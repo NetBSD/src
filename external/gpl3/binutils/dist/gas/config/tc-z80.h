@@ -1,5 +1,5 @@
 /* this is tc-z80.h
-   Copyright (C) 2005-2022 Free Software Foundation, Inc.
+   Copyright (C) 2005-2024 Free Software Foundation, Inc.
 
    Contributed by Arnold Metselaar <arnold_m@operamail.com>
 
@@ -28,7 +28,6 @@
 #define TARGET_FORMAT "elf32-z80"
 #endif
 #define BFD_ARCH      TARGET_ARCH
-#define COFF_MAGIC    0x5A80
 #define TARGET_BYTES_BIG_ENDIAN  0
 
 /* If you define this macro, GAS will warn about the
@@ -55,11 +54,11 @@
   (as_fatal (_("estimate_size_before_relax called")), 1)
 
 /* Define some functions to be called by generic code.  */
-#define md_end               z80_md_end
+#define md_finish               z80_md_finish
 #define md_start_line_hook() { if (z80_start_line_hook ()) continue; }
 #define TC_CONS_FIX_NEW(f,w,s,e,r)  z80_cons_fix_new ((f), (w), (s), (e))
 
-extern void z80_md_end (void);
+extern void z80_md_finish (void);
 extern int z80_start_line_hook (void);
 extern void z80_cons_fix_new (fragS *, int, int, expressionS *);
 

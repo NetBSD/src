@@ -1,5 +1,5 @@
 /* tc-loongarch.h -- Header file for tc-loongarch.c.
-   Copyright (C) 2021-2022 Free Software Foundation, Inc.
+   Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Loongson Ltd.
 
    This file is part of GAS.
@@ -20,6 +20,8 @@
 
 #ifndef TC_LOONGARCH
 #define TC_LOONGARCH
+
+#include "opcode/loongarch.h"
 
 #define TARGET_BYTES_BIG_ENDIAN 0
 #define TARGET_ARCH bfd_arch_loongarch
@@ -47,34 +49,84 @@ extern int loongarch_relax_frag (asection *, struct frag *, long);
 #define md_undefined_symbol(name) (0)
 #define md_operand(x)
 
-/* This is called to see whether a reloc against a defined symbol
-   should be converted into a reloc against a section.  */
+extern bool loongarch_frag_align_code (int, int);
+#define md_do_align(N, FILL, LEN, MAX, LABEL)				\
+  if ((N) != 0 && !(FILL) && !need_pass_2 && subseg_text_p (now_seg))	\
+    {									\
+      if (loongarch_frag_align_code (N, MAX))				\
+	goto LABEL;							\
+    }
+
+/* The following two macros let the linker resolve all the relocs
+   due to relaxation.
+
+   This is called to see whether a reloc against a defined symbol
+   should be converted into a reloc against a section.
+
+   If relax and norelax have different value may cause ld ".eh_frame_hdr
+   refers to overlapping FDEs" error when link relax .o and norelax .o.  */
 #define tc_fix_adjustable(fixp) 0
 
-/* Values passed to md_apply_fix don't include symbol values.  */
-#define TC_FORCE_RELOCATION_SUB_LOCAL(FIX, SEG) 1
+/* Tne difference between same-section symbols may be affected by linker
+   relaxation, so do not resolve such expressions in the assembler.  */
+#define md_allow_local_subtract(l,r,s) 0
+
+/* If subsy of BFD_RELOC32/64 and PC in same segment, and without relax
+   or PC at start of subsy or with relax but sub_symbol_segment not in
+   SEC_CODE, we generate 32/64_PCREL.  */
+#define TC_FORCE_RELOCATION_SUB_LOCAL(FIX, SEG) \
+  (!(LARCH_opts.thin_add_sub \
+     && (BFD_RELOC_32 || BFD_RELOC_64) \
+     && (!LARCH_opts.relax \
+	|| S_GET_VALUE (FIX->fx_subsy) \
+	   == FIX->fx_frag->fr_address + FIX->fx_where \
+	|| (LARCH_opts.relax \
+	   && ((S_GET_SEGMENT (FIX->fx_subsy)->flags & SEC_CODE) == 0)))))
+
 #define TC_VALIDATE_FIX_SUB(FIX, SEG) 1
 #define DIFF_EXPR_OK 1
+
+/* Postpone text-section label subtraction calculation until linking, since
+   linker relaxations might change the deltas.  */
+#define TC_FORCE_RELOCATION_SUB_SAME(FIX, SEC)	\
+  (LARCH_opts.relax ?  \
+    (GENERIC_FORCE_RELOCATION_SUB_SAME (FIX, SEC)	\
+      || ((SEC)->flags & SEC_CODE) != 0		\
+      || ((SEC)->flags & SEC_DEBUGGING) != 0	\
+      || TC_FORCE_RELOCATION (FIX)) \
+    : (GENERIC_FORCE_RELOCATION_SUB_SAME (FIX, SEC))) \
+
+#define TC_LINKRELAX_FIXUP(seg) ((seg->flags & SEC_CODE)  \
+				    || (seg->flags & SEC_DEBUGGING))
+
+#define TC_FORCE_RELOCATION_LOCAL(FIX) 1
+
+/* Adjust debug_line after relaxation.  */
+#define DWARF2_USE_FIXED_ADVANCE_PC 1
+
+/* Values passed to md_apply_fix don't include symbol values.  */
+#define MD_APPLY_SYM_VALUE(FIX) 0
 
 #define TARGET_USE_CFIPOP 1
 #define DWARF2_DEFAULT_RETURN_COLUMN 1 /* $ra.  */
 #define DWARF2_CIE_DATA_ALIGNMENT -4
-extern int loongarch_dwarf2_addr_size (void);
-#define DWARF2_FDE_RELOC_SIZE loongarch_dwarf2_addr_size ()
-#define DWARF2_ADDR_SIZE(bfd) loongarch_dwarf2_addr_size ()
-#define CFI_DIFF_EXPR_OK 0
 
 #define tc_cfi_frame_initial_instructions	\
   loongarch_cfi_frame_initial_instructions
 extern void loongarch_cfi_frame_initial_instructions (void);
 
+#define tc_symbol_new_hook(sym) \
+  if (0 == strcmp (sym->bsym->name, FAKE_LABEL_NAME)) \
+    S_SET_OTHER (sym, STV_HIDDEN);
+
 #define tc_parse_to_dw2regnum tc_loongarch_parse_to_dw2regnum
 extern void tc_loongarch_parse_to_dw2regnum (expressionS *);
 
-/* A enumerated values to specific how to deal with align in '.text'.
-   Now we want to fill 'andi $r0,$r0,0x0'.
-   Here is the type 0, will fill andi insn later.  */
-#define NOP_OPCODE (0x00)
+extern void loongarch_pre_output_hook (void);
+#define md_pre_output_hook loongarch_pre_output_hook ()
+#define GAS_SORT_RELOCS 1
+
+#define SUB_SEGMENT_ALIGN(SEG, FRCHAIN) 0
 
 #define HANDLE_ALIGN(fragp) loongarch_handle_align (fragp)
 extern void loongarch_handle_align (struct frag *);
@@ -90,5 +142,8 @@ struct reloc_info
   bfd_reloc_code_real_type type;
   expressionS value;
 };
+
+#define md_finish loongarch_md_finish
+extern void loongarch_md_finish (void);
 
 #endif

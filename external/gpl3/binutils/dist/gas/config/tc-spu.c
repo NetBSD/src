@@ -1,6 +1,6 @@
 /* spu.c -- Assembler for the IBM Synergistic Processing Unit (SPU)
 
-   Copyright (C) 2006-2022 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -573,6 +573,7 @@ get_reg (const char *param, struct spu_insn *insn, int arg, int accept_expr)
       expression (&ex);
       param = input_line_pointer;
       input_line_pointer = save_ptr;
+      resolve_register (&ex);
       if (ex.X_op == O_register || ex.X_op == O_constant)
 	{
 	  insn->opcode |= ex.X_add_number << arg_encode[arg].pos;

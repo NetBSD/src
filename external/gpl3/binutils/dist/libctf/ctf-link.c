@@ -1,5 +1,5 @@
 /* CTF linking.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -243,8 +243,7 @@ ctf_link_lazy_open (ctf_dict_t *fp, ctf_link_input_t *input)
 #else
   ctf_err_warn (fp, 0, ECTF_NEEDSBFD, _("cannot open %s lazily"),
 		input->clin_filename);
-  ctf_set_errno (fp, ECTF_NEEDSBFD);
-  return -1;
+  return ctf_set_errno (fp, ECTF_NEEDSBFD);
 #endif
 
   /* Having no CTF sections is not an error.  We just don't need to do
@@ -257,8 +256,7 @@ ctf_link_lazy_open (ctf_dict_t *fp, ctf_link_input_t *input)
 
       ctf_err_warn (fp, 0, err, _("opening CTF %s failed"),
 		    input->clin_filename);
-      ctf_set_errno (fp, err);
-      return -1;
+      return ctf_set_errno (fp, err);
     }
 
   if ((count = ctf_archive_count (input->clin_arc)) == 0)
@@ -321,12 +319,12 @@ ctf_create_per_cu (ctf_dict_t *fp, ctf_dict_t *input, const char *cu_name)
   if (ctf_name == NULL)
     ctf_name = cu_name;
 
-  /* Look up the per-CU dict.  If we don't know of one, or it is for
-     a different input CU which just happens to have the same name,
-     create a new one.  */
+  /* Look up the per-CU dict.  If we don't know of one, or it is for a different input
+     CU which just happens to have the same name, create a new one.  If we are creating
+     a dict with no input specified, anything will do.  */
 
   if ((cu_fp = ctf_dynhash_lookup (fp->ctf_link_outputs, ctf_name)) == NULL
-      || cu_fp->ctf_link_in_out != fp)
+      || (input && cu_fp->ctf_link_in_out != fp))
     {
       int err;
 
@@ -363,7 +361,8 @@ ctf_create_per_cu (ctf_dict_t *fp, ctf_dict_t *input, const char *cu_name)
 
 /* Add a mapping directing that the CU named FROM should have its
    conflicting/non-duplicate types (depending on link mode) go into a dict
-   named TO.  Many FROMs can share a TO.
+   named TO.  Many FROMs can share a TO, but adding the same FROM with
+   a different TO will replace the old mapping.
 
    We forcibly add a dict named TO in every case, even though it may well
    wind up empty, because clients that use this facility usually expect to find
@@ -373,7 +372,7 @@ int
 ctf_link_add_cu_mapping (ctf_dict_t *fp, const char *from, const char *to)
 {
   int err;
-  char *f = NULL, *t = NULL;
+  char *f = NULL, *t = NULL, *existing;
   ctf_dynhash_t *one_out;
 
   /* Mappings cannot be set up if per-CU output dicts already exist.  */
@@ -394,6 +393,19 @@ ctf_link_add_cu_mapping (ctf_dict_t *fp, const char *from, const char *to)
 						      ctf_dynhash_destroy);
   if (fp->ctf_link_out_cu_mapping == NULL)
     goto oom;
+
+  /* If this FROM already exists, remove the mapping from both the FROM->TO
+     and the TO->FROM lists: the user wants to change it.  */
+
+  if ((existing = ctf_dynhash_lookup (fp->ctf_link_in_cu_mapping, from)) != NULL)
+    {
+      one_out = ctf_dynhash_lookup (fp->ctf_link_out_cu_mapping, existing);
+      if (!ctf_assert (fp, one_out))
+	return -1;				/* errno is set for us.  */
+
+      ctf_dynhash_remove (one_out, from);
+      ctf_dynhash_remove (fp->ctf_link_in_cu_mapping, from);
+    }
 
   f = strdup (from);
   t = strdup (to);
@@ -431,7 +443,10 @@ ctf_link_add_cu_mapping (ctf_dict_t *fp, const char *from, const char *to)
 	}
     }
   else
-    free (t);
+    {
+      free (t);
+      t = NULL;
+    }
 
   if (ctf_dynhash_insert (one_out, f, NULL) < 0)
     {
@@ -677,8 +692,7 @@ ctf_link_deduplicating_count_inputs (ctf_dict_t *fp, ctf_dynhash_t *cu_names,
     {
       ctf_err_warn (fp, 0, err, _("iteration error counting deduplicating "
 				  "CTF link inputs"));
-      ctf_set_errno (fp, err);
-      return -1;
+      return ctf_set_errno (fp, err);
     }
 
   if (!count)
@@ -1352,8 +1366,7 @@ ctf_link_empty_outputs (ctf_dict_t *fp)
     {
       fp->ctf_flags &= ~LCTF_LINKING;
       ctf_err_warn (fp, 1, err, _("iteration error removing old outputs"));
-      ctf_set_errno (fp, err);
-      return -1;
+      return ctf_set_errno (fp, err);
     }
   return 0;
 }
@@ -1502,11 +1515,17 @@ ctf_link (ctf_dict_t *fp, int flags)
   if (fp->ctf_link_outputs == NULL)
     return ctf_set_errno (fp, ENOMEM);
 
+  fp->ctf_flags |= LCTF_LINKING;
+  ctf_link_deduplicating (fp);
+  fp->ctf_flags &= ~LCTF_LINKING;
+
+  if ((ctf_errno (fp) != 0) && (ctf_errno (fp) != ECTF_NOCTFDATA))
+    return -1;
+
   /* Create empty CUs if requested.  We do not currently claim that multiple
      links in succession with CTF_LINK_EMPTY_CU_MAPPINGS set in some calls and
      not set in others will do anything especially sensible.  */
 
-  fp->ctf_flags |= LCTF_LINKING;
   if (fp->ctf_link_out_cu_mapping && (flags & CTF_LINK_EMPTY_CU_MAPPINGS))
     {
       ctf_next_t *i = NULL;
@@ -1527,16 +1546,10 @@ ctf_link (ctf_dict_t *fp, int flags)
 	{
 	  fp->ctf_flags &= ~LCTF_LINKING;
 	  ctf_err_warn (fp, 1, err, _("iteration error creating empty CUs"));
-	  ctf_set_errno (fp, err);
-	  return -1;
+	  return ctf_set_errno (fp, err);
 	}
     }
 
-  ctf_link_deduplicating (fp);
-
-  fp->ctf_flags &= ~LCTF_LINKING;
-  if ((ctf_errno (fp) != 0) && (ctf_errno (fp) != ECTF_NOCTFDATA))
-    return -1;
   return 0;
 }
 
@@ -1845,19 +1858,42 @@ ctf_link_warn_outdated_inputs (ctf_dict_t *fp)
 {
   ctf_next_t *i = NULL;
   void *name_;
-  void *ifp_;
+  void *input_;
   int err;
 
-  while ((err = ctf_dynhash_next (fp->ctf_link_inputs, &i, &name_, &ifp_)) == 0)
+  while ((err = ctf_dynhash_next (fp->ctf_link_inputs, &i, &name_, &input_)) == 0)
     {
       const char *name = (const char *) name_;
-      ctf_dict_t *ifp = (ctf_dict_t *) ifp_;
+      ctf_link_input_t *input = (ctf_link_input_t *) input_;
+      ctf_next_t *j = NULL;
+      ctf_dict_t *ifp;
+      int err;
+
+      /* We only care about CTF archives by this point: lazy-opened archives
+	 have always been opened by this point, and short-circuited entries have
+	 a matching corresponding archive member. Entries with NULL clin_arc can
+	 exist, and constitute old entries renamed via a name changer: the
+	 renamed entries exist elsewhere in the list, so we can just skip
+	 those.  */
+
+      if (!input->clin_arc)
+	continue;
+
+      /* All entries in the archive will necessarily contain the same
+	 CTF_F_NEWFUNCINFO flag, so we only need to check the first. We don't
+	 even need to do that if we can't open it for any reason at all: the
+	 link will fail later on regardless, since an input can't be opened. */
+
+      ifp = ctf_archive_next (input->clin_arc, &j, NULL, 0, &err);
+      if (!ifp)
+	continue;
+      ctf_next_destroy (j);
 
       if (!(ifp->ctf_header->cth_flags & CTF_F_NEWFUNCINFO)
 	  && (ifp->ctf_header->cth_varoff - ifp->ctf_header->cth_funcoff) > 0)
-	ctf_err_warn (ifp, 1, 0, _("linker input %s has CTF func info but uses "
-				   "an old, unreleased func info format: "
-				   "this func info section will be dropped."),
+	ctf_err_warn (fp, 1, 0, _("linker input %s has CTF func info but uses "
+				  "an old, unreleased func info format: "
+				  "this func info section will be dropped."),
 		      name);
     }
   if (err != ECTF_NEXT_END)

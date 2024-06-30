@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -880,7 +880,7 @@ struct worker_thread_info
   int thread_num;           /* Application-defined thread # */
   volatile int control;     /* Thread state */
   volatile int result;      /* Return status */
-  struct stat64 statbuf;    /* File info from stat64() */
+  dbe_stat_t statbuf;       /* File info from stat64() */
   const char *path;         /* File */
 };
 
@@ -1058,9 +1058,9 @@ extract_and_save_dirname (const char *path, int status)
 
 // get status for specified file
 static int
-dbe_stat_internal (const char *path, struct stat64 *sbuf, bool file_only)
+dbe_stat_internal (const char *path, dbe_stat_t *sbuf, bool file_only)
 {
-  struct stat64 statbuf;
+  dbe_stat_t statbuf;
   int dir_status = check_dirname (path);
   if (dir_status == DIR_STATUS_UNKNOWN)
     {
@@ -1116,7 +1116,7 @@ dbe_stat_internal (const char *path, struct stat64 *sbuf, bool file_only)
 // get status for the regular file
 
 int
-dbe_stat_file (const char *path, struct stat64 *sbuf)
+dbe_stat_file (const char *path, dbe_stat_t *sbuf)
 {
   int res = dbe_stat_internal (path, sbuf, true);
   return res;
@@ -1125,7 +1125,7 @@ dbe_stat_file (const char *path, struct stat64 *sbuf)
 // get status for specified file
 
 int
-dbe_stat (const char *path, struct stat64 *sbuf)
+dbe_stat (const char *path, dbe_stat_t *sbuf)
 {
   int res = dbe_stat_internal (path, sbuf, false);
   return res;
@@ -1159,7 +1159,7 @@ dbe_read_dir (const char *path, const char *format)
 	  if (format_aF)
 	    {
 	      const char *attr = NTXT ("@"); // Link
-	      struct stat64 sbuf;
+	      dbe_stat_t sbuf;
 	      sbuf.st_mode = 0;
 	      char filename[MAXPATHLEN + 1];
 	      snprintf (filename, sizeof (filename), NTXT ("%s/%s"), path, entry->d_name);
@@ -1253,7 +1253,7 @@ dbe_delete_file (const char *pathname)
 {
   StringBuilder sb;
   char *cmd = NULL;
-  struct stat64 sbuf;
+  dbe_stat_t sbuf;
   sbuf.st_mode = 0;
   int st = dbe_stat (pathname, &sbuf);
   if (st == 0)

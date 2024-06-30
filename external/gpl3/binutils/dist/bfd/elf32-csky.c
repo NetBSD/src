@@ -1,5 +1,5 @@
 /* 32-bit ELF support for C-SKY.
-   Copyright (C) 1998-2022 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
    Contributed by C-SKY Microsystems and Mentor Graphics.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1942,8 +1942,7 @@ csky_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	{
 	  struct elf_dyn_relocs *p;
 
-	  for (p = *((struct elf_dyn_relocs **)
-		     &elf_section_data (s)->local_dynrel);
+	  for (p = elf_section_data (s)->local_dynrel;
 	       p != NULL;
 	       p = p->next)
 	    {
@@ -2864,7 +2863,6 @@ elf32_csky_merge_attributes (bfd *ibfd, struct bfd_link_info *info)
   bfd *obfd = info->output_bfd;
   obj_attribute *in_attr;
   obj_attribute *out_attr;
-  obj_attribute tattr;
   csky_arch_for_merge *old_arch = NULL;
   csky_arch_for_merge *new_arch = NULL;
   int i;
@@ -2892,15 +2890,7 @@ elf32_csky_merge_attributes (bfd *ibfd, struct bfd_link_info *info)
       /* This is the first object.  Copy the attributes.  */
       out_attr = elf_known_obj_attributes_proc (obfd);
 
-      /* If Tag_CSKY_CPU_NAME is already set, save it.  */
-      memcpy (&tattr, &out_attr[Tag_CSKY_ARCH_NAME], sizeof (tattr));
-
       _bfd_elf_copy_obj_attributes (ibfd, obfd);
-
-      out_attr = elf_known_obj_attributes_proc (obfd);
-
-      /* Restore Tag_CSKY_CPU_NAME.  */
-      memcpy (&out_attr[Tag_CSKY_ARCH_NAME], &tattr, sizeof (tattr));
 
       /* Use the Tag_null value to indicate the attributes have been
 	 initialized.  */
@@ -3066,12 +3056,14 @@ csky_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   old_flags = elf_elfheader (obfd)->e_flags;
   out_attr = elf_known_obj_attributes_proc (obfd);
 
-  /* the flags like"e , f ,g ..." , we take collection.  */
-  newest_flag = (old_flags & (~CSKY_ARCH_MASK))
-   | (new_flags & (~CSKY_ARCH_MASK));
+  /* The flags like "e , f ,g ..." , we take collection.  */
+  newest_flag = old_flags | new_flags;
 
   sec_name = get_elf_backend_data (ibfd)->obj_attrs_section;
-  if (bfd_get_section_by_name (ibfd, sec_name) == NULL)
+
+  if (bfd_get_section_by_name (ibfd, sec_name) == NULL
+      || ((new_flags & (CSKY_ARCH_MASK | CSKY_ABI_MASK)) !=
+	  (old_flags & (CSKY_ARCH_MASK | CSKY_ABI_MASK))))
     {
       /* Input BFDs have no ".csky.attribute" section.  */
       new_arch = csky_find_arch_with_eflag (new_flags & CSKY_ARCH_MASK);
@@ -3110,9 +3102,6 @@ csky_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 	      out_attr[Tag_CSKY_ARCH_NAME].s =
 		_bfd_elf_attr_strdup (obfd, newest_arch->name);
 	    }
-	  else
-	    newest_flag |= ((new_flags & (CSKY_ARCH_MASK | CSKY_ABI_MASK))
-			    | (old_flags & (CSKY_ARCH_MASK | CSKY_ABI_MASK)));
 	}
       else
 	{
@@ -3739,7 +3728,7 @@ csky_build_one_stub (struct bfd_hash_entry *gen_entry,
      section.  The user should fix his linker script.  */
   if (stub_entry->target_section->output_section == NULL
       && info->non_contiguous_regions)
-    info->callbacks->einfo (_("%F%P: Could not assign '%pA' to an output section. "
+    info->callbacks->einfo (_("%F%P: Could not assign `%pA' to an output section. "
 			      "Retry without --enable-non-contiguous-regions.\n"),
 			    stub_entry->target_section);
 

@@ -1,5 +1,5 @@
 /* BFD support for AArch64.
-   Copyright (C) 2009-2022 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -39,8 +39,8 @@ compatible (const bfd_arch_info_type * a, const bfd_arch_info_type * b)
   if (a->mach == b->mach)
     return a;
 
-  /* Don't allow mixing ilp32 with lp64.  */
-  if ((a->mach & bfd_mach_aarch64_ilp32) != (b->mach & bfd_mach_aarch64_ilp32))
+  /* Don't allow mixing data models.  */
+  if ((a->mach ^ b->mach) & (bfd_mach_aarch64_ilp32 | bfd_mach_aarch64_llp64))
     return NULL;
 
   /* Otherwise if either a or b is the 'default' machine
@@ -73,7 +73,10 @@ processors[] =
   { bfd_mach_aarch64,	  "cortex-a65"	    },
   { bfd_mach_aarch64,	  "cortex-a65ae"    },
   { bfd_mach_aarch64,	  "cortex-a76ae"    },
-  { bfd_mach_aarch64,	  "cortex-a77"	    }
+  { bfd_mach_aarch64,	  "cortex-a77"	    },
+  { bfd_mach_aarch64,	  "cortex-a720"	    },
+  { bfd_mach_aarch64,     "cortex-x3"       },
+  { bfd_mach_aarch64,     "cortex-x4"       },
 };
 
 static bool
@@ -84,6 +87,15 @@ scan (const struct bfd_arch_info *info, const char *string)
   /* First test for an exact match.  */
   if (strcasecmp (string, info->printable_name) == 0)
     return true;
+
+  /* If there is a prefix of "aarch64:" then skip it.  */
+  const char * colon;
+  if ((colon = strchr (string, ':')) != NULL)
+    {
+      if (strncasecmp (string, "aarch64", colon - string) != 0)
+	return false;
+      string = colon + 1;
+    }
 
   /* Next check for a processor name instead of an Architecture name.  */
   for (i = sizeof (processors) / sizeof (processors[0]); i--;)
@@ -102,20 +114,33 @@ scan (const struct bfd_arch_info *info, const char *string)
   return false;
 }
 
-#define N(NUMBER, PRINT, WORDSIZE, DEFAULT, NEXT)		\
-  { WORDSIZE, WORDSIZE, 8, bfd_arch_aarch64, NUMBER,		\
-    "aarch64", PRINT, 4, DEFAULT, compatible, scan,		\
-      bfd_arch_default_fill, NEXT, 0 }
+/* Figure out if llp64 is default */
+#if DEFAULT_VECTOR == aarch64_pe_le_vec
+#define LLP64_DEFAULT true
+#define AARCH64_DEFAULT false
+#else
+#define LLP64_DEFAULT false
+#define AARCH64_DEFAULT true
+#endif
 
-static const bfd_arch_info_type bfd_aarch64_arch_v8_r =
-  N (bfd_mach_aarch64_8R, "aarch64:armv8-r", 64, false, NULL);
+#define N(NUMBER, PRINT, WORDSIZE, ADDRSIZE, DEFAULT, NEXT)		\
+  { WORDSIZE, ADDRSIZE, 8, bfd_arch_aarch64, NUMBER,		\
+     "aarch64", PRINT, 4, DEFAULT, compatible, scan,		\
+       bfd_arch_default_fill, NEXT, 0 }
+
+ static const bfd_arch_info_type bfd_aarch64_arch_v8_r =
+  N (bfd_mach_aarch64_8R, "aarch64:armv8-r", 64, 64, false, NULL);
 
 static const bfd_arch_info_type bfd_aarch64_arch_ilp32 =
-  N (bfd_mach_aarch64_ilp32, "aarch64:ilp32", 32, false,
+  N (bfd_mach_aarch64_ilp32, "aarch64:ilp32", 32, 32, false,
      &bfd_aarch64_arch_v8_r);
 
-const bfd_arch_info_type bfd_aarch64_arch =
-  N (0, "aarch64", 64, true, &bfd_aarch64_arch_ilp32);
+static const bfd_arch_info_type bfd_aarch64_arch_llp64 =
+  N (bfd_mach_aarch64_llp64, "aarch64:llp64", 32, 64, LLP64_DEFAULT,
+     &bfd_aarch64_arch_ilp32);
+
+ const bfd_arch_info_type bfd_aarch64_arch =
+  N (0, "aarch64", 64, 64, AARCH64_DEFAULT, &bfd_aarch64_arch_llp64);
 
 bool
 bfd_is_aarch64_special_symbol_name (const char *name, int type)

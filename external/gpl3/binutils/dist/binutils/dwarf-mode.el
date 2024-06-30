@@ -1,8 +1,8 @@
 ;;; dwarf-mode.el --- Browser for DWARF information. -*-lexical-binding:t-*-
 
-;; Version: 1.7
+;; Version: 1.8
 
-;; Copyright (C) 2012-2022 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
 ;; This file is not part of GNU Emacs, but is distributed under the
 ;; same terms:
@@ -111,7 +111,7 @@ By default, expands just one level of children.
 A prefix argument means expand all children."
   (interactive "P")
   (beginning-of-line)
-  (unless (looking-at "^ <\\([0-9]+\\)><\\([0-9a-f]+\\)>")
+  (unless (looking-at "^ <\\([0-9]+\\)><\\([0-9a-f]+\\)>: \\.\\.\\.")
     (error "Unrecognized line."))
   (let ((die (match-string 2)))
     (if arg
@@ -177,11 +177,22 @@ A prefix argument means expand all children."
 ;; Run objdump and insert the contents into the buffer.  The arguments
 ;; are the way they are because this is also called as a
 ;; revert-buffer-function.
-(defun dwarf-do-refresh (&rest ignore)
+(defun dwarf-do-refresh (&rest _ignore)
   (dwarf--check-running)
   (let ((inhibit-read-only t))
     (dwarf--invoke (point-min) (point-max)
 		   dwarf-objdump-program "-Wi" "--dwarf-depth=1"
+		   (expand-file-name dwarf-file))
+    (set-buffer-modified-p nil)))
+
+(defun dwarf-refresh-all ()
+  "Refresh the current buffer without eliding substructure.
+Note that this can result in very voluminous output."
+  (interactive)
+  (dwarf--check-running)
+  (let ((inhibit-read-only t))
+    (dwarf--invoke (point-min) (point-max)
+		   dwarf-objdump-program "-Wi"
 		   (expand-file-name dwarf-file))
     (set-buffer-modified-p nil)))
 
@@ -198,6 +209,7 @@ A prefix argument means expand all children."
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map special-mode-map)
     (define-key map [(control ?m)] #'dwarf-insert-substructure)
+    (define-key map "A" #'dwarf-refresh-all)
     map)
   "Keymap for dwarf-mode buffers.")
 
@@ -207,7 +219,6 @@ A prefix argument means expand all children."
 \\{dwarf-mode-map}"
 
   (set (make-local-variable 'font-lock-defaults) '(dwarf-font-lock-keywords))
-  ;; FIXME: we could be smarter and check the file time.
   (set (make-local-variable 'revert-buffer-function) #'dwarf-do-refresh)
   (jit-lock-register #'dwarf-fontify-region))
 

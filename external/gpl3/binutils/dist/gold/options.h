@@ -1,6 +1,6 @@
 // options.h -- handle command line options for gold  -*- C++ -*-
 
-// Copyright (C) 2006-2022 Free Software Foundation, Inc.
+// Copyright (C) 2006-2024 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -770,8 +770,8 @@ class General_options
 
   DEFINE_enum(compress_debug_sections, options::TWO_DASHES, '\0', "none",
 	      N_("Compress .debug_* sections in the output file"),
-	      ("[none,zlib,zlib-gnu,zlib-gabi]"), false,
-	      {"none", "zlib", "zlib-gnu", "zlib-gabi"});
+	      ("[none,zlib,zlib-gnu,zlib-gabi,zstd]"), false,
+	      {"none", "zlib", "zlib-gnu", "zlib-gabi", "zstd"});
 
   DEFINE_bool(copy_dt_needed_entries, options::TWO_DASHES, '\0', false,
 	      N_("Not supported"),
@@ -846,6 +846,10 @@ class General_options
   DEFINE_enable(new_dtags, options::EXACTLY_TWO_DASHES, '\0', true,
 		N_("Enable use of DT_RUNPATH"),
 		N_("Disable use of DT_RUNPATH"));
+
+  DEFINE_enable(linker_version, options::EXACTLY_TWO_DASHES, '\0', false,
+		N_("Put the linker version string into the .comment section"),
+		N_("Put the linker version string into the .note.gnu.gold-version section"));
 
   DEFINE_bool(enum_size_warning, options::TWO_DASHES, '\0', true, NULL,
 	      N_("(ARM only) Do not warn about objects with incompatible "
@@ -1101,6 +1105,10 @@ class General_options
 
   DEFINE_bool(p, options::ONE_DASH, 'p', false,
 	      N_("Ignored for ARM compatibility"), NULL);
+
+  DEFINE_optional_string(package_metadata, options::TWO_DASHES, '\0', NULL,
+			 N_("Generate package metadata note"),
+			 N_("[=JSON]"));
 
   DEFINE_bool(pie, options::ONE_DASH, '\0', false,
 	      N_("Create a position independent executable"),
@@ -1456,9 +1464,6 @@ class General_options
 
   // The -z options.
 
-  DEFINE_bool(bndplt, options::DASH_Z, '\0', false,
-	      N_("(x86-64 only) Generate a BND PLT for Intel MPX"),
-	      N_("Generate a regular PLT"));
   DEFINE_bool(combreloc, options::DASH_Z, '\0', true,
 	      N_("Sort dynamic relocs"),
 	      N_("Do not sort dynamic relocs"));

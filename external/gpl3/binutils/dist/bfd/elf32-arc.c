@@ -1,5 +1,5 @@
 /* ARC-specific support for 32-bit ELF
-   Copyright (C) 1994-2022 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
    Contributed by Cupertino Miranda (cmiranda@synopsys.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1226,10 +1226,8 @@ arc_special_overflow_checks (const struct arc_relocation_data reloc_data,
   (bfd_signed_vma) (reloc_data.sym_section->output_section->vma)
 #define JLI (bfd_signed_vma) (reloc_data.sym_section->output_section->vma)
 #define _SDA_BASE_ (bfd_signed_vma) (reloc_data.sdata_begin_symbol_vma)
-#define TLS_REL (bfd_signed_vma) \
-  ((elf_hash_table (info))->tls_sec->output_section->vma)
-#define TLS_TBSS (align_power(TCB_SIZE, \
-		  reloc_data.sym_section->alignment_power))
+#define TLS_REL (bfd_signed_vma)(tls_sec->output_section->vma)
+#define TLS_TBSS (align_power (TCB_SIZE, tls_sec->alignment_power))
 
 #define none (0)
 
@@ -1307,6 +1305,7 @@ arc_do_relocation (bfd_byte * contents,
   bfd * abfd = reloc_data.input_section->owner;
   struct elf_link_hash_table *htab ATTRIBUTE_UNUSED = elf_hash_table (info);
   bfd_reloc_status_type flag;
+  asection *tls_sec = htab->tls_sec;
 
   if (!reloc_data.should_relocate)
     return bfd_reloc_ok;
@@ -1335,6 +1334,20 @@ arc_do_relocation (bfd_byte * contents,
     }
 
   orig_insn = insn;
+
+  /* If we resolve a TLS relocation, make sure we do have a valid TLS
+     section.  */
+  switch (reloc_data.howto->type)
+    {
+    case R_ARC_TLS_LE_32:
+      if (tls_sec == NULL)
+	return bfd_reloc_notsupported;
+      break;
+
+    default:
+      break;
+    }
+
 
   switch (reloc_data.howto->type)
     {
@@ -2972,8 +2985,9 @@ arc_elf_relax_section (bfd *abfd, asection *sec,
      section does not have relocs, or if this is not a code
      section.  */
   if (bfd_link_relocatable (link_info)
-      || (sec->flags & SEC_RELOC) == 0
       || sec->reloc_count == 0
+      || (sec->flags & SEC_RELOC) == 0
+      || (sec->flags & SEC_HAS_CONTENTS) == 0
       || (sec->flags & SEC_CODE) == 0)
     return true;
 

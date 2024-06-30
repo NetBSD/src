@@ -1,5 +1,5 @@
 \input texinfo @c                               -*-Texinfo-*-
-@c  Copyright (C) 1991-2022 Free Software Foundation, Inc.
+@c  Copyright (C) 1991-2024 Free Software Foundation, Inc.
 @c UPDATE!!  On future updates--
 @c   (1)   check for new machine-dep cmdline options in
 @c         md_parse_option definitions in config/tc-*.c
@@ -100,7 +100,7 @@
 This file documents the GNU Assembler "@value{AS}".
 
 @c man begin COPYRIGHT
-Copyright @copyright{} 1991-2022 Free Software Foundation, Inc.
+Copyright @copyright{} 1991-2024 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3
@@ -149,7 +149,7 @@ done.
 @end tex
 
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1991-2022 Free Software Foundation, Inc.
+Copyright @copyright{} 1991-2024 Free Software Foundation, Inc.
 
       Permission is granted to copy, distribute and/or modify this document
       under the terms of the GNU Free Documentation License, Version 1.3
@@ -226,27 +226,43 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
 @c to be limited to one line for the header.
 @smallexample
 @c man begin SYNOPSIS
-@value{AS} [@b{-a}[@b{cdghlns}][=@var{file}]] [@b{--alternate}] [@b{-D}]
- [@b{--compress-debug-sections}]  [@b{--nocompress-debug-sections}]
+@value{AS} [@b{-a}[@b{cdghilns}][=@var{file}]]
+ [@b{--alternate}]
+ [@b{--compress-debug-sections}] [@b{--nocompress-debug-sections}]
+ [@b{-D}]
+ [@b{--dump-config}]
  [@b{--debug-prefix-map} @var{old}=@var{new}]
- [@b{--defsym} @var{sym}=@var{val}] [@b{-f}] [@b{-g}] [@b{--gstabs}]
- [@b{--gstabs+}] [@b{--gdwarf-<N>}] [@b{--gdwarf-sections}]
+ [@b{--defsym} @var{sym}=@var{val}]
+ [@b{--elf-stt-common=[no|yes]}]
+ [@b{--emulation}=@var{name}]
+ [@b{-f}]
+ [@b{-g}] [@b{--gstabs}] [@b{--gstabs+}]
+ [@b{--gdwarf-<N>}] [@b{--gdwarf-sections}]
  [@b{--gdwarf-cie-version}=@var{VERSION}]
- [@b{--help}] [@b{-I} @var{dir}] [@b{-J}]
- [@b{-K}] [@b{-L}] [@b{--listing-lhs-width}=@var{NUM}]
- [@b{--listing-lhs-width2}=@var{NUM}] [@b{--listing-rhs-width}=@var{NUM}]
- [@b{--listing-cont-lines}=@var{NUM}] [@b{--keep-locals}]
+ [@b{--generate-missing-build-notes=[no|yes]}]
+ [@b{--gsframe}]
+ [@b{--hash-size}=@var{N}]
+ [@b{--help}] [@b{--target-help}]
+ [@b{-I} @var{dir}]
+ [@b{-J}]
+ [@b{-K}]
+ [@b{--keep-locals}]
+ [@b{-L}]
+ [@b{--listing-lhs-width}=@var{NUM}]
+ [@b{--listing-lhs-width2}=@var{NUM}]
+ [@b{--listing-rhs-width}=@var{NUM}]
+ [@b{--listing-cont-lines}=@var{NUM}]
+ [@b{--multibyte-handling=[allow|warn|warn-sym-only]}]
  [@b{--no-pad-sections}]
  [@b{-o} @var{objfile}] [@b{-R}]
+ [@b{--scfi=experimental}]
+ [@b{--sectname-subst}]
+ [@b{--size-check=[error|warning]}]
  [@b{--statistics}]
  [@b{-v}] [@b{-version}] [@b{--version}]
  [@b{-W}] [@b{--warn}] [@b{--fatal-warnings}] [@b{-w}] [@b{-x}]
  [@b{-Z}] [@b{@@@var{FILE}}]
- [@b{--sectname-subst}] [@b{--size-check=[error|warning]}]
- [@b{--elf-stt-common=[no|yes]}]
- [@b{--generate-missing-build-notes=[no|yes]}]
- [@b{--multibyte-handling=[allow|warn|warn-sym-only]}]
- [@b{--target-help}] [@var{target-options}]
+ [@var{target-options}]
  [@b{--}|@var{files} @dots{}]
 @c
 @c man end
@@ -424,7 +440,7 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
 @end ifset
 @ifset MICROBLAZE
 @emph{Target MICROBLAZE options:}
-@c MicroBlaze has no machine-dependent assembler options.
+   [@b{-mlittle-endian}] [@b{-mbig-endian}]
 @end ifset
 @ifset MIPS
 
@@ -657,7 +673,7 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
 @table @gcctabopt
 @include at-file.texi
 
-@item -a[cdghlmns]
+@item -a[cdghilmns]
 Turn on listings, in any of a variety of ways:
 
 @table @gcctabopt
@@ -675,6 +691,9 @@ include high-level source
 
 @item -al
 include assembly
+
+@item -ali
+include assembly with ginsn
 
 @item -am
 include macro expansions
@@ -711,16 +730,19 @@ given section @emph{larger} then it is not compressed.
 @itemx --compress-debug-sections=zlib
 @itemx --compress-debug-sections=zlib-gnu
 @itemx --compress-debug-sections=zlib-gabi
+@itemx --compress-debug-sections=zstd
 These options control how DWARF debug sections are compressed.
 @option{--compress-debug-sections=none} is equivalent to
 @option{--nocompress-debug-sections}.
 @option{--compress-debug-sections=zlib} and
 @option{--compress-debug-sections=zlib-gabi} are equivalent to
 @option{--compress-debug-sections}.
-@option{--compress-debug-sections=zlib-gnu} compresses DWARF debug
-sections using zlib.  The debug sections are renamed to begin with
-@samp{.zdebug}.  Note if compression would make a given section
-@emph{larger} then it is not compressed nor renamed.
+@option{--compress-debug-sections=zlib-gnu} compresses DWARF debug sections
+using the obsoleted zlib-gnu format.  The debug sections are renamed to begin
+with @samp{.zdebug}.
+@option{--compress-debug-sections=zstd} compresses DWARF debug
+sections using zstd.  Note - if compression would actually make a section
+@emph{larger}, then it is not compressed nor renamed.
 
 @end ifset
 
@@ -730,7 +752,8 @@ targets except the x86/x86_64, but a configure time option can be used to
 override this.
 
 @item -D
-Ignored.  This option is accepted for script compatibility with calls to
+Enable debugging in target specific backends, if supported.  Otherwise ignored.
+Even if ignored, this option is accepted for script compatibility with calls to
 other assemblers.
 
 @item --debug-prefix-map @var{old}=@var{new}
@@ -743,6 +766,21 @@ Define the symbol @var{sym} to be @var{value} before assembling the input file.
 indicates a hexadecimal value, and a leading @samp{0} indicates an octal
 value.  The value of the symbol can be overridden inside a source file via the
 use of a @code{.set} pseudo-op.
+
+@item --dump-config
+Displays how the assembler is configured and then exits.
+
+@ifset ELF
+@item --elf-stt-common=no
+@itemx --elf-stt-common=yes
+These options control whether the ELF assembler should generate common
+symbols with the @code{STT_COMMON} type.  The default can be controlled
+by a configure option @option{--enable-elf-stt-common}.
+@end ifset
+
+@item --emulation=@var{name}
+If the assembler is configured to support multiple different target
+configurations then this option can be used to select the desired form.
 
 @item -f
 ``fast''---skip whitespace and comment preprocessing (assume source is
@@ -804,20 +842,10 @@ suffix.
 
 @item --gdwarf-cie-version=@var{version}
 Control which version of DWARF Common Information Entries (CIEs) are produced.
-When this flag is not specificed the default is version 1, though some targets
+When this flag is not specified the default is version 1, though some targets
 can modify this default.  Other possible values for @var{version} are 3 or 4.
 
 @ifset ELF
-@item --size-check=error
-@itemx --size-check=warning
-Issue an error or warning for invalid ELF .size directive.
-
-@item --elf-stt-common=no
-@itemx --elf-stt-common=yes
-These options control whether the ELF assembler should generate common
-symbols with the @code{STT_COMMON} type.  The default can be controlled
-by a configure option @option{--enable-elf-stt-common}.
-
 @item --generate-missing-build-notes=yes
 @itemx --generate-missing-build-notes=no
 These options control whether the ELF assembler should generate GNU Build
@@ -825,7 +853,14 @@ attribute notes if none are present in the input sources.
 The default can be controlled by the @option{--enable-generate-build-notes}
 configure option.
 
+@item --gsframe
+@itemx --gsframe
+Create @var{.sframe} section from CFI directives.
+
 @end ifset
+
+@item --hash-size @var{N}
+Ignored.  Supported for command line compatibility with other assemblers.
 
 @item --help
 Print a summary of the command-line options and exit.
@@ -875,6 +910,7 @@ to @var{number} + 1.
 @item --multibyte-handling=allow
 @itemx --multibyte-handling=warn
 @itemx --multibyte-handling=warn-sym-only
+@itemx --multibyte-handling=warn_sym_only
 Controls how the assembler handles multibyte characters in the input.  The
 default (which can be restored by using the @option{allow} argument) is to
 allow such characters without complaint.  Using the @option{warn} argument will
@@ -895,12 +931,34 @@ Name the object-file output from @command{@value{AS}} @var{objfile}.
 @item -R
 Fold the data section into the text section.
 
+@item --reduce-memory-overheads
+Ignored.  Supported for compatibility with tools that apss the same option to
+both the assembler and the linker.
+
 @ifset ELF
+@item --scfi=experimental
+This option controls whether the assembler should synthesize CFI for
+hand-written input.  If the input already contains some synthesizable CFI
+directives, the assembler ignores them and emits a warning.  Note that
+@code{--scfi=experimental} is not intended to be used for compiler-generated
+code, including inline assembly.  This experimental support is work in
+progress.  Only System V AMD64 ABI is supported.
+
+Each input function in assembly must begin with the @code{.type} directive, and
+should ideally be closed off using a @code{.size} directive.  When using SCFI,
+each @code{.type} directive prompts GAS to start a new FDE (a.k.a., Function
+Descriptor Entry).  This implies that with each @code{.type} directive, a
+previous block of instructions, if any, is finalised as a distinct FDE.
+
 @item --sectname-subst
 Honor substitution sequences in section names.
 @ifclear man
 @xref{Section Name Substitutions,,@code{.section @var{name}}}.
 @end ifclear
+
+@item --size-check=error
+@itemx --size-check=warning
+Issue an error or warning for invalid ELF .size directive.
 @end ifset
 
 @item --statistics
@@ -2098,7 +2156,7 @@ If you use (or have used) the @sc{gnu} assembler on one architecture, you
 should find a fairly similar environment when you use it on another
 architecture.  Each version has much in common with the others,
 including object file formats, most assembler directives (often called
-@dfn{pseudo-ops}) and assembler syntax.@refill
+@dfn{pseudo-ops}) and assembler syntax.
 
 @cindex purpose of @sc{gnu} assembler
 @command{@value{AS}} is primarily intended to assemble the output of the
@@ -2363,9 +2421,9 @@ assembler.)
 @c man end
 
 @menu
-* a::             -a[cdghlns] enable listings
+* a::             -a[cdghilns] enable listings
 * alternate::     --alternate enable alternate macro syntax
-* D::             -D for compatibility
+* D::             -D for compatibility and debugging
 * f::             -f to work faster
 * I::             -I for .include search path
 @ifclear DIFF-TBL-KLUGE
@@ -2390,7 +2448,7 @@ assembler.)
 @end menu
 
 @node a
-@section Enable Listings: @option{-a[cdghlns]}
+@section Enable Listings: @option{-a[cdghilns]}
 
 @kindex -a
 @kindex -ac
@@ -2398,6 +2456,7 @@ assembler.)
 @kindex -ag
 @kindex -ah
 @kindex -al
+@kindex -ali
 @kindex -an
 @kindex -as
 @cindex listings, enabling
@@ -2407,7 +2466,9 @@ These options enable listing output from the assembler.  By itself,
 @samp{-a} requests high-level, assembly, and symbols listing.
 You can use other letters to select specific options for the list:
 @samp{-ah} requests a high-level language listing,
-@samp{-al} requests an output-program assembly listing, and
+@samp{-al} requests an output-program assembly listing,
+@samp{-ali} requests an output-program assembly listing along with the
+associated ginsn, and
 @samp{-as} requests a symbol table listing.
 High-level listings require that a compiler debugging option like
 @samp{-g} be used, and that assembly listings (@samp{-al}) be requested
@@ -2453,8 +2514,9 @@ Begin in alternate macro mode, see @ref{Altmacro,,@code{.altmacro}}.
 @section @option{-D}
 
 @kindex -D
-This option has no effect whatsoever, but it is accepted to make it more
-likely that scripts written for other assemblers also work with
+This option enables debugging, if it is supported by the assembler's
+configuration.  Otherwise it does nothing as is ignored.  This allows scripts
+designed to work with other assemblers to also work with GAS.
 @command{@value{AS}}.
 
 @node f
@@ -2885,9 +2947,9 @@ preprocessed.
 If the first line of an input file is @code{#NO_APP} or if you use the
 @samp{-f} option, whitespace and comments are not removed from the input file.
 Within an input file, you can ask for whitespace and comment removal in
-specific portions of the by putting a line that says @code{#APP} before the
+specific portions of the file by putting a line that says @code{#APP} before the
 text that may contain whitespace or comments, and putting a line that says
-@code{#NO_APP} after this text.  This feature is mainly intend to support
+@code{#NO_APP} after this text.  This feature is mainly intended to support
 @code{asm} statements in compilers whose output is otherwise free of comments
 and whitespace.
 
@@ -2923,12 +2985,13 @@ This means you may not nest these comments.
 @cindex line comment character
 Anything from a @dfn{line comment} character up to the next newline is
 considered a comment and is ignored.  The line comment character is target
-specific, and some targets multiple comment characters.  Some targets also have
-line comment characters that only work if they are the first character on a
-line.  Some targets use a sequence of two characters to introduce a line
-comment.  Some targets can also change their line comment characters depending
-upon command-line options that have been used.  For more details see the
-@emph{Syntax} section in the documentation for individual targets.
+specific, and some targets support multiple comment characters.  Some targets
+also have line comment characters that only work if they are the first
+character on a line.  Some targets use a sequence of two characters to
+introduce a line comment.  Some targets can also change their line comment
+characters depending upon command-line options that have been used.  For more
+details see the @emph{Syntax} section in the documentation for individual
+targets.
 
 If the line comment character is the hash sign (@samp{#}) then it still has the
 special ability to enable and disable preprocessing (@pxref{Preprocessing}) and
@@ -3009,7 +3072,7 @@ exception: they do not end statements.
 @cindex newline, required at file end
 @cindex EOF, newline must precede
 It is an error to end any statement with end-of-file:  the last
-character of any input file should be a newline.@refill
+character of any input file should be a newline.
 
 An empty statement is allowed, and may include whitespace.  It is ignored.
 
@@ -3029,7 +3092,7 @@ assembles into a machine language instruction.
 Different versions of @command{@value{AS}} for different computers
 recognize different instructions.  In fact, the same symbol may
 represent a different instruction in a different computer's assembly
-language.@refill
+language.
 @end ifset
 
 @cindex @code{:} (label)
@@ -3228,7 +3291,7 @@ immediately following an acute accent is taken as a literal character
 and does not count as the end of a statement.  The value of a character
 constant in a numeric expression is the machine's byte-wide code for
 that character.  @command{@value{AS}} assumes your character code is ASCII:
-@kbd{'A} means 65, @kbd{'B} means 66, and so on. @refill
+@kbd{'A} means 65, @kbd{'B} means 66, and so on.
 
 @node Numbers
 @subsection Number Constants
@@ -3649,7 +3712,7 @@ bug in the assembler.
 
 @cindex expr (internal section)
 @item expr section
-The assembler stores complex expression internally as combinations of
+The assembler stores complex expressions internally as combinations of
 symbols.  When it needs to represent an expression as a symbol, it puts
 it in the expr section.
 @c FIXME item debug
@@ -4356,7 +4419,7 @@ You may not subtract arguments from different sections.
 @dfn{Is Less Than Or Equal To}
 
 The comparison operators can be used as infix operators.  A true result has a
-value of -1 whereas a false result has a value of 0.   Note, these operators
+value of -1 whereas a false result has a value of 0.  Note, these operators
 perform signed comparisons.
 @end table
 
@@ -4371,7 +4434,7 @@ perform signed comparisons.
 
 These two logical operations can be used to combine the results of sub
 expressions.  Note, unlike the comparison operators a true result returns a
-value of 1 but a false results does still return 0.  Also note that the logical
+value of 1 but a false result does still return 0.  Also note that the logical
 or operator has a slightly lower precedence than logical and.
 
 @end table
@@ -4414,7 +4477,12 @@ Some machine configurations provide additional directives.
 * Asciz::                       @code{.asciz "@var{string}"}@dots{}
 * Attach_to_group::             @code{.attach_to_group @var{name}}
 * Balign::                      @code{.balign [@var{abs-expr}[, @var{abs-expr}]]}
+@ifset ELF
 * Bss::                         @code{.bss @var{subsection}}
+@end ifset
+@ifclear ELF
+* Bss::                         @code{.bss}
+@end ifclear
 * Bundle directives::           @code{.bundle_align_mode @var{abs-expr}}, etc
 * Byte::                        @code{.byte @var{expressions}}
 * CFI directives::		@code{.cfi_startproc [simple]}, @code{.cfi_endproc}, etc.
@@ -4589,7 +4657,7 @@ Some machine configurations provide additional directives.
 @end ifclear
 * 2byte::                       @code{.2byte @var{expressions}}
 * 4byte::                       @code{.4byte @var{expressions}}
-* 8byte::                       @code{.8byte @var{bignums}}
+* 8byte::                       @code{.8byte @var{expressions}}
 * Deprecated::                  Deprecated Directives
 @end menu
 
@@ -4759,14 +4827,20 @@ filled in with the value 0x368d (the exact placement of the bytes depends upon
 the endianness of the processor).  If it skips 1 or 3 bytes, the fill value is
 undefined.
 
+@ifset ELF
 @node Bss
 @section @code{.bss @var{subsection}}
+@end ifset
+@ifclear ELF
+@node Bss
+@section @code{.bss}
+@end ifclear
 @cindex @code{bss} directive
 
 @code{.bss} tells @command{@value{AS}} to assemble the following statements
 onto the end of the bss section.
 @ifset ELF
-For ELF based targets an optional @var{subsection} expression (which must
+For most ELF based targets an optional @var{subsection} expression (which must
 evaluate to a positive integer) can be provided.  In this case the statements
 are appended to the end of the indicated bss subsection.
 @end ifset
@@ -4836,16 +4910,25 @@ same number of @code{.bundle_lock} and @code{.bundle_unlock} directives.
 @code{.byte} expects zero or more expressions, separated by commas.
 Each expression is assembled into the next byte.
 
+Note - this directive is not intended for encoding instructions, and it will
+not trigger effects like DWARF line number generation.  Instead some targets
+support special directives for encoding arbitrary binary sequences as
+instructions such as @code{.insn} or @code{.inst}.
+
 @node CFI directives
 @section CFI directives
 @subsection @code{.cfi_sections @var{section_list}}
 @cindex @code{cfi_sections} directive
 @code{.cfi_sections} may be used to specify whether CFI directives
-should emit @code{.eh_frame} section and/or @code{.debug_frame} section.
-If @var{section_list} is @code{.eh_frame}, @code{.eh_frame} is emitted,
-if @var{section_list} is @code{.debug_frame}, @code{.debug_frame} is emitted.
-To emit both use @code{.eh_frame, .debug_frame}.  The default if this
-directive is not used is @code{.cfi_sections .eh_frame}.
+should emit @code{.eh_frame} section, @code{.debug_frame} section and/or
+@code{.sframe} section.  If @var{section_list} contains @code{.eh_frame},
+@code{.eh_frame} is emitted, if @var{section_list} contains
+@code{.debug_frame}, @code{.debug_frame} is emitted, and finally, if
+@var{section_list} contains @code{.sframe}, @code{.sframe} is emitted.
+To emit multiple sections, specify them together in a list.  For example, to
+emit both @code{.eh_frame} and @code{.debug_frame}, use
+@code{.eh_frame, .debug_frame}.  The default if this directive is not used
+is @code{.cfi_sections .eh_frame}.
 
 On targets that support compact unwinding tables these can be generated
 by specifying @code{.eh_frame_entry} instead of @code{.eh_frame}.
@@ -5130,6 +5213,11 @@ If no suffix is used then @samp{.w} is assumed.
 The byte ordering is target dependent, as is the size and format of floating
 point values.
 
+Note - these directives are not intended for encoding instructions, and they
+will not trigger effects like DWARF line number generation.  Instead some
+targets support special directives for encoding arbitrary binary sequences as
+instructions such as @code{.insn} or @code{.inst}.
+
 @node Dcb
 @section @code{.dcb[@var{size}] @var{number} [,@var{fill}]}
 @cindex @code{dcb} directive
@@ -5189,7 +5277,6 @@ suffixes do not indicate that floating-point values are to be inserted.
 If the @var{size} suffix is omitted then @samp{.w} is assumed.
 
 The byte ordering is target dependent.
-
 
 @ifset COFF
 @node Def
@@ -5452,7 +5539,7 @@ With this version a separate directory name is allowed, although if this is
 used then @var{filename} should not contain any directory component, except
 for @var{fileno} equal to 0: in this case, @var{dirname} is expected to be
 the current directory and @var{filename} the currently processed file, and
-the latter need not be located in the former. In addtion an MD5 hash value
+the latter need not be located in the former. In addition an MD5 hash value
 of the contents of @var{filename} can be provided. This will be stored in
 the the file table as well, and can be used by tools reading the debug
 information to verify that the contents of the source file match the
@@ -5724,6 +5811,11 @@ integers.  On the H8/300H and the Renesas SH, however, @code{.int} emits
 32-bit integers.
 @end ifset
 @end ifclear
+
+Note - this directive is not intended for encoding instructions, and it will
+not trigger effects like DWARF line number generation.  Instead some targets
+support special directives for encoding arbitrary binary sequences as
+instructions such as eg @code{.insn} or @code{.inst}.
 
 @ifset ELF
 @node Internal
@@ -6519,14 +6611,16 @@ as in the @code{.section} (@pxref{Section}) directive.
 @end ifset
 
 @node Quad
-@section @code{.quad @var{bignums}}
+@section @code{.quad @var{expressions}}
 
 @cindex @code{quad} directive
-@code{.quad} expects zero or more bignums, separated by commas.  For
-each bignum, it emits
 @ifclear bignum-16
-an 8-byte integer.  If the bignum won't fit in 8 bytes, it prints a
-warning message; and just takes the lowest order 8 bytes of the bignum.
+For 64-bit architectures, or more generally with any GAS configured to support
+64-bit target virtual addresses, this is like @samp{.int}, but emitting 64-bit
+quantities.  Otherwise @code{.quad} expects zero or more bignums, separated by
+commas.  For each item, it emits an 8-byte integer.  If a bignum won't fit in
+8 bytes, a warning message is printed and just the lowest order 8 bytes of the
+bignum are taken.
 @cindex eight-byte integer
 @cindex integer, 8-byte
 
@@ -6534,11 +6628,19 @@ The term ``quad'' comes from contexts in which a ``word'' is two bytes;
 hence @emph{quad}-word for 8 bytes.
 @end ifclear
 @ifset bignum-16
-a 16-byte integer.  If the bignum won't fit in 16 bytes, it prints a
-warning message; and just takes the lowest order 16 bytes of the bignum.
+@code{.quad} expects zero or more bignums, separated by commas.  For
+each bignum, it emits a 16-byte integer.  If the bignum won't fit in 16
+bytes, it prints a warning message; and just takes the lowest order 16
+bytes of the bignum.
+@xref{Octa,,@code{.octa @var{bignums}}}.
 @cindex sixteen-byte integer
 @cindex integer, 16-byte
 @end ifset
+
+Note - this directive is not intended for encoding instructions, and it will
+not trigger effects like DWARF line number generation.  Instead some targets
+support special directives for encoding arbitrary binary sequences as
+instructions such as @code{.insn} or @code{.inst}.
 
 @node Reloc
 @section @code{.reloc @var{offset}, @var{reloc_name}[, @var{expression}]}
@@ -6748,6 +6850,12 @@ section is a member of a section group
 section is used for thread-local-storage
 @item ?
 section is a member of the previously-current section's group, if any
+@item +
+section inherits attributes and (unless explicitly specified) type from the
+previously-current section, adding other attributes as specified
+@item -
+section inherits attributes and (unless explicitly specified) type from the
+previously-current section, removing other attributes as specified
 @item R
 retained section (apply SHF_GNU_RETAIN to prevent linker garbage
 collection, GNU ELF extension)
@@ -6768,6 +6876,12 @@ flags can be added to an already defined section.  The @code{.interp},
 section may have the executable (@code{x}) flag added.  Also note that the
 @code{.attach_to_group} directive can be used to add a section to a group even
 if the section was not originally declared to be part of that group.
+
+Note further that @code{+} and @code{-} need to come first and can only take
+the effect described here unless overridden by a target.  The attributes
+inherited are those in effect at the time the directive is processed.
+Attributes added later (see above) will not be inherited.  Using either
+together with @code{?} is undefined at this point.
 
 The optional @var{type} argument may contain one of the following constants:
 
@@ -6827,7 +6941,7 @@ must be present along with an additional field like this:
 
 The @var{SymbolName} field specifies the symbol name which the section
 references.  Alternatively a numeric @var{SectionIndex} can be provided.  This
-is not generally a good idea as section indicies are rarely known at assembly
+is not generally a good idea as section indices are rarely known at assembly
 time, but the facility is provided for testing purposes.  An index of zero is
 allowed.  It indicates that the linked-to section has already been discarded.
 
@@ -6893,7 +7007,7 @@ the section name is not recognized, the default will be for the section to have
 none of the above flags: it will not be allocated in memory, nor writable, nor
 executable.  The section will contain data.
 
-For ELF targets, the assembler supports another type of @code{.section}
+For SPARC ELF targets, the assembler supports another type of @code{.section}
 directive for compatibility with the Solaris assembler:
 
 @smallexample
@@ -6970,6 +7084,11 @@ This expects zero or more @var{expressions}, and emits
 a 16 bit number for each.
 @end ifset
 @end ifclear
+
+Note - this directive is not intended for encoding instructions, and it will
+not trigger effects like DWARF line number generation.  Instead some targets
+support special directives for encoding arbitrary binary sequences as
+instructions such as @code{.insn} or @code{.inst}.
 
 @node Single
 @section @code{.single @var{flonums}}
@@ -7623,8 +7742,11 @@ long values into the output.
 @cindex eight-byte integer
 @cindex integer, 8-byte
 
-Like the @option{.2byte} directive, except that it inserts unaligned, eight
-byte long bignum values into the output.
+For 64-bit architectures, or more generally with any GAS configured to support
+64-bit target virtual addresses, this is like the @option{.2byte} directive,
+except that it inserts unaligned, eight byte long values into the output.
+Otherwise, like @ref{Quad,,@code{.quad @var{expressions}}}, it expects zero or
+more bignums, separated by commas.
 
 @node Deprecated
 @section Deprecated Directives
@@ -7746,6 +7868,18 @@ registers and 32-bit general-purpose registers.
 registers, 32-bit general-purpose registers and a rule that forbids the
 direct use of odd-numbered single-precision floating-point registers.
 @end itemize
+
+@item Tag_GNU_MIPS_ABI_MSA (8)
+The MIPS SIMD Architecture (MSA) ABI used by this object file.  The value
+will be:
+
+@itemize @bullet
+@item
+0 for files not affected by the MSA ABI.
+@item
+1 for files using the 128-bit MSA ABI.
+@end itemize
+
 @end table
 
 @subsection PowerPC Attributes
@@ -7915,6 +8049,9 @@ subject, see the hardware manufacturer's manual.
 @end ifset
 @ifset LM32
 * LM32-Dependent::              LM32 Dependent Features
+@end ifset
+@ifset KVX
+* KVX-Dependent::               KVX Dependent Features
 @end ifset
 @ifset M32C
 * M32C-Dependent::              M32C Dependent Features
@@ -8139,6 +8276,10 @@ family.
 
 @ifset LOONGARCH
 @include c-loongarch.texi
+@end ifset
+
+@ifset KVX
+@include c-kvx.texi
 @end ifset
 
 @ifset M32C

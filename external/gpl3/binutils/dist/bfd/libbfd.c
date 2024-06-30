@@ -1,5 +1,5 @@
 /* Assorted BFD support routines, only used internally.
-   Copyright (C) 1990-2022 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -22,6 +22,7 @@
 #include "sysdep.h"
 #include "bfd.h"
 #include "libbfd.h"
+#include "objalloc.h"
 
 #ifndef HAVE_GETPAGESIZE
 #define getpagesize() 2048
@@ -263,7 +264,7 @@ INTERNAL_FUNCTION
 	bfd_malloc
 
 SYNOPSIS
-	extern void * bfd_malloc (bfd_size_type SIZE) ATTRIBUTE_HIDDEN;
+	void *bfd_malloc (bfd_size_type {*size*});
 
 DESCRIPTION
 	Returns a pointer to an allocated block of memory that is at least
@@ -298,7 +299,7 @@ INTERNAL_FUNCTION
 	bfd_realloc
 
 SYNOPSIS
-	extern void * bfd_realloc (void * MEM, bfd_size_type SIZE) ATTRIBUTE_HIDDEN;
+	void *bfd_realloc (void *{*mem*}, bfd_size_type {*size*});
 
 DESCRIPTION
 	Returns a pointer to an allocated block of memory that is at least
@@ -348,7 +349,7 @@ INTERNAL_FUNCTION
 	bfd_realloc_or_free
 
 SYNOPSIS
-	extern void * bfd_realloc_or_free (void * MEM, bfd_size_type SIZE) ATTRIBUTE_HIDDEN;
+	void *bfd_realloc_or_free (void *{*mem*}, bfd_size_type {*size*});
 
 DESCRIPTION
 	Returns a pointer to an allocated block of memory that is at least
@@ -393,7 +394,7 @@ INTERNAL_FUNCTION
 	bfd_zmalloc
 
 SYNOPSIS
-	extern void * bfd_zmalloc (bfd_size_type SIZE) ATTRIBUTE_HIDDEN;
+	void *bfd_zmalloc (bfd_size_type {*size*});
 
 DESCRIPTION
 	Returns a pointer to an allocated block of memory that is at least
@@ -417,6 +418,87 @@ bfd_zmalloc (bfd_size_type size)
 }
 
 /*
+FUNCTION
+	bfd_alloc
+
+SYNOPSIS
+	void *bfd_alloc (bfd *abfd, bfd_size_type wanted);
+
+DESCRIPTION
+	Allocate a block of @var{wanted} bytes of memory attached to
+	<<abfd>> and return a pointer to it.
+*/
+
+void *
+bfd_alloc (bfd *abfd, bfd_size_type size)
+{
+  void *ret;
+  unsigned long ul_size = (unsigned long) size;
+
+  if (size != ul_size
+      /* Note - although objalloc_alloc takes an unsigned long as its
+	 argument, internally the size is treated as a signed long.  This can
+	 lead to problems where, for example, a request to allocate -1 bytes
+	 can result in just 1 byte being allocated, rather than
+	 ((unsigned long) -1) bytes.  Also memory checkers will often
+	 complain about attempts to allocate a negative amount of memory.
+	 So to stop these problems we fail if the size is negative.  */
+      || ((signed long) ul_size) < 0)
+    {
+      bfd_set_error (bfd_error_no_memory);
+      return NULL;
+    }
+
+  ret = objalloc_alloc ((struct objalloc *) abfd->memory, ul_size);
+  if (ret == NULL)
+    bfd_set_error (bfd_error_no_memory);
+  else
+    abfd->alloc_size += size;
+  return ret;
+}
+
+/*
+FUNCTION
+	bfd_zalloc
+
+SYNOPSIS
+	void *bfd_zalloc (bfd *abfd, bfd_size_type wanted);
+
+DESCRIPTION
+	Allocate a block of @var{wanted} bytes of zeroed memory
+	attached to <<abfd>> and return a pointer to it.
+*/
+
+void *
+bfd_zalloc (bfd *abfd, bfd_size_type size)
+{
+  void *res;
+
+  res = bfd_alloc (abfd, size);
+  if (res)
+    memset (res, 0, (size_t) size);
+  return res;
+}
+
+/*
+FUNCTION
+	bfd_release
+
+SYNOPSIS
+	void bfd_release (bfd *, void *);
+
+DESCRIPTION
+	Free a block allocated for a BFD.
+	Note: Also frees all more recently allocated blocks!
+*/
+
+void
+bfd_release (bfd *abfd, void *block)
+{
+  objalloc_free_block ((struct objalloc *) abfd->memory, block);
+}
+
+/*
 INTERNAL_FUNCTION
 	bfd_write_bigendian_4byte_int
 
@@ -433,8 +515,8 @@ bool
 bfd_write_bigendian_4byte_int (bfd *abfd, unsigned int i)
 {
   bfd_byte buffer[4];
-  bfd_putb32 ((bfd_vma) i, buffer);
-  return bfd_bwrite (buffer, (bfd_size_type) 4, abfd) == 4;
+  bfd_putb32 (i, buffer);
+  return bfd_write (buffer, 4, abfd) == 4;
 }
 
 
@@ -477,13 +559,13 @@ DESCRIPTION
 .{* Byte swapping macros for user section data.  *}
 .
 .#define bfd_put_8(abfd, val, ptr) \
-.  ((void) (*((unsigned char *) (ptr)) = (val) & 0xff))
+.  ((void) (*((bfd_byte *) (ptr)) = (val) & 0xff))
 .#define bfd_put_signed_8 \
 .  bfd_put_8
 .#define bfd_get_8(abfd, ptr) \
-.  ((bfd_vma) *(const unsigned char *) (ptr) & 0xff)
+.  ((bfd_vma) *(const bfd_byte *) (ptr) & 0xff)
 .#define bfd_get_signed_8(abfd, ptr) \
-.  ((((bfd_signed_vma) *(const unsigned char *) (ptr) & 0xff) ^ 0x80) - 0x80)
+.  ((((bfd_signed_vma) *(const bfd_byte *) (ptr) & 0xff) ^ 0x80) - 0x80)
 .
 .#define bfd_put_16(abfd, val, ptr) \
 .  BFD_SEND (abfd, bfd_putx16, ((val),(ptr)))
@@ -619,6 +701,42 @@ DESCRIPTION
 #define COERCE64(x) \
   (((uint64_t) (x) ^ ((uint64_t) 1 << 63)) - ((uint64_t) 1 << 63))
 
+/*
+FUNCTION
+	Byte swapping routines.
+
+SYNOPSIS
+	uint64_t bfd_getb64 (const void *);
+	uint64_t bfd_getl64 (const void *);
+	int64_t bfd_getb_signed_64 (const void *);
+	int64_t bfd_getl_signed_64 (const void *);
+	bfd_vma bfd_getb32 (const void *);
+	bfd_vma bfd_getl32 (const void *);
+	bfd_signed_vma bfd_getb_signed_32 (const void *);
+	bfd_signed_vma bfd_getl_signed_32 (const void *);
+	bfd_vma bfd_getb16 (const void *);
+	bfd_vma bfd_getl16 (const void *);
+	bfd_signed_vma bfd_getb_signed_16 (const void *);
+	bfd_signed_vma bfd_getl_signed_16 (const void *);
+	void bfd_putb64 (uint64_t, void *);
+	void bfd_putl64 (uint64_t, void *);
+	void bfd_putb32 (bfd_vma, void *);
+	void bfd_putl32 (bfd_vma, void *);
+	void bfd_putb24 (bfd_vma, void *);
+	void bfd_putl24 (bfd_vma, void *);
+	void bfd_putb16 (bfd_vma, void *);
+	void bfd_putl16 (bfd_vma, void *);
+	uint64_t bfd_get_bits (const void *, int, bool);
+	void bfd_put_bits (uint64_t, void *, int, bool);
+
+DESCRIPTION
+	Read and write integers in a particular endian order.  getb
+	and putb functions handle big-endian, getl and putl handle
+	little-endian.  bfd_get_bits and bfd_put_bits specify
+	big-endian by passing TRUE in the last parameter,
+	little-endian by passing FALSE.
+*/
+
 bfd_vma
 bfd_getb16 (const void *p)
 {
@@ -685,11 +803,11 @@ bfd_vma
 bfd_getb24 (const void *p)
 {
   const bfd_byte *addr = (const bfd_byte *) p;
-  unsigned long v;
+  uint32_t v;
 
-  v =  (unsigned long) addr[0] << 16;
-  v |= (unsigned long) addr[1] << 8;
-  v |= (unsigned long) addr[2];
+  v =  (uint32_t) addr[0] << 16;
+  v |= (uint32_t) addr[1] << 8;
+  v |= (uint32_t) addr[2];
   return v;
 }
 
@@ -697,11 +815,11 @@ bfd_vma
 bfd_getl24 (const void *p)
 {
   const bfd_byte *addr = (const bfd_byte *) p;
-  unsigned long v;
+  uint32_t v;
 
-  v = (unsigned long) addr[0];
-  v |= (unsigned long) addr[1] << 8;
-  v |= (unsigned long) addr[2] << 16;
+  v = (uint32_t) addr[0];
+  v |= (uint32_t) addr[1] << 8;
+  v |= (uint32_t) addr[2] << 16;
   return v;
 }
 
@@ -709,12 +827,12 @@ bfd_vma
 bfd_getb32 (const void *p)
 {
   const bfd_byte *addr = (const bfd_byte *) p;
-  unsigned long v;
+  uint32_t v;
 
-  v = (unsigned long) addr[0] << 24;
-  v |= (unsigned long) addr[1] << 16;
-  v |= (unsigned long) addr[2] << 8;
-  v |= (unsigned long) addr[3];
+  v = (uint32_t) addr[0] << 24;
+  v |= (uint32_t) addr[1] << 16;
+  v |= (uint32_t) addr[2] << 8;
+  v |= (uint32_t) addr[3];
   return v;
 }
 
@@ -722,12 +840,12 @@ bfd_vma
 bfd_getl32 (const void *p)
 {
   const bfd_byte *addr = (const bfd_byte *) p;
-  unsigned long v;
+  uint32_t v;
 
-  v = (unsigned long) addr[0];
-  v |= (unsigned long) addr[1] << 8;
-  v |= (unsigned long) addr[2] << 16;
-  v |= (unsigned long) addr[3] << 24;
+  v = (uint32_t) addr[0];
+  v |= (uint32_t) addr[1] << 8;
+  v |= (uint32_t) addr[2] << 16;
+  v |= (uint32_t) addr[3] << 24;
   return v;
 }
 
@@ -735,12 +853,12 @@ bfd_signed_vma
 bfd_getb_signed_32 (const void *p)
 {
   const bfd_byte *addr = (const bfd_byte *) p;
-  unsigned long v;
+  uint32_t v;
 
-  v = (unsigned long) addr[0] << 24;
-  v |= (unsigned long) addr[1] << 16;
-  v |= (unsigned long) addr[2] << 8;
-  v |= (unsigned long) addr[3];
+  v = (uint32_t) addr[0] << 24;
+  v |= (uint32_t) addr[1] << 16;
+  v |= (uint32_t) addr[2] << 8;
+  v |= (uint32_t) addr[3];
   return COERCE32 (v);
 }
 
@@ -748,12 +866,12 @@ bfd_signed_vma
 bfd_getl_signed_32 (const void *p)
 {
   const bfd_byte *addr = (const bfd_byte *) p;
-  unsigned long v;
+  uint32_t v;
 
-  v = (unsigned long) addr[0];
-  v |= (unsigned long) addr[1] << 8;
-  v |= (unsigned long) addr[2] << 16;
-  v |= (unsigned long) addr[3] << 24;
+  v = (uint32_t) addr[0];
+  v |= (uint32_t) addr[1] << 8;
+  v |= (uint32_t) addr[2] << 16;
+  v |= (uint32_t) addr[3] << 24;
   return COERCE32 (v);
 }
 
@@ -943,15 +1061,7 @@ _bfd_generic_get_section_contents (bfd *abfd,
       return false;
     }
 
-  /* We do allow reading of a section after bfd_final_link has
-     written the contents out to disk.  In that situation, rawsize is
-     just a stale version of size, so ignore it.  Otherwise we must be
-     reading an input section, where rawsize, if different to size,
-     is the on-disk size.  */
-  if (abfd->direction != write_direction && section->rawsize != 0)
-    sz = section->rawsize;
-  else
-    sz = section->size;
+  sz = bfd_get_section_limit_octets (abfd, section);
   if (offset + count < count
       || offset + count > sz
       || (abfd->my_archive != NULL
@@ -964,7 +1074,7 @@ _bfd_generic_get_section_contents (bfd *abfd,
     }
 
   if (bfd_seek (abfd, section->filepos + offset, SEEK_SET) != 0
-      || bfd_bread (location, count, abfd) != count)
+      || bfd_read (location, count, abfd) != count)
     return false;
 
   return true;
@@ -1042,7 +1152,7 @@ _bfd_generic_set_section_contents (bfd *abfd,
     return true;
 
   if (bfd_seek (abfd, section->filepos + offset, SEEK_SET) != 0
-      || bfd_bwrite (location, count, abfd) != count)
+      || bfd_write (location, count, abfd) != count)
     return false;
 
   return true;
@@ -1082,34 +1192,6 @@ bfd_generic_is_local_label_name (bfd *abfd, const char *name)
   return name[0] == locals_prefix;
 }
 
-/* Give a warning at runtime if someone compiles code which calls
-   old routines.  */
-
-void
-_bfd_warn_deprecated (const char *what,
-		      const char *file,
-		      int line,
-		      const char *func)
-{
-  /* Poor man's tracking of functions we've already warned about.  */
-  static size_t mask = 0;
-
-  if (~(size_t) func & ~mask)
-    {
-      fflush (stdout);
-      /* Note: separate sentences in order to allow
-	 for translation into other languages.  */
-      if (func)
-	/* xgettext:c-format */
-	fprintf (stderr, _("Deprecated %s called at %s line %d in %s\n"),
-		 what, file, line, func);
-      else
-	fprintf (stderr, _("Deprecated %s called\n"), what);
-      fflush (stderr);
-      mask |= ~(size_t) func;
-    }
-}
-
 /* Helper function for reading uleb128 encoded data.  */
 
 bfd_vma
@@ -1120,7 +1202,7 @@ _bfd_read_unsigned_leb128 (bfd *abfd ATTRIBUTE_UNUSED,
   bfd_vma result;
   unsigned int num_read;
   unsigned int shift;
-  unsigned char byte;
+  bfd_byte byte;
 
   result = 0;
   shift = 0;
@@ -1154,7 +1236,7 @@ _bfd_safe_read_leb128 (bfd *abfd ATTRIBUTE_UNUSED,
 {
   bfd_vma result = 0;
   unsigned int shift = 0;
-  unsigned char byte = 0;
+  bfd_byte byte = 0;
   bfd_byte *data = *ptr;
 
   while (data < end)
@@ -1188,7 +1270,7 @@ _bfd_read_signed_leb128 (bfd *abfd ATTRIBUTE_UNUSED,
   bfd_vma result;
   unsigned int shift;
   unsigned int num_read;
-  unsigned char byte;
+  bfd_byte byte;
 
   result = 0;
   shift = 0;

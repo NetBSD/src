@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -259,18 +259,11 @@ process_data_descriptor (const char *defstring)
 
   clear_hwcdefs ();
   if (!defstring || !strlen (defstring))
-    {
-      err = HWCFUNCS_ERROR_HWCARGS;
-      goto ext_hw_install_end;
-    }
+    return HWCFUNCS_ERROR_HWCARGS;
   ds = strdup (defstring);
   if (!ds)
-    {
-      err = HWCFUNCS_ERROR_HWCINIT;
-      goto ext_hw_install_end;
-    }
+    return HWCFUNCS_ERROR_HWCINIT;
   dsp = ds;
-
   for (idx = 0; idx < MAX_PICS && *dsp; idx++)
     {
       char *name = NULL;
@@ -281,13 +274,33 @@ process_data_descriptor (const char *defstring)
       int timecvt = 0;
       unsigned sort_order = (unsigned) - 1;
 
+      // Read use_perf_event_type, type, config
+      hwcdef[idx].use_perf_event_type = (int) strtol (dsp, &dsp, 0);
+      if (*dsp++ != ':')
+	{
+	  err = HWCFUNCS_ERROR_HWCARGS;
+	  break;
+	}
+      hwcdef[idx].type = (int) strtol (dsp, &dsp, 0);
+      if (*dsp++ != ':')
+	{
+	  err = HWCFUNCS_ERROR_HWCARGS;
+	  break;
+	}
+      hwcdef[idx].config = strtol (dsp, &dsp, 0);
+      if (*dsp++ != ':')
+	{
+	  err = HWCFUNCS_ERROR_HWCARGS;
+	  break;
+	}
+
       /* name */
       name = dsp;
       dsp = strchr (dsp, ':');
       if (dsp == NULL)
 	{
 	  err = HWCFUNCS_ERROR_HWCARGS;
-	  goto ext_hw_install_end;
+	  break;
 	}
       *dsp++ = (char) 0;
 
@@ -297,7 +310,7 @@ process_data_descriptor (const char *defstring)
       if (dsp == NULL)
 	{
 	  err = HWCFUNCS_ERROR_HWCARGS;
-	  goto ext_hw_install_end;
+	  break;
 	}
       *dsp++ = (char) 0;
 
@@ -306,12 +319,12 @@ process_data_descriptor (const char *defstring)
       if (*dsp++ != ':')
 	{
 	  err = HWCFUNCS_ERROR_HWCARGS;
-	  goto ext_hw_install_end;
+	  break;
 	}
       if (reg < 0 && reg != -1)
 	{
 	  err = HWCFUNCS_ERROR_HWCARGS;
-	  goto ext_hw_install_end;
+	  break;
 	}
       if (reg >= 0)
 	hwcdef[idx].reg_num = reg;
@@ -321,21 +334,16 @@ process_data_descriptor (const char *defstring)
       if (*dsp++ != ':')
 	{
 	  err = HWCFUNCS_ERROR_HWCARGS;
-	  goto ext_hw_install_end;
+	  break;
 	}
       if (interval < 0)
 	{
 	  err = HWCFUNCS_ERROR_HWCARGS;
-	  goto ext_hw_install_end;
+	  break;
 	}
       hwcdef[idx].val = interval;
 
       /* min_time */
-      /*
-       * This is a new field.
-       * An old launcher (dbx, etc.) would not include it.
-       * Detect the presence of the field by the char 'm'.
-       */
       if (*dsp == 'm')
 	{
 	  long long tmp_ll = 0;
@@ -344,12 +352,12 @@ process_data_descriptor (const char *defstring)
 	  if (*dsp++ != ':')
 	    {
 	      err = HWCFUNCS_ERROR_HWCARGS;
-	      goto ext_hw_install_end;
+	      break;
 	    }
 	  if (tmp_ll < 0)
 	    {
 	      err = HWCFUNCS_ERROR_HWCARGS;
-	      goto ext_hw_install_end;
+	      break;
 	    }
 	  hwcdef[idx].min_time = tmp_ll;
 	}
@@ -361,7 +369,7 @@ process_data_descriptor (const char *defstring)
       if (*dsp++ != ':')
 	{
 	  err = HWCFUNCS_ERROR_HWCARGS;
-	  goto ext_hw_install_end;
+	  break;
 	}
       hwcdef[idx].sort_order = sort_order;
 
@@ -370,7 +378,7 @@ process_data_descriptor (const char *defstring)
       if (*dsp++ != ':')
 	{
 	  err = HWCFUNCS_ERROR_HWCARGS;
-	  goto ext_hw_install_end;
+	  break;
 	}
       hwcdef[idx].timecvt = timecvt;
 
@@ -379,7 +387,7 @@ process_data_descriptor (const char *defstring)
       if (*dsp != 0 && *dsp++ != ',')
 	{
 	  err = HWCFUNCS_ERROR_HWCARGS;
-	  goto ext_hw_install_end;
+	  break;
 	}
       hwcdef[idx].memop = memop;
       if (*name)
@@ -394,27 +402,11 @@ process_data_descriptor (const char *defstring)
     }
 
   if (*dsp)
-    {
-      TprintfT (DBG_LT0, "hwcfuncs: ERROR: process_data_descriptor(): "
-		"ctr string had some trailing garbage:"
-		" '%s'\n", dsp);
-      err = HWCFUNCS_ERROR_HWCARGS;
-      goto ext_hw_install_end;
-    }
-  free (ds);
-  hwcdef_cnt = idx;
-  return 0;
-
-ext_hw_install_end:
-  if (dsp && *dsp)
-    {
-      TprintfT (DBG_LT0, "hwcfuncs: ERROR: process_data_descriptor(): "
-		" syntax error just before:"
-		" '%s;\n", dsp);
-      logerr (GTXT ("Data descriptor syntax error near `%s'\n"), dsp);
-    }
+    err = HWCFUNCS_ERROR_HWCARGS;
+  if (err != 0)
+    logerr (GTXT ("Data descriptor syntax error near `%s'\n"), dsp);
   else
-    logerr (GTXT ("Data descriptor syntax error\n"));
+    hwcdef_cnt = idx;
   free (ds);
   return err;
 }

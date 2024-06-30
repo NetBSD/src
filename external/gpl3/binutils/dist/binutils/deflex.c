@@ -569,7 +569,7 @@ char *yytext;
 #define YY_NO_INPUT 1
 #line 4 "deflex.l"
 
-/* Copyright (C) 1995-2022 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2024 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
