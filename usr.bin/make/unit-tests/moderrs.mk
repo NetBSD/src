@@ -1,8 +1,7 @@
-# $NetBSD: moderrs.mk,v 1.31 2023/11/19 22:32:44 rillig Exp $
+# $NetBSD: moderrs.mk,v 1.32 2024/06/30 14:23:18 rillig Exp $
 #
 # various modifier error tests
 
-'=		'\''
 VAR=		TheVariable
 # in case we have to change it ;-)
 MOD_UNKN=	Z
@@ -26,29 +25,29 @@ all:	mod-remember-parse
 all:	mod-sysv-parse
 
 mod-unknown-direct: print-header print-footer
-	@echo 'want: Unknown modifier $'Z$''
+# expect: make: in target "mod-unknown-direct": while evaluating variable "VAR": Unknown modifier "Z"
 	@echo 'VAR:Z=before-${VAR:Z}-after'
 
 mod-unknown-indirect: print-header print-footer
-	@echo 'want: Unknown modifier $'Z$''
+# expect: make: in target "mod-unknown-indirect": while evaluating variable "VAR": Unknown modifier "Z"
 	@echo 'VAR:${MOD_UNKN}=before-${VAR:${MOD_UNKN}:inner}-after'
 
 unclosed-direct: print-header print-footer
-	@echo 'want: Unclosed expression, expecting $'}$' for modifier "S,V,v," of variable "VAR" with value "Thevariable"'
+# expect: make: Unclosed expression, expecting '}' for modifier "S,V,v," of variable "VAR" with value "Thevariable"
 	@echo VAR:S,V,v,=${VAR:S,V,v,
 
 unclosed-indirect: print-header print-footer
-	@echo 'want: Unclosed expression after indirect modifier, expecting $'}$' for variable "VAR"'
+# expect: make: Unclosed expression after indirect modifier, expecting '}' for variable "VAR"
 	@echo VAR:${MOD_TERM},=${VAR:${MOD_S}
 
 unfinished-indirect: print-header print-footer
-	@echo 'want: Unfinished modifier for VAR ($',$' missing)'
+# expect: make: Unfinished modifier for "VAR" (',' missing)
 	-@echo "VAR:${MOD_TERM}=${VAR:${MOD_TERM}}"
 
 unfinished-loop: print-header print-footer
-	@echo 'want: Unfinished modifier for UNDEF ($'@$' missing)'
+# expect: make: Unfinished modifier for "UNDEF" ('@' missing)
 	@echo ${UNDEF:U1 2 3:@var}
-	@echo 'want: Unfinished modifier for UNDEF ($'@$' missing)'
+# expect: make: Unfinished modifier for "UNDEF" ('@' missing)
 	@echo ${UNDEF:U1 2 3:@var@...}
 	@echo ${UNDEF:U1 2 3:@var@${var}@}
 
@@ -63,9 +62,9 @@ loop-close: print-header print-footer
 	@echo ${UNDEF:U1 2 3:@var@${var}}...@}
 
 words: print-header print-footer
-	@echo 'want: Unfinished modifier for UNDEF ($']$' missing)'
+# expect: make: Unfinished modifier for "UNDEF" (']' missing)
 	@echo ${UNDEF:U1 2 3:[}
-	@echo 'want: Unfinished modifier for UNDEF ($']$' missing)'
+# expect: make: Unfinished modifier for "UNDEF" (']' missing)
 	@echo ${UNDEF:U1 2 3:[#}
 
 	# out of bounds => empty
@@ -91,13 +90,13 @@ words: print-header print-footer
 	@echo 12345=${UNDEF:U1 2 3:[123451234512345123451234512345]:S,^$,ok,:S,^3$,ok,}
 
 exclam: print-header print-footer
-	@echo 'want: Unfinished modifier for VARNAME ($'!$' missing)'
+# expect: make: Unfinished modifier for "VARNAME" ('!' missing)
 	@echo ${VARNAME:!echo}
 	# When the final exclamation mark is missing, there is no
 	# fallback to the SysV substitution modifier.
 	# If there were a fallback, the output would be "exclam",
 	# and the above would have produced an "Unknown modifier '!'".
-	@echo 'want: Unfinished modifier for ! ($'!$' missing)'
+# expect: make: Unfinished modifier for "!" ('!' missing)
 	@echo ${!:L:!=exclam}
 
 mod-subst-delimiter: print-header print-footer
