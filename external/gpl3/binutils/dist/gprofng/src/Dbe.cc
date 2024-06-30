@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -271,7 +271,7 @@ dbeGetFileAttributes (const char *filename, const char *format)
       if (!strcmp (format, NTXT ("/bin/ls -dl ")))
 	{
 	  // A kind of "/bin/ls -dl " simulation
-	  struct stat64 sbuf;
+	  dbe_stat_t sbuf;
 	  sbuf.st_mode = 0;
 	  dbe_stat (filename, &sbuf);
 	  if (S_IREAD & sbuf.st_mode)

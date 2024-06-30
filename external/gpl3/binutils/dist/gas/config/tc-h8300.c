@@ -1,5 +1,5 @@
 /* tc-h8300.c -- Assemble code for the Renesas H8/300
-   Copyright (C) 1991-2022 Free Software Foundation, Inc.
+   Copyright (C) 1991-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -235,14 +235,12 @@ md_begin (void)
   unsigned int nopcodes;
   struct h8_opcode *p, *p1;
   struct h8_instruction *pi;
-  char prev_buffer[100];
   int idx = 0;
 
   if (!bfd_set_arch_mach (stdoutput, bfd_arch_h8300, default_mach))
     as_warn (_("could not set architecture and machine"));
 
   opcode_hash_control = str_htab_create ();
-  prev_buffer[0] = 0;
 
   nopcodes = sizeof (h8_opcodes) / sizeof (struct h8_opcode);
 
@@ -266,7 +264,7 @@ md_begin (void)
 	break;
       /* Strip off any . part when inserting the opcode and only enter
 	 unique codes into the hash table.  */
-      dst = buffer = XNEWVEC (char, strlen (src) + 1);
+      dst = buffer = notes_alloc (strlen (src) + 1);
       while (*src)
 	{
 	  if (*src == '.')
@@ -283,7 +281,6 @@ md_begin (void)
       if (cmplen == 0)
 	cmplen = len;
       str_hash_insert (opcode_hash_control, buffer, pi, 0);
-      strcpy (prev_buffer, buffer);
       idx++;
 
       for (p = p1; p->name; p++)

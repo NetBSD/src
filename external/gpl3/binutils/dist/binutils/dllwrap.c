@@ -1,5 +1,5 @@
 /* dllwrap.c -- wrapper for DLLTOOL and GCC to generate PE style DLLs
-   Copyright (C) 1998-2022 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
    Contributed by Mumit Khan (khan@xraylith.wisc.edu).
 
    This file is part of GNU Binutils.
@@ -186,9 +186,9 @@ look_for_prog (const char *progname, const char *prefix, int end_prefix)
 		 + strlen (EXECUTABLE_SUFFIX)
 #endif
 		 + 10);
-  strcpy (cmd, prefix);
+  memcpy (cmd, prefix, end_prefix);
 
-  sprintf (cmd + end_prefix, "%s", progname);
+  strcpy (cmd + end_prefix, progname);
 
   if (strchr (cmd, '/') != NULL)
     {
@@ -351,7 +351,7 @@ run (const char *what, char *args)
   int i;
   const char **argv;
   char *errmsg_fmt = NULL, *errmsg_arg = NULL;
-  char *temp_base = choose_temp_base ();
+  char *temp_base = make_temp_file (NULL);
   int in_quote;
   char sep;
 
@@ -818,7 +818,7 @@ main (int argc, char **argv)
 
   if (! def_file_seen)
     {
-      char *fileprefix = choose_temp_base ();
+      char *fileprefix = make_temp_file (NULL);
 
       def_file_name = (char *) xmalloc (strlen (fileprefix) + 5);
       sprintf (def_file_name, "%s.def",
@@ -1031,7 +1031,7 @@ Creating one, but that may not be what you want"));
 
   if (! base_file_name)
     {
-      char *fileprefix = choose_temp_base ();
+      char *fileprefix = make_temp_file (NULL);
       base_file_name = (char *) xmalloc (strlen (fileprefix) + 6);
       sprintf (base_file_name, "%s.base",
 	       (dontdeltemps) ? mybasename (fileprefix) : fileprefix);

@@ -1,5 +1,5 @@
 /* MIPS-specific support for 32-bit ELF
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
 
    Most of the information added by Ian Lance Taylor, Cygnus Support,
    <ian@cygnus.com>.
@@ -1790,6 +1790,10 @@ _bfd_mips_elf32_gprel16_reloc (bfd *abfd, arelent *reloc_entry,
   if (ret != bfd_reloc_ok)
     return ret;
 
+  if (!_bfd_mips_reloc_offset_in_range (abfd, input_section, reloc_entry,
+					check_shuffle))
+    return bfd_reloc_outofrange;
+
   location = (bfd_byte *) data + reloc_entry->address;
   _bfd_mips_elf_reloc_unshuffle (abfd, reloc_entry->howto->type, false,
 				 location);
@@ -1854,10 +1858,14 @@ gprel32_with_gp (bfd *abfd, asymbol *symbol, arelent *reloc_entry,
   else
     relocation = symbol->value;
 
-  relocation += symbol->section->output_section->vma;
-  relocation += symbol->section->output_offset;
+  if (symbol->section->output_section != NULL)
+    {
+      relocation += symbol->section->output_section->vma;
+      relocation += symbol->section->output_offset;
+    }
 
-  if (reloc_entry->address > bfd_get_section_limit (abfd, input_section))
+  if (!_bfd_mips_reloc_offset_in_range (abfd, input_section, reloc_entry,
+					check_inplace))
     return bfd_reloc_outofrange;
 
   /* Set val to the offset into the section or symbol.  */
@@ -1955,6 +1963,10 @@ mips16_gprel_reloc (bfd *abfd, arelent *reloc_entry, asymbol *symbol,
 			   &gp);
   if (ret != bfd_reloc_ok)
     return ret;
+
+  if (!_bfd_mips_reloc_offset_in_range (abfd, input_section, reloc_entry,
+					check_shuffle))
+    return bfd_reloc_outofrange;
 
   location = (bfd_byte *) data + reloc_entry->address;
   _bfd_mips_elf_reloc_unshuffle (abfd, reloc_entry->howto->type, false,
@@ -2123,8 +2135,8 @@ bfd_elf32_bfd_reloc_type_lookup (bfd *abfd, bfd_reloc_code_real_type code)
       /* We need to handle BFD_RELOC_CTOR specially.
 	 Select the right relocation (R_MIPS_32 or R_MIPS_64) based on the
 	 size of addresses of the ABI.  */
-      if ((elf_elfheader (abfd)->e_flags & (E_MIPS_ABI_O64
-					    | E_MIPS_ABI_EABI64)) != 0)
+      if ((elf_elfheader (abfd)->e_flags & (EF_MIPS_ABI_O64
+					    | EF_MIPS_ABI_EABI64)) != 0)
 	return &elf_mips_ctor64_howto;
       else
 	return &howto_table[(int) R_MIPS_32];
@@ -2573,6 +2585,8 @@ static const struct ecoff_debug_swap mips_elf32_ecoff_debug_swap = {
 					_bfd_mips_elf_is_target_special_symbol
 #define bfd_elf32_get_synthetic_symtab	_bfd_mips_elf_get_synthetic_symtab
 #define bfd_elf32_find_nearest_line	_bfd_mips_elf_find_nearest_line
+#define bfd_elf32_find_nearest_line_with_alt \
+					_bfd_mips_elf_find_nearest_line_with_alt
 #define bfd_elf32_find_inliner_info	_bfd_mips_elf_find_inliner_info
 #define bfd_elf32_new_section_hook	_bfd_mips_elf_new_section_hook
 #define bfd_elf32_set_section_contents	_bfd_mips_elf_set_section_contents
@@ -2588,6 +2602,7 @@ static const struct ecoff_debug_swap mips_elf32_ecoff_debug_swap = {
 					_bfd_mips_elf_print_private_bfd_data
 #define bfd_elf32_bfd_relax_section	_bfd_mips_elf_relax_section
 #define bfd_elf32_mkobject		_bfd_mips_elf_mkobject
+#define bfd_elf32_bfd_free_cached_info	_bfd_mips_elf_free_cached_info
 
 /* Support for SGI-ish mips targets.  */
 #define TARGET_LITTLE_SYM		mips_elf32_le_vec

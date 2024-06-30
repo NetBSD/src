@@ -1,5 +1,5 @@
 /* tc-arc.c -- Assembler for the ARC
-   Copyright (C) 1994-2022 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
 
    Contributor: Claudiu Zissulescu <claziss@synopsys.com>
 
@@ -49,7 +49,7 @@
 			  && (SUB_OPCODE (x) == 0x28))
 
 #ifndef TARGET_WITH_CPU
-#define TARGET_WITH_CPU "arc700"
+#define TARGET_WITH_CPU "hs38_linux"
 #endif /* TARGET_WITH_CPU */
 
 #define ARC_GET_FLAG(s)   	(*symbol_get_tc (s))
@@ -774,6 +774,15 @@ arc_insert_opcode (const struct arc_opcode *opcode)
   entry->count++;
 }
 
+static void
+arc_opcode_free (void *elt)
+{
+  string_tuple_t *tuple = (string_tuple_t *) elt;
+  struct arc_opcode_hash_entry *entry = (void *) tuple->value;
+  free (entry->opcode);
+  free (entry);
+  free (tuple);
+}
 
 /* Like md_number_to_chars but for middle-endian values.  The 4-byte limm
    value, is encoded as 'middle-endian' for a little-endian target.  This
@@ -1303,6 +1312,8 @@ tokenize_arguments (char *str,
 	     relocation type as well.  */
 	  if (*input_line_pointer == '@')
 	    parse_reloc_symbol (tok);
+	  else
+	    resolve_register (tok);
 
 	  debug_exp (tok);
 
@@ -2508,7 +2519,7 @@ md_assemble (char *str)
   struct arc_flags flags[MAX_INSN_FLGS];
 
   /* Split off the opcode.  */
-  opnamelen = strspn (str, "abcdefghijklmnopqrstuvwxyz_0123468");
+  opnamelen = strspn (str, "abcdefghijklmnopqrstuvwxyz_0123456789");
   opname = xmemdup0 (str, opnamelen);
 
   /* Signalize we are assembling the instructions.  */
@@ -2605,7 +2616,8 @@ md_begin (void)
   bfd_set_private_flags (stdoutput, selected_cpu.eflags);
 
   /* Set up a hash table for the instructions.  */
-  arc_opcode_hash = str_htab_create ();
+  arc_opcode_hash = htab_create_alloc (16, hash_string_tuple, eq_string_tuple,
+				       arc_opcode_free, xcalloc, free);
 
   /* Initialize the hash table with the insns.  */
   do
@@ -2710,6 +2722,15 @@ md_begin (void)
   declare_addrtype ("cxd", ARC_NPS400_ADDRTYPE_CXD);
 }
 
+void
+arc_md_end (void)
+{
+  htab_delete (arc_opcode_hash);
+  htab_delete (arc_reg_hash);
+  htab_delete (arc_aux_hash);
+  htab_delete (arc_addrtype_hash);
+}
+
 /* Write a value out to the object file, using the appropriate
    endianness.  */
 
@@ -2796,11 +2817,11 @@ md_pcrel_from_section (fixS *fixP,
 	}
     }
 
-  pr_debug ("pcrel from %"BFD_VMA_FMT"x + %lx = %"BFD_VMA_FMT"x, "
-	    "symbol: %s (%"BFD_VMA_FMT"x)\n",
-	    fixP->fx_frag->fr_address, fixP->fx_where, base,
+  pr_debug ("pcrel from %" PRIx64 " + %lx = %" PRIx64 ", "
+	    "symbol: %s (%" PRIx64 ")\n",
+	    (uint64_t) fixP->fx_frag->fr_address, fixP->fx_where, (uint64_t) base,
 	    fixP->fx_addsy ? S_GET_NAME (fixP->fx_addsy) : "(null)",
-	    fixP->fx_addsy ? S_GET_VALUE (fixP->fx_addsy) : 0);
+	    fixP->fx_addsy ? (uint64_t) S_GET_VALUE (fixP->fx_addsy) : (uint64_t) 0);
 
   return base;
 }
@@ -3292,9 +3313,9 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
   table_entry = TC_GENERIC_RELAX_TABLE + fragP->fr_subtype;
 
   pr_debug ("%s:%d: md_convert_frag, subtype: %d, fix: %d, "
-	    "var: %"BFD_VMA_FMT"d\n",
+	    "var: %" PRId64 "\n",
 	    fragP->fr_file, fragP->fr_line,
-	    fragP->fr_subtype, fix, fragP->fr_var);
+	    fragP->fr_subtype, fix, (int64_t) fragP->fr_var);
 
   if (fragP->fr_subtype <= 0
       && fragP->fr_subtype >= arc_num_relax_opcodes)
@@ -4920,7 +4941,9 @@ arc_set_attribute_int (int tag, int value)
   if (tag < 1
       || tag >= NUM_KNOWN_OBJ_ATTRIBUTES
       || !attributes_set_explicitly[tag])
-    bfd_elf_add_proc_attr_int (stdoutput, tag, value);
+    if (!bfd_elf_add_proc_attr_int (stdoutput, tag, value))
+      as_fatal (_("error adding attribute: %s"),
+		bfd_errmsg (bfd_get_error ()));
 }
 
 static void
@@ -4929,7 +4952,9 @@ arc_set_attribute_string (int tag, const char *value)
   if (tag < 1
       || tag >= NUM_KNOWN_OBJ_ATTRIBUTES
       || !attributes_set_explicitly[tag])
-    bfd_elf_add_proc_attr_string (stdoutput, tag, value);
+    if (!bfd_elf_add_proc_attr_string (stdoutput, tag, value))
+      as_fatal (_("error adding attribute: %s"),
+		bfd_errmsg (bfd_get_error ()));
 }
 
 /* Allocate and concatenate two strings.  s1 can be NULL but not
@@ -4999,7 +5024,9 @@ arc_set_public_attributes (void)
       && (base != bfd_elf_get_obj_attr_int (stdoutput, OBJ_ATTR_PROC,
 					    Tag_ARC_CPU_base)))
     as_warn (_("Overwrite explicitly set Tag_ARC_CPU_base"));
-  bfd_elf_add_proc_attr_int (stdoutput, Tag_ARC_CPU_base, base);
+  if (!bfd_elf_add_proc_attr_int (stdoutput, Tag_ARC_CPU_base, base))
+    as_fatal (_("error adding attribute: %s"),
+	      bfd_errmsg (bfd_get_error ()));
 
   /* Tag_ARC_ABI_osver.  */
   if (attributes_set_explicitly[Tag_ARC_ABI_osver])
@@ -5048,14 +5075,16 @@ arc_set_public_attributes (void)
     {
       as_warn (_("Overwrite explicitly set Tag_ARC_ABI_rf16 to full "
 		 "register file"));
-      bfd_elf_add_proc_attr_int (stdoutput, Tag_ARC_ABI_rf16, 0);
+      if (!bfd_elf_add_proc_attr_int (stdoutput, Tag_ARC_ABI_rf16, 0))
+	as_fatal (_("error adding attribute: %s"),
+		  bfd_errmsg (bfd_get_error ()));
     }
 }
 
 /* Add the default contents for the .ARC.attributes section.  */
 
 void
-arc_md_end (void)
+arc_md_finish (void)
 {
   arc_set_public_attributes ();
 

@@ -72,16 +72,17 @@ extern int yydebug;
     PRIVATEU = 273,                /* PRIVATEU  */
     PRIVATEL = 274,                /* PRIVATEL  */
     ALIGNCOMM = 275,               /* ALIGNCOMM  */
-    READ = 276,                    /* READ  */
-    WRITE = 277,                   /* WRITE  */
-    EXECUTE = 278,                 /* EXECUTE  */
-    SHARED_K = 279,                /* SHARED_K  */
-    NONAMEU = 280,                 /* NONAMEU  */
-    NONAMEL = 281,                 /* NONAMEL  */
-    DIRECTIVE = 282,               /* DIRECTIVE  */
-    EQUAL = 283,                   /* EQUAL  */
-    ID = 284,                      /* ID  */
-    DIGITS = 285                   /* DIGITS  */
+    EXCLUDE_SYMBOLS = 276,         /* EXCLUDE_SYMBOLS  */
+    READ = 277,                    /* READ  */
+    WRITE = 278,                   /* WRITE  */
+    EXECUTE = 279,                 /* EXECUTE  */
+    SHARED_K = 280,                /* SHARED_K  */
+    NONAMEU = 281,                 /* NONAMEU  */
+    NONAMEL = 282,                 /* NONAMEL  */
+    DIRECTIVE = 283,               /* DIRECTIVE  */
+    EQUAL = 284,                   /* EQUAL  */
+    ID = 285,                      /* ID  */
+    DIGITS = 286                   /* DIGITS  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -108,22 +109,23 @@ extern int yydebug;
 #define PRIVATEU 273
 #define PRIVATEL 274
 #define ALIGNCOMM 275
-#define READ 276
-#define WRITE 277
-#define EXECUTE 278
-#define SHARED_K 279
-#define NONAMEU 280
-#define NONAMEL 281
-#define DIRECTIVE 282
-#define EQUAL 283
-#define ID 284
-#define DIGITS 285
+#define EXCLUDE_SYMBOLS 276
+#define READ 277
+#define WRITE 278
+#define EXECUTE 279
+#define SHARED_K 280
+#define NONAMEU 281
+#define NONAMEL 282
+#define DIRECTIVE 283
+#define EQUAL 284
+#define ID 285
+#define DIGITS 286
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 114 "deffilep.y"
+#line 117 "deffilep.y"
 
   char *id;
   const char *id_const;
@@ -131,7 +133,7 @@ union YYSTYPE
   bfd_vma vma;
   char *digits;
 
-#line 135 "deffilep.h"
+#line 137 "deffilep.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

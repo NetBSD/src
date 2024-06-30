@@ -1,5 +1,5 @@
 /* subsegs.c - subsegments -
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -50,8 +50,8 @@ subsegs_end (struct obstack **obs)
   for (; *obs; obs++)
     _obstack_free (*obs, NULL);
   _obstack_free (&frchains, NULL);
-  _obstack_free (&cond_obstack, NULL);
-  _obstack_free (&notes, NULL);
+  bfd_set_section_userdata (bfd_abs_section_ptr, NULL);
+  bfd_set_section_userdata (bfd_und_section_ptr, NULL);
 }
 
 static void
@@ -61,7 +61,6 @@ alloc_seginfo (segT seg)
 
   seginfo = obstack_alloc (&notes, sizeof (*seginfo));
   memset (seginfo, 0, sizeof (*seginfo));
-  seginfo->bfd_section = seg;
   bfd_set_section_userdata (seg, seginfo);
 }
 /*
@@ -131,6 +130,7 @@ subseg_set_rest (segT seg, subsegT subseg)
       newP->frch_frag_now = frag_alloc (&newP->frch_obstack);
       newP->frch_frag_now->fr_type = rs_fill;
       newP->frch_cfi_data = NULL;
+      newP->frch_ginsn_data = NULL;
 
       newP->frch_root = newP->frch_last = newP->frch_frag_now;
 

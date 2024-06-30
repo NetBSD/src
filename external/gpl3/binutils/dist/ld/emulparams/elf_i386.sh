@@ -39,4 +39,12 @@ case "$target" in
 	;;
     esac
     ;;
+  x86_64*-freebsd*)
+    case "$EMULATION_NAME" in
+      *i386*)
+	LIBPATH_SUFFIX=32
+	LIBPATH_SUFFIX_SKIP=64
+	;;
+    esac
+    ;;
 esac

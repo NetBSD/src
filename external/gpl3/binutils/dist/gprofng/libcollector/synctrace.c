@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -26,25 +26,18 @@
 #include <dlfcn.h>
 #include <unistd.h>
 #include <semaphore.h>		/* sem_wait() */
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/param.h>
 #include <pthread.h>
 
 #include "gp-defs.h"
-#include "collector_module.h"
+#include "collector.h"
 #include "gp-experiment.h"
 #include "data_pckts.h"
-#include "i18n.h"
 #include "tsd.h"
 #include "cc_libcollector.h"
-
-/* TprintfT(<level>,...) definitions.  Adjust per module as needed */
-#define DBG_LT0 0 // for high-level configuration, unexpected errors/warnings
-#define DBG_LTT 0 // for interposition on GLIBC functions
-#define DBG_LT1 1 // for configuration details, warnings
-#define DBG_LT2 2
-#define DBG_LT3 3
 
 /* define the packet that will be written out */
 typedef struct Sync_packet
@@ -89,18 +82,7 @@ static int init_thread_intf_finished = 0;
 #define RECHCK_JREENTRANCE(x)   (!sync_java || !sync_mode || ((x) = collector_interface->getKey( sync_key )) == NULL || (*(x) == 0))
 #define PUSH_REENTRANCE(x)      ((*(x))++)
 #define POP_REENTRANCE(x)       ((*(x))--)
-
-#define CALL_REAL(x)            (*(int(*)())__real_##x)
-#define NULL_PTR(x)             ( __real_##x == NULL )
 #define gethrtime	collector_interface->getHiResTime
-
-#ifdef DEBUG
-#define Tprintf(...)   if (collector_interface) collector_interface->writeDebugInfo( 0, __VA_ARGS__ )
-#define TprintfT(...)  if (collector_interface) collector_interface->writeDebugInfo( 1, __VA_ARGS__ )
-#else
-#define Tprintf(...)
-#define TprintfT(...)
-#endif
 
 /*
  * In most cases, the functions which require interposition are implemented as
@@ -110,32 +92,51 @@ static int init_thread_intf_finished = 0;
  * is distinct from the internal version (used by system libraries), i.e.,
  * cond_wait() is an alias for _cond_wait_cancel() rather than _cond_wait().
  */
-static void *__real_strtol = NULL;
-static void *__real_fprintf = NULL;
-static void *__real___collector_jprofile_enable_synctrace = NULL;
-static void *__real_pthread_mutex_lock = NULL;
-static void *__real_pthread_mutex_unlock = NULL; /* not interposed, used in calibrate */
-static void *__real_pthread_cond_wait = NULL;
-static void *__real_pthread_cond_timedwait = NULL;
-static void *__real_pthread_join = NULL;
-static void *__real_sem_wait = NULL;
-static void *__real_pthread_cond_wait_2_3_2 = NULL;
-static void *__real_pthread_cond_timedwait_2_3_2 = NULL;
+static long int (*__real_strtol)(const char *nptr, char **endptr, int base) = NULL;
+static int (*__real_fprintf) (FILE *stream, const char *format, ...) = NULL;
+static void (*__real___collector_jprofile_enable_synctrace) (void) = NULL;
+static int (*__real_pthread_mutex_lock) (pthread_mutex_t *mutex) = NULL;
+static int (*__real_pthread_mutex_lock_2_17) (pthread_mutex_t *mutex) = NULL;
+static int (*__real_pthread_mutex_lock_2_2_5) (pthread_mutex_t *mutex) = NULL;
+static int (*__real_pthread_mutex_lock_2_0) (pthread_mutex_t *mutex) = NULL;
+static int (*__real_pthread_mutex_unlock) (pthread_mutex_t *mutex) = NULL;
+static int (*__real_pthread_cond_wait) (pthread_cond_t *restrict cond,
+				pthread_mutex_t *restrict mutex) = NULL;
+static int (*__real_pthread_cond_timedwait) (pthread_cond_t *restrict cond,
+			pthread_mutex_t *restrict mutex,
+			const struct timespec *restrict abstime) = NULL;
+static int (*__real_pthread_join) (pthread_t thread, void **retval) = NULL;
+static int (*__real_pthread_join_2_34) (pthread_t thread, void **retval) = NULL;
+static int (*__real_pthread_join_2_17) (pthread_t thread, void **retval) = NULL;
+static int (*__real_pthread_join_2_2_5) (pthread_t thread, void **retval) = NULL;
+static int (*__real_pthread_join_2_0) (pthread_t thread, void **retval) = NULL;
+static int (*__real_sem_wait) (sem_t *sem) = NULL;
+static int (*__real_sem_wait_2_34) (sem_t *sem) = NULL;
+static int (*__real_sem_wait_2_17) (sem_t *sem) = NULL;
+static int (*__real_sem_wait_2_2_5) (sem_t *sem) = NULL;
+static int (*__real_sem_wait_2_1) (sem_t *sem) = NULL;
+static int (*__real_sem_wait_2_0) (sem_t *sem) = NULL;
+static int (*__real_pthread_cond_wait_2_17) (pthread_cond_t *restrict cond,
+				pthread_mutex_t *restrict mutex) = NULL;
+static int (*__real_pthread_cond_wait_2_3_2) (pthread_cond_t *restrict cond,
+				pthread_mutex_t *restrict mutex) = NULL;
+static int (*__real_pthread_cond_wait_2_2_5) (pthread_cond_t *restrict cond,
+				pthread_mutex_t *restrict mutex) = NULL;
+static int (*__real_pthread_cond_wait_2_0) (pthread_cond_t *restrict cond,
+				pthread_mutex_t *restrict mutex) = NULL;
+static int (*__real_pthread_cond_timedwait_2_17) (pthread_cond_t *restrict cond,
+			pthread_mutex_t *restrict mutex,
+			const struct timespec *restrict abstime) = NULL;
+static int (*__real_pthread_cond_timedwait_2_3_2) (pthread_cond_t *restrict cond,
+			pthread_mutex_t *restrict mutex,
+			const struct timespec *restrict abstime) = NULL;
+static int (*__real_pthread_cond_timedwait_2_2_5) (pthread_cond_t *restrict cond,
+			pthread_mutex_t *restrict mutex,
+			const struct timespec *restrict abstime) = NULL;
+static int (*__real_pthread_cond_timedwait_2_0) (pthread_cond_t *restrict cond,
+			pthread_mutex_t *restrict mutex,
+			const struct timespec *restrict abstime) = NULL;
 
-#if WSIZE(32)
-static void *__real_sem_wait_2_1 = NULL;
-static void *__real_sem_wait_2_0 = NULL;
-static void *__real_pthread_cond_wait_2_0 = NULL;
-static void *__real_pthread_cond_timedwait_2_0 = NULL;
-#elif WSIZE(64)
-#if ARCH(Intel)
-static void *__real_pthread_cond_wait_2_2_5 = NULL;
-static void *__real_pthread_cond_timedwait_2_2_5 = NULL;
-#elif ARCH(SPARC)
-static void *__real_pthread_cond_wait_2_2 = NULL;
-static void *__real_pthread_cond_timedwait_2_2 = NULL;
-#endif  /* ARCH() */
-#endif /* WSIZE() */
 
 static void
 collector_memset (void *s, int c, size_t n)
@@ -252,22 +253,28 @@ open_experiment (const char *exp)
   collector_interface->writeLog ("  <profdata fname=\"%s\"/>\n",
 				 module_interface.description);
   /* Record Sync_packet description */
-  Sync_packet *pp = NULL;
   collector_interface->writeLog ("  <profpckt kind=\"%d\" uname=\"Synchronization tracing data\">\n", SYNC_PCKT);
   collector_interface->writeLog ("    <field name=\"LWPID\" uname=\"Lightweight process id\" offset=\"%d\" type=\"%s\"/>\n",
-				 &pp->comm.lwp_id, sizeof (pp->comm.lwp_id) == 4 ? "INT32" : "INT64");
+		(int) offsetof (Sync_packet, comm.lwp_id),
+		fld_sizeof (Sync_packet, comm.lwp_id) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"THRID\" uname=\"Thread number\" offset=\"%d\" type=\"%s\"/>\n",
-				 &pp->comm.thr_id, sizeof (pp->comm.thr_id) == 4 ? "INT32" : "INT64");
+		(int) offsetof (Sync_packet, comm.thr_id),
+		fld_sizeof (Sync_packet, comm.thr_id) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"CPUID\" uname=\"CPU id\" offset=\"%d\" type=\"%s\"/>\n",
-				 &pp->comm.cpu_id, sizeof (pp->comm.cpu_id) == 4 ? "INT32" : "INT64");
+		(int) offsetof (Sync_packet, comm.cpu_id),
+		fld_sizeof (Sync_packet, comm.cpu_id) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"TSTAMP\" uname=\"High resolution timestamp\" offset=\"%d\" type=\"%s\"/>\n",
-				 &pp->comm.tstamp, sizeof (pp->comm.tstamp) == 4 ? "INT32" : "INT64");
+		(int) offsetof (Sync_packet, comm.tstamp),
+		fld_sizeof (Sync_packet, comm.tstamp) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"FRINFO\" offset=\"%d\" type=\"%s\"/>\n",
-				 &pp->comm.frinfo, sizeof (pp->comm.frinfo) == 4 ? "INT32" : "INT64");
+		(int) offsetof (Sync_packet, comm.frinfo),
+		fld_sizeof (Sync_packet, comm.frinfo) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"SRQST\" uname=\"Synchronization start time\" offset=\"%d\" type=\"%s\"/>\n",
-				 &pp->requested, sizeof (pp->requested) == 4 ? "INT32" : "INT64");
+		(int) offsetof (Sync_packet, requested),
+		fld_sizeof (Sync_packet, requested) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"SOBJ\" uname=\"Synchronization object address\" offset=\"%d\" type=\"%s\"/>\n",
-				 &pp->objp, sizeof (pp->objp) == 4 ? "INT32" : "INT64");
+		(int) offsetof (Sync_packet, objp),
+		fld_sizeof (Sync_packet, objp) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("  </profpckt>\n");
   collector_interface->writeLog ("</profile>\n");
 
@@ -358,6 +365,23 @@ sync_calibrate ()
 }
 
 static int
+init_pthread_mutex_lock (void *dlflag)
+{
+  __real_pthread_mutex_lock_2_17 = dlvsym (dlflag, "pthread_mutex_lock", "GLIBC_2.17");
+  __real_pthread_mutex_lock_2_2_5 = dlvsym (dlflag, "pthread_mutex_lock", "GLIBC_2.2.5");
+  __real_pthread_mutex_lock_2_0 = dlvsym (dlflag, "pthread_mutex_lock", "GLIBC_2.0");
+  if (__real_pthread_mutex_lock_2_17)
+    __real_pthread_mutex_lock = __real_pthread_mutex_lock_2_17;
+  else if (__real_pthread_mutex_lock_2_2_5)
+    __real_pthread_mutex_lock = __real_pthread_mutex_lock_2_2_5;
+  else if (__real_pthread_mutex_lock_2_0)
+    __real_pthread_mutex_lock = __real_pthread_mutex_lock_2_0;
+  else
+    __real_pthread_mutex_lock = dlsym (dlflag, "pthread_mutex_lock");
+  return __real_pthread_mutex_lock ? 1 : 0;
+}
+
+static int
 init_thread_intf ()
 {
   void *dlflag = RTLD_NEXT;
@@ -393,280 +417,118 @@ init_thread_intf ()
       sync_java = 0;
     }
 
-#if WSIZE(32)
-  /* ########################################## begin WSIZE(32) */
-  /* IMPORTANT!!  The GLIBC_* versions below must match those in the er_sync.*.mapfile ! */
   dlflag = RTLD_NEXT;
-  ptr = dlvsym (dlflag, "pthread_mutex_lock", "GLIBC_2.0");
-  if (ptr == NULL)
+  if (init_pthread_mutex_lock (dlflag) == 0)
     {
       /* We are probably dlopened after libthread/libc,
        * try to search in the previously loaded objects
        */
       dlflag = RTLD_DEFAULT;
-      ptr = dlvsym (dlflag, "pthread_mutex_lock", "GLIBC_2.0");
-      if (ptr != NULL)
-	{
-	  __real_pthread_mutex_lock = ptr;
-	  Tprintf (0, "synctrace: WARNING: init_thread_intf() using RTLD_DEFAULT for OS sync routines\n");
-	}
-      else
+      if (init_pthread_mutex_lock (dlflag) == 0)
 	{
 	  CALL_REAL (fprintf)(stderr, "synctrace_init COL_ERROR_SYNCINIT pthread_mutex_lock\n");
 	  err = COL_ERROR_SYNCINIT;
 	}
     }
-  else
-    __real_pthread_mutex_lock = ptr;
 
-  ptr = dlvsym (dlflag, "pthread_mutex_unlock", "GLIBC_2.0");
-  if (ptr)
-    __real_pthread_mutex_unlock = (void *) ptr;
+  if ((ptr = dlvsym (dlflag, "pthread_mutex_unlock", "GLIBC_2.17")) != NULL)
+    __real_pthread_mutex_unlock = ptr;
+  else if ((ptr = dlvsym (dlflag, "pthread_mutex_unlock", "GLIBC_2.2.5")) != NULL)
+    __real_pthread_mutex_unlock = ptr;
+  else if ((ptr = dlvsym (dlflag, "pthread_mutex_unlock", "GLIBC_2.0")) != NULL)
+    __real_pthread_mutex_unlock = ptr;
   else
+    __real_pthread_mutex_unlock = dlsym (dlflag, "pthread_mutex_unlock");
+  if (__real_pthread_mutex_unlock == NULL)
     {
       CALL_REAL (fprintf)(stderr, "synctrace_init COL_ERROR_SYNCINIT pthread_mutex_unlock\n");
       err = COL_ERROR_SYNCINIT;
     }
-  ptr = dlvsym (dlflag, "pthread_cond_wait", "GLIBC_2.3.2");
-  if (ptr)
-    __real_pthread_cond_wait = (void *) ptr;
+
+  __real_pthread_cond_wait_2_17 = dlvsym (dlflag, "pthread_cond_wait", "GLIBC_2.17");
+  __real_pthread_cond_wait_2_3_2 = dlvsym (dlflag, "pthread_cond_wait", "GLIBC_2.3.2");
+  __real_pthread_cond_wait_2_2_5 = dlvsym (dlflag, "pthread_cond_wait", "GLIBC_2.2.5");
+  __real_pthread_cond_wait_2_0 = dlvsym (dlflag, "pthread_cond_wait", "GLIBC_2.0");
+  if (__real_pthread_cond_wait_2_17)
+    __real_pthread_cond_wait = __real_pthread_cond_wait_2_17;
+  else if (__real_pthread_cond_wait_2_3_2)
+    __real_pthread_cond_wait = __real_pthread_cond_wait_2_3_2;
+  else if (__real_pthread_cond_wait_2_2_5)
+    __real_pthread_cond_wait = __real_pthread_cond_wait_2_2_5;
+  else if (__real_pthread_cond_wait_2_0)
+    __real_pthread_cond_wait = __real_pthread_cond_wait_2_0;
   else
+    __real_pthread_cond_wait = dlsym (dlflag, "pthread_cond_wait");
+  if (__real_pthread_cond_wait == NULL)
     {
       CALL_REAL (fprintf)(stderr, "synctrace_init COL_ERROR_SYNCINIT pthread_cond_wait\n");
       err = COL_ERROR_SYNCINIT;
     }
-  ptr = dlvsym (dlflag, "pthread_cond_timedwait", "GLIBC_2.3.2");
-  if (ptr)
-    __real_pthread_cond_timedwait = (void *) ptr;
+
+  __real_pthread_cond_timedwait_2_17 = dlvsym (dlflag, "pthread_cond_timedwait", "GLIBC_2.17");
+  __real_pthread_cond_timedwait_2_3_2 = dlvsym (dlflag, "pthread_cond_timedwait", "GLIBC_2.3.2");
+  __real_pthread_cond_timedwait_2_2_5 = dlvsym (dlflag, "pthread_cond_timedwait", "GLIBC_2.2.5");
+  __real_pthread_cond_timedwait_2_0 = dlvsym (dlflag, "pthread_cond_timedwait", "GLIBC_2.0");
+  if (__real_pthread_cond_timedwait_2_17)
+    __real_pthread_cond_timedwait = __real_pthread_cond_timedwait_2_17;
+  else if (__real_pthread_cond_timedwait_2_3_2)
+    __real_pthread_cond_timedwait = __real_pthread_cond_timedwait_2_3_2;
+  else if (__real_pthread_cond_timedwait_2_2_5)
+    __real_pthread_cond_timedwait = __real_pthread_cond_timedwait_2_2_5;
+  else if (__real_pthread_cond_timedwait_2_0)
+    __real_pthread_cond_timedwait = __real_pthread_cond_timedwait_2_0;
   else
+    __real_pthread_cond_timedwait = dlsym (dlflag, "pthread_cond_timedwait");
+  if (__real_pthread_cond_timedwait == NULL)
     {
       CALL_REAL (fprintf)(stderr, "synctrace_init COL_ERROR_SYNCINIT pthread_cond_timedwait\n");
       err = COL_ERROR_SYNCINIT;
     }
-  ptr = dlvsym (dlflag, "pthread_join", "GLIBC_2.0");
-  if (ptr)
-    __real_pthread_join = (void *) ptr;
+
+  __real_pthread_join_2_34 = dlvsym (dlflag, "pthread_join", "GLIBC_2.34");
+  __real_pthread_join_2_17 = dlvsym (dlflag, "pthread_join", "GLIBC_2.17");
+  __real_pthread_join_2_2_5 = dlvsym (dlflag, "pthread_join", "GLIBC_2.2.5");
+  __real_pthread_join_2_0 = dlvsym (dlflag, "pthread_join", "GLIBC_2.0");
+  if (__real_pthread_join_2_34)
+    __real_pthread_join = __real_pthread_join_2_34;
+  else if (__real_pthread_join_2_17)
+    __real_pthread_join = __real_pthread_join_2_17;
+  else if (__real_pthread_join_2_2_5)
+    __real_pthread_join = __real_pthread_join_2_2_5;
+  else if (__real_pthread_join_2_0)
+    __real_pthread_join = __real_pthread_join_2_0;
   else
+    __real_pthread_join = dlsym (dlflag, "pthread_join");
+  if (__real_pthread_join == NULL)
     {
       CALL_REAL (fprintf)(stderr, "synctrace_init COL_ERROR_SYNCINIT pthread_join\n");
       err = COL_ERROR_SYNCINIT;
     }
-  ptr = dlvsym (dlflag, "sem_wait", "GLIBC_2.1");
-  if (ptr)
-    __real_sem_wait = (void *) ptr;
+
+  __real_sem_wait_2_34 = dlvsym (dlflag, "sem_wait", "GLIBC_2.34");
+  __real_sem_wait_2_17 = dlvsym (dlflag, "sem_wait", "GLIBC_2.17");
+  __real_sem_wait_2_2_5 = dlvsym (dlflag, "sem_wait", "GLIBC_2.2.5");
+  __real_sem_wait_2_1 = dlvsym (dlflag, "sem_wait", "GLIBC_2.1");
+  __real_sem_wait_2_0 = dlvsym (dlflag, "sem_wait", "GLIBC_2.0");
+  if (__real_sem_wait_2_34)
+    __real_sem_wait = __real_sem_wait_2_34;
+  else if (__real_sem_wait_2_17)
+    __real_sem_wait = __real_sem_wait_2_17;
+  else if (__real_sem_wait_2_2_5)
+    __real_sem_wait = __real_sem_wait_2_2_5;
+  else if (__real_sem_wait_2_1)
+    __real_sem_wait = __real_sem_wait_2_1;
+  else if (__real_sem_wait_2_0)
+    __real_sem_wait = __real_sem_wait_2_0;
   else
+    __real_sem_wait = dlsym (dlflag, "sem_wait");
+  if (__real_sem_wait == NULL)
     {
       CALL_REAL (fprintf)(stderr, "synctrace_init COL_ERROR_SYNCINIT sem_wait\n");
       err = COL_ERROR_SYNCINIT;
     }
 
-#if ARCH(Intel)
-  /* ############## Intel specific additional pointers for 32-bits */
-  ptr = __real_sem_wait_2_1 = __real_sem_wait;
-  ptr = dlvsym (dlflag, "sem_wait", "GLIBC_2.0");
-  if (ptr)
-    __real_sem_wait_2_0 = (void *) ptr;
-  else
-    {
-      CALL_REAL (fprintf)(stderr, "synctrace_init COL_ERROR_SYNCINIT sem_wait_2_0\n");
-      err = COL_ERROR_SYNCINIT;
-    }
-  ptr = dlvsym (dlflag, "pthread_cond_wait", "GLIBC_2.0");
-  if (ptr)
-    __real_pthread_cond_wait_2_0 = (void *) ptr;
-  else
-    {
-      CALL_REAL (fprintf)(stderr, "synctrace_init COL_ERROR_SYNCINIT pthread_cond_wait_2_0\n");
-      err = COL_ERROR_SYNCINIT;
-    }
-  ptr = dlvsym (dlflag, "pthread_cond_timedwait", "GLIBC_2.0");
-  if (ptr)
-    __real_pthread_cond_timedwait_2_0 = (void *) ptr;
-  else
-    {
-      CALL_REAL (fprintf)(stderr, "synctrace_init COL_ERROR_SYNCINIT __real_pthread_cond_timedwait_2_0\n");
-      err = COL_ERROR_SYNCINIT;
-    }
-#endif /* ARCH(Intel) */
 
-#else /* WSIZE(64) */
-  /* # most versions are different between platforms	*/
-  /* # the few that are common are set after the ARCH ifdef */
-#if ARCH(Aarch64)
-  dlflag = RTLD_NEXT;
-#define GLIBC_N    "GLIBC_2.17"
-  __real_pthread_mutex_lock = dlvsym(dlflag, "pthread_mutex_lock", GLIBC_N);
-  __real_pthread_mutex_unlock = dlvsym(dlflag, "pthread_mutex_unlock", GLIBC_N);
-  __real_pthread_cond_wait = dlvsym(dlflag, "pthread_cond_wait", GLIBC_N);
-  __real_pthread_cond_timedwait = dlvsym(dlflag, "pthread_cond_timedwait", GLIBC_N);
-  __real_pthread_join = dlvsym(dlflag, "pthread_join", GLIBC_N);
-  __real_sem_wait = dlvsym(dlflag, "sem_wait", GLIBC_N);
-
-#elif ARCH(Intel)
-  dlflag = RTLD_NEXT;
-  ptr = dlvsym (dlflag, "pthread_mutex_lock", "GLIBC_2.2.5");
-  if (ptr == NULL)
-    {
-      /* We are probably dlopened after libthread/libc,
-       * try to search in the previously loaded objects
-       */
-      dlflag = RTLD_DEFAULT;
-      ptr = dlvsym (dlflag, "pthread_mutex_lock", "GLIBC_2.2.5");
-      if (ptr != NULL)
-	{
-	  __real_pthread_mutex_lock = ptr;
-	  Tprintf (0, "synctrace: WARNING: init_thread_intf() using RTLD_DEFAULT for Solaris sync routines\n");
-	}
-      else
-	{
-	  CALL_REAL (fprintf)(stderr, "synctrace_init COL_ERROR_SYNCINIT pthread_mutex_lock\n");
-	  err = COL_ERROR_SYNCINIT;
-	}
-    }
-  else
-    __real_pthread_mutex_lock = ptr;
-  ptr = dlvsym (dlflag, "pthread_mutex_unlock", "GLIBC_2.2.5");
-  if (ptr)
-    __real_pthread_mutex_unlock = (void *) ptr;
-  else
-    {
-      CALL_REAL (fprintf)(stderr, "synctrace_init COL_ERROR_SYNCINIT pthread_mutex_unlock\n");
-      err = COL_ERROR_SYNCINIT;
-    }
-  ptr = dlvsym (dlflag, "pthread_cond_wait", "GLIBC_2.3.2");
-  if (ptr)
-    __real_pthread_cond_wait = (void *) ptr;
-  else
-    {
-      CALL_REAL (fprintf)(stderr, "synctrace_init COL_ERROR_SYNCINIT pthread_cond_wait\n");
-      err = COL_ERROR_SYNCINIT;
-    }
-  ptr = dlvsym (dlflag, "pthread_cond_timedwait", "GLIBC_2.3.2");
-  if (ptr)
-    __real_pthread_cond_timedwait = (void *) ptr;
-  else
-    {
-      CALL_REAL (fprintf)(stderr, "synctrace_init COL_ERROR_SYNCINIT pthread_cond_timedwait\n");
-      err = COL_ERROR_SYNCINIT;
-    }
-  ptr = dlvsym (dlflag, "pthread_join", "GLIBC_2.2.5");
-  if (ptr)
-    __real_pthread_join = (void *) ptr;
-  else
-    {
-      CALL_REAL (fprintf)(stderr, "synctrace_init COL_ERROR_SYNCINIT pthread_join\n");
-      err = COL_ERROR_SYNCINIT;
-    }
-  ptr = dlvsym (dlflag, "sem_wait", "GLIBC_2.2.5");
-  if (ptr)
-    __real_sem_wait = (void *) ptr;
-  else
-    {
-      CALL_REAL (fprintf)(stderr, "synctrace_init COL_ERROR_SYNCINIT sem_wait\n");
-      err = COL_ERROR_SYNCINIT;
-    }
-  ptr = dlvsym (dlflag, "pthread_cond_wait", "GLIBC_2.2.5");
-  if (ptr)
-    __real_pthread_cond_wait_2_2_5 = (void *) ptr;
-  else
-    {
-      CALL_REAL (fprintf)(stderr, "synctrace_init COL_ERROR_SYNCINIT pthread_cond_wait_2_2_5\n");
-      err = COL_ERROR_SYNCINIT;
-    }
-  ptr = dlvsym (dlflag, "pthread_cond_timedwait", "GLIBC_2.2.5");
-  if (ptr)
-    __real_pthread_cond_timedwait_2_2_5 = (void *) ptr;
-  else
-    {
-      CALL_REAL (fprintf)(stderr, "synctrace_init COL_ERROR_SYNCINIT pthread_cond_timedwait_2_2_5\n");
-      err = COL_ERROR_SYNCINIT;
-    }
-
-#elif ARCH(SPARC)
-  dlflag = RTLD_NEXT;
-  ptr = dlvsym (dlflag, "pthread_mutex_lock", "GLIBC_2.2");
-  if (ptr == NULL)
-    {
-      /* We are probably dlopened after libthread/libc,
-       * try to search in the previously loaded objects
-       */
-      dlflag = RTLD_DEFAULT;
-      ptr = dlvsym (dlflag, "pthread_mutex_lock", "GLIBC_2.2");
-      if (ptr != NULL)
-	{
-	  __real_pthread_mutex_lock = ptr;
-	  Tprintf (0, "synctrace: WARNING: init_thread_intf() using RTLD_DEFAULT for Solaris sync routines\n");
-	}
-      else
-	{
-	  CALL_REAL (fprintf)(stderr, "synctrace_init COL_ERROR_SYNCINIT mutex_lock\n");
-	  err = COL_ERROR_SYNCINIT;
-	}
-    }
-  else
-    __real_pthread_mutex_lock = ptr;
-  ptr = dlvsym (dlflag, "pthread_mutex_unlock", "GLIBC_2.2");
-  if (ptr)
-    __real_pthread_mutex_unlock = (void *) ptr;
-  else
-    {
-      CALL_REAL (fprintf)(stderr, "synctrace_init COL_ERROR_SYNCINIT pthread_mutex_unlock\n");
-      err = COL_ERROR_SYNCINIT;
-    }
-  ptr = dlvsym (dlflag, "pthread_cond_wait", "GLIBC_2.3.2");
-  if (ptr)
-    __real_pthread_cond_wait = (void *) ptr;
-  else
-    {
-      CALL_REAL (fprintf)(stderr, "synctrace_init COL_ERROR_SYNCINIT pthread_cond_wait\n");
-      err = COL_ERROR_SYNCINIT;
-    }
-  ptr = dlvsym (dlflag, "pthread_cond_timedwait", "GLIBC_2.3.2");
-  if (ptr)
-    __real_pthread_cond_timedwait = (void *) ptr;
-  else
-    {
-      CALL_REAL (fprintf)(stderr, "synctrace_init COL_ERROR_SYNCINIT pthread_cond_timedwait\n");
-      err = COL_ERROR_SYNCINIT;
-    }
-  ptr = dlvsym (dlflag, "pthread_join", "GLIBC_2.2");
-  if (ptr)
-    __real_pthread_join = (void *) ptr;
-  else
-    {
-      CALL_REAL (fprintf)(stderr, "synctrace_init COL_ERROR_SYNCINIT pthread_join\n");
-      err = COL_ERROR_SYNCINIT;
-    }
-  ptr = dlvsym (dlflag, "sem_wait", "GLIBC_2.2");
-  if (ptr)
-    __real_sem_wait = (void *) ptr;
-  else
-    {
-      CALL_REAL (fprintf)(stderr, "synctrace_init COL_ERROR_SYNCINIT sem_wait\n");
-      err = COL_ERROR_SYNCINIT;
-    }
-  ptr = dlvsym (dlflag, "pthread_cond_wait", "GLIBC_2.2");
-  if (ptr)
-    __real_pthread_cond_wait_2_2 = (void *) ptr;
-  else
-    {
-      CALL_REAL (fprintf)(stderr, "synctrace_init COL_ERROR_SYNCINIT pthread_cond_wait_2_2_5\n");
-      err = COL_ERROR_SYNCINIT;
-    }
-  ptr = dlvsym (dlflag, "pthread_cond_timedwait", "GLIBC_2.2");
-  if (ptr)
-    __real_pthread_cond_timedwait_2_2 = (void *) ptr;
-  else
-    {
-      CALL_REAL (fprintf)(stderr, "synctrace_init COL_ERROR_SYNCINIT pthread_cond_timedwait_2_2\n");
-      err = COL_ERROR_SYNCINIT;
-    }
-#endif /* ARCH() */
-#endif /* WSIZE(64) */
-  /*  the pointers that are common to 32- and 64-bits, and to SPARC and Intel */
-
-  __real_pthread_cond_wait_2_3_2 = __real_pthread_cond_wait;
-  __real_pthread_cond_timedwait_2_3_2 = __real_pthread_cond_timedwait;
   ptr = dlsym (dlflag, "strtol");
   if (ptr)
     __real_strtol = (void *) ptr;
@@ -712,25 +574,24 @@ __collector_jsync_end (hrtime_t reqt, void *object)
       spacket.comm.tstamp = grnt;
       spacket.requested = reqt;
       spacket.objp = (intptr_t) object;
-      spacket.comm.frinfo = collector_interface->getFrameInfo (sync_hndl, spacket.comm.tstamp, FRINFO_FROM_STACK_ARG, &spacket);
-      collector_interface->writeDataRecord (sync_hndl, (Common_packet*) & spacket);
+      spacket.comm.frinfo = collector_interface->getFrameInfo (sync_hndl,
+			spacket.comm.tstamp, FRINFO_FROM_STACK_ARG, &spacket);
+      collector_interface->writeDataRecord (sync_hndl, (Common_packet*) &spacket);
     }
   Tprintf (DBG_LT1, "__collector_jsync_begin: end event\n");
   POP_REENTRANCE (guard);
 }
-
 /*-------------------------------------------------------- pthread_mutex_lock */
-int
-pthread_mutex_lock (pthread_mutex_t *mp)
+static int
+gprofng_pthread_mutex_lock (int (real_func) (pthread_mutex_t *),
+			    pthread_mutex_t *mp)
 {
   int *guard;
-  if (NULL_PTR (pthread_mutex_lock))
-    init_thread_intf ();
   if (CHCK_NREENTRANCE (guard))
-    return CALL_REAL (pthread_mutex_lock)(mp);
+    return (real_func) (mp);
   PUSH_REENTRANCE (guard);
   hrtime_t reqt = gethrtime ();
-  int ret = CALL_REAL (pthread_mutex_lock)(mp);
+  int ret = (real_func) (mp);
   if (RECHCK_NREENTRANCE (guard))
     {
       POP_REENTRANCE (guard);
@@ -745,83 +606,39 @@ pthread_mutex_lock (pthread_mutex_t *mp)
       spacket.comm.tstamp = grnt;
       spacket.requested = reqt;
       spacket.objp = (intptr_t) mp;
-      spacket.comm.frinfo = collector_interface->getFrameInfo (sync_hndl, spacket.comm.tstamp, FRINFO_FROM_STACK, &spacket);
-      collector_interface->writeDataRecord (sync_hndl, (Common_packet*) & spacket);
+      spacket.comm.frinfo = collector_interface->getFrameInfo (sync_hndl,
+			spacket.comm.tstamp, FRINFO_FROM_STACK_ARG, &spacket);
+      collector_interface->writeDataRecord (sync_hndl, (Common_packet*) &spacket);
     }
   POP_REENTRANCE (guard);
   return ret;
 }
 
+#define DCL_PTHREAD_MUTEX_LOCK(dcl_f) \
+  int dcl_f (pthread_mutex_t *mp) \
+  { \
+    if (__real_pthread_mutex_lock == NULL) \
+      init_thread_intf (); \
+    return gprofng_pthread_mutex_lock (__real_pthread_mutex_lock, mp); \
+  }
+
+DCL_FUNC_VER (DCL_PTHREAD_MUTEX_LOCK, pthread_mutex_lock_2_17, pthread_mutex_lock@GLIBC_2.17)
+DCL_FUNC_VER (DCL_PTHREAD_MUTEX_LOCK, pthread_mutex_lock_2_2_5, pthread_mutex_lock@GLIBC_2.2.5)
+DCL_FUNC_VER (DCL_PTHREAD_MUTEX_LOCK, pthread_mutex_lock_2_0, pthread_mutex_lock@GLIBC_2.0)
+DCL_PTHREAD_MUTEX_LOCK (pthread_mutex_lock)
 
 /*------------------------------------------------------------- pthread_cond_wait */
-// map interposed symbol versions
 static int
-__collector_pthread_cond_wait_symver (int(real_pthread_cond_wait) (), pthread_cond_t *cond, pthread_mutex_t *mutex);
-
-#if ARCH(Intel) || ARCH(SPARC)
-SYMVER_ATTRIBUTE (__collector_pthread_cond_wait_2_3_2,
-		  pthread_cond_wait@@GLIBC_2.3.2)
-#endif
-int
-__collector_pthread_cond_wait_2_3_2 (pthread_cond_t *cond, pthread_mutex_t *mutex)
-{
-  if (NULL_PTR (pthread_cond_wait))
-    init_thread_intf ();
-  TprintfT (DBG_LTT, "linetrace: GLIBC: __collector_pthread_cond_wait_2_3_2@%p\n", CALL_REAL (pthread_cond_wait_2_3_2));
-  return __collector_pthread_cond_wait_symver (CALL_REAL (pthread_cond_wait_2_3_2), cond, mutex);
-}
-
-#if WSIZE(32)
-
-SYMVER_ATTRIBUTE (__collector_pthread_cond_wait_2_0,
-		  pthread_cond_wait@GLIBC_2.0)
-int
-__collector_pthread_cond_wait_2_0 (pthread_cond_t *cond, pthread_mutex_t *mutex)
-{
-  if (NULL_PTR (pthread_cond_wait))
-    init_thread_intf ();
-  TprintfT (DBG_LTT, "linetrace: GLIBC: __collector_pthread_cond_wait_2_0@%p\n", CALL_REAL (pthread_cond_wait_2_0));
-  return __collector_pthread_cond_wait_symver (CALL_REAL (pthread_cond_wait_2_0), cond, mutex);
-}
-#else // WSIZE(64)
-#if ARCH(Intel)
-SYMVER_ATTRIBUTE (__collector_pthread_cond_wait_2_2_5,
-		  pthread_cond_wait@GLIBC_2.2.5)
-int
-__collector_pthread_cond_wait_2_2_5 (pthread_cond_t *cond, pthread_mutex_t *mutex)
-{
-  if (NULL_PTR (pthread_cond_wait))
-    init_thread_intf ();
-  TprintfT (DBG_LTT, "linetrace: GLIBC: __collector_pthread_cond_wait_2_2_5@%p\n", CALL_REAL (pthread_cond_wait_2_2_5));
-  return __collector_pthread_cond_wait_symver (CALL_REAL (pthread_cond_wait_2_2_5), cond, mutex);
-}
-#elif ARCH(SPARC)
-
-SYMVER_ATTRIBUTE (__collector_pthread_cond_wait_2_2,
-		  pthread_cond_wait@GLIBC_2.2)
-int
-__collector_pthread_cond_wait_2_2 (pthread_cond_t *cond, pthread_mutex_t *mutex)
-{
-  if (NULL_PTR (pthread_cond_wait))
-    init_thread_intf ();
-  TprintfT (DBG_LTT, "linetrace: GLIBC: __collector_pthread_cond_wait_2_2@%p\n", CALL_REAL (pthread_cond_wait_2_2));
-  return __collector_pthread_cond_wait_symver (CALL_REAL (pthread_cond_wait_2_2), cond, mutex);
-}
-#endif  // ARCH()
-#endif  // WSIZE()
-
-static int
-__collector_pthread_cond_wait_symver (int(real_pthread_cond_wait) (), pthread_cond_t *cond, pthread_mutex_t *mutex)
+gprofng_pthread_cond_wait (int(real_func) (pthread_cond_t *, pthread_mutex_t *),
+			   pthread_cond_t *cond, pthread_mutex_t *mutex)
 {
   int *guard;
-  if (NULL_PTR (pthread_cond_wait))
-    init_thread_intf ();
   if (CHCK_NREENTRANCE (guard))
-    return (real_pthread_cond_wait) (cond, mutex);
+    return (real_func) (cond, mutex);
   PUSH_REENTRANCE (guard);
   hrtime_t reqt = gethrtime ();
   int ret = -1;
-  ret = (real_pthread_cond_wait) (cond, mutex);
+  ret = (real_func) (cond, mutex);
   if (RECHCK_NREENTRANCE (guard))
     {
       POP_REENTRANCE (guard);
@@ -836,95 +653,42 @@ __collector_pthread_cond_wait_symver (int(real_pthread_cond_wait) (), pthread_co
       spacket.comm.tstamp = grnt;
       spacket.requested = reqt;
       spacket.objp = (intptr_t) mutex;
-      spacket.comm.frinfo = collector_interface->getFrameInfo (sync_hndl, spacket.comm.tstamp, FRINFO_FROM_STACK_ARG, &spacket);
-      collector_interface->writeDataRecord (sync_hndl, (Common_packet*) & spacket);
+      spacket.comm.frinfo = collector_interface->getFrameInfo (sync_hndl,
+			spacket.comm.tstamp, FRINFO_FROM_STACK_ARG, &spacket);
+      collector_interface->writeDataRecord (sync_hndl, (Common_packet*) &spacket);
     }
   POP_REENTRANCE (guard);
   return ret;
 }
 
+#define DCL_PTHREAD_COND_WAIT(dcl_f) \
+  int dcl_f (pthread_cond_t *cond, pthread_mutex_t *mutex) \
+  { \
+    if (__real_pthread_cond_wait == NULL) \
+      init_thread_intf (); \
+    return gprofng_pthread_cond_wait (__real_pthread_cond_wait, cond, mutex); \
+  }
+
+DCL_FUNC_VER (DCL_PTHREAD_COND_WAIT, pthread_cond_wait_2_17, pthread_cond_wait@GLIBC_2.17)
+DCL_FUNC_VER (DCL_PTHREAD_COND_WAIT, pthread_cond_wait_2_3_2, pthread_cond_wait@GLIBC_2.3.2)
+DCL_FUNC_VER (DCL_PTHREAD_COND_WAIT, pthread_cond_wait_2_2_5, pthread_cond_wait@GLIBC_2.2.5)
+DCL_FUNC_VER (DCL_PTHREAD_COND_WAIT, pthread_cond_wait_2_0, pthread_cond_wait@GLIBC_2.0)
+DCL_PTHREAD_COND_WAIT (pthread_cond_wait)
+
 /*---------------------------------------------------- pthread_cond_timedwait */
-// map interposed symbol versions
 static int
-__collector_pthread_cond_timedwait_symver (int(real_pthread_cond_timedwait) (),
-					   pthread_cond_t *cond,
-					   pthread_mutex_t *mutex,
-					   const struct timespec *abstime);
-
-#if ARCH(Intel) || ARCH(SPARC)
-SYMVER_ATTRIBUTE (__collector_pthread_cond_timedwait_2_3_2,
-		  pthread_cond_timedwait@@GLIBC_2.3.2)
-#endif  // ARCH()
-int
-__collector_pthread_cond_timedwait_2_3_2 (pthread_cond_t *cond,
-					  pthread_mutex_t *mutex,
-					  const struct timespec *abstime)
-{
-  if (NULL_PTR (pthread_cond_timedwait))
-    init_thread_intf ();
-  TprintfT (DBG_LTT, "linetrace: GLIBC: __collector_pthread_cond_timedwait_2_3_2@%p\n", CALL_REAL (pthread_cond_timedwait_2_3_2));
-  return __collector_pthread_cond_timedwait_symver (CALL_REAL (pthread_cond_timedwait_2_3_2), cond, mutex, abstime);
-}
-
-#if WSIZE(32)
-SYMVER_ATTRIBUTE (__collector_pthread_cond_timedwait_2_0,
-		  pthread_cond_timedwait@GLIBC_2.0)
-int
-__collector_pthread_cond_timedwait_2_0 (pthread_cond_t *cond,
-					pthread_mutex_t *mutex,
-					const struct timespec *abstime)
-{
-  if (NULL_PTR (pthread_cond_timedwait))
-    init_thread_intf ();
-  TprintfT (DBG_LTT, "linetrace: GLIBC: __collector_pthread_cond_timedwait_2_0@%p\n", CALL_REAL (pthread_cond_timedwait_2_0));
-  return __collector_pthread_cond_timedwait_symver (CALL_REAL (pthread_cond_timedwait_2_0), cond, mutex, abstime);
-}
-#else // WSIZE(64)
-#if ARCH(Intel)
-SYMVER_ATTRIBUTE (__collector_pthread_cond_timedwait_2_2_5,
-		  pthread_cond_timedwait@GLIBC_2.2.5)
-int
-__collector_pthread_cond_timedwait_2_2_5 (pthread_cond_t *cond,
-					  pthread_mutex_t *mutex,
-					  const struct timespec *abstime)
-{
-  if (NULL_PTR (pthread_cond_timedwait))
-    init_thread_intf ();
-  TprintfT (DBG_LTT, "linetrace: GLIBC: __collector_pthread_cond_timedwait_2_2_5@%p\n", CALL_REAL (pthread_cond_timedwait_2_2_5));
-  return __collector_pthread_cond_timedwait_symver (CALL_REAL (pthread_cond_timedwait_2_2_5), cond, mutex, abstime);
-}
-#elif ARCH(SPARC)
-
-SYMVER_ATTRIBUTE (__collector_pthread_cond_timedwait_2_2,
-		  pthread_cond_timedwait@GLIBC_2.2)
-int
-__collector_pthread_cond_timedwait_2_2 (pthread_cond_t *cond,
-					pthread_mutex_t *mutex,
-					const struct timespec *abstime)
-{
-  if (NULL_PTR (pthread_cond_timedwait))
-    init_thread_intf ();
-  TprintfT (DBG_LTT, "linetrace: GLIBC: __collector_pthread_cond_timedwait_2_2@%p\n", CALL_REAL (pthread_cond_timedwait_2_2));
-  return __collector_pthread_cond_timedwait_symver (CALL_REAL (pthread_cond_timedwait_2_2), cond, mutex, abstime);
-}
-#endif  // ARCH()
-#endif  // WSIZE()
-
-static int
-__collector_pthread_cond_timedwait_symver (int(real_pthread_cond_timedwait) (),
-					   pthread_cond_t *cond,
-					   pthread_mutex_t *mutex,
-					   const struct timespec *abstime)
+gprofng_pthread_cond_timedwait (int(real_func) (pthread_cond_t *,
+				    pthread_mutex_t*, const struct timespec *),
+				pthread_cond_t *cond, pthread_mutex_t *mutex,
+				const struct timespec *abstime)
 {
   int *guard;
-  if (NULL_PTR (pthread_cond_timedwait))
-    init_thread_intf ();
   if (CHCK_NREENTRANCE (guard))
-    return (real_pthread_cond_timedwait) (cond, mutex, abstime);
+    return (real_func) (cond, mutex, abstime);
   PUSH_REENTRANCE (guard);
   hrtime_t reqt = gethrtime ();
   int ret = -1;
-  ret = (real_pthread_cond_timedwait) (cond, mutex, abstime);
+  ret = (real_func) (cond, mutex, abstime);
   if (RECHCK_NREENTRANCE (guard))
     {
       POP_REENTRANCE (guard);
@@ -934,30 +698,46 @@ __collector_pthread_cond_timedwait_symver (int(real_pthread_cond_timedwait) (),
   if (grnt - reqt >= sync_threshold)
     {
       Sync_packet spacket;
-      collector_memset (&spacket, 0, sizeof ( Sync_packet));
-      spacket.comm.tsize = sizeof ( Sync_packet);
+      collector_memset (&spacket, 0, sizeof (Sync_packet));
+      spacket.comm.tsize = sizeof (Sync_packet);
       spacket.comm.tstamp = grnt;
       spacket.requested = reqt;
       spacket.objp = (intptr_t) mutex;
-      spacket.comm.frinfo = collector_interface->getFrameInfo (sync_hndl, spacket.comm.tstamp, FRINFO_FROM_STACK_ARG, &spacket);
-      collector_interface->writeDataRecord (sync_hndl, (Common_packet*) & spacket);
+      spacket.comm.frinfo = collector_interface->getFrameInfo (sync_hndl,
+			spacket.comm.tstamp, FRINFO_FROM_STACK_ARG, &spacket);
+      collector_interface->writeDataRecord (sync_hndl, (Common_packet*) &spacket);
     }
   POP_REENTRANCE (guard);
   return ret;
 }
 
+#define DCL_PTHREAD_COND_TIMEDWAIT(dcl_f) \
+  int dcl_f (pthread_cond_t *cond, pthread_mutex_t *mutex, \
+	     const struct timespec *abstime) \
+  { \
+    if (__real_pthread_cond_timedwait == NULL) \
+      init_thread_intf (); \
+    return gprofng_pthread_cond_timedwait (__real_pthread_cond_timedwait, cond, mutex, abstime); \
+  }
+
+DCL_FUNC_VER (DCL_PTHREAD_COND_TIMEDWAIT, pthread_cond_timedwait_2_17, pthread_cond_timedwait@GLIBC_2.17)
+DCL_FUNC_VER (DCL_PTHREAD_COND_TIMEDWAIT, pthread_cond_timedwait_2_3_2, pthread_cond_timedwait@GLIBC_2.3.2)
+DCL_FUNC_VER (DCL_PTHREAD_COND_TIMEDWAIT, pthread_cond_timedwait_2_2_5, pthread_cond_timedwait@GLIBC_2.2.5)
+DCL_FUNC_VER (DCL_PTHREAD_COND_TIMEDWAIT, pthread_cond_timedwait_2_0, pthread_cond_timedwait@GLIBC_2.0)
+DCL_PTHREAD_COND_TIMEDWAIT (pthread_cond_timedwait)
+
+
 /*------------------------------------------------------------- pthread_join */
-int
-pthread_join (pthread_t target_thread, void **status)
+static int
+gprofng_pthread_join (int(real_func) (pthread_t, void **),
+		      pthread_t target_thread, void **status)
 {
   int *guard;
-  if (NULL_PTR (pthread_join))
-    init_thread_intf ();
   if (CHCK_NREENTRANCE (guard))
-    return CALL_REAL (pthread_join)(target_thread, status);
+    return real_func (target_thread, status);
   PUSH_REENTRANCE (guard);
   hrtime_t reqt = gethrtime ();
-  int ret = CALL_REAL (pthread_join)(target_thread, status);
+  int ret = real_func(target_thread, status);
   if (RECHCK_NREENTRANCE (guard))
     {
       POP_REENTRANCE (guard);
@@ -967,73 +747,44 @@ pthread_join (pthread_t target_thread, void **status)
   if (grnt - reqt >= sync_threshold)
     {
       Sync_packet spacket;
-      collector_memset (&spacket, 0, sizeof ( Sync_packet));
-      spacket.comm.tsize = sizeof ( Sync_packet);
+      collector_memset (&spacket, 0, sizeof (Sync_packet));
+      spacket.comm.tsize = sizeof (Sync_packet);
       spacket.comm.tstamp = grnt;
       spacket.requested = reqt;
       spacket.objp = (Vaddr_type) target_thread;
-      spacket.comm.frinfo = collector_interface->getFrameInfo (sync_hndl, spacket.comm.tstamp, FRINFO_FROM_STACK, &spacket);
-      collector_interface->writeDataRecord (sync_hndl, (Common_packet*) & spacket);
+      spacket.comm.frinfo = collector_interface->getFrameInfo (sync_hndl,
+			spacket.comm.tstamp, FRINFO_FROM_STACK_ARG, &spacket);
+      collector_interface->writeDataRecord (sync_hndl, (Common_packet*) &spacket);
     }
   POP_REENTRANCE (guard);
   return ret;
 }
 
+#define DCL_PTHREAD_JOIN(dcl_f) \
+  int dcl_f (pthread_t target_thread, void **status) \
+  { \
+    if (__real_pthread_join == NULL) \
+      init_thread_intf (); \
+    return gprofng_pthread_join (__real_pthread_join, target_thread, status); \
+  }
+
+DCL_FUNC_VER (DCL_PTHREAD_JOIN, pthread_join_2_34, pthread_join@GLIBC_2.34)
+DCL_FUNC_VER (DCL_PTHREAD_JOIN, pthread_join_2_17, pthread_join@GLIBC_2.17)
+DCL_FUNC_VER (DCL_PTHREAD_JOIN, pthread_join_2_2_5, pthread_join@GLIBC_2.2.5)
+DCL_FUNC_VER (DCL_PTHREAD_JOIN, pthread_join_2_0, pthread_join@GLIBC_2.0)
+DCL_PTHREAD_JOIN (pthread_join)
+
 /*------------------------------------------------------------- sem_wait */
-// map interposed symbol versions
-#if ARCH(Intel) && WSIZE(32)
 static int
-__collector_sem_wait_symver (int(real_sem_wait) (), sem_t *sp);
-
-SYMVER_ATTRIBUTE (__collector_sem_wait_2_1, sem_wait@@GLIBC_2.1)
-int
-__collector_sem_wait_2_1 (sem_t *sp)
+gprofng_sem_wait (int (real_func) (sem_t *), sem_t *sp)
 {
-  if (NULL_PTR (sem_wait))
-    init_thread_intf ();
-  TprintfT (DBG_LTT, "linetrace: GLIBC: __collector_sem_wait_2_1@%p\n", CALL_REAL (sem_wait_2_1));
-  return __collector_sem_wait_symver (CALL_REAL (sem_wait_2_1), sp);
-}
-
-SYMVER_ATTRIBUTE (__collector_sem_wait_2_0, sem_wait@GLIBC_2.0)
-int
-__collector_sem_wait_2_0 (sem_t *sp)
-{
-  if (NULL_PTR (sem_wait))
-    init_thread_intf ();
-  TprintfT (DBG_LTT, "linetrace: GLIBC: __collector_sem_wait_2_0@%p\n", CALL_REAL (sem_wait_2_0));
-  return __collector_sem_wait_symver (CALL_REAL (sem_wait_2_0), sp);
-}
-#endif
-
-#if ARCH(Intel) && WSIZE(32)
-static int
-__collector_sem_wait_symver (int(real_sem_wait) (), sem_t *sp)
-{
-#else
-int
-sem_wait (sem_t *sp)
-{
-#endif
   int *guard;
-  if (NULL_PTR (sem_wait))
-    init_thread_intf ();
   if (CHCK_NREENTRANCE (guard))
-    {
-#if ARCH(Intel) && WSIZE(32)
-      return (real_sem_wait) (sp);
-#else
-      return CALL_REAL (sem_wait)(sp);
-#endif
-    }
+    return real_func (sp);
   PUSH_REENTRANCE (guard);
   hrtime_t reqt = gethrtime ();
   int ret = -1;
-#if ARCH(Intel) && WSIZE(32)
-  ret = (real_sem_wait) (sp);
-#else
-  ret = CALL_REAL (sem_wait)(sp);
-#endif
+  ret = real_func (sp);
   if (RECHCK_NREENTRANCE (guard))
     {
       POP_REENTRANCE (guard);
@@ -1043,19 +794,30 @@ sem_wait (sem_t *sp)
   if (grnt - reqt >= sync_threshold)
     {
       Sync_packet spacket;
-      collector_memset (&spacket, 0, sizeof ( Sync_packet));
-      spacket.comm.tsize = sizeof ( Sync_packet);
+      collector_memset (&spacket, 0, sizeof (Sync_packet));
+      spacket.comm.tsize = sizeof (Sync_packet);
       spacket.comm.tstamp = grnt;
       spacket.requested = reqt;
       spacket.objp = (intptr_t) sp;
-
-#if ARCH(Intel) && WSIZE(32)
-      spacket.comm.frinfo = collector_interface->getFrameInfo (sync_hndl, spacket.comm.tstamp, FRINFO_FROM_STACK_ARG, &spacket);
-#else
-      spacket.comm.frinfo = collector_interface->getFrameInfo (sync_hndl, spacket.comm.tstamp, FRINFO_FROM_STACK, &spacket);
-#endif
-      collector_interface->writeDataRecord (sync_hndl, (Common_packet*) & spacket);
+      spacket.comm.frinfo = collector_interface->getFrameInfo (sync_hndl,
+			spacket.comm.tstamp, FRINFO_FROM_STACK_ARG, &spacket);
+      collector_interface->writeDataRecord (sync_hndl, (Common_packet*) &spacket);
     }
   POP_REENTRANCE (guard);
   return ret;
 }
+
+#define DCL_SEM_WAIT(dcl_f) \
+  int dcl_f (sem_t *sp) \
+  { \
+    if (__real_sem_wait == NULL) \
+      init_thread_intf (); \
+    return gprofng_sem_wait (__real_sem_wait, sp); \
+  }
+
+DCL_FUNC_VER (DCL_SEM_WAIT, sem_wait_2_34, sem_wait@GLIBC_2.34)
+DCL_FUNC_VER (DCL_SEM_WAIT, sem_wait_2_17, sem_wait@GLIBC_2.17)
+DCL_FUNC_VER (DCL_SEM_WAIT, sem_wait_2_2_5, sem_wait@GLIBC_2.2.5)
+DCL_FUNC_VER (DCL_SEM_WAIT, sem_wait_2_0, sem_wait@GLIBC_2.0)
+DCL_FUNC_VER (DCL_SEM_WAIT, sem_wait_2_1, sem_wait@GLIBC_2.1)
+DCL_SEM_WAIT (sem_wait)

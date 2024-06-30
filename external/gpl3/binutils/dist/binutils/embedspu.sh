@@ -1,7 +1,7 @@
 #! /bin/sh
 # Embed an SPU ELF executable into a PowerPC object file.
 #
-# Copyright (C) 2006-2022 Free Software Foundation, Inc.
+# Copyright (C) 2006-2024 Free Software Foundation, Inc.
 #
 # This file is part of GNU Binutils.
 #
@@ -108,9 +108,7 @@ main ()
   READELF="$prog"
 
   # Sanity check the input file
-  if ! ${READELF} -h ${INFILE} | grep 'Class:.*ELF32' >/dev/null 2>/dev/null \
-     || ! ${READELF} -h ${INFILE} | grep 'Type:.*EXEC' >/dev/null 2>/dev/null \
-     || ! ${READELF} -h ${INFILE} | egrep 'Machine:.*(SPU|17)' >/dev/null 2>/dev/null
+  if test `${READELF} -h ${INFILE} | sed -n -e '/Class:.*ELF32/p' -e '/Type:.*EXEC/p' -e '/Machine:.*SPU/p' -e '/Machine:.*17/p' | sed -n '$='` != 3
   then
     echo "${INFILE}: Does not appear to be an SPU executable"
     exit 1

@@ -2,7 +2,7 @@
 
 %{
 
-/* Copyright (C) 1991-2022 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2024 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support.
 
    This file is part of the GNU Binutils.
@@ -133,7 +133,7 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 				comment (); }
 
 <MRI,EXPRESSION>"$"([0-9A-Fa-f])+ {
-				yylval.integer = bfd_scan_vma (yytext + 1, 0, 16);
+				yylval.integer = strtoull (yytext + 1, 0, 16);
 				yylval.bigint.str = NULL;
 				return INT;
 			}
@@ -158,8 +158,7 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 				    default:
 				     ibase = 10;
 				   }
-				   yylval.integer = bfd_scan_vma (yytext, 0,
-								  ibase);
+				   yylval.integer = strtoull (yytext, 0, ibase);
 				   yylval.bigint.str = NULL;
 				   return INT;
 				 }
@@ -172,7 +171,7 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 				      ++s;
 				      ibase = 16;
 				    }
-				  yylval.integer = bfd_scan_vma (s, 0, ibase);
+				  yylval.integer = strtoull (s, 0, ibase);
 				  yylval.bigint.str = NULL;
 				  if (yytext[yyleng - 1] == 'M'
 				      || yytext[yyleng - 1] == 'm')
@@ -233,6 +232,7 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 <SCRIPT,EXPRESSION,MRI,WILD>"/="	{ RTOKEN(DIVEQ); }
 <SCRIPT,EXPRESSION,MRI,WILD>"&="	{ RTOKEN(ANDEQ); }
 <SCRIPT,EXPRESSION,MRI,WILD>"|="	{ RTOKEN(OREQ); }
+<SCRIPT,EXPRESSION,MRI,WILD>"^="	{ RTOKEN(XOREQ); }
 <EXPRESSION,MRI>"&&"			{ RTOKEN(ANDAND); }
 <SCRIPT,EXPRESSION,MRI>">"		{ RTOKEN('>'); }
 <SCRIPT,EXPRESSION,MRI,INPUTLIST>","	{ RTOKEN(','); }
@@ -247,6 +247,7 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 <EXPRESSION,MRI>"/"			{ RTOKEN('/'); }
 <EXPRESSION,MRI>"%"			{ RTOKEN('%'); }
 <EXPRESSION,MRI>"<"			{ RTOKEN('<'); }
+<EXPRESSION,MRI>"^"			{ RTOKEN('^'); }
 <SCRIPT,EXPRESSION,MRI,WILD>"="		{ RTOKEN('='); }
 <SCRIPT,EXPRESSION,MRI,WILD>"}"		{ RTOKEN('}'); }
 <SCRIPT,EXPRESSION,MRI,WILD>"{"		{ RTOKEN('{'); }
@@ -309,6 +310,8 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 <WILD>"LONG"				{ RTOKEN(LONG); }
 <WILD>"SHORT"				{ RTOKEN(SHORT); }
 <WILD>"BYTE"				{ RTOKEN(BYTE); }
+<WILD>"ASCIZ"				{ RTOKEN(ASCIZ); }
+<WILD>"LINKER_VERSION"			{ RTOKEN(LINKER_VERSION); }
 <SCRIPT>"NOFLOAT"			{ RTOKEN(NOFLOAT); }
 <SCRIPT,EXPRESSION>"NOCROSSREFS"	{ RTOKEN(NOCROSSREFS); }
 <SCRIPT,EXPRESSION>"NOCROSSREFS_TO"	{ RTOKEN(NOCROSSREFS_TO); }
@@ -318,6 +321,7 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 <WILD>"SORT"				{ RTOKEN(SORT_BY_NAME); }
 <WILD>"SORT_BY_INIT_PRIORITY"		{ RTOKEN(SORT_BY_INIT_PRIORITY); }
 <WILD>"SORT_NONE"			{ RTOKEN(SORT_NONE); }
+<WILD>"REVERSE"				{ RTOKEN(REVERSE); }
 <EXPRESSION>"NOLOAD"			{ RTOKEN(NOLOAD); }
 <EXPRESSION>"READONLY"			{ RTOKEN(READONLY); }
 <EXPRESSION>"DSECT"			{ RTOKEN(DSECT); }
@@ -487,8 +491,8 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
   return END;
 }
 
-<SCRIPT,WILD,MRI,VERS_START,VERS_SCRIPT,VERS_NODE>.	lex_warn_invalid (" in script", yytext);
-<EXPRESSION>.	lex_warn_invalid (" in expression", yytext);
+<SCRIPT,WILD,MRI,VERS_START,VERS_SCRIPT,VERS_NODE>.	lex_warn_invalid (_(" in script"), yytext);
+<EXPRESSION>.	lex_warn_invalid (_(" in expression"), yytext);
 
 %%
 
@@ -664,7 +668,7 @@ static int
 yy_input (char *buf, int max_size)
 {
   int result = 0;
-  if (YY_CURRENT_BUFFER->yy_input_file)
+  if (YY_CURRENT_BUFFER != NULL && YY_CURRENT_BUFFER->yy_input_file)
     {
       if (yyin)
 	{

@@ -1,5 +1,5 @@
 /* symbols.c -symbol table-
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -25,6 +25,7 @@
 #include "obstack.h"		/* For "symbols.h" */
 #include "subsegs.h"
 #include "write.h"
+#include "scfi.h"
 
 #include <limits.h>
 #ifndef CHAR_BIT
@@ -242,6 +243,75 @@ struct xsymbol dot_symbol_x;
 #endif
 
 struct obstack notes;
+
+/* Utility functions to allocate and duplicate memory on the notes
+   obstack, each like the corresponding function without "notes_"
+   prefix.  All of these exit on an allocation failure.  */
+
+void *
+notes_alloc (size_t size)
+{
+  return obstack_alloc (&notes, size);
+}
+
+void *
+notes_calloc (size_t n, size_t size)
+{
+  size_t amt;
+  void *ret;
+  if (gas_mul_overflow (n, size, &amt))
+    {
+      obstack_alloc_failed_handler ();
+      abort ();
+    }
+  ret = notes_alloc (amt);
+  memset (ret, 0, amt);
+  return ret;
+}
+
+void *
+notes_memdup (const void *src, size_t copy_size, size_t alloc_size)
+{
+  void *ret = obstack_alloc (&notes, alloc_size);
+  memcpy (ret, src, copy_size);
+  if (alloc_size > copy_size)
+    memset ((char *) ret + copy_size, 0, alloc_size - copy_size);
+  return ret;
+}
+
+char *
+notes_strdup (const char *str)
+{
+  size_t len = strlen (str) + 1;
+  return notes_memdup (str, len, len);
+}
+
+char *
+notes_concat (const char *first, ...)
+{
+  va_list args;
+  const char *str;
+
+  va_start (args, first);
+  for (str = first; str; str = va_arg (args, const char *))
+    {
+      size_t size = strlen (str);
+      obstack_grow (&notes, str, size);
+    }
+  va_end (args);
+  obstack_1grow (&notes, 0);
+  return obstack_finish (&notes);
+}
+
+/* Use with caution!  Frees PTR and all more recently allocated memory
+   on the notes obstack.  */
+
+void
+notes_free (void *ptr)
+{
+  obstack_free (&notes, ptr);
+}
+
 #ifdef TE_PE
 /* The name of an external symbol which is
    used to make weak PE symbol names unique.  */
@@ -274,13 +344,10 @@ symbol_new (const char *name, segT segment, fragS *frag, valueT valu)
 static const char *
 save_symbol_name (const char *name)
 {
-  size_t name_length;
   char *ret;
 
   gas_assert (name != NULL);
-  name_length = strlen (name) + 1;	/* +1 for \0.  */
-  obstack_grow (&notes, name, name_length);
-  ret = (char *) obstack_finish (&notes);
+  ret = notes_strdup (name);
 
 #ifdef tc_canonicalize_symbol_name
   ret = tc_canonicalize_symbol_name (ret);
@@ -321,6 +388,8 @@ symbol_init (symbolS *symbolP, const char *name, asection *sec,
     }
 
   S_SET_VALUE (symbolP, valu);
+  if (sec == reg_section)
+    symbolP->x->value.X_op = O_register;
 
   symbol_clear_list_pointers (symbolP);
 
@@ -343,7 +412,7 @@ symbol_create (const char *name, segT segment, fragS *frag, valueT valu)
   preserved_copy_of_name = save_symbol_name (name);
 
   size = sizeof (symbolS) + sizeof (struct xsymbol);
-  symbolP = (symbolS *) obstack_alloc (&notes, size);
+  symbolP = notes_alloc (size);
 
   /* symbol must be born in some fixed state.  This seems as good as any.  */
   memset (symbolP, 0, size);
@@ -377,7 +446,7 @@ local_symbol_make (const char *name, segT section, fragS *frag, valueT val)
 
   name_copy = save_symbol_name (name);
 
-  ret = (struct local_symbol *) obstack_alloc (&notes, sizeof *ret);
+  ret = notes_alloc (sizeof *ret);
   ret->flags = flags;
   ret->hash = 0;
   ret->name = name_copy;
@@ -403,7 +472,7 @@ local_symbol_convert (void *sym)
 
   ++local_symbol_conversion_count;
 
-  xtra = (struct xsymbol *) obstack_alloc (&notes, sizeof (*xtra));
+  xtra = notes_alloc (sizeof (*xtra));
   memset (xtra, 0, sizeof (*xtra));
   val = ent->lsy.value;
   ent->sy.x = xtra;
@@ -641,6 +710,8 @@ colon (/* Just seen "x:" - rattle symbols & frags.  */
 #ifdef obj_frob_label
   obj_frob_label (symbolP);
 #endif
+  if (flag_synth_cfi)
+    ginsn_frob_label (symbolP);
 
   return symbolP;
 }
@@ -717,8 +788,7 @@ symbol_clone (symbolS *orgsymP, int replace)
     orgsymP = local_symbol_convert (orgsymP);
   bsymorg = orgsymP->bsym;
 
-  newsymP = (symbolS *) obstack_alloc (&notes, (sizeof (symbolS)
-						+ sizeof (struct xsymbol)));
+  newsymP = notes_alloc (sizeof (symbolS) + sizeof (struct xsymbol));
   *newsymP = *orgsymP;
   newsymP->x = (struct xsymbol *) (newsymP + 1);
   *newsymP->x = *orgsymP->x;
@@ -1343,6 +1413,45 @@ resolve_symbol_value (symbolS *symp)
 	  BAD_CASE (op);
 	  break;
 
+	case O_md1:
+	case O_md2:
+	case O_md3:
+	case O_md4:
+	case O_md5:
+	case O_md6:
+	case O_md7:
+	case O_md8:
+	case O_md9:
+	case O_md10:
+	case O_md11:
+	case O_md12:
+	case O_md13:
+	case O_md14:
+	case O_md15:
+	case O_md16:
+	case O_md17:
+	case O_md18:
+	case O_md19:
+	case O_md20:
+	case O_md21:
+	case O_md22:
+	case O_md23:
+	case O_md24:
+	case O_md25:
+	case O_md26:
+	case O_md27:
+	case O_md28:
+	case O_md29:
+	case O_md30:
+	case O_md31:
+	case O_md32:
+#ifdef md_resolve_symbol
+	  resolved = md_resolve_symbol (symp, &final_val, &final_seg);
+	  if (resolved)
+	    break;
+#endif
+	  goto exit_dont_set_value;
+
 	case O_absent:
 	  final_val = 0;
 	  /* Fall through.  */
@@ -1721,7 +1830,7 @@ resolve_local_symbol (void **slot, void *arg ATTRIBUTE_UNUSED)
 void
 resolve_local_symbol_values (void)
 {
-  htab_traverse (sy_hash, resolve_local_symbol, NULL);
+  htab_traverse_noresize (sy_hash, resolve_local_symbol, NULL);
 }
 
 /* Obtain the current value of a symbol without changing any
@@ -2104,7 +2213,7 @@ decode_local_label_name (char *s)
     instance_number = (10 * instance_number) + *p - '0';
 
   message_format = _("\"%d\" (instance number %d of a %s label)");
-  symbol_decode = (char *) obstack_alloc (&notes, strlen (message_format) + 30);
+  symbol_decode = notes_alloc (strlen (message_format) + 30);
   sprintf (symbol_decode, message_format, label_number, instance_number, type);
 
   return symbol_decode;
@@ -2113,7 +2222,7 @@ decode_local_label_name (char *s)
 /* Get the value of a symbol.  */
 
 valueT
-S_GET_VALUE (symbolS *s)
+S_GET_VALUE_WHERE (symbolS *s, const char * file, unsigned int line)
 {
   if (s->flags.local_symbol)
     return resolve_symbol_value (s);
@@ -2132,10 +2241,24 @@ S_GET_VALUE (symbolS *s)
       if (! s->flags.resolved
 	  || s->x->value.X_op != O_symbol
 	  || (S_IS_DEFINED (s) && ! S_IS_COMMON (s)))
-	as_bad (_("attempt to get value of unresolved symbol `%s'"),
-		S_GET_NAME (s));
+	{
+	  if (strcmp (S_GET_NAME (s), FAKE_LABEL_NAME) == 0)
+	    as_bad_where (file, line, _("expression is too complex to be resolved or converted into relocations"));
+	  else if (file != NULL)
+	    as_bad_where (file, line, _("attempt to get value of unresolved symbol `%s'"),
+			  S_GET_NAME (s));
+	  else
+	    as_bad (_("attempt to get value of unresolved symbol `%s'"),
+		    S_GET_NAME (s));
+	}
     }
   return (valueT) s->x->value.X_add_number;
+}
+
+valueT
+S_GET_VALUE (symbolS *s)
+{
+  return S_GET_VALUE_WHERE (s, NULL, 0);
 }
 
 /* Set the value of a symbol.  */
@@ -2300,14 +2423,13 @@ S_IS_LOCAL (symbolS *s)
   if (s->flags.local_symbol)
     return 1;
 
-  flags = s->bsym->flags;
-
-  /* Sanity check.  */
-  if ((flags & BSF_LOCAL) && (flags & BSF_GLOBAL))
-    abort ();
+  if (S_IS_EXTERNAL (s))
+    return 0;
 
   if (bfd_asymbol_section (s->bsym) == reg_section)
     return 1;
+
+  flags = s->bsym->flags;
 
   if (flag_strip_local_absolute
       /* Keep BSF_FILE symbols in order to allow debuggers to identify
@@ -2345,7 +2467,7 @@ S_CAN_BE_REDEFINED (const symbolS *s)
     return (((struct local_symbol *) s)->frag
 	    == &predefined_address_frag);
   /* Permit register names to be redefined.  */
-  return s->bsym->section == reg_section;
+  return s->x->value.X_op == O_register;
 }
 
 int
@@ -2365,13 +2487,13 @@ S_IS_FORWARD_REF (const symbolS *s)
 }
 
 const char *
-S_GET_NAME (symbolS *s)
+S_GET_NAME (const symbolS *s)
 {
   return s->name;
 }
 
 segT
-S_GET_SEGMENT (symbolS *s)
+S_GET_SEGMENT (const symbolS *s)
 {
   if (s->flags.local_symbol)
     return ((struct local_symbol *) s)->section;
@@ -2983,7 +3105,7 @@ symbol_begin (void)
 {
   symbol_lastP = NULL;
   symbol_rootP = NULL;		/* In case we have 0 symbols (!!)  */
-  sy_hash = htab_create_alloc (16, hash_symbol_entry, eq_symbol_entry,
+  sy_hash = htab_create_alloc (1024, hash_symbol_entry, eq_symbol_entry,
 			       NULL, xcalloc, free);
 
 #if defined (EMIT_SECTION_SYMBOLS) || !defined (RELOC_REQUIRES_SYMBOL)
@@ -2995,6 +3117,12 @@ symbol_begin (void)
 
   if (LOCAL_LABELS_FB)
     fb_label_init ();
+}
+
+void
+symbol_end (void)
+{
+  htab_delete (sy_hash);
 }
 
 void
@@ -3022,9 +3150,7 @@ print_symbol_value_1 (FILE *file, symbolS *sym)
   const char *name = S_GET_NAME (sym);
   if (!name || !name[0])
     name = "(unnamed)";
-  fprintf (file, "sym ");
-  fprintf_vma (file, (bfd_vma) (uintptr_t) sym);
-  fprintf (file, " %s", name);
+  fprintf (file, "sym %p %s", sym, name);
 
   if (sym->flags.local_symbol)
     {
@@ -3032,10 +3158,7 @@ print_symbol_value_1 (FILE *file, symbolS *sym)
 
       if (locsym->frag != &zero_address_frag
 	  && locsym->frag != NULL)
-	{
-	  fprintf (file, " frag ");
-	  fprintf_vma (file, (bfd_vma) (uintptr_t) locsym->frag);
-	}
+	fprintf (file, " frag %p", locsym->frag);
       if (locsym->flags.resolved)
 	fprintf (file, " resolved");
       fprintf (file, " local");
@@ -3043,10 +3166,7 @@ print_symbol_value_1 (FILE *file, symbolS *sym)
   else
     {
       if (sym->frag != &zero_address_frag)
-	{
-	  fprintf (file, " frag ");
-	  fprintf_vma (file, (bfd_vma) (uintptr_t) sym->frag);
-	}
+	fprintf (file, " frag %p", sym->frag);
       if (sym->flags.written)
 	fprintf (file, " written");
       if (sym->flags.resolved)
@@ -3120,9 +3240,7 @@ print_binary (FILE *file, const char *name, expressionS *exp)
 void
 print_expr_1 (FILE *file, expressionS *exp)
 {
-  fprintf (file, "expr ");
-  fprintf_vma (file, (bfd_vma) (uintptr_t) exp);
-  fprintf (file, " ");
+  fprintf (file, "expr %p ", exp);
   switch (exp->X_op)
     {
     case O_illegal:
@@ -3132,7 +3250,7 @@ print_expr_1 (FILE *file, expressionS *exp)
       fprintf (file, "absent");
       break;
     case O_constant:
-      fprintf (file, "constant %lx", (unsigned long) exp->X_add_number);
+      fprintf (file, "constant %" PRIx64, (uint64_t) exp->X_add_number);
       break;
     case O_symbol:
       indent_level++;
@@ -3141,8 +3259,8 @@ print_expr_1 (FILE *file, expressionS *exp)
       fprintf (file, ">");
     maybe_print_addnum:
       if (exp->X_add_number)
-	fprintf (file, "\n%*s%lx", indent_level * 4, "",
-		 (unsigned long) exp->X_add_number);
+	fprintf (file, "\n%*s%" PRIx64, indent_level * 4, "",
+		 (uint64_t) exp->X_add_number);
       indent_level--;
       break;
     case O_register:

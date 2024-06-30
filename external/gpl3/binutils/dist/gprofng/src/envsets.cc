@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -146,25 +146,53 @@ collect::putenv_libcollector_ld_misc ()
   // so that -agentlib:gp-collector works
   // and so that collect -F works with 32/64-bit mix of processes
 
-  // Set GPROFNG_PRELOAD_LIBDIRS
+  StringBuilder sb;
+  sb.append ("SP_COLLECTOR_LIBRARY_PATH=");
+  int len = sb.length ();
+  int cnt = 0;
+  char *fname;
   char *ev = getenv (GPROFNG_PRELOAD_LIBDIRS);
   char *libpath_list = NULL;
-  if (ev == NULL && settings->preload_libdirs == NULL)
+  if (ev)
+    { /* GPROFNG_PRELOAD_LIBDIRS is used only in the gprofng testing.
+       * Use these directories first.  */
+      ev = strdup (ev);
+      for (char *s = ev; s;)
+	{
+	  char *s1 = strchr (s, ':');
+	  if (s1)
+	    *(s1++) = 0;
+	  fname = dbe_sprintf ("%s/%s", s, LIBGP_COLLECTOR);
+	  if (access (fname, R_OK | F_OK) == 0)
+	    {
+	      if (++cnt != 1)
+		sb.append (':');
+	      sb.append (s);
+	    }
+	  free (fname);
+	  s = s1;
+	}
+      free (ev);
+      ev = NULL;
+    }
+  if (settings->preload_libdirs == NULL)
     {
       settings->read_rc (false);
       ev = settings->preload_libdirs;
     }
   ev = dbe_strdup (ev);
-  StringBuilder sb;
-  sb.appendf ("%s=", "SP_COLLECTOR_LIBRARY_PATH");
-  int len = sb.length ();
-  int cnt = 0;
+  fname = dbe_sprintf ("%s/%s/%s", LIBDIR, PACKAGE, LIBGP_COLLECTOR);
+  if (access (fname, R_OK | F_OK) == 0)
+    {
+      ++cnt;
+      sb.appendf ("%s/%s", LIBDIR, PACKAGE);
+    }
+  free (fname);
   for (char *s = ev; s;)
     {
       char *s1 = strchr (s, ':');
       if (s1)
 	*(s1++) = 0;
-      char *fname;
       if (*s == '/')
 	{
 	  fname = dbe_sprintf ("%s/%s/%s", s, PACKAGE, LIBGP_COLLECTOR);

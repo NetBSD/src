@@ -1,5 +1,5 @@
 /* ldctor.c -- constructor support routines
-   Copyright (C) 1991-2022 Free Software Foundation, Inc.
+   Copyright (C) 1991-2024 Free Software Foundation, Inc.
    By Steve Chamberlain <sac@cygnus.com>
 
    This file is part of the GNU Binutils.
@@ -20,6 +20,7 @@
    MA 02110-1301, USA.  */
 
 #include "sysdep.h"
+#include "libiberty.h"
 #include "bfd.h"
 #include "bfdlink.h"
 #include "safe-ctype.h"
@@ -352,11 +353,7 @@ ldctor_build_sets (void)
 		  print_nl ();
 		  len = 0;
 		}
-	      while (len < 20)
-		{
-		  print_space ();
-		  ++len;
-		}
+	      print_spaces (20 - len);
 
 	      if (e->name != NULL)
 		minfo ("%pT\n", e->name);

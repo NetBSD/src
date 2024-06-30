@@ -1,5 +1,5 @@
 /* IBM S/390-specific support for 64-bit ELF
-   Copyright (C) 2000-2022 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
    Contributed Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -2714,7 +2714,7 @@ elf_s390_relocate_section (bfd *output_bfd,
 	      /* This relocation gets optimized away by the local exec
 		 access optimization.  */
 	      BFD_ASSERT (! unresolved_reloc);
-	      bfd_put_64 (output_bfd, -tpoff (info, relocation),
+	      bfd_put_64 (output_bfd, -tpoff (info, relocation) + rel->r_addend,
 			  contents + rel->r_offset);
 	      continue;
 	    }
@@ -2907,7 +2907,7 @@ elf_s390_relocate_section (bfd *output_bfd,
 	  else
 	    {
 	      BFD_ASSERT (! unresolved_reloc);
-	      bfd_put_64 (output_bfd, -tpoff (info, relocation),
+	      bfd_put_64 (output_bfd, -tpoff (info, relocation) + rel->r_addend,
 			  contents + rel->r_offset);
 	    }
 	  continue;
@@ -3055,6 +3055,24 @@ elf_s390_relocate_section (bfd *output_bfd,
       if (r_type == R_390_PC24DBL
 	  || r_type == R_390_PLT24DBL)
 	rel->r_offset--;
+
+      /* Issue an error if the right shift implied by the relocation
+	 would drop bits from the symbol value.  */
+      if (howto->rightshift
+	  && (relocation & (((bfd_vma)1 << howto->rightshift) - 1)))
+	{
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("%pB(%pA+%#" PRIx64 "): "
+	       "misaligned symbol `%s' (%#" PRIx64 ") for relocation %s"),
+	     input_bfd,
+	     input_section,
+	     (uint64_t) rel->r_offset,
+	     h->root.root.string,
+	     (uint64_t)relocation,
+	     howto->name);
+	  return false;
+	}
 
       if (r_type == R_390_20
 	  || r_type == R_390_GOT20

@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -1169,7 +1169,7 @@ DbeSession::open_experiment (Experiment *exp, char *path)
       t_exp_list[j] = NULL;
 
       char *lineage_name = exp_names->fetch (j);
-      struct stat64 sbuf;
+      dbe_stat_t sbuf;
       char *dpath = dbe_sprintf (NTXT ("%s/%s"), path, lineage_name);
 
       // look for experiments with no profile collected

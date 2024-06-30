@@ -1,5 +1,102 @@
 -*- text -*-
 
+Changes in 2.42:
+
+* The objdump program has a new command line option -Z/--decompress which
+  changes the behaviour of the -s/--full-contents option, forcing it to
+  decompress the contents of any compressed section before they are displayed.
+
+  In addition when objdump is displaying sections headers (via the -h/--headers
+  command line option) it will now display "COMPRESSED" in the Flags field of
+  any compressed section.
+
+* The readelf program has a new command line option --extra-sym-info which
+  extends the information displayed by the --symbols option.  When enabled
+  the display will include the name of the section referenced by a symbol's
+  index field (st_shndx).  In the future more information may also be displayed
+  when this option is enabled.
+
+* objcopy --set-section-flags now supports "large" to set SHF_X86_64_LARGE
+  for ELF x86-64 objects.
+
+* objdump --visualize-jumps is now supported on s390 architecture.
+
+* The s390 disassembly now optionally includes the instruction description as
+  comment with the s390-specific disassembler option "insndesc":
+  - For objdump it can be enabled with "objdump -M insndesc ...".
+  - In gdb it can be enabled with "set disassembler-options insndesc".
+
+Changes in 2.41:
+
+* The MIPS port now supports the Sony Interactive Entertainment Allegrex
+  processor, used with the PlayStation Portable, which implements the MIPS
+  II ISA along with a single-precision FPU and a few implementation-specific
+  integer instructions.
+
+* Objdump's --private option can now be used on PE format files to display the
+  fields in the file header and section headers.
+
+* New versioned release of libsframe: libsframe.so.1.  This release introduces
+  versioned symbols with version node name LIBSFRAME_1.0.  This release also
+  updates the ABI in an incompatible way: this includes removal of
+  sframe_get_funcdesc_with_addr API, change in the behavior of
+  sframe_fre_get_ra_offset and sframe_fre_get_fp_offset APIs.
+
+* SFrame Version 2 is now the default (and only) format version supported by
+  gas, ld, readelf and objdump.
+  
+* Add command-line option, --strip-section-headers, to objcopy and strip to
+  remove ELF section header from ELF file.
+
+* The RISC-V port now supports the following new standard extensions:
+  - Zicond (conditional zero instructions)
+  - Zfa (additional floating-point instructions)
+  - Zvbb, Zvbc, Zvkg, Zvkned, Zvknh[ab], Zvksed, Zvksh, Zvkn, Zvknc, Zvkng,
+    Zvks, Zvksc, Zvkg, Zvkt (vector crypto instructions)
+
+* The RISC-V port now supports the following vendor-defined extensions:
+  - XVentanaCondOps
+
+* The LoongArch port now supports the following extensions:
+  - LSX (Loongson SIMD eXtension; 128-bit vectors)
+  - LASX (Loongson Advanced SIMD eXtension; 256-bit vectors)
+  - LVZ (Loongson Virtualization extension)
+  - LBT (Loongson Binary Translation extension)
+
+* The LoongArch disassembly output received the following tweaks:
+  - Colored output is now supported.
+  - Some pseudo-instructions are now shown in place of the canonical forms,
+    where semantics are equivalent. A disassembler option '-M no-aliases' is
+    added to disable the new behavior.
+  - Signed immediates are no longer printed with their hex representation.
+  - Unrecognized instruction words are now shown with '.word'.
+
+Changes in 2.40:
+
+* Objdump has a new command line option --show-all-symbols which will make it
+  display all symbols that match a given address when disassembling.  (Normally
+  only the first symbol that matches an address is shown).
+
+* Add --enable-colored-disassembly configure time option to enable colored
+  disassembly output by default, if the output device is a terminal.  Note,
+  this configure option is disabled by default.
+  
+* DCO signed contributions are now accepted.
+
+* objcopy --decompress-debug-sections now supports zstd compressed debug
+  sections.  The new option --compress-debug-sections=zstd compresses debug
+  sections with zstd.
+
+* addr2line and objdump --dwarf now support zstd compressed debug sections.
+
+* The dlltool program now accepts --deterministic-libraries and
+  --non-deterministic-libraries as command line options to control whether or
+  not it generates deterministic output libraries.  If neither of these options
+  are used the default is whatever was set when the binutils were configured.
+  
+* readelf and objdump now have a newly added option --sframe which dumps the
+  SFrame section.
+
 Changes in 2.39:
 
 * Add --no-weak/-W option to nm to make it ignore weak symbols.
@@ -850,7 +947,7 @@ Changes in binutils 2.1:
   and/or local symbols only.  They now also support long options.
 
 
-Copyright (C) 2012-2022 Free Software Foundation, Inc.
+Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

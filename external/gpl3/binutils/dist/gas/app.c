@@ -1,5 +1,5 @@
 /* This is the Assembler Pre-Processor
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -1536,4 +1536,17 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
   if (to > tostart)
     last_char = to[-1];
   return to - tostart;
+}
+
+/* Return amount of pending input.  */
+
+size_t
+do_scrub_pending (void)
+{
+  size_t len = 0;
+  if (saved_input)
+    len += saved_input_len;
+  if (state == -1)
+    len += strlen (out_string);
+  return len;
 }
