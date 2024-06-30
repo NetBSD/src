@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3069 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3070 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -440,3 +440,5 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	puc(4): Add support for a range of Brainboxes PCI serial cards,
 		from Cameron Williams.  [jakllsch 20240623]
 	OpenSSH: Import 9.6. [christos 20240625]
+	evbarm: Add support for Ampere Altra/Altra Max platforms.
+		[jmcneill 20240630]
