@@ -1159,9 +1159,27 @@
 {
   int i;
 
+  /* Generate a PARALLEL that contains all of the register results.
+     The offsets are somewhat arbitrary, since we don't know the
+     actual return type.  The main thing we need to avoid is having
+     overlapping byte ranges, since those might give the impression
+     that two registers are known to have data in common.  */
+  rtvec rets = rtvec_alloc (XVECLEN (operands[2], 0));
+  poly_int64 offset = 0;
+  for (i = 0; i < XVECLEN (operands[2], 0); i++)
+    {
+      rtx reg = SET_SRC (XVECEXP (operands[2], 0, i));
+      gcc_assert (REG_P (reg));
+      rtx offset_rtx = gen_int_mode (offset, Pmode);
+      rtx piece = gen_rtx_EXPR_LIST (VOIDmode, reg, offset_rtx);
+      RTVEC_ELT (rets, i) = piece;
+      offset += GET_MODE_SIZE (GET_MODE (reg));
+    }
+  rtx ret = gen_rtx_PARALLEL (VOIDmode, rets);
+
   /* Untyped calls always use the default ABI.  It's only possible to use
      ABI variants if we know the type of the target function.  */
-  emit_call_insn (gen_call (operands[0], const0_rtx, const0_rtx));
+  emit_call_insn (gen_call_value (ret, operands[0], const0_rtx, const0_rtx));
 
   for (i = 0; i < XVECLEN (operands[2], 0); i++)
     {
@@ -1627,7 +1645,22 @@
 }
 )
 
-(define_insn "aarch64_movmemdi"
+(define_expand "aarch64_movmemdi"
+  [(parallel
+     [(set (match_operand 2) (const_int 0))
+      (clobber (match_dup 3))
+      (clobber (match_dup 4))
+      (clobber (reg:CC CC_REGNUM))
+      (set (match_operand 0)
+	   (unspec:BLK [(match_operand 1) (match_dup 2)] UNSPEC_MOVMEM))])]
+  "TARGET_MOPS"
+  {
+    operands[3] = XEXP (operands[0], 0);
+    operands[4] = XEXP (operands[1], 0);
+  }
+)
+
+(define_insn "*aarch64_movmemdi"
   [(parallel [
    (set (match_operand:DI 2 "register_operand" "+&r") (const_int 0))
    (clobber (match_operand:DI 0 "register_operand" "+&r"))
@@ -1660,17 +1693,9 @@
        && INTVAL (sz_reg) < aarch64_mops_memmove_size_threshold)
      FAIL;
 
-   rtx addr_dst = XEXP (operands[0], 0);
-   rtx addr_src = XEXP (operands[1], 0);
-
-   if (!REG_P (sz_reg))
-     sz_reg = force_reg (DImode, sz_reg);
-   if (!REG_P (addr_dst))
-     addr_dst = force_reg (DImode, addr_dst);
-   if (!REG_P (addr_src))
-     addr_src = force_reg (DImode, addr_src);
-   emit_insn (gen_aarch64_movmemdi (addr_dst, addr_src, sz_reg));
-   DONE;
+  if (aarch64_expand_cpymem_mops (operands, true))
+    DONE;
+  FAIL;
 }
 )
 
@@ -1849,17 +1874,18 @@
   [(set_attr "type" "neon_load1_2reg")]
 )
 
-(define_insn "loadwb_pair<TX:mode>_<P:mode>"
+(define_insn "loadwb_pair<TX_V16QI:mode>_<P:mode>"
   [(parallel
     [(set (match_operand:P 0 "register_operand" "=k")
-          (plus:P (match_operand:P 1 "register_operand" "0")
-                  (match_operand:P 4 "aarch64_mem_pair_offset" "n")))
-     (set (match_operand:TX 2 "register_operand" "=w")
-          (mem:TX (match_dup 1)))
-     (set (match_operand:TX 3 "register_operand" "=w")
-          (mem:TX (plus:P (match_dup 1)
+	  (plus:P (match_operand:P 1 "register_operand" "0")
+		  (match_operand:P 4 "aarch64_mem_pair_offset" "n")))
+     (set (match_operand:TX_V16QI 2 "register_operand" "=w")
+	  (mem:TX_V16QI (match_dup 1)))
+     (set (match_operand:TX_V16QI 3 "register_operand" "=w")
+	  (mem:TX_V16QI (plus:P (match_dup 1)
 			  (match_operand:P 5 "const_int_operand" "n"))))])]
-  "TARGET_SIMD && INTVAL (operands[5]) == GET_MODE_SIZE (<TX:MODE>mode)"
+  "TARGET_SIMD
+   && known_eq (INTVAL (operands[5]), GET_MODE_SIZE (<TX_V16QI:MODE>mode))"
   "ldp\\t%q2, %q3, [%1], %4"
   [(set_attr "type" "neon_ldp_q")]
 )
@@ -1898,20 +1924,20 @@
   [(set_attr "type" "neon_store1_2reg<q>")]
 )
 
-(define_insn "storewb_pair<TX:mode>_<P:mode>"
+(define_insn "storewb_pair<TX_V16QI:mode>_<P:mode>"
   [(parallel
     [(set (match_operand:P 0 "register_operand" "=&k")
-          (plus:P (match_operand:P 1 "register_operand" "0")
-                  (match_operand:P 4 "aarch64_mem_pair_offset" "n")))
-     (set (mem:TX (plus:P (match_dup 0)
+	  (plus:P (match_operand:P 1 "register_operand" "0")
+		  (match_operand:P 4 "aarch64_mem_pair_offset" "n")))
+     (set (mem:TX_V16QI (plus:P (match_dup 0)
 			  (match_dup 4)))
-          (match_operand:TX 2 "register_operand" "w"))
-     (set (mem:TX (plus:P (match_dup 0)
+	  (match_operand:TX_V16QI 2 "register_operand" "w"))
+     (set (mem:TX_V16QI (plus:P (match_dup 0)
 			  (match_operand:P 5 "const_int_operand" "n")))
-          (match_operand:TX 3 "register_operand" "w"))])]
+	  (match_operand:TX_V16QI 3 "register_operand" "w"))])]
   "TARGET_SIMD
-   && INTVAL (operands[5])
-      == INTVAL (operands[4]) + GET_MODE_SIZE (<TX:MODE>mode)"
+   && known_eq (INTVAL (operands[5]),
+		INTVAL (operands[4]) + GET_MODE_SIZE (<TX_V16QI:MODE>mode))"
   "stp\\t%q2, %q3, [%0, %4]!"
   [(set_attr "type" "neon_stp_q")]
 )
@@ -7668,9 +7694,9 @@
 ;; Load/Store 64-bit (LS64) instructions.
 (define_insn "ld64b"
   [(set (match_operand:V8DI 0 "register_operand" "=r")
-        (unspec_volatile:V8DI
-          [(mem:V8DI (match_operand:DI 1 "register_operand" "r"))]
-            UNSPEC_LD64B)
+	(unspec_volatile:V8DI
+	  [(mem:V8DI (match_operand:DI 1 "register_operand" "r"))]
+	    UNSPEC_LD64B)
   )]
   "TARGET_LS64"
   "ld64b\\t%0, [%1]"
@@ -7678,9 +7704,9 @@
 )
 
 (define_insn "st64b"
-  [(set (mem:V8DI (match_operand:DI 0 "register_operand" "=r"))
-        (unspec_volatile:V8DI [(match_operand:V8DI 1 "register_operand" "r")]
-            UNSPEC_ST64B)
+  [(set (mem:V8DI (match_operand:DI 0 "register_operand" "r"))
+	(unspec_volatile:V8DI [(match_operand:V8DI 1 "register_operand" "r")]
+	    UNSPEC_ST64B)
   )]
   "TARGET_LS64"
   "st64b\\t%1, [%0]"
@@ -7689,10 +7715,10 @@
 
 (define_insn "st64bv"
   [(set (match_operand:DI 0 "register_operand" "=r")
-        (unspec_volatile:DI [(const_int 0)] UNSPEC_ST64BV_RET))
+	(unspec_volatile:DI [(const_int 0)] UNSPEC_ST64BV_RET))
    (set (mem:V8DI (match_operand:DI 1 "register_operand" "r"))
-        (unspec_volatile:V8DI [(match_operand:V8DI 2 "register_operand" "r")]
-            UNSPEC_ST64BV)
+	(unspec_volatile:V8DI [(match_operand:V8DI 2 "register_operand" "r")]
+	    UNSPEC_ST64BV)
   )]
   "TARGET_LS64"
   "st64bv\\t%0, %2, [%1]"
@@ -7701,10 +7727,10 @@
 
 (define_insn "st64bv0"
   [(set (match_operand:DI 0 "register_operand" "=r")
-        (unspec_volatile:DI [(const_int 0)] UNSPEC_ST64BV0_RET))
+	(unspec_volatile:DI [(const_int 0)] UNSPEC_ST64BV0_RET))
    (set (mem:V8DI (match_operand:DI 1 "register_operand" "r"))
-        (unspec_volatile:V8DI [(match_operand:V8DI 2 "register_operand" "r")]
-            UNSPEC_ST64BV0)
+	(unspec_volatile:V8DI [(match_operand:V8DI 2 "register_operand" "r")]
+	    UNSPEC_ST64BV0)
   )]
   "TARGET_LS64"
   "st64bv0\\t%0, %2, [%1]"

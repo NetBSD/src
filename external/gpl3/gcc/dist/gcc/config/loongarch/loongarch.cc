@@ -1008,7 +1008,8 @@ loongarch_save_restore_reg (machine_mode mode, int regno, HOST_WIDE_INT offset,
 
 static void
 loongarch_for_each_saved_reg (HOST_WIDE_INT sp_offset,
-			      loongarch_save_restore_fn fn)
+			      loongarch_save_restore_fn fn,
+			      bool skip_eh_data_regs_p)
 {
   HOST_WIDE_INT offset;
 
@@ -1017,7 +1018,15 @@ loongarch_for_each_saved_reg (HOST_WIDE_INT sp_offset,
   for (int regno = GP_REG_FIRST; regno <= GP_REG_LAST; regno++)
     if (BITSET_P (cfun->machine->frame.mask, regno - GP_REG_FIRST))
       {
-	loongarch_save_restore_reg (word_mode, regno, offset, fn);
+	/* Special care needs to be taken for $r4-$r7 (EH_RETURN_DATA_REGNO)
+	   when returning normally from a function that calls
+	   __builtin_eh_return.  In this case, these registers are saved but
+	   should not be restored, or the return value may be clobbered.  */
+
+	if (!(skip_eh_data_regs_p
+	      && GP_ARG_FIRST <= regno && regno < GP_ARG_FIRST + 4))
+	  loongarch_save_restore_reg (word_mode, regno, offset, fn);
+
 	offset -= UNITS_PER_WORD;
       }
 
@@ -1098,7 +1107,9 @@ loongarch_first_stack_step (struct loongarch_frame_info *frame)
 static void
 loongarch_emit_stack_tie (void)
 {
-  emit_insn (gen_stack_tie (Pmode, stack_pointer_rtx, hard_frame_pointer_rtx));
+  emit_insn (gen_stack_tie (Pmode, stack_pointer_rtx,
+			    frame_pointer_needed ? hard_frame_pointer_rtx
+			    : stack_pointer_rtx));
 }
 
 #define PROBE_INTERVAL (1 << STACK_CHECK_PROBE_INTERVAL_EXP)
@@ -1287,7 +1298,7 @@ loongarch_expand_prologue (void)
 			    GEN_INT (-step1));
       RTX_FRAME_RELATED_P (emit_insn (insn)) = 1;
       size -= step1;
-      loongarch_for_each_saved_reg (size, loongarch_save_reg);
+      loongarch_for_each_saved_reg (size, loongarch_save_reg, false);
     }
 
 
@@ -1334,11 +1345,13 @@ loongarch_can_use_return_insn (void)
   return reload_completed && cfun->machine->frame.total_size == 0;
 }
 
-/* Expand an "epilogue" or "sibcall_epilogue" pattern; SIBCALL_P
-   says which.  */
+/* Expand function epilogue using the following insn patterns:
+   "epilogue"	      (style == NORMAL_RETURN)
+   "sibcall_epilogue" (style == SIBCALL_RETURN)
+   "eh_return"	      (style == EXCEPTION_RETURN) */
 
 void
-loongarch_expand_epilogue (bool sibcall_p)
+loongarch_expand_epilogue (int style)
 {
   /* Split the frame into two.  STEP1 is the amount of stack we should
      deallocate before restoring the registers.  STEP2 is the amount we
@@ -1355,7 +1368,8 @@ loongarch_expand_epilogue (bool sibcall_p)
   bool need_barrier_p
     = (get_frame_size () + cfun->machine->frame.arg_pointer_offset) != 0;
 
-  if (!sibcall_p && loongarch_can_use_return_insn ())
+  /* Handle simple returns.  */
+  if (style == NORMAL_RETURN && loongarch_can_use_return_insn ())
     {
       emit_jump_insn (gen_return ());
       return;
@@ -1431,7 +1445,9 @@ loongarch_expand_epilogue (bool sibcall_p)
 
   /* Restore the registers.  */
   loongarch_for_each_saved_reg (frame->total_size - step2,
-				loongarch_restore_reg);
+				loongarch_restore_reg,
+				crtl->calls_eh_return
+				&& style != EXCEPTION_RETURN);
 
   if (need_barrier_p)
     loongarch_emit_stack_tie ();
@@ -1452,11 +1468,12 @@ loongarch_expand_epilogue (bool sibcall_p)
     }
 
   /* Add in the __builtin_eh_return stack adjustment.  */
-  if (crtl->calls_eh_return)
+  if (crtl->calls_eh_return && style == EXCEPTION_RETURN)
     emit_insn (gen_add3_insn (stack_pointer_rtx, stack_pointer_rtx,
 			      EH_RETURN_STACKADJ_RTX));
 
-  if (!sibcall_p)
+  /* Emit return unless doing sibcall.  */
+  if (style != SIBCALL_RETURN)
     emit_jump_insn (gen_simple_return_internal (ra));
 }
 
@@ -4319,27 +4336,27 @@ loongarch_memmodel_needs_rel_acq_fence (enum memmodel model)
     }
 }
 
-/* Return true if a FENCE should be emitted to before a memory access to
-   implement the release portion of memory model MODEL.  */
+/* Return true if a FENCE should be emitted after a failed CAS to
+   implement the acquire semantic of failure_memorder.  */
 
 static bool
-loongarch_memmodel_needs_release_fence (enum memmodel model)
+loongarch_cas_failure_memorder_needs_acquire (enum memmodel model)
 {
-  switch (model)
+  switch (memmodel_base (model))
     {
+    case MEMMODEL_ACQUIRE:
     case MEMMODEL_ACQ_REL:
     case MEMMODEL_SEQ_CST:
-    case MEMMODEL_SYNC_SEQ_CST:
-    case MEMMODEL_RELEASE:
-    case MEMMODEL_SYNC_RELEASE:
       return true;
 
-    case MEMMODEL_ACQUIRE:
-    case MEMMODEL_CONSUME:
-    case MEMMODEL_SYNC_ACQUIRE:
     case MEMMODEL_RELAXED:
+    case MEMMODEL_RELEASE:
       return false;
 
+    /* MEMMODEL_CONSUME is deliberately not handled because it's always
+       replaced by MEMMODEL_ACQUIRE as at now.  If you see an ICE caused by
+       MEMMODEL_CONSUME, read the change (re)introducing it carefully and
+       decide what to do.  See PR 59448 and get_memmodel in builtins.cc.  */
     default:
       gcc_unreachable ();
     }
@@ -4366,7 +4383,8 @@ loongarch_memmodel_needs_release_fence (enum memmodel model)
    'V'	Print exact log2 of CONST_INT OP element 0 of a replicated
 	  CONST_VECTOR in decimal.
    'A'	Print a _DB suffix if the memory model requires a release.
-   'G'	Print a DBAR insn if the memory model requires a release.
+   'G'	Print a DBAR insn for CAS failure (with an acquire semantic if
+	needed, otherwise a simple load-load barrier).
    'i'	Print i if the operand is not a register.  */
 
 static void
@@ -4487,8 +4505,11 @@ loongarch_print_operand (FILE *file, rtx op, int letter)
       break;
 
     case 'G':
-      if (loongarch_memmodel_needs_release_fence ((enum memmodel) INTVAL (op)))
-	fputs ("dbar\t0", file);
+      if (loongarch_cas_failure_memorder_needs_acquire (
+	    memmodel_from_int (INTVAL (op))))
+	fputs ("dbar\t0b10100", file);
+      else
+	fputs ("dbar\t0x700", file);
       break;
 
     case 'i':
@@ -5496,7 +5517,8 @@ loongarch_init_machine_status (void)
 }
 
 static void
-loongarch_option_override_internal (struct gcc_options *opts)
+loongarch_option_override_internal (struct gcc_options *opts,
+				    struct gcc_options *opts_set)
 {
   int i, regno, mode;
 
@@ -5507,6 +5529,8 @@ loongarch_option_override_internal (struct gcc_options *opts)
   loongarch_config_target (&la_target, la_opt_switches,
 			   la_opt_cpu_arch, la_opt_cpu_tune, la_opt_fpu,
 			   la_opt_abi_base, la_opt_abi_ext, la_opt_cmodel, 0);
+
+  loongarch_update_gcc_opt_status (&la_target, opts, opts_set);
 
   if (TARGET_ABI_LP64)
     flag_pcc_struct_return = 0;
@@ -5570,7 +5594,30 @@ loongarch_option_override_internal (struct gcc_options *opts)
 static void
 loongarch_option_override (void)
 {
-  loongarch_option_override_internal (&global_options);
+  loongarch_option_override_internal (&global_options, &global_options_set);
+}
+
+/* Implement TARGET_OPTION_SAVE.  */
+static void
+loongarch_option_save (struct cl_target_option *,
+		       struct gcc_options *opts,
+		       struct gcc_options *opts_set)
+{
+  loongarch_update_gcc_opt_status (&la_target, opts, opts_set);
+}
+
+/* Implement TARGET_OPTION_RESTORE.  */
+static void
+loongarch_option_restore (struct gcc_options *,
+			  struct gcc_options *,
+			  struct cl_target_option *ptr)
+{
+  la_target.cpu_arch = ptr->x_la_opt_cpu_arch;
+  la_target.cpu_tune = ptr->x_la_opt_cpu_tune;
+
+  la_target.isa.fpu = ptr->x_la_opt_fpu;
+
+  la_target.cmodel = ptr->x_la_opt_cmodel;
 }
 
 /* Implement TARGET_CONDITIONAL_REGISTER_USAGE.  */
@@ -5792,6 +5839,10 @@ loongarch_starting_frame_offset (void)
 
 #undef TARGET_OPTION_OVERRIDE
 #define TARGET_OPTION_OVERRIDE loongarch_option_override
+#define TARGET_OPTION_SAVE loongarch_option_save
+#undef TARGET_OPTION_RESTORE
+#define TARGET_OPTION_RESTORE loongarch_option_restore
+
 
 #undef TARGET_LEGITIMIZE_ADDRESS
 #define TARGET_LEGITIMIZE_ADDRESS loongarch_legitimize_address

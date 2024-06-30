@@ -1,3 +1,71 @@
+2024-06-20  Release Manager
+
+	* GCC 12.4.0 released.
+
+2024-06-11  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2024-02-22  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c/114007
+	* c-lex.cc (c_common_has_attribute): Parse 2 CPP_COLONs with
+	the first one with COLON_SCOPE flag the same as CPP_SCOPE but
+	ensure 0 is returned then.
+
+2024-06-11  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2024-01-09  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c/113262
+	* c-attribs.cc (handle_copy_attribute): Don't use
+	DECL_SOURCE_LOCATION (decl) if decl is not DECL_P, use input_location
+	instead.  Formatting fixes.
+
+2024-05-08  Andrew Pinski  <quic_apinski@quicinc.com>
+
+	Backported from master:
+	2024-05-07  Andrew Pinski  <quic_apinski@quicinc.com>
+
+	PR c++/89224
+	* c-common.cc (convert_vector_to_array_for_subscript): Call build_qualified_type
+	for the inner type.
+
+2024-01-27  Lewis Hyatt  <lhyatt@gmail.com>
+
+	PR preprocessor/105608
+	* c-pch.cc (c_common_read_pch): Start a new line map before asking
+	libcpp to restore macros defined prior to reading the PCH, instead
+	of afterward.
+
+2023-12-15  Richard Biener  <rguenther@suse.de>
+
+	Backported from master:
+	2023-08-31  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/111253
+	* c-pretty-print.cc (c_pretty_printer::primary_expression):
+	Only dump gimple_assign_single_p SSA def RHS.
+
+2023-05-19  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2023-05-15  Patrick Palka  <ppalka@redhat.com>
+
+	* c-cppbuiltin.cc (c_cpp_builtins): Predefine __cpp_auto_cast
+	for C++23.
+
+2023-05-09  Martin Uecker  <uecker@tugraz.at>
+
+	Backported from master:
+	2023-02-18  Martin Uecker  <uecker@tugraz.at>
+
+	PR c/105660
+	* c-attribs.cc (append_access_attr): Use order of arguments when
+	construction string.
+	(append_access_attr_idxs): Rename and make static.
+	* c-warn.cc (warn_parm_array_mismatch): Add assertion.
+
 2023-05-08  Release Manager
 
 	* GCC 12.3.0 released.

@@ -1,3 +1,48 @@
+2024-06-20  Release Manager
+
+	* GCC 12.4.0 released.
+
+2024-06-12  Andre Vieira  <andre.simoesdiasvieira@arm.com>
+
+	Backported from master:
+	2024-06-06  Andre Vieira  <andre.simoesdiasvieira@arm.com>
+
+	PR target/115360
+	* config/arm/cmse_nonsecure_call.S: Add .type and .size directives.
+
+2024-04-12  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backported from master:
+	2022-12-24  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* config/t-slibgcc-darwin (install-darwin-libgcc-stubs): Skip the
+	install of libgcc_s.1.dylib when the installation is into the build
+	gcc directory.
+
+2024-01-13  Sandra Loosemore  <sandra@codesourcery.com>
+
+	Backported from master:
+	2024-01-12  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* unwind-dw2-fde-dip.c (_Unwind_Find_FDE): Do not try to use
+	_dl_find_object on nios2; it doesn't work.
+
+2023-05-21  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backported from master:
+	2023-05-19  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* config.host: Arrange to set min Darwin OS versions from
+	the configured host version.
+	* config/darwin10-unwind-find-enc-func.c: Do not use current
+	headers, but declare the nexessary structures locally to the
+	versions in use for Mac OSX 10.6.
+	* config/t-darwin: Amend to handle configured min OS
+	versions.
+	* config/t-darwin-min-1: New.
+	* config/t-darwin-min-5: New.
+	* config/t-darwin-min-8: New.
+
 2023-05-08  Release Manager
 
 	* GCC 12.3.0 released.

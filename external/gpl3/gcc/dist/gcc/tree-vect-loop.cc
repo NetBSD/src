@@ -2874,7 +2874,7 @@ vect_analyze_loop_1 (class loop *loop, vec_info_shared *shared,
 		     res ? "succeeded" : " failed",
 		     GET_MODE_NAME (loop_vinfo->vector_mode));
 
-  if (!main_loop_vinfo && suggested_unroll_factor > 1)
+  if (res && !main_loop_vinfo && suggested_unroll_factor > 1)
     {
       if (dump_enabled_p ())
 	dump_printf_loc (MSG_NOTE, vect_location,
@@ -3513,24 +3513,15 @@ pop:
 	 ???  We could relax this and handle arbitrary live stmts by
 	 forcing a scalar epilogue for example.  */
       imm_use_iterator imm_iter;
+      use_operand_p use_p;
       gimple *op_use_stmt;
       unsigned cnt = 0;
       FOR_EACH_IMM_USE_STMT (op_use_stmt, imm_iter, op.ops[opi])
 	if (!is_gimple_debug (op_use_stmt)
 	    && (*code != ERROR_MARK
 		|| flow_bb_inside_loop_p (loop, gimple_bb (op_use_stmt))))
-	  {
-	    /* We want to allow x + x but not x < 1 ? x : 2.  */
-	    if (is_gimple_assign (op_use_stmt)
-		&& gimple_assign_rhs_code (op_use_stmt) == COND_EXPR)
-	      {
-		use_operand_p use_p;
-		FOR_EACH_IMM_USE_ON_STMT (use_p, imm_iter)
-		  cnt++;
-	      }
-	    else
-	      cnt++;
-	  }
+	  FOR_EACH_IMM_USE_ON_STMT (use_p, imm_iter)
+	    cnt++;
       if (cnt != 1)
 	{
 	  fail = true;
@@ -6859,17 +6850,18 @@ vectorizable_reduction (loop_vec_info loop_vinfo,
 		  < GET_MODE_SIZE (SCALAR_TYPE_MODE (TREE_TYPE (vectype_op[i]))))))
 	vectype_in = vectype_op[i];
 
-      if (op.code == COND_EXPR)
+      /* Record how the non-reduction-def value of COND_EXPR is defined.
+	 ???  For a chain of multiple CONDs we'd have to match them up all.  */
+      if (op.code == COND_EXPR && reduc_chain_length == 1)
 	{
-	  /* Record how the non-reduction-def value of COND_EXPR is defined.  */
 	  if (dt == vect_constant_def)
 	    {
 	      cond_reduc_dt = dt;
 	      cond_reduc_val = op.ops[i];
 	    }
-	  if (dt == vect_induction_def
-	      && def_stmt_info
-	      && is_nonwrapping_integer_induction (def_stmt_info, loop))
+	  else if (dt == vect_induction_def
+		   && def_stmt_info
+		   && is_nonwrapping_integer_induction (def_stmt_info, loop))
 	    {
 	      cond_reduc_dt = dt;
 	      cond_stmt_vinfo = def_stmt_info;
@@ -8219,6 +8211,15 @@ vectorizable_induction (loop_vec_info loop_vinfo,
 
   step_expr = STMT_VINFO_LOOP_PHI_EVOLUTION_PART (stmt_info);
   gcc_assert (step_expr != NULL_TREE);
+  if (INTEGRAL_TYPE_P (TREE_TYPE (step_expr))
+      && !type_has_mode_precision_p (TREE_TYPE (step_expr)))
+    {
+      if (dump_enabled_p ())
+	dump_printf_loc (MSG_MISSED_OPTIMIZATION, vect_location,
+			 "bit-precision induction vectorization not "
+			 "supported.\n");
+      return false;
+    }
   tree step_vectype = get_same_sized_vectype (TREE_TYPE (step_expr), vectype);
 
   /* Check for backend support of PLUS/MINUS_EXPR. */
@@ -9498,9 +9499,7 @@ find_in_mapping (tree t, void *context)
    corresponding dr_vec_info need to be reconnected to the EPILOGUE's
    stmt_vec_infos, their statements need to point to their corresponding copy,
    if they are gather loads or scatter stores then their reference needs to be
-   updated to point to its corresponding copy and finally we set
-   'base_misaligned' to false as we have already peeled for alignment in the
-   prologue of the main loop.  */
+   updated to point to its corresponding copy.  */
 
 static void
 update_epilogue_loop_vinfo (class loop *epilogue, tree advance)
@@ -9641,10 +9640,6 @@ update_epilogue_loop_vinfo (class loop *epilogue, tree advance)
 	}
       DR_STMT (dr) = STMT_VINFO_STMT (stmt_vinfo);
       stmt_vinfo->dr_aux.stmt = stmt_vinfo;
-      /* The vector size of the epilogue is smaller than that of the main loop
-	 so the alignment is either the same or lower. This means the dr will
-	 thus by definition be aligned.  */
-      STMT_VINFO_DR_INFO (stmt_vinfo)->base_misaligned = false;
     }
 
   epilogue_vinfo->shared->datarefs_copy.release ();

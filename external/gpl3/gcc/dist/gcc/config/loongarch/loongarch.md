@@ -93,9 +93,15 @@
 
 (define_constants
   [(RETURN_ADDR_REGNUM		1)
+   (TP_REGNUM			2)
    (T0_REGNUM			12)
    (T1_REGNUM			13)
    (S0_REGNUM			23)
+
+   ;; Return path styles
+   (NORMAL_RETURN		0)
+   (SIBCALL_RETURN		1)
+   (EXCEPTION_RETURN		2)
 
    ;; PIC long branch sequences are never longer than 100 bytes.
    (MAX_PIC_BRANCH_LENGTH	100)
@@ -2622,6 +2628,10 @@
 }
   [(set_attr "type" "branch")])
 
+;; Micro-architecture unconditionally treats a "jr $ra" as "return from subroutine",
+;; non-returning indirect jumps through $ra would interfere with both subroutine
+;; return prediction and the more general indirect branch prediction.
+
 (define_expand "indirect_jump"
   [(set (pc) (match_operand 0 "register_operand"))]
   ""
@@ -2632,7 +2642,7 @@
 })
 
 (define_insn "@indirect_jump<mode>"
-  [(set (pc) (match_operand:P 0 "register_operand" "r"))]
+  [(set (pc) (match_operand:P 0 "register_operand" "e"))]
   ""
   "jr\t%0"
   [(set_attr "type" "jump")
@@ -2655,7 +2665,7 @@
 
 (define_insn "@tablejump<mode>"
   [(set (pc)
-	(match_operand:P 0 "register_operand" "r"))
+	(match_operand:P 0 "register_operand" "e"))
    (use (label_ref (match_operand 1 "" "")))]
   ""
   "jr\t%0"
@@ -2710,7 +2720,7 @@
   [(const_int 2)]
   ""
 {
-  loongarch_expand_epilogue (false);
+  loongarch_expand_epilogue (NORMAL_RETURN);
   DONE;
 })
 
@@ -2718,7 +2728,7 @@
   [(const_int 2)]
   ""
 {
-  loongarch_expand_epilogue (true);
+  loongarch_expand_epilogue (SIBCALL_RETURN);
   DONE;
 })
 
@@ -2775,6 +2785,20 @@
     emit_insn (gen_eh_set_ra_di (operands[0]));
   else
     emit_insn (gen_eh_set_ra_si (operands[0]));
+
+  emit_jump_insn (gen_eh_return_internal ());
+  emit_barrier ();
+  DONE;
+})
+
+(define_insn_and_split "eh_return_internal"
+  [(eh_return)]
+  ""
+  "#"
+  "epilogue_completed"
+  [(const_int 0)]
+{
+  loongarch_expand_epilogue (EXCEPTION_RETURN);
   DONE;
 })
 
@@ -3291,6 +3315,12 @@
   [(set_attr "length" "0")
    (set_attr "type" "ghost")])
 
+;; Named pattern for expanding thread pointer reference.
+(define_expand "get_thread_pointer<mode>"
+  [(set (match_operand:P 0 "register_operand" "=r")
+	(reg:P TP_REGNUM))]
+  "HAVE_AS_TLS"
+  {})
 
 (define_split
   [(match_operand 0 "small_data_pattern")]

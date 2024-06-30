@@ -965,8 +965,8 @@ resolve_common_vars (gfc_common_head *common_block, bool named_common)
 
       /* gfc_add_in_common may have been called before, but the reported errors
 	 have been ignored to continue parsing.
-	 We do the checks again here.  */
-      if (!csym->attr.use_assoc)
+	 We do the checks again here, unless the symbol is USE associated.  */
+      if (!csym->attr.use_assoc && !csym->attr.used_in_submodule)
 	{
 	  gfc_add_in_common (&csym->attr, csym->name, &common_block->where);
 	  gfc_notify_std (GFC_STD_F2018_OBS, "COMMON block at %L",
@@ -5461,7 +5461,9 @@ gfc_resolve_ref (gfc_expr *expr)
 	case REF_INQUIRY:
 	  /* Implement requirement in note 9.7 of F2018 that the result of the
 	     LEN inquiry be a scalar.  */
-	  if (ref->u.i == INQUIRY_LEN && array_ref && expr->ts.deferred)
+	  if (ref->u.i == INQUIRY_LEN && array_ref
+	      && ((expr->ts.type == BT_CHARACTER && !expr->ts.u.cl->length)
+		  || expr->ts.type == BT_INTEGER))
 	    {
 	      array_ref->u.ar.type = AR_ELEMENT;
 	      expr->rank = 0;
@@ -9923,11 +9925,6 @@ resolve_select_rank (gfc_code *code, gfc_namespace *old_ns)
 			       || gfc_expr_attr (code->expr1).pointer))
 	gfc_error ("RANK (*) at %L cannot be used with the pointer or "
 		   "allocatable selector at %L", &c->where, &code->expr1->where);
-
-      if (case_value == -1 && (gfc_expr_attr (code->expr1).allocatable
-			       || gfc_expr_attr (code->expr1).pointer))
-	gfc_error ("RANK (*) at %L cannot be used with the pointer or "
-		   "allocatable selector at %L", &c->where, &code->expr1->where);
     }
 
   /* Add EXEC_SELECT to switch on rank.  */
@@ -12913,7 +12910,10 @@ resolve_fl_var_and_proc (gfc_symbol *sym, int mp_flag)
 
       if (allocatable)
 	{
-	  if (dimension && as->type != AS_ASSUMED_RANK)
+	  if (dimension
+	      && as
+	      && as->type != AS_ASSUMED_RANK
+	      && !sym->attr.select_rank_temporary)
 	    {
 	      gfc_error ("Allocatable array %qs at %L must have a deferred "
 			 "shape or assumed rank", sym->name, &sym->declared_at);
