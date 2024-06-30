@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1123 2024/06/30 11:44:14 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1124 2024/06/30 13:01:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1123 2024/06/30 11:44:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1124 2024/06/30 13:01:01 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -262,6 +262,9 @@ typedef struct SepBuf {
 typedef enum {
 	VSK_TARGET,
 	VSK_VARNAME,
+	VSK_COND,
+	VSK_COND_THEN,
+	VSK_COND_ELSE,
 	VSK_EXPR
 } EvalStackElementKind;
 
@@ -375,11 +378,17 @@ EvalStack_Details(void)
 
 	buf->len = 0;
 	for (i = 0; i < evalStack.len; i++) {
+		static const char descr[][42] = {
+			"in target",
+			"while evaluating variable",
+			"while evaluating condition",
+			"while evaluating then-branch of condition",
+			"while evaluating else-branch of condition",
+			"while evaluating",
+		};
 		EvalStackElement *elem = evalStack.elems + i;
-		Buf_AddStr(buf,
-		    elem->kind == VSK_TARGET ? "in target \"" :
-		    elem->kind == VSK_EXPR ? "while evaluating \"" :
-		    "while evaluating variable \"");
+		Buf_AddStr(buf, descr[elem->kind]);
+		Buf_AddStr(buf, " \"");
 		Buf_AddStr(buf, elem->str);
 		Buf_AddStr(buf, "\": ");
 	}
@@ -3443,6 +3452,7 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 
 	CondResult cond_rc = CR_TRUE;	/* just not CR_ERROR */
 	if (Expr_ShouldEval(expr)) {
+		evalStack.elems[evalStack.len - 1].kind = VSK_COND;
 		cond_rc = Cond_EvalCondition(expr->name);
 		if (cond_rc == CR_TRUE)
 			then_emode = expr->emode;
@@ -3450,11 +3460,13 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 			else_emode = expr->emode;
 	}
 
+	evalStack.elems[evalStack.len - 1].kind = VSK_COND_THEN;
 	(*pp)++;		/* skip past the '?' */
 	if (!ParseModifierPart(pp, ':', ':', then_emode,
 	    ch, &thenBuf, NULL, NULL))
 		return AMR_CLEANUP;
 
+	evalStack.elems[evalStack.len - 1].kind = VSK_COND_ELSE;
 	if (!ParseModifierPart(pp, ch->endc, ch->endc, else_emode,
 	    ch, &elseBuf, NULL, NULL)) {
 		LazyBuf_Done(&thenBuf);
@@ -3464,12 +3476,8 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 	(*pp)--;		/* Go back to the ch->endc. */
 
 	if (cond_rc == CR_ERROR) {
-		Substring thenExpr = LazyBuf_Get(&thenBuf);
-		Substring elseExpr = LazyBuf_Get(&elseBuf);
-		Error("Bad conditional expression '%s' before '?%.*s:%.*s'",
-		    expr->name,
-		    (int)Substring_Length(thenExpr), thenExpr.start,
-		    (int)Substring_Length(elseExpr), elseExpr.start);
+		evalStack.elems[evalStack.len - 1].kind = VSK_COND;
+		Parse_Error(PARSE_FATAL, "Bad condition");
 		LazyBuf_Done(&thenBuf);
 		LazyBuf_Done(&elseBuf);
 		return AMR_CLEANUP;

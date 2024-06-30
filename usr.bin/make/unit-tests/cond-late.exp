@@ -1,4 +1,6 @@
-make: Bad conditional expression ' != "no"' before '?:'
+make: "cond-late.mk" line 38: while evaluating variable "VAR": while evaluating condition " != "no"": Bad condition
+make: Fatal errors encountered -- cannot continue
+make: stopped in unit-tests
 yes
 no
 exit status 0
