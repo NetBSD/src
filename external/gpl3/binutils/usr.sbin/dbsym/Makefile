@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2016/01/26 19:37:49 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2024/06/30 16:10:22 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -14,11 +14,14 @@ CPPFLAGS+=	-I${DIST}/bfd -I${DIST}/binutils -I${DIST}/include
 
 .if !defined(HOSTPROG)
 PROGDPLIBS+=	bfd	${TOP}/${BFDSUBDIR}/libbfd
+PROGDPLIBS+=	sframe	${TOP}/${BFDSUBDIR}/libsframe
 PROGDPLIBS+=	iberty	${TOP}/${BFDSUBDIR}/libiberty
 .else
 CPPFLAGS+=	-I${BFDDIR}
 DPADD+=		${BFDDIR}/libbfd.a
 LDADD+=		-L${BFDDIR} -lbfd
+DPADD+=		${SFRAMEDIR}/libsframe.a
+LDADD+=		-L${SFRAMEDIR} -lsframe
 DPADD+=		${IBERTYDIR}/libiberty.a
 LDADD+=		-L${IBERTYDIR} -liberty
 .endif
