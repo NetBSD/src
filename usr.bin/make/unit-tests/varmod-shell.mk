@@ -1,4 +1,4 @@
-# $NetBSD: varmod-shell.mk,v 1.7 2022/01/10 20:32:29 rillig Exp $
+# $NetBSD: varmod-shell.mk,v 1.8 2024/06/30 11:00:06 rillig Exp $
 #
 # Tests for the ':!cmd!' variable modifier, which runs the shell command
 # given by the variable modifier and returns its output.
@@ -21,16 +21,20 @@
 # Between 2000-04-29 and 2020-11-17, the error message mentioned the previous
 # value of the expression (which is usually an empty string) instead of the
 # command that was executed.
+# expect+1: warning: while evaluating "${:!echo word; false!} != "word"": "echo word; false" returned non-zero status
 .if ${:!echo word; false!} != "word"
 .  error
 .endif
+# expect+1: warning: while evaluating "${:Uprevious value:!echo word; false!} != "word"": "echo word; false" returned non-zero status
 .if ${:Uprevious value:!echo word; false!} != "word"
 .  error
 .endif
 
 
-.MAKEFLAGS: -dv			# to see the actual command
+.MAKEFLAGS: -dv			# to see the "Capturing" debug output
+# expect+1: warning: while evaluating "${:!echo word; ${:Ufalse}!}": "echo word; false" returned non-zero status
 _:=	${:!echo word; ${:Ufalse}!}
 .MAKEFLAGS: -d0
+
 
 all:

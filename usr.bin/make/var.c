@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1121 2024/06/15 22:06:30 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1122 2024/06/30 11:00:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1121 2024/06/15 22:06:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1122 2024/06/30 11:00:06 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2632,8 +2632,7 @@ ApplyModifier_ShellCommand(const char **pp, ModChain *ch)
 		output = Cmd_Exec(cmd.str, &error);
 		Expr_SetValueOwn(expr, output);
 		if (error != NULL) {
-			/* XXX: why still return AMR_OK? */
-			Error("%s", error);
+			Parse_Error(PARSE_WARNING, "%s", error);
 			free(error);
 		}
 	} else
@@ -3746,7 +3745,7 @@ ApplyModifier_SunShell(const char **pp, ModChain *ch)
 		char *output, *error;
 		output = Cmd_Exec(Expr_Str(expr), &error);
 		if (error != NULL) {
-			Error("%s", error);
+			Parse_Error(PARSE_WARNING, "%s", error);
 			free(error);
 		}
 		Expr_SetValueOwn(expr, output);

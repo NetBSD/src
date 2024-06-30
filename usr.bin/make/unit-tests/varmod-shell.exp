@@ -1,11 +1,11 @@
-make: "echo word; false" returned non-zero status
-make: "echo word; false" returned non-zero status
+make: "varmod-shell.mk" line 25: warning: while evaluating "${:!echo word; false!} != "word"": "echo word; false" returned non-zero status
+make: "varmod-shell.mk" line 29: warning: while evaluating "${:Uprevious value:!echo word; false!} != "word"": "echo word; false" returned non-zero status
 Global: _ = # (empty)
 Var_Parse: ${:!echo word; ${:Ufalse}!} (eval-keep-dollar-and-undefined)
 Evaluating modifier ${:!...} on value "" (eval-keep-dollar-and-undefined, undefined)
 Modifier part: "echo word; false"
 Capturing the output of command "echo word; false"
-make: "echo word; false" returned non-zero status
+make: "varmod-shell.mk" line 36: warning: while evaluating "${:!echo word; ${:Ufalse}!}": "echo word; false" returned non-zero status
 Result of ${:!echo word; ${:Ufalse}!} is "word" (eval-keep-dollar-and-undefined, defined)
 Global: _ = word
 Global: .MAKEFLAGS =  -r -k -d v -d
