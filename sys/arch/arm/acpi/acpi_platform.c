@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.36 2023/04/07 08:55:29 skrll Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.37 2024/06/30 17:58:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.36 2023/04/07 08:55:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.37 2024/06/30 17:58:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.36 2023/04/07 08:55:29 skrll Exp
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <arm/acpi/acpi_table.h>
+#include <dev/acpi/acpi_srat.h>
 
 #include <libfdt.h>
 
@@ -391,6 +392,14 @@ spcr_unmap:
 }
 
 static void
+acpi_platform_device_register_post_config(device_t self, void *aux)
+{
+	if (device_is_a(self, "acpi")) {
+		acpisrat_load_uvm();
+	}
+}
+
+static void
 acpi_platform_reset(void)
 {
 #ifdef EFI_RUNTIME
@@ -413,6 +422,7 @@ static const struct fdt_platform acpi_platform = {
 	.fp_startup = acpi_platform_startup,
 	.fp_init_attach_args = acpi_platform_init_attach_args,
 	.fp_device_register = acpi_platform_device_register,
+	.fp_device_register_post_config = acpi_platform_device_register_post_config,
 	.fp_reset = acpi_platform_reset,
 	.fp_delay = gtmr_delay,
 	.fp_uart_freq = acpi_platform_uart_freq,

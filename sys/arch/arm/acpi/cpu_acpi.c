@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_acpi.c,v 1.15 2024/05/09 12:41:08 pho Exp $ */
+/* $NetBSD: cpu_acpi.c,v 1.16 2024/06/30 17:58:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.15 2024/05/09 12:41:08 pho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.16 2024/06/30 17:58:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.15 2024/05/09 12:41:08 pho Exp $");
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_srat.h>
 
 #include <arm/armreg.h>
 #include <arm/cpu.h>
@@ -100,6 +101,7 @@ cpu_acpi_attach(device_t parent, device_t self, void *aux)
 	const uint64_t mpidr = gicc->ArmMpidr;
 	const int unit = device_unit(self);
 	struct cpu_info *ci = &cpu_info_store[unit];
+	struct acpisrat_node *node;
 
 #ifdef MULTIPROCESSOR
 	if (cpu_mpidr_aff_read() != mpidr && (boothowto & RB_MD1) == 0) {
@@ -132,6 +134,15 @@ cpu_acpi_attach(device_t parent, device_t self, void *aux)
 
 	/* Store the ACPI Processor UID in cpu_info */
 	ci->ci_acpiid = gicc->Uid;
+
+	/* Scan SRAT for NUMA info. */
+	if (cpu_mpidr_aff_read() == mpidr) {
+		acpisrat_init();
+	}
+	node = acpisrat_get_node(gicc->Uid);
+	if (node != NULL) {
+		ci->ci_numa_id = node->nodeid;
+	}
 
 	/* Attach the CPU */
 	cpu_attach(self, mpidr);
