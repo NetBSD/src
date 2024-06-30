@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.58 2021/09/09 20:24:07 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.59 2024/06/30 17:11:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.58 2021/09/09 20:24:07 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.59 2024/06/30 17:11:27 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1155,6 +1155,10 @@ re_fastaddc(EditLine *el)
 	wchar_t c;
 	int rhdiff;
 
+	if (el->el_line.cursor == el->el_line.buffer) {
+		re_refresh(el);
+		return;
+	}
 	c = el->el_line.cursor[-1];
 
 	if (c == '\t' || el->el_line.cursor != el->el_line.lastchar) {
