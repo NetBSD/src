@@ -80,8 +80,6 @@ darwin_gt_pch_get_address (size_t sz, int fd)
   if (addr == (void *) TRY_EMPTY_VM_SPACE)
     return addr;
 
-
-const struct host_hooks host_hooks = HOST_HOOKS_INITIALIZER;
   /* OK try to find a space without the constraint.  */
   addr = mmap ((void *) TRY_EMPTY_VM_SPACE, sz, PROT_READ | PROT_WRITE,
 	       MAP_PRIVATE, fd, 0);
@@ -185,3 +183,5 @@ darwin_gt_pch_use_address (void *&addr, size_t sz, int fd, size_t off)
 
   return 1;
 }
+
+const struct host_hooks host_hooks = HOST_HOOKS_INITIALIZER;

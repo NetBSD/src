@@ -49,6 +49,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-cfg.h"
 #include "gimple-fold.h"
 #include "varasm.h"
+#include "target.h"
 #include "file-prefix-map.h"
 
 /* Map from a tree to a VAR_DECL tree.  */
@@ -786,6 +787,13 @@ ubsan_expand_null_ifn (gimple_stmt_iterator *gsip)
 	}
     }
   check_null = sanitize_flags_p (SANITIZE_NULL);
+  if (check_null && POINTER_TYPE_P (TREE_TYPE (ptr)))
+    {
+      addr_space_t as = TYPE_ADDR_SPACE (TREE_TYPE (TREE_TYPE (ptr)));
+      if (!ADDR_SPACE_GENERIC_P (as)
+	  && targetm.addr_space.zero_address_valid (as))
+	check_null = false;
+    }
 
   if (check_align == NULL_TREE && !check_null)
     {
@@ -1377,8 +1385,15 @@ instrument_mem_ref (tree mem, tree base, gimple_stmt_iterator *iter,
       if (align <= 1)
 	align = 0;
     }
-  if (align == 0 && !sanitize_flags_p (SANITIZE_NULL))
-    return;
+  if (align == 0)
+    {
+      if (!sanitize_flags_p (SANITIZE_NULL))
+	return;
+      addr_space_t as = TYPE_ADDR_SPACE (TREE_TYPE (base));
+      if (!ADDR_SPACE_GENERIC_P (as)
+	  && targetm.addr_space.zero_address_valid (as))
+	return;
+    }
   tree t = TREE_OPERAND (base, 0);
   if (!POINTER_TYPE_P (TREE_TYPE (t)))
     return;
@@ -1690,13 +1705,17 @@ instrument_bool_enum_load (gimple_stmt_iterator *gsi)
       || TREE_CODE (gimple_assign_lhs (stmt)) != SSA_NAME)
     return;
 
+  addr_space_t as = TYPE_ADDR_SPACE (TREE_TYPE (rhs));
+  if (as != TYPE_ADDR_SPACE (utype))
+    utype = build_qualified_type (utype, TYPE_QUALS (utype)
+					 | ENCODE_QUAL_ADDR_SPACE (as));
   bool ends_bb = stmt_ends_bb_p (stmt);
   location_t loc = gimple_location (stmt);
   tree lhs = gimple_assign_lhs (stmt);
   tree ptype = build_pointer_type (TREE_TYPE (rhs));
   tree atype = reference_alias_ptr_type (rhs);
   gimple *g = gimple_build_assign (make_ssa_name (ptype),
-				  build_fold_addr_expr (rhs));
+				   build_fold_addr_expr (rhs));
   gimple_set_location (g, loc);
   gsi_insert_before (gsi, g, GSI_SAME_STMT);
   tree mem = build2 (MEM_REF, utype, gimple_assign_lhs (g),

@@ -1,6 +1,6 @@
 /* Definitions for AArch64 running NetBSD
    Copyright (C) 2016-2022 Free Software Foundation, Inc.
-   Contributed by Matthew Green (mrg@eterna.com.au) and Christos Zoulas
+   Contributed by Matthew Green (mrg@eterna23.net) and Christos Zoulas
    (christos@NetBSD.org.)
 
    This file is part of GCC.

@@ -3826,11 +3826,10 @@ rs6000_option_override_internal (bool global_init_p)
 		 "-mmultiple");
     }
 
-  /* If little-endian, default to -mstrict-align on older processors.
-     Testing for direct_move matches power8 and later.  */
+  /* If little-endian, default to -mstrict-align on older processors.  */
   if (!BYTES_BIG_ENDIAN
       && !(processor_target_table[tune_index].target_enable
-	   & OPTION_MASK_DIRECT_MOVE))
+	   & OPTION_MASK_POWER8))
     rs6000_isa_flags |= ~rs6000_isa_flags_explicit & OPTION_MASK_STRICT_ALIGN;
 
   /* Add some warnings for VSX.  */
@@ -3872,8 +3871,7 @@ rs6000_option_override_internal (bool global_init_p)
       && (rs6000_isa_flags_explicit & (OPTION_MASK_SOFT_FLOAT
 				       | OPTION_MASK_ALTIVEC
 				       | OPTION_MASK_VSX)) != 0)
-    rs6000_isa_flags &= ~((OPTION_MASK_P8_VECTOR | OPTION_MASK_CRYPTO
-			   | OPTION_MASK_DIRECT_MOVE)
+    rs6000_isa_flags &= ~((OPTION_MASK_P8_VECTOR | OPTION_MASK_CRYPTO)
 		         & ~rs6000_isa_flags_explicit);
 
   if (TARGET_DEBUG_REG || TARGET_DEBUG_TARGET)
@@ -3917,7 +3915,7 @@ rs6000_option_override_internal (bool global_init_p)
       else
 	rs6000_isa_flags |= ISA_3_0_MASKS_SERVER;
     }
-  else if (TARGET_P8_VECTOR || TARGET_DIRECT_MOVE || TARGET_CRYPTO)
+  else if (TARGET_P8_VECTOR || TARGET_POWER8 || TARGET_CRYPTO)
     rs6000_isa_flags |= (ISA_2_7_MASKS_SERVER & ~ignore_masks);
   else if (TARGET_VSX)
     rs6000_isa_flags |= (ISA_2_6_MASKS_SERVER & ~ignore_masks);
@@ -3956,13 +3954,6 @@ rs6000_option_override_internal (bool global_init_p)
 	/* TARGET_VSX = 1 implies Power 7 and newer */
 	error ("%qs requires %qs", "-mvsx", "-mfprnd");
       rs6000_isa_flags &= ~OPTION_MASK_FPRND;
-    }
-
-  if (TARGET_DIRECT_MOVE && !TARGET_VSX)
-    {
-      if (rs6000_isa_flags_explicit & OPTION_MASK_DIRECT_MOVE)
-	error ("%qs requires %qs", "-mdirect-move", "-mvsx");
-      rs6000_isa_flags &= ~OPTION_MASK_DIRECT_MOVE;
     }
 
   if (TARGET_P8_VECTOR && !TARGET_ALTIVEC)
@@ -8128,7 +8119,8 @@ darwin_rs6000_special_round_type_align (tree type, unsigned int computed,
       type = TREE_TYPE (type);
   } while (AGGREGATE_TYPE_P (type));
 
-  if (! AGGREGATE_TYPE_P (type) && type != error_mark_node)
+  if (type != error_mark_node && ! AGGREGATE_TYPE_P (type)
+      && ! TYPE_PACKED (type) && maximum_field_alignment == 0)
     align = MAX (align, TYPE_ALIGN (type));
 
   return align;
@@ -17116,7 +17108,7 @@ output_toc (FILE *file, rtx x, int labelno, machine_mode mode)
       if (DECIMAL_FLOAT_MODE_P (GET_MODE (x)))
 	REAL_VALUE_TO_TARGET_DECIMAL128 (*CONST_DOUBLE_REAL_VALUE (x), k);
       else
-	REAL_VALUE_TO_TARGET_LONG_DOUBLE (*CONST_DOUBLE_REAL_VALUE (x), k);
+	real_to_target (k, CONST_DOUBLE_REAL_VALUE (x), GET_MODE (x));
 
       if (TARGET_64BIT)
 	{
@@ -21910,7 +21902,9 @@ rs6000_rtx_costs (rtx x, machine_mode mode, int outer_code,
 	    *total = rs6000_cost->divsi;
 	}
       /* Add in shift and subtract for MOD unless we have a mod instruction. */
-      if (!TARGET_MODULO && (code == MOD || code == UMOD))
+      if ((!TARGET_MODULO
+	   || (RS6000_DISABLE_SCALAR_MODULO && SCALAR_INT_MODE_P (mode)))
+	 && (code == MOD || code == UMOD))
 	*total += COSTS_N_INSNS (2);
       return false;
 
@@ -23958,7 +23952,7 @@ static struct rs6000_opt_mask const rs6000_opt_masks[] =
 								false, true  },
   { "cmpb",			OPTION_MASK_CMPB,		false, true  },
   { "crypto",			OPTION_MASK_CRYPTO,		false, true  },
-  { "direct-move",		OPTION_MASK_DIRECT_MOVE,	false, true  },
+  { "direct-move",		0,				false, true  },
   { "dlmzb",			OPTION_MASK_DLMZB,		false, true  },
   { "efficient-unaligned-vsx",	OPTION_MASK_EFFICIENT_UNALIGNED_VSX,
 								false, true  },
@@ -25254,15 +25248,21 @@ rs6000_need_ipa_fn_target_info (const_tree decl,
 static bool
 rs6000_update_ipa_fn_target_info (unsigned int &info, const gimple *stmt)
 {
+#ifndef HAVE_AS_POWER10_HTM
   /* Assume inline asm can use any instruction features.  */
   if (gimple_code (stmt) == GIMPLE_ASM)
     {
-      /* Should set any bits we concerned, for now OPTION_MASK_HTM is
-	 the only bit we care about.  */
-      info |= RS6000_FN_TARGET_INFO_HTM;
+      const char *asm_str = gimple_asm_string (as_a<const gasm *> (stmt));
+      /* Ignore empty inline asm string.  */
+      if (strlen (asm_str) > 0)
+	/* Should set any bits we concerned, for now OPTION_MASK_HTM is
+	   the only bit we care about.  */
+	info |= RS6000_FN_TARGET_INFO_HTM;
       return false;
     }
-  else if (gimple_code (stmt) == GIMPLE_CALL)
+#endif
+
+  if (gimple_code (stmt) == GIMPLE_CALL)
     {
       tree fndecl = gimple_call_fndecl (stmt);
       if (fndecl && fndecl_built_in_p (fndecl, BUILT_IN_MD))
@@ -25290,49 +25290,44 @@ rs6000_can_inline_p (tree caller, tree callee)
   tree caller_tree = DECL_FUNCTION_SPECIFIC_TARGET (caller);
   tree callee_tree = DECL_FUNCTION_SPECIFIC_TARGET (callee);
 
-  /* If the callee has no option attributes, then it is ok to inline.  */
+  /* If the caller/callee has option attributes, then use them.
+     Otherwise, use the command line options.  */
   if (!callee_tree)
-    ret = true;
+    callee_tree = target_option_default_node;
+  if (!caller_tree)
+    caller_tree = target_option_default_node;
 
-  else
+  struct cl_target_option *callee_opts = TREE_TARGET_OPTION (callee_tree);
+  struct cl_target_option *caller_opts = TREE_TARGET_OPTION (caller_tree);
+
+  HOST_WIDE_INT callee_isa = callee_opts->x_rs6000_isa_flags;
+  HOST_WIDE_INT caller_isa = caller_opts->x_rs6000_isa_flags;
+  HOST_WIDE_INT explicit_isa = callee_opts->x_rs6000_isa_flags_explicit;
+
+  cgraph_node *callee_node = cgraph_node::get (callee);
+  if (ipa_fn_summaries && ipa_fn_summaries->get (callee_node) != NULL)
     {
-      HOST_WIDE_INT caller_isa;
-      struct cl_target_option *callee_opts = TREE_TARGET_OPTION (callee_tree);
-      HOST_WIDE_INT callee_isa = callee_opts->x_rs6000_isa_flags;
-      HOST_WIDE_INT explicit_isa = callee_opts->x_rs6000_isa_flags_explicit;
-
-      /* If the caller has option attributes, then use them.
-	 Otherwise, use the command line options.  */
-      if (caller_tree)
-	caller_isa = TREE_TARGET_OPTION (caller_tree)->x_rs6000_isa_flags;
-      else
-	caller_isa = rs6000_isa_flags;
-
-      cgraph_node *callee_node = cgraph_node::get (callee);
-      if (ipa_fn_summaries && ipa_fn_summaries->get (callee_node) != NULL)
+      unsigned int info = ipa_fn_summaries->get (callee_node)->target_info;
+      if ((info & RS6000_FN_TARGET_INFO_HTM) == 0)
 	{
-	  unsigned int info = ipa_fn_summaries->get (callee_node)->target_info;
-	  if ((info & RS6000_FN_TARGET_INFO_HTM) == 0)
-	    {
-	      callee_isa &= ~OPTION_MASK_HTM;
-	      explicit_isa &= ~OPTION_MASK_HTM;
-	    }
+	  callee_isa &= ~OPTION_MASK_HTM;
+	  explicit_isa &= ~OPTION_MASK_HTM;
 	}
-
-      /* Ignore -mpower8-fusion and -mpower10-fusion options for inlining
-	 purposes.  */
-      callee_isa &= ~(OPTION_MASK_P8_FUSION | OPTION_MASK_P10_FUSION);
-      explicit_isa &= ~(OPTION_MASK_P8_FUSION | OPTION_MASK_P10_FUSION);
-
-      /* The callee's options must be a subset of the caller's options, i.e.
-	 a vsx function may inline an altivec function, but a no-vsx function
-	 must not inline a vsx function.  However, for those options that the
-	 callee has explicitly enabled or disabled, then we must enforce that
-	 the callee's and caller's options match exactly; see PR70010.  */
-      if (((caller_isa & callee_isa) == callee_isa)
-	  && (caller_isa & explicit_isa) == (callee_isa & explicit_isa))
-	ret = true;
     }
+
+  /* Ignore -mpower8-fusion and -mpower10-fusion options for inlining
+     purposes.  */
+  callee_isa &= ~(OPTION_MASK_P8_FUSION | OPTION_MASK_P10_FUSION);
+  explicit_isa &= ~(OPTION_MASK_P8_FUSION | OPTION_MASK_P10_FUSION);
+
+  /* The callee's options must be a subset of the caller's options, i.e.
+     a vsx function may inline an altivec function, but a no-vsx function
+     must not inline a vsx function.  However, for those options that the
+     callee has explicitly enabled or disabled, then we must enforce that
+     the callee's and caller's options match exactly; see PR70010.  */
+  if (((caller_isa & callee_isa) == callee_isa)
+      && (caller_isa & explicit_isa) == (callee_isa & explicit_isa))
+    ret = true;
 
   if (TARGET_DEBUG_TARGET)
     fprintf (stderr, "rs6000_can_inline_p:, caller %s, callee %s, %s inline\n",
@@ -28607,7 +28602,6 @@ vec_const_128bit_to_bytes (rtx op,
 
   info->all_words_same
     = (info->words[0] == info->words[1]
-       && info->words[0] == info->words[1]
        && info->words[0] == info->words[2]
        && info->words[0] == info->words[3]);
 
