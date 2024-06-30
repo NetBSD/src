@@ -47,3 +47,7 @@ INITIAL_READONLY_SECTIONS="${RELOCATING+${CREATE_SHLIB-${INITIAL_READONLY_SECTIO
 OTHER_END_SYMBOLS="${CREATE_SHLIB-__BSS_END__ = .;
     __global_pointer$ = MIN(__SDATA_BEGIN__ + 0x800,
 		            MAX(__DATA_BEGIN__ + 0x800, __BSS_END__ - 0x800));}"
+
+# Put .got before .data
+DATA_GOT=" "
+SEPARATE_GOTPLT="SIZEOF (.got.plt) >= 8 ? 8 : 0"
