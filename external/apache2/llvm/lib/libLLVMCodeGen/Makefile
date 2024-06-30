@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:51 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2024/06/30 20:40:04 mrg Exp $
 
 LIB=	LLVMCodeGen
 
@@ -206,3 +206,5 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 .else
 .include <bsd.lib.mk>
 .endif
+
+CWARNFLAGS.gcc+=	${CC_WNO_STRINGOP_OVERREAD}
