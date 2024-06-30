@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-binutils,v 1.15 2023/02/07 20:37:30 christos Exp $
+#	$NetBSD: mknative-binutils,v 1.16 2024/06/30 16:11:11 christos Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/external/gpl3/binutils
@@ -20,60 +20,61 @@ BFD_MACHINE_ARCH=$(echo ${MACHINE_ARCH} | sed -e 's/armv[4-7]/arm/')
 ##### external/gpl3/binutils/lib/libbfd #####
 
 get_libbfd () {
-	mkdir -p $_TOP/external/gpl3/binutils/lib/libbfd/arch/$BFD_MACHINE_ARCH
+	local d=external/gpl3/binutils/lib/libbfd/arch/$BFD_MACHINE_ARCH
+	mkdir -p $_TOP/$d
 
-	{
-		getvars bfd/Makefile \
-			libbfd_la_DEPENDENCIES libbfd_la_OBJECTS DEFS \
-			INCLUDES TDEFAULTS HAVEVECS
-	} | write_mk external/gpl3/binutils/lib/libbfd/arch/$BFD_MACHINE_ARCH/defs.mk
+	getvars bfd/Makefile \
+	    libbfd_la_DEPENDENCIES libbfd_la_OBJECTS DEFS \
+	    INCLUDES TDEFAULTS HAVEVECS | write_mk $d/defs.mk
 
-	write_c external/gpl3/binutils/lib/libbfd/arch/$BFD_MACHINE_ARCH/bfd.h <$_TMPDIR/bfd/bfd.h
-	write_c external/gpl3/binutils/lib/libbfd/arch/$BFD_MACHINE_ARCH/bfdver.h <$_TMPDIR/bfd/bfdver.h
-
-	{
-		cat $_TMPDIR/bfd/config.h
-	} | write_c external/gpl3/binutils/lib/libbfd/arch/$BFD_MACHINE_ARCH/config.h
+	for i in bfd.h bfdver.h config.h; do
+	    write_c $d/$i < $_TMPDIR/bfd/$i
+	done
 }
 
 ##### external/gpl3/binutils/lib/libopcodes #####
 
 get_libopcodes () {
-	mkdir -p $_TOP/external/gpl3/binutils/lib/libopcodes/arch/$BFD_MACHINE_ARCH
+	local d=external/gpl3/binutils/lib/libopcodes/arch/$BFD_MACHINE_ARCH
+	mkdir -p $_TOP/$d
 
-	{
-		getvars opcodes/Makefile \
-			archdefs BFD_MACHINES libopcodes_la_SOURCES
-	} | write_mk external/gpl3/binutils/lib/libopcodes/arch/$BFD_MACHINE_ARCH/defs.mk
+	getvars opcodes/Makefile \
+	    archdefs BFD_MACHINES libopcodes_la_SOURCES | write_mk $d/defs.mk
 
-	{
-		cat $_TMPDIR/opcodes/config.h
-	} | write_c external/gpl3/binutils/lib/libopcodes/arch/$BFD_MACHINE_ARCH/config.h
+	write_c $d/config.h < $_TMPDIR/opcodes/config.h
 }
 
 get_libgnuctf () {
-	mkdir -p $_TOP/external/gpl3/binutils/lib/libgnuctf/arch/$BFD_MACHINE_ARCH
+	local d=external/gpl3/binutils/lib/libgnuctf/arch/$BFD_MACHINE_ARCH
+	mkdir -p $_TOP/$d
 
-	{
-		getvars libctf/Makefile libctf_la_SOURCES
-	} | write_mk external/gpl3/binutils/lib/libgnuctf/arch/$BFD_MACHINE_ARCH/defs.mk
+	getvars libctf/Makefile libctf_la_SOURCES | write_mk $d/defs.mk
 
-	{
-		cat $_TMPDIR/libctf/config.h
-	} | write_c external/gpl3/binutils/lib/libgnuctf/arch/$BFD_MACHINE_ARCH/config.h
+
+	write_c $d/config.h < $_TMPDIR/libctf/config.h
 }
 
 ##### external/gpl3/binutils/lib/libiberty #####
 
 get_libiberty () {
-	mkdir -p $_TOP/external/gpl3/binutils/lib/libiberty/arch/$BFD_MACHINE_ARCH
+	local d=external/gpl3/binutils/lib/libiberty/arch/$BFD_MACHINE_ARCH
+	mkdir -p $_TOP/$d
 
 	getvars libiberty/Makefile \
-		ALLOCA EXTRA_OFILES LIBOBJS REQUIRED_OFILES \
-		| write_mk external/gpl3/binutils/lib/libiberty/arch/$BFD_MACHINE_ARCH/defs.mk
+	    ALLOCA EXTRA_OFILES LIBOBJS REQUIRED_OFILES | write_mk $d/defs.mk
 
-	write_c external/gpl3/binutils/lib/libiberty/arch/$BFD_MACHINE_ARCH/config.h \
-		<$_TMPDIR/libiberty/config.h
+	write_c $d/config.h < $_TMPDIR/libiberty/config.h
+}
+
+##### external/gpl3/binutils/lib/libiberty #####
+
+get_libsframe () {
+	local d=external/gpl3/binutils/lib/libsframe/arch/$BFD_MACHINE_ARCH
+	mkdir -p $_TOP/$d
+
+        getvars libsframe/Makefile libsframe_la_SOURCES | write_mk $d/defs.mk
+
+	write_c $d/config.h < $_TMPDIR/libsframe/config.h
 }
 
 ##### external/gpl3/binutils/usr.bin #####
@@ -81,7 +82,8 @@ get_libiberty () {
 get_binutils () {
 	### common
 
-	mkdir -p $_TOP/external/gpl3/binutils/usr.bin/common/arch/$BFD_MACHINE_ARCH
+	local d=external/gpl3/binutils/usr.bin/common/arch/$BFD_MACHINE_ARCH
+	mkdir -p $_TOP/$d
 
 	{
 		getvars binutils/Makefile \
@@ -96,53 +98,55 @@ get_binutils () {
 		for f in `getvars binutils/Makefile PROGRAMS | sed 'y,-,_,;s,^[^=]*=,,'`; do
 			getvars binutils/Makefile ${f}_OBJECTS ${f}_DEPENDENCIES
 		done
-	} | write_mk external/gpl3/binutils/usr.bin/common/arch/$BFD_MACHINE_ARCH/defs.mk
+	} | write_mk $d/defs.mk
 
-	write_c external/gpl3/binutils/usr.bin/common/arch/$BFD_MACHINE_ARCH/config.h \
-		<$_TMPDIR/binutils/config.h
+	write_c $d/config.h < $_TMPDIR/binutils/config.h
 
 	### gas
 
-	mkdir -p $_TOP/external/gpl3/binutils/usr.bin/gas/arch/$BFD_MACHINE_ARCH
+	d=external/gpl3/binutils/usr.bin/gas/arch/$BFD_MACHINE_ARCH
+	mkdir -p $_TOP/$d
 
 	grep -v DEPDIR "$_TMPDIR/gas/Makefile" > "$_TMPDIR/gas/Makefile.nodeps"
 	getvars gas/Makefile.nodeps \
-                DEFS INCLUDES as_new_OBJECTS as_new_LDADD | 
+                DEFS INCLUDES as_new_OBJECTS as_new_LDADD |
 	sed	-e s/G_as_new_OBJECTS/G_OBJS/ \
 		-e s/G_as_new_LDADD=/G_OBJS+=/ \
 		-e s@config/@@g \
 		-e 's/\.\..*a//' |
-	write_mk external/gpl3/binutils/usr.bin/gas/arch/$BFD_MACHINE_ARCH/defs.mk
+	write_mk $d/defs.mk
 
-	for f in config itbl-cpu obj-format targ-cpu targ-env; do
-		write_c external/gpl3/binutils/usr.bin/gas/arch/$BFD_MACHINE_ARCH/$f.h <$_TMPDIR/gas/$f.h
+	for f in config.h itbl-cpu.h obj-format.h targ-cpu.h targ-env.h; do
+		write_c $d/$f < $_TMPDIR/gas/$f
 	done
 
 	### gprof
+	d=external/gpl3/binutils/usr.bin/gprof/arch/$BFD_MACHINE_ARCH
 
-	mkdir -p $_TOP/external/gpl3/binutils/usr.bin/gprof/arch/$BFD_MACHINE_ARCH
+	mkdir -p $_TOP/$d
 
 	getvars gprof/Makefile \
 		DEFS gprof_OBJECTS INCLUDES TEXINFOS \
-		| write_mk external/gpl3/binutils/usr.bin/gprof/arch/$BFD_MACHINE_ARCH/defs.mk
+		| write_mk $d/defs.mk
 
-	write_c external/gpl3/binutils/usr.bin/gprof/arch/$BFD_MACHINE_ARCH/gconfig.h <$_TMPDIR/gprof/gconfig.h
+	write_c $d/gconfig.h <$_TMPDIR/gprof/gconfig.h
 
 	### ld
 
-	mkdir -p $_TOP/external/gpl3/binutils/usr.bin/ld/arch/$BFD_MACHINE_ARCH
+	d=external/gpl3/binutils/usr.bin/ld/arch/$BFD_MACHINE_ARCH
+	mkdir -p $_TOP/$d
 
 	{
 		getvars ld/Makefile \
-			DEFS EMUL EMULATION_OFILES INCLUDES OFILES STRINGIFY TEXINFOS
+			DEFS EMUL EMULATION_OFILES INCLUDES OFILES TEXINFOS
 		getvars ld/Makefile \
 			target_alias | sed 's,[\._0-9A-Z]*$,,'
 		getvars	ld/Makefile \
 			enable_initfini_array
-	} | write_mk external/gpl3/binutils/usr.bin/ld/arch/$BFD_MACHINE_ARCH/defs.mk
+	} | write_mk $d/defs.mk
 
-	for f in config ldemul-list; do
-		write_c external/gpl3/binutils/usr.bin/ld/arch/$BFD_MACHINE_ARCH/$f.h <$_TMPDIR/ld/$f.h
+	for f in config.h ldemul-list.h; do
+		write_c $d/$f <$_TMPDIR/ld/$f
 	done
 }
 
@@ -155,6 +159,7 @@ all|binutils)	# everything (uses "canadian cross" temp environment)
 	get_libgnuctf
 	get_libopcodes
 	get_libiberty
+	get_libsframe
 	exit 0
 	;;
 
