@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.79 2023/06/12 12:58:17 skrll Exp $ */
+/* $NetBSD: fdtvar.h,v 1.80 2024/06/30 17:55:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -318,6 +318,7 @@ struct fdt_platform {
 	void			(*fp_startup)(void);
 	void			(*fp_init_attach_args)(struct fdt_attach_args *);
 	void			(*fp_device_register)(device_t, void *);
+	void			(*fp_device_register_post_config)(device_t, void *);
 	void			(*fp_reset)(void);
 	void			(*fp_delay)(u_int);
 	u_int			(*fp_uart_freq)(void);
