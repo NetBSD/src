@@ -163,6 +163,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   template<typename _Tp, _Tp... _Idx>
     struct integer_sequence
     {
+#if __cplusplus >= 202002L
+      static_assert(is_integral_v<_Tp>);
+#endif
       typedef _Tp value_type;
       static constexpr size_t size() noexcept { return sizeof...(_Idx); }
     };
@@ -173,7 +176,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 #if __has_builtin(__make_integer_seq)
       = __make_integer_seq<integer_sequence, _Tp, _Num>;
 #else
-      = integer_sequence<_Tp, __integer_pack(_Num)...>;
+      = integer_sequence<_Tp, __integer_pack(_Tp(_Num))...>;
 #endif
 
   /// Alias template index_sequence

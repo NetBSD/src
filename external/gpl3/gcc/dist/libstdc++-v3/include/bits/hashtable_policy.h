@@ -291,18 +291,22 @@ namespace __detail
 
       __gnu_cxx::__aligned_buffer<_Value> _M_storage;
 
+      [[__gnu__::__always_inline__]]
       _Value*
       _M_valptr() noexcept
       { return _M_storage._M_ptr(); }
 
+      [[__gnu__::__always_inline__]]
       const _Value*
       _M_valptr() const noexcept
       { return _M_storage._M_ptr(); }
 
+      [[__gnu__::__always_inline__]]
       _Value&
       _M_v() noexcept
       { return *_M_valptr(); }
 
+      [[__gnu__::__always_inline__]]
       const _Value&
       _M_v() const noexcept
       { return *_M_valptr(); }
@@ -1278,19 +1282,6 @@ namespace __detail
 	    "hash function must be invocable with an argument of key type");
 	  return _M_hash()(__k);
 	}
-
-      __hash_code
-      _M_hash_code(const _Hash&,
-		   const _Hash_node_value<_Value, true>& __n) const
-      { return __n._M_hash_code; }
-
-      // Compute hash code using _Hash as __n _M_hash_code, if present, was
-      // computed using _H2.
-      template<typename _H2>
-	__hash_code
-	_M_hash_code(const _H2&,
-		const _Hash_node_value<_Value, __cache_hash_code>& __n) const
-	{ return _M_hash_code(_ExtractKey{}(__n._M_v())); }
 
       __hash_code
       _M_hash_code(const _Hash_node_value<_Value, false>& __n) const

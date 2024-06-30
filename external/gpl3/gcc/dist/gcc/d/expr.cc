@@ -1057,8 +1057,7 @@ public:
 	Declaration *decl = e->e1->isVarExp ()->var;
 	if (decl->storage_class & (STCout | STCref))
 	  {
-	    tree t2 = convert_for_assignment (build_expr (e->e2),
-					      e->e2->type, e->e1->type);
+	    tree t2 = convert_for_assignment (e->e2, e->e1->type);
 	    tree t1 = build_expr (e->e1);
 	    /* Want reference to lhs, not indirect ref.  */
 	    t1 = TREE_OPERAND (t1, 0);
@@ -1078,8 +1077,7 @@ public:
     if (tb1->ty == TY::Tstruct)
       {
 	tree t1 = build_expr (e->e1);
-	tree t2 = convert_for_assignment (build_expr (e->e2, false, true),
-					  e->e2->type, e->e1->type);
+	tree t2 = convert_for_assignment (e->e2, e->e1->type, true);
 	StructDeclaration *sd = tb1->isTypeStruct ()->sym;
 
 	/* Look for struct = 0.  */
@@ -1157,8 +1155,7 @@ public:
 	    || (e->op == EXP::blit || e->e1->type->size () == 0))
 	  {
 	    tree t1 = build_expr (e->e1);
-	    tree t2 = convert_for_assignment (build_expr (e->e2),
-					      e->e2->type, e->e1->type);
+	    tree t2 = convert_for_assignment (e->e2, e->e1->type);
 
 	    this->result_ = build_assign (modifycode, t1, t2);
 	    return;
@@ -1192,8 +1189,7 @@ public:
 
     /* Simple assignment.  */
     tree t1 = build_expr (e->e1);
-    tree t2 = convert_for_assignment (build_expr (e->e2),
-				      e->e2->type, e->e1->type);
+    tree t2 = convert_for_assignment (e->e2, e->e1->type);
 
     this->result_ = build_assign (modifycode, t1, t2);
   }
@@ -2707,6 +2703,10 @@ public:
 	    ctor = build_address (decl);
 	    if (tb->ty == TY::Tarray)
 	      ctor = d_array_value (type, size_int (e->elements->length), ctor);
+
+	    /* Immutable literals can be placed in rodata.  */
+	    if (tb->isImmutable ())
+	      TREE_READONLY (decl) = 1;
 
 	    d_pushdecl (decl);
 	    rest_of_decl_compilation (decl, 1, 0);

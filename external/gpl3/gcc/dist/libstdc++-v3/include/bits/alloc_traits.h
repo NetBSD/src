@@ -72,7 +72,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     template<typename _Tp>
       using __pocs = typename _Tp::propagate_on_container_swap;
     template<typename _Tp>
-      using __equal = typename _Tp::is_always_equal;
+      using __equal = __type_identity<typename _Tp::is_always_equal>;
   };
 
   template<typename _Alloc, typename _Up>
@@ -207,7 +207,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
        * otherwise @c is_empty<Alloc>::type
       */
       using is_always_equal
-	= __detected_or_t<typename is_empty<_Alloc>::type, __equal, _Alloc>;
+	= typename __detected_or_t<is_empty<_Alloc>, __equal, _Alloc>::type;
 
       template<typename _Tp>
 	using rebind_alloc = __alloc_rebind<_Alloc, _Tp>;
@@ -661,6 +661,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       { return __rhs; }
     };
 
+  /// @cond undocumented
 #if __cplusplus < 201703L
   template<typename _Alloc>
     inline void
@@ -818,7 +819,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       __a.deallocate(__a.allocate(1u), 1u);
     };
 #endif
+  /// @endcond
 #endif // C++11
+
+  /// @cond undocumented
 
   /**
    * Destroy a range of objects using the supplied allocator.  For
@@ -847,8 +851,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     _Destroy(_ForwardIterator __first, _ForwardIterator __last,
 	     allocator<_Tp>&)
     {
-      _Destroy(__first, __last);
+      std::_Destroy(__first, __last);
     }
+  /// @endcond
 
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace std

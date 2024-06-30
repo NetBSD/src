@@ -1639,12 +1639,15 @@ set_noop_p (const_rtx set)
     return 1;
 
   if (MEM_P (dst) && MEM_P (src))
-    return rtx_equal_p (dst, src) && !side_effects_p (dst);
+    return (rtx_equal_p (dst, src)
+	    && !side_effects_p (dst)
+	    && !side_effects_p (src));
 
   if (GET_CODE (dst) == ZERO_EXTRACT)
-    return rtx_equal_p (XEXP (dst, 0), src)
-	   && !BITS_BIG_ENDIAN && XEXP (dst, 2) == const0_rtx
-	   && !side_effects_p (src);
+    return (rtx_equal_p (XEXP (dst, 0), src)
+	    && !BITS_BIG_ENDIAN && XEXP (dst, 2) == const0_rtx
+	    && !side_effects_p (src)
+	    && !side_effects_p (XEXP (dst, 0)));
 
   if (GET_CODE (dst) == STRICT_LOW_PART)
     dst = XEXP (dst, 0);
@@ -6987,6 +6990,21 @@ vec_series_lowpart_p (machine_mode result_mode, machine_mode op_mode, rtx sel)
     {
       int offset = BYTES_BIG_ENDIAN ? nunits - XVECLEN (sel, 0) : 0;
       return rtvec_series_p (XVEC (sel, 0), offset);
+    }
+  return false;
+}
+
+/* Return true if X contains a paradoxical subreg.  */
+
+bool
+contains_paradoxical_subreg_p (rtx x)
+{
+  subrtx_var_iterator::array_type array;
+  FOR_EACH_SUBRTX_VAR (iter, array, x, NONCONST)
+    {
+      x = *iter;
+      if (SUBREG_P (x) && paradoxical_subreg_p (x))
+	return true;
     }
   return false;
 }

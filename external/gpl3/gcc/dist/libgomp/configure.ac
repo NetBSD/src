@@ -339,6 +339,22 @@ fi
 AX_COUNT_CPUS
 AC_SUBST(CPU_COUNT)
 
+AC_MSG_NOTICE([checking for flock implementation])
+AC_CHECK_PROGS(FLOCK, flock)
+# Fallback if 'perl' is available.
+if test -z "$FLOCK"; then
+  # These need to be absolute paths, yet at the same time need to
+  # canonicalize only relative paths, because then amd will not unmount
+  # drives. Thus the use of PWDCMD: set it to 'pawd' or 'amq -w' if using amd.
+  case $srcdir in
+changequote(,)dnl
+    [\\/$]* | ?:[\\/]*) libgomp_abs_srcdir=${srcdir} ;;
+changequote([,])dnl
+    *) libgomp_abs_srcdir=`cd "$srcdir" && ${PWDCMD-pwd} || echo "$srcdir"` ;;
+  esac
+  AC_CHECK_PROG(FLOCK, perl, $libgomp_abs_srcdir/testsuite/flock)
+fi
+
 # Get target configury.
 . ${srcdir}/configure.tgt
 CFLAGS="$save_CFLAGS $XCFLAGS"

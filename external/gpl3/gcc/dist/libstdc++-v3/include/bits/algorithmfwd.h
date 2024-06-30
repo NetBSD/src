@@ -601,13 +601,14 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     _OIter
     reverse_copy(_BIter, _BIter, _OIter);
 
-  inline namespace _V2
-  {
-    template<typename _FIter>
-      _GLIBCXX20_CONSTEXPR
-      _FIter
-      rotate(_FIter, _FIter, _FIter);
-  }
+_GLIBCXX_BEGIN_INLINE_ABI_NAMESPACE(_V2)
+
+  template<typename _FIter>
+    _GLIBCXX20_CONSTEXPR
+    _FIter
+    rotate(_FIter, _FIter, _FIter);
+
+_GLIBCXX_END_INLINE_ABI_NAMESPACE(_V2)
 
   template<typename _FIter, typename _OIter>
     _GLIBCXX20_CONSTEXPR
@@ -828,10 +829,12 @@ _GLIBCXX_BEGIN_NAMESPACE_ALGO
     partition(_BIter, _BIter, _Predicate);
 
   template<typename _RAIter>
+    _GLIBCXX14_DEPRECATED_SUGGEST("std::shuffle")
     void
     random_shuffle(_RAIter, _RAIter);
 
   template<typename _RAIter, typename _Generator>
+    _GLIBCXX14_DEPRECATED_SUGGEST("std::shuffle")
     void
     random_shuffle(_RAIter, _RAIter,
 #if __cplusplus >= 201103L

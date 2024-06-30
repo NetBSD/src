@@ -426,6 +426,9 @@ enum d_tree_index
   DTI_NULL_ARRAY,
   DTI_BOTTOM_TYPE,
 
+  DTI_BOOL_FALSE,
+  DTI_BOOL_TRUE,
+
   DTI_MAX
 };
 
@@ -462,6 +465,9 @@ extern GTY(()) tree d_global_trees[DTI_MAX];
 #define null_array_node			d_global_trees[DTI_NULL_ARRAY]
 /* The bottom type, referred to as `noreturn` in code.  */
 #define noreturn_type_node		d_global_trees[DTI_BOTTOM_TYPE]
+/* D boolean values are always byte-sized, unlike boolean_type_node.  */
+#define d_bool_false_node		d_global_trees[DTI_BOOL_FALSE]
+#define d_bool_true_node		d_global_trees[DTI_BOOL_TRUE]
 
 /* A prefix for internal variables, which are not user-visible.  */
 #if !defined (NO_DOT_IN_LABEL)
@@ -600,8 +606,8 @@ extern tree d_truthvalue_conversion (tree);
 extern tree d_convert (tree, tree);
 extern tree convert_expr (tree, Type *, Type *);
 extern tree convert_for_rvalue (tree, Type *, Type *);
-extern tree convert_for_assignment (tree, Type *, Type *);
-extern tree convert_for_argument (tree, Parameter *);
+extern tree convert_for_assignment (Expression *, Type *, bool = false);
+extern tree convert_for_argument (Expression *, Parameter *);
 extern tree convert_for_condition (tree, Type *);
 extern tree d_array_convert (Expression *);
 extern tree d_array_convert (Type *, Expression *);

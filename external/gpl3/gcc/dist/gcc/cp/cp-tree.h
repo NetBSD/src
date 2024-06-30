@@ -2077,6 +2077,7 @@ struct GTY(()) language_function {
 
   BOOL_BITFIELD invalid_constexpr : 1;
   BOOL_BITFIELD throwing_cleanup : 1;
+  BOOL_BITFIELD backward_goto : 1;
 
   hash_table<named_label_hash> *x_named_labels;
 
@@ -7014,7 +7015,7 @@ extern tree begin_eh_spec_block			(void);
 extern void finish_eh_spec_block		(tree, tree);
 extern tree build_eh_type_type			(tree);
 extern tree cp_protect_cleanup_actions		(void);
-extern void maybe_splice_retval_cleanup		(tree);
+extern void maybe_splice_retval_cleanup		(tree, bool);
 extern tree maybe_set_retval_sentinel		(void);
 
 extern tree template_parms_to_args		(tree);
@@ -7295,7 +7296,8 @@ extern tree do_auto_deduction                   (tree, tree, tree,
                                                  auto_deduction_context
 						 = adc_unspecified,
 						 tree = NULL_TREE,
-						 int = LOOKUP_NORMAL);
+						 int = LOOKUP_NORMAL,
+						 tree = NULL_TREE);
 extern tree type_uses_auto			(tree);
 extern tree type_uses_auto_or_concept		(tree);
 extern void append_type_to_template_for_access_check (tree, tree, tree,

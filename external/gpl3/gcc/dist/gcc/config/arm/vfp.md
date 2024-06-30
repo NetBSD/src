@@ -105,9 +105,9 @@
     case 8:
       return "vmov%?.f32\t%0, %1\t%@ int";
     case 9:
-      return "vmsr%?\t P0, %1\t@ movhi";
+      return "vmsr%?\tp0, %1\t@ movhi";
     case 10:
-      return "vmrs%?\t %0, P0\t@ movhi";
+      return "vmrs%?\t%0, p0\t@ movhi";
     default:
       gcc_unreachable ();
     }
@@ -209,9 +209,9 @@
     case 8:
       return "vmov%?.f32\t%0, %1\t%@ int";
     case 9:
-      return "vmsr%?\t P0, %1\t%@ movhi";
+      return "vmsr%?\tp0, %1\t%@ movhi";
     case 10:
-      return "vmrs%?\t%0, P0\t%@ movhi";
+      return "vmrs%?\t%0, p0\t%@ movhi";
     default:
       gcc_unreachable ();
     }
@@ -312,9 +312,9 @@
     case 12: case 13:
       return output_move_vfp (operands);
     case 14:
-      return \"vmsr\\t P0, %1\";
+      return \"vmsr\\tp0, %1\";
     case 15:
-      return \"vmrs\\t %0, P0\";
+      return \"vmrs\\t%0, p0\";
     case 16:
       return \"mcr\\tp10, 7, %1, cr1, cr0, 0\\t @SET_FPSCR\";
     case 17:
@@ -2138,7 +2138,7 @@
 (define_insn_and_split "no_literal_pool_df_immediate"
   [(set (match_operand:DF 0 "s_register_operand" "=w")
 	(match_operand:DF 1 "const_double_operand" "F"))
-   (clobber (match_operand:DF 2 "s_register_operand" "=r"))]
+   (clobber (match_operand:DI 2 "s_register_operand" "=r"))]
   "arm_disable_literal_pool
    && TARGET_VFP_BASE
    && !arm_const_double_rtx (operands[1])
@@ -2153,8 +2153,9 @@
   unsigned HOST_WIDE_INT ival = zext_hwi (buf[order], 32);
   ival |= (zext_hwi (buf[1 - order], 32) << 32);
   rtx cst = gen_int_mode (ival, DImode);
-  emit_move_insn (simplify_gen_subreg (DImode, operands[2], DFmode, 0), cst);
-  emit_move_insn (operands[0], operands[2]);
+  emit_move_insn (operands[2], cst);
+  emit_move_insn (operands[0],
+		  simplify_gen_subreg (DFmode, operands[2], DImode, 0));
   DONE;
 }
 )
