@@ -513,8 +513,8 @@ _GLIBCXX_BEGIN_NAMESPACE_FILESYSTEM
 	return false;
       }
 
-    size_t count = from_st->st_size;
 #if defined _GLIBCXX_USE_SENDFILE && ! defined _GLIBCXX_FILESYSTEM_IS_WINDOWS
+    size_t count = from_st->st_size;
     ssize_t n = 0;
     if (count != 0)
       {
