@@ -1,4 +1,4 @@
-# $NetBSD: varmod-edge.mk,v 1.20 2024/04/20 10:18:55 rillig Exp $
+# $NetBSD: varmod-edge.mk,v 1.21 2024/06/30 15:21:24 rillig Exp $
 #
 # Tests for edge cases in variable modifiers.
 #
@@ -162,6 +162,7 @@ MOD.colons=	${INP.colons::::}
 EXP.colons=	# empty
 
 .for test in ${TESTS}
+# expect+3: while evaluating variable "MOD.eq-esc": while evaluating variable "INP.eq-esc": Unfinished modifier ('=' missing)
 # expect+2: while evaluating variable "MOD.colons": while evaluating variable "INP.colons": Unknown modifier ":"
 # expect+1: while evaluating variable "MOD.colons": while evaluating variable "INP.colons": Unknown modifier ":"
 .  if ${MOD.${test}} == ${EXP.${test}}
@@ -204,7 +205,7 @@ EXP.colons=	# empty
 # variable name with quotes, leading to the rather confusing "Unfinished
 # modifier for  (',' missing)", having two spaces in a row.
 #
-# XXX: The error message should report the filename:lineno.
+# expect+2: while evaluating "${:S,}": Unfinished modifier (',' missing)
 # expect+1: Malformed conditional (${:S,})
 .if ${:S,}
 .  error
