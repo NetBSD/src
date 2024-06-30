@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3070 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3071 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -442,3 +442,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	OpenSSH: Import 9.6. [christos 20240625]
 	evbarm: Add support for Ampere Altra/Altra Max platforms.
 		[jmcneill 20240630]
+	evbarm: Add NUMA awareness for ACPI based systems. [jmcneill 20240630]
