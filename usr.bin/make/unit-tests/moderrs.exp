@@ -1,33 +1,26 @@
 mod-unknown-direct:
-want: Unknown modifier 'Z'
 make: in target "mod-unknown-direct": while evaluating variable "VAR": Unknown modifier "Z"
 VAR:Z=before--after
 
 mod-unknown-indirect:
-want: Unknown modifier 'Z'
 make: in target "mod-unknown-indirect": while evaluating variable "VAR": Unknown modifier "Z"
 VAR:Z=before-inner}-after
 
 unclosed-direct:
-want: Unclosed expression, expecting '}' for modifier "S,V,v," of variable "VAR" with value "Thevariable"
 make: Unclosed expression, expecting '}' for modifier "S,V,v," of variable "VAR" with value "Thevariable"
 VAR:S,V,v,=Thevariable
 
 unclosed-indirect:
-want: Unclosed expression after indirect modifier, expecting '}' for variable "VAR"
 make: Unclosed expression after indirect modifier, expecting '}' for variable "VAR"
 VAR:S,V,v,=Thevariable
 
 unfinished-indirect:
-want: Unfinished modifier for VAR (',' missing)
 make: Unfinished modifier for "VAR" (',' missing)
 VAR:S,V,v=
 
 unfinished-loop:
-want: Unfinished modifier for UNDEF ('@' missing)
 make: Unfinished modifier for "UNDEF" ('@' missing)
 
-want: Unfinished modifier for UNDEF ('@' missing)
 make: Unfinished modifier for "UNDEF" ('@' missing)
 
 1 2 3
@@ -38,10 +31,8 @@ make: Unclosed expression, expecting '}' for modifier "@var@${var}}...@" of vari
 1}... 2}... 3}...
 
 words:
-want: Unfinished modifier for UNDEF (']' missing)
 make: Unfinished modifier for "UNDEF" (']' missing)
 
-want: Unfinished modifier for UNDEF (']' missing)
 make: Unfinished modifier for "UNDEF" (']' missing)
 
 13=
@@ -49,10 +40,8 @@ make: Bad modifier ":[123451234512345123451234512345]" for variable "UNDEF"
 12345=S,^ok,:S,^3ok,}
 
 exclam:
-want: Unfinished modifier for VARNAME ('!' missing)
 make: Unfinished modifier for "VARNAME" ('!' missing)
 
-want: Unfinished modifier for ! ('!' missing)
 make: Unfinished modifier for "!" ('!' missing)
 
 
