@@ -48,7 +48,7 @@ sysv:y
 make: Unfinished modifier for "ASSIGN" ('}' missing)
 
 ok=word
-make: Command " echo word; (exit 13) " exited with status 13
+make: warning: in target "mod-assign-shell-error": while evaluating variable "SH_ERR": Command " echo word; (exit 13) " exited with status 13
 err=previous
 Command: TARGET_CMD_VAR = cmd-value
 Global: TARGET_GLOBAL_VAR = global-value

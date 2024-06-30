@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1122 2024/06/30 11:00:06 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1123 2024/06/30 11:44:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1122 2024/06/30 11:00:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1123 2024/06/30 11:44:14 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3557,7 +3557,7 @@ found_op:
 		char *output, *error;
 		output = Cmd_Exec(val.str, &error);
 		if (error != NULL) {
-			Error("%s", error);
+			Parse_Error(PARSE_WARNING, "%s", error);
 			free(error);
 		} else
 			Var_Set(scope, expr->name, output);
