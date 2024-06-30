@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_srat.c,v 1.8 2019/12/27 12:51:57 ad Exp $ */
+/* $NetBSD: acpi_srat.c,v 1.9 2024/06/30 17:54:08 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_srat.c,v 1.8 2019/12/27 12:51:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_srat.c,v 1.9 2024/06/30 17:54:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -148,6 +148,7 @@ acpisrat_parse(void)
 	ACPI_SRAT_CPU_AFFINITY *srat_cpu;
 	ACPI_SRAT_MEM_AFFINITY *srat_mem;
 	ACPI_SRAT_X2APIC_CPU_AFFINITY *srat_x2apic;
+	ACPI_SRAT_GICC_AFFINITY *srat_gicc;
 
 	acpisrat_nodeid_t nodeid;
 	struct cpulist *cpuentry = NULL;
@@ -234,6 +235,36 @@ acpisrat_parse(void)
 			cpuentry->cpu.apicid = srat_x2apic->ApicId;
 			cpuentry->cpu.clockdomain = srat_x2apic->ClockDomain;
 			cpuentry->cpu.flags = srat_x2apic->Flags;
+			break;
+
+		case ACPI_SRAT_TYPE_GICC_AFFINITY:
+			srat_gicc = (ACPI_SRAT_GICC_AFFINITY *)subtable;
+			if ((srat_gicc->Flags & ACPI_SRAT_GICC_ENABLED) == 0)
+				break;
+			nodeid = srat_gicc->ProximityDomain;
+
+			/*
+			 * This table entry overrides
+			 * ACPI_SRAT_TYPE_CPU_AFFINITY.
+			 */
+			if (!ignore_cpu_affinity) {
+				struct cpulist *citer;
+				while ((citer = CPU_FIRST()) != NULL) {
+					CPU_REM(citer);
+					cpu_free(citer);
+				}
+				ignore_cpu_affinity = true;
+			}
+
+			cpuentry = cpu_alloc();
+			if (cpuentry == NULL)
+				return ENOMEM;
+			CPU_ADD(cpuentry);
+
+			cpuentry->cpu.nodeid = nodeid;
+			cpuentry->cpu.apicid = srat_gicc->AcpiProcessorUid;
+			cpuentry->cpu.clockdomain = srat_gicc->ClockDomain;
+			cpuentry->cpu.flags = srat_gicc->Flags;
 			break;
 
 		case ACPI_SRAT_TYPE_RESERVED:
