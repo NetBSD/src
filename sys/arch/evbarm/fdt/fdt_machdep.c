@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.107 2024/01/19 09:09:04 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.108 2024/06/30 17:55:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.107 2024/01/19 09:09:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.108 2024/06/30 17:55:28 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bootconfig.h"
@@ -497,6 +497,11 @@ fdt_device_register(device_t self, void *aux)
 static void
 fdt_device_register_post_config(device_t self, void *aux)
 {
+	const struct fdt_platform *plat = fdt_platform_find();
+
+	if (plat && plat->fp_device_register_post_config)
+		plat->fp_device_register_post_config(self, aux);
+
 #if NUKBD > 0 && NWSDISPLAY > 0
 	if (device_is_a(self, "wsdisplay")) {
 		struct wsdisplay_softc *sc = device_private(self);
