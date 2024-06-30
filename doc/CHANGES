@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3068 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3069 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -419,7 +419,7 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	libarchive: Import libarchive-3.7.4. [christos 20240609]
 	ipfilter(4): Mark as MPSAFE.  [mrg 20240609]
 	pkg_install: Import pkg_install-20240307. [wiz 20240611]
-	OpenSSL: Imported 3.0.14. [christos 2020611]
+	OpenSSL: Imported 3.0.14. [christos 20240611]
 	sh(1): When a background job is started at the top level (ie: not
 		in any kind of subshell) of an interactive shell, print
 		the job number assigned, and the process id of the lead
