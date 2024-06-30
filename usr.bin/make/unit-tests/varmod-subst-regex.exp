@@ -1,24 +1,24 @@
-make: Regex compilation error: (details omitted)
+make: in target "mod-regex-compile-error": while evaluating "${:Uword1 word2:C,****,____,g:C,word,____,:Q}.": Regex compilation error: (details omitted)
 mod-regex-compile-error: C,word,____,:Q}.
-make: No subexpression \1
-make: No subexpression \1
-make: No subexpression \1
-make: No subexpression \1
+make: in target "mod-regex-limits": while evaluating "${:U1 23 456:C,..,\1\1,:Q}": No subexpression \1
+make: in target "mod-regex-limits": while evaluating "${:U1 23 456:C,..,\1\1,:Q}": No subexpression \1
+make: in target "mod-regex-limits": while evaluating "${:U1 23 456:C,..,\1\1,:Q}": No subexpression \1
+make: in target "mod-regex-limits": while evaluating "${:U1 23 456:C,..,\1\1,:Q}": No subexpression \1
 mod-regex-limits:11-missing:1 6
 mod-regex-limits:11-ok:1 22 446
-make: No subexpression \2
-make: No subexpression \2
-make: No subexpression \2
-make: No subexpression \2
+make: in target "mod-regex-limits": while evaluating "${:U1 23 456:C,..,\2\2,:Q}": No subexpression \2
+make: in target "mod-regex-limits": while evaluating "${:U1 23 456:C,..,\2\2,:Q}": No subexpression \2
+make: in target "mod-regex-limits": while evaluating "${:U1 23 456:C,..,\2\2,:Q}": No subexpression \2
+make: in target "mod-regex-limits": while evaluating "${:U1 23 456:C,..,\2\2,:Q}": No subexpression \2
 mod-regex-limits:22-missing:1 6
-make: No subexpression \2
-make: No subexpression \2
-make: No subexpression \2
-make: No subexpression \2
+make: in target "mod-regex-limits": while evaluating "${:U1 23 456:C,(.).,\2\2,:Q}": No subexpression \2
+make: in target "mod-regex-limits": while evaluating "${:U1 23 456:C,(.).,\2\2,:Q}": No subexpression \2
+make: in target "mod-regex-limits": while evaluating "${:U1 23 456:C,(.).,\2\2,:Q}": No subexpression \2
+make: in target "mod-regex-limits": while evaluating "${:U1 23 456:C,(.).,\2\2,:Q}": No subexpression \2
 mod-regex-limits:22-missing:1 6
 mod-regex-limits:22-ok:1 33 556
 mod-regex-limits:capture:ihgfedcbaabcdefghijABCDEFGHIJa0a1a2rest
-make: Regex compilation error: (details omitted)
+make: in target "mod-regex-errors": while evaluating variable "UNDEF": Regex compilation error: (details omitted)
 mod-regex-errors:
 make: in target "mod-regex-errors": while evaluating variable "word": while evaluating "${:U:Z}y,W}": Unknown modifier "Z"
 mod-regex-errors: xy

@@ -1,4 +1,4 @@
-# $NetBSD: varmod-assign.mk,v 1.21 2024/06/30 11:37:21 rillig Exp $
+# $NetBSD: varmod-assign.mk,v 1.22 2024/06/30 15:21:24 rillig Exp $
 #
 # Tests for the obscure ::= variable modifiers, which perform variable
 # assignments during evaluation, just like the = operator in C.
@@ -95,6 +95,7 @@ mod-assign-parse:
 
 	# When parsing an assignment operator fails because the operator is
 	# incomplete, make falls back to the SysV modifier.
+# expect: make: in target "mod-assign-parse": while evaluating variable "ASSIGN": Unfinished modifier ('}' missing)
 	@echo ${SYSV::=sysv\:x}${SYSV::x=:y}
 
 	@echo ${ASSIGN::=value	# missing closing brace

@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1124 2024/06/30 13:01:01 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1125 2024/06/30 15:21:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1124 2024/06/30 13:01:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1125 2024/06/30 15:21:23 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1567,7 +1567,7 @@ RegexError(int reerr, const regex_t *pat, const char *str)
 	size_t errlen = regerror(reerr, pat, NULL, 0);
 	char *errbuf = bmake_malloc(errlen);
 	regerror(reerr, pat, errbuf, errlen);
-	Error("%s: %s", str, errbuf);
+	Parse_Error(PARSE_FATAL, "%s: %s", str, errbuf);
 	free(errbuf);
 }
 
@@ -1579,7 +1579,7 @@ RegexReplaceBackref(char ref, SepBuf *buf, const char *wp,
 	unsigned int n = (unsigned)ref - '0';
 
 	if (n >= nsub)
-		Error("No subexpression \\%u", n);
+		Parse_Error(PARSE_FATAL, "No subexpression \\%u", n);
 	else if (m[n].rm_so == -1) {
 		if (opts.strict)
 			Error("No match for subexpression \\%u", n);
@@ -2230,8 +2230,8 @@ ParseModifierPart(
 
 	*pp = p;
 	if (*p != end1 && *p != end2) {
-		Error("Unfinished modifier for \"%s\" ('%c' missing)",
-		    ch->expr->name, end2);
+		Parse_Error(PARSE_FATAL,
+		    "Unfinished modifier ('%c' missing)", end2);
 		LazyBuf_Done(part);
 		return false;
 	}
@@ -2933,7 +2933,8 @@ ApplyModifier_Subst(const char **pp, ModChain *ch)
 
 	char delim = (*pp)[1];
 	if (delim == '\0') {
-		Error("Missing delimiter for modifier ':S'");
+		Parse_Error(PARSE_FATAL,
+		    "Missing delimiter for modifier ':S'");
 		(*pp)++;
 		return AMR_CLEANUP;
 	}
@@ -2982,7 +2983,8 @@ ApplyModifier_Regex(const char **pp, ModChain *ch)
 
 	char delim = (*pp)[1];
 	if (delim == '\0') {
-		Error("Missing delimiter for :C modifier");
+		Parse_Error(PARSE_FATAL,
+		    "Missing delimiter for modifier ':C'");
 		(*pp)++;
 		return AMR_CLEANUP;
 	}
