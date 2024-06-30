@@ -1,4 +1,4 @@
-This is libquadmath.info, produced by makeinfo version 6.5 from
+This is libquadmath.info, produced by makeinfo version 6.8 from
 libquadmath.texi.
 
 Copyright (C) 2010-2022 Free Software Foundation, Inc.
@@ -809,3 +809,8 @@ Node: GNU Free Documentation License10919
 Node: Reporting Bugs36068
 
 End Tag Table
+
+
+Local Variables:
+coding: utf-8
+End:

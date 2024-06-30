@@ -26508,7 +26508,8 @@ process_scope_var (tree stmt, tree decl, tree origin, dw_die_ref context_die)
 
   if (die != NULL && die->die_parent == NULL)
     add_child_die (context_die, die);
-  else if (TREE_CODE (decl_or_origin) == IMPORTED_DECL)
+
+  if (TREE_CODE (decl_or_origin) == IMPORTED_DECL)
     {
       if (early_dwarf)
 	dwarf2out_imported_module_or_decl_1 (decl_or_origin, DECL_NAME (decl_or_origin),
@@ -30107,8 +30108,13 @@ prune_unused_types_walk (dw_die_ref die)
     case DW_TAG_reference_type:
     case DW_TAG_rvalue_reference_type:
     case DW_TAG_volatile_type:
+    case DW_TAG_restrict_type:
+    case DW_TAG_shared_type:
+    case DW_TAG_atomic_type:
+    case DW_TAG_immutable_type:
     case DW_TAG_typedef:
     case DW_TAG_array_type:
+    case DW_TAG_coarray_type:
     case DW_TAG_friend:
     case DW_TAG_enumeration_type:
     case DW_TAG_subroutine_type:
@@ -30117,6 +30123,8 @@ prune_unused_types_walk (dw_die_ref die)
     case DW_TAG_subrange_type:
     case DW_TAG_ptr_to_member_type:
     case DW_TAG_file_type:
+    case DW_TAG_unspecified_type:
+    case DW_TAG_dynamic_type:
       /* Type nodes are useful only when other DIEs reference them --- don't
 	 mark them.  */
       /* FALLTHROUGH */
@@ -32154,24 +32162,12 @@ dwarf2out_finish (const char *filename)
       reset_dies (comp_unit_die ());
       for (limbo_die_node *node = cu_die_list; node; node = node->next)
 	reset_dies (node->die);
-
-      hash_table<comdat_type_hasher> comdat_type_table (100);
       for (ctnode = comdat_type_list; ctnode != NULL; ctnode = ctnode->next)
 	{
-	  comdat_type_node **slot
-	      = comdat_type_table.find_slot (ctnode, INSERT);
-
-	  /* Don't reset types twice.  */
-	  if (*slot != HTAB_EMPTY_ENTRY)
-	    continue;
-
 	  /* Remove the pointer to the line table.  */
 	  remove_AT (ctnode->root_die, DW_AT_stmt_list);
-
 	  if (debug_info_level >= DINFO_LEVEL_TERSE)
 	    reset_dies (ctnode->root_die);
-
-	  *slot = ctnode;
 	}
 
       /* Reset die CU symbol so we don't output it twice.  */

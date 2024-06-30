@@ -79,6 +79,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	      }
 	    else if (__s.length())
 	      {
+		(void)_M_use_local_data();
 		traits_type::copy(_M_local_buf, __s._M_local_buf,
 				  __s.length() + 1);
 		_M_length(__s.length());
@@ -87,6 +88,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	      }
 	    else if (length())
 	      {
+		(void)__s._M_use_local_data();
 		traits_type::copy(__s._M_local_buf, _M_local_buf,
 				  length() + 1);
 		__s._M_length(length());
@@ -97,6 +99,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	else
 	  {
 	    const size_type __tmp_capacity = __s._M_allocated_capacity;
+	    (void)__s._M_use_local_data();
 	    traits_type::copy(__s._M_local_buf, _M_local_buf,
 			      length() + 1);
 	    _M_data(__s._M_data());
@@ -108,6 +111,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  const size_type __tmp_capacity = _M_allocated_capacity;
 	  if (__s._M_is_local())
 	    {
+	      (void)_M_use_local_data();
 	      traits_type::copy(_M_local_buf, __s._M_local_buf,
 				__s.length() + 1);
 	      __s._M_data(_M_data());
@@ -529,6 +533,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		    {
 		      const size_type __nleft = (__p + __len1) - __s;
 		      this->_S_move(__p, __s, __nleft);
+		      // Tell the middle-end that the copy can't overlap
+		      // (PR105651).
+		      if (__len2 < __nleft)
+			__builtin_unreachable();
 		      this->_S_copy(__p + __nleft, __p + __len2,
 				    __len2 - __nleft);
 		    }
@@ -562,13 +570,14 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   template<typename _Operation>
     constexpr void
     basic_string<_CharT, _Traits, _Alloc>::
-    resize_and_overwrite(size_type __n, _Operation __op)
+    resize_and_overwrite(const size_type __n, _Operation __op)
     {
       const size_type __capacity = capacity();
       _CharT* __p;
       if (__n > __capacity)
 	{
-	  __p = _M_create(__n, __capacity);
+	  auto __new_capacity = __n; // Must not allow _M_create to modify __n.
+	  __p = _M_create(__new_capacity, __capacity);
 	  this->_S_copy(__p, _M_data(), length()); // exclude trailing null
 #if __cpp_lib_is_constant_evaluated
 	  if (std::is_constant_evaluated())
@@ -576,7 +585,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 #endif
 	  _M_dispose();
 	  _M_data(__p);
-	  _M_capacity(__n);
+	  _M_capacity(__new_capacity);
 	}
       else
 	__p = _M_data();
@@ -586,9 +595,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	size_type _M_r;
       };
       _Terminator __term{this};
-      const size_type __n2 [[maybe_unused]] = __n;
-      __term._M_r = std::move(__op)(__p, __n);
-      _GLIBCXX_DEBUG_ASSERT(__term._M_r >= 0 && __term._M_r <= __n2);
+      auto __r = std::move(__op)(auto(__p), auto(__n));
+      static_assert(ranges::__detail::__is_integer_like<decltype(__r)>);
+      _GLIBCXX_DEBUG_ASSERT(__r >= 0 && __r <= __n);
+      __term._M_r = size_type(__r);
+      if (__term._M_r > __n)
+	__builtin_unreachable();
     }
 #endif // C++23
 

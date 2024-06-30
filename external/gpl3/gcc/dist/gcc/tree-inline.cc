@@ -65,6 +65,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "symbol-summary.h"
 #include "symtab-thunks.h"
 #include "symtab-clones.h"
+#include "asan.h"
 
 /* I'm not real happy about this, but we need to handle gimple and
    non-gimple trees.  */
@@ -2210,13 +2211,26 @@ copy_bb (copy_body_data *id, basic_block bb,
 	    }
 	  else if (call_stmt
 		   && id->call_stmt
-		   && gimple_call_internal_p (stmt)
-		   && gimple_call_internal_fn (stmt) == IFN_TSAN_FUNC_EXIT)
-	    {
-	      /* Drop TSAN_FUNC_EXIT () internal calls during inlining.  */
-	      gsi_remove (&copy_gsi, false);
-	      continue;
-	    }
+		   && gimple_call_internal_p (stmt))
+	    switch (gimple_call_internal_fn (stmt))
+	      {
+	      case IFN_TSAN_FUNC_EXIT:
+		/* Drop .TSAN_FUNC_EXIT () internal calls during inlining.  */
+		gsi_remove (&copy_gsi, false);
+		continue;
+	      case IFN_ASAN_MARK:
+		/* Drop .ASAN_MARK internal calls during inlining into
+		   no_sanitize functions.  */
+		if (!sanitize_flags_p (SANITIZE_ADDRESS, id->dst_fn)
+		    && !sanitize_flags_p (SANITIZE_HWADDRESS, id->dst_fn))
+		  {
+		    gsi_remove (&copy_gsi, false);
+		    continue;
+		  }
+		break;
+	      default:
+		break;
+	      }
 
 	  /* Statements produced by inlining can be unfolded, especially
 	     when we constant propagated some operands.  We can't fold
@@ -2992,24 +3006,13 @@ redirect_all_calls (copy_body_data * id, basic_block bb)
       gimple *stmt = gsi_stmt (si);
       if (is_gimple_call (stmt))
 	{
-	  tree old_lhs = gimple_call_lhs (stmt);
 	  struct cgraph_edge *edge = id->dst_node->get_edge (stmt);
 	  if (edge)
 	    {
-	      gimple *new_stmt
-		= cgraph_edge::redirect_call_stmt_to_callee (edge);
-	      /* If IPA-SRA transformation, run as part of edge redirection,
-		 removed the LHS because it is unused, save it to
-		 killed_new_ssa_names so that we can prune it from debug
-		 statements.  */
-	      if (old_lhs
-		  && TREE_CODE (old_lhs) == SSA_NAME
-		  && !gimple_call_lhs (new_stmt))
-		{
-		  if (!id->killed_new_ssa_names)
-		    id->killed_new_ssa_names = new hash_set<tree> (16);
-		  id->killed_new_ssa_names->add (old_lhs);
-		}
+	      if (!id->killed_new_ssa_names)
+		id->killed_new_ssa_names = new hash_set<tree> (16);
+	      cgraph_edge::redirect_call_stmt_to_callee (edge,
+		id->killed_new_ssa_names);
 
 	      if (stmt == last && id->call_stmt && maybe_clean_eh_stmt (stmt))
 		gimple_purge_dead_eh_edges (bb);
@@ -3336,8 +3339,12 @@ copy_body (copy_body_data *id,
   body = copy_cfg_body (id, entry_block_map, exit_block_map,
 			new_entry);
   copy_debug_stmts (id);
-  delete id->killed_new_ssa_names;
-  id->killed_new_ssa_names = NULL;
+  if (id->killed_new_ssa_names)
+    {
+      ipa_release_ssas_in_hash (id->killed_new_ssa_names);
+      delete id->killed_new_ssa_names;
+      id->killed_new_ssa_names = NULL;
+    }
 
   return body;
 }
