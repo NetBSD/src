@@ -1,4 +1,4 @@
-# $NetBSD: varmod-assign.mk,v 1.20 2024/04/20 10:18:55 rillig Exp $
+# $NetBSD: varmod-assign.mk,v 1.21 2024/06/30 11:37:21 rillig Exp $
 #
 # Tests for the obscure ::= variable modifiers, which perform variable
 # assignments during evaluation, just like the = operator in C.
@@ -105,7 +105,7 @@ mod-assign-shell-error:
 
 	# If the command fails, the variable keeps its previous value.
 	@${SH_ERR::=previous}
-	@${SH_ERR::!= echo word; false } echo err=${SH_ERR}
+	@${SH_ERR::!= echo word; (exit 13) } echo err=${SH_ERR}
 
 # XXX: The ::= modifier expands its right-hand side exactly once.
 # This differs subtly from normal assignments such as '+=' or '=', which copy

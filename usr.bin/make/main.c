@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.624 2024/06/02 15:31:26 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.625 2024/06/30 11:37:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.624 2024/06/02 15:31:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.625 2024/06/30 11:37:21 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1784,10 +1784,15 @@ Cmd_Exec(const char *cmd, char **error)
 
 	if (WIFSIGNALED(status))
 		*error = str_concat3("\"", cmd, "\" exited on a signal");
-	else if (WEXITSTATUS(status) != 0)
-		*error = str_concat3(
-		    "\"", cmd, "\" returned non-zero status");
-	else if (saved_errno != 0)
+	else if (WEXITSTATUS(status) != 0) {
+		Buffer errBuf;
+		Buf_Init(&errBuf);
+		Buf_AddStr(&errBuf, "Command \"");
+		Buf_AddStr(&errBuf, cmd);
+		Buf_AddStr(&errBuf, "\" exited with status ");
+		Buf_AddInt(&errBuf, WEXITSTATUS(status));
+		*error = Buf_DoneData(&errBuf);
+	} else if (saved_errno != 0)
 		*error = str_concat3(
 		    "Couldn't read shell's output for \"", cmd, "\"");
 	else

@@ -48,7 +48,7 @@ sysv:y
 make: Unfinished modifier for "ASSIGN" ('}' missing)
 
 ok=word
-make: " echo word; false " returned non-zero status
+make: Command " echo word; (exit 13) " exited with status 13
 err=previous
 Command: TARGET_CMD_VAR = cmd-value
 Global: TARGET_GLOBAL_VAR = global-value
