@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2023/08/01 05:57:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2024/06/30 16:15:04 christos Exp $
 
 PROG=		lto-dump
 # XXX pullout from LTO_DUMP_OBJS
@@ -15,8 +15,8 @@ BINDIR=		/usr/bin
 
 CPPFLAGS+=	-DPREFIX=\"/usr\"
 
-#COPTS.lto-lang.cc+=	-Wno-stack-protector
-#COPTS.lto-common.cc+=	-Wno-stack-protector
+COPTS.lto-lang.cc+=	-Wno-error=stack-protector
+COPTS.lto-common.cc+=	-Wno-error=stack-protector
 
 .include "../Makefile.backend"
 .include "../Makefile.target-defines"

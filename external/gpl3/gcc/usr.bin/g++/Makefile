@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2023/08/01 05:57:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2024/06/30 16:15:03 christos Exp $
 
 PROG=		gplusplus
 PROGNAME=	g++
@@ -18,6 +18,6 @@ DPADD+=		${LIBINTL}
 
 ${SRCS}: ${GCCARCH}/defs.mk
 
-#COPTS.gcc.cc=	-Wno-stack-protector
+COPTS.gcc.cc=	-Wno-error=stack-protector
 
 .PATH: ${DIST}/gcc/cp ${DIST}/gcc ${DIST}/gcc/cp

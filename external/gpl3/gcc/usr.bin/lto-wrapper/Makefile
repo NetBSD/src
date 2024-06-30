@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2023/08/01 05:57:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2024/06/30 16:15:04 christos Exp $
 
 NOMAN=1
 PROG=		lto-wrapper
@@ -19,7 +19,7 @@ CPPFLAGS+=	-DPREFIX=\"/usr\" -I${GCCARCH} -I${G_ALL_CPPFLAGS}
 .include "../Makefile.backtrace"
 .include "../Makefile.libiberty"
 
-#COPTS.lto-wrapper.cc=	-Wno-stack-protector
+COPTS.lto-wrapper.cc=	-Wno-error=stack-protector
 
 LDADD+=	${LIBMPC} ${LIBMPFR} ${LIBGMP} -lintl -lz -lm
 DPADD+=	${LIBMPC} ${LIBMPFR} ${LIBGMP} ${LIBINTL} ${LIBZ} ${LIBM}

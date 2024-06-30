@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2023/08/01 05:57:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2024/06/30 16:15:04 christos Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
@@ -16,7 +16,12 @@ CPPFLAGS+=	-I${.CURDIR} -I${.CURDIR}/arch/${GCC_MACHINE_ARCH} \
 
 .include <bsd.lib.mk>
 
-#COPTS+=	-Wno-stack-protector
+COPTS.charset.cc +=	-Wno-error=stack-protector
+COPTS.directives.cc +=	-Wno-error=stack-protector
+COPTS.files.cc +=	-Wno-error=stack-protector
+COPTS.macro.cc +=	-Wno-error=stack-protector
+COPTS.mkdeps.cc +=	-Wno-error=stack-protector
+COPTS.pch.cc +=	-Wno-error=stack-protector
 
 # Force using C++ for this
 HOST_CC:=	${HOST_CXX}

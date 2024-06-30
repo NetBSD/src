@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2023/08/11 06:52:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2024/06/30 16:15:03 christos Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
@@ -19,10 +19,10 @@ CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} -I. \
 		-DCONFIGURE_SPECS="\"\"" \
 		-I${BACKENDOBJ}
 
-#COPTS.prefix.cc+=	-Wno-stack-protector
-#COPTS.opts-common.cc+=	-Wno-stack-protector
-#COPTS.rs6000-common.cc+=	-Wno-stack-protector
-#COPTS.arm-common.cc+=	-Wno-stack-protector
+COPTS.prefix.cc+=	-Wno-error=stack-protector
+COPTS.opts-common.cc+=	-Wno-error=stack-protector
+COPTS.rs6000-common.cc+=	-Wno-error=stack-protector
+COPTS.arm-common.cc+=	-Wno-error=stack-protector
 .if ${MACHINE_CPU} == "sh3"
 COPTS.opts.cc+=		${CC_WNO_FORMAT_TRUNCATION}
 .endif

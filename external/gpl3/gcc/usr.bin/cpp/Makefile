@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2023/08/01 05:57:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2024/06/30 16:15:03 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -28,7 +28,7 @@ ${SRCS}: ${GCCARCH}/defs.mk
 
 .include <bsd.info.mk>
 
-#COPTS.gcc.cc=	-Wno-stack-protector
+COPTS.gcc.cc=	-Wno-error=stack-protector
 
 .PATH: ${DIST}/gcc ${DIST}/gcc/c-family ${DIST}/gcc/doc
 
