@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2023/08/01 05:57:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2024/06/30 16:15:04 christos Exp $
 
 PROG=		lto1
 SRCS=		attribs.cc \
@@ -12,9 +12,9 @@ SRCS=		attribs.cc \
 
 CPPFLAGS+=	-DPREFIX=\"/usr\"
 
-#COPTS.lto.cc+=		-Wno-stack-protector
-#COPTS.lto-lang.cc+=	-Wno-stack-protector
-#COPTS.lto-common.cc+=	-Wno-stack-protector
+COPTS.lto.cc+=		-Wno-error=stack-protector
+COPTS.lto-lang.cc+=	-Wno-error=stack-protector
+COPTS.lto-common.cc+=	-Wno-error=stack-protector
 
 .include "../Makefile.backend"
 .include "../Makefile.backtrace"
