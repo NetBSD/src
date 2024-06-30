@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.110 2023/02/12 14:50:42 abs Exp $
+# $NetBSD: GENERIC,v 1.111 2024/06/30 05:59:14 rin Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,13 +23,14 @@
 
 include 	"arch/sun2/conf/std.sun2"
 
-options 	MODULAR			# new style module(7) framework
+#options 	MODULAR			# new style module(7) framework
 #options 	MODULAR_DEFAULT_AUTOLOAD
+
 options 	INSECURE		# allow modload(8) in multiuser mode
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.110 $"
+#ident 		"GENERIC-$Revision: 1.111 $"
 
 # Bootloader has size limit (~2MB). Kernel should be smaller than this
 # hard limit. Otherwise, it freezes before adding swap even with 7MB
@@ -74,7 +75,7 @@ options 	DDB
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 
 # Compatibility options
-include 	"conf/compat_netbsd16.config"
+#include 	"conf/compat_netbsd16.config"
 #options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
 #options 	COMPAT_AOUT_M68K # support for NetBSD a.out executables
 #options 	EXEC_AOUT	# support for a.out executables
