@@ -38,7 +38,7 @@
 #define _GLIBCXX_RELEASE 12
 
 // The datestamp of the C++ library in compressed ISO date format.
-#define __GLIBCXX__ 20230508
+#define __GLIBCXX__ 20240620
 
 // Macros for various attributes.
 //   _GLIBCXX_PURE
@@ -349,13 +349,16 @@ namespace __gnu_cxx
 # define _GLIBCXX_DEFAULT_ABI_TAG
 #endif
 
-// Defined if inline namespaces are used for versioning.
+// Non-zero if inline namespaces are used for versioning the entire library.
 # define _GLIBCXX_INLINE_VERSION 0 
 
-// Inline namespace for symbol versioning.
 #if _GLIBCXX_INLINE_VERSION
+// Inline namespace for symbol versioning of (nearly) everything in std.
 # define _GLIBCXX_BEGIN_NAMESPACE_VERSION namespace __8 {
 # define _GLIBCXX_END_NAMESPACE_VERSION }
+// Unused when everything in std is versioned anyway.
+# define _GLIBCXX_BEGIN_INLINE_ABI_NAMESPACE(X)
+# define _GLIBCXX_END_INLINE_ABI_NAMESPACE(X)
 
 namespace std
 {
@@ -380,8 +383,12 @@ _GLIBCXX_END_NAMESPACE_VERSION
 }
 
 #else
+// Unused.
 # define _GLIBCXX_BEGIN_NAMESPACE_VERSION
 # define _GLIBCXX_END_NAMESPACE_VERSION
+// Used to version individual components, e.g. std::_V2::error_category.
+# define _GLIBCXX_BEGIN_INLINE_ABI_NAMESPACE(X) inline namespace X {
+# define _GLIBCXX_END_INLINE_ABI_NAMESPACE(X)   } // inline namespace X
 #endif
 
 // Inline namespaces for special modes: debug, parallel.
@@ -820,6 +827,9 @@ namespace std
 
 #undef _GLIBCXX_HAS_BUILTIN
 
+// Mark code that should be ignored by the compiler, but seen by Doxygen.
+#define _GLIBCXX_DOXYGEN_ONLY(X)
+
 // PSTL configuration
 
 #if __cplusplus >= 201703L
@@ -878,7 +888,7 @@ namespace std
 #define _GLIBCXX_HAVE_ATAN2F 1
 
 /* Define to 1 if you have the `atan2l' function. */
-/* #undef _GLIBCXX_HAVE_ATAN2L */
+#define _GLIBCXX_HAVE_ATAN2L 1
 
 /* Define to 1 if you have the `atanf' function. */
 #define _GLIBCXX_HAVE_ATANF 1
@@ -914,7 +924,7 @@ namespace std
 /* #undef _GLIBCXX_HAVE_COSHL */
 
 /* Define to 1 if you have the `cosl' function. */
-/* #undef _GLIBCXX_HAVE_COSL */
+#define _GLIBCXX_HAVE_COSL 1
 
 /* Define to 1 if you have the declaration of `strnlen', and to 0 if you
    don't. */
@@ -990,10 +1000,10 @@ namespace std
 /* #undef _GLIBCXX_HAVE_FP_H */
 
 /* Define to 1 if you have the `frexpf' function. */
-/* #undef _GLIBCXX_HAVE_FREXPF */
+#define _GLIBCXX_HAVE_FREXPF 1
 
 /* Define to 1 if you have the `frexpl' function. */
-/* #undef _GLIBCXX_HAVE_FREXPL */
+#define _GLIBCXX_HAVE_FREXPL 1
 
 /* Define if getentropy is available in <unistd.h>. */
 #define _GLIBCXX_HAVE_GETENTROPY 1
@@ -1186,7 +1196,7 @@ namespace std
 #define _GLIBCXX_HAVE_SINCOSF 1
 
 /* Define to 1 if you have the `sincosl' function. */
-/* #undef _GLIBCXX_HAVE_SINCOSL */
+#define _GLIBCXX_HAVE_SINCOSL 1
 
 /* Define to 1 if you have the `sinf' function. */
 #define _GLIBCXX_HAVE_SINF 1
@@ -1198,7 +1208,7 @@ namespace std
 /* #undef _GLIBCXX_HAVE_SINHL */
 
 /* Define to 1 if you have the `sinl' function. */
-/* #undef _GLIBCXX_HAVE_SINL */
+#define _GLIBCXX_HAVE_SINL 1
 
 /* Defined if sleep exists. */
 /* #undef _GLIBCXX_HAVE_SLEEP */
@@ -1325,7 +1335,7 @@ namespace std
 /* #undef _GLIBCXX_HAVE_TANHL */
 
 /* Define to 1 if you have the `tanl' function. */
-/* #undef _GLIBCXX_HAVE_TANL */
+#define _GLIBCXX_HAVE_TANL 1
 
 /* Define to 1 if you have the <tgmath.h> header file. */
 #define _GLIBCXX_HAVE_TGMATH_H 1
@@ -1781,6 +1791,12 @@ namespace std
    namespace std::tr1. */
 #define _GLIBCXX_USE_C99_STDINT_TR1 1
 
+/* Define if usable chdir is available in <unistd.h>. */
+#define _GLIBCXX_USE_CHDIR 1
+
+/* Define if usable chmod is available in <sys/stat.h>. */
+#define _GLIBCXX_USE_CHMOD 1
+
 /* Defined if clock_gettime syscall has monotonic and realtime clock support.
    */
 /* #undef _GLIBCXX_USE_CLOCK_GETTIME_SYSCALL */
@@ -1805,6 +1821,9 @@ namespace std
 /* Define if fchmodat is available in <sys/stat.h>. */
 #define _GLIBCXX_USE_FCHMODAT 1
 
+/* Define if usable getcwd is available in <unistd.h>. */
+#define _GLIBCXX_USE_GETCWD 1
+
 /* Defined if gettimeofday is available. */
 #define _GLIBCXX_USE_GETTIMEOFDAY 1
 
@@ -1819,6 +1838,9 @@ namespace std
 
 /* Define if lstat is available in <sys/stat.h>. */
 #define _GLIBCXX_USE_LSTAT 1
+
+/* Define if usable mkdir is available in <sys/stat.h>. */
+#define _GLIBCXX_USE_MKDIR 1
 
 /* Defined if nanosleep is available. */
 #define _GLIBCXX_USE_NANOSLEEP 1
