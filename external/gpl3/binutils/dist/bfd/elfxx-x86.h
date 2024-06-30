@@ -1,5 +1,5 @@
 /* x86 specific support for ELF
-   Copyright (C) 2017-2022 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -30,12 +30,12 @@
 #include "elf-linker-x86.h"
 #include "elf/i386.h"
 #include "elf/x86-64.h"
+#include "sframe-api.h"
 
 #define X86_64_PCREL_TYPE_P(TYPE) \
   ((TYPE) == R_X86_64_PC8 \
    || (TYPE) == R_X86_64_PC16 \
    || (TYPE) == R_X86_64_PC32 \
-   || (TYPE) == R_X86_64_PC32_BND \
    || (TYPE) == R_X86_64_PC64)
 #define I386_PCREL_TYPE_P(TYPE) ((TYPE) == R_386_PC32)
 #define X86_PCREL_TYPE_P(IS_X86_64, TYPE) \
@@ -97,13 +97,10 @@
 #define PLT_FDE_START_OFFSET	4 + PLT_CIE_LENGTH + 8
 #define PLT_FDE_LEN_OFFSET	4 + PLT_CIE_LENGTH + 12
 
-#define I386_PCREL_TYPE_P(TYPE) ((TYPE) == R_386_PC32)
-#define X86_64_PCREL_TYPE_P(TYPE) \
-  ((TYPE) == R_X86_64_PC8 \
-   || (TYPE) == R_X86_64_PC16 \
-   || (TYPE) == R_X86_64_PC32 \
-   || (TYPE) == R_X86_64_PC32_BND \
-   || (TYPE) == R_X86_64_PC64)
+/* This must be the same as sframe_get_hdr_size (sfh).  For x86-64, this value
+   is the same as sizeof (sframe_header) because there is no SFrame auxilliary
+   header.  */
+#define PLT_SFRAME_FDE_START_OFFSET	sizeof (sframe_header)
 
 #define ABI_64_P(abfd) \
   (get_elf_backend_data (abfd)->s->elfclass == ELFCLASS64)
@@ -388,6 +385,24 @@ struct elf_x86_link_hash_entry
   bfd_vma tlsdesc_got;
 };
 
+#define SFRAME_PLT0_MAX_NUM_FRES 2
+#define SFRAME_PLTN_MAX_NUM_FRES 2
+
+struct elf_x86_sframe_plt
+{
+  unsigned int plt0_entry_size;
+  unsigned int plt0_num_fres;
+  const sframe_frame_row_entry *plt0_fres[SFRAME_PLT0_MAX_NUM_FRES];
+
+  unsigned int pltn_entry_size;
+  unsigned int pltn_num_fres;
+  const sframe_frame_row_entry *pltn_fres[SFRAME_PLTN_MAX_NUM_FRES];
+
+  unsigned int sec_pltn_entry_size;
+  unsigned int sec_pltn_num_fres;
+  const sframe_frame_row_entry *sec_pltn_fres[SFRAME_PLTN_MAX_NUM_FRES];
+};
+
 struct elf_x86_lazy_plt_layout
 {
   /* The first entry in a lazy procedure linkage table looks like this.  */
@@ -487,6 +502,9 @@ struct elf_x86_plt_layout
   /* 1 has PLT0.  */
   unsigned int has_plt0;
 
+  /* Offset of indirect branch in plt_entry.  */
+  unsigned int plt_indirect_branch_offset;
+
   /* Offsets into plt_entry that are to be replaced with...  */
   unsigned int plt_got_offset;    /* ... address of this symbol in .got. */
 
@@ -584,6 +602,11 @@ struct elf_x86_link_hash_table
   asection *plt_got;
   asection *plt_got_eh_frame;
 
+  sframe_encoder_ctx *plt_cfe_ctx;
+  asection *plt_sframe;
+  sframe_encoder_ctx *plt_second_cfe_ctx;
+  asection *plt_second_sframe;
+
   /* Parameters describing PLT generation, lazy or non-lazy.  */
   struct elf_x86_plt_layout plt;
 
@@ -592,6 +615,10 @@ struct elf_x86_link_hash_table
 
   /* Parameters describing non-lazy PLT generation.  */
   const struct elf_x86_non_lazy_plt_layout *non_lazy_plt;
+
+  /* The .sframe helper object for .plt section.
+     This is used for x86-64 only.  */
+  const struct elf_x86_sframe_plt *sframe_plt;
 
   union
   {
@@ -681,6 +708,22 @@ struct elf_x86_init_table
 
   /* The non-lazy PLT layout for IBT.  */
   const struct elf_x86_non_lazy_plt_layout *non_lazy_ibt_plt;
+
+  /* The .sframe helper object for lazy .plt section.
+     This is used for x86-64 only.  */
+  const struct elf_x86_sframe_plt *sframe_lazy_plt;
+
+  /* The .sframe helper object for non-lazy .plt section.
+     This is used for x86-64 only.  */
+  const struct elf_x86_sframe_plt *sframe_non_lazy_plt;
+
+  /* The .sframe helper object for lazy IBT .plt section.
+     This is used for x86-64 only.  */
+  const struct elf_x86_sframe_plt *sframe_lazy_ibt_plt;
+
+  /* The .sframe helper object for non-lazy IBT .plt section.
+     This is used for x86-64 only.  */
+  const struct elf_x86_sframe_plt *sframe_non_lazy_ibt_plt;
 
   bfd_byte plt0_pad_byte;
 

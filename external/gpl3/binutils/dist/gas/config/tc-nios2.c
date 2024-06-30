@@ -1,5 +1,5 @@
 /* Altera Nios II assembler.
-   Copyright (C) 2012-2022 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
    Contributed by Nigel Gray (ngray@altera.com).
    Contributed by Mentor Graphics, Inc.
 
@@ -507,7 +507,7 @@ s_nios2_align (int ignore ATTRIBUTE_UNUSED)
 static void
 s_nios2_text (int i)
 {
-  s_text (i);
+  obj_elf_text (i);
   nios2_last_label = NULL;
   nios2_current_align = 0;
   nios2_current_align_seg = now_seg;
@@ -518,7 +518,7 @@ s_nios2_text (int i)
 static void
 s_nios2_data (int i)
 {
-  s_data (i);
+  obj_elf_data (i);
   nios2_last_label = NULL;
   nios2_current_align = 0;
   nios2_current_align_seg = now_seg;

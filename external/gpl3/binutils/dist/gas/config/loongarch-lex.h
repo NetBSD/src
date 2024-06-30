@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2021-2022 Free Software Foundation, Inc.
+   Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -32,3 +32,6 @@ loongarch_parse_expr (const char *expr,
 		      size_t max_reloc_num,
 		      size_t *reloc_num,
 		      offsetT *imm);
+bfd_reloc_code_real_type
+loongarch_larch_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
+				   const char *l_r_name);

@@ -1,5 +1,5 @@
 /* Plugin control for the GNU linker.
-   Copyright (C) 2010-2022 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -51,7 +51,9 @@
 #if !(defined(errno) || defined(_MSC_VER) && defined(_INC_ERRNO))
 extern int errno;
 #endif
-#if !defined (HAVE_DLFCN_H) && defined (HAVE_WINDOWS_H)
+#if defined (HAVE_DLFCN_H)
+#include <dlfcn.h>
+#elif defined (HAVE_WINDOWS_H)
 #include <windows.h>
 #endif
 
@@ -85,6 +87,7 @@ typedef struct plugin
   size_t n_args;
   /* The plugin's event handlers.  */
   ld_plugin_claim_file_handler claim_file_handler;
+  ld_plugin_claim_file_handler_v2 claim_file_handler_v2;
   ld_plugin_all_symbols_read_handler all_symbols_read_handler;
   ld_plugin_cleanup_handler cleanup_handler;
   /* TRUE if the cleanup handlers have been called.  */
@@ -157,6 +160,7 @@ static const enum ld_plugin_tag tv_header_tags[] =
   LDPT_LINKER_OUTPUT,
   LDPT_OUTPUT_NAME,
   LDPT_REGISTER_CLAIM_FILE_HOOK,
+  LDPT_REGISTER_CLAIM_FILE_HOOK_V2,
   LDPT_REGISTER_ALL_SYMBOLS_READ_HOOK,
   LDPT_REGISTER_CLEANUP_HOOK,
   LDPT_ADD_SYMBOLS,
@@ -179,7 +183,7 @@ static bool plugin_notice (struct bfd_link_info *,
 			   struct bfd_link_hash_entry *,
 			   bfd *, asection *, bfd_vma, flagword);
 
-static bfd_cleanup plugin_object_p (bfd *);
+static bfd_cleanup plugin_object_p (bfd *, bool);
 
 #if !defined (HAVE_DLFCN_H) && defined (HAVE_WINDOWS_H)
 
@@ -462,6 +466,15 @@ register_claim_file (ld_plugin_claim_file_handler handler)
 {
   ASSERT (called_plugin);
   called_plugin->claim_file_handler = handler;
+  return LDPS_OK;
+}
+
+/* Register a claim-file version 2 handler.  */
+static enum ld_plugin_status
+register_claim_file_v2 (ld_plugin_claim_file_handler_v2 handler)
+{
+  ASSERT (called_plugin);
+  called_plugin->claim_file_handler_v2 = handler;
   return LDPS_OK;
 }
 
@@ -1017,6 +1030,9 @@ set_tv_header (struct ld_plugin_tv *tv)
 	case LDPT_REGISTER_CLAIM_FILE_HOOK:
 	  TVU(register_claim_file) = register_claim_file;
 	  break;
+	case LDPT_REGISTER_CLAIM_FILE_HOOK_V2:
+	  TVU(register_claim_file_v2) = register_claim_file_v2;
+	  break;
 	case LDPT_REGISTER_ALL_SYMBOLS_READ_HOOK:
 	  TVU(register_all_symbols_read) = register_all_symbols_read;
 	  break;
@@ -1142,7 +1158,8 @@ plugin_load_plugins (void)
 
 /* Call 'claim file' hook for all plugins.  */
 static int
-plugin_call_claim_file (const struct ld_plugin_input_file *file, int *claimed)
+plugin_call_claim_file (const struct ld_plugin_input_file *file, int *claimed,
+			bool known_used)
 {
   plugin_t *curplug = plugins_list;
   *claimed = false;
@@ -1153,7 +1170,10 @@ plugin_call_claim_file (const struct ld_plugin_input_file *file, int *claimed)
 	  enum ld_plugin_status rv;
 
 	  called_plugin = curplug;
-	  rv = (*curplug->claim_file_handler) (file, claimed);
+	  if (curplug->claim_file_handler_v2)
+	    rv = (*curplug->claim_file_handler_v2) (file, claimed, known_used);
+	  else
+	    rv = (*curplug->claim_file_handler) (file, claimed);
 	  called_plugin = NULL;
 	  if (rv != LDPS_OK)
 	    set_plugin_error (curplug->name);
@@ -1185,7 +1205,7 @@ plugin_cleanup (bfd *abfd ATTRIBUTE_UNUSED)
 }
 
 static bfd_cleanup
-plugin_object_p (bfd *ibfd)
+plugin_object_p (bfd *ibfd, bool known_used)
 {
   int claimed;
   plugin_input_file_t *input;
@@ -1237,7 +1257,7 @@ plugin_object_p (bfd *ibfd)
 
   claimed = 0;
 
-  if (plugin_call_claim_file (&file, &claimed))
+  if (plugin_call_claim_file (&file, &claimed, known_used))
     einfo (_("%F%P: %s: plugin reported error claiming file\n"),
 	   plugin_error_plugin ());
 
@@ -1292,7 +1312,7 @@ void
 plugin_maybe_claim (lang_input_statement_type *entry)
 {
   ASSERT (entry->header.type == lang_input_statement_enum);
-  if (plugin_object_p (entry->the_bfd))
+  if (plugin_object_p (entry->the_bfd, true))
     {
       bfd *abfd = entry->the_bfd->plugin_dummy_bfd;
 

@@ -1,5 +1,5 @@
 /* Emulation code used by all ELF targets.
-   Copyright (C) 1991-2022 Free Software Foundation, Inc.
+   Copyright (C) 1991-2024 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -19,6 +19,7 @@
    MA 02110-1301, USA.  */
 
 #include "sysdep.h"
+#include "libiberty.h"
 #include "bfd.h"
 #include "bfdlink.h"
 #include "ctf-api.h"

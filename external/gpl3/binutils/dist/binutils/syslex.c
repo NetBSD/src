@@ -494,7 +494,7 @@ char *yytext;
 #line 1 "syslex.l"
 #define YY_NO_INPUT 1
 #line 4 "syslex.l"
-/* Copyright (C) 2001-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 

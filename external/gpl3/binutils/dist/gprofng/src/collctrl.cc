@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -39,7 +39,7 @@
 #include "libiberty.h"
 #include "collctrl.h"
 #include "hwcdrv.h"
-//#include "hwcfuncs.h"
+#include "StringBuilder.h"
 
 #define SP_GROUP_HEADER     "#analyzer experiment group"
 #define DD_MAXPATHLEN       (MAXPATHLEN * 4) /* large, to build up data descriptor */
@@ -55,7 +55,84 @@ extern const char *strsignal (int);
 #define _SC_CPUID_MAX       517
 #endif
 
-const char *get_fstype (char *);
+static const char *get_fstype (char *);
+static cpu_info_t cpu_info;
+
+static void
+read_str (char *from, char **to)
+{
+  if (*to != NULL)
+    return;
+  for (char *s = from; *s; s++)
+    if (*s != ':' && *s != '\t' && *s != ' ')
+      {
+	for (int i = ((int) strlen (s)) - 1; i >= 0; i--)
+	  {
+	    if (s[i] != '\n' && s[i] != ' ' && s[i] != '\t')
+	      {
+		*to = strndup(s, i + 1);
+		return;
+	      }
+	  }
+	return; // string is empty
+      }
+}
+
+static int
+read_int (char *from)
+{
+  char *val = strchr (from, ':');
+  if (val)
+    return atoi (val + 1);
+  return 0;
+}
+
+cpu_info_t *
+read_cpuinfo()
+{
+  static int inited = 0;
+  if (inited)
+    return &cpu_info;
+  inited = 1;
+
+#if defined(__aarch64__)
+  asm volatile("mrs %0, cntfrq_el0" : "=r" (cpu_info.cpu_clk_freq));
+#endif
+
+  // Read /proc/cpuinfo to get CPU info and clock rate
+  FILE *procf = fopen ("/proc/cpuinfo", "r");
+  if (procf != NULL)
+    {
+      char temp[1024];
+      while (fgets (temp, (int) sizeof (temp), procf) != NULL)
+	{
+	  if (strncmp (temp, "processor", 9) == 0)
+	    cpu_info.cpu_cnt++;
+	  else if (strncmp (temp, "cpu MHz", 7) == 0)
+	    cpu_info.cpu_clk_freq = read_int (temp + 9);
+	  else if (strncmp (temp, "cpu family", 10) == 0)
+	    cpu_info.cpu_family = read_int (temp + 10);
+	  else if (strncmp (temp, "vendor_id", 9) == 0)
+	    {
+	      if (cpu_info.cpu_vendorstr == NULL)
+		read_str (temp + 9, &cpu_info.cpu_vendorstr);
+	    }
+	  else if (strncmp (temp, "model name", 10) == 0)
+	    {
+	      if (cpu_info.cpu_modelstr == NULL)
+		read_str (temp + 10, &cpu_info.cpu_modelstr);
+	    }
+	  else if (strncmp (temp, "model", 5) == 0)
+	    cpu_info.cpu_model = read_int (temp + 5);
+	  else if (strncmp (temp, "CPU implementer", 15) == 0)
+	    cpu_info.cpu_family = read_int (temp + 15);
+	  else if (strncmp (temp, "CPU architecture", 16) == 0)
+	    cpu_info.cpu_model = read_int (temp + 16);
+	}
+      fclose (procf);
+    }
+  return &cpu_info;
+}
 
 Coll_Ctrl::Coll_Ctrl (int _interactive, bool _defHWC, bool _kernelHWC)
 {
@@ -81,60 +158,9 @@ Coll_Ctrl::Coll_Ctrl (int _interactive, bool _defHWC, bool _kernelHWC)
       /* add 2048 to count, since on some systems CPUID does not start at zero */
       ncpumax = ncpus + 2048;
     }
-  ncpus = 0;
-  cpu_clk_freq = 0;
-
-  // On Linux, read /proc/cpuinfo to get CPU count and clock rate
-  // Note that parsing is different on SPARC and x86
-#if defined(sparc)
-  FILE *procf = fopen ("/proc/cpuinfo", "r");
-  if (procf != NULL)
-    {
-      char temp[1024];
-      while (fgets (temp, (int) sizeof (temp), procf) != NULL)
-	{
-	  if (strncmp (temp, "Cpu", 3) == 0 && temp[3] != '\0'
-	      && strncmp ((strchr (temp + 1, 'C')) ? strchr (temp + 1, 'C')
-			  : (temp + 4), "ClkTck", 6) == 0)
-	    {
-	      ncpus++;
-	      char *val = strchr (temp, ':');
-	      if (val)
-		{
-		  unsigned long long freq;
-		  sscanf (val + 2, "%llx", &freq);
-		  cpu_clk_freq = (unsigned int) (((double) freq) / 1000000.0 + 0.5);
-		}
-	      else
-		cpu_clk_freq = 0;
-	    }
-	}
-      fclose (procf);
-    }
-
-#elif defined(__aarch64__)
-  asm volatile("mrs %0, cntfrq_el0" : "=r" (cpu_clk_freq));
-  dbe_write (2, GTXT ("CPU clock frequency: %d\n"), cpu_clk_freq);
-
-#else
-  FILE *procf = fopen ("/proc/cpuinfo", "r");
-  if (procf != NULL)
-    {
-      char temp[1024];
-      while (fgets (temp, (int) sizeof (temp), procf) != NULL)
-	{
-	  // x86 Linux
-	  if (strncmp (temp, "processor", 9) == 0)
-	    ncpus++;
-	  else if (strncmp (temp, "cpu MHz", 7) == 0)
-	    {
-	      char *val = strchr (temp, ':');
-	      cpu_clk_freq = val ? atoi (val + 1) : 0;
-	    }
-	}
-      fclose (procf);
-    }
-#endif
+  cpu_info_t *cpu_p = read_cpuinfo();
+  ncpus = cpu_p->cpu_cnt;
+  cpu_clk_freq = cpu_p->cpu_clk_freq;
 
   /* check resolution of system clock */
   sys_resolution = sysconf (_SC_CLK_TCK);
@@ -760,7 +786,7 @@ Coll_Ctrl::get_collect_args ()
       *p++ = strdup ("-s");
       if (synctrace_thresh < 0)
 	*p++ = strdup ("calibrate");
-      else if (synctrace_thresh < 0)
+      else if (synctrace_thresh == 0)
 	*p++ = strdup ("all");
       else
 	*p++ = dbe_sprintf ("%d", synctrace_thresh);
@@ -1079,15 +1105,12 @@ Coll_Ctrl::set_synctrace (const char *string)
   /* the remaining string should be a number >= 0 */
   char *endchar = NULL;
   int tval = (int) strtol (val, &endchar, 0);
-  free (val);
   if (*endchar != 0 || tval < 0)
     {
-      /* invalid setting */
-      /* restore the comma, if it was zeroed out */
-      if (comma_p != NULL)
-	*comma_p = ',';
+      free (val);
       return dbe_sprintf (GTXT ("Unrecognized synchronization tracing threshold `%s'\n"), string);
     }
+  free (val);
   synctrace_thresh = tval;
   synctrace_enabled = 1;
   return NULL;
@@ -1724,78 +1747,62 @@ Coll_Ctrl::set_size_limit (const char *string)
 void
 Coll_Ctrl::build_data_desc ()
 {
-  char spec[DD_MAXPATHLEN];
-  spec[0] = 0;
+  StringBuilder sb;
 
   // Put sample sig before clock profiling. Dbx uses PROF
   // for that purpose and we want it to be processed first.
   if (project_home)
-    snprintf (spec + strlen (spec), sizeof (spec) - strlen (spec), "P:%s;", project_home);
+    sb.appendf ("P:%s;", project_home);
   if (sample_sig != 0)
-    snprintf (spec + strlen (spec), sizeof (spec) - strlen (spec), "g:%d;", sample_sig);
+    sb.appendf ("g:%d;", sample_sig);
   if (pauseresume_sig != 0)
-    snprintf (spec + strlen (spec), sizeof (spec) - strlen (spec), "d:%d%s;", pauseresume_sig,
-	      (pauseresume_pause == 1 ? "p" : ""));
+    sb.appendf ("d:%d%s;", pauseresume_sig, pauseresume_pause == 1 ? "p" : "");
   if (clkprof_enabled == 1)
-    snprintf (spec + strlen (spec), sizeof (spec) - strlen (spec), "p:%d;", clkprof_timer);
+    sb.appendf ("p:%d;", clkprof_timer);
   if (synctrace_enabled == 1)
-    snprintf (spec + strlen (spec), sizeof (spec) - strlen (spec), "s:%d,%d;", synctrace_thresh, synctrace_scope);
+    sb.appendf ("s:%d,%d;", synctrace_thresh, synctrace_scope);
   if (heaptrace_enabled == 1)
-    snprintf (spec + strlen (spec), sizeof (spec) - strlen (spec), "H:%d;", heaptrace_checkenabled);
+    sb.appendf ("H:%d;", heaptrace_checkenabled);
   if (iotrace_enabled == 1)
-    snprintf (spec + strlen (spec), sizeof (spec) - strlen (spec), "i:;");
+    sb.append ("i:;");
   if (hwcprof_enabled_cnt > 0)
     {
-      snprintf (spec + strlen (spec), sizeof (spec) - strlen (spec), "h:%s",
-		(hwcprof_default == true) ? "*" : "");
+      sb.appendf ("h:%s", (hwcprof_default == true) ? "*" : "");
       for (int ii = 0; ii < hwcprof_enabled_cnt; ii++)
 	{
-	  /* min_time is a "new" field.
-	   *
-	   * To help process_data_descriptor() in hwcfuncs.c parse
-	   * the HWC portion of this string -- specifically, to
-	   * recognize min_time when it's present and skip over
-	   * when it's not -- we prepend 'm' to the min_time value.
-	   *
-	   * When we no longer worry about, say, an old dbx
-	   * writing this string and a new libcollector looking for
-	   * the min_time field, the 'm' character can be
-	   * removed and process_data_descriptor() simplified.
-	   */
-	  hrtime_t min_time = hwctr[ii].min_time;
+	  Hwcentry *h = hwctr + ii;
+	  hrtime_t min_time = h->min_time;
 	  if (min_time == HWCTIME_TBD)
 	    // user did not specify any value for overflow rate
-	    min_time = hwctr[ii].min_time_default;
-	  snprintf (spec + strlen (spec), sizeof (spec) - strlen (spec),
-		    "%s%s:%s:%d:%d:m%lld:%d:%d:0x%x", ii ? "," : "",
-		    strcmp (hwctr[ii].name, hwctr[ii].int_name) ? hwctr[ii].name : "",
-		    hwctr[ii].int_name, hwctr[ii].reg_num, hwctr[ii].val,
-		    min_time, ii, /*tag*/ hwctr[ii].timecvt, hwctr[ii].memop);
+	    min_time = h->min_time_default;
+	  if (ii > 0)
+	    sb.append (',');
+	  sb.appendf ("%d:%d:%lld:%s:%s:%lld:%d:m%lld:%d:%d:0x%x",
+		    h->use_perf_event_type, h->type, (long long) h->config,
+		    strcmp (h->name, h->int_name) ? h->name : "",
+		    h->int_name, (long long) h->reg_num, h->val,
+		    (long long) min_time, ii, /*tag*/ h->timecvt, h->memop);
 	}
-      snprintf (spec + strlen (spec), sizeof (spec) - strlen (spec), ";");
+      sb.append (";");
     }
-  if ((time_run != 0) || (start_delay != 0))
+  if (time_run != 0 || start_delay != 0)
     {
       if (start_delay != 0)
-	snprintf (spec + strlen (spec), sizeof (spec) - strlen (spec), "t:%d:%d;", start_delay, time_run);
+	sb.appendf ("t:%d:%d;", start_delay, time_run);
       else
-	snprintf (spec + strlen (spec), sizeof (spec) - strlen (spec), "t:%d;", time_run);
+	sb.appendf ("t:%d;", time_run);
     }
   if (sample_period != 0)
-    snprintf (spec + strlen (spec), sizeof (spec) - strlen (spec), "S:%d;",
-	      sample_period);
+    sb.appendf ("S:%d;", sample_period);
   if (size_limit != 0)
-    snprintf (spec + strlen (spec), sizeof (spec) - strlen (spec), "L:%d;",
-	      size_limit);
+    sb.appendf ("L:%d;", size_limit);
   if (java_mode != 0)
-    snprintf (spec + strlen (spec), sizeof (spec) - strlen (spec), "j:%d;", (int) java_mode);
+    sb.appendf ("j:%d;", (int) java_mode);
   if (follow_mode != FOLLOW_NONE)
-    snprintf (spec + strlen (spec), sizeof (spec) - strlen (spec), "F:%d;", (int) follow_mode);
-  snprintf (spec + strlen (spec), sizeof (spec) - strlen (spec), "a:%s;", archive_mode);
-  if (strlen (spec) + 1 >= sizeof (spec))
-    abort ();
+    sb.appendf ("F:%d;", (int) follow_mode);
+  sb.appendf ("a:%s;", archive_mode);
   free (data_desc);
-  data_desc = strdup (spec);
+  data_desc = sb.toString ();
 }
 
 char *

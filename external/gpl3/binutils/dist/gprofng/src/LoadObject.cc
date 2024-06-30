@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -445,59 +445,32 @@ LoadObject::find_function (uint64_t foff)
   if (func == NULL)
     {
       int last = functions->size () - 1;
-      uint64_t usize = (uint64_t) size;
-      if (foff >= usize)
+      uint64_t usize = size < 0 ? 0 : (uint64_t) size;
+      if (last < 0)
+	high_bound = foff >= usize ? foff : usize;
+      else if (left == 0)
+	high_bound = functions->fetch (left)->img_offset;
+      else if (left < last)
 	{
-	  // Cannot map to this LoadObject. Probably LoadObject was changed.
-	  if (last >= 0 && functions->fetch (last)->img_offset == usize)
-	    {
-	      // Function is already created
-	      func = functions->fetch (last);
-	      if (func->size < 0 || (uint64_t) func->size < foff - usize)
-		func->size = foff - usize;
-	    }
-	  else
-	    {
-	      low_bound = size;
-	      high_bound = foff;
-	      func_name = dbe_sprintf (GTXT ("<static>@0x%llx (%s) --  no functions found"),
-				       low_bound, name);
-	    }
-	}
-      else if (last < 0)
-	{
-	  low_bound = 0;
-	  high_bound = size;
-	  func_name = dbe_sprintf (GTXT ("<static>@0x%llx (%s) --  no functions found"),
-				   low_bound, name);
-	}
-      else if (foff < functions->fetch (0)->img_offset)
-	{
-	  low_bound = 0;
-	  high_bound = functions->fetch (0)->img_offset;
+	  Function *fp = functions->fetch (left - 1);
+	  low_bound = fp->img_offset + fp->size;
+	  high_bound = functions->fetch (left)->img_offset;
 	}
       else
 	{
 	  Function *fp = functions->fetch (last);
-	  if (foff >= fp->img_offset + fp->size)
+	  if (fp->flags & FUNC_FLAG_SIMULATED)
 	    {
-	      low_bound = fp->img_offset + fp->size;
-	      high_bound = size;
+	      // Function is already created
+	      func = fp;
+	      uint64_t sz = func->size < 0 ? 0 : func->size;
+	      if (sz + func->img_offset < foff)
+		func->size = foff - func->img_offset;
 	    }
 	  else
 	    {
-	      fp = functions->fetch (left);
-	      if (foff >= fp->img_offset + fp->size)
-		{
-		  low_bound = fp->img_offset + fp->size;
-		  high_bound = functions->fetch (left + 1)->img_offset;
-		}
-	      else
-		{
-		  Function *fp1 = functions->fetch (left - 1);
-		  low_bound = fp1->img_offset + fp1->size;
-		  high_bound = fp->img_offset;
-		}
+	      low_bound = fp->img_offset + fp->size;
+	      high_bound = foff > usize ? foff : usize;
 	    }
 	}
     }
@@ -505,6 +478,7 @@ LoadObject::find_function (uint64_t foff)
   if (func == NULL)
     {
       func = dbeSession->createFunction ();
+      func->flags |= FUNC_FLAG_SIMULATED;
       func->size = (unsigned) (high_bound - low_bound);
       func->module = noname;
       func->img_fname = get_pathname ();
@@ -512,7 +486,7 @@ LoadObject::find_function (uint64_t foff)
       noname->functions->append (func); // unordered
       if (func_name == NULL)
 	func_name = dbe_sprintf (GTXT ("<static>@0x%llx (%s)"), low_bound,
-				 name);
+				     name);
       func->set_name (func_name);
       free (func_name);
 

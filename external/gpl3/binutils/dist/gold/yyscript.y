@@ -1,6 +1,6 @@
 /* yyscript.y -- linker script grammar for gold.  */
 
-/* Copyright (C) 2006-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2024 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <iant@google.com>.
 
    This file is part of gold.
@@ -26,6 +26,7 @@
 %{
 
 #include "config.h"
+#include "diagnostics.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -33,6 +34,8 @@
 #include <string.h>
 
 #include "script-c.h"
+
+DIAGNOSTIC_IGNORE_UNUSED_BUT_SET_VARIABLE
 
 %}
 

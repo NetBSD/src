@@ -1,6 +1,6 @@
 // i386.cc -- i386 target support for gold.
 
-// Copyright (C) 2006-2022 Free Software Foundation, Inc.
+// Copyright (C) 2006-2024 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -2672,7 +2672,7 @@ Target_i386::do_finalize_sections(
 				  ? NULL
 				  : this->plt_->rel_plt());
   layout->add_target_dynamic_tags(true, this->got_plt_, rel_plt,
-				  this->rel_dyn_, true, false);
+				  this->rel_dyn_, true, false, false);
 
   // Emit any relocs we saved in an attempt to avoid generating COPY
   // relocs.

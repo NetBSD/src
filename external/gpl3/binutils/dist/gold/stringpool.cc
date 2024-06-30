@@ -1,6 +1,6 @@
 // stringpool.cc -- a string pool for gold
 
-// Copyright (C) 2006-2022 Free Software Foundation, Inc.
+// Copyright (C) 2006-2024 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -25,6 +25,7 @@
 #include <cstring>
 #include <algorithm>
 #include <vector>
+#include <uchar.h>
 
 #include "output.h"
 #include "parameters.h"
@@ -527,9 +528,9 @@ template
 class Stringpool_template<char>;
 
 template
-class Stringpool_template<uint16_t>;
+class Stringpool_template<char16_t>;
 
 template
-class Stringpool_template<uint32_t>;
+class Stringpool_template<char32_t>;
 
 } // End namespace gold.

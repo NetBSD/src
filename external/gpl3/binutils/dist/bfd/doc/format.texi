@@ -28,11 +28,7 @@ The BFD contains the result of an executable core dump.
 
 @findex bfd_check_format
 @subsubsection @code{bfd_check_format}
-@strong{Synopsis}
-@example
-bool bfd_check_format (bfd *abfd, bfd_format format);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool bfd_check_format (bfd *abfd, bfd_format format); 
 Verify if the file attached to the BFD @var{abfd} is compatible
 with the format @var{format} (i.e., one of @code{bfd_object},
 @code{bfd_archive} or @code{bfd_core}).
@@ -69,14 +65,10 @@ none of the backends recognised the file format.
 more than one backend recognised the file format.
 @end itemize
 
+@end deftypefn
 @findex bfd_check_format_matches
 @subsubsection @code{bfd_check_format_matches}
-@strong{Synopsis}
-@example
-bool bfd_check_format_matches
-   (bfd *abfd, bfd_format format, char ***matching);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool bfd_check_format_matches (bfd *abfd, bfd_format format, char ***matching); 
 Like @code{bfd_check_format}, except when it returns FALSE with
 @code{bfd_errno} set to @code{bfd_error_file_ambiguously_recognized}.  In that
 case, if @var{matching} is not NULL, it will be filled in with
@@ -87,26 +79,21 @@ Then the user may choose a format and try again.
 When done with the list that @var{matching} points to, the caller
 should free it.
 
+@end deftypefn
 @findex bfd_set_format
 @subsubsection @code{bfd_set_format}
-@strong{Synopsis}
-@example
-bool bfd_set_format (bfd *abfd, bfd_format format);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool bfd_set_format (bfd *abfd, bfd_format format); 
 This function sets the file format of the BFD @var{abfd} to the
 format @var{format}. If the target set in the BFD does not
 support the format requested, the format is invalid, or the BFD
 is not open for writing, then an error occurs.
 
+@end deftypefn
 @findex bfd_format_string
 @subsubsection @code{bfd_format_string}
-@strong{Synopsis}
-@example
-const char *bfd_format_string (bfd_format format);
-@end example
-@strong{Description}@*
+@deftypefn {Function} const char *bfd_format_string (bfd_format format); 
 Return a pointer to a const string
 @code{invalid}, @code{object}, @code{archive}, @code{core}, or @code{unknown},
 depending upon the value of @var{format}.
 
+@end deftypefn

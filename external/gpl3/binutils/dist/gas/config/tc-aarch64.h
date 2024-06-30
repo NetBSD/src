@@ -1,5 +1,5 @@
 /* tc-aarch64.h -- Header file for tc-aarch64.c.
-   Copyright (C) 2009-2022 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GAS.
@@ -59,9 +59,11 @@ struct aarch64_fix
   enum aarch64_opnd opnd;
 };
 
-#if defined OBJ_ELF
+#ifdef OBJ_ELF
 # define AARCH64_BI_ENDIAN
 # define TARGET_FORMAT	elf64_aarch64_target_format ()
+#elif defined (OBJ_COFF)
+# define TARGET_FORMAT coff_aarch64_target_format ()
 #endif
 
 #define TC_FORCE_RELOCATION(FIX) aarch64_force_relocation (FIX)
@@ -169,7 +171,7 @@ void aarch64_elf_copy_symbol_attributes (symbolS *, symbolS *);
 struct aarch64_frag_type
 {
   int recorded;
-#ifdef OBJ_ELF
+#if defined OBJ_ELF || defined OBJ_COFF
   /* If there is a mapping symbol at offset 0 in this frag,
      it will be saved in FIRST_MAP.  If there are any mapping
      symbols in this frag, the last one will be saved in
@@ -189,7 +191,10 @@ struct aarch64_frag_type
       goto LABEL;								\
     }
 
+/* COFF sub section alignment calculated using the write.c implementation.  */
+#ifndef OBJ_COFF
 #define SUB_SEGMENT_ALIGN(SEG, FRCHAIN) 0
+#endif
 
 #define DWARF2_LINE_MIN_INSN_LENGTH 	4
 
@@ -202,8 +207,10 @@ struct aarch64_frag_type
 extern int aarch64_dwarf2_addr_size (void);
 #define DWARF2_ADDR_SIZE(bfd) aarch64_dwarf2_addr_size ()
 
+#if defined OBJ_ELF || defined OBJ_COFF
 #ifdef OBJ_ELF
 # define obj_frob_symbol(sym, punt)	aarch64elf_frob_symbol ((sym), & (punt))
+#endif
 
 # define GLOBAL_OFFSET_TABLE_NAME	"_GLOBAL_OFFSET_TABLE_"
 # define TC_SEGMENT_INFO_TYPE 		struct aarch64_segment_info_type
@@ -242,23 +249,56 @@ struct aarch64_segment_info_type
 extern void aarch64_after_parse_args (void);
 #define md_after_parse_args() aarch64_after_parse_args ()
 
-#else /* Not OBJ_ELF.  */
-#define GLOBAL_OFFSET_TABLE_NAME "__GLOBAL_OFFSET_TABLE_"
-#endif
-
-#if defined OBJ_ELF || defined OBJ_COFF
-
 # define EXTERN_FORCE_RELOC 			1
 # define tc_fix_adjustable(FIX) 		1
+
 /* Values passed to md_apply_fix don't include the symbol value.  */
 # define MD_APPLY_SYM_VALUE(FIX) 		0
 
-#endif
+#else /* Neither OBJ_ELF nor OBJ_COFF.  */
+
+#define GLOBAL_OFFSET_TABLE_NAME "__GLOBAL_OFFSET_TABLE_"
+
+#endif /*  OBJ_ELF || OBJ_COFF.  */
+
+#ifdef OBJ_ELF
+
+/* Whether SFrame stack trace info is supported.  */
+extern bool aarch64_support_sframe_p (void);
+#define support_sframe_p aarch64_support_sframe_p
+
+/* The stack-pointer register number for SFrame stack trace info.  */
+extern unsigned int aarch64_sframe_cfa_sp_reg;
+#define SFRAME_CFA_SP_REG aarch64_sframe_cfa_sp_reg
+
+/* The base-pointer register number for CFA stack trace info.  */
+extern unsigned int aarch64_sframe_cfa_fp_reg;
+#define SFRAME_CFA_FP_REG aarch64_sframe_cfa_fp_reg
+
+/* The return address register number for CFA stack trace info.  */
+extern unsigned int aarch64_sframe_cfa_ra_reg;
+#define SFRAME_CFA_RA_REG aarch64_sframe_cfa_ra_reg
+
+/* Specify if RA tracking is needed.  */
+extern bool aarch64_sframe_ra_tracking_p (void);
+#define sframe_ra_tracking_p aarch64_sframe_ra_tracking_p
+
+/* Specify the fixed offset to recover RA from CFA.
+   (useful only when RA tracking is not needed).  */
+extern offsetT aarch64_sframe_cfa_ra_offset (void);
+#define sframe_cfa_ra_offset aarch64_sframe_cfa_ra_offset
+
+/* The abi/arch indentifier for SFrame.  */
+unsigned char aarch64_sframe_get_abi_arch (void);
+#define sframe_get_abi_arch aarch64_sframe_get_abi_arch
+
+#endif /* OBJ_ELF  */
 
 #define MD_PCREL_FROM_SECTION(F,S) md_pcrel_from_section(F,S)
 
 extern void aarch64_frag_align_code (int, int);
 extern const char * elf64_aarch64_target_format (void);
+extern const char * coff_aarch64_target_format (void);
 extern int aarch64_force_relocation (struct fix *);
 extern void aarch64_cleanup (void);
 extern void aarch64_start_line_hook (void);

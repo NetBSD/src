@@ -71,6 +71,7 @@
 
 
 #include "config.h"
+#include "diagnostics.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -79,8 +80,10 @@
 
 #include "script-c.h"
 
+DIAGNOSTIC_IGNORE_UNUSED_BUT_SET_VARIABLE
 
-#line 84 "yyscript.c"
+
+#line 87 "yyscript.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -345,7 +348,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 53 "yyscript.y"
+#line 56 "yyscript.y"
 
   /* A string.  */
   struct Parser_string string;
@@ -375,7 +378,7 @@ union YYSTYPE
   struct Version_tree* versnode;
   enum Script_section_type section_type;
 
-#line 379 "yyscript.c"
+#line 382 "yyscript.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -990,31 +993,31 @@ static const yytype_uint8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   236,   236,   237,   238,   239,   240,   241,   242,   247,
-     248,   253,   254,   257,   256,   260,   262,   263,   264,   266,
-     272,   279,   280,   283,   282,   286,   289,   288,   292,   294,
-     295,   297,   300,   301,   309,   317,   317,   323,   325,   327,
-     333,   334,   339,   341,   344,   343,   351,   352,   357,   359,
-     360,   362,   366,   365,   374,   376,   374,   393,   398,   403,
-     408,   413,   418,   427,   429,   434,   439,   444,   454,   455,
-     462,   463,   470,   471,   478,   479,   481,   483,   489,   498,
-     500,   505,   507,   512,   515,   521,   524,   529,   531,   537,
-     538,   539,   541,   543,   545,   552,   553,   556,   562,   564,
-     566,   568,   570,   577,   579,   585,   592,   601,   606,   615,
-     620,   625,   630,   639,   644,   663,   682,   691,   693,   700,
-     702,   707,   716,   717,   722,   725,   728,   733,   736,   739,
-     743,   745,   747,   751,   753,   755,   760,   761,   766,   775,
-     777,   784,   785,   793,   798,   809,   818,   820,   826,   832,
-     838,   844,   850,   856,   862,   868,   870,   872,   878,   878,
-     888,   890,   892,   894,   896,   898,   900,   902,   904,   906,
-     908,   910,   912,   914,   916,   918,   920,   922,   924,   926,
-     928,   930,   932,   934,   936,   938,   940,   942,   944,   946,
-     948,   950,   952,   954,   956,   958,   960,   962,   964,   966,
-     968,   970,   975,   980,   982,   990,   996,  1006,  1009,  1010,
-    1014,  1020,  1024,  1025,  1029,  1033,  1038,  1045,  1049,  1057,
-    1058,  1060,  1062,  1064,  1073,  1078,  1083,  1088,  1095,  1094,
-    1105,  1104,  1111,  1116,  1126,  1128,  1135,  1136,  1141,  1142,
-    1147,  1148
+       0,   239,   239,   240,   241,   242,   243,   244,   245,   250,
+     251,   256,   257,   260,   259,   263,   265,   266,   267,   269,
+     275,   282,   283,   286,   285,   289,   292,   291,   295,   297,
+     298,   300,   303,   304,   312,   320,   320,   326,   328,   330,
+     336,   337,   342,   344,   347,   346,   354,   355,   360,   362,
+     363,   365,   369,   368,   377,   379,   377,   396,   401,   406,
+     411,   416,   421,   430,   432,   437,   442,   447,   457,   458,
+     465,   466,   473,   474,   481,   482,   484,   486,   492,   501,
+     503,   508,   510,   515,   518,   524,   527,   532,   534,   540,
+     541,   542,   544,   546,   548,   555,   556,   559,   565,   567,
+     569,   571,   573,   580,   582,   588,   595,   604,   609,   618,
+     623,   628,   633,   642,   647,   666,   685,   694,   696,   703,
+     705,   710,   719,   720,   725,   728,   731,   736,   739,   742,
+     746,   748,   750,   754,   756,   758,   763,   764,   769,   778,
+     780,   787,   788,   796,   801,   812,   821,   823,   829,   835,
+     841,   847,   853,   859,   865,   871,   873,   875,   881,   881,
+     891,   893,   895,   897,   899,   901,   903,   905,   907,   909,
+     911,   913,   915,   917,   919,   921,   923,   925,   927,   929,
+     931,   933,   935,   937,   939,   941,   943,   945,   947,   949,
+     951,   953,   955,   957,   959,   961,   963,   965,   967,   969,
+     971,   973,   978,   983,   985,   993,   999,  1009,  1012,  1013,
+    1017,  1023,  1027,  1028,  1032,  1036,  1041,  1048,  1052,  1060,
+    1061,  1063,  1065,  1067,  1076,  1081,  1086,  1091,  1098,  1097,
+    1108,  1107,  1114,  1119,  1129,  1131,  1138,  1139,  1144,  1145,
+    1150,  1151
 };
 #endif
 
@@ -2402,210 +2405,210 @@ yyreduce:
   switch (yyn)
     {
   case 12: /* file_cmd: FORCE_COMMON_ALLOCATION  */
-#line 255 "yyscript.y"
+#line 258 "yyscript.y"
             { script_set_common_allocation(closure, 1); }
-#line 2408 "yyscript.c"
+#line 2411 "yyscript.c"
     break;
 
   case 13: /* $@1: %empty  */
-#line 257 "yyscript.y"
+#line 260 "yyscript.y"
             { script_start_group(closure); }
-#line 2414 "yyscript.c"
+#line 2417 "yyscript.c"
     break;
 
   case 14: /* file_cmd: GROUP $@1 '(' input_list ')'  */
-#line 259 "yyscript.y"
+#line 262 "yyscript.y"
             { script_end_group(closure); }
-#line 2420 "yyscript.c"
+#line 2423 "yyscript.c"
     break;
 
   case 15: /* file_cmd: INHIBIT_COMMON_ALLOCATION  */
-#line 261 "yyscript.y"
+#line 264 "yyscript.y"
             { script_set_common_allocation(closure, 0); }
-#line 2426 "yyscript.c"
+#line 2429 "yyscript.c"
     break;
 
   case 18: /* file_cmd: OPTION '(' string ')'  */
-#line 265 "yyscript.y"
+#line 268 "yyscript.y"
             { script_parse_option(closure, (yyvsp[-1].string).value, (yyvsp[-1].string).length); }
-#line 2432 "yyscript.c"
+#line 2435 "yyscript.c"
     break;
 
   case 19: /* file_cmd: OUTPUT_FORMAT '(' string ')'  */
-#line 267 "yyscript.y"
+#line 270 "yyscript.y"
             {
 	      if (!script_check_output_format(closure, (yyvsp[-1].string).value, (yyvsp[-1].string).length,
 					      NULL, 0, NULL, 0))
 		YYABORT;
 	    }
-#line 2442 "yyscript.c"
+#line 2445 "yyscript.c"
     break;
 
   case 20: /* file_cmd: OUTPUT_FORMAT '(' string ',' string ',' string ')'  */
-#line 273 "yyscript.y"
+#line 276 "yyscript.y"
             {
 	      if (!script_check_output_format(closure, (yyvsp[-5].string).value, (yyvsp[-5].string).length,
 					      (yyvsp[-3].string).value, (yyvsp[-3].string).length,
 					      (yyvsp[-1].string).value, (yyvsp[-1].string).length))
 		YYABORT;
 	    }
-#line 2453 "yyscript.c"
+#line 2456 "yyscript.c"
     break;
 
   case 22: /* file_cmd: SEARCH_DIR '(' string ')'  */
-#line 281 "yyscript.y"
+#line 284 "yyscript.y"
             { script_add_search_dir(closure, (yyvsp[-1].string).value, (yyvsp[-1].string).length); }
-#line 2459 "yyscript.c"
+#line 2462 "yyscript.c"
     break;
 
   case 23: /* $@2: %empty  */
-#line 283 "yyscript.y"
+#line 286 "yyscript.y"
             { script_start_sections(closure); }
-#line 2465 "yyscript.c"
+#line 2468 "yyscript.c"
     break;
 
   case 24: /* file_cmd: SECTIONS '{' $@2 sections_block '}'  */
-#line 285 "yyscript.y"
+#line 288 "yyscript.y"
             { script_finish_sections(closure); }
-#line 2471 "yyscript.c"
+#line 2474 "yyscript.c"
     break;
 
   case 25: /* file_cmd: TARGET_K '(' string ')'  */
-#line 287 "yyscript.y"
+#line 290 "yyscript.y"
             { script_set_target(closure, (yyvsp[-1].string).value, (yyvsp[-1].string).length); }
-#line 2477 "yyscript.c"
+#line 2480 "yyscript.c"
     break;
 
   case 26: /* $@3: %empty  */
-#line 289 "yyscript.y"
+#line 292 "yyscript.y"
             { script_push_lex_into_version_mode(closure); }
-#line 2483 "yyscript.c"
+#line 2486 "yyscript.c"
     break;
 
   case 27: /* file_cmd: VERSIONK '{' $@3 version_script '}'  */
-#line 291 "yyscript.y"
+#line 294 "yyscript.y"
             { script_pop_lex_mode(closure); }
-#line 2489 "yyscript.c"
+#line 2492 "yyscript.c"
     break;
 
   case 28: /* file_cmd: ENTRY '(' string ')'  */
-#line 293 "yyscript.y"
+#line 296 "yyscript.y"
             { script_set_entry(closure, (yyvsp[-1].string).value, (yyvsp[-1].string).length); }
-#line 2495 "yyscript.c"
+#line 2498 "yyscript.c"
     break;
 
   case 30: /* file_cmd: ASSERT_K '(' parse_exp ',' string ')'  */
-#line 296 "yyscript.y"
+#line 299 "yyscript.y"
             { script_add_assertion(closure, (yyvsp[-3].expr), (yyvsp[-1].string).value, (yyvsp[-1].string).length); }
-#line 2501 "yyscript.c"
+#line 2504 "yyscript.c"
     break;
 
   case 31: /* file_cmd: INCLUDE string  */
-#line 298 "yyscript.y"
+#line 301 "yyscript.y"
             { script_include_directive(PARSING_LINKER_SCRIPT, closure,
 				       (yyvsp[0].string).value, (yyvsp[0].string).length); }
-#line 2508 "yyscript.c"
+#line 2511 "yyscript.c"
     break;
 
   case 35: /* $@4: %empty  */
-#line 317 "yyscript.y"
+#line 320 "yyscript.y"
             { script_push_lex_into_expression_mode(closure); }
-#line 2514 "yyscript.c"
+#line 2517 "yyscript.c"
     break;
 
   case 36: /* extern_name_list: $@4 extern_name_list_body  */
-#line 319 "yyscript.y"
+#line 322 "yyscript.y"
             { script_pop_lex_mode(closure); }
-#line 2520 "yyscript.c"
+#line 2523 "yyscript.c"
     break;
 
   case 37: /* extern_name_list_body: string  */
-#line 324 "yyscript.y"
+#line 327 "yyscript.y"
             { script_add_extern(closure, (yyvsp[0].string).value, (yyvsp[0].string).length); }
-#line 2526 "yyscript.c"
+#line 2529 "yyscript.c"
     break;
 
   case 38: /* extern_name_list_body: extern_name_list_body string  */
-#line 326 "yyscript.y"
+#line 329 "yyscript.y"
             { script_add_extern(closure, (yyvsp[0].string).value, (yyvsp[0].string).length); }
-#line 2532 "yyscript.c"
+#line 2535 "yyscript.c"
     break;
 
   case 39: /* extern_name_list_body: extern_name_list_body ',' string  */
-#line 328 "yyscript.y"
+#line 331 "yyscript.y"
             { script_add_extern(closure, (yyvsp[0].string).value, (yyvsp[0].string).length); }
-#line 2538 "yyscript.c"
+#line 2541 "yyscript.c"
     break;
 
   case 42: /* input_list_element: string  */
-#line 340 "yyscript.y"
+#line 343 "yyscript.y"
             { script_add_file(closure, (yyvsp[0].string).value, (yyvsp[0].string).length); }
-#line 2544 "yyscript.c"
+#line 2547 "yyscript.c"
     break;
 
   case 43: /* input_list_element: '-' STRING  */
-#line 342 "yyscript.y"
+#line 345 "yyscript.y"
             { script_add_library(closure, (yyvsp[0].string).value, (yyvsp[0].string).length); }
-#line 2550 "yyscript.c"
+#line 2553 "yyscript.c"
     break;
 
   case 44: /* $@5: %empty  */
-#line 344 "yyscript.y"
+#line 347 "yyscript.y"
             { script_start_as_needed(closure); }
-#line 2556 "yyscript.c"
+#line 2559 "yyscript.c"
     break;
 
   case 45: /* input_list_element: AS_NEEDED $@5 '(' input_list ')'  */
-#line 346 "yyscript.y"
+#line 349 "yyscript.y"
             { script_end_as_needed(closure); }
-#line 2562 "yyscript.c"
+#line 2565 "yyscript.c"
     break;
 
   case 48: /* section_block_cmd: ENTRY '(' string ')'  */
-#line 358 "yyscript.y"
+#line 361 "yyscript.y"
             { script_set_entry(closure, (yyvsp[-1].string).value, (yyvsp[-1].string).length); }
-#line 2568 "yyscript.c"
+#line 2571 "yyscript.c"
     break;
 
   case 50: /* section_block_cmd: ASSERT_K '(' parse_exp ',' string ')'  */
-#line 361 "yyscript.y"
+#line 364 "yyscript.y"
             { script_add_assertion(closure, (yyvsp[-3].expr), (yyvsp[-1].string).value, (yyvsp[-1].string).length); }
-#line 2574 "yyscript.c"
+#line 2577 "yyscript.c"
     break;
 
   case 51: /* section_block_cmd: INCLUDE string  */
-#line 363 "yyscript.y"
+#line 366 "yyscript.y"
             { script_include_directive(PARSING_SECTIONS_BLOCK, closure,
 				       (yyvsp[0].string).value, (yyvsp[0].string).length); }
-#line 2581 "yyscript.c"
+#line 2584 "yyscript.c"
     break;
 
   case 52: /* $@6: %empty  */
-#line 366 "yyscript.y"
+#line 369 "yyscript.y"
             { script_start_output_section(closure, (yyvsp[-1].string).value, (yyvsp[-1].string).length, &(yyvsp[0].output_section_header)); }
-#line 2587 "yyscript.c"
+#line 2590 "yyscript.c"
     break;
 
   case 53: /* section_block_cmd: string section_header $@6 '{' section_cmds '}' section_trailer  */
-#line 368 "yyscript.y"
+#line 371 "yyscript.y"
             { script_finish_output_section(closure, &(yyvsp[0].output_section_trailer)); }
-#line 2593 "yyscript.c"
+#line 2596 "yyscript.c"
     break;
 
   case 54: /* $@7: %empty  */
-#line 374 "yyscript.y"
+#line 377 "yyscript.y"
             { script_push_lex_into_expression_mode(closure); }
-#line 2599 "yyscript.c"
+#line 2602 "yyscript.c"
     break;
 
   case 55: /* $@8: %empty  */
-#line 376 "yyscript.y"
+#line 379 "yyscript.y"
             { script_pop_lex_mode(closure); }
-#line 2605 "yyscript.c"
+#line 2608 "yyscript.c"
     break;
 
   case 56: /* section_header: $@7 opt_address_and_section_type opt_at opt_align opt_subalign $@8 opt_constraint  */
-#line 378 "yyscript.y"
+#line 381 "yyscript.y"
             {
 	      (yyval.output_section_header).address = (yyvsp[-5].output_section_header).address;
 	      (yyval.output_section_header).section_type = (yyvsp[-5].output_section_header).section_type;
@@ -2614,373 +2617,373 @@ yyreduce:
 	      (yyval.output_section_header).subalign = (yyvsp[-2].expr);
 	      (yyval.output_section_header).constraint = (yyvsp[0].constraint);
 	    }
-#line 2618 "yyscript.c"
+#line 2621 "yyscript.c"
     break;
 
   case 57: /* opt_address_and_section_type: ':'  */
-#line 394 "yyscript.y"
+#line 397 "yyscript.y"
             {
 	      (yyval.output_section_header).address = NULL;
 	      (yyval.output_section_header).section_type = SCRIPT_SECTION_TYPE_NONE;
 	    }
-#line 2627 "yyscript.c"
+#line 2630 "yyscript.c"
     break;
 
   case 58: /* opt_address_and_section_type: '(' ')' ':'  */
-#line 399 "yyscript.y"
+#line 402 "yyscript.y"
             {
 	      (yyval.output_section_header).address = NULL;
 	      (yyval.output_section_header).section_type = SCRIPT_SECTION_TYPE_NONE;
 	    }
-#line 2636 "yyscript.c"
+#line 2639 "yyscript.c"
     break;
 
   case 59: /* opt_address_and_section_type: exp ':'  */
-#line 404 "yyscript.y"
+#line 407 "yyscript.y"
             {
 	      (yyval.output_section_header).address = (yyvsp[-1].expr);
 	      (yyval.output_section_header).section_type = SCRIPT_SECTION_TYPE_NONE;
 	    }
-#line 2645 "yyscript.c"
+#line 2648 "yyscript.c"
     break;
 
   case 60: /* opt_address_and_section_type: exp '(' ')' ':'  */
-#line 409 "yyscript.y"
+#line 412 "yyscript.y"
             {
 	      (yyval.output_section_header).address = (yyvsp[-3].expr);
 	      (yyval.output_section_header).section_type = SCRIPT_SECTION_TYPE_NONE;
 	    }
-#line 2654 "yyscript.c"
+#line 2657 "yyscript.c"
     break;
 
   case 61: /* opt_address_and_section_type: '(' section_type ')' ':'  */
-#line 414 "yyscript.y"
+#line 417 "yyscript.y"
             {
 	      (yyval.output_section_header).address = NULL;
 	      (yyval.output_section_header).section_type = (yyvsp[-2].section_type);
 	    }
-#line 2663 "yyscript.c"
+#line 2666 "yyscript.c"
     break;
 
   case 62: /* opt_address_and_section_type: exp '(' section_type ')' ':'  */
-#line 419 "yyscript.y"
+#line 422 "yyscript.y"
             {
 	      (yyval.output_section_header).address = (yyvsp[-4].expr);
 	      (yyval.output_section_header).section_type = (yyvsp[-2].section_type);
 	    }
-#line 2672 "yyscript.c"
+#line 2675 "yyscript.c"
     break;
 
   case 63: /* section_type: NOLOAD  */
-#line 428 "yyscript.y"
+#line 431 "yyscript.y"
             { (yyval.section_type) = SCRIPT_SECTION_TYPE_NOLOAD; }
-#line 2678 "yyscript.c"
+#line 2681 "yyscript.c"
     break;
 
   case 64: /* section_type: DSECT  */
-#line 430 "yyscript.y"
+#line 433 "yyscript.y"
             {
 	      yyerror(closure, "DSECT section type is unsupported");
 	      (yyval.section_type) = SCRIPT_SECTION_TYPE_DSECT;
 	    }
-#line 2687 "yyscript.c"
+#line 2690 "yyscript.c"
     break;
 
   case 65: /* section_type: COPY  */
-#line 435 "yyscript.y"
+#line 438 "yyscript.y"
             {
 	      yyerror(closure, "COPY section type is unsupported");
 	      (yyval.section_type) = SCRIPT_SECTION_TYPE_COPY;
 	    }
-#line 2696 "yyscript.c"
+#line 2699 "yyscript.c"
     break;
 
   case 66: /* section_type: INFO  */
-#line 440 "yyscript.y"
+#line 443 "yyscript.y"
             {
 	      yyerror(closure, "INFO section type is unsupported");
 	      (yyval.section_type) = SCRIPT_SECTION_TYPE_INFO;
 	    }
-#line 2705 "yyscript.c"
+#line 2708 "yyscript.c"
     break;
 
   case 67: /* section_type: OVERLAY  */
-#line 445 "yyscript.y"
+#line 448 "yyscript.y"
             {
 	      yyerror(closure, "OVERLAY section type is unsupported");
 	      (yyval.section_type) = SCRIPT_SECTION_TYPE_OVERLAY;
 	    }
-#line 2714 "yyscript.c"
+#line 2717 "yyscript.c"
     break;
 
   case 68: /* opt_at: %empty  */
-#line 454 "yyscript.y"
+#line 457 "yyscript.y"
             { (yyval.expr) = NULL; }
-#line 2720 "yyscript.c"
+#line 2723 "yyscript.c"
     break;
 
   case 69: /* opt_at: AT '(' exp ')'  */
-#line 456 "yyscript.y"
+#line 459 "yyscript.y"
             { (yyval.expr) = (yyvsp[-1].expr); }
-#line 2726 "yyscript.c"
+#line 2729 "yyscript.c"
     break;
 
   case 70: /* opt_align: %empty  */
-#line 462 "yyscript.y"
+#line 465 "yyscript.y"
             { (yyval.expr) = NULL; }
-#line 2732 "yyscript.c"
+#line 2735 "yyscript.c"
     break;
 
   case 71: /* opt_align: ALIGN_K '(' exp ')'  */
-#line 464 "yyscript.y"
+#line 467 "yyscript.y"
             { (yyval.expr) = (yyvsp[-1].expr); }
-#line 2738 "yyscript.c"
+#line 2741 "yyscript.c"
     break;
 
   case 72: /* opt_subalign: %empty  */
-#line 470 "yyscript.y"
+#line 473 "yyscript.y"
             { (yyval.expr) = NULL; }
-#line 2744 "yyscript.c"
+#line 2747 "yyscript.c"
     break;
 
   case 73: /* opt_subalign: SUBALIGN '(' exp ')'  */
-#line 472 "yyscript.y"
+#line 475 "yyscript.y"
             { (yyval.expr) = (yyvsp[-1].expr); }
-#line 2750 "yyscript.c"
+#line 2753 "yyscript.c"
     break;
 
   case 74: /* opt_constraint: %empty  */
-#line 478 "yyscript.y"
+#line 481 "yyscript.y"
             { (yyval.constraint) = CONSTRAINT_NONE; }
-#line 2756 "yyscript.c"
+#line 2759 "yyscript.c"
     break;
 
   case 75: /* opt_constraint: ONLY_IF_RO  */
-#line 480 "yyscript.y"
+#line 483 "yyscript.y"
             { (yyval.constraint) = CONSTRAINT_ONLY_IF_RO; }
-#line 2762 "yyscript.c"
+#line 2765 "yyscript.c"
     break;
 
   case 76: /* opt_constraint: ONLY_IF_RW  */
-#line 482 "yyscript.y"
+#line 485 "yyscript.y"
             { (yyval.constraint) = CONSTRAINT_ONLY_IF_RW; }
-#line 2768 "yyscript.c"
+#line 2771 "yyscript.c"
     break;
 
   case 77: /* opt_constraint: SPECIAL  */
-#line 484 "yyscript.y"
+#line 487 "yyscript.y"
             { (yyval.constraint) = CONSTRAINT_SPECIAL; }
-#line 2774 "yyscript.c"
+#line 2777 "yyscript.c"
     break;
 
   case 78: /* section_trailer: opt_memspec opt_at_memspec opt_phdr opt_fill opt_comma  */
-#line 490 "yyscript.y"
+#line 493 "yyscript.y"
             {
 	      (yyval.output_section_trailer).fill = (yyvsp[-1].expr);
 	      (yyval.output_section_trailer).phdrs = (yyvsp[-2].string_list);
 	    }
-#line 2783 "yyscript.c"
+#line 2786 "yyscript.c"
     break;
 
   case 79: /* opt_memspec: '>' string  */
-#line 499 "yyscript.y"
+#line 502 "yyscript.y"
             { script_set_section_region(closure, (yyvsp[0].string).value, (yyvsp[0].string).length, 1); }
-#line 2789 "yyscript.c"
+#line 2792 "yyscript.c"
     break;
 
   case 81: /* opt_at_memspec: AT '>' string  */
-#line 506 "yyscript.y"
+#line 509 "yyscript.y"
             { script_set_section_region(closure, (yyvsp[0].string).value, (yyvsp[0].string).length, 0); }
-#line 2795 "yyscript.c"
+#line 2798 "yyscript.c"
     break;
 
   case 83: /* opt_phdr: opt_phdr ':' string  */
-#line 513 "yyscript.y"
+#line 516 "yyscript.y"
             { (yyval.string_list) = script_string_list_push_back((yyvsp[-2].string_list), (yyvsp[0].string).value, (yyvsp[0].string).length); }
-#line 2801 "yyscript.c"
+#line 2804 "yyscript.c"
     break;
 
   case 84: /* opt_phdr: %empty  */
-#line 515 "yyscript.y"
+#line 518 "yyscript.y"
             { (yyval.string_list) = NULL; }
-#line 2807 "yyscript.c"
+#line 2810 "yyscript.c"
     break;
 
   case 85: /* opt_fill: '=' parse_exp  */
-#line 522 "yyscript.y"
+#line 525 "yyscript.y"
             { (yyval.expr) = (yyvsp[0].expr); }
-#line 2813 "yyscript.c"
+#line 2816 "yyscript.c"
     break;
 
   case 86: /* opt_fill: %empty  */
-#line 524 "yyscript.y"
+#line 527 "yyscript.y"
             { (yyval.expr) = NULL; }
-#line 2819 "yyscript.c"
+#line 2822 "yyscript.c"
     break;
 
   case 91: /* section_cmd: data_length '(' parse_exp ')'  */
-#line 540 "yyscript.y"
+#line 543 "yyscript.y"
             { script_add_data(closure, (yyvsp[-3].integer), (yyvsp[-1].expr)); }
-#line 2825 "yyscript.c"
+#line 2828 "yyscript.c"
     break;
 
   case 92: /* section_cmd: ASSERT_K '(' parse_exp ',' string ')'  */
-#line 542 "yyscript.y"
+#line 545 "yyscript.y"
             { script_add_assertion(closure, (yyvsp[-3].expr), (yyvsp[-1].string).value, (yyvsp[-1].string).length); }
-#line 2831 "yyscript.c"
+#line 2834 "yyscript.c"
     break;
 
   case 93: /* section_cmd: FILL '(' parse_exp ')'  */
-#line 544 "yyscript.y"
+#line 547 "yyscript.y"
             { script_add_fill(closure, (yyvsp[-1].expr)); }
-#line 2837 "yyscript.c"
+#line 2840 "yyscript.c"
     break;
 
   case 94: /* section_cmd: CONSTRUCTORS  */
-#line 546 "yyscript.y"
+#line 549 "yyscript.y"
             {
 	      /* The GNU linker uses CONSTRUCTORS for the a.out object
 		 file format.  It does nothing when using ELF.  Since
 		 some ELF linker scripts use it although it does
 		 nothing, we accept it and ignore it.  */
 	    }
-#line 2848 "yyscript.c"
+#line 2851 "yyscript.c"
     break;
 
   case 96: /* section_cmd: INCLUDE string  */
-#line 554 "yyscript.y"
+#line 557 "yyscript.y"
             { script_include_directive(PARSING_SECTION_COMMANDS, closure,
 				       (yyvsp[0].string).value, (yyvsp[0].string).length); }
-#line 2855 "yyscript.c"
+#line 2858 "yyscript.c"
     break;
 
   case 98: /* data_length: QUAD  */
-#line 563 "yyscript.y"
+#line 566 "yyscript.y"
             { (yyval.integer) = QUAD; }
-#line 2861 "yyscript.c"
+#line 2864 "yyscript.c"
     break;
 
   case 99: /* data_length: SQUAD  */
-#line 565 "yyscript.y"
+#line 568 "yyscript.y"
             { (yyval.integer) = SQUAD; }
-#line 2867 "yyscript.c"
+#line 2870 "yyscript.c"
     break;
 
   case 100: /* data_length: LONG  */
-#line 567 "yyscript.y"
+#line 570 "yyscript.y"
             { (yyval.integer) = LONG; }
-#line 2873 "yyscript.c"
+#line 2876 "yyscript.c"
     break;
 
   case 101: /* data_length: SHORT  */
-#line 569 "yyscript.y"
+#line 572 "yyscript.y"
             { (yyval.integer) = SHORT; }
-#line 2879 "yyscript.c"
+#line 2882 "yyscript.c"
     break;
 
   case 102: /* data_length: BYTE  */
-#line 571 "yyscript.y"
+#line 574 "yyscript.y"
             { (yyval.integer) = BYTE; }
-#line 2885 "yyscript.c"
+#line 2888 "yyscript.c"
     break;
 
   case 103: /* input_section_spec: input_section_no_keep  */
-#line 578 "yyscript.y"
+#line 581 "yyscript.y"
             { script_add_input_section(closure, &(yyvsp[0].input_section_spec), 0); }
-#line 2891 "yyscript.c"
+#line 2894 "yyscript.c"
     break;
 
   case 104: /* input_section_spec: KEEP '(' input_section_no_keep ')'  */
-#line 580 "yyscript.y"
+#line 583 "yyscript.y"
             { script_add_input_section(closure, &(yyvsp[-1].input_section_spec), 1); }
-#line 2897 "yyscript.c"
+#line 2900 "yyscript.c"
     break;
 
   case 105: /* input_section_no_keep: string  */
-#line 586 "yyscript.y"
+#line 589 "yyscript.y"
             {
 	      (yyval.input_section_spec).file.name = (yyvsp[0].string);
 	      (yyval.input_section_spec).file.sort = SORT_WILDCARD_NONE;
 	      (yyval.input_section_spec).input_sections.sections = NULL;
 	      (yyval.input_section_spec).input_sections.exclude = NULL;
 	    }
-#line 2908 "yyscript.c"
+#line 2911 "yyscript.c"
     break;
 
   case 106: /* input_section_no_keep: wildcard_file '(' wildcard_sections ')'  */
-#line 593 "yyscript.y"
+#line 596 "yyscript.y"
             {
 	      (yyval.input_section_spec).file = (yyvsp[-3].wildcard_section);
 	      (yyval.input_section_spec).input_sections = (yyvsp[-1].wildcard_sections);
 	    }
-#line 2917 "yyscript.c"
+#line 2920 "yyscript.c"
     break;
 
   case 107: /* wildcard_file: wildcard_name  */
-#line 602 "yyscript.y"
+#line 605 "yyscript.y"
             {
 	      (yyval.wildcard_section).name = (yyvsp[0].string);
 	      (yyval.wildcard_section).sort = SORT_WILDCARD_NONE;
 	    }
-#line 2926 "yyscript.c"
+#line 2929 "yyscript.c"
     break;
 
   case 108: /* wildcard_file: SORT_BY_NAME '(' wildcard_name ')'  */
-#line 607 "yyscript.y"
+#line 610 "yyscript.y"
             {
 	      (yyval.wildcard_section).name = (yyvsp[-1].string);
 	      (yyval.wildcard_section).sort = SORT_WILDCARD_BY_NAME;
 	    }
-#line 2935 "yyscript.c"
+#line 2938 "yyscript.c"
     break;
 
   case 109: /* wildcard_sections: wildcard_sections opt_comma wildcard_section  */
-#line 616 "yyscript.y"
+#line 619 "yyscript.y"
             {
 	      (yyval.wildcard_sections).sections = script_string_sort_list_add((yyvsp[-2].wildcard_sections).sections, &(yyvsp[0].wildcard_section));
 	      (yyval.wildcard_sections).exclude = (yyvsp[-2].wildcard_sections).exclude;
 	    }
-#line 2944 "yyscript.c"
+#line 2947 "yyscript.c"
     break;
 
   case 110: /* wildcard_sections: wildcard_section  */
-#line 621 "yyscript.y"
+#line 624 "yyscript.y"
             {
 	      (yyval.wildcard_sections).sections = script_new_string_sort_list(&(yyvsp[0].wildcard_section));
 	      (yyval.wildcard_sections).exclude = NULL;
 	    }
-#line 2953 "yyscript.c"
+#line 2956 "yyscript.c"
     break;
 
   case 111: /* wildcard_sections: wildcard_sections opt_comma EXCLUDE_FILE '(' exclude_names ')'  */
-#line 626 "yyscript.y"
+#line 629 "yyscript.y"
             {
 	      (yyval.wildcard_sections).sections = (yyvsp[-5].wildcard_sections).sections;
 	      (yyval.wildcard_sections).exclude = script_string_list_append((yyvsp[-5].wildcard_sections).exclude, (yyvsp[-1].string_list));
 	    }
-#line 2962 "yyscript.c"
+#line 2965 "yyscript.c"
     break;
 
   case 112: /* wildcard_sections: EXCLUDE_FILE '(' exclude_names ')'  */
-#line 631 "yyscript.y"
+#line 634 "yyscript.y"
             {
 	      (yyval.wildcard_sections).sections = NULL;
 	      (yyval.wildcard_sections).exclude = (yyvsp[-1].string_list);
 	    }
-#line 2971 "yyscript.c"
+#line 2974 "yyscript.c"
     break;
 
   case 113: /* wildcard_section: wildcard_name  */
-#line 640 "yyscript.y"
+#line 643 "yyscript.y"
             {
 	      (yyval.wildcard_section).name = (yyvsp[0].string);
 	      (yyval.wildcard_section).sort = SORT_WILDCARD_NONE;
 	    }
-#line 2980 "yyscript.c"
+#line 2983 "yyscript.c"
     break;
 
   case 114: /* wildcard_section: SORT_BY_NAME '(' wildcard_section ')'  */
-#line 645 "yyscript.y"
+#line 648 "yyscript.y"
             {
 	      (yyval.wildcard_section).name = (yyvsp[-1].wildcard_section).name;
 	      switch ((yyvsp[-1].wildcard_section).sort)
@@ -2999,11 +3002,11 @@ yyreduce:
 		  abort();
 		}
 	    }
-#line 3003 "yyscript.c"
+#line 3006 "yyscript.c"
     break;
 
   case 115: /* wildcard_section: SORT_BY_ALIGNMENT '(' wildcard_section ')'  */
-#line 664 "yyscript.y"
+#line 667 "yyscript.y"
             {
 	      (yyval.wildcard_section).name = (yyvsp[-1].wildcard_section).name;
 	      switch ((yyvsp[-1].wildcard_section).sort)
@@ -3022,111 +3025,111 @@ yyreduce:
 		  abort();
 		}
 	    }
-#line 3026 "yyscript.c"
+#line 3029 "yyscript.c"
     break;
 
   case 116: /* wildcard_section: SORT_BY_INIT_PRIORITY '(' wildcard_name ')'  */
-#line 683 "yyscript.y"
+#line 686 "yyscript.y"
             {
 	      (yyval.wildcard_section).name = (yyvsp[-1].string);
 	      (yyval.wildcard_section).sort = SORT_WILDCARD_BY_INIT_PRIORITY;
 	    }
-#line 3035 "yyscript.c"
+#line 3038 "yyscript.c"
     break;
 
   case 117: /* exclude_names: exclude_names opt_comma wildcard_name  */
-#line 692 "yyscript.y"
+#line 695 "yyscript.y"
             { (yyval.string_list) = script_string_list_push_back((yyvsp[-2].string_list), (yyvsp[0].string).value, (yyvsp[0].string).length); }
-#line 3041 "yyscript.c"
+#line 3044 "yyscript.c"
     break;
 
   case 118: /* exclude_names: wildcard_name  */
-#line 694 "yyscript.y"
+#line 697 "yyscript.y"
             { (yyval.string_list) = script_new_string_list((yyvsp[0].string).value, (yyvsp[0].string).length); }
-#line 3047 "yyscript.c"
+#line 3050 "yyscript.c"
     break;
 
   case 119: /* wildcard_name: string  */
-#line 701 "yyscript.y"
+#line 704 "yyscript.y"
             { (yyval.string) = (yyvsp[0].string); }
-#line 3053 "yyscript.c"
+#line 3056 "yyscript.c"
     break;
 
   case 120: /* wildcard_name: '*'  */
-#line 703 "yyscript.y"
+#line 706 "yyscript.y"
             {
 	      (yyval.string).value = "*";
 	      (yyval.string).length = 1;
 	    }
-#line 3062 "yyscript.c"
+#line 3065 "yyscript.c"
     break;
 
   case 121: /* wildcard_name: '?'  */
-#line 708 "yyscript.y"
+#line 711 "yyscript.y"
             {
 	      (yyval.string).value = "?";
 	      (yyval.string).length = 1;
 	    }
-#line 3071 "yyscript.c"
+#line 3074 "yyscript.c"
     break;
 
   case 124: /* memory_def: string memory_attr ':' memory_origin '=' parse_exp opt_comma memory_length '=' parse_exp  */
-#line 723 "yyscript.y"
+#line 726 "yyscript.y"
           { script_add_memory(closure, (yyvsp[-9].string).value, (yyvsp[-9].string).length, (yyvsp[-8].integer), (yyvsp[-4].expr), (yyvsp[0].expr)); }
-#line 3077 "yyscript.c"
+#line 3080 "yyscript.c"
     break;
 
   case 125: /* memory_def: INCLUDE string  */
-#line 726 "yyscript.y"
+#line 729 "yyscript.y"
           { script_include_directive(PARSING_MEMORY_DEF, closure,
 				     (yyvsp[0].string).value, (yyvsp[0].string).length); }
-#line 3084 "yyscript.c"
+#line 3087 "yyscript.c"
     break;
 
   case 127: /* memory_attr: '(' string ')'  */
-#line 734 "yyscript.y"
+#line 737 "yyscript.y"
           { (yyval.integer) = script_parse_memory_attr(closure, (yyvsp[-1].string).value, (yyvsp[-1].string).length, 0); }
-#line 3090 "yyscript.c"
+#line 3093 "yyscript.c"
     break;
 
   case 128: /* memory_attr: '(' '!' string ')'  */
-#line 737 "yyscript.y"
+#line 740 "yyscript.y"
           { (yyval.integer) = script_parse_memory_attr(closure, (yyvsp[-1].string).value, (yyvsp[-1].string).length, 1); }
-#line 3096 "yyscript.c"
+#line 3099 "yyscript.c"
     break;
 
   case 129: /* memory_attr: %empty  */
-#line 739 "yyscript.y"
+#line 742 "yyscript.y"
             { (yyval.integer) = 0; }
-#line 3102 "yyscript.c"
+#line 3105 "yyscript.c"
     break;
 
   case 138: /* phdr_def: string phdr_type phdr_info ';'  */
-#line 767 "yyscript.y"
+#line 770 "yyscript.y"
             { script_add_phdr(closure, (yyvsp[-3].string).value, (yyvsp[-3].string).length, (yyvsp[-2].integer), &(yyvsp[-1].phdr_info)); }
-#line 3108 "yyscript.c"
+#line 3111 "yyscript.c"
     break;
 
   case 139: /* phdr_type: string  */
-#line 776 "yyscript.y"
+#line 779 "yyscript.y"
             { (yyval.integer) = script_phdr_string_to_type(closure, (yyvsp[0].string).value, (yyvsp[0].string).length); }
-#line 3114 "yyscript.c"
+#line 3117 "yyscript.c"
     break;
 
   case 140: /* phdr_type: INTEGER  */
-#line 778 "yyscript.y"
+#line 781 "yyscript.y"
             { (yyval.integer) = (yyvsp[0].integer); }
-#line 3120 "yyscript.c"
+#line 3123 "yyscript.c"
     break;
 
   case 141: /* phdr_info: %empty  */
-#line 784 "yyscript.y"
+#line 787 "yyscript.y"
             { memset(&(yyval.phdr_info), 0, sizeof(struct Phdr_info)); }
-#line 3126 "yyscript.c"
+#line 3129 "yyscript.c"
     break;
 
   case 142: /* phdr_info: string phdr_info  */
-#line 786 "yyscript.y"
+#line 789 "yyscript.y"
             {
 	      (yyval.phdr_info) = (yyvsp[0].phdr_info);
 	      if ((yyvsp[-1].string).length == 7 && strncmp((yyvsp[-1].string).value, "FILEHDR", 7) == 0)
@@ -3134,20 +3137,20 @@ yyreduce:
 	      else
 		yyerror(closure, "PHDRS syntax error");
 	    }
-#line 3138 "yyscript.c"
+#line 3141 "yyscript.c"
     break;
 
   case 143: /* phdr_info: PHDRS phdr_info  */
-#line 794 "yyscript.y"
+#line 797 "yyscript.y"
             {
 	      (yyval.phdr_info) = (yyvsp[0].phdr_info);
 	      (yyval.phdr_info).includes_phdrs = 1;
 	    }
-#line 3147 "yyscript.c"
+#line 3150 "yyscript.c"
     break;
 
   case 144: /* phdr_info: string '(' INTEGER ')' phdr_info  */
-#line 799 "yyscript.y"
+#line 802 "yyscript.y"
             {
 	      (yyval.phdr_info) = (yyvsp[0].phdr_info);
 	      if ((yyvsp[-4].string).length == 5 && strncmp((yyvsp[-4].string).value, "FLAGS", 5) == 0)
@@ -3158,409 +3161,409 @@ yyreduce:
 	      else
 		yyerror(closure, "PHDRS syntax error");
 	    }
-#line 3162 "yyscript.c"
+#line 3165 "yyscript.c"
     break;
 
   case 145: /* phdr_info: AT '(' parse_exp ')' phdr_info  */
-#line 810 "yyscript.y"
+#line 813 "yyscript.y"
             {
 	      (yyval.phdr_info) = (yyvsp[0].phdr_info);
 	      (yyval.phdr_info).load_address = (yyvsp[-2].expr);
 	    }
-#line 3171 "yyscript.c"
+#line 3174 "yyscript.c"
     break;
 
   case 146: /* assignment: string '=' parse_exp  */
-#line 819 "yyscript.y"
+#line 822 "yyscript.y"
             { script_set_symbol(closure, (yyvsp[-2].string).value, (yyvsp[-2].string).length, (yyvsp[0].expr), 0, 0); }
-#line 3177 "yyscript.c"
+#line 3180 "yyscript.c"
     break;
 
   case 147: /* assignment: string PLUSEQ parse_exp  */
-#line 821 "yyscript.y"
+#line 824 "yyscript.y"
             {
 	      Expression_ptr s = script_exp_string((yyvsp[-2].string).value, (yyvsp[-2].string).length);
 	      Expression_ptr e = script_exp_binary_add(s, (yyvsp[0].expr));
 	      script_set_symbol(closure, (yyvsp[-2].string).value, (yyvsp[-2].string).length, e, 0, 0);
 	    }
-#line 3187 "yyscript.c"
+#line 3190 "yyscript.c"
     break;
 
   case 148: /* assignment: string MINUSEQ parse_exp  */
-#line 827 "yyscript.y"
+#line 830 "yyscript.y"
             {
 	      Expression_ptr s = script_exp_string((yyvsp[-2].string).value, (yyvsp[-2].string).length);
 	      Expression_ptr e = script_exp_binary_sub(s, (yyvsp[0].expr));
 	      script_set_symbol(closure, (yyvsp[-2].string).value, (yyvsp[-2].string).length, e, 0, 0);
 	    }
-#line 3197 "yyscript.c"
+#line 3200 "yyscript.c"
     break;
 
   case 149: /* assignment: string MULTEQ parse_exp  */
-#line 833 "yyscript.y"
+#line 836 "yyscript.y"
             {
 	      Expression_ptr s = script_exp_string((yyvsp[-2].string).value, (yyvsp[-2].string).length);
 	      Expression_ptr e = script_exp_binary_mult(s, (yyvsp[0].expr));
 	      script_set_symbol(closure, (yyvsp[-2].string).value, (yyvsp[-2].string).length, e, 0, 0);
 	    }
-#line 3207 "yyscript.c"
+#line 3210 "yyscript.c"
     break;
 
   case 150: /* assignment: string DIVEQ parse_exp  */
-#line 839 "yyscript.y"
+#line 842 "yyscript.y"
             {
 	      Expression_ptr s = script_exp_string((yyvsp[-2].string).value, (yyvsp[-2].string).length);
 	      Expression_ptr e = script_exp_binary_div(s, (yyvsp[0].expr));
 	      script_set_symbol(closure, (yyvsp[-2].string).value, (yyvsp[-2].string).length, e, 0, 0);
 	    }
-#line 3217 "yyscript.c"
+#line 3220 "yyscript.c"
     break;
 
   case 151: /* assignment: string LSHIFTEQ parse_exp  */
-#line 845 "yyscript.y"
+#line 848 "yyscript.y"
             {
 	      Expression_ptr s = script_exp_string((yyvsp[-2].string).value, (yyvsp[-2].string).length);
 	      Expression_ptr e = script_exp_binary_lshift(s, (yyvsp[0].expr));
 	      script_set_symbol(closure, (yyvsp[-2].string).value, (yyvsp[-2].string).length, e, 0, 0);
 	    }
-#line 3227 "yyscript.c"
+#line 3230 "yyscript.c"
     break;
 
   case 152: /* assignment: string RSHIFTEQ parse_exp  */
-#line 851 "yyscript.y"
+#line 854 "yyscript.y"
             {
 	      Expression_ptr s = script_exp_string((yyvsp[-2].string).value, (yyvsp[-2].string).length);
 	      Expression_ptr e = script_exp_binary_rshift(s, (yyvsp[0].expr));
 	      script_set_symbol(closure, (yyvsp[-2].string).value, (yyvsp[-2].string).length, e, 0, 0);
 	    }
-#line 3237 "yyscript.c"
+#line 3240 "yyscript.c"
     break;
 
   case 153: /* assignment: string ANDEQ parse_exp  */
-#line 857 "yyscript.y"
+#line 860 "yyscript.y"
             {
 	      Expression_ptr s = script_exp_string((yyvsp[-2].string).value, (yyvsp[-2].string).length);
 	      Expression_ptr e = script_exp_binary_bitwise_and(s, (yyvsp[0].expr));
 	      script_set_symbol(closure, (yyvsp[-2].string).value, (yyvsp[-2].string).length, e, 0, 0);
 	    }
-#line 3247 "yyscript.c"
+#line 3250 "yyscript.c"
     break;
 
   case 154: /* assignment: string OREQ parse_exp  */
-#line 863 "yyscript.y"
+#line 866 "yyscript.y"
             {
 	      Expression_ptr s = script_exp_string((yyvsp[-2].string).value, (yyvsp[-2].string).length);
 	      Expression_ptr e = script_exp_binary_bitwise_or(s, (yyvsp[0].expr));
 	      script_set_symbol(closure, (yyvsp[-2].string).value, (yyvsp[-2].string).length, e, 0, 0);
 	    }
-#line 3257 "yyscript.c"
+#line 3260 "yyscript.c"
     break;
 
   case 155: /* assignment: HIDDEN '(' string '=' parse_exp ')'  */
-#line 869 "yyscript.y"
+#line 872 "yyscript.y"
             { script_set_symbol(closure, (yyvsp[-3].string).value, (yyvsp[-3].string).length, (yyvsp[-1].expr), 0, 1); }
-#line 3263 "yyscript.c"
+#line 3266 "yyscript.c"
     break;
 
   case 156: /* assignment: PROVIDE '(' string '=' parse_exp ')'  */
-#line 871 "yyscript.y"
+#line 874 "yyscript.y"
             { script_set_symbol(closure, (yyvsp[-3].string).value, (yyvsp[-3].string).length, (yyvsp[-1].expr), 1, 0); }
-#line 3269 "yyscript.c"
+#line 3272 "yyscript.c"
     break;
 
   case 157: /* assignment: PROVIDE_HIDDEN '(' string '=' parse_exp ')'  */
-#line 873 "yyscript.y"
+#line 876 "yyscript.y"
             { script_set_symbol(closure, (yyvsp[-3].string).value, (yyvsp[-3].string).length, (yyvsp[-1].expr), 1, 1); }
-#line 3275 "yyscript.c"
+#line 3278 "yyscript.c"
     break;
 
   case 158: /* $@9: %empty  */
-#line 878 "yyscript.y"
+#line 881 "yyscript.y"
             { script_push_lex_into_expression_mode(closure); }
-#line 3281 "yyscript.c"
+#line 3284 "yyscript.c"
     break;
 
   case 159: /* parse_exp: $@9 exp  */
-#line 880 "yyscript.y"
+#line 883 "yyscript.y"
             {
 	      script_pop_lex_mode(closure);
 	      (yyval.expr) = (yyvsp[0].expr);
 	    }
-#line 3290 "yyscript.c"
+#line 3293 "yyscript.c"
     break;
 
   case 160: /* exp: '(' exp ')'  */
-#line 889 "yyscript.y"
+#line 892 "yyscript.y"
             { (yyval.expr) = (yyvsp[-1].expr); }
-#line 3296 "yyscript.c"
+#line 3299 "yyscript.c"
     break;
 
   case 161: /* exp: '-' exp  */
-#line 891 "yyscript.y"
+#line 894 "yyscript.y"
             { (yyval.expr) = script_exp_unary_minus((yyvsp[0].expr)); }
-#line 3302 "yyscript.c"
+#line 3305 "yyscript.c"
     break;
 
   case 162: /* exp: '!' exp  */
-#line 893 "yyscript.y"
+#line 896 "yyscript.y"
             { (yyval.expr) = script_exp_unary_logical_not((yyvsp[0].expr)); }
-#line 3308 "yyscript.c"
+#line 3311 "yyscript.c"
     break;
 
   case 163: /* exp: '~' exp  */
-#line 895 "yyscript.y"
+#line 898 "yyscript.y"
             { (yyval.expr) = script_exp_unary_bitwise_not((yyvsp[0].expr)); }
-#line 3314 "yyscript.c"
+#line 3317 "yyscript.c"
     break;
 
   case 164: /* exp: '+' exp  */
-#line 897 "yyscript.y"
+#line 900 "yyscript.y"
             { (yyval.expr) = (yyvsp[0].expr); }
-#line 3320 "yyscript.c"
+#line 3323 "yyscript.c"
     break;
 
   case 165: /* exp: exp '*' exp  */
-#line 899 "yyscript.y"
+#line 902 "yyscript.y"
             { (yyval.expr) = script_exp_binary_mult((yyvsp[-2].expr), (yyvsp[0].expr)); }
-#line 3326 "yyscript.c"
+#line 3329 "yyscript.c"
     break;
 
   case 166: /* exp: exp '/' exp  */
-#line 901 "yyscript.y"
+#line 904 "yyscript.y"
             { (yyval.expr) = script_exp_binary_div((yyvsp[-2].expr), (yyvsp[0].expr)); }
-#line 3332 "yyscript.c"
+#line 3335 "yyscript.c"
     break;
 
   case 167: /* exp: exp '%' exp  */
-#line 903 "yyscript.y"
+#line 906 "yyscript.y"
             { (yyval.expr) = script_exp_binary_mod((yyvsp[-2].expr), (yyvsp[0].expr)); }
-#line 3338 "yyscript.c"
+#line 3341 "yyscript.c"
     break;
 
   case 168: /* exp: exp '+' exp  */
-#line 905 "yyscript.y"
+#line 908 "yyscript.y"
             { (yyval.expr) = script_exp_binary_add((yyvsp[-2].expr), (yyvsp[0].expr)); }
-#line 3344 "yyscript.c"
+#line 3347 "yyscript.c"
     break;
 
   case 169: /* exp: exp '-' exp  */
-#line 907 "yyscript.y"
+#line 910 "yyscript.y"
             { (yyval.expr) = script_exp_binary_sub((yyvsp[-2].expr), (yyvsp[0].expr)); }
-#line 3350 "yyscript.c"
+#line 3353 "yyscript.c"
     break;
 
   case 170: /* exp: exp LSHIFT exp  */
-#line 909 "yyscript.y"
+#line 912 "yyscript.y"
             { (yyval.expr) = script_exp_binary_lshift((yyvsp[-2].expr), (yyvsp[0].expr)); }
-#line 3356 "yyscript.c"
+#line 3359 "yyscript.c"
     break;
 
   case 171: /* exp: exp RSHIFT exp  */
-#line 911 "yyscript.y"
+#line 914 "yyscript.y"
             { (yyval.expr) = script_exp_binary_rshift((yyvsp[-2].expr), (yyvsp[0].expr)); }
-#line 3362 "yyscript.c"
+#line 3365 "yyscript.c"
     break;
 
   case 172: /* exp: exp EQ exp  */
-#line 913 "yyscript.y"
+#line 916 "yyscript.y"
             { (yyval.expr) = script_exp_binary_eq((yyvsp[-2].expr), (yyvsp[0].expr)); }
-#line 3368 "yyscript.c"
+#line 3371 "yyscript.c"
     break;
 
   case 173: /* exp: exp NE exp  */
-#line 915 "yyscript.y"
+#line 918 "yyscript.y"
             { (yyval.expr) = script_exp_binary_ne((yyvsp[-2].expr), (yyvsp[0].expr)); }
-#line 3374 "yyscript.c"
+#line 3377 "yyscript.c"
     break;
 
   case 174: /* exp: exp LE exp  */
-#line 917 "yyscript.y"
+#line 920 "yyscript.y"
             { (yyval.expr) = script_exp_binary_le((yyvsp[-2].expr), (yyvsp[0].expr)); }
-#line 3380 "yyscript.c"
+#line 3383 "yyscript.c"
     break;
 
   case 175: /* exp: exp GE exp  */
-#line 919 "yyscript.y"
+#line 922 "yyscript.y"
             { (yyval.expr) = script_exp_binary_ge((yyvsp[-2].expr), (yyvsp[0].expr)); }
-#line 3386 "yyscript.c"
+#line 3389 "yyscript.c"
     break;
 
   case 176: /* exp: exp '<' exp  */
-#line 921 "yyscript.y"
+#line 924 "yyscript.y"
             { (yyval.expr) = script_exp_binary_lt((yyvsp[-2].expr), (yyvsp[0].expr)); }
-#line 3392 "yyscript.c"
+#line 3395 "yyscript.c"
     break;
 
   case 177: /* exp: exp '>' exp  */
-#line 923 "yyscript.y"
+#line 926 "yyscript.y"
             { (yyval.expr) = script_exp_binary_gt((yyvsp[-2].expr), (yyvsp[0].expr)); }
-#line 3398 "yyscript.c"
+#line 3401 "yyscript.c"
     break;
 
   case 178: /* exp: exp '&' exp  */
-#line 925 "yyscript.y"
+#line 928 "yyscript.y"
             { (yyval.expr) = script_exp_binary_bitwise_and((yyvsp[-2].expr), (yyvsp[0].expr)); }
-#line 3404 "yyscript.c"
+#line 3407 "yyscript.c"
     break;
 
   case 179: /* exp: exp '^' exp  */
-#line 927 "yyscript.y"
+#line 930 "yyscript.y"
             { (yyval.expr) = script_exp_binary_bitwise_xor((yyvsp[-2].expr), (yyvsp[0].expr)); }
-#line 3410 "yyscript.c"
+#line 3413 "yyscript.c"
     break;
 
   case 180: /* exp: exp '|' exp  */
-#line 929 "yyscript.y"
+#line 932 "yyscript.y"
             { (yyval.expr) = script_exp_binary_bitwise_or((yyvsp[-2].expr), (yyvsp[0].expr)); }
-#line 3416 "yyscript.c"
+#line 3419 "yyscript.c"
     break;
 
   case 181: /* exp: exp ANDAND exp  */
-#line 931 "yyscript.y"
+#line 934 "yyscript.y"
             { (yyval.expr) = script_exp_binary_logical_and((yyvsp[-2].expr), (yyvsp[0].expr)); }
-#line 3422 "yyscript.c"
+#line 3425 "yyscript.c"
     break;
 
   case 182: /* exp: exp OROR exp  */
-#line 933 "yyscript.y"
+#line 936 "yyscript.y"
             { (yyval.expr) = script_exp_binary_logical_or((yyvsp[-2].expr), (yyvsp[0].expr)); }
-#line 3428 "yyscript.c"
+#line 3431 "yyscript.c"
     break;
 
   case 183: /* exp: exp '?' exp ':' exp  */
-#line 935 "yyscript.y"
+#line 938 "yyscript.y"
             { (yyval.expr) = script_exp_trinary_cond((yyvsp[-4].expr), (yyvsp[-2].expr), (yyvsp[0].expr)); }
-#line 3434 "yyscript.c"
+#line 3437 "yyscript.c"
     break;
 
   case 184: /* exp: INTEGER  */
-#line 937 "yyscript.y"
+#line 940 "yyscript.y"
             { (yyval.expr) = script_exp_integer((yyvsp[0].integer)); }
-#line 3440 "yyscript.c"
+#line 3443 "yyscript.c"
     break;
 
   case 185: /* exp: string  */
-#line 939 "yyscript.y"
+#line 942 "yyscript.y"
             { (yyval.expr) = script_symbol(closure, (yyvsp[0].string).value, (yyvsp[0].string).length); }
-#line 3446 "yyscript.c"
+#line 3449 "yyscript.c"
     break;
 
   case 186: /* exp: MAX_K '(' exp ',' exp ')'  */
-#line 941 "yyscript.y"
+#line 944 "yyscript.y"
             { (yyval.expr) = script_exp_function_max((yyvsp[-3].expr), (yyvsp[-1].expr)); }
-#line 3452 "yyscript.c"
+#line 3455 "yyscript.c"
     break;
 
   case 187: /* exp: MIN_K '(' exp ',' exp ')'  */
-#line 943 "yyscript.y"
+#line 946 "yyscript.y"
             { (yyval.expr) = script_exp_function_min((yyvsp[-3].expr), (yyvsp[-1].expr)); }
-#line 3458 "yyscript.c"
+#line 3461 "yyscript.c"
     break;
 
   case 188: /* exp: DEFINED '(' string ')'  */
-#line 945 "yyscript.y"
+#line 948 "yyscript.y"
             { (yyval.expr) = script_exp_function_defined((yyvsp[-1].string).value, (yyvsp[-1].string).length); }
-#line 3464 "yyscript.c"
+#line 3467 "yyscript.c"
     break;
 
   case 189: /* exp: SIZEOF_HEADERS  */
-#line 947 "yyscript.y"
+#line 950 "yyscript.y"
             { (yyval.expr) = script_exp_function_sizeof_headers(); }
-#line 3470 "yyscript.c"
+#line 3473 "yyscript.c"
     break;
 
   case 190: /* exp: ALIGNOF '(' string ')'  */
-#line 949 "yyscript.y"
+#line 952 "yyscript.y"
             { (yyval.expr) = script_exp_function_alignof((yyvsp[-1].string).value, (yyvsp[-1].string).length); }
-#line 3476 "yyscript.c"
+#line 3479 "yyscript.c"
     break;
 
   case 191: /* exp: SIZEOF '(' string ')'  */
-#line 951 "yyscript.y"
+#line 954 "yyscript.y"
             { (yyval.expr) = script_exp_function_sizeof((yyvsp[-1].string).value, (yyvsp[-1].string).length); }
-#line 3482 "yyscript.c"
+#line 3485 "yyscript.c"
     break;
 
   case 192: /* exp: ADDR '(' string ')'  */
-#line 953 "yyscript.y"
+#line 956 "yyscript.y"
             { (yyval.expr) = script_exp_function_addr((yyvsp[-1].string).value, (yyvsp[-1].string).length); }
-#line 3488 "yyscript.c"
+#line 3491 "yyscript.c"
     break;
 
   case 193: /* exp: LOADADDR '(' string ')'  */
-#line 955 "yyscript.y"
+#line 958 "yyscript.y"
             { (yyval.expr) = script_exp_function_loadaddr((yyvsp[-1].string).value, (yyvsp[-1].string).length); }
-#line 3494 "yyscript.c"
+#line 3497 "yyscript.c"
     break;
 
   case 194: /* exp: ORIGIN '(' string ')'  */
-#line 957 "yyscript.y"
+#line 960 "yyscript.y"
             { (yyval.expr) = script_exp_function_origin(closure, (yyvsp[-1].string).value, (yyvsp[-1].string).length); }
-#line 3500 "yyscript.c"
+#line 3503 "yyscript.c"
     break;
 
   case 195: /* exp: LENGTH '(' string ')'  */
-#line 959 "yyscript.y"
+#line 962 "yyscript.y"
             { (yyval.expr) = script_exp_function_length(closure, (yyvsp[-1].string).value, (yyvsp[-1].string).length); }
-#line 3506 "yyscript.c"
+#line 3509 "yyscript.c"
     break;
 
   case 196: /* exp: CONSTANT '(' string ')'  */
-#line 961 "yyscript.y"
+#line 964 "yyscript.y"
             { (yyval.expr) = script_exp_function_constant((yyvsp[-1].string).value, (yyvsp[-1].string).length); }
-#line 3512 "yyscript.c"
+#line 3515 "yyscript.c"
     break;
 
   case 197: /* exp: ABSOLUTE '(' exp ')'  */
-#line 963 "yyscript.y"
+#line 966 "yyscript.y"
             { (yyval.expr) = script_exp_function_absolute((yyvsp[-1].expr)); }
-#line 3518 "yyscript.c"
+#line 3521 "yyscript.c"
     break;
 
   case 198: /* exp: ALIGN_K '(' exp ')'  */
-#line 965 "yyscript.y"
+#line 968 "yyscript.y"
             { (yyval.expr) = script_exp_function_align(script_exp_string(".", 1), (yyvsp[-1].expr)); }
-#line 3524 "yyscript.c"
+#line 3527 "yyscript.c"
     break;
 
   case 199: /* exp: ALIGN_K '(' exp ',' exp ')'  */
-#line 967 "yyscript.y"
+#line 970 "yyscript.y"
             { (yyval.expr) = script_exp_function_align((yyvsp[-3].expr), (yyvsp[-1].expr)); }
-#line 3530 "yyscript.c"
+#line 3533 "yyscript.c"
     break;
 
   case 200: /* exp: BLOCK '(' exp ')'  */
-#line 969 "yyscript.y"
+#line 972 "yyscript.y"
             { (yyval.expr) = script_exp_function_align(script_exp_string(".", 1), (yyvsp[-1].expr)); }
-#line 3536 "yyscript.c"
+#line 3539 "yyscript.c"
     break;
 
   case 201: /* exp: DATA_SEGMENT_ALIGN '(' exp ',' exp ')'  */
-#line 971 "yyscript.y"
+#line 974 "yyscript.y"
             {
 	      script_data_segment_align(closure);
 	      (yyval.expr) = script_exp_function_data_segment_align((yyvsp[-3].expr), (yyvsp[-1].expr));
 	    }
-#line 3545 "yyscript.c"
+#line 3548 "yyscript.c"
     break;
 
   case 202: /* exp: DATA_SEGMENT_RELRO_END '(' exp ',' exp ')'  */
-#line 976 "yyscript.y"
+#line 979 "yyscript.y"
             {
 	      script_data_segment_relro_end(closure);
 	      (yyval.expr) = script_exp_function_data_segment_relro_end((yyvsp[-3].expr), (yyvsp[-1].expr));
 	    }
-#line 3554 "yyscript.c"
+#line 3557 "yyscript.c"
     break;
 
   case 203: /* exp: DATA_SEGMENT_END '(' exp ')'  */
-#line 981 "yyscript.y"
+#line 984 "yyscript.y"
             { (yyval.expr) = script_exp_function_data_segment_end((yyvsp[-1].expr)); }
-#line 3560 "yyscript.c"
+#line 3563 "yyscript.c"
     break;
 
   case 204: /* exp: SEGMENT_START '(' string ',' exp ')'  */
-#line 983 "yyscript.y"
+#line 986 "yyscript.y"
             {
 	      (yyval.expr) = script_exp_function_segment_start((yyvsp[-3].string).value, (yyvsp[-3].string).length, (yyvsp[-1].expr));
 	      /* We need to take note of any SEGMENT_START expressions
@@ -3568,196 +3571,196 @@ yyreduce:
 		 -Tbss options.  */
 	      script_saw_segment_start_expression(closure);
 	    }
-#line 3572 "yyscript.c"
+#line 3575 "yyscript.c"
     break;
 
   case 205: /* exp: ASSERT_K '(' exp ',' string ')'  */
-#line 991 "yyscript.y"
+#line 994 "yyscript.y"
             { (yyval.expr) = script_exp_function_assert((yyvsp[-3].expr), (yyvsp[-1].string).value, (yyvsp[-1].string).length); }
-#line 3578 "yyscript.c"
+#line 3581 "yyscript.c"
     break;
 
   case 206: /* defsym_expr: string '=' parse_exp  */
-#line 997 "yyscript.y"
+#line 1000 "yyscript.y"
             { script_set_symbol(closure, (yyvsp[-2].string).value, (yyvsp[-2].string).length, (yyvsp[0].expr), 0, 0); }
-#line 3584 "yyscript.c"
+#line 3587 "yyscript.c"
     break;
 
   case 210: /* dynamic_list_node: '{' vers_defns ';' '}' ';'  */
-#line 1015 "yyscript.y"
+#line 1018 "yyscript.y"
             { script_new_vers_node (closure, NULL, (yyvsp[-3].versyms)); }
-#line 3590 "yyscript.c"
+#line 3593 "yyscript.c"
     break;
 
   case 214: /* vers_node: '{' vers_tag '}' ';'  */
-#line 1030 "yyscript.y"
+#line 1033 "yyscript.y"
             {
 	      script_register_vers_node (closure, NULL, 0, (yyvsp[-2].versnode), NULL);
 	    }
-#line 3598 "yyscript.c"
+#line 3601 "yyscript.c"
     break;
 
   case 215: /* vers_node: string '{' vers_tag '}' ';'  */
-#line 1034 "yyscript.y"
+#line 1037 "yyscript.y"
             {
 	      script_register_vers_node (closure, (yyvsp[-4].string).value, (yyvsp[-4].string).length, (yyvsp[-2].versnode),
 					 NULL);
 	    }
-#line 3607 "yyscript.c"
+#line 3610 "yyscript.c"
     break;
 
   case 216: /* vers_node: string '{' vers_tag '}' verdep ';'  */
-#line 1039 "yyscript.y"
+#line 1042 "yyscript.y"
             {
 	      script_register_vers_node (closure, (yyvsp[-5].string).value, (yyvsp[-5].string).length, (yyvsp[-3].versnode), (yyvsp[-1].deplist));
 	    }
-#line 3615 "yyscript.c"
+#line 3618 "yyscript.c"
     break;
 
   case 217: /* verdep: string  */
-#line 1046 "yyscript.y"
+#line 1049 "yyscript.y"
             {
 	      (yyval.deplist) = script_add_vers_depend (closure, NULL, (yyvsp[0].string).value, (yyvsp[0].string).length);
 	    }
-#line 3623 "yyscript.c"
+#line 3626 "yyscript.c"
     break;
 
   case 218: /* verdep: verdep string  */
-#line 1050 "yyscript.y"
+#line 1053 "yyscript.y"
             {
 	      (yyval.deplist) = script_add_vers_depend (closure, (yyvsp[-1].deplist), (yyvsp[0].string).value, (yyvsp[0].string).length);
 	    }
-#line 3631 "yyscript.c"
+#line 3634 "yyscript.c"
     break;
 
   case 219: /* vers_tag: %empty  */
-#line 1057 "yyscript.y"
+#line 1060 "yyscript.y"
             { (yyval.versnode) = script_new_vers_node (closure, NULL, NULL); }
-#line 3637 "yyscript.c"
+#line 3640 "yyscript.c"
     break;
 
   case 220: /* vers_tag: vers_defns ';'  */
-#line 1059 "yyscript.y"
+#line 1062 "yyscript.y"
             { (yyval.versnode) = script_new_vers_node (closure, (yyvsp[-1].versyms), NULL); }
-#line 3643 "yyscript.c"
+#line 3646 "yyscript.c"
     break;
 
   case 221: /* vers_tag: GLOBAL ':' vers_defns ';'  */
-#line 1061 "yyscript.y"
+#line 1064 "yyscript.y"
             { (yyval.versnode) = script_new_vers_node (closure, (yyvsp[-1].versyms), NULL); }
-#line 3649 "yyscript.c"
+#line 3652 "yyscript.c"
     break;
 
   case 222: /* vers_tag: LOCAL ':' vers_defns ';'  */
-#line 1063 "yyscript.y"
+#line 1066 "yyscript.y"
             { (yyval.versnode) = script_new_vers_node (closure, NULL, (yyvsp[-1].versyms)); }
-#line 3655 "yyscript.c"
+#line 3658 "yyscript.c"
     break;
 
   case 223: /* vers_tag: GLOBAL ':' vers_defns ';' LOCAL ':' vers_defns ';'  */
-#line 1065 "yyscript.y"
+#line 1068 "yyscript.y"
             { (yyval.versnode) = script_new_vers_node (closure, (yyvsp[-5].versyms), (yyvsp[-1].versyms)); }
-#line 3661 "yyscript.c"
+#line 3664 "yyscript.c"
     break;
 
   case 224: /* vers_defns: STRING  */
-#line 1074 "yyscript.y"
+#line 1077 "yyscript.y"
             {
 	      (yyval.versyms) = script_new_vers_pattern (closure, NULL, (yyvsp[0].string).value,
 					    (yyvsp[0].string).length, 0);
 	    }
-#line 3670 "yyscript.c"
+#line 3673 "yyscript.c"
     break;
 
   case 225: /* vers_defns: QUOTED_STRING  */
-#line 1079 "yyscript.y"
+#line 1082 "yyscript.y"
             {
 	      (yyval.versyms) = script_new_vers_pattern (closure, NULL, (yyvsp[0].string).value,
 					    (yyvsp[0].string).length, 1);
 	    }
-#line 3679 "yyscript.c"
+#line 3682 "yyscript.c"
     break;
 
   case 226: /* vers_defns: vers_defns ';' STRING  */
-#line 1084 "yyscript.y"
+#line 1087 "yyscript.y"
             {
 	      (yyval.versyms) = script_new_vers_pattern (closure, (yyvsp[-2].versyms), (yyvsp[0].string).value,
                                             (yyvsp[0].string).length, 0);
 	    }
-#line 3688 "yyscript.c"
+#line 3691 "yyscript.c"
     break;
 
   case 227: /* vers_defns: vers_defns ';' QUOTED_STRING  */
-#line 1089 "yyscript.y"
+#line 1092 "yyscript.y"
             {
 	      (yyval.versyms) = script_new_vers_pattern (closure, (yyvsp[-2].versyms), (yyvsp[0].string).value,
                                             (yyvsp[0].string).length, 1);
 	    }
-#line 3697 "yyscript.c"
+#line 3700 "yyscript.c"
     break;
 
   case 228: /* $@10: %empty  */
-#line 1095 "yyscript.y"
+#line 1098 "yyscript.y"
             { version_script_push_lang (closure, (yyvsp[-1].string).value, (yyvsp[-1].string).length); }
-#line 3703 "yyscript.c"
+#line 3706 "yyscript.c"
     break;
 
   case 229: /* vers_defns: EXTERN string '{' $@10 vers_defns opt_semicolon '}'  */
-#line 1097 "yyscript.y"
+#line 1100 "yyscript.y"
             {
 	      (yyval.versyms) = (yyvsp[-2].versyms);
 	      version_script_pop_lang(closure);
 	    }
-#line 3712 "yyscript.c"
+#line 3715 "yyscript.c"
     break;
 
   case 230: /* $@11: %empty  */
-#line 1105 "yyscript.y"
+#line 1108 "yyscript.y"
             { version_script_push_lang (closure, (yyvsp[-1].string).value, (yyvsp[-1].string).length); }
-#line 3718 "yyscript.c"
+#line 3721 "yyscript.c"
     break;
 
   case 231: /* vers_defns: vers_defns ';' EXTERN string '{' $@11 vers_defns opt_semicolon '}'  */
-#line 1107 "yyscript.y"
+#line 1110 "yyscript.y"
             {
 	      (yyval.versyms) = script_merge_expressions ((yyvsp[-8].versyms), (yyvsp[-2].versyms));
 	      version_script_pop_lang(closure);
 	    }
-#line 3727 "yyscript.c"
+#line 3730 "yyscript.c"
     break;
 
   case 232: /* vers_defns: EXTERN  */
-#line 1112 "yyscript.y"
+#line 1115 "yyscript.y"
             {
 	      (yyval.versyms) = script_new_vers_pattern (closure, NULL, "extern",
 					    sizeof("extern") - 1, 1);
 	    }
-#line 3736 "yyscript.c"
+#line 3739 "yyscript.c"
     break;
 
   case 233: /* vers_defns: vers_defns ';' EXTERN  */
-#line 1117 "yyscript.y"
+#line 1120 "yyscript.y"
             {
 	      (yyval.versyms) = script_new_vers_pattern (closure, (yyvsp[-2].versyms), "extern",
 					    sizeof("extern") - 1, 1);
 	    }
-#line 3745 "yyscript.c"
+#line 3748 "yyscript.c"
     break;
 
   case 234: /* string: STRING  */
-#line 1127 "yyscript.y"
+#line 1130 "yyscript.y"
             { (yyval.string) = (yyvsp[0].string); }
-#line 3751 "yyscript.c"
+#line 3754 "yyscript.c"
     break;
 
   case 235: /* string: QUOTED_STRING  */
-#line 1129 "yyscript.y"
+#line 1132 "yyscript.y"
             { (yyval.string) = (yyvsp[0].string); }
-#line 3757 "yyscript.c"
+#line 3760 "yyscript.c"
     break;
 
 
-#line 3761 "yyscript.c"
+#line 3764 "yyscript.c"
 
       default: break;
     }
@@ -3981,5 +3984,5 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 1151 "yyscript.y"
+#line 1154 "yyscript.y"
 

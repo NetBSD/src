@@ -1,6 +1,6 @@
 // output.cc -- manage the output file for gold
 
-// Copyright (C) 2006-2022 Free Software Foundation, Inc.
+// Copyright (C) 2006-2024 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <algorithm>
+#include <uchar.h>
 
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
@@ -2706,10 +2707,10 @@ Output_section::add_merge_input_section(Relobj* object, unsigned int shndx,
 	      pomb = new Output_merge_string<char>(addralign);
 	      break;
 	    case 2:
-	      pomb = new Output_merge_string<uint16_t>(addralign);
+	      pomb = new Output_merge_string<char16_t>(addralign);
 	      break;
 	    case 4:
-	      pomb = new Output_merge_string<uint32_t>(addralign);
+	      pomb = new Output_merge_string<char32_t>(addralign);
 	      break;
 	    default:
 	      return false;

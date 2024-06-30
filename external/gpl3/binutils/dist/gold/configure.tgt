@@ -1,6 +1,6 @@
 # configure.tgt -- target configuration for gold  -*- sh -*-
 
-# Copyright (C) 2006-2022 Free Software Foundation, Inc.
+# Copyright (C) 2006-2024 Free Software Foundation, Inc.
 # Written by Ian Lance Taylor <iant@google.com>.
 
 # This file is part of gold.
@@ -155,8 +155,9 @@ aarch64*-*)
  ;;
 mips*el*-*-*|mips*le*-*-*)
  targ_obj=mips
- targ_machine=EM_MIPS_RS3_LE
+ targ_machine=EM_MIPS
  targ_size=32
+ targ_extra_size=64
  targ_big_endian=false
  targ_extra_big_endian=true
  ;;
@@ -164,6 +165,7 @@ mips*-*-*)
  targ_obj=mips
  targ_machine=EM_MIPS
  targ_size=32
+ targ_extra_size=64
  targ_big_endian=true
  targ_extra_big_endian=false
  ;;

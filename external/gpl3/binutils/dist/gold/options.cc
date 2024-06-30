@@ -1,6 +1,6 @@
 // options.c -- handle command line options for gold
 
-// Copyright (C) 2006-2022 Free Software Foundation, Inc.
+// Copyright (C) 2006-2024 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -1432,6 +1432,15 @@ General_options::finalize()
 	  this->set_compress_debug_sections("none");
 	}
     }
+
+#ifndef HAVE_ZSTD
+  if (strcmp(this->compress_debug_sections(), "zstd") == 0)
+    {
+      gold_error(_("--compress-debug-sections=zstd: gold is not built with "
+		   "zstd support"));
+      this->set_compress_debug_sections("none");
+    }
+#endif
 
   // --rosegment-gap implies --rosegment.
   if (this->user_set_rosegment_gap())

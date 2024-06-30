@@ -275,7 +275,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 53 "yyscript.y"
+#line 56 "yyscript.y"
 
   /* A string.  */
   struct Parser_string string;

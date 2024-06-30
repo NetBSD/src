@@ -473,7 +473,7 @@ int yy_flex_debug = 0;
 char *yytext;
 #line 1 "./config/loongarch-lex.l"
 /*
-   Copyright (C) 2021-2022 Free Software Foundation, Inc.
+   Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

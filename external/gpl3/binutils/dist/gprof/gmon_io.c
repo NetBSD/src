@@ -1,6 +1,6 @@
 /* gmon_io.c - Input and output from/to gmon.out files.
 
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 

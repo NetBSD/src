@@ -1,5 +1,5 @@
 /* tc-tic4x.h -- Assemble for the Texas TMS320C[34]X.
-   Copyright (C) 1997-2022 Free Software Foundation, Inc.
+   Copyright (C) 1997-2024 Free Software Foundation, Inc.
 
    Contributed by Michael P. Hayes (m.hayes@elec.canterbury.ac.nz)
 
@@ -88,6 +88,6 @@ extern void tic4x_start_line (void);
 extern void tic4x_cleanup (void);
 #define md_cleanup() tic4x_cleanup()
 
-extern void tic4x_end (void);
-#define md_end() tic4x_end()
+extern void tic4x_md_finish (void);
+#define md_finish() tic4x_md_finish()
 

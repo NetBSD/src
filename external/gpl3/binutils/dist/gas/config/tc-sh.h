@@ -1,5 +1,5 @@
 /* This file is tc-sh.h
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -129,8 +129,6 @@ extern void sh_frob_file (void);
 
 #ifdef OBJ_COFF
 /* COFF specific definitions.  */
-
-#define COFF_MAGIC (!target_big_endian ? SH_ARCH_MAGIC_LITTLE : SH_ARCH_MAGIC_BIG)
 
 #define tc_coff_symbol_emit_hook(a) ; /* Not used.  */
 

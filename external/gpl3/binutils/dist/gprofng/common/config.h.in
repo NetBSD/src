@@ -118,3 +118,6 @@
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
 #undef _POSIX_SOURCE
+
+/* Build with musl-libc. */
+#undef __MUSL_LIBC

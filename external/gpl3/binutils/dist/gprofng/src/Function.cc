@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -416,6 +416,8 @@ SrcInfo *
 Function::new_srcInfo ()
 {
   SrcInfo *t = new SrcInfo ();
+  t->src_line = NULL;
+  t->included_from = NULL;
   t->next = srcinfo_list;
   srcinfo_list = t;
   return t;

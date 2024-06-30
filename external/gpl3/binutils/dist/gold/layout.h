@@ -1,6 +1,6 @@
 // layout.h -- lay out output file sections for gold  -*- C++ -*-
 
-// Copyright (C) 2006-2022 Free Software Foundation, Inc.
+// Copyright (C) 2006-2024 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -950,7 +950,8 @@ class Layout
   add_target_dynamic_tags(bool use_rel, const Output_data* plt_got,
 			  const Output_data* plt_rel,
 			  const Output_data_reloc_generic* dyn_rel,
-			  bool add_debug, bool dynrel_includes_plt);
+			  bool add_debug, bool dynrel_includes_plt,
+			  bool custom_relcount);
 
   // Add a target-specific dynamic tag with constant value.
   void
@@ -1106,6 +1107,10 @@ class Layout
   // Create a build ID note if needed.
   void
   create_build_id();
+
+  // Create a package metadata note if needed.
+  void
+  create_package_metadata();
 
   // Link .stab and .stabstr sections.
   void
@@ -1453,6 +1458,8 @@ class Layout
   Gdb_index* gdb_index_data_;
   // The space for the build ID checksum if there is one.
   Output_section_data* build_id_note_;
+  // The space for the package metadata JSON if there is one.
+  Output_section_data* package_metadata_note_;
   // The output section containing dwarf abbreviations
   Output_reduced_debug_abbrev_section* debug_abbrev_;
   // The output section containing the dwarf debug info tree

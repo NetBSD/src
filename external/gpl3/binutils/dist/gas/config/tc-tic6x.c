@@ -1,5 +1,5 @@
 /* TI C6X assembler.
-   Copyright (C) 2010-2022 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
    Contributed by Joseph Myers <joseph@codesourcery.com>
    		  Bernd Schmidt  <bernds@codesourcery.com>
 
@@ -1037,7 +1037,7 @@ bool
 tic6x_do_align (int n, char *fill, int len ATTRIBUTE_UNUSED, int max)
 {
   /* Given code alignments of 4, 8, 16 or 32 bytes, we try to handle
-     them in the md_end pass by inserting NOPs in parallel with
+     them in the md_finish pass by inserting NOPs in parallel with
      previous instructions.  We only do this in sections containing
      nothing but instructions.  Code alignments of 1 or 2 bytes have
      no effect in such sections (but we record them with
@@ -4078,7 +4078,7 @@ md_atof (int type, char *litP, int *sizeP)
   return ieee_md_atof (type, litP, sizeP, target_big_endian);
 }
 
-/* Adjust the frags in SECTION (see tic6x_end).  */
+/* Adjust the frags in SECTION (see tic6x_md_finish).  */
 
 static void
 tic6x_adjust_section (bfd *abfd ATTRIBUTE_UNUSED, segT section,
@@ -4381,7 +4381,9 @@ tic6x_set_attribute_int (int tag, int value)
       || tag >= NUM_KNOWN_OBJ_ATTRIBUTES)
     abort ();
   if (!tic6x_attributes_set_explicitly[tag])
-    bfd_elf_add_proc_attr_int (stdoutput, tag, value);
+    if (!bfd_elf_add_proc_attr_int (stdoutput, tag, value))
+      as_fatal (_("error adding attribute: %s"),
+		bfd_errmsg (bfd_get_error ()));
 }
 
 /* Set object attributes deduced from the input file and command line
@@ -4403,7 +4405,7 @@ tic6x_set_attributes (void)
    relaxing.  */
 
 void
-tic6x_end (void)
+tic6x_md_finish (void)
 {
   /* Set object attributes at this point if not explicitly set.  */
   tic6x_set_attributes ();
@@ -4419,7 +4421,7 @@ tic6x_end (void)
 }
 
 /* No machine-dependent frags at this stage; all converted in
-   tic6x_end.  */
+   tic6x_md_finish.  */
 
 void
 md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED, segT asec ATTRIBUTE_UNUSED,
@@ -4429,7 +4431,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED, segT asec ATTRIBUTE_UNUSED,
 }
 
 /* No machine-dependent frags at this stage; all converted in
-   tic6x_end.  */
+   tic6x_md_finish.  */
 
 int
 md_estimate_size_before_relax (fragS *fragp ATTRIBUTE_UNUSED,
@@ -4660,7 +4662,7 @@ tic6x_start_unwind_section (const segT text_seg, int idx)
     }
 
   obj_elf_change_section (sec_name, type, flags, 0, &match,
-			  linkonce, 0);
+			  linkonce);
 
   /* Set the section link for index tables.  */
   if (idx)
