@@ -3750,31 +3750,54 @@ gcc_gxx_libcxx_include_dir=
 if test "${with_gxx_libcxx_include_dir+set}" = set; then :
   withval=$with_gxx_libcxx_include_dir; case "${withval}" in
 yes)	as_fn_error $? "bad value ${withval} given for libc++ include directory" "$LINENO" 5 ;;
-no)	;;
 *)	gcc_gxx_libcxx_include_dir=$with_gxx_libcxx_include_dir ;;
 esac
 fi
 
 
+# --with-gxx-libcxx-include-dir controls the enabling of the -stdlib option.
+# if --with-gxx-libcxx-include-dir is 'no' we disable the stdlib option.
+# if --with-gxx-libcxx-include-dir is unset we enable the stdlib option
+# based on the platform (to be available on platform versions where it is the
+# default for the system tools). We also use a default path within the compiler
+# install tree.
+# Otherwise, we use the path provided and enable the stdlib option.
 # If both --with-sysroot and --with-gxx-libcxx-include-dir are passed, we
 # check to see if the latter starts with the former and, upon success, compute
 # gcc_gxx_libcxx_include_dir as relative to the sysroot.
 gcc_gxx_libcxx_include_dir_add_sysroot=0
-
+gcc_enable_stdlib_opt=0
 if test x${gcc_gxx_libcxx_include_dir} != x; then
-
-$as_echo "#define ENABLE_STDLIB_OPTION 1" >>confdefs.h
-
-else
-  $as_echo "#define ENABLE_STDLIB_OPTION 0" >>confdefs.h
-
-fi
-# ??? This logic must match libstdc++-v3/acinclude.m4:GLIBCXX_EXPORT_INSTALL_INFO.
-if test x${gcc_gxx_libcxx_include_dir} = x; then
-  if test x${enable_version_specific_runtime_libs} = xyes; then
-    gcc_gxx_libcxx_include_dir='${libsubdir}/libc++_include/c++/v1'
+  if test x${gcc_gxx_libcxx_include_dir} = xno; then
+    # set defaults for the dir, but the option is disabled anyway.
+    gcc_gxx_libcxx_include_dir=
   else
-    libcxx_incdir='libc++_include/c++/$(version)/v1'
+    gcc_enable_stdlib_opt=1
+  fi
+else
+  case $target in
+    *-darwin1[1-9]* | *-darwin2*)
+       # Default this on for Darwin versions which default to libcxx,
+       # and embed the path in the compiler install so that we get a
+       # self-contained toolchain.
+       gcc_enable_stdlib_opt=1
+       ;;
+    *) ;;
+  esac
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define ENABLE_STDLIB_OPTION $gcc_enable_stdlib_opt
+_ACEOF
+
+
+# Sysroot behaviour as for gxx-include-dir
+if test x${gcc_gxx_libcxx_include_dir} = x; then
+  # default path,embedded in the compiler tree.
+  libcxx_incdir='include/c++/v1'
+  if test x${enable_version_specific_runtime_libs} = xyes; then
+    gcc_gxx_libcxx_include_dir='${libsubdir}/$libcxx_incdir'
+  else
     if test x$host != x$target; then
        libcxx_incdir="$target_alias/$libcxx_incdir"
     fi
@@ -19668,7 +19691,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 19671 "configure"
+#line 19694 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -19774,7 +19797,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 19777 "configure"
+#line 19800 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -26102,6 +26125,39 @@ $as_echo "#define HAVE_AS_MMACOSX_VERSION_MIN_OPTION 1" >>confdefs.h
 
 fi
 
+    if test x$gcc_cv_as_mmacosx_version_min = "xyes"; then
+       { $as_echo "$as_me:${as_lineno-$LINENO}: checking assembler for .build_version" >&5
+$as_echo_n "checking assembler for .build_version... " >&6; }
+if ${gcc_cv_as_darwin_build_version+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  gcc_cv_as_darwin_build_version=no
+  if test x$gcc_cv_as != x; then
+    $as_echo ' .build_version macos, 10, 14 sdk_version 10, 14' > conftest.s
+    if { ac_try='$gcc_cv_as $gcc_cv_as_flags -mmacosx-version-min=10.14 -o conftest.o conftest.s >&5'
+  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; }
+    then
+	gcc_cv_as_darwin_build_version=yes
+    else
+      echo "configure: failed program was" >&5
+      cat conftest.s >&5
+    fi
+    rm -f conftest.o conftest.s
+  fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gcc_cv_as_darwin_build_version" >&5
+$as_echo "$gcc_cv_as_darwin_build_version" >&6; }
+if test $gcc_cv_as_darwin_build_version = yes; then
+
+$as_echo "#define HAVE_AS_MACOS_BUILD_VERSION 1" >>confdefs.h
+
+fi
+
+    fi
     ;;
 esac
 
@@ -27963,6 +28019,49 @@ fi
 
 
     case $target in
+      *-*-aix*) conftest_s='	.machine "pwr10"
+	.csect .text[PR]
+	tend. 0';;
+      *-*-darwin*) conftest_s='	.text
+	tend. 0';;
+      *) conftest_s='	.machine power10
+	.text
+	tend. 0';;
+    esac
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking assembler for htm support on Power10" >&5
+$as_echo_n "checking assembler for htm support on Power10... " >&6; }
+if ${gcc_cv_as_power10_htm+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  gcc_cv_as_power10_htm=no
+  if test x$gcc_cv_as != x; then
+    $as_echo "$conftest_s" > conftest.s
+    if { ac_try='$gcc_cv_as $gcc_cv_as_flags  -o conftest.o conftest.s >&5'
+  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; }
+    then
+	gcc_cv_as_power10_htm=yes
+    else
+      echo "configure: failed program was" >&5
+      cat conftest.s >&5
+    fi
+    rm -f conftest.o conftest.s
+  fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gcc_cv_as_power10_htm" >&5
+$as_echo "$gcc_cv_as_power10_htm" >&6; }
+if test $gcc_cv_as_power10_htm = yes; then
+
+$as_echo "#define HAVE_AS_POWER10_HTM 1" >>confdefs.h
+
+fi
+
+
+    case $target in
       *-*-aix*) conftest_s='	.csect .text[PR]
 LCF..0:
 	addis 11,30,_GLOBAL_OFFSET_TABLE_-LCF..0@ha';;
@@ -28828,6 +28927,72 @@ if test $gcc_cv_as_loongarch_dtprelword != yes; then
 $as_echo "#define HAVE_AS_DTPRELWORD 1" >>confdefs.h
 
 fi
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking assembler for -mrelax option" >&5
+$as_echo_n "checking assembler for -mrelax option... " >&6; }
+if ${gcc_cv_as_loongarch_relax+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  gcc_cv_as_loongarch_relax=no
+  if test x$gcc_cv_as != x; then
+    $as_echo '.text' > conftest.s
+    if { ac_try='$gcc_cv_as $gcc_cv_as_flags -mrelax -o conftest.o conftest.s >&5'
+  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; }
+    then
+	gcc_cv_as_loongarch_relax=yes
+    else
+      echo "configure: failed program was" >&5
+      cat conftest.s >&5
+    fi
+    rm -f conftest.o conftest.s
+  fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gcc_cv_as_loongarch_relax" >&5
+$as_echo "$gcc_cv_as_loongarch_relax" >&6; }
+if test $gcc_cv_as_loongarch_relax = yes; then
+
+$as_echo "#define HAVE_AS_MRELAX_OPTION 1" >>confdefs.h
+
+fi
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking assembler for conditional branch relaxation support" >&5
+$as_echo_n "checking assembler for conditional branch relaxation support... " >&6; }
+if ${gcc_cv_as_loongarch_cond_branch_relax+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  gcc_cv_as_loongarch_cond_branch_relax=no
+  if test x$gcc_cv_as != x; then
+    $as_echo 'a:
+       .rept 32769
+       nop
+       .endr
+       beq $a0,$a1,a' > conftest.s
+    if { ac_try='$gcc_cv_as $gcc_cv_as_flags --fatal-warnings -o conftest.o conftest.s >&5'
+  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; }
+    then
+	gcc_cv_as_loongarch_cond_branch_relax=yes
+    else
+      echo "configure: failed program was" >&5
+      cat conftest.s >&5
+    fi
+    rm -f conftest.o conftest.s
+  fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gcc_cv_as_loongarch_cond_branch_relax" >&5
+$as_echo "$gcc_cv_as_loongarch_cond_branch_relax" >&6; }
+if test $gcc_cv_as_loongarch_cond_branch_relax = yes; then
+
+$as_echo "#define HAVE_AS_COND_BRANCH_RELAXATION 1" >>confdefs.h
+
+fi
+
     ;;
     s390*-*-*)
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking assembler for .gnu_attribute support" >&5
@@ -30720,7 +30885,8 @@ $as_echo "$gcc_cv_ld64_major" >&6; }
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking linker version" >&5
 $as_echo_n "checking linker version... " >&6; }
     if test x"${gcc_cv_ld64_version}" = x; then
-      gcc_cv_ld64_version=`$gcc_cv_ld -v 2>&1 | grep ld64 | sed s/.*ld64-// | awk '{print $1}'`
+      gcc_cv_ld64_version=`$gcc_cv_ld -v 2>&1 | $EGREP 'ld64|dyld' \
+      | sed -e 's/.*ld64-//' -e 's/.*dyld-//'| awk '{print $1}'`
     fi
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $gcc_cv_ld64_version" >&5
 $as_echo "$gcc_cv_ld64_version" >&6; }
@@ -30790,7 +30956,7 @@ $as_echo_n "checking dsymutil version \"$dsymutil_temp\"... " >&6; }
       dsymutil_kind=LLVM
       dsymutil_vers=`echo $dsymutil_temp | sed 's/.*LLVM\ version\ \([0-9\.]*\).*/\1/'`
     else
-      dsymutil_kind=UNKNOWN
+      dsymutil_kind=DET_UNKNOWN
       dsymutil_vers="0.0"
     fi
     dsymutil_major=`expr "$dsymutil_vers" : '\([0-9]*\)'`

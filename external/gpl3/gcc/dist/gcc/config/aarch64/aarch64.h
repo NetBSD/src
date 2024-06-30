@@ -268,7 +268,7 @@ extern unsigned aarch64_architecture_version;
   (AARCH64_FL_FOR_ARCH8_5 | AARCH64_FL_V8_6 | AARCH64_FL_FPSIMD \
    | AARCH64_FL_I8MM | AARCH64_FL_BF16)
 #define AARCH64_FL_FOR_ARCH8_7			\
-  (AARCH64_FL_FOR_ARCH8_6 | AARCH64_FL_V8_7 | AARCH64_FL_LS64)
+  (AARCH64_FL_FOR_ARCH8_6 | AARCH64_FL_V8_7)
 #define AARCH64_FL_FOR_ARCH8_8			\
   (AARCH64_FL_FOR_ARCH8_7 | AARCH64_FL_V8_8 | AARCH64_FL_MOPS)
 
@@ -860,6 +860,9 @@ extern enum aarch64_processor aarch64_tune;
 #ifdef HAVE_POLY_INT_H
 struct GTY (()) aarch64_frame
 {
+  /* The offset from the bottom of the static frame (the bottom of the
+     outgoing arguments) of each register save slot, or -2 if no save is
+     needed.  */
   poly_int64 reg_offset[LAST_SAVED_REGNUM + 1];
 
   /* The number of extra stack bytes taken up by register varargs.
@@ -868,25 +871,28 @@ struct GTY (()) aarch64_frame
      STACK_BOUNDARY.  */
   HOST_WIDE_INT saved_varargs_size;
 
-  /* The size of the callee-save registers with a slot in REG_OFFSET.  */
-  poly_int64 saved_regs_size;
+  /* The number of bytes between the bottom of the static frame (the bottom
+     of the outgoing arguments) and the bottom of the register save area.
+     This value is always a multiple of STACK_BOUNDARY.  */
+  poly_int64 bytes_below_saved_regs;
 
-  /* The size of the callee-save registers with a slot in REG_OFFSET that
-     are saved below the hard frame pointer.  */
-  poly_int64 below_hard_fp_saved_regs_size;
+  /* The number of bytes between the bottom of the static frame (the bottom
+     of the outgoing arguments) and the hard frame pointer.  This value is
+     always a multiple of STACK_BOUNDARY.  */
+  poly_int64 bytes_below_hard_fp;
 
-  /* Offset from the base of the frame (incomming SP) to the
-     top of the locals area.  This value is always a multiple of
+  /* The number of bytes between the top of the locals area and the top
+     of the frame (the incomming SP).  This value is always a multiple of
      STACK_BOUNDARY.  */
-  poly_int64 locals_offset;
+  poly_int64 bytes_above_locals;
 
-  /* Offset from the base of the frame (incomming SP) to the
-     hard_frame_pointer.  This value is always a multiple of
+  /* The number of bytes between the hard_frame_pointer and the top of
+     the frame (the incomming SP).  This value is always a multiple of
      STACK_BOUNDARY.  */
-  poly_int64 hard_fp_offset;
+  poly_int64 bytes_above_hard_fp;
 
-  /* The size of the frame.  This value is the offset from base of the
-     frame (incomming SP) to the stack_pointer.  This value is always
+  /* The size of the frame, i.e. the number of bytes between the bottom
+     of the outgoing arguments and the incoming SP.  This value is always
      a multiple of STACK_BOUNDARY.  */
   poly_int64 frame_size;
 
@@ -896,10 +902,6 @@ struct GTY (()) aarch64_frame
   /* The writeback value when pushing callee-save registers.
      It is zero when no push is used.  */
   HOST_WIDE_INT callee_adjust;
-
-  /* The offset from SP to the callee-save registers after initial_adjust.
-     It may be non-zero if no push is used (ie. callee_adjust == 0).  */
-  poly_int64 callee_offset;
 
   /* The size of the stack adjustment before saving or after restoring
      SVE registers.  */
@@ -947,6 +949,14 @@ struct GTY (()) aarch64_frame
      to save vector registers in the correct layout for unwinding.
      This is the register they should use.  */
   unsigned spare_pred_reg;
+
+  /* An SVE register that is saved below the hard frame pointer and that acts
+     as a probe for later allocations, or INVALID_REGNUM if none.  */
+  unsigned sve_save_and_probe;
+
+  /* A register that is saved at the hard frame pointer and that acts
+     as a probe for later allocations, or INVALID_REGNUM if none.  */
+  unsigned hard_fp_save_and_probe;
 
   bool laid_out;
 

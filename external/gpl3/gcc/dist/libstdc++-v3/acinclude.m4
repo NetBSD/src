@@ -978,7 +978,7 @@ AC_DEFUN([GLIBCXX_ENABLE_C99], [
            vscanf("%i", args);
            vsnprintf(fmt, 0, "%i", args);
            vsscanf(fmt, "%i", args);
-           snprintf(fmt, 0, "%i");
+           snprintf(fmt, 0, "%i", 1);
          }], [],
         [glibcxx_cv_c99_stdio_cxx98=yes], [glibcxx_cv_c99_stdio_cxx98=no])
     ])
@@ -1210,7 +1210,7 @@ AC_DEFUN([GLIBCXX_ENABLE_C99], [
            vscanf("%i", args);
            vsnprintf(fmt, 0, "%i", args);
            vsscanf(fmt, "%i", args);
-           snprintf(fmt, 0, "%i");
+           snprintf(fmt, 0, "%i", 1);
          }], [],
         [glibcxx_cv_c99_stdio_cxx11=yes], [glibcxx_cv_c99_stdio_cxx11=no])
     ])
@@ -1623,7 +1623,7 @@ AC_DEFUN([GLIBCXX_CHECK_C99_TR1], [
   AC_LANG_SAVE
   AC_LANG_CPLUSPLUS
 
-  # Use -std=c++98 because the default (-std=gnu++98) leaves __STRICT_ANSI__
+  # Use -std=c++98 because -std=gnu++98 leaves __STRICT_ANSI__
   # undefined and fake C99 facilities may be spuriously enabled.
   ac_save_CXXFLAGS="$CXXFLAGS"
   CXXFLAGS="$CXXFLAGS -std=c++98"
@@ -1888,9 +1888,9 @@ AC_DEFUN([GLIBCXX_CHECK_C99_TR1], [
 		  lround(0.0);
 		  lroundf(0.0f);
 		  lroundl(0.0l);
-		  nan(0);
-		  nanf(0);
-		  nanl(0);
+		  nan("");
+		  nanf("");
+		  nanl("");
 		  nearbyint(0.0);
 		  nearbyintf(0.0f);
 		  nearbyintl(0.0l);
@@ -4570,6 +4570,66 @@ dnl
     AC_DEFINE(HAVE_STRUCT_DIRENT_D_TYPE, 1, [Define to 1 if `d_type' is a member of `struct dirent'.])
   fi
 dnl
+  AC_CACHE_CHECK([for chmod], glibcxx_cv_chmod, [dnl
+    GCC_TRY_COMPILE_OR_LINK(
+      [
+       #include <sys/stat.h>
+      ],
+      [
+       int i = chmod("", S_IRUSR);
+      ],
+      [glibcxx_cv_chmod=yes],
+      [glibcxx_cv_chmod=no])
+  ])
+  if test $glibcxx_cv_chmod = yes; then
+    AC_DEFINE(_GLIBCXX_USE_CHMOD, 1, [Define if usable chmod is available in <sys/stat.h>.])
+  fi
+dnl
+  AC_CACHE_CHECK([for mkdir], glibcxx_cv_mkdir, [dnl
+    GCC_TRY_COMPILE_OR_LINK(
+      [
+       #include <sys/stat.h>
+      ],
+      [
+       int i = mkdir("", S_IRUSR);
+      ],
+      [glibcxx_cv_mkdir=yes],
+      [glibcxx_cv_mkdir=no])
+  ])
+  if test $glibcxx_cv_mkdir = yes; then
+    AC_DEFINE(_GLIBCXX_USE_MKDIR, 1, [Define if usable mkdir is available in <sys/stat.h>.])
+  fi
+dnl
+  AC_CACHE_CHECK([for chdir], glibcxx_cv_chdir, [dnl
+    GCC_TRY_COMPILE_OR_LINK(
+      [
+       #include <unistd.h>
+      ],
+      [
+       int i = chdir("");
+      ],
+      [glibcxx_cv_chdir=yes],
+      [glibcxx_cv_chdir=no])
+  ])
+  if test $glibcxx_cv_chdir = yes; then
+    AC_DEFINE(_GLIBCXX_USE_CHDIR, 1, [Define if usable chdir is available in <unistd.h>.])
+  fi
+dnl
+  AC_CACHE_CHECK([for getcwd], glibcxx_cv_getcwd, [dnl
+    GCC_TRY_COMPILE_OR_LINK(
+      [
+       #include <unistd.h>
+      ],
+      [
+       char* s = getcwd((char*)0, 1);
+      ],
+      [glibcxx_cv_getcwd=yes],
+      [glibcxx_cv_getcwd=no])
+  ])
+  if test $glibcxx_cv_getcwd = yes; then
+    AC_DEFINE(_GLIBCXX_USE_GETCWD, 1, [Define if usable getcwd is available in <unistd.h>.])
+  fi
+dnl
   AC_CACHE_CHECK([for realpath], glibcxx_cv_realpath, [dnl
     GCC_TRY_COMPILE_OR_LINK(
       [
@@ -4924,7 +4984,7 @@ AC_DEFUN([GLIBCXX_ENABLE_BACKTRACE], [
 
   # Most of this is adapted from libsanitizer/configure.ac
 
-  BACKTRACE_CPPFLAGS=
+  BACKTRACE_CPPFLAGS="-D_GNU_SOURCE"
 
   # libbacktrace only needs atomics for int, which we've already tested
   if test "$glibcxx_cv_atomic_int" = "yes"; then
@@ -4952,8 +5012,11 @@ AC_DEFUN([GLIBCXX_ENABLE_BACKTRACE], [
     have_dl_iterate_phdr=no
   else
     # When built as a GCC target library, we can't do a link test.
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS -D_GNU_SOURCE"
     AC_EGREP_HEADER([dl_iterate_phdr], [link.h], [have_dl_iterate_phdr=yes],
 		    [have_dl_iterate_phdr=no])
+    CPPFLAGS="$ac_save_CPPFLAGS"
   fi
   if test "$have_dl_iterate_phdr" = "yes"; then
     BACKTRACE_CPPFLAGS="$BACKTRACE_CPPFLAGS -DHAVE_DL_ITERATE_PHDR=1"

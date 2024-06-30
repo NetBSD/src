@@ -1094,6 +1094,7 @@ c_cpp_builtins (cpp_reader *pfile)
 	  cpp_define (pfile, "__cpp_if_consteval=202106L");
 	  cpp_define (pfile, "__cpp_constexpr=202110L");
 	  cpp_define (pfile, "__cpp_multidimensional_subscript=202110L");
+	  cpp_define (pfile, "__cpp_auto_cast=202110L");
 	}
       if (flag_concepts)
         {
