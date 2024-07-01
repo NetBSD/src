@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_device.c,v 1.20 2023/09/30 10:46:45 mrg Exp $	*/
+/*	$NetBSD: amdgpu_device.c,v 1.21 2024/07/01 12:09:52 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.20 2023/09/30 10:46:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.21 2024/07/01 12:09:52 riastradh Exp $");
 
 #include <linux/power_supply.h>
 #include <linux/kthread.h>
@@ -3047,9 +3047,10 @@ int amdgpu_device_init(struct amdgpu_device *adev,
 	}
 
 #ifdef __NetBSD__
-	if (pci_mapreg_map(&adev->pdev->pd_pa, PCI_BAR(5),
+	const int bar = (adev->asic_type >= CHIP_BONAIRE ? 5 : 2);
+	if (pci_mapreg_map(&adev->pdev->pd_pa, PCI_BAR(bar),
 		pci_mapreg_type(adev->pdev->pd_pa.pa_pc,
-		    adev->pdev->pd_pa.pa_tag, PCI_BAR(5)),
+		    adev->pdev->pd_pa.pa_tag, PCI_BAR(bar)),
 		0,
 		&adev->rmmiot, &adev->rmmioh,
 		&adev->rmmio_base, &adev->rmmio_size))
