@@ -1,11 +1,11 @@
-# $NetBSD: md.amd64,v 1.124 2024/04/09 15:17:23 nia Exp $
-./usr/lib/libtsan_g.a				comp-c-debuglib		compat,debuglib,arch64,cxx,gcc
+# $NetBSD: md.amd64,v 1.125 2024/07/01 04:03:04 mrg Exp $
+./usr/lib/libtsan_g.a				comp-c-debuglib		compat,debuglib,arch64,cxx,gcccmds,gcc
 ./usr/lib/libx86_64_g.a				comp-c-debuglib		debuglib
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/gdbserver.debug	base-util-debug		gdb,debug
 ./usr/libdata/debug/usr/bin/pmc.debug		comp-obsolete		obsolete
-./usr/libdata/debug/usr/lib/libtsan.so.1.0.debug		comp-sys-debug	debug,cxx,gcc=10
-./usr/libdata/debug/usr/lib/libtsan.so.2.0.debug		comp-sys-debug	debug,cxx,gcc=12
+./usr/libdata/debug/usr/lib/libtsan.so.1.0.debug		comp-sys-debug	debug,cxx,gcccmds,gcc=10
+./usr/libdata/debug/usr/lib/libtsan.so.2.0.debug		comp-sys-debug	debug,cxx,gcccmds,gcc=12
 ./usr/libdata/debug/usr/lib/libx86_64.so.0.0.debug	comp-sys-shlib		pic,debug
 ./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait.debug	tests-obsolete	obsolete
 ./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait3.debug	tests-obsolete	obsolete

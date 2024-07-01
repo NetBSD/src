@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.342 2024/06/10 07:47:06 kre Exp $
+# $NetBSD: shl.mi,v 1.343 2024/07/01 04:03:04 mrg Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,binutils
 ./usr/lib/libgcc_eh_g.a				comp-c-debuglib		debuglib,gcc
 ./usr/lib/libgcc_s_g.a				comp-c-debuglib		debuglib,gcc
@@ -68,8 +68,8 @@
 ./usr/libdata/debug/usr/lib/i18n/libmapper_zone.so.5.0.debug	comp-i18n-debug	debug
 ./usr/libdata/debug/usr/lib/libamu.so.5.0.debug			comp-amd-debug	debug
 ./usr/libdata/debug/usr/lib/libarchive.so.5.1.debug		comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libasan.so.5.0.debug		comp-sys-debug	debug,cxx,gcc=10
-./usr/libdata/debug/usr/lib/libasan.so.6.0.debug		comp-sys-debug	debug,cxx,gcc=12
+./usr/libdata/debug/usr/lib/libasan.so.5.0.debug		comp-sys-debug	debug,cxx,gcccmds,gcc=10
+./usr/libdata/debug/usr/lib/libasan.so.6.0.debug		comp-sys-debug	debug,cxx,gcccmds,gcc=12
 ./usr/libdata/debug/usr/lib/libasn1.so.10.0.debug		comp-krb5-debug	debug,kerberos
 ./usr/libdata/debug/usr/lib/libatf-c++.so.2.0.debug		comp-atf-debug	debug,atf
 ./usr/libdata/debug/usr/lib/libatf-c.so.0.0.debug		comp-atf-debug	debug,atf
@@ -142,8 +142,8 @@
 ./usr/libdata/debug/usr/lib/liblber.so.5.0.debug		comp-ldap-debug	debug,ldap
 ./usr/libdata/debug/usr/lib/libldap.so.6.0.debug		comp-ldap-debug	debug,ldap
 ./usr/libdata/debug/usr/lib/libldap_r.so.6.0.debug		comp-ldap-debug	debug,ldap
-./usr/libdata/debug/usr/lib/liblsan.so.2.0.debug		comp-sys-debug	debug,cxx,gcc=10
-./usr/libdata/debug/usr/lib/liblsan.so.3.0.debug		comp-sys-debug	debug,cxx,gcc=12
+./usr/libdata/debug/usr/lib/liblsan.so.2.0.debug		comp-sys-debug	debug,cxx,gcccmds,gcc=10
+./usr/libdata/debug/usr/lib/liblsan.so.3.0.debug		comp-sys-debug	debug,cxx,gcccmds,gcc=12
 ./usr/libdata/debug/usr/lib/liblua.so.6.1.debug			comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/liblutok.so.3.0.debug		comp-kyua-debug	debug,kyua
 ./usr/libdata/debug/usr/lib/liblzf.so.1.0.debug			comp-sys-debug	debug
@@ -300,8 +300,8 @@
 ./usr/libdata/debug/usr/lib/libtpm_unseal.so.2.0.debug		comp-tpm-debug	debug,tpm
 ./usr/libdata/debug/usr/lib/libtre.so.0.8.debug			comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libtspi.so.4.0.debug		comp-tpm-debug	debug,tpm
-./usr/libdata/debug/usr/lib/libubsan.so.4.0.debug		comp-sys-debug	debug,cxx,gcc=10
-./usr/libdata/debug/usr/lib/libubsan.so.5.0.debug		comp-sys-debug	debug,cxx,gcc=12
+./usr/libdata/debug/usr/lib/libubsan.so.4.0.debug		comp-sys-debug	debug,cxx,gcccmds,gcc=10
+./usr/libdata/debug/usr/lib/libubsan.so.5.0.debug		comp-sys-debug	debug,cxx,gcccmds,gcc=12
 ./usr/libdata/debug/usr/lib/libukfs.so.1.0.debug		comp-sys-debug	debug,rump
 ./usr/libdata/debug/usr/lib/libumem.so.0.0.debug		comp-zfs-debug	debug,zfs
 ./usr/libdata/debug/usr/lib/libunbound.so.9.0.debug 		comp-net-debug	debug,unbound

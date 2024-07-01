@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc64,v 1.7 2024/06/10 07:57:10 kre Exp $
+# $NetBSD: ad.powerpc64,v 1.8 2024/07/01 04:03:04 mrg Exp $
 ./lib/powerpc					base-compat-shlib	compat
 ./lib/powerpc/npf					base-compat-shlib	compat,npf
 ./lib/powerpc/npf/ext_log.so			base-compat-shlib	compat,npf
@@ -87,11 +87,11 @@
 ./usr/lib/powerpc/libarchive.so			base-compat-shlib	compat
 ./usr/lib/powerpc/libarchive.so.5			base-compat-shlib	compat
 ./usr/lib/powerpc/libarchive.so.5.1		base-compat-shlib	compat
-./usr/lib/powerpc/libasan.so			base-compat-shlib	compat,gcc,cxx
-./usr/lib/powerpc/libasan.so.5			base-compat-shlib	compat,gcc=10,cxx
-./usr/lib/powerpc/libasan.so.5.0			base-compat-shlib	compat,gcc=10,cxx
-./usr/lib/powerpc/libasan.so.6			base-compat-shlib	compat,gcc=12,cxx
-./usr/lib/powerpc/libasan.so.6.0			base-compat-shlib	compat,gcc=12,cxx
+./usr/lib/powerpc/libasan.so			base-compat-shlib	compat,gcc,gcccmds,cxx
+./usr/lib/powerpc/libasan.so.5			base-compat-shlib	compat,gcc=10,gcccmds,cxx
+./usr/lib/powerpc/libasan.so.5.0			base-compat-shlib	compat,gcc=10,gcccmds,cxx
+./usr/lib/powerpc/libasan.so.6			base-compat-shlib	compat,gcc=12,gcccmds,cxx
+./usr/lib/powerpc/libasan.so.6.0			base-compat-shlib	compat,gcc=12,gcccmds,cxx
 ./usr/lib/powerpc/libasn1.so			base-compat-shlib	compat,kerberos
 ./usr/lib/powerpc/libasn1.so.10			base-compat-shlib	compat,kerberos
 ./usr/lib/powerpc/libasn1.so.10.0			base-compat-shlib	compat,kerberos
@@ -272,11 +272,11 @@
 ./usr/lib/powerpc/libldap_r.so			base-compat-shlib	compat,ldap
 ./usr/lib/powerpc/libldap_r.so.6			base-compat-shlib	compat,ldap
 ./usr/lib/powerpc/libldap_r.so.6.0		base-compat-shlib	compat,ldap
-./usr/lib/powerpc/liblsan.so			base-compat-shlib	compat,cxx,gcc
-./usr/lib/powerpc/liblsan.so.2			base-compat-shlib	compat,cxx,gcc=10
-./usr/lib/powerpc/liblsan.so.2.0			base-compat-shlib	compat,cxx,gcc=10
-./usr/lib/powerpc/liblsan.so.3			base-compat-shlib	compat,cxx,gcc=12
-./usr/lib/powerpc/liblsan.so.3.0			base-compat-shlib	compat,cxx,gcc=12
+./usr/lib/powerpc/liblsan.so			base-compat-shlib	compat,cxx,gcccmds,gcc
+./usr/lib/powerpc/liblsan.so.2			base-compat-shlib	compat,cxx,gcccmds,gcc=10
+./usr/lib/powerpc/liblsan.so.2.0			base-compat-shlib	compat,cxx,gcccmds,gcc=10
+./usr/lib/powerpc/liblsan.so.3			base-compat-shlib	compat,cxx,gcccmds,gcc=12
+./usr/lib/powerpc/liblsan.so.3.0			base-compat-shlib	compat,cxx,gcccmds,gcc=12
 ./usr/lib/powerpc/liblua.so			base-compat-shlib	compat
 ./usr/lib/powerpc/liblua.so.6			base-compat-shlib	compat
 ./usr/lib/powerpc/liblua.so.6.1			base-compat-shlib	compat
@@ -437,11 +437,11 @@
 ./usr/lib/powerpc/libtre.so			base-compat-shlib	compat
 ./usr/lib/powerpc/libtre.so.0			base-compat-shlib	compat
 ./usr/lib/powerpc/libtre.so.0.8			base-compat-shlib	compat
-./usr/lib/powerpc/libubsan.so			base-compat-shlib	compat,gcc,cxx
-./usr/lib/powerpc/libubsan.so.4			base-compat-shlib	compat,gcc=10,cxx
-./usr/lib/powerpc/libubsan.so.4.0			base-compat-shlib	compat,gcc=10,cxx
-./usr/lib/powerpc/libubsan.so.5			base-compat-shlib	compat,gcc=12,cxx
-./usr/lib/powerpc/libubsan.so.5.0			base-compat-shlib	compat,gcc=12,cxx
+./usr/lib/powerpc/libubsan.so			base-compat-shlib	compat,gcccmds,gcc,cxx
+./usr/lib/powerpc/libubsan.so.4			base-compat-shlib	compat,gcccmds,gcc=10,cxx
+./usr/lib/powerpc/libubsan.so.4.0			base-compat-shlib	compat,gcccmds,gcc=10,cxx
+./usr/lib/powerpc/libubsan.so.5			base-compat-shlib	compat,gcccmds,gcc=12,cxx
+./usr/lib/powerpc/libubsan.so.5.0			base-compat-shlib	compat,gcccmds,gcc=12,cxx
 ./usr/lib/powerpc/libukfs.so			base-compat-shlib	compat
 ./usr/lib/powerpc/libukfs.so.1			base-compat-shlib	compat
 ./usr/lib/powerpc/libukfs.so.1.0			base-compat-shlib	compat

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.981 2024/06/10 07:47:06 kre Exp $
+# $NetBSD: shl.mi,v 1.982 2024/07/01 04:03:04 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -208,11 +208,11 @@
 ./usr/lib/libarchive.so				base-sys-shlib
 ./usr/lib/libarchive.so.5			base-sys-shlib
 ./usr/lib/libarchive.so.5.1			base-sys-shlib
-./usr/lib/libasan.so				base-sys-shlib		cxx,gcc
-./usr/lib/libasan.so.5				base-sys-shlib		cxx,gcc=10
-./usr/lib/libasan.so.5.0			base-sys-shlib		cxx,gcc=10
-./usr/lib/libasan.so.6				base-sys-shlib		cxx,gcc=12
-./usr/lib/libasan.so.6.0			base-sys-shlib		cxx,gcc=12
+./usr/lib/libasan.so				base-sys-shlib		cxx,gcccmds
+./usr/lib/libasan.so.5				base-sys-shlib		cxx,gcccmds,gcc=10
+./usr/lib/libasan.so.5.0			base-sys-shlib		cxx,gccgcccmds,=10
+./usr/lib/libasan.so.6				base-sys-shlib		cxx,gcccmds,gcc=12
+./usr/lib/libasan.so.6.0			base-sys-shlib		cxx,gcccmds,gcc=12
 ./usr/lib/libasn1.so				base-krb5-shlib		kerberos
 ./usr/lib/libasn1.so.10				base-krb5-shlib		kerberos
 ./usr/lib/libasn1.so.10.0			base-krb5-shlib		kerberos
@@ -424,11 +424,11 @@
 ./usr/lib/libldap_r.so				base-ldap-shlib		ldap
 ./usr/lib/libldap_r.so.6			base-ldap-shlib		ldap
 ./usr/lib/libldap_r.so.6.0			base-ldap-shlib		ldap
-./usr/lib/liblsan.so				base-sys-shlib		cxx,gcc
-./usr/lib/liblsan.so.2				base-sys-shlib		cxx,gcc=10
-./usr/lib/liblsan.so.2.0			base-sys-shlib		cxx,gcc=10
-./usr/lib/liblsan.so.3				base-sys-shlib		cxx,gcc=12
-./usr/lib/liblsan.so.3.0			base-sys-shlib		cxx,gcc=12
+./usr/lib/liblsan.so				base-sys-shlib		cxx,gcccmds,gcc
+./usr/lib/liblsan.so.2				base-sys-shlib		cxx,gcccmds,gcc=10
+./usr/lib/liblsan.so.2.0			base-sys-shlib		cxx,gcccmds,gcc=10
+./usr/lib/liblsan.so.3				base-sys-shlib		cxx,gcccmds,gcc=12
+./usr/lib/liblsan.so.3.0			base-sys-shlib		cxx,gcccmds,gcc=12
 ./usr/lib/liblua.so				base-sys-shlib
 ./usr/lib/liblua.so.6				base-sys-shlib
 ./usr/lib/liblua.so.6.1				base-sys-shlib
@@ -908,11 +908,11 @@
 ./usr/lib/libtspi.so				base-sys-shlib		tpm
 ./usr/lib/libtspi.so.4				base-sys-shlib		tpm
 ./usr/lib/libtspi.so.4.0			base-sys-shlib		tpm
-./usr/lib/libubsan.so				base-sys-shlib		cxx,gcc
-./usr/lib/libubsan.so.4				base-sys-shlib		cxx,gcc=10
-./usr/lib/libubsan.so.4.0			base-sys-shlib		cxx,gcc=10
-./usr/lib/libubsan.so.5				base-sys-shlib		cxx,gcc=12
-./usr/lib/libubsan.so.5.0			base-sys-shlib		cxx,gcc=12
+./usr/lib/libubsan.so				base-sys-shlib		cxx,gcccmds,gcc
+./usr/lib/libubsan.so.4				base-sys-shlib		cxx,gcccmds,gcc=10
+./usr/lib/libubsan.so.4.0			base-sys-shlib		cxx,gcccmds,gcc=10
+./usr/lib/libubsan.so.5				base-sys-shlib		cxx,gcccmds,gcc=12
+./usr/lib/libubsan.so.5.0			base-sys-shlib		cxx,gcccmds,gcc=12
 ./usr/lib/libukfs.so				base-sys-shlib		rump
 ./usr/lib/libukfs.so.1				base-sys-shlib		rump
 ./usr/lib/libukfs.so.1.0			base-sys-shlib		rump

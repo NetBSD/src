@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.435 2024/05/05 02:53:01 riastradh Exp $
+# $NetBSD: mi,v 1.436 2024/07/01 04:03:04 mrg Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -26,7 +26,7 @@
 ./usr/lib/i18n/libmapper_zone_g.a		comp-c-debuglib		debuglib
 ./usr/lib/libamu_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libarchive_g.a			comp-c-debuglib		debuglib
-./usr/lib/libasan_g.a				comp-c-debuglib		debuglib,cxx,gcc
+./usr/lib/libasan_g.a				comp-c-debuglib		debuglib,cxx,gcccmds,gcc
 ./usr/lib/libasn1_g.a				comp-c-debuglib		debuglib,kerberos
 ./usr/lib/libatf-c++_g.a			comp-c-debuglib		debuglib,atf
 ./usr/lib/libatf-c_g.a				comp-c-debuglib		debuglib,atf
@@ -98,7 +98,7 @@
 ./usr/lib/liblber_g.a				comp-c-debuglib		debuglib,ldap
 ./usr/lib/libldap_g.a				comp-c-debuglib		debuglib,ldap
 ./usr/lib/libldap_r_g.a				comp-c-debuglib		debuglib,ldap
-./usr/lib/liblsan_g.a				comp-c-debuglib		debuglib,cxx,gcc
+./usr/lib/liblsan_g.a				comp-c-debuglib		debuglib,cxx,gcccmds,gcc
 ./usr/lib/liblua_g.a				comp-c-debuglib		debuglib
 ./usr/lib/liblwres_g.a				comp-obsolete		obsolete
 ./usr/lib/liblzf_g.a				comp-c-debuglib		debuglib
@@ -265,7 +265,7 @@
 ./usr/lib/libtpm_unseal_g.a			comp-c-debuglib		debuglib,tpm
 ./usr/lib/libtre_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libtspi_g.a				comp-c-debuglib		debuglib,tpm
-./usr/lib/libubsan_g.a				comp-c-debuglib		debuglib,cxx,gcc
+./usr/lib/libubsan_g.a				comp-c-debuglib		debuglib,cxx,gcccmds,gcc
 ./usr/lib/libukfs_g.a				comp-c-debuglib		debuglib,rump
 ./usr/lib/libumem_g.a				comp-c-debuglib		debuglib,zfs
 ./usr/lib/libunbound_g.a			comp-c-debuglib		debuglib,unbound

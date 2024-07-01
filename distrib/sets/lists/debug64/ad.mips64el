@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.5 2024/06/23 18:29:14 mrg Exp $
+# $NetBSD: ad.mips64el,v 1.6 2024/07/01 04:03:05 mrg Exp $
 ./usr/lib/64/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/64/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/64/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -24,7 +24,7 @@
 ./usr/lib/64/i18n/libmapper_zone_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/64/libamu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/64/libarchive_g.a			comp-c-debuglib	debuglib,compat
-./usr/lib/64/libasan_g.a			comp-c-debuglib	debuglib,compat,cxx,gcc
+./usr/lib/64/libasan_g.a			comp-c-debuglib	debuglib,compat,cxx,gcccmds,gcc
 ./usr/lib/64/libasn1_g.a			comp-c-debuglib	debuglib,compat,kerberos
 ./usr/lib/64/libatf-c++_g.a			comp-c-debuglib	debuglib,compat,atf
 ./usr/lib/64/libatf-c_g.a			comp-c-debuglib	debuglib,compat,atf
@@ -93,7 +93,7 @@
 ./usr/lib/64/liblber_g.a			comp-c-debuglib	debuglib,compat,ldap
 ./usr/lib/64/libldap_g.a			comp-c-debuglib	debuglib,compat,ldap
 ./usr/lib/64/libldap_r_g.a			comp-c-debuglib	debuglib,compat,ldap
-./usr/lib/64/liblsan_g.a			comp-c-debuglib	debuglib,compat,cxx,gcc
+./usr/lib/64/liblsan_g.a			comp-c-debuglib	debuglib,compat,cxx,gcccmds,gcc
 ./usr/lib/64/liblua_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/64/liblzf_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/64/liblzma_g.a			comp-c-debuglib	debuglib,compat
@@ -148,7 +148,7 @@
 ./usr/lib/64/libsupc++_g.a			comp-c-debuglib	debuglib,compat,cxx,gcc,libstdcxx
 ./usr/lib/64/libterminfo_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/64/libtre_g.a			comp-c-debuglib	debuglib,compat
-./usr/lib/64/libubsan_g.a			comp-c-debuglib	debuglib,compat,cxx,gcc
+./usr/lib/64/libubsan_g.a			comp-c-debuglib	debuglib,compat,cxx,gcccmds,gcc
 ./usr/lib/64/libukfs_g.a			comp-c-debuglib	debuglib,compat,rump
 ./usr/lib/64/libumem_g.a			comp-c-debuglib	debuglib,compat,zfs
 ./usr/lib/64/libunbound_g.a			comp-c-debuglib	debuglib,compat,unbound
@@ -190,8 +190,8 @@
 ./usr/libdata/debug/usr/lib/64/i18n/libmapper_zone.so.5.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libamu.so.5.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libarchive.so.5.1.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libasan.so.5.0.debug	comp-sys-debug	debug,compat,cxx,gcc=10
-./usr/libdata/debug/usr/lib/64/libasan.so.6.0.debug	comp-sys-debug	debug,compat,cxx,gcc=12
+./usr/libdata/debug/usr/lib/64/libasan.so.5.0.debug	comp-sys-debug	debug,compat,cxx,gcccmds,gcc=10
+./usr/libdata/debug/usr/lib/64/libasan.so.6.0.debug	comp-sys-debug	debug,compat,cxx,gcccmds,gcc=12
 ./usr/libdata/debug/usr/lib/64/libasn1.so.10.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libatf-c++.so.2.0.debug	comp-sys-debug	debug,compat,atf
 ./usr/libdata/debug/usr/lib/64/libatf-c.so.0.0.debug	comp-sys-debug	debug,compat,atf
@@ -253,8 +253,8 @@
 ./usr/libdata/debug/usr/lib/64/liblber.so.5.0.debug	comp-sys-debug	debug,compat,ldap
 ./usr/libdata/debug/usr/lib/64/libldap.so.6.0.debug	comp-sys-debug	debug,compat,ldap
 ./usr/libdata/debug/usr/lib/64/libldap_r.so.6.0.debug	comp-sys-debug	debug,compat,ldap
-./usr/libdata/debug/usr/lib/64/liblsan.so.2.0.debug	comp-sys-debug	debug,compat,cxx,gcc=10
-./usr/libdata/debug/usr/lib/64/liblsan.so.3.0.debug	comp-sys-debug	debug,compat,cxx,gcc=12
+./usr/libdata/debug/usr/lib/64/liblsan.so.2.0.debug	comp-sys-debug	debug,compat,cxx,gcccmds,gcc=10
+./usr/libdata/debug/usr/lib/64/liblsan.so.3.0.debug	comp-sys-debug	debug,compat,cxx,gcccmds,gcc=12
 ./usr/libdata/debug/usr/lib/64/liblua.so.6.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/liblzf.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/liblzma.so.2.0.debug	comp-sys-debug	debug,compat
@@ -307,8 +307,8 @@
 ./usr/libdata/debug/usr/lib/64/libstdc++.so.9.1.debug	comp-sys-debug	debug,compat,cxx,libstdcxx,gcc=12
 ./usr/libdata/debug/usr/lib/64/libterminfo.so.2.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libtre.so.0.8.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libubsan.so.4.0.debug	comp-sys-debug	debug,compat,cxx,gcc=10
-./usr/libdata/debug/usr/lib/64/libubsan.so.5.0.debug	comp-sys-debug	debug,compat,cxx,gcc=12
+./usr/libdata/debug/usr/lib/64/libubsan.so.4.0.debug	comp-sys-debug	debug,compat,cxx,gcccmds,gcc=10
+./usr/libdata/debug/usr/lib/64/libubsan.so.5.0.debug	comp-sys-debug	debug,compat,cxx,gcccmds,gcc=12
 ./usr/libdata/debug/usr/lib/64/libukfs.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libumem.so.0.0.debug	comp-sys-debug	debug,compat,zfs
 ./usr/libdata/debug/usr/lib/64/libunbound.so.9.0.debug	comp-sys-debug	debug,compat,unbound
