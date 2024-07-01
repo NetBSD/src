@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.48 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.49 2024/07/01 01:35:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.48 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.49 2024/07/01 01:35:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -70,11 +70,11 @@ __KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.48 2020/05/23 23:42:43 ad Exp $");
 MODULE(MODULE_CLASS_MISC, mqueue, NULL);
 
 /* System-wide limits. */
-static u_int			mq_open_max = MQ_OPEN_MAX;
-static u_int			mq_prio_max = MQ_PRIO_MAX;
-static u_int			mq_max_msgsize = 16 * MQ_DEF_MSGSIZE;
-static u_int			mq_def_maxmsg = 32;
-static u_int			mq_max_maxmsg = 16 * 32;
+u_int			mq_open_max = MQ_OPEN_MAX;
+static u_int		mq_prio_max = MQ_PRIO_MAX;
+u_int			mq_max_msgsize = 16 * MQ_DEF_MSGSIZE;
+u_int			mq_def_maxmsg = 32;
+u_int			mq_max_maxmsg = 16 * 32;
 
 static pool_cache_t		mqmsg_cache	__read_mostly;
 static kmutex_t			mqlist_lock	__cacheline_aligned;

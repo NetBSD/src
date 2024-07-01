@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.33 2021/11/25 02:27:08 ryo Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.34 2024/07/01 01:35:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -57,6 +57,8 @@ typedef long linux_suseconds_t;
 typedef unsigned short linux_gid16_t;
 typedef unsigned short linux_uid16_t;
 typedef unsigned short linux_umode_t;
+
+typedef long linux_mqd_t;
 
 /*
  * From Linux include/asm-.../posix_types.h
