@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.64 2023/09/23 18:21:12 ad Exp $	*/
+/*	$NetBSD: namei.src,v 1.65 2024/07/01 00:58:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -272,7 +272,7 @@ extern const namei_simple_flags_t
  *
  * namei_simple_kernel takes a kernel-space path as the first argument.
  * namei_simple_user takes a user-space path as the first argument.
- * The nameiat_simple_* variants handle relative path using the given 
+ * The nameiat_simple* variants handle relative path using the given 
  * directory vnode instead of current directory.
  *
  * A namei call can be converted to namei_simple_* if:
@@ -283,6 +283,8 @@ extern const namei_simple_flags_t
  */
 int namei_simple_kernel(const char *, namei_simple_flags_t, struct vnode **);
 int namei_simple_user(const char *, namei_simple_flags_t, struct vnode **);
+int nameiat_simple(struct vnode *, struct pathbuf *, namei_simple_flags_t,
+    struct vnode **);
 int nameiat_simple_kernel(struct vnode *, const char *, namei_simple_flags_t,
     struct vnode **);
 int nameiat_simple_user(struct vnode *, const char *, namei_simple_flags_t, 
