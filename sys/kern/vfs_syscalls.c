@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.562 2024/06/29 13:31:07 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.563 2024/07/01 00:51:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2020, 2023 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.562 2024/06/29 13:31:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.563 2024/07/01 00:51:11 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -260,7 +260,7 @@ fd_nameiat_simple_user(struct lwp *l, int fdat, const char *path,
 	struct vnode *dvp;
 	int error;
 
-	if (fdat != AT_FDCWD && path[0] != '/') {
+	if (fdat != AT_FDCWD) {
 		if ((error = fd_getvnode(fdat, &dfp)) != 0)
 			goto out;
 
