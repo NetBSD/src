@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.447 2024/04/05 01:16:00 christos Exp $
+#	$NetBSD: bsd.README,v 1.447.2.1 2024/07/01 01:01:12 perseant Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1012,6 +1012,10 @@ LIB_EXPSYM	File listing all symbols expected to be defined by the
 		from the expected symbols to the actual symbols.
 		During development, you can update the expected symbols
 		from the actual ones with `make update-symbols'.
+
+VERSION_MAP	Path to an ld version script to use when linking the
+		library.  Resolved from .PATH like a target
+		prerequisite.
 
 
 The include file <bsd.lib.mk> includes the file named "../Makefile.inc"

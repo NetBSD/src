@@ -1,5 +1,5 @@
 /* resrc.c -- read and write Windows rc files.
-   Copyright (C) 1997-2022 Free Software Foundation, Inc.
+   Copyright (C) 1997-2024 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Rewritten by Kai Tietz, Onevision.
 
@@ -202,7 +202,7 @@ run_cmd (char *cmd, const char *redir)
   int i;
   const char **argv;
   char *errmsg_fmt = NULL, *errmsg_arg = NULL;
-  char *temp_base = choose_temp_base ();
+  char *temp_base = make_temp_file (NULL);
   int in_quote;
   char sep;
   int redir_handle = -1;
@@ -316,7 +316,7 @@ open_input_stream (char *cmd)
     {
       char *fileprefix;
 
-      fileprefix = choose_temp_base ();
+      fileprefix = make_temp_file (NULL);
       cpp_temp_file = (char *) xmalloc (strlen (fileprefix) + 5);
       sprintf (cpp_temp_file, "%s.irc", fileprefix);
       free (fileprefix);
@@ -383,9 +383,9 @@ look_for_default (char *cmd, const char *prefix, int end_prefix,
   struct stat s;
   const char *fnquotes = (filename_need_quotes (filename) ? "\"" : "");
 
-  strcpy (cmd, prefix);
+  memcpy (cmd, prefix, end_prefix);
 
-  sprintf (cmd + end_prefix, "%s", DEFAULT_PREPROCESSOR_CMD);
+  char *out = stpcpy (cmd + end_prefix, DEFAULT_PREPROCESSOR_CMD);
 
   if (
 #if defined (__DJGPP__) || defined (__CYGWIN__) || defined (_WIN32)
@@ -409,13 +409,13 @@ look_for_default (char *cmd, const char *prefix, int end_prefix,
 
   if (filename_need_quotes (cmd))
     {
-      char *cmd_copy = xmalloc (strlen (cmd));
-      strcpy (cmd_copy, cmd);
-      sprintf (cmd, "\"%s\"", cmd_copy);
-      free (cmd_copy);
+      memmove (cmd + 1, cmd, out - cmd);
+      cmd[0] = '"';
+      out++;
+      *out++ = '"';
     }
 
-  sprintf (cmd + strlen (cmd), " %s %s %s%s%s",
+  sprintf (out, " %s %s %s%s%s",
 	   DEFAULT_PREPROCESSOR_ARGS, preprocargs, fnquotes, filename, fnquotes);
 
   if (verbose)
@@ -441,29 +441,23 @@ read_rc_file (const char *filename, const char *preprocessor,
     {
       char *edit, *dir;
 
-      if (filename[0] == '/'
-	  || filename[0] == '\\'
-	  || filename[1] == ':')
-        /* Absolute path.  */
-	edit = dir = xstrdup (filename);
-      else
+      edit = dir = xmalloc (strlen (filename) + 3);
+      if (filename[0] != '/'
+	  && filename[0] != '\\'
+	  && filename[1] != ':')
 	{
 	  /* Relative path.  */
-	  edit = dir = xmalloc (strlen (filename) + 3);
-	  sprintf (dir, "./%s", filename);
+	  *edit++ = '.';
+	  *edit++ = '/';
 	}
+      edit = stpcpy (edit, filename);
 
       /* Walk dir backwards stopping at the first directory separator.  */
-      edit += strlen (dir);
       while (edit > dir && (edit[-1] != '\\' && edit[-1] != '/'))
-	{
-	  --edit;
-	  edit[0] = 0;
-	}
+	--edit;
 
       /* Cut off trailing slash.  */
-      --edit;
-      edit[0] = 0;
+      *--edit = 0;
 
       /* Convert all back slashes to forward slashes.  */
       while ((edit = strchr (dir, '\\')) != NULL)

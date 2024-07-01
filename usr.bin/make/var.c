@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1121 2024/06/15 22:06:30 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1121.2.1 2024/07/01 01:01:15 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1121 2024/06/15 22:06:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1121.2.1 2024/07/01 01:01:15 perseant Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -262,6 +262,9 @@ typedef struct SepBuf {
 typedef enum {
 	VSK_TARGET,
 	VSK_VARNAME,
+	VSK_COND,
+	VSK_COND_THEN,
+	VSK_COND_ELSE,
 	VSK_EXPR
 } EvalStackElementKind;
 
@@ -375,11 +378,17 @@ EvalStack_Details(void)
 
 	buf->len = 0;
 	for (i = 0; i < evalStack.len; i++) {
+		static const char descr[][42] = {
+			"in target",
+			"while evaluating variable",
+			"while evaluating condition",
+			"while evaluating then-branch of condition",
+			"while evaluating else-branch of condition",
+			"while evaluating",
+		};
 		EvalStackElement *elem = evalStack.elems + i;
-		Buf_AddStr(buf,
-		    elem->kind == VSK_TARGET ? "in target \"" :
-		    elem->kind == VSK_EXPR ? "while evaluating \"" :
-		    "while evaluating variable \"");
+		Buf_AddStr(buf, descr[elem->kind]);
+		Buf_AddStr(buf, " \"");
 		Buf_AddStr(buf, elem->str);
 		Buf_AddStr(buf, "\": ");
 	}
@@ -1558,7 +1567,7 @@ RegexError(int reerr, const regex_t *pat, const char *str)
 	size_t errlen = regerror(reerr, pat, NULL, 0);
 	char *errbuf = bmake_malloc(errlen);
 	regerror(reerr, pat, errbuf, errlen);
-	Error("%s: %s", str, errbuf);
+	Parse_Error(PARSE_FATAL, "%s: %s", str, errbuf);
 	free(errbuf);
 }
 
@@ -1570,7 +1579,7 @@ RegexReplaceBackref(char ref, SepBuf *buf, const char *wp,
 	unsigned int n = (unsigned)ref - '0';
 
 	if (n >= nsub)
-		Error("No subexpression \\%u", n);
+		Parse_Error(PARSE_FATAL, "No subexpression \\%u", n);
 	else if (m[n].rm_so == -1) {
 		if (opts.strict)
 			Error("No match for subexpression \\%u", n);
@@ -2221,8 +2230,8 @@ ParseModifierPart(
 
 	*pp = p;
 	if (*p != end1 && *p != end2) {
-		Error("Unfinished modifier for \"%s\" ('%c' missing)",
-		    ch->expr->name, end2);
+		Parse_Error(PARSE_FATAL,
+		    "Unfinished modifier ('%c' missing)", end2);
 		LazyBuf_Done(part);
 		return false;
 	}
@@ -2632,8 +2641,7 @@ ApplyModifier_ShellCommand(const char **pp, ModChain *ch)
 		output = Cmd_Exec(cmd.str, &error);
 		Expr_SetValueOwn(expr, output);
 		if (error != NULL) {
-			/* XXX: why still return AMR_OK? */
-			Error("%s", error);
+			Parse_Error(PARSE_WARNING, "%s", error);
 			free(error);
 		}
 	} else
@@ -2925,7 +2933,8 @@ ApplyModifier_Subst(const char **pp, ModChain *ch)
 
 	char delim = (*pp)[1];
 	if (delim == '\0') {
-		Error("Missing delimiter for modifier ':S'");
+		Parse_Error(PARSE_FATAL,
+		    "Missing delimiter for modifier ':S'");
 		(*pp)++;
 		return AMR_CLEANUP;
 	}
@@ -2974,7 +2983,8 @@ ApplyModifier_Regex(const char **pp, ModChain *ch)
 
 	char delim = (*pp)[1];
 	if (delim == '\0') {
-		Error("Missing delimiter for :C modifier");
+		Parse_Error(PARSE_FATAL,
+		    "Missing delimiter for modifier ':C'");
 		(*pp)++;
 		return AMR_CLEANUP;
 	}
@@ -3444,6 +3454,7 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 
 	CondResult cond_rc = CR_TRUE;	/* just not CR_ERROR */
 	if (Expr_ShouldEval(expr)) {
+		evalStack.elems[evalStack.len - 1].kind = VSK_COND;
 		cond_rc = Cond_EvalCondition(expr->name);
 		if (cond_rc == CR_TRUE)
 			then_emode = expr->emode;
@@ -3451,11 +3462,13 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 			else_emode = expr->emode;
 	}
 
+	evalStack.elems[evalStack.len - 1].kind = VSK_COND_THEN;
 	(*pp)++;		/* skip past the '?' */
 	if (!ParseModifierPart(pp, ':', ':', then_emode,
 	    ch, &thenBuf, NULL, NULL))
 		return AMR_CLEANUP;
 
+	evalStack.elems[evalStack.len - 1].kind = VSK_COND_ELSE;
 	if (!ParseModifierPart(pp, ch->endc, ch->endc, else_emode,
 	    ch, &elseBuf, NULL, NULL)) {
 		LazyBuf_Done(&thenBuf);
@@ -3465,12 +3478,8 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 	(*pp)--;		/* Go back to the ch->endc. */
 
 	if (cond_rc == CR_ERROR) {
-		Substring thenExpr = LazyBuf_Get(&thenBuf);
-		Substring elseExpr = LazyBuf_Get(&elseBuf);
-		Error("Bad conditional expression '%s' before '?%.*s:%.*s'",
-		    expr->name,
-		    (int)Substring_Length(thenExpr), thenExpr.start,
-		    (int)Substring_Length(elseExpr), elseExpr.start);
+		evalStack.elems[evalStack.len - 1].kind = VSK_COND;
+		Parse_Error(PARSE_FATAL, "Bad condition");
 		LazyBuf_Done(&thenBuf);
 		LazyBuf_Done(&elseBuf);
 		return AMR_CLEANUP;
@@ -3558,7 +3567,7 @@ found_op:
 		char *output, *error;
 		output = Cmd_Exec(val.str, &error);
 		if (error != NULL) {
-			Error("%s", error);
+			Parse_Error(PARSE_WARNING, "%s", error);
 			free(error);
 		} else
 			Var_Set(scope, expr->name, output);
@@ -3746,7 +3755,7 @@ ApplyModifier_SunShell(const char **pp, ModChain *ch)
 		char *output, *error;
 		output = Cmd_Exec(Expr_Str(expr), &error);
 		if (error != NULL) {
-			Error("%s", error);
+			Parse_Error(PARSE_WARNING, "%s", error);
 			free(error);
 		}
 		Expr_SetValueOwn(expr, output);

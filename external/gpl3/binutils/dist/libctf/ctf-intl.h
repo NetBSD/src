@@ -1,5 +1,5 @@
 /* ctf-intl.h - libctf specific header for gettext code.
-   Copyright (C) 1998-2022 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
 
    Written by Tom Tromey <tromey@cygnus.com>
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -61,19 +61,6 @@ typedef struct prmap_t
   int pr_pagesize;          /* pagesize (bytes) for this mapping */
 } prmap_t;
 
-/* TprintfT(<level>,...) definitions.  Adjust per module as needed */
-#define DBG_LT0 0 // for high-level configuration, unexpected errors/warnings
-#define DBG_LT1 1 // for configuration details, warnings
-#define DBG_LT2 2
-#define DBG_LT3 3
-#define DBG_LT4 4
-
-#define SYS_MMAP_NAME       "mmap"
-#define SYS_MMAP64_NAME     "mmap64"
-#define SYS_MUNMAP_NAME     "munmap"
-#define SYS_DLOPEN_NAME     "dlopen"
-#define SYS_DLCLOSE_NAME    "dlclose"
-
 typedef struct MapInfo
 {
   struct MapInfo *next;
@@ -113,9 +100,6 @@ static int reentrance = 0;
 #define PUSH_REENTRANCE  reentrance++
 #define POP_REENTRANCE   reentrance--
 
-#define CALL_REAL(x)    (__real_##x)
-#define NULL_PTR(x)     (__real_##x == NULL)
-
 /* interposition function handles */
 static void *(*__real_mmap)(void* start, size_t length, int prot, int flags,
 			    int fd, off_t offset) = NULL;
@@ -123,11 +107,17 @@ static void *(*__real_mmap64)(void* start, size_t length, int prot, int flags,
 			      int fd, off64_t offset) = NULL;
 static int (*__real_munmap)(void* start, size_t length) = NULL;
 static void *(*__real_dlopen)(const char* pathname, int mode) = NULL;
-#if (ARCH(Intel) && WSIZE(32)) || ARCH(SPARC)
+static void *(*__real_dlopen_2_34)(const char* pathname, int mode) = NULL;
+static void *(*__real_dlopen_2_17)(const char* pathname, int mode) = NULL;
+static void *(*__real_dlopen_2_2_5)(const char* pathname, int mode) = NULL;
 static void *(*__real_dlopen_2_1)(const char* pathname, int mode) = NULL;
 static void *(*__real_dlopen_2_0)(const char* pathname, int mode) = NULL;
-#endif
+
 static int (*__real_dlclose)(void* handle) = NULL;
+static int (*__real_dlclose_2_34)(void* handle) = NULL;
+static int (*__real_dlclose_2_17)(void* handle) = NULL;
+static int (*__real_dlclose_2_2_5)(void* handle) = NULL;
+static int (*__real_dlclose_2_0)(void* handle) = NULL;
 static void (*collector_heap_record)(int, size_t, void*) = NULL;
 
 /* internal function prototypes */
@@ -441,13 +431,9 @@ checksum_mapname (MapInfo* map)
 }
 
 
-#if (ARCH(Intel) && WSIZE(32)) || ARCH(SPARC)
 static void*
-dlopen_searchpath_symver (void*(real_dlopen) (), void* caller_addr, const char* basename, int mode)
-#else
-static void*
-dlopen_searchpath (void* caller_addr, const char* basename, int mode)
-#endif
+dlopen_searchpath (void*(real_dlopen) (const char *, int),
+		void *caller_addr, const char *basename, int mode)
 {
   TprintfT (DBG_LT2, "dlopen_searchpath(%p, %s, %d)\n", caller_addr, basename, mode);
   Dl_info dl_info;
@@ -458,7 +444,8 @@ dlopen_searchpath (void* caller_addr, const char* basename, int mode)
     }
   TprintfT (DBG_LT2, "dladdr(%p): %p fname=%s\n",
 	    caller_addr, dl_info.dli_fbase, dl_info.dli_fname);
-  int noload = RTLD_BINDING_MASK | RTLD_NOLOAD; //XXXX why RTLD_BINDING_MASK?
+  int noload = RTLD_LAZY | RTLD_NOW | RTLD_NOLOAD;
+  void *caller_hndl = NULL;
 #define WORKAROUND_RTLD_BUG 1
 #ifdef WORKAROUND_RTLD_BUG
   // A dynamic linker dlopen bug can result in corruption/closure of open streams
@@ -470,29 +457,20 @@ dlopen_searchpath (void* caller_addr, const char* basename, int mode)
 #endif
   const char* tmp_path =
 	  (dl_info.dli_fbase == (void*) MAINBASE) ? NULL : dl_info.dli_fname;
-  void* caller_hndl = NULL;
-#if ((ARCH(Intel) && WSIZE(32)) || ARCH(SPARC))
-  caller_hndl = (real_dlopen) (tmp_path, noload);
-#else
-  caller_hndl = CALL_REAL (dlopen)(tmp_path, noload);
-#endif
+  caller_hndl = real_dlopen (tmp_path, noload);
 
 #else //XXXX workaround should be removed once linker patches are all available
 
-  void* caller_hndl = NULL;
-#if (ARCH(Intel) && WSIZE(32) || ARCH(SPARC)
-  caller_hndl = (real_dlopen) (dl_info.dli_fname, noload);
-#else
-  caller_hndl = CALL_REAL (dlopen)(dl_info.dli_fname, noload);
-#endif
+  caller_hndl = real_dlopen (dl_info.dli_fname, noload);
 
 #endif //XXXX workaround should be removed once linker patches are all available
 
   if (!caller_hndl)
     {
       TprintfT (0, "ERROR: dlopen(%s,NOLOAD): %s\n", dl_info.dli_fname, dlerror ());
-      return 0;
+      return NULL;
     }
+#if !defined(__MUSL_LIBC)
   Dl_serinfo _info, *info = &_info;
   Dl_serpath *path;
 
@@ -546,7 +524,7 @@ dlopen_searchpath (void* caller_addr, const char* basename, int mode)
       I have already confirmed with our user that the workaround
       is working with his real application. Additionally,
       the dlopen_searchpath() function is called only by the
-      libcorrector init() function when the experiment is started.
+      libcollector init() function when the experiment is started.
       Therefore, allocating some extra bytes on the stack which
       is local to this routine is harmless.
    */
@@ -575,7 +553,8 @@ dlopen_searchpath (void* caller_addr, const char* basename, int mode)
       if (ret)
 	return ret; // success!
     }
-  return 0;
+#endif
+  return NULL;
 }
 
 static void
@@ -1429,17 +1408,15 @@ init_mmap_intf ()
 {
   if (__collector_dlsym_guard)
     return 1;
-  void *dlflag;
-  __real_mmap = (void*(*)(void* addr, size_t len, int prot, int flags,
-			  int fildes, off_t off))dlsym (RTLD_NEXT, SYS_MMAP_NAME);
+  void *dlflag = RTLD_NEXT;
+  __real_mmap = dlsym (dlflag, "mmap");
   if (__real_mmap == NULL)
     {
 
       /* We are probably dlopened after libthread/libc,
        * try to search in the previously loaded objects
        */
-      __real_mmap = (void*(*)(void* addr, size_t len, int prot, int flags,
-			      int fildes, off_t off))dlsym (RTLD_DEFAULT, SYS_MMAP_NAME);
+      __real_mmap = dlsym (RTLD_DEFAULT, "mmap");
       if (__real_mmap == NULL)
 	{
 	  TprintfT (0, "ERROR: collector real mmap not found\n");
@@ -1448,33 +1425,59 @@ init_mmap_intf ()
       TprintfT (DBG_LT2, "collector real mmap found with RTLD_DEFAULT\n");
       dlflag = RTLD_DEFAULT;
     }
-  else
-    {
-      TprintfT (DBG_LT2, "collector real mmap found with RTLD_NEXT\n");
-      dlflag = RTLD_NEXT;
-    }
 
-  TprintfT (DBG_LT2, "init_mmap_intf() @%p __real_mmap\n", __real_mmap);
-  __real_mmap64 = (void*(*)(void *, size_t, int, int, int, off64_t))
-	  dlsym (dlflag, SYS_MMAP64_NAME);
-  TprintfT (DBG_LT2, "init_mmap_intf() @%p __real_mmap64\n", __real_mmap64);
-  __real_munmap = (int(*)(void *, size_t)) dlsym (dlflag, SYS_MUNMAP_NAME);
-  TprintfT (DBG_LT2, "init_mmap_intf() @%p __real_munmap\n", __real_munmap);
+  __real_mmap64 = dlsym (dlflag, "mmap64");
+  __real_munmap = dlsym (dlflag, "munmap");
 
   // dlopen/dlmopen/dlclose are in libdl.so
-  __real_dlopen = (void*(*)(const char *, int))
-	  dlvsym (dlflag, SYS_DLOPEN_NAME, SYS_DLOPEN_VERSION);
-  TprintfT (DBG_LT2, "init_mmap_intf() [%s] @%p __real_dlopen\n",
-	    SYS_DLOPEN_VERSION, __real_dlopen);
-#if (ARCH(Intel) && WSIZE(32)) || ARCH(SPARC)
-  __real_dlopen_2_1 = __real_dlopen;
-  __real_dlopen_2_0 = (void*(*)(const char *, int))
-	  dlvsym (dlflag, SYS_DLOPEN_NAME, "GLIBC_2.0");
-#endif
+  __real_dlopen_2_34 = dlvsym (dlflag, "dlopen", "GLIBC_2.34");
+  __real_dlopen_2_17 = dlvsym (dlflag, "dlopen", "GLIBC_2.17");
+  __real_dlopen_2_2_5 = dlvsym (dlflag, "dlopen", "GLIBC_2.2.5");
+  __real_dlopen_2_1 = dlvsym (dlflag, "dlopen", "GLIBC_2.1");
+  __real_dlopen_2_0 = dlvsym (dlflag, "dlopen", "GLIBC_2.0");
+  if (__real_dlopen_2_34)
+    __real_dlopen = __real_dlopen_2_34;
+  else if (__real_dlopen_2_17)
+    __real_dlopen = __real_dlopen_2_17;
+  else if (__real_dlopen_2_2_5)
+    __real_dlopen = __real_dlopen_2_2_5;
+  else if (__real_dlopen_2_1)
+    __real_dlopen = __real_dlopen_2_1;
+  else if (__real_dlopen_2_0)
+    __real_dlopen = __real_dlopen_2_0;
+  else
+    __real_dlopen = dlsym (dlflag, "dlopen");
+    
+  __real_dlclose_2_34 = dlvsym (dlflag, "dlclose", "GLIBC_2.34");
+  __real_dlclose_2_17 = dlvsym (dlflag, "dlclose", "GLIBC_2.17");
+  __real_dlclose_2_2_5 = dlvsym (dlflag, "dlclose", "GLIBC_2.2.5");
+  __real_dlclose_2_0 = dlvsym (dlflag, "dlclose", "GLIBC_2.0");
+  if (__real_dlclose_2_34)
+    __real_dlclose = __real_dlclose_2_34;
+  else if (__real_dlclose_2_17)
+    __real_dlclose = __real_dlclose_2_17;
+  else if (__real_dlclose_2_2_5)
+    __real_dlclose = __real_dlclose_2_2_5;
+  else if (__real_dlclose_2_0)
+    __real_dlclose = __real_dlclose_2_0;
+  else
+    __real_dlclose = dlsym (dlflag, "dlclose");
 
-  __real_dlclose = (int(*)(void* handle))dlsym (dlflag, SYS_DLCLOSE_NAME);
-  TprintfT (DBG_LT2, "init_mmap_intf() @%p __real_dlclose\n", __real_dlclose);
-  TprintfT (DBG_LT2, "init_mmap_intf() done\n");
+#define PR_FUNC(f)  TprintfT (DBG_LT2, " mmaptrace.c: " #f ": @%p\n", f)
+  PR_FUNC (__real_dlclose);
+  PR_FUNC (__real_dlclose_2_0);
+  PR_FUNC (__real_dlclose_2_17);
+  PR_FUNC (__real_dlclose_2_2_5);
+  PR_FUNC (__real_dlclose_2_34);
+  PR_FUNC (__real_dlopen);
+  PR_FUNC (__real_dlopen_2_0);
+  PR_FUNC (__real_dlopen_2_1);
+  PR_FUNC (__real_dlopen_2_17);
+  PR_FUNC (__real_dlopen_2_2_5);
+  PR_FUNC (__real_dlopen_2_34);
+  PR_FUNC (__real_mmap);
+  PR_FUNC (__real_mmap64);
+  PR_FUNC (__real_munmap);
 
   return 0;
 }
@@ -1505,7 +1508,7 @@ mmap (void *start, size_t length, int prot, int flags, int fd, off_t offset)
 }
 
 /*------------------------------------------------------------- mmap64 */
-#if WSIZE(32)       /* mmap64 only defined for non-64-bit */
+#if WSIZE(32) && !defined(__USE_FILE_OFFSET64)
 
 void *
 mmap64 (void *start, size_t length, int prot, int flags, int fd, off64_t offset)
@@ -1550,40 +1553,9 @@ munmap (void *start, size_t length)
 
 
 /*------------------------------------------------------------- dlopen */
-// map interposed symbol versions
-#if (ARCH(Intel) && WSIZE(32)) || ARCH(SPARC)
-
 static void *
-__collector_dlopen_symver (void*(real_dlopen) (), void *caller, const char *pathname, int mode);
-
-SYMVER_ATTRIBUTE (__collector_dlopen_2_1, dlopen@@GLIBC_2.1)
-void *
-__collector_dlopen_2_1 (const char *pathname, int mode)
-{
-  if (NULL_PTR (dlopen))
-    init_mmap_intf ();
-  void *caller = __builtin_return_address (0); // must be called inside dlopen first layer interpostion
-  return __collector_dlopen_symver (CALL_REAL (dlopen_2_1), caller, pathname, mode);
-}
-
-SYMVER_ATTRIBUTE (__collector_dlopen_2_0, dlopen@GLIBC_2.0)
-void *
-__collector_dlopen_2_0 (const char *pathname, int mode)
-{
-  if (NULL_PTR (dlopen))
-    init_mmap_intf ();
-  void* caller = __builtin_return_address (0); // must be called inside dlopen first layer interpostion
-  return __collector_dlopen_symver (CALL_REAL (dlopen_2_0), caller, pathname, mode);
-}
-#endif
-
-#if (ARCH(Intel) && WSIZE(32)) || ARCH(SPARC)
-static void *
-__collector_dlopen_symver (void*(real_dlopen) (), void *caller, const char *pathname, int mode)
-#else
-void *
-dlopen (const char *pathname, int mode)
-#endif
+gprofng_dlopen (void*(real_dlopen) (const char *, int),
+		void *caller, const char *pathname, int mode)
 {
   const char * real_pathname = pathname;
   char new_pathname[MAXPATHLEN];
@@ -1595,10 +1567,6 @@ dlopen (const char *pathname, int mode)
     origin_offset = 10;
   if (origin_offset)
     {
-#if ! ((ARCH(Intel) && WSIZE(32)) || ARCH(SPARC))
-      // 'caller' is not passed as an argument
-      void * caller = __builtin_return_address (0); // must be called inside dlopen first layer interpostion
-#endif
       Dl_info dl_info;
       if (caller && dladdr (caller, &dl_info) != 0)
 	{
@@ -1608,48 +1576,29 @@ dlopen (const char *pathname, int mode)
 	  const char *p = __collector_strrchr (dl_info.dli_fname, '/');
 	  if (p)
 	    __collector_strlcpy (new_pathname, dl_info.dli_fname,
-				 (p - dl_info.dli_fname + 2) < MAXPATHLEN ? (p - dl_info.dli_fname + 2) : MAXPATHLEN);
-	  __collector_strlcat (new_pathname, pathname + origin_offset, MAXPATHLEN - CALL_UTIL (strlen)(new_pathname));
+				 (p - dl_info.dli_fname + 2) < MAXPATHLEN ?
+				   (p - dl_info.dli_fname + 2) : MAXPATHLEN);
+	  __collector_strlcat (new_pathname, pathname + origin_offset,
+			   MAXPATHLEN - CALL_UTIL (strlen)(new_pathname));
 	  real_pathname = new_pathname;
 	}
       else
 	TprintfT (0, "ERROR: dladdr(%p): %s\n", caller, dlerror ());
     }
-  if (NULL_PTR (dlopen))
-    init_mmap_intf ();
   TprintfT (DBG_LT2, "libcollector.dlopen(%s,%d) interposing\n",
 	    pathname ? pathname : "", mode);
-  void* ret = NULL;
+  void *ret = NULL;
 
   // set guard for duration of handling dlopen, since want to ensure
   // new mappings are resolved after the actual dlopen has occurred
   PUSH_REENTRANCE;
   hrtime_t hrt = GETRELTIME ();
 
-  if (real_pathname && !__collector_strchr (real_pathname, '/'))
-    { // got an unqualified name
-      // get caller and use its searchpath
-#if ! ((ARCH(Intel) && WSIZE(32)) || ARCH(SPARC))
-      void* caller = __builtin_return_address (0); // must be called inside dlopen
-#endif
-      if (caller)
-	{
-#if (ARCH(Intel) && WSIZE(32)) || ARCH(SPARC)
-	  ret = dlopen_searchpath_symver (real_dlopen, caller, real_pathname, mode);
-#else
-	  ret = dlopen_searchpath (caller, real_pathname, mode);
-#endif
-	}
-    }
+  if (caller && real_pathname && !__collector_strchr (real_pathname, '/'))
+    ret = dlopen_searchpath (real_dlopen, caller, real_pathname, mode);
 
   if (!ret)
-    {
-#if (ARCH(Intel) && WSIZE(32)) || ARCH(SPARC)
-      ret = (real_dlopen) (real_pathname, mode);
-#else
-      ret = CALL_REAL (dlopen)(real_pathname, mode);
-#endif
-    }
+    ret = real_dlopen (real_pathname, mode);
   TprintfT (DBG_LT2, "libcollector -- dlopen(%s) returning %p\n", pathname, ret);
 
   /* Don't call update if dlopen failed: preserve dlerror() */
@@ -1660,13 +1609,26 @@ dlopen (const char *pathname, int mode)
   return ret;
 }
 
+#define DCL_DLOPEN(dcl_f) \
+void *dcl_f (const char *pathname, int mode) \
+  { \
+    if (__real_dlopen == NULL) \
+      init_mmap_intf (); \
+    void *caller = __builtin_return_address (0); \
+    return gprofng_dlopen (__real_dlopen, caller, pathname, mode); \
+  }
+
+DCL_FUNC_VER (DCL_DLOPEN, dlopen_2_34, dlopen@GLIBC_2.34)
+DCL_FUNC_VER (DCL_DLOPEN, dlopen_2_17, dlopen@GLIBC_2.17)
+DCL_FUNC_VER (DCL_DLOPEN, dlopen_2_2_5, dlopen@GLIBC_2.2.5)
+DCL_FUNC_VER (DCL_DLOPEN, dlopen_2_1, dlopen@GLIBC_2.1)
+DCL_FUNC_VER (DCL_DLOPEN, dlopen_2_0, dlopen@GLIBC_2.0)
+DCL_DLOPEN (dlopen)
+
 /*------------------------------------------------------------- dlclose */
-int
-dlclose (void *handle)
+static int
+gprofng_dlclose (int (real_dlclose) (void *), void *handle)
 {
-  if (NULL_PTR (dlclose))
-    init_mmap_intf ();
-  TprintfT (DBG_LT2, "__collector_dlclose(%p) entered\n", handle);
   hrtime_t hrt = GETRELTIME ();
   if (!CHCK_REENTRANCE)
     {
@@ -1675,7 +1637,7 @@ dlclose (void *handle)
       POP_REENTRANCE;
       hrt = GETRELTIME ();
     }
-  int ret = CALL_REAL (dlclose)(handle);
+  int ret = real_dlclose (handle);
 
   /* Don't call update if dlclose failed: preserve dlerror() */
   if (!ret && !CHCK_REENTRANCE)
@@ -1684,6 +1646,21 @@ dlclose (void *handle)
       update_map_segments (hrt, 1);
       POP_REENTRANCE;
     }
-  TprintfT (DBG_LT2, "__collector_dlclose(%p) returning %d\n", handle, ret);
+  TprintfT (DBG_LT2, "gprofng_dlclose @%p (%p) returning %d\n", real_dlclose,
+	    handle, ret);
   return ret;
 }
+
+#define DCL_DLCLOSE(dcl_f) \
+int dcl_f (void *handle) \
+  { \
+    if (__real_dlclose == NULL) \
+      init_mmap_intf (); \
+    return gprofng_dlclose (__real_dlclose, handle); \
+  }
+
+DCL_FUNC_VER (DCL_DLCLOSE, dlclose_2_34, dlclose@GLIBC_2.34)
+DCL_FUNC_VER (DCL_DLCLOSE, dlclose_2_17, dlclose@GLIBC_2.17)
+DCL_FUNC_VER (DCL_DLCLOSE, dlclose_2_2_5, dlclose@GLIBC_2.2.5)
+DCL_FUNC_VER (DCL_DLCLOSE, dlclose_2_0, dlclose@GLIBC_2.0)
+DCL_DLCLOSE (dlclose)

@@ -1,631 +1,312 @@
-/* DO NOT EDIT!  -*- buffer-read-only: t -*- vi:set ro:  */
-/* Disassembler interface for targets using CGEN. -*- C -*-
-   CGEN: Cpu tools GENerator
+/* bpf-dis.c - BPF disassembler.
+   Copyright (C) 2023-2024 Free Software Foundation, Inc.
 
-   THIS FILE IS MACHINE GENERATED WITH CGEN.
-   - the resultant file is machine generated, cgen-dis.in isn't
+   Contributed by Oracle Inc.
 
-   Copyright (C) 1996-2022 Free Software Foundation, Inc.
+   This file is part of the GNU binutils.
 
-   This file is part of libopcodes.
-
-   This library is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
+   This is free software; you can redistribute them and/or modify them
+   under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 3, or (at your option)
    any later version.
 
-   It is distributed in the hope that it will be useful, but WITHOUT
-   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
-   License for more details.
+   This program is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation, Inc.,
-   51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  */
-
-/* ??? Eventually more and more of this stuff can go to cpu-independent files.
-   Keep that in mind.  */
+   along with this program; see the file COPYING3. If not,
+   see <http://www.gnu.org/licenses/>.  */
 
 #include "sysdep.h"
-#include <stdio.h>
-#include "ansidecl.h"
 #include "disassemble.h"
-#include "bfd.h"
-#include "symcat.h"
 #include "libiberty.h"
-#include "bpf-desc.h"
-#include "bpf-opc.h"
 #include "opintl.h"
+#include "opcode/bpf.h"
+#include "elf-bfd.h"
+#include "elf/bpf.h"
 
-/* Default text to print if an instruction isn't recognized.  */
-#define UNKNOWN_INSN_MSG _("*unknown*")
+#include <string.h>
+#include <inttypes.h>
 
-static void print_normal
-  (CGEN_CPU_DESC, void *, long, unsigned int, bfd_vma, int);
-static void print_address
-  (CGEN_CPU_DESC, void *, bfd_vma, unsigned int, bfd_vma, int) ATTRIBUTE_UNUSED;
-static void print_keyword
-  (CGEN_CPU_DESC, void *, CGEN_KEYWORD *, long, unsigned int) ATTRIBUTE_UNUSED;
-static void print_insn_normal
-  (CGEN_CPU_DESC, void *, const CGEN_INSN *, CGEN_FIELDS *, bfd_vma, int);
-static int print_insn
-  (CGEN_CPU_DESC, bfd_vma,  disassemble_info *, bfd_byte *, unsigned);
-static int default_print_insn
-  (CGEN_CPU_DESC, bfd_vma, disassemble_info *) ATTRIBUTE_UNUSED;
-static int read_insn
-  (CGEN_CPU_DESC, bfd_vma, disassemble_info *, bfd_byte *, int, CGEN_EXTRACT_INFO *,
-   unsigned long *);
-
-/* -- disassembler routines inserted here.  */
+/* This disassembler supports two different syntaxes for BPF assembly.
+   One is called "normal" and has the typical form for assembly
+   languages, with mnemonics and the like.  The other is called
+   "pseudoc" and looks like C.  */
 
-/* -- dis.c */
-
-/* We need to customize the disassembler a bit:
-   - Use 8 bytes per line by default.
-*/
-
-#define CGEN_PRINT_INSN bpf_print_insn
-
-static int
-bpf_print_insn (CGEN_CPU_DESC cd, bfd_vma pc, disassemble_info *info)
+enum bpf_dialect
 {
-  bfd_byte buf[CGEN_MAX_INSN_SIZE];
-  int buflen;
-  int status;
-
-  info->bytes_per_chunk = 1;
-  info->bytes_per_line = 8;
-
-  /* Attempt to read the base part of the insn.  */
-  buflen = cd->base_insn_bitsize / 8;
-  status = (*info->read_memory_func) (pc, buf, buflen, info);
-
-  /* Try again with the minimum part, if min < base.  */
-  if (status != 0 && (cd->min_insn_bitsize < cd->base_insn_bitsize))
-    {
-      buflen = cd->min_insn_bitsize / 8;
-      status = (*info->read_memory_func) (pc, buf, buflen, info);
-    }
-
-  if (status != 0)
-    {
-      (*info->memory_error_func) (status, pc, info);
-      return -1;
-    }
-
-  return print_insn (cd, pc, info, buf, buflen);
-}
-
-/* Signed immediates should be printed in hexadecimal.  */
-
-static void
-print_immediate (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
-                 void *dis_info,
-                 int64_t value,
-                 unsigned int attrs ATTRIBUTE_UNUSED,
-                 bfd_vma pc ATTRIBUTE_UNUSED,
-                 int length ATTRIBUTE_UNUSED)
-{
-  disassemble_info *info = (disassemble_info *) dis_info;
-
-  if (value <= 9)
-    (*info->fprintf_func) (info->stream, "%" PRId64, value);
-  else
-    (*info->fprintf_func) (info->stream, "%#" PRIx64, value);
-
-  /* This is to avoid -Wunused-function for print_normal.  */
-  if (0)
-    print_normal (cd, dis_info, value, attrs, pc, length);
-}
-
-/* Endianness bit sizes should be printed in decimal.  */
-
-static void
-print_endsize (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
-               void *dis_info,
-               unsigned long value,
-               unsigned int attrs ATTRIBUTE_UNUSED,
-               bfd_vma pc ATTRIBUTE_UNUSED,
-               int length ATTRIBUTE_UNUSED)
-{
-  disassemble_info *info = (disassemble_info *) dis_info;
-  (*info->fprintf_func) (info->stream, "%lu", value);
-}
-
-
-/* -- */
-
-void bpf_cgen_print_operand
-  (CGEN_CPU_DESC, int, void *, CGEN_FIELDS *, void const *, bfd_vma, int);
-
-/* Main entry point for printing operands.
-   XINFO is a `void *' and not a `disassemble_info *' to not put a requirement
-   of dis-asm.h on cgen.h.
-
-   This function is basically just a big switch statement.  Earlier versions
-   used tables to look up the function to use, but
-   - if the table contains both assembler and disassembler functions then
-     the disassembler contains much of the assembler and vice-versa,
-   - there's a lot of inlining possibilities as things grow,
-   - using a switch statement avoids the function call overhead.
-
-   This function could be moved into `print_insn_normal', but keeping it
-   separate makes clear the interface between `print_insn_normal' and each of
-   the handlers.  */
-
-void
-bpf_cgen_print_operand (CGEN_CPU_DESC cd,
-			   int opindex,
-			   void * xinfo,
-			   CGEN_FIELDS *fields,
-			   void const *attrs ATTRIBUTE_UNUSED,
-			   bfd_vma pc,
-			   int length)
-{
-  disassemble_info *info = (disassemble_info *) xinfo;
-
-  switch (opindex)
-    {
-    case BPF_OPERAND_DISP16 :
-      print_normal (cd, info, fields->f_offset16, 0|(1<<CGEN_OPERAND_SIGNED)|(1<<CGEN_OPERAND_PCREL_ADDR), pc, length);
-      break;
-    case BPF_OPERAND_DISP32 :
-      print_normal (cd, info, fields->f_imm32, 0|(1<<CGEN_OPERAND_SIGNED)|(1<<CGEN_OPERAND_PCREL_ADDR), pc, length);
-      break;
-    case BPF_OPERAND_DSTBE :
-      print_keyword (cd, info, & bpf_cgen_opval_h_gpr, fields->f_dstbe, 0);
-      break;
-    case BPF_OPERAND_DSTLE :
-      print_keyword (cd, info, & bpf_cgen_opval_h_gpr, fields->f_dstle, 0);
-      break;
-    case BPF_OPERAND_ENDSIZE :
-      print_endsize (cd, info, fields->f_imm32, 0, pc, length);
-      break;
-    case BPF_OPERAND_IMM32 :
-      print_immediate (cd, info, fields->f_imm32, 0|(1<<CGEN_OPERAND_SIGNED), pc, length);
-      break;
-    case BPF_OPERAND_IMM64 :
-      print_immediate (cd, info, fields->f_imm64, 0|(1<<CGEN_OPERAND_SIGNED)|(1<<CGEN_OPERAND_VIRTUAL), pc, length);
-      break;
-    case BPF_OPERAND_OFFSET16 :
-      print_immediate (cd, info, fields->f_offset16, 0|(1<<CGEN_OPERAND_SIGNED), pc, length);
-      break;
-    case BPF_OPERAND_SRCBE :
-      print_keyword (cd, info, & bpf_cgen_opval_h_gpr, fields->f_srcbe, 0);
-      break;
-    case BPF_OPERAND_SRCLE :
-      print_keyword (cd, info, & bpf_cgen_opval_h_gpr, fields->f_srcle, 0);
-      break;
-
-    default :
-      /* xgettext:c-format */
-      opcodes_error_handler
-	(_("internal error: unrecognized field %d while printing insn"),
-	 opindex);
-      abort ();
-  }
-}
-
-cgen_print_fn * const bpf_cgen_print_handlers[] =
-{
-  print_insn_normal,
+  BPF_DIALECT_NORMAL,
+  BPF_DIALECT_PSEUDOC
 };
 
+/* Global configuration for the disassembler.  */
+
+static enum bpf_dialect asm_dialect = BPF_DIALECT_NORMAL;
+static int asm_bpf_version = -1;
+static int asm_obase = 10;
+
+/* Print BPF specific command-line options.  */
 
 void
-bpf_cgen_init_dis (CGEN_CPU_DESC cd)
+print_bpf_disassembler_options (FILE *stream)
 {
-  bpf_cgen_init_opcode_table (cd);
-  bpf_cgen_init_ibld_table (cd);
-  cd->print_handlers = & bpf_cgen_print_handlers[0];
-  cd->print_operand = bpf_cgen_print_operand;
+  fprintf (stream, _("\n\
+The following BPF specific disassembler options are supported for use\n\
+with the -M switch (multiple options should be separated by commas):\n"));
+  fprintf (stream, "\n");
+  fprintf (stream, _("\
+      pseudoc                  Use pseudo-c syntax.\n\
+      v1,v2,v3,v4,xbpf         Version of the BPF ISA to use.\n\
+      hex,oct,dec              Output numerical base for immediates.\n"));
 }
 
-
-/* Default print handler.  */
+/* Parse BPF specific command-line options.  */
 
 static void
-print_normal (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
-	      void *dis_info,
-	      long value,
-	      unsigned int attrs,
-	      bfd_vma pc ATTRIBUTE_UNUSED,
-	      int length ATTRIBUTE_UNUSED)
+parse_bpf_dis_option (const char *option)
 {
-  disassemble_info *info = (disassemble_info *) dis_info;
-
-  /* Print the operand as directed by the attributes.  */
-  if (CGEN_BOOL_ATTR (attrs, CGEN_OPERAND_SEM_ONLY))
-    ; /* nothing to do */
-  else if (CGEN_BOOL_ATTR (attrs, CGEN_OPERAND_SIGNED))
-    (*info->fprintf_func) (info->stream, "%ld", value);
+  if (strcmp (option, "pseudoc") == 0)
+    asm_dialect = BPF_DIALECT_PSEUDOC;
+  else if (strcmp (option, "v1") == 0)
+    asm_bpf_version = BPF_V1;
+  else if (strcmp (option, "v2") == 0)
+    asm_bpf_version = BPF_V2;
+  else if (strcmp (option, "v3") == 0)
+    asm_bpf_version = BPF_V3;
+  else if (strcmp (option, "v4") == 0)
+    asm_bpf_version = BPF_V4;
+  else if (strcmp (option, "xbpf") == 0)
+    asm_bpf_version = BPF_XBPF;
+  else if (strcmp (option, "hex") == 0)
+    asm_obase = 16;
+  else if (strcmp (option, "oct") == 0)
+    asm_obase = 8;
+  else if (strcmp (option, "dec") == 0)
+    asm_obase = 10;
   else
-    (*info->fprintf_func) (info->stream, "0x%lx", value);
+    /* xgettext:c-format */
+    opcodes_error_handler (_("unrecognized disassembler option: %s"), option);
 }
-
-/* Default address handler.  */
 
 static void
-print_address (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
-	       void *dis_info,
-	       bfd_vma value,
-	       unsigned int attrs,
-	       bfd_vma pc ATTRIBUTE_UNUSED,
-	       int length ATTRIBUTE_UNUSED)
+parse_bpf_dis_options (const char *opts_in)
 {
-  disassemble_info *info = (disassemble_info *) dis_info;
+  char *opts = xstrdup (opts_in), *opt = opts, *opt_end = opts;
 
-  /* Print the operand as directed by the attributes.  */
-  if (CGEN_BOOL_ATTR (attrs, CGEN_OPERAND_SEM_ONLY))
-    ; /* Nothing to do.  */
-  else if (CGEN_BOOL_ATTR (attrs, CGEN_OPERAND_PCREL_ADDR))
-    (*info->print_address_func) (value, info);
-  else if (CGEN_BOOL_ATTR (attrs, CGEN_OPERAND_ABS_ADDR))
-    (*info->print_address_func) (value, info);
-  else if (CGEN_BOOL_ATTR (attrs, CGEN_OPERAND_SIGNED))
-    (*info->fprintf_func) (info->stream, "%ld", (long) value);
-  else
-    (*info->fprintf_func) (info->stream, "0x%lx", (long) value);
+  for ( ; opt_end != NULL; opt = opt_end + 1)
+    {
+      if ((opt_end = strchr (opt, ',')) != NULL)
+	*opt_end = 0;
+      parse_bpf_dis_option (opt);
+    }
+
+  free (opts);
 }
 
-/* Keyword print handler.  */
+/* Auxiliary function used in print_insn_bpf below.  */
 
 static void
-print_keyword (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
-	       void *dis_info,
-	       CGEN_KEYWORD *keyword_table,
-	       long value,
-	       unsigned int attrs ATTRIBUTE_UNUSED)
+print_register (disassemble_info *info,
+                const char *tag, uint8_t regno)
 {
-  disassemble_info *info = (disassemble_info *) dis_info;
-  const CGEN_KEYWORD_ENTRY *ke;
+  const char *fmt
+    = (asm_dialect == BPF_DIALECT_NORMAL
+       ? "%%r%d"
+       : ((*(tag + 2) == 'w')
+          ? "w%d"
+          : "r%d"));
 
-  ke = cgen_keyword_lookup_value (keyword_table, value);
-  if (ke != NULL)
-    (*info->fprintf_func) (info->stream, "%s", ke->name);
-  else
-    (*info->fprintf_func) (info->stream, "???");
-}
-
-/* Default insn printer.
-
-   DIS_INFO is defined as `void *' so the disassembler needn't know anything
-   about disassemble_info.  */
-
-static void
-print_insn_normal (CGEN_CPU_DESC cd,
-		   void *dis_info,
-		   const CGEN_INSN *insn,
-		   CGEN_FIELDS *fields,
-		   bfd_vma pc,
-		   int length)
-{
-  const CGEN_SYNTAX *syntax = CGEN_INSN_SYNTAX (insn);
-  disassemble_info *info = (disassemble_info *) dis_info;
-  const CGEN_SYNTAX_CHAR_TYPE *syn;
-
-  CGEN_INIT_PRINT (cd);
-
-  for (syn = CGEN_SYNTAX_STRING (syntax); *syn; ++syn)
-    {
-      if (CGEN_SYNTAX_MNEMONIC_P (*syn))
-	{
-	  (*info->fprintf_func) (info->stream, "%s", CGEN_INSN_MNEMONIC (insn));
-	  continue;
-	}
-      if (CGEN_SYNTAX_CHAR_P (*syn))
-	{
-	  (*info->fprintf_func) (info->stream, "%c", CGEN_SYNTAX_CHAR (*syn));
-	  continue;
-	}
-
-      /* We have an operand.  */
-      bpf_cgen_print_operand (cd, CGEN_SYNTAX_FIELD (*syn), info,
-				 fields, CGEN_INSN_ATTRS (insn), pc, length);
-    }
-}
-
-/* Subroutine of print_insn. Reads an insn into the given buffers and updates
-   the extract info.
-   Returns 0 if all is well, non-zero otherwise.  */
-
-static int
-read_insn (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
-	   bfd_vma pc,
-	   disassemble_info *info,
-	   bfd_byte *buf,
-	   int buflen,
-	   CGEN_EXTRACT_INFO *ex_info,
-	   unsigned long *insn_value)
-{
-  int status = (*info->read_memory_func) (pc, buf, buflen, info);
-
-  if (status != 0)
-    {
-      (*info->memory_error_func) (status, pc, info);
-      return -1;
-    }
-
-  ex_info->dis_info = info;
-  ex_info->valid = (1 << buflen) - 1;
-  ex_info->insn_bytes = buf;
-
-  *insn_value = bfd_get_bits (buf, buflen * 8, info->endian == BFD_ENDIAN_BIG);
-  return 0;
-}
-
-/* Utility to print an insn.
-   BUF is the base part of the insn, target byte order, BUFLEN bytes long.
-   The result is the size of the insn in bytes or zero for an unknown insn
-   or -1 if an error occurs fetching data (memory_error_func will have
-   been called).  */
-
-static int
-print_insn (CGEN_CPU_DESC cd,
-	    bfd_vma pc,
-	    disassemble_info *info,
-	    bfd_byte *buf,
-	    unsigned int buflen)
-{
-  CGEN_INSN_INT insn_value;
-  const CGEN_INSN_LIST *insn_list;
-  CGEN_EXTRACT_INFO ex_info;
-  int basesize;
-
-  /* Extract base part of instruction, just in case CGEN_DIS_* uses it. */
-  basesize = cd->base_insn_bitsize < buflen * 8 ?
-                                     cd->base_insn_bitsize : buflen * 8;
-  insn_value = cgen_get_insn_value (cd, buf, basesize, cd->insn_endian);
-
-
-  /* Fill in ex_info fields like read_insn would.  Don't actually call
-     read_insn, since the incoming buffer is already read (and possibly
-     modified a la m32r).  */
-  ex_info.valid = (1 << buflen) - 1;
-  ex_info.dis_info = info;
-  ex_info.insn_bytes = buf;
-
-  /* The instructions are stored in hash lists.
-     Pick the first one and keep trying until we find the right one.  */
-
-  insn_list = CGEN_DIS_LOOKUP_INSN (cd, (char *) buf, insn_value);
-  while (insn_list != NULL)
-    {
-      const CGEN_INSN *insn = insn_list->insn;
-      CGEN_FIELDS fields;
-      int length;
-      unsigned long insn_value_cropped;
-
-#ifdef CGEN_VALIDATE_INSN_SUPPORTED
-      /* Not needed as insn shouldn't be in hash lists if not supported.  */
-      /* Supported by this cpu?  */
-      if (! bpf_cgen_insn_supported (cd, insn))
-        {
-          insn_list = CGEN_DIS_NEXT_INSN (insn_list);
-	  continue;
-        }
-#endif
-
-      /* Basic bit mask must be correct.  */
-      /* ??? May wish to allow target to defer this check until the extract
-	 handler.  */
-
-      /* Base size may exceed this instruction's size.  Extract the
-         relevant part from the buffer. */
-      if ((unsigned) (CGEN_INSN_BITSIZE (insn) / 8) < buflen &&
-	  (unsigned) (CGEN_INSN_BITSIZE (insn) / 8) <= sizeof (unsigned long))
-	insn_value_cropped = bfd_get_bits (buf, CGEN_INSN_BITSIZE (insn),
-					   info->endian == BFD_ENDIAN_BIG);
-      else
-	insn_value_cropped = insn_value;
-
-      if ((insn_value_cropped & CGEN_INSN_BASE_MASK (insn))
-	  == CGEN_INSN_BASE_VALUE (insn))
-	{
-	  /* Printing is handled in two passes.  The first pass parses the
-	     machine insn and extracts the fields.  The second pass prints
-	     them.  */
-
-	  /* Make sure the entire insn is loaded into insn_value, if it
-	     can fit.  */
-	  if (((unsigned) CGEN_INSN_BITSIZE (insn) > cd->base_insn_bitsize) &&
-	      (unsigned) (CGEN_INSN_BITSIZE (insn) / 8) <= sizeof (unsigned long))
-	    {
-	      unsigned long full_insn_value;
-	      int rc = read_insn (cd, pc, info, buf,
-				  CGEN_INSN_BITSIZE (insn) / 8,
-				  & ex_info, & full_insn_value);
-	      if (rc != 0)
-		return rc;
-	      length = CGEN_EXTRACT_FN (cd, insn)
-		(cd, insn, &ex_info, full_insn_value, &fields, pc);
-	    }
-	  else
-	    length = CGEN_EXTRACT_FN (cd, insn)
-	      (cd, insn, &ex_info, insn_value_cropped, &fields, pc);
-
-	  /* Length < 0 -> error.  */
-	  if (length < 0)
-	    return length;
-	  if (length > 0)
-	    {
-	      CGEN_PRINT_FN (cd, insn) (cd, info, insn, &fields, pc, length);
-	      /* Length is in bits, result is in bytes.  */
-	      return length / 8;
-	    }
-	}
-
-      insn_list = CGEN_DIS_NEXT_INSN (insn_list);
-    }
-
-  return 0;
-}
-
-/* Default value for CGEN_PRINT_INSN.
-   The result is the size of the insn in bytes or zero for an unknown insn
-   or -1 if an error occured fetching bytes.  */
-
-#ifndef CGEN_PRINT_INSN
-#define CGEN_PRINT_INSN default_print_insn
-#endif
-
-static int
-default_print_insn (CGEN_CPU_DESC cd, bfd_vma pc, disassemble_info *info)
-{
-  bfd_byte buf[CGEN_MAX_INSN_SIZE];
-  int buflen;
-  int status;
-
-  /* Attempt to read the base part of the insn.  */
-  buflen = cd->base_insn_bitsize / 8;
-  status = (*info->read_memory_func) (pc, buf, buflen, info);
-
-  /* Try again with the minimum part, if min < base.  */
-  if (status != 0 && (cd->min_insn_bitsize < cd->base_insn_bitsize))
-    {
-      buflen = cd->min_insn_bitsize / 8;
-      status = (*info->read_memory_func) (pc, buf, buflen, info);
-    }
-
-  if (status != 0)
-    {
-      (*info->memory_error_func) (status, pc, info);
-      return -1;
-    }
-
-  return print_insn (cd, pc, info, buf, buflen);
+  (*info->fprintf_styled_func) (info->stream, dis_style_register, fmt, regno);
 }
 
 /* Main entry point.
    Print one instruction from PC on INFO->STREAM.
    Return the size of the instruction (in bytes).  */
 
-typedef struct cpu_desc_list
-{
-  struct cpu_desc_list *next;
-  CGEN_BITSET *isa;
-  int mach;
-  int endian;
-  int insn_endian;
-  CGEN_CPU_DESC cd;
-} cpu_desc_list;
-
 int
 print_insn_bpf (bfd_vma pc, disassemble_info *info)
 {
-  static cpu_desc_list *cd_list = 0;
-  cpu_desc_list *cl = 0;
-  static CGEN_CPU_DESC cd = 0;
-  static CGEN_BITSET *prev_isa;
-  static int prev_mach;
-  static int prev_endian;
-  static int prev_insn_endian;
-  int length;
-  CGEN_BITSET *isa;
-  int mach;
-  int endian = (info->endian == BFD_ENDIAN_BIG
-		? CGEN_ENDIAN_BIG
-		: CGEN_ENDIAN_LITTLE);
-  int insn_endian = (info->endian_code == BFD_ENDIAN_BIG
-                     ? CGEN_ENDIAN_BIG
-                     : CGEN_ENDIAN_LITTLE);
-  enum bfd_architecture arch;
+  int insn_size = 8, status;
+  bfd_byte insn_bytes[16];
+  bpf_insn_word word = 0;
+  const struct bpf_opcode *insn = NULL;
+  enum bpf_endian endian = (info->endian == BFD_ENDIAN_LITTLE
+                            ? BPF_ENDIAN_LITTLE : BPF_ENDIAN_BIG);
 
-  /* ??? gdb will set mach but leave the architecture as "unknown" */
-#ifndef CGEN_BFD_ARCH
-#define CGEN_BFD_ARCH bfd_arch_bpf
-#endif
-  arch = info->arch;
-  if (arch == bfd_arch_unknown)
-    arch = CGEN_BFD_ARCH;
-
-  /* There's no standard way to compute the machine or isa number
-     so we leave it to the target.  */
-#ifdef CGEN_COMPUTE_MACH
-  mach = CGEN_COMPUTE_MACH (info);
-#else
-  mach = info->mach;
-#endif
-
-#ifdef CGEN_COMPUTE_ISA
-  {
-    static CGEN_BITSET *permanent_isa;
-
-    if (!permanent_isa)
-      permanent_isa = cgen_bitset_create (MAX_ISAS);
-    isa = permanent_isa;
-    cgen_bitset_clear (isa);
-    cgen_bitset_add (isa, CGEN_COMPUTE_ISA (info));
-  }
-#else
-  isa = info->private_data;
-#endif
-
-  /* If we've switched cpu's, try to find a handle we've used before */
-  if (cd
-      && (cgen_bitset_compare (isa, prev_isa) != 0
-	  || mach != prev_mach
-	  || endian != prev_endian))
+  /* Handle bpf-specific command-line options.  */
+  if (info->disassembler_options != NULL)
     {
-      cd = 0;
-      for (cl = cd_list; cl; cl = cl->next)
-	{
-	  if (cgen_bitset_compare (cl->isa, isa) == 0 &&
-	      cl->mach == mach &&
-	      cl->endian == endian)
-	    {
-	      cd = cl->cd;
- 	      prev_isa = cd->isas;
-	      break;
-	    }
-	}
+      parse_bpf_dis_options (info->disassembler_options);
+      /* Avoid repeteadly parsing the options.  */
+      info->disassembler_options = NULL;
     }
 
-  /* If we haven't initialized yet, initialize the opcode table.  */
-  if (! cd)
+  /* Determine what version of the BPF ISA to use when disassembling.
+     If the user didn't explicitly specify an ISA version, then derive
+     it from the CPU Version flag in the ELF header.  A CPU version of
+     0 in the header means "latest version".  */
+  if (asm_bpf_version == -1 && info->section && info->section->owner)
     {
-      const bfd_arch_info_type *arch_type = bfd_lookup_arch (arch, mach);
-      const char *mach_name;
+      struct bfd *abfd = info->section->owner;
+      Elf_Internal_Ehdr *header = elf_elfheader (abfd);
+      int cpu_version = header->e_flags & EF_BPF_CPUVER;
 
-      if (!arch_type)
-	abort ();
-      mach_name = arch_type->printable_name;
-
-      prev_isa = cgen_bitset_copy (isa);
-      prev_mach = mach;
-      prev_endian = endian;
-      prev_insn_endian = insn_endian;
-      cd = bpf_cgen_cpu_open (CGEN_CPU_OPEN_ISAS, prev_isa,
-				 CGEN_CPU_OPEN_BFDMACH, mach_name,
-				 CGEN_CPU_OPEN_ENDIAN, prev_endian,
-                                 CGEN_CPU_OPEN_INSN_ENDIAN, prev_insn_endian,
-				 CGEN_CPU_OPEN_END);
-      if (!cd)
-	abort ();
-
-      /* Save this away for future reference.  */
-      cl = xmalloc (sizeof (struct cpu_desc_list));
-      cl->cd = cd;
-      cl->isa = prev_isa;
-      cl->mach = mach;
-      cl->endian = endian;
-      cl->next = cd_list;
-      cd_list = cl;
-
-      bpf_cgen_init_dis (cd);
+      switch (cpu_version)
+        {
+        case 0: asm_bpf_version = BPF_V4; break;
+        case 1: asm_bpf_version = BPF_V1; break;
+        case 2: asm_bpf_version = BPF_V2; break;
+        case 3: asm_bpf_version = BPF_V3; break;
+        case 4: asm_bpf_version = BPF_V4; break;
+        case 0xf: asm_bpf_version = BPF_XBPF; break;
+        default:
+          /* xgettext:c-format */
+          opcodes_error_handler (_("unknown BPF CPU version %u\n"),
+                                 cpu_version);
+          break;
+        }
     }
 
-  /* We try to have as much common code as possible.
-     But at this point some targets need to take over.  */
-  /* ??? Some targets may need a hook elsewhere.  Try to avoid this,
-     but if not possible try to move this hook elsewhere rather than
-     have two hooks.  */
-  length = CGEN_PRINT_INSN (cd, pc, info);
-  if (length > 0)
-    return length;
-  if (length < 0)
-    return -1;
+  /* Print eight bytes per line.  */
+  info->bytes_per_chunk = 1;
+  info->bytes_per_line = 8;
 
-  (*info->fprintf_func) (info->stream, UNKNOWN_INSN_MSG);
-  return cd->default_insn_bitsize / 8;
+  /* Read an instruction word.  */
+  status = (*info->read_memory_func) (pc, insn_bytes, 8, info);
+  if (status != 0)
+    {
+      (*info->memory_error_func) (status, pc, info);
+      return -1;
+    }
+  word = (bpf_insn_word) bfd_getb64 (insn_bytes);
+
+  /* Try to match an instruction with it.  */
+  insn = bpf_match_insn (word, endian, asm_bpf_version);
+
+  /* Print it out.  */
+  if (insn)
+    {
+      const char *insn_tmpl
+        = asm_dialect == BPF_DIALECT_NORMAL ? insn->normal : insn->pseudoc;
+      const char *p = insn_tmpl;
+
+      /* Print the template contents completed with the instruction
+         operands.  */
+      for (p = insn_tmpl; *p != '\0';)
+        {
+          switch (*p)
+            {
+            case ' ':
+              /* Single space prints to nothing.  */
+              p += 1;
+              break;
+            case '%':
+              if (*(p + 1) == '%')
+                {
+                  (*info->fprintf_styled_func) (info->stream, dis_style_text, "%%");
+                  p += 2;
+                }
+              else if (*(p + 1) == 'w' || *(p + 1) == 'W')
+                {
+                  /* %W prints to a single space.  */
+                  (*info->fprintf_styled_func) (info->stream, dis_style_text, " ");
+                  p += 2;
+                }
+              else if (strncmp (p, "%dr", 3) == 0)
+                {
+                  print_register (info, p, bpf_extract_dst (word, endian));
+                  p += 3;
+                }
+              else if (strncmp (p, "%sr", 3) == 0)
+                {
+                  print_register (info, p, bpf_extract_src (word, endian));
+                  p += 3;
+                }
+              else if (strncmp (p, "%dw", 3) == 0)
+                {
+                  print_register (info, p, bpf_extract_dst (word, endian));
+                  p += 3;
+                }
+              else if (strncmp (p, "%sw", 3) == 0)
+                {
+                  print_register (info, p, bpf_extract_src (word, endian));
+                  p += 3;
+                }
+              else if (strncmp (p, "%i32", 4) == 0
+                       || strncmp (p, "%d32", 4) == 0
+                       || strncmp (p, "%I32", 4) == 0)
+                {
+                  int32_t imm32 = bpf_extract_imm32 (word, endian);
+
+                  if (p[1] == 'I')
+                    (*info->fprintf_styled_func) (info->stream, dis_style_immediate,
+                                                  "%s",
+						  asm_obase != 10 || imm32 >= 0 ? "+" : "");
+                  (*info->fprintf_styled_func) (info->stream, dis_style_immediate,
+                                                asm_obase == 10 ? "%" PRIi32
+                                                : asm_obase == 8 ? "%" PRIo32
+                                                : "0x%" PRIx32,
+                                                imm32);
+                  p += 4;
+                }
+              else if (strncmp (p, "%o16", 4) == 0
+                       || strncmp (p, "%d16", 4) == 0)
+                {
+                  int16_t offset16 = bpf_extract_offset16 (word, endian);
+
+                  if (p[1] == 'o')
+                    (*info->fprintf_styled_func) (info->stream, dis_style_immediate,
+                                                  "%s",
+						  asm_obase != 10 || offset16 >= 0 ? "+" : "");
+                  if (asm_obase == 16 || asm_obase == 8)
+                    (*info->fprintf_styled_func) (info->stream, dis_style_immediate,
+                                                  asm_obase == 8 ? "0%" PRIo16 : "0x%" PRIx16,
+                                                  (uint16_t) offset16);
+                  else
+                    (*info->fprintf_styled_func) (info->stream, dis_style_immediate,
+                                                  "%" PRIi16, offset16);
+                  p += 4;
+                }
+              else if (strncmp (p, "%i64", 4) == 0)
+                {
+                  bpf_insn_word word2 = 0;
+
+                  status = (*info->read_memory_func) (pc + 8, insn_bytes + 8,
+                                                          8, info);
+                  if (status != 0)
+                    {
+                      (*info->memory_error_func) (status, pc + 8, info);
+                      return -1;
+                    }
+                  word2 = (bpf_insn_word) bfd_getb64 (insn_bytes + 8);
+
+                  (*info->fprintf_styled_func) (info->stream, dis_style_immediate,
+                                                asm_obase == 10 ? "%" PRIi64
+                                                : asm_obase == 8 ? "0%" PRIo64
+                                                : "0x%" PRIx64,
+                                                bpf_extract_imm64 (word, word2, endian));
+                  insn_size = 16;
+                  p += 4;
+                }
+              else
+                {
+                  /* xgettext:c-format */
+                  opcodes_error_handler (_("# internal error, unknown tag in opcode template (%s)"),
+                                         insn_tmpl);
+                  return -1;
+                }
+              break;
+            default:
+              /* Any other character is printed literally.  */
+              (*info->fprintf_styled_func) (info->stream, dis_style_text, "%c", *p);
+              p += 1;
+            }
+        }
+    }
+  else
+    (*info->fprintf_styled_func) (info->stream, dis_style_text, "<unknown>");
+
+  return insn_size;
 }

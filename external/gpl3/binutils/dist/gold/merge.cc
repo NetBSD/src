@@ -1,6 +1,6 @@
 // merge.cc -- handle section merging for gold
 
-// Copyright (C) 2006-2022 Free Software Foundation, Inc.
+// Copyright (C) 2006-2024 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -665,10 +665,10 @@ template
 class Output_merge_string<char>;
 
 template
-class Output_merge_string<uint16_t>;
+class Output_merge_string<char16_t>;
 
 template
-class Output_merge_string<uint32_t>;
+class Output_merge_string<char32_t>;
 
 #if defined(HAVE_TARGET_32_LITTLE) || defined(HAVE_TARGET_32_BIG)
 template

@@ -1,5 +1,5 @@
 /* Linker file opening and searching.
-   Copyright (C) 1991-2022 Free Software Foundation, Inc.
+   Copyright (C) 1991-2024 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -34,6 +34,7 @@
 #include "ldemul.h"
 #include "libiberty.h"
 #include "filenames.h"
+#include <fnmatch.h>
 #if BFD_SUPPORTS_PLUGINS
 #include "plugin-api.h"
 #include "plugin.h"
@@ -64,6 +65,215 @@ typedef struct search_arch
 static search_dirs_type **search_tail_ptr = &search_head;
 static search_arch_type *search_arch_head;
 static search_arch_type **search_arch_tail_ptr = &search_arch_head;
+
+typedef struct input_remap
+{
+  const char *          pattern;  /* Pattern to match input files.  */
+  const char *          renamed;  /* Filename to use if the pattern matches.  */
+  struct input_remap *  next;     /* Link in a chain of these structures.  */
+} input_remap;
+
+static struct input_remap * input_remaps = NULL;
+
+void
+ldfile_add_remap (const char * pattern, const char * renamed)
+{
+  struct input_remap * new_entry;
+
+  new_entry = xmalloc (sizeof * new_entry);
+  new_entry->pattern = xstrdup (pattern);
+  new_entry->next = NULL;
+
+  /* Look for special filenames that mean that the input file should be ignored.  */
+  if (strcmp (renamed, "/dev/null") == 0
+      || strcmp (renamed, "NUL") == 0)
+    new_entry->renamed = NULL;
+  else
+    /* FIXME: Should we add sanity checking of the 'renamed' string ?  */
+    new_entry->renamed = xstrdup (renamed);
+
+  /* It would be easier to add this new node at the start of the chain,
+     but users expect that remapping will occur in the order in which
+     they occur on the command line, and in the remapping files.  */
+  if (input_remaps == NULL)
+    {
+      input_remaps = new_entry;
+    }
+  else
+    {
+      struct input_remap * i;
+
+      for (i = input_remaps; i->next != NULL; i = i->next)
+	;
+      i->next = new_entry;
+    }
+}
+
+void
+ldfile_remap_input_free (void)
+{
+  while (input_remaps != NULL)
+    {
+      struct input_remap * i = input_remaps;
+
+      input_remaps = i->next;
+      free ((void *) i->pattern);
+      free ((void *) i->renamed);
+      free (i);
+    }
+}
+
+bool
+ldfile_add_remap_file (const char * file)
+{
+  FILE * f;
+
+  f = fopen (file, FOPEN_RT);
+  if (f == NULL)
+    return false;
+
+  size_t linelen = 256;
+  char * line = xmalloc (linelen);
+
+  do
+    {
+      char * p = line;
+      char * q;
+
+      /* Normally this would use getline(3), but we need to be portable.  */
+      while ((q = fgets (p, linelen - (p - line), f)) != NULL
+	     && strlen (q) == linelen - (p - line) - 1
+	     && line[linelen - 2] != '\n')
+	{
+	  line = xrealloc (line, 2 * linelen);
+	  p = line + linelen - 1;
+	  linelen += linelen;
+	}
+
+      if (q == NULL && p == line)
+	break;
+
+      p = strchr (line, '\n');
+      if (p)
+	*p = '\0';
+
+      /* Because the file format does not know any form of quoting we
+	 can search forward for the next '#' character and if found
+	 make it terminating the line.  */
+      p = strchr (line, '#');
+      if (p)
+	*p = '\0';
+
+      /* Remove leading whitespace.  NUL is no whitespace character.  */
+      p = line;
+      while (*p == ' ' || *p == '\f' || *p == '\r' || *p == '\t' || *p == '\v')
+	++p;
+
+      /* If the line is blank it is ignored.  */
+      if (*p == '\0')
+	continue;
+
+      char * pattern = p;
+
+      /* Advance past the pattern.  We accept whitespace or '=' as an
+	 end-of-pattern marker.  */
+      while (*p && *p != '=' && *p != ' ' && *p != '\t' && *p != '\f'
+	     && *p != '\r' && *p != '\v')
+	++p;
+
+      if (*p == '\0')
+	{
+	  einfo ("%F%P: malformed remap file entry: %s\n", line);
+	  continue;
+	}
+
+      * p++ = '\0';
+
+      /* Skip whitespace again.  */
+      while (*p == ' ' || *p == '\f' || *p == '\r' || *p == '\t' || *p == '\v')
+	++p;
+
+      if (*p == '\0')
+	{
+	  einfo ("%F%P: malformed remap file entry: %s\n", line);
+	  continue;
+	}
+
+      char * renamed = p;
+
+      /* Advance past the rename entry.  */
+      while (*p && *p != '=' && *p != ' ' && *p != '\t' && *p != '\f'
+	     && *p != '\r' && *p != '\v')
+	++p;
+      /* And terminate it.  */
+      *p = '\0';
+
+      ldfile_add_remap (pattern, renamed);
+    }
+  while (! feof (f));
+
+  free (line);
+  fclose (f);
+
+  return true;
+}
+
+const char *
+ldfile_possibly_remap_input (const char * filename)
+{
+  struct input_remap * i;
+
+  if (filename == NULL)
+    return NULL;
+
+  for (i = input_remaps; i != NULL; i = i->next)
+    {
+      if (fnmatch (i->pattern, filename, 0) == 0)
+	{
+	  if (verbose)
+	    {
+	      if (strpbrk ((i->pattern), "?*[") != NULL)
+		{
+		  if (i->renamed)
+		    info_msg (_("remap input file '%s' to '%s' based upon pattern '%s'\n"),
+			      filename, i->renamed, i->pattern);
+		  else
+		    info_msg (_("remove input file '%s' based upon pattern '%s'\n"),
+			      filename, i->pattern);
+		}
+	      else
+		{
+		  if (i->renamed)
+		    info_msg (_("remap input file '%s' to '%s'\n"),
+			      filename, i->renamed);
+		  else
+		    info_msg (_("remove input file '%s'\n"),
+			      filename);
+		}
+	    }
+
+	  return i->renamed;
+	}
+    }
+	 
+  return filename;
+}
+
+void
+ldfile_print_input_remaps (void)
+{
+  if (input_remaps == NULL)
+    return;
+
+  minfo (_("\nInput File Remapping\n\n"));
+
+  struct input_remap * i;
+
+  for (i = input_remaps; i != NULL; i = i->next)
+    minfo (_("  Pattern: %s\tMaps To: %s\n"), i->pattern,
+	   i->renamed ? i->renamed : _("<discard>"));
+}
+
 
 /* Test whether a pathname, after canonicalization, is the same or a
    sub-directory of the sysroot directory.  */
@@ -142,7 +352,11 @@ ldfile_try_open_bfd (const char *attempt,
       return false;
     }
 
-  track_dependency_files (attempt);
+  /* PR 30568: Do not track lto generated temporary object files.  */
+#if BFD_SUPPORTS_PLUGINS
+  if (!entry->flags.lto_output)
+#endif
+    track_dependency_files (attempt);
 
   /* Linker needs to decompress sections.  */
   entry->the_bfd->flags |= BFD_DECOMPRESS;
@@ -529,7 +743,10 @@ try_open (const char *name, bool *sysrooted)
   result = fopen (name, "r");
 
   if (result != NULL)
-    *sysrooted = is_sysrooted_pathname (name);
+    {
+      *sysrooted = is_sysrooted_pathname (name);
+      track_dependency_files (name);
+    }
 
   if (verbose)
     {
@@ -710,8 +927,6 @@ ldfile_open_command_file_1 (const char *name, enum script_open_style open_how)
       einfo (_("%F%P: cannot open linker script file %s: %E\n"), name);
       return;
     }
-
-  track_dependency_files (name);
 
   lex_push_file (ldlex_input_stack, name, sysrooted);
 

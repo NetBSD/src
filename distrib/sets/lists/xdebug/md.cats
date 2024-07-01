@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.23 2024/01/26 13:06:36 tsutsui Exp $
+# $NetBSD: md.cats,v 1.23.2.1 2024/07/01 00:59:49 perseant Exp $
 ./usr/X11R7/lib/modules/extensions/libcfb32_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		xdebug-obsolete	xorg,obsolete
@@ -30,8 +30,7 @@
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug		xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/apm_drv.so.1.debug	xdebug-obsolete		xorg,obsolete,xorg_server_ver=120
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/apm_drv.so.1.debug	xdebug-xf86-video-apm-debug		xorg,debug,xorg_server_ver=110
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ark_drv.so.0.debug	xdebug-obsolete		xorg,obsolete,xorg_server_ver=120
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ark_drv.so.0.debug	xdebug-xf86-video-ark-debug		xorg,debug,xorg_server_ver=110
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ark_drv.so.0.debug	xdebug-xf86-video-ark-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ast_drv.so.1.debug	xdebug-xf86-video-ast-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.6.debug	xdebug-obsolete		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.19.debug	xdebug-obsolete		obsolete
@@ -85,7 +84,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/siliconmotion_drv.so.1.debug	xdebug-xf86-video-siliconmotion-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/tdfx_drv.so.1.debug	xdebug-xf86-video-tdfx-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/tga_drv.so.1.debug	xdebug-obsolete	obsolete
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/trident_drv.so.1.debug	xdebug-obsolete	obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/trident_drv.so.1.debug	xdebug-xf86-video-trident-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/tseng_drv.so.1.debug	xdebug-xf86-video-tseng-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/vesa_drv.so.2.debug	xdebug-xf86-video-vesa-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ws_drv.so.1.debug	xdebug-xf86-input-ws-debug		xorg,debug

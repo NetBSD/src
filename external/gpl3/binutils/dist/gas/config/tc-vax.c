@@ -1,5 +1,5 @@
 /* tc-vax.c - vax-specific -
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -2786,8 +2786,9 @@ md_assemble (char *instruction_string)
 		}
 	      else
 		{
-		  as_warn (_("A bignum/flonum may not be a displacement: 0x%lx used"),
-			   (expP->X_add_number = 0x80000000L));
+		  as_warn (_("A bignum/flonum may not be a displacement: 0x%"
+			     PRIx64 " used"),
+			   (uint64_t) (expP->X_add_number = 0x80000000L));
 		  /* Chosen so luser gets the most offset bits to patch later.  */
 		}
 	      expP->X_add_number = floatP->low[0]

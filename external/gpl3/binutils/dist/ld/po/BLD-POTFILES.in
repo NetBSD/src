@@ -11,6 +11,8 @@ eaarch64linux.c
 eaarch64linux32.c
 eaarch64linux32b.c
 eaarch64linuxb.c
+eaarch64nto.c
+eaarch64pe.c
 eaix5ppc.c
 eaix5rs6.c
 eaixppc.c
@@ -22,6 +24,7 @@ earclinux.c
 earclinux_nps.c
 earcv2elf.c
 earcv2elfx.c
+earm64pe.c
 earm_wince_pe.c
 earmelf.c
 earmelf_fbsd.c
@@ -57,8 +60,10 @@ eavr6.c
 eavrtiny.c
 eavrxmega1.c
 eavrxmega2.c
+eavrxmega2_flmap.c
 eavrxmega3.c
 eavrxmega4.c
+eavrxmega4_flmap.c
 eavrxmega5.c
 eavrxmega6.c
 eavrxmega7.c
@@ -112,6 +117,7 @@ eelf32ft32.c
 eelf32ip2k.c
 eelf32iq10.c
 eelf32iq2000.c
+eelf32kvx.c
 eelf32l4300.c
 eelf32lm32.c
 eelf32lm32fd.c
@@ -182,6 +188,8 @@ eelf64briscv_lp64f.c
 eelf64btsmip.c
 eelf64btsmip_fbsd.c
 eelf64hppa.c
+eelf64kvx.c
+eelf64kvx_linux.c
 eelf64loongarch.c
 eelf64lppc.c
 eelf64lppc_fbsd.c

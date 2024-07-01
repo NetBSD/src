@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -148,7 +148,7 @@ __collector_create_handle (char *descp)
     init ();
 
   /* set up header for file, file name, etc. */
-  if (__collector_exp_dir_name == NULL)
+  if (*__collector_exp_dir_name == 0)
     {
       __collector_log_write ("<event kind=\"%s\" id=\"%d\">__collector_exp_dir_name==NULL</event>\n",
 			     SP_JCMD_CERROR, COL_ERROR_EXPOPEN);
@@ -243,16 +243,14 @@ __collector_create_handle (char *descp)
     {
       /* allocate our buffers in virtual memory */
       /* later, we will remap buffers individually to the file */
-      uint8_t *memory = (uint8_t*) CALL_UTIL (mmap64)(0,
-						      (size_t) (NBUFS * blksz),
-						      PROT_READ | PROT_WRITE,
+      uint8_t *memory = (uint8_t*) CALL_UTIL (mmap64_) (0,
+	      (size_t) (NBUFS * blksz), PROT_READ | PROT_WRITE,
 #if ARCH(SPARC)
 	      MAP_SHARED | MAP_ANON,
 #else
 	      MAP_PRIVATE | MAP_ANON,
 #endif
-	      -1,
-						      (off64_t) 0);
+	      -1, (off64_t) 0);
       if (memory == MAP_FAILED)
 	{
 	  TprintfT (0, "create_handle: can't mmap MAP_ANON (for %s): %s\n", hndl->fname, CALL_UTIL (strerror)(errno));
@@ -516,9 +514,8 @@ allocateChunk (DataHandle *hndl, unsigned ichunk)
       if (__collector_cas_ptr (&hndl->chunks[ichunk], NULL, CHUNK_BUSY) == NULL)
 	{
 	  /* allocate virtual memory */
-	  uint8_t *newchunk = (uint8_t*) CALL_UTIL (mmap64)(0,
-							    (size_t) (blksz * hndl->nflow),
-							    PROT_READ | PROT_WRITE,
+	  uint8_t *newchunk = (uint8_t*) CALL_UTIL (mmap64_) (0,
+		  (size_t) (blksz * hndl->nflow), PROT_READ | PROT_WRITE,
 #if ARCH(SPARC)
 		  MAP_SHARED | MAP_ANON,
 #else
@@ -611,8 +608,10 @@ remapBlock (DataHandle *hndl, unsigned iflow, unsigned ichunk)
 		  char errmsg[MAXPATHLEN + 50];
 		  hrtime_t teo = __collector_gethrtime ();
 		  double deltato = (double) (teo - tso) / 1000000.;
-		  (void) CALL_UTIL (snprintf) (errmsg, sizeof (errmsg), " t=%d, %s: open-retries-failed = %d, %3.6f ms.; remap",
-					       __collector_thr_self (), hndl->fname, iter, deltato);
+		  (void) CALL_UTIL (snprintf) (errmsg, sizeof (errmsg),
+			" t=%lu, %s: open-retries-failed=%d, %3.6f ms.; remap\n",
+			(unsigned long) __collector_thr_self (), hndl->fname,
+			iter, deltato);
 		  __collector_log_write ("<event kind=\"%s\" id=\"%d\">%s</event>\n",
 					 SP_JCMD_COMMENT, COL_COMMENT_NONE, errmsg);
 		  rc = 1;
@@ -623,9 +622,9 @@ remapBlock (DataHandle *hndl, unsigned iflow, unsigned ichunk)
 	    }
 	  deleteHandle (hndl);
 	  TprintfT (0, "remapBlock: can't open file: %s: %s\n", hndl->fname, STR (CALL_UTIL (strerror)(errno)));
-	  __collector_log_write ("<event kind=\"%s\" id=\"%d\" ec=\"%d\">t=%llu, %s: remap </event>\n",
+	  __collector_log_write ("<event kind=\"%s\" id=\"%d\" ec=\"%d\">t=%lu, %s: remap </event>\n",
 				 SP_JCMD_CERROR, COL_ERROR_FILEOPN, errno,
-				 (unsigned long long) __collector_thr_self (),
+				 (unsigned long) __collector_thr_self (),
 				 hndl->fname);
 	  rc = 1;
 	  goto exit;
@@ -640,15 +639,18 @@ remapBlock (DataHandle *hndl, unsigned iflow, unsigned ichunk)
       char errmsg[MAXPATHLEN + 50];
       hrtime_t teo = __collector_gethrtime ();
       double deltato = (double) (teo - tso) / 1000000.;
-      (void) CALL_UTIL (snprintf) (errmsg, sizeof (errmsg), " t=%d, %s: open-retries = %d, %3.6f ms.; remap",
-				   __collector_thr_self (), hndl->fname, iter, deltato);
+      (void) CALL_UTIL (snprintf) (errmsg, sizeof (errmsg),
+	      " t=%ld, %s: open-retries=%d, %3.6f ms.; remap\n",
+	      (unsigned long) __collector_thr_self (), hndl->fname,
+	      iter, deltato);
       __collector_log_write ("<event kind=\"%s\" id=\"%d\">%s</event>\n",
 			     SP_JCMD_COMMENT, COL_COMMENT_NONE, errmsg);
     }
 
   /* Ensure disk space is allocated and the block offset is 0 */
   uint32_t zero = 0;
-  int n = CALL_UTIL (pwrite64)(fd, &zero, sizeof (zero), (off64_t) (offset + blksz - sizeof (zero)));
+  int n = CALL_UTIL (pwrite64_) (fd, &zero, sizeof (zero),
+				(off64_t) (offset + blksz - sizeof (zero)));
   if (n <= 0)
     {
       deleteHandle (hndl);
@@ -663,13 +665,9 @@ remapBlock (DataHandle *hndl, unsigned iflow, unsigned ichunk)
 
   /* Map block to file */
   uint8_t *bptr = getBlock (hndl, iflow, ichunk);
-  uint8_t *vaddr = (uint8_t *) CALL_UTIL (mmap64)(
-						  (void*) bptr,
-						  (size_t) blksz,
-						  PROT_READ | PROT_WRITE,
-						  MAP_SHARED | MAP_FIXED,
-						  fd,
-						  offset);
+  uint8_t *vaddr = (uint8_t *) CALL_UTIL (mmap64_) ((void*) bptr,
+	  (size_t) blksz, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED,
+	  fd, offset);
 
   if (vaddr != bptr)
     {
@@ -784,8 +782,9 @@ __collector_write_packet (DataHandle *hndl, CM_Packet *pckt)
       TprintfT (0, "collector_write_packet: packet too long: %d (max %ld)\n", recsz, blksz);
       return 1;
     }
-  unsigned tid = (__collector_no_threads ? __collector_lwp_self () : __collector_thr_self ());
-  unsigned iflow = tid % hndl->nflow;
+  collector_thread_t tid = __collector_no_threads ? __collector_lwp_self ()
+						  : __collector_thr_self ();
+  unsigned iflow = (unsigned) (((unsigned long) tid) % hndl->nflow);
 
   /* Acquire block */
   uint32_t *sptr = &hndl->blkstate[iflow * NCHUNKS];
@@ -925,7 +924,8 @@ mapBuffer (char *fname, Buffer *buf, off64_t foff)
 
   /* ensure disk space is allocated */
   char nl = '\n';
-  int n = CALL_UTIL (pwrite64)(fd, &nl, sizeof (nl), (off64_t) (foff + blksz - sizeof (nl)));
+  int n = CALL_UTIL (pwrite64_) (fd, &nl, sizeof (nl),
+				 (off64_t) (foff + blksz - sizeof (nl)));
   if (n <= 0)
     {
       TprintfT (0, "mapBuffer ERROR: can't pwrite file %s at 0x%llx\n", fname,
@@ -937,7 +937,7 @@ mapBuffer (char *fname, Buffer *buf, off64_t foff)
       goto exit;
     }
   /* mmap buf->vaddr to fname at foff */
-  uint8_t *vaddr = CALL_UTIL (mmap64)(buf->vaddr, (size_t) blksz,
+  uint8_t *vaddr = CALL_UTIL (mmap64_) (buf->vaddr, (size_t) blksz,
 	  PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, foff);
   if (vaddr != buf->vaddr)
     {

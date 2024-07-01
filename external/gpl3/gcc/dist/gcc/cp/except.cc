@@ -1318,21 +1318,20 @@ maybe_set_retval_sentinel ()
    on throw.  */
 
 void
-maybe_splice_retval_cleanup (tree compound_stmt)
+maybe_splice_retval_cleanup (tree compound_stmt, bool is_try)
 {
-  /* If we need a cleanup for the return value, add it in at the same level as
-     pushdecl_outermost_localscope.  And also in try blocks.  */
-  const bool function_body
-    = (current_binding_level->level_chain
-       && current_binding_level->level_chain->kind == sk_function_parms
-      /* When we're processing a default argument, c_f_d may not have been
-	 set.  */
-       && current_function_decl);
+  if (!current_function_decl || !cfun
+      || DECL_CONSTRUCTOR_P (current_function_decl)
+      || DECL_DESTRUCTOR_P (current_function_decl)
+      || !current_retval_sentinel)
+    return;
 
-  if ((function_body || current_binding_level->kind == sk_try)
-      && !DECL_CONSTRUCTOR_P (current_function_decl)
-      && !DECL_DESTRUCTOR_P (current_function_decl)
-      && current_retval_sentinel)
+  /* if we need a cleanup for the return value, add it in at the same level as
+     pushdecl_outermost_localscope.  And also in try blocks.  */
+  cp_binding_level *b = current_binding_level;
+  const bool function_body = b->kind == sk_function_parms;
+
+  if (function_body || is_try)
     {
       location_t loc = DECL_SOURCE_LOCATION (current_function_decl);
       tree_stmt_iterator iter = tsi_start (compound_stmt);
@@ -1346,9 +1345,13 @@ maybe_splice_retval_cleanup (tree compound_stmt)
 	}
 
       /* Skip past other decls, they can't contain a return.  */
-      while (TREE_CODE (tsi_stmt (iter)) == DECL_EXPR)
+      while (!tsi_end_p (iter)
+	     && TREE_CODE (tsi_stmt (iter)) == DECL_EXPR)
 	tsi_next (&iter);
-      gcc_assert (!tsi_end_p (iter));
+
+      if (tsi_end_p (iter))
+	/* Nothing to wrap.  */
+	return;
 
       /* Wrap the rest of the STATEMENT_LIST in a CLEANUP_STMT.  */
       tree stmts = NULL_TREE;
@@ -1358,6 +1361,14 @@ maybe_splice_retval_cleanup (tree compound_stmt)
 	  tsi_delink (&iter);
 	}
       tree dtor = build_cleanup (retval);
+      if (!function_body)
+	{
+	  /* Clear the sentinel so we don't try to destroy the retval again on
+	     rethrow (c++/112301).  */
+	  tree clear = build2 (MODIFY_EXPR, boolean_type_node,
+			       current_retval_sentinel, boolean_false_node);
+	  dtor = build2 (COMPOUND_EXPR, void_type_node, clear, dtor);
+	}
       tree cond = build3 (COND_EXPR, void_type_node, current_retval_sentinel,
 			  dtor, void_node);
       tree cleanup = build_stmt (loc, CLEANUP_STMT,

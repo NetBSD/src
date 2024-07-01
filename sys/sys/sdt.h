@@ -1,4 +1,4 @@
-/*	$NetBSD: sdt.h,v 1.22 2023/04/30 08:46:33 riastradh Exp $	*/
+/*	$NetBSD: sdt.h,v 1.22.6.1 2024/07/01 01:01:14 perseant Exp $	*/
 
 /*-
  * Copyright 2006-2008 John Birrell <jb@FreeBSD.org>
@@ -226,13 +226,12 @@
 #define SDT_PROBE_DECLARE(prov, mod, func, name)			      \
 	extern struct sdt_probe sdt_##prov##_##mod##_##func##_##name[1]
 
-#define SDT_PROBE(prov, mod, func, name, arg0, arg1, arg2, arg3, arg4)	do    \
-{									      \
-	if (__predict_false(sdt_##prov##_##mod##_##func##_##name->id))	      \
-		(*sdt_probe_func)(sdt_##prov##_##mod##_##func##_##name->id,   \
-		    (uintptr_t)(arg0), (uintptr_t)(arg1), (uintptr_t)(arg2),  \
-		    (uintptr_t)(arg3), (uintptr_t)(arg4));		      \
-} while (0)
+#define SDT_PROBE(prov, mod, func, name, arg0, arg1, arg2, arg3, arg4)	      \
+	(__predict_false(sdt_##prov##_##mod##_##func##_##name->id)	      \
+	    ? (*sdt_probe_func)(sdt_##prov##_##mod##_##func##_##name->id,     \
+		(uintptr_t)(arg0), (uintptr_t)(arg1), (uintptr_t)(arg2),      \
+		(uintptr_t)(arg3), (uintptr_t)(arg4))			      \
+	    : 0)
 
 #define SDT_PROBE_ARGTYPE(prov, mod, func, name, num, type, xtype)	      \
 	static struct sdt_argtype sdta_##prov##_##mod##_##func##_##name##num[1]\
@@ -372,31 +371,29 @@
 #define	SDT_PROBE5(prov, mod, func, name, arg0, arg1, arg2, arg3, arg4) \
 	SDT_PROBE(prov, mod, func, name, arg0, arg1, arg2, arg3, arg4)
 /* XXX: void * function casts */
-#define	SDT_PROBE6(prov, mod, func, name, arg0, arg1, arg2, arg3, arg4,	      \
-    arg5)	do							      \
-{									      \
-	if (__predict_false(sdt_##prov##_##mod##_##func##_##name->id))	      \
-		__FPTRCAST(void (*)(uint32_t, uintptr_t, uintptr_t,	      \
-			uintptr_t, uintptr_t, uintptr_t, uintptr_t),	      \
-		    sdt_probe_func)(					      \
+#define	SDT_PROBE6(prov, mod, func, name, arg0, arg1, arg2, arg3, arg4, arg5) \
+	(__predict_false(sdt_##prov##_##mod##_##func##_##name->id)	      \
+	    ? __FPTRCAST(void (*)(uint32_t, uintptr_t, uintptr_t,	      \
+		    uintptr_t, uintptr_t, uintptr_t, uintptr_t),	      \
+		sdt_probe_func)(					      \
 			sdt_##prov##_##mod##_##func##_##name->id,	      \
 			(uintptr_t)(arg0), (uintptr_t)(arg1),		      \
 			(uintptr_t)(arg2), (uintptr_t)(arg3),		      \
-			(uintptr_t)(arg4), (uintptr_t)(arg5));		      \
-} while (0)
+			(uintptr_t)(arg4), (uintptr_t)(arg5))		      \
+	    : 0)
 #define	SDT_PROBE7(prov, mod, func, name, arg0, arg1, arg2, arg3, arg4, arg5, \
-    arg6)	do							      \
-{									      \
-	if (__predict_false(sdt_##prov##_##mod##_##func##_##name->id))	      \
-		__FPTRCAST(void (*)(uint32_t, uintptr_t, uintptr_t,	      \
-			uintptr_t, uintptr_t, uintptr_t, uintptr_t,	      \
-			uintptr_t), sdt_probe_func)(			      \
+    arg6)								      \
+	(__predict_false(sdt_##prov##_##mod##_##func##_##name->id)	      \
+	    ? __FPTRCAST(void (*)(uint32_t, uintptr_t, uintptr_t,	      \
+		    uintptr_t, uintptr_t, uintptr_t, uintptr_t,		      \
+		    uintptr_t),						      \
+		sdt_probe_func)(					      \
 			sdt_##prov##_##mod##_##func##_##name->id,	      \
 			(uintptr_t)(arg0), (uintptr_t)(arg1),		      \
 			(uintptr_t)(arg2), (uintptr_t)(arg3),		      \
 			(uintptr_t)(arg4), (uintptr_t)(arg5),		      \
-			(uintptr_t)(arg6));				      \
-} while (0)
+			(uintptr_t)(arg6))				      \
+	    : 0)
 
 #define	DTRACE_PROBE_IMPL_START(name, arg0, arg1, arg2, arg3, arg4)	do    \
 {									      \
@@ -503,6 +500,12 @@ SDT_PROVIDER_DECLARE(sdt);
 void sdt_init(void *);
 void sdt_exit(void);
 
+#ifdef KDTRACE_HOOKS
+SDT_PROBE_DECLARE(sdt, , , set__error);
+#define	SET_ERROR(err)	(SDT_PROBE1(sdt, , , set__error,  (err)), (err))
+#else
+#define	SET_ERROR(err)	(err)
+#endif	/* KDTRACE_HOOKS */
 
 #endif /* _KERNEL */
 

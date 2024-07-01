@@ -73,6 +73,7 @@ along with GCC; see the file COPYING3.  If not see
 
 */
 
+#define INCLUDE_ALGORITHM
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -1632,6 +1633,13 @@ runtime_alias_check_p (ddr_p ddr, class loop *loop, bool speed_p)
 				   "runtime alias check not supported for"
 				   " outer loop.\n");
 
+  /* FORNOW: We don't support handling different address spaces.  */
+  if (TYPE_ADDR_SPACE (TREE_TYPE (TREE_TYPE (DR_BASE_ADDRESS (DDR_A (ddr)))))
+      != TYPE_ADDR_SPACE (TREE_TYPE (TREE_TYPE (DR_BASE_ADDRESS (DDR_B (ddr))))))
+    return opt_result::failure_at (DR_STMT (DDR_A (ddr)),
+				   "runtime alias check between different "
+				   "address spaces not supported.\n");
+
   return opt_result::success ();
 }
 
@@ -2620,7 +2628,9 @@ create_intersect_range_checks (class loop *loop, tree *cond_expr,
 	 Because the maximum values are inclusive, there is an alias
 	 if the maximum value of one segment is equal to the minimum
 	 value of the other.  */
-      min_align = MIN (dr_a.align, dr_b.align);
+      min_align = std::min (dr_a.align, dr_b.align);
+      min_align = std::min (min_align, known_alignment (dr_a.access_size));
+      min_align = std::min (min_align, known_alignment (dr_b.access_size));
       cmp_code = LT_EXPR;
     }
 

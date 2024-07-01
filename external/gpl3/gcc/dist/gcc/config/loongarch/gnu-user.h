@@ -33,16 +33,21 @@ along with GCC; see the file COPYING3.  If not see
 #define GLIBC_DYNAMIC_LINKER \
   "/lib" ABI_GRLEN_SPEC "/ld-linux-loongarch-" ABI_SPEC ".so.1"
 
+#define MUSL_ABI_SPEC \
+  "%{mabi=lp64d:}" \
+  "%{mabi=lp64f:-sp}" \
+  "%{mabi=lp64s:-sf}"
+
 #undef MUSL_DYNAMIC_LINKER
 #define MUSL_DYNAMIC_LINKER \
-  "/lib" ABI_GRLEN_SPEC "/ld-musl-loongarch-" ABI_SPEC ".so.1"
+  "/lib/ld-musl-loongarch" ABI_GRLEN_SPEC MUSL_ABI_SPEC ".so.1"
 
 #undef GNU_USER_TARGET_LINK_SPEC
 #define GNU_USER_TARGET_LINK_SPEC \
   "%{G*} %{shared} -m " GNU_USER_LINK_EMULATION \
   "%{!shared: %{static} %{!static: %{rdynamic:-export-dynamic} " \
-  "-dynamic-linker " GNU_USER_DYNAMIC_LINKER "}}"
-
+  "-dynamic-linker " GNU_USER_DYNAMIC_LINKER "}}" \
+  "%{mno-relax: --no-relax}"
 
 /* Similar to standard Linux, but adding -ffast-math support.  */
 #undef GNU_USER_TARGET_MATHFILE_SPEC

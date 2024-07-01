@@ -2038,6 +2038,8 @@ cxx_omp_clause_apply_fn (tree fn, tree arg1, tree arg2)
 					   TREE_PURPOSE (parm), fn,
 					   i - is_method, tf_warning_or_error);
       t = build_call_a (fn, i, argarray);
+      if (MAYBE_CLASS_TYPE_P (TREE_TYPE (t)))
+	t = build_cplus_new (TREE_TYPE (t), t, tf_warning_or_error);
       t = fold_convert (void_type_node, t);
       t = fold_build_cleanup_point_expr (TREE_TYPE (t), t);
       append_to_statement_list (t, &ret);
@@ -2071,6 +2073,8 @@ cxx_omp_clause_apply_fn (tree fn, tree arg1, tree arg2)
 					   TREE_PURPOSE (parm), fn,
 					   i - is_method, tf_warning_or_error);
       t = build_call_a (fn, i, argarray);
+      if (MAYBE_CLASS_TYPE_P (TREE_TYPE (t)))
+	t = build_cplus_new (TREE_TYPE (t), t, tf_warning_or_error);
       t = fold_convert (void_type_node, t);
       return fold_build_cleanup_point_expr (TREE_TYPE (t), t);
     }
@@ -2453,7 +2457,14 @@ cp_fold (tree x)
     fold_cache = hash_map<tree, tree>::create_ggc (101);
 
   if (tree *cached = fold_cache->get (x))
-    return *cached;
+    {
+      /* unshare_expr doesn't recurse into SAVE_EXPRs.  If SAVE_EXPR's
+	 argument has been folded into a tree invariant, make sure it is
+	 unshared.  See PR112727.  */
+      if (TREE_CODE (x) == SAVE_EXPR && *cached != x)
+	return unshare_expr (*cached);
+      return *cached;
+    }
 
   uid_sensitive_constexpr_evaluation_checker c;
 

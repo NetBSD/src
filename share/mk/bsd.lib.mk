@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.405 2024/05/08 20:38:55 riastradh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.405.2.1 2024/07/01 01:01:12 perseant Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -610,6 +610,20 @@ LIBDPLIBS+=     stdc++	${.CURDIR}/../../../../../external/gpl3/${EXTERNAL_GCC_SU
 . endif
 .else
 LIBCC:=	${CC}
+.endif
+
+# VERSION_MAP
+#
+#	Path to an ld version script to use when linking the library.
+#	Resolved from .PATH like a target prerequisite.
+#
+#	Implemented by adding -Wl,--version-script=${${VERSION_MAP}:P}
+#	to LDFLAGS, and by adding ${VERSION_MAP} to DPADD to make it a
+#	target prerequisite so :P works.
+#
+.if !empty(VERSION_MAP)
+DPADD+=			${VERSION_MAP}
+LDFLAGS+=		-Wl,--version-script=${${VERSION_MAP}:P}
 .endif
 
 _LDADD.${_LIB}=	${LDADD} ${LDADD.${_LIB}}

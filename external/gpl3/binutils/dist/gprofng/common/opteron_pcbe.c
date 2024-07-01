@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -315,30 +315,25 @@ static int
 opt_pcbe_init (void)
 {
   amd_family = cpuid_getfamily ();
-  /*
-   * Make sure this really _is_ an Opteron or Athlon 64 system. The kernel
-   * loads this module based on its name in the module directory, but it
-   * could have been renamed.
-   */
-  if (cpuid_getvendor () != X86_VENDOR_AMD
-      || (amd_family != OPTERON_FAMILY && amd_family != AMD_FAMILY_10H))
-    return (-1);
+  if (cpuid_getvendor () != X86_VENDOR_AMD)
+    return -1;
 
   /*
    * Figure out processor revision here and assign appropriate
    * event configuration.
    */
-  if (amd_family == OPTERON_FAMILY)
+  switch (amd_family)
     {
+    case OPTERON_FAMILY:
       amd_events = opt_events_rev_E;
       amd_generic_events = opt_generic_events;
-    }
-  else
-    {
+      break;
+    case AMD_FAMILY_10H:
       amd_events = family_10h_events;
       amd_generic_events = family_10h_generic_events;
+      break;
     }
-  return (0);
+  return 0;
 }
 
 static uint_t

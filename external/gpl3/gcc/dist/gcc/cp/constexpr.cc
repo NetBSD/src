@@ -3932,7 +3932,8 @@ cxx_eval_array_reference (const constexpr_ctx *ctx, tree t,
   if (!lval
       && TREE_CODE (ary) == VIEW_CONVERT_EXPR
       && VECTOR_TYPE_P (TREE_TYPE (TREE_OPERAND (ary, 0)))
-      && TREE_TYPE (t) == TREE_TYPE (TREE_TYPE (TREE_OPERAND (ary, 0))))
+      && (TYPE_MAIN_VARIANT (TREE_TYPE (t))
+	  == TYPE_MAIN_VARIANT (TREE_TYPE (TREE_TYPE (TREE_OPERAND (ary, 0))))))
     ary = TREE_OPERAND (ary, 0);
 
   tree oldidx = TREE_OPERAND (t, 1);
@@ -8777,7 +8778,12 @@ potential_constant_expression_1 (tree t, bool want_rval, bool strict, bool now,
 	  }
 	else if (fun)
           {
-	    if (RECUR (fun, FUNCTION_POINTER_TYPE_P (fun) ? rval : any))
+	    if (TREE_TYPE (fun)
+		&& FUNCTION_POINTER_TYPE_P (TREE_TYPE (fun)))
+	      want_rval = rval;
+	    else
+	      want_rval = any;
+	    if (RECUR (fun, want_rval))
 	      /* Might end up being a constant function pointer.  But it
 		 could also be a function object with constexpr op(), so
 		 we pass 'any' so that the underlying VAR_DECL is deemed
@@ -8847,7 +8853,7 @@ potential_constant_expression_1 (tree t, bool want_rval, bool strict, bool now,
 	  return RECUR (DECL_VALUE_EXPR (t), rval);
 	}
       if (want_rval
-	  && !var_in_maybe_constexpr_fn (t)
+	  && (now || !var_in_maybe_constexpr_fn (t))
 	  && !type_dependent_expression_p (t)
 	  && !decl_maybe_constant_var_p (t)
 	  && (strict
@@ -8956,7 +8962,7 @@ potential_constant_expression_1 (tree t, bool want_rval, bool strict, bool now,
         STRIP_NOPS (x);
         if (is_this_parameter (x) && !is_capture_proxy (x))
 	  {
-	    if (!var_in_maybe_constexpr_fn (x))
+	    if (now || !var_in_maybe_constexpr_fn (x))
 	      {
 		if (flags & tf_error)
 		  error_at (loc, "use of %<this%> in a constant expression");

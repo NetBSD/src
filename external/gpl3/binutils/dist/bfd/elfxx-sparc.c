@@ -1,5 +1,5 @@
 /* SPARC-specific support for ELF
-   Copyright (C) 2005-2022 Free Software Foundation, Inc.
+   Copyright (C) 2005-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -3021,7 +3021,7 @@ _bfd_sparc_elf_relocate_section (bfd *output_bfd,
 		(_("%pB: relocation %s against STT_GNU_IFUNC "
 		   "symbol `%s' isn't handled by %s"), input_bfd,
 		 _bfd_sparc_elf_howto_table[r_type].name,
-		 name, __FUNCTION__);
+		 name, __func__);
 	      bfd_set_error (bfd_error_bad_value);
 	      return false;
 	    }

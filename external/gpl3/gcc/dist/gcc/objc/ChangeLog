@@ -1,3 +1,63 @@
+2024-06-20  Release Manager
+
+	* GCC 12.4.0 released.
+
+2024-05-09  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backported from master:
+	2024-05-02  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* objc-next-runtime-abi-02.cc (WEAK_PROTOCOLS_AFTER): New.
+	(next_runtime_abi_02_protocol_decl): Use WEAK_PROTOCOLS_AFTER
+	to determine this ABI change.
+	(build_v2_protocol_list_address_table): Likewise.
+
+2024-04-20  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backported from master:
+	2024-01-18  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* objc-act.cc (objc_init): Initialize interface and class
+	name hash maps before the preprocessor uses them.
+
+2024-04-19  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backported from master:
+	2024-01-28  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* objc-next-runtime-abi-02.cc (build_v2_address_table): Prevent
+	over-alignment of Objective-C metadata by setting DECL_USER_ALIGN
+	on relevant variables.
+	(build_v2_protocol_list_address_table): Likewise.
+	(generate_v2_protocol_list): Likewise.
+	(generate_v2_meth_descriptor_table): Likewise.
+	(generate_v2_meth_type_list): Likewise.
+	(generate_v2_property_table): Likewise.
+	(generate_v2_dispatch_table): Likewise.
+	(generate_v2_ivars_list): Likewise.
+	(generate_v2_class_structs): Likewise.
+	(build_ehtype): Likewise.
+	* objc-runtime-shared-support.cc (generate_strings): Likewise.
+
+2024-04-19  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backported from master:
+	2024-01-12  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* objc-next-runtime-abi-02.cc
+	(build_v2_objc_method_fixup_call): Early exit for cases
+	where the sender or receiver are known to be in error.
+
+2024-04-12  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backported from master:
+	2022-05-03  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* objc-next-runtime-abi-02.cc (next_runtime_abi_02_protocol_decl): Do
+	not dead-strip the runtime meta-data symbols.
+	(build_v2_classrefs_table): Likewise.
+	(build_v2_protocol_list_address_table): Likewise.
+
 2023-05-08  Release Manager
 
 	* GCC 12.3.0 released.

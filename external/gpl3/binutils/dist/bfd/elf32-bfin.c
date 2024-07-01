@@ -1,5 +1,5 @@
 /* ADI Blackfin BFD support for 32-bit ELF.
-   Copyright (C) 2005-2022 Free Software Foundation, Inc.
+   Copyright (C) 2005-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -4917,8 +4917,7 @@ bfin_finish_dynamic_symbol (bfd * output_bfd,
 	  && (info->symbolic
 	      || h->dynindx == -1 || h->forced_local) && h->def_regular)
 	{
-	  _bfd_error_handler (_("*** check this relocation %s"),
-			      __FUNCTION__);
+	  _bfd_error_handler (_("*** check this relocation %s"), __func__);
 	  rela.r_info = ELF32_R_INFO (0, R_BFIN_PCREL24);
 	  rela.r_addend = bfd_get_signed_32 (output_bfd,
 					     (sgot->contents

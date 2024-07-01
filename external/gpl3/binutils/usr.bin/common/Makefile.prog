@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.prog,v 1.11 2022/12/26 16:41:00 christos Exp $
+#	$NetBSD: Makefile.prog,v 1.11.2.1 2024/07/01 01:00:41 perseant Exp $
 #
 # Common Makefile fragment for a binutils program.
 #
@@ -26,6 +26,7 @@ PROGDPLIBS+=	opcodes	${TOP}/${BFDSUBDIR}/libopcodes
 
 .if !empty(G_${BUPROG}_DEPENDENCIES:M*/libbfd*)
 PROGDPLIBS+=	bfd	${TOP}/${BFDSUBDIR}/libbfd
+PROGDPLIBS+=	sframe	${TOP}/${BFDSUBDIR}/libsframe
 .endif
 
 .if !empty(G_${BUPROG}_DEPENDENCIES:M*/libiberty*)

@@ -35,7 +35,7 @@
 # endif
 # if defined(_GLIBCXX_HAVE_SYS_STAT_H) && defined(_GLIBCXX_HAVE_SYS_TYPES_H)
 #  include <sys/types.h>
-#  include <sys/stat.h>
+#  include <sys/stat.h>  // mkdir, chmod
 # endif
 #endif
 #if !_GLIBCXX_USE_UTIMENSAT && _GLIBCXX_HAVE_UTIME_H
@@ -84,7 +84,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   inline error_code
   __unsupported() noexcept
   {
-#if defined ENOTSUP
+#if defined __AVR__
+    // avr-libc defines ENOTSUP and EOPNOTSUPP but with nonsense values.
+    // ENOSYS is defined though, so use an error_code corresponding to that.
+    // This contradicts the comment above, but we don't have much choice.
+    return std::make_error_code(std::errc::function_not_supported);
+#elif defined ENOTSUP
     return std::make_error_code(std::errc::not_supported);
 #elif defined EOPNOTSUPP
     // This is supposed to be for socket operations
@@ -124,15 +129,19 @@ namespace __gnu_posix
 
   inline int chmod(const wchar_t* path, mode_t mode)
   { return ::_wchmod(path, mode); }
+#define _GLIBCXX_USE_CHMOD 1
 
   inline int mkdir(const wchar_t* path, mode_t)
   { return ::_wmkdir(path); }
+#define _GLIBCXX_USE_MKDIR 1
 
   inline wchar_t* getcwd(wchar_t* buf, size_t size)
   { return ::_wgetcwd(buf, size > (size_t)INT_MAX ? INT_MAX : (int)size); }
+#define _GLIBCXX_USE_GETCWD 1
 
   inline int chdir(const wchar_t* path)
   { return ::_wchdir(path); }
+#define _GLIBCXX_USE_CHDIR 1
 
 #if !_GLIBCXX_USE_UTIMENSAT && _GLIBCXX_HAVE_UTIME_H
   using utimbuf = _utimbuf;
@@ -181,10 +190,18 @@ namespace __gnu_posix
 #  endif
 # endif
   using ::mode_t;
+# if _GLIBCXX_USE_CHMOD
   using ::chmod;
+# endif
+# if _GLIBCXX_USE_MKDIR
   using ::mkdir;
+# endif
+# if _GLIBCXX_USE_GETCWD
   using ::getcwd;
+# endif
+# if _GLIBCXX_USE_CHDIR
   using ::chdir;
+# endif
 # if !_GLIBCXX_USE_UTIMENSAT && _GLIBCXX_USE_UTIME
   using ::utimbuf;
   using ::utime;
@@ -452,25 +469,26 @@ _GLIBCXX_BEGIN_NAMESPACE_FILESYSTEM
       int fd;
     };
 
-    int iflag = O_RDONLY;
+    int common_flags = 0;
+#ifdef O_CLOEXEC
+    common_flags |= O_CLOEXEC;
+#endif
 #ifdef _GLIBCXX_FILESYSTEM_IS_WINDOWS
-    iflag |= O_BINARY;
+    common_flags |= O_BINARY;
 #endif
 
+    const int iflag = O_RDONLY | common_flags;
     CloseFD in = { posix::open(from, iflag) };
     if (in.fd == -1)
       {
 	ec.assign(errno, std::generic_category());
 	return false;
       }
-    int oflag = O_WRONLY|O_CREAT;
+    int oflag = O_WRONLY | O_CREAT | common_flags;
     if (options.overwrite || options.update)
       oflag |= O_TRUNC;
     else
       oflag |= O_EXCL;
-#ifdef _GLIBCXX_FILESYSTEM_IS_WINDOWS
-    oflag |= O_BINARY;
-#endif
     CloseFD out = { posix::open(to, oflag, S_IWUSR) };
     if (out.fd == -1)
       {
@@ -485,35 +503,41 @@ _GLIBCXX_BEGIN_NAMESPACE_FILESYSTEM
     if (::fchmod(out.fd, from_st->st_mode))
 #elif defined _GLIBCXX_USE_FCHMODAT && ! defined _GLIBCXX_FILESYSTEM_IS_WINDOWS
     if (::fchmodat(AT_FDCWD, to, from_st->st_mode, 0))
-#else
+#elif defined _GLIBCXX_USE_CHMOD
     if (posix::chmod(to, from_st->st_mode))
+#else
+    if (false)
 #endif
       {
 	ec.assign(errno, std::generic_category());
 	return false;
       }
 
-    size_t count = from_st->st_size;
 #if defined _GLIBCXX_USE_SENDFILE && ! defined _GLIBCXX_FILESYSTEM_IS_WINDOWS
-    off_t offset = 0;
-    ssize_t n = ::sendfile(out.fd, in.fd, &offset, count);
-    if (n < 0 && errno != ENOSYS && errno != EINVAL)
+    size_t count = from_st->st_size;
+    ssize_t n = 0;
+    if (count != 0)
       {
-	ec.assign(errno, std::generic_category());
-	return false;
-      }
-    if ((size_t)n == count)
-      {
-	if (!out.close() || !in.close())
+	off_t offset = 0;
+	n = ::sendfile(out.fd, in.fd, &offset, count);
+	if (n < 0 && errno != ENOSYS && errno != EINVAL)
 	  {
 	    ec.assign(errno, std::generic_category());
 	    return false;
 	  }
-	ec.clear();
-	return true;
+	if ((size_t)n == count)
+	  {
+	    if (!out.close() || !in.close())
+	      {
+		ec.assign(errno, std::generic_category());
+		return false;
+	      }
+	    ec.clear();
+	    return true;
+	  }
+	else if (n > 0)
+	  count -= n;
       }
-    else if (n > 0)
-      count -= n;
 #endif // _GLIBCXX_USE_SENDFILE
 
     using std::ios;
@@ -543,11 +567,17 @@ _GLIBCXX_BEGIN_NAMESPACE_FILESYSTEM
       }
 #endif
 
-    if (count && !(std::ostream(&sbout) << &sbin))
-      {
-	ec = std::make_error_code(std::errc::io_error);
-	return false;
-      }
+    // ostream::operator<<(streambuf*) fails if it extracts no characters,
+    // so don't try to use it for empty files. But from_st->st_size == 0 for
+    // some special files (e.g. procfs, see PR libstdc++/108178) so just try
+    // to read a character to decide whether there is anything to copy or not.
+    if (sbin.sgetc() != char_traits<char>::eof())
+      if (!(std::ostream(&sbout) << &sbin))
+	{
+	  ec = std::make_error_code(std::errc::io_error);
+	  return false;
+	}
+
     if (!sbout.close() || !sbin.close())
       {
 	ec.assign(errno, std::generic_category());
@@ -620,7 +650,8 @@ _GLIBCXX_BEGIN_NAMESPACE_FILESYSTEM
       {
 	buf.resize(len);
 	len = GetTempPathW(buf.size(), buf.data());
-      } while (len > buf.size());
+      }
+    while (len > buf.size());
 
     if (len == 0)
       ec = __last_system_error();

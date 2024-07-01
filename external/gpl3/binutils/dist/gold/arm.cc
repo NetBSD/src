@@ -1,6 +1,6 @@
 // arm.cc -- arm target support for gold.
 
-// Copyright (C) 2009-2022 Free Software Foundation, Inc.
+// Copyright (C) 2009-2024 Free Software Foundation, Inc.
 // Written by Doug Kwan <dougkwan@google.com> based on the i386 code
 // by Ian Lance Taylor <iant@google.com>.
 // This file also contains borrowed and adapted code from
@@ -9484,7 +9484,7 @@ Target_arm<big_endian>::do_finalize_sections(
 				  ? NULL
 				  : this->plt_->rel_plt());
   layout->add_target_dynamic_tags(true, this->got_plt_, rel_plt,
-				  this->rel_dyn_, true, false);
+				  this->rel_dyn_, true, false, false);
 
   // Emit any relocs we saved in an attempt to avoid generating COPY
   // relocs.

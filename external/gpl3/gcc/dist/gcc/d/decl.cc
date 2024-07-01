@@ -781,7 +781,7 @@ public:
       {
 	/* Do not store variables we cannot take the address of,
 	   but keep the values for purposes of debugging.  */
-	if (!d->type->isscalar ())
+	if (d->type->isscalar () && !d->type->hasPointers ())
 	  {
 	    tree decl = get_symbol_decl (d);
 	    d_pushdecl (decl);
@@ -855,10 +855,28 @@ public:
 	    /* Maybe put variable on list of things needing destruction.  */
 	    if (d->needsScopeDtor ())
 	      {
+		/* Rewrite: `decl = exp' => TARGET_EXPR(decl, exp, dtor).  */
 		vec_safe_push (d_function_chain->vars_in_scope, decl);
+
 		/* Force a TARGET_EXPR to add the corresponding cleanup.  */
-		exp = force_target_expr (compound_expr (exp, decl));
-		TARGET_EXPR_CLEANUP (exp) = build_expr (d->edtor);
+		if (TREE_CODE (exp) != TARGET_EXPR)
+		  {
+		    if (VOID_TYPE_P (TREE_TYPE (exp)))
+		      exp = compound_expr (exp, decl);
+
+		    exp = force_target_expr (exp);
+		  }
+
+		TARGET_EXPR_CLEANUP (exp)
+		  = compound_expr (TARGET_EXPR_CLEANUP (exp),
+				   build_expr (d->edtor));
+
+		/* The decl is really an alias for the TARGET_EXPR slot.  */
+		SET_DECL_VALUE_EXPR (decl, TARGET_EXPR_SLOT (exp));
+		DECL_HAS_VALUE_EXPR_P (decl) = 1;
+		/* This tells the gimplifier not to emit a clobber for the decl
+		   as its lifetime ends when the slot gets cleaned up.  */
+		TREE_ADDRESSABLE (decl) = 0;
 	      }
 
 	    add_stmt (exp);
@@ -1199,6 +1217,20 @@ get_symbol_decl (Declaration *decl)
       return decl->csym;
     }
 
+  if (VarDeclaration *vd = decl->isVarDeclaration ())
+    {
+      /* CONST_DECL was initially intended for enumerals and may be used for
+	 scalars in general, but not for aggregates.  Here a non-constant
+	 value is generated anyway so as its value can be used.  */
+      if (!vd->canTakeAddressOf () && !vd->type->isscalar ())
+	{
+	  gcc_assert (vd->_init && !vd->_init->isVoidInitializer ());
+	  Expression *ie = initializerToExpression (vd->_init);
+	  decl->csym = build_expr (ie, false);
+	  return decl->csym;
+	}
+    }
+
   /* Build the tree for the symbol.  */
   FuncDeclaration *fd = decl->isFuncDeclaration ();
   if (fd)
@@ -1246,24 +1278,30 @@ get_symbol_decl (Declaration *decl)
       if (vd->storage_class & STCextern)
 	DECL_EXTERNAL (decl->csym) = 1;
 
-      /* CONST_DECL was initially intended for enumerals and may be used for
-	 scalars in general, but not for aggregates.  Here a non-constant
-	 value is generated anyway so as the CONST_DECL only serves as a
-	 placeholder for the value, however the DECL itself should never be
-	 referenced in any generated code, or passed to the back-end.  */
-      if (vd->storage_class & STCmanifest)
+      if (!vd->canTakeAddressOf ())
 	{
 	  /* Cannot make an expression out of a void initializer.  */
-	  if (vd->_init && !vd->_init->isVoidInitializer ())
-	    {
-	      Expression *ie = initializerToExpression (vd->_init);
+	  gcc_assert (vd->_init && !vd->_init->isVoidInitializer ());
+	  /* Non-scalar manifest constants have already been dealt with.  */
+	  gcc_assert (vd->type->isscalar ());
 
-	      if (!vd->type->isscalar ())
-		DECL_INITIAL (decl->csym) = build_expr (ie, false);
-	      else
-		DECL_INITIAL (decl->csym) = build_expr (ie, true);
-	    }
+	  Expression *ie = initializerToExpression (vd->_init);
+	  DECL_INITIAL (decl->csym) = build_expr (ie, true);
 	}
+
+      /* [type-qualifiers/const-and-immutable]
+
+	 `immutable` applies to data that cannot change. Immutable data values,
+	 once constructed, remain the same for the duration of the program's
+	 execution.  */
+      if (vd->isImmutable () && !vd->setInCtorOnly ())
+	TREE_READONLY (decl->csym) = 1;
+
+      /* `const` applies to data that cannot be changed by the const reference
+	 to that data. It may, however, be changed by another reference to that
+	 same data.  */
+      if (vd->isConst () && !vd->isDataseg ())
+	TREE_READONLY (decl->csym) = 1;
     }
 
   /* Set the declaration mangled identifier if static.  */

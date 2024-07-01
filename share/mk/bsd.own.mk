@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1382.2.1 2024/06/29 19:43:25 perseant Exp $
+#	$NetBSD: bsd.own.mk,v 1.1382.2.2 2024/07/01 01:01:12 perseant Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -78,6 +78,8 @@ TOOLCHAIN_MISSING?=	no
 .if \
     ${MACHINE_CPU} == "aarch64" || \
     ${MACHINE_CPU} == "arm" || \
+    ${MACHINE_CPU} == "mips" || \
+    ${MACHINE_CPU} == "powerpc" || \
     ${MACHINE_CPU} == "riscv" || \
     ${MACHINE_ARCH} == "x86_64" || \
     ${MACHINE_ARCH} == "i386" || \
@@ -117,9 +119,9 @@ MKGCCCMDS?=	no
 #
 HAVE_BINUTILS?=	239
 
-.if ${HAVE_BINUTILS} == 239
+.if ${HAVE_BINUTILS} == 242
 EXTERNAL_BINUTILS_SUBDIR=	binutils
-.elif ${HAVE_BINUTILS} == 234
+.elif ${HAVE_BINUTILS} == 239
 EXTERNAL_BINUTILS_SUBDIR=	binutils.old
 .else
 EXTERNAL_BINUTILS_SUBDIR=	/does/not/exist
@@ -1345,7 +1347,7 @@ MKDTB.riscv64=			yes
 # During transition from xorg-server 1.10 to 1.20
 # XXX sgimips uses XAA which is removed in 1.20, and EXA is hard
 # XXX to do the same with.
-.if ${MACHINE} == "sgimips" || ${MACHINE} == "alpha"
+.if ${MACHINE} == "sgimips"
 HAVE_XORG_SERVER_VER?=110
 .else
 HAVE_XORG_SERVER_VER?=120

@@ -1,5 +1,5 @@
 /* ldwrite.c -- write out the linked file
-   Copyright (C) 1991-2022 Free Software Foundation, Inc.
+   Copyright (C) 1991-2024 Free Software Foundation, Inc.
    Written by Steve Chamberlain sac@cygnus.com
 
    This file is part of the GNU Binutils.
@@ -57,11 +57,14 @@ build_link_order (lang_statement_union_type *statement)
 
 	link_order = bfd_new_link_order (link_info.output_bfd, output_section);
 	if (link_order == NULL)
-	  einfo (_("%F%P: bfd_new_link_order failed\n"));
+	  einfo (_("%F%P: bfd_new_link_order failed: %E\n"));
 
 	link_order->type = bfd_data_link_order;
 	link_order->offset = statement->data_statement.output_offset;
-	link_order->u.data.contents = (bfd_byte *) xmalloc (QUAD_SIZE);
+	link_order->u.data.contents = bfd_alloc (link_info.output_bfd,
+						 QUAD_SIZE);
+	if (link_order->u.data.contents == NULL)
+	  einfo (_("%F%P: bfd_new_link_order failed: %E\n"));
 
 	value = statement->data_statement.value;
 
@@ -167,13 +170,15 @@ build_link_order (lang_statement_union_type *statement)
 
 	link_order = bfd_new_link_order (link_info.output_bfd, output_section);
 	if (link_order == NULL)
-	  einfo (_("%F%P: bfd_new_link_order failed\n"));
+	  einfo (_("%F%P: bfd_new_link_order failed: %E\n"));
 
 	link_order->offset = rs->output_offset;
 	link_order->size = bfd_get_reloc_size (rs->howto);
 
 	link_order->u.reloc.p = (struct bfd_link_order_reloc *)
-	  xmalloc (sizeof (struct bfd_link_order_reloc));
+	  bfd_alloc (link_info.output_bfd, sizeof (struct bfd_link_order_reloc));
+	if (link_order->u.reloc.p == NULL)
+	  einfo (_("%F%P: bfd_new_link_order failed: %E\n"));
 
 	link_order->u.reloc.p->reloc = rs->reloc;
 	link_order->u.reloc.p->addend = rs->addend_value;
@@ -219,7 +224,7 @@ build_link_order (lang_statement_union_type *statement)
 	    link_order = bfd_new_link_order (link_info.output_bfd,
 					     output_section);
 	    if (link_order == NULL)
-	      einfo (_("%F%P: bfd_new_link_order failed\n"));
+	      einfo (_("%F%P: bfd_new_link_order failed: %E\n"));
 
 	    if ((i->flags & SEC_NEVER_LOAD) != 0
 		&& (i->flags & SEC_DEBUGGING) == 0)
@@ -260,7 +265,7 @@ build_link_order (lang_statement_union_type *statement)
 	link_order = bfd_new_link_order (link_info.output_bfd,
 					 output_section);
 	if (link_order == NULL)
-	  einfo (_("%F%P: bfd_new_link_order failed\n"));
+	  einfo (_("%F%P: bfd_new_link_order failed: %E\n"));
 	link_order->type = bfd_data_link_order;
 	link_order->size = statement->padding_statement.size;
 	link_order->offset = statement->padding_statement.output_offset;

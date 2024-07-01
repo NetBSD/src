@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.216 2024/05/17 10:25:43 nia Exp $
+#	$NetBSD: GENERIC64,v 1.216.2.1 2024/07/01 01:01:13 perseant Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -54,6 +54,8 @@ options 	HEARTBEAT_MAX_PERIOD_DEFAULT=15
 
 # The QEMU virt machine
 #options 	EARLYCONS=plcom, CONSADDR=0x09000000
+# Ampere Altra/Altra Max
+#options 	EARLYCONS=plcom, CONSADDR=0x100002600000
 
 # Hardware management of the Access flag and dirty state (HAFDBS).
 options 	ARMV81_HAFDBS

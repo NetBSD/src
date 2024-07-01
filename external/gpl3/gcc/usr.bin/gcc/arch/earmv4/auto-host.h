@@ -372,6 +372,12 @@
 #endif
 
 
+/* Define if your assembler supports conditional branch relaxation. */
+#ifndef USED_FOR_TARGET
+/* #undef HAVE_AS_COND_BRANCH_RELAXATION */
+#endif
+
+
 /* Define if your assembler supports the --debug-prefix-map option. */
 #ifndef USED_FOR_TARGET
 #define HAVE_AS_DEBUG_PREFIX_MAP 1
@@ -603,6 +609,12 @@
 #endif
 
 
+/* Define if your macOS assembler supports .build_version directives */
+#ifndef USED_FOR_TARGET
+/* #undef HAVE_AS_MACOS_BUILD_VERSION */
+#endif
+
+
 /* Define if the assembler understands -march=rv*_zifencei. */
 #ifndef USED_FOR_TARGET
 /* #undef HAVE_AS_MARCH_ZIFENCEI */
@@ -632,6 +644,12 @@
    */
 #ifndef USED_FOR_TARGET
 /* #undef HAVE_AS_MMACOSX_VERSION_MIN_OPTION */
+#endif
+
+
+/* Define if your assembler supports -mrelax option. */
+#ifndef USED_FOR_TARGET
+/* #undef HAVE_AS_MRELAX_OPTION */
 #endif
 
 
@@ -674,6 +692,12 @@
 /* Define if your assembler supports R_PPC*_PLTSEQ relocations. */
 #ifndef USED_FOR_TARGET
 /* #undef HAVE_AS_PLTSEQ */
+#endif
+
+
+/* Define if your assembler supports htm insns on power10. */
+#ifndef USED_FOR_TARGET
+/* #undef HAVE_AS_POWER10_HTM */
 #endif
 
 
@@ -2210,6 +2234,12 @@
 /* Define if O_CLOEXEC supported by fcntl. */
 #ifndef USED_FOR_TARGET
 #define HOST_HAS_O_CLOEXEC 1
+#endif
+
+
+/* Define which stat syscall is able to handle 64bit indodes. */
+#ifndef USED_FOR_TARGET
+/* #undef HOST_STAT_FOR_64BIT_INODES */
 #endif
 
 

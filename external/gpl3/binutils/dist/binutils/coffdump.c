@@ -1,5 +1,5 @@
 /* Coff file dumper.
-   Copyright (C) 1994-2022 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -366,8 +366,7 @@ dump_coff_scope (struct coff_scope *p)
   if (p)
     {
       tab (1);
-      printf ("%s %" BFD_VMA_FMT "x ",
-	      _("List of blocks "), (bfd_vma) (uintptr_t) p);
+      printf ("%s %p ", _("List of blocks "), p);
 
       if (p->sec)
 	printf( "  %s %x..%x",  p->sec->name,p->offset, p->offset + p->size -1);

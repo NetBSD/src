@@ -3775,13 +3775,14 @@ cp_build_indirect_ref (location_t loc, tree ptr, ref_operator errorstring,
    If INDEX is of some user-defined type, it must be converted to
    integer type.  Otherwise, to make a compatible PLUS_EXPR, it
    will inherit the type of the array, which will be some pointer type.
-   
+
    LOC is the location to use in building the array reference.  */
 
 tree
 cp_build_array_ref (location_t loc, tree array, tree idx,
 		    tsubst_flags_t complain)
 {
+  tree first = NULL_TREE;
   tree ret;
 
   if (idx == 0)
@@ -3825,6 +3826,14 @@ cp_build_array_ref (location_t loc, tree array, tree idx,
     }
 
   bool non_lvalue = convert_vector_to_array_for_subscript (loc, &array, idx);
+
+  /* 0[array] */
+  if (TREE_CODE (TREE_TYPE (idx)) == ARRAY_TYPE)
+    {
+      std::swap (array, idx);
+      if (flag_strong_eval_order == 2 && TREE_SIDE_EFFECTS (array))
+	idx = first = save_expr (idx);
+    }
 
   if (TREE_CODE (TREE_TYPE (array)) == ARRAY_TYPE)
     {
@@ -3901,15 +3910,16 @@ cp_build_array_ref (location_t loc, tree array, tree idx,
       protected_set_expr_location (ret, loc);
       if (non_lvalue)
 	ret = non_lvalue_loc (loc, ret);
+      if (first)
+	ret = build2_loc (loc, COMPOUND_EXPR, TREE_TYPE (ret), first, ret);
       return ret;
     }
 
   {
     tree ar = cp_default_conversion (array, complain);
     tree ind = cp_default_conversion (idx, complain);
-    tree first = NULL_TREE;
 
-    if (flag_strong_eval_order == 2 && TREE_SIDE_EFFECTS (ind))
+    if (!first && flag_strong_eval_order == 2 && TREE_SIDE_EFFECTS (ind))
       ar = first = save_expr (ar);
 
     /* Put the integer in IND to simplify error checking.  */
@@ -10352,7 +10362,9 @@ treat_lvalue_as_rvalue_p (tree expr, bool return_p)
       for (tree decl = b->names; decl; decl = TREE_CHAIN (decl))
 	if (decl == retval)
 	  return set_implicit_rvalue_p (move (expr));
-      if (b->kind == sk_function_parms || b->kind == sk_try)
+      if (b->kind == sk_function_parms
+	  || b->kind == sk_try
+	  || b->kind == sk_namespace)
 	return NULL_TREE;
     }
 }
@@ -10678,6 +10690,9 @@ check_return_expr (tree retval, bool *no_warning)
   if (fn_returns_value_p && flag_elide_constructors)
     {
       if (named_return_value_okay_p
+	  /* The current NRV implementation breaks if a backward goto needs to
+	     destroy the object (PR92407).  */
+	  && !cp_function_chain->backward_goto
           && (current_function_return_value == NULL_TREE
 	      || current_function_return_value == bare_retval))
 	current_function_return_value = bare_retval;

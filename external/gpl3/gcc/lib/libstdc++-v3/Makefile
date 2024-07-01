@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.55 2024/02/21 09:06:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.55.2.1 2024/07/01 01:01:00 perseant Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -214,6 +214,8 @@ COPTS.${f}.cc+= -fimplicit-templates ${G_GLIBCXX_ABI_FLAGS}
 # XXXGCC12
 # hits on sparc, sparc64, armv7 at least
 COPTS.floating_to_chars.cc+=	-Wno-error=unused-function
+COPTS.cp-demangle.c+=	-Wno-error=stack-protector
+COPTS.floating_to_chars.cc+=	-Wno-error=stack-protector
 
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>

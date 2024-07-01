@@ -1326,7 +1326,7 @@ traverse_io_block (gfc_code *code, bool *has_reached, gfc_code *prev)
       if (iters[i])
 	{
 	  gfc_expr *var = iters[i]->var;
-	  for (int j = i - 1; j < i; j++)
+	  for (int j = 0; j < i; j++)
 	    {
 	      if (iters[j]
 		  && (var_in_expr (var, iters[j]->start)
@@ -5792,6 +5792,9 @@ check_externals_expr (gfc_expr **ep, int *walk_subtrees ATTRIBUTE_UNUSED,
   gfc_actual_arglist *actual;
 
   if (e->expr_type != EXPR_FUNCTION)
+    return 0;
+
+  if (e->symtree && e->symtree->n.sym->attr.subroutine)
     return 0;
 
   sym = e->value.function.esym;

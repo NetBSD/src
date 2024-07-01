@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2022 Free Software Foundation, Inc.
+# Copyright (C) 2014-2024 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -78,6 +78,8 @@
 #	USER_LABEL_PREFIX - prefix to add to user-visible symbols.
 #	RODATA_NAME, SDATA_NAME, SBSS_NAME, BSS_NAME - base parts of names
 #		for standard sections, without initial "." or suffixes.
+#       SYMBOL_ABI_ALIGNMENT - minimum alignment in bytes which needs to be
+#               applied to every symbol definition
 #
 # When adding sections, do note that the names of some sections are used
 # when specifying the start address of the next.
@@ -167,19 +169,29 @@ if test -z "$GOT"; then
     GOTPLT=".got.plt      ${RELOCATING-0} : { *(.got.plt)${RELOCATING+ *(.igot.plt)} }"
   fi
 fi
+
+def_symbol()
+{
+    if [ -z "${SYMBOL_ABI_ALIGNMENT}" ]; then
+	echo "${USER_LABEL_PREFIX}$1 = ."
+    else
+	echo "${USER_LABEL_PREFIX}$1 = ALIGN(${SYMBOL_ABI_ALIGNMENT})"
+    fi
+}
+
 REL_IFUNC=".rel.ifunc    ${RELOCATING-0} : { *(.rel.ifunc) }"
 RELA_IFUNC=".rela.ifunc   ${RELOCATING-0} : { *(.rela.ifunc) }"
 REL_IPLT=".rel.iplt     ${RELOCATING-0} :
     {
-      ${RELOCATING+${CREATE_PIC-PROVIDE_HIDDEN (${USER_LABEL_PREFIX}__rel_iplt_start = .);}}
+      ${RELOCATING+${CREATE_PIC-PROVIDE_HIDDEN ($(def_symbol "__rel_iplt_start"));}}
       *(.rel.iplt)
-      ${RELOCATING+${CREATE_PIC-PROVIDE_HIDDEN (${USER_LABEL_PREFIX}__rel_iplt_end = .);}}
+      ${RELOCATING+${CREATE_PIC-PROVIDE_HIDDEN ($(def_symbol "__rel_iplt_end"));}}
     }"
 RELA_IPLT=".rela.iplt    ${RELOCATING-0} :
     {
-      ${RELOCATING+${CREATE_PIC-PROVIDE_HIDDEN (${USER_LABEL_PREFIX}__rela_iplt_start = .);}}
+      ${RELOCATING+${CREATE_PIC-PROVIDE_HIDDEN ($(def_symbol "__rela_iplt_start"));}}
       *(.rela.iplt)
-      ${RELOCATING+${CREATE_PIC-PROVIDE_HIDDEN (${USER_LABEL_PREFIX}__rela_iplt_end = .);}}
+      ${RELOCATING+${CREATE_PIC-PROVIDE_HIDDEN ($(def_symbol "__rela_iplt_end"));}}
     }"
 DYNAMIC=".dynamic      ${RELOCATING-0} : { *(.dynamic) }"
 RODATA=".${RODATA_NAME}       ${RELOCATING-0} : { *(.${RODATA_NAME}${RELOCATING+ .${RODATA_NAME}.* .gnu.linkonce.r.*}) }"
@@ -269,23 +281,23 @@ else
 fi
 PREINIT_ARRAY=".preinit_array    :
   {
-    ${CREATE_SHLIB-PROVIDE_HIDDEN (${USER_LABEL_PREFIX}__preinit_array_start = .);}
+    ${CREATE_SHLIB-PROVIDE_HIDDEN ($(def_symbol "__preinit_array_start"));}
     KEEP (*(.preinit_array))
-    ${CREATE_SHLIB-PROVIDE_HIDDEN (${USER_LABEL_PREFIX}__preinit_array_end = .);}
+    ${CREATE_SHLIB-PROVIDE_HIDDEN ($(def_symbol "__preinit_array_end"));}
   }"
 INIT_ARRAY=".init_array    :
   {
-    ${CREATE_SHLIB-PROVIDE_HIDDEN (${USER_LABEL_PREFIX}__init_array_start = .);}
+    ${CREATE_SHLIB-PROVIDE_HIDDEN ($(def_symbol "__init_array_start"));}
     ${SORT_INIT_ARRAY}
     KEEP (*(.init_array ${CTORS_IN_INIT_ARRAY}))
-    ${CREATE_SHLIB-PROVIDE_HIDDEN (${USER_LABEL_PREFIX}__init_array_end = .);}
+    ${CREATE_SHLIB-PROVIDE_HIDDEN ($(def_symbol "__init_array_end"));}
   }"
 FINI_ARRAY=".fini_array    :
   {
-    ${CREATE_SHLIB-PROVIDE_HIDDEN (${USER_LABEL_PREFIX}__fini_array_start = .);}
+    ${CREATE_SHLIB-PROVIDE_HIDDEN ($(def_symbol "__fini_array_start"));}
     ${SORT_FINI_ARRAY}
     KEEP (*(.fini_array ${DTORS_IN_FINI_ARRAY}))
-    ${CREATE_SHLIB-PROVIDE_HIDDEN (${USER_LABEL_PREFIX}__fini_array_end = .);}
+    ${CREATE_SHLIB-PROVIDE_HIDDEN ($(def_symbol "__fini_array_end"));}
   }"
 CTOR=".ctors        ${CONSTRUCTING-0} :
   {
@@ -325,16 +337,15 @@ DTOR=".dtors        ${CONSTRUCTING-0} :
   }"
 STACK=".stack        ${RELOCATING-0}${RELOCATING+${STACK_ADDR}} :
   {
-    ${RELOCATING+${USER_LABEL_PREFIX}_stack = .;}
+    ${RELOCATING+$(def_symbol "_stack");}
     *(.stack)
     ${RELOCATING+${STACK_SENTINEL}}
   }"
 test "${HAVE_NOINIT}" = "yes" && NOINIT="
   /* This section contains data that is not initialized during load,
      or during the application's initialization sequence.  */
-  .noinit (NOLOAD) :
+  .noinit ${RELOCATING-0} (NOLOAD) : ${RELOCATING+ALIGN(${ALIGNMENT})}
   {
-    ${RELOCATING+. = ALIGN(${ALIGNMENT});}
     ${RELOCATING+PROVIDE (__noinit_start = .);}
     *(.noinit${RELOCATING+ .noinit.* .gnu.linkonce.n.*})
     ${RELOCATING+. = ALIGN(${ALIGNMENT});}
@@ -343,9 +354,8 @@ test "${HAVE_NOINIT}" = "yes" && NOINIT="
 test "${HAVE_PERSISTENT}" = "yes" && PERSISTENT="
   /* This section contains data that is initialized during load,
      but not during the application's initialization sequence.  */
-  .persistent :
+  .persistent ${RELOCATING-0} : ${RELOCATING+ALIGN(${ALIGNMENT})}
   {
-    ${RELOCATING+. = ALIGN(${ALIGNMENT});}
     ${RELOCATING+PROVIDE (__persistent_start = .);}
     *(.persistent${RELOCATING+ .persistent.* .gnu.linkonce.p.*})
     ${RELOCATING+. = ALIGN(${ALIGNMENT});}
@@ -380,7 +390,7 @@ else
 fi
 
 cat <<EOF
-/* Copyright (C) 2014-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -496,16 +506,16 @@ cat >> ldscripts/dyntmp.$$ <<EOF
   .rel.plt      ${RELOCATING-0} :
     {
       *(.rel.plt)
-      ${IREL_IN_PLT+${RELOCATING+${CREATE_PIC-PROVIDE_HIDDEN (${USER_LABEL_PREFIX}__rel_iplt_start = .);}}}
+      ${IREL_IN_PLT+${RELOCATING+${CREATE_PIC-PROVIDE_HIDDEN ($(def_symbol "__rel_iplt_start"));}}}
       ${IREL_IN_PLT+${RELOCATING+*(.rel.iplt)}}
-      ${IREL_IN_PLT+${RELOCATING+${CREATE_PIC-PROVIDE_HIDDEN (${USER_LABEL_PREFIX}__rel_iplt_end = .);}}}
+      ${IREL_IN_PLT+${RELOCATING+${CREATE_PIC-PROVIDE_HIDDEN ($(def_symbol "__rel_iplt_end"));}}}
     }
   .rela.plt     ${RELOCATING-0} :
     {
       *(.rela.plt)
-      ${IREL_IN_PLT+${RELOCATING+${CREATE_PIC-PROVIDE_HIDDEN (${USER_LABEL_PREFIX}__rela_iplt_start = .);}}}
+      ${IREL_IN_PLT+${RELOCATING+${CREATE_PIC-PROVIDE_HIDDEN ($(def_symbol "__rela_iplt_start"));}}}
       ${IREL_IN_PLT+${RELOCATING+*(.rela.iplt)}}
-      ${IREL_IN_PLT+${RELOCATING+${CREATE_PIC-PROVIDE_HIDDEN (${USER_LABEL_PREFIX}__rela_iplt_end = .);}}}
+      ${IREL_IN_PLT+${RELOCATING+${CREATE_PIC-PROVIDE_HIDDEN ($(def_symbol "__rela_iplt_end"));}}}
     }
   ${OTHER_PLT_RELOC_SECTIONS}
 EOF
@@ -604,6 +614,7 @@ cat <<EOF
   ${OTHER_READONLY_SECTIONS}
   .eh_frame_hdr ${RELOCATING-0} : { *(.eh_frame_hdr)${RELOCATING+ *(.eh_frame_entry .eh_frame_entry.*)} }
   .eh_frame     ${RELOCATING-0} : ONLY_IF_RO { KEEP (*(.eh_frame))${RELOCATING+ *(.eh_frame.*)} }
+  .sframe       ${RELOCATING-0} : ONLY_IF_RO { *(.sframe)${RELOCATING+ *(.sframe.*)} }
   .gcc_except_table ${RELOCATING-0} : ONLY_IF_RO { *(.gcc_except_table${RELOCATING+ .gcc_except_table.*}) }
   .gnu_extab ${RELOCATING-0} : ONLY_IF_RO { *(.gnu_extab*) }
   /* These sections are generated by the Sun/Oracle C++ compiler.  */
@@ -622,6 +633,7 @@ cat <<EOF
 
   /* Exception handling  */
   .eh_frame     ${RELOCATING-0} : ONLY_IF_RW { KEEP (*(.eh_frame))${RELOCATING+ *(.eh_frame.*)} }
+  .sframe       ${RELOCATING-0} : ONLY_IF_RW { *(.sframe)${RELOCATING+ *(.sframe.*)} }
   .gnu_extab    ${RELOCATING-0} : ONLY_IF_RW { *(.gnu_extab) }
   .gcc_except_table ${RELOCATING-0} : ONLY_IF_RW { *(.gcc_except_table${RELOCATING+ .gcc_except_table.*}) }
   .exception_ranges ${RELOCATING-0} : ONLY_IF_RW { *(.exception_ranges${RELOCATING+*}) }
@@ -629,7 +641,7 @@ cat <<EOF
   /* Thread Local Storage sections  */
   .tdata	${RELOCATING-0} :
    {
-     ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN (${USER_LABEL_PREFIX}__tdata_start = .);}}
+     ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN ($(def_symbol "__tdata_start"));}}
      *(.tdata${RELOCATING+ .tdata.* .gnu.linkonce.td.*})
    }
   .tbss		${RELOCATING-0} : { *(.tbss${RELOCATING+ .tbss.* .gnu.linkonce.tb.*})${RELOCATING+ *(.tcommon)} }
@@ -677,10 +689,11 @@ cat <<EOF
   ${SDATA_GOT+${OTHER_GOT_SECTIONS}}
   ${DATA_SDATA-${SDATA}}
   ${DATA_SDATA-${OTHER_SDATA_SECTIONS}}
-  ${RELOCATING+${DATA_END_SYMBOLS-${CREATE_SHLIB+PROVIDE (}${USER_LABEL_PREFIX}_edata = .${CREATE_SHLIB+)}; PROVIDE (${USER_LABEL_PREFIX}edata = .);}}
+  ${RELOCATING+${SYMBOL_ABI_ALIGNMENT+. = ALIGN(${SYMBOL_ABI_ALIGNMENT});}}
+  ${RELOCATING+${DATA_END_SYMBOLS-${CREATE_SHLIB+PROVIDE (}$(def_symbol "_edata")${CREATE_SHLIB+)}; PROVIDE ($(def_symbol "edata"));}}
   ${PERSISTENT}
-  ${RELOCATING+. = .;}
-  ${RELOCATING+${CREATE_SHLIB+PROVIDE (}${USER_LABEL_PREFIX}__bss_start = .${CREATE_SHLIB+)};}
+  ${RELOCATING+. = ALIGN(ALIGNOF(NEXT_SECTION));}
+  ${RELOCATING+${CREATE_SHLIB+PROVIDE (}$(def_symbol "__bss_start")${CREATE_SHLIB+)};}
   ${RELOCATING+${OTHER_BSS_SYMBOLS}}
   ${DATA_SDATA-${SBSS}}
   ${BSS_PLT+${PLT}}
@@ -714,7 +727,7 @@ cat <<EOF
   ${LARGE_BSS_AFTER_BSS-${LARGE_BSS}}
   ${RELOCATING+. = ALIGN(${ALIGNMENT});}
   ${RELOCATING+${OTHER_END_SYMBOLS}}
-  ${RELOCATING+${END_SYMBOLS-${CREATE_SHLIB+PROVIDE (}${USER_LABEL_PREFIX}_end = .${CREATE_SHLIB+)}; PROVIDE (${USER_LABEL_PREFIX}end = .);}}
+  ${RELOCATING+${END_SYMBOLS-${CREATE_SHLIB+PROVIDE (}$(def_symbol "_end")${CREATE_SHLIB+)}; PROVIDE ($(def_symbol "end"));}}
   ${RELOCATING+${DATA_SEGMENT_END}}
   ${TINY_DATA_SECTION}
   ${TINY_BSS_SECTION}
@@ -723,22 +736,8 @@ EOF
 
 test -z "${NON_ALLOC_DYN}" || emit_dyn
 
-cat <<EOF
-  /* Stabs debugging sections.  */
-  .stab          0 : { *(.stab) }
-  .stabstr       0 : { *(.stabstr) }
-  .stab.excl     0 : { *(.stab.excl) }
-  .stab.exclstr  0 : { *(.stab.exclstr) }
-  .stab.index    0 : { *(.stab.index) }
-  .stab.indexstr 0 : { *(.stab.indexstr) }
-
-  .comment       0 : { *(.comment) }
-
-  .gnu.build.attributes : { *(.gnu.build.attributes${RELOCATING+ .gnu.build.attributes.*}) }
-
-EOF
-
-. $srcdir/scripttempl/DWARF.sc
+source_sh $srcdir/scripttempl/misc-sections.sc
+source_sh $srcdir/scripttempl/DWARF.sc
 
 cat <<EOF
   ${ATTRS_SECTIONS}

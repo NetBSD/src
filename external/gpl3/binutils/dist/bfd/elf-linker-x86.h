@@ -1,5 +1,5 @@
 /* x86-specific ELF linker support between ld and bfd.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -31,9 +31,6 @@ enum elf_x86_prop_report
 /* Used to pass x86-specific linker options from ld to bfd.  */
 struct elf_linker_x86_params
 {
-  /* TRUE if BND prefix in PLT entries is always generated.  */
-  unsigned int bndplt: 1;
-
   /* TRUE if IBT-enabled PLT entries should be generated.  */
   unsigned int ibtplt: 1;
 
@@ -63,6 +60,9 @@ struct elf_linker_x86_params
 
   /* Report relative relocations.  */
   unsigned int report_relative_reloc : 1;
+
+  /* Mark PLT with dynamic tags.  */
+  unsigned int mark_plt : 1;
 
   /* X86-64 ISA level needed.  */
   unsigned int isa_level;

@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.64 2024/06/22 17:59:49 mrg Exp $
+# $NetBSD: md.alpha,v 1.64.2.1 2024/07/01 00:59:49 perseant Exp $
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/gtf					xserver-xorg-server-bin	xorg
@@ -38,10 +38,8 @@
 ./usr/X11R7/lib/modules/drivers/apm_drv.so		xserver-obsolete	xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/lib/modules/drivers/apm_drv.so.1		-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/drivers/apm_drv.so.1		xserver-obsolete	xorg,xorg_server_ver=120,obsolete
-./usr/X11R7/lib/modules/drivers/ark_drv.so		-unknown-	xorg,xorg_server_ver=110
-./usr/X11R7/lib/modules/drivers/ark_drv.so		xserver-obsolete	xorg,xorg_server_ver=120,obsolete
-./usr/X11R7/lib/modules/drivers/ark_drv.so.0		-unknown-	xorg,xorg_server_ver=110
-./usr/X11R7/lib/modules/drivers/ark_drv.so.0		xserver-obsolete	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/lib/modules/drivers/ark_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/ark_drv.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ast_drv.so		xserver-xf86-video-ast-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/ast_drv.so.1		xserver-xf86-video-ast-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so		xserver-xf86-video-ati-drivers	xorg
@@ -100,10 +98,8 @@
 ./usr/X11R7/lib/modules/drivers/tga_drv.so.1		xserver-xf86-video-tga-drivers	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/drivers/tga_drv.so		xserver-xf86-video-tga-drivers	xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/lib/modules/drivers/tga_drv.so.1		xserver-xf86-video-tga-drivers	xorg,xorg_server_ver=120,obsolete
-./usr/X11R7/lib/modules/drivers/trident_drv.so		xserver-xf86-video-trident-drivers	xorg,xorg_server_ver=110
-./usr/X11R7/lib/modules/drivers/trident_drv.so.1	xserver-xf86-video-trident-drivers	xorg,xorg_server_ver=110
-./usr/X11R7/lib/modules/drivers/trident_drv.so		xserver-xf86-video-trident-drivers	xorg,xorg_server_ver=120,obsolete
-./usr/X11R7/lib/modules/drivers/trident_drv.so.1	xserver-xf86-video-trident-drivers	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/lib/modules/drivers/trident_drv.so		xserver-xf86-video-trident-drivers	xorg
+./usr/X11R7/lib/modules/drivers/trident_drv.so.1	xserver-xf86-video-trident-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/tseng_drv.so		xserver-xf86-video-tseng-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/tseng_drv.so.1		xserver-xf86-video-tseng-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/vga_drv.so		xserver-obsolete	obsolete
@@ -343,7 +339,7 @@
 ./usr/X11R7/man/html4/r128.html				xserver-xf86-video-r128-htmlman	html,xorg
 ./usr/X11R7/man/html4/radeon.html			xserver-xf86-video-radeon-kms-htmlman	html,xorg
 ./usr/X11R7/man/html4/radeonhd.html			xserver-obsolete	html,xorg,obsolete
-./usr/X11R7/man/html4/s3.html				xserver-xf86-video-s3-htmlman	html,xorg
+./usr/X11R7/man/html4/s3.html				xserver-obsolete	html,xorg,obsolete
 ./usr/X11R7/man/html4/s3virge.html			xserver-xf86-video-s3virge-htmlman	html,xorg
 ./usr/X11R7/man/html4/savage.html			xserver-xf86-video-savage-htmlman	html,xorg
 ./usr/X11R7/man/html4/siliconmotion.html		xserver-xf86-video-siliconmotion-htmlman	html,xorg
@@ -409,8 +405,7 @@
 ./usr/X11R7/man/man4/siliconmotion.4			xserver-xf86-video-siliconmotion-man	.man,xorg
 ./usr/X11R7/man/man4/sis.4				xserver-xf86-video-sis-man	.man,xorg
 ./usr/X11R7/man/man4/tdfx.4				xserver-xf86-video-tdfx-man	.man,xorg
-./usr/X11R7/man/man4/trident.4				xserver-xf86-video-trident-man	.man,xorg,xorg_server_ver=110
-./usr/X11R7/man/man4/trident.4				xserver-xf86-video-trident-man	.man,xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/man/man4/trident.4				xserver-xf86-video-trident-man	.man,xorg
 ./usr/X11R7/man/man4/tseng.4				xserver-xf86-video-tseng-man	.man,xorg
 ./usr/X11R7/man/man4/vga.4				xserver-obsolete	obsolete
 ./usr/X11R7/man/man4/void.4				xserver-obsolete	obsolete

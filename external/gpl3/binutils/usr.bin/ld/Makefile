@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2023/04/27 20:55:27 hgutch Exp $
+#	$NetBSD: Makefile,v 1.39.2.1 2024/07/01 01:00:42 perseant Exp $
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH} \
 		-I${DIST}/ld \
@@ -24,6 +24,7 @@ COPTS.ldgram.c = -Wno-stack-protector
 
 PROGDPLIBS+=	gnuctf 	${TOP}/${BFDSUBDIR}/libgnuctf
 PROGDPLIBS+=	bfd	${TOP}/${BFDSUBDIR}/libbfd
+PROGDPLIBS+=	sframe	${TOP}/${BFDSUBDIR}/libsframe
 PROGDPLIBS+=	iberty 	${TOP}/${BFDSUBDIR}/libiberty
 
 TEXINFO=	${G_TEXINFOS}
@@ -35,7 +36,7 @@ FILESDIR=	${SCRIPTSDIR}/ldscripts
 .PATH: ${COMMONOBJDIR} ${DIST}/ld ${DIST}/ld/emulparams \
 	${DIST}/ld/emultempl ${DIST}/ld/scripttempl ldscripts
 
-BUILDSYMLINKS+=	${G_STRINGIFY} stringify.sed
+BUILDSYMLINKS+=	${DIST}/ld/emultempl/stringify.sed stringify.sed
 BUILDSYMLINKS+=	gen-doc.texi configdoc.texi
 
 ${PROG}.info: configdoc.texi bfdver.texi
@@ -47,7 +48,8 @@ ${PROG}.info: configdoc.texi bfdver.texi
 
 .depend.${f}: ${f}.sh
 	${_MKTARGET_CREATE}
-	(srcdir=${DIST}/ld EMULATION_NAME=$f . ${>:M*.sh} && \
+	(alias source_sh=.; \
+	 srcdir=${DIST}/ld EMULATION_NAME=$f . ${>:M*.sh} && \
 		if [ x"$$TEMPLATE_NAME" != x ]; then \
 			temp_name=$$TEMPLATE_NAME.em; \
 		else \

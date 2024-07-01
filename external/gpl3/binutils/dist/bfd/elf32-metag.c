@@ -1,5 +1,5 @@
 /* Meta support for 32-bit ELF
-   Copyright (C) 2013-2022 Free Software Foundation, Inc.
+   Copyright (C) 2013-2024 Free Software Foundation, Inc.
    Contributed by Imagination Technologies Ltd.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -3342,7 +3342,7 @@ metag_build_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
      section.  The user should fix his linker script.  */
   if (hsh->target_section->output_section == NULL
       && info->non_contiguous_regions)
-    info->callbacks->einfo (_("%F%P: Could not assign '%pA' to an output section. "
+    info->callbacks->einfo (_("%F%P: Could not assign `%pA' to an output section. "
 			      "Retry without --enable-non-contiguous-regions.\n"),
 			    hsh->target_section);
 

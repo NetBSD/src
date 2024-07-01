@@ -23,6 +23,7 @@ AC_DEFUN([GAS_WORKING_ASSERT],
 [AC_MSG_CHECKING([for working assert macro])
 AC_CACHE_VAL(gas_cv_assert_ok,
 AC_TRY_LINK([#include <assert.h>
+#include <string.h>
 #include <stdio.h>], [
 /* check for requoting problems */
 static int a, b, c, d;

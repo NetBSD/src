@@ -254,9 +254,11 @@
 
 #ifdef __clang__
 #define _GLIBCXX_SIMD_NORMAL_MATH
+#define _GLIBCXX_SIMD_ALWAYS_INLINE_LAMBDA
 #else
 #define _GLIBCXX_SIMD_NORMAL_MATH                                              \
   [[__gnu__::__optimize__("finite-math-only,no-signed-zeros")]]
+#define _GLIBCXX_SIMD_ALWAYS_INLINE_LAMBDA __attribute__((__always_inline__))
 #endif
 #define _GLIBCXX_SIMD_NEVER_INLINE [[__gnu__::__noinline__]]
 #define _GLIBCXX_SIMD_INTRINSIC                                                \
@@ -265,7 +267,7 @@
 #define _GLIBCXX_SIMD_IS_UNLIKELY(__x) __builtin_expect(__x, 0)
 #define _GLIBCXX_SIMD_IS_LIKELY(__x) __builtin_expect(__x, 1)
 
-#if defined __STRICT_ANSI__ && __STRICT_ANSI__
+#if __STRICT_ANSI__ || defined __clang__
 #define _GLIBCXX_SIMD_CONSTEXPR
 #define _GLIBCXX_SIMD_USE_CONSTEXPR_API const
 #else
@@ -294,6 +296,8 @@
 #ifdef _GLIBCXX_SIMD_NO_ALWAYS_INLINE
 #undef _GLIBCXX_SIMD_ALWAYS_INLINE
 #define _GLIBCXX_SIMD_ALWAYS_INLINE inline
+#undef _GLIBCXX_SIMD_ALWAYS_INLINE_LAMBDA
+#define _GLIBCXX_SIMD_ALWAYS_INLINE_LAMBDA
 #undef _GLIBCXX_SIMD_INTRINSIC
 #define _GLIBCXX_SIMD_INTRINSIC inline
 #endif

@@ -1,5 +1,5 @@
 /* libdeps plugin for the GNU linker.
-   Copyright (C) 2020-2022 Free Software Foundation, Inc.
+   Copyright (C) 2020-2024 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 

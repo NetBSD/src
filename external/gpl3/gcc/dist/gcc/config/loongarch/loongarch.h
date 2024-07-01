@@ -69,8 +69,23 @@ along with GCC; see the file COPYING3.  If not see
 #define SUBTARGET_ASM_SPEC ""
 #endif
 
+#if HAVE_AS_MRELAX_OPTION && HAVE_AS_COND_BRANCH_RELAXATION
+#define ASM_MRELAX_DEFAULT "%{!mrelax:%{!mno-relax:-mrelax}}"
+#else
+#define ASM_MRELAX_DEFAULT "%{!mrelax:%{!mno-relax:-mno-relax}}"
+#endif
+
+#if HAVE_AS_MRELAX_OPTION
+#define ASM_MRELAX_SPEC \
+  "%{!mno-pass-mrelax-to-as:%{mrelax} %{mno-relax} " ASM_MRELAX_DEFAULT "}"
+#else
+#define ASM_MRELAX_SPEC \
+  "%{mpass-mrelax-to-as:%{mrelax} %{mno-relax} " ASM_MRELAX_DEFAULT "}"
+#endif
+
 #undef ASM_SPEC
-#define ASM_SPEC "%{mabi=*} %{subtarget_asm_spec}"
+#define ASM_SPEC \
+  "%{mabi=*} " ASM_MRELAX_SPEC " %(subtarget_asm_spec)"
 
 /* Extra switches sometimes passed to the linker.  */
 
@@ -978,11 +993,6 @@ typedef struct {
 
 #define ASM_OUTPUT_ALIGN(STREAM, LOG) fprintf (STREAM, "\t.align\t%d\n", (LOG))
 
-/* "nop" instruction 54525952 (andi $r0,$r0,0) is
-   used for padding.  */
-#define ASM_OUTPUT_ALIGN_WITH_NOP(STREAM, LOG) \
-  fprintf (STREAM, "\t.align\t%d,54525952,4\n", (LOG))
-
 /* This is how to output an assembler line to advance the location
    counter by SIZE bytes.  */
 
@@ -1148,3 +1158,8 @@ struct GTY (()) machine_function
   (TARGET_HARD_FLOAT_ABI ? (TARGET_DOUBLE_FLOAT_ABI ? 8 : 4) : 0)
 
 #define FUNCTION_VALUE_REGNO_P(N) ((N) == GP_RETURN || (N) == FP_RETURN)
+
+/* LoongArch maintains ICache/DCache coherency by hardware,
+   we just need "ibar" to avoid instruction hazard here.  */
+#undef  CLEAR_INSN_CACHE
+#define CLEAR_INSN_CACHE(beg, end) __builtin_loongarch_ibar (0)

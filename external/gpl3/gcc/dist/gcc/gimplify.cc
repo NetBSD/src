@@ -2764,6 +2764,7 @@ gimplify_switch_expr (tree *expr_p, gimple_seq *pre_p)
 
       switch_stmt = gimple_build_switch (SWITCH_COND (switch_expr),
 					 default_case, labels);
+      gimple_set_location (switch_stmt, EXPR_LOCATION (switch_expr));
       /* For the benefit of -Wimplicit-fallthrough, if switch_body_seq
 	 ends with a GIMPLE_LABEL holding SWITCH_BREAK_LABEL_P LABEL_DECL,
 	 wrap the GIMPLE_SWITCH up to that GIMPLE_LABEL into a GIMPLE_BIND,
@@ -6847,7 +6848,12 @@ gimplify_asm_expr (tree *expr_p, gimple_seq *pre_p, gimple_seq *post_p)
       stmt = gimple_build_asm_vec (TREE_STRING_POINTER (ASM_STRING (expr)),
 				   inputs, outputs, clobbers, labels);
 
-      gimple_asm_set_volatile (stmt, ASM_VOLATILE_P (expr) || noutputs == 0);
+      /* asm is volatile if it was marked by the user as volatile or
+	 there are no outputs or this is an asm goto.  */
+      gimple_asm_set_volatile (stmt,
+			       ASM_VOLATILE_P (expr)
+			       || noutputs == 0
+			       || labels);
       gimple_asm_set_input (stmt, ASM_INPUT_P (expr));
       gimple_asm_set_inline (stmt, ASM_INLINE_P (expr));
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -24,6 +24,7 @@
 #include <string.h>
 #include <values.h>
 #include <stdarg.h>
+#include <unistd.h>
 
 #include "gp-defs.h"
 #include "StringBuilder.h"
@@ -445,6 +446,13 @@ StringBuilder::toFileLn (FILE *fp)
   append ('\0');
   count--;
   fprintf (fp, NTXT ("%s\n"), value);
+}
+
+void
+StringBuilder::write (int fd)
+{
+  if (count > 0)
+    ::write (fd, value, count);
 }
 
 StringBuilder *

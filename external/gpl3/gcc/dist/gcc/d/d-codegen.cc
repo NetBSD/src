@@ -996,6 +996,7 @@ lower_struct_comparison (tree_code code, StructDeclaration *sd,
 	      if (tmode == NULL_TREE)
 		tmode = make_unsigned_type (GET_MODE_BITSIZE (mode.require ()));
 
+	      tmode = build_aligned_type (tmode, TYPE_ALIGN (stype));
 	      t1ref = build_vconvert (tmode, t1ref);
 	      t2ref = build_vconvert (tmode, t2ref);
 
@@ -1105,7 +1106,7 @@ build_array_struct_comparison (tree_code code, StructDeclaration *sd,
 	if (length == 0 || result OP 0) break;  */
   t = build_boolop (EQ_EXPR, length, d_convert (lentype, integer_zero_node));
   t = build_boolop (TRUTH_ORIF_EXPR, t, build_boolop (code, result,
-						      boolean_false_node));
+						      d_bool_false_node));
   t = build1 (EXIT_EXPR, void_type_node, t);
   add_stmt (t);
 
@@ -2197,14 +2198,16 @@ d_build_call (TypeFunction *tf, tree callable, tree object,
       for (size_t i = 0; i < arguments->length; ++i)
 	{
 	  Expression *arg = (*arguments)[i];
-	  tree targ = build_expr (arg);
+	  tree targ;
 
 	  if (i - varargs < nparams && i >= varargs)
 	    {
 	      /* Actual arguments for declared formal arguments.  */
 	      Parameter *parg = tf->parameterList[i - varargs];
-	      targ = convert_for_argument (targ, parg);
+	      targ = convert_for_argument (arg, parg);
 	    }
+	  else
+	    targ = build_expr (arg);
 
 	  /* Don't pass empty aggregates by value.  */
 	  if (empty_aggregate_p (TREE_TYPE (targ)) && !TREE_ADDRESSABLE (targ)
@@ -2220,10 +2223,17 @@ d_build_call (TypeFunction *tf, tree callable, tree object,
 	      Type *t = arg->type->toBasetype ();
 	      StructDeclaration *sd = t->baseElemOf ()->isTypeStruct ()->sym;
 
-	      /* Nested structs also have ADDRESSABLE set, but if the type has
-		 neither a copy constructor nor a destructor available, then we
-		 need to take care of copying its value before passing it.  */
-	      if (arg->op == EXP::structLiteral || (!sd->postblit && !sd->dtor))
+	      /* Need to take care of copying its value before passing the
+		 argument in the following scenarios:
+		 - The argument is a literal expression; a CONSTRUCTOR can't
+		 have its address taken.
+		 - The type has neither a copy constructor nor a destructor
+		 available; nested structs also have ADDRESSABLE set.
+		 - The ABI of the function expects the callee to destroy its
+		 arguments; when the caller is handles destruction, then `targ'
+		 has already been made into a temporary. */
+	      if (arg->op == EXP::structLiteral || (!sd->postblit && !sd->dtor)
+		  || target.isCalleeDestroyingArgs (tf))
 		targ = force_target_expr (targ);
 
 	      targ = convert (build_reference_type (TREE_TYPE (targ)),

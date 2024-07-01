@@ -1,5 +1,5 @@
 /* 32-bit ELF support for Nios II.
-   Copyright (C) 2012-2022 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
    Contributed by Nigel Gray (ngray@altera.com).
    Contributed by Mentor Graphics, Inc.
 
@@ -2491,7 +2491,7 @@ nios2_build_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg ATTRIBUTE_U
      section.  The user should fix his linker script.  */
   if (hsh->target_section->output_section == NULL
       && info->non_contiguous_regions)
-    info->callbacks->einfo (_("%F%P: Could not assign '%pA' to an output section. "
+    info->callbacks->einfo (_("%F%P: Could not assign `%pA' to an output section. "
 			      "Retry without --enable-non-contiguous-regions.\n"),
 			    hsh->target_section);
 
@@ -3724,7 +3724,6 @@ nios2_elf32_relocate_section (bfd *output_bfd,
       const char *name = NULL;
       int r_type;
       const char *format;
-      char *msgbuf = NULL;
       char *msg = NULL;
       bool unresolved_reloc;
       bfd_vma off;
@@ -3825,10 +3824,7 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 
 		  format = _("global pointer relative relocation at address "
 			     "%#" PRIx64 " when _gp not defined\n");
-		  if (asprintf (&msgbuf, format,
-				(uint64_t) reloc_address) == -1)
-		    msgbuf = NULL;
-		  msg = msgbuf;
+		  msg = bfd_asprintf (format, (uint64_t) reloc_address);
 		  r = bfd_reloc_dangerous;
 		}
 	      else
@@ -3857,11 +3853,10 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 				 "the global pointer (at %#" PRIx64 ") "
 				 "because the offset (%" PRId64 ") is out of "
 				 "the allowed range, -32678 to 32767\n" );
-		      if (asprintf (&msgbuf, format, name,
-				    (uint64_t) symbol_address, (uint64_t) gp,
-				    (int64_t) relocation) == -1)
-			msgbuf = NULL;
-		      msg = msgbuf;
+		      msg = bfd_asprintf (format, name,
+					  (uint64_t) symbol_address,
+					  (uint64_t) gp,
+					  (int64_t) relocation);
 		      r = bfd_reloc_outofrange;
 		    }
 		  else
@@ -4531,7 +4526,6 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 	    {
 	      (*info->callbacks->warning) (info, msg, name, input_bfd,
 					   input_section, rel->r_offset);
-	      free (msgbuf);
 	      return false;
 	    }
 	}

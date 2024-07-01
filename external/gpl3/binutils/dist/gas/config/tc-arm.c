@@ -1,5 +1,5 @@
 /* tc-arm.c -- Assemble for the ARM
-   Copyright (C) 1994-2022 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
 	Modified by David Taylor (dtaylor@armltd.co.uk)
 	Cirrus coprocessor mods by Aldy Hernandez (aldyh@redhat.com)
@@ -742,6 +742,7 @@ const char * const reg_expected_msgs[] =
 #define REG_SP	13
 #define REG_LR	14
 #define REG_PC	15
+#define REG_RA_AUTH_CODE 143
 
 /* ARM instructions take 4bytes in the object file, Thumb instructions
    take 2:  */
@@ -1943,21 +1944,6 @@ parse_reg_list (char ** strp, enum reg_list_els etype)
 
 	      reg = arm_reg_parse (&str, rt);
 
-	      /* Skip over allowed registers of alternative types in mixed-type
-	         register lists.  */
-	      if (reg == FAIL && rt == REG_TYPE_PSEUDO
-		  && ((reg = arm_reg_parse (&str, REG_TYPE_RN)) != FAIL))
-		{
-		  cur_reg = reg;
-		  continue;
-		}
-	      else if (reg == FAIL && rt == REG_TYPE_RN
-		       && ((reg = arm_reg_parse (&str, REG_TYPE_PSEUDO)) != FAIL))
-		{
-		  cur_reg = reg;
-		  continue;
-		}
-
 	      if (etype == REGLIST_CLRM)
 		{
 		  if (reg == REG_SP || reg == REG_PC)
@@ -2865,12 +2851,7 @@ s_unreq (int a ATTRIBUTE_UNUSED)
   char saved_char;
 
   name = input_line_pointer;
-
-  while (*input_line_pointer != 0
-	 && *input_line_pointer != ' '
-	 && *input_line_pointer != '\n')
-    ++input_line_pointer;
-
+  input_line_pointer = find_end_of_line (input_line_pointer, flag_m68k_mri);
   saved_char = *input_line_pointer;
   *input_line_pointer = 0;
 
@@ -3222,6 +3203,7 @@ s_code (int unused ATTRIBUTE_UNUSED)
     default:
       as_bad (_("invalid operand to .code directive (%d) (expecting 16 or 32)"), temp);
     }
+  demand_empty_rest_of_line ();
 }
 
 static void
@@ -3244,7 +3226,7 @@ s_force_thumb (int ignore ATTRIBUTE_UNUSED)
 static void
 s_thumb_func (int ignore ATTRIBUTE_UNUSED)
 {
-  s_thumb (0);
+  s_thumb (0);  /* Will check for end-of-line.  */
 
   /* The following label is the name/address of the start of a Thumb function.
      We need to know this for the interworking support.	 */
@@ -3365,20 +3347,7 @@ s_syntax (int unused ATTRIBUTE_UNUSED)
   demand_empty_rest_of_line ();
 }
 
-/* Directives: sectioning and alignment.  */
-
-static void
-s_bss (int ignore ATTRIBUTE_UNUSED)
-{
-  /* We don't support putting frags in the BSS segment, we fake it by
-     marking in_bss, then looking at s_skip for clues.	*/
-  subseg_set (bss_section, 0);
-  demand_empty_rest_of_line ();
-
-#ifdef md_elf_section_change_hook
-  md_elf_section_change_hook ();
-#endif
-}
+/* Directives: alignment.  */
 
 static void
 s_even (int ignore ATTRIBUTE_UNUSED)
@@ -3795,6 +3764,7 @@ s_ltorg (int ignored ATTRIBUTE_UNUSED)
   literal_pool * pool;
   char sym_name[20];
 
+  demand_empty_rest_of_line ();
   pool = find_literal_pool ();
   if (pool == NULL
       || pool->symbol == NULL
@@ -4139,7 +4109,6 @@ s_arm_unwind_fnstart (int ignored ATTRIBUTE_UNUSED)
   unwind.sp_restored = 0;
 }
 
-
 /* Parse a handlerdata directive.  Creates the exception handling table entry
    for the function.  */
 
@@ -4297,15 +4266,19 @@ s_arm_unwind_personality (int ignored ATTRIBUTE_UNUSED)
 /* Parse a directive saving pseudo registers.  */
 
 static void
-s_arm_unwind_save_pseudo (long range)
+s_arm_unwind_save_pseudo (int regno)
 {
   valueT op;
 
-  if (range & (1 << 12))
+  switch (regno)
     {
+    case REG_RA_AUTH_CODE:
       /* Opcode for restoring RA_AUTH_CODE.  */
       op = 0xb4;
       add_unwind_opcode (op, 1);
+      break;
+    default:
+      as_bad (_("Unknown register no. encountered: %d\n"), regno);
     }
 }
 
@@ -4375,6 +4348,80 @@ s_arm_unwind_save_core (long range)
     }
 }
 
+/* Implement correct handling of .save lists enabling the split into
+sublists where necessary, while preserving correct sublist ordering.  */
+
+static void
+parse_dot_save (char **str_p, int prev_reg)
+{
+  long core_regs = 0;
+  int reg;
+  int in_range = 0;
+
+  if (**str_p == ',')
+    *str_p += 1;
+  if (**str_p == '}')
+    {
+      *str_p += 1;
+      return;
+    }
+
+  while ((reg = arm_reg_parse (str_p, REG_TYPE_RN)) != FAIL)
+    {
+      if (!in_range)
+	{
+	  if (core_regs & (1 << reg))
+	    as_tsktsk (_("Warning: duplicated register (r%d) in register list"),
+		       reg);
+	  else if (reg <= prev_reg)
+	    as_tsktsk (_("Warning: register list not in ascending order"));
+
+	  core_regs |= (1 << reg);
+	  prev_reg = reg;
+	  if (skip_past_char(str_p, '-') != FAIL)
+	    in_range = 1;
+	  else if (skip_past_comma(str_p) == FAIL)
+	    first_error (_("bad register list"));
+	}
+      else
+	{
+	  int i;
+	  if (reg <= prev_reg)
+	    first_error (_("bad range in register list"));
+	  for (i = prev_reg + 1; i <= reg; i++)
+	    {
+	      if (core_regs & (1 << i))
+		as_tsktsk (_("Warning: duplicated register (r%d) in register list"),
+			   i);
+	      else
+		core_regs |= 1 << i;
+	    }
+	  in_range = 0;
+	}
+    }
+  if (core_regs)
+    {
+      /* Higher register numbers go in higher memory addresses. When splitting a list,
+	 right-most sublist should therefore be .saved first. Use recursion for this.  */
+      parse_dot_save (str_p, reg);
+      /* We're back from recursion, so emit .save insn for sublist.  */
+      s_arm_unwind_save_core (core_regs);
+      return;
+    }
+  /* Handle pseudo-regs, under assumption these are emitted singly.  */
+  else if ((reg = arm_reg_parse (str_p, REG_TYPE_PSEUDO)) != FAIL)
+    {
+      /* recurse for remainder of input. Note: No assumption is made regarding which
+	 register in core register set holds pseudo-register. It's not considered in
+	 ordering check beyond ensuring it's not sandwiched between 2 consecutive
+	 registers.  */
+      parse_dot_save (str_p, prev_reg + 1);
+      s_arm_unwind_save_pseudo (reg);
+      return;
+    }
+  else
+    as_bad (BAD_SYNTAX);
+}
 
 /* Parse a directive saving FPA registers.  */
 
@@ -4716,39 +4763,13 @@ s_arm_unwind_save_mmxwcg (void)
   ignore_rest_of_line ();
 }
 
-/* Convert range and mask_range into a sequence of s_arm_unwind_core
-   and s_arm_unwind_pseudo operations.  We assume that mask_range will
-   not have consecutive bits set, or that one operation per bit is
-   acceptable.  */
-
-static void
-s_arm_unwind_save_mixed (long range, long mask_range)
-{
-  while (mask_range)
-    {
-      long mask_bit = mask_range & -mask_range;
-      long subrange = range & (mask_bit - 1);
-
-      if (subrange)
-	s_arm_unwind_save_core (subrange);
-
-      s_arm_unwind_save_pseudo (mask_bit);
-      range &= ~subrange;
-      mask_range &= ~mask_bit;
-    }
-
-  if (range)
-    s_arm_unwind_save_core (range);
-}
-
 /* Parse an unwind_save directive.
    If the argument is non-zero, this is a .vsave directive.  */
 
 static void
 s_arm_unwind_save (int arch_v6)
 {
-  char *peek, *mask_peek;
-  long range, mask_range;
+  char *peek;
   struct reg_entry *reg;
   bool had_brace = false;
 
@@ -4756,7 +4777,7 @@ s_arm_unwind_save (int arch_v6)
     as_bad (MISSING_FNSTART);
 
   /* Figure out what sort of save we have.  */
-  peek = mask_peek = input_line_pointer;
+  peek = input_line_pointer;
 
   if (*peek == '{')
     {
@@ -4788,20 +4809,13 @@ s_arm_unwind_save (int arch_v6)
 
     case REG_TYPE_PSEUDO:
     case REG_TYPE_RN:
-      mask_range = parse_reg_list (&mask_peek, REGLIST_PSEUDO);
-      range = parse_reg_list (&input_line_pointer, REGLIST_RN);
-
-      if (range == FAIL || mask_range == FAIL)
-	{
-	  as_bad (_("expected register list"));
-	  ignore_rest_of_line ();
-	  return;
-	}
-
-      demand_empty_rest_of_line ();
-
-      s_arm_unwind_save_mixed (range, mask_range);
-      return;
+      {
+	if (had_brace)
+	  input_line_pointer++;
+	parse_dot_save (&input_line_pointer, -1);
+	demand_empty_rest_of_line ();
+	return;
+      }
 
     case REG_TYPE_VFD:
       if (arch_v6)
@@ -4900,6 +4914,22 @@ s_arm_unwind_pad (int ignored ATTRIBUTE_UNUSED)
   unwind.pending_offset += offset;
 
   demand_empty_rest_of_line ();
+}
+
+/* Parse an unwind_pacspval directive.  */
+
+static void
+s_arm_unwind_pacspval (int ignored ATTRIBUTE_UNUSED)
+{
+  valueT op;
+
+  if (!unwind.proc_start)
+    as_bad (MISSING_FNSTART);
+
+  demand_empty_rest_of_line ();
+
+  op = 0xb5;
+  add_unwind_opcode (op, 1);
 }
 
 /* Parse an unwind_setfp directive.  */
@@ -5144,7 +5174,6 @@ const pseudo_typeS md_pseudo_table[] =
   { "dn",	   s_dn,          0 },
   { "qn",          s_qn,          0 },
   { "unreq",	   s_unreq,	  0 },
-  { "bss",	   s_bss,	  0 },
   { "align",	   s_align_ptwo,  2 },
   { "arm",	   s_arm,	  0 },
   { "thumb",	   s_thumb,	  0 },
@@ -5178,6 +5207,7 @@ const pseudo_typeS md_pseudo_table[] =
   { "vsave",		s_arm_unwind_save,	1 },
   { "movsp",		s_arm_unwind_movsp,	0 },
   { "pad",		s_arm_unwind_pad,	0 },
+  { "pacspval",		s_arm_unwind_pacspval,	0 },
   { "setfp",		s_arm_unwind_setfp,	0 },
   { "unwind_raw",	s_arm_unwind_raw,	0 },
   { "eabi_attribute",	s_arm_eabi_attribute,	0 },
@@ -8316,7 +8346,7 @@ static void
 do_scalar_fp16_v82_encode (void)
 {
   if (inst.cond < COND_ALWAYS)
-    as_warn (_("ARMv8.2 scalar fp16 instruction cannot be conditional,"
+    as_warn (_("scalar fp16 instruction cannot be conditional,"
 	       " the behaviour is UNPREDICTABLE"));
   constraint (!ARM_CPU_HAS_FEATURE (cpu_variant, arm_ext_fp16),
 	      _(BAD_FP16));
@@ -19143,16 +19173,6 @@ do_neon_cvt_1 (enum neon_cvt_mode mode)
       return;
     }
 
-  if ((rs == NS_FD || rs == NS_QQI) && mode == neon_cvt_mode_n
-      && ARM_CPU_HAS_FEATURE (cpu_variant, mve_ext))
-    {
-      /* We are dealing with vcvt with the 'ne' condition.  */
-      inst.cond = 0x1;
-      inst.instruction = N_MNEM_vcvt;
-      do_neon_cvt_1 (neon_cvt_mode_z);
-      return;
-    }
-
   /* VFP rather than Neon conversions.  */
   if (flavour >= neon_cvt_flavour_first_fp)
     {
@@ -20561,7 +20581,7 @@ do_neon_movhf (void)
     {
       if (thumb_mode)
 	{
-	  as_warn (_("ARMv8.2 scalar fp16 instruction cannot be conditional,"
+	  as_warn (_("scalar fp16 instruction cannot be conditional,"
 		     " the behaviour is UNPREDICTABLE"));
 	}
       else
@@ -22748,6 +22768,23 @@ opcode_lookup (char **str)
      cond = (const struct asm_cond *) str_hash_find_n (arm_vcond_hsh, affix, 1);
      opcode = (const struct asm_opcode *) str_hash_find_n (arm_ops_hsh, base,
 							   affix - base);
+
+     /* A known edge case is a conflict between an 'e' as a suffix for an
+	Else of a VPT predication block and an 'ne' suffix for an IT block.
+	If we detect that edge case here and we are not in a VPT VECTOR_PRED
+	block, reset opcode and cond, so that the 'ne' case can be detected
+	in the next section for 2-character conditional suffixes.
+	An example where this is a problem is between the MVE 'vcvtn' and the
+	non-MVE 'vcvt' instructions. */
+     if (cond && opcode
+	 && cond->template_name[0] == 'e'
+	 && opcode->template_name[affix - base - 1] == 'n'
+	 && now_pred.type != VECTOR_PRED)
+       {
+	 opcode = NULL;
+	 cond = NULL;
+       }
+
      /* If this opcode can not be vector predicated then don't accept it with a
 	vector predication code.  */
      if (opcode && !opcode->mayBeVecPred)
@@ -23997,12 +24034,8 @@ static const struct reg_entry reg_names[] =
   /* XScale accumulator registers.  */
   REGNUM(acc,0,XSCALE), REGNUM(ACC,0,XSCALE),
 
-  /* DWARF ABI defines RA_AUTH_CODE to 143. It also reserves 134-142 for future
-     expansion.  RA_AUTH_CODE here is given the value 143 % 134 to make it easy
-     for tc_arm_regname_to_dw2regnum to translate to DWARF reg number using
-     134 + reg_number should the range 134 to 142 be used for more pseudo regs
-     in the future.  This also helps fit RA_AUTH_CODE into a bitmask.  */
-  REGDEF(ra_auth_code,12,PSEUDO),
+  /* DWARF ABI defines RA_AUTH_CODE to 143.  */
+  REGDEF(ra_auth_code,143,PSEUDO),
 };
 #undef REGDEF
 #undef REGNUM
@@ -27732,7 +27765,7 @@ start_unwind_section (const segT text_seg, int idx)
     }
 
   obj_elf_change_section (sec_name, type, flags, 0, &match,
-			  linkonce, 0);
+			  linkonce);
 
   /* Set the section link for index tables.  */
   if (idx)
@@ -27785,7 +27818,10 @@ create_unwind_entry (int have_data)
       if (unwind.personality_index == 0)
 	{
 	  if (unwind.opcode_count > 3)
-	    as_bad (_("too many unwind opcodes for personality routine 0"));
+	    {
+	      as_bad (_("too many unwind opcodes for personality routine 0"));
+	      return 1;
+	    }
 
 	  if (!have_data)
 	    {
@@ -27826,7 +27862,10 @@ create_unwind_entry (int have_data)
 
   size = (size + 3) >> 2;
   if (size > 0xff)
-    as_bad (_("too many unwind opcodes"));
+    {
+      as_bad (_("too many unwind opcodes"));
+      return 1;
+    }
 
   frag_align (2, 0, 0);
   record_alignment (now_seg, 2);
@@ -27909,7 +27948,6 @@ create_unwind_entry (int have_data)
   return 0;
 }
 
-
 /* Initialize the DWARF-2 unwind information for this procedure.  */
 
 void
@@ -27936,6 +27974,10 @@ tc_arm_regname_to_dw2regnum (char *regname)
   reg = arm_reg_parse (&regname, REG_TYPE_VFD);
   if (reg != FAIL)
     return reg + 256;
+
+  reg = arm_reg_parse (&regname, REG_TYPE_PSEUDO);
+  if (reg != FAIL)
+    return reg;
 
   return FAIL;
 }
@@ -28124,11 +28166,8 @@ arm_tc_equal_in_insn (int c ATTRIBUTE_UNUSED, char * name)
 	    already_warned = str_htab_create ();
 	  /* Only warn about the symbol once.  To keep the code
 	     simple we let str_hash_insert do the lookup for us.  */
-	  if (str_hash_find (already_warned, nbuf) == NULL)
-	    {
-	      as_warn (_("[-mwarn-syms]: Assignment makes a symbol match an ARM instruction: %s"), name);
-	      str_hash_insert (already_warned, nbuf, NULL, 0);
-	    }
+	  if (str_hash_insert (already_warned, nbuf, NULL, 0) == NULL)
+	    as_warn (_("[-mwarn-syms]: Assignment makes a symbol match an ARM instruction: %s"), name);
 	}
       else
 	free (nbuf);
@@ -31727,6 +31766,9 @@ static const struct arm_cpu_option_table arm_cpus[] =
   ARM_CPU_OPT ("cortex-x1",   "Cortex-X1",	       ARM_ARCH_V8_2A,
 	       ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_SB),
 	       FPU_ARCH_DOTPROD_NEON_VFP_ARMV8),
+  ARM_CPU_OPT ("cortex-x1c",   "Cortex-X1C",	       ARM_ARCH_V8_2A,
+	       ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_SB),
+	       FPU_ARCH_DOTPROD_NEON_VFP_ARMV8),
   ARM_CPU_OPT ("exynos-m1",	  "Samsung Exynos M1", ARM_ARCH_V8A,
 	       ARM_FEATURE_CORE_HIGH (ARM_EXT2_CRC),
 	       FPU_ARCH_CRYPTO_NEON_VFP_ARMV8),
@@ -31984,6 +32026,7 @@ static const struct arm_ext_table armv86a_ext_table[] =
 
 #define armv87a_ext_table armv86a_ext_table
 #define armv88a_ext_table armv87a_ext_table
+#define armv89a_ext_table armv88a_ext_table
 
 static const struct arm_ext_table armv9a_ext_table[] =
 {
@@ -32003,6 +32046,7 @@ static const struct arm_ext_table armv9a_ext_table[] =
 #define armv91a_ext_table armv86a_ext_table
 #define armv92a_ext_table armv91a_ext_table
 #define armv93a_ext_table armv92a_ext_table
+#define armv94a_ext_table armv93a_ext_table
 
 #define CDE_EXTENSIONS \
   ARM_ADD ("cdecp0", ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE | ARM_EXT2_CDE0)), \
@@ -32128,10 +32172,12 @@ static const struct arm_arch_option_table arm_archs[] =
   ARM_ARCH_OPT2 ("armv8.6-a",	  ARM_ARCH_V8_6A,	FPU_ARCH_VFP, armv86a),
   ARM_ARCH_OPT2 ("armv8.7-a",	  ARM_ARCH_V8_7A,	FPU_ARCH_VFP, armv87a),
   ARM_ARCH_OPT2 ("armv8.8-a",	  ARM_ARCH_V8_8A,	FPU_ARCH_VFP, armv88a),
+  ARM_ARCH_OPT2 ("armv8.9-a",	  ARM_ARCH_V8_9A,	FPU_ARCH_VFP, armv89a),
   ARM_ARCH_OPT2 ("armv9-a",	  ARM_ARCH_V9A,		FPU_ARCH_VFP, armv9a),
   ARM_ARCH_OPT2 ("armv9.1-a",	  ARM_ARCH_V9_1A,	FPU_ARCH_VFP, armv91a),
   ARM_ARCH_OPT2 ("armv9.2-a",	  ARM_ARCH_V9_2A,	FPU_ARCH_VFP, armv92a),
   ARM_ARCH_OPT2 ("armv9.3-a",	  ARM_ARCH_V9_2A,	FPU_ARCH_VFP, armv93a),
+  ARM_ARCH_OPT2 ("armv9.4-a",	  ARM_ARCH_V9_4A,	FPU_ARCH_VFP, armv94a),
   ARM_ARCH_OPT ("xscale",	  ARM_ARCH_XSCALE,	FPU_ARCH_VFP),
   ARM_ARCH_OPT ("iwmmxt",	  ARM_ARCH_IWMMXT,	FPU_ARCH_VFP),
   ARM_ARCH_OPT ("iwmmxt2",	  ARM_ARCH_IWMMXT2,	FPU_ARCH_VFP),
@@ -32917,10 +32963,12 @@ static const cpu_arch_ver_table cpu_arch_ver[] =
     {TAG_CPU_ARCH_V8,	    ARM_ARCH_V8_6A},
     {TAG_CPU_ARCH_V8,	    ARM_ARCH_V8_7A},
     {TAG_CPU_ARCH_V8,	    ARM_ARCH_V8_8A},
+    {TAG_CPU_ARCH_V8,	    ARM_ARCH_V8_9A},
     {TAG_CPU_ARCH_V9,	    ARM_ARCH_V9A},
     {TAG_CPU_ARCH_V9,	    ARM_ARCH_V9_1A},
     {TAG_CPU_ARCH_V9,	    ARM_ARCH_V9_2A},
     {TAG_CPU_ARCH_V9,	    ARM_ARCH_V9_3A},
+    {TAG_CPU_ARCH_V9,	    ARM_ARCH_V9_4A},
     {-1,		    ARM_ARCH_NONE}
 };
 
@@ -32932,7 +32980,9 @@ aeabi_set_attribute_int (int tag, int value)
   if (tag < 1
       || tag >= NUM_KNOWN_OBJ_ATTRIBUTES
       || !attributes_set_explicitly[tag])
-    bfd_elf_add_proc_attr_int (stdoutput, tag, value);
+    if (!bfd_elf_add_proc_attr_int (stdoutput, tag, value))
+      as_fatal (_("error adding attribute: %s"),
+		bfd_errmsg (bfd_get_error ()));
 }
 
 static void
@@ -32941,7 +32991,9 @@ aeabi_set_attribute_string (int tag, const char *value)
   if (tag < 1
       || tag >= NUM_KNOWN_OBJ_ATTRIBUTES
       || !attributes_set_explicitly[tag])
-    bfd_elf_add_proc_attr_string (stdoutput, tag, value);
+    if (!bfd_elf_add_proc_attr_string (stdoutput, tag, value))
+      as_fatal (_("error adding attribute: %s"),
+		bfd_errmsg (bfd_get_error ()));
 }
 
 /* Return whether features in the *NEEDED feature set are available via
@@ -33324,7 +33376,7 @@ arm_md_post_relax (void)
 /* Add the default contents for the .ARM.attributes section.  */
 
 void
-arm_md_end (void)
+arm_md_finish (void)
 {
   if (EF_ARM_EABI_VERSION (meabi_flags) < EF_ARM_EABI_VER4)
     return;
@@ -33343,10 +33395,16 @@ s_arm_cpu (int ignored ATTRIBUTE_UNUSED)
   char saved_char;
 
   name = input_line_pointer;
-  while (*input_line_pointer && !ISSPACE (*input_line_pointer))
-    input_line_pointer++;
+  input_line_pointer = find_end_of_line (input_line_pointer, flag_m68k_mri);
   saved_char = *input_line_pointer;
   *input_line_pointer = 0;
+
+  if (!*name)
+    {
+      as_bad (_(".cpu: missing cpu name"));
+      *input_line_pointer = saved_char;
+      return;
+    }
 
   /* Skip the first "all" entry.  */
   for (opt = arm_cpus + 1; opt->name != NULL; opt++)
@@ -33373,7 +33431,6 @@ s_arm_cpu (int ignored ATTRIBUTE_UNUSED)
       }
   as_bad (_("unknown cpu `%s'"), name);
   *input_line_pointer = saved_char;
-  ignore_rest_of_line ();
 }
 
 /* Parse a .arch directive.  */
@@ -33386,10 +33443,16 @@ s_arm_arch (int ignored ATTRIBUTE_UNUSED)
   char *name;
 
   name = input_line_pointer;
-  while (*input_line_pointer && !ISSPACE (*input_line_pointer))
-    input_line_pointer++;
+  input_line_pointer = find_end_of_line (input_line_pointer, flag_m68k_mri);
   saved_char = *input_line_pointer;
   *input_line_pointer = 0;
+
+  if (!*name)
+    {
+      as_bad (_(".arch: missing architecture name"));
+      *input_line_pointer = saved_char;
+      return;
+    }
 
   /* Skip the first "all" entry.  */
   for (opt = arm_archs + 1; opt->name != NULL; opt++)
@@ -33421,10 +33484,16 @@ s_arm_object_arch (int ignored ATTRIBUTE_UNUSED)
   char *name;
 
   name = input_line_pointer;
-  while (*input_line_pointer && !ISSPACE (*input_line_pointer))
-    input_line_pointer++;
+  input_line_pointer = find_end_of_line (input_line_pointer, flag_m68k_mri);
   saved_char = *input_line_pointer;
   *input_line_pointer = 0;
+
+  if (!*name)
+    {
+      as_bad (_(".object_arch: missing architecture name"));
+      *input_line_pointer = saved_char;
+      return;
+    }
 
   /* Skip the first "all" entry.  */
   for (opt = arm_archs + 1; opt->name != NULL; opt++)
@@ -33452,10 +33521,16 @@ s_arm_arch_extension (int ignored ATTRIBUTE_UNUSED)
   int adding_value = 1;
 
   name = input_line_pointer;
-  while (*input_line_pointer && !ISSPACE (*input_line_pointer))
-    input_line_pointer++;
+  input_line_pointer = find_end_of_line (input_line_pointer, flag_m68k_mri);
   saved_char = *input_line_pointer;
   *input_line_pointer = 0;
+
+  if (!*name)
+    {
+      as_bad (_(".arch_extension: missing architecture extension"));
+      *input_line_pointer = saved_char;
+      return;
+    }
 
   if (strlen (name) >= 2
       && startswith (name, "no"))
@@ -33535,7 +33610,6 @@ s_arm_arch_extension (int ignored ATTRIBUTE_UNUSED)
     as_bad (_("unknown architecture extension `%s'\n"), name);
 
   *input_line_pointer = saved_char;
-  ignore_rest_of_line ();
 }
 
 /* Parse a .fpu directive.  */
@@ -33548,10 +33622,16 @@ s_arm_fpu (int ignored ATTRIBUTE_UNUSED)
   char *name;
 
   name = input_line_pointer;
-  while (*input_line_pointer && !ISSPACE (*input_line_pointer))
-    input_line_pointer++;
+  input_line_pointer = find_end_of_line (input_line_pointer, flag_m68k_mri);
   saved_char = *input_line_pointer;
   *input_line_pointer = 0;
+
+  if (!*name)
+    {
+      as_bad (_(".fpu: missing fpu name"));
+      *input_line_pointer = saved_char;
+      return;
+    }
 
   for (opt = arm_fpus; opt->name != NULL; opt++)
     if (streq (opt->name, name))
@@ -33565,7 +33645,6 @@ s_arm_fpu (int ignored ATTRIBUTE_UNUSED)
 #endif
 	  ARM_MERGE_FEATURE_SETS (cpu_variant, selected_cpu, selected_fpu);
 	*input_line_pointer = saved_char;
-	demand_empty_rest_of_line ();
 	return;
       }
 
