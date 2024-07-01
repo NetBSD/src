@@ -1,5 +1,5 @@
 /* BFD back-end for TMS320C4X coff binaries.
-   Copyright (C) 1996-2022 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
 
    Contributed by Michael Hayes (m.hayes@elec.canterbury.ac.nz)
 
@@ -219,7 +219,7 @@ tic4x_reloc_processing (arelent *relent,
 
   relent->address = reloc->r_vaddr;
 
-  if (reloc->r_symndx != -1)
+  if (reloc->r_symndx != -1 && symbols != NULL)
     {
       if (reloc->r_symndx < 0 || reloc->r_symndx >= obj_conv_table_size (abfd))
 	{

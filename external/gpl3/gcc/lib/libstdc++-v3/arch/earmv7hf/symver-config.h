@@ -938,6 +938,12 @@
    namespace std::tr1. */
 #define _GLIBCXX_USE_C99_STDINT_TR1 1
 
+/* Define if usable chdir is available in <unistd.h>. */
+#define _GLIBCXX_USE_CHDIR 1
+
+/* Define if usable chmod is available in <sys/stat.h>. */
+#define _GLIBCXX_USE_CHMOD 1
+
 /* Defined if clock_gettime syscall has monotonic and realtime clock support.
    */
 /* #undef _GLIBCXX_USE_CLOCK_GETTIME_SYSCALL */
@@ -962,6 +968,9 @@
 /* Define if fchmodat is available in <sys/stat.h>. */
 #define _GLIBCXX_USE_FCHMODAT 1
 
+/* Define if usable getcwd is available in <unistd.h>. */
+#define _GLIBCXX_USE_GETCWD 1
+
 /* Defined if gettimeofday is available. */
 #define _GLIBCXX_USE_GETTIMEOFDAY 1
 
@@ -976,6 +985,9 @@
 
 /* Define if lstat is available in <sys/stat.h>. */
 #define _GLIBCXX_USE_LSTAT 1
+
+/* Define if usable mkdir is available in <sys/stat.h>. */
+#define _GLIBCXX_USE_MKDIR 1
 
 /* Defined if nanosleep is available. */
 #define _GLIBCXX_USE_NANOSLEEP 1

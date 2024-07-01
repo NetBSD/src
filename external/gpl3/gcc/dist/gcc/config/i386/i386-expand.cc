@@ -350,6 +350,23 @@ ix86_expand_move (machine_mode mode, rtx operands[])
 
     default:
       break;
+
+    case SUBREG:
+      /* As not all values in XFmode are representable in real_value,
+	 we might be called with unfoldable SUBREGs of constants.  */
+      if (mode == XFmode
+	  && CONSTANT_P (SUBREG_REG (op1))
+	  && can_create_pseudo_p ())
+	{
+	  machine_mode imode = GET_MODE (SUBREG_REG (op1));
+	  rtx r = force_const_mem (imode, SUBREG_REG (op1));
+	  if (r)
+	    r = validize_mem (r);
+	  else
+	    r = force_reg (imode, SUBREG_REG (op1));
+	  op1 = simplify_gen_subreg (mode, r, imode, SUBREG_BYTE (op1));
+	}
+      break;
     }
 
   if ((flag_pic || MACHOPIC_INDIRECT)
@@ -13273,6 +13290,25 @@ ix86_expand_builtin (tree exp, rtx target, rtx subtarget,
 
       if (pat)
 	emit_insn (pat);
+      return 0;
+
+    case IX86_BUILTIN_LDTILECFG:
+    case IX86_BUILTIN_STTILECFG:
+      arg0 = CALL_EXPR_ARG (exp, 0);
+      op0 = expand_normal (arg0);
+
+      if (!address_operand (op0, VOIDmode))
+	{
+	  op0 = convert_memory_address (Pmode, op0);
+	  op0 = copy_addr_to_reg (op0);
+	}
+      op0 = gen_rtx_MEM (XImode, op0);
+      if (fcode == IX86_BUILTIN_LDTILECFG)
+	icode = CODE_FOR_ldtilecfg;
+      else
+	icode = CODE_FOR_sttilecfg;
+      pat = GEN_FCN (icode) (op0);
+      emit_insn (pat);
       return 0;
 
     case IX86_BUILTIN_LLWPCB:

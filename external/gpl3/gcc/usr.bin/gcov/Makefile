@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2023/08/01 05:57:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.12.2.1 2024/07/01 01:01:12 perseant Exp $
 
 .include <bsd.init.mk>
 
@@ -21,7 +21,7 @@ MAN=		gcov.1
 .include "../Makefile.libiberty"
 .include "../Makefile.libdecnumber"
 
-#COPTS.gcov.cc += -Wno-stack-protector
+COPTS.gcov.cc += -Wno-error=stack-protector
 
 LDADD+=		-lintl
 DPADD+=		${LIBINTL}

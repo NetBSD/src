@@ -1,5 +1,5 @@
 /* write.h
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -81,9 +81,10 @@ struct fix
   /* Some bits for the CPU specific code.  */
   unsigned fx_tcbit : 1;
   unsigned fx_tcbit2 : 1;
+  unsigned fx_tcbit3 : 1;
 
   /* Spare bits.  */
-  unsigned fx_unused : 2;
+  unsigned fx_unused : 1;
 
   bfd_reloc_code_real_type fx_r_type;
 

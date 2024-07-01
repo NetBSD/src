@@ -1,5 +1,5 @@
 /* Intel 80386/80486-specific support for 32-bit ELF
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -969,7 +969,8 @@ elf_i386_check_tls_transition (asection *sec,
 	  || !((struct elf_x86_link_hash_entry *) h)->tls_get_addr)
 	return false;
       else if (indirect_call)
-	return (ELF32_R_TYPE (rel[1].r_info) == R_386_GOT32X);
+	return (ELF32_R_TYPE (rel[1].r_info) == R_386_GOT32X
+		|| ELF32_R_TYPE (rel[1].r_info) == R_386_GOT32);
       else
 	return (ELF32_R_TYPE (rel[1].r_info) == R_386_PC32
 		|| ELF32_R_TYPE (rel[1].r_info) == R_386_PLT32);
@@ -1068,12 +1069,25 @@ elf_i386_tls_transition (struct bfd_link_info *info, bfd *abfd,
   unsigned int from_type = *r_type;
   unsigned int to_type = from_type;
   bool check = true;
+  unsigned int to_le_type, to_ie_type;
 
   /* Skip TLS transition for functions.  */
   if (h != NULL
       && (h->type == STT_FUNC
 	  || h->type == STT_GNU_IFUNC))
     return true;
+
+  if (get_elf_backend_data (abfd)->target_os == is_solaris)
+    {
+      /* NB: Solaris only supports R_386_TLS_LE and R_386_TLS_IE.  */
+      to_le_type = R_386_TLS_LE;
+      to_ie_type = R_386_TLS_IE;
+    }
+  else
+    {
+      to_le_type = R_386_TLS_LE_32;
+      to_ie_type = R_386_TLS_IE_32;
+    }
 
   switch (from_type)
     {
@@ -1086,10 +1100,10 @@ elf_i386_tls_transition (struct bfd_link_info *info, bfd *abfd,
       if (bfd_link_executable (info))
 	{
 	  if (h == NULL)
-	    to_type = R_386_TLS_LE_32;
+	    to_type = to_le_type;
 	  else if (from_type != R_386_TLS_IE
 		   && from_type != R_386_TLS_GOTIE)
-	    to_type = R_386_TLS_IE_32;
+	    to_type = to_ie_type;
 	}
 
       /* When we are called from elf_i386_relocate_section, there may
@@ -1099,7 +1113,7 @@ elf_i386_tls_transition (struct bfd_link_info *info, bfd *abfd,
 	  unsigned int new_to_type = to_type;
 
 	  if (TLS_TRANSITION_IE_TO_LE_P (info, h, tls_type))
-	    new_to_type = R_386_TLS_LE_32;
+	    new_to_type = to_le_type;
 
 	  if (to_type == R_386_TLS_GD
 	      || to_type == R_386_TLS_GOTDESC
@@ -1108,7 +1122,7 @@ elf_i386_tls_transition (struct bfd_link_info *info, bfd *abfd,
 	      if (tls_type == GOT_TLS_IE_POS)
 		new_to_type = R_386_TLS_GOTIE;
 	      else if (tls_type & GOT_TLS_IE)
-		new_to_type = R_386_TLS_IE_32;
+		new_to_type = to_ie_type;
 	    }
 
 	  /* We checked the transition before when we were called from
@@ -1122,7 +1136,7 @@ elf_i386_tls_transition (struct bfd_link_info *info, bfd *abfd,
 
     case R_386_TLS_LDM:
       if (bfd_link_executable (info))
-	to_type = R_386_TLS_LE_32;
+	to_type = to_le_type;
       break;
 
     default:
@@ -1233,6 +1247,12 @@ elf_i386_convert_load_reloc (bfd *abfd, Elf_Internal_Shdr *symtab_hdr,
     return true;
 
   htab = elf_x86_hash_table (link_info, I386_ELF_DATA);
+  if (htab == NULL || ! is_x86_elf (abfd, htab))
+    {
+      bfd_set_error (bfd_error_wrong_format);
+      return false;
+    }
+
   is_pic = bfd_link_pic (link_info);
 
   r_type = *r_type_p;
@@ -1510,6 +1530,10 @@ elf_i386_scan_relocs (bfd *abfd,
 
       r_symndx = ELF32_R_SYM (rel->r_info);
       r_type = ELF32_R_TYPE (rel->r_info);
+
+      /* Don't check R_386_NONE.  */
+      if (r_type == R_386_NONE)
+	continue;
 
       if (r_symndx >= NUM_SHDR_ENTRIES (symtab_hdr))
 	{
@@ -1814,7 +1838,8 @@ elf_i386_scan_relocs (bfd *abfd,
 		      || (sec->flags & (SEC_CODE | SEC_READONLY)) != 0)
 		    h->plt.refcount = 1;
 
-		  if (h->pointer_equality_needed
+		  if (htab->elf.target_os != is_solaris
+		      && h->pointer_equality_needed
 		      && h->type == STT_FUNC
 		      && eh->def_protected
 		      && !SYMBOL_DEFINED_NON_SHARED_P (h)
@@ -2029,6 +2054,7 @@ elf_i386_relocate_section (bfd *output_bfd,
   Elf_Internal_Rela *wrel;
   Elf_Internal_Rela *relend;
   bool is_vxworks_tls;
+  unsigned expected_tls_le;
   unsigned plt_entry_size;
 
   /* Skip if check_relocs or scan_relocs failed.  */
@@ -2858,9 +2884,17 @@ elf_i386_relocate_section (bfd *output_bfd,
 					 relend, h, r_symndx, true))
 	    return false;
 
-	  if (r_type_tls == R_386_TLS_LE_32)
+	  expected_tls_le = htab->elf.target_os == is_solaris
+	    ? R_386_TLS_LE : R_386_TLS_LE_32;
+	  if (r_type_tls == expected_tls_le)
 	    {
-	      BFD_ASSERT (! unresolved_reloc);
+	      /* NB: Solaris only supports R_386_TLS_GD->R_386_TLS_LE.  */
+	      BFD_ASSERT (! unresolved_reloc
+			  && (htab->elf.target_os != is_solaris
+			      || (htab->elf.target_os == is_solaris
+				  && (r_type == R_386_TLS_GD
+				      || r_type == R_386_TLS_IE
+				      || r_type == R_386_TLS_GOTIE))));
 	      if (r_type == R_386_TLS_GD)
 		{
 		  unsigned int type;
@@ -3357,7 +3391,9 @@ elf_i386_relocate_section (bfd *output_bfd,
 		 into:
 			movl %gs:0, %eax
 			leal 0(%esi), %esi  */
-	      BFD_ASSERT (r_type == R_386_TLS_LE_32);
+	      expected_tls_le = htab->elf.target_os == is_solaris
+		? R_386_TLS_LE : R_386_TLS_LE_32;
+	      BFD_ASSERT (r_type == expected_tls_le);
 	      if (*(contents + rel->r_offset + 4) == 0xff
 		  || *(contents + rel->r_offset + 4) == 0x67)
 		memcpy (contents + rel->r_offset - 2,

@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -278,7 +278,7 @@ er_archive::start (int argc, char *argv[])
   if (founder_exp->get_status () == Experiment::FAILURE)
     {
       if (!quiet)
-	fprintf (stderr, GTXT ("er_archive: %s: %s\n"), argv[last],
+	fprintf (stderr, GTXT ("gp-archive: %s: %s\n"), argv[last],
 		 pr_mesgs (founder_exp->fetch_errors (), NTXT (""), NTXT ("")));
       exit (1);
     }
@@ -315,8 +315,8 @@ er_archive::start (int argc, char *argv[])
 	      if (exp->get_status () == Experiment::FAILURE)
 		{
 		  if (!quiet)
-		    fprintf (stderr, GTXT ("er_archive: %s: %s\n"), exp_path,
-			     pr_mesgs (exp->fetch_errors (), NTXT (""), NTXT ("")));
+		    fprintf (stderr, GTXT ("gp-archive: %s: %s\n"), exp_path,
+			     pr_mesgs (exp->fetch_errors (), "", ""));
 		  delete exp;
 		  continue;
 		}
@@ -362,7 +362,7 @@ er_archive::start (int argc, char *argv[])
       if (elf && (lo->checksum != 0) && (lo->checksum != elf->elf_checksum ()))
 	{
 	  if (!quiet)
-	    fprintf (stderr, GTXT ("er_archive: '%s' has an unexpected checksum value; perhaps it was rebuilt. File ignored\n"),
+	    fprintf (stderr, GTXT ("gp-archive: '%s' has an unexpected checksum value; perhaps it was rebuilt. File ignored\n"),
 		       df->get_location ());
 	  continue;
 	}
@@ -480,12 +480,13 @@ er_archive::start (int argc, char *argv[])
       for (long i = 0, sz = notfound_files->size (); i < sz; i++)
 	{
 	  DbeFile *df = notfound_files->get (i);
-	  fprintf (stderr, GTXT ("er_archive: Cannot find file: `%s'\n"), df->get_name ());
+	  fprintf (stderr, GTXT ("gp-archive: Cannot find file: `%s'\n"), df->get_name ());
 	}
-      fprintf (stderr, GTXT ("\n If you know the correct location of the missing file(s)"
-			     " you can help %s to find them by manually editing the .gprofng.rc file."
-			     " See %s man pages for more details.\n"),
-	       whoami, whoami);
+      fprintf (stderr,
+        GTXT ("\n If you know the correct location of the missing file(s)"
+	      " you can help gp-archive to find them by manually editing"
+	      " the .gprofng.rc file."
+	      " See the gp-archive man page for more details.\n"));
     }
   delete notfound_files;
 }
@@ -588,21 +589,21 @@ er_archive::check_args (int argc, char *argv[])
 	    int fd = open (optarg, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 	    if (fd == -1)
 	      {
-		fprintf (stderr, GTXT ("er_archive: Can't open %s: %s\n"),
+		fprintf (stderr, GTXT ("gp-archive: Can't open %s: %s\n"),
 			 optarg, strerror (errno));
 		break;
 	      }
 	    if (dup2 (fd, 2) == -1)
 	      {
 		close (fd);
-		fprintf (stderr, GTXT ("er_archive: Can't divert stderr: %s\n"),
+		fprintf (stderr, GTXT ("gp-archive: Can't divert stderr: %s\n"),
 			 strerror (errno));
 		break;
 	      }
 	    if (dup2 (fd, 1) == -1)
 	      {
 		close (fd);
-		fprintf (stderr, GTXT ("er_archive: Can't divert stdout: %s\n"),
+		fprintf (stderr, GTXT ("gp-archive: Can't divert stdout: %s\n"),
 			 strerror (errno));
 		break;
 	      }

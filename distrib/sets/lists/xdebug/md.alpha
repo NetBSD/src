@@ -1,11 +1,10 @@
-# $NetBSD: md.alpha,v 1.22 2024/01/26 12:58:51 tsutsui Exp $
+# $NetBSD: md.alpha,v 1.22.2.1 2024/07/01 00:59:49 perseant Exp $
 ./usr/X11R7/lib/modules/extensions/libdri2_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/bin/Xorg.debug		xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug		xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/apm_drv.so.1.debug	xdebug-obsolete	xorg,obsolete,xorg_server_ver=120
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/apm_drv.so.1.debug	xdebug-xf86-video-apm-debug	xorg,debug,xorg_server_ver=110
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ark_drv.so.0.debug	xdebug-obsolete	xorg,obsolete,xorg_server_ver=120
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ark_drv.so.0.debug	xdebug-xf86-video-ark-debug	xorg,debug,xorg_server_ver=110
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ark_drv.so.0.debug	xdebug-xf86-video-ark-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ast_drv.so.1.debug	xdebug-xf86-video-ast-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.6.debug	xdebug-obsolete		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.19.debug	xdebug-obsolete		obsolete
@@ -25,13 +24,13 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/nv_drv.so.2.debug	xdebug-xf86-video-nv-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/r128_drv.so.6.debug	xdebug-xf86-video-r128-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeon_drv.so.6.debug	xdebug-xf86-video-radeon-kms-debug	xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/s3_drv.so.0.debug	xdebug-xf86-video-s3-debug	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/s3_drv.so.0.debug	xdebug-obsolete	xorg,debug,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/s3virge_drv.so.1.debug	xdebug-xf86-video-s3virge-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/savage_drv.so.2.debug	xdebug-xf86-video-savage-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/siliconmotion_drv.so.1.debug	xdebug-xf86-video-siliconmotion-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/sis_drv.so.0.debug	xdebug-xf86-video-sis-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/tdfx_drv.so.1.debug	xdebug-xf86-video-tdfx-debug	xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/tga_drv.so.1.debug	xdebug-xf86-video-tga-debug	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/tga_drv.so.1.debug	xdebug-debug-obsolete	xorg,debug,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/trident_drv.so.1.debug	xdebug-xf86-video-trident-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/tseng_drv.so.1.debug	xdebug-xf86-video-tseng-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ws_drv.so.1.debug	xdebug-xf86-input-ws-debug	xorg,debug

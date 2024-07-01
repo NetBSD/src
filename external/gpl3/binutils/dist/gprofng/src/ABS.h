@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -53,7 +53,7 @@ extern char *ABS_PP_CODES[NUM_ABS_PP_CODES];
 /* dbe should check HWC values for errors */
 #define HWCVAL_ERR_FLAG         (1ULL<<63)
 #define HWCVAL_SET_ERR(ctr)     ((ctr) | HWCVAL_ERR_FLAG)
-#define HWCVAL_HAS_ERR(ctr)     ((ctr) & HWCVAL_ERR_FLAG ? 1 : 0)
+#define HWCVAL_HAS_ERR(ctr)     (((ctr) & HWCVAL_ERR_FLAG) != 0)
 #define HWCVAL_CLR_ERR(ctr)     ((ctr) & ~HWCVAL_ERR_FLAG)
 
 #define ABS_GET_RT_CODE(EA)     ((EA) & 0x0FLL)

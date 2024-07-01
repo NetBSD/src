@@ -1,5 +1,5 @@
 /* bfd back-end for HP PA-RISC SOM objects.
-   Copyright (C) 1990-2022 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah.
@@ -635,267 +635,268 @@ static const int comp3_opcodes[] =
 #define R_SHORT_PCREL_MODE 0x3e
 #endif
 
-#define SOM_HOWTO(TYPE, NAME)	\
-  HOWTO(TYPE, 0, 0, 32, false, 0, 0, hppa_som_reloc, NAME, false, 0, 0, false)
+#define SOM_HOWTO(SIZE, TYPE)	\
+  HOWTO(TYPE, 0, SIZE, 32, false, 0, 0, hppa_som_reloc, \
+	#TYPE, false, 0, 0, false)
 
 static reloc_howto_type som_hppa_howto_table[] =
 {
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_NO_RELOCATION, "R_NO_RELOCATION"),
-  SOM_HOWTO (R_ZEROES, "R_ZEROES"),
-  SOM_HOWTO (R_ZEROES, "R_ZEROES"),
-  SOM_HOWTO (R_UNINIT, "R_UNINIT"),
-  SOM_HOWTO (R_UNINIT, "R_UNINIT"),
-  SOM_HOWTO (R_RELOCATION, "R_RELOCATION"),
-  SOM_HOWTO (R_DATA_ONE_SYMBOL, "R_DATA_ONE_SYMBOL"),
-  SOM_HOWTO (R_DATA_ONE_SYMBOL, "R_DATA_ONE_SYMBOL"),
-  SOM_HOWTO (R_DATA_PLABEL, "R_DATA_PLABEL"),
-  SOM_HOWTO (R_DATA_PLABEL, "R_DATA_PLABEL"),
-  SOM_HOWTO (R_SPACE_REF, "R_SPACE_REF"),
-  SOM_HOWTO (R_REPEATED_INIT, "REPEATED_INIT"),
-  SOM_HOWTO (R_REPEATED_INIT, "REPEATED_INIT"),
-  SOM_HOWTO (R_REPEATED_INIT, "REPEATED_INIT"),
-  SOM_HOWTO (R_REPEATED_INIT, "REPEATED_INIT"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_PCREL_CALL, "R_PCREL_CALL"),
-  SOM_HOWTO (R_PCREL_CALL, "R_PCREL_CALL"),
-  SOM_HOWTO (R_PCREL_CALL, "R_PCREL_CALL"),
-  SOM_HOWTO (R_PCREL_CALL, "R_PCREL_CALL"),
-  SOM_HOWTO (R_PCREL_CALL, "R_PCREL_CALL"),
-  SOM_HOWTO (R_PCREL_CALL, "R_PCREL_CALL"),
-  SOM_HOWTO (R_PCREL_CALL, "R_PCREL_CALL"),
-  SOM_HOWTO (R_PCREL_CALL, "R_PCREL_CALL"),
-  SOM_HOWTO (R_PCREL_CALL, "R_PCREL_CALL"),
-  SOM_HOWTO (R_PCREL_CALL, "R_PCREL_CALL"),
-  SOM_HOWTO (R_PCREL_CALL, "R_PCREL_CALL"),
-  SOM_HOWTO (R_PCREL_CALL, "R_PCREL_CALL"),
-  SOM_HOWTO (R_PCREL_CALL, "R_PCREL_CALL"),
-  SOM_HOWTO (R_PCREL_CALL, "R_PCREL_CALL"),
-  SOM_HOWTO (R_SHORT_PCREL_MODE, "R_SHORT_PCREL_MODE"),
-  SOM_HOWTO (R_LONG_PCREL_MODE, "R_LONG_PCREL_MODE"),
-  SOM_HOWTO (R_ABS_CALL, "R_ABS_CALL"),
-  SOM_HOWTO (R_ABS_CALL, "R_ABS_CALL"),
-  SOM_HOWTO (R_ABS_CALL, "R_ABS_CALL"),
-  SOM_HOWTO (R_ABS_CALL, "R_ABS_CALL"),
-  SOM_HOWTO (R_ABS_CALL, "R_ABS_CALL"),
-  SOM_HOWTO (R_ABS_CALL, "R_ABS_CALL"),
-  SOM_HOWTO (R_ABS_CALL, "R_ABS_CALL"),
-  SOM_HOWTO (R_ABS_CALL, "R_ABS_CALL"),
-  SOM_HOWTO (R_ABS_CALL, "R_ABS_CALL"),
-  SOM_HOWTO (R_ABS_CALL, "R_ABS_CALL"),
-  SOM_HOWTO (R_ABS_CALL, "R_ABS_CALL"),
-  SOM_HOWTO (R_ABS_CALL, "R_ABS_CALL"),
-  SOM_HOWTO (R_ABS_CALL, "R_ABS_CALL"),
-  SOM_HOWTO (R_ABS_CALL, "R_ABS_CALL"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DP_RELATIVE, "R_DP_RELATIVE"),
-  SOM_HOWTO (R_DATA_GPREL, "R_DATA_GPREL"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_DLT_REL, "R_DLT_REL"),
-  SOM_HOWTO (R_DLT_REL, "R_DLT_REL"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_CODE_ONE_SYMBOL, "R_CODE_ONE_SYMBOL"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_MILLI_REL, "R_MILLI_REL"),
-  SOM_HOWTO (R_MILLI_REL, "R_MILLI_REL"),
-  SOM_HOWTO (R_CODE_PLABEL, "R_CODE_PLABEL"),
-  SOM_HOWTO (R_CODE_PLABEL, "R_CODE_PLABEL"),
-  SOM_HOWTO (R_BREAKPOINT, "R_BREAKPOINT"),
-  SOM_HOWTO (R_ENTRY, "R_ENTRY"),
-  SOM_HOWTO (R_ENTRY, "R_ENTRY"),
-  SOM_HOWTO (R_ALT_ENTRY, "R_ALT_ENTRY"),
-  SOM_HOWTO (R_EXIT, "R_EXIT"),
-  SOM_HOWTO (R_BEGIN_TRY, "R_BEGIN_TRY"),
-  SOM_HOWTO (R_END_TRY, "R_END_TRY"),
-  SOM_HOWTO (R_END_TRY, "R_END_TRY"),
-  SOM_HOWTO (R_END_TRY, "R_END_TRY"),
-  SOM_HOWTO (R_BEGIN_BRTAB, "R_BEGIN_BRTAB"),
-  SOM_HOWTO (R_END_BRTAB, "R_END_BRTAB"),
-  SOM_HOWTO (R_STATEMENT, "R_STATEMENT"),
-  SOM_HOWTO (R_STATEMENT, "R_STATEMENT"),
-  SOM_HOWTO (R_STATEMENT, "R_STATEMENT"),
-  SOM_HOWTO (R_DATA_EXPR, "R_DATA_EXPR"),
-  SOM_HOWTO (R_CODE_EXPR, "R_CODE_EXPR"),
-  SOM_HOWTO (R_FSEL, "R_FSEL"),
-  SOM_HOWTO (R_LSEL, "R_LSEL"),
-  SOM_HOWTO (R_RSEL, "R_RSEL"),
-  SOM_HOWTO (R_N_MODE, "R_N_MODE"),
-  SOM_HOWTO (R_S_MODE, "R_S_MODE"),
-  SOM_HOWTO (R_D_MODE, "R_D_MODE"),
-  SOM_HOWTO (R_R_MODE, "R_R_MODE"),
-  SOM_HOWTO (R_DATA_OVERRIDE, "R_DATA_OVERRIDE"),
-  SOM_HOWTO (R_DATA_OVERRIDE, "R_DATA_OVERRIDE"),
-  SOM_HOWTO (R_DATA_OVERRIDE, "R_DATA_OVERRIDE"),
-  SOM_HOWTO (R_DATA_OVERRIDE, "R_DATA_OVERRIDE"),
-  SOM_HOWTO (R_DATA_OVERRIDE, "R_DATA_OVERRIDE"),
-  SOM_HOWTO (R_TRANSLATED, "R_TRANSLATED"),
-  SOM_HOWTO (R_AUX_UNWIND, "R_AUX_UNWIND"),
-  SOM_HOWTO (R_COMP1, "R_COMP1"),
-  SOM_HOWTO (R_COMP2, "R_COMP2"),
-  SOM_HOWTO (R_COMP3, "R_COMP3"),
-  SOM_HOWTO (R_PREV_FIXUP, "R_PREV_FIXUP"),
-  SOM_HOWTO (R_PREV_FIXUP, "R_PREV_FIXUP"),
-  SOM_HOWTO (R_PREV_FIXUP, "R_PREV_FIXUP"),
-  SOM_HOWTO (R_PREV_FIXUP, "R_PREV_FIXUP"),
-  SOM_HOWTO (R_SEC_STMT, "R_SEC_STMT"),
-  SOM_HOWTO (R_N0SEL, "R_N0SEL"),
-  SOM_HOWTO (R_N1SEL, "R_N1SEL"),
-  SOM_HOWTO (R_LINETAB, "R_LINETAB"),
-  SOM_HOWTO (R_LINETAB_ESC, "R_LINETAB_ESC"),
-  SOM_HOWTO (R_LTP_OVERRIDE, "R_LTP_OVERRIDE"),
-  SOM_HOWTO (R_COMMENT, "R_COMMENT"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED"),
-  SOM_HOWTO (R_RESERVED, "R_RESERVED")
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_NO_RELOCATION),
+  SOM_HOWTO (0, R_ZEROES),
+  SOM_HOWTO (0, R_ZEROES),
+  SOM_HOWTO (0, R_UNINIT),
+  SOM_HOWTO (0, R_UNINIT),
+  SOM_HOWTO (4, R_RELOCATION),
+  SOM_HOWTO (4, R_DATA_ONE_SYMBOL),
+  SOM_HOWTO (4, R_DATA_ONE_SYMBOL),
+  SOM_HOWTO (4, R_DATA_PLABEL),
+  SOM_HOWTO (4, R_DATA_PLABEL),
+  SOM_HOWTO (4, R_SPACE_REF),
+  SOM_HOWTO (0, R_REPEATED_INIT),
+  SOM_HOWTO (0, R_REPEATED_INIT),
+  SOM_HOWTO (0, R_REPEATED_INIT),
+  SOM_HOWTO (0, R_REPEATED_INIT),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (4, R_PCREL_CALL),
+  SOM_HOWTO (4, R_PCREL_CALL),
+  SOM_HOWTO (4, R_PCREL_CALL),
+  SOM_HOWTO (4, R_PCREL_CALL),
+  SOM_HOWTO (4, R_PCREL_CALL),
+  SOM_HOWTO (4, R_PCREL_CALL),
+  SOM_HOWTO (4, R_PCREL_CALL),
+  SOM_HOWTO (4, R_PCREL_CALL),
+  SOM_HOWTO (4, R_PCREL_CALL),
+  SOM_HOWTO (4, R_PCREL_CALL),
+  SOM_HOWTO (4, R_PCREL_CALL),
+  SOM_HOWTO (4, R_PCREL_CALL),
+  SOM_HOWTO (4, R_PCREL_CALL),
+  SOM_HOWTO (4, R_PCREL_CALL),
+  SOM_HOWTO (0, R_SHORT_PCREL_MODE),
+  SOM_HOWTO (0, R_LONG_PCREL_MODE),
+  SOM_HOWTO (4, R_ABS_CALL),
+  SOM_HOWTO (4, R_ABS_CALL),
+  SOM_HOWTO (4, R_ABS_CALL),
+  SOM_HOWTO (4, R_ABS_CALL),
+  SOM_HOWTO (4, R_ABS_CALL),
+  SOM_HOWTO (4, R_ABS_CALL),
+  SOM_HOWTO (4, R_ABS_CALL),
+  SOM_HOWTO (4, R_ABS_CALL),
+  SOM_HOWTO (4, R_ABS_CALL),
+  SOM_HOWTO (4, R_ABS_CALL),
+  SOM_HOWTO (4, R_ABS_CALL),
+  SOM_HOWTO (4, R_ABS_CALL),
+  SOM_HOWTO (4, R_ABS_CALL),
+  SOM_HOWTO (4, R_ABS_CALL),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DP_RELATIVE),
+  SOM_HOWTO (4, R_DATA_GPREL),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (4, R_DLT_REL),
+  SOM_HOWTO (4, R_DLT_REL),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (4, R_CODE_ONE_SYMBOL),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (4, R_MILLI_REL),
+  SOM_HOWTO (4, R_MILLI_REL),
+  SOM_HOWTO (4, R_CODE_PLABEL),
+  SOM_HOWTO (4, R_CODE_PLABEL),
+  SOM_HOWTO (4, R_BREAKPOINT),
+  SOM_HOWTO (0, R_ENTRY),
+  SOM_HOWTO (0, R_ENTRY),
+  SOM_HOWTO (0, R_ALT_ENTRY),
+  SOM_HOWTO (0, R_EXIT),
+  SOM_HOWTO (0, R_BEGIN_TRY),
+  SOM_HOWTO (0, R_END_TRY),
+  SOM_HOWTO (0, R_END_TRY),
+  SOM_HOWTO (0, R_END_TRY),
+  SOM_HOWTO (0, R_BEGIN_BRTAB),
+  SOM_HOWTO (0, R_END_BRTAB),
+  SOM_HOWTO (0, R_STATEMENT),
+  SOM_HOWTO (0, R_STATEMENT),
+  SOM_HOWTO (0, R_STATEMENT),
+  SOM_HOWTO (4, R_DATA_EXPR),
+  SOM_HOWTO (4, R_CODE_EXPR),
+  SOM_HOWTO (0, R_FSEL),
+  SOM_HOWTO (0, R_LSEL),
+  SOM_HOWTO (0, R_RSEL),
+  SOM_HOWTO (0, R_N_MODE),
+  SOM_HOWTO (0, R_S_MODE),
+  SOM_HOWTO (0, R_D_MODE),
+  SOM_HOWTO (0, R_R_MODE),
+  SOM_HOWTO (0, R_DATA_OVERRIDE),
+  SOM_HOWTO (0, R_DATA_OVERRIDE),
+  SOM_HOWTO (0, R_DATA_OVERRIDE),
+  SOM_HOWTO (0, R_DATA_OVERRIDE),
+  SOM_HOWTO (0, R_DATA_OVERRIDE),
+  SOM_HOWTO (0, R_TRANSLATED),
+  SOM_HOWTO (0, R_AUX_UNWIND),
+  SOM_HOWTO (0, R_COMP1),
+  SOM_HOWTO (0, R_COMP2),
+  SOM_HOWTO (0, R_COMP3),
+  SOM_HOWTO (0, R_PREV_FIXUP),
+  SOM_HOWTO (0, R_PREV_FIXUP),
+  SOM_HOWTO (0, R_PREV_FIXUP),
+  SOM_HOWTO (0, R_PREV_FIXUP),
+  SOM_HOWTO (0, R_SEC_STMT),
+  SOM_HOWTO (0, R_N0SEL),
+  SOM_HOWTO (0, R_N1SEL),
+  SOM_HOWTO (0, R_LINETAB),
+  SOM_HOWTO (0, R_LINETAB_ESC),
+  SOM_HOWTO (0, R_LTP_OVERRIDE),
+  SOM_HOWTO (0, R_COMMENT),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED),
+  SOM_HOWTO (0, R_RESERVED)
 };
 
 /* Initialize the SOM relocation queue.  By definition the queue holds
@@ -2116,7 +2117,7 @@ setup_sections (bfd *abfd,
 		    SEEK_SET) != 0)
 	goto error_return;
       amt = sizeof ext_space;
-      if (bfd_bread (&ext_space, amt, abfd) != amt)
+      if (bfd_read (&ext_space, amt, abfd) != amt)
 	goto error_return;
 
       som_swap_space_dictionary_in (&ext_space, &space);
@@ -2158,7 +2159,7 @@ setup_sections (bfd *abfd,
 		    SEEK_SET) != 0)
 	goto error_return;
       amt = sizeof ext_subspace;
-      if (bfd_bread (&ext_subspace, amt, abfd) != amt)
+      if (bfd_read (&ext_subspace, amt, abfd) != amt)
 	goto error_return;
       /* Seek back to the start of the subspaces for loop below.  */
       if (bfd_seek (abfd,
@@ -2190,7 +2191,7 @@ setup_sections (bfd *abfd,
 
 	  /* Read in the next subspace.  */
 	  amt = sizeof ext_subspace;
-	  if (bfd_bread (&ext_subspace, amt, abfd) != amt)
+	  if (bfd_read (&ext_subspace, amt, abfd) != amt)
 	    goto error_return;
 
 	  som_swap_subspace_dictionary_in (&ext_subspace, &subspace);
@@ -2395,7 +2396,7 @@ som_object_p (bfd *abfd)
 #define ENTRY_SIZE sizeof (struct som_external_som_entry)
 
   amt = sizeof (struct som_external_header);
-  if (bfd_bread (&ext_file_hdr, amt, abfd) != amt)
+  if (bfd_read (&ext_file_hdr, amt, abfd) != amt)
     {
       if (bfd_get_error () != bfd_error_system_call)
 	bfd_set_error (bfd_error_wrong_format);
@@ -2426,7 +2427,7 @@ som_object_p (bfd *abfd)
     case EXECLIBMAGIC:
       /* Read the lst header and determine where the SOM directory begins.  */
 
-      if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0)
+      if (bfd_seek (abfd, 0, SEEK_SET) != 0)
 	{
 	  if (bfd_get_error () != bfd_error_system_call)
 	    bfd_set_error (bfd_error_wrong_format);
@@ -2434,7 +2435,7 @@ som_object_p (bfd *abfd)
 	}
 
       amt = sizeof (struct som_external_lst_header);
-      if (bfd_bread (&ext_lst_header, amt, abfd) != amt)
+      if (bfd_read (&ext_lst_header, amt, abfd) != amt)
 	{
 	  if (bfd_get_error () != bfd_error_system_call)
 	    bfd_set_error (bfd_error_wrong_format);
@@ -2451,7 +2452,7 @@ som_object_p (bfd *abfd)
 	}
 
       amt = ENTRY_SIZE;
-      if (bfd_bread (&ext_som_entry, amt, abfd) != amt)
+      if (bfd_read (&ext_som_entry, amt, abfd) != amt)
 	{
 	  if (bfd_get_error () != bfd_error_system_call)
 	    bfd_set_error (bfd_error_wrong_format);
@@ -2469,7 +2470,7 @@ som_object_p (bfd *abfd)
 
       /* And finally, re-read the som header.  */
       amt = sizeof (struct som_external_header);
-      if (bfd_bread (&ext_file_hdr, amt, abfd) != amt)
+      if (bfd_read (&ext_file_hdr, amt, abfd) != amt)
 	{
 	  if (bfd_get_error () != bfd_error_system_call)
 	    bfd_set_error (bfd_error_wrong_format);
@@ -2504,7 +2505,7 @@ som_object_p (bfd *abfd)
       if (aux_hdr_ptr == NULL)
 	return NULL;
       amt = sizeof (struct som_external_exec_auxhdr);
-      if (bfd_bread (&ext_exec_auxhdr, amt, abfd) != amt)
+      if (bfd_read (&ext_exec_auxhdr, amt, abfd) != amt)
 	{
 	  if (bfd_get_error () != bfd_error_system_call)
 	    bfd_set_error (bfd_error_wrong_format);
@@ -2933,15 +2934,17 @@ som_write_fixups (bfd *abfd,
       asection *subsection;
 
       /* Find a space.  */
-      while (!som_is_space (section))
+      while (section && !som_is_space (section))
 	section = section->next;
+      if (!section)
+	break;
 
       /* Now iterate through each of its subspaces.  */
       for (subsection = abfd->sections;
 	   subsection != NULL;
 	   subsection = subsection->next)
 	{
-	  int reloc_offset;
+	  unsigned int reloc_offset;
 	  unsigned int current_rounding_mode;
 #ifndef NO_PCREL_MODES
 	  unsigned int current_call_mode;
@@ -2992,6 +2995,31 @@ som_write_fixups (bfd *abfd,
 	      unsigned int skip;
 	      int sym_num;
 
+	      if (bfd_reloc->address < reloc_offset)
+		{
+		  _bfd_error_handler
+		    /* xgettext:c-format */
+		    (_("%pB(%pA+%#" PRIx64 "): "
+		       "%s relocation offset out of order"),
+		     abfd, subsection, (uint64_t) bfd_reloc->address,
+		     bfd_reloc->howto->name);
+		  bfd_set_error (bfd_error_bad_value);
+		  return false;
+		}
+	      if (!bfd_reloc_offset_in_range (bfd_reloc->howto,
+					      abfd, subsection,
+					      bfd_reloc->address))
+		{
+		  _bfd_error_handler
+		    /* xgettext:c-format */
+		    (_("%pB(%pA+%#" PRIx64 "): "
+		       "%s relocation offset out of range"),
+		     abfd, subsection, (uint64_t) bfd_reloc->address,
+		     bfd_reloc->howto->name);
+		  bfd_set_error (bfd_error_bad_value);
+		  return false;
+		}
+
 	      /* Get the symbol number.  Remember it's stored in a
 		 special place for section symbols.  */
 	      if ((*bfd_reloc->sym_ptr_ptr)->flags & BSF_SECTION_SYM)
@@ -3003,13 +3031,15 @@ som_write_fixups (bfd *abfd,
 		 then dump the current buffer contents now.  Also reinitialize
 		 the relocation queue.
 
-		 No single BFD relocation could ever translate into more
-		 than 100 bytes of SOM relocations (20bytes is probably the
-		 upper limit, but leave lots of space for growth).  */
-	      if (p - tmp_space + 100 > SOM_TMP_BUFSIZE)
+		 A single BFD relocation would probably only ever
+		 translate into at most 20 bytes of SOM relocations.
+		 However with fuzzed object files and resulting silly
+		 values for "skip" below, som_reloc_skip can emit 262
+		 bytes.  Leave lots of space for growth.  */
+	      if (p - tmp_space + 512 > SOM_TMP_BUFSIZE)
 		{
 		  amt = p - tmp_space;
-		  if (bfd_bwrite ((void *) tmp_space, amt, abfd) != amt)
+		  if (bfd_write (tmp_space, amt, abfd) != amt)
 		    return false;
 
 		  p = tmp_space;
@@ -3022,42 +3052,8 @@ som_write_fixups (bfd *abfd,
 	      p = som_reloc_skip (abfd, skip, p,
 				  &subspace_reloc_size, reloc_queue);
 
-	      /* Update reloc_offset for the next iteration.
-
-		 Many relocations do not consume input bytes.  They
-		 are markers, or set state necessary to perform some
-		 later relocation.  */
-	      switch (bfd_reloc->howto->type)
-		{
-		case R_ENTRY:
-		case R_ALT_ENTRY:
-		case R_EXIT:
-		case R_N_MODE:
-		case R_S_MODE:
-		case R_D_MODE:
-		case R_R_MODE:
-		case R_FSEL:
-		case R_LSEL:
-		case R_RSEL:
-		case R_COMP1:
-		case R_COMP2:
-		case R_BEGIN_BRTAB:
-		case R_END_BRTAB:
-		case R_BEGIN_TRY:
-		case R_END_TRY:
-		case R_N0SEL:
-		case R_N1SEL:
-#ifndef NO_PCREL_MODES
-		case R_SHORT_PCREL_MODE:
-		case R_LONG_PCREL_MODE:
-#endif
-		  reloc_offset = bfd_reloc->address;
-		  break;
-
-		default:
-		  reloc_offset = bfd_reloc->address + 4;
-		  break;
-		}
+	      /* Update reloc_offset for the next iteration.  */
+	      reloc_offset = bfd_reloc->address + bfd_reloc->howto->size;
 
 	      /* Now the actual relocation we care about.  */
 	      switch (bfd_reloc->howto->type)
@@ -3294,7 +3290,7 @@ som_write_fixups (bfd *abfd,
 
 	  /* Scribble out the relocations.  */
 	  amt = p - tmp_space;
-	  if (bfd_bwrite ((void *) tmp_space, amt, abfd) != amt)
+	  if (bfd_write (tmp_space, amt, abfd) != amt)
 	    return false;
 	  p = tmp_space;
 
@@ -3308,113 +3304,126 @@ som_write_fixups (bfd *abfd,
   return true;
 }
 
+/* Write the length of STR followed by STR to P which points into
+   *BUF, a buffer of *BUFLEN size.  Track total size in *STRINGS_SIZE,
+   setting *STRX to the current offset for STR.  When STR can't fit in
+   *BUF, flush the buffer to ABFD, possibly reallocating.  Return the
+   next available location in *BUF, or NULL on error.  */
+
+static char *
+add_string (char *p, const char *str, bfd *abfd, char **buf, size_t *buflen,
+	    unsigned int *strings_size, unsigned int *strx)
+{
+  size_t length = strlen (str) + 1;
+  /* Each entry will take 4 bytes to hold the string length + the
+     string itself + null terminator + padding to a 4 byte boundary.  */
+  size_t needed = (4 + length + 3) & ~3;
+
+  /* If there is not enough room for the next entry, then dump the
+     current buffer contents now and maybe allocate a larger buffer.  */
+  if (p - *buf + needed > *buflen)
+    {
+      /* Flush buffer before refilling or reallocating.  */
+      size_t amt = p - *buf;
+      if (bfd_write (*buf, amt, abfd) != amt)
+	return NULL;
+
+      /* Reallocate if now empty buffer still too small.  */
+      if (needed > *buflen)
+	{
+	  /* Ensure a minimum growth factor to avoid O(n**2) space
+	     consumption for n strings.  The optimal minimum factor
+	     seems to be 2.  */
+	  if (*buflen * 2 < needed)
+	    *buflen = needed;
+	  else
+	    *buflen = *buflen * 2;
+	  free (*buf);
+	  *buf = bfd_malloc (*buflen);
+	  if (*buf == NULL)
+	    return NULL;
+	}
+
+      /* Reset to beginning of the (possibly new) buffer space.  */
+      p = *buf;
+    }
+
+  /* First element in a string table entry is the length of
+     the string.  This must always be 4 byte aligned.  This is
+     also an appropriate time to fill in the string index
+     field in the symbol table entry.  */
+  bfd_put_32 (abfd, length - 1, p);
+  *strings_size += 4;
+  p += 4;
+
+  *strx = *strings_size;
+
+  /* Next comes the string itself + a null terminator.  */
+  memcpy (p, str, length);
+  p += length;
+  *strings_size += length;
+
+  /* Always align up to the next word boundary.  */
+  if (length & 3)
+    {
+      length = 4 - (length & 3);
+      memset (p, 0, length);
+      *strings_size += length;
+      p += length;
+    }
+  return p;
+}
+
 /* Write out the space/subspace string table.  */
 
 static bool
 som_write_space_strings (bfd *abfd,
 			 unsigned long current_offset,
-			 unsigned int *string_sizep)
+			 unsigned int *strings_size)
 {
   /* Chunk of memory that we can use as buffer space, then throw
      away.  */
   size_t tmp_space_size = SOM_TMP_BUFSIZE;
   char *tmp_space = bfd_malloc (tmp_space_size);
   char *p = tmp_space;
-  unsigned int strings_size = 0;
   asection *section;
-  size_t amt;
-  bfd_size_type res;
 
   if (tmp_space == NULL)
     return false;
 
   /* Seek to the start of the space strings in preparation for writing
      them out.  */
-  if (bfd_seek (abfd, (file_ptr) current_offset, SEEK_SET) != 0)
+  if (bfd_seek (abfd, current_offset, SEEK_SET) != 0)
     return false;
 
   /* Walk through all the spaces and subspaces (order is not important)
      building up and writing string table entries for their names.  */
+  *strings_size = 0;
   for (section = abfd->sections; section != NULL; section = section->next)
     {
-      size_t length;
+      unsigned int *strx;
 
       /* Only work with space/subspaces; avoid any other sections
 	 which might have been made (.text for example).  */
-      if (!som_is_space (section) && !som_is_subspace (section))
+      if (som_is_space (section))
+	strx = &som_section_data (section)->space_dict->name;
+      else if (som_is_subspace (section))
+	strx = &som_section_data (section)->subspace_dict->name;
+      else
 	continue;
 
-      /* Get the length of the space/subspace name.  */
-      length = strlen (section->name);
-
-      /* If there is not enough room for the next entry, then dump the
-	 current buffer contents now and maybe allocate a larger
-	 buffer.  Each entry will take 4 bytes to hold the string
-	 length + the string itself + null terminator.  */
-      if (p - tmp_space + 5 + length > tmp_space_size)
-	{
-	  /* Flush buffer before refilling or reallocating.  */
-	  amt = p - tmp_space;
-	  if (bfd_bwrite ((void *) &tmp_space[0], amt, abfd) != amt)
-	    return false;
-
-	  /* Reallocate if now empty buffer still too small.  */
-	  if (5 + length > tmp_space_size)
-	    {
-	      /* Ensure a minimum growth factor to avoid O(n**2) space
-		 consumption for n strings.  The optimal minimum
-		 factor seems to be 2, as no other value can guarantee
-		 wasting less than 50% space.  (Note that we cannot
-		 deallocate space allocated by `alloca' without
-		 returning from this function.)  The same technique is
-		 used a few more times below when a buffer is
-		 reallocated.  */
-	      if (2 * tmp_space_size < length + 5)
-		tmp_space_size = length + 5;
-	      else
-		tmp_space_size = 2 * tmp_space_size;
-	      tmp_space = xrealloc (tmp_space, tmp_space_size);
-	    }
-
-	  /* Reset to beginning of the (possibly new) buffer space.  */
-	  p = tmp_space;
-	}
-
-      /* First element in a string table entry is the length of the
-	 string.  Alignment issues are already handled.  */
-      bfd_put_32 (abfd, (bfd_vma) length, p);
-      p += 4;
-      strings_size += 4;
-
-      /* Record the index in the space/subspace records.  */
-      if (som_is_space (section))
-	som_section_data (section)->space_dict->name = strings_size;
-      else
-	som_section_data (section)->subspace_dict->name = strings_size;
-
-      /* Next comes the string itself + a null terminator.  */
-      strcpy (p, section->name);
-      p += length + 1;
-      strings_size += length + 1;
-
-      /* Always align up to the next word boundary.  */
-      while (strings_size % 4)
-	{
-	  bfd_put_8 (abfd, 0, p);
-	  p++;
-	  strings_size++;
-	}
+      p = add_string (p, section->name, abfd, &tmp_space, &tmp_space_size,
+		      strings_size, strx);
+      if (p == NULL)
+	return false;
     }
 
   /* Done with the space/subspace strings.  Write out any information
      contained in a partial block.  */
-  amt = p - tmp_space;
-  res = bfd_bwrite ((void *) &tmp_space[0], amt, abfd);
+  size_t amt = p - tmp_space;
+  bool ok = amt ? bfd_write (tmp_space, amt, abfd) == amt : true;
   free (tmp_space);
-  if (res != amt)
-    return false;
-  *string_sizep = strings_size;
-  return true;
+  return ok;
 }
 
 /* Write out the symbol string table.  */
@@ -3424,7 +3433,7 @@ som_write_symbol_strings (bfd *abfd,
 			  unsigned long current_offset,
 			  asymbol **syms,
 			  unsigned int num_syms,
-			  unsigned int *string_sizep,
+			  unsigned int *strings_size,
 			  struct som_compilation_unit *compilation_unit)
 {
   unsigned int i;
@@ -3433,9 +3442,6 @@ som_write_symbol_strings (bfd *abfd,
   size_t tmp_space_size = SOM_TMP_BUFSIZE;
   char *tmp_space = bfd_malloc (tmp_space_size);
   char *p = tmp_space;
-  unsigned int strings_size = 0;
-  size_t amt;
-  bfd_size_type res;
 
   if (tmp_space == NULL)
     return false;
@@ -3449,15 +3455,15 @@ som_write_symbol_strings (bfd *abfd,
 
   /* Seek to the start of the space strings in preparation for writing
      them out.  */
-  if (bfd_seek (abfd, (file_ptr) current_offset, SEEK_SET) != 0)
+  if (bfd_seek (abfd, current_offset, SEEK_SET) != 0)
     return false;
 
+  *strings_size = 0;
   if (compilation_unit)
     {
       for (i = 0; i < 4; i++)
 	{
 	  struct som_name_pt *name;
-	  size_t length;
 
 	  switch (i)
 	    {
@@ -3477,121 +3483,28 @@ som_write_symbol_strings (bfd *abfd,
 	      abort ();
 	    }
 
-	  length = strlen (name->name);
+	  p = add_string (p, name->name, abfd, &tmp_space, &tmp_space_size,
+			  strings_size, &name->strx);
 
-	  /* If there is not enough room for the next entry, then dump
-	     the current buffer contents now and maybe allocate a
-	     larger buffer.  */
-	  if (p - tmp_space + 5 + length > tmp_space_size)
-	    {
-	      /* Flush buffer before refilling or reallocating.  */
-	      amt = p - tmp_space;
-	      if (bfd_bwrite ((void *) &tmp_space[0], amt, abfd) != amt)
-		return false;
-
-	      /* Reallocate if now empty buffer still too small.  */
-	      if (5 + length > tmp_space_size)
-		{
-		  /* See alloca above for discussion of new size.  */
-		  if (2 * tmp_space_size < 5 + length)
-		    tmp_space_size = 5 + length;
-		  else
-		    tmp_space_size = 2 * tmp_space_size;
-		  tmp_space = xrealloc (tmp_space, tmp_space_size);
-		}
-
-	      /* Reset to beginning of the (possibly new) buffer
-		 space.  */
-	      p = tmp_space;
-	    }
-
-	  /* First element in a string table entry is the length of
-	     the string.  This must always be 4 byte aligned.  This is
-	     also an appropriate time to fill in the string index
-	     field in the symbol table entry.  */
-	  bfd_put_32 (abfd, (bfd_vma) length, p);
-	  strings_size += 4;
-	  p += 4;
-
-	  /* Next comes the string itself + a null terminator.  */
-	  strcpy (p, name->name);
-
-	  name->strx = strings_size;
-
-	  p += length + 1;
-	  strings_size += length + 1;
-
-	  /* Always align up to the next word boundary.  */
-	  while (strings_size % 4)
-	    {
-	      bfd_put_8 (abfd, 0, p);
-	      strings_size++;
-	      p++;
-	    }
+	  if (p == NULL)
+	    return false;
 	}
     }
 
   for (i = 0; i < num_syms; i++)
     {
-      size_t length = strlen (syms[i]->name);
-
-      /* If there is not enough room for the next entry, then dump the
-	 current buffer contents now and maybe allocate a larger buffer.  */
-     if (p - tmp_space + 5 + length > tmp_space_size)
-	{
-	  /* Flush buffer before refilling or reallocating.  */
-	  amt = p - tmp_space;
-	  if (bfd_bwrite ((void *) &tmp_space[0], amt, abfd) != amt)
-	    return false;
-
-	  /* Reallocate if now empty buffer still too small.  */
-	  if (5 + length > tmp_space_size)
-	    {
-	      /* See alloca above for discussion of new size.  */
-	      if (2 * tmp_space_size < 5 + length)
-		tmp_space_size = 5 + length;
-	      else
-		tmp_space_size = 2 * tmp_space_size;
-	      tmp_space = xrealloc (tmp_space, tmp_space_size);
-	    }
-
-	  /* Reset to beginning of the (possibly new) buffer space.  */
-	  p = tmp_space;
-	}
-
-      /* First element in a string table entry is the length of the
-	 string.  This must always be 4 byte aligned.  This is also
-	 an appropriate time to fill in the string index field in the
-	 symbol table entry.  */
-      bfd_put_32 (abfd, (bfd_vma) length, p);
-      strings_size += 4;
-      p += 4;
-
-      /* Next comes the string itself + a null terminator.  */
-      strcpy (p, syms[i]->name);
-
-      som_symbol_data (syms[i])->stringtab_offset = strings_size;
-      p += length + 1;
-      strings_size += length + 1;
-
-      /* Always align up to the next word boundary.  */
-      while (strings_size % 4)
-	{
-	  bfd_put_8 (abfd, 0, p);
-	  strings_size++;
-	  p++;
-	}
+      p = add_string (p, syms[i]->name, abfd, &tmp_space, &tmp_space_size,
+		      strings_size,
+		      &som_symbol_data (syms[i])->stringtab_offset);
+      if (p == NULL)
+	return false;
     }
 
   /* Scribble out any partial block.  */
-  amt = p - tmp_space;
-  res = bfd_bwrite ((void *) &tmp_space[0], amt, abfd);
+  size_t amt = p - tmp_space;
+  bool ok = amt ? bfd_write (tmp_space, amt, abfd) == amt : true;
   free (tmp_space);
-  if (res != amt)
-    return false;
-
-  *string_sizep = strings_size;
-  return true;
+  return ok;
 }
 
 /* Compute variable information to be placed in the SOM headers,
@@ -3643,7 +3556,7 @@ som_begin_writing (bfd *abfd)
       struct som_external_string_auxhdr ext_string_auxhdr;
       bfd_size_type len;
 
-      if (bfd_seek (abfd, (file_ptr) current_offset, SEEK_SET) != 0)
+      if (bfd_seek (abfd, current_offset, SEEK_SET) != 0)
 	return false;
 
       /* Write the aux_id structure and the string length.  */
@@ -3652,15 +3565,14 @@ som_begin_writing (bfd *abfd)
       current_offset += len;
       som_swap_string_auxhdr_out
 	(obj_som_version_hdr (abfd), &ext_string_auxhdr);
-      if (bfd_bwrite (&ext_string_auxhdr, len, abfd) != len)
+      if (bfd_write (&ext_string_auxhdr, len, abfd) != len)
 	return false;
 
       /* Write the version string.  */
       len = obj_som_version_hdr (abfd)->header_id.length - 4;
       obj_som_file_hdr (abfd)->aux_header_size += len;
       current_offset += len;
-      if (bfd_bwrite ((void *) obj_som_version_hdr (abfd)->string, len, abfd)
-	  != len)
+      if (bfd_write (obj_som_version_hdr (abfd)->string, len, abfd) != len)
 	return false;
     }
 
@@ -3669,7 +3581,7 @@ som_begin_writing (bfd *abfd)
       struct som_external_string_auxhdr ext_string_auxhdr;
       bfd_size_type len;
 
-      if (bfd_seek (abfd, (file_ptr) current_offset, SEEK_SET) != 0)
+      if (bfd_seek (abfd, current_offset, SEEK_SET) != 0)
 	return false;
 
       /* Write the aux_id structure and the string length.  */
@@ -3678,15 +3590,14 @@ som_begin_writing (bfd *abfd)
       current_offset += len;
       som_swap_string_auxhdr_out
 	(obj_som_copyright_hdr (abfd), &ext_string_auxhdr);
-      if (bfd_bwrite (&ext_string_auxhdr, len, abfd) != len)
+      if (bfd_write (&ext_string_auxhdr, len, abfd) != len)
 	return false;
 
       /* Write the copyright string.  */
       len = obj_som_copyright_hdr (abfd)->header_id.length - 4;
       obj_som_file_hdr (abfd)->aux_header_size += len;
       current_offset += len;
-      if (bfd_bwrite ((void *) obj_som_copyright_hdr (abfd)->string, len, abfd)
-	  != len)
+      if (bfd_write (obj_som_copyright_hdr (abfd)->string, len, abfd) != len)
 	return false;
     }
 
@@ -3933,9 +3844,9 @@ som_begin_writing (bfd *abfd)
      zeros are filled in.  Ugh.  */
   if (abfd->flags & (EXEC_P | DYNAMIC))
     current_offset = SOM_ALIGN (current_offset, PA_PAGESIZE);
-  if (bfd_seek (abfd, (file_ptr) current_offset - 1, SEEK_SET) != 0)
+  if (bfd_seek (abfd, current_offset - 1, SEEK_SET) != 0)
     return false;
-  if (bfd_bwrite ((void *) "", (bfd_size_type) 1, abfd) != 1)
+  if (bfd_write ("", 1, abfd) != 1)
     return false;
 
   obj_som_file_hdr (abfd)->unloadable_sp_size
@@ -4102,7 +4013,7 @@ som_finish_writing (bfd *abfd)
 	  som_swap_subspace_dictionary_record_out
 	    (som_section_data (subsection)->subspace_dict, &ext_subspace_dict);
 	  amt = sizeof (struct som_subspace_dictionary_record);
-	  if (bfd_bwrite (&ext_subspace_dict, amt, abfd) != amt)
+	  if (bfd_write (&ext_subspace_dict, amt, abfd) != amt)
 	    return false;
 	}
       /* Goto the next section.  */
@@ -4160,7 +4071,7 @@ som_finish_writing (bfd *abfd)
 	  som_swap_subspace_dictionary_record_out
 	    (som_section_data (subsection)->subspace_dict, &ext_subspace_dict);
 	  amt = sizeof (struct som_subspace_dictionary_record);
-	  if (bfd_bwrite (&ext_subspace_dict, amt, abfd) != amt)
+	  if (bfd_write (&ext_subspace_dict, amt, abfd) != amt)
 	    return false;
 	}
       /* Goto the next section.  */
@@ -4189,7 +4100,7 @@ som_finish_writing (bfd *abfd)
       som_swap_space_dictionary_out (som_section_data (section)->space_dict,
 				     &ext_space_dict);
       amt = sizeof (struct som_external_space_dictionary_record);
-      if (bfd_bwrite (&ext_space_dict, amt, abfd) != amt)
+      if (bfd_write (&ext_space_dict, amt, abfd) != amt)
 	return false;
 
       /* Goto the next section.  */
@@ -4209,13 +4120,13 @@ som_finish_writing (bfd *abfd)
 	(obj_som_compilation_unit (abfd), &ext_comp_unit);
 
       amt = sizeof (struct som_external_compilation_unit);
-      if (bfd_bwrite (&ext_comp_unit, amt, abfd) != amt)
+      if (bfd_write (&ext_comp_unit, amt, abfd) != amt)
 	return false;
     }
 
   /* Setting of the system_id has to happen very late now that copying of
      BFD private data happens *after* section contents are set.  */
-  if (abfd->flags & (EXEC_P | DYNAMIC))
+  if ((abfd->flags & (EXEC_P | DYNAMIC)) && obj_som_exec_data (abfd))
     obj_som_file_hdr (abfd)->system_id = obj_som_exec_data (abfd)->system_id;
   else if (bfd_get_mach (abfd) == pa20)
     obj_som_file_hdr (abfd)->system_id = CPU_PA_RISC2_0;
@@ -4231,10 +4142,10 @@ som_finish_writing (bfd *abfd)
 
   /* Only thing left to do is write out the file header.  It is always
      at location zero.  Seek there and write it.  */
-  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0)
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0)
     return false;
   amt = sizeof (struct som_external_header);
-  if (bfd_bwrite (&ext_header, amt, abfd) != amt)
+  if (bfd_write (&ext_header, amt, abfd) != amt)
     return false;
 
   /* Now write the exec header.  */
@@ -4246,7 +4157,8 @@ som_finish_writing (bfd *abfd)
 
       exec_header = obj_som_exec_hdr (abfd);
       exec_header->exec_entry = bfd_get_start_address (abfd);
-      exec_header->exec_flags = obj_som_exec_data (abfd)->exec_flags;
+      if (obj_som_exec_data (abfd))
+	exec_header->exec_flags = obj_som_exec_data (abfd)->exec_flags;
 
       /* Oh joys.  Ram some of the BSS data into the DATA section
 	 to be compatible with how the hp linker makes objects
@@ -4275,7 +4187,7 @@ som_finish_writing (bfd *abfd)
 	return false;
 
       amt = sizeof (ext_exec_header);
-      if (bfd_bwrite (&ext_exec_header, amt, abfd) != amt)
+      if (bfd_write (&ext_exec_header, amt, abfd) != amt)
 	return false;
     }
   return true;
@@ -4521,7 +4433,7 @@ som_build_and_write_symbol_table (bfd *abfd)
 
   symtab_size = num_syms;
   symtab_size *= sizeof (struct som_external_symbol_dictionary_record);
-  if (bfd_bwrite ((void *) som_symtab, symtab_size, abfd) != symtab_size)
+  if (bfd_write (som_symtab, symtab_size, abfd) != symtab_size)
     goto error_return;
 
   free (som_symtab);
@@ -4897,9 +4809,8 @@ som_print_symbol (bfd *abfd,
       fprintf (file, "%s", symbol->name);
       break;
     case bfd_print_symbol_more:
-      fprintf (file, "som ");
-      fprintf_vma (file, symbol->value);
-      fprintf (file, " %lx", (long) symbol->flags);
+      fprintf (file, "som %08" PRIx64 " %x",
+	       (uint64_t) symbol->value, symbol->flags);
       break;
     case bfd_print_symbol_all:
       {
@@ -4942,13 +4853,9 @@ som_set_reloc_info (unsigned char *fixup,
 		    unsigned int symcount,
 		    bool just_count)
 {
-  unsigned int op, varname, deallocate_contents = 0;
+  unsigned int deallocate_contents = 0;
   unsigned char *end_fixups = &fixup[end];
-  const struct fixup_format *fp;
-  const char *cp;
-  unsigned char *save_fixup;
-  int variables[26], stack[20], c, v, count, prev_fixup, *sp, saved_unwind_bits;
-  const int *subop;
+  int variables[26], stack[20], count, prev_fixup, *sp, saved_unwind_bits;
   arelent *rptr = internal_relocs;
   unsigned int offset = 0;
 
@@ -4967,10 +4874,14 @@ som_set_reloc_info (unsigned char *fixup,
 
   while (fixup < end_fixups)
     {
+      const char *cp;
+      unsigned int op;
+      const struct fixup_format *fp;
+
       /* Save pointer to the start of this fixup.  We'll use
 	 it later to determine if it is necessary to put this fixup
 	 on the queue.  */
-      save_fixup = fixup;
+      unsigned char *save_fixup = fixup;
 
       /* Get the fixup code and its associated format.  */
       op = *fixup++;
@@ -4979,6 +4890,11 @@ som_set_reloc_info (unsigned char *fixup,
       /* Handle a request for a previous fixup.  */
       if (*fp->format == 'P')
 	{
+	  if (!reloc_queue[fp->D].reloc)
+	    /* The back-reference doesn't exist.  This is a broken
+	       object file, likely fuzzed.  Just ignore the fixup.  */
+	    continue;
+
 	  /* Get pointer to the beginning of the prev fixup, move
 	     the repeated fixup to the head of the queue.  */
 	  fixup = reloc_queue[fp->D].reloc;
@@ -5016,11 +4932,15 @@ som_set_reloc_info (unsigned char *fixup,
       while (*cp)
 	{
 	  /* The variable this pass is going to compute a value for.  */
-	  varname = *cp++;
+	  unsigned int varname = *cp++;
+	  const int *subop;
+	  int c;
 
 	  /* Start processing RHS.  Continue until a NULL or '=' is found.  */
 	  do
 	    {
+	      unsigned v;
+
 	      c = *cp++;
 
 	      /* If this is a variable, push it on the stack.  */
@@ -5094,7 +5014,7 @@ som_set_reloc_info (unsigned char *fixup,
 	    /* A symbol to use in the relocation.  Make a note
 	       of this if we are not just counting.  */
 	    case 'S':
-	      if (! just_count && (unsigned int) c < symcount)
+	      if (!just_count && symbols != NULL && (unsigned int) c < symcount)
 		rptr->sym_ptr_ptr = &symbols[c];
 	      break;
 	    /* Argument relocation bits for a function call.  */
@@ -5226,26 +5146,30 @@ som_set_reloc_info (unsigned char *fixup,
 		     section contents.  */
 		  rptr->addend = var ('V');
 
-		  if (rptr->addend == 0 && !section->contents)
+		  if (rptr->addend == 0
+		      && (section->flags & SEC_HAS_CONTENTS) != 0)
 		    {
-		      /* Got to read the damn contents first.  We don't
-			 bother saving the contents (yet).  Add it one
-			 day if the need arises.  */
-		      bfd_byte *contents;
-		      if (!bfd_malloc_and_get_section (section->owner, section,
-						       &contents))
+		      if (!section->contents)
 			{
-			  free (contents);
-			  return (unsigned) -1;
+			  /* Got to read the damn contents first.  We don't
+			     bother saving the contents (yet).  Add it one
+			     day if the need arises.  */
+			  bfd_byte *contents;
+			  if (!bfd_malloc_and_get_section (section->owner,
+							   section, &contents))
+			    {
+			      free (contents);
+			      return (unsigned) -1;
+			    }
+			  section->contents = contents;
+			  deallocate_contents = 1;
 			}
-		      section->contents = contents;
-		      deallocate_contents = 1;
+		      if (offset - var ('L') <= section->size
+			  && section->size - (offset - var ('L')) >= 4)
+			rptr->addend = bfd_get_32 (section->owner,
+						   (section->contents
+						    + offset - var ('L')));
 		    }
-		  else if (rptr->addend == 0)
-		    rptr->addend = bfd_get_32 (section->owner,
-					       (section->contents
-						+ offset - var ('L')));
-
 		}
 	      else
 		rptr->addend = var ('V');
@@ -5259,7 +5183,10 @@ som_set_reloc_info (unsigned char *fixup,
 	}
     }
   if (deallocate_contents)
-    free (section->contents);
+    {
+      free (section->contents);
+      section->contents = NULL;
+    }
 
   return count;
 
@@ -5717,9 +5644,9 @@ som_get_section_contents (bfd *abfd,
 {
   if (count == 0 || ((section->flags & SEC_HAS_CONTENTS) == 0))
     return true;
-  if ((bfd_size_type) (offset+count) > section->size
-      || bfd_seek (abfd, (file_ptr) (section->filepos + offset), SEEK_SET) != 0
-      || bfd_bread (location, count, abfd) != count)
+  if ((bfd_size_type) (offset + count) > section->size
+      || bfd_seek (abfd, section->filepos + offset, SEEK_SET) != 0
+      || bfd_read (location, count, abfd) != count)
     return false; /* On error.  */
   return true;
 }
@@ -5754,7 +5681,7 @@ som_set_section_contents (bfd *abfd,
   if (bfd_seek (abfd, offset, SEEK_SET) != 0)
     return false;
 
-  if (bfd_bwrite (location, count, abfd) != count)
+  if (bfd_write (location, count, abfd) != count)
     return false;
   return true;
 }
@@ -5963,7 +5890,7 @@ som_bfd_count_ar_symbols (bfd *abfd,
 
       /* Read in this symbol and update the counter.  */
       amt = sizeof (ext_lst_symbol);
-      if (bfd_bread ((void *) &ext_lst_symbol, amt, abfd) != amt)
+      if (bfd_read (&ext_lst_symbol, amt, abfd) != amt)
 	goto error_return;
 
       (*count)++;
@@ -5991,7 +5918,7 @@ som_bfd_count_ar_symbols (bfd *abfd,
 
 	  /* Read the symbol in and update the counter.  */
 	  amt = sizeof (ext_lst_symbol);
-	  if (bfd_bread ((void *) &ext_lst_symbol, amt, abfd) != amt)
+	  if (bfd_read (&ext_lst_symbol, amt, abfd) != amt)
 	    goto error_return;
 
 	  (*count)++;
@@ -6072,7 +5999,7 @@ som_bfd_fill_in_ar_symbols (bfd *abfd,
 	goto error_return;
 
       amt = sizeof (lst_symbol);
-      if (bfd_bread ((void *) &lst_symbol, amt, abfd) != amt)
+      if (bfd_read (&lst_symbol, amt, abfd) != amt)
 	goto error_return;
 
       /* Get the name of the symbol, first get the length which is stored
@@ -6086,7 +6013,7 @@ som_bfd_fill_in_ar_symbols (bfd *abfd,
 			   + bfd_getb32 (lst_symbol.name) - 4), SEEK_SET) != 0)
 	goto error_return;
 
-      if (bfd_bread (&ext_len, (bfd_size_type) 4, abfd) != 4)
+      if (bfd_read (&ext_len, 4, abfd) != 4)
 	goto error_return;
       len = bfd_getb32 (ext_len);
 
@@ -6129,7 +6056,7 @@ som_bfd_fill_in_ar_symbols (bfd *abfd,
 	    goto error_return;
 
 	  amt = sizeof (lst_symbol);
-	  if (bfd_bread ((void *) &lst_symbol, amt, abfd) != amt)
+	  if (bfd_read (&lst_symbol, amt, abfd) != amt)
 	    goto error_return;
 
 	  /* Seek to the name length & string and read them in.  */
@@ -6137,7 +6064,7 @@ som_bfd_fill_in_ar_symbols (bfd *abfd,
 			+ bfd_getb32 (lst_symbol.name) - 4, SEEK_SET) != 0)
 	    goto error_return;
 
-	  if (bfd_bread (&ext_len, (bfd_size_type) 4, abfd) != 4)
+	  if (bfd_read (&ext_len, 4, abfd) != 4)
 	    goto error_return;
 	  len = bfd_getb32 (ext_len);
 
@@ -6192,7 +6119,7 @@ som_slurp_armap (bfd *abfd)
   struct artdata *ardata = bfd_ardata (abfd);
   char nextname[17];
   size_t amt = 16;
-  int i = bfd_bread ((void *) nextname, amt, abfd);
+  int i = bfd_read (nextname, amt, abfd);
 
   /* Special cases.  */
   if (i == 0)
@@ -6200,7 +6127,7 @@ som_slurp_armap (bfd *abfd)
   if (i != 16)
     return false;
 
-  if (bfd_seek (abfd, (file_ptr) -16, SEEK_CUR) != 0)
+  if (bfd_seek (abfd, -16, SEEK_CUR) != 0)
     return false;
 
   /* For archives without .o files there is no symbol table.  */
@@ -6212,7 +6139,7 @@ som_slurp_armap (bfd *abfd)
 
   /* Read in and sanity check the archive header.  */
   amt = sizeof (struct ar_hdr);
-  if (bfd_bread ((void *) &ar_header, amt, abfd) != amt)
+  if (bfd_read (&ar_header, amt, abfd) != amt)
     return false;
 
   if (strncmp (ar_header.ar_fmag, ARFMAG, 2))
@@ -6236,7 +6163,7 @@ som_slurp_armap (bfd *abfd)
   /* Read in the library symbol table.  We'll make heavy use of this
      in just a minute.  */
   amt = sizeof (struct som_external_lst_header);
-  if (bfd_bread ((void *) &ext_lst_header, amt, abfd) != amt)
+  if (bfd_read (&ext_lst_header, amt, abfd) != amt)
     return false;
 
   som_swap_lst_header_in (&ext_lst_header, &lst_header);
@@ -6607,22 +6534,22 @@ som_bfd_ar_write_symbol_stuff (bfd *abfd,
 
   /* Now scribble out the hash table.  */
   amt = (size_t) hash_size * 4;
-  if (bfd_bwrite ((void *) hash_table, amt, abfd) != amt)
+  if (bfd_write (hash_table, amt, abfd) != amt)
     goto error_return;
 
   /* Then the SOM dictionary.  */
   amt = (size_t) module_count * sizeof (struct som_external_som_entry);
-  if (bfd_bwrite ((void *) som_dict, amt, abfd) != amt)
+  if (bfd_write (som_dict, amt, abfd) != amt)
     goto error_return;
 
   /* The library symbols.  */
   amt = (size_t) nsyms * sizeof (struct som_external_lst_symbol_record);
-  if (bfd_bwrite ((void *) lst_syms, amt, abfd) != amt)
+  if (bfd_write (lst_syms, amt, abfd) != amt)
     goto error_return;
 
   /* And finally the strings.  */
   amt = string_size;
-  if (bfd_bwrite ((void *) strings, amt, abfd) != amt)
+  if (bfd_write (strings, amt, abfd) != amt)
     goto error_return;
 
   free (hash_table);
@@ -6763,12 +6690,12 @@ som_write_armap (bfd *abfd,
 
   /* Scribble out the ar header.  */
   amt = sizeof (struct ar_hdr);
-  if (bfd_bwrite ((void *) &hdr, amt, abfd) != amt)
+  if (bfd_write (&hdr, amt, abfd) != amt)
     return false;
 
   /* Now scribble out the lst header.  */
   amt = sizeof (struct som_external_lst_header);
-  if (bfd_bwrite ((void *) &lst, amt, abfd) != amt)
+  if (bfd_write (&lst, amt, abfd) != amt)
     return false;
 
   /* Build and write the armap.  */
@@ -6779,13 +6706,13 @@ som_write_armap (bfd *abfd,
   return true;
 }
 
-/* Free all information we have cached for this BFD.  We can always
-   read it again later if we need it.  */
+/* Throw away some malloc'd information for this BFD.  */
 
 static bool
 som_bfd_free_cached_info (bfd *abfd)
 {
-  if (bfd_get_format (abfd) == bfd_object)
+  if (bfd_get_format (abfd) == bfd_object
+      || bfd_get_format (abfd) == bfd_core)
     {
       asection *o;
 
@@ -6803,7 +6730,9 @@ som_bfd_free_cached_info (bfd *abfd)
 #undef FREE
     }
 
-  return _bfd_generic_close_and_cleanup (abfd);
+  /* Do not call _bfd_generic_bfd_free_cached_info here.
+     som_write_armap needs to access the bfd objalloc memory.  */
+  return true;
 }
 
 /* End of miscellaneous support functions.  */
@@ -6818,7 +6747,7 @@ som_bfd_link_split_section (bfd *abfd ATTRIBUTE_UNUSED, asection *sec)
 
 #define som_find_line				_bfd_nosymbols_find_line
 #define som_get_symbol_version_string		_bfd_nosymbols_get_symbol_version_string
-#define	som_close_and_cleanup			som_bfd_free_cached_info
+#define som_close_and_cleanup			_bfd_generic_close_and_cleanup
 #define som_read_ar_hdr				_bfd_generic_read_ar_hdr
 #define som_write_ar_hdr			_bfd_generic_write_ar_hdr
 #define som_openr_next_archived_file		bfd_generic_openr_next_archived_file

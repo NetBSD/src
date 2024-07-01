@@ -24,41 +24,7 @@ This is the structure of a relocation entry:
 
 
 @example
-
-typedef enum bfd_reloc_status
-@{
-  /* No errors detected.  Note - the value 2 is used so that it
-     will not be mistaken for the boolean TRUE or FALSE values.  */
-  bfd_reloc_ok = 2,
-
-  /* The relocation was performed, but there was an overflow.  */
-  bfd_reloc_overflow,
-
-  /* The address to relocate was not within the section supplied.  */
-  bfd_reloc_outofrange,
-
-  /* Used by special functions.  */
-  bfd_reloc_continue,
-
-  /* Unsupported relocation size requested.  */
-  bfd_reloc_notsupported,
-
-  /* Unused.  */
-  bfd_reloc_other,
-
-  /* The symbol to relocate against was undefined.  */
-  bfd_reloc_undefined,
-
-  /* The relocation was performed, but may not be ok.  If this type is
-     returned, the error_message argument to bfd_perform_relocation
-     will be set.  */
-  bfd_reloc_dangerous
- @}
- bfd_reloc_status_type;
-
-typedef const struct reloc_howto_struct reloc_howto_type;
-
-typedef struct reloc_cache_entry
+struct reloc_cache_entry
 @{
   /* A pointer into the canonical table of pointers.  */
   struct bfd_symbol **sym_ptr_ptr;
@@ -72,11 +38,9 @@ typedef struct reloc_cache_entry
   /* Pointer to how to perform the required relocation.  */
   reloc_howto_type *howto;
 
-@}
-arelent;
+@};
 
 @end example
-@strong{Description}@*
 Here is a description of each of the fields within an @code{arelent}:
 
 @itemize @bullet
@@ -231,7 +195,6 @@ performing a relocation.
 
 
 @example
-
 enum complain_overflow
 @{
   /* Do not complain on overflow.  */
@@ -250,6 +213,7 @@ enum complain_overflow
      unsigned number.  */
   complain_overflow_unsigned
 @};
+
 @end example
 @subsubsection @code{reloc_howto_type}
 The @code{reloc_howto_type} is a structure which contains all the
@@ -314,6 +278,11 @@ struct reloc_howto_struct
      empty (e.g., ELF); this flag signals the fact.  */
   unsigned int pcrel_offset:1;
 
+  /* Whether bfd_install_relocation should just install the addend,
+     or should follow the practice of some older object formats and
+     install a value including the symbol.  */
+  unsigned int install_addend:1;
+
   /* src_mask selects the part of the instruction (or data) to be used
      in the relocation sum.  If the target relocations don't have an
      addend in the reloc, eg. ELF USE_REL, src_mask will normally equal
@@ -342,18 +311,18 @@ struct reloc_howto_struct
 @end example
 @findex The HOWTO Macro
 @subsubsection @code{The HOWTO Macro}
-@strong{Description}@*
 The HOWTO macro fills in a reloc_howto_type (a typedef for
 const struct reloc_howto_struct).
 @example
+#define HOWTO_INSTALL_ADDEND 0
 #define HOWTO_RSIZE(sz) ((sz) < 0 ? -(sz) : (sz))
 #define HOWTO(type, right, size, bits, pcrel, left, ovf, func, name,   \
               inplace, src_mask, dst_mask, pcrel_off)                  \
   @{ (unsigned) type, HOWTO_RSIZE (size), bits, right, left, ovf,       \
-    size < 0, pcrel, inplace, pcrel_off, src_mask, dst_mask, func, name @}
+    size < 0, pcrel, inplace, pcrel_off, HOWTO_INSTALL_ADDEND,         \
+    src_mask, dst_mask, func, name @}
 @end example
 
-@strong{Description}@*
 This is used to fill in an empty howto entry in an array.
 @example
 #define EMPTY_HOWTO(C) \
@@ -370,7 +339,6 @@ bfd_get_reloc_size (reloc_howto_type *howto)
 
 @findex arelent_chain
 @subsubsection @code{arelent_chain}
-@strong{Description}@*
 How relocs are tied together in an @code{asection}:
 @example
 typedef struct relent_chain
@@ -384,49 +352,24 @@ arelent_chain;
 
 @findex bfd_check_overflow
 @subsubsection @code{bfd_check_overflow}
-@strong{Synopsis}
-@example
-bfd_reloc_status_type bfd_check_overflow
-   (enum complain_overflow how,
-    unsigned int bitsize,
-    unsigned int rightshift,
-    unsigned int addrsize,
-    bfd_vma relocation);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bfd_reloc_status_type bfd_check_overflow (enum complain_overflow how, unsigned int bitsize, unsigned int rightshift, unsigned int addrsize, bfd_vma relocation); 
 Perform overflow checking on @var{relocation} which has
 @var{bitsize} significant bits and will be shifted right by
 @var{rightshift} bits, on a machine with addresses containing
 @var{addrsize} significant bits.  The result is either of
 @code{bfd_reloc_ok} or @code{bfd_reloc_overflow}.
 
+@end deftypefn
 @findex bfd_reloc_offset_in_range
 @subsubsection @code{bfd_reloc_offset_in_range}
-@strong{Synopsis}
-@example
-bool bfd_reloc_offset_in_range
-   (reloc_howto_type *howto,
-    bfd *abfd,
-    asection *section,
-    bfd_size_type offset);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool bfd_reloc_offset_in_range (reloc_howto_type *howto, bfd *abfd, asection *section, bfd_size_type offset); 
 Returns TRUE if the reloc described by @var{HOWTO} can be
 applied at @var{OFFSET} octets in @var{SECTION}.
 
+@end deftypefn
 @findex bfd_perform_relocation
 @subsubsection @code{bfd_perform_relocation}
-@strong{Synopsis}
-@example
-bfd_reloc_status_type bfd_perform_relocation
-   (bfd *abfd,
-    arelent *reloc_entry,
-    void *data,
-    asection *input_section,
-    bfd *output_bfd,
-    char **error_message);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bfd_reloc_status_type bfd_perform_relocation (bfd *abfd, arelent *reloc_entry, void *data, asection *input_section, bfd *output_bfd, char **error_message); 
 If @var{output_bfd} is supplied to this function, the
 generated image will be relocatable; the relocations are
 copied to the output file after they have been changed to
@@ -442,18 +385,10 @@ types with addends were invented to solve just this problem.
 The @var{error_message} argument is set to an error message if
 this return @code{bfd_reloc_dangerous}.
 
+@end deftypefn
 @findex bfd_install_relocation
 @subsubsection @code{bfd_install_relocation}
-@strong{Synopsis}
-@example
-bfd_reloc_status_type bfd_install_relocation
-   (bfd *abfd,
-    arelent *reloc_entry,
-    void *data, bfd_vma data_start,
-    asection *input_section,
-    char **error_message);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bfd_reloc_status_type bfd_install_relocation (bfd *abfd, arelent *reloc_entry, void *data, bfd_vma data_start, asection *input_section, char **error_message); 
 This looks remarkably like @code{bfd_perform_relocation}, except it
 does not expect that the section contents have been filled in.
 I.e., it's suitable for use when creating, rather than applying
@@ -462,6 +397,7 @@ a relocation.
 For now, this function should be considered reserved for the
 assembler.
 
+@end deftypefn
 
 @node howto manager,  , typedef arelent, Relocations
 @subsection The howto manager
@@ -469,9 +405,8 @@ When an application wants to create a relocation, but doesn't
 know what the target machine might call it, it can find out by
 using this bit of code.
 
-@findex bfd_reloc_code_type
-@subsubsection @code{bfd_reloc_code_type}
-@strong{Description}@*
+@findex bfd_reloc_code_real_type
+@subsubsection @code{bfd_reloc_code_real_type}
 The insides of a reloc code.  The idea is that, eventually, there
 will be one enumerator for every type of relocation we ever do.
 Pass one of these values to @code{bfd_reloc_type_lookup}, and it'll
@@ -498,9 +433,10 @@ Basic absolute relocations of N bits.
 @deffnx {} BFD_RELOC_16_PCREL
 @deffnx {} BFD_RELOC_12_PCREL
 @deffnx {} BFD_RELOC_8_PCREL
-PC-relative relocations.  Sometimes these are relative to the address
-of the relocation itself; sometimes they are relative to the start of
-the section containing the relocation.  It depends on the specific target.
+PC-relative relocations.  Sometimes these are relative to the
+address of the relocation itself; sometimes they are relative to the
+start of the section containing the relocation.  It depends on the
+specific target.
 @end deffn
 @deffn {} BFD_RELOC_32_SECREL
 @deffnx {} BFD_RELOC_16_SECIDX
@@ -583,8 +519,8 @@ displacement is used on the Alpha.
 @end deffn
 @deffn {} BFD_RELOC_HI22
 @deffnx {} BFD_RELOC_LO10
-High 22 bits and low 10 bits of 32-bit value, placed into lower bits of
-the target word.  These are used on the SPARC.
+High 22 bits and low 10 bits of 32-bit value, placed into lower bits
+of the target word.  These are used on the SPARC.
 @end deffn
 @deffn {} BFD_RELOC_GPREL16
 @deffnx {} BFD_RELOC_GPREL32
@@ -652,10 +588,10 @@ I think these are specific to SPARC a.out (e.g., Sun 4).
 @deffnx {} BFD_RELOC_SPARC_SIZE32
 @deffnx {} BFD_RELOC_SPARC_SIZE64
 @deffnx {} BFD_RELOC_SPARC_WDISP10
-SPARC64 relocations
+SPARC64 relocations.
 @end deffn
 @deffn {} BFD_RELOC_SPARC_REV32
-SPARC little endian relocation
+SPARC little endian relocation.
 @end deffn
 @deffn {} BFD_RELOC_SPARC_TLS_GD_HI22
 @deffnx {} BFD_RELOC_SPARC_TLS_GD_LO10
@@ -681,7 +617,7 @@ SPARC little endian relocation
 @deffnx {} BFD_RELOC_SPARC_TLS_DTPOFF64
 @deffnx {} BFD_RELOC_SPARC_TLS_TPOFF32
 @deffnx {} BFD_RELOC_SPARC_TLS_TPOFF64
-SPARC TLS relocations
+SPARC TLS relocations.
 @end deffn
 @deffn {} BFD_RELOC_SPU_IMM7
 @deffnx {} BFD_RELOC_SPU_IMM8
@@ -823,18 +759,18 @@ to compensate for the borrow when the low bits are added.
 Low 16 bits.
 @end deffn
 @deffn {} BFD_RELOC_HI16_PCREL
-High 16 bits of 32-bit pc-relative value
+High 16 bits of 32-bit pc-relative value.
 @end deffn
 @deffn {} BFD_RELOC_HI16_S_PCREL
-High 16 bits of 32-bit pc-relative value, adjusted
+High 16 bits of 32-bit pc-relative value, adjusted.
 @end deffn
 @deffn {} BFD_RELOC_LO16_PCREL
-Low 16 bits of pc-relative value
+Low 16 bits of pc-relative value.
 @end deffn
 @deffn {} BFD_RELOC_MIPS16_GOT16
 @deffnx {} BFD_RELOC_MIPS16_CALL16
 Equivalent of BFD_RELOC_MIPS_*, but with the MIPS16 layout of
-16-bit immediate fields
+16-bit immediate fields.
 @end deffn
 @deffn {} BFD_RELOC_MIPS16_HI16
 MIPS16 high 16 bits of 32-bit value.
@@ -855,7 +791,7 @@ MIPS16 low 16 bits.
 @deffnx {} BFD_RELOC_MIPS16_TLS_GOTTPREL
 @deffnx {} BFD_RELOC_MIPS16_TLS_TPREL_HI16
 @deffnx {} BFD_RELOC_MIPS16_TLS_TPREL_LO16
-MIPS16 TLS relocations
+MIPS16 TLS relocations.
 @end deffn
 @deffn {} BFD_RELOC_MIPS_LITERAL
 @deffnx {} BFD_RELOC_MICROMIPS_LITERAL
@@ -1002,16 +938,16 @@ Fujitsu Frv Relocations.
 This is a 24bit GOT-relative reloc for the mn10300.
 @end deffn
 @deffn {} BFD_RELOC_MN10300_GOT32
-This is a 32bit GOT-relative reloc for the mn10300, offset by two bytes
-in the instruction.
+This is a 32bit GOT-relative reloc for the mn10300, offset by two
+bytes in the instruction.
 @end deffn
 @deffn {} BFD_RELOC_MN10300_GOT24
-This is a 24bit GOT-relative reloc for the mn10300, offset by two bytes
-in the instruction.
+This is a 24bit GOT-relative reloc for the mn10300, offset by two
+bytes in the instruction.
 @end deffn
 @deffn {} BFD_RELOC_MN10300_GOT16
-This is a 16bit GOT-relative reloc for the mn10300, offset by two bytes
-in the instruction.
+This is a 16bit GOT-relative reloc for the mn10300, offset by two
+bytes in the instruction.
 @end deffn
 @deffn {} BFD_RELOC_MN10300_COPY
 Copy symbol at runtime.
@@ -1026,14 +962,13 @@ Create PLT entry.
 Adjust by program base.
 @end deffn
 @deffn {} BFD_RELOC_MN10300_SYM_DIFF
-Together with another reloc targeted at the same location,
-allows for a value that is the difference of two symbols
-in the same section.
+Together with another reloc targeted at the same location, allows
+for a value that is the difference of two symbols in the same
+section.
 @end deffn
 @deffn {} BFD_RELOC_MN10300_ALIGN
-The addend of this reloc is an alignment power that must
-be honoured at the offset's location, regardless of linker
-relaxation.
+The addend of this reloc is an alignment power that must be honoured
+at the offset's location, regardless of linker relaxation.
 @end deffn
 @deffn {} BFD_RELOC_MN10300_TLS_GD
 @deffnx {} BFD_RELOC_MN10300_TLS_LD
@@ -1047,12 +982,12 @@ relaxation.
 Various TLS-related relocations.
 @end deffn
 @deffn {} BFD_RELOC_MN10300_32_PCREL
-This is a 32bit pcrel reloc for the mn10300, offset by two bytes in the
-instruction.
+This is a 32bit pcrel reloc for the mn10300, offset by two bytes in
+the instruction.
 @end deffn
 @deffn {} BFD_RELOC_MN10300_16_PCREL
-This is a 16bit pcrel reloc for the mn10300, offset by two bytes in the
-instruction.
+This is a 16bit pcrel reloc for the mn10300, offset by two bytes in
+the instruction.
 @end deffn
 @deffn {} BFD_RELOC_386_GOT32
 @deffnx {} BFD_RELOC_386_PLT32
@@ -1079,7 +1014,7 @@ instruction.
 @deffnx {} BFD_RELOC_386_TLS_DESC
 @deffnx {} BFD_RELOC_386_IRELATIVE
 @deffnx {} BFD_RELOC_386_GOT32X
-i386/elf relocations
+i386/elf relocations.
 @end deffn
 @deffn {} BFD_RELOC_X86_64_GOT32
 @deffnx {} BFD_RELOC_X86_64_PLT32
@@ -1112,7 +1047,10 @@ i386/elf relocations
 @deffnx {} BFD_RELOC_X86_64_PLT32_BND
 @deffnx {} BFD_RELOC_X86_64_GOTPCRELX
 @deffnx {} BFD_RELOC_X86_64_REX_GOTPCRELX
-x86-64/elf relocations
+@deffnx {} BFD_RELOC_X86_64_CODE_4_GOTPCRELX
+@deffnx {} BFD_RELOC_X86_64_CODE_4_GOTTPOFF
+@deffnx {} BFD_RELOC_X86_64_CODE_4_GOTPC32_TLSDESC
+x86-64/elf relocations.
 @end deffn
 @deffn {} BFD_RELOC_NS32K_IMM_8
 @deffnx {} BFD_RELOC_NS32K_IMM_16
@@ -1126,11 +1064,11 @@ x86-64/elf relocations
 @deffnx {} BFD_RELOC_NS32K_DISP_8_PCREL
 @deffnx {} BFD_RELOC_NS32K_DISP_16_PCREL
 @deffnx {} BFD_RELOC_NS32K_DISP_32_PCREL
-ns32k relocations
+ns32k relocations.
 @end deffn
 @deffn {} BFD_RELOC_PDP11_DISP_8_PCREL
 @deffnx {} BFD_RELOC_PDP11_DISP_6_PCREL
-PDP11 relocations
+PDP11 relocations.
 @end deffn
 @deffn {} BFD_RELOC_PJ_CODE_HI16
 @deffnx {} BFD_RELOC_PJ_CODE_LO16
@@ -1312,7 +1250,7 @@ Power(rs6000) and PowerPC relocations.
 PowerPC and PowerPC64 thread-local storage relocations.
 @end deffn
 @deffn {} BFD_RELOC_I370_D12
-IBM 370/390 relocations
+IBM 370/390 relocations.
 @end deffn
 @deffn {} BFD_RELOC_CTOR
 The type of reloc used to build a constructor table - at the moment
@@ -1320,8 +1258,8 @@ probably a 32 bit wide absolute relocation, but the target can choose.
 It generally does map to one of the other relocation types.
 @end deffn
 @deffn {} BFD_RELOC_ARM_PCREL_BRANCH
-ARM 26 bit pc-relative branch.  The lowest two bits must be zero and are
-not stored in the instruction.
+ARM 26 bit pc-relative branch.  The lowest two bits must be zero and
+are not stored in the instruction.
 @end deffn
 @deffn {} BFD_RELOC_ARM_PCREL_BLX
 ARM 26 bit pc-relative branch.  The lowest bit must be zero and is
@@ -1334,7 +1272,8 @@ not stored in the instruction.  The 2nd lowest bit comes from a 1 bit
 field in the instruction.
 @end deffn
 @deffn {} BFD_RELOC_ARM_PCREL_CALL
-ARM 26-bit pc-relative branch for an unconditional BL or BLX instruction.
+ARM 26-bit pc-relative branch for an unconditional BL or BLX
+instruction.
 @end deffn
 @deffn {} BFD_RELOC_ARM_PCREL_JUMP
 ARM 26-bit pc-relative branch for B or conditional BL instruction.
@@ -1386,9 +1325,9 @@ Read-only segment base relative address.
 Data segment base relative address.
 @end deffn
 @deffn {} BFD_RELOC_ARM_TARGET2
-This reloc is used for references to RTTI data from exception handling
-tables.  The actual definition depends on the target.  It may be a
-pc-relative or some form of GOT-indirect relocation.
+This reloc is used for references to RTTI data from exception
+handling tables.  The actual definition depends on the target.  It
+may be a pc-relative or some form of GOT-indirect relocation.
 @end deffn
 @deffn {} BFD_RELOC_ARM_PREL31
 31-bit PC relative address.
@@ -1797,65 +1736,58 @@ ADI Blackfin arithmetic relocation.
 @end deffn
 @deffn {} BFD_RELOC_D10V_10_PCREL_R
 Mitsubishi D10V relocs.
-This is a 10-bit reloc with the right 2 bits
-assumed to be 0.
+This is a 10-bit reloc with the right 2 bits assumed to be 0.
 @end deffn
 @deffn {} BFD_RELOC_D10V_10_PCREL_L
 Mitsubishi D10V relocs.
-This is a 10-bit reloc with the right 2 bits
-assumed to be 0.  This is the same as the previous reloc
-except it is in the left container, i.e.,
-shifted left 15 bits.
+This is a 10-bit reloc with the right 2 bits assumed to be 0.  This
+is the same as the previous reloc except it is in the left
+container, i.e., shifted left 15 bits.
 @end deffn
 @deffn {} BFD_RELOC_D10V_18
-This is an 18-bit reloc with the right 2 bits
-assumed to be 0.
+This is an 18-bit reloc with the right 2 bits assumed to be 0.
 @end deffn
 @deffn {} BFD_RELOC_D10V_18_PCREL
-This is an 18-bit reloc with the right 2 bits
-assumed to be 0.
+This is an 18-bit reloc with the right 2 bits assumed to be 0.
 @end deffn
 @deffn {} BFD_RELOC_D30V_6
 Mitsubishi D30V relocs.
 This is a 6-bit absolute reloc.
 @end deffn
 @deffn {} BFD_RELOC_D30V_9_PCREL
-This is a 6-bit pc-relative reloc with
-the right 3 bits assumed to be 0.
+This is a 6-bit pc-relative reloc with the right 3 bits assumed to
+be 0.
 @end deffn
 @deffn {} BFD_RELOC_D30V_9_PCREL_R
-This is a 6-bit pc-relative reloc with
-the right 3 bits assumed to be 0. Same
-as the previous reloc but on the right side
-of the container.
+This is a 6-bit pc-relative reloc with the right 3 bits assumed to
+be 0.  Same as the previous reloc but on the right side of the
+container.
 @end deffn
 @deffn {} BFD_RELOC_D30V_15
-This is a 12-bit absolute reloc with the
-right 3 bitsassumed to be 0.
+This is a 12-bit absolute reloc with the right 3 bitsassumed to
+be 0.
 @end deffn
 @deffn {} BFD_RELOC_D30V_15_PCREL
-This is a 12-bit pc-relative reloc with
-the right 3 bits assumed to be 0.
+This is a 12-bit pc-relative reloc with the right 3 bits assumed to
+be 0.
 @end deffn
 @deffn {} BFD_RELOC_D30V_15_PCREL_R
-This is a 12-bit pc-relative reloc with
-the right 3 bits assumed to be 0. Same
-as the previous reloc but on the right side
-of the container.
+This is a 12-bit pc-relative reloc with the right 3 bits assumed to
+be 0.  Same as the previous reloc but on the right side of the
+container.
 @end deffn
 @deffn {} BFD_RELOC_D30V_21
-This is an 18-bit absolute reloc with
-the right 3 bits assumed to be 0.
+This is an 18-bit absolute reloc with the right 3 bits assumed to
+be 0.
 @end deffn
 @deffn {} BFD_RELOC_D30V_21_PCREL
-This is an 18-bit pc-relative reloc with
-the right 3 bits assumed to be 0.
+This is an 18-bit pc-relative reloc with the right 3 bits assumed to
+be 0.
 @end deffn
 @deffn {} BFD_RELOC_D30V_21_PCREL_R
-This is an 18-bit pc-relative reloc with
-the right 3 bits assumed to be 0. Same
-as the previous reloc but on the right side
-of the container.
+This is an 18-bit pc-relative reloc with the right 3 bits assumed to
+be 0.  Same as the previous reloc but on the right side of the
+container.
 @end deffn
 @deffn {} BFD_RELOC_D30V_32
 This is a 32-bit absolute reloc.
@@ -1864,13 +1796,9 @@ This is a 32-bit absolute reloc.
 This is a 32-bit pc-relative reloc.
 @end deffn
 @deffn {} BFD_RELOC_DLX_HI16_S
-DLX relocs
-@end deffn
-@deffn {} BFD_RELOC_DLX_LO16
-DLX relocs
-@end deffn
-@deffn {} BFD_RELOC_DLX_JMP26
-DLX relocs
+@deffnx {} BFD_RELOC_DLX_LO16
+@deffnx {} BFD_RELOC_DLX_JMP26
+DLX relocs.
 @end deffn
 @deffn {} BFD_RELOC_M32C_HI8
 @deffnx {} BFD_RELOC_M32C_RL_JUMP
@@ -1883,7 +1811,8 @@ Renesas M32R (formerly Mitsubishi M32R) relocs.
 This is a 24 bit absolute address.
 @end deffn
 @deffn {} BFD_RELOC_M32R_10_PCREL
-This is a 10-bit pc-relative reloc with the right 2 bits assumed to be 0.
+This is a 10-bit pc-relative reloc with the right 2 bits assumed to
+be 0.
 @end deffn
 @deffn {} BFD_RELOC_M32R_18_PCREL
 This is an 18-bit reloc with the right 2 bits assumed to be 0.
@@ -1903,8 +1832,8 @@ used when the lower 16 bits are treated as signed.
 This is a 16-bit reloc containing the lower 16 bits of an address.
 @end deffn
 @deffn {} BFD_RELOC_M32R_SDA16
-This is a 16-bit reloc containing the small data area offset for use in
-add3, load, and store instructions.
+This is a 16-bit reloc containing the small data area offset for use
+in add3, load, and store instructions.
 @end deffn
 @deffn {} BFD_RELOC_M32R_GOT24
 @deffnx {} BFD_RELOC_M32R_26_PLTREL
@@ -1930,10 +1859,12 @@ NDS32 relocs.
 This is a 20 bit absolute address.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_9_PCREL
-This is a 9-bit pc-relative reloc with the right 1 bit assumed to be 0.
+This is a 9-bit pc-relative reloc with the right 1 bit assumed to
+be 0.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_WORD_9_PCREL
-This is a 9-bit pc-relative reloc with the right 1 bit assumed to be 0.
+This is a 9-bit pc-relative reloc with the right 1 bit assumed to
+be 0.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_15_PCREL
 This is an 15-bit reloc with the right 1 bit assumed to be 0.
@@ -1946,59 +1877,59 @@ This is a 25-bit reloc with the right 1 bit assumed to be 0.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_HI20
 This is a 20-bit reloc containing the high 20 bits of an address
-used with the lower 12 bits
+used with the lower 12 bits.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_LO12S3
 This is a 12-bit reloc containing the lower 12 bits of an address
-then shift right by 3. This is used with ldi,sdi...
+then shift right by 3.  This is used with ldi,sdi.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_LO12S2
 This is a 12-bit reloc containing the lower 12 bits of an address
-then shift left by 2. This is used with lwi,swi...
+then shift left by 2.  This is used with lwi,swi.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_LO12S1
 This is a 12-bit reloc containing the lower 12 bits of an address
-then shift left by 1. This is used with lhi,shi...
+then shift left by 1.  This is used with lhi,shi.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_LO12S0
 This is a 12-bit reloc containing the lower 12 bits of an address
-then shift left by 0. This is used with lbisbi...
+then shift left by 0.  This is used with lbisbi.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_LO12S0_ORI
 This is a 12-bit reloc containing the lower 12 bits of an address
-then shift left by 0. This is only used with branch relaxations
+then shift left by 0.  This is only used with branch relaxations.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_SDA15S3
-This is a 15-bit reloc containing the small data area 18-bit signed offset
-and shift left by 3 for use in ldi, sdi...
+This is a 15-bit reloc containing the small data area 18-bit signed
+offset and shift left by 3 for use in ldi, sdi.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_SDA15S2
-This is a 15-bit reloc containing the small data area 17-bit signed offset
-and shift left by 2 for use in lwi, swi...
+This is a 15-bit reloc containing the small data area 17-bit signed
+offset and shift left by 2 for use in lwi, swi.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_SDA15S1
-This is a 15-bit reloc containing the small data area 16-bit signed offset
-and shift left by 1 for use in lhi, shi...
+This is a 15-bit reloc containing the small data area 16-bit signed
+offset and shift left by 1 for use in lhi, shi.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_SDA15S0
-This is a 15-bit reloc containing the small data area 15-bit signed offset
-and shift left by 0 for use in lbi, sbi...
+This is a 15-bit reloc containing the small data area 15-bit signed
+offset and shift left by 0 for use in lbi, sbi.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_SDA16S3
-This is a 16-bit reloc containing the small data area 16-bit signed offset
-and shift left by 3
+This is a 16-bit reloc containing the small data area 16-bit signed
+offset and shift left by 3.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_SDA17S2
-This is a 17-bit reloc containing the small data area 17-bit signed offset
-and shift left by 2 for use in lwi.gp, swi.gp...
+This is a 17-bit reloc containing the small data area 17-bit signed
+offset and shift left by 2 for use in lwi.gp, swi.gp.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_SDA18S1
-This is a 18-bit reloc containing the small data area 18-bit signed offset
-and shift left by 1 for use in lhi.gp, shi.gp...
+This is a 18-bit reloc containing the small data area 18-bit signed
+offset and shift left by 1 for use in lhi.gp, shi.gp.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_SDA19S0
-This is a 19-bit reloc containing the small data area 19-bit signed offset
-and shift left by 0 for use in lbi.gp, sbi.gp...
+This is a 19-bit reloc containing the small data area 19-bit signed
+offset and shift left by 0 for use in lbi.gp, sbi.gp.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_GOT20
 @deffnx {} BFD_RELOC_NDS32_9_PLTREL
@@ -2015,7 +1946,7 @@ and shift left by 0 for use in lbi.gp, sbi.gp...
 @deffnx {} BFD_RELOC_NDS32_GOT_LO12
 @deffnx {} BFD_RELOC_NDS32_GOTPC_HI20
 @deffnx {} BFD_RELOC_NDS32_GOTPC_LO12
-for PIC
+For PIC.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_INSN16
 @deffnx {} BFD_RELOC_NDS32_LABEL
@@ -2037,27 +1968,27 @@ for PIC
 @deffnx {} BFD_RELOC_NDS32_LONGJUMP5
 @deffnx {} BFD_RELOC_NDS32_LONGJUMP6
 @deffnx {} BFD_RELOC_NDS32_LONGJUMP7
-for relax
+For relax.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_PLTREL_HI20
 @deffnx {} BFD_RELOC_NDS32_PLTREL_LO12
 @deffnx {} BFD_RELOC_NDS32_PLT_GOTREL_HI20
 @deffnx {} BFD_RELOC_NDS32_PLT_GOTREL_LO12
-for PIC
+For PIC.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_SDA12S2_DP
 @deffnx {} BFD_RELOC_NDS32_SDA12S2_SP
 @deffnx {} BFD_RELOC_NDS32_LO12S2_DP
 @deffnx {} BFD_RELOC_NDS32_LO12S2_SP
-for floating point
+For floating point.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_DWARF2_OP1
 @deffnx {} BFD_RELOC_NDS32_DWARF2_OP2
 @deffnx {} BFD_RELOC_NDS32_DWARF2_LEB
-for dwarf2 debug_line.
+For dwarf2 debug_line.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_UPDATE_TA
-for eliminate 16-bit instructions
+For eliminating 16-bit instructions.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_PLT_GOTREL_LO20
 @deffnx {} BFD_RELOC_NDS32_PLT_GOTREL_LO15
@@ -2068,14 +1999,15 @@ for eliminate 16-bit instructions
 @deffnx {} BFD_RELOC_NDS32_GOTOFF_LO19
 @deffnx {} BFD_RELOC_NDS32_GOT15S2
 @deffnx {} BFD_RELOC_NDS32_GOT17S2
-for PIC object relaxation
+For PIC object relaxation.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_5
 NDS32 relocs.
 This is a 5 bit absolute address.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_10_UPCREL
-This is a 10-bit unsigned pc-relative reloc with the right 1 bit assumed to be 0.
+This is a 10-bit unsigned pc-relative reloc with the right 1 bit
+assumed to be 0.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_SDA_FP7U2_RELA
 If fp were omitted, fp can used as another gp.
@@ -2098,7 +2030,7 @@ If fp were omitted, fp can used as another gp.
 @deffnx {} BFD_RELOC_NDS32_DIFF32
 @deffnx {} BFD_RELOC_NDS32_DIFF_ULEB128
 @deffnx {} BFD_RELOC_NDS32_EMPTY
-relaxation relative relocation types
+Relaxation relative relocation types.
 @end deffn
 @deffn {} BFD_RELOC_NDS32_25_ABS
 This is a 25 bit absolute address.
@@ -2143,10 +2075,10 @@ For TLS.
 For floating load store relaxation.
 @end deffn
 @deffn {} BFD_RELOC_V850_9_PCREL
-This is a 9-bit reloc
+This is a 9-bit reloc.
 @end deffn
 @deffn {} BFD_RELOC_V850_22_PCREL
-This is a 22-bit reloc
+This is a 22-bit reloc.
 @end deffn
 @deffn {} BFD_RELOC_V850_SDA_16_16_OFFSET
 This is a 16 bit offset from the short data area pointer.
@@ -2207,8 +2139,8 @@ Used for relaxing indirect jumps.
 Used to maintain alignment whilst relaxing.
 @end deffn
 @deffn {} BFD_RELOC_V850_LO16_SPLIT_OFFSET
-This is a variation of BFD_RELOC_LO16 that can be used in v850e ld.bu
-instructions.
+This is a variation of BFD_RELOC_LO16 that can be used in v850e
+ld.bu instructions.
 @end deffn
 @deffn {} BFD_RELOC_V850_16_PCREL
 This is a 16-bit reloc.
@@ -2232,49 +2164,29 @@ This is a 16-bit reloc.
 This is a 16-bit reloc.
 @end deffn
 @deffn {} BFD_RELOC_V850_LO16_S1
-Low 16 bits. 16 bit shifted by 1.
+Low 16 bits.  16 bit shifted by 1.
 @end deffn
 @deffn {} BFD_RELOC_V850_CALLT_15_16_OFFSET
 This is a 16 bit offset from the call table base pointer.
 @end deffn
 @deffn {} BFD_RELOC_V850_32_GOTPCREL
-DSO relocations.
-@end deffn
-@deffn {} BFD_RELOC_V850_16_GOT
-DSO relocations.
-@end deffn
-@deffn {} BFD_RELOC_V850_32_GOT
-DSO relocations.
-@end deffn
-@deffn {} BFD_RELOC_V850_22_PLT_PCREL
-DSO relocations.
-@end deffn
-@deffn {} BFD_RELOC_V850_32_PLT_PCREL
-DSO relocations.
-@end deffn
-@deffn {} BFD_RELOC_V850_COPY
-DSO relocations.
-@end deffn
-@deffn {} BFD_RELOC_V850_GLOB_DAT
-DSO relocations.
-@end deffn
-@deffn {} BFD_RELOC_V850_JMP_SLOT
-DSO relocations.
-@end deffn
-@deffn {} BFD_RELOC_V850_RELATIVE
-DSO relocations.
-@end deffn
-@deffn {} BFD_RELOC_V850_16_GOTOFF
-DSO relocations.
-@end deffn
-@deffn {} BFD_RELOC_V850_32_GOTOFF
+@deffnx {} BFD_RELOC_V850_16_GOT
+@deffnx {} BFD_RELOC_V850_32_GOT
+@deffnx {} BFD_RELOC_V850_22_PLT_PCREL
+@deffnx {} BFD_RELOC_V850_32_PLT_PCREL
+@deffnx {} BFD_RELOC_V850_COPY
+@deffnx {} BFD_RELOC_V850_GLOB_DAT
+@deffnx {} BFD_RELOC_V850_JMP_SLOT
+@deffnx {} BFD_RELOC_V850_RELATIVE
+@deffnx {} BFD_RELOC_V850_16_GOTOFF
+@deffnx {} BFD_RELOC_V850_32_GOTOFF
 DSO relocations.
 @end deffn
 @deffn {} BFD_RELOC_V850_CODE
-start code.
+Start code.
 @end deffn
 @deffn {} BFD_RELOC_V850_DATA
-start data in text.
+Start data in text.
 @end deffn
 @deffn {} BFD_RELOC_TIC30_LDP
 This is a 8bit DP reloc for the tms320c30, where the most
@@ -2340,12 +2252,12 @@ TMS320C6000 relocations.
 This is a 48 bit reloc for the FR30 that stores 32 bits.
 @end deffn
 @deffn {} BFD_RELOC_FR30_20
-This is a 32 bit reloc for the FR30 that stores 20 bits split up into
-two sections.
+This is a 32 bit reloc for the FR30 that stores 20 bits split up
+into two sections.
 @end deffn
 @deffn {} BFD_RELOC_FR30_6_IN_4
-This is a 16 bit reloc for the FR30 that stores a 6 bit word offset in
-4 bits.
+This is a 16 bit reloc for the FR30 that stores a 6 bit word offset
+in 4 bits.
 @end deffn
 @deffn {} BFD_RELOC_FR30_8_IN_8
 This is a 16 bit reloc for the FR30 that stores an 8 bit byte offset
@@ -2464,8 +2376,8 @@ These are relocations for the PUSHJ instruction.
 These are relocations for the JMP instruction.
 @end deffn
 @deffn {} BFD_RELOC_MMIX_ADDR19
-This is a relocation for a relative address as in a GETA instruction or
-a branch.
+This is a relocation for a relative address as in a GETA instruction
+or a branch.
 @end deffn
 @deffn {} BFD_RELOC_MMIX_ADDR27
 This is a relocation for a relative address as in a JMP instruction.
@@ -2479,12 +2391,12 @@ This is a relocation for an instruction field that may be a general
 register.
 @end deffn
 @deffn {} BFD_RELOC_MMIX_BASE_PLUS_OFFSET
-This is a relocation for two instruction fields holding a register and
-an offset, the equivalent of the relocation.
+This is a relocation for two instruction fields holding a register
+and an offset, the equivalent of the relocation.
 @end deffn
 @deffn {} BFD_RELOC_MMIX_LOCAL
-This relocation is an assertion that the expression is not allocated as
-a global register.  It does not modify contents.
+This relocation is an assertion that the expression is not allocated
+as a global register.  It does not modify contents.
 @end deffn
 @deffn {} BFD_RELOC_AVR_7_PCREL
 This is a 16 bit reloc for the AVR that stores 8 bit pc relative
@@ -2507,12 +2419,13 @@ This is a 16 bit reloc for the AVR that stores 8 bit value (high 8 bit
 of data memory address) into 8 bit immediate value of LDI insn.
 @end deffn
 @deffn {} BFD_RELOC_AVR_HH8_LDI
-This is a 16 bit reloc for the AVR that stores 8 bit value (most high 8 bit
-of program memory address) into 8 bit immediate value of LDI insn.
+This is a 16 bit reloc for the AVR that stores 8 bit value (most
+high 8 bit of program memory address) into 8 bit immediate value of
+LDI insn.
 @end deffn
 @deffn {} BFD_RELOC_AVR_MS8_LDI
-This is a 16 bit reloc for the AVR that stores 8 bit value (most high 8 bit
-of 32 bit value) into 8 bit immediate value of LDI insn.
+This is a 16 bit reloc for the AVR that stores 8 bit value (most
+high 8 bit of 32 bit value) into 8 bit immediate value of LDI insn.
 @end deffn
 @deffn {} BFD_RELOC_AVR_LO8_LDI_NEG
 This is a 16 bit reloc for the AVR that stores negated 8 bit value
@@ -2525,12 +2438,12 @@ SUBI insn.
 @end deffn
 @deffn {} BFD_RELOC_AVR_HH8_LDI_NEG
 This is a 16 bit reloc for the AVR that stores negated 8 bit value
-(most high 8 bit of program memory address) into 8 bit immediate value
-of LDI or SUBI insn.
+(most high 8 bit of program memory address) into 8 bit immediate
+value of LDI or SUBI insn.
 @end deffn
 @deffn {} BFD_RELOC_AVR_MS8_LDI_NEG
-This is a 16 bit reloc for the AVR that stores negated 8 bit value (msb
-of 32 bit value) into 8 bit immediate value of LDI insn.
+This is a 16 bit reloc for the AVR that stores negated 8 bit value
+(msb of 32 bit value) into 8 bit immediate value of LDI insn.
 @end deffn
 @deffn {} BFD_RELOC_AVR_LO8_LDI_PM
 This is a 16 bit reloc for the AVR that stores 8 bit value (usually
@@ -2538,9 +2451,9 @@ command address) into 8 bit immediate value of LDI insn.
 @end deffn
 @deffn {} BFD_RELOC_AVR_LO8_LDI_GS
 This is a 16 bit reloc for the AVR that stores 8 bit value
-(command address) into 8 bit immediate value of LDI insn. If the address
-is beyond the 128k boundary, the linker inserts a jump stub for this reloc
-in the lower 128k.
+(command address) into 8 bit immediate value of LDI insn. If the
+address is beyond the 128k boundary, the linker inserts a jump stub
+for this reloc in the lower 128k.
 @end deffn
 @deffn {} BFD_RELOC_AVR_HI8_LDI_PM
 This is a 16 bit reloc for the AVR that stores 8 bit value (high 8 bit
@@ -2548,13 +2461,14 @@ of command address) into 8 bit immediate value of LDI insn.
 @end deffn
 @deffn {} BFD_RELOC_AVR_HI8_LDI_GS
 This is a 16 bit reloc for the AVR that stores 8 bit value (high 8 bit
-of command address) into 8 bit immediate value of LDI insn.  If the address
-is beyond the 128k boundary, the linker inserts a jump stub for this reloc
-below 128k.
+of command address) into 8 bit immediate value of LDI insn.  If the
+address is beyond the 128k boundary, the linker inserts a jump stub
+for this reloc below 128k.
 @end deffn
 @deffn {} BFD_RELOC_AVR_HH8_LDI_PM
-This is a 16 bit reloc for the AVR that stores 8 bit value (most high 8 bit
-of command address) into 8 bit immediate value of LDI insn.
+This is a 16 bit reloc for the AVR that stores 8 bit value (most
+high 8 bit of command address) into 8 bit immediate value of LDI
+insn.
 @end deffn
 @deffn {} BFD_RELOC_AVR_LO8_LDI_PM_NEG
 This is a 16 bit reloc for the AVR that stores negated 8 bit value
@@ -2576,27 +2490,27 @@ into 22 bits.
 @end deffn
 @deffn {} BFD_RELOC_AVR_LDI
 This is a 16 bit reloc for the AVR that stores all needed bits
-for absolute addressing with ldi with overflow check to linktime
+for absolute addressing with ldi with overflow check to linktime.
 @end deffn
 @deffn {} BFD_RELOC_AVR_6
 This is a 6 bit reloc for the AVR that stores offset for ldd/std
-instructions
+instructions.
 @end deffn
 @deffn {} BFD_RELOC_AVR_6_ADIW
 This is a 6 bit reloc for the AVR that stores offset for adiw/sbiw
-instructions
+instructions.
 @end deffn
 @deffn {} BFD_RELOC_AVR_8_LO
 This is a 8 bit reloc for the AVR that stores bits 0..7 of a symbol
-in .byte lo8(symbol)
+in .byte lo8(symbol).
 @end deffn
 @deffn {} BFD_RELOC_AVR_8_HI
 This is a 8 bit reloc for the AVR that stores bits 8..15 of a symbol
-in .byte hi8(symbol)
+in .byte hi8(symbol).
 @end deffn
 @deffn {} BFD_RELOC_AVR_8_HLO
 This is a 8 bit reloc for the AVR that stores bits 16..23 of a symbol
-in .byte hlo8(symbol)
+in .byte hlo8(symbol).
 @end deffn
 @deffn {} BFD_RELOC_AVR_DIFF8
 @deffnx {} BFD_RELOC_AVR_DIFF16
@@ -2614,11 +2528,11 @@ lds and sts instructions supported only tiny core.
 @end deffn
 @deffn {} BFD_RELOC_AVR_PORT6
 This is a 6 bit reloc for the AVR that stores an I/O register
-number for the IN and OUT instructions
+number for the IN and OUT instructions.
 @end deffn
 @deffn {} BFD_RELOC_AVR_PORT5
 This is a 5 bit reloc for the AVR that stores an I/O register
-number for the SBIC, SBIS, SBI and CBI instructions
+number for the SBIC, SBIS, SBI and CBI instructions.
 @end deffn
 @deffn {} BFD_RELOC_RISCV_HI20
 @deffnx {} BFD_RELOC_RISCV_PCREL_HI20
@@ -2655,11 +2569,6 @@ number for the SBIC, SBIS, SBI and CBI instructions
 @deffnx {} BFD_RELOC_RISCV_ALIGN
 @deffnx {} BFD_RELOC_RISCV_RVC_BRANCH
 @deffnx {} BFD_RELOC_RISCV_RVC_JUMP
-@deffnx {} BFD_RELOC_RISCV_RVC_LUI
-@deffnx {} BFD_RELOC_RISCV_GPREL_I
-@deffnx {} BFD_RELOC_RISCV_GPREL_S
-@deffnx {} BFD_RELOC_RISCV_TPREL_I
-@deffnx {} BFD_RELOC_RISCV_TPREL_S
 @deffnx {} BFD_RELOC_RISCV_RELAX
 @deffnx {} BFD_RELOC_RISCV_CFA
 @deffnx {} BFD_RELOC_RISCV_SUB6
@@ -2668,6 +2577,8 @@ number for the SBIC, SBIS, SBI and CBI instructions
 @deffnx {} BFD_RELOC_RISCV_SET16
 @deffnx {} BFD_RELOC_RISCV_SET32
 @deffnx {} BFD_RELOC_RISCV_32_PCREL
+@deffnx {} BFD_RELOC_RISCV_SET_ULEB128
+@deffnx {} BFD_RELOC_RISCV_SUB_ULEB128
 RISC-V relocations.
 @end deffn
 @deffn {} BFD_RELOC_RL78_NEG8
@@ -2857,15 +2768,15 @@ Long displacement extension.
 STT_GNU_IFUNC relocation.
 @end deffn
 @deffn {} BFD_RELOC_SCORE_GPREL15
-Score relocations
-Low 16 bit for load/store
+Score relocations.
+Low 16 bit for load/store.
 @end deffn
 @deffn {} BFD_RELOC_SCORE_DUMMY2
 @deffnx {} BFD_RELOC_SCORE_JMP
-This is a 24-bit reloc with the right 1 bit assumed to be 0
+This is a 24-bit reloc with the right 1 bit assumed to be 0.
 @end deffn
 @deffn {} BFD_RELOC_SCORE_BRANCH
-This is a 19-bit reloc with the right 1 bit assumed to be 0
+This is a 19-bit reloc with the right 1 bit assumed to be 0.
 @end deffn
 @deffn {} BFD_RELOC_SCORE_IMM30
 This is a 32-bit reloc for 48-bit instructions.
@@ -2874,61 +2785,61 @@ This is a 32-bit reloc for 48-bit instructions.
 This is a 32-bit reloc for 48-bit instructions.
 @end deffn
 @deffn {} BFD_RELOC_SCORE16_JMP
-This is a 11-bit reloc with the right 1 bit assumed to be 0
+This is a 11-bit reloc with the right 1 bit assumed to be 0.
 @end deffn
 @deffn {} BFD_RELOC_SCORE16_BRANCH
-This is a 8-bit reloc with the right 1 bit assumed to be 0
+This is a 8-bit reloc with the right 1 bit assumed to be 0.
 @end deffn
 @deffn {} BFD_RELOC_SCORE_BCMP
-This is a 9-bit reloc with the right 1 bit assumed to be 0
+This is a 9-bit reloc with the right 1 bit assumed to be 0.
 @end deffn
 @deffn {} BFD_RELOC_SCORE_GOT15
 @deffnx {} BFD_RELOC_SCORE_GOT_LO16
 @deffnx {} BFD_RELOC_SCORE_CALL15
 @deffnx {} BFD_RELOC_SCORE_DUMMY_HI16
-Undocumented Score relocs
+Undocumented Score relocs.
 @end deffn
 @deffn {} BFD_RELOC_IP2K_FR9
-Scenix IP2K - 9-bit register number / data address
+Scenix IP2K - 9-bit register number / data address.
 @end deffn
 @deffn {} BFD_RELOC_IP2K_BANK
-Scenix IP2K - 4-bit register/data bank number
+Scenix IP2K - 4-bit register/data bank number.
 @end deffn
 @deffn {} BFD_RELOC_IP2K_ADDR16CJP
-Scenix IP2K - low 13 bits of instruction word address
+Scenix IP2K - low 13 bits of instruction word address.
 @end deffn
 @deffn {} BFD_RELOC_IP2K_PAGE3
-Scenix IP2K - high 3 bits of instruction word address
+Scenix IP2K - high 3 bits of instruction word address.
 @end deffn
 @deffn {} BFD_RELOC_IP2K_LO8DATA
 @deffnx {} BFD_RELOC_IP2K_HI8DATA
 @deffnx {} BFD_RELOC_IP2K_EX8DATA
-Scenix IP2K - ext/low/high 8 bits of data address
+Scenix IP2K - ext/low/high 8 bits of data address.
 @end deffn
 @deffn {} BFD_RELOC_IP2K_LO8INSN
 @deffnx {} BFD_RELOC_IP2K_HI8INSN
-Scenix IP2K - low/high 8 bits of instruction word address
+Scenix IP2K - low/high 8 bits of instruction word address.
 @end deffn
 @deffn {} BFD_RELOC_IP2K_PC_SKIP
-Scenix IP2K - even/odd PC modifier to modify snb pcl.0
+Scenix IP2K - even/odd PC modifier to modify snb pcl.0.
 @end deffn
 @deffn {} BFD_RELOC_IP2K_TEXT
 Scenix IP2K - 16 bit word address in text section.
 @end deffn
 @deffn {} BFD_RELOC_IP2K_FR_OFFSET
-Scenix IP2K - 7-bit sp or dp offset
+Scenix IP2K - 7-bit sp or dp offset.
 @end deffn
 @deffn {} BFD_RELOC_VPE4KMATH_DATA
 @deffnx {} BFD_RELOC_VPE4KMATH_INSN
-Scenix VPE4K coprocessor - data/insn-space addressing
+Scenix VPE4K coprocessor - data/insn-space addressing.
 @end deffn
 @deffn {} BFD_RELOC_VTABLE_INHERIT
 @deffnx {} BFD_RELOC_VTABLE_ENTRY
 These two relocations are used by the linker to determine which of
 the entries in a C++ virtual function table are actually used.  When
-the --gc-sections option is given, the linker will zero out the entries
-that are not used, so that the code for those functions need not be
-included in the output.
+the --gc-sections option is given, the linker will zero out the
+entries that are not used, so that the code for those functions need
+not be included in the output.
 
 VTABLE_INHERIT is a zero-space relocation used to describe to the
 linker the inheritance tree of a C++ virtual function table.  The
@@ -2936,11 +2847,11 @@ relocation's symbol should be the parent class' vtable, and the
 relocation should be located at the child vtable.
 
 VTABLE_ENTRY is a zero-space relocation that describes the use of a
-virtual function table entry.  The reloc's symbol should refer to the
-table of the class mentioned in the code.  Off of that base, an offset
-describes the entry that is being used.  For Rela hosts, this offset
-is stored in the reloc's addend.  For Rel hosts, we are forced to put
-this offset in the reloc's section offset.
+virtual function table entry.  The reloc's symbol should refer to
+the table of the class mentioned in the code.  Off of that base, an
+offset describes the entry that is being used.  For Rela hosts, this
+offset is stored in the reloc's addend.  For Rel hosts, we are
+forced to put this offset in the reloc's section offset.
 @end deffn
 @deffn {} BFD_RELOC_IA64_IMM14
 @deffnx {} BFD_RELOC_IA64_IMM22
@@ -3064,7 +2975,8 @@ the symbol.
 Motorola 68HC11 reloc.
 This is a 24-bit reloc that represents the address with a 16-bit
 value and a 8-bit page number.  The symbol address is transformed
-to follow the 16K memory bank of 68HC12 (seen as mapped in the window).
+to follow the 16K memory bank of 68HC12 (seen as mapped in the
+window).
 @end deffn
 @deffn {} BFD_RELOC_M68HC12_5B
 Motorola 68HC12 reloc.
@@ -3082,8 +2994,8 @@ some of them.
 @end deffn
 @deffn {} BFD_RELOC_XGATE_LO16
 Freescale XGATE reloc.
-This is the 16-bit lower part of an address.  It is used for the '16-bit'
-instructions.
+This is the 16-bit lower part of an address.  It is used for the
+'16-bit' instructions.
 @end deffn
 @deffn {} BFD_RELOC_XGATE_GPAGE
 Freescale XGATE reloc.
@@ -3101,13 +3013,13 @@ This is a 10-bit pc-relative reloc.
 @end deffn
 @deffn {} BFD_RELOC_XGATE_IMM8_LO
 Freescale XGATE reloc.
-This is the 16-bit lower part of an address.  It is used for the '16-bit'
-instructions.
+This is the 16-bit lower part of an address.  It is used for the
+'16-bit' instructions.
 @end deffn
 @deffn {} BFD_RELOC_XGATE_IMM8_HI
 Freescale XGATE reloc.
-This is the 16-bit higher part of an address.  It is used for the '16-bit'
-instructions.
+This is the 16-bit higher part of an address.  It is used for the
+'16-bit' instructions.
 @end deffn
 @deffn {} BFD_RELOC_XGATE_IMM3
 Freescale XGATE reloc.
@@ -3139,18 +3051,18 @@ This is a PCREL10 branch.
 @end deffn
 @deffn {} BFD_RELOC_M68HC12_LO8XG
 Motorola 68HC12/XGATE reloc.
-This is the 8 bit low part of an absolute address and immediately precedes
-a matching HI8XG part.
+This is the 8 bit low part of an absolute address and immediately
+precedes a matching HI8XG part.
 @end deffn
 @deffn {} BFD_RELOC_M68HC12_HI8XG
 Motorola 68HC12/XGATE reloc.
-This is the 8 bit high part of an absolute address and immediately follows
-a matching LO8XG part.
+This is the 8 bit high part of an absolute address and immediately
+follows a matching LO8XG part.
 @end deffn
 @deffn {} BFD_RELOC_S12Z_15_PCREL
 Freescale S12Z reloc.
-This is a 15 bit relative address.  If the most significant bits are all zero
-then it may be truncated to 8 bits.
+This is a 15 bit relative address.  If the most significant bits are
+all zero then it may be truncated to 8 bits.
 @end deffn
 @deffn {} BFD_RELOC_CR16_NUM8
 @deffnx {} BFD_RELOC_CR16_NUM16
@@ -3247,7 +3159,8 @@ Relocs used in ELF shared libraries for CRIS.
 32-bit offset to symbol with PLT entry, relative to GOT.
 @end deffn
 @deffn {} BFD_RELOC_CRIS_32_PLT_PCREL
-32-bit offset to symbol with PLT entry, relative to this relocation.
+32-bit offset to symbol with PLT entry, relative to this
+relocation.
 @end deffn
 @deffn {} BFD_RELOC_CRIS_32_GOT_GD
 @deffnx {} BFD_RELOC_CRIS_16_GOT_GD
@@ -3369,7 +3282,7 @@ Morpho MT - 8 bit immediate relocation.
 @deffnx {} BFD_RELOC_MSP430_SYM_DIFF
 @deffnx {} BFD_RELOC_MSP430_SET_ULEB128
 @deffnx {} BFD_RELOC_MSP430_SUB_ULEB128
-msp430 specific relocation codes
+msp430 specific relocation codes.
 @end deffn
 @deffn {} BFD_RELOC_NIOS2_S16
 @deffnx {} BFD_RELOC_NIOS2_U16
@@ -3444,8 +3357,8 @@ PRU 8-bit unsigned relocation used for the LOOP instruction.
 @end deffn
 @deffn {} BFD_RELOC_PRU_32_PMEM
 @deffnx {} BFD_RELOC_PRU_16_PMEM
-PRU Program Memory relocations.  Used to convert from byte addressing to
-32-bit word addressing.
+PRU Program Memory relocations.  Used to convert from byte
+addressing to 32-bit word addressing.
 @end deffn
 @deffn {} BFD_RELOC_PRU_GNU_DIFF8
 @deffnx {} BFD_RELOC_PRU_GNU_DIFF16
@@ -3453,12 +3366,12 @@ PRU Program Memory relocations.  Used to convert from byte addressing to
 @deffnx {} BFD_RELOC_PRU_GNU_DIFF16_PMEM
 @deffnx {} BFD_RELOC_PRU_GNU_DIFF32_PMEM
 PRU relocations to mark the difference of two local symbols.
-These are only needed to support linker relaxation and can be ignored
-when not relaxing.  The field is set to the value of the difference
-assuming no relaxation.  The relocation encodes the position of the
-second symbol so the linker can determine whether to adjust the field
-value. The PMEM variants encode the word difference, instead of byte
-difference between symbols.
+These are only needed to support linker relaxation and can be
+ignored when not relaxing.  The field is set to the value of the
+difference assuming no relaxation.  The relocation encodes the
+position of the second symbol so the linker can determine whether to
+adjust the field value.  The PMEM variants encode the word
+difference, instead of byte difference between symbols.
 @end deffn
 @deffn {} BFD_RELOC_IQ2000_OFFSET_16
 @deffnx {} BFD_RELOC_IQ2000_OFFSET_21
@@ -3476,20 +3389,21 @@ to one of its own internal functions or data structures.
 Xtensa relocations for ELF shared objects.
 @end deffn
 @deffn {} BFD_RELOC_XTENSA_PLT
-Xtensa relocation used in ELF object files for symbols that may require
-PLT entries.  Otherwise, this is just a generic 32-bit relocation.
+Xtensa relocation used in ELF object files for symbols that may
+require PLT entries.  Otherwise, this is just a generic 32-bit
+relocation.
 @end deffn
 @deffn {} BFD_RELOC_XTENSA_DIFF8
 @deffnx {} BFD_RELOC_XTENSA_DIFF16
 @deffnx {} BFD_RELOC_XTENSA_DIFF32
-Xtensa relocations for backward compatibility.  These have been replaced
-by BFD_RELOC_XTENSA_PDIFF and BFD_RELOC_XTENSA_NDIFF.
+Xtensa relocations for backward compatibility.  These have been
+replaced by BFD_RELOC_XTENSA_PDIFF and BFD_RELOC_XTENSA_NDIFF.
 Xtensa relocations to mark the difference of two local symbols.
-These are only needed to support linker relaxation and can be ignored
-when not relaxing.  The field is set to the value of the difference
-assuming no relaxation.  The relocation encodes the position of the
-first symbol so the linker can determine whether to adjust the field
-value.
+These are only needed to support linker relaxation and can be
+ignored when not relaxing.  The field is set to the value of the
+difference assuming no relaxation.  The relocation encodes the
+position of the first symbol so the linker can determine whether to
+adjust the field value.
 @end deffn
 @deffn {} BFD_RELOC_XTENSA_SLOT0_OP
 @deffnx {} BFD_RELOC_XTENSA_SLOT1_OP
@@ -3562,14 +3476,14 @@ Xtensa TLS relocations.
 @deffnx {} BFD_RELOC_XTENSA_NDIFF16
 @deffnx {} BFD_RELOC_XTENSA_NDIFF32
 Xtensa relocations to mark the difference of two local symbols.
-These are only needed to support linker relaxation and can be ignored
-when not relaxing.  The field is set to the value of the difference
-assuming no relaxation.  The relocation encodes the position of the
-subtracted symbol so the linker can determine whether to adjust the field
-value.  PDIFF relocations are used for positive differences, NDIFF
-relocations are used for negative differences.  The difference value
-is treated as unsigned with these relocation types, giving full
-8/16 value ranges.
+These are only needed to support linker relaxation and can be
+ignored when not relaxing.  The field is set to the value of the
+difference assuming no relaxation.  The relocation encodes the
+position of the subtracted symbol so the linker can determine
+whether to adjust the field value.  PDIFF relocations are used for
+positive differences, NDIFF relocations are used for negative
+differences.  The difference value is treated as unsigned with these
+relocation types, giving full 8/16 value ranges.
 @end deffn
 @deffn {} BFD_RELOC_Z80_DISP8
 8 bit signed offset in (ix+d) or (iy+d).
@@ -3640,8 +3554,8 @@ required.
 Used when referencing a GOT entry.
 @end deffn
 @deffn {} BFD_RELOC_MACH_O_X86_64_GOT_LOAD
-Used when loading a GOT entry with movq.  It is specially marked so that
-the linker could optimize the movq to a leaq if possible.
+Used when loading a GOT entry with movq.  It is specially marked so
+that the linker could optimize the movq to a leaq if possible.
 @end deffn
 @deffn {} BFD_RELOC_MACH_O_X86_64_PCREL32_1
 Same as BFD_RELOC_32_PCREL but with an implicit -1 addend.
@@ -3668,70 +3582,75 @@ Relative offset within page of GOT slot.
 Address of a GOT entry.
 @end deffn
 @deffn {} BFD_RELOC_MICROBLAZE_32_LO
-This is a 32 bit reloc for the microblaze that stores the
-low 16 bits of a value
+This is a 32 bit reloc for the microblaze that stores the low 16
+bits of a value.
 @end deffn
 @deffn {} BFD_RELOC_MICROBLAZE_32_LO_PCREL
-This is a 32 bit pc-relative reloc for the microblaze that
-stores the low 16 bits of a value
+This is a 32 bit pc-relative reloc for the microblaze that stores
+the low 16 bits of a value.
 @end deffn
 @deffn {} BFD_RELOC_MICROBLAZE_32_ROSDA
-This is a 32 bit reloc for the microblaze that stores a
-value relative to the read-only small data area anchor
+This is a 32 bit reloc for the microblaze that stores a value
+relative to the read-only small data area anchor.
 @end deffn
 @deffn {} BFD_RELOC_MICROBLAZE_32_RWSDA
-This is a 32 bit reloc for the microblaze that stores a
-value relative to the read-write small data area anchor
+This is a 32 bit reloc for the microblaze that stores a value
+relative to the read-write small data area anchor.
 @end deffn
 @deffn {} BFD_RELOC_MICROBLAZE_32_SYM_OP_SYM
-This is a 32 bit reloc for the microblaze to handle
-expressions of the form "Symbol Op Symbol"
+This is a 32 bit reloc for the microblaze to handle expressions of
+the form "Symbol Op Symbol".
+@end deffn
+@deffn {} BFD_RELOC_MICROBLAZE_32_NONE
+This is a 32 bit reloc that stores the 32 bit pc relative value in
+two words (with an imm instruction).  No relocation is done here -
+only used for relaxing.
 @end deffn
 @deffn {} BFD_RELOC_MICROBLAZE_64_NONE
-This is a 64 bit reloc that stores the 32 bit pc relative
-value in two words (with an imm instruction).  No relocation is
-done here - only used for relaxing
+This is a 64 bit reloc that stores the 32 bit pc relative value in
+two words (with an imm instruction).  No relocation is done here -
+only used for relaxing.
 @end deffn
 @deffn {} BFD_RELOC_MICROBLAZE_64_GOTPC
-This is a 64 bit reloc that stores the 32 bit pc relative
-value in two words (with an imm instruction).  The relocation is
-PC-relative GOT offset
+This is a 64 bit reloc that stores the 32 bit pc relative value in
+two words (with an imm instruction).  The relocation is PC-relative
+GOT offset.
 @end deffn
 @deffn {} BFD_RELOC_MICROBLAZE_64_GOT
-This is a 64 bit reloc that stores the 32 bit pc relative
-value in two words (with an imm instruction).  The relocation is
-GOT offset
+This is a 64 bit reloc that stores the 32 bit pc relative value in
+two words (with an imm instruction).  The relocation is GOT offset.
 @end deffn
 @deffn {} BFD_RELOC_MICROBLAZE_64_PLT
-This is a 64 bit reloc that stores the 32 bit pc relative
-value in two words (with an imm instruction).  The relocation is
-PC-relative offset into PLT
+This is a 64 bit reloc that stores the 32 bit pc relative value in
+two words (with an imm instruction).  The relocation is PC-relative
+offset into PLT.
 @end deffn
 @deffn {} BFD_RELOC_MICROBLAZE_64_GOTOFF
-This is a 64 bit reloc that stores the 32 bit GOT relative
-value in two words (with an imm instruction).  The relocation is
-relative offset from _GLOBAL_OFFSET_TABLE_
+This is a 64 bit reloc that stores the 32 bit GOT relative value in
+two words (with an imm instruction).  The relocation is relative
+offset from _GLOBAL_OFFSET_TABLE_.
 @end deffn
 @deffn {} BFD_RELOC_MICROBLAZE_32_GOTOFF
-This is a 32 bit reloc that stores the 32 bit GOT relative
-value in a word.  The relocation is relative offset from
+This is a 32 bit reloc that stores the 32 bit GOT relative value in
+a word.  The relocation is relative offset from
+_GLOBAL_OFFSET_TABLE_.
 @end deffn
 @deffn {} BFD_RELOC_MICROBLAZE_COPY
 This is used to tell the dynamic linker to copy the value out of
 the dynamic object into the runtime process image.
 @end deffn
 @deffn {} BFD_RELOC_MICROBLAZE_64_TLS
-Unused Reloc
+Unused Reloc.
 @end deffn
 @deffn {} BFD_RELOC_MICROBLAZE_64_TLSGD
 This is a 64 bit reloc that stores the 32 bit GOT relative value
-of the GOT TLS GD info entry in two words (with an imm instruction). The
-relocation is GOT offset.
+of the GOT TLS GD info entry in two words (with an imm instruction).
+The relocation is GOT offset.
 @end deffn
 @deffn {} BFD_RELOC_MICROBLAZE_64_TLSLD
 This is a 64 bit reloc that stores the 32 bit GOT relative value
-of the GOT TLS LD info entry in two words (with an imm instruction). The
-relocation is GOT offset.
+of the GOT TLS LD info entry in two words (with an imm instruction).
+The relocation is GOT offset.
 @end deffn
 @deffn {} BFD_RELOC_MICROBLAZE_32_TLSDTPMOD
 This is a 32 bit reloc that stores the Module ID to GOT(n).
@@ -3741,25 +3660,125 @@ This is a 32 bit reloc that stores TLS offset to GOT(n+1).
 @end deffn
 @deffn {} BFD_RELOC_MICROBLAZE_64_TLSDTPREL
 This is a 32 bit reloc for storing TLS offset to two words (uses imm
-instruction)
+instruction).
 @end deffn
 @deffn {} BFD_RELOC_MICROBLAZE_64_TLSGOTTPREL
-This is a 64 bit reloc that stores 32-bit thread pointer relative offset
-to two words (uses imm instruction).
+This is a 64 bit reloc that stores 32-bit thread pointer relative
+offset to two words (uses imm instruction).
 @end deffn
 @deffn {} BFD_RELOC_MICROBLAZE_64_TLSTPREL
-This is a 64 bit reloc that stores 32-bit thread pointer relative offset
-to two words (uses imm instruction).
+This is a 64 bit reloc that stores 32-bit thread pointer relative
+offset to two words (uses imm instruction).
 @end deffn
 @deffn {} BFD_RELOC_MICROBLAZE_64_TEXTPCREL
-This is a 64 bit reloc that stores the 32 bit pc relative
-value in two words (with an imm instruction).  The relocation is
-PC-relative offset from start of TEXT.
+This is a 64 bit reloc that stores the 32 bit pc relative value in
+two words (with an imm instruction).  The relocation is PC-relative
+offset from start of TEXT.
 @end deffn
 @deffn {} BFD_RELOC_MICROBLAZE_64_TEXTREL
-This is a 64 bit reloc that stores the 32 bit offset
-value in two words (with an imm instruction).  The relocation is
-relative offset from start of TEXT.
+This is a 64 bit reloc that stores the 32 bit offset value in two
+words (with an imm instruction).  The relocation is relative offset
+from start of TEXT.
+@end deffn
+@deffn {} BFD_RELOC_KVX_RELOC_START
+KVX pseudo relocation code to mark the start of the KVX relocation
+enumerators.  N.B. the order of the enumerators is important as
+several tables in the KVX bfd backend are indexed by these
+enumerators; make sure they are all synced.
+@end deffn
+@deffn {} BFD_RELOC_KVX_NONE
+KVX null relocation code.
+@end deffn
+@deffn {} BFD_RELOC_KVX_16
+@deffnx {} BFD_RELOC_KVX_32
+@deffnx {} BFD_RELOC_KVX_64
+@deffnx {} BFD_RELOC_KVX_S16_PCREL
+@deffnx {} BFD_RELOC_KVX_PCREL17
+@deffnx {} BFD_RELOC_KVX_PCREL27
+@deffnx {} BFD_RELOC_KVX_32_PCREL
+@deffnx {} BFD_RELOC_KVX_S37_PCREL_LO10
+@deffnx {} BFD_RELOC_KVX_S37_PCREL_UP27
+@deffnx {} BFD_RELOC_KVX_S43_PCREL_LO10
+@deffnx {} BFD_RELOC_KVX_S43_PCREL_UP27
+@deffnx {} BFD_RELOC_KVX_S43_PCREL_EX6
+@deffnx {} BFD_RELOC_KVX_S64_PCREL_LO10
+@deffnx {} BFD_RELOC_KVX_S64_PCREL_UP27
+@deffnx {} BFD_RELOC_KVX_S64_PCREL_EX27
+@deffnx {} BFD_RELOC_KVX_64_PCREL
+@deffnx {} BFD_RELOC_KVX_S16
+@deffnx {} BFD_RELOC_KVX_S32_LO5
+@deffnx {} BFD_RELOC_KVX_S32_UP27
+@deffnx {} BFD_RELOC_KVX_S37_LO10
+@deffnx {} BFD_RELOC_KVX_S37_UP27
+@deffnx {} BFD_RELOC_KVX_S37_GOTOFF_LO10
+@deffnx {} BFD_RELOC_KVX_S37_GOTOFF_UP27
+@deffnx {} BFD_RELOC_KVX_S43_GOTOFF_LO10
+@deffnx {} BFD_RELOC_KVX_S43_GOTOFF_UP27
+@deffnx {} BFD_RELOC_KVX_S43_GOTOFF_EX6
+@deffnx {} BFD_RELOC_KVX_32_GOTOFF
+@deffnx {} BFD_RELOC_KVX_64_GOTOFF
+@deffnx {} BFD_RELOC_KVX_32_GOT
+@deffnx {} BFD_RELOC_KVX_S37_GOT_LO10
+@deffnx {} BFD_RELOC_KVX_S37_GOT_UP27
+@deffnx {} BFD_RELOC_KVX_S43_GOT_LO10
+@deffnx {} BFD_RELOC_KVX_S43_GOT_UP27
+@deffnx {} BFD_RELOC_KVX_S43_GOT_EX6
+@deffnx {} BFD_RELOC_KVX_64_GOT
+@deffnx {} BFD_RELOC_KVX_GLOB_DAT
+@deffnx {} BFD_RELOC_KVX_COPY
+@deffnx {} BFD_RELOC_KVX_JMP_SLOT
+@deffnx {} BFD_RELOC_KVX_RELATIVE
+@deffnx {} BFD_RELOC_KVX_S43_LO10
+@deffnx {} BFD_RELOC_KVX_S43_UP27
+@deffnx {} BFD_RELOC_KVX_S43_EX6
+@deffnx {} BFD_RELOC_KVX_S64_LO10
+@deffnx {} BFD_RELOC_KVX_S64_UP27
+@deffnx {} BFD_RELOC_KVX_S64_EX27
+@deffnx {} BFD_RELOC_KVX_S37_GOTADDR_LO10
+@deffnx {} BFD_RELOC_KVX_S37_GOTADDR_UP27
+@deffnx {} BFD_RELOC_KVX_S43_GOTADDR_LO10
+@deffnx {} BFD_RELOC_KVX_S43_GOTADDR_UP27
+@deffnx {} BFD_RELOC_KVX_S43_GOTADDR_EX6
+@deffnx {} BFD_RELOC_KVX_S64_GOTADDR_LO10
+@deffnx {} BFD_RELOC_KVX_S64_GOTADDR_UP27
+@deffnx {} BFD_RELOC_KVX_S64_GOTADDR_EX27
+@deffnx {} BFD_RELOC_KVX_64_DTPMOD
+@deffnx {} BFD_RELOC_KVX_64_DTPOFF
+@deffnx {} BFD_RELOC_KVX_S37_TLS_DTPOFF_LO10
+@deffnx {} BFD_RELOC_KVX_S37_TLS_DTPOFF_UP27
+@deffnx {} BFD_RELOC_KVX_S43_TLS_DTPOFF_LO10
+@deffnx {} BFD_RELOC_KVX_S43_TLS_DTPOFF_UP27
+@deffnx {} BFD_RELOC_KVX_S43_TLS_DTPOFF_EX6
+@deffnx {} BFD_RELOC_KVX_S37_TLS_GD_LO10
+@deffnx {} BFD_RELOC_KVX_S37_TLS_GD_UP27
+@deffnx {} BFD_RELOC_KVX_S43_TLS_GD_LO10
+@deffnx {} BFD_RELOC_KVX_S43_TLS_GD_UP27
+@deffnx {} BFD_RELOC_KVX_S43_TLS_GD_EX6
+@deffnx {} BFD_RELOC_KVX_S37_TLS_LD_LO10
+@deffnx {} BFD_RELOC_KVX_S37_TLS_LD_UP27
+@deffnx {} BFD_RELOC_KVX_S43_TLS_LD_LO10
+@deffnx {} BFD_RELOC_KVX_S43_TLS_LD_UP27
+@deffnx {} BFD_RELOC_KVX_S43_TLS_LD_EX6
+@deffnx {} BFD_RELOC_KVX_64_TPOFF
+@deffnx {} BFD_RELOC_KVX_S37_TLS_IE_LO10
+@deffnx {} BFD_RELOC_KVX_S37_TLS_IE_UP27
+@deffnx {} BFD_RELOC_KVX_S43_TLS_IE_LO10
+@deffnx {} BFD_RELOC_KVX_S43_TLS_IE_UP27
+@deffnx {} BFD_RELOC_KVX_S43_TLS_IE_EX6
+@deffnx {} BFD_RELOC_KVX_S37_TLS_LE_LO10
+@deffnx {} BFD_RELOC_KVX_S37_TLS_LE_UP27
+@deffnx {} BFD_RELOC_KVX_S43_TLS_LE_LO10
+@deffnx {} BFD_RELOC_KVX_S43_TLS_LE_UP27
+@deffnx {} BFD_RELOC_KVX_S43_TLS_LE_EX6
+@deffnx {} BFD_RELOC_KVX_8
+KVX Relocations.
+@end deffn
+@deffn {} BFD_RELOC_KVX_RELOC_END
+KVX pseudo relocation code to mark the end of the KVX relocation
+enumerators that have direct mapping to ELF reloc codes.  There are
+a few more enumerators after this one; those are mainly used by the
+KVX assembler for the internal fixup or to select one of the above
+enumerators.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_RELOC_START
 AArch64 pseudo relocation code to mark the start of the AArch64
@@ -3787,77 +3806,77 @@ PC-relative relocations.  These are equivalent to BFD_RELOC_N_PCREL
 and they were added to assist the indexing of the howto table.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_MOVW_G0
-AArch64 MOV[NZK] instruction with most significant bits 0 to 15
-of an unsigned address/value.
+AArch64 MOV[NZK] instruction with most significant bits 0 to 15 of
+an unsigned address/value.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_MOVW_G0_NC
 AArch64 MOV[NZK] instruction with less significant bits 0 to 15 of
 an address/value.  No overflow checking.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_MOVW_G1
-AArch64 MOV[NZK] instruction with most significant bits 16 to 31
-of an unsigned address/value.
+AArch64 MOV[NZK] instruction with most significant bits 16 to 31 of
+an unsigned address/value.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_MOVW_G1_NC
-AArch64 MOV[NZK] instruction with less significant bits 16 to 31
-of an address/value.  No overflow checking.
+AArch64 MOV[NZK] instruction with less significant bits 16 to 31 of
+an address/value.  No overflow checking.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_MOVW_G2
-AArch64 MOV[NZK] instruction with most significant bits 32 to 47
-of an unsigned address/value.
+AArch64 MOV[NZK] instruction with most significant bits 32 to 47 of
+an unsigned address/value.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_MOVW_G2_NC
-AArch64 MOV[NZK] instruction with less significant bits 32 to 47
-of an address/value.  No overflow checking.
+AArch64 MOV[NZK] instruction with less significant bits 32 to 47 of
+an address/value.  No overflow checking.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_MOVW_G3
-AArch64 MOV[NZK] instruction with most signficant bits 48 to 64
-of a signed or unsigned address/value.
+AArch64 MOV[NZK] instruction with most signficant bits 48 to 64 of a
+signed or unsigned address/value.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_MOVW_G0_S
-AArch64 MOV[NZ] instruction with most significant bits 0 to 15
-of a signed value.  Changes instruction to MOVZ or MOVN depending on the
+AArch64 MOV[NZ] instruction with most significant bits 0 to 15 of a
+signed value.  Changes instruction to MOVZ or MOVN depending on the
 value's sign.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_MOVW_G1_S
-AArch64 MOV[NZ] instruction with most significant bits 16 to 31
-of a signed value.  Changes instruction to MOVZ or MOVN depending on the
+AArch64 MOV[NZ] instruction with most significant bits 16 to 31 of a
+signed value.  Changes instruction to MOVZ or MOVN depending on the
 value's sign.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_MOVW_G2_S
-AArch64 MOV[NZ] instruction with most significant bits 32 to 47
-of a signed value.  Changes instruction to MOVZ or MOVN depending on the
+AArch64 MOV[NZ] instruction with most significant bits 32 to 47 of a
+signed value.  Changes instruction to MOVZ or MOVN depending on the
 value's sign.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_MOVW_PREL_G0
-AArch64 MOV[NZ] instruction with most significant bits 0 to 15
-of a signed value.  Changes instruction to MOVZ or MOVN depending on the
+AArch64 MOV[NZ] instruction with most significant bits 0 to 15 of a
+signed value.  Changes instruction to MOVZ or MOVN depending on the
 value's sign.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_MOVW_PREL_G0_NC
-AArch64 MOV[NZ] instruction with most significant bits 0 to 15
-of a signed value.  Changes instruction to MOVZ or MOVN depending on the
+AArch64 MOV[NZ] instruction with most significant bits 0 to 15 of a
+signed value.  Changes instruction to MOVZ or MOVN depending on the
 value's sign.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_MOVW_PREL_G1
-AArch64 MOVK instruction with most significant bits 16 to 31
-of a signed value.
+AArch64 MOVK instruction with most significant bits 16 to 31 of a
+signed value.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_MOVW_PREL_G1_NC
-AArch64 MOVK instruction with most significant bits 16 to 31
-of a signed value.
+AArch64 MOVK instruction with most significant bits 16 to 31 of a
+signed value.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_MOVW_PREL_G2
-AArch64 MOVK instruction with most significant bits 32 to 47
-of a signed value.
+AArch64 MOVK instruction with most significant bits 32 to 47 of a
+signed value.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_MOVW_PREL_G2_NC
-AArch64 MOVK instruction with most significant bits 32 to 47
-of a signed value.
+AArch64 MOVK instruction with most significant bits 32 to 47 of a
+signed value.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_MOVW_PREL_G3
-AArch64 MOVK instruction with most significant bits 47 to 63
-of a signed value.
+AArch64 MOVK instruction with most significant bits 47 to 63 of a
+signed value.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_LD_LO19_PCREL
 AArch64 Load Literal instruction, holding a 19 bit pc-relative word
@@ -3865,7 +3884,8 @@ offset.  The lowest two bits must be zero and are not stored in the
 instruction, giving a 21 bit signed byte offset.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_ADR_LO21_PCREL
-AArch64 ADR instruction, holding a simple 21 bit pc-relative byte offset.
+AArch64 ADR instruction, holding a simple 21 bit pc-relative byte
+offset.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_ADR_HI21_PCREL
 AArch64 ADRP instruction, with bits 12 to 32 of a pc-relative page
@@ -3877,8 +3897,8 @@ offset, giving a 4KB aligned page base address, but with no overflow
 checking.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_ADD_LO12
-AArch64 ADD immediate instruction, holding bits 0 to 11 of the address.
-Used in conjunction with BFD_RELOC_AARCH64_ADR_HI21_PCREL.
+AArch64 ADD immediate instruction, holding bits 0 to 11 of the
+address.  Used in conjunction with BFD_RELOC_AARCH64_ADR_HI21_PCREL.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_LDST8_LO12
 AArch64 8-bit load/store instruction, holding bits 0 to 11 of the
@@ -3886,23 +3906,23 @@ address.  Used in conjunction with BFD_RELOC_AARCH64_ADR_HI21_PCREL.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TSTBR14
 AArch64 14 bit pc-relative test bit and branch.
-The lowest two bits must be zero and are not stored in the instruction,
-giving a 16 bit signed byte offset.
+The lowest two bits must be zero and are not stored in the
+instruction, giving a 16 bit signed byte offset.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_BRANCH19
 AArch64 19 bit pc-relative conditional branch and compare & branch.
-The lowest two bits must be zero and are not stored in the instruction,
-giving a 21 bit signed byte offset.
+The lowest two bits must be zero and are not stored in the
+instruction, giving a 21 bit signed byte offset.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_JUMP26
 AArch64 26 bit pc-relative unconditional branch.
-The lowest two bits must be zero and are not stored in the instruction,
-giving a 28 bit signed byte offset.
+The lowest two bits must be zero and are not stored in the
+instruction, giving a 28 bit signed byte offset.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_CALL26
 AArch64 26 bit pc-relative unconditional branch and link.
-The lowest two bits must be zero and are not stored in the instruction,
-giving a 28 bit signed byte offset.
+The lowest two bits must be zero and are not stored in the
+instruction, giving a 28 bit signed byte offset.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_LDST16_LO12
 AArch64 16-bit load/store instruction, holding bits 0 to 11 of the
@@ -3922,15 +3942,15 @@ address.  Used in conjunction with BFD_RELOC_AARCH64_ADR_HI21_PCREL.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_GOT_LD_PREL19
 AArch64 Load Literal instruction, holding a 19 bit PC relative word
-offset of the global offset table entry for a symbol.  The lowest two
-bits must be zero and are not stored in the instruction, giving a 21
-bit signed byte offset.  This relocation type requires signed overflow
-checking.
+offset of the global offset table entry for a symbol.  The lowest
+two bits must be zero and are not stored in the instruction, giving
+a 21 bit signed byte offset.  This relocation type requires signed
+overflow checking.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_ADR_GOT_PAGE
-Get to the page base of the global offset table entry for a symbol as
-part of an ADRP instruction using a 21 bit PC relative value.Used in
-conjunction with BFD_RELOC_AARCH64_LD64_GOT_LO12_NC.
+Get to the page base of the global offset table entry for a symbol
+as part of an ADRP instruction using a 21 bit PC relative value.
+Used in conjunction with BFD_RELOC_AARCH64_LD64_GOT_LO12_NC.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_LD64_GOT_LO12_NC
 Unsigned 12 bit byte offset for 64 bit load/store from the page of
@@ -3947,18 +3967,20 @@ Unsigned 16 bit byte offset for 64 bit load/store from the GOT entry
 for this symbol.  Valid in LP64 ABI only.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_MOVW_GOTOFF_G1
-Unsigned 16 bit byte higher offset for 64 bit load/store from the GOT entry
-for this symbol.  Valid in LP64 ABI only.
+Unsigned 16 bit byte higher offset for 64 bit load/store from the
+GOT entry for this symbol.  Valid in LP64 ABI only.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_LD64_GOTOFF_LO15
 Unsigned 15 bit byte offset for 64 bit load/store from the page of
 the GOT entry for this symbol.  Valid in LP64 ABI only.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_LD32_GOTPAGE_LO14
-Scaled 14 bit byte offset to the page base of the global offset table.
+Scaled 14 bit byte offset to the page base of the global offset
+table.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_LD64_GOTPAGE_LO15
-Scaled 15 bit byte offset to the page base of the global offset table.
+Scaled 15 bit byte offset to the page base of the global offset
+table.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSGD_ADR_PAGE21
 Get to the page base of the global offset table entry for a symbols
@@ -3967,11 +3989,11 @@ relative value.  Used in conjunction with
 BFD_RELOC_AARCH64_TLSGD_ADD_LO12_NC.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSGD_ADR_PREL21
-AArch64 TLS General Dynamic
+AArch64 TLS General Dynamic.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSGD_ADD_LO12_NC
-Unsigned 12 bit byte offset to global offset table entry for a symbols
-tls_index structure.  Used in conjunction with
+Unsigned 12 bit byte offset to global offset table entry for a
+symbol's tls_index structure.  Used in conjunction with
 BFD_RELOC_AARCH64_TLSGD_ADR_PAGE21.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSGD_MOVW_G0_NC
@@ -4005,11 +4027,12 @@ bit[23:12] of byte offset to module TLS base address.
 Unsigned 12 bit byte offset to module TLS base address.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLD_ADD_DTPREL_LO12_NC
-No overflow check version of BFD_RELOC_AARCH64_TLSLD_ADD_DTPREL_LO12.
+No overflow check version of
+BFD_RELOC_AARCH64_TLSLD_ADD_DTPREL_LO12.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLD_ADD_LO12_NC
-Unsigned 12 bit byte offset to global offset table entry for a symbols
-tls_index structure.  Used in conjunction with
+Unsigned 12 bit byte offset to global offset table entry for a
+symbol's tls_index structure.  Used in conjunction with
 BFD_RELOC_AARCH64_TLSLD_ADR_PAGE21.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLD_ADR_PAGE21
@@ -4017,47 +4040,52 @@ GOT entry page address for AArch64 TLS Local Dynamic, used with ADRP
 instruction.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLD_ADR_PREL21
-GOT entry address for AArch64 TLS Local Dynamic, used with ADR instruction.
+GOT entry address for AArch64 TLS Local Dynamic, used with ADR
+instruction.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLD_LDST16_DTPREL_LO12
 bit[11:1] of byte offset to module TLS base address, encoded in ldst
 instructions.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLD_LDST16_DTPREL_LO12_NC
-Similar as BFD_RELOC_AARCH64_TLSLD_LDST16_DTPREL_LO12, but no overflow check.
+Similar to BFD_RELOC_AARCH64_TLSLD_LDST16_DTPREL_LO12, but no
+overflow check.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLD_LDST32_DTPREL_LO12
 bit[11:2] of byte offset to module TLS base address, encoded in ldst
 instructions.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLD_LDST32_DTPREL_LO12_NC
-Similar as BFD_RELOC_AARCH64_TLSLD_LDST32_DTPREL_LO12, but no overflow check.
+Similar to BFD_RELOC_AARCH64_TLSLD_LDST32_DTPREL_LO12, but no
+overflow check.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLD_LDST64_DTPREL_LO12
 bit[11:3] of byte offset to module TLS base address, encoded in ldst
 instructions.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLD_LDST64_DTPREL_LO12_NC
-Similar as BFD_RELOC_AARCH64_TLSLD_LDST64_DTPREL_LO12, but no overflow check.
+Similar to BFD_RELOC_AARCH64_TLSLD_LDST64_DTPREL_LO12, but no
+overflow check.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLD_LDST8_DTPREL_LO12
 bit[11:0] of byte offset to module TLS base address, encoded in ldst
 instructions.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLD_LDST8_DTPREL_LO12_NC
-Similar as BFD_RELOC_AARCH64_TLSLD_LDST8_DTPREL_LO12, but no overflow check.
+Similar to BFD_RELOC_AARCH64_TLSLD_LDST8_DTPREL_LO12, but no
+overflow check.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLD_MOVW_DTPREL_G0
 bit[15:0] of byte offset to module TLS base address.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLD_MOVW_DTPREL_G0_NC
-No overflow check version of BFD_RELOC_AARCH64_TLSLD_MOVW_DTPREL_G0
+No overflow check version of BFD_RELOC_AARCH64_TLSLD_MOVW_DTPREL_G0.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLD_MOVW_DTPREL_G1
 bit[31:16] of byte offset to module TLS base address.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLD_MOVW_DTPREL_G1_NC
-No overflow check version of BFD_RELOC_AARCH64_TLSLD_MOVW_DTPREL_G1
+No overflow check version of BFD_RELOC_AARCH64_TLSLD_MOVW_DTPREL_G1.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLD_MOVW_DTPREL_G2
 bit[47:32] of byte offset to module TLS base address.
@@ -4091,85 +4119,57 @@ bit[11:1] of byte offset to module TLS base address, encoded in ldst
 instructions.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLE_LDST16_TPREL_LO12_NC
-Similar as BFD_RELOC_AARCH64_TLSLE_LDST16_TPREL_LO12, but no overflow check.
+Similar to BFD_RELOC_AARCH64_TLSLE_LDST16_TPREL_LO12, but no
+overflow check.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLE_LDST32_TPREL_LO12
 bit[11:2] of byte offset to module TLS base address, encoded in ldst
 instructions.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLE_LDST32_TPREL_LO12_NC
-Similar as BFD_RELOC_AARCH64_TLSLE_LDST32_TPREL_LO12, but no overflow check.
+Similar to BFD_RELOC_AARCH64_TLSLE_LDST32_TPREL_LO12, but no
+overflow check.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLE_LDST64_TPREL_LO12
 bit[11:3] of byte offset to module TLS base address, encoded in ldst
 instructions.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLE_LDST64_TPREL_LO12_NC
-Similar as BFD_RELOC_AARCH64_TLSLE_LDST64_TPREL_LO12, but no overflow check.
+Similar to BFD_RELOC_AARCH64_TLSLE_LDST64_TPREL_LO12, but no
+overflow check.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLE_LDST8_TPREL_LO12
 bit[11:0] of byte offset to module TLS base address, encoded in ldst
 instructions.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLE_LDST8_TPREL_LO12_NC
-Similar as BFD_RELOC_AARCH64_TLSLE_LDST8_TPREL_LO12, but no overflow check.
+Similar to BFD_RELOC_AARCH64_TLSLE_LDST8_TPREL_LO12, but no overflow
+check.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSDESC_LD_PREL19
-AArch64 TLS DESC relocation.
-@end deffn
-@deffn {} BFD_RELOC_AARCH64_TLSDESC_ADR_PREL21
-AArch64 TLS DESC relocation.
-@end deffn
-@deffn {} BFD_RELOC_AARCH64_TLSDESC_ADR_PAGE21
-AArch64 TLS DESC relocation.
-@end deffn
-@deffn {} BFD_RELOC_AARCH64_TLSDESC_LD64_LO12
-AArch64 TLS DESC relocation.
-@end deffn
-@deffn {} BFD_RELOC_AARCH64_TLSDESC_LD32_LO12_NC
-AArch64 TLS DESC relocation.
-@end deffn
-@deffn {} BFD_RELOC_AARCH64_TLSDESC_ADD_LO12
-AArch64 TLS DESC relocation.
-@end deffn
-@deffn {} BFD_RELOC_AARCH64_TLSDESC_OFF_G1
-AArch64 TLS DESC relocation.
-@end deffn
-@deffn {} BFD_RELOC_AARCH64_TLSDESC_OFF_G0_NC
-AArch64 TLS DESC relocation.
-@end deffn
-@deffn {} BFD_RELOC_AARCH64_TLSDESC_LDR
-AArch64 TLS DESC relocation.
-@end deffn
-@deffn {} BFD_RELOC_AARCH64_TLSDESC_ADD
-AArch64 TLS DESC relocation.
-@end deffn
-@deffn {} BFD_RELOC_AARCH64_TLSDESC_CALL
-AArch64 TLS DESC relocation.
+@deffnx {} BFD_RELOC_AARCH64_TLSDESC_ADR_PREL21
+@deffnx {} BFD_RELOC_AARCH64_TLSDESC_ADR_PAGE21
+@deffnx {} BFD_RELOC_AARCH64_TLSDESC_LD64_LO12
+@deffnx {} BFD_RELOC_AARCH64_TLSDESC_LD32_LO12_NC
+@deffnx {} BFD_RELOC_AARCH64_TLSDESC_ADD_LO12
+@deffnx {} BFD_RELOC_AARCH64_TLSDESC_OFF_G1
+@deffnx {} BFD_RELOC_AARCH64_TLSDESC_OFF_G0_NC
+@deffnx {} BFD_RELOC_AARCH64_TLSDESC_LDR
+@deffnx {} BFD_RELOC_AARCH64_TLSDESC_ADD
+@deffnx {} BFD_RELOC_AARCH64_TLSDESC_CALL
+AArch64 TLS DESC relocations.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_COPY
-AArch64 TLS relocation.
-@end deffn
-@deffn {} BFD_RELOC_AARCH64_GLOB_DAT
-AArch64 TLS relocation.
-@end deffn
-@deffn {} BFD_RELOC_AARCH64_JUMP_SLOT
-AArch64 TLS relocation.
-@end deffn
-@deffn {} BFD_RELOC_AARCH64_RELATIVE
-AArch64 TLS relocation.
+@deffnx {} BFD_RELOC_AARCH64_GLOB_DAT
+@deffnx {} BFD_RELOC_AARCH64_JUMP_SLOT
+@deffnx {} BFD_RELOC_AARCH64_RELATIVE
+AArch64 DSO relocations.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLS_DTPMOD
-AArch64 TLS relocation.
-@end deffn
-@deffn {} BFD_RELOC_AARCH64_TLS_DTPREL
-AArch64 TLS relocation.
-@end deffn
-@deffn {} BFD_RELOC_AARCH64_TLS_TPREL
-AArch64 TLS relocation.
-@end deffn
-@deffn {} BFD_RELOC_AARCH64_TLSDESC
-AArch64 TLS relocation.
+@deffnx {} BFD_RELOC_AARCH64_TLS_DTPREL
+@deffnx {} BFD_RELOC_AARCH64_TLS_TPREL
+@deffnx {} BFD_RELOC_AARCH64_TLSDESC
+AArch64 TLS relocations.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_IRELATIVE
 AArch64 support for STT_GNU_IFUNC.
@@ -4190,20 +4190,22 @@ AArch64 unspecified load/store instruction, holding bits 0 to 11 of the
 address.  Used in conjunction with BFD_RELOC_AARCH64_ADR_HI21_PCREL.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLD_LDST_DTPREL_LO12
-AArch64 pseudo relocation code for TLS local dynamic mode.  It's to be
-used internally by the AArch64 assembler and not (currently) written to
-any object files.
+AArch64 pseudo relocation code for TLS local dynamic mode.  It's to
+be used internally by the AArch64 assembler and not (currently)
+written to any object files.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLD_LDST_DTPREL_LO12_NC
-Similar as BFD_RELOC_AARCH64_TLSLD_LDST_DTPREL_LO12, but no overflow check.
+Similar to BFD_RELOC_AARCH64_TLSLD_LDST_DTPREL_LO12, but no overflow
+check.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLE_LDST_TPREL_LO12
 AArch64 pseudo relocation code for TLS local exec mode.  It's to be
-used internally by the AArch64 assembler and not (currently) written to
-any object files.
+used internally by the AArch64 assembler and not (currently) written
+to any object files.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSLE_LDST_TPREL_LO12_NC
-Similar as BFD_RELOC_AARCH64_TLSLE_LDST_TPREL_LO12, but no overflow check.
+Similar to BFD_RELOC_AARCH64_TLSLE_LDST_TPREL_LO12, but no overflow
+check.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_LD_GOT_LO12_NC
 AArch64 pseudo relocation code to be used internally by the AArch64
@@ -4410,29 +4412,29 @@ Tilera TILEPro Relocations.
 Tilera TILE-Gx Relocations.
 @end deffn
 @deffn {} BFD_RELOC_BPF_64
-@deffnx {} BFD_RELOC_BPF_32
-@deffnx {} BFD_RELOC_BPF_16
-@deffnx {} BFD_RELOC_BPF_DISP16
 @deffnx {} BFD_RELOC_BPF_DISP32
+@deffnx {} BFD_RELOC_BPF_DISPCALL32
+@deffnx {} BFD_RELOC_BPF_DISP16
 Linux eBPF relocations.
 @end deffn
 @deffn {} BFD_RELOC_EPIPHANY_SIMM8
-Adapteva EPIPHANY - 8 bit signed pc-relative displacement
+Adapteva EPIPHANY - 8 bit signed pc-relative displacement.
 @end deffn
 @deffn {} BFD_RELOC_EPIPHANY_SIMM24
-Adapteva EPIPHANY - 24 bit signed pc-relative displacement
+Adapteva EPIPHANY - 24 bit signed pc-relative displacement.
 @end deffn
 @deffn {} BFD_RELOC_EPIPHANY_HIGH
-Adapteva EPIPHANY - 16 most-significant bits of absolute address
+Adapteva EPIPHANY - 16 most-significant bits of absolute address.
 @end deffn
 @deffn {} BFD_RELOC_EPIPHANY_LOW
-Adapteva EPIPHANY - 16 least-significant bits of absolute address
+Adapteva EPIPHANY - 16 least-significant bits of absolute address.
 @end deffn
 @deffn {} BFD_RELOC_EPIPHANY_SIMM11
-Adapteva EPIPHANY - 11 bit signed number - add/sub immediate
+Adapteva EPIPHANY - 11 bit signed number - add/sub immediate.
 @end deffn
 @deffn {} BFD_RELOC_EPIPHANY_IMM11
-Adapteva EPIPHANY - 11 bit sign-magnitude number (ld/st displacement)
+Adapteva EPIPHANY - 11 bit sign-magnitude number (ld/st
+displacement).
 @end deffn
 @deffn {} BFD_RELOC_EPIPHANY_IMM8
 Adapteva EPIPHANY - 8 bit immediate for 16 bit mov instruction.
@@ -4534,6 +4536,8 @@ S12Z relocations.
 @deffnx {} BFD_RELOC_LARCH_TLS_DTPREL64
 @deffnx {} BFD_RELOC_LARCH_TLS_TPREL32
 @deffnx {} BFD_RELOC_LARCH_TLS_TPREL64
+@deffnx {} BFD_RELOC_LARCH_TLS_DESC32
+@deffnx {} BFD_RELOC_LARCH_TLS_DESC64
 @deffnx {} BFD_RELOC_LARCH_MARK_LA
 @deffnx {} BFD_RELOC_LARCH_MARK_PCREL
 @deffnx {} BFD_RELOC_LARCH_SOP_PUSH_PCREL
@@ -4571,135 +4575,144 @@ S12Z relocations.
 @deffnx {} BFD_RELOC_LARCH_SUB24
 @deffnx {} BFD_RELOC_LARCH_SUB32
 @deffnx {} BFD_RELOC_LARCH_SUB64
+@deffnx {} BFD_RELOC_LARCH_B16
+@deffnx {} BFD_RELOC_LARCH_B21
+@deffnx {} BFD_RELOC_LARCH_B26
+@deffnx {} BFD_RELOC_LARCH_ABS_HI20
+@deffnx {} BFD_RELOC_LARCH_ABS_LO12
+@deffnx {} BFD_RELOC_LARCH_ABS64_LO20
+@deffnx {} BFD_RELOC_LARCH_ABS64_HI12
+@deffnx {} BFD_RELOC_LARCH_PCALA_HI20
+@deffnx {} BFD_RELOC_LARCH_PCALA_LO12
+@deffnx {} BFD_RELOC_LARCH_PCALA64_LO20
+@deffnx {} BFD_RELOC_LARCH_PCALA64_HI12
+@deffnx {} BFD_RELOC_LARCH_GOT_PC_HI20
+@deffnx {} BFD_RELOC_LARCH_GOT_PC_LO12
+@deffnx {} BFD_RELOC_LARCH_GOT64_PC_LO20
+@deffnx {} BFD_RELOC_LARCH_GOT64_PC_HI12
+@deffnx {} BFD_RELOC_LARCH_GOT_HI20
+@deffnx {} BFD_RELOC_LARCH_GOT_LO12
+@deffnx {} BFD_RELOC_LARCH_GOT64_LO20
+@deffnx {} BFD_RELOC_LARCH_GOT64_HI12
+@deffnx {} BFD_RELOC_LARCH_TLS_LE_HI20
+@deffnx {} BFD_RELOC_LARCH_TLS_LE_LO12
+@deffnx {} BFD_RELOC_LARCH_TLS_LE64_LO20
+@deffnx {} BFD_RELOC_LARCH_TLS_LE64_HI12
+@deffnx {} BFD_RELOC_LARCH_TLS_IE_PC_HI20
+@deffnx {} BFD_RELOC_LARCH_TLS_IE_PC_LO12
+@deffnx {} BFD_RELOC_LARCH_TLS_IE64_PC_LO20
+@deffnx {} BFD_RELOC_LARCH_TLS_IE64_PC_HI12
+@deffnx {} BFD_RELOC_LARCH_TLS_IE_HI20
+@deffnx {} BFD_RELOC_LARCH_TLS_IE_LO12
+@deffnx {} BFD_RELOC_LARCH_TLS_IE64_LO20
+@deffnx {} BFD_RELOC_LARCH_TLS_IE64_HI12
+@deffnx {} BFD_RELOC_LARCH_TLS_LD_PC_HI20
+@deffnx {} BFD_RELOC_LARCH_TLS_LD_HI20
+@deffnx {} BFD_RELOC_LARCH_TLS_GD_PC_HI20
+@deffnx {} BFD_RELOC_LARCH_TLS_GD_HI20
+@deffnx {} BFD_RELOC_LARCH_32_PCREL
+@deffnx {} BFD_RELOC_LARCH_RELAX
+@deffnx {} BFD_RELOC_LARCH_DELETE
+@deffnx {} BFD_RELOC_LARCH_ALIGN
+@deffnx {} BFD_RELOC_LARCH_PCREL20_S2
+@deffnx {} BFD_RELOC_LARCH_CFA
+@deffnx {} BFD_RELOC_LARCH_ADD6
+@deffnx {} BFD_RELOC_LARCH_SUB6
+@deffnx {} BFD_RELOC_LARCH_ADD_ULEB128
+@deffnx {} BFD_RELOC_LARCH_SUB_ULEB128
+@deffnx {} BFD_RELOC_LARCH_64_PCREL
+@deffnx {} BFD_RELOC_LARCH_CALL36
+@deffnx {} BFD_RELOC_LARCH_TLS_DESC_PC_HI20
+@deffnx {} BFD_RELOC_LARCH_TLS_DESC_PC_LO12
+@deffnx {} BFD_RELOC_LARCH_TLS_DESC64_PC_LO20
+@deffnx {} BFD_RELOC_LARCH_TLS_DESC64_PC_HI12
+@deffnx {} BFD_RELOC_LARCH_TLS_DESC_HI20
+@deffnx {} BFD_RELOC_LARCH_TLS_DESC_LO12
+@deffnx {} BFD_RELOC_LARCH_TLS_DESC64_LO20
+@deffnx {} BFD_RELOC_LARCH_TLS_DESC64_HI12
+@deffnx {} BFD_RELOC_LARCH_TLS_DESC_LD
+@deffnx {} BFD_RELOC_LARCH_TLS_DESC_CALL
+@deffnx {} BFD_RELOC_LARCH_TLS_LE_HI20_R
+@deffnx {} BFD_RELOC_LARCH_TLS_LE_ADD_R
+@deffnx {} BFD_RELOC_LARCH_TLS_LE_LO12_R
+@deffnx {} BFD_RELOC_LARCH_TLS_LD_PCREL20_S2
+@deffnx {} BFD_RELOC_LARCH_TLS_GD_PCREL20_S2
+@deffnx {} BFD_RELOC_LARCH_TLS_DESC_PCREL20_S2
 LARCH relocations.
 @end deffn
 
 @example
-
 typedef enum bfd_reloc_code_real bfd_reloc_code_real_type;
+
 @end example
 @findex bfd_reloc_type_lookup
 @subsubsection @code{bfd_reloc_type_lookup}
-@strong{Synopsis}
-@example
-reloc_howto_type *bfd_reloc_type_lookup
-   (bfd *abfd, bfd_reloc_code_real_type code);
-reloc_howto_type *bfd_reloc_name_lookup
-   (bfd *abfd, const char *reloc_name);
-@end example
-@strong{Description}@*
+@deftypefn {Function} reloc_howto_type *bfd_reloc_type_lookup (bfd *abfd, bfd_reloc_code_real_type code); reloc_howto_type *bfd_reloc_name_lookup (bfd *abfd, const char *reloc_name); 
 Return a pointer to a howto structure which, when
 invoked, will perform the relocation @var{code} on data from the
 architecture noted.
 
+@end deftypefn
 @findex bfd_default_reloc_type_lookup
 @subsubsection @code{bfd_default_reloc_type_lookup}
-@strong{Synopsis}
-@example
-reloc_howto_type *bfd_default_reloc_type_lookup
-   (bfd *abfd, bfd_reloc_code_real_type  code);
-@end example
-@strong{Description}@*
+@deftypefn {Function} reloc_howto_type *bfd_default_reloc_type_lookup (bfd *abfd, bfd_reloc_code_real_type code); 
 Provides a default relocation lookup routine for any architecture.
 
+@end deftypefn
 @findex bfd_get_reloc_code_name
 @subsubsection @code{bfd_get_reloc_code_name}
-@strong{Synopsis}
-@example
-const char *bfd_get_reloc_code_name (bfd_reloc_code_real_type code);
-@end example
-@strong{Description}@*
+@deftypefn {Function} const char *bfd_get_reloc_code_name (bfd_reloc_code_real_type code); 
 Provides a printable name for the supplied relocation code.
 Useful mainly for printing error messages.
 
+@end deftypefn
 @findex bfd_generic_relax_section
 @subsubsection @code{bfd_generic_relax_section}
-@strong{Synopsis}
-@example
-bool bfd_generic_relax_section
-   (bfd *abfd,
-    asection *section,
-    struct bfd_link_info *,
-    bool *);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool bfd_generic_relax_section (bfd *abfd, asection *section, struct bfd_link_info *, bool *); 
 Provides default handling for relaxing for back ends which
 don't do relaxing.
 
+@end deftypefn
 @findex bfd_generic_gc_sections
 @subsubsection @code{bfd_generic_gc_sections}
-@strong{Synopsis}
-@example
-bool bfd_generic_gc_sections
-   (bfd *, struct bfd_link_info *);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool bfd_generic_gc_sections (bfd *, struct bfd_link_info *); 
 Provides default handling for relaxing for back ends which
 don't do section gc -- i.e., does nothing.
 
+@end deftypefn
 @findex bfd_generic_lookup_section_flags
 @subsubsection @code{bfd_generic_lookup_section_flags}
-@strong{Synopsis}
-@example
-bool bfd_generic_lookup_section_flags
-   (struct bfd_link_info *, struct flag_info *, asection *);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool bfd_generic_lookup_section_flags (struct bfd_link_info *, struct flag_info *, asection *); 
 Provides default handling for section flags lookup
 -- i.e., does nothing.
 Returns FALSE if the section should be omitted, otherwise TRUE.
 
+@end deftypefn
 @findex bfd_generic_merge_sections
 @subsubsection @code{bfd_generic_merge_sections}
-@strong{Synopsis}
-@example
-bool bfd_generic_merge_sections
-   (bfd *, struct bfd_link_info *);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool bfd_generic_merge_sections (bfd *, struct bfd_link_info *); 
 Provides default handling for SEC_MERGE section merging for back ends
 which don't have SEC_MERGE support -- i.e., does nothing.
 
+@end deftypefn
 @findex bfd_generic_get_relocated_section_contents
 @subsubsection @code{bfd_generic_get_relocated_section_contents}
-@strong{Synopsis}
-@example
-bfd_byte *bfd_generic_get_relocated_section_contents
-   (bfd *abfd,
-    struct bfd_link_info *link_info,
-    struct bfd_link_order *link_order,
-    bfd_byte *data,
-    bool relocatable,
-    asymbol **symbols);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bfd_byte *bfd_generic_get_relocated_section_contents (bfd *abfd, struct bfd_link_info *link_info, struct bfd_link_order *link_order, bfd_byte *data, bool relocatable, asymbol **symbols); 
 Provides default handling of relocation effort for back ends
 which can't be bothered to do it efficiently.
 
+@end deftypefn
 @findex _bfd_generic_set_reloc
 @subsubsection @code{_bfd_generic_set_reloc}
-@strong{Synopsis}
-@example
-void _bfd_generic_set_reloc
-   (bfd *abfd,
-    sec_ptr section,
-    arelent **relptr,
-    unsigned int count);
-@end example
-@strong{Description}@*
+@deftypefn {Function} void _bfd_generic_set_reloc (bfd *abfd, sec_ptr section, arelent **relptr, unsigned int count); 
 Installs a new set of internal relocations in SECTION.
 
+@end deftypefn
 @findex _bfd_unrecognized_reloc
 @subsubsection @code{_bfd_unrecognized_reloc}
-@strong{Synopsis}
-@example
-bool _bfd_unrecognized_reloc
-   (bfd * abfd,
-    sec_ptr section,
-    unsigned int r_type);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool _bfd_unrecognized_reloc (bfd * abfd, sec_ptr section, unsigned int r_type); 
 Reports an unrecognized reloc.
 Written as a function in order to reduce code duplication.
 Returns FALSE so that it can be called from a return statement.
 
+@end deftypefn

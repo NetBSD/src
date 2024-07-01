@@ -2008,6 +2008,13 @@
   const vsll __builtin_vsx_xxspltd_2di (vsll, const int<1>);
     XXSPLTD_V2DI vsx_xxspltd_v2di {}
 
+  const vsq __builtin_pack_vector_int128 (unsigned long long, \
+                                          unsigned long long);
+    PACK_V1TI packv1ti {}
+
+  const unsigned long __builtin_unpack_vector_int128 (vsq, const int<1>);
+    UNPACK_V1TI unpackv1ti {}
+
 
 ; Power7 builtins (ISA 2.06).
 [power7]
@@ -2029,15 +2036,8 @@
   const unsigned int __builtin_divweu (unsigned int, unsigned int);
     DIVWEU diveu_si {}
 
-  const vsq __builtin_pack_vector_int128 (unsigned long long, \
-                                          unsigned long long);
-    PACK_V1TI packv1ti {}
-
   void __builtin_ppc_speculation_barrier ();
     SPECBARR speculation_barrier {}
-
-  const unsigned long __builtin_unpack_vector_int128 (vsq, const int<1>);
-    UNPACK_V1TI unpackv1ti {}
 
 
 ; Power7 builtins requiring 64-bit GPRs (even with 32-bit addressing).
@@ -2796,6 +2796,19 @@
   const vsi __builtin_vsx_xxbrw_v4si (vsi);
     XXBRW_V4SI p9_xxbrw_v4si {}
 
+  const signed int __builtin_vsx_scalar_cmp_exp_qp_eq (_Float128, _Float128);
+    VSCEQPEQ xscmpexpqp_eq_kf {}
+
+  const signed int __builtin_vsx_scalar_cmp_exp_qp_gt (_Float128, _Float128);
+    VSCEQPGT xscmpexpqp_gt_kf {}
+
+  const signed int __builtin_vsx_scalar_cmp_exp_qp_lt (_Float128, _Float128);
+    VSCEQPLT xscmpexpqp_lt_kf {}
+
+  const signed int \
+      __builtin_vsx_scalar_cmp_exp_qp_unordered (_Float128, _Float128);
+    VSCEQPUO xscmpexpqp_unordered_kf {}
+
 
 ; Miscellaneous P9 functions
 [power9]
@@ -2877,19 +2890,6 @@
 
   fpmath _Float128 __builtin_mulf128_round_to_odd (_Float128, _Float128);
     MULF128_ODD mulkf3_odd {}
-
-  const signed int __builtin_vsx_scalar_cmp_exp_qp_eq (_Float128, _Float128);
-    VSCEQPEQ xscmpexpqp_eq_kf {}
-
-  const signed int __builtin_vsx_scalar_cmp_exp_qp_gt (_Float128, _Float128);
-    VSCEQPGT xscmpexpqp_gt_kf {}
-
-  const signed int __builtin_vsx_scalar_cmp_exp_qp_lt (_Float128, _Float128);
-    VSCEQPLT xscmpexpqp_lt_kf {}
-
-  const signed int \
-      __builtin_vsx_scalar_cmp_exp_qp_unordered (_Float128, _Float128);
-    VSCEQPUO xscmpexpqp_unordered_kf {}
 
   fpmath _Float128 __builtin_sqrtf128_round_to_odd (_Float128);
     SQRTF128_ODD sqrtkf2_odd {}

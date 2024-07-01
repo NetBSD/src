@@ -1,13 +1,14 @@
-#	$NetBSD: Makefile,v 1.15 2018/05/01 19:59:46 christos Exp $
+#	$NetBSD: Makefile,v 1.15.14.1 2024/07/01 01:01:14 perseant Exp $
 
 .include <bsd.hostinit.mk>
 
 HOSTPROGNAME=	${MACHINE_GNU_PLATFORM}-dbsym
 
-HOST_SRCDIR=    external/gpl3/binutils/usr.sbin/dbsym
+HOST_SRCDIR=    external/gpl3/${EXTERNAL_BINUTILS_SUBDIR}/usr.sbin/dbsym
 
 TOOLCHAINOBJ!=	cd ${.CURDIR}/../binutils && ${PRINTOBJDIR}
 BFDDIR?=	${TOOLCHAINOBJ}/build/bfd
+SFRAMEDIR?=	${TOOLCHAINOBJ}/build/libsframe
 IBERTYDIR?=	${TOOLCHAINOBJ}/build/libiberty
 
 .include "${.CURDIR}/../Makefile.host"

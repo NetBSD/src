@@ -1,6 +1,6 @@
 /* Interface between the opcode library and its callers.
 
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -61,6 +61,13 @@ enum disassembler_style
      These should be things that correspond to real machine
      instructions.  */
   dis_style_mnemonic,
+
+  /* Some architectures include additional mnemonic like fields within the
+     instruction operands, e.g. on aarch64 'add w16, w7, w1, lsl #2' where
+     the 'lsl' is an additional piece of text that describes how the
+     instruction should behave.  This sub-mnemonic style can be used for
+     these pieces of text.  */
+  dis_style_sub_mnemonic,
 
   /* For things that aren't real machine instructions, but rather
      assembler directives, e.g. .byte, etc.  */
@@ -311,7 +318,8 @@ typedef struct
   /* Option argument name to use in descriptions.  */
   const char *name;
 
-  /* Vector of acceptable option argument values, NULL-terminated.  */
+  /* Vector of acceptable option argument values, NULL-terminated.
+     NULL if any values are accepted.  */
   const char **values;
 } disasm_option_arg_t;
 
@@ -377,9 +385,11 @@ extern void print_ppc_disassembler_options (FILE *);
 extern void print_riscv_disassembler_options (FILE *);
 extern void print_arm_disassembler_options (FILE *);
 extern void print_arc_disassembler_options (FILE *);
+extern void print_kvx_disassembler_options(FILE *);
 extern void print_s390_disassembler_options (FILE *);
 extern void print_wasm32_disassembler_options (FILE *);
 extern void print_loongarch_disassembler_options (FILE *);
+extern void print_bpf_disassembler_options (FILE *);
 extern bool aarch64_symbol_is_valid (asymbol *, struct disassemble_info *);
 extern bool arm_symbol_is_valid (asymbol *, struct disassemble_info *);
 extern bool csky_symbol_is_valid (asymbol *, struct disassemble_info *);

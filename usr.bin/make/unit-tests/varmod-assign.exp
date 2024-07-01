@@ -45,10 +45,10 @@ mod-assign-empty: VAR=overwritten
 make: in target "mod-assign-parse": while evaluating variable "ASSIGN": Unknown modifier ":x"
 
 sysv:y
-make: Unfinished modifier for "ASSIGN" ('}' missing)
+make: in target "mod-assign-parse": while evaluating variable "ASSIGN": Unfinished modifier ('}' missing)
 
 ok=word
-make: " echo word; false " returned non-zero status
+make: warning: in target "mod-assign-shell-error": while evaluating variable "SH_ERR": Command " echo word; (exit 13) " exited with status 13
 err=previous
 Command: TARGET_CMD_VAR = cmd-value
 Global: TARGET_GLOBAL_VAR = global-value

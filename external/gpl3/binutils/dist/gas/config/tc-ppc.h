@@ -1,5 +1,5 @@
 /* tc-ppc.h -- Header file for tc-ppc.c.
-   Copyright (C) 1994-2022 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of GAS, the GNU Assembler.
@@ -187,8 +187,8 @@ do {								\
   symbol_get_tc (dest)->within = symbol_get_tc (src)->within;	\
 } while (0)
 
-extern void ppc_xcoff_end (void);
-#define md_end ppc_xcoff_end
+extern void ppc_xcoff_md_finish (void);
+#define md_finish ppc_xcoff_md_finish
 
 #define TC_PARSE_CONS_EXPRESSION(EXP, NBYTES)	\
   ppc_xcoff_parse_cons (EXP, NBYTES)
@@ -251,10 +251,13 @@ extern void ppc_frob_file_before_adjust (void);
 #define tc_adjust_symtab() ppc_elf_adjust_symtab ()
 extern void ppc_elf_adjust_symtab (void);
 
-extern void ppc_elf_end (void);
-#define md_end ppc_elf_end
+extern void ppc_elf_md_finish (void);
+#define md_finish ppc_elf_md_finish
 
 #endif /* OBJ_ELF */
+
+extern void ppc_md_end (void);
+#define md_end ppc_md_end
 
 #if defined (OBJ_ELF) || defined (OBJ_XCOFF)
 #define TC_FORCE_RELOCATION(FIX) ppc_force_relocation (FIX)
@@ -319,13 +322,12 @@ extern void ppc_frob_label (symbolS *);
 /* call md_pcrel_from_section, not md_pcrel_from */
 #define MD_PCREL_FROM_SECTION(FIX, SEC) md_pcrel_from_section(FIX, SEC)
 
-#define md_parse_name(name, exp, mode, c) ppc_parse_name (name, exp)
-extern int ppc_parse_name (const char *, struct expressionS *);
+#define md_parse_name(name, exp, mode, c) \
+  (ppc_parse_name (name, exp, mode), true)
+extern void ppc_parse_name (const char *, struct expressionS *, enum expr_mode);
 
 #define md_optimize_expr(left, op, right) ppc_optimize_expr (left, op, right)
 extern int ppc_optimize_expr (expressionS *, operatorT, expressionS *);
-
-#define md_operand(x)
 
 #define md_cleanup() ppc_cleanup ()
 extern void ppc_cleanup (void);

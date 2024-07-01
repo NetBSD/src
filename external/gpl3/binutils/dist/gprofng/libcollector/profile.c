@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -27,6 +27,7 @@
 
 #include "config.h"
 #include <dlfcn.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ucontext.h>
@@ -181,22 +182,28 @@ open_experiment (const char *exp)
 				 module_interface.description);
 
   /* Record Profile packet description */
-  ClockPacket *cp = NULL;
   collector_interface->writeLog ("  <profpckt kind=\"%d\" uname=\"" STXT ("Clock profiling data") "\">\n", CLOCK_TYPE);
   collector_interface->writeLog ("    <field name=\"LWPID\" uname=\"" STXT ("Lightweight process id") "\" offset=\"%d\" type=\"%s\"/>\n",
-				 &cp->lwp_id, sizeof (cp->lwp_id) == 4 ? "INT32" : "INT64");
+		(int) offsetof (ClockPacket, lwp_id),
+		fld_sizeof (ClockPacket, lwp_id) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"THRID\" uname=\"" STXT ("Thread number") "\" offset=\"%d\" type=\"%s\"/>\n",
-				 &cp->thr_id, sizeof (cp->thr_id) == 4 ? "INT32" : "INT64");
+		(int) offsetof (ClockPacket, thr_id),
+		fld_sizeof (ClockPacket, thr_id) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"CPUID\" uname=\"" STXT ("CPU id") "\" offset=\"%d\" type=\"%s\"/>\n",
-				 &cp->cpu_id, sizeof (cp->cpu_id) == 4 ? "INT32" : "INT64");
+		(int) offsetof (ClockPacket, cpu_id),
+		fld_sizeof (ClockPacket, cpu_id) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"TSTAMP\" uname=\"" STXT ("High resolution timestamp") "\" offset=\"%d\" type=\"%s\"/>\n",
-				 &cp->tstamp, sizeof (cp->tstamp) == 4 ? "INT32" : "INT64");
+		(int) offsetof (ClockPacket, tstamp),
+		fld_sizeof (ClockPacket, tstamp) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"FRINFO\" offset=\"%d\" type=\"%s\"/>\n",
-				 &cp->frinfo, sizeof (cp->frinfo) == 4 ? "INT32" : "INT64");
+		(int) offsetof (ClockPacket, frinfo),
+		fld_sizeof (ClockPacket, frinfo) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"MSTATE\" uname=\"" STXT ("Thread state") "\" offset=\"%d\" type=\"%s\"/>\n",
-				 &cp->mstate, sizeof (cp->mstate) == 4 ? "INT32" : "INT64");
+		(int) offsetof (ClockPacket, mstate),
+		fld_sizeof (ClockPacket, mstate) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"NTICK\" uname=\"" STXT ("Duration") "\" offset=\"%d\" type=\"%s\"/>\n",
-				 &cp->nticks, sizeof (cp->nticks) == 4 ? "INT32" : "INT64");
+		(int) offsetof (ClockPacket, nticks),
+		fld_sizeof (ClockPacket, nticks) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("  </profpckt>\n");
   collector_interface->writeLog ("</profile>\n");
   return COL_ERROR_NONE;
@@ -268,7 +275,7 @@ __collector_ext_profile_handler (siginfo_t *info, ucontext_t *context)
       /* assume this case is rare, and accept overhead of creating dummy_uc */
       TprintfT (0, "collector_profile_handler: ERROR: got NULL context!\n");
       context = &uctxmem;
-      getcontext (context);     /* initialize dummy context */
+      CALL_UTIL (getcontext) (context);     /* initialize dummy context */
       SETFUNCTIONCONTEXT (context, &__collector_lost_profile_context);
     }
   ClockPacket pckt;

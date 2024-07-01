@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.10 2024/06/10 07:47:06 kre Exp $
+# $NetBSD: ad.aarch64,v 1.10.2.1 2024/07/01 00:59:49 perseant Exp $
 ./usr/lib/eabi/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabi/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabi/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -29,7 +29,7 @@
 ./usr/lib/eabi/libatf-c++_g.a			comp-c-debuglib	debuglib,compat,atf
 ./usr/lib/eabi/libatf-c_g.a			comp-c-debuglib	debuglib,compat,atf
 ./usr/lib/eabi/libavl_g.a			comp-c-debuglib	debuglib,compat,zfs
-./usr/lib/eabi/libbfd_g.a			comp-sys-debug	debug,compat,binutils
+./usr/lib/eabi/libbfd_g.a			comp-sys-debug	debuglib,compat,binutils
 ./usr/lib/eabi/libbind9_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabi/libblocklist_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabi/libbluetooth_g.a			comp-c-debuglib	debuglib,compat
@@ -192,7 +192,7 @@
 ./usr/lib/eabihf/libatf-c++_g.a			comp-c-debuglib	debuglib,compat,atf
 ./usr/lib/eabihf/libatf-c_g.a			comp-c-debuglib	debuglib,compat,atf
 ./usr/lib/eabihf/libavl_g.a			comp-c-debuglib	debuglib,compat,zfs
-./usr/lib/eabihf/libbfd_g.a	comp-sys-debug		debug,compat,binutils
+./usr/lib/eabihf/libbfd_g.a	comp-sys-debug		debuglib,compat,binutils
 ./usr/lib/eabihf/libbind9_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabihf/libblocklist_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabihf/libbluetooth_g.a			comp-c-debuglib	debuglib,compat

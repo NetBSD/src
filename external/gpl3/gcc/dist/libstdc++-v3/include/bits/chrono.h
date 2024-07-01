@@ -483,26 +483,13 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	{ return numeric_limits<_Rep>::lowest(); }
       };
 
-    /// @cond undocumented
-
-    template<typename _Tp>
-      struct __is_ratio
-      : std::false_type
-      { };
-
-    template<intmax_t _Num, intmax_t _Den>
-      struct __is_ratio<ratio<_Num, _Den>>
-      : std::true_type
-      { };
-
-    /// @endcond
-
     template<typename _Rep, typename _Period>
       class duration
       {
-	static_assert(!__is_duration<_Rep>::value, "rep cannot be a duration");
+	static_assert(!__is_duration<_Rep>::value,
+		      "rep cannot be a std::chrono::duration");
 	static_assert(__is_ratio<_Period>::value,
-		      "period must be a specialization of ratio");
+		      "period must be a specialization of std::ratio");
 	static_assert(_Period::num > 0, "period must be positive");
 
 	template<typename _Rep2>
@@ -1206,7 +1193,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     // compatibility definitions for previous versions.  At some
     // point, when these clocks settle down, the inlined namespaces
     // can be removed.  XXX GLIBCXX_ABI Deprecated
-    inline namespace _V2 {
+_GLIBCXX_BEGIN_INLINE_ABI_NAMESPACE(_V2)
 
     /**
      *  @brief System clock.
@@ -1278,7 +1265,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     */
     using high_resolution_clock = system_clock;
 
-    } // end inline namespace _V2
+_GLIBCXX_END_INLINE_ABI_NAMESPACE(_V2)
 
 #if __cplusplus >= 202002L
     /// @addtogroup chrono

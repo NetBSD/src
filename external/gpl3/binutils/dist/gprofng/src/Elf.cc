@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -151,6 +151,14 @@ Elf::Elf (char *filename) : DbeMessages (), Data_window (filename)
   gnu_debug_file = NULL;
   dbeFile = NULL;
   abfd = NULL;
+  bfd_symcnt = -1;
+  bfd_dynsymcnt = -1;
+  bfd_synthcnt = -1;
+  bfd_sym = NULL;
+  bfd_dynsym = NULL;
+  bfd_synthsym = NULL;
+  synthsym = NULL;
+
   if (bfd_status != BFD_INIT_MAGIC)
     {
       status = ELF_ERR_CANT_OPEN_FILE;
@@ -162,6 +170,7 @@ Elf::Elf (char *filename) : DbeMessages (), Data_window (filename)
       status = ELF_ERR_CANT_OPEN_FILE;
       return;
     }
+  abfd->flags |= BFD_DECOMPRESS;
   if (!bfd_check_format (abfd, bfd_object))
     {
       bfd_close (abfd);
@@ -270,6 +279,10 @@ Elf::~Elf ()
   delete elfSymbols;
   delete gnu_debug_file;
   delete dbeFile;
+  delete synthsym;
+  free (bfd_sym);
+  free (bfd_dynsym);
+  free (bfd_synthsym);
   if (abfd)
     bfd_close (abfd);
 }
@@ -719,6 +732,87 @@ Elf::find_ancillary_files (char *lo_name)
 	    }
 	}
     }
+  return NULL;
+}
+
+void
+Elf::get_bfd_symbols()
+{
+  if (bfd_symcnt < 0)
+    {
+      if ((bfd_get_file_flags (abfd) & HAS_SYMS) != 0)
+	bfd_symcnt = bfd_get_symtab_upper_bound (abfd);
+      if (bfd_symcnt > 0)
+	{
+	  bfd_sym = (asymbol **) malloc (bfd_symcnt);
+	  bfd_symcnt = bfd_canonicalize_symtab (abfd, bfd_sym);
+	  if (bfd_symcnt < 0)
+	    {
+	      free (bfd_sym);
+	      bfd_sym = NULL;
+	    }
+	}
+      else
+	bfd_symcnt = 0;
+    }
+
+  if (bfd_dynsymcnt < 0)
+    {
+      bfd_dynsymcnt = bfd_get_dynamic_symtab_upper_bound (abfd);
+      if (bfd_dynsymcnt > 0)
+	{
+	  bfd_dynsym = (asymbol **) malloc (bfd_dynsymcnt);
+	  bfd_dynsymcnt = bfd_canonicalize_dynamic_symtab (abfd, bfd_dynsym);
+	  if (bfd_dynsymcnt < 0)
+	    {
+	      free (bfd_dynsym);
+	      bfd_dynsym = NULL;
+	    }
+	}
+      else
+	bfd_dynsymcnt = 0;
+    }
+  if (bfd_synthcnt < 0)
+    {
+      bfd_synthcnt = bfd_get_synthetic_symtab (abfd, bfd_symcnt, bfd_sym,
+				bfd_dynsymcnt, bfd_dynsym, &bfd_synthsym);
+      if (bfd_synthcnt < 0)
+	bfd_synthcnt = 0;
+    }
+}
+
+static int
+cmp_sym_addr (const void *a, const void *b)
+{
+  asymbol *sym1 = *((asymbol **) a);
+  asymbol *sym2 = *((asymbol **) b);
+  uint64_t a1 = sym1->value;
+  uint64_t a2 = sym2->value;
+  if (sym1->section)
+    a1 += sym1->section->vma;
+  if (sym2->section)
+    a2 += sym2->section->vma;
+  return a1 < a2 ? -1 : (a1 == a2 ? 0 : 1);
+}
+
+const char *
+Elf::get_funcname_in_plt (uint64_t pc)
+{
+  if (synthsym == NULL)
+    {
+      get_bfd_symbols();
+      synthsym = new Vector<asymbol *> (bfd_synthcnt + 1);
+      for (long i = 0; i < bfd_synthcnt; i++)
+	synthsym->append (bfd_synthsym + i);
+      synthsym->sort (cmp_sym_addr);
+    }
+
+  asymbol sym, *symp = &sym;
+  sym.section = NULL;
+  sym.value = pc;
+  long ind = synthsym->bisearch (0, -1, &symp, cmp_sym_addr);
+  if (ind >= 0)
+    return synthsym->get (ind)->name;
   return NULL;
 }
 

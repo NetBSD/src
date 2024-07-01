@@ -1,5 +1,5 @@
 /* Implementation header.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -741,7 +741,6 @@ extern struct ctf_archive *ctf_arc_open_internal (const char *, int *);
 extern void ctf_arc_close_internal (struct ctf_archive *);
 extern const ctf_preamble_t *ctf_arc_bufpreamble (const ctf_sect_t *);
 extern void *ctf_set_open_errno (int *, int);
-extern unsigned long ctf_set_errno (ctf_dict_t *, int);
 extern void ctf_flip_header (ctf_header_t *);
 extern int ctf_flip (ctf_dict_t *, ctf_header_t *, unsigned char *, int);
 

@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2021-2022 Free Software Foundation, Inc.
+   Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -83,11 +83,11 @@ static const char *
 my_getExpression (expressionS *ep, const char *str)
 {
   char *save_in, *ret;
+
   if (*str == ':')
     {
       unsigned long j;
       char *str_1 = (char *) str;
-      str_1++;
       j = strtol (str_1, &str_1, 10);
       get_internal_label (ep, j, *str_1 == 'f');
       return NULL;
@@ -101,68 +101,57 @@ my_getExpression (expressionS *ep, const char *str)
 }
 
 static void
-reloc (const char *op_c_str, const char *id_c_str, offsetT addend)
+emit_const_var (const char *op)
 {
-  expressionS id_sym_expr;
+  expressionS ep;
 
   if (end <= top)
     as_fatal (_("expr too huge"));
 
-  if (id_c_str)
-    {
-      my_getExpression (&id_sym_expr, id_c_str);
-      id_sym_expr.X_add_number += addend;
-    }
+  my_getExpression (&ep, op);
+
+  if (ep.X_op != O_constant)
+    as_bad ("illegal operand: %s", op);
+
+  top->value.X_op = O_constant;
+  top->value.X_add_number = ep.X_add_number;
+  top->type = BFD_RELOC_LARCH_SOP_PUSH_ABSOLUTE;
+  top++;
+}
+
+static void
+reloc (const char *op_c_str, const char *id_c_str, offsetT addend)
+{
+  expressionS id_sym_expr;
+  bfd_reloc_code_real_type btype;
+
+  if (end <= top)
+    as_fatal (_("expr too huge"));
+
+  /* For compatible old asm code.  */
+  if (0 == strcmp (op_c_str, "plt"))
+    btype = BFD_RELOC_LARCH_B26;
   else
     {
-      id_sym_expr.X_op = O_constant;
-      id_sym_expr.X_add_number = addend;
+      btype = loongarch_larch_reloc_name_lookup (NULL, op_c_str);
+      if (btype == BFD_RELOC_NONE)
+	as_fatal (_("unsupported modifier %s"), op_c_str);
     }
 
-  if (strcmp (op_c_str, "abs") == 0)
-    {
-      top->value = id_sym_expr;
-      top->type = BFD_RELOC_LARCH_SOP_PUSH_ABSOLUTE;
-      top++;
-    }
-  else if (strcmp (op_c_str, "pcrel") == 0)
-    {
-      top->value = id_sym_expr;
-      top->type = BFD_RELOC_LARCH_SOP_PUSH_PCREL;
-      top++;
-    }
-  else if (strcmp (op_c_str, "gprel") == 0)
-    {
-      top->value = id_sym_expr;
-      top->type = BFD_RELOC_LARCH_SOP_PUSH_GPREL;
-      top++;
-    }
-  else if (strcmp (op_c_str, "tprel") == 0)
-    {
-      top->value = id_sym_expr;
-      top->type = BFD_RELOC_LARCH_SOP_PUSH_TLS_TPREL;
-      top++;
-    }
-  else if (strcmp (op_c_str, "tlsgot") == 0)
-    {
-      top->value = id_sym_expr;
-      top->type = BFD_RELOC_LARCH_SOP_PUSH_TLS_GOT;
-      top++;
-    }
-  else if (strcmp (op_c_str, "tlsgd") == 0)
-    {
-      top->value = id_sym_expr;
-      top->type = BFD_RELOC_LARCH_SOP_PUSH_TLS_GD;
-      top++;
-    }
-  else if (strcmp (op_c_str, "plt") == 0)
-    {
-      top->value = id_sym_expr;
-      top->type = BFD_RELOC_LARCH_SOP_PUSH_PLT_PCREL;
-      top++;
-    }
+  if (id_c_str)
+  {
+    my_getExpression (&id_sym_expr, id_c_str);
+    id_sym_expr.X_add_number += addend;
+  }
   else
-    as_fatal (_("unknown reloc hint: %s"), op_c_str);
+  {
+    id_sym_expr.X_op = O_constant;
+    id_sym_expr.X_add_number = addend;
+  }
+
+  top->value = id_sym_expr;
+  top->type = btype;
+  top++;
 }
 
 static void
@@ -352,6 +341,7 @@ offsetT imm;
 
 primary_expression
 	: INTEGER {emit_const ($1);}
+	| IDENTIFIER {emit_const_var ($1);}
 	| '(' expression ')'
 	| '%' IDENTIFIER '(' IDENTIFIER addend ')' {reloc ($2, $4, $5); free ($2); free ($4);}
 	| '%' IDENTIFIER '(' INTEGER addend ')' {reloc ($2, NULL, $4 + $5); free ($2);}

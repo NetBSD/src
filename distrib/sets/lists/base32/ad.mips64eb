@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.6 2024/06/10 07:57:10 kre Exp $
+# $NetBSD: ad.mips64eb,v 1.6.2.1 2024/07/01 00:59:48 perseant Exp $
 ./lib/64					base-compat-shlib	compat
 ./lib/o32					base-compat-shlib	compat
 ./lib/o32/npf					base-compat-shlib	compat,npf
@@ -90,9 +90,11 @@
 ./usr/lib/o32/libarchive.so			base-compat-shlib	compat
 ./usr/lib/o32/libarchive.so.5			base-compat-shlib	compat
 ./usr/lib/o32/libarchive.so.5.1			base-compat-shlib	compat
-./usr/lib/o32/libasan.so			base-compat-shlib	compat,gcc,cxx
-./usr/lib/o32/libasan.so.5			base-compat-shlib	compat,gcc,cxx
-./usr/lib/o32/libasan.so.5.0			base-compat-shlib	compat,gcc,cxx
+./usr/lib/o32/libasan.so			base-compat-shlib	compat,cxx,gcc
+./usr/lib/o32/libasan.so.5			base-compat-shlib	compat,cxx,gcc=10
+./usr/lib/o32/libasan.so.5.0			base-compat-shlib	compat,cxx,gcc=10
+./usr/lib/o32/libasan.so.6			base-compat-shlib	compat,cxx,gcc=12
+./usr/lib/o32/libasan.so.6.0			base-compat-shlib	compat,cxx,gcc=12
 ./usr/lib/o32/libasn1.so			base-compat-shlib	compat,kerberos
 ./usr/lib/o32/libasn1.so.10			base-compat-shlib	compat,kerberos
 ./usr/lib/o32/libasn1.so.10.0			base-compat-shlib	compat,kerberos
@@ -205,7 +207,8 @@
 ./usr/lib/o32/libgnumalloc.so.1.0		base-compat-shlib	compat
 ./usr/lib/o32/libgomp.so			base-compat-shlib	compat,gcc
 ./usr/lib/o32/libgomp.so.2			base-compat-shlib	compat,gcc
-./usr/lib/o32/libgomp.so.2.1			base-compat-shlib	compat,gcc
+./usr/lib/o32/libgomp.so.2.1			base-compat-shlib	compat,gcc=10
+./usr/lib/o32/libgomp.so.2.2			base-compat-shlib	compat,gcc=12
 ./usr/lib/o32/libgssapi.so			base-compat-shlib	compat,kerberos
 ./usr/lib/o32/libgssapi.so.12			base-compat-shlib	compat,kerberos
 ./usr/lib/o32/libgssapi.so.12.0		base-compat-shlib	compat,kerberos
@@ -276,8 +279,10 @@
 ./usr/lib/o32/libldap_r.so.6			base-compat-shlib	compat,ldap
 ./usr/lib/o32/libldap_r.so.6.0		base-compat-shlib	compat,ldap
 ./usr/lib/o32/liblsan.so			base-compat-shlib	compat,cxx,gcc
-./usr/lib/o32/liblsan.so.2			base-compat-shlib	compat,cxx,gcc
-./usr/lib/o32/liblsan.so.2.0			base-compat-shlib	compat,cxx,gcc
+./usr/lib/o32/liblsan.so.2			base-compat-shlib	compat,cxx,gcc=10
+./usr/lib/o32/liblsan.so.2.0			base-compat-shlib	compat,cxx,gcc=10
+./usr/lib/o32/liblsan.so.3			base-compat-shlib	compat,cxx,gcc=12
+./usr/lib/o32/liblsan.so.3.0			base-compat-shlib	compat,cxx,gcc=12
 ./usr/lib/o32/liblua.so			base-compat-shlib	compat
 ./usr/lib/o32/liblua.so.6			base-compat-shlib	compat
 ./usr/lib/o32/liblua.so.6.1			base-compat-shlib	compat
@@ -323,9 +328,9 @@
 ./usr/lib/o32/libp2k.so			base-compat-shlib	compat
 ./usr/lib/o32/libp2k.so.2			base-compat-shlib	compat
 ./usr/lib/o32/libp2k.so.2.0			base-compat-shlib	compat
-./usr/lib/o32/libpam.so			base-compat-shlib	compat
-./usr/lib/o32/libpam.so.4			base-compat-shlib	compat
-./usr/lib/o32/libpam.so.4.1			base-compat-shlib	compat
+./usr/lib/o32/libpam.so			base-compat-shlib	compat,pam
+./usr/lib/o32/libpam.so.4			base-compat-shlib	compat,pam
+./usr/lib/o32/libpam.so.4.1			base-compat-shlib	compat,pam
 ./usr/lib/o32/libpanel.so			base-compat-shlib	compat
 ./usr/lib/o32/libpanel.so.3			base-compat-shlib	compat
 ./usr/lib/o32/libpanel.so.3.0			base-compat-shlib	compat
@@ -422,9 +427,10 @@
 ./usr/lib/o32/libssl.so			base-compat-shlib	compat
 ./usr/lib/o32/libssl.so.15			base-compat-shlib	compat
 ./usr/lib/o32/libssl.so.15.0			base-compat-shlib	compat
-./usr/lib/o32/libstdc++.so			base-compat-shlib	compat,gcc,cxx,libstdcxx
-./usr/lib/o32/libstdc++.so.9			base-compat-shlib	compat,gcc,cxx,libstdcxx
-./usr/lib/o32/libstdc++.so.9.0		base-compat-shlib	compat,gcc,cxx,libstdcxx
+./usr/lib/o32/libstdc++.so			base-compat-shlib	compat,cxx,libstdcxx,gcc
+./usr/lib/o32/libstdc++.so.9			base-compat-shlib	compat,cxx,libstdcxx,gcc
+./usr/lib/o32/libstdc++.so.9.0			base-compat-shlib	compat,cxx,libstdcxx,gcc=10
+./usr/lib/o32/libstdc++.so.9.1			base-compat-shlib	compat,cxx,libstdcxx,gcc=12
 ./usr/lib/o32/libtermcap.so			base-compat-shlib	compat
 ./usr/lib/o32/libtermcap.so.0			base-compat-shlib	compat
 ./usr/lib/o32/libtermcap.so.0.6		base-compat-shlib	compat
@@ -437,9 +443,11 @@
 ./usr/lib/o32/libtre.so			base-compat-shlib	compat
 ./usr/lib/o32/libtre.so.0			base-compat-shlib	compat
 ./usr/lib/o32/libtre.so.0.8			base-compat-shlib	compat
-./usr/lib/o32/libubsan.so			base-compat-shlib	compat,gcc,cxx
-./usr/lib/o32/libubsan.so.4			base-compat-shlib	compat,gcc,cxx
-./usr/lib/o32/libubsan.so.4.0			base-compat-shlib	compat,gcc,cxx
+./usr/lib/o32/libubsan.so			base-compat-shlib	compat,cxx,gcc
+./usr/lib/o32/libubsan.so.4			base-compat-shlib	compat,cxx,gcc=10
+./usr/lib/o32/libubsan.so.4.0			base-compat-shlib	compat,cxx,gcc=10
+./usr/lib/o32/libubsan.so.5			base-compat-shlib	compat,cxx,gcc=12
+./usr/lib/o32/libubsan.so.5.0			base-compat-shlib	compat,cxx,gcc=12
 ./usr/lib/o32/libukfs.so			base-compat-shlib	compat
 ./usr/lib/o32/libukfs.so.1			base-compat-shlib	compat
 ./usr/lib/o32/libukfs.so.1.0			base-compat-shlib	compat

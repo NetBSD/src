@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2023/08/01 05:57:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.13.2.1 2024/07/01 01:01:06 perseant Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
@@ -28,6 +28,8 @@ MKPICLIB:=	no
 version.cc: ${GCCARCH}/defs.mk ${TOP}/tools/gcc/gcc-version.mk
 
 ${SRCS}: ${GCCARCH}/defs.mk
+
+COPTS.intl.cc +=	-Wno-error=stack-protector
 
 .include <bsd.lib.mk>
 

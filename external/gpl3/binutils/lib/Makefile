@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.3 2020/04/04 01:34:28 christos Exp $
+#	$NetBSD: Makefile,v 1.3.8.1 2024/07/01 01:00:40 perseant Exp $
 
-SUBDIR+= libgnuctf libopcodes libbfd libiberty
+SUBDIR+= libgnuctf libopcodes libbfd libiberty libsframe
 
 .include <bsd.subdir.mk>

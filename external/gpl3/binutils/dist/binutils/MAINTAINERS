@@ -77,8 +77,8 @@ responsibility among the other maintainers.
   CRIS		   Hans-Peter Nilsson <hp@axis.com>
   CRX		   M R Swami Reddy <MR.Swami.Reddy@nsc.com>
   CTF		   Nick Alcock <nick.alcock@oracle.com>
-  C-SKY		   Lifang Xia <lifang_xia@c-sky.com>
-  C-SKY		   Yunhai Shang <yunhai_shang@c-sky.com>
+  C-SKY		   Lifang Xia <lifang_xia@linux.alibaba.com>
+  C-SKY		   Yunhai Shang <yunhai@linux.alibaba.com>
   DLX              Nikolaos Kavvadias <nkavv@physics.auth.gr>
   DWARF2	   Jason Merrill <jason@redhat.com>
   DWARF2	   Jakub Jelinek <jakub@redhat.com>
@@ -92,7 +92,6 @@ responsibility among the other maintainers.
   gprofng	   Vladimir Mezentsev <vladimir.mezentsev@oracle.com>
   H8300		   Prafulla Thakare <prafulla.thakare@kpitcummins.com>
   HPPA		   Dave Anglin <dave.anglin@bell.net>
-  HPPA elf32	   Alan Modra <amodra@gmail.com>
   HPPA elf64	   Jeff Law <law@redhat.com> [Basic maintainance only]
   IA-64		   Jim Wilson <wilson@tuliptree.org>
   IQ2000	   Stan Cox <scox@redhat.com>
@@ -100,6 +99,7 @@ responsibility among the other maintainers.
   ix86 COFF	   DJ Delorie <dj@redhat.com>
   ix86 PE/COFF	   Dave Korn <dave.korn.cygwin@gmail.com>
   ix86 INTEL MODE  Jan Beulich <jbeulich@suse.com>
+  libsframe	   Indu Bhagat <indu.bhagat@oracle.com>
   LM32             Jon Beniston <jon@beniston.com>
   LoongArch	   Chenghua Xu <xuchenghua@loongson.cn>
   LoongArch	   Zhensong Liu <liuzhensong@loongson.cn>
@@ -116,7 +116,6 @@ responsibility among the other maintainers.
   MMIX		   Hans-Peter Nilsson <hp@bitrange.com>
   MN10300	   Alexandre Oliva <aoliva@sourceware.org>
   Moxie		   Anthony Green <green@moxielogic.com>
-  MSP430	   Dmitry Diky <diwil@spec.ru>
   NDS32		   Kuan-Lin Chen <kuanlinchentw@gmail.com>
   NDS32		   Wei-Cheng Wang <cole945@gmail.com>
   NetBSD support   Matt Thomas <matt@netbsd.org>
@@ -125,7 +124,6 @@ responsibility among the other maintainers.
   OR1K		   Christian Svensson <blue@cmd.nu>
   OR1K		   Stefan Kristiansson <stefan.kristiansson@saunalahti.fi>
   OR1K		   Stafford Horne <shorne@gmail.com>
-  PDP11		   Stephen Casner <casner@acm.org>
   PPC		   Geoff Keating <geoffk@geoffk.org>
   PPC		   Alan Modra <amodra@gmail.com>
   PPC		   Peter Bergner <bergner@vnet.ibm.com>
@@ -133,7 +131,7 @@ responsibility among the other maintainers.
   RISC-V	   Palmer Dabbelt <palmer@dabbelt.com>
   RISC-V	   Andrew Waterman <andrew@sifive.com>
   RISC-V	   Jim Wilson <jim.wilson.gcc@gmail.com>
-  RISC-V	   Nelson Chu <nelson.chu@sifive.com>
+  RISC-V	   Nelson Chu <nelson@rivosinc.com>
   RX               Nick Clifton <nickc@redhat.com>
   S12Z		   John Darrington <john@darrington.wattle.id.au>
   s390, s390x	   Andreas Krebbel <krebbel@linux.ibm.com>
@@ -142,13 +140,14 @@ responsibility among the other maintainers.
   SPARC		   Jose E. Marchesi <jose.marchesi@oracle.com>
   SPU		   Alan Modra <amodra@gmail.com>
   TIC54X           Timothy Wall <twall@alum.mit.edu>
-  TIC6X            Joseph Myers <joseph@codesourcery.com>
+  TIC6X            Joseph Myers <josmyers@redhat.com>
   TILE-Gx          Walter Lee <walt@tilera.com>
   TILEPro          Walter Lee <walt@tilera.com>
   VAX		   Matt Thomas <matt@netbsd.org>
   VAX		   Jan-Benedict Glaw <jbglaw@lug-owl.de>
   Visium	   Eric Botcazou <ebotcazou@libertysurf.fr>
   VMS		   Tristan Gingold <tgingold@free.fr>
+  x86_64	   Jan Beulich <jbeulich@suse.com>
   x86_64	   Jan Hubicka <jh@suse.cz>
   x86_64	   Andreas Jaeger <aj@suse.de>
   x86_64	   H.J. Lu <hjl.tools@gmail.com>
@@ -211,6 +210,35 @@ spelling mistakes, blatantly incorrect code (where the correct code is
 also blatantly obvious), and so on.  Obvious fixes should always be
 small, the larger they are, the more likely it is that they contain
 some un-obvious side effect or consequence.
+
+Obvious fixes should not be "legally significant", as defined here:
+
+  https://www.gnu.org/prep/maintain/maintain.html#Legally-Significant
+
+     --------  Patches and Copyright  ---------
+
+If a patch is non-obvious, its copyright must be considered.  There
+are two ways to handle this.  The first is to assign the copyright
+of the FSF.  This ensures that if problems with the authorship of the
+patch arise, the FSF will be able to deal with them.
+
+The list of already assigned copyrights can be obtained from
+fencepost.gnu.org in the file: /gd/gnuorg/copyright.list. 
+
+New copyright assignments can be obtained by completing one of the
+forms found here and sending it off to the FSF:
+
+  https://git.savannah.gnu.org/gitweb/?p=gnulib.git;a=tree;f=doc/Copyright
+
+The alternative is to sign off the contribution by agreeing to the
+Developer's Certificate of Origin (version 1.1 or later) and adding a
+line to the end of the contribution that looks something like this:
+
+  Signed-off-by: Random J Developer <random@developer.example.org>
+
+The details of the Developer's Certificate or Origin can be found here:
+       
+  https://developercertificate.org/
 
     --------- Branch Checkins ---------
 
@@ -310,7 +338,7 @@ Having selected the branch name, create the branch as follows:
 Please do not commit any patches to a branch you did not create
 without the explicit permission of the person who created the branch.
 
-Copyright (C) 2012-2022 Free Software Foundation, Inc.
+Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

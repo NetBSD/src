@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -61,8 +61,10 @@ public:
   uint64_t ReadLength ();
   SLEB128 GetSLEB128 ();
   ULEB128 GetULEB128 ();
-  char *GetString (uint64_t *lenp);
+  char *GetString ();
   char *GetData (uint64_t len);
+  uint32_t Get_24 ();
+  uint64_t get_value (int dw_form);
   void dump (char *msg);
 
   inline uint32_t
@@ -84,6 +86,8 @@ public:
   bool fmt64;
   bool addr32;
   bool need_swap_endian;
+  int address_size;
+  int segment_selector_size; // DWARF 5
 
 private:
   bool isCopy;
@@ -132,7 +136,7 @@ public:
 class DwrLineRegs
 {
 public:
-  DwrLineRegs (DwrSec *_secp, char *dirName);
+  DwrLineRegs (Dwarf *_dwarf, DwrSec *_secp, char *dirName);
   ~DwrLineRegs ();
   char *getPath (int fn);
   Vector<DwrLine *> *get_lines ();
@@ -146,7 +150,9 @@ private:
   void DoSpecialOpcode (int opcode);
   void EmitLine ();
   void reset ();
+  Vector <DwrFileName *> *read_file_names_dwarf5 ();
 
+  Dwarf *dwarf;
   char *fname;
   uint64_t dir_index;
   uint64_t timestamp;
@@ -167,7 +173,7 @@ private:
   bool basic_block;
   bool end_sequence;
   Vector<DwrLine *> *lines;
-  Vector<char *> *include_directories;
+  Vector<DwrFileName *> *dir_names;
   Dwarf_Small *standard_opcode_length;
   DwrSec *debug_lineSec;
   uint64_t header_length;
@@ -269,6 +275,7 @@ public:
   static char *at2str (int tag);
   static char *form2str (int tag);
   static char *tag2str (int tag);
+  static char *lnct2str (int ty);
 
   uint64_t cu_header_offset;
   uint64_t cu_offset;
@@ -302,6 +309,7 @@ private:
   uint64_t stmt_list_offset;  // offset in .debug_line section (DW_AT_stmt_list)
   char *comp_dir;             // compilation directory (DW_AT_comp_dir)
   Module *module;
+  int unit_type;
   Dwarf_Half version;
   Dwarf_Small address_size;
   Dwr_Tag dwrTag;

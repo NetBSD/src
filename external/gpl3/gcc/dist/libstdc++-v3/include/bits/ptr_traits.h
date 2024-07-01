@@ -47,6 +47,8 @@ namespace std _GLIBCXX_VISIBILITY(default)
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
+  /// @cond undocumented
+
   class __undefined;
 
   // For a specialization `SomeTemplate<T, Types...>` the member `type` is T,
@@ -71,25 +73,26 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     struct __replace_first_arg<_SomeTemplate<_Tp, _Types...>, _Up>
     { using type = _SomeTemplate<_Up, _Types...>; };
 
-#if __cpp_concepts
-  // When concepts are supported detection of _Ptr::element_type is done
-  // by a requires-clause, so __ptr_traits_elem_t only needs to do this:
-  template<typename _Ptr>
-    using __ptr_traits_elem_t = typename __get_first_arg<_Ptr>::type;
-#else
   // Detect the element type of a pointer-like type.
   template<typename _Ptr, typename = void>
     struct __ptr_traits_elem : __get_first_arg<_Ptr>
     { };
 
   // Use _Ptr::element_type if is a valid type.
+#if __cpp_concepts
+  template<typename _Ptr> requires requires { typename _Ptr::element_type; }
+    struct __ptr_traits_elem<_Ptr, void>
+    { using type = typename _Ptr::element_type; };
+#else
   template<typename _Ptr>
     struct __ptr_traits_elem<_Ptr, __void_t<typename _Ptr::element_type>>
     { using type = typename _Ptr::element_type; };
+#endif
 
   template<typename _Ptr>
     using __ptr_traits_elem_t = typename __ptr_traits_elem<_Ptr>::type;
-#endif
+
+  /// @endcond
 
   // Define pointer_traits<P>::pointer_to.
   template<typename _Ptr, typename _Elt, bool = is_void<_Elt>::value>
@@ -101,17 +104,17 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       /**
        *  @brief  Obtain a pointer to an object
        *  @param  __r  A reference to an object of type `element_type`
-       *  @return `pointer::pointer_to(__e)`
-       *  @pre `pointer::pointer_to(__e)` is a valid expression.
+       *  @return `pointer::pointer_to(__r)`
+       *  @pre `pointer::pointer_to(__r)` is a valid expression.
       */
       static pointer
-      pointer_to(element_type& __e)
+      pointer_to(element_type& __r)
 #if __cpp_lib_concepts
       requires requires {
-	{ pointer::pointer_to(__e) } -> convertible_to<pointer>;
+	{ pointer::pointer_to(__r) } -> convertible_to<pointer>;
       }
 #endif
-      { return pointer::pointer_to(__e); }
+      { return pointer::pointer_to(__r); }
     };
 
   // Do not define pointer_traits<P>::pointer_to if element type is void.
@@ -140,29 +143,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     struct __ptr_traits_impl : __ptr_traits_ptr_to<_Ptr, _Elt>
     {
     private:
-      template<typename _Tp, typename = void>
-	struct __difference { using type = ptrdiff_t; };
-
       template<typename _Tp>
-#if __cpp_concepts
-	requires requires { typename _Tp::difference_type; }
-	struct __difference<_Tp>
-#else
-	struct __difference<_Tp, __void_t<typename _Tp::difference_type>>
-#endif
-	{ using type = typename _Tp::difference_type; };
-
-      template<typename _Tp, typename _Up, typename = void>
-	struct __rebind : __replace_first_arg<_Tp, _Up> { };
+	using __diff_t = typename _Tp::difference_type;
 
       template<typename _Tp, typename _Up>
-#if __cpp_concepts
-	requires requires { typename _Tp::template rebind<_Up>; }
-	struct __rebind<_Tp, _Up>
-#else
-	struct __rebind<_Tp, _Up, __void_t<typename _Tp::template rebind<_Up>>>
-#endif
-	{ using type = typename _Tp::template rebind<_Up>; };
+	using __rebind = __type_identity<typename _Tp::template rebind<_Up>>;
 
     public:
       /// The pointer type.
@@ -172,11 +157,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       using element_type = _Elt;
 
       /// The type used to represent the difference between two pointers.
-      using difference_type = typename __difference<_Ptr>::type;
+      using difference_type = __detected_or_t<ptrdiff_t, __diff_t, _Ptr>;
 
       /// A pointer to a different type.
       template<typename _Up>
-        using rebind = typename __rebind<_Ptr, _Up>::type;
+	using rebind = typename __detected_or_t<__replace_first_arg<_Ptr, _Up>,
+						__rebind, _Ptr, _Up>::type;
     };
 
   // _GLIBCXX_RESOLVE_LIB_DEFECTS
@@ -187,6 +173,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   /**
    * @brief  Uniform interface to all pointer-like types
+   * @headerfile memory
    * @ingroup pointer_abstractions
    * @since C++11
   */
@@ -194,15 +181,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     struct pointer_traits : __ptr_traits_impl<_Ptr, __ptr_traits_elem_t<_Ptr>>
     { };
 
-#if __cpp_concepts
-  template<typename _Ptr> requires requires { typename _Ptr::element_type; }
-    struct pointer_traits<_Ptr>
-    : __ptr_traits_impl<_Ptr, typename _Ptr::element_type>
-    { };
-#endif
-
   /**
    * @brief  Partial specialization for built-in pointers.
+   * @headerfile memory
    * @ingroup pointer_abstractions
    * @since C++11
   */

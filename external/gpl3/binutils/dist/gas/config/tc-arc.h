@@ -1,5 +1,5 @@
 /* tc-arc.h - Macros and type defines for the ARC.
-   Copyright (C) 2014-2022 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
    Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 
@@ -190,7 +190,7 @@ extern const char *arc_target_format;
 #define obj_adjust_symtab() arc_adjust_symtab ()
 
 /* Object attribute hooks.  */
-#define md_end arc_md_end
+#define md_finish arc_md_finish
 #define CONVERT_SYMBOLIC_ATTRIBUTE(name) arc_convert_symbolic_attribute (name)
 #ifndef TC_COPY_SYMBOL_ATTRIBUTES
 #define TC_COPY_SYMBOL_ATTRIBUTES(DEST, SRC) \
@@ -199,7 +199,7 @@ extern const char *arc_target_format;
 
 extern void arc_copy_symbol_attributes (symbolS *, symbolS *);
 extern int arc_convert_symbolic_attribute (const char *);
-extern void arc_md_end (void);
+extern void arc_md_finish (void);
 extern void arc_adjust_symtab (void);
 extern int arc_pcrel_adjust (fragS *);
 extern bool arc_parse_name (const char *, struct expressionS *);
@@ -267,5 +267,8 @@ struct arc_relax_type
   /* Number of flags.  Used for re-assembling in md_convert_frag.  */
   int nflg;
 };
+
+extern void arc_md_end (void);
+#define md_end arc_md_end
 
 #endif

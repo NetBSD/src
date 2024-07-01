@@ -1,5 +1,5 @@
 /* od-avrelf.c -- dump information about an AVR elf object file.
-   Copyright (C) 2011-2022 Free Software Foundation, Inc.
+   Copyright (C) 2011-2024 Free Software Foundation, Inc.
    Written by Senthil Kumar Selvaraj, Atmel.
 
    This file is part of GNU Binutils.
@@ -270,25 +270,26 @@ elf32_avr_dump_mem_usage (bfd *abfd)
           "Device: %s\n\n", device.name);
 
   /* Text size */
-  printf ("Program:%8lu bytes", text_usage);
+  printf ("Program:%8" PRIu64 " bytes", (uint64_t) text_usage);
   if (device.flash_size > 0)
-    printf (" (%2.1f%% Full)", ((float) text_usage / device.flash_size) * 100);
+    printf (" (%2.1f%% Full)", (double) text_usage / device.flash_size * 100);
 
   printf ("\n(.text + .data + .bootloader)\n\n");
 
   /* Data size */
-  printf ("Data:   %8lu bytes", data_usage);
+  printf ("Data:   %8" PRIu64 " bytes", (uint64_t) data_usage);
   if (device.ram_size > 0)
-    printf (" (%2.1f%% Full)", ((float) data_usage / device.ram_size) * 100);
+    printf (" (%2.1f%% Full)", (double) data_usage / device.ram_size * 100);
 
   printf ("\n(.data + .bss + .noinit)\n\n");
 
   /* EEPROM size */
   if (eeprom_usage > 0)
     {
-      printf ("EEPROM: %8lu bytes", eeprom_usage);
+      printf ("EEPROM: %8" PRIu64 " bytes", (uint64_t) eeprom_usage);
       if (device.eeprom_size > 0)
-        printf (" (%2.1f%% Full)", ((float) eeprom_usage / device.eeprom_size) * 100);
+	printf (" (%2.1f%% Full)",
+		(double) eeprom_usage / device.eeprom_size * 100);
 
       printf ("\n(.eeprom)\n\n");
     }
@@ -315,12 +316,12 @@ elf32_avr_dump_avr_prop (bfd *abfd)
 
   for (i = 0; i < r_list->record_count; ++i)
     {
-      printf ("   %d %s @ %s + %#08lx (%#08lx)\n",
+      printf ("   %d %s @ %s + %#08" PRIx64" (%#08" PRIx64 ")\n",
 	      i,
 	      avr_elf32_property_record_name (&r_list->records [i]),
 	      r_list->records [i].section->name,
-	      r_list->records [i].offset,
-	      (bfd_section_vma (r_list->records [i].section)
+	      (uint64_t) r_list->records [i].offset,
+	      ((uint64_t) bfd_section_vma (r_list->records [i].section)
 	       + r_list->records [i].offset));
       switch (r_list->records [i].type)
         {

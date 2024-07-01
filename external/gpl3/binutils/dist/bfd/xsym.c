@@ -1,5 +1,5 @@
 /* xSYM symbol-file support for BFD.
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -32,6 +32,7 @@
 #define bfd_sym_bfd_is_target_special_symbol	    _bfd_bool_bfd_asymbol_false
 #define bfd_sym_get_lineno			    _bfd_nosymbols_get_lineno
 #define bfd_sym_find_nearest_line		    _bfd_nosymbols_find_nearest_line
+#define bfd_sym_find_nearest_line_with_alt	    _bfd_nosymbols_find_nearest_line_with_alt
 #define bfd_sym_find_line			    _bfd_nosymbols_find_line
 #define bfd_sym_find_inliner_info		    _bfd_nosymbols_find_inliner_info
 #define bfd_sym_get_symbol_version_string	    _bfd_nosymbols_get_symbol_version_string
@@ -194,7 +195,7 @@ bfd_sym_read_header_v32 (bfd *abfd, bfd_sym_header_block *header)
   unsigned char buf[154];
   long ret;
 
-  ret = bfd_bread (buf, 154, abfd);
+  ret = bfd_read (buf, 154, abfd);
   if (ret != 154)
     return -1;
 
@@ -235,7 +236,7 @@ bfd_sym_read_version (bfd *abfd, bfd_sym_version *version)
   char version_string[32];
   long ret;
 
-  ret = bfd_bread (version_string, sizeof (version_string), abfd);
+  ret = bfd_read (version_string, sizeof (version_string), abfd);
   if (ret != sizeof (version_string))
     return -1;
 
@@ -564,7 +565,7 @@ bfd_sym_fetch_resources_table_entry (bfd *abfd,
 
   if (bfd_seek (abfd, offset, SEEK_SET) < 0)
     return -1;
-  if (bfd_bread (buf, entry_size, abfd) != entry_size)
+  if (bfd_read (buf, entry_size, abfd) != entry_size)
     return -1;
 
   (*parser) (buf, entry_size, entry);
@@ -615,7 +616,7 @@ bfd_sym_fetch_modules_table_entry (bfd *abfd,
 
   if (bfd_seek (abfd, offset, SEEK_SET) < 0)
     return -1;
-  if (bfd_bread (buf, entry_size, abfd) != entry_size)
+  if (bfd_read (buf, entry_size, abfd) != entry_size)
     return -1;
 
   (*parser) (buf, entry_size, entry);
@@ -665,7 +666,7 @@ bfd_sym_fetch_file_references_table_entry (bfd *abfd,
 
   if (bfd_seek (abfd, offset, SEEK_SET) < 0)
     return -1;
-  if (bfd_bread (buf, entry_size, abfd) != entry_size)
+  if (bfd_read (buf, entry_size, abfd) != entry_size)
     return -1;
 
   (*parser) (buf, entry_size, entry);
@@ -715,7 +716,7 @@ bfd_sym_fetch_contained_modules_table_entry (bfd *abfd,
 
   if (bfd_seek (abfd, offset, SEEK_SET) < 0)
     return -1;
-  if (bfd_bread (buf, entry_size, abfd) != entry_size)
+  if (bfd_read (buf, entry_size, abfd) != entry_size)
     return -1;
 
   (*parser) (buf, entry_size, entry);
@@ -765,7 +766,7 @@ bfd_sym_fetch_contained_variables_table_entry (bfd *abfd,
 
   if (bfd_seek (abfd, offset, SEEK_SET) < 0)
     return -1;
-  if (bfd_bread (buf, entry_size, abfd) != entry_size)
+  if (bfd_read (buf, entry_size, abfd) != entry_size)
     return -1;
 
   (*parser) (buf, entry_size, entry);
@@ -815,7 +816,7 @@ bfd_sym_fetch_contained_statements_table_entry (bfd *abfd,
 
   if (bfd_seek (abfd, offset, SEEK_SET) < 0)
     return -1;
-  if (bfd_bread (buf, entry_size, abfd) != entry_size)
+  if (bfd_read (buf, entry_size, abfd) != entry_size)
     return -1;
 
   (*parser) (buf, entry_size, entry);
@@ -865,7 +866,7 @@ bfd_sym_fetch_contained_labels_table_entry (bfd *abfd,
 
   if (bfd_seek (abfd, offset, SEEK_SET) < 0)
     return -1;
-  if (bfd_bread (buf, entry_size, abfd) != entry_size)
+  if (bfd_read (buf, entry_size, abfd) != entry_size)
     return -1;
 
   (*parser) (buf, entry_size, entry);
@@ -915,7 +916,7 @@ bfd_sym_fetch_contained_types_table_entry (bfd *abfd,
 
   if (bfd_seek (abfd, offset, SEEK_SET) < 0)
     return -1;
-  if (bfd_bread (buf, entry_size, abfd) != entry_size)
+  if (bfd_read (buf, entry_size, abfd) != entry_size)
     return -1;
 
   (*parser) (buf, entry_size, entry);
@@ -965,7 +966,7 @@ bfd_sym_fetch_file_references_index_table_entry (bfd *abfd,
 
   if (bfd_seek (abfd, offset, SEEK_SET) < 0)
     return -1;
-  if (bfd_bread (buf, entry_size, abfd) != entry_size)
+  if (bfd_read (buf, entry_size, abfd) != entry_size)
     return -1;
 
   (*parser) (buf, entry_size, entry);
@@ -1015,7 +1016,7 @@ bfd_sym_fetch_constant_pool_entry (bfd *abfd,
 
   if (bfd_seek (abfd, offset, SEEK_SET) < 0)
     return -1;
-  if (bfd_bread (buf, entry_size, abfd) != entry_size)
+  if (bfd_read (buf, entry_size, abfd) != entry_size)
     return -1;
 
   (*parser) (buf, entry_size, entry);
@@ -1062,7 +1063,7 @@ bfd_sym_fetch_type_table_entry (bfd *abfd,
 
   if (bfd_seek (abfd, offset, SEEK_SET) < 0)
     return -1;
-  if (bfd_bread (buf, entry_size, abfd) != entry_size)
+  if (bfd_read (buf, entry_size, abfd) != entry_size)
     return -1;
 
   (*parser) (buf, entry_size, entry);
@@ -1085,17 +1086,17 @@ bfd_sym_fetch_type_information_table_entry (bfd *abfd,
   if (bfd_seek (abfd, offset, SEEK_SET) < 0)
     return -1;
 
-  if (bfd_bread (buf, 4, abfd) != 4)
+  if (bfd_read (buf, 4, abfd) != 4)
     return -1;
   entry->nte_index = bfd_getb32 (buf);
 
-  if (bfd_bread (buf, 2, abfd) != 2)
+  if (bfd_read (buf, 2, abfd) != 2)
     return -1;
   entry->physical_size = bfd_getb16 (buf);
 
   if (entry->physical_size & 0x8000)
     {
-      if (bfd_bread (buf, 4, abfd) != 4)
+      if (bfd_read (buf, 4, abfd) != 4)
 	return -1;
       entry->physical_size &= 0x7fff;
       entry->logical_size = bfd_getb32 (buf);
@@ -1103,7 +1104,7 @@ bfd_sym_fetch_type_information_table_entry (bfd *abfd,
     }
   else
     {
-      if (bfd_bread (buf, 2, abfd) != 2)
+      if (bfd_read (buf, 2, abfd) != 2)
 	return -1;
       entry->physical_size &= 0x7fff;
       entry->logical_size = bfd_getb16 (buf);
@@ -2206,8 +2207,8 @@ bfd_sym_scan (bfd *abfd, bfd_sym_version version, bfd_sym_data_struct *mdata)
   mdata->sbfd = abfd;
   mdata->version = version;
 
-  bfd_seek (abfd, 0, SEEK_SET);
-  if (bfd_sym_read_header (abfd, &mdata->header, mdata->version) != 0)
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0
+      || bfd_sym_read_header (abfd, &mdata->header, mdata->version) != 0)
     return -1;
 
   mdata->name_table = bfd_sym_read_name_table (abfd, &mdata->header);
@@ -2235,8 +2236,8 @@ bfd_sym_object_p (bfd *abfd)
   bfd_sym_version version = -1;
   bfd_sym_data_struct *mdata;
 
-  bfd_seek (abfd, 0, SEEK_SET);
-  if (bfd_sym_read_version (abfd, &version) != 0)
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0
+      || bfd_sym_read_version (abfd, &version) != 0)
     goto wrong;
 
   mdata = (bfd_sym_data_struct *) bfd_alloc (abfd, sizeof (*mdata));

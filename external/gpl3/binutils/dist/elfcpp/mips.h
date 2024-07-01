@@ -1,6 +1,6 @@
 // mips.h -- ELF definitions specific to EM_MIPS  -*- C++ -*-
 
-// Copyright (C) 2012-2022 Free Software Foundation, Inc.
+// Copyright (C) 2012-2024 Free Software Foundation, Inc.
 // Written by Sasa Stankovic <sasa.stankovic@imgtec.com>
 //        and Aleksandar Simeonov <aleksandar.simeonov@rt-rk.com>.
 
@@ -218,26 +218,49 @@ enum
 // 00 - 7F should be left for a future standard;
 // the rest are open.
 
-  E_MIPS_MACH_3900 = 0x00810000,
-  E_MIPS_MACH_4010 = 0x00820000,
-  E_MIPS_MACH_4100 = 0x00830000,
-  E_MIPS_MACH_4650 = 0x00850000,
-  E_MIPS_MACH_4120 = 0x00870000,
-  E_MIPS_MACH_4111 = 0x00880000,
-  E_MIPS_MACH_SB1 = 0x008a0000,
-  E_MIPS_MACH_OCTEON = 0x008b0000,
-  E_MIPS_MACH_XLR = 0x008c0000,
-  E_MIPS_MACH_OCTEON2 = 0x008d0000,
-  E_MIPS_MACH_OCTEON3 = 0x008e0000,
-  E_MIPS_MACH_5400 = 0x00910000,
-  E_MIPS_MACH_5900 = 0x00920000,
-  E_MIPS_MACH_5500 = 0x00980000,
-  E_MIPS_MACH_9000 = 0x00990000,
-  E_MIPS_MACH_LS2E = 0x00A00000,
-  E_MIPS_MACH_LS2F = 0x00A10000,
-  E_MIPS_MACH_GS464 = 0x00A20000,
-  E_MIPS_MACH_GS464E = 0x00A30000,
-  E_MIPS_MACH_GS264E = 0x00A40000,
+  EF_MIPS_MACH_3900 = 0x00810000,
+  EF_MIPS_MACH_4010 = 0x00820000,
+  EF_MIPS_MACH_4100 = 0x00830000,
+  EF_MIPS_MACH_4650 = 0x00850000,
+  EF_MIPS_MACH_4120 = 0x00870000,
+  EF_MIPS_MACH_4111 = 0x00880000,
+  EF_MIPS_MACH_SB1 = 0x008a0000,
+  EF_MIPS_MACH_OCTEON = 0x008b0000,
+  EF_MIPS_MACH_XLR = 0x008c0000,
+  EF_MIPS_MACH_OCTEON2 = 0x008d0000,
+  EF_MIPS_MACH_OCTEON3 = 0x008e0000,
+  EF_MIPS_MACH_5400 = 0x00910000,
+  EF_MIPS_MACH_5900 = 0x00920000,
+  EF_MIPS_MACH_5500 = 0x00980000,
+  EF_MIPS_MACH_9000 = 0x00990000,
+  EF_MIPS_MACH_LS2E = 0x00A00000,
+  EF_MIPS_MACH_LS2F = 0x00A10000,
+  EF_MIPS_MACH_GS464 = 0x00A20000,
+  EF_MIPS_MACH_GS464E = 0x00A30000,
+  EF_MIPS_MACH_GS264E = 0x00A40000,
+
+  // In order to support backwards compatibility we also
+  // define the old versions of some of these constants.
+  E_MIPS_MACH_3900    = EF_MIPS_MACH_3900,
+  E_MIPS_MACH_4010    = EF_MIPS_MACH_4010,
+  E_MIPS_MACH_4100    = EF_MIPS_MACH_4100,
+  E_MIPS_MACH_4650    = EF_MIPS_MACH_4650,
+  E_MIPS_MACH_4120    = EF_MIPS_MACH_4120,
+  E_MIPS_MACH_4111    = EF_MIPS_MACH_4111,
+  E_MIPS_MACH_SB1     = EF_MIPS_MACH_SB1,
+  E_MIPS_MACH_OCTEON  = EF_MIPS_MACH_OCTEON,
+  E_MIPS_MACH_XLR     = EF_MIPS_MACH_XLR,
+  E_MIPS_MACH_OCTEON2 = EF_MIPS_MACH_OCTEON2,
+  E_MIPS_MACH_OCTEON3 = EF_MIPS_MACH_OCTEON3,
+  E_MIPS_MACH_5400    = EF_MIPS_MACH_5400,
+  E_MIPS_MACH_5900    = EF_MIPS_MACH_5900,
+  E_MIPS_MACH_5500    = EF_MIPS_MACH_5500,
+  E_MIPS_MACH_9000    = EF_MIPS_MACH_9000,
+  E_MIPS_MACH_LS2E    = EF_MIPS_MACH_LS2E,
+  E_MIPS_MACH_LS2F    = EF_MIPS_MACH_LS2F,
+  E_MIPS_MACH_GS464   = EF_MIPS_MACH_GS464,
+  E_MIPS_MACH_GS464E  = EF_MIPS_MACH_GS464E,
+  E_MIPS_MACH_GS264E  = EF_MIPS_MACH_GS264E,
 };
 
 // MIPS architecture
@@ -246,27 +269,42 @@ enum
   // Four bit MIPS architecture field.
   EF_MIPS_ARCH = 0xf0000000,
   // -mips1 code.
-  E_MIPS_ARCH_1 = 0x00000000,
+  EF_MIPS_ARCH_1 = 0x00000000,
   // -mips2 code.
-  E_MIPS_ARCH_2 = 0x10000000,
+  EF_MIPS_ARCH_2 = 0x10000000,
   // -mips3 code.
-  E_MIPS_ARCH_3 = 0x20000000,
+  EF_MIPS_ARCH_3 = 0x20000000,
   // -mips4 code.
-  E_MIPS_ARCH_4 = 0x30000000,
+  EF_MIPS_ARCH_4 = 0x30000000,
   // -mips5 code.
-  E_MIPS_ARCH_5 = 0x40000000,
+  EF_MIPS_ARCH_5 = 0x40000000,
   // -mips32 code.
-  E_MIPS_ARCH_32 = 0x50000000,
+  EF_MIPS_ARCH_32 = 0x50000000,
   // -mips64 code.
-  E_MIPS_ARCH_64 = 0x60000000,
+  EF_MIPS_ARCH_64 = 0x60000000,
   // -mips32r2 code.
-  E_MIPS_ARCH_32R2 = 0x70000000,
+  EF_MIPS_ARCH_32R2 = 0x70000000,
   // -mips64r2 code.
-  E_MIPS_ARCH_64R2 = 0x80000000,
+  EF_MIPS_ARCH_64R2 = 0x80000000,
   // -mips32r6 code.
-  E_MIPS_ARCH_32R6 = 0x90000000,
+  EF_MIPS_ARCH_32R6 = 0x90000000,
   // -mips64r6 code.
-  E_MIPS_ARCH_64R6 = 0xa0000000,
+  EF_MIPS_ARCH_64R6 = 0xa0000000,
+
+  // In order to support backwards compatibility we also
+  // define the old versions of some of these constants.
+  E_MIPS_ARCH_1    = EF_MIPS_ARCH_1,
+  E_MIPS_ARCH_2    = EF_MIPS_ARCH_2,
+  E_MIPS_ARCH_3    = EF_MIPS_ARCH_3,
+  E_MIPS_ARCH_4    = EF_MIPS_ARCH_4,
+  E_MIPS_ARCH_5    = EF_MIPS_ARCH_5,
+  E_MIPS_ARCH_32   = EF_MIPS_ARCH_32,
+  E_MIPS_ARCH_64   = EF_MIPS_ARCH_64,
+  E_MIPS_ARCH_32R2 = EF_MIPS_ARCH_32R2,
+  E_MIPS_ARCH_64R2 = EF_MIPS_ARCH_64R2,
+  E_MIPS_ARCH_32R6 = EF_MIPS_ARCH_32R6,
+  E_MIPS_ARCH_64R6 = EF_MIPS_ARCH_64R6,
+  
 };
 
 // Values for the xxx_size bytes of an ABI flags structure.
@@ -412,13 +450,20 @@ enum
   EF_MIPS_ABI = 0x0000F000,
 
   // The original o32 abi.
-  E_MIPS_ABI_O32 = 0x00001000,
+  EF_MIPS_ABI_O32 = 0x00001000,
   // O32 extended to work on 64 bit architectures
-  E_MIPS_ABI_O64 = 0x00002000,
+  EF_MIPS_ABI_O64 = 0x00002000,
   // EABI in 32 bit mode
-  E_MIPS_ABI_EABI32 = 0x00003000,
+  EF_MIPS_ABI_EABI32 = 0x00003000,
   // EABI in 64 bit mode
-  E_MIPS_ABI_EABI64 = 0x00004000,
+  EF_MIPS_ABI_EABI64 = 0x00004000,
+
+  // In order to support backwards compatibility we also
+  // define the old versions of some of these constants.
+  E_MIPS_ABI_O32    = EF_MIPS_ABI_O32,
+  E_MIPS_ABI_O64    = EF_MIPS_ABI_O64,
+  E_MIPS_ABI_EABI32 = EF_MIPS_ABI_EABI32,
+  E_MIPS_ABI_EABI64 = EF_MIPS_ABI_EABI64,  
 };
 
 // Dynamic section MIPS flags
@@ -493,8 +538,8 @@ abi_n32(elfcpp::Elf_Word e_flags)
 bool
 r6_isa(elfcpp::Elf_Word e_flags)
 {
-  return ((e_flags & elfcpp::EF_MIPS_ARCH) == elfcpp::E_MIPS_ARCH_32R6)
-           || ((e_flags & elfcpp::EF_MIPS_ARCH) == elfcpp::E_MIPS_ARCH_64R6);
+  return ((e_flags & elfcpp::EF_MIPS_ARCH) == elfcpp::EF_MIPS_ARCH_32R6)
+           || ((e_flags & elfcpp::EF_MIPS_ARCH) == elfcpp::EF_MIPS_ARCH_64R6);
 }
 
 // Whether the file has microMIPS code.

@@ -37,6 +37,7 @@
 #include "cg_print.h"
 #include "utils.h"
 #include "sym_ids.h"
+#include "corefile.h"
 
 static int cmp_topo (const void *, const void *);
 static void propagate_time (Sym *);
@@ -622,7 +623,11 @@ cg_assemble (void)
       parent->cg.cyc.num = 0;
       parent->cg.cyc.head = parent;
       parent->cg.cyc.next = 0;
-      if (ignore_direct_calls)
+      if (ignore_direct_calls
+	  && parent->addr >= core_text_sect->vma
+	  && parent->addr < core_text_sect->vma +  core_text_sect->size
+	  && (parent + 1)->addr >= core_text_sect->vma
+	  && (parent + 1)->addr <= core_text_sect->vma +  core_text_sect->size)
 	find_call (parent, parent->addr, (parent + 1)->addr);
     }
 

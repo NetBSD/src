@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -22,6 +22,19 @@
 
 #ifndef __HWC_CPUS_H
 #define __HWC_CPUS_H
+
+typedef struct
+{
+  int cpu_cnt;
+  int cpu_clk_freq;
+  int cpu_model;
+  int cpu_family;
+  int cpu_vendor;
+  char *cpu_vendorstr;
+  char *cpu_modelstr;
+} cpu_info_t;
+
+extern cpu_info_t *read_cpuinfo();
 
 #define MAX_PICS    20 /* Max # of HW ctrs that can be enabled simultaneously */
 
@@ -91,6 +104,8 @@
 #define CPC_AMD_FAM_10H         2501 /* Barcelona, Shanghai... */
 #define CPC_AMD_FAM_11H         2502 /* Griffin... */
 #define CPC_AMD_FAM_15H         2503
+#define CPC_AMD_Authentic       2504
+  
 #define CPC_KPROF               3003 // OBSOLETE (To support 12.3 and earlier)
 #define CPC_FOX                 3004 /* pseudo-chip */
 
@@ -191,6 +206,7 @@ enum {
   {CPC_ULTRA2                , "UltraSPARC I&II"}, \
   {CPC_ULTRA1                , "UltraSPARC I&II"}, \
   {ARM_CPU_IMP_APM           , AARCH64_VENDORSTR_ARM}, \
+  {CPC_AMD_Authentic         , "AuthenticAMD"}, \
   {0, NULL}
   /* init like this:
      static libcpc2_cpu_lookup_t cpu_table[]={LIBCPC2_CPU_LOOKUP_LIST};

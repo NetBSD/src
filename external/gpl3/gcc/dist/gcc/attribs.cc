@@ -109,15 +109,6 @@ static const struct attribute_spec empty_attribute_table[] =
   { NULL, 0, 0, false, false, false, false, NULL, NULL }
 };
 
-/* Return base name of the attribute.  Ie '__attr__' is turned into 'attr'.
-   To avoid need for copying, we simply return length of the string.  */
-
-static void
-extract_attribute_substring (struct substring *str)
-{
-  canonicalize_attr_name (str->str, str->length);
-}
-
 /* Insert an array of attributes ATTRIBUTES into a namespace.  This
    array must be NULL terminated.  NS is the name of attribute
    namespace.  IGNORED_P is true iff all unknown attributes in this
@@ -409,7 +400,6 @@ lookup_scoped_attribute_spec (const_tree ns, const_tree name)
 
   attr.str = IDENTIFIER_POINTER (name);
   attr.length = IDENTIFIER_LENGTH (name);
-  extract_attribute_substring (&attr);
   return attrs->attribute_hash->find_with_hash (&attr,
 						substring_hash (attr.str,
 							       	attr.length));
@@ -489,7 +479,12 @@ diag_attr_exclusions (tree last_decl, tree node, tree attrname,
   if (DECL_P (node))
     {
       attrs[0] = DECL_ATTRIBUTES (node);
-      attrs[1] = TYPE_ATTRIBUTES (TREE_TYPE (node));
+      if (TREE_TYPE (node))
+	attrs[1] = TYPE_ATTRIBUTES (TREE_TYPE (node));
+      else
+	/* TREE_TYPE can be NULL e.g. while processing attributes on
+	   enumerators.  */
+	attrs[1] = NULL_TREE;
     }
   else
     {
@@ -578,9 +573,9 @@ attribute_ignored_p (tree attr)
     return false;
   if (tree ns = get_attribute_namespace (attr))
     {
-      if (attr_namespace_ignored_p (ns))
-	return true;
       const attribute_spec *as = lookup_attribute_spec (TREE_PURPOSE (attr));
+      if (as == NULL && attr_namespace_ignored_p (ns))
+	return true;
       if (as && as->max_length == -2)
 	return true;
     }
@@ -851,7 +846,10 @@ decl_attributes (tree *node, tree attributes, int flags,
 	    }
 	}
 
-      if (no_add_attrs)
+      if (no_add_attrs
+	  /* Don't add attributes registered just for -Wno-attributes=foo::bar
+	     purposes.  */
+	  || attribute_ignored_p (attr))
 	continue;
 
       if (spec->handler != NULL)

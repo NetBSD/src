@@ -1,4 +1,4 @@
-$NetBSD: README.gcc12,v 1.24 2024/06/18 14:08:11 rin Exp $
+$NetBSD: README.gcc12,v 1.24.2.1 2024/07/01 01:00:42 perseant Exp $
 
 
 new stuff:
@@ -53,12 +53,12 @@ i386		y	y	y	y	y[18]	y		y	n[19]	y
 ia64		y	b	y	y	y	y		y[3]	n	y
 m68000		y	y	y	y	b	n		y[14]	?	?
 m68k		y	y	y	y	b	y		y[14]	y[14]	?
-mipseb		y	b	y	y	b	y		?	?	?
-mipsel		y	b	y	y	b	y		?	?	?
-mips64eb	y	b	y	y	b	y		?	?	?
-mips64el	y	b	y	y	b	y		?	?	?
-powerpc		y	y	y	y	y	y		y	y	?
-powerpc64	y	?	?	y	b	b		?	?	?
+mipseb		y	b	y	y	b	y		y	y	y
+mipsel		y	b	y	y	b	y		y	?	y
+mips64eb	y	b	y	y	b	y		y	y	y
+mips64el	y	b	y	y	b	y		y	?	y
+powerpc		y	y	y	y	y	y		y	y	y
+powerpc64	y	?	?	y	b	b		?	?	y
 sh3eb		y	?	y	y	b	y		?	?	?
 sh3el		y	n[20]	y	y	b	y		n[22]	?	?
 sparc		y	y	y	y	n[21]	y		y	y	y
