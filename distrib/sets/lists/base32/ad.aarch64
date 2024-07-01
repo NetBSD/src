@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.8 2024/06/10 07:57:10 kre Exp $
+# $NetBSD: ad.aarch64,v 1.9 2024/07/01 04:03:04 mrg Exp $
 ./lib/eabi					base-compat-shlib	compat
 ./lib/eabi/npf					base-compat-shlib	compat,npf
 ./lib/eabi/npf/ext_log.so			base-compat-shlib	compat,npf
@@ -102,9 +102,9 @@
 ./usr/lib/eabi/libarm.so			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libarm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libarm.so.0.0			base-compat-shlib	compat,pic
-./usr/lib/eabi/libasan.so			base-compat-shlib	compat,gcc,cxx
-./usr/lib/eabi/libasan.so.5			base-compat-shlib	compat,gcc,cxx
-./usr/lib/eabi/libasan.so.5.0			base-compat-shlib	compat,gcc,cxx
+./usr/lib/eabi/libasan.so			base-compat-shlib	compat,gcccmds,gcc,cxx
+./usr/lib/eabi/libasan.so.5			base-compat-shlib	compat,gcccmds,gcc,cxx
+./usr/lib/eabi/libasan.so.5.0			base-compat-shlib	compat,gcccmds,gcc,cxx
 ./usr/lib/eabi/libasn1.so			base-compat-shlib	compat,kerberos
 ./usr/lib/eabi/libasn1.so.10			base-compat-shlib	compat,kerberos
 ./usr/lib/eabi/libasn1.so.10.0			base-compat-shlib	compat,kerberos
@@ -293,9 +293,9 @@
 ./usr/lib/eabi/libldap_r.so			base-compat-shlib	compat,ldap
 ./usr/lib/eabi/libldap_r.so.6			base-compat-shlib	compat,ldap
 ./usr/lib/eabi/libldap_r.so.6.0		base-compat-shlib	compat,ldap
-./usr/lib/eabi/liblsan.so			base-compat-shlib	compat,cxx,gcc
-./usr/lib/eabi/liblsan.so.2			base-compat-shlib	compat,cxx,gcc
-./usr/lib/eabi/liblsan.so.2.0			base-compat-shlib	compat,cxx,gcc
+./usr/lib/eabi/liblsan.so			base-compat-shlib	compat,cxx,gcccmds,gcc
+./usr/lib/eabi/liblsan.so.2			base-compat-shlib	compat,cxx,gcccmds,gcc
+./usr/lib/eabi/liblsan.so.2.0			base-compat-shlib	compat,cxx,gcccmds,gcc
 ./usr/lib/eabi/liblua.so			base-compat-shlib	compat
 ./usr/lib/eabi/liblua.so.6			base-compat-shlib	compat
 ./usr/lib/eabi/liblua.so.6.1			base-compat-shlib	compat
@@ -455,9 +455,9 @@
 ./usr/lib/eabi/libtre.so			base-compat-shlib	compat
 ./usr/lib/eabi/libtre.so.0			base-compat-shlib	compat
 ./usr/lib/eabi/libtre.so.0.8			base-compat-shlib	compat
-./usr/lib/eabi/libubsan.so			base-compat-shlib	compat,gcc,cxx
-./usr/lib/eabi/libubsan.so.4			base-compat-shlib	compat,gcc,cxx
-./usr/lib/eabi/libubsan.so.4.0			base-compat-shlib	compat,gcc,cxx
+./usr/lib/eabi/libubsan.so			base-compat-shlib	compat,gcccmds,gcc,cxx
+./usr/lib/eabi/libubsan.so.4			base-compat-shlib	compat,gcccmds,gcc,cxx
+./usr/lib/eabi/libubsan.so.4.0			base-compat-shlib	compat,gcccmds,gcc,cxx
 ./usr/lib/eabi/libukfs.so			base-compat-shlib	compat
 ./usr/lib/eabi/libukfs.so.1			base-compat-shlib	compat
 ./usr/lib/eabi/libukfs.so.1.0			base-compat-shlib	compat
@@ -616,9 +616,9 @@
 ./usr/lib/eabihf/libarm.so			base-compat-shlib	compat,pic
 ./usr/lib/eabihf/libarm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/eabihf/libarm.so.0.0			base-compat-shlib	compat,pic
-./usr/lib/eabihf/libasan.so			base-compat-shlib	compat,gcc,cxx
-./usr/lib/eabihf/libasan.so.5			base-compat-shlib	compat,gcc,cxx
-./usr/lib/eabihf/libasan.so.5.0			base-compat-shlib	compat,gcc,cxx
+./usr/lib/eabihf/libasan.so			base-compat-shlib	compat,gcccmds,gcc,cxx
+./usr/lib/eabihf/libasan.so.5			base-compat-shlib	compat,gcccmds,gcc,cxx
+./usr/lib/eabihf/libasan.so.5.0			base-compat-shlib	compat,gcccmds,gcc,cxx
 ./usr/lib/eabihf/libasn1.so			base-compat-shlib	compat,kerberos
 ./usr/lib/eabihf/libasn1.so.10			base-compat-shlib	compat,kerberos
 ./usr/lib/eabihf/libasn1.so.10.0			base-compat-shlib	compat,kerberos
@@ -804,9 +804,9 @@
 ./usr/lib/eabihf/libldap_r.so			base-compat-shlib	compat,ldap
 ./usr/lib/eabihf/libldap_r.so.6			base-compat-shlib	compat,ldap
 ./usr/lib/eabihf/libldap_r.so.6.0		base-compat-shlib	compat,ldap
-./usr/lib/eabihf/liblsan.so			base-compat-shlib	compat,cxx,gcc
-./usr/lib/eabihf/liblsan.so.2			base-compat-shlib	compat,cxx,gcc
-./usr/lib/eabihf/liblsan.so.2.0			base-compat-shlib	compat,cxx,gcc
+./usr/lib/eabihf/liblsan.so			base-compat-shlib	compat,cxx,gcccmds,gcc
+./usr/lib/eabihf/liblsan.so.2			base-compat-shlib	compat,cxx,gcccmds,gcc
+./usr/lib/eabihf/liblsan.so.2.0			base-compat-shlib	compat,cxx,gcccmds,gcc
 ./usr/lib/eabihf/liblua.so			base-compat-shlib	compat
 ./usr/lib/eabihf/liblua.so.6			base-compat-shlib	compat
 ./usr/lib/eabihf/liblua.so.6.1			base-compat-shlib	compat
@@ -966,9 +966,9 @@
 ./usr/lib/eabihf/libtre.so			base-compat-shlib	compat
 ./usr/lib/eabihf/libtre.so.0			base-compat-shlib	compat
 ./usr/lib/eabihf/libtre.so.0.8			base-compat-shlib	compat
-./usr/lib/eabihf/libubsan.so			base-compat-shlib	compat,gcc,cxx
-./usr/lib/eabihf/libubsan.so.4			base-compat-shlib	compat,gcc,cxx
-./usr/lib/eabihf/libubsan.so.4.0			base-compat-shlib	compat,gcc,cxx
+./usr/lib/eabihf/libubsan.so			base-compat-shlib	compat,gcccmds,gcc,cxx
+./usr/lib/eabihf/libubsan.so.4			base-compat-shlib	compat,gcccmds,gcc,cxx
+./usr/lib/eabihf/libubsan.so.4.0			base-compat-shlib	compat,gcccmds,gcc,cxx
 ./usr/lib/eabihf/libukfs.so			base-compat-shlib	compat
 ./usr/lib/eabihf/libukfs.so.1			base-compat-shlib	compat
 ./usr/lib/eabihf/libukfs.so.1.0			base-compat-shlib	compat

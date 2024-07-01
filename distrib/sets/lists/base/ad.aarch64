@@ -1,11 +1,11 @@
-# $NetBSD: ad.aarch64,v 1.46 2024/04/09 15:17:22 nia Exp $
+# $NetBSD: ad.aarch64,v 1.47 2024/07/01 04:03:04 mrg Exp $
 ./lib/oabi					base-obsolete		obsolete
 ./lib/oabi/npf					base-obsolete		obsolete
 ./libexec/ld.elf_so-oabi			base-obsolete		obsolete
 ./usr/lib/eabi/lua/5.3				base-obsolete		obsolete
-./usr/lib/libtsan.so				base-sys-shlib		cxx,gcc=12
-./usr/lib/libtsan.so.2				base-sys-shlib		cxx,gcc=12
-./usr/lib/libtsan.so.2.0			base-sys-shlib		cxx,gcc=12
+./usr/lib/libtsan.so				base-sys-shlib		cxx,gcccmds,gcc=12
+./usr/lib/libtsan.so.2				base-sys-shlib		cxx,gcccmds,gcc=12
+./usr/lib/libtsan.so.2.0			base-sys-shlib		cxx,gcccmds,gcc=12
 ./usr/lib/eabihf/lua/5.3			base-obsolete		obsolete
 ./usr/lib/oabi					base-obsolete		obsolete
 ./usr/lib/oabi/i18n				base-obsolete		obsolete
