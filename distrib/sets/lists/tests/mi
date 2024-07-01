@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1324 2024/06/16 18:40:58 rillig Exp $
+# $NetBSD: mi,v 1.1325 2024/07/01 21:24:05 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6291,6 +6291,8 @@
 ./usr/tests/usr.bin/make/unit-tests/varmod-to-one-word.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmod-to-separator.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmod-to-separator.mk			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/varmod-to-title.exp				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/varmod-to-title.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmod-to-upper.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmod-to-upper.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmod-undefined.exp			tests-usr.bin-tests	compattestfile,atf
