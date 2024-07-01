@@ -25,5 +25,5 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 const char *
 mpfr_get_version (void)
 {
-  return "4.2.0";
+  return "4.2.1";
 }

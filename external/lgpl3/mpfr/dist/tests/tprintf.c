@@ -62,11 +62,17 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #define check_length_with_cmp(num_test, var, value, cmp, var_spec)      \
   if (cmp != 0)                                                         \
     {                                                                   \
-      mpfr_fprintf (stderr, "Error in test #%d, mpfr_printf printed %"  \
+      mpfr_fprintf (stderr, "Error in test #%d: mpfr_printf printed %"  \
                     QUOTE(var_spec)" characters instead of %d\n",       \
                     (num_test), (var), (value));                        \
       exit (1);                                                         \
     }
+
+#if MPFR_LCONV_DPTS
+#define DPLEN ((int) strlen (localeconv()->decimal_point))
+#else
+#define DPLEN 1
+#endif
 
 /* limit for random precision in random() */
 const int prec_max_printf = 5000;
@@ -316,11 +322,11 @@ check_mixed (void)
   check_vprintf ("a. %c, b. %Rb, c. %u, d. %li%ln", i, mpfr, i, lo, &ulo);
   check_length (2, ulo, 36, lu);
   check_vprintf ("a. %hi, b. %*f, c. %Re%hn", ush, 3, f, mpfr, &ush);
-  check_length (3, ush, 46, hu);
+  check_length (3, ush, 45 + DPLEN, hu);
   check_vprintf ("a. %hi, b. %f, c. %#.2Rf%n", sh, d, mpfr, &i);
-  check_length (4, i, 29, d);
+  check_length (4, i, 28 + DPLEN, d);
   check_vprintf ("a. %R*A, b. %Fe, c. %i%zn", rnd, mpfr, mpf, sz, &sz);
-  check_length (5, (unsigned long) sz, 34, lu); /* no format specifier '%zu' in C90 */
+  check_length (5, (unsigned long) sz, 33 + DPLEN, lu); /* no format specifier '%zu' in C90 */
   check_vprintf ("a. %Pu, b. %c, c. %RUG, d. %Zi%Zn", prec, ch, mpfr, mpz, &mpz);
   check_length_with_cmp (6, mpz, 24, mpz_cmp_ui (mpz, 24), Zi);
   check_vprintf ("%% a. %#.0RNg, b. %Qx%Rn c. %p",
@@ -332,7 +338,9 @@ check_mixed (void)
   check_vprintf ("%% a. %RNg, b. %Qx, c. %td%tn", mpfr, mpq, p, &p);
   if (p != 20)
     {
-      mpfr_fprintf (stderr, "Error in test 8, got '%% a. %RNg, b. %Qx, c. %td'\n", mpfr, mpq, saved_p);
+      mpfr_fprintf (stderr,
+                    "Error in test #8: got '%% a. %RNg, b. %Qx, c. %td'\n",
+                    mpfr, mpq, saved_p);
 #if defined(__MINGW32__) || defined(__MINGW64__)
       fprintf (stderr,
                "Your MinGW may be too old, in which case compiling GMP\n"
@@ -344,7 +352,7 @@ check_mixed (void)
 
 #ifdef PRINTF_L
   check_vprintf ("a. %RA, b. %Lf, c. %QX%zn", mpfr, ld, mpq, &sz);
-  check_length (9, (unsigned long) sz, 30, lu); /* no format specifier '%zu' in C90 */
+  check_length (9, (unsigned long) sz, 29 + DPLEN, lu); /* no format specifier '%zu' in C90 */
 #endif
 
 #ifndef NPRINTF_HH

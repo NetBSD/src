@@ -171,11 +171,11 @@ mpfr_atan2u (mpfr_ptr z, mpfr_srcptr y, mpfr_srcptr x, unsigned long u,
   MPFR_ZIV_DECL (loop);
 
   MPFR_LOG_FUNC
-    (("y[%Pu]=%.*Rg x[%Pu]=%.*Rg u=%lu rnd=%d",
+    (("y[%Pd]=%.*Rg x[%Pd]=%.*Rg u=%lu rnd=%d",
       mpfr_get_prec(y), mpfr_log_prec, y,
       mpfr_get_prec(x), mpfr_log_prec, x,
       u, rnd_mode),
-     ("z[%Pu]=%.*Rg inexact=%d", mpfr_get_prec (z), mpfr_log_prec, z,
+     ("z[%Pd]=%.*Rg inexact=%d", mpfr_get_prec (z), mpfr_log_prec, z,
       inex));
 
   /* Special cases */

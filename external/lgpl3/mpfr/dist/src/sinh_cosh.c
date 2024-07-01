@@ -37,9 +37,9 @@ mpfr_sinh_cosh (mpfr_ptr sh, mpfr_ptr ch, mpfr_srcptr xt, mpfr_rnd_t rnd_mode)
   MPFR_ASSERTN (sh != ch);
 
   MPFR_LOG_FUNC
-    (("x[%Pu]=%.*Rg rnd=%d",
+    (("x[%Pd]=%.*Rg rnd=%d",
       mpfr_get_prec (xt), mpfr_log_prec, xt, rnd_mode),
-     ("sh[%Pu]=%.*Rg ch[%Pu]=%.*Rg",
+     ("sh[%Pd]=%.*Rg ch[%Pd]=%.*Rg",
       mpfr_get_prec (sh), mpfr_log_prec, sh,
       mpfr_get_prec (ch), mpfr_log_prec, ch));
 

@@ -39,6 +39,9 @@ Known bugs:
   between parameters' exponents is near 2*MPFR_EMAX_MAX and on the other hand
   the output precision or the precision of the parameter with greatest
   absolute value is greater than 2*MPFR_EMAX_MAX-4.
+  Note: Such huge precisions are not possible as they would be larger than
+  MPFR_PREC_MAX, unless the types for mpfr_exp_t and/or mpfr_prec_t are
+  changed (only for developers or expert users, not officially supported).
 
 Potential bugs:
 

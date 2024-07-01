@@ -543,7 +543,7 @@ sum_aux (mpfr_ptr sum, const mpfr_ptr *x, unsigned long n, mpfr_rnd_t rnd,
   MPFR_LOG_FUNC
     (("n=%lu rnd=%d maxexp=%" MPFR_EXP_FSPEC "d rn=%lu",
       n, rnd, (mpfr_eexp_t) maxexp, rn),
-     ("sum[%Pu]=%.*Rg", mpfr_get_prec (sum), mpfr_log_prec, sum));
+     ("sum[%Pd]=%.*Rg", mpfr_get_prec (sum), mpfr_log_prec, sum));
 
   MPFR_ASSERTD (rn >= 3 && rn <= n);
 
@@ -1268,7 +1268,7 @@ mpfr_sum (mpfr_ptr sum, const mpfr_ptr *x, unsigned long n, mpfr_rnd_t rnd)
 {
   MPFR_LOG_FUNC
     (("n=%lu rnd=%d", n, rnd),
-     ("sum[%Pu]=%.*Rg", mpfr_get_prec (sum), mpfr_log_prec, sum));
+     ("sum[%Pd]=%.*Rg", mpfr_get_prec (sum), mpfr_log_prec, sum));
 
   if (MPFR_UNLIKELY (n <= 2))
     {

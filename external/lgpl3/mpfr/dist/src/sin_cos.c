@@ -61,8 +61,8 @@ mpfr_sin_cos (mpfr_ptr y, mpfr_ptr z, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
     }
 
   MPFR_LOG_FUNC
-    (("x[%Pu]=%.*Rg rnd=%d", mpfr_get_prec (x), mpfr_log_prec, x, rnd_mode),
-     ("sin[%Pu]=%.*Rg cos[%Pu]=%.*Rg", mpfr_get_prec(y), mpfr_log_prec, y,
+    (("x[%Pd]=%.*Rg rnd=%d", mpfr_get_prec (x), mpfr_log_prec, x, rnd_mode),
+     ("sin[%Pd]=%.*Rg cos[%Pd]=%.*Rg", mpfr_get_prec(y), mpfr_log_prec, y,
       mpfr_get_prec (z), mpfr_log_prec, z));
 
   MPFR_SAVE_EXPO_MARK (expo);

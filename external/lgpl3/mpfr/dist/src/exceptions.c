@@ -384,7 +384,7 @@ mpfr_underflow (mpfr_ptr x, mpfr_rnd_t rnd_mode, int sign)
 
   MPFR_LOG_FUNC
     (("rnd=%d sign=%d", rnd_mode, sign),
-     ("x[%Pu]=%.*Rg", mpfr_get_prec (x), mpfr_log_prec, x));
+     ("x[%Pd]=%.*Rg", mpfr_get_prec (x), mpfr_log_prec, x));
 
   MPFR_ASSERT_SIGN (sign);
 
@@ -412,7 +412,7 @@ mpfr_overflow (mpfr_ptr x, mpfr_rnd_t rnd_mode, int sign)
 
   MPFR_LOG_FUNC
     (("rnd=%d sign=%d", rnd_mode, sign),
-     ("x[%Pu]=%.*Rg", mpfr_get_prec (x), mpfr_log_prec, x));
+     ("x[%Pd]=%.*Rg", mpfr_get_prec (x), mpfr_log_prec, x));
 
   MPFR_ASSERT_SIGN (sign);
 

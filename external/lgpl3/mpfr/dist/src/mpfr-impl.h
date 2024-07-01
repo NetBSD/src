@@ -1655,8 +1655,10 @@ do {                                                                  \
    this can be found in practice: https://reviews.llvm.org/D27167 says:
    "I found this problem on FreeBSD 11, where thousands_sep in fr_FR.UTF-8
    is a no-break space (U+00A0)."
-   Note, however, that this is not allowed by the C standard, which just
-   says "character" and not "multibyte character".
+   Under Linux, this is U+202F NARROW NO-BREAK SPACE (e2 80 af).
+   And in the ps_AF locale,
+     decimal_point = U+066B ARABIC DECIMAL SEPARATOR (d9 ab)
+     thousands_sep = U+066C ARABIC THOUSANDS SEPARATOR (d9 ac)
    In the mean time, in case of non-single-byte character, revert to the
    default value. */
 #if MPFR_LCONV_DPTS
@@ -2192,7 +2194,7 @@ __MPFR_DECLSPEC extern mpfr_prec_t mpfr_log_prec;
   while (0)
 
 #define MPFR_LOG_VAR(x)                                                 \
-  LOG_PRINT (MPFR_LOG_INTERNAL_F, "%s.%d:%s[%#Pu]=%.*Rg\n", __func__,   \
+  LOG_PRINT (MPFR_LOG_INTERNAL_F, "%s.%d:%s[%#Pd]=%.*Rg\n", __func__,   \
              (int) __LINE__, #x, mpfr_get_prec (x), mpfr_log_prec, x)
 
 #define MPFR_LOG_MSG2(format, ...)                                      \
