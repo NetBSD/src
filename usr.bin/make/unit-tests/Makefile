@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.347 2024/06/01 15:54:40 sjg Exp $
+# $NetBSD: Makefile,v 1.348 2024/07/01 21:02:26 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -397,6 +397,7 @@ TESTS+=		varmod-to-lower
 TESTS+=		varmod-to-many-words
 TESTS+=		varmod-to-one-word
 TESTS+=		varmod-to-separator
+TESTS+=		varmod-to-title
 TESTS+=		varmod-to-upper
 TESTS+=		varmod-undefined
 TESTS+=		varmod-unique
