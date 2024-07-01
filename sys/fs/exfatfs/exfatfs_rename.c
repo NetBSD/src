@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_rename.c,v 1.1.2.1 2024/06/29 19:43:26 perseant Exp $	*/
+/*	$NetBSD: exfatfs_rename.c,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2022 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_rename.c,v 1.1.2.1 2024/06/29 19:43:26 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_rename.c,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: exfatfs_rename.c,v 1.1.2.1 2024/06/29 19:43:26 perse
 #ifdef EXFATFS_RENAME_DEBUG
 # define DPRINTF(x) printf x
 #else
-# define DPRINTF(x)
+# define DPRINTF(x) __nothing
 #endif
 
 /*
@@ -365,8 +365,8 @@ exfatfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	KASSERT(fxip != NULL);
 	KASSERT(fs != NULL);
 
-	DPRINTF(("exfatfs_gro_rename(mp=%p, cred=%p, fdvp=%p, fcnp=%p, fde=%p, fvp=%p,\n",
-		 mp, cred, fdvp, fcnp, fde, fvp));
+	DPRINTF(("exfatfs_gro_rename(mp=%p, cred=%p, fdvp=%p, fcnp=%p, fde=%p,"
+		 " fvp=%p,\n", mp, cred, fdvp, fcnp, fde, fvp));
 	DPRINTF(("    tdvp=%p, tcnp=%p, tde=%p, tvp=%p, tvp_nlinkp=%p)\n",
 		 tdvp, tcnp, tde, tvp, tvp_nlinkp));
 

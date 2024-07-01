@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_trie_basic.c,v 1.1.2.1 2024/06/29 19:43:26 perseant Exp $	*/
+/*	$NetBSD: exfatfs_trie_basic.c,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_trie_basic.c,v 1.1.2.1 2024/06/29 19:43:26 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_trie_basic.c,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/buf.h>
@@ -55,7 +55,8 @@ typedef struct uvnode uvnode_t;
 # include <stdlib.h>
 # include <string.h>
 # include <errno.h>
-# define pool_get(a, b) (struct xf_bitmap_node *)malloc(sizeof(struct xf_bitmap_node))
+# define pool_get(a, b) (struct xf_bitmap_node *)			\
+			malloc(sizeof(struct xf_bitmap_node))
 # define pool_put(a, b) free((b))
 #endif
 
@@ -64,7 +65,7 @@ typedef struct uvnode uvnode_t;
 #ifdef EXFATFS_TRIE_DEBUG
 # define DPRINTF(x) printf x
 #else
-# define DPRINTF(x)
+# define DPRINTF(x) __nothing
 #endif
 
 /*
@@ -73,7 +74,8 @@ typedef struct uvnode uvnode_t;
 
 extern struct pool exfatfs_bitmap_pool;
 
-#define BN_FULL(bp, level) ((bp)->count == (1 << (level * BN_CHILDREN_SHIFT)) - 1)
+#define BN_FULL(bp, level) ((bp)->count == (1 << (level * BN_CHILDREN_SHIFT)) \
+									- 1)
 
 /* Convert cluster number to disk address and offset */
 #define NBBYSHIFT 3 /* 1 << NBBYSHIFT == NBBY == 8 */
@@ -142,7 +144,8 @@ exfatfs_bitmap_adj(struct exfatfs *fs,
 			return 0;
 		secno = cno >> (fs->xf_SectorsPerClusterShift
 				+ fs->xf_BytesPerSectorShift + NBBY);
-		if ((error = bread(fs->xf_bitmapvp, secno, BN_BLOCK_SIZE, 0, &bp)) != 0)
+		if ((error = bread(fs->xf_bitmapvp, secno, BN_BLOCK_SIZE, 0,
+				   &bp)) != 0)
 			return error;
 		data = (uint8_t *)bp->b_data;
 		if (dir > 0)
@@ -159,7 +162,8 @@ exfatfs_bitmap_adj(struct exfatfs *fs,
 	if (bnp->count == 0 || BN_FULL(bnp, level)) {
 		for (i = 0; i < BN_CHILDREN_COUNT; i++)
 			if (bnp->children[i] != NULL)
-				pool_put(&exfatfs_bitmap_pool, bnp->children[i]);
+				pool_put(&exfatfs_bitmap_pool,
+					 bnp->children[i]);
 		exfatfs_check_fence(fs);
 		return 0;
 	}
@@ -169,7 +173,8 @@ exfatfs_bitmap_adj(struct exfatfs *fs,
 		bnp->children[rcno] = pool_get(&exfatfs_bitmap_pool, PR_WAITOK);
 		memset(bnp->children[rcno], 0, sizeof(*bnp));
 	}
-	return exfatfs_bitmap_adj(fs, bnp->children[rcno], cno, --level, dir, alloc);
+	return exfatfs_bitmap_adj(fs, bnp->children[rcno], cno, --level, dir,
+				  alloc);
 }
 
 /*
@@ -201,7 +206,8 @@ exfatfs_bitmap_scan(struct exfatfs *fs,
 	if (level == BOTTOM_LEVEL) {
 		secno = start >> (fs->xf_SectorsPerClusterShift
 				  + fs->xf_BytesPerSectorShift + NBBY);
-		if ((error = bread(fs->xf_bitmapvp, secno, BN_BLOCK_SIZE, 0, &bp)) != 0)
+		if ((error = bread(fs->xf_bitmapvp, secno, BN_BLOCK_SIZE, 0,
+				   &bp)) != 0)
 			return error;
 		data = (uint8_t *)bp->b_data;
 		r = INVALID;
@@ -220,8 +226,9 @@ exfatfs_bitmap_scan(struct exfatfs *fs,
 				break;
 		}
 		if (alloc && r != INVALID) {
-			DPRINTF(("TRIE: allocate cluster %u at lbn %u byte %d bit %d\n",
-				 (unsigned)r, (unsigned)bp->b_lblkno, (int)i, (int)j));
+			DPRINTF(("TRIE: allocate cluster %u at lbn %u byte %d"
+				 " bit %d\n", (unsigned)r,
+				 (unsigned)bp->b_lblkno, (int)i, (int)j));
 			data[i] |= (1 << j);
 			bdwrite(bp);
 		} else
@@ -240,7 +247,8 @@ exfatfs_bitmap_scan(struct exfatfs *fs,
 		if (bnp->children[i] == NULL) /* Empty (or full) section */
 			return (i << (BN_CHILDREN_SHIFT * level));
 
-		error = exfatfs_bitmap_scan(fs, bnp->children[i], start, --level, &r, alloc);
+		error = exfatfs_bitmap_scan(fs, bnp->children[i], start,
+					    --level, &r, alloc);
 		if (error == 0 && r != INVALID) {
 			*cp = (i << (BN_CHILDREN_SHIFT * level)) | r;
 			exfatfs_check_fence(fs);
@@ -272,8 +280,9 @@ exfatfs_init_trie(struct exfatfs *fs, int doread)
 	/* Discover which is the top level */
 	for (i = BOTTOM_LEVEL; ; i++) {
 		DPRINTF(("TRIE: level %d gives %llu vs %llu\n", i,
-		       (unsigned long long)fs->xf_ClusterCount,
-			 (unsigned long long)(1 << (i * BN_CHILDREN_SHIFT)) - 1));
+		         (unsigned long long)fs->xf_ClusterCount,
+			 (unsigned long long)
+				(1 << (i * BN_CHILDREN_SHIFT)) - 1));
 		if (fs->xf_ClusterCount < (1 << (i * BN_CHILDREN_SHIFT)) - 1) {
 			fs->xf_bitmap_toplevel = i;
 			break;
@@ -287,8 +296,10 @@ exfatfs_init_trie(struct exfatfs *fs, int doread)
 	}
 
 	/* Populate from disk */
-	for (i = 0; i < VTOXI(fs->xf_bitmapvp)->xi_validDataLength; i += SECSIZE(fs)) {
-		if ((error = bread(fs->xf_bitmapvp, i >> fs->xf_BytesPerSectorShift,
+	for (i = 0; i < VTOXI(fs->xf_bitmapvp)->xi_validDataLength;
+	     i += SECSIZE(fs)) {
+		if ((error = bread(fs->xf_bitmapvp,
+				   i >> fs->xf_BytesPerSectorShift,
 				   SECSIZE(fs), 0, &bp)) != 0)
 			return error;
 		DPRINTF(("TRIE: read lblkno %lu blkno 0x%lx\n",
@@ -300,7 +311,8 @@ exfatfs_init_trie(struct exfatfs *fs, int doread)
 				break;
 			byte = ((char *)bp->b_data)[j];
 			if (cno + NBBY > fs->xf_ClusterCount)
-				byte &= ((1 << (fs->xf_ClusterCount & (NBBY - 1))) - 1);
+				byte &= ((1 << (fs->xf_ClusterCount
+						& (NBBY - 1))) - 1);
 			bitcount = byte2bitcount[byte];
 			DPRINTF(("TRIE: cluster %lu..%lu, %d busy\n",
 			       (unsigned long)(cno),
@@ -377,13 +389,16 @@ exfatfs_bitmap_alloc(struct exfatfs *fs, uint32_t start, uint32_t *cp)
 			 (unsigned)LBNOFF2CLUSTER(fs, lbn, off),
 			 (unsigned)end));
 		while (LBNOFF2CLUSTER(fs, lbn, off) < end) {
-			exfatfs_bmap_shared(fs->xf_bitmapvp, lbn, NULL, &blkno, NULL);
+			exfatfs_bmap_shared(fs->xf_bitmapvp, lbn, NULL, &blkno,
+					    NULL);
 			DPRINTF((" lbn %u -> bn 0x%x\n",
 				 (unsigned)lbn, (unsigned)blkno));
-			if ((error = bread(fs->xf_devvp, blkno, SECSIZE(fs), 0, &bp)) != 0)
+			if ((error = bread(fs->xf_devvp, blkno, SECSIZE(fs), 0,
+					   &bp)) != 0)
 				return error;
 			DPRINTF((" search %u..%u\n",
-				 (unsigned)off, (unsigned)(1 << BITMAPSHIFT(fs))));
+				 (unsigned)off,
+				 (unsigned)(1 << BITMAPSHIFT(fs))));
 			while (off < (1 << BITMAPSHIFT(fs))
 			       && LBNOFF2CLUSTER(fs, lbn, off) < end) {
 				data = (uint8_t *)bp->b_data;
@@ -395,8 +410,10 @@ exfatfs_bitmap_alloc(struct exfatfs *fs, uint32_t start, uint32_t *cp)
 			}
 			if (r != INVALID) {
 				assert(r >= 2 && r < fs->xf_ClusterCount - 2);
-				DPRINTF(("basic allocate cluster %u/%u at lbn %u bit %d\n",
-					 (unsigned)r, (unsigned)end, (unsigned)lbn, (int)off));
+				DPRINTF(("basic allocate cluster %u/%u at lbn"
+					 " %u bit %d\n", (unsigned)r,
+					 (unsigned)end, (unsigned)lbn,
+					 (int)off));
 				setbit(data, off);
 				bdwrite(bp);
 #ifdef _KERNEL
@@ -483,14 +500,17 @@ exfatfs_bitmap_init(struct exfatfs *fs, int doread)
 		exfatfs_bmap_shared(fs->xf_bitmapvp, lbn, NULL, &blkno, NULL);
 		DPRINTF((" lbn %u -> bn 0x%x\n",
 			 (unsigned)lbn, (unsigned)blkno));
-		if ((error = bread(fs->xf_devvp, blkno, SECSIZE(fs), 0, &bp)) != 0) {
+		if ((error = bread(fs->xf_devvp, blkno, SECSIZE(fs), 0, &bp))
+			     != 0) {
 			printf("bread(%p, %u, %u) returned %d\n",
-			       fs->xf_devvp, (unsigned)blkno, (unsigned)SECSIZE(fs), error);
+			       fs->xf_devvp, (unsigned)blkno,
+			       (unsigned)SECSIZE(fs), error);
 			return error;
 		}
 #if 1
 		for (data = (uint8_t *)bp->b_data;
-		     data - (uint8_t *)bp->b_data < SECSIZE(fs) && LBNOFF2CLUSTER(fs, lbn, off + NBBY) < end;
+		     data - (uint8_t *)bp->b_data < SECSIZE(fs)
+			&& LBNOFF2CLUSTER(fs, lbn, off + NBBY) < end;
 		     ++data) {
 			fs->xf_FreeClusterCount -= byte2bitcount[*data];
 			off += NBBY;
@@ -518,4 +538,3 @@ exfatfs_bitmap_destroy(struct exfatfs *fs)
 {
 }
 #endif /* ! EXFATFS_USE_TRIE */
-

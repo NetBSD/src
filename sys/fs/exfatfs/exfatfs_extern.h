@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_extern.h,v 1.1.2.1 2024/06/29 19:43:26 perseant Exp $	*/
+/*	$NetBSD: exfatfs_extern.h,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -25,24 +25,31 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef EXFATFS_EXTERN_H_
+#define EXFATFS_EXTERN_H_
+
 #include <sys/types.h>
 #include <sys/vnode.h>
 #include <fs/exfatfs/exfatfs.h>
 #include <fs/exfatfs/exfatfs_inode.h>
 #include <fs/exfatfs/exfatfs_mount.h>
 
-int exfatfs_bmap_shared(struct vnode *vp, daddr_t bn, struct vnode **vpp,
-			daddr_t *bnp, int *runp);
-int exfatfs_mountfs_shared(struct vnode *devvp, struct exfatfs_mount *, unsigned secsize, struct exfatfs **fsp);
+int exfatfs_bmap_shared(struct vnode *, daddr_t, struct vnode **, daddr_t *,
+	int *);
+int exfatfs_mountfs_shared(struct vnode *, struct exfatfs_mount *, unsigned,
+	struct exfatfs **);
 struct xfinode *exfatfs_newxfinode(struct exfatfs *, uint32_t, uint32_t);
 struct exfatfs_dirent *exfatfs_newdirent(void);
 int exfatfs_get_file_name(struct xfinode *, uint16_t *, int *, int);
 int exfatfs_set_file_name(struct xfinode *, uint16_t *, int);
 void exfatfs_freexfinode(struct xfinode *);
 void exfatfs_freedirent(struct exfatfs_dirent *);
-int exfatfs_scandir(struct vnode *dvp, off_t startoff, off_t *endoff,
-		    unsigned (*emptyfunc)(void *, off_t, off_t),
-		    unsigned (*validfunc)(void *, struct xfinode *, off_t),
+int exfatfs_scandir(struct vnode *, off_t, off_t *,
+		    unsigned (*)(void *, off_t, off_t),
+		    unsigned (*)(void *, struct xfinode *, off_t),
 		    void *arg);
 #define SCANDIR_STOP     0x00000001
 #define SCANDIR_DONTFREE 0x00000002
+
+#endif /* EXFATFS_EXTERN_H_ */

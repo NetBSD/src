@@ -1,4 +1,31 @@
-/* $NetBSD: exfatfs_dirent.h,v 1.1.2.1 2024/06/29 19:43:26 perseant Exp $ */
+/* $NetBSD: exfatfs_dirent.h,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $ */
+
+/*-
+ * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #ifndef EXFATFS_DIRENT_H_
 #define EXFATFS_DIRENT_H_
 
@@ -11,7 +38,8 @@ struct exfatfs_dirent {
 #define XD_ENTRYTYPE_TYPECODE_MASK       0x1f /* All values valid */
 #define XD_ENTRYTYPE_TYPEIMPORTANCE_MASK 0x20 /* 0 = critical, 1 = benign */
 #define XD_ENTRYTYPE_TYPECATEGORY_MASK   0x40 /* 0 = primary, 1 = secondary */
-#define ISPRIMARY(dp) (((dp)->xd_entryType & XD_ENTRYTYPE_TYPECATEGORY_MASK) == 0)
+#define ISPRIMARY(dp) (((dp)->xd_entryType & XD_ENTRYTYPE_TYPECATEGORY_MASK) \
+			== 0)
 #define XD_ENTRYTYPE_INUSE_MASK          0x80 /* 0 = not in use, 1 = in use */
 #define ISINUSE(dp) (((dp)->xd_entryType & XD_ENTRYTYPE_INUSE_MASK) > 0)
 
@@ -43,8 +71,10 @@ struct exfatfs_dirent_plus {
 
 struct exfatfs_dirent_primary {
 	uint8_t  xd_entryType;          /* Byte 0 */
-	uint8_t  xd_secondaryCount;     /* Byte 1 */ /* # of secondary entries after this one */
-	uint16_t xd_setChecksum;        /* Bytes 2-3 */ /* Checksum of all dirents, excluding this field */
+	/* # of secondary entries after this one */
+	uint8_t  xd_secondaryCount;     /* Byte 1 */
+	/* Checksum of all dirents, excluding this field */
+	uint16_t xd_setChecksum;        /* Bytes 2-3 */
 	uint16_t xd_generalPrimaryFlags; /* Bytes 4-5 */
 #define XD_GENERALPRIMARYFLAGS_ALLOCATIONPOSSIBLE_MASK 0x0001
 #define XD_GENERALPRIMARYFLAGS_NOFATCHAIN              0x0002
@@ -112,7 +142,8 @@ struct exfatfs_dfe {
 #define XD_FILEATTR_RESERVED1 0x0008
 #define XD_FILEATTR_DIRECTORY 0x0010
 #define XD_FILEATTR_ARCHIVE   0x0020
-#define XD_FILEATTR_SYMLINK   0x0040 /* Non-standard, from dorimanx/exfat-nofuse */
+/* Non-standard, from dorimanx/exfat-nofuse */
+#define XD_FILEATTR_SYMLINK   0x0040
 	uint8_t xd_reserved1[2];
 	uint32_t xd_createTimestamp;
 	uint32_t xd_lastModifiedTimestamp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_vnops.c,v 1.1.2.1 2024/06/29 19:43:26 perseant Exp $	*/
+/*	$NetBSD: exfatfs_vnops.c,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_vnops.c,v 1.1.2.1 2024/06/29 19:43:26 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_vnops.c,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $");
 
 #include <sys/buf.h>
 #include <sys/dirent.h>
@@ -89,7 +89,7 @@ static uint8_t PRIMARY_IGNORE_LEN = 2;
 #ifdef EXFATFS_VNOPS_DEBUG
 # define DPRINTF(x) printf x
 #else
-# define DPRINTF(x)
+# define DPRINTF(x) __nothing
 #endif
 
 /*
@@ -293,9 +293,12 @@ exfatfs_setattr(void *v)
 		if (error)
 			goto bad;
 		if (vap->va_atime.tv_sec != VNOVAL)
-			exfatfs_unix2dostime(&vap->va_atime, fs->xf_gmtoff, &DFE(xip)->xd_lastAccessedTimestamp, NULL);
+			exfatfs_unix2dostime(&vap->va_atime, fs->xf_gmtoff,
+				&DFE(xip)->xd_lastAccessedTimestamp, NULL);
 		if (vap->va_mtime.tv_sec != VNOVAL)
-			exfatfs_unix2dostime(&vap->va_mtime, fs->xf_gmtoff, &DFE(xip)->xd_lastModifiedTimestamp, &DFE(xip)->xd_lastModified10msIncrement);
+			exfatfs_unix2dostime(&vap->va_mtime, fs->xf_gmtoff,
+				&DFE(xip)->xd_lastModifiedTimestamp,
+				&DFE(xip)->xd_lastModified10msIncrement);
 		DFE(xip)->xd_fileAttributes |= XD_FILEATTR_ARCHIVE;
 		xip->xi_flag |= XI_MODIFIED;
 		de_changed = 1;
@@ -415,8 +418,10 @@ exfatfs_read(void *v)
 
 		off = uio->uio_offset & (SECSIZE(fs) - 1);
 		n = uio->uio_resid - uio->uio_offset;
-		if (uio->uio_offset + uio->uio_resid > GET_DSE_VALIDDATALENGTH(xip))
-			n -= uio->uio_offset + uio->uio_resid - GET_DSE_VALIDDATALENGTH(xip);
+		if (uio->uio_offset + uio->uio_resid >
+		    GET_DSE_VALIDDATALENGTH(xip))
+			n -= uio->uio_offset + uio->uio_resid
+			     - GET_DSE_VALIDDATALENGTH(xip);
 		n = MIN(n, bp->b_resid - off);
 		if (n > 0)
 			error = uiomove((char *)bp->b_data + off, n, uio);
@@ -517,10 +522,12 @@ exfatfs_write(void *v)
 		/* DPRINTF(("write past valid data length\n")); */
 		if (uio->uio_offset + resid > GET_DSE_DATALENGTH(xip)) {
 			DPRINTF(("write past allocation\n"));
-			if ((error = deextend(xip, uio->uio_offset + resid, ioflag, cred)) != 0)
+			if ((error = deextend(xip, uio->uio_offset + resid,
+					      ioflag, cred)) != 0)
 				goto errexit;
 			DPRINTF(("now vdl=%llu dl=%llu\n",
-				 (unsigned long long)GET_DSE_VALIDDATALENGTH(xip),
+				 (unsigned long long)
+					GET_DSE_VALIDDATALENGTH(xip),
 				 (unsigned long long)GET_DSE_DATALENGTH(xip)));
 		}
 
@@ -531,7 +538,8 @@ exfatfs_write(void *v)
 		rem = round_page(GET_DSE_VALIDDATALENGTH(xip))
 			- GET_DSE_VALIDDATALENGTH(xip);
 		if (rem > 0)
-			ubc_zerorange(&vp->v_uobj, (off_t)GET_DSE_VALIDDATALENGTH(xip),
+			ubc_zerorange(&vp->v_uobj,
+				      (off_t)GET_DSE_VALIDDATALENGTH(xip),
 			    rem, UBC_VNODE_FLAGS(vp));
 		extended = 1;
 	}
@@ -625,7 +633,8 @@ exfatfs_writeback(struct xfinode *xip)
 	for (i = 0; i < EXFATFS_MAXDIRENT
 		     && xip->xi_direntp[i]
 		     && xip->xi_dirent_blk[i]; i++) {
-		DPRINTF((" write inum 0x%lx i=%d type 0x%x bn %lx off %d = cn 0x%lx off 0x%lx\n",
+		DPRINTF((" write inum 0x%lx i=%d type 0x%x bn %lx off %d"
+			 " = cn 0x%lx off 0x%lx\n",
 			 (unsigned long)INUM(xip), i,
 			 xip->xi_direntp[i]->xd_entryType,
 			 xip->xi_dirent_blk[i],
@@ -675,7 +684,8 @@ exfatfs_update(struct vnode *vp, const struct timespec *acc,
 	struct xfinode *xip;
 	
 	DPRINTF(("exfatfs_update %p (0x%lx) flags 0x%x xiflags 0x%lx\n",
-		 vp, (unsigned long)INUM(VTOXI(vp)), flags, VTOXI(vp)->xi_flag));
+		 vp, (unsigned long)INUM(VTOXI(vp)), flags,
+		 VTOXI(vp)->xi_flag));
 	
 	if (vp->v_mount->mnt_flag & MNT_RDONLY) {
 		DPRINTF(("exfatfs_update: ro\n"));
@@ -839,7 +849,7 @@ exfatfs_findempty(struct vnode *dvp, struct xfinode *xip)
 	KASSERT(len > 2);
 	KASSERT(len <= EXFATFS_MAXDIRENT);
 	
-	DPRINTF(("exfatfs_findempty searching dir 0x%lx bytes 0..%llu of %llu\n",
+	DPRINTF(("exfatfs_findempty search dir 0x%lx bytes 0..%llu of %llu\n",
 		 (unsigned long)INUM(dxip),
 		 (unsigned long long)GET_DSE_VALIDDATALENGTH(dxip),
 		 (unsigned long long)GET_DSE_DATALENGTH(dxip)));
@@ -852,7 +862,8 @@ exfatfs_findempty(struct vnode *dvp, struct xfinode *xip)
 	for (off = 0; off < GET_DSE_VALIDDATALENGTH(dxip); off += SECSIZE(fs)) {
 		lbn = EXFATFS_BYTES2FSSEC(fs, off);
 		VOP_BMAP(dvp, lbn, NULL, &blkno, NULL);
-		if ((error = bread(fs->xf_devvp, blkno, SECSIZE(fs), 0, &bp)) != 0)
+		if ((error = bread(fs->xf_devvp, blkno, SECSIZE(fs), 0, &bp))
+		    != 0)
 			return error;
 		for (so = 0; so < SECSIZE(fs); so += sizeof(*dirent)) {
 			dirent = (struct exfatfs_dirent *)
@@ -868,11 +879,15 @@ exfatfs_findempty(struct vnode *dvp, struct xfinode *xip)
 				++contig;
 				if (contig >= len) {
 					brelse(bp, 0);
-					DPRINTF(("dir 0x%lx has %d empty entries at byte %lld (entry %u) bn 0x%lx..0x%lx\n",
+					DPRINTF(("dir 0x%lx has %d empty"
+						 " entries at byte %lld"
+						 " (entry %u) bn 0x%lx..0x%lx"
+						 "\n",
 						 (unsigned long)INUM(dxip),
 						 contig,
 						 (long long)r,
-						 (unsigned)EXFATFS_BYTES2DIRENT(fs, r),
+						 (unsigned)
+						  EXFATFS_BYTES2DIRENT(fs, r),
 						 rblkno, blkno));
 					goto havespace;
 				}
@@ -892,7 +907,8 @@ exfatfs_findempty(struct vnode *dvp, struct xfinode *xip)
 	newsize = r + len * sizeof(*dirent);
 	if (GET_DSE_DATALENGTH(dxip) < newsize) {
 		/* We need to allocate blocks before extending */
-		if ((error = deextend(dxip, roundup2(newsize, CLUSTERSIZE(fs)), 0, NOCRED)) != 0)
+		if ((error = deextend(dxip, roundup2(newsize, CLUSTERSIZE(fs)),
+				      0, NOCRED)) != 0)
 			return error;
 		DPRINTF((" allocated dir 0x%lx to %llu\n",
 			 (unsigned long)INUM(dxip),
@@ -1095,7 +1111,8 @@ exfatfs_alloc(struct vnode *dvp, struct vnode **vpp,
 		    cnp->cn_flags);
 
 	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
-	DPRINTF(("exfatfs_alloc: new entry is 0x%lx\n", (unsigned long)INUM(xip)));
+	DPRINTF(("exfatfs_alloc: new entry is 0x%lx\n",
+		 (unsigned long)INUM(xip)));
 	return (0);
 
 errout:
@@ -1320,7 +1337,8 @@ exfatfs_lookup(void *v)
 
 	*vpp = NULL;
 	
-	DPRINTF(("exfatfs_lookup(%p, %p, {%x, %x, %d:\"%*s\"=%hhx,%hhx,%hhx})\n",
+	DPRINTF(("exfatfs_lookup(%p, %p, {%x, %x, %d:\"%*s\"=%hhx,%hhx,%hhx})"
+		 "\n",
 		 dvp, vpp,
 		 (unsigned)cnp->cn_nameiop,
 		 (unsigned)cnp->cn_flags,
@@ -1362,11 +1380,13 @@ exfatfs_lookup(void *v)
 #ifdef TRACE_INUM
 		if (INUM(dxip) == TRACE_INUM) {
 			if (*vpp == NULLVP) {
-				printf("cache_lookup returned ENOENT for name %.*s\n",
+				printf("cache_lookup returned ENOENT for name"
+				       " %.*s\n",
 				       (int)cnp->cn_namelen, cnp->cn_nameptr);
 			} else {
 				KASSERT(VTOXI(*vpp) != NULL);
-				printf("cache_lookup returned ino 0x%lx for name %.*s\n",
+				printf("cache_lookup returned ino 0x%lx for"
+				       " name %.*s\n",
 				       INUM(VTOXI(*vpp)), (int)cnp->cn_namelen,
 				       cnp->cn_nameptr);
 			}
@@ -1425,8 +1445,9 @@ exfatfs_lookup(void *v)
 	if (fx.xip != NULL) {
 #ifdef TRACE_INUM
 		if (INUM(dxip) == TRACE_INUM || INUM(fx.xip) == TRACE_INUM)
-			printf("lookup dino 0x%lx found ino 0x%lx with xip=%p gen %p\n",
-			       INUM(dxip), INUM(fx.xip), fx.xip, fx.xip->xi_dirgen);
+			printf("lookup dino 0x%lx found ino 0x%lx with xip=%p"
+			       " gen %p\n", INUM(dxip), INUM(fx.xip), fx.xip,
+			       fx.xip->xi_dirgen);
 #endif /* TRACE_INUM */
 		nvp = NULL;
 		/* Store xip where loadvnode can find it */
@@ -1636,9 +1657,10 @@ exfatfs_readdir(void *v)
 			}
 			dirbuf.d_type = DT_DIR;
 			dirbuf.d_reclen = _DIRENT_SIZE(&dirbuf);
-			DPRINTF(("dirbuf fileno=0x%lx type=%d namlen=%d name=%.*s\n",
-			       dirbuf.d_fileno, dirbuf.d_type,
-			       dirbuf.d_namlen,
+			DPRINTF(("dirbuf fileno=0x%lx type=%d namlen=%d"
+				 " name=%.*s\n",
+			         dirbuf.d_fileno, dirbuf.d_type,
+			         dirbuf.d_namlen,
 				 dirbuf.d_namlen, dirbuf.d_name));
 			if (uio->uio_resid < dirbuf.d_reclen)
 				goto out;
@@ -1680,9 +1702,10 @@ out:
 			*ap->a_ncookies = fo.ncookies;
 	}
 
-	DPRINTF(("readdir: returning %d with resid=%u, offset-BIAS=%llu, eof=%d\n",
-	       error, (unsigned)uio->uio_resid,
-	       (unsigned long long)(offset - BIAS),
+	DPRINTF(("readdir: returning %d with resid=%u, offset-BIAS=%llu,"
+		 " eof=%d\n",
+	         error, (unsigned)uio->uio_resid,
+	         (unsigned long long)(offset - BIAS),
 		 *ap->a_eofflag));
 	exfatfs_check_fence(fs);
 	return (error);
@@ -1939,10 +1962,12 @@ exfatfs_inactive(void *v)
 	 * it from the directory earlier.
          */
 	if (xip->xi_refcnt > 0) {
-	  DPRINTF(("exfatfs_inactive: ino 0x%lx no recycle\n", (unsigned long)INUM(xip)));
+		DPRINTF(("exfatfs_inactive: ino 0x%lx no recycle\n",
+			 (unsigned long)INUM(xip)));
 		*ap->a_recycle = 0;
 	} else {
-	  DPRINTF(("exfatfs_inactive: ino 0x%lx yes recycle\n", (unsigned long)INUM(xip)));
+		DPRINTF(("exfatfs_inactive: ino 0x%lx yes recycle\n",
+			 (unsigned long)INUM(xip)));
 		*ap->a_recycle = 1;
 #ifdef USE_INACTIVE
 		if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0 &&
@@ -2145,7 +2170,8 @@ exfatfs_readlink(void *v)
 		{
 			daddr_t blkno;
 			VOP_BMAP(vp, lbn, NULL, &blkno, NULL);
-			error = bread(xip->xi_devvp, blkno, SECSIZE(fs), 0, &bp);
+			error = bread(xip->xi_devvp, blkno, SECSIZE(fs), 0,
+				      &bp);
 		}
 #endif /* !SYMLINK_SELF */
 		if (error)
@@ -2208,7 +2234,7 @@ const struct vnodeopv_entry_desc exfatfs_vnodeop_entries[] = {
 	{ &vop_inactive_desc, exfatfs_inactive },	/* inactive */
 	{ &vop_reclaim_desc, exfatfs_reclaim },		/* reclaim */
 #ifdef EXFATFS_LOCKDEBUG
-	{ &vop_lock_desc, exfatfs_lock },			/* lock */
+	{ &vop_lock_desc, exfatfs_lock },		/* lock */
 #else
 	{ &vop_lock_desc, genfs_lock },			/* lock */
 #endif
@@ -2269,8 +2295,9 @@ detrunc(struct xfinode *xip, off_t bytes, int ioflags, kauth_cred_t cred) {
 	}
 #endif /* USE_FATCACHE */
 
-	DPRINTF(("inum 0x%lx trunc bytes=%lx lcn=0x%x pcn=0x%x oldcount=0x%x newcount=0x%x\n",
-		 (unsigned long)INUM(xip), (unsigned long)bytes, (unsigned)lcn, (unsigned)pcn,
+	DPRINTF(("inum 0x%lx trunc bytes=%lx lcn=0x%x pcn=0x%x oldcount=0x%x"
+		 " newcount=0x%x\n", (unsigned long)INUM(xip),
+		 (unsigned long)bytes, (unsigned)lcn, (unsigned)pcn,
 		 (unsigned)oldcount, (unsigned)newcount));
 	
 	while (lcn < oldcount) {
@@ -2278,17 +2305,21 @@ detrunc(struct xfinode *xip, off_t bytes, int ioflags, kauth_cred_t cred) {
 		assert(pcn >= 2 && pcn < fs->xf_ClusterCount + 2);
 
 		/* Read the FAT to find the next cluster */
-		bread(fs->xf_devvp, EXFATFS_FATBLK(fs, pcn), SECSIZE(fs), 0, &bp);
+		bread(fs->xf_devvp, EXFATFS_FATBLK(fs, pcn), SECSIZE(fs), 0,
+		      &bp);
 		opcn = pcn;
 		pcn = ((uint32_t *)bp->b_data)[EXFATFS_FATOFF(pcn)];
 		if (lcn >= newcount) {
 			/* Deallocate cluster */
-			DPRINTF(("dealloc cluster 0x%x from ino 0x%x coff %u/%u\n",
+			DPRINTF(("dealloc cluster 0x%x from ino 0x%x coff"
+				 " %u/%u\n",
 				 (unsigned)opcn, (unsigned)INUM(xip),
 				 (unsigned)lcn,
-				 (unsigned)EXFATFS_BYTES2CLUSTER(fs, GET_DSE_DATALENGTH(xip))));
+				 (unsigned)EXFATFS_BYTES2CLUSTER(fs,
+					GET_DSE_DATALENGTH(xip))));
 			exfatfs_bitmap_dealloc(fs, opcn);
-			((uint32_t *)bp->b_data)[EXFATFS_FATOFF(opcn)] = 0xFFFFFFFF;
+			((uint32_t *)bp->b_data)[EXFATFS_FATOFF(opcn)]
+				= 0xFFFFFFFF;
 			if (ioflags)
 				bwrite(bp);
 			else
@@ -2297,9 +2328,13 @@ detrunc(struct xfinode *xip, off_t bytes, int ioflags, kauth_cred_t cred) {
 			/* Invalidate the pages, if any, in the buffer cache */
 #if 0 /* use vtruncbuf instead */
 			if (ISDIRECTORY(xip) || ISSYMLINK(xip)) {
-				for (lbn = 0; lbn < EXFATFS_CLUSTER2FSSEC(fs, 1); ++lbn) {
+				for (lbn = 0;
+				     lbn < EXFATFS_CLUSTER2FSSEC(fs, 1); ++lbn) {
 					binvalbuf(xip->xi_devvp,
-						  EXFATFS_CLUSTER2HWADDR(fs, pcn) + EXFATFS_FSSEC2DEVBSIZE(fs, lbn));
+						  EXFATFS_CLUSTER2HWADDR(fs,
+							pcn)
+						  + EXFATFS_FSSEC2DEVBSIZE(fs,
+							lbn));
 				}
 			}
 #endif /* 0 */
@@ -2336,7 +2371,9 @@ detrunc(struct xfinode *xip, off_t bytes, int ioflags, kauth_cred_t cred) {
 /*
  * Allocate clusters from the free map.
  */
-static int deextend(struct xfinode *xip, off_t bytes, int ioflags, kauth_cred_t cred) {
+static int deextend(struct xfinode *xip, off_t bytes, int ioflags,
+	kauth_cred_t cred)
+{
 	struct exfatfs *fs = xip->xi_fs;
 	uint32_t newcount = EXFATFS_BYTES2CLUSTER(fs, bytes) +
 		((bytes & CLUSTERMASK(fs)) ? 1 : 0);
@@ -2380,7 +2417,8 @@ static int deextend(struct xfinode *xip, off_t bytes, int ioflags, kauth_cred_t 
 #endif /* USE_FATCACHE */
 
 	if (lcn >= newcount) {
-		printf("impossible: bytes=%ld datalength=%lu lcn=%u old=%u new=%u\n",
+		printf("impossible: bytes=%ld datalength=%lu lcn=%u old=%u"
+		       " new=%u\n",
 		       (long)bytes, (unsigned long)GET_DSE_DATALENGTH(xip),
 		       lcn, oldcount, newcount);
 	}
@@ -2412,7 +2450,8 @@ static int deextend(struct xfinode *xip, off_t bytes, int ioflags, kauth_cred_t 
 			mutex_exit(&fs->xf_lock);
 #endif /* !ALLOC_SEQUENTIAL */
 			allocated = 1;
-			DPRINTF(("         allocated lclust %u = pclust 0x%x (following 0x%x)\n", lcn, pcn, opcn));
+			DPRINTF(("  allocated lclust %u = pclust 0x%x"
+				 " (following 0x%x)\n", lcn, pcn, opcn));
 			/* Store the allocation */
 			if (lcn == 0) {
 				/* Store it in the directory entry */
@@ -2420,11 +2459,14 @@ static int deextend(struct xfinode *xip, off_t bytes, int ioflags, kauth_cred_t 
 				SET_DSE_NOFATCHAIN(xip);
 			} else {
 				/* Store it in the FAT, just after opcn */
-				if ((error = bread(fs->xf_devvp, EXFATFS_FATBLK(fs, opcn),
+				if ((error = bread(fs->xf_devvp,
+						   EXFATFS_FATBLK(fs, opcn),
 						   SECSIZE(fs), 0, &bp)) != 0)
 					return error;
-				((uint32_t *)bp->b_data)[EXFATFS_FATOFF(opcn)] = pcn;
-				DPRINTF(("FAT %lu -> %lu\n", (unsigned long)opcn,
+				((uint32_t *)bp->b_data)[EXFATFS_FATOFF(opcn)]
+					= pcn;
+				DPRINTF(("FAT %lu -> %lu\n",
+					 (unsigned long)opcn,
 					 (unsigned long)pcn));
 				/*
 				 * If the clusters are not adjacent,
@@ -2432,7 +2474,8 @@ static int deextend(struct xfinode *xip, off_t bytes, int ioflags, kauth_cred_t 
 				 * reckoning for bmap.
 				 */
 				if (pcn != opcn + 1 && IS_DSE_NOFATCHAIN(xip)) {
-					DPRINTF(("inum 0x%lx not consecutive with 0x%x != 0x%x+1\n",
+					DPRINTF(("inum 0x%lx not consecutive"
+						 " with 0x%x != 0x%x+1\n",
 						 INUM(xip), pcn, opcn));
 					CLR_DSE_NOFATCHAIN(xip);
 				}
@@ -2447,7 +2490,8 @@ static int deextend(struct xfinode *xip, off_t bytes, int ioflags, kauth_cred_t 
 				for (bn = EXFATFS_CLUSTER2HWADDR(fs, pcn);
 				     EXFATFS_HWADDR2CLUSTER(fs, bn) == pcn;
 				     bn += EXFATFS_FSSEC2DEVBSIZE(fs, 1)) {
-					bp = getblk(fs->xf_devvp, bn, SECSIZE(fs), 0, 0);
+					bp = getblk(fs->xf_devvp, bn,
+						    SECSIZE(fs), 0, 0);
 					memset(bp->b_data, 0, SECSIZE(fs));
 					bdwrite(bp);
 					bp = NULL;
@@ -2468,7 +2512,8 @@ static int deextend(struct xfinode *xip, off_t bytes, int ioflags, kauth_cred_t 
 		if (allocated) {
 			pcn = 0;
 		} else {
-			if ((error = bread(fs->xf_devvp, EXFATFS_FATBLK(fs, pcn),
+			if ((error = bread(fs->xf_devvp,
+					   EXFATFS_FATBLK(fs, pcn),
 					   SECSIZE(fs), 0, &bp)) != 0)
 				return error;
 			pcn = ((uint32_t *)bp->b_data)[EXFATFS_FATOFF(pcn)];

@@ -1,7 +1,7 @@
-/*	$NetBSD: exfatfs_conv.c,v 1.1.2.1 2024/06/29 19:43:26 perseant Exp $	*/
+/*	$NetBSD: exfatfs_conv.c,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $	*/
 
 /*-
- * Copyright (c) 2022 The NetBSD Foundation, Inc.
+ * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,10 +25,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_conv.c,v 1.1.2.1 2024/06/29 19:43:26 perseant Exp $");
-
 /*-
  * Copyright (C) 1995, 1997 Wolfgang Solfrank.
  * Copyright (C) 1995, 1997 TooLs GmbH.
@@ -77,6 +73,9 @@ __KERNEL_RCSID(0, "$NetBSD: exfatfs_conv.c,v 1.1.2.1 2024/06/29 19:43:26 persean
  *
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_conv.c,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $");
+
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
@@ -85,9 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: exfatfs_conv.c,v 1.1.2.1 2024/06/29 19:43:26 persean
 #include <assert.h>
 #define KASSERT(x)     assert(x)
 #endif
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_conv.c,v 1.1.2.1 2024/06/29 19:43:26 perseant Exp $");
 
 /*
  * System include files.
@@ -158,7 +154,8 @@ static int utf8ucs2(const u_int8_t *, int, u_int16_t *);
  * file timestamps. The passed in unix time is assumed to be in GMT.
  */
 void
-exfatfs_unix2dostime(const struct timespec *tsp, int gmtoff, uint32_t *dtp, uint8_t *dhp)
+exfatfs_unix2dostime(const struct timespec *tsp, int gmtoff, uint32_t *dtp,
+	uint8_t *dhp)
 {
 	u_long t;
 	struct clock_ymdhms ymd;
@@ -210,7 +207,8 @@ invalid_dos_date:
  * not be too efficient.
  */
 struct timespec *
-exfatfs_dos2unixtime(uint32_t dt, u_int8_t dh, int gmtoff, struct timespec *tsp)
+exfatfs_dos2unixtime(uint32_t dt, u_int8_t dh, int gmtoff,
+	struct timespec *tsp)
 {
 	time_t seconds;
 	struct clock_ymdhms ymd;
@@ -245,7 +243,8 @@ exfatfs_dos2unixtime(uint32_t dt, u_int8_t dh, int gmtoff, struct timespec *tsp)
  * User-space versions of the above.
  */
 void
-exfatfs_unix2dostime(const struct timespec *tsp, int gmtoff, uint32_t *dtp, uint8_t *dhp)
+exfatfs_unix2dostime(const struct timespec *tsp, int gmtoff, uint32_t *dtp,
+	uint8_t *dhp)
 {
 	time_t t;
 	struct tm *tm;
@@ -292,12 +291,14 @@ invalid_dos_date:
 }
 
 struct timespec *
-exfatfs_dos2unixtime(uint32_t dt, uint8_t dh, int gmtoff, struct timespec *tsp) {
+exfatfs_dos2unixtime(uint32_t dt, uint8_t dh, int gmtoff, struct timespec *tsp)
+{
 	struct tm tm;
 	time_t seconds;
 
 	memset(&tm, 0, sizeof(tm));
-	tm.tm_year = ((dt & DT_YEAR_MASK)       >> DT_YEAR_SHIFT) + DOSBIASYEAR - 1900;
+	tm.tm_year = ((dt & DT_YEAR_MASK)       >> DT_YEAR_SHIFT)
+							+ DOSBIASYEAR - 1900;
 	tm.tm_mon =  ((dt & DT_MONTH_MASK) - 1) >> DT_MONTH_SHIFT;
 	tm.tm_mday = (dt & DT_DAY_MASK)         >> DT_DAY_SHIFT;
 	tm.tm_hour = (dt & DT_HOURS_MASK)       >> DT_HOURS_SHIFT;
@@ -380,7 +381,9 @@ utf8ucs2(const u_int8_t *in, int n, u_int16_t *out)
 		return 2;
 	} else if (in[0] <= 0xef) {
 		if (n < 3) return 0;
-		outch = (in[0] & 0x1f) << 12 | (in[1] & 0x3f) << 6 | (in[2] & 0x3f);
+		outch = (in[0] & 0x1f) << 12
+			| (in[1] & 0x3f) << 6
+			| (in[2] & 0x3f);
 		if (out)
 			*out = htole16(outch);
 		return 3;
@@ -438,5 +441,3 @@ exfatfs_utf8ucs2str(const u_int8_t *in, int n, u_int16_t *out, int m)
 
 	return p - out;
 }
-
-
