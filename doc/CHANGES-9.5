@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.7 2024/06/26 17:13:55 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.8 2024/07/01 20:05:04 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -94,4 +94,11 @@ usr.sbin/btpand/btpand.c			1.9
 
 	btpand(8): fix off-by-one bug causing out of bounds memory access.
 	[plunky, ticket #1851]
+
+crypto/external/bsd/openssh/dist/log.c		1.29
+crypto/external/bsd/openssh/dist/version.h	(patch)
+
+	sshd(8): PR 58386:  avoid strnvis and syslog_r in signal handler
+	context. Fixes CVE-2024-6387.
+	[riastradh, ticket #1854]
 
