@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2020 2024/06/30 09:41:11 mrg Exp $
+#	$NetBSD: 3RDPARTY,v 1.2021 2024/07/01 01:41:49 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1569,7 +1569,7 @@ Notes:
 
 Package:	mpfr
 Version:	4.2.0
-Current Vers:	4.2.0
+Current Vers:	4.2.1
 Maintainer:
 Archive Site:	http://www.mpfr.org/mpfr-current/
 Home Page:	http://www.mpfr.org/
@@ -1581,7 +1581,7 @@ Notes:
 
 Package:	GNU MP
 Version:	6.2.1
-Current Vers:	6.2.1
+Current Vers:	6.3.0
 Maintainer:	https://gmplib.org/mailman/listinfo/gmp-devel
 Archive Site:	https://gmplib.org/
 Home Page:	https://gmplib.org/
