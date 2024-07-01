@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.352 2024/06/10 08:04:44 kre Exp $
+$NetBSD: UPDATING,v 1.353 2024/07/01 09:33:14 martin Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,10 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20240628:
+	Update builds will require removing the tools objdir for binutils
+	(as most architectures should use binutils.old now).
 
 20240610:
 	Update builds are likely to require removing the objdir for
