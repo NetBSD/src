@@ -1,11 +1,11 @@
-/*	$NetBSD: rump_namei.h,v 1.52 2023/09/23 18:21:43 ad Exp $	*/
+/*	$NetBSD: rump_namei.h,v 1.53 2024/07/01 00:58:43 christos Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.64 2023/09/23 18:21:12 ad Exp 
+ *   from: NetBSD: namei.src,v 1.65 2024/07/01 00:58:05 christos Exp 
  */
 
 #ifndef _RUMP_RUMP_NAMEI_H_
