@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.80 2024/06/29 13:46:09 christos Exp $
+	$NetBSD: syscalls.master,v 1.81 2024/07/01 01:35:52 christos Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -48,6 +48,7 @@
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/common/linux_machdep.h>
+#include <compat/linux/common/linux_mqueue.h>
 #include <compat/linux/common/linux_sched.h>
 
 
@@ -467,12 +468,23 @@
 271	UNIMPL		pciconfig_iobase
 272	UNIMPL		pciconfig_read
 273	UNIMPL		pciconfig_write
-274	UNIMPL		mq_open
-275	UNIMPL		mq_unlink
-276	UNIMPL		mq_timedsend
-277	UNIMPL		mq_timedreceive
-278	UNIMPL		mq_notify
-279	UNIMPL		mq_getsetattr
+274	STD		{ linux_mqd_t|linux_sys||mq_open(const char *name, \
+			    int oflag, linux_umode_t mode, \
+			    struct linux_mq_attr *attr); }
+275	STD		{ int|linux_sys||mq_unlink(const char *name); }
+276	STD		{ int|linux_sys||mq_timedsend(linux_mqd_t mqdes, \
+			    const char *msg_ptr, size_t msg_len, \
+			    unsigned int msg_prio, \
+			    const struct linux_timespec *abs_timeout); }
+277	STD		{ ssize_t|linux_sys||mq_timedreceive(linux_mqd_t mqdes, \
+			    char *msg_ptr, size_t msg_len, \
+			    unsigned int *msg_prio, \
+			    const struct linux_timespec *abs_timeout); }
+278	STD		{ int|linux_sys||mq_notify(linux_mqd_t mqdes, \
+			    const struct linux_sigevent *sevp); }
+279	STD		{ int|linux_sys||mq_getsetattr(linux_mqd_t mqdes, \
+			    const struct linux_mq_attr *newattr, \
+			    struct linux_mq_attr *oldattr); }
 280	STD		{ int|linux_sys||waitid(int idtype, id_t id, \
 			    linux_siginfo_t *infop, int options, \
 			    struct rusage50 *rusage); }
