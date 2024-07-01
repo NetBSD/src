@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.52 2024/06/29 13:46:40 rin Exp $
+#	$NetBSD: Makefile,v 1.53 2024/07/01 01:29:59 rin Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -29,11 +29,8 @@ SRCS+= biosgetsystime.S cpufunc.S bootmenu.c
 SRCS+= realprot.S message.S message32.S dump_eax.S pvcopy.S putstr.S putstr32.S
 SRCS+= rasops.c vbe.c biosvbe.S
 .if (${I386_INCLUDE_DISK} == "yes")
-SRCS+= biosdisk.c biosdisk_ll.c bios_disk.S
+SRCS+= biosdisk.c biosdisk_ll.c bios_disk.S diskbuf.c
 CWARNFLAGS.gcc+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
-.endif
-.if (${I386_INCLUDE_DISK} == "yes") || (${I386_INCLUDE_DOS} == "yes")
-SRCS+= diskbuf.c
 .endif
 .if (${I386_INCLUDE_PS2} == "yes")
 SRCS+= biosmca.S biosmemps2.S
