@@ -1,4 +1,4 @@
-/* $NetBSD: linux_systrace_args.c,v 1.26 2024/06/29 13:46:32 christos Exp $ */
+/* $NetBSD: linux_systrace_args.c,v 1.27 2024/07/01 01:36:18 christos Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -1751,6 +1751,62 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		iarg[2] = SCARG(p, len); /* off_t */
 		iarg[3] = SCARG(p, advice); /* int */
 		*n_args = 4;
+		break;
+	}
+	/* linux_sys_mq_open */
+	case 274: {
+		const struct linux_sys_mq_open_args *p = params;
+		uarg[0] = (intptr_t) SCARG(p, name); /* const char * */
+		iarg[1] = SCARG(p, oflag); /* int */
+		iarg[2] = SCARG(p, mode); /* linux_umode_t */
+		uarg[3] = (intptr_t) SCARG(p, attr); /* struct linux_mq_attr * */
+		*n_args = 4;
+		break;
+	}
+	/* linux_sys_mq_unlink */
+	case 275: {
+		const struct linux_sys_mq_unlink_args *p = params;
+		uarg[0] = (intptr_t) SCARG(p, name); /* const char * */
+		*n_args = 1;
+		break;
+	}
+	/* linux_sys_mq_timedsend */
+	case 276: {
+		const struct linux_sys_mq_timedsend_args *p = params;
+		iarg[0] = SCARG(p, mqdes); /* linux_mqd_t */
+		uarg[1] = (intptr_t) SCARG(p, msg_ptr); /* const char * */
+		uarg[2] = SCARG(p, msg_len); /* size_t */
+		uarg[3] = SCARG(p, msg_prio); /* unsigned int */
+		uarg[4] = (intptr_t) SCARG(p, abs_timeout); /* const struct linux_timespec * */
+		*n_args = 5;
+		break;
+	}
+	/* linux_sys_mq_timedreceive */
+	case 277: {
+		const struct linux_sys_mq_timedreceive_args *p = params;
+		iarg[0] = SCARG(p, mqdes); /* linux_mqd_t */
+		uarg[1] = (intptr_t) SCARG(p, msg_ptr); /* char * */
+		uarg[2] = SCARG(p, msg_len); /* size_t */
+		uarg[3] = (intptr_t) SCARG(p, msg_prio); /* unsigned int * */
+		uarg[4] = (intptr_t) SCARG(p, abs_timeout); /* const struct linux_timespec * */
+		*n_args = 5;
+		break;
+	}
+	/* linux_sys_mq_notify */
+	case 278: {
+		const struct linux_sys_mq_notify_args *p = params;
+		iarg[0] = SCARG(p, mqdes); /* linux_mqd_t */
+		uarg[1] = (intptr_t) SCARG(p, sevp); /* const struct linux_sigevent * */
+		*n_args = 2;
+		break;
+	}
+	/* linux_sys_mq_getsetattr */
+	case 279: {
+		const struct linux_sys_mq_getsetattr_args *p = params;
+		iarg[0] = SCARG(p, mqdes); /* linux_mqd_t */
+		uarg[1] = (intptr_t) SCARG(p, newattr); /* const struct linux_mq_attr * */
+		uarg[2] = (intptr_t) SCARG(p, oldattr); /* struct linux_mq_attr * */
+		*n_args = 3;
 		break;
 	}
 	/* linux_sys_waitid */
@@ -4996,6 +5052,108 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* linux_sys_mq_open */
+	case 274:
+		switch(ndx) {
+		case 0:
+			p = "const char *";
+			break;
+		case 1:
+			p = "int";
+			break;
+		case 2:
+			p = "linux_umode_t";
+			break;
+		case 3:
+			p = "struct linux_mq_attr *";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_mq_unlink */
+	case 275:
+		switch(ndx) {
+		case 0:
+			p = "const char *";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_mq_timedsend */
+	case 276:
+		switch(ndx) {
+		case 0:
+			p = "linux_mqd_t";
+			break;
+		case 1:
+			p = "const char *";
+			break;
+		case 2:
+			p = "size_t";
+			break;
+		case 3:
+			p = "unsigned int";
+			break;
+		case 4:
+			p = "const struct linux_timespec *";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_mq_timedreceive */
+	case 277:
+		switch(ndx) {
+		case 0:
+			p = "linux_mqd_t";
+			break;
+		case 1:
+			p = "char *";
+			break;
+		case 2:
+			p = "size_t";
+			break;
+		case 3:
+			p = "unsigned int *";
+			break;
+		case 4:
+			p = "const struct linux_timespec *";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_mq_notify */
+	case 278:
+		switch(ndx) {
+		case 0:
+			p = "linux_mqd_t";
+			break;
+		case 1:
+			p = "const struct linux_sigevent *";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_mq_getsetattr */
+	case 279:
+		switch(ndx) {
+		case 0:
+			p = "linux_mqd_t";
+			break;
+		case 1:
+			p = "const struct linux_mq_attr *";
+			break;
+		case 2:
+			p = "struct linux_mq_attr *";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* linux_sys_waitid */
 	case 280:
 		switch(ndx) {
@@ -6800,6 +6958,36 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* linux_sys_fadvise64_64 */
 	case 270:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_mq_open */
+	case 274:
+		if (ndx == 0 || ndx == 1)
+			p = "linux_mqd_t";
+		break;
+	/* linux_sys_mq_unlink */
+	case 275:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_mq_timedsend */
+	case 276:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_mq_timedreceive */
+	case 277:
+		if (ndx == 0 || ndx == 1)
+			p = "ssize_t";
+		break;
+	/* linux_sys_mq_notify */
+	case 278:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_mq_getsetattr */
+	case 279:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
