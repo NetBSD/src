@@ -20,6 +20,14 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 ##############################################################################
 
+Changes from version 4.2.0 to version 4.2.1:
+- Bug fixes (see <https://www.mpfr.org/mpfr-4.2.0/#fixed> and/or the
+  ChangeLog file).
+- Improved MPFR manual.
+- Configure tests: replaced the test of the link with GMP, in order to
+  avoid the use of a function without a prototype (Autoconf issue), as
+  this is obsolescent in ISO C. The new test should be more robust.
+
 Changes from versions 4.1.* to version 4.2.0:
 - The "fondue savoyarde" release.
 - Binary compatible with MPFR 4.0.* and 4.1.*, though some minor changes in

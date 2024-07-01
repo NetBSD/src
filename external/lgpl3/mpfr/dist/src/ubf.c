@@ -74,10 +74,10 @@ void
 mpfr_ubf_mul_exact (mpfr_ubf_ptr a, mpfr_srcptr b, mpfr_srcptr c)
 {
   MPFR_LOG_FUNC
-    (("b[%Pu]=%.*Rg c[%Pu]=%.*Rg",
+    (("b[%Pd]=%.*Rg c[%Pd]=%.*Rg",
       mpfr_get_prec (b), mpfr_log_prec, b,
       mpfr_get_prec (c), mpfr_log_prec, c),
-     ("a[%Pu]=%.*Rg",
+     ("a[%Pd]=%.*Rg",
       mpfr_get_prec ((mpfr_ptr) a), mpfr_log_prec, a));
 
   MPFR_ASSERTD ((mpfr_ptr) a != b);

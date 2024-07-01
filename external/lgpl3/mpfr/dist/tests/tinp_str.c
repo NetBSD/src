@@ -20,7 +20,13 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
+#include <ctype.h>
+
 #include "mpfr-test.h"
+
+#ifdef HAVE_LOCALE_H
+#include <locale.h>
+#endif
 
 int
 main (int argc, char *argv[])
@@ -43,28 +49,26 @@ main (int argc, char *argv[])
       exit (1);
     }
   i = mpfr_inp_str (x, f, 10, MPFR_RNDN);
-  if (i == 0 || mpfr_cmp_si (x, -1700))
+  if (i != 5 || mpfr_cmp_si0 (x, -1700))
     {
       printf ("Error in reading 1st line from file inp_str.dat (%d)\n", i);
       mpfr_dump (x);
       exit (1);
     }
   i = mpfr_inp_str (x, f, 10, MPFR_RNDN);
-  if (i == 0 || mpfr_cmp_ui (x, 31415))
+  if (i != 10 || mpfr_cmp_ui0 (x, 31415))
     {
       printf ("Error in reading 2nd line from file inp_str.dat (%d)\n", i);
       mpfr_dump (x);
       exit (1);
     }
-  getc (f);
   i = mpfr_inp_str (x, f, 10, MPFR_RNDN);
-  if (i == 0 || mpfr_cmp_ui (x, 31416))
+  if (i != 111 || mpfr_cmp_ui0 (x, 31416))
     {
       printf ("Error in reading 3rd line from file inp_str.dat (%d)\n", i);
       mpfr_dump (x);
       exit (1);
     }
-  getc (f);
   i = mpfr_inp_str (x, f, 10, MPFR_RNDN);
   if (i != 0)
     {
@@ -79,7 +83,6 @@ main (int argc, char *argv[])
                 2, MPFR_RNDN);
   for (n = 2; n < 63; n++)
     {
-      getc (f);
       i = mpfr_inp_str (x, f, n, MPFR_RNDN);
       if (i == 0 || !mpfr_equal_p (x, y))
         {
@@ -89,6 +92,30 @@ main (int argc, char *argv[])
           exit (1);
         }
       mpfr_set_ui (x, 0, MPFR_RNDN);
+    }
+
+  /* This last test assumes that isspace(0) is false.
+     If it isn't, set the locale to "C" in order to ensure that;
+     but we check isspace(0) again, just in case. */
+  if (! isspace (0)
+#if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
+      || (setlocale (LC_ALL, "C"), ! isspace (0))
+#endif
+      )
+    {
+      i = mpfr_inp_str (x, f, 10, MPFR_RNDN);
+      if (i != 0)
+        {
+          printf ("Error in the '\\0' test (%d)\n", i);
+          exit (1);
+        }
+      i = mpfr_inp_str (x, f, 10, MPFR_RNDN);
+      if (i != 3 || mpfr_cmp_ui0 (x, 17))
+        {
+          printf ("Error following the '\\0' test (%d)\n", i);
+          mpfr_dump (x);
+          exit (1);
+        }
     }
 
   fclose (f);

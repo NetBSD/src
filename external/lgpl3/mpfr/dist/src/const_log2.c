@@ -121,7 +121,7 @@ mpfr_const_log2_internal (mpfr_ptr x, mpfr_rnd_t rnd_mode)
 
   MPFR_LOG_FUNC (
     ("rnd_mode=%d", rnd_mode),
-    ("x[%Pu]=%.*Rg inex=%d", mpfr_get_prec(x), mpfr_log_prec, x, inexact));
+    ("x[%Pd]=%.*Rg inex=%d", mpfr_get_prec(x), mpfr_log_prec, x, inexact));
 
   w = n + MPFR_INT_CEIL_LOG2 (n) + 3;
 

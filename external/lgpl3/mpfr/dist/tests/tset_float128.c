@@ -45,6 +45,8 @@ check_special (void)
   if (! mpfr_nan_p (x))
     {
       printf ("Error in mpfr_set_float128(x, NaN)\n");
+      printf ("got ");
+      mpfr_dump (x);
       exit (1);
     }
   f = mpfr_get_float128 (x, MPFR_RNDN);
@@ -61,12 +63,15 @@ check_special (void)
   if (! mpfr_inf_p (x) || MPFR_IS_NEG (x))
     {
       printf ("Error in mpfr_set_float128(x, +Inf)\n");
+      printf ("got ");
+      mpfr_dump (x);
       exit (1);
     }
   f = mpfr_get_float128 (x, MPFR_RNDN);
   if (f != MPFR_DBL_INFP)
     {
       printf ("Error in mpfr_get_float128(+Inf)\n");
+      printf ("got %f\n", (double) f);
       exit (1);
     }
 
@@ -76,12 +81,15 @@ check_special (void)
   if (! mpfr_inf_p (x) || MPFR_IS_POS (x))
     {
       printf ("Error in mpfr_set_float128(x, -Inf)\n");
+      printf ("got ");
+      mpfr_dump (x);
       exit (1);
     }
   f = mpfr_get_float128 (x, MPFR_RNDN);
   if (f != MPFR_DBL_INFM)
     {
       printf ("Error in mpfr_get_float128(-Inf)\n");
+      printf ("got %f\n", (double) f);
       exit (1);
     }
 #endif
@@ -92,18 +100,22 @@ check_special (void)
   if (! mpfr_zero_p (x) || MPFR_IS_NEG (x))
     {
       printf ("Error in mpfr_set_float128(x, +0)\n");
+      printf ("got ");
+      mpfr_dump (x);
       exit (1);
     }
   f = mpfr_get_float128 (x, MPFR_RNDN);
   if (f != 0.0)  /* the sign is not checked */
     {
       printf ("Error in mpfr_get_float128(+0.0)\n");
+      printf ("got %f\n", (double) f);
       exit (1);
     }
 #if !defined(MPFR_ERRDIVZERO) && defined(HAVE_SIGNEDZ)
   if (1 / f != MPFR_DBL_INFP)  /* check the sign */
     {
       printf ("Error in mpfr_get_float128(+0.0)\n");
+      printf ("got %f\n", (double) f);
       exit (1);
     }
 #endif
@@ -114,12 +126,16 @@ check_special (void)
   if (! mpfr_zero_p (x))
     {
       printf ("Error in mpfr_set_float128(x, -0)\n");
+      printf ("got ");
+      mpfr_dump (x);
       exit (1);
     }
 #if defined(HAVE_SIGNEDZ)
   if (MPFR_IS_POS (x))
     {
       printf ("Error in mpfr_set_float128(x, -0)\n");
+      printf ("got ");
+      mpfr_dump (x);
       exit (1);
     }
 #endif
@@ -127,12 +143,14 @@ check_special (void)
   if (f != -0.0)  /* the sign is not checked */
     {
       printf ("Error in mpfr_get_float128(-0.0)\n");
+      printf ("got %f\n", (double) f);
       exit (1);
     }
 #if !defined(MPFR_ERRDIVZERO) && defined(HAVE_SIGNEDZ)
   if (1 / f != MPFR_DBL_INFM)  /* check the sign */
     {
       printf ("Error in mpfr_get_float128(-0.0)\n");
+      printf ("got %f\n", (double) f);
       exit (1);
     }
 #endif

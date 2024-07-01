@@ -740,10 +740,10 @@ mpfr_mul (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)
   MPFR_TMP_DECL (marker);
 
   MPFR_LOG_FUNC
-    (("b[%Pu]=%.*Rg c[%Pu]=%.*Rg rnd=%d",
+    (("b[%Pd]=%.*Rg c[%Pd]=%.*Rg rnd=%d",
       mpfr_get_prec (b), mpfr_log_prec, b,
       mpfr_get_prec (c), mpfr_log_prec, c, rnd_mode),
-     ("a[%Pu]=%.*Rg inexact=%d",
+     ("a[%Pd]=%.*Rg inexact=%d",
       mpfr_get_prec (a), mpfr_log_prec, a, inexact));
 
   /* deal with special cases */
