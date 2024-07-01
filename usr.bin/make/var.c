@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1125 2024/06/30 15:21:23 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1126 2024/07/01 21:02:26 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1125 2024/06/30 15:21:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1126 2024/07/01 21:02:26 sjg Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3142,6 +3142,21 @@ ok:
 }
 
 static char *
+str_totitle(const char *str)
+{
+	size_t i, n = strlen(str) + 1;
+	char *res = bmake_malloc(n);
+	for (i = 0; i < n; i++) {
+		if (i == 0 || ch_isspace(res[i - 1]))
+			res[i] = ch_toupper(str[i]);
+		else
+			res[i] = ch_tolower(str[i]);
+	}
+	return res;
+}
+
+
+static char *
 str_toupper(const char *str)
 {
 	size_t i, n = strlen(str) + 1;
@@ -3188,6 +3203,13 @@ ApplyModifier_To(const char **pp, ModChain *ch)
 		return AMR_OK;
 	}
 
+	if (mod[1] == 't') {				/* :tt */
+		*pp = mod + 2;
+		if (Expr_ShouldEval(expr))
+			Expr_SetValueOwn(expr, str_totitle(Expr_Str(expr)));
+		return AMR_OK;
+	}
+	
 	if (mod[1] == 'u') {				/* :tu */
 		*pp = mod + 2;
 		if (Expr_ShouldEval(expr))
