@@ -26,7 +26,7 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 ])
 
 dnl Add check-news when it checks for more than 15 lines
-AC_INIT([MPFR],[4.2.0])
+AC_INIT([MPFR],[4.2.1])
 
 dnl AC_CANONICAL_HOST is needed by this configure.ac file.
 dnl AC_CANONICAL_TARGET is not explicitly needed, but may be required by
@@ -94,6 +94,11 @@ dnl There is still some problem with GMP's HAVE_CONFIG
 dnl AC_CONFIG_HEADERS([mpfrconf.h:mpfrconf.in])
 
 unset gmp_lib_path GMP_CFLAGS GMP_CC
+
+unset dev_version
+if $EGREP -q -e '-dev$' $srcdir/VERSION; then
+  dev_version=1
+fi
 
 dnl ********************************************************************
 dnl Extra arguments to configure (AC_ARG_WITH and AC_ARG_ENABLE)
@@ -228,6 +233,9 @@ AC_ARG_ENABLE(warnings,
       *)   AC_MSG_ERROR([bad value for --enable-warnings: yes or no]) ;;
      esac])
 
+dnl For timeout support (in the testsuite), the case "yes" and absent
+dnl --enable-tests-timeout option will be handled in a consistent way
+dnl in MPFR_CONFIGS (see acinclude.m4).
 AC_ARG_ENABLE(tests-timeout,
    [  --enable-tests-timeout=NUM
                           [[for developers]] enable timeout for test programs
@@ -236,7 +244,7 @@ AC_ARG_ENABLE(tests-timeout,
                           overrides NUM (0: no timeout)],
    [ case $enableval in
       no)   ;;
-      yes)  AC_DEFINE([MPFR_TESTS_TIMEOUT], 0, [timeout limit]) ;;
+      yes)  ;;
       [[0-9]]|[[0-9]][[0-9]]|[[0-9]][[0-9]][[0-9]]|[[0-9]][[0-9]][[0-9]][[0-9]])
        AC_DEFINE_UNQUOTED([MPFR_TESTS_TIMEOUT], $enableval, [timeout limit]) ;;
       *)    AC_MSG_ERROR([bad value for --enable-tests-timeout]) ;;
@@ -558,9 +566,16 @@ dnl
 dnl We need to check whether --disable-new-dtags is supported as alternate
 dnl linkers may be used (e.g., with tcc: CC=tcc LD=tcc).
 dnl
+dnl [2023-08]
+dnl On Android/Termux, -Wl,--disable-new-dtags is supported by clang, but
+dnl the DT_RPATH directories are stripped away when running the program.
+dnl Moreover, config.guess identifies the host as GNU/Linux (*-*-linux-gnu)
+dnl instead of Android (linux*android*), so that we need to explicitly
+dnl exclude Termux.
+dnl
 case $host in
-  *-*-linux*)
-    if test -n "$LD_LIBRARY_PATH"; then
+  *-*-linux-gnu)
+    if test -n "$LD_LIBRARY_PATH" && test -z "$TERMUX_VERSION"; then
       saved_LDFLAGS="$LDFLAGS"
       LDFLAGS="$LDFLAGS -Wl,--disable-new-dtags"
       AC_MSG_CHECKING(whether --disable-new-dtags is supported by the linker)
@@ -721,10 +736,25 @@ You probably need to change some of the GMP or MPFR compile options.
 See 'config.log' for details (search for GMP_NUMB_BITS).])],
        [AC_MSG_RESULT([cannot test])])
 
+MPFR_CHECK_MP_LIMB_T_VS_LONG
+MPFR_CHECK_MP_LIMB_T_VS_INTMAX
+
+dnl Now we will need the GMP library (not just gmp.h).
+dnl Do not use AC_CHECK_LIB as it is based on a deprecated ISO C feature.
+LIBS="-lgmp $LIBS"
+
 dnl Check if we can link with GMP
-AC_CHECK_LIB(gmp, __gmpz_init, [LIBS="-lgmp $LIBS"],
- [AC_MSG_ERROR([libgmp not found or uses a different ABI (including static vs shared).
-Please read the INSTALL file -- see "In case of problem".])])
+AC_MSG_CHECKING(if we can link with GMP)
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include "gmp.h"
+mpz_t m;
+]],[[
+mpz_init (m);
+]])],[AC_MSG_RESULT(yes)],[
+ AC_MSG_RESULT(no)
+ AC_MSG_ERROR([libgmp not found or uses a different ABI (including static vs shared).
+Please read the INSTALL file -- see "In case of problem".])
+])
 
 dnl Check for corresponding 'gmp.h' and libgmp
 AC_MSG_CHECKING(if gmp.h version and libgmp version are the same)
@@ -801,9 +831,6 @@ AC_CHECK_FUNCS([__gmpn_invert_limb])
 dnl mpn_rsblsh1_n(rp, up, vp, n) does {rp, n} <- 2 * {vp, n} - {up, n}
 AC_CHECK_FUNCS([__gmpn_rsblsh1_n])
 
-MPFR_CHECK_MP_LIMB_T_VS_LONG
-MPFR_CHECK_MP_LIMB_T_VS_INTMAX
-
 else
 
 dnl Setup for mini-gmp
@@ -857,7 +884,7 @@ if test -f confdefs.h; then
   done
 fi
 
-if $EGREP -q -e '-dev$' $srcdir/VERSION; then
+if test -n "$dev_version"; then
   AC_SUBST([DATAFILES])dnl
   DATAFILES=`echo \`$SED -n \
     's/^ *data_check *("\(data\/[[^"]]*\)".*/tests\/\1/p' \

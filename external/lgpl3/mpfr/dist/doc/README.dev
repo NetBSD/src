@@ -241,6 +241,7 @@ To make a release (for the MPFR team):
      This should at least be done last, in order to be complete before the
      generation of the tarball.
      Note: First, make sure that all the pending commits have been done.
+     Push the changes with "git push".
 
   5) Create an annotated tag whose name corresponds to the content of
      the VERSION file:
@@ -435,8 +436,13 @@ To make a release (for the MPFR team):
      In case of a new patchlevel release, add a link from the web page
      of the previous release.
 
-     * For the release candidates: Announce the RC in the mpfr-announce,
-     mpfr, gmp-discuss, gcc and platform-testers[2] mailing-lists.
+     * For the release candidates:
+     Upload the tarballs and the signatures to the MPFR web server
+     (via the misc.git repository).
+     Run the tools/announce-text script to do some checking and get
+     the announce text. Edit this text if need be.
+     Announce the RC in the mpfr-announce, mpfr, gmp-discuss, gcc and
+     platform-testers[2] mailing-lists.
      A minimal web page for the MPFR release can be created right now
      (see Git history such as [3] for examples), as the manual already
      contains the new URLs.

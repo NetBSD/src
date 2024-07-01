@@ -1363,6 +1363,63 @@ bug20181127 (void)
   mpfr_clears (x, y, (mpfr_ptr) 0);
 }
 
+/* Bug reported by Michael Jones (case i = 0 below)
+     https://sympa.inria.fr/sympa/arc/mpfr/2023-06/msg00000.html
+   This yields an integer overflow -LONG_MIN. The result might still
+   be correct, but a runtime error is obtained with an UB sanitizer:
+     strtofr.c:745:11: runtime error: negation of -9223372036854775808 [...]
+   Details after an analysis:
+   With GCC 4.9.4 and tcc, one gets an assertion failure:
+     mpn_exp.c:94: MPFR assertion failed: e > 0
+   And if all assertions are disabled with
+     ./configure --enable-assert=none CC=gcc-4.9
+   one gets an incorrect result:
+     Error in bug20230606 for i = 0
+     Expected x = 0
+     Got      x = 0.11001100110011001E-3
+   This issue is not visible with GCC 8.4.0 and later, even with -O0,
+   because GCC now transforms "-X >= 0" to "X <= 0" (which is valid
+   under the ISO C rules). Note that such an optimization generally
+   makes buggy code (which assumes "wrapping") fail; here, it makes
+   the bug invisible!
+
+   Case i = 1 should be identical.
+
+   Case i = 2 shows another bug (probably with all compilers):
+     Error in bug20230606 for i = 2
+     Expected x = 0
+     Got      x = 0.11111111111111111E1073741823
+   or with an UB sanitizer:
+     strtofr.c:428:19: runtime error: signed integer overflow: [...]
+   This is the bug mentioned at
+     https://sympa.inria.fr/sympa/arc/mpfr/2023-06/msg00001.html
+*/
+static void
+bug20230606 (void)
+{
+  const char *const s[] = {
+    "0.1E-99999999999999999999",
+    ".1E-99999999999999999999",
+    ".01E-99999999999999999999" };
+  mpfr_t x;
+  int i;
+
+  mpfr_init2 (x, 17);
+  for (i = 0; i < numberof (s); i++)
+    {
+      mpfr_strtofr (x, s[i], NULL, 10, MPFR_RNDZ);
+      if (!mpfr_zero_p (x) || mpfr_signbit (x) != 0)
+        {
+          printf ("Error in bug20230606 for i = %d\n", i);
+          printf ("Expected x = 0\n");
+          printf ("Got      x = ");
+          mpfr_dump (x);
+          exit (1);
+        }
+    }
+  mpfr_clear (x);
+}
+
 static void
 coverage (void)
 {
@@ -1563,6 +1620,7 @@ main (int argc, char *argv[])
   bug20161217 ();
   bug20170308 ();
   bug20181127 ();
+  bug20230606 ();
   random_tests ();
 
   tests_end_mpfr ();

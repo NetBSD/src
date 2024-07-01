@@ -47,8 +47,8 @@ mpfr_eint_aux (mpfr_ptr y, mpfr_srcptr x)
   MPFR_GROUP_DECL (group);
 
   MPFR_LOG_FUNC (
-    ("x[%Pu]=%.*Rg", mpfr_get_prec (x), mpfr_log_prec, x),
-    ("y[%Pu]=%.*Rg", mpfr_get_prec (y), mpfr_log_prec, y));
+    ("x[%Pd]=%.*Rg", mpfr_get_prec (x), mpfr_log_prec, x),
+    ("y[%Pd]=%.*Rg", mpfr_get_prec (y), mpfr_log_prec, y));
 
   /* for |x| <= 1, we have S := sum(x^k/k/k!, k=1..infinity) = x + R(x)
      where |R(x)| <= (x/2)^2/(1-|x|/2) <= 2*(x/2)^2
@@ -182,7 +182,7 @@ mpfr_eint_asympt (mpfr_ptr y, mpfr_srcptr x)
   mpfr_exp_t err_exp;
 
   MPFR_LOG_FUNC (
-    ("x[%Pu]=%.*Rg", mpfr_get_prec (x), mpfr_log_prec, x),
+    ("x[%Pd]=%.*Rg", mpfr_get_prec (x), mpfr_log_prec, x),
     ("err_exp=%" MPFR_EXP_FSPEC "d", (mpfr_eexp_t) err_exp));
 
   mpfr_init2 (t, p);
@@ -232,8 +232,8 @@ mpfr_eint (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
   MPFR_ZIV_DECL (loop);
 
   MPFR_LOG_FUNC (
-    ("x[%Pu]=%.*Rg rnd=%d", mpfr_get_prec (x), mpfr_log_prec, x, rnd),
-    ("y[%Pu]=%.*Rg inexact=%d", mpfr_get_prec (y), mpfr_log_prec, y, inex));
+    ("x[%Pd]=%.*Rg rnd=%d", mpfr_get_prec (x), mpfr_log_prec, x, rnd),
+    ("y[%Pd]=%.*Rg inexact=%d", mpfr_get_prec (y), mpfr_log_prec, y, inex));
 
   if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (x)))
     {

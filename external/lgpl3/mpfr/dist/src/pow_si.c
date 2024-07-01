@@ -43,9 +43,9 @@ int
 POW_S (mpfr_ptr y, mpfr_srcptr x, TYPE n, mpfr_rnd_t rnd)
 {
   MPFR_LOG_FUNC
-    (("x[%Pu]=%.*Rg n=%" FSPEC "d rnd=%d",
+    (("x[%Pd]=%.*Rg n=%" FSPEC "d rnd=%d",
       mpfr_get_prec (x), mpfr_log_prec, x, n, rnd),
-     ("y[%Pu]=%.*Rg", mpfr_get_prec (y), mpfr_log_prec, y));
+     ("y[%Pd]=%.*Rg", mpfr_get_prec (y), mpfr_log_prec, y));
 
   if (n >= 0)
     return POW_U (y, x, n, rnd);
