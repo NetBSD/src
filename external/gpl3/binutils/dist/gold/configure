@@ -8744,6 +8744,7 @@ $as_echo "$LIBINTL" >&6; }
 
       fi
 
+
 $as_echo "#define HAVE_GETTEXT 1" >>confdefs.h
 
 
