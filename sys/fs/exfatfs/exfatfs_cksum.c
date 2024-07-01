@@ -1,7 +1,7 @@
-/*	$NetBSD: exfatfs_cksum.c,v 1.1.2.1 2024/06/29 19:43:26 perseant Exp $	*/
+/*	$NetBSD: exfatfs_cksum.c,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $	*/
 
 /*-
- * Copyright (c) 2022 The NetBSD Foundation, Inc.
+ * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_cksum.c,v 1.1.2.1 2024/06/29 19:43:26 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_cksum.c,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $");
 
 #include <sys/types.h>
 #ifdef _KERNEL
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: exfatfs_cksum.c,v 1.1.2.1 2024/06/29 19:43:26 persea
 #ifdef EXFATFS_CKSUM_DEBUG
 # define DPRINTF(x) printf x
 #else
-# define DPRINTF(x)
+# define DPRINTF(x) __nothing
 #endif
 
 /*
@@ -134,78 +134,6 @@ uint16_t exfatfs_cksum16(uint16_t seed, uint8_t *data, uint64_t datalen,
 	
 	return cksum;
 }
-
-/*
-uint32_t BootChecksum(uint8_t *sectors, uint16_t BytesPerSector)
-{
-    uint32_t NumberOfBytes = (uint32_t)BytesPerSector * 11;
-    uint32_t Checksum = 0;
-    uint32_t Index;
-
-    for (Index = 0; Index < NumberOfBytes; Index++)
-    {
-        if ((Index == 106) || (Index == 107) || (Index == 112))
-        {
-            continue;
-        }
-        Checksum = ((Checksum&1) ? 0x80000000 : 0) + (Checksum>>1) + (uint32_t)Sectors[Index];
-    }
-
-    return Checksum;
-}
-*/
-
-/*
-uint16_t EntrySetChecksum(uint8_t * Entries, uint8_t SecondaryCount)
-{
-    uint16_t NumberOfBytes = ((uint16_t)SecondaryCount + 1) * 32;
-    uint16_t Checksum = 0;
-    uint16_t Index;
-
-    for (Index = 0; Index < NumberOfBytes; Index++)
-    {
-        if ((Index == 2) || (Index == 3))
-        {
-            continue;
-        }
-        Checksum = ((Checksum&1) ? 0x8000 : 0) + (Checksum>>1) +  (uint16_t)Entries[Index];
-    }
-    return Checksum;
-}
-
-uint32_t TableChecksum
-(
-    uint8_t  * Table,    // points to an in-memory copy of the up-case table
-    uint64_t   DataLength
-)
-{
-    uint32_t Checksum = 0;
-    uint64_t Index;
-
-    for (Index = 0; Index < DataLength; Index++)
-    {
-        Checksum = ((Checksum&1) ? 0x80000000 : 0) + (Checksum>>1) + (uint32_t)Table[Index];
-    }
-
-    return Checksum;
-}
-*/
-
-/*
-uint16_t NameHash (uint16_t *FileName, uint8_t NameLength)
-{
-    uint8_t  * Buffer = (uint8_t *)FileName;
-    uint16_t   NumberOfBytes = (uint16_t)NameLength * 2;
-    uint16_t   Hash = 0;
-    uint16_t   Index;
-
-    for (Index = 0; Index < NumberOfBytes; Index++)
-    {
-        Hash = ((Hash&1) ? 0x8000 : 0) + (Hash>>1) + (uint16_t)Buffer[Index];
-    }
-    return Hash;
-}
-*/
 
 void htole_bootblock(struct exfatfs *out, struct exfatfs *in)
 {

@@ -1,7 +1,7 @@
-/*	$NetBSD: exfatfs_rename.h,v 1.1.2.1 2024/06/29 19:43:26 perseant Exp $	*/
+/*	$NetBSD: exfatfs_rename.h,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $	*/
 
 /*-
- * Copyright (c) 2011, 2022 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011, 2022, 2024 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,6 +31,6 @@
 #ifndef EXFATFS_RENAME_H_
 #define EXFATFS_RENAME_H_
 
-int exfatfs_rename(void *v);
+int exfatfs_rename(void *);
 
 #endif /* EXFATFS_RENAME_H_ */

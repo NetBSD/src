@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_tables.c,v 1.1.2.1 2024/06/29 19:43:26 perseant Exp $	*/
+/*	$NetBSD: exfatfs_tables.c,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_tables.c,v 1.1.2.1 2024/06/29 19:43:26 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_tables.c,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -469,7 +469,8 @@ exfatfs_check_filename_ucs2(uint16_t *name, int len)
 	return 0;
 }
 
-MALLOC_JUSTDEFINE(M_EURO, "Exfatfs upcase table", "Exfatfs upcase table list entry");
+MALLOC_JUSTDEFINE(M_EURO, "Exfatfs upcase table",			\
+		"Exfatfs upcase table list entry");
 	
 void
 exfatfs_load_uctable(struct exfatfs *fs, uint16_t *table, int len)
@@ -566,7 +567,9 @@ exfatfs_upcase_str(struct exfatfs *fs, uint16_t *s, int len)
  * Implement strcasecmp() using this particular upcase table.
  * We don't care *how* the file names differ, only *whether* they differ.
  */
-int exfatfs_upcase_cmp(struct exfatfs *fs, uint16_t *s1, int len1, uint16_t *s2, int len2) {
+int exfatfs_upcase_cmp(struct exfatfs *fs, uint16_t *s1, int len1,
+	uint16_t *s2, int len2)
+{
 	int i, r;
 
 	for (i = 0; i < len1 && i < len2; i++) {

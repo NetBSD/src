@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_extern.c,v 1.1.2.1 2024/06/29 19:43:26 perseant Exp $	*/
+/*	$NetBSD: exfatfs_extern.c,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ typedef struct uvvnode uvnode_t;
 #  include <stdio.h>
 # endif /* !_KERNEL */
 #else
-# define DPRINTF(x)
+# define DPRINTF(x) __nothing
 #endif
 
 #ifdef _KERNEL
@@ -204,7 +204,8 @@ exfatfs_bmap_shared(struct vnode *vp, daddr_t targetlbn, struct vnode **vpp,
 		}
 		assert(pcn >= 2 && pcn < fs->xf_ClusterCount + 2);
 		/* Read the FAT to find the next cluster */
-		if ((error = bread(fs->xf_devvp, EXFATFS_FATBLK(fs, pcn), SECSIZE(fs), 0, &bp)) != 0) {
+		if ((error = bread(fs->xf_devvp, EXFATFS_FATBLK(fs, pcn),
+					SECSIZE(fs), 0, &bp)) != 0) {
 			printf("failed to read FAT pcn %u block 0x%x\n",
 			       (unsigned)pcn, (unsigned)EXFATFS_FATBLK(fs, pcn));
 			goto errout;
@@ -238,7 +239,7 @@ exfatfs_bmap_shared(struct vnode *vp, daddr_t targetlbn, struct vnode **vpp,
 	xip->xi_fatcache_pc = pcn;
 	*bnp = EXFATFS_CLUSTER2HWADDR(fs, pcn)
 		+ EXFATFS_FSSEC2DEVBSIZE(fs, (targetlbn
-					      & ((1 << fs->xf_SectorsPerClusterShift) - 1)));
+			      & ((1 << fs->xf_SectorsPerClusterShift) - 1)));
 
 	/* If we found it, hint the rest of the cluster. */
 	run = EXFATFS_CLUSTER2FSSEC(fs, targetcn + 1) - targetlbn - 1;
@@ -246,7 +247,7 @@ exfatfs_bmap_shared(struct vnode *vp, daddr_t targetlbn, struct vnode **vpp,
 		*runp = run;
 	}
 
-	DPRINTF(("BMAP return lcn %d at pcn 0x%lx -> lbn %d..%d at bn 0x%lx..0x%lx\n",
+	DPRINTF(("BMAP lcn %d at pcn 0x%lx -> lbn %d..%d at bn 0x%lx..0x%lx\n",
 		 (int)lcn, (unsigned long)pcn,
 		 (int)targetlbn, (int)(targetlbn + run),
 		 (unsigned long)*bnp,
@@ -256,7 +257,8 @@ errout:
 	return error;
 }
 
-int exfatfs_mountfs_shared(struct vnode *devvp, struct exfatfs_mount *xmp, unsigned secsize, struct exfatfs **fsp)
+int exfatfs_mountfs_shared(struct vnode *devvp, struct exfatfs_mount *xmp,
+	unsigned secsize, struct exfatfs **fsp)
 {
 	struct exfatfs *fs = NULL;
 	struct buf *bp;
@@ -304,7 +306,7 @@ int exfatfs_mountfs_shared(struct vnode *devvp, struct exfatfs_mount *xmp, unsig
 					   secsize, 0, &bp)) < 0) {
 				DPRINTF(("bread (., %lu, %lu, ., .) errno %d\n",
 					 (unsigned long)((bn + boot_offset)
-							 << (secshift - DEV_BSHIFT)),
+						<< (secshift - DEV_BSHIFT)),
 					 (unsigned long)secsize, error));
 				continue;
 			}
@@ -917,10 +919,16 @@ exfatfs_scandir(struct vnode *dvp,
 					uint16_t ucs2[NAME_MAX];
 					uint8_t utf8[NAME_MAX];
 					int namlen;
-					exfatfs_get_file_name(xip, ucs2, &namlen, sizeof(ucs2));
-					namlen = exfatfs_ucs2utf8str(ucs2, namlen, utf8, sizeof(utf8));
-					printf("trace process inum 0x%lx primary 0x%hhx valid %d len %d name %.*s\n",
-					       INUM(xip), xip->xi_direntp[0]->xd_entryType, valid, namlen, namlen, utf8);
+					exfatfs_get_file_name(xip, ucs2,
+						&namlen, sizeof(ucs2));
+					namlen = exfatfs_ucs2utf8str(ucs2,
+						namlen, utf8, sizeof(utf8));
+					printf("trace process inum 0x%lx"
+					       " primary 0x%hhx valid %d"
+					       " len %d name %.*s\n",
+					       INUM(xip),
+					       xip->xi_direntp[0]->xd_entryType,
+					       valid, namlen, namlen, utf8);
 				}
 #endif /* TRACE_INUM */
 					       
@@ -930,8 +938,10 @@ exfatfs_scandir(struct vnode *dvp,
 					assert(xip->xi_direntp[1] != NULL);
 					assert(dxip->xi_serial == dserial);
 					if (validfunc != NULL) {
-						flags = (*validfunc)(arg, xip, EXFATFS_DIRENT2BYTES(fs, off));
-						assert(dxip->xi_serial == dserial);
+						flags = (*validfunc)(arg, xip,
+						 EXFATFS_DIRENT2BYTES(fs, off));
+						assert(dxip->xi_serial
+							== dserial);
 						if (flags & SCANDIR_DONTFREE) {
 							/*
 							 * Caller will free
@@ -939,11 +949,14 @@ exfatfs_scandir(struct vnode *dvp,
 							 * Get ourselves a
 							 * new one.
 							 */
-							xip = exfatfs_newxfinode(fs, 0, 0);
+							xip = exfatfs_newxfinode
+								(fs, 0, 0);
 						}
-						assert(dxip->xi_serial == dserial);
+						assert(dxip->xi_serial
+							== dserial);
 						if (flags & SCANDIR_STOP) {
-							DPRINTF(("  SCANDIR_STOP\n"));
+							DPRINTF(("  SCANDIR"
+								 "_STOP\n"));
 							goto out;
 						}
 					}

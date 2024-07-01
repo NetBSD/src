@@ -1,4 +1,31 @@
-/* $NetBSD: exfatfs.h,v 1.1.2.1 2024/06/29 19:43:26 perseant Exp $ */
+/* $NetBSD: exfatfs.h,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $ */
+
+/*-
+ * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #ifndef FS_EXFATFS_EXFATFS_H_
 #define FS_EXFATFS_EXFATFS_H_
 
@@ -63,7 +90,8 @@ struct exfatfs {
 #define xf_FatLength xf_exfatdfs.xdf_FatLength
 #define xf_ClusterHeapOffset xf_exfatdfs.xdf_ClusterHeapOffset
 #define xf_ClusterCount xf_exfatdfs.xdf_ClusterCount
-#define xf_FirstClusterOfRootDirectory xf_exfatdfs.xdf_FirstClusterOfRootDirectory
+#define xf_FirstClusterOfRootDirectory \
+		xf_exfatdfs.xdf_FirstClusterOfRootDirectory
 #define xf_VolumeSerialNumber xf_exfatdfs.xdf_VolumeSerialNumber
 #define xf_FileSystemRevision xf_exfatdfs.xdf_FileSystemRevision
 #define EXFATFS_MAJOR(fs) (((fs)->xf_FileSystemRevision & 0xFF00) >> 8)
@@ -108,7 +136,8 @@ struct exfatfs {
  * DEV_BSIZE is 512 bytes and cluster numbers are 4 bytes,
  * so there are 128 = 2**7 entries per DEV_BSIZE.
  */
-#define EXFATFS_FATBLK(fs, clust) (((fs)->xf_FatOffset >> ((fs)->xf_BytesPerSectorShift - DEV_BSHIFT)) + ((clust) >> 7))
+#define EXFATFS_FATBLK(fs, clust) (((fs)->xf_FatOffset >> 		\
+	((fs)->xf_BytesPerSectorShift - DEV_BSHIFT)) + ((clust) >> 7))
 #define EXFATFS_FATOFF(clust) ((clust) & 0x7F)
 
 #if 0
@@ -144,18 +173,26 @@ struct exfatfs_args {
 #define EXFATFS_DIRENT2BYTES(fs, e) ((e) << EXFATFS_DIRENT_BASESHIFT)
 
 /* Convert from sizeof(dirent) to cluster */
-#define EXFATFS_DIRENT_SHIFT(fs) ((fs)->xf_BytesPerSectorShift + (fs)->xf_SectorsPerClusterShift - EXFATFS_DIRENT_BASESHIFT)
+#define EXFATFS_DIRENT_SHIFT(fs) ((fs)->xf_BytesPerSectorShift + \
+	(fs)->xf_SectorsPerClusterShift - EXFATFS_DIRENT_BASESHIFT)
 
-#define EXFATFS_DIRENT2DEVBSIZE(fs, e) ((e) >> (DEV_BSHIFT - EXFATFS_DIRENT_BASESHIFT))
-#define EXFATFS_DEVBSIZE2DIRENT(fs, e) ((e) << (DEV_BSHIFT - EXFATFS_DIRENT_BASESHIFT))
-#define EXFATFS_DIRENT2FSSEC(fs, e) ((e) >> (fs->xf_BytesPerSectorShift - EXFATFS_DIRENT_BASESHIFT))
-#define EXFATFS_FSSEC2DIRENT(fs, sec) ((sec) << (fs->xf_BytesPerSectorShift - EXFATFS_DIRENT_BASESHIFT))
+#define EXFATFS_DIRENT2DEVBSIZE(fs, e) ((e) >> (DEV_BSHIFT - \
+					EXFATFS_DIRENT_BASESHIFT))
+#define EXFATFS_DEVBSIZE2DIRENT(fs, e) ((e) << (DEV_BSHIFT \
+						- EXFATFS_DIRENT_BASESHIFT))
+#define EXFATFS_DIRENT2FSSEC(fs, e) ((e) >> (fs->xf_BytesPerSectorShift \
+						- EXFATFS_DIRENT_BASESHIFT))
+#define EXFATFS_FSSEC2DIRENT(fs, sec) ((sec) << (fs->xf_BytesPerSectorShift \
+						- EXFATFS_DIRENT_BASESHIFT))
 
 /* If we have an entry number we may need to convert it to lbn and offset */
-#define EXFATFS_DIRENT2ENTRY(fs, e) EXFATFS_BYTES2DIRENT((fs), (EXFATFS_DIRENT2BYTES((fs), (e)) & SECMASK(fs)))
+#define EXFATFS_DIRENT2ENTRY(fs, e) EXFATFS_BYTES2DIRENT((fs), \
+			(EXFATFS_DIRENT2BYTES((fs), (e)) & SECMASK(fs)))
 
-#define EXFATFS_CLUST_ENTRY2INO(fs, clust, entry) ((((uint64_t)clust) << EXFATFS_DIRENT_SHIFT(fs)) | (entry))
-#define EXFATFS_HWADDR_ENTRY2INO(fs, bn, entry) ((EXFATFS_HWADDR2CLUSTER((fs), (bn)) << EXFATFS_DIRENT_SHIFT(fs)) | (entry))
+#define EXFATFS_CLUST_ENTRY2INO(fs, clust, entry) ((((uint64_t)clust) \
+				<< EXFATFS_DIRENT_SHIFT(fs)) | (entry))
+#define EXFATFS_HWADDR_ENTRY2INO(fs, bn, entry) ((EXFATFS_HWADDR2CLUSTER((fs),\
+			 (bn)) << EXFATFS_DIRENT_SHIFT(fs)) | (entry))
 #define INO2CLUST(ino) ((ino) >> EXFATFS_DIRENT_SHIFT(fs))
 #define INO2ENTRY(ino) ((ino) & ((1 << EXFATFS_DIRENT_SHIFT(fs)) - 1))
 #define ROOTDIRCLUST 1
@@ -165,24 +202,40 @@ struct exfatfs_args {
 /*
  * Units conversions between clusters, filesystem sectors and DEV_BSIZE.
  */
-#define EXFATFS_FSSEC2DEVBSIZE(fs, bn) ((bn) << ((fs)->xf_BytesPerSectorShift - DEV_BSHIFT))
-#define EXFATFS_DEVBSIZE2FSSEC(fs, bn) ((bn) >> ((fs)->xf_BytesPerSectorShift - DEV_BSHIFT))
-#define EXFATFS_BYTES2CLUSTER(fs, n) ((n) >> ((fs)->xf_BytesPerSectorShift + (fs)->xf_SectorsPerClusterShift))
+#define EXFATFS_FSSEC2DEVBSIZE(fs, bn) ((bn) << ((fs)->xf_BytesPerSectorShift \
+							- DEV_BSHIFT))
+#define EXFATFS_DEVBSIZE2FSSEC(fs, bn) ((bn) >> ((fs)->xf_BytesPerSectorShift \
+							- DEV_BSHIFT))
+#define EXFATFS_BYTES2CLUSTER(fs, n) ((n) >> ((fs)->xf_BytesPerSectorShift \
+					+ (fs)->xf_SectorsPerClusterShift))
 #define EXFATFS_BYTES2FSSEC(fs, n) ((n) >> ((fs)->xf_BytesPerSectorShift))
 #define EXFATFS_FSSEC2BYTES(fs, n) ((n) << ((fs)->xf_BytesPerSectorShift))
-#define EXFATFS_CLUSTER2BYTES(fs, cn) ((cn) << ((fs)->xf_BytesPerSectorShift + (fs)->xf_SectorsPerClusterShift))
-#define EXFATFS_CLUSTER2DEVBSIZE(fs, cn) ((cn) << ((fs)->xf_BytesPerSectorShift + (fs)->xf_SectorsPerClusterShift - DEV_BSHIFT))
-#define EXFATFS_DEVBSIZE2CLUSTER(fs, bn) ((bn) >> ((fs)->xf_BytesPerSectorShift + (fs)->xf_SectorsPerClusterShift - DEV_BSHIFT))
-#define EXFATFS_CLUSTER2FSSEC(fs, clust) ((clust) << (fs)->xf_SectorsPerClusterShift)
-#define EXFATFS_FSSEC2CLUSTER(fs, lbn)   ((lbn) >> (fs)->xf_SectorsPerClusterShift)
+#define EXFATFS_CLUSTER2BYTES(fs, cn) ((cn) << ((fs)->xf_BytesPerSectorShift \
+					+ (fs)->xf_SectorsPerClusterShift))
+#define EXFATFS_CLUSTER2DEVBSIZE(fs, cn) ((cn) << ((fs)->xf_BytesPerSectorShift\
+			 + (fs)->xf_SectorsPerClusterShift - DEV_BSHIFT))
+#define EXFATFS_DEVBSIZE2CLUSTER(fs, bn) ((bn) >> ((fs)->xf_BytesPerSectorShift\
+			 + (fs)->xf_SectorsPerClusterShift - DEV_BSHIFT))
+#define EXFATFS_CLUSTER2FSSEC(fs, clust) ((clust) << 			\
+			(fs)->xf_SectorsPerClusterShift)
+#define EXFATFS_FSSEC2CLUSTER(fs, lbn)   ((lbn) >> 			\
+			(fs)->xf_SectorsPerClusterShift)
 #define SECSIZE(fs) (1 << (fs)->xf_BytesPerSectorShift)
 #define SECMASK(fs) (SECSIZE(fs) - 1)
-#define CLUSTERSIZE(fs) (1 << ((fs)->xf_BytesPerSectorShift + (fs)->xf_SectorsPerClusterShift))
+#define CLUSTERSIZE(fs) (1 << ((fs)->xf_BytesPerSectorShift + 		\
+				(fs)->xf_SectorsPerClusterShift))
 #define CLUSTERMASK(fs) (CLUSTERSIZE(fs) - 1)
+/* The unit in which I/O is performed */
+#define IOSIZE(fs) MIN(CLUSTERSIZE(fs), MAXPHYS)
+#define IOMASK(fs) (IOSIZE(fs) - 1)
 
-#define EXFATFS_CLUSTER2HWADDR(fs, clust) (EXFATFS_CLUSTER2FSSEC((fs), (clust) - 2) + (fs)->xf_ClusterHeapOffset)
-#define EXFATFS_HWADDR2CLUSTER(fs, bn) (EXFATFS_FSSEC2CLUSTER((fs), (bn) - (fs)->xf_ClusterHeapOffset) + 2)
+#define EXFATFS_CLUSTER2HWADDR(fs, clust) (EXFATFS_CLUSTER2FSSEC((fs),	\
+				(clust) - 2) + (fs)->xf_ClusterHeapOffset)
+#define EXFATFS_HWADDR2CLUSTER(fs, bn) (EXFATFS_FSSEC2CLUSTER((fs), (bn) \
+				- (fs)->xf_ClusterHeapOffset) + 2)
 /* The offset of this block relative to start of cluster, in dirent units */
-#define EXFATFS_HWADDR2DIRENT(fs, bn) EXFATFS_DEVBSIZE2DIRENT((fs), ((bn) - EXFATFS_CLUSTER2HWADDR((fs), EXFATFS_HWADDR2CLUSTER((fs), (bn)))))
+#define EXFATFS_HWADDR2DIRENT(fs, bn) EXFATFS_DEVBSIZE2DIRENT((fs),	\
+	((bn) - EXFATFS_CLUSTER2HWADDR((fs), 				\
+		EXFATFS_HWADDR2CLUSTER((fs), (bn)))))
 
 #endif /* FS_EXFATFS_EXFATFS_H_ */

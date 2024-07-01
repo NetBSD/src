@@ -1,4 +1,4 @@
-/* $NetBSD: exfatfs_vfsops.c,v 1.1.2.1 2024/06/29 19:43:26 perseant Exp $ */
+/* $NetBSD: exfatfs_vfsops.c,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $ */
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_vfsops.c,v 1.1.2.1 2024/06/29 19:43:26 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_vfsops.c,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $");
 
 struct vm_page;
 
@@ -66,7 +66,7 @@ struct vm_page;
 #ifdef EXFATFS_VFSOPS_DEBUG
 # define DPRINTF(x) printf x
 #else
-# define DPRINTF(x)
+# define DPRINTF(x) __nothing
 #endif
 
 static int update_mp(struct mount *, struct exfatfs_args *);
