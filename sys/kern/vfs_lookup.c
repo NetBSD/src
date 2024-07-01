@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.234 2023/05/01 05:12:44 mlelstv Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.235 2024/07/01 00:58:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.234 2023/05/01 05:12:44 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.235 2024/07/01 00:58:04 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -2267,76 +2267,68 @@ namei_simple_convert_flags(namei_simple_flags_t sflags)
 
 int
 namei_simple_kernel(const char *path, namei_simple_flags_t sflags,
-	struct vnode **vp_ret)
+    struct vnode **vp_ret)
 {
 	return nameiat_simple_kernel(NULL, path, sflags, vp_ret);
 }
 
 int
-nameiat_simple_kernel(struct vnode *dvp, const char *path,
-	namei_simple_flags_t sflags, struct vnode **vp_ret)
+nameiat_simple(struct vnode *dvp, struct pathbuf *pb,
+    namei_simple_flags_t sflags, struct vnode **vp_ret)
 {
 	struct nameidata nd;
-	struct pathbuf *pb;
-	int err;
+	int error;
 
-	pb = pathbuf_create(path);
-	if (pb == NULL) {
-		return ENOMEM;
-	}
-
-	NDINIT(&nd,
-		LOOKUP,
-		namei_simple_convert_flags(sflags),
-		pb);
+	NDINIT(&nd, LOOKUP, namei_simple_convert_flags(sflags), pb);
 
 	if (dvp != NULL)
 		NDAT(&nd, dvp);
 
-	err = namei(&nd);
-	if (err != 0) {
-		pathbuf_destroy(pb);
-		return err;
-	}
+	error = namei(&nd);
+	if (error != 0)
+		return error;
+
 	*vp_ret = nd.ni_vp;
-	pathbuf_destroy(pb);
 	return 0;
 }
 
 int
+nameiat_simple_kernel(struct vnode *dvp, const char *path,
+    namei_simple_flags_t sflags, struct vnode **vp_ret)
+{
+	struct pathbuf *pb;
+	int error;
+
+	pb = pathbuf_create(path);
+	if (pb == NULL)
+		return ENOMEM;
+
+	error = nameiat_simple(dvp, pb, sflags, vp_ret);
+
+	pathbuf_destroy(pb);
+	return error;
+}
+
+int
 namei_simple_user(const char *path, namei_simple_flags_t sflags,
-	struct vnode **vp_ret)
+    struct vnode **vp_ret)
 {
 	return nameiat_simple_user(NULL, path, sflags, vp_ret);
 }
 
 int
 nameiat_simple_user(struct vnode *dvp, const char *path,
-	namei_simple_flags_t sflags, struct vnode **vp_ret)
+    namei_simple_flags_t sflags, struct vnode **vp_ret)
 {
 	struct pathbuf *pb;
-	struct nameidata nd;
-	int err;
+	int error;
 
-	err = pathbuf_copyin(path, &pb);
-	if (err) {
-		return err;
-	}
+	error = pathbuf_copyin(path, &pb);
+	if (error)
+		return error;
 
-	NDINIT(&nd,
-		LOOKUP,
-		namei_simple_convert_flags(sflags),
-		pb);
+	error = nameiat_simple(dvp, pb, sflags, vp_ret);
 
-	if (dvp != NULL)
-		NDAT(&nd, dvp);
-
-	err = namei(&nd);
-	if (err != 0) {
-		pathbuf_destroy(pb);
-		return err;
-	}
-	*vp_ret = nd.ni_vp;
 	pathbuf_destroy(pb);
-	return 0;
+	return error;
 }

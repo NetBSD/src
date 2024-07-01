@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.563 2024/07/01 00:51:11 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.564 2024/07/01 00:58:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2020, 2023 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.563 2024/07/01 00:51:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.564 2024/07/01 00:58:04 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -259,8 +259,16 @@ fd_nameiat_simple_user(struct lwp *l, int fdat, const char *path,
 	file_t *dfp;
 	struct vnode *dvp;
 	int error;
+	struct pathbuf *pb;
+	const char *p;
 
-	if (fdat != AT_FDCWD) {
+	error = pathbuf_copyin(path, &pb);
+	if (error) {
+		return error;
+	}
+	p = pathbuf_stringcopy_get(pb);
+
+	if (fdat != AT_FDCWD && p[0] != '/') {
 		if ((error = fd_getvnode(fdat, &dfp)) != 0)
 			goto out;
 
@@ -269,11 +277,15 @@ fd_nameiat_simple_user(struct lwp *l, int fdat, const char *path,
 		dvp = NULL;
 	}
 
-	error = nameiat_simple_user(dvp, path, sflags, vp_ret);
+	error = nameiat_simple(dvp, pb, sflags, vp_ret);
 
 	if (fdat != AT_FDCWD)
 		fd_putfile(fdat);
+
 out:
+	pathbuf_stringcopy_put(pb, p);
+	pathbuf_destroy(pb);
+
 	return error;
 }
 
