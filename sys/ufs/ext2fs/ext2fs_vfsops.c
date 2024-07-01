@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.225 2023/08/27 16:35:51 christos Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.226 2024/07/01 22:12:56 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.225 2023/08/27 16:35:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.226 2024/07/01 22:12:56 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -653,7 +653,8 @@ ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 			return error;
 		}
 		e2fs_cgload(bp->b_data,
-		    &fs->e2fs_gd[i * fs->e2fs_bsize / sizeof(struct ext2_gd)],
+		    &fs->e2fs_gd[i *
+			(fs->e2fs_bsize >> fs->e2fs_group_desc_shift)],
 		    fs->e2fs_bsize, fs->e2fs_group_desc_shift);
 		brelse(bp, 0);
 	}
@@ -770,8 +771,8 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 		    m_fs->e2fs_bsize, 0, &bp);
 		if (error)
 			goto out1;
-		e2fs_cgload(bp->b_data, &m_fs->e2fs_gd[i * m_fs->e2fs_bsize
-		    / sizeof(struct ext2_gd)],
+		e2fs_cgload(bp->b_data, &m_fs->e2fs_gd[i *
+			(m_fs->e2fs_bsize >> m_fs->e2fs_group_desc_shift)],
 		    m_fs->e2fs_bsize, m_fs->e2fs_group_desc_shift);
 		brelse(bp, 0);
 		bp = NULL;
@@ -1334,8 +1335,8 @@ ext2fs_cgupdate(struct ufsmount *mp, int waitfor)
 		bp = getblk(mp->um_devvp, EXT2_FSBTODB(fs,
 		    fs->e2fs.e2fs_first_dblock +
 		    1 /* superblock */ + i), fs->e2fs_bsize, 0, 0);
-		e2fs_cgsave(&fs->e2fs_gd[
-		    i * fs->e2fs_bsize / sizeof(struct ext2_gd)],
+		e2fs_cgsave(&fs->e2fs_gd[i *
+			(m_fs->e2fs_bsize >> m_fs->e2fs_group_desc_shift)],
 		    bp->b_data, fs->e2fs_bsize, fs->e2fs_group_desc_shift);
 		if (waitfor == MNT_WAIT)
 			error = bwrite(bp);
