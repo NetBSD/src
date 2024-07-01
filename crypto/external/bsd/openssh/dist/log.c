@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.28 2024/06/29 18:03:32 riastradh Exp $	*/
+/*	$NetBSD: log.c,v 1.29 2024/07/01 15:42:42 riastradh Exp $	*/
 /* $OpenBSD: log.c,v 1.61 2023/12/06 21:06:48 djm Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: log.c,v 1.28 2024/06/29 18:03:32 riastradh Exp $");
+__RCSID("$NetBSD: log.c,v 1.29 2024/07/01 15:42:42 riastradh Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -422,12 +422,14 @@ void
 sshsigdie(const char *file, const char *func, int line, int showfunc,
     LogLevel level, const char *suffix, const char *fmt, ...)
 {
+#ifdef SYSLOG_R_SAFE_IN_SIGHAND
 	va_list args;
 
 	va_start(args, fmt);
 	sshlogv(file, func, line, showfunc, SYSLOG_LEVEL_FATAL,
 	    suffix, fmt, args);
 	va_end(args);
+#endif
 	_exit(1);
 }
 
