@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.226 2024/07/01 22:12:56 riastradh Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.227 2024/07/02 05:02:49 rin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.226 2024/07/01 22:12:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.227 2024/07/02 05:02:49 rin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1336,7 +1336,7 @@ ext2fs_cgupdate(struct ufsmount *mp, int waitfor)
 		    fs->e2fs.e2fs_first_dblock +
 		    1 /* superblock */ + i), fs->e2fs_bsize, 0, 0);
 		e2fs_cgsave(&fs->e2fs_gd[i *
-			(m_fs->e2fs_bsize >> m_fs->e2fs_group_desc_shift)],
+			(fs->e2fs_bsize >> fs->e2fs_group_desc_shift)],
 		    bp->b_data, fs->e2fs_bsize, fs->e2fs_group_desc_shift);
 		if (waitfor == MNT_WAIT)
 			error = bwrite(bp);
