@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.5 2020/11/21 15:52:32 thorpej Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.6 2024/07/02 06:07:12 rin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.5 2020/11/21 15:52:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.6 2024/07/02 06:07:12 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -172,6 +172,13 @@ mca_intr_disestablish(mca_chipset_tag_t mc, void *cookie)
 	
 
 /*
+ * GCC 12 blames pointer reference to 0-th page, [0, 0xfff].
+ * XXX map to higher address as done for, e.g., arm by devmap?
+ */
+#pragma GCC diagnostic push					/* XXX { */
+#pragma GCC diagnostic ignored "-Warray-bounds"
+
+/*
  * Handle a NMI.
  * return true to panic system, false to ignore.
  */
@@ -249,6 +256,8 @@ mca_disk_unbusy(void)
 {
 	outb(PORT_DISKLED, inb(PORT_DISKLED) & ~DISKLED_ON);
 }
+
+#pragma GCC diagnostic pop					/* XXX } */
 
 /*
  * -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
