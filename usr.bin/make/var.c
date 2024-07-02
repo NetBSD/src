@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1126 2024/07/01 21:02:26 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.1127 2024/07/02 20:10:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1126 2024/07/01 21:02:26 sjg Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1127 2024/07/02 20:10:45 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3209,7 +3209,7 @@ ApplyModifier_To(const char **pp, ModChain *ch)
 			Expr_SetValueOwn(expr, str_totitle(Expr_Str(expr)));
 		return AMR_OK;
 	}
-	
+
 	if (mod[1] == 'u') {				/* :tu */
 		*pp = mod + 2;
 		if (Expr_ShouldEval(expr))
