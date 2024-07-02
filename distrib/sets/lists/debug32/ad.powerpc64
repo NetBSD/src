@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc64,v 1.10 2024/07/01 04:03:04 mrg Exp $
+# $NetBSD: ad.powerpc64,v 1.11 2024/07/02 04:38:56 rin Exp $
 ./usr/lib/powerpc/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/powerpc/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/powerpc/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -255,7 +255,7 @@
 ./usr/libdata/debug/usr/lib/powerpc/libldap.so.6.0.debug	comp-sys-debug	debug,compat,ldap
 ./usr/libdata/debug/usr/lib/powerpc/libldap_r.so.6.0.debug	comp-sys-debug	debug,compat,ldap
 ./usr/libdata/debug/usr/lib/powerpc/liblsan.so.2.0.debug	comp-sys-debug	debug,compat,cxx,gcccmds,gcc=10
-./usr/libdata/debug/usr/lib/powerpc/liblsan.so.2.1.debug	comp-sys-debug	debug,compat,cxx,gcccmds,gcc=12
+./usr/libdata/debug/usr/lib/powerpc/liblsan.so.3.0.debug	comp-sys-debug	debug,compat,cxx,gcccmds,gcc=12
 ./usr/libdata/debug/usr/lib/powerpc/liblua.so.6.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/powerpc/liblzf.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/powerpc/liblzma.so.2.0.debug	comp-sys-debug	debug,compat
