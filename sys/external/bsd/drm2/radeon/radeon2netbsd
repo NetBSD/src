@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: radeon2netbsd,v 1.3 2021/12/19 00:25:26 riastradh Exp $
+#	$NetBSD: radeon2netbsd,v 1.4 2024/07/02 20:09:13 riastradh Exp $
 #
 # $ /path/to/radeon2netbsd > /path/to/files.radeon.new
 #
@@ -17,6 +17,10 @@ radeon_top=external/bsd/drm2/dist/drm/radeon
 radeon_flag=radeon
 
 env CONFIG_ACPI=y \
+env CONFIG_DRM_FBDEV_EMULATION=y \
+env CONFIG_DRM_RADEON=y \
+env CONFIG_MMU_NOTIFIER=y \
+env CONFIG_VGA_SWITCHEROO=y \
 env src=. \
 make -f Makefile -V '$(radeon-y)' \
 | tr ' ' '\n' \
