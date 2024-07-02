@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: nouveau2netbsd,v 1.6 2024/04/16 14:26:53 riastradh Exp $
+#	$NetBSD: nouveau2netbsd,v 1.7 2024/07/02 20:09:01 riastradh Exp $
 #
 # $ /path/to/nouveau2netbsd > /path/to/files.nouveau.new
 #
@@ -36,6 +36,11 @@ cat Kbuild								\
 | sed -e 's,^endif$,.endif,'						\
 | env									\
 	env CONFIG_ACPI=y						\
+	env CONFIG_COMPAT=y						\
+	env CONFIG_DRM_NOUVEAU_SVM=y					\
+	env CONFIG_LEDS_CLASS=y						\
+	env CONFIG_NOUVEAU=y						\
+	env CONFIG_NOUVEAU_BACKLIGHT=y					\
 	env CONFIG_X86=y						\
 	env src=.							\
 	make -f /dev/stdin -V '$(nouveau-y)'				\
@@ -83,7 +88,9 @@ cat Kbuild								\
 ' >> "$filemap"
 
 while read from to; do
-	if [ "x$from" != "x$to" ]; then
+	# If the move already happened, that's fine: the makefile
+	# detects duplicates.
+	if [ "x$from" != "x$to" -a \! -f "$to" ]; then
 		${MV} -f -- "$from" "$to"
 	fi
 	printf 'file\t%s\t%s\n' "$nouveau_top/$to" "$nouveau_flag"
