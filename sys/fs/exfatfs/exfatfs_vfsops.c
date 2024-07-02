@@ -1,4 +1,4 @@
-/* $NetBSD: exfatfs_vfsops.c,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $ */
+/* $NetBSD: exfatfs_vfsops.c,v 1.1.2.3 2024/07/02 20:36:50 perseant Exp $ */
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_vfsops.c,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_vfsops.c,v 1.1.2.3 2024/07/02 20:36:50 perseant Exp $");
 
 struct vm_page;
 
@@ -54,15 +54,15 @@ struct vm_page;
 #include <sys/module.h>
 
 #include <fs/exfatfs/exfatfs.h>
+#include <fs/exfatfs/exfatfs_balloc.h>
 #include <fs/exfatfs/exfatfs_cksum.h>
 #include <fs/exfatfs/exfatfs_conv.h>
 #include <fs/exfatfs/exfatfs_extern.h>
 #include <fs/exfatfs/exfatfs_inode.h>
 #include <fs/exfatfs/exfatfs_mount.h>
-#include <fs/exfatfs/exfatfs_trie.h>
 #include <fs/exfatfs/exfatfs_vfsops.h>
 
-#define EXFATFS_VFSOPS_DEBUG
+/* #define EXFATFS_VFSOPS_DEBUG */
 #ifdef EXFATFS_VFSOPS_DEBUG
 # define DPRINTF(x) printf x
 #else
@@ -195,8 +195,6 @@ exfatfs_init(void)
   	pool_init(&exfatfs_xfinode_pool, sizeof(struct xfinode), 0, 0, 0,
 	    "exfatfsinopl", &pool_allocator_nointr, IPL_NONE);
 	pool_sethiwat(&exfatfs_xfinode_pool, 1);
-  	pool_init(&exfatfs_bitmap_pool, sizeof(struct xf_bitmap_node), 0, 0, 0,
-	    "exfatfsbitpl", &pool_allocator_nointr, IPL_NONE);
 	pool_sethiwat(&exfatfs_bitmap_pool, 1);
   	pool_init(&exfatfs_dirent_pool, sizeof(struct exfatfs_dirent), 0, 0, 0,
 	    "exfatfsdirentpl", &pool_allocator_nointr, IPL_NONE);

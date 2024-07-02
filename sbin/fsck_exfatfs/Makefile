@@ -1,10 +1,12 @@
-# $NetBSD: Makefile,v 1.1.2.1 2024/06/29 19:43:25 perseant Exp $
+# $NetBSD: Makefile,v 1.1.2.2 2024/07/02 20:36:50 perseant Exp $
 
 .include <bsd.own.mk>
 
 PROG=	fsck_exfatfs
 MAN=	fsck_exfatfs.8
-SRCS=	fsck_exfatfs.c exfatfs.c partutil.c bufcache.c exfatfs_cksum.c exfatfs_conv.c exfatfs_extern.c exfatfs_tables.c exfatfs_trie.c vnode.c kernelops.c pass0.c pass1.c pass2.c fsutil.c
+SRCS=	fsck_exfatfs.c exfatfs.c partutil.c bufcache.c exfatfs_balloc.c \
+	exfatfs_cksum.c exfatfs_conv.c exfatfs_extern.c exfatfs_tables.c \
+	vnode.c kernelops.c pass0.c pass1.c pass2.c fsutil.c
 
 LDADD+= -lutil
 DPADD+= ${LIBUTIL}

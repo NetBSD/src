@@ -1,4 +1,4 @@
-/* $NetBSD: exfatfs.h,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $ */
+/* $NetBSD: exfatfs.h,v 1.1.2.3 2024/07/02 20:36:50 perseant Exp $ */
 
 /*-
  * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
@@ -36,8 +36,6 @@
 /* #define TRACE_INUM 0x8b54e1b */
 
 #define USE_FATCACHE
-
-struct xf_bitmap_node;
 
 #define EXFATFS_BOOTBLOCK_PRIMARY_FSSEC   0
 #define EXFATFS_BOOTBLOCK_SECONDARY_FSSEC 12
@@ -114,7 +112,6 @@ struct exfatfs {
 	struct vnode *xf_upcasevp; /* XXX not needed? */
 	STAILQ_HEAD(, exfatfs_upcase_range_offset) xf_eurolist;
 	LIST_HEAD(, xfinode) xf_newxip;
-	struct xf_bitmap_node *xf_bitmap_trie;
 	int xf_bitmap_toplevel;
 	uint32_t xf_FreeClusterCount;
 	uint32_t xf_dirmask;

@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_extern.c,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $	*/
+/*	$NetBSD: exfatfs_extern.c,v 1.1.2.3 2024/07/02 20:36:50 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -52,13 +52,13 @@ typedef struct uvvnode uvnode_t;
 #endif
 
 #include <fs/exfatfs/exfatfs.h>
+#include <fs/exfatfs/exfatfs_balloc.h>
 #include <fs/exfatfs/exfatfs_cksum.h>
 #include <fs/exfatfs/exfatfs_conv.h>
 #include <fs/exfatfs/exfatfs_dirent.h>
 #include <fs/exfatfs/exfatfs_extern.h>
 #include <fs/exfatfs/exfatfs_inode.h>
 #include <fs/exfatfs/exfatfs_extern.h>
-#include <fs/exfatfs/exfatfs_trie.h>
 #include <fs/exfatfs/exfatfs_vfsops.h>
 
 /* #define EXFATFS_EXTERN_DEBUG */
@@ -390,7 +390,7 @@ int exfatfs_mountfs_shared(struct vnode *devvp, struct exfatfs_mount *xmp,
 	/*
 	 * Initialize data structure for finding free clusters.
 	 */
-	if ((error = exfatfs_bitmap_init(fs, 1)) != 0) {
+	if ((error = exfatfs_bitmap_init(fs)) != 0) {
 		DPRINTF(("Bitmap init failed with %d\n", error));
 		goto error_exit;
 	}

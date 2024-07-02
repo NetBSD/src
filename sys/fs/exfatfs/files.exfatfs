@@ -1,13 +1,13 @@
-#	$NetBSD: files.exfatfs,v 1.1.2.1 2024/06/29 19:43:26 perseant Exp $
+#	$NetBSD: files.exfatfs,v 1.1.2.2 2024/07/02 20:36:50 perseant Exp $
 
 deffs	EXFATFS
 
 define	exfatfs: vfs
+file	fs/exfatfs/exfatfs_balloc.c		exfatfs
 file	fs/exfatfs/exfatfs_cksum.c		exfatfs
 file	fs/exfatfs/exfatfs_conv.c		exfatfs
 file	fs/exfatfs/exfatfs_extern.c		exfatfs
 file	fs/exfatfs/exfatfs_rename.c		exfatfs
 file	fs/exfatfs/exfatfs_tables.c		exfatfs
-file	fs/exfatfs/exfatfs_trie.c		exfatfs
 file	fs/exfatfs/exfatfs_vfsops.c		exfatfs
 file	fs/exfatfs/exfatfs_vnops.c		exfatfs

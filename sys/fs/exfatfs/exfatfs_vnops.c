@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_vnops.c,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $	*/
+/*	$NetBSD: exfatfs_vnops.c,v 1.1.2.3 2024/07/02 20:36:50 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_vnops.c,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_vnops.c,v 1.1.2.3 2024/07/02 20:36:50 perseant Exp $");
 
 #include <sys/buf.h>
 #include <sys/dirent.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: exfatfs_vnops.c,v 1.1.2.2 2024/07/01 22:15:21 persea
 #include <uvm/uvm_extern.h>
 
 #include <fs/exfatfs/exfatfs.h>
+#include <fs/exfatfs/exfatfs_balloc.h>
 #include <fs/exfatfs/exfatfs_conv.h>
 #include <fs/exfatfs/exfatfs_cksum.h>
 #include <fs/exfatfs/exfatfs_dirent.h>
@@ -60,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: exfatfs_vnops.c,v 1.1.2.2 2024/07/01 22:15:21 persea
 #include <fs/exfatfs/exfatfs_mount.h>
 #include <fs/exfatfs/exfatfs_inode.h>
 #include <fs/exfatfs/exfatfs_rename.h>
-#include <fs/exfatfs/exfatfs_trie.h>
 #include <fs/exfatfs/exfatfs_tables.h>
 #include <fs/exfatfs/exfatfs_vnops.h>
 #include <fs/exfatfs/exfatfs_vfsops.h>

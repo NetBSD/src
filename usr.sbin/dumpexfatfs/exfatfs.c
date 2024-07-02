@@ -37,10 +37,10 @@
 #define vnode uvnode
 #define buf ubuf
 #include <fs/exfatfs/exfatfs.h>
+#include <fs/exfatfs/exfatfs_balloc.h> /* for bitmap_init */
 #include <fs/exfatfs/exfatfs_dirent.h>
 #include <fs/exfatfs/exfatfs_extern.h>
 #include <fs/exfatfs/exfatfs_inode.h>
-#include <fs/exfatfs/exfatfs_trie.h> /* for bitmap_init */
 #include <fs/exfatfs/exfatfs_vfsops.h> /* for getnewvnode */
 #undef buf
 #undef vnode

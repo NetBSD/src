@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2459.2.2 2024/07/01 00:59:48 perseant Exp $
+#	$NetBSD: mi,v 1.2459.2.3 2024/07/02 20:36:50 perseant Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -976,6 +976,7 @@
 ./usr/include/fs/efs/efs_sb.h			comp-c-include
 ./usr/include/fs/exfatfs			comp-c-include	exfatfs
 ./usr/include/fs/exfatfs/exfatfs.h		comp-c-include	exfatfs
+./usr/include/fs/exfatfs/exfatfs_balloc.h	comp-c-include	exfatfs
 ./usr/include/fs/exfatfs/exfatfs_cksum.h	comp-c-include	exfatfs
 ./usr/include/fs/exfatfs/exfatfs_conv.h		comp-c-include	exfatfs
 ./usr/include/fs/exfatfs/exfatfs_dirent.h	comp-c-include	exfatfs
@@ -983,7 +984,6 @@
 ./usr/include/fs/exfatfs/exfatfs_inode.h	comp-c-include	exfatfs
 ./usr/include/fs/exfatfs/exfatfs_mount.h	comp-c-include	exfatfs
 ./usr/include/fs/exfatfs/exfatfs_tables.h	comp-c-include	exfatfs
-./usr/include/fs/exfatfs/exfatfs_trie.h		comp-c-include	exfatfs
 ./usr/include/fs/exfatfs/exfatfs_vfsops.h	comp-c-include	exfatfs
 ./usr/include/fs/exfatfs/exfatfs_vnops.h	comp-c-include	exfatfs
 ./usr/include/fs/hfs/hfs.h			comp-c-include
