@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.5 2024/07/02 05:26:40 rin Exp $	*/
+/*	$NetBSD: sd.c,v 1.6 2024/07/02 05:34:08 rin Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -593,9 +593,11 @@ sdopen(struct open_file *f, ...)
 	sd->sc_target = target;
 	sd->sc_bus = bus;
 
-	error = scsi_inquire(sd, SCSIPI_INQUIRY_LENGTH_SCSI2, inqbuf);
+	memset(&buf, 0, sizeof(buf));
+	error = scsi_inquire(sd, SCSIPI_INQUIRY_LENGTH_SCSI2, &buf);
 	if (error != 0)
 		return error;
+	inqbuf = &buf;
 
 	sd->sc_type = inqbuf->device & SID_TYPE;
 
