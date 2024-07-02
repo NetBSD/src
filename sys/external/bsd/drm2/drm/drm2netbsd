@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: drm2netbsd,v 1.5 2021/12/19 10:46:17 riastradh Exp $
+#	$NetBSD: drm2netbsd,v 1.6 2024/07/02 20:09:30 riastradh Exp $
 #
 # $ /path/to/drm2netbsd > /path/to/files.drm.new
 #
@@ -14,12 +14,27 @@ drmkms_top=external/bsd/drm2/dist/drm
 # config(5) flag for the DRMKMS driver.
 drmkms_flag=drmkms
 
-env CONFIG_PCI=y \
-env CONFIG_AGP=y \
+env CONFIG_COMPAT=y \
+env CONFIG_DRM=y \
+env CONFIG_DRM_BUDDY=y \
+env CONFIG_DRM_EXEC=y \
 env CONFIG_DRM_FBDEV_EMULATION=y \
 env CONFIG_DRM_GEM_CMA_HELPER=y \
+env CONFIG_DRM_GEM_DMA_HELPER=y \
+env CONFIG_DRM_GEM_SHMEM_HELPER=y \
+env CONFIG_DRM_KMS_HELPER=y \
+env CONFIG_DRM_LEGACY=y \
+env CONFIG_DRM_MIPI_DBI=y \
+env CONFIG_DRM_MIPI_DSI=y \
 env CONFIG_DRM_PANEL=y \
+env CONFIG_DRM_PANEL_ORIENTATION_QUIRKS=y \
+env CONFIG_DRM_PRIVACY_SCREEN=y \
+env CONFIG_DRM_SCHED=y \
+env CONFIG_DRM_SUBALLOC_HELPER=y \
 env CONFIG_DRM_VM=y \
+env CONFIG_DRM_VRAM_HELPER=y \
+env CONFIG_OF=y \
+env CONFIG_PCI=y \
 make -f Makefile -V '$(drm-y)' -V '$(drm_kms_helper-y)' \
 | tr ' ' '\n' \
 | grep -v '^$' \
