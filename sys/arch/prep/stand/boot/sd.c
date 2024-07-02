@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.4 2019/01/08 19:41:09 jdolecek Exp $	*/
+/*	$NetBSD: sd.c,v 1.5 2024/07/02 05:26:40 rin Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -568,10 +568,9 @@ sdopen(struct open_file *f, ...)
 {
 	struct sd_softc *sd;
 	struct scsi_test_unit_ready cmd;
-	struct scsipi_inquiry_data *inqbuf;
+	struct scsipi_inquiry_data buf, *inqbuf = &buf;
 	u_int bus, target, lun, part;
 	int error;
-	char buf[SCSIPI_INQUIRY_LENGTH_SCSI2];
 	va_list ap;
 
 	va_start(ap, f);
@@ -594,10 +593,9 @@ sdopen(struct open_file *f, ...)
 	sd->sc_target = target;
 	sd->sc_bus = bus;
 
-	if ((error = scsi_inquire(sd, sizeof(buf), buf)) != 0)
+	error = scsi_inquire(sd, SCSIPI_INQUIRY_LENGTH_SCSI2, inqbuf);
+	if (error != 0)
 		return error;
-
-	inqbuf = (struct scsipi_inquiry_data *)buf;
 
 	sd->sc_type = inqbuf->device & SID_TYPE;
 

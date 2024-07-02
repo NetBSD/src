@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.8 2024/02/08 19:44:08 andvar Exp $	*/
+/*	$NetBSD: siop.c,v 1.9 2024/07/02 05:26:40 rin Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -65,7 +65,7 @@ static void siop_xfer_setup(struct siop_xfer *, void *);
 static int siop_add_reselsw(struct siop_adapter *, int, int);
 static void siop_update_scntl3(struct siop_adapter *, int, int);
 
-static int _scsi_inquire(struct siop_adapter *, int, int, int, char *);
+static int _scsi_inquire(struct siop_adapter *, int, int, int, void *);
 static void scsi_request_sense(struct siop_adapter *, struct scsi_xfer *);
 static int scsi_interpret_sense(struct siop_adapter *, struct scsi_xfer *);
 static int scsi_probe(struct siop_adapter *);
@@ -764,7 +764,7 @@ siop_update_scntl3(struct siop_adapter *adp, int target, int lunsw_off)
  */
 
 static int
-_scsi_inquire(struct siop_adapter *adp, int t, int l, int buflen, char *buf)
+_scsi_inquire(struct siop_adapter *adp, int t, int l, int buflen, void *buf)
 {
 	struct scsipi_inquiry *cmd = (struct scsipi_inquiry *)adp->cmd;
 	struct scsipi_inquiry_data *inqbuf =
@@ -1012,21 +1012,20 @@ scsi_interpret_sense(struct siop_adapter *adp, struct scsi_xfer *xs)
 static int
 scsi_probe(struct siop_adapter *adp)
 {
-	struct scsipi_inquiry_data *inqbuf;
+	struct scsipi_inquiry_data buf, *inqbuf = &buf;
 	int found, t, l;
 	uint8_t device;
-	char buf[SCSIPI_INQUIRY_LENGTH_SCSI2],
-	    product[sizeof(inqbuf->product) + 1];
+	char product[sizeof(inqbuf->product) + 1];
 
 	found = 0;
 	for (t = 0; t < 8; t++) {
 		if (t == adp->id)
 			continue;
 		for (l = 0; l < 8; l++) {
-			if (_scsi_inquire(adp, t, l, sizeof(buf), buf) != 0)
+			if (_scsi_inquire(adp, t, l,
+			    SCSIPI_INQUIRY_LENGTH_SCSI2, inqbuf) != 0)
 				continue;
 
-			inqbuf = (struct scsipi_inquiry_data *)buf;
 			device = inqbuf->device & SID_TYPE;
 			if (device == T_NODEVICE)
 				continue;
