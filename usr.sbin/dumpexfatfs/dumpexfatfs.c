@@ -19,11 +19,11 @@
 #define buf ubuf
 
 #include <fs/exfatfs/exfatfs.h>
+#include <fs/exfatfs/exfatfs_balloc.h>
 #include <fs/exfatfs/exfatfs_cksum.h>
 #include <fs/exfatfs/exfatfs_conv.h>
 #include <fs/exfatfs/exfatfs_dirent.h>
 #include <fs/exfatfs/exfatfs_extern.h>
-#include <fs/exfatfs/exfatfs_trie.h>
 
 #include "vnode.h"
 #include "bufcache.h"

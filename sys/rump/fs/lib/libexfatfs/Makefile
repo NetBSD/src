@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2024/06/29 19:43:26 perseant Exp $
+#	$NetBSD: Makefile,v 1.1.2.2 2024/07/02 20:36:51 perseant Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../fs/exfatfs
@@ -6,9 +6,8 @@
 LIB=	rumpfs_exfatfs
 COMMENT=Microsoft exFAT file system
 
-SRCS=	exfatfs_cksum.c exfatfs_conv.c exfatfs_extern.c \
-	exfatfs_rename.c exfatfs_tables.c \
-	exfatfs_trie_basic.c exfatfs_vfsops.c exfatfs_vnops.c
+SRCS=	exfatfs_balloc.c exfatfs_cksum.c exfatfs_conv.c exfatfs_extern.c \
+	exfatfs_rename.c exfatfs_tables.c exfatfs_vfsops.c exfatfs_vnops.c
 
 CPPFLAGS+=
 

@@ -1,4 +1,4 @@
-/* $NetBSD: exfatfs_trie_basic.h,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $ */
+/* $NetBSD: exfatfs_balloc.h,v 1.1.2.1 2024/07/02 20:36:50 perseant Exp $ */
 
 /*-
  * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
@@ -26,24 +26,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef EXFATFS_TRIE_BASIC_H_
-#define EXFATFS_TRIE_BASIC_H_
+#ifndef EXFATFS_BALLOC_H_
+#define EXFATFS_BALLOC_H_
 
-#define BN_CHILDREN_SHIFT 8
-#define BN_CHILDREN_COUNT (1 << BN_CHILDREN_SHIFT)
-#define BOTTOM_LEVEL      2 /* level at which 1 block * 8 is full count */
-#define BN_BLOCK_SIZE     (BN_CHILDREN_SHIFT << BOTTOM_LEVEL)
-#define INVALID           (~(uint32_t)0)
+/* XXX we need MAXPHYSSHIFT */
+#define MAXPSHIFT 16
+#define MAXPSIZE (1 << MAXPSHIFT) /* Must be <= MAXPHYS */
 
-struct xf_bitmap_node {
-	struct xf_bitmap_node *children[BN_CHILDREN_COUNT];
-	uint32_t count;
-};
+/* Convert cluster number to disk address and offset */
+#define NBBYSHIFT		3 /* 1 << NBBYSHIFT == NBBY == 8 */
+#define LBNSIZE(fs)		(1 << LBNSHIFT(fs))
+#define LBNSHIFT(fs)		MIN(MAXPSHIFT, ((fs)->xf_BytesPerSectorShift + \
+                                (fs)->xf_SectorsPerClusterShift))
+#define LBNOFF2CLUSTER(fs, lbn, off) ((lbn << BITMAPSHIFT(fs)) + (off) + 2)
+#define BITMAPSHIFT(fs)		(LBNSHIFT(fs) + NBBYSHIFT)
+#define BITMAPLBN(fs, cn)	(((cn) - 2) >> BITMAPSHIFT(fs))
+#define BITMAPOFF(fs, cn)	(((cn) - 2) & ((1 << BITMAPSHIFT(fs)) - 1))
+#define INVALID			(~(uint32_t)0)
 
-int exfatfs_bitmap_init(struct exfatfs *, int);
+int exfatfs_bitmap_init(struct exfatfs *);
 void exfatfs_bitmap_destroy(struct exfatfs *);
-
 int exfatfs_bitmap_alloc(struct exfatfs *, uint32_t, uint32_t *);
 int exfatfs_bitmap_dealloc(struct exfatfs *, uint32_t);
 
-#endif /* EXFATFS_TRIE_BASIC_H_ */
+#endif /* EXFATFS_BALLOC_H_ */

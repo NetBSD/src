@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2024/06/29 19:43:27 perseant Exp $
+#	$NetBSD: Makefile,v 1.1.2.2 2024/07/02 20:36:51 perseant Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 WARNS?=	3	# XXX -Wsign-compare
@@ -7,7 +7,9 @@ WARNS?=	3	# XXX -Wsign-compare
 
 CFLAGS+=-g
 PROG=	dumpexfatfs
-SRCS=	dumpexfatfs.c exfatfs.c exfatfs_cksum.c exfatfs_conv.c exfatfs_extern.c exfatfs_trie_basic.c exfatfs_tables.c bufcache.c vnode.c kernelops.c
+SRCS=	dumpexfatfs.c exfatfs.c exfatfs_cksum.c exfatfs_balloc.c \
+	exfatfs_conv.c exfatfs_extern.c exfatfs_tables.c \
+	bufcache.c vnode.c kernelops.c
 .PATH:	${NETBSDSRCDIR}/sys/fs/exfatfs
 MAN=	dumpexfatfs.8
 LDADD+=	-lutil
