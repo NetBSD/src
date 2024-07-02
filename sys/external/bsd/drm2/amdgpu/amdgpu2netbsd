@@ -1,10 +1,10 @@
 #!/bin/sh
 
-#	$NetBSD: amdgpu2netbsd,v 1.4 2021/12/19 10:20:31 riastradh Exp $
+#	$NetBSD: amdgpu2netbsd,v 1.5 2024/07/02 20:08:51 riastradh Exp $
 #
 # $ /path/to/amdgpu2netbsd > /path/to/files.amdgpu.new
 #
-# Run from the top-level dist/amd/amdgpu source directory, ideally
+# Run from the top-level dist/drm/amd/amdgpu source directory, ideally
 # before import.
 
 set -Ceu
@@ -24,13 +24,20 @@ amdgpu_flag=amdgpu
 	printf 'include Makefile\n'
 } | env \
 	env CONFIG_ACPI=y \
+	env CONFIG_COMPAT=y \
 	env CONFIG_DRM_AMDGPU=y \
 	env CONFIG_DRM_AMDGPU_CIK=y \
 	env CONFIG_DRM_AMDGPU_SI=y \
 	env CONFIG_DRM_AMD_ACP=y \
 	env CONFIG_DRM_AMD_DC=y \
-	env CONFIG_DRM_AMD_DC_DCN=y \
+	env CONFIG_DRM_AMD_DC_FP=y \
 	env CONFIG_DRM_AMD_DC_HDCP=y \
+	env CONFIG_DRM_AMD_DC_SI=y \
+	env CONFIG_HMM_MIRROR=y \
+	env CONFIG_HSA_AMD=y \
+	env CONFIG_HSA_AMD_SVM=y \
+	env CONFIG_PERF_EVENTS=y \
+	env CONFIG_VGA_SWITCHEROO=y \
 	env srctree="`pwd`" \
 	env src=. \
 	${GMAKE} -f - -s show-amdgpu-y \
