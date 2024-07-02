@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.9 2024/07/02 05:26:40 rin Exp $	*/
+/*	$NetBSD: siop.c,v 1.10 2024/07/02 05:34:08 rin Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -1017,13 +1017,15 @@ scsi_probe(struct siop_adapter *adp)
 	uint8_t device;
 	char product[sizeof(inqbuf->product) + 1];
 
+	memset(&buf, 0, sizeof(buf));
+
 	found = 0;
 	for (t = 0; t < 8; t++) {
 		if (t == adp->id)
 			continue;
 		for (l = 0; l < 8; l++) {
 			if (_scsi_inquire(adp, t, l,
-			    SCSIPI_INQUIRY_LENGTH_SCSI2, inqbuf) != 0)
+			    SCSIPI_INQUIRY_LENGTH_SCSI2, &buf) != 0)
 				continue;
 
 			device = inqbuf->device & SID_TYPE;
