@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sanitizer,v 1.18 2024/02/25 06:07:28 mrg Exp $
+#	$NetBSD: Makefile.sanitizer,v 1.19 2024/07/02 02:36:22 rin Exp $
 
 SANITIZER=${GCCDIST}/libsanitizer
 .PATH: ${SANITIZER}/interception ${SANITIZER}/sanitizer_common
@@ -122,14 +122,4 @@ COPTS.sanitizer_symbolizer_libcdep.cc += -O1
 COPTS.sanitizer_symbolizer_report.cc += -O1
 COPTS.ubsan_diag.cc += -O1
 COPTS.ubsan_init.cc += -O1
-.endif
-
-# XXX GCC 12 sanitizers has higher minimal requirements upon some CPUs.
-# - 32-bit SPARC needs v8 to supply eg __sync_add_and_fetch_4
-# - i386 needs i586 for __sync_val_compare_and_swap_8.
-.if ${MACHINE_ARCH} == "sparc"
-COPTS+= -mcpu=v8
-.endif
-.if ${MACHINE_ARCH} == "i386"
-COPTS+= -march=i586
 .endif
