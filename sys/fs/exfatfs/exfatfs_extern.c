@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_extern.c,v 1.1.2.3 2024/07/02 20:36:50 perseant Exp $	*/
+/*	$NetBSD: exfatfs_extern.c,v 1.1.2.4 2024/07/03 18:57:42 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ exfatfs_bmap_shared(struct vnode *vp, daddr_t targetlbn, struct vnode **vpp,
 	*bnp = (daddr_t)-1;
 
 	if (EXFATFS_FSSEC2CLUSTER(fs, (unsigned long)targetlbn) >
-	    EXFATFS_BYTES2CLUSTER(fs, GET_DSE_DATALENGTH(xip))) {
+	    EXFATFS_BYTES2CLUSTER(fs, GET_DSE_DATALENGTH_BLK(xip, fs))) {
 		exfatfs_check_fence(fs);
 		return 0;
 	}
@@ -146,7 +146,8 @@ exfatfs_bmap_shared(struct vnode *vp, daddr_t targetlbn, struct vnode **vpp,
 		*bnp = EXFATFS_CLUSTER2HWADDR(fs, GET_DSE_FIRSTCLUSTER(xip))
 			+ EXFATFS_FSSEC2DEVBSIZE(fs, targetlbn);
 		if (runp) {
-			*runp = EXFATFS_BYTES2FSSEC(fs, GET_DSE_DATALENGTH(xip))
+			*runp = EXFATFS_BYTES2FSSEC(fs,
+					GET_DSE_DATALENGTH_BLK(xip, fs))
 				- targetlbn;
 		}
 		return 0;
@@ -176,7 +177,7 @@ exfatfs_bmap_shared(struct vnode *vp, daddr_t targetlbn, struct vnode **vpp,
 	if (!(pcn >= 2 && pcn < fs->xf_ClusterCount + 2)) {
 		printf("bmap: ino 0x%lx data length %lu, first cluster 0x%lx\n",
 		       (unsigned long)INUM(xip),
-		       (unsigned long)GET_DSE_DATALENGTH(xip),
+		       (unsigned long)GET_DSE_DATALENGTH_BLK(xip, fs),
 		       (unsigned long)pcn);
 	}
 	assert(pcn >= 2 && pcn < fs->xf_ClusterCount + 2);
@@ -441,8 +442,8 @@ exfatfs_system_loadvnode(struct exfatfs *fs,
 		
 	/* Fill in the few interesting fields */
 	SET_DSE_FIRSTCLUSTER(xip, dataStart);
-	SET_DSE_VALIDDATALENGTH(xip, dataLength);
 	SET_DSE_DATALENGTH(xip, dataLength);
+	SET_DSE_VALIDDATALENGTH(xip, dataLength);
 
 	DPRINTF(("exfatfs_system_loadvnode(%p, %u, %u, %u, %lu)\n",
 		 fs, dirclust, diroffset, dataStart, dataLength));
