@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.214 2022/04/18 19:46:35 jkoshy Exp $
+#	$NetBSD: Makefile,v 1.214.2.1 2024/07/03 18:38:54 martin Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -169,6 +169,7 @@ SUBDIR+=	ibmnws-ncdcs
 
 .if ${MACHINE} == "macppc"
 SUBDIR+=	macppc-fixcoff
+SUBDIR+=	macppc_installboot
 .endif
 
 .if (${MACHINE} == "prep" || ${MACHINE} == "rs6000" || ${MACHINE} == "bebox")
@@ -230,6 +231,10 @@ SUBDIR+=	dtc
 
 .if ${MACHINE} == "mvme68k"
 SUBDIR+=	mvme68k-wrtvid
+.endif
+
+.if ${MACHINE} == "mac68k" || ${MACHINE} == "macppc"
+SUBDIR+=	mkhybrid
 .endif
 
 .if ${MKX11} != "no"

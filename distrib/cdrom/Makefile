@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.52.14.1 2023/05/28 09:58:41 martin Exp $
+# $NetBSD: Makefile,v 1.52.14.2 2024/07/03 18:38:53 martin Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -63,8 +63,8 @@ ALL_PORTS:=		${ALL_PORTS} ${BASE_PORTS.${image}}
 
 SUBDIR=
 
-.if !empty(ALL_PORTS:Mmacppc)
-SUBDIR+=	macppc_installboot
+.if !empty(ALL_PORTS:Mmac68k) || !empty(ALL_PORTS:Mmacppc)
+MKISOFS=	${TOOL_MKHYBRID}
 .endif
 
 .if !empty(SUBDIR)
@@ -81,9 +81,6 @@ RSYNC?=		/usr/pkg/bin/rsync
 ALPHA_IBOOT?=	${TOOL_INSTALLBOOT} -m alpha -o sunsum,append
 PMAX_IBOOT?=	${TOOL_INSTALLBOOT} -m pmax -o sunsum,append
 VAX_IBOOT?=	${TOOL_INSTALLBOOT} -m vax -o sunsum,append
-.if !empty(ALL_PORTS:Mmacppc)
-MACPPC_IBOOTDIR!= cd ${.CURDIR}/macppc_installboot && ${PRINTOBJDIR}
-.endif
 .if !empty(ALL_PORTS:Msgimips)
 SGIMIPS_SGIVOL?=	${TOOLDIR}/bin/nbsgivol
 .endif
@@ -299,7 +296,7 @@ MKISOFS_ARGS.${image}+=	-hfs -part -hide-hfs-list ${.CURDIR}/hide-hfs.lst \
 UUDECODE_FILES=	${BOOTHFS}
 .include <bsd.files.mk>
 .elif defined(USE_APPLE_ISO) || !empty(ports:Mmac68k)
-MKISOFS_ARGS.${image}+=	-apple --macbin -data-change-warn -map ${.CURDIR}/hfsmap.lst
+MKISOFS_ARGS.${image}+=	-apple --macbin -map ${.CURDIR}/hfsmap.lst
 .endif
 
 # Sun (sparc, sparc64, sun3)
@@ -468,10 +465,6 @@ size-${image}: stage-${image} extfileprep fileprep-${image} check_mkisofs
 
 # Actually build the image with all the bootstrap goo....
 
-.if !empty(BASE_PORTS.${image}:Mmacppc)
-${IMAGEDIR}/${image}.iso: all-macppc_installboot
-.endif
-
 ${IMAGEDIR}/${image}.iso: size-${image} check_mkisofs
 	@sort -o ${contents.${image}} ${contents.${image}}
 .if defined(LOG_MKISOFS)
@@ -485,8 +478,7 @@ ${IMAGEDIR}/${image}.iso: size-${image} check_mkisofs
 	    ${.TARGET} ${SUN_BOOT_ARGS.${image}}
 .endif
 .if !empty(BASE_PORTS.${image}:Mmacppc)
-	${MACPPC_IBOOTDIR}/macppc_installboot \
-	    $@ ${EXTFILEDIR}/macppc.bootxx /ofwboot
+	${TOOL_MACPPCINSTALLBOOT} $@ ${EXTFILEDIR}/macppc.bootxx /ofwboot
 .endif
 .if !empty(BASE_PORTS.${image}:Mpmax)
 	${PMAX_IBOOT} $@ ${BOOTFILE.pmax}
