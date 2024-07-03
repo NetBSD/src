@@ -1,4 +1,4 @@
-#	$NetBSD: files.linux,v 1.24 2024/07/03 06:43:29 rin Exp $
+#	$NetBSD: files.linux,v 1.25 2024/07/03 07:31:26 rin Exp $
 #
 # Config file description for machine-independent Linux compat code.
 # Included by ports that need it.
@@ -6,7 +6,7 @@
 # ports should define any machine-specific files they need in their
 # own file lists.
 
-define	compat_linux		: compat, compat_ossaudio, sysv_ipc
+define	compat_linux		: compat, compat_ossaudio, mqueue, sysv_ipc
 file	compat/linux/common/linux_blkio.c	compat_linux
 file	compat/linux/common/linux_cdrom.c	compat_linux
 file	compat/linux/common/linux_errno.c	compat_linux
