@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.238 2024/06/10 12:49:29 riastradh Exp $
+#  $NetBSD: Makefile,v 1.239 2024/07/03 06:26:03 mrg Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -14,7 +14,6 @@
 #
 
 NOSANITIZER=		# defined
-COPTS+=			${${ACTIVE_CC} == "gcc":? -frounding-math :}
 
 #
 # There are two options in making libm at fdlibm compile time:
@@ -75,6 +74,8 @@ EXPSYM_SRC_MD=	m.${LIBC_MACHINE_CPU}.expsym
 # (The rule has to be written below after EXPSYM_SRCS has been
 # determined.)
 LIB_EXPSYM=	m.expsym
+
+COPTS+=	${${ACTIVE_CC} == "gcc":? -frounding-math :}
 
 .if (${LIBC_MACHINE_CPU} == "aarch64")
 .PATH: ${.CURDIR}/arch/aarch64
