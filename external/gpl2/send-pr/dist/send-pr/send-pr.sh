@@ -155,8 +155,8 @@ if [ -z "$ARCH" -a -f /bin/arch ]; then
   ARCH=`/bin/arch`
 fi
 MACHINE=`$UNAME -m`
-if [ -z "$ARCH" -a -f /bin/machine ]; then
-  ARCH=`/bin/arch`
+if [ -z "$MACHINE" -a -f /bin/machine ]; then
+  MACHINE=`/bin/machine`
 fi
 
 COMMAND=`echo $0 | sed -e 's,.*/,,'`
