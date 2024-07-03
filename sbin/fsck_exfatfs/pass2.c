@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.1.2.1 2024/06/29 19:43:25 perseant Exp $	*/
+/*	$NetBSD: pass2.c,v 1.1.2.2 2024/07/03 21:56:17 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -94,14 +94,14 @@ pass2(struct exfatfs *fs, uint8_t *observed_bitmap)
 				continue;
 			++problems;
 			if (isset(observed_bitmap, base + off)) {
-				pwarn("AT PHYSICAL DISK ADDRESS 0x%lx size %zu offset %lu/%lu\n", bp->b_blkno, size, (unsigned long)off, (unsigned long)(size * NBBY));
+				pwarn("AT PHYSICAL DISK ADDRESS 0x%lx size %zu offset %lu/%lu\n", (unsigned long)bp->b_blkno, size, (unsigned long)off, (unsigned long)(size * NBBY));
 				pwarn("UNALLOCATED CLUSTER %lu IN USE\n", (unsigned long)base + off + 2);
 				if (Pflag || reply("ALLOCATE") == 1) {
 					setbit(bp->b_data, off - base);
 					modified = 1;
 				}
 			} else {
-				pwarn("AT PHYSICAL DISK ADDRESS 0x%lx size %zu offset %lu/%lu\n", bp->b_blkno, size, (unsigned long)off, (unsigned long)(size * NBBY));
+				pwarn("AT PHYSICAL DISK ADDRESS 0x%lx size %zu offset %lu/%lu\n", (unsigned long)bp->b_blkno, size, (unsigned long)off, (unsigned long)(size * NBBY));
 				pwarn("ALLOCATED CLUSTER %lu NOT IN USE\n", (unsigned long)base + off + 2);
 				if (Pflag || reply("CLEAR") == 1) {
 					clrbit(bp->b_data, off - base);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.1.2.1 2024/06/29 19:43:25 perseant Exp $	*/
+/*	$NetBSD: pass1.c,v 1.1.2.2 2024/07/03 21:56:17 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -287,7 +287,7 @@ validfunc(void *arg, struct xfinode *xip, off_t unused)
 			exfatfs_get_file_name(xip, ucs2, &len, sizeof ucs2);
 			exfatfs_ucs2utf8str(ucs2, len, utf8, NAME_MAX);
 			printf("nv=%d scan directory 0x%lx, %s\n",
-			       nvnodes, INUM(xip), utf8);
+			       nvnodes, (unsigned long)INUM(xip), utf8);
 			assert(xip->xi_serial == dserial);
 		}
 		pass1_recursive(vp, vdp);

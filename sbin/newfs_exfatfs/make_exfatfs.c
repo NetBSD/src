@@ -1,4 +1,4 @@
-/*	$NetBSD: make_exfatfs.c,v 1.1.2.1 2024/06/29 19:43:25 perseant Exp $	*/
+/*	$NetBSD: make_exfatfs.c,v 1.1.2.2 2024/07/03 21:56:17 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_exfatfs.c,v 1.1.2.1 2024/06/29 19:43:25 perseant Exp $");
+__RCSID("$NetBSD: make_exfatfs.c,v 1.1.2.2 2024/07/03 21:56:17 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -698,7 +698,7 @@ make_exfatfs(int devfd, uint secsize, struct dkwedge_info *dkw, uint bsize,
 			bit = ((i - start) & (NBBY - 1));
 			byte = (i - start) / NBBY;
 			if (Vflag)
-				printf("  set bit %d byte %d bn 0x%lx for cluster %lld\n", bit, byte, bp->b_blkno, (long long)i);
+				printf("  set bit %d byte %d bn 0x%lx for cluster %lld\n", bit, byte, (unsigned long)bp->b_blkno, (long long)i);
 			((char *)bp->b_data)[byte] |= (1 << bit);
 		}
 		if (Vflag)
