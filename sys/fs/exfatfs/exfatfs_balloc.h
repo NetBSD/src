@@ -1,4 +1,4 @@
-/* $NetBSD: exfatfs_balloc.h,v 1.1.2.1 2024/07/02 20:36:50 perseant Exp $ */
+/* $NetBSD: exfatfs_balloc.h,v 1.1.2.2 2024/07/03 04:08:47 perseant Exp $ */
 
 /*-
  * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
@@ -29,9 +29,7 @@
 #ifndef EXFATFS_BALLOC_H_
 #define EXFATFS_BALLOC_H_
 
-/* XXX we need MAXPHYSSHIFT */
-#define MAXPSHIFT 16
-#define MAXPSIZE (1 << MAXPSHIFT) /* Must be <= MAXPHYS */
+#include <fs/exfatfs/exfatfs.h>
 
 /* Convert cluster number to disk address and offset */
 #define NBBYSHIFT		3 /* 1 << NBBYSHIFT == NBBY == 8 */

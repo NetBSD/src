@@ -1,4 +1,4 @@
-/* $NetBSD: exfatfs.h,v 1.1.2.3 2024/07/02 20:36:50 perseant Exp $ */
+/* $NetBSD: exfatfs.h,v 1.1.2.4 2024/07/03 04:08:47 perseant Exp $ */
 
 /*-
  * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
@@ -219,11 +219,17 @@ struct exfatfs_args {
 			(fs)->xf_SectorsPerClusterShift)
 #define SECSIZE(fs) (1 << (fs)->xf_BytesPerSectorShift)
 #define SECMASK(fs) (SECSIZE(fs) - 1)
-#define CLUSTERSIZE(fs) (1 << ((fs)->xf_BytesPerSectorShift + 		\
-				(fs)->xf_SectorsPerClusterShift))
+
+#define CLUSTERSHIFT(fs)	((fs)->xf_BytesPerSectorShift + 	\
+				 (fs)->xf_SectorsPerClusterShift)
+#define CLUSTERSIZE(fs) (1 << CLUSTERSHIFT(fs))
 #define CLUSTERMASK(fs) (CLUSTERSIZE(fs) - 1)
+
 /* The unit in which I/O is performed */
-#define IOSIZE(fs) MIN(CLUSTERSIZE(fs), MAXPHYS)
+#define MAXPSHIFT 16
+#define MAXPSIZE (1 << MAXPSHIFT)	/* Must be <= MAXPHYS */
+#define IOSHIFT(fs) MIN(CLUSTERSHIFT(fs), MAXPSHIFT)
+#define IOSIZE(fs) MIN(CLUSTERSIZE(fs), MAXPSIZE)
 #define IOMASK(fs) (IOSIZE(fs) - 1)
 
 #define EXFATFS_CLUSTER2HWADDR(fs, clust) (EXFATFS_CLUSTER2FSSEC((fs),	\
