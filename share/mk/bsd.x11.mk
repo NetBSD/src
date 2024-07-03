@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.155 2024/05/09 06:34:51 nia Exp $
+#	$NetBSD: bsd.x11.mk,v 1.156 2024/07/03 09:24:04 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -149,6 +149,20 @@ PRINT_PACKAGE_VERSION=	${TOOL_AWK} '/^PACKAGE_VERSION=/ {		\
 				version = substr($$1, RSTART, RLENGTH);	\
 			} END { print version }'
 
+_CONFIGURE_PATH=
+.if exists(${X11SRCDIR.${PROG}}/configure)
+_CONFIGURE_PATH=${X11SRCDIR.${PROG}}/configure
+.elif exists(${X11SRCDIR.${LIB}}/configure)
+_CONFIGURE_PATH=${X11SRCDIR.${LIB}}/configure
+.endif
+
+.if exists(${_CONFIGURE_PATH})
+_PRINT_PACKAGE_STRING=	${TOOL_AWK} -F= '/^PACKAGE_STRING=/ { print $$2 }' \
+			${_CONFIGURE_PATH}
+PACKAGE_STRING!=	${_PRINT_PACKAGE_STRING}
+.else
+PACKAGE_STRING=		"X11 program"
+.endif
 
 # Commandline to convert 'XCOMM' comments and 'XHASH' to '#', among other
 # things. Transformed from the "CppSedMagic" macro from "Imake.rules".
@@ -412,13 +426,16 @@ _X11MANTRANSFORM= \
 _X11MANTRANSFORMS_BOTH=\
 	${X11EXTRAMANTRANSFORMS_BOTH} \
 	appmansuffix		1 \
+	APP_MAN_SUFFIX		1 \
 	LIB_MAN_SUFFIX		3 \
 	libmansuffix		3 \
 	oslibmansuffix		3 \
 	drivermansuffix		4 \
 	filemansuffix		5 \
+	MISC_MAN_SUFFIX		7 \
 	miscmansuffix		7 \
 	adminmansuffix		8 \
+	XORG_MAN_PAGE		"X Version 11" \
 	logdir			/var/log \
 	sysconfdir		/etc \
 	apploaddir		${X11ROOTDIR}/lib/X11/app-defaults \
@@ -434,6 +451,7 @@ _X11MANTRANSFORMS_BOTH=\
 	XCONFIGFILEMAN		'xorg.conf(5)' \
 	xlocaledir		${X11LIBDIR}/locale \
 	xorgversion		${XORGVERSION:C/ /%/gW} \
+	PACKAGE_STRING		${PACKAGE_STRING} \
 	XSERVERNAME		Xorg \
 	xservername		Xorg
 
