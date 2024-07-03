@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_vnops.c,v 1.1.2.3 2024/07/02 20:36:50 perseant Exp $	*/
+/*	$NetBSD: exfatfs_vnops.c,v 1.1.2.4 2024/07/03 04:08:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_vnops.c,v 1.1.2.3 2024/07/02 20:36:50 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_vnops.c,v 1.1.2.4 2024/07/03 04:08:47 perseant Exp $");
 
 #include <sys/buf.h>
 #include <sys/dirent.h>
@@ -411,12 +411,12 @@ exfatfs_read(void *v)
 		if (uio->uio_offset >= GET_DSE_VALIDDATALENGTH(xip))
 			return 0;
 
-		lbn = uio->uio_offset >> fs->xf_BytesPerSectorShift;
-		error = bread(vp, lbn, 1 << fs->xf_BytesPerSectorShift, 0, &bp);
+		lbn = uio->uio_offset >> IOSHIFT(fs);
+		error = bread(vp, lbn, IOSIZE(fs), 0, &bp);
 		if (error)
 			goto bad;
 
-		off = uio->uio_offset & (SECSIZE(fs) - 1);
+		off = uio->uio_offset & IOMASK(fs);
 		n = uio->uio_resid - uio->uio_offset;
 		if (uio->uio_offset + uio->uio_resid >
 		    GET_DSE_VALIDDATALENGTH(xip))
@@ -2430,7 +2430,7 @@ static int deextend(struct xfinode *xip, off_t bytes, int ioflags,
 		/* If pcn is not allocated, allocate it */
 		allocated = 0;
 		if (pcn == 0 || pcn == 0xFFFFFFFF) {
-			uint32_t tpcn = opcn;
+			uint32_t tpcn = opcn + 1;
 #ifndef ALLOC_SEQUENTIAL
 			mutex_enter(&fs->xf_lock);
 			tpcn = fs->xf_next_cluster;
@@ -2446,7 +2446,7 @@ static int deextend(struct xfinode *xip, off_t bytes, int ioflags,
 			}
 #ifndef ALLOC_SEQUENTIAL
 			mutex_enter(&fs->xf_lock);
-			fs->xf_next_cluster = pcn;
+			fs->xf_next_cluster = pcn + 1;
 			mutex_exit(&fs->xf_lock);
 #endif /* !ALLOC_SEQUENTIAL */
 			allocated = 1;
@@ -2483,6 +2483,7 @@ static int deextend(struct xfinode *xip, off_t bytes, int ioflags,
 					bwrite(bp);
 				else
 					bdwrite(bp);
+				bp = NULL;
 			}
 
 			/* Fill a new directory cluster with zero */
@@ -2518,6 +2519,7 @@ static int deextend(struct xfinode *xip, off_t bytes, int ioflags,
 				return error;
 			pcn = ((uint32_t *)bp->b_data)[EXFATFS_FATOFF(pcn)];
 			brelse(bp, 0);
+			bp = NULL;
 		}
 	}
 	KASSERT(lcn < newcount);
