@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_balloc.c,v 1.1.2.1 2024/07/02 20:36:50 perseant Exp $	*/
+/*	$NetBSD: exfatfs_balloc.c,v 1.1.2.2 2024/07/03 18:41:08 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_balloc.c,v 1.1.2.1 2024/07/02 20:36:50 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_balloc.c,v 1.1.2.2 2024/07/03 18:41:08 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/buf.h>
@@ -145,7 +145,7 @@ exfatfs_bitmap_alloc(struct exfatfs *fs, uint32_t start, uint32_t *cp)
 				++off;
 			}
 			if (r != INVALID) {
-				assert(r >= 2 && r < fs->xf_ClusterCount - 2);
+				assert(r >= 2 && r < fs->xf_ClusterCount + 2);
 				DPRINTF(("basic allocate cluster %u/%u"
 					 " at lbn %u bit %d\n",
 					 (unsigned)r, (unsigned)end,
@@ -162,15 +162,19 @@ exfatfs_bitmap_alloc(struct exfatfs *fs, uint32_t start, uint32_t *cp)
 			off = 0;
 			assert(++c <= 2 * fs->xf_ClusterCount);
 		}
-		if (start == ostart && start > 2) {
-			end = start;
-			start = 2;
-			DPRINTF((" not found, now start=%u end=%u\n",
-				 (unsigned)start, (unsigned)end));
-			continue;
-		}
-	} while (0);
+
+		/* If we've searched everywhere, we are done */
+		if (start != ostart || ostart <= 2)
+			break;
+
+		/* We've only searched the end.  Now search the begninning. */
+		end = start;
+		start = 2;
+		DPRINTF((" not found, now start=%u end=%u\n",
+			 (unsigned)start, (unsigned)end));
+	} while (1);
 	
+	DPRINTF(("no clusters to allocate, returning ENOSPC\n"));
 	return ENOSPC;
 }
 
