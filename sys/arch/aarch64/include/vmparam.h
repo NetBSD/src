@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.19 2022/04/02 11:16:06 skrll Exp $ */
+/* $NetBSD: vmparam.h,v 1.19.4.1 2024/07/03 19:13:20 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -179,7 +179,7 @@
 #define AARCH64_KVA_TO_PA(va)	((paddr_t) ((va) & ~AARCH64_DIRECTMAP_MASK))
 
 /* */
-#define VM_PHYSSEG_MAX		64              /* XXX */
+#define VM_PHYSSEG_MAX		256              /* XXX */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 
 #define VM_NFREELIST		1

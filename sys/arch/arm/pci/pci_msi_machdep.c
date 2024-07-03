@@ -1,4 +1,4 @@
-/* $NetBSD: pci_msi_machdep.c,v 1.9 2020/02/13 06:28:25 skrll Exp $ */
+/* $NetBSD: pci_msi_machdep.c,v 1.9.24.1 2024/07/03 19:13:20 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.9 2020/02/13 06:28:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.9.24.1 2024/07/03 19:13:20 martin Exp $");
 
 #include <sys/kernel.h>
 #include <sys/kmem.h>
@@ -63,14 +63,13 @@ static struct arm_pci_msi *
 arm_pci_msi_lookup(const struct pci_attach_args *pa)
 {
 	struct arm_pci_msi *msip;
-	uint32_t devid, frameid;
+	uint32_t rid, frameid;
 	int b, d, f;
 
 	pci_decompose_tag(pa->pa_pc, pa->pa_tag, &b, &d, &f);
 
-	devid = (b << 8) | (d << 3) | f;
-	devid = pci_get_devid(pa->pa_pc, devid);
-	frameid = pci_get_frameid(pa->pa_pc, devid);
+	rid = (b << 8) | (d << 3) | f;
+	frameid = pci_get_frameid(pa->pa_pc, rid);
 
 	SIMPLEQ_FOREACH(msip, &arm_pci_msi_list, msi_link)
 		if (frameid == msip->msi_id)
