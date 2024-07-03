@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.4 2016/03/09 15:44:49 christos Exp $	*/
+/*	$NetBSD: installboot.h,v 1.4.26.1 2024/07/03 18:38:53 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,10 +42,6 @@
 
 #include <sys/stat.h>
 #include <stdint.h>
-
-#ifndef MAXNAMLEN
-#define MAXNAMLEN	511
-#endif
 
 typedef enum {
 				/* flags from global options */
@@ -134,8 +130,5 @@ struct bbinfo_params {
 
 int		cd9660_match(ib_params *);
 int		cd9660_findstage2(ib_params *, uint32_t *, ib_block *);
-
-int isofncmp(const u_char *, size_t, const u_char *, size_t, int);
-void isofntrans(const u_char *, int, u_char *, u_short *, int, int, int, int);
 
 #endif	/* _INSTALLBOOT_H */

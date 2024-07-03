@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2021/05/25 11:55:40 martin Exp $
+#	$NetBSD: Makefile,v 1.17.4.1 2024/07/03 18:38:54 martin Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -18,6 +18,9 @@ release: check_RELEASEDIR .WAIT ${OWFBOOTERS}
 	${RELEASE_INSTALL} ${OFWBOOTERS} ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation
 
 iso_image:
-	${MAKEDIRTARGET} cdroms iso_image
+# macppc installcd is now created via "do-isa-image" target in
+# etc/Makefile using ${TOOLS_MKHYBRID} for ISO9660/HFS hybrid image
+# with bootable special Apple partition map
+#	${MAKEDIRTARGET} cdroms iso_image
 
 .include <bsd.subdir.mk>

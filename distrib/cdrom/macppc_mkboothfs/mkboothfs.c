@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboothfs.c,v 1.3 2008/05/14 13:29:27 tsutsui Exp $	*/
+/*	$NetBSD: mkboothfs.c,v 1.3.72.1 2024/07/03 18:38:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Izumi Tsutsui.  All rights reserved.
@@ -30,6 +30,9 @@
 #else
 #include <sys/bootblock.h>
 #endif
+#if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
+#include <sys/endian.h>
+#endif
 
 #include <err.h>
 #include <fcntl.h>
@@ -40,8 +43,18 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#define BUFSIZE		(64 * 1024)
+
 #define BSIZE		512
-#define BUFSIZE		(8 * 1024)
+#define BOOTPARTSIZE	32768	/* XXX: not sure how much required */
+#define BOOTDATASIZE	(BOOTPARTSIZE - MACPPC_BOOT_BLOCK_MAX_SIZE)
+
+#define HFS_BLKSIZE	512
+#define HFS_MAGICOFFSET	(BOOTDATASIZE - (HFS_BLKSIZE * 2))
+#define HFS_MAGIC	0x4c4b
+
+#define SIZETOBLK512(size)	((size) / 512)
+#define SIZETOBLK2048(size)	((size) / 2048)
 
 static void usage(void);
 
@@ -94,8 +107,8 @@ main(int argc, char **argv)
 	pme.pmSig =		htobe16(APPLE_PART_MAP_ENTRY_MAGIC);
 	pme.pmMapBlkCnt =	htobe32(1);
 	pme.pmPyPartStart =	htobe32(1);
-	pme.pmPartBlkCnt =	htobe32(1);
-	pme.pmDataCnt =		htobe32(1);
+	pme.pmPartBlkCnt =	htobe32(SIZETOBLK2048(BOOTPARTSIZE));
+	pme.pmDataCnt =		htobe32(SIZETOBLK2048(BOOTDATASIZE));
 	strlcpy(pme.pmPartName, "NetBSD_BootBlock", sizeof(pme.pmPartName));
 	strlcpy(pme.pmPartType, "Apple_Driver", sizeof(pme.pmPartType));
 	pme.pmPartStatus =	htobe32(0x3b);
@@ -112,8 +125,8 @@ main(int argc, char **argv)
 	 * Write 512-byte/sector map in the third 512 byte block
 	 */
 	pme.pmPyPartStart =	htobe32(4);
-	pme.pmPartBlkCnt =	htobe32(4);
-	pme.pmDataCnt =		htobe32(4);
+	pme.pmPartBlkCnt =	htobe32(SIZETOBLK512(BOOTPARTSIZE));
+	pme.pmDataCnt =		htobe32(SIZETOBLK512(BOOTDATASIZE));
 	memset(buf, 0, BSIZE);
 	memcpy(buf, &pme, sizeof(pme));
 	write(ofd, buf, BSIZE);
@@ -133,10 +146,9 @@ main(int argc, char **argv)
 	/*
 	 * Prepare HFS "bootblock"; enough to pacify mkisofs.
 	 */
-	memset(buf, 0, BSIZE * 2);
-	buf[0] = 0x4c;
-	buf[1] = 0x4b;
-	if (write(ofd, buf, BSIZE * 2) != BSIZE * 2)
+	memset(buf, 0, BOOTDATASIZE);
+	be16enc(&buf[HFS_MAGICOFFSET], HFS_MAGIC);
+	if (write(ofd, buf, BOOTDATASIZE) != BOOTDATASIZE)
 		err(1, "write boot-hfs-file `%s'", boothfs);
  
 	free(buf);
