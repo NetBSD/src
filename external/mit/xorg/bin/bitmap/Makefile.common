@@ -1,0 +1,9 @@
+#	$NetBSD: Makefile.common,v 1.1 2024/07/03 09:30:22 mrg Exp $
+
+# common makefile fragment for bitmap components
+
+LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11 -lm
+DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
+	${LIBXPM} ${LIBXEXT} ${LIBX11} ${LIBM}
+
+CPPFLAGS+=-DHAVE_MKSTEMP -DHAVE_LRINT -DPACKAGE_STRING=\"${PACKAGE_STRING}\"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2016/04/13 21:48:21 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2024/07/03 09:30:22 mrg Exp $
 
 NOMAN=	1
 
@@ -6,10 +6,7 @@ NOMAN=	1
 
 PROG=	bmtoa
 
-CPPFLAGS+=-DHAVE_MKSTEMP
-LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11 -lm
-DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
-	${LIBXPM} ${LIBXEXT} ${LIBX11} ${LIBM}
+.include "../Makefile.common"
 
 .PATH:	${X11SRCDIR.bitmap}
 
