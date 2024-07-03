@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/05/31 05:24:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2024/07/03 09:37:48 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -8,9 +8,13 @@ SRCS=	actions.c comm.c editres.c geometry.c handler.c setvalues.c \
 
 APPDEFS=Editres.ad Editres-color.ad
 
-LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11
+LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lxkbfile -lXext -lX11
 DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
-	${LIBXPM} ${LIBXEXT} ${LIBX11}
+	${LIBXPM} ${LIBXKBFILE} ${LIBXEXT} ${LIBX11}
+LDADD+=	-lXrandr -lxkbfile -lXext -lX11
+DPADD+=	${LIBXRANDR} ${LIBXKBFILE} ${LIBXEXT} ${LIBX11}
+
+CPPFLAGS+=	-DXKB -DPACKAGE_STRING=\"${PACKAGE_STRING}\"
 
 .PATH:	${X11SRCDIR.${PROG}}
 .PATH:	${X11SRCDIR.${PROG}}/man
