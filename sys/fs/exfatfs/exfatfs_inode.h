@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_inode.h,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $	*/
+/*	$NetBSD: exfatfs_inode.h,v 1.1.2.3 2024/07/03 18:57:42 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
@@ -225,6 +225,8 @@ do {									\
 #define GET_DSE_VALIDDATALENGTH(xip) DSE(xip)->xd_validDataLength
 #define GET_DSE_FIRSTCLUSTER(xip)    DSE(xip)->xd_firstCluster
 #define GET_DSE_DATALENGTH(xip)      DSE(xip)->xd_dataLength
+#define GET_DSE_DATALENGTH_BLK(xip, fs) roundup2(DSE(xip)->xd_dataLength, \
+						CLUSTERSIZE(fs))
 
 #define SET_DSE_NAMELENGTH(xip, v)					\
 do {									\

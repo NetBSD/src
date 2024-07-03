@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_vnops.c,v 1.1.2.4 2024/07/03 04:08:47 perseant Exp $	*/
+/*	$NetBSD: exfatfs_vnops.c,v 1.1.2.5 2024/07/03 18:57:42 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_vnops.c,v 1.1.2.4 2024/07/03 04:08:47 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_vnops.c,v 1.1.2.5 2024/07/03 18:57:42 perseant Exp $");
 
 #include <sys/buf.h>
 #include <sys/dirent.h>
@@ -230,7 +230,7 @@ exfatfs_getattr(void *v)
 	}
 	vap->va_gen = 0;
 	vap->va_blocksize = SECSIZE(fs);
-	vap->va_bytes = GET_DSE_DATALENGTH(xip);
+	vap->va_bytes = GET_DSE_DATALENGTH_BLK(xip, fs);
 	vap->va_type = ap->a_vp->v_type;
 	DPRINTF((" getattr returning 0\n"));
 	return (0);
@@ -496,18 +496,6 @@ exfatfs_write(void *v)
 		return (EFBIG);
 
 	/*
-	 * If the offset we are starting the write at is beyond the end of
-	 * the file, then they've done a seek.  Unix filesystems allow
-	 * files with holes in them, DOS doesn't so we must fill the hole
-	 * with zeroed blocks.
-	 */
-	if (uio->uio_offset > GET_DSE_DATALENGTH(xip)) {
-		if ((error = deextend(xip, uio->uio_offset, ioflag, cred)) != 0) {
-			return (error);
-		}
-	}
-
-	/*
 	 * Remember some values in case the write fails.
 	 */
 	async = vp->v_mount->mnt_flag & MNT_ASYNC;
@@ -520,7 +508,8 @@ exfatfs_write(void *v)
 	 */
 	if (uio->uio_offset + resid > GET_DSE_VALIDDATALENGTH(xip)) {
 		/* DPRINTF(("write past valid data length\n")); */
-		if (uio->uio_offset + resid > GET_DSE_DATALENGTH(xip)) {
+		if (uio->uio_offset + resid > GET_DSE_DATALENGTH_BLK(xip,
+								xip->xi_fs)) {
 			DPRINTF(("write past allocation\n"));
 			if ((error = deextend(xip, uio->uio_offset + resid,
 					      ioflag, cred)) != 0)
@@ -528,9 +517,11 @@ exfatfs_write(void *v)
 			DPRINTF(("now vdl=%llu dl=%llu\n",
 				 (unsigned long long)
 					GET_DSE_VALIDDATALENGTH(xip),
-				 (unsigned long long)GET_DSE_DATALENGTH(xip)));
+				 (unsigned long long)
+					GET_DSE_DATALENGTH_BLK(xip, fs)));
 		}
 
+		SET_DSE_DATALENGTH(xip, uio->uio_offset + resid);
 		SET_DSE_VALIDDATALENGTH(xip, uio->uio_offset + resid);
 		/* hint uvm to not read in extended part */
 		uvm_vnp_setwritesize(vp, GET_DSE_VALIDDATALENGTH(xip));
@@ -852,7 +843,7 @@ exfatfs_findempty(struct vnode *dvp, struct xfinode *xip)
 	DPRINTF(("exfatfs_findempty search dir 0x%lx bytes 0..%llu of %llu\n",
 		 (unsigned long)INUM(dxip),
 		 (unsigned long long)GET_DSE_VALIDDATALENGTH(dxip),
-		 (unsigned long long)GET_DSE_DATALENGTH(dxip)));
+		 (unsigned long long)GET_DSE_DATALENGTH_BLK(dxip, fs)));
 
 	/*
 	 * Search the directory for empty space.  If there is any, we won't
@@ -905,20 +896,20 @@ exfatfs_findempty(struct vnode *dvp, struct xfinode *xip)
 	if (r < 0) /* We never found a single empty spot */
 		r = GET_DSE_VALIDDATALENGTH(dxip);
 	newsize = r + len * sizeof(*dirent);
-	if (GET_DSE_DATALENGTH(dxip) < newsize) {
+	if (GET_DSE_DATALENGTH_BLK(dxip, fs) < newsize) {
 		/* We need to allocate blocks before extending */
 		if ((error = deextend(dxip, roundup2(newsize, CLUSTERSIZE(fs)),
 				      0, NOCRED)) != 0)
 			return error;
 		DPRINTF((" allocated dir 0x%lx to %llu\n",
 			 (unsigned long)INUM(dxip),
-			 (unsigned long long)GET_DSE_DATALENGTH(dxip)));
+			 (unsigned long long)GET_DSE_DATALENGTH_BLK(dxip, fs)));
 	}
 
 	/* Space is now allocated.  Adjust validDataLength if necessary. */
 	/* exFAT requires ValidDataLength == DataLength for directories */
 	SET_DSE_VALIDDATALENGTH(dxip, GET_DSE_DATALENGTH(dxip));
-	uvm_vnp_setsize(dvp, GET_DSE_DATALENGTH(dxip));
+	uvm_vnp_setsize(dvp, GET_DSE_VALIDDATALENGTH(dxip));
 
 havespace:
 	dxip->xi_flag |= XI_MODIFIED;
@@ -1677,6 +1668,7 @@ exfatfs_readdir(void *v)
 		}
 	}
 
+	KASSERT(GET_DSE_DATALENGTH(xip) == GET_DSE_DATALENGTH_BLK(xip, fs));
 	KASSERT(GET_DSE_VALIDDATALENGTH(xip) == GET_DSE_DATALENGTH(xip));
 
 	/* Scan the directory to fill in uio. */
@@ -2116,6 +2108,7 @@ exfatfs_symlink(void *v)
 		       MIN(resid, SECSIZE(fs)));
 		bdwrite(bp);
 	}
+	SET_DSE_DATALENGTH(xip, len);
 	SET_DSE_VALIDDATALENGTH(xip, len);
 	uvm_vnp_setsize(vp, len);
 	xip->xi_flag |= XI_MODIFIED;
@@ -2262,7 +2255,8 @@ detrunc(struct xfinode *xip, off_t bytes, int ioflags, kauth_cred_t cred) {
 	struct exfatfs *fs = xip->xi_fs;
 	uint32_t newcount = EXFATFS_BYTES2CLUSTER(fs, bytes) +
 		((bytes & CLUSTERMASK(fs)) ? 1 : 0);
-	uint32_t oldcount = EXFATFS_BYTES2CLUSTER(fs, GET_DSE_DATALENGTH(xip));
+	uint32_t oldcount = EXFATFS_BYTES2CLUSTER(fs,
+				GET_DSE_DATALENGTH_BLK(xip, fs));
 	uint32_t pcn, opcn, lcn;
 #if 0
 	daddr_t lbn;
@@ -2316,7 +2310,7 @@ detrunc(struct xfinode *xip, off_t bytes, int ioflags, kauth_cred_t cred) {
 				 (unsigned)opcn, (unsigned)INUM(xip),
 				 (unsigned)lcn,
 				 (unsigned)EXFATFS_BYTES2CLUSTER(fs,
-					GET_DSE_DATALENGTH(xip))));
+					GET_DSE_DATALENGTH_BLK(xip, fs))));
 			exfatfs_bitmap_dealloc(fs, opcn);
 			((uint32_t *)bp->b_data)[EXFATFS_FATOFF(opcn)]
 				= 0xFFFFFFFF;
@@ -2344,15 +2338,16 @@ detrunc(struct xfinode *xip, off_t bytes, int ioflags, kauth_cred_t cred) {
 		++lcn;
 	}
 	assert(lcn == oldcount);
+	SET_DSE_DATALENGTH(xip, bytes);
 	SET_DSE_VALIDDATALENGTH(xip, bytes);
-	SET_DSE_DATALENGTH(xip, roundup2(bytes, CLUSTERSIZE(fs)));
 	vtruncbuf(XITOV(xip), newcount, 0, 0);
 
 	DPRINTF(("inum 0x%x terminating with lcn=0x%x pcn=0x%x dl=%u\n",
 		 (unsigned)INUM(xip),
 		 (unsigned)lcn,
 		 (unsigned)pcn,
-		 (unsigned)EXFATFS_BYTES2CLUSTER(fs, GET_DSE_DATALENGTH(xip))));
+		 (unsigned)EXFATFS_BYTES2CLUSTER(fs,
+			GET_DSE_DATALENGTH_BLK(xip, fs))));
 	
 	if (newcount == 0) {
 		CLR_DSE_NOFATCHAIN(xip);
@@ -2377,7 +2372,8 @@ static int deextend(struct xfinode *xip, off_t bytes, int ioflags,
 	struct exfatfs *fs = xip->xi_fs;
 	uint32_t newcount = EXFATFS_BYTES2CLUSTER(fs, bytes) +
 		((bytes & CLUSTERMASK(fs)) ? 1 : 0);
-	uint32_t oldcount = EXFATFS_BYTES2CLUSTER(fs, GET_DSE_DATALENGTH(xip));
+	uint32_t oldcount = EXFATFS_BYTES2CLUSTER(fs,
+		GET_DSE_DATALENGTH_BLK(xip, fs));
 	uint32_t pcn, lcn, opcn;
 	daddr_t bn;
 	struct buf *bp = NULL;
@@ -2418,8 +2414,8 @@ static int deextend(struct xfinode *xip, off_t bytes, int ioflags,
 
 	if (lcn >= newcount) {
 		printf("impossible: bytes=%ld datalength=%lu lcn=%u old=%u"
-		       " new=%u\n",
-		       (long)bytes, (unsigned long)GET_DSE_DATALENGTH(xip),
+		       " new=%u\n", (long)bytes,
+		       (unsigned long)GET_DSE_DATALENGTH_BLK(xip, fs),
 		       lcn, oldcount, newcount);
 	}
 	KASSERT(lcn < newcount);
@@ -2527,7 +2523,7 @@ static int deextend(struct xfinode *xip, off_t bytes, int ioflags,
 	DPRINTF(("deextend end with pcn %u lcn %u\n", pcn, lcn));
 
 	/* Update size */
-	SET_DSE_DATALENGTH(xip, EXFATFS_CLUSTER2BYTES(fs, newcount));
+	SET_DSE_DATALENGTH(xip, bytes);
 	exfatfs_writeback(xip);
 	
 	if (lcn == newcount - 1 && pcn >= 2 && pcn < fs->xf_ClusterCount + 2) {
