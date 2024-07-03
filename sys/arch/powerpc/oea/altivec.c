@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.34 2021/10/30 19:44:56 thorpej Exp $	*/
+/*	$NetBSD: altivec.c,v 1.34.4.1 2024/07/03 18:12:35 martin Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.34 2021/10/30 19:44:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.34.4.1 2024/07/03 18:12:35 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -162,6 +162,10 @@ vec_restore_from_mcontext(struct lwp *l, const mcontext_t *mcp)
 	struct pcb * const pcb = lwp_getpcb(l);
 
 	KASSERT(l == curlwp);
+
+	/* Nothing to do here. */
+	if (!vec_used_p(l))
+		return;
 
 	/* we don't need to save the state, just drop it */
 	pcu_discard(&vec_ops, l, true);
