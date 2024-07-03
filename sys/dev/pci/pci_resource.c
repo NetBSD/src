@@ -1,4 +1,4 @@
-/* $NetBSD: pci_resource.c,v 1.3.2.1 2023/11/29 12:34:46 martin Exp $ */
+/* $NetBSD: pci_resource.c,v 1.3.2.2 2024/07/03 19:13:19 martin Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_resource.c,v 1.3.2.1 2023/11/29 12:34:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_resource.c,v 1.3.2.2 2024/07/03 19:13:19 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -136,7 +136,7 @@ struct pci_resources {
 	vmem_t		*pr_res[NUM_PCI_RANGES];
 };
 
-static void	pci_resource_scan_bus(struct pci_resources *,
+static int	pci_resource_scan_bus(struct pci_resources *,
 		    struct pci_device *, uint8_t);
 
 #define	PCI_SBDF_FMT			"%04x:%02x:%02x.%u"
@@ -524,7 +524,11 @@ pci_resource_scan_device(struct pci_resources *pr,
 		bridge_bus = pci_conf_read(pr->pr_pc, tag, PCI_BRIDGE_BUS_REG);
 		sec_bus = PCI_BRIDGE_BUS_NUM_SECONDARY(bridge_bus);
 		if (sec_bus <= pr->pr_endbus) {
-			pci_resource_scan_bus(pr, pd, sec_bus);
+			if (pci_resource_scan_bus(pr, pd, sec_bus) != 0) {
+				DPRINT("PCI: " PCI_SBDF_FMT " bus %u "
+				       "already scanned (firmware bug!)\n",
+				       PCI_SBDF_FMT_ARGS(pr, pd), sec_bus);
+			}
 		}
 	}
 
@@ -536,7 +540,7 @@ pci_resource_scan_device(struct pci_resources *pr,
  *
  *   Enumerate devices on a bus, recursively.
  */
-static void
+static int
 pci_resource_scan_bus(struct pci_resources *pr,
     struct pci_device *bridge_dev, uint8_t busno)
 {
@@ -552,8 +556,7 @@ pci_resource_scan_bus(struct pci_resources *pr,
 		 * Firmware has configured more than one bridge with the
 		 * same secondary bus number.
 		 */
-		panic("Bus %u already scanned (firmware bug!)", busno);
-		return;
+		return EINVAL;
 	}
 
 	pb = pci_new_bus(pr, busno, bridge_dev);
@@ -570,6 +573,8 @@ pci_resource_scan_bus(struct pci_resources *pr,
 			pci_resource_scan_device(pr, pb, devno, funcno);
 		}
 	}
+
+	return 0;
 }
 
 /*

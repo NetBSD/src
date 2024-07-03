@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.42 2021/08/07 18:39:40 jmcneill Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.42.6.1 2024/07/03 19:13:20 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.42 2021/08/07 18:39:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.42.6.1 2024/07/03 19:13:20 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -247,9 +247,7 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 
 	case ACPI_RESOURCE_TYPE_ADDRESS32:
 		/* XXX Only fixed size supported for now */
-		if (res->Data.Address32.Address.AddressLength == 0 ||
-		    (!arg->include_producer &&
-		     res->Data.Address32.ProducerConsumer != ACPI_CONSUMER))
+		if (res->Data.Address32.Address.AddressLength == 0)
 			break;
 #define ADDRESS32_FIXED2(r)						\
 	((r)->Data.Address32.MinAddressFixed == ACPI_ADDRESS_FIXED &&	\
@@ -303,9 +301,7 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 	case ACPI_RESOURCE_TYPE_ADDRESS64:
 #ifdef _LP64
 		/* XXX Only fixed size supported for now */
-		if (res->Data.Address64.Address.AddressLength == 0 ||
-		    (!arg->include_producer &&
-		     res->Data.Address64.ProducerConsumer != ACPI_CONSUMER))
+		if (res->Data.Address64.Address.AddressLength == 0)
 			break;
 #define ADDRESS64_FIXED2(r)						\
 	((r)->Data.Address64.MinAddressFixed == ACPI_ADDRESS_FIXED &&	\
