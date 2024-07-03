@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.8 2024/07/01 20:05:04 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.9 2024/07/03 17:29:50 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -101,4 +101,18 @@ crypto/external/bsd/openssh/dist/version.h	(patch)
 	sshd(8): PR 58386:  avoid strnvis and syslog_r in signal handler
 	context. Fixes CVE-2024-6387.
 	[riastradh, ticket #1854]
+
+sys/dev/pci/pcidevs				1.1507
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+	PR 58358: add Brainboxes as manufacturer and some of their devices.
+	[nia, ticket #1852]
+
+usr.sbin/sysinst/msg.mi.de			1.49,1.50
+usr.sbin/sysinst/msg.mi.en			1.52
+
+	sysinst(8): Note that leaving the network "media type" empty
+	autoconfigures.
+	[nia, ticket #1853]
 
