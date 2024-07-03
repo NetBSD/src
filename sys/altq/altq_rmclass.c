@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.29 2021/07/21 07:34:44 ozaki-r Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.29.10.1 2024/07/03 19:15:07 martin Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.29 2021/07/21 07:34:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.29.10.1 2024/07/03 19:15:07 martin Exp $");
 
 /* #ident "@(#)rm_class.c  1.48     97/12/05 SMI" */
 
@@ -879,6 +879,7 @@ rmc_under_limit(struct rm_class *cl, struct timespec *now)
 	rm_class_t	*p = cl;
 	rm_class_t	*top;
 	struct rm_ifdat	*ifd = cl->ifdat_;
+	int sleeping = cl->sleeping_;
 
 	ifd->borrowed_[ifd->qi_] = NULL;
 	/*
@@ -888,20 +889,23 @@ rmc_under_limit(struct rm_class *cl, struct timespec *now)
 	if (cl->parent_ == NULL)
 		return (1);
 
-	if (cl->sleeping_) {
-		if (TS_LT(now, &cl->undertime_))
-			return (0);
-
-		CALLOUT_STOP(&cl->callout_);
-		cl->sleeping_ = 0;
-		cl->undertime_.tv_sec = 0;
+	if (!TS_LT(now, &cl->undertime_)) {
+		/* Fast path: the given class is allowed to send packets */
+		if (sleeping) {
+			CALLOUT_STOP(&cl->callout_);
+			cl->sleeping_ = 0;
+			cl->undertime_.tv_sec = 0;
+		}
 		return (1);
 	}
 
 	top = NULL;
-	while (cl->undertime_.tv_sec && TS_LT(now, &cl->undertime_)) {
+	do {
 		if (((cl = cl->borrow_) == NULL) ||
 		    (cl->depth_ > ifd->cutoff_)) {
+			/* No need to call the delay action */
+			if (sleeping)
+				return (0);
 #ifdef ADJUST_CUTOFF
 			if (cl != NULL)
 				/* cutoff is taking effect, just
@@ -931,7 +935,7 @@ rmc_under_limit(struct rm_class *cl, struct timespec *now)
 			return (0);
 		}
 		top = cl;
-	}
+	} while (cl->undertime_.tv_sec && TS_LT(now, &cl->undertime_));
 
 	if (cl != p)
 		ifd->borrowed_[ifd->qi_] = cl;
