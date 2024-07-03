@@ -337,7 +337,7 @@ void print_upcase_table(struct exfatfs *fs, uint32_t clust, uint64_t len)
 	int i, subclust;
 	struct buf *bp;
 
-	printf("Upcase Table (%ld entries):", len / 2);
+	printf("Upcase Table (%ld entries):", (long)len / 2);
 	do {
 		for (subclust = 0; subclust < (1 << fs->xf_SectorsPerClusterShift); ++subclust) {
 			/* Retrieve the block */
@@ -445,7 +445,7 @@ void print_dir(struct exfatfs *fs, uint32_t dirclust, uint32_t diroff, int actio
 			++nsecfound;
 		
 		if (action == ACTION_PRINT)
-			printf("Entry %ld: type 0x%2.2hhx\n", off, dp[0]);
+			printf("Entry %ld: type 0x%2.2hhx\n", (long)off, dp[0]);
 		switch (dp[0]) {
 		case XD_ENTRYTYPE_EOD:
 			if (action == ACTION_PRINT)
