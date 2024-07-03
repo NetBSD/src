@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.156 2024/07/03 09:24:04 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.157 2024/07/03 09:37:05 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -451,9 +451,13 @@ _X11MANTRANSFORMS_BOTH=\
 	XCONFIGFILEMAN		'xorg.conf(5)' \
 	xlocaledir		${X11LIBDIR}/locale \
 	xorgversion		${XORGVERSION:C/ /%/gW} \
-	PACKAGE_STRING		${PACKAGE_STRING} \
 	XSERVERNAME		Xorg \
 	xservername		Xorg
+
+.if !empty(PACKAGE_STRING)
+_X11MANTRANSFORMS_BOTH+=\
+	PACKAGE_STRING		${PACKAGE_STRING}
+.endif
 
 .for __def__ __value__ in ${_X11MANTRANSFORMS_BOTH}
 _X11MANTRANSFORM+= \
