@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.36 2024/06/25 11:52:11 macallan Exp $	*/
+/*	$NetBSD: sti.c,v 1.37 2024/07/03 13:08:36 macallan Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.36 2024/06/25 11:52:11 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.37 2024/07/03 13:08:36 macallan Exp $");
 
 #include "wsdisplay.h"
 
@@ -133,6 +133,7 @@ void	ngle_artist_setupfb(struct sti_screen *);
 void	ngle_elk_setupfb(struct sti_screen *);
 void	ngle_timber_setupfb(struct sti_screen *);
 int	ngle_putcmap(struct sti_screen *, u_int, u_int);
+int	ngle_hcrx_putcmap(struct sti_screen *, u_int, u_int);
 #endif
 
 #define	STI_ENABLE_ROM(sc) \
@@ -685,7 +686,7 @@ sti_screen_setup(struct sti_screen *scr, int flags)
 
 	case STI_DD_HCRX:
 		scr->setupfb = ngle_elk_setupfb;
-		scr->putcmap = ngle_putcmap;
+		scr->putcmap = ngle_hcrx_putcmap;
 
 		if (scr->scr_bpp > 8) {
 			scr->reg12_value = NGLE_BUFF1_CMAP3;
@@ -694,7 +695,7 @@ sti_screen_setup(struct sti_screen *scr, int flags)
 			scr->reg12_value = NGLE_BUFF1_CMAP0;
 			scr->reg10_value = 0x13602000;
 		}
-		scr->cmap_finish_register = NGLE_REG_1;
+		scr->cmap_finish_register = NGLE_REG_38;
 		break;
 
 	case STI_DD_GRX:
@@ -1649,9 +1650,53 @@ ngle_putcmap(struct sti_screen *scr, u_int idx, u_int count)
 		r++, g++, b++;
 	}
 
+
 	bus_space_write_stream_4(memt, memh, NGLE_REG_2, 0x400);
 	bus_space_write_stream_4(memt, memh, scr->cmap_finish_register,
 	    cmap_finish);
+	ngle_setup_fb(memt, memh, scr->reg10_value);
+
+
+	return 0;
+}
+
+int
+ngle_hcrx_putcmap(struct sti_screen *scr, u_int idx, u_int count)
+{
+	struct sti_rom *rom = scr->scr_rom;
+	bus_space_tag_t memt = rom->memt;
+	bus_space_handle_t memh = rom->regh[2];
+	uint8_t *r, *g, *b;
+	uint32_t cmap_finish;
+
+	if (scr->scr_bpp > 8)
+		cmap_finish = 0x80000100;
+	else
+		cmap_finish = 0x82000100;
+
+	r = scr->scr_rcmap + idx;
+	g = scr->scr_gcmap + idx;
+	b = scr->scr_bcmap + idx;
+
+	ngle_setup_hw(memt, memh);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_10, 0xbbe0f000);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_14, 0x03000300);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_13, 0xffffffff);
+
+	while (count-- != 0) {
+		ngle_setup_hw(memt, memh);
+		bus_space_write_stream_4(memt, memh, NGLE_REG_3,
+		    0x400 | (idx << 2));
+		bus_space_write_stream_4(memt, memh, NGLE_REG_4,
+		    (*r << 16) | (*g << 8) | *b);
+
+		idx++;
+		r++, g++, b++;
+	}
+
+
+	bus_space_write_stream_4(memt, memh, NGLE_REG_2, 0x400);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_38, cmap_finish);
 	ngle_setup_fb(memt, memh, scr->reg10_value);
 
 
