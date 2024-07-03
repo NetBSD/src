@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.66 2023/04/07 10:34:13 kre Exp $	*/
+/*	$NetBSD: histedit.c,v 1.67 2024/07/03 05:58:05 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.66 2023/04/07 10:34:13 kre Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.67 2024/07/03 05:58:05 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,9 @@ __RCSID("$NetBSD: histedit.c,v 1.66 2023/04/07 10:34:13 kre Exp $");
 #include "myhistedit.h"
 #include "error.h"
 #include "alias.h"
-#ifndef SMALL
+
+#ifndef SMALL		/* almost all the rest of this file */
+
 #include "eval.h"
 #include "memalloc.h"
 #include "show.h"
@@ -170,7 +172,7 @@ histedit(void)
 				    "ReadLine compatible completion function",
 				    sh_complete);
 			} else {
-bad:
+ bad:;
 				out2str("sh: can't initialize editing\n");
 			}
 			INTON;
@@ -308,12 +310,16 @@ histcmd(volatile int argc, char ** volatile argv)
 	int i, retval;
 	const char *firststr, *laststr;
 	int first, last, direction;
-	char * volatile pat = NULL, * volatile repl;	/* ksh "fc old=new" crap */
+
+	char * volatile pat = NULL;	/* ksh "fc old=new" crap */
+	char * volatile repl;
+
 	static int active = 0;
 	struct jmploc jmploc;
 	struct jmploc *volatile savehandler;
 	char editfile[MAXPATHLEN + 1];
 	FILE * volatile efp;
+
 #ifdef __GNUC__
 	repl = NULL;	/* XXX gcc4 */
 	efp = NULL;	/* XXX gcc4 */
@@ -471,6 +477,7 @@ histcmd(volatile int argc, char ** volatile argv)
 	 */
 	if (editor) {
 		int fd;
+
 		INTOFF;		/* easier */
 		snprintf(editfile, sizeof(editfile), "%s_shXXXXXX", _PATH_TMP);
 		if ((fd = mkstemp(editfile)) < 0)
@@ -493,7 +500,7 @@ histcmd(volatile int argc, char ** volatile argv)
 	 */
 	history(hist, &he, H_FIRST);
 	retval = history(hist, &he, H_NEXT_EVENT, first);
-	for (;retval != -1; retval = history(hist, &he, direction)) {
+	for ( ; retval != -1; retval = history(hist, &he, direction)) {
 		if (lflg) {
 			if (!nflg)
 				out1fmt("%5d ", he.num);
@@ -508,7 +515,7 @@ histcmd(volatile int argc, char ** volatile argv)
 					out2str(s);
 				}
 
-				evalstring(strcpy(stalloc(strlen(s) + 1), s), 0);
+				evalstring(strcpy(stalloc(strlen(s)+1), s), 0);
 				if (displayhist && hist) {
 					/*
 					 *  XXX what about recursive and
@@ -595,8 +602,8 @@ comparator(const void *a, const void *b)
  * searches for files in current directory. If we're at the start of the
  * line, we want to look for available commands from all paths in $PATH.
  */
-static char
-**sh_matches(const char *text, int start, int end)
+static char **
+sh_matches(const char *text, int start, int end)
 {
 	char *free_path = NULL, *dirname, *path;
 	char **matches = NULL;
@@ -623,8 +630,10 @@ static char
 
 			if (strncmp(entry->d_name, text, curpos) != 0)
 				continue;
-			if (entry->d_type == DT_UNKNOWN || entry->d_type == DT_LNK) {
-				if (fstatat(dfd, entry->d_name, &statb, 0) == -1)
+			if (entry->d_type == DT_UNKNOWN ||
+			    entry->d_type == DT_LNK) {
+				if (fstatat(dfd, entry->d_name, &statb, 0)
+				    == -1)
 					continue;
 				if (!S_ISREG(statb.st_mode))
 					continue;
@@ -643,7 +652,7 @@ static char
 		}
 		closedir(dir);
 	}
-out:
+ out:;
 	free(free_path);
 	if (i == 0) {
 		free(matches);
@@ -685,8 +694,8 @@ not_fcnumber(const char *s)
 {
 	if (s == NULL)
 		return 0;
-        if (*s == '-')
-                s++;
+	if (*s == '-')
+		s++;
 	return !is_number(s);
 }
 
@@ -738,17 +747,21 @@ str_to_event(const char *str, int last)
 	}
 	return he.num;
 }
-#else
+
+#else	/* defined(SMALL) */
+
 int
 histcmd(int argc, char **argv)
 {
 	error("not compiled with history support");
 	/* NOTREACHED */
 }
+
 int
 inputrc(int argc, char **argv)
 {
 	error("not compiled with history support");
 	/* NOTREACHED */
 }
-#endif
+
+#endif	/* SMALL */
