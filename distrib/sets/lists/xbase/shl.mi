@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.106 2024/05/10 12:21:49 riastradh Exp $
+# $NetBSD: shl.mi,v 1.107 2024/07/04 07:52:29 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -200,6 +200,9 @@
 ./usr/X11R7/lib/libxcb-damage.so		xbase-libxcb-lib		xorg,compatx11file
 ./usr/X11R7/lib/libxcb-damage.so.0		xbase-libxcb-lib		xorg,compatx11file
 ./usr/X11R7/lib/libxcb-damage.so.0.1		xbase-libxcb-lib		xorg,compatx11file
+./usr/X11R7/lib/libxcb-dbe.so			xbase-libxcb-lib		xorg,compatx11file
+./usr/X11R7/lib/libxcb-dbe.so.0			xbase-libxcb-lib		xorg,compatx11file
+./usr/X11R7/lib/libxcb-dbe.so.0.1		xbase-libxcb-lib		xorg,compatx11file
 ./usr/X11R7/lib/libxcb-dpms.so			xbase-libxcb-lib		xorg,compatx11file
 ./usr/X11R7/lib/libxcb-dpms.so.0		xbase-libxcb-lib		xorg,compatx11file
 ./usr/X11R7/lib/libxcb-dpms.so.0.1		xbase-libxcb-lib		xorg,compatx11file

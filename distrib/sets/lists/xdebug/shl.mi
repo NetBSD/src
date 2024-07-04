@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.71 2024/06/15 12:38:16 wiz Exp $
+# $NetBSD: shl.mi,v 1.72 2024/07/04 07:52:29 mrg Exp $
 ./usr/libdata/debug/usr/X11R7/lib	base-sys-usr		xorg,debug,compatx11dir
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libximcp.so.2.0.debug	obsolete		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libxlcDef.so.2.0.debug	obsolete		obsolete
@@ -66,6 +66,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-aux.so.0.0.debug	xdebug-xcb-util-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-composite.so.0.1.debug	xdebug-libxcb-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-damage.so.0.1.debug	xdebug-libxcb-debug		xorg,debug,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libxcb-dbe.so.0.1.debug	xdebug-libxcb-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-dpms.so.0.1.debug	xdebug-libxcb-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-dri2.so.0.1.debug	xdebug-libxcb-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-dri3.so.0.1.debug	xdebug-libxcb-debug		xorg,debug,compatx11file

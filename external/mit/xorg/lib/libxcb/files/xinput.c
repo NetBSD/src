@@ -4325,13 +4325,13 @@ xcb_input_change_feedback_control_checked (xcb_connection_t         *c,
                                            xcb_input_feedback_ctl_t *feedback)
 {
     static const xcb_protocol_request_t xcb_req = {
-        .count = 4,
+        .count = 3,
         .ext = &xcb_input_id,
         .opcode = XCB_INPUT_CHANGE_FEEDBACK_CONTROL,
         .isvoid = 1
     };
 
-    struct iovec xcb_parts[6];
+    struct iovec xcb_parts[5];
     xcb_void_cookie_t xcb_ret;
     xcb_input_change_feedback_control_request_t xcb_out;
 
@@ -4361,13 +4361,13 @@ xcb_input_change_feedback_control (xcb_connection_t         *c,
                                    xcb_input_feedback_ctl_t *feedback)
 {
     static const xcb_protocol_request_t xcb_req = {
-        .count = 4,
+        .count = 3,
         .ext = &xcb_input_id,
         .opcode = XCB_INPUT_CHANGE_FEEDBACK_CONTROL,
         .isvoid = 1
     };
 
-    struct iovec xcb_parts[6];
+    struct iovec xcb_parts[5];
     xcb_void_cookie_t xcb_ret;
     xcb_input_change_feedback_control_request_t xcb_out;
 
@@ -7311,13 +7311,13 @@ xcb_input_change_device_control (xcb_connection_t       *c,
                                  xcb_input_device_ctl_t *control)
 {
     static const xcb_protocol_request_t xcb_req = {
-        .count = 4,
+        .count = 3,
         .ext = &xcb_input_id,
         .opcode = XCB_INPUT_CHANGE_DEVICE_CONTROL,
         .isvoid = 0
     };
 
-    struct iovec xcb_parts[6];
+    struct iovec xcb_parts[5];
     xcb_input_change_device_control_cookie_t xcb_ret;
     xcb_input_change_device_control_request_t xcb_out;
 
@@ -7345,13 +7345,13 @@ xcb_input_change_device_control_unchecked (xcb_connection_t       *c,
                                            xcb_input_device_ctl_t *control)
 {
     static const xcb_protocol_request_t xcb_req = {
-        .count = 4,
+        .count = 3,
         .ext = &xcb_input_id,
         .opcode = XCB_INPUT_CHANGE_DEVICE_CONTROL,
         .isvoid = 0
     };
 
-    struct iovec xcb_parts[6];
+    struct iovec xcb_parts[5];
     xcb_input_change_device_control_cookie_t xcb_ret;
     xcb_input_change_device_control_request_t xcb_out;
 

@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2017/03/05 09:27:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2024/07/04 07:52:28 mrg Exp $
 
 SUBDIR=	libxcb .WAIT
 
 SUBDIR+= \
 	composite \
 	damage \
+	dbe \
 	dpms \
 	dri2 \
 	dri3 \

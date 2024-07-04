@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xmlsrcs,v 1.7 2022/07/12 02:43:46 mrg Exp $
+#	$NetBSD: Makefile.xmlsrcs,v 1.8 2024/07/04 07:52:28 mrg Exp $
 
 # list of the libxcb xml-generated .c files.
 
@@ -6,6 +6,7 @@ XMLSRCS= \
 	bigreq.c \
 	composite.c \
 	damage.c \
+	dbe.c \
 	dpms.c \
 	dri2.c \
 	dri3.c \
