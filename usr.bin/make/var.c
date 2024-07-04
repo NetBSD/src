@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1128 2024/07/04 17:47:53 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1129 2024/07/04 18:53:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1128 2024/07/04 17:47:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1129 2024/07/04 18:53:37 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1965,11 +1965,9 @@ FormatTime(const char *fmt, time_t t, bool gmt)
  * and stores the result back in ch->expr->value via Expr_SetValueOwn or
  * Expr_SetValueRefer.
  *
- * If evaluating fails, the fallback error message "Bad modifier" is printed
- * using Error.  This function has no side effects, it really just prints the
- * error message, continuing as if nothing had happened.  TODO: This should be
- * fixed by adding proper error handling to Var_Subst, Var_Parse,
- * ApplyModifiers and ModifyWords.
+ * If evaluating fails, the fallback error message "Bad modifier" is printed.
+ * TODO: Add proper error handling to Var_Subst, Var_Parse, ApplyModifiers and
+ * ModifyWords.
  *
  * Some modifiers such as :D and :U turn undefined expressions into defined
  * expressions using Expr_Define.
@@ -4118,8 +4116,8 @@ ApplyModifiers(
 
 bad_modifier:
 	/* Take a guess at where the modifier ends. */
-	Error("Bad modifier \":%.*s\" for variable \"%s\"",
-	    (int)strcspn(mod, ":)}"), mod, expr->name);
+	Parse_Error(PARSE_FATAL, "Bad modifier \":%.*s\"",
+	    (int)strcspn(mod, ":)}"), mod);
 
 cleanup:
 	/*

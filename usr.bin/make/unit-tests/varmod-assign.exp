@@ -37,9 +37,9 @@ Global: .MAKEOVERRIDES =  FIRST LAST LAST LAST APPENDED RAN RAN RAN IT1 THEN1 IE
 Result of ${CMD_NEW_VAR::=new-value} is "" (eval, undefined)
 Global: .MAKEFLAGS =  -r -k -d v -d 0 -d v -d
 Global: .MAKEFLAGS =  -r -k -d v -d 0 -d v -d 0
-make: Bad modifier ":" for variable ""
+make: in target "mod-assign-empty": while evaluating "${::=value}": Bad modifier ":"
 mod-assign-empty: value}
-make: Bad modifier ":" for variable ""
+make: in target "mod-assign-empty": while evaluating "${:Uvalue::=overwritten}": Bad modifier ":"
 mod-assign-empty: overwritten}
 mod-assign-empty: VAR=overwritten
 make: in target "mod-assign-parse": while evaluating variable "ASSIGN" with value "": Unknown modifier ":x"
