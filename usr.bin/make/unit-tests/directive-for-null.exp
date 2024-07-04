@@ -1,4 +1,5 @@
 make: "(stdin)" line 2: Zero byte read from file
+	in directory <curdir>
 *** Error code 2 (continuing)
 
 Stop.

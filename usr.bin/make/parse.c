@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.731 2024/06/15 19:43:56 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.732 2024/07/04 17:47:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.731 2024/06/15 19:43:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.732 2024/07/04 17:47:53 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -424,6 +424,8 @@ PrintStackTrace(bool includingInnermost)
 		} else
 			debug_printf("\tin %s:%u\n", fname, entry->lineno);
 	}
+	if (makelevel > 0)
+		debug_printf("\tin directory %s\n", curdir);
 }
 
 /* Check if the current character is escaped on the current line. */
@@ -538,7 +540,7 @@ ParseVErrorInternal(FILE *f, bool useVars, const GNode *gn,
 		parseErrors++;
 	}
 
-	if (DEBUG(PARSE))
+	if (level == PARSE_FATAL || DEBUG(PARSE))
 		PrintStackTrace(false);
 }
 

@@ -23,9 +23,11 @@ make: "directive-for.mk" line 211: XXX: Should not reach before--after
 make: "directive-for.mk" line 211: XXX: Should not reach word3
 make: "directive-for.mk" line 219: no iteration variables in for
 make: "directive-for.mk" line 245: 1 open conditional
+	in .for loop from directive-for.mk:243 with var = value
 make: "directive-for.mk" line 261: for-less endfor
 make: "directive-for.mk" line 262: if-less endif
 make: "directive-for.mk" line 270: if-less endif
+	in .for loop from directive-for.mk:269 with var = value
 For: new loop 2
 For: end for 2
 For: end for 1

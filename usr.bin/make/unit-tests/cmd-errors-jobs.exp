@@ -3,7 +3,7 @@ make: in target "unclosed-expression": Unclosed variable "UNCLOSED"
 : unclosed-expression-
 make: Unclosed expression, expecting '}' for "UNCLOSED"
 : unclosed-modifier-
-make: in target "unknown-modifier": while evaluating variable "UNKNOWN": Unknown modifier "Z"
+make: in target "unknown-modifier": while evaluating variable "UNKNOWN" with value "": Unknown modifier "Z"
 : unknown-modifier--eol
 : end-eol
 exit status 0

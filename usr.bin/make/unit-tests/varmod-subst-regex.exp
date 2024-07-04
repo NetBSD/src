@@ -18,9 +18,9 @@ make: in target "mod-regex-limits": while evaluating "${:U1 23 456:C,(.).,\2\2,:
 mod-regex-limits:22-missing:1 6
 mod-regex-limits:22-ok:1 33 556
 mod-regex-limits:capture:ihgfedcbaabcdefghijABCDEFGHIJa0a1a2rest
-make: in target "mod-regex-errors": while evaluating variable "UNDEF": Regex compilation error: (details omitted)
+make: in target "mod-regex-errors": while evaluating variable "UNDEF" with value "value": Regex compilation error: (details omitted)
 mod-regex-errors:
-make: in target "mod-regex-errors": while evaluating variable "word": while evaluating "${:U:Z}y,W}": Unknown modifier "Z"
+make: in target "mod-regex-errors": while evaluating variable "word" with value "word": while evaluating "${:U:Z}y,W}": Unknown modifier "Z"
 mod-regex-errors: xy
 unmatched-subexpression.ok: one one 2 3 5 8 one3 2one 34
 make: No match for subexpression \2

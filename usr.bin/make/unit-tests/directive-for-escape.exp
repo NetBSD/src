@@ -96,7 +96,11 @@ For: end for 1
 make: "directive-for-escape.mk" line 213: eight  and no cents.
 For: end for 1
 make: "directive-for-escape.mk" line 226: newline in .for value
+	in .for loop from directive-for-escape.mk:226 with i = "
+"
 make: "directive-for-escape.mk" line 226: newline in .for value
+	in .for loop from directive-for-escape.mk:226 with i = "
+"
 For: loop body with i = "
 ":
 .  info short: ${:U" "}

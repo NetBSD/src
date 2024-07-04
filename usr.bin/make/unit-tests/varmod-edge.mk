@@ -1,4 +1,4 @@
-# $NetBSD: varmod-edge.mk,v 1.21 2024/06/30 15:21:24 rillig Exp $
+# $NetBSD: varmod-edge.mk,v 1.22 2024/07/04 17:47:54 rillig Exp $
 #
 # Tests for edge cases in variable modifiers.
 #
@@ -162,9 +162,9 @@ MOD.colons=	${INP.colons::::}
 EXP.colons=	# empty
 
 .for test in ${TESTS}
-# expect+3: while evaluating variable "MOD.eq-esc": while evaluating variable "INP.eq-esc": Unfinished modifier ('=' missing)
-# expect+2: while evaluating variable "MOD.colons": while evaluating variable "INP.colons": Unknown modifier ":"
-# expect+1: while evaluating variable "MOD.colons": while evaluating variable "INP.colons": Unknown modifier ":"
+# expect+3: while evaluating variable "MOD.eq-esc" with value "${INP.eq-esc:a\=b}": while evaluating variable "INP.eq-esc" with value "file.c file...": Unfinished modifier ('=' missing)
+# expect+2: while evaluating variable "MOD.colons" with value "${INP.colons::::}": while evaluating variable "INP.colons" with value "value": Unknown modifier ":"
+# expect+1: while evaluating variable "MOD.colons" with value "${INP.colons::::}": while evaluating variable "INP.colons" with value "": Unknown modifier ":"
 .  if ${MOD.${test}} == ${EXP.${test}}
 # expect+16: ok M-paren
 # expect+15: ok M-mixed

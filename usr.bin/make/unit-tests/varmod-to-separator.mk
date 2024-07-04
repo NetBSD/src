@@ -1,4 +1,4 @@
-# $NetBSD: varmod-to-separator.mk,v 1.15 2024/06/01 18:44:05 rillig Exp $
+# $NetBSD: varmod-to-separator.mk,v 1.16 2024/07/04 17:47:54 rillig Exp $
 #
 # Tests for the :ts variable modifier, which joins the words of the variable
 # using an arbitrary character as word separator.
@@ -150,7 +150,7 @@ WORDS=	one two three four five six
 # for an unsigned character though.
 #
 # Since 2020-11-01, these out-of-bounds values are rejected.
-# expect+2: while evaluating variable "WORDS": Invalid character number at "400:tu}"
+# expect+2: while evaluating variable "WORDS" with value "one two three": Invalid character number at "400:tu}"
 # expect+1: Malformed conditional (${WORDS:[1..3]:ts\400:tu})
 .if ${WORDS:[1..3]:ts\400:tu}
 .  warning The separator \400 is accepted even though it is out of bounds.
@@ -166,7 +166,7 @@ WORDS=	one two three four five six
 # The hexadecimal number must be in the range of an unsigned char.
 #
 # Since 2020-11-01, these out-of-bounds values are rejected.
-# expect+2: while evaluating variable "WORDS": Invalid character number at "100:tu}"
+# expect+2: while evaluating variable "WORDS" with value "one two three": Invalid character number at "100:tu}"
 # expect+1: Malformed conditional (${WORDS:[1..3]:ts\x100:tu})
 .if ${WORDS:[1..3]:ts\x100:tu}
 .  warning The separator \x100 is accepted even though it is out of bounds.
@@ -175,14 +175,14 @@ WORDS=	one two three four five six
 .endif
 
 # The number after ':ts\x' must be hexadecimal.
-# expect+2: while evaluating variable "word": Invalid character number at ",}"
+# expect+2: while evaluating variable "word" with value "word": Invalid character number at ",}"
 # expect+1: Malformed conditional (${word:L:ts\x,})
 .if ${word:L:ts\x,}
 .endif
 
 # The hexadecimal number must be in the range of 'unsigned long' on all
 # supported platforms.
-# expect+2: while evaluating variable "word": Invalid character number at "112233445566778899}"
+# expect+2: while evaluating variable "word" with value "word": Invalid character number at "112233445566778899}"
 # expect+1: Malformed conditional (${word:L:ts\x112233445566778899})
 .if ${word:L:ts\x112233445566778899}
 .endif

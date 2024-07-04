@@ -1,4 +1,4 @@
-# $NetBSD: varmod-localtime.mk,v 1.15 2024/04/20 10:18:55 rillig Exp $
+# $NetBSD: varmod-localtime.mk,v 1.16 2024/07/04 17:47:54 rillig Exp $
 #
 # Tests for the :localtime variable modifier, which formats a timestamp
 # using strftime(3) in local time.
@@ -139,7 +139,7 @@
 # Before var.c 1.1050 from 2023-05-09, the timestamp could be directly
 # followed by the next modifier, without a ':' separator.  This was the same
 # bug as for the ':L' and ':P' modifiers.
-# expect+2: while evaluating variable "%Y": Invalid time value "100000S,1970,bad,"
+# expect+2: while evaluating variable "%Y" with value "%Y": Invalid time value "100000S,1970,bad,"
 # expect+1: Malformed conditional (${%Y:L:localtime=100000S,1970,bad,} != "bad")
 .if ${%Y:L:localtime=100000S,1970,bad,} != "bad"
 .  error
