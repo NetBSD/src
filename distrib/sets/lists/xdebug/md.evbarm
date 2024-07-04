@@ -1,4 +1,4 @@
-# $NetBSD: md.evbarm,v 1.37 2024/01/26 13:06:36 tsutsui Exp $
+# $NetBSD: md.evbarm,v 1.38 2024/07/04 12:35:47 martin Exp $
 ./usr/X11R7/lib/libdrm_amdgpu_g.a			xdebug-libdrm_amdgpu-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libdrm_nouveau_g.a			xdebug-libdrm_nouveau-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libvdpau_g.a				xdebug-libvdpau-debuglib	xorg,debuglib,compatx11file
@@ -19,8 +19,10 @@
 ./usr/X11R7/lib/modules/libxf8_16bpp_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/bin/Xorg.debug	xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug	xdebug-xorg-server-debug	xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/libdrm_amdgpu.so.1.2.debug	xdebug-libdrm_amdgpu-debug		xorg,debug,compatx11file
-./usr/libdata/debug/usr/X11R7/lib/libdrm_nouveau.so.3.1.debug	xdebug-libdrm_nouveau-debug		xorg,debug,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libdrm_amdgpu.so.1.2.debug	xdebug-obsolete	xorg,obsolete,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libdrm_amdgpu.so.1.3.debug	xdebug-libdrm_amdgpu-debug		xorg,debug,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libdrm_nouveau.so.3.1.debug	xdebug-obsolete	xorg,obsolete,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libdrm_nouveau.so.3.2.debug	xdebug-libdrm_nouveau-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libvdpau.so.1.0.debug		xdebug-libvdpau-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/mesa_dri_drivers.so.0.debug	xdebug-dri-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/nouveau_dri.so.0.debug	xdebug-xf86-video-nouveau-debug		xorg,debug
