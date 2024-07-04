@@ -148,5 +148,5 @@ pre-middle-suffix        pre%ffix=NPre%NS         "NPre-middle-suNS"
 make: "varmod-sysv.mk" line 261: while evaluating variable "error" with value "error": Unfinished modifier ('}' missing)
 make: "varmod-sysv.mk" line 261: Malformed conditional (${error:L:from=$(}))
 make: Fatal errors encountered -- cannot continue
-make: stopped in unit-tests
+make: stopped making "all" in unit-tests
 exit status 1

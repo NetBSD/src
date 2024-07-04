@@ -17,5 +17,5 @@ CondParser_Eval: ("${VAR}")
 CondParser_Eval: "quoted" == quoted
 Comparing "quoted" == "quoted"
 make: Fatal errors encountered -- cannot continue
-make: stopped in unit-tests
+make: stopped making "all" in unit-tests
 exit status 1

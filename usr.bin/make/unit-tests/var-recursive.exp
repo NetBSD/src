@@ -18,5 +18,5 @@ make: stopped in unit-tests
 : OK
 In a command near "var-recursive.mk" line 57: make[1]: Variable VAR is recursive.
 
-make: stopped in unit-tests
+make: stopped making "target" in unit-tests
 exit status 0

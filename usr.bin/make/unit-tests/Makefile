@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.348 2024/07/01 21:02:26 sjg Exp $
+# $NetBSD: Makefile,v 1.349 2024/07/04 20:18:40 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -733,7 +733,7 @@ LIMIT_RESOURCES?=	:
 # Postprocess the test output to make the output platform-independent.
 #
 # Replace anything after 'stopped in' with unit-tests
-_SED_CMDS+=	-e '/stopped/s, /.*, unit-tests,'
+_SED_CMDS+=	-e '/stopped/s, in /.*, in unit-tests,'
 # Allow the test files to be placed anywhere.
 _SED_CMDS+=	-e 's,\(\.PARSEDIR}\) = `'"/[^']*'"',\1 = <some-dir>,'
 _SED_CMDS+=	-e 's,\(\.INCLUDEDFROMDIR}\) = `'"/[^']*'"',\1 = <some-dir>,'

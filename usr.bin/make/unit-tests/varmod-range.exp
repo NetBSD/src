@@ -10,5 +10,5 @@ make: "varmod-range.mk" line 105: Malformed conditional ("${a b c:L:rango}Rest" 
 make: "varmod-range.mk" line 114: while evaluating variable "a b c" with value "a b c": Unknown modifier "ranger"
 make: "varmod-range.mk" line 114: Malformed conditional ("${a b c:L:ranger}Rest" != "Rest")
 make: Fatal errors encountered -- cannot continue
-make: stopped in unit-tests
+make: stopped making "all" in unit-tests
 exit status 1
