@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2019/03/04 09:25:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2024/07/04 00:33:28 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,7 @@ APPDEFS=	XMore
 SRCS=	xmore.c
 
 CPPFLAGS+=	-DXMORE
+CPPFLAGS+=	-DPACKAGE_STRING=\"${PACKAGE_STRING}\"
 
 LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11
 DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2022/10/16 23:38:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2024/07/04 00:33:28 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,7 @@ CPPFLAGS+=	-D_CONST_X_STRING
 CPPFLAGS+=	-DHAS_MKSTEMP
 CPPFLAGS+=	-DUSE_XFT -DXFREE86_FT2 -I${DESTDIR}${X11INCDIR}/freetype2
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2/freetype
+CPPFLAGS+=	-DPACKAGE_STRING=\"${PACKAGE_STRING}\"
 
 APPDEFS=Xditview Xditview-chrtr
 
