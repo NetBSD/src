@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.58 2024/05/13 14:59:31 christos Exp $
+#	$NetBSD: shl.mi,v 1.59 2024/07/04 05:23:33 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -68,7 +68,7 @@
 ./usr/X11R7/lib/libmp_pic.a				xcomp-obsolete	obsolete
 ./usr/X11R7/lib/libpciaccess_pic.a			xcomp-libpciaccess-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libpixman-1_pic.a			xcomp-pixman-lib	xorg,picinstall,compatx11file
-./usr/X11R7/lib/libpthread-stubs_pic.a			xcomp-libpthread-stubs-lib	xorg,picinstall,compatx11file
+./usr/X11R7/lib/libpthread-stubs_pic.a			xcomp-obsolete		obsolete
 ./usr/X11R7/lib/libre_pic.a				xcomp-obsolete	obsolete
 ./usr/X11R7/lib/libxcb-atom_pic.a			xcomp-xcb-util-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxcb-aux_pic.a			xcomp-xcb-util-lib	xorg,picinstall,compatx11file

@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.244 2024/06/15 12:38:15 wiz Exp $
+#	 $NetBSD: mi,v 1.245 2024/07/04 05:23:33 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1250,8 +1250,8 @@
 ./usr/X11R7/lib/libpciaccess_p.a			xcomp-libpciaccess-lib	profile,xorg,compatx11file
 ./usr/X11R7/lib/libpixman-1.a				xcomp-pixman-lib	xorg,compatx11file
 ./usr/X11R7/lib/libpixman-1_p.a				xcomp-pixman-lib	profile,xorg,compatx11file
-./usr/X11R7/lib/libpthread-stubs.a			xcomp-libpthread-stubs-lib	xorg,compatx11file
-./usr/X11R7/lib/libpthread-stubs_p.a			xcomp-libpthread-stubs-lib	profile,xorg,compatx11file
+./usr/X11R7/lib/libpthread-stubs.a			xcomp-obsolete		obsolete
+./usr/X11R7/lib/libpthread-stubs_p.a			xcomp-obsolete		obsolete
 ./usr/X11R7/lib/libre.a					xcomp-obsolete	obsolete
 ./usr/X11R7/lib/libre_p.a				xcomp-obsolete	obsolete
 ./usr/X11R7/lib/libxcb-atom.a				xcomp-xcb-util-lib	xorg,compatx11file
@@ -1365,7 +1365,7 @@
 ./usr/X11R7/lib/pkgconfig/pixman-1.pc			xcomp-pixman-lib	xorg
 ./usr/X11R7/lib/pkgconfig/presentproto.pc		xcomp-xorgproto-lib	xorg
 ./usr/X11R7/lib/pkgconfig/printproto.pc			xcomp-obsolete	obsolete
-./usr/X11R7/lib/pkgconfig/pthread-stubs.pc		xcomp-pthread-stubs-lib	xorg
+./usr/X11R7/lib/pkgconfig/pthread-stubs.pc		xcomp-obsolete		obsolete
 ./usr/X11R7/lib/pkgconfig/randrproto.pc			xcomp-xorgproto-lib	xorg
 ./usr/X11R7/lib/pkgconfig/recordproto.pc		xcomp-xorgproto-lib	xorg
 ./usr/X11R7/lib/pkgconfig/renderproto.pc		xcomp-xorgproto-lib	xorg
@@ -5979,7 +5979,7 @@
 ./usr/libdata/lint/llib-llisp.ln			xcomp-obsolete	obsolete
 ./usr/libdata/lint/llib-lmp.ln				xcomp-obsolete	obsolete
 ./usr/libdata/lint/llib-lpciaccess.ln			xcomp-libpciaccess-lintlib	lint,xorg
-./usr/libdata/lint/llib-lpthread-stubs.ln		xcomp-libpthread-stubs-lintlib	lint,xorg
+./usr/libdata/lint/llib-lpthread-stubs.ln		xcomp-obsolete		obsolete
 ./usr/libdata/lint/llib-lre.ln				xcomp-obsolete	obsolete
 ./usr/libdata/lint/llib-lxcb-composite.ln		xcomp-obsolete	obsolete
 ./usr/libdata/lint/llib-lxcb-damage.ln			xcomp-libxcb-lintlib	lint,xorg
