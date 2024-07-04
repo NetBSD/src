@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2024/06/30 17:46:39 christos Exp $
+#	$NetBSD: Makefile,v 1.16 2024/07/04 02:20:03 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -8,40 +8,13 @@ MDSETIMAGE=${NETBSDSRCDIR}/usr.sbin/mdsetimage
 .if (defined(HOSTPROG) && \
      (${TOOLCHAIN_MISSING} == "no" || defined(EXTERNAL_TOOLCHAIN))) || \
     ${MKBINUTILS} != "no"
-BFDSUBDIR=	lib
 
 PROG=		mdsetimage
 SRCS=		mdsetimage.c bin_bfd.c
 MAN=		mdsetimage.8
 
-CPPFLAGS+=	-I${DIST}/bfd -I${DIST}/binutils -I${DIST}/include -I${MDSETIMAGE}
+CPPFLAGS+=	-I${MDSETIMAGE}
 
-.if !defined(HOSTPROG)
-PROGDPLIBS+=	bfd	${TOP}/${BFDSUBDIR}/libbfd
-PROGDPLIBS+=	sframe	${TOP}/${BFDSUBDIR}/libsframe
-PROGDPLIBS+=	iberty	${TOP}/${BFDSUBDIR}/libiberty
-.else
-DPADD+=		${BFDDIR}/libbfd.a
-LDADD+=		-L${BFDDIR} -lbfd
-DPADD+=		${SFRAMEDIR}/libsframe.a
-LDADD+=		-L${SFRAMEDIR} -lsframe
-DPADD+=		${IBERTYDIR}/libiberty.a
-LDADD+=		-L${IBERTYDIR} -liberty
-CPPFLAGS+=	-I${BFDDIR}
-.endif
-
-.include <bsd.prog.mk>
-
-.ifndef HOSTPROG
-.include	"${TOP}/${BFDSUBDIR}/libbfd/arch/${BINUTILS_MACHINE_ARCH}/defs.mk"
-
-CPPFLAGS+=	-I${TOP}/${BFDSUBDIR}/libbfd/arch/${BINUTILS_MACHINE_ARCH} ${G_INCLUDES}
-LDADD+=		-lintl
-DPADD+=		${LIBINTL}
-DPADD+=		${LIBZ}
-.endif # HOSTPROG
-
-LDADD+=		-lz
-# No DPADD because we don't know the format and we didn't build it.
+.include "${.PARSEDIR}/../bfd.mk"
 
 .endif # MKBINUTILS != no
