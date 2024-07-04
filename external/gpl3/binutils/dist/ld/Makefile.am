@@ -643,10 +643,22 @@ GEN_DEPENDS = $(srcdir)/genscripts.sh ldscripts/stamp
 
 @TDIRS@
 
-e%.c:
-	$(AM_V_GEN)${GENSCRIPTS} $* "$(tdir_$*)"
+# We can't use pattern rules as we don't want to depend on GNU
+# make, or else these rules could have been expressed in one
+# two-liner: 'e%.c:' and '     ${GENSCRIPTS} $* "$(tdir_$*)"'.
+# (The recursive variable expansion is portable.)
+
+run-genscripts:
+	$(AM_V_at)${GENSCRIPTS} $(script_target) "$($(script_tdirname))"
+
+.PHONY: run-genscripts
+
+#e%.c:
+#	$(AM_V_GEN)${GENSCRIPTS} $* "$(tdir_$*)"
 
 $(ALL_EMULATION_SOURCES) $(ALL_64_EMULATION_SOURCES): $(GEN_DEPENDS)
+	$(AM_V_GEN)base=`echo $@ | sed -e 's,e\(.*\).c,\1,'`; \
+	$(MAKE) run-genscripts "script_target=$$base" "script_tdirname=tdir_$$base" 
 
 #Dummy rule to prevent make considering e%.c as a source for missing
 #.Pc files (and they are all missing until the e*.c files are generated).
