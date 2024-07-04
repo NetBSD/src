@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2023/11/25 12:11:27 rin Exp $
+#	$NetBSD: Makefile,v 1.39 2024/07/04 01:19:44 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -18,6 +18,7 @@ BASE_CONFIGURE_ARGS= \
 	${BRANDING}
 
 CONFIGURE_ARGS=	--disable-nls --disable-werror \
+		--with-zstd=no \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
 		${BASE_CONFIGURE_ARGS}
 
