@@ -1,4 +1,4 @@
-#	$NetBSD: copts.mk,v 1.11 2023/08/08 06:27:32 mrg Exp $
+#	$NetBSD: copts.mk,v 1.12 2024/07/04 01:11:34 rin Exp $
 
 # MI per-file compiler options required.
 
@@ -8,7 +8,6 @@
 .ifndef _SYS_CONF_COPTS_MK_
 _SYS_CONF_COPTS_MK_=1
 
-COPTS.zlib.c+=		${CC_WNO_IMPLICIT_FALLTHROUGH}
 COPTS.pf.c+=		${CC_WNO_IMPLICIT_FALLTHROUGH}
 COPTS.radeon_cs.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
 COPTS.via_dmablit.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
