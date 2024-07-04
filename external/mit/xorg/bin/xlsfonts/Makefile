@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2015/07/20 03:12:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2024/07/04 01:02:24 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,8 @@ SRCS=	xlsfonts.c dsimple.c
 
 LDADD+=	-lXext -lX11
 DPADD+=	${LIBXEXT} ${LIBX11}
+
+CPPFLAGS+=-DHAVE_REALLOCARRAY
 
 .PATH:	${X11SRCDIR.${PROG}}
 .PATH:	${X11SRCDIR.${PROG}}/man

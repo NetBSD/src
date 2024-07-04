@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2021/04/26 22:04:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2024/07/04 01:02:24 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,7 @@ XSMDIR=	${X11ETCDIR}/xsm
 CPPFLAGS+=-DHAVE_MKSTEMP -DHAVE_PUTENV
 CPPFLAGS.remote.c=	-DRSHCMD=\"ssh\"
 CPPFLAGS.restart.c=	-DSYSTEM_INIT_FILE=\"${XSMDIR}/system.xsm\"
+CPPFLAGS+=		-DPACKAGE_STRING=\"${PACKAGE_STRING}\"
 
 CONFIGFILES=	system.xsm
 FILESDIR=	${XSMDIR}
