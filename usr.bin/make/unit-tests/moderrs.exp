@@ -1,7 +1,7 @@
-make: in target "mod-unknown-direct": while evaluating variable "VAR": Unknown modifier "Z"
+make: in target "mod-unknown-direct": while evaluating variable "VAR" with value "TheVariable": Unknown modifier "Z"
 VAR:Z=before--after
 
-make: in target "mod-unknown-indirect": while evaluating variable "VAR": Unknown modifier "Z"
+make: in target "mod-unknown-indirect": while evaluating variable "VAR" with value "TheVariable": Unknown modifier "Z"
 VAR:Z=before-inner}-after
 
 unclosed-direct:
@@ -12,12 +12,12 @@ unclosed-indirect:
 make: Unclosed expression after indirect modifier, expecting '}' for variable "VAR"
 VAR:S,V,v,=Thevariable
 
-make: in target "unfinished-indirect": while evaluating variable "VAR": Unfinished modifier (',' missing)
+make: in target "unfinished-indirect": while evaluating variable "VAR" with value "TheVariable": Unfinished modifier (',' missing)
 VAR:S,V,v=
 
-make: in target "unfinished-loop": while evaluating variable "UNDEF": Unfinished modifier ('@' missing)
+make: in target "unfinished-loop": while evaluating variable "UNDEF" with value "1 2 3": Unfinished modifier ('@' missing)
 
-make: in target "unfinished-loop": while evaluating variable "UNDEF": Unfinished modifier ('@' missing)
+make: in target "unfinished-loop": while evaluating variable "UNDEF" with value "1 2 3": Unfinished modifier ('@' missing)
 
 1 2 3
 
@@ -26,42 +26,42 @@ make: Unclosed expression, expecting '}' for modifier "@var@${var}}...@" of vari
 1}... 2}... 3}...
 1}... 2}... 3}...
 
-make: in target "words": while evaluating variable "UNDEF": Unfinished modifier (']' missing)
+make: in target "words": while evaluating variable "UNDEF" with value "1 2 3": Unfinished modifier (']' missing)
 
-make: in target "words": while evaluating variable "UNDEF": Unfinished modifier (']' missing)
+make: in target "words": while evaluating variable "UNDEF" with value "1 2 3": Unfinished modifier (']' missing)
 
 13=
 make: Bad modifier ":[123451234512345123451234512345]" for variable "UNDEF"
 12345=S,^ok,:S,^3ok,}
 
-make: in target "exclam": while evaluating variable "VARNAME": Unfinished modifier ('!' missing)
+make: in target "exclam": while evaluating variable "VARNAME" with value "": Unfinished modifier ('!' missing)
 
-make: in target "exclam": while evaluating variable "!": Unfinished modifier ('!' missing)
+make: in target "exclam": while evaluating variable "!" with value "!": Unfinished modifier ('!' missing)
 
 
-make: in target "mod-subst-delimiter": while evaluating variable "VAR": Missing delimiter for modifier ':S'
+make: in target "mod-subst-delimiter": while evaluating variable "VAR" with value "TheVariable": Missing delimiter for modifier ':S'
 1:
-make: in target "mod-subst-delimiter": while evaluating variable "VAR": Unfinished modifier (',' missing)
+make: in target "mod-subst-delimiter": while evaluating variable "VAR" with value "TheVariable": Unfinished modifier (',' missing)
 2:
-make: in target "mod-subst-delimiter": while evaluating variable "VAR": Unfinished modifier (',' missing)
+make: in target "mod-subst-delimiter": while evaluating variable "VAR" with value "TheVariable": Unfinished modifier (',' missing)
 3:
-make: in target "mod-subst-delimiter": while evaluating variable "VAR": Unfinished modifier (',' missing)
+make: in target "mod-subst-delimiter": while evaluating variable "VAR" with value "TheVariable": Unfinished modifier (',' missing)
 4:
-make: in target "mod-subst-delimiter": while evaluating variable "VAR": Unfinished modifier (',' missing)
+make: in target "mod-subst-delimiter": while evaluating variable "VAR" with value "TheVariable": Unfinished modifier (',' missing)
 5:
 make: Unclosed expression, expecting '}' for modifier "S,from,to," of variable "VAR" with value "TheVariable"
 6: TheVariable
 7: TheVariable
 
-make: in target "mod-regex-delimiter": while evaluating variable "VAR": Missing delimiter for modifier ':C'
+make: in target "mod-regex-delimiter": while evaluating variable "VAR" with value "TheVariable": Missing delimiter for modifier ':C'
 1:
-make: in target "mod-regex-delimiter": while evaluating variable "VAR": Unfinished modifier (',' missing)
+make: in target "mod-regex-delimiter": while evaluating variable "VAR" with value "TheVariable": Unfinished modifier (',' missing)
 2:
-make: in target "mod-regex-delimiter": while evaluating variable "VAR": Unfinished modifier (',' missing)
+make: in target "mod-regex-delimiter": while evaluating variable "VAR" with value "TheVariable": Unfinished modifier (',' missing)
 3:
-make: in target "mod-regex-delimiter": while evaluating variable "VAR": Unfinished modifier (',' missing)
+make: in target "mod-regex-delimiter": while evaluating variable "VAR" with value "TheVariable": Unfinished modifier (',' missing)
 4:
-make: in target "mod-regex-delimiter": while evaluating variable "VAR": Unfinished modifier (',' missing)
+make: in target "mod-regex-delimiter": while evaluating variable "VAR" with value "TheVariable": Unfinished modifier (',' missing)
 5:
 make: Unclosed expression, expecting '}' for modifier "C,from,to," of variable "VAR" with value "TheVariable"
 6: TheVariable
@@ -98,16 +98,16 @@ make: in target "mod-ifelse-parse": while evaluating else-branch of condition "F
 then
 
 1 1 2 3 5 8 13 21 34
-make: in target "mod-remember-parse": while evaluating variable "FIB": Unknown modifier "__"
+make: in target "mod-remember-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Unknown modifier "__"
 
 
-make: in target "mod-sysv-parse": while evaluating variable "FIB": Unknown modifier "3"
+make: in target "mod-sysv-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Unknown modifier "3"
 make: Unclosed expression, expecting '}' for modifier "3" of variable "FIB" with value ""
 
-make: in target "mod-sysv-parse": while evaluating variable "FIB": Unknown modifier "3="
+make: in target "mod-sysv-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Unknown modifier "3="
 make: Unclosed expression, expecting '}' for modifier "3=" of variable "FIB" with value ""
 
-make: in target "mod-sysv-parse": while evaluating variable "FIB": Unknown modifier "3=x3"
+make: in target "mod-sysv-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Unknown modifier "3=x3"
 make: Unclosed expression, expecting '}' for modifier "3=x3" of variable "FIB" with value ""
 
 1 1 2 x3 5 8 1x3 21 34

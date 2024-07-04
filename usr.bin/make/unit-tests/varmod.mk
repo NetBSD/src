@@ -1,4 +1,4 @@
-# $NetBSD: varmod.mk,v 1.15 2024/06/06 20:41:50 rillig Exp $
+# $NetBSD: varmod.mk,v 1.16 2024/07/04 17:47:54 rillig Exp $
 #
 # Tests for variable modifiers, such as :Q, :S,from,to or :Ufallback.
 #
@@ -113,7 +113,7 @@ DOLLAR2=	${:U\$}
 # XXX: The .error should not be reached since the expression is
 # malformed, and this error should be propagated up to Cond_EvalLine.
 VAR=	STOP
-# expect+1: while evaluating variable "VAR": Missing delimiter ':' after modifier "P"
+# expect+1: while evaluating variable "VAR" with value "VAR": Missing delimiter ':' after modifier "P"
 .if ${VAR:P=RE} != "STORE"
 # expect+1: Missing argument for ".error"
 .  error
@@ -131,7 +131,7 @@ VAR=	STOP
 # Test the range generation modifier ':range=n' with a very large number that
 # is larger than SIZE_MAX for any supported platform.
 # expect+2: Malformed conditional (${word:L:range=99333000222000111000})
-# expect+1: while evaluating variable "word": Invalid number "99333000222000111000}" for ':range' modifier
+# expect+1: while evaluating variable "word" with value "word": Invalid number "99333000222000111000}" for ':range' modifier
 .if ${word:L:range=99333000222000111000}
 .endif
 
@@ -154,13 +154,13 @@ VAR=	STOP
 .if ${:U:!printf '%s\n' $!} != "\$"
 .  error
 .endif
-# expect+1: while evaluating variable "VAR": Dollar followed by nothing
+# expect+1: while evaluating variable "VAR" with value "value$": Dollar followed by nothing
 .if ${VAR::=value$} != "" || ${VAR} != "value"
 .  error
 .endif
 ${:U }=		<space>
-# expect+2: while evaluating variable "VAR": Dollar followed by nothing
-# expect+1: while evaluating variable "VAR": Dollar followed by nothing
+# expect+2: while evaluating variable "VAR" with value "value$": Dollar followed by nothing
+# expect+1: while evaluating variable "VAR" with value "value$ appended$": Dollar followed by nothing
 .if ${VAR::+=appended$} != "" || ${VAR} != "value<space>appended"
 .  error
 .endif
@@ -170,7 +170,7 @@ ${:U }=		<space>
 .if ${0:?then$:else$} != "else\$"
 .  error
 .endif
-# expect+1: while evaluating variable "word": Dollar followed by nothing
+# expect+1: while evaluating variable "word" with value "word": Dollar followed by nothing
 .if ${word:L:@w@$w$@} != "word"
 .  error
 .endif
@@ -191,8 +191,8 @@ VAR_DOLLAR=	VAR$$
 .if ${word:L:C,d,$,} != "wor\$"
 .  error
 .endif
-# expect+2: while evaluating variable "VAR": Invalid variable name '}', at "$} != "set""
-# expect+1: while evaluating variable "VAR": Dollar followed by nothing
+# expect+2: while evaluating variable "VAR" with value "value$ appended$": Dollar followed by nothing
+# expect+1: while evaluating variable "VAR" with value "value<space>appended": Invalid variable name '}', at "$} != "set""
 .if ${VAR:Dset$} != "set"
 .  error
 .endif
@@ -201,28 +201,28 @@ VAR_DOLLAR=	VAR$$
 .  error
 .endif
 # expect+2: Malformed conditional (${%y:L:gmtime=1000$})
-# expect+1: while evaluating variable "%y": Invalid time value "1000$"
+# expect+1: while evaluating variable "%y" with value "%y": Invalid time value "1000$"
 .if ${%y:L:gmtime=1000$}
 .  error
 .else
 .  error
 .endif
 # expect+2: Malformed conditional (${%y:L:localtime=1000$})
-# expect+1: while evaluating variable "%y": Invalid time value "1000$"
+# expect+1: while evaluating variable "%y" with value "%y": Invalid time value "1000$"
 .if ${%y:L:localtime=1000$}
 .  error
 .else
 .  error
 .endif
-# expect+1: while evaluating variable "word": Dollar followed by nothing
+# expect+1: while evaluating variable "word" with value "word": Dollar followed by nothing
 .if ${word:L:Mw*$} != "word"
 .  error
 .endif
-# expect+1: while evaluating variable "word": Dollar followed by nothing
+# expect+1: while evaluating variable "word" with value "word": Dollar followed by nothing
 .if ${word:L:NX*$} != "word"
 .  error
 .endif
-# expect+2: while evaluating variable ".": Invalid argument 'fallback$' for modifier ':mtime'
+# expect+2: while evaluating variable "." with value ".": Invalid argument 'fallback$' for modifier ':mtime'
 # expect+1: Malformed conditional (${.:L:mtime=fallback$})
 .if ${.:L:mtime=fallback$}
 .  error

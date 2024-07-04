@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1127 2024/07/02 20:10:45 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1128 2024/07/04 17:47:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1127 2024/07/02 20:10:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1128 2024/07/04 17:47:53 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -271,6 +271,7 @@ typedef enum {
 typedef struct {
 	EvalStackElementKind kind;
 	const char *str;
+	const FStr *value;
 } EvalStackElement;
 
 typedef struct {
@@ -350,7 +351,7 @@ static EvalStack evalStack;
 
 
 static void
-EvalStack_Push(EvalStackElementKind kind, const char *str)
+EvalStack_Push(EvalStackElementKind kind, const char *str, const FStr *value)
 {
 	if (evalStack.len >= evalStack.cap) {
 		evalStack.cap = 16 + 2 * evalStack.cap;
@@ -359,6 +360,7 @@ EvalStack_Push(EvalStackElementKind kind, const char *str)
 	}
 	evalStack.elems[evalStack.len].kind = kind;
 	evalStack.elems[evalStack.len].str = str;
+	evalStack.elems[evalStack.len].value = value;
 	evalStack.len++;
 }
 
@@ -390,6 +392,10 @@ EvalStack_Details(void)
 		Buf_AddStr(buf, descr[elem->kind]);
 		Buf_AddStr(buf, " \"");
 		Buf_AddStr(buf, elem->str);
+		if (elem->kind == VSK_VARNAME) {
+			Buf_AddStr(buf, "\" with value \"");
+			Buf_AddStr(buf, elem->value->str);
+		}
 		Buf_AddStr(buf, "\": ");
 	}
 	return buf->len > 0 ? buf->data : "";
@@ -4604,9 +4610,9 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode)
 	expr.value = FStr_InitRefer(v->val.data);
 
 	if (expr.name[0] != '\0')
-		EvalStack_Push(VSK_VARNAME, expr.name);
+		EvalStack_Push(VSK_VARNAME, expr.name, &expr.value);
 	else
-		EvalStack_Push(VSK_EXPR, start);
+		EvalStack_Push(VSK_EXPR, start, NULL);
 
 	/*
 	 * Before applying any modifiers, expand any nested expressions from
@@ -4788,7 +4794,7 @@ char *
 Var_SubstInTarget(const char *str, GNode *scope)
 {
 	char *res;
-	EvalStack_Push(VSK_TARGET, scope->name);
+	EvalStack_Push(VSK_TARGET, scope->name, NULL);
 	res = Var_Subst(str, scope, VARE_EVAL);
 	EvalStack_Pop();
 	return res;

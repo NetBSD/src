@@ -1,4 +1,4 @@
-# $NetBSD: moderrs.mk,v 1.33 2024/06/30 15:21:24 rillig Exp $
+# $NetBSD: moderrs.mk,v 1.34 2024/07/04 17:47:54 rillig Exp $
 #
 # various modifier error tests
 
@@ -25,11 +25,11 @@ all:	mod-remember-parse
 all:	mod-sysv-parse
 
 mod-unknown-direct: print-footer
-# expect: make: in target "mod-unknown-direct": while evaluating variable "VAR": Unknown modifier "Z"
+# expect: make: in target "mod-unknown-direct": while evaluating variable "VAR" with value "TheVariable": Unknown modifier "Z"
 	@echo 'VAR:Z=before-${VAR:Z}-after'
 
 mod-unknown-indirect: print-footer
-# expect: make: in target "mod-unknown-indirect": while evaluating variable "VAR": Unknown modifier "Z"
+# expect: make: in target "mod-unknown-indirect": while evaluating variable "VAR" with value "TheVariable": Unknown modifier "Z"
 	@echo 'VAR:${MOD_UNKN}=before-${VAR:${MOD_UNKN}:inner}-after'
 
 unclosed-direct: print-header print-footer
@@ -41,13 +41,13 @@ unclosed-indirect: print-header print-footer
 	@echo VAR:${MOD_TERM},=${VAR:${MOD_S}
 
 unfinished-indirect: print-footer
-# expect: make: in target "unfinished-indirect": while evaluating variable "VAR": Unfinished modifier (',' missing)
+# expect: make: in target "unfinished-indirect": while evaluating variable "VAR" with value "TheVariable": Unfinished modifier (',' missing)
 	-@echo "VAR:${MOD_TERM}=${VAR:${MOD_TERM}}"
 
 unfinished-loop: print-footer
-# expect: make: in target "unfinished-loop": while evaluating variable "UNDEF": Unfinished modifier ('@' missing)
+# expect: make: in target "unfinished-loop": while evaluating variable "UNDEF" with value "1 2 3": Unfinished modifier ('@' missing)
 	@echo ${UNDEF:U1 2 3:@var}
-# expect: make: in target "unfinished-loop": while evaluating variable "UNDEF": Unfinished modifier ('@' missing)
+# expect: make: in target "unfinished-loop": while evaluating variable "UNDEF" with value "1 2 3": Unfinished modifier ('@' missing)
 	@echo ${UNDEF:U1 2 3:@var@...}
 	@echo ${UNDEF:U1 2 3:@var@${var}@}
 
@@ -63,9 +63,9 @@ loop-close: print-header print-footer
 	@echo ${UNDEF:U1 2 3:@var@${var}}...@}
 
 words: print-footer
-# expect: make: in target "words": while evaluating variable "UNDEF": Unfinished modifier (']' missing)
+# expect: make: in target "words": while evaluating variable "UNDEF" with value "1 2 3": Unfinished modifier (']' missing)
 	@echo ${UNDEF:U1 2 3:[}
-# expect: make: in target "words": while evaluating variable "UNDEF": Unfinished modifier (']' missing)
+# expect: make: in target "words": while evaluating variable "UNDEF" with value "1 2 3": Unfinished modifier (']' missing)
 	@echo ${UNDEF:U1 2 3:[#}
 
 	# out of bounds => empty
@@ -91,40 +91,40 @@ words: print-footer
 	@echo 12345=${UNDEF:U1 2 3:[123451234512345123451234512345]:S,^$,ok,:S,^3$,ok,}
 
 exclam: print-footer
-# expect: make: in target "exclam": while evaluating variable "VARNAME": Unfinished modifier ('!' missing)
+# expect: make: in target "exclam": while evaluating variable "VARNAME" with value "": Unfinished modifier ('!' missing)
 	@echo ${VARNAME:!echo}
 	# When the final exclamation mark is missing, there is no
 	# fallback to the SysV substitution modifier.
 	# If there were a fallback, the output would be "exclam",
 	# and the above would have produced an "Unknown modifier '!'".
-# expect: make: in target "exclam": while evaluating variable "!": Unfinished modifier ('!' missing)
+# expect: make: in target "exclam": while evaluating variable "!" with value "!": Unfinished modifier ('!' missing)
 	@echo ${!:L:!=exclam}
 
 mod-subst-delimiter: print-footer
-# expect: make: in target "mod-subst-delimiter": while evaluating variable "VAR": Missing delimiter for modifier ':S'
+# expect: make: in target "mod-subst-delimiter": while evaluating variable "VAR" with value "TheVariable": Missing delimiter for modifier ':S'
 	@echo 1: ${VAR:S
-# expect: make: in target "mod-subst-delimiter": while evaluating variable "VAR": Unfinished modifier (',' missing)
+# expect: make: in target "mod-subst-delimiter": while evaluating variable "VAR" with value "TheVariable": Unfinished modifier (',' missing)
 	@echo 2: ${VAR:S,
-# expect: make: in target "mod-subst-delimiter": while evaluating variable "VAR": Unfinished modifier (',' missing)
+# expect: make: in target "mod-subst-delimiter": while evaluating variable "VAR" with value "TheVariable": Unfinished modifier (',' missing)
 	@echo 3: ${VAR:S,from
-# expect: make: in target "mod-subst-delimiter": while evaluating variable "VAR": Unfinished modifier (',' missing)
+# expect: make: in target "mod-subst-delimiter": while evaluating variable "VAR" with value "TheVariable": Unfinished modifier (',' missing)
 	@echo 4: ${VAR:S,from,
-# expect: make: in target "mod-subst-delimiter": while evaluating variable "VAR": Unfinished modifier (',' missing)
+# expect: make: in target "mod-subst-delimiter": while evaluating variable "VAR" with value "TheVariable": Unfinished modifier (',' missing)
 	@echo 5: ${VAR:S,from,to
 # expect: make: Unclosed expression, expecting '}' for modifier "S,from,to," of variable "VAR" with value "TheVariable"
 	@echo 6: ${VAR:S,from,to,
 	@echo 7: ${VAR:S,from,to,}
 
 mod-regex-delimiter: print-footer
-# expect: make: in target "mod-regex-delimiter": while evaluating variable "VAR": Missing delimiter for modifier ':C'
+# expect: make: in target "mod-regex-delimiter": while evaluating variable "VAR" with value "TheVariable": Missing delimiter for modifier ':C'
 	@echo 1: ${VAR:C
-# expect: make: in target "mod-regex-delimiter": while evaluating variable "VAR": Unfinished modifier (',' missing)
+# expect: make: in target "mod-regex-delimiter": while evaluating variable "VAR" with value "TheVariable": Unfinished modifier (',' missing)
 	@echo 2: ${VAR:C,
-# expect: make: in target "mod-regex-delimiter": while evaluating variable "VAR": Unfinished modifier (',' missing)
+# expect: make: in target "mod-regex-delimiter": while evaluating variable "VAR" with value "TheVariable": Unfinished modifier (',' missing)
 	@echo 3: ${VAR:C,from
-# expect: make: in target "mod-regex-delimiter": while evaluating variable "VAR": Unfinished modifier (',' missing)
+# expect: make: in target "mod-regex-delimiter": while evaluating variable "VAR" with value "TheVariable": Unfinished modifier (',' missing)
 	@echo 4: ${VAR:C,from,
-# expect: make: in target "mod-regex-delimiter": while evaluating variable "VAR": Unfinished modifier (',' missing)
+# expect: make: in target "mod-regex-delimiter": while evaluating variable "VAR" with value "TheVariable": Unfinished modifier (',' missing)
 	@echo 5: ${VAR:C,from,to
 # expect: make: Unclosed expression, expecting '}' for modifier "C,from,to," of variable "VAR" with value "TheVariable"
 	@echo 6: ${VAR:C,from,to,
@@ -163,15 +163,15 @@ mod-ifelse-parse: print-footer
 
 mod-remember-parse: print-footer
 	@echo ${FIB:_}		# ok
-# expect: make: in target "mod-remember-parse": while evaluating variable "FIB": Unknown modifier "__"
+# expect: make: in target "mod-remember-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Unknown modifier "__"
 	@echo ${FIB:__}		# modifier name too long
 
 mod-sysv-parse: print-footer
-# expect: make: in target "mod-sysv-parse": while evaluating variable "FIB": Unknown modifier "3"
+# expect: make: in target "mod-sysv-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Unknown modifier "3"
 	@echo ${FIB:3
-# expect: make: in target "mod-sysv-parse": while evaluating variable "FIB": Unknown modifier "3="
+# expect: make: in target "mod-sysv-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Unknown modifier "3="
 	@echo ${FIB:3=
-# expect: make: in target "mod-sysv-parse": while evaluating variable "FIB": Unknown modifier "3=x3"
+# expect: make: in target "mod-sysv-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Unknown modifier "3=x3"
 	@echo ${FIB:3=x3
 	@echo ${FIB:3=x3}	# ok
 

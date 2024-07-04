@@ -1,4 +1,4 @@
-# $NetBSD: varmod-range.mk,v 1.11 2024/04/20 10:18:55 rillig Exp $
+# $NetBSD: varmod-range.mk,v 1.12 2024/07/04 17:47:54 rillig Exp $
 #
 # Tests for the :range variable modifier, which generates sequences
 # of integers from the given range.
@@ -91,7 +91,7 @@
 #.endif
 
 # modifier name too short
-# expect+2: while evaluating variable "a b c": Unknown modifier "rang"
+# expect+2: while evaluating variable "a b c" with value "a b c": Unknown modifier "rang"
 # expect+1: Malformed conditional ("${a b c:L:rang}Rest" != "Rest")
 .if "${a b c:L:rang}Rest" != "Rest"
 .  error
@@ -100,7 +100,7 @@
 .endif
 
 # misspelled modifier name
-# expect+2: while evaluating variable "a b c": Unknown modifier "rango"
+# expect+2: while evaluating variable "a b c" with value "a b c": Unknown modifier "rango"
 # expect+1: Malformed conditional ("${a b c:L:rango}Rest" != "Rest")
 .if "${a b c:L:rango}Rest" != "Rest"
 .  error
@@ -109,7 +109,7 @@
 .endif
 
 # modifier name too long
-# expect+2: while evaluating variable "a b c": Unknown modifier "ranger"
+# expect+2: while evaluating variable "a b c" with value "a b c": Unknown modifier "ranger"
 # expect+1: Malformed conditional ("${a b c:L:ranger}Rest" != "Rest")
 .if "${a b c:L:ranger}Rest" != "Rest"
 .  error
