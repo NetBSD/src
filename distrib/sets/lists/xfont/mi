@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.46 2021/01/09 02:40:44 uki Exp $
+# $NetBSD: mi,v 1.47 2024/07/04 08:49:13 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3909,6 +3909,7 @@
 ./usr/X11R7/lib/X11/fonts/encodings/ibm-cp866.enc.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/encodings/iso8859-11.enc.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/encodings/iso8859-13.enc.gz	xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/encodings/iso8859-14.enc.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/encodings/iso8859-16.enc.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/encodings/iso8859-6.16.enc.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/encodings/iso8859-6.8x.enc.gz	xfont	share,xorg,x11fonts
