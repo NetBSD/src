@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2015/07/22 08:46:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2024/07/04 00:33:28 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,8 @@ APPDEFS=Xmessage Xmessage-color
 LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11
 DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
 	${LIBXPM} ${LIBXEXT} ${LIBX11}
+
+CPPFLAGS+=	-DPACKAGE_STRING=\"${PACKAGE_STRING}\"
 
 .PATH:	${X11SRCDIR.${PROG}}
 .PATH:	${X11SRCDIR.${PROG}}/man
