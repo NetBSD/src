@@ -1,4 +1,4 @@
-#      $NetBSD: Makefile,v 1.10 2019/01/10 09:12:57 mrg Exp $
+#      $NetBSD: Makefile,v 1.11 2024/07/04 09:34:14 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ LIB=	drm_intel
 .PATH: ${X11SRCDIR.drm}/intel
 
 SRCS=	intel_bufmgr.c intel_bufmgr_fake.c intel_bufmgr_gem.c \
-	intel_chipset.c intel_decode.c mm.c
+	intel_decode.c mm.c
 
 CFLAGS+=	-std=c99
 
