@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.564 2024/07/01 00:58:04 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.565 2024/07/04 05:59:05 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2020, 2023 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.564 2024/07/01 00:58:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.565 2024/07/04 05:59:05 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -245,7 +245,7 @@ fd_nameiat(struct lwp *l, int fdat, struct nameidata *ndp)
 
 	error = namei(ndp);
 
-	if (fdat != AT_FDCWD)
+	if (fdat != AT_FDCWD && path[0] != '/')
 		fd_putfile(fdat);
 out:
 	pathbuf_stringcopy_put(ndp->ni_pathbuf, path);
@@ -279,7 +279,7 @@ fd_nameiat_simple_user(struct lwp *l, int fdat, const char *path,
 
 	error = nameiat_simple(dvp, pb, sflags, vp_ret);
 
-	if (fdat != AT_FDCWD)
+	if (fdat != AT_FDCWD && path[0] != '/')
 		fd_putfile(fdat);
 
 out:
