@@ -7,5 +7,5 @@ make: "varmod-loop-varname.mk" line 96: Malformed conditional (${1 2 3:L:@v$$@($
 make: "varmod-loop-varname.mk" line 103: while evaluating variable "1 2 3" with value "1 2 3": In the :@ modifier, the variable name "v$$$" must not contain a dollar
 make: "varmod-loop-varname.mk" line 103: Malformed conditional (${1 2 3:L:@v$$$@($v)@} != "() () ()")
 make: Fatal errors encountered -- cannot continue
-make: stopped in unit-tests
+make: stopped making "all" in unit-tests
 exit status 1

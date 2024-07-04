@@ -3,5 +3,5 @@ make: "(stdin)" line 2: Zero byte read from file
 *** Error code 2 (continuing)
 
 Stop.
-make: stopped in unit-tests
+make: stopped making "all" in unit-tests
 exit status 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.625 2024/06/30 11:37:21 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.626 2024/07/04 20:18:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.625 2024/06/30 11:37:21 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.626 2024/07/04 20:18:40 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -2067,6 +2067,7 @@ void
 PrintOnError(GNode *gn, const char *msg)
 {
 	static GNode *errorNode = NULL;
+	StringListNode *ln;
 
 	if (DEBUG(HASH)) {
 		Targ_Stats();
@@ -2076,7 +2077,20 @@ PrintOnError(GNode *gn, const char *msg)
 	if (errorNode != NULL)
 		return;		/* we've been here! */
 
-	printf("%s%s: stopped in %s\n", msg, progname, curdir);
+	printf("%s%s: stopped", msg, progname);
+	ln = opts.create.first;
+	if (ln != NULL || mainNode != NULL) {
+		printf(" making \"");
+		if (ln != NULL) {
+			printf("%s", (const char *)ln->datum);
+			for (ln = ln->next; ln != NULL; ln = ln->next)
+				printf(" %s", (const char *)ln->datum);
+		}
+		if (opts.create.first == NULL && mainNode != NULL)
+			printf("%s", mainNode->name);
+		printf("\"");
+	}
+	printf(" in %s\n", curdir);
 
 	/* we generally want to keep quiet if a sub-make died */
 	if (shouldDieQuietly(gn, -1))
