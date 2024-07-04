@@ -5326,13 +5326,13 @@ xcb_randr_set_monitor_checked (xcb_connection_t         *c,
                                xcb_randr_monitor_info_t *monitorinfo)
 {
     static const xcb_protocol_request_t xcb_req = {
-        .count = 4,
+        .count = 3,
         .ext = &xcb_randr_id,
         .opcode = XCB_RANDR_SET_MONITOR,
         .isvoid = 1
     };
 
-    struct iovec xcb_parts[6];
+    struct iovec xcb_parts[5];
     xcb_void_cookie_t xcb_ret;
     xcb_randr_set_monitor_request_t xcb_out;
 
@@ -5357,13 +5357,13 @@ xcb_randr_set_monitor (xcb_connection_t         *c,
                        xcb_randr_monitor_info_t *monitorinfo)
 {
     static const xcb_protocol_request_t xcb_req = {
-        .count = 4,
+        .count = 3,
         .ext = &xcb_randr_id,
         .opcode = XCB_RANDR_SET_MONITOR,
         .isvoid = 1
     };
 
-    struct iovec xcb_parts[6];
+    struct iovec xcb_parts[5];
     xcb_void_cookie_t xcb_ret;
     xcb_randr_set_monitor_request_t xcb_out;
 

@@ -22,9 +22,6 @@
 /* Define to 1 if you have the `is_system_labeled' function. */
 /* #undef HAVE_IS_SYSTEM_LABELED */
 
-/* launchd support available */
-/* #undef HAVE_LAUNCHD */
-
 /* Define to 1 if you have the `ws2_32' library (-lws2_32). */
 /* #undef HAVE_LIBWS2_32 */
 
@@ -77,13 +74,13 @@
 #define PACKAGE "libxcb"
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "https://gitlab.freedesktop.org/xorg/lib/libxcb/issues"
+#define PACKAGE_BUGREPORT "https://gitlab.freedesktop.org/xorg/lib/libxcb/-/issues"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "libxcb"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libxcb 1.15"
+#define PACKAGE_STRING "libxcb 1.17.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libxcb"
@@ -92,13 +89,13 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.15"
+#define PACKAGE_VERSION "1.17.0"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
 
 /* Minor version of this package */
-#define PACKAGE_VERSION_MINOR 15
+#define PACKAGE_VERSION_MINOR 17
 
 /* Patch version of this package */
 #define PACKAGE_VERSION_PATCHLEVEL 0
@@ -200,10 +197,16 @@
 
 
 /* Version number of package */
-#define VERSION "1.15"
+#define VERSION "1.17.0"
 
 /* XCB buffer queue size */
 #define XCB_QUEUE_BUFFER_SIZE 16384
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+/* #undef _FILE_OFFSET_BITS */
+
+/* Define for large files, on AIX-style hosts. */
+/* #undef _LARGE_FILES */
 
 /* Defined if needed to expose struct msghdr.msg_control */
 /* #undef _XOPEN_SOURCE */

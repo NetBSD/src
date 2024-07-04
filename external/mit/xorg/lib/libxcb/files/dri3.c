@@ -18,6 +18,24 @@
 
 xcb_extension_t xcb_dri3_id = { "DRI3", 0 };
 
+void
+xcb_dri3_syncobj_next (xcb_dri3_syncobj_iterator_t *i)
+{
+    --i->rem;
+    ++i->data;
+    i->index += sizeof(xcb_dri3_syncobj_t);
+}
+
+xcb_generic_iterator_t
+xcb_dri3_syncobj_end (xcb_dri3_syncobj_iterator_t i)
+{
+    xcb_generic_iterator_t ret;
+    ret.data = i.data + i.rem;
+    ret.index = i.index + ((char *) ret.data - (char *) i.data);
+    ret.rem = 0;
+    return ret;
+}
+
 xcb_dri3_query_version_cookie_t
 xcb_dri3_query_version (xcb_connection_t *c,
                         uint32_t          major_version,
@@ -967,6 +985,122 @@ xcb_dri3_set_drm_device_in_use (xcb_connection_t *c,
     xcb_out.window = window;
     xcb_out.drmMajor = drmMajor;
     xcb_out.drmMinor = drmMinor;
+
+    xcb_parts[2].iov_base = (char *) &xcb_out;
+    xcb_parts[2].iov_len = sizeof(xcb_out);
+    xcb_parts[3].iov_base = 0;
+    xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+
+    xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
+    return xcb_ret;
+}
+
+xcb_void_cookie_t
+xcb_dri3_import_syncobj_checked (xcb_connection_t   *c,
+                                 xcb_dri3_syncobj_t  syncobj,
+                                 xcb_drawable_t      drawable,
+                                 int32_t             syncobj_fd)
+{
+    static const xcb_protocol_request_t xcb_req = {
+        .count = 2,
+        .ext = &xcb_dri3_id,
+        .opcode = XCB_DRI3_IMPORT_SYNCOBJ,
+        .isvoid = 1
+    };
+
+    struct iovec xcb_parts[4];
+    xcb_void_cookie_t xcb_ret;
+    xcb_dri3_import_syncobj_request_t xcb_out;
+    int fds[1];
+    int fd_index = 0;
+
+    xcb_out.syncobj = syncobj;
+    xcb_out.drawable = drawable;
+
+    xcb_parts[2].iov_base = (char *) &xcb_out;
+    xcb_parts[2].iov_len = sizeof(xcb_out);
+    xcb_parts[3].iov_base = 0;
+    xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+
+    fds[fd_index++] = syncobj_fd;
+    xcb_ret.sequence = xcb_send_request_with_fds(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req, 1, fds);
+    return xcb_ret;
+}
+
+xcb_void_cookie_t
+xcb_dri3_import_syncobj (xcb_connection_t   *c,
+                         xcb_dri3_syncobj_t  syncobj,
+                         xcb_drawable_t      drawable,
+                         int32_t             syncobj_fd)
+{
+    static const xcb_protocol_request_t xcb_req = {
+        .count = 2,
+        .ext = &xcb_dri3_id,
+        .opcode = XCB_DRI3_IMPORT_SYNCOBJ,
+        .isvoid = 1
+    };
+
+    struct iovec xcb_parts[4];
+    xcb_void_cookie_t xcb_ret;
+    xcb_dri3_import_syncobj_request_t xcb_out;
+    int fds[1];
+    int fd_index = 0;
+
+    xcb_out.syncobj = syncobj;
+    xcb_out.drawable = drawable;
+
+    xcb_parts[2].iov_base = (char *) &xcb_out;
+    xcb_parts[2].iov_len = sizeof(xcb_out);
+    xcb_parts[3].iov_base = 0;
+    xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+
+    fds[fd_index++] = syncobj_fd;
+    xcb_ret.sequence = xcb_send_request_with_fds(c, 0, xcb_parts + 2, &xcb_req, 1, fds);
+    return xcb_ret;
+}
+
+xcb_void_cookie_t
+xcb_dri3_free_syncobj_checked (xcb_connection_t   *c,
+                               xcb_dri3_syncobj_t  syncobj)
+{
+    static const xcb_protocol_request_t xcb_req = {
+        .count = 2,
+        .ext = &xcb_dri3_id,
+        .opcode = XCB_DRI3_FREE_SYNCOBJ,
+        .isvoid = 1
+    };
+
+    struct iovec xcb_parts[4];
+    xcb_void_cookie_t xcb_ret;
+    xcb_dri3_free_syncobj_request_t xcb_out;
+
+    xcb_out.syncobj = syncobj;
+
+    xcb_parts[2].iov_base = (char *) &xcb_out;
+    xcb_parts[2].iov_len = sizeof(xcb_out);
+    xcb_parts[3].iov_base = 0;
+    xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+
+    xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
+    return xcb_ret;
+}
+
+xcb_void_cookie_t
+xcb_dri3_free_syncobj (xcb_connection_t   *c,
+                       xcb_dri3_syncobj_t  syncobj)
+{
+    static const xcb_protocol_request_t xcb_req = {
+        .count = 2,
+        .ext = &xcb_dri3_id,
+        .opcode = XCB_DRI3_FREE_SYNCOBJ,
+        .isvoid = 1
+    };
+
+    struct iovec xcb_parts[4];
+    xcb_void_cookie_t xcb_ret;
+    xcb_dri3_free_syncobj_request_t xcb_out;
+
+    xcb_out.syncobj = syncobj;
 
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);

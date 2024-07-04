@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2022/07/12 02:53:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2024/07/04 07:52:28 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -50,6 +50,7 @@ INCS=	\
 	bigreq.h \
 	composite.h \
 	damage.h \
+	dbe.h \
 	dpms.h \
 	dri2.h \
 	dri3.h \

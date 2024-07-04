@@ -17,13 +17,14 @@
 #include "randr.h"
 #include "xfixes.h"
 #include "sync.h"
+#include "dri3.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define XCB_PRESENT_MAJOR_VERSION 1
-#define XCB_PRESENT_MINOR_VERSION 2
+#define XCB_PRESENT_MINOR_VERSION 4
 
 extern xcb_extension_t xcb_present_id;
 
@@ -47,14 +48,17 @@ typedef enum xcb_present_option_t {
     XCB_PRESENT_OPTION_ASYNC = 1,
     XCB_PRESENT_OPTION_COPY = 2,
     XCB_PRESENT_OPTION_UST = 4,
-    XCB_PRESENT_OPTION_SUBOPTIMAL = 8
+    XCB_PRESENT_OPTION_SUBOPTIMAL = 8,
+    XCB_PRESENT_OPTION_ASYNC_MAY_TEAR = 16
 } xcb_present_option_t;
 
 typedef enum xcb_present_capability_t {
     XCB_PRESENT_CAPABILITY_NONE = 0,
     XCB_PRESENT_CAPABILITY_ASYNC = 1,
     XCB_PRESENT_CAPABILITY_FENCE = 2,
-    XCB_PRESENT_CAPABILITY_UST = 4
+    XCB_PRESENT_CAPABILITY_UST = 4,
+    XCB_PRESENT_CAPABILITY_ASYNC_MAY_TEAR = 8,
+    XCB_PRESENT_CAPABILITY_SYNCOBJ = 16
 } xcb_present_capability_t;
 
 typedef enum xcb_present_complete_kind_t {
@@ -220,6 +224,35 @@ typedef struct xcb_present_query_capabilities_reply_t {
     uint32_t length;
     uint32_t capabilities;
 } xcb_present_query_capabilities_reply_t;
+
+/** Opcode for xcb_present_pixmap_synced. */
+#define XCB_PRESENT_PIXMAP_SYNCED 5
+
+/**
+ * @brief xcb_present_pixmap_synced_request_t
+ **/
+typedef struct xcb_present_pixmap_synced_request_t {
+    uint8_t             major_opcode;
+    uint8_t             minor_opcode;
+    uint16_t            length;
+    xcb_window_t        window;
+    xcb_pixmap_t        pixmap;
+    uint32_t            serial;
+    xcb_xfixes_region_t valid;
+    xcb_xfixes_region_t update;
+    int16_t             x_off;
+    int16_t             y_off;
+    xcb_randr_crtc_t    target_crtc;
+    xcb_dri3_syncobj_t  acquire_syncobj;
+    xcb_dri3_syncobj_t  release_syncobj;
+    uint64_t            acquire_point;
+    uint64_t            release_point;
+    uint32_t            options;
+    uint8_t             pad0[4];
+    uint64_t            target_msc;
+    uint64_t            divisor;
+    uint64_t            remainder;
+} xcb_present_pixmap_synced_request_t;
 
 /** Opcode for xcb_present_generic. */
 #define XCB_PRESENT_GENERIC 0
@@ -618,6 +651,80 @@ xcb_present_query_capabilities_reply_t *
 xcb_present_query_capabilities_reply (xcb_connection_t                         *c,
                                       xcb_present_query_capabilities_cookie_t   cookie  /**< */,
                                       xcb_generic_error_t                     **e);
+
+int
+xcb_present_pixmap_synced_sizeof (const void  *_buffer,
+                                  uint32_t     notifies_len);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ *
+ * This form can be used only if the request will not cause
+ * a reply to be generated. Any returned error will be
+ * saved for handling by xcb_request_check().
+ */
+xcb_void_cookie_t
+xcb_present_pixmap_synced_checked (xcb_connection_t           *c,
+                                   xcb_window_t                window,
+                                   xcb_pixmap_t                pixmap,
+                                   uint32_t                    serial,
+                                   xcb_xfixes_region_t         valid,
+                                   xcb_xfixes_region_t         update,
+                                   int16_t                     x_off,
+                                   int16_t                     y_off,
+                                   xcb_randr_crtc_t            target_crtc,
+                                   xcb_dri3_syncobj_t          acquire_syncobj,
+                                   xcb_dri3_syncobj_t          release_syncobj,
+                                   uint64_t                    acquire_point,
+                                   uint64_t                    release_point,
+                                   uint32_t                    options,
+                                   uint64_t                    target_msc,
+                                   uint64_t                    divisor,
+                                   uint64_t                    remainder,
+                                   uint32_t                    notifies_len,
+                                   const xcb_present_notify_t *notifies);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ *
+ */
+xcb_void_cookie_t
+xcb_present_pixmap_synced (xcb_connection_t           *c,
+                           xcb_window_t                window,
+                           xcb_pixmap_t                pixmap,
+                           uint32_t                    serial,
+                           xcb_xfixes_region_t         valid,
+                           xcb_xfixes_region_t         update,
+                           int16_t                     x_off,
+                           int16_t                     y_off,
+                           xcb_randr_crtc_t            target_crtc,
+                           xcb_dri3_syncobj_t          acquire_syncobj,
+                           xcb_dri3_syncobj_t          release_syncobj,
+                           uint64_t                    acquire_point,
+                           uint64_t                    release_point,
+                           uint32_t                    options,
+                           uint64_t                    target_msc,
+                           uint64_t                    divisor,
+                           uint64_t                    remainder,
+                           uint32_t                    notifies_len,
+                           const xcb_present_notify_t *notifies);
+
+xcb_present_notify_t *
+xcb_present_pixmap_synced_notifies (const xcb_present_pixmap_synced_request_t *R);
+
+int
+xcb_present_pixmap_synced_notifies_length (const xcb_present_pixmap_synced_request_t *R);
+
+xcb_present_notify_iterator_t
+xcb_present_pixmap_synced_notifies_iterator (const xcb_present_pixmap_synced_request_t *R);
 
 int
 xcb_present_redirect_notify_sizeof (const void  *_buffer,

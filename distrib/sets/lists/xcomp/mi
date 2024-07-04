@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.245 2024/07/04 05:23:33 mrg Exp $
+#	 $NetBSD: mi,v 1.246 2024/07/04 07:52:29 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -740,6 +740,7 @@
 ./usr/X11R7/include/xcb/bigreq.h			xcomp-libxcb-include	xorg
 ./usr/X11R7/include/xcb/composite.h			xcomp-libxcb-include	xorg
 ./usr/X11R7/include/xcb/damage.h			xcomp-libxcb-include	xorg
+./usr/X11R7/include/xcb/dbe.h				xcomp-libxcb-include	xorg
 ./usr/X11R7/include/xcb/dpms.h				xcomp-libxcb-include	xorg
 ./usr/X11R7/include/xcb/dri2.h				xcomp-libxcb-include	xorg
 ./usr/X11R7/include/xcb/dri3.h				xcomp-libxcb-include	xorg
@@ -1262,6 +1263,8 @@
 ./usr/X11R7/lib/libxcb-composite_p.a			xcomp-libxcb-lib	profile,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-damage.a				xcomp-libxcb-lib	xorg,compatx11file
 ./usr/X11R7/lib/libxcb-damage_p.a			xcomp-libxcb-lib	profile,xorg,compatx11file
+./usr/X11R7/lib/libxcb-dbe.a				xcomp-libxcb-lib	xorg,compatx11file
+./usr/X11R7/lib/libxcb-dbe_p.a				xcomp-libxcb-lib	profile,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-dpms.a				xcomp-libxcb-lib	xorg,compatx11file
 ./usr/X11R7/lib/libxcb-dpms_p.a				xcomp-libxcb-lib	profile,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-dri2.a				xcomp-libxcb-lib	xorg,compatx11file
@@ -1385,6 +1388,7 @@
 ./usr/X11R7/lib/pkgconfig/xcb-aux.pc			xcomp-xcb-util-lib	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-composite.pc		xcomp-libxcb-lib	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-damage.pc			xcomp-libxcb-lib	xorg
+./usr/X11R7/lib/pkgconfig/xcb-dbe.pc			xcomp-libxcb-lib	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-dpms.pc			xcomp-libxcb-lib	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-dri2.pc			xcomp-libxcb-lib	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-dri3.pc			xcomp-libxcb-lib	xorg
@@ -5983,6 +5987,7 @@
 ./usr/libdata/lint/llib-lre.ln				xcomp-obsolete	obsolete
 ./usr/libdata/lint/llib-lxcb-composite.ln		xcomp-obsolete	obsolete
 ./usr/libdata/lint/llib-lxcb-damage.ln			xcomp-libxcb-lintlib	lint,xorg
+./usr/libdata/lint/llib-lxcb-dbe.ln			xcomp-libxcb-lintlib	lint,xorg
 ./usr/libdata/lint/llib-lxcb-dpms.ln			xcomp-libxcb-lintlib	lint,xorg
 ./usr/libdata/lint/llib-lxcb-dri2.ln			xcomp-libxcb-lintlib	lint,xorg
 ./usr/libdata/lint/llib-lxcb-dri3.ln			xcomp-libxcb-lintlib	lint,xorg
