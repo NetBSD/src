@@ -1,41 +1,14 @@
-#	$NetBSD: Makefile,v 1.13 2024/06/30 16:10:22 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2024/07/04 02:20:03 christos Exp $
 
 .include <bsd.own.mk>
 
 .if (defined(HOSTPROG) && \
      (${TOOLCHAIN_MISSING} == "no" || defined(EXTERNAL_TOOLCHAIN))) || \
     ${MKBINUTILS} != "no"
-BFDSUBDIR=	lib
 
 PROG=		dbsym
 MAN=		dbsym.8
 
-CPPFLAGS+=	-I${DIST}/bfd -I${DIST}/binutils -I${DIST}/include
-
-.if !defined(HOSTPROG)
-PROGDPLIBS+=	bfd	${TOP}/${BFDSUBDIR}/libbfd
-PROGDPLIBS+=	sframe	${TOP}/${BFDSUBDIR}/libsframe
-PROGDPLIBS+=	iberty	${TOP}/${BFDSUBDIR}/libiberty
-.else
-CPPFLAGS+=	-I${BFDDIR}
-DPADD+=		${BFDDIR}/libbfd.a
-LDADD+=		-L${BFDDIR} -lbfd
-DPADD+=		${SFRAMEDIR}/libsframe.a
-LDADD+=		-L${SFRAMEDIR} -lsframe
-DPADD+=		${IBERTYDIR}/libiberty.a
-LDADD+=		-L${IBERTYDIR} -liberty
-.endif
-
-.include <bsd.prog.mk>
-
-.ifndef HOSTPROG
-.include	"${TOP}/${BFDSUBDIR}/libbfd/arch/${BINUTILS_MACHINE_ARCH}/defs.mk"
-CPPFLAGS+=	-I${TOP}/${BFDSUBDIR}/libbfd/arch/${BINUTILS_MACHINE_ARCH} ${G_INCLUDES}
-LDADD+=		-lintl
-DPADD+=		${LIBINTL}
-.endif # HOSTPROG
-
-LDADD+=		-lz
-# No DPADD because we don't know the format and we didn't build it.
+.include "${.PARSEDIR}/../bfd.mk"
 
 .endif # MKBINUTILS != no
