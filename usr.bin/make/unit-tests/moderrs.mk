@@ -1,4 +1,4 @@
-# $NetBSD: moderrs.mk,v 1.34 2024/07/04 17:47:54 rillig Exp $
+# $NetBSD: moderrs.mk,v 1.35 2024/07/04 18:53:37 rillig Exp $
 #
 # various modifier error tests
 
@@ -133,21 +133,21 @@ mod-regex-delimiter: print-footer
 mod-ts-parse: print-header print-footer
 	@echo ${FIB:ts}
 	@echo ${FIB:ts\65}	# octal 065 == U+0035 == '5'
-# expect: make: Bad modifier ":ts\65oct" for variable "FIB"
+# expect: make: in target "mod-ts-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Bad modifier ":ts\65oct"
 	@echo ${FIB:ts\65oct}	# bad modifier
-# expect: make: Bad modifier ":ts\65oct" for variable ""
+# expect: make: in target "mod-ts-parse": while evaluating "${:U${FIB}:ts\65oct} # bad modifier, variable name is """: Bad modifier ":ts\65oct"
 	@echo ${:U${FIB}:ts\65oct} # bad modifier, variable name is ""
-# expect: make: Bad modifier ":tsxy" for variable "FIB"
+# expect: make: in target "mod-ts-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Bad modifier ":tsxy"
 	@echo ${FIB:tsxy}	# modifier too long
 
 mod-t-parse: print-header print-footer
-# expect: make: Bad modifier ":t" for variable "FIB"
+# expect: make: in target "mod-t-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Bad modifier ":t"
 	@echo ${FIB:t
-# expect: make: Bad modifier ":txy" for variable "FIB"
+# expect: make: in target "mod-t-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Bad modifier ":txy"
 	@echo ${FIB:txy}
-# expect: make: Bad modifier ":t" for variable "FIB"
+# expect: make: in target "mod-t-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Bad modifier ":t"
 	@echo ${FIB:t}
-# expect: make: Bad modifier ":t" for variable "FIB"
+# expect: make: in target "mod-t-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Bad modifier ":t"
 	@echo ${FIB:t:M*}
 
 mod-ifelse-parse: print-footer

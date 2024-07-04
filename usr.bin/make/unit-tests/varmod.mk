@@ -1,4 +1,4 @@
-# $NetBSD: varmod.mk,v 1.16 2024/07/04 17:47:54 rillig Exp $
+# $NetBSD: varmod.mk,v 1.17 2024/07/04 18:53:37 rillig Exp $
 #
 # Tests for variable modifiers, such as :Q, :S,from,to or :Ufallback.
 #
@@ -121,9 +121,11 @@ VAR=	STOP
 
 # Test the word selection modifier ':[n]' with a very large number that is
 # larger than ULONG_MAX for any supported platform.
+# expect+2: while evaluating variable "word" with value "word": Bad modifier ":[99333000222000111000]"
 # expect+1: Malformed conditional (${word:L:[99333000222000111000]})
 .if ${word:L:[99333000222000111000]}
 .endif
+# expect+2: while evaluating variable "word" with value "word": Bad modifier ":[2147483648]"
 # expect+1: Malformed conditional (${word:L:[2147483648]})
 .if ${word:L:[2147483648]}
 .endif
@@ -174,7 +176,7 @@ ${:U }=		<space>
 .if ${word:L:@w@$w$@} != "word"
 .  error
 .endif
-# expect: make: Bad modifier ":[$]" for variable "word"
+# expect+2: while evaluating variable "word" with value "": Bad modifier ":[$]"
 # expect+1: Malformed conditional (${word:[$]})
 .if ${word:[$]}
 .  error
