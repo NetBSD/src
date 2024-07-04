@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2015/07/20 23:50:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2024/07/04 01:02:24 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,8 @@ SRCS=	iceauth.c process.c
 
 LDADD+=	-lICE
 DPADD+=	${LIBICE}
+
+CPPFLAGS+=	-DHAVE_REALLOCARRAY
 
 .PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/man
 
