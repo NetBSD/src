@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.380 2024/06/02 15:31:26 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.381 2024/07/05 05:11:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -115,7 +115,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.380 2024/06/02 15:31:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.381 2024/07/05 05:11:25 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -979,7 +979,6 @@ Candidate_New(char *name, char *prefix, Suffix *suff, Candidate *parent,
 }
 
 /* Add a new candidate to the list. */
-/*ARGSUSED*/
 static void
 CandidateList_Add(CandidateList *list, char *srcName, Candidate *targ,
 		  Suffix *suff, const char *debug_tag MAKE_ATTR_UNUSED)

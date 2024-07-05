@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.339 2024/06/15 20:02:45 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.340 2024/07/05 05:11:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #define MAKE_GNUC_PREREQ(x, y)	0
 #endif
 
-#if MAKE_GNUC_PREREQ(2, 7)
+#if MAKE_GNUC_PREREQ(2, 7) || lint
 #define MAKE_ATTR_UNUSED	__attribute__((__unused__))
 #else
 #define MAKE_ATTR_UNUSED	/* delete */
@@ -918,7 +918,6 @@ const char *GNodeMade_Name(GNodeMade) MAKE_ATTR_USE;
 #ifdef CLEANUP
 void Parse_RegisterCommand(char *);
 #else
-/* ARGSUSED */
 MAKE_INLINE
 void Parse_RegisterCommand(char *cmd MAKE_ATTR_UNUSED)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.626 2024/07/04 20:18:40 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.627 2024/07/05 05:11:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.626 2024/07/04 20:18:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.627 2024/07/05 05:11:25 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -789,7 +789,6 @@ AppendWords(StringList *lp, char *str)
 }
 
 #ifdef SIGINFO
-/*ARGSUSED*/
 static void
 siginfo(int signo MAKE_ATTR_UNUSED)
 {

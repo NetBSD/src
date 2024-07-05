@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1129 2024/07/04 18:53:37 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1130 2024/07/05 05:11:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1129 2024/07/04 18:53:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1130 2024/07/05 05:11:25 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1416,21 +1416,18 @@ SepBuf_DoneData(SepBuf *buf)
 typedef void (*ModifyWordProc)(Substring word, SepBuf *buf, void *data);
 
 
-/*ARGSUSED*/
 static void
 ModifyWord_Head(Substring word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
 	SepBuf_AddSubstring(buf, Substring_Dirname(word));
 }
 
-/*ARGSUSED*/
 static void
 ModifyWord_Tail(Substring word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
 	SepBuf_AddSubstring(buf, Substring_Basename(word));
 }
 
-/*ARGSUSED*/
 static void
 ModifyWord_Suffix(Substring word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
@@ -1439,7 +1436,6 @@ ModifyWord_Suffix(Substring word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 		SepBuf_AddRange(buf, lastDot + 1, word.end);
 }
 
-/*ARGSUSED*/
 static void
 ModifyWord_Root(Substring word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
@@ -1761,7 +1757,6 @@ VarSelectWords(const char *str, int first, int last,
 }
 
 
-/*ARGSUSED*/
 static void
 ModifyWord_Realpath(Substring word, SepBuf *buf, void *data MAKE_ATTR_UNUSED)
 {
@@ -3060,7 +3055,6 @@ ApplyModifier_Quote(const char **pp, ModChain *ch)
 	return AMR_OK;
 }
 
-/*ARGSUSED*/
 static void
 ModifyWord_Copy(Substring word, SepBuf *buf, void *data MAKE_ATTR_UNUSED)
 {

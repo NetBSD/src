@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.478 2024/06/28 15:20:57 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.479 2024/07/05 05:11:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -141,7 +141,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.478 2024/06/28 15:20:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.479 2024/07/05 05:11:25 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -594,7 +594,6 @@ JobCondPassSig(int signo)
  *
  * Sends a token on the child exit pipe to wake us up from select()/poll().
  */
-/*ARGSUSED*/
 static void
 JobChildSig(int signo MAKE_ATTR_UNUSED)
 {
@@ -606,7 +605,6 @@ JobChildSig(int signo MAKE_ATTR_UNUSED)
 
 
 /* Resume all stopped jobs. */
-/*ARGSUSED*/
 static void
 JobContinueSig(int signo MAKE_ATTR_UNUSED)
 {
