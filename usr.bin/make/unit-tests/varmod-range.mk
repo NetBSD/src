@@ -1,4 +1,4 @@
-# $NetBSD: varmod-range.mk,v 1.12 2024/07/04 17:47:54 rillig Exp $
+# $NetBSD: varmod-range.mk,v 1.13 2024/07/05 19:47:22 rillig Exp $
 #
 # Tests for the :range variable modifier, which generates sequences
 # of integers from the given range.
@@ -62,7 +62,7 @@
 #
 # Since 2020-11-01, the parser issues a more precise "Invalid number" error
 # instead.
-# expect+2: while evaluating "${:U:range=x}Rest" != "Rest"": Invalid number "x}Rest" != "Rest"" for ':range' modifier
+# expect+2: while evaluating "${:U:range=x}Rest" != "Rest"" with value "": Invalid number "x}Rest" != "Rest"" for ':range' modifier
 # expect+1: Malformed conditional ("${:U:range=x}Rest" != "Rest")
 .if "${:U:range=x}Rest" != "Rest"
 .  error
@@ -73,7 +73,7 @@
 # The upper limit of the range must always be given in decimal.
 # This parse error stops at the 'x', trying to parse it as a variable
 # modifier.
-# expect+2: while evaluating "${:U:range=0x0}Rest" != "Rest"": Unknown modifier "x0"
+# expect+2: while evaluating "${:U:range=0x0}Rest" != "Rest"" with value "1": Unknown modifier "x0"
 # expect+1: Malformed conditional ("${:U:range=0x0}Rest" != "Rest")
 .if "${:U:range=0x0}Rest" != "Rest"
 .  error

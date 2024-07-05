@@ -1,4 +1,4 @@
-# $NetBSD: varmod-edge.mk,v 1.24 2024/07/05 18:59:33 rillig Exp $
+# $NetBSD: varmod-edge.mk,v 1.25 2024/07/05 19:47:22 rillig Exp $
 #
 # Tests for edge cases in variable modifiers.
 #
@@ -169,7 +169,7 @@ EXP.colons=	# empty
 # expect+17: ok M-paren
 # expect+16: ok M-mixed
 # expect+15: ok M-unescape
-# expect-4: while evaluating variable "MOD.M-nest-mix" with value "${INP.M-nest-mix:M${:U*)}}": while evaluating variable "INP.M-nest-mix" with value "(parentheses)": while evaluating "${:U*)": Unclosed expression, expecting '}' for modifier "U*)"
+# expect-4: while evaluating variable "MOD.M-nest-mix" with value "${INP.M-nest-mix:M${:U*)}}": while evaluating variable "INP.M-nest-mix" with value "(parentheses)": while evaluating "${:U*)" with value "*)": Unclosed expression, expecting '}' for modifier "U*)"
 # expect+13: ok M-nest-mix
 # expect+12: ok M-nest-brk
 # expect+11: ok M-pat-err
@@ -193,7 +193,7 @@ EXP.colons=	# empty
 # XXX: The error message should mention the variable name of the expression,
 # even though that name is empty in this case.
 # expect+2: Malformed conditional (${:Z})
-# expect+1: while evaluating "${:Z}": Unknown modifier "Z"
+# expect+1: while evaluating "${:Z}" with value "": Unknown modifier "Z"
 .if ${:Z}
 .  error
 .else
@@ -206,7 +206,7 @@ EXP.colons=	# empty
 # variable name with quotes, leading to the rather confusing "Unfinished
 # modifier for  (',' missing)", having two spaces in a row.
 #
-# expect+2: while evaluating "${:S,}": Unfinished modifier (',' missing)
+# expect+2: while evaluating "${:S,}" with value "": Unfinished modifier (',' missing)
 # expect+1: Malformed conditional (${:S,})
 .if ${:S,}
 .  error

@@ -1,7 +1,7 @@
 make: "varmod-edge.mk" line 186: ok M-paren
 make: "varmod-edge.mk" line 186: ok M-mixed
 make: "varmod-edge.mk" line 186: ok M-unescape
-make: "varmod-edge.mk" line 168: while evaluating variable "MOD.M-nest-mix" with value "${INP.M-nest-mix:M${:U*)}}": while evaluating variable "INP.M-nest-mix" with value "(parentheses)": while evaluating "${:U*)": Unclosed expression, expecting '}' for modifier "U*)"
+make: "varmod-edge.mk" line 168: while evaluating variable "MOD.M-nest-mix" with value "${INP.M-nest-mix:M${:U*)}}": while evaluating variable "INP.M-nest-mix" with value "(parentheses)": while evaluating "${:U*)" with value "*)": Unclosed expression, expecting '}' for modifier "U*)"
 	in .for loop from varmod-edge.mk:164 with test = M-nest-mix
 make: "varmod-edge.mk" line 186: ok M-nest-mix
 make: "varmod-edge.mk" line 186: ok M-nest-brk
@@ -22,9 +22,9 @@ make: "varmod-edge.mk" line 168: while evaluating variable "MOD.colons" with val
 make: "varmod-edge.mk" line 168: while evaluating variable "MOD.colons" with value "${INP.colons::::}": while evaluating variable "INP.colons" with value "": Unknown modifier ":"
 	in .for loop from varmod-edge.mk:164 with test = colons
 make: "varmod-edge.mk" line 186: ok colons
-make: "varmod-edge.mk" line 197: while evaluating "${:Z}": Unknown modifier "Z"
+make: "varmod-edge.mk" line 197: while evaluating "${:Z}" with value "": Unknown modifier "Z"
 make: "varmod-edge.mk" line 197: Malformed conditional (${:Z})
-make: "varmod-edge.mk" line 211: while evaluating "${:S,}": Unfinished modifier (',' missing)
+make: "varmod-edge.mk" line 211: while evaluating "${:S,}" with value "": Unfinished modifier (',' missing)
 make: "varmod-edge.mk" line 211: Malformed conditional (${:S,})
 make: Fatal errors encountered -- cannot continue
 make: stopped making "all" in unit-tests

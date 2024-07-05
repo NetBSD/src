@@ -1,4 +1,4 @@
-# $NetBSD: varmod-loop-varname.mk,v 1.8 2024/07/04 17:47:54 rillig Exp $
+# $NetBSD: varmod-loop-varname.mk,v 1.9 2024/07/05 19:47:22 rillig Exp $
 #
 # Tests for the first part of the variable modifier ':@var@...@', which
 # contains the variable name to use during the loop.
@@ -13,7 +13,7 @@
 # dynamically.  There was no practical use-case for this.
 # Since var.c 1.907 from 2021-04-04, a '$' is no longer allowed in the
 # variable name.
-# expect+2: while evaluating "${:Uone two three:@${:Ubar:S,b,v,}@+${var}+@} != "+one+ +two+ +three+"": In the :@ modifier, the variable name "${:Ubar:S,b,v,}" must not contain a dollar
+# expect+2: while evaluating "${:Uone two three:@${:Ubar:S,b,v,}@+${var}+@} != "+one+ +two+ +three+"" with value "one two three": In the :@ modifier, the variable name "${:Ubar:S,b,v,}" must not contain a dollar
 # expect+1: Malformed conditional (${:Uone two three:@${:Ubar:S,b,v,}@+${var}+@} != "+one+ +two+ +three+")
 .if ${:Uone two three:@${:Ubar:S,b,v,}@+${var}+@} != "+one+ +two+ +three+"
 .  error

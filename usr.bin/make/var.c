@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1131 2024/07/05 18:59:33 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1132 2024/07/05 19:47:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1131 2024/07/05 18:59:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1132 2024/07/05 19:47:22 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -389,10 +389,12 @@ EvalStack_Details(void)
 			"while evaluating",
 		};
 		EvalStackElement *elem = evalStack.elems + i;
-		Buf_AddStr(buf, descr[elem->kind]);
+		EvalStackElementKind kind = elem->kind;
+		Buf_AddStr(buf, descr[kind]);
 		Buf_AddStr(buf, " \"");
 		Buf_AddStr(buf, elem->str);
-		if (elem->kind == VSK_VARNAME) {
+		if (elem->value != NULL
+		    && (kind == VSK_VARNAME || kind == VSK_EXPR)) {
 			Buf_AddStr(buf, "\" with value \"");
 			Buf_AddStr(buf, elem->value->str);
 		}
@@ -4602,7 +4604,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode)
 	if (expr.name[0] != '\0')
 		EvalStack_Push(VSK_VARNAME, expr.name, &expr.value);
 	else
-		EvalStack_Push(VSK_EXPR, start, NULL);
+		EvalStack_Push(VSK_EXPR, start, &expr.value);
 
 	/*
 	 * Before applying any modifiers, expand any nested expressions from

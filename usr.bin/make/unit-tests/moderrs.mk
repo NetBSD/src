@@ -1,4 +1,4 @@
-# $NetBSD: moderrs.mk,v 1.37 2024/07/05 18:59:33 rillig Exp $
+# $NetBSD: moderrs.mk,v 1.38 2024/07/05 19:47:22 rillig Exp $
 #
 # various modifier error tests
 
@@ -135,7 +135,7 @@ mod-ts-parse: print-header print-footer
 	@echo ${FIB:ts\65}	# octal 065 == U+0035 == '5'
 # expect: make: in target "mod-ts-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Bad modifier ":ts\65oct"
 	@echo ${FIB:ts\65oct}	# bad modifier
-# expect: make: in target "mod-ts-parse": while evaluating "${:U${FIB}:ts\65oct} # bad modifier, variable name is """: Bad modifier ":ts\65oct"
+# expect: make: in target "mod-ts-parse": while evaluating "${:U${FIB}:ts\65oct} # bad modifier, variable name is """ with value "1 1 2 3 5 8 13 21 34": Bad modifier ":ts\65oct"
 	@echo ${:U${FIB}:ts\65oct} # bad modifier, variable name is ""
 # expect: make: in target "mod-ts-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Bad modifier ":tsxy"
 	@echo ${FIB:tsxy}	# modifier too long

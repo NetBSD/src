@@ -1,4 +1,4 @@
-# $NetBSD: varmod-to-separator.mk,v 1.17 2024/07/04 18:53:37 rillig Exp $
+# $NetBSD: varmod-to-separator.mk,v 1.18 2024/07/05 19:47:22 rillig Exp $
 #
 # Tests for the :ts variable modifier, which joins the words of the variable
 # using an arbitrary character as word separator.
@@ -262,7 +262,7 @@ WORDS=	one two three four five six
 # happens for non-octal digits.  From 2003.07.23.18.06.46 to
 # 2016.02.27.16.20.06, the result was '1E2', since 2016.03.07.20.20.35 make no
 # longer accepts this escape and complains.
-# expect+2: while evaluating "${:Ua b:ts\69}": Bad modifier ":ts\69"
+# expect+2: while evaluating "${:Ua b:ts\69}" with value "a b": Bad modifier ":ts\69"
 # expect+1: Malformed conditional (${:Ua b:ts\69})
 .if ${:Ua b:ts\69}
 .  error
@@ -271,7 +271,7 @@ WORDS=	one two three four five six
 .endif
 
 # Try whether bmake is Unicode-ready.
-# expect+2: while evaluating "${:Ua b:ts\x1F60E}": Invalid character number at "1F60E}"
+# expect+2: while evaluating "${:Ua b:ts\x1F60E}" with value "a b": Invalid character number at "1F60E}"
 # expect+1: Malformed conditional (${:Ua b:ts\x1F60E})
 .if ${:Ua b:ts\x1F60E}		# U+1F60E "smiling face with sunglasses"
 .  error

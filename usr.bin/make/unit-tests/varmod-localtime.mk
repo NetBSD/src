@@ -1,4 +1,4 @@
-# $NetBSD: varmod-localtime.mk,v 1.16 2024/07/04 17:47:54 rillig Exp $
+# $NetBSD: varmod-localtime.mk,v 1.17 2024/07/05 19:47:22 rillig Exp $
 #
 # Tests for the :localtime variable modifier, which formats a timestamp
 # using strftime(3) in local time.
@@ -56,7 +56,7 @@
 # 1970.  Going back 50 years in the past is not a practical use case for
 # make.  Therefore, since var.c 1.631, negative time stamps produce a
 # parse error.
-# expect+2: while evaluating "${:L:localtime=-1} != """: Invalid time value "-1"
+# expect+2: while evaluating "${:L:localtime=-1} != """ with value "": Invalid time value "-1"
 # expect+1: Malformed conditional (${:L:localtime=-1} != "")
 .if ${:L:localtime=-1} != ""
 .  error
@@ -67,7 +67,7 @@
 
 # Spaces were allowed before var.c 1.631 from 2020-10-31 21:40:20, not
 # because it would make sense but just as a side-effect from using strtoul.
-# expect+2: while evaluating "${:L:localtime= 1} != """: Invalid time value " 1"
+# expect+2: while evaluating "${:L:localtime= 1} != """ with value "": Invalid time value " 1"
 # expect+1: Malformed conditional (${:L:localtime= 1} != "")
 .if ${:L:localtime= 1} != ""
 .  error
@@ -115,7 +115,7 @@
 #
 # Since var.c 1.631 from 2020-10-31, the overflow is detected and produces a
 # parse error.
-# expect+2: while evaluating "${:L:localtime=10000000000000000000000000000000} != """: Invalid time value "10000000000000000000000000000000"
+# expect+2: while evaluating "${:L:localtime=10000000000000000000000000000000} != """ with value "": Invalid time value "10000000000000000000000000000000"
 # expect+1: Malformed conditional (${:L:localtime=10000000000000000000000000000000} != "")
 .if ${:L:localtime=10000000000000000000000000000000} != ""
 .  error
@@ -128,7 +128,7 @@
 # stopped after the '=', and the remaining string was parsed for more variable
 # modifiers.  Because of the unknown modifier 'e' from the 'error', the whole
 # variable value was discarded and thus not printed.
-# expect+2: while evaluating "${:L:localtime=error} != """: Invalid time value "error"
+# expect+2: while evaluating "${:L:localtime=error} != """ with value "": Invalid time value "error"
 # expect+1: Malformed conditional (${:L:localtime=error} != "")
 .if ${:L:localtime=error} != ""
 .  error

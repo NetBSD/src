@@ -1,7 +1,7 @@
 make: "varmod-range.mk" line 43: Malformed conditional (${:range=5} != "")
-make: "varmod-range.mk" line 67: while evaluating "${:U:range=x}Rest" != "Rest"": Invalid number "x}Rest" != "Rest"" for ':range' modifier
+make: "varmod-range.mk" line 67: while evaluating "${:U:range=x}Rest" != "Rest"" with value "": Invalid number "x}Rest" != "Rest"" for ':range' modifier
 make: "varmod-range.mk" line 67: Malformed conditional ("${:U:range=x}Rest" != "Rest")
-make: "varmod-range.mk" line 78: while evaluating "${:U:range=0x0}Rest" != "Rest"": Unknown modifier "x0"
+make: "varmod-range.mk" line 78: while evaluating "${:U:range=0x0}Rest" != "Rest"" with value "1": Unknown modifier "x0"
 make: "varmod-range.mk" line 78: Malformed conditional ("${:U:range=0x0}Rest" != "Rest")
 make: "varmod-range.mk" line 96: while evaluating variable "a b c" with value "a b c": Unknown modifier "rang"
 make: "varmod-range.mk" line 96: Malformed conditional ("${a b c:L:rang}Rest" != "Rest")
