@@ -1,4 +1,4 @@
-# $NetBSD: varparse-errors.mk,v 1.15 2024/07/05 17:41:50 rillig Exp $
+# $NetBSD: varparse-errors.mk,v 1.16 2024/07/05 18:59:33 rillig Exp $
 
 # Tests for parsing and evaluating all kinds of expressions.
 #
@@ -79,31 +79,31 @@ _:=	${:U:OX:U${IND}} ${:U:OX:U${IND}}
 # Before var.c 1.032 from 2022-08-24, make complained about 'Unknown modifier'
 # or 'Bad modifier' when in fact the modifier was entirely correct, it was
 # just not delimited by either ':' or '}' but instead by '\0'.
-# expect: make: Unclosed expression, expecting '}' for modifier "Q" of variable "" with value ""
+# expect+1: while evaluating "${:U:Q": Unclosed expression, expecting '}' for modifier "Q"
 UNCLOSED:=	${:U:Q
-# expect: make: Unclosed expression, expecting '}' for modifier "sh" of variable "" with value ""
+# expect+1: while evaluating "${:U:sh": Unclosed expression, expecting '}' for modifier "sh"
 UNCLOSED:=	${:U:sh
-# expect: make: Unclosed expression, expecting '}' for modifier "tA" of variable "" with value ""
+# expect+1: while evaluating "${:U:tA": Unclosed expression, expecting '}' for modifier "tA"
 UNCLOSED:=	${:U:tA
-# expect: make: Unclosed expression, expecting '}' for modifier "tsX" of variable "" with value ""
+# expect+1: while evaluating "${:U:tsX": Unclosed expression, expecting '}' for modifier "tsX"
 UNCLOSED:=	${:U:tsX
-# expect: make: Unclosed expression, expecting '}' for modifier "ts" of variable "" with value ""
+# expect+1: while evaluating "${:U:ts": Unclosed expression, expecting '}' for modifier "ts"
 UNCLOSED:=	${:U:ts
-# expect: make: Unclosed expression, expecting '}' for modifier "ts\040" of variable "" with value ""
+# expect+1: while evaluating "${:U:ts\040": Unclosed expression, expecting '}' for modifier "ts\040"
 UNCLOSED:=	${:U:ts\040
-# expect: make: Unclosed expression, expecting '}' for modifier "u" of variable "" with value ""
+# expect+1: while evaluating "${:U:u": Unclosed expression, expecting '}' for modifier "u"
 UNCLOSED:=	${:U:u
-# expect: make: Unclosed expression, expecting '}' for modifier "H" of variable "" with value "."
+# expect+1: while evaluating "${:U:H": Unclosed expression, expecting '}' for modifier "H"
 UNCLOSED:=	${:U:H
-# expect: make: Unclosed expression, expecting '}' for modifier "[1]" of variable "" with value ""
+# expect+1: while evaluating "${:U:[1]": Unclosed expression, expecting '}' for modifier "[1]"
 UNCLOSED:=	${:U:[1]
-# expect: make: Unclosed expression, expecting '}' for modifier "hash" of variable "" with value "b2af338b"
+# expect+1: while evaluating "${:U:hash": Unclosed expression, expecting '}' for modifier "hash"
 UNCLOSED:=	${:U:hash
-# expect: make: Unclosed expression, expecting '}' for modifier "range" of variable "" with value "1"
+# expect+1: while evaluating "${:U:range": Unclosed expression, expecting '}' for modifier "range"
 UNCLOSED:=	${:U:range
-# expect: make: Unclosed expression, expecting '}' for modifier "_" of variable "" with value ""
+# expect+1: while evaluating "${:U:_": Unclosed expression, expecting '}' for modifier "_"
 UNCLOSED:=	${:U:_
-# expect: make: Unclosed expression, expecting '}' for modifier "gmtime" of variable "" with value "<timestamp>"
+# expect+1: while evaluating "${:U:gmtime": Unclosed expression, expecting '}' for modifier "gmtime"
 UNCLOSED:=	${:U:gmtime
-# expect: make: Unclosed expression, expecting '}' for modifier "localtime" of variable "" with value "<timestamp>"
+# expect+1: while evaluating "${:U:localtime": Unclosed expression, expecting '}' for modifier "localtime"
 UNCLOSED:=	${:U:localtime

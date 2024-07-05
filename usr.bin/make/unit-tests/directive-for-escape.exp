@@ -1,16 +1,18 @@
 For: end for 1
 For: loop body with chars = !"#$%&'()*+,-./0-9:;<=>?@A-Z[\]_^a-z{|}~:
-# expect: make: Unclosed expression, expecting '}' for modifier "U!"" of variable "" with value "!""
+# expect+2: while evaluating "${:U!"": Unclosed expression, expecting '}' for modifier "U!""
 # expect+1: !"
 .  info ${:U!"#$%&'()*+,-./0-9\:;<=>?@A-Z[\\]_^a-z{|\}~}
-make: Unclosed expression, expecting '}' for modifier "U!"" of variable "" with value "!""
+make: "directive-for-escape.mk" line 21: while evaluating "${:U!"": Unclosed expression, expecting '}' for modifier "U!""
+	in .for loop from directive-for-escape.mk:18 with chars = !"#$%&'()*+,-./0-9:;<=>?@A-Z[\]_^a-z{|}~
 make: "directive-for-escape.mk" line 21: !"
 For: end for 1
 For: loop body with chars = !"\\#$%&'()*+,-./0-9:;<=>?@A-Z[\]_^a-z{|}~:
-# expect: make: Unclosed expression, expecting '}' for modifier "U!"\\\\" of variable "" with value "!"\\"
+# expect+2: while evaluating "${:U!"\\\\": Unclosed expression, expecting '}' for modifier "U!"\\\\"
 # expect+1: !"\\
 .  info ${:U!"\\\\#$%&'()*+,-./0-9\:;<=>?@A-Z[\\]_^a-z{|\}~}
-make: Unclosed expression, expecting '}' for modifier "U!"\\\\" of variable "" with value "!"\\"
+make: "directive-for-escape.mk" line 33: while evaluating "${:U!"\\\\": Unclosed expression, expecting '}' for modifier "U!"\\\\"
+	in .for loop from directive-for-escape.mk:30 with chars = !"\\#$%&'()*+,-./0-9:;<=>?@A-Z[\]_^a-z{|}~
 make: "directive-for-escape.mk" line 33: !"\\
 For: end for 1
 For: loop body with i = $:

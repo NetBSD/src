@@ -2,9 +2,9 @@ make: "varmod-order.mk" line 17: while evaluating variable "WORDS" with value "o
 make: "varmod-order.mk" line 17: Undefined variable "${WORDS:OX"
 make: "varmod-order.mk" line 23: while evaluating variable "WORDS" with value "one two three four five six seven eight nine ten": Bad modifier ":OxXX"
 make: "varmod-order.mk" line 23: Undefined variable "${WORDS:Ox"
-make: Unclosed expression, expecting '}' for modifier "O" of variable "WORDS" with value "eight five four nine one seven six ten three two"
-make: Unclosed expression, expecting '}' for modifier "On" of variable "NUMBERS" with value "1 2 3 4 5 6 7 8 9 10"
-make: Unclosed expression, expecting '}' for modifier "Onr" of variable "NUMBERS" with value "10 9 8 7 6 5 4 3 2 1"
+make: "varmod-order.mk" line 27: while evaluating variable "WORDS" with value "eight five four nine one seven six ten three two": Unclosed expression, expecting '}' for modifier "O"
+make: "varmod-order.mk" line 29: while evaluating variable "NUMBERS" with value "1 2 3 4 5 6 7 8 9 10": Unclosed expression, expecting '}' for modifier "On"
+make: "varmod-order.mk" line 31: while evaluating variable "NUMBERS" with value "10 9 8 7 6 5 4 3 2 1": Unclosed expression, expecting '}' for modifier "Onr"
 make: "varmod-order.mk" line 38: while evaluating variable "NUMBERS" with value "8 5 4 9 1 7 6 10 3 2": Bad modifier ":Oxn"
 make: "varmod-order.mk" line 38: Malformed conditional (${NUMBERS:Oxn})
 make: "varmod-order.mk" line 48: while evaluating variable "NUMBERS" with value "8 5 4 9 1 7 6 10 3 2": Bad modifier ":On_typo"

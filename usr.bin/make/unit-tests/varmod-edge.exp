@@ -1,7 +1,8 @@
 make: "varmod-edge.mk" line 186: ok M-paren
 make: "varmod-edge.mk" line 186: ok M-mixed
 make: "varmod-edge.mk" line 186: ok M-unescape
-make: Unclosed expression, expecting '}' for modifier "U*)" of variable "" with value "*)"
+make: "varmod-edge.mk" line 168: while evaluating variable "MOD.M-nest-mix" with value "${INP.M-nest-mix:M${:U*)}}": while evaluating variable "INP.M-nest-mix" with value "(parentheses)": while evaluating "${:U*)": Unclosed expression, expecting '}' for modifier "U*)"
+	in .for loop from varmod-edge.mk:164 with test = M-nest-mix
 make: "varmod-edge.mk" line 186: ok M-nest-mix
 make: "varmod-edge.mk" line 186: ok M-nest-brk
 make: "varmod-edge.mk" line 186: ok M-pat-err

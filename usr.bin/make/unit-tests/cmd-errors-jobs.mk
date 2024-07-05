@@ -1,4 +1,4 @@
-# $NetBSD: cmd-errors-jobs.mk,v 1.6 2024/07/05 17:41:50 rillig Exp $
+# $NetBSD: cmd-errors-jobs.mk,v 1.7 2024/07/05 18:59:33 rillig Exp $
 #
 # Demonstrate how errors in expressions affect whether the commands
 # are actually executed in jobs mode.
@@ -20,7 +20,7 @@ unclosed-expression:
 	: $@-${UNCLOSED
 
 unclosed-modifier:
-# expect: make: Unclosed expression, expecting '}' for "UNCLOSED"
+# expect: make: in target "unclosed-modifier": while evaluating variable "UNCLOSED" with value "": Unclosed expression, expecting '}'
 # XXX: This command is executed even though it contains parse errors.
 # expect: : unclosed-modifier-
 	: $@-${UNCLOSED:
