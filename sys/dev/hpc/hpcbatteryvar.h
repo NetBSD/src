@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcbatteryvar.h,v 1.4 2012/10/27 17:18:17 chs Exp $	*/
+/*	$NetBSD: hpcbatteryvar.h,v 1.5 2024/07/05 19:28:36 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 SATO Kazumi
@@ -104,7 +104,7 @@ struct hpcbattery_spec {
 	int backup_port;	/* index of backup battery port, -1 then ignore */
 	int b_full;		/* backup battery full */
 	int b_low;		/* backup battery low */
-	int b_critical;		/* backup battery hight */
+	int b_critical;		/* backup battery high */
 	int b_flag;		/* main battery value positive, negative flag. 1 or -1 */
 	int nocharge_port;	/* nocharge/(charge or dc) z50, -1 then ignore*/
 	int n_low;		/* if n_flag*value < n_flag*n_low, now nocharging... */

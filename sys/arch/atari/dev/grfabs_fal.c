@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.c,v 1.29 2023/01/06 10:28:28 tsutsui Exp $	*/
+/*	$NetBSD: grfabs_fal.c,v 1.30 2024/07/05 19:28:36 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_fal.c,v 1.29 2023/01/06 10:28:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_fal.c,v 1.30 2024/07/05 19:28:36 andvar Exp $");
 
 #ifdef FALCON_VIDEO
 /*
@@ -280,7 +280,7 @@ falcon_detect(dmode_t *dm)
 		dm->depth = 1;		/* 2 color */
 
 	/*
-	 * Now calculate the screen hight
+	 * Now calculate the screen height
 	 */
 
 	dm->size.height = vregs->vd_v_dis_end - vregs->vd_v_dis_beg;

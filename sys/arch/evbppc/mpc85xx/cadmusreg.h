@@ -1,4 +1,4 @@
-/*	$NetBSD: cadmusreg.h,v 1.2 2011/01/18 01:10:25 matt Exp $	*/
+/*	$NetBSD: cadmusreg.h,v 1.3 2024/07/05 19:28:35 andvar Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #define	CM_CSR_EPHY_GET(n) __SHIFTOUT((n), CM_CSR_EPHY)
 #define	CM_CSR_LED	__BIT(0)
 #define	CM_RST		0x02	/* Reset control register */
-#define	CM_RST_XRSTEN	__BIT(7) /* Enable the NVRAM watchdog timr to function as a general reset input */
+#define	CM_RST_XRSTEN	__BIT(7) /* Enable the NVRAM watchdog timer to function as a general reset input */
 #define	CM_RST_PHYRST	__BIT(6) /* Reset the Ethernet PHY */
 #define	CM_RST_ATM1RST	__BIT(5) /* Reset the FCC1/ATM1 PHYS */
 #define	CM_RST_ATM2RST	__BIT(4) /* Reset the FCC2/ATM2 PHY */

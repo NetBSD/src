@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.9 2023/10/13 16:30:01 tsutsui Exp $	*/
+/*	$NetBSD: bmd.c,v 1.10 2024/07/05 19:28:36 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -102,18 +102,18 @@ union bmd_rfcnt {
 #define BMAP_OFFSET	8
 
 #define PB_WIDTH	2048			/* Plane Width   (Bit) */
-#define PB_HEIGHT	1024			/* Plane Hight   (Bit) */
+#define PB_HEIGHT	1024			/* Plane Height  (Bit) */
 #define PL_WIDTH	64			/* Plane Width  (long) */
 #define PS_WIDTH	128			/* Plane Width  (long) */
 #define P_WIDTH		256			/* Plane Width  (Byte) */
 
 #define SB_WIDTH	1280			/* Screen Width  (Bit) */
-#define SB_HEIGHT	1024			/* Screen Hight  (Bit) */
+#define SB_HEIGHT	1024			/* Screen Height (Bit) */
 #define SL_WIDTH	40			/* Screen Width (Long) */
 #define S_WIDTH		160			/* Screen Width (Byte) */
 
 #define FB_WIDTH	12			/* Font Width    (Bit) */
-#define FB_HEIGHT	20			/* Font Hight    (Bit) */
+#define FB_HEIGHT	20			/* Font Height   (Bit) */
 
 
 #define NEXT_LINE(addr)			(addr +  (PL_WIDTH * FB_HEIGHT))

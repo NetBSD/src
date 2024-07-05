@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.44 2021/08/07 16:18:54 thorpej Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.45 2024/07/05 19:28:36 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.44 2021/08/07 16:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.45 2024/07/05 19:28:36 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -821,7 +821,7 @@ vrpiu_calc_powerstate(struct vrpiu_softc *sc)
 	sc->sc_battery.nextpoll = hz*vrpiu_ad_poll_interval;
 	vrpiu_send_battery_event(sc);
 	/*
-	 * restart next A/D polling if change polling timming.
+	 * restart next A/D polling if change polling timing.
 	 */
 	if (sc->sc_battery.nextpoll != hz*vrpiu_ad_poll_interval)
 		callout_reset(&sc->sc_adpoll, sc->sc_battery.nextpoll,
