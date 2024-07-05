@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.176 2024/06/29 12:11:11 riastradh Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.177 2024/07/05 04:31:51 rin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.176 2024/06/29 12:11:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.177 2024/07/05 04:31:51 rin Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -588,8 +588,7 @@ re_diag(struct rtk_softc *sc)
 	sc->re_testmode = 0;
 	ifp->if_flags &= ~IFF_PROMISC;
 	re_stop(ifp, 0);
-	if (m0 != NULL)
-		m_freem(m0);
+	m_freem(m0);
 
 	return error;
 }
@@ -1180,8 +1179,7 @@ re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
 
 	return 0;
  out:
-	if (n != NULL)
-		m_freem(n);
+	m_freem(n);
 	return ENOMEM;
 }
 

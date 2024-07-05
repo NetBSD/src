@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.212 2024/06/29 12:11:11 riastradh Exp $	*/
+/*	$NetBSD: tulip.c,v 1.213 2024/07/05 04:31:51 rin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.212 2024/06/29 12:11:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.213 2024/07/05 04:31:51 rin Exp $");
 
 
 #include <sys/param.h>
@@ -775,8 +775,7 @@ tlp_start(struct ifnet *ifp)
 			 * packet.
 			 */
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
-			if (m != NULL)
-				m_freem(m);
+			m_freem(m);
 			break;
 		}
 

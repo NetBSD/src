@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dmc.c,v 1.29 2022/04/04 19:33:45 andvar Exp $	*/
+/*	$NetBSD: if_dmc.c,v 1.30 2024/07/05 04:31:52 rin Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.29 2022/04/04 19:33:45 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.30 2024/07/05 04:31:52 rin Exp $");
 
 #undef DMCDEBUG	/* for base table dump on fatal error */
 
@@ -919,10 +919,8 @@ dmcdown(struct dmc_softc *sc)
 
 	for (ifxp = sc->sc_ifw; ifxp < &sc->sc_ifw[NXMT]; ifxp++) {
 #ifdef notyet
-		if (ifxp->ifw_xtofree) {
-			(void) m_freem(ifxp->ifw_xtofree);
-			ifxp->ifw_xtofree = 0;
-		}
+		m_freem(ifxp->ifw_xtofree);
+		ifxp->ifw_xtofree = NULL;
 #endif
 	}
 	IF_PURGE(&sc->sc_if.if_snd);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.309 2024/02/11 13:01:29 jdolecek Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.310 2024/07/05 04:31:53 rin Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.309 2024/02/11 13:01:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.310 2024/07/05 04:31:53 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1095,10 +1095,8 @@ sosend(struct socket *so, struct sockaddr *addr, struct uio *uio,
  out:
 	sounlock(so);
 	splx(s);
-	if (top)
-		m_freem(top);
-	if (control)
-		m_freem(control);
+	m_freem(top);
+	m_freem(control);
 	return error;
 }
 
@@ -1199,8 +1197,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 			m = m_free(m);
 		} while (uio->uio_resid > 0 && error == 0 && m);
 bad:
-		if (m != NULL)
-			m_freem(m);
+		m_freem(m);
 		return error;
 	}
 	if (mp != NULL)

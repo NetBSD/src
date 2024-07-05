@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/nfs/krpc_subr.c 298788 2016-04-29 16:07:25Z pfg "); */
-__RCSID("$NetBSD: krpc_subr.c,v 1.6 2016/11/18 22:37:50 pgoyette Exp $");
+__RCSID("$NetBSD: krpc_subr.c,v 1.7 2024/07/05 04:31:52 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,10 +338,8 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 				free(from, M_SONAME);
 				from = NULL;
 			}
-			if (m) {
-				m_freem(m);
-				m = NULL;
-			}
+			m_freem(m);
+			m = NULL;
 			bzero(&auio, sizeof(auio));
 			auio.uio_resid = len = 1<<16;
 			rcvflg = 0;
@@ -423,7 +421,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	}
 
  out:
-	if (mhead) m_freem(mhead);
+	m_freem(mhead);
 	if (from) free(from, M_SONAME);
 	soclose(so);
 	return error;

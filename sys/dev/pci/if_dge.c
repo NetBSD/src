@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.64 2024/02/09 22:08:35 andvar Exp $ */
+/*	$NetBSD: if_dge.c,v 1.65 2024/07/05 04:31:51 rin Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.64 2024/02/09 22:08:35 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.65 2024/07/05 04:31:51 rin Exp $");
 
 
 
@@ -1708,8 +1708,7 @@ dge_rxintr(struct dge_softc *sc)
 			DGE_INIT_RXDESC(sc, i);
 			if ((status & RDESC_STS_EOP) == 0)
 				sc->sc_rxdiscard = 1;
-			if (sc->sc_rxhead != NULL)
-				m_freem(sc->sc_rxhead);
+			m_freem(sc->sc_rxhead);
 			DGE_RXCHAIN_RESET(sc);
 			DPRINTF(DGE_DEBUG_RX,
 			    ("%s: RX: Rx buffer allocation failed, "

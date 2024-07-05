@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.87 2024/06/16 17:11:11 skrll Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.88 2024/07/05 04:31:51 rin Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.87 2024/06/16 17:11:11 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.88 2024/07/05 04:31:51 rin Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -666,8 +666,7 @@ dwc_gmac_free_rx_ring(struct dwc_gmac_softc *sc, struct dwc_gmac_rx_ring *ring)
 			bus_dmamap_unload(sc->sc_dmat, data->rd_map);
 			bus_dmamap_destroy(sc->sc_dmat, data->rd_map);
 		}
-		if (data->rd_m != NULL)
-			m_freem(data->rd_m);
+		m_freem(data->rd_m);
 	}
 }
 

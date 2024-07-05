@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.175 2024/03/09 13:55:27 riastradh Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.176 2024/07/05 04:31:53 rin Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.175 2024/03/09 13:55:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.176 2024/07/05 04:31:53 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -956,8 +956,7 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 		}
 	}
 	if (error) {
-		if (top != NULL)
-			m_freem(top);
+		m_freem(top);
 		if_statinc(ifp, if_ierrors);
 		goto out0;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-deflate.c,v 1.23 2016/08/06 22:38:18 pgoyette Exp $	*/
+/*	$NetBSD: ppp-deflate.c,v 1.24 2024/07/05 04:31:53 rin Exp $	*/
 /*	Id: ppp-deflate.c,v 1.5 1997/03/04 03:33:28 paulus Exp 	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp-deflate.c,v 1.23 2016/08/06 22:38:18 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp-deflate.c,v 1.24 2024/07/05 04:31:53 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -334,10 +334,8 @@ z_compress(void *arg,
 	state->stats.comp_bytes += olen;
 	state->stats.comp_packets++;
     } else {
-	if (*mret != NULL) {
-	    m_freem(*mret);
-	    *mret = NULL;
-	}
+	m_freem(*mret);
+	*mret = NULL;
 	state->stats.inc_bytes += orig_len;
 	state->stats.inc_packets++;
 	olen = orig_len;

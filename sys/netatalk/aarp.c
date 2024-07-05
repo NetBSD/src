@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.46 2023/07/31 01:24:36 dholland Exp $	*/
+/*	$NetBSD: aarp.c,v 1.47 2024/07/05 04:31:53 rin Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.46 2023/07/31 01:24:36 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.47 2024/07/05 04:31:53 rin Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_atalk.h"
@@ -298,8 +298,7 @@ aarpresolve(struct ifnet *ifp, struct mbuf *m,
 	}
 
 	/* entry has not completed */
-	if (aat->aat_hold)
-		m_freem(aat->aat_hold);
+	m_freem(aat->aat_hold);
 	aat->aat_hold = m;
 	aarpwhohas(ifp, destsat);
 	splx(s);
@@ -529,8 +528,7 @@ static void
 aarptfree(struct aarptab *aat)
 {
 
-	if (aat->aat_hold)
-		m_freem(aat->aat_hold);
+	m_freem(aat->aat_hold);
 	aat->aat_hold = 0;
 	aat->aat_timer = aat->aat_flags = 0;
 	aat->aat_ataddr.s_net = 0;

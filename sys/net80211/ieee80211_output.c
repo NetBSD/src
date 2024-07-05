@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.67 2022/10/24 08:11:25 msaitoh Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.68 2024/07/05 04:31:53 rin Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.67 2022/10/24 08:11:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.68 2024/07/05 04:31:53 rin Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -710,8 +710,7 @@ ieee80211_encap(struct ieee80211com *ic, struct mbuf *m,
 	return m;
 
 bad:
-	if (m != NULL)
-		m_freem(m);
+	m_freem(m);
 	return NULL;
 }
 

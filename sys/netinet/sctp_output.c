@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.35 2024/02/09 22:08:37 andvar Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.36 2024/07/05 04:31:54 rin Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.35 2024/02/09 22:08:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.36 2024/07/05 04:31:54 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -3296,15 +3296,13 @@ sctp_send_initiate_ack(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 	MGETHDR(m, M_DONTWAIT, MT_HEADER);
 	if (m == NULL) {
 		/* No memory, INIT timer will re-attempt. */
-		if (op_err)
-			sctp_m_freem(op_err);
+		sctp_m_freem(op_err);
 		return;
 	}
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) != M_EXT) {
 		/* Failed to get cluster buffer */
-		if (op_err)
-			sctp_m_freem(op_err);
+		sctp_m_freem(op_err);
 		sctp_m_freem(m);
 		return;
 	}
@@ -3336,8 +3334,7 @@ sctp_send_initiate_ack(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 		 * us but there is a chance not.
 		 */
 		if (inp->sctp_flags & (SCTP_PCB_FLAGS_SOCKET_GONE|SCTP_PCB_FLAGS_SOCKET_ALLGONE)) {
-			if (op_err)
-				sctp_m_freem(op_err);
+			sctp_m_freem(op_err);
 			sctp_m_freem(m);
 			sctp_send_abort(init_pkt, iphlen, sh, 0, NULL);
 			return;
@@ -4150,8 +4147,7 @@ sctp_msg_append(struct sctp_tcb *stcb,
 			       stcb, net, m, srcv);
 		}
 #endif
-		if (m)
-			sctp_m_freem(m);
+		sctp_m_freem(m);
 		return (EFAULT);
 	}
 	so = stcb->sctp_socket;
@@ -4592,8 +4588,9 @@ out:
 			sctp_m_freem(n);
 			n = mnext;
 		}
-	} else if (m)
+	} else {
 		sctp_m_freem(m);
+	}
 
 	return (error);
 }
@@ -4618,8 +4615,7 @@ sctp_copy_mbufchain(struct mbuf *clonechain,
 
 	if (appendchain == NULL) {
 		/* error */
-		if (outchain)
-			sctp_m_freem(outchain);
+		sctp_m_freem(outchain);
 		return (NULL);
 	}
 	if (outchain) {
@@ -4837,10 +4833,8 @@ sctp_toss_old_cookies(struct sctp_association *asoc)
 		nchk = TAILQ_NEXT(chk, sctp_next);
 		if (chk->rec.chunk_id == SCTP_COOKIE_ECHO) {
 			TAILQ_REMOVE(&asoc->control_send_queue, chk, sctp_next);
-			if (chk->data) {
-				sctp_m_freem(chk->data);
-				chk->data = NULL;
-			}
+			sctp_m_freem(chk->data);
+			chk->data = NULL;
 			asoc->ctrl_queue_cnt--;
 			if (chk->whoTo)
 				sctp_free_remote_addr(chk->whoTo);
@@ -4869,10 +4863,8 @@ sctp_toss_old_asconf(struct sctp_tcb *stcb)
 		/* find SCTP_ASCONF chunk in queue (only one ever in queue) */
 		if (chk->rec.chunk_id == SCTP_ASCONF) {
 			TAILQ_REMOVE(&asoc->control_send_queue, chk, sctp_next);
-			if (chk->data) {
-				sctp_m_freem(chk->data);
-				chk->data = NULL;
-			}
+			sctp_m_freem(chk->data);
+			chk->data = NULL;
 			asoc->ctrl_queue_cnt--;
 			if (chk->whoTo)
 				sctp_free_remote_addr(chk->whoTo);
@@ -4971,10 +4963,8 @@ sctp_clean_up_ctl(struct sctp_association *asoc)
 			/* Stray chunks must be cleaned up */
 		clean_up_anyway:
 			TAILQ_REMOVE(&asoc->control_send_queue, chk, sctp_next);
-			if (chk->data) {
-				sctp_m_freem(chk->data);
-				chk->data = NULL;
-			}
+			sctp_m_freem(chk->data);
+			chk->data = NULL;
 			asoc->ctrl_queue_cnt--;
 			sctp_free_remote_addr(chk->whoTo);
 			SCTP_ZONE_FREE(sctppcbinfo.ipi_zone_chunk, chk);
@@ -5085,10 +5075,8 @@ sctp_move_to_outqueue(struct sctp_tcb *stcb,
 					(SCTP_NOTIFY_DATAGRAM_UNSENT|SCTP_INTERNAL_ERROR),
 					chk);
 
-			if (chk->data) {
-				sctp_m_freem(chk->data);
-				chk->data = NULL;
-			}
+			sctp_m_freem(chk->data);
+			chk->data = NULL;
 			if (chk->whoTo) {
 				sctp_free_remote_addr(chk->whoTo);
 				chk->whoTo = NULL;
@@ -6412,8 +6400,7 @@ sctp_send_asconf_ack(struct sctp_tcb *stcb, uint32_t retrans)
 	chk = (struct sctp_tmit_chunk *)SCTP_ZONE_GET(sctppcbinfo.ipi_zone_chunk);
 	if (chk == NULL) {
 		/* no memory */
-		if (m_ack)
-			sctp_m_freem(m_ack);
+		sctp_m_freem(m_ack);
 		return (-1);
 	}
 	sctppcbinfo.ipi_count_chunk++;
@@ -7406,8 +7393,7 @@ sctp_output(struct sctp_inpcb *inp, struct mbuf *m,
 				sctp_msg_append(stcb, net, m, &srcv, flags);
 				error = 0;
 			} else {
-				if (m)
-					sctp_m_freem(m);
+				sctp_m_freem(m);
 				error = ECONNRESET;
 			}
 			SCTP_TCB_UNLOCK(stcb);
@@ -7693,8 +7679,7 @@ sctp_send_sack(struct sctp_tcb *stcb)
 			TAILQ_REMOVE(&asoc->control_send_queue, chk, sctp_next);
 			asoc->ctrl_queue_cnt++;
 			a_chk = chk;
-			if (a_chk->data)
-				sctp_m_freem(a_chk->data);
+			sctp_m_freem(a_chk->data);
 			a_chk->data = NULL;
 			sctp_free_remote_addr(a_chk->whoTo);
 			a_chk->whoTo = NULL;
@@ -7884,8 +7869,7 @@ sctp_send_sack(struct sctp_tcb *stcb)
 			/* can't get a cluster
 			 * give up and try later.
 			 */
-			if (a_chk->data)
-				sctp_m_freem(a_chk->data);
+			sctp_m_freem(a_chk->data);
 			a_chk->data = NULL;
 			a_chk->whoTo->ref_count--;
 			SCTP_ZONE_FREE(sctppcbinfo.ipi_zone_chunk, a_chk);
@@ -8404,10 +8388,8 @@ sctp_send_hb(struct sctp_tcb *stcb, int user_req, struct sctp_nets *u_net)
 			 * down side to the Q's style as defined in the RFC
 			 * and not my alternate style defined in the RFC.
 			 */
-			if (chk->data != NULL) {
-				sctp_m_freem(chk->data);
-				chk->data = NULL;
-			}
+			sctp_m_freem(chk->data);
+			chk->data = NULL;
 			SCTP_ZONE_FREE(sctppcbinfo.ipi_zone_chunk, chk);
 			sctppcbinfo.ipi_count_chunk--;
 			if ((int)sctppcbinfo.ipi_count_chunk < 0) {
@@ -8976,14 +8958,12 @@ sctp_send_abort(struct mbuf *m, int iphlen, struct sctphdr *sh, uint32_t vtag,
 
 	/* don't respond to ABORT with ABORT */
 	if (sctp_is_there_an_abort_here(m, iphlen, &vtag)) {
-		if (err_cause)
-			sctp_m_freem(err_cause);
+		sctp_m_freem(err_cause);
 		return;
 	}
 	MGETHDR(mout, M_DONTWAIT, MT_HEADER);
 	if (mout == NULL) {
-		if (err_cause)
-			sctp_m_freem(err_cause);
+		sctp_m_freem(err_cause);
 		return;
 	}
 	iph = mtod(m, struct ip *);
@@ -9715,10 +9695,8 @@ temp_clean_up:
 		if (error) {
 			chk = TAILQ_FIRST(&tmp);
 			while (chk) {
-				if (chk->data) {
-					sctp_m_freem(chk->data);
-					chk->data = NULL;
-				}
+				sctp_m_freem(chk->data);
+				chk->data = NULL;
 				TAILQ_REMOVE(&tmp, chk, sctp_next);
 				SCTP_ZONE_FREE(sctppcbinfo.ipi_zone_chunk, chk);
 				sctppcbinfo.ipi_count_chunk--;
@@ -9811,8 +9789,7 @@ release:
 out_locked:
 	sounlock(so);
 
-	if (mm)
-		sctp_m_freem(mm);
+	sctp_m_freem(mm);
 	return (error);
 }
 
@@ -10054,10 +10031,8 @@ sctp_sosend(struct socket *so, struct sockaddr *addr, struct uio *uio,
 		srcv = stcb->asoc.def_send;
 	}
 	/* we are now done with all control */
-	if (control) {
-		sctp_m_freem(control);
-		control = NULL;
-	}
+	sctp_m_freem(control);
+	control = NULL;
 
 	if ((SCTP_GET_STATE(asoc) == SCTP_STATE_SHUTDOWN_SENT) ||
 	    (SCTP_GET_STATE(asoc) == SCTP_STATE_SHUTDOWN_RECEIVED) ||
@@ -10207,9 +10182,7 @@ sctp_sosend(struct socket *so, struct sockaddr *addr, struct uio *uio,
 	if (stcb) {
 		SCTP_TCB_UNLOCK(stcb);
 	}
-	if (top)
-		sctp_m_freem(top);
-	if (control)
-		sctp_m_freem(control);
+	sctp_m_freem(top);
+	sctp_m_freem(control);
 	return (error);
 }

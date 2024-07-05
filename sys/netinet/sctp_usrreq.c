@@ -1,5 +1,5 @@
 /*	$KAME: sctp_usrreq.c,v 1.50 2005/06/16 20:45:29 jinmei Exp $	*/
-/*	$NetBSD: sctp_usrreq.c,v 1.24 2024/02/09 22:08:37 andvar Exp $	*/
+/*	$NetBSD: sctp_usrreq.c,v 1.25 2024/07/05 04:31:54 rin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.24 2024/02/09 22:08:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.25 2024/07/05 04:31:54 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -605,10 +605,8 @@ sctp_send(struct socket *so, struct mbuf *m, struct sockaddr *addr,
 	int error;
 	inp = (struct sctp_inpcb *)so->so_pcb;
 	if (inp == 0) {
-		if (control) {
-			sctp_m_freem(control);
-			control = NULL;
-		}
+		sctp_m_freem(control);
+		control = NULL;
 		sctp_m_freem(m);
 		return EINVAL;
 	}
@@ -621,20 +619,16 @@ sctp_send(struct socket *so, struct mbuf *m, struct sockaddr *addr,
 	} else if (addr == NULL) {
 		error = EDESTADDRREQ;
 		sctp_m_freem(m);
-		if (control) {
-			sctp_m_freem(control);
-			control = NULL;
-		}
+		sctp_m_freem(control);
+		control = NULL;
 		return (error);
 	}
 #ifdef INET6
 	if (addr->sa_family != AF_INET) {
 		/* must be a v4 address! */
 		sctp_m_freem(m);
-		if (control) {
-			sctp_m_freem(control);
-			control = NULL;
-		}
+		sctp_m_freem(control);
+		control = NULL;
 		error = EDESTADDRREQ;
 		return EINVAL;
 	}

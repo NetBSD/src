@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.799 2024/06/29 12:11:12 riastradh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.800 2024/07/05 04:31:51 rin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.799 2024/06/29 12:11:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.800 2024/07/05 04:31:51 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -10294,8 +10294,7 @@ wm_rxeof(struct wm_rxqueue *rxq, u_int limit)
 			wm_init_rxdesc(rxq, i);
 			if (!wm_rxdesc_is_eop(rxq, status))
 				rxq->rxq_discard = 1;
-			if (rxq->rxq_head != NULL)
-				m_freem(rxq->rxq_head);
+			m_freem(rxq->rxq_head);
 			WM_RXCHAIN_RESET(rxq);
 			DPRINTF(sc, WM_DEBUG_RX,
 			    ("%s: RX: Rx buffer allocation failed, "

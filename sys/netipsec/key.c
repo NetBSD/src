@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.283 2024/06/29 13:01:14 riastradh Exp $	*/
+/*	$NetBSD: key.c,v 1.284 2024/07/05 04:31:54 rin Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.283 2024/06/29 13:01:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.284 2024/07/05 04:31:54 rin Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -1228,8 +1228,7 @@ key_sendup_message_delete(struct secasvar *sav)
 	key_sendup_mbuf(NULL, result, KEY_SENDUP_REGISTERED);
 	result = NULL;
 msgfail:
-	if (result)
-		m_freem(result);
+	m_freem(result);
 }
 #endif
 
@@ -2081,8 +2080,7 @@ key_sp2msg(const struct secpolicy *sp, int mflag)
 
 	m = key_alloc_mbuf(tlen, mflag);
 	if (!m || m->m_next) {	/*XXX*/
-		if (m)
-			m_freem(m);
+		m_freem(m);
 		return NULL;
 	}
 
@@ -2796,8 +2794,7 @@ key_spdacquire(const struct secpolicy *sp)
 	return key_sendup_mbuf(NULL, m, KEY_SENDUP_REGISTERED);
 
 fail:
-	if (result)
-		m_freem(result);
+	m_freem(result);
 	return error;
 }
 #endif /* notyet */
@@ -2853,8 +2850,7 @@ key_api_spdflush(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, ENOBUFS);
 	}
 
-	if (m->m_next)
-		m_freem(m->m_next);
+	m_freem(m->m_next);
 	m->m_next = NULL;
 	m->m_pkthdr.len = m->m_len = PFKEY_ALIGN8(sizeof(struct sadb_msg));
 	newmsg = mtod(m, struct sadb_msg *);
@@ -4323,8 +4319,7 @@ key_setsadbaddr(u_int16_t exttype, const struct sockaddr *saddr,
 	    PFKEY_ALIGN8(saddr->sa_len);
 	m = key_alloc_mbuf(len, mflag);
 	if (!m || m->m_next) {	/*XXX*/
-		if (m)
-			m_freem(m);
+		m_freem(m);
 		return NULL;
 	}
 
@@ -4361,8 +4356,7 @@ key_setsadbident(u_int16_t exttype, u_int16_t idtype,
 	len = PFKEY_ALIGN8(sizeof(struct sadb_ident)) + PFKEY_ALIGN8(stringlen);
 	m = key_alloc_mbuf(len);
 	if (!m || m->m_next) {	/*XXX*/
-		if (m)
-			m_freem(m);
+		m_freem(m);
 		return NULL;
 	}
 
@@ -4424,8 +4418,7 @@ key_setsadbxpolicy(const u_int16_t type, const u_int8_t dir, const u_int32_t id,
 	len = PFKEY_ALIGN8(sizeof(struct sadb_x_policy));
 	m = key_alloc_mbuf(len, mflag);
 	if (!m || m->m_next) {	/*XXX*/
-		if (m)
-			m_freem(m);
+		m_freem(m);
 		return NULL;
 	}
 
@@ -6582,8 +6575,7 @@ key_getcomb_esp(int mflag)
 	return result;
 
  fail:
-	if (result)
-		m_freem(result);
+	m_freem(result);
 	return NULL;
 }
 
@@ -6971,8 +6963,7 @@ key_acquire(const struct secasindex *saidx, const struct secpolicy *sp, int mfla
 	return key_acquire_sendup_mbuf_later(result);
 
  fail:
-	if (result)
-		m_freem(result);
+	m_freem(result);
 	return error;
 }
 
@@ -7528,8 +7519,7 @@ key_expire(struct secasvar *sav)
 	return key_sendup_mbuf(NULL, result, KEY_SENDUP_REGISTERED);
 
  fail:
-	if (result)
-		m_freem(result);
+	m_freem(result);
 	splx(s);
 	return error;
 }
@@ -7599,8 +7589,7 @@ key_api_flush(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, ENOBUFS);
 	}
 
-	if (m->m_next)
-		m_freem(m->m_next);
+	m_freem(m->m_next);
 	m->m_next = NULL;
 	m->m_pkthdr.len = m->m_len = sizeof(struct sadb_msg);
 	newmsg = mtod(m, struct sadb_msg *);

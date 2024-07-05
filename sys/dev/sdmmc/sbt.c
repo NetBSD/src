@@ -1,4 +1,4 @@
-/*	$NetBSD: sbt.c,v 1.8 2019/11/10 21:16:37 chs Exp $	*/
+/*	$NetBSD: sbt.c,v 1.9 2024/07/05 04:31:52 rin Exp $	*/
 /*	$OpenBSD: sbt.c,v 1.9 2007/06/19 07:59:57 uwe Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Type-A/B SDIO Bluetooth cards */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbt.c,v 1.8 2019/11/10 21:16:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbt.c,v 1.9 2024/07/05 04:31:52 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -427,15 +427,11 @@ sbt_disable(device_t self)
 	s = spltty();
 
 #ifdef notyet			/* XXX */
-	if (sc->sc_rxp) {
-		m_freem(sc->sc_rxp);
-		sc->sc_rxp = NULL;
-	}
+	m_freem(sc->sc_rxp);
+	sc->sc_rxp = NULL;
 
-	if (sc->sc_txp) {
-		m_freem(sc->sc_txp);
-		sc->sc_txp = NULL;
-	}
+	m_freem(sc->sc_txp);
+	sc->sc_txp = NULL;
 #endif
 
 	MBUFQ_DRAIN(&sc->sc_cmdq);

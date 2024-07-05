@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.78 2022/05/22 11:39:08 riastradh Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.79 2024/07/05 04:31:54 rin Exp $	*/
 /*	$FreeBSD: xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.78 2022/05/22 11:39:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.79 2024/07/05 04:31:54 rin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -509,8 +509,7 @@ nofamily:
 	return 0;
 
 bad:
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	*mp = NULL;
 	return error;
 }
@@ -567,8 +566,7 @@ ipe4_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 {
 	/* This is a rather serious mistake, so no conditional printing. */
 	printf("should never be called\n");
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	return EOPNOTSUPP;
 }
 

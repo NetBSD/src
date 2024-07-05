@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.76 2024/05/14 19:00:44 andvar Exp $ */
+/*	$NetBSD: if_atu.c,v 1.77 2024/07/05 04:31:52 rin Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.76 2024/05/14 19:00:44 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.77 2024/07/05 04:31:52 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1601,10 +1601,8 @@ atu_xfer_list_free(struct atu_softc *sc, struct atu_chain *ch, int listlen)
 	for (i = 0; i < listlen; i++) {
 		if (ch[i].atu_buf != NULL)
 			ch[i].atu_buf = NULL;
-		if (ch[i].atu_mbuf != NULL) {
-			m_freem(ch[i].atu_mbuf);
-			ch[i].atu_mbuf = NULL;
-		}
+		m_freem(ch[i].atu_mbuf);
+		ch[i].atu_mbuf = NULL;
 		if (ch[i].atu_xfer != NULL) {
 			usbd_destroy_xfer(ch[i].atu_xfer);
 			ch[i].atu_xfer = NULL;
@@ -1741,10 +1739,8 @@ atu_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	DPRINTFN(25, ("%s: atu_txeof status=%d\n", device_xname(sc->atu_dev),
 	    status));
 
-	if (c->atu_mbuf) {
-		m_freem(c->atu_mbuf);
-		c->atu_mbuf = NULL;
-	}
+	m_freem(c->atu_mbuf);
+	c->atu_mbuf = NULL;
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)

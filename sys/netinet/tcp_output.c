@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.220 2024/06/29 12:59:08 riastradh Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.221 2024/07/05 04:31:54 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.220 2024/06/29 12:59:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.221 2024/07/05 04:31:54 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1405,8 +1405,7 @@ reset:			TCP_REASS_UNLOCK(tp);
 
 		sav = tcp_signature_getsav(m);
 		if (sav == NULL) {
-			if (m)
-				m_freem(m);
+			m_freem(m);
 			return EPERM;
 		}
 

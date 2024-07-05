@@ -1,4 +1,4 @@
-/*	$NetBSD: in_offload.c,v 1.14 2020/03/27 16:34:58 jdolecek Exp $	*/
+/*	$NetBSD: in_offload.c,v 1.15 2024/07/05 04:31:54 rin Exp $	*/
 
 /*
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_offload.c,v 1.14 2020/03/27 16:34:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_offload.c,v 1.15 2024/07/05 04:31:54 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -159,10 +159,8 @@ tcp4_segment(struct mbuf *m, int off)
 	return m0;
 
 quit:
-	if (hdr != NULL)
-		m_freem(hdr);
-	if (m != NULL)
-		m_freem(m);
+	m_freem(hdr);
+	m_freem(m);
 	for (m = m0; m != NULL; m = n) {
 		n = m->m_nextpkt;
 		m_freem(m);

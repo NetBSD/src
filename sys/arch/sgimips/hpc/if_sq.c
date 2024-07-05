@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.59 2024/06/29 12:11:11 riastradh Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.60 2024/07/05 04:31:50 rin Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.59 2024/06/29 12:11:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.60 2024/07/05 04:31:50 rin Exp $");
 
 
 #include <sys/param.h>
@@ -623,8 +623,7 @@ sq_start(struct ifnet *ifp)
 			 * XXX it is worth it?
 			 */
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
-			if (m != NULL)
-				m_freem(m);
+			m_freem(m);
 			break;
 		}
 

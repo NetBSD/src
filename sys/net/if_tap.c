@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.132 2024/04/17 18:52:54 riastradh Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.133 2024/07/05 04:31:53 rin Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.132 2024/04/17 18:52:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.133 2024/07/05 04:31:53 rin Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -902,8 +902,7 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 		m = n = m_free(m);
 	} while (m != NULL && uio->uio_resid > 0 && error == 0);
 
-	if (m != NULL)
-		m_freem(m);
+	m_freem(m);
 
 out:
 	return error;

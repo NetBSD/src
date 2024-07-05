@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.403 2024/06/29 12:59:08 riastradh Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.404 2024/07/05 04:31:54 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.403 2024/06/29 12:59:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.404 2024/07/05 04:31:54 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -812,8 +812,7 @@ ours:
 	return;
 
 out:
-	if (m != NULL)
-		m_freem(m);
+	m_freem(m);
 }
 
 /*
@@ -1486,8 +1485,7 @@ error:
 		 * be a big problem under DoS attacks or if the underlying
 		 * interface is rate-limited.
 		 */
-		if (mcopy)
-			m_freem(mcopy);
+		m_freem(mcopy);
 		rtcache_percpu_putref(ipforward_rt_percpu);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.16 2024/06/29 12:11:12 riastradh Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.17 2024/07/05 04:31:51 rin Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.16 2024/06/29 12:11:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.17 2024/07/05 04:31:51 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_vmx.h"
@@ -3240,8 +3240,7 @@ vmxnet3_tx_common_locked(struct ifnet *ifp, struct vmxnet3_txqueue *txq, int txt
 			break;
 
 		if (vmxnet3_txq_encap(txq, &m_head) != 0) {
-			if (m_head != NULL)
-				m_freem(m_head);
+			m_freem(m_head);
 			break;
 		}
 

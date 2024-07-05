@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.326 2023/11/02 09:40:47 yamaguchi Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.327 2024/07/05 04:31:53 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.326 2023/11/02 09:40:47 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.327 2024/07/05 04:31:53 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -462,8 +462,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 
 bad:
 	if_statinc(ifp, if_oerrors);
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	return error;
 }
 

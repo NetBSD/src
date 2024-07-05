@@ -1,4 +1,4 @@
-/* $NetBSD: if_ae.c,v 1.44 2024/06/29 12:11:11 riastradh Exp $ */
+/* $NetBSD: if_ae.c,v 1.45 2024/07/05 04:31:49 rin Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.44 2024/06/29 12:11:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.45 2024/07/05 04:31:49 rin Exp $");
 
 
 #include <sys/param.h>
@@ -638,8 +638,7 @@ ae_start(struct ifnet *ifp)
 			 * XXX it is worth it?
 			 */
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
-			if (m != NULL)
-				m_freem(m);
+			m_freem(m);
 			break;
 		}
 

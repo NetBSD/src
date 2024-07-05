@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.153 2021/10/11 02:42:46 rin Exp $	*/
+/*	$NetBSD: elink3.c,v 1.154 2024/07/05 04:31:51 rin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.153 2021/10/11 02:42:46 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.154 2024/07/05 04:31:51 rin Exp $");
 
 #include "opt_inet.h"
 
@@ -1924,10 +1924,8 @@ epmbufempty(struct ep_softc *sc)
 
 	s = splnet();
 	for (i = 0; i < MAX_MBS; i++) {
-		if (sc->mb[i]) {
-			m_freem(sc->mb[i]);
-			sc->mb[i] = NULL;
-		}
+		m_freem(sc->mb[i]);
+		sc->mb[i] = NULL;
 	}
 	sc->last_mb = sc->next_mb = 0;
 	callout_stop(&sc->sc_mbuf_callout);

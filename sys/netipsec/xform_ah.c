@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.114 2022/05/22 11:40:29 riastradh Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.115 2024/07/05 04:31:54 rin Exp $	*/
 /*	$FreeBSD: xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.114 2022/05/22 11:40:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.115 2024/07/05 04:31:54 rin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -703,8 +703,7 @@ bad:
 	}
 	if (crp != NULL)
 		crypto_freereq(crp);
-	if (m != NULL)
-		m_freem(m);
+	m_freem(m);
 	AH_STATINC(stat);
 	return error;
 }
@@ -863,8 +862,7 @@ bad:
 	if (sav)
 		KEY_SA_UNREF(&sav);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
-	if (m != NULL)
-		m_freem(m);
+	m_freem(m);
 	if (tc != NULL) {
 		if (pool_used)
 			pool_cache_put(ah_tdb_crypto_pool_cache, tc);
@@ -1118,8 +1116,7 @@ bad_tc:
 bad_crp:
 	crypto_freereq(crp);
 bad:
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	return error;
 }
 
@@ -1204,8 +1201,7 @@ bad:
 		KEY_SA_UNREF(&sav);
 	KEY_SP_UNREF(&isr->sp);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	if (__predict_true(pool_used))
 		pool_cache_put(ah_tdb_crypto_pool_cache, tc);
 	else

@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_session.c,v 1.29 2024/02/09 22:08:37 andvar Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.30 2024/07/05 04:31:53 rin Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.29 2024/02/09 22:08:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.30 2024/07/05 04:31:53 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1622,11 +1622,9 @@ rfcomm_session_send_uih(struct rfcomm_session *rs, struct rfcomm_dlc *dlc,
 nomem:
 	err = ENOMEM;
 
-	if (m0 != NULL)
-		m_freem(m0);
+	m_freem(m0);
 
-	if (m != NULL)
-		m_freem(m);
+	m_freem(m);
 
 fail:
 	if (credit != NULL)

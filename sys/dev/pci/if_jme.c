@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.56 2023/12/20 05:08:34 thorpej Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.57 2024/07/05 04:31:51 rin Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.56 2023/12/20 05:08:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.57 2024/07/05 04:31:51 rin Exp $");
 
 
 #include <sys/param.h>
@@ -663,8 +663,7 @@ jme_add_rxbuf(jme_softc_t *sc, struct mbuf *m)
 		aprint_error_dev(sc->jme_dev,
 		    "mbuf already here: rxprod %d rxcons %d\n",
 		    sc->jme_rx_prod, sc->jme_rx_cons);
-		if (m)
-			m_freem(m);
+		m_freem(m);
 		return EINVAL;
 	}
 

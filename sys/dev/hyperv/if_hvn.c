@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvn.c,v 1.27 2024/02/09 22:08:34 andvar Exp $	*/
+/*	$NetBSD: if_hvn.c,v 1.28 2024/07/05 04:31:50 rin Exp $	*/
 /*	$OpenBSD: if_hvn.c,v 1.39 2018/03/11 14:31:34 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.27 2024/02/09 22:08:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.28 2024/07/05 04:31:50 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_hvn.h"
@@ -2284,10 +2284,8 @@ hvn_txd_put(struct hvn_tx_ring *txr, struct hvn_tx_desc *txd)
 		CLR(txd->txd_flags, HVN_TXD_FLAG_DMAMAP);
 	}
 
-	if (txd->txd_buf != NULL) {
-		m_freem(txd->txd_buf);
-		txd->txd_buf = NULL;
-	}
+	m_freem(txd->txd_buf);
+	txd->txd_buf = NULL;
 
 	TAILQ_INSERT_TAIL(&txr->txr_list, txd, txd_entry);
 	txr->txr_avail++;

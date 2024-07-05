@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.66 2022/04/06 22:01:45 mlelstv Exp $	*/
+/*	$NetBSD: ubt.c,v 1.67 2024/07/05 04:31:52 rin Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.66 2022/04/06 22:01:45 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.67 2024/07/05 04:31:52 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -963,15 +963,11 @@ ubt_abortdealloc(struct ubt_softc *sc)
 	}
 
 	/* Free partial SCO packets */
-	if (sc->sc_scord_mbuf != NULL) {
-		m_freem(sc->sc_scord_mbuf);
-		sc->sc_scord_mbuf = NULL;
-	}
+	m_freem(sc->sc_scord_mbuf);
+	sc->sc_scord_mbuf = NULL;
 
-	if (sc->sc_scowr_mbuf != NULL) {
-		m_freem(sc->sc_scowr_mbuf);
-		sc->sc_scowr_mbuf = NULL;
-	}
+	m_freem(sc->sc_scowr_mbuf);
+	sc->sc_scowr_mbuf = NULL;
 
 	/* Empty mbuf queues */
 	MBUFQ_DRAIN(&sc->sc_cmd_queue);

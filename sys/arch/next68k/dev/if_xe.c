@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xe.c,v 1.28 2023/02/03 23:02:56 tsutsui Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.29 2024/07/05 04:31:49 rin Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xe.c,v 1.28 2023/02/03 23:02:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xe.c,v 1.29 2024/07/05 04:31:49 rin Exp $");
 
 #include "opt_inet.h"
 
@@ -323,10 +323,8 @@ xe_dma_reset(struct mb8795_softc *sc)
 		bus_dmamap_unload(xsc->sc_txdma->sc_dmat, xsc->sc_tx_dmamap);
 		xsc->sc_tx_loaded = 0;
 	}
-	if (xsc->sc_tx_mb_head) {
-		m_freem(xsc->sc_tx_mb_head);
-		xsc->sc_tx_mb_head = NULL;
-	}
+	m_freem(xsc->sc_tx_mb_head);
+	xsc->sc_tx_mb_head = NULL;
 
 	for(i = 0; i < MB8795_NRXBUFS; i++) {
 		if (xsc->sc_rx_mb_head[i]) {

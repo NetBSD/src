@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nfsdstate.c,v 1.5 2023/05/28 08:21:24 andvar Exp $	*/
+/*	$NetBSD: nfs_nfsdstate.c,v 1.6 2024/07/05 04:31:52 rin Exp $	*/
 /*-
  * Copyright (c) 2009 Rick Macklem, University of Guelph
  * All rights reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsserver/nfs_nfsdstate.c 307694 2016-10-20 23:53:16Z rmacklem "); */
-__RCSID("$NetBSD: nfs_nfsdstate.c,v 1.5 2023/05/28 08:21:24 andvar Exp $");
+__RCSID("$NetBSD: nfs_nfsdstate.c,v 1.6 2024/07/05 04:31:52 rin Exp $");
 
 #ifndef APPLEKEXT
 #include <fs/nfs/common/nfsport.h>
@@ -5953,8 +5953,7 @@ nfsrv_freesession(struct nfsdsession *sep, uint8_t *sessionid)
 	if (sep == NULL)
 		return (NFSERR_BADSESSION);
 	for (i = 0; i < NFSV4_SLOTS; i++)
-		if (sep->sess_slots[i].nfssl_reply != NULL)
-			m_freem(sep->sess_slots[i].nfssl_reply);
+		m_freem(sep->sess_slots[i].nfssl_reply);
 	if (sep->sess_cbsess.nfsess_xprt != NULL)
 		SVC_RELEASE(sep->sess_cbsess.nfsess_xprt);
 	free(sep, M_NFSDSESSION);

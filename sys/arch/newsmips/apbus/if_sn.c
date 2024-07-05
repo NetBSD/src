@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.55 2023/09/02 07:15:30 andvar Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.56 2024/07/05 04:31:49 rin Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.55 2023/09/02 07:15:30 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.56 2024/07/05 04:31:49 rin Exp $");
 
 #include "opt_inet.h"
 
@@ -453,8 +453,7 @@ snstop(struct sn_softc *sc)
 	/* free all pending transmit mbufs */
 	while (sc->mtd_hw != sc->mtd_free) {
 		mtd = &sc->mtda[sc->mtd_hw];
-		if (mtd->mtd_mbuf)
-			m_freem(mtd->mtd_mbuf);
+		m_freem(mtd->mtd_mbuf);
 		if (++sc->mtd_hw == NTDA) sc->mtd_hw = 0;
 	}
 
@@ -901,10 +900,8 @@ sonictxint(struct sn_softc *sc)
 		}
 #endif /* SNDEBUG */
 
-		if (mtd->mtd_mbuf != 0) {
-			m_freem(mtd->mtd_mbuf);
-			mtd->mtd_mbuf = 0;
-		}
+		m_freem(mtd->mtd_mbuf);
+		mtd->mtd_mbuf = NULL;
 		if (++mtd_hw == NTDA) mtd_hw = 0;
 
 		txp_status = SRO(sc->bitmode, txp, TXP_STATUS);

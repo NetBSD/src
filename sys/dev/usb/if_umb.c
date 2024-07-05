@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umb.c,v 1.25 2022/08/20 11:32:08 riastradh Exp $ */
+/*	$NetBSD: if_umb.c,v 1.26 2024/07/05 04:31:52 rin Exp $ */
 /*	$OpenBSD: if_umb.c,v 1.20 2018/09/10 17:00:45 gerhard Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.25 2022/08/20 11:32:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.26 2024/07/05 04:31:52 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -693,10 +693,8 @@ umb_free_xfers(struct umb_softc *sc)
 		sc->sc_tx_xfer = NULL;
 		sc->sc_tx_buf = NULL;
 	}
-	if (sc->sc_tx_m) {
-		m_freem(sc->sc_tx_m);
-		sc->sc_tx_m = NULL;
-	}
+	m_freem(sc->sc_tx_m);
+	sc->sc_tx_m = NULL;
 }
 
 Static int

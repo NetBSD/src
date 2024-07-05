@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvsocket.c,v 1.5 2022/12/20 09:40:09 hannken Exp $	*/
+/*	$NetBSD: nfs_srvsocket.c,v 1.6 2024/07/05 04:31:54 rin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvsocket.c,v 1.5 2022/12/20 09:40:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvsocket.c,v 1.6 2024/07/05 04:31:54 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -480,10 +480,8 @@ nfsdsock_sendreply(struct nfssvc_sock *slp, struct nfsrv_descript *nd)
 {
 	int error;
 
-	if (nd->nd_mrep != NULL) {
-		m_freem(nd->nd_mrep);
-		nd->nd_mrep = NULL;
-	}
+	m_freem(nd->nd_mrep);
+	nd->nd_mrep = NULL;
 
 	mutex_enter(&slp->ns_lock);
 	if ((slp->ns_flags & SLP_SENDING) != 0) {

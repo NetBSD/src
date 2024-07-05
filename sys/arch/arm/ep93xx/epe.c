@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.50 2022/09/27 06:36:41 skrll Exp $	*/
+/*	$NetBSD: epe.c,v 1.51 2024/07/05 04:31:49 rin Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.50 2022/09/27 06:36:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.51 2024/07/05 04:31:49 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -238,8 +238,7 @@ begin:
 				/* Drop packets until we can get replacement
 				 * empty mbufs for the RXDQ.
 				 */
-				if (m != NULL)
-					m_freem(m);
+				m_freem(m);
 
 				if_statinc(ifp, if_ierrors);
 			}

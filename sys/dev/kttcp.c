@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.42 2018/12/22 14:28:56 maxv Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.43 2024/07/05 04:31:50 rin Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.42 2018/12/22 14:28:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.43 2024/07/05 04:31:50 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -341,8 +341,7 @@ nopages:
 	sbunlock(&so->so_snd);
  out:
  	sounlock(so);
-	if (top)
-		m_freem(top);
+	m_freem(top);
 	*done = slen - resid;
 #if 0
 	printf("sosend: error %d slen %llu resid %lld\n", error, slen, resid);
@@ -380,8 +379,7 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 			m = m_free(m);
 		} while (resid && error == 0 && m);
  bad:
-		if (m)
-			m_freem(m);
+		m_freem(m);
 		return (error);
 	}
 	if (mp)

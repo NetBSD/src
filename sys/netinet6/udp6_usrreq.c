@@ -1,4 +1,4 @@
-/* $NetBSD: udp6_usrreq.c,v 1.154 2022/11/04 09:01:53 ozaki-r Exp $ */
+/* $NetBSD: udp6_usrreq.c,v 1.155 2024/07/05 04:31:54 rin Exp $ */
 /* $KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $ */
 /* $KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $ */
 
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.154 2022/11/04 09:01:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.155 2024/07/05 04:31:54 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -404,8 +404,7 @@ udp6_sendup(struct mbuf *m, int off /* offset of data portion */,
 		m_adj(n, off);
 		if (sbappendaddr(&so->so_rcv, src, n, opts) == 0) {
 			m_freem(n);
-			if (opts)
-				m_freem(opts);
+			m_freem(opts);
 			UDP6_STATINC(UDP6_STAT_FULLSOCK);
 			soroverflow(so);
 		} else
@@ -723,8 +722,7 @@ udp6_input(struct mbuf **mp, int *offp, int proto)
 	}
 
 bad:
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	return IPPROTO_DONE;
 }
 

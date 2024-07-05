@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_tftproot.c,v 1.25 2020/12/05 17:42:29 thorpej Exp $ */
+/*	$NetBSD: subr_tftproot.c,v 1.26 2024/07/05 04:31:53 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 Emmanuel Dreyfus, all rights reserved.
@@ -39,7 +39,7 @@
 #include "opt_md.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.25 2020/12/05 17:42:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.26 2024/07/05 04:31:53 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -335,11 +335,9 @@ tftproot_getfile(struct tftproot_handle *trh, struct lwp *l)
 
 	error = 0;
 out:
-	if (m_serv)
-		m_freem(m_serv);
+	m_freem(m_serv);
 
-	if (m_outbuf)
-		m_freem(m_outbuf);
+	m_freem(m_outbuf);
 
 	if (so)
 		soclose(so);

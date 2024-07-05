@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.42 2016/06/10 13:27:16 ozaki-r Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.43 2024/07/05 04:31:54 rin Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.42 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.43 2024/07/05 04:31:54 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -380,8 +380,8 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func, struct mbu
 	}
 
  out:
-	if (mhead) m_freem(mhead);
-	if (from) m_freem(from);
+	m_freem(mhead);
+	m_freem(from);
 	soclose(so);
 	return error;
 }

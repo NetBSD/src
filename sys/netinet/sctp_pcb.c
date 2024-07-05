@@ -1,5 +1,5 @@
 /* $KAME: sctp_pcb.c,v 1.39 2005/06/16 18:29:25 jinmei Exp $ */
-/* $NetBSD: sctp_pcb.c,v 1.26 2022/10/15 21:53:21 andvar Exp $ */
+/* $NetBSD: sctp_pcb.c,v 1.27 2024/07/05 04:31:54 rin Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.26 2022/10/15 21:53:21 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.27 2024/07/05 04:31:54 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2021,14 +2021,10 @@ sctp_inpcb_free(struct sctp_inpcb *inp, int immediate)
 	}
 	sctp_timer_stop(SCTP_TIMER_TYPE_NEWCOOKIE, inp, NULL, NULL);
 
-	if (inp->control) {
-		sctp_m_freem(inp->control);
-		inp->control = NULL;
-	}
-	if (inp->pkt) {
-		sctp_m_freem(inp->pkt);
-		inp->pkt = NULL;
-	}
+	sctp_m_freem(inp->control);
+	inp->control = NULL;
+	sctp_m_freem(inp->pkt);
+	inp->pkt = NULL;
 	so = inp->sctp_socket;
 	ip_pcb = &inp->ip_inp.inp; /* we could just cast the main
 				   * pointer here but I will
@@ -3130,10 +3126,8 @@ sctp_free_assoc(struct sctp_inpcb *inp, struct sctp_tcb *stcb)
 		chk = TAILQ_FIRST(&outs->outqueue);
 		while (chk) {
 			TAILQ_REMOVE(&outs->outqueue, chk, sctp_next);
-			if (chk->data) {
-				sctp_m_freem(chk->data);
-				chk->data = NULL;
-			}
+			sctp_m_freem(chk->data);
+			chk->data = NULL;
 			chk->whoTo = NULL;
 			chk->asoc = NULL;
 			/* Free the chunk */
@@ -3155,10 +3149,8 @@ sctp_free_assoc(struct sctp_inpcb *inp, struct sctp_tcb *stcb)
 	chk = TAILQ_FIRST(&asoc->pending_reply_queue);
 	while (chk) {
 		TAILQ_REMOVE(&asoc->pending_reply_queue, chk, sctp_next);
-		if (chk->data) {
-			sctp_m_freem(chk->data);
-			chk->data = NULL;
-		}
+		sctp_m_freem(chk->data);
+		chk->data = NULL;
 		chk->whoTo = NULL;
 		chk->asoc = NULL;
 		/* Free the chunk */
@@ -3175,10 +3167,8 @@ sctp_free_assoc(struct sctp_inpcb *inp, struct sctp_tcb *stcb)
 		chk = TAILQ_FIRST(&asoc->send_queue);
 		while (chk) {
 			TAILQ_REMOVE(&asoc->send_queue, chk, sctp_next);
-			if (chk->data) {
-				sctp_m_freem(chk->data);
-				chk->data = NULL;
-			}
+			sctp_m_freem(chk->data);
+			chk->data = NULL;
 			SCTP_ZONE_FREE(sctppcbinfo.ipi_zone_chunk, chk);
 			sctppcbinfo.ipi_count_chunk--;
 			if ((int)sctppcbinfo.ipi_count_chunk < 0) {
@@ -3193,10 +3183,8 @@ sctp_free_assoc(struct sctp_inpcb *inp, struct sctp_tcb *stcb)
 		chk = TAILQ_FIRST(&asoc->sent_queue);
 		while (chk) {
 			TAILQ_REMOVE(&asoc->sent_queue, chk, sctp_next);
-			if (chk->data) {
-				sctp_m_freem(chk->data);
-				chk->data = NULL;
-			}
+			sctp_m_freem(chk->data);
+			chk->data = NULL;
 			SCTP_ZONE_FREE(sctppcbinfo.ipi_zone_chunk, chk);
 			sctppcbinfo.ipi_count_chunk--;
 			if ((int)sctppcbinfo.ipi_count_chunk < 0) {
@@ -3211,10 +3199,8 @@ sctp_free_assoc(struct sctp_inpcb *inp, struct sctp_tcb *stcb)
 		chk = TAILQ_FIRST(&asoc->control_send_queue);
 		while (chk) {
 			TAILQ_REMOVE(&asoc->control_send_queue, chk, sctp_next);
-			if (chk->data) {
-				sctp_m_freem(chk->data);
-				chk->data = NULL;
-			}
+			sctp_m_freem(chk->data);
+			chk->data = NULL;
 			SCTP_ZONE_FREE(sctppcbinfo.ipi_zone_chunk, chk);
 			sctppcbinfo.ipi_count_chunk--;
 			if ((int)sctppcbinfo.ipi_count_chunk < 0) {
@@ -3228,10 +3214,8 @@ sctp_free_assoc(struct sctp_inpcb *inp, struct sctp_tcb *stcb)
 		chk = TAILQ_FIRST(&asoc->reasmqueue);
 		while (chk) {
 			TAILQ_REMOVE(&asoc->reasmqueue, chk, sctp_next);
-			if (chk->data) {
-				sctp_m_freem(chk->data);
-				chk->data = NULL;
-			}
+			sctp_m_freem(chk->data);
+			chk->data = NULL;
 			SCTP_ZONE_FREE(sctppcbinfo.ipi_zone_chunk, chk);
 			sctppcbinfo.ipi_count_chunk--;
 			if ((int)sctppcbinfo.ipi_count_chunk < 0) {
@@ -3245,10 +3229,8 @@ sctp_free_assoc(struct sctp_inpcb *inp, struct sctp_tcb *stcb)
 		chk = TAILQ_FIRST(&asoc->delivery_queue);
 		while (chk) {
 			TAILQ_REMOVE(&asoc->delivery_queue, chk, sctp_next);
-			if (chk->data) {
-				sctp_m_freem(chk->data);
-				chk->data = NULL;
-			}
+			sctp_m_freem(chk->data);
+			chk->data = NULL;
 			SCTP_ZONE_FREE(sctppcbinfo.ipi_zone_chunk, chk);
 			sctppcbinfo.ipi_count_chunk--;
 			if ((int)sctppcbinfo.ipi_count_chunk < 0) {
@@ -3278,10 +3260,8 @@ sctp_free_assoc(struct sctp_inpcb *inp, struct sctp_tcb *stcb)
 				while (chk) {
 					TAILQ_REMOVE(&asoc->strmin[i].inqueue,
 					    chk, sctp_next);
-					if (chk->data) {
-						sctp_m_freem(chk->data);
-						chk->data = NULL;
-					}
+					sctp_m_freem(chk->data);
+					chk->data = NULL;
 					SCTP_ZONE_FREE(sctppcbinfo.ipi_zone_chunk,
 					    chk);
 					sctppcbinfo.ipi_count_chunk--;
@@ -3310,10 +3290,8 @@ sctp_free_assoc(struct sctp_inpcb *inp, struct sctp_tcb *stcb)
 		TAILQ_REMOVE(&asoc->asconf_queue, aparam, next);
 		free(aparam, M_PCB);
 	}
-	if (asoc->last_asconf_ack_sent != NULL) {
-		sctp_m_freem(asoc->last_asconf_ack_sent);
-		asoc->last_asconf_ack_sent = NULL;
-	}
+	sctp_m_freem(asoc->last_asconf_ack_sent);
+	asoc->last_asconf_ack_sent = NULL;
 	/* Insert new items here :> */
 
 	/* Get rid of LOCK */
@@ -4540,10 +4518,8 @@ sctp_drain_mbufs(struct sctp_inpcb *inp, struct sctp_tcb *stcb)
 			asoc->cnt_on_reasm_queue--;
 			SCTP_UNSET_TSN_PRESENT(asoc->mapping_array, gap);
 			TAILQ_REMOVE(&asoc->reasmqueue, chk, sctp_next);
-			if (chk->data) {
-				sctp_m_freem(chk->data);
-				chk->data = NULL;
-			}
+			sctp_m_freem(chk->data);
+			chk->data = NULL;
 			SCTP_ZONE_FREE(sctppcbinfo.ipi_zone_chunk, chk);
 			sctppcbinfo.ipi_count_chunk--;
 			if ((int)sctppcbinfo.ipi_count_chunk < 0) {
@@ -4578,10 +4554,8 @@ sctp_drain_mbufs(struct sctp_inpcb *inp, struct sctp_tcb *stcb)
 				    gap);
 				TAILQ_REMOVE(&asoc->strmin[strmat].inqueue,
 				    chk, sctp_next);
-				if (chk->data) {
-					sctp_m_freem(chk->data);
-					chk->data = NULL;
-				}
+				sctp_m_freem(chk->data);
+				chk->data = NULL;
 				SCTP_ZONE_FREE(sctppcbinfo.ipi_zone_chunk, chk);
 				sctppcbinfo.ipi_count_chunk--;
 				if ((int)sctppcbinfo.ipi_count_chunk < 0) {

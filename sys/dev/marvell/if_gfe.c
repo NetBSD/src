@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.60 2022/08/20 19:04:07 thorpej Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.61 2024/07/05 04:31:51 rin Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.60 2022/08/20 19:04:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.61 2024/07/05 04:31:51 rin Exp $");
 
 #include "opt_inet.h"
 
@@ -1100,8 +1100,7 @@ gfe_rx_cleanup(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		return;
 	}
 
-	if (rxq->rxq_curpkt)
-		m_freem(rxq->rxq_curpkt);
+	m_freem(rxq->rxq_curpkt);
 	if ((sc->sc_flags & GE_NOFREE) == 0) {
 		gfe_dmamem_free(sc, &rxq->rxq_desc_mem);
 		gfe_dmamem_free(sc, &rxq->rxq_buf_mem);

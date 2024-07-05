@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.36 2020/03/19 14:01:48 thorpej Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.37 2024/07/05 04:31:50 rin Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.36 2020/03/19 14:01:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.37 2024/07/05 04:31:50 rin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -525,8 +525,7 @@ ec_recv(struct ec_softc *sc, int intbit)
 
 	} else {
 		/* Something went wrong. */
-		if (m0 != NULL)
-			m_freem(m0);
+		m_freem(m0);
 		if_statinc(ifp, if_ierrors);
 	}
 

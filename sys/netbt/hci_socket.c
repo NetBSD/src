@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.47 2019/09/28 07:10:55 plunky Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.48 2024/07/05 04:31:53 rin Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.47 2019/09/28 07:10:55 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.48 2024/07/05 04:31:53 rin Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -603,8 +603,7 @@ hci_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 	KASSERT(pcb != NULL);
 	KASSERT(m != NULL);
 
-	if (control) /* have no use for this */
-		m_freem(control);
+	m_freem(control); /* have no use for this */
 
 	if (sa) {
 		if (sa->bt_len != sizeof(struct sockaddr_bt)) {
@@ -681,8 +680,7 @@ hci_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 bad:
 	DPRINTF("packet (%d bytes) not sent (error %d)\n",
 			m->m_pkthdr.len, err);
-	if (m)
-		m_freem(m);
+	m_freem(m);
 
 	return err;
 }

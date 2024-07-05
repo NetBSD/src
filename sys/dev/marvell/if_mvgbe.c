@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.67 2024/02/04 18:52:36 andvar Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.68 2024/07/05 04:31:51 rin Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.67 2024/02/04 18:52:36 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.68 2024/07/05 04:31:51 rin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -1416,16 +1416,12 @@ mvgbe_stop(struct ifnet *ifp, int disable)
 
 	/* Free RX and TX mbufs still in the queues. */
 	for (i = 0; i < MVGBE_RX_RING_CNT; i++) {
-		if (cdata->mvgbe_rx_chain[i].mvgbe_mbuf != NULL) {
-			m_freem(cdata->mvgbe_rx_chain[i].mvgbe_mbuf);
-			cdata->mvgbe_rx_chain[i].mvgbe_mbuf = NULL;
-		}
+		m_freem(cdata->mvgbe_rx_chain[i].mvgbe_mbuf);
+		cdata->mvgbe_rx_chain[i].mvgbe_mbuf = NULL;
 	}
 	for (i = 0; i < MVGBE_TX_RING_CNT; i++) {
-		if (cdata->mvgbe_tx_chain[i].mvgbe_mbuf != NULL) {
-			m_freem(cdata->mvgbe_tx_chain[i].mvgbe_mbuf);
-			cdata->mvgbe_tx_chain[i].mvgbe_mbuf = NULL;
-		}
+		m_freem(cdata->mvgbe_tx_chain[i].mvgbe_mbuf);
+		cdata->mvgbe_tx_chain[i].mvgbe_mbuf = NULL;
 	}
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);

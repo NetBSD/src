@@ -1,4 +1,4 @@
-/*	$NetBSD: can.c,v 1.13 2022/11/04 09:00:58 ozaki-r Exp $	*/
+/*	$NetBSD: can.c,v 1.14 2024/07/05 04:31:54 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.13 2022/11/04 09:00:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.14 2024/07/05 04:31:54 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,9 +401,7 @@ canintr(void *arg __unused)
 			canp_unref(sender_canp);
 		}
 		/* If it didn't go anywhere just delete it */
-		if (m) {
-			m_freem(m);
-		}
+		m_freem(m);
 	}
 	mutex_exit(softnet_lock);
 }

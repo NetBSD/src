@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.48 2024/06/29 12:11:11 riastradh Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.49 2024/07/05 04:31:51 rin Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.48 2024/06/29 12:11:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.49 2024/07/05 04:31:51 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -5163,10 +5163,8 @@ aq_txring_reset(struct aq_softc *sc, struct aq_txring *txring, bool start)
 
 	/* free mbufs untransmitted */
 	for (i = 0; i < AQ_TXD_NUM; i++) {
-		if (txring->txr_mbufs[i].m != NULL) {
-			m_freem(txring->txr_mbufs[i].m);
-			txring->txr_mbufs[i].m = NULL;
-		}
+		m_freem(txring->txr_mbufs[i].m);
+		txring->txr_mbufs[i].m = NULL;
 	}
 
 	/* disable DMA */

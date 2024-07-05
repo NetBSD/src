@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.125 2023/12/30 21:46:52 riastradh Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.126 2024/07/05 04:31:50 rin Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.125 2023/12/30 21:46:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.126 2024/07/05 04:31:50 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1062,10 +1062,8 @@ free_mbufs:
 			    xst->xs_dmamap);
 			xst->xs_loaded = false;
 		}
-		if (xst->xs_m != NULL) {
-			m_freem(xst->xs_m);
-			xst->xs_m = NULL;
-		}
+		m_freem(xst->xs_m);
+		xst->xs_m = NULL;
 	}
 }
 

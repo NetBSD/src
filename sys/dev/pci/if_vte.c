@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.36 2024/06/29 12:11:12 riastradh Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.37 2024/07/05 04:31:51 rin Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.36 2024/06/29 12:11:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.37 2024/07/05 04:31:51 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1435,10 +1435,8 @@ vte_stop(struct ifnet *ifp, int disable)
 	}
 	/* Free TX mbuf pools used for deep copy. */
 	for (i = 0; i < VTE_TX_RING_CNT; i++) {
-		if (sc->vte_cdata.vte_txmbufs[i] != NULL) {
-			m_freem(sc->vte_cdata.vte_txmbufs[i]);
-			sc->vte_cdata.vte_txmbufs[i] = NULL;
-		}
+		m_freem(sc->vte_cdata.vte_txmbufs[i]);
+		sc->vte_cdata.vte_txmbufs[i] = NULL;
 	}
 }
 

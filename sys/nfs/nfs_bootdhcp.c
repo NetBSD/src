@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.58 2024/05/13 00:24:19 msaitoh Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.59 2024/07/05 04:31:54 rin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.58 2024/05/13 00:24:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.59 2024/07/05 04:31:54 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs_boot.h"
@@ -684,8 +684,7 @@ bootpc_call(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 out:
 	if (bpc.replybuf)
 		free(bpc.replybuf, M_DEVBUF);
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	soclose(so);
 	return (error);
 }

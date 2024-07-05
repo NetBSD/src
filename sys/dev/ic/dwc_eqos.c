@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.36 2024/02/10 15:55:00 skrll Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.37 2024/07/05 04:31:51 rin Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.36 2024/02/10 15:55:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.37 2024/07/05 04:31:51 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -572,8 +572,7 @@ eqos_init_rings(struct eqos_softc *sc, int qid)
 	sc->sc_tx.cur = sc->sc_tx.next = sc->sc_tx.queued = 0;
 
 	sc->sc_rx_discarding = false;
-	if (sc->sc_rx_receiving_m != NULL)
-		m_freem(sc->sc_rx_receiving_m);
+	m_freem(sc->sc_rx_receiving_m);
 	sc->sc_rx_receiving_m = NULL;
 	sc->sc_rx_receiving_m_last = NULL;
 
