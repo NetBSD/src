@@ -5,11 +5,11 @@ make: in target "mod-unknown-indirect": while evaluating variable "VAR" with val
 VAR:Z=before-inner}-after
 
 unclosed-direct:
-make: Unclosed expression, expecting '}' for modifier "S,V,v," of variable "VAR" with value "Thevariable"
+make: in target "unclosed-direct": while evaluating variable "VAR" with value "Thevariable": Unclosed expression, expecting '}' for modifier "S,V,v,"
 VAR:S,V,v,=Thevariable
 
 unclosed-indirect:
-make: Unclosed expression after indirect modifier, expecting '}' for variable "VAR"
+make: in target "unclosed-indirect": while evaluating variable "VAR" with value "Thevariable": Unclosed expression after indirect modifier, expecting '}'
 VAR:S,V,v,=Thevariable
 
 make: in target "unfinished-indirect": while evaluating variable "VAR" with value "TheVariable": Unfinished modifier (',' missing)
@@ -22,7 +22,7 @@ make: in target "unfinished-loop": while evaluating variable "UNDEF" with value 
 1 2 3
 
 loop-close:
-make: Unclosed expression, expecting '}' for modifier "@var@${var}}...@" of variable "UNDEF" with value "1}... 2}... 3}..."
+make: in target "loop-close": while evaluating variable "UNDEF" with value "1}... 2}... 3}...": Unclosed expression, expecting '}' for modifier "@var@${var}}...@"
 1}... 2}... 3}...
 1}... 2}... 3}...
 
@@ -49,7 +49,7 @@ make: in target "mod-subst-delimiter": while evaluating variable "VAR" with valu
 4:
 make: in target "mod-subst-delimiter": while evaluating variable "VAR" with value "TheVariable": Unfinished modifier (',' missing)
 5:
-make: Unclosed expression, expecting '}' for modifier "S,from,to," of variable "VAR" with value "TheVariable"
+make: in target "mod-subst-delimiter": while evaluating variable "VAR" with value "TheVariable": Unclosed expression, expecting '}' for modifier "S,from,to,"
 6: TheVariable
 7: TheVariable
 
@@ -63,7 +63,7 @@ make: in target "mod-regex-delimiter": while evaluating variable "VAR" with valu
 4:
 make: in target "mod-regex-delimiter": while evaluating variable "VAR" with value "TheVariable": Unfinished modifier (',' missing)
 5:
-make: Unclosed expression, expecting '}' for modifier "C,from,to," of variable "VAR" with value "TheVariable"
+make: in target "mod-regex-delimiter": while evaluating variable "VAR" with value "TheVariable": Unclosed expression, expecting '}' for modifier "C,from,to,"
 6: TheVariable
 7: TheVariable
 
@@ -102,13 +102,13 @@ make: in target "mod-remember-parse": while evaluating variable "FIB" with value
 
 
 make: in target "mod-sysv-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Unknown modifier "3"
-make: Unclosed expression, expecting '}' for modifier "3" of variable "FIB" with value ""
+make: in target "mod-sysv-parse": while evaluating variable "FIB" with value "": Unclosed expression, expecting '}' for modifier "3"
 
 make: in target "mod-sysv-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Unknown modifier "3="
-make: Unclosed expression, expecting '}' for modifier "3=" of variable "FIB" with value ""
+make: in target "mod-sysv-parse": while evaluating variable "FIB" with value "": Unclosed expression, expecting '}' for modifier "3="
 
 make: in target "mod-sysv-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Unknown modifier "3=x3"
-make: Unclosed expression, expecting '}' for modifier "3=x3" of variable "FIB" with value ""
+make: in target "mod-sysv-parse": while evaluating variable "FIB" with value "": Unclosed expression, expecting '}' for modifier "3=x3"
 
 1 1 2 x3 5 8 1x3 21 34
 

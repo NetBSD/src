@@ -1,4 +1,4 @@
-# $NetBSD: moderrs.mk,v 1.36 2024/07/05 17:41:50 rillig Exp $
+# $NetBSD: moderrs.mk,v 1.37 2024/07/05 18:59:33 rillig Exp $
 #
 # various modifier error tests
 
@@ -33,11 +33,11 @@ mod-unknown-indirect: print-footer
 	@echo 'VAR:${MOD_UNKN}=before-${VAR:${MOD_UNKN}:inner}-after'
 
 unclosed-direct: print-header print-footer
-# expect: make: Unclosed expression, expecting '}' for modifier "S,V,v," of variable "VAR" with value "Thevariable"
+# expect: make: in target "unclosed-direct": while evaluating variable "VAR" with value "Thevariable": Unclosed expression, expecting '}' for modifier "S,V,v,"
 	@echo VAR:S,V,v,=${VAR:S,V,v,
 
 unclosed-indirect: print-header print-footer
-# expect: make: Unclosed expression after indirect modifier, expecting '}' for variable "VAR"
+# expect: make: in target "unclosed-indirect": while evaluating variable "VAR" with value "Thevariable": Unclosed expression after indirect modifier, expecting '}'
 	@echo VAR:${MOD_TERM},=${VAR:${MOD_S}
 
 unfinished-indirect: print-footer
@@ -58,7 +58,7 @@ unfinished-loop: print-footer
 # This is also contrary to the SysV modifier, where only the actually
 # used delimiter (either braces or parentheses) must be balanced.
 loop-close: print-header print-footer
-# expect: make: Unclosed expression, expecting '}' for modifier "@var@${var}}...@" of variable "UNDEF" with value "1}... 2}... 3}..."
+# expect: make: in target "loop-close": while evaluating variable "UNDEF" with value "1}... 2}... 3}...": Unclosed expression, expecting '}' for modifier "@var@${var}}...@"
 	@echo ${UNDEF:U1 2 3:@var@${var}}...@
 	@echo ${UNDEF:U1 2 3:@var@${var}}...@}
 
@@ -111,7 +111,7 @@ mod-subst-delimiter: print-footer
 	@echo 4: ${VAR:S,from,
 # expect: make: in target "mod-subst-delimiter": while evaluating variable "VAR" with value "TheVariable": Unfinished modifier (',' missing)
 	@echo 5: ${VAR:S,from,to
-# expect: make: Unclosed expression, expecting '}' for modifier "S,from,to," of variable "VAR" with value "TheVariable"
+# expect: make: in target "mod-subst-delimiter": while evaluating variable "VAR" with value "TheVariable": Unclosed expression, expecting '}' for modifier "S,from,to,"
 	@echo 6: ${VAR:S,from,to,
 	@echo 7: ${VAR:S,from,to,}
 
@@ -126,7 +126,7 @@ mod-regex-delimiter: print-footer
 	@echo 4: ${VAR:C,from,
 # expect: make: in target "mod-regex-delimiter": while evaluating variable "VAR" with value "TheVariable": Unfinished modifier (',' missing)
 	@echo 5: ${VAR:C,from,to
-# expect: make: Unclosed expression, expecting '}' for modifier "C,from,to," of variable "VAR" with value "TheVariable"
+# expect: make: in target "mod-regex-delimiter": while evaluating variable "VAR" with value "TheVariable": Unclosed expression, expecting '}' for modifier "C,from,to,"
 	@echo 6: ${VAR:C,from,to,
 	@echo 7: ${VAR:C,from,to,}
 
@@ -168,13 +168,13 @@ mod-remember-parse: print-footer
 
 mod-sysv-parse: print-footer
 # expect: make: in target "mod-sysv-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Unknown modifier "3"
-# expect: make: Unclosed expression, expecting '}' for modifier "3" of variable "FIB" with value ""
+# expect: make: in target "mod-sysv-parse": while evaluating variable "FIB" with value "": Unclosed expression, expecting '}' for modifier "3"
 	@echo ${FIB:3
 # expect: make: in target "mod-sysv-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Unknown modifier "3="
-# expect: make: Unclosed expression, expecting '}' for modifier "3=" of variable "FIB" with value ""
+# expect: make: in target "mod-sysv-parse": while evaluating variable "FIB" with value "": Unclosed expression, expecting '}' for modifier "3="
 	@echo ${FIB:3=
 # expect: make: in target "mod-sysv-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Unknown modifier "3=x3"
-# expect: make: Unclosed expression, expecting '}' for modifier "3=x3" of variable "FIB" with value ""
+# expect: make: in target "mod-sysv-parse": while evaluating variable "FIB" with value "": Unclosed expression, expecting '}' for modifier "3=x3"
 	@echo ${FIB:3=x3
 	@echo ${FIB:3=x3}	# ok
 

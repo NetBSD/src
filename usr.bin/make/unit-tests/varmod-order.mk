@@ -1,4 +1,4 @@
-# $NetBSD: varmod-order.mk,v 1.13 2024/07/05 17:41:50 rillig Exp $
+# $NetBSD: varmod-order.mk,v 1.14 2024/07/05 18:59:33 rillig Exp $
 #
 # Tests for the :O variable modifier and its variants, which either sort the
 # words of the value or shuffle them.
@@ -23,11 +23,11 @@ _:=	${WORDS:OX}
 _:=	${WORDS:OxXX}
 
 # Missing closing brace, to cover the error handling code.
-# expect: make: Unclosed expression, expecting '}' for modifier "O" of variable "WORDS" with value "eight five four nine one seven six ten three two"
+# expect+1: while evaluating variable "WORDS" with value "eight five four nine one seven six ten three two": Unclosed expression, expecting '}' for modifier "O"
 _:=	${WORDS:O
-# expect: make: Unclosed expression, expecting '}' for modifier "On" of variable "NUMBERS" with value "1 2 3 4 5 6 7 8 9 10"
+# expect+1: while evaluating variable "NUMBERS" with value "1 2 3 4 5 6 7 8 9 10": Unclosed expression, expecting '}' for modifier "On"
 _:=	${NUMBERS:On
-# expect: make: Unclosed expression, expecting '}' for modifier "Onr" of variable "NUMBERS" with value "10 9 8 7 6 5 4 3 2 1"
+# expect+1: while evaluating variable "NUMBERS" with value "10 9 8 7 6 5 4 3 2 1": Unclosed expression, expecting '}' for modifier "Onr"
 _:=	${NUMBERS:Onr
 
 # Shuffling numerically doesn't make sense, so don't allow 'x' and 'n' to be
