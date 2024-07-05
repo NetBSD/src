@@ -46,7 +46,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.49 2020/05/30 14:16:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.50 2024/07/05 04:34:35 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -328,10 +328,8 @@ out:
 		error = ENETUNREACH;
 	}
 
-	if (*mp) {
-		/* Free the mbuf chain. */
-		m_freem(*mp);
-		*mp = NULL;
-	}
+	/* Free the mbuf chain. */
+	m_freem(*mp);
+	*mp = NULL;
 	return error;
 }
