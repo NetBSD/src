@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nfsdkrpc.c,v 1.4 2016/12/13 21:50:32 pgoyette Exp $	*/
+/*	$NetBSD: nfs_nfsdkrpc.c,v 1.5 2024/07/05 04:31:52 rin Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsserver/nfs_nfsdkrpc.c 299203 2016-05-06 23:40:37Z pfg "); */
-__RCSID("$NetBSD: nfs_nfsdkrpc.c,v 1.4 2016/12/13 21:50:32 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_nfsdkrpc.c,v 1.5 2024/07/05 04:31:52 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet6.h"
@@ -275,15 +275,13 @@ nfssvc_program(struct svc_req *rqst, SVCXPRT *xprt)
 		nd.nd_mreq->m_len = 0;
 		cacherep = RC_REPLY;
 	}
-	if (nd.nd_mrep != NULL)
-		m_freem(nd.nd_mrep);
+	m_freem(nd.nd_mrep);
 
 	if (nd.nd_cred != NULL)
 		crfree(nd.nd_cred);
 
 	if (cacherep == RC_DROPIT) {
-		if (nd.nd_mreq != NULL)
-			m_freem(nd.nd_mreq);
+		m_freem(nd.nd_mreq);
 		svc_freereq(rqst);
 		goto out;
 	}
@@ -296,8 +294,7 @@ nfssvc_program(struct svc_req *rqst, SVCXPRT *xprt)
 
 	if (nd.nd_repstat & NFSERR_AUTHERR) {
 		svcerr_auth(rqst, nd.nd_repstat & ~NFSERR_AUTHERR);
-		if (nd.nd_mreq != NULL)
-			m_freem(nd.nd_mreq);
+		m_freem(nd.nd_mreq);
 	} else if (!svc_sendreply_mbuf(rqst, nd.nd_mreq)) {
 		svcerr_systemerr(rqst);
 	}

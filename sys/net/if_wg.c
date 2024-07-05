@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.78 2024/03/10 04:21:47 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.79 2024/07/05 04:31:53 rin Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.78 2024/03/10 04:21:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.79 2024/07/05 04:31:53 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -1730,8 +1730,8 @@ wg_send_handshake_msg_init(struct wg_softc *wg, struct wg_peer *wgp)
 	} else {
 		wg_put_session_index(wg, wgs);
 		/* Initiation failed; toss packet waiting for it if any.  */
-		if ((m = atomic_swap_ptr(&wgp->wgp_pending, NULL)) != NULL)
-			m_freem(m);
+		m = atomic_swap_ptr(&wgp->wgp_pending, NULL);
+		m_freem(m);
 	}
 
 	return error;
@@ -2745,8 +2745,7 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 	}
 out:
 	wg_put_session(wgs, &psref);
-	if (m != NULL)
-		m_freem(m);
+	m_freem(m);
 	if (free_encrypted_buf)
 		kmem_intr_free(encrypted_buf, encrypted_len);
 }
@@ -3349,8 +3348,7 @@ wgintr(void *cookie)
 		wg_send_data_msg(wgp, wgs, m);
 		m = NULL;	/* consumed */
 next1:		wg_put_session(wgs, &psref);
-next0:		if (m)
-			m_freem(m);
+next0:		m_freem(m);
 		/* XXX Yield to avoid userland starvation?  */
 	}
 }
@@ -3368,8 +3366,8 @@ wg_purge_pending_packets(struct wg_peer *wgp)
 {
 	struct mbuf *m;
 
-	if ((m = atomic_swap_ptr(&wgp->wgp_pending, NULL)) != NULL)
-		m_freem(m);
+	m = atomic_swap_ptr(&wgp->wgp_pending, NULL);
+	m_freem(m);
 	pktq_barrier(wg_pktq);
 }
 
@@ -3930,8 +3928,7 @@ out2:
 #endif
 	wg_put_session(wgs, &wgs_psref);
 out1:	wg_put_peer(wgp, &wgp_psref);
-out0:	if (m)
-		m_freem(m);
+out0:	m_freem(m);
 	curlwp_bindx(bound);
 	return error;
 }

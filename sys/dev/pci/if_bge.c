@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.392 2024/06/29 12:11:11 riastradh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.393 2024/07/05 04:31:51 rin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.392 2024/06/29 12:11:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.393 2024/07/05 04:31:51 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1704,10 +1704,8 @@ bge_free_rx_ring_jumbo(struct bge_softc *sc)
 		return;
 
 	for (i = 0; i < BGE_JUMBO_RX_RING_CNT; i++) {
-		if (sc->bge_cdata.bge_rx_jumbo_chain[i] != NULL) {
-			m_freem(sc->bge_cdata.bge_rx_jumbo_chain[i]);
-			sc->bge_cdata.bge_rx_jumbo_chain[i] = NULL;
-		}
+		m_freem(sc->bge_cdata.bge_rx_jumbo_chain[i]);
+		sc->bge_cdata.bge_rx_jumbo_chain[i] = NULL;
 		memset((char *)&sc->bge_rdata->bge_rx_jumbo_ring[i], 0,
 		    sizeof(struct bge_rx_bd));
 	}

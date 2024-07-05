@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.66 2022/08/20 19:11:08 thorpej Exp $ */
+/*	$NetBSD: if_ural.c,v 1.67 2024/07/05 04:31:52 rin Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.66 2022/08/20 19:11:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.67 2024/07/05 04:31:52 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -668,10 +668,8 @@ ural_free_rx_list(struct ural_softc *sc)
 			data->xfer = NULL;
 		}
 
-		if (data->m != NULL) {
-			m_freem(data->m);
-			data->m = NULL;
-		}
+		m_freem(data->m);
+		data->m = NULL;
 	}
 }
 

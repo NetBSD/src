@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.38 2019/01/28 12:53:01 martin Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.39 2024/07/05 04:31:53 rin Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.38 2019/01/28 12:53:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.39 2024/07/05 04:31:53 rin Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -294,8 +294,7 @@ sco_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 	KASSERT(solocked(so));
 	KASSERT(m != NULL);
 
-	if (control) /* no use for that */
-		m_freem(control);
+	m_freem(control); /* no use for that */
 
 	if (pcb == NULL) {
 		err = EINVAL;

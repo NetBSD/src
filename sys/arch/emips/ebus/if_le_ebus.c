@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ebus.c,v 1.25 2023/12/20 06:36:03 thorpej Exp $	*/
+/*	$NetBSD: if_le_ebus.c,v 1.26 2024/07/05 04:31:49 rin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.25 2023/12/20 06:36:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.26 2024/07/05 04:31:49 rin Exp $");
 
 #include "opt_inet.h"
 
@@ -484,8 +484,7 @@ enic_post_recv(struct enic_softc *sc, struct mbuf *m)
 		m = NULL;
 	}
 
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	sc->inited = 1;
 }
 

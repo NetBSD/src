@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.39 2019/06/29 17:42:36 kamil Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.40 2024/07/05 04:31:54 rin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.39 2019/06/29 17:42:36 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.40 2024/07/05 04:31:54 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs_boot.h"
@@ -384,8 +384,7 @@ bad:
 
 out:
 	m_freem(from);
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	return(error);
 }
 

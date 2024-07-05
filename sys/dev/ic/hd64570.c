@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.59 2024/06/29 12:11:11 riastradh Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.60 2024/07/05 04:31:51 rin Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.59 2024/06/29 12:11:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.60 2024/07/05 04:31:51 rin Exp $");
 
 #include "opt_inet.h"
 
@@ -896,8 +896,7 @@ sca_output(
 	return (error);
 
  bad:
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	return (error);
 }
 
@@ -1696,8 +1695,7 @@ sca_frame_process(sca_port_t *scp)
 	}
 	return;
 dropit:
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	return;
 }
 

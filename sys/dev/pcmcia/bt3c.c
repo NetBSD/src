@@ -1,4 +1,4 @@
-/* $NetBSD: bt3c.c,v 1.23 2014/05/20 18:25:54 rmind Exp $ */
+/* $NetBSD: bt3c.c,v 1.24 2024/07/05 04:31:51 rin Exp $ */
 
 /*-
  * Copyright (c) 2005 Iain D. Hibbert,
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.23 2014/05/20 18:25:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.24 2024/07/05 04:31:51 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -883,15 +883,11 @@ bt3c_disable(device_t self)
 		sc->sc_intr = NULL;
 	}
 
-	if (sc->sc_rxp) {
-		m_freem(sc->sc_rxp);
-		sc->sc_rxp = NULL;
-	}
+	m_freem(sc->sc_rxp);
+	sc->sc_rxp = NULL;
 
-	if (sc->sc_txp) {
-		m_freem(sc->sc_txp);
-		sc->sc_txp = NULL;
-	}
+	m_freem(sc->sc_txp);
+	sc->sc_txp = NULL;
 
 	MBUFQ_DRAIN(&sc->sc_cmdq);
 	MBUFQ_DRAIN(&sc->sc_aclq);

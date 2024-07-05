@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.31 2022/10/26 23:44:03 riastradh Exp $	*/
+/*	$NetBSD: btuart.c,v 1.32 2024/07/05 04:31:50 rin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.31 2022/10/26 23:44:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.32 2024/07/05 04:31:50 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -582,15 +582,11 @@ btuart_disable(device_t self)
 
 	s = spltty();
 
-	if (sc->sc_rxp) {
-		m_freem(sc->sc_rxp);
-		sc->sc_rxp = NULL;
-	}
+	m_freem(sc->sc_rxp);
+	sc->sc_rxp = NULL;
 
-	if (sc->sc_txp) {
-		m_freem(sc->sc_txp);
-		sc->sc_txp = NULL;
-	}
+	m_freem(sc->sc_txp);
+	sc->sc_txp = NULL;
 
 	MBUFQ_DRAIN(&sc->sc_cmdq);
 	MBUFQ_DRAIN(&sc->sc_aclq);

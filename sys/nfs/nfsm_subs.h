@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.57 2023/03/23 19:52:52 riastradh Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.58 2024/07/05 04:31:54 rin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -447,10 +447,8 @@
 		else \
 		   (void) nfs_rephead((s), nfsd, slp, error, cache, &frev, \
 			mrq, &mb, &bpos); \
-		if (mrep != NULL) { \
-			m_freem(mrep); \
-			mrep = NULL; \
-		} \
+		m_freem(mrep); \
+		mrep = NULL; \
 		mreq = *mrq; \
 		if (error && (!(nfsd->nd_flag & ND_NFSV3) || \
 			error == EBADRPC)) {\

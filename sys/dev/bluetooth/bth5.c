@@ -1,4 +1,4 @@
-/*	$NetBSD: bth5.c,v 1.8 2022/10/26 23:43:34 riastradh Exp $	*/
+/*	$NetBSD: bth5.c,v 1.9 2024/07/05 04:31:50 rin Exp $	*/
 /*
  * Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bth5.c,v 1.8 2022/10/26 23:43:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bth5.c,v 1.9 2024/07/05 04:31:50 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1739,15 +1739,11 @@ bth5_disable(device_t self)
 
 	s = spltty();
 
-	if (sc->sc_rxp) {
-		m_freem(sc->sc_rxp);
-		sc->sc_rxp = NULL;
-	}
+	m_freem(sc->sc_rxp);
+	sc->sc_rxp = NULL;
 
-	if (sc->sc_txp) {
-		m_freem(sc->sc_txp);
-		sc->sc_txp = NULL;
-	}
+	m_freem(sc->sc_txp);
+	sc->sc_txp = NULL;
 
 	MBUFQ_DRAIN(&sc->sc_cmdq);
 	MBUFQ_DRAIN(&sc->sc_aclq);

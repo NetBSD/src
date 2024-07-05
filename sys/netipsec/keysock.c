@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.71 2024/06/29 13:01:14 riastradh Exp $	*/
+/*	$NetBSD: keysock.c,v 1.72 2024/07/05 04:31:54 rin Exp $	*/
 /*	$FreeBSD: keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.71 2024/06/29 13:01:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.72 2024/07/05 04:31:54 rin Exp $");
 
 /* This code has derived from sys/net/rtsock.c on FreeBSD2.2.5 */
 
@@ -153,8 +153,7 @@ key_output(struct mbuf *m, struct socket *so)
 	m = NULL;
 	splx(s);
 end:
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	return error;
 }
 

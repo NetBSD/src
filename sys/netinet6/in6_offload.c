@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_offload.c,v 1.12 2018/12/12 01:40:20 rin Exp $	*/
+/*	$NetBSD: in6_offload.c,v 1.13 2024/07/05 04:31:54 rin Exp $	*/
 
 /*
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_offload.c,v 1.12 2018/12/12 01:40:20 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_offload.c,v 1.13 2024/07/05 04:31:54 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -155,10 +155,8 @@ tcp6_segment(struct mbuf *m, int off)
 	return m0;
 
 quit:
-	if (hdr != NULL)
-		m_freem(hdr);
-	if (m != NULL)
-		m_freem(m);
+	m_freem(hdr);
+	m_freem(m);
 	for (m = m0; m != NULL; m = n) {
 		n = m->m_nextpkt;
 		m_freem(m);

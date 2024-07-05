@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.296 2022/11/04 09:01:53 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.297 2024/07/05 04:31:54 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.296 2022/11/04 09:01:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.297 2024/07/05 04:31:54 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -485,8 +485,7 @@ tcp_template(struct tcpcb *tp)
 	if (m && m->m_len == hlen + sizeof(struct tcphdr)) {
 		;
 	} else {
-		if (m)
-			m_freem(m);
+		m_freem(m);
 		m = tp->t_template = NULL;
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m && hlen + sizeof(struct tcphdr) > MHLEN) {

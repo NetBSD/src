@@ -1,4 +1,4 @@
-/*	$NetBSD: arn9003.c,v 1.16 2023/08/01 07:04:15 mrg Exp $	*/
+/*	$NetBSD: arn9003.c,v 1.17 2024/07/05 04:31:50 rin Exp $	*/
 /*	$OpenBSD: ar9003.c,v 1.25 2012/10/20 09:53:32 stsp Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn9003.c,v 1.16 2023/08/01 07:04:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn9003.c,v 1.17 2024/07/05 04:31:50 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -813,8 +813,7 @@ ar9003_rx_free(struct athn_softc *sc, int qid)
 
 		if (bf->bf_map != NULL)
 			bus_dmamap_destroy(sc->sc_dmat, bf->bf_map);
-		if (bf->bf_m != NULL)
-			m_freem(bf->bf_m);
+		m_freem(bf->bf_m);
 	}
 	free(rxq->bf, M_DEVBUF);
 }

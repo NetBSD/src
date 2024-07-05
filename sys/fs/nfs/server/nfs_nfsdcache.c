@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nfsdcache.c,v 1.4 2016/12/13 21:50:32 pgoyette Exp $	*/
+/*	$NetBSD: nfs_nfsdcache.c,v 1.5 2024/07/05 04:31:52 rin Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsserver/nfs_nfsdcache.c 304026 2016-08-12 22:44:59Z rmacklem "); */
-__RCSID("$NetBSD: nfs_nfsdcache.c,v 1.4 2016/12/13 21:50:32 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_nfsdcache.c,v 1.5 2024/07/05 04:31:52 rin Exp $");
 
 /*
  * Here is the basic algorithm:
@@ -485,8 +485,7 @@ nfsrvd_updatecache(struct nfsrv_descript *nd)
 		nfsstatsv1.srvcache_nonidemdonehits++;
 		mtx_unlock(mutex);
 		nd->nd_repstat = 0;
-		if (nd->nd_mreq)
-			mbuf_freem(nd->nd_mreq);
+		mbuf_freem(nd->nd_mreq);
 		if (!(rp->rc_flag & RC_REPMBUF))
 			panic("reply from cache");
 		nd->nd_mreq = m_copym(rp->rc_reply, 0,

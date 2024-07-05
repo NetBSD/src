@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.439 2024/06/29 12:59:08 riastradh Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.440 2024/07/05 04:31:54 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.439 2024/06/29 12:59:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.440 2024/07/05 04:31:54 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1484,10 +1484,8 @@ findpcb:
 #ifdef INET6
 	/* save packet options if user wanted */
 	if (inp->inp_af == AF_INET6 && (inp->inp_flags & IN6P_CONTROLOPTS)) {
-		if (inp->inp_options) {
-			m_freem(inp->inp_options);
-			inp->inp_options = NULL;
-		}
+		m_freem(inp->inp_options);
+		inp->inp_options = NULL;
 		ip6_savecontrol(inp, &inp->inp_options, ip6, m);
 	}
 #endif
@@ -1898,8 +1896,7 @@ after_listen:
 					(void)tcp_output(tp);
 					KERNEL_UNLOCK_ONE(NULL);
 				}
-				if (tcp_saveti)
-					m_freem(tcp_saveti);
+				m_freem(tcp_saveti);
 				return;
 			}
 		} else if (th->th_ack == tp->snd_una &&
@@ -2009,8 +2006,7 @@ after_listen:
 				(void)tcp_output(tp);
 				KERNEL_UNLOCK_ONE(NULL);
 			}
-			if (tcp_saveti)
-				m_freem(tcp_saveti);
+			m_freem(tcp_saveti);
 			return;
 		}
 	}
@@ -2401,8 +2397,7 @@ after_listen:
 		if (tp->rcv_nxt == th->th_seq) {
 			tcp_respond(tp, m, m, th, (tcp_seq)0, th->th_ack - 1,
 			    TH_ACK);
-			if (tcp_saveti)
-				m_freem(tcp_saveti);
+			m_freem(tcp_saveti);
 			return;
 		}
 
@@ -2855,8 +2850,7 @@ dodata:
 		(void)tcp_output(tp);
 		KERNEL_UNLOCK_ONE(NULL);
 	}
-	if (tcp_saveti)
-		m_freem(tcp_saveti);
+	m_freem(tcp_saveti);
 
 	if (tp->t_state == TCPS_TIME_WAIT
 	    && (so->so_state & SS_NOFDREF)
@@ -2901,8 +2895,7 @@ dropafterack2:
 	KERNEL_LOCK(1, NULL);
 	(void)tcp_output(tp);
 	KERNEL_UNLOCK_ONE(NULL);
-	if (tcp_saveti)
-		m_freem(tcp_saveti);
+	m_freem(tcp_saveti);
 	return;
 
 dropwithreset_ratelim:
@@ -2933,8 +2926,7 @@ dropwithreset:
 		(void)tcp_respond(tp, m, m, th, th->th_seq + tlen, (tcp_seq)0,
 		    TH_RST|TH_ACK);
 	}
-	if (tcp_saveti)
-		m_freem(tcp_saveti);
+	m_freem(tcp_saveti);
 	return;
 
 badcsum:
@@ -2949,8 +2941,7 @@ drop:
 			tcp_trace(TA_DROP, ostate, tp, tcp_saveti, 0);
 #endif
 	}
-	if (tcp_saveti)
-		m_freem(tcp_saveti);
+	m_freem(tcp_saveti);
 	m_freem(m);
 	return;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.106 2022/05/25 04:15:44 ozaki-r Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.107 2024/07/05 04:31:54 rin Exp $	*/
 /*	$FreeBSD: xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.106 2022/05/25 04:15:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.107 2024/07/05 04:31:54 rin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -664,8 +664,7 @@ bad:
 	if (sav)
 		KEY_SA_UNREF(&sav);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
-	if (m != NULL)
-		m_freem(m);
+	m_freem(m);
 	if (tc != NULL)
 		pool_cache_put(esp_tdb_crypto_pool_cache, tc);
 	if (crp != NULL)
@@ -933,8 +932,7 @@ esp_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	return 0;
 
 bad:
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	return error;
 }
 
@@ -1010,8 +1008,7 @@ bad:
 		KEY_SA_UNREF(&sav);
 	KEY_SP_UNREF(&isr->sp);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	pool_cache_put(esp_tdb_crypto_pool_cache, tc);
 	crypto_freereq(crp);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.211 2024/02/03 19:05:14 jdolecek Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.212 2024/07/05 04:31:53 rin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.211 2024/02/03 19:05:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.212 2024/07/05 04:31:53 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
@@ -624,10 +624,8 @@ bad:
 
 	if (iov != aiov)
 		kmem_free(iov, iovsz);
-	if (to)
-		m_freem(to);
-	if (control)
-		m_freem(control);
+	m_freem(to);
+	m_freem(control);
 
 	return error;
 }

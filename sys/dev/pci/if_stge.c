@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.92 2024/06/29 12:11:12 riastradh Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.93 2024/07/05 04:31:51 rin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.92 2024/06/29 12:11:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.93 2024/07/05 04:31:51 rin Exp $");
 
 
 #include <sys/param.h>
@@ -1278,8 +1278,7 @@ stge_rxintr(struct stge_softc *sc)
 			STGE_INIT_RXDESC(sc, i);
 			if ((status & RFD_FrameEnd) == 0)
 				sc->sc_rxdiscard = 1;
-			if (sc->sc_rxhead != NULL)
-				m_freem(sc->sc_rxhead);
+			m_freem(sc->sc_rxhead);
 			STGE_RXCHAIN_RESET(sc);
 			continue;
 		}

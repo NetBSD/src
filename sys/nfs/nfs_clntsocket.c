@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clntsocket.c,v 1.6 2018/01/21 20:36:49 christos Exp $	*/
+/*	$NetBSD: nfs_clntsocket.c,v 1.7 2024/07/05 04:31:54 rin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_clntsocket.c,v 1.6 2018/01/21 20:36:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_clntsocket.c,v 1.7 2024/07/05 04:31:54 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -250,8 +250,7 @@ tryagain:
 			    rcvflg = 0;
 			    error =  (*so->so_receive)(so, NULL,
 				&auio, mp, &control, &rcvflg);
-			    if (control)
-				m_freem(control);
+			    m_freem(control);
 			    if (error == EWOULDBLOCK && rep) {
 				if (rep->r_flags & R_SOFTTERM)
 					return (EINTR);
@@ -382,8 +381,7 @@ nfs_reply(struct nfsreq *myrep, struct lwp *lwp)
 			}
 			return (error);
 		}
-		if (nam)
-			m_freem(nam);
+		m_freem(nam);
 
 		/*
 		 * Get the xid and check that it is an rpc reply

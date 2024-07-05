@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.83 2023/06/24 05:12:03 msaitoh Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.84 2024/07/05 04:31:53 rin Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.83 2023/06/24 05:12:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.84 2024/07/05 04:31:53 rin Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -1000,10 +1000,8 @@ node_cleanup(struct ieee80211_node *ni)
 	 * XXX does this leave us open to inheriting old state?
 	 */
 	for (i = 0; i < N(ni->ni_rxfrag); i++) {
-		if (ni->ni_rxfrag[i] != NULL) {
-			m_freem(ni->ni_rxfrag[i]);
-			ni->ni_rxfrag[i] = NULL;
-		}
+		m_freem(ni->ni_rxfrag[i]);
+		ni->ni_rxfrag[i] = NULL;
 	}
 
 	/*

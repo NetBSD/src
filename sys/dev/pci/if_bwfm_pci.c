@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwfm_pci.c,v 1.13 2022/05/23 13:53:37 rin Exp $	*/
+/*	$NetBSD: if_bwfm_pci.c,v 1.14 2024/07/05 04:31:51 rin Exp $	*/
 /*	$OpenBSD: if_bwfm_pci.c,v 1.18 2018/02/08 05:00:38 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwfm_pci.c,v 1.13 2022/05/23 13:53:37 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwfm_pci.c,v 1.14 2024/07/05 04:31:51 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1439,10 +1439,8 @@ bwfm_pci_msg_rx(struct bwfm_pci_softc *sc, void *buf)
 			printf("%s: failed to open flowring %d\n",
 			    DEVNAME(sc), flowid);
 			ring->status = RING_CLOSED;
-			if (ring->m) {
-				m_freem(ring->m);
-				ring->m = NULL;
-			}
+			m_freem(ring->m);
+			ring->m = NULL;
 			ifp->if_flags &= ~IFF_OACTIVE;
 			ifp->if_start(ifp);
 			break;

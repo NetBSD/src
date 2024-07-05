@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.192 2024/06/29 12:11:12 riastradh Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.193 2024/07/05 04:31:51 rin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.192 2024/06/29 12:11:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.193 2024/07/05 04:31:51 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1638,8 +1638,7 @@ sipcom_start(struct ifnet *ifp)
 			 * packet.
 			 */
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
-			if (m != NULL)
-				m_freem(m);
+			m_freem(m);
 			SIP_EVCNT_INCR(&sc->sc_ev_txdstall);
 			break;
 		}
@@ -2171,8 +2170,7 @@ gsip_rxintr(struct sip_softc *sc)
 			sip_init_rxdesc(sc, i);
 			if (cmdsts & CMDSTS_MORE)
 				sc->sc_rxdiscard = 1;
-			if (sc->sc_rxhead != NULL)
-				m_freem(sc->sc_rxhead);
+			m_freem(sc->sc_rxhead);
 			sip_rxchain_reset(sc);
 			continue;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: btbc.c,v 1.17 2014/11/16 16:20:00 ozaki-r Exp $	*/
+/*	$NetBSD: btbc.c,v 1.18 2024/07/05 04:31:51 rin Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.17 2014/11/16 16:20:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.18 2024/07/05 04:31:51 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -910,15 +910,11 @@ btbc_disable(device_t self)
 		sc->sc_intr = NULL;
 	}
 
-	if (sc->sc_rxp) {
-		m_freem(sc->sc_rxp);
-		sc->sc_rxp = NULL;
-	}
+	m_freem(sc->sc_rxp);
+	sc->sc_rxp = NULL;
 
-	if (sc->sc_txp) {
-		m_freem(sc->sc_txp);
-		sc->sc_txp = NULL;
-	}
+	m_freem(sc->sc_txp);
+	sc->sc_txp = NULL;
 
 	MBUFQ_DRAIN(&sc->sc_cmdq);
 	MBUFQ_DRAIN(&sc->sc_aclq);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtw.c,v 1.26 2022/03/03 06:06:52 riastradh Exp $	*/
+/*	$NetBSD: if_urtw.c,v 1.27 2024/07/05 04:31:52 rin Exp $	*/
 /*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.26 2022/03/03 06:06:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.27 2024/07/05 04:31:52 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -956,10 +956,8 @@ urtw_free_rx_data_list(struct urtw_softc *sc)
 			usbd_destroy_xfer(data->xfer);
 			data->xfer = NULL;
 		}
-		if (data->m != NULL) {
-			m_freem(data->m);
-			data->m = NULL;
-		}
+		m_freem(data->m);
+		data->m = NULL;
 	}
 }
 

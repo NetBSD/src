@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.47 2022/07/06 15:41:47 andvar Exp $ */
+/* $NetBSD: i82596.c,v 1.48 2024/07/05 04:31:51 rin Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.47 2022/07/06 15:41:47 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.48 2024/07/05 04:31:51 rin Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -1039,8 +1039,7 @@ iee_stop(struct ifnet *ifp, int disable)
 			bus_dmamap_destroy(sc->sc_dmat, sc->sc_rx_map[n]);
 		}
 		sc->sc_rx_map[n] = NULL;
-		if (sc->sc_rx_mbuf[n] != NULL)
-			m_freem(sc->sc_rx_mbuf[n]);
+		m_freem(sc->sc_rx_mbuf[n]);
 		sc->sc_rx_mbuf[n] = NULL;
 	}
 }

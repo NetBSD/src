@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_link.c,v 1.26 2021/12/04 13:23:04 andvar Exp $	*/
+/*	$NetBSD: hci_link.c,v 1.27 2024/07/05 04:31:53 rin Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.26 2021/12/04 13:23:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.27 2024/07/05 04:31:53 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -599,7 +599,7 @@ hci_acl_send(struct mbuf *m, struct hci_link *link,
 	return 0;
 
 nomem:
-	if (m) m_freem(m);
+	m_freem(m);
 	if (pdu) {
 		MBUFQ_DRAIN(&pdu->lp_data);
 		pool_put(&l2cap_pdu_pool, pdu);
@@ -968,10 +968,8 @@ hci_link_free(struct hci_link *link, int err)
 	KASSERT(TAILQ_EMPTY(&link->hl_txq));
 
 	/* ACL incoming data packet */
-	if (link->hl_rxp != NULL) {
-		m_freem(link->hl_rxp);
-		link->hl_rxp = NULL;
-	}
+	m_freem(link->hl_rxp);
+	link->hl_rxp = NULL;
 
 	/* SCO master ACL link */
 	if (link->hl_link != NULL) {

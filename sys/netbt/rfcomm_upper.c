@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_upper.c,v 1.23 2018/09/03 16:29:36 riastradh Exp $	*/
+/*	$NetBSD: rfcomm_upper.c,v 1.24 2024/07/05 04:31:53 rin Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.23 2018/09/03 16:29:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.24 2024/07/05 04:31:53 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -282,10 +282,8 @@ rfcomm_detach_pcb(struct rfcomm_dlc **handle)
 	if (dlc->rd_state != RFCOMM_DLC_CLOSED)
 		rfcomm_dlc_close(dlc, 0);
 
-	if (dlc->rd_txbuf != NULL) {
-		m_freem(dlc->rd_txbuf);
-		dlc->rd_txbuf = NULL;
-	}
+	m_freem(dlc->rd_txbuf);
+	dlc->rd_txbuf = NULL;
 
 	dlc->rd_upper = NULL;
 	*handle = NULL;

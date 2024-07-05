@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.163 2021/06/04 10:44:58 hannken Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.164 2024/07/05 04:31:54 rin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.163 2021/06/04 10:44:58 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.164 2024/07/05 04:31:54 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -793,8 +793,7 @@ nfssvc_nfsd(struct nfssvc_copy_ops *ops, struct nfsd_srvargs *nsd,
 					if (nd) {
 						nfsrv_updatecache(nd, false,
 						    mreq);
-						if (nd->nd_nam2)
-							m_freem(nd->nd_nam2);
+						m_freem(nd->nd_nam2);
 					}
 					break;
 				}

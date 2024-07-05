@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.123 2022/05/23 13:53:37 rin Exp $ */
+/* $NetBSD: if_ti.c,v 1.124 2024/07/05 04:31:51 rin Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.123 2022/05/23 13:53:37 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.124 2024/07/05 04:31:51 rin Exp $");
 
 #include "opt_inet.h"
 
@@ -950,10 +950,8 @@ ti_free_rx_ring_jumbo(struct ti_softc *sc)
 	int		i;
 
 	for (i = 0; i < TI_JUMBO_RX_RING_CNT; i++) {
-		if (sc->ti_cdata.ti_rx_jumbo_chain[i] != NULL) {
-			m_freem(sc->ti_cdata.ti_rx_jumbo_chain[i]);
-			sc->ti_cdata.ti_rx_jumbo_chain[i] = NULL;
-		}
+		m_freem(sc->ti_cdata.ti_rx_jumbo_chain[i]);
+		sc->ti_cdata.ti_rx_jumbo_chain[i] = NULL;
 		memset((char *)&sc->ti_rdata->ti_rx_jumbo_ring[i], 0,
 		    sizeof(struct ti_rx_desc));
 	}

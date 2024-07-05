@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd-comp.c,v 1.22 2016/08/06 22:38:18 pgoyette Exp $	*/
+/*	$NetBSD: bsd-comp.c,v 1.23 2024/07/05 04:31:53 rin Exp $	*/
 /*	Id: bsd-comp.c,v 1.6 1996/08/28 06:31:58 paulus Exp 	*/
 
 /* Because this code is derived from the 4.3BSD compress source:
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bsd-comp.c,v 1.22 2016/08/06 22:38:18 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bsd-comp.c,v 1.23 2024/07/05 04:31:53 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -643,10 +643,8 @@ bsd_compress(void *state,
     ++db->uncomp_count;
     if (olen + PPP_HDRLEN + BSD_OVHD > maxolen) {
 	/* throw away the compressed stuff if it is longer than uncompressed */
-	if (*mret != NULL) {
-	    m_freem(*mret);
-	    *mret = NULL;
-	}
+	m_freem(*mret);
+	*mret = NULL;
 	++db->incomp_count;
 	db->incomp_bytes += ilen;
     } else {

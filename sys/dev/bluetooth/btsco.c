@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.42 2020/06/11 02:39:31 thorpej Exp $	*/
+/*	$NetBSD: btsco.c,v 1.43 2024/07/05 04:31:50 rin Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.42 2020/06/11 02:39:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.43 2024/07/05 04:31:50 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -370,10 +370,8 @@ btsco_detach(device_t self, int flags)
 	}
 
 	mutex_enter(bt_lock);
-	if (sc->sc_rx_mbuf != NULL) {
-		m_freem(sc->sc_rx_mbuf);
-		sc->sc_rx_mbuf = NULL;
-	}
+	m_freem(sc->sc_rx_mbuf);
+	sc->sc_rx_mbuf = NULL;
 	mutex_exit(bt_lock);
 
 	if (sc->sc_tx_refcnt > 0) {
@@ -530,8 +528,7 @@ btsco_sco_input(void *arg, struct mbuf *m)
 		sc->sc_rx_block += len;
 
 		if (len > m->m_pkthdr.len) {
-			if (sc->sc_rx_mbuf != NULL)
-				m_freem(sc->sc_rx_mbuf);
+			m_freem(sc->sc_rx_mbuf);
 
 			m_adj(m, len);
 			sc->sc_rx_mbuf = m;
@@ -665,10 +662,8 @@ btsco_close(void *hdl)
 		sco_detach_pcb(&sc->sc_sco_l);
 	}
 
-	if (sc->sc_rx_mbuf != NULL) {
-		m_freem(sc->sc_rx_mbuf);
-		sc->sc_rx_mbuf = NULL;
-	}
+	m_freem(sc->sc_rx_mbuf);
+	sc->sc_rx_mbuf = NULL;
 
 	sc->sc_rx_want = 0;
 	sc->sc_rx_block = NULL;
@@ -828,10 +823,8 @@ btsco_halt_input(void *hdl)
 	sc->sc_rx_intr = NULL;
 	sc->sc_rx_intrarg = NULL;
 
-	if (sc->sc_rx_mbuf != NULL) {
-		m_freem(sc->sc_rx_mbuf);
-		sc->sc_rx_mbuf = NULL;
-	}
+	m_freem(sc->sc_rx_mbuf);
+	sc->sc_rx_mbuf = NULL;
 
 	return 0;
 }

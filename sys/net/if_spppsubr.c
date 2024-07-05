@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.268 2024/02/17 15:47:39 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.269 2024/07/05 04:31:53 rin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.268 2024/02/17 15:47:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.269 2024/07/05 04:31:53 rin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1544,14 +1544,10 @@ sppp_cp_fini(const struct cp *cp, struct sppp *sp)
 	callout_halt(&scp->ch, NULL);
 	callout_destroy(&scp->ch);
 
-	if (scp->mbuf_confreq != NULL) {
-		m_freem(scp->mbuf_confreq);
-		scp->mbuf_confreq = NULL;
-	}
-	if (scp->mbuf_confnak != NULL) {
-		m_freem(scp->mbuf_confnak);
-		scp->mbuf_confnak = NULL;
-	}
+	m_freem(scp->mbuf_confreq);
+	scp->mbuf_confreq = NULL;
+	m_freem(scp->mbuf_confnak);
+	scp->mbuf_confnak = NULL;
 }
 
 /*
@@ -1608,9 +1604,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 
 		scp->rcr_type = CP_RCR_NONE;
 		scp->rconfid = h->ident;
-		if (scp->mbuf_confreq != NULL) {
-			m_freem(scp->mbuf_confreq);
-		}
+		m_freem(scp->mbuf_confreq);
 		scp->mbuf_confreq = m;
 		m = NULL;
 		sppp_wq_add(sp->wq_cp, &scp->work_rcr);
@@ -1633,9 +1627,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			break;
 		}
 
-		if (scp->mbuf_confnak) {
-			m_freem(scp->mbuf_confnak);
-		}
+		m_freem(scp->mbuf_confnak);
 		scp->mbuf_confnak = m;
 		m = NULL;
 		sppp_wq_add(sp->wq_cp, &scp->work_rcn);
@@ -1777,8 +1769,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 
 out:
 	SPPP_UNLOCK(sp);
-	if (m != NULL)
-		m_freem(m);
+	m_freem(m);
 }
 
 /*
@@ -6525,14 +6516,10 @@ sppp_tlf(const struct cp *cp, struct sppp *sp)
 	sp->lcp.protos &= ~(1 << cp->protoidx);
 
 	/* cleanup */
-	if (sp->scp[cp->protoidx].mbuf_confreq != NULL) {
-		m_freem(sp->scp[cp->protoidx].mbuf_confreq);
-		sp->scp[cp->protoidx].mbuf_confreq = NULL;
-	}
-	if (sp->scp[cp->protoidx].mbuf_confnak != NULL) {
-		m_freem(sp->scp[cp->protoidx].mbuf_confnak);
-		sp->scp[cp->protoidx].mbuf_confnak = NULL;
-	}
+	m_freem(sp->scp[cp->protoidx].mbuf_confreq);
+	sp->scp[cp->protoidx].mbuf_confreq = NULL;
+	m_freem(sp->scp[cp->protoidx].mbuf_confnak);
+	sp->scp[cp->protoidx].mbuf_confnak = NULL;
 
 	sppp_lcp_check_and_close(sp);
 }

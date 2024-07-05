@@ -1,5 +1,5 @@
 /*	$KAME: dccp_usrreq.c,v 1.67 2005/11/03 16:05:04 nishida Exp $	*/
-/*	$NetBSD: dccp_usrreq.c,v 1.26 2022/11/04 09:01:53 ozaki-r Exp $ */
+/*	$NetBSD: dccp_usrreq.c,v 1.27 2024/07/05 04:31:54 rin Exp $ */
 
 /*
  * Copyright (c) 2003 Joacim Häggmark, Magnus Erixzon, Nils-Erik Mattsson 
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.26 2022/11/04 09:01:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.27 2024/07/05 04:31:54 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -880,12 +880,10 @@ dccp_input(struct mbuf *m, int off, int proto)
 	}
 
 	if (dh->dh_type == DCCP_TYPE_DATA || dh->dh_type == DCCP_TYPE_DATAACK) {
-		if (so->so_state & SS_CANTRCVMORE) 
-		{
+		if (so->so_state & SS_CANTRCVMORE) {
 			DCCP_DEBUG((LOG_INFO, "state & SS_CANTRCVMORE...!\n"));
 			m_freem(m);
-			if (opts)
-				m_freem(opts);
+			m_freem(opts);
 		} else {
 			m_adj(m, (iphlen + data_off));
 			DCCP_DEBUG((LOG_INFO, "Calling sbappend!\n"));
@@ -895,8 +893,7 @@ dccp_input(struct mbuf *m, int off, int proto)
 		sorwakeup(so);
 	} else {
 		m_freem(m);
-		if (opts)
-			m_freem(opts);
+		m_freem(opts);
 	}
 #if defined(__FreeBSD__) && __FreeBSD_version >= 500000
 	if (dp)
@@ -907,8 +904,7 @@ dccp_input(struct mbuf *m, int off, int proto)
 
 badunlocked:
 	m_freem(m);
-	if (opts)
-		m_freem(opts);
+	m_freem(opts);
 	return;
 }
 

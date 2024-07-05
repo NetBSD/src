@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.138 2021/11/06 06:44:41 msaitoh Exp $	*/
+/*	$NetBSD: ath.c,v 1.139 2024/07/05 04:31:50 rin Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.138 2021/11/06 06:44:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.139 2024/07/05 04:31:50 rin Exp $");
 #endif
 
 /*
@@ -2746,10 +2746,8 @@ ath_descdma_cleanup(struct ath_softc *sc,
 	bus_dmamem_free(dd->dd_dmat, &dd->dd_dseg, dd->dd_dnseg);
 
 	STAILQ_FOREACH(bf, head, bf_list) {
-		if (bf->bf_m) {
-			m_freem(bf->bf_m);
-			bf->bf_m = NULL;
-		}
+		m_freem(bf->bf_m);
+		bf->bf_m = NULL;
 		if (bf->bf_dmamap != NULL) {
 			bus_dmamap_destroy(sc->sc_dmat, bf->bf_dmamap);
 			bf->bf_dmamap = NULL;

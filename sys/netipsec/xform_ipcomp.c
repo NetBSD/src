@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.75 2022/10/19 21:28:02 christos Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.76 2024/07/05 04:31:54 rin Exp $	*/
 /*	$FreeBSD: xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.75 2022/10/19 21:28:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.76 2024/07/05 04:31:54 rin Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -341,8 +341,7 @@ bad:
 	if (sav)
 		KEY_SA_UNREF(&sav);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	if (tc != NULL)
 		pool_cache_put(ipcomp_tdb_crypto_pool_cache, tc);
 	if (crp)
@@ -498,8 +497,7 @@ ipcomp_output(struct mbuf *m, const struct ipsecrequest *isr,
 	return 0;
 
 bad:
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	return error;
 }
 
@@ -626,8 +624,7 @@ bad:
 		KEY_SA_UNREF(&sav);
 	KEY_SP_UNREF(&isr->sp);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	pool_cache_put(ipcomp_tdb_crypto_pool_cache, tc);
 	crypto_freereq(crp);
 }

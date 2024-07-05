@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_commonsubs.c,v 1.6 2024/02/05 21:46:06 andvar Exp $	*/
+/*	$NetBSD: nfs_commonsubs.c,v 1.7 2024/07/05 04:31:52 rin Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfs/nfs_commonsubs.c 308708 2016-11-16 01:11:49Z cperciva "); */
-__RCSID("$NetBSD: nfs_commonsubs.c,v 1.6 2024/02/05 21:46:06 andvar Exp $");
+__RCSID("$NetBSD: nfs_commonsubs.c,v 1.7 2024/07/05 04:31:52 rin Exp $");
 
 /*
  * These functions support the macros and help fiddle mbuf chains for
@@ -4091,8 +4091,7 @@ nfsv4_seqsession(uint32_t seqid, uint32_t slotid, uint32_t highslot,
 			/* No reply cached, so just do it. */
 			slots[slotid].nfssl_inprog = 1;
 	} else if ((slots[slotid].nfssl_seq + 1) == seqid) {
-		if (slots[slotid].nfssl_reply != NULL)
-			m_freem(slots[slotid].nfssl_reply);
+		m_freem(slots[slotid].nfssl_reply);
 		slots[slotid].nfssl_reply = NULL;
 		slots[slotid].nfssl_inprog = 1;
 		slots[slotid].nfssl_seq++;
@@ -4115,8 +4114,7 @@ nfsv4_seqsess_cacherep(uint32_t slotid, struct nfsslot *slots, int repstat,
 		*rep = slots[slotid].nfssl_reply;
 		slots[slotid].nfssl_reply = NULL;
 	} else {
-		if (slots[slotid].nfssl_reply != NULL)
-			m_freem(slots[slotid].nfssl_reply);
+		m_freem(slots[slotid].nfssl_reply);
 		slots[slotid].nfssl_reply = *rep;
 	}
 	slots[slotid].nfssl_inprog = 0;

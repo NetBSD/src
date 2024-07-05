@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.172 2022/09/03 02:47:59 thorpej Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.173 2024/07/05 04:31:53 rin Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.172 2022/09/03 02:47:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.173 2024/07/05 04:31:53 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -447,10 +447,8 @@ pppdealloc(struct ppp_softc *sc)
 		sc->sc_npqueue = m->m_nextpkt;
 		m_freem(m);
 	}
-	if (sc->sc_togo != NULL) {
-		m_freem(sc->sc_togo);
-		sc->sc_togo = NULL;
-	}
+	m_freem(sc->sc_togo);
+	sc->sc_togo = NULL;
 #ifdef PPP_COMPRESS
 	ppp_ccp_closed(sc);
 	sc->sc_xc_state = NULL;

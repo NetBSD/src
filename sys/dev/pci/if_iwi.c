@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.120 2022/08/22 18:09:04 thorpej Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.121 2024/07/05 04:31:51 rin Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.120 2022/08/22 18:09:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.121 2024/07/05 04:31:51 rin Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -668,10 +668,8 @@ iwi_reset_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring)
 			bus_dmamap_unload(sc->sc_dmat, data->map);
 		}
 
-		if (data->m != NULL) {
-			m_freem(data->m);
-			data->m = NULL;
-		}
+		m_freem(data->m);
+		data->m = NULL;
 
 		if (data->ni != NULL) {
 			ieee80211_free_node(data->ni);
@@ -707,9 +705,7 @@ iwi_free_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring)
 			bus_dmamap_destroy(sc->sc_dmat, data->map);
 		}
 
-		if (data->m != NULL) {
-			m_freem(data->m);
-		}
+		m_freem(data->m);
 	}
 }
 
@@ -781,9 +777,7 @@ iwi_free_rx_ring(struct iwi_softc *sc, struct iwi_rx_ring *ring)
 			bus_dmamap_destroy(sc->sc_dmat, data->map);
 		}
 
-		if (data->m != NULL) {
-			m_freem(data->m);
-		}
+		m_freem(data->m);
 	}
 }
 

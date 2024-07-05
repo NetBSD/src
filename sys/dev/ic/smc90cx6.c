@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.75 2020/01/30 04:56:11 thorpej Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.76 2024/07/05 04:31:51 rin Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.75 2020/01/30 04:56:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.76 2024/07/05 04:31:51 rin Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -604,8 +604,7 @@ bah_srint(void *vsc)
 
 cleanup:
 
-	if (head != NULL)
-		m_freem(head);
+	m_freem(head);
 
 	/* mark buffer as invalid by source id 0 */
 	bus_space_write_1(bst_m, mem, buffer*512, 0);

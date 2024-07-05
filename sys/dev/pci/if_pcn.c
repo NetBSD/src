@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.78 2024/02/10 09:30:06 andvar Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.79 2024/07/05 04:31:51 rin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.78 2024/02/10 09:30:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.79 2024/07/05 04:31:51 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -992,8 +992,7 @@ pcn_start(struct ifnet *ifp)
 			 * packet.
 			 */
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
-			if (m != NULL)
-				m_freem(m);
+			m_freem(m);
 			PCN_EVCNT_INCR(&sc->sc_ev_txdstall);
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.190 2024/06/29 12:11:12 riastradh Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.191 2024/07/05 04:31:53 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.190 2024/06/29 12:11:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.191 2024/07/05 04:31:53 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1479,8 +1479,7 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
 	if (runfilt) {
 		if (pfil_run_hooks(sc->sc_if.if_pfil, &m,
 		    dst_ifp, PFIL_OUT) != 0) {
-			if (m != NULL)
-				m_freem(m);
+			m_freem(m);
 			return;
 		}
 		if (m == NULL)
@@ -1879,8 +1878,7 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 	}
 
 	if (pfil_run_hooks(sc->sc_if.if_pfil, &m, src_if, PFIL_IN) != 0) {
-		if (m != NULL)
-			m_freem(m);
+		m_freem(m);
 		goto out;
 	}
 	if (m == NULL)

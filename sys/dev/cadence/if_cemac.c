@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.27 2024/06/29 12:11:11 riastradh Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.28 2024/07/05 04:31:50 rin Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.27 2024/06/29 12:11:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.28 2024/07/05 04:31:50 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -372,8 +372,7 @@ cemac_intr(void *arg)
 				/* Drop packets until we can get replacement
 				 * empty mbufs for the RXDQ.
 				 */
-				if (m != NULL)
-					m_freem(m);
+				m_freem(m);
 				if_statinc_ref(ifp, nsr, if_ierrors);
 			}
 			sc->rxqi++;

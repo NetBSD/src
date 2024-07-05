@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.70 2022/08/12 19:13:36 riastradh Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.71 2024/07/05 04:31:52 rin Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.70 2022/08/12 19:13:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.71 2024/07/05 04:31:52 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -627,10 +627,8 @@ rum_free_rx_list(struct rum_softc *sc)
 			data->xfer = NULL;
 		}
 
-		if (data->m != NULL) {
-			m_freem(data->m);
-			data->m = NULL;
-		}
+		m_freem(data->m);
+		data->m = NULL;
 	}
 }
 

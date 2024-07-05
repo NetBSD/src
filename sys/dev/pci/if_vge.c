@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.88 2024/06/29 12:11:12 riastradh Exp $ */
+/* $NetBSD: if_vge.c,v 1.89 2024/07/05 04:31:51 rin Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.88 2024/06/29 12:11:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.89 2024/07/05 04:31:51 rin Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -1160,8 +1160,7 @@ vge_newbuf(struct vge_softc *sc, int idx, struct mbuf *m)
 
 	return 0;
  out:
-	if (m_new != NULL)
-		m_freem(m_new);
+	m_freem(m_new);
 	return ENOMEM;
 }
 
