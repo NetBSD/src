@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000reg.h,v 1.11 2023/03/25 21:33:46 andvar Exp $	*/
+/*	$NetBSD: dm9000reg.h,v 1.12 2024/07/05 20:19:42 andvar Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -161,8 +161,8 @@
 #define DM9000_RWPAH		0x25	/* Rx SRAM read pointer 15:8 */
 
 /* VID 0x0a46, PID 0x9000 */
-#define DM9000_VID0	0x28	/* vender ID 7:0 */
-#define DM9000_VID1	0x29	/* vender ID 15:8 */
+#define DM9000_VID0	0x28	/* vendor ID 7:0 */
+#define DM9000_VID1	0x29	/* vendor ID 15:8 */
 #define DM9000_PID0	0x2A	/* product ID 7:0 */
 #define DM9000_PID1	0x2B	/* product ID 15:8 */
 #define DM9000_CHIPR	0x2C	/* chip revision */

@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.31 2024/03/29 06:13:40 rillig Exp $ */
+/* $NetBSD: moused.c,v 1.32 2024/07/05 20:19:43 andvar Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.31 2024/03/29 06:13:40 rillig Exp $");
+__RCSID("$NetBSD: moused.c,v 1.32 2024/07/05 20:19:43 andvar Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -2580,7 +2580,7 @@ pnpparse(pnpid_t *id, char *buf, int len)
     id->revision = ((buf[1] & 0x3f) << 6) | (buf[2] & 0x3f);
     debug("PnP rev %d.%02d", id->revision / 100, id->revision % 100);
 
-    /* EISA vender and product ID */
+    /* EISA vendor and product ID */
     id->eisaid = &buf[3];
     id->neisaid = 7;
 
