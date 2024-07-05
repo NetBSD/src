@@ -1,4 +1,4 @@
-# $NetBSD: deptgt.mk,v 1.18 2024/07/05 19:47:22 rillig Exp $
+# $NetBSD: deptgt.mk,v 1.19 2024/07/05 20:01:52 rillig Exp $
 #
 # Tests for special targets like .BEGIN or .SUFFIXES in dependency
 # declarations.
@@ -45,7 +45,7 @@ ${:U}: empty-source
 # expansion would be to use the variable modifier '::=' to modify the
 # targets.  This in turn would be such an extreme and unreliable edge case
 # that nobody uses it.
-# expect+1: while evaluating "${:U:Z}:" with value "": Unknown modifier "Z"
+# expect+1: while parsing "${:U:Z}:": Unknown modifier "Z"
 $$$$$$$${:U:Z}:
 
 # expect+1: warning: Extra target 'ordinary' ignored

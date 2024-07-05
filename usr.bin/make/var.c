@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1132 2024/07/05 19:47:22 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1133 2024/07/05 20:01:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1132 2024/07/05 19:47:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1133 2024/07/05 20:01:52 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -265,7 +265,8 @@ typedef enum {
 	VSK_COND,
 	VSK_COND_THEN,
 	VSK_COND_ELSE,
-	VSK_EXPR
+	VSK_EXPR,
+	VSK_EXPR_PARSE
 } EvalStackElementKind;
 
 typedef struct {
@@ -387,6 +388,7 @@ EvalStack_Details(void)
 			"while evaluating then-branch of condition",
 			"while evaluating else-branch of condition",
 			"while evaluating",
+			"while parsing",
 		};
 		EvalStackElement *elem = evalStack.elems + i;
 		EvalStackElementKind kind = elem->kind;
@@ -4601,7 +4603,9 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode)
 	 */
 	expr.value = FStr_InitRefer(v->val.data);
 
-	if (expr.name[0] != '\0')
+	if (!VarEvalMode_ShouldEval(emode))
+		EvalStack_Push(VSK_EXPR_PARSE, start, NULL);
+	else if (expr.name[0] != '\0')
 		EvalStack_Push(VSK_VARNAME, expr.name, &expr.value);
 	else
 		EvalStack_Push(VSK_EXPR, start, &expr.value);

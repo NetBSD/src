@@ -47,7 +47,7 @@ CondParser_Eval: ${DELAYED} == "two"
 Comparing "two" == "two"
 make: "varmod-ifelse.mk" line 296: yes
 make: "varmod-ifelse.mk" line 318: while evaluating then-branch of condition "1": while evaluating "${:X-then}:${:X-else}}" with value "": Unknown modifier "X-then"
-make: "varmod-ifelse.mk" line 318: while evaluating else-branch of condition "1": while evaluating "${:X-else}}" with value "": Unknown modifier "X-else"
+make: "varmod-ifelse.mk" line 318: while evaluating else-branch of condition "1": while parsing "${:X-else}}": Unknown modifier "X-else"
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1
