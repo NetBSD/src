@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0_lcd.c,v 1.15 2020/11/20 18:34:45 thorpej Exp $ */
+/* $NetBSD: s3c24x0_lcd.c,v 1.16 2024/07/05 19:28:36 andvar Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c24x0_lcd.c,v 1.15 2020/11/20 18:34:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c24x0_lcd.c,v 1.16 2024/07/05 19:28:36 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -402,7 +402,7 @@ s3c24x0_lcd_new_screen(struct s3c24x0_lcd_softc *sc,
 #define rgb(r,g,b)	_rgb((r)>>1,g,(b)>>1)
 
 #define L	0x30			/* low intensity */
-#define H	0x3f			/* hight intensity */
+#define H	0x3f			/* high intensity */
 
 static const uint16_t basic_color_map[] = {
 	rgb(	0,   0,   0),		/* black */

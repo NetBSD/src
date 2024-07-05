@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200debug.c,v 1.6 2014/03/26 17:53:36 christos Exp $	*/
+/*	$NetBSD: mq200debug.c,v 1.7 2024/07/05 19:28:35 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMURA Shin
@@ -31,7 +31,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mq200debug.c,v 1.6 2014/03/26 17:53:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mq200debug.c,v 1.7 2024/07/05 19:28:35 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -424,7 +424,7 @@ mq200_dump_gc(struct mq200_softc *sc, int gc)
 	 * GC09R	Window Vertical Control
 	 */
 	reg = mq200_read(sc, MQ200_GCWVCR(gc));
-	printf("GC09R=0x%08x:   Window Vertical start=%03d hight=%03d\n",
+	printf("GC09R=0x%08x:   Window Vertical start=%03d height=%03d\n",
 	    reg,
 	    (reg&MQ200_GCWVC_START_MASK)>> MQ200_GCWVC_START_SHIFT,
 	    (reg&MQ200_GCWVC_HEIGHT_MASK)>> MQ200_GCWVC_HEIGHT_SHIFT);
@@ -447,7 +447,7 @@ mq200_dump_gc(struct mq200_softc *sc, int gc)
 	 * GC0BR	Alternate Window Vertical Control
 	 */
 	reg = mq200_read(sc, MQ200_GCAWVCR(gc));
-	printf("GC0BR=0x%08x:   Altwin Vertical start=%03d hight=%03d\n",
+	printf("GC0BR=0x%08x:   Altwin Vertical start=%03d height=%03d\n",
 	    reg,
 	    (reg&MQ200_GCAWVC_START_MASK)>> MQ200_GCAWVC_START_SHIFT,
 	    (reg&MQ200_GCAWVC_HEIGHT_MASK)>> MQ200_GCAWVC_HEIGHT_SHIFT);

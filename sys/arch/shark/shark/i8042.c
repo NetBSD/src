@@ -1,4 +1,4 @@
-/*	$NetBSD: i8042.c,v 1.8 2021/09/16 22:19:10 andvar Exp $	*/
+/*	$NetBSD: i8042.c,v 1.9 2024/07/05 19:28:36 andvar Exp $	*/
 
 /*
  * Copyright 1997
@@ -59,7 +59,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8042.c,v 1.8 2021/09/16 22:19:10 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8042.c,v 1.9 2024/07/05 19:28:36 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -378,7 +378,7 @@ i8042_cmd(bus_space_tag_t    iot,
             } /* End If able to get response from device */
             else
             {
-                /* Timmed out waiting for a response .... maybe we
+                /* Timed out waiting for a response .... maybe we
                 ** weren't meant to get one ??
                 */
                 KERN_DEBUG(i8042debug, KERN_DEBUG_WARNING, 
