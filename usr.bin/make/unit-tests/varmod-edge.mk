@@ -1,4 +1,4 @@
-# $NetBSD: varmod-edge.mk,v 1.22 2024/07/04 17:47:54 rillig Exp $
+# $NetBSD: varmod-edge.mk,v 1.23 2024/07/05 17:41:50 rillig Exp $
 #
 # Tests for edge cases in variable modifiers.
 #
@@ -166,9 +166,10 @@ EXP.colons=	# empty
 # expect+2: while evaluating variable "MOD.colons" with value "${INP.colons::::}": while evaluating variable "INP.colons" with value "value": Unknown modifier ":"
 # expect+1: while evaluating variable "MOD.colons" with value "${INP.colons::::}": while evaluating variable "INP.colons" with value "": Unknown modifier ":"
 .  if ${MOD.${test}} == ${EXP.${test}}
-# expect+16: ok M-paren
-# expect+15: ok M-mixed
-# expect+14: ok M-unescape
+# expect+17: ok M-paren
+# expect+16: ok M-mixed
+# expect+15: ok M-unescape
+# expect: make: Unclosed expression, expecting '}' for modifier "U*)" of variable "" with value "*)"
 # expect+13: ok M-nest-mix
 # expect+12: ok M-nest-brk
 # expect+11: ok M-pat-err

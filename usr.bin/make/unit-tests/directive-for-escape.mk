@@ -1,4 +1,4 @@
-# $NetBSD: directive-for-escape.mk,v 1.23 2023/11/19 22:32:44 rillig Exp $
+# $NetBSD: directive-for-escape.mk,v 1.24 2024/07/05 17:41:50 rillig Exp $
 #
 # Test escaping of special characters in the iteration values of a .for loop.
 # These values get expanded later using the :U variable modifier, and this
@@ -16,9 +16,10 @@ ASCII=	!"\#$$%&'()*+,-./0-9:;<=>?@A-Z[\]_^a-z{|}~
 # the loop.  Not only would it need the escaping for the variable modifier
 # ':U' but also the escaping for the line-end comment.
 .for chars in ${ASCII}
+# expect: make: Unclosed expression, expecting '}' for modifier "U!"" of variable "" with value "!""
+# expect+1: !"
 .  info ${chars}
 .endfor
-# expect-2: !"
 
 # As of 2020-12-31, using 2 backslashes before be '#' would treat the '#'
 # as comment character.  Using 3 backslashes doesn't help either since
@@ -27,9 +28,10 @@ ASCII=	!"\#$$%&'()*+,-./0-9:;<=>?@A-Z[\]_^a-z{|}~
 # at all.
 ASCII.2020-12-31=	!"\\\#$$%&'()*+,-./0-9:;<=>?@A-Z[\]_^a-z{|}~
 .for chars in ${ASCII.2020-12-31}
+# expect: make: Unclosed expression, expecting '}' for modifier "U!"\\\\" of variable "" with value "!"\\"
+# expect+1: !"\\
 .  info ${chars}
 .endfor
-# expect-2: !"\\
 
 # Cover the code in ExprLen.
 #

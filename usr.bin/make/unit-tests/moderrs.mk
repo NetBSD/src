@@ -1,4 +1,4 @@
-# $NetBSD: moderrs.mk,v 1.35 2024/07/04 18:53:37 rillig Exp $
+# $NetBSD: moderrs.mk,v 1.36 2024/07/05 17:41:50 rillig Exp $
 #
 # various modifier error tests
 
@@ -168,10 +168,13 @@ mod-remember-parse: print-footer
 
 mod-sysv-parse: print-footer
 # expect: make: in target "mod-sysv-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Unknown modifier "3"
+# expect: make: Unclosed expression, expecting '}' for modifier "3" of variable "FIB" with value ""
 	@echo ${FIB:3
 # expect: make: in target "mod-sysv-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Unknown modifier "3="
+# expect: make: Unclosed expression, expecting '}' for modifier "3=" of variable "FIB" with value ""
 	@echo ${FIB:3=
 # expect: make: in target "mod-sysv-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Unknown modifier "3=x3"
+# expect: make: Unclosed expression, expecting '}' for modifier "3=x3" of variable "FIB" with value ""
 	@echo ${FIB:3=x3
 	@echo ${FIB:3=x3}	# ok
 

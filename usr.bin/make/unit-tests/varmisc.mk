@@ -1,4 +1,4 @@
-# $NetBSD: varmisc.mk,v 1.33 2023/10/19 18:24:33 rillig Exp $
+# $NetBSD: varmisc.mk,v 1.34 2024/07/05 17:41:50 rillig Exp $
 #
 # Miscellaneous variable tests.
 
@@ -190,13 +190,22 @@ target2-flags: target2.c
 
 varerror-unclosed:
 	@echo $@:begin
+# expect: make: in target "varerror-unclosed": Unclosed variable ""
 	@echo $(
+# expect: make: in target "varerror-unclosed": Unclosed variable "UNCLOSED"
 	@echo $(UNCLOSED
+# expect: make: in target "varerror-unclosed": Unclosed variable "UNCLOSED"
 	@echo ${UNCLOSED
+# expect: make: Unclosed expression, expecting '}' for modifier "M${PATTERN" of variable "UNCLOSED" with value ""
 	@echo ${UNCLOSED:M${PATTERN
+# expect: make: in target "varerror-unclosed": Unclosed variable "param"
+# expect: make: in target "varerror-unclosed": Unclosed variable "UNCLOSED."
 	@echo ${UNCLOSED.${param
 	@echo $
 .for i in 1 2 3
+# expect: make: in target "varerror-unclosed": Unclosed variable "UNCLOSED.1"
+# expect: make: in target "varerror-unclosed": Unclosed variable "UNCLOSED.2"
+# expect: make: in target "varerror-unclosed": Unclosed variable "UNCLOSED.3"
 	@echo ${UNCLOSED.${i}
 .endfor
 	@echo ${UNCLOSED_INDIR_2}

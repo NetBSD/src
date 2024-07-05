@@ -1,4 +1,4 @@
-# $NetBSD: varparse-errors.mk,v 1.14 2024/07/04 18:53:37 rillig Exp $
+# $NetBSD: varparse-errors.mk,v 1.15 2024/07/05 17:41:50 rillig Exp $
 
 # Tests for parsing and evaluating all kinds of expressions.
 #
@@ -79,17 +79,31 @@ _:=	${:U:OX:U${IND}} ${:U:OX:U${IND}}
 # Before var.c 1.032 from 2022-08-24, make complained about 'Unknown modifier'
 # or 'Bad modifier' when in fact the modifier was entirely correct, it was
 # just not delimited by either ':' or '}' but instead by '\0'.
+# expect: make: Unclosed expression, expecting '}' for modifier "Q" of variable "" with value ""
 UNCLOSED:=	${:U:Q
+# expect: make: Unclosed expression, expecting '}' for modifier "sh" of variable "" with value ""
 UNCLOSED:=	${:U:sh
+# expect: make: Unclosed expression, expecting '}' for modifier "tA" of variable "" with value ""
 UNCLOSED:=	${:U:tA
+# expect: make: Unclosed expression, expecting '}' for modifier "tsX" of variable "" with value ""
 UNCLOSED:=	${:U:tsX
+# expect: make: Unclosed expression, expecting '}' for modifier "ts" of variable "" with value ""
 UNCLOSED:=	${:U:ts
+# expect: make: Unclosed expression, expecting '}' for modifier "ts\040" of variable "" with value ""
 UNCLOSED:=	${:U:ts\040
+# expect: make: Unclosed expression, expecting '}' for modifier "u" of variable "" with value ""
 UNCLOSED:=	${:U:u
+# expect: make: Unclosed expression, expecting '}' for modifier "H" of variable "" with value "."
 UNCLOSED:=	${:U:H
+# expect: make: Unclosed expression, expecting '}' for modifier "[1]" of variable "" with value ""
 UNCLOSED:=	${:U:[1]
+# expect: make: Unclosed expression, expecting '}' for modifier "hash" of variable "" with value "b2af338b"
 UNCLOSED:=	${:U:hash
+# expect: make: Unclosed expression, expecting '}' for modifier "range" of variable "" with value "1"
 UNCLOSED:=	${:U:range
+# expect: make: Unclosed expression, expecting '}' for modifier "_" of variable "" with value ""
 UNCLOSED:=	${:U:_
+# expect: make: Unclosed expression, expecting '}' for modifier "gmtime" of variable "" with value "<timestamp>"
 UNCLOSED:=	${:U:gmtime
+# expect: make: Unclosed expression, expecting '}' for modifier "localtime" of variable "" with value "<timestamp>"
 UNCLOSED:=	${:U:localtime
