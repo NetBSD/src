@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.68 2024/07/05 02:24:57 kre Exp $	*/
+/*	$NetBSD: histedit.c,v 1.69 2024/07/05 04:07:26 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.68 2024/07/05 02:24:57 kre Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.69 2024/07/05 04:07:26 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -382,14 +382,14 @@ histcmd(volatile int argc, char ** volatile argv)
 			if (*editfile) {
 				VTRACE(DBG_HISTORY,
 				    ("histcmd err jump unlink temp \"%s\"\n",
-				    *editfile));
+				    editfile));
 				unlink(editfile);
 			}
 			handler = savehandler;
 			longjmp(handler->loc, 1);
 		}
 		handler = &jmploc;
-		VTRACE(DBG_HISTORY, ("histcmd was active %d (++)\n", active));
+		VTRACE(DBG_HISTORY, ("histcmd is active %d(++)\n", active));
 		if (++active > MAXHISTLOOPS) {
 			active = 0;
 			displayhist = 0;
@@ -435,8 +435,11 @@ histcmd(volatile int argc, char ** volatile argv)
 	 */
 	switch (argc) {
 	case 0:
-		firststr = lflg ? "-16" : "-1";
-		laststr = "-1";
+		if (lflg) {
+			firststr = "-16";
+			laststr = "-1";
+		} else
+			firststr = laststr = "-1";
 		break;
 	case 1:
 		firststr = argv[0];
@@ -455,6 +458,22 @@ histcmd(volatile int argc, char ** volatile argv)
 	 */
 	first = str_to_event(firststr, 0);
 	last = str_to_event(laststr, 1);
+
+	if (first == -1 || last == -1) {
+		if (lflg)   /* no history exists, that's OK */
+			return 0;
+		if (first == -1 && last == -1) {
+			if (firststr != laststr)
+				error("history events %s to %s do not exist",
+				    firststr, laststr);
+			else
+				error("history event %s does not exist",
+				    firststr);
+		} else {
+			error("history event %s does not exist",
+			    first == -1 ? firststr : laststr);
+		}
+	}
 
 	if (rflg) {
 		i = last;
@@ -479,7 +498,8 @@ histcmd(volatile int argc, char ** volatile argv)
 		int fd;
 
 		INTOFF;		/* easier */
-		snprintf(editfile, sizeof(editfile), "%s_shXXXXXX", _PATH_TMP);
+		snprintf(editfile, sizeof(editfile),
+		    "%s_shXXXXXX", _PATH_TMP);
 		if ((fd = mkstemp(editfile)) < 0)
 			error("can't create temporary file %s", editfile);
 		if ((efp = fdopen(fd, "w")) == NULL) {
@@ -550,6 +570,7 @@ histcmd(volatile int argc, char ** volatile argv)
 		readcmdfile(editfile);	/* XXX - should read back - quick tst */
 		VTRACE(DBG_HISTORY, ("histcmd unlink %s\n", editfile));
 		unlink(editfile);
+		editfile[0] = '\0';
 		INTON;
 	}
 
@@ -735,8 +756,7 @@ str_to_event(const char *str, int last)
 			}
 		}
 		if (retval == -1)
-			error("history number %s not found (internal error)",
-			       str);
+			return -1;
 	} else {
 		/*
 		 * pattern
