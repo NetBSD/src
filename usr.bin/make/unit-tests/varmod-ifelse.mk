@@ -1,4 +1,4 @@
-# $NetBSD: varmod-ifelse.mk,v 1.30 2024/06/30 13:01:01 rillig Exp $
+# $NetBSD: varmod-ifelse.mk,v 1.31 2024/07/05 19:47:22 rillig Exp $
 #
 # Tests for the ${cond:?then:else} variable modifier, which evaluates either
 # the then-expression or the else-expression, depending on the condition.
@@ -313,7 +313,7 @@ BOTH=	<${YES}> <${NO}>
 .endif
 
 
-# expect+2: while evaluating then-branch of condition "1": while evaluating "${:X-then}:${:X-else}}": Unknown modifier "X-then"
-# expect+1: while evaluating else-branch of condition "1": while evaluating "${:X-else}}": Unknown modifier "X-else"
+# expect+2: while evaluating then-branch of condition "1": while evaluating "${:X-then}:${:X-else}}" with value "": Unknown modifier "X-then"
+# expect+1: while evaluating else-branch of condition "1": while evaluating "${:X-else}}" with value "": Unknown modifier "X-else"
 .if ${1:?${:X-then}:${:X-else}}
 .endif

@@ -20,9 +20,9 @@ make: "varmod-to-separator.mk" line 240: while evaluating variable "WORDS" with 
 make: "varmod-to-separator.mk" line 240: Malformed conditional (${WORDS:ts\X})
 make: "varmod-to-separator.mk" line 250: while evaluating variable "WORDS" with value "one two three four five six": Bad modifier ":t\X"
 make: "varmod-to-separator.mk" line 250: Malformed conditional (${WORDS:t\X} != "anything")
-make: "varmod-to-separator.mk" line 267: while evaluating "${:Ua b:ts\69}": Bad modifier ":ts\69"
+make: "varmod-to-separator.mk" line 267: while evaluating "${:Ua b:ts\69}" with value "a b": Bad modifier ":ts\69"
 make: "varmod-to-separator.mk" line 267: Malformed conditional (${:Ua b:ts\69})
-make: "varmod-to-separator.mk" line 276: while evaluating "${:Ua b:ts\x1F60E}": Invalid character number at "1F60E}"
+make: "varmod-to-separator.mk" line 276: while evaluating "${:Ua b:ts\x1F60E}" with value "a b": Invalid character number at "1F60E}"
 make: "varmod-to-separator.mk" line 276: Malformed conditional (${:Ua b:ts\x1F60E})
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests

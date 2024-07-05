@@ -72,7 +72,7 @@ mod-ts-parse:
 15152535558513521534
 make: in target "mod-ts-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Bad modifier ":ts\65oct"
 65oct}
-make: in target "mod-ts-parse": while evaluating "${:U${FIB}:ts\65oct} # bad modifier, variable name is """: Bad modifier ":ts\65oct"
+make: in target "mod-ts-parse": while evaluating "${:U${FIB}:ts\65oct} # bad modifier, variable name is """ with value "1 1 2 3 5 8 13 21 34": Bad modifier ":ts\65oct"
 65oct}
 make: in target "mod-ts-parse": while evaluating variable "FIB" with value "1 1 2 3 5 8 13 21 34": Bad modifier ":tsxy"
 xy}

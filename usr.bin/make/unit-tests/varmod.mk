@@ -1,4 +1,4 @@
-# $NetBSD: varmod.mk,v 1.17 2024/07/04 18:53:37 rillig Exp $
+# $NetBSD: varmod.mk,v 1.18 2024/07/05 19:47:22 rillig Exp $
 #
 # Tests for variable modifiers, such as :Q, :S,from,to or :Ufallback.
 #
@@ -103,7 +103,7 @@ DOLLAR2=	${:U\$}
 .endif
 
 # A '$' followed by nothing is an error as well.
-# expect+1: while evaluating "${:Uword:@word@${word}$@} != "word"": Dollar followed by nothing
+# expect+1: while evaluating "${:Uword:@word@${word}$@} != "word"" with value "word": Dollar followed by nothing
 .if ${:Uword:@word@${word}$@} != "word"
 .  error
 .endif
@@ -140,7 +140,7 @@ VAR=	STOP
 # In an indirect modifier, the delimiter is '\0', which at the same time marks
 # the end of the string.  The sequence '\\' '\0' is not an escaped delimiter,
 # as it would be wrong to skip past the end of the string.
-# expect+2: while evaluating "${:${:Ugmtime=\\}}": Invalid time value "\"
+# expect+2: while evaluating "${:${:Ugmtime=\\}}" with value "": Invalid time value "\"
 # expect+1: Malformed conditional (${:${:Ugmtime=\\}})
 .if ${:${:Ugmtime=\\}}
 .  error
@@ -198,7 +198,7 @@ VAR_DOLLAR=	VAR$$
 .if ${VAR:Dset$} != "set"
 .  error
 .endif
-# expect+1: while evaluating "${:Ufallback$} != "fallback"": Invalid variable name '}', at "$} != "fallback""
+# expect+1: while evaluating "${:Ufallback$} != "fallback"" with value "": Invalid variable name '}', at "$} != "fallback""
 .if ${:Ufallback$} != "fallback"
 .  error
 .endif
