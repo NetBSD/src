@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181reg.h,v 1.5 2022/07/03 11:30:48 andvar Exp $	*/
+/*	$NetBSD: ite8181reg.h,v 1.6 2024/07/05 19:33:39 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000 SATO Kazumi
@@ -29,7 +29,7 @@
 
 /* ITE8181 configuration registers */
 #define ITE8181_CONF_OFFSET	((8192 -1) * 1024)	/* offset of config reg */
-#define ITE8181_ID       0x00	/* Device ID, Vender ID */
+#define ITE8181_ID       0x00	/* Device ID, Vendor ID */
 #define		ITE8181_DATA_ID 0x81811283
 #define		ITE8181_PRODUCT_ID 0x8181
 #define		ITE8181_VENDER_ID 0x1283
@@ -65,10 +65,10 @@
 #define ITE8181_GUI_BSLE	0x00	/* BitBlt src/Line Draw End */
 #define ITE8181_GUI_BDLS	0x04	/* BitBlt dst/Line Draw Start */
 #define ITE8181_GUI_BPOA	0x08	/* BitBlt Pattern Offset Address */
-#define ITE8181_GUI_BWH		0x0c	/* BitBlt Width, Hight */
+#define ITE8181_GUI_BWH		0x0c	/* BitBlt Width, Height */
 #define ITE8181_GUI_BSO		0x10	/* BitBlt Screen Offset */
-#define ITE8181_GUI_FCR		0x14	/* ForeGround Color Reg. */
-#define ITE8181_GUI_BCR		0x18	/* BackGround Color Reg. */
+#define ITE8181_GUI_FCR		0x14	/* Foreground Color Reg. */
+#define ITE8181_GUI_BCR		0x18	/* Background Color Reg. */
 #define ITE8181_GUI_BC		0x1c	/* BitBlt Control */
 #define ITE8181_GUI_BS		0x20	/* BitBlt Status */
 #define ITE8181_GUI_ASDS	0x24	/* Line Draw Axial Step, Diagonal Step */
@@ -114,7 +114,7 @@
 #define 	ITE8181_EMA_DISABLEPASS	0xce	/* EMA disable passwd(w) */
 #define 	ITE8181_EMA_ENABLED	0x01	/* EMA enabled (r) */
 
-/* ITE8181 LCD Controller Timming Reg. */
+/* ITE8181 LCD Controller Timing Reg. */
 #define ITE8181_EMA_HSIZE	0x80	/* LCD Controller H size Reg. */
 #define ITE8181_EMA_HALIGN	0x81	/* LCD H Align Adjust Reg. */
 #define ITE8181_EMA_HRETRACE	0x82	/* LCD H Retrace Adjust Reg. */
@@ -128,7 +128,7 @@
 #define ITE8181_EMA_VALIGNA	0x8a	/* LCD V Align Adjust Reg A(350) */
 #define ITE8181_EMA_VALIGNB	0x8b	/* LCD V Align Adjust Reg B(400) */
 #define ITE8181_EMA_VALIGNC	0x8c	/* LCD V Align Adjust Reg C(>=480) */
-#define ITE8181_EMA_VRETRACE	0x8d	/* LCD V Retrace adjusr Reg. */
+#define ITE8181_EMA_VRETRACE	0x8d	/* LCD V Retrace Adjust Reg. */
 #define ITE8181_EMA_VOVERFLOW	0x8e	/* LCD V Adjust Overflow Reg. */
 
 /* ITE8181 LCD Controller Reg. */
