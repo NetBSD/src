@@ -1,30 +1,30 @@
-make: "varmod-edge.mk" line 185: ok M-paren
-make: "varmod-edge.mk" line 185: ok M-mixed
-make: "varmod-edge.mk" line 185: ok M-unescape
+make: "varmod-edge.mk" line 186: ok M-paren
+make: "varmod-edge.mk" line 186: ok M-mixed
+make: "varmod-edge.mk" line 186: ok M-unescape
 make: Unclosed expression, expecting '}' for modifier "U*)" of variable "" with value "*)"
-make: "varmod-edge.mk" line 185: ok M-nest-mix
-make: "varmod-edge.mk" line 185: ok M-nest-brk
-make: "varmod-edge.mk" line 185: ok M-pat-err
-make: "varmod-edge.mk" line 185: ok M-bsbs
-make: "varmod-edge.mk" line 185: ok M-bs1-par
-make: "varmod-edge.mk" line 185: ok M-bs2-par
-make: "varmod-edge.mk" line 185: ok M-128
-make: "varmod-edge.mk" line 185: ok eq-ext
-make: "varmod-edge.mk" line 185: ok eq-q
-make: "varmod-edge.mk" line 185: ok eq-bs
+make: "varmod-edge.mk" line 186: ok M-nest-mix
+make: "varmod-edge.mk" line 186: ok M-nest-brk
+make: "varmod-edge.mk" line 186: ok M-pat-err
+make: "varmod-edge.mk" line 186: ok M-bsbs
+make: "varmod-edge.mk" line 186: ok M-bs1-par
+make: "varmod-edge.mk" line 186: ok M-bs2-par
+make: "varmod-edge.mk" line 186: ok M-128
+make: "varmod-edge.mk" line 186: ok eq-ext
+make: "varmod-edge.mk" line 186: ok eq-q
+make: "varmod-edge.mk" line 186: ok eq-bs
 make: "varmod-edge.mk" line 168: while evaluating variable "MOD.eq-esc" with value "${INP.eq-esc:a\=b}": while evaluating variable "INP.eq-esc" with value "file.c file...": Unfinished modifier ('=' missing)
 	in .for loop from varmod-edge.mk:164 with test = eq-esc
-make: "varmod-edge.mk" line 185: ok eq-esc
-make: "varmod-edge.mk" line 185: ok colon
+make: "varmod-edge.mk" line 186: ok eq-esc
+make: "varmod-edge.mk" line 186: ok colon
 make: "varmod-edge.mk" line 168: while evaluating variable "MOD.colons" with value "${INP.colons::::}": while evaluating variable "INP.colons" with value "value": Unknown modifier ":"
 	in .for loop from varmod-edge.mk:164 with test = colons
 make: "varmod-edge.mk" line 168: while evaluating variable "MOD.colons" with value "${INP.colons::::}": while evaluating variable "INP.colons" with value "": Unknown modifier ":"
 	in .for loop from varmod-edge.mk:164 with test = colons
-make: "varmod-edge.mk" line 185: ok colons
-make: "varmod-edge.mk" line 196: while evaluating "${:Z}": Unknown modifier "Z"
-make: "varmod-edge.mk" line 196: Malformed conditional (${:Z})
-make: "varmod-edge.mk" line 210: while evaluating "${:S,}": Unfinished modifier (',' missing)
-make: "varmod-edge.mk" line 210: Malformed conditional (${:S,})
+make: "varmod-edge.mk" line 186: ok colons
+make: "varmod-edge.mk" line 197: while evaluating "${:Z}": Unknown modifier "Z"
+make: "varmod-edge.mk" line 197: Malformed conditional (${:Z})
+make: "varmod-edge.mk" line 211: while evaluating "${:S,}": Unfinished modifier (',' missing)
+make: "varmod-edge.mk" line 211: Malformed conditional (${:S,})
 make: Fatal errors encountered -- cannot continue
 make: stopped making "all" in unit-tests
 exit status 1
