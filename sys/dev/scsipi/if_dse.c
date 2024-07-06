@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dse.c,v 1.5 2024/01/01 22:29:48 gutteridge Exp $ */
+/*	$NetBSD: if_dse.c,v 1.6 2024/07/06 10:37:33 andvar Exp $ */
 
 /*
  * Driver for DaynaPORT SCSI/Link SCSI-Ethernet
@@ -1364,7 +1364,7 @@ dseopen(dev_t dev, int flag, int fmt, struct lwp *l)
 
 /*
  * close the device.. only called if we are the LAST
- * occurence of an open device
+ * occurrence of an open device
  */
 int
 dseclose(dev_t dev, int flag, int fmt, struct lwp *l)
