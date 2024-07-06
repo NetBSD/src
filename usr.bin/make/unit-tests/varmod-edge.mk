@@ -1,4 +1,4 @@
-# $NetBSD: varmod-edge.mk,v 1.27 2024/07/06 10:36:23 rillig Exp $
+# $NetBSD: varmod-edge.mk,v 1.28 2024/07/06 11:09:17 rillig Exp $
 #
 # Tests for edge cases in variable modifiers.
 #
@@ -74,8 +74,8 @@ EXP=	[
 .  warning expected "${EXP}", got "${MOD}"
 .endif
 
+
 # The pattern in the nested variable has an unclosed character class.
-# No error is reported though, and the pattern is closed implicitly.
 #
 # Before str.c 1.104 from 2024-07-06, no error was reported.
 #
