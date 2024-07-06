@@ -1,4 +1,4 @@
-# $NetBSD: varmod-edge.mk,v 1.26 2024/07/06 10:14:35 rillig Exp $
+# $NetBSD: varmod-edge.mk,v 1.27 2024/07/06 10:36:23 rillig Exp $
 #
 # Tests for edge cases in variable modifiers.
 #
@@ -77,14 +77,14 @@ EXP=	[
 # The pattern in the nested variable has an unclosed character class.
 # No error is reported though, and the pattern is closed implicitly.
 #
-# XXX: It is unexpected that no error is reported.
-# See str.c, function Str_Match.
+# Before str.c 1.104 from 2024-07-06, no error was reported.
 #
 # Before 2019-12-02, this test case triggered an out-of-bounds read
 # in Str_Match.
 INP=	[ [[ [[[
 MOD=	${INP:M${:U[[}}
 EXP=	[
+# expect+1: warning: while evaluating variable "MOD" with value "${INP:M${:U[[}}": while evaluating variable "INP" with value "[ [[ [[[": Unfinished character list in pattern '[[' of modifier ':M'
 .if ${MOD} != ${EXP}
 .  warning expected "${EXP}", got "${MOD}"
 .endif

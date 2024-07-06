@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.103 2024/04/14 15:21:20 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.104 2024/07/06 10:36:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.103 2024/04/14 15:21:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.104 2024/07/06 10:36:23 rillig Exp $");
 
 
 static HashTable interned_strings;
@@ -356,8 +356,10 @@ match_fixed_length:
 				goto no_match;
 			while (*pat != ']' && *pat != '\0')
 				pat++;
-			if (*pat == '\0')
+			if (*pat == '\0') {
+				res.error = "Unfinished character list";
 				pat--;
+			}
 			continue;
 		}
 
