@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.627 2024/07/05 05:11:25 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.628 2024/07/06 21:35:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.627 2024/07/05 05:11:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.628 2024/07/06 21:35:48 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -2084,8 +2084,7 @@ PrintOnError(GNode *gn, const char *msg)
 			printf("%s", (const char *)ln->datum);
 			for (ln = ln->next; ln != NULL; ln = ln->next)
 				printf(" %s", (const char *)ln->datum);
-		}
-		if (opts.create.first == NULL && mainNode != NULL)
+		} else
 			printf("%s", mainNode->name);
 		printf("\"");
 	}
