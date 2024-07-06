@@ -1,4 +1,4 @@
-/*	$NetBSD: dptivar.h,v 1.10 2021/11/01 21:28:03 andvar Exp $	*/
+/*	$NetBSD: dptivar.h,v 1.11 2024/07/06 10:09:15 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -217,7 +217,7 @@ struct dpt_sysinfo {
 	u_int8_t	osMinorVersion;         /* The OS version */
 	u_int8_t	osRevision;
 	u_int8_t	osSubRevision;
-	u_int8_t	busType;                /* See defininitions above */
+	u_int8_t	busType;                /* See definitions above */
 	u_int8_t	pad[3];                 /* For alignment */
 	struct	dpt_dparam drives[16];		/* SmartROM Logical Drives */
 };

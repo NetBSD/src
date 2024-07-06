@@ -1,5 +1,5 @@
 /* $KAME: sctp6_usrreq.c,v 1.38 2005/08/24 08:08:56 suz Exp $ */
-/* $NetBSD: sctp6_usrreq.c,v 1.25 2024/07/05 04:31:54 rin Exp $ */
+/* $NetBSD: sctp6_usrreq.c,v 1.26 2024/07/06 10:09:15 andvar Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.25 2024/07/05 04:31:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.26 2024/07/06 10:09:15 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -495,7 +495,7 @@ sctp6_ctlinput(int cmd, const struct sockaddr *pktdst, void *d)
 }
 
 /*
- * this routine can probably be collasped into the one in sctp_userreq.c
+ * this routine can probably be collapsed into the one in sctp_userreq.c
  * since they do the same thing and now we lookup with a sockaddr
  */
 #ifdef __FreeBSD__
@@ -887,8 +887,8 @@ sctp6_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 		 * note with the current version this code will only be
 		 * used by OpenBSD, NetBSD and FreeBSD have methods for
 		 * re-defining sosend() to use sctp_sosend().  One can
-		 * optionaly switch back to this code (by changing back
-		 * the defininitions but this is not advisable.
+		 * optionally switch back to this code (by changing back
+		 * the definitions but this is not advisable.
 		 */
 		int ret;
 		ret = sctp_output(inp, inp->pkt , nam, inp->control, l, 0);

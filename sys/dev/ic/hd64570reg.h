@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570reg.h,v 1.12 2024/05/14 19:00:44 andvar Exp $	*/
+/*	$NetBSD: hd64570reg.h,v 1.13 2024/07/06 10:09:15 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -79,7 +79,7 @@ struct hdlc_llc_header {
 };
 
 /*
- * Hitachi HD64570  defininitions
+ * Hitachi HD64570  definitions
  */
 
 /*  SCA Control Registers  */
