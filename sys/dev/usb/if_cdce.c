@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.81 2022/03/03 05:56:28 riastradh Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.82 2024/07/06 07:09:22 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.81 2022/03/03 05:56:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.82 2024/07/06 07:09:22 mlelstv Exp $");
 
 #include <sys/param.h>
 
@@ -251,6 +251,9 @@ cdce_attach(device_t parent, device_t self, void *aux)
 	usbnet_attach(un);
 	usbnet_attach_ifp(un, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
             0, NULL);
+
+	/* XXX There is no link state, pretend we are always on */
+	if_link_state_change(usbnet_ifp(un), LINK_STATE_UP);
 }
 
 static void
