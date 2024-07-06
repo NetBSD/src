@@ -1,4 +1,4 @@
-# $NetBSD: directive-for-escape.mk,v 1.26 2024/07/05 19:47:22 rillig Exp $
+# $NetBSD: directive-for-escape.mk,v 1.27 2024/07/06 10:14:35 rillig Exp $
 #
 # Test escaping of special characters in the iteration values of a .for loop.
 # These values get expanded later using the :U variable modifier, and this
@@ -44,30 +44,30 @@ ASCII.2020-12-31=	!"\\\#$$%&'()*+,-./0-9:;<=>?@A-Z[\]_^a-z{|}~
 V=		value
 VALUES=		$$ $${V} $${V:=-with-modifier} $$(V) $$(V:=-with-modifier)
 .for i in ${VALUES}
+# expect: .  info ${:U\$}
+# expect+9: $
+# expect: .  info ${:U${V}}
+# expect+7: value
+# expect: .  info ${:U${V:=-with-modifier}}
+# expect+5: value-with-modifier
+# expect: .  info ${:U$(V)}
+# expect+3: value
+# expect: .  info ${:U$(V:=-with-modifier)}
+# expect+1: value-with-modifier
 .  info $i
 .endfor
-# expect: .  info ${:U\$}
-# expect-3: $
-# expect: .  info ${:U${V}}
-# expect-5: value
-# expect: .  info ${:U${V:=-with-modifier}}
-# expect-7: value-with-modifier
-# expect: .  info ${:U$(V)}
-# expect-9: value
-# expect: .  info ${:U$(V:=-with-modifier)}
-# expect-11: value-with-modifier
 #
 # Providing the loop items directly has the same effect.
 .for i in $$ $${V} $${V:=-with-modifier} $$(V) $$(V:=-with-modifier)
+# expect: .  info ${:U\$}
+# expect+6: $
+# expect: .  info ${:U${V}}
+# expect+4: value
+# expect+3: value-with-modifier
+# expect+2: value
+# expect+1: value-with-modifier
 .  info $i
 .endfor
-# expect: .  info ${:U\$}
-# expect-3: $
-# expect: .  info ${:U${V}}
-# expect-5: value
-# expect-6: value-with-modifier
-# expect-7: value
-# expect-8: value-with-modifier
 
 # Try to cover the code for nested '{}' in ExprLen, without success.
 #
@@ -114,12 +114,11 @@ VALUES=		$${UNDEF:U\$$\$$ {{}} end}
 # To make the expression '$\' visible, define it to an actual word:
 ${:U\\}=	backslash
 .for i in ${VALUES}
+# expect+3: ${UNDEF:U\backslash$
+# expect+2: {{}}
+# expect+1: end}
 .  info $i
 .endfor
-#
-# expect-3: ${UNDEF:U\backslash$
-# expect-4: {{}}
-# expect-5: end}
 #
 # FIXME: There was no expression '$\' in the original text of the variable
 # 'VALUES', that's a surprise in the parser.
@@ -135,18 +134,18 @@ ${:U\\}=	backslash
 # Var_Parse do all the parsing work.
 VALUES=		begin<$${UNDEF:Ufallback:N{{{}}}}>end
 .for i in ${VALUES}
+# expect+1: begin<fallback>end
 .  info $i
 .endfor
-# expect-2: begin<fallback>end
 
 # A single trailing dollar doesn't happen in practice.
 # The dollar sign is correctly passed through to the body of the .for loop.
 # There, it is expanded by the .info directive, but even there a trailing
 # dollar sign is kept as-is.
 .for i in ${:U\$}
+# expect+1: $
 .  info ${i}
 .endfor
-# expect-2: $
 
 # Before for.c 1.173 from 2023-05-08, the name of the iteration variable
 # could contain colons, which affected expressions having this exact
@@ -172,27 +171,27 @@ i=		outer
 i2=		two
 i,=		comma
 .for i in inner
+# expect+1: .        $i: inner
 .  info .        $$i: $i
+# expect+1: .      ${i}: inner
 .  info .      $${i}: ${i}
+# expect+1: .   ${i:M*}: inner
 .  info .   $${i:M*}: ${i:M*}
+# expect+1: .      $(i): inner
 .  info .      $$(i): $(i)
+# expect+1: .   $(i:M*): inner
 .  info .   $$(i:M*): $(i:M*)
+# expect+1: . ${i${:U}}: outer
 .  info . $${i$${:U}}: ${i${:U}}
+# expect+1: .    ${i\}}: inner}
 .  info .    $${i\}}: ${i\}}	# XXX: unclear why ForLoop_SubstVarLong needs this
+# expect+1: .     ${i2}: two
 .  info .     $${i2}: ${i2}
+# expect+1: .     ${i,}: comma
 .  info .     $${i,}: ${i,}
+# expect+1: .  adjacent: innerinnerinnerinner
 .  info .  adjacent: $i${i}${i:M*}$i
 .endfor
-# expect-11: .        $i: inner
-# expect-11: .      ${i}: inner
-# expect-11: .   ${i:M*}: inner
-# expect-11: .      $(i): inner
-# expect-11: .   $(i:M*): inner
-# expect-11: . ${i${:U}}: outer
-# expect-11: .    ${i\}}: inner}
-# expect-11: .     ${i2}: two
-# expect-11: .     ${i,}: comma
-# expect-11: .  adjacent: innerinnerinnerinner
 
 # Before for.c 1.173 from 2023-05-08, the variable name could be a single '$'
 # since there was no check on valid variable names.  ForLoop_SubstVarShort
@@ -226,13 +225,12 @@ ${closing-brace}=	<closing-brace>	# alternative interpretation
 # expect+2: newline in .for value
 # expect+1: newline in .for value
 .for i in "${.newline}"
+# expect+1: short: " "
 .  info short: $i
+# expect+1: long: " "
 .  info long: ${i}
 .endfor
-# expect-3: short: " "
-# expect-3: long: " "
-
-# No error since the newline character is not actually used.
+# No error since the newline character is not actually used in the body.
 .for i in "${.newline}"
 .endfor
 

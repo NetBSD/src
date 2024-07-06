@@ -1,4 +1,4 @@
-# $NetBSD: directive-for-errors.mk,v 1.12 2024/07/05 19:47:22 rillig Exp $
+# $NetBSD: directive-for-errors.mk,v 1.13 2024/07/06 10:14:35 rillig Exp $
 #
 # Tests for error handling in .for loops.
 
@@ -7,10 +7,10 @@
 # in a parse error.
 # expect+1: Unknown directive "fori"
 .fori in 1 2 3
+# expect+1: warning: <>
 .  warning <${i}>
+# expect+1: for-less endfor
 .endfor
-# expect-2: warning: <>
-# expect-2: for-less endfor
 
 
 # A slash is not whitespace, therefore this is not parsed as a .for loop.
@@ -23,10 +23,10 @@
 # name is parsed a bit differently.
 # expect+1: Unknown directive "for"
 .for/i in 1 2 3
+# expect+1: warning: <>
 .  warning <${i}>
+# expect+1: for-less endfor
 .endfor
-# expect-2: warning: <>
-# expect-2: for-less endfor
 
 
 # Before for.c 1.173 from 2023-05-08, the variable name could be an arbitrary
@@ -87,8 +87,8 @@ ${:U\\}=	backslash	# see whether the "variable" '\' is local
 # the loop body is expanded as if no error had happened.
 # expect+1: while evaluating "${:U3:Z} 4" with value "3": Unknown modifier "Z"
 .for i in 1 2 ${:U3:Z} 4
+# expect+3: warning: Should not be reached.
+# expect+2: warning: Should not be reached.
+# expect+1: warning: Should not be reached.
 .  warning Should not be reached.
 .endfor
-# expect-2: warning: Should not be reached.
-# expect-3: warning: Should not be reached.
-# expect-4: warning: Should not be reached.
