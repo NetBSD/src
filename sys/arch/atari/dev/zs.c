@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.81 2023/01/06 10:28:28 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.82 2024/07/06 10:09:15 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.81 2023/01/06 10:28:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.82 2024/07/06 10:09:15 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,7 +330,7 @@ zsattach(device_t parent, device_t self, void *aux)
 
 	if (machineid & ATARI_TT) {
 		/*
-		 * ininitialise TT-MFP timer C: 307200Hz
+		 * initialise TT-MFP timer C: 307200Hz
 		 * timer C and D share one control register:
 		 *	bits 0-2 control timer D
 		 *	bits 4-6 control timer C
