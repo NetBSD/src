@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.220 2024/07/05 05:11:25 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.221 2024/07/07 07:50:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.220 2024/07/05 05:11:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.221 2024/07/07 07:50:57 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -949,18 +949,18 @@ Arch_Init(void)
 	Lst_Init(&archives);
 }
 
+#ifdef CLEANUP
 /* Clean up the archives module. */
 void
 Arch_End(void)
 {
-#ifdef CLEANUP
 	ArchListNode *ln;
 
 	for (ln = archives.first; ln != NULL; ln = ln->next)
 		ArchFree(ln->datum);
 	Lst_Done(&archives);
-#endif
 }
+#endif
 
 bool
 Arch_IsLib(GNode *gn)
