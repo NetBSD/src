@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 2023/07/30 09:22:02 riastradh Exp $
+# $NetBSD: Makefile,v 1.22 2024/07/07 17:37:33 riastradh Exp $
 #
 
 NOMAN=		# defined
@@ -28,9 +28,21 @@ SUBDIR+=	helper_use_static
 TESTSDIR=	${TESTSBASE}/libexec/ld.elf_so
 
 TESTS_C+=	t_dlerror-cleared t_dlerror-false t_dlinfo t_dlvsym t_ifunc
+TESTS_C+=	t_ifunc_now
+TESTS_C+=	t_ifunc_norelro
+TESTS_C+=	t_ifunc_norelro_now
 TESTS_C+=	t_rtld_r_debug
 TESTS_C+=	t_tls_extern
 TESTS_C+=	t_hash
+
+SRCS.t_ifunc_now=		t_ifunc.c
+SRCS.t_ifunc_norelro=		t_ifunc.c
+SRCS.t_ifunc_norelro_now=	t_ifunc.c
+
+LDADD.t_ifunc+=			-Wl,-z,relro
+LDADD.t_ifunc_now+=		-Wl,-z,relro -Wl,-z,now
+LDADD.t_ifunc_norelro+=		-Wl,-z,norelro
+LDADD.t_ifunc_norelro_now+=	-Wl,-z,norelro -Wl,-z,now
 
 .PATH:	${NETBSDSRCDIR}/libexec/ld.elf_so
 SRCS.t_hash+=	t_hash.c
@@ -41,8 +53,10 @@ COPTS.t_rtld_r_debug.c += ${CC_WNO_MAYBE_UNINITIALIZED}
 
 LDADD.t_dlerror-false=	-Wl,-rpath,/var/nonexistent/lib
 LDADD.t_dlvsym=		-Wl,-rpath,${TESTSDIR}/h_helper_symver_dso2
-LDADD.t_ifunc=		-Wl,-rpath,${TESTSDIR} -lutil
-DPADD.t_ifunc=		${LIBUTIL}
+.for t in t_ifunc t_ifunc_now t_ifunc_norelro t_ifunc_norelro_now
+LDADD.${t}+=		-Wl,-rpath,${TESTSDIR} -lutil
+DPADD.${t}+=		${LIBUTIL}
+.endfor
 LDADD.t_tls_extern+=	-Wl,-rpath,${TESTSDIR}
 
 TESTS_SH+=		t_df_1_noopen t_dl_symver t_thread_local_dtor

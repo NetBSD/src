@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1325 2024/07/01 21:24:05 rillig Exp $
+# $NetBSD: mi,v 1.1326 2024/07/07 17:37:33 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4228,6 +4228,9 @@
 ./usr/tests/libexec/ld.elf_so/t_dlvsym			tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/t_hash			tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/t_ifunc			tests-libexec-tests	compattestfile,atf,pic
+./usr/tests/libexec/ld.elf_so/t_ifunc_norelro		tests-libexec-tests	compattestfile,atf,pic
+./usr/tests/libexec/ld.elf_so/t_ifunc_norelro_now	tests-libexec-tests	compattestfile,atf,pic
+./usr/tests/libexec/ld.elf_so/t_ifunc_now		tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/t_rtld_r_debug		tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/t_thread_local_dtor	tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/t_tls_extern		tests-libexec-tests	compattestfile,atf,pic
