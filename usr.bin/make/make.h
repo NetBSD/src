@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.340 2024/07/05 05:11:25 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.341 2024/07/07 07:50:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -788,7 +788,9 @@ extern char **environ;
 
 /* arch.c */
 void Arch_Init(void);
+#ifdef CLEANUP
 void Arch_End(void);
+#endif
 
 bool Arch_ParseArchive(char **, GNodeList *, GNode *);
 void Arch_Touch(GNode *);
@@ -860,7 +862,9 @@ bool GetBooleanExpr(const char *, bool);
 
 /* parse.c */
 void Parse_Init(void);
+#ifdef CLEANUP
 void Parse_End(void);
+#endif
 
 void PrintLocation(FILE *, bool, const GNode *);
 void PrintStackTrace(bool);
@@ -878,7 +882,9 @@ void Parse_GuardEndif(void);
 
 /* suff.c */
 void Suff_Init(void);
+#ifdef CLEANUP
 void Suff_End(void);
+#endif
 
 void Suff_ClearSuffixes(void);
 bool Suff_IsTransform(const char *) MAKE_ATTR_USE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.479 2024/07/05 05:11:25 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.480 2024/07/07 07:50:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -141,7 +141,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.479 2024/07/05 05:11:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.480 2024/07/07 07:50:57 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -2585,14 +2585,14 @@ Job_Finish(void)
 	return job_errors;
 }
 
+#ifdef CLEANUP
 /* Clean up any memory used by the jobs module. */
 void
 Job_End(void)
 {
-#ifdef CLEANUP
 	free(shell_freeIt);
-#endif
 }
+#endif
 
 /*
  * Waits for all running jobs to finish and returns.

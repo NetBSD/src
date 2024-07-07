@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.732 2024/07/04 17:47:53 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.733 2024/07/07 07:50:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.732 2024/07/04 17:47:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.733 2024/07/07 07:50:57 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -2974,11 +2974,11 @@ Parse_Init(void)
 	HashTable_Init(&guards);
 }
 
+#ifdef CLEANUP
 /* Clean up the parsing module. */
 void
 Parse_End(void)
 {
-#ifdef CLEANUP
 	HashIter hi;
 
 	Lst_DoneFree(&targCmds);
@@ -2995,8 +2995,8 @@ Parse_End(void)
 		free(guard);
 	}
 	HashTable_Done(&guards);
-#endif
 }
+#endif
 
 
 /* Populate the list with the single main target to create, or error out. */
