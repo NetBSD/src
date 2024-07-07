@@ -1,4 +1,4 @@
-/*	$NetBSD: t_faccessat.c,v 1.4 2024/07/07 14:27:47 christos Exp $ */
+/*	$NetBSD: t_faccessat.c,v 1.5 2024/07/07 14:29:48 christos Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_faccessat.c,v 1.4 2024/07/07 14:27:47 christos Exp $");
+__RCSID("$NetBSD: t_faccessat.c,v 1.5 2024/07/07 14:29:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -181,7 +181,7 @@ ATF_TC_BODY(faccessat_abs, tc)
 {
 	int fd;
 	char cwd[MAXPATHLEN];
-	char abs_path[MAXPATHLEN];
+	char abs_path[MAXPATHLEN * 2];
 
 	ATF_REQUIRE(mkdir(DIR, 0755) == 0);
 	ATF_REQUIRE((fd = open(FILE, O_CREAT|O_RDWR, 0644)) != -1);
@@ -203,7 +203,7 @@ ATF_TC_BODY(faccessat_abs_fddir, tc)
 {
 	int dfd;
 	char cwd[MAXPATHLEN];
-	char abs_path[MAXPATHLEN];
+	char abs_path[MAXPATHLEN * 2];
 
 	ATF_REQUIRE(mkdir(DIR, 0755) == 0);
 	ATF_REQUIRE((dfd = open(DIR, O_RDONLY, 0)) != -1);
@@ -224,7 +224,7 @@ ATF_TC_HEAD(faccessat_abs_fdcwd, tc)
 ATF_TC_BODY(faccessat_abs_fdcwd, tc)
 {
 	char cwd[MAXPATHLEN];
-	char abs_path[MAXPATHLEN];
+	char abs_path[MAXPATHLEN * 2];
 
 	ATF_REQUIRE(mkdir(DIR, 0755) == 0);
 
