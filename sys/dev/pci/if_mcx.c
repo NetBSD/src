@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcx.c,v 1.28 2024/07/05 04:31:51 rin Exp $ */
+/*	$NetBSD: if_mcx.c,v 1.29 2024/07/07 23:29:04 msaitoh Exp $ */
 /*	$OpenBSD: if_mcx.c,v 1.101 2021/06/02 19:16:11 patrick Exp $ */
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.28 2024/07/05 04:31:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.29 2024/07/07 23:29:04 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2678,6 +2678,7 @@ static const struct {
 	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT28800 },
 	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT28800VF },
 	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT28908 },
+	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT28908VF },
 	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT2892 },
 	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT2894 },
 };
