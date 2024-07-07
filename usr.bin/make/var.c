@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1133 2024/07/05 20:01:52 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1134 2024/07/07 09:54:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -76,10 +76,6 @@
  * expressions like ${VAR}, ${VAR:Modifiers}, ${${VARNAME}} or ${VAR:${MODS}}.
  *
  * Interface:
- *	Var_Init	Initialize this module.
- *
- *	Var_End		Clean up the module.
- *
  *	Var_Set
  *	Var_SetExpand	Set the value of the variable, creating it if
  *			necessary.
@@ -132,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1133 2024/07/05 20:01:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1134 2024/07/07 09:54:12 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4807,22 +4803,6 @@ Var_Expand(FStr *str, GNode *scope, VarEvalMode emode)
 	/* TODO: handle errors */
 	FStr_Done(str);
 	*str = FStr_InitOwn(expanded);
-}
-
-/* Initialize the variables module. */
-void
-Var_Init(void)
-{
-	SCOPE_INTERNAL = GNode_New("Internal");
-	SCOPE_GLOBAL = GNode_New("Global");
-	SCOPE_CMDLINE = GNode_New("Command");
-}
-
-/* Clean up the variables module. */
-void
-Var_End(void)
-{
-	Var_Stats();
 }
 
 void

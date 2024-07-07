@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.341 2024/07/07 07:50:57 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.342 2024/07/07 09:54:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -931,8 +931,6 @@ void Parse_RegisterCommand(char *cmd MAKE_ATTR_UNUSED)
 #endif
 
 /* var.c */
-void Var_Init(void);
-void Var_End(void);
 
 typedef enum VarEvalMode {
 

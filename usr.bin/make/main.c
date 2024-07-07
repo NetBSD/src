@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.629 2024/07/07 07:50:57 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.630 2024/07/07 09:54:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.629 2024/07/07 07:50:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.630 2024/07/07 09:54:12 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1342,7 +1342,6 @@ main_Init(int argc, char **argv)
 
 	/* Just in case MAKEOBJDIR wants us to do something tricky. */
 	Targ_Init();
-	Var_Init();
 	Global_Set_ReadOnly(".MAKE.OS", utsname.sysname);
 	Global_Set("MACHINE", machine);
 	Global_Set("MACHINE_ARCH", machine_arch);
@@ -1581,15 +1580,15 @@ main_CleanUp(void)
 	if (opts.enterFlag)
 		printf("%s: Leaving directory `%s'\n", progname, curdir);
 
+	Var_Stats();
+	Targ_Stats();
+
 #ifdef USE_META
 	meta_finish();
 #endif
 #ifdef CLEANUP
 	Suff_End();
-#endif
-	Var_End();
 	Targ_End();
-#ifdef CLEANUP
 	Arch_End();
 	Parse_End();
 	Dir_End();
