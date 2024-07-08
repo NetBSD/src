@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.12 2024/07/01 04:03:04 mrg Exp $
+# $NetBSD: ad.aarch64,v 1.13 2024/07/08 22:35:09 christos Exp $
 ./usr/lib/eabi/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabi/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabi/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -472,7 +472,7 @@
 ./usr/libdata/debug/usr/lib/eabi/libskey.so.2.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libsl.so.7.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libsqlite3.so.1.5.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabi/libssh.so.46.1.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabi/libssh.so.47.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libssl.so.15.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libstdc++.so.9.0.debug	comp-sys-debug	debug,compat,gcc,cxx,libstdcxx
 ./usr/libdata/debug/usr/lib/eabi/libterminfo.so.2.0.debug	comp-sys-debug	debug,compat
@@ -652,7 +652,7 @@
 ./usr/libdata/debug/usr/lib/eabihf/libskey.so.2.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libsl.so.7.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libsqlite3.so.1.5.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabihf/libssh.so.46.1.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabihf/libssh.so.47.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libssl.so.15.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libstdc++.so.9.0.debug	comp-sys-debug	debug,compat,gcc,cxx,libstdcxx
 ./usr/libdata/debug/usr/lib/eabihf/libterminfo.so.2.0.debug	comp-sys-debug	debug,compat

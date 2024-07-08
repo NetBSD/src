@@ -1,4 +1,4 @@
-# $NetBSD: ad.mipsn64el,v 1.11 2024/07/01 04:03:04 mrg Exp $
+# $NetBSD: ad.mipsn64el,v 1.12 2024/07/08 22:35:08 christos Exp $
 ./lib/n32					base-compat-shlib	compat
 ./lib/n32/npf					base-compat-shlib	compat,npf
 ./lib/n32/npf/ext_log.so			base-compat-shlib	compat,npf
@@ -431,8 +431,8 @@
 ./usr/lib/n32/libsqlite3.so.1			base-compat-shlib	compat
 ./usr/lib/n32/libsqlite3.so.1.5		base-compat-shlib	compat
 ./usr/lib/n32/libssh.so			base-compat-shlib	compat
-./usr/lib/n32/libssh.so.46			base-compat-shlib	compat
-./usr/lib/n32/libssh.so.46.1			base-compat-shlib	compat
+./usr/lib/n32/libssh.so.47			base-compat-shlib	compat
+./usr/lib/n32/libssh.so.47.0			base-compat-shlib	compat
 ./usr/lib/n32/libssl.so			base-compat-shlib	compat
 ./usr/lib/n32/libssl.so.15			base-compat-shlib	compat
 ./usr/lib/n32/libssl.so.15.0			base-compat-shlib	compat
@@ -944,8 +944,8 @@
 ./usr/lib/o32/libsqlite3.so.1			base-compat-shlib	compat
 ./usr/lib/o32/libsqlite3.so.1.5		base-compat-shlib	compat
 ./usr/lib/o32/libssh.so			base-compat-shlib	compat
-./usr/lib/o32/libssh.so.46			base-compat-shlib	compat
-./usr/lib/o32/libssh.so.46.1			base-compat-shlib	compat
+./usr/lib/o32/libssh.so.47			base-compat-shlib	compat
+./usr/lib/o32/libssh.so.47.0			base-compat-shlib	compat
 ./usr/lib/o32/libssl.so			base-compat-shlib	compat
 ./usr/lib/o32/libssl.so.15			base-compat-shlib	compat
 ./usr/lib/o32/libssl.so.15.0			base-compat-shlib	compat

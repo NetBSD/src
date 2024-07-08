@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.9 2024/07/01 04:03:04 mrg Exp $
+# $NetBSD: ad.aarch64,v 1.10 2024/07/08 22:35:08 christos Exp $
 ./lib/eabi					base-compat-shlib	compat
 ./lib/eabi/npf					base-compat-shlib	compat,npf
 ./lib/eabi/npf/ext_log.so			base-compat-shlib	compat,npf
@@ -435,8 +435,8 @@
 ./usr/lib/eabi/libsqlite3.so.1			base-compat-shlib	compat
 ./usr/lib/eabi/libsqlite3.so.1.5		base-compat-shlib	compat
 ./usr/lib/eabi/libssh.so			base-compat-shlib	compat
-./usr/lib/eabi/libssh.so.46			base-compat-shlib	compat
-./usr/lib/eabi/libssh.so.46.1			base-compat-shlib	compat
+./usr/lib/eabi/libssh.so.47			base-compat-shlib	compat
+./usr/lib/eabi/libssh.so.47.0			base-compat-shlib	compat
 ./usr/lib/eabi/libssl.so			base-compat-shlib	compat
 ./usr/lib/eabi/libssl.so.15			base-compat-shlib	compat
 ./usr/lib/eabi/libssl.so.15.0			base-compat-shlib	compat
@@ -946,8 +946,8 @@
 ./usr/lib/eabihf/libsqlite3.so.1			base-compat-shlib	compat
 ./usr/lib/eabihf/libsqlite3.so.1.5		base-compat-shlib	compat
 ./usr/lib/eabihf/libssh.so			base-compat-shlib	compat
-./usr/lib/eabihf/libssh.so.46			base-compat-shlib	compat
-./usr/lib/eabihf/libssh.so.46.1			base-compat-shlib	compat
+./usr/lib/eabihf/libssh.so.47			base-compat-shlib	compat
+./usr/lib/eabihf/libssh.so.47.0			base-compat-shlib	compat
 ./usr/lib/eabihf/libssl.so			base-compat-shlib	compat
 ./usr/lib/eabihf/libssl.so.15			base-compat-shlib	compat
 ./usr/lib/eabihf/libssl.so.15.0			base-compat-shlib	compat

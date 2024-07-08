@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.6 2024/07/01 04:03:04 mrg Exp $
+# $NetBSD: ad.mips64eb,v 1.7 2024/07/08 22:35:08 christos Exp $
 ./lib/64/npf					base-compat-shlib	compat,npf
 ./lib/64/npf/ext_log.so			base-compat-shlib	compat,npf
 ./lib/64/npf/ext_log.so.0			base-compat-shlib	compat,npf
@@ -416,8 +416,8 @@
 ./usr/lib/64/libsqlite3.so.1			base-compat-shlib	compat
 ./usr/lib/64/libsqlite3.so.1.5		base-compat-shlib	compat
 ./usr/lib/64/libssh.so			base-compat-shlib	compat
-./usr/lib/64/libssh.so.46			base-compat-shlib	compat
-./usr/lib/64/libssh.so.46.1			base-compat-shlib	compat
+./usr/lib/64/libssh.so.47			base-compat-shlib	compat
+./usr/lib/64/libssh.so.47.0			base-compat-shlib	compat
 ./usr/lib/64/libssl.so			base-compat-shlib	compat
 ./usr/lib/64/libssl.so.15			base-compat-shlib	compat
 ./usr/lib/64/libssl.so.15.0			base-compat-shlib	compat

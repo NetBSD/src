@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.6 2024/07/01 04:03:05 mrg Exp $
+# $NetBSD: ad.mips64eb,v 1.7 2024/07/08 22:35:09 christos Exp $
 ./usr/lib/64/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/64/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/64/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -301,7 +301,7 @@
 ./usr/libdata/debug/usr/lib/64/libskey.so.2.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libsl.so.7.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libsqlite3.so.1.5.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libssh.so.46.1.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libssh.so.47.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libssl.so.15.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libstdc++.so.9.0.debug	comp-sys-debug	debug,compat,cxx,libstdcxx,gcc=10
 ./usr/libdata/debug/usr/lib/64/libstdc++.so.9.1.debug	comp-sys-debug	debug,compat,cxx,libstdcxx,gcc=12
