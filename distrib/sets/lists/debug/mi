@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.437 2024/07/07 17:37:33 riastradh Exp $
+# $NetBSD: mi,v 1.438 2024/07/08 22:35:09 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -1040,6 +1040,7 @@
 ./usr/libdata/debug/usr/libexec/ssh-keysign.debug	comp-secsh-debug	debug
 ./usr/libdata/debug/usr/libexec/ssh-pkcs11-helper.debug	comp-secsh-debug	debug
 ./usr/libdata/debug/usr/libexec/ssh-sk-helper.debug	comp-secsh-debug	debug
+./usr/libdata/debug/usr/libexec/ssh-session.debug	comp-secsh-debug	debug
 ./usr/libdata/debug/usr/libexec/telnetd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/tftp-proxy.debug	comp-pf-debug		pf,debug
 ./usr/libdata/debug/usr/libexec/tftpd.debug	comp-netutil-debug	debug

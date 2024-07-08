@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.12 2024/07/01 04:03:04 mrg Exp $
+# $NetBSD: md.amd64,v 1.13 2024/07/08 22:35:08 christos Exp $
 ./lib/i386					base-compat-shlib	compat
 ./lib/i386/npf					base-compat-shlib	compat,npf
 ./lib/i386/npf/ext_log.so			base-compat-shlib	compat,npf
@@ -426,8 +426,8 @@
 ./usr/lib/i386/libsqlite3.so.1			base-compat-shlib	compat
 ./usr/lib/i386/libsqlite3.so.1.5		base-compat-shlib	compat
 ./usr/lib/i386/libssh.so			base-compat-shlib	compat
-./usr/lib/i386/libssh.so.46			base-compat-shlib	compat
-./usr/lib/i386/libssh.so.46.1			base-compat-shlib	compat
+./usr/lib/i386/libssh.so.47			base-compat-shlib	compat
+./usr/lib/i386/libssh.so.47.0			base-compat-shlib	compat
 ./usr/lib/i386/libssl.so			base-compat-shlib	compat
 ./usr/lib/i386/libssl.so.15			base-compat-shlib	compat
 ./usr/lib/i386/libssl.so.15.0			base-compat-shlib	compat
