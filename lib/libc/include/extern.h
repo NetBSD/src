@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.29 2024/01/19 19:31:41 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.30 2024/07/08 22:14:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -65,18 +65,6 @@ char *__hldtoa(long double, const char *, int, int *, int *,  char **);
 char *__ldtoa(long double *, int, int, int *, int *, char **);
 #endif
 char *__hdtoa(double, const char *, int, int *, int *, char **);
-
-#ifndef __LIBC12_SOURCE__
-struct syslog_data;
-void	syslog_ss(int, struct syslog_data *, const char *, ...)
-    __RENAME(__syslog_ss60) __printflike(3, 4);
-void    vsyslog_ss(int, struct syslog_data *, const char *, va_list) 
-    __RENAME(__vsyslog_ss60) __printflike(3, 0); 
-void	syslogp_ss(int, struct syslog_data *, const char *, const char *, 
-    const char *, ...) __RENAME(__syslogp_ss60) __printflike(5, 0);
-void	vsyslogp_ss(int, struct syslog_data *, const char *, const char *, 
-    const char *, va_list) __RENAME(__vsyslogp_ss60) __printflike(5, 0);
-#endif
 
 void	_malloc_prefork(void);
 void	_malloc_postfork(void);
