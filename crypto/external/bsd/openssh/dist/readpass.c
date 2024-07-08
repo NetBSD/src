@@ -1,5 +1,5 @@
-/*	$NetBSD: readpass.c,v 1.18 2022/10/05 22:39:36 christos Exp $	*/
-/* $OpenBSD: readpass.c,v 1.70 2022/05/27 04:27:49 dtucker Exp $ */
+/*	$NetBSD: readpass.c,v 1.19 2024/07/08 22:33:44 christos Exp $	*/
+/* $OpenBSD: readpass.c,v 1.71 2024/03/30 04:27:44 djm Exp $ */
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readpass.c,v 1.18 2022/10/05 22:39:36 christos Exp $");
+__RCSID("$NetBSD: readpass.c,v 1.19 2024/07/08 22:33:44 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -128,8 +128,9 @@ read_passphrase(const char *prompt, int flags)
 	const char *askpass_hint = NULL, *askpass = NULL;
 	const char *s;
 
-	if ((s = getenv("DISPLAY")) != NULL)
-		allow_askpass = *s != '\0';
+	if (((s = getenv("DISPLAY")) != NULL && *s != '\0') ||
+	    ((s = getenv("WAYLAND_DISPLAY")) != NULL && *s != '\0'))
+		allow_askpass = 1;
 	if ((s = getenv(SSH_ASKPASS_REQUIRE_ENV)) != NULL) {
 		if (strcasecmp(s, "force") == 0) {
 			use_askpass = 1;
@@ -262,7 +263,7 @@ notify_start(int force_askpass, const char *fmt, ...)
 		debug3_f("cannot notify: no askpass");
 		goto out;
 	}
-	if (getenv("DISPLAY") == NULL &&
+	if (getenv("DISPLAY") == NULL && getenv("WAYLAND_DISPLAY") == NULL &&
 	    ((s = getenv(SSH_ASKPASS_REQUIRE_ENV)) == NULL ||
 	    strcmp(s, "force") != 0)) {
 		debug3_f("cannot notify: no display");

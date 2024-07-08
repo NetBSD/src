@@ -1,5 +1,5 @@
-/*	$NetBSD: servconf.h,v 1.30 2023/10/25 20:19:57 christos Exp $	*/
-/* $OpenBSD: servconf.h,v 1.160 2023/09/06 23:35:35 djm Exp $ */
+/*	$NetBSD: servconf.h,v 1.31 2024/07/08 22:33:44 christos Exp $	*/
+/* $OpenBSD: servconf.h,v 1.165 2024/06/12 22:36:00 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -32,11 +32,6 @@
 #define	PERMIT_NO_PASSWD	2
 #define	PERMIT_YES		3
 
-/* use_privsep */
-#define PRIVSEP_OFF		0
-#define PRIVSEP_ON		1
-#define PRIVSEP_NOSANDBOX	2
-
 /* PermitOpen */
 #define PERMITOPEN_ANY		0
 #define PERMITOPEN_NONE		-2
@@ -57,7 +52,6 @@
 #define PUBKEYAUTH_VERIFY_REQUIRED	(1<<1)
 
 struct ssh;
-struct fwd_perm_list;
 
 /*
  * Used to store addresses from ListenAddr directives. These may be
@@ -74,6 +68,22 @@ struct queued_listenaddr {
 struct listenaddr {
 	char *rdomain;
 	struct addrinfo *addrs;
+};
+
+#define PER_SOURCE_PENALTY_OVERFLOW_DENY_ALL	1
+#define PER_SOURCE_PENALTY_OVERFLOW_PERMISSIVE	2
+struct per_source_penalty {
+	int	enabled;
+	int	max_sources4;
+	int	max_sources6;
+	int	overflow_mode;
+	int	overflow_mode6;
+	int	penalty_crash;
+	int	penalty_grace;
+	int	penalty_authfail;
+	int	penalty_noauth;
+	int	penalty_max;
+	int	penalty_min;
 };
 
 typedef struct {
@@ -191,6 +201,8 @@ typedef struct {
 	int	per_source_max_startups;
 	int	per_source_masklen_ipv4;
 	int	per_source_masklen_ipv6;
+	char	*per_source_penalty_exempt;
+	struct per_source_penalty per_source_penalty;
 	int	max_authtries;
 	int	max_sessions;
 	char   *banner;			/* SSH-2 banner message */
@@ -209,6 +221,7 @@ typedef struct {
 	char   **authorized_keys_files;
 
 	int	use_pam;		/* Enable auth via PAM */
+	char   *pam_service_name;
 	int     none_enabled;           /* enable NONE cipher switch */
 	int     tcp_rcv_buf_poll;       /* poll tcp rcv window in autotuning kernels*/
 	int	hpn_disabled;		/* disable hpn functionality. false by default */
@@ -253,6 +266,8 @@ typedef struct {
 	u_int	num_channel_timeouts;
 
 	int	unused_connection_timeout;
+
+	char   *sshd_session_path;
 }       ServerOptions;
 
 /* Information about the incoming connection as used by Match */
@@ -317,20 +332,16 @@ TAILQ_HEAD(include_list, include_item);
 		M_CP_STRARRAYOPT(subsystem_args, num_subsystems); \
 	} while (0)
 
-struct connection_info *get_connection_info(struct ssh *, int, int);
 void	 initialize_server_options(ServerOptions *);
 void	 fill_default_server_options(ServerOptions *);
 int	 process_server_config_line(ServerOptions *, char *, const char *, int,
 	    int *, struct connection_info *, struct include_list *includes);
-void	 process_permitopen(struct ssh *ssh, ServerOptions *options);
-void	 process_channel_timeouts(struct ssh *ssh, ServerOptions *);
 void	 load_server_config(const char *, struct sshbuf *);
 void	 parse_server_config(ServerOptions *, const char *, struct sshbuf *,
 	    struct include_list *includes, struct connection_info *, int);
 void	 parse_server_match_config(ServerOptions *,
 	    struct include_list *includes, struct connection_info *);
 int	 parse_server_match_testspec(struct connection_info *, char *);
-int	 server_match_spec_complete(struct connection_info *);
 void	 servconf_merge_subsystems(ServerOptions *, ServerOptions *);
 void	 copy_set_server_options(ServerOptions *, ServerOptions *, int);
 void	 dump_config(ServerOptions *);

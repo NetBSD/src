@@ -1,3 +1,5 @@
+/*	$NetBSD: sshd-session.c,v 1.2 2024/07/08 22:33:44 christos Exp $	*/
+
 /* $OpenBSD: sshd-session.c,v 1.4 2024/06/26 23:16:52 deraadt Exp $ */
 /*
  * SSH2 implementation:
@@ -27,7 +29,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: sshd-session.c,v 1.2 2024/07/08 22:33:44 christos Exp $");
+
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/tree.h>
@@ -53,6 +59,8 @@
 #include <openssl/bn.h>
 #include <openssl/evp.h>
 #endif
+
+#include <netinet/in.h>
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -94,6 +102,23 @@
 #include "srclimit.h"
 #include "dh.h"
 
+#include "pfilter.h"
+
+#ifdef LIBWRAP
+#include <tcpd.h>
+#include <syslog.h>
+int allow_severity = LOG_INFO;
+int deny_severity = LOG_WARNING;
+#endif /* LIBWRAP */
+
+#ifdef WITH_LDAP_PUBKEY
+#include "ldapauth.h"
+#endif
+
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX MAXHOSTNAMELEN 
+#endif
+
 /* Re-exec fds */
 #define REEXEC_DEVCRYPTO_RESERVED_FD	(STDERR_FILENO + 1)
 #define REEXEC_STARTUP_PIPE_FD		(STDERR_FILENO + 2)
@@ -106,7 +131,7 @@ extern char *__progname;
 ServerOptions options;
 
 /* Name of the server configuration file. */
-char *config_file_name = _PATH_SERVER_CONFIG_FILE;
+const char *config_file_name = _PATH_SERVER_CONFIG_FILE;
 
 /*
  * Debug mode flag.  This can be set on the command line.  If debug
@@ -182,6 +207,7 @@ static void do_ssh2_kex(struct ssh *);
 static void
 grace_alarm_handler(int sig)
 {
+	pfilter_notify(1);
 	/*
 	 * Try to kill any processes that we have spawned, E.g. authorized
 	 * keys command helpers or privsep children.
@@ -611,7 +637,7 @@ notify_hostkeys(struct ssh *ssh)
 	sshbuf_free(buf);
 }
 
-static void
+__dead static void
 usage(void)
 {
 	fprintf(stderr, "%s, %s\n", SSH_VERSION, SSH_OPENSSL_VERSION);
@@ -768,6 +794,7 @@ check_ip_options(struct ssh *ssh)
 	return;
 }
 
+#ifdef __OpenBSD__
 /* Set the routing domain for this process */
 static void
 set_process_rdomain(struct ssh *ssh, const char *name)
@@ -792,6 +819,7 @@ set_process_rdomain(struct ssh *ssh, const char *name)
 		    rtable, strerror(errno));
 	debug_f("set routing domain %d (was %d)", rtable, ortable);
 }
+#endif
 
 /*
  * Main program for the daemon.
@@ -943,6 +971,16 @@ main(int ac, char **av)
 		exit(1);
 	}
 
+#ifdef WITH_LDAP_PUBKEY
+	/* ldap_options_print(&options.lpk); */
+	/* XXX initialize/check ldap connection and set *LD */
+	if (options.lpk.on) {
+	    if (options.lpk.l_conf && (ldap_parse_lconf(&options.lpk) < 0) )
+		error("[LDAP] could not parse %s", options.lpk.l_conf);
+	    if (ldap_xconnect(&options.lpk) < 0)
+		error("[LDAP] could not initialize ldap connection");
+	}
+#endif
 	debug("sshd version %s, %s", SSH_VERSION, SSH_OPENSSL_VERSION);
 
 	if (!rexeced_flag)
@@ -998,7 +1036,7 @@ main(int ac, char **av)
 		 * Signal parent that this child is at a point where
 		 * they can go away if they have a SIGHUP pending.
 		 */
-		(void)atomicio(vwrite, startup_pipe, "\0", 1);
+		(void)atomicio(vwrite, startup_pipe, __UNCONST("\0"), 1);
 	}
 
 	/* Check that options are sensible */
@@ -1122,6 +1160,8 @@ main(int ac, char **av)
 	ssh_signal(SIGQUIT, SIG_DFL);
 	ssh_signal(SIGCHLD, SIG_DFL);
 
+	pfilter_init();
+
 	/*
 	 * Register our connection.  This turns encryption off because we do
 	 * not have a key.
@@ -1226,13 +1266,29 @@ main(int ac, char **av)
 	authctxt->authenticated = 1;
 	if (startup_pipe != -1) {
 		/* signal listener that authentication completed successfully */
-		(void)atomicio(vwrite, startup_pipe, "\001", 1);
+		(void)atomicio(vwrite, startup_pipe, __UNCONST("\001"), 1);
 		close(startup_pipe);
 		startup_pipe = -1;
 	}
 
+#ifdef __OpenBSD__
 	if (options.routing_domain != NULL)
 		set_process_rdomain(ssh, options.routing_domain);
+#endif
+
+#ifdef GSSAPI
+	if (options.gss_authentication) {
+		temporarily_use_uid(authctxt->pw);
+		ssh_gssapi_storecreds();
+		restore_uid();
+	}
+#endif
+#ifdef USE_PAM
+	if (options.use_pam) {
+		do_pam_setcred();
+		do_pam_session(ssh);
+	}
+#endif
 
 	/*
 	 * In privilege separation, we fork another child and prepare
@@ -1254,6 +1310,11 @@ main(int ac, char **av)
 	ssh_packet_get_bytes(ssh, &ibytes, &obytes);
 	verbose("Transferred: sent %llu, received %llu bytes",
 	    (unsigned long long)obytes, (unsigned long long)ibytes);
+
+#ifdef USE_PAM
+	if (options.use_pam)
+		finish_pam();
+#endif /* USE_PAM */
 
 	verbose("Closing connection to %.500s port %d", remote_ip, remote_port);
 	ssh_packet_close(ssh);
@@ -1346,6 +1407,9 @@ void
 cleanup_exit(int i)
 {
 	extern int auth_attempted; /* monitor.c */
+
+	if (i == 255)
+		pfilter_notify(1);
 
 	if (the_active_state != NULL && the_authctxt != NULL) {
 		do_cleanup(the_active_state, the_authctxt);

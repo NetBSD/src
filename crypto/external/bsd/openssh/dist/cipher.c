@@ -1,5 +1,5 @@
-/*	$NetBSD: cipher.c,v 1.21 2023/12/20 17:15:20 christos Exp $	*/
-/* $OpenBSD: cipher.c,v 1.120 2023/10/10 06:49:54 tb Exp $ */
+/*	$NetBSD: cipher.c,v 1.22 2024/07/08 22:33:43 christos Exp $	*/
+/* $OpenBSD: cipher.c,v 1.121 2024/05/17 02:39:11 jsg Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: cipher.c,v 1.21 2023/12/20 17:15:20 christos Exp $");
+__RCSID("$NetBSD: cipher.c,v 1.22 2024/07/08 22:33:43 christos Exp $");
 #include <sys/types.h>
 
 #include <string.h>
@@ -403,7 +403,7 @@ cipher_crypt(struct sshcipher_ctx *cc, u_int seqnr, u_char *dest,
 		if (!EVP_CIPHER_CTX_ctrl(cc->evp, EVP_CTRL_GCM_IV_GEN,
 		    1, lastiv))
 			return SSH_ERR_LIBCRYPTO_ERROR;
-		/* set tag on decyption */
+		/* set tag on decryption */
 		if (!cc->encrypt &&
 		    !EVP_CIPHER_CTX_ctrl(cc->evp, EVP_CTRL_GCM_SET_TAG,
 		    authlen, __UNCONST(src + aadlen + len)))

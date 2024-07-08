@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-krb5.c,v 1.10 2022/02/23 19:07:20 christos Exp $	*/
+/*	$NetBSD: auth2-krb5.c,v 1.11 2024/07/08 22:33:43 christos Exp $	*/
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-krb5.c,v 1.10 2022/02/23 19:07:20 christos Exp $");
+__RCSID("$NetBSD: auth2-krb5.c,v 1.11 2024/07/08 22:33:43 christos Exp $");
 
 #include <krb5.h>
 #include <stdio.h>
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: auth2-krb5.c,v 1.10 2022/02/23 19:07:20 christos Exp $");
 
 /* import */
 extern ServerOptions options;
+extern struct authmethod_cfg methodcfg_krb5;
 
 static int
 userauth_kerberos(struct ssh *ssh, const char *method)
@@ -61,7 +62,7 @@ userauth_kerberos(struct ssh *ssh, const char *method)
 
 	tkt.data = passwd;
 	tkt.length = dlen;
-	if (PRIVSEP(auth_krb5(ssh, &tkt, &client, &reply))) {
+	if (mm_auth_krb5(ssh, &tkt, &client, &reply)) {
 		authenticated = 1;
 		if (reply.length)
 			free(reply.data);
@@ -73,8 +74,6 @@ userauth_kerberos(struct ssh *ssh, const char *method)
 }
 
 Authmethod method_kerberos = {
-	"kerberos-2@ssh.com",
-	NULL,
+	&methodcfg_krb5,
 	userauth_kerberos,
-	&options.kerberos_authentication
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: sshbuf.h,v 1.19 2023/07/26 17:58:16 christos Exp $	*/
+/*	$NetBSD: sshbuf.h,v 1.20 2024/07/08 22:33:44 christos Exp $	*/
 /*	$OpenBSD: sshbuf.h,v 1.28 2022/12/02 04:40:27 djm Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller

@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: openssh2netbsd,v 1.4 2021/04/19 14:07:36 christos Exp $
+#	$NetBSD: openssh2netbsd,v 1.5 2024/07/08 22:33:43 christos Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,7 +40,7 @@ cd "$1"
 find . -name CVS -print | xargs rm -r
 
 ### Remove Makefile and subdirs
-rm -r Makefile Makefile.inc
-rm -r ssh-add ssh scp ssh-agent sshd sftp-server ssh-keygen sftp ssh-keyscan ssh-keysign ssh-pkcs11-helper ssh-sk-helper
+rm -f Makefile Makefile.inc
+rm -fr ssh-add ssh scp ssh-agent sshd sftp-server ssh-keygen sftp ssh-keyscan ssh-keysign ssh-pkcs11-helper ssh-sk-helper sshd-session
 
 exit 0

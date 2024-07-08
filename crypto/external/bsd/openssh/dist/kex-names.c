@@ -1,3 +1,4 @@
+/*	$NetBSD: kex-names.c,v 1.2 2024/07/08 22:33:43 christos Exp $	*/
 /* $OpenBSD: kex-names.c,v 1.1 2024/05/17 00:32:32 djm Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -23,6 +24,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: kex-names.c,v 1.2 2024/07/08 22:33:43 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,7 +48,7 @@
 #include "xmalloc.h"
 
 struct kexalg {
-	char *name;
+	const char *name;
 	u_int type;
 	int ec_nid;
 	int hash_alg;

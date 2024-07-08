@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-pam.h,v 1.10 2023/10/25 20:19:57 christos Exp $	*/
+/*	$NetBSD: auth-pam.h,v 1.11 2024/07/08 22:33:43 christos Exp $	*/
 /*
  * Copyright (c) 2000 Damien Miller.  All rights reserved.
  *
@@ -32,7 +32,7 @@ void start_pam(struct ssh *);
 void finish_pam(void);
 u_int do_pam_account(void);
 void do_pam_session(struct ssh *);
-void do_pam_setcred(int );
+void do_pam_setcred(void);
 void do_pam_chauthtok(void);
 int do_pam_putenv(const char *, char *);
 char ** fetch_pam_environment(void);

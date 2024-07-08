@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.c,v 1.45 2024/06/25 16:36:54 christos Exp $	*/
-/* $OpenBSD: readconf.c,v 1.386 2024/03/04 04:13:18 djm Exp $ */
+/*	$NetBSD: readconf.c,v 1.46 2024/07/08 22:33:44 christos Exp $	*/
+/* $OpenBSD: readconf.c,v 1.387 2024/05/17 02:39:11 jsg Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readconf.c,v 1.45 2024/06/25 16:36:54 christos Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.46 2024/07/08 22:33:44 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -3475,7 +3475,7 @@ parse_ssh_uri(const char *uri, char **userp, char **hostp, int *portp)
 	return r;
 }
 
-/* XXX the following is a near-vebatim copy from servconf.c; refactor */
+/* XXX the following is a near-verbatim copy from servconf.c; refactor */
 static const char *
 fmt_multistate_int(int val, const struct multistate *m)
 {

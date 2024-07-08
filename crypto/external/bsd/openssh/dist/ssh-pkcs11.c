@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-pkcs11.c,v 1.26 2023/10/25 20:19:57 christos Exp $	*/
-/* $OpenBSD: ssh-pkcs11.c,v 1.59 2023/07/27 22:26:49 djm Exp $ */
+/*	$NetBSD: ssh-pkcs11.c,v 1.27 2024/07/08 22:33:44 christos Exp $	*/
+/* $OpenBSD: ssh-pkcs11.c,v 1.62 2024/04/02 12:22:38 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
@@ -18,7 +18,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11.c,v 1.26 2023/10/25 20:19:57 christos Exp $");
+__RCSID("$NetBSD: ssh-pkcs11.c,v 1.27 2024/07/08 22:33:44 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -1366,10 +1366,22 @@ pkcs11_rsa_generate_private_key(struct pkcs11_provider *p, CK_ULONG slotidx,
 }
 
 static int
+h2i(char c)
+{
+	if (c >= '0' && c <= '9')
+		return c - '0';
+	else if (c >= 'a' && c <= 'f')
+		return c - 'a' + 10;
+	else if (c >= 'A' && c <= 'F')
+		return c - 'A' + 10;
+	else
+		return -1;
+}
+
+static int
 pkcs11_decode_hex(const char *hex, unsigned char **dest, size_t *rlen)
 {
 	size_t	i, len;
-	char	ptr[3];
 
 	if (dest)
 		*dest = NULL;
@@ -1382,13 +1394,14 @@ pkcs11_decode_hex(const char *hex, unsigned char **dest, size_t *rlen)
 
 	*dest = xmalloc(len);
 
-	ptr[2] = '\0';
 	for (i = 0; i < len; i++) {
-		ptr[0] = hex[2 * i];
-		ptr[1] = hex[(2 * i) + 1];
-		if (!isxdigit(ptr[0]) || !isxdigit(ptr[1]))
+		int hi, low;
+
+		hi = h2i(hex[2 * i]);
+		lo = h2i(hex[(2 * i) + 1]);
+		if (hi == -1 || lo == -1)
 			return -1;
-		(*dest)[i] = (unsigned char)strtoul(ptr, NULL, 16);
+		(*dest)[i] = (hi << 4) | lo;
 	}
 
 	if (rlen)

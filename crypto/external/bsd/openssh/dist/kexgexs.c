@@ -1,5 +1,5 @@
-/*	$NetBSD: kexgexs.c,v 1.23 2023/10/25 20:19:57 christos Exp $	*/
-/* $OpenBSD: kexgexs.c,v 1.46 2023/03/29 01:07:48 dtucker Exp $ */
+/*	$NetBSD: kexgexs.c,v 1.24 2024/07/08 22:33:43 christos Exp $	*/
+/* $OpenBSD: kexgexs.c,v 1.47 2024/05/17 00:30:23 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexgexs.c,v 1.23 2023/10/25 20:19:57 christos Exp $");
+__RCSID("$NetBSD: kexgexs.c,v 1.24 2024/07/08 22:33:43 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <stdio.h>
@@ -96,7 +96,7 @@ input_kex_dh_gex_request(int type, u_int32_t seq, struct ssh *ssh)
 	}
 
 	/* Contact privileged parent */
-	kex->dh = PRIVSEP(choose_dh(min, nbits, max));
+	kex->dh = mm_choose_dh(min, nbits, max);
 	if (kex->dh == NULL) {
 		(void)sshpkt_disconnect(ssh, "no matching DH grp found");
 		r = SSH_ERR_ALLOC_FAIL;
