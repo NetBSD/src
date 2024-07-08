@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3072 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3073 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -449,3 +449,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		(from Reinhard Speyerer) [christos 20240704]
 	mcx(4): Match on ConnectX-6 virtual functions, from OpenBSD.
 		[msaitoh 20240707]
+	OpenSSH: Import 9.8. [christos 20240708]
