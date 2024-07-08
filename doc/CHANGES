@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3071 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3072 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -443,3 +443,9 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	evbarm: Add support for Ampere Altra/Altra Max platforms.
 		[jmcneill 20240630]
 	evbarm: Add NUMA awareness for ACPI based systems. [jmcneill 20240630]
+	compat_linux(8): Add linux POSIX message queue support (from
+		Ricardo Branco) [christos 20240701]
+	u3g(4): add support for Sierra Wireless MC7304 devices
+		(from Reinhard Speyerer) [christos 20240704]
+	mcx(4): Match on ConnectX-6 virtual functions, from OpenBSD.
+		[msaitoh 20240707]
