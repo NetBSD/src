@@ -1,5 +1,5 @@
-# $NetBSD: md.amd64,v 1.125 2024/07/01 04:03:04 mrg Exp $
-./usr/lib/libtsan_g.a				comp-c-debuglib		compat,debuglib,arch64,cxx,gcccmds,gcc
+# $NetBSD: md.amd64,v 1.126 2024/07/08 14:10:13 rin Exp $
+./usr/lib/libtsan_g.a				comp-c-debuglib		debuglib,arch64,cxx,gcccmds,gcc
 ./usr/lib/libx86_64_g.a				comp-c-debuglib		debuglib
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/gdbserver.debug	base-util-debug		gdb,debug
