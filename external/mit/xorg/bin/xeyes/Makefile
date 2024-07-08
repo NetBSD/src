@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2024/07/04 00:33:28 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2024/07/08 01:06:57 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,8 @@ DPADD+=	${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11} ${LIBM} \
 	${LIBXCB}
 
 CPPFLAGS+=	-DPACKAGE_STRING=\"${PACKAGE_STRING}\"
+
+COPTS.Eyes.c += -Wno-error=stack-protector
 
 .PATH:	${X11SRCDIR.${PROG}}
 .PATH:	${X11SRCDIR.${PROG}}/man
