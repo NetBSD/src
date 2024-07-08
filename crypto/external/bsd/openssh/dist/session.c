@@ -1,5 +1,5 @@
-/*	$NetBSD: session.c,v 1.39 2024/06/25 16:36:54 christos Exp $	*/
-/* $OpenBSD: session.c,v 1.337 2024/02/01 02:37:33 djm Exp $ */
+/*	$NetBSD: session.c,v 1.40 2024/07/08 22:33:44 christos Exp $	*/
+/* $OpenBSD: session.c,v 1.338 2024/05/17 00:30:24 djm Exp $ */
 
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.39 2024/06/25 16:36:54 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.40 2024/07/08 22:33:44 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -427,13 +427,6 @@ do_exec_no_pty(struct ssh *ssh, Session *s, const char *command)
 
 	session_proctitle(s);
 
-#ifdef notdef
-#if defined(USE_PAM)
-	if (options.use_pam && !use_privsep)
-		do_pam_setcred(1);
-#endif /* USE_PAM */
-#endif
-
 	/* Fork the child. */
 	switch ((pid = fork())) {
 	case -1:
@@ -552,13 +545,6 @@ do_exec_pty(struct ssh *ssh, Session *s, const char *command)
 		fatal("do_exec_pty: no session");
 	ptyfd = s->ptyfd;
 	ttyfd = s->ttyfd;
-
-#if defined(USE_PAM)
-	if (options.use_pam) {
-		if (!use_privsep)
-			do_pam_setcred(1);
-	}
-#endif
 
 	/*
 	 * Create another descriptor of the pty master side for use as the
@@ -725,8 +711,6 @@ do_login(struct ssh *ssh, Session *s, const char *command)
 {
 	socklen_t fromlen;
 	struct sockaddr_storage from;
-	struct passwd * pw = s->pw;
-	pid_t pid = getpid();
 
 	/*
 	 * Get IP address of client. If the connection is not a socket, let
@@ -741,26 +725,6 @@ do_login(struct ssh *ssh, Session *s, const char *command)
 			cleanup_exit(254);
 		}
 	}
-
-	/* Record that there was a login on that tty from the remote host. */
-	if (!use_privsep)
-		record_login(pid, s->tty, pw->pw_name, pw->pw_uid,
-		    session_get_remote_name_or_ip(ssh, utmp_len,
-		    options.use_dns),
-		    (struct sockaddr *)&from, fromlen);
-
-#ifdef USE_PAM
-	/*
-	 * If password change is needed, do it now.
-	 * This needs to occur before the ~/.hushlogin check.
-	 */
-	if (options.use_pam && !use_privsep && s->authctxt->force_pwchange) {
-		display_loginmsg();
-		do_pam_chauthtok();
-		s->authctxt->force_pwchange = 0;
-		/* XXX - signal [net] parent to enable forwardings */
-	}
-#endif
 
 	if (check_quietlogin(s, command))
 		return;
@@ -871,9 +835,10 @@ read_environment_file(char ***env, u_int *envsize,
 	fclose(f);
 }
 
-#ifdef USE_PAM
-void copy_environment(char **, char ***, u_int *);
-void copy_environment(char **source, char ***env, u_int *envsize)
+#if defined(USE_PAM) || defined(HAVE_CYGWIN)
+static void
+copy_environment_denylist(char **source, char ***env, u_int *envsize,
+    const char *denylist)
 {
 	char *var_name, *var_val;
 	int i;
@@ -881,7 +846,7 @@ void copy_environment(char **source, char ***env, u_int *envsize)
 	if (source == NULL)
 		return;
 
-	for (i = 0; source[i] != NULL; i++) {
+	for(i = 0; source[i] != NULL; i++) {
 		var_name = xstrdup(source[i]);
 		if ((var_val = strstr(var_name, "=")) == NULL) {
 			free(var_name);
@@ -889,13 +854,16 @@ void copy_environment(char **source, char ***env, u_int *envsize)
 		}
 		*var_val++ = '\0';
 
-		debug3("Copy environment: %s=%s", var_name, var_val);
-		child_set_env(env, envsize, var_name, var_val);
+		if (denylist == NULL ||
+		    match_pattern_list(var_name, denylist, 0) != 1) {
+			debug3("Copy environment: %s=%s", var_name, var_val);
+			child_set_env(env, envsize, var_name, var_val);
+		}
 
 		free(var_name);
 	}
 }
-#endif
+#endif /* defined(USE_PAM) || defined(HAVE_CYGWIN) */
 
 static char **
 do_setup_env(struct ssh *ssh, Session *s, const char *shell)
@@ -978,6 +946,31 @@ do_setup_env(struct ssh *ssh, Session *s, const char *shell)
 		    options.permit_user_env_allowlist);
 	}
 
+#ifdef USE_PAM
+	/*
+	 * Pull in any environment variables that may have
+	 * been set by PAM.
+	 */
+	if (options.use_pam) {
+		char **p;
+
+		/*
+		 * Don't allow PAM-internal env vars to leak
+		 * back into the session environment.
+		 */
+#define PAM_ENV_DENYLIST  "SSH_AUTH_INFO*,SSH_CONNECTION*"
+		p = fetch_pam_child_environment();
+		copy_environment_denylist(p, &env, &envsize,
+		    PAM_ENV_DENYLIST);
+		free_pam_environment(p);
+
+		p = fetch_pam_environment();
+		copy_environment_denylist(p, &env, &envsize,
+		    PAM_ENV_DENYLIST);
+		free_pam_environment(p);
+	}
+#endif /* USE_PAM */
+
 	/* Environment specified by admin */
 	for (i = 0; i < options.num_setenv; i++) {
 		cp = xstrdup(options.setenv[i]);
@@ -1022,23 +1015,7 @@ do_setup_env(struct ssh *ssh, Session *s, const char *shell)
 		child_set_env(&env, &envsize, "KRB5CCNAME",
 		    s->authctxt->krb5_ticket_file);
 #endif
-#ifdef USE_PAM
-	/*
-	 * Pull in any environment variables that may have
-	 * been set by PAM.
-	 */
-	if (options.use_pam) {
-		char **p;
 
-		p = fetch_pam_child_environment();
-		copy_environment(p, &env, &envsize);
-		free_pam_environment(p);
-
-		p = fetch_pam_environment();
-		copy_environment(p, &env, &envsize);
-		free_pam_environment(p);
-	}
-#endif /* USE_PAM */
 
 	if (debug_flag) {
 		/* dump the environment */
@@ -1222,7 +1199,7 @@ do_setusercontext(struct passwd *pw)
 #ifdef HAVE_LOGIN_CAP
 # ifdef USE_PAM
 		if (options.use_pam) {
-			do_pam_setcred(use_privsep);
+			do_pam_setcred();
 		}
 # endif /* USE_PAM */
 		/* Prepare groups */
@@ -1252,7 +1229,7 @@ do_setusercontext(struct passwd *pw)
 		 * Reestablish them here.
 		 */
 		if (options.use_pam) {
-			do_pam_setcred(use_privsep);
+			do_pam_setcred();
 		}
 # endif /* USE_PAM */
 #endif
@@ -1383,6 +1360,18 @@ do_child(struct ssh *ssh, Session *s, const char *command)
 	 * Login(1) does this as well, and it needs uid 0 for the "-h"
 	 * switch, so we let login(1) to this for us.
 	 */
+	/* When PAM is enabled we rely on it to do the nologin check */
+	if (!options.use_pam)
+		do_nologin(pw);
+	do_setusercontext(pw);
+	/*
+	 * PAM session modules in do_setusercontext may have
+	 * generated messages, so if this in an interactive
+	 * login then display them too.
+	 */
+	if (!check_quietlogin(s, command))
+		display_loginmsg();
+
 #ifdef USE_PAM
 	if (options.use_pam && !is_pam_session_open()) {
 		debug3("PAM session not opened, exiting");
@@ -1390,8 +1379,6 @@ do_child(struct ssh *ssh, Session *s, const char *command)
 		exit(254);
 	}
 #endif
-	do_nologin(pw);
-	do_setusercontext(pw);
 
 	/*
 	 * Get the shell from the password data.  An empty shell field is
@@ -1750,8 +1737,7 @@ session_pty_req(struct ssh *ssh, Session *s)
 
 	/* Allocate a pty and open it. */
 	debug("Allocating pty.");
-	if (!PRIVSEP(pty_allocate(&s->ptyfd, &s->ttyfd, s->tty,
-	    sizeof(s->tty)))) {
+	if (!mm_pty_allocate(&s->ptyfd, &s->ttyfd, s->tty, sizeof(s->tty))) {
 		free(s->term);
 		s->term = NULL;
 		s->ptyfd = -1;
@@ -1765,9 +1751,6 @@ session_pty_req(struct ssh *ssh, Session *s)
 
 	if ((r = sshpkt_get_end(ssh)) != 0)
 		sshpkt_fatal(ssh, r, "%s: parse packet", __func__);
-
-	if (!use_privsep)
-		pty_setowner(s->pw, s->tty);
 
 	/* Set window size from the packet. */
 	pty_change_window_size(s->ptyfd, s->row, s->col, s->xpixel, s->ypixel);
@@ -1984,7 +1967,7 @@ session_signal_req(struct ssh *ssh, Session *s)
 		    signame, s->forced ? "forced-command" : "subsystem");
 		goto out;
 	}
-	if (!use_privsep || mm_is_monitor()) {
+	if (mm_is_monitor()) {
 		error_f("session signalling requires privilege separation");
 		goto out;
 	}
@@ -2133,7 +2116,7 @@ session_pty_cleanup2(Session *s)
 void
 session_pty_cleanup(Session *s)
 {
-	PRIVSEP(session_pty_cleanup2(s));
+	mm_session_pty_cleanup2(s);
 }
 
 static const char *
@@ -2524,7 +2507,7 @@ do_cleanup(struct ssh *ssh, Authctxt *authctxt)
 	 * Cleanup ptys/utmp only if privsep is disabled,
 	 * or if running in monitor.
 	 */
-	if (!use_privsep || mm_is_monitor())
+	if (mm_is_monitor())
 		session_destroy_all(ssh, session_pty_cleanup2);
 }
 

@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.h,v 1.23 2022/10/05 22:39:36 christos Exp $	*/
-/* $OpenBSD: auth.h,v 1.106 2022/06/15 16:08:25 djm Exp $ */
+/*	$NetBSD: auth.h,v 1.24 2024/07/08 22:33:43 christos Exp $	*/
+/* $OpenBSD: auth.h,v 1.108 2024/05/17 06:42:04 jsg Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -110,11 +110,15 @@ struct Authctxt {
 #include "auth-pam.h"
 #endif
 
+struct authmethod_cfg {
+	const char *name;
+	const char *synonym;
+	int *enabled;
+};
+
 struct Authmethod {
-	const char	*name;
-	const char	*synonym;
+	struct authmethod_cfg *cfg;
 	int	(*userauth)(struct ssh *, const char *);
-	int	*enabled;
 };
 
 /*
@@ -207,7 +211,6 @@ int	 sshd_hostkey_sign(struct ssh *, struct sshkey *, struct sshkey *,
     u_char **, size_t *, const u_char *, size_t, const char *);
 
 /* Key / cert options linkage to auth layer */
-const struct sshauthopt *auth_options(struct ssh *);
 int	 auth_activate_options(struct ssh *, struct sshauthopt *);
 void	 auth_restrict_session(struct ssh *);
 void	 auth_log_authopts(const char *, const struct sshauthopt *, int);

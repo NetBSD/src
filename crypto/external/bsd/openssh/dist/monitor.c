@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor.c,v 1.44 2024/06/25 16:58:24 christos Exp $	*/
-/* $OpenBSD: monitor.c,v 1.237 2023/08/16 16:14:11 djm Exp $ */
+/*	$NetBSD: monitor.c,v 1.45 2024/07/08 22:33:43 christos Exp $	*/
+/* $OpenBSD: monitor.c,v 1.240 2024/06/06 17:15:25 djm Exp $ */
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor.c,v 1.44 2024/06/25 16:58:24 christos Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.45 2024/07/08 22:33:43 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -117,8 +117,6 @@ int mm_answer_keyverify(struct ssh *, int, struct sshbuf *);
 int mm_answer_pty(struct ssh *, int, struct sshbuf *);
 int mm_answer_pty_cleanup(struct ssh *, int, struct sshbuf *);
 int mm_answer_term(struct ssh *, int, struct sshbuf *);
-int mm_answer_sesskey(struct ssh *, int, struct sshbuf *);
-int mm_answer_sessid(struct ssh *, int, struct sshbuf *);
 
 #ifdef USE_PAM
 int mm_answer_pam_start(struct ssh *, int, struct sshbuf *);
@@ -140,6 +138,8 @@ int mm_answer_gss_userok(struct ssh *, int, struct sshbuf *);
 int mm_answer_gss_checkmic(struct ssh *, int, struct sshbuf *);
 #endif
 
+static Authctxt *authctxt;
+
 /* local state for key verify */
 static u_char *key_blob = NULL;
 static size_t key_bloblen = 0;
@@ -152,6 +152,7 @@ static const char *auth_submethod = NULL;
 static u_int session_id2_len = 0;
 static u_char *session_id2 = NULL;
 static pid_t monitor_child_pid;
+int auth_attempted = 0;
 
 struct mon_table {
 	enum monitor_reqtype type;
@@ -253,10 +254,10 @@ monitor_child_preauth(struct ssh *ssh, struct monitor *pmonitor)
 {
 	struct mon_table *ent;
 	int authenticated = 0, partial = 0;
-	Authctxt *authctxt = ssh->authctxt;
 
 	debug3("preauth child monitor started");
 
+	authctxt = (Authctxt *)ssh->authctxt;
 	if (pmonitor->m_recvfd >= 0)
 		close(pmonitor->m_recvfd);
 	if (pmonitor->m_log_sendfd >= 0)
@@ -280,6 +281,10 @@ monitor_child_preauth(struct ssh *ssh, struct monitor *pmonitor)
 
 		authenticated = (monitor_read(ssh, pmonitor,
 		    mon_dispatch, &ent) == 1);
+
+		/* Record that auth was attempted to set exit status later */
+		if ((ent->flags & MON_AUTH) != 0)
+			auth_attempted = 1;
 
 		/* Special handling for multiple required authentications */
 		if (options.num_auth_methods != 0) {
@@ -317,9 +322,8 @@ monitor_child_preauth(struct ssh *ssh, struct monitor *pmonitor)
 		if (ent->flags & (MON_AUTHDECIDE|MON_ALOG)) {
 			auth_log(ssh, authenticated, partial,
 			    auth_method, auth_submethod);
-			if (!partial && !authenticated) {
+			if (!partial && !authenticated)
 				authctxt->failures++;
-			}
 			if (authenticated || partial) {
 				auth2_update_session_info(authctxt,
 				    auth_method, auth_submethod);
@@ -343,6 +347,7 @@ monitor_child_preauth(struct ssh *ssh, struct monitor *pmonitor)
 	}
 
 	debug_f("user %s authenticated by privileged process", authctxt->user);
+	auth_attempted = 0;
 	ssh->authctxt = NULL;
 	ssh_packet_set_log_preamble(ssh, "user %s", authctxt->user);
 
@@ -692,14 +697,39 @@ mm_answer_sign(struct ssh *ssh, int sock, struct sshbuf *m)
 			fatal_fr(r, "assemble %s", #id); \
 	} while (0)
 
+void
+mm_encode_server_options(struct sshbuf *m)
+{
+	int r;
+	u_int i;
+
+	/* XXX this leaks raw pointers to the unpriv child processes */
+	if ((r = sshbuf_put_string(m, &options, sizeof(options))) != 0)
+		fatal_fr(r, "assemble options");
+
+#define M_CP_STROPT(x) do { \
+		if (options.x != NULL && \
+		    (r = sshbuf_put_cstring(m, options.x)) != 0) \
+			fatal_fr(r, "assemble %s", #x); \
+	} while (0)
+#define M_CP_STRARRAYOPT(x, nx) do { \
+		for (i = 0; i < options.nx; i++) { \
+			if ((r = sshbuf_put_cstring(m, options.x[i])) != 0) \
+				fatal_fr(r, "assemble %s", #x); \
+		} \
+	} while (0)
+	/* See comment in servconf.h */
+	COPY_MATCH_STRING_OPTS();
+#undef M_CP_STROPT
+#undef M_CP_STRARRAYOPT
+}
+
 /* Retrieves the password entry and also checks if the user is permitted */
 int
 mm_answer_pwnamallow(struct ssh *ssh, int sock, struct sshbuf *m)
 {
 	struct passwd *pwent;
 	int r, allowed = 0;
-	u_int i;
-	Authctxt *authctxt = ssh->authctxt;
 
 	debug3_f("entering");
 
@@ -744,24 +774,9 @@ mm_answer_pwnamallow(struct ssh *ssh, int sock, struct sshbuf *m)
  out:
 	ssh_packet_set_log_preamble(ssh, "%suser %s",
 	    authctxt->valid ? "authenticating" : "invalid ", authctxt->user);
-	if ((r = sshbuf_put_string(m, &options, sizeof(options))) != 0)
-		fatal_fr(r, "assemble options");
 
-#define M_CP_STROPT(x) do { \
-		if (options.x != NULL && \
-		    (r = sshbuf_put_cstring(m, options.x)) != 0) \
-			fatal_fr(r, "assemble %s", #x); \
-	} while (0)
-#define M_CP_STRARRAYOPT(x, nx) do { \
-		for (i = 0; i < options.nx; i++) { \
-			if ((r = sshbuf_put_cstring(m, options.x[i])) != 0) \
-				fatal_fr(r, "assemble %s", #x); \
-		} \
-	} while (0)
-	/* See comment in servconf.h */
-	COPY_MATCH_STRING_OPTS();
-#undef M_CP_STROPT
-#undef M_CP_STRARRAYOPT
+	/* Send active options to unpriv */
+	mm_encode_server_options(m);
 
 	/* Create valid auth method lists */
 	if (auth2_setup_methods_lists(authctxt) != 0) {
@@ -807,7 +822,6 @@ int
 mm_answer_authserv(struct ssh *ssh, int sock, struct sshbuf *m)
 {
 	int r;
-	Authctxt *authctxt = ssh->authctxt;
 
 	monitor_permit_authentications(1);
 
@@ -844,7 +858,10 @@ mm_answer_authpassword(struct ssh *ssh, int sock, struct sshbuf *m)
 	sshbuf_reset(m);
 	if ((r = sshbuf_put_u32(m, authenticated)) != 0)
 		fatal_fr(r, "assemble");
-
+#ifdef USE_PAM
+	if ((r = sshbuf_put_u32(m, sshpam_get_maxtries_reached())) != 0)
+		fatal_fr(r, "assemble PAM");
+#endif
 	debug3_f("sending result %d", authenticated);
 	mm_request_send(sock, MONITOR_ANS_AUTHPASSWORD, m);
 
@@ -987,7 +1004,8 @@ mm_answer_pam_start(struct ssh *ssh, int sock, struct sshbuf *m)
 
 	start_pam(ssh);
 
-	monitor_permit(mon_dispatch, MONITOR_REQ_PAM_ACCOUNT, 1);
+	if (options.kbd_interactive_authentication)
+	    monitor_permit(mon_dispatch, MONITOR_REQ_PAM_ACCOUNT, 1);
 
 	return (0);
 }
@@ -996,14 +1014,16 @@ int
 mm_answer_pam_account(struct ssh *ssh, int sock, struct sshbuf *m)
 {
 	u_int ret;
+	int r;
 
 	if (!options.use_pam)
 		fatal("UsePAM not set, but ended up in %s anyway", __func__);
 
 	ret = do_pam_account();
 
-	sshbuf_put_u32(m, ret);
-	sshbuf_put_string(m, sshbuf_ptr(loginmsg), sshbuf_len(loginmsg));
+	if ((r = sshbuf_put_u32(m, ret)) != 0 ||
+	    (r = sshbuf_put_stringb(m, loginmsg)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
 
 	mm_request_send(sock, MONITOR_ANS_PAM_ACCOUNT, m);
 
@@ -1016,16 +1036,24 @@ extern KbdintDevice sshpam_device;
 int
 mm_answer_pam_init_ctx(struct ssh *ssh, int sock, struct sshbuf *m)
 {
+	u_int ok = 0;
+	int r;
+
 	debug3("%s", __func__);
+	if (!options.kbd_interactive_authentication)
+		fatal("%s: kbd-int authentication not enabled", __func__);
+	if (sshpam_ctxt != NULL)
+		fatal("%s: already called", __func__);
 	sshpam_ctxt = (sshpam_device.init_ctx)(ssh->authctxt);
 	sshpam_authok = NULL;
 	sshbuf_reset(m);
 	if (sshpam_ctxt != NULL) {
 		monitor_permit(mon_dispatch, MONITOR_REQ_PAM_FREE_CTX, 1);
-		sshbuf_put_u32(m, 1);
-	} else {
-		sshbuf_put_u32(m, 0);
+		monitor_permit(mon_dispatch, MONITOR_REQ_PAM_QUERY, 1);
+		ok = 1;
 	}
+	if ((r = sshbuf_put_u32(m, ok)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
 	mm_request_send(sock, MONITOR_ANS_PAM_INIT_CTX, m);
 	return (0);
 }
@@ -1035,32 +1063,38 @@ mm_answer_pam_query(struct ssh *ssh, int sock, struct sshbuf *m)
 {
 	char *name, *info, **prompts;
 	u_int i, num, *echo_on;
-	int ret;
+	int r, ret;
 
 	debug3("%s", __func__);
 	sshpam_authok = NULL;
-	ret = (sshpam_device.query)(sshpam_ctxt, &name, &info, &num, &prompts, &echo_on);
+	if (sshpam_ctxt == NULL)
+		fatal("%s: no context", __func__);
+	ret = (sshpam_device.query)(sshpam_ctxt, &name, &info,
+	    &num, &prompts, &echo_on);
 	if (ret == 0 && num == 0)
 		sshpam_authok = sshpam_ctxt;
 	if (num > 1 || name == NULL || info == NULL)
-		ret = -1;
+		fatal("sshpam_device.query failed");
+	monitor_permit(mon_dispatch, MONITOR_REQ_PAM_RESPOND, 1);
 	sshbuf_reset(m);
-	sshbuf_put_u32(m, ret);
-	sshbuf_put_cstring(m, name);
+	if ((r = sshbuf_put_u32(m, ret)) != 0 ||
+	    (r = sshbuf_put_cstring(m, name)) != 0 ||
+	    (r = sshbuf_put_cstring(m, info)) != 0 ||
+	    (r = sshbuf_put_u32(m, sshpam_get_maxtries_reached())) != 0 ||
+	    (r = sshbuf_put_u32(m, num)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
 	free(name);
-	sshbuf_put_cstring(m, info);
 	free(info);
-	sshbuf_put_u32(m, num);
 	for (i = 0; i < num; ++i) {
-		sshbuf_put_cstring(m, prompts[i]);
+		if ((r = sshbuf_put_cstring(m, prompts[i])) != 0 ||
+		    (r = sshbuf_put_u32(m, echo_on[i])) != 0)
+			fatal("%s: buffer error: %s", __func__, ssh_err(r));
 		free(prompts[i]);
-		sshbuf_put_u32(m, echo_on[i]);
 	}
-	if (prompts != NULL)
-		free(prompts);
-	if (echo_on != NULL)
-		free(echo_on);
+	free(prompts);
+	free(echo_on);
 	auth_method = "keyboard-interactive/pam";
+	auth_submethod = "pam";
 	mm_request_send(sock, MONITOR_ANS_PAM_QUERY, m);
 	return (0);
 }
@@ -1070,12 +1104,18 @@ mm_answer_pam_respond(struct ssh *ssh, int sock, struct sshbuf *m)
 {
 	char **resp;
 	u_int i, num;
-	int ret, r;
+	int r, ret;
 
 	debug3("%s", __func__);
+	if (sshpam_ctxt == NULL)
+		fatal("%s: no context", __func__);
 	sshpam_authok = NULL;
 	if ((r = sshbuf_get_u32(m, &num)) != 0)
 		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+	if (num > PAM_MAX_NUM_MSG) {
+		fatal_f("Too many PAM messages, got %u, expected <= %u",
+		    num, (unsigned)PAM_MAX_NUM_MSG);
+	}
 	if (num > 0) {
 		resp = xmalloc(num * sizeof(char *));
 		for (i = 0; i < num; ++i)
@@ -1090,9 +1130,11 @@ mm_answer_pam_respond(struct ssh *ssh, int sock, struct sshbuf *m)
 		ret = (sshpam_device.respond)(sshpam_ctxt, num, NULL);
 	}
 	sshbuf_reset(m);
-	sshbuf_put_u32(m, ret);
+	if ((r = sshbuf_put_u32(m, ret)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
 	mm_request_send(sock, MONITOR_ANS_PAM_RESPOND, m);
 	auth_method = "keyboard-interactive/pam";
+	auth_submethod = "pam";
 	if (ret == 0)
 		sshpam_authok = sshpam_ctxt;
 	return (0);
@@ -1104,11 +1146,16 @@ mm_answer_pam_free_ctx(struct ssh *ssh, int sock, struct sshbuf *m)
 	int r = sshpam_authok != NULL && sshpam_authok == sshpam_ctxt;
 
 	debug3("%s", __func__);
+	if (sshpam_ctxt == NULL)
+		fatal("%s: no context", __func__);
 	(sshpam_device.free_ctx)(sshpam_ctxt);
 	sshpam_ctxt = sshpam_authok = NULL;
 	sshbuf_reset(m);
 	mm_request_send(sock, MONITOR_ANS_PAM_FREE_CTX, m);
+	/* Allow another attempt */
+	monitor_permit(mon_dispatch, MONITOR_REQ_PAM_INIT_CTX, 1);
 	auth_method = "keyboard-interactive/pam";
+	auth_submethod = "pam";
 	return r;
 }
 #endif
@@ -1151,7 +1198,6 @@ mm_answer_keyallowed(struct ssh *ssh, int sock, struct sshbuf *m)
 	u_int type = 0;
 	int r, allowed = 0;
 	struct sshauthopt *opts = NULL;
-	Authctxt *authctxt = ssh->authctxt;
 
 	debug3_f("entering");
 	if ((r = sshbuf_get_u32(m, &type)) != 0 ||
@@ -1246,7 +1292,6 @@ monitor_valid_userblob(struct ssh *ssh, const u_char *data, u_int datalen)
 	size_t len;
 	u_char type;
 	int hostbound = 0, r, fail = 0;
-	Authctxt *authctxt = ssh->authctxt;
 
 	if ((b = sshbuf_from(data, datalen)) == NULL)
 		fatal_f("sshbuf_from");
@@ -1328,7 +1373,6 @@ monitor_valid_hostbasedblob(struct ssh *ssh, const u_char *data, u_int datalen,
 	size_t len;
 	int r, fail = 0;
 	u_char type;
-	Authctxt *authctxt = ssh->authctxt;
 
 	if ((b = sshbuf_from(data, datalen)) == NULL)
 		fatal_f("sshbuf_new");
@@ -1398,7 +1442,6 @@ mm_answer_keyverify(struct ssh *ssh, int sock, struct sshbuf *m)
 	int r, ret, req_presence = 0, req_verify = 0, valid_data = 0;
 	int encoded_ret;
 	struct sshkey_sig_details *sig_details = NULL;
-	Authctxt *authctxt = ssh->authctxt;
 
 	if ((r = sshbuf_get_string_direct(m, &blob, &bloblen)) != 0 ||
 	    (r = sshbuf_get_string_direct(m, &signature, &signaturelen)) != 0 ||
@@ -1548,7 +1591,6 @@ mm_answer_pty(struct ssh *ssh, int sock, struct sshbuf *m)
 	extern struct monitor *pmonitor;
 	Session *s;
 	int r, res, fd0;
-	Authctxt *authctxt = ssh->authctxt;
 
 	debug3_f("entering");
 
@@ -1641,7 +1683,6 @@ mm_answer_krb5(struct ssh *ssh, int xsocket, struct sshbuf *m)
 	size_t len;
 	int r;
 	int success;
-	Authctxt *authctxt = ssh->authctxt;
 
 	/* use temporary var to avoid size issues on 64bit arch */
 	if ((r = sshbuf_get_string(m, &data, &len)) != 0)
@@ -1685,6 +1726,11 @@ mm_answer_term(struct ssh *ssh, int sock, struct sshbuf *req)
 
 	/* The child is terminating */
 	session_destroy_all(ssh, &mm_session_close);
+
+#ifdef USE_PAM
+	if (options.use_pam)
+		sshpam_cleanup();
+#endif
 
 	while (waitpid(pmonitor->m_pid, &status, 0) == -1)
 		if (errno != EINTR)
@@ -1921,7 +1967,6 @@ mm_answer_gss_userok(struct ssh *ssh, int sock, struct sshbuf *m)
 {
 	int r, authenticated;
 	const char *displayname;
-	Authctxt *authctxt = ssh->authctxt;
 
 	if (!options.gss_authentication)
 		fatal_f("GSSAPI authentication not enabled");

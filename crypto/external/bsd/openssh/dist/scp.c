@@ -1,5 +1,5 @@
-/*	$NetBSD: scp.c,v 1.41 2023/12/20 17:15:21 christos Exp $	*/
-/* $OpenBSD: scp.c,v 1.260 2023/10/11 05:42:08 djm Exp $ */
+/*	$NetBSD: scp.c,v 1.42 2024/07/08 22:33:44 christos Exp $	*/
+/* $OpenBSD: scp.c,v 1.261 2024/06/26 23:14:14 deraadt Exp $ */
 
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
@@ -74,7 +74,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.41 2023/12/20 17:15:21 christos Exp $");
+__RCSID("$NetBSD: scp.c,v 1.42 2024/07/08 22:33:44 christos Exp $");
 
 #include <sys/param.h>	/* roundup MAX */
 #include <sys/types.h>
@@ -207,9 +207,11 @@ suspone(int pid, int signo)
 static void
 suspchild(int signo)
 {
+	int save_errno = errno;
 	suspone(do_cmd_pid, signo);
 	suspone(do_cmd_pid2, signo);
 	kill(getpid(), SIGSTOP);
+	errno = save_errno;
 }
 
 static int

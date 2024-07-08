@@ -1,3 +1,5 @@
+/*	$NetBSD: auth2-methods.c,v 1.2 2024/07/08 22:33:43 christos Exp $	*/
+
 /*
  * Copyright (c) 2012,2023 Damien Miller <djm@mindrot.org>
  *
@@ -13,6 +15,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include "includes.h"
+__RCSID("$NetBSD: auth2-methods.c,v 1.2 2024/07/08 22:33:43 christos Exp $");
 
 #include <sys/types.h>
 
@@ -52,6 +57,13 @@ struct authmethod_cfg methodcfg_gssapi = {
 	"gssapi-with-mic",
 	NULL,
 	&options.gss_authentication
+};
+#endif
+#ifdef KRB5
+struct authmethod_cfg methodcfg_krb5 = {
+	"kerberos-2@ssh.com",
+	NULL,
+	&options.kerberos_authentication
 };
 #endif
 struct authmethod_cfg methodcfg_passwd = {

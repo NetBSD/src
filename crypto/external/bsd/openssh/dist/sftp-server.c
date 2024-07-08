@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-server.c,v 1.30 2023/10/25 20:19:57 christos Exp $	*/
-/* $OpenBSD: sftp-server.c,v 1.147 2023/04/12 08:53:54 jsg Exp $ */
+/*	$NetBSD: sftp-server.c,v 1.31 2024/07/08 22:33:44 christos Exp $	*/
+/* $OpenBSD: sftp-server.c,v 1.148 2024/04/30 06:23:51 djm Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Markus Friedl.  All rights reserved.
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-server.c,v 1.30 2023/10/25 20:19:57 christos Exp $");
+__RCSID("$NetBSD: sftp-server.c,v 1.31 2024/07/08 22:33:44 christos Exp $");
 
 #include <sys/param.h>	/* MIN */
 #include <sys/types.h>
@@ -1679,14 +1679,16 @@ process_extended_home_directory(u_int32_t id)
 		fatal_fr(r, "parse");
 
 	debug3("request %u: home-directory \"%s\"", id, username);
-	if ((user_pw = getpwnam(username)) == NULL) {
+	if (username[0] == '\0') {
+		user_pw = pw;
+	} else if ((user_pw = getpwnam(username)) == NULL) {
 		send_status(id, SSH2_FX_FAILURE);
 		goto out;
 	}
 
-	verbose("home-directory \"%s\"", pw->pw_dir);
+	verbose("home-directory \"%s\"", user_pw->pw_dir);
 	attrib_clear(&s.attrib);
-	s.name = s.long_name = pw->pw_dir;
+	s.name = s.long_name = user_pw->pw_dir;
 	send_names(id, 1, &s);
  out:
 	free(username);

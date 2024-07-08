@@ -1,5 +1,6 @@
-/*	$NetBSD: auth-rhosts.c,v 1.16 2023/07/26 17:58:15 christos Exp $	*/
-/* $OpenBSD: auth-rhosts.c,v 1.57 2022/12/09 00:17:40 dtucker Exp $ */
+/*	$NetBSD: auth-rhosts.c,v 1.17 2024/07/08 22:33:43 christos Exp $	*/
+/* $OpenBSD: auth-rhosts.c,v 1.58 2024/05/17 00:30:23 djm Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -16,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-rhosts.c,v 1.16 2023/07/26 17:58:15 christos Exp $");
+__RCSID("$NetBSD: auth-rhosts.c,v 1.17 2024/07/08 22:33:43 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -45,7 +46,6 @@ __RCSID("$NetBSD: auth-rhosts.c,v 1.16 2023/07/26 17:58:15 christos Exp $");
 
 /* import */
 extern ServerOptions options;
-extern int use_privsep;
 
 /*
  * This function processes an rhosts-style file (.rhosts, .shosts, or

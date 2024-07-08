@@ -1,5 +1,5 @@
-/*	$NetBSD: packet.h,v 1.26 2023/12/20 17:15:21 christos Exp $	*/
-/* $OpenBSD: packet.h,v 1.96 2023/12/18 14:45:17 djm Exp $ */
+/*	$NetBSD: packet.h,v 1.27 2024/07/08 22:33:44 christos Exp $	*/
+/* $OpenBSD: packet.h,v 1.98 2024/05/17 06:42:04 jsg Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -121,14 +121,12 @@ int	 ssh_packet_authentication_state(struct ssh *);
 void	 ssh_packet_request_rekeying(void);
 
 int      ssh_packet_read(struct ssh *);
-int      ssh_packet_read_poll(struct ssh *);
 int ssh_packet_read_poll2(struct ssh *, u_char *, u_int32_t *seqnr_p);
 int	 ssh_packet_process_incoming(struct ssh *, const char *buf, u_int len);
 int	 ssh_packet_process_read(struct ssh *, int);
 int      ssh_packet_read_seqnr(struct ssh *, u_char *, u_int32_t *seqnr_p);
 int      ssh_packet_read_poll_seqnr(struct ssh *, u_char *, u_int32_t *seqnr_p);
 
-const void *ssh_packet_get_string_ptr(struct ssh *, u_int *length_ptr);
 void     ssh_packet_disconnect(struct ssh *, const char *fmt, ...)
 	__attribute__((format(printf, 2, 3)))
 	__attribute__((noreturn));
@@ -162,6 +160,7 @@ int	 ssh_remote_port(struct ssh *);
 const char *ssh_local_ipaddr(struct ssh *);
 int	 ssh_local_port(struct ssh *);
 const char *ssh_packet_rdomain_in(struct ssh *);
+char	*ssh_remote_hostname(struct ssh *);
 
 void	 ssh_packet_set_rekey_limits(struct ssh *, u_int64_t, u_int32_t);
 time_t	 ssh_packet_get_rekey_timeout(struct ssh *);

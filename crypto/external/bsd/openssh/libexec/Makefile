@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2020/02/27 00:24:40 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2024/07/08 22:33:45 christos Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=	ssh-sk-helper
+SUBDIR=	ssh-sk-helper sshd-session
 
 .include <bsd.subdir.mk>

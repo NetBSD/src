@@ -1,5 +1,6 @@
-/*	$NetBSD: auth2-hostbased.c,v 1.23 2023/07/26 17:58:15 christos Exp $	*/
-/* $OpenBSD: auth2-hostbased.c,v 1.52 2023/03/05 05:34:09 dtucker Exp $ */
+/*	$NetBSD: auth2-hostbased.c,v 1.24 2024/07/08 22:33:43 christos Exp $	*/
+/* $OpenBSD: auth2-hostbased.c,v 1.53 2024/05/17 00:30:23 djm Exp $ */
+
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-hostbased.c,v 1.23 2023/07/26 17:58:15 christos Exp $");
+__RCSID("$NetBSD: auth2-hostbased.c,v 1.24 2024/07/08 22:33:43 christos Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
@@ -55,6 +56,7 @@ __RCSID("$NetBSD: auth2-hostbased.c,v 1.23 2023/07/26 17:58:15 christos Exp $");
 
 /* import */
 extern ServerOptions options;
+extern struct authmethod_cfg methodcfg_hostbased;
 
 static int
 userauth_hostbased(struct ssh *ssh, const char *method)
@@ -146,10 +148,10 @@ userauth_hostbased(struct ssh *ssh, const char *method)
 
 	/* test for allowed key and correct signature */
 	authenticated = 0;
-	if (PRIVSEP(hostbased_key_allowed(ssh, authctxt->pw, cuser,
-	    chost, key)) &&
-	    PRIVSEP(sshkey_verify(key, sig, slen,
-	    sshbuf_ptr(b), sshbuf_len(b), pkalg, ssh->compat, NULL)) == 0)
+	if (mm_hostbased_key_allowed(ssh, authctxt->pw, cuser,
+	    chost, key) &&
+	    mm_sshkey_verify(key, sig, slen,
+	    sshbuf_ptr(b), sshbuf_len(b), pkalg, ssh->compat, NULL) == 0)
 		authenticated = 1;
 
 	auth2_record_key(authctxt, authenticated, key);
@@ -253,8 +255,6 @@ hostbased_key_allowed(struct ssh *ssh, struct passwd *pw,
 }
 
 Authmethod method_hostbased = {
-	"hostbased",
-	NULL,
+	&methodcfg_hostbased,
 	userauth_hostbased,
-	&options.hostbased_authentication
 };

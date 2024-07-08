@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect2.c,v 1.47 2024/06/25 16:36:54 christos Exp $	*/
-/* $OpenBSD: sshconnect2.c,v 1.372 2024/01/08 00:34:34 djm Exp $ */
+/*	$NetBSD: sshconnect2.c,v 1.48 2024/07/08 22:33:44 christos Exp $	*/
+/* $OpenBSD: sshconnect2.c,v 1.373 2024/05/17 06:38:00 jsg Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.47 2024/06/25 16:36:54 christos Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.48 2024/07/08 22:33:44 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -89,8 +89,6 @@ static int userauth_kerberos(struct ssh *);
 #endif
 
 /* import */
-extern char *client_version_string;
-extern char *server_version_string;
 extern Options options;
 
 /* tty_flag is set in ssh.c. use this in ssh_userauth2 */

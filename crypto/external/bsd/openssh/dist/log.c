@@ -1,5 +1,5 @@
-/*	$NetBSD: log.c,v 1.29 2024/07/01 15:42:42 riastradh Exp $	*/
-/* $OpenBSD: log.c,v 1.61 2023/12/06 21:06:48 djm Exp $ */
+/*	$NetBSD: log.c,v 1.30 2024/07/08 22:33:43 christos Exp $	*/
+/* $OpenBSD: log.c,v 1.62 2024/06/27 22:36:44 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: log.c,v 1.29 2024/07/01 15:42:42 riastradh Exp $");
+__RCSID("$NetBSD: log.c,v 1.30 2024/07/08 22:33:43 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -416,21 +416,6 @@ sshlogdie(const char *file, const char *func, int line, int showfunc,
 	    suffix, fmt, args);
 	va_end(args);
 	cleanup_exit(254);
-}
-
-void
-sshsigdie(const char *file, const char *func, int line, int showfunc,
-    LogLevel level, const char *suffix, const char *fmt, ...)
-{
-#ifdef SYSLOG_R_SAFE_IN_SIGHAND
-	va_list args;
-
-	va_start(args, fmt);
-	sshlogv(file, func, line, showfunc, SYSLOG_LEVEL_FATAL,
-	    suffix, fmt, args);
-	va_end(args);
-#endif
-	_exit(1);
 }
 
 void

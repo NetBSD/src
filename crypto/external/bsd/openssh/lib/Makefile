@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2023/10/07 12:15:49 rin Exp $
+#	$NetBSD: Makefile,v 1.39 2024/07/08 22:33:45 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -33,6 +33,7 @@ hash.c \
 hmac.c \
 hostfile.c \
 kex.c \
+kex-names.c \
 kexdh.c \
 kexecdh.c \
 kexgen.c \
