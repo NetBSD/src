@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.355 2024/07/01 04:03:04 mrg Exp $
+# $NetBSD: shl.mi,v 1.356 2024/07/09 13:29:02 rin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -60,6 +60,8 @@
 ./usr/lib/libgnuctf.so.0.0			base-sys-shlib		compatfile,binutils=234
 ./usr/lib/libgnuctf.so.1			base-sys-shlib		compatfile,binutils=239
 ./usr/lib/libgnuctf.so.1.0			base-sys-shlib		compatfile,binutils=239
+./usr/lib/libgnuctf.so.2			base-sys-shlib		compatfile,binutils=242
+./usr/lib/libgnuctf.so.2.0			base-sys-shlib		compatfile,binutils=242
 ./usr/lib/libgnumalloc_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libgomp_pic.a				comp-c-piclib		compatfile,picinstall,gcc
 ./usr/lib/libgssapi_pic.a			comp-c-piclib		compatfile,picinstall,kerberos
@@ -122,6 +124,8 @@
 ./usr/lib/libopcodes.so.10.0			comp-c-shlib		compatfile,binutils=234
 ./usr/lib/libopcodes.so.11			comp-c-shlib		compatfile,binutils=239
 ./usr/lib/libopcodes.so.11.0			comp-c-shlib		compatfile,binutils=239
+./usr/lib/libopcodes.so.12			comp-c-shlib		compatfile,binutils=242
+./usr/lib/libopcodes.so.12.0			comp-c-shlib		compatfile,binutils=242
 ./usr/lib/libopcodes.so.9			comp-c-shlib		compatfile,binutils=231
 ./usr/lib/libopcodes.so.9.0			comp-c-shlib		compatfile,binutils=231
 ./usr/lib/libopenpgpsdk_pic.a			comp-obsolete		obsolete

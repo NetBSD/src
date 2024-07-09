@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1775 2024/05/04 19:16:22 reed Exp $
+# $NetBSD: mi,v 1.1776 2024/07/09 13:29:02 rin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -32,6 +32,7 @@
 ./usr/share/info/iostream.info			man-obsolete		obsolete
 ./usr/share/info/kth-krb.info			man-obsolete		obsolete
 ./usr/share/info/ld.info			man-computil-info	binutils,info
+./usr/share/info/ldint.info			man-computil-info	binutils=242,info
 ./usr/share/info/send-pr.info			man-gnats-info		info
 ./usr/share/info/stabs.info			man-debug-info		gdb,info
 ./usr/share/info/tar.info			man-obsolete		obsolete
