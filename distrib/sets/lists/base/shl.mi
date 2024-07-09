@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.984 2024/07/08 22:35:08 christos Exp $
+# $NetBSD: shl.mi,v 1.985 2024/07/09 13:29:01 rin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -231,6 +231,8 @@
 ./usr/lib/libbfd.so.17.0			base-sys-shlib		binutils=234
 ./usr/lib/libbfd.so.18				base-sys-shlib		binutils=239
 ./usr/lib/libbfd.so.18.0			base-sys-shlib		binutils=239
+./usr/lib/libbfd.so.19				base-sys-shlib		binutils=242
+./usr/lib/libbfd.so.19.0			base-sys-shlib		binutils=242
 ./usr/lib/libbind9.so				base-bind-shlib
 ./usr/lib/libbind9.so.21			base-bind-shlib
 ./usr/lib/libbind9.so.21.0			base-bind-shlib
