@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1385 2024/06/30 15:56:08 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1386 2024/07/09 08:20:34 rin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1592,7 +1592,7 @@ OBJECT_FMTS=
 OBJECT_FMTS+=	elf32
 .endif
 .if	${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH:M*64*} != ""
-. if !(${MKCOMPAT:Uyes} == "no" && ${MACHINE_CPU} == "mips")
+. if !(${MKCOMPAT:Uyes} == "no" && ${MACHINE_ARCH:Mmips64*} != "")
 OBJECT_FMTS+=	elf64
 . endif
 .endif
