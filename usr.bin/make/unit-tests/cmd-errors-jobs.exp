@@ -6,4 +6,4 @@ make: in target "unclosed-modifier": while evaluating variable "UNCLOSED" with v
 make: in target "unknown-modifier": while evaluating variable "UNKNOWN" with value "": Unknown modifier "Z"
 : unknown-modifier--eol
 : end-eol
-exit status 0
+exit status 2

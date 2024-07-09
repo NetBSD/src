@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.342 2024/07/07 09:54:12 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.343 2024/07/09 19:43:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -861,6 +861,7 @@ const char *cached_realpath(const char *, char *);
 bool GetBooleanExpr(const char *, bool);
 
 /* parse.c */
+extern int parseErrors;
 void Parse_Init(void);
 #ifdef CLEANUP
 void Parse_End(void);
@@ -874,7 +875,6 @@ void Parse_File(const char *, int);
 void Parse_PushInput(const char *, unsigned, unsigned, Buffer,
 		     struct ForLoop *);
 void Parse_MainName(GNodeList *);
-int Parse_NumErrors(void) MAKE_ATTR_USE;
 unsigned int CurFile_CondMinDepth(void) MAKE_ATTR_USE;
 void Parse_GuardElse(void);
 void Parse_GuardEndif(void);

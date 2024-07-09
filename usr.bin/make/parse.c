@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.733 2024/07/07 07:50:57 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.734 2024/07/09 19:43:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.733 2024/07/07 07:50:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.734 2024/07/09 19:43:01 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -231,7 +231,7 @@ static StringList targCmds = LST_INIT;
  */
 static GNode *order_pred;
 
-static int parseErrors;
+int parseErrors;
 
 /*
  * The include chain of makefiles.  At index 0 is the top-level makefile from
@@ -3011,10 +3011,4 @@ Parse_MainName(GNodeList *mainList)
 		Lst_AppendAll(mainList, &mainNode->cohorts);
 
 	Global_Append(".TARGETS", mainNode->name);
-}
-
-int
-Parse_NumErrors(void)
-{
-	return parseErrors;
 }

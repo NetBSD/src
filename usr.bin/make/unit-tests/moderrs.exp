@@ -112,4 +112,4 @@ make: in target "mod-sysv-parse": while evaluating variable "FIB" with value "":
 
 1 1 2 x3 5 8 1x3 21 34
 
-exit status 0
+exit status 2

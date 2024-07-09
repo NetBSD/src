@@ -57,4 +57,4 @@ target: TARGET_TARGET_VAR = new-value
 Global: TARGET_GLOBAL_VAR = new-value
 Global: TARGET_ENV_VAR = new-value
 target: TARGET_NEW_VAR = new-value
-exit status 0
+exit status 2

@@ -123,4 +123,4 @@ LIST:tw:C/ /,/g="one two three four five six"
 LIST:tw:C/ /,/1g="one two three four five six"
 LIST:tw:tW:C/ /,/="one,two three four five six"
 LIST:tW:tw:C/ /,/="one two three four five six"
-exit status 0
+exit status 2

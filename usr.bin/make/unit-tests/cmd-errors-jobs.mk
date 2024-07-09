@@ -1,4 +1,4 @@
-# $NetBSD: cmd-errors-jobs.mk,v 1.7 2024/07/05 18:59:33 rillig Exp $
+# $NetBSD: cmd-errors-jobs.mk,v 1.8 2024/07/09 19:43:01 rillig Exp $
 #
 # Demonstrate how errors in expressions affect whether the commands
 # are actually executed in jobs mode.
@@ -35,5 +35,4 @@ unknown-modifier:
 end:
 	: $@-eol
 
-# XXX: Despite the parse errors, the exit status is 0.
-# expect: exit status 0
+# expect: exit status 2
