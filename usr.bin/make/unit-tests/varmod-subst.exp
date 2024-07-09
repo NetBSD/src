@@ -59,4 +59,4 @@ mod-subst-dollar:$40:
 mod-subst-dollar:U8:
 mod-subst-dollar:$$$$:
 mod-subst-dollar:$$$good3
-exit status 0
+exit status 2

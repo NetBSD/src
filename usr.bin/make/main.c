@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.630 2024/07/07 09:54:12 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.631 2024/07/09 19:43:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.630 2024/07/07 09:54:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.631 2024/07/09 19:43:01 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1604,7 +1604,7 @@ main_CleanUp(void)
 static int
 main_Exit(bool outOfDate)
 {
-	if (opts.strict && (main_errors > 0 || Parse_NumErrors() > 0))
+	if ((opts.strict && main_errors > 0) || parseErrors > 0)
 		return 2;	/* Not 1 so -q can distinguish error */
 	return outOfDate ? 1 : 0;
 }

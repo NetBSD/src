@@ -6,4 +6,4 @@ make: in target "all": while evaluating variable "12345" with value "12345": Unk
 
 make: in target "all": while evaluating variable "12345" with value "12345": Unknown modifier "hashed"
 
-exit status 0
+exit status 2

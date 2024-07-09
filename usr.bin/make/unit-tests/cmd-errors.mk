@@ -1,4 +1,4 @@
-# $NetBSD: cmd-errors.mk,v 1.8 2024/07/05 18:59:33 rillig Exp $
+# $NetBSD: cmd-errors.mk,v 1.9 2024/07/09 19:43:01 rillig Exp $
 #
 # Demonstrate how errors in expressions affect whether the commands
 # are actually executed in compat mode.
@@ -33,5 +33,4 @@ end:
 # expect: : end-eol
 	: $@-eol
 
-# XXX: Despite the parse errors, the exit status is 0.
-# expect: exit status 0
+# expect: exit status 2

@@ -68,4 +68,4 @@ make: in target "varerror-unclosed": while evaluating variable "UNCLOSED_INDIR_2
 varerror-unclosed:end
 target1-flags: we have: one two
 target2-flags: we have: one two three four
-exit status 0
+exit status 2
