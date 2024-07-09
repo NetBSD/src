@@ -1,5 +1,5 @@
 make: "varmod-edge.mk" line 60: while evaluating variable "MOD" with value "${INP:M${:U*)}}": while evaluating variable "INP" with value "(parentheses)": while evaluating "${:U*)" with value "*)": Unclosed expression, expecting '}' for modifier "U*)"
-make: "varmod-edge.mk" line 88: warning: while evaluating variable "MOD" with value "${INP:M${:U[[}}": while evaluating variable "INP" with value "[ [[ [[[": Unfinished character list in pattern '[[' of modifier ':M'
+make: "varmod-edge.mk" line 88: while evaluating variable "MOD" with value "${INP:M${:U[[}}": while evaluating variable "INP" with value "[ [[ [[[": Unfinished character list in pattern '[[' of modifier ':M'
 make: "varmod-edge.mk" line 178: while evaluating variable "MOD" with value "${INP:a\=b}": while evaluating variable "INP" with value "file.c file...": Unfinished modifier ('=' missing)
 make: "varmod-edge.mk" line 194: while evaluating variable "MOD" with value "${INP::::}": while evaluating variable "INP" with value "value": Unknown modifier ":"
 make: "varmod-edge.mk" line 194: while evaluating variable "MOD" with value "${INP::::}": while evaluating variable "INP" with value "": Unknown modifier ":"

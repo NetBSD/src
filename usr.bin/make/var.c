@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1134 2024/07/07 09:54:12 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1135 2024/07/09 17:07:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1134 2024/07/07 09:54:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1135 2024/07/09 17:07:23 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2801,7 +2801,7 @@ ModifyWord_Match(Substring word, SepBuf *buf, void *data)
 	res = Str_Match(word.start, args->pattern);
 	if (res.error != NULL && !args->error_reported) {
 		args->error_reported = true;
-		Parse_Error(PARSE_WARNING,
+		Parse_Error(PARSE_FATAL,
 		    "%s in pattern '%s' of modifier '%s'",
 		    res.error, args->pattern, args->neg ? ":N" : ":M");
 	}
