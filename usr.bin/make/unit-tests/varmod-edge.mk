@@ -1,4 +1,4 @@
-# $NetBSD: varmod-edge.mk,v 1.28 2024/07/06 11:09:17 rillig Exp $
+# $NetBSD: varmod-edge.mk,v 1.29 2024/07/09 17:07:23 rillig Exp $
 #
 # Tests for edge cases in variable modifiers.
 #
@@ -84,7 +84,7 @@ EXP=	[
 INP=	[ [[ [[[
 MOD=	${INP:M${:U[[}}
 EXP=	[
-# expect+1: warning: while evaluating variable "MOD" with value "${INP:M${:U[[}}": while evaluating variable "INP" with value "[ [[ [[[": Unfinished character list in pattern '[[' of modifier ':M'
+# expect+1: while evaluating variable "MOD" with value "${INP:M${:U[[}}": while evaluating variable "INP" with value "[ [[ [[[": Unfinished character list in pattern '[[' of modifier ':M'
 .if ${MOD} != ${EXP}
 .  warning expected "${EXP}", got "${MOD}"
 .endif
