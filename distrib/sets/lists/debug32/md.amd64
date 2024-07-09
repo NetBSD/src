@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.18 2024/07/08 22:35:09 christos Exp $
+# $NetBSD: md.amd64,v 1.19 2024/07/09 14:37:38 rin Exp $
 ./usr/lib/i386/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -200,6 +200,7 @@
 ./usr/libdata/debug/usr/lib/i386/libatf-c.so.0.0.debug	comp-sys-debug	debug,compat,atf
 ./usr/libdata/debug/usr/lib/i386/libavl.so.0.0.debug	comp-sys-debug	debug,compat,zfs
 ./usr/libdata/debug/usr/lib/i386/libbfd.so.18.0.debug	comp-sys-debug	debug,compat,binutils=239
+./usr/libdata/debug/usr/lib/i386/libbfd.so.19.0.debug	comp-sys-debug	debug,compat,binutils=242
 ./usr/libdata/debug/usr/lib/i386/libbind9.so.21.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/i386/libblocklist.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/i386/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat
@@ -233,6 +234,7 @@
 ./usr/libdata/debug/usr/lib/i386/libform.so.8.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/i386/libgcc_s.so.1.0.debug	comp-sys-debug	debug,compat,gcc
 ./usr/libdata/debug/usr/lib/i386/libgnuctf.so.1.0.debug	comp-sys-debug	debug,compat,binutils=239
+./usr/libdata/debug/usr/lib/i386/libgnuctf.so.2.0.debug	comp-sys-debug	debug,compat,binutils=242
 ./usr/libdata/debug/usr/lib/i386/libgnumalloc.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/i386/libgomp.so.2.1.debug	comp-sys-debug	debug,compat,gcc,gcc=10
 ./usr/libdata/debug/usr/lib/i386/libgomp.so.2.2.debug	comp-sys-debug	debug,compat,gcc,gcc=12
@@ -275,7 +277,8 @@
 ./usr/libdata/debug/usr/lib/i386/libns.so.21.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/i386/libnvpair.so.0.0.debug	comp-sys-debug	debug,compat,zfs
 ./usr/libdata/debug/usr/lib/i386/libobjc.so.4.0.debug	comp-sys-debug	debug,compat,gcc
-./usr/libdata/debug/usr/lib/i386/libopcodes.so.11.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/i386/libopcodes.so.11.0.debug	comp-sys-debug	debug,compat,binutils=239
+./usr/libdata/debug/usr/lib/i386/libopcodes.so.12.0.debug	comp-sys-debug	debug,compat,binutils=242
 ./usr/libdata/debug/usr/lib/i386/libossaudio.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/i386/libp2k.so.2.0.debug	comp-sys-debug	debug,compat,rump
 ./usr/libdata/debug/usr/lib/i386/libpam.so.4.1.debug	comp-sys-debug	debug,compat,pam
