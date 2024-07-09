@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.9 2024/07/08 22:35:08 christos Exp $
+# $NetBSD: ad.mips64eb,v 1.10 2024/07/09 14:48:44 rin Exp $
 ./lib/64					base-compat-shlib	compat
 ./lib/o32					base-compat-shlib	compat
 ./lib/o32/npf					base-compat-shlib	compat,npf
@@ -107,8 +107,10 @@
 ./usr/lib/o32/libavl.so			base-compat-shlib	compat,zfs
 ./usr/lib/o32/libavl.so.0			base-compat-shlib	compat,zfs
 ./usr/lib/o32/libavl.so.0.0			base-compat-shlib	compat,zfs
-./usr/lib/o32/libbfd.so.18			base-compat-shlib	compat
-./usr/lib/o32/libbfd.so.18.0			base-compat-shlib	compat
+./usr/lib/o32/libbfd.so.18			base-compat-shlib	compat,binutils=239
+./usr/lib/o32/libbfd.so.18.0			base-compat-shlib	compat,binutils=239
+./usr/lib/o32/libbfd.so.19			base-compat-shlib	compat,binutils=242
+./usr/lib/o32/libbfd.so.19.0			base-compat-shlib	compat,binutils=242
 ./usr/lib/o32/libbind9.so			base-compat-shlib	compat
 ./usr/lib/o32/libbind9.so.21			base-compat-shlib	compat
 ./usr/lib/o32/libbind9.so.21.0		base-compat-shlib	compat

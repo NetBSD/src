@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.13 2024/07/08 22:35:09 christos Exp $
+# $NetBSD: ad.mips64eb,v 1.14 2024/07/09 14:48:44 rin Exp $
 ./usr/lib/o32/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/o32/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/o32/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -199,6 +199,7 @@
 ./usr/libdata/debug/usr/lib/o32/libatf-c.so.0.0.debug	comp-sys-debug	debug,compat,atf
 ./usr/libdata/debug/usr/lib/o32/libavl.so.0.0.debug	comp-sys-debug	debug,compat,zfs
 ./usr/libdata/debug/usr/lib/o32/libbfd.so.18.0.debug	comp-sys-debug	debug,compat,binutils=239
+./usr/libdata/debug/usr/lib/o32/libbfd.so.19.0.debug	comp-sys-debug	debug,compat,binutils=242
 ./usr/libdata/debug/usr/lib/o32/libbind9.so.21.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libblocklist.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat
@@ -229,6 +230,7 @@
 ./usr/libdata/debug/usr/lib/o32/libform.so.8.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libgcc_s.so.1.0.debug	comp-sys-debug	debug,compat,gcc
 ./usr/libdata/debug/usr/lib/o32/libgnuctf.so.1.0.debug	comp-sys-debug	debug,compat,binutils=239
+./usr/libdata/debug/usr/lib/o32/libgnuctf.so.2.0.debug	comp-sys-debug	debug,compat,binutils=242
 ./usr/libdata/debug/usr/lib/o32/libgnumalloc.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libgomp.so.2.1.debug	comp-sys-debug	debug,compat,gcc=10
 ./usr/libdata/debug/usr/lib/o32/libgomp.so.2.2.debug	comp-sys-debug	debug,compat,gcc=12
@@ -270,7 +272,8 @@
 ./usr/libdata/debug/usr/lib/o32/libns.so.21.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libnvpair.so.0.0.debug	comp-sys-debug	debug,compat,zfs
 ./usr/libdata/debug/usr/lib/o32/libobjc.so.4.0.debug	comp-sys-debug	debug,compat,gcc
-./usr/libdata/debug/usr/lib/o32/libopcodes.so.11.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libopcodes.so.11.0.debug	comp-sys-debug	debug,compat,binutils=239
+./usr/libdata/debug/usr/lib/o32/libopcodes.so.12.0.debug	comp-sys-debug	debug,compat,binutils=242
 ./usr/libdata/debug/usr/lib/o32/libossaudio.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libp2k.so.2.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libpam.so.4.1.debug	comp-sys-debug	debug,compat,pam
