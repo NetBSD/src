@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fchmodat.c,v 1.6 2024/07/10 20:19:51 christos Exp $ */
+/*	$NetBSD: t_fchmodat.c,v 1.7 2024/07/10 20:44:06 rillig Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fchmodat.c,v 1.6 2024/07/10 20:19:51 christos Exp $");
+__RCSID("$NetBSD: t_fchmodat.c,v 1.7 2024/07/10 20:44:06 rillig Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: t_fchmodat.c,v 1.6 2024/07/10 20:19:51 christos Exp $");
 
 #define modecheck(a, b) \
 	ATF_REQUIRE_MSG(((a) & ALLPERMS) == (b), \
-	    "Incorrect mode found %#o != expected%#o", \
+	    "Incorrect mode found %#o != expected %#o", \
 	    ((a) & ALLPERMS), (b));
 
 ATF_TC(fchmodat_fd);
