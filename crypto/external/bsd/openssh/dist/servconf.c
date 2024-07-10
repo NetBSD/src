@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.46 2024/07/08 22:33:44 christos Exp $	*/
+/*	$NetBSD: servconf.c,v 1.47 2024/07/10 14:42:01 christos Exp $	*/
 /* $OpenBSD: servconf.c,v 1.411 2024/06/12 22:36:00 djm Exp $ */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: servconf.c,v 1.46 2024/07/08 22:33:44 christos Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.47 2024/07/10 14:42:01 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
@@ -68,6 +68,9 @@ __RCSID("$NetBSD: servconf.c,v 1.46 2024/07/08 22:33:44 christos Exp $");
 #include "auth.h"
 #include "fmt_scaled.h"
 
+#if !defined(SSHD_PAM_SERVICE)
+# define SSHD_PAM_SERVICE		"sshd"
+#endif
 #ifdef WITH_LDAP_PUBKEY
 #include "ldapauth.h"
 #endif
@@ -93,6 +96,7 @@ initialize_server_options(ServerOptions *options)
 
 	/* Portable-specific options */
 	options->use_pam = -1;
+	options->pam_service_name = NULL;
 
 	/* Standard Options */
 	options->num_ports = 0;
@@ -329,12 +333,14 @@ fill_default_server_options(ServerOptions *options)
 	/* Portable-specific options */
 	if (options->use_pam == -1)
 		options->use_pam = 0;
+	if (options->pam_service_name == NULL)
+		options->pam_service_name = xstrdup(SSHD_PAM_SERVICE);
 
 	/* Standard Options */
 	u_int i;
 
 	if (options->num_host_key_files == 0) {
-		/* fill default hostkeys */
+		/* fill default hostkeys for protocols */
 		servconf_add_hostkey("[default]", 0, options,
 		    _PATH_HOST_RSA_KEY_FILE, 0);
 		servconf_add_hostkey("[default]", 0, options,
@@ -643,7 +649,9 @@ fill_default_server_options(ServerOptions *options)
 /* Keyword tokens. */
 typedef enum {
 	sBadOption,		/* == unknown option */
+	/* Portable-specific options */
 	sUsePAM, sPAMServiceName,
+	/* Standard Options */
 	sPort, sHostKeyFile, sLoginGraceTime,
 	sPermitRootLogin, sLogFacility, sLogLevel, sLogVerbose,
 	sKerberosAuthentication, sKerberosOrLocalPasswd, sKerberosTicketCleanup,
@@ -702,6 +710,7 @@ static struct {
 	ServerOpCodes opcode;
 	u_int flags;
 } keywords[] = {
+	/* Portable-specific options */
 #ifdef USE_PAM
 	{ "usepam", sUsePAM, SSHCFG_GLOBAL },
 	{ "pamservicename", sPAMServiceName, SSHCFG_ALL },
@@ -709,6 +718,7 @@ static struct {
 	{ "usepam", sUnsupported, SSHCFG_GLOBAL },
 	{ "pamservicename", sUnsupported, SSHCFG_ALL },
 #endif
+	/* Standard Options */
 	{ "port", sPort, SSHCFG_GLOBAL },
 	{ "hostkey", sHostKeyFile, SSHCFG_GLOBAL },
 	{ "hostdsakey", sHostKeyFile, SSHCFG_GLOBAL },		/* alias */
@@ -1457,6 +1467,16 @@ process_server_config_line_depth(ServerOptions *options, char *line,
 	case sUsePAM:
 		intptr = &options->use_pam;
 		goto parse_flag;
+	case sPAMServiceName:
+		charptr = &options->pam_service_name;
+		arg = argv_next(&ac, &av);
+		if (!arg || *arg == '\0') {
+			fatal("%s line %d: missing argument.",
+			    filename, linenum);
+		}
+		if (*activep && *charptr == NULL)
+			*charptr = xstrdup(arg);
+		break;
 
 	/* Standard Options */
 	case sBadOption:
@@ -2735,6 +2755,10 @@ process_server_config_line_depth(ServerOptions *options, char *line,
 		goto parse_flag;
 
 	case sRDomain:
+#if !defined(__OpenBSD__) && !defined(HAVE_SYS_SET_PROCESS_RDOMAIN)
+		fatal("%s line %d: setting RDomain not supported on this "
+		    "platform.", filename, linenum);
+#endif
 		charptr = &options->routing_domain;
 		arg = argv_next(&ac, &av);
 		if (!arg || *arg == '\0')
@@ -3486,7 +3510,9 @@ dump_config(ServerOptions *o)
 	dump_cfg_string(sHostbasedAcceptedAlgorithms, o->hostbased_accepted_algos);
 	dump_cfg_string(sHostKeyAlgorithms, o->hostkeyalgorithms);
 	dump_cfg_string(sPubkeyAcceptedAlgorithms, o->pubkey_accepted_algos);
+#if defined(__OpenBSD__) || defined(HAVE_SYS_SET_PROCESS_RDOMAIN)
 	dump_cfg_string(sRDomain, o->routing_domain);
+#endif
 	dump_cfg_string(sSshdSessionPath, o->sshd_session_path);
 	dump_cfg_string(sPerSourcePenaltyExemptList, o->per_source_penalty_exempt);
 
