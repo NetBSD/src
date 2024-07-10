@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.196 2023/11/15 03:50:22 msaitoh Exp $ */
+/* $NetBSD: ixv.c,v 1.197 2024/07/10 03:23:02 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.196 2023/11/15 03:50:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.197 2024/07/10 03:23:02 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -229,7 +229,6 @@ static int ixv_enable_legacy_tx = 0;
 TUNABLE_INT("hw.ixv.enable_legacy_tx", &ixv_enable_legacy_tx);
 
 #ifdef NET_MPSAFE
-#define IXGBE_MPSAFE		1
 #define IXGBE_CALLOUT_FLAGS	CALLOUT_MPSAFE
 #define IXGBE_SOFTINT_FLAGS	SOFTINT_MPSAFE
 #define IXGBE_WORKQUEUE_FLAGS	WQ_PERCPU | WQ_MPSAFE
@@ -1657,9 +1656,7 @@ ixv_setup_interface(device_t dev, struct ixgbe_softc *sc)
 	ifp->if_stop = ixv_ifstop;
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-#ifdef IXGBE_MPSAFE
 	ifp->if_extflags = IFEF_MPSAFE;
-#endif
 	ifp->if_ioctl = ixv_ioctl;
 	if (sc->feat_en & IXGBE_FEATURE_LEGACY_TX) {
 #if 0
@@ -3407,10 +3404,9 @@ ixv_allocate_msix(struct ixgbe_softc *sc, const struct pci_attach_args *pa)
 		    device_xname(dev), i);
 		intrstr = pci_intr_string(pc, sc->osdep.intrs[i], intrbuf,
 		    sizeof(intrbuf));
-#ifdef IXGBE_MPSAFE
 		pci_intr_setattr(pc, &sc->osdep.intrs[i], PCI_INTR_MPSAFE,
 		    true);
-#endif
+
 		/* Set the handler function */
 		que->res = sc->osdep.ihs[i] = pci_intr_establish_xname(pc,
 		    sc->osdep.intrs[i], IPL_NET, ixv_msix_que, que,
@@ -3476,10 +3472,8 @@ ixv_allocate_msix(struct ixgbe_softc *sc, const struct pci_attach_args *pa)
 	sc->vector = vector;
 	intrstr = pci_intr_string(pc, sc->osdep.intrs[vector], intrbuf,
 	    sizeof(intrbuf));
-#ifdef IXGBE_MPSAFE
-	pci_intr_setattr(pc, &sc->osdep.intrs[vector], PCI_INTR_MPSAFE,
-	    true);
-#endif
+	pci_intr_setattr(pc, &sc->osdep.intrs[vector], PCI_INTR_MPSAFE, true);
+
 	/* Set the mbx handler function */
 	sc->osdep.ihs[vector] = pci_intr_establish_xname(pc,
 	    sc->osdep.intrs[vector], IPL_NET, ixv_msix_mbx, sc, intr_xname);

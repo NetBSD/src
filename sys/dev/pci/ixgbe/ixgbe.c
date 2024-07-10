@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.352 2024/06/29 12:11:12 riastradh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.353 2024/07/10 03:23:02 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.352 2024/06/29 12:11:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.353 2024/07/10 03:23:02 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -412,7 +412,6 @@ static int (*ixgbe_ring_empty)(struct ifnet *, pcq_t *);
 #endif
 
 #ifdef NET_MPSAFE
-#define IXGBE_MPSAFE		1
 #define IXGBE_CALLOUT_FLAGS	CALLOUT_MPSAFE
 #define IXGBE_SOFTINT_FLAGS	SOFTINT_MPSAFE
 #define IXGBE_WORKQUEUE_FLAGS	WQ_PERCPU | WQ_MPSAFE
@@ -1385,9 +1384,7 @@ ixgbe_setup_interface(device_t dev, struct ixgbe_softc *sc)
 	ifp->if_stop = ixgbe_ifstop;
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-#ifdef IXGBE_MPSAFE
 	ifp->if_extflags = IFEF_MPSAFE;
-#endif
 	ifp->if_ioctl = ixgbe_ioctl;
 #if __FreeBSD_version >= 1100045
 	/* TSO parameters */
@@ -6929,10 +6926,9 @@ ixgbe_allocate_msix(struct ixgbe_softc *sc, const struct pci_attach_args *pa)
 		    device_xname(dev), i);
 		intrstr = pci_intr_string(pc, sc->osdep.intrs[i], intrbuf,
 		    sizeof(intrbuf));
-#ifdef IXGBE_MPSAFE
 		pci_intr_setattr(pc, &sc->osdep.intrs[i], PCI_INTR_MPSAFE,
 		    true);
-#endif
+
 		/* Set the handler function */
 		que->res = sc->osdep.ihs[i] = pci_intr_establish_xname(pc,
 		    sc->osdep.intrs[i], IPL_NET, ixgbe_msix_que, que,
@@ -7034,10 +7030,8 @@ ixgbe_allocate_msix(struct ixgbe_softc *sc, const struct pci_attach_args *pa)
 	sc->vector = vector;
 	intrstr = pci_intr_string(pc, sc->osdep.intrs[vector], intrbuf,
 	    sizeof(intrbuf));
-#ifdef IXGBE_MPSAFE
-	pci_intr_setattr(pc, &sc->osdep.intrs[vector], PCI_INTR_MPSAFE,
-	    true);
-#endif
+	pci_intr_setattr(pc, &sc->osdep.intrs[vector], PCI_INTR_MPSAFE, true);
+
 	/* Set the link handler function */
 	sc->osdep.ihs[vector] = pci_intr_establish_xname(pc,
 	    sc->osdep.intrs[vector], IPL_NET, ixgbe_msix_admin, sc,
