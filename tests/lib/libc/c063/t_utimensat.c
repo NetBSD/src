@@ -1,4 +1,4 @@
-/*	$NetBSD: t_utimensat.c,v 1.6 2017/01/10 15:13:56 christos Exp $ */
+/*	$NetBSD: t_utimensat.c,v 1.7 2024/07/10 19:23:56 rillig Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_utimensat.c,v 1.6 2017/01/10 15:13:56 christos Exp $");
+__RCSID("$NetBSD: t_utimensat.c,v 1.7 2024/07/10 19:23:56 rillig Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -185,7 +185,7 @@ ATF_TC_BODY(utimensat_fdlink, tc)
 	ATF_REQUIRE((dfd = open(DIR, O_RDONLY, 0)) != -1);
 
 	ATF_REQUIRE(utimensat(dfd, BASELINK, tptr, 0) == -1);
-	ATF_REQUIRE(errno = ENOENT);
+	ATF_REQUIRE(errno == ENOENT);
 
 	ATF_REQUIRE(utimensat(dfd, BASELINK, tptr, AT_SYMLINK_NOFOLLOW) == 0);
 
