@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: named,v 1.28 2023/12/25 08:35:07 kre Exp $
+# $NetBSD: named,v 1.29 2024/07/10 07:27:10 christos Exp $
 #
 
 # PROVIDE: named
@@ -97,12 +97,12 @@ named_precmd()
 	#
 	case "$($command -v)" in
 	BIND*)	# 9 no group, named-xfer, or ndc
-		named_plugindir="/usr/libexec/named"
+		named_plugindir="/usr/lib/named"
 		if ! [ -d "${named_chrootdir}${named_plugindir}" ]; then
 		    mkdir -p -m 755 "${named_chrootdir}${named_plugindir}"
 		    chown root:wheel "${named_chrootdir}${named_plugindir}"
 		fi
-		for p in filter-aaaa.so; do
+		for p in filter-aaaa.so.0; do
 			copy_if_newer "${named_chrootdir}" \
 			    "${named_plugindir}" "$p"
 		done
