@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.648 2024/06/17 17:06:47 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.649 2024/07/10 20:33:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.648 2024/06/17 17:06:47 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.649 2024/07/10 20:33:37 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1808,6 +1808,15 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 	case POINT:
 	case ARROW:
 		ntn = build_struct_access(op, sys, ln, rn);
+		break;
+	case NOT:
+		if (ln->tn_op == ASSIGN && ln->u.ops.right->tn_op == CON) {
+			/* constant assignment of type '%s' in operand ... */
+			warning(382, type_name(ln->tn_type),
+			    is_nonzero_val(&ln->u.ops.right->u.value)
+			    ? "true" : "false");
+		}
+		ntn = build_op(op, sys, gettyp(Tflag ? BOOL : INT), ln, NULL);
 		break;
 	case INCAFT:
 	case DECAFT:
