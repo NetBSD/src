@@ -1,4 +1,4 @@
-/*	$NetBSD: t_list.c,v 1.2 2017/10/02 05:14:29 pgoyette Exp $	*/
+/*	$NetBSD: t_list.c,v 1.3 2024/07/10 20:52:32 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ ATF_TC_BODY(list_move, tc)
 	memcpy(&old_copy, &old_head, sizeof(old_head));
 
 	n3 = LIST_FIRST(&new_head);
-	ATF_CHECK_MSG(n3->value = 2, "Unexpected value for LIST_FIRST");
+	ATF_CHECK_MSG(n3->value == 2, "Unexpected value for LIST_FIRST");
 
 	LIST_REMOVE(n3, entries);
 	ATF_CHECK_MSG(memcmp(&old_copy, &old_head, sizeof(old_head)) == 0,
