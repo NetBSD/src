@@ -1,4 +1,4 @@
-.\"     $NetBSD: imax.9,v 1.7 2024/07/10 07:03:47 rin Exp $
+.\"     $NetBSD: imax.9,v 1.8 2024/07/10 07:08:37 rin Exp $
 .\"
 .\" Copyright (c) 2006 Igor Sobrado
 .\" All rights reserved.
@@ -32,8 +32,8 @@
 .Nm imin ,
 .Nm lmax ,
 .Nm lmin ,
-.Nm max ,
-.Nm min ,
+.Nm uimax ,
+.Nm uimin ,
 .Nm ulmax ,
 .Nm ulmin
 .Nd compare integers
@@ -58,7 +58,7 @@
 The
 .Fn imin ,
 .Fn lmin ,
-.Fn min ,
+.Fn uimin ,
 and
 .Fn ulmin
 functions return whichever argument is algebraically smaller, differing only
@@ -68,7 +68,7 @@ natural size, long, unsigned and unsigned long integers.
 The
 .Fn imax ,
 .Fn lmax ,
-.Fn max ,
+.Fn uimax ,
 and
 .Fn ulmax
 functions are identical except that they return the algebraically larger
