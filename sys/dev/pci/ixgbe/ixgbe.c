@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.353 2024/07/10 03:23:02 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.354 2024/07/10 03:26:30 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,12 +64,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.353 2024/07/10 03:23:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.354 2024/07/10 03:26:30 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_inet6.h"
-#include "opt_net_mpsafe.h"
 #endif
 
 #include "ixgbe.h"
@@ -411,17 +410,6 @@ static int (*ixgbe_start_locked)(struct ifnet *, struct tx_ring *);
 static int (*ixgbe_ring_empty)(struct ifnet *, pcq_t *);
 #endif
 
-#ifdef NET_MPSAFE
-#define IXGBE_CALLOUT_FLAGS	CALLOUT_MPSAFE
-#define IXGBE_SOFTINT_FLAGS	SOFTINT_MPSAFE
-#define IXGBE_WORKQUEUE_FLAGS	WQ_PERCPU | WQ_MPSAFE
-#define IXGBE_TASKLET_WQ_FLAGS	WQ_MPSAFE
-#else
-#define IXGBE_CALLOUT_FLAGS	0
-#define IXGBE_SOFTINT_FLAGS	0
-#define IXGBE_WORKQUEUE_FLAGS	WQ_PERCPU
-#define IXGBE_TASKLET_WQ_FLAGS	0
-#endif
 #define IXGBE_WORKQUEUE_PRI PRI_SOFTNET
 
 /* Interval between reports of errors */
@@ -844,11 +832,10 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	IXGBE_CORE_LOCK_INIT(sc, device_xname(dev));
 
 	/* Set up the timer callout and workqueue */
-	callout_init(&sc->timer, IXGBE_CALLOUT_FLAGS);
+	callout_init(&sc->timer, CALLOUT_MPSAFE);
 	snprintf(wqname, sizeof(wqname), "%s-timer", device_xname(dev));
 	error = workqueue_create(&sc->timer_wq, wqname,
-	    ixgbe_handle_timer, sc, IXGBE_WORKQUEUE_PRI, IPL_NET,
-	    IXGBE_TASKLET_WQ_FLAGS);
+	    ixgbe_handle_timer, sc, IXGBE_WORKQUEUE_PRI, IPL_NET, WQ_MPSAFE);
 	if (error) {
 		aprint_error_dev(dev,
 		    "could not create timer workqueue (%d)\n", error);
@@ -1178,8 +1165,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	mutex_init(&(sc)->admin_mtx, MUTEX_DEFAULT, IPL_NET);
 	snprintf(wqname, sizeof(wqname), "%s-admin", device_xname(dev));
 	error = workqueue_create(&sc->admin_wq, wqname,
-	    ixgbe_handle_admin, sc, IXGBE_WORKQUEUE_PRI, IPL_NET,
-	    IXGBE_TASKLET_WQ_FLAGS);
+	    ixgbe_handle_admin, sc, IXGBE_WORKQUEUE_PRI, IPL_NET, WQ_MPSAFE);
 	if (error) {
 		aprint_error_dev(dev,
 		    "could not create admin workqueue (%d)\n", error);
@@ -1296,13 +1282,12 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		sc->recovery_mode = 0;
 
 		/* Set up the timer callout */
-		callout_init(&sc->recovery_mode_timer,
-		    IXGBE_CALLOUT_FLAGS);
+		callout_init(&sc->recovery_mode_timer, CALLOUT_MPSAFE);
 		snprintf(wqname, sizeof(wqname), "%s-recovery",
 		    device_xname(dev));
 		error = workqueue_create(&sc->recovery_mode_timer_wq,
 		    wqname, ixgbe_handle_recovery_mode_timer, sc,
-		    IXGBE_WORKQUEUE_PRI, IPL_NET, IXGBE_TASKLET_WQ_FLAGS);
+		    IXGBE_WORKQUEUE_PRI, IPL_NET, WQ_MPSAFE);
 		if (error) {
 			aprint_error_dev(dev, "could not create "
 			    "recovery_mode_timer workqueue (%d)\n", error);
@@ -6835,22 +6820,22 @@ alloc_retry:
 	 */
 	if (!(sc->feat_en & IXGBE_FEATURE_LEGACY_TX)) {
 		txr->txr_si =
-		    softint_establish(SOFTINT_NET | IXGBE_SOFTINT_FLAGS,
+		    softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 			ixgbe_deferred_mq_start, txr);
 
 		snprintf(wqname, sizeof(wqname), "%sdeferTx",
 		    device_xname(dev));
 		defertx_error = workqueue_create(&sc->txr_wq, wqname,
 		    ixgbe_deferred_mq_start_work, sc, IXGBE_WORKQUEUE_PRI,
-		    IPL_NET, IXGBE_WORKQUEUE_FLAGS);
+		    IPL_NET, WQ_PERCPU | WQ_MPSAFE);
 		sc->txr_wq_enqueued = percpu_alloc(sizeof(u_int));
 	}
-	que->que_si = softint_establish(SOFTINT_NET | IXGBE_SOFTINT_FLAGS,
+	que->que_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 	    ixgbe_handle_que, que);
 	snprintf(wqname, sizeof(wqname), "%sTxRx", device_xname(dev));
 	error = workqueue_create(&sc->que_wq, wqname,
 	    ixgbe_handle_que_work, sc, IXGBE_WORKQUEUE_PRI, IPL_NET,
-	    IXGBE_WORKQUEUE_FLAGS);
+	    WQ_PERCPU | WQ_MPSAFE);
 
 	if ((!(sc->feat_en & IXGBE_FEATURE_LEGACY_TX)
 		&& ((txr->txr_si == NULL) || defertx_error != 0))
@@ -6985,7 +6970,7 @@ ixgbe_allocate_msix(struct ixgbe_softc *sc, const struct pci_attach_args *pa)
 
 		if (!(sc->feat_en & IXGBE_FEATURE_LEGACY_TX)) {
 			txr->txr_si = softint_establish(
-				SOFTINT_NET | IXGBE_SOFTINT_FLAGS,
+				SOFTINT_NET | SOFTINT_MPSAFE,
 				ixgbe_deferred_mq_start, txr);
 			if (txr->txr_si == NULL) {
 				aprint_error_dev(dev,
@@ -6995,7 +6980,7 @@ ixgbe_allocate_msix(struct ixgbe_softc *sc, const struct pci_attach_args *pa)
 			}
 		}
 		que->que_si
-		    = softint_establish(SOFTINT_NET | IXGBE_SOFTINT_FLAGS,
+		    = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 			ixgbe_handle_que, que);
 		if (que->que_si == NULL) {
 			aprint_error_dev(dev,
@@ -7007,7 +6992,7 @@ ixgbe_allocate_msix(struct ixgbe_softc *sc, const struct pci_attach_args *pa)
 	snprintf(wqname, sizeof(wqname), "%sdeferTx", device_xname(dev));
 	error = workqueue_create(&sc->txr_wq, wqname,
 	    ixgbe_deferred_mq_start_work, sc, IXGBE_WORKQUEUE_PRI, IPL_NET,
-	    IXGBE_WORKQUEUE_FLAGS);
+	    WQ_PERCPU | WQ_MPSAFE);
 	if (error) {
 		aprint_error_dev(dev,
 		    "couldn't create workqueue for deferred Tx\n");
@@ -7018,7 +7003,7 @@ ixgbe_allocate_msix(struct ixgbe_softc *sc, const struct pci_attach_args *pa)
 	snprintf(wqname, sizeof(wqname), "%sTxRx", device_xname(dev));
 	error = workqueue_create(&sc->que_wq, wqname,
 	    ixgbe_handle_que_work, sc, IXGBE_WORKQUEUE_PRI, IPL_NET,
-	    IXGBE_WORKQUEUE_FLAGS);
+	    WQ_PERCPU | WQ_MPSAFE);
 	if (error) {
 		aprint_error_dev(dev, "couldn't create workqueue for Tx/Rx\n");
 		goto err_out;
