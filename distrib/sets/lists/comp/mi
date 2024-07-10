@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2462 2024/07/08 22:14:30 christos Exp $
+#	$NetBSD: mi,v 1.2463 2024/07/10 07:20:52 rin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -12293,6 +12293,8 @@
 ./usr/share/man/cat9/le64enc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/le64toh.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/linedisc.0			comp-sys-catman		.cat
+./usr/share/man/cat9/lmax.0			comp-sys-catman		.cat
+./usr/share/man/cat9/lmin.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/localcount.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/lock.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/locking.0			comp-sys-catman		.cat
@@ -12987,7 +12989,11 @@
 ./usr/share/man/cat9/ufetch_long.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ufetch_ptr.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ufetch_short.0		comp-sys-catman		.cat
+./usr/share/man/cat9/uimax.0			comp-sys-catman		.cat
+./usr/share/man/cat9/uimin.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/uiomove.0			comp-sys-catman		.cat
+./usr/share/man/cat9/ulmax.0			comp-sys-catman		.cat
+./usr/share/man/cat9/ulmin.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ungetnewvnode.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/untimeout.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uprintf.0			comp-sys-catman		.cat
@@ -20706,6 +20712,8 @@
 ./usr/share/man/html9/le64enc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/le64toh.html		comp-sys-htmlman	html
 ./usr/share/man/html9/linedisc.html		comp-sys-htmlman	html
+./usr/share/man/html9/lmax.html			comp-sys-htmlman	html
+./usr/share/man/html9/lmin.html			comp-sys-htmlman	html
 ./usr/share/man/html9/localcount.html		comp-sys-htmlman	html
 ./usr/share/man/html9/lock.html			comp-sys-htmlman	html
 ./usr/share/man/html9/locking.html		comp-sys-htmlman	html
@@ -21373,7 +21381,11 @@
 ./usr/share/man/html9/ufetch_long.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ufetch_ptr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ufetch_short.html		comp-sys-htmlman	html
+./usr/share/man/html9/uimax.html		comp-sys-htmlman	html
+./usr/share/man/html9/uimin.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uiomove.html		comp-sys-htmlman	html
+./usr/share/man/html9/ulmax.html		comp-sys-htmlman	html
+./usr/share/man/html9/ulmin.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ungetnewvnode.html	comp-obsolete		obsolete
 ./usr/share/man/html9/untimeout.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uprintf.html		comp-sys-htmlman	html
@@ -29270,6 +29282,8 @@
 ./usr/share/man/man9/le64enc.9			comp-sys-man		.man
 ./usr/share/man/man9/le64toh.9			comp-sys-man		.man
 ./usr/share/man/man9/linedisc.9			comp-sys-man		.man
+./usr/share/man/man9/lmax.9			comp-sys-man		.man
+./usr/share/man/man9/lmin.9			comp-sys-man		.man
 ./usr/share/man/man9/localcount.9		comp-sys-man		.man
 ./usr/share/man/man9/lock.9			comp-sys-man		.man
 ./usr/share/man/man9/locking.9			comp-sys-man		.man
@@ -29964,7 +29978,11 @@
 ./usr/share/man/man9/ufetch_long.9		comp-sys-man		.man
 ./usr/share/man/man9/ufetch_ptr.9		comp-sys-man		.man
 ./usr/share/man/man9/ufetch_short.9		comp-sys-man		.man
+./usr/share/man/man9/uimax.9			comp-sys-man		.man
+./usr/share/man/man9/uimin.9			comp-sys-man		.man
 ./usr/share/man/man9/uiomove.9			comp-sys-man		.man
+./usr/share/man/man9/ulmax.9			comp-sys-man		.man
+./usr/share/man/man9/ulmin.9			comp-sys-man		.man
 ./usr/share/man/man9/ungetnewvnode.9		comp-obsolete		obsolete
 ./usr/share/man/man9/untimeout.9		comp-sys-man		.man
 ./usr/share/man/man9/uprintf.9			comp-sys-man		.man
