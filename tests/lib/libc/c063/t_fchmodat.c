@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fchmodat.c,v 1.4 2024/07/10 01:12:18 christos Exp $ */
+/*	$NetBSD: t_fchmodat.c,v 1.5 2024/07/10 19:23:56 rillig Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fchmodat.c,v 1.4 2024/07/10 01:12:18 christos Exp $");
+__RCSID("$NetBSD: t_fchmodat.c,v 1.5 2024/07/10 19:23:56 rillig Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -173,7 +173,7 @@ ATF_TC_BODY(fchmodat_fdlink, tc)
 	ATF_REQUIRE((dfdlink = open(DIR, O_RDONLY, 0)) != -1);
 
 	ATF_REQUIRE(fchmodat(dfdlink, BASELINK, 0600, 0) == -1);
-	ATF_REQUIRE(errno = ENOENT);
+	ATF_REQUIRE(errno == ENOENT);
 
 	ATF_REQUIRE(fchmodat(dfdlink, BASELINK, 0600, AT_SYMLINK_NOFOLLOW) == 0);
 
