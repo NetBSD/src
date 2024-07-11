@@ -1,5 +1,7 @@
-# $NetBSD: ad.aarch64,v 1.39 2024/07/01 04:03:04 mrg Exp $
+# $NetBSD: ad.aarch64,v 1.40 2024/07/11 08:13:49 riastradh Exp $
 ./usr/lib/libtsan_g.a						comp-c-debuglib	debuglib,arch64,cxx,gcccmds,gcc=12
+./usr/libdata/debug/libexec/ld.elf_so-oabi.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/lib/libtsan.so.2.0.debug		comp-sys-debug	debug,cxx,gcccmds,gcc=12
+./usr/libdata/debug/usr/libexec/ld.elf_so-oabi.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/ofctl.debug			comp-util-debug		debug
 ./usr/libdata/debug/usr/sbin/tpctl.debug			comp-sysutil-debug	debug
