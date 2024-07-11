@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.47 2022/10/19 06:09:27 blymn Exp $	*/
+/*	$NetBSD: color.c,v 1.48 2024/07/11 07:13:41 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.47 2022/10/19 06:09:27 blymn Exp $");
+__RCSID("$NetBSD: color.c,v 1.48 2024/07/11 07:13:41 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -123,6 +123,7 @@ start_color(void)
 
 	_cursesi_screen->COLORS = COLORS;
 	_cursesi_screen->COLOR_PAIRS = COLOR_PAIRS;
+	_cursesi_screen->curpair = -1;
 
 	/* Reset terminal colour and colour pairs. */
 	if (orig_colors != NULL)
@@ -540,6 +541,10 @@ __set_color( /*ARGSUSED*/ WINDOW *win, attr_t attr)
 		return;
 
 	pair = PAIR_NUMBER((uint32_t)attr);
+
+	if (pair == _cursesi_screen->curpair)
+		return;
+
 	__CTRACE(__CTRACE_COLOR, "__set_color: %d, %d, %d\n", pair,
 	    _cursesi_screen->colour_pairs[pair].fore,
 	    _cursesi_screen->colour_pairs[pair].back);
@@ -578,6 +583,8 @@ __set_color( /*ARGSUSED*/ WINDOW *win, attr_t attr)
 			    0, __cputchar);
 		break;
 	}
+
+	_cursesi_screen->curpair = pair;
 	curscr->wattr &= ~__COLOR;
 	curscr->wattr |= attr & __COLOR;
 }
@@ -611,6 +618,8 @@ __unset_color(WINDOW *win)
 		}
 		break;
 	}
+
+	_cursesi_screen->curpair = -1;
 }
 
 /*
@@ -620,6 +629,12 @@ __unset_color(WINDOW *win)
 void
 __restore_colors(void)
 {
+	/*
+	 * forget foreground/background colour just in case it was
+	 * changed.  We will reset them if required.
+	 */
+	_cursesi_screen->curpair = -1;
+
 	if (can_change != 0)
 		switch (_cursesi_screen->color_type) {
 		case COLOR_HP:
