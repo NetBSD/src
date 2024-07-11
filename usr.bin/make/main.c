@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.631 2024/07/09 19:43:01 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.632 2024/07/11 20:09:16 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.631 2024/07/09 19:43:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.632 2024/07/11 20:09:16 sjg Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1685,6 +1685,56 @@ found:
 	return true;
 }
 
+/* populate av for Cmd_Exec and Compat_RunCommand */
+int
+Cmd_Argv(const char *cmd, size_t cmd_len, const char **av, size_t avsz,
+    char *cmd_file, size_t cmd_filesz, bool eflag, bool xflag)
+{
+	int ac = 0;
+	int cmd_fd = -1;
+
+	if (shellPath == NULL)
+		Shell_Init();
+
+	if (cmd_file != NULL) {
+		if (cmd_len == 0)
+			cmd_len = strlen(cmd);
+
+		if (cmd_len > MAKE_CMDLEN_LIMIT) {
+			cmd_fd = mkTempFile(NULL, cmd_file, cmd_filesz);
+			if (cmd_fd >= 0) {
+				ssize_t n;
+
+				n = write(cmd_fd, cmd, cmd_len);
+				close(cmd_fd);
+				if (n < (ssize_t)cmd_len) {
+					unlink(cmd_file);
+					cmd_fd = -1;
+				}
+			}
+		} else
+			cmd_file[0] = '\0';
+	}
+
+	if (avsz < 4 || (eflag && avsz < 5))
+		return -1;
+
+	/* The following works for any of the builtin shell specs. */
+	av[ac++] = shellPath;
+	if (eflag)
+		av[ac++] = shellErrFlag;
+	if (cmd_fd >= 0) {
+		if (xflag)
+			av[ac++] = "-x";
+		av[ac++] = cmd_file;
+	} else {
+		av[ac++] = xflag ? "-xc" : "-c";
+		av[ac++] = cmd;
+	}
+	av[ac] = NULL;
+	return ac;
+}
+
 /*
  * Execute the command in cmd, and return its output (only stdout, not
  * stderr, possibly empty).  In the output, replace newlines with spaces.
@@ -1703,40 +1753,11 @@ Cmd_Exec(const char *cmd, char **error)
 	char *p;
 	int saved_errno;
 	char cmd_file[MAXPATHLEN];
-	size_t cmd_len;
-	int cmd_fd = -1;
 
-	if (shellPath == NULL)
-		Shell_Init();
-
-	cmd_len = strlen(cmd);
-	if (cmd_len > 1000) {
-		cmd_fd = mkTempFile(NULL, cmd_file, sizeof(cmd_file));
-		if (cmd_fd >= 0) {
-			ssize_t n;
-
-			n = write(cmd_fd, cmd, cmd_len);
-			close(cmd_fd);
-			if (n < (ssize_t)cmd_len) {
-				unlink(cmd_file);
-				cmd_fd = -1;
-			}
-		}
-	}
-
-	args[0] = shellName;
-	if (cmd_fd >= 0) {
-		args[1] = cmd_file;
-		args[2] = NULL;
-	} else {
-		cmd_file[0] = '\0';
-		args[1] = "-c";
-		args[2] = cmd;
-		args[3] = NULL;
-	}
 	DEBUG1(VAR, "Capturing the output of command \"%s\"\n", cmd);
 
-	if (pipe(pipefds) == -1) {
+	if (Cmd_Argv(cmd, 0, args, 4, cmd_file, sizeof(cmd_file), false, false) < 0
+	    || pipe(pipefds) == -1) {
 		*error = str_concat3(
 		    "Couldn't create pipe for \"", cmd, "\"");
 		return bmake_strdup("");
