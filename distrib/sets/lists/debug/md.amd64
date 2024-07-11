@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.126 2024/07/08 14:10:13 rin Exp $
+# $NetBSD: md.amd64,v 1.127 2024/07/11 08:13:49 riastradh Exp $
 ./usr/lib/libtsan_g.a				comp-c-debuglib		debuglib,arch64,cxx,gcccmds,gcc
 ./usr/lib/libx86_64_g.a				comp-c-debuglib		debuglib
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
@@ -7,6 +7,7 @@
 ./usr/libdata/debug/usr/lib/libtsan.so.1.0.debug		comp-sys-debug	debug,cxx,gcccmds,gcc=10
 ./usr/libdata/debug/usr/lib/libtsan.so.2.0.debug		comp-sys-debug	debug,cxx,gcccmds,gcc=12
 ./usr/libdata/debug/usr/lib/libx86_64.so.0.0.debug	comp-sys-shlib		pic,debug
+./usr/libdata/debug/usr/libexec/ld.elf_so-i386	comp-obsolete	obsolete
 ./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait.debug	tests-obsolete	obsolete
 ./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait3.debug	tests-obsolete	obsolete
 ./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait4.debug	tests-obsolete	obsolete

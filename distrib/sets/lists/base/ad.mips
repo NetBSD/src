@@ -1,8 +1,9 @@
-# $NetBSD: ad.mips,v 1.94 2024/04/09 15:17:22 nia Exp $
+# $NetBSD: ad.mips,v 1.95 2024/07/11 08:13:48 riastradh Exp $
+#
 ./lib/libc_fp.so				base-sys-shlib		dynamicroot,softfloat,arch64
 ./lib/libc_fp.so.0				base-sys-shlib		dynamicroot,softfloat,arch64
 ./lib/libc_fp.so.0.0				base-sys-shlib		dynamicroot,softfloat,arch64
-./usr/lib/libc_fp.so				base-sys-shlib		softfloat,arch64
-./usr/lib/libc_fp.so.0				base-sys-shlib		softfloat,arch64
-./usr/lib/libc_fp.so.0.0			base-sys-shlib		softfloat,arch64
+./usr/lib/libc_fp.so				base-sys-shlib		softfloat,arch64,compatfile
+./usr/lib/libc_fp.so.0				base-sys-shlib		softfloat,arch64,compatfile
+./usr/lib/libc_fp.so.0.0			base-sys-shlib		softfloat,arch64,compatfile
 ./usr/lkm/ldscript				base-obsolete		obsolete
