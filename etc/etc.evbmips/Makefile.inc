@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.27 2021/11/03 08:05:39 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.28 2024/07/11 13:40:19 rin Exp $
 #
 #	etc.evbmips/Makefile.inc -- evbmips-specific etc Makefile targets
 #
@@ -35,6 +35,7 @@ BUILD_KERNELS+=		INSTALL_OCTEON
 KERNEL_SETS=		ALCHEMY DB120 DBAU1500 DBAU1550 MALTA RB433UAH
 BUILD_KERNELS=		INSTALL_MALTA
 
+KERNEL_SETS+=		MIPSSIM
 .endif
 
 # SBMIPS has a kernel for all targets
