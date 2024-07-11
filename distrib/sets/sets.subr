@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.208 2024/07/11 17:27:04 riastradh Exp $
+#	$NetBSD: sets.subr,v 1.209 2024/07/11 17:27:25 riastradh Exp $
 #
 
 #
@@ -222,6 +222,7 @@ sparc64)
 x86_64)	compat32arches=i386
 	;;
 esac
+: ${compat32arches:=}
 : ${compat64arches:=}
 
 
@@ -256,7 +257,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.208 2024/07/11 17:27:04 riastradh Exp $
+# 	# $NetBSD: sets.subr,v 1.209 2024/07/11 17:27:25 riastradh Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
