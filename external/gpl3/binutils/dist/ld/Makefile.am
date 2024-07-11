@@ -776,6 +776,8 @@ NetBSD_DISABLED_ld.1:
 # The sed command removes the no-adjust Nroff command so that
 # the man output looks standard.
 ldint.1: $(srcdir)/ldint.texi configdoc.texi
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_ldint.1:
 	$(AM_V_GEN)touch $@
 	$(AM_V_at)-$(TEXI2POD) $(MANCONF) < $(srcdir)/ldint.texi > ldint.pod
 	$(AM_V_at)-($(POD2MAN) ldint.pod | \
