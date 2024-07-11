@@ -1,4 +1,5 @@
-# $NetBSD: md.acorn32,v 1.14 2022/01/10 17:50:18 martin Exp $
+# $NetBSD: md.acorn32,v 1.15 2024/07/11 20:41:05 riastradh Exp $
+#
 ./dev/beep					base-obsolete		obsolete
 ./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share
 ./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share

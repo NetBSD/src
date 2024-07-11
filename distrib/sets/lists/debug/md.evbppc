@@ -1,4 +1,5 @@
-# $NetBSD: md.evbppc,v 1.2 2022/05/30 15:06:54 rin Exp $
+# $NetBSD: md.evbppc,v 1.3 2024/07/11 20:41:08 riastradh Exp $
+#
 ./usr/lib/libc_aligned_g.a			comp-c-debuglib		debuglib,!machine_arch=powerpc64
 ./usr/libdata/debug/netbsd-esata-P2020DS.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/netbsd-ld0a-INSTALL_TWRP1025.debug	comp-sysutil-debug	debug

@@ -1,4 +1,5 @@
-# $NetBSD: module.ad.m68k,v 1.1 2020/05/01 22:21:11 christos Exp $
+# $NetBSD: module.ad.m68k,v 1.2 2024/07/11 20:41:08 riastradh Exp $
+#
 ./usr/libdata/debug/@MODULEDIR@/compat_aoutm68k			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_aoutm68k/compat_aoutm68k.kmod.debug modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/exec_aout				modules-base-kernel	kmod,debug

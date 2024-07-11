@@ -1,4 +1,5 @@
-# $NetBSD: ad.aarch64,v 1.47 2024/07/01 04:03:04 mrg Exp $
+# $NetBSD: ad.aarch64,v 1.48 2024/07/11 20:41:05 riastradh Exp $
+#
 ./lib/oabi					base-obsolete		obsolete
 ./lib/oabi/npf					base-obsolete		obsolete
 ./libexec/ld.elf_so-oabi			base-obsolete		obsolete

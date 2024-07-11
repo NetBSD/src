@@ -1,4 +1,5 @@
-# $NetBSD: md.virt68k,v 1.1 2024/01/06 07:35:38 thorpej Exp $
+# $NetBSD: md.virt68k,v 1.2 2024/07/11 20:41:06 riastradh Exp $
+#
 ./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share
 ./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share
 ./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share

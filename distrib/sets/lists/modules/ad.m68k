@@ -1,4 +1,5 @@
-# $NetBSD: ad.m68k,v 1.3 2020/02/11 11:36:53 uki Exp $
+# $NetBSD: ad.m68k,v 1.4 2024/07/11 20:41:09 riastradh Exp $
+#
 ./@MODULEDIR@/compat_aoutm68k			modules-base-kernel	kmod
 ./@MODULEDIR@/compat_aoutm68k/compat_aoutm68k.kmod modules-base-kernel	kmod
 ./@MODULEDIR@/exec_aout				modules-base-kernel	kmod

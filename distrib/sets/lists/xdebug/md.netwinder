@@ -1,4 +1,5 @@
-# $NetBSD: md.netwinder,v 1.14 2024/01/26 12:58:51 tsutsui Exp $
+# $NetBSD: md.netwinder,v 1.15 2024/07/11 20:41:10 riastradh Exp $
+#
 ./usr/X11R7/lib/modules/extensions/libcfb32_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		xdebug-obsolete	xorg,obsolete

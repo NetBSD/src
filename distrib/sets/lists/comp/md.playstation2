@@ -1,4 +1,5 @@
-# $NetBSD: md.playstation2,v 1.15 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.playstation2,v 1.16 2024/07/11 20:41:07 riastradh Exp $
+#
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/playstation2			comp-c-include
 ./usr/include/playstation2/_G_config.h		comp-obsolete		obsolete

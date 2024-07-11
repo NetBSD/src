@@ -1,4 +1,5 @@
-# $NetBSD: shl.mi,v 1.73 2024/07/04 09:34:13 mrg Exp $
+# $NetBSD: shl.mi,v 1.74 2024/07/11 20:41:10 riastradh Exp $
+#
 ./usr/libdata/debug/usr/X11R7/lib	base-sys-usr		xorg,debug,compatx11dir
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libximcp.so.2.0.debug	obsolete		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libxlcDef.so.2.0.debug	obsolete		obsolete

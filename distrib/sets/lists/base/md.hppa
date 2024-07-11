@@ -1,4 +1,5 @@
-# $NetBSD: md.hppa,v 1.5 2022/09/08 05:16:45 rillig Exp $
+# $NetBSD: md.hppa,v 1.6 2024/07/11 20:41:06 riastradh Exp $
+#
 ./usr/mdec/boot				base-sysutil-bin
 ./usr/mdec/cdboot			base-sysutil-bin
 ./usr/mdec/mkboot			base-sysutil-bin

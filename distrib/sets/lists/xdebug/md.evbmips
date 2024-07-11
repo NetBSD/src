@@ -1,4 +1,5 @@
-# $NetBSD: md.evbmips,v 1.15 2024/01/26 13:06:36 tsutsui Exp $
+# $NetBSD: md.evbmips,v 1.16 2024/07/11 20:41:10 riastradh Exp $
+#
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdri2_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdri_g.a		xdebug-obsolete	xorg,obsolete

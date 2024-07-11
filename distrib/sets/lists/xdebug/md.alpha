@@ -1,4 +1,5 @@
-# $NetBSD: md.alpha,v 1.24 2024/06/24 09:36:59 martin Exp $
+# $NetBSD: md.alpha,v 1.25 2024/07/11 20:41:10 riastradh Exp $
+#
 ./usr/X11R7/lib/modules/extensions/libdri2_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/bin/Xorg.debug		xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug		xdebug-xorg-server-debug	xorg,debug

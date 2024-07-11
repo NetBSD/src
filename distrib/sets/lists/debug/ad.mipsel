@@ -1,4 +1,5 @@
-# $NetBSD: ad.mipsel,v 1.5 2022/01/09 07:45:05 skrll Exp $
+# $NetBSD: ad.mipsel,v 1.6 2024/07/11 20:41:08 riastradh Exp $
+#
 ./usr/libdata/debug/usr/bin/elf2ecoff.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/netbsd-aumac0-ALCHEMY.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/netbsd-aumac0-DBAU1500.debug	comp-sysutil-debug	debug

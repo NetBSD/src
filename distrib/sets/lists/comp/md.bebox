@@ -1,4 +1,5 @@
-# $NetBSD: md.bebox,v 1.41 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.bebox,v 1.42 2024/07/11 20:41:07 riastradh Exp $
+#
 ./usr/include/bebox				comp-c-include
 ./usr/include/bebox/_G_config.h			comp-obsolete		obsolete
 ./usr/include/bebox/ansi.h			comp-c-include

@@ -1,4 +1,5 @@
-# $NetBSD: md.hp300,v 1.64 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.hp300,v 1.65 2024/07/11 20:41:07 riastradh Exp $
+#
 ./usr/include/hp300				comp-c-include
 ./usr/include/hp300/_G_config.h			comp-obsolete		obsolete
 ./usr/include/hp300/ansi.h			comp-c-include

@@ -1,4 +1,5 @@
-# $NetBSD: md.i386,v 1.21 2023/09/04 21:36:31 riastradh Exp $
+# $NetBSD: md.i386,v 1.22 2024/07/11 20:41:08 riastradh Exp $
+#
 ./usr/lib/libi386_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libm387_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libpmc_g.a				comp-obsolete		obsolete

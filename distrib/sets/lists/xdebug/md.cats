@@ -1,4 +1,5 @@
-# $NetBSD: md.cats,v 1.25 2024/06/22 23:20:38 mrg Exp $
+# $NetBSD: md.cats,v 1.26 2024/07/11 20:41:10 riastradh Exp $
+#
 ./usr/X11R7/lib/modules/extensions/libcfb32_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		xdebug-obsolete	xorg,obsolete

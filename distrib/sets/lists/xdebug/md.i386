@@ -1,4 +1,5 @@
-# $NetBSD: md.i386,v 1.65 2024/07/04 09:34:13 mrg Exp $
+# $NetBSD: md.i386,v 1.66 2024/07/11 20:41:10 riastradh Exp $
+#
 ./usr/X11R7/lib/libI810XvMC_g.a				xdebug-libI810XvMC-debuglib	xorg,debuglib
 ./usr/X11R7/lib/libIntelXvMC_g.a			xdebug-libIntelXvMC-debuglib	xorg,debuglib
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			xdebug-libchromeXvMCPro-debuglib	xorg,debuglib

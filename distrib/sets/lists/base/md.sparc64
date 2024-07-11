@@ -1,4 +1,5 @@
-# $NetBSD: md.sparc64,v 1.263 2024/04/09 15:17:22 nia Exp $
+# $NetBSD: md.sparc64,v 1.264 2024/07/11 20:41:06 riastradh Exp $
+#
 ./sbin/edlabel					base-obsolete	obsolete
 ./usr/bin/fdformat				base-util-bin
 ./usr/mdec/binstall				base-sysutil-bin

@@ -1,4 +1,5 @@
-# $NetBSD: md.ibmnws,v 1.15 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.ibmnws,v 1.16 2024/07/11 20:41:07 riastradh Exp $
+#
 ./usr/include/ibmnws				comp-c-include
 ./usr/include/ibmnws/_G_config.h		comp-obsolete		obsolete
 ./usr/include/ibmnws/ansi.h			comp-c-include

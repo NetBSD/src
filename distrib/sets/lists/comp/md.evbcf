@@ -1,4 +1,5 @@
-# $NetBSD: md.evbcf,v 1.4 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.evbcf,v 1.5 2024/07/11 20:41:07 riastradh Exp $
+#
 ./usr/include/evbcf				comp-c-include
 ./usr/include/evbcf/ansi.h			comp-c-include
 ./usr/include/evbcf/aout_machdep.h		comp-c-include

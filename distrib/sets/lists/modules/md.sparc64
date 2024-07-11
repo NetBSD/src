@@ -1,4 +1,5 @@
-# $NetBSD: md.sparc64,v 1.13 2022/12/20 04:10:11 pgoyette Exp $
+# $NetBSD: md.sparc64,v 1.14 2024/07/11 20:41:09 riastradh Exp $
+#
 ./@MODULEDIR@/compat_netbsd32			modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32/compat_netbsd32.kmod modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_09		modules-base-kernel	kmod

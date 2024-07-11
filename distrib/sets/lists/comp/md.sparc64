@@ -1,4 +1,5 @@
-# $NetBSD: md.sparc64,v 1.216 2024/06/22 20:17:25 riastradh Exp $
+# $NetBSD: md.sparc64,v 1.217 2024/07/11 20:41:07 riastradh Exp $
+#
 ./usr/include/g++/bits/sparc			comp-c-include		compat
 ./usr/include/g++/bits/sparc/c++config.h	comp-c-include		gcc,compat
 ./usr/include/g++/bits/sparc64			comp-c-include		compat

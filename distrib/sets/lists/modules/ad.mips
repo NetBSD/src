@@ -1,4 +1,5 @@
-# $NetBSD: ad.mips,v 1.19 2022/12/20 04:10:11 pgoyette Exp $
+# $NetBSD: ad.mips,v 1.20 2024/07/11 20:41:09 riastradh Exp $
+#
 ./@MODULEDIR@/compat_netbsd32			modules-base-kernel	kmod,arch64,nocompatmodules
 ./@MODULEDIR@/compat_netbsd32/compat_netbsd32.kmod modules-base-kernel	kmod,arch64,nocompatmodules
 ./@MODULEDIR@/compat_netbsd32_09		modules-base-kernel	kmod,arch64,nocompatmodules

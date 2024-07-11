@@ -1,4 +1,5 @@
-# $NetBSD: ad.mips,v 1.83 2023/09/04 21:36:31 riastradh Exp $
+# $NetBSD: ad.mips,v 1.84 2024/07/11 20:41:07 riastradh Exp $
+#
 -./usr/lib/64/libgomp_g.a				comp-c-debuglib		debuglib,compat,arch64
 -./usr/libdata/debug/usr/lib/64/libgomp.so.2.0.debug	comp-c-debug		debug,compatfile,gcc=9
 -./usr/libdata/debug/usr/lib/64/libgomp.so.2.1.debug	comp-c-debug		debug,compatfile,gcc=10

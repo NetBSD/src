@@ -1,2 +1,3 @@
-# $NetBSD: md.evbmips,v 1.10 2020/07/24 12:07:09 jmcneill Exp $
+# $NetBSD: md.evbmips,v 1.11 2024/07/11 20:41:08 riastradh Exp $
+#
 ./usr/libdata/debug/usr/sbin/ofctl.debug	comp-sysutil-debug	debug

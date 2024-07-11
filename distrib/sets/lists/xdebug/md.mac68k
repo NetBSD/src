@@ -1,4 +1,5 @@
-# $NetBSD: md.mac68k,v 1.13 2024/01/26 13:06:36 tsutsui Exp $
+# $NetBSD: md.mac68k,v 1.14 2024/07/11 20:41:10 riastradh Exp $
+#
 ./usr/libdata/debug/usr/X11R7/bin/Xorg.debug	xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug	xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.2.debug	xdebug-xf86-input-keyboard-debug	xorg,debug
