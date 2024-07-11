@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.343 2024/07/09 19:43:01 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.344 2024/07/11 20:09:16 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -845,8 +845,13 @@ void For_Break(struct ForLoop *);
 /* job.c */
 void JobReapChild(pid_t, int, bool);
 
+/* longer than this we use a temp file */
+#ifndef MAKE_CMDLEN_LIMIT
+# define MAKE_CMDLEN_LIMIT 1000
+#endif
 /* main.c */
 void Main_ParseArgLine(const char *);
+int Cmd_Argv(const char *, size_t, const char **, size_t, char *, size_t, bool, bool);
 char *Cmd_Exec(const char *, char **) MAKE_ATTR_USE;
 void Error(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2);
 void Fatal(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2) MAKE_ATTR_DEAD;

@@ -1,4 +1,4 @@
-# $NetBSD: var-op-shell.mk,v 1.9 2024/06/30 11:37:21 rillig Exp $
+# $NetBSD: var-op-shell.mk,v 1.10 2024/07/11 20:09:16 sjg Exp $
 #
 # Tests for the != variable assignment operator, which runs its right-hand
 # side through the shell.
@@ -99,7 +99,7 @@ OUTPUT_SHORT!=	echo "$$0"
 OUTPUT_LONG!=	echo "$$0" || : ${:U:range=1000}
 # When running '$shell -c $command', '$0' in the shell evaluates to the name
 # of the shell.
-.if ${OUTPUT_SHORT} != ${.SHELL:T}
+.if ${OUTPUT_SHORT:T} != ${.SHELL:T}
 .  error
 .endif
 # When running '$shell $tmpfile', '$0' in the shell evaluates to the name of
