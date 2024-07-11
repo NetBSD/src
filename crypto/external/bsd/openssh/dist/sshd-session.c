@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd-session.c,v 1.2 2024/07/08 22:33:44 christos Exp $	*/
+/*	$NetBSD: sshd-session.c,v 1.3 2024/07/11 17:26:53 riastradh Exp $	*/
 
 /* $OpenBSD: sshd-session.c,v 1.4 2024/06/26 23:16:52 deraadt Exp $ */
 /*
@@ -30,7 +30,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd-session.c,v 1.2 2024/07/08 22:33:44 christos Exp $");
+__RCSID("$NetBSD: sshd-session.c,v 1.3 2024/07/11 17:26:53 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -204,6 +204,7 @@ static void do_ssh2_kex(struct ssh *);
  * As usual, this may only take signal-safe actions, even though it is
  * terminal.
  */
+__dead
 static void
 grace_alarm_handler(int sig)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-pam.c,v 1.22 2024/07/08 22:33:43 christos Exp $	*/
+/*	$NetBSD: auth-pam.c,v 1.23 2024/07/11 17:26:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -53,7 +53,7 @@
 /*
  * NetBSD local changes
  */
-__RCSID("$NetBSD: auth-pam.c,v 1.22 2024/07/08 22:33:43 christos Exp $");
+__RCSID("$NetBSD: auth-pam.c,v 1.23 2024/07/11 17:26:53 riastradh Exp $");
 #define _LIB_PTHREAD_H
 #undef USE_POSIX_THREADS /* Not yet */
 #define HAVE_SECURITY_PAM_APPL_H
@@ -1206,6 +1206,7 @@ static struct pam_conv tty_conv = { sshpam_tty_conv, NULL };
  * XXX this should be done in the authentication phase, but ssh1 doesn't
  * support that
  */
+__dead				/* fatal is __dead */
 void
 do_pam_chauthtok(void)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.52 2024/07/08 22:33:44 christos Exp $	*/
+/*	$NetBSD: sshd.c,v 1.53 2024/07/11 17:26:53 riastradh Exp $	*/
 /* $OpenBSD: sshd.c,v 1.609 2024/06/27 23:01:15 djm Exp $ */
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd.c,v 1.52 2024/07/08 22:33:44 christos Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.53 2024/07/11 17:26:53 riastradh Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -480,6 +480,7 @@ sighup_handler(int sig)
  * Called from the main program after receiving SIGHUP.
  * Restarts the server.
  */
+__dead
 static void
 sighup_restart(void)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: clientloop.c,v 1.41 2024/07/08 22:33:43 christos Exp $	*/
+/*	$NetBSD: clientloop.c,v 1.42 2024/07/11 17:26:53 riastradh Exp $	*/
 /* $OpenBSD: clientloop.c,v 1.408 2024/07/01 04:31:17 djm Exp $ */
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: clientloop.c,v 1.41 2024/07/08 22:33:43 christos Exp $");
+__RCSID("$NetBSD: clientloop.c,v 1.42 2024/07/11 17:26:53 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -200,7 +200,10 @@ quit_message(const char *fmt, ...)
 	xasprintf(&fmt2, "%s\r\n", fmt);
 
 	va_start(args, fmt);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
 	xvasprintf(&msg, fmt2, args);
+#pragma GCC diagnostic pop
 	va_end(args);
 
 	(void)atomicio(vwrite, STDERR_FILENO, msg, strlen(msg));
