@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.42 2024/07/08 22:14:31 christos Exp $	*/
+/*	$NetBSD: syslog.h,v 1.43 2024/07/11 06:05:58 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -222,11 +222,11 @@ void	vsyslogp_r(int, struct syslog_data *, const char *, const char *,
     const char *, __va_list) __RENAME(__vsyslogp_r60) __sysloglike(5, 0);
 void	syslog_ss(int, struct syslog_data *, const char *, ...)
     __RENAME(__syslog_ss60) __sysloglike(3, 4);
-void    vsyslog_ss(int, struct syslog_data *, const char *, va_list) 
-    __RENAME(__vsyslog_ss60) __sysloglike(3, 0); 
-void	syslogp_ss(int, struct syslog_data *, const char *, const char *, 
+void    vsyslog_ss(int, struct syslog_data *, const char *, va_list)
+    __RENAME(__vsyslog_ss60) __sysloglike(3, 0);
+void	syslogp_ss(int, struct syslog_data *, const char *, const char *,
     const char *, ...) __RENAME(__syslogp_ss60) __sysloglike(5, 0);
-void	vsyslogp_ss(int, struct syslog_data *, const char *, const char *, 
+void	vsyslogp_ss(int, struct syslog_data *, const char *, const char *,
     const char *, va_list) __RENAME(__vsyslogp_ss60) __sysloglike(5, 0);
 #endif
 void	syslogp(int, const char *, const char *, const char *, ...)
