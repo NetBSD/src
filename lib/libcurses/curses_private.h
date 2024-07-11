@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.81 2024/05/17 23:32:50 uwe Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.82 2024/07/11 07:13:41 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -226,6 +226,7 @@ struct __screen {
 #define	TABSIZE_DEFAULT		8   /* spaces. */
 	int	 COLORS;	/* Maximum colors on the screen */
 	int	 COLOR_PAIRS;	/* Maximum color pairs on the screen */
+	short	 curpair;	/* current colour pair set on the terminal */
 	int	 My_term;	/* Use Def_term regardless. */
 	char	 GT;		/* Gtty indicates tabs. */
 	char	 NONL;		/* Term can't hack LF doing a CR. */

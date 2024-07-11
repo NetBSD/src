@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.39 2024/05/27 14:30:43 uwe Exp $	*/
+/*	$NetBSD: screen.c,v 1.40 2024/07/11 07:13:41 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.39 2024/05/27 14:30:43 uwe Exp $");
+__RCSID("$NetBSD: screen.c,v 1.40 2024/07/11 07:13:41 blymn Exp $");
 #endif
 #endif					/* not lint */
 
@@ -156,6 +156,7 @@ newterm(const char *type, FILE *outfd, FILE *infd)
 	new_screen->nca = A_NORMAL;
 	new_screen->color_type = COLOR_NONE;
 	new_screen->COLOR_PAIRS = 0;
+	new_screen->curpair = -1;
 	new_screen->old_mode = 1;
 	new_screen->stdbuf = NULL;
 	new_screen->stdscr = NULL;
