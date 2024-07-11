@@ -1,4 +1,4 @@
-/* $Id: t_bm.c,v 1.1 2014/06/23 10:53:20 shm Exp $ */
+/* $Id: t_bm.c,v 1.2 2024/07/11 03:51:18 kre Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$Id: t_bm.c,v 1.1 2014/06/23 10:53:20 shm Exp $");
+__RCSID("$Id: t_bm.c,v 1.2 2024/07/11 03:51:18 kre Exp $");
 
 #include <atf-c.h>
 #include <stdio.h>
@@ -77,10 +77,10 @@ ATF_TC_BODY(bm, tc)
 	bm_pat *pattern;
 	
 	for (ts = 0; ts < sizeof(testcases)/sizeof(t_testcase); ts++) {
-		ATF_CHECK(pattern = bm_comp((const u_char *)testcases[ts].pattern,
+		ATF_CHECK((pattern = bm_comp((const u_char *)testcases[ts].pattern),
 		  strlen(testcases[ts].pattern), (const u_char *)testcases[ts].freq));
 
-		ATF_REQUIRE(text = strdup(testcases[ts].text));
+		ATF_REQUIRE((text = strdup(testcases[ts].text)));
 		off = bm_exec(pattern, (u_char *)text, strlen(text));
 
 		if (testcases[ts].match == -1)
