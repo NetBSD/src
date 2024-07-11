@@ -1,4 +1,5 @@
-# $NetBSD: md.news68k,v 1.29 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.news68k,v 1.30 2024/07/11 20:41:07 riastradh Exp $
+#
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/news68k				comp-c-include
 ./usr/include/news68k/_G_config.h		comp-obsolete		obsolete

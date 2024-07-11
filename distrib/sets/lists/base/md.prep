@@ -1,4 +1,5 @@
-# $NetBSD: md.prep,v 1.20 2022/01/11 19:27:13 martin Exp $
+# $NetBSD: md.prep,v 1.21 2024/07/11 20:41:06 riastradh Exp $
+#
 ./usr/mdec/boot					base-sysutil-bin
 ./usr/mdec/boot_com0				base-sysutil-bin
 ./usr/mdec/boot_com0_vreset				base-sysutil-bin

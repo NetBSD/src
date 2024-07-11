@@ -1,4 +1,5 @@
-# $NetBSD: mi,v 1.49 2024/07/04 07:52:29 mrg Exp $
+# $NetBSD: mi,v 1.50 2024/07/11 20:41:10 riastradh Exp $
+#
 ./etc/mtree/set.xdebug					comp-sys-root
 ./usr/X11R7/lib						base-x11-root	xorg,debuglib,compatx11dir
 ./usr/X11R7/lib/libEGL_g.a				xdebug-libEGL-debuglib	xorg,debuglib,compatx11file,xorg_glamor

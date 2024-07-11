@@ -1,4 +1,5 @@
-# $NetBSD: md.hpcmips,v 1.35 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.hpcmips,v 1.36 2024/07/11 20:41:07 riastradh Exp $
+#
 ./usr/include/dev/hpc/hpcfbio.h			comp-c-include
 ./usr/include/hpcmips				comp-c-include
 ./usr/include/hpcmips/_G_config.h		comp-obsolete		obsolete

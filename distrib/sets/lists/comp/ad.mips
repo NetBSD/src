@@ -1,4 +1,5 @@
-# $NetBSD: ad.mips,v 1.93 2024/06/22 20:17:25 riastradh Exp $
+# $NetBSD: ad.mips,v 1.94 2024/07/11 20:41:06 riastradh Exp $
+#
 -./usr/lib/64/libgomp.a
 -./usr/lib/64/libgomp.so
 -./usr/lib/64/libgomp.so.1

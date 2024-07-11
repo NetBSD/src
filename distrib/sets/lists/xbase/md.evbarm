@@ -1,4 +1,5 @@
-# $NetBSD: md.evbarm,v 1.10 2024/07/04 09:34:13 mrg Exp $
+# $NetBSD: md.evbarm,v 1.11 2024/07/11 20:41:09 riastradh Exp $
+#
 ./usr/X11R7/lib/libdrm_amdgpu.so		xbase-libdrm_amdgpu-lib		xorg,compatx11file
 ./usr/X11R7/lib/libdrm_amdgpu.so.1		xbase-libdrm_amdgpu-lib		xorg,compatx11file
 ./usr/X11R7/lib/libdrm_amdgpu.so.1.3		xbase-libdrm_amdgpu-lib		xorg,compatx11file

@@ -1,4 +1,5 @@
-# $NetBSD: ad.arm,v 1.110 2024/06/22 20:17:25 riastradh Exp $
+# $NetBSD: ad.arm,v 1.111 2024/07/11 20:41:06 riastradh Exp $
+#
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/include/acorn26				comp-obsolete		obsolete
 ./usr/include/acorn26/ansi.h			comp-obsolete		obsolete

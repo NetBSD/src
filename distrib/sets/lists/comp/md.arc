@@ -1,4 +1,5 @@
-# $NetBSD: md.arc,v 1.26 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.arc,v 1.27 2024/07/11 20:41:07 riastradh Exp $
+#
 ./usr/include/arc				comp-c-include
 ./usr/include/arc/_G_config.h			comp-obsolete		obsolete
 ./usr/include/arc/ansi.h			comp-c-include

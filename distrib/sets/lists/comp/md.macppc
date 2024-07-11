@@ -1,4 +1,5 @@
-# $NetBSD: md.macppc,v 1.42 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.macppc,v 1.43 2024/07/11 20:41:07 riastradh Exp $
+#
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/macppc				comp-c-include
 ./usr/include/macppc/_G_config.h		comp-obsolete		obsolete

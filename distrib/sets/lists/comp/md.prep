@@ -1,4 +1,5 @@
-# $NetBSD: md.prep,v 1.33 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.prep,v 1.34 2024/07/11 20:41:07 riastradh Exp $
+#
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/prep				comp-c-include
 ./usr/include/prep/_G_config.h			comp-obsolete		obsolete

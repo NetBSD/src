@@ -1,3 +1,4 @@
-# $NetBSD: ad.m68k.shl,v 1.1 2013/01/16 16:01:07 christos Exp $
+# $NetBSD: ad.m68k.shl,v 1.2 2024/07/11 20:41:07 riastradh Exp $
+#
 ./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/lib/libm68k.so.0.0.debug	comp-sys-debug	debug

@@ -1,4 +1,5 @@
-# $NetBSD: md.sun3,v 1.65 2024/01/14 18:22:02 thorpej Exp $
+# $NetBSD: md.sun3,v 1.66 2024/07/11 20:41:07 riastradh Exp $
+#
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sun3				comp-c-include
 ./usr/include/sun3/_G_config.h			comp-obsolete		obsolete

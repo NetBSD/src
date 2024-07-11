@@ -1,4 +1,5 @@
-# $NetBSD: md.evbarm.armeb,v 1.21 2024/01/26 13:06:36 tsutsui Exp $
+# $NetBSD: md.evbarm.armeb,v 1.22 2024/07/11 20:41:10 riastradh Exp $
+#
 ./usr/X11R7/lib/libvdpau_g.a				xdebug-libvdpau-debuglib	xorg,debuglib
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		-unknown-	xorg,debuglib,xorg_server_ver=110
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		xdebug-obsolete	xorg,obsolete,xorg_server_ver=120

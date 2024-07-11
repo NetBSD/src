@@ -1,4 +1,5 @@
-# $NetBSD: md.evbppc,v 1.18 2022/05/30 15:06:54 rin Exp $
+# $NetBSD: md.evbppc,v 1.19 2024/07/11 20:41:07 riastradh Exp $
+#
 ./usr/include/evbppc				comp-c-include
 ./usr/include/evbppc/_G_config.h		comp-obsolete		obsolete
 ./usr/include/evbppc/ansi.h			comp-c-include

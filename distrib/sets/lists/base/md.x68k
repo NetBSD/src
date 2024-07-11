@@ -1,4 +1,5 @@
-# $NetBSD: md.x68k,v 1.47 2020/08/16 07:03:45 isaki Exp $
+# $NetBSD: md.x68k,v 1.48 2024/07/11 20:41:06 riastradh Exp $
+#
 ./dev/pow0					base-obsolete		obsolete
 ./dev/pow1					base-obsolete		obsolete
 ./usr/bin/bellctrl				base-util-bin

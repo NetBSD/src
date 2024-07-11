@@ -1,4 +1,5 @@
-# $NetBSD: ad.aarch64,v 1.13 2024/05/09 12:09:58 pho Exp $
+# $NetBSD: ad.aarch64,v 1.14 2024/07/11 20:41:09 riastradh Exp $
+#
 ./@MODULEDIR@/amdgpu				modules-base-kernel	kmod
 ./@MODULEDIR@/amdgpu/amdgpu.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/bpfjit				modules-base-kernel	kmod,sljit

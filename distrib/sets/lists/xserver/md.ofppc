@@ -1,4 +1,5 @@
-# $NetBSD: md.ofppc,v 1.41 2024/01/26 13:06:37 tsutsui Exp $
+# $NetBSD: md.ofppc,v 1.42 2024/07/11 20:41:11 riastradh Exp $
+#
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/gtf					xserver-xorg-server-bin	xorg

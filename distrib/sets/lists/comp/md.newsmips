@@ -1,4 +1,5 @@
-# $NetBSD: md.newsmips,v 1.34 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.newsmips,v 1.35 2024/07/11 20:41:07 riastradh Exp $
+#
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/newsmips				comp-c-include
 ./usr/include/newsmips/_G_config.h		comp-obsolete		obsolete

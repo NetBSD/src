@@ -1,4 +1,5 @@
-# $NetBSD: md.atari,v 1.2 2017/01/05 13:45:51 wiz Exp $
+# $NetBSD: md.atari,v 1.3 2024/07/11 20:41:08 riastradh Exp $
+#
 ./usr/libdata/debug/sbin/ahdilabel.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/binpatch.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/edahdi.debug		comp-sysutil-debug	debug

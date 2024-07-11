@@ -1,4 +1,5 @@
-# $NetBSD: md.i386,v 1.7 2020/10/16 07:12:26 mgorny Exp $
+# $NetBSD: md.i386,v 1.8 2024/07/11 20:41:09 riastradh Exp $
+#
 ./usr/tests/kernel/arch/x86/Atffile		tests-obsolete	obsolete
 ./usr/tests/kernel/arch/x86/Kyuafile		tests-obsolete	obsolete
 ./usr/tests/kernel/arch/x86/t_ptrace_wait	tests-obsolete	obsolete

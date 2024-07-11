@@ -1,4 +1,5 @@
-# $NetBSD: module.md.sparc,v 1.1 2020/05/01 22:21:11 christos Exp $
+# $NetBSD: module.md.sparc,v 1.2 2024/07/11 20:41:08 riastradh Exp $
+#
 ./usr/libdata/debug/@MODULEDIR@/bpfjit				modules-base-kernel	kmod,sljit,debug
 ./usr/libdata/debug/@MODULEDIR@/bpfjit/bpfjit.kmod.debug		modules-base-kernel	kmod,sljit,debug
 ./usr/libdata/debug/@MODULEDIR@/exec_elf32			modules-base-kernel	kmod,debug

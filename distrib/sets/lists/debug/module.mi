@@ -1,4 +1,5 @@
-# $NetBSD: module.mi,v 1.25 2023/08/27 13:20:09 kardel Exp $
+# $NetBSD: module.mi,v 1.26 2024/07/11 20:41:08 riastradh Exp $
+#
 ./usr/libdata/debug/@MODULEDIR@					modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready/accf_dataready.kmod.debug	modules-base-kernel	kmod,debug

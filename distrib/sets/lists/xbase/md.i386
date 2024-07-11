@@ -1,4 +1,5 @@
-# $NetBSD: md.i386,v 1.36 2024/07/04 09:34:13 mrg Exp $
+# $NetBSD: md.i386,v 1.37 2024/07/11 20:41:09 riastradh Exp $
+#
 ./usr/X11R7/lib/libI810XvMC.so			xbase-libI810XvMC-lib		xorg
 ./usr/X11R7/lib/libI810XvMC.so.1		xbase-libI810XvMC-lib		xorg
 ./usr/X11R7/lib/libI810XvMC.so.1.0		xbase-libI810XvMC-lib		xorg

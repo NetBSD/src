@@ -1,4 +1,5 @@
-# $NetBSD: md.next68k,v 1.34 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.next68k,v 1.35 2024/07/11 20:41:07 riastradh Exp $
+#
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/next68k				comp-c-include
 ./usr/include/next68k/_G_config.h		comp-obsolete		obsolete

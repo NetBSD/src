@@ -1,3 +1,4 @@
-# $NetBSD: md.sun3,v 1.4 2020/07/23 09:46:49 tsutsui Exp $
+# $NetBSD: md.sun3,v 1.5 2024/07/11 20:41:10 riastradh Exp $
+#
 ./usr/libdata/debug/usr/X11R7/bin/Xsun.debug	xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/XsunMono.debug	xdebug-xorg-server-debug	xorg,debug

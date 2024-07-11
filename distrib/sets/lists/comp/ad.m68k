@@ -1,4 +1,5 @@
-# $NetBSD: ad.m68k,v 1.72 2024/06/22 20:17:25 riastradh Exp $
+# $NetBSD: ad.m68k,v 1.73 2024/07/11 20:41:06 riastradh Exp $
+#
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/include/gcc-4.5/math-68881.h		comp-obsolete		obsolete
 ./usr/include/gcc-4.5/tgmath.h			comp-obsolete		obsolete

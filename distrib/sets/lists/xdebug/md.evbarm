@@ -1,4 +1,5 @@
-# $NetBSD: md.evbarm,v 1.38 2024/07/04 12:35:47 martin Exp $
+# $NetBSD: md.evbarm,v 1.39 2024/07/11 20:41:10 riastradh Exp $
+#
 ./usr/X11R7/lib/libdrm_amdgpu_g.a			xdebug-libdrm_amdgpu-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libdrm_nouveau_g.a			xdebug-libdrm_nouveau-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libvdpau_g.a				xdebug-libvdpau-debuglib	xorg,debuglib,compatx11file

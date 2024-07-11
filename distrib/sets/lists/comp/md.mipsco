@@ -1,4 +1,5 @@
-# $NetBSD: md.mipsco,v 1.25 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.mipsco,v 1.26 2024/07/11 20:41:07 riastradh Exp $
+#
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mipsco				comp-c-include
 ./usr/include/mipsco/_G_config.h		comp-obsolete		obsolete

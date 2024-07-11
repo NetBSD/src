@@ -1,4 +1,5 @@
-# $NetBSD: md.hpcsh,v 1.29 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.hpcsh,v 1.30 2024/07/11 20:41:07 riastradh Exp $
+#
 ./usr/include/hpcsh				comp-c-include
 ./usr/include/hpcsh/_G_config.h			comp-obsolete		obsolete
 ./usr/include/hpcsh/ansi.h			comp-c-include

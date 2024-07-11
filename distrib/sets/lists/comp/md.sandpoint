@@ -1,4 +1,5 @@
-# $NetBSD: md.sandpoint,v 1.21 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.sandpoint,v 1.22 2024/07/11 20:41:07 riastradh Exp $
+#
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sandpoint				comp-c-include
 ./usr/include/sandpoint/_G_config.h		comp-obsolete		obsolete

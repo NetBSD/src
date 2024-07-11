@@ -1,4 +1,5 @@
-# $NetBSD: ad.aarch64,v 1.54 2024/07/01 04:03:04 mrg Exp $
+# $NetBSD: ad.aarch64,v 1.55 2024/07/11 20:41:06 riastradh Exp $
+#
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include

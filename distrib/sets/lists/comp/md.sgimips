@@ -1,4 +1,5 @@
-# $NetBSD: md.sgimips,v 1.23 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.sgimips,v 1.24 2024/07/11 20:41:07 riastradh Exp $
+#
 ./usr/include/dev/crmfbreg.h			comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sgimips				comp-c-include

@@ -1,4 +1,5 @@
-# $NetBSD: md.vax,v 1.29 2024/01/28 06:20:02 tsutsui Exp $
+# $NetBSD: md.vax,v 1.30 2024/07/11 20:41:11 riastradh Exp $
+#
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/gtf					xserver-xorg-server-bin	xorg
