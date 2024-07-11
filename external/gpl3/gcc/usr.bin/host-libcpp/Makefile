@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2023/05/19 10:42:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2024/07/11 13:00:37 bad Exp $
 
 BUILD_ENV= \
 		AR=${HOST_AR:Q} \
@@ -18,6 +18,9 @@ BUILD_ENV= \
 		PATH="${TOOLDIR}/bin:$$PATH" \
 		RANLIB=${HOST_RANLIB:Q} \
 		YACC=${YACC:Q}
+
+# libcpp needs a C++11 compiler
+HOST_CXXFLAGS+= -std=c++11
 
 GMAKE_J_ARGS?=	${MAKEFLAGS:[*]:M*-j*:C/(^|.* )(-j ?[0-9][0-9]*).*/\2/W}
 BUILD_COMMAND=	/usr/bin/env -i ${BUILD_ENV} ${TOOL_GMAKE} ${GMAKE_J_ARGS} -e
