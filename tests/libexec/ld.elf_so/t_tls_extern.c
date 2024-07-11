@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tls_extern.c,v 1.12 2023/06/04 01:24:58 joerg Exp $	*/
+/*	$NetBSD: t_tls_extern.c,v 1.13 2024/07/11 01:58:15 kre Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <atf-c.h>
 #include <dlfcn.h>
 
-#define	ATF_REQUIRE_DL(x)	ATF_REQUIRE_MSG(x, "%s: %s", #x, dlerror())
+#define	ATF_REQUIRE_DL(x) ATF_REQUIRE_MSG((x) != NULL, "%s: %s", #x, dlerror())
 
 enum order {
 	DEF_USE_EAGER,
