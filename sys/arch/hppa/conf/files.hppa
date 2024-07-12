@@ -1,4 +1,4 @@
-#	$NetBSD: files.hppa,v 1.25 2024/02/13 13:40:13 macallan Exp $
+#	$NetBSD: files.hppa,v 1.26 2024/07/12 08:43:08 macallan Exp $
 #
 #	$OpenBSD: files.hppa,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -275,6 +275,13 @@ file	arch/hppa/gsc/com_harmony.c	com_harmony
 device	gftfb: wsemuldisplaydev, rasops8, vcons, glyphcache, sti_pci, sti
 attach	gftfb at pci
 file	arch/hppa/dev/gftfb.c		gftfb
+defflag opt_gftfb.h GFTFB_DEBUG
+
+# hyperdrive, aka HCRX
+device	hyperfb: wsemuldisplaydev, rasops8, vcons, glyphcache, sti
+attach	hyperfb at gedoens
+file	arch/hppa/dev/hyperfb.c		hyperfb
+defflag opt_hyperfb.h HYPERFB_DEBUG
 
 # Memory Disk
 file dev/md_root.c			memory_disk_hooks
