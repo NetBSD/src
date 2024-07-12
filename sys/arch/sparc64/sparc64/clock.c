@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.123 2020/05/29 12:30:41 rin Exp $ */
+/*	$NetBSD: clock.c,v 1.124 2024/07/12 22:31:40 andvar Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.123 2020/05/29 12:30:41 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.124 2024/07/12 22:31:40 andvar Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -308,7 +308,7 @@ timerattach(device_t parent, device_t self, void *aux)
 	 */
 
 #ifdef DEBUG
-	printf("Delay calibrarion....\n");
+	printf("Delay calibration....\n");
 #endif
 	for (timerblurb = 1; timerblurb > 0; timerblurb++) {
 		volatile int discard;
