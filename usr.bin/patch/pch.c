@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: pch.c,v 1.37 2007/09/02 15:19:33 deraadt Exp $
  * $DragonFly: src/usr.bin/patch/pch.c,v 1.6 2008/08/10 23:35:40 joerg Exp $
- * $NetBSD: pch.c,v 1.33 2023/06/16 23:31:53 wiz Exp $
+ * $NetBSD: pch.c,v 1.34 2024/07/12 15:48:39 manu Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pch.c,v 1.33 2023/06/16 23:31:53 wiz Exp $");
+__RCSID("$NetBSD: pch.c,v 1.34 2024/07/12 15:48:39 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -61,7 +61,7 @@ static LINENUM	p_max;		/* max allowed value of p_end */
 static LINENUM	p_context = 3;	/* # of context lines */
 static LINENUM	p_input_line = 0;	/* current line # from patch file */
 static char	**p_line = NULL;/* the text of the hunk */
-static short	*p_len = NULL;	/* length of each line */
+static ssize_t	*p_len = NULL;	/* length of each line */
 static char	*p_char = NULL;	/* +, -, and ! */
 static int	hunkmax = INITHUNKMAX;	/* size of above arrays to begin with */
 static int	p_indent;	/* indent to patch */
@@ -135,7 +135,7 @@ set_hunkmax(void)
 	if (p_line == NULL)
 		p_line = calloc((size_t) hunkmax, sizeof(char *));
 	if (p_len == NULL)
-		p_len = calloc((size_t) hunkmax, sizeof(short));
+		p_len = calloc((size_t) hunkmax, sizeof(ssize_t));
 	if (p_char == NULL)
 		p_char = calloc((size_t) hunkmax, sizeof(char));
 }
@@ -148,7 +148,7 @@ grow_hunkmax(void)
 {
 	int		new_hunkmax;
 	char		**new_p_line;
-	short		*new_p_len;
+	ssize_t		*new_p_len;
 	char		*new_p_char;
 
 	new_hunkmax = hunkmax * 2;
@@ -160,7 +160,7 @@ grow_hunkmax(void)
 	if (new_p_line == NULL)
 		free(p_line);
 
-	new_p_len = pch_realloc(p_len, new_hunkmax, sizeof(short));
+	new_p_len = pch_realloc(p_len, new_hunkmax, sizeof(ssize_t));
 	if (new_p_len == NULL)
 		free(p_len);
 
@@ -1207,7 +1207,7 @@ bool
 pch_swap(void)
 {
 	char	**tp_line;	/* the text of the hunk */
-	short	*tp_len;	/* length of each line */
+	ssize_t	*tp_len;	/* length of each line */
 	char	*tp_char;	/* +, -, and ! */
 	LINENUM	i;
 	LINENUM	n;
@@ -1364,7 +1364,7 @@ pch_context(void)
 /*
  * Return the length of a particular patch line.
  */
-short
+ssize_t
 pch_line_len(LINENUM line)
 {
 	return p_len[line];
