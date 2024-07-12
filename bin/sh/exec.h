@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.27 2018/06/22 11:04:55 kre Exp $	*/
+/*	$NetBSD: exec.h,v 1.28 2024/07/12 07:30:30 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -69,7 +69,7 @@ void find_command(char *, struct cmdentry *, int, const char *);
 int (*find_builtin(char *))(int, char **);
 int (*find_splbltin(char *))(int, char **);
 void hashcd(void);
-void changepath(const char *);
+void changepath(char *, int);
 void deletefuncs(void);
 void getcmdentry(char *, struct cmdentry *);
 union node;
