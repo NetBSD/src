@@ -1,4 +1,4 @@
-/* $NetBSD: exfatfs_dirent.h,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $ */
+/* $NetBSD: exfatfs_dirent.h,v 1.1.2.3 2024/07/12 23:46:54 perseant Exp $ */
 
 /*-
  * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
@@ -63,6 +63,9 @@ struct exfatfs_dirent {
 	uint32_t xd_firstCluster;	/* Bytes 20..23 */
 	uint64_t xd_dataLength;		/* Bytes 24..32 */
 };
+
+/* Not in the spec: FILE but not in use */
+#define XD_ENTRYTYPE_FILLER	       0x05
 
 struct exfatfs_dirent_plus {
 	struct exfatfs_dirent de;
