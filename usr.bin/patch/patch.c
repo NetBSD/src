@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: patch.c,v 1.45 2007/04/18 21:52:24 sobrado Exp $
  * $DragonFly: src/usr.bin/patch/patch.c,v 1.10 2008/08/10 23:39:56 joerg Exp $
- * $NetBSD: patch.c,v 1.34 2023/06/16 11:27:00 wiz Exp $
+ * $NetBSD: patch.c,v 1.35 2024/07/12 15:48:39 manu Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: patch.c,v 1.34 2023/06/16 11:27:00 wiz Exp $");
+__RCSID("$NetBSD: patch.c,v 1.35 2024/07/12 15:48:39 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -106,7 +106,7 @@ static void	copy_till(LINENUM, bool);
 static bool	spew_output(void);
 static void	dump_line(LINENUM, bool);
 static bool	patch_match(LINENUM, LINENUM, LINENUM);
-static bool	similar(const char *, const char *, int);
+static bool	similar(const char *, const char *, ssize_t);
 __dead static void	usage(void);
 
 /* true if -E was specified on command line.  */
@@ -1027,7 +1027,7 @@ patch_match(LINENUM base, LINENUM offset, LINENUM fuzz)
 	LINENUM		pat_lines = pch_ptrn_lines() - fuzz;
 	const char	*ilineptr;
 	const char	*plineptr;
-	short		plinelen;
+	ssize_t		plinelen;
 
 	for (iline = base + offset + fuzz; pline <= pat_lines; pline++, iline++) {
 		ilineptr = ifetch(iline, offset >= 0);
@@ -1063,7 +1063,7 @@ patch_match(LINENUM base, LINENUM offset, LINENUM fuzz)
  * Do two lines match with canonicalized white space?
  */
 static bool
-similar(const char *a, const char *b, int len)
+similar(const char *a, const char *b, ssize_t len)
 {
 	while (len) {
 		if (isspace((unsigned char)*b)) {	/* whitespace (or \n) to match? */

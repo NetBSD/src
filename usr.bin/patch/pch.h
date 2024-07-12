@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: pch.h,v 1.9 2003/10/31 20:20:45 millert Exp $
  * $DragonFly: src/usr.bin/patch/pch.h,v 1.1 2004/09/24 18:44:28 joerg Exp $
- * $NetBSD: pch.h,v 1.10 2008/09/19 18:33:34 joerg Exp $
+ * $NetBSD: pch.h,v 1.11 2024/07/12 15:48:39 manu Exp $
  */
 
 /*
@@ -47,7 +47,7 @@ bool		there_is_another_patch(void);
 bool		another_hunk(void);
 bool		pch_swap(void);
 char		*pfetch(LINENUM);
-short		pch_line_len(LINENUM);
+ssize_t		pch_line_len(LINENUM);
 LINENUM		pch_first(void);
 LINENUM		pch_ptrn_lines(void);
 LINENUM		pch_newfirst(void);
