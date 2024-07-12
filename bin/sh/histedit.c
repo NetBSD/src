@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.69 2024/07/05 04:07:26 kre Exp $	*/
+/*	$NetBSD: histedit.c,v 1.70 2024/07/12 07:30:30 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.69 2024/07/05 04:07:26 kre Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.70 2024/07/12 07:30:30 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,7 +113,7 @@ histedit(void)
 			INTON;
 
 			if (hist != NULL)
-				sethistsize(histsizeval());
+				sethistsize(histsizeval(), histsizeflags());
 			else
 				out2str("sh: can't initialize history\n");
 		}
@@ -164,7 +164,7 @@ histedit(void)
 				if (hist)
 					el_set(el, EL_HIST, history, hist);
 
-				set_prompt_lit(lookupvar("PSlit"));
+				set_prompt_lit(lookupvar("PSlit"), 0);
 				el_set(el, EL_SIGNAL, 1);
 				el_set(el, EL_SAFEREAD, 1);
 				el_set(el, EL_ALIAS_TEXT, alias_text, NULL);
@@ -211,7 +211,7 @@ histedit(void)
 }
 
 void
-set_prompt_lit(const char *lit_ch)
+set_prompt_lit(char *lit_ch, int flags __unused)
 {
 	wchar_t wc;
 
@@ -234,24 +234,31 @@ set_prompt_lit(const char *lit_ch)
 }
 
 void
-set_editrc(const char *fname)
+set_editrc(char *fname, int flags)
 {
 	INTOFF;
-	if (iflag && editing && el)
+	if (iflag && editing && el && !(flags & VUNSET))
 		el_source(el, fname);
 	INTON;
 }
 
 void
-sethistsize(const char *hs)
+sethistsize(char *hs, int flags)
 {
 	int histsize;
 	HistEvent he;
 
+	CTRACE(DBG_HISTORY, ("Set HISTSIZE=%s [%x] %s\n",
+	    (hs == NULL ? "''" : hs), flags, "!hist" + (hist != NULL)));
+
+	if (hs != NULL && *hs != '\0' && (flags & VUNSAFE) && !is_number(hs))
+		hs = NULL;
+
+	if (hs == NULL || *hs == '\0' || (flags & VUNSET) ||
+	    (histsize = number(hs)) < 0)
+		histsize = 100;
+
 	if (hist != NULL) {
-		if (hs == NULL || *hs == '\0' || !is_number(hs) ||
-		   (histsize = number(hs)) < 0)
-			histsize = 100;
 		INTOFF;
 		history(hist, &he, H_SETSIZE, histsize);
 		history(hist, &he, H_SETUNIQUE, 1);
@@ -260,10 +267,10 @@ sethistsize(const char *hs)
 }
 
 void
-setterm(const char *term)
+setterm(char *term, int flags __unused)
 {
 	INTOFF;
-	if (el != NULL && term != NULL)
+	if (el != NULL && term != NULL && *term != '\0')
 		if (el_set(el, EL_TERMINAL, term) != 0) {
 			outfmt(out2, "sh: Can't set terminal type %s\n", term);
 			outfmt(out2, "sh: Using dumb terminal settings.\n");

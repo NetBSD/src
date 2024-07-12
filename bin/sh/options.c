@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.58 2022/09/18 06:03:19 kre Exp $	*/
+/*	$NetBSD: options.c,v 1.59 2024/07/12 07:30:30 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.58 2022/09/18 06:03:19 kre Exp $");
+__RCSID("$NetBSD: options.c,v 1.59 2024/07/12 07:30:30 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -465,7 +465,7 @@ setcmd(int argc, char **argv)
 
 
 void
-getoptsreset(const char *value)
+getoptsreset(char *value, int flags __unused)
 {
 	/*
 	 * This is just to detect the case where OPTIND=1
