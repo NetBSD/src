@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 2018/07/16 01:04:47 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.8 2024/07/12 22:31:40 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMRUA Shin
@@ -49,7 +49,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.7 2018/07/16 01:04:47 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 2024/07/12 22:31:40 andvar Exp $");
 #endif /* not lint */
 
 void load_data(const char *, struct tpctl_data *);
@@ -125,7 +125,7 @@ main(int argc, char *argv[])
 		/* NOTREACHED */
 	}
 
-	/* load calibrarion parameters from specified file */
+	/* load calibration parameters from specified file */
 	load_data(data_file, &data);
 
 	/* open touch panel device and initialize touch panel routines */
@@ -138,7 +138,7 @@ main(int argc, char *argv[])
 	pref = search_data(&data, tp.id);
 	if (opt_forceupdate || pref == NULL) {
 		/* if the parameters wasn't found or '-f' options was 
-		   specified, do 'calibrarion' */
+		   specified, do 'calibration' */
 		struct wsmouse_calibcoords coords;
 
 		/* draw cursors and collect samples */
@@ -162,7 +162,7 @@ main(int argc, char *argv[])
 	if (tp_setcalibcoords(&tp, pref) < 0)
 		errx(EXIT_FAILURE, "can't set samples");
 
-	/* save calibrarion parameters from specified file */
+	/* save calibration parameters from specified file */
 	if (!opt_noupdate)
 		save_data(data_file, &data);
 	/* dispose data */
@@ -173,7 +173,7 @@ main(int argc, char *argv[])
 }
 
 /*
- * load calibrarion parameters from specified file
+ * load calibration parameters from specified file
  *
  * return:	none (it won't return if some error occurs)
  */
@@ -215,7 +215,7 @@ load_data(const char *data_file, struct tpctl_data *data)
 }
 
 /*
- * save calibrarion parameters to specified file
+ * save calibration parameters to specified file
  *
  * return:	none (it won't return if some error occurs)
  */
