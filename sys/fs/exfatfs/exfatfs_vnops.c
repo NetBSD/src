@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_vnops.c,v 1.1.2.5 2024/07/03 18:57:42 perseant Exp $	*/
+/*	$NetBSD: exfatfs_vnops.c,v 1.1.2.6 2024/07/12 23:46:54 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_vnops.c,v 1.1.2.5 2024/07/03 18:57:42 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_vnops.c,v 1.1.2.6 2024/07/12 23:46:54 perseant Exp $");
 
 #include <sys/buf.h>
 #include <sys/dirent.h>
@@ -819,8 +819,9 @@ int
 exfatfs_findempty(struct vnode *dvp, struct xfinode *xip)
 {
 	off_t off = 0, r = -1, newsize, so;
-	int i;
+	int i, filling, modified;
 	daddr_t blkno;
+	size_t bytes;
 	struct exfatfs_dirent *dirent;
 	struct xfinode *dxip;
 	struct exfatfs *fs;
@@ -837,6 +838,7 @@ exfatfs_findempty(struct vnode *dvp, struct xfinode *xip)
 	fs = dxip->xi_fs;
 	KASSERT(fs != NULL);
 	len = GET_DFE_SECONDARY_COUNT(xip) + 1;
+	bytes = EXFATFS_DIRENT2BYTES(fs, len);
 	KASSERT(len > 2);
 	KASSERT(len <= EXFATFS_MAXDIRENT);
 	
@@ -856,9 +858,31 @@ exfatfs_findempty(struct vnode *dvp, struct xfinode *xip)
 		if ((error = bread(fs->xf_devvp, blkno, SECSIZE(fs), 0, &bp))
 		    != 0)
 			return error;
+		filling = 0;
+		modified = 0;
 		for (so = 0; so < SECSIZE(fs); so += sizeof(*dirent)) {
 			dirent = (struct exfatfs_dirent *)
 				(((char *)bp->b_data) + so);
+			/*
+			 * If our entry will fit into a disk sector,
+			 * but it could no longer fit in *this* sector
+			 * even if the rest of the sector were empty,
+			 * skip to the next, clearing any intervening EOD
+			 * markers as we go.
+			 */
+			if (r < 0 && !filling && bytes <= SECSIZE(fs)
+			    && so + bytes > SECSIZE(fs)) {
+				filling = 1;
+			}
+			if (filling) {
+				if (ISEOD(dirent)) {
+					dirent->xd_entryType =
+						XD_ENTRYTYPE_FILLER;
+					modified = 1;
+				}
+				continue;
+			}
+
 			if (ISINUSE(dirent)) {
 				contig = 0;
 				r = -1;
@@ -869,7 +893,11 @@ exfatfs_findempty(struct vnode *dvp, struct xfinode *xip)
 				}
 				++contig;
 				if (contig >= len) {
-					brelse(bp, 0);
+					if (modified)
+						bdwrite(bp);
+					else
+						brelse(bp, 0);
+
 					DPRINTF(("dir 0x%lx has %d empty"
 						 " entries at byte %lld"
 						 " (entry %u) bn 0x%lx..0x%lx"
@@ -884,7 +912,10 @@ exfatfs_findempty(struct vnode *dvp, struct xfinode *xip)
 				}
 			}
 		}
-		brelse(bp, 0);
+		if (modified)
+			bdwrite(bp);
+		else
+			brelse(bp, 0);
 	}
 
 	/* r = -1; */ /* XXX never reallocate XXX */
@@ -908,6 +939,7 @@ exfatfs_findempty(struct vnode *dvp, struct xfinode *xip)
 
 	/* Space is now allocated.  Adjust validDataLength if necessary. */
 	/* exFAT requires ValidDataLength == DataLength for directories */
+	SET_DSE_DATALENGTH(dxip, roundup2(newsize, CLUSTERSIZE(fs)));
 	SET_DSE_VALIDDATALENGTH(dxip, GET_DSE_DATALENGTH(dxip));
 	uvm_vnp_setsize(dvp, GET_DSE_VALIDDATALENGTH(dxip));
 
