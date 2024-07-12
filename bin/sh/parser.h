@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.h,v 1.28 2019/02/13 21:40:50 kre Exp $	*/
+/*	$NetBSD: parser.h,v 1.29 2024/07/12 08:35:47 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -77,6 +77,7 @@ int goodname(const char *);
 int isassignment(const char *);
 const char *getprompt(void *);
 const char *expandstr(char *, int);
+const char *expandvar(char *, int);
 const char *expandenv(char *);
 
 struct HereDoc;
