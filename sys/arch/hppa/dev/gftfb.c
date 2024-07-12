@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.14 2024/04/18 04:52:43 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.15 2024/07/12 08:45:05 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -47,15 +47,12 @@
 #include <dev/ic/stireg.h>
 #include <dev/ic/stivar.h>
 
-#ifdef STIDEBUG
-#define	DPRINTF(s)	do {	\
-	if (stidebug)		\
-		printf s;	\
-} while(0)
+#include "opt_gftfb.h"
 
-extern int stidebug;
+#ifdef GFTFB_DEBUG
+#define	DPRINTF(s) printf(s)
 #else
-#define	DPRINTF(s)	/* */
+#define	DPRINTF(s) /* */
 #endif
 
 int	gftfb_match(device_t, cfdata_t, void *);
@@ -425,7 +422,7 @@ gftfb_check_rom(struct gftfb_softc *spc, struct pci_attach_args *pa)
 		    offs + 0x0c);
 		subsize <<= 9;
 
-#ifdef STIDEBUG
+#ifdef GFTFB_DEBUG
 		gftfb_disable_rom_internal(spc);
 		DPRINTF(("ROM offset %08x size %08x type %08x",
 		    (u_int)offs, (u_int)subsize, tmp));
@@ -473,7 +470,7 @@ gftfb_check_rom(struct gftfb_softc *spc, struct pci_attach_args *pa)
 			break;
 #endif
 		default:
-#ifdef STIDEBUG
+#ifdef GFTFB_DEBUG
 			DPRINTF((" (wrong architecture)"));
 #endif
 			break;
