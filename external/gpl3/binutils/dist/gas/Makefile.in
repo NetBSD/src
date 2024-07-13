@@ -2142,6 +2142,8 @@ config/loongarch-lex-wrapper.@OBJEXT@: config/loongarch-lex.c config/loongarch-p
 itbl-lex-wrapper.@OBJEXT@: itbl-lex.c itbl-parse.h
 
 itbl-parse.c: $(srcdir)/itbl-parse.y
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_itbl-parse.c:
 	$(SHELL) $(YLWRAP) $(srcdir)/itbl-parse.y y.tab.c $@ y.tab.h itbl-parse.h -- $(YACCCOMPILE) -d
 
 itbl-parse.h: itbl-parse.c
