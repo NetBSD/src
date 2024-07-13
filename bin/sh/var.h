@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.40 2024/07/12 07:30:30 kre Exp $	*/
+/*	$NetBSD: var.h,v 1.41 2024/07/13 13:43:58 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -99,6 +99,8 @@ extern struct var line_num;
 extern struct var editrc;
 extern struct var vterm;
 extern struct var vtermcap;
+extern struct var vhistappend;
+extern struct var vhistfile;
 extern struct var vhistsize;
 extern struct var ps_lit;
 extern struct var euname;
@@ -128,6 +130,10 @@ extern int funclineabs;
 #ifndef SMALL
 #define histsizeval()	(vhistsize.text + 9)
 #define histsizeflags()	(vhistsize.flags)
+#define histfileval()	(vhistfile.text + 9)
+#define histfileflags()	(vhistfile.flags)
+#define histappval()	(vhistappend.text + 11)
+#define histappflags()	(vhistappend.flags)
 #define termval()	(vterm.text + 5)
 #endif
 

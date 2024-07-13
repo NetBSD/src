@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.261 2024/07/13 07:11:20 kre Exp $
+.\"	$NetBSD: sh.1,v 1.262 2024/07/13 13:43:58 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd April 12, 2024
+.Dd July 13, 2024
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
 .ds flags abCEeFfhIiLlmnpquVvXx
@@ -781,8 +781,6 @@ generate are treated as quoted in this case.
 .\"
 .\"
 .Ss Dollar Single Quotes ( Li \&$'...' )
-.\"
-.Pp
 Enclosing characters in a matched pair of single quotes, with the
 first immediately preceded by an unquoted dollar sign
 .Pq Li \&$
@@ -2904,6 +2902,8 @@ and creating it again \(en provided the variable is not also read-only.
 .It Ic fc Oo Fl e Ar editor Oc Op Ar first Op Ar last
 .It Ic fc Fl l Oo Fl nr Oc Op Ar first Op Ar last
 .It Ic fc Fl s Oo Ar old=new Oc Op Ar first
+.It Ic fc Fl z
+.Pp
 The
 .Ic fc
 built-in lists, or edits and re-executes, commands previously entered
@@ -2951,6 +2951,9 @@ nor
 .Fl s ) .
 .It Fl s
 Re-execute the command without invoking an editor.
+.It Fl z
+Clear the history buffer.
+No other options or arguments are permitted.
 .It Ar first
 .It Ar last
 Select the commands to list or edit.
@@ -2989,6 +2992,14 @@ The following environment variables affect the execution of
 .Bl -tag -width HISTSIZE
 .It Ev FCEDIT
 Name of the editor to use.
+If
+.Ev FCEDIT
+is not set,
+.Ev EDITOR
+is used, if set.
+If neither is used the
+.Ic ed
+utility is used.
 .It Ev HISTSIZE
 The number of previous commands that are accessible.
 .El
@@ -4748,8 +4759,72 @@ If set it loses its special properties, and is simply a variable.
 See the
 .Ic specialvar
 built-in command for remedial action.
+.It Ev HISTAPPEND
+If set to one of
+.Ql true ,
+.Ql yes ,
+.Ql on ,
+or an integral value greater than zero,
+and if
+.Ev HISTFILE
+is also set, and is a valid history file,
+then as commands are read and added to the
+history buffer, they are also written to the
+.Ev HISTFILE
+named.
+.It Ev HISTFILE
+When assigned to in an interactive shell
+the contents of the file named by expanding
+the new value of
+.Ev HISTFILE
+will, if it exists,
+can be opened for reading,
+and is a suitable
+.Nm
+history file (one previously written by
+.Nm ) , 
+be read into the history buffer, 
+appending its contents to any existing history entries.
+If
+.Ev HISTFILE
+is set when
+.Nm
+exits,
+after any EXIT trap has been evaluated,
+and if
+.Ev HISTAPPEND
+is not enabled,
+or if
+.Ev HISTFILE
+is assigned when HISTAPPEND is enabled,
+or if
+.Ev HISTAPPEND
+is enabled when
+.Ev HISTFILE
+is set,
+the contents of the history buffer will be written
+to the file named after expanding this variable.
+If the file named did not previously exist, it will be created.
+If it did exist, it must be writable.
+The file will be truncated, and then if owned by the current user,
+the current history buffer will be written to it.
+.Pp
+When used for reading or writing history entries,
+variable and arithmetic expansions are performed,
+upon its value to produce a file name, and if the
+.Ev HISTFILE
+variable was set by this shell,
+rather than obtained from the environment,
+command substitutions will also be performed.
+No file will be used if an expansion error occurs,
+or if there is a command substitution in a value obtained
+from the environment.
 .It Ev HISTSIZE
 The number of lines in the history buffer for the shell.
+If unset, or set to an empty string, 100 lines will be used.
+Attempts to set HISTSIZE to anything other than a string of
+digits will generate an error.
+An invalid value found in the environment will be ignored.
 .It Ev HOME
 Set automatically by
 .Xr login 1
@@ -4757,7 +4832,7 @@ from the user's login directory in the password file
 .Pq Xr passwd 5 .
 This environment variable also functions as the default argument for the
 .Ic cd
-built-in.
+built-in, and as the value of a tilde expansion without a user name.
 .It Ev HOSTNAME
 Set to the current hostname of the system, as returned by
 .Xr gethostname 3 .
