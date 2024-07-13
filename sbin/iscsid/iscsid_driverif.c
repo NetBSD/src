@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_driverif.c,v 1.10 2023/12/27 18:07:30 mlelstv Exp $	*/
+/*	$NetBSD: iscsid_driverif.c,v 1.11 2024/07/13 23:51:19 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -293,13 +293,13 @@ make_connection(session_t * sess, iscsid_login_req_t * req,
 		break;
 	case EAI_NODATA:
 		res->status = ISCSID_STATUS_HOST_NOT_FOUND;
-		break;
+		return NULL;
 	case EAI_AGAIN:
 		res->status = ISCSID_STATUS_HOST_TRY_AGAIN;
-		break;
+		return NULL;
 	default:
 		res->status = ISCSID_STATUS_HOST_ERROR;
-		break;
+		return NULL;
 	}
 
 	/* alloc the connection structure */
