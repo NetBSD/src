@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2024/07/09 04:29:09 christos Exp $
+#	$NetBSD: Makefile,v 1.29 2024/07/13 16:27:31 skrll Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -127,3 +127,8 @@ pex64igen.c: peXXigen.c
 pe-aarch64igen.c: peXXigen.c
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e s/XX/peAArch64/g < $> > $@
+
+pe-riscv64igen.c: peXXigen.c
+	${_MKTARGET_CREATE}
+	${TOOL_SED} -e s/XX/peRiscV64/g < $> > $@
+
