@@ -1,4 +1,4 @@
-/*	$NetBSD: mystring.c,v 1.20 2023/04/07 10:34:13 kre Exp $	*/
+/*	$NetBSD: mystring.c,v 1.21 2024/07/13 13:43:58 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mystring.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mystring.c,v 1.20 2023/04/07 10:34:13 kre Exp $");
+__RCSID("$NetBSD: mystring.c,v 1.21 2024/07/13 13:43:58 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,8 @@ __RCSID("$NetBSD: mystring.c,v 1.20 2023/04/07 10:34:13 kre Exp $");
 #include <inttypes.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <strings.h>
+
 #include "shell.h"
 #include "syntax.h"
 #include "error.h"
@@ -137,4 +139,30 @@ is_number(const char *p)
 			return 0;
 	} while (*++p != '\0');
 	return 1;
+}
+
+/*
+ * Check a string for common representations of yes/true/...
+ * Default result is false
+ */
+
+int
+boolstr(const char *s)
+{
+	size_t len;
+
+	if (s == NULL)
+		return 0;
+
+	len = strlen(s);
+	if (len == 0)
+		return 0;
+
+	if (strncasecmp(s, "true", len) == 0		||
+	    strncasecmp(s, "yes", len) == 0		||
+	    (len == 2 && strcasecmp(s, "on") == 0)	||
+	    is_digit(*s) || atoi(s) != 0)
+		return 1;
+
+	return 0;
 }

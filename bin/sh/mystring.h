@@ -1,4 +1,4 @@
-/*	$NetBSD: mystring.h,v 1.11 2003/08/07 09:05:35 agc Exp $	*/
+/*	$NetBSD: mystring.h,v 1.12 2024/07/13 13:43:58 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,6 +40,7 @@ void scopyn(const char *, char *, int);
 int prefix(const char *, const char *);
 int number(const char *);
 int is_number(const char *);
+int boolstr(const char *);
 
 #define equal(s1, s2)	(strcmp(s1, s2) == 0)
 #define scopy(s1, s2)	((void)strcpy(s2, s1))

@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.70 2024/07/12 07:30:30 kre Exp $	*/
+/*	$NetBSD: histedit.c,v 1.71 2024/07/13 13:43:58 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,13 +37,15 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.70 2024/07/12 07:30:30 kre Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.71 2024/07/13 13:43:58 kre Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,6 +64,7 @@ __RCSID("$NetBSD: histedit.c,v 1.70 2024/07/12 07:30:30 kre Exp $");
 #include "myhistedit.h"
 #include "error.h"
 #include "alias.h"
+#include "redir.h"
 
 #ifndef SMALL		/* almost all the rest of this file */
 
@@ -78,6 +81,11 @@ int displayhist;
 static FILE *el_in, *el_out;
 static int curpos;
 
+static char *HistFile = NULL;
+static const char *HistFileOpen = NULL;
+FILE *HistFP = NULL;
+static int History_fd;
+
 #ifdef DEBUG
 extern FILE *tracefile;
 #endif
@@ -88,6 +96,7 @@ static int str_to_event(const char *, int);
 static int comparator(const void *, const void *);
 static char **sh_matches(const char *, int, int);
 static unsigned char sh_complete(EditLine *, int);
+static FILE *Hist_File_Open(const char *);
 
 /*
  * Set history and editing status.  Called whenever the status may
@@ -112,9 +121,10 @@ histedit(void)
 			hist = history_init();
 			INTON;
 
-			if (hist != NULL)
+			if (hist != NULL) {
 				sethistsize(histsizeval(), histsizeflags());
-			else
+				sethistfile(histfileval(), histfileflags());
+			} else
 				out2str("sh: can't initialize history\n");
 		}
 		if (editing && !el && isatty(0)) { /* && isatty(2) ??? */
@@ -260,10 +270,291 @@ sethistsize(char *hs, int flags)
 
 	if (hist != NULL) {
 		INTOFF;
-		history(hist, &he, H_SETSIZE, histsize);
+		/* H_SETSIZE actually sets n-1 as the limit */
+		history(hist, &he, H_SETSIZE, histsize + 1);
 		history(hist, &he, H_SETUNIQUE, 1);
 		INTON;
 	}
+}
+
+void
+sethistfile(char *hs, int flags)
+{
+	const char *file;
+	HistEvent he;
+
+	CTRACE(DBG_HISTORY, ("Set HISTFILE=%s [%x] %s\n",
+	    (hs == NULL ? "''" : hs), flags, "!hist" + (hist != NULL)));
+
+	if (hs == NULL || *hs == '\0' || (flags & VUNSET)) {
+		if (HistFP != NULL) {
+			fclose(HistFP);
+			HistFP = NULL;
+		}
+		if (HistFile != NULL) {
+			free(HistFile);
+			HistFile = NULL;
+			HistFileOpen = NULL;
+		}
+		return;
+	}
+
+	if (hist != NULL) {
+		file = expandvar(hs, flags);
+		if (file == NULL || *file == '\0')
+			return;
+
+		INTOFF;
+
+		history(hist, &he, H_LOAD, file);
+
+		/*
+		 * This is needed so sethistappend() can work
+		 * on the current (new) filename, not the previous one.
+		 */
+		if (HistFile != NULL)
+			free(HistFile);
+
+		HistFile = strdup(hs);
+		/*
+		 * We need to ensure that HistFile & HistFileOpen
+		 * are not equal .. we know HistFile has just altered.
+		 * If they happen to be equal (both NULL perhaps, or
+		 * the strdup() just above happned to return the same
+		 * buffer as was freed the line before) then simply
+		 * set HistFileOpen to something which cannot be the
+		 * same as anything allocated, or NULL.   Its only
+		 * use is to compare against HistFile.
+		 */
+		if (HistFile == HistFileOpen)
+			HistFileOpen = "";
+
+		sethistappend((histappflags() & VUNSET) ? NULL : histappval(),
+			~VUNSET & 0xFFFF);
+
+		INTON;
+	}
+}
+
+void
+sethistappend(char *s, int flags __diagused)
+{
+	CTRACE(DBG_HISTORY, ("Set HISTAPPEND=%s [%x] %s ",
+	    (s == NULL ? "''" : s), flags, "!hist" + (hist != NULL)));
+
+	INTOFF;
+	if (flags & VUNSET || !boolstr(s)) {
+		CTRACE(DBG_HISTORY, ("off"));
+
+		if (HistFP != NULL) {
+			CTRACE(DBG_HISTORY, (" closing"));
+
+			fclose(HistFP);
+			HistFP = NULL;
+			HistFileOpen = NULL;
+		}
+	} else {
+		CTRACE(DBG_HISTORY, ("on"));
+
+		if (HistFileOpen != HistFile || HistFP == NULL) {
+			if (HistFP != NULL) {
+				CTRACE(DBG_HISTORY, (" closing prev"));
+				fclose(HistFP);
+				HistFP = NULL;
+			}
+			if (hist != NULL &&
+			    HistFile != NULL &&
+			    HistFP == NULL) {
+				CTRACE(DBG_HISTORY, ("\n"));
+
+				save_sh_history();
+
+				CTRACE(DBG_HISTORY, ("opening: "));
+
+				HistFP = Hist_File_Open(HistFile);
+				if (HistFP != NULL)
+					HistFileOpen = HistFile;
+				else {
+					CTRACE(DBG_HISTORY, ("open failed"));
+				}
+			}
+		}
+	}
+	INTON;
+
+	CTRACE(DBG_HISTORY, ("\n"));
+}
+
+static void
+History_FD_Renumbered(int from, int to)
+{
+	if (History_fd == from)
+		History_fd = to;
+
+	VTRACE(DBG_HISTORY, ("History_FD_Renumbered(%d,%d)-> %d\n",
+	    from, to, History_fd));
+}
+
+/*
+ * The callback functions for the FILE* returned by funopen2()
+ */
+static ssize_t
+Hist_Write(void *cookie, const void *buf, size_t len)
+{
+	if (cookie != (void *)&History_fd) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	return write(History_fd, buf, len);
+}
+
+static int
+Hist_Close(void *cookie)
+{
+	if (cookie == (void *)&History_fd) {
+		sh_close(History_fd);
+		History_fd = -1;
+		return 0;
+	}
+
+	VTRACE(DBG_HISTORY, ("HistClose(%p) != %p\n", cookie, &History_fd));
+
+	errno = EINVAL;
+	return -1;
+}
+
+static off_t
+Hist_Seek(void *cookie, off_t pos, int whence)
+{
+	if (cookie != (void *)&History_fd) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	return lseek(History_fd, pos, whence);
+}
+
+/*
+ * a variant of open() for history files.
+ */
+static int
+open_history_file(const char *name, int mode)
+{
+	int fd;
+	struct stat statb;
+
+	fd = open(name, mode, S_IWUSR|S_IRUSR);
+
+	VTRACE(DBG_HISTORY, ("open_history_file(\"%s\", %#x) -> %d\n",
+	    name, mode, fd));
+
+	if (fd == -1)
+		return -1;
+
+	if (fstat(fd, &statb) == -1) {
+		VTRACE(DBG_HISTORY, ("history file fstat(%d) failed [%d]\n",
+		    fd, errno));
+		close(fd);
+		return -1;
+	}
+
+	if (statb.st_uid != getuid()) {
+		VTRACE(DBG_HISTORY,
+		    ("history file wrong user (uid=%d file=%d)\n",
+			getuid(), statb.st_uid));
+		close(fd);
+		return -1;
+	}
+
+	return fd;
+}
+
+static FILE *
+Hist_File_Open(const char *name)
+{
+	FILE *fd;
+	int n;
+
+	INTOFF;
+
+	n = open_history_file(name, O_WRONLY|O_CREAT|O_APPEND|O_CLOEXEC);
+
+	VTRACE(DBG_HISTORY, ("History_File_Open(\"%s\") -> %d", name, n));
+	if (n == -1) {
+		VTRACE(DBG_HISTORY, (" [%d]\n", errno));
+		INTON;
+		return NULL;
+	}
+
+	n = to_upper_fd(n);
+	(void) lseek(n, 0, SEEK_END);
+	VTRACE(DBG_HISTORY, (" -> %d", n));
+
+	History_fd = n;
+	register_sh_fd(n, History_FD_Renumbered);
+
+	if ((fd =
+	    funopen2(&History_fd, NULL, Hist_Write, Hist_Seek, NULL,
+		     Hist_Close)) == NULL) {
+
+		VTRACE(DBG_HISTORY, ("; funopen2 failed[%d]\n", errno));
+
+		sh_close(n);
+		History_fd = -1;
+		INTON;
+		return NULL;
+	}
+	setlinebuf(fd);
+
+	VTRACE(DBG_HISTORY, (" fd:%p\n", fd));
+
+	INTON;
+
+	return fd;
+}
+
+void
+save_sh_history(void)
+{
+	char *var;
+	const char *file;
+	int fd;
+	FILE *fp;
+	HistEvent he;
+
+	if (HistFP != NULL) {
+		/* don't close, just make sure nothing in buffer */
+		(void) fflush(HistFP);
+		return;
+	}
+
+	if (hist == NULL)
+		return;
+
+	var = histfileval();
+	if ((histfileflags() & VUNSET) || *var == '\0')
+		return;
+
+	file = expandvar(var, histfileflags());
+
+	VTRACE(DBG_HISTORY,
+	    ("save_sh_history('%s')\n", file == NULL ? "" : file));
+
+	if (file == NULL || *file == '\0')
+		return;
+
+	INTOFF;
+	fd = open_history_file(file, O_WRONLY|O_CREAT|O_TRUNC);
+	if (fd != -1) {
+		fp = fdopen(fd, "w");
+		if (fp != NULL) {
+			(void) history(hist, &he, H_SAVE_FP, fp);
+			fclose(fp);
+		} else
+			close(fd);
+	}
+	INTON;
 }
 
 void
@@ -278,6 +569,9 @@ setterm(char *term, int flags __unused)
 	INTON;
 }
 
+/*
+ * The built-in sh commands supported by this file
+ */
 int
 inputrc(int argc, char **argv)
 {
@@ -313,7 +607,7 @@ histcmd(volatile int argc, char ** volatile argv)
 	int ch;
 	const char * volatile editor = NULL;
 	HistEvent he;
-	volatile int lflg = 0, nflg = 0, rflg = 0, sflg = 0;
+	volatile int lflg = 0, nflg = 0, rflg = 0, sflg = 0, zflg = 0;
 	int i, retval;
 	const char *firststr, *laststr;
 	int first, last, direction;
@@ -341,7 +635,7 @@ histcmd(volatile int argc, char ** volatile argv)
 
 	optreset = 1; optind = 1; /* initialize getopt */
 	while (not_fcnumber(argv[optind]) &&
-	      (ch = getopt(argc, argv, ":e:lnrs")) != -1)
+	      (ch = getopt(argc, argv, ":e:lnrsz")) != -1)
 		switch ((char)ch) {
 		case 'e':
 			editor = optarg;
@@ -363,6 +657,10 @@ histcmd(volatile int argc, char ** volatile argv)
 			sflg = 1;
 			VTRACE(DBG_HISTORY, ("histcmd -s\n"));
 			break;
+		case 'z':
+			zflg = 1;
+			VTRACE(DBG_HISTORY, ("histcmd -z\n"));
+			break;
 		case ':':
 			error("option -%c expects argument", optopt);
 			/* NOTREACHED */
@@ -372,6 +670,15 @@ histcmd(volatile int argc, char ** volatile argv)
 			/* NOTREACHED */
 		}
 	argc -= optind, argv += optind;
+
+	if (zflg) {
+		if (argc != 0 || (lflg|nflg|rflg|sflg) != 0)
+			error("Usage: fc -z");
+
+		history(hist, &he, H_CLEAR);
+		return 0;
+	}
+
 
 	/*
 	 * If executing...
@@ -446,7 +753,7 @@ histcmd(volatile int argc, char ** volatile argv)
 			firststr = "-16";
 			laststr = "-1";
 		} else
-			firststr = laststr = "-1";
+			firststr = laststr = "-1";	/* the exact same str */
 		break;
 	case 1:
 		firststr = argv[0];
@@ -587,6 +894,10 @@ histcmd(volatile int argc, char ** volatile argv)
 		displayhist = 0;
 	return 0;
 }
+
+/*
+ * and finally worker functions for those built-ins
+ */
 
 static const char *
 fc_replace(const char *s, char *p, char *r)

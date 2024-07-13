@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.83 2024/07/12 07:30:30 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.84 2024/07/13 13:43:58 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.83 2024/07/12 07:30:30 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.84 2024/07/13 13:43:58 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,6 +107,8 @@ struct localvar *localvars;
 
 #ifndef SMALL
 struct var vhistsize;
+struct var vhistfile;
+struct var vhistappend;
 struct var vterm;
 struct var editrc;
 struct var ps_lit;
@@ -142,6 +144,10 @@ const struct varinit varinit[] = {
 #ifndef SMALL
 	{ &vhistsize,	VSTRFIXED|VTEXTFIXED|VUNSET,	"HISTSIZE=",
 	   { .set_func= sethistsize } },
+	{ &vhistfile,	VSTRFIXED|VTEXTFIXED|VUNSET,	"HISTFILE=",
+	   { .set_func= sethistfile } },
+	{ &vhistappend,	VSTRFIXED|VTEXTFIXED|VUNSET,	"HISTAPPEND=",
+	   { .set_func= sethistappend } },
 #endif
 	{ &vifs,	VSTRFIXED|VTEXTFIXED,		"IFS= \t\n",
 	   { NULL } },
