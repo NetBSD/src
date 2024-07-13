@@ -1,4 +1,4 @@
-# $NetBSD: MIPSSIM,v 1.9 2024/01/29 18:27:11 christos Exp $
+# $NetBSD: MIPSSIM,v 1.10 2024/07/13 03:40:38 rin Exp $
 #
 # Kernel config for the QEMU MIPS "mipssim" simulator
 #
@@ -8,7 +8,7 @@
 
 include 	"arch/evbmips/conf/std.mipssim"
 
-#ident 		"GENERIC-$Revision: 1.9 $"
+#ident 		"GENERIC-$Revision: 1.10 $"
 
 maxusers	32
 
@@ -68,6 +68,7 @@ file-system	UNION		# union file system
 #file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system 	CODA		# Coda File System; also needs vcoda (below)
 file-system	PTYFS		# /dev/pts/N support
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system	MFS		# memory-based filesystem
 file-system	TMPFS		# Efficient memory file-system
 
@@ -139,6 +140,15 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
 
+# Pseudo-Devices
+
+pseudo-device	crypto				# /dev/crypto device
+pseudo-device	swcrypto			# software crypto implementation
+
+pseudo-device	vnd				# disk-like interface to files
+#options 	VND_COMPRESSION			# compressed vnd(4)
+
+pseudo-device	putter				# for puffs and pud
 
 # Network pseudo-devices
 pseudo-device	bpfilter			# Berkeley packet filter
