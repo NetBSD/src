@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.312 2023/12/07 09:00:32 pgoyette Exp $	*/
+/*	$NetBSD: tty.c,v 1.313 2024/07/14 05:10:40 kre Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.312 2023/12/07 09:00:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.313 2024/07/14 05:10:40 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1417,7 +1417,7 @@ unlock_constty:	mutex_exit(&constty_lock);
 		}
 
 		if (pgid < 0) {
-			if (pgid == INT_MIN) {
+			if (pgid <= INT_MIN) {
 				mutex_exit(&proc_lock);
 				return (EINVAL);
 			}
