@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.89 2024/07/14 09:31:55 skrll Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.90 2024/07/14 09:38:41 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.89 2024/07/14 09:31:55 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.90 2024/07/14 09:38:41 skrll Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -923,6 +923,10 @@ dwc_gmac_init_locked(struct ifnet *ifp)
 		opmode |= GMAC_DMA_OP_RXSTOREFORWARD | GMAC_DMA_OP_TXSTOREFORWARD;
 	}
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_OPMODE, opmode);
+#ifdef DWC_GMAC_DEBUG
+	aprint_normal_dev(sc->sc_dev,
+	    "setting DMA opmode register: %08x\n", opmode);
+#endif
 
 	sc->sc_stopping = false;
 
@@ -1189,7 +1193,7 @@ dwc_gmac_tx_intr(struct dwc_gmac_softc *sc)
 	for (i = sc->sc_txq.t_next; sc->sc_txq.t_queued > 0; i = TX_NEXT(i)) {
 #ifdef DWC_GMAC_DEBUG
 		aprint_normal_dev(sc->sc_dev,
-		    "dwc_gmac_tx_intr: checking desc #%d (t_queued: %d)\n",
+		    "%s: checking desc #%d (t_queued: %d)\n", __func__,
 		    i, sc->sc_txq.t_queued);
 #endif
 
@@ -1217,8 +1221,8 @@ dwc_gmac_tx_intr(struct dwc_gmac_softc *sc)
 
 #ifdef DWC_GMAC_DEBUG
 		aprint_normal_dev(sc->sc_dev,
-		    "dwc_gmac_tx_intr: done with packet at desc #%d, "
-		    "freeing mbuf %p\n", i, data->td_m);
+		    "%s: done with packet at desc #%d, freeing mbuf %p\n",
+		    __func__, i, data->td_m);
 #endif
 
 		m_freem(data->td_m);
@@ -1247,6 +1251,10 @@ dwc_gmac_rx_intr(struct dwc_gmac_softc *sc)
 
 	mutex_enter(&sc->sc_rxq.r_mtx);
 	for (i = sc->sc_rxq.r_cur; ; i = RX_NEXT(i)) {
+#ifdef DWC_GMAC_DEBUG
+		aprint_normal_dev(sc->sc_dev, "%s: checking desc #%d\n",
+		    __func__, i);
+#endif
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
 		    RX_DESC_OFFSET(i), sizeof(*desc),
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
@@ -1259,8 +1267,8 @@ dwc_gmac_rx_intr(struct dwc_gmac_softc *sc)
 		if (sc->sc_descm->rx_has_error(desc)) {
 #ifdef DWC_GMAC_DEBUG
 			aprint_normal_dev(sc->sc_dev,
-			    "RX error: descriptor status %08x, skipping\n",
-			    le32toh(desc->ddesc_status0));
+			    "%s: RX error: status %08x, skipping\n",
+			    __func__, le32toh(desc->ddesc_status0));
 #endif
 			if_statinc(ifp, if_ierrors);
 			goto skip;
@@ -1270,8 +1278,8 @@ dwc_gmac_rx_intr(struct dwc_gmac_softc *sc)
 
 #ifdef DWC_GMAC_DEBUG
 		aprint_normal_dev(sc->sc_dev,
-		    "rx int: device is done with descriptor #%d, len: %d\n",
-		    i, len);
+		    "%s: device is done with descriptor #%d, len: %d\n",
+		    __func__, i, len);
 #endif
 
 		/*
@@ -1317,6 +1325,11 @@ dwc_gmac_rx_intr(struct dwc_gmac_softc *sc)
 		}
 		physaddr = data->rd_map->dm_segs[0].ds_addr;
 
+#ifdef DWC_GMAC_DEBUG
+		aprint_normal_dev(sc->sc_dev,
+		    "%s: receiving packet at desc #%d,   using mbuf %p\n",
+		    __func__, i, data->rd_m);
+#endif
 		/*
 		 * New mbuf loaded, update RX ring and continue
 		 */
@@ -1626,19 +1639,19 @@ dwc_gmac_dump_dma(struct dwc_gmac_softc *sc)
 	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_RX_ADDR));
 	aprint_normal_dev(sc->sc_dev, "tx descriptors: %08x\n",
 	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_TX_ADDR));
-	aprint_normal_dev(sc->sc_dev, "status: %08x\n",
+	aprint_normal_dev(sc->sc_dev, " status: %08x\n",
 	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_STATUS));
 	aprint_normal_dev(sc->sc_dev, "op mode: %08x\n",
 	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_OPMODE));
-	aprint_normal_dev(sc->sc_dev, "int enable: %08x\n",
+	aprint_normal_dev(sc->sc_dev, "int en.: %08x\n",
 	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_INTENABLE));
-	aprint_normal_dev(sc->sc_dev, "cur tx: %08x\n",
+	aprint_normal_dev(sc->sc_dev, " cur tx: %08x\n",
 	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_CUR_TX_DESC));
-	aprint_normal_dev(sc->sc_dev, "cur rx: %08x\n",
+	aprint_normal_dev(sc->sc_dev, " cur rx: %08x\n",
 	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_CUR_RX_DESC));
-	aprint_normal_dev(sc->sc_dev, "cur tx buffer: %08x\n",
+	aprint_normal_dev(sc->sc_dev, "cur txb: %08x\n",
 	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_CUR_TX_BUFADDR));
-	aprint_normal_dev(sc->sc_dev, "cur rx buffer: %08x\n",
+	aprint_normal_dev(sc->sc_dev, "cur rxb: %08x\n",
 	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_CUR_RX_BUFADDR));
 }
 
@@ -1646,7 +1659,6 @@ static void
 dwc_gmac_dump_tx_desc(struct dwc_gmac_softc *sc)
 {
 	const size_t descsz = sizeof(struct dwc_gmac_dev_dmadesc);
-	int i;
 
 	aprint_normal_dev(sc->sc_dev, "TX queue: cur=%d, next=%d, queued=%d\n",
 	    sc->sc_txq.t_cur, sc->sc_txq.t_next, sc->sc_txq.t_queued);
@@ -1656,12 +1668,11 @@ dwc_gmac_dump_tx_desc(struct dwc_gmac_softc *sc)
 	    TX_DESC_OFFSET(0), AWGE_TX_RING_COUNT * descsz,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-	for (i = 0; i < AWGE_TX_RING_COUNT; i++) {
+	for (size_t i = 0; i < AWGE_TX_RING_COUNT; i++) {
 		struct dwc_gmac_dev_dmadesc *desc = &sc->sc_txq.t_desc[i];
-		aprint_normal("#%d (%08lx): status: %08x cntl: %08x "
+		aprint_normal("#%3zu (%08lx): status: %08x cntl: %08x "
 		    "data: %08x next: %08x\n",
-		    i, sc->sc_txq.t_physaddr +
-			i * sizeof(struct dwc_gmac_dev_dmadesc),
+		    i, sc->sc_txq.t_physaddr + i * descsz,
 		    le32toh(desc->ddesc_status0), le32toh(desc->ddesc_cntl1),
 		    le32toh(desc->ddesc_data), le32toh(desc->ddesc_next));
 	}
@@ -1671,7 +1682,6 @@ static void
 dwc_gmac_dump_rx_desc(struct dwc_gmac_softc *sc)
 {
 	const size_t descsz = sizeof(struct dwc_gmac_dev_dmadesc);
-	int i;
 
 	aprint_normal_dev(sc->sc_dev, "RX queue: cur=%d, next=%d\n",
 	    sc->sc_rxq.r_cur, sc->sc_rxq.r_next);
@@ -1681,14 +1691,40 @@ dwc_gmac_dump_rx_desc(struct dwc_gmac_softc *sc)
 	    RX_DESC_OFFSET(0), AWGE_RX_RING_COUNT * descsz,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-	for (i = 0; i < AWGE_RX_RING_COUNT; i++) {
+	for (size_t i = 0; i < AWGE_RX_RING_COUNT; i++) {
 		struct dwc_gmac_dev_dmadesc *desc = &sc->sc_rxq.r_desc[i];
-		aprint_normal("#%d (%08lx): status: %08x cntl: %08x "
-		    "data: %08x next: %08x\n",
-		    i, sc->sc_rxq.r_physaddr +
-			i * sizeof(struct dwc_gmac_dev_dmadesc),
+		char buf[200];
+
+		if (!sc->sc_descm->rx_is_owned_by_dev(desc)) {
+			/* print interrupt state */
+			snprintb(buf, sizeof(buf),
+			    "\177\20"
+			    "b\x1e"	"daff\0"
+			    "f\x10\xe"	"frlen\0"
+			    "b\x0f"	"error\0"
+			    "b\x0e"	"rxtrunc\0"	/* descriptor error? */
+			    "b\x0d"	"saff\0"
+			    "b\x0c"	"giantframe\0"	/* length error? */
+			    "b\x0b"	"damaged\0"
+			    "b\x0a"	"vlan\0"
+			    "b\x09"	"first\0"
+			    "b\x08"	"last\0"
+			    "b\x07"	"giant\0"
+			    "b\x06"	"collison\0"
+			    "b\x05"	"ether\0"
+			    "b\x04"	"watchdog\0"
+			    "b\x03"	"miierror\0"
+			    "b\x02"	"dribbling\0"
+			    "b\x01"	"crc\0"
+			    "\0", le32toh(desc->ddesc_status0));
+		}
+
+		aprint_normal("#%3zu (%08lx): status: %08x cntl: %08x "
+		    "data: %08x next: %08x %s\n",
+		    i, sc->sc_rxq.r_physaddr + i * descsz,
 		    le32toh(desc->ddesc_status0), le32toh(desc->ddesc_cntl1),
-		    le32toh(desc->ddesc_data), le32toh(desc->ddesc_next));
+		    le32toh(desc->ddesc_data), le32toh(desc->ddesc_next),
+		    sc->sc_descm->rx_is_owned_by_dev(desc) ? "" : buf);
 	}
 }
 
@@ -1702,22 +1738,29 @@ dwc_dump_status(struct dwc_gmac_softc *sc)
 	char buf[200];
 
 	/* print interrupt state */
-	snprintb(buf, sizeof(buf), "\177\20"
-	    "b\x10""NI\0"
-	    "b\x0f""AI\0"
-	    "b\x0e""ER\0"
-	    "b\x0d""FB\0"
-	    "b\x0a""ET\0"
-	    "b\x09""RW\0"
-	    "b\x08""RS\0"
-	    "b\x07""RU\0"
-	    "b\x06""RI\0"
-	    "b\x05""UN\0"
-	    "b\x04""OV\0"
-	    "b\x03""TJ\0"
-	    "b\x02""TU\0"
-	    "b\x01""TS\0"
-	    "b\x00""TI\0"
+	snprintb(buf, sizeof(buf),
+	    "\177\20"
+	    "b\x1c"	"GPI\0"
+	    "b\x1b"	"GMC\0"
+	    "b\x1a"	"GLI\0"
+	    "f\x17\x3"	"EB\0"
+	    "f\x14\x3"	"TPS\0"
+	    "f\x11\x3"	"RPS\0"
+	    "b\x10"	"NI\0"
+	    "b\x0f"	"AI\0"
+	    "b\x0e"	"ER\0"
+	    "b\x0d"	"FB\0"
+	    "b\x0a"	"ET\0"
+	    "b\x09"	"RW\0"
+	    "b\x08"	"RS\0"
+	    "b\x07"	"RU\0"
+	    "b\x06"	"RI\0"
+	    "b\x05"	"UN\0"
+	    "b\x04"	"OV\0"
+	    "b\x03"	"TJ\0"
+	    "b\x02"	"TU\0"
+	    "b\x01"	"TS\0"
+	    "b\x00"	"TI\0"
 	    "\0", dma_status);
 	aprint_normal_dev(sc->sc_dev, "INTR status: %08x, DMA status: %s\n",
 	    status, buf);
