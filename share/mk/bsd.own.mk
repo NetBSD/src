@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1388 2024/07/13 03:38:12 rin Exp $
+#	$NetBSD: bsd.own.mk,v 1.1389 2024/07/14 06:43:11 skrll Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -119,6 +119,7 @@ MKGCCCMDS?=	no
 #
 .if \
     ${MACHINE_CPU} == "mips" || \
+    ${MACHINE_CPU} == "riscv" || \
     ${MACHINE_ARCH} == "x86_64"
 HAVE_BINUTILS?= 242
 .else
