@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.88 2024/07/05 04:31:51 rin Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.89 2024/07/14 09:31:55 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.88 2024/07/05 04:31:51 rin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.89 2024/07/14 09:31:55 skrll Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -473,11 +473,11 @@ dwc_gmac_alloc_rx_ring(struct dwc_gmac_softc *sc,
 {
 	struct dwc_gmac_rx_data *data;
 	bus_addr_t physaddr;
-	const size_t descsize = AWGE_RX_RING_COUNT * sizeof(*ring->r_desc);
+	const size_t rxringsz = AWGE_RX_RING_COUNT * sizeof(*ring->r_desc);
 	int error, i, next;
 
 	ring->r_cur = ring->r_next = 0;
-	memset(ring->r_desc, 0, descsize);
+	memset(ring->r_desc, 0, rxringsz);
 
 	/*
 	 * Pre-allocate Rx buffers and populate Rx ring.
@@ -537,7 +537,8 @@ dwc_gmac_alloc_rx_ring(struct dwc_gmac_softc *sc,
 		sc->sc_descm->rx_set_owned_by_dev(desc);
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map, 0,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
+	    RX_DESC_OFFSET(0),
 	    AWGE_RX_RING_COUNT * sizeof(struct dwc_gmac_dev_dmadesc),
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_RX_ADDR,
@@ -581,12 +582,12 @@ dwc_gmac_reset_rx_ring(struct dwc_gmac_softc *sc,
 static int
 dwc_gmac_alloc_dma_rings(struct dwc_gmac_softc *sc)
 {
-	const size_t descsize = AWGE_TOTAL_RING_COUNT *
+	const size_t ringsize = AWGE_TOTAL_RING_COUNT *
 		sizeof(struct dwc_gmac_dev_dmadesc);
 	int error, nsegs;
 	void *rings;
 
-	error = bus_dmamap_create(sc->sc_dmat, descsize, 1, descsize, 0,
+	error = bus_dmamap_create(sc->sc_dmat, ringsize, 1, ringsize, 0,
 	    BUS_DMA_NOWAIT, &sc->sc_dma_ring_map);
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
@@ -595,7 +596,7 @@ dwc_gmac_alloc_dma_rings(struct dwc_gmac_softc *sc)
 		goto fail;
 	}
 
-	error = bus_dmamem_alloc(sc->sc_dmat, descsize, PAGE_SIZE, 0,
+	error = bus_dmamem_alloc(sc->sc_dmat, ringsize, PAGE_SIZE, 0,
 	    &sc->sc_dma_ring_seg, 1, &nsegs, BUS_DMA_NOWAIT |BUS_DMA_COHERENT);
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
@@ -604,7 +605,7 @@ dwc_gmac_alloc_dma_rings(struct dwc_gmac_softc *sc)
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &sc->sc_dma_ring_seg, nsegs,
-	    descsize, &rings, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
+	    ringsize, &rings, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not allocate DMA memory\n");
@@ -612,7 +613,7 @@ dwc_gmac_alloc_dma_rings(struct dwc_gmac_softc *sc)
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, sc->sc_dma_ring_map, rings,
-	    descsize, NULL, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
+	    ringsize, NULL, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not load desc DMA map\n");
@@ -683,7 +684,7 @@ dwc_gmac_alloc_tx_ring(struct dwc_gmac_softc *sc,
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
 	    TX_DESC_OFFSET(0),
 	    AWGE_TX_RING_COUNT * sizeof(struct dwc_gmac_dev_dmadesc),
-	    BUS_DMASYNC_POSTWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	for (i = 0; i < AWGE_TX_RING_COUNT; i++) {
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
@@ -700,6 +701,10 @@ dwc_gmac_alloc_tx_ring(struct dwc_gmac_softc *sc,
 		    ring->t_physaddr + sizeof(struct dwc_gmac_dev_dmadesc)
 		    * TX_NEXT(i));
 	}
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
+	    TX_DESC_OFFSET(0),
+	    AWGE_TX_RING_COUNT * sizeof(struct dwc_gmac_dev_dmadesc),
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	return 0;
 
@@ -1088,14 +1093,16 @@ dwc_gmac_queue(struct dwc_gmac_softc *sc, struct mbuf *m0)
 	data->td_m = m0;
 	data->td_active = map;
 
+	/* sync the packet buffer */
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
+
+	/* sync the new descriptors - ownership not transferred yet */
+	dwc_gmac_txdesc_sync(sc, first, sc->sc_txq.t_cur,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	/* Pass first to device */
 	sc->sc_descm->tx_set_owned_by_dev(&sc->sc_txq.t_desc[first]);
-
-	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE);
 
 	return 0;
 }
@@ -1330,6 +1337,11 @@ skip:
 
 		sc->sc_descm->rx_init_flags(desc);
 		sc->sc_descm->rx_set_len(desc, data->rd_m->m_len);
+
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
+		    RX_DESC_OFFSET(i), sizeof(*desc),
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
 		sc->sc_descm->rx_set_owned_by_dev(desc);
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
@@ -1633,11 +1645,17 @@ dwc_gmac_dump_dma(struct dwc_gmac_softc *sc)
 static void
 dwc_gmac_dump_tx_desc(struct dwc_gmac_softc *sc)
 {
+	const size_t descsz = sizeof(struct dwc_gmac_dev_dmadesc);
 	int i;
 
 	aprint_normal_dev(sc->sc_dev, "TX queue: cur=%d, next=%d, queued=%d\n",
 	    sc->sc_txq.t_cur, sc->sc_txq.t_next, sc->sc_txq.t_queued);
 	aprint_normal_dev(sc->sc_dev, "TX DMA descriptors:\n");
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
+	    TX_DESC_OFFSET(0), AWGE_TX_RING_COUNT * descsz,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
 	for (i = 0; i < AWGE_TX_RING_COUNT; i++) {
 		struct dwc_gmac_dev_dmadesc *desc = &sc->sc_txq.t_desc[i];
 		aprint_normal("#%d (%08lx): status: %08x cntl: %08x "
@@ -1652,11 +1670,17 @@ dwc_gmac_dump_tx_desc(struct dwc_gmac_softc *sc)
 static void
 dwc_gmac_dump_rx_desc(struct dwc_gmac_softc *sc)
 {
+	const size_t descsz = sizeof(struct dwc_gmac_dev_dmadesc);
 	int i;
 
 	aprint_normal_dev(sc->sc_dev, "RX queue: cur=%d, next=%d\n",
 	    sc->sc_rxq.r_cur, sc->sc_rxq.r_next);
 	aprint_normal_dev(sc->sc_dev, "RX DMA descriptors:\n");
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
+	    RX_DESC_OFFSET(0), AWGE_RX_RING_COUNT * descsz,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
 	for (i = 0; i < AWGE_RX_RING_COUNT; i++) {
 		struct dwc_gmac_dev_dmadesc *desc = &sc->sc_rxq.r_desc[i];
 		aprint_normal("#%d (%08lx): status: %08x cntl: %08x "
