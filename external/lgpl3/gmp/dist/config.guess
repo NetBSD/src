@@ -705,7 +705,7 @@ sparc-*-* | sparc64-*-*)
 	  exact_cpu=ultrasparc2i
 	elif grep 'SUNW,UltraSPARC-II' $dummy >/dev/null; then
 	  exact_cpu=ultrasparc2
-	elif grep 'SUNW,UltraSPARC' $dummy >/dev/null; then
+	elif egrep '(SUNW|ORCL),(Ultra)?SPARC' $dummy >/dev/null; then 	   
 	  exact_cpu=ultrasparc
 	elif grep 'Ross,RT62.' $dummy >/dev/null; then
 	  # RT620, RT625, RT626 hypersparcs (v8).
