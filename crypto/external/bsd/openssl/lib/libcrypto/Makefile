@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2024/07/12 21:00:45 christos Exp $
+#	$NetBSD: Makefile,v 1.37 2024/07/15 06:34:17 riastradh Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -43,7 +43,6 @@ OPENSSLINC=	${OPENSSLSRC}/include/openssl
 CPPFLAGS+= -I${.CURDIR}/../libdefault
 CPPFLAGS+= -I${OPENSSLSRC}/providers/common/include
 CPPFLAGS+= -I${OPENSSLSRC}/providers/implementations/include
-CPPFLAGS+= ${AESCPPFLAGS}
 .PATH: ${.CURDIR}/../libdefault
 .include "${.CURDIR}/../libcommon/srcs.inc"
 .PATH: ${.CURDIR}/../libcommon
