@@ -1,4 +1,4 @@
-/*	$NetBSD: stireg.h,v 1.6 2015/09/09 11:56:53 skrll Exp $	*/
+/*	$NetBSD: stireg.h,v 1.7 2024/07/15 10:30:42 macallan Exp $	*/
 
 /*	$OpenBSD: stireg.h,v 1.14 2015/04/05 23:25:57 miod Exp $	*/
 
@@ -649,16 +649,16 @@ STI_DEP(util);
 #define	NGLE_REG_23		0x0005c0
 #define	NGLE_REG_4		0x000600	/* palette data */
 #define	NGLE_REG_5		0x0006a0	/* cursor data */
-#define	NGLE_REG_6		0x000800
-#define	NGLE_REG_7		0x000804
-#define	NGLE_REG_24		0x000808
-#define	NGLE_REG_8		0x000820
-#define	NGLE_REG_73		0x000944
-#define	NGLE_REG_9		0x000a04
-#define	NGLE_REG_25		0x000b00
+#define	NGLE_REG_6		0x000800	/* rectfill XY */
+#define	NGLE_REG_7		0x000804	/* bitblt size WH */
+#define	NGLE_REG_24		0x000808	/* bitblt src XY */
+#define	NGLE_REG_8		0x000820	/* transfer data */
+#define	NGLE_REG_37		0x000944	/* HCRX fast rect fill, size */
+#define	NGLE_REG_9		0x000a04	/* rect fill size, start */
+#define	NGLE_REG_25		0x000b00	/* bitblt dst XY, start */
 #define	NGLE_REG_RAMDAC		0x001000
-#define	NGLE_REG_10		0x018000
-#define	NGLE_REG_11		0x018004	/* dest coords */
+#define	NGLE_REG_10		0x018000	/* buffer ctl */
+#define	NGLE_REG_11		0x018004	/* dest bitmap access */
 #define	NGLE_REG_12		0x01800c	/* control plane register */
 #define	NGLE_REG_35		0x018010	/* fg color */
 #define	NGLE_REG_36		0x018014
