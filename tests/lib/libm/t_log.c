@@ -1,4 +1,4 @@
-/* $NetBSD: t_log.c,v 1.15 2024/06/09 16:53:12 riastradh Exp $ */
+/* $NetBSD: t_log.c,v 1.16 2024/07/15 06:19:17 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,836 +29,590 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_log.c,v 1.15 2024/06/09 16:53:12 riastradh Exp $");
+__RCSID("$NetBSD: t_log.c,v 1.16 2024/07/15 06:19:17 riastradh Exp $");
 
 #include <atf-c.h>
 
+#include <errno.h>
 #include <float.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
 
+#define	CHECK_EQ(i, f, x, y)						      \
+	ATF_CHECK_EQ_MSG(f(x), y,					      \
+	    "[%u] %s(%a=%.17g)=%a=%.17g, expected %a=%.17g",		      \
+	    (i), #f, (double)(x), (double)(x), f(x), f(x),		      \
+	    (double)(y), (double)(y))
+
+#define	CHECKL_EQ(i, f, x, y)						      \
+	ATF_CHECK_EQ_MSG(f(x), y,					      \
+	    "[%u] %s(%La=%.17Lg)=%La=%.17Lg, expected %La=%.17Lg",	      \
+	    (i), #f, (long double)(x), (long double)(x), f(x), f(x),	      \
+	    (long double)(y), (long double)(y))
+
+#ifdef NAN
+
+#define	CHECK_NAN(i, f, x)						      \
+	ATF_CHECK_MSG(isnan(f(x)),					      \
+	    "[%u] %s(%a=%.17g)=%a=%.17g, expected NaN",			      \
+	    (i), #f, (x), (x), f(x), f(x))
+
+#define	CHECKL_NAN(i, f, x)						      \
+	ATF_CHECK_MSG(isnan(f(x)),					      \
+	    "[%u] %s(%La=%.17Lg)=%La=%.17Lg, expected NaN",		      \
+	    (i), #f, (long double)(x), (long double)(x), f(x), f(x))
+
+#else  /* !defined(NAN) */
+
+#define	CHECK_NAN(i, f, x) do						      \
+{									      \
+	int _checknan_error;						      \
+	double _checknan_result;					      \
+	errno = 0;							      \
+	_checknan_result = f(x);					      \
+	_checknan_error = errno;					      \
+	ATF_CHECK_EQ_MSG(errno, EDOM,					      \
+	    "[%u] %s(%a=%.17g)=%a=%.17g errno=%d, expected EDOM=%d",	      \
+	    (i), #f, (double)(x), (double)(x),				      \
+	    _checknan_result, _checknan_result,				      \
+	    _checknan_error, EDOM);					      \
+} while (0)
+
+#define	CHECKL_NAN(i, f, x) do						      \
+{									      \
+	int _checknan_error;						      \
+	long double _checknan_result;					      \
+	errno = 0;							      \
+	_checknan_result = f(x);					      \
+	_checknan_error = errno;					      \
+	ATF_CHECK_EQ_MSG(errno, EDOM,					      \
+	    "[%u] %s(%La=%.17Lg)=%La=%.17Lg errno=%d, expected EDOM=%d",      \
+	    (i), #f, (long double)(x), (long double)(x),		      \
+	    _checknan_result, _checknan_result,				      \
+	    _checknan_error, EDOM);					      \
+} while (0)
+
+#endif	/* NAN */
+
+static const float logf_invalid[] = {
+#ifdef NAN
+	NAN,
+#endif
+	-HUGE_VALF,
+	-FLT_MAX,
+	-10,
+	-1,
+	-FLT_EPSILON,
+	-FLT_MIN,
+#ifdef FLT_DENORM_MIN
+	-FLT_DENORM_MIN,
+#endif
+};
+
+static const double log_invalid[] = {
+#ifdef NAN
+	NAN,
+#endif
+	-HUGE_VAL,
+	-DBL_MAX,
+	-10,
+	-1,
+	-DBL_EPSILON,
+	-DBL_MIN,
+#ifdef DBL_DENORM_MIN
+	-DBL_DENORM_MIN,
+#endif
+};
+
+static const long double logl_invalid[] = {
+#ifdef NAN
+	NAN,
+#endif
+	-HUGE_VALL,
+	-LDBL_MAX,
+	-10,
+	-1,
+	-LDBL_EPSILON,
+	-LDBL_MIN,
+#ifdef LDBL_DENORM_MIN
+	-LDBL_DENORM_MIN,
+#endif
+};
+
+static const float log1pf_invalid[] = {
+#ifdef NAN
+	NAN,
+#endif
+	-HUGE_VALF,
+	-FLT_MAX,
+	-10,
+	-1 - FLT_EPSILON,
+};
+
+static const double log1p_invalid[] = {
+#ifdef NAN
+	NAN,
+#endif
+	-HUGE_VAL,
+	-DBL_MAX,
+	-10,
+	-1 - DBL_EPSILON,
+};
+
+static const long double log1pl_invalid[] = {
+#ifdef NAN
+	NAN,
+#endif
+	-HUGE_VALL,
+	-LDBL_MAX,
+	-10,
+	-1 - LDBL_EPSILON,
+};
+
 /*
  * log10(3)
  */
-ATF_TC(log10_base);
-ATF_TC_HEAD(log10_base, tc)
+static const struct {
+	float x, y;
+} log10f_exact[] = {
+	{ 1, 0 },
+	{ 10, 1 },
+	{ 100, 2 },
+};
+
+ATF_TC(log10_invalid);
+ATF_TC_HEAD(log10_invalid, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test log10(10) == 1");
+	atf_tc_set_md_var(tc, "descr", "Test log10/f/l on invalid inputs");
+}
+ATF_TC_BODY(log10_invalid, tc)
+{
+	unsigned i;
+
+	for (i = 0; i < __arraycount(logf_invalid); i++) {
+		CHECK_NAN(i, log10f, logf_invalid[i]);
+		CHECK_NAN(i, log10, logf_invalid[i]);
+		CHECKL_NAN(i, log10l, logf_invalid[i]);
+	}
+
+	for (i = 0; i < __arraycount(log_invalid); i++) {
+		CHECK_NAN(i, log10, log_invalid[i]);
+		CHECKL_NAN(i, log10l, log_invalid[i]);
+	}
+
+	for (i = 0; i < __arraycount(logl_invalid); i++) {
+		CHECKL_NAN(i, log10l, logl_invalid[i]);
+	}
 }
 
-ATF_TC_BODY(log10_base, tc)
+ATF_TC(log10_zero);
+ATF_TC_HEAD(log10_zero, tc)
 {
-	ATF_CHECK(log10(10.0) == 1.0);
+	atf_tc_set_md_var(tc, "descr", "Test log10/f/l on zero");
+}
+ATF_TC_BODY(log10_zero, tc)
+{
+
+	CHECK_EQ(0, log10f, +0., -HUGE_VALF);
+	CHECK_EQ(0, log10, +0., -HUGE_VAL);
+	CHECKL_EQ(0, log10l, +0., -HUGE_VALL);
+
+	CHECK_EQ(1, log10f, -0., -HUGE_VALF);
+	CHECK_EQ(1, log10, -0., -HUGE_VAL);
+	CHECKL_EQ(1, log10l, -0., -HUGE_VALL);
 }
 
-ATF_TC(log10_nan);
-ATF_TC_HEAD(log10_nan, tc)
+ATF_TC(log10_exact);
+ATF_TC_HEAD(log10_exact, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test log10(NaN) == NaN");
+	atf_tc_set_md_var(tc, "descr", "Test log10/f/l exact cases");
+}
+ATF_TC_BODY(log10_exact, tc)
+{
+	unsigned i;
+
+	ATF_CHECK_EQ(signbit(log10f(1)), 0);
+	ATF_CHECK_EQ(signbit(log10(1)), 0);
+	ATF_CHECK_EQ(signbit(log10l(1)), 0);
+
+	for (i = 0; i < __arraycount(log10f_exact); i++) {
+		const float x = log10f_exact[i].x;
+		const float y = log10f_exact[i].y;
+
+		CHECK_EQ(i, log10f, x, y);
+		CHECK_EQ(i, log10, x, y);
+		CHECKL_EQ(i, log10l, x, y);
+	}
 }
 
-ATF_TC_BODY(log10_nan, tc)
+ATF_TC(log10_inf);
+ATF_TC_HEAD(log10_inf, tc)
 {
-	const double x = 0.0L / 0.0L;
-
-	ATF_CHECK(isnan(x) != 0);
-	ATF_CHECK(isnan(log10(x)) != 0);
+	atf_tc_set_md_var(tc, "descr", "Test log10/f/l on +infinity");
 }
-
-ATF_TC(log10_inf_neg);
-ATF_TC_HEAD(log10_inf_neg, tc)
+ATF_TC_BODY(log10_inf, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test log10(-Inf) == NaN");
-}
 
-ATF_TC_BODY(log10_inf_neg, tc)
-{
-	const double x = -1.0L / 0.0L;
-	const double y = log10(x);
+	if (!isinf(INFINITY))
+		atf_tc_skip("no infinities on this architecture");
 
-	ATF_CHECK(isnan(y) != 0);
-}
-
-ATF_TC(log10_inf_pos);
-ATF_TC_HEAD(log10_inf_pos, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log10(+Inf) == +Inf");
-}
-
-ATF_TC_BODY(log10_inf_pos, tc)
-{
-	const double x = 1.0L / 0.0L;
-
-	ATF_CHECK(log10(x) == x);
-}
-
-ATF_TC(log10_one_pos);
-ATF_TC_HEAD(log10_one_pos, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log10(1.0) == +0.0");
-}
-
-ATF_TC_BODY(log10_one_pos, tc)
-{
-	const double x = log10(1.0);
-	const double y = 0.0L;
-
-	ATF_CHECK(x == y);
-	ATF_CHECK(signbit(x) == 0);
-	ATF_CHECK(signbit(y) == 0);
-}
-
-ATF_TC(log10_zero_neg);
-ATF_TC_HEAD(log10_zero_neg, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log10(-0.0) == -HUGE_VAL");
-}
-
-ATF_TC_BODY(log10_zero_neg, tc)
-{
-	const double x = -0.0L;
-
-	ATF_CHECK(log10(x) == -HUGE_VAL);
-}
-
-ATF_TC(log10_zero_pos);
-ATF_TC_HEAD(log10_zero_pos, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log10(+0.0) == -HUGE_VAL");
-}
-
-ATF_TC_BODY(log10_zero_pos, tc)
-{
-	const double x = 0.0L;
-
-	ATF_CHECK(log10(x) == -HUGE_VAL);
-}
-
-/*
- * log10f(3)
- */
-ATF_TC(log10f_base);
-ATF_TC_HEAD(log10f_base, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log10f(10) == 1");
-}
-
-ATF_TC_BODY(log10f_base, tc)
-{
-	ATF_CHECK(log10f(10.0) == 1.0);
-}
-
-ATF_TC(log10f_nan);
-ATF_TC_HEAD(log10f_nan, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log10f(NaN) == NaN");
-}
-
-ATF_TC_BODY(log10f_nan, tc)
-{
-	const float x = 0.0L / 0.0L;
-
-	ATF_CHECK(isnan(x) != 0);
-	ATF_CHECK(isnan(log10f(x)) != 0);
-}
-
-ATF_TC(log10f_inf_neg);
-ATF_TC_HEAD(log10f_inf_neg, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log10f(-Inf) == NaN");
-}
-
-ATF_TC_BODY(log10f_inf_neg, tc)
-{
-	const float x = -1.0L / 0.0L;
-	const float y = log10f(x);
-
-	ATF_CHECK(isnan(y) != 0);
-}
-
-ATF_TC(log10f_inf_pos);
-ATF_TC_HEAD(log10f_inf_pos, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log10f(+Inf) == +Inf");
-}
-
-ATF_TC_BODY(log10f_inf_pos, tc)
-{
-	const float x = 1.0L / 0.0L;
-
-	ATF_CHECK(log10f(x) == x);
-}
-
-ATF_TC(log10f_one_pos);
-ATF_TC_HEAD(log10f_one_pos, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log10f(1.0) == +0.0");
-}
-
-ATF_TC_BODY(log10f_one_pos, tc)
-{
-	const float x = log10f(1.0);
-	const float y = 0.0L;
-
-	ATF_CHECK(x == y);
-	ATF_CHECK(signbit(x) == 0);
-	ATF_CHECK(signbit(y) == 0);
-}
-
-ATF_TC(log10f_zero_neg);
-ATF_TC_HEAD(log10f_zero_neg, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log10f(-0.0) == -HUGE_VALF");
-}
-
-ATF_TC_BODY(log10f_zero_neg, tc)
-{
-	const float x = -0.0L;
-
-	ATF_CHECK(log10f(x) == -HUGE_VALF);
-}
-
-ATF_TC(log10f_zero_pos);
-ATF_TC_HEAD(log10f_zero_pos, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log10f(+0.0) == -HUGE_VALF");
-}
-
-ATF_TC_BODY(log10f_zero_pos, tc)
-{
-	const float x = 0.0L;
-
-	ATF_CHECK(log10f(x) == -HUGE_VALF);
+	CHECK_EQ(0, log10f, INFINITY, INFINITY);
+	CHECK_EQ(0, log10, INFINITY, INFINITY);
+	CHECKL_EQ(0, log10l, INFINITY, INFINITY);
 }
 
 /*
  * log1p(3)
  */
-ATF_TC(log1p_nan);
-ATF_TC_HEAD(log1p_nan, tc)
+
+ATF_TC(log1p_invalid);
+ATF_TC_HEAD(log1p_invalid, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test log1p(NaN) == NaN");
+	atf_tc_set_md_var(tc, "descr", "Test log1p/f/l on invalid inputs");
+}
+ATF_TC_BODY(log1p_invalid, tc)
+{
+	unsigned i;
+
+	for (i = 0; i < __arraycount(log1pf_invalid); i++) {
+		CHECK_NAN(i, log1pf, log1pf_invalid[i]);
+		CHECK_NAN(i, log1p, log1pf_invalid[i]);
+		CHECKL_NAN(i, log1pl, log1pf_invalid[i]);
+	}
+
+	for (i = 0; i < __arraycount(log1p_invalid); i++) {
+		CHECK_NAN(i, log1p, log1p_invalid[i]);
+		CHECKL_NAN(i, log1pl, log1p_invalid[i]);
+	}
+
+	for (i = 0; i < __arraycount(log1pl_invalid); i++) {
+		CHECKL_NAN(i, log1pl, log1pl_invalid[i]);
+	}
 }
 
-ATF_TC_BODY(log1p_nan, tc)
+ATF_TC(log1p_neg_one);
+ATF_TC_HEAD(log1p_neg_one, tc)
 {
-	const double x = 0.0L / 0.0L;
+	atf_tc_set_md_var(tc, "descr", "Test log1p/f/l on -1");
+}
+ATF_TC_BODY(log1p_neg_one, tc)
+{
 
-	ATF_CHECK(isnan(x) != 0);
-	ATF_CHECK(isnan(log1p(x)) != 0);
+	CHECK_EQ(0, log1pf, -1., -HUGE_VALF);
+	CHECK_EQ(0, log1p, -1., -HUGE_VAL);
+	CHECKL_EQ(0, log1pl, -1., -HUGE_VALL);
 }
 
-ATF_TC(log1p_inf_neg);
-ATF_TC_HEAD(log1p_inf_neg, tc)
+ATF_TC(log1p_exact);
+ATF_TC_HEAD(log1p_exact, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test log1p(-Inf) == NaN");
+	atf_tc_set_md_var(tc, "descr", "Test log1p/f/l exact cases");
+}
+ATF_TC_BODY(log1p_exact, tc)
+{
+
+	/*
+	 * Not _exact_, but the approximation is good enough.
+	 */
+#ifdef FLT_DENORM_MIN
+	CHECK_EQ(0, log1pf, -FLT_DENORM_MIN, -FLT_DENORM_MIN);
+#endif
+#ifdef DBL_DENORM_MIN
+	CHECK_EQ(0, log1p, -DBL_DENORM_MIN, -DBL_DENORM_MIN);
+#endif
+#ifdef LDBL_DENORM_MIN
+	CHECKL_EQ(0, log1pl, -LDBL_DENORM_MIN, -LDBL_DENORM_MIN);
+#endif
+
+	CHECK_EQ(1, log1pf, -FLT_MIN, -FLT_MIN);
+	CHECK_EQ(1, log1p, -DBL_MIN, -DBL_MIN);
+	CHECKL_EQ(1, log1pl, -LDBL_MIN, -LDBL_MIN);
+
+	CHECK_EQ(0, log1pf, -0., 0);
+	CHECK_EQ(0, log1p, -0., 0);
+	CHECKL_EQ(0, log1pl, -0., 0);
+
+	CHECK_EQ(1, log1pf, +0., 0);
+	CHECK_EQ(1, log1p, +0., 0);
+	CHECKL_EQ(1, log1pl, +0., 0);
+
+	CHECK_EQ(2, log1pf, 1, logf(2));
+	CHECK_EQ(2, log1p, 1, log(2));
+	CHECKL_EQ(2, log1pl, 1, logl(2));
 }
 
-ATF_TC_BODY(log1p_inf_neg, tc)
+ATF_TC(log1p_inf);
+ATF_TC_HEAD(log1p_inf, tc)
 {
-	const volatile double x = -1.0 / 0.0;
-	const double y = log1p(x);
-
-	ATF_CHECK_MSG(isnan(y), "y=%a", y);
+	atf_tc_set_md_var(tc, "descr", "Test log1p/f/l on +infinity");
 }
-
-ATF_TC(log1p_inf_pos);
-ATF_TC_HEAD(log1p_inf_pos, tc)
+ATF_TC_BODY(log1p_inf, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test log1p(+Inf) == +Inf");
-}
 
-ATF_TC_BODY(log1p_inf_pos, tc)
-{
-	const double x = 1.0L / 0.0L;
+	if (!isinf(INFINITY))
+		atf_tc_skip("no infinities on this architecture");
 
-	ATF_CHECK(log1p(x) == x);
-}
-
-ATF_TC(log1p_one_neg);
-ATF_TC_HEAD(log1p_one_neg, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log1p(-1.0) == -HUGE_VAL");
-}
-
-ATF_TC_BODY(log1p_one_neg, tc)
-{
-	const volatile double x = -1.0;
-	const double y = log1p(x);
-
-	ATF_CHECK_EQ_MSG(y, -HUGE_VAL, "y=%a", y);
-}
-
-ATF_TC(log1p_zero_neg);
-ATF_TC_HEAD(log1p_zero_neg, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log1p(-0.0) == -0.0");
-}
-
-ATF_TC_BODY(log1p_zero_neg, tc)
-{
-	const double x = -0.0L;
-
-	ATF_CHECK(log1p(x) == x);
-}
-
-ATF_TC(log1p_zero_pos);
-ATF_TC_HEAD(log1p_zero_pos, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log1p(+0.0) == +0.0");
-}
-
-ATF_TC_BODY(log1p_zero_pos, tc)
-{
-	const double x = 0.0L;
-
-	ATF_CHECK(log1p(x) == x);
-}
-
-/*
- * log1pf(3)
- */
-ATF_TC(log1pf_nan);
-ATF_TC_HEAD(log1pf_nan, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log1pf(NaN) == NaN");
-}
-
-ATF_TC_BODY(log1pf_nan, tc)
-{
-	const float x = 0.0L / 0.0L;
-
-	ATF_CHECK(isnan(x) != 0);
-	ATF_CHECK(isnan(log1pf(x)) != 0);
-}
-
-ATF_TC(log1pf_inf_neg);
-ATF_TC_HEAD(log1pf_inf_neg, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log1pf(-Inf) == NaN");
-}
-
-ATF_TC_BODY(log1pf_inf_neg, tc)
-{
-	const volatile float x = -1.0f / 0.0f;
-	const float y = log1pf(x);
-
-	ATF_CHECK_MSG(isnan(y), "y=%a", y);
-}
-
-ATF_TC(log1pf_inf_pos);
-ATF_TC_HEAD(log1pf_inf_pos, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log1pf(+Inf) == +Inf");
-}
-
-ATF_TC_BODY(log1pf_inf_pos, tc)
-{
-	const float x = 1.0L / 0.0L;
-
-	ATF_CHECK(log1pf(x) == x);
-}
-
-ATF_TC(log1pf_one_neg);
-ATF_TC_HEAD(log1pf_one_neg, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log1pf(-1.0) == -HUGE_VALF");
-}
-
-ATF_TC_BODY(log1pf_one_neg, tc)
-{
-	const volatile float x = -1.0f;
-	const float y = log1pf(x);
-
-	ATF_CHECK_EQ_MSG(y, -HUGE_VALF, "y=%a", y);
-}
-
-ATF_TC(log1pf_zero_neg);
-ATF_TC_HEAD(log1pf_zero_neg, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log1pf(-0.0) == -0.0");
-}
-
-ATF_TC_BODY(log1pf_zero_neg, tc)
-{
-	const float x = -0.0L;
-
-	ATF_CHECK(log1pf(x) == x);
-}
-
-ATF_TC(log1pf_zero_pos);
-ATF_TC_HEAD(log1pf_zero_pos, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log1pf(+0.0) == +0.0");
-}
-
-ATF_TC_BODY(log1pf_zero_pos, tc)
-{
-	const float x = 0.0L;
-
-	ATF_CHECK(log1pf(x) == x);
+	CHECK_EQ(0, log1pf, INFINITY, INFINITY);
+	CHECK_EQ(0, log1p, INFINITY, INFINITY);
+	CHECKL_EQ(0, log1pl, INFINITY, INFINITY);
 }
 
 /*
  * log2(3)
  */
-ATF_TC(log2_base);
-ATF_TC_HEAD(log2_base, tc)
+static const struct {
+	float x, y;
+} log2f_exact[] = {
+#ifdef FLT_DENORM_MIN
+	{ FLT_DENORM_MIN, FLT_MIN_EXP - FLT_MANT_DIG },
+#endif
+	{ FLT_MIN, FLT_MIN_EXP - 1 },
+	{ 0.25, -2 },
+	{ 0.5, -1 },
+	{ 1, 0 },
+	{ 2, 1 },
+	{ 4, 2 },
+	{ 8, 3 },
+	{ 1 << FLT_MANT_DIG, FLT_MANT_DIG },
+	{ (float)(1 << FLT_MANT_DIG) * (1 << FLT_MANT_DIG),
+	  2*FLT_MANT_DIG },
+};
+static const struct {
+	double x, y;
+} log2_exact[] = {
+#ifdef DBL_DENORM_MIN
+	{ DBL_DENORM_MIN, DBL_MIN_EXP - DBL_MANT_DIG },
+#endif
+	{ DBL_MIN, DBL_MIN_EXP - 1 },
+	{ (uint64_t)1 << DBL_MANT_DIG, DBL_MANT_DIG },
+	{ ((double)((uint64_t)1 << DBL_MANT_DIG) *
+		    ((uint64_t)1 << DBL_MANT_DIG)),
+	  2*DBL_MANT_DIG },
+};
+
+static const struct {
+	long double x, y;
+} log2l_exact[] = {
+#ifdef LDBL_DENORM_MIN
+	{ LDBL_DENORM_MIN, LDBL_MIN_EXP - LDBL_MANT_DIG },
+#endif
+	{ LDBL_MIN, LDBL_MIN_EXP - 1 },
+	{ ((long double)((uint64_t)1 << (LDBL_MANT_DIG/2)) *
+		    ((uint64_t)1 << ((LDBL_MANT_DIG + 1)/2))),
+	  LDBL_MANT_DIG },
+	{ (((long double)((uint64_t)1 << (LDBL_MANT_DIG/2)) *
+			((uint64_t)1 << ((LDBL_MANT_DIG + 1)/2))) *
+		    ((long double)((uint64_t)1 << (LDBL_MANT_DIG/2)) *
+			((uint64_t)1 << ((LDBL_MANT_DIG + 1)/2)))),
+	  2*LDBL_MANT_DIG },
+};
+
+ATF_TC(log2_invalid);
+ATF_TC_HEAD(log2_invalid, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test log2(2) == 1");
+	atf_tc_set_md_var(tc, "descr", "Test log2/f/l on invalid inputs");
+}
+ATF_TC_BODY(log2_invalid, tc)
+{
+	unsigned i;
+
+	for (i = 0; i < __arraycount(logf_invalid); i++) {
+		CHECK_NAN(i, log2f, logf_invalid[i]);
+		CHECK_NAN(i, log2, logf_invalid[i]);
+		CHECKL_NAN(i, log2l, logf_invalid[i]);
+	}
+
+	for (i = 0; i < __arraycount(log_invalid); i++) {
+		CHECK_NAN(i, log2, log_invalid[i]);
+		CHECKL_NAN(i, log2l, log_invalid[i]);
+	}
+
+	for (i = 0; i < __arraycount(logl_invalid); i++) {
+		CHECKL_NAN(i, log2l, logl_invalid[i]);
+	}
 }
 
-ATF_TC_BODY(log2_base, tc)
+ATF_TC(log2_zero);
+ATF_TC_HEAD(log2_zero, tc)
 {
-	ATF_CHECK(log2(2.0) == 1.0);
+	atf_tc_set_md_var(tc, "descr", "Test log2/f/l on zero");
+}
+ATF_TC_BODY(log2_zero, tc)
+{
+
+	CHECK_EQ(0, log2f, +0., -HUGE_VALF);
+	CHECK_EQ(0, log2, +0., -HUGE_VAL);
+	CHECKL_EQ(0, log2l, +0., -HUGE_VALL);
+
+	CHECK_EQ(1, log2f, -0., -HUGE_VALF);
+	CHECK_EQ(1, log2, -0., -HUGE_VAL);
+	CHECKL_EQ(1, log2l, -0., -HUGE_VALL);
 }
 
-ATF_TC(log2_nan);
-ATF_TC_HEAD(log2_nan, tc)
+ATF_TC(log2_exact);
+ATF_TC_HEAD(log2_exact, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test log2(NaN) == NaN");
+	atf_tc_set_md_var(tc, "descr", "Test log2/f/l exact cases");
+}
+ATF_TC_BODY(log2_exact, tc)
+{
+	unsigned i;
+
+	ATF_CHECK_EQ(signbit(log2f(1)), 0);
+	ATF_CHECK_EQ(signbit(log2(1)), 0);
+	ATF_CHECK_EQ(signbit(log2l(1)), 0);
+
+	for (i = 0; i < __arraycount(log2f_exact); i++) {
+		const float x = log2f_exact[i].x;
+		const float y = log2f_exact[i].y;
+
+		CHECK_EQ(i, log2f, x, y);
+		CHECK_EQ(i, log2, x, y);
+		CHECKL_EQ(i, log2l, x, y);
+	}
+
+	for (i = 0; i < __arraycount(log2_exact); i++) {
+		const double x = log2_exact[i].x;
+		const double y = log2_exact[i].y;
+
+		CHECK_EQ(i, log2, x, y);
+		CHECKL_EQ(i, log2l, x, y);
+	}
+
+	for (i = 0; i < __arraycount(log2l_exact); i++) {
+		const long double x = log2l_exact[i].x;
+		const long double y = log2l_exact[i].y;
+
+		CHECKL_EQ(i, log2l, x, y);
+	}
 }
 
-ATF_TC_BODY(log2_nan, tc)
+ATF_TC(log2_inf);
+ATF_TC_HEAD(log2_inf, tc)
 {
-	const double x = 0.0L / 0.0L;
-
-	ATF_CHECK(isnan(x) != 0);
-	ATF_CHECK(isnan(log2(x)) != 0);
+	atf_tc_set_md_var(tc, "descr", "Test log2/f/l on +infinity");
 }
-
-ATF_TC(log2_inf_neg);
-ATF_TC_HEAD(log2_inf_neg, tc)
+ATF_TC_BODY(log2_inf, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test log2(-Inf) == NaN");
-}
 
-ATF_TC_BODY(log2_inf_neg, tc)
-{
-	const double x = -1.0L / 0.0L;
-	const double y = log2(x);
+	if (!isinf(INFINITY))
+		atf_tc_skip("no infinities on this architecture");
 
-	ATF_CHECK(isnan(y) != 0);
-}
-
-ATF_TC(log2_inf_pos);
-ATF_TC_HEAD(log2_inf_pos, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log2(+Inf) == +Inf");
-}
-
-ATF_TC_BODY(log2_inf_pos, tc)
-{
-	const double x = 1.0L / 0.0L;
-
-	ATF_CHECK(log2(x) == x);
-}
-
-ATF_TC(log2_one_pos);
-ATF_TC_HEAD(log2_one_pos, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log2(1.0) == +0.0");
-}
-
-ATF_TC_BODY(log2_one_pos, tc)
-{
-	const double x = log2(1.0);
-	const double y = 0.0L;
-
-	ATF_CHECK(x == y);
-	ATF_CHECK(signbit(x) == 0);
-	ATF_CHECK(signbit(y) == 0);
-}
-
-ATF_TC(log2_zero_neg);
-ATF_TC_HEAD(log2_zero_neg, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log2(-0.0) == -HUGE_VAL");
-}
-
-ATF_TC_BODY(log2_zero_neg, tc)
-{
-	const double x = -0.0L;
-
-	ATF_CHECK(log2(x) == -HUGE_VAL);
-}
-
-ATF_TC(log2_zero_pos);
-ATF_TC_HEAD(log2_zero_pos, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log2(+0.0) == -HUGE_VAL");
-}
-
-ATF_TC_BODY(log2_zero_pos, tc)
-{
-	const double x = 0.0L;
-
-	ATF_CHECK(log2(x) == -HUGE_VAL);
-}
-
-/*
- * log2f(3)
- */
-ATF_TC(log2f_base);
-ATF_TC_HEAD(log2f_base, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log2f(2) == 1");
-}
-
-ATF_TC_BODY(log2f_base, tc)
-{
-	ATF_CHECK(log2f(2.0) == 1.0);
-}
-
-ATF_TC(log2f_nan);
-ATF_TC_HEAD(log2f_nan, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log2f(NaN) == NaN");
-}
-
-ATF_TC_BODY(log2f_nan, tc)
-{
-	const float x = 0.0L / 0.0L;
-
-	ATF_CHECK(isnan(x) != 0);
-	ATF_CHECK(isnan(log2f(x)) != 0);
-}
-
-ATF_TC(log2f_inf_neg);
-ATF_TC_HEAD(log2f_inf_neg, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log2f(-Inf) == NaN");
-}
-
-ATF_TC_BODY(log2f_inf_neg, tc)
-{
-	const float x = -1.0L / 0.0L;
-	const float y = log2f(x);
-
-	ATF_CHECK(isnan(y) != 0);
-}
-
-ATF_TC(log2f_inf_pos);
-ATF_TC_HEAD(log2f_inf_pos, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log2f(+Inf) == +Inf");
-}
-
-ATF_TC_BODY(log2f_inf_pos, tc)
-{
-	const float x = 1.0L / 0.0L;
-
-	ATF_CHECK(log2f(x) == x);
-}
-
-ATF_TC(log2f_one_pos);
-ATF_TC_HEAD(log2f_one_pos, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log2f(1.0) == +0.0");
-}
-
-ATF_TC_BODY(log2f_one_pos, tc)
-{
-	const float x = log2f(1.0);
-	const float y = 0.0L;
-
-	ATF_CHECK(x == y);
-	ATF_CHECK(signbit(x) == 0);
-	ATF_CHECK(signbit(y) == 0);
-}
-
-ATF_TC(log2f_zero_neg);
-ATF_TC_HEAD(log2f_zero_neg, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log2f(-0.0) == -HUGE_VALF");
-}
-
-ATF_TC_BODY(log2f_zero_neg, tc)
-{
-	const float x = -0.0L;
-
-	ATF_CHECK(log2f(x) == -HUGE_VALF);
-}
-
-ATF_TC(log2f_zero_pos);
-ATF_TC_HEAD(log2f_zero_pos, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log2f(+0.0) == -HUGE_VALF");
-}
-
-ATF_TC_BODY(log2f_zero_pos, tc)
-{
-	const float x = 0.0L;
-
-	ATF_CHECK(log2f(x) == -HUGE_VALF);
+	CHECK_EQ(0, log2f, INFINITY, INFINITY);
+	CHECK_EQ(0, log2, INFINITY, INFINITY);
+	CHECKL_EQ(0, log2l, INFINITY, INFINITY);
 }
 
 /*
  * log(3)
  */
-ATF_TC(log_base);
-ATF_TC_HEAD(log_base, tc)
+
+ATF_TC(log_invalid);
+ATF_TC_HEAD(log_invalid, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test log(e) == 1");
+	atf_tc_set_md_var(tc, "descr", "Test log/f/l on invalid inputs");
+}
+ATF_TC_BODY(log_invalid, tc)
+{
+	unsigned i;
+
+	for (i = 0; i < __arraycount(logf_invalid); i++) {
+		CHECK_NAN(i, logf, logf_invalid[i]);
+		CHECK_NAN(i, log, logf_invalid[i]);
+		CHECKL_NAN(i, logl, logf_invalid[i]);
+	}
+
+	for (i = 0; i < __arraycount(log_invalid); i++) {
+		CHECK_NAN(i, log, log_invalid[i]);
+		CHECKL_NAN(i, logl, log_invalid[i]);
+	}
+
+	for (i = 0; i < __arraycount(logl_invalid); i++) {
+		CHECKL_NAN(i, logl, logl_invalid[i]);
+	}
 }
 
-ATF_TC_BODY(log_base, tc)
+ATF_TC(log_zero);
+ATF_TC_HEAD(log_zero, tc)
 {
-	const double eps = DBL_EPSILON;
+	atf_tc_set_md_var(tc, "descr", "Test log/f/l on zero");
+}
+ATF_TC_BODY(log_zero, tc)
+{
 
-	if (!(fabs(log(M_E) - 1.0) <= eps))
-		atf_tc_fail_nonfatal("log(e) = %.17g != 1", log(M_E));
+	CHECK_EQ(0, logf, +0., -HUGE_VALF);
+	CHECK_EQ(0, log, +0., -HUGE_VAL);
+	CHECKL_EQ(0, logl, +0., -HUGE_VALL);
+
+	CHECK_EQ(1, logf, -0., -HUGE_VALF);
+	CHECK_EQ(1, log, -0., -HUGE_VAL);
+	CHECKL_EQ(1, logl, -0., -HUGE_VALL);
 }
 
-ATF_TC(log_nan);
-ATF_TC_HEAD(log_nan, tc)
+ATF_TC(log_normal);
+ATF_TC_HEAD(log_normal, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test log(NaN) == NaN");
+	atf_tc_set_md_var(tc, "descr", "Test log/f/l normal cases");
+}
+ATF_TC_BODY(log_normal, tc)
+{
+	volatile long double e = M_E;
+
+	CHECK_EQ(0, logf, 1, 0);
+	CHECK_EQ(0, log, 1, 0);
+	CHECKL_EQ(0, logl, 1, 0);
+
+	ATF_CHECK_EQ(signbit(logf(1)), 0);
+	ATF_CHECK_EQ(signbit(log(1)), 0);
+	ATF_CHECK_EQ(signbit(logl(1)), 0);
+
+	ATF_CHECK_MSG(fabsf((logf(e) - 1)/1) < FLT_EPSILON,
+	    "logf(e)=%a=%.8g", logf(e), logf(e));
+	ATF_CHECK_MSG(fabs((log(e) - 1)/1) < DBL_EPSILON,
+	    "log(e)=%a=%.17g", log(e), log(e));
+	ATF_CHECK_MSG(fabsl((logl(e) - 1)/1) < LDBL_EPSILON,
+	    "logl(e)=%La=%.34Lg", logl(e), logl(e));
 }
 
-ATF_TC_BODY(log_nan, tc)
+ATF_TC(log_inf);
+ATF_TC_HEAD(log_inf, tc)
 {
-	const double x = 0.0L / 0.0L;
-
-	ATF_CHECK(isnan(x) != 0);
-	ATF_CHECK(isnan(log(x)) != 0);
+	atf_tc_set_md_var(tc, "descr", "Test log/f/l on +infinity");
 }
-
-ATF_TC(log_inf_neg);
-ATF_TC_HEAD(log_inf_neg, tc)
+ATF_TC_BODY(log_inf, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test log(-Inf) == NaN");
-}
 
-ATF_TC_BODY(log_inf_neg, tc)
-{
-	const double x = -1.0L / 0.0L;
-	const double y = log(x);
+	if (!isinf(INFINITY))
+		atf_tc_skip("no infinities on this architecture");
 
-	ATF_CHECK(isnan(y) != 0);
-}
-
-ATF_TC(log_inf_pos);
-ATF_TC_HEAD(log_inf_pos, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log(+Inf) == +Inf");
-}
-
-ATF_TC_BODY(log_inf_pos, tc)
-{
-	const double x = 1.0L / 0.0L;
-
-	ATF_CHECK(log(x) == x);
-}
-
-ATF_TC(log_one_pos);
-ATF_TC_HEAD(log_one_pos, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log(1.0) == +0.0");
-}
-
-ATF_TC_BODY(log_one_pos, tc)
-{
-	const double x = log(1.0);
-	const double y = 0.0L;
-
-	ATF_CHECK(x == y);
-	ATF_CHECK(signbit(x) == 0);
-	ATF_CHECK(signbit(y) == 0);
-}
-
-ATF_TC(log_zero_neg);
-ATF_TC_HEAD(log_zero_neg, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log(-0.0) == -HUGE_VAL");
-}
-
-ATF_TC_BODY(log_zero_neg, tc)
-{
-	const double x = -0.0L;
-
-	ATF_CHECK(log(x) == -HUGE_VAL);
-}
-
-ATF_TC(log_zero_pos);
-ATF_TC_HEAD(log_zero_pos, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test log(+0.0) == -HUGE_VAL");
-}
-
-ATF_TC_BODY(log_zero_pos, tc)
-{
-	const double x = 0.0L;
-
-	ATF_CHECK(log(x) == -HUGE_VAL);
-}
-
-/*
- * logf(3)
- */
-ATF_TC(logf_base);
-ATF_TC_HEAD(logf_base, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test logf(e) == 1");
-}
-
-ATF_TC_BODY(logf_base, tc)
-{
-	const float eps = FLT_EPSILON;
-
-	if (!(fabsf(logf(M_E) - 1.0f) <= eps))
-		atf_tc_fail_nonfatal("logf(e) = %.17g != 1",
-		    (double)logf(M_E));
-}
-
-ATF_TC(logf_nan);
-ATF_TC_HEAD(logf_nan, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test logf(NaN) == NaN");
-}
-
-ATF_TC_BODY(logf_nan, tc)
-{
-	const float x = 0.0L / 0.0L;
-
-	ATF_CHECK(isnan(x) != 0);
-	ATF_CHECK(isnan(logf(x)) != 0);
-}
-
-ATF_TC(logf_inf_neg);
-ATF_TC_HEAD(logf_inf_neg, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test logf(-Inf) == NaN");
-}
-
-ATF_TC_BODY(logf_inf_neg, tc)
-{
-	const float x = -1.0L / 0.0L;
-	const float y = logf(x);
-
-	ATF_CHECK(isnan(y) != 0);
-}
-
-ATF_TC(logf_inf_pos);
-ATF_TC_HEAD(logf_inf_pos, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test logf(+Inf) == +Inf");
-}
-
-ATF_TC_BODY(logf_inf_pos, tc)
-{
-	const float x = 1.0L / 0.0L;
-
-	ATF_CHECK(logf(x) == x);
-}
-
-ATF_TC(logf_one_pos);
-ATF_TC_HEAD(logf_one_pos, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test logf(1.0) == +0.0");
-}
-
-ATF_TC_BODY(logf_one_pos, tc)
-{
-	const float x = logf(1.0);
-	const float y = 0.0L;
-
-	ATF_CHECK(x == y);
-	ATF_CHECK(signbit(x) == 0);
-	ATF_CHECK(signbit(y) == 0);
-}
-
-ATF_TC(logf_zero_neg);
-ATF_TC_HEAD(logf_zero_neg, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test logf(-0.0) == -HUGE_VALF");
-}
-
-ATF_TC_BODY(logf_zero_neg, tc)
-{
-	const float x = -0.0L;
-
-	ATF_CHECK(logf(x) == -HUGE_VALF);
-}
-
-ATF_TC(logf_zero_pos);
-ATF_TC_HEAD(logf_zero_pos, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test logf(+0.0) == -HUGE_VALF");
-}
-
-ATF_TC_BODY(logf_zero_pos, tc)
-{
-	const float x = 0.0L;
-
-	ATF_CHECK(logf(x) == -HUGE_VALF);
+	CHECK_EQ(0, logf, INFINITY, INFINITY);
+	CHECK_EQ(0, log, INFINITY, INFINITY);
+	CHECKL_EQ(0, logl, INFINITY, INFINITY);
 }
 
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, log10_base);
-	ATF_TP_ADD_TC(tp, log10_nan);
-	ATF_TP_ADD_TC(tp, log10_inf_neg);
-	ATF_TP_ADD_TC(tp, log10_inf_pos);
-	ATF_TP_ADD_TC(tp, log10_one_pos);
-	ATF_TP_ADD_TC(tp, log10_zero_neg);
-	ATF_TP_ADD_TC(tp, log10_zero_pos);
+	ATF_TP_ADD_TC(tp, log10_invalid);
+	ATF_TP_ADD_TC(tp, log10_zero);
+	ATF_TP_ADD_TC(tp, log10_exact);
+	ATF_TP_ADD_TC(tp, log10_inf);
 
-	ATF_TP_ADD_TC(tp, log10f_base);
-	ATF_TP_ADD_TC(tp, log10f_nan);
-	ATF_TP_ADD_TC(tp, log10f_inf_neg);
-	ATF_TP_ADD_TC(tp, log10f_inf_pos);
-	ATF_TP_ADD_TC(tp, log10f_one_pos);
-	ATF_TP_ADD_TC(tp, log10f_zero_neg);
-	ATF_TP_ADD_TC(tp, log10f_zero_pos);
+	ATF_TP_ADD_TC(tp, log1p_invalid);
+	ATF_TP_ADD_TC(tp, log1p_neg_one);
+	ATF_TP_ADD_TC(tp, log1p_exact);
+	ATF_TP_ADD_TC(tp, log1p_inf);
 
-	ATF_TP_ADD_TC(tp, log1p_nan);
-	ATF_TP_ADD_TC(tp, log1p_inf_neg);
-	ATF_TP_ADD_TC(tp, log1p_inf_pos);
-	ATF_TP_ADD_TC(tp, log1p_one_neg);
-	ATF_TP_ADD_TC(tp, log1p_zero_neg);
-	ATF_TP_ADD_TC(tp, log1p_zero_pos);
+	ATF_TP_ADD_TC(tp, log2_invalid);
+	ATF_TP_ADD_TC(tp, log2_zero);
+	ATF_TP_ADD_TC(tp, log2_exact);
+	ATF_TP_ADD_TC(tp, log2_inf);
 
-	ATF_TP_ADD_TC(tp, log1pf_nan);
-	ATF_TP_ADD_TC(tp, log1pf_inf_neg);
-	ATF_TP_ADD_TC(tp, log1pf_inf_pos);
-	ATF_TP_ADD_TC(tp, log1pf_one_neg);
-	ATF_TP_ADD_TC(tp, log1pf_zero_neg);
-	ATF_TP_ADD_TC(tp, log1pf_zero_pos);
-
-	ATF_TP_ADD_TC(tp, log2_base);
-	ATF_TP_ADD_TC(tp, log2_nan);
-	ATF_TP_ADD_TC(tp, log2_inf_neg);
-	ATF_TP_ADD_TC(tp, log2_inf_pos);
-	ATF_TP_ADD_TC(tp, log2_one_pos);
-	ATF_TP_ADD_TC(tp, log2_zero_neg);
-	ATF_TP_ADD_TC(tp, log2_zero_pos);
-
-	ATF_TP_ADD_TC(tp, log2f_base);
-	ATF_TP_ADD_TC(tp, log2f_nan);
-	ATF_TP_ADD_TC(tp, log2f_inf_neg);
-	ATF_TP_ADD_TC(tp, log2f_inf_pos);
-	ATF_TP_ADD_TC(tp, log2f_one_pos);
-	ATF_TP_ADD_TC(tp, log2f_zero_neg);
-	ATF_TP_ADD_TC(tp, log2f_zero_pos);
-
-	ATF_TP_ADD_TC(tp, log_base);
-	ATF_TP_ADD_TC(tp, log_nan);
-	ATF_TP_ADD_TC(tp, log_inf_neg);
-	ATF_TP_ADD_TC(tp, log_inf_pos);
-	ATF_TP_ADD_TC(tp, log_one_pos);
-	ATF_TP_ADD_TC(tp, log_zero_neg);
-	ATF_TP_ADD_TC(tp, log_zero_pos);
-
-	ATF_TP_ADD_TC(tp, logf_base);
-	ATF_TP_ADD_TC(tp, logf_nan);
-	ATF_TP_ADD_TC(tp, logf_inf_neg);
-	ATF_TP_ADD_TC(tp, logf_inf_pos);
-	ATF_TP_ADD_TC(tp, logf_one_pos);
-	ATF_TP_ADD_TC(tp, logf_zero_neg);
-	ATF_TP_ADD_TC(tp, logf_zero_pos);
+	ATF_TP_ADD_TC(tp, log_invalid);
+	ATF_TP_ADD_TC(tp, log_zero);
+	ATF_TP_ADD_TC(tp, log_normal);
+	ATF_TP_ADD_TC(tp, log_inf);
 
 	return atf_no_error();
 }
