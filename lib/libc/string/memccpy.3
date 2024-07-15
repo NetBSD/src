@@ -26,9 +26,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)memccpy.3	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: memccpy.3,v 1.10 2006/10/16 08:48:45 wiz Exp $
+.\"	$NetBSD: memccpy.3,v 1.11 2024/07/15 19:25:30 wiz Exp $
 .\"
-.Dd June 9, 1993
+.Dd July 15, 2024
 .Dt MEMCCPY 3
 .Os
 .Sh NAME
@@ -65,8 +65,14 @@ bytes are copied, and a null pointer is returned.
 .Xr memcpy 3 ,
 .Xr memmove 3 ,
 .Xr strcpy 3
+.Sh STANDARDS
+.Nm
+conforms to
+.St -p1003.1
+and
+.St -svid4 .
 .Sh HISTORY
 The
 .Fn memccpy
 function first appeared in
-.Bx 4.4 .
+.Bx 4.3 Tahoe .
