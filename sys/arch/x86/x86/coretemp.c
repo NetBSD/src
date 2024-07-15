@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.41 2024/03/12 02:26:16 gutteridge Exp $ */
+/* $NetBSD: coretemp.c,v 1.42 2024/07/15 01:57:23 gutteridge Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.41 2024/03/12 02:26:16 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.42 2024/07/15 01:57:23 gutteridge Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -279,14 +279,14 @@ coretemp_tjmax(device_t self)
 		 * Check MSR_IA32_PLATFORM_ID(0x17) bit 28. It's not documented
 		 * in the datasheet, but the following page describes the
 		 * detail:
-		 *   http://software.intel.com/en-us/articles/
-		 *     mobile-intel-core2-processor-detection-table/
+		 *   https://web.archive.org/web/20110608131711/http://software.intel.com/
+		 *     en-us/articles/mobile-intel-core2-processor-detection-table/
 		 *   Was: http://softwarecommunity.intel.com/Wiki/Mobility/
 		 *     720.htm
 		 */
 		if (rdmsr_safe(MSR_IA32_PLATFORM_ID, &msr) != 0)
 			goto notee;
-		if ((model < 0x17) && ((msr & __BIT(28)) == 0))
+		if ((msr & __BIT(28)) == 0)
 			goto notee;
 
 		if (rdmsr_safe(MSR_IA32_EXT_CONFIG, &msr) == EFAULT) {
