@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.1 2024/07/12 08:43:08 macallan Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.2 2024/07/15 10:26:09 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.1 2024/07/12 08:43:08 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.2 2024/07/15 10:26:09 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -133,6 +133,52 @@ static int 	hyperfb_putpalreg(struct hyperfb_softc *, uint8_t, uint8_t,
 void 	hyperfb_setup(struct hyperfb_softc *);
 static void	hyperfb_set_video(struct hyperfb_softc *, int);
 
+static void	hyperfb_rectfill(struct hyperfb_softc *, int, int, int, int,
+			    uint32_t);
+static void	hyperfb_bitblt(void *, int, int, int, int, int,
+			    int, int);
+
+static void	hyperfb_cursor(void *, int, int, int);
+static void	hyperfb_putchar(void *, int, int, u_int, long);
+static void	hyperfb_copycols(void *, int, int, int, int);
+static void	hyperfb_erasecols(void *, int, int, int, long);
+static void	hyperfb_copyrows(void *, int, int, int);
+static void	hyperfb_eraserows(void *, int, int, long);
+
+#if 0
+static void	hyperfb_move_cursor(struct hyperfb_softc *, int, int);
+static int	hyperfb_do_cursor(struct hyperfb_softc *, struct wsdisplay_cursor *);
+#endif
+
+#define BA(F,C,S,A,J,B,I)						\
+	(((F)<<31)|((C)<<27)|((S)<<24)|((A)<<21)|((J)<<16)|((B)<<12)|(I))
+	/* FCCCCSSSAAAJJJJJBBBBIIIIIIIIIIII */
+
+#define IBOvals(R,M,X,S,D,L,B,F)					\
+	(((R)<<8)|((M)<<16)|((X)<<24)|((S)<<29)|((D)<<28)|((L)<<31)|((B)<<1)|(F))
+	/* LSSDXXXXMMMMMMMMRRRRRRRRBBBBBBBF */
+
+#define	    IndexedDcd	0	/* Pixel data is indexed (pseudo) color */
+#define	    Otc04	2	/* Pixels in each longword transfer (4) */
+#define	    Otc32	5	/* Pixels in each longword transfer (32) */
+#define	    Ots08	3	/* Each pixel is size (8)d transfer (1) */
+#define	    OtsIndirect	6	/* Each bit goes through FG/BG color(8) */
+#define	    AddrLong	5	/* FB address is Long aligned (pixel) */
+#define	    BINovly	0x2	/* 8 bit overlay */
+#define	    BINapp0I	0x0	/* Application Buffer 0, Indexed */
+#define	    BINapp1I	0x1	/* Application Buffer 1, Indexed */
+#define	    BINapp0F8	0xa	/* Application Buffer 0, Fractional 8-8-8 */
+#define	    BINattr	0xd	/* Attribute Bitmap */
+#define	    RopSrc 	0x3
+#define	    RopInv 	0xc
+#define	    BitmapExtent08  3	/* Each write hits ( 8) bits in depth */
+#define	    BitmapExtent32  5	/* Each write hits (32) bits in depth */
+#define	    DataDynamic	    0	/* Data register reloaded by direct access */
+#define	    MaskDynamic	    1	/* Mask register reloaded by direct access */
+#define	    MaskOtc	    0	/* Mask contains Object Count valid bits */
+
+static inline void hyperfb_wait_fifo(struct hyperfb_softc *, uint32_t);
+
 #define	ngle_bt458_write(sc, r, v) \
 	hyperfb_write4(sc, NGLE_REG_RAMDAC + ((r) << 2), (v) << 24)
 
@@ -181,6 +227,16 @@ hyperfb_wait(struct hyperfb_softc *sc)
 		if (stat == 0)
 			stat = hyperfb_read1(sc, NGLE_REG_15b0);
 	} while (stat != 0);
+}
+
+static inline void
+hyperfb_wait_fifo(struct hyperfb_softc *sc, uint32_t slots)
+{
+	uint32_t reg;
+
+	do {
+		reg = hyperfb_read4(sc, NGLE_REG_34);
+	} while (reg < slots);
 }
 
 void
@@ -395,10 +451,10 @@ hyperfb_attach(device_t parent, device_t self, void *aux)
 #endif
 		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
 		    defattr);
-#if 0
+
 		hyperfb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
 		    ri->ri_devcmap[(defattr >> 16) & 0xff]);
-#endif
+
 		vcons_replay_msgbuf(&sc->sc_console_screen);
 	} else {
 		/*
@@ -456,21 +512,20 @@ hyperfb_init_screen(void *cookie, struct vcons_screen *scr,
 	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
 		      WSSCREEN_RESIZE;
-	scr->scr_flags |= VCONS_LOADFONT | VCONS_DONT_READ;
+	scr->scr_flags |= VCONS_LOADFONT;
 
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);
 
 	ri->ri_hw = scr;
-#if 0
+
 	sc->sc_putchar = ri->ri_ops.putchar;
-	ri->ri_ops.copyrows = gftfb_copyrows;
-	ri->ri_ops.copycols = gftfb_copycols;
-	ri->ri_ops.eraserows = gftfb_eraserows;
-	ri->ri_ops.erasecols = gftfb_erasecols;
-	ri->ri_ops.cursor = gftfb_cursor;
-	ri->ri_ops.putchar = gftfb_putchar;
-#endif
+	ri->ri_ops.copyrows = hyperfb_copyrows;
+	ri->ri_ops.copycols = hyperfb_copycols;
+	ri->ri_ops.eraserows = hyperfb_eraserows;
+	ri->ri_ops.erasecols = hyperfb_erasecols;
+	ri->ri_ops.cursor = hyperfb_cursor;
+	ri->ri_ops.putchar = hyperfb_putchar;
 }
 
 static int
@@ -517,10 +572,10 @@ hyperfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				hyperfb_restore_palette(sc);
 #if 0
 				glyphcache_wipe(&sc->sc_gc);
+#endif
 				hyperfb_rectfill(sc, 0, 0, sc->sc_width,
 				    sc->sc_height, ms->scr_ri.ri_devcmap[
 				    (ms->scr_defattr >> 16) & 0xff]);
-#endif
 				vcons_redraw_screen(ms);
 				hyperfb_set_video(sc, 1);
 			}
@@ -552,7 +607,7 @@ hyperfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		{
 			struct wsdisplay_curpos *cp = (void *)data;
 
-			gftfb_move_cursor(sc, cp->x, cp->y);
+			hyperfb_move_cursor(sc, cp->x, cp->y);
 		}
 		return 0;
 
@@ -569,7 +624,7 @@ hyperfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		{
 			struct wsdisplay_cursor *cursor = (void *)data;
 
-			return gftfb_do_cursor(sc, cursor);
+			return hyperfb_do_cursor(sc, cursor);
 		}
 #endif
 
@@ -719,10 +774,8 @@ hyperfb_setup(struct hyperfb_softc *sc)
 	sc->sc_enabled = 0;
 	sc->sc_video_on = 1;
 
-#if 0
 	sc->sc_rect_colour = 0xf0000000;
 	sc->sc_rect_height = 0;
-#endif
 
 	/* set Bt458 read mask register to all planes */
 	/* XXX I'm not sure HCRX even has one of these */
@@ -818,7 +871,7 @@ hyperfb_setup(struct hyperfb_softc *sc)
 
 	//hyperfb_write4(sc, NGLE_REG_29, 0x80200020);
 
-	//gftfb_move_cursor(sc, 100, 100);
+	//hyperfb_move_cursor(sc, 100, 100);
 
 }
 
@@ -839,5 +892,262 @@ hyperfb_set_video(struct hyperfb_softc *sc, int on)
 		hyperfb_write4(sc, NGLE_REG_33, reg | 0x0a000000);
 	} else {
 		hyperfb_write4(sc, NGLE_REG_33, reg & ~0x0a000000);
+	}
+}
+
+static void
+hyperfb_rectfill(struct hyperfb_softc *sc, int x, int y, int wi, int he,
+		      uint32_t bg)
+{
+	/*
+	 * XXX
+	 * HCRX has the same problem as VisEG drawing rectangles less than 32
+	 * pixels wide, but here we don't seem to have any usable offscreen 
+	 * memory, at least not as long as we're using the overlay planes.
+	 * As a workaround, fall back to memset()-based fills for rectangles
+	 * less than 32 pixels wide
+	 */
+	if (wi < 32) {
+		int i;
+		uint8_t *ptr = (uint8_t *)sc->sc_fb + (y << 11) + x;
+
+		if (sc->sc_hwmode != HW_FB)
+			hyperfb_setup_fb(sc);
+
+		for (i = 0; i < he; i++) {
+			memset(ptr, bg, wi);
+			ptr += 2048;
+		}
+		return;
+	}
+	if (sc->sc_hwmode != HW_FILL) {
+		hyperfb_wait_fifo(sc, 4);
+		/* transfer data */
+		hyperfb_write4(sc, NGLE_REG_8, 0xffffffff);
+		/* plane mask */
+		hyperfb_write4(sc, NGLE_REG_13, 0xff);
+		/* bitmap op */
+		hyperfb_write4(sc, NGLE_REG_14, 
+		    IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc, 0, 0));
+		/* dst bitmap access */
+		hyperfb_write4(sc, NGLE_REG_11,
+		    BA(IndexedDcd, Otc32, OtsIndirect, AddrLong, 0, BINovly, 0));
+		sc->sc_hwmode = HW_FILL;
+	}
+	hyperfb_wait_fifo(sc, 3);
+	hyperfb_write4(sc, NGLE_REG_35, bg);
+	/* dst XY */
+	hyperfb_write4(sc, NGLE_REG_6, (x << 16) | y);
+	/* len XY start */
+	hyperfb_write4(sc, NGLE_REG_9, (wi << 16) | he);
+}
+
+static void
+hyperfb_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
+			    int he, int rop)
+{
+	struct hyperfb_softc *sc = cookie;
+
+	if (sc->sc_hwmode != HW_BLIT) {
+		hyperfb_wait(sc);
+		hyperfb_write4(sc, NGLE_REG_10, 0x13a02000);
+		hyperfb_write4(sc, NGLE_REG_13, 0xff);
+		sc->sc_hwmode = HW_BLIT;
+	}
+	hyperfb_wait_fifo(sc, 4);
+	hyperfb_write4(sc, NGLE_REG_14, ((rop << 8) & 0xf00) | 0x23000000);
+	/* IBOvals(rop, 0, BitmapExtent08, 1, DataDynamic, MaskOtc, 0, 0) */
+	hyperfb_write4(sc, NGLE_REG_24, (xs << 16) | ys);
+	hyperfb_write4(sc, NGLE_REG_7, (wi << 16) | he);
+	hyperfb_write4(sc, NGLE_REG_25, (xd << 16) | yd);
+}
+
+static void
+hyperfb_nuke_cursor(struct rasops_info *ri)
+{
+	struct vcons_screen *scr = ri->ri_hw;
+	struct hyperfb_softc *sc = scr->scr_cookie;
+	int wi, he, x, y;
+		
+	if (ri->ri_flg & RI_CURSOR) {
+		wi = ri->ri_font->fontwidth;
+		he = ri->ri_font->fontheight;
+		x = ri->ri_ccol * wi + ri->ri_xorigin;
+		y = ri->ri_crow * he + ri->ri_yorigin;
+		hyperfb_bitblt(sc, x, y, x, y, wi, he, RopInv);
+		ri->ri_flg &= ~RI_CURSOR;
+	}
+}
+
+static void
+hyperfb_cursor(void *cookie, int on, int row, int col)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct hyperfb_softc *sc = scr->scr_cookie;
+	int x, y, wi, he;
+	
+	wi = ri->ri_font->fontwidth;
+	he = ri->ri_font->fontheight;
+	
+	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+		if (on) {
+			if (ri->ri_flg & RI_CURSOR) {
+				hyperfb_nuke_cursor(ri);
+			}
+			x = col * wi + ri->ri_xorigin;
+			y = row * he + ri->ri_yorigin;
+			hyperfb_bitblt(sc, x, y, x, y, wi, he, RopInv);
+			ri->ri_flg |= RI_CURSOR;
+		}
+		ri->ri_crow = row;
+		ri->ri_ccol = col;
+	} else
+	{
+		ri->ri_crow = row;
+		ri->ri_ccol = col;
+		ri->ri_flg &= ~RI_CURSOR;
+	}
+
+}
+
+static void
+hyperfb_putchar(void *cookie, int row, int col, u_int c, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, c);
+	struct vcons_screen *scr = ri->ri_hw;
+	struct hyperfb_softc *sc = scr->scr_cookie;
+	int x, y, wi, he/*, rv = GC_NOPE*/;
+	uint32_t bg;
+
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
+		return;
+
+	if (!CHAR_IN_FONT(c, font))
+		return;
+
+	if (row == ri->ri_crow && col == ri->ri_ccol) {
+		ri->ri_flg &= ~RI_CURSOR;
+	}
+
+	wi = font->fontwidth;
+	he = font->fontheight;
+
+	x = ri->ri_xorigin + col * wi;
+	y = ri->ri_yorigin + row * he;
+
+	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+
+	if (c == 0x20) {
+		hyperfb_rectfill(sc, x, y, wi, he, bg);
+		return;
+	}
+
+#if 0
+	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
+	if (rv == GC_OK)
+		return;
+#endif
+	if (sc->sc_hwmode != HW_FB) hyperfb_setup_fb(sc);
+	sc->sc_putchar(cookie, row, col, c, attr);
+#if 0
+	if (rv == GC_ADD)
+		glyphcache_add(&sc->sc_gc, c, x, y);
+#endif
+}
+
+static void
+hyperfb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct hyperfb_softc *sc = scr->scr_cookie;
+	int32_t xs, xd, y, width, height;
+	
+	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+		if (ri->ri_crow == row && 
+		   (ri->ri_ccol >= srccol && ri->ri_ccol < (srccol + ncols)) &&
+		   (ri->ri_flg & RI_CURSOR)) {
+			hyperfb_nuke_cursor(ri);
+		}
+
+		xs = ri->ri_xorigin + ri->ri_font->fontwidth * srccol;
+		xd = ri->ri_xorigin + ri->ri_font->fontwidth * dstcol;
+		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+		width = ri->ri_font->fontwidth * ncols;
+		height = ri->ri_font->fontheight;
+		hyperfb_bitblt(sc, xs, y, xd, y, width, height, RopSrc);
+		if (ri->ri_crow == row && 
+		   (ri->ri_ccol >= dstcol && ri->ri_ccol < (dstcol + ncols)))
+			ri->ri_flg &= ~RI_CURSOR;
+	}
+}
+
+static void
+hyperfb_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct hyperfb_softc *sc = scr->scr_cookie;
+	int32_t x, y, width, height, fg, bg, ul;
+	
+	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+		x = ri->ri_xorigin + ri->ri_font->fontwidth * startcol;
+		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+		width = ri->ri_font->fontwidth * ncols;
+		height = ri->ri_font->fontheight;
+		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
+
+		hyperfb_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
+		if (ri->ri_crow == row && 
+		   (ri->ri_ccol >= startcol && ri->ri_ccol < (startcol + ncols)))
+			ri->ri_flg &= ~RI_CURSOR;
+	}
+}
+
+static void
+hyperfb_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct hyperfb_softc *sc = scr->scr_cookie;
+	int32_t x, ys, yd, width, height;
+
+	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+		if ((ri->ri_crow >= srcrow && ri->ri_crow < (srcrow + nrows)) &&
+		   (ri->ri_flg & RI_CURSOR)) {
+			hyperfb_nuke_cursor(ri);
+		}
+		x = ri->ri_xorigin;
+		ys = ri->ri_yorigin + ri->ri_font->fontheight * srcrow;
+		yd = ri->ri_yorigin + ri->ri_font->fontheight * dstrow;
+		width = ri->ri_emuwidth;
+		height = ri->ri_font->fontheight * nrows;
+		hyperfb_bitblt(sc, x, ys, x, yd, width, height, RopSrc);
+		if (ri->ri_crow >= dstrow && ri->ri_crow < (dstrow + nrows))
+			ri->ri_flg &= ~RI_CURSOR;
+	}
+}
+
+static void
+hyperfb_eraserows(void *cookie, int row, int nrows, long fillattr)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct hyperfb_softc *sc = scr->scr_cookie;
+	int32_t x, y, width, height, fg, bg, ul;
+	
+	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+		x = ri->ri_xorigin;
+		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+		width = ri->ri_emuwidth;
+		height = ri->ri_font->fontheight * nrows;
+		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
+
+		hyperfb_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
+
+		if (ri->ri_crow >= row && ri->ri_crow < (row + nrows))
+			ri->ri_flg &= ~RI_CURSOR;
 	}
 }
