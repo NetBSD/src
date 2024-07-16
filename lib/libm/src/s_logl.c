@@ -1,4 +1,4 @@
-/*	$NetBSD: s_logl.c,v 1.4 2024/02/24 15:16:53 christos Exp $	*/
+/*	$NetBSD: s_logl.c,v 1.5 2024/07/16 14:52:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_logl.c,v 1.4 2024/02/24 15:16:53 christos Exp $");
+__RCSID("$NetBSD: s_logl.c,v 1.5 2024/07/16 14:52:50 riastradh Exp $");
 #endif
 
 #include "namespace.h"
@@ -38,14 +38,12 @@ __RCSID("$NetBSD: s_logl.c,v 1.4 2024/02/24 15:16:53 christos Exp $");
 #include <machine/float.h>
 #include <machine/ieee.h>
 
-#ifdef __weak_alias
+#ifdef __HAVE_LONG_DOUBLE
+
 __weak_alias(logl, _logl)
 __weak_alias(log10l, _log10l)
 __weak_alias(log2l, _log2l)
 __weak_alias(log1pl, _log1pl)
-#endif
-
-#ifdef __HAVE_LONG_DOUBLE
 
 #if LDBL_MANT_DIG == 64
 #include "../ld80/s_logl.c"
@@ -55,29 +53,4 @@ __weak_alias(log1pl, _log1pl)
 #error "Unsupported long double format"
 #endif
 
-#else
-
-long double
-logl(long double l)
-{
-	return log(l);
-}
-
-long double
-log10l(long double l)
-{
-	return log10(l);
-}
-
-long double
-log2l(long double l)
-{
-	return log2(l);
-}
-
-long double
-log1pl(long double l)
-{
-	return log1p(l);
-}
 #endif

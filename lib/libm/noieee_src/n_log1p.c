@@ -1,4 +1,4 @@
-/*      $NetBSD: n_log1p.c,v 1.8 2014/03/06 10:58:26 martin Exp $ */
+/*      $NetBSD: n_log1p.c,v 1.9 2024/07/16 14:52:50 riastradh Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: n_log1p.c,v 1.9 2024/07/16 14:52:50 riastradh Exp $");
 
 #ifndef lint
 #if 0
@@ -93,9 +96,14 @@ static char sccsid[] = "@(#)log1p.c	8.1 (Berkeley) 6/4/93";
  * shown.
  */
 
+#include "namespace.h"
+
 #include <errno.h>
 #define _LIBM_STATIC
 #include "mathimpl.h"
+
+__weak_alias(log1pl, _log1pl)
+__strong_alias(_log1pl, _log1p)
 
 vc(ln2hi, 6.9314718055829871446E-1  ,7217,4031,0000,f7d0,   0, .B17217F7D00000)
 vc(ln2lo, 1.6465949582897081279E-12 ,bcd5,2ce7,d9cc,e4f1, -39, .E7BCD5E4F1D9CC)
@@ -111,6 +119,7 @@ ic(sqrt2, 1.4142135623730951455E0,     0, 1.6A09E667F3BCD)
 #define	sqrt2	vccast(sqrt2)
 #endif
 
+__weak_alias(log1p, _log1p)
 double
 log1p(double x)
 {
@@ -169,6 +178,7 @@ log1p(double x)
 	else return(x);
 }
 
+__weak_alias(log1pf, _log1pf)
 float
 log1pf(float x)
 {

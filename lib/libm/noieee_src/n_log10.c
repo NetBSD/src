@@ -1,4 +1,4 @@
-/*      $NetBSD: n_log10.c,v 1.7 2014/03/06 10:57:44 martin Exp $ */
+/*      $NetBSD: n_log10.c,v 1.8 2024/07/16 14:52:50 riastradh Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: n_log10.c,v 1.8 2024/07/16 14:52:50 riastradh Exp $");
 
 #ifndef lint
 #if 0
@@ -72,6 +75,8 @@ static char sccsid[] = "@(#)log10.c	8.1 (Berkeley) 6/4/93";
  * shown.
  */
 
+#include "namespace.h"
+
 #define _LIBM_STATIC
 #include "mathimpl.h"
 
@@ -83,7 +88,10 @@ ic(ivln10, 4.3429448190325181667E-1, -2, 1.BCB7B1526E50E)
 #define	ln10hi	vccast(ln10hi)
 #endif
 
+__weak_alias(log10l, _log10l)
+__strong_alias(_log10l, _log10)
 
+__weak_alias(log10, _log10)
 double
 log10(double x)
 {
@@ -94,6 +102,7 @@ log10(double x)
 #endif	/* defined(__vax__)||defined(tahoe) */
 }
 
+__weak_alias(log10f, _log10f)
 float
 log10f(float x)
 {

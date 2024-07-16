@@ -1,4 +1,4 @@
-/* $NetBSD: namespace.h,v 1.23 2024/06/09 13:33:36 riastradh Exp $ */
+/* $NetBSD: namespace.h,v 1.24 2024/07/16 14:52:50 riastradh Exp $ */
 
 #define acos _acos
 #define acosf _acosf
@@ -64,9 +64,15 @@
 #define lgammal _lgammal
 #define lgammal_r _lgammal_r
 #define log _log
+#define log10 _log10
 #define log10l _log10l
+#define log10f _log10f
+#define log1p _log1p
 #define log1pl _log1pl
+#define log1pf _log1pf
+#define log2 _log2
 #define log2l _log2l
+#define log2f _log2f
 #define logf _logf
 #define logl _logl
 #define modfl _modfl

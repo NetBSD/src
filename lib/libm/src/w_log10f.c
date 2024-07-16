@@ -15,17 +15,19 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_log10f.c,v 1.6 2002/05/26 22:02:02 wiz Exp $");
+__RCSID("$NetBSD: w_log10f.c,v 1.7 2024/07/16 14:52:50 riastradh Exp $");
 #endif
 
 /*
  * wrapper log10f(X)
  */
 
+#include "namespace.h"
+
 #include "math.h"
 #include "math_private.h"
 
-
+__weak_alias(log10f, _log10f)
 float
 log10f(float x)		/* wrapper log10f */
 {

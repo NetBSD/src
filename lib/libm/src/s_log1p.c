@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_log1p.c,v 1.12 2002/05/26 22:01:57 wiz Exp $");
+__RCSID("$NetBSD: s_log1p.c,v 1.13 2024/07/16 14:52:50 riastradh Exp $");
 #endif
 
 /* double log1p(double x)
@@ -80,8 +80,15 @@ __RCSID("$NetBSD: s_log1p.c,v 1.12 2002/05/26 22:01:57 wiz Exp $");
  *	 See HP-15C Advanced Functions Handbook, p.193.
  */
 
+#include "namespace.h"
+
 #include "math.h"
 #include "math_private.h"
+
+#ifndef __HAVE_LONG_DOUBLE
+__weak_alias(log1pl, _log1pl)
+__strong_alias(_log1pl, _log1p)
+#endif
 
 static const double
 ln2_hi  =  6.93147180369123816490e-01,	/* 3fe62e42 fee00000 */
@@ -97,6 +104,7 @@ Lp7 = 1.479819860511658591e-01;  /* 3FC2F112 DF3E5244 */
 
 static const double zero = 0.0;
 
+__weak_alias(log1p, _log1p)
 double
 log1p(double x)
 {
