@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.192 2024/07/16 03:32:43 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.193 2024/07/16 03:35:38 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.192 2024/07/16 03:32:43 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.193 2024/07/16 03:35:38 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -184,9 +184,6 @@ __CTASSERT(offsetof(struct ifbifconf, ifbic_buf) == offsetof(struct ifbaconf, if
 
 #define BRIDGE_RT_PSZ_PERFORM(_sc) \
 				pserialize_perform((_sc)->sc_rtlist_psz)
-
-#define BRIDGE_RT_RENTER(__s)	do { __s = pserialize_read_enter(); } while (0)
-#define BRIDGE_RT_REXIT(__s)	do { pserialize_read_exit(__s); } while (0)
 
 #define BRIDGE_RTLIST_READER_FOREACH(_brt, _sc)			\
 	PSLIST_READER_FOREACH((_brt), &((_sc)->sc_rtlist),		\
@@ -660,7 +657,7 @@ bridge_lookup_member(struct bridge_softc *sc, const char *name, struct psref *ps
 	struct ifnet *ifp;
 	int s;
 
-	BRIDGE_PSZ_RENTER(s);
+	s = pserialize_read_enter();
 
 	BRIDGE_IFLIST_READER_FOREACH(bif, sc) {
 		ifp = bif->bif_ifp;
@@ -670,7 +667,7 @@ bridge_lookup_member(struct bridge_softc *sc, const char *name, struct psref *ps
 	if (bif != NULL)
 		bridge_acquire_member(sc, bif, psref);
 
-	BRIDGE_PSZ_REXIT(s);
+	pserialize_read_exit(s);
 
 	return bif;
 }
@@ -687,7 +684,7 @@ bridge_lookup_member_if(struct bridge_softc *sc, struct ifnet *member_ifp,
 	struct bridge_iflist *bif;
 	int s;
 
-	BRIDGE_PSZ_RENTER(s);
+	s = pserialize_read_enter();
 
 	bif = member_ifp->if_bridgeif;
 	if (bif != NULL) {
@@ -695,7 +692,7 @@ bridge_lookup_member_if(struct bridge_softc *sc, struct ifnet *member_ifp,
 		    bridge_psref_class);
 	}
 
-	BRIDGE_PSZ_REXIT(s);
+	pserialize_read_exit(s);
 
 	return bif;
 }
@@ -1671,12 +1668,12 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 
 		n = m->m_nextpkt;
 
-		BRIDGE_PSZ_RENTER(s);
+		s = pserialize_read_enter();
 		BRIDGE_IFLIST_READER_FOREACH(bif, sc) {
 			struct psref psref;
 
 			bridge_acquire_member(sc, bif, &psref);
-			BRIDGE_PSZ_REXIT(s);
+			pserialize_read_exit(s);
 
 			dst_if = bif->bif_ifp;
 			if ((dst_if->if_flags & IFF_RUNNING) == 0)
@@ -1743,7 +1740,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 			}
 
 next:
-			BRIDGE_PSZ_RENTER(s);
+			s = pserialize_read_enter();
 			bridge_release_member(sc, bif, &psref);
 
 			/* Guarantee we don't re-enter the loop as we already
@@ -1751,7 +1748,7 @@ next:
 			if (used)
 				break;
 		}
-		BRIDGE_PSZ_REXIT(s);
+		pserialize_read_exit(s);
 
 		if (!used)
 			m_freem(m);
@@ -2030,12 +2027,12 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 		int s;
 		struct psref _psref;
 
-		BRIDGE_PSZ_RENTER(s);
+		s = pserialize_read_enter();
 		BRIDGE_IFLIST_READER_FOREACH(_bif, sc) {
 			/* It is destined for us. */
 			if (bridge_ourether(_bif, eh, 0)) {
 				bridge_acquire_member(sc, _bif, &_psref);
-				BRIDGE_PSZ_REXIT(s);
+				pserialize_read_exit(s);
 				if (_bif->bif_flags & IFBIF_LEARNING)
 					(void) bridge_rtupdate(sc,
 					    eh->ether_shost, ifp, 0, IFBAF_DYNAMIC);
@@ -2049,7 +2046,7 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 			if (bridge_ourether(_bif, eh, 1))
 				break;
 		}
-		BRIDGE_PSZ_REXIT(s);
+		pserialize_read_exit(s);
 out:
 
 		if (_bif != NULL) {
@@ -2115,12 +2112,12 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 
 	bmcast = m->m_flags & (M_BCAST|M_MCAST);
 
-	BRIDGE_PSZ_RENTER(s);
+	s = pserialize_read_enter();
 	BRIDGE_IFLIST_READER_FOREACH(bif, sc) {
 		struct psref psref;
 
 		bridge_acquire_member(sc, bif, &psref);
-		BRIDGE_PSZ_REXIT(s);
+		pserialize_read_exit(s);
 
 		dst_if = bif->bif_ifp;
 
@@ -2177,10 +2174,10 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 			RELEASE_GLOBAL_LOCKS();
 		}
 next:
-		BRIDGE_PSZ_RENTER(s);
+		s = pserialize_read_enter();
 		bridge_release_member(sc, bif, &psref);
 	}
-	BRIDGE_PSZ_REXIT(s);
+	pserialize_read_exit(s);
 
 	m_freem(m);
 }
@@ -2241,7 +2238,7 @@ again:
 	 * A route for this destination might already exist.  If so,
 	 * update it, otherwise create a new one.
 	 */
-	BRIDGE_RT_RENTER(s);
+	s = pserialize_read_enter();
 	brt = bridge_rtnode_lookup(sc, dst);
 
 	if (brt != NULL) {
@@ -2257,7 +2254,7 @@ again:
 				brt->brt_expire = time_uptime + sc->sc_brttimeout;
 		}
 	}
-	BRIDGE_RT_REXIT(s);
+	pserialize_read_exit(s);
 
 	if (brt == NULL) {
 		int r;
@@ -2283,11 +2280,11 @@ bridge_rtlookup(struct bridge_softc *sc, const uint8_t *addr)
 	struct ifnet *ifs = NULL;
 	int s;
 
-	BRIDGE_RT_RENTER(s);
+	s = pserialize_read_enter();
 	brt = bridge_rtnode_lookup(sc, addr);
 	if (brt != NULL)
 		ifs = brt->brt_ifp;
-	BRIDGE_RT_REXIT(s);
+	pserialize_read_exit(s);
 
 	return ifs;
 }
