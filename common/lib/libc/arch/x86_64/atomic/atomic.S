@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.30 2024/07/16 22:44:38 riastradh Exp $	*/
+/*	$NetBSD: atomic.S,v 1.31 2024/07/16 22:45:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,6 +36,13 @@
 #define	ALIAS(f, t)	STRONG_ALIAS(f,t)
 #else
 #define	ALIAS(f, t)	WEAK_ALIAS(f,t)
+#endif
+
+#ifdef _HARDKERNEL
+#include <machine/frameasm.h>
+#define	LOCK		HOTPATCH(HP_NAME_NOLOCK, 1); lock
+#else
+#define	LOCK		lock
 #endif
 
 	.text
