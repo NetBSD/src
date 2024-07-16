@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.14 2024/04/17 06:11:56 skrll Exp $
+#	$NetBSD: GENERIC.common,v 1.15 2024/07/16 12:01:19 riastradh Exp $
 #
 #	GENERIC common RISC-V kernel config items shared between 32 and 64
 #	kernels
@@ -161,6 +161,7 @@ pseudo-device 	sequencer		# MIDI sequencer
 virtio* 	at fdt?			# Virtio MMIO device
 #viomb* 	at virtio?		# Virtio memory balloon device
 ld* 		at virtio?		# Virtio disk device
+viocon* 	at virtio?		# Virtio serial device
 vioif* 		at virtio?		# Virtio network device
 viornd* 	at virtio?		# Virtio entropy device
 #vioscsi* 	at virtio?		# Virtio SCSI device

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.120 2023/07/15 22:30:19 riastradh Exp $
+#	$NetBSD: GENERIC,v 1.121 2024/07/16 12:01:19 riastradh Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -602,6 +602,7 @@ virtio* 	at pci? dev ? function ?	# Virtio PCI device
 # the balloon driver cannot work on machines with non-4k pages
 #viomb* 	at virtio?			# Virtio memory balloon device
 ld* 		at virtio?			# Virtio disk device
+viocon*		at virtio?			# Virtio serial device
 vioif* 		at virtio?			# Virtio network device
 viornd* 	at virtio?			# Virtio entropy device
 vioscsi* 	at virtio?			# Virtio SCSI device

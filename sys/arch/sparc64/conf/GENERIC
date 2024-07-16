@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.240 2024/04/02 22:56:51 charlotte Exp $
+# $NetBSD: GENERIC,v 1.241 2024/07/16 12:01:19 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.240 $"
+#ident		"GENERIC-$Revision: 1.241 $"
 
 maxusers	64
 
@@ -409,6 +409,7 @@ virtio* at pci? dev ? function ?	# Virtio PCI device
 # the baloon driver can not work on machines with non-4k pages
 #viomb*	at virtio?			# Virtio memory balloon device
 ld*	at virtio?			# Virtio disk device
+viocon*	at virtio?			# Virtio serial device
 vioif*	at virtio?			# Virtio network device
 viornd* at virtio?			# Virtio entropy device
 vioscsi* at virtio?			# Virtio SCSI device

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.QEMU,v 1.2 2023/11/19 20:01:48 thorpej Exp $
+# $NetBSD: GENERIC.QEMU,v 1.3 2024/07/16 12:01:18 riastradh Exp $
 #
 # Generic Alpha kernel specifically configured for Qemu.
 
@@ -13,6 +13,7 @@ makeoptions	COPY_SYMTAB=1
 virtio*	at pci? dev ? function ?	# Virtio PCI device
 #viomb*	at virtio?			# Virtio memory balloon device
 ld*	at virtio?			# Virtio disk device
+viocon*	at virtio?			# Virtio serial device
 vioif*	at virtio?			# Virtio network device
 viornd*	at virtio?			# Virtio entropy device
 vioscsi* at virtio?			# Virtio SCSI device
