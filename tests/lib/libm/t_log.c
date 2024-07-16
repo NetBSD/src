@@ -1,4 +1,4 @@
-/* $NetBSD: t_log.c,v 1.16 2024/07/15 06:19:17 riastradh Exp $ */
+/* $NetBSD: t_log.c,v 1.17 2024/07/16 03:14:16 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_log.c,v 1.16 2024/07/15 06:19:17 riastradh Exp $");
+__RCSID("$NetBSD: t_log.c,v 1.17 2024/07/16 03:14:16 riastradh Exp $");
+
+#include <sys/types.h>
 
 #include <atf-c.h>
 
@@ -47,7 +49,7 @@ __RCSID("$NetBSD: t_log.c,v 1.16 2024/07/15 06:19:17 riastradh Exp $");
 
 #define	CHECKL_EQ(i, f, x, y)						      \
 	ATF_CHECK_EQ_MSG(f(x), y,					      \
-	    "[%u] %s(%La=%.17Lg)=%La=%.17Lg, expected %La=%.17Lg",	      \
+	    "[%u] %s(%La=%.34Lg)=%La=%.34Lg, expected %La=%.34Lg",	      \
 	    (i), #f, (long double)(x), (long double)(x), f(x), f(x),	      \
 	    (long double)(y), (long double)(y))
 
@@ -60,7 +62,7 @@ __RCSID("$NetBSD: t_log.c,v 1.16 2024/07/15 06:19:17 riastradh Exp $");
 
 #define	CHECKL_NAN(i, f, x)						      \
 	ATF_CHECK_MSG(isnan(f(x)),					      \
-	    "[%u] %s(%La=%.17Lg)=%La=%.17Lg, expected NaN",		      \
+	    "[%u] %s(%La=%.34Lg)=%La=%.34Lg, expected NaN",		      \
 	    (i), #f, (long double)(x), (long double)(x), f(x), f(x))
 
 #else  /* !defined(NAN) */
@@ -87,7 +89,7 @@ __RCSID("$NetBSD: t_log.c,v 1.16 2024/07/15 06:19:17 riastradh Exp $");
 	_checknan_result = f(x);					      \
 	_checknan_error = errno;					      \
 	ATF_CHECK_EQ_MSG(errno, EDOM,					      \
-	    "[%u] %s(%La=%.17Lg)=%La=%.17Lg errno=%d, expected EDOM=%d",      \
+	    "[%u] %s(%La=%.34Lg)=%La=%.34Lg errno=%d, expected EDOM=%d",      \
 	    (i), #f, (long double)(x), (long double)(x),		      \
 	    _checknan_result, _checknan_result,				      \
 	    _checknan_error, EDOM);					      \
@@ -236,6 +238,16 @@ ATF_TC_BODY(log10_exact, tc)
 	ATF_CHECK_EQ(signbit(log10(1)), 0);
 	ATF_CHECK_EQ(signbit(log10l(1)), 0);
 
+#if __HAVE_LONG_DOUBLE + 0 == 128
+	/*
+	 * Not sure if it's the same issue, but probably!
+	 *
+	 * log10l(x) != y: [1] log10l(0x1.4p+3=10)=0x1.ffffffffcf54a625cf632f6e120dp-1=0.99999999997786775, expected 0x1p+0=1
+	 * log10l(x) != y: [2] log10l(0x1.9p+6=100)=0x1.ffffc6bdc46c7020e9b1f5a2930ep+0=1.9999965871142409, expected 0x1p+1=2
+	 */
+	atf_tc_expect_fail("PR lib/58337: logl() crashes on arm64");
+#endif
+
 	for (i = 0; i < __arraycount(log10f_exact); i++) {
 		const float x = log10f_exact[i].x;
 		const float y = log10f_exact[i].y;
@@ -244,6 +256,51 @@ ATF_TC_BODY(log10_exact, tc)
 		CHECK_EQ(i, log10, x, y);
 		CHECKL_EQ(i, log10l, x, y);
 	}
+}
+
+ATF_TC(log10_approx);
+ATF_TC_HEAD(log10_approx, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test log10/f/l approximate cases");
+}
+ATF_TC_BODY(log10_approx, tc)
+{
+	volatile long double e =
+	    2.7182818284590452353602874713526624977572470937L;
+	volatile long double e2 =
+	    7.3890560989306502272304274605750078131803155705519L;
+	volatile long double log10e =
+	    0.43429448190325182765112891891660508229439700580367L;
+	volatile long double log10e2 =
+	    2*0.43429448190325182765112891891660508229439700580367L;
+
+#if __HAVE_LONG_DOUBLE + 0 == 128
+	atf_tc_expect_fail("PR lib/58337: logl() crashes on arm64");
+#endif
+
+	ATF_CHECK_MSG((fabsf((log10f(e) - (float)log10e)/(float)log10e) <
+		2*FLT_EPSILON),
+	    "log10f(e)=%a=%.8g expected %a=%.8g",
+	    log10f(e), log10f(e), (float)log10e, (float)log10e);
+	ATF_CHECK_MSG((fabs((log10(e) - (double)log10e)/(double)log10e) <
+		2*DBL_EPSILON),
+	    "log10(e)=%a=%.17g expected %a=%.17g",
+	    log10(e), log10(e), (double)log10e, (double)log10e);
+	ATF_CHECK_MSG((fabsl((log10l(e) - log10e)/log10e) < 2*LDBL_EPSILON),
+	    "log10l(e)=%La=%.34Lg expected %La=%.34Lg",
+	    log10l(e), log10l(e), log10e, log10e);
+
+	ATF_CHECK_MSG((fabsf((log10f(e2) - (float)log10e2)/(float)log10e2) <
+		2*FLT_EPSILON),
+	    "log10f(e^2)=%a=%.8g expected %a=%.8g",
+	    log10f(e2), log10f(e2), (float)log10e2, (float)log10e2);
+	ATF_CHECK_MSG((fabs((log10(e2) - (double)log10e2)/(double)log10e2) <
+		2*DBL_EPSILON),
+	    "log10(e^2)=%a=%.17g expected %a=%.17g",
+	    log10(e2), log10(e2), (double)log10e2, (double)log10e2);
+	ATF_CHECK_MSG((fabsl((log10l(e2) - log10e2)/log10e2) < 2*LDBL_EPSILON),
+	    "log10l(e^2)=%La=%.34Lg expected %La=%.34Lg",
+	    log10l(e2), log10l(e2), log10e2, log10e2);
 }
 
 ATF_TC(log10_inf);
@@ -312,8 +369,42 @@ ATF_TC_HEAD(log1p_exact, tc)
 ATF_TC_BODY(log1p_exact, tc)
 {
 
+	CHECK_EQ(0, log1pf, -FLT_MIN, -FLT_MIN);
+	CHECK_EQ(0, log1p, -DBL_MIN, -DBL_MIN);
+	CHECKL_EQ(01, log1pl, -LDBL_MIN, -LDBL_MIN);
+
+	CHECK_EQ(1, log1pf, -0., 0);
+	CHECK_EQ(1, log1p, -0., 0);
+	CHECKL_EQ(1, log1pl, -0., 0);
+
+	CHECK_EQ(2, log1pf, +0., 0);
+	CHECK_EQ(2, log1p, +0., 0);
+	CHECKL_EQ(2, log1pl, +0., 0);
+
+	CHECK_EQ(3, log1pf, 1, logf(2));
+	CHECK_EQ(3, log1p, 1, log(2));
+	CHECKL_EQ(3, log1pl, 1, logl(2));
+}
+
+ATF_TC(log1p_approx);
+ATF_TC_HEAD(log1p_approx, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test log1p/f/l approximate cases");
+}
+ATF_TC_BODY(log1p_approx, tc)
+{
+	volatile long double em1 =	/* exp(1) - 1 */
+	    1.7182818284590452353602874713526624977572470937L;
+	volatile long double e2m1 =	/* exp(2) - 1 */
+	    6.3890560989306502272304274605750078131803155705519L;
+
+#if __HAVE_LONG_DOUBLE + 0 == 128
+	atf_tc_expect_fail("PR lib/58337: logl() crashes on arm64");
+#endif
+
 	/*
-	 * Not _exact_, but the approximation is good enough.
+	 * Approximation is close enough that equality of the rounded
+	 * output had better hold.
 	 */
 #ifdef FLT_DENORM_MIN
 	CHECK_EQ(0, log1pf, -FLT_DENORM_MIN, -FLT_DENORM_MIN);
@@ -325,21 +416,19 @@ ATF_TC_BODY(log1p_exact, tc)
 	CHECKL_EQ(0, log1pl, -LDBL_DENORM_MIN, -LDBL_DENORM_MIN);
 #endif
 
-	CHECK_EQ(1, log1pf, -FLT_MIN, -FLT_MIN);
-	CHECK_EQ(1, log1p, -DBL_MIN, -DBL_MIN);
-	CHECKL_EQ(1, log1pl, -LDBL_MIN, -LDBL_MIN);
+	ATF_CHECK_MSG(fabsf((log1pf(em1) - 1)/1) < 2*FLT_EPSILON,
+	    "log1pf(e)=%a=%.8g", log1pf(em1), log1pf(em1));
+	ATF_CHECK_MSG(fabs((log1p(em1) - 1)/1) < 2*DBL_EPSILON,
+	    "log1p(e)=%a=%.17g", log1p(em1), log1p(em1));
+	ATF_CHECK_MSG(fabsl((log1pl(em1) - 1)/1) < 2*LDBL_EPSILON,
+	    "log1pl(e)=%La=%.34Lg", log1pl(em1), log1pl(em1));
 
-	CHECK_EQ(0, log1pf, -0., 0);
-	CHECK_EQ(0, log1p, -0., 0);
-	CHECKL_EQ(0, log1pl, -0., 0);
-
-	CHECK_EQ(1, log1pf, +0., 0);
-	CHECK_EQ(1, log1p, +0., 0);
-	CHECKL_EQ(1, log1pl, +0., 0);
-
-	CHECK_EQ(2, log1pf, 1, logf(2));
-	CHECK_EQ(2, log1p, 1, log(2));
-	CHECKL_EQ(2, log1pl, 1, logl(2));
+	ATF_CHECK_MSG(fabsf((log1pf(e2m1) - 2)/2) < 2*FLT_EPSILON,
+	    "log1pf(e^2)=%a=%.8g", log1pf(em1), log1pf(em1));
+	ATF_CHECK_MSG(fabs((log1p(e2m1) - 2)/2) < 2*DBL_EPSILON,
+	    "log1p(e^2)=%a=%.17g", log1p(em1), log1p(em1));
+	ATF_CHECK_MSG(fabsl((log1pl(e2m1) - 2)/2) < 2*LDBL_EPSILON,
+	    "log1pl(e^2)=%La=%.34Lg", log1pl(em1), log1pl(em1));
 }
 
 ATF_TC(log1p_inf);
@@ -488,6 +577,51 @@ ATF_TC_BODY(log2_exact, tc)
 	}
 }
 
+ATF_TC(log2_approx);
+ATF_TC_HEAD(log2_approx, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test log2/f/l approximate cases");
+}
+ATF_TC_BODY(log2_approx, tc)
+{
+	volatile long double e =
+	    2.7182818284590452353602874713526624977572470937L;
+	volatile long double e2 =
+	    7.3890560989306502272304274605750078131803155705519L;
+	volatile long double log2e =
+	    1.442695040888963407359924681001892137426645954153L;
+	volatile long double log2e2 =
+	    2*1.442695040888963407359924681001892137426645954153L;
+
+#if __HAVE_LONG_DOUBLE + 0 == 128
+	atf_tc_expect_fail("PR lib/58337: logl() crashes on arm64");
+#endif
+
+	ATF_CHECK_MSG((fabsf((log2f(e) - (float)log2e)/(float)log2e) <
+		2*FLT_EPSILON),
+	    "log2f(e)=%a=%.8g expected %a=%.8g",
+	    log2f(e), log2f(e), (float)log2e, (float)log2e);
+	ATF_CHECK_MSG((fabs((log2(e) - (double)log2e)/(double)log2e) <
+		2*DBL_EPSILON),
+	    "log2(e)=%a=%.17g expected %a=%.17g",
+	    log2(e), log2(e), (double)log2e, (double)log2e);
+	ATF_CHECK_MSG((fabsl((log2l(e) - log2e)/log2e) < 2*LDBL_EPSILON),
+	    "log2l(e)=%La=%.34Lg expected %La=%.34Lg",
+	    log2l(e), log2l(e), log2e, log2e);
+
+	ATF_CHECK_MSG((fabsf((log2f(e2) - (float)log2e2)/(float)log2e2) <
+		2*FLT_EPSILON),
+	    "log2f(e^2)=%a=%.8g expected %a=%.8g",
+	    log2f(e2), log2f(e2), (float)log2e2, (float)log2e2);
+	ATF_CHECK_MSG((fabs((log2(e2) - (double)log2e2)/(double)log2e2) <
+		2*DBL_EPSILON),
+	    "log2(e^2)=%a=%.17g expected %a=%.17g",
+	    log2(e2), log2(e2), (double)log2e2, (double)log2e2);
+	ATF_CHECK_MSG((fabsl((log2l(e2) - log2e2)/log2e2) < 2*LDBL_EPSILON),
+	    "log2l(e^2)=%La=%.34Lg expected %La=%.34Lg",
+	    log2l(e2), log2l(e2), log2e2, log2e2);
+}
+
 ATF_TC(log2_inf);
 ATF_TC_HEAD(log2_inf, tc)
 {
@@ -550,14 +684,13 @@ ATF_TC_BODY(log_zero, tc)
 	CHECKL_EQ(1, logl, -0., -HUGE_VALL);
 }
 
-ATF_TC(log_normal);
-ATF_TC_HEAD(log_normal, tc)
+ATF_TC(log_exact);
+ATF_TC_HEAD(log_exact, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test log/f/l normal cases");
+	atf_tc_set_md_var(tc, "descr", "Test log/f/l exact cases");
 }
-ATF_TC_BODY(log_normal, tc)
+ATF_TC_BODY(log_exact, tc)
 {
-	volatile long double e = M_E;
 
 	CHECK_EQ(0, logf, 1, 0);
 	CHECK_EQ(0, log, 1, 0);
@@ -566,13 +699,61 @@ ATF_TC_BODY(log_normal, tc)
 	ATF_CHECK_EQ(signbit(logf(1)), 0);
 	ATF_CHECK_EQ(signbit(log(1)), 0);
 	ATF_CHECK_EQ(signbit(logl(1)), 0);
+}
 
-	ATF_CHECK_MSG(fabsf((logf(e) - 1)/1) < FLT_EPSILON,
+ATF_TC(log_approx);
+ATF_TC_HEAD(log_approx, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test log/f/l approximate cases");
+}
+ATF_TC_BODY(log_approx, tc)
+{
+	volatile long double e =
+	    2.7182818284590452353602874713526624977572470937L;
+	volatile long double e2 =
+	    7.3890560989306502272304274605750078131803155705519L;
+	volatile long double log_2 =
+	    0.69314718055994530941723212145817656807550013436025L;
+	volatile long double log_10 =
+	    2.30258509299404568401799145468436420760110148862875L;
+
+#if __HAVE_LONG_DOUBLE + 0 == 128
+	atf_tc_expect_fail("PR lib/58337: logl() crashes on arm64");
+#endif
+
+	ATF_CHECK_MSG(fabsf((logf(2) - log_2)/log_2) < 2*FLT_EPSILON,
+	    "logf(2)=%a=%.8g expected %a=%.8g",
+	    logf(2), logf(2), (float)log_2, (float)log_2);
+	ATF_CHECK_MSG(fabs((log(2) - log_2)/log_2) < 2*DBL_EPSILON,
+	    "log(2)=%a=%.17g expected %a=%.17g",
+	    log(2), log(2), (double)log_2, (double)log_2);
+	ATF_CHECK_MSG(fabsl((logl(2) - log_2)/log_2) < 2*LDBL_EPSILON,
+	    "logl(2)=%La=%.34Lg expected %La=%.34Lg",
+	    logl(2), logl(2), log_2, log_2);
+
+	ATF_CHECK_MSG(fabsf((logf(e) - 1)/1) < 2*FLT_EPSILON,
 	    "logf(e)=%a=%.8g", logf(e), logf(e));
-	ATF_CHECK_MSG(fabs((log(e) - 1)/1) < DBL_EPSILON,
+	ATF_CHECK_MSG(fabs((log(e) - 1)/1) < 2*DBL_EPSILON,
 	    "log(e)=%a=%.17g", log(e), log(e));
-	ATF_CHECK_MSG(fabsl((logl(e) - 1)/1) < LDBL_EPSILON,
+	ATF_CHECK_MSG(fabsl((logl(e) - 1)/1) < 2*LDBL_EPSILON,
 	    "logl(e)=%La=%.34Lg", logl(e), logl(e));
+
+	ATF_CHECK_MSG(fabsf((logf(e2) - 2)/2) < 2*FLT_EPSILON,
+	    "logf(e)=%a=%.8g", logf(e2), logf(e2));
+	ATF_CHECK_MSG(fabs((log(e2) - 2)/2) < 2*DBL_EPSILON,
+	    "log(e)=%a=%.17g", log(e2), log(e2));
+	ATF_CHECK_MSG(fabsl((logl(e2) - 2)/2) < 2*LDBL_EPSILON,
+	    "logl(e)=%La=%.34Lg", logl(e2), logl(e2));
+
+	ATF_CHECK_MSG(fabsf((logf(10) - log_10)/log_10) < 2*FLT_EPSILON,
+	    "logf(10)=%a=%.8g expected %a=%.8g",
+	    logf(10), logf(10), (float)log_10, (float)log_10);
+	ATF_CHECK_MSG(fabs((log(10) - log_10)/log_10) < 2*DBL_EPSILON,
+	    "log(10)=%a=%.17g expected %a=%.17g",
+	    log(10), log(10), (double)log_10, (double)log_10);
+	ATF_CHECK_MSG(fabsl((logl(10) - log_10)/log_10) < 2*LDBL_EPSILON,
+	    "logl(10)=%La=%.34Lg expected %La=%.34Lg",
+	    logl(10), logl(10), log_10, log_10);
 }
 
 ATF_TC(log_inf);
@@ -597,21 +778,25 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, log10_invalid);
 	ATF_TP_ADD_TC(tp, log10_zero);
 	ATF_TP_ADD_TC(tp, log10_exact);
+	ATF_TP_ADD_TC(tp, log10_approx);
 	ATF_TP_ADD_TC(tp, log10_inf);
 
 	ATF_TP_ADD_TC(tp, log1p_invalid);
 	ATF_TP_ADD_TC(tp, log1p_neg_one);
 	ATF_TP_ADD_TC(tp, log1p_exact);
+	ATF_TP_ADD_TC(tp, log1p_approx);
 	ATF_TP_ADD_TC(tp, log1p_inf);
 
 	ATF_TP_ADD_TC(tp, log2_invalid);
 	ATF_TP_ADD_TC(tp, log2_zero);
 	ATF_TP_ADD_TC(tp, log2_exact);
+	ATF_TP_ADD_TC(tp, log2_approx);
 	ATF_TP_ADD_TC(tp, log2_inf);
 
 	ATF_TP_ADD_TC(tp, log_invalid);
 	ATF_TP_ADD_TC(tp, log_zero);
-	ATF_TP_ADD_TC(tp, log_normal);
+	ATF_TP_ADD_TC(tp, log_exact);
+	ATF_TP_ADD_TC(tp, log_approx);
 	ATF_TP_ADD_TC(tp, log_inf);
 
 	return atf_no_error();
