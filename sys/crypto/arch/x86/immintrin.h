@@ -1,4 +1,4 @@
-/*	$NetBSD: immintrin.h,v 1.3 2024/07/15 13:59:19 riastradh Exp $	*/
+/*	$NetBSD: immintrin.h,v 1.4 2024/07/16 15:27:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -63,7 +63,8 @@ typedef unsigned __v4su __attribute__((__vector_size__(16)));
 typedef float __v4sf __attribute__((__vector_size__(16)));
 typedef short __v8hi __attribute__((__vector_size__(16)));
 typedef char __v16qi __attribute__((__vector_size__(16)));
-typedef char __v16qi_u __attribute__((__vector_size__(16), __aligned__(1)));
+typedef char __v16qi_u
+    __attribute__((__vector_size__(16), __may_alias__, __aligned__(1)));
 
 #elif defined(__clang__)
 
@@ -146,7 +147,7 @@ static __inline __m128i
 _mm_loadu_si64(const void *__p)
 {
 #if defined(__GNUC__) && !defined(__clang__)
-	int64_t __v = (*(const __m64_u *)__p)[0];
+	int64_t __v = (int64_t)*(const __m64_u *)__p;
 #else
 	int64_t __v = ((const struct { int64_t __v; } _PACKALIAS *)__p)->__v;
 #endif
