@@ -78,9 +78,6 @@ _floorl
 _fmodl
 _lgammal
 _lgammal_r
-_log10l
-_log1pl
-_log2l
 _modfl
 _remquo
 _remquof
@@ -139,10 +136,6 @@ llrintl
 llround
 llroundf
 llroundl
-log10l
-log1pl
-log2l
-logl
 lrintl
 lroundl
 matherr

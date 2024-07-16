@@ -12,17 +12,24 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_log10.c,v 1.9 2002/05/26 22:02:02 wiz Exp $");
+__RCSID("$NetBSD: w_log10.c,v 1.10 2024/07/16 14:52:50 riastradh Exp $");
 #endif
 
 /*
  * wrapper log10(X)
  */
 
+#include "namespace.h"
+
 #include "math.h"
 #include "math_private.h"
 
+#ifndef __HAVE_LONG_DOUBLE
+__weak_alias(log10l, _log10l)
+__strong_alias(_log10l, _log10)
+#endif
 
+__weak_alias(log10, _log10)
 double
 log10(double x)		/* wrapper log10 */
 {

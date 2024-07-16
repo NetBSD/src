@@ -1,4 +1,4 @@
-/*      $NetBSD: n_log.c,v 1.8 2014/10/10 20:58:09 martin Exp $ */
+/*      $NetBSD: n_log.c,v 1.9 2024/07/16 14:52:50 riastradh Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,24 +28,24 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: n_log.c,v 1.9 2024/07/16 14:52:50 riastradh Exp $");
+
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)log.c	8.2 (Berkeley) 11/30/93";
 #endif
 #endif /* not lint */
 
-#include "../src/namespace.h"
+#include "namespace.h"
 
 #include <math.h>
 #include <errno.h>
 
 #include "mathimpl.h"
 
-#ifdef __weak_alias
-__weak_alias(log, _log);
-__weak_alias(_logl, _log);
-__weak_alias(logf, _logf);
-#endif
+__weak_alias(logl, _logl)
+__strong_alias(_logl, _log)
 
 /* Table-driven natural logarithm.
  *
@@ -372,6 +372,7 @@ static const double logF_tail[N+1] = {
 	-.00000000000017239444525614834
 };
 
+__weak_alias(log, _log)
 double
 log(double x)
 {
@@ -485,6 +486,7 @@ __log__D(double x)
 	return (r);
 }
 
+__weak_alias(logf, _logf)
 float
 logf(float x)
 {

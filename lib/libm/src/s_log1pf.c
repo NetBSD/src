@@ -15,8 +15,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_log1pf.c,v 1.8 2002/05/26 22:01:57 wiz Exp $");
+__RCSID("$NetBSD: s_log1pf.c,v 1.9 2024/07/16 14:52:50 riastradh Exp $");
 #endif
+
+#include "namespace.h"
 
 #include "math.h"
 #include "math_private.h"
@@ -35,6 +37,7 @@ Lp7 = 1.4798198640e-01; /* 3E178897 */
 
 static const float zero = 0.0;
 
+__weak_alias(log1pf, _log1pf)
 float
 log1pf(float x)
 {

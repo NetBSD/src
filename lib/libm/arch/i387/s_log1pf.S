@@ -12,7 +12,7 @@
 
 #include "abi.h"
 
-RCSID("$NetBSD: s_log1pf.S,v 1.10 2003/09/16 18:17:11 wennmach Exp $")
+RCSID("$NetBSD: s_log1pf.S,v 1.11 2024/07/16 14:52:49 riastradh Exp $")
 
 /*
  * The log1pf() function is provided to compute an accurate value of
@@ -37,12 +37,13 @@ RCSID("$NetBSD: s_log1pf.S,v 1.10 2003/09/16 18:17:11 wennmach Exp $")
  * which can be done with just one conditional branch. If x is
  * inside this range, we use fyl2xp1. Outside of this range,
  * the use of fyl2x is accurate enough.
- * 
  */
+
+WEAK_ALIAS(log1pf, _log1pf)
 
 .text
 	.align	4
-ENTRY(log1pf)
+ENTRY(_log1pf)
 	XMM_ONE_ARG_FLOAT_PROLOGUE
 	flds	ARG_FLOAT_ONE
 	fabs
@@ -74,3 +75,4 @@ use_fyl2xp1:
 	fyl2xp1
 	XMM_FLOAT_EPILOGUE
 	ret
+END(_log1pf)

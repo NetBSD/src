@@ -1,4 +1,4 @@
-/*      $NetBSD: n_log2.c,v 1.1 2014/03/06 10:57:01 martin Exp $ */
+/*      $NetBSD: n_log2.c,v 1.2 2024/07/16 14:52:50 riastradh Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,6 +28,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: n_log2.c,v 1.2 2024/07/16 14:52:50 riastradh Exp $");
+
 /* LOG2(X)
  * RETURN THE BASE 10 LOGARITHM OF x
  *
@@ -40,18 +43,24 @@
  *			    log(2)
  */
 
+#include "namespace.h"
+
 #define _LIBM_STATIC
 #include "mathimpl.h"
 
+__weak_alias(log2l, _log2l)
+__strong_alias(_log2l, _log2)
 
 static const double ln2 = .6931471805599453094172321214581765680755;
 
+__weak_alias(log2, _log2)
 double
 log2(double x)
 {
 	return log(x)/ln2;
 }
 
+__weak_alias(log2f, _log2f)
 float
 log2f(float x)
 {
