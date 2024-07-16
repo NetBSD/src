@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.191 2024/07/05 04:31:53 rin Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.192 2024/07/16 03:32:43 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.191 2024/07/05 04:31:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.192 2024/07/16 03:32:43 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1547,7 +1547,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 	struct ifnet *dst_if;
 	struct bridge_softc *sc;
 	struct mbuf *n;
-	int s;
+	int s, bound;
 
 	/*
 	 * bridge_output() is called from ether_output(), furthermore
@@ -1657,6 +1657,11 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 			return 0;
 	}
 
+	/*
+	 * When we use pppoe over bridge, bridge_output() can be called
+	 * in a lwp context by pppoe_timeout_wk().
+	 */
+	bound = curlwp_bind();
 	do {
 		/* XXX Should call bridge_broadcast, but there are locking
 		 * issues which need resolving first. */
@@ -1753,6 +1758,8 @@ next:
 
 		m = n;
 	} while (m != NULL);
+	curlwp_bindx(bound);
+
 	return 0;
 
 unicast_asis:
