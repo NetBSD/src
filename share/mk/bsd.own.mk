@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1391 2024/07/15 08:37:59 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.1392 2024/07/16 21:10:16 skrll Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -119,6 +119,7 @@ MKGCCCMDS?=	no
 #
 .if \
     ${MACHINE_CPU} == "aarch64" || \
+    ${MACHINE_CPU} == "arm" || \
     ${MACHINE_CPU} == "hppa" || \
     ${MACHINE_CPU} == "mips" || \
     ${MACHINE_CPU} == "riscv" || \
