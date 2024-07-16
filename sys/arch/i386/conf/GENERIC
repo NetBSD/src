@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1256 2024/04/30 19:35:28 andvar Exp $
+# $NetBSD: GENERIC,v 1.1257 2024/07/16 12:01:19 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1256 $"
+#ident		"GENERIC-$Revision: 1.1257 $"
 
 maxusers	64		# estimated number of users
 
@@ -1409,6 +1409,7 @@ weasel* at pci?
 virtio* at pci? dev ? function ?	# Virtio PCI device
 viomb* at virtio?			# Virtio memory balloon device
 ld* at virtio?				# Virtio disk device
+viocon* at virtio?			# Virtio serial device
 vioif* at virtio?			# Virtio network device
 viornd* at virtio?			# Virtio entropy device
 vioscsi* at virtio?			# Virtio SCSI device

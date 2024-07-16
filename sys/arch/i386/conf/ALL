@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.519 2024/04/30 19:35:28 andvar Exp $
+# $NetBSD: ALL,v 1.520 2024/07/16 12:01:19 riastradh Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.519 $"
+#ident		"ALL-$Revision: 1.520 $"
 
 maxusers	64		# estimated number of users
 
@@ -1705,11 +1705,11 @@ weasel* at pci?
 virtio*	at pci? dev ? function ?	# Virtio PCI device
 viomb*	at virtio?			# Virtio memory balloon device
 ld*	at virtio?			# Virtio disk device
+viocon* at virtio?			# Virtio serial device
 vioif*	at virtio?			# Virtio network device
 viornd* at virtio?			# Virtio entropy device
 vioscsi* at virtio?			# Virtio SCSI device
 vio9p*	at virtio?			# Virtio 9P device
-viocon* at virtio?			# Virtio console device
 
 # Flash subsystem
 flash* at flashbus?
