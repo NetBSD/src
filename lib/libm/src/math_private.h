@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.33 2024/07/17 11:59:58 riastradh Exp $
+ * $NetBSD: math_private.h,v 1.34 2024/07/17 12:00:13 riastradh Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -20,23 +20,18 @@
 #include <assert.h>
 #include <sys/types.h>
 
-/* The original fdlibm code used statements like:
-	n0 = ((*(int*)&one)>>29)^1;		* index of high word *
-	ix0 = *(n0+(int*)&x);			* high word of x *
-	ix1 = *((1-n0)+(int*)&x);		* low word of x *
-   to dig two 32 bit words out of the 64 bit IEEE floating point
-   value.  That is non-ANSI, and, moreover, the gcc instruction
-   scheduler gets it wrong.  We instead use the following macros.
-   Unlike the original code, we determine the endianness at compile
-   time, not at run time; I don't see much benefit to selecting
-   endianness at run time.  */
-
-/* A union which permits us to convert between a double and two 32 bit
-   ints.  */
-
 /*
- * A union which permits us to convert between a double and two 32 bit
- * ints.
+ * The original fdlibm code used statements like:
+ *
+ *	n0 = ((*(int*)&one)>>29)^1;		// index of high word
+ *	ix0 = *(n0+(int*)&x);			// high word of x
+ *	ix1 = *((1-n0)+(int*)&x);		// low word of x
+ *
+ * to dig two 32-bit words out of the-64 bit IEEE floating point value.
+ * That is non-ANSI, and, moreover, the gcc instruction scheduler gets
+ * it wrong.  We instead use the following macros.  Unlike the original
+ * code, we determine the endianness at compile time, not at run time;
+ * I don't see much benefit to selecting endianness at run time.
  */
 
 #ifdef __arm__
@@ -49,8 +44,10 @@
 #define	IEEE_WORD_ORDER	BYTE_ORDER
 #endif
 
-/* A union which permits us to convert between a long double and
-   four 32 bit ints.  */
+/*
+ * A union which permits us to convert between a long double and
+ * four 32-bit integers.
+ */
 
 #if IEEE_WORD_ORDER == BIG_ENDIAN
 
@@ -90,6 +87,11 @@ typedef union
 
 #endif
 
+/*
+ * A union which permits us to convert between a double and two 32-bit
+ * integers.
+ */
+
 #if IEEE_WORD_ORDER == BIG_ENDIAN
 
 typedef union
@@ -126,7 +128,7 @@ typedef union
 
 #endif
 
-/* Get two 32 bit ints from a double.  */
+/* Get two 32-bit integers from a double.  */
 
 #define EXTRACT_WORDS(ix0,ix1,d)				\
 do {								\
@@ -136,7 +138,7 @@ do {								\
   (ix1) = ew_u.parts.lsw;					\
 } while (0)
 
-/* Get a 64-bit int from a double. */
+/* Get a 64-bit integer from a double. */
 #define EXTRACT_WORD64(ix,d)					\
 do {								\
   ieee_double_shape_type ew_u;					\
@@ -145,7 +147,7 @@ do {								\
 } while (0)
 
 
-/* Get the more significant 32 bit int from a double.  */
+/* Get the more significant 32-bit integer from a double.  */
 
 #define GET_HIGH_WORD(i,d)					\
 do {								\
@@ -154,7 +156,7 @@ do {								\
   (i) = gh_u.parts.msw;						\
 } while (0)
 
-/* Get the less significant 32 bit int from a double.  */
+/* Get the less significant 32-bit integer from a double.  */
 
 #define GET_LOW_WORD(i,d)					\
 do {								\
@@ -163,7 +165,7 @@ do {								\
   (i) = gl_u.parts.lsw;						\
 } while (0)
 
-/* Set a double from two 32 bit ints.  */
+/* Set a double from two 32-bit integers.  */
 
 #define INSERT_WORDS(d,ix0,ix1)					\
 do {								\
@@ -173,7 +175,8 @@ do {								\
   (d) = iw_u.value;						\
 } while (0)
 
-/* Set a double from a 64-bit int. */
+/* Set a double from a 64-bit integer. */
+
 #define INSERT_WORD64(d,ix)					\
 do {								\
   ieee_double_shape_type iw_u;					\
@@ -181,8 +184,7 @@ do {								\
   (d) = iw_u.value;						\
 } while (0)
 
-
-/* Set the more significant 32 bits of a double from an int.  */
+/* Set the more significant 32 bits of a double from an integer.  */
 
 #define SET_HIGH_WORD(d,v)					\
 do {								\
@@ -192,7 +194,7 @@ do {								\
   (d) = sh_u.value;						\
 } while (0)
 
-/* Set the less significant 32 bits of a double from an int.  */
+/* Set the less significant 32 bits of a double from an integer.  */
 
 #define SET_LOW_WORD(d,v)					\
 do {								\
@@ -202,8 +204,10 @@ do {								\
   (d) = sl_u.value;						\
 } while (0)
 
-/* A union which permits us to convert between a float and a 32 bit
-   int.  */
+/*
+ * A union which permits us to convert between a float and a 32-bit
+ * integer.
+ */
 
 typedef union
 {
@@ -211,7 +215,7 @@ typedef union
   u_int32_t word;
 } ieee_float_shape_type;
 
-/* Get a 32 bit int from a float.  */
+/* Get a 32-bit integer from a float.  */
 
 #define GET_FLOAT_WORD(i,d)					\
 do {								\
@@ -220,7 +224,7 @@ do {								\
   (i) = gf_u.word;						\
 } while (0)
 
-/* Set a float from a 32 bit int.  */
+/* Set a float from a 32-bit integer.  */
 
 #define SET_FLOAT_WORD(d,i)					\
 do {								\
@@ -240,10 +244,9 @@ do {								\
   ((u)->extu_fracl = (v) & ((1ULL << EXT_FRACLBITS) - 1),	\
   (u)->extu_frach = (v) >> EXT_FRACLBITS)
 
-
 /*
- * Get expsign and mantissa as 16 bit and 64 bit ints from an 80 bit long
- * double.
+ * Get expsign as 16-bit integer ix0 and significand as 64-bit integer
+ * ix1 from an 80-bit long double d.
  */
 
 #define	EXTRACT_LDBL80_WORDS(ix0,ix1,d)				\
@@ -255,8 +258,9 @@ do {								\
 } while (0)
 
 /*
- * Get expsign and mantissa as one 16 bit and two 64 bit ints from a 128 bit
- * long double.
+ * Get expsign as 16-bit integer ix0 and significand as two 64-bit
+ * integers, ix1 high-order and ix2 low-order, from a 128-bit long
+ * double d.
  */
 
 #define	EXTRACT_LDBL128_WORDS(ix0,ix1,ix2,d)			\
@@ -268,7 +272,7 @@ do {								\
   (ix2) = ew_u.extu_fracl;					\
 } while (0)
 
-/* Get expsign as a 16 bit int from a long double.  */
+/* Get expsign as a 16-bit integer i from a long double d.  */
 
 #define	GET_LDBL_EXPSIGN(i,d)					\
 do {								\
@@ -278,8 +282,8 @@ do {								\
 } while (0)
 
 /*
- * Set an 80 bit long double from a 16 bit int expsign and a 64 bit int
- * mantissa.
+ * Set an 80-bit long double d from a 16-bit integer expsign ix0 and a
+ * 64-bit integer significand ix1.
  */
 
 #define	INSERT_LDBL80_WORDS(d,ix0,ix1)				\
@@ -291,8 +295,9 @@ do {								\
 } while (0)
 
 /*
- * Set a 128 bit long double from a 16 bit int expsign and two 64 bit ints
- * comprising the mantissa.
+ * Set a 128-bit long double d from a 16-bit integer expsign ix0 and
+ * two 64-bit integers composing the significand, ix1 high-order and
+ * ix2 low-order.
  */
 
 #define	INSERT_LDBL128_WORDS(d,ix0,ix1,ix2)			\
@@ -304,7 +309,7 @@ do {								\
   (d) = iw_u.extu_ld;						\
 } while (0)
 
-/* Set expsign of a long double from a 16 bit int.  */
+/* Set expsign of a long double from a 16-bit integer.  */
 
 #define	SET_LDBL_EXPSIGN(d,v)					\
 do {								\
@@ -503,7 +508,7 @@ void _scan_nan(uint32_t *__words, int __num_words, const char *__s);
  *
  * When one arg is NaN, the result is typically that arg quieted.  When both
  * args are NaNs, the result is typically the quietening of the arg whose
- * mantissa is largest after quietening.  When neither arg is NaN, the
+ * significand is largest after quietening.  When neither arg is NaN, the
  * result may be NaN because it is indeterminate, or finite for subsequent
  * construction of a NaN as the indeterminate 0.0L/0.0L.
  *
@@ -680,7 +685,7 @@ extern long double __ieee754_fmodl(long double, long double);
 extern long double __ieee754_sqrtl(long double);
 
 /*
- * TRUNC() is a macro that sets the trailing 27 bits in the mantissa of an
+ * TRUNC() is a macro that sets the trailing 27 bits in the significand of an
  * IEEE double variable to zero.  It must be expression-like for syntactic
  * reasons, and we implement this expression using an inline function
  * instead of a pure macro to avoid depending on the gcc feature of
@@ -876,10 +881,10 @@ irintl(long double x)
 #define breakpoint()    asm("int $3")
 #else
 #include <signal.h>
- 
+
 #define breakpoint()    raise(SIGTRAP)
-#endif  
-#endif  
+#endif
+#endif
 
 #ifdef STRUCT_RETURN
 #define	RETURNSP(rp) do {		\
