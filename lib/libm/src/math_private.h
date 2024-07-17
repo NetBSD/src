@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.32 2024/04/03 04:40:23 kre Exp $
+ * $NetBSD: math_private.h,v 1.33 2024/07/17 11:59:58 riastradh Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -264,8 +264,8 @@ do {								\
   union ieee_ext_u ew_u;					\
   ew_u.extu_ld = (d);						\
   (ix0) = GET_EXPSIGN(&ew_u);					\
-  (ix1) = ew_u.extu_fracl;					\
-  (ix2) = ew_u.extu_frach;					\
+  (ix1) = ew_u.extu_frach;					\
+  (ix2) = ew_u.extu_fracl;					\
 } while (0)
 
 /* Get expsign as a 16 bit int from a long double.  */

@@ -1,4 +1,4 @@
-/* $NetBSD: t_log.c,v 1.17 2024/07/16 03:14:16 riastradh Exp $ */
+/* $NetBSD: t_log.c,v 1.18 2024/07/17 11:59:58 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_log.c,v 1.17 2024/07/16 03:14:16 riastradh Exp $");
+__RCSID("$NetBSD: t_log.c,v 1.18 2024/07/17 11:59:58 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -238,16 +238,6 @@ ATF_TC_BODY(log10_exact, tc)
 	ATF_CHECK_EQ(signbit(log10(1)), 0);
 	ATF_CHECK_EQ(signbit(log10l(1)), 0);
 
-#if __HAVE_LONG_DOUBLE + 0 == 128
-	/*
-	 * Not sure if it's the same issue, but probably!
-	 *
-	 * log10l(x) != y: [1] log10l(0x1.4p+3=10)=0x1.ffffffffcf54a625cf632f6e120dp-1=0.99999999997786775, expected 0x1p+0=1
-	 * log10l(x) != y: [2] log10l(0x1.9p+6=100)=0x1.ffffc6bdc46c7020e9b1f5a2930ep+0=1.9999965871142409, expected 0x1p+1=2
-	 */
-	atf_tc_expect_fail("PR lib/58337: logl() crashes on arm64");
-#endif
-
 	for (i = 0; i < __arraycount(log10f_exact); i++) {
 		const float x = log10f_exact[i].x;
 		const float y = log10f_exact[i].y;
@@ -273,10 +263,6 @@ ATF_TC_BODY(log10_approx, tc)
 	    0.43429448190325182765112891891660508229439700580367L;
 	volatile long double log10e2 =
 	    2*0.43429448190325182765112891891660508229439700580367L;
-
-#if __HAVE_LONG_DOUBLE + 0 == 128
-	atf_tc_expect_fail("PR lib/58337: logl() crashes on arm64");
-#endif
 
 	ATF_CHECK_MSG((fabsf((log10f(e) - (float)log10e)/(float)log10e) <
 		2*FLT_EPSILON),
@@ -397,10 +383,6 @@ ATF_TC_BODY(log1p_approx, tc)
 	    1.7182818284590452353602874713526624977572470937L;
 	volatile long double e2m1 =	/* exp(2) - 1 */
 	    6.3890560989306502272304274605750078131803155705519L;
-
-#if __HAVE_LONG_DOUBLE + 0 == 128
-	atf_tc_expect_fail("PR lib/58337: logl() crashes on arm64");
-#endif
 
 	/*
 	 * Approximation is close enough that equality of the rounded
@@ -593,10 +575,6 @@ ATF_TC_BODY(log2_approx, tc)
 	volatile long double log2e2 =
 	    2*1.442695040888963407359924681001892137426645954153L;
 
-#if __HAVE_LONG_DOUBLE + 0 == 128
-	atf_tc_expect_fail("PR lib/58337: logl() crashes on arm64");
-#endif
-
 	ATF_CHECK_MSG((fabsf((log2f(e) - (float)log2e)/(float)log2e) <
 		2*FLT_EPSILON),
 	    "log2f(e)=%a=%.8g expected %a=%.8g",
@@ -716,10 +694,6 @@ ATF_TC_BODY(log_approx, tc)
 	    0.69314718055994530941723212145817656807550013436025L;
 	volatile long double log_10 =
 	    2.30258509299404568401799145468436420760110148862875L;
-
-#if __HAVE_LONG_DOUBLE + 0 == 128
-	atf_tc_expect_fail("PR lib/58337: logl() crashes on arm64");
-#endif
 
 	ATF_CHECK_MSG(fabsf((logf(2) - log_2)/log_2) < 2*FLT_EPSILON,
 	    "logf(2)=%a=%.8g expected %a=%.8g",
