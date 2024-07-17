@@ -1,4 +1,4 @@
-/* $NetBSD: t_log.c,v 1.18 2024/07/17 11:59:58 riastradh Exp $ */
+/* $NetBSD: t_log.c,v 1.19 2024/07/17 14:52:13 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_log.c,v 1.18 2024/07/17 11:59:58 riastradh Exp $");
+__RCSID("$NetBSD: t_log.c,v 1.19 2024/07/17 14:52:13 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -367,7 +367,14 @@ ATF_TC_BODY(log1p_exact, tc)
 	CHECK_EQ(2, log1p, +0., 0);
 	CHECKL_EQ(2, log1pl, +0., 0);
 
+#ifdef __i386__
+	atf_tc_expect_fail("PR port-i386/58434: single-float functions"
+	    " sometimes return surprisingly much precision");
+#endif
 	CHECK_EQ(3, log1pf, 1, logf(2));
+#ifdef __i386__
+	atf_tc_expect_pass();
+#endif
 	CHECK_EQ(3, log1p, 1, log(2));
 	CHECKL_EQ(3, log1pl, 1, logl(2));
 }
