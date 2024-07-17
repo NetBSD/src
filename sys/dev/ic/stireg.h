@@ -1,4 +1,4 @@
-/*	$NetBSD: stireg.h,v 1.8 2024/07/17 07:06:21 macallan Exp $	*/
+/*	$NetBSD: stireg.h,v 1.9 2024/07/17 08:28:22 macallan Exp $	*/
 
 /*	$OpenBSD: stireg.h,v 1.14 2015/04/05 23:25:57 miod Exp $	*/
 
@@ -641,6 +641,34 @@ STI_DEP(util);
  * NGLE register layout.
  * Based upon xc/programs/Xserver/hw/hp/ngle/dregs.h
  */
+
+#define BA(F,C,S,A,J,B,I)						\
+	(((F)<<31)|((C)<<27)|((S)<<24)|((A)<<21)|((J)<<16)|((B)<<12)|(I))
+	/* FCCCCSSSAAAJJJJJBBBBIIIIIIIIIIII */
+
+#define IBOvals(R,M,X,S,D,L,B,F)					\
+	(((R)<<8)|((M)<<16)|((X)<<24)|((S)<<29)|((D)<<28)|((L)<<31)|((B)<<1)|(F))
+	/* LSSDXXXXMMMMMMMMRRRRRRRRBBBBBBBF */
+
+#define	    IndexedDcd	0	/* Pixel data is indexed (pseudo) color */
+#define	    Otc04	2	/* Pixels in each longword transfer (4) */
+#define	    Otc32	5	/* Pixels in each longword transfer (32) */
+#define	    Ots08	3	/* Each pixel is size (8)d transfer (1) */
+#define	    OtsIndirect	6	/* Each bit goes through FG/BG color(8) */
+#define	    AddrLong	5	/* FB address is Long aligned (pixel) */
+#define	    BINovly	0x2	/* 8 bit overlay */
+#define	    BINapp0I	0x0	/* Application Buffer 0, Indexed */
+#define	    BINapp1I	0x1	/* Application Buffer 1, Indexed */
+#define	    BINapp0F8	0xa	/* Application Buffer 0, Fractional 8-8-8 */
+#define	    BINattr	0xd	/* Attribute Bitmap */
+#define	    RopSrc 	0x3
+#define	    RopInv 	0xc
+#define	    BitmapExtent08  3	/* Each write hits ( 8) bits in depth */
+#define	    BitmapExtent32  5	/* Each write hits (32) bits in depth */
+#define	    DataDynamic	    0	/* Data register reloaded by direct access */
+#define	    MaskDynamic	    1	/* Mask register reloaded by direct access */
+#define	    MaskOtc	    0	/* Mask contains Object Count valid bits */
+
 #define	NGLE_REG_1		0x000118	/* Artist LUT blt ctrl */
 #define	NGLE_REG_28		0x000420
 #define	NGLE_REG_2		0x000480	/* LUT blt src? */
