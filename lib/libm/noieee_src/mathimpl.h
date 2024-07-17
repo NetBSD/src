@@ -1,4 +1,4 @@
-/*	$NetBSD: mathimpl.h,v 1.10 2011/11/02 02:34:56 christos Exp $	*/
+/*	$NetBSD: mathimpl.h,v 1.11 2024/07/17 12:00:48 riastradh Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -56,7 +56,7 @@
     * Args are the name to define, the decimal floating point value,
     * four 16-bit chunks of the float value in hex
     * (because the vax and tahoe differ in float format!), the power
-    * of 2 of the hex-float exponent, and the hex-float mantissa.
+    * of 2 of the hex-float exponent, and the hex-float significand.
     * Most of these arguments are not used at compile time; they are
     * used in a post-check to make sure the constants were compiled
     * correctly.

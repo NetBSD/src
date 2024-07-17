@@ -1,4 +1,4 @@
-/*	$NetBSD: s_atanl.c,v 1.7 2024/06/09 13:35:38 riastradh Exp $	*/
+/*	$NetBSD: s_atanl.c,v 1.8 2024/07/17 12:00:48 riastradh Exp $	*/
 
 /* FreeBSD: head/lib/msun/src/s_atan.c 176451 2008-02-22 02:30:36Z das */
 /*
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_atanl.c,v 1.7 2024/06/09 13:35:38 riastradh Exp $");
+__RCSID("$NetBSD: s_atanl.c,v 1.8 2024/07/17 12:00:48 riastradh Exp $");
 
 #include "namespace.h"
 
@@ -67,7 +67,7 @@ atanl(long double x)
 	    if(expsign>0) return  atanhi[3]+atanlo[3];
 	    else     return -atanhi[3]-atanlo[3];
 	}
-	/* Extract the exponent and the first few bits of the mantissa. */
+	/* Extract the exponent and the first few bits of the significand. */
 	/* XXX There should be a more convenient way to do this. */
 	expman = (expt << 8) | ((u.extu_frach >> (MANH_SIZE - 9)) & 0xff);
 	if (expman < ((BIAS - 2) << 8) + 0xc0) {	/* |x| < 0.4375 */
