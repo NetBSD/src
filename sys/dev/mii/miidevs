@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.171 2023/10/17 14:07:51 msaitoh Exp $
+$NetBSD: miidevs,v 1.172 2024/07/17 13:37:05 msaitoh Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -280,11 +280,15 @@ model xxMARVELL I210		0x0000 I210 10/100/1000 media interface
 model xxMARVELL I82563		0x000a i82563 10/100/1000 media interface
 model ATTANSIC I82578		0x0004 Intel 82578 10/100/1000 media interface
 /* Acquired by MaxLinear */
-model INTEL2 GPY211		0x0000 MaxLinear GPY21[125] 2.5G media interface
+model INTEL2 GPY211		0x0000 MaxLinear GPY21[125] 2.5G PHY
 model INTEL2 I226_1		0x0001 I226 2.5G media interface (1)
 model INTEL2 I226_2		0x0005 I226 2.5G media interface (2)
 model INTEL2 I225		0x000c I225 2.5G media interface
+model INTEL2 GPY211_2		0x0020 MaxLinear GPY21[12] 2.5G PHY (2)
+model INTEL2 GPY211_3		0x0021 MaxLinear GPY211 2.5G PHY (3)
+model INTEL2 GPY212		0x0022 MaxLinear GPY212 2.5G PHY
 model INTEL2 GPY115		0x0030 MaxLinear GPY115 Gigabit PHY
+model INTEL2 GPY215		0x0032 MaxLinear GPY215 2.5G PHY
 
 /* JMicron PHYs */
 model JMICRON JMP211		0x0021 JMP211 10/100/1000 media interface
