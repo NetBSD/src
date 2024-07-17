@@ -1,4 +1,4 @@
-/*	$NetBSD: stireg.h,v 1.7 2024/07/15 10:30:42 macallan Exp $	*/
+/*	$NetBSD: stireg.h,v 1.8 2024/07/17 07:06:21 macallan Exp $	*/
 
 /*	$OpenBSD: stireg.h,v 1.14 2015/04/05 23:25:57 miod Exp $	*/
 
@@ -641,9 +641,9 @@ STI_DEP(util);
  * NGLE register layout.
  * Based upon xc/programs/Xserver/hw/hp/ngle/dregs.h
  */
-#define	NGLE_REG_1		0x000118
+#define	NGLE_REG_1		0x000118	/* Artist LUT blt ctrl */
 #define	NGLE_REG_28		0x000420
-#define	NGLE_REG_2		0x000480
+#define	NGLE_REG_2		0x000480	/* LUT blt src? */
 #define	NGLE_REG_3		0x0004a0	/* palette index */
 #define	NGLE_REG_22		0x0005a0
 #define	NGLE_REG_23		0x0005c0
@@ -672,15 +672,25 @@ STI_DEP(util);
 #define	NGLE_REG_34		0x200008	/* # of fifo slots */
 #define	NGLE_REG_17		0x200100	/* cursor coordinates */
 #define	NGLE_REG_18		0x200104	/* cursor enable */
-#define	NGLE_REG_26		0x200118
+#define	NGLE_REG_26		0x200118	/* EG LUT blt ctrl */
 #define	NGLE_REG_19		0x200200
 #define	NGLE_REG_20		0x200208	/* cursor geometry */
 #define	NGLE_REG_21		0x200218	/* Artist misc video */
 #define	NGLE_REG_27		0x200308	/* Artist misc ctrl */
 #define	NGLE_REG_29		0x210000	/* HCRX cursor coord & enable */
+	#define HCRX_ENABLE_CURSOR	0x80000000
 #define	NGLE_REG_30		0x210004	/* HCRX cursor address */
 #define	NGLE_REG_31		0x210008	/* HCRX cursor data */
-#define	NGLE_REG_38		0x210020	/* colormap data */
+#define	NGLE_REG_38		0x210020	/* HCRX LUT blt ctrl */
+	/* EWRRRROO OOOOOOOO TTRRRRLL LLLLLLLL */
+	#define LBC_ENABLE	0x80000000
+	#define LBC_WAIT_BLANK	0x40000000
+	#define LBS_OFFSET_SHIFT	16
+	#define LBC_TYPE_MASK		0xc000
+	#define LBC_TYPE_CMAP		0
+	#define LBC_TYPE_CURSOR		0x8000
+	#define LBC_TYPE_OVERLAY	0xc000
+	#define LBC_LENGTH_SHIFT	0
 #define	NGLE_REG_41		0x210024
 #define	NGLE_REG_42		0x210028
 #define	NGLE_REG_43		0x21002c
@@ -688,8 +698,13 @@ STI_DEP(util);
 #define	NGLE_REG_45		0x210034
 #define	NGLE_REG_32		0x21003c
 #define	NGLE_REG_33		0x210040	/* HCRX misc video */
-#define	NGLE_REG_39		0x210120
-#define	NGLE_REG_40		0x210130
+	#define HCRX_VIDEO_ENABLE	0x0A000000
+#define	NGLE_REG_39		0x210120	/* HCRX 'hyperbowl' mode 2 */
+	#define HYPERBOWL_MODE2_8_24					15
+#define	NGLE_REG_40		0x210130	/* HCRX 'hyperbowl' */
+	#define HYPERBOWL_MODE_FOR_8_OVER_88_LUT0_NO_TRANSPARENCIES	4
+	#define HYPERBOWL_MODE01_8_24_LUT0_TRANSPARENT_LUT1_OPAQUE	8
+	#define HYPERBOWL_MODE01_8_24_LUT0_OPAQUE_LUT1_OPAQUE		10
 
 #define	NGLE_BUFF0_CMAP0	0x00001e02
 #define	NGLE_BUFF1_CMAP0	0x02001e02
