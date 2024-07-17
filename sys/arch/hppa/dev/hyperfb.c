@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.2 2024/07/15 10:26:09 macallan Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.3 2024/07/17 07:11:01 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.2 2024/07/15 10:26:09 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.3 2024/07/17 07:11:01 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -145,10 +145,8 @@ static void	hyperfb_erasecols(void *, int, int, int, long);
 static void	hyperfb_copyrows(void *, int, int, int);
 static void	hyperfb_eraserows(void *, int, int, long);
 
-#if 0
 static void	hyperfb_move_cursor(struct hyperfb_softc *, int, int);
 static int	hyperfb_do_cursor(struct hyperfb_softc *, struct wsdisplay_cursor *);
-#endif
 
 #define BA(F,C,S,A,J,B,I)						\
 	(((F)<<31)|((C)<<27)|((S)<<24)|((A)<<21)|((J)<<16)|((B)<<12)|(I))
@@ -593,7 +591,6 @@ hyperfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			return ret;
 		}
 
-#if 0
 	case WSDISPLAYIO_GCURPOS:
 		{
 			struct wsdisplay_curpos *cp = (void *)data;
@@ -626,7 +623,6 @@ hyperfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 
 			return hyperfb_do_cursor(sc, cursor);
 		}
-#endif
 
 	case WSDISPLAYIO_SVIDEO:
 		hyperfb_set_video(sc, *(int *)data);
@@ -860,18 +856,14 @@ hyperfb_setup(struct hyperfb_softc *sc)
 	hyperfb_write4(sc, NGLE_REG_13, 0xffffffff);
 	hyperfb_wait(sc);
 	hyperfb_write4(sc, NGLE_REG_3, 0);
-	hyperfb_write4(sc, NGLE_REG_4, 0);
-	hyperfb_write4(sc, NGLE_REG_4, 0);
 	hyperfb_write4(sc, NGLE_REG_4, 0x000000ff);	/* BG */
 	hyperfb_write4(sc, NGLE_REG_4, 0x00ff0000);	/* FG */
 	hyperfb_wait(sc);
 	hyperfb_write4(sc, NGLE_REG_2, 0);
-	hyperfb_write4(sc, NGLE_REG_1, 0x80008004);
+	hyperfb_write4(sc, NGLE_REG_38, LBC_ENABLE | LBC_TYPE_CURSOR | 4);
 	hyperfb_setup_fb(sc);	
 
-	//hyperfb_write4(sc, NGLE_REG_29, 0x80200020);
-
-	//hyperfb_move_cursor(sc, 100, 100);
+	hyperfb_move_cursor(sc, 100, 100);
 
 }
 
@@ -889,9 +881,9 @@ hyperfb_set_video(struct hyperfb_softc *sc, int on)
 	reg = hyperfb_read4(sc, NGLE_REG_33);
 	
 	if (on) {
-		hyperfb_write4(sc, NGLE_REG_33, reg | 0x0a000000);
+		hyperfb_write4(sc, NGLE_REG_33, reg | HCRX_VIDEO_ENABLE);
 	} else {
-		hyperfb_write4(sc, NGLE_REG_33, reg & ~0x0a000000);
+		hyperfb_write4(sc, NGLE_REG_33, reg & ~HCRX_VIDEO_ENABLE);
 	}
 }
 
@@ -1150,4 +1142,159 @@ hyperfb_eraserows(void *cookie, int row, int nrows, long fillattr)
 		if (ri->ri_crow >= row && ri->ri_crow < (row + nrows))
 			ri->ri_flg &= ~RI_CURSOR;
 	}
+}
+
+static void
+hyperfb_move_cursor(struct hyperfb_softc *sc, int x, int y)
+{
+	uint32_t pos;
+
+	sc->sc_cursor_x = x;
+	x -= sc->sc_hot_x;
+	sc->sc_cursor_y = y;
+	y -= sc->sc_hot_y;
+
+	if (x < 0) x = 0x1000 - x;
+	if (y < 0) y = 0x1000 - y;
+	pos = (x << 16) | y;
+	if (sc->sc_enabled) pos |= HCRX_ENABLE_CURSOR;
+	hyperfb_wait(sc);
+	hyperfb_write4(sc, NGLE_REG_29, pos);
+}
+
+static int
+hyperfb_do_cursor(struct hyperfb_softc *sc, struct wsdisplay_cursor *cur)
+{
+
+	if (cur->which & WSDISPLAY_CURSOR_DOCUR) {
+
+		sc->sc_enabled = cur->enable;
+		cur->which |= WSDISPLAY_CURSOR_DOPOS;
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOHOT) {
+
+		sc->sc_hot_x = cur->hot.x;
+		sc->sc_hot_y = cur->hot.y;
+		cur->which |= WSDISPLAY_CURSOR_DOPOS;
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOPOS) {
+
+		hyperfb_move_cursor(sc, cur->pos.x, cur->pos.y);
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOCMAP) {
+		uint32_t rgb;
+		uint8_t r[2], g[2], b[2];
+
+		copyin(cur->cmap.blue, b, 2);
+		copyin(cur->cmap.green, g, 2);
+		copyin(cur->cmap.red, r, 2);
+		mutex_enter(&sc->sc_hwlock);
+		hyperfb_wait(sc);
+		hyperfb_write4(sc, NGLE_REG_10, 0xBBE0F000);
+		hyperfb_write4(sc, NGLE_REG_14, 0x03000300);
+		hyperfb_write4(sc, NGLE_REG_13, 0xffffffff);
+		hyperfb_wait(sc);
+		hyperfb_write4(sc, NGLE_REG_3, 0);
+		rgb = (r[0] << 16) | (g[0] << 8) | b[0];
+		hyperfb_write4(sc, NGLE_REG_4, rgb);	/* BG */
+		rgb = (r[1] << 16) | (g[1] << 8) | b[1];
+		hyperfb_write4(sc, NGLE_REG_4, rgb);	/* FG */
+		hyperfb_write4(sc, NGLE_REG_2, 0);
+		hyperfb_write4(sc, NGLE_REG_38, LBC_ENABLE | LBC_TYPE_CURSOR | 4);
+
+		hyperfb_setup_fb(sc);	
+		mutex_exit(&sc->sc_hwlock);
+
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOSHAPE) {
+		uint32_t buffer[128], latch, tmp;
+		int i;
+
+		copyin(cur->mask, buffer, 512);
+		hyperfb_wait(sc);
+		hyperfb_write4(sc, NGLE_REG_30, 0);
+		for (i = 0; i < 128; i += 2) {
+			latch = 0;
+			tmp = buffer[i] & 0x80808080;
+			latch |= tmp >> 7;
+			tmp = buffer[i] & 0x40404040;
+			latch |= tmp >> 5;
+			tmp = buffer[i] & 0x20202020;
+			latch |= tmp >> 3;
+			tmp = buffer[i] & 0x10101010;
+			latch |= tmp >> 1;
+			tmp = buffer[i] & 0x08080808;
+			latch |= tmp << 1;
+			tmp = buffer[i] & 0x04040404;
+			latch |= tmp << 3;
+			tmp = buffer[i] & 0x02020202;
+			latch |= tmp << 5;
+			tmp = buffer[i] & 0x01010101;
+			latch |= tmp << 7;
+			hyperfb_write4(sc, NGLE_REG_31, latch);
+			latch = 0;
+			tmp = buffer[i + 1] & 0x80808080;
+			latch |= tmp >> 7;
+			tmp = buffer[i + 1] & 0x40404040;
+			latch |= tmp >> 5;
+			tmp = buffer[i + 1] & 0x20202020;
+			latch |= tmp >> 3;
+			tmp = buffer[i + 1] & 0x10101010;
+			latch |= tmp >> 1;
+			tmp = buffer[i + 1] & 0x08080808;
+			latch |= tmp << 1;
+			tmp = buffer[i + 1] & 0x04040404;
+			latch |= tmp << 3;
+			tmp = buffer[i + 1] & 0x02020202;
+			latch |= tmp << 5;
+			tmp = buffer[i + 1] & 0x01010101;
+			latch |= tmp << 7;
+			hyperfb_write4(sc, NGLE_REG_31, latch);
+		}
+
+		copyin(cur->image, buffer, 512);
+		hyperfb_wait(sc);
+		hyperfb_write4(sc, NGLE_REG_30, 0x80);
+		for (i = 0; i < 128; i += 2) {
+			latch = 0;
+			tmp = buffer[i] & 0x80808080;
+			latch |= tmp >> 7;
+			tmp = buffer[i] & 0x40404040;
+			latch |= tmp >> 5;
+			tmp = buffer[i] & 0x20202020;
+			latch |= tmp >> 3;
+			tmp = buffer[i] & 0x10101010;
+			latch |= tmp >> 1;
+			tmp = buffer[i] & 0x08080808;
+			latch |= tmp << 1;
+			tmp = buffer[i] & 0x04040404;
+			latch |= tmp << 3;
+			tmp = buffer[i] & 0x02020202;
+			latch |= tmp << 5;
+			tmp = buffer[i] & 0x01010101;
+			latch |= tmp << 7;
+			hyperfb_write4(sc, NGLE_REG_31, latch);
+			latch = 0;
+			tmp = buffer[i + 1] & 0x80808080;
+			latch |= tmp >> 7;
+			tmp = buffer[i + 1] & 0x40404040;
+			latch |= tmp >> 5;
+			tmp = buffer[i + 1] & 0x20202020;
+			latch |= tmp >> 3;
+			tmp = buffer[i + 1] & 0x10101010;
+			latch |= tmp >> 1;
+			tmp = buffer[i + 1] & 0x08080808;
+			latch |= tmp << 1;
+			tmp = buffer[i + 1] & 0x04040404;
+			latch |= tmp << 3;
+			tmp = buffer[i + 1] & 0x02020202;
+			latch |= tmp << 5;
+			tmp = buffer[i + 1] & 0x01010101;
+			latch |= tmp << 7;
+			hyperfb_write4(sc, NGLE_REG_31, latch);
+		}
+		hyperfb_setup_fb(sc);
+	}
+
+	return 0;
 }
