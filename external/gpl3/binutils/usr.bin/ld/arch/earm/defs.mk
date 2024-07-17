@@ -8,5 +8,5 @@ G_EMULATION_OFILES=earmelf_nbsd_eabi.o earmelfb_nbsd_eabi.o earmelf_nbsd_eabihf.
 G_INCLUDES=
 G_OFILES=ldgram.o ldlex-wrapper.o lexsup.o ldlang.o  mri.o ldctor.o ldmain.o plugin.o  ldwrite.o ldexp.o  ldemul.o ldver.o ldmisc.o  ldfile.o ldcref.o earmelf_nbsd_eabi.o earmelfb_nbsd_eabi.o earmelf_nbsd_eabihf.o earmelfb_nbsd_eabihf.o earmelf_nbsd.o earmelfb_nbsd.o earmelf.o ldelf.o ldelfgen.o  ldbuildid.o
 G_TEXINFOS=ld.texi ldint.texi
-G_target_alias=arm--netbsdelf-eabi
+G_target_alias=armv4--netbsdelf-eabi
 G_enable_initfini_array=yes

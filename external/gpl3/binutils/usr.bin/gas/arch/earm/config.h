@@ -258,16 +258,16 @@
 /* #undef STRICTCOFF */
 
 /* Target alias. */
-#define TARGET_ALIAS "arm--netbsdelf-eabi"
+#define TARGET_ALIAS "armv4--netbsdelf-eabi"
 
 /* Define as 1 if big endian. */
 #define TARGET_BYTES_BIG_ENDIAN 0
 
 /* Canonical target. */
-#define TARGET_CANONICAL "arm--netbsdelf-eabi"
+#define TARGET_CANONICAL "armv4--netbsdelf-eabi"
 
 /* Target CPU. */
-#define TARGET_CPU "arm"
+#define TARGET_CPU "armv4"
 
 /* Target OS. */
 #define TARGET_OS "netbsdelf-eabi"
