@@ -11,7 +11,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: e_fmodl.c,v 1.2 2013/11/14 15:25:22 martin Exp $");
+__RCSID("$NetBSD: e_fmodl.c,v 1.3 2024/07/17 12:00:48 riastradh Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/lib/msun/src/e_fmodl.c 181063 2008-07-31 20:09:47Z das $");
 #endif
@@ -43,8 +43,8 @@ typedef	uint32_t manh_t;
 
 /*
  * These macros add and remove an explicit integer bit in front of the
- * fractional mantissa, if the architecture doesn't have such a bit by
- * default already.
+ * fractional significand, if the architecture doesn't have such a bit
+ * by default already.
  */
 #ifdef LDBL_IMPLICIT_NBIT
 #define	SET_NBIT(hx)	((hx) | (1ULL << EXT_FRACHBITS))
@@ -65,9 +65,9 @@ static const long double one = 1.0, Zero[] = {0.0, -0.0,};
  * Method: shift and subtract
  *
  * Assumptions:
- * - The low part of the mantissa fits in a manl_t exactly.
- * - The high part of the mantissa fits in an int64_t with enough room
- *   for an explicit integer bit in front of the fractional bits.
+ * - The low part of the significand fits in a manl_t exactly.
+ * - The high part of the significand fits in an int64_t with enough
+ *   room for an explicit integer bit in front of the fractional bits.
  */
 long double
 __ieee754_fmodl(long double x, long double y)
@@ -143,7 +143,7 @@ __ieee754_fmodl(long double x, long double y)
 	    hx = hx+hx+(lx>>MANL_SHIFT); lx = lx+lx;
 	    iy -= 1;
 	}
-	ux.extu_frach = hx; /* The mantissa is truncated here if needed. */
+	ux.extu_frach = hx; /* The significand is truncated here if needed. */
 	ux.extu_fracl = lx;
 	if (iy < LDBL_MIN_EXP) {
 	    ux.extu_exp = iy + (BIAS + 512);

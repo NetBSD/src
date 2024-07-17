@@ -79,7 +79,7 @@ static const struct {
 	/*
 	 * XXX hi is rounded down, and the formatting is not quite normal.
 	 * But I rather like both.  The 0x1.*p format is good for 4N+1
-	 * mantissa bits.  Rounding down makes the lo terms positive,
+	 * significand bits.  Rounding down makes the lo terms positive,
 	 * so that the columnar formatting can be simpler.
 	 */
 	{ 0x1.0163da9fb3335p+0, 0x1.b61299ab8cdb7p-54 },
