@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.3 2024/07/17 07:11:01 macallan Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.4 2024/07/17 08:30:28 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -28,10 +28,11 @@
  
 /*
  * a native driver for HCRX / hyperdrive cards
+ * tested on a HCRX24Z in a C360 only so far
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.3 2024/07/17 07:11:01 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.4 2024/07/17 08:30:28 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -73,11 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.3 2024/07/17 07:11:01 macallan Exp $")
 
 #define HCRX_CONFIG_24BIT	0x100
 
-#define HYPERBOWL_MODE_FOR_8_OVER_88_LUT0_NO_TRANSPARENCIES	4
-#define HYPERBOWL_MODE01_8_24_LUT0_TRANSPARENT_LUT1_OPAQUE	8
-#define HYPERBOWL_MODE01_8_24_LUT0_OPAQUE_LUT1_OPAQUE		10
-#define HYPERBOWL_MODE2_8_24					15
-
 int hyperfb_match(device_t, cfdata_t, void *);
 void hyperfb_attach(device_t, device_t, void *);
 
@@ -105,7 +101,6 @@ struct	hyperfb_softc {
 #define HW_FB	0
 #define HW_FILL	1
 #define HW_BLIT	2
-	uint32_t sc_rect_colour, sc_rect_height;
 	/* cursor stuff */
 	int sc_cursor_x, sc_cursor_y;
 	int sc_hot_x, sc_hot_y, sc_enabled;
@@ -147,33 +142,6 @@ static void	hyperfb_eraserows(void *, int, int, long);
 
 static void	hyperfb_move_cursor(struct hyperfb_softc *, int, int);
 static int	hyperfb_do_cursor(struct hyperfb_softc *, struct wsdisplay_cursor *);
-
-#define BA(F,C,S,A,J,B,I)						\
-	(((F)<<31)|((C)<<27)|((S)<<24)|((A)<<21)|((J)<<16)|((B)<<12)|(I))
-	/* FCCCCSSSAAAJJJJJBBBBIIIIIIIIIIII */
-
-#define IBOvals(R,M,X,S,D,L,B,F)					\
-	(((R)<<8)|((M)<<16)|((X)<<24)|((S)<<29)|((D)<<28)|((L)<<31)|((B)<<1)|(F))
-	/* LSSDXXXXMMMMMMMMRRRRRRRRBBBBBBBF */
-
-#define	    IndexedDcd	0	/* Pixel data is indexed (pseudo) color */
-#define	    Otc04	2	/* Pixels in each longword transfer (4) */
-#define	    Otc32	5	/* Pixels in each longword transfer (32) */
-#define	    Ots08	3	/* Each pixel is size (8)d transfer (1) */
-#define	    OtsIndirect	6	/* Each bit goes through FG/BG color(8) */
-#define	    AddrLong	5	/* FB address is Long aligned (pixel) */
-#define	    BINovly	0x2	/* 8 bit overlay */
-#define	    BINapp0I	0x0	/* Application Buffer 0, Indexed */
-#define	    BINapp1I	0x1	/* Application Buffer 1, Indexed */
-#define	    BINapp0F8	0xa	/* Application Buffer 0, Fractional 8-8-8 */
-#define	    BINattr	0xd	/* Attribute Bitmap */
-#define	    RopSrc 	0x3
-#define	    RopInv 	0xc
-#define	    BitmapExtent08  3	/* Each write hits ( 8) bits in depth */
-#define	    BitmapExtent32  5	/* Each write hits (32) bits in depth */
-#define	    DataDynamic	    0	/* Data register reloaded by direct access */
-#define	    MaskDynamic	    1	/* Mask register reloaded by direct access */
-#define	    MaskOtc	    0	/* Mask contains Object Count valid bits */
 
 static inline void hyperfb_wait_fifo(struct hyperfb_softc *, uint32_t);
 
@@ -769,9 +737,6 @@ hyperfb_setup(struct hyperfb_softc *sc)
 	sc->sc_hot_y = 0;
 	sc->sc_enabled = 0;
 	sc->sc_video_on = 1;
-
-	sc->sc_rect_colour = 0xf0000000;
-	sc->sc_rect_height = 0;
 
 	/* set Bt458 read mask register to all planes */
 	/* XXX I'm not sure HCRX even has one of these */
