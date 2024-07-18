@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.29 2021/06/10 07:21:07 mcf Exp $	*/
+/*	$NetBSD: director.c,v 1.30 2024/07/18 22:10:51 blymn Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -57,6 +57,7 @@ saved_data_t  saved_output;	/* In testlang_conf.y */
 int to_slave;
 int from_slave;
 int master;			/* pty to the slave */
+int nofail;			/* don't exit on check file fail */
 int verbose;			/* control verbosity of tests */
 int check_file_flag;		/* control check-file generation */
 const char *check_path;		/* path to prepend to check files for output
@@ -136,16 +137,20 @@ main(int argc, char *argv[])
 	int pipe_to_slave[2], pipe_from_slave[2];
 
 	termpath = term = slave = NULL;
+	nofail = 0;
 	verbose = 0;
 	check_file_flag = 0;
 
-	while ((ch = getopt(argc, argv, "vgfC:s:t:T:")) != -1) {
+	while ((ch = getopt(argc, argv, "nvgfC:s:t:T:")) != -1) {
 		switch (ch) {
 		case 'C':
 			check_path = optarg;
 			break;
 		case 'T':
 			termpath = optarg;
+			break;
+		case 'n':
+			nofail = 1;
 			break;
 		case 's':
 			slave = optarg;

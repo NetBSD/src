@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.54 2023/12/10 15:51:13 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.55 2024/07/18 22:10:51 blymn Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -55,6 +55,7 @@ extern int master;
 extern struct pollfd readfd;
 extern char *check_path;
 extern char *cur_file;		/* from director.c */
+extern int nofail;		/* from director.c */
 
 int yylex(void);
 
@@ -1004,7 +1005,7 @@ compare_streams(const char *filename, bool discard)
 					data, (data >= ' ' )? data : '-');
 		}
 
-		if (!create_check_file && ref != data) {
+		if (!nofail && !create_check_file && ref != data) {
 			errx(2, "%s:%zu: refresh data from slave does "
 			    "not match expected from file %s offset %zu "
 			    "[reference 0x%02x (%c) != slave 0x%02x (%c)]",
@@ -1029,7 +1030,7 @@ compare_streams(const char *filename, bool discard)
 	}
 
 	/* discard any excess saved output if required */
-	if (discard) {
+	if (discard || nofail) {
 		saved_output.count = 0;
 		saved_output.readp = 0;
 	}
