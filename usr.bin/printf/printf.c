@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.54 2021/05/20 02:01:07 christos Exp $	*/
+/*	$NetBSD: printf.c,v 1.55 2024/07/18 12:08:11 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.54 2021/05/20 02:01:07 christos Exp $");
+__RCSID("$NetBSD: printf.c,v 1.55 2024/07/18 12:08:11 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,7 +146,7 @@ main(int argc, char *argv[])
 
 	/*
 	 * printf does not comply with Posix XBD 12.2 - there are no opts,
-	 * not even the -- end of options marker.   Do not run getoot().
+	 * not even the -- end of options marker.   Do not run getopt().
 	 */
 	if (argc > 2 && strchr(argv[1], '%') == NULL) {
 		int o;
