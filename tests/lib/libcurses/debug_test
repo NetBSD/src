@@ -26,10 +26,13 @@ usage() {
 	echo "         ${CURSES_TRACE_FILE}"
 	echo "	  -L : Add the argument as a prefix to LD_LIBRARY_PATH to"
 	echo "	       use an alternate libcurses version"
+	echo "    -n : Add the nofail option to the director invocation"
+	echo "       : so the director won't exit on check_file mismatch"
 	echo "    -s : Specify the slave command.  Defaults to \"../slave/slave\""
 	echo "    -v : Enable verbose output"
 	echo "    -g : Enable check file generation if the file does not exists"
 	echo "    -f : Forces check file generation if -g flag is set"
+	echo "    -t : Specify the TERM to use for the tests"
 	echo
 }
 
@@ -41,7 +44,7 @@ usage() {
 #ARGS="-T ${BASEDIR} -I ${INCLUDE_PATH} -C ${CHECK_PATH}"
 ARGS="-T ${BASEDIR} -C ${CHECK_PATH}"
 #
-while getopts cf:F:L:s:vg opt
+while getopts cf:F:L:ns:t:vg opt
 do
     case "${opt}" in
 	c)
@@ -60,8 +63,16 @@ do
 	    LD_LIBRARY_PATH=${OPTARG}:${LD_LIBRARY_PATH}
 	    ;;
 
+	n)
+	    ARGS="-n ${ARGS} "
+	    ;;
+
 	s)
 	    SLAVE=${OPTARG}
+	    ;;
+
+	t)
+	    ARGS="-t ${OPTARG} ${ARGS}"
 	    ;;
 
 	v)
