@@ -1,4 +1,4 @@
-/*	$NetBSD: ruserpass.c,v 1.33 2007/04/17 05:52:04 lukem Exp $	*/
+/*	$NetBSD: ruserpass.c,v 1.34 2024/07/19 03:53:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: ruserpass.c,v 1.33 2007/04/17 05:52:04 lukem Exp $");
+__RCSID("$NetBSD: ruserpass.c,v 1.34 2024/07/19 03:53:13 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -247,7 +247,7 @@ ruserpass(const char *host, char **aname, char **apass, char **aacct)
 				tmp++;
 			}
 			if (tmp == macbuf + 4096) {
-				fputs("4K macro buffer exceeded.\n",
+				fputs("4 KiB macro buffer exceeded.\n",
 				    ttyout);
 				goto bad;
 			}

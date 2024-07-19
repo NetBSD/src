@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.141 2021/01/06 09:15:59 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.142 2024/07/19 03:53:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2021 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.141 2021/01/06 09:15:59 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.142 2024/07/19 03:53:13 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -2487,7 +2487,7 @@ macdef(int argc, char *argv[])
 		while ((c = getchar()) != '\n' && c != EOF)
 			/* LOOP */;
 		if (c == EOF || getchar() == '\n') {
-			fputs("Macro not defined - 4K buffer exceeded.\n",
+			fputs("Macro not defined - 4 KiB buffer exceeded.\n",
 			    ttyout);
 			code = -1;
 			return;
