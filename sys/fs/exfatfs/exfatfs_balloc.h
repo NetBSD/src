@@ -1,4 +1,4 @@
-/* $NetBSD: exfatfs_balloc.h,v 1.1.2.2 2024/07/03 04:08:47 perseant Exp $ */
+/* $NetBSD: exfatfs_balloc.h,v 1.1.2.3 2024/07/19 16:19:15 perseant Exp $ */
 
 /*-
  * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
@@ -31,15 +31,12 @@
 
 #include <fs/exfatfs/exfatfs.h>
 
-/* Convert cluster number to disk address and offset */
+/* Convert cluster number to logical block and offset in bitmap */
 #define NBBYSHIFT		3 /* 1 << NBBYSHIFT == NBBY == 8 */
-#define LBNSIZE(fs)		(1 << LBNSHIFT(fs))
-#define LBNSHIFT(fs)		MIN(MAXPSHIFT, ((fs)->xf_BytesPerSectorShift + \
-                                (fs)->xf_SectorsPerClusterShift))
-#define LBNOFF2CLUSTER(fs, lbn, off) ((lbn << BITMAPSHIFT(fs)) + (off) + 2)
-#define BITMAPSHIFT(fs)		(LBNSHIFT(fs) + NBBYSHIFT)
+#define BITMAPSHIFT(fs)		(EXFATFS_LSHIFT(fs) + NBBYSHIFT)
 #define BITMAPLBN(fs, cn)	(((cn) - 2) >> BITMAPSHIFT(fs))
 #define BITMAPOFF(fs, cn)	(((cn) - 2) & ((1 << BITMAPSHIFT(fs)) - 1))
+#define LBNOFF2CLUSTER(fs, lbn, off) ((lbn << BITMAPSHIFT(fs)) + (off) + 2)
 #define INVALID			(~(uint32_t)0)
 
 int exfatfs_bitmap_init(struct exfatfs *);

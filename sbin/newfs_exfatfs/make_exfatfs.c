@@ -1,4 +1,4 @@
-/*	$NetBSD: make_exfatfs.c,v 1.1.2.2 2024/07/03 21:56:17 perseant Exp $	*/
+/*	$NetBSD: make_exfatfs.c,v 1.1.2.3 2024/07/19 16:19:16 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_exfatfs.c,v 1.1.2.2 2024/07/03 21:56:17 perseant Exp $");
+__RCSID("$NetBSD: make_exfatfs.c,v 1.1.2.3 2024/07/19 16:19:16 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -602,7 +602,7 @@ make_exfatfs(int devfd, uint secsize, struct dkwedge_info *dkw, uint bsize,
 	if (Vflag)
 		printf("First cluster of root directory: 0x%lx (byte 0x%llx)\n",
 		       (unsigned long)fs->xf_FirstClusterOfRootDirectory,
-		       (unsigned long long)EXFATFS_CLUSTER2HWADDR(fs, fs->xf_FirstClusterOfRootDirectory) * secsize);
+		       (unsigned long long)EXFATFS_LC2D(fs, fs->xf_FirstClusterOfRootDirectory) * secsize);
 	
 	/*
 	 * Prepare root directory entries.
@@ -633,7 +633,7 @@ make_exfatfs(int devfd, uint secsize, struct dkwedge_info *dkw, uint bsize,
 
 	/* Size of bitmap data, in clusters */
 	bitmap_cluster_size = howmany(dirent_bitmap.xd_dataLength,
-				      CLUSTERSIZE(fs));
+				      EXFATFS_CSIZE(fs));
 	
 	/* Third root directory entry: Up-case Table */
 	/* This too has cluster data, like a file */
@@ -652,21 +652,21 @@ make_exfatfs(int devfd, uint secsize, struct dkwedge_info *dkw, uint bsize,
 		       (unsigned long)dirent_upcase.xd_firstCluster);
 	/* Size of upcase table, in clusters */
 	upcase_cluster_size = howmany(dirent_upcase.xd_dataLength,
-				      CLUSTERSIZE(fs));
+				      EXFATFS_CSIZE(fs));
 
 	/*
 	 * Write the upcase table to disk.
 	 */
-	daddr = EXFATFS_CLUSTER2HWADDR(fs, dirent_upcase.xd_firstCluster);
+	daddr = EXFATFS_LC2D(fs, dirent_upcase.xd_firstCluster);
 	resid = sizeof(exfatfs_recommended_upcase_table_compressed);
-	for (i = 0; resid > 0; i += SECSIZE(fs), resid -= SECSIZE(fs)) {
+	for (i = 0; resid > 0; i += EXFATFS_LSIZE(fs), resid -= EXFATFS_LSIZE(fs)) {
 		if (!Nflag) {
-			bp = getblk(devvp, daddr, SECSIZE(fs));
- 			memset(bp->b_data, 0, SECSIZE(fs));
-			memcpy(bp->b_data, ((const char *)exfatfs_recommended_upcase_table_compressed) + i, MIN(SECSIZE(fs), resid));
+			bp = getblk(devvp, daddr, EXFATFS_LSIZE(fs));
+ 			memset(bp->b_data, 0, EXFATFS_LSIZE(fs));
+			memcpy(bp->b_data, ((const char *)exfatfs_recommended_upcase_table_compressed) + i, MIN(EXFATFS_LSIZE(fs), resid));
 			if (Vflag)
 				printf(" write upcase sector size %d at bn 0x%lx\n",
-		       			SECSIZE(fs), (unsigned long)bp->b_blkno);
+		       			EXFATFS_LSIZE(fs), (unsigned long)bp->b_blkno);
 			bwrite(bp);
 			++daddr;
 		}
@@ -680,20 +680,20 @@ make_exfatfs(int devfd, uint secsize, struct dkwedge_info *dkw, uint bsize,
 	 */
 	if (!Nflag) {
 		start = dirent_bitmap.xd_firstCluster;
-		daddr = EXFATFS_CLUSTER2HWADDR(fs, start);
-		bp = getblk(devvp, daddr, SECSIZE(fs));
-		memset(bp->b_data, 0, SECSIZE(fs));
+		daddr = EXFATFS_LC2D(fs, start);
+		bp = getblk(devvp, daddr, EXFATFS_LSIZE(fs));
+		memset(bp->b_data, 0, EXFATFS_LSIZE(fs));
 
 		for (i = start; i <= fs->xf_FirstClusterOfRootDirectory; i++) {
-			if ((i - start) == NBBY * SECSIZE(fs)) {
+			if ((i - start) == NBBY * EXFATFS_LSIZE(fs)) {
 				if (Vflag)
 					printf(" write used bitmap sector size %d at bn 0x%lx\n",
-			       			SECSIZE(fs), (unsigned long)bp->b_blkno);
+			       			EXFATFS_LSIZE(fs), (unsigned long)bp->b_blkno);
 				bwrite(bp);
 				start = i;
 				++daddr;
-				bp = getblk(devvp, daddr, SECSIZE(fs));
-				memset(bp->b_data, 0, SECSIZE(fs));
+				bp = getblk(devvp, daddr, EXFATFS_LSIZE(fs));
+				memset(bp->b_data, 0, EXFATFS_LSIZE(fs));
 			}
 			bit = ((i - start) & (NBBY - 1));
 			byte = (i - start) / NBBY;
@@ -703,19 +703,18 @@ make_exfatfs(int devfd, uint secsize, struct dkwedge_info *dkw, uint bsize,
 		}
 		if (Vflag)
 			printf(" write used bitmap sector size %d at bn 0x%lx\n",
-			       SECSIZE(fs), (unsigned long)bp->b_blkno);
+			       EXFATFS_LSIZE(fs), (unsigned long)bp->b_blkno);
 		bwrite(bp);
 	}
 
 	/* Now write blank pages for the rest of the bitmap */
 	progress = oprogress = 0;
-	// for (off = roundup(fs->xf_FirstClusterOfRootDirectory, NBBY * SECSIZE(fs)) / NBBY; off < (off_t)dirent_bitmap.xd_dataLength; off += SECSIZE(fs)) {
 	start = ++daddr;
-	end = EXFATFS_CLUSTER2HWADDR(fs, fs->xf_FirstClusterOfRootDirectory);
+	end = EXFATFS_LC2D(fs, fs->xf_FirstClusterOfRootDirectory);
 	for (daddr = start; daddr < end; ++daddr) {
 		if (!Nflag) {
-			size_t size = SECSIZE(fs);
-			if (daddr < EXFATFS_CLUSTER2HWADDR(fs, fs->xf_FirstClusterOfRootDirectory) - MAXPHYS / SECSIZE(fs))
+			size_t size = EXFATFS_LSIZE(fs);
+			if (daddr < EXFATFS_LC2D(fs, fs->xf_FirstClusterOfRootDirectory) - MAXPHYS / EXFATFS_LSIZE(fs))
 				size = MAXPHYS;
 			bp = getblk(devvp, daddr, size);
 			memset(bp->b_data, 0, size);
@@ -731,8 +730,8 @@ make_exfatfs(int devfd, uint secsize, struct dkwedge_info *dkw, uint bsize,
 				oprogress = progress;
 			}
 			bwrite(bp);
-			if (size > (size_t)SECSIZE(fs))
-				daddr += size / SECSIZE(fs) - 1;
+			if (size > (size_t)EXFATFS_LSIZE(fs))
+				daddr += size / EXFATFS_LSIZE(fs) - 1;
 		}
 	}
 	if (!Vflag) {
@@ -743,11 +742,11 @@ make_exfatfs(int devfd, uint secsize, struct dkwedge_info *dkw, uint bsize,
 	}
 
 	/* Write the root directory following the bitmap */
-	daddr = EXFATFS_CLUSTER2HWADDR(fs, fs->xf_FirstClusterOfRootDirectory);
+	daddr = EXFATFS_LC2D(fs, fs->xf_FirstClusterOfRootDirectory);
 	if (!Nflag) {
-		bp = getblk(devvp, daddr, SECSIZE(fs));
+		bp = getblk(devvp, daddr, EXFATFS_LSIZE(fs));
 		data = bp->b_data;
-		memset(data, 0, SECSIZE(fs));
+		memset(data, 0, EXFATFS_LSIZE(fs));
 		
 		memcpy(data, &dirent_label, sizeof(dirent_label));
 		data += sizeof(dirent_label);
@@ -766,11 +765,11 @@ make_exfatfs(int devfd, uint secsize, struct dkwedge_info *dkw, uint bsize,
 	}
 
 	/* Fill the rest of the root directory cluster with zero */
-	for (++daddr; EXFATFS_HWADDR2CLUSTER(fs, daddr)
+	for (++daddr; EXFATFS_D2LC(fs, daddr)
 		     == fs->xf_FirstClusterOfRootDirectory; ++daddr) {
 		if (!Nflag) {
-			bp = getblk(devvp, daddr, SECSIZE(fs));
-			memset(bp->b_data, 0x00, SECSIZE(fs));
+			bp = getblk(devvp, daddr, EXFATFS_LSIZE(fs));
+			memset(bp->b_data, 0x00, EXFATFS_LSIZE(fs));
 			if (Vflag)
 				printf(" write zero root directory sector at bn 0x%lx\n",
 				       (unsigned long)bp->b_blkno);
@@ -782,27 +781,27 @@ make_exfatfs(int devfd, uint secsize, struct dkwedge_info *dkw, uint bsize,
 	 * Write the FAT.
 	 */
 	progress = oprogress = 0;
-	end = howmany(fs->xf_ClusterCount, SECSIZE(fs) / sizeof(uint32_t));
+	end = howmany(fs->xf_ClusterCount, FATBSIZE(fs) / sizeof(uint32_t));
 	for (i = 0; i < end; ++i) {
 		if (!Nflag) {
 #if 1
 			size_t size = MAXPHYS;
-			if (size > (size_t)(end - i) * SECSIZE(fs)) {
-				size = (end - i) * SECSIZE(fs);
+			if (size > (size_t)(end - i) * FATBSIZE(fs)) {
+				size = (end - i) * FATBSIZE(fs);
 				/* printf(" reset size to %zd for i=%lld\n",
 					size, (long long)i); */
 			}
 #else
-			size_t size = SECSIZE(fs);
-			if (i >= (MAXPHYS / size) && howmany(fs->xf_ClusterCount, SECSIZE(fs) / sizeof(uint32_t)) - i > (MAXPHYS / size))
+			size_t size = FATBSIZE(fs);
+			if (i >= (MAXPHYS / size) && howmany(fs->xf_ClusterCount, FATBSIZE(fs) / sizeof(uint32_t)) - i > (MAXPHYS / size))
 				size = MAXPHYS;
 #endif
 			fatspersec = size / sizeof(uint32_t);
-			daddr = (i + fs->xf_FatOffset) * (SECSIZE(fs) / DEV_BSIZE);
+			daddr = (i + fs->xf_FatOffset) * (FATBSIZE(fs) / DEV_BSIZE);
 			bp = getblk(devvp, daddr, size);
 			memset(bp->b_data, 0, size);
 			for (j = 0; j < fatspersec; j++) {
-				uint32_t sec = i * (SECSIZE(fs) / sizeof(uint32_t)) + j;
+				uint32_t sec = i * (FATBSIZE(fs) / sizeof(uint32_t)) + j;
 				uint32_t v;
 				
 				if (sec == 0) {
@@ -831,8 +830,8 @@ make_exfatfs(int devfd, uint secsize, struct dkwedge_info *dkw, uint bsize,
 				oprogress = progress;
 			}
 			bwrite(bp);
-			if (size > (size_t)SECSIZE(fs))
-				i += (size / SECSIZE(fs)) - 1;
+			if (size > (size_t)FATBSIZE(fs))
+				i += (size / FATBSIZE(fs)) - 1;
 		}
 	}
 	if (!Vflag) {
@@ -850,44 +849,44 @@ make_exfatfs(int devfd, uint secsize, struct dkwedge_info *dkw, uint bsize,
 	if (!Nflag) {
 		for (base = 0; base < 24; base += 12) {
 			/* Write superblock to disk */
-			bp = getblk(devvp, base + 0, SECSIZE(fs));
+			bp = getblk(devvp, base + 0, BSSIZE(fs));
 			memcpy(bp->b_data, &fs->xf_exfatdfs, sizeof(fs->xf_exfatdfs));
 			cksum = exfatfs_cksum32(0, (uint8_t *)bp->b_data,
-						SECSIZE(fs), boot_ignore,
+						BSSIZE(fs), boot_ignore,
 						sizeof(boot_ignore));
 			if (Vflag)
 				printf(" write boot sector size %d at bn 0x%lx\n",
-		       			SECSIZE(fs), (unsigned long)bp->b_blkno);
+		       			BSSIZE(fs), (unsigned long)bp->b_blkno);
 			bwrite(bp);
 			
 			/* Write extended boot sectors */
 			for (i = 1; i < 9; i++) {
-				bp = getblk(devvp, base + i, SECSIZE(fs));
-				memset(bp->b_data, 0, SECSIZE(fs));
+				bp = getblk(devvp, base + i, BSSIZE(fs));
+				memset(bp->b_data, 0, BSSIZE(fs));
 				*(uint32_t *)((char *)bp->b_data
-					      + SECSIZE(fs)
+					      + BSSIZE(fs)
 					      - sizeof(uint32_t))
 					= htole32(0xAA550000);
 				cksum = exfatfs_cksum32(cksum,
 							(uint8_t *)bp->b_data,
-							SECSIZE(fs),
+							BSSIZE(fs),
 							NULL, 0);
 				if (Vflag)
 					printf(" write extended boot sector size %d at bn 0x%lx\n",
-		       				SECSIZE(fs), (unsigned long)bp->b_blkno);
+		       				BSSIZE(fs), (unsigned long)bp->b_blkno);
 				bwrite(bp);
 			}
 			
 			/* Checksum but do not write OEM and Reserved */
 			for (i = 9; i < 11; i++) {
-				bread(devvp, base + i, SECSIZE(fs), 0, &bp);
+				bread(devvp, base + i, BSSIZE(fs), 0, &bp);
 				cksum = exfatfs_cksum32(cksum,
 							(uint8_t *)bp->b_data,
-							SECSIZE(fs),
+							BSSIZE(fs),
 							NULL, 0);
 				if (Vflag)
 					printf(" write oem/reserved block size %d at bn 0x%lx\n",
-		       				SECSIZE(fs), (unsigned long)bp->b_blkno);
+		       				BSSIZE(fs), (unsigned long)bp->b_blkno);
 				brelse(bp, 0);
 			}
 
@@ -897,8 +896,8 @@ make_exfatfs(int devfd, uint secsize, struct dkwedge_info *dkw, uint bsize,
 				       (unsigned long)(base + i));
 
 			/* Populate checksum block and write it */
-			bp = getblk(devvp, base + i, SECSIZE(fs));
-			for (j = 0; j < SECSIZE(fs) / sizeof(uint32_t); j++)
+			bp = getblk(devvp, base + i, BSSIZE(fs));
+			for (j = 0; j < BSSIZE(fs) / sizeof(uint32_t); j++)
 				((uint32_t *)bp->b_data)[j] = cksum;
 			bwrite(bp);
 		}

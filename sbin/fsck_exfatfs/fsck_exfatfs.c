@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck_exfatfs.c,v 1.1.2.1 2024/06/29 19:43:25 perseant Exp $	*/
+/*	$NetBSD: fsck_exfatfs.c,v 1.1.2.2 2024/07/19 16:19:16 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: fsck_exfatfs.c,v 1.1.2.1 2024/06/29 19:43:25 perseant Exp $");
+__RCSID("$NetBSD: fsck_exfatfs.c,v 1.1.2.2 2024/07/19 16:19:16 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -344,12 +344,12 @@ main(int argc, char **argv)
 			
 			/* Read the FAT to find the next cluster */
 			bread(fs->xf_devvp, EXFATFS_FATBLK(fs, clust),
-			      SECSIZE(fs), 0, &bp);
+			      FATBSIZE(fs), 0, &bp);
 			clust = ((uint32_t *)bp->b_data)
 				[EXFATFS_FATOFF(clust)];
 			brelse(bp, 0);
 			SET_DSE_DATALENGTH(xip, GET_DSE_DATALENGTH(xip)
-					   + CLUSTERSIZE(fs));
+					   + EXFATFS_CSIZE(fs));
 		}
 		SET_DSE_VALIDDATALENGTH(xip, GET_DSE_DATALENGTH(xip));
 
@@ -357,16 +357,16 @@ main(int argc, char **argv)
 
 		/* Set up bitmapvp */
 		exfatfs_bmap_shared(fs->xf_rootvp, 0, NULL, &bn, NULL);
-		bread(fs->xf_devvp, bn, SECSIZE(fs), 0, &bp);
+		bread(fs->xf_devvp, bn, EXFATFS_LSIZE(fs), 0, &bp);
 		dentp = dentp0 =
 			(struct exfatfs_dirent_allocation_bitmap *)bp->b_data;
-		endp = dentp + EXFATFS_FSSEC2DIRENT(fs, 1);
+		endp = dentp + EXFATFS_S2DIRENT(fs, 1);
 		while (dentp < endp) {
 			if (dentp->xd_entryType == XD_ENTRYTYPE_ALLOC_BITMAP
 			    || dentp->xd_entryType == XD_ENTRYTYPE_UPCASE_TABLE) {
 				/* Fake file entries */
 				xip = exfatfs_newxfinode(fs,
-							 EXFATFS_HWADDR2CLUSTER(fs, bp->b_blkno),
+							 EXFATFS_D2LC(fs, bp->b_blkno),
 							 dentp - dentp0);
 				xip->xi_direntp[0] = exfatfs_newdirent();
 				xip->xi_direntp[1] = exfatfs_newdirent();
@@ -389,7 +389,7 @@ main(int argc, char **argv)
 		if (debug)
 			fprintf(stderr, "bitmap file length %llu (%llu clusters)\n",
 				(long long)GET_DSE_DATALENGTH(VTOXI(fs->xf_bitmapvp)),
-				(long long)GET_DSE_DATALENGTH(VTOXI(fs->xf_bitmapvp)) / CLUSTERSIZE(fs));
+				(long long)EXFATFS_B2C(fs, GET_DSE_DATALENGTH(VTOXI(fs->xf_bitmapvp))));
 		while (clust != 0xFFFFFFFF) {
 			if (debug)
 				fprintf(stderr, "bitmap file cluster %d\n", clust);
@@ -399,7 +399,7 @@ main(int argc, char **argv)
 			
 			/* Read the FAT to find the next cluster */
 			bread(fs->xf_devvp, EXFATFS_FATBLK(fs, clust),
-			      SECSIZE(fs), 0, &bp);
+			      FATBSIZE(fs), 0, &bp);
 
 			oclust = clust;
 			clust = ((uint32_t *)bp->b_data)
@@ -425,7 +425,7 @@ main(int argc, char **argv)
 
 			/* Read the FAT to find the next cluster */
 			bread(fs->xf_devvp, EXFATFS_FATBLK(fs, clust),
-			      SECSIZE(fs), 0, &bp);
+			      FATBSIZE(fs), 0, &bp);
 			clust = ((uint32_t *)bp->b_data)
 				[EXFATFS_FATOFF(clust)];
 			brelse(bp, 0);

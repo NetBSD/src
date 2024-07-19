@@ -1,2 +1,1 @@
-* Convert IO size from disk sector size to MAXPHYS.
 * Use unions in directory entries instead of the cumbersome casting.

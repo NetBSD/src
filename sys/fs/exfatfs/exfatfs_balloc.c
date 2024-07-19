@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_balloc.c,v 1.1.2.2 2024/07/03 18:41:08 perseant Exp $	*/
+/*	$NetBSD: exfatfs_balloc.c,v 1.1.2.3 2024/07/19 16:19:15 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_balloc.c,v 1.1.2.2 2024/07/03 18:41:08 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_balloc.c,v 1.1.2.3 2024/07/19 16:19:15 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/buf.h>
@@ -129,7 +129,7 @@ exfatfs_bitmap_alloc(struct exfatfs *fs, uint32_t start, uint32_t *cp)
 					    NULL);
 			DPRINTF((" lbn %u -> bn 0x%x\n",
 				 (unsigned)lbn, (unsigned)blkno));
-			if ((error = bread(fs->xf_devvp, blkno, LBNSIZE(fs), 0,
+			if ((error = bread(fs->xf_devvp, blkno, EXFATFS_LSIZE(fs), 0,
 					   &bp)) != 0)
 				return error;
 			DPRINTF((" search %u..%u\n",
@@ -152,7 +152,13 @@ exfatfs_bitmap_alloc(struct exfatfs *fs, uint32_t start, uint32_t *cp)
 					 (unsigned)lbn, (int)off));
 				setbit(data, off);
 				bdwrite(bp);
+#ifdef _KERNEL
+				mutex_enter(&fs->xf_lock);
+#endif /* _KERNEL */
 				--fs->xf_FreeClusterCount;
+#ifdef _KERNEL
+				mutex_exit(&fs->xf_lock);
+#endif /* _KERNEL */
 				if (cp != NULL)
 					*cp = r;
 				return 0;
@@ -189,14 +195,21 @@ exfatfs_bitmap_dealloc(struct exfatfs *fs, uint32_t cno)
 	lbn = BITMAPLBN(fs, cno);
 	off = BITMAPOFF(fs, cno);
 	exfatfs_bmap_shared(fs->xf_bitmapvp, lbn, NULL, &blkno, NULL);
-	if ((error = bread(fs->xf_devvp, blkno, LBNSIZE(fs), 0, &bp)) != 0)
+	if ((error = bread(fs->xf_devvp, blkno, EXFATFS_LSIZE(fs), 0, &bp)) != 0)
 		return error;
 	data = (uint8_t *)bp->b_data;
 	DPRINTF(("basic deallocate cluster %u at lbn %u bit %d\n",
 		 (unsigned)cno, (unsigned)lbn, (int)off));
+	assert(isset(data, off));
 	clrbit(data, off);
 	bdwrite(bp);
+#ifdef _KERNEL
+	mutex_enter(&fs->xf_lock);
+#endif /* _KERNEL */
 	++fs->xf_FreeClusterCount;
+#ifdef _KERNEL
+	mutex_exit(&fs->xf_lock);
+#endif /* _KERNEL */
 	return 0;
 }
 
@@ -222,10 +235,10 @@ exfatfs_bitmap_init(struct exfatfs *fs)
 			lbn = BITMAPLBN(fs, cn);
 			exfatfs_bmap_shared(fs->xf_bitmapvp, lbn, NULL,
 					    &blkno, NULL);
-			bread(fs->xf_devvp, blkno, LBNSIZE(fs), 0, &bp);
+			bread(fs->xf_devvp, blkno, EXFATFS_LSIZE(fs), 0, &bp);
 			data = (uint8_t *)bp->b_data;
 		}
-		for (off = 0; off < LBNSIZE(fs) && cn < end; ++off) {
+		for (off = 0; off < EXFATFS_LSIZE(fs) && cn < end; ++off) {
 			if (cn >= end - NBBY) {
 				for (i = 0; i < NBBY && cn < end; i++) {
 					if (data[off] & (1 << i))

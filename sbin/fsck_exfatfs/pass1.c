@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.1.2.2 2024/07/03 21:56:17 perseant Exp $	*/
+/*	$NetBSD: pass1.c,v 1.1.2.3 2024/07/19 16:19:16 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -219,7 +219,7 @@ validfunc(void *arg, struct xfinode *xip, off_t unused)
 	assert(xip->xi_serial == dserial);
 
 	/* Account bitmap blocks */
-	lcncount = howmany(GET_DSE_DATALENGTH(xip), CLUSTERSIZE(fs)); /* Not always a cluster multiple! */
+	lcncount = howmany(GET_DSE_DATALENGTH(xip), EXFATFS_CSIZE(fs)); /* Not always a cluster multiple! */
 	lcn = 0;
 	pcn = GET_DSE_FIRSTCLUSTER(xip);
 	while (lcn < lcncount) {
@@ -253,7 +253,7 @@ validfunc(void *arg, struct xfinode *xip, off_t unused)
 			/* Follow the FAT chain */
 			error = bread(fs->xf_devvp,
 				      EXFATFS_FATBLK(fs, pcn),
-				      SECSIZE(fs), 0, &bp);
+				      FATBSIZE(fs), 0, &bp);
 			if (error) {
 				warn("File 0x%lx", (unsigned long)INUM(xip));
 				goto out;
