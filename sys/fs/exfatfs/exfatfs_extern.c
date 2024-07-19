@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_extern.c,v 1.1.2.4 2024/07/03 18:57:42 perseant Exp $	*/
+/*	$NetBSD: exfatfs_extern.c,v 1.1.2.5 2024/07/19 16:19:15 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -88,11 +88,8 @@ static int checkzero(void *p, int len);
 static unsigned long serial;
 
 /*
- * Convert a logical address, in SECSIZE units, into a hardware
+ * Convert a logical address, in EXFATFS_LSIZE units, into a hardware
  * address, in DEV_BSIZE units.
- * XXX SECSIZE is too small, while CLUSTERSIZE is too big.
- * XXX We should probably use something like MIN(CLUSTERSIZE, MAXPHYS),
- * XXX and convert units when necessary.
  */
 int
 exfatfs_bmap_shared(struct vnode *vp, daddr_t targetlbn, struct vnode **vpp,
@@ -101,7 +98,7 @@ exfatfs_bmap_shared(struct vnode *vp, daddr_t targetlbn, struct vnode **vpp,
 	struct xfinode *xip;
 	struct exfatfs *fs;
 	struct buf *bp;
-	daddr_t pcn, targetcn;
+	daddr_t pcn, targetlcn;
 	uint32_t lcn;
 	int error, run = 0;
 	unsigned c;
@@ -132,8 +129,8 @@ exfatfs_bmap_shared(struct vnode *vp, daddr_t targetlbn, struct vnode **vpp,
 	/* If we can't find it, return -1 */
 	*bnp = (daddr_t)-1;
 
-	if (EXFATFS_FSSEC2CLUSTER(fs, (unsigned long)targetlbn) >
-	    EXFATFS_BYTES2CLUSTER(fs, GET_DSE_DATALENGTH_BLK(xip, fs))) {
+	if (EXFATFS_L2C(fs, (unsigned long)targetlbn) >
+	    howmany(GET_DSE_DATALENGTH(xip), EXFATFS_CSIZE(fs))) {
 		exfatfs_check_fence(fs);
 		return 0;
 	}
@@ -143,11 +140,10 @@ exfatfs_bmap_shared(struct vnode *vp, daddr_t targetlbn, struct vnode **vpp,
 	 * address using dead reckoning from the first cluster.
 	 */
 	if (IS_DSE_NOFATCHAIN(xip)) {
-		*bnp = EXFATFS_CLUSTER2HWADDR(fs, GET_DSE_FIRSTCLUSTER(xip))
-			+ EXFATFS_FSSEC2DEVBSIZE(fs, targetlbn);
+		*bnp = EXFATFS_LC2D(fs, GET_DSE_FIRSTCLUSTER(xip))
+			+ EXFATFS_L2D(fs, targetlbn);
 		if (runp) {
-			*runp = EXFATFS_BYTES2FSSEC(fs,
-					GET_DSE_DATALENGTH_BLK(xip, fs))
+			*runp = howmany(GET_DSE_DATALENGTH(xip), EXFATFS_LSIZE(fs))
 				- targetlbn;
 		}
 		return 0;
@@ -157,11 +153,11 @@ exfatfs_bmap_shared(struct vnode *vp, daddr_t targetlbn, struct vnode **vpp,
 	 * Walk the FAT chain until we reach the address of interest
 	 * By default we start from zero
 	 */
-	targetcn = EXFATFS_FSSEC2CLUSTER(fs, targetlbn);
-	assert(targetcn < fs->xf_ClusterCount);
-	DPRINTF(("BMAP targetlbn=%lu targetcn=%lu\n",
+	targetlcn = EXFATFS_L2C(fs, targetlbn);
+	assert(targetlcn < fs->xf_ClusterCount);
+	DPRINTF(("BMAP targetlbn=%lu targetlcn=%lu\n",
 		 (unsigned long)targetlbn,
-		 (unsigned long)targetcn));
+		 (unsigned long)targetlcn));
 	pcn = GET_DSE_FIRSTCLUSTER(xip);
 	lcn = 0;
 
@@ -187,7 +183,7 @@ exfatfs_bmap_shared(struct vnode *vp, daddr_t targetlbn, struct vnode **vpp,
 	
 	/* If we have a value cached, start there instead */
 #ifdef USE_FATCACHE
-	if (xip->xi_fatcache_lc > 0 && xip->xi_fatcache_lc < targetcn) {
+	if (xip->xi_fatcache_lc > 0 && xip->xi_fatcache_lc < targetlcn) {
 		lcn = xip->xi_fatcache_lc;
 		pcn = xip->xi_fatcache_pc;
 		assert(pcn >= 2 && pcn < fs->xf_ClusterCount + 2);
@@ -199,14 +195,14 @@ exfatfs_bmap_shared(struct vnode *vp, daddr_t targetlbn, struct vnode **vpp,
 	assert(fs->xf_devvp != NULL);
 	assert(pcn >= 2 && pcn < fs->xf_ClusterCount + 2);
 	c = 0;
-	while (targetcn != lcn) {
+	while (targetlcn > lcn) {
 		if (pcn < 2 || pcn >= fs->xf_ClusterCount + 2) {
 			printf("Cluster 0x%x out of bounds!\n", (unsigned)pcn);
 		}
 		assert(pcn >= 2 && pcn < fs->xf_ClusterCount + 2);
 		/* Read the FAT to find the next cluster */
 		if ((error = bread(fs->xf_devvp, EXFATFS_FATBLK(fs, pcn),
-					SECSIZE(fs), 0, &bp)) != 0) {
+					FATBSIZE(fs), 0, &bp)) != 0) {
 			printf("failed to read FAT pcn %u block 0x%x\n",
 			       (unsigned)pcn, (unsigned)EXFATFS_FATBLK(fs, pcn));
 			goto errout;
@@ -220,7 +216,7 @@ exfatfs_bmap_shared(struct vnode *vp, daddr_t targetlbn, struct vnode **vpp,
 		assert(++c <= fs->xf_ClusterCount);
 	}
 
-	if (targetcn != lcn) {
+	if (targetlcn != lcn) {
 		/* Not found */
 		*bnp = -1;
 		if (runp)
@@ -236,14 +232,13 @@ exfatfs_bmap_shared(struct vnode *vp, daddr_t targetlbn, struct vnode **vpp,
 		exfatfs_check_fence(fs);
 		return EIO;
 	}
-	xip->xi_fatcache_lc = targetcn;
+	xip->xi_fatcache_lc = targetlcn;
 	xip->xi_fatcache_pc = pcn;
-	*bnp = EXFATFS_CLUSTER2HWADDR(fs, pcn)
-		+ EXFATFS_FSSEC2DEVBSIZE(fs, (targetlbn
-			      & ((1 << fs->xf_SectorsPerClusterShift) - 1)));
+	*bnp = EXFATFS_LC2D(fs, pcn)
+		+ EXFATFS_L2D(fs, targetlbn - EXFATFS_C2L(fs, targetlcn));
 
 	/* If we found it, hint the rest of the cluster. */
-	run = EXFATFS_CLUSTER2FSSEC(fs, targetcn + 1) - targetlbn - 1;
+	run = EXFATFS_C2L(fs, targetlcn + 1) - targetlbn - 1;
 	if (runp && *bnp != (daddr_t)-1) {
 		*runp = run;
 	}
@@ -252,7 +247,7 @@ exfatfs_bmap_shared(struct vnode *vp, daddr_t targetlbn, struct vnode **vpp,
 		 (int)lcn, (unsigned long)pcn,
 		 (int)targetlbn, (int)(targetlbn + run),
 		 (unsigned long)*bnp,
-		 (unsigned long)(*bnp + EXFATFS_FSSEC2DEVBSIZE(fs, run))));
+		 (unsigned long)(*bnp + EXFATFS_L2D(fs, run))));
 errout:
 	exfatfs_check_fence(fs);
 	return error;
@@ -493,15 +488,15 @@ read_rootdir (struct exfatfs *fs)
 	int i;
 	struct buf *bp;
 	uint32_t clust = fs->xf_FirstClusterOfRootDirectory;
-	daddr_t daddr = EXFATFS_CLUSTER2HWADDR(fs, clust);
+	daddr_t daddr = EXFATFS_LC2D(fs, clust);
 	
 	exfatfs_check_fence(fs);
 	/* Print root directory contents */
-	bread(fs->xf_devvp, daddr, SECSIZE(fs), 0, &bp);
+	bread(fs->xf_devvp, daddr, EXFATFS_LSIZE(fs), 0, &bp);
 	data = (uint8_t *)bp->b_data;
 	
-	for (i = 0; i * 32 < SECSIZE(fs); i++) {
-		dp = data + i * 32;
+	for (i = 0; i * sizeof(struct exfatfs_dirent) < (size_t)EXFATFS_LSIZE(fs); i++) {
+		dp = data + i * sizeof(struct exfatfs_dirent);
 
 		switch (dp[0]) {
 		case XD_ENTRYTYPE_EOD:
@@ -521,7 +516,7 @@ read_rootdir (struct exfatfs *fs)
 						 xdab->xd_firstCluster,
 						 xdab->xd_dataLength,
 						 &fs->xf_bitmapvp);
-			bread(fs->xf_devvp, daddr, SECSIZE(fs), 0, &bp);
+			bread(fs->xf_devvp, daddr, EXFATFS_LSIZE(fs), 0, &bp);
 			data = (uint8_t *)bp->b_data;
 			break;
 
@@ -533,7 +528,7 @@ read_rootdir (struct exfatfs *fs)
 						 xdut->xd_firstCluster,
 						 xdut->xd_dataLength,
 						 &fs->xf_upcasevp);
-			bread(fs->xf_devvp, daddr, SECSIZE(fs), 0, &bp);
+			bread(fs->xf_devvp, daddr, EXFATFS_LSIZE(fs), 0, &bp);
 			data = (uint8_t *)bp->b_data;
 			break;
 
@@ -799,20 +794,20 @@ exfatfs_scandir(struct vnode *dvp,
 	entryno = 0;
 	invstart = -1;
 	have_primary = 0;
-	off = EXFATFS_BYTES2DIRENT(fs, startoff);
-	lbn = EXFATFS_BYTES2FSSEC(fs, startoff);
-	maxlbn = howmany(GET_DSE_VALIDDATALENGTH(dxip), SECSIZE(fs));
+	off = EXFATFS_B2DIRENT(fs, startoff);
+	lbn = EXFATFS_B2L(fs, startoff);
+	maxlbn = howmany(GET_DSE_VALIDDATALENGTH(dxip), EXFATFS_LSIZE(fs));
 	while(lbn < maxlbn) {
 		exfatfs_bmap_shared(dvp, lbn, NULL, &blkno, NULL);
-		error = bread(fs->xf_devvp, blkno, SECSIZE(fs), 0, &bp);
+		error = bread(fs->xf_devvp, blkno, EXFATFS_LSIZE(fs), 0, &bp);
 		if (error)
 			goto out;
 
 		assert(dxip->xi_serial == dserial);
 		data = bp->b_data;
 		dentp0 = (struct exfatfs_dirent *)data;
-		dentp = dentp0 + (off & (EXFATFS_FSSEC2DIRENT(fs, 1) - 1));
-		endp = dentp0 + EXFATFS_FSSEC2DIRENT(fs, 1);
+		dentp = dentp0 + (off & (EXFATFS_L2DIRENT(fs, 1) - 1));
+		endp = dentp0 + EXFATFS_L2DIRENT(fs, 1);
 		while (dentp < endp) {
 			if (ISPRIMARY(dentp))
 				have_primary = 1;
@@ -885,8 +880,8 @@ exfatfs_scandir(struct vnode *dvp,
 			case XD_ENTRYTYPE_FILE:
 				/* Construct key from buffer and offset */
 				memset(&xip->xi_key, 0, sizeof(xip->xi_key));
-				xip->xi_dirclust = EXFATFS_HWADDR2CLUSTER(fs, xip->xi_dirent_blk[0]);
-				xip->xi_diroffset = EXFATFS_HWADDR2DIRENT(fs, xip->xi_dirent_blk[0]) +
+				xip->xi_dirclust = EXFATFS_D2LC(fs, xip->xi_dirent_blk[0]);
+				xip->xi_diroffset = EXFATFS_DCLOFF_DIRENT(fs, xip->xi_dirent_blk[0]) +
 					xip->xi_dirent_off[0];
 				break;
 				
@@ -940,7 +935,7 @@ exfatfs_scandir(struct vnode *dvp,
 					assert(dxip->xi_serial == dserial);
 					if (validfunc != NULL) {
 						flags = (*validfunc)(arg, xip,
-						 EXFATFS_DIRENT2BYTES(fs, off));
+						 EXFATFS_DIRENT2B(fs, off));
 						assert(dxip->xi_serial
 							== dserial);
 						if (flags & SCANDIR_DONTFREE) {
@@ -991,7 +986,7 @@ out:
 	if (bp != NULL)
 		brelse(bp, 0);
 	if (endoff != NULL)
-		*endoff = EXFATFS_DIRENT2BYTES(fs, off);
+		*endoff = EXFATFS_DIRENT2B(fs, off);
 	return error;
 }
 

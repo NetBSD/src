@@ -197,7 +197,7 @@ void print_fat(struct exfatfs *fs)
 {
 	struct buf *bp;
 	int fatno, i, j;
-	int fatsperblk = SECSIZE(fs) / 4;
+	int fatsperblk = FATBSIZE(fs) / 4;
 	uint32_t *table;
 
 	for (fatno = 0; fatno < fs->xf_NumberOfFats; fatno++) {
@@ -205,11 +205,11 @@ void print_fat(struct exfatfs *fs)
 		       fs->xf_FatOffset + fatno * fs->xf_FatLength);
 		
 		for (i = 0; i < fs->xf_ClusterCount + 2; i+= fatsperblk) {
-			bread(fs->xf_devvp, EXFATFS_FSSEC2DEVBSIZE(fs, fs->xf_FatOffset + (i / fatsperblk) + fatno * fs->xf_FatLength),
-			      SECSIZE(fs), 0, &bp);
+			bread(fs->xf_devvp, EXFATFS_S2D(fs, fs->xf_FatOffset + (i / fatsperblk) + fatno * fs->xf_FatLength),
+			      FATBSIZE(fs), 0, &bp);
 			
 			table = (uint32_t *)bp->b_data;
-			for (j = 0; j < SECSIZE(fs) / 4
+			for (j = 0; j < FATBSIZE(fs) / 4
 				     && i + j < fs->xf_ClusterCount + 2; j++) {
 				printf("\t%8.8x: %8.8x\n", (unsigned int)i + j,
 				       (unsigned int)table[j]);
@@ -281,10 +281,10 @@ uint32_t next_fat(struct exfatfs *fs, uint32_t fat)
 	struct buf *bp;
 	uint32_t retval;
 
-	bread(fs->xf_devvp, EXFATFS_FSSEC2DEVBSIZE(fs, fs->xf_FatOffset
+	bread(fs->xf_devvp, EXFATFS_S2D(fs, fs->xf_FatOffset
 					    + (fat >> (fs->xf_BytesPerSectorShift - 2))),
-	      SECSIZE(fs), 0, &bp);
-	retval = ((uint32_t *)bp->b_data)[fat & (SECMASK(fs) >> 2)];
+	      FATBSIZE(fs), 0, &bp);
+	retval = ((uint32_t *)bp->b_data)[fat & (FATBMASK(fs) >> 2)];
 	brelse(bp, 0);
 
 	return retval;
@@ -301,16 +301,16 @@ void print_bitmap(struct exfatfs *fs)
 	printf("Bitmap beginning at cluster 2:\n");
 	total = 0;
 	for (lbn = 0; lbn < howmany(fs->xf_ClusterCount,
-				    SECSIZE(fs) / sizeof(uint32_t)); ++lbn) {
+				    EXFATFS_LSIZE(fs) / sizeof(uint32_t)); ++lbn) {
 		/* Retrieve the block */
-		bread(fs->xf_bitmapvp, lbn, SECSIZE(fs), 0, &bp);
+		bread(fs->xf_bitmapvp, lbn, EXFATFS_LSIZE(fs), 0, &bp);
 		printf("--lbn %lu hw 0x%lx\n",
 		       (unsigned long)bp->b_lblkno,
 		       (unsigned long)bp->b_blkno);
 		data = (uint8_t *)bp->b_data;
 		
 		/* Format it */
-		for (i = 0; i < SECSIZE(fs); i++) {
+		for (i = 0; i < EXFATFS_LSIZE(fs); i++) {
 			if ((total & 0x7f) == 0) {
 				printf("\t%8.8lx ", (unsigned long)total + 2);
 			} else if ((total & 0x3f) == 0) {
@@ -341,11 +341,11 @@ void print_upcase_table(struct exfatfs *fs, uint32_t clust, uint64_t len)
 	do {
 		for (subclust = 0; subclust < (1 << fs->xf_SectorsPerClusterShift); ++subclust) {
 			/* Retrieve the block */
-			bread(fs->xf_devvp, EXFATFS_CLUSTER2HWADDR(fs, clust) + EXFATFS_FSSEC2DEVBSIZE(fs, subclust), SECSIZE(fs), 0, &bp);
+			bread(fs->xf_devvp, EXFATFS_LC2D(fs, clust) + EXFATFS_S2D(fs, subclust), EXFATFS_LSIZE(fs), 0, &bp);
 			data = (uint16_t *)bp->b_data;
 			
 			/* Format it */
-			for (i = 0; i < SECSIZE(fs) >> 1; i++) {
+			for (i = 0; i < EXFATFS_LSIZE(fs) >> 1; i++) {
 				if ((total & 0x7) == 0) {
 					printf("\n\t");
 				}
@@ -383,15 +383,15 @@ void print_dir(struct exfatfs *fs, uint32_t dirclust, uint32_t diroff, int actio
 		maxlen = INT_MAX;
 	} else {
 		/* Load the directory entry specified */
-		daddr_t blkno = EXFATFS_CLUSTER2HWADDR(fs, dirclust)
-			+ EXFATFS_DIRENT2DEVBSIZE(fs, diroff);
+		daddr_t blkno = EXFATFS_LC2D(fs, dirclust)
+			+ EXFATFS_DIRENT2D(fs, diroff);
 		struct exfatfs_dse *dse;
 
 		printf("Reading dirent from %d/%d, physical blk 0x%x\n",
 		       (int)dirclust, (int)diroff, (unsigned)blkno);
-		bread(fs->xf_devvp, blkno, SECSIZE(fs), 0, &bp);
+		bread(fs->xf_devvp, blkno, EXFATFS_LSIZE(fs), 0, &bp);
 		dse = malloc(sizeof(*dse));
-		memcpy(dse, ((struct exfatfs_dse *)bp->b_data) + (diroff % EXFATFS_FSSEC2DIRENT(fs, 1)) + 1, sizeof(*dse));
+		memcpy(dse, ((struct exfatfs_dse *)bp->b_data) + (diroff % EXFATFS_S2D(fs, 1)) + 1, sizeof(*dse));
 		brelse(bp, 0);
 		bp = NULL;
 		clust = dse->xd_firstCluster;
@@ -403,15 +403,15 @@ void print_dir(struct exfatfs *fs, uint32_t dirclust, uint32_t diroff, int actio
 		printf(" Reading from cluster %d\n", clust);
 	}
 	for (off = 0; off * sizeof(*dfp) < maxlen; ++off) {
-		i = off % (SECSIZE(fs) / sizeof(*dfp));
+		i = off % (EXFATFS_LSIZE(fs) / sizeof(*dfp));
 		if (i == 0) {
 			if (bp)
 				brelse(bp, 0);
 
 			/* Maybe a new cluster, too */
-			if (off > 0 && ((off * sizeof(*dfp)) & CLUSTERMASK(fs)) == 0) {
+			if (off > 0 && ((off * sizeof(*dfp)) & EXFATFS_CMASK(fs)) == 0) {
 				if (bread(fs->xf_devvp, EXFATFS_FATBLK(fs, clust),
-					  SECSIZE(fs), 0, &bp) != 0) {
+					  FATBSIZE(fs), 0, &bp) != 0) {
 					err(1, "Read FAT entry 0x%lx\n", (unsigned long)clust);
 				}
 				clust = ((uint32_t *)bp->b_data)[EXFATFS_FATOFF(clust)];
@@ -423,13 +423,13 @@ void print_dir(struct exfatfs *fs, uint32_t dirclust, uint32_t diroff, int actio
 					printf(" Reading from cluster %d\n", clust);
 			}
 			
-			bread(fs->xf_devvp, EXFATFS_CLUSTER2HWADDR(fs, clust)
-			      + (((off * sizeof(*dfp)) & CLUSTERMASK(fs))
+			bread(fs->xf_devvp, EXFATFS_LC2D(fs, clust)
+			      + (((off * sizeof(*dfp)) & EXFATFS_CMASK(fs))
 				 >> DEV_BSHIFT),
-			      SECSIZE(fs), 0, &bp);
+			      EXFATFS_LSIZE(fs), 0, &bp);
 			if (action == ACTION_PRINT)
 				printf("  lbn %ld at bn 0x%lx\n",
-				       (long)(off / (SECSIZE(fs) / sizeof(*dfp))),
+				       (long)(off / (EXFATFS_LSIZE(fs) / sizeof(*dfp))),
 				       (unsigned long)bp->b_blkno);
 			data = (uint8_t *)bp->b_data;
 		}
@@ -512,7 +512,7 @@ void print_dir(struct exfatfs *fs, uint32_t dirclust, uint32_t diroff, int actio
 			streamfound = 0;
 			namefound = 0;
 			cksumreqd = dfp->xd_setChecksum;
-			inum = EXFATFS_CLUST_ENTRY2INO(fs, clust, off);
+			inum = CE2INO(fs, clust, off);
 			cksum = exfatfs_cksum16(0, (uint8_t *)dfp, sizeof(*dfp),
 						PRIMARY_IGNORE, PRIMARY_IGNORE_LEN);
 			
@@ -601,6 +601,8 @@ void print_dir(struct exfatfs *fs, uint32_t dirclust, uint32_t diroff, int actio
 			if (action == ACTION_PRINT) {
 				printf("\tStream Extension%s\n",
 				       ISINUSE(dsp) ? "" : " (not in use)");
+				printf("\t\tSecondary Flags: 0x%hhx\n",
+				       dsp->xd_generalSecondaryFlags);
 				printf("\t\tName Length: %hhu\n",
 				       dsp->xd_nameLength);
 				printf("\t\tName Hash: 0x%hx\n",

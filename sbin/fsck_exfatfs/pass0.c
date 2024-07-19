@@ -1,4 +1,4 @@
-/*	$NetBSD: pass0.c,v 1.1.2.1 2024/06/29 19:43:25 perseant Exp $	*/
+/*	$NetBSD: pass0.c,v 1.1.2.2 2024/07/19 16:19:16 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -73,15 +73,15 @@ pass0(struct exfatfs *fs, struct dkwedge_info *dkwp)
 		/* Read boot sectors to compute checksum */
 		for (i = 0; i < 11; i++) {
 			int written = 0;
-			bread(fs->xf_devvp, base + i, SECSIZE(fs), 0, &bp);
+			bread(fs->xf_devvp, base + i, BSSIZE(fs), 0, &bp);
 
 			cksum = exfatfs_cksum32(cksum, (uint8_t *)bp->b_data,
-						SECSIZE(fs),
+						BSSIZE(fs),
 						boot_ignore,
 						(i == 0 ? boot_ignore_len : 0));
 			if (i > 0 && i < 9) {
 				if (*(uint32_t *)((char *)bp->b_data
-					      + SECSIZE(fs)
+					      + BSSIZE(fs)
 						  - sizeof(uint32_t))
 				    != htole32(0xAA550000)) {
 						pwarn("Extended boot sector %d magic number wrong\n",
@@ -90,7 +90,7 @@ pass0(struct exfatfs *fs, struct dkwedge_info *dkwp)
 							exit(1);
 						if (reply("fix") == 1) {
 							*(uint32_t *)((char *)bp->b_data
-								      + SECSIZE(fs)
+								      + BSSIZE(fs)
 								      - sizeof(uint32_t))
 								= htole32(0xAA550000);
 							bwrite(bp);
@@ -104,8 +104,8 @@ pass0(struct exfatfs *fs, struct dkwedge_info *dkwp)
 		}
 		
 		/* Compare boot block against recorded checksum */
-		bread(fs->xf_devvp, base + i, SECSIZE(fs), 0, &bp);
-		for (j = 0; j < SECSIZE(fs) / sizeof(uint32_t); j++) {
+		bread(fs->xf_devvp, base + i, BSSIZE(fs), 0, &bp);
+		for (j = 0; j < BSSIZE(fs) / sizeof(uint32_t); j++) {
 			if (((uint32_t *)bp->b_data)[j] != cksum) {
 				pwarn("Boot block %d checksum mismatch:"
 				      " word %d expected 0x%x computed 0x%x\n",
@@ -206,7 +206,7 @@ pass0(struct exfatfs *fs, struct dkwedge_info *dkwp)
 	}
 		
 	/* FatLength */
-	if (fs->xf_FatLength < howmany((fs->xf_ClusterCount + 2) * 4, SECSIZE(fs))) {
+	if (fs->xf_FatLength < howmany((fs->xf_ClusterCount + 2) * 4, FATBSIZE(fs))) {
 		pfatal("FatLength too small\n");
 		if (Pflag || reply("continue") == 0)
 			exit(1);

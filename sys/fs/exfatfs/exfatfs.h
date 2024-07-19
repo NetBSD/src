@@ -1,4 +1,4 @@
-/* $NetBSD: exfatfs.h,v 1.1.2.4 2024/07/03 04:08:47 perseant Exp $ */
+/* $NetBSD: exfatfs.h,v 1.1.2.5 2024/07/19 16:19:15 perseant Exp $ */
 
 /*-
  * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
@@ -164,81 +164,103 @@ struct exfatfs_args {
 #define EXFATFS_LABELMAX 11
 #define EXFATFS_NAMEMAX 255
 
-/* Base shift from bytes to sizeof(struct dirent) */
-#define EXFATFS_DIRENT_BASESHIFT 5
-#define EXFATFS_BYTES2DIRENT(fs, e) ((e) >> EXFATFS_DIRENT_BASESHIFT)
-#define EXFATFS_DIRENT2BYTES(fs, e) ((e) << EXFATFS_DIRENT_BASESHIFT)
-
-/* Convert from sizeof(dirent) to cluster */
-#define EXFATFS_DIRENT_SHIFT(fs) ((fs)->xf_BytesPerSectorShift + \
-	(fs)->xf_SectorsPerClusterShift - EXFATFS_DIRENT_BASESHIFT)
-
-#define EXFATFS_DIRENT2DEVBSIZE(fs, e) ((e) >> (DEV_BSHIFT - \
-					EXFATFS_DIRENT_BASESHIFT))
-#define EXFATFS_DEVBSIZE2DIRENT(fs, e) ((e) << (DEV_BSHIFT \
-						- EXFATFS_DIRENT_BASESHIFT))
-#define EXFATFS_DIRENT2FSSEC(fs, e) ((e) >> (fs->xf_BytesPerSectorShift \
-						- EXFATFS_DIRENT_BASESHIFT))
-#define EXFATFS_FSSEC2DIRENT(fs, sec) ((sec) << (fs->xf_BytesPerSectorShift \
-						- EXFATFS_DIRENT_BASESHIFT))
-
-/* If we have an entry number we may need to convert it to lbn and offset */
-#define EXFATFS_DIRENT2ENTRY(fs, e) EXFATFS_BYTES2DIRENT((fs), \
-			(EXFATFS_DIRENT2BYTES((fs), (e)) & SECMASK(fs)))
-
-#define EXFATFS_CLUST_ENTRY2INO(fs, clust, entry) ((((uint64_t)clust) \
-				<< EXFATFS_DIRENT_SHIFT(fs)) | (entry))
-#define EXFATFS_HWADDR_ENTRY2INO(fs, bn, entry) ((EXFATFS_HWADDR2CLUSTER((fs),\
-			 (bn)) << EXFATFS_DIRENT_SHIFT(fs)) | (entry))
-#define INO2CLUST(ino) ((ino) >> EXFATFS_DIRENT_SHIFT(fs))
-#define INO2ENTRY(ino) ((ino) & ((1 << EXFATFS_DIRENT_SHIFT(fs)) - 1))
-#define ROOTDIRCLUST 1
-#define ROOTDIRENTRY 1
-#define ROOTINO(fs) EXFATFS_CLUST_ENTRY2INO((fs), ROOTDIRCLUST, ROOTDIRENTRY)
+/* A shift corresponding to MAXPHYS */
+#define MAXPSHIFT 16
+#define MAXPSIZE (1 << MAXPSHIFT)
 
 /*
- * Units conversions between clusters, filesystem sectors and DEV_BSIZE.
+ * Units conversions between clusters, logical blocks, filesystem sectors
+ * and DEV_BSIZE.
  */
-#define EXFATFS_FSSEC2DEVBSIZE(fs, bn) ((bn) << ((fs)->xf_BytesPerSectorShift \
-							- DEV_BSHIFT))
-#define EXFATFS_DEVBSIZE2FSSEC(fs, bn) ((bn) >> ((fs)->xf_BytesPerSectorShift \
-							- DEV_BSHIFT))
-#define EXFATFS_BYTES2CLUSTER(fs, n) ((n) >> ((fs)->xf_BytesPerSectorShift \
-					+ (fs)->xf_SectorsPerClusterShift))
-#define EXFATFS_BYTES2FSSEC(fs, n) ((n) >> ((fs)->xf_BytesPerSectorShift))
-#define EXFATFS_FSSEC2BYTES(fs, n) ((n) << ((fs)->xf_BytesPerSectorShift))
-#define EXFATFS_CLUSTER2BYTES(fs, cn) ((cn) << ((fs)->xf_BytesPerSectorShift \
-					+ (fs)->xf_SectorsPerClusterShift))
-#define EXFATFS_CLUSTER2DEVBSIZE(fs, cn) ((cn) << ((fs)->xf_BytesPerSectorShift\
-			 + (fs)->xf_SectorsPerClusterShift - DEV_BSHIFT))
-#define EXFATFS_DEVBSIZE2CLUSTER(fs, bn) ((bn) >> ((fs)->xf_BytesPerSectorShift\
-			 + (fs)->xf_SectorsPerClusterShift - DEV_BSHIFT))
-#define EXFATFS_CLUSTER2FSSEC(fs, clust) ((clust) << 			\
-			(fs)->xf_SectorsPerClusterShift)
-#define EXFATFS_FSSEC2CLUSTER(fs, lbn)   ((lbn) >> 			\
-			(fs)->xf_SectorsPerClusterShift)
-#define SECSIZE(fs) (1 << (fs)->xf_BytesPerSectorShift)
-#define SECMASK(fs) (SECSIZE(fs) - 1)
 
-#define CLUSTERSHIFT(fs)	((fs)->xf_BytesPerSectorShift + 	\
-				 (fs)->xf_SectorsPerClusterShift)
-#define CLUSTERSIZE(fs) (1 << CLUSTERSHIFT(fs))
-#define CLUSTERMASK(fs) (CLUSTERSIZE(fs) - 1)
+/* Convert between bytes and the basic three types */
+#define EXFATFS_CSHIFT(fs) ((fs)->xf_BytesPerSectorShift			\
+			+ (fs)->xf_SectorsPerClusterShift)
+#define EXFATFS_CSIZE(fs) (1 << EXFATFS_CSHIFT(fs))
+#define EXFATFS_CMASK(fs) (EXFATFS_CSIZE(fs) - 1)
 
-/* The unit in which I/O is performed */
-#define MAXPSHIFT 16
-#define MAXPSIZE (1 << MAXPSHIFT)	/* Must be <= MAXPHYS */
-#define IOSHIFT(fs) MIN(CLUSTERSHIFT(fs), MAXPSHIFT)
-#define IOSIZE(fs) MIN(CLUSTERSIZE(fs), MAXPSIZE)
-#define IOMASK(fs) (IOSIZE(fs) - 1)
+#define EXFATFS_LSHIFT(fs) MIN(MAXPSHIFT, EXFATFS_CSHIFT(fs))
+#define EXFATFS_LSIZE(fs)  (1 << EXFATFS_LSHIFT(fs))
+#define EXFATFS_LMASK(fs)  (EXFATFS_LSIZE(fs) - 1)
 
-#define EXFATFS_CLUSTER2HWADDR(fs, clust) (EXFATFS_CLUSTER2FSSEC((fs),	\
-				(clust) - 2) + (fs)->xf_ClusterHeapOffset)
-#define EXFATFS_HWADDR2CLUSTER(fs, bn) (EXFATFS_FSSEC2CLUSTER((fs), (bn) \
-				- (fs)->xf_ClusterHeapOffset) + 2)
-/* The offset of this block relative to start of cluster, in dirent units */
-#define EXFATFS_HWADDR2DIRENT(fs, bn) EXFATFS_DEVBSIZE2DIRENT((fs),	\
-	((bn) - EXFATFS_CLUSTER2HWADDR((fs), 				\
-		EXFATFS_HWADDR2CLUSTER((fs), (bn)))))
+#define EXFATFS_SSHIFT(fs) ((fs)->xf_BytesPerSectorShift)
+#define EXFATFS_SSIZE(fs) (1 << EXFATFS_SSHIFT(fs))
+#define EXFATFS_SMASK(fs) (EXFATFS_SSIZE(fs) - 1)
+
+/* Base shift from bytes to sizeof(struct dirent) */
+#define EXFATFS_DIRENT_SHIFT 5
+
+/* Convert from bytes to each */
+#define EXFATFS_B2C(fs, n)      ((n) >> EXFATFS_CSHIFT(fs))
+#define EXFATFS_B2L(fs, n)      ((n) >> EXFATFS_LSHIFT(fs))
+#define EXFATFS_B2S(fs, n)      ((n) >> EXFATFS_SSHIFT(fs))
+#define EXFATFS_B2D(fs, n)      ((n) >> DEV_BSHIFT)
+#define EXFATFS_B2DIRENT(fs, n) ((n) >> EXFATFS_DIRENT_SHIFT)
+
+/* Convert from sizeof(dirent) to each */
+#define EXFATFS_DIRENT2C(fs, n) ((n) >> (EXFATFS_CSHIFT(fs) - EXFATFS_DIRENT_SHIFT))
+#define EXFATFS_DIRENT2L(fs, n) ((n) >> (EXFATFS_LSHIFT(fs) - EXFATFS_DIRENT_SHIFT))
+#define EXFATFS_DIRENT2S(fs, n) ((n) >> (EXFATFS_SSHIFT(fs) - EXFATFS_DIRENT_SHIFT))
+#define EXFATFS_DIRENT2D(fs, n) ((n) >> (DEV_BSHIFT - EXFATFS_DIRENT_SHIFT))
+#define EXFATFS_DIRENT2B(fs, n) ((n) << EXFATFS_DIRENT_SHIFT)
+
+/* Convert from DEV_BSIZE to each */
+#define EXFATFS_D2C(fs, n)      ((n) >> (EXFATFS_CSHIFT(fs) - DEV_BSHIFT))
+#define EXFATFS_D2L(fs, n)      ((n) >> (EXFATFS_LSHIFT(fs) - DEV_BSHIFT))
+#define EXFATFS_D2S(fs, n)      ((n) >> (EXFATFS_SSHIFT(fs) - DEV_BSHIFT))
+#define EXFATFS_D2DIRENT(fs, n) ((n) << (DEV_BSHIFT - EXFATFS_DIRENT_SHIFT))
+#define EXFATFS_D2B(fs, n)      ((n) << DEV_BSHIFT)
+
+/* Convert from filesystem sectors to each */
+#define EXFATFS_S2C(fs, n)      ((n) >> (EXFATFS_CSHIFT(fs) - EXFATFS_SSHIFT(fs)))
+#define EXFATFS_S2L(fs, n)      ((n) >> (EXFATFS_LSHIFT(fs) - EXFATFS_SSHIFT(fs)))
+#define EXFATFS_S2D(fs, n)      ((n) << (EXFATFS_SSHIFT(fs) - DEV_BSHIFT))
+#define EXFATFS_S2DIRENT(fs, n) ((n) << (EXFATFS_SSHIFT(fs) - EXFATFS_DIRENT_SHIFT))
+#define EXFATFS_S2B(fs, n)      ((n) << EXFATFS_SSHIFT(fs))
+
+/* Convert from logical blocks to each */
+#define EXFATFS_L2C(fs, n)      ((n) >> (EXFATFS_CSHIFT(fs) - EXFATFS_LSHIFT(fs)))
+#define EXFATFS_L2S(fs, n)      ((n) << (EXFATFS_LSHIFT(fs) - EXFATFS_SSHIFT(fs)))
+#define EXFATFS_L2D(fs, n)      ((n) << (EXFATFS_LSHIFT(fs) - DEV_BSHIFT))
+#define EXFATFS_L2DIRENT(fs, n) ((n) << (EXFATFS_LSHIFT(fs) - EXFATFS_DIRENT_SHIFT))
+#define EXFATFS_L2B(fs, n)      ((n) << EXFATFS_LSHIFT(fs))
+
+/* Convert between clusters and each */
+#define EXFATFS_C2L(fs, n)      ((n) << (EXFATFS_CSHIFT(fs) - EXFATFS_LSHIFT(fs)))
+#define EXFATFS_C2S(fs, n)      ((n) << (EXFATFS_CSHIFT(fs) - EXFATFS_SSHIFT(fs)))
+#define EXFATFS_C2D(fs, n)      ((n) << (EXFATFS_CSHIFT(fs) - DEV_BSHIFT))
+#define EXFATFS_C2DIRENT(fs, n) ((n) << (EXFATFS_CSHIFT(fs) - EXFATFS_DIRENT_SHIFT))
+#define EXFATFS_C2B(fs, n)      ((n) << EXFATFS_CSHIFT(fs))
+
+/* Cluster / DEV_BSIZE mask */
+#define EXFATFS_DCMASK(fs) (EXFATFS_C2D((fs), 1) - 1)
+
+/* Size of boot sectors */
+#define BSSHIFT(fs) EXFATFS_SSHIFT(fs)
+#define BSSIZE(fs)  EXFATFS_SSIZE(fs)
+#define BSMASK(fs)  EXFATFS_SMASK(fs)
+
+/* Size of FAT blocks */
+#define FATBSHIFT(fs) EXFATFS_SSHIFT(fs)
+#define FATBSIZE(fs)  EXFATFS_SSIZE(fs)
+#define FATBMASK(fs)  EXFATFS_SMASK(fs)
+
+/* Inode numbers are coded as (cluster, entry #) pairs */
+#define INO2CLUST(ino) EXFATFS_DIRENT2C(fs, ino)
+#define INO2ENTRY(ino) ((ino) & ((EXFATFS_C2DIRENT(fs, 1)) - 1))
+#define CE2INO(fs, c, e)   (EXFATFS_C2DIRENT(fs, (c)) | (e))
+
+#define ROOTDIRCLUST 1
+#define ROOTDIRENTRY 1
+#define ROOTINO(fs) CE2INO((fs), ROOTDIRCLUST, ROOTDIRENTRY)
+
+/*
+ * Convert between a logical cluster number and its physical location on disk,
+ * in DEV_BSIZE units.
+ */
+#define EXFATFS_LC2D(fs, c) (EXFATFS_C2D((fs), (c) - 2) + (fs)->xf_ClusterHeapOffset) /* EXFATFS_CLUSTER2HWADDR */
+#define EXFATFS_D2LC(fs, bn) (EXFATFS_D2C((fs), (bn) - (fs)->xf_ClusterHeapOffset) + 2) /* EXFATFS_HWADDR2CLUSTER */
+/* The offset of this DEV_BSIZE block relative to start of cluster, in dirent units */
+#define EXFATFS_DCLOFF_DIRENT(fs, bn) EXFATFS_D2DIRENT((fs), ((bn) - EXFATFS_C2D((fs), EXFATFS_D2C((fs), (bn))))) /* EXFATFS_HWADDR2DIRENT */
 
 #endif /* FS_EXFATFS_EXFATFS_H_ */

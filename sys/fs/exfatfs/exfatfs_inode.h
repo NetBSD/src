@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_inode.h,v 1.1.2.3 2024/07/03 18:57:42 perseant Exp $	*/
+/*	$NetBSD: exfatfs_inode.h,v 1.1.2.4 2024/07/19 16:19:15 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
@@ -226,7 +226,7 @@ do {									\
 #define GET_DSE_FIRSTCLUSTER(xip)    DSE(xip)->xd_firstCluster
 #define GET_DSE_DATALENGTH(xip)      DSE(xip)->xd_dataLength
 #define GET_DSE_DATALENGTH_BLK(xip, fs) roundup2(DSE(xip)->xd_dataLength, \
-						CLUSTERSIZE(fs))
+						EXFATFS_CSIZE(fs))
 
 #define SET_DSE_NAMELENGTH(xip, v)					\
 do {									\
@@ -325,7 +325,7 @@ void exfatfs_check_fence(struct exfatfs *fs);
 # define exfatfs_check_fence(fs)
 #endif
 
-#define INUM(xip) EXFATFS_CLUST_ENTRY2INO((xip)->xi_fs, (xip)->xi_dirclust, \
+#define INUM(xip) CE2INO((xip)->xi_fs, (xip)->xi_dirclust, \
 					(xip)->xi_diroffset)
 
 /*

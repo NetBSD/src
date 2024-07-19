@@ -1,4 +1,4 @@
-/* $NetBSD: exfatfs_vfsops.c,v 1.1.2.3 2024/07/02 20:36:50 perseant Exp $ */
+/* $NetBSD: exfatfs_vfsops.c,v 1.1.2.4 2024/07/19 16:19:16 perseant Exp $ */
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_vfsops.c,v 1.1.2.3 2024/07/02 20:36:50 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_vfsops.c,v 1.1.2.4 2024/07/19 16:19:16 perseant Exp $");
 
 struct vm_page;
 
@@ -502,7 +502,7 @@ exfatfs_finish_mountfs(struct exfatfs *fs)
 	mp->mnt_stat.f_namemax = EXFATFS_NAMEMAX;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_dev_bshift = DEV_BSHIFT;
-	mp->mnt_fs_bshift = fs->xf_BytesPerSectorShift;
+	mp->mnt_fs_bshift = EXFATFS_LSHIFT(fs);
 
 	spec_node_setmountedfs(devvp, mp);
 
@@ -636,14 +636,14 @@ exfatfs_unmount(struct mount *mp, int mntflags)
 int
 exfatfs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
-	struct exfatfs *fs = MPTOXMP(mp)->xm_fs;;
+	struct exfatfs *fs = MPTOXMP(mp)->xm_fs;
 	
-	sbp->f_bsize = CLUSTERSIZE(fs);
-	sbp->f_frsize = SECSIZE(fs); /* XXX */
-	sbp->f_iosize = MIN(sbp->f_bsize, MAXPHYS);
-	sbp->f_blocks = EXFATFS_CLUSTER2FSSEC(fs, fs->xf_ClusterCount);
-	sbp->f_bfree =  EXFATFS_CLUSTER2FSSEC(fs, fs->xf_FreeClusterCount);
-	sbp->f_bavail = EXFATFS_CLUSTER2FSSEC(fs, fs->xf_FreeClusterCount);
+	sbp->f_bsize = EXFATFS_LSIZE(fs);
+	sbp->f_frsize = EXFATFS_LSIZE(fs);
+	sbp->f_iosize = EXFATFS_LSIZE(fs);
+	sbp->f_blocks = EXFATFS_C2L(fs, fs->xf_ClusterCount);
+	sbp->f_bfree =  EXFATFS_C2L(fs, fs->xf_FreeClusterCount);
+	sbp->f_bavail = EXFATFS_C2L(fs, fs->xf_FreeClusterCount);
 	sbp->f_bresvd = 0;
 	sbp->f_files = 0; /* XXX How can we know the number of files? */
 	sbp->f_ffree = 0; /* Could compute from #files if we had that */
@@ -692,7 +692,8 @@ exfatfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 	SET_DFE_CREATE_UTCOFF(xip, 0x80);
 	SET_DSE_FIRSTCLUSTER(xip, fs->xf_FirstClusterOfRootDirectory);
 	SET_DSE_ALLOCPOSSIBLE(xip);
-	
+	CLR_DSE_NOFATCHAIN(xip);
+
 	/*
 	 * The root directory doesn't store its length anywhere.
 	 * Walk its FAT to find out how long the file is.
@@ -702,12 +703,12 @@ exfatfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 	while (clust != 0xFFFFFFFF) {
 		/* Read the FAT to find the next cluster */
 		bread(fs->xf_devvp, EXFATFS_FATBLK(fs, clust),
-		      SECSIZE(fs), 0, &bp);
+		      FATBSIZE(fs), 0, &bp);
 		clust = ((uint32_t *)bp->b_data)
 			[EXFATFS_FATOFF(clust)];
 		brelse(bp, 0);
 		SET_DSE_DATALENGTH(xip, GET_DSE_DATALENGTH(xip)
-				   + CLUSTERSIZE(fs));
+				   + EXFATFS_CSIZE(fs));
 	}
 	SET_DSE_VALIDDATALENGTH(xip, GET_DSE_DATALENGTH(xip));
 	/* GETPARENT(xip, dvp); */ /* Root has no parent */
@@ -889,7 +890,7 @@ int exfatfs_getnewvnode(struct exfatfs *fs, struct vnode *dvp,
 		 fs, dvp, clust, off, type, vpp));
 
 	va.va_type = type;
-	va.va_fileid = EXFATFS_CLUST_ENTRY2INO(fs, clust, off);
+	va.va_fileid = CE2INO(fs, clust, off);
 	return vcache_new(XMPTOMP(fs->xf_mp), dvp,
 			  &va, NOCRED, xip, vpp);
 }

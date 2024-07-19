@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.1.2.2 2024/07/03 21:56:17 perseant Exp $	*/
+/*	$NetBSD: pass2.c,v 1.1.2.3 2024/07/19 16:19:16 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ pass2(struct exfatfs *fs, uint8_t *observed_bitmap)
 	uint32_t base, off;
 	struct buf *bp = NULL;
 	daddr_t lbn, endlbn;
-	size_t size = bitmap_discontiguous ? SECSIZE(fs) : MAXPHYS;
+	size_t size = bitmap_discontiguous ? EXFATFS_LSIZE(fs) : MAXPHYS;
 	int modified;
 	
 	if (!Pflag) {
@@ -66,10 +66,10 @@ pass2(struct exfatfs *fs, uint8_t *observed_bitmap)
 	
 	assert(fs->xf_bitmapvp != NULL);
 
-	endlbn = howmany(fs->xf_ClusterCount, SECSIZE(fs) * NBBY);
-	for (lbn = 0; lbn < endlbn; lbn += size / SECSIZE(fs)) {
-		if (size > (size_t) (endlbn - lbn) * SECSIZE(fs)) {
-			size = (endlbn - lbn) * SECSIZE(fs);
+	endlbn = howmany(fs->xf_ClusterCount, EXFATFS_LSIZE(fs) * NBBY);
+	for (lbn = 0; lbn < endlbn; lbn += size / EXFATFS_LSIZE(fs)) {
+		if (size > (size_t) (endlbn - lbn) * EXFATFS_LSIZE(fs)) {
+			size = (endlbn - lbn) * EXFATFS_LSIZE(fs);
 			if (debug)
 				pwarn("At lbn %lu, switch to block size %zd\n",
 					(unsigned long)lbn, size);
@@ -80,7 +80,7 @@ pass2(struct exfatfs *fs, uint8_t *observed_bitmap)
 		bread(fs->xf_bitmapvp, lbn, size, 0, &bp);
 
 		/* Check the quick way first */
-		base = lbn * SECSIZE(fs) * NBBY;
+		base = lbn * EXFATFS_LSIZE(fs) * NBBY;
 		if (memcmp(bp->b_data, observed_bitmap + base / NBBY, size) == 0) {
 			brelse(bp, 0);
 			continue;
