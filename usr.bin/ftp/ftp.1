@@ -1,6 +1,6 @@
-.\" 	$NetBSD: ftp.1,v 1.154 2024/04/17 02:46:03 gutteridge Exp $
+.\" 	$NetBSD: ftp.1,v 1.155 2024/07/19 03:51:21 lukem Exp $
 .\"
-.\" Copyright (c) 1996-2023 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1996-2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -57,7 +57,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd April 17, 2024
+.Dd July 19, 2024
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -66,10 +66,10 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl 46AadefginpRtVv\&?
+.Op Fl b Ar bufsize
 .Op Fl N Ar netrc
 .Op Fl o Ar output
 .Op Fl P Ar port
-.Op Fl b Ar bufsize
 .Op Fl q Ar quittime
 .Op Fl r Ar retry
 .Op Fl s Ar srcaddr
@@ -205,8 +205,11 @@ to bypass normal login procedure, and use an anonymous login instead.
 .It Fl b Ar bufsize
 Change the input buffer size to
 .Ar bufsize .
-The default is 
-.Dv 16K .
+The default
+.Ar bufsize
+is
+.Dv 16384
+(16 KiB).
 .It Fl d
 Enables debugging.
 .It Fl e
