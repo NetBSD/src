@@ -1,7 +1,7 @@
-/*	$NetBSD: progressbar.c,v 1.24 2021/01/06 04:43:14 lukem Exp $	*/
+/*	$NetBSD: progressbar.c,v 1.25 2024/07/19 03:53:13 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997-2021 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2024 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progressbar.c,v 1.24 2021/01/06 04:43:14 lukem Exp $");
+__RCSID("$NetBSD: progressbar.c,v 1.25 2024/07/19 03:53:13 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -89,17 +89,17 @@ updateprogressmeter(int dummy)
  */
 #if !defined(NO_PROGRESS) || !defined(STANDALONE_PROGRESS)
 static const char * const suffixes[] = {
-	"",	/* 2^0  (byte) */
-	"KiB",	/* 2^10 Kibibyte */
-	"MiB",	/* 2^20 Mebibyte */
-	"GiB",	/* 2^30 Gibibyte */
-	"TiB",	/* 2^40 Tebibyte */
-	"PiB",	/* 2^50 Pebibyte */
-	"EiB",	/* 2^60 Exbibyte */
+	"",	/* 2^0, (byte) */
+	"KiB",	/* 2^10, Kibibyte */
+	"MiB",	/* 2^20, Mebibyte */
+	"GiB",	/* 2^30, Gibibyte */
+	"TiB",	/* 2^40, Tebibyte */
+	"PiB",	/* 2^50, Pebibyte */
+	"EiB",	/* 2^60, Exbibyte */
 #if 0
 		/* The following are not necessary for signed 64-bit off_t */
-	"ZiB",	/* 2^70 Zebibyte */
-	"YiB",	/* 2^80 Yobibyte */
+	"ZiB",	/* 2^70, Zebibyte */
+	"YiB",	/* 2^80, Yobibyte */
 #endif
 };
 #define NSUFFIXES	(int)(sizeof(suffixes) / sizeof(suffixes[0]))
