@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.83 2024/04/18 17:35:53 mlelstv Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.84 2024/07/19 04:48:13 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.83 2024/04/18 17:35:53 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.84 2024/07/19 04:48:13 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1701,7 +1701,7 @@ pms_synaptics_passthrough(struct pms_softc *psc)
 		 * scrolling.
 		 */
 		if (synaptics_aux_mid_button_scroll &&
-		    dy && (psc->buttons & 0x2)) {
+		    dy && (psc->buttons & 0x42)) {
 			wsmouse_precision_scroll(psc->sc_wsmousedev, dx, dy);
 		} else {
 			buttons = (psc->buttons & 0x1f) | ((psc->buttons >> 5) & 0x7);
