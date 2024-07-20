@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_timer.c,v 1.23 2020/05/29 12:30:40 rin Exp $	*/
+/*	$NetBSD: iq80310_timer.c,v 1.24 2024/07/20 20:36:33 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_timer.c,v 1.23 2020/05/29 12:30:40 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_timer.c,v 1.24 2024/07/20 20:36:33 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ timer_read(void)
 	/*
 	 * First read latches count.
 	 *
-	 * From RedBoot: harware bug that causes invalid counts to be
+	 * From RedBoot: hardware bug that causes invalid counts to be
 	 * latched.  The loop appears to work around the problem.
 	 */
 	do {

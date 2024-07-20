@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.10 2011/02/08 20:20:19 rmind Exp $	*/
+/*	$NetBSD: clock.c,v 1.11 2024/07/20 20:36:33 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2011/02/08 20:20:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2024/07/20 20:36:33 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2011/02/08 20:20:19 rmind Exp $");
  *
  * Inittodr initializes the time of day hardware which provides
  * date functions.  Its primary function is to use some file
- * system information in case the hardare clock lost state.
+ * system information in case the hardware clock lost state.
  *
  * Resettodr restores the time of day hardware after a time change.
  */

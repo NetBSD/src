@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.25 2023/12/08 01:38:20 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.26 2024/07/20 20:36:33 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -656,7 +656,7 @@ __bus_space_copy_region(8)
  * - When bus bridge performs automatic byte swap, these functions
  *   perform byte swap once more, to cancel the bridge's behavior.
  *
- * Mips Computer Systems platforms perform harware byte swapping -
+ * Mips Computer Systems platforms perform hardware byte swapping -
  * therefore the streaming methods can byte swap as determined from
  * the bus space tag settings
  *
