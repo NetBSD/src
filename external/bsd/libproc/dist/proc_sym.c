@@ -32,7 +32,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libproc/proc_sym.c 279946 2015-03-13 04:26:48Z stas $");
 #else
-__RCSID("$NetBSD: proc_sym.c,v 1.4 2017/06/15 23:44:58 kamil Exp $");
+__RCSID("$NetBSD: proc_sym.c,v 1.4.16.1 2024/07/20 14:59:02 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -140,6 +140,10 @@ proc_objname(struct proc_handle *p, uintptr_t addr, char *objname,
 {
 	size_t i;
 	rd_loadobj_t *rdl;
+
+	if (p->nobjs == 0)
+		if (proc_rdagent(p) == NULL)
+			return (NULL);
 
 	for (i = 0; i < p->nobjs; i++) {
 		rdl = &p->rdobjs[i];
