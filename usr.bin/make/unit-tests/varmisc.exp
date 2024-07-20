@@ -43,29 +43,17 @@ export-appended: env mk
 parse-dynamic: parse-dynamic parse-dynamic before
 parse-dynamic: parse-dynamic parse-dynamic after
 parse-dynamic: parse-dynamic parse-dynamic after
-varerror-unclosed:begin
-make: in target "varerror-unclosed": Unclosed variable ""
+varerror-unclosed-1:begin
+make: in target "varerror-unclosed-2": Unclosed variable ""
+make: in target "varerror-unclosed-3": Unclosed variable "UNCLOSED"
+make: in target "varerror-unclosed-4": Unclosed variable "UNCLOSED"
+make: in target "varerror-unclosed-5": while evaluating variable "UNCLOSED" with value "": Unclosed variable "PATTERN"
+make: in target "varerror-unclosed-5": while evaluating variable "UNCLOSED" with value "": Unclosed expression, expecting '}' for modifier "M${PATTERN"
+make: in target "varerror-unclosed-6": Unclosed variable "param"
+make: in target "varerror-unclosed-6": Unclosed variable "UNCLOSED."
 
-make: in target "varerror-unclosed": Unclosed variable "UNCLOSED"
-
-make: in target "varerror-unclosed": Unclosed variable "UNCLOSED"
-
-make: in target "varerror-unclosed": while evaluating variable "UNCLOSED" with value "": Unclosed variable "PATTERN"
-make: in target "varerror-unclosed": while evaluating variable "UNCLOSED" with value "": Unclosed expression, expecting '}' for modifier "M${PATTERN"
-
-make: in target "varerror-unclosed": Unclosed variable "param"
-make: in target "varerror-unclosed": Unclosed variable "UNCLOSED."
-
-
-make: in target "varerror-unclosed": Unclosed variable "UNCLOSED.1"
-
-make: in target "varerror-unclosed": Unclosed variable "UNCLOSED.2"
-
-make: in target "varerror-unclosed": Unclosed variable "UNCLOSED.3"
-
-make: in target "varerror-unclosed": while evaluating variable "UNCLOSED_INDIR_2" with value "${UNCLOSED_INDIR_1}": while evaluating variable "UNCLOSED_INDIR_1" with value "${UNCLOSED_ORIG": Unclosed variable "UNCLOSED_ORIG"
-
-varerror-unclosed:end
+make: in target "varerror-unclosed-7": Unclosed variable "UNCLOSED.1"
+make: in target "varerror-unclosed-8": while evaluating variable "UNCLOSED_INDIR_2" with value "${UNCLOSED_INDIR_1}": while evaluating variable "UNCLOSED_INDIR_1" with value "${UNCLOSED_ORIG": Unclosed variable "UNCLOSED_ORIG"
 target1-flags: we have: one two
 target2-flags: we have: one two three four
 exit status 2
