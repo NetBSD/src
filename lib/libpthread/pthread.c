@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.181.2.2 2024/06/20 18:22:47 martin Exp $	*/
+/*	$NetBSD: pthread.c,v 1.181.2.3 2024/07/20 15:35:01 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.181.2.2 2024/06/20 18:22:47 martin Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.181.2.3 2024/07/20 15:35:01 martin Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -1076,10 +1076,10 @@ pthread__assertfunc(const char *file, int line, const char *function,
 	int len;
 
 	/*
-	 * snprintf should not acquire any locks, or we could
+	 * snprintf_ss should not acquire any locks, or we could
 	 * end up deadlocked if the assert caller held locks.
 	 */
-	len = snprintf(buf, 1024,
+	len = snprintf_ss(buf, 1024,
 	    "assertion \"%s\" failed: file \"%s\", line %d%s%s%s\n",
 	    expr, file, line,
 	    function ? ", function \"" : "",
@@ -1109,7 +1109,7 @@ pthread__errorfunc(const char *file, int line, const char *function,
 	va_end(ap);
 
 	/*
-	 * snprintf should not acquire any locks, or we could
+	 * snprintf_ss should not acquire any locks, or we could
 	 * end up deadlocked if the assert caller held locks.
 	 */
 	len = snprintf_ss(buf, sizeof(buf),
