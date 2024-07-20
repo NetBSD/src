@@ -5,5 +5,9 @@ make: in target "unclosed-modifier": while evaluating variable "UNCLOSED" with v
 : unclosed-modifier-
 make: in target "unknown-modifier": while evaluating variable "UNKNOWN" with value "": Unknown modifier "Z"
 : unknown-modifier--eol
+make: in target "depend-source": while evaluating variable "UNCLOSED" with value "": Unclosed expression, expecting '}'
+: depend-source-
 : end-eol
+: Making depend-target
+: .END-eol
 exit status 2

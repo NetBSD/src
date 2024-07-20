@@ -1,11 +1,13 @@
-# $NetBSD: cmd-errors-jobs.mk,v 1.8 2024/07/09 19:43:01 rillig Exp $
+# $NetBSD: cmd-errors-jobs.mk,v 1.9 2024/07/20 13:59:31 rillig Exp $
 #
 # Demonstrate how errors in expressions affect whether the commands
 # are actually executed in jobs mode.
 
 .MAKEFLAGS: -j1
 
-all: undefined unclosed-expression unclosed-modifier unknown-modifier end
+all: undefined unclosed-expression unclosed-modifier unknown-modifier
+all: depend-target
+all: end
 
 # Undefined variables in expressions are not an error.  They expand to empty
 # strings.
@@ -31,8 +33,22 @@ unknown-modifier:
 # expect: : unknown-modifier--eol
 	: $@-${UNKNOWN:Z}-eol
 
+depend-target: depend-source
+# TODO: don't make the target, as its source failed to generate the commands.
+# expect: : Making depend-target
+# expect-reset
+	: Making $@
+
+depend-source:
+# expect: make: in target "depend-source": while evaluating variable "UNCLOSED" with value "": Unclosed expression, expecting '}'
+	: $@-${UNCLOSED:
+
 # expect: : end-eol
 end:
+	: $@-eol
+
+# expect: : .END-eol
+.END:
 	: $@-eol
 
 # expect: exit status 2
