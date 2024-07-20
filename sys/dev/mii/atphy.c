@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.31 2023/02/22 08:09:09 msaitoh Exp $ */
+/*	$NetBSD: atphy.c,v 1.32 2024/07/20 20:36:32 andvar Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.31 2023/02/22 08:09:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.32 2024/07/20 20:36:32 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,7 +265,7 @@ atphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			 * in unexpected results such as inaccessibility of
 			 * hardware of freshly rebooted system. Disable
 			 * powering down PHY until I got more information for
-			 * Attansic/Atheros PHY hardwares.
+			 * Attansic/Atheros PHY hardware.
 			 */
 			PHY_WRITE(sc, MII_BMCR, bmcr | BMCR_ISO);
 			goto done;

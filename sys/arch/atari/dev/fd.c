@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.98 2023/12/20 00:40:42 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.99 2024/07/20 20:36:33 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.98 2023/12/20 00:40:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.99 2024/07/20 20:36:33 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1152,7 +1152,7 @@ fdmotoroff(struct fd_softc *sc)
 	int s;
 
 	/*
-	 * Get at harware interrupt level
+	 * Get at hardware interrupt level
 	 */
 	s = splbio();
 

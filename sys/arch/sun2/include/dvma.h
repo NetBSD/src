@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.h,v 1.7 2008/04/28 20:23:37 martin Exp $	*/
+/*	$NetBSD: dvma.h,v 1.8 2024/07/20 20:36:33 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <machine/idprom.h>
 
 /*
- * Note that while the DVMA harware makes the last 1MB visible
+ * Note that while the DVMA hardware makes the last 1MB visible
  * for secondary masters, the PROM "owns" the last page of it.
  * XXX fredette - is this because of the obio ie SCP?
  * Also note that OBIO devices can actually see all of
