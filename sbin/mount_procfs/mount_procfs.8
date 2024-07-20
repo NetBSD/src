@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_procfs.8,v 1.38 2020/01/08 12:04:57 ad Exp $
+.\"	$NetBSD: mount_procfs.8,v 1.38.8.1 2024/07/20 15:39:46 martin Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 .\"	@(#)mount_procfs.8	8.3 (Berkeley) 6/1/94
 .\"
 .\"
-.Dd January 8, 2020
+.Dd April 18, 2023
 .Dt MOUNT_PROCFS 8
 .Os
 .Sh NAME
@@ -108,9 +108,103 @@ This can be used to gain access to the process' symbol table,
 or to start another copy of the process.
 .It Pa map
 A map of the process' virtual memory.
+This file comprises lines describing the memory regions of the process,
+where each line contains the following fields:
+.Pp
+.Bl -tag -compact -width max-protection
+.It start-address
+The starting address of the region (inclusive).
+.It end-address
+The ending address of the region (exclusive).
+.It protection
+The access permissions for the region, represented as
+a three-character string using the characters
+.Sq r ,
+.Sq w
+and
+.Sq x
+to denote read, write, and execute permission respectively.
+The lack of a permission is represented by a
+.Sq - .
+.It max-protection
+The maximum access permissions for the region represented as
+a three character string using the characters
+.Sq r ,
+.Sq w
+and
+.Sq x
+to denote read, write, and execute permission respectively.
+The lack of a permission is represented by a
+.Sq - .
+.It copy-on-write
+Whether the region is copy-on-write.
+One of:
+.Bl -tag -compact -width NCOW
+.It COW
+A region that is copy-on-write.
+.It NCOW
+A region that is not copy-on-write.
+.El
+.It needs-copy
+Whether the region needs a copy.
+One of:
+.Bl -tag -compact -width NNC
+.It NC
+The region needs a copy.
+.It NNC
+The region does not need a copy.
+.El
+.It inheritance
+The inheritance code for the region, as set by
+.Xr minherit 2 .
+.It wired-count
+The wired count for the region.
+The region can be paged out if its wired count is zero.
+.It advice
+The advice value set by a prior call to
+.Xr madvise 2
+for the region.
+.El
 .It Pa maps
 A map of the process' virtual memory in a form like the
 proc filesystem as implemented in Linux.
+This file comprises lines describing the memory regions of
+the process, where each line contains the following fields:
+.Pp
+.Bl -tag -compact -width start-address
+.It start-address
+The starting address of the region (inclusive).
+.It end-address
+The ending address of the region (exclusive).
+.It protection
+The access permissions for the region, represented as
+a three-character string using the characters
+.Sq r ,
+.Sq w
+and
+.Sq x
+to denote read, write, and execute permission respectively.
+The lack of a permission is represented by a
+.Sq - .
+.It copy-on-write
+Whether the region is copy-on-write.
+One of:
+.Bl -tag -compact -width ".Sq p"
+.It Sq p
+The region is copy-on-write.
+.It Sq s
+The region is shared.
+.El
+.It offset
+The offset into the file being mapped by the region.
+.It device-id
+The major and minor number of the device containing the file
+being mapped by the region.
+.It fileid
+The inode for the file associated with the region.
+.It path
+The pathname to the file associated with the region.
+.El
 .It Pa mem
 The complete virtual memory image of the process.
 Only those addresses which exist in the process can be accessed.
