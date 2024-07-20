@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy_arm.S,v 1.5 2013/12/02 21:21:33 joerg Exp $	*/
+/*	$NetBSD: memcpy_arm.S,v 1.5.40.1 2024/07/20 14:52:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ ENTRY(memcpy)
 	push	{r0, lr}		/* memcpy() returns dest addr */
 
 	subs	r2, r2, #4
-	blt	.Lmemcpy_l4		/* less than 4 bytes */
+	blo	.Lmemcpy_l4		/* less than 4 bytes */
 	ands	r12, r0, #3
 	bne	.Lmemcpy_destul		/* oh unaligned destination addr */
 	ands	r12, r1, #3
@@ -75,9 +75,9 @@ ENTRY(memcpy)
 .Lmemcpy_t8:
 	/* We have aligned source and destination */
 	subs	r2, r2, #8
-	blt	.Lmemcpy_l12		/* less than 12 bytes (4 from above) */
+	blo	.Lmemcpy_l12		/* less than 12 bytes (4 from above) */
 	subs	r2, r2, #0x14
-	blt	.Lmemcpy_l32		/* less than 32 bytes (12 from above) */
+	blo	.Lmemcpy_l32		/* less than 32 bytes (12 from above) */
 	push	{r4}		/* borrow r4 */
 
 	/* blat 32 bytes at a time */
@@ -88,12 +88,12 @@ ENTRY(memcpy)
 	ldmia	r1!, {r3, r4, r12, lr}
 	stmia	r0!, {r3, r4, r12, lr}
 	subs	r2, r2, #0x20
-	bge	.Lmemcpy_loop32
+	bhs	.Lmemcpy_loop32
 
 	cmn	r2, #0x10
-	ldmiage	r1!, {r3, r4, r12, lr}	/* blat a remaining 16 bytes */
-	stmiage	r0!, {r3, r4, r12, lr}
-	subge	r2, r2, #0x10
+	ldmiahs	r1!, {r3, r4, r12, lr}	/* blat a remaining 16 bytes */
+	stmiahs	r0!, {r3, r4, r12, lr}
+	subhs	r2, r2, #0x10
 	pop	{r4}		/* return r4 */
 
 .Lmemcpy_l32:
@@ -101,21 +101,21 @@ ENTRY(memcpy)
 
 	/* blat 12 bytes at a time */
 .Lmemcpy_loop12:
-	ldmiage	r1!, {r3, r12, lr}
-	stmiage	r0!, {r3, r12, lr}
-	subsge	r2, r2, #0x0c
-	bge	.Lmemcpy_loop12
+	ldmiahs	r1!, {r3, r12, lr}
+	stmiahs	r0!, {r3, r12, lr}
+	subshs	r2, r2, #0x0c
+	bhs	.Lmemcpy_loop12
 
 .Lmemcpy_l12:
 	adds	r2, r2, #8
-	blt	.Lmemcpy_l4
+	blo	.Lmemcpy_l4
 
 	subs	r2, r2, #4
-	ldrlt	r3, [r1], #4
-	strlt	r3, [r0], #4
-	ldmiage	r1!, {r3, r12}
-	stmiage	r0!, {r3, r12}
-	subge	r2, r2, #4
+	ldrlo	r3, [r1], #4
+	strlo	r3, [r0], #4
+	ldmiahs	r1!, {r3, r12}
+	stmiahs	r0!, {r3, r12}
+	subhs	r2, r2, #4
 
 .Lmemcpy_l4:
 	/* less than 4 bytes to go */
@@ -129,10 +129,10 @@ ENTRY(memcpy)
 	cmp	r2, #2
 	ldrb	r3, [r1], #1
 	strb	r3, [r0], #1
-	ldrbge	r3, [r1], #1
-	strbge	r3, [r0], #1
-	ldrbgt	r3, [r1], #1
-	strbgt	r3, [r0], #1
+	ldrbhs	r3, [r1], #1
+	strbhs	r3, [r0], #1
+	ldrbhi	r3, [r1], #1
+	strbhi	r3, [r0], #1
 	pop	{r0, pc}
 
 	/* erg - unaligned destination */
@@ -143,12 +143,12 @@ ENTRY(memcpy)
 	/* align destination with byte copies */
 	ldrb	r3, [r1], #1
 	strb	r3, [r0], #1
-	ldrbge	r3, [r1], #1
-	strbge	r3, [r0], #1
-	ldrbgt	r3, [r1], #1
-	strbgt	r3, [r0], #1
+	ldrbhs	r3, [r1], #1
+	strbhs	r3, [r0], #1
+	ldrbhi	r3, [r1], #1
+	strbhi	r3, [r0], #1
 	subs	r2, r2, r12
-	blt	.Lmemcpy_l4		/* less the 4 bytes */
+	blo	.Lmemcpy_l4		/* less the 4 bytes */
 
 	ands	r12, r1, #3
 	beq	.Lmemcpy_t8		/* we have an aligned source */
@@ -159,10 +159,10 @@ ENTRY(memcpy)
 	bic	r1, r1, #3
 	ldr	lr, [r1], #4
 	cmp	r12, #2
-	bgt	.Lmemcpy_srcul3
+	bhi	.Lmemcpy_srcul3
 	beq	.Lmemcpy_srcul2
 	cmp	r2, #0x0c
-	blt	.Lmemcpy_srcul1loop4
+	blo	.Lmemcpy_srcul1loop4
 	sub	r2, r2, #0x0c
 	push	{r4, r5}
 
@@ -192,10 +192,10 @@ ENTRY(memcpy)
 #endif
 	stmia	r0!, {r3-r5, r12}
 	subs	r2, r2, #0x10
-	bge	.Lmemcpy_srcul1loop16
+	bhs	.Lmemcpy_srcul1loop16
 	pop	{r4, r5}
 	adds	r2, r2, #0x0c
-	blt	.Lmemcpy_srcul1l4
+	blo	.Lmemcpy_srcul1l4
 
 .Lmemcpy_srcul1loop4:
 #ifdef __ARMEB__
@@ -211,7 +211,7 @@ ENTRY(memcpy)
 #endif
 	str	r12, [r0], #4
 	subs	r2, r2, #4
-	bge	.Lmemcpy_srcul1loop4
+	bhs	.Lmemcpy_srcul1loop4
 
 .Lmemcpy_srcul1l4:
 	sub	r1, r1, #3
@@ -219,7 +219,7 @@ ENTRY(memcpy)
 
 .Lmemcpy_srcul2:
 	cmp	r2, #0x0c
-	blt	.Lmemcpy_srcul2loop4
+	blo	.Lmemcpy_srcul2loop4
 	sub	r2, r2, #0x0c
 	push	{r4, r5}
 
@@ -249,10 +249,10 @@ ENTRY(memcpy)
 #endif
 	stmia	r0!, {r3-r5, r12}
 	subs	r2, r2, #0x10
-	bge	.Lmemcpy_srcul2loop16
+	bhs	.Lmemcpy_srcul2loop16
 	pop	{r4, r5}
 	adds	r2, r2, #0x0c
-	blt	.Lmemcpy_srcul2l4
+	blo	.Lmemcpy_srcul2l4
 
 .Lmemcpy_srcul2loop4:
 #ifdef __ARMEB__
@@ -268,7 +268,7 @@ ENTRY(memcpy)
 #endif
 	str	r12, [r0], #4
 	subs	r2, r2, #4
-	bge	.Lmemcpy_srcul2loop4
+	bhs	.Lmemcpy_srcul2loop4
 
 .Lmemcpy_srcul2l4:
 	sub	r1, r1, #2
@@ -276,7 +276,7 @@ ENTRY(memcpy)
 
 .Lmemcpy_srcul3:
 	cmp	r2, #0x0c
-	blt	.Lmemcpy_srcul3loop4
+	blo	.Lmemcpy_srcul3loop4
 	sub	r2, r2, #0x0c
 	push	{r4, r5}
 
@@ -306,10 +306,10 @@ ENTRY(memcpy)
 #endif
 	stmia	r0!, {r3-r5, r12}
 	subs	r2, r2, #0x10
-	bge	.Lmemcpy_srcul3loop16
+	bhs	.Lmemcpy_srcul3loop16
 	pop	{r4, r5}
 	adds	r2, r2, #0x0c
-	blt	.Lmemcpy_srcul3l4
+	blo	.Lmemcpy_srcul3l4
 
 .Lmemcpy_srcul3loop4:
 #ifdef __ARMEB__
@@ -325,7 +325,7 @@ ENTRY(memcpy)
 #endif
 	str	r12, [r0], #4
 	subs	r2, r2, #4
-	bge	.Lmemcpy_srcul3loop4
+	bhs	.Lmemcpy_srcul3loop4
 
 .Lmemcpy_srcul3l4:
 	sub	r1, r1, #1
