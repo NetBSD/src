@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.123 2021/10/07 13:04:18 msaitoh Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.123.4.1 2024/07/20 14:19:31 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.123 2021/10/07 13:04:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.123.4.1 2024/07/20 14:19:31 martin Exp $");
 
 #include "opt_xen.h"
 
@@ -481,10 +481,6 @@ cpu_probe_c3(struct cpu_info *ci)
 	model = CPUID_TO_MODEL(ci->ci_signature);
 	stepping = CPUID_TO_STEPPING(ci->ci_signature);
 
-	/* Determine the largest extended function value. */
-	x86_cpuid(0x80000000, descs);
-	lfunc = descs[0];
-
 	if (family == 6) {
 		/*
 		 * VIA Eden ESP.
@@ -499,11 +495,45 @@ cpu_probe_c3(struct cpu_info *ci)
 		 *    bit in the FCR MSR.
 		 */
 		ci->ci_feat_val[0] |= CPUID_CX8;
-		wrmsr(MSR_VIA_FCR, rdmsr(MSR_VIA_FCR) | VIA_ACE_ECX8);
+		wrmsr(MSR_VIA_FCR, rdmsr(MSR_VIA_FCR) | VIA_FCR_CX8_REPORT);
+
+		/*
+		 * For reference on VIA Alternate Instructions, see the VIA C3
+		 * Processor Alternate Instruction Set Application Note, 2002.
+		 * http://www.bitsavers.org/components/viaTechnologies/C3-ais-appnote.pdf
+		 *
+		 * Disable unsafe ALTINST mode for VIA C3 processors, if necessary.
+		 *
+		 * This is done for the security reasons, as some CPUs were
+		 * found with ALTINST enabled by default.  This functionality
+		 * has ability to bypass many x86 architecture memory
+		 * protections and privilege checks, exposing a possibility
+		 * for backdoors and should not be enabled unintentionally.
+		 */
+		if (model > 0x5 && model < 0xA) {
+			int disable_ais = 0;
+			x86_cpuid(0xc0000000, descs);
+			lfunc = descs[0];
+			/* Check AIS flags first if supported ("Nehemiah"). */
+			if (lfunc >= 0xc0000001) {
+				x86_cpuid(0xc0000001, descs);
+				lfunc = descs[3];
+				if ((lfunc & CPUID_VIA_HAS_AIS)
+				    && (lfunc & CPUID_VIA_DO_AIS)) {
+					disable_ais = 1;
+				}
+			} else	/* Explicitly disable AIS for pre-CX5L CPUs. */
+				disable_ais = 1;
+
+			if (disable_ais) {
+				msr = rdmsr(MSR_VIA_FCR);
+				wrmsr(MSR_VIA_FCR, msr & ~VIA_FCR_ALTINST_ENABLE);
+			}
+		}
 	}
 
 	if (family > 6 || model > 0x9 || (model == 0x9 && stepping >= 3)) {
-		/* VIA Nehemiah or Esther. */
+		/* VIA Nehemiah or later. */
 		x86_cpuid(0xc0000000, descs);
 		lfunc = descs[0];
 		if (lfunc >= 0xc0000001) {	/* has ACE, RNG */
@@ -571,17 +601,15 @@ cpu_probe_c3(struct cpu_info *ci)
 		    }
 
 		    if (ace_enable) {
-			msr = rdmsr(MSR_VIA_ACE);
-			wrmsr(MSR_VIA_ACE, msr | VIA_ACE_ENABLE);
+			msr = rdmsr(MSR_VIA_FCR);
+			wrmsr(MSR_VIA_FCR, msr | VIA_FCR_ACE_ENABLE);
 		    }
 		}
 	}
 
-	/* Explicitly disable unsafe ALTINST mode. */
-	if (ci->ci_feat_val[4] & CPUID_VIA_DO_ACE) {
-		msr = rdmsr(MSR_VIA_ACE);
-		wrmsr(MSR_VIA_ACE, msr & ~VIA_ACE_ALTINST);
-	}
+	/* Determine the largest extended function value. */
+	x86_cpuid(0x80000000, descs);
+	lfunc = descs[0];
 
 	/*
 	 * Determine L1 cache/TLB info.
