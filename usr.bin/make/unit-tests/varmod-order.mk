@@ -1,4 +1,4 @@
-# $NetBSD: varmod-order.mk,v 1.14 2024/07/05 18:59:33 rillig Exp $
+# $NetBSD: varmod-order.mk,v 1.15 2024/07/20 08:54:19 rillig Exp $
 #
 # Tests for the :O variable modifier and its variants, which either sort the
 # words of the value or shuffle them.
@@ -10,19 +10,12 @@ NUMBERS=	8 5 4 9 1 7 6 10 3 2	# in English alphabetical order
 .  error ${WORDS:O}
 .endif
 
-# Unknown modifier "OX"
-# FIXME: The error message "Undefined variable" is wrong.
-# expect+2: Undefined variable "${WORDS:OX"
 # expect+1: while evaluating variable "WORDS" with value "one two three four five six seven eight nine ten": Bad modifier ":OX"
 _:=	${WORDS:OX}
 
-# Unknown modifier "OxXX"
-# FIXME: The error message "Undefined variable" is wrong.
-# expect+2: Undefined variable "${WORDS:Ox"
 # expect+1: while evaluating variable "WORDS" with value "one two three four five six seven eight nine ten": Bad modifier ":OxXX"
 _:=	${WORDS:OxXX}
 
-# Missing closing brace, to cover the error handling code.
 # expect+1: while evaluating variable "WORDS" with value "eight five four nine one seven six ten three two": Unclosed expression, expecting '}' for modifier "O"
 _:=	${WORDS:O
 # expect+1: while evaluating variable "NUMBERS" with value "1 2 3 4 5 6 7 8 9 10": Unclosed expression, expecting '}' for modifier "On"

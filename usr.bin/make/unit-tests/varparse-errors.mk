@@ -1,4 +1,4 @@
-# $NetBSD: varparse-errors.mk,v 1.17 2024/07/05 19:47:22 rillig Exp $
+# $NetBSD: varparse-errors.mk,v 1.18 2024/07/20 08:54:19 rillig Exp $
 
 # Tests for parsing and evaluating all kinds of expressions.
 #
@@ -66,11 +66,9 @@ VAR.${:U:Z}post=	unknown modifier with text in the variable name
 #
 #.MAKEFLAGS: -dv
 IND=	${:OX}
-# expect+6: while evaluating "${:U:OX:U${IND}} ${:U:OX:U${IND}}" with value "": Bad modifier ":OX"
-# expect+5: while evaluating "${:U:OX:U${IND}}" with value "": Bad modifier ":OX"
-# expect+4: Undefined variable "${:U:OX"
-# expect+3: while evaluating variable "IND" with value "${:OX}": while evaluating "${:OX}" with value "": Bad modifier ":OX"
-# expect+2: Undefined variable "${:U:OX"
+# expect+4: while evaluating "${:U:OX:U${IND}} ${:U:OX:U${IND}}" with value "": Bad modifier ":OX"
+# expect+3: while evaluating "${:U:OX:U${IND}}" with value "": Bad modifier ":OX"
+# expect+2: while evaluating variable "IND" with value "${:OX}": while evaluating "${:OX}" with value "": Bad modifier ":OX"
 # expect+1: while evaluating variable "IND" with value "${:OX}": while evaluating "${:OX}" with value "": Bad modifier ":OX"
 _:=	${:U:OX:U${IND}} ${:U:OX:U${IND}}
 #.MAKEFLAGS: -d0
