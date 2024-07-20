@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.150.2.15 2023/07/29 09:48:51 martin Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.150.2.16 2024/07/20 14:20:57 martin Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -1099,8 +1099,12 @@
 
 /*
  * Centaur Extended Feature flags.
- * CPUID FnC000_0001
+ * CPUID FnC000_0001 (VIA "Nehemiah" or later)
  */
+#define CPUID_VIA_HAS_AIS	__BIT(0)	/* Alternate Instruction Set supported */
+						/* (VIA "Nehemiah" only) */
+#define CPUID_VIA_DO_AIS	__BIT(1)	/* Alternate Instruction Set enabled */
+						/* (VIA "Nehemiah" only) */
 #define CPUID_VIA_HAS_RNG	__BIT(2)	/* Random number generator */
 #define CPUID_VIA_DO_RNG	__BIT(3)
 #define CPUID_VIA_HAS_ACE	__BIT(6)	/* AES Encryption */
@@ -1288,7 +1292,7 @@
 #define  MSR_X2APIC_SELF_IPI		0x03f	/* SELF IPI (W) */
 
 /*
- * VIA "Nehemiah" MSRs
+ * VIA "Nehemiah" or later MSRs
  */
 #define MSR_VIA_RNG		0x0000110b
 #define MSR_VIA_RNG_ENABLE	0x00000040
@@ -1296,15 +1300,10 @@
 #define MSR_VIA_RNG_NOISE_A	0x00000000
 #define MSR_VIA_RNG_NOISE_B	0x00000100
 #define MSR_VIA_RNG_2NOISE	0x00000300
-#define MSR_VIA_ACE		0x00001107
-#define 	VIA_ACE_ALTINST	0x00000001
-#define 	VIA_ACE_ECX8	0x00000002
-#define 	VIA_ACE_ENABLE	0x10000000
-
-/*
- * VIA "Eden" MSRs
- */
-#define MSR_VIA_FCR		MSR_VIA_ACE
+#define MSR_VIA_FCR		0x00001107	/* Feature Control Register */
+#define 	VIA_FCR_ACE_ENABLE	0x10000000	/* Enable PadLock (ex. RNG) */
+#define 	VIA_FCR_CX8_REPORT	0x00000002	/* Enable CX8 CPUID reporting */
+#define 	VIA_FCR_ALTINST_ENABLE	0x00000001	/* Enable ALTINST (C3 only) */
 
 /*
  * AMD K6/K7 MSRs.
