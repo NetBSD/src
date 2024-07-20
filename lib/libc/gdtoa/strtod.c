@@ -1,4 +1,4 @@
-/* $NetBSD: strtod.c,v 1.18 2021/05/06 16:15:33 christos Exp $ */
+/* $NetBSD: strtod.c,v 1.18.6.1 2024/07/20 15:03:06 martin Exp $ */
 
 /****************************************************************
 
@@ -90,9 +90,6 @@ sulp
 	}
 #endif /*}*/
 
-#if __GNUC_PREREQ__(9, 3)
-__attribute__((__optimize__("O0")))
-#endif
 static double
 _int_strtod_l(CONST char *s00, char **se, locale_t loc)
 {
