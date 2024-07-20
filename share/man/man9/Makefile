@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.437.2.3 2019/12/08 14:26:38 martin Exp $
+#       $NetBSD: Makefile,v 1.437.2.4 2024/07/20 16:57:51 martin Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -395,7 +395,13 @@ MLINKS+=iic.9 iic_acquire_bus.9 \
 	iic.9 iic_smbus_write_byte.9 \
 	iic.9 iic_smbus_read_byte.9 \
 	iic.9 iic_smbus_receive_byte.9
-MLINKS+=imax.9 imin.9
+MLINKS+=imax.9 imin.9 \
+	imax.9 lmax.9 \
+	imax.9 lmin.9 \
+	imax.9 uimax.9 \
+	imax.9 uimin.9 \
+	imax.9 ulmax.9 \
+	imax.9 ulmin.9
 MLINKS+=in4_cksum.9 in_cksum.9 \
 	in4_cksum.9 in6_cksum.9
 MLINKS+=ioasic.9 ioasic_intr_establish.9 \
