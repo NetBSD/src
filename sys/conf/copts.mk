@@ -1,4 +1,4 @@
-#	$NetBSD: copts.mk,v 1.7 2022/08/27 20:42:16 rillig Exp $
+#	$NetBSD: copts.mk,v 1.7.4.1 2024/07/20 14:26:01 martin Exp $
 
 # MI per-file compiler options required.
 
@@ -9,7 +9,6 @@
 _SYS_CONF_COPTS_MK_=1
 
 .if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
-COPTS.zlib.c+=		-Wno-error=implicit-fallthrough
 COPTS.pf.c+=		-Wno-error=implicit-fallthrough
 COPTS.radeon_cs.c+=	-Wno-error=implicit-fallthrough
 COPTS.via_dmablit.c+=	-Wno-error=implicit-fallthrough

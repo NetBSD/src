@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.38 2022/04/12 20:51:42 andvar Exp $	*/
+/*	$NetBSD: zlib.c,v 1.38.4.1 2024/07/20 14:26:01 martin Exp $	*/
 /*
  * This file is derived from various .h and .c files from the zlib-1.0.4
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
@@ -11,7 +11,7 @@
  * - added inflateIncomp and deflateOutputPending
  * - allow strm->next_out to be NULL, meaning discard the output
  *
- * $Id: zlib.c,v 1.38 2022/04/12 20:51:42 andvar Exp $
+ * $Id: zlib.c,v 1.38.4.1 2024/07/20 14:26:01 martin Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.38 2022/04/12 20:51:42 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.38.4.1 2024/07/20 14:26:01 martin Exp $");
 
 #define NO_DUMMY_DECL
 #define NO_ZCFUNCS
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.38 2022/04/12 20:51:42 andvar Exp $");
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.38 2022/04/12 20:51:42 andvar Exp $ */
+/* @(#) $Id: zlib.c,v 1.38.4.1 2024/07/20 14:26:01 martin Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H
@@ -294,7 +294,7 @@ void   zcfree(voidpf opaque, voidpf ptr);
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.38 2022/04/12 20:51:42 andvar Exp $ */
+/* @(#) $Id: zlib.c,v 1.38.4.1 2024/07/20 14:26:01 martin Exp $ */
 
 #ifndef _DEFLATE_H
 #define _DEFLATE_H
@@ -656,7 +656,7 @@ void _tr_stored_type_only(deflate_state *);
  *
  */
 
-/* @(#) $Id: zlib.c,v 1.38 2022/04/12 20:51:42 andvar Exp $ */
+/* @(#) $Id: zlib.c,v 1.38.4.1 2024/07/20 14:26:01 martin Exp $ */
 
 /* #include "deflate.h" */
 
@@ -1999,7 +1999,7 @@ local block_state deflate_slow(deflate_state *s, int flush)
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id: zlib.c,v 1.38 2022/04/12 20:51:42 andvar Exp $ */
+/* @(#) $Id: zlib.c,v 1.38.4.1 2024/07/20 14:26:01 martin Exp $ */
 
 /* #define GEN_TREES_H */
 
@@ -3529,6 +3529,7 @@ int ZEXPORT inflate(z_streamp z, int f)
         break;
       }
       z->state->mode = FLAG;
+      /* FALLTHROUGH */
     case FLAG:
       NEEDBYTE
       b = NEXTBYTE;
@@ -3546,18 +3547,22 @@ int ZEXPORT inflate(z_streamp z, int f)
         break;
       }
       z->state->mode = DICT4;
+      /* FALLTHROUGH */
     case DICT4:
       NEEDBYTE
       z->state->sub.check.need = (uLong)NEXTBYTE << 24;
       z->state->mode = DICT3;
+      /* FALLTHROUGH */
     case DICT3:
       NEEDBYTE
       z->state->sub.check.need += (uLong)NEXTBYTE << 16;
       z->state->mode = DICT2;
+      /* FALLTHROUGH */
     case DICT2:
       NEEDBYTE
       z->state->sub.check.need += (uLong)NEXTBYTE << 8;
       z->state->mode = DICT1;
+      /* FALLTHROUGH */
     case DICT1:
       NEEDBYTE
       z->state->sub.check.need += (uLong)NEXTBYTE;
@@ -3591,18 +3596,22 @@ int ZEXPORT inflate(z_streamp z, int f)
         break;
       }
       z->state->mode = CHECK4;
+      /* FALLTHROUGH */
     case CHECK4:
       NEEDBYTE
       z->state->sub.check.need = (uLong)NEXTBYTE << 24;
       z->state->mode = CHECK3;
+      /* FALLTHROUGH */
     case CHECK3:
       NEEDBYTE
       z->state->sub.check.need += (uLong)NEXTBYTE << 16;
       z->state->mode = CHECK2;
+      /* FALLTHROUGH */
     case CHECK2:
       NEEDBYTE
       z->state->sub.check.need += (uLong)NEXTBYTE << 8;
       z->state->mode = CHECK1;
+      /* FALLTHROUGH */
     case CHECK1:
       NEEDBYTE
       z->state->sub.check.need += (uLong)NEXTBYTE;
@@ -3616,6 +3625,7 @@ int ZEXPORT inflate(z_streamp z, int f)
       }
       Tracev((stderr, "inflate: zlib check ok\n"));
       z->state->mode = DONE;
+      /* FALLTHROUGH */
     case DONE:
       return Z_STREAM_END;
     case BAD:
@@ -4272,6 +4282,7 @@ int inflate_blocks(inflate_blocks_statef *s, z_streamp z, int r)
       }
       ZFREE(z, s->sub.trees.blens);
       s->mode = CODES;
+      /* FALLTHROUGH */
     case CODES:
       UPDATE
       if ((r = inflate_codes(s, z, r)) != Z_STREAM_END)
@@ -4288,11 +4299,13 @@ int inflate_blocks(inflate_blocks_statef *s, z_streamp z, int r)
         break;
       }
       s->mode = DRY;
+      /* FALLTHROUGH */
     case DRY:
       FLUSH
       if (s->read != s->write)
         LEAVE
       s->mode = DONEB;
+      /* FALLTHROUGH */
     case DONEB:
       r = Z_STREAM_END;
       LEAVE
@@ -5155,6 +5168,7 @@ int inflate_codes(inflate_blocks_statef *s, z_streamp z, int r)
       c->sub.code.need = c->lbits;
       c->sub.code.tree = c->ltree;
       c->mode = LEN;
+      /* FALLTHROUGH */
     case LEN:           /* i: get length/literal/eob next */
       j = c->sub.code.need;
       NEEDBITS(j)
@@ -5202,6 +5216,7 @@ int inflate_codes(inflate_blocks_statef *s, z_streamp z, int r)
       c->sub.code.tree = c->dtree;
       Tracevv((stderr, "inflate:         length %u\n", c->len));
       c->mode = DIST;
+      /* FALLTHROUGH */
     case DIST:          /* i: get distance next */
       j = c->sub.code.need;
       NEEDBITS(j)
@@ -5232,6 +5247,7 @@ int inflate_codes(inflate_blocks_statef *s, z_streamp z, int r)
       DUMPBITS(j)
       Tracevv((stderr, "inflate:         distance %u\n", c->sub.copy.dist));
       c->mode = COPY;
+      /* FALLTHROUGH */
     case COPY:          /* o: copying bytes in window, waiting for space */
       f = q - c->sub.copy.dist;
       while (f < s->window)             /* modulo window size-"while" instead */
@@ -5263,6 +5279,7 @@ int inflate_codes(inflate_blocks_statef *s, z_streamp z, int r)
       if (s->read != s->write)
         LEAVE
       c->mode = END;
+      /* FALLTHROUGH */
     case END:
       r = Z_STREAM_END;
       LEAVE
@@ -5813,7 +5830,7 @@ void  zcfree (opaque, ptr)
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zlib.c,v 1.38 2022/04/12 20:51:42 andvar Exp $ */
+/* @(#) $Id: zlib.c,v 1.38.4.1 2024/07/20 14:26:01 martin Exp $ */
 
 /* #include "zlib.h" */
 
