@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.480 2024/07/07 07:50:57 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.481 2024/07/20 14:09:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -141,7 +141,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.480 2024/07/07 07:50:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.481 2024/07/20 14:09:27 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1680,6 +1680,8 @@ JobStart(GNode *gn, bool special)
 		 * virtual targets.
 		 */
 
+		int parseErrorsBefore;
+
 		/*
 		 * We're serious here, but if the commands were bogus, we're
 		 * also dead...
@@ -1689,7 +1691,10 @@ JobStart(GNode *gn, bool special)
 			DieHorribly();
 		}
 
+		parseErrorsBefore = parseErrors;
 		JobWriteShellCommands(job, gn, &run);
+		if (parseErrors != parseErrorsBefore)
+			run = false;
 		(void)fflush(job->cmdFILE);
 	} else if (!GNode_ShouldExecute(gn)) {
 		/*
