@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.9 2024/07/03 17:29:50 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.10 2024/07/20 15:59:35 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -115,4 +115,27 @@ usr.sbin/sysinst/msg.mi.en			1.52
 	sysinst(8): Note that leaving the network "media type" empty
 	autoconfigures.
 	[nia, ticket #1853]
+
+sys/arch/x86/include/specialreg.h		1.212
+sys/arch/x86/x86/identcpu.c			1.129,1.130
+
+	x86: PR 58370: VIA CPU probe fixes.
+	[andvar, ticket #1855]
+
+bin/sh/histedit.c				1.68
+
+	sh(1): ignore non-numeric values for HISTSIZE.
+	[kre, ticket #1856]
+
+distrib/sets/lists/comp/mi			1.2463
+share/man/man9/Makefile				1.471
+share/man/man9/imax.9				1.7,1.8
+
+	imax(9): document the renaming from  max/min to uimax/uimin.
+	[rin, ticket #1857]
+
+sys/net/if_bridge.c				1.192
+
+	bridge(4): add missing curlwp_bind() for pppoe.
+	[rin, ticket #1858]
 
