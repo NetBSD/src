@@ -1,4 +1,4 @@
-.\"	$NetBSD: pthread_attr_getguardsize.3,v 1.5 2017/10/22 16:37:24 abhinav Exp $
+.\"	$NetBSD: pthread_attr_getguardsize.3,v 1.5.14.1 2024/07/20 15:36:52 martin Exp $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -123,3 +123,27 @@ There was insufficient memory.
 .Sh STANDARDS
 Both functions conform to
 .St -p1003.1-2008 .
+.Sh BUGS
+Older versions of
+.Nx ,
+prior to 10.0, 9.4, and 8.3, incorrectly adjust the stack address by
+the guard size in threads configured with
+.Xr pthread_attr_setstack 3 ,
+instead of ignoring the guard size in that case as
+.Tn POSIX
+prescribes
+.Po
+see
+.Lk https://gnats.NetBSD.org/57721 "PR lib/57721"
+.Pc .
+.Pp
+Even if you didn't set a nonzero guard size with
+.Fn pthread_attr_setguardsize ,
+the system will choose a nonzero default guard size.
+.Pp
+To work around this in applications that run on older and newer
+versions of
+.Nx ,
+as well as on other operating systems, you can safely set the guard
+size to zero:
+.Dl "pthread_attr_setguardsize(&attr, 0);"
