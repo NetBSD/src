@@ -1,4 +1,4 @@
-# $NetBSD: cmd-errors-lint.mk,v 1.4 2024/07/05 18:59:33 rillig Exp $
+# $NetBSD: cmd-errors-lint.mk,v 1.5 2024/07/20 11:05:11 rillig Exp $
 #
 # Demonstrate how errors in expressions affect whether the commands
 # are actually executed.
@@ -15,20 +15,17 @@ undefined:
 
 unclosed-expression:
 # expect: make: in target "unclosed-expression": Unclosed variable "UNCLOSED"
-# XXX: This command is executed even though it contains parse errors.
-# expect: : unclosed-expression
+# expect-not: : unclosed-expression
 	: $@ ${UNCLOSED
 
 unclosed-modifier:
 # expect: make: in target "unclosed-modifier": while evaluating variable "UNCLOSED" with value "": Unclosed expression, expecting '}'
-# XXX: This command is executed even though it contains parse errors.
-# expect: : unclosed-modifier
+# expect-not: : unclosed-modifier
 	: $@ ${UNCLOSED:
 
 unknown-modifier:
 # expect: make: in target "unknown-modifier": while evaluating variable "UNKNOWN" with value "": Unknown modifier "Z"
-# XXX: This command is executed even though it contains parse errors.
-# expect: : unknown-modifier
+# expect-not: : unknown-modifier
 	: $@ ${UNKNOWN:Z}
 
 end:
