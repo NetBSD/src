@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.17 2024/07/03 19:16:46 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.18 2024/07/20 16:05:52 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -760,4 +760,178 @@ sys/altq/altq_rmclass.c				1.31
 
 	altq, cbq: take care of borrowed classes on sleeping.
 	[ozaki-r, ticket #736]
+
+sys/arch/x86/include/specialreg.h		1.212
+sys/arch/x86/x86/identcpu.c			1.129,1.130
+
+	x86: PR 58370: VIA CPU probe fixes.
+	[andvar, ticket #738]
+
+sys/conf/copts.mk				1.12 (patch)
+sys/net/zlib.c					1.39
+
+	Avoid errors for newer gcc -Wimplicit-fallthrough warnings in
+	net/zlib.c
+	[rin, ticket #739]
+
+sys/netinet6/ip6_output.c			1.232
+sys/netipsec/ipsec.c				1.178
+sys/netipsec/ipsec_input.c			1.79
+sys/netipsec/ipsec_output.c			1.86
+
+	ipsec: remove unnecessary splsoftnet protection, the code is
+	already MP-safe.
+	[rin, ticket #740]
+
+sys/kern/uipc_socket.c				1.309
+
+	PR 55690: make kqfilter() behave the same with option PIPE_SOCKETPAIR
+	pipe as it does for standard one - refuse EVFILT_WRITE if the reader
+	is already disconnected.
+	[jdolecek, ticket #741]
+
+bin/cp/utils.c					1.50
+
+	cp(1): PR 57857: always copy regular files, even if they appear to
+	be zero-sized.
+	[rin, ticket #742]
+
+bin/ls/ls.c					1.78
+
+	ls(1): PR 57892: print full pathname in error messages.
+	[rin, ticket #743]
+
+common/lib/libc/arch/aarch64/string/bcopy.S	1.3
+
+	aarch64: PR 57388: minor bug fix in bcopy.S.
+	[rin, ticket #744]
+
+common/lib/libc/arch/arm/string/memcpy_arm.S	1.6,1.7
+common/lib/libc/arch/arm/string/memcpy_neon.S	1.2
+common/lib/libc/arch/arm/string/memcpy_xscale.S	1.6
+common/lib/libc/arch/arm/string/memmove.S	1.11
+common/lib/libc/arch/arm/string/memset.S	1.9
+common/lib/libc/arch/arm/string/memset_naive.S	1.2
+common/lib/libc/arch/arm/string/strlen_neon.S	1.4
+
+	arm: string: Use unsigned comparison for pointers and size_t values.
+	[rin, ticket #745]
+
+etc/services					1.105,1.106
+
+	/etc/services: resolve a conflict for port 2049 and restore local
+	additions. PR 57759.
+	[rin, ticket #746]
+
+external/bsd/libproc/dist/proc_sym.c		1.5,1.6
+
+	libproc: sanitize process symbols so binary doesn't end up in dtrace
+	profiling.
+	[rin, ticket #747]
+
+lib/libc/atomic/atomic_ops.3			1.9
+
+	atomic_ops(3): note that aarch64 implements CAS.
+	[rin, ticket #748]
+
+lib/libc/gdtoa/strtod.c				1.19
+
+	libc: PR 55668: remove workarounds for older gcc versions
+	for the internal routine used by strtod(3).
+	[rin, ticket #749]
+
+lib/libc/gen/err.3				1.24
+
+	err(3): improve the manual page.
+	[rin, ticket #750]
+
+lib/libc/gen/usleep.3				1.22
+
+	usleep(3): PR 58184: add CAVEATS for NetBSD before 10.1.
+	[rin, ticket #751]
+
+share/man/man4/options.4			1.531
+
+	options(4): update `file-system UDF' description, it is not considered
+	experimental any more.
+	[reinoud, ticket #752]
+
+lib/libc/net/getaddrinfo.3			1.61
+
+	freeaddrinfo(3): note that a call with NULL argument causes
+	a segmentation fault.
+	[rin, ticket #753]
+
+lib/libc/stdio/fvwrite.c			1.31
+
+	fvwrite: optimize for unbuffered write.
+	[rin, ticket #754]
+
+lib/libc/sys/stat.2				1.60
+
+	stat(2): improve manual page.
+	[rin, ticket #755]
+
+lib/libcurses/refresh.c				1.127
+
+	curses(3): fix random application crashes.
+	[rin, ticket #756]
+
+lib/libpthread/pthread.c			1.182
+
+	libpthread: avoid deadlocks in snprintf(3).
+	[rin, ticket #757]
+
+lib/libpthread/pthread_attr_getguardsize.3	1.6
+lib/libpthread/pthread_attr_getstack.3		1.9
+
+	pthread: PR 57721: document the setstack vs setguardsize bug.
+	Suggest the safe, compatible workaround.
+	[rin, ticket #758]
+
+lib/libutil/stat_flags.3			1.9
+
+	stat_flags(3): improve manual page.
+	[rin, ticket #759]
+
+sbin/mount_procfs/mount_procfs.8		1.39
+
+	mount_procfs(8): document the format of the region descriptor
+	lines contained in the 'map' and 'maps' special files.
+	[rin, ticket #760]
+
+bin/sh/histedit.c				1.68
+
+	sh(1): ignore non-numeric values for HISTSIZE.
+	[kre, ticket #761]
+
+distrib/sets/lists/comp/mi			1.2463
+share/man/man9/Makefile				1.471
+share/man/man9/imax.9				1.7,1.8
+
+	imax(9): document the renaming from  max/min to uimax/uimin.
+	[rin, ticket #762]
+
+sys/net/if_bridge.c				1.192
+
+	bridge(4): add missing curlwp_bind() for pppoe.
+	[rin, ticket #763]
+
+common/lib/libc/arch/i386/atomic/atomic.S	1.37
+common/lib/libc/arch/x86_64/atomic/atomic.S	1.30
+sys/arch/amd64/amd64/cpufunc.S			1.68
+sys/arch/i386/i386/cpufunc.S			1.52
+sys/arch/xen/include/hypervisor.h		1.60
+sys/arch/xen/include/xenring.h			1.8
+
+	xen: PR 57199: don't hotpatch away LOCK prefix in xen_mb,
+	even on UP boots.
+	[riastradh, ticket #764]
+
+distrib/sets/lists/debug/module.mi		1.27
+distrib/sets/lists/modules/mi			1.160
+sys/modules/Makefile				1.291
+
+	modules: Build `ipl` module only if MKIPFILTER is enabled.
+	[rin, ticket #765]
 
