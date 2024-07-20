@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1135 2024/07/09 17:07:23 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1136 2024/07/20 08:54:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1135 2024/07/09 17:07:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1136 2024/07/20 08:54:19 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4677,8 +4677,7 @@ VarSubstDollarDollar(const char **pp, Buffer *res, VarEvalMode emode)
 }
 
 static void
-VarSubstExpr(const char **pp, Buffer *buf, GNode *scope,
-	     VarEvalMode emode, bool *inout_errorReported)
+VarSubstExpr(const char **pp, Buffer *buf, GNode *scope, VarEvalMode emode)
 {
 	const char *p = *pp;
 	const char *nested_p = p;
@@ -4686,28 +4685,8 @@ VarSubstExpr(const char **pp, Buffer *buf, GNode *scope,
 	/* TODO: handle errors */
 
 	if (val.str == var_Error || val.str == varUndefined) {
-		if (!VarEvalMode_ShouldKeepUndef(emode)) {
-			p = nested_p;
-		} else if (val.str == var_Error) {
-
-			/*
-			 * FIXME: The condition 'val.str == var_Error' doesn't
-			 * mean there was an undefined variable.  It could
-			 * equally well be a parse error; see
-			 * unit-tests/varmod-order.mk.
-			 */
-
-			/*
-			 * If variable is undefined, complain and skip the
-			 * variable. The complaint will stop us from doing
-			 * anything when the file is parsed.
-			 */
-			if (!*inout_errorReported) {
-				Parse_Error(PARSE_FATAL,
-				    "Undefined variable \"%.*s\"",
-				    (int)(nested_p - p), p);
-				*inout_errorReported = true;
-			}
+		if (!VarEvalMode_ShouldKeepUndef(emode)
+		    || val.str == var_Error) {
 			p = nested_p;
 		} else {
 			/*
@@ -4761,20 +4740,13 @@ Var_Subst(const char *str, GNode *scope, VarEvalMode emode)
 	const char *p = str;
 	Buffer res;
 
-	/*
-	 * Set true if an error has already been reported, to prevent a
-	 * plethora of messages when recursing
-	 */
-	static bool errorReported;
-
 	Buf_Init(&res);
-	errorReported = false;
 
 	while (*p != '\0') {
 		if (p[0] == '$' && p[1] == '$')
 			VarSubstDollarDollar(&p, &res, emode);
 		else if (p[0] == '$')
-			VarSubstExpr(&p, &res, scope, emode, &errorReported);
+			VarSubstExpr(&p, &res, scope, emode);
 		else
 			VarSubstPlain(&p, &res);
 	}
