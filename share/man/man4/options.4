@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.523.2.1 2023/05/13 13:26:57 martin Exp $
+.\"	$NetBSD: options.4,v 1.523.2.2 2024/07/20 15:22:09 martin Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -900,15 +900,15 @@ See
 .Xr mount_procfs 8
 for details.
 .It Cd file-system UDF
-.Bq Em EXPERIMENTAL
-Includes code for the UDF file system commonly found on CD and DVD
-media but also on USB sticks.
-Currently supports read and write access up to UDF 2.01 and somewhat limited
-write support for UDF 2.50.
-It is marked experimental since there is no
-.Xr fsck_udf 8 .
+Includes code for the UDF file system commonly found on CD and DVD media but
+also on USB sticks and harddiscs for interchange and backup. Supports read and
+write access for all formats on discs and on rewritable and recordable
+CD/DVD/BD media. It has a somewhat limited write support for UDF 2.50 as it
+can't expand the metadata partion.
 See
 .Xr mount_udf 8
+and
+.Xr fsck_udf 8
 for details.
 .It Cd file-system UMAPFS
 Includes a loopback file system in which user and group IDs may be
