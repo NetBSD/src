@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.77 2020/07/07 14:29:06 christos Exp $	*/
+/*	$NetBSD: ls.c,v 1.77.6.1 2024/07/20 14:46:10 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.77 2020/07/07 14:29:06 christos Exp $");
+__RCSID("$NetBSD: ls.c,v 1.77.6.1 2024/07/20 14:46:10 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -445,7 +445,7 @@ traverse(int argc, char *argv[], int options)
 			break;
 		case FTS_DNR:
 		case FTS_ERR:
-			warnx("%s: %s", p->fts_name, strerror(p->fts_errno));
+			warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
 			rval = EXIT_FAILURE;
 			break;
 		case FTS_D:
