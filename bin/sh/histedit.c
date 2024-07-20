@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.65 2022/08/22 17:33:11 kre Exp $	*/
+/*	$NetBSD: histedit.c,v 1.65.2.1 2024/07/20 15:42:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.65 2022/08/22 17:33:11 kre Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.65.2.1 2024/07/20 15:42:08 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -247,7 +247,7 @@ sethistsize(const char *hs)
 	HistEvent he;
 
 	if (hist != NULL) {
-		if (hs == NULL || *hs == '\0' || *hs == '-' ||
+		if (hs == NULL || *hs == '\0' || !is_number(hs) ||
 		   (histsize = number(hs)) < 0)
 			histsize = 100;
 		INTOFF;
