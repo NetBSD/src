@@ -1,4 +1,4 @@
-.\" $NetBSD: err.3,v 1.22.16.1 2023/01/06 13:44:41 martin Exp $
+.\" $NetBSD: err.3,v 1.22.16.2 2024/07/20 15:05:52 martin Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)err.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd January 5, 2023
+.Dd February 2, 2024
 .Dt ERR 3
 .Os
 .Sh NAME
@@ -81,27 +81,30 @@ and
 .Fn warn
 family of functions display a formatted error message on the standard
 error output.
-In all cases, the last component of the program name, a colon character,
-and a space are output.
+.Pp
+In all cases these functions output the last component of the program name,
+a colon character, and a space.
 If the
 .Fa fmt
 argument is not
 .Dv NULL ,
-the formatted error message is output.
+it is used as a
+.Xr printf 3 Ns
+-like format specification for the error message.
+.Pp
 In the case of the
 .Fn err ,
 .Fn verr ,
 .Fn warn ,
 and
 .Fn vwarn
-functions, the error message string affiliated with the current value of
-the global variable
+functions, an additional error message string affiliated with the current
+value of the global variable
 .Va errno
 is output next, preceded by a colon character and a space if
 .Fa fmt
 is not
 .Dv NULL .
-In all cases, the output is followed by a newline character.
 The
 .Fn errc ,
 .Fn verrc ,
@@ -119,7 +122,9 @@ The
 .Fn warnx ,
 and
 .Fn vwarnx
-functions will not output this error message string.
+functions will not output an additional error message string.
+.Pp
+In all cases, the output is terminated by a newline character.
 .Pp
 The
 .Fn err ,
@@ -168,6 +173,7 @@ if ((fd = open(block_device, O_RDONLY, 0)) == -1)
 .Sh SEE ALSO
 .Xr exit 3 ,
 .Xr getprogname 3 ,
+.Xr printf 3 ,
 .Xr strerror 3
 .Sh HISTORY
 The
