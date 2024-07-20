@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.126 2022/12/05 21:14:25 blymn Exp $	*/
+/*	$NetBSD: refresh.c,v 1.126.2.1 2024/07/20 15:33:03 martin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.126 2022/12/05 21:14:25 blymn Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.126.2.1 2024/07/20 15:33:03 martin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1382,7 +1382,6 @@ makech(int wy)
 					}
 					return OK;
 				}
-				ce = NULL;
 			}
 
 #ifdef HAVE_WCHAR
