@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.23 2022/12/03 01:04:43 brad Exp $
+# $NetBSD: module.mi,v 1.23.2.1 2024/07/20 16:03:23 martin Exp $
 ./usr/libdata/debug/@MODULEDIR@					modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready/accf_dataready.kmod.debug	modules-base-kernel	kmod,debug
@@ -244,8 +244,8 @@
 ./usr/libdata/debug/@MODULEDIR@/iic/iic.kmod.debug			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/ip_ecn				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/ip_ecn/ip_ecn.kmod.debug 		modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/ipl				modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/ipl/ipl.kmod.debug 			modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/ipl				modules-base-kernel	kmod,debug,ipfilter
+./usr/libdata/debug/@MODULEDIR@/ipl/ipl.kmod.debug 			modules-base-kernel	kmod,debug,ipfilter
 ./usr/libdata/debug/@MODULEDIR@/iscsi				modules-base-kernel	kmod,iscsi,debug
 ./usr/libdata/debug/@MODULEDIR@/iscsi/iscsi.kmod.debug			modules-base-kernel	kmod,iscsi,debug
 ./usr/libdata/debug/@MODULEDIR@/kernfs				modules-base-kernel	kmod,debug

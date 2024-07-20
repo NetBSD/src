@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.157 2022/12/03 01:04:43 brad Exp $
+# $NetBSD: mi,v 1.157.2.1 2024/07/20 16:03:23 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -271,8 +271,8 @@
 ./@MODULEDIR@/iic/iic.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/ip_ecn				modules-base-kernel	kmod
 ./@MODULEDIR@/ip_ecn/ip_ecn.kmod 		modules-base-kernel	kmod
-./@MODULEDIR@/ipl				modules-base-kernel	kmod
-./@MODULEDIR@/ipl/ipl.kmod 			modules-base-kernel	kmod
+./@MODULEDIR@/ipl				modules-base-kernel	kmod,ipfilter
+./@MODULEDIR@/ipl/ipl.kmod 			modules-base-kernel	kmod,ipfilter
 ./@MODULEDIR@/iscsi				modules-base-kernel	kmod,iscsi
 ./@MODULEDIR@/iscsi/iscsi.kmod			modules-base-kernel	kmod,iscsi
 ./@MODULEDIR@/kernfs				modules-base-kernel	kmod

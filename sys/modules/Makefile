@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.274.2.3 2024/04/18 15:21:55 martin Exp $
+#	$NetBSD: Makefile,v 1.274.2.4 2024/07/20 16:03:23 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -109,7 +109,9 @@ SUBDIR+=	if_vlan
 SUBDIR+=	if_wg
 SUBDIR+=	iic
 SUBDIR+=	ip_ecn
+.if ${MKIPFILTER:Uno} != no
 SUBDIR+=	ipl
+.endif
 SUBDIR+=	kernfs
 SUBDIR+=	layerfs
 SUBDIR+=	lfs
