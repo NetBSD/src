@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.29 2022/07/30 14:11:00 riastradh Exp $	*/
+/*	$NetBSD: atomic.S,v 1.29.2.1 2024/07/20 16:11:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -279,6 +279,8 @@ ENTRY(_membar_sync)
 	 * https://pvk.ca/Blog/2014/10/19/performance-optimisation-~-writing-an-essay/
 	 * https://shipilev.net/blog/2014/on-the-fence-with-dependencies/
 	 * https://www.agner.org/optimize/instruction_tables.pdf
+	 *
+	 * Sync with xen_mb in sys/arch/amd64/amd64/cpufunc.S.
 	 */
 	LOCK
 	addq	$0, -8(%rsp)
