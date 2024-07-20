@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.49 2020/05/17 23:34:11 christos Exp $ */
+/* $NetBSD: utils.c,v 1.49.6.1 2024/07/20 14:41:10 martin Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.49 2020/05/17 23:34:11 christos Exp $");
+__RCSID("$NetBSD: utils.c,v 1.49.6.1 2024/07/20 14:41:10 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -179,10 +179,10 @@ copy_file(FTSENT *entp, int dne)
 	rval = 0;
 
 	/* 
-	 * There's no reason to do anything other than close the file
-	 * now if it's regular and empty, so let's not bother.
+	 * We always copy regular files, even if they appear to be 0-sized
+	 * because kernfs and procfs don't return file sizes.
 	 */
-	bool need_copy = !S_ISREG(fs->st_mode) || fs->st_size > 0;
+	bool need_copy = S_ISREG(fs->st_mode) || fs->st_size > 0;
 
 	struct finfo fi;
 
