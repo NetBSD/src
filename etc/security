@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.131 2023/07/05 12:07:21 martin Exp $
+#	$NetBSD: security,v 1.132 2024/07/21 14:56:16 he Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -359,7 +359,7 @@ if checkyesno check_group; then
 			dupgroups="$dupgroups $group"
 		fi
 	done
-	if [ ! -z $dupgroups ] ; then
+	if [ ! -z "$dupgroups" ] ; then
 		printf "\n$GRP has duplicate group names.\n"
 		printf "$dupgroups\n"
 	fi
