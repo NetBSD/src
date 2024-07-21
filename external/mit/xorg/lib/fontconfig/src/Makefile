@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2023/01/25 22:35:06 christos Exp $
+#	$NetBSD: Makefile,v 1.30 2024/07/21 08:04:05 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -331,6 +331,7 @@ COPTS.fcstr.c+=	${${ACTIVE_CC} == "clang":? -Wa,-Av8plus  :}
 .endif
 
 LINTFLAGS+=-DFC_NO_MT
+LINTFLAGS.fclang.c+=	-X 141	# 'a - b' overflows 'unsigned long'
 
 LIBUUID_DIST=	${NETBSDSRCDIR}/external/bsd/libuuid_ul/lib/libuuid_ul
 .include "${LIBUUID_DIST}/srcs.mk"
