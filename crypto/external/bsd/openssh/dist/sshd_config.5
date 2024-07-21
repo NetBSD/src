@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd_config.5,v 1.44 2024/07/08 22:33:44 christos Exp $
+.\"	$NetBSD: sshd_config.5,v 1.45 2024/07/21 20:18:05 christos Exp $
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -1311,6 +1311,7 @@ Available keywords are
 .Cm LogLevel ,
 .Cm MaxAuthTries ,
 .Cm MaxSessions ,
+.Cm PAMServiceName ,
 .Cm PasswordAuthentication ,
 .Cm PermitEmptyPasswords ,
 .Cm PermitListen ,
@@ -1377,6 +1378,13 @@ and
 key exchange methods.
 The default is
 .Pa /etc/moduli .
+.It Cm PAMServiceName
+Specifies the service name used for Pluggable Authentication Modules (PAM)
+authentication, authorisation and session controls when
+.Cm UsePAM
+is enabled.
+The default is
+.Cm sshd .
 .It Cm PasswordAuthentication
 Specifies whether password authentication is allowed.
 The default is
@@ -1985,6 +1993,30 @@ and
 .Cm Match
 .Cm Host
 directives.
+.It Cm UsePAM
+Enables the Pluggable Authentication Module interface.
+If set to
+.Cm yes
+this will enable PAM authentication using
+.Cm KbdInteractiveAuthentication
+and
+.Cm PasswordAuthentication
+in addition to PAM account and session module processing for all
+authentication types.
+.Pp
+Because PAM keyboard-interactive authentication usually serves an equivalent
+role to password authentication, you should disable either
+.Cm PasswordAuthentication
+or
+.Cm KbdInteractiveAuthentication .
+.Pp
+If
+.Cm UsePAM
+is enabled, you will not be able to run
+.Xr sshd 8
+as a non-root user.
+The default is
+.Cm no .
 .It Cm VersionAddendum
 Optionally specifies additional text to append to the SSH protocol banner
 sent by the server upon connection.
