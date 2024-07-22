@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtol.c,v 1.7 2017/07/06 21:08:44 joerg Exp $ */
+/*	$NetBSD: t_strtol.c,v 1.8 2024/07/22 16:41:05 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,10 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtol.c,v 1.7 2017/07/06 21:08:44 joerg Exp $");
+__RCSID("$NetBSD: t_strtol.c,v 1.8 2024/07/22 16:41:05 christos Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
@@ -45,10 +46,8 @@ struct test {
 	const char	*end;
 };
 
-static void	check(struct test *, long int, long long int, char *);
-
 static void
-check(struct test *t, long int li, long long int lli, char *end)
+check(struct test *t, long int li, long long int lli, intmax_t ji, char *end)
 {
 
 	if (li != -1 && li != t->res)
@@ -58,6 +57,10 @@ check(struct test *t, long int li, long long int lli, char *end)
 	if (lli != -1 && lli != t->res)
 		atf_tc_fail_nonfatal("strtoll(%s, NULL, %d) failed "
 		    "(rv = %lld)", t->str, t->base, lli);
+
+	if (ji != -1 && ji != t->res)
+		atf_tc_fail_nonfatal("strtoll(%s, NULL, %d) failed "
+		    "(rv = %jd)", t->str, t->base, ji);
 
 	if ((t->end != NULL && strcmp(t->end, end) != 0) ||
 	    (t->end == NULL && *end != '\0'))
@@ -102,8 +105,10 @@ ATF_TC_BODY(strtol_base, tc)
 
 	long long int lli;
 	long int li;
+	intmax_t ji;
 	long long int ulli;
 	long int uli;
+	uintmax_t uji;
 	char *end, *end2;
 	size_t i;
 
@@ -111,22 +116,66 @@ ATF_TC_BODY(strtol_base, tc)
 
 		li = strtol(t[i].str, &end, t[i].base);
 		lli = strtoll(t[i].str, NULL, t[i].base);
+		ji = strtoimax(t[i].str, NULL, t[i].base);
 
 		uli = strtoul(t[i].str, &end2, t[i].base);
 		ulli = strtoull(t[i].str, NULL, t[i].base);
+		uji = strtoumax(t[i].str, NULL, t[i].base);
 
-		check(&t[i], li, lli, end);
+		check(&t[i], li, lli, ji, end);
 
 		if (li != uli)
 			atf_tc_fail_nonfatal("strtoul(%s, NULL, %d) failed "
 			    "(rv = %lu)", t[i].str, t[i].base, uli);
-		if (end != end2)
-			atf_tc_fail_nonfatal("invalid end pointer ('%p') from "
-			    "strtoul(%s, &end, %d)", end2, t[i].str, t[i].base);
 		if (lli != ulli)
 			atf_tc_fail_nonfatal("strtoull(%s, NULL, %d) failed "
 			    "(rv = %llu)", t[i].str, t[i].base, ulli);
+		if ((uintmax_t)ji != uji)
+			atf_tc_fail_nonfatal("strtoumax(%s, NULL, %d) failed "
+			    "(rv = %ju)", t[i].str, t[i].base, uji);
+		if (end != end2)
+			atf_tc_fail_nonfatal("invalid end pointer ('%p') from "
+			    "strtoul(%s, &end, %d)", end2, t[i].str, t[i].base);
 	}
+}
+
+ATF_TC(strtol_invbase);
+ATF_TC_HEAD(strtol_invbase, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test strtol(3) with an invalid base");
+}
+
+ATF_TC_BODY(strtol_invbase, tc)
+{
+	long long int lli;
+	long int li;
+	intmax_t ji;
+	long long int ulli;
+	long int uli;
+	uintmax_t uji;
+	char *end;
+	char boo[] = "boo";
+	const char str[] = "1";
+
+#define CHECK(r, f, fun) \
+	end = boo; \
+	r = fun(str, &end, -2); \
+	if (strcmp(str, end) != 0) \
+	    atf_tc_fail_nonfatal( \
+		    "%s(1, boo, -2) failed endptr=%s ", # fun, end); \
+	if (r) \
+	    atf_tc_fail_nonfatal( \
+		    "%s(1, boo, -2) failed rv=" f, # fun, r); \
+	if (errno != EINVAL) \
+	    atf_tc_fail_nonfatal( \
+		    "%s(1, boo, -2) failed errno=%d", # fun, errno)
+
+	CHECK(li, "%ld", strtol);
+	CHECK(lli, "%lld", strtoll);
+	CHECK(ji, "%jd", strtoimax);
+	CHECK(uli, "%lu", strtoul);
+	CHECK(ulli, "%llu", strtoull);
+	CHECK(uji, "%ju", strtoumax);
 }
 
 ATF_TC(strtol_case);
@@ -151,6 +200,7 @@ ATF_TC_BODY(strtol_case, tc)
 
 	long long int lli;
 	long int li;
+	intmax_t ji;
 	char *end;
 	size_t i;
 
@@ -158,8 +208,9 @@ ATF_TC_BODY(strtol_case, tc)
 
 		li = strtol(t[i].str, &end, t[i].base);
 		lli = strtoll(t[i].str, NULL, t[i].base);
+		ji = strtoimax(t[i].str, NULL, t[i].base);
 
-		check(&t[i], li, lli, end);
+		check(&t[i], li, lli, ji, end);
 	}
 }
 
@@ -199,7 +250,7 @@ ATF_TC_BODY(strtol_range, tc)
 		if (errno != ERANGE)
 			atf_tc_fail("strtol(3) did not catch ERANGE");
 
-		check(&t[i], li, -1, end);
+		check(&t[i], li, -1, -1, end);
 	}
 }
 
@@ -230,6 +281,7 @@ ATF_TC_BODY(strtol_signed, tc)
 
 	long long int lli;
 	long int li;
+	intmax_t ji;
 	char *end;
 	size_t i;
 
@@ -237,14 +289,16 @@ ATF_TC_BODY(strtol_signed, tc)
 
 		li = strtol(t[i].str, &end, t[i].base);
 		lli = strtoll(t[i].str, NULL, t[i].base);
+		ji = strtoimax(t[i].str, NULL, t[i].base);
 
-		check(&t[i], li, lli, end);
+		check(&t[i], li, lli, ji, end);
 	}
 }
 
 ATF_TP_ADD_TCS(tp)
 {
 
+	ATF_TP_ADD_TC(tp, strtol_invbase);
 	ATF_TP_ADD_TC(tp, strtol_base);
 	ATF_TP_ADD_TC(tp, strtol_case);
 	ATF_TP_ADD_TC(tp, strtol_range);
