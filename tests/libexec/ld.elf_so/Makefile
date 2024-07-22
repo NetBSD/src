@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.23 2024/07/16 17:15:44 riastradh Exp $
+# $NetBSD: Makefile,v 1.24 2024/07/22 02:34:58 riastradh Exp $
 #
 
 NOMAN=		# defined
@@ -41,8 +41,8 @@ SRCS.t_ifunc_norelro_now=	t_ifunc.c
 
 LDADD.t_ifunc+=			${${MKRELRO} != "no":?-Wl,-z,relro:}
 LDADD.t_ifunc_now+=		${${MKRELRO} != "no":?-Wl,-z,relro:} -Wl,-z,now
-LDADD.t_ifunc_norelro+=		-Wl,-z,norelro
-LDADD.t_ifunc_norelro_now+=	-Wl,-z,norelro -Wl,-z,now
+LDADD.t_ifunc_norelro+=		${${MKRELRO} != "no":?-Wl,-z,norelro:}
+LDADD.t_ifunc_norelro_now+=	${${MKRELRO} != "no":?-Wl,-z,norelro:} -Wl,-z,now
 
 .PATH:	${NETBSDSRCDIR}/libexec/ld.elf_so
 SRCS.t_hash+=	t_hash.c
