@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.20 2024/07/22 23:14:25 riastradh Exp $	*/
+/*	$NetBSD: tls.c,v 1.21 2024/07/22 23:15:57 riastradh Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.20 2024/07/22 23:14:25 riastradh Exp $");
+__RCSID("$NetBSD: tls.c,v 1.21 2024/07/22 23:15:57 riastradh Exp $");
 
 /*
  * Thread-local storage
@@ -164,6 +164,10 @@ _rtld_tls_get_addr(void *tls, size_t idx, size_t offset)
 	if (__predict_false(DTV_GENERATION(dtv) != _rtld_tls_dtv_generation)) {
 		size_t to_copy = DTV_MAX_INDEX(dtv);
 
+		/*
+		 * "2 +" because the first element is the generation and
+		 * the second one is the maximum index.
+		 */
 		new_dtv = xcalloc((2 + _rtld_tls_max_index) * sizeof(*dtv));
 		++new_dtv;		/* advance past DTV_MAX_INDEX */
 		if (to_copy > _rtld_tls_max_index)	/* XXX How? */
@@ -248,6 +252,10 @@ _rtld_tls_allocate_locked(void)
 	tcb->tcb_self = tcb;
 #endif
 	dbg(("lwp %d tls tcb %p", _lwp_self(), tcb));
+	/*
+	 * "2 +" because the first element is the generation and the second
+	 * one is the maximum index.
+	 */
 	tcb->tcb_dtv = xcalloc(sizeof(*tcb->tcb_dtv) * (2 + _rtld_tls_max_index));
 	++tcb->tcb_dtv;		/* advance past DTV_MAX_INDEX */
 	SET_DTV_MAX_INDEX(tcb->tcb_dtv, _rtld_tls_max_index);
