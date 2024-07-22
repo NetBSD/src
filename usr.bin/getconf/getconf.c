@@ -1,4 +1,4 @@
-/*	$NetBSD: getconf.c,v 1.37 2024/01/27 16:04:36 christos Exp $	*/
+/*	$NetBSD: getconf.c,v 1.38 2024/07/22 21:03:17 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,9 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: getconf.c,v 1.37 2024/01/27 16:04:36 christos Exp $");
-#endif /* not lint */
+__RCSID("$NetBSD: getconf.c,v 1.38 2024/07/22 21:03:17 rillig Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -234,7 +232,6 @@ main(int argc, char **argv)
 again:
 	for (cp = conf_table; cp->name != NULL; cp++) {
 		if (a_flag || strcmp(vn, cp->name) == 0) {
-			/*LINTED weird expression*/
 			if ((cp->type == PATHCONF) == (pathname != NULL)) {
 				printvar(cp, pathname);
 				found = 1;
