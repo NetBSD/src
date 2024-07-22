@@ -30,7 +30,11 @@ end begin-direct with status 1
 begin begin-indirect
 (exit 13) # before-begin
 *** Error code 13 (continuing)
-end begin-indirect with status 0
+
+
+Stop.
+make: stopped making "begin-indirect" in unit-tests
+end begin-indirect with status 1
 
 begin end-direct
 (exit 13) # .END
@@ -44,6 +48,10 @@ end end-direct with status 1
 begin end-indirect
 (exit 13) # before-end
 *** Error code 13 (continuing)
-end end-indirect with status 0
+
+
+Stop.
+make: stopped making "end-indirect" in unit-tests
+end end-indirect with status 1
 
 exit status 0
