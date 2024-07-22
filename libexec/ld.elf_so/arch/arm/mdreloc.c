@@ -1,9 +1,18 @@
-/*	$NetBSD: mdreloc.c,v 1.46 2023/06/04 01:24:57 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.47 2024/07/22 23:10:35 riastradh Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.46 2023/06/04 01:24:57 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.47 2024/07/22 23:10:35 riastradh Exp $");
 #endif /* not lint */
+
+/*
+ * Arm (32-bit) ELF relocations.
+ *
+ * Reference:
+ *
+ *	[AAELF32] ELF for the Arm Architecture, 2022Q3.  Arm Ltd.
+ *	https://github.com/ARM-software/abi-aa/blob/2982a9f3b512a5bfdc9e3fea5d3b298f9165c36b/aaelf32/aaelf32.rst
+ */
 
 #include <sys/types.h>
 #include <string.h>
