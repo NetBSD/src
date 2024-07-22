@@ -1,9 +1,49 @@
-: undefined--eol
-make: in target "unclosed-expression": Unclosed variable "UNCLOSED"
-make: in target "unclosed-modifier": while evaluating variable "UNCLOSED" with value "": Unclosed expression, expecting '}'
-make: in target "unknown-modifier": while evaluating variable "UNKNOWN" with value "": Unknown modifier "Z"
-make: in target "depend-source": while evaluating variable "UNCLOSED" with value "": Unclosed expression, expecting '}'
-: end-eol
-: Making depend-target
-: .END-eol
-exit status 2
+begin undefined-direct
+: undefined-direct--eol
+end undefined-direct with status 0
+
+begin undefined-indirect
+: undefined-direct--eol
+end undefined-indirect with status 0
+
+begin parse-error-direct
+make: in target "parse-error-unclosed-expression": Unclosed variable "UNCLOSED"
+make: in target "parse-error-unclosed-modifier": while evaluating variable "UNCLOSED" with value "": Unclosed expression, expecting '}'
+make: in target "parse-error-unknown-modifier": while evaluating variable "UNKNOWN" with value "": Unknown modifier "Z"
+end parse-error-direct with status 2
+
+begin parse-error-indirect
+make: in target "parse-error-unclosed-expression": Unclosed variable "UNCLOSED"
+make: in target "parse-error-unclosed-modifier": while evaluating variable "UNCLOSED" with value "": Unclosed expression, expecting '}'
+make: in target "parse-error-unknown-modifier": while evaluating variable "UNKNOWN" with value "": Unknown modifier "Z"
+end parse-error-indirect with status 2
+
+begin begin-direct
+(exit 13) # .BEGIN
+*** Error code 13 (continuing)
+
+
+Stop.
+make: stopped making "begin-direct" in unit-tests
+end begin-direct with status 1
+
+begin begin-indirect
+(exit 13) # before-begin
+*** Error code 13 (continuing)
+end begin-indirect with status 0
+
+begin end-direct
+(exit 13) # .END
+*** Error code 13 (continuing)
+
+
+Stop.
+make: stopped making "end-direct" in unit-tests
+end end-direct with status 1
+
+begin end-indirect
+(exit 13) # before-end
+*** Error code 13 (continuing)
+end end-indirect with status 0
+
+exit status 0
