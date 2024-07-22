@@ -1,4 +1,4 @@
-# $NetBSD: cmd-errors-jobs.mk,v 1.11 2024/07/22 18:02:51 rillig Exp $
+# $NetBSD: cmd-errors-jobs.mk,v 1.12 2024/07/22 18:11:15 rillig Exp $
 #
 # Demonstrate how errors in expressions affect whether the commands
 # are actually executed in jobs mode.
@@ -76,11 +76,9 @@ before-begin:
 	(exit 13) # $@
 .endif
 # expect: begin begin-indirect
-# TODO: Show the "stopped making" message.
-# expect-not: stopped making "begin-indirect"
 # expect: *** Error code 13 (continuing)
-# TODO: Exit with a non-zero status due to the failed target.
-# expect: end begin-indirect with status 0
+# expect: make: stopped making "begin-indirect" in unit-tests
+# expect: end begin-indirect with status 1
 
 
 .if make(end-direct)
@@ -102,8 +100,6 @@ before-end:
 	(exit 13) # $@
 .endif
 # expect: begin end-indirect
-# TODO: Show the "stopped making" message.
-# expect-not: stopped making "end-indirect"
 # expect: *** Error code 13 (continuing)
-# TODO: Exit with a non-zero status due to the failed target.
-# expect: end end-indirect with status 0
+# expect: make: stopped making "end-indirect" in unit-tests
+# expect: end end-indirect with status 1

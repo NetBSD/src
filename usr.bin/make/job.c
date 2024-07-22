@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.481 2024/07/20 14:09:27 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.482 2024/07/22 18:11:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -141,7 +141,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.481 2024/07/20 14:09:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.482 2024/07/22 18:11:15 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1962,8 +1962,7 @@ JobRun(GNode *targ)
 	}
 #else
 	Compat_Make(targ, targ);
-	/* XXX: Replace with GNode_IsError(gn) */
-	if (targ->made == ERROR) {
+	if (GNode_IsError(targ)) {
 		PrintOnError(targ, "\n\nStop.\n");
 		exit(1);
 	}
