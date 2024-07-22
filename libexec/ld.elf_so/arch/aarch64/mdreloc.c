@@ -1,4 +1,4 @@
-/* $NetBSD: mdreloc.c,v 1.18 2023/06/04 01:24:56 joerg Exp $ */
+/* $NetBSD: mdreloc.c,v 1.19 2024/07/22 23:10:35 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -60,8 +60,23 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.18 2023/06/04 01:24:56 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.19 2024/07/22 23:10:35 riastradh Exp $");
 #endif /* not lint */
+
+/*
+ * AArch64 ELF relocations.
+ *
+ * References:
+ *
+ *	[AAELF64] ELF for the Arm 64-bit Architecture (AArch64),
+ *	2022Q3.  Arm Ltd.
+ *	https://github.com/ARM-software/abi-aa/blob/2982a9f3b512a5bfdc9e3fea5d3b298f9165c36b/aaelf64/aaelf64.rst
+ *
+ *	[TLSDESC] Glauber de Oliveira Costa and Alexandre Oliva,
+ *	`Thread-Local Storage Access in Dynamic Libraries in the ARM
+ *	Platform', 2006.
+ *	https://www.fsfla.org/~lxoliva/writeups/TLS/paper-lk2006.pdf
+ */
 
 #include <sys/types.h>
 #include <string.h>
