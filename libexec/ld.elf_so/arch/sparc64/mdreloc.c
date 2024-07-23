@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.70 2023/06/04 01:24:58 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.71 2024/07/23 09:55:19 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -30,9 +30,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * SPARC ELF relocations.
+ *
+ * Reference:
+ *
+ *	SPARC Compliance Definition 2.4.1
+ *	http://sparc.org/wp-content/uploads/2014/01/SCD.2.4.1.pdf.gz
+ */
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.70 2023/06/04 01:24:58 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.71 2024/07/23 09:55:19 uwe Exp $");
 #endif /* not lint */
 
 #include <machine/elf_support.h>
