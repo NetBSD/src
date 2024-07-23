@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_null.8,v 1.23 2024/07/23 15:06:31 uwe Exp $
+.\"	$NetBSD: mount_null.8,v 1.24 2024/07/23 15:53:43 uwe Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -231,10 +231,11 @@ The disadvantage is that vnode arguments must be manually mapped.
 Expose
 .Nx
 source tree under
+.Pa /export/netbsd/src
+as
 .Pa /usr/src
-in read-only mode to prevent polluting the sources with accidental
+but in read-only mode to prevent polluting the sources with accidental
 writes:
-
 .Pp
 .Dl mount -t null -o ro /export/netbsd/src /usr/src
 .\"
