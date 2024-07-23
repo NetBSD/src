@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_null.8,v 1.22 2020/12/01 02:43:18 pgoyette Exp $
+.\"	$NetBSD: mount_null.8,v 1.23 2024/07/23 15:06:31 uwe Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -68,9 +68,7 @@ The
 filesystem differs from a traditional
 loopback file system in two respects: it is implemented using
 a stackable layers technique, and its
-.Do
-null-nodes
-.Dc
+.Dq null-nodes
 stack above
 all lower-layer vnodes (not just above directory vnodes).
 .Pp
@@ -81,7 +79,7 @@ and
 are converted to absolute paths before use.
 .Pp
 The options are as follows:
-.Bl -tag -width indent
+.Bl -tag -width Fl
 .It Fl o
 Options are specified with a
 .Fl o
@@ -131,20 +129,20 @@ in the arguments and, if a vnode is returned by the operation,
 stacks a null-node on top of the returned vnode.
 .Pp
 Although bypass handles most operations,
-.Em vop_getattr ,
-.Em vop_inactive ,
-.Em vop_reclaim ,
+.Fa vop_getattr ,
+.Fa vop_inactive ,
+.Fa vop_reclaim ,
 and
-.Em vop_print
+.Fa vop_print
 are not bypassed.
-.Em vop_getattr
+.Fa vop_getattr
 must change the fsid being returned.
-.Em vop_inactive
+.Fa vop_inactive
 and
-.Em vop_reclaim
+.Fa vop_reclaim
 are not bypassed so that
 they can handle freeing null-layer specific data.
-.Em vop_print
+.Fa vop_print
 is not bypassed to avoid excessive debugging
 information.
 .\"
@@ -167,20 +165,23 @@ The bypass routine stacks a null-node above the new
 vnode before returning it to the caller.
 .Pp
 For example, imagine mounting a null layer with
-.Bd -literal -offset indent
-mount_null /usr/include /dev/layer/null
-.Ed
+.Pp
+.Dl mount_null /usr/include /dev/layer/null
+.Pp
 Changing directory to
 .Pa /dev/layer/null
 will assign
 the root null-node (which was created when the null layer was mounted).
 Now consider opening
 .Pa sys .
-A vop_lookup would be done on the root null-node.
+A
+.Fa vop_lookup
+would be done on the root null-node.
 This operation would bypass through to the lower layer
 which would return a vnode representing the UFS
 .Pa sys .
-null_bypass then builds a null-node aliasing the UFS
+.Fn null_bypass
+then builds a null-node aliasing the UFS
 .Pa sys
 and returns this to the caller.
 Later operations on the null-node
@@ -204,7 +205,9 @@ There are two techniques to invoke operations on a lower layer
 when the operation cannot be completely bypassed.
 Each method is appropriate in different situations.
 In both cases, it is the responsibility of the aliasing layer to make
-the operation arguments "correct" for the lower layer
+the operation arguments
+.Dq correct
+for the lower layer
 by mapping any vnode arguments to the lower layer.
 .Pp
 The first approach is to call the aliasing layer's bypass routine.
@@ -212,16 +215,28 @@ This method is most suitable when you wish to invoke the operation
 currently being handled on the lower layer.
 It has the advantage that the bypass routine already must do argument mapping.
 An example of this is
-.Em null_getattrs
+.Fn null_getattrs
 in the null layer.
 .Pp
 A second approach is to directly invoke vnode operations on
 the lower layer with the
-.Em VOP_OPERATIONNAME
+.Xr vnodeops 9
 interface.
 The advantage of this method is that it is easy to invoke
 arbitrary operations on the lower layer.
 The disadvantage is that vnode arguments must be manually mapped.
+.\"
+.\"
+.Sh EXAMPLES
+Expose
+.Nx
+source tree under
+.Pa /usr/src
+in read-only mode to prevent polluting the sources with accidental
+writes:
+
+.Pp
+.Dl mount -t null -o ro /export/netbsd/src /usr/src
 .\"
 .\"
 .Sh SEE ALSO
