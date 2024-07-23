@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2018/12/31 12:13:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.15 2024/07/23 07:52:06 riastradh Exp $
 
 DRIVER=		xf86-video-nv
 DRIVER_NAME=	nv_drv
@@ -33,6 +33,7 @@ CPPFLAGS+= -DAVOID_VGAHW
 # XXX
 COPTS+=		${${ACTIVE_CC} == "gcc":? -Wno-error=cpp :}
 COPTS+=		${${ACTIVE_CC} == "clang":? -Wno-error=\#warnings :}
+COPTS+=		${${ACTIVE_CC} == "clang":? -Wno-error=pointer-sign :}
 
 COPTS.g80_dac.c+=		-Wno-error	# XXX deprecated
 
