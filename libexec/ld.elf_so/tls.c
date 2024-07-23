@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.21 2024/07/22 23:15:57 riastradh Exp $	*/
+/*	$NetBSD: tls.c,v 1.22 2024/07/23 22:00:00 riastradh Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.21 2024/07/22 23:15:57 riastradh Exp $");
+__RCSID("$NetBSD: tls.c,v 1.22 2024/07/23 22:00:00 riastradh Exp $");
 
 /*
  * Thread-local storage
@@ -523,7 +523,7 @@ __tls_get_addr(void *arg_)
 	 * application bug if code of the module is still running at
 	 * that point.
 	 */
-	if (__predict_true(idx < DTV_MAX_INDEX(dtv) && dtv[idx] != NULL))
+	if (__predict_true(idx <= DTV_MAX_INDEX(dtv) && dtv[idx] != NULL))
 		return (uint8_t *)dtv[idx] + offset;
 
 	return _rtld_tls_get_addr(tcb, idx, offset);
