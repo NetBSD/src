@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tls_extern.c,v 1.15 2024/07/22 23:18:30 riastradh Exp $	*/
+/*	$NetBSD: t_tls_extern.c,v 1.16 2024/07/23 18:11:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,6 @@
 
 #include <atf-c.h>
 #include <dlfcn.h>
-#include <signal.h>
 
 #define	ATF_REQUIRE_DL(x) ATF_REQUIRE_MSG((x) != 0, "%s: %s", #x, dlerror())
 
@@ -424,10 +423,6 @@ ATF_TC_BODY(opencloseloop_use, tc)
 	 */
 	ATF_REQUIRE_DL(use = dlopen("libh_use_dynamic.so", 0));
 	ATF_REQUIRE_DL(fuse = dlsym(use, "fuse"));
-#ifdef __aarch64__
-	atf_tc_expect_signal(SIGSEGV,
-	    "PR lib/58154: bad fast path test in aarch64 tls");
-#endif
 	pdef = (*fdef)();
 	puse = (*fuse)();
 	ATF_CHECK_EQ_MSG(pdef, puse,
