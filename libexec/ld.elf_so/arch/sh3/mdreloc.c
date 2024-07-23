@@ -1,9 +1,18 @@
-/*	$NetBSD: mdreloc.c,v 1.36 2023/06/04 01:24:58 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.37 2024/07/23 09:27:00 uwe Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.36 2023/06/04 01:24:58 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.37 2024/07/23 09:27:00 uwe Exp $");
 #endif /* not lint */
+
+/*
+ * SuperH ELF relocations.
+ *
+ * Reference:
+ *
+ *	[RM0197] SH-4 generic and C specific application binary interface
+ *	https://www.st.com/resource/en/reference_manual/rm0197-sh4-generic-and-c-specific-application-binary-interface-stmicroelectronics.pdf
+ */
 
 #include <sys/types.h>
 #include <sys/tls.h>
