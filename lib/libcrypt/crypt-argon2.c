@@ -1,3 +1,5 @@
+/*	$NetBSD: crypt-argon2.c,v 1.21 2024/07/23 22:32:22 riastradh Exp $	*/
+
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -23,6 +25,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: crypt-argon2.c,v 1.21 2024/07/23 22:32:22 riastradh Exp $");
 
 #include <sys/resource.h>
 #include <sys/param.h>
