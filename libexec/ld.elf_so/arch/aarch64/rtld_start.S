@@ -1,4 +1,4 @@
-/* $NetBSD: rtld_start.S,v 1.6 2024/07/22 23:18:50 riastradh Exp $ */
+/* $NetBSD: rtld_start.S,v 1.7 2024/07/23 18:11:53 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: rtld_start.S,v 1.6 2024/07/22 23:18:50 riastradh Exp $")
+RCSID("$NetBSD: rtld_start.S,v 1.7 2024/07/23 18:11:53 riastradh Exp $")
 
 /*
  * void _rtld_start(void (*cleanup)(void), const Obj_Entry *obj,
@@ -236,8 +236,7 @@ ENTRY(_rtld_tlsdesc_dynamic)
 	ldr	x3, [x0, #-8]		/* x3 := max = DTV_MAX_INDEX(dtv) */
 	ldr	x2, [x1, #0]		/* x2 := idx = tlsdesc->td_tlsindex */
 	cmp	x2, x3
-	b.lt	1f			/* Slow path if idx < max */
-					/* XXX PR lib/58154 */
+	b.gt	1f			/* Slow path if idx > max */
 
 	ldr	x3, [x0, x2, lsl #3]	/* x3 := dtv[idx] */
 	cbz	x3, 1f			/* Slow path if dtv[idx] is null */
