@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt-argon2.c,v 1.21 2024/07/23 22:32:22 riastradh Exp $	*/
+/*	$NetBSD: crypt-argon2.c,v 1.22 2024/07/23 22:37:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crypt-argon2.c,v 1.21 2024/07/23 22:32:22 riastradh Exp $");
+__RCSID("$NetBSD: crypt-argon2.c,v 1.22 2024/07/23 22:37:11 riastradh Exp $");
 
 #include <sys/resource.h>
 #include <sys/param.h>
@@ -35,7 +35,7 @@ __RCSID("$NetBSD: crypt-argon2.c,v 1.21 2024/07/23 22:32:22 riastradh Exp $");
 #include <sys/syslimits.h>
 
 #include <stdlib.h>
-#include <stdio.h> 
+#include <stdio.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
@@ -53,7 +53,7 @@ estimate_argon2_params(argon2_type, uint32_t *,
 
 /* defaults pulled from run.c */
 #define HASHLEN		32
-#define T_COST_DEF 	3 
+#define T_COST_DEF 	3
 #define LOG_M_COST_DEF 	12 /* 2^12 = 4 MiB */
 #define LANES_DEF 	1
 #define THREADS_DEF 	1
@@ -214,10 +214,10 @@ estimate_argon2_params(argon2_type atype, uint32_t *etime,
 			goto error;
 		for (; time < ARGON2_MAX_TIME; ++time) {
 			if (argon2_hash(time, memory, threads,
-			    tmp_pwd, sizeof(tmp_pwd), 
-			    tmp_salt, sizeof(tmp_salt), 
-			    tmp_hash, sizeof(tmp_hash), 
-			    tmp_encoded, sizeof(tmp_encoded), 
+			    tmp_pwd, sizeof(tmp_pwd),
+			    tmp_salt, sizeof(tmp_salt),
+			    tmp_hash, sizeof(tmp_hash),
+			    tmp_encoded, sizeof(tmp_encoded),
 			    atype, ARGON2_VERSION_NUMBER) != ARGON2_OK) {
 				goto reset;
 			}
@@ -250,7 +250,7 @@ reset:
 /* we don't force param order as input, */
 /* but we do provide the expected order to argon2 api */
 static int
-decode_option(argon2_context *ctx, argon2_type *atype, const char *option) 
+decode_option(argon2_context *ctx, argon2_type *atype, const char *option)
 {
 	size_t tmp = 0;
         char *in = 0, *inp;
@@ -268,14 +268,14 @@ decode_option(argon2_context *ctx, argon2_type *atype, const char *option)
 
 	sl = strlen(a);
 
-	if (sl == strlen(ARGON2_ARGON2I_STR) && 
+	if (sl == strlen(ARGON2_ARGON2I_STR) &&
 	   !(strcmp(ARGON2_ARGON2I_STR, a))) {
 		*atype=Argon2_i;
-	} else if (sl == strlen(ARGON2_ARGON2D_STR) && 
+	} else if (sl == strlen(ARGON2_ARGON2D_STR) &&
 	        !(strcmp(ARGON2_ARGON2D_STR, a))) {
 		*atype=Argon2_d;
 	}
-	else if (sl == strlen(ARGON2_ARGON2ID_STR) && 
+	else if (sl == strlen(ARGON2_ARGON2ID_STR) &&
 	        !(strcmp(ARGON2_ARGON2ID_STR, a))) {
 		*atype=Argon2_id;
 	} else { /* default to id, we assume simple mistake */
@@ -363,7 +363,7 @@ decode_option(argon2_context *ctx, argon2_type *atype, const char *option)
 	} else {
 		/* don't care if passwd hash is missing */
 		/* if missing, most likely coming from */
-		/* pwhash or similar */ 
+		/* pwhash or similar */
 	}
 
 	/* free our token buffer */
@@ -373,7 +373,7 @@ decode_option(argon2_context *ctx, argon2_type *atype, const char *option)
         return error;
 }
 
-crypt_private char * 
+crypt_private char *
 __crypt_argon2(const char *pw, const char * salt)
 {
 	/* we use the libargon2 api to generate */
