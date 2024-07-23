@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.63 2023/06/04 01:24:57 joerg Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.64 2024/07/23 10:17:32 uwe Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -28,9 +28,22 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Power ELF relocations.
+ *
+ * Reference:
+ *
+ *	Power Architecture(R) 32-bit
+ *	Application Binary Interface Supplement 1.0 - Linux(R)
+ *	http://web.archive.org/web/20120608163845/https://www.power.org/resources/downloads/Power-Arch-32-bit-ABI-supp-1.0-Linux.pdf
+ *
+ *	64-bit PowerPC ELF Application Binary Interface Supplement 1.9
+ *	https://refspecs.linuxfoundation.org/ELF/ppc64/PPC-elf64abi-1.9.pdf
+ */
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ppc_reloc.c,v 1.63 2023/06/04 01:24:57 joerg Exp $");
+__RCSID("$NetBSD: ppc_reloc.c,v 1.64 2024/07/23 10:17:32 uwe Exp $");
 #endif /* not lint */
 
 #include <stdarg.h>
