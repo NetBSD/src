@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2425.2.5 2024/07/20 15:47:50 martin Exp $
+#	$NetBSD: mi,v 1.2425.2.6 2024/07/24 09:54:51 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11773,6 +11773,7 @@
 ./usr/share/man/cat9/crypto_newsession.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/crypto_register.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/crypto_unregister.0	comp-sys-catman		.cat
+./usr/share/man/cat9/crashme.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/csf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ctob.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ctod.0			comp-sys-catman		.cat
@@ -20132,6 +20133,7 @@
 ./usr/share/man/html9/crypto_newsession.html	comp-sys-htmlman	html
 ./usr/share/man/html9/crypto_register.html	comp-sys-htmlman	html
 ./usr/share/man/html9/crypto_unregister.html	comp-sys-htmlman	html
+./usr/share/man/html9/crashme.html		comp-sys-htmlman	html
 ./usr/share/man/html9/csf.html			comp-sys-htmlman	html
 ./usr/share/man/html9/ctob.html			comp-sys-htmlman	html
 ./usr/share/man/html9/ctod.html			comp-sys-htmlman	html
@@ -28628,6 +28630,7 @@
 ./usr/share/man/man9/crypto_newsession.9	comp-sys-man		.man
 ./usr/share/man/man9/crypto_register.9		comp-sys-man		.man
 ./usr/share/man/man9/crypto_unregister.9	comp-sys-man		.man
+./usr/share/man/man9/crashme.9			comp-sys-man		.man
 ./usr/share/man/man9/csf.9			comp-sys-man		.man
 ./usr/share/man/man9/ctob.9			comp-sys-man		.man
 ./usr/share/man/man9/ctod.9			comp-sys-man		.man
