@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtoi.c,v 1.4 2024/07/24 08:59:11 kre Exp $	*/
+/*	$NetBSD: t_strtoi.c,v 1.5 2024/07/24 09:26:06 kre Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtoi.c,v 1.4 2024/07/24 08:59:11 kre Exp $");
+__RCSID("$NetBSD: t_strtoi.c,v 1.5 2024/07/24 09:26:06 kre Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
