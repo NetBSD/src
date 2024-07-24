@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.80 2024/07/24 20:29:43 christos Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.81 2024/07/24 20:54:43 christos Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.80 2024/07/24 20:29:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.81 2024/07/24 20:54:43 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -213,8 +213,7 @@ int wg_debug;
 #endif
 
 #define WG_LOG_RATECHECK(wgprc, level, fmt, args...)	do {		\
-	if ((wg_debug & WG_DEBUG_FLAGS_LOG) && 				\
-	    ppsratecheck(&(wgprc)->wgprc_lasttime,			\
+	if (ppsratecheck(&(wgprc)->wgprc_lasttime,			\
 	    &(wgprc)->wgprc_curpps, 1)) {				\
 		log(level, fmt, ##args);				\
 	}								\
@@ -2388,16 +2387,21 @@ wg_validate_inner_packet(const char *packet, size_t decrypted_len, int *af)
 	uint16_t packet_len;
 	const struct ip *ip;
 
-	if (__predict_false(decrypted_len < sizeof(struct ip)))
+	if (__predict_false(decrypted_len < sizeof(*ip))) {
+		WG_DLOG("decrypted_len=%zu < %zu\n", decrypted_len,
+		    sizeof(*ip));
 		return false;
+	}
 
 	ip = (const struct ip *)packet;
 	if (ip->ip_v == 4)
 		*af = AF_INET;
 	else if (ip->ip_v == 6)
 		*af = AF_INET6;
-	else
+	else {
+		WG_DLOG("ip_v=%d\n", ip->ip_v);
 		return false;
+	}
 
 	WG_DLOG("af=%d\n", *af);
 
@@ -2411,11 +2415,14 @@ wg_validate_inner_packet(const char *packet, size_t decrypted_len, int *af)
 	case AF_INET6: {
 		const struct ip6_hdr *ip6;
 
-		if (__predict_false(decrypted_len < sizeof(struct ip6_hdr)))
+		if (__predict_false(decrypted_len < sizeof(*ip6))) {
+			WG_DLOG("decrypted_len=%zu < %zu\n", decrypted_len,
+			    sizeof(*ip6));
 			return false;
+		}
 
 		ip6 = (const struct ip6_hdr *)packet;
-		packet_len = sizeof(struct ip6_hdr) + ntohs(ip6->ip6_plen);
+		packet_len = sizeof(*ip6) + ntohs(ip6->ip6_plen);
 		break;
 	}
 #endif
@@ -2423,9 +2430,11 @@ wg_validate_inner_packet(const char *packet, size_t decrypted_len, int *af)
 		return false;
 	}
 
-	WG_DLOG("packet_len=%u\n", packet_len);
-	if (packet_len > decrypted_len)
+	if (packet_len > decrypted_len) {
+		WG_DLOG("packet_len %u > decrypted_len %zu\n", packet_len,
+		    decrypted_len);
 		return false;
+	}
 
 	return true;
 }
