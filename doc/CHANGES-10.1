@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.18 2024/07/20 16:05:52 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.19 2024/07/24 09:58:37 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -934,4 +934,22 @@ sys/modules/Makefile				1.291
 
 	modules: Build `ipl` module only if MKIPFILTER is enabled.
 	[rin, ticket #765]
+
+distrib/amd64/ramdisks/Makefile			1.6
+
+	PR 58316 and 57948: only enable the build of ramdisk-zfsroot if
+	ZFS is enabled.
+	[ozaki-r, ticket #766]
+
+distrib/sets/lists/comp/mi			1.2465
+share/man/man9/Makefile				1.472
+
+	crashme(9): install man page.
+	[rin, ticket #767]
+
+lib/libcurses/screen.c				1.39
+tests/lib/libcurses/tests/curs_set		1.2
+
+	curses: PR 58090, PR 58313: init old_mode to 1 (normal visible cursor).
+	[uwe, ticket #768]
 
