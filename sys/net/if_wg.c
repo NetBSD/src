@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.79 2024/07/05 04:31:53 rin Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.80 2024/07/24 20:29:43 christos Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.79 2024/07/05 04:31:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.80 2024/07/24 20:29:43 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -167,6 +167,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.79 2024/07/05 04:31:53 rin Exp $");
 #define WGLOG(level, fmt, args...)					      \
 	log(level, "%s: " fmt, __func__, ##args)
 
+// #define WG_DEBUG
+
 /* Debug options */
 #ifdef WG_DEBUG
 /* Output debug logs */
@@ -185,23 +187,34 @@ __KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.79 2024/07/05 04:31:53 rin Exp $");
 #ifndef WG_DEBUG_PARAMS
 #define WG_DEBUG_PARAMS
 #endif
+int wg_debug;
+#define WG_DEBUG_FLAGS_LOG	1
+#define WG_DEBUG_FLAGS_TRACE	2
+#define WG_DEBUG_FLAGS_DUMP	4
 #endif
 
+
 #ifdef WG_DEBUG_TRACE
-#define WG_TRACE(msg)							      \
-	log(LOG_DEBUG, "%s:%d: %s\n", __func__, __LINE__, (msg))
+#define WG_TRACE(msg)	 do {						\
+	if (wg_debug & WG_DEBUG_FLAGS_TRACE)				\
+	    log(LOG_DEBUG, "%s:%d: %s\n", __func__, __LINE__, (msg));	\
+} while (0)
 #else
 #define WG_TRACE(msg)	__nothing
 #endif
 
 #ifdef WG_DEBUG_LOG
-#define WG_DLOG(fmt, args...)	log(LOG_DEBUG, "%s: " fmt, __func__, ##args)
+#define WG_DLOG(fmt, args...)	 do {					\
+	if (wg_debug & WG_DEBUG_FLAGS_LOG)				\
+	    log(LOG_DEBUG, "%s: " fmt, __func__, ##args);		\
+} while (0)
 #else
 #define WG_DLOG(fmt, args...)	__nothing
 #endif
 
 #define WG_LOG_RATECHECK(wgprc, level, fmt, args...)	do {		\
-	if (ppsratecheck(&(wgprc)->wgprc_lasttime,			\
+	if ((wg_debug & WG_DEBUG_FLAGS_LOG) && 				\
+	    ppsratecheck(&(wgprc)->wgprc_lasttime,			\
 	    &(wgprc)->wgprc_curpps, 1)) {				\
 		log(level, fmt, ##args);				\
 	}								\
@@ -242,6 +255,9 @@ puthexdump(char *buf, const void *p, size_t n)
 static void
 wg_dump_buf(const char *func, const char *buf, const size_t size)
 {
+	if ((wg_debug & WG_DEBUG_FLAGS_DUMP) == 0)
+		return;
+
 	char *hex = gethexdump(buf, size);
 
 	log(LOG_DEBUG, "%s: %s\n", func, hex ? hex : "(enomem)");
@@ -253,6 +269,9 @@ static void
 wg_dump_hash(const uint8_t *func, const uint8_t *name, const uint8_t *hash,
     const size_t size)
 {
+	if ((wg_debug & WG_DEBUG_FLAGS_DUMP) == 0)
+		return;
+
 	char *hex = gethexdump(hash, size);
 
 	log(LOG_DEBUG, "%s: %s: %s\n", func, name, hex ? hex : "(enomem)");
@@ -2307,6 +2326,7 @@ wg_send_keepalive_msg(struct wg_peer *wgp, struct wg_session *wgs)
 	 * "A keepalive message is simply a transport data message with
 	 *  a zero-length encapsulated encrypted inner-packet."
 	 */
+	WG_TRACE("");
 	m = m_gethdr(M_WAIT, MT_DATA);
 	wg_send_data_msg(wgp, wgs, m);
 }
@@ -4165,12 +4185,12 @@ wg_handle_prop_peer(struct wg_softc *wg, prop_dictionary_t peer,
 		goto out;
 	}
 #ifdef WG_DEBUG_DUMP
-    {
-	char *hex = gethexdump(pubkey, pubkey_len);
-	log(LOG_DEBUG, "pubkey=%p, pubkey_len=%lu\n%s\n",
-	    pubkey, pubkey_len, hex);
-	puthexdump(hex, pubkey, pubkey_len);
-    }
+        if (wg_debug & WG_DEBUG_FLAGS_DUMP) {
+		char *hex = gethexdump(pubkey, pubkey_len);
+		log(LOG_DEBUG, "pubkey=%p, pubkey_len=%lu\n%s\n",
+		    pubkey, pubkey_len, hex);
+		puthexdump(hex, pubkey, pubkey_len);
+	}
 #endif
 
 	struct wg_peer *wgp = wg_alloc_peer(wg);
@@ -4330,9 +4350,10 @@ wg_alloc_prop_buf(char **_buf, struct ifdrv *ifd)
 		return error;
 	buf[ifd->ifd_len] = '\0';
 #ifdef WG_DEBUG_DUMP
-	log(LOG_DEBUG, "%.*s\n",
-	    (int)MIN(INT_MAX, ifd->ifd_len),
-	    (const char *)buf);
+	if (wg_debug & WG_DEBUG_FLAGS_DUMP) {
+		log(LOG_DEBUG, "%.*s\n", (int)MIN(INT_MAX, ifd->ifd_len),
+		    (const char *)buf);
+	}
 #endif
 	*_buf = buf;
 	return 0;
@@ -4358,12 +4379,12 @@ wg_ioctl_set_private_key(struct wg_softc *wg, struct ifdrv *ifd)
 		&privkey, &privkey_len))
 		goto out;
 #ifdef WG_DEBUG_DUMP
-    {
-	char *hex = gethexdump(privkey, privkey_len);
-	log(LOG_DEBUG, "privkey=%p, privkey_len=%lu\n%s\n",
-	    privkey, privkey_len, hex);
-	puthexdump(hex, privkey, privkey_len);
-    }
+	if (wg_debug & WG_DEBUG_FLAGS_DUMP) {
+		char *hex = gethexdump(privkey, privkey_len);
+		log(LOG_DEBUG, "privkey=%p, privkey_len=%lu\n%s\n",
+		    privkey, privkey_len, hex);
+		puthexdump(hex, privkey, privkey_len);
+	}
 #endif
 	if (privkey_len != WG_STATIC_KEY_LEN)
 		goto out;
@@ -4877,6 +4898,11 @@ SYSCTL_SETUP(sysctl_net_wg_setup, "sysctl net.wg setup")
 	    CTLTYPE_BOOL, "force_underload",
 	    SYSCTL_DESCR("force to detemine under load"),
 	    NULL, 0, &wg_force_underload, 0, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "debug",
+	    SYSCTL_DESCR("set debug flags 1=debug 2=trace 4=dump"),
+	    NULL, 0, &wg_debug, 0, CTL_CREATE, CTL_EOL);
 }
 #endif
 
