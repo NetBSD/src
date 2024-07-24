@@ -1,4 +1,4 @@
-.\" $NetBSD: crashme.9,v 1.5 2021/12/11 23:47:53 riastradh Exp $
+.\" $NetBSD: crashme.9,v 1.6 2024/07/24 12:48:17 uwe Exp $
 .\"
 .\" Copyright (c) 2019 Matthew R. Green
 .\" All rights reserved.
@@ -46,20 +46,21 @@ These nodes are simply named callbacks that are expected to cause the
 system to crash.
 .Pp
 The crashme functionality is only available in kernels with the
-.Xr options 4
-.Dv DEBUG
-option set.
+.Ic options DEBUG
+set in the kernel
+.Xr config 5
+file.
 .Pp
 Each crashme node is maintained in a
 .Vt crashme_node
 structure which has the following public members:
-.Bd -literal
-typedef int (*crashme_fn)(int);
+.Bd -literal -offset indent
+typedef int (*crashme_fn)(int /* flags */);
 
 typedef struct crashme_node {
-	const char	*cn_name;
-	const char	*cn_longname;
-	crashme_fn	 cn_fn;
+        const char     *cn_name;
+        const char     *cn_longname;
+        crashme_fn      cn_fn;
 } crashme_node;
 .Ed
 .Pp
@@ -72,17 +73,19 @@ and
 members.
 .Pp
 The
+.Fa cn_fn
+function is passed
 .Ar flags
-parameter is passed from sysctl.
-The return value is 0 upon success or non zero for failure.
+parameter from sysctl.
+It shall return 0 upon success or non zero on failure.
 .Sh SYSCTL SUPPORT
 The following
 .Xr sysctl 8
 variables are provided by the
 .Nm
 subsystem:
-.Bl -tag -width Li
-.It Li debug.crashme_enable
+.Bl -tag -offset indent -width Va
+.It Va debug.crashme_enable
 Must be set to 1 for any
 .Nm
 node to be executed.
@@ -90,28 +93,29 @@ node to be executed.
 .Pp
 The following
 .Xr sysctl 8
-nodes trigger crashes in different ways when written:
-.Bl -tag -width ".Li debug.crashme.null_deref"
-.It Li debug.crashme.panic
+variables trigger crashes in different ways when written to:
+.Bl -tag -offset indent -width Va
+.It Va debug.crashme.panic
 Call
 .Xr panic 9 .
-.It Li debug.crashme.null_deref
+.It Va debug.crashme.null_deref
 Dereference a null pointer.
-.It Li debug.crashme.null_jump
+.It Va debug.crashme.null_jump
 Call a null function pointer, i.e., jump to the instruction address
 zero.
-.It Li debug.crashme.ddb
+.It Va debug.crashme.ddb
 Enter
-.Xr ddb 9
+.Xr ddb 4
 directly by calling
-.Xr Debugger 9 .
+.Fn Debugger .
 Requires
-.Xr options 4
-.Dv DDB .
+.Ic options DDB .
 .El
 .Sh SEE ALSO
+.Xr ddb 4 ,
 .Xr options 4 ,
-.Xr panic 9
+.Xr sysctl 8 ,
+.Xr panic 9 .
 .Sh HISTORY
 The
 .Nm
