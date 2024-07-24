@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.81 2024/07/24 20:54:43 christos Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.82 2024/07/24 22:17:21 kre Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.81 2024/07/24 20:54:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.82 2024/07/24 22:17:21 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -168,6 +168,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.81 2024/07/24 20:54:43 christos Exp $");
 	log(level, "%s: " fmt, __func__, ##args)
 
 // #define WG_DEBUG
+
+#ifndef WG_DEBUG
+# if defined(WG_DEBUG_LOG) || defined(WG_DEBUG_TRACE) ||		    \
+	defined(WG_DEBUG_DUMP) || defined(WG_DEBUG_PARAMS)
+#   define WG_DEBUG
+# endif
+#endif
 
 /* Debug options */
 #ifdef WG_DEBUG
