@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.1.2.1 2024/06/29 19:43:25 perseant Exp $	*/
+/*	$NetBSD: newfs.c,v 1.1.2.2 2024/07/24 00:46:18 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.1.2.1 2024/06/29 19:43:25 perseant Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.1.2.2 2024/07/24 00:46:18 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,6 +116,9 @@ main(int argc, char **argv)
 	uint16_t uclabel[11];
 	uint16_t uclabellen;
 	uint64_t diskbytes;
+	char *bootcodefile = NULL, *bootcode = NULL;
+	char *uctablefile = NULL, *uctable = NULL;
+	size_t uctablesize = 0;
 	int r;
 
 	if ((progname = strrchr(*argv, '/')) != NULL)
@@ -129,7 +132,7 @@ main(int argc, char **argv)
 
 	debug = force = 0;
 	memset(&dkw, 0, sizeof(dkw));
-	while ((ch = getopt(argc, argv, "a:c:Dh:FL:l:No:S:s:T:v#:")) != -1)
+	while ((ch = getopt(argc, argv, "a:b:c:Dh:FL:l:No:S:s:T:u:v#:")) != -1)
 		switch(ch) {
 		case 'D':
 			debug = 1;
@@ -156,6 +159,9 @@ main(int argc, char **argv)
 		  	align = strsuftoi64("alignment", optarg,
 					    MINBLOCKSIZE, INT64_MAX, NULL);
 			break;
+		case 'b':
+			bootcodefile = optarg;
+			break;
 		case 'c':
 		  	csize = strsuftoi64("cluster size", optarg,
 					    MINBLOCKSIZE, INT64_MAX, NULL);
@@ -173,6 +179,9 @@ main(int argc, char **argv)
 		case 's':
 		        fssize = strsuftoi64("file system size", optarg,
 					     0, INT64_MAX, &byte_sized);
+			break;
+		case 'u':
+			uctablefile = optarg;
 			break;
 		case 'v':
 			Vflag++;
@@ -274,7 +283,7 @@ main(int argc, char **argv)
 
 	/* If csize not specified, switch based on the partition size */
 	/* This table is based on Windows defaults */
-	diskbytes = secsize * (off_t)dev_bsize;
+	diskbytes = dkw.dkw_size * (off_t)dev_bsize;
 	if (csize <= 0) {
 #define KILOBYTE (off_t)1024
 #define MEGABYTE (1024 * KILOBYTE)
@@ -287,6 +296,10 @@ main(int argc, char **argv)
 			csize = 32 * KILOBYTE;
 		else
 			csize = 128 * KILOBYTE;
+		if (Vflag)
+			printf("Using Windows default cluster size %d"
+				" for filesystem size %lld\n",
+				(int)csize, (unsigned long long)diskbytes);
 #else /* SD Card Association recommendations */
 		if (diskbytes <= 8 * MEGABYTE)
 			csize = 8 * KILOBYTE;
@@ -300,7 +313,15 @@ main(int argc, char **argv)
 			csize = 256 * KILOBYTE;
 		else
 			csize = 512 * KILOBYTE;
+		if (Vflag)
+			printf("Using SD Card Association recommended"
+				" cluster size %d"
+				" for filesystem size %lld\n",
+				(int)csize, (unsigned long long)diskbytes);
 #endif
+	} else {
+		if (Vflag)
+			printf("Using specified cluster size %d", (int)csize);
 	}
 
 	if (align <= 0) {
@@ -331,9 +352,38 @@ main(int argc, char **argv)
 					 strlen(label), uclabel,
 					 EXFATFS_LABELMAX);
 
+	/* Load bootcode from file if requested */
+	if (bootcodefile != NULL) {
+		bootcode = (char *)malloc(390);
+		FILE *fp = fopen(bootcodefile, "rb");
+		if (fp == NULL || fread(bootcode, 390, 1, fp) != 1) {
+			perror(bootcodefile);
+			exit(1);
+		}
+		fclose(fp);
+	}
+
+	/* Load upcase table from file if requested */
+	if (uctablefile != NULL) {
+		FILE *fp;
+		if (stat(uctablefile, &st) != 0) {
+			perror(uctablefile);
+			exit(1);
+		}
+		uctablesize = st.st_size;
+		uctable = malloc(uctablesize);
+		fp = fopen(uctablefile, "rb");
+		if (fp == NULL || fread(uctable, uctablesize, 1, fp) != 1) {
+			perror(uctablefile);
+			exit(1);
+		}
+		fclose(fp);
+	}
+
 	/* Make the filesystem */
 	r = make_exfatfs(fso, secsize, &dkw, csize,
-			 uclabel, uclabellen, serial);
+			 uclabel, uclabellen, serial,
+			 (uint16_t *)uctable, uctablesize, bootcode);
 	if (debug)
 		bufstats();
 	exit(r);
