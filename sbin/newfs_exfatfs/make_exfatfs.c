@@ -1,4 +1,4 @@
-/*	$NetBSD: make_exfatfs.c,v 1.1.2.3 2024/07/19 16:19:16 perseant Exp $	*/
+/*	$NetBSD: make_exfatfs.c,v 1.1.2.4 2024/07/24 00:46:18 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_exfatfs.c,v 1.1.2.3 2024/07/19 16:19:16 perseant Exp $");
+__RCSID("$NetBSD: make_exfatfs.c,v 1.1.2.4 2024/07/24 00:46:18 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -492,7 +492,8 @@ efun(int eval, const char *fmt, ...)
 
 int
 make_exfatfs(int devfd, uint secsize, struct dkwedge_info *dkw, uint bsize,
-	     uint16_t *uclabel, int uclabellen, uint32_t serial)
+	     uint16_t *uclabel, int uclabellen, uint32_t serial,
+	     uint16_t *uctable, size_t uctablesize, char *bootcode)
 {
 	struct exfatfs *fs;
 	struct uvnode *devvp;
@@ -523,6 +524,12 @@ make_exfatfs(int devfd, uint secsize, struct dkwedge_info *dkw, uint bsize,
 	heapalign /= secsize;
 	if (heapalign == 0)
 		heapalign = align;
+
+	/* If no table given, use recommendation */
+	if (uctable == NULL || uctablesize == 0) {
+		uctable = exfatfs_recommended_upcase_table_compressed;
+		uctablesize = sizeof (exfatfs_recommended_upcase_table_compressed);
+	}
 
 	/* Use random serial number if not given */
 	if (serial == 0)
@@ -587,22 +594,16 @@ make_exfatfs(int devfd, uint secsize, struct dkwedge_info *dkw, uint bsize,
 	fs->xf_NumberOfFats = 1; /* XXX maybe two? */
 	fs->xf_DriveSelect = 0x80; /* An arbitrary value, from the spec */
 	fs->xf_PercentInUse = 0;
-#ifdef WINDOWS_BOOTCODE /* XXX take bootcode from a file via option */
-	memcpy(fs->xf_BootCode, WINDOWS_BOOTCODE, sizeof(fs->xf_BootCode));
-#else /* ! defined WINDOWS_BOOTCODE */
-	memset(fs->xf_BootCode, 0xf4, sizeof(fs->xf_BootCode));
-#endif /* ! defined WINDOWS_BOOTCODE */
+	if (bootcode == NULL)
+		memset(fs->xf_BootCode, 0xf4, sizeof(fs->xf_BootCode));
+	else
+		memcpy(fs->xf_BootCode, bootcode, sizeof(fs->xf_BootCode));
 	fs->xf_BootSignature = EXFAT_BOOT_SIGNATURE;
 
 	if (Vflag)
 		printf("ClusterHeapOffset: 0x%lx (byte 0x%llx)\n",
 		       (unsigned long)fs->xf_ClusterHeapOffset,
 		       (unsigned long long)fs->xf_ClusterHeapOffset << fs->xf_BytesPerSectorShift);
-	
-	if (Vflag)
-		printf("First cluster of root directory: 0x%lx (byte 0x%llx)\n",
-		       (unsigned long)fs->xf_FirstClusterOfRootDirectory,
-		       (unsigned long long)EXFATFS_LC2D(fs, fs->xf_FirstClusterOfRootDirectory) * secsize);
 	
 	/*
 	 * Prepare root directory entries.
@@ -642,10 +643,9 @@ make_exfatfs(int devfd, uint secsize, struct dkwedge_info *dkw, uint bsize,
 		| XD_ENTRYTYPE_INUSE_MASK;
 	dirent_upcase.xd_firstCluster = dirent_bitmap.xd_firstCluster
 		+ bitmap_cluster_size;
-	dirent_upcase.xd_dataLength = sizeof(exfatfs_recommended_upcase_table_compressed);
+	dirent_upcase.xd_dataLength = uctablesize;
 	dirent_upcase.xd_tableChecksum = 
-		exfatfs_cksum32(0, (uint8_t *)exfatfs_recommended_upcase_table_compressed,
-				sizeof(exfatfs_recommended_upcase_table_compressed),
+		exfatfs_cksum32(0, (uint8_t *)uctable, uctablesize,
 				NULL, 0);
 	if (Vflag)
 		printf("First cluster of upcase map: 0x%lx\n",
@@ -658,15 +658,16 @@ make_exfatfs(int devfd, uint secsize, struct dkwedge_info *dkw, uint bsize,
 	 * Write the upcase table to disk.
 	 */
 	daddr = EXFATFS_LC2D(fs, dirent_upcase.xd_firstCluster);
-	resid = sizeof(exfatfs_recommended_upcase_table_compressed);
+	resid = uctablesize;
 	for (i = 0; resid > 0; i += EXFATFS_LSIZE(fs), resid -= EXFATFS_LSIZE(fs)) {
 		if (!Nflag) {
 			bp = getblk(devvp, daddr, EXFATFS_LSIZE(fs));
  			memset(bp->b_data, 0, EXFATFS_LSIZE(fs));
-			memcpy(bp->b_data, ((const char *)exfatfs_recommended_upcase_table_compressed) + i, MIN(EXFATFS_LSIZE(fs), resid));
+			memcpy(bp->b_data, ((const char *)uctable) + i,
+				MIN(EXFATFS_LSIZE(fs), resid));
 			if (Vflag)
-				printf(" write upcase sector size %d at bn 0x%lx\n",
-		       			EXFATFS_LSIZE(fs), (unsigned long)bp->b_blkno);
+				printf(" write upcase sector size %d (%d) at bn 0x%lx\n",
+		       			EXFATFS_LSIZE(fs), (int)resid, (unsigned long)bp->b_blkno);
 			bwrite(bp);
 			++daddr;
 		}
@@ -674,6 +675,11 @@ make_exfatfs(int devfd, uint secsize, struct dkwedge_info *dkw, uint bsize,
 
 	fs->xf_FirstClusterOfRootDirectory = dirent_upcase.xd_firstCluster
 		+ upcase_cluster_size;
+	if (Vflag)
+		printf("First cluster of root directory: 0x%lx (byte 0x%llx)\n",
+		       (unsigned long)fs->xf_FirstClusterOfRootDirectory,
+		       (unsigned long long)EXFATFS_LC2D(fs, fs->xf_FirstClusterOfRootDirectory) * secsize);
+	
 
 	/*
 	 * Write the first bitmap sector.
@@ -684,14 +690,16 @@ make_exfatfs(int devfd, uint secsize, struct dkwedge_info *dkw, uint bsize,
 		bp = getblk(devvp, daddr, EXFATFS_LSIZE(fs));
 		memset(bp->b_data, 0, EXFATFS_LSIZE(fs));
 
+		/* Mark off the clusters we've allocated */
 		for (i = start; i <= fs->xf_FirstClusterOfRootDirectory; i++) {
+			/* It might take more than one bitmap cluster */
 			if ((i - start) == NBBY * EXFATFS_LSIZE(fs)) {
 				if (Vflag)
 					printf(" write used bitmap sector size %d at bn 0x%lx\n",
 			       			EXFATFS_LSIZE(fs), (unsigned long)bp->b_blkno);
 				bwrite(bp);
 				start = i;
-				++daddr;
+				daddr += EXFATFS_L2D(fs, 1);
 				bp = getblk(devvp, daddr, EXFATFS_LSIZE(fs));
 				memset(bp->b_data, 0, EXFATFS_LSIZE(fs));
 			}
@@ -709,8 +717,8 @@ make_exfatfs(int devfd, uint secsize, struct dkwedge_info *dkw, uint bsize,
 
 	/* Now write blank pages for the rest of the bitmap */
 	progress = oprogress = 0;
-	start = ++daddr;
-	end = EXFATFS_LC2D(fs, fs->xf_FirstClusterOfRootDirectory);
+	start = daddr + EXFATFS_L2D(fs, 1);
+	end = EXFATFS_LC2D(fs, dirent_upcase.xd_firstCluster);
 	for (daddr = start; daddr < end; ++daddr) {
 		if (!Nflag) {
 			size_t size = EXFATFS_LSIZE(fs);
