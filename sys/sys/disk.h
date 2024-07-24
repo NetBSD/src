@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.78 2023/05/09 12:04:04 riastradh Exp $	*/
+/*	$NetBSD: disk.h,v 1.78.6.1 2024/07/24 20:56:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -195,6 +195,7 @@ struct dkwedge_list {
 #define	DKW_PTYPE_HFS		"hfs"
 #define	DKW_PTYPE_FILECORE	"filecore"
 #define	DKW_PTYPE_EXT2FS	"ext2fs"
+#define	DKW_PTYPE_EXFATFS	"exfatfs"
 #define	DKW_PTYPE_NTFS		"ntfs"
 #define	DKW_PTYPE_RAIDFRAME	"raidframe"
 #define	DKW_PTYPE_CCD		"ccd"
