@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck_exfatfs.c,v 1.1.2.2 2024/07/19 16:19:16 perseant Exp $	*/
+/*	$NetBSD: fsck_exfatfs.c,v 1.1.2.3 2024/07/24 00:42:10 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: fsck_exfatfs.c,v 1.1.2.2 2024/07/19 16:19:16 perseant Exp $");
+__RCSID("$NetBSD: fsck_exfatfs.c,v 1.1.2.3 2024/07/24 00:42:10 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,7 @@ __RCSID("$NetBSD: fsck_exfatfs.c,v 1.1.2.2 2024/07/19 16:19:16 perseant Exp $");
 #define vnode uvnode
 #define buf ubuf
 #include <fs/exfatfs/exfatfs.h>
+#include <fs/exfatfs/exfatfs_cksum.h>
 #include <fs/exfatfs/exfatfs_conv.h>
 #include <fs/exfatfs/exfatfs_extern.h>
 #include <fs/exfatfs/exfatfs_inode.h>
@@ -447,12 +448,47 @@ main(int argc, char **argv)
 		pass2(fs, bitmap);
 		
 		/* Mark filesystem clean */
-		
-		/* Report file count and cluster usage */
+		if (fsdirty) {
+			daddr_t base;
+			int i;
+			size_t j;
+			uint32_t cksum;
+			uint8_t boot_ignore[3] = { 106, 107, 112 };
+
+			pwarn("WRITING SUPERBLOCKS\n");
+			for (base = 0; base < 24; base += 12) {
+				/* Write superblock to disk */
+				bp = getblk(devvp, base + 0, BSSIZE(fs));
+				memcpy(bp->b_data, &fs->xf_exfatdfs,
+				       sizeof(fs->xf_exfatdfs));
+				cksum = exfatfs_cksum32(0,
+						(uint8_t *)bp->b_data,
+						BSSIZE(fs), boot_ignore,
+						sizeof(boot_ignore));
+				bwrite(bp);
+			
+				/* Checksum but do not write other sectors */
+				for (i = 1; i < 11; i++) {
+					bread(devvp, base + i, BSSIZE(fs), 0, &bp);
+					cksum = exfatfs_cksum32(cksum,
+								(uint8_t *)bp->b_data,
+								BSSIZE(fs),
+								NULL, 0);
+					brelse(bp, 0);
+				}
+
+				/* Populate checksum block and write it */
+				bp = getblk(devvp, base + i, BSSIZE(fs));
+				for (j = 0; j < BSSIZE(fs) / sizeof(uint32_t); j++)
+					((uint32_t *)bp->b_data)[j] = cksum;
+				bwrite(bp);
+			}
+		}
 		
 		close(devfd);
 	}
 
+	/* Report file count and cluster usage */
 	printf("%llu files, %u/%u clusters allocated, %0.1f%% fragmentation\n",
 	       total_files, clusters_used, fs->xf_ClusterCount,
 	       (frag_files * 100.0) / total_files);
