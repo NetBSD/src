@@ -1,4 +1,4 @@
-/* $NetBSD: exfatfs_tables.h,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $ */
+/* $NetBSD: exfatfs_tables.h,v 1.1.2.3 2024/07/24 00:38:26 perseant Exp $ */
 
 /*-
  * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
@@ -38,8 +38,8 @@ struct exfatfs_upcase_range_offset {
 	int16_t  euro_ucoff; /* Offset of uppercase version of characters */
 };
 
-int exfatfs_check_filename_ucs2(uint16_t *, int);
-void exfatfs_load_uctable(struct exfatfs *, uint16_t *, int);
+int exfatfs_check_filename_ucs2(struct exfatfs *, uint16_t *, int);
+void exfatfs_load_uctable(struct exfatfs *, const uint16_t *, int);
 void exfatfs_destroy_uctable(struct exfatfs *);
 void exfatfs_upcase_str(struct exfatfs *, uint16_t *, int);
 int exfatfs_upcase_cmp(struct exfatfs *, uint16_t *, int, uint16_t *, int);

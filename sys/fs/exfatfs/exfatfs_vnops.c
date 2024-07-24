@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_vnops.c,v 1.1.2.7 2024/07/19 16:19:16 perseant Exp $	*/
+/*	$NetBSD: exfatfs_vnops.c,v 1.1.2.8 2024/07/24 00:38:27 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_vnops.c,v 1.1.2.7 2024/07/19 16:19:16 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_vnops.c,v 1.1.2.8 2024/07/24 00:38:27 perseant Exp $");
 
 #include <sys/buf.h>
 #include <sys/dirent.h>
@@ -1003,17 +1003,23 @@ exfatfs_alloc(struct vnode *dvp, struct vnode **vpp,
 	fs = dxip->xi_fs;
 	KASSERT(fs != NULL);
 	
-	/* Create a new inode */
-	xip = exfatfs_newxfinode(fs, 0, 0);
-	
 	/*
 	 * Find an empty location in a directory.  If there is none,
 	 * extend the directory by enough to hold three entries.
 	 * Remember the logical byte offset of the empty space.
 	 */
+
+	/* Convert filename to UCS2 */
 	ucs2len = exfatfs_utf8ucs2str(cnp->cn_nameptr, cnp->cn_namelen,
 				      ucs2filename, EXFATFS_MAX_NAMELEN);
-	exfatfs_upcase_str(fs, ucs2filename, ucs2len);
+	/* exfatfs_upcase_str(fs, ucs2filename, ucs2len); */
+
+	/* Check name for forbidden characters: from section 7.7.3 */
+	if (exfatfs_check_filename_ucs2(fs, ucs2filename, ucs2len) != 0)
+		return EINVAL;
+
+	/* Create a new inode */
+	xip = exfatfs_newxfinode(fs, 0, 0);
 	
 	contig = 2 + howmany(ucs2len, EXFATFS_NAME_CHUNKSIZE);
 	DPRINTF(("alloc: namelen %lu -> ucs2len=%lu, contig=%lu\n",
@@ -2404,7 +2410,7 @@ detrunc(struct xfinode *xip, off_t bytes, int ioflags, kauth_cred_t cred)
  * fragmented but has become so.
  */
 static int
-rewrite_fat(struct xfinode *xip, uint32_t clustercount)
+rewrite_fat(struct xfinode *xip, uint32_t clustercount, int ioflags)
 {
 	uint32_t lcn, pcn;
 	struct buf *bp = NULL;
@@ -2424,13 +2430,20 @@ rewrite_fat(struct xfinode *xip, uint32_t clustercount)
 			= (lcn == clustercount - 1
 				? 0xffffffff : pcn + 1);
 		if (EXFATFS_FATBLK(fs, pcn) != EXFATFS_FATBLK(fs, pcn + 1)) {
-			bdwrite(bp);
+			if (ioflags)
+				bwrite(bp);
+			else
+				bdwrite(bp);
 			bp = NULL;
 		}
 	}
 
-	if (bp != NULL)
-		bdwrite(bp);
+	if (bp != NULL) {
+		if (ioflags)
+			bwrite(bp);
+		else
+			bdwrite(bp);
+	}
 
 	return 0;
 }
@@ -2543,7 +2556,7 @@ deextend(struct xfinode *xip, off_t bytes, int ioflags,
 						 " with 0x%x != 0x%x+1\n",
 						 INUM(xip), pcn, opcn));
 					CLR_DSE_NOFATCHAIN(xip);
-					if ((error = rewrite_fat(xip, lcn)) != 0)
+					if ((error = rewrite_fat(xip, lcn, ioflags)) != 0)
 						return error;
 				}
 				if (!IS_DSE_NOFATCHAIN(xip)) {
@@ -2561,6 +2574,21 @@ deextend(struct xfinode *xip, off_t bytes, int ioflags,
 						bwrite(bp);
 					else
 						bdwrite(bp);
+
+					/* And it has no successor */
+					if ((error = bread(fs->xf_devvp,
+						   	EXFATFS_FATBLK(fs, pcn),
+						   	FATBSIZE(fs), 0, &bp)) != 0)
+						return error;
+					((uint32_t *)bp->b_data)[EXFATFS_FATOFF(pcn)]
+						= 0xffffffff;
+					DPRINTF(("FAT %lu -> -1\n",
+					 	(unsigned long)pcn));
+					if (ioflags)
+						bwrite(bp);
+					else
+						bdwrite(bp);
+
 					bp = NULL;
 				}
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_extern.c,v 1.1.2.5 2024/07/19 16:19:15 perseant Exp $	*/
+/*	$NetBSD: exfatfs_extern.c,v 1.1.2.6 2024/07/24 00:38:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@ typedef struct uvvnode uvnode_t;
 #include <fs/exfatfs/exfatfs_extern.h>
 #include <fs/exfatfs/exfatfs_inode.h>
 #include <fs/exfatfs/exfatfs_extern.h>
+#include <fs/exfatfs/exfatfs_tables.h>
 #include <fs/exfatfs/exfatfs_vfsops.h>
 
 /* #define EXFATFS_EXTERN_DEBUG */
@@ -258,6 +259,7 @@ int exfatfs_mountfs_shared(struct vnode *devvp, struct exfatfs_mount *xmp,
 {
 	struct exfatfs *fs = NULL;
 	struct buf *bp;
+	uint16_t *uctable;
 	int	error;
 	unsigned secshift;
 	const char *errstr;
@@ -265,6 +267,7 @@ int exfatfs_mountfs_shared(struct vnode *devvp, struct exfatfs_mount *xmp,
 	uint8_t boot_ignore[3] = { 106, 107, 112 };
 	int bn;
 	uint32_t sum, badsb;
+	off_t res, off;
 
 	DPRINTF(("exfatfs_mountfs_shared(%p, %u, %p)\n",
 		 devvp, secsize, fsp));
@@ -369,11 +372,18 @@ int exfatfs_mountfs_shared(struct vnode *devvp, struct exfatfs_mount *xmp,
 		return EINVAL;
 	}
 
+	LIST_INIT(&fs->xf_newxip);
 	fs->xf_devvp = devvp;
 	fs->xf_mp = xmp;
-	if (xmp != NULL)
+	if (xmp != NULL) {
 		xmp->xm_fs = fs;
-	LIST_INIT(&fs->xf_newxip);
+
+		/* If mounting for write, mark the fs dirty */
+		if (!(xmp->xm_flags & EXFATFSMNT_RONLY)) {
+			fs->xf_VolumeFlags |= EXFATFS_VOLUME_DIRTY;
+			exfatfs_write_sb(fs);
+		}
+	}
 	
 	exfatfs_finish_mountfs(fs);
 
@@ -382,7 +392,31 @@ int exfatfs_mountfs_shared(struct vnode *devvp, struct exfatfs_mount *xmp,
 	 */
 	read_rootdir(fs);
 	exfatfs_check_fence(fs);
-	
+
+	/*
+	 * Load the upcase table
+	 */
+	uctable = malloc(GET_DSE_DATALENGTH(VTOXI(fs->xf_upcasevp))
+#ifdef _KERNEL
+					    , M_EXFATFSBOOT, M_WAITOK
+#endif /* _KERNEL */
+					);
+	res = (off_t)GET_DSE_DATALENGTH(VTOXI(fs->xf_upcasevp));
+	for (off = 0; res > 0; off += EXFATFS_LSIZE(fs), res -= EXFATFS_LSIZE(fs)) {
+		bread(fs->xf_upcasevp, EXFATFS_B2L(fs, off),
+		      EXFATFS_LSIZE(fs), 0, &bp);
+		memcpy(uctable + off, bp->b_data, MIN(res, EXFATFS_LSIZE(fs)));
+		brelse(bp, 0);
+	}
+	exfatfs_load_uctable(fs, uctable,
+			     GET_DSE_DATALENGTH(VTOXI(fs->xf_upcasevp))
+			     / sizeof(uint16_t));
+	free(uctable
+#ifdef _KERNEL
+		     , M_EXFATFSBOOT
+#endif /* _KERNEL */
+		);
+
 	/*
 	 * Initialize data structure for finding free clusters.
 	 */
@@ -1062,6 +1096,58 @@ int exfatfs_set_file_name(struct xfinode *xip, uint16_t *name,
 	
 	/* Note how many secondaries we now have */
 	SET_DFE_SECONDARY_COUNT(xip, i - 1);
+
+	return 0;
+}
+
+/*
+ * Write the boot block to disk, and checksum the boot block set.
+ */
+int
+exfatfs_write_sb(struct exfatfs *fs)
+{
+	daddr_t base;
+	int i, error;
+	size_t j;
+	uint32_t cksum;
+	uint8_t boot_ignore[3] = { 106, 107, 112 };
+	struct buf *bp;
+
+	for (base = 0; base < 24; base += 12) {
+		/* Write superblock to disk */
+		if ((error = bread(fs->xf_devvp, base + 0, BSSIZE(fs),
+		     0, &bp)) != 0)
+			return error;
+		memcpy(bp->b_data, &fs->xf_exfatdfs,
+		       sizeof(fs->xf_exfatdfs));
+		cksum = exfatfs_cksum32(0,
+				(uint8_t *)bp->b_data,
+				BSSIZE(fs), boot_ignore,
+				sizeof(boot_ignore));
+		bwrite(bp);
+
+		/* Checksum but do not write other sectors */
+		for (i = 1; i < 11; i++) {
+			if ((error = bread(fs->xf_devvp, base + i, BSSIZE(fs),
+			     0, &bp)) != 0)
+				return error;
+			cksum = exfatfs_cksum32(cksum,
+						(uint8_t *)bp->b_data,
+						BSSIZE(fs),
+						NULL, 0);
+			brelse(bp, 0);
+		}
+
+		/* Populate checksum block and write it */
+		bp = getblk(fs->xf_devvp, base + i, BSSIZE(fs)
+#ifdef _KERNEL
+			    , 0, 0
+#endif /* _KERNEL */
+			   );
+		for (j = 0; j < BSSIZE(fs) / sizeof(uint32_t); j++)
+			((uint32_t *)bp->b_data)[j] = cksum;
+		bwrite(bp);
+	}
 
 	return 0;
 }
