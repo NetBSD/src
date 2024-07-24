@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.83 2024/07/24 22:32:07 kre Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.84 2024/07/24 23:46:13 christos Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.83 2024/07/24 22:32:07 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.84 2024/07/24 23:46:13 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -183,6 +183,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.83 2024/07/24 22:32:07 kre Exp $");
 #ifndef WG_DEBUG_DUMP
 #define WG_DEBUG_DUMP
 #endif
+/* debug packets */
+#ifndef WG_DEBUG_PACKET
+#define WG_DEBUG_PACKET
+#endif
 /* Make some internal parameters configurable for testing and debugging */
 #ifndef WG_DEBUG_PARAMS
 #define WG_DEBUG_PARAMS
@@ -201,6 +205,7 @@ int wg_debug;
 #define WG_DEBUG_FLAGS_LOG	1
 #define WG_DEBUG_FLAGS_TRACE	2
 #define WG_DEBUG_FLAGS_DUMP	4
+#define WG_DEBUG_FLAGS_PACKET	8
 #endif
 
 
@@ -236,9 +241,10 @@ static bool wg_force_underload = false;
 #ifdef WG_DEBUG_DUMP
 
 static char *
-gethexdump(const char *p, size_t n)
+gethexdump(const void *vp, size_t n)
 {
 	char *buf;
+	const uint8_t *p = vp;
 	size_t i;
 
 	if (n > SIZE_MAX/3 - 1)
@@ -2696,6 +2702,18 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 		goto out;
 	}
 
+#ifdef WG_DEBUG_PACKET
+	if (wg_debug & WG_DEBUG_FLAGS_PACKET) {
+		char *hex = gethexdump(wgmd, sizeof(*wgmd));
+		log(LOG_DEBUG, "wgmd=%p, sizeof(*wgmd)=%zu\n%s\n",
+		    wgmd, sizeof(*wgmd), hex);
+		puthexdump(hex, wgmd, sizeof(*wgmd));
+		hex = gethexdump(decrypted_buf, decrypted_len);
+		log(LOG_DEBUG, "decrypted_buf=%p, decrypted_len=%zu\n%s\n",
+		    decrypted_buf, decrypted_len, hex);
+		puthexdump(hex, decrypted_buf, decrypted_len);
+	}
+#endif
 	/* We're done with m now; free it and chuck the pointers.  */
 	m_freem(m);
 	m = NULL;
@@ -4070,6 +4088,18 @@ wg_send_data_msg(struct wg_peer *wgp, struct wg_session *wgs,
 	KASSERT(n->m_len >= sizeof(*wgmd));
 	wgmd = mtod(n, struct wg_msg_data *);
 	wg_fill_msg_data(wg, wgp, wgs, wgmd);
+#ifdef WG_DEBUG_PACKET
+	if (wg_debug & WG_DEBUG_FLAGS_PACKET) {
+		char *hex = gethexdump(wgmd, sizeof(*wgmd));
+		log(LOG_DEBUG, "wgmd=%p, sizeof(*wgmd)=%zu\n%s\n",
+		    wgmd, sizeof(*wgmd), hex);
+		puthexdump(hex, wgmd, sizeof(*wgmd));
+		hex = gethexdump(padded_buf, padded_len);
+		log(LOG_DEBUG, "padded_buf=%p, padded_len=%zu\n%s\n",
+		    padded_buf, padded_len, hex);
+		puthexdump(hex, padded_buf, padded_len);
+	}
+#endif
 	/* [W] 5.4.6: AEAD(Tm^send, Nm^send, P, e) */
 	wg_algo_aead_enc((char *)wgmd + sizeof(*wgmd), encrypted_len,
 	    wgs->wgs_tkey_send, le64toh(wgmd->wgmd_counter),
@@ -4920,7 +4950,7 @@ SYSCTL_SETUP(sysctl_net_wg_setup, "sysctl net.wg setup")
 	sysctl_createv(clog, 0, &node, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "debug",
-	    SYSCTL_DESCR("set debug flags 1=debug 2=trace 4=dump"),
+	    SYSCTL_DESCR("set debug flags 1=log 2=trace 4=dump 8=packet"),
 	    NULL, 0, &wg_debug, 0, CTL_CREATE, CTL_EOL);
 }
 #endif
