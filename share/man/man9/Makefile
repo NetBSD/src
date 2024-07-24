@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.465.2.2 2024/07/20 15:47:50 martin Exp $
+#       $NetBSD: Makefile,v 1.465.2.3 2024/07/24 09:54:51 martin Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -14,7 +14,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 acl.9 \
 	cpu_idle.9 cpu_initclocks.9 cpu_need_resched.9 \
 	cpu_number.9 cpu_reboot.9 cpu_rootconf.9 \
 	cpu_startup.9 cpu_switchto.9 cpufreq.9 \
-	csf.9 ctod.9 \
+	crashme.9 csf.9 ctod.9 \
 	curproc.9 \
 	ddb.9 ddc.9 \
 	delay.9 devsw_attach.9 disk.9 disklabel.9 dksubr.9 dofileread.9 \
