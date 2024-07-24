@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.82 2024/07/24 22:17:21 kre Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.83 2024/07/24 22:32:07 kre Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.82 2024/07/24 22:17:21 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.83 2024/07/24 22:32:07 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -169,13 +169,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.82 2024/07/24 22:17:21 kre Exp $");
 
 // #define WG_DEBUG
 
-#ifndef WG_DEBUG
-# if defined(WG_DEBUG_LOG) || defined(WG_DEBUG_TRACE) ||		    \
-	defined(WG_DEBUG_DUMP) || defined(WG_DEBUG_PARAMS)
-#   define WG_DEBUG
-# endif
-#endif
-
 /* Debug options */
 #ifdef WG_DEBUG
 /* Output debug logs */
@@ -194,6 +187,16 @@ __KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.82 2024/07/24 22:17:21 kre Exp $");
 #ifndef WG_DEBUG_PARAMS
 #define WG_DEBUG_PARAMS
 #endif
+#endif /* WG_DEBUG */
+
+#ifndef WG_DEBUG
+# if defined(WG_DEBUG_LOG) || defined(WG_DEBUG_TRACE) ||		    \
+	defined(WG_DEBUG_DUMP) || defined(WG_DEBUG_PARAMS)
+#   define WG_DEBUG
+# endif
+#endif
+
+#ifdef WG_DEBUG
 int wg_debug;
 #define WG_DEBUG_FLAGS_LOG	1
 #define WG_DEBUG_FLAGS_TRACE	2
