@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtoi.c,v 1.3 2024/01/20 16:52:41 christos Exp $	*/
+/*	$NetBSD: t_strtoi.c,v 1.4 2024/07/24 08:59:11 kre Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtoi.c,v 1.3 2024/01/20 16:52:41 christos Exp $");
+__RCSID("$NetBSD: t_strtoi.c,v 1.4 2024/07/24 08:59:11 kre Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -61,19 +61,49 @@ check(struct test *t, intmax_t rv, char *end, int rstatus)
 {
 
 	if (rv != t->res)
-		atf_tc_fail_nonfatal("strtoi(%s, &end, %d, %jd, %jd, &rstatus)"
-		    " failed (rv = %jd)", t->str, t->base, t->lo, t->hi, rv);
+		atf_tc_fail_nonfatal("strtoi(\"%s\", &end, %d, %jd, %jd, "
+		    "&rstatus) failed (rv = %jd)", t->str, t->base,
+		    t->lo, t->hi, rv);
 
-	if (rstatus != t->rstatus)
-		atf_tc_fail_nonfatal("strtoi(%s, &end, %d, %jd, %jd, &rstatus)"
-		    " failed (rstatus: %d ('%s'))",
-		    t->str, t->base, t->lo, t->hi, rstatus, strerror(rstatus));
+	if (rstatus != t->rstatus) {
+		char *emsg;
+
+		if (rstatus != 0) {
+			emsg = strerror(rstatus);
+			if (emsg != NULL) {
+				emsg = strdup(emsg);
+				if (emsg == NULL) {
+					atf_tc_fail("Out of Memory");
+					return;
+				}
+			}
+		} else
+			emsg = NULL;
+
+		atf_tc_fail_nonfatal("strtoi(\"%s\", &end, %d, %jd, %jd, &rstatus)"
+		    " failed (rstatus: %d %s%s%sexpected %d%s%s%s)",
+		    t->str, t->base, t->lo, t->hi, rstatus, rstatus ? "('" : "",
+		    emsg != NULL ? emsg : "", rstatus ? "') " : "", t->rstatus,
+		    t->rstatus ? " ('" : "", t->rstatus ? strerror(t->rstatus)
+		    : "", t->rstatus ? "')" : "");
+
+		free(emsg);
+	}
 
 	if ((t->end != NULL && strcmp(t->end, end) != 0) ||
 	    (t->end == NULL && *end != '\0'))
 		atf_tc_fail_nonfatal("invalid end pointer ('%s') from "
-		    "strtoi(%s, &end, %d, %jd, %jd, &rstatus)",
-		     end, t->str, t->base, t->lo, t->hi);
+		    "strtoi(\"%s\", &end, %d, %jd, %jd, &rstatus), "
+		    "expected '%s'", end, t->str, t->base, t->lo, t->hi,
+		     t->end != NULL ? t->end : "\\0");
+}
+
+static void
+check_errno(int e)
+{
+	if (e != 0)
+		atf_tc_fail("strtoi(3) changed errno to %d ('%s')",
+			            e, strerror(e));
 }
 
 ATF_TC(strtoi_base);
@@ -126,6 +156,18 @@ ATF_TC_BODY(strtoi_base, tc)
 		{ "0x75bcd15",                  123456789,	0,	NULL,
 		  INTMAX_MIN,	INTMAX_MAX,	0	},
 	};
+	struct test f[] = {
+		{ "1",                                  0,	1,	"1",
+		  INTMAX_MIN,	INTMAX_MAX,	EINVAL	},
+		{ "2",                                  0,	-1,	"2",
+		  INTMAX_MIN,	INTMAX_MAX,	EINVAL	},
+		{ "3",                                  0,	37,	"3",
+		  INTMAX_MIN,	INTMAX_MAX,	EINVAL	},
+		{ "4",                                  0,	-1,	"4",
+		  INTMAX_MIN,	INTMAX_MAX,	EINVAL	},
+		{ "0x",                                  0,	 0,	"x",
+		  INTMAX_MIN,	INTMAX_MAX,	ENOTSUP	},
+	};
 
 	intmax_t rv;
 	char *end;
@@ -137,11 +179,22 @@ ATF_TC_BODY(strtoi_base, tc)
 		errno = 0;
 		rv = strtoi(t[i].str, &end, t[i].base, t[i].lo, t[i].hi, &e);
 
-		if (errno != 0)
-			atf_tc_fail("strtoi(3) changed errno to %d ('%s')",
-			            e, strerror(e));
+		check_errno(errno);
 
 		check(&t[i], rv, end, e);
+	}
+
+	for (i = 0; i < __arraycount(f); i++) {
+
+		end = NULL;
+		errno = 0;
+		e = -99;
+
+		rv = strtoi(f[i].str, &end, f[i].base, f[i].lo, f[i].hi, &e);
+
+		check_errno(errno);
+
+		check(&f[i], rv, end, e);
 	}
 }
 
@@ -184,9 +237,7 @@ ATF_TC_BODY(strtoi_case, tc)
 		errno = 0;
 		rv = strtoi(t[i].str, &end, t[i].base, t[i].lo, t[i].hi, &e);
 
-		if (errno != 0)
-			atf_tc_fail("strtoi(3) changed errno to %d ('%s')",
-			            e, strerror(e));
+		check_errno(errno);
 
 		check(&t[i], rv, end, e);
 	}
@@ -211,10 +262,22 @@ ATF_TC_BODY(strtoi_range, tc)
 #else
 #error extend this test to your platform!
 #endif
-		{ "10",	1,	10,	NULL,
-		  -1,	1,	ERANGE	},
-		{ "10",	11,	10,	NULL,
-		  11,	20,	ERANGE	},
+		{ "10",		 1,	10,	NULL,
+		  -1,	 1,	ERANGE			},
+		{ "10",		11,	10,	NULL,
+		  11,	20,	ERANGE			},
+		{ "7",		 7,	0,	NULL,
+		   7,	 7,	0			},
+		{ "6",		 7,	0,	NULL,
+		   7,	 7,	ERANGE			},
+		{ "8",		 7,	0,	NULL,
+		   7,	 7,	ERANGE			},
+		{ "7x",		 7,	0,	"x",
+		   7,	 7,	ENOTSUP			},
+		{ "8x",		 7,	0,	"x",
+		   7,	 7,	ERANGE			},
+		{ "Z",		11,	10,	"Z",
+		  11,	20,	ECANCELED		},
 	};
 
 	intmax_t rv;
@@ -228,8 +291,8 @@ ATF_TC_BODY(strtoi_range, tc)
 		rv = strtoi(t[i].str, &end, t[i].base, t[i].lo, t[i].hi, &e);
 
 		if (errno != 0)
-			atf_tc_fail("strtoi(3) changed errno to %d ('%s')",
-			            e, strerror(e));
+			atf_tc_fail("Range test %zd set errno=%d", i, errno);
+		check_errno(errno);
 
 		check(&t[i], rv, end, e);
 	}
@@ -245,8 +308,11 @@ ATF_TC_HEAD(strtoi_range_trail, tc)
 ATF_TC_BODY(strtoi_range_trail, tc)
 {
 	struct test t[] = {
-		{ "11x", 9, 10, "x", 0,	9, ERANGE },
-		{ " -3y", -2, 10, "y", -2, 1, ERANGE },
+		{ "11x",    9, 10, "x",  0, 9, ERANGE },
+		{ " -3y",  -2, 10, "y", -2, 1, ERANGE },
+		{ "11111z", 9, 10, "z",  0, 9, ERANGE },
+		{ "+0xAq",  9, 16, "q",  0, 9, ERANGE },
+		{ "-0xBAr", 0, 16, "r",  0, 9, ERANGE },
 	};
 
 	intmax_t rv;
@@ -259,9 +325,7 @@ ATF_TC_BODY(strtoi_range_trail, tc)
 		errno = 0;
 		rv = strtoi(t[i].str, &end, t[i].base, t[i].lo, t[i].hi, &e);
 
-		if (errno != 0)
-			atf_tc_fail("strtoi(3) changed errno to %d ('%s')",
-			            e, strerror(e));
+		check_errno(errno);
 
 		check(&t[i], rv, end, e);
 	}
@@ -316,9 +380,7 @@ ATF_TC_BODY(strtoi_signed, tc)
 		errno = 0;
 		rv = strtoi(t[i].str, &end, t[i].base, t[i].lo, t[i].hi, &e);
 
-		if (errno != 0)
-			atf_tc_fail("strtoi(3) changed errno to %d ('%s')",
-			            e, strerror(e));
+		check_errno(errno);
 
 		check(&t[i], rv, end, e);
 	}
