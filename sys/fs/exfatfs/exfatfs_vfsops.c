@@ -1,4 +1,4 @@
-/* $NetBSD: exfatfs_vfsops.c,v 1.1.2.4 2024/07/19 16:19:16 perseant Exp $ */
+/* $NetBSD: exfatfs_vfsops.c,v 1.1.2.5 2024/07/24 00:38:26 perseant Exp $ */
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_vfsops.c,v 1.1.2.4 2024/07/19 16:19:16 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_vfsops.c,v 1.1.2.5 2024/07/24 00:38:26 perseant Exp $");
 
 struct vm_page;
 
@@ -60,6 +60,7 @@ struct vm_page;
 #include <fs/exfatfs/exfatfs_extern.h>
 #include <fs/exfatfs/exfatfs_inode.h>
 #include <fs/exfatfs/exfatfs_mount.h>
+#include <fs/exfatfs/exfatfs_tables.h>
 #include <fs/exfatfs/exfatfs_vfsops.h>
 
 /* #define EXFATFS_VFSOPS_DEBUG */
@@ -615,6 +616,11 @@ exfatfs_unmount(struct mount *mp, int mntflags)
 	DPRINTF((" spec_node_setmountedfs...\n"));
 	if (fs->xf_devvp->v_type != VBAD)
 		spec_node_setmountedfs(fs->xf_devvp, NULL);
+	DPRINTF((" clear dirty and update free percent...\n"));
+	fs->xf_VolumeFlags &= ~EXFATFS_VOLUME_DIRTY;
+	fs->xf_PercentInUse = (fs->xf_ClusterCount - fs->xf_FreeClusterCount)
+		/ fs->xf_ClusterCount;
+	exfatfs_write_sb(fs);
 	DPRINTF((" lock devvp...\n"));
 	vn_lock(fs->xf_devvp, LK_EXCLUSIVE | LK_RETRY);
 	DPRINTF((" close devvp...\n"));
@@ -622,6 +628,8 @@ exfatfs_unmount(struct mount *mp, int mntflags)
 	    xmp->xm_flags & EXFATFSMNT_RONLY ? FREAD : FREAD|FWRITE, NOCRED);
 	DPRINTF((" vput devvp...\n"));
 	vput(fs->xf_devvp);
+	DPRINTF((" free upcase table...\n"));
+	exfatfs_destroy_uctable(fs);
 	DPRINTF((" free bitmap...\n"));
 	exfatfs_bitmap_destroy(fs);
 	DPRINTF((" destroy lock...\n"));

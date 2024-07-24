@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_extern.h,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $	*/
+/*	$NetBSD: exfatfs_extern.h,v 1.1.2.3 2024/07/24 00:38:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -51,5 +51,6 @@ int exfatfs_scandir(struct vnode *, off_t, off_t *,
 		    void *arg);
 #define SCANDIR_STOP     0x00000001
 #define SCANDIR_DONTFREE 0x00000002
+int exfatfs_write_sb(struct exfatfs *);
 
 #endif /* EXFATFS_EXTERN_H_ */

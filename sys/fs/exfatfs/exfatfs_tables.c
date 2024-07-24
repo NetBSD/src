@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_tables.c,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $	*/
+/*	$NetBSD: exfatfs_tables.c,v 1.1.2.3 2024/07/24 00:38:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_tables.c,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_tables.c,v 1.1.2.3 2024/07/24 00:38:26 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -449,15 +449,44 @@ const uint16_t exfat_invalid_filename_chars[] = {
 	0x003C,	0x003E,	0x003F,	0x005C,	0x007C
 };
 
+#define MAX_INVALID_LENGTH 4
+static uint16_t invalid_names[] = {
+          '.', 0, 0, 0,
+          '.', '.', 0, 0,
+          'C', 'O', 'N', 0,
+          'P', 'R', 'N', 0,
+          'N', 'U', 'L', 0,
+          'C', 'O', 'M', '1',
+          'C', 'O', 'M', '2',
+          'C', 'O', 'M', '3',
+          'C', 'O', 'M', '4',
+          'C', 'O', 'M', '5',
+          'C', 'O', 'M', '6',
+          'C', 'O', 'M', '7',
+          'C', 'O', 'M', '8',
+          'C', 'O', 'M', '9',
+          'C', 'O', 'M', '0',
+          'L', 'P', 'T', '1',
+          'L', 'P', 'T', '2',
+          'L', 'P', 'T', '3',
+          'L', 'P', 'T', '4',
+          'L', 'P', 'T', '5',
+          'L', 'P', 'T', '6',
+          'L', 'P', 'T', '7',
+          'L', 'P', 'T', '8',
+          0, 0, 0, 0
+};
+
 /*
  * Check whether a filename is valid.
  * Returns 0 if valid, non-zero on error.
  */
 int
-exfatfs_check_filename_ucs2(uint16_t *name, int len)
+exfatfs_check_filename_ucs2(struct exfatfs *fs, uint16_t *name, int len)
 {
 	int i;
 	unsigned j;
+	uint16_t *ucs2cp;
 
 	for (i = 0; i < len; i++) {
 		for (j = 0; j < sizeof(exfat_invalid_filename_chars)
@@ -466,6 +495,19 @@ exfatfs_check_filename_ucs2(uint16_t *name, int len)
 				return -1;
 		}
 	}
+
+        /* Check name against list of invalid names */
+        /* XXX invalid filenames are not in the spec */
+        if (len <= MAX_INVALID_LENGTH) {
+                for (ucs2cp = invalid_names; *ucs2cp != 0;
+                     ucs2cp += MAX_INVALID_LENGTH) {
+                        if (exfatfs_upcase_cmp(fs, name, len,
+                                               ucs2cp, MAX_INVALID_LENGTH)
+                            == 0)
+                                return -2;
+                }
+        }
+
 	return 0;
 }
 
@@ -473,7 +515,7 @@ MALLOC_JUSTDEFINE(M_EURO, "Exfatfs upcase table",			\
 		"Exfatfs upcase table list entry");
 	
 void
-exfatfs_load_uctable(struct exfatfs *fs, uint16_t *table, int len)
+exfatfs_load_uctable(struct exfatfs *fs, const uint16_t *table, int len)
 {
 	uint16_t begin = 0;
 	int16_t ucoff;
@@ -511,6 +553,7 @@ exfatfs_load_uctable(struct exfatfs *fs, uint16_t *table, int len)
 				begin = current;
 			}
 		}
+		++current;
 	}
 	/* Finish up last entry, if any */
 	if (ucoff != 0) {
@@ -548,7 +591,7 @@ exfatfs_upcase(struct exfatfs *fs, uint16_t wc)
 	STAILQ_FOREACH(europ, &fs->xf_eurolist, euro_list) {
 		if (europ->euro_begin > wc)
 			break;
-		if (europ->euro_begin >= wc && wc < europ->euro_end)
+		if (europ->euro_begin <= wc && wc < europ->euro_end)
 			return wc + europ->euro_ucoff;
 	}
 	return wc;
