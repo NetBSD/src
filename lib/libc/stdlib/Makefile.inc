@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.99 2024/06/07 20:50:13 riastradh Exp $
+#	$NetBSD: Makefile.inc,v 1.100 2024/07/24 08:55:08 kre Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -65,6 +65,7 @@ MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 atoll.3 \
 strtou.3: strtoi.3
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e s/strtoi/strtou/g -e s/STRTOI/STRTOU/g \
+	    -e 's/an intmax_t/a unitmax_t/g' -e 's/strtou 3/strtoi 3/g' \
 	    -e s/intmax_t/uintmax_t/g -e s/%jd/%ju/g ${.ALLSRC} > ${.TARGET}
 CLEANFILES += strtou.3
 
@@ -98,9 +99,11 @@ MLINKS+=radixsort.3 sradixsort.3
 MLINKS+=strfmon.3 strfmon_l.3
 MLINKS+=strsuftoll.3 strsuftollx.3
 MLINKS+=strtod.3 strtof.3 strtod.3 strtold.3
+MLINKS+=strtoi.3 strtoi_l.3
 MLINKS+=strtol.3 strtoimax.3
 MLINKS+=strtol.3 strtoll.3
 MLINKS+=strtol.3 strtoq.3
+MLINKS+=strtou.3 strtou_l.3
 MLINKS+=strtoul.3 strtoull.3
 MLINKS+=strtoul.3 strtoumax.3
 MLINKS+=strtoul.3 strtouq.3

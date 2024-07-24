@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtoi.3,v 1.10 2024/02/10 18:43:51 andvar Exp $
+.\"	$NetBSD: strtoi.3,v 1.11 2024/07/24 08:55:08 kre Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,11 +36,12 @@
 .\" Created by Kamil Rytarowski, based on ID:
 .\" NetBSD: strtol.3,v 1.31 2015/03/11 09:57:35 wiz Exp
 .\"
-.Dd January 20, 2024
+.Dd July 24, 2024
 .Dt STRTOI 3
 .Os
 .Sh NAME
-.Nm strtoi
+.Nm strtoi ,
+.Nm strtoi_l
 .Nd convert a string value to an intmax_t integer
 .Sh LIBRARY
 .Lb libc
@@ -55,34 +56,51 @@
 .Fa "intmax_t hi"
 .Fa "int *rstatus"
 .Fc
+.In locale.h
+.Ft intmax_t
+.Fo strtoi_l
+.Fa "const char * restrict nptr"
+.Fa "char ** restrict endptr"
+.Fa "int base"
+.Fa "intmax_t lo"
+.Fa "intmax_t hi"
+.Fa "int *rstatus"
+.Fa "locale_t loc"
+.Fc
 .Sh DESCRIPTION
 The
 .Fn strtoi
-function converts the string in
-.Fa nptr
-to an
+generates the
 .Ft intmax_t
-value.
+result value equivalent to the numeric string in
+.Fa nptr .
 The
 .Fn strtoi
-function uses internally
+function internally uses
 .Xr strtoimax 3
-and ensures that the result is always in the range [
-.Fa lo ..
-.Fa hi
-].
-In addition it always places
+and then ensures that the result is in the range
+.Bq Fa lo No .. Fa hi .
+In addition it places
+a conversion status indicator,
 .Dv 0
-on success or a conversion status in the
+if fully successful,
+in the integer addressed by the
 .Fa rstatus
-argument, avoiding the
+argument, if that is not NULL, allowing the
 .Dv errno
-gymnastics the other functions require.
+gymnastics that other similar functions require to be avoided.
 The
 .Fa rstatus
 argument can be
 .Dv NULL
-if conversion status is to be ignored.
+if the conversion status is to be ignored.
+.Pp
+The operation of
+.Fn strtoi
+is unspecified if
+.Fa lo
+is greater than
+.Fa hi .
 .Pp
 The string may begin with an arbitrary amount of white space
 (as determined by
@@ -100,6 +118,7 @@ the string may then include a
 or
 .Ql 0X
 prefix,
+after which there must immediately follow at least one hexadecimal digit,
 and the number will be read in base 16; otherwise,
 .\" if the
 .\" .Fa base
@@ -116,9 +135,9 @@ is taken as 10 (decimal) unless the next character is
 .Ql 0 ,
 in which case it is taken as 8 (octal).
 .Pp
-The remainder of the string is converted to an
+The remainder of the string is converted to the
 .Em intmax_t
-value in the obvious manner,
+result in the obvious manner,
 stopping at the end of the string
 or at the first character which is not a valid digit
 in the given base.
@@ -133,11 +152,15 @@ representing 35.)
 .Pp
 If
 .Fa endptr
-is non-nil,
+is not NULL,
 .Fn strtoi
-stores the address of the first invalid character in
+stores the address of the first character after those
+which were converted in
 .Fa *endptr .
 If there were no digits at all, however,
+or if the
+.Fa base
+is invalid,
 .Fn strtoi
 stores the original value of
 .Fa nptr
@@ -152,24 +175,46 @@ but
 is
 .Ql \e0
 on return, the entire string was valid.)
+Note that converting an out of range value has no
+impact upon the value placed into
+.Fa *endptr .
+.Pp
+The
+.Fn strtoi_l
+function is identical, except uses the locale given by
+.Fa loc
+rather than the current locale, when determining what is white space to
+be skipped before the conversion begins.
 .Sh RETURN VALUES
 The
 .Fn strtoi
-function
-always returns the closest value in the range specified by
-the
+function,
+returns the converted value,
+or the closest value in the range specified by the
 .Fa lo
 and
 .Fa hi
-arguments.
+arguments, if the value converted was outside that range.
+If
+.Fa lo
+is equal to
+.Fa hi
+and no overriding error occurs,
+that value will always be returned.
 .Pp
 The
 .Va errno
-value is guaranteed to be left unchanged.
+value from
+.In errno.h ,
+is guaranteed to be left unchanged.
 .Pp
-Errors are stored as the conversion status in the
+Errors are stored as the conversion status error indicator,
+taken from a subset of the values from
+.In errno.h
+in the
 .Fa rstatus
-argument.
+argument, if that was not given as a NULL pointer.
+See the ERRORS section below for the possible values.
 .Sh EXAMPLES
 The following example will always return a number in
 .Dv [1..99]
@@ -185,25 +230,38 @@ if (e)
 .Bl -tag -width Er
 .It Bq Er ECANCELED
 The string did not contain any characters that were converted.
+If given
+.Fa endptr
+will be set to
+.Fa nptr .
 .It Bq Er EINVAL
 The
 .Ar base
-is not between 2 and 36 and does not contain the special value 0.
+is not between 2 and 36 and nor is it the special value 0.
+If given
+.Fa endptr
+will be set to
+.Fa nptr .
 .It Bq Er ENOTSUP
 The string contained non-numeric characters that did not get converted.
 In this case,
 .Fa endptr
 points to the first unconverted character.
 .It Bq Er ERANGE
-The given string was out of range; the value converted has been clamped;
-or the range given was invalid, i.e.
-.Fa lo
->
-.Fa hi .
+The given string was out of range; the value converted has been clamped.
+In this case,
+.Fa endptr
+points to the terminating
+.Sq \e0
+if the
+.Fa nptr
+string was fully converted, or to the first unconverted character otherwise.
 .El
 .Pp
+The validity of the provided base is checked first, and if that
+fails, no further processing is attempted.
 The range check is more important than the unconverted characters check,
-and it is performed first.
+and is given priority.
 If a program needs to know if there were unconverted characters when an
 out of range number has been provided, it needs to supply and test
 .Fa endptr.
@@ -213,17 +271,19 @@ out of range number has been provided, it needs to supply and test
 .Xr atol 3 ,
 .Xr atoll 3 ,
 .Xr strtod 3 ,
+.Xr strtou 3 ,
 .Xr strtoimax 3 ,
 .Xr strtol 3 ,
 .Xr strtoll 3 ,
-.Xr strtou 3 ,
 .Xr strtoul 3 ,
 .Xr strtoull 3 ,
-.Xr strtoumax 3
+.Xr warnc 3
 .Sh STANDARDS
 The
 .Fn strtoi
-function is a
+and
+.Fn strtoi_l
+functions are a
 .Nx
 extension.
 .Sh HISTORY
@@ -234,7 +294,8 @@ function first appeared in
 .Ox
 introduced the
 .Fn strtonum 3
-function for the same purpose, but the interface makes it impossible to
-properly differentiate illegal returns.
+function for the same purpose, but its interface makes it impossible to
+properly differentiate error conditions.
 .Sh BUGS
-Ignores the current locale.
+Ignores the current locale while doing the numeric conversion, only
+ASCII letters and digits are allowed, and no grouping characters.
