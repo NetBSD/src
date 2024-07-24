@@ -1,9 +1,8 @@
-/*	$NetBSD: _strtoi.h,v 1.4 2024/07/21 17:40:42 christos Exp $	*/
+/*	$NetBSD: _strtoi.h,v 1.5 2024/07/24 09:11:27 kre Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
- * Copyright (c) 2024, Alejandro Colomar <alx@kernel.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,7 +69,7 @@ INT_FUNCNAME(_int_, _FUNCNAME, _l)(const char * __restrict nptr,
 	int serrno;
 #endif
 	__TYPE im;
-	char *e;
+	char *ep;
 	int rep;
 
 	_DIAGASSERT(hi >= lo);
@@ -78,10 +77,25 @@ INT_FUNCNAME(_int_, _FUNCNAME, _l)(const char * __restrict nptr,
 	_DIAGASSERT(nptr != NULL);
 	/* endptr may be NULL */
 
-	e = NULL;
+	if (endptr == NULL)
+		endptr = &ep;
 
 	if (rstatus == NULL)
 		rstatus = &rep;
+
+	*rstatus = 0;		/* assume there will be no errors */
+
+	if (base != 0 && (base < 2 || base > 36)) {
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+		*rstatus = EINVAL;
+		if (endptr != NULL)
+			/* LINTED interface specification */
+			*endptr = __UNCONST(nptr);
+		return 0;
+#else
+		panic("%s: invalid base %d", __func__, base);
+#endif
+	}
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 	serrno = errno;
@@ -90,21 +104,20 @@ INT_FUNCNAME(_int_, _FUNCNAME, _l)(const char * __restrict nptr,
 
 #if defined(_KERNEL) || defined(_STANDALONE) || \
     defined(HAVE_NBTOOL_CONFIG_H) || defined(BCS_ONLY)
-	im = __WRAPPED(nptr, &e, base);
+	im = __WRAPPED(nptr, endptr, base);
 #else
-	im = __WRAPPED_L(nptr, &e, base, loc);
+	im = __WRAPPED_L(nptr, endptr, base, loc);
 #endif
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
-	*rstatus = errno;
+	/* EINVAL here can only mean "nothing converted" */
+	if (errno != EINVAL)
+		*rstatus = errno;
 	errno = serrno;
 #endif
 
-	if (endptr != NULL && e != NULL)
-		*endptr = e;
-
 	/* No digits were found */
-	if (nptr == e && (*rstatus == 0 || *rstatus == EINVAL))
+	if (*rstatus == 0 && nptr == *endptr)
 		*rstatus = ECANCELED;
 
 	if (im < lo) {
@@ -120,7 +133,7 @@ INT_FUNCNAME(_int_, _FUNCNAME, _l)(const char * __restrict nptr,
 	}
 
 	/* There are further characters after number */
-	if (*rstatus == 0 && *e != '\0')
+	if (*rstatus == 0 && **endptr != '\0')
 		*rstatus = ENOTSUP;
 
 	return im;
