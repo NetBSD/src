@@ -82,8 +82,9 @@ int main(int argc, char **argv)
 {
 	int devfd, c;
 	struct exfatfs *fs;
+	char *bootcodefile = NULL;
 
-	while ((c = getopt(argc, argv, "Aabcd:fruv")) != -1) {
+	while ((c = getopt(argc, argv, "AaB:bcd:fruv")) != -1) {
 		switch (c) {
 		case 'A':
 			Aflag = !Aflag;
@@ -94,6 +95,9 @@ int main(int argc, char **argv)
 			break;
 		case 'a':
 			Aflag = !Aflag;
+			break;
+		case 'B':
+			bootcodefile = optarg;
 			break;
 		case 'b':
 			Bflag = !Bflag;
@@ -144,13 +148,28 @@ int main(int argc, char **argv)
 		
 		exit(0);
 	}
-	
+
 	if (Aflag + Bflag + Dflag + Fflag + Rflag + Uflag == 0)
 		Aflag = Bflag = Fflag = Rflag = Uflag = 1;
 	
 	devfd = open(argv[optind], O_RDONLY);
 	if (devfd <= 0)
 		err(1, argv[optind]);
+	
+	if (bootcodefile != NULL) {
+		/*
+		 * Extract the bootcode and write it to a file.
+		 * exFAT bootcode is 390 bytes starting at offset 120.
+		 */
+		FILE *fp;
+		char buf[390];
+		if (pread(devfd, buf, sizeof(buf), 120) < sizeof(buf))
+			err(1, argv[optind]);
+		fp = fopen(bootcodefile, "wb");
+		if (fp == NULL || fwrite(buf, 390, 1, fp) < 1)
+			err(1, argv[optind]);	
+		fclose(fp);
+	}
 	
 	/* Set dev_bshift to match dev_bsize */
 	for (dev_bshift = 0; (1 << dev_bshift) < dev_bsize; ++dev_bshift)
@@ -389,9 +408,12 @@ void print_dir(struct exfatfs *fs, uint32_t dirclust, uint32_t diroff, int actio
 
 		printf("Reading dirent from %d/%d, physical blk 0x%x\n",
 		       (int)dirclust, (int)diroff, (unsigned)blkno);
-		bread(fs->xf_devvp, blkno, EXFATFS_LSIZE(fs), 0, &bp);
+		bread(fs->xf_devvp, blkno, EXFATFS_SSIZE(fs), 0, &bp);
 		dse = malloc(sizeof(*dse));
-		memcpy(dse, ((struct exfatfs_dse *)bp->b_data) + (diroff % EXFATFS_S2D(fs, 1)) + 1, sizeof(*dse));
+		/* The stream entry is always the second entry in a file set */
+		memcpy(dse, ((struct exfatfs_dse *)bp->b_data)
+		       + (diroff & (EXFATFS_D2DIRENT(fs, 1) - 1)) + 1,
+		       sizeof(*dse));
 		brelse(bp, 0);
 		bp = NULL;
 		clust = dse->xd_firstCluster;
@@ -400,7 +422,7 @@ void print_dir(struct exfatfs *fs, uint32_t dirclust, uint32_t diroff, int actio
 	
 	if (action == ACTION_PRINT) {
 		printf("Directory entries:\n");
-		printf(" Reading from cluster %d\n", clust);
+		printf(" Reading from cluster %d (0x%x)\n", clust, clust);
 	}
 	for (off = 0; off * sizeof(*dfp) < maxlen; ++off) {
 		i = off % (EXFATFS_LSIZE(fs) / sizeof(*dfp));
@@ -457,7 +479,7 @@ void print_dir(struct exfatfs *fs, uint32_t dirclust, uint32_t diroff, int actio
 				printf("\tAllocation Bitmap\n");
 				printf("\t\tFlags: %hhx\n",
 				       ((struct exfatfs_dirent_allocation_bitmap *)dp)->xd_bitmapFlags);
-				printf("\t\tFirst Cluster: %lx\n", (unsigned long)
+				printf("\t\tFirst Cluster: 0x%lx\n", (unsigned long)
 				       ((struct exfatfs_dirent_allocation_bitmap *)dp)->xd_firstCluster);
 				printf("\t\tData Length: %llu\n", (unsigned long long)
 				       ((struct exfatfs_dirent_allocation_bitmap *)dp)->xd_dataLength);
@@ -473,7 +495,7 @@ void print_dir(struct exfatfs *fs, uint32_t dirclust, uint32_t diroff, int actio
 				printf("\tUpcase Table\n");
 				printf("\t\tChecksum: %lx\n", (unsigned long)
 				       ((struct exfatfs_dirent_upcase_table *)dp)->xd_tableChecksum);
-				printf("\t\tFirst Cluster: %lx\n", (unsigned long)
+				printf("\t\tFirst Cluster: 0x%lx\n", (unsigned long)
 				       ((struct exfatfs_dirent_upcase_table *)dp)->xd_firstCluster);
 				printf("\t\tData Length: %llu\n", (unsigned long long)
 				       ((struct exfatfs_dirent_upcase_table *)dp)->xd_dataLength);
@@ -609,7 +631,7 @@ void print_dir(struct exfatfs *fs, uint32_t dirclust, uint32_t diroff, int actio
 				       dsp->xd_nameHash);
 				printf("\t\tValid Data Length: %llu\n",
 				       (unsigned long long)dsp->xd_validDataLength);
-				printf("\t\tFirst Cluster: %lu\n",
+				printf("\t\tFirst Cluster: 0x%lx\n",
 				       (unsigned long)dsp->xd_firstCluster);
 				printf("\t\tData Length: %llu\n",
 				       (unsigned long long)dsp->xd_dataLength);
