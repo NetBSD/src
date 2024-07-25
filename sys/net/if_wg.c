@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.90 2024/07/25 01:47:00 christos Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.91 2024/07/25 16:45:36 christos Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.90 2024/07/25 01:47:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.91 2024/07/25 16:45:36 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -2715,8 +2715,10 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 
 #ifdef WG_DEBUG_PACKET
 	if (wg_debug & WG_DEBUG_FLAGS_PACKET) {
-		hexdump(aprint_debug, "wgmd", wgmd, sizeof(*wgmd));
-		hexdump(aprint_debug, "decrypted_buf", decrypted_buf,
+		hexdump(printf, "tkey_recv", wgs->wgs_tkey_recv,
+		    sizeof(wgs->wgs_tkey_recv));
+		hexdump(printf, "wgmd", wgmd, sizeof(*wgmd));
+		hexdump(printf, "decrypted_buf", decrypted_buf,
 		    decrypted_len);
 	}
 #endif
@@ -4096,8 +4098,7 @@ wg_send_data_msg(struct wg_peer *wgp, struct wg_session *wgs,
 	wg_fill_msg_data(wg, wgp, wgs, wgmd);
 #ifdef WG_DEBUG_PACKET
 	if (wg_debug & WG_DEBUG_FLAGS_PACKET) {
-		hexdump(aprint_debug, "wgmd", wgmd, sizeof(*wgmd));
-		hexdump(aprint_debug, "padded_buf", padded_buf,
+		hexdump(printf, "padded_buf", padded_buf,
 		    padded_len);
 	}
 #endif
@@ -4108,7 +4109,10 @@ wg_send_data_msg(struct wg_peer *wgp, struct wg_session *wgs,
 	    NULL, 0);
 #ifdef WG_DEBUG_PACKET
 	if (wg_debug & WG_DEBUG_FLAGS_PACKET) {
-		hexdump(aprint_debug, "outgoing packet",
+		hexdump(printf, "tkey_send", wgs->wgs_tkey_send,
+		    sizeof(wgs->wgs_tkey_send));
+		hexdump(printf, "wgmd", wgmd, sizeof(*wgmd));
+		hexdump(printf, "outgoing packet",
 		    (char *)wgmd + sizeof(*wgmd), encrypted_len);
 		size_t decrypted_len = encrypted_len - WG_AUTHTAG_LEN;
 		char *decrypted_buf = kmem_intr_alloc((decrypted_len +
