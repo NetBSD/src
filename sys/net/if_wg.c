@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.84 2024/07/24 23:46:13 christos Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.85 2024/07/25 00:07:33 christos Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.84 2024/07/24 23:46:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.85 2024/07/25 00:07:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -167,7 +167,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.84 2024/07/24 23:46:13 christos Exp $");
 #define WGLOG(level, fmt, args...)					      \
 	log(level, "%s: " fmt, __func__, ##args)
 
-// #define WG_DEBUG
+#define WG_DEBUG
 
 /* Debug options */
 #ifdef WG_DEBUG
@@ -247,13 +247,13 @@ gethexdump(const void *vp, size_t n)
 	const uint8_t *p = vp;
 	size_t i;
 
-	if (n > SIZE_MAX/3 - 1)
+	if (n > (SIZE_MAX - 1) / 3)
 		return NULL;
-	buf = kmem_alloc(3*n + 1, KM_NOSLEEP);
+	buf = kmem_alloc(3 * n + 1, KM_NOSLEEP);
 	if (buf == NULL)
 		return NULL;
 	for (i = 0; i < n; i++)
-		snprintf(buf + 3*i, 3 + 1, " %02hhx", p[i]);
+		snprintf(buf + 3 * i, 3 + 1, " %02hhx", p[i]);
 	return buf;
 }
 
@@ -2705,13 +2705,18 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 #ifdef WG_DEBUG_PACKET
 	if (wg_debug & WG_DEBUG_FLAGS_PACKET) {
 		char *hex = gethexdump(wgmd, sizeof(*wgmd));
-		log(LOG_DEBUG, "wgmd=%p, sizeof(*wgmd)=%zu\n%s\n",
-		    wgmd, sizeof(*wgmd), hex);
-		puthexdump(hex, wgmd, sizeof(*wgmd));
+		if (hex != NULL) {
+			log(LOG_DEBUG, "wgmd=%p, sizeof(*wgmd)=%zu\n%s\n",
+			    wgmd, sizeof(*wgmd), hex);
+			puthexdump(hex, wgmd, sizeof(*wgmd));
+		}
 		hex = gethexdump(decrypted_buf, decrypted_len);
-		log(LOG_DEBUG, "decrypted_buf=%p, decrypted_len=%zu\n%s\n",
-		    decrypted_buf, decrypted_len, hex);
-		puthexdump(hex, decrypted_buf, decrypted_len);
+		if (hex != NULL) {
+			log(LOG_DEBUG, "decrypted_buf=%p, "
+			    "decrypted_len=%zu\n%s\n",
+			decrypted_buf, decrypted_len, hex);
+			puthexdump(hex, decrypted_buf, decrypted_len);
+		}
 	}
 #endif
 	/* We're done with m now; free it and chuck the pointers.  */
@@ -4091,13 +4096,17 @@ wg_send_data_msg(struct wg_peer *wgp, struct wg_session *wgs,
 #ifdef WG_DEBUG_PACKET
 	if (wg_debug & WG_DEBUG_FLAGS_PACKET) {
 		char *hex = gethexdump(wgmd, sizeof(*wgmd));
-		log(LOG_DEBUG, "wgmd=%p, sizeof(*wgmd)=%zu\n%s\n",
-		    wgmd, sizeof(*wgmd), hex);
-		puthexdump(hex, wgmd, sizeof(*wgmd));
+		if (hex != NULL) {
+			log(LOG_DEBUG, "wgmd=%p, sizeof(*wgmd)=%zu\n%s\n",
+			    wgmd, sizeof(*wgmd), hex);
+			puthexdump(hex, wgmd, sizeof(*wgmd));
+		}
 		hex = gethexdump(padded_buf, padded_len);
-		log(LOG_DEBUG, "padded_buf=%p, padded_len=%zu\n%s\n",
-		    padded_buf, padded_len, hex);
-		puthexdump(hex, padded_buf, padded_len);
+		if (hex != NULL) {
+			log(LOG_DEBUG, "padded_buf=%p, padded_len=%zu\n%s\n",
+			    padded_buf, padded_len, hex);
+			puthexdump(hex, padded_buf, padded_len);
+		}
 	}
 #endif
 	/* [W] 5.4.6: AEAD(Tm^send, Nm^send, P, e) */
