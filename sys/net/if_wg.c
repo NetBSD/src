@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.88 2024/07/25 00:37:08 kre Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.89 2024/07/25 00:55:53 kre Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.88 2024/07/25 00:37:08 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.89 2024/07/25 00:55:53 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -243,6 +243,8 @@ static bool wg_force_underload = false;
 
 #ifdef WG_DEBUG_DUMP
 
+static char enomem[10] = "[enomem]";
+
 static char *
 gethexdump(const void *vp, size_t n)
 {
@@ -251,10 +253,10 @@ gethexdump(const void *vp, size_t n)
 	size_t i;
 
 	if (n > (SIZE_MAX - 1) / 3)
-		return NULL;
+		return enomem;
 	buf = kmem_alloc(3 * n + 1, KM_NOSLEEP);
 	if (buf == NULL)
-		return NULL;
+		return enomem;
 	for (i = 0; i < n; i++)
 		snprintf(buf + 3 * i, 3 + 1, " %02hhx", p[i]);
 	return buf;
@@ -264,7 +266,7 @@ static void
 puthexdump(char *buf, const void *p, size_t n)
 {
 
-	if (buf == NULL)
+	if (buf == NULL || buf == enomem)
 		return;
 	kmem_free(buf, 3*n + 1);
 }
@@ -278,7 +280,7 @@ wg_dump_buf(const char *func, const char *buf, const size_t size)
 
 	char *hex = gethexdump(buf, size);
 
-	log(LOG_DEBUG, "%s: %s\n", func, hex ? hex : "(enomem)");
+	log(LOG_DEBUG, "%s: %s\n", func, hex);
 	puthexdump(hex, buf, size);
 }
 #endif
@@ -292,7 +294,7 @@ wg_dump_hash(const uint8_t *func, const uint8_t *name, const uint8_t *hash,
 
 	char *hex = gethexdump(hash, size);
 
-	log(LOG_DEBUG, "%s: %s: %s\n", func, name, hex ? hex : "(enomem)");
+	log(LOG_DEBUG, "%s: %s: %s\n", func, name, hex);
 	puthexdump(hex, hash, size);
 }
 
