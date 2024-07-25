@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.86 2024/07/25 00:24:02 christos Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.87 2024/07/25 00:29:24 kre Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.86 2024/07/25 00:24:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.87 2024/07/25 00:29:24 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -2638,7 +2638,7 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 	mlen = m_length(m);
 	encrypted_len = mlen - sizeof(*wgmd);
 	if (encrypted_len < WG_AUTHTAG_LEN) {
-		WG_DLOG("Short encrypted_len: %lu\n", encrypted_len);
+		WG_DLOG("Short encrypted_len: %zu\n", encrypted_len);
 		goto out;
 	}
 	success = m_ensure_contig(&m, sizeof(*wgmd) + encrypted_len);
@@ -2676,7 +2676,7 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 	decrypted_buf = mtod(n, char *);
 
 	/* Decrypt and verify the packet.  */
-	WG_DLOG("mlen=%lu, encrypted_len=%lu\n", mlen, encrypted_len);
+	WG_DLOG("mlen=%zu, encrypted_len=%zu\n", mlen, encrypted_len);
 	error = wg_algo_aead_dec(decrypted_buf,
 	    encrypted_len - WG_AUTHTAG_LEN /* can be 0 */,
 	    wgs->wgs_tkey_recv, le64toh(wgmd->wgmd_counter), encrypted_buf,
@@ -2899,7 +2899,7 @@ wg_validate_msg_header(struct wg_softc *wg, struct mbuf *m)
 
 	/* Verify the mbuf chain is long enough for this type of message.  */
 	if (__predict_false(mbuflen < msglen)) {
-		WG_DLOG("Invalid msg size: mbuflen=%lu type=%u\n", mbuflen,
+		WG_DLOG("Invalid msg size: mbuflen=%zu type=%u\n", mbuflen,
 		    le32toh(wgm.wgm_type));
 		goto error;
 	}
@@ -4058,7 +4058,7 @@ wg_send_data_msg(struct wg_peer *wgp, struct wg_session *wgs,
 	inner_len = mlen;
 	padded_len = roundup(mlen, 16);
 	encrypted_len = padded_len + WG_AUTHTAG_LEN;
-	WG_DLOG("inner=%lu, padded=%lu, encrypted_len=%lu\n",
+	WG_DLOG("inner=%zu, padded=%zu, encrypted_len=%zu\n",
 	    inner_len, padded_len, encrypted_len);
 	if (mlen != 0) {
 		bool success;
@@ -4228,7 +4228,7 @@ wg_handle_prop_peer(struct wg_softc *wg, prop_dictionary_t peer,
 #ifdef WG_DEBUG_DUMP
         if (wg_debug & WG_DEBUG_FLAGS_DUMP) {
 		char *hex = gethexdump(pubkey, pubkey_len);
-		log(LOG_DEBUG, "pubkey=%p, pubkey_len=%lu\n%s\n",
+		log(LOG_DEBUG, "pubkey=%p, pubkey_len=%zu\n%s\n",
 		    pubkey, pubkey_len, hex);
 		puthexdump(hex, pubkey, pubkey_len);
 	}
@@ -4382,7 +4382,7 @@ wg_alloc_prop_buf(char **_buf, struct ifdrv *ifd)
 	int error;
 	char *buf;
 
-	WG_DLOG("buf=%p, len=%lu\n", ifd->ifd_data, ifd->ifd_len);
+	WG_DLOG("buf=%p, len=%zu\n", ifd->ifd_data, ifd->ifd_len);
 	if (ifd->ifd_len >= WG_MAX_PROPLEN)
 		return E2BIG;
 	buf = kmem_alloc(ifd->ifd_len + 1, KM_SLEEP);
@@ -4422,7 +4422,7 @@ wg_ioctl_set_private_key(struct wg_softc *wg, struct ifdrv *ifd)
 #ifdef WG_DEBUG_DUMP
 	if (wg_debug & WG_DEBUG_FLAGS_DUMP) {
 		char *hex = gethexdump(privkey, privkey_len);
-		log(LOG_DEBUG, "privkey=%p, privkey_len=%lu\n%s\n",
+		log(LOG_DEBUG, "privkey=%p, privkey_len=%zu\n%s\n",
 		    privkey, privkey_len, hex);
 		puthexdump(hex, privkey, privkey_len);
 	}
@@ -5092,7 +5092,7 @@ rumpkern_wg_recv_user(struct wg_softc *wg, struct iovec *iov, size_t iovlen)
 	m->m_len = m->m_pkthdr.len = 0;
 	m_copyback(m, 0, iov[1].iov_len, iov[1].iov_base);
 
-	WG_DLOG("iov_len=%lu\n", iov[1].iov_len);
+	WG_DLOG("iov_len=%zu\n", iov[1].iov_len);
 	WG_DUMP_BUF(iov[1].iov_base, iov[1].iov_len);
 
 	(void)wg_output(ifp, m, dst, NULL);
@@ -5118,7 +5118,7 @@ rumpkern_wg_recv_peer(struct wg_softc *wg, struct iovec *iov, size_t iovlen)
 	m->m_len = m->m_pkthdr.len = 0;
 	m_copyback(m, 0, iov[1].iov_len, iov[1].iov_base);
 
-	WG_DLOG("iov_len=%lu\n", iov[1].iov_len);
+	WG_DLOG("iov_len=%zu\n", iov[1].iov_len);
 	WG_DUMP_BUF(iov[1].iov_base, iov[1].iov_len);
 
 	bound = curlwp_bind();
