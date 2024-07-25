@@ -1,4 +1,4 @@
-/*	$NetBSD: make_exfatfs.c,v 1.1.2.4 2024/07/24 00:46:18 perseant Exp $	*/
+/*	$NetBSD: make_exfatfs.c,v 1.1.2.5 2024/07/25 23:46:10 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_exfatfs.c,v 1.1.2.4 2024/07/24 00:46:18 perseant Exp $");
+__RCSID("$NetBSD: make_exfatfs.c,v 1.1.2.5 2024/07/25 23:46:10 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -475,9 +475,10 @@ uint16_t exfatfs_recommended_upcase_table_compressed[] = {
 
 extern int Nflag; /* Don't write anything */
 extern int Vflag; /* Verbose */
-extern uint32_t align;
+extern uint32_t fatalign;
 extern uint32_t heapalign;
 extern uint32_t fatlength;
+extern uint32_t partition_offset;
 
 void pwarn(const char *, ...);
 
@@ -520,10 +521,10 @@ make_exfatfs(int devfd, uint secsize, struct dkwedge_info *dkw, uint bsize,
 		++scshift;
 
 	/* Convert align and heapalign into sectors */
-	align /= secsize;
+	fatalign /= secsize;
 	heapalign /= secsize;
 	if (heapalign == 0)
-		heapalign = align;
+		heapalign = fatalign;
 
 	/* If no table given, use recommendation */
 	if (uctable == NULL || uctablesize == 0) {
@@ -556,11 +557,16 @@ make_exfatfs(int devfd, uint secsize, struct dkwedge_info *dkw, uint bsize,
 	memcpy(fs->xf_JumpBoot, EXFAT_JUMPBOOT, sizeof(EXFAT_JUMPBOOT));
 	memcpy(fs->xf_FileSystemName, EXFAT_FSNAME, sizeof(EXFAT_FSNAME));
 	/* memset(fs->xf_MustBeZero, 0, sizeof(fs->xf_MustBeZero); */
-	fs->xf_PartitionOffset = dkw->dkw_offset;
+	fs->xf_PartitionOffset = partition_offset;
 	fs->xf_VolumeLength = dkw->dkw_size;
-	fs->xf_FatOffset = 24; /* Immediately following boot blocks */
-	if (align)
-		fs->xf_FatOffset = roundup(fs->xf_FatOffset, align);
+
+ 	/* The FAT immediately follows the boot blocks */
+	fs->xf_FatOffset = 24;
+	/* and some optional alignment padding */
+	if (fatalign) {
+		uint32_t falignoff = partition_offset % fatalign;
+		fs->xf_FatOffset = roundup(fs->xf_FatOffset + falignoff, fatalign);
+	}
 
 	/* Find the total number of "blocks" (clusters) on this volume */
 	/* This is an overestimate, not accounting for the FAT itself */
@@ -572,9 +578,11 @@ make_exfatfs(int devfd, uint secsize, struct dkwedge_info *dkw, uint bsize,
 		nclust = fatlength * secsize / sizeof(uint32_t) - 2;
 	fs->xf_FatLength = fatlength;
 	fs->xf_ClusterHeapOffset = fs->xf_FatOffset + fs->xf_FatLength;
-	if (heapalign)
-		fs->xf_ClusterHeapOffset = roundup(fs->xf_ClusterHeapOffset,
-						   heapalign);
+	if (heapalign) {
+		uint32_t halignoff = partition_offset % heapalign;
+		fs->xf_ClusterHeapOffset = roundup(fs->xf_ClusterHeapOffset
+						   + halignoff, heapalign);
+	}
 
 	/* Recalculate to take FATs into account */
 	nclust = (dkw->dkw_size - fs->xf_ClusterHeapOffset)

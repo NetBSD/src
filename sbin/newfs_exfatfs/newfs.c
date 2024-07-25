@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.1.2.2 2024/07/24 00:46:18 perseant Exp $	*/
+/*	$NetBSD: newfs.c,v 1.1.2.3 2024/07/25 23:46:10 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.1.2.2 2024/07/24 00:46:18 perseant Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.1.2.3 2024/07/25 23:46:10 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,9 +80,9 @@ int	Nflag = 0;		/* run without writing file system */
 int	Vflag = 0;		/* verbose */
 uint64_t fssize;		/* file system size */
 uint32_t sectorsize;		/* bytes/sector */
-uint32_t align = 0;		/* fat alignment (bytes) */
+uint32_t fatalign = 0;		/* fat alignment (sectors) */
 uint32_t csize = 0;		/* block size */
-uint32_t heapalign = 0;		/* cluster heap alignment (bytes) */
+uint32_t heapalign = 0;		/* cluster heap alignment (sectors) */
 uint32_t serial = 0;
 uint32_t partition_offset = 0;
 uint32_t fatlength = 0;
@@ -134,59 +134,59 @@ main(int argc, char **argv)
 	memset(&dkw, 0, sizeof(dkw));
 	while ((ch = getopt(argc, argv, "a:b:c:Dh:FL:l:No:S:s:T:u:v#:")) != -1)
 		switch(ch) {
-		case 'D':
+		case 'D': /* debug */
 			debug = 1;
 			break;
-		case 'F':
+		case 'F': /* force create filesystem even on non disk */
 			force = 1;
 			break;
-		case 'L':
+		case 'L': /* specify label */
 			label = optarg;
 			break;
-		case 'N':
+		case 'N': /* dry run */
 			Nflag++;
 			break;
-		case 'S':
+		case 'S': /* size in sectors */
 		  	secsize = strsuftoi64("sector size", optarg, 1,
 					      INT64_MAX, NULL);
 			if (secsize <= 0 || (secsize & (secsize - 1)))
 				fatal("%s: bad sector size", optarg);
 			break;
-		case 'T':
+		case 'T': /* specify disk type XXX */
 			disktype = optarg;
 			break;
-		case 'a':
-		  	align = strsuftoi64("alignment", optarg,
-					    MINBLOCKSIZE, INT64_MAX, NULL);
+		case 'a': /* FAT alignment */
+		  	fatalign = strsuftoi64("alignment", optarg,
+						MINBLOCKSIZE, INT64_MAX, NULL);
 			break;
-		case 'b':
+		case 'b': /* take bootcode from file */
 			bootcodefile = optarg;
 			break;
-		case 'c':
+		case 'c': /* cluster (block) size */
 		  	csize = strsuftoi64("cluster size", optarg,
 					    MINBLOCKSIZE, INT64_MAX, NULL);
 			break;
-		case 'h':
+		case 'h': /* cluster heap alignment */
 		  	heapalign = strsuftoi64("heap alignment", optarg,
 						MINBLOCKSIZE, INT64_MAX, NULL);
 			break;
-		case 'l':
+		case 'l': /* FAT length in sectors */
 			fatlength = strtoul(optarg, NULL, 10);
 			break;
-		case 'o':
-			dkw.dkw_offset = strtoul(optarg, NULL, 10);
+		case 'o': /* partition offset */
+			partition_offset = strtoul(optarg, NULL, 10);
 			break;
-		case 's':
+		case 's': /* size in DEV_BSIZE units */
 		        fssize = strsuftoi64("file system size", optarg,
 					     0, INT64_MAX, &byte_sized);
 			break;
-		case 'u':
+		case 'u': /* take uctable from file */
 			uctablefile = optarg;
 			break;
-		case 'v':
+		case 'v': /* verbose */
 			Vflag++;
 			break;
-		case '#':
+		case '#': /* specify serial number */
 			serial = strtoul(optarg, NULL, 10);
 			break;
 		case '?':
@@ -271,6 +271,10 @@ main(int argc, char **argv)
 		fssize /= secsize;
 	}
 
+	/* If not specified, use partition offset from wedge */
+	if (partition_offset <= 0)
+		partition_offset = dkw.dkw_offset;
+
 	/* If force, make the partition look like EXFAT */
 	if (force) {
 		(void)strcpy(dkw.dkw_ptype, DKW_PTYPE_EXFAT); 
@@ -300,7 +304,7 @@ main(int argc, char **argv)
 			printf("Using Windows default cluster size %d"
 				" for filesystem size %lld\n",
 				(int)csize, (unsigned long long)diskbytes);
-#else /* SD Card Association recommendations */
+#else /* SD Association recommendations */
 		if (diskbytes <= 8 * MEGABYTE)
 			csize = 8 * KILOBYTE;
 		else if (diskbytes <= 1 * GIGABYTE)
@@ -314,7 +318,7 @@ main(int argc, char **argv)
 		else
 			csize = 512 * KILOBYTE;
 		if (Vflag)
-			printf("Using SD Card Association recommended"
+			printf("Using SD Association recommended"
 				" cluster size %d"
 				" for filesystem size %lld\n",
 				(int)csize, (unsigned long long)diskbytes);
@@ -324,28 +328,31 @@ main(int argc, char **argv)
 			printf("Using specified cluster size %d", (int)csize);
 	}
 
-	if (align <= 0) {
+	if (fatalign <= 0) {
 #ifdef USE_WINDOWS_DEFAULTS
-		align = 0;
-#else /* SD Card Association recommendations */
+		fatalign = 0;
+#else /* SD Association recommendations */
 		if (diskbytes <= 8 * MEGABYTE)
-			align = 8 * KILOBYTE;
+			fatalign = 8 * KILOBYTE;
 		else if (diskbytes <= 64 * MEGABYTE)
-			align = 16 * KILOBYTE;
+			fatalign = 16 * KILOBYTE;
 		else if (diskbytes <= 256 * MEGABYTE)
-			align = 32 * KILOBYTE;
+			fatalign = 32 * KILOBYTE;
 		else if (diskbytes <= 2 * GIGABYTE)
-			align = 64 * KILOBYTE;
+			fatalign = 64 * KILOBYTE;
 		else if (diskbytes <= 32 * GIGABYTE)
-			align = 4 * MEGABYTE;
+			fatalign = 4 * MEGABYTE;
 		else if (diskbytes <= 128 * GIGABYTE)
-			align = 16 * MEGABYTE;
+			fatalign = 16 * MEGABYTE;
 		else if (diskbytes <= 512 * GIGABYTE)
-			align = 32 * MEGABYTE;
+			fatalign = 32 * MEGABYTE;
 		else
-			align = 64 * MEGABYTE;
+			fatalign = 64 * MEGABYTE;
 #endif
 	}
+	/* Convert to sectors */
+	fatalign /= secsize;
+	heapalign /= secsize;
 
 	/* Convert given label from UTF8 into UCS2 */
 	uclabellen = exfatfs_utf8ucs2str((const uint8_t *)label,
@@ -439,13 +446,22 @@ usage(void)
 {
 	fprintf(stderr, "usage: newfs_exfatfs [ -fsoptions ] special-device\n");
 	fprintf(stderr, "where fsoptions are:\n");
+	fprintf(stderr, "\t-# serial number\n");
 	fprintf(stderr, "\t-D (debug)\n");
 	fprintf(stderr, "\t-F (force)\n");
+	fprintf(stderr, "\t-L label\n");
 	fprintf(stderr,
 	    "\t-N (do not create file system, just print out parameters)\n");
 	fprintf(stderr, "\t-S sector size\n");
-	fprintf(stderr, "\t-a alignment in bytes\n");
+	fprintf(stderr, "\t-T disk type\n");
+	fprintf(stderr, "\t-a FAT alignment in bytes\n");
+	fprintf(stderr, "\t-b bootcode file\n");
 	fprintf(stderr, "\t-c cluster size in bytes\n");
+	fprintf(stderr, "\t-h cluster heap alignment in bytes\n");
+	fprintf(stderr, "\t-l FAT length in sectors\n");
+	fprintf(stderr, "\t-o partition offset in sectors\n");
 	fprintf(stderr, "\t-s file system size in sectors\n");
+	fprintf(stderr, "\t-u upcase table file\n");
+	fprintf(stderr, "\t-v (verbose)\n");
 	exit(1);
 }
