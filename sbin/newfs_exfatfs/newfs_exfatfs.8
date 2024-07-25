@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs_exfatfs.8,v 1.1.2.1 2024/06/29 19:43:25 perseant Exp $
+.\"	$NetBSD: newfs_exfatfs.8,v 1.1.2.2 2024/07/25 23:46:10 perseant Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,20 +46,38 @@ device basing its defaults on the information in the disk label.
 Before running
 .Nm
 the disk must be labeled using
-.Xr disklabel 8 ,
-the proper fstype is exFAT.
+.Xr disklabel 8 .
+The proper fstype is exFAT.
 .Pp
 The following options define the general layout policies.
 .Bl -tag -width Fl
-.It Fl b Ar cluster-size
+.It Fl # Ar serial-number
+Use the given serial number, rather than generating one at random.
+.It Fl a Ar fat-alignment
+The alignment of the File Allocation Table in bytes.
+If not specified, the alignment is made according to XXX.
+.It Fl b Ar bootcode-file
+Use the bootcode contained in the given file.
+If not specified, the bootcode field will be filled with NUL (0x00).
+.It Fl c Ar cluster-size
 The cluster size of the file system in bytes.
 If not specified, the block size is generated based on the file system size.
+.It Fl D
+Print debugging information to stdout.
 .It Fl F
 Force creation of a file system even on a partition labeled as another type.
+.It Fl h Ar heap-alignment
+The alignment of the cluster heap, in bytes.
+If not specified, the FAT alignment will be used.
 .It Fl L Ar label
 Specify the file system label.  The default label is "NONE GIVEN".
+.It Fl l Ar fat-length
+The length of the File Allocation Table, in sectors.
 .It Fl N
 Do not actually create the filesystem.
+.It Fl o Ar partition-offset
+The offset of this partition from the beginning of the disk, in sectors.
+The default value is taken from the disklabel.
 .It Fl S Ar sector-size
 Use this as the size of filesystem sectors, in bytes.  The default is to
 use the sector size from the disk label.
@@ -67,6 +85,12 @@ use the sector size from the disk label.
 The size of the file system in sectors.
 .It Fl T Ar type
 Use the given disk type when there is no disk label.
+.It Fl u Ar upcase-file
+Use the given file for the filesystem's upcase table.
+The default is to use the recommended upcase table from
+section 7.2.5.1 of the specification.
+.It Fl v
+Be more verbose about what is being done.
 .El
 .Sh SEE ALSO
 .Xr disktab 5 ,
