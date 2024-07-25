@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.85 2024/07/25 00:07:33 christos Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.86 2024/07/25 00:24:02 christos Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.85 2024/07/25 00:07:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.86 2024/07/25 00:24:02 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -82,6 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.85 2024/07/25 00:07:33 christos Exp $");
 #include <sys/time.h>
 #include <sys/timespec.h>
 #include <sys/workqueue.h>
+
+#include <lib/libkern/libkern.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -2704,19 +2706,9 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 
 #ifdef WG_DEBUG_PACKET
 	if (wg_debug & WG_DEBUG_FLAGS_PACKET) {
-		char *hex = gethexdump(wgmd, sizeof(*wgmd));
-		if (hex != NULL) {
-			log(LOG_DEBUG, "wgmd=%p, sizeof(*wgmd)=%zu\n%s\n",
-			    wgmd, sizeof(*wgmd), hex);
-			puthexdump(hex, wgmd, sizeof(*wgmd));
-		}
-		hex = gethexdump(decrypted_buf, decrypted_len);
-		if (hex != NULL) {
-			log(LOG_DEBUG, "decrypted_buf=%p, "
-			    "decrypted_len=%zu\n%s\n",
-			decrypted_buf, decrypted_len, hex);
-			puthexdump(hex, decrypted_buf, decrypted_len);
-		}
+		hexdump(aprint_debug, "wgmd", wgmd, sizeof(*wgmd));
+		hexdump(aprint_debug, "decrypted_buf", decrypted_buf,
+		    decrypted_len);
 	}
 #endif
 	/* We're done with m now; free it and chuck the pointers.  */
@@ -4095,18 +4087,9 @@ wg_send_data_msg(struct wg_peer *wgp, struct wg_session *wgs,
 	wg_fill_msg_data(wg, wgp, wgs, wgmd);
 #ifdef WG_DEBUG_PACKET
 	if (wg_debug & WG_DEBUG_FLAGS_PACKET) {
-		char *hex = gethexdump(wgmd, sizeof(*wgmd));
-		if (hex != NULL) {
-			log(LOG_DEBUG, "wgmd=%p, sizeof(*wgmd)=%zu\n%s\n",
-			    wgmd, sizeof(*wgmd), hex);
-			puthexdump(hex, wgmd, sizeof(*wgmd));
-		}
-		hex = gethexdump(padded_buf, padded_len);
-		if (hex != NULL) {
-			log(LOG_DEBUG, "padded_buf=%p, padded_len=%zu\n%s\n",
-			    padded_buf, padded_len, hex);
-			puthexdump(hex, padded_buf, padded_len);
-		}
+		hexdump(aprint_debug, "wgmd", wgmd, sizeof(*wgmd));
+		hexdump(aprint_debug, "padded_buf", padded_buf,
+		    padded_len);
 	}
 #endif
 	/* [W] 5.4.6: AEAD(Tm^send, Nm^send, P, e) */
