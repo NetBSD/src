@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3073 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3074 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -450,3 +450,10 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	mcx(4): Match on ConnectX-6 virtual functions, from OpenBSD.
 		[msaitoh 20240707]
 	OpenSSH: Import 9.8. [christos 20240708]
+	patch(1): Handle lines of length beyond INT16_MAX.  [manu 20240712]
+	sh(1): Implement the HISTFILE and HISTAPPEND variables.  [kre 20240713]
+	mips: Switch to binutils 2.42.  [rin 20240713]
+	riscv: Switch to binutils 2.42.  [skrll 20240714]
+	aarch64: Switch to binutils 2.42.  [skrll 20240714]
+	hppa: Switch to binutils 2.42.  [skrll 20240715]
+	hppa: Add hyperfb, a driver for HCRX video cards.  [macallan 20240717]
