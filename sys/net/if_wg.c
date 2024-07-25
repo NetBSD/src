@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.87 2024/07/25 00:29:24 kre Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.88 2024/07/25 00:37:08 kre Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.87 2024/07/25 00:29:24 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.88 2024/07/25 00:37:08 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -197,7 +197,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.87 2024/07/25 00:29:24 kre Exp $");
 
 #ifndef WG_DEBUG
 # if defined(WG_DEBUG_LOG) || defined(WG_DEBUG_TRACE) ||		    \
-	defined(WG_DEBUG_DUMP) || defined(WG_DEBUG_PARAMS)
+	defined(WG_DEBUG_DUMP) || defined(WG_DEBUG_PARAMS) ||		    \
+	defined(WG_DEBUG_PACKET)
 #   define WG_DEBUG
 # endif
 #endif
