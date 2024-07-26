@@ -1,5 +1,5 @@
 #!/bin/sh
-#    $NetBSD: service,v 1.9 2023/03/14 06:19:35 kre Exp $
+#    $NetBSD: service,v 1.10 2024/07/26 18:54:49 jakllsch Exp $
 #    service -- run or list system services
 #
 #  Taken from FreeBSD: releng/10.1/usr.sbin/service/service.sh 268098
@@ -213,5 +213,5 @@ do
     fi
 done
 
-printf >&2 '%s does not exist in%s\n' "${script}" "${rc_directories}"
+printf >&2 '%s does not exist in %s\n' "${script}" "${rc_directories}"
 exit 1
