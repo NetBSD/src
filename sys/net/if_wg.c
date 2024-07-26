@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.91 2024/07/25 16:45:36 christos Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.92 2024/07/26 18:34:35 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.91 2024/07/25 16:45:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.92 2024/07/26 18:34:35 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -924,8 +924,10 @@ wgdetach(void)
 	}
 
 	/* No interfaces left.  Nuke it.  */
-	workqueue_destroy(wg_wq);
-	pktq_destroy(wg_pktq);
+	if (wg_wq)
+		workqueue_destroy(wg_wq);
+	if (wg_pktq)
+		pktq_destroy(wg_pktq);
 	psref_class_destroy(wg_psref_class);
 
 	return 0;
