@@ -1,4 +1,4 @@
-/*	$NetBSD: sodium_selftest.h,v 1.1 2024/07/26 18:25:03 riastradh Exp $	*/
+/*	$NetBSD: sodium_selftest.h,v 1.2 2024/07/26 18:32:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
 #define	_SYS_CRYPTO_SODIUM_SODIUM_SELFTEST_H_
 
 int crypto_aead_chacha20poly1305_ietf_selftest(void);
+int crypto_aead_xchacha20poly1305_ietf_selftest(void);
 
 int sodium_selftest(void);
 
