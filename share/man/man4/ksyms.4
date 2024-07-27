@@ -1,4 +1,4 @@
-.\" $NetBSD: ksyms.4,v 1.9 2024/07/27 13:13:25 uwe Exp $
+.\" $NetBSD: ksyms.4,v 1.10 2024/07/27 13:14:04 uwe Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -84,7 +84,7 @@ contains the symbol value.
 Returns the complete symbol for the given symbol name.
 .Bd -literal -offset indent
 struct ksyms_gsymbol {
-	const char *kg_name;
+        const char *kg_name;
         void *kg_sym;
 };
 .Ed
