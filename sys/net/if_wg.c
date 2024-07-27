@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.92 2024/07/26 18:34:35 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.93 2024/07/27 15:45:20 christos Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.92 2024/07/26 18:34:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.93 2024/07/27 15:45:20 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -245,20 +245,26 @@ static bool wg_force_underload = false;
 
 static char enomem[10] = "[enomem]";
 
+#define	MAX_HDUMP_LEN	10000	/* large enough */
+
+
 static char *
 gethexdump(const void *vp, size_t n)
 {
 	char *buf;
 	const uint8_t *p = vp;
-	size_t i;
+	size_t i, alloc;
 
-	if (n > (SIZE_MAX - 1) / 3)
-		return enomem;
-	buf = kmem_alloc(3 * n + 1, KM_NOSLEEP);
+	alloc = n;
+	if (n > MAX_HDUMP_LEN)
+		alloc = MAX_HDUMP_LEN;
+	buf = kmem_alloc(3 * alloc + 5, KM_NOSLEEP);
 	if (buf == NULL)
 		return enomem;
-	for (i = 0; i < n; i++)
+	for (i = 0; i < alloc; i++)
 		snprintf(buf + 3 * i, 3 + 1, " %02hhx", p[i]);
+	if (alloc != n)
+		snprintf(buf + 3 * i, 4 + 1, " ...");
 	return buf;
 }
 
@@ -268,7 +274,9 @@ puthexdump(char *buf, const void *p, size_t n)
 
 	if (buf == NULL || buf == enomem)
 		return;
-	kmem_free(buf, 3*n + 1);
+	if (n > MAX_HDUMP_LEN)
+		n = MAX_HDUMP_LEN;
+	kmem_free(buf, 3 * n + 5);
 }
 
 #ifdef WG_RUMPKERNEL
