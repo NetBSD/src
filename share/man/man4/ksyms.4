@@ -1,4 +1,4 @@
-.\" $NetBSD: ksyms.4,v 1.8 2024/07/27 11:19:30 tnn Exp $
+.\" $NetBSD: ksyms.4,v 1.9 2024/07/27 13:13:25 uwe Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,27 +60,27 @@ command codes below are defined in
 The (third) argument to the
 .Xr ioctl 2
 should be a pointer to the type indicated.
-.Bl -tag -width indent -offset indent
-.It Dv KIOCGSIZE (int)
+.Bl -tag -width Dv -offset indent
+.It Dv KIOCGSIZE Pq Vt int
 Returns the total size of the current symbol table.
 This should be used when allocating a buffer to read in the
 whole symbol table to memory.
-.It Dv KIOCGVALUE (struct ksyms_gvalue)
+.It Dv KIOCGVALUE Pq Vt struct ksyms_gvalue
 Returns the value for the given symbol name in a symtab-independent
 fashion.
 .Bd -literal -offset indent
 struct ksyms_gvalue {
-	const char *kv_name;
-	uint64_t kv_value;
+        const char *kv_name;
+        uint64_t kv_value;
 };
 .Ed
 .Pp
-The struct element
-.Va kv_name
+The struct member
+.Fa kv_name
 should be set to the name of the requested value, and upon return
-.Va kv_value
+.Fa kv_value
 contains the symbol value.
-.It Dv KIOCGSYMBOL (struct ksyms_gsymbol)
+.It Dv KIOCGSYMBOL Pq Vt struct ksyms_gsymbol
 Returns the complete symbol for the given symbol name.
 .Bd -literal -offset indent
 struct ksyms_gsymbol {
@@ -89,17 +89,17 @@ struct ksyms_gsymbol {
 };
 .Ed
 .Pp
-The struct element
-.Va kg_name
+The struct member
+.Fa kg_name
 should be set to the name of the requested symbol, and the found
 symbol will be written to the
-.Va kg_sym
+.Fa kg_sym
 address.
 It is the callers responsibility to ensure that enough space
 for the symbol is allocated.
 .El
 .Sh FILES
-.Bl -tag -width /dev/ksymsX
+.Bl -tag -width Pa
 .It Pa /dev/ksyms
 .El
 .Sh SEE ALSO
