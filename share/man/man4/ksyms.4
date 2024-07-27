@@ -1,4 +1,4 @@
-.\" $NetBSD: ksyms.4,v 1.7 2010/03/22 18:58:31 joerg Exp $
+.\" $NetBSD: ksyms.4,v 1.8 2024/07/27 11:19:30 tnn Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 12, 2008
+.Dd July 27, 2024
 .Dt KSYMS 4
 .Os
 .Sh NAME
@@ -65,21 +65,21 @@ should be a pointer to the type indicated.
 Returns the total size of the current symbol table.
 This should be used when allocating a buffer to read in the
 whole symbol table to memory.
-.It Dv KIOCGVALUE (struct ksyms_gsymbol)
+.It Dv KIOCGVALUE (struct ksyms_gvalue)
 Returns the value for the given symbol name in a symtab-independent
 fashion.
 .Bd -literal -offset indent
-struct ksyms_gsymbol {
-	const char *kg_name;
-	unsigned long *kg_value;
+struct ksyms_gvalue {
+	const char *kv_name;
+	uint64_t kv_value;
 };
 .Ed
 .Pp
 The struct element
-.Va kg_name
-should be set to the name of the requested value, and the address that
-.Va kg_value
-points to will receive the symbol value.
+.Va kv_name
+should be set to the name of the requested value, and upon return
+.Va kv_value
+contains the symbol value.
 .It Dv KIOCGSYMBOL (struct ksyms_gsymbol)
 Returns the complete symbol for the given symbol name.
 .Bd -literal -offset indent
