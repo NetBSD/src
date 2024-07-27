@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac_reg.h,v 1.22 2024/02/27 08:21:24 skrll Exp $ */
+/* $NetBSD: dwc_gmac_reg.h,v 1.23 2024/07/27 12:56:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -38,6 +38,8 @@
 #define	AWIN_GMAC_MAC_FLOWCTRL		0x0018
 #define	AWIN_GMAC_MAC_VLANTAG		0x001c
 #define	AWIN_GMAC_MAC_VERSION		0x0020	/* not always implemented? */
+#define	 AWIN_GMAC_MAC_VERSION_USERVER_MASK	__BITS(15, 8)
+#define	 AWIN_GMAC_MAC_VERSION_SNPSVER_MASK	__BITS( 7, 0)
 #define	AWIN_GMAC_MAC_INTR		0x0038
 #define	AWIN_GMAC_MAC_INTMASK		0x003c
 #define	AWIN_GMAC_MAC_ADDR0HI		0x0040

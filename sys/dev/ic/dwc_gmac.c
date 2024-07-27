@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.90 2024/07/14 09:38:41 skrll Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.91 2024/07/27 12:56:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.90 2024/07/14 09:38:41 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.91 2024/07/27 12:56:27 skrll Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -182,7 +182,7 @@ int
 dwc_gmac_attach(struct dwc_gmac_softc *sc, int phy_id, uint32_t mii_clk)
 {
 	uint8_t enaddr[ETHER_ADDR_LEN];
-	uint32_t maclo, machi, ver, hwft;
+	uint32_t maclo, machi, hwft;
 	struct mii_data * const mii = &sc->sc_mii;
 	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 	prop_dictionary_t dict;
@@ -225,8 +225,11 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, int phy_id, uint32_t mii_clk)
 		enaddr[5] = (machi >> 8) & 0x0ff;
 	}
 
-	ver = bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_VERSION);
-	aprint_normal_dev(sc->sc_dev, "Core version: %08x\n", ver);
+	const uint32_t ver =
+	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_VERSION);
+	const uint32_t snpsver =
+	    __SHIFTOUT(ver, AWIN_GMAC_MAC_VERSION_SNPSVER_MASK);
+	aprint_normal_dev(sc->sc_dev, "Core version: %08x\n", snpsver);
 
 	/*
 	 * Init chip and do initial setup
@@ -238,7 +241,7 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, int phy_id, uint32_t mii_clk)
 	    ether_sprintf(enaddr));
 
 	hwft = 0;
-	if (ver >= 0x35) {
+	if (snpsver >= 0x35) {
 		hwft = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
 		    AWIN_GMAC_DMA_HWFEATURES);
 		aprint_normal_dev(sc->sc_dev,
