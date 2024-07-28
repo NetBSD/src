@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.107 2024/07/28 14:48:47 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.108 2024/07/28 14:49:31 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.107 2024/07/28 14:48:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.108 2024/07/28 14:49:31 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -719,12 +719,12 @@ static unsigned wg_keepalive_timeout = WG_KEEPALIVE_TIMEOUT;
 static struct mbuf *
 		wg_get_mbuf(size_t, size_t);
 
-static int	wg_send_data_msg(struct wg_peer *, struct wg_session *,
+static void	wg_send_data_msg(struct wg_peer *, struct wg_session *,
 		    struct mbuf *);
-static int	wg_send_cookie_msg(struct wg_softc *, struct wg_peer *,
+static void	wg_send_cookie_msg(struct wg_softc *, struct wg_peer *,
 		    const uint32_t, const uint8_t [WG_MAC_LEN],
 		    const struct sockaddr *);
-static int	wg_send_handshake_msg_resp(struct wg_softc *, struct wg_peer *,
+static void	wg_send_handshake_msg_resp(struct wg_softc *, struct wg_peer *,
 		    struct wg_session *, const struct wg_msg_init *);
 static void	wg_send_keepalive_msg(struct wg_peer *, struct wg_session *);
 
@@ -884,7 +884,7 @@ wginitqueues(void)
 
 	error = workqueue_create(&wg_wq, "wgpeer", wg_peer_work, NULL,
 	    PRI_NONE, IPL_SOFTNET, WQ_MPSAFE|WQ_PERCPU);
-	KASSERT(error == 0);
+	KASSERTMSG(error == 0, "error=%d", error);
 
 	return 0;
 }
@@ -896,7 +896,7 @@ wg_guarantee_initialized(void)
 	int error __diagused;
 
 	error = RUN_ONCE(&init, wginitqueues);
-	KASSERT(error == 0);
+	KASSERTMSG(error == 0, "error=%d", error);
 }
 
 static int
@@ -1576,13 +1576,13 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 		uint8_t zero[WG_MAC_LEN] = {0};
 		if (consttime_memequal(wgmi->wgmi_mac2, zero, sizeof(zero))) {
 			WG_TRACE("sending a cookie message: no cookie included");
-			(void)wg_send_cookie_msg(wg, wgp, wgmi->wgmi_sender,
+			wg_send_cookie_msg(wg, wgp, wgmi->wgmi_sender,
 			    wgmi->wgmi_mac1, src);
 			goto out;
 		}
 		if (!wgp->wgp_last_sent_cookie_valid) {
 			WG_TRACE("sending a cookie message: no cookie sent ever");
-			(void)wg_send_cookie_msg(wg, wgp, wgmi->wgmi_sender,
+			wg_send_cookie_msg(wg, wgp, wgmi->wgmi_sender,
 			    wgmi->wgmi_mac1, src);
 			goto out;
 		}
@@ -1694,7 +1694,7 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 	/*
 	 * Respond to the initiator with our ephemeral public key.
 	 */
-	(void)wg_send_handshake_msg_resp(wg, wgp, wgs, wgmi);
+	wg_send_handshake_msg_resp(wg, wgp, wgs, wgmi);
 
 	WG_DLOG("session[L=%"PRIx32" R=%"PRIx32"]:"
 	    " calculate keys as responder\n",
@@ -1788,7 +1788,7 @@ wg_send_so(struct wg_peer *wgp, struct mbuf *m)
 	return error;
 }
 
-static int
+static void
 wg_send_handshake_msg_init(struct wg_softc *wg, struct wg_peer *wgp)
 {
 	int error;
@@ -1805,10 +1805,10 @@ wg_send_handshake_msg_init(struct wg_softc *wg, struct wg_peer *wgp)
 		break;
 	case WGS_STATE_INIT_ACTIVE:	/* we're already initiating, stop */
 		WG_TRACE("Session already initializing, skip starting new one");
-		return EBUSY;
+		return;
 	case WGS_STATE_INIT_PASSIVE:	/* peer was trying -- XXX what now? */
 		WG_TRACE("Session already initializing, waiting for peer");
-		return EBUSY;
+		return;
 	case WGS_STATE_ESTABLISHED:	/* can't happen */
 		panic("unstable session can't be established");
 	case WGS_STATE_DESTROYING:	/* rekey initiated by us too early */
@@ -1847,22 +1847,27 @@ wg_send_handshake_msg_init(struct wg_softc *wg, struct wg_peer *wgp)
 	wgmi = mtod(m, struct wg_msg_init *);
 	wg_fill_msg_init(wg, wgp, wgs, wgmi);
 
-	error = wg->wg_ops->send_hs_msg(wgp, m);
-	if (error == 0) {
-		WG_TRACE("init msg sent");
-
-		if (wgp->wgp_handshake_start_time == 0)
-			wgp->wgp_handshake_start_time = time_uptime;
-		callout_schedule(&wgp->wgp_handshake_timeout_timer,
-		    MIN(wg_rekey_timeout, (unsigned)(INT_MAX / hz)) * hz);
-	} else {
+	error = wg->wg_ops->send_hs_msg(wgp, m); /* consumes m */
+	if (error) {
+		/*
+		 * Sending out an initiation packet failed; give up on
+		 * this session and toss packet waiting for it if any.
+		 *
+		 * XXX Why don't we just let the periodic handshake
+		 * retry logic work in this case?
+		 */
+		WG_DLOG("send_hs_msg failed, error=%d\n", error);
 		wg_put_session_index(wg, wgs);
-		/* Initiation failed; toss packet waiting for it if any.  */
 		m = atomic_swap_ptr(&wgp->wgp_pending, NULL);
 		m_freem(m);
+		return;
 	}
 
-	return error;
+	WG_TRACE("init msg sent");
+	if (wgp->wgp_handshake_start_time == 0)
+		wgp->wgp_handshake_start_time = time_uptime;
+	callout_schedule(&wgp->wgp_handshake_timeout_timer,
+	    MIN(wg_rekey_timeout, (unsigned)(INT_MAX / hz)) * hz);
 }
 
 static void
@@ -2039,13 +2044,13 @@ wg_handle_msg_resp(struct wg_softc *wg, const struct wg_msg_resp *wgmr,
 		uint8_t zero[WG_MAC_LEN] = {0};
 		if (consttime_memequal(wgmr->wgmr_mac2, zero, sizeof(zero))) {
 			WG_TRACE("sending a cookie message: no cookie included");
-			(void)wg_send_cookie_msg(wg, wgp, wgmr->wgmr_sender,
+			wg_send_cookie_msg(wg, wgp, wgmr->wgmr_sender,
 			    wgmr->wgmr_mac1, src);
 			goto out;
 		}
 		if (!wgp->wgp_last_sent_cookie_valid) {
 			WG_TRACE("sending a cookie message: no cookie sent ever");
-			(void)wg_send_cookie_msg(wg, wgp, wgmr->wgmr_sender,
+			wg_send_cookie_msg(wg, wgp, wgmr->wgmr_sender,
 			    wgmr->wgmr_mac1, src);
 			goto out;
 		}
@@ -2207,7 +2212,7 @@ out:
 	wg_put_session(wgs, &psref);
 }
 
-static int
+static void
 wg_send_handshake_msg_resp(struct wg_softc *wg, struct wg_peer *wgp,
     struct wg_session *wgs, const struct wg_msg_init *wgmi)
 {
@@ -2229,10 +2234,13 @@ wg_send_handshake_msg_resp(struct wg_softc *wg, struct wg_peer *wgp,
 	wgmr = mtod(m, struct wg_msg_resp *);
 	wg_fill_msg_resp(wg, wgp, wgs, wgmr, wgmi);
 
-	error = wg->wg_ops->send_hs_msg(wgp, m);
-	if (error == 0)
-		WG_TRACE("resp msg sent");
-	return error;
+	error = wg->wg_ops->send_hs_msg(wgp, m); /* consumes m */
+	if (error) {
+		WG_DLOG("send_hs_msg failed, error=%d\n", error);
+		return;
+	}
+
+	WG_TRACE("resp msg sent");
 }
 
 static struct wg_peer *
@@ -2313,7 +2321,7 @@ wg_fill_msg_cookie(struct wg_softc *wg, struct wg_peer *wgp,
 	wgp->wgp_last_sent_cookie_valid = true;
 }
 
-static int
+static void
 wg_send_cookie_msg(struct wg_softc *wg, struct wg_peer *wgp,
     const uint32_t sender, const uint8_t mac1[WG_MAC_LEN],
     const struct sockaddr *src)
@@ -2333,10 +2341,13 @@ wg_send_cookie_msg(struct wg_softc *wg, struct wg_peer *wgp,
 	wgmc = mtod(m, struct wg_msg_cookie *);
 	wg_fill_msg_cookie(wg, wgp, wgmc, sender, mac1, src);
 
-	error = wg->wg_ops->send_hs_msg(wgp, m);
-	if (error == 0)
-		WG_TRACE("cookie msg sent");
-	return error;
+	error = wg->wg_ops->send_hs_msg(wgp, m); /* consumes m */
+	if (error) {
+		WG_DLOG("send_hs_msg failed, error=%d\n", error);
+		return;
+	}
+
+	WG_TRACE("cookie msg sent");
 }
 
 static bool
@@ -4282,9 +4293,8 @@ wg_get_mbuf(size_t leading_len, size_t len)
 	return m;
 }
 
-static int
-wg_send_data_msg(struct wg_peer *wgp, struct wg_session *wgs,
-    struct mbuf *m)
+static void
+wg_send_data_msg(struct wg_peer *wgp, struct wg_session *wgs, struct mbuf *m)
 {
 	struct wg_softc *wg = wgp->wgp_sc;
 	int error;
@@ -4311,7 +4321,7 @@ wg_send_data_msg(struct wg_peer *wgp, struct wg_session *wgs,
 			padded_buf = kmem_intr_alloc(padded_len, KM_NOSLEEP);
 			if (padded_buf == NULL) {
 				error = ENOBUFS;
-				goto end;
+				goto out;
 			}
 			free_padded_buf = true;
 			m_copydata(m, 0, mlen, padded_buf);
@@ -4322,7 +4332,7 @@ wg_send_data_msg(struct wg_peer *wgp, struct wg_session *wgs,
 	n = wg_get_mbuf(leading_len, sizeof(*wgmd) + encrypted_len);
 	if (n == NULL) {
 		error = ENOBUFS;
-		goto end;
+		goto out;
 	}
 	KASSERT(n->m_len >= sizeof(*wgmd));
 	wgmd = mtod(n, struct wg_msg_data *);
@@ -4370,49 +4380,76 @@ wg_send_data_msg(struct wg_peer *wgp, struct wg_session *wgs,
 	}
 #endif
 
-	error = wg->wg_ops->send_data_msg(wgp, n);
-	if (error == 0) {
-		struct ifnet *ifp = &wg->wg_if;
-		if_statadd(ifp, if_obytes, mlen);
-		if_statinc(ifp, if_opackets);
-		if (wgs->wgs_is_initiator &&
-		    ((time_uptime32 -
-			atomic_load_relaxed(&wgs->wgs_time_established)) >=
-			wg_rekey_after_time)) {
-			/*
-			 * [W] 6.2 Transport Message Limits
-			 * "if a peer is the initiator of a current secure
-			 *  session, WireGuard will send a handshake initiation
-			 *  message to begin a new secure session if, after
-			 *  transmitting a transport data message, the current
-			 *  secure session is REKEY-AFTER-TIME seconds old,"
-			 */
-			WG_TRACE("rekey after time");
-			atomic_store_relaxed(&wgp->wgp_force_rekey, 1);
-			wg_schedule_peer_task(wgp, WGP_TASK_SEND_INIT_MESSAGE);
-		}
-		const uint32_t now = time_uptime32;
-		atomic_store_relaxed(&wgs->wgs_time_last_data_sent,
-		    MAX(now, 1));
-		if (wg_session_get_send_counter(wgs) >=
-		    wg_rekey_after_messages) {
-			/*
-			 * [W] 6.2 Transport Message Limits
-			 * "WireGuard will try to create a new session, by
-			 *  sending a handshake initiation message (section
-			 *  5.4.2), after it has sent REKEY-AFTER-MESSAGES
-			 *  transport data messages..."
-			 */
-			WG_TRACE("rekey after messages");
-			atomic_store_relaxed(&wgp->wgp_force_rekey, 1);
-			wg_schedule_peer_task(wgp, WGP_TASK_SEND_INIT_MESSAGE);
-		}
+	error = wg->wg_ops->send_data_msg(wgp, n); /* consumes n */
+	if (error) {
+		WG_DLOG("send_data_msg failed, error=%d\n", error);
+		goto out;
 	}
-end:
-	m_freem(m);
+
+	/*
+	 * Packet was sent out -- count it in the interface statistics.
+	 */
+	if_statadd(&wg->wg_if, if_obytes, mlen);
+	if_statinc(&wg->wg_if, if_opackets);
+
+	/*
+	 * Record when we last sent data, for determining when we need
+	 * to send a passive keepalive.
+	 *
+	 * Other logic assumes that wgs_time_last_data_sent is zero iff
+	 * we have never sent data on this session.  Early at boot, if
+	 * wg(4) starts operating within <1sec, or after 136 years of
+	 * uptime, we may observe time_uptime32 = 0.  In that case,
+	 * pretend we observed 1 instead.  That way, we correctly
+	 * indicate we have sent data on this session; the only logic
+	 * this might adversely affect is the keepalive timeout
+	 * detection, which might spuriously send a keepalive during
+	 * one second every 136 years.  All of this is very silly, of
+	 * course, but the cost to guaranteeing wgs_time_last_data_sent
+	 * is nonzero is negligible here.
+	 */
+	const uint32_t now = time_uptime32;
+	atomic_store_relaxed(&wgs->wgs_time_last_data_sent, MAX(now, 1));
+
+	/*
+	 * Check rekey-after-time.
+	 */
+	if (wgs->wgs_is_initiator &&
+	    ((time_uptime32 -
+		atomic_load_relaxed(&wgs->wgs_time_established)) >=
+		wg_rekey_after_time)) {
+		/*
+		 * [W] 6.2 Transport Message Limits
+		 * "if a peer is the initiator of a current secure
+		 *  session, WireGuard will send a handshake initiation
+		 *  message to begin a new secure session if, after
+		 *  transmitting a transport data message, the current
+		 *  secure session is REKEY-AFTER-TIME seconds old,"
+		 */
+		WG_TRACE("rekey after time");
+		atomic_store_relaxed(&wgp->wgp_force_rekey, 1);
+		wg_schedule_peer_task(wgp, WGP_TASK_SEND_INIT_MESSAGE);
+	}
+
+	/*
+	 * Check rekey-after-messages.
+	 */
+	if (wg_session_get_send_counter(wgs) >= wg_rekey_after_messages) {
+		/*
+		 * [W] 6.2 Transport Message Limits
+		 * "WireGuard will try to create a new session, by
+		 *  sending a handshake initiation message (section
+		 *  5.4.2), after it has sent REKEY-AFTER-MESSAGES
+		 *  transport data messages..."
+		 */
+		WG_TRACE("rekey after messages");
+		atomic_store_relaxed(&wgp->wgp_force_rekey, 1);
+		wg_schedule_peer_task(wgp, WGP_TASK_SEND_INIT_MESSAGE);
+	}
+
+out:	m_freem(m);
 	if (free_padded_buf)
 		kmem_intr_free(padded_buf, padded_len);
-	return error;
 }
 
 static void
@@ -5083,9 +5120,10 @@ wg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #ifdef WG_RUMPKERNEL
 	case SIOCSLINKSTR:
 		error = wg_ioctl_linkstr(wg, ifd);
-		if (error == 0)
-			wg->wg_ops = &wg_ops_rumpuser;
-		return error;
+		if (error)
+			return error;
+		wg->wg_ops = &wg_ops_rumpuser;
+		return 0;
 #endif
 	default:
 		break;
@@ -5347,9 +5385,11 @@ wg_bind_port_user(struct wg_softc *wg, const uint16_t port)
 		return 0;
 
 	error = rumpuser_wg_sock_bind(wg->wg_user, port);
-	if (error == 0)
-		wg->wg_listen_port = port;
-	return error;
+	if (error)
+		return error;
+
+	wg->wg_listen_port = port;
+	return 0;
 }
 
 /*
@@ -5361,6 +5401,7 @@ rumpkern_wg_recv_user(struct wg_softc *wg, struct iovec *iov, size_t iovlen)
 	struct ifnet *ifp = &wg->wg_if;
 	struct mbuf *m;
 	const struct sockaddr *dst;
+	int error;
 
 	WG_TRACE("");
 
@@ -5375,7 +5416,9 @@ rumpkern_wg_recv_user(struct wg_softc *wg, struct iovec *iov, size_t iovlen)
 	WG_DLOG("iov_len=%zu\n", iov[1].iov_len);
 	WG_DUMP_BUF(iov[1].iov_base, iov[1].iov_len);
 
-	(void)wg_output(ifp, m, dst, NULL);
+	error = wg_output(ifp, m, dst, NULL); /* consumes m */
+	if (error)
+		WG_DLOG("wg_output failed, error=%d\n", error);
 }
 
 /*
