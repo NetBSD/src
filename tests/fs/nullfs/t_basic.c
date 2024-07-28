@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.5 2020/06/26 07:50:12 jruoho Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.6 2024/07/28 12:55:59 bad Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -78,9 +78,9 @@ ATF_TC_BODY(basic, tc)
 
 	rump_init();
 	if (rump_sys_mkdir("/td1", 0777) == -1)
-		atf_tc_fail_errno("mp1");
+		atf_tc_fail_errno("mkdir /td1");
 	if (rump_sys_mkdir("/td2", 0777) == -1)
-		atf_tc_fail_errno("mp1");
+		atf_tc_fail_errno("mkdir /td2");
 
 	/* use tmpfs because rumpfs doesn't support regular files */
 	memset(&targs, 0, sizeof(targs));
@@ -146,16 +146,14 @@ ATF_TC_HEAD(twistymount, tc)
 
 ATF_TC_BODY(twistymount, tc)
 {
-	int mkd = 0;
-
 	rump_init();
 
 	if (rump_sys_mkdir("/td", 0777) == -1)
-		atf_tc_fail_errno("mkdir %d", mkd++);
+		atf_tc_fail_errno("mkdir /td");
 	if (rump_sys_mkdir("/td/dist", 0777) == -1)
-		atf_tc_fail_errno("mkdir %d", mkd++);
+		atf_tc_fail_errno("mkdir /td/dist");
 	if (rump_sys_mkdir("/mp", 0777) == -1)
-		atf_tc_fail_errno("mkdir %d", mkd++);
+		atf_tc_fail_errno("mkdir /mp");
 
 	/* MNT_RDONLY doesn't matter, but just for compat with the PR */
 	mountnull("/td", "/mp", MNT_RDONLY);
