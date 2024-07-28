@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.94 2024/07/28 14:37:59 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.95 2024/07/28 14:38:19 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.94 2024/07/28 14:37:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.95 2024/07/28 14:38:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -612,11 +612,12 @@ struct wg_peer {
 
 	struct timespec		wgp_last_handshake_time;
 
-	callout_t		wgp_rekey_timer;
 	callout_t		wgp_handshake_timeout_timer;
 	callout_t		wgp_session_dtor_timer;
 
 	time_t			wgp_handshake_start_time;
+
+	volatile unsigned	wgp_force_rekey;
 
 	int			wgp_n_allowedips;
 	struct wg_allowedip	wgp_allowedips[WG_ALLOWEDIPS];
@@ -735,7 +736,6 @@ static struct wg_session *
 static void	wg_update_endpoint_if_necessary(struct wg_peer *,
 		    const struct sockaddr *);
 
-static void	wg_schedule_rekey_timer(struct wg_peer *);
 static void	wg_schedule_session_dtor_timer(struct wg_peer *);
 
 static bool	wg_is_underload(struct wg_softc *, struct wg_peer *, int);
@@ -2146,8 +2146,6 @@ wg_handle_msg_resp(struct wg_softc *wg, const struct wg_msg_resp *wgmr,
 	wgp->wgp_last_sent_mac1_valid = false;
 	wgp->wgp_last_sent_cookie_valid = false;
 
-	wg_schedule_rekey_timer(wgp);
-
 	wg_update_endpoint_if_necessary(wgp, src);
 
 	/*
@@ -2435,14 +2433,6 @@ wg_lookup_session_by_index(struct wg_softc *wg, const uint32_t index,
 	pserialize_read_exit(s);
 
 	return wgs;
-}
-
-static void
-wg_schedule_rekey_timer(struct wg_peer *wgp)
-{
-	int timeout = MIN(wg_rekey_after_time, (unsigned)(INT_MAX / hz));
-
-	callout_schedule(&wgp->wgp_rekey_timer, timeout * hz);
 }
 
 static void
@@ -3146,16 +3136,22 @@ wg_task_send_init_message(struct wg_softc *wg, struct wg_peer *wgp)
 		return;
 	}
 
+	/*
+	 * If we already have an established session, there's no need
+	 * to initiate a new one -- unless the rekey-after-time or
+	 * rekey-after-messages limits have passed.
+	 */
 	wgs = wgp->wgp_session_stable;
-	if (wgs->wgs_state == WGS_STATE_UNKNOWN) {
-		/* XXX What if the unstable session is already INIT_ACTIVE?  */
-		wg_send_handshake_msg_init(wg, wgp);
-	} else {
-		/* rekey */
-		wgs = wgp->wgp_session_unstable;
-		if (wgs->wgs_state != WGS_STATE_INIT_ACTIVE)
-			wg_send_handshake_msg_init(wg, wgp);
-	}
+	if (wgs->wgs_state == WGS_STATE_ESTABLISHED &&
+	    !atomic_swap_uint(&wgp->wgp_force_rekey, 0))
+		return;
+
+	/*
+	 * Ensure we're initiating a new session.  If the unstable
+	 * session is already INIT_ACTIVE or INIT_PASSIVE, this does
+	 * nothing.
+	 */
+	wg_send_handshake_msg_init(wg, wgp);
 }
 
 static void
@@ -3576,14 +3572,6 @@ next0:		m_freem(m);
 }
 
 static void
-wg_rekey_timer(void *arg)
-{
-	struct wg_peer *wgp = arg;
-
-	wg_schedule_peer_task(wgp, WGP_TASK_SEND_INIT_MESSAGE);
-}
-
-static void
 wg_purge_pending_packets(struct wg_peer *wgp)
 {
 	struct mbuf *m;
@@ -3611,8 +3599,6 @@ wg_alloc_peer(struct wg_softc *wg)
 	wgp = kmem_zalloc(sizeof(*wgp), KM_SLEEP);
 
 	wgp->wgp_sc = wg;
-	callout_init(&wgp->wgp_rekey_timer, CALLOUT_MPSAFE);
-	callout_setfunc(&wgp->wgp_rekey_timer, wg_rekey_timer, wgp);
 	callout_init(&wgp->wgp_handshake_timeout_timer, CALLOUT_MPSAFE);
 	callout_setfunc(&wgp->wgp_handshake_timeout_timer,
 	    wg_handshake_timeout_timer, wgp);
@@ -3690,7 +3676,6 @@ wg_destroy_peer(struct wg_peer *wgp)
 	wg_purge_pending_packets(wgp);
 
 	/* Halt all packet processing and timeouts.  */
-	callout_halt(&wgp->wgp_rekey_timer, NULL);
 	callout_halt(&wgp->wgp_handshake_timeout_timer, NULL);
 	callout_halt(&wgp->wgp_session_dtor_timer, NULL);
 
@@ -4302,7 +4287,8 @@ wg_send_data_msg(struct wg_peer *wgp, struct wg_session *wgs,
 		if_statadd(ifp, if_obytes, mlen);
 		if_statinc(ifp, if_opackets);
 		if (wgs->wgs_is_initiator &&
-		    wgs->wgs_time_last_data_sent == 0) {
+		    ((time_uptime - wgs->wgs_time_established) >=
+			wg_rekey_after_time)) {
 			/*
 			 * [W] 6.2 Transport Message Limits
 			 * "if a peer is the initiator of a current secure
@@ -4311,7 +4297,9 @@ wg_send_data_msg(struct wg_peer *wgp, struct wg_session *wgs,
 			 *  transmitting a transport data message, the current
 			 *  secure session is REKEY-AFTER-TIME seconds old,"
 			 */
-			wg_schedule_rekey_timer(wgp);
+			WG_TRACE("rekey after time");
+			atomic_store_relaxed(&wgp->wgp_force_rekey, 1);
+			wg_schedule_peer_task(wgp, WGP_TASK_SEND_INIT_MESSAGE);
 		}
 		wgs->wgs_time_last_data_sent = time_uptime;
 		if (wg_session_get_send_counter(wgs) >=
@@ -4323,6 +4311,8 @@ wg_send_data_msg(struct wg_peer *wgp, struct wg_session *wgs,
 			 *  5.4.2), after it has sent REKEY-AFTER-MESSAGES
 			 *  transport data messages..."
 			 */
+			WG_TRACE("rekey after messages");
+			atomic_store_relaxed(&wgp->wgp_force_rekey, 1);
 			wg_schedule_peer_task(wgp, WGP_TASK_SEND_INIT_MESSAGE);
 		}
 	}
