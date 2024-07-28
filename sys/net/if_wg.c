@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.105 2024/07/28 14:47:58 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.106 2024/07/28 14:48:13 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.105 2024/07/28 14:47:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.106 2024/07/28 14:48:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -3612,8 +3612,8 @@ wg_session_hit_limits(struct wg_session *wgs)
 	 * [W] 6.2: Transport Message Limits
 	 * "After REJECT-AFTER-MESSAGES transport data messages or after the
 	 *  current secure session is REJECT-AFTER-TIME seconds old, whichever
-	 *  comes first, WireGuard will refuse to send any more transport data
-	 *  messages using the current secure session, ..."
+	 *  comes first, WireGuard will refuse to send or receive any more
+	 *  transport data messages using the current secure session, ..."
 	 */
 	KASSERT(time_established != 0 || time_uptime > UINT32_MAX);
 	if ((time_uptime32 - time_established) > wg_reject_after_time) {
