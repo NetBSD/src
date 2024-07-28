@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.102 2024/07/28 14:45:51 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.103 2024/07/28 14:46:16 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.102 2024/07/28 14:45:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.103 2024/07/28 14:46:16 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -2857,6 +2857,15 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 	wgmd = NULL;
 
 	/*
+	 * The packet is genuine.  Update the peer's endpoint if the
+	 * source address changed.
+	 *
+	 * XXX How to prevent DoS by replaying genuine packets from the
+	 * wrong source address?
+	 */
+	wg_update_endpoint_if_necessary(wgp, src);
+
+	/*
 	 * Validate the encapsulated packet header and get the address
 	 * family, or drop.
 	 */
@@ -2865,15 +2874,6 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 		m_freem(n);
 		goto update_state;
 	}
-
-	/*
-	 * The packet is genuine.  Update the peer's endpoint if the
-	 * source address changed.
-	 *
-	 * XXX How to prevent DoS by replaying genuine packets from the
-	 * wrong source address?
-	 */
-	wg_update_endpoint_if_necessary(wgp, src);
 
 	/* Submit it into our network stack if routable.  */
 	ok = wg_validate_route(wg, wgp, af, decrypted_buf);
