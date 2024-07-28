@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.108 2024/07/28 14:49:31 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.109 2024/07/28 14:49:49 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.108 2024/07/28 14:49:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.109 2024/07/28 14:49:49 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.108 2024/07/28 14:49:31 riastradh Exp $"
 #include <net/pktqueue.h>
 #include <net/route.h>
 
+#ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
@@ -99,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.108 2024/07/28 14:49:31 riastradh Exp $"
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
+#endif	/* INET */
 
 #ifdef INET6
 #include <netinet/ip6.h>
@@ -106,7 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.108 2024/07/28 14:49:31 riastradh Exp $"
 #include <netinet6/in6_var.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/udp6_var.h>
-#endif /* INET6 */
+#endif	/* INET6 */
 
 #include <prop/proplib.h>
 
@@ -824,8 +826,10 @@ wg_rnh(struct wg_softc *wg, const int family)
 {
 
 	switch (family) {
+#ifdef INET
 		case AF_INET:
 			return wg->wg_rtable_ipv4;
+#endif
 #ifdef INET6
 		case AF_INET6:
 			return wg->wg_rtable_ipv6;
@@ -2288,6 +2292,7 @@ wg_fill_msg_cookie(struct wg_softc *wg, struct wg_peer *wgp,
 	}
 
 	switch (src->sa_family) {
+#ifdef INET
 	case AF_INET: {
 		const struct sockaddr_in *sin = satocsin(src);
 		addrlen = sizeof(sin->sin_addr);
@@ -2295,6 +2300,7 @@ wg_fill_msg_cookie(struct wg_softc *wg, struct wg_peer *wgp,
 		uh_sport = sin->sin_port;
 		break;
 	    }
+#endif
 #ifdef INET6
 	case AF_INET6: {
 		const struct sockaddr_in6 *sin6 = satocsin6(src);
@@ -2604,18 +2610,28 @@ wg_validate_route(struct wg_softc *wg, struct wg_peer *wgp_expected,
 	 *  decrypting it."
 	 */
 
-	if (af == AF_INET) {
+	switch (af) {
+#ifdef INET
+	case AF_INET: {
 		const struct ip *ip = (const struct ip *)packet;
 		struct sockaddr_in *sin = (struct sockaddr_in *)&ss;
 		sockaddr_in_init(sin, &ip->ip_src, 0);
 		sa = sintosa(sin);
+		break;
+	}
+#endif
 #ifdef INET6
-	} else {
+	case AF_INET6: {
 		const struct ip6_hdr *ip6 = (const struct ip6_hdr *)packet;
 		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)&ss;
 		sockaddr_in6_init(sin6, &ip6->ip6_src, 0, 0, 0);
 		sa = sin6tosa(sin6);
+		break;
+	}
 #endif
+	default:
+		__USE(ss);
+		return false;
 	}
 
 	wgp = wg_pick_peer_by_sa(wg, sa, &psref);
@@ -2906,15 +2922,24 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 	} else {
 		char addrstr[INET6_ADDRSTRLEN];
 		memset(addrstr, 0, sizeof(addrstr));
-		if (af == AF_INET) {
+		switch (af) {
+#ifdef INET
+		case AF_INET: {
 			const struct ip *ip = (const struct ip *)decrypted_buf;
 			IN_PRINT(addrstr, &ip->ip_src);
+			break;
+		}
+#endif
 #ifdef INET6
-		} else if (af == AF_INET6) {
+		case AF_INET6: {
 			const struct ip6_hdr *ip6 =
 			    (const struct ip6_hdr *)decrypted_buf;
 			IN6_PRINT(addrstr, &ip6->ip6_src);
+			break;
+		}
 #endif
+		default:
+			panic("invalid af=%d", af);
 		}
 		WG_LOG_RATECHECK(&wgp->wgp_ppsratecheck, LOG_DEBUG,
 		    "%s: peer %s: invalid source address (%s)\n",
@@ -3487,12 +3512,13 @@ wg_job(struct threadpool_job *job)
 static int
 wg_bind_port(struct wg_softc *wg, const uint16_t port)
 {
-	int error;
+	int error = 0;
 	uint16_t old_port = wg->wg_listen_port;
 
 	if (port != 0 && old_port == port)
 		return 0;
 
+#ifdef INET
 	struct sockaddr_in _sin, *sin = &_sin;
 	sin->sin_len = sizeof(*sin);
 	sin->sin_family = AF_INET;
@@ -3500,8 +3526,9 @@ wg_bind_port(struct wg_softc *wg, const uint16_t port)
 	sin->sin_port = htons(port);
 
 	error = sobind(wg->wg_so4, sintosa(sin), curlwp);
-	if (error != 0)
+	if (error)
 		return error;
+#endif
 
 #ifdef INET6
 	struct sockaddr_in6 _sin6, *sin6 = &_sin6;
@@ -3511,13 +3538,13 @@ wg_bind_port(struct wg_softc *wg, const uint16_t port)
 	sin6->sin6_port = htons(port);
 
 	error = sobind(wg->wg_so6, sin6tosa(sin6), curlwp);
-	if (error != 0)
+	if (error)
 		return error;
 #endif
 
 	wg->wg_listen_port = port;
 
-	return 0;
+	return error;
 }
 
 static void
@@ -4251,16 +4278,21 @@ wg_send_udp(struct wg_peer *wgp, struct mbuf *m)
 	wgsa = wg_get_endpoint_sa(wgp, &psref);
 	so = wg_get_so_by_peer(wgp, wgsa);
 	solock(so);
-	if (wgsatosa(wgsa)->sa_family == AF_INET) {
+	switch (wgsatosa(wgsa)->sa_family) {
+#ifdef INET
+	case AF_INET:
 		error = udp_send(so, m, wgsatosa(wgsa), NULL, curlwp);
-	} else {
+		break;
+#endif
 #ifdef INET6
+	case AF_INET6:
 		error = udp6_output(sotoinpcb(so), m, wgsatosin6(wgsa),
 		    NULL, curlwp);
-#else
+		break;
+#endif
+	default:
 		m_freem(m);
 		error = EPFNOSUPPORT;
-#endif
 	}
 	sounlock(so);
 	wg_put_sa(wgp, wgsa, &psref);
@@ -4468,9 +4500,11 @@ wg_input(struct ifnet *ifp, struct mbuf *m, const int af)
 	bpf_mtap_af(ifp, af, m, BPF_D_IN);
 
 	switch (af) {
+#ifdef INET
 	case AF_INET:
 		pktq = ip_pktq;
 		break;
+#endif
 #ifdef INET6
 	case AF_INET6:
 		pktq = ip6_pktq;
@@ -4577,11 +4611,14 @@ wg_handle_prop_peer(struct wg_softc *wg, prop_dictionary_t peer,
 	}
 	memcpy(wgsatoss(wgsa), addr, addr_len);
 	switch (wgsa_family(wgsa)) {
+#ifdef INET
 	case AF_INET:
+		break;
+#endif
 #ifdef INET6
 	case AF_INET6:
-#endif
 		break;
+#endif
 	default:
 		error = EPFNOSUPPORT;
 		goto out;
@@ -4620,6 +4657,7 @@ skip_endpoint:
 			continue;
 
 		switch (wga->wga_family) {
+#ifdef INET
 		case AF_INET: {
 			struct sockaddr_in sin;
 			char addrstr[128];
@@ -4646,6 +4684,7 @@ skip_endpoint:
 
 			break;
 		    }
+#endif
 #ifdef INET6
 		case AF_INET6: {
 			struct sockaddr_in6 sin6;
@@ -4978,12 +5017,14 @@ wg_ioctl_get(struct wg_softc *wg, struct ifdrv *ifd)
 				goto _next;
 
 			switch (wga->wga_family) {
+#ifdef INET
 			case AF_INET:
 				if (!prop_dictionary_set_data(prop_allowedip,
 					"ip", &wga->wga_addr4,
 					sizeof(wga->wga_addr4)))
 					goto _next;
 				break;
+#endif
 #ifdef INET6
 			case AF_INET6:
 				if (!prop_dictionary_set_data(prop_allowedip,
@@ -4993,7 +5034,7 @@ wg_ioctl_get(struct wg_softc *wg, struct ifdrv *ifd)
 				break;
 #endif
 			default:
-				break;
+				panic("invalid af=%d", wga->wga_family);
 			}
 			prop_array_set(allowedips, j, prop_allowedip);
 		_next:
@@ -5060,8 +5101,10 @@ wg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		switch (ifr->ifr_addr.sa_family) {
+#ifdef INET
 		case AF_INET:	/* IP supports Multicast */
 			break;
+#endif
 #ifdef INET6
 		case AF_INET6:	/* IP6 supports Multicast */
 			break;
@@ -5141,6 +5184,7 @@ wg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	 *     will be handled via pr_ioctl form doifioctl later.
 	 */
 	switch (cmd) {
+#ifdef INET
 	case SIOCAIFADDR:
 	case SIOCDIFADDR: {
 		struct in_aliasreq _ifra = *(const struct in_aliasreq *)data;
@@ -5153,6 +5197,7 @@ wg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = ENOTTY;
 		break;
 	}
+#endif
 #ifdef INET6
 	case SIOCAIFADDR_IN6:
 	case SIOCDIFADDR_IN6: {
@@ -5167,6 +5212,8 @@ wg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	}
 #endif
+	default:
+		break;
 	}
 #endif /* WG_RUMPKERNEL */
 
@@ -5346,20 +5393,31 @@ wg_input_user(struct ifnet *ifp, struct mbuf *m, const int af)
 
 	WG_TRACE("");
 
-	if (af == AF_INET) {
+	switch (af) {
+#ifdef INET
+	case AF_INET: {
 		struct sockaddr_in *sin = (struct sockaddr_in *)&ss;
 		struct ip *ip;
 
 		KASSERT(m->m_len >= sizeof(struct ip));
 		ip = mtod(m, struct ip *);
 		sockaddr_in_init(sin, &ip->ip_dst, 0);
-	} else {
+		break;
+	}
+#endif
+#ifdef INET6
+	case AF_INET6: {
 		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)&ss;
 		struct ip6_hdr *ip6;
 
 		KASSERT(m->m_len >= sizeof(struct ip6_hdr));
 		ip6 = mtod(m, struct ip6_hdr *);
 		sockaddr_in6_init(sin6, &ip6->ip6_dst, 0, 0, 0);
+		break;
+	}
+#endif
+	default:
+		goto out;
 	}
 
 	iov[0].iov_base = &ss;
@@ -5372,7 +5430,7 @@ wg_input_user(struct ifnet *ifp, struct mbuf *m, const int af)
 	/* Send decrypted packets to users via a tun. */
 	rumpuser_wg_send_user(wg->wg_user, iov, 2);
 
-	m_freem(m);
+out:	m_freem(m);
 }
 
 static int
