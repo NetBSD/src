@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.101 2024/07/28 14:45:33 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.102 2024/07/28 14:45:51 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.101 2024/07/28 14:45:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.102 2024/07/28 14:45:51 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -2863,7 +2863,7 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 	ok = wg_validate_inner_packet(decrypted_buf, decrypted_len, &af);
 	if (!ok) {
 		m_freem(n);
-		goto out;
+		goto update_state;
 	}
 
 	/*
@@ -2903,6 +2903,7 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 	}
 	n = NULL;
 
+update_state:
 	/* Update the state machine if necessary.  */
 	if (__predict_false(state == WGS_STATE_INIT_PASSIVE)) {
 		/*
