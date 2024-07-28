@@ -1,4 +1,4 @@
-#	$NetBSD: t_misc.sh,v 1.12 2022/06/13 07:59:15 martin Exp $
+#	$NetBSD: t_misc.sh,v 1.13 2024/07/28 14:46:33 riastradh Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -143,10 +143,9 @@ wg_handshake_timeout_body()
 	local ip_wg_local=10.0.0.1
 	local ip_wg_peer=10.0.0.2
 	local port=51820
-	local rekey_after_time=3
 	local outfile=./out
-	local rekey_timeout=3
-	local rekey_attempt_time=8
+	local rekey_timeout=4
+	local rekey_attempt_time=10
 	local n=
 
 	setup_servers
