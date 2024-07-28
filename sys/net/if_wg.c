@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.109 2024/07/28 14:49:49 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.110 2024/07/28 14:50:05 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.109 2024/07/28 14:49:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.110 2024/07/28 14:50:05 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -331,7 +331,7 @@ wg_dump_hash(const uint8_t *func, const uint8_t *name, const uint8_t *hash,
 #define WG_ALLOWEDIPS		16
 
 #define CURVE25519_KEY_LEN	32
-#define TAI64N_LEN		sizeof(uint32_t) * 3
+#define TAI64N_LEN		(sizeof(uint32_t) * 3)
 #define POLY1305_AUTHTAG_LEN	16
 #define HMAC_BLOCK_LEN		64
 
@@ -426,7 +426,7 @@ struct wg_msg_cookie {
 
 #define	SLIWIN_BITS	2048u
 #define	SLIWIN_TYPE	uint32_t
-#define	SLIWIN_BPW	NBBY*sizeof(SLIWIN_TYPE)
+#define	SLIWIN_BPW	(NBBY*sizeof(SLIWIN_TYPE))
 #define	SLIWIN_WORDS	howmany(SLIWIN_BITS, SLIWIN_BPW)
 #define	SLIWIN_NPKT	(SLIWIN_BITS - NBBY*sizeof(SLIWIN_TYPE))
 
