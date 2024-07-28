@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.201 2023/10/15 11:11:37 riastradh Exp $	*/
+/*	$NetBSD: emul.c,v 1.202 2024/07/28 13:01:55 bad Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.201 2023/10/15 11:11:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.202 2024/07/28 13:01:55 bad Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -72,13 +72,13 @@ struct tty *constty;
 
 const struct bdevsw *bdevsw0[255];
 const struct bdevsw **bdevsw = bdevsw0;
-const int sys_cdevsws = 255;
-int max_cdevsws = 255;
+const int sys_bdevsws = 255;
+int max_bdevsws = 255;
 
 const struct cdevsw *cdevsw0[255];
 const struct cdevsw **cdevsw = cdevsw0;
-const int sys_bdevsws = 255;
-int max_bdevsws = 255;
+const int sys_cdevsws = 255;
+int max_cdevsws = 255;
 
 int mem_no = 2;
 
