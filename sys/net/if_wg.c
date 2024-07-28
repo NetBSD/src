@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.100 2024/07/28 14:40:02 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.101 2024/07/28 14:45:33 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.100 2024/07/28 14:40:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.101 2024/07/28 14:45:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -2693,6 +2693,7 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 	struct wg_session *wgs;
 	struct wg_peer *wgp;
 	int state;
+	time_t age;
 	size_t mlen;
 	struct psref psref;
 	int error, af;
@@ -2733,6 +2734,16 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 	case WGS_STATE_ESTABLISHED:
 	case WGS_STATE_DESTROYING:
 		break;
+	}
+
+	/*
+	 * Reject if the session is too old.
+	 */
+	age = time_uptime - wgs->wgs_time_established;
+	if (__predict_false(age >= wg_reject_after_time)) {
+		WG_DLOG("session %"PRIx32" too old, %"PRIuMAX" sec\n",
+		    wgmd->wgmd_receiver, (uintmax_t)age);
+	       goto out;
 	}
 
 	/*
