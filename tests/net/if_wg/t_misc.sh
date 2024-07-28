@@ -1,4 +1,4 @@
-#	$NetBSD: t_misc.sh,v 1.13 2024/07/28 14:46:33 riastradh Exp $
+#	$NetBSD: t_misc.sh,v 1.14 2024/07/28 14:46:44 riastradh Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -80,7 +80,7 @@ wg_rekey_body()
 
 	latest_handshake=$($HIJACKING wgconfig wg0 show peer peer0 \
 	    | awk -F ': ' '/latest-handshake/ {print $2;}')
-	$DEBUG && echo $latest_handshake
+	$DEBUG && echo handshake1=$latest_handshake
 
 	sleep 1
 
@@ -103,7 +103,7 @@ wg_rekey_body()
 
 	latest_handshake=$($HIJACKING wgconfig wg0 show peer peer0 \
 	    | awk -F ': ' '/latest-handshake/ {print $2;}')
-	$DEBUG && echo $latest_handshake
+	$DEBUG && echo handshake2=$latest_handshake
 
 	# Wait for a reinitiation to be performed again
 	sleep $((rekey_after_time+1))
