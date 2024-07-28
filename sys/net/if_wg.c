@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.106 2024/07/28 14:48:13 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.107 2024/07/28 14:48:47 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.106 2024/07/28 14:48:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.107 2024/07/28 14:48:47 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -3663,6 +3663,9 @@ wg_purge_pending_packets(struct wg_peer *wgp)
 
 	m = atomic_swap_ptr(&wgp->wgp_pending, NULL);
 	m_freem(m);
+#ifdef ALTQ
+	wg_start(&wgp->wgp_sc->wg_if);
+#endif
 	pktq_barrier(wg_pktq);
 }
 
@@ -3978,8 +3981,9 @@ wg_clone_create(struct if_clone *ifc, int unit)
 	return 0;
 
 fail4: __unused
+	wg_destroy_all_peers(wg);
 	wg_if_detach(wg);
-fail3:	wg_destroy_all_peers(wg);
+fail3:
 #ifdef INET6
 	solock(wg->wg_so6);
 	wg->wg_so6->so_rcv.sb_flags &= ~SB_UPCALL;
@@ -4031,8 +4035,8 @@ wg_clone_destroy(struct ifnet *ifp)
 	}
 #endif
 
-	wg_if_detach(wg);
 	wg_destroy_all_peers(wg);
+	wg_if_detach(wg);
 #ifdef INET6
 	solock(wg->wg_so6);
 	wg->wg_so6->so_rcv.sb_flags &= ~SB_UPCALL;
