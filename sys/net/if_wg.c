@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.97 2024/07/28 14:39:00 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.98 2024/07/28 14:39:19 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.97 2024/07/28 14:39:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.98 2024/07/28 14:39:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -351,7 +351,7 @@ wg_dump_hash(const uint8_t *func, const uint8_t *name, const uint8_t *hash,
 
 #define WG_COOKIE_LEN		16
 #define WG_MAC_LEN		16
-#define WG_RANDVAL_LEN		24
+#define WG_COOKIESECRET_LEN	32
 
 #define WG_EPHEMERAL_KEY_LEN	CURVE25519_KEY_LEN
 /* [N] 5.2: "ck: A chaining key of HASHLEN bytes" */
@@ -631,8 +631,8 @@ struct wg_peer {
 
 	time_t			wgp_last_msg_received_time[WG_MSG_TYPE_MAX];
 
-	time_t			wgp_last_genrandval_time;
-	uint32_t		wgp_randval;
+	time_t			wgp_last_cookiesecret_time;
+	uint8_t			wgp_cookiesecret[WG_COOKIESECRET_LEN];
 
 	struct wg_ppsratecheck	wgp_ppsratecheck;
 
@@ -700,7 +700,7 @@ struct wg_softc {
 #define WG_KEEPALIVE_TIMEOUT		 10
 
 #define WG_COOKIE_TIME			120
-#define WG_RANDVAL_TIME			(2 * 60)
+#define WG_COOKIESECRET_TIME		(2 * 60)
 
 static uint64_t wg_rekey_after_messages = WG_REKEY_AFTER_MESSAGES;
 static uint64_t wg_reject_after_messages = WG_REJECT_AFTER_MESSAGES;
@@ -2257,9 +2257,11 @@ wg_fill_msg_cookie(struct wg_softc *wg, struct wg_peer *wgp,
 	 * "The secret variable, Rm, changes every two minutes to a
 	 * random value"
 	 */
-	if ((time_uptime - wgp->wgp_last_genrandval_time) > WG_RANDVAL_TIME) {
-		wgp->wgp_randval = cprng_strong32();
-		wgp->wgp_last_genrandval_time = time_uptime;
+	if ((time_uptime - wgp->wgp_last_cookiesecret_time) >
+	    WG_COOKIESECRET_TIME) {
+		cprng_strong(kern_cprng, wgp->wgp_cookiesecret,
+		    sizeof(wgp->wgp_cookiesecret), 0);
+		wgp->wgp_last_cookiesecret_time = time_uptime;
 	}
 
 	switch (src->sa_family) {
@@ -2284,7 +2286,7 @@ wg_fill_msg_cookie(struct wg_softc *wg, struct wg_peer *wgp,
 	}
 
 	wg_algo_mac(cookie, sizeof(cookie),
-	    (const uint8_t *)&wgp->wgp_randval, sizeof(wgp->wgp_randval),
+	    wgp->wgp_cookiesecret, sizeof(wgp->wgp_cookiesecret),
 	    addr, addrlen, (const uint8_t *)&uh_sport, sizeof(uh_sport));
 	wg_algo_mac_cookie(key, sizeof(key), wg->wg_pubkey,
 	    sizeof(wg->wg_pubkey));
