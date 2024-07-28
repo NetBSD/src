@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.103 2024/07/28 14:46:16 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.104 2024/07/28 14:47:37 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.103 2024/07/28 14:46:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.104 2024/07/28 14:47:37 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -510,8 +510,10 @@ struct wg_session {
 #define WGS_STATE_ESTABLISHED	3
 #define WGS_STATE_DESTROYING	4
 
-	time_t		wgs_time_established;
-	time_t		wgs_time_last_data_sent;
+	volatile uint32_t
+			wgs_time_established;
+	volatile uint32_t
+			wgs_time_last_data_sent;
 	bool		wgs_is_initiator;
 
 	uint32_t	wgs_local_index;
@@ -1677,8 +1679,12 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 	 * establishment -- this is used to decide when to erase keys,
 	 * and we want to start counting as soon as we have generated
 	 * keys.
+	 *
+	 * No need for atomic store because the session can't be used
+	 * in the rx or tx paths yet -- not until we transition to
+	 * INTI_PASSIVE.
 	 */
-	wgs->wgs_time_established = time_uptime;
+	wgs->wgs_time_established = time_uptime32;
 	wg_schedule_session_dtor_timer(wgp);
 
 	/*
@@ -2115,7 +2121,7 @@ wg_handle_msg_resp(struct wg_softc *wg, const struct wg_msg_resp *wgmr,
 
 	KASSERTMSG(wgs->wgs_state == WGS_STATE_INIT_ACTIVE, "state=%d",
 	    wgs->wgs_state);
-	wgs->wgs_time_established = time_uptime;
+	wgs->wgs_time_established = time_uptime32;
 	wg_schedule_session_dtor_timer(wgp);
 	wgs->wgs_time_last_data_sent = 0;
 	wgs->wgs_is_initiator = true;
@@ -2466,9 +2472,12 @@ wg_need_to_send_init_message(struct wg_session *wgs)
 	 *  KEEPALIVE-TIMEOUT − REKEY-TIMEOUT) seconds old and it has
 	 *  not yet acted upon this event."
 	 */
-	return wgs->wgs_is_initiator && wgs->wgs_time_last_data_sent == 0 &&
-	    (time_uptime - wgs->wgs_time_established) >=
-	    (wg_reject_after_time - wg_keepalive_timeout - wg_rekey_timeout);
+	return wgs->wgs_is_initiator &&
+	    atomic_load_relaxed(&wgs->wgs_time_last_data_sent) == 0 &&
+	    ((time_uptime32 -
+		atomic_load_relaxed(&wgs->wgs_time_established)) >=
+		(wg_reject_after_time - wg_keepalive_timeout -
+		    wg_rekey_timeout));
 }
 
 static void
@@ -2693,7 +2702,7 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 	struct wg_session *wgs;
 	struct wg_peer *wgp;
 	int state;
-	time_t age;
+	uint32_t age;
 	size_t mlen;
 	struct psref psref;
 	int error, af;
@@ -2739,10 +2748,10 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 	/*
 	 * Reject if the session is too old.
 	 */
-	age = time_uptime - wgs->wgs_time_established;
+	age = time_uptime32 - atomic_load_relaxed(&wgs->wgs_time_established);
 	if (__predict_false(age >= wg_reject_after_time)) {
-		WG_DLOG("session %"PRIx32" too old, %"PRIuMAX" sec\n",
-		    wgmd->wgmd_receiver, (uintmax_t)age);
+		WG_DLOG("session %"PRIx32" too old, %"PRIu32" sec\n",
+		    wgmd->wgmd_receiver, age);
 	       goto out;
 	}
 
@@ -2923,11 +2932,13 @@ update_state:
 		 *  itself to send back for KEEPALIVE-TIMEOUT seconds, it sends
 		 *  a keepalive message."
 		 */
-		WG_DLOG("time_uptime=%ju wgs_time_last_data_sent=%ju\n",
-		    (uintmax_t)time_uptime,
-		    (uintmax_t)wgs->wgs_time_last_data_sent);
-		if ((time_uptime - wgs->wgs_time_last_data_sent) >=
-		    wg_keepalive_timeout) {
+		const uint32_t now = time_uptime32;
+		const uint32_t time_last_data_sent =
+		    atomic_load_relaxed(&wgs->wgs_time_last_data_sent);
+		WG_DLOG("time_uptime32=%"PRIu32
+		    " wgs_time_last_data_sent=%"PRIu32"\n",
+		    now, time_last_data_sent);
+		if ((now - time_last_data_sent) >= wg_keepalive_timeout) {
 			WG_TRACE("Schedule sending keepalive message");
 			/*
 			 * We can't send a keepalive message here to avoid
@@ -3346,7 +3357,7 @@ static void
 wg_task_destroy_prev_session(struct wg_softc *wg, struct wg_peer *wgp)
 {
 	struct wg_session *wgs;
-	time_t age;
+	uint32_t age;
 
 	WG_TRACE("WGP_TASK_DESTROY_PREV_SESSION");
 
@@ -3357,14 +3368,16 @@ wg_task_destroy_prev_session(struct wg_softc *wg, struct wg_peer *wgp)
 	 * was ESTABLISHED and is now DESTROYING, older than
 	 * reject-after-time, destroy it.  Upcoming sessions are still
 	 * in INIT_ACTIVE or INIT_PASSIVE -- we don't touch those here.
+	 *
+	 * No atomic for access to wgs_time_established because it is
+	 * only updated under wgp_lock.
 	 */
 	wgs = wgp->wgp_session_unstable;
 	KASSERT(wgs->wgs_state != WGS_STATE_ESTABLISHED);
 	if (wgs->wgs_state == WGS_STATE_DESTROYING &&
-	    ((age = (time_uptime - wgs->wgs_time_established)) >=
+	    ((age = (time_uptime32 - wgs->wgs_time_established)) >=
 		wg_reject_after_time)) {
-		WG_DLOG("destroying past session %"PRIuMAX" sec old\n",
-		    (uintmax_t)age);
+		WG_DLOG("destroying past session %"PRIu32" sec old\n", age);
 		wg_put_session_index(wg, wgs);
 		KASSERTMSG(wgs->wgs_state == WGS_STATE_UNKNOWN, "state=%d",
 		    wgs->wgs_state);
@@ -3380,10 +3393,9 @@ wg_task_destroy_prev_session(struct wg_softc *wg, struct wg_peer *wgp)
 	KASSERT(wgs->wgs_state != WGS_STATE_INIT_PASSIVE);
 	KASSERT(wgs->wgs_state != WGS_STATE_DESTROYING);
 	if (wgs->wgs_state == WGS_STATE_ESTABLISHED &&
-	    ((age = (time_uptime - wgs->wgs_time_established)) >=
+	    ((age = (time_uptime32 - wgs->wgs_time_established)) >=
 		wg_reject_after_time)) {
-		WG_DLOG("destroying current session %"PRIuMAX" sec old\n",
-		    (uintmax_t)age);
+		WG_DLOG("destroying current session %"PRIu32" sec old\n", age);
 		atomic_store_relaxed(&wgs->wgs_state, WGS_STATE_DESTROYING);
 		wg_put_session_index(wg, wgs);
 		KASSERTMSG(wgs->wgs_state == WGS_STATE_UNKNOWN, "state=%d",
@@ -3589,6 +3601,8 @@ wg_socreate(struct wg_softc *wg, int af, struct socket **sop)
 static bool
 wg_session_hit_limits(struct wg_session *wgs)
 {
+	uint32_t time_established =
+	    atomic_load_relaxed(&wgs->wgs_time_established);
 
 	/*
 	 * [W] 6.2: Transport Message Limits
@@ -3597,8 +3611,8 @@ wg_session_hit_limits(struct wg_session *wgs)
 	 *  comes first, WireGuard will refuse to send any more transport data
 	 *  messages using the current secure session, ..."
 	 */
-	KASSERT(wgs->wgs_time_established != 0);
-	if ((time_uptime - wgs->wgs_time_established) > wg_reject_after_time) {
+	KASSERT(time_established != 0 || time_uptime > UINT32_MAX);
+	if ((time_uptime32 - time_established) > wg_reject_after_time) {
 		WG_DLOG("The session hits REJECT_AFTER_TIME\n");
 		return true;
 	} else if (wg_session_get_send_counter(wgs) >
@@ -4354,7 +4368,8 @@ wg_send_data_msg(struct wg_peer *wgp, struct wg_session *wgs,
 		if_statadd(ifp, if_obytes, mlen);
 		if_statinc(ifp, if_opackets);
 		if (wgs->wgs_is_initiator &&
-		    ((time_uptime - wgs->wgs_time_established) >=
+		    ((time_uptime32 -
+			atomic_load_relaxed(&wgs->wgs_time_established)) >=
 			wg_rekey_after_time)) {
 			/*
 			 * [W] 6.2 Transport Message Limits
@@ -4368,7 +4383,9 @@ wg_send_data_msg(struct wg_peer *wgp, struct wg_session *wgs,
 			atomic_store_relaxed(&wgp->wgp_force_rekey, 1);
 			wg_schedule_peer_task(wgp, WGP_TASK_SEND_INIT_MESSAGE);
 		}
-		wgs->wgs_time_last_data_sent = time_uptime;
+		const uint32_t now = time_uptime32;
+		atomic_store_relaxed(&wgs->wgs_time_last_data_sent,
+		    MAX(now, 1));
 		if (wg_session_get_send_counter(wgs) >=
 		    wg_rekey_after_messages) {
 			/*
