@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.110 2024/07/28 14:50:05 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.111 2024/07/28 14:50:31 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.110 2024/07/28 14:50:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.111 2024/07/28 14:50:31 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -191,10 +191,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.110 2024/07/28 14:50:05 riastradh Exp $"
 #ifndef WG_DEBUG_DUMP
 #define WG_DEBUG_DUMP
 #endif
-/* debug packets */
-#ifndef WG_DEBUG_PACKET
-#define WG_DEBUG_PACKET
-#endif
 /* Make some internal parameters configurable for testing and debugging */
 #ifndef WG_DEBUG_PARAMS
 #define WG_DEBUG_PARAMS
@@ -203,8 +199,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.110 2024/07/28 14:50:05 riastradh Exp $"
 
 #ifndef WG_DEBUG
 # if defined(WG_DEBUG_LOG) || defined(WG_DEBUG_TRACE) ||		    \
-	defined(WG_DEBUG_DUMP) || defined(WG_DEBUG_PARAMS) ||		    \
-	defined(WG_DEBUG_PACKET)
+	defined(WG_DEBUG_DUMP) || defined(WG_DEBUG_PARAMS)
 #   define WG_DEBUG
 # endif
 #endif
@@ -214,7 +209,6 @@ int wg_debug;
 #define WG_DEBUG_FLAGS_LOG	1
 #define WG_DEBUG_FLAGS_TRACE	2
 #define WG_DEBUG_FLAGS_DUMP	4
-#define WG_DEBUG_FLAGS_PACKET	8
 #endif
 
 
@@ -2829,12 +2823,6 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 	KASSERT(m->m_len >= sizeof(*wgmd));
 	wgmd = mtod(m, struct wg_msg_data *);
 
-#ifdef WG_DEBUG_PACKET
-	if (wg_debug & WG_DEBUG_FLAGS_PACKET) {
-		hexdump(printf, "incoming packet", encrypted_buf,
-		    encrypted_len);
-	}
-#endif
 	/*
 	 * Get a buffer for the plaintext.  Add WG_AUTHTAG_LEN to avoid
 	 * a zero-length buffer (XXX).  Drop if plaintext is longer
@@ -2882,15 +2870,6 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 		goto out;
 	}
 
-#ifdef WG_DEBUG_PACKET
-	if (wg_debug & WG_DEBUG_FLAGS_PACKET) {
-		hexdump(printf, "tkey_recv", wgs->wgs_tkey_recv,
-		    sizeof(wgs->wgs_tkey_recv));
-		hexdump(printf, "wgmd", wgmd, sizeof(*wgmd));
-		hexdump(printf, "decrypted_buf", decrypted_buf,
-		    decrypted_len);
-	}
-#endif
 	/* We're done with m now; free it and chuck the pointers.  */
 	m_freem(m);
 	m = NULL;
@@ -4369,48 +4348,12 @@ wg_send_data_msg(struct wg_peer *wgp, struct wg_session *wgs, struct mbuf *m)
 	KASSERT(n->m_len >= sizeof(*wgmd));
 	wgmd = mtod(n, struct wg_msg_data *);
 	wg_fill_msg_data(wg, wgp, wgs, wgmd);
-#ifdef WG_DEBUG_PACKET
-	if (wg_debug & WG_DEBUG_FLAGS_PACKET) {
-		hexdump(printf, "padded_buf", padded_buf,
-		    padded_len);
-	}
-#endif
+
 	/* [W] 5.4.6: AEAD(Tm^send, Nm^send, P, e) */
 	wg_algo_aead_enc((char *)wgmd + sizeof(*wgmd), encrypted_len,
 	    wgs->wgs_tkey_send, le64toh(wgmd->wgmd_counter),
 	    padded_buf, padded_len,
 	    NULL, 0);
-#ifdef WG_DEBUG_PACKET
-	if (wg_debug & WG_DEBUG_FLAGS_PACKET) {
-		hexdump(printf, "tkey_send", wgs->wgs_tkey_send,
-		    sizeof(wgs->wgs_tkey_send));
-		hexdump(printf, "wgmd", wgmd, sizeof(*wgmd));
-		hexdump(printf, "outgoing packet",
-		    (char *)wgmd + sizeof(*wgmd), encrypted_len);
-		size_t decrypted_len = encrypted_len - WG_AUTHTAG_LEN;
-		char *decrypted_buf = kmem_intr_alloc((decrypted_len +
-			WG_AUTHTAG_LEN/*XXX*/), KM_NOSLEEP);
-		if (decrypted_buf != NULL) {
-			error = wg_algo_aead_dec(
-			    1 + decrypted_buf /* force misalignment */,
-			    encrypted_len - WG_AUTHTAG_LEN /* XXX */,
-			    wgs->wgs_tkey_send, le64toh(wgmd->wgmd_counter),
-			    (char *)wgmd + sizeof(*wgmd), encrypted_len,
-			    NULL, 0);
-			if (error) {
-				WG_DLOG("wg_algo_aead_dec failed: %d\n",
-				    error);
-			}
-			if (!consttime_memequal(1 + decrypted_buf,
-				(char *)wgmd + sizeof(*wgmd),
-				decrypted_len)) {
-				WG_DLOG("wg_algo_aead_dec returned garbage\n");
-			}
-			kmem_intr_free(decrypted_buf, (decrypted_len +
-				WG_AUTHTAG_LEN/*XXX*/));
-		}
-	}
-#endif
 
 	error = wg->wg_ops->send_data_msg(wgp, n); /* consumes n */
 	if (error) {
