@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.93 2024/07/27 15:45:20 christos Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.94 2024/07/28 14:37:59 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.93 2024/07/27 15:45:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.94 2024/07/28 14:37:59 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -1282,8 +1282,16 @@ wg_destroy_session(struct wg_softc *wg, struct wg_session *wgs)
 	pserialize_perform(wgp->wgp_psz);
 	psref_target_destroy(&wgs->wgs_psref, wg_psref_class);
 
-	/* Free memory, zero state, and transition to UNKNOWN.  */
+	/*
+	 * Free memory, zero state, and transition to UNKNOWN.  We have
+	 * exclusive access to the session now, so there is no need for
+	 * an atomic store.
+	 */
 	thmap_gc(wg->wg_sessions_byindex, garbage);
+	WG_DLOG("session[L=%"PRIx32" R=%"PRIx32"] -> WGS_STATE_UNKNOWN\n",
+	    wgs->wgs_local_index, wgs->wgs_remote_index);
+	wgs->wgs_local_index = 0;
+	wgs->wgs_remote_index = 0;
 	wg_clear_states(wgs);
 	wgs->wgs_state = WGS_STATE_UNKNOWN;
 }
@@ -1306,7 +1314,8 @@ wg_get_session_index(struct wg_softc *wg, struct wg_session *wgs)
 
 	KASSERT(mutex_owned(wgp->wgp_lock));
 	KASSERT(wgs == wgp->wgp_session_unstable);
-	KASSERT(wgs->wgs_state == WGS_STATE_UNKNOWN);
+	KASSERTMSG(wgs->wgs_state == WGS_STATE_UNKNOWN, "state=%d",
+	    wgs->wgs_state);
 
 	do {
 		/* Pick a uniform random index.  */
@@ -1379,7 +1388,8 @@ wg_fill_msg_init(struct wg_softc *wg, struct wg_peer *wgp,
 
 	KASSERT(mutex_owned(wgp->wgp_lock));
 	KASSERT(wgs == wgp->wgp_session_unstable);
-	KASSERT(wgs->wgs_state == WGS_STATE_INIT_ACTIVE);
+	KASSERTMSG(wgs->wgs_state == WGS_STATE_INIT_ACTIVE, "state=%d",
+	    wgs->wgs_state);
 
 	wgmi->wgmi_type = htole32(WG_MSG_TYPE_INIT);
 	wgmi->wgmi_sender = wgs->wgs_local_index;
@@ -1622,29 +1632,40 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 	wgs = wgp->wgp_session_unstable;
 	switch (wgs->wgs_state) {
 	case WGS_STATE_UNKNOWN:		/* new session initiated by peer */
-		wg_get_session_index(wg, wgs);
 		break;
 	case WGS_STATE_INIT_ACTIVE:	/* we're already initiating, drop */
+		/* XXX Who wins if both sides send INIT?  */
 		WG_TRACE("Session already initializing, ignoring the message");
 		goto out;
 	case WGS_STATE_INIT_PASSIVE:	/* peer is retrying, start over */
 		WG_TRACE("Session already initializing, destroying old states");
-		wg_clear_states(wgs);
-		/* keep session index */
+		/*
+		 * XXX Avoid this -- just resend our response -- if the
+		 * INIT message is identical to the previous one.
+		 */
+		wg_put_session_index(wg, wgs);
+		KASSERTMSG(wgs->wgs_state == WGS_STATE_UNKNOWN, "state=%d",
+		    wgs->wgs_state);
 		break;
 	case WGS_STATE_ESTABLISHED:	/* can't happen */
 		panic("unstable session can't be established");
-		break;
 	case WGS_STATE_DESTROYING:	/* rekey initiated by peer */
 		WG_TRACE("Session destroying, but force to clear");
 		callout_stop(&wgp->wgp_session_dtor_timer);
-		wg_clear_states(wgs);
-		/* keep session index */
+		wg_put_session_index(wg, wgs);
+		KASSERTMSG(wgs->wgs_state == WGS_STATE_UNKNOWN, "state=%d",
+		    wgs->wgs_state);
 		break;
 	default:
 		panic("invalid session state: %d", wgs->wgs_state);
 	}
-	wgs->wgs_state = WGS_STATE_INIT_PASSIVE;
+
+	/*
+	 * Assign a fresh session index.
+	 */
+	KASSERTMSG(wgs->wgs_state == WGS_STATE_UNKNOWN, "state=%d",
+	    wgs->wgs_state);
+	wg_get_session_index(wg, wgs);
 
 	memcpy(wgs->wgs_handshake_hash, hash, sizeof(hash));
 	memcpy(wgs->wgs_chaining_key, ckey, sizeof(ckey));
@@ -1653,10 +1674,35 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 
 	wg_update_endpoint_if_necessary(wgp, src);
 
+	/*
+	 * Respond to the initiator with our ephemeral public key.
+	 */
 	(void)wg_send_handshake_msg_resp(wg, wgp, wgs, wgmi);
 
+	WG_DLOG("session[L=%"PRIx32" R=%"PRIx32"]:"
+	    " calculate keys as responder\n",
+	    wgs->wgs_local_index, wgs->wgs_remote_index);
 	wg_calculate_keys(wgs, false);
 	wg_clear_states(wgs);
+
+	/*
+	 * Session is ready to receive data now that we have received
+	 * the peer initiator's ephemeral key pair, generated our
+	 * responder's ephemeral key pair, and derived a session key.
+	 *
+	 * Transition from UNKNOWN to INIT_PASSIVE to publish it to the
+	 * data rx path, wg_handle_msg_data, where the
+	 * atomic_load_acquire matching this atomic_store_release
+	 * happens.
+	 *
+	 * (Session is not, however, ready to send data until the peer
+	 * has acknowledged our response by sending its first data
+	 * packet.  So don't swap the sessions yet.)
+	 */
+	WG_DLOG("session[L=%"PRIx32" R=%"PRIx32"] -> WGS_STATE_INIT_PASSIVE\n",
+	    wgs->wgs_local_index, wgs->wgs_remote_index);
+	atomic_store_release(&wgs->wgs_state, WGS_STATE_INIT_PASSIVE);
+	WG_TRACE("WGS_STATE_INIT_PASSIVE");
 
 out:
 	mutex_exit(wgp->wgp_lock);
@@ -1739,25 +1785,41 @@ wg_send_handshake_msg_init(struct wg_softc *wg, struct wg_peer *wgp)
 	/* XXX pull dispatch out into wg_task_send_init_message */
 	switch (wgs->wgs_state) {
 	case WGS_STATE_UNKNOWN:		/* new session initiated by us */
-		wg_get_session_index(wg, wgs);
 		break;
 	case WGS_STATE_INIT_ACTIVE:	/* we're already initiating, stop */
 		WG_TRACE("Session already initializing, skip starting new one");
 		return EBUSY;
 	case WGS_STATE_INIT_PASSIVE:	/* peer was trying -- XXX what now? */
-		WG_TRACE("Session already initializing, destroying old states");
-		wg_clear_states(wgs);
-		/* keep session index */
-		break;
+		WG_TRACE("Session already initializing, waiting for peer");
+		return EBUSY;
 	case WGS_STATE_ESTABLISHED:	/* can't happen */
 		panic("unstable session can't be established");
-		break;
 	case WGS_STATE_DESTROYING:	/* rekey initiated by us too early */
 		WG_TRACE("Session destroying");
-		/* XXX should wait? */
-		return EBUSY;
+		wg_put_session_index(wg, wgs);
+		KASSERTMSG(wgs->wgs_state == WGS_STATE_UNKNOWN, "state=%d",
+		    wgs->wgs_state);
+		break;
 	}
-	wgs->wgs_state = WGS_STATE_INIT_ACTIVE;
+
+	/*
+	 * Assign a fresh session index.
+	 */
+	KASSERTMSG(wgs->wgs_state == WGS_STATE_UNKNOWN, "state=%d",
+	    wgs->wgs_state);
+	wg_get_session_index(wg, wgs);
+
+	/*
+	 * We have initiated a session.  Transition to INIT_ACTIVE.
+	 * This doesn't publish it for use in the data rx path,
+	 * wg_handle_msg_data, or in the data tx path, wg_output -- we
+	 * have to wait for the peer to respond with their ephemeral
+	 * public key before we can derive a session key for tx/rx.
+	 * Hence only atomic_store_relaxed.
+	 */
+	WG_DLOG("session[L=%"PRIx32" R=(unknown)] -> WGS_STATE_INIT_ACTIVE\n",
+	    wgs->wgs_local_index);
+	atomic_store_relaxed(&wgs->wgs_state, WGS_STATE_INIT_ACTIVE);
 
 	m = m_gethdr(M_WAIT, MT_DATA);
 	if (sizeof(*wgmi) > MHLEN) {
@@ -1799,7 +1861,8 @@ wg_fill_msg_resp(struct wg_softc *wg, struct wg_peer *wgp,
 
 	KASSERT(mutex_owned(wgp->wgp_lock));
 	KASSERT(wgs == wgp->wgp_session_unstable);
-	KASSERT(wgs->wgs_state == WGS_STATE_INIT_PASSIVE);
+	KASSERTMSG(wgs->wgs_state == WGS_STATE_UNKNOWN, "state=%d",
+	    wgs->wgs_state);
 
 	memcpy(hash, wgs->wgs_handshake_hash, sizeof(hash));
 	memcpy(ckey, wgs->wgs_chaining_key, sizeof(ckey));
@@ -1889,11 +1952,13 @@ wg_swap_sessions(struct wg_peer *wgp)
 	KASSERT(mutex_owned(wgp->wgp_lock));
 
 	wgs = wgp->wgp_session_unstable;
-	KASSERT(wgs->wgs_state == WGS_STATE_ESTABLISHED);
+	KASSERTMSG(wgs->wgs_state == WGS_STATE_ESTABLISHED, "state=%d",
+	    wgs->wgs_state);
 
 	wgs_prev = wgp->wgp_session_stable;
-	KASSERT(wgs_prev->wgs_state == WGS_STATE_ESTABLISHED ||
-	    wgs_prev->wgs_state == WGS_STATE_UNKNOWN);
+	KASSERTMSG((wgs_prev->wgs_state == WGS_STATE_ESTABLISHED ||
+		wgs_prev->wgs_state == WGS_STATE_UNKNOWN),
+	    "state=%d", wgs_prev->wgs_state);
 	atomic_store_release(&wgp->wgp_session_stable, wgs);
 	wgp->wgp_session_unstable = wgs_prev;
 }
@@ -2041,17 +2106,38 @@ wg_handle_msg_resp(struct wg_softc *wg, const struct wg_msg_resp *wgmr,
 	wgs->wgs_remote_index = wgmr->wgmr_sender;
 	WG_DLOG("receiver=%x\n", wgs->wgs_remote_index);
 
-	KASSERT(wgs->wgs_state == WGS_STATE_INIT_ACTIVE);
-	wgs->wgs_state = WGS_STATE_ESTABLISHED;
+	KASSERTMSG(wgs->wgs_state == WGS_STATE_INIT_ACTIVE, "state=%d",
+	    wgs->wgs_state);
 	wgs->wgs_time_established = time_uptime;
 	wgs->wgs_time_last_data_sent = 0;
 	wgs->wgs_is_initiator = true;
+	WG_DLOG("session[L=%"PRIx32" R=%"PRIx32"]:"
+	    " calculate keys as initiator\n",
+	    wgs->wgs_local_index, wgs->wgs_remote_index);
 	wg_calculate_keys(wgs, true);
 	wg_clear_states(wgs);
+
+	/*
+	 * Session is ready to receive data now that we have received
+	 * the responder's response.
+	 *
+	 * Transition from INIT_ACTIVE to ESTABLISHED to publish it to
+	 * the data rx path, wg_handle_msg_data.
+	 */
+	WG_DLOG("session[L=%"PRIx32" R=%"PRIx32" -> WGS_STATE_ESTABLISHED\n",
+	    wgs->wgs_local_index, wgs->wgs_remote_index);
+	atomic_store_release(&wgs->wgs_state, WGS_STATE_ESTABLISHED);
 	WG_TRACE("WGS_STATE_ESTABLISHED");
 
 	callout_stop(&wgp->wgp_handshake_timeout_timer);
 
+	/*
+	 * Session is ready to send data now that we have received the
+	 * responder's response.
+	 *
+	 * Swap the sessions to publish the new one as the stable
+	 * session for the data tx path, wg_output.
+	 */
 	wg_swap_sessions(wgp);
 	KASSERT(wgs == wgp->wgp_session_stable);
 	wgs_prev = wgp->wgp_session_unstable;
@@ -2087,8 +2173,17 @@ wg_handle_msg_resp(struct wg_softc *wg, const struct wg_msg_resp *wgmr,
 		/* Wait for wg_get_stable_session to drain.  */
 		pserialize_perform(wgp->wgp_psz);
 
-		/* Transition ESTABLISHED->DESTROYING.  */
-		wgs_prev->wgs_state = WGS_STATE_DESTROYING;
+		/*
+		 * Transition ESTABLISHED->DESTROYING.  The session
+		 * will remain usable for the data rx path to process
+		 * packets still in flight to us, but we won't use it
+		 * for data tx.
+		 */
+		WG_DLOG("session[L=%"PRIx32" R=%"PRIx32"]"
+		    " -> WGS_STATE_DESTROYING\n",
+		    wgs_prev->wgs_local_index, wgs_prev->wgs_remote_index);
+		atomic_store_relaxed(&wgs_prev->wgs_state,
+		    WGS_STATE_DESTROYING);
 
 		/* We can't destroy the old session immediately */
 		wg_schedule_session_dtor_timer(wgp);
@@ -2112,7 +2207,8 @@ wg_send_handshake_msg_resp(struct wg_softc *wg, struct wg_peer *wgp,
 
 	KASSERT(mutex_owned(wgp->wgp_lock));
 	KASSERT(wgs == wgp->wgp_session_unstable);
-	KASSERT(wgs->wgs_state == WGS_STATE_INIT_PASSIVE);
+	KASSERTMSG(wgs->wgs_state == WGS_STATE_UNKNOWN, "state=%d",
+	    wgs->wgs_state);
 
 	m = m_gethdr(M_WAIT, MT_DATA);
 	if (sizeof(*wgmr) > MHLEN) {
@@ -2329,8 +2425,11 @@ wg_lookup_session_by_index(struct wg_softc *wg, const uint32_t index,
 	int s = pserialize_read_enter();
 	wgs = thmap_get(wg->wg_sessions_byindex, &index, sizeof index);
 	if (wgs != NULL) {
-		KASSERT(atomic_load_relaxed(&wgs->wgs_state) !=
-		    WGS_STATE_UNKNOWN);
+		uint32_t oindex __diagused =
+		    atomic_load_relaxed(&wgs->wgs_local_index);
+		KASSERTMSG(index == oindex,
+		    "index=%"PRIx32" wgs->wgs_local_index=%"PRIx32,
+		    index, oindex);
 		psref_acquire(psref, &wgs->wgs_psref, wg_psref_class);
 	}
 	pserialize_read_exit(s);
@@ -2612,12 +2711,15 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 	 * We are only ready to handle data when in INIT_PASSIVE,
 	 * ESTABLISHED, or DESTROYING.  All transitions out of that
 	 * state dissociate the session index and drain psrefs.
+	 *
+	 * atomic_load_acquire matches atomic_store_release in either
+	 * wg_handle_msg_init or wg_handle_msg_resp.  (The transition
+	 * INIT_PASSIVE to ESTABLISHED in wg_task_establish_session
+	 * doesn't make a difference for this rx path.)
 	 */
-	state = atomic_load_relaxed(&wgs->wgs_state);
+	state = atomic_load_acquire(&wgs->wgs_state);
 	switch (state) {
 	case WGS_STATE_UNKNOWN:
-		panic("wg session %p in unknown state has session index %u",
-		    wgs, wgmd->wgmd_receiver);
 	case WGS_STATE_INIT_ACTIVE:
 		WG_TRACE("not yet ready for data");
 		goto out;
@@ -2852,6 +2954,15 @@ wg_handle_msg_cookie(struct wg_softc *wg, const struct wg_msg_cookie *wgmc)
 		WG_TRACE("No valid mac1 sent (or expired)");
 		goto out;
 	}
+
+	/*
+	 * wgp_last_sent_mac1_valid is only set to true when we are
+	 * transitioning to INIT_ACTIVE or INIT_PASSIVE, and always
+	 * cleared on transition out of them.
+	 */
+	KASSERTMSG((wgs->wgs_state == WGS_STATE_INIT_ACTIVE ||
+		wgs->wgs_state == WGS_STATE_INIT_PASSIVE),
+	    "state=%d", wgs->wgs_state);
 
 	/* Decrypt the cookie and store it for later handshake retry.  */
 	wg_algo_mac_cookie(key, sizeof(key), wgp->wgp_pubkey,
@@ -3099,12 +3210,33 @@ wg_task_establish_session(struct wg_softc *wg, struct wg_peer *wgp)
 		/* XXX Can this happen?  */
 		return;
 
-	wgs->wgs_state = WGS_STATE_ESTABLISHED;
 	wgs->wgs_time_established = time_uptime;
 	wgs->wgs_time_last_data_sent = 0;
 	wgs->wgs_is_initiator = false;
+
+	/*
+	 * Session was already ready to receive data.  Transition from
+	 * INIT_PASSIVE to ESTABLISHED just so we can swap the
+	 * sessions.
+	 *
+	 * atomic_store_relaxed because this doesn't affect the data rx
+	 * path, wg_handle_msg_data -- changing from INIT_PASSIVE to
+	 * ESTABLISHED makes no difference to the data rx path, and the
+	 * transition to INIT_PASSIVE with store-release already
+	 * published the state needed by the data rx path.
+	 */
+	WG_DLOG("session[L=%"PRIx32" R=%"PRIx32"] -> WGS_STATE_ESTABLISHED\n",
+	    wgs->wgs_local_index, wgs->wgs_remote_index);
+	atomic_store_relaxed(&wgs->wgs_state, WGS_STATE_ESTABLISHED);
 	WG_TRACE("WGS_STATE_ESTABLISHED");
 
+	/*
+	 * Session is ready to send data too now that we have received
+	 * the peer initiator's first data packet.
+	 *
+	 * Swap the sessions to publish the new one as the stable
+	 * session for the data tx path, wg_output.
+	 */
 	wg_swap_sessions(wgp);
 	KASSERT(wgs == wgp->wgp_session_stable);
 	wgs_prev = wgp->wgp_session_unstable;
@@ -3130,15 +3262,29 @@ wg_task_establish_session(struct wg_softc *wg, struct wg_peer *wgp)
 		/* Wait for wg_get_stable_session to drain.  */
 		pserialize_perform(wgp->wgp_psz);
 
-		/* Transition ESTABLISHED->DESTROYING.  */
-		wgs_prev->wgs_state = WGS_STATE_DESTROYING;
+		/*
+		 * Transition ESTABLISHED->DESTROYING.  The session
+		 * will remain usable for the data rx path to process
+		 * packets still in flight to us, but we won't use it
+		 * for data tx.
+		 */
+		WG_DLOG("session[L=%"PRIx32" R=%"PRIx32"]"
+		    " -> WGS_STATE_DESTROYING\n",
+		    wgs_prev->wgs_local_index, wgs_prev->wgs_remote_index);
+		atomic_store_relaxed(&wgs_prev->wgs_state,
+		    WGS_STATE_DESTROYING);
 
 		/* We can't destroy the old session immediately */
 		wg_schedule_session_dtor_timer(wgp);
 	} else {
 		KASSERTMSG(wgs_prev->wgs_state == WGS_STATE_UNKNOWN,
 		    "state=%d", wgs_prev->wgs_state);
-		wg_clear_states(wgs_prev);
+		WG_DLOG("session[L=%"PRIx32" R=%"PRIx32"]"
+		    " -> WGS_STATE_UNKNOWN\n",
+		    wgs_prev->wgs_local_index, wgs_prev->wgs_remote_index);
+		wgs_prev->wgs_local_index = 0; /* paranoia */
+		wgs_prev->wgs_remote_index = 0; /* paranoia */
+		wg_clear_states(wgs_prev); /* paranoia */
 		wgs_prev->wgs_state = WGS_STATE_UNKNOWN;
 	}
 }
@@ -3326,9 +3472,10 @@ wg_overudp_cb(struct mbuf **mp, int offset, struct socket *so,
 	WG_DLOG("type=%d\n", le32toh(wgm.wgm_type));
 
 	/*
-	 * Handle DATA packets promptly as they arrive.  Other packets
-	 * may require expensive public-key crypto and are not as
-	 * sensitive to latency, so defer them to the worker thread.
+	 * Handle DATA packets promptly as they arrive, if they are in
+	 * an active session.  Other packets may require expensive
+	 * public-key crypto and are not as sensitive to latency, so
+	 * defer them to the worker thread.
 	 */
 	switch (le32toh(wgm.wgm_type)) {
 	case WG_MSG_TYPE_DATA:
