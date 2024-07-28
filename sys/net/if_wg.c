@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.95 2024/07/28 14:38:19 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.96 2024/07/28 14:38:42 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.95 2024/07/28 14:38:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.96 2024/07/28 14:38:42 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -1651,7 +1651,7 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 		panic("unstable session can't be established");
 	case WGS_STATE_DESTROYING:	/* rekey initiated by peer */
 		WG_TRACE("Session destroying, but force to clear");
-		callout_stop(&wgp->wgp_session_dtor_timer);
+		callout_halt(&wgp->wgp_session_dtor_timer, NULL);
 		wg_put_session_index(wg, wgs);
 		KASSERTMSG(wgs->wgs_state == WGS_STATE_UNKNOWN, "state=%d",
 		    wgs->wgs_state);
@@ -2129,7 +2129,7 @@ wg_handle_msg_resp(struct wg_softc *wg, const struct wg_msg_resp *wgmr,
 	atomic_store_release(&wgs->wgs_state, WGS_STATE_ESTABLISHED);
 	WG_TRACE("WGS_STATE_ESTABLISHED");
 
-	callout_stop(&wgp->wgp_handshake_timeout_timer);
+	callout_halt(&wgp->wgp_handshake_timeout_timer, NULL);
 
 	/*
 	 * Session is ready to send data now that we have received the
