@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.98 2024/07/28 14:39:19 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.99 2024/07/28 14:39:35 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.98 2024/07/28 14:39:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.99 2024/07/28 14:39:35 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -605,7 +605,7 @@ struct wg_peer {
 	struct wg_session	*wgp_session_unstable;
 
 	/* first outgoing packet awaiting session initiation */
-	struct mbuf		*wgp_pending;
+	struct mbuf		*volatile wgp_pending;
 
 	/* timestamp in big-endian */
 	wg_timestamp_t	wgp_timestamp_latest_init;
