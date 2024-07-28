@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.111 2024/07/28 14:50:31 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.112 2024/07/28 14:55:30 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.111 2024/07/28 14:50:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.112 2024/07/28 14:55:30 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -211,7 +211,6 @@ int wg_debug;
 #define WG_DEBUG_FLAGS_DUMP	4
 #endif
 
-
 #ifdef WG_DEBUG_TRACE
 #define WG_TRACE(msg)	 do {						\
 	if (wg_debug & WG_DEBUG_FLAGS_TRACE)				\
@@ -247,7 +246,16 @@ static char enomem[10] = "[enomem]";
 
 #define	MAX_HDUMP_LEN	10000	/* large enough */
 
-
+/*
+ * gethexdump(p, n)
+ *
+ *	Allocate a string returning a hexdump of bytes p[0..n),
+ *	truncated to MAX_HDUMP_LEN.  Must be freed with puthexdump.
+ *
+ *	We use this instead of libkern hexdump() because the result is
+ *	logged with log(LOG_DEBUG, ...), which puts a priority tag on
+ *	every message, so it can't be done incrementally.
+ */
 static char *
 gethexdump(const void *vp, size_t n)
 {
@@ -258,13 +266,13 @@ gethexdump(const void *vp, size_t n)
 	alloc = n;
 	if (n > MAX_HDUMP_LEN)
 		alloc = MAX_HDUMP_LEN;
-	buf = kmem_alloc(3 * alloc + 5, KM_NOSLEEP);
+	buf = kmem_alloc(3*alloc + 5, KM_NOSLEEP);
 	if (buf == NULL)
 		return enomem;
 	for (i = 0; i < alloc; i++)
-		snprintf(buf + 3 * i, 3 + 1, " %02hhx", p[i]);
+		snprintf(buf + 3*i, 3 + 1, " %02hhx", p[i]);
 	if (alloc != n)
-		snprintf(buf + 3 * i, 4 + 1, " ...");
+		snprintf(buf + 3*i, 4 + 1, " ...");
 	return buf;
 }
 
@@ -276,7 +284,7 @@ puthexdump(char *buf, const void *p, size_t n)
 		return;
 	if (n > MAX_HDUMP_LEN)
 		n = MAX_HDUMP_LEN;
-	kmem_free(buf, 3 * n + 5);
+	kmem_free(buf, 3*n + 5);
 }
 
 #ifdef WG_RUMPKERNEL
