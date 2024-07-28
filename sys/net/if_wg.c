@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.104 2024/07/28 14:47:37 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.105 2024/07/28 14:47:58 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.104 2024/07/28 14:47:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.105 2024/07/28 14:47:58 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -119,6 +119,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.104 2024/07/28 14:47:37 riastradh Exp $"
 
 #ifdef WG_RUMPKERNEL
 #include "wg_user.h"
+#endif
+
+#ifndef time_uptime32
+#define	time_uptime32	((uint32_t)time_uptime)
 #endif
 
 /*
