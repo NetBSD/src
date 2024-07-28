@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.99 2024/07/28 14:39:35 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.100 2024/07/28 14:40:02 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.99 2024/07/28 14:39:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.100 2024/07/28 14:40:02 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -1346,7 +1346,6 @@ wg_put_session_index(struct wg_softc *wg, struct wg_session *wgs)
 	struct wg_peer *wgp __diagused = wgs->wgs_peer;
 
 	KASSERT(mutex_owned(wgp->wgp_lock));
-	KASSERT(wgs == wgp->wgp_session_unstable);
 	KASSERT(wgs->wgs_state != WGS_STATE_UNKNOWN);
 	KASSERT(wgs->wgs_state != WGS_STATE_ESTABLISHED);
 
@@ -1651,7 +1650,6 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 		panic("unstable session can't be established");
 	case WGS_STATE_DESTROYING:	/* rekey initiated by peer */
 		WG_TRACE("Session destroying, but force to clear");
-		callout_halt(&wgp->wgp_session_dtor_timer, NULL);
 		wg_put_session_index(wg, wgs);
 		KASSERTMSG(wgs->wgs_state == WGS_STATE_UNKNOWN, "state=%d",
 		    wgs->wgs_state);
@@ -1673,6 +1671,15 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 	    sizeof(wgmi->wgmi_ephemeral));
 
 	wg_update_endpoint_if_necessary(wgp, src);
+
+	/*
+	 * Count the time of the INIT message as the time of
+	 * establishment -- this is used to decide when to erase keys,
+	 * and we want to start counting as soon as we have generated
+	 * keys.
+	 */
+	wgs->wgs_time_established = time_uptime;
+	wg_schedule_session_dtor_timer(wgp);
 
 	/*
 	 * Respond to the initiator with our ephemeral public key.
@@ -2109,6 +2116,7 @@ wg_handle_msg_resp(struct wg_softc *wg, const struct wg_msg_resp *wgmr,
 	KASSERTMSG(wgs->wgs_state == WGS_STATE_INIT_ACTIVE, "state=%d",
 	    wgs->wgs_state);
 	wgs->wgs_time_established = time_uptime;
+	wg_schedule_session_dtor_timer(wgp);
 	wgs->wgs_time_last_data_sent = 0;
 	wgs->wgs_is_initiator = true;
 	WG_DLOG("session[L=%"PRIx32" R=%"PRIx32"]:"
@@ -2179,9 +2187,6 @@ wg_handle_msg_resp(struct wg_softc *wg, const struct wg_msg_resp *wgmr,
 		    wgs_prev->wgs_local_index, wgs_prev->wgs_remote_index);
 		atomic_store_relaxed(&wgs_prev->wgs_state,
 		    WGS_STATE_DESTROYING);
-
-		/* We can't destroy the old session immediately */
-		wg_schedule_session_dtor_timer(wgp);
 	} else {
 		KASSERTMSG(wgs_prev->wgs_state == WGS_STATE_UNKNOWN,
 		    "state=%d", wgs_prev->wgs_state);
@@ -2604,6 +2609,7 @@ wg_session_dtor_timer(void *arg)
 
 	WG_TRACE("enter");
 
+	wg_schedule_session_dtor_timer(wgp);
 	wg_schedule_peer_task(wgp, WGP_TASK_DESTROY_PREV_SESSION);
 }
 
@@ -2611,8 +2617,19 @@ static void
 wg_schedule_session_dtor_timer(struct wg_peer *wgp)
 {
 
-	/* 1 second grace period */
-	callout_schedule(&wgp->wgp_session_dtor_timer, hz);
+	/*
+	 * If the periodic session destructor is already pending to
+	 * handle the previous session, that's fine -- leave it in
+	 * place; it will be scheduled again.
+	 */
+	if (callout_pending(&wgp->wgp_session_dtor_timer)) {
+		WG_DLOG("session dtor already pending\n");
+		return;
+	}
+
+	WG_DLOG("scheduling session dtor in %u secs\n", wg_reject_after_time);
+	callout_schedule(&wgp->wgp_session_dtor_timer,
+	    wg_reject_after_time*hz);
 }
 
 static bool
@@ -3205,7 +3222,6 @@ wg_task_establish_session(struct wg_softc *wg, struct wg_peer *wgp)
 		/* XXX Can this happen?  */
 		return;
 
-	wgs->wgs_time_established = time_uptime;
 	wgs->wgs_time_last_data_sent = 0;
 	wgs->wgs_is_initiator = false;
 
@@ -3265,9 +3281,6 @@ wg_task_establish_session(struct wg_softc *wg, struct wg_peer *wgp)
 		    wgs_prev->wgs_local_index, wgs_prev->wgs_remote_index);
 		atomic_store_relaxed(&wgs_prev->wgs_state,
 		    WGS_STATE_DESTROYING);
-
-		/* We can't destroy the old session immediately */
-		wg_schedule_session_dtor_timer(wgp);
 	} else {
 		KASSERTMSG(wgs_prev->wgs_state == WGS_STATE_UNKNOWN,
 		    "state=%d", wgs_prev->wgs_state);
@@ -3321,15 +3334,61 @@ static void
 wg_task_destroy_prev_session(struct wg_softc *wg, struct wg_peer *wgp)
 {
 	struct wg_session *wgs;
+	time_t age;
 
 	WG_TRACE("WGP_TASK_DESTROY_PREV_SESSION");
 
 	KASSERT(mutex_owned(wgp->wgp_lock));
 
+	/*
+	 * If theres's any previous unstable session, i.e., one that
+	 * was ESTABLISHED and is now DESTROYING, older than
+	 * reject-after-time, destroy it.  Upcoming sessions are still
+	 * in INIT_ACTIVE or INIT_PASSIVE -- we don't touch those here.
+	 */
 	wgs = wgp->wgp_session_unstable;
-	if (wgs->wgs_state == WGS_STATE_DESTROYING) {
+	KASSERT(wgs->wgs_state != WGS_STATE_ESTABLISHED);
+	if (wgs->wgs_state == WGS_STATE_DESTROYING &&
+	    ((age = (time_uptime - wgs->wgs_time_established)) >=
+		wg_reject_after_time)) {
+		WG_DLOG("destroying past session %"PRIuMAX" sec old\n",
+		    (uintmax_t)age);
 		wg_put_session_index(wg, wgs);
+		KASSERTMSG(wgs->wgs_state == WGS_STATE_UNKNOWN, "state=%d",
+		    wgs->wgs_state);
 	}
+
+	/*
+	 * If theres's any ESTABLISHED stable session older than
+	 * reject-after-time, destroy it.  (The stable session can also
+	 * be in UNKNOWN state -- nothing to do in that case)
+	 */
+	wgs = wgp->wgp_session_stable;
+	KASSERT(wgs->wgs_state != WGS_STATE_INIT_ACTIVE);
+	KASSERT(wgs->wgs_state != WGS_STATE_INIT_PASSIVE);
+	KASSERT(wgs->wgs_state != WGS_STATE_DESTROYING);
+	if (wgs->wgs_state == WGS_STATE_ESTABLISHED &&
+	    ((age = (time_uptime - wgs->wgs_time_established)) >=
+		wg_reject_after_time)) {
+		WG_DLOG("destroying current session %"PRIuMAX" sec old\n",
+		    (uintmax_t)age);
+		atomic_store_relaxed(&wgs->wgs_state, WGS_STATE_DESTROYING);
+		wg_put_session_index(wg, wgs);
+		KASSERTMSG(wgs->wgs_state == WGS_STATE_UNKNOWN, "state=%d",
+		    wgs->wgs_state);
+	}
+
+	/*
+	 * If there's no sessions left, no need to have the timer run
+	 * until the next time around -- halt it.
+	 *
+	 * It is only ever scheduled with wgp_lock held or in the
+	 * callout itself, and callout_halt prevents rescheudling
+	 * itself, so this never races with rescheduling.
+	 */
+	if (wgp->wgp_session_unstable->wgs_state == WGS_STATE_UNKNOWN &&
+	    wgp->wgp_session_stable->wgs_state == WGS_STATE_UNKNOWN)
+		callout_halt(&wgp->wgp_session_dtor_timer, NULL);
 }
 
 static void
