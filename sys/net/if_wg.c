@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.96 2024/07/28 14:38:42 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.97 2024/07/28 14:39:00 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.96 2024/07/28 14:38:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.97 2024/07/28 14:39:00 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -2168,9 +2168,6 @@ wg_handle_msg_resp(struct wg_softc *wg, const struct wg_msg_resp *wgmr,
 	}
 
 	if (wgs_prev->wgs_state == WGS_STATE_ESTABLISHED) {
-		/* Wait for wg_get_stable_session to drain.  */
-		pserialize_perform(wgp->wgp_psz);
-
 		/*
 		 * Transition ESTABLISHED->DESTROYING.  The session
 		 * will remain usable for the data rx path to process
@@ -3255,9 +3252,6 @@ wg_task_establish_session(struct wg_softc *wg, struct wg_peer *wgp)
 	}
 
 	if (wgs_prev->wgs_state == WGS_STATE_ESTABLISHED) {
-		/* Wait for wg_get_stable_session to drain.  */
-		pserialize_perform(wgp->wgp_psz);
-
 		/*
 		 * Transition ESTABLISHED->DESTROYING.  The session
 		 * will remain usable for the data rx path to process
