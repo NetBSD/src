@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.115 2024/07/29 02:33:27 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.116 2024/07/29 02:33:44 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.115 2024/07/29 02:33:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.116 2024/07/29 02:33:44 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -1987,14 +1987,39 @@ wg_swap_sessions(struct wg_peer *wgp)
 
 	KASSERT(mutex_owned(wgp->wgp_lock));
 
+	/*
+	 * Get the newly established session, to become the new
+	 * session.  Caller must have transitioned from INIT_ACTIVE to
+	 * INIT_PASSIVE to ESTABLISHED already.  This will become the
+	 * stable session.
+	 */
 	wgs = wgp->wgp_session_unstable;
 	KASSERTMSG(wgs->wgs_state == WGS_STATE_ESTABLISHED, "state=%d",
 	    wgs->wgs_state);
 
+	/*
+	 * Get the stable session, which is either the previously
+	 * established session in the ESTABLISHED state, or has not
+	 * been established at all and is UNKNOWN.  This will become
+	 * the unstable session.
+	 */
 	wgs_prev = wgp->wgp_session_stable;
 	KASSERTMSG((wgs_prev->wgs_state == WGS_STATE_ESTABLISHED ||
 		wgs_prev->wgs_state == WGS_STATE_UNKNOWN),
 	    "state=%d", wgs_prev->wgs_state);
+
+	/*
+	 * Publish the newly established session for the tx path to use
+	 * and make the other one the unstable session to handle
+	 * stragglers in the rx path and later be used for the next
+	 * session's handshake.
+	 *
+	 * If wgs_prev was previously ESTABLISHED, caller must
+	 * transition it to DESTROYING and then pass through
+	 * wg_put_session_index before recycling it.
+	 *
+	 * XXX Factor that logic out into this routine.
+	 */
 	atomic_store_release(&wgp->wgp_session_stable, wgs);
 	wgp->wgp_session_unstable = wgs_prev;
 }
