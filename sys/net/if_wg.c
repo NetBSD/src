@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.125 2024/07/29 19:44:22 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.126 2024/07/29 19:45:56 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.125 2024/07/29 19:44:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.126 2024/07/29 19:45:56 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -1911,7 +1911,7 @@ wg_send_handshake_msg_init(struct wg_softc *wg, struct wg_peer *wgp)
 		WG_DLOG("send_hs_msg failed, error=%d\n", error);
 		wg_put_session_index(wg, wgs);
 		m = atomic_swap_ptr(&wgp->wgp_pending, NULL);
-		membar_acquire(); /* matches membar_release in wg_output */
+		membar_acquire(); /* matches membar_release in wgintr */
 		m_freem(m);
 		return;
 	}
@@ -2082,7 +2082,7 @@ wg_swap_sessions(struct wg_softc *wg, struct wg_peer *wgp)
 	 * or else the responder will never answer.
 	 */
 	if ((m = atomic_swap_ptr(&wgp->wgp_pending, NULL)) != NULL) {
-		membar_acquire(); /* matches membar_release in wg_output */
+		membar_acquire(); /* matches membar_release in wgintr */
 		kpreempt_disable();
 		const uint32_t h = curcpu()->ci_index; // pktq_rps_hash(m)
 		M_SETCTX(m, wgp);
@@ -3708,8 +3708,28 @@ wgintr(void *cookie)
 	while ((m = pktq_dequeue(wg_pktq)) != NULL) {
 		wgp = M_GETCTX(m, struct wg_peer *);
 		if ((wgs = wg_get_stable_session(wgp, &psref)) == NULL) {
+			/*
+			 * No established session.  If we're the first
+			 * to try sending data, schedule a handshake
+			 * and queue the packet for when the handshake
+			 * is done; otherwise just drop the packet and
+			 * let the ongoing handshake attempt continue.
+			 * We could queue more data packets but it's
+			 * not clear that's worthwhile.
+			 */
 			WG_TRACE("no stable session");
-			wg_schedule_peer_task(wgp, WGP_TASK_SEND_INIT_MESSAGE);
+			membar_release();
+			if ((m = atomic_swap_ptr(&wgp->wgp_pending, m)) ==
+			    NULL) {
+				WG_TRACE("queued first packet;"
+				    " init handshake");
+				wg_schedule_peer_task(wgp,
+				    WGP_TASK_SEND_INIT_MESSAGE);
+			} else {
+				membar_acquire();
+				WG_TRACE("first packet already queued,"
+				    " dropping");
+			}
 			goto next0;
 		}
 		if (__predict_false(wg_session_hit_limits(wgs))) {
@@ -3732,7 +3752,7 @@ wg_purge_pending_packets(struct wg_peer *wgp)
 	struct mbuf *m;
 
 	m = atomic_swap_ptr(&wgp->wgp_pending, NULL);
-	membar_acquire();     /* matches membar_release in wg_output */
+	membar_acquire();     /* matches membar_release in wgintr */
 	m_freem(m);
 #ifdef ALTQ
 	wg_start(&wgp->wgp_sc->wg_if);
@@ -4202,8 +4222,7 @@ wg_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 {
 	struct wg_softc *wg = ifp->if_softc;
 	struct wg_peer *wgp = NULL;
-	struct wg_session *wgs = NULL;
-	struct psref wgp_psref, wgs_psref;
+	struct psref wgp_psref;
 	int bound;
 	int error;
 
@@ -4240,33 +4259,7 @@ wg_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	m->m_pkthdr.csum_flags = 0;
 	m->m_pkthdr.csum_data = 0;
 
-	/* Check whether there's an established session.  */
-	wgs = wg_get_stable_session(wgp, &wgs_psref);
-	if (wgs == NULL) {
-		/*
-		 * No established session.  If we're the first to try
-		 * sending data, schedule a handshake and queue the
-		 * packet for when the handshake is done; otherwise
-		 * just drop the packet and let the ongoing handshake
-		 * attempt continue.  We could queue more data packets
-		 * but it's not clear that's worthwhile.
-		 *
-		 * membar_release matches membar_acquire in
-		 * wg_swap_sessions, wg_purge_pending_packets, and
-		 * wg_send_handshake_msg_init.
-		 */
-		membar_release();
-		if ((m = atomic_swap_ptr(&wgp->wgp_pending, m)) == NULL) {
-			WG_TRACE("queued first packet; init handshake");
-			wg_schedule_peer_task(wgp, WGP_TASK_SEND_INIT_MESSAGE);
-		} else {
-			membar_acquire();
-			WG_TRACE("first packet already queued, dropping");
-		}
-		goto out1;
-	}
-
-	/* There's an established session.  Toss it in the queue.  */
+	/* Toss it in the queue.  */
 #ifdef ALTQ
 	if (altq) {
 		mutex_enter(ifp->if_snd.ifq_lock);
@@ -4278,7 +4271,7 @@ wg_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		mutex_exit(ifp->if_snd.ifq_lock);
 		if (m == NULL) {
 			wg_start(ifp);
-			goto out2;
+			goto out1;
 		}
 	}
 #endif
@@ -4289,17 +4282,16 @@ wg_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		WGLOG(LOG_ERR, "%s: pktq full, dropping\n",
 		    if_name(&wg->wg_if));
 		error = ENOBUFS;
-		goto out3;
+		goto out2;
 	}
 	m = NULL;		/* consumed */
 	error = 0;
-out3:	kpreempt_enable();
+out2:	kpreempt_enable();
 
 #ifdef ALTQ
-out2:
+out1:
 #endif
-	wg_put_session(wgs, &wgs_psref);
-out1:	wg_put_peer(wgp, &wgp_psref);
+	wg_put_peer(wgp, &wgp_psref);
 out0:	m_freem(m);
 	curlwp_bindx(bound);
 	return error;
