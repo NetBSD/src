@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.127 2024/07/29 19:46:25 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.128 2024/07/29 19:46:59 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.127 2024/07/29 19:46:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.128 2024/07/29 19:46:59 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -2083,15 +2083,8 @@ wg_swap_sessions(struct wg_softc *wg, struct wg_peer *wgp)
 	 */
 	if ((m = atomic_swap_ptr(&wgp->wgp_pending, NULL)) != NULL) {
 		membar_acquire(); /* matches membar_release in wgintr */
-		kpreempt_disable();
-		const uint32_t h = curcpu()->ci_index; // pktq_rps_hash(m)
-		M_SETCTX(m, wgp);
-		if (__predict_false(!pktq_enqueue(wg_pktq, m, h))) {
-			WGLOG(LOG_ERR, "%s: pktq full, dropping\n",
-			    if_name(&wg->wg_if));
-			m_freem(m);
-		}
-		kpreempt_enable();
+		wg_send_data_msg(wgp, wgs, m); /* consumes m */
+		m = NULL;
 	} else if (wgs->wgs_is_initiator) {
 		wg_send_keepalive_msg(wgp, wgs);
 	}
