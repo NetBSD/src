@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.122 2024/07/29 16:02:05 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.123 2024/07/29 18:43:11 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.122 2024/07/29 16:02:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.123 2024/07/29 18:43:11 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -1297,7 +1297,8 @@ wg_get_stable_session(struct wg_peer *wgp, struct psref *psref)
 
 	s = pserialize_read_enter();
 	wgs = atomic_load_consume(&wgp->wgp_session_stable);
-	if (__predict_false(wgs->wgs_state != WGS_STATE_ESTABLISHED))
+	if (__predict_false(atomic_load_relaxed(&wgs->wgs_state) !=
+		WGS_STATE_ESTABLISHED))
 		wgs = NULL;
 	else
 		psref_acquire(psref, &wgs->wgs_psref, wg_psref_class);
