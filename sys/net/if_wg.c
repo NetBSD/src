@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.116 2024/07/29 02:33:44 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.117 2024/07/29 02:33:58 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.116 2024/07/29 02:33:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.117 2024/07/29 02:33:58 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -518,8 +518,7 @@ struct wg_session {
 #define WGS_STATE_ESTABLISHED	3
 #define WGS_STATE_DESTROYING	4
 
-	volatile uint32_t
-			wgs_time_established;
+	uint32_t	wgs_time_established;
 	volatile uint32_t
 			wgs_time_last_data_sent;
 	volatile bool	wgs_force_rekey;
@@ -1693,14 +1692,12 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 	wg_update_endpoint_if_necessary(wgp, src);
 
 	/*
-	 * Count the time of the INIT message as the time of
-	 * establishment -- this is used to decide when to erase keys,
-	 * and we want to start counting as soon as we have generated
-	 * keys.
-	 *
-	 * No need for atomic store because the session can't be used
-	 * in the rx or tx paths yet -- not until we transition to
-	 * INTI_PASSIVE.
+	 * Even though we don't transition from INIT_PASSIVE to
+	 * ESTABLISHED until we receive the first data packet from the
+	 * initiator, we count the time of the INIT message as the time
+	 * of establishment -- this is used to decide when to erase
+	 * keys, and we want to start counting as soon as we have
+	 * generated keys.
 	 */
 	wgs->wgs_time_established = time_uptime32;
 	wg_schedule_session_dtor_timer(wgp);
@@ -2530,8 +2527,7 @@ wg_need_to_send_init_message(struct wg_session *wgs)
 	 */
 	return wgs->wgs_is_initiator &&
 	    atomic_load_relaxed(&wgs->wgs_time_last_data_sent) == 0 &&
-	    ((time_uptime32 -
-		atomic_load_relaxed(&wgs->wgs_time_established)) >=
+	    (time_uptime32 - wgs->wgs_time_established >=
 		(wg_reject_after_time - wg_keepalive_timeout -
 		    wg_rekey_timeout));
 }
@@ -2814,7 +2810,7 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 	/*
 	 * Reject if the session is too old.
 	 */
-	age = time_uptime32 - atomic_load_relaxed(&wgs->wgs_time_established);
+	age = time_uptime32 - wgs->wgs_time_established;
 	if (__predict_false(age >= wg_reject_after_time)) {
 		WG_DLOG("session %"PRIx32" too old, %"PRIu32" sec\n",
 		    wgmd->wgmd_receiver, age);
@@ -3428,9 +3424,6 @@ wg_task_destroy_prev_session(struct wg_softc *wg, struct wg_peer *wgp)
 	 * was ESTABLISHED and is now DESTROYING, older than
 	 * reject-after-time, destroy it.  Upcoming sessions are still
 	 * in INIT_ACTIVE or INIT_PASSIVE -- we don't touch those here.
-	 *
-	 * No atomic for access to wgs_time_established because it is
-	 * only updated under wgp_lock.
 	 */
 	wgs = wgp->wgp_session_unstable;
 	KASSERT(wgs->wgs_state != WGS_STATE_ESTABLISHED);
@@ -3663,8 +3656,6 @@ wg_socreate(struct wg_softc *wg, int af, struct socket **sop)
 static bool
 wg_session_hit_limits(struct wg_session *wgs)
 {
-	uint32_t time_established =
-	    atomic_load_relaxed(&wgs->wgs_time_established);
 
 	/*
 	 * [W] 6.2: Transport Message Limits
@@ -3673,8 +3664,8 @@ wg_session_hit_limits(struct wg_session *wgs)
 	 *  comes first, WireGuard will refuse to send or receive any more
 	 *  transport data messages using the current secure session, ..."
 	 */
-	KASSERT(time_established != 0 || time_uptime > UINT32_MAX);
-	if ((time_uptime32 - time_established) > wg_reject_after_time) {
+	KASSERT(wgs->wgs_time_established != 0 || time_uptime > UINT32_MAX);
+	if (time_uptime32 - wgs->wgs_time_established > wg_reject_after_time) {
 		WG_DLOG("The session hits REJECT_AFTER_TIME\n");
 		return true;
 	} else if (wg_session_get_send_counter(wgs) >
@@ -4430,9 +4421,7 @@ wg_send_data_msg(struct wg_peer *wgp, struct wg_session *wgs, struct mbuf *m)
 	 * Check rekey-after-time.
 	 */
 	if (wgs->wgs_is_initiator &&
-	    ((time_uptime32 -
-		atomic_load_relaxed(&wgs->wgs_time_established)) >=
-		wg_rekey_after_time)) {
+	    now - wgs->wgs_time_established >= wg_rekey_after_time) {
 		/*
 		 * [W] 6.2 Transport Message Limits
 		 * "if a peer is the initiator of a current secure
