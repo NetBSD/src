@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.126 2024/07/29 19:45:56 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.127 2024/07/29 19:46:25 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.126 2024/07/29 19:45:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.127 2024/07/29 19:46:25 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -3734,8 +3734,20 @@ wgintr(void *cookie)
 		}
 		if (__predict_false(wg_session_hit_limits(wgs))) {
 			WG_TRACE("stable session hit limits");
-			atomic_store_relaxed(&wgs->wgs_force_rekey, true);
-			wg_schedule_peer_task(wgp, WGP_TASK_SEND_INIT_MESSAGE);
+			membar_release();
+			if ((m = atomic_swap_ptr(&wgp->wgp_pending, m)) ==
+			    NULL) {
+				WG_TRACE("queued first packet in a while;"
+				    " reinit handshake");
+				atomic_store_relaxed(&wgs->wgs_force_rekey,
+				    true);
+				wg_schedule_peer_task(wgp,
+				    WGP_TASK_SEND_INIT_MESSAGE);
+			} else {
+				membar_acquire();
+				WG_TRACE("first packet in already queued,"
+				    " dropping");
+			}
 			goto next1;
 		}
 		wg_send_data_msg(wgp, wgs, m);
