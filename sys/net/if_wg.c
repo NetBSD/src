@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.121 2024/07/29 16:01:32 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.122 2024/07/29 16:02:05 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.121 2024/07/29 16:01:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.122 2024/07/29 16:02:05 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -1722,6 +1722,13 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 	memcpy(wgs->wgs_ephemeral_key_peer, wgmi->wgmi_ephemeral,
 	    sizeof(wgmi->wgmi_ephemeral));
 
+	/*
+	 * The packet is genuine.  Update the peer's endpoint if the
+	 * source address changed.
+	 *
+	 * XXX How to prevent DoS by replaying genuine packets from the
+	 * wrong source address?
+	 */
 	wg_update_endpoint_if_necessary(wgp, src);
 
 	/*
@@ -2010,10 +2017,20 @@ wg_fill_msg_resp(struct wg_softc *wg, struct wg_peer *wgp,
 	WG_DLOG("receiver=%x\n", wgs->wgs_remote_index);
 }
 
+/*
+ * wg_swap_sessions(wg, wgp)
+ *
+ *	Caller has just finished establishing the unstable session in
+ *	wg for peer wgp.  Publish it as the stable session, send queued
+ *	packets or keepalives as necessary to kick off the session,
+ *	move the previously stable session to unstable, and begin
+ *	destroying it.
+ */
 static void
-wg_swap_sessions(struct wg_peer *wgp)
+wg_swap_sessions(struct wg_softc *wg, struct wg_peer *wgp)
 {
 	struct wg_session *wgs, *wgs_prev;
+	struct mbuf *m;
 
 	KASSERT(mutex_owned(wgp->wgp_lock));
 
@@ -2043,15 +2060,63 @@ wg_swap_sessions(struct wg_peer *wgp)
 	 * and make the other one the unstable session to handle
 	 * stragglers in the rx path and later be used for the next
 	 * session's handshake.
-	 *
-	 * If wgs_prev was previously ESTABLISHED, caller must
-	 * transition it to DESTROYING and then pass through
-	 * wg_put_session_index before recycling it.
-	 *
-	 * XXX Factor that logic out into this routine.
 	 */
 	atomic_store_release(&wgp->wgp_session_stable, wgs);
 	wgp->wgp_session_unstable = wgs_prev;
+
+	/*
+	 * Record the handshake time and reset the handshake state.
+	 */
+	getnanotime(&wgp->wgp_last_handshake_time);
+	wgp->wgp_handshake_start_time = 0;
+	wgp->wgp_last_sent_mac1_valid = false;
+	wgp->wgp_last_sent_cookie_valid = false;
+
+	/*
+	 * If we had a data packet queued up, send it.
+	 *
+	 * If not, but we're the initiator, send a keepalive message --
+	 * if we're the initiator we have to send something immediately
+	 * or else the responder will never answer.
+	 */
+	if ((m = atomic_swap_ptr(&wgp->wgp_pending, NULL)) != NULL) {
+		kpreempt_disable();
+		const uint32_t h = curcpu()->ci_index; // pktq_rps_hash(m)
+		M_SETCTX(m, wgp);
+		if (__predict_false(!pktq_enqueue(wg_pktq, m, h))) {
+			WGLOG(LOG_ERR, "%s: pktq full, dropping\n",
+			    if_name(&wg->wg_if));
+			m_freem(m);
+		}
+		kpreempt_enable();
+	} else if (wgs->wgs_is_initiator) {
+		wg_send_keepalive_msg(wgp, wgs);
+	}
+
+	/*
+	 * If the previous stable session was established, begin to
+	 * destroy it.
+	 */
+	if (wgs_prev->wgs_state == WGS_STATE_ESTABLISHED) {
+		/*
+		 * Transition ESTABLISHED->DESTROYING.  The session
+		 * will remain usable for the data rx path to process
+		 * packets still in flight to us, but we won't use it
+		 * for data tx.
+		 */
+		WG_DLOG("session[L=%"PRIx32" R=%"PRIx32"]"
+		    " -> WGS_STATE_DESTROYING\n",
+		    wgs_prev->wgs_local_index, wgs_prev->wgs_remote_index);
+		atomic_store_relaxed(&wgs_prev->wgs_state,
+		    WGS_STATE_DESTROYING);
+	} else {
+		KASSERTMSG(wgs_prev->wgs_state == WGS_STATE_UNKNOWN,
+		    "state=%d", wgs_prev->wgs_state);
+		wgs_prev->wgs_local_index = 0; /* paranoia */
+		wgs_prev->wgs_remote_index = 0; /* paranoia */
+		wg_clear_states(wgs_prev); /* paranoia */
+		wgs_prev->wgs_state = WGS_STATE_UNKNOWN;
+	}
 }
 
 static void __noinline
@@ -2066,8 +2131,6 @@ wg_handle_msg_resp(struct wg_softc *wg, const struct wg_msg_resp *wgmr,
 	struct psref psref;
 	int error;
 	uint8_t mac1[WG_MAC_LEN];
-	struct wg_session *wgs_prev;
-	struct mbuf *m;
 
 	wg_algo_mac_mac1(mac1, sizeof(mac1),
 	    wg->wg_pubkey, sizeof(wg->wg_pubkey),
@@ -2197,6 +2260,15 @@ wg_handle_msg_resp(struct wg_softc *wg, const struct wg_msg_resp *wgmr,
 	wgs->wgs_remote_index = wgmr->wgmr_sender;
 	WG_DLOG("receiver=%x\n", wgs->wgs_remote_index);
 
+	/*
+	 * The packet is genuine.  Update the peer's endpoint if the
+	 * source address changed.
+	 *
+	 * XXX How to prevent DoS by replaying genuine packets from the
+	 * wrong source address?
+	 */
+	wg_update_endpoint_if_necessary(wgp, src);
+
 	KASSERTMSG(wgs->wgs_state == WGS_STATE_INIT_ACTIVE, "state=%d",
 	    wgs->wgs_state);
 	wgs->wgs_time_established = time_uptime32;
@@ -2230,51 +2302,8 @@ wg_handle_msg_resp(struct wg_softc *wg, const struct wg_msg_resp *wgmr,
 	 * Swap the sessions to publish the new one as the stable
 	 * session for the data tx path, wg_output.
 	 */
-	wg_swap_sessions(wgp);
+	wg_swap_sessions(wg, wgp);
 	KASSERT(wgs == wgp->wgp_session_stable);
-	wgs_prev = wgp->wgp_session_unstable;
-	getnanotime(&wgp->wgp_last_handshake_time);
-	wgp->wgp_handshake_start_time = 0;
-	wgp->wgp_last_sent_mac1_valid = false;
-	wgp->wgp_last_sent_cookie_valid = false;
-
-	wg_update_endpoint_if_necessary(wgp, src);
-
-	/*
-	 * If we had a data packet queued up, send it; otherwise send a
-	 * keepalive message -- either way we have to send something
-	 * immediately or else the responder will never answer.
-	 */
-	if ((m = atomic_swap_ptr(&wgp->wgp_pending, NULL)) != NULL) {
-		kpreempt_disable();
-		const uint32_t h = curcpu()->ci_index; // pktq_rps_hash(m)
-		M_SETCTX(m, wgp);
-		if (__predict_false(!pktq_enqueue(wg_pktq, m, h))) {
-			WGLOG(LOG_ERR, "%s: pktq full, dropping\n",
-			    if_name(&wg->wg_if));
-			m_freem(m);
-		}
-		kpreempt_enable();
-	} else {
-		wg_send_keepalive_msg(wgp, wgs);
-	}
-
-	if (wgs_prev->wgs_state == WGS_STATE_ESTABLISHED) {
-		/*
-		 * Transition ESTABLISHED->DESTROYING.  The session
-		 * will remain usable for the data rx path to process
-		 * packets still in flight to us, but we won't use it
-		 * for data tx.
-		 */
-		WG_DLOG("session[L=%"PRIx32" R=%"PRIx32"]"
-		    " -> WGS_STATE_DESTROYING\n",
-		    wgs_prev->wgs_local_index, wgs_prev->wgs_remote_index);
-		atomic_store_relaxed(&wgs_prev->wgs_state,
-		    WGS_STATE_DESTROYING);
-	} else {
-		KASSERTMSG(wgs_prev->wgs_state == WGS_STATE_UNKNOWN,
-		    "state=%d", wgs_prev->wgs_state);
-	}
 
 out:
 	mutex_exit(wgp->wgp_lock);
@@ -3322,8 +3351,7 @@ wg_task_retry_handshake(struct wg_softc *wg, struct wg_peer *wgp)
 static void
 wg_task_establish_session(struct wg_softc *wg, struct wg_peer *wgp)
 {
-	struct wg_session *wgs, *wgs_prev;
-	struct mbuf *m;
+	struct wg_session *wgs;
 
 	KASSERT(mutex_owned(wgp->wgp_lock));
 
@@ -3358,50 +3386,8 @@ wg_task_establish_session(struct wg_softc *wg, struct wg_peer *wgp)
 	 * Swap the sessions to publish the new one as the stable
 	 * session for the data tx path, wg_output.
 	 */
-	wg_swap_sessions(wgp);
+	wg_swap_sessions(wg, wgp);
 	KASSERT(wgs == wgp->wgp_session_stable);
-	wgs_prev = wgp->wgp_session_unstable;
-	getnanotime(&wgp->wgp_last_handshake_time);
-	wgp->wgp_handshake_start_time = 0;
-	wgp->wgp_last_sent_mac1_valid = false;
-	wgp->wgp_last_sent_cookie_valid = false;
-
-	/* If we had a data packet queued up, send it.  */
-	if ((m = atomic_swap_ptr(&wgp->wgp_pending, NULL)) != NULL) {
-		kpreempt_disable();
-		const uint32_t h = curcpu()->ci_index; // pktq_rps_hash(m)
-		M_SETCTX(m, wgp);
-		if (__predict_false(!pktq_enqueue(wg_pktq, m, h))) {
-			WGLOG(LOG_ERR, "%s: pktq full, dropping\n",
-			    if_name(&wg->wg_if));
-			m_freem(m);
-		}
-		kpreempt_enable();
-	}
-
-	if (wgs_prev->wgs_state == WGS_STATE_ESTABLISHED) {
-		/*
-		 * Transition ESTABLISHED->DESTROYING.  The session
-		 * will remain usable for the data rx path to process
-		 * packets still in flight to us, but we won't use it
-		 * for data tx.
-		 */
-		WG_DLOG("session[L=%"PRIx32" R=%"PRIx32"]"
-		    " -> WGS_STATE_DESTROYING\n",
-		    wgs_prev->wgs_local_index, wgs_prev->wgs_remote_index);
-		atomic_store_relaxed(&wgs_prev->wgs_state,
-		    WGS_STATE_DESTROYING);
-	} else {
-		KASSERTMSG(wgs_prev->wgs_state == WGS_STATE_UNKNOWN,
-		    "state=%d", wgs_prev->wgs_state);
-		WG_DLOG("session[L=%"PRIx32" R=%"PRIx32"]"
-		    " -> WGS_STATE_UNKNOWN\n",
-		    wgs_prev->wgs_local_index, wgs_prev->wgs_remote_index);
-		wgs_prev->wgs_local_index = 0; /* paranoia */
-		wgs_prev->wgs_remote_index = 0; /* paranoia */
-		wg_clear_states(wgs_prev); /* paranoia */
-		wgs_prev->wgs_state = WGS_STATE_UNKNOWN;
-	}
 }
 
 static void
