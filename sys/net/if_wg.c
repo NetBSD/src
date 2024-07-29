@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.123 2024/07/29 18:43:11 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.124 2024/07/29 19:43:56 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.123 2024/07/29 18:43:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.124 2024/07/29 19:43:56 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -3712,6 +3712,7 @@ wgintr(void *cookie)
 		}
 		if (__predict_false(wg_session_hit_limits(wgs))) {
 			WG_TRACE("stable session hit limits");
+			atomic_store_relaxed(&wgs->wgs_force_rekey, true);
 			wg_schedule_peer_task(wgp, WGP_TASK_SEND_INIT_MESSAGE);
 			goto next1;
 		}
