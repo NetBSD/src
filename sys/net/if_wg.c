@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.124 2024/07/29 19:43:56 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.125 2024/07/29 19:44:22 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.124 2024/07/29 19:43:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.125 2024/07/29 19:44:22 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -1911,6 +1911,7 @@ wg_send_handshake_msg_init(struct wg_softc *wg, struct wg_peer *wgp)
 		WG_DLOG("send_hs_msg failed, error=%d\n", error);
 		wg_put_session_index(wg, wgs);
 		m = atomic_swap_ptr(&wgp->wgp_pending, NULL);
+		membar_acquire(); /* matches membar_release in wg_output */
 		m_freem(m);
 		return;
 	}
@@ -2081,6 +2082,7 @@ wg_swap_sessions(struct wg_softc *wg, struct wg_peer *wgp)
 	 * or else the responder will never answer.
 	 */
 	if ((m = atomic_swap_ptr(&wgp->wgp_pending, NULL)) != NULL) {
+		membar_acquire(); /* matches membar_release in wg_output */
 		kpreempt_disable();
 		const uint32_t h = curcpu()->ci_index; // pktq_rps_hash(m)
 		M_SETCTX(m, wgp);
@@ -3730,6 +3732,7 @@ wg_purge_pending_packets(struct wg_peer *wgp)
 	struct mbuf *m;
 
 	m = atomic_swap_ptr(&wgp->wgp_pending, NULL);
+	membar_acquire();     /* matches membar_release in wg_output */
 	m_freem(m);
 #ifdef ALTQ
 	wg_start(&wgp->wgp_sc->wg_if);
@@ -4247,11 +4250,17 @@ wg_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		 * just drop the packet and let the ongoing handshake
 		 * attempt continue.  We could queue more data packets
 		 * but it's not clear that's worthwhile.
+		 *
+		 * membar_release matches membar_acquire in
+		 * wg_swap_sessions, wg_purge_pending_packets, and
+		 * wg_send_handshake_msg_init.
 		 */
+		membar_release();
 		if ((m = atomic_swap_ptr(&wgp->wgp_pending, m)) == NULL) {
 			WG_TRACE("queued first packet; init handshake");
 			wg_schedule_peer_task(wgp, WGP_TASK_SEND_INIT_MESSAGE);
 		} else {
+			membar_acquire();
 			WG_TRACE("first packet already queued, dropping");
 		}
 		goto out1;
