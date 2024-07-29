@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.114 2024/07/29 02:29:11 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.115 2024/07/29 02:33:27 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.114 2024/07/29 02:29:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.115 2024/07/29 02:33:27 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -4213,8 +4213,7 @@ wg_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		 * attempt continue.  We could queue more data packets
 		 * but it's not clear that's worthwhile.
 		 */
-		if (atomic_cas_ptr(&wgp->wgp_pending, NULL, m) == NULL) {
-			m = NULL; /* consume */
+		if ((m = atomic_swap_ptr(&wgp->wgp_pending, m)) == NULL) {
 			WG_TRACE("queued first packet; init handshake");
 			wg_schedule_peer_task(wgp, WGP_TASK_SEND_INIT_MESSAGE);
 		} else {
