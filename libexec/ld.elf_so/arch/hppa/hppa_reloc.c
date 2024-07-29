@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.51 2024/07/22 23:10:46 riastradh Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.52 2024/07/29 05:32:39 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hppa_reloc.c,v 1.51 2024/07/22 23:10:46 riastradh Exp $");
+__RCSID("$NetBSD: hppa_reloc.c,v 1.52 2024/07/29 05:32:39 macallan Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -625,6 +625,9 @@ _rtld_relocate_plt_lazy(Obj_Entry *obj)
 		Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 		Elf_Addr func_pc, func_sl;
 
+		/* skip R_PARISC_NONE entries */
+		if (ELF_R_TYPE(rela->r_info) == R_TYPE(NONE)) continue;
+			
 		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(IPLT));
 
 		/*
