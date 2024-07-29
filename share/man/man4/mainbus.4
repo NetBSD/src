@@ -1,4 +1,4 @@
-.\" $NetBSD: mainbus.4,v 1.7 2024/07/29 11:42:48 bad Exp $
+.\" $NetBSD: mainbus.4,v 1.8 2024/07/29 14:09:16 uwe Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,16 +32,17 @@
 .Os
 .Sh NAME
 .Nm mainbus
-.Nd pseudo top level "bus"
+.Nd top level pseudo
+.Dq bus
 .Sh SYNOPSIS
-.Cd "mainbus0 at root"
-.Cd "XX       at mainbus0"
+.Cd mainbus0 at root
+.Ar instance Cd at mainbus0
 .Sh DESCRIPTION
 The
 .Nm
 is not a real bus, but serves as the top level device to which other
 busses and drivers attach.
 .Sh SEE ALSO
-.Xr config 1 ,
-.Xr autoconf 9 ,
-.Xr intro 4
+.Xr intro 4 ,
+.Xr config 5 ,
+.Xr autoconf 9 .
