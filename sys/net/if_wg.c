@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.112 2024/07/28 14:55:30 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.113 2024/07/29 02:28:58 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.112 2024/07/28 14:55:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.113 2024/07/29 02:28:58 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -522,6 +522,7 @@ struct wg_session {
 			wgs_time_established;
 	volatile uint32_t
 			wgs_time_last_data_sent;
+	volatile bool	wgs_force_rekey;
 	bool		wgs_is_initiator;
 
 	uint32_t	wgs_local_index;
@@ -626,8 +627,6 @@ struct wg_peer {
 	callout_t		wgp_session_dtor_timer;
 
 	time_t			wgp_handshake_start_time;
-
-	volatile unsigned	wgp_force_rekey;
 
 	int			wgp_n_allowedips;
 	struct wg_allowedip	wgp_allowedips[WG_ALLOWEDIPS];
@@ -1306,6 +1305,7 @@ wg_destroy_session(struct wg_softc *wg, struct wg_session *wgs)
 	wgs->wgs_remote_index = 0;
 	wg_clear_states(wgs);
 	wgs->wgs_state = WGS_STATE_UNKNOWN;
+	wgs->wgs_force_rekey = false;
 }
 
 /*
@@ -3209,7 +3209,7 @@ wg_task_send_init_message(struct wg_softc *wg, struct wg_peer *wgp)
 	 */
 	wgs = wgp->wgp_session_stable;
 	if (wgs->wgs_state == WGS_STATE_ESTABLISHED &&
-	    !atomic_swap_uint(&wgp->wgp_force_rekey, 0))
+	    !atomic_load_relaxed(&wgs->wgs_force_rekey))
 		return;
 
 	/*
@@ -4410,7 +4410,7 @@ wg_send_data_msg(struct wg_peer *wgp, struct wg_session *wgs, struct mbuf *m)
 		 *  secure session is REKEY-AFTER-TIME seconds old,"
 		 */
 		WG_TRACE("rekey after time");
-		atomic_store_relaxed(&wgp->wgp_force_rekey, 1);
+		atomic_store_relaxed(&wgs->wgs_force_rekey, true);
 		wg_schedule_peer_task(wgp, WGP_TASK_SEND_INIT_MESSAGE);
 	}
 
@@ -4426,7 +4426,7 @@ wg_send_data_msg(struct wg_peer *wgp, struct wg_session *wgs, struct mbuf *m)
 		 *  transport data messages..."
 		 */
 		WG_TRACE("rekey after messages");
-		atomic_store_relaxed(&wgp->wgp_force_rekey, 1);
+		atomic_store_relaxed(&wgs->wgs_force_rekey, true);
 		wg_schedule_peer_task(wgp, WGP_TASK_SEND_INIT_MESSAGE);
 	}
 
