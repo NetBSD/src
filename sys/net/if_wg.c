@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.118 2024/07/29 02:34:27 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.119 2024/07/29 16:00:41 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.118 2024/07/29 02:34:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.119 2024/07/29 16:00:41 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -1991,8 +1991,8 @@ wg_swap_sessions(struct wg_peer *wgp)
 	/*
 	 * Get the newly established session, to become the new
 	 * session.  Caller must have transitioned from INIT_ACTIVE to
-	 * INIT_PASSIVE to ESTABLISHED already.  This will become the
-	 * stable session.
+	 * INIT_PASSIVE or to ESTABLISHED already.  This will become
+	 * the stable session.
 	 */
 	wgs = wgp->wgp_session_unstable;
 	KASSERTMSG(wgs->wgs_state == WGS_STATE_ESTABLISHED, "state=%d",
