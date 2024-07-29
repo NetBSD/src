@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.128 2024/07/29 19:46:59 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.129 2024/07/29 19:47:13 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.128 2024/07/29 19:46:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.129 2024/07/29 19:47:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -540,7 +540,7 @@ struct wg_session {
 	struct psref_target
 			wgs_psref;
 
-	int		wgs_state;
+	volatile int	wgs_state;
 #define WGS_STATE_UNKNOWN	0
 #define WGS_STATE_INIT_ACTIVE	1
 #define WGS_STATE_INIT_PASSIVE	2
@@ -632,15 +632,15 @@ struct wg_peer {
 	kmutex_t		*wgp_intr_lock;
 
 	uint8_t	wgp_pubkey[WG_STATIC_KEY_LEN];
-	struct wg_sockaddr	*wgp_endpoint;
+	struct wg_sockaddr	*volatile wgp_endpoint;
 	struct wg_sockaddr	*wgp_endpoint0;
 	volatile unsigned	wgp_endpoint_changing;
-	bool			wgp_endpoint_available;
+	volatile bool		wgp_endpoint_available;
 
 			/* The preshared key (optional) */
 	uint8_t		wgp_psk[WG_PRESHARED_KEY_LEN];
 
-	struct wg_session	*wgp_session_stable;
+	struct wg_session	*volatile wgp_session_stable;
 	struct wg_session	*wgp_session_unstable;
 
 	/* first outgoing packet awaiting session initiation */
