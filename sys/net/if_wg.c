@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.119 2024/07/29 16:00:41 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.120 2024/07/29 16:01:13 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.119 2024/07/29 16:00:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.120 2024/07/29 16:01:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -2490,11 +2490,9 @@ wg_lookup_session_by_index(struct wg_softc *wg, const uint32_t index,
 	int s = pserialize_read_enter();
 	wgs = thmap_get(wg->wg_sessions_byindex, &index, sizeof index);
 	if (wgs != NULL) {
-		uint32_t oindex __diagused =
-		    atomic_load_relaxed(&wgs->wgs_local_index);
-		KASSERTMSG(index == oindex,
+		KASSERTMSG(index == wgs->wgs_local_index,
 		    "index=%"PRIx32" wgs->wgs_local_index=%"PRIx32,
-		    index, oindex);
+		    index, wgs->wgs_local_index);
 		psref_acquire(psref, &wgs->wgs_psref, wg_psref_class);
 	}
 	pserialize_read_exit(s);
