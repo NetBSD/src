@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.120 2024/07/29 16:01:13 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.121 2024/07/29 16:01:32 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.120 2024/07/29 16:01:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.121 2024/07/29 16:01:32 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -437,6 +437,14 @@ struct sliwin {
 	uint64_t	T;
 };
 
+/*
+ * sliwin_reset(W)
+ *
+ *	Reset sliding window state to a blank history with no observed
+ *	sequence numbers.
+ *
+ *	Caller must have exclusive access to W.
+ */
 static void
 sliwin_reset(struct sliwin *W)
 {
@@ -444,6 +452,16 @@ sliwin_reset(struct sliwin *W)
 	memset(W, 0, sizeof(*W));
 }
 
+/*
+ * sliwin_check_fast(W, S)
+ *
+ *	Do a fast check of the sliding window W to validate sequence
+ *	number S.  No state is recorded.  Return 0 on accept, nonzero
+ *	error code on reject.
+ *
+ *	May be called concurrently with other calls to
+ *	sliwin_check_fast and sliwin_update.
+ */
 static int
 sliwin_check_fast(const volatile struct sliwin *W, uint64_t S)
 {
@@ -465,6 +483,17 @@ sliwin_check_fast(const volatile struct sliwin *W, uint64_t S)
 	return 0;
 }
 
+/*
+ * sliwin_update(W, S)
+ *
+ *	Check the sliding window W to validate sequence number S, and
+ *	if accepted, update it to reflect having observed S.  Return 0
+ *	on accept, nonzero error code on reject.
+ *
+ *	May be called concurrently with other calls to
+ *	sliwin_check_fast, but caller must exclude other calls to
+ *	sliwin_update.
+ */
 static int
 sliwin_update(struct sliwin *W, uint64_t S)
 {
