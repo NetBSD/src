@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.113 2024/07/29 02:28:58 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.114 2024/07/29 02:29:11 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.113 2024/07/29 02:28:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.114 2024/07/29 02:29:11 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -407,7 +407,7 @@ struct wg_msg_data {
 	uint32_t	wgmd_type;
 	uint32_t	wgmd_receiver;
 	uint64_t	wgmd_counter;
-	uint32_t	wgmd_packet[0];
+	uint32_t	wgmd_packet[];
 } __packed;
 
 /* [W] 5.4.7 Under Load: Cookie Reply Message */
@@ -725,7 +725,7 @@ static struct mbuf *
 static void	wg_send_data_msg(struct wg_peer *, struct wg_session *,
 		    struct mbuf *);
 static void	wg_send_cookie_msg(struct wg_softc *, struct wg_peer *,
-		    const uint32_t, const uint8_t [WG_MAC_LEN],
+		    const uint32_t, const uint8_t[static WG_MAC_LEN],
 		    const struct sockaddr *);
 static void	wg_send_handshake_msg_resp(struct wg_softc *, struct wg_peer *,
 		    struct wg_session *, const struct wg_msg_init *);
@@ -736,7 +736,7 @@ static struct wg_peer *
 		    struct psref *);
 static struct wg_peer *
 		wg_lookup_peer_by_pubkey(struct wg_softc *,
-		    const uint8_t [WG_STATIC_KEY_LEN], struct psref *);
+		    const uint8_t[static WG_STATIC_KEY_LEN], struct psref *);
 
 static struct wg_session *
 		wg_lookup_session_by_index(struct wg_softc *,
@@ -953,8 +953,8 @@ wgdetach(void)
 }
 
 static void
-wg_init_key_and_hash(uint8_t ckey[WG_CHAINING_KEY_LEN],
-    uint8_t hash[WG_HASH_LEN])
+wg_init_key_and_hash(uint8_t ckey[static WG_CHAINING_KEY_LEN],
+    uint8_t hash[static WG_HASH_LEN])
 {
 	/* [W] 5.4: CONSTRUCTION */
 	const char *signature = "Noise_IKpsk2_25519_ChaChaPoly_BLAKE2s";
@@ -978,7 +978,7 @@ wg_init_key_and_hash(uint8_t ckey[WG_CHAINING_KEY_LEN],
 }
 
 static void
-wg_algo_hash(uint8_t hash[WG_HASH_LEN], const uint8_t input[],
+wg_algo_hash(uint8_t hash[static WG_HASH_LEN], const uint8_t input[],
     const size_t inputsize)
 {
 	struct blake2s state;
@@ -1041,8 +1041,8 @@ wg_algo_mac_cookie(uint8_t out[], const size_t outsize,
 }
 
 static void
-wg_algo_generate_keypair(uint8_t pubkey[WG_EPHEMERAL_KEY_LEN],
-    uint8_t privkey[WG_EPHEMERAL_KEY_LEN])
+wg_algo_generate_keypair(uint8_t pubkey[static WG_EPHEMERAL_KEY_LEN],
+    uint8_t privkey[static WG_EPHEMERAL_KEY_LEN])
 {
 
 	CTASSERT(WG_EPHEMERAL_KEY_LEN == crypto_scalarmult_curve25519_BYTES);
@@ -1052,9 +1052,9 @@ wg_algo_generate_keypair(uint8_t pubkey[WG_EPHEMERAL_KEY_LEN],
 }
 
 static void
-wg_algo_dh(uint8_t out[WG_DH_OUTPUT_LEN],
-    const uint8_t privkey[WG_STATIC_KEY_LEN],
-    const uint8_t pubkey[WG_STATIC_KEY_LEN])
+wg_algo_dh(uint8_t out[static WG_DH_OUTPUT_LEN],
+    const uint8_t privkey[static WG_STATIC_KEY_LEN],
+    const uint8_t pubkey[static WG_STATIC_KEY_LEN])
 {
 
 	CTASSERT(WG_STATIC_KEY_LEN == crypto_scalarmult_curve25519_BYTES);
@@ -1100,8 +1100,10 @@ wg_algo_hmac(uint8_t out[], const size_t outlen,
 }
 
 static void
-wg_algo_kdf(uint8_t out1[WG_KDF_OUTPUT_LEN], uint8_t out2[WG_KDF_OUTPUT_LEN],
-    uint8_t out3[WG_KDF_OUTPUT_LEN], const uint8_t ckey[WG_CHAINING_KEY_LEN],
+wg_algo_kdf(uint8_t out1[static WG_KDF_OUTPUT_LEN],
+    uint8_t out2[WG_KDF_OUTPUT_LEN],
+    uint8_t out3[WG_KDF_OUTPUT_LEN],
+    const uint8_t ckey[static WG_CHAINING_KEY_LEN],
     const uint8_t input[], const size_t inputlen)
 {
 	uint8_t tmp1[WG_KDF_OUTPUT_LEN], tmp2[WG_KDF_OUTPUT_LEN + 1];
@@ -1140,10 +1142,10 @@ wg_algo_kdf(uint8_t out1[WG_KDF_OUTPUT_LEN], uint8_t out2[WG_KDF_OUTPUT_LEN],
 }
 
 static void __noinline
-wg_algo_dh_kdf(uint8_t ckey[WG_CHAINING_KEY_LEN],
+wg_algo_dh_kdf(uint8_t ckey[static WG_CHAINING_KEY_LEN],
     uint8_t cipher_key[WG_CIPHER_KEY_LEN],
-    const uint8_t local_key[WG_STATIC_KEY_LEN],
-    const uint8_t remote_key[WG_STATIC_KEY_LEN])
+    const uint8_t local_key[static WG_STATIC_KEY_LEN],
+    const uint8_t remote_key[static WG_STATIC_KEY_LEN])
 {
 	uint8_t dhout[WG_DH_OUTPUT_LEN];
 
@@ -1157,8 +1159,10 @@ wg_algo_dh_kdf(uint8_t ckey[WG_CHAINING_KEY_LEN],
 }
 
 static void
-wg_algo_aead_enc(uint8_t out[], size_t expected_outsize, const uint8_t key[],
-    const uint64_t counter, const uint8_t plain[], const size_t plainsize,
+wg_algo_aead_enc(uint8_t out[], size_t expected_outsize,
+    const uint8_t key[static crypto_aead_chacha20poly1305_ietf_KEYBYTES],
+    const uint64_t counter,
+    const uint8_t plain[], const size_t plainsize,
     const uint8_t auth[], size_t authlen)
 {
 	uint8_t nonce[(32 + 64) / 8] = {0};
@@ -1174,9 +1178,11 @@ wg_algo_aead_enc(uint8_t out[], size_t expected_outsize, const uint8_t key[],
 }
 
 static int
-wg_algo_aead_dec(uint8_t out[], size_t expected_outsize, const uint8_t key[],
-    const uint64_t counter, const uint8_t encrypted[],
-    const size_t encryptedsize, const uint8_t auth[], size_t authlen)
+wg_algo_aead_dec(uint8_t out[], size_t expected_outsize,
+    const uint8_t key[static crypto_aead_chacha20poly1305_ietf_KEYBYTES],
+    const uint64_t counter,
+    const uint8_t encrypted[], const size_t encryptedsize,
+    const uint8_t auth[], size_t authlen)
 {
 	uint8_t nonce[(32 + 64) / 8] = {0};
 	long long unsigned int outsize;
@@ -1193,9 +1199,10 @@ wg_algo_aead_dec(uint8_t out[], size_t expected_outsize, const uint8_t key[],
 
 static void
 wg_algo_xaead_enc(uint8_t out[], const size_t expected_outsize,
-    const uint8_t key[], const uint8_t plain[], const size_t plainsize,
+    const uint8_t key[static crypto_aead_xchacha20poly1305_ietf_KEYBYTES],
+    const uint8_t plain[], const size_t plainsize,
     const uint8_t auth[], size_t authlen,
-    const uint8_t nonce[WG_SALT_LEN])
+    const uint8_t nonce[static WG_SALT_LEN])
 {
 	long long unsigned int outsize;
 	int error __diagused;
@@ -1209,9 +1216,10 @@ wg_algo_xaead_enc(uint8_t out[], const size_t expected_outsize,
 
 static int
 wg_algo_xaead_dec(uint8_t out[], const size_t expected_outsize,
-    const uint8_t key[], const uint8_t encrypted[], const size_t encryptedsize,
+    const uint8_t key[static crypto_aead_xchacha20poly1305_ietf_KEYBYTES],
+    const uint8_t encrypted[], const size_t encryptedsize,
     const uint8_t auth[], size_t authlen,
-    const uint8_t nonce[WG_SALT_LEN])
+    const uint8_t nonce[static WG_SALT_LEN])
 {
 	long long unsigned int outsize;
 	int error;
@@ -2251,7 +2259,7 @@ wg_send_handshake_msg_resp(struct wg_softc *wg, struct wg_peer *wgp,
 
 static struct wg_peer *
 wg_lookup_peer_by_pubkey(struct wg_softc *wg,
-    const uint8_t pubkey[WG_STATIC_KEY_LEN], struct psref *psref)
+    const uint8_t pubkey[static WG_STATIC_KEY_LEN], struct psref *psref)
 {
 	struct wg_peer *wgp;
 
@@ -2267,7 +2275,7 @@ wg_lookup_peer_by_pubkey(struct wg_softc *wg,
 static void
 wg_fill_msg_cookie(struct wg_softc *wg, struct wg_peer *wgp,
     struct wg_msg_cookie *wgmc, const uint32_t sender,
-    const uint8_t mac1[WG_MAC_LEN], const struct sockaddr *src)
+    const uint8_t mac1[static WG_MAC_LEN], const struct sockaddr *src)
 {
 	uint8_t cookie[WG_COOKIE_LEN];
 	uint8_t key[WG_HASH_LEN];
@@ -2331,7 +2339,7 @@ wg_fill_msg_cookie(struct wg_softc *wg, struct wg_peer *wgp,
 
 static void
 wg_send_cookie_msg(struct wg_softc *wg, struct wg_peer *wgp,
-    const uint32_t sender, const uint8_t mac1[WG_MAC_LEN],
+    const uint32_t sender, const uint8_t mac1[static WG_MAC_LEN],
     const struct sockaddr *src)
 {
 	int error;
@@ -4477,8 +4485,8 @@ wg_input(struct ifnet *ifp, struct mbuf *m, const int af)
 }
 
 static void
-wg_calc_pubkey(uint8_t pubkey[WG_STATIC_KEY_LEN],
-    const uint8_t privkey[WG_STATIC_KEY_LEN])
+wg_calc_pubkey(uint8_t pubkey[static WG_STATIC_KEY_LEN],
+    const uint8_t privkey[static WG_STATIC_KEY_LEN])
 {
 
 	crypto_scalarmult_base(pubkey, privkey);
