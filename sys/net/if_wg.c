@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.117 2024/07/29 02:33:58 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.118 2024/07/29 02:34:27 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.117 2024/07/29 02:33:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.118 2024/07/29 02:34:27 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -923,6 +923,7 @@ wg_count_dec(void)
 {
 	unsigned c __diagused;
 
+	membar_release();	/* match atomic_load_acquire in wgdetach */
 	c = atomic_dec_uint_nv(&wg_count);
 	KASSERT(c != UINT_MAX);
 }
@@ -934,8 +935,11 @@ wgdetach(void)
 	/* Prevent new interface creation.  */
 	if_clone_detach(&wg_cloner);
 
-	/* Check whether there are any existing interfaces.  */
-	if (atomic_load_relaxed(&wg_count)) {
+	/*
+	 * Check whether there are any existing interfaces.  Matches
+	 * membar_release and atomic_dec_uint_nv in wg_count_dec.
+	 */
+	if (atomic_load_acquire(&wg_count)) {
 		/* Back out -- reattach the cloner.  */
 		if_clone_attach(&wg_cloner);
 		return EBUSY;
