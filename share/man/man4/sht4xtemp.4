@@ -1,4 +1,4 @@
-.\" $NetBSD: sht4xtemp.4,v 1.2 2021/10/03 18:20:13 wiz Exp $
+.\" $NetBSD: sht4xtemp.4,v 1.2.2.1 2024/07/30 15:56:29 snj Exp $
 .\"
 .\" Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -68,7 +68,7 @@ Use one of the strings listed in
 .Li hw.sht4xtemp.heaterpulses .
 .It Li hw.sht4xtemp0.debug
 If the driver is compiled with
-.Dv SI70XX_DEBUG ,
+.Dv SHT4X_DEBUG ,
 this node will appear and can be used to set the debugging level.
 .It Li hw.sht4xtemp0.readattempts
 To read %RH or temperature the chip requires that the command be sent,
