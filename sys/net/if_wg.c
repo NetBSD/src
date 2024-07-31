@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.130 2024/07/31 00:25:47 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.131 2024/07/31 00:26:01 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -37,11 +37,13 @@
  * 2018-07-11 [2] is referred with label [N].
  *
  * [1] https://www.wireguard.com/papers/wireguard.pdf
+ *     https://web.archive.org/web/20180805103233/https://www.wireguard.com/papers/wireguard.pdf
  * [2] http://noiseprotocol.org/noise.pdf
+ *     https://web.archive.org/web/20180727193154/https://noiseprotocol.org/noise.pdf
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.130 2024/07/31 00:25:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.131 2024/07/31 00:26:01 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
