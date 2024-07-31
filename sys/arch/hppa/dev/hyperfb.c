@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.5 2024/07/24 08:34:03 macallan Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.6 2024/07/31 09:56:04 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.5 2024/07/24 08:34:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.6 2024/07/31 09:56:04 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -98,9 +98,10 @@ struct	hyperfb_softc {
 	u_char sc_cmap_blue[256];
 	kmutex_t sc_hwlock;
 	uint32_t sc_hwmode;
-#define HW_FB	0
-#define HW_FILL	1
-#define HW_BLIT	2
+#define HW_FB		0
+#define HW_FILL		1
+#define HW_BLIT		2
+#define HW_SFILL	3
 	/* cursor stuff */
 	int sc_cursor_x, sc_cursor_y;
 	int sc_hot_x, sc_hot_y, sc_enabled;
@@ -210,12 +211,18 @@ static inline void
 hyperfb_setup_fb(struct hyperfb_softc *sc)
 {
 
+	/*
+	 * turns out the plane mask is applied to everything, including
+	 * direct framebuffer writes, so make sure we always set it
+	 */
 	hyperfb_wait(sc);
 	if ((sc->sc_mode != WSDISPLAYIO_MODE_EMUL) && sc->sc_24bit) {
 		hyperfb_write4(sc, NGLE_REG_10, 0xBBA0A000);	/* 24bit */
 		hyperfb_write4(sc, NGLE_REG_13, 0xffffffff);
-	} else
+	} else {
 		hyperfb_write4(sc, NGLE_REG_10, 0x13602000);	/* 8bit */
+		hyperfb_write4(sc, NGLE_REG_13, 0xff);
+	}
 	hyperfb_write4(sc, NGLE_REG_14, 0x83000300);
 	hyperfb_wait(sc);
 	hyperfb_write1(sc, NGLE_REG_16b1, 1);
@@ -479,7 +486,6 @@ hyperfb_attach(device_t parent, device_t self, void *aux)
 	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARGS_NONE);
 
 	hyperfb_setup_fb(sc);
-
 }
 
 static void
@@ -957,6 +963,7 @@ hyperfb_rectfill(struct hyperfb_softc *sc, int x, int y, int wi, int he,
 	 * less than 32 pixels wide
 	 */
 	if (wi < 32) {
+#if 0
 		int i;
 		uint8_t *ptr = (uint8_t *)sc->sc_fb + (y << 11) + x;
 
@@ -967,6 +974,37 @@ hyperfb_rectfill(struct hyperfb_softc *sc, int x, int y, int wi, int he,
 			memset(ptr, bg, wi);
 			ptr += 2048;
 		}
+#else
+		/*
+		 * instead of memset() we abuse the blitter - set / clear the
+		 * planes we want, select colour by planemask, do two passes
+		 * where necessary ( as in, anything not black or white )
+		 */ 
+		if (sc->sc_hwmode != HW_SFILL) {
+			hyperfb_wait(sc);
+			hyperfb_write4(sc, NGLE_REG_10, 0x13a02000);
+			sc->sc_hwmode = HW_SFILL;
+		}
+		bg &= 0xff;
+		hyperfb_wait_fifo(sc, 2);
+		hyperfb_write4(sc, NGLE_REG_24, (x << 16) | y);
+		if (bg != 0) {
+			hyperfb_wait_fifo(sc, 4);
+			hyperfb_write4(sc, NGLE_REG_14, 
+			    IBOvals(RopSet, 0, BitmapExtent08, 1, DataDynamic, MaskOtc, 0, 0));
+			hyperfb_write4(sc, NGLE_REG_13, bg);
+			hyperfb_write4(sc, NGLE_REG_7, (wi << 16) | he);
+			hyperfb_write4(sc, NGLE_REG_25, (x << 16) | y);
+		}
+		if (bg != 0xff) {
+			hyperfb_wait_fifo(sc, 4);
+			hyperfb_write4(sc, NGLE_REG_14, 
+			    IBOvals(RopClr, 0, BitmapExtent08, 1, DataDynamic, MaskOtc, 0, 0));
+			hyperfb_write4(sc, NGLE_REG_13, bg ^ 0xff);
+			hyperfb_write4(sc, NGLE_REG_7, (wi << 16) | he);
+			hyperfb_write4(sc, NGLE_REG_25, (x << 16) | y);
+		}
+#endif
 		return;
 	}
 	if (sc->sc_hwmode != HW_FILL) {
