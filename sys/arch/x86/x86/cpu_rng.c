@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_rng.c,v 1.21 2024/06/09 20:07:33 riastradh Exp $ */
+/* $NetBSD: cpu_rng.c,v 1.22 2024/07/31 22:44:49 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -38,6 +38,12 @@
  * Number Generator Software Implementation Guide (`Intel DRNG SIG'),
  * Revision 2.1, October 17, 2018.
  * https://software.intel.com/sites/default/files/managed/98/4a/DRNG_Software_Implementation_Guide_2.1.pdf
+ *
+ * Intel's hardware implementation is analyzed by Mike Hamburg, Paul
+ * Kocher, and Mark E. Marson, `Analysis of Intel's Ivy Bridge Digital
+ * Random Number Generator', Cryptography Research, Inc., March 12,
+ * 2012.
+ * https://web.archive.org/web/20141230024150/http://www.cryptography.com/public/pdf/Intel_TRNG_Report_20120312.pdf
  *
  * For reference on AMD RDRAND/RDSEED, which are designed to be
  * compatible with Intel RDRAND/RDSEED, see the somewhat less detailed
