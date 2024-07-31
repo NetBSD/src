@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.197 2023/10/16 17:29:31 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.198 2024/07/31 20:05:28 andvar Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.197 2023/10/16 17:29:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.198 2024/07/31 20:05:28 andvar Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -845,7 +845,7 @@ no_NOX:
 	movl	$RELOC(__kernel_end),%edi
 
 #if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(makeoptions_COPY_SYMTAB)
-	/* Save the symbols (if loaded); brinds us on (2). */
+	/* Save the symbols (if loaded); brings us on (2). */
 	movl	RELOC(esym),%eax
 	testl	%eax,%eax
 	jz	1f

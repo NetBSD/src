@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.224 2023/10/16 17:29:30 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.225 2024/07/31 20:05:28 andvar Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -655,7 +655,7 @@ next:	pop	%edi
 	movl	$RELOC(__kernel_end),%edi
 
 #if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(makeoptions_COPY_SYMTAB)
-	/* Save the symbols (if loaded); brinds us on (2). */
+	/* Save the symbols (if loaded); brings us on (2). */
 	movl	RELOC(esym),%eax
 	testl	%eax,%eax
 	jz	1f
