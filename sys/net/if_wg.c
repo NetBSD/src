@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.129 2024/07/29 19:47:13 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.130 2024/07/31 00:25:47 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.129 2024/07/29 19:47:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.130 2024/07/31 00:25:47 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -1522,6 +1522,70 @@ wg_fill_msg_init(struct wg_softc *wg, struct wg_peer *wgp,
 	WG_DLOG("%s: sender=%x\n", __func__, wgs->wgs_local_index);
 }
 
+/*
+ * wg_initiator_priority(wg, wgp)
+ *
+ *	Return true if we claim priority over peer wgp as initiator at
+ *	the moment, false if not.  That is, if we and our peer are
+ *	trying to initiate a session, do we ignore the peer's attempt
+ *	and barge ahead with ours, or discard our attempt and accept
+ *	the peer's?
+ *
+ *	We jointly flip a coin by computing
+ *
+ *		H(pubkey A) ^ H(pubkey B) ^ H(posix minutes as le64),
+ *
+ *	and taking the low-order bit.  If our public key hash, as a
+ *	256-bit integer in little-endian, is less than the peer's
+ *	public key hash, also as a 256-bit integer in little-endian, we
+ *	claim priority iff the bit is 0; otherwise we claim priority
+ *	iff the bit is 1.
+ *
+ *	This way, it is essentially arbitrary who claims priority, and
+ *	it may change (by a coin toss) minute to minute, but both
+ *	parties agree at any given moment -- except possibly at the
+ *	boundary of a minute -- who will take priority.
+ *
+ *	This is an extension to the WireGuard protocol -- as far as I
+ *	can tell, the protocol whitepaper has no resolution to this
+ *	deadlock scenario.  According to the author, `the deadlock
+ *	doesn't happen because of some additional state machine logic,
+ *	and on very small chances that it does, it quickly undoes
+ *	itself.', but this additional state machine logic does not
+ *	appear to be anywhere in the whitepaper, and I don't see how it
+ *	can undo itself until both sides have given up and one side is
+ *	quicker to initiate the next time around.
+ *
+ *	XXX It might be prudent to put a prefix in the hash input, so
+ *	we avoid accidentally colliding with any other uses of the same
+ *	hash on the same input.  But it's best if any changes are
+ *	coordinated, so that peers generally agree on what coin is
+ *	being tossed, instead of tossing their own independent coins
+ *	(which will also converge to working but more slowly over more
+ *	handshake retries).
+ */
+static bool
+wg_initiator_priority(struct wg_softc *wg, struct wg_peer *wgp)
+{
+	const uint64_t now = time_second/60, now_le = htole64(now);
+	uint8_t h_min;
+	uint8_t h_local[BLAKE2S_MAX_DIGEST];
+	uint8_t h_peer[BLAKE2S_MAX_DIGEST];
+	int borrow;
+	unsigned i;
+
+	blake2s(&h_min, 1, NULL, 0, &now_le, sizeof(now_le));
+	blake2s(h_local, sizeof(h_local), NULL, 0,
+	    wg->wg_pubkey, sizeof(wg->wg_pubkey));
+	blake2s(h_peer, sizeof(h_peer), NULL, 0,
+	    wgp->wgp_pubkey, sizeof(wgp->wgp_pubkey));
+
+	for (borrow = 0, i = 0; i < BLAKE2S_MAX_DIGEST; i++)
+		borrow = (h_local[i] - h_peer[i] + borrow) >> 8;
+
+	return 1 & (h_local[0] ^ h_peer[0] ^ h_min ^ borrow);
+}
+
 static void __noinline
 wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
     const struct sockaddr *src)
@@ -1685,10 +1749,17 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 	switch (wgs->wgs_state) {
 	case WGS_STATE_UNKNOWN:		/* new session initiated by peer */
 		break;
-	case WGS_STATE_INIT_ACTIVE:	/* we're already initiating, drop */
-		/* XXX Who wins if both sides send INIT?  */
-		WG_TRACE("Session already initializing, ignoring the message");
-		goto out;
+	case WGS_STATE_INIT_ACTIVE:	/* we're already initiating */
+		if (wg_initiator_priority(wg, wgp)) {
+			WG_TRACE("Session already initializing,"
+			    " ignoring the message");
+			goto out;
+		}
+		WG_TRACE("Yielding session initiation to peer");
+		wg_put_session_index(wg, wgs);
+		KASSERTMSG(wgs->wgs_state == WGS_STATE_UNKNOWN, "state=%d",
+		    wgs->wgs_state);
+		break;
 	case WGS_STATE_INIT_PASSIVE:	/* peer is retrying, start over */
 		WG_TRACE("Session already initializing, destroying old states");
 		/*
