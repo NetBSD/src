@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_evalobj.c,v 1.3 2021/12/10 11:09:52 msaitoh Exp $	*/
+/*	$NetBSD: aml_evalobj.c,v 1.4 2024/07/31 20:15:33 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999 Takanori Watanabe
@@ -30,7 +30,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_evalobj.c,v 1.4 2000/11/09 06:24:45 iwasaki Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aml_evalobj.c,v 1.3 2021/12/10 11:09:52 msaitoh Exp $");
+__RCSID("$NetBSD: aml_evalobj.c,v 1.4 2024/07/31 20:15:33 andvar Exp $");
 
 #include <sys/param.h>
 
@@ -95,7 +95,7 @@ aml_eval_fieldobject(struct aml_environ *env, struct aml_name *name)
 		wname = aml_search_name(env, field->f.fld.regname);
 		if (wname == NULL || wname->property == NULL ||
 		    wname->property->type != aml_t_opregion) {
-			AML_DEBUGPRINT("Inappropreate Type\n");
+			AML_DEBUGPRINT("Inappropriate Type\n");
 			env->stat = aml_stat_panic;
 			env->curname = oname;
 			return (NULL);
