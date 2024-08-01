@@ -1,4 +1,4 @@
-.\"	$NetBSD: virtio.4,v 1.10 2024/08/01 09:24:31 uwe Exp $
+.\"	$NetBSD: virtio.4,v 1.11 2024/08/01 09:38:50 uwe Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,9 +51,12 @@ available to the virtual machine.
 .Nm
 driver itself provides the core infrastructure to communicate
 with the hypervisor (called virtqueues) and supports the following devices:
-.Bl -tag -width xxxxx
+.Pp
+.Bl -tag -width Xr -compact
 .It Xr ld 4
 A Disk device.
+.It Xr viocon 4
+Console device.
 .It Xr vioif 4
 An Ethernet device.
 .It Xr viomb 4
@@ -76,6 +79,10 @@ A SCSI adapter.
 .%A Rusty Russell, IBM Corporation
 .%T Virtio PCI Card Specification
 .%U http://ozlabs.org/~rusty/virtio-spec/
+.Re
+.Rs
+.%T Virtual I/O Device (VIRTIO) Version 1.0
+.%U https://docs.oasis-open.org/virtio/virtio/v1.0/virtio-v1.0.html
 .Re
 .Sh HISTORY
 The
