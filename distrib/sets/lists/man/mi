@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1777 2024/07/12 21:02:22 christos Exp $
+# $NetBSD: mi,v 1.1778 2024/08/01 13:41:15 nat Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -1528,6 +1528,7 @@
 ./usr/share/man/cat4/m25p.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mac68k/adb.0		man-obsolete		obsolete
 ./usr/share/man/cat4/mac68k/ae.0		man-sys-catman		.cat
+./usr/share/man/cat4/mac68k/ascaudio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mac68k/autoconf.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mac68k/cpi.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mac68k/intro.0		man-sys-catman		.cat
@@ -5081,6 +5082,7 @@
 ./usr/share/man/man4/m25p.4			man-sys-man		.man
 ./usr/share/man/man4/mac68k/adb.4		man-obsolete		obsolete
 ./usr/share/man/man4/mac68k/ae.4		man-sys-man		.man
+./usr/share/man/man4/mac68k/ascaudio.4		man-sys-man		.man
 ./usr/share/man/man4/mac68k/autoconf.4		man-sys-man		.man
 ./usr/share/man/man4/mac68k/cpi.4		man-sys-man		.man
 ./usr/share/man/man4/mac68k/intro.4		man-sys-man		.man
