@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.4 2024/07/12 21:02:22 christos Exp $
+# $NetBSD: mi,v 1.5 2024/08/01 14:29:07 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1374,6 +1374,7 @@
 ./usr/share/man/html4/luna68k/xp.html		man-sys-htmlman		html
 ./usr/share/man/html4/lxtphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/m25p.html			man-sys-htmlman		html
+./usr/share/man/html4/mac68k/ascaudio.html	man-sys-htmlman		html
 ./usr/share/man/html4/mac68k/ae.html		man-sys-htmlman		html
 ./usr/share/man/html4/mac68k/autoconf.html	man-sys-htmlman		html
 ./usr/share/man/html4/mac68k/cpi.html		man-sys-htmlman		html
