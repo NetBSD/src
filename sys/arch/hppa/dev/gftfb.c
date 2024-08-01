@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.16 2024/07/17 08:30:28 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.17 2024/08/01 00:20:22 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -868,7 +868,7 @@ gftfb_mmap(void *v, void *vs, off_t offset, int prot)
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)
 		return -1;
 
-	if (offset >= 0 || offset < sc->sc_scr.fblen) {
+	if (offset >= 0 && offset < sc->sc_scr.fblen) {
 		/* framebuffer */
 		pa = bus_space_mmap(rom->memt, sc->sc_scr.fbaddr, offset,
 		    prot, BUS_SPACE_MAP_LINEAR);
