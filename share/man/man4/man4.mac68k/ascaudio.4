@@ -1,4 +1,4 @@
-.\"	$NetBSD: ascaudio.4,v 1.1 2024/08/01 13:41:14 nat Exp $
+.\"	$NetBSD: ascaudio.4,v 1.2 2024/08/01 14:59:38 uwe Exp $
 .\" Copyright (c) 2024  Nathanial Sloss <nathanialsloss@yahoo.com.au>
 .\" All rights reserved.
 .\"
@@ -28,12 +28,14 @@
 .Os
 .Sh NAME
 .Nm ascaudio
-.Nd MAC68K Apple Sound Chip (ASC) built-in audio.
+.Nd MAC68K Apple Sound Chip
+.Pq Tn ASC
+built-in audio.
 .Sh SYNOPSIS
-.Cd ascaudio*	at obio? flags 0x00
-.Cd audio*	at audiobus?
-.Cd spkr*	at audio?
-.Cd wsbell*	at spkr?
+.Cd ascaudio* at obio? flags 0x00
+.Cd audio* at audiobus?
+.Cd spkr* at audio?
+.Cd wsbell* at spkr?
 .Sh DESCRIPTION
 .Nm
 provides an audio device for the (Enchanced) Apple Sound Chip.
@@ -49,14 +51,15 @@ for use in
 .Xr config 1
 files:
 .Pp
-.Bl -tag -compact -width "quality:"
-.It  0x0 (DEFQUALTY) :
-22257Hz Monaural playback.
-.It  0x1 (LOWQUALITY) :
+.Bl -tag -offset indent -width Dv
+.It Li 0x0 Pq Dv DEFQUALTY :
+22257\^Hz Monaural playback.
+.It Li 0x1 Pq Dv LOWQUALITY :
 Half playback rate.
 Monoaural, intended for machines with slower clock rates.
-.It 0x2 (HIGHQUALITY) :
-Best Quality supported by ASC.
+.It Li 0x2 Pq Dv HIGHQUALITY :
+Best Quality supported by
+.Tn ASC .
 This would be stereo on equipped machines.
 .El
 .\"
