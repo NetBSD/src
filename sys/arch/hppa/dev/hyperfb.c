@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.7 2024/07/31 16:38:00 riastradh Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.8 2024/08/01 00:20:22 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.7 2024/07/31 16:38:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.8 2024/08/01 00:20:22 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -659,7 +659,8 @@ hyperfb_mmap(void *v, void *vs, off_t offset, int prot)
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)
 		return -1;
 
-	if (offset >= 0 || offset < 2048 * 1024) {
+	/* GSC framebuffer space is 16MB */
+	if (offset >= 0 && offset < 0x1000000) {
 		/* framebuffer */
 		pa = bus_space_mmap(sc->sc_iot, sc->sc_base + HCRX_FBOFFSET,
 		    offset, prot,
