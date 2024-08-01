@@ -1,4 +1,4 @@
-.\"	$NetBSD: virtio.4,v 1.9 2018/06/07 12:32:26 jakllsch Exp $
+.\"	$NetBSD: virtio.4,v 1.10 2024/08/01 09:24:31 uwe Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,6 +34,7 @@
 .Cd "virtio* at fdt?"
 .Cd "virtio* at pci? dev ? function ?"
 .Cd "ld* at virtio?"
+.Cd "viocon* at virtio?"
 .Cd "vioif* at virtio?"
 .Cd "viomb* at virtio?"
 .Cd "viornd* at virtio?"
@@ -65,6 +66,7 @@ A SCSI adapter.
 .Sh SEE ALSO
 .Xr ld 4 ,
 .Xr pci 4 ,
+.Xr viocon 4 ,
 .Xr vioif 4 ,
 .Xr viomb 4 ,
 .Xr viornd 4 ,
