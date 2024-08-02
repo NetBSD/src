@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.1.2.2 2024/07/24 00:46:18 perseant Exp $	*/
+/*	$NetBSD: extern.h,v 1.1.2.3 2024/08/02 00:23:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -31,10 +31,13 @@
  *	@(#)extern.h	8.2 (Berkeley) 5/24/95
  */
 
+#include "vnode.h"
+
 void	fatal(const char *fmt, ...)
      __attribute__((__format__(__printf__,1,2)));
-int	make_exfatfs(int, uint, struct dkwedge_info *, uint,
-		     uint16_t *, int, uint32_t, uint16_t *, size_t, char *);
+int	make_exfatfs(struct uvnode *, struct exfatfs *,
+		     uint16_t *, int, uint16_t *, size_t,
+		     uint32_t, uint32_t);
 
 extern char	*progname;
 extern char	*special;

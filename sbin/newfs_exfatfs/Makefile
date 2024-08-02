@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.1.2.1 2024/06/29 19:43:25 perseant Exp $
+# $NetBSD: Makefile,v 1.1.2.2 2024/08/02 00:23:20 perseant Exp $
 
 .include <bsd.own.mk>
 
 PROG=	newfs_exfatfs
 MAN=	newfs_exfatfs.8
-SRCS=	newfs.c partutil.c make_exfatfs.c bufcache.c exfatfs_cksum.c exfatfs_conv.c exfatfs_tables.c vnode.c kernelops.c
+SRCS=	newfs.c defaults.c partutil.c make_exfatfs.c bufcache.c exfatfs_cksum.c exfatfs_conv.c exfatfs_extern.c exfatfs_tables.c vnode.c kernelops.c
 
 CFLAGS=-g
 
