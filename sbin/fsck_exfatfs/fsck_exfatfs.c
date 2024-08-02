@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck_exfatfs.c,v 1.1.2.3 2024/07/24 00:42:10 perseant Exp $	*/
+/*	$NetBSD: fsck_exfatfs.c,v 1.1.2.4 2024/08/02 00:18:59 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: fsck_exfatfs.c,v 1.1.2.3 2024/07/24 00:42:10 perseant Exp $");
+__RCSID("$NetBSD: fsck_exfatfs.c,v 1.1.2.4 2024/08/02 00:18:59 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -489,9 +489,11 @@ main(int argc, char **argv)
 	}
 
 	/* Report file count and cluster usage */
-	printf("%llu files, %u/%u clusters allocated, %0.1f%% fragmentation\n",
-	       total_files, clusters_used, fs->xf_ClusterCount,
-	       (frag_files * 100.0) / total_files);
+	if (!Qflag) {
+		printf("%llu files, %u/%u clusters allocated, %0.1f%% fragmentation\n",
+		       total_files, clusters_used, fs->xf_ClusterCount,
+		       (frag_files * 100.0) / total_files);
+	}
 
 	if (Nflag)
 		r = (problems ? 2 : 0);
