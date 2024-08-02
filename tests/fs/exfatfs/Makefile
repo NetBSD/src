@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2024/06/29 19:43:26 perseant Exp $
+#	$NetBSD: Makefile,v 1.1.2.2 2024/08/02 00:24:52 perseant Exp $
 #
 
 .include <bsd.own.mk>
@@ -12,6 +12,8 @@ MAN.h_exfatfs_server=	# empty
 BINDIR.h_exfatfs_server=	${TESTSDIR}
 
 TESTS_C+=	t_mount
+
+TESTS_SH+=	t_newfs
 
 LDADD+=-lrumpfs_exfatfs						# exfatfs
 LDADD+=-lrumpdev_disk -lrumpdev					# disk device
