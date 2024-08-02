@@ -35,6 +35,7 @@ void print_dir(struct exfatfs *fs, uint32_t clust, uint32_t off, int action);
 
 void print_fat(struct exfatfs *fs);
 void print_bootblock(struct exfatfs *fs);
+void print_bootblock_newfs(struct exfatfs *fs, char *);
 void print_bitmap(struct exfatfs *fs);
 void print_upcase_table(struct exfatfs *fs, uint32_t clust, uint64_t len);
 uint32_t next_fat(struct exfatfs *fs, uint32_t fat);
@@ -49,12 +50,15 @@ int Bflag = 0;
 int Cflag = 0;
 int Dflag = 0;
 int Fflag = 0;
+int Nflag = 0;
 int Rflag = 0;
 int Uflag = 0;
 int verbose = 0;
 
 static uint8_t PRIMARY_IGNORE[2] = { 2, 3 };
 static uint8_t PRIMARY_IGNORE_LEN = 2;
+
+#define NEWFS_EXFATFS "newfs_exfatfs"
 
 static void
 efun(int eval, const char *fmt, ...)
@@ -83,8 +87,9 @@ int main(int argc, char **argv)
 	int devfd, c;
 	struct exfatfs *fs;
 	char *bootcodefile = NULL;
+	char *rdev;
 
-	while ((c = getopt(argc, argv, "AaB:bcd:fruv")) != -1) {
+	while ((c = getopt(argc, argv, "AaB:bcd:fnruv")) != -1) {
 		switch (c) {
 		case 'A':
 			Aflag = !Aflag;
@@ -111,6 +116,9 @@ int main(int argc, char **argv)
 		case 'f':
 			Fflag = !Fflag;
 			break;
+		case 'n':
+			Nflag = !Nflag;
+			break;
 		case 'r':
 			Rflag = !Rflag;
 			break;
@@ -127,6 +135,7 @@ int main(int argc, char **argv)
 	}
 	if (argc < optind)
 		usage();
+	rdev = argv[optind];
 
 	if (Cflag) {
 		struct timespec now;
@@ -149,12 +158,12 @@ int main(int argc, char **argv)
 		exit(0);
 	}
 
-	if (Aflag + Bflag + Dflag + Fflag + Rflag + Uflag == 0)
+	if (Aflag + Bflag + Dflag + Fflag + Nflag + Rflag + Uflag == 0)
 		Aflag = Bflag = Fflag = Rflag = Uflag = 1;
 	
-	devfd = open(argv[optind], O_RDONLY);
+	devfd = open(rdev, O_RDONLY);
 	if (devfd <= 0)
-		err(1, argv[optind]);
+		err(1, rdev);
 	
 	if (bootcodefile != NULL) {
 		/*
@@ -164,10 +173,10 @@ int main(int argc, char **argv)
 		FILE *fp;
 		char buf[390];
 		if (pread(devfd, buf, sizeof(buf), 120) < sizeof(buf))
-			err(1, argv[optind]);
+			err(1, rdev);
 		fp = fopen(bootcodefile, "wb");
 		if (fp == NULL || fwrite(buf, 390, 1, fp) < 1)
-			err(1, argv[optind]);	
+			err(1, rdev);
 		fclose(fp);
 	}
 	
@@ -184,6 +193,11 @@ int main(int argc, char **argv)
 		fprintf(stderr, "Initialize exfatfs library...\n");
 
 	fs = exfatfs_init(devfd, verbose);
+
+	if (Nflag) {
+		print_bootblock_newfs(fs, rdev);
+		printf("\n");
+	}
 
 	if (Bflag) {
 		print_bootblock(fs);
@@ -290,6 +304,19 @@ void print_bootblock(struct exfatfs *fs)
 	}
 	printf("\n");
         printf("BootSignature: 0x%hx\n", fs->xf_BootSignature);
+}
+
+void print_bootblock_newfs(struct exfatfs *fs, char *rdev)
+{
+	printf("%s -# 0x%lx -a %lu -c %u -h %lu -S %u -s %lu %s\n",
+	       NEWFS_EXFATFS,
+	       (unsigned long)fs->xf_VolumeSerialNumber, /* -# */
+	       (unsigned long)fs->xf_FatOffset, /* -a */
+	       (unsigned)(1 << (fs->xf_SectorsPerClusterShift + fs->xf_BytesPerSectorShift)), /* -c */
+	       (unsigned long)fs->xf_ClusterHeapOffset, /* -h */
+	       (unsigned)(1 << fs->xf_BytesPerSectorShift), /* -S */
+	       (unsigned long)fs->xf_VolumeLength, /* -s */
+	       rdev);
 }
 
 /*

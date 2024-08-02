@@ -1,4 +1,4 @@
-.\"	$NetBSD: dumpexfatfs.8,v 1.1.2.1 2024/06/29 19:43:27 perseant Exp $
+.\"	$NetBSD: dumpexfatfs.8,v 1.1.2.2 2024/08/02 00:24:20 perseant Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,12 +48,35 @@ The listing is very long and detailed.
 This command is useful mostly for finding out certain file system
 information such as the file system block size.
 .Pp
-.\"The following flags are interpreted by
-.\".Nm .
-.\".Bl -tag -width indent
-.\".It Fl a
-.\"Dump the contents of all superblocks, not just the first.  Superblocks
-.\"appear in the dumplfs output with the segment containing them.
+The following flags are interpreted by
+.Nm .
+.Bl -tag -width indent
+.\""AaB:bcd:fnruv"
+.It Fl A
+This is equivalent to using flags -abfru.
+.It Fl a
+Dump the allocation bitmap.
+.It Fl B Ar bootcode-file
+Dump the filesystem's bootcode into a file suitable for use by
+.Xr newfs_exfatfs 8 .
+.It Fl c
+Print the current time, converted to and from DOS format time;
+and January 1st, 1980 in DOS format time.
+.It Fl d Ar inum
+Dump the contents of the directory with inode number
+.Ar inum .
+.It Fl f
+Dump the File Allocation Table.
+.It Fl n
+Show the invocation of
+.Xr newfs 8
+to duplicate this filesystem.
+.It Fl r
+Dump the contents of the root directory.
+.It Fl u
+Display the up-case table.
+.It Fl v
+Be more verbose.
 .El
 .Sh SEE ALSO
 .Xr disktab 5 ,
