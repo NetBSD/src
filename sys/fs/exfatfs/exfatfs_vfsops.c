@@ -1,4 +1,4 @@
-/* $NetBSD: exfatfs_vfsops.c,v 1.1.2.5 2024/07/24 00:38:26 perseant Exp $ */
+/* $NetBSD: exfatfs_vfsops.c,v 1.1.2.6 2024/08/02 00:16:55 perseant Exp $ */
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_vfsops.c,v 1.1.2.5 2024/07/24 00:38:26 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_vfsops.c,v 1.1.2.6 2024/08/02 00:16:55 perseant Exp $");
 
 struct vm_page;
 
@@ -620,7 +620,7 @@ exfatfs_unmount(struct mount *mp, int mntflags)
 	fs->xf_VolumeFlags &= ~EXFATFS_VOLUME_DIRTY;
 	fs->xf_PercentInUse = (fs->xf_ClusterCount - fs->xf_FreeClusterCount)
 		/ fs->xf_ClusterCount;
-	exfatfs_write_sb(fs);
+	exfatfs_write_sb(fs, 0);
 	DPRINTF((" lock devvp...\n"));
 	vn_lock(fs->xf_devvp, LK_EXCLUSIVE | LK_RETRY);
 	DPRINTF((" close devvp...\n"));

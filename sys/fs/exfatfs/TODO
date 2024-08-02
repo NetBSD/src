@@ -1,1 +1,2 @@
 * Use unions in directory entries instead of the cumbersome casting.
+* Copy extended boot code too, if requested.

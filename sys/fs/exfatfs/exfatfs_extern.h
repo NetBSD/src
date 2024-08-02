@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_extern.h,v 1.1.2.3 2024/07/24 00:38:26 perseant Exp $	*/
+/*	$NetBSD: exfatfs_extern.h,v 1.1.2.4 2024/08/02 00:16:55 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 
 int exfatfs_bmap_shared(struct vnode *, daddr_t, struct vnode **, daddr_t *,
 	int *);
+int exfatfs_locate_valid_superblock(struct vnode *, size_t, struct exfatfs **);
 int exfatfs_mountfs_shared(struct vnode *, struct exfatfs_mount *, unsigned,
 	struct exfatfs **);
 struct xfinode *exfatfs_newxfinode(struct exfatfs *, uint32_t, uint32_t);
@@ -51,6 +52,6 @@ int exfatfs_scandir(struct vnode *, off_t, off_t *,
 		    void *arg);
 #define SCANDIR_STOP     0x00000001
 #define SCANDIR_DONTFREE 0x00000002
-int exfatfs_write_sb(struct exfatfs *);
+int exfatfs_write_sb(struct exfatfs *, int);
 
 #endif /* EXFATFS_EXTERN_H_ */

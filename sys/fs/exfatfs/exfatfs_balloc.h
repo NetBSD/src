@@ -1,4 +1,4 @@
-/* $NetBSD: exfatfs_balloc.h,v 1.1.2.3 2024/07/19 16:19:15 perseant Exp $ */
+/* $NetBSD: exfatfs_balloc.h,v 1.1.2.4 2024/08/02 00:16:55 perseant Exp $ */
 
 /*-
  * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
@@ -42,6 +42,6 @@
 int exfatfs_bitmap_init(struct exfatfs *);
 void exfatfs_bitmap_destroy(struct exfatfs *);
 int exfatfs_bitmap_alloc(struct exfatfs *, uint32_t, uint32_t *);
-int exfatfs_bitmap_dealloc(struct exfatfs *, uint32_t);
+int exfatfs_bitmap_dealloc(struct exfatfs *, uint32_t, int);
 
 #endif /* EXFATFS_BALLOC_H_ */

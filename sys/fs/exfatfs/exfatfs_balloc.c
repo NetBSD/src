@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_balloc.c,v 1.1.2.3 2024/07/19 16:19:15 perseant Exp $	*/
+/*	$NetBSD: exfatfs_balloc.c,v 1.1.2.4 2024/08/02 00:16:55 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_balloc.c,v 1.1.2.3 2024/07/19 16:19:15 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_balloc.c,v 1.1.2.4 2024/08/02 00:16:55 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/buf.h>
@@ -185,24 +185,39 @@ exfatfs_bitmap_alloc(struct exfatfs *fs, uint32_t start, uint32_t *cp)
 }
 
 int
-exfatfs_bitmap_dealloc(struct exfatfs *fs, uint32_t cno)
+exfatfs_bitmap_dealloc(struct exfatfs *fs, uint32_t cno, int len)
 {
 	daddr_t lbn, blkno;
-	struct buf *bp;
-	int off, error;
+	struct buf *bp = NULL;
+	int off, error, lbsize;
 	uint8_t *data;
-	
+
 	lbn = BITMAPLBN(fs, cno);
 	off = BITMAPOFF(fs, cno);
-	exfatfs_bmap_shared(fs->xf_bitmapvp, lbn, NULL, &blkno, NULL);
-	if ((error = bread(fs->xf_devvp, blkno, EXFATFS_LSIZE(fs), 0, &bp)) != 0)
-		return error;
-	data = (uint8_t *)bp->b_data;
-	DPRINTF(("basic deallocate cluster %u at lbn %u bit %d\n",
-		 (unsigned)cno, (unsigned)lbn, (int)off));
-	assert(isset(data, off));
-	clrbit(data, off);
-	bdwrite(bp);
+	lbsize = EXFATFS_LSIZE(fs) * NBBY;
+	while (--len >= 0) {
+		if (off >= lbsize) {
+			/* Switch to a new block */
+			off = 0;
+			++lbn;
+			if (bp != NULL)
+				bdwrite(bp);
+			bp = NULL;
+		}
+		if (bp == NULL) {
+			exfatfs_bmap_shared(fs->xf_bitmapvp, lbn, NULL, &blkno, NULL);
+			if ((error = bread(fs->xf_devvp, blkno, EXFATFS_LSIZE(fs), 0, &bp)) != 0)
+				return error;
+			data = (uint8_t *)bp->b_data;
+		}
+		DPRINTF(("basic deallocate cluster %u at lbn %u bit %d\n",
+		 	(unsigned)cno, (unsigned)lbn, (int)off));
+		assert(isset(data, off));
+		clrbit(data, off);
+		++off;
+	}
+	if (bp != NULL)
+		bdwrite(bp);
 #ifdef _KERNEL
 	mutex_enter(&fs->xf_lock);
 #endif /* _KERNEL */

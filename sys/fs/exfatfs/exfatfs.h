@@ -1,4 +1,4 @@
-/* $NetBSD: exfatfs.h,v 1.1.2.5 2024/07/19 16:19:15 perseant Exp $ */
+/* $NetBSD: exfatfs.h,v 1.1.2.6 2024/08/02 00:16:55 perseant Exp $ */
 
 /*-
  * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
@@ -71,7 +71,8 @@ struct exfatdfs {
 	uint8_t  xdf_DriveSelect;
 	uint8_t  xdf_PercentInUse;
 	uint8_t  xdf_Reserved[7];
-	uint8_t  xdf_BootCode[390];
+#define EXFATFS_BOOTCODE_SIZE 390
+	uint8_t  xdf_BootCode[EXFATFS_BOOTCODE_SIZE];
 	uint16_t xdf_BootSignature;
 #define EXFAT_BOOT_SIGNATURE 0xAA55
 #define EXFAT_EXTENDED_BOOT_SIGNATURE 0xAA550000

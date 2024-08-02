@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_extern.c,v 1.1.2.6 2024/07/24 00:38:26 perseant Exp $	*/
+/*	$NetBSD: exfatfs_extern.c,v 1.1.2.7 2024/08/02 00:16:55 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -33,10 +33,11 @@
 
 #ifdef _KERNEL
 # include <sys/buf.h>
+# define B_INVAL BC_INVAL
 # include <sys/malloc.h>
 # include <sys/rwlock.h>
 # include <miscfs/specfs/specdev.h>  /* For v_rdev */
-#else
+#else /* ! _KERNEL */
 # include <stdlib.h>
 # include <string.h>
 # include <assert.h>
@@ -49,7 +50,7 @@
 # define buf ubuf
 typedef struct uvvnode uvnode_t;
 # define vnode_t uvnode_t
-#endif
+#endif /* ! _KERNEL */
 
 #include <fs/exfatfs/exfatfs.h>
 #include <fs/exfatfs/exfatfs_balloc.h>
@@ -254,6 +255,116 @@ errout:
 	return error;
 }
 
+int
+exfatfs_locate_valid_superblock(struct vnode *devvp, size_t secshift, struct exfatfs **fsp)
+{
+	struct exfatfs *fs = NULL;
+	struct buf *bp;
+	int error, last_error;
+	const char *errstr;
+	int boot_offset;
+	uint8_t boot_ignore[3] = { 106, 107, 112 };
+	int bn;
+	uint32_t sum, badsb;
+	size_t secsize, newshift;
+
+	*fsp = NULL;
+	secsize = (1 << secshift);
+
+	/*
+	 * Check both boot blocks and checksums to find a valid one
+	 */
+	for (boot_offset = 0; boot_offset <= 12; boot_offset += 12) {
+		/* Innocent until proven guilty */
+		badsb = 0;
+		
+		/* Compute the checksum of the first 11 blocks */
+		sum = 0;
+		for (bn = 0; bn < 11; ++bn) {
+			if ((error = bread(devvp,
+					   (bn + boot_offset)
+					   << (secshift - DEV_BSHIFT),
+					   secsize, 0, &bp)) < 0) {
+				DPRINTF(("bread (., %lu, %lu, ., .) errno %d\n",
+					 (unsigned long)((bn + boot_offset)
+						<< (secshift - DEV_BSHIFT)),
+					 (unsigned long)secsize, error));
+				last_error = error;
+				continue;
+			}
+
+			/* If the sectors are of a different size, switch to that size */
+			newshift = ((struct exfatfs *)bp->b_data)->xf_BytesPerSectorShift;
+			if (newshift != secshift && newshift >= 9 && newshift <= 12) {
+				brelse(bp, B_INVAL);
+				return exfatfs_locate_valid_superblock(devvp, newshift, fsp);
+			}
+
+			/*
+			 * The checksum of the first sector ignores
+			 * certain fields, per the specification.
+			 */
+			sum = exfatfs_cksum32(sum, (uint8_t *)bp->b_data,
+					      secsize,
+					      boot_ignore, (bn == 0 ? 3 : 0));
+
+			/*
+			 * If this is the boot block, save the data;
+			 * this is our superblock if checksums match.
+			 */
+			if (bn == 0 && fs == NULL) {
+				*fsp = malloc(sizeof(**fsp)
+#ifdef _KERNEL
+					    , M_EXFATFSBOOT, M_WAITOK
+#endif /* _KERNEL */
+					);
+				memset(*fsp, 0, sizeof(*fs));
+				memcpy(*fsp, bp->b_data, sizeof((*fsp)->xf_exfatdfs));
+#ifdef DEBUG_VERBOSE
+				DPRINTF(("fs = %p\n", *fsp));
+#endif
+			}
+			brelse(bp, 0);
+		}
+		if (*fsp == NULL)
+			continue;
+
+		/* Now read the recorded checksum and compare */
+		if ((error = bread(devvp, (11 + boot_offset) << (secshift - DEV_BSHIFT),
+				   secsize, 0, &bp)) != 0) {
+			last_error = error;
+			continue;
+		}
+		if (sum != *(u_int32_t *)(bp->b_data)) {
+			DPRINTF(("Checksum mismatch at offset %u\n", boot_offset));
+			badsb = 1;
+		}
+		brelse(bp, 0);
+		bp = NULL;
+
+		/* Check other aspects of the boot block */
+		if (!badsb && (errstr = exfatfs_check_bootblock(*fsp)) != NULL) {
+			DPRINTF(("%s\n", errstr));
+			badsb = 1;
+		}
+
+		if (!badsb)
+			break;
+
+		/* Not an error on the first one, just try the other */
+		free(*fsp
+#ifdef _KERNEL
+		     , M_EXFATFSBOOT
+#endif /* _KERNEL */
+			);
+		*fsp = NULL;
+	}
+
+	if (*fsp)
+		last_error = 0;
+	return last_error;
+}
+	
 int exfatfs_mountfs_shared(struct vnode *devvp, struct exfatfs_mount *xmp,
 	unsigned secsize, struct exfatfs **fsp)
 {
@@ -262,11 +373,6 @@ int exfatfs_mountfs_shared(struct vnode *devvp, struct exfatfs_mount *xmp,
 	uint16_t *uctable;
 	int	error;
 	unsigned secshift;
-	const char *errstr;
-	int boot_offset;
-	uint8_t boot_ignore[3] = { 106, 107, 112 };
-	int bn;
-	uint32_t sum, badsb;
 	off_t res, off;
 
 	DPRINTF(("exfatfs_mountfs_shared(%p, %u, %p)\n",
@@ -289,84 +395,9 @@ int exfatfs_mountfs_shared(struct vnode *devvp, struct exfatfs_mount *xmp,
 		return EINVAL;
 	}
 
-	/*
-	 * Check both boot blocks and checksums to find a valid one
-	 */
-	for (boot_offset = 0; boot_offset <= 12; boot_offset += 12) {
-		/* Innocent until proven guilty */
-		badsb = 0;
-		
-		/* Compute the checksum of the first 11 blocks */
-		sum = 0;
-		for (bn = 0; bn < 11; ++bn) {
-			if ((error = bread(devvp,
-					   (bn + boot_offset)
-					   << (secshift - DEV_BSHIFT),
-					   secsize, 0, &bp)) < 0) {
-				DPRINTF(("bread (., %lu, %lu, ., .) errno %d\n",
-					 (unsigned long)((bn + boot_offset)
-						<< (secshift - DEV_BSHIFT)),
-					 (unsigned long)secsize, error));
-				continue;
-			}
-			/*
-			 * The checksum of the first sector ignores
-			 * certain fields, per the specification.
-			 */
-			sum = exfatfs_cksum32(sum, (uint8_t *)bp->b_data,
-					      secsize,
-					      boot_ignore, (bn == 0 ? 3 : 0));
+	if ((error = exfatfs_locate_valid_superblock(devvp, secshift, &fs)) != 0)
+		return error;
 
-			/*
-			 * If this is the boot block, save the data;
-			 * this is our superblock if checksums match.
-			 */
-			if (bn == 0 && fs == NULL) {
-				fs = malloc(sizeof(*fs)
-#ifdef _KERNEL
-					    , M_EXFATFSBOOT, M_WAITOK
-#endif /* _KERNEL */
-					);
-				memset(fs, 0, sizeof(*fs));
-				memcpy(fs, bp->b_data, sizeof(fs->xf_exfatdfs));
-#ifdef DEBUG_VERBOSE
-				DPRINTF(("fs = %p\n", fs));
-#endif
-			}
-			brelse(bp, 0);
-		}
-		if (fs == NULL)
-			continue;
-
-		/* Now read the recorded checksum and compare */
-		if ((error = bread(devvp, (11 + boot_offset) << (secshift - DEV_BSHIFT),
-				   secsize, 0, &bp)) != 0)
-			continue;
-		if (sum != *(u_int32_t *)(bp->b_data)) {
-			DPRINTF(("Checksum mismatch at offset %u\n", boot_offset));
-			badsb = 1;
-		}
-		brelse(bp, 0);
-		bp = NULL;
-
-		/* Check other aspects of the boot block */
-		if (!badsb && (errstr = exfatfs_check_bootblock(fs)) != NULL) {
-			DPRINTF(("%s\n", errstr));
-			badsb = 1;
-		}
-
-		if (!badsb)
-			break;
-
-		/* Not an error on the first one, just try the other */
-		free(fs
-#ifdef _KERNEL
-		     , M_EXFATFSBOOT
-#endif /* _KERNEL */
-			);
-		fs = NULL;
-	}
-	
 	if (fs == NULL) {
 		DPRINTF(("Neither boot block was valid\n"));
 		return EINVAL;
@@ -381,7 +412,7 @@ int exfatfs_mountfs_shared(struct vnode *devvp, struct exfatfs_mount *xmp,
 		/* If mounting for write, mark the fs dirty */
 		if (!(xmp->xm_flags & EXFATFSMNT_RONLY)) {
 			fs->xf_VolumeFlags |= EXFATFS_VOLUME_DIRTY;
-			exfatfs_write_sb(fs);
+			exfatfs_write_sb(fs, 0);
 		}
 	}
 	
@@ -584,7 +615,8 @@ done:
 	return 0;
 }
 
-static const char * exfatfs_check_bootblock(struct exfatfs *fs)
+static const char *
+exfatfs_check_bootblock(struct exfatfs *fs)
 {
 	unsigned i;
 
@@ -741,7 +773,8 @@ exfatfs_freedirent(struct exfatfs_dirent *dp)
 }
 
 #ifdef EXFATFS_FENCE
-static int checkzero(void *p, int len) {
+static int
+checkzero(void *p, int len) {
 	int i;
 
 	for (i = 0; i < len; i++)
@@ -1028,8 +1061,9 @@ out:
  * Assemble the file name from its various components and
  * store it in "name", with its length in "namelenp".
  */
-int exfatfs_get_file_name(struct xfinode *xip, uint16_t *name,
-			  int *namelenp, int resid)
+int
+exfatfs_get_file_name(struct xfinode *xip, uint16_t *name,
+		      int *namelenp, int resid)
 {
 	int entryno, i;
 	struct exfatfs_dfn *dfn;
@@ -1055,8 +1089,9 @@ int exfatfs_get_file_name(struct xfinode *xip, uint16_t *name,
  * to preserve other, non-filename-related, secondary entries that may
  * follow the File Name entries.
  */
-int exfatfs_set_file_name(struct xfinode *xip, uint16_t *name,
-			  int namelen)
+int
+exfatfs_set_file_name(struct xfinode *xip, uint16_t *name,
+		      int namelen)
 {
 	struct exfatfs_dirent *oldp[EXFATFS_MAXDIRENT];
 	struct exfatfs_dfn *dfnp;
@@ -1104,7 +1139,7 @@ int exfatfs_set_file_name(struct xfinode *xip, uint16_t *name,
  * Write the boot block to disk, and checksum the boot block set.
  */
 int
-exfatfs_write_sb(struct exfatfs *fs)
+exfatfs_write_sb(struct exfatfs *fs, int re_checksum)
 {
 	daddr_t base;
 	int i, error;
@@ -1120,11 +1155,15 @@ exfatfs_write_sb(struct exfatfs *fs)
 			return error;
 		memcpy(bp->b_data, &fs->xf_exfatdfs,
 		       sizeof(fs->xf_exfatdfs));
-		cksum = exfatfs_cksum32(0,
-				(uint8_t *)bp->b_data,
-				BSSIZE(fs), boot_ignore,
-				sizeof(boot_ignore));
+		if (re_checksum)
+			cksum = exfatfs_cksum32(0,
+					(uint8_t *)bp->b_data,
+					BSSIZE(fs), boot_ignore,
+					sizeof(boot_ignore));
 		bwrite(bp);
+
+		if (!re_checksum)
+			continue;
 
 		/* Checksum but do not write other sectors */
 		for (i = 1; i < 11; i++) {
