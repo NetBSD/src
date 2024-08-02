@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.1.2.3 2024/07/19 16:19:16 perseant Exp $	*/
+/*	$NetBSD: pass1.c,v 1.1.2.4 2024/08/02 00:19:00 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -308,7 +308,7 @@ pass1(struct exfatfs *fs, struct dup *duplist, uint8_t *bitmap)
 	vd.duplist = duplist;
 	vd.bitmap = bitmap;
 
-	if (!Pflag) {
+	if (!Pflag && !Qflag) {
 		fprintf(stderr, "** Phase 1 - Scan for dups\n");
 	}
 	pass1_recursive(fs->xf_rootvp, &vd);

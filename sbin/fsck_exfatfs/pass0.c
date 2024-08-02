@@ -1,4 +1,4 @@
-/*	$NetBSD: pass0.c,v 1.1.2.2 2024/07/19 16:19:16 perseant Exp $	*/
+/*	$NetBSD: pass0.c,v 1.1.2.3 2024/08/02 00:18:59 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -80,23 +80,23 @@ pass0(struct exfatfs *fs, struct dkwedge_info *dkwp)
 						boot_ignore,
 						(i == 0 ? boot_ignore_len : 0));
 			if (i > 0 && i < 9) {
-				if (*(uint32_t *)((char *)bp->b_data
-					      + BSSIZE(fs)
-						  - sizeof(uint32_t))
-				    != htole32(0xAA550000)) {
-						pwarn("Extended boot sector %d magic number wrong\n",
-						      base + i);
-						if (Pflag || reply("CONTINUE") == 0)
-							exit(1);
-						if (reply("fix") == 1) {
-							*(uint32_t *)((char *)bp->b_data
-								      + BSSIZE(fs)
-								      - sizeof(uint32_t))
-								= htole32(0xAA550000);
-							bwrite(bp);
-							written = 1;
-						}
+				uint32_t *ebcp = (uint32_t *)((char *)bp->b_data
+					      + BSSIZE(fs) - sizeof(uint32_t));
+				if (*ebcp && *ebcp != htole32(0xAA550000)) {
+					pwarn("Extended boot sector %d magic number wrong\n",
+					      base + i);
+					if (Pflag || reply("CONTINUE") == 0)
+						exit(1);
+					if (reply("zero") == 1) {
+						*ebcp = 0;
+						bwrite(bp);
+						written = 1;
+					} else if (reply("set to 0xAA550000") == 1) {
+						*ebcp = htole32(0xAA550000);
+						bwrite(bp);
+						written = 1;
 					}
+				}
 			}
 
 			if (!written)

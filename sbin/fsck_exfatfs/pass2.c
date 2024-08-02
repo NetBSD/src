@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.1.2.3 2024/07/19 16:19:16 perseant Exp $	*/
+/*	$NetBSD: pass2.c,v 1.1.2.4 2024/08/02 00:19:00 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ pass2(struct exfatfs *fs, uint8_t *observed_bitmap)
 	size_t size = bitmap_discontiguous ? EXFATFS_LSIZE(fs) : MAXPHYS;
 	int modified;
 	
-	if (!Pflag) {
+	if (!Pflag && !Qflag) {
 		fprintf(stderr, "** Phase 2 - Verify allocation bitmap\n");
 	}
 	
