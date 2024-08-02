@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.67 2023/06/04 01:24:56 joerg Exp $	 */
+/*	$NetBSD: map_object.c,v 1.68 2024/08/02 11:45:52 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.67 2023/06/04 01:24:56 joerg Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.68 2024/08/02 11:45:52 skrll Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -376,7 +376,9 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 			    - base_vaddr);
 
 			if ((nclear = data_vlimit - clear_vaddr) > 0) {
-				/* Make sure the end of the segment is writable
+				/*
+				 * Make sure the end of the segment is
+				 * writable.
 				 */
 				if ((data_prot & PROT_WRITE) == 0 && -1 ==
 				     mprotect(clear_page, _rtld_pagesz,
