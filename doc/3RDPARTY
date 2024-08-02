@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2027 2024/08/01 19:49:03 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2028 2024/08/02 16:27:14 gutteridge Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1472,11 +1472,11 @@ for now, late 2021, do it manually).
 
 Package:	wpa_supplicant/hostapd
 Version:	2.9
-Current Vers:	2.10
+Current Vers:	2.11
 Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
 Archive Site:	http://w1.fi/releases/
 Home Page:	http://w1.fi/wpa_supplicant/
-Date:		2024-02-26
+Date:		2024-08-02
 Mailing List:
 Responsible:	scw, dyoung, christos
 License:	BSD or GPLv2
