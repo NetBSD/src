@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2022/06/06 10:56:29 nia Exp $
+#	$NetBSD: Makefile,v 1.30.4.1 2024/08/02 00:24:52 perseant Exp $
 #
 
 .include <bsd.own.mk>
@@ -28,6 +28,7 @@ SRCS.t_link+= sysctlbyname.c sysctlgetmibinfo.c t_link.c
 
 LDADD+=-lrumpnet_shmif -lrumpnet -lrumpnet_net -lrumpnet_netinet# TCP/IP
 LDADD+=-lrumpfs_nfs						# NFS
+LDADD+=-lrumpfs_exfatfs						# exFATfs
 LDADD+=-lrumpfs_ext2fs						# ext2fs
 LDADD+=-lrumpfs_ffs						# ffs
 LDADD+=-lrumpfs_lfs						# lfs

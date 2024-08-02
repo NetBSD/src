@@ -1,4 +1,4 @@
-/*	$NetBSD: h_exfatfs_server.c,v 1.1.2.1 2024/06/29 19:43:26 perseant Exp $	*/
+/*	$NetBSD: h_exfatfs_server.c,v 1.1.2.2 2024/08/02 00:24:52 perseant Exp $	*/
 
 /*
  * rump server for advanced quota tests
@@ -55,16 +55,12 @@ main(int argc, char **argv)
 	const char *filename;
 	const char *serverurl;
 	struct exfatfs_args uargs;
-	int log = 0;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "bl")) != -1) {
+	while ((ch = getopt(argc, argv, "b")) != -1) {
 		switch(ch) {
 		case 'b':
 			background = 1;
-			break;
-		case 'l':
-			log = 1;
 			break;
 		default:
 			usage();
@@ -93,7 +89,7 @@ main(int argc, char **argv)
 		die("mount point create", errno);
 	rump_pub_etfs_register("/diskdev", filename, RUMP_ETFS_BLK);
 	uargs.fspec = __UNCONST("/diskdev");
-	if (rump_sys_mount(MOUNT_EXFATFS, FSTEST_MNTNAME, (log) ? MNT_LOG : 0,
+	if (rump_sys_mount(MOUNT_EXFATFS, FSTEST_MNTNAME, 0,
 	    &uargs, sizeof(uargs)) == -1)
 		die("mount ffs", errno);
 
