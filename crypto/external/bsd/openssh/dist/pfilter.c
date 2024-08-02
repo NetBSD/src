@@ -1,4 +1,4 @@
-/*	$NetBSD: pfilter.c,v 1.8 2020/06/15 01:57:29 christos Exp $	*/
+/*	$NetBSD: pfilter.c,v 1.9 2024/08/02 17:13:02 christos Exp $	*/
 #include "namespace.h"
 #include "includes.h"
 #include "ssh.h"
@@ -6,19 +6,20 @@
 #include "log.h"
 #include "pfilter.h"
 #include <blocklist.h>
+#include <syslog.h>
 
 #ifndef SMALL
 static struct blocklist *blstate;
 #endif
 
 #include "includes.h"
-__RCSID("$NetBSD: pfilter.c,v 1.8 2020/06/15 01:57:29 christos Exp $");
+__RCSID("$NetBSD: pfilter.c,v 1.9 2024/08/02 17:13:02 christos Exp $");
 
 void
 pfilter_init()
 {
 #ifndef SMALL
-	blstate = blocklist_open();
+	blstate = blocklist_open2(vsyslog_ss);
 #endif
 }
 
