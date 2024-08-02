@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_vnops.c,v 1.1.2.8 2024/07/24 00:38:27 perseant Exp $	*/
+/*	$NetBSD: exfatfs_vnops.c,v 1.1.2.9 2024/08/02 00:16:55 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_vnops.c,v 1.1.2.8 2024/07/24 00:38:27 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_vnops.c,v 1.1.2.9 2024/08/02 00:16:55 perseant Exp $");
 
 #include <sys/buf.h>
 #include <sys/dirent.h>
@@ -224,7 +224,7 @@ exfatfs_getattr(void *v)
 			     GET_DFE_CREATE10MS(xip), fs->xf_gmtoff,
 			     &vap->va_ctime);
 	vap->va_flags = 0;
-	if (ISARCHIVE(xip)) {
+	if (!ISARCHIVE(xip)) {
 		vap->va_flags |= SF_ARCHIVED;
 		vap->va_mode  |= S_ARCH1;
 	}
@@ -2336,13 +2336,20 @@ detrunc_fat(struct xfinode *xip, off_t bytes, int ioflags, kauth_cred_t cred)
 				 (unsigned)lcn,
 				 (unsigned)EXFATFS_B2C(fs,
 					GET_DSE_DATALENGTH_BLK(xip, fs))));
-			exfatfs_bitmap_dealloc(fs, opcn);
+			exfatfs_bitmap_dealloc(fs, opcn, 1);
 			((uint32_t *)bp->b_data)[EXFATFS_FATOFF(opcn)]
 				= 0xFFFFFFFF;
 			if (ioflags)
 				bwrite(bp);
 			else
 				bdwrite(bp);
+
+			/* Notify underlying device for TRIM */
+			vn_lock(fs->xf_devvp, LK_EXCLUSIVE | LK_RETRY);
+			VOP_FDISCARD(fs->xf_devvp,
+				EXFATFS_LC2D(fs, pcn) << DEV_BSHIFT,
+				EXFATFS_C2B(fs, 1));
+			VOP_UNLOCK(fs->xf_devvp);
 		} else
 			brelse(bp, 0);
 		++lcn;
@@ -2368,19 +2375,23 @@ detrunc(struct xfinode *xip, off_t bytes, int ioflags, kauth_cred_t cred)
 	struct exfatfs *fs = xip->xi_fs;
 	uint32_t newcount = howmany(bytes, EXFATFS_CSIZE(fs));
 	uint32_t oldcount = howmany(GET_DSE_DATALENGTH(xip), EXFATFS_CSIZE(fs));
-	uint32_t pcn, lcn;
+	uint32_t pcn;
 
 	assert(/* oldcount >= 0 && */ oldcount <= fs->xf_ClusterCount);
 
 	if (oldcount > newcount) {
 		/* We need to deallocate blocks */
-		/* If we are contiguous, we can use dead reckoning */
 		if (IS_DSE_NOFATCHAIN(xip)) {
-			/* XXX put this loop in exfatfs_balloc.c where it can be more efficient */
-			for (lcn = oldcount; lcn > newcount; --lcn) {
-				pcn = GET_DSE_FIRSTCLUSTER(xip) + lcn - 1;
-				exfatfs_bitmap_dealloc(fs, pcn);
-			}
+			/* If we are contiguous, we can use dead reckoning */
+			pcn = GET_DSE_FIRSTCLUSTER(xip) + newcount;
+			exfatfs_bitmap_dealloc(fs, pcn, oldcount - newcount);
+
+			/* Notify underlying device for TRIM */
+			vn_lock(fs->xf_devvp, LK_EXCLUSIVE | LK_RETRY);
+			VOP_FDISCARD(fs->xf_devvp,
+				EXFATFS_LC2D(fs, pcn) << DEV_BSHIFT,
+				EXFATFS_C2B(fs, oldcount - newcount));
+			VOP_UNLOCK(fs->xf_devvp);
 		} else {
 			/* If not we need to walk the FAT */
 			detrunc_fat(xip, bytes, ioflags, cred);
