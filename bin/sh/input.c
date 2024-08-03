@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.73 2024/07/13 13:43:58 kre Exp $	*/
+/*	$NetBSD: input.c,v 1.74 2024/08/03 03:05:58 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.73 2024/07/13 13:43:58 kre Exp $");
+__RCSID("$NetBSD: input.c,v 1.74 2024/08/03 03:05:58 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -571,7 +571,7 @@ setinputfd(int fd, int push)
  */
 
 void
-setinputstring(char *string, int push, int line1)
+setinputstring(const char *string, int push, int line1)
 {
 
 	INTOFF;

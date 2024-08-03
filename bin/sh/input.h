@@ -1,4 +1,4 @@
-/*	$NetBSD: input.h,v 1.21 2018/08/19 23:50:27 kre Exp $	*/
+/*	$NetBSD: input.h,v 1.22 2024/08/03 03:05:58 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ void pushstring(const char *, int, struct alias *);
 void popstring(void);
 void setinputfile(const char *, int);
 void setinputfd(int, int);
-void setinputstring(char *, int, int);
+void setinputstring(const char *, int, int);
 void popfile(void);
 struct parsefile *getcurrentfile(void);
 void popfilesupto(struct parsefile *);

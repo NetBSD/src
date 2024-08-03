@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.h,v 1.23 2019/02/04 11:16:41 kre Exp $	*/
+/*	$NetBSD: eval.h,v 1.24 2024/08/03 03:05:58 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,7 +47,7 @@ struct backcmd {		/* result of evalbackcmd */
 	struct job *jp;		/* job structure for command */
 };
 
-void evalstring(char *, int);
+void evalstring(const char *, int);
 union node;	/* BLETCH for ansi C */
 void evaltree(union node *, int);
 void evalbackcmd(union node *, struct backcmd *);
