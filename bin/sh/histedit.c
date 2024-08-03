@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.72 2024/08/03 01:13:10 kre Exp $	*/
+/*	$NetBSD: histedit.c,v 1.73 2024/08/03 03:46:23 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.72 2024/08/03 01:13:10 kre Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.73 2024/08/03 03:46:23 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -849,7 +849,8 @@ histcmd(volatile int argc, char ** volatile argv)
 					out2str(s);
 				}
 
-				evalstring(strcpy(stalloc(strlen(s)+1), s), 0);
+				evalstring(s, 0);
+
 				if (displayhist && hist) {
 					/*
 					 *  XXX what about recursive and
