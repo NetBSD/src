@@ -1,4 +1,4 @@
-.\" $NetBSD: df.1,v 1.59 2024/08/03 04:04:54 kre Exp $
+.\" $NetBSD: df.1,v 1.60 2024/08/03 05:27:58 kre Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)df.1	8.2 (Berkeley) 1/13/92
 .\"
-.Dd August 8, 2022
+.Dd August 3, 2024
 .Dt DF 1
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd display free disk space
 .Sh SYNOPSIS
 .Nm
-.Op Fl aclnW
+.Op Fl aclMnqW
 .Op Fl G | Fl bkP | Fl bfgHhikmN
 .Op Fl t Ar type
 .Oo Ar file | Ar file_system Oc Ns ...
@@ -173,6 +173,23 @@ Display statistics only about mounted file systems with the
 flag set.
 If a non-local file system is given as an argument, a
 warning is issued and no information is given on that file system.
+.It Fl M
+Each
+.Ar file
+.Pq or Ar file_system
+specified as an argument must give a path to a mount point
+in the tree, at which a file system is currently mounted.
+Information for that mounted file system is, if not otherwise
+excluded, provided.
+If a
+.Ar file
+which does not name a mount point is specified,
+a warning is issued,
+and no information is given for the file system on which that
+.Ar file
+resides (unless some other
+.Ar file
+names its mount point).
 .It Fl m
 The
 .Fl m
@@ -217,6 +234,8 @@ option may not be specified with
 and the
 .Ar blksize
 is required to be 512 or 1024.
+.It Fl q
+Suppress all warning output.
 .It Fl t Ar type
 Is used to indicate the actions should only be taken on
 file systems of the specified type.
