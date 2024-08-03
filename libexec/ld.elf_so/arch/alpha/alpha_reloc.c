@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.44 2023/06/04 01:24:57 joerg Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.45 2024/08/03 21:59:58 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,18 +36,18 @@
  */
 
 /*
- * Copyright 1996, 1997, 1998, 1999 John D. Polstra.   
+ * Copyright 1996, 1997, 1998, 1999 John D. Polstra.
  * All rights reserved.
- *           
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
- * are met: 
+ * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *          
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: alpha_reloc.c,v 1.44 2023/06/04 01:24:57 joerg Exp $");
+__RCSID("$NetBSD: alpha_reloc.c,v 1.45 2024/08/03 21:59:58 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -371,7 +371,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 	Elf_Addr new_value;
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
-	Elf_Addr stubaddr; 
+	Elf_Addr stubaddr;
 	unsigned long info = rela->r_info;
 
 	assert(ELF_R_TYPE(info) == R_TYPE(JMP_SLOT));
@@ -549,7 +549,7 @@ out:
 caddr_t
 _rtld_bind(const Obj_Entry *obj, Elf_Addr reloff)
 {
-	const Elf_Rela *rela = 
+	const Elf_Rela *rela =
 	    (const Elf_Rela *)((const uint8_t *)obj->pltrela + reloff);
 	Elf_Addr result = 0; /* XXX gcc */
 	int err;

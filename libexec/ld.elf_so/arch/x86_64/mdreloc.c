@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.48 2023/06/04 01:24:58 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.49 2024/08/03 21:59:59 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.48 2023/06/04 01:24:58 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.49 2024/08/03 21:59:59 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -336,7 +336,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 		    rela->r_addend);
 	}
 
-	rdbg(("bind now/fixup in %s --> old=%p new=%p", 
+	rdbg(("bind now/fixup in %s --> old=%p new=%p",
 	    defobj->strtab + def->st_name, (void *)*where, (void *)new_value));
 	if (*where != new_value)
 		*where = new_value;

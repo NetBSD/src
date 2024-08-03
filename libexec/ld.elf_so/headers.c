@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.71 2023/01/04 01:37:24 christos Exp $	 */
+/*	$NetBSD: headers.c,v 1.72 2024/08/03 21:59:57 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.71 2023/01/04 01:37:24 christos Exp $");
+__RCSID("$NetBSD: headers.c,v 1.72 2024/08/03 21:59:57 riastradh Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -435,10 +435,10 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 
 #ifdef RTLD_LOADER
 #if defined(__HAVE_FUNCTION_DESCRIPTORS)
- 	if (init != 0)
+	if (init != 0)
 		obj->init = (void (*)(void))
 		    _rtld_function_descriptor_alloc(obj, NULL, init);
- 	if (fini != 0)
+	if (fini != 0)
 		obj->fini = (void (*)(void))
 		    _rtld_function_descriptor_alloc(obj, NULL, fini);
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.68 2024/08/02 11:45:52 skrll Exp $	 */
+/*	$NetBSD: map_object.c,v 1.69 2024/08/03 21:59:57 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.68 2024/08/02 11:45:52 skrll Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.69 2024/08/03 21:59:57 riastradh Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -359,7 +359,7 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 		data_prot = convert_prot(segs[i]->p_flags);
 		data_flags = convert_flags(segs[i]->p_flags) | MAP_FIXED;
 		if (data_vlimit != data_vaddr &&
-		    mmap(data_addr, data_vlimit - data_vaddr, data_prot, 
+		    mmap(data_addr, data_vlimit - data_vaddr, data_prot,
 		    data_flags, fd, data_offset) == MAP_FAILED) {
 			_rtld_error("%s: mmap of data failed: %s", path,
 			    xstrerror(errno));
