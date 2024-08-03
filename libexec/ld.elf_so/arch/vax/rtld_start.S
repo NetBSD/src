@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.24 2014/08/17 16:57:37 matt Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.25 2024/08/03 21:59:59 riastradh Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -158,7 +158,7 @@ ALTENTRY(_rtld_bind_start)
 	extzv	$16,$12,%r2,%r1	/* get save mask back */
 	jbr	22b		/* now build the new callframe */
 
-30:	
+30:
 	calls	$0,_C_LABEL(_rtld_die)
 #else
 	/*

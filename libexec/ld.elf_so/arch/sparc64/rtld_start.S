@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.17 2008/04/28 20:23:04 martin Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.18 2024/08/03 21:59:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -42,7 +42,7 @@
  * _rtld() expects the stack pointer to point to two longwords for argument
  *	return followed by argc, etc.  We need to create a pointer to
  *	&argc + 16 and pass that in.  The return args will be in those locations.
- * 
+ *
  * NB:	We are violating the ELF spec by passing a pointer to the ps strings in
  * 	%g1 instead of a termination routine.
  */
@@ -52,7 +52,7 @@
 
 /* Offset of ARGC from bottom of stack */
 #define	ARGC	176
-	
+
 	.section	".text"
 	.align	4
 	.global	_rtld_start
@@ -101,7 +101,7 @@ _rtld_start:
 	 *
 	 * The first two entries of PLT2 contain the xword object pointer.
 	 *
-	 * These routines are called with two longword arguments, 
+	 * These routines are called with two longword arguments,
 	 * x and y.  To calculate the address of the entry,
 	 * _rtld_bind_start_1(y, x) does:
 	 *
@@ -139,7 +139,7 @@ _rtld_bind_start_0:	# (y, x)
 	add	%l2, %l1, %l2
 	sllx	%l2, 10, %l2
 	sub	%l0, %l2, %l2		/* And i%5120 */
-	
+
 	/* Let the division churn for a bit. */
 	sdivx	%l2, 24, %l4		/* (i%5120)/24 */
 
@@ -150,23 +150,22 @@ _rtld_bind_start_0:	# (y, x)
 
 	sethi	%hi(32768), %l6
 	add	%l3, %l4, %l5		/* %l5 = (i/5120)*160 + (i%5120)/24; */
-	
+
 	call	_rtld_bind		/* Call _rtld_bind(obj, offset) */
 	 add	%l5, %l6, %o1		/* %o1 = 32768 + ... */
 
 	jmp	%o0			/* return value == function address */
 	 restore			/* Dump our stack frame */
-	
+
 	.section	".text"
 	.align	4
 	.global	_rtld_bind_start_1
 	.type	_rtld_bind_start_1,@function
 _rtld_bind_start_1:	# (y, x)
 	ldx	[%o0 + (2*4)], %o0	/* Load object pointer from PLT2 */
-	
+
 	call	_rtld_bind		/* Call _rtld_bind(obj, offset) */
 	 srax	%o1, 15, %o1		/* %o1 is the index to our PLT slot */
 
 	jmp	%o0			/* return value == function address */
 	 restore			/* Dump our stack frame */
-

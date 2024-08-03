@@ -1,8 +1,8 @@
-/*	$NetBSD: mdreloc.c,v 1.43 2023/06/04 20:02:29 martin Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.44 2024/08/03 21:59:58 riastradh Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.43 2023/06/04 20:02:29 martin Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.44 2024/08/03 21:59:58 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -257,7 +257,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rel *rel,
 	}
 
 	rdbg(("bind now/fixup in %s --> old=%p new=%p",
-	    defobj->strtab + def->st_name, (void *)*where, 
+	    defobj->strtab + def->st_name, (void *)*where,
 	    (void *)target));
 	if (*where != target)
 		*where = target;
@@ -290,7 +290,7 @@ _rtld_relocate_plt_objects(const Obj_Entry *obj)
 {
 	const Elf_Rel *rel;
 	int err = 0;
-	
+
 	for (rel = obj->pltrel; rel < obj->pltrellim; rel++) {
 		err = _rtld_relocate_plt_object(obj, rel, NULL);
 		if (err)

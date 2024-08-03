@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.75 2023/06/04 01:24:57 joerg Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.76 2024/08/03 21:59:58 riastradh Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.75 2023/06/04 01:24:57 joerg Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.76 2024/08/03 21:59:58 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -327,7 +327,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 		case R_TYPE(TLS_DTPREL64):
 		case R_TYPE(TLS_TPREL64):
 #else
-		case R_TYPE(TLS_DTPMOD32): 
+		case R_TYPE(TLS_DTPMOD32):
 		case R_TYPE(TLS_DTPREL32):
 		case R_TYPE(TLS_TPREL32):
 #endif
@@ -405,7 +405,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 #if ELFSIZE == 64
 		case R_TYPE(TLS_DTPMOD64):
 #else
-		case R_TYPE(TLS_DTPMOD32): 
+		case R_TYPE(TLS_DTPMOD32):
 #endif
 		{
 			Elf_Addr old = load_ptr(where, ELFSIZE / 8);

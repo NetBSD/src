@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.71 2024/07/23 09:55:19 uwe Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.72 2024/08/03 21:59:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.71 2024/07/23 09:55:19 uwe Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.72 2024/08/03 21:59:58 riastradh Exp $");
 #endif /* not lint */
 
 #include <machine/elf_support.h>
@@ -148,15 +148,15 @@ static const char *reloc_names[] = {
 	"GLOB_DAT", "JMP_SLOT", "RELATIVE", "UA_32", "PLT32",
 	"HIPLT22", "LOPLT10", "LOPLT10", "PCPLT22", "PCPLT32",
 	"10", "11", "64", "OLO10", "HH22",
-	"HM10", "LM22", "PC_HH22", "PC_HM10", "PC_LM22", 
+	"HM10", "LM22", "PC_HH22", "PC_HM10", "PC_LM22",
 	"WDISP16", "WDISP19", "GLOB_JMP", "7", "5", "6",
-	"DISP64", "PLT64", "HIX22", "LOX10", "H44", "M44", 
+	"DISP64", "PLT64", "HIX22", "LOX10", "H44", "M44",
 	"L44", "REGISTER", "UA64", "UA16",
 	"TLS_GD_HI22", "TLS_GD_LO10", "TLS_GD_ADD", "TLS_GD_CALL",
 	"TLS_LDM_HI22", "TLS_LDM_LO10", "TLS_LDM_ADD", "TLS_LDM_CALL",
-	"TLS_LDO_HIX22", "TLS_LDO_LOX10", "TLS_LDO_ADD", "TLS_IE_HI22", 
-	"TLS_IE_LO10", "TLS_IE_LD", "TLS_IE_LDX", "TLS_IE_ADD", "TLS_LE_HIX22", 
-	"TLS_LE_LOX10", "TLS_DTPMOD32", "TLS_DTPMOD64", "TLS_DTPOFF32", 
+	"TLS_LDO_HIX22", "TLS_LDO_LOX10", "TLS_LDO_ADD", "TLS_IE_HI22",
+	"TLS_IE_LO10", "TLS_IE_LD", "TLS_IE_LDX", "TLS_IE_ADD", "TLS_LE_HIX22",
+	"TLS_LE_LOX10", "TLS_DTPMOD32", "TLS_DTPMOD64", "TLS_DTPOFF32",
 	"TLS_DTPOFF64", "TLS_TPOFF32", "TLS_TPOFF64",
 };
 #endif
@@ -179,7 +179,7 @@ static const long reloc_target_bitmask[] = {
 	_BM(22), _BM(22),		/* HI22, _22 */
 	_BM(13), _BM(10),		/* RELOC_13, _LO10 */
 	_BM(10), _BM(13), _BM(22),	/* GOT10, GOT13, GOT22 */
-	_BM(10), _BM(22),		/* _PC10, _PC22 */  
+	_BM(10), _BM(22),		/* _PC10, _PC22 */
 	_BM(30), 0,			/* _WPLT30, _COPY */
 	-1, _BM(32), -1,		/* _GLOB_DAT, JMP_SLOT, _RELATIVE */
 	_BM(32), _BM(32),		/* _UA32, PLT32 */
@@ -270,7 +270,7 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 		_rtld_install_plt(&entry[0], (Elf_Addr) &_rtld_bind_start_0);
 		_rtld_install_plt(&entry[8], (Elf_Addr) &_rtld_bind_start_1);
 
-		/* 
+		/*
 		 * Install the object reference in first slot
 		 * of entry 2.
 		 */
@@ -544,7 +544,7 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 		 * specifications say that they should have relocation entries,
 		 * but the 32-bit SPARC binutils do not generate them, and now
 		 * the 64-bit SPARC binutils have stopped generating them too.
-		 * 
+		 *
 		 * So, to provide binary compatibility, we will check the first
 		 * entry, if it is reserved it should not be of the type
 		 * JMP_SLOT or JMP_REL.  If it is either of those, then
@@ -634,7 +634,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 	} else {
 		value = (Elf_Addr)(defobj->relocbase + def->st_value);
 	}
-	rdbg(("bind now/fixup in %s at %p --> new=%p", 
+	rdbg(("bind now/fixup in %s at %p --> new=%p",
 	    defobj->strtab + def->st_name, (void*)where, (void *)value));
 
 	_rtld_write_plt(where, value, rela, obj);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.10 2009/12/14 00:41:19 matt Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.11 2024/08/03 21:59:58 riastradh Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -120,7 +120,7 @@ _rtld_bind_start:
 	jal	_C_LABEL(_rtld_bind)
 	 nop
 	move	sp, s0
-	REG_L	ra, XCALLFRAME_RA(sp)		
+	REG_L	ra, XCALLFRAME_RA(sp)
 	REG_L	s0, XCALLFRAME_S0(sp)
 	REG_L	a0, XCALLFRAME_A0(sp)
 	REG_L	a1, XCALLFRAME_A1(sp)

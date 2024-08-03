@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.64 2024/07/23 10:17:32 uwe Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.65 2024/08/03 21:59:58 riastradh Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ppc_reloc.c,v 1.64 2024/07/23 10:17:32 uwe Exp $");
+__RCSID("$NetBSD: ppc_reloc.c,v 1.65 2024/08/03 21:59:58 riastradh Exp $");
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -455,7 +455,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, int reloff
 	} else {
 		value = (Elf_Addr)(defobj->relocbase + def->st_value);
 	}
-	rdbg(("bind now/fixup in %s --> new=%p", 
+	rdbg(("bind now/fixup in %s --> new=%p",
 	    defobj->strtab + def->st_name, (void *)value));
 
 #ifdef _LP64
@@ -486,14 +486,14 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, int reloff
 	} else {
 		Elf_Addr *pltcall, *jmptab;
 		int N = obj->pltrelalim - obj->pltrela;
-	
+
 		/* Entries beyond 8192 take twice as much space. */
 		if (N > 8192)
 			N += N-8192;
 
 		pltcall = obj->pltgot;
 		jmptab = pltcall + 18 + N * 2;
-	
+
 		jmptab[reloff] = value;
 
 		if (reloff < 32768) {
@@ -538,7 +538,7 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 	new_value = 0;	/* XXX gcc */
 
 	_rtld_shared_enter();
-	err = _rtld_relocate_plt_object(obj, rela, reloff, &new_value); 
+	err = _rtld_relocate_plt_object(obj, rela, reloff, &new_value);
 	if (err)
 		_rtld_die();
 	_rtld_shared_exit();
@@ -555,7 +555,7 @@ _rtld_relocate_plt_objects(const Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
 	int reloff;
-	
+
 	for (rela = obj->pltrela, reloff = 0; rela < obj->pltrelalim; rela++, reloff++) {
 		if (_rtld_relocate_plt_object(obj, rela, reloff, NULL) < 0)
 			return -1;
