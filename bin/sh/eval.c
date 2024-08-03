@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.192 2024/06/15 05:18:48 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.193 2024/08/03 03:05:58 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.192 2024/06/15 05:18:48 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.193 2024/08/03 03:05:58 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -213,7 +213,7 @@ evalcmd(int argc, char **argv)
  */
 
 void
-evalstring(char *s, int flag)
+evalstring(const char *s, int flag)
 {
 	union node *n;
 	struct stackmark smark;
