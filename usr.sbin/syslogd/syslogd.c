@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.141 2023/10/11 23:22:13 uwe Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.142 2024/08/03 02:43:37 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.141 2023/10/11 23:22:13 uwe Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.142 2024/08/03 02:43:37 gutteridge Exp $");
 #endif
 #endif /* not lint */
 
@@ -557,7 +557,7 @@ getgroup:
 #if (IETF_NUM_PRIVALUES != (LOG_NFACILITIES<<3))
 	logerror("Warning: system defines %d priority values, but "
 	    "syslog-protocol/syslog-sign specify %d values",
-	    LOG_NFACILITIES, SIGN_NUM_PRIVALS);
+	    LOG_NFACILITIES, IETF_NUM_PRIVALUES>>3);
 #endif
 
 	/*
