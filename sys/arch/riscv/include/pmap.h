@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.23 2024/01/01 17:18:02 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.24 2024/08/04 08:16:25 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
 #define	PMAP_INVALID_SEGTAB_ADDRESS	((pmap_segtab_t *)0xdeadbeef)
 #endif
 #define	PMAP_TLB_NUM_PIDS		(__SHIFTOUT_MASK(SATP_ASID) + 1)
-#define	PMAP_TLB_BITMAP_LENGTH          PMAP_TLB_NUM_PIDS
+#define	PMAP_TLB_BITMAP_LENGTH		PMAP_TLB_NUM_PIDS
 #define	PMAP_TLB_FLUSH_ASID_ON_RESET	true
 
 #define	pmap_phys_address(x)		(x)
@@ -98,9 +98,9 @@
 #ifndef __BSD_PTENTRY_T__
 #define	__BSD_PTENTRY_T__
 #ifdef _LP64
-#define	PRIxPTE         PRIx64
+#define	PRIxPTE		PRIx64
 #else
-#define	PRIxPTE         PRIx32
+#define	PRIxPTE		PRIx32
 #endif
 #endif /* __BSD_PTENTRY_T__ */
 
@@ -185,8 +185,8 @@ extern vaddr_t pmap_direct_end;
 static inline bool
 pmap_md_tlb_check_entry(void *ctx, vaddr_t va, tlb_asid_t asid, pt_entry_t pte)
 {
-        // TLB not walked and so not called.
-        return false;
+	// TLB not walked and so not called.
+	return false;
 }
 
 static inline void

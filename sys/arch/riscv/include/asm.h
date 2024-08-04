@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.7 2023/05/07 12:41:48 skrll Exp $	*/
+/*	$NetBSD: asm.h,v 1.8 2024/08/04 08:16:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@
 	MSG(msg)
 
 #define	MSG(msg)			\
-        .pushsection .rodata.str1.8,"aMS",@progbits,1; \
+	.pushsection .rodata.str1.8,"aMS",@progbits,1; \
 9:	.asciiz	msg;			\
 	.popsection
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 2023/05/07 12:41:49 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7 2024/08/04 08:16:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: mainbus.c,v 1.6 2023/05/07 12:41:49 skrll Exp $");
+__RCSID("$NetBSD: mainbus.c,v 1.7 2024/08/04 08:16:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -60,7 +60,7 @@ extern struct bus_space riscv_generic_bs_tag;
 bus_space_tag_t
 fdtbus_bus_tag_create(int phandle, uint32_t flags)
 {
-        return &riscv_generic_bs_tag;
+	return &riscv_generic_bs_tag;
 }
 
 static inline bool
