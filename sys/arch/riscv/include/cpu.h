@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.15 2023/12/25 13:21:30 skrll Exp $ */
+/* $NetBSD: cpu.h,v 1.16 2024/08/04 08:16:25 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -215,10 +215,10 @@ static inline void
 cpu_dosoftints(void)
 {
 	extern void dosoftints(void);
-        struct cpu_info * const ci = curcpu();
-        if (ci->ci_intr_depth == 0
+	struct cpu_info * const ci = curcpu();
+	if (ci->ci_intr_depth == 0
 	    && (ci->ci_data.cpu_softints >> ci->ci_cpl) > 0)
-                dosoftints();
+		dosoftints();
 }
 
 static inline bool

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.10 2023/05/07 12:41:48 skrll Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.11 2024/08/04 08:16:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: db_disasm.c,v 1.10 2023/05/07 12:41:48 skrll Exp $");
+__RCSID("$NetBSD: db_disasm.c,v 1.11 2024/08/04 08:16:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -549,7 +549,7 @@ struct riscv_disasm32_entry {
 		// R4, In, U, J
 		const char *name;
 		// R, I, S, B
-	        struct {
+		struct {
 			const struct riscv_disasm_insn *v;
 			unsigned n;
 		} entries;
@@ -1282,7 +1282,7 @@ db_disasm_32(db_addr_t loc, uint32_t insn, bool altfmt)
 			  INSN_FUNCT7(insn) >> 2);
 		db_print_riscv_fpround(", ", INSN_FUNCT3(insn));
 		db_printf("\n");
-	        break;
+		break;
 	    case FMT_I:
 		/* immediates */
 		imm = INSN_IMM_I(insn);

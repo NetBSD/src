@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.5 2023/09/03 08:48:20 skrll Exp $ */
+/* $NetBSD: intr.h,v 1.6 2024/08/04 08:16:25 skrll Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ struct splsw;
 
 typedef int ipl_t;
 typedef struct {
-        ipl_t _spl;
+	ipl_t _spl;
 } ipl_cookie_t;
 
 #ifdef _KERNEL

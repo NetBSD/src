@@ -1,4 +1,4 @@
-/* $NetBSD: jh71x0_clkc.c,v 1.1 2024/07/27 07:09:50 skrll Exp $ */
+/* $NetBSD: jh71x0_clkc.c,v 1.2 2024/08/04 08:16:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jh71x0_clkc.c,v 1.1 2024/07/27 07:09:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jh71x0_clkc.c,v 1.2 2024/08/04 08:16:26 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -298,7 +298,7 @@ jh71x0_clkc_fracdiv_get_rate(struct jh71x0_clkc_softc *sc,
 	uint32_t val = RD4(sc, jcc->jcc_reg);
 	unsigned long div100 =
 	    100UL * __SHIFTOUT(val, JH71X0_CLK_INT_MASK) +
-	            __SHIFTOUT(val, JH71X0_CLK_FRAC_MASK);
+		    __SHIFTOUT(val, JH71X0_CLK_FRAC_MASK);
 
 	return (div100 >= JH71X0_CLK_FRAC_MIN) ? 100UL * rate / div100 : 0;
 }

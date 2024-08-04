@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.26 2024/05/02 18:18:17 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.27 2024/08/04 08:16:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	__PMAP_PRIVATE
 #define	__UFETCHSTORE_PRIVATE
 
-__RCSID("$NetBSD: trap.c,v 1.26 2024/05/02 18:18:17 skrll Exp $");
+__RCSID("$NetBSD: trap.c,v 1.27 2024/08/04 08:16:26 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -272,7 +272,7 @@ dump_trapframe(const struct trapframe *tf, void (*pr)(const char *, ...))
 {
 	const char *name = cause_name(tf->tf_cause);
 	static const char *regname[] = {
-	           "ra",  "sp",  "gp",	//  x0,  x1,  x2,  x3,
+		   "ra",  "sp",  "gp",	//  x0,  x1,  x2,  x3,
 	    "tp",  "t0",  "t1",  "t2",	//  x4,  x5,  x6,  x7,
 	    "s0",  "s1",  "a0",  "a1",	//  x8,  x9, x10, x11,
 	    "a2",  "a3",  "a4",  "a5",	// x12, x13, x14, x15,
