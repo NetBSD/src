@@ -1,4 +1,4 @@
-# $NetBSD: t_pax.sh,v 1.6 2024/08/05 06:03:33 riastradh Exp $
+# $NetBSD: t_pax.sh,v 1.7 2024/08/05 06:03:54 riastradh Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -86,8 +86,6 @@ pr44498_copy_body()
 	mkdir foo foo/bar foo/bar/baz
 	chmod 111 foo
 	touch foo/bar/quux
-	atf_expect_fail 'PR bin/44498:' \
-	    'tar(1) unnecessarily demands that getcwd() work'
 	atf_check sh -c '{ cd foo/bar && exec pax -rw quux baz/.; }'
 }
 
@@ -104,8 +102,6 @@ pr44498_insecureextract_body()
 	chmod 111 foo
 	touch baz/quux
 	atf_check pax -w -x ustar -f baz.tar baz
-	atf_expect_fail 'PR bin/44498:' \
-	    'tar(1) unnecessarily demands that getcwd() work'
 	atf_check sh -c '{ cd foo/bar && exec pax -r --insecure; } <baz.tar'
 }
 
@@ -136,8 +132,6 @@ pr44498_write_body()
 	mkdir foo foo/bar
 	touch foo/bar/quux
 	chmod 111 foo
-	atf_expect_fail 'PR bin/44498:' \
-	    'tar(1) unnecessarily demands that getcwd() work'
 	atf_check sh -c '{ cd foo/bar && pax -w -x ustar .; } >bar.tar'
 	atf_check -o 'inline:.\n./quux\n' pax -f bar.tar
 }

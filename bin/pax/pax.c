@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.50 2024/08/05 04:05:51 riastradh Exp $	*/
+/*	$NetBSD: pax.c,v 1.51 2024/08/05 06:03:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.50 2024/08/05 04:05:51 riastradh Exp $");
+__RCSID("$NetBSD: pax.c,v 1.51 2024/08/05 06:03:54 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -262,6 +262,9 @@ main(int argc, char **argv)
 	/*
 	 * For any actions other than LIST, keep a reference to cwd, so
 	 * we can always come back home.
+	 *
+	 * For EXTRACT (pax -r) without --insecure, also save the path
+	 * to cwd to check for escape attempts.
 	 */
 	if (act != LIST) {
 		cwdfd = open(".", O_RDONLY);
@@ -270,8 +273,10 @@ main(int argc, char **argv)
 			    "Can't open current working directory.");
 			return exit_val;
 		}
-		if (updatepath() == -1)
-			return exit_val;
+		if (act == EXTRACT && secure) {
+			if (updatepath() == -1)
+				return exit_val;
+		}
 	}
 
 	/*
