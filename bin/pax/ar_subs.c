@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.58 2023/05/28 21:42:40 lukem Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.59 2024/08/05 13:37:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.58 2023/05/28 21:42:40 lukem Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.59 2024/08/05 13:37:26 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -249,7 +249,7 @@ list(void)
 				break;
 			if (res == 0) {
 				if (arcn->name[0] == '/' && !check_Aflag()) {
-					memmove(arcn->name, arcn->name + 1, 
+					memmove(arcn->name, arcn->name + 1,
 					    strlen(arcn->name));
 				}
 				ls_list(arcn, now, stdout);
@@ -449,7 +449,6 @@ extract(void)
 			continue;
 		}
 
-			
 		/*
 		 * all ok, extract this member based on type
 		 */

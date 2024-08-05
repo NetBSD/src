@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.75 2019/03/20 03:13:39 gutteridge Exp $	*/
+/*	$NetBSD: tar.c,v 1.76 2024/08/05 13:37:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.75 2019/03/20 03:13:39 gutteridge Exp $");
+__RCSID("$NetBSD: tar.c,v 1.76 2024/08/05 13:37:27 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -403,7 +403,7 @@ tar_id(char *blk, int size)
 			    "Busted tar archive: has both ustar and old tar "
 			    "records");
 	} else
-		is_ustar = 0; 
+		is_ustar = 0;
 	return check_sum(hd->chksum, sizeof(hd->chksum), blk, BLKMULT, 1);
 }
 
@@ -1392,7 +1392,7 @@ tar_gnutar_minus_minus_exclude(const char *path)
 
 	if (len > MAXPATHLEN)
 		tty_warn(0, "pathname too long: %s", path);
-	
+
 	return (tar_gnutar_exclude_one(path, len));
 }
 
