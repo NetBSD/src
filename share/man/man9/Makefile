@@ -1,9 +1,9 @@
-#       $NetBSD: Makefile,v 1.472 2024/07/24 02:36:24 rin Exp $
+#       $NetBSD: Makefile,v 1.473 2024/08/05 13:02:46 christos Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	accept_filter.9 accf_data.9 accf_http.9 acl.9 \
-	altq.9 arp.9 audio.9 autoconf.9 \
+	acct_process.9 altq.9 arp.9 audio.9 autoconf.9 \
 	bcdtobin.9 bcmp.9 bcopy.9 bintime_add.9 bluetooth.9 boothowto.9 bpf.9 \
 	buffercache.9 bufferio.9 bufq.9 bus_dma.9 bus_space.9 byteorder.9 \
 	bzero.9 \
