@@ -1,4 +1,4 @@
-/*	$NetBSD: stireg.h,v 1.10 2024/07/31 09:54:13 macallan Exp $	*/
+/*	$NetBSD: stireg.h,v 1.11 2024/08/05 09:43:37 macallan Exp $	*/
 
 /*	$OpenBSD: stireg.h,v 1.14 2015/04/05 23:25:57 miod Exp $	*/
 
@@ -672,11 +672,11 @@ STI_DEP(util);
 #define	    MaskOtc	    0	/* Mask contains Object Count valid bits */
 
 #define	NGLE_REG_1		0x000118	/* Artist LUT blt ctrl */
-#define	NGLE_REG_28		0x000420
-#define	NGLE_REG_2		0x000480	/* LUT blt src? */
-#define	NGLE_REG_3		0x0004a0	/* palette index */
-#define	NGLE_REG_22		0x0005a0
-#define	NGLE_REG_23		0x0005c0
+#define	NGLE_REG_28		0x000420	/* HCRX video bus access */
+#define	NGLE_REG_2		0x000480	/* BINC src */
+#define	NGLE_REG_3		0x0004a0	/* BINC dst */
+#define	NGLE_REG_22		0x0005a0	/* BINC dst mask */
+#define	NGLE_REG_23		0x0005c0	/* BINC data */
 #define	NGLE_REG_4		0x000600	/* palette data */
 #define	NGLE_REG_5		0x0006a0	/* cursor data */
 #define	NGLE_REG_6		0x000800	/* rectfill XY */
@@ -691,19 +691,20 @@ STI_DEP(util);
 #define	NGLE_REG_11		0x018004	/* dest bitmap access */
 #define	NGLE_REG_12		0x01800c	/* control plane register */
 #define	NGLE_REG_35		0x018010	/* fg color */
-#define	NGLE_REG_36		0x018014
+#define	NGLE_REG_36		0x018014	/* bg colour? */
 #define	NGLE_REG_13		0x018018	/* image planemask */
 #define	NGLE_REG_14		0x01801c	/* raster op */
-#define	NGLE_REG_15		0x200000
+#define	NGLE_REG_15		0x200000	/* 'busy dodger' idle */
+	#define DODGER_IDLE	0x1000	/* or 0x10000, likely tpyo */
 #define	NGLE_REG_15b0		0x200000	/* busy register */
 #define	NGLE_REG_16		0x200004
-#define	NGLE_REG_16b1		0x200005
-#define	NGLE_REG_16b3		0x200007
+#define	NGLE_REG_16b1		0x200005	/* setup copyarea */
+#define	NGLE_REG_16b3		0x200007	/* ROM table index on CRX */
 #define	NGLE_REG_34		0x200008	/* # of fifo slots */
 #define	NGLE_REG_17		0x200100	/* cursor coordinates */
 #define	NGLE_REG_18		0x200104	/* cursor enable */
 #define	NGLE_REG_26		0x200118	/* EG LUT blt ctrl */
-#define	NGLE_REG_19		0x200200
+#define	NGLE_REG_19		0x200200	/* artist sprite size */
 #define	NGLE_REG_20		0x200208	/* cursor geometry */
 #define	NGLE_REG_21		0x200218	/* Artist misc video */
 #define	NGLE_REG_27		0x200308	/* Artist misc ctrl */
@@ -722,11 +723,11 @@ STI_DEP(util);
 	#define LBC_TYPE_OVERLAY	0xc000
 	#define LBC_LENGTH_SHIFT	0
 #define	NGLE_REG_41		0x210024
-#define	NGLE_REG_42		0x210028
-#define	NGLE_REG_43		0x21002c
-#define	NGLE_REG_44		0x210030
-#define	NGLE_REG_45		0x210034
-#define	NGLE_REG_32		0x21003c
+#define	NGLE_REG_42		0x210028	/* these seem to control */
+#define	NGLE_REG_43		0x21002c	/* how the 24bit planes */
+#define	NGLE_REG_44		0x210030	/* are displayed on HCRX - */
+#define	NGLE_REG_45		0x210034	/* no info on bits */
+#define	NGLE_REG_32		0x21003c	/* HCRX plane enable */ 
 #define	NGLE_REG_33		0x210040	/* HCRX misc video */
 	#define HCRX_VIDEO_ENABLE	0x0A000000
 #define	NGLE_REG_39		0x210120	/* HCRX 'hyperbowl' mode 2 */
