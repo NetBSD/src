@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.65 2023/05/28 21:42:40 lukem Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.66 2024/08/05 13:37:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.65 2023/05/28 21:42:40 lukem Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.66 2024/08/05 13:37:26 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -139,7 +139,7 @@ file_creat(ARCHD *arcn, int write_to_hardlink)
 	 */
 	if (write_to_hardlink)
 		return (open(arcn->name, O_TRUNC | O_EXCL | O_RDWR, 0));
-	
+
 	/*
 	 * Create a temporary file name so that the file doesn't have partial
 	 * contents while restoring.
@@ -909,7 +909,7 @@ set_pmode(char *fnm, mode_t mode)
 void
 set_chflags(char *fnm, u_int32_t flags)
 {
-	
+
 #if 0
 	if (chflags(fnm, flags) < 0 && errno != EOPNOTSUPP)
 		syswarn(1, errno, "Cannot set file flags on %s", fnm);

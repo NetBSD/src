@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.120 2023/07/20 20:09:49 lukem Exp $	*/
+/*	$NetBSD: options.c,v 1.121 2024/08/05 13:37:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.120 2023/07/20 20:09:49 lukem Exp $");
+__RCSID("$NetBSD: options.c,v 1.121 2024/08/05 13:37:27 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -206,7 +206,7 @@ FSUB fsub[] = {
  */
 int ford[] = {F_USTAR, F_TAR,
 #ifndef NO_CPIO
-    F_SV4CRC, F_SV4CPIO, F_CPIO, F_BCPIO, 
+    F_SV4CRC, F_SV4CPIO, F_CPIO, F_BCPIO,
 #endif
     -1};
 
@@ -2144,7 +2144,7 @@ set_tstamp(const char *b, struct stat *st)
 	}
 
 	st->st_ino = 1;
-#if HAVE_STRUCT_STAT_BIRTHTIME 
+#if HAVE_STRUCT_STAT_BIRTHTIME
 	st->st_birthtime =
 #endif
 	st->st_mtime = st->st_ctime = st->st_atime = when;

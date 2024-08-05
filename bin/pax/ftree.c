@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.43 2023/05/28 17:01:46 lukem Exp $	*/
+/*	$NetBSD: ftree.c,v 1.44 2024/08/05 13:37:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -71,7 +71,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.43 2023/05/28 17:01:46 lukem Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.44 2024/08/05 13:37:26 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -495,7 +495,7 @@ next_file(ARCHD *arcn)
 		 * override settings with those from specfile
 		 */
 		if (ftnode->flags & F_MODE) {
-			statbuf.st_mode &= ~ALLPERMS; 
+			statbuf.st_mode &= ~ALLPERMS;
 			statbuf.st_mode |= (ftnode->st_mode & ALLPERMS);
 		}
 		if (ftnode->flags & (F_GID | F_GNAME))
