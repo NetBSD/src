@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.81 2024/02/10 02:25:15 isaki Exp $	*/
+/*	$NetBSD: virtio.c,v 1.82 2024/08/05 19:26:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.81 2024/02/10 02:25:15 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.82 2024/08/05 19:26:43 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1047,6 +1047,7 @@ virtio_enqueue_prep(struct virtio_softc *sc, struct virtqueue *vq, int *slotp)
 {
 	uint16_t slot;
 
+	KASSERT(sc->sc_child_state == VIRTIO_CHILD_ATTACH_FINISHED);
 	KASSERT(slotp != NULL);
 
 	slot = vq_alloc_slot(sc, vq, 1);
