@@ -1,4 +1,4 @@
-# $NetBSD: t_pax.sh,v 1.2 2024/04/28 07:27:40 rillig Exp $
+# $NetBSD: t_pax.sh,v 1.3 2024/08/05 03:55:04 riastradh Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -48,7 +48,26 @@ append_body() {
 	atf_check -s exit:0 -o empty -e empty cmp file1.tar file2.tar
 }
 
+atf_test_case pr44498
+pr44498_head()
+{
+	atf_set "descr" "Ensure pax list operation works without getcwd"
+	atf_set "require.user" "unprivileged"
+}
+pr44498_body()
+{
+	mkdir foo foo/bar baz
+	chmod 111 foo
+	touch baz/quux
+	atf_check pax -w -x ustar -f baz.tar baz
+	atf_expect_fail 'PR bin/44498:' \
+	    'tar(1) unnecessarily demands that getcwd() work'
+	atf_check -o 'inline:baz\nbaz/quux\n' \
+	    sh -c '{ cd foo/bar && exec pax; } <baz.tar'
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case append
+	atf_add_test_case pr44498
 }
