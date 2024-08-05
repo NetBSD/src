@@ -1,4 +1,4 @@
-# $NetBSD: t_pax.sh,v 1.4 2024/08/05 04:05:51 riastradh Exp $
+# $NetBSD: t_pax.sh,v 1.5 2024/08/05 04:05:59 riastradh Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -48,6 +48,16 @@ append_body() {
 	atf_check -s exit:0 -o empty -e empty cmp file1.tar file2.tar
 }
 
+atf_test_case pr41736
+pr41736_head()
+{
+	atf_set "descr" "Test pax exits with 0 if stdin file list is empty"
+}
+pr41736_body()
+{
+	atf_check pax -rw . </dev/null
+}
+
 atf_test_case pr44498
 pr44498_head()
 {
@@ -67,5 +77,6 @@ pr44498_body()
 atf_init_test_cases()
 {
 	atf_add_test_case append
+	atf_add_test_case pr41736
 	atf_add_test_case pr44498
 }
