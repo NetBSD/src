@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.8 2024/08/01 00:20:22 macallan Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.9 2024/08/05 09:45:05 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.8 2024/08/01 00:20:22 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.9 2024/08/05 09:45:05 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -1268,7 +1268,8 @@ hyperfb_move_cursor(struct hyperfb_softc *sc, int x, int y)
 	if (y < 0) y = 0x1000 - y;
 	pos = (x << 16) | y;
 	if (sc->sc_enabled) pos |= HCRX_ENABLE_CURSOR;
-	hyperfb_wait(sc);
+	hyperfb_wait_fifo(sc, 2);
+	hyperfb_write4(sc, NGLE_REG_28, 0);
 	hyperfb_write4(sc, NGLE_REG_29, pos);
 }
 
