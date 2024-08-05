@@ -1,4 +1,4 @@
-.\"	$NetBSD: acct_process.9,v 1.1 2024/08/05 13:02:46 christos Exp $
+.\"	$NetBSD: acct_process.9,v 1.2 2024/08/05 13:40:51 uwe Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .Dt ACCT_PROCESS 9
 .Os
 .Sh NAME
-.Nm acct_process 
+.Nm acct_process
 .Nd populate and write the process accounting record
 .Sh SYNOPSIS
 .In sys/acct.h
@@ -44,7 +44,7 @@ function is called when the process exits.
 If accounting is turned off, it returns immediately.
 If accounting is turned on via
 .Xr acct 2 ,
-then the 
+then the
 .Nm
 populates the accounting structure described in
 .Xr acct 5 ,
@@ -52,13 +52,10 @@ then writes the accounting record to the file specified by
 .Xr acct 2 .
 .Sh RETURN VALUES
 .Nm
-returns
-.Dv 0
-on success and the same error codes as
+returns 0 on success and the same error codes as
 .Xr vn_rdwr 9
 on failure.
-All three functions return the computed checksum value.
 .Sh SEE ALSO
 .Xr acct 2 ,
 .Xr acct 5 ,
-.Xr vn_rdwr 9.
+.Xr vn_rdwr 9 .
