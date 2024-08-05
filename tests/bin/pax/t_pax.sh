@@ -1,4 +1,4 @@
-# $NetBSD: t_pax.sh,v 1.5 2024/08/05 04:05:59 riastradh Exp $
+# $NetBSD: t_pax.sh,v 1.6 2024/08/05 06:03:33 riastradh Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -74,9 +74,81 @@ pr44498_body()
 	    sh -c '{ cd foo/bar && exec pax; } <baz.tar'
 }
 
+atf_test_case pr44498_copy
+pr44498_copy_head()
+{
+	atf_set "descr" \
+	    "Ensure pax insecure copy operation works without getcwd"
+	atf_set "require.user" "unprivileged"
+}
+pr44498_copy_body()
+{
+	mkdir foo foo/bar foo/bar/baz
+	chmod 111 foo
+	touch foo/bar/quux
+	atf_expect_fail 'PR bin/44498:' \
+	    'tar(1) unnecessarily demands that getcwd() work'
+	atf_check sh -c '{ cd foo/bar && exec pax -rw quux baz/.; }'
+}
+
+atf_test_case pr44498_insecureextract
+pr44498_insecureextract_head()
+{
+	atf_set "descr" \
+	    "Ensure pax insecure extract operation works without getcwd"
+	atf_set "require.user" "unprivileged"
+}
+pr44498_insecureextract_body()
+{
+	mkdir foo foo/bar baz
+	chmod 111 foo
+	touch baz/quux
+	atf_check pax -w -x ustar -f baz.tar baz
+	atf_expect_fail 'PR bin/44498:' \
+	    'tar(1) unnecessarily demands that getcwd() work'
+	atf_check sh -c '{ cd foo/bar && exec pax -r --insecure; } <baz.tar'
+}
+
+atf_test_case pr44498_listwd
+pr44498_listwd_head()
+{
+	atf_set "descr" "Ensure pax list operation works without working dir"
+	atf_set "require.user" "unprivileged"
+}
+pr44498_listwd_body()
+{
+	mkdir foo baz
+	chmod 111 foo
+	touch baz/quux
+	atf_check pax -w -x ustar -f baz.tar baz
+	atf_check -o 'inline:baz\nbaz/quux\n' \
+	    sh -c '{ cd foo && exec pax; } <baz.tar'
+}
+
+atf_test_case pr44498_write
+pr44498_write_head()
+{
+	atf_set "descr" "Ensure pax write operation works without getcwd"
+	atf_set "require.user" "unprivileged"
+}
+pr44498_write_body()
+{
+	mkdir foo foo/bar
+	touch foo/bar/quux
+	chmod 111 foo
+	atf_expect_fail 'PR bin/44498:' \
+	    'tar(1) unnecessarily demands that getcwd() work'
+	atf_check sh -c '{ cd foo/bar && pax -w -x ustar .; } >bar.tar'
+	atf_check -o 'inline:.\n./quux\n' pax -f bar.tar
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case append
 	atf_add_test_case pr41736
 	atf_add_test_case pr44498
+	atf_add_test_case pr44498_copy
+	atf_add_test_case pr44498_insecureextract
+	atf_add_test_case pr44498_listwd
+	atf_add_test_case pr44498_write
 }
