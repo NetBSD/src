@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2466 2024/07/24 08:55:08 kre Exp $
+#	$NetBSD: mi,v 1.2467 2024/08/05 13:06:38 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11633,6 +11633,7 @@
 ./usr/share/man/cat9/accf_data.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/accf_http.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/acl.0			comp-sys-catman		.cat
+./usr/share/man/cat9/acct_process.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/allocbuf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/altq.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/aprint_debug.0		comp-sys-catman		.cat
@@ -20085,6 +20086,7 @@
 ./usr/share/man/html9/accf_data.html		comp-sys-htmlman	html
 ./usr/share/man/html9/accf_http.html		comp-sys-htmlman	html
 ./usr/share/man/html9/acl.html			comp-sys-htmlman	html
+./usr/share/man/html9/acct_process.html		comp-sys-htmlman	html
 ./usr/share/man/html9/allocbuf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/altq.html			comp-sys-htmlman	html
 ./usr/share/man/html9/aprint_debug.html		comp-sys-htmlman	html
@@ -28640,6 +28642,7 @@
 ./usr/share/man/man9/accf_data.9		comp-sys-man		.man
 ./usr/share/man/man9/accf_http.9		comp-sys-man		.man
 ./usr/share/man/man9/acl.9			comp-sys-man		.man
+./usr/share/man/man9/acct_process.9		comp-sys-man		.man
 ./usr/share/man/man9/allocbuf.9			comp-sys-man		.man
 ./usr/share/man/man9/altq.9			comp-sys-man		.man
 ./usr/share/man/man9/aprint_debug.9		comp-sys-man		.man
