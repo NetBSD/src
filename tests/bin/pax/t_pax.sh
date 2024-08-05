@@ -1,4 +1,4 @@
-# $NetBSD: t_pax.sh,v 1.3 2024/08/05 03:55:04 riastradh Exp $
+# $NetBSD: t_pax.sh,v 1.4 2024/08/05 04:05:51 riastradh Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -60,8 +60,6 @@ pr44498_body()
 	chmod 111 foo
 	touch baz/quux
 	atf_check pax -w -x ustar -f baz.tar baz
-	atf_expect_fail 'PR bin/44498:' \
-	    'tar(1) unnecessarily demands that getcwd() work'
 	atf_check -o 'inline:baz\nbaz/quux\n' \
 	    sh -c '{ cd foo/bar && exec pax; } <baz.tar'
 }
