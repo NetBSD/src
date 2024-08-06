@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.212.2.3 2023/08/01 17:03:53 martin Exp $	 */
+/*	$NetBSD: rtld.c,v 1.212.2.4 2024/08/06 15:06:47 snj Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.212.2.3 2023/08/01 17:03:53 martin Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.212.2.4 2024/08/06 15:06:47 snj Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -68,6 +68,13 @@ __RCSID("$NetBSD: rtld.c,v 1.212.2.3 2023/08/01 17:03:53 martin Exp $");
 #if !defined(lint)
 #include "sysident.h"
 #endif
+
+/*
+ * Hidden function from common/lib/libc/atomic - nop on machines
+ * with enough atomic ops. Need to explicitly call it early.
+ * libc has the same symbol and will initialize itself, but not our copy.
+ */
+void __libc_atomic_init(void);
 
 /*
  * Function declarations.
@@ -404,6 +411,8 @@ _rtld_init(caddr_t mapbase, caddr_t relocbase, const char *execname)
 	ehdr = (Elf_Ehdr *)mapbase;
 	_rtld_objself.phdr = (Elf_Phdr *)((char *)mapbase + ehdr->e_phoff);
 	_rtld_objself.phsize = ehdr->e_phnum * sizeof(_rtld_objself.phdr[0]);
+
+	__libc_atomic_init();
 }
 
 /*
