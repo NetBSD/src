@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.56 2024/08/06 07:48:16 kre Exp $	*/
+/*	$NetBSD: printf.c,v 1.57 2024/08/06 14:55:48 kre Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.56 2024/08/06 07:48:16 kre Exp $");
+__RCSID("$NetBSD: printf.c,v 1.57 2024/08/06 14:55:48 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,13 +68,13 @@ __RCSID("$NetBSD: printf.c,v 1.56 2024/08/06 07:48:16 kre Exp $");
 static void	 conv_escape_str(char *, void (*)(int), int);
 static char	*conv_escape(char *, char *, int);
 static char	*conv_expand(const char *);
-static char	 getchr(void);
-static double	 getdouble(void);
+static wchar_t	 getchr(void);
+static long double getdouble(void);
 static int	 getwidth(void);
 static intmax_t	 getintmax(void);
 static char	*getstr(void);
-static char	*mklong(const char *, char);
-static intmax_t	 wide_char(const char *);
+static char	*mklong(const char *, char, char);
+static intmax_t	 wide_char(const char *, int);
 static void      check_conversion(const char *, const char *);
 static void	 usage(void);
 
@@ -85,6 +85,7 @@ static char	*b_fmt;
 
 static int	rval;
 static char  **gargv;
+static int	long_double;
 
 #ifdef BUILTIN		/* csh builtin */
 #define main progprintf
@@ -142,6 +143,7 @@ main(int argc, char *argv[])
 #endif
 
 	rval = 0;	/* clear for builtin versions (avoid holdover) */
+	long_double = 0;
 	clearerr(stdout);	/* for the builtin version */
 
 	if (argc > 2 && strchr(argv[1], '%') == NULL) {
@@ -173,8 +175,11 @@ main(int argc, char *argv[])
 		 * the strchr() test above.
 		 */
 
-		while ((o = getopt(argc, argv, "")) != -1) {
+		while ((o = getopt(argc, argv, "L")) != -1) {
 			switch (o) {
+			case 'L':
+				long_double = 1;
+				break;
 			case '?':
 			default:
 				usage();
@@ -318,10 +323,20 @@ main(int argc, char *argv[])
 				printf("%s", b_fmt);
 				break;
 			}
-			case 'c': {
-				char p = getchr();
+			case 'C': {
+				wchar_t p = (wchar_t)getintmax();
+				char *f = mklong(start, 'c', 'l');
 
-				PF(start, p);
+				PF(f, p);
+				if (error < 0)
+					goto out;
+				break;
+			}
+			case 'c': {
+				wchar_t p = getchr();
+				char *f = mklong(start, ch, 'l');
+
+				PF(f, p);
 				if (error < 0)
 					goto out;
 				break;
@@ -337,7 +352,7 @@ main(int argc, char *argv[])
 			case 'd':
 			case 'i': {
 				intmax_t p = getintmax();
-				char *f = mklong(start, ch);
+				char *f = mklong(start, ch, 'j');
 
 				PF(f, p);
 				if (error < 0)
@@ -349,7 +364,7 @@ main(int argc, char *argv[])
 			case 'x':
 			case 'X': {
 				uintmax_t p = (uintmax_t)getintmax();
-				char *f = mklong(start, ch);
+				char *f = mklong(start, ch, 'j');
 
 				PF(f, p);
 				if (error < 0)
@@ -364,9 +379,15 @@ main(int argc, char *argv[])
 			case 'F':
 			case 'g':
 			case 'G': {
-				double p = getdouble();
+				long double p = getdouble();
 
-				PF(start, p);
+				if (long_double) {
+					char * f = mklong(start, ch, 'L');
+					PF(f, p);
+				} else {
+					double pp = (double)p;
+					PF(start, pp);
+				}
 				if (error < 0)
 					goto out;
 				break;
@@ -639,7 +660,7 @@ conv_expand(const char *str)
 }
 
 static char *
-mklong(const char *str, char ch)
+mklong(const char *str, char ch, char longer)
 {
 	static char copy[64];
 	size_t len;	
@@ -651,18 +672,18 @@ mklong(const char *str, char ch)
 		rval = 1;
 	}
 	(void)memmove(copy, str, len - 3);
-	copy[len - 3] = 'j';
+	copy[len - 3] = longer;
 	copy[len - 2] = ch;
 	copy[len - 1] = '\0';
 	return copy;	
 }
 
-static char
+static wchar_t
 getchr(void)
 {
 	if (!*gargv)
 		return 0;
-	return **gargv++;
+	return (wchar_t)wide_char(*gargv++, 0);
 }
 
 static char *
@@ -710,7 +731,7 @@ getintmax(void)
 	gargv++;
 
 	if (*cp == '\"' || *cp == '\'')
-		return wide_char(cp);
+		return wide_char(cp, 1);
 
 	errno = 0;
 	val = strtoimax(cp, &ep, 0);
@@ -718,10 +739,10 @@ getintmax(void)
 	return val;
 }
 
-static double
+static long double
 getdouble(void)
 {
-	double val;
+	long double val;
 	char *ep;
 
 	if (!*gargv)
@@ -729,36 +750,44 @@ getdouble(void)
 
 	/* This is a NetBSD extension, not required by POSIX (it is useless) */
 	if (*(ep = *gargv) == '\"' || *ep == '\'')
-		return (double)wide_char(ep);
+		return (long double)wide_char(ep, 1);
 
 	errno = 0;
-	val = strtod(*gargv, &ep);
+	val = strtold(*gargv, &ep);
 	check_conversion(*gargv++, ep);
 	return val;
 }
 
 /*
- * XXX This is just a placeholder for a later version which
- *     will do mbtowc() on p+1 (and after checking that all of the
- *     string has been consumed) return that value.
+ * Fetch a wide character from the string given
  *
- * This (mbtowc) behaviour is required by POSIX (as is the check
- * that the whole arg is consumed).
+ * if all that character must consume the entire string
+ * after an initial leading byte (ascii char) is ignored,
+ * (used for parsing intger args using the 'X syntax)
  *
- * What follows is actually correct if we assume that LC_CTYPE=C
- * (or something else similar that is a single byte charset).
+ * if !all then there is no requirement that the whole
+ * string be consumed (remaining characters are just ignored)
+ * but the character is to start at *p.
+ * (used for fetching the first chartacter of a string arg for %c)
  */
 static intmax_t
-wide_char(const char *p)
+wide_char(const char *p, int all)
 {
-	intmax_t ch = (intmax_t)(unsigned char)p[1];
+	wchar_t wch;
+	size_t len;
+	int n;
 
-	if (ch != 0 && p[2] != '\0') {
+	(void)mbtowc(NULL, NULL, 0);
+	n = mbtowc(&wch, p + all, len = strlen(p + all));
+	if (n < 0) {
+		warn("%s", p);
+		rval = -1;
+	} else if (all && (size_t)n != len) {
 		warnx("%s: not completely converted", p);
 		rval = 1;
 	}
 
-	return ch;
+	return (intmax_t) wch;
 }
 
 static void
@@ -779,5 +808,6 @@ check_conversion(const char *s, const char *ep)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s format [arg ...]\n", getprogname());
+	(void)fprintf(stderr,
+	    "Usage: %s [-L] format [arg ...]\n", getprogname());
 }
