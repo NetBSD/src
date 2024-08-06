@@ -1,4 +1,4 @@
-# $NetBSD: varname.mk,v 1.14 2023/11/19 21:47:52 rillig Exp $
+# $NetBSD: varname.mk,v 1.15 2024/08/06 17:46:01 rillig Exp $
 #
 # Tests for special variables, such as .MAKE or .PARSEDIR.
 # And for variable names in general.
@@ -28,7 +28,7 @@ ${VARNAME}=	3 open parentheses
 # balanced.  At the end of the line, there are still 3 levels open, which
 # means the variable name is not finished.
 # expect+2: Error in archive specification: "VAR"
-# expect+1: No closing parenthesis in archive specification
+# expect+1: Missing ')' in archive specification
 ${:UVAR(((}=	try1
 # On the left-hand side of a variable assignments, the backslash is not parsed
 # as an escape character, therefore the parentheses still count to the nesting
