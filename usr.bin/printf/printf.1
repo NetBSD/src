@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.1,v 1.39 2024/08/06 17:18:00 uwe Exp $
+.\"	$NetBSD: printf.1,v 1.40 2024/08/06 17:23:01 uwe Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,13 +56,24 @@ are converted and copied to the standard output, and format specifications,
 each of which causes printing of the next successive
 .Ar argument  .
 .Pp
+If the first character of
+.Ar format
+is a dash,
+.Ar format
+must be preceded by a word consisting of two dashes
+.Pq Sq Fl Fl
+to prevent it
+from being interpreted as an option string.
+See
+.Xr getopt 3 .
+.Pp
 The
 .Fl L
 option causes all floating point values resulting from format
 conversions to be printed using
-.Em long double
+.Vt long double
 formats, rather than the default
-.Em double .
+.Vt double .
 .Pp
 The
 .Ar arguments
@@ -424,17 +435,6 @@ precision is omitted, all characters in the string are printed.
 In no case does a non-existent or small field width cause truncation of
 a field; padding takes place only if the specified field width exceeds
 the actual width.
-.Pp
-If the first character of
-.Ar format
-is a dash,
-.Ar format
-must be preceded by a word consisting of two dashes
-.Pq Sq Fl Fl
-to prevent it
-from being interpreted as an option string.
-See
-.Xr getopt 3 .
 .Sh EXIT STATUS
 .Ex -std
 .Sh SEE ALSO
