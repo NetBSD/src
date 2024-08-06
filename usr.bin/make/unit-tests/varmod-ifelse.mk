@@ -1,4 +1,4 @@
-# $NetBSD: varmod-ifelse.mk,v 1.32 2024/07/05 20:01:52 rillig Exp $
+# $NetBSD: varmod-ifelse.mk,v 1.33 2024/08/06 18:00:17 rillig Exp $
 #
 # Tests for the ${cond:?then:else} variable modifier, which evaluates either
 # the then-expression or the else-expression, depending on the condition.
@@ -25,7 +25,7 @@
 # Var_Parse and ParseVarname, it would be more useful and predictable
 # though.
 # expect+2: while evaluating condition "bare words == "literal"": Bad condition
-# expect+1: Malformed conditional (${${:Ubare words} == "literal":?bad:bad})
+# expect+1: Malformed conditional '${${:Ubare words} == "literal":?bad:bad}'
 .if ${${:Ubare words} == "literal":?bad:bad}
 .  error
 .else
@@ -45,7 +45,7 @@ COND:=	${${UNDEF} == "":?bad-assign:bad-assign}
 # The difference to the ':=' variable assignment is the additional
 # "Malformed conditional" error message.
 # expect+2: while evaluating condition " == """: Bad condition
-# expect+1: Malformed conditional (${${UNDEF} == "":?bad-cond:bad-cond})
+# expect+1: Malformed conditional '${${UNDEF} == "":?bad-cond:bad-cond}'
 .if ${${UNDEF} == "":?bad-cond:bad-cond}
 .  error
 .else
@@ -69,7 +69,7 @@ COND:=	${${UNDEF} == "":?bad-assign:bad-assign}
 # error propagates to CondEvalExpression, where the "Malformed conditional"
 # comes from.
 # expect+2: while evaluating condition "1 == == 2": Bad condition
-# expect+1: Malformed conditional (${1 == == 2:?yes:no} != "")
+# expect+1: Malformed conditional '${1 == == 2:?yes:no} != ""'
 .if ${1 == == 2:?yes:no} != ""
 .  error
 .else

@@ -1,4 +1,4 @@
-# $NetBSD: cond-token-var.mk,v 1.8 2023/11/19 21:47:52 rillig Exp $
+# $NetBSD: cond-token-var.mk,v 1.9 2024/08/06 18:00:17 rillig Exp $
 #
 # Tests for expressions in .if conditions.
 #
@@ -24,13 +24,13 @@ DEF=	defined
 .endif
 
 # A variable that appears on the left-hand side must be defined.
-# expect+1: Malformed conditional (${UNDEF} == ${DEF})
+# expect+1: Malformed conditional '${UNDEF} == ${DEF}'
 .if ${UNDEF} == ${DEF}
 .  error
 .endif
 
 # A variable that appears on the right-hand side must be defined.
-# expect+1: Malformed conditional (${DEF} == ${UNDEF})
+# expect+1: Malformed conditional '${DEF} == ${UNDEF}'
 .if ${DEF} == ${UNDEF}
 .  error
 .endif
@@ -40,7 +40,7 @@ DEF=	defined
 .endif
 
 # An undefined variable on its own generates a parse error.
-# expect+1: Malformed conditional (${UNDEF})
+# expect+1: Malformed conditional '${UNDEF}'
 .if ${UNDEF}
 .endif
 

@@ -1,4 +1,4 @@
-# $NetBSD: varmod-localtime.mk,v 1.17 2024/07/05 19:47:22 rillig Exp $
+# $NetBSD: varmod-localtime.mk,v 1.18 2024/08/06 18:00:17 rillig Exp $
 #
 # Tests for the :localtime variable modifier, which formats a timestamp
 # using strftime(3) in local time.
@@ -57,7 +57,7 @@
 # make.  Therefore, since var.c 1.631, negative time stamps produce a
 # parse error.
 # expect+2: while evaluating "${:L:localtime=-1} != """ with value "": Invalid time value "-1"
-# expect+1: Malformed conditional (${:L:localtime=-1} != "")
+# expect+1: Malformed conditional '${:L:localtime=-1} != ""'
 .if ${:L:localtime=-1} != ""
 .  error
 .else
@@ -68,7 +68,7 @@
 # Spaces were allowed before var.c 1.631 from 2020-10-31 21:40:20, not
 # because it would make sense but just as a side-effect from using strtoul.
 # expect+2: while evaluating "${:L:localtime= 1} != """ with value "": Invalid time value " 1"
-# expect+1: Malformed conditional (${:L:localtime= 1} != "")
+# expect+1: Malformed conditional '${:L:localtime= 1} != ""'
 .if ${:L:localtime= 1} != ""
 .  error
 .else
@@ -116,7 +116,7 @@
 # Since var.c 1.631 from 2020-10-31, the overflow is detected and produces a
 # parse error.
 # expect+2: while evaluating "${:L:localtime=10000000000000000000000000000000} != """ with value "": Invalid time value "10000000000000000000000000000000"
-# expect+1: Malformed conditional (${:L:localtime=10000000000000000000000000000000} != "")
+# expect+1: Malformed conditional '${:L:localtime=10000000000000000000000000000000} != ""'
 .if ${:L:localtime=10000000000000000000000000000000} != ""
 .  error
 .else
@@ -129,7 +129,7 @@
 # modifiers.  Because of the unknown modifier 'e' from the 'error', the whole
 # variable value was discarded and thus not printed.
 # expect+2: while evaluating "${:L:localtime=error} != """ with value "": Invalid time value "error"
-# expect+1: Malformed conditional (${:L:localtime=error} != "")
+# expect+1: Malformed conditional '${:L:localtime=error} != ""'
 .if ${:L:localtime=error} != ""
 .  error
 .else
@@ -140,7 +140,7 @@
 # followed by the next modifier, without a ':' separator.  This was the same
 # bug as for the ':L' and ':P' modifiers.
 # expect+2: while evaluating variable "%Y" with value "%Y": Invalid time value "100000S,1970,bad,"
-# expect+1: Malformed conditional (${%Y:L:localtime=100000S,1970,bad,} != "bad")
+# expect+1: Malformed conditional '${%Y:L:localtime=100000S,1970,bad,} != "bad"'
 .if ${%Y:L:localtime=100000S,1970,bad,} != "bad"
 .  error
 .endif

@@ -1,10 +1,10 @@
 make: "varmod-ifelse.mk" line 29: while evaluating condition "bare words == "literal"": Bad condition
-make: "varmod-ifelse.mk" line 29: Malformed conditional (${${:Ubare words} == "literal":?bad:bad})
+make: "varmod-ifelse.mk" line 29: Malformed conditional '${${:Ubare words} == "literal":?bad:bad}'
 make: "varmod-ifelse.mk" line 40: while evaluating condition " == """: Bad condition
 make: "varmod-ifelse.mk" line 49: while evaluating condition " == """: Bad condition
-make: "varmod-ifelse.mk" line 49: Malformed conditional (${${UNDEF} == "":?bad-cond:bad-cond})
+make: "varmod-ifelse.mk" line 49: Malformed conditional '${${UNDEF} == "":?bad-cond:bad-cond}'
 make: "varmod-ifelse.mk" line 73: while evaluating condition "1 == == 2": Bad condition
-make: "varmod-ifelse.mk" line 73: Malformed conditional (${1 == == 2:?yes:no} != "")
+make: "varmod-ifelse.mk" line 73: Malformed conditional '${1 == == 2:?yes:no} != ""'
 CondParser_Eval: "${1 == == 2:?yes:no}" != ""
 CondParser_Eval: 1 == == 2
 Comparing 1.000000 == 0.000000

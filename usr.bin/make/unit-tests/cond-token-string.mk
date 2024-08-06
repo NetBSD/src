@@ -1,4 +1,4 @@
-# $NetBSD: cond-token-string.mk,v 1.11 2024/07/05 19:47:22 rillig Exp $
+# $NetBSD: cond-token-string.mk,v 1.12 2024/08/06 18:00:17 rillig Exp $
 #
 # Tests for quoted string literals in .if conditions.
 #
@@ -10,7 +10,7 @@
 
 # Cover the code in CondParser_String that frees the memory after parsing
 # an expression based on an undefined variable.
-# expect+2: Malformed conditional ("" != "${:Uvalue:Z}")
+# expect+2: Malformed conditional '"" != "${:Uvalue:Z}"'
 # expect+1: while evaluating "${:Uvalue:Z}"" with value "value": Unknown modifier "Z"
 .if "" != "${:Uvalue:Z}"
 .  error
@@ -28,7 +28,7 @@
 # The 'x' produces a "Malformed conditional" since the left-hand side of a
 # comparison in an .if directive must be either an expression, a
 # quoted string literal or a number that starts with a digit.
-# expect+1: Malformed conditional (x${:Uvalue} == "")
+# expect+1: Malformed conditional 'x${:Uvalue} == ""'
 .if x${:Uvalue} == ""
 .  error
 .else
