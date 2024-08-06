@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.55 2024/07/18 12:08:11 wiz Exp $	*/
+/*	$NetBSD: printf.c,v 1.56 2024/08/06 07:48:16 kre Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.55 2024/07/18 12:08:11 wiz Exp $");
+__RCSID("$NetBSD: printf.c,v 1.56 2024/08/06 07:48:16 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,23 +144,33 @@ main(int argc, char *argv[])
 	rval = 0;	/* clear for builtin versions (avoid holdover) */
 	clearerr(stdout);	/* for the builtin version */
 
-	/*
-	 * printf does not comply with Posix XBD 12.2 - there are no opts,
-	 * not even the -- end of options marker.   Do not run getopt().
-	 */
 	if (argc > 2 && strchr(argv[1], '%') == NULL) {
 		int o;
 
 		/*
-		 * except that if there are multiple args and
-		 * the first (the nominal format) contains no '%'
-		 * conversions (which we will approximate as no '%'
-		 * characters at all, conversions or not) then the
-		 * results are unspecified, and we can do what we
-		 * like.   So in that case, for some backward compat
-		 * to scripts which (stupidly) do:
-		 *	printf -- format args
-		 * process this case the old way.
+		 * We only do this for argc > 2, as:
+		 *
+		 * for argc <= 1
+		 *	at best we have a bare "printf" so there cannot be
+		 *	any options, thus getopts() would be a waste of time.
+		 *	The usage() below is assured.
+		 *
+		 * for argc == 2
+		 *	There is only one arg (argv[1])	which logically must
+		 *	be intended to be the (required) format string for
+		 *	printf, without which we can do nothing	so rather
+		 *	than usage() if it happens to start with a '-' we
+		 *	just avoid getopts() and treat it as a format string.
+		 *
+		 * Then, for argc > 2, we also skip this if there is a '%'
+		 * anywhere in argv[1] as it is likely that would be intended
+		 * to be the format string, rather than options, even if it
+		 * starts with a '-' so we skip getopts() in that case as well.
+		 *
+		 * Note that this would fail should there ever be an option
+		 * which takes an arbitrary string value, which could be given
+		 * as -Oabc%def so should that ever become possible, remove
+		 * the strchr() test above.
 		 */
 
 		while ((o = getopt(argc, argv, "")) != -1) {
@@ -178,13 +188,13 @@ main(int argc, char *argv[])
 		argv += 1;
 	}
 
-	if (argc < 1) {
+	if (argc < 1) {		/* Nothing left at all? */
 		usage();
 		return 1;
 	}
 
-	format = *argv;
-	gargv = ++argv;
+	format = *argv;		/* First remaining arg is the format string */
+	gargv = ++argv;		/* remaining args are for that to consume */
 
 #define SKIP1	"#-+ 0'"
 #define SKIP2	"0123456789"
