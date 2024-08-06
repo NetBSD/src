@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.76 2024/08/03 21:59:58 riastradh Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.77 2024/08/06 20:26:45 riastradh Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -28,9 +28,25 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * MIPS ELF relocations, for all ABIs: o32, n32, n64.
+ *
+ * References:
+ *
+ *	[SYSVMIPS32ABI] System V Application Binary Interface: MIPS
+ *	RISC Processor Supplement, 3rd ed., 1996.
+ *	https://www.sco.com/developers/devspecs/mipsabi.pdf
+ *	https://web.archive.org/web/20221026055746/http://www.sco.com/developers/devspecs/mipsabi.pdf
+ *
+ *	[SGIMIPS64ELF] 64-bit ELF Object File Specification, Draft
+ *	Version 2.5, MIPS Technologies / Silicon Graphics Computer
+ *	Systems.  Archived 2015-08-18.
+ *	https://web.archive.org/web/20150818210955/http://techpubs.sgi.com/library/manuals/4000/007-4658-001/pdf/007-4658-001.pdf
+ */
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.76 2024/08/03 21:59:58 riastradh Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.77 2024/08/06 20:26:45 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
