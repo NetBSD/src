@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.9 2024/08/05 09:45:05 macallan Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.10 2024/08/06 07:34:23 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.9 2024/08/05 09:45:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.10 2024/08/06 07:34:23 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -220,10 +220,12 @@ hyperfb_setup_fb(struct hyperfb_softc *sc)
 	 */
 	hyperfb_wait(sc);
 	if ((sc->sc_mode != WSDISPLAYIO_MODE_EMUL) && sc->sc_24bit) {
-		hyperfb_write4(sc, NGLE_REG_10, 0xBBA0A000);	/* 24bit */
+		hyperfb_write4(sc, NGLE_REG_10, 
+		    BA(FractDcd, Otc24, Ots08, AddrLong, 0, BINapp0F8, 0));
 		hyperfb_write4(sc, NGLE_REG_13, 0xffffffff);
 	} else {
-		hyperfb_write4(sc, NGLE_REG_10, 0x13602000);	/* 8bit */
+		hyperfb_write4(sc, NGLE_REG_10, 
+		    BA(IndexedDcd, Otc04, Ots08, AddrByte, 0, BINovly, 0));
 		hyperfb_write4(sc, NGLE_REG_13, 0xff);
 	}
 	hyperfb_write4(sc, NGLE_REG_14, 0x83000300);
@@ -237,7 +239,8 @@ hyperfb_setup_fb24(struct hyperfb_softc *sc)
 {
 
 	hyperfb_wait(sc);
-	hyperfb_write4(sc, NGLE_REG_10, 0xBBA0A000);	/* 24bit */
+	hyperfb_write4(sc, NGLE_REG_10, 
+	    BA(FractDcd, Otc24, Ots08, AddrLong, 0, BINapp0F8, 0));
 	hyperfb_write4(sc, NGLE_REG_13, 0xffffffff);
 	hyperfb_write4(sc, NGLE_REG_14, 0x83000300);
 	//IBOvals(RopSrc,0,BitmapExtent08,0,DataDynamic,MaskDynamic,0,0)
@@ -852,7 +855,8 @@ hyperfb_setup(struct hyperfb_softc *sc)
 	if (sc->sc_24bit) {
 		/* overlay transparency */
 		hyperfb_wait_fifo(sc, 7);
-		hyperfb_write4(sc, NGLE_REG_11, 0x13a02000);
+		hyperfb_write4(sc, NGLE_REG_11, 
+		    BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, BINovly, 0));
 		hyperfb_write4(sc, NGLE_REG_14, 0x03000300);
 		hyperfb_write4(sc, NGLE_REG_3, 0x000017f0);
 		hyperfb_write4(sc, NGLE_REG_13, 0xffffffff);
@@ -992,7 +996,8 @@ hyperfb_rectfill(struct hyperfb_softc *sc, int x, int y, int wi, int he,
 		 */
 		if (sc->sc_hwmode != HW_SFILL) {
 			hyperfb_wait(sc);
-			hyperfb_write4(sc, NGLE_REG_10, 0x13a02000);
+			hyperfb_write4(sc, NGLE_REG_10, 
+		 	 BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, BINovly, 0));
 			sc->sc_hwmode = HW_SFILL;
 		}
 		bg &= 0xff;
@@ -1051,7 +1056,8 @@ hyperfb_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
 
 	if (sc->sc_hwmode != HW_BLIT) {
 		hyperfb_wait(sc);
-		hyperfb_write4(sc, NGLE_REG_10, 0x13a02000);
+		hyperfb_write4(sc, NGLE_REG_10, 
+		    BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, BINovly, 0));
 		hyperfb_write4(sc, NGLE_REG_13, 0xff);
 		sc->sc_hwmode = HW_BLIT;
 	}
