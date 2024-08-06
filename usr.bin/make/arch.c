@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.221 2024/07/07 07:50:57 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.222 2024/08/06 17:46:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.221 2024/07/07 07:50:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.222 2024/08/06 17:46:01 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -266,8 +266,7 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 
 		if (*cp == '\0') {
 			Parse_Error(PARSE_FATAL,
-			    "No closing parenthesis "
-			    "in archive specification");
+			    "Missing ')' in archive specification");
 			return false;
 		}
 

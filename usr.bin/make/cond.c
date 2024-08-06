@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.366 2024/07/06 21:21:09 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.367 2024/08/06 17:46:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -91,7 +91,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.366 2024/07/06 21:21:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.367 2024/08/06 17:46:01 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -266,7 +266,8 @@ ParseFuncArg(CondParser *par, const char **pp, bool doEval, const char *func)
 			len++;
 
 		Parse_Error(PARSE_FATAL,
-		    "Missing closing parenthesis for %.*s()", len, func);
+		    "Missing ')' after argument '%s' for '%.*s'",
+		    res, len, func);
 		par->printedError = true;
 		free(res);
 		return NULL;
