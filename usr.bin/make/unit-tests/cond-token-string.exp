@@ -1,7 +1,7 @@
 make: "cond-token-string.mk" line 15: while evaluating "${:Uvalue:Z}"" with value "value": Unknown modifier "Z"
-make: "cond-token-string.mk" line 15: Malformed conditional ("" != "${:Uvalue:Z}")
+make: "cond-token-string.mk" line 15: Malformed conditional '"" != "${:Uvalue:Z}"'
 make: "cond-token-string.mk" line 25: xvalue is not defined.
-make: "cond-token-string.mk" line 32: Malformed conditional (x${:Uvalue} == "")
+make: "cond-token-string.mk" line 32: Malformed conditional 'x${:Uvalue} == ""'
 make: "cond-token-string.mk" line 42: Expected.
 CondParser_Eval: "UNDEF"
 make: "cond-token-string.mk" line 52: The string literal "UNDEF" is not empty.

@@ -4,21 +4,21 @@ make: "varmod-order.mk" line 20: while evaluating variable "WORDS" with value "e
 make: "varmod-order.mk" line 22: while evaluating variable "NUMBERS" with value "1 2 3 4 5 6 7 8 9 10": Unclosed expression, expecting '}' for modifier "On"
 make: "varmod-order.mk" line 24: while evaluating variable "NUMBERS" with value "10 9 8 7 6 5 4 3 2 1": Unclosed expression, expecting '}' for modifier "Onr"
 make: "varmod-order.mk" line 31: while evaluating variable "NUMBERS" with value "8 5 4 9 1 7 6 10 3 2": Bad modifier ":Oxn"
-make: "varmod-order.mk" line 31: Malformed conditional (${NUMBERS:Oxn})
+make: "varmod-order.mk" line 31: Malformed conditional '${NUMBERS:Oxn}'
 make: "varmod-order.mk" line 41: while evaluating variable "NUMBERS" with value "8 5 4 9 1 7 6 10 3 2": Bad modifier ":On_typo"
-make: "varmod-order.mk" line 41: Malformed conditional (${NUMBERS:On_typo})
+make: "varmod-order.mk" line 41: Malformed conditional '${NUMBERS:On_typo}'
 make: "varmod-order.mk" line 51: while evaluating variable "NUMBERS" with value "8 5 4 9 1 7 6 10 3 2": Bad modifier ":Onr_typo"
-make: "varmod-order.mk" line 51: Malformed conditional (${NUMBERS:Onr_typo})
+make: "varmod-order.mk" line 51: Malformed conditional '${NUMBERS:Onr_typo}'
 make: "varmod-order.mk" line 61: while evaluating variable "NUMBERS" with value "8 5 4 9 1 7 6 10 3 2": Bad modifier ":Orn_typo"
-make: "varmod-order.mk" line 61: Malformed conditional (${NUMBERS:Orn_typo})
+make: "varmod-order.mk" line 61: Malformed conditional '${NUMBERS:Orn_typo}'
 make: "varmod-order.mk" line 73: while evaluating variable "NUMBERS" with value "8 5 4 9 1 7 6 10 3 2": Bad modifier ":Onn"
-make: "varmod-order.mk" line 73: Malformed conditional (${NUMBERS:Onn})
+make: "varmod-order.mk" line 73: Malformed conditional '${NUMBERS:Onn}'
 make: "varmod-order.mk" line 83: while evaluating variable "NUMBERS" with value "8 5 4 9 1 7 6 10 3 2": Bad modifier ":Onrr"
-make: "varmod-order.mk" line 83: Malformed conditional (${NUMBERS:Onrr})
+make: "varmod-order.mk" line 83: Malformed conditional '${NUMBERS:Onrr}'
 make: "varmod-order.mk" line 93: while evaluating variable "NUMBERS" with value "8 5 4 9 1 7 6 10 3 2": Bad modifier ":Orrn"
-make: "varmod-order.mk" line 93: Malformed conditional (${NUMBERS:Orrn})
+make: "varmod-order.mk" line 93: Malformed conditional '${NUMBERS:Orrn}'
 make: "varmod-order.mk" line 108: while evaluating variable "SWITCH" with value "On": Bad modifier ":On=Off"
-make: "varmod-order.mk" line 108: Malformed conditional (${SWITCH:On=Off} != "Off")
+make: "varmod-order.mk" line 108: Malformed conditional '${SWITCH:On=Off} != "Off"'
 make: Fatal errors encountered -- cannot continue
 make: stopped making "all" in unit-tests
 exit status 1

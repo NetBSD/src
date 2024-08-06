@@ -1,4 +1,4 @@
-# $NetBSD: varmod-match.mk,v 1.26 2024/07/09 17:07:23 rillig Exp $
+# $NetBSD: varmod-match.mk,v 1.27 2024/08/06 18:00:17 rillig Exp $
 #
 # Tests for the ':M' modifier, which keeps only those words that match the
 # given pattern.
@@ -360,7 +360,7 @@ WORDS=		[x- x x- y yyyyy
 #	[:]	matches never since the ':' starts the next modifier
 # expect+3: while evaluating variable " : :: " with value " : :: ": Unfinished character list in pattern '[' of modifier ':M'
 # expect+2: while evaluating variable " : :: " with value "": Unknown modifier "]"
-# expect+1: Malformed conditional (${ ${:U\:} ${:U\:\:} :L:M[:]} != ":")
+# expect+1: Malformed conditional '${ ${:U\:} ${:U\:\:} :L:M[:]} != ":"'
 .if ${ ${:U\:} ${:U\:\:} :L:M[:]} != ":"
 .  error
 .else

@@ -1,4 +1,4 @@
-# $NetBSD: vardebug.mk,v 1.11 2024/07/05 19:47:22 rillig Exp $
+# $NetBSD: vardebug.mk,v 1.12 2024/08/06 18:00:17 rillig Exp $
 #
 # Demonstrates the debugging output for var.c.
 
@@ -58,7 +58,7 @@ VAR+=		3
 # When ApplyModifiers results in an error, this appears in the debug log
 # as "is error", without surrounding quotes.
 # expect: Result of ${:unknown} is error (eval-defined, defined)
-# expect+2: Malformed conditional (${:Uvariable:unknown})
+# expect+2: Malformed conditional '${:Uvariable:unknown}'
 # expect+1: while evaluating "${:Uvariable:unknown}" with value "variable": Unknown modifier "unknown"
 .if ${:Uvariable:unknown}
 .endif
@@ -69,7 +69,7 @@ VAR+=		3
 # There is a specialized error message for "Undefined variable", but as of
 # 2020-08-08, that is not covered by any unit tests.  It might even be
 # unreachable.
-# expect+1: Malformed conditional (${UNDEFINED})
+# expect+1: Malformed conditional '${UNDEFINED}'
 .if ${UNDEFINED}
 .endif
 
