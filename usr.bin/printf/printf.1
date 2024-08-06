@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.1,v 1.38 2024/08/06 14:55:48 kre Exp $
+.\"	$NetBSD: printf.1,v 1.39 2024/08/06 17:18:00 uwe Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -92,10 +92,6 @@ Character escape sequences are in backslash notation as defined in
 .St -ansiC .
 The characters and their meanings are as follows:
 .Bl -tag -offset indent -width Cm
-.It Cm \ee
-Write an
-.Aq escape
-character.
 .It Cm \ea
 Write a
 .Aq bell
@@ -103,6 +99,10 @@ character.
 .It Cm \eb
 Write a
 .Aq backspace
+character.
+.It Cm \ee
+Write an
+.Aq escape
 character.
 .It Cm \ef
 Write a
