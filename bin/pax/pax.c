@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.49 2019/04/24 17:27:08 cheusov Exp $	*/
+/*	$NetBSD: pax.c,v 1.49.10.1 2024/08/07 10:52:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.49 2019/04/24 17:27:08 cheusov Exp $");
+__RCSID("$NetBSD: pax.c,v 1.49.10.1 2024/08/07 10:52:49 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -260,15 +260,24 @@ main(int argc, char **argv)
 		return exit_val;
 
 	/*
-	 * Keep a reference to cwd, so we can always come back home.
+	 * For any actions other than LIST, keep a reference to cwd, so
+	 * we can always come back home.
+	 *
+	 * For EXTRACT (pax -r) without --insecure, also save the path
+	 * to cwd to check for escape attempts.
 	 */
-	cwdfd = open(".", O_RDONLY);
-	if (cwdfd < 0) {
-		syswarn(1, errno, "Can't open current working directory.");
-		return exit_val;
+	if (act != LIST) {
+		cwdfd = open(".", O_RDONLY);
+		if (cwdfd < 0) {
+			syswarn(1, errno,
+			    "Can't open current working directory.");
+			return exit_val;
+		}
+		if (act == EXTRACT && secure) {
+			if (updatepath() == -1)
+				return exit_val;
+		}
 	}
-	if (updatepath() == -1)
-		return exit_val;
 
 	/*
 	 * Where should we put temporary files?

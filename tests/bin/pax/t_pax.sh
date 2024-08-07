@@ -1,4 +1,4 @@
-# $NetBSD: t_pax.sh,v 1.1 2012/03/17 16:33:11 jruoho Exp $
+# $NetBSD: t_pax.sh,v 1.1.44.1 2024/08/07 10:52:49 martin Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -48,7 +48,101 @@ append_body() {
 	atf_check -s eq:0 -o empty -e empty cmp file1.tar file2.tar
 }
 
+atf_test_case pr41736
+pr41736_head()
+{
+	atf_set "descr" "Test pax exits with 0 if stdin file list is empty"
+}
+pr41736_body()
+{
+	atf_check pax -rw . </dev/null
+}
+
+atf_test_case pr44498
+pr44498_head()
+{
+	atf_set "descr" "Ensure pax list operation works without getcwd"
+	atf_set "require.user" "unprivileged"
+}
+pr44498_body()
+{
+	mkdir foo foo/bar baz
+	chmod 111 foo
+	touch baz/quux
+	atf_check pax -w -x ustar -f baz.tar baz
+	atf_check -o 'inline:baz\nbaz/quux\n' \
+	    sh -c '{ cd foo/bar && exec pax; } <baz.tar'
+}
+
+atf_test_case pr44498_copy
+pr44498_copy_head()
+{
+	atf_set "descr" \
+	    "Ensure pax insecure copy operation works without getcwd"
+	atf_set "require.user" "unprivileged"
+}
+pr44498_copy_body()
+{
+	mkdir foo foo/bar foo/bar/baz
+	chmod 111 foo
+	touch foo/bar/quux
+	atf_check sh -c '{ cd foo/bar && exec pax -rw quux baz/.; }'
+}
+
+atf_test_case pr44498_insecureextract
+pr44498_insecureextract_head()
+{
+	atf_set "descr" \
+	    "Ensure pax insecure extract operation works without getcwd"
+	atf_set "require.user" "unprivileged"
+}
+pr44498_insecureextract_body()
+{
+	mkdir foo foo/bar baz
+	chmod 111 foo
+	touch baz/quux
+	atf_check pax -w -x ustar -f baz.tar baz
+	atf_check sh -c '{ cd foo/bar && exec pax -r --insecure; } <baz.tar'
+}
+
+atf_test_case pr44498_listwd
+pr44498_listwd_head()
+{
+	atf_set "descr" "Ensure pax list operation works without working dir"
+	atf_set "require.user" "unprivileged"
+}
+pr44498_listwd_body()
+{
+	mkdir foo baz
+	chmod 111 foo
+	touch baz/quux
+	atf_check pax -w -x ustar -f baz.tar baz
+	atf_check -o 'inline:baz\nbaz/quux\n' \
+	    sh -c '{ cd foo && exec pax; } <baz.tar'
+}
+
+atf_test_case pr44498_write
+pr44498_write_head()
+{
+	atf_set "descr" "Ensure pax write operation works without getcwd"
+	atf_set "require.user" "unprivileged"
+}
+pr44498_write_body()
+{
+	mkdir foo foo/bar
+	touch foo/bar/quux
+	chmod 111 foo
+	atf_check sh -c '{ cd foo/bar && pax -w -x ustar .; } >bar.tar'
+	atf_check -o 'inline:.\n./quux\n' pax -f bar.tar
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case append
+	atf_add_test_case pr41736
+	atf_add_test_case pr44498
+	atf_add_test_case pr44498_copy
+	atf_add_test_case pr44498_insecureextract
+	atf_add_test_case pr44498_listwd
+	atf_add_test_case pr44498_write
 }
