@@ -1,4 +1,4 @@
-/*	$NetBSD: viocon.c,v 1.5.4.1 2023/05/13 10:56:10 martin Exp $	*/
+/*	$NetBSD: viocon.c,v 1.5.4.2 2024/08/07 11:05:22 martin Exp $	*/
 /*	$OpenBSD: viocon.c,v 1.8 2021/11/05 11:38:29 mpi Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viocon.c,v 1.5.4.1 2023/05/13 10:56:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viocon.c,v 1.5.4.2 2024/08/07 11:05:22 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -222,11 +222,12 @@ viocon_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n%s: viocon_port_create failed\n", __func__);
 		goto err;
 	}
-	viocon_rx_fill(sc->sc_ports[0]);
 
 	if (virtio_child_attach_finish(vsc, sc->sc_vqs, nvqs,
 	    /*config_change*/NULL, /*req_flags*/0) != 0)
 		goto err;
+
+	viocon_rx_fill(sc->sc_ports[0]);
 
 	return;
 err:
