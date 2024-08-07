@@ -1,4 +1,4 @@
-/* $NetBSD: rtld_start.S,v 1.5 2022/03/24 12:12:00 andvar Exp $ */
+/* $NetBSD: rtld_start.S,v 1.5.2.1 2024/08/07 11:00:12 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: rtld_start.S,v 1.5 2022/03/24 12:12:00 andvar Exp $")
+RCSID("$NetBSD: rtld_start.S,v 1.5.2.1 2024/08/07 11:00:12 martin Exp $")
 
 /*
  * void _rtld_start(void (*cleanup)(void), const Obj_Entry *obj,
@@ -146,87 +146,121 @@ ENTRY_NP(_rtld_bind_start)
 END(_rtld_bind_start)
 
 /*
- * struct rel_tlsdesc {
- *  uint64_t resolver_fnc;
- *  uint64_t resolver_arg;
+ * Entry points used by _rtld_tlsdesc_fill.  They will be passed in x0
+ * a pointer to:
  *
+ *	struct rel_tlsdesc {
+ *		uint64_t resolver_fnc;
+ *		uint64_t resolver_arg;
+ *	};
  *
- * uint64_t _rtld_tlsdesc_static(struct rel_tlsdesc *);
+ * They are called with nonstandard calling convention and must
+ * preserve all registers except x0.
+ */
+
+/*
+ * uint64_t@x0
+ * _rtld_tlsdesc_static(struct rel_tlsdesc *rel_tlsdesc@x0);
  *
- * Resolver function for TLS symbols resolved at load time
+ *	Resolver function for TLS symbols resolved at load time.
+ *
+ *	rel_tlsdesc->resolver_arg is the offset of the static
+ *	thread-local storage region, relative to the start of the TCB.
+ *
+ *	Nonstandard calling convention: Must preserve all registers
+ *	except x0.
  */
 ENTRY(_rtld_tlsdesc_static)
 	.cfi_startproc
-	ldr	x0, [x0, #8]
-	ret
+	ldr	x0, [x0, #8]		/* x0 := tcboffset */
+	ret				/* return x0 = tcboffset */
 	.cfi_endproc
 END(_rtld_tlsdesc_static)
 
 /*
- * uint64_t _rtld_tlsdesc_undef(void);
+ * uint64_t@x0
+ * _rtld_tlsdesc_undef(struct rel_tlsdesc *rel_tlsdesc@x0);
  *
- * Resolver function for weak and undefined TLS symbols
+ *	Resolver function for weak and undefined TLS symbols.
+ *
+ *	rel_tlsdesc->resolver_arg is the Elf_Rela rela->r_addend.
+ *
+ *	Nonstandard calling convention: Must preserve all registers
+ *	except x0.
  */
 ENTRY(_rtld_tlsdesc_undef)
 	.cfi_startproc
-	str	x1, [sp, #-16]!
+	str	x1, [sp, #-16]!		/* save x1 on stack */
 	.cfi_adjust_cfa_offset	16
 
-	mrs	x1, tpidr_el0
-	ldr	x0, [x0, #8]
-	sub	x0, x0, x1
+	mrs	x1, tpidr_el0		/* x1 := current thread tcb */
+	ldr	x0, [x0, #8]		/* x0 := rela->r_addend */
+	sub	x0, x0, x1		/* x0 := rela->r_addend - tcb */
 
-	ldr	x1, [sp], #16
-	.cfi_adjust_cfa_offset 	-16
+	ldr	x1, [sp], #16		/* restore x1 from stack */
+	.cfi_adjust_cfa_offset	-16
 	.cfi_endproc
-	ret
+	ret				/* return x0 = rela->r_addend - tcb */
 END(_rtld_tlsdesc_undef)
 
 /*
- * uint64_t _rtld_tlsdesc_dynamic(struct rel_tlsdesc *);
+ * uint64_t@x0
+ * _rtld_tlsdesc_dynamic(struct rel_tlsdesc *tlsdesc@x0);
  *
- * Resolver function for TLS symbols from dlopen()
+ *	Resolver function for TLS symbols from dlopen().
+ *
+ *	rel_tlsdesc->resolver_arg is a pointer to a struct tls_data
+ *	object allocated during relocation.
+ *
+ *	Nonstandard calling convention: Must preserve all registers
+ *	except x0.
  */
 ENTRY(_rtld_tlsdesc_dynamic)
 	.cfi_startproc
 
 	/* Save registers used in fast path */
-	stp	x1,  x2, [sp, #(-2 * 16)]!
-	stp	x3,  x4, [sp, #(1 * 16)]
+	stp	x1, x2, [sp, #(-2 * 16)]!
+	stp	x3, x4, [sp, #(1 * 16)]
 	.cfi_adjust_cfa_offset	2 * 16
 	.cfi_rel_offset		x1, 0
 	.cfi_rel_offset		x2, 8
 	.cfi_rel_offset		x3, 16
 	.cfi_rel_offset		x4, 24
 
-	/* Test fastpath - inlined version of __tls_get_addr. */
+	/* Try for the fast path -- inlined version of __tls_get_addr. */
 
-	ldr	x1, [x0, #8]		/* tlsdesc ptr */
-	mrs	x4, tpidr_el0
-	ldr	x0, [x4]		/* DTV pointer (tcb->tcb_dtv) */
+	ldr	x1, [x0, #8]		/* x1 := tlsdesc (struct tls_data *) */
+	mrs	x4, tpidr_el0		/* x4 := tcb */
+	ldr	x0, [x4]		/* x0 := dtv = tcb->tcb_dtv */
 
-	ldr	x3, [x0, #-8]		/* DTV_MAX_INDEX(dtv) */
-	ldr	x2, [x1, #0]		/* tlsdesc->td_tlsindex */
+	ldr	x3, [x0, #-8]		/* x3 := max = DTV_MAX_INDEX(dtv) */
+	ldr	x2, [x1, #0]		/* x2 := idx = tlsdesc->td_tlsindex */
 	cmp	x2, x3
-	b.lt	1f			/* Slow path */
+	b.gt	1f			/* Slow path if idx > max */
 
-	ldr     x3, [x0, x2, lsl #3]	/* dtv[tlsdesc->td_tlsindex] */
-	cbz	x3, 1f
+	ldr	x3, [x0, x2, lsl #3]	/* x3 := dtv[idx] */
+	cbz	x3, 1f			/* Slow path if dtv[idx] is null */
 
-	/* Return (dtv[tlsdesc->td_tlsindex] + tlsdesc->td_tlsoffs - tp) */
-	ldr	x2, [x1, #8]		/* tlsdesc->td_tlsoffs */
-	add 	x2, x2, x3
-	sub	x0, x2, x4
+	/*
+	 * Fast path
+	 *
+	 * return (dtv[tlsdesc->td_tlsindex] + tlsdesc->td_tlsoffs - tcb)
+	 */
+	ldr	x2, [x1, #8]		/* x2 := offs = tlsdesc->td_tlsoffs */
+	add	x2, x2, x3		/* x2 := addr = dtv[idx] + offs */
+	sub	x0, x2, x4		/* x0 := addr - tcb
 
-	/* Restore registers and return */
-	ldp	 x3,  x4, [sp, #(1 * 16)]
-	ldp	 x1,  x2, [sp], #(2 * 16)
-	.cfi_adjust_cfa_offset 	-2 * 16
-	ret
+	/* Restore fast path registers and return */
+	ldp	x3, x4, [sp, #(1 * 16)]
+	ldp	x1, x2, [sp], #(2 * 16)
+	.cfi_adjust_cfa_offset	-2 * 16
+	ret				/* return x0 = addr - tcb */
 
 	/*
 	 * Slow path
-	 * return _rtld_tls_get_addr(tp, tlsdesc->td_tlsindex, tlsdesc->td_tlsoffs);
+	 *
+	 * return _rtld_tls_get_addr(tp, tlsdesc->td_tlsindex,
+	 *     tlsdesc->td_tlsoffs);
 	 *
 	 */
 1:
@@ -236,18 +270,18 @@ ENTRY(_rtld_tlsdesc_dynamic)
 	.cfi_rel_offset		x29, 0
 	.cfi_rel_offset		x30, 8
 
-	stp	x5,   x6, [sp, #(1 * 16)]
-	stp	x7,   x8, [sp, #(2 * 16)]
-	stp	x9,  x10, [sp, #(3 * 16)]
+	stp	x5, x6, [sp, #(1 * 16)]
+	stp	x7, x8, [sp, #(2 * 16)]
+	stp	x9, x10, [sp, #(3 * 16)]
 	stp	x11, x12, [sp, #(4 * 16)]
 	stp	x13, x14, [sp, #(5 * 16)]
 	stp	x15, x16, [sp, #(6 * 16)]
 	stp	x17, x18, [sp, #(7 * 16)]
-	.cfi_rel_offset		 x5, 16
-	.cfi_rel_offset		 x6, 24
-	.cfi_rel_offset		 x7, 32
-	.cfi_rel_offset		 x8, 40
-	.cfi_rel_offset		 x9, 48
+	.cfi_rel_offset		x5, 16
+	.cfi_rel_offset		x6, 24
+	.cfi_rel_offset		x7, 32
+	.cfi_rel_offset		x8, 40
+	.cfi_rel_offset		x9, 48
 	.cfi_rel_offset		x10, 56
 	.cfi_rel_offset		x11, 64
 	.cfi_rel_offset		x12, 72
@@ -259,31 +293,32 @@ ENTRY(_rtld_tlsdesc_dynamic)
 	.cfi_rel_offset		x18, 120
 
 	/* Find the tls offset */
-	mov	x0, x4			/* tp */
-	mov	x3, x1			/* tlsdesc ptr */
-	ldr	x1, [x3, #0]		/* tlsdesc->td_tlsindex */
-	ldr	x2, [x3, #8]		/* tlsdesc->td_tlsoffs */
-	bl	_rtld_tls_get_addr
-	mrs	x1, tpidr_el0
-	sub	x0, x0, x1
+	mov	x0, x4			/* x0 := tcb */
+	mov	x3, x1			/* x3 := tlsdesc */
+	ldr	x1, [x3, #0]		/* x1 := idx = tlsdesc->td_tlsindex */
+	ldr	x2, [x3, #8]		/* x2 := offs = tlsdesc->td_tlsoffs */
+	bl	_rtld_tls_get_addr	/* x0 := addr = _rtld_tls_get_addr(tcb,
+					 *     idx, offs) */
+	mrs	x1, tpidr_el0		/* x1 := tcb */
+	sub	x0, x0, x1		/* x0 := addr - tcb */
 
 	/* Restore slow path registers */
 	ldp	x17, x18, [sp, #(7 * 16)]
 	ldp	x15, x16, [sp, #(6 * 16)]
 	ldp	x13, x14, [sp, #(5 * 16)]
 	ldp	x11, x12, [sp, #(4 * 16)]
-	ldp	x9, x10,  [sp, #(3 * 16)]
-	ldp	x7, x8,   [sp, #(2 * 16)]
-	ldp	x5, x6,   [sp, #(1 * 16)]
+	ldp	x9, x10, [sp, #(3 * 16)]
+	ldp	x7, x8, [sp, #(2 * 16)]
+	ldp	x5, x6, [sp, #(1 * 16)]
 	ldp	x29, x30, [sp], #(8 * 16)
-	.cfi_adjust_cfa_offset 	-8 * 16
+	.cfi_adjust_cfa_offset	-8 * 16
 	.cfi_restore		x29
 	.cfi_restore		x30
 
 	/* Restore fast path registers and return */
-	ldp	 x3,  x4, [sp, #16]
-	ldp	 x1,  x2, [sp], #(2 * 16)
+	ldp	x3, x4, [sp, #16]
+	ldp	x1, x2, [sp], #(2 * 16)
 	.cfi_adjust_cfa_offset	-2 * 16
 	.cfi_endproc
-	ret
+	ret				/* return x0 = addr - tcb */
 END(_rtld_tlsdesc_dynamic)

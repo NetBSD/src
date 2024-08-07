@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.14.8.1 2023/08/01 16:34:56 martin Exp $	*/
+/*	$NetBSD: tls.c,v 1.14.8.2 2024/08/07 11:00:12 martin Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,18 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.14.8.1 2023/08/01 16:34:56 martin Exp $");
+__RCSID("$NetBSD: tls.c,v 1.14.8.2 2024/08/07 11:00:12 martin Exp $");
+
+/*
+ * Thread-local storage
+ *
+ * Reference:
+ *
+ *	[ELFTLS] Ulrich Drepper, `ELF Handling For Thread-Local
+ *	Storage', Version 0.21, 2023-08-22.
+ *	https://akkadia.org/drepper/tls.pdf
+ *	https://web.archive.org/web/20240718081934/https://akkadia.org/drepper/tls.pdf
+ */
 
 #include <sys/param.h>
 #include <sys/ucontext.h>
@@ -45,20 +56,93 @@ __RCSID("$NetBSD: tls.c,v 1.14.8.1 2023/08/01 16:34:56 martin Exp $");
 static struct tls_tcb *_rtld_tls_allocate_locked(void);
 static void *_rtld_tls_module_allocate(struct tls_tcb *, size_t);
 
+/*
+ * DTV offset
+ *
+ *	On some architectures (m68k, mips, or1k, powerpc, and riscv),
+ *	the DTV offsets passed to __tls_get_addr have a bias relative
+ *	to the start of the DTV, in order to maximize the range of TLS
+ *	offsets that can be used by instruction encodings with signed
+ *	displacements.
+ */
 #ifndef TLS_DTV_OFFSET
 #define	TLS_DTV_OFFSET	0
 #endif
 
 static size_t _rtld_tls_static_space;	/* Static TLS space allocated */
 static size_t _rtld_tls_static_offset;	/* Next offset for static TLS to use */
-size_t _rtld_tls_dtv_generation = 1;
-size_t _rtld_tls_max_index = 1;
+size_t _rtld_tls_dtv_generation = 1;	/* Bumped on each load of obj w/ TLS */
+size_t _rtld_tls_max_index = 1;		/* Max index into up-to-date DTV */
 
-#define	DTV_GENERATION(dtv)	((size_t)((dtv)[0]))
-#define	DTV_MAX_INDEX(dtv)	((size_t)((dtv)[-1]))
+/*
+ * DTV -- Dynamic Thread Vector
+ *
+ *	The DTV is a per-thread array that maps each module with
+ *	thread-local storage to a pointer into part of the thread's TCB
+ *	(thread control block), or dynamically loaded TLS blocks,
+ *	reserved for that module's storage.
+ *
+ *	The TCB itself, struct tls_tcb, has a pointer to the DTV at
+ *	tcb->tcb_dtv.
+ *
+ *	The layout is:
+ *
+ *		+---------------+
+ *		| max index     | -1    max index i for which dtv[i] is alloced
+ *		+---------------+
+ *		| generation    |  0    void **dtv points here
+ *		+---------------+
+ *		| obj 1 tls ptr |  1    TLS pointer for obj w/ obj->tlsindex 1
+ *		+---------------+
+ *		| obj 2 tls ptr |  2    TLS pointer for obj w/ obj->tlsindex 2
+ *		+---------------+
+ *		  .
+ *		  .
+ *		  .
+ *
+ *	The values of obj->tlsindex start at 1; this way,
+ *	dtv[obj->tlsindex] works, when dtv[0] is the generation.  The
+ *	TLS pointers go either into the static thread-local storage,
+ *	for the initial objects (i.e., those loaded at startup), or
+ *	into TLS blocks dynamically allocated for objects that
+ *	dynamically loaded by dlopen.
+ *
+ *	The generation field is a cache of the global generation number
+ *	_rtld_tls_dtv_generation, which is bumped every time an object
+ *	with TLS is loaded in _rtld_map_object, and cached by
+ *	__tls_get_addr (via _rtld_tls_get_addr) when a newly loaded
+ *	module lies outside the bounds of the current DTV.
+ *
+ *	XXX Why do we keep max index and generation separately?  They
+ *	appear to be initialized the same, always incremented together,
+ *	and always stored together.
+ *
+ *	XXX Why is this not a struct?
+ *
+ *		struct dtv {
+ *			size_t	dtv_gen;
+ *			void	*dtv_module[];
+ *		};
+ */
+#define	DTV_GENERATION(dtv)		((size_t)((dtv)[0]))
+#define	DTV_MAX_INDEX(dtv)		((size_t)((dtv)[-1]))
 #define	SET_DTV_GENERATION(dtv, val)	(dtv)[0] = (void *)(size_t)(val)
 #define	SET_DTV_MAX_INDEX(dtv, val)	(dtv)[-1] = (void *)(size_t)(val)
 
+/*
+ * _rtld_tls_get_addr(tcb, idx, offset)
+ *
+ *	Slow path for __tls_get_addr (see below), called to allocate
+ *	TLS space if needed for the object obj with obj->tlsindex idx,
+ *	at offset, which must be below obj->tlssize.
+ *
+ *	This may allocate a DTV if the current one is too old, and it
+ *	may allocate a dynamically loaded TLS block if there isn't one
+ *	already allocated for it.
+ *
+ *	XXX Why is the first argument passed as `void *tls' instead of
+ *	just `struct tls_tcb *tcb'?
+ */
 void *
 _rtld_tls_get_addr(void *tls, size_t idx, size_t offset)
 {
@@ -70,15 +154,26 @@ _rtld_tls_get_addr(void *tls, size_t idx, size_t offset)
 
 	dtv = tcb->tcb_dtv;
 
+	/*
+	 * If the generation number has changed, we have to allocate a
+	 * new DTV.
+	 *
+	 * XXX Do we really?  Isn't it enough to check whether idx <=
+	 * DTV_MAX_INDEX(dtv)?
+	 */
 	if (__predict_false(DTV_GENERATION(dtv) != _rtld_tls_dtv_generation)) {
 		size_t to_copy = DTV_MAX_INDEX(dtv);
 
+		/*
+		 * "2 +" because the first element is the generation and
+		 * the second one is the maximum index.
+		 */
 		new_dtv = xcalloc((2 + _rtld_tls_max_index) * sizeof(*dtv));
-		++new_dtv;
-		if (to_copy > _rtld_tls_max_index)
+		++new_dtv;		/* advance past DTV_MAX_INDEX */
+		if (to_copy > _rtld_tls_max_index)	/* XXX How? */
 			to_copy = _rtld_tls_max_index;
 		memcpy(new_dtv + 1, dtv + 1, to_copy * sizeof(*dtv));
-		xfree(dtv - 1);
+		xfree(dtv - 1);		/* retreat back to DTV_MAX_INDEX */
 		dtv = tcb->tcb_dtv = new_dtv;
 		SET_DTV_MAX_INDEX(dtv, _rtld_tls_max_index);
 		SET_DTV_GENERATION(dtv, _rtld_tls_dtv_generation);
@@ -92,6 +187,18 @@ _rtld_tls_get_addr(void *tls, size_t idx, size_t offset)
 	return (uint8_t *)dtv[idx] + offset;
 }
 
+/*
+ * _rtld_tls_initial_allocation()
+ *
+ *	Allocate the TCB (thread control block) for the initial thread,
+ *	once the static TLS space usage has been determined (plus some
+ *	slop to allow certain special cases like Mesa to be dlopened).
+ *
+ *	This must be done _after_ all initial objects (i.e., those
+ *	loaded at startup, as opposed to objects dynamically loaded by
+ *	dlopen) have had TLS offsets allocated if need be by
+ *	_rtld_tls_offset_allocate, and have had relocations processed.
+ */
 void
 _rtld_tls_initial_allocation(void)
 {
@@ -114,6 +221,20 @@ _rtld_tls_initial_allocation(void)
 #endif
 }
 
+/*
+ * _rtld_tls_allocate_locked()
+ *
+ *	Internal subroutine to allocate a TCB (thread control block)
+ *	for the current thread.
+ *
+ *	This allocates a DTV and a TCB that points to it, including
+ *	static space in the TCB for the TLS of the initial objects.
+ *	TLS blocks for dynamically loaded objects are allocated lazily.
+ *
+ *	Caller must either be single-threaded (at startup via
+ *	_rtld_tls_initial_allocation) or hold the rtld exclusive lock
+ *	(via _rtld_tls_allocate).
+ */
 static struct tls_tcb *
 _rtld_tls_allocate_locked(void)
 {
@@ -131,8 +252,12 @@ _rtld_tls_allocate_locked(void)
 	tcb->tcb_self = tcb;
 #endif
 	dbg(("lwp %d tls tcb %p", _lwp_self(), tcb));
+	/*
+	 * "2 +" because the first element is the generation and the second
+	 * one is the maximum index.
+	 */
 	tcb->tcb_dtv = xcalloc(sizeof(*tcb->tcb_dtv) * (2 + _rtld_tls_max_index));
-	++tcb->tcb_dtv;
+	++tcb->tcb_dtv;		/* advance past DTV_MAX_INDEX */
 	SET_DTV_MAX_INDEX(tcb->tcb_dtv, _rtld_tls_max_index);
 	SET_DTV_GENERATION(tcb->tcb_dtv, _rtld_tls_dtv_generation);
 
@@ -155,6 +280,14 @@ _rtld_tls_allocate_locked(void)
 	return tcb;
 }
 
+/*
+ * _rtld_tls_allocate()
+ *
+ *	Allocate a TCB (thread control block) for the current thread.
+ *
+ *	Called by pthread_create for non-initial threads.  (The initial
+ *	thread's TCB is allocated by _rtld_tls_initial_allocation.)
+ */
 struct tls_tcb *
 _rtld_tls_allocate(void)
 {
@@ -168,6 +301,14 @@ _rtld_tls_allocate(void)
 	return tcb;
 }
 
+/*
+ * _rtld_tls_free(tcb)
+ *
+ *	Free a TCB allocated with _rtld_tls_allocate.
+ *
+ *	Frees any TLS blocks for dynamically loaded objects that tcb's
+ *	DTV points to, and frees tcb's DTV, and frees tcb.
+ */
 void
 _rtld_tls_free(struct tls_tcb *tcb)
 {
@@ -190,12 +331,27 @@ _rtld_tls_free(struct tls_tcb *tcb)
 		    (uint8_t *)tcb->tcb_dtv[i] >= p_end)
 			xfree(tcb->tcb_dtv[i]);
 	}
-	xfree(tcb->tcb_dtv - 1);
+	xfree(tcb->tcb_dtv - 1);	/* retreat back to DTV_MAX_INDEX */
 	xfree(p);
 
 	_rtld_exclusive_exit(&mask);
 }
 
+/*
+ * _rtld_tls_module_allocate(tcb, idx)
+ *
+ *	Allocate thread-local storage in the thread with the given TCB
+ *	(thread control block) for the object obj whose obj->tlsindex
+ *	is idx.
+ *
+ *	If obj has had space in static TLS reserved (obj->tls_static),
+ *	return a pointer into that.  Otherwise, allocate a TLS block,
+ *	mark obj as having a TLS block allocated (obj->tls_dynamic),
+ *	and return it.
+ *
+ *	Called by _rtld_tls_get_addr to get the thread-local storage
+ *	for an object the first time around.
+ */
 static void *
 _rtld_tls_module_allocate(struct tls_tcb *tcb, size_t idx)
 {
@@ -228,6 +384,16 @@ _rtld_tls_module_allocate(struct tls_tcb *tcb, size_t idx)
 	return p;
 }
 
+/*
+ * _rtld_tls_offset_allocate(obj)
+ *
+ *	Allocate a static thread-local storage offset for obj.
+ *
+ *	Called by _rtld at startup for all initial objects.  Called
+ *	also by MD relocation logic, which is allowed (for Mesa) to
+ *	allocate an additional 64 bytes (RTLD_STATIC_TLS_RESERVATION)
+ *	of static thread-local storage in dlopened objects.
+ */
 int
 _rtld_tls_offset_allocate(Obj_Entry *obj)
 {
@@ -284,6 +450,17 @@ _rtld_tls_offset_allocate(Obj_Entry *obj)
 	return 0;
 }
 
+/*
+ * _rtld_tls_offset_free(obj)
+ *
+ *	Free a static thread-local storage offset for obj.
+ *
+ *	Called by dlclose (via _rtld_unload_object -> _rtld_obj_free).
+ *
+ *	Since static thread-local storage is normally not used by
+ *	dlopened objects (with the exception of Mesa), this doesn't do
+ *	anything to recycle the space right now.
+ */
 void
 _rtld_tls_offset_free(Obj_Entry *obj)
 {
@@ -297,10 +474,33 @@ _rtld_tls_offset_free(Obj_Entry *obj)
 
 #if defined(__HAVE_COMMON___TLS_GET_ADDR) && defined(RTLD_LOADER)
 /*
- * The fast path is access to an already allocated DTV entry.
- * This checks the current limit and the entry without needing any
- * locking. Entries are only freed on dlclose() and it is an application
- * bug if code of the module is still running at that point.
+ * __tls_get_addr(tlsindex)
+ *
+ *	Symbol directly called by code generated by the compiler for
+ *	references thread-local storage in the general-dynamic or
+ *	local-dynamic TLS models (but not initial-exec or local-exec).
+ *
+ *	The argument is a pointer to
+ *
+ *		struct {
+ *			unsigned long int ti_module;
+ *			unsigned long int ti_offset;
+ *		};
+ *
+ *	 as in, e.g., [ELFTLS] Sec. 3.4.3.  This coincides with the
+ *	 type size_t[2] on all architectures that use this common
+ *	 __tls_get_addr definition (XXX but why do we write it as
+ *	 size_t[2]?).
+ *
+ *	 ti_module, i.e., arg[0], is the obj->tlsindex assigned at
+ *	 load-time by _rtld_map_object, and ti_offset, i.e., arg[1], is
+ *	 assigned at link-time by ld(1), possibly adjusted by
+ *	 TLS_DTV_OFFSET.
+ *
+ *	 Some architectures -- specifically IA-64 -- use a different
+ *	 calling convention.  Some architectures -- specifically i386
+ *	 -- also use another entry point ___tls_get_addr (that's three
+ *	 leading underscores) with a different calling convention.
  */
 void *
 __tls_get_addr(void *arg_)
@@ -316,6 +516,13 @@ __tls_get_addr(void *arg_)
 
 	dtv = tcb->tcb_dtv;
 
+	/*
+	 * Fast path: access to an already allocated DTV entry.  This
+	 * checks the current limit and the entry without needing any
+	 * locking.  Entries are only freed on dlclose() and it is an
+	 * application bug if code of the module is still running at
+	 * that point.
+	 */
 	if (__predict_true(idx < DTV_MAX_INDEX(dtv) && dtv[idx] != NULL))
 		return (uint8_t *)dtv[idx] + offset;
 
