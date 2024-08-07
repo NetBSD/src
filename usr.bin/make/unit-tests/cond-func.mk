@@ -1,4 +1,4 @@
-# $NetBSD: cond-func.mk,v 1.16 2024/08/06 17:46:01 rillig Exp $
+# $NetBSD: cond-func.mk,v 1.17 2024/08/07 05:37:11 rillig Exp $
 #
 # Tests for those parts of the functions in .if conditions that are common
 # among several functions.
@@ -136,6 +136,14 @@ defined-var=	# defined but empty
 
 # expect+1: Missing ')' after argument '' for 'defined'
 .if defined(
+.  error
+.else
+.  error
+.endif
+
+# XXX: Don't use the expanded argument in the diagnostic.
+# expect+1: Missing ')' after argument 'VARNAME.param' for 'defined'
+.if defined(${:UVARNAME}.param extra)
 .  error
 .else
 .  error

@@ -7,6 +7,7 @@ make: "cond-func.mk" line 115: A plain function name is parsed as defined(...).
 make: "cond-func.mk" line 126: Symbols may start with a function name.
 make: "cond-func.mk" line 132: Symbols may start with a function name.
 make: "cond-func.mk" line 138: Missing ')' after argument '' for 'defined'
+make: "cond-func.mk" line 146: Missing ')' after argument 'VARNAME.param' for 'defined'
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1
