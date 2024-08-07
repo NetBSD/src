@@ -1,8 +1,8 @@
-/*	$NetBSD: mdreloc.c,v 1.44.4.1 2023/08/04 12:55:46 martin Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.44.4.2 2024/08/07 10:45:41 martin Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.44.4.1 2023/08/04 12:55:46 martin Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.44.4.2 2024/08/07 10:45:41 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -232,8 +232,11 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			    _rtld_tls_offset_allocate(__UNCONST(defobj)))
 				return -1;
 
-			tmp = (Elf_Addr)def->st_value + defobj->tlsoffset +
-			    sizeof(struct tls_tcb);
+			if (__predict_true(RELOC_ALIGNED_P(where)))
+				tmp = *where;
+			else
+				tmp = load_ptr(where);
+			tmp += (Elf_Addr)def->st_value + defobj->tlsoffset + sizeof(struct tls_tcb);
 			if (__predict_true(RELOC_ALIGNED_P(where)))
 				*where = tmp;
 			else
