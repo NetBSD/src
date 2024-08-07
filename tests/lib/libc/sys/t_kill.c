@@ -1,4 +1,4 @@
-/* $NetBSD: t_kill.c,v 1.1 2011/07/07 06:57:53 jruoho Exp $ */
+/* $NetBSD: t_kill.c,v 1.1.56.1 2024/08/07 10:04:48 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_kill.c,v 1.1 2011/07/07 06:57:53 jruoho Exp $");
+__RCSID("$NetBSD: t_kill.c,v 1.1.56.1 2024/08/07 10:04:48 martin Exp $");
 
 #include <sys/wait.h>
 
@@ -299,6 +299,18 @@ ATF_TC_BODY(kill_pgrp_zero, tc)
 		atf_tc_fail("failed to kill(2) a process group");
 }
 
+ATF_TC(kill_int_min);
+ATF_TC_HEAD(kill_int_min, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test kill(INT_MIN) fails with ESRCH");
+}
+
+ATF_TC_BODY(kill_int_min, tc)
+{
+
+	ATF_CHECK_ERRNO(ESRCH, kill(INT_MIN, 0));
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -307,6 +319,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, kill_perm);
 	ATF_TP_ADD_TC(tp, kill_pgrp_neg);
 	ATF_TP_ADD_TC(tp, kill_pgrp_zero);
+	ATF_TP_ADD_TC(tp, kill_int_min);
 
 	return atf_no_error();
 }

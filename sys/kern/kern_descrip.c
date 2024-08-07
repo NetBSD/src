@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.251.10.1 2023/07/30 12:09:51 martin Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.251.10.2 2024/08/07 10:04:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.251.10.1 2023/07/30 12:09:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.251.10.2 2024/08/07 10:04:47 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1819,7 +1819,7 @@ fsetown(pid_t *pgid, u_long cmd, const void *data)
 	pid_t id = *(const pid_t *)data;
 	int error;
 
-	if (id == INT_MIN)
+	if (id <= INT_MIN)
 		return EINVAL;
 
 	switch (cmd) {
@@ -1868,6 +1868,7 @@ fgetown(pid_t pgid, u_long cmd, void *data)
 
 	switch (cmd) {
 	case TIOCGPGRP:
+		KASSERT(pgid > INT_MIN);
 		*(int *)data = -pgid;
 		break;
 	default:
@@ -1907,7 +1908,7 @@ fownsignal(pid_t pgid, int signo, int code, int band, void *fdescdata)
 	} else {
 		struct pgrp *pgrp;
 
-		KASSERT(pgid < 0);
+		KASSERT(pgid < 0 && pgid > INT_MIN);
 		pgrp = pgrp_find(-pgid);
 		if (pgrp != NULL) {
 			kpgsignal(pgrp, &ksi, fdescdata, 0);
