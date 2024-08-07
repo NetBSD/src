@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.281 2019/03/01 11:06:57 pgoyette Exp $	*/
+/*	$NetBSD: tty.c,v 1.281.4.1 2024/08/07 10:11:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.281 2019/03/01 11:06:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.281.4.1 2024/08/07 10:11:45 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1302,6 +1302,10 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		}
 
 		if (pgid < 0) {
+			if (pgid <= INT_MIN) {
+				mutex_exit(proc_lock);
+				return (EINVAL);
+			}
 			pgrp = pgrp_find(-pgid);
 			if (pgrp == NULL) {
 				mutex_exit(proc_lock);
