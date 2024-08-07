@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.269 2022/10/26 23:20:36 riastradh Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.269.2.1 2024/08/07 10:04:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.269 2022/10/26 23:20:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.269.2.1 2024/08/07 10:04:47 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -627,7 +627,7 @@ pgid_in_session(struct proc *p, pid_t pg_id)
 	struct session *session;
 	int error;
 
-	if (pg_id == INT_MIN)
+	if (pg_id <= INT_MIN)
 		return EINVAL;
 
 	mutex_enter(&proc_lock);

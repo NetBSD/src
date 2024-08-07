@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.182 2022/07/01 01:07:56 riastradh Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.182.4.1 2024/08/07 10:04:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.182 2022/07/01 01:07:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.182.4.1 2024/08/07 10:04:47 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1095,7 +1095,10 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t **fpp)
 		/*
 		 * by process group
 		 */
-		pg = pgrp_find(-pid);
+		if (pid == INT_MIN)
+			pg = NULL;
+		else
+			pg = pgrp_find(-pid);
 		if (pg == NULL)
 			error = ESRCH;
 		else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.56 2022/04/21 21:31:11 andvar Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.56.4.1 2024/08/07 10:04:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.56 2022/04/21 21:31:11 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.56.4.1 2024/08/07 10:04:47 martin Exp $");
 
 #include "opt_dtrace.h"
 
@@ -272,6 +272,8 @@ kill1(struct lwp *l, pid_t pid, ksiginfo_t *ksi, register_t *retval)
 	case 0:			/* signal own process group */
 		return killpg1(l, ksi, 0, 0);
 	default:		/* negative explicit process group */
+		if (pid <= INT_MIN)
+			return ESRCH;
 		return killpg1(l, ksi, -pid, 0);
 	}
 	/* NOTREACHED */
