@@ -1,4 +1,4 @@
-# $NetBSD: directive-include-guard.mk,v 1.17 2024/08/07 05:37:11 rillig Exp $
+# $NetBSD: directive-include-guard.mk,v 1.18 2024/08/07 05:48:45 rillig Exp $
 #
 # Tests for multiple-inclusion guards in makefiles.
 #
@@ -581,7 +581,7 @@ LINES.target-name-exclamation= \
 # expect: Parse_PushInput: file target-name-exclamation.tmp, line 1
 # expect: Parse_PushInput: file target-name-exclamation.tmp, line 1
 
-# If the guard target name is enclosed in spaces, it does not have an effect,
+# If the guard target name has leading spaces, it does not have an effect,
 # as that form is not common in practice.
 CASES+=	target-name-leading-space
 LINES.target-name-leading-space= \
@@ -591,13 +591,15 @@ LINES.target-name-leading-space= \
 # expect: Parse_PushInput: file target-name-leading-space.tmp, line 1
 # expect: Parse_PushInput: file target-name-leading-space.tmp, line 1
 
+# If the guard target name has trailing spaces, it does not have an effect,
+# as that form is not common in practice.
 CASES+=	target-name-trailing-space
 LINES.target-name-trailing-space= \
 	'.if !target(target-name-trailing-space )' \
 	'target-name-trailing-space: .NOTMAIN' \
 	'.endif'
 # expect: Parse_PushInput: file target-name-trailing-space.tmp, line 1
-# expect: Skipping 'target-name-trailing-space.tmp' because 'target-name-trailing-space' is defined
+# expect: Parse_PushInput: file target-name-trailing-space.tmp, line 1
 
 # If the guard target condition is enclosed in parentheses, it does not have
 # an effect, as that form is not common in practice.
