@@ -1,11 +1,111 @@
+Thread-local storage.
+
+Each thread has a thread control block, or TCB.  The TCB is a
+variable-size structure headed by `struct tls_tcb' from <sys/tls.h>,
+with:
+
+(a) static thread-local storage for the TLS data of initial objects,
+    i.e., those loaded at startup rather than those dynamically loaded
+    by dlopen
+
+(b) a pointer to a dynamic thread vector (DTV) for the TLS data
+    pointers of objects that use global-dynamic or local-dynamic models
+    (typically shared libraries or dlopenable modules)
+
+(c) the pthread_t pointer
+
+The per-thread lwp private pointer, also sometimes called TP (thread
+pointer), managed by the _lwp_setprivate and _lwp_setprivate syscalls,
+either points at the TCB directly, or, on some architectures, points at
+
+	tp = tcb + sizeof(struct tls_tcb) + TLS_TP_OFFSET.
+
+This bias is chosen for architectures where signed displacements from
+TP enable twice the range of static TLS offsets when biased like this.
+Architectures with such a tp/tcb offset must provide
+
+void *__lwp_gettcb_fast(void);
+
+in machine/mcontext.h and must define __HAVE___LWP_GETTCB_FAST in
+machine/types.h to reflect this; otherwise they must provide
+__lwp_getprivate_fast to return the TCB pointer.
+
+Each architecture has one of two TLS variants, variant I or variant II.
+Variant I places the static thread-local storage _after_ the fixed
+content of the TCB, at increasing addresses (increasing addresses grow
+down in diagram):
+
+	+---------------+
+	| dtv pointer   |       tcb points here (struct tls_tcb)
+	+---------------+
+	| pthread_t     |
+	+---------------+
+	| obj0 tls      |       obj0->tlsoffset = 0
+	|               |
+	|               |
+	+---------------+
+	| obj1 tls      |       obj1->tlsoffset = 3
+	+---------------+
+	| obj2 tls      |       obj2->tlsoffset = 4
+	|               |
+	.		.
+	.		.
+	.		.
+	|               |
+	+---------------+
+	| objN tls      |       objN->tlsoffset = k
+	+---------------+
+
+Variant II places the static thread-local storage _before_ the fixed
+content of the TCB, at decreasing addresses:
+
+	+---------------+
+	| objN tls      |       objN->tlsoffset = k
+	+---------------+
+	| obj(N-1) tls  |       obj(N-1)->tlsoffset = k - 1
+	.               .
+	.               .
+	.               .
+	|               |
+	+---------------+
+	| obj2 tls      |       obj2->tlsoffset = 4
+	+---------------+
+	| obj1 tls      |       obj1->tlsoffset = 3
+	+---------------+
+	| obj0 tls      |       obj0->tlsoffset = 0
+	|               |
+	|               |
+	+---------------+
+	| tcb pointer   |       tcb points here (struct tls_tcb)
+	+---------------+
+	| dtv pointer   |
+	+---------------+
+	| pthread_t     |
+	+---------------+
+
+See [ELFTLS] Sec. 3 `Run-Time Handling of TLS', Figs 1 and 2, for
+bigger pictures including the DTV and dynamically allocated TLS blocks.
+
+Each architecture also has its own ELF ABI processor supplement with
+the architecture-specific relocations and TLS details.
+
+References:
+
+	[ELFTLS] Ulrich Drepper, `ELF Handling For Thread-Local
+	Storage', Version 0.21, 2023-08-22.
+	https://akkadia.org/drepper/tls.pdf
+	https://web.archive.org/web/20240718081934/https://akkadia.org/drepper/tls.pdf
+
 Steps for adding TLS support for a new platform:
 
 (1) Declare TLS variant in machine/types.h by defining either
 __HAVE_TLS_VARIANT_I or __HAVE_TLS_VARIANT_II.
 
-(2) _lwp_makecontext has to set the reserved register or kernel transfer
-variable in uc_mcontext to the provided value of 'private'. See
-src/lib/libc/arch/$PLATFORM/gen/_lwp.c.
+(2) _lwp_makecontext has to set the reserved register or kernel
+transfer variable in uc_mcontext according to the provided value of
+`private'.  Note that _lwp_makecontext takes tcb, not tp, as an
+argument, so make sure to adjust it if needed for the tp/tcb offset.
+See src/lib/libc/arch/$PLATFORM/gen/_lwp.c.
 
 This is not possible on the VAX as there is no free space in ucontext_t.
 This requires either a special version of _lwp_create or versioning
@@ -60,9 +160,22 @@ def->st_value - defobj->tlsoffset + rela->r_addend
 
 e.g. starting offset is counting down from the TCB.
 
-(6) Implement __lwp_getprivate_fast() in machine/mcontext.h and set
-__HAVE___LWP_GETPRIVATE_FAST in machine/types.h.
+(6) If there is a tp/tcb offset, implement
 
-(7) Test using src/tests/lib/libc/tls.  Make sure with "objdump -R" that
-t_tls_dynamic has two TPOFF relocations and h_tls_dlopen.so.1 and
-libh_tls_dynamic.so.1 have both two DTPMOD and DTPOFF relocations.
+	__lwp_gettcb_fast()
+	__lwp_settcb()
+
+in machine/mcontext.h and set
+
+	__HAVE___LWP_GETTCB_FAST
+	__HAVE___LWP_SETTCB
+
+in machine/types.h.
+
+Otherwise, implement __lwp_getprivate_fast() in machine/mcontext.h and
+set __HAVE___LWP_GETPRIVATE_FAST in machine/types.h.
+
+(7) Test using src/tests/lib/libc/tls and src/tests/libexec/ld.elf_so.
+Make sure with "objdump -R" that t_tls_dynamic has two TPOFF
+relocations and h_tls_dlopen.so.1 and libh_tls_dynamic.so.1 have both
+two DTPMOD and DTPOFF relocations.
