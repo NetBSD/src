@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.57 2024/08/06 14:55:48 kre Exp $	*/
+/*	$NetBSD: printf.c,v 1.58 2024/08/07 15:40:03 kre Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.57 2024/08/06 14:55:48 kre Exp $");
+__RCSID("$NetBSD: printf.c,v 1.58 2024/08/07 15:40:03 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -778,7 +778,7 @@ wide_char(const char *p, int all)
 	int n;
 
 	(void)mbtowc(NULL, NULL, 0);
-	n = mbtowc(&wch, p + all, len = strlen(p + all));
+	n = mbtowc(&wch, p + all, (len = strlen(p + all)) + 1);
 	if (n < 0) {
 		warn("%s", p);
 		rval = -1;
