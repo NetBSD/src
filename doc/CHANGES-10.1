@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.21 2024/08/06 15:08:25 snj Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.22 2024/08/07 11:06:59 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -965,4 +965,64 @@ libexec/ld.elf_so/rtld.c			1.216
 	for machines that do not implement all required ops in hardware
 	(like 32bit sparc).
 	[martin, ticket #775]
+
+sys/dev/pci/if_vioif.c				1.108
+
+	vioif(4): fix missing check for stopping state in RX interrupt.
+	[rin, ticket #770]
+
+share/man/man4/virtio.4				1.10,1.11
+
+	virtio(4) PR 58533: add references to viocon.
+	[uwe, ticket #771]
+
+sys/dev/pci/if_vioif.c				1.111
+
+	vioif(4): PR 58049: respect queue size limits.
+	[isaki, ticket #772]
+
+lib/libc/compat-43/killpg.c			1.10
+sys/kern/kern_descrip.c				1.263
+sys/kern/kern_ktrace.c				1.185
+sys/kern/kern_proc.c				1.276
+sys/kern/sys_sig.c				1.58
+sys/kern/tty.c					1.313
+tests/lib/libc/sys/t_kill.c			1.2
+
+	PR 58425: disallow INT_MIN as a (negative) pid arg.
+	Add a test for this.
+	[kre, ticket #773]
+
+bin/sh/histedit.c				1.72
+
+	sh(1): fix sh histedit core dump.
+	[kre, ticket #774]
+
+bin/pax/ar_subs.c				1.58
+bin/pax/buf_subs.c				1.31
+bin/pax/extern.h				1.61
+bin/pax/file_subs.c				1.65
+bin/pax/ftree.c					1.43
+bin/pax/pax.c					1.50,1.51
+tests/bin/pax/t_pax.sh				1.3-1.7
+
+	pax(1): Fix various PRs and add tests for the bugs.
+	PR 33753: pax(1) deletes target file if rewriting it fails
+	(`don't installworld to a full disk')
+	PR 41736: pax reports an error when copying zero files
+	PR 44498: tar(1) unnecessarily demands that getcwd() work
+	[riastradh, ticket #776]
+
+libexec/ld.elf_so/README.TLS			1.7
+libexec/ld.elf_so/arch/aarch64/rtld_start.S	1.6,1.7
+libexec/ld.elf_so/tls.c				1.15,1.20,1.21
+tests/libexec/ld.elf_so/t_tls_extern.c		1.15,1.16
+
+	ld.elf_so(1): PR 58154: fix aarch64 thread-local storage
+	[riastradh, ticket #777]
+
+sys/dev/virtio/viocon.c				1.10
+
+	viocon(4): PR 58555: fix crash at boot on certain hosts.
+	[riastradh, ticket #778]
 
