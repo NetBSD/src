@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.57 2021/12/05 02:52:17 msaitoh Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.57.2.1 2024/08/07 10:52:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.57 2021/12/05 02:52:17 msaitoh Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.57.2.1 2024/08/07 10:52:49 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -1131,10 +1131,14 @@ copy(void)
 		}
 
 		/*
-		 * copy source file data to the destination file
+		 * copy source file data to the destination file.
+		 * if there was a failure, remove the temporary file
+		 * and leave any existing destination file unmodified.
 		 */
-		cp_file(arcn, fdsrc, fddest);
-		file_close(arcn, fddest);
+		if (cp_file(arcn, fdsrc, fddest) < 0)
+			file_cleanup(arcn, fddest);
+		else
+			file_close(arcn, fddest);
 		rdfile_close(arcn, &fdsrc);
 
 		if (vflag && vfpart) {
