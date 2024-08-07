@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tls_extern.c,v 1.12.2.2 2023/08/01 16:34:58 martin Exp $	*/
+/*	$NetBSD: t_tls_extern.c,v 1.12.2.3 2024/08/07 11:00:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -382,6 +382,63 @@ ATF_TC_BODY(onlydef_static_dynamic_lazy, tc)
 	    pstatic, pdynamic);
 }
 
+ATF_TC(opencloseloop_use);
+ATF_TC_HEAD(opencloseloop_use, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Testing opening and closing in a loop,"
+	    " then opening and using dynamic TLS");
+}
+ATF_TC_BODY(opencloseloop_use, tc)
+{
+	unsigned i;
+	void *def, *use;
+	int *(*fdef)(void), *(*fuse)(void);
+	int *pdef, *puse;
+
+	/*
+	 * Open and close the definition library repeatedly.  This
+	 * should trigger allocation of many DTV offsets, which are
+	 * (currently) not recycled, so the required DTV offsets should
+	 * become very long -- pages past what is actually allocated
+	 * before we attempt to use it.
+	 *
+	 * This way, we will exercise the wrong-way-conditional fast
+	 * path of PR lib/58154.
+	 */
+	for (i = sysconf(_SC_PAGESIZE); i --> 0;) {
+		ATF_REQUIRE_DL(def = dlopen("libh_def_dynamic.so", 0));
+		ATF_REQUIRE_EQ_MSG(dlclose(def), 0,
+		    "dlclose(def): %s", dlerror());
+	}
+
+	/*
+	 * Now open the definition library and keep it open.
+	 */
+	ATF_REQUIRE_DL(def = dlopen("libh_def_dynamic.so", 0));
+	ATF_REQUIRE_DL(fdef = dlsym(def, "fdef"));
+
+	/*
+	 * Open libraries that use the definition and verify they
+	 * observe the same pointer.
+	 */
+	ATF_REQUIRE_DL(use = dlopen("libh_use_dynamic.so", 0));
+	ATF_REQUIRE_DL(fuse = dlsym(use, "fuse"));
+	pdef = (*fdef)();
+	puse = (*fuse)();
+	ATF_CHECK_EQ_MSG(pdef, puse,
+	    "%p in defining library != %p in using library",
+	    pdef, puse);
+
+	/*
+	 * Also verify the pointer can be used.
+	 */
+	*pdef = 123;
+	*puse = 456;
+	ATF_CHECK_EQ_MSG(*pdef, *puse,
+	    "%d in defining library != %d in using library",
+	    *pdef, *puse);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -398,6 +455,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, onlydef_dynamic_static_lazy);
 	ATF_TP_ADD_TC(tp, onlydef_static_dynamic_eager);
 	ATF_TP_ADD_TC(tp, onlydef_static_dynamic_lazy);
+	ATF_TP_ADD_TC(tp, opencloseloop_use);
 	ATF_TP_ADD_TC(tp, static_abusedef);
 	ATF_TP_ADD_TC(tp, static_abusedefnoload);
 	ATF_TP_ADD_TC(tp, static_defabuse_eager);
