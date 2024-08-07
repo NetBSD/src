@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.65.2.1 2024/07/20 15:42:08 martin Exp $	*/
+/*	$NetBSD: histedit.c,v 1.65.2.2 2024/08/07 10:41:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.65.2.1 2024/07/20 15:42:08 martin Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.65.2.2 2024/08/07 10:41:11 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -570,7 +570,7 @@ fc_replace(const char *s, char *p, char *r)
 		} else
 			STPUTC(*s++, dest);
 	}
-	STACKSTRNUL(dest);
+	STPUTC('\0', dest);
 	dest = grabstackstr(dest);
 	VTRACE(DBG_HISTORY, ("\"%s\"\n", dest));
 
