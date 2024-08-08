@@ -1,4 +1,4 @@
-#	$NetBSD: t_tap.sh,v 1.11 2020/09/30 14:43:15 roy Exp $
+#	$NetBSD: t_tap.sh,v 1.11.6.1 2024/08/08 06:54:25 martin Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -179,7 +179,7 @@ tap_bridged_body()
 	atf_check -s exit:0 rump.ifconfig -w 10
 
 	# Now we can ping the tap address
-	export RUMP_SERVER=${SOCK_LOCAL}
+	export RUMP_SERVER=${SOCK_REMOTE}
 	atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 $IP4_TAP
 	atf_check -s exit:0 -o ignore rump.ping6 -n -X $TIMEOUT -c 1 $IP6_TAP
 
