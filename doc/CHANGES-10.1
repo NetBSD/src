@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.22 2024/08/07 11:06:59 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.23 2024/08/08 06:55:19 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -1025,4 +1025,14 @@ sys/dev/virtio/viocon.c				1.10
 
 	viocon(4): PR 58555: fix crash at boot on certain hosts.
 	[riastradh, ticket #778]
+
+libexec/ld.elf_so/arch/hppa/hppa_reloc.c	1.52
+
+	hppa: ld.elf_so(1): avoid a crash on R_PARISC_NONE relocations.
+	[macallan, ticket #779]
+
+tests/net/if_tap/t_tap.sh			1.12
+
+	t_tap: fix `tap_bridged` test case.
+	[rin, ticket #780]
 
