@@ -167,7 +167,7 @@ sig_set(EditLine *el)
 	struct sigaction osa, nsa;
 
 	nsa.sa_handler = sig_handler;
-	nsa.sa_flags = 0;
+	nsa.sa_flags = SA_ONSTACK;
 	sigemptyset(&nsa.sa_mask);
 
 	sel = el;
