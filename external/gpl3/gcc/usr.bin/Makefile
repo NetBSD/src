@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2024/06/18 04:07:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.17 2024/08/10 23:49:12 mrg Exp $
 
 NOOBJ=# defined
 
@@ -8,13 +8,19 @@ GCC_MACHINE_ARCH=${MACHINE_ARCH:S/earmv5/earm/}
 
 .if ${MKGCC} != "no" && exists(${.CURDIR}/gcc/arch/${GCC_MACHINE_ARCH}/defs.mk)
 
+.if defined(NOGCCISL)
+ISL_SUBDIR=	../../../mit/isl/lib/libisl
+.else
+ISL_SUBDIR=
+.endif
+
 # host-libiberty is used by include on rs6000.
 SUBDIR+=	host-libiberty .WAIT
 
 # We keep libcpp here since it depends upon frontend.
 .if ${MKGCCCMDS} != "no" || make(includes)
 SUBDIR+=	host-libcpp .WAIT \
-		../../../mit/isl/lib/libisl \
+		${ISL_SUBDIR} \
 		backend .WAIT \
 		frontend .WAIT \
 		common common-target .WAIT \
