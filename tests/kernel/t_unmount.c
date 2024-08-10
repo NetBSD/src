@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unmount.c,v 1.1 2024/08/09 23:24:15 bad Exp $	*/
+/*	$NetBSD: t_unmount.c,v 1.2 2024/08/10 14:44:54 bad Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2024\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_unmount.c,v 1.1 2024/08/09 23:24:15 bad Exp $");
+__RCSID("$NetBSD: t_unmount.c,v 1.2 2024/08/10 14:44:54 bad Exp $");
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -61,7 +61,6 @@ ATF_TC_BODY(async, tc)
 	struct tmpfs_args args;
 	struct vnode *vp;
 	extern struct vnode *rumpns_rootvnode;
-	int rv;
 
 	RZ(rump_init());
 
@@ -80,9 +79,7 @@ ATF_TC_BODY(async, tc)
 	RZ(rump_pub_lwproc_rfork(RUMP_RFCFDG));
 
 	/* get vnode of MP, unlocked */
-	rv = rump_pub_namei(RUMP_NAMEI_LOOKUP, 0,
-	    MP, NULL, &vp, NULL);
-	ATF_REQUIRE_MSG((rv == 0), "rump_pub_namei failed: %s", strerror(rv));
+	RZ(rump_pub_namei(RUMP_NAMEI_LOOKUP, 0, MP, NULL, &vp, NULL));
 
 	/* make sure we didn't just get the root vnode */
 	ATF_REQUIRE_MSG((rumpns_rootvnode != vp), "drat! got the root vnode");
