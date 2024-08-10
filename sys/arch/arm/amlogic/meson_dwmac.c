@@ -1,4 +1,4 @@
-/* $NetBSD: meson_dwmac.c,v 1.14 2021/11/19 07:04:27 jdc Exp $ */
+/* $NetBSD: meson_dwmac.c,v 1.15 2024/08/10 12:16:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.14 2021/11/19 07:04:27 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.15 2024/08/10 12:16:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -266,7 +266,7 @@ meson_dwmac_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": Gigabit Ethernet Controller\n");
 
 	if (fdtbus_intr_establish_xname(phandle, 0, IPL_NET,
-	    DWCGMAC_FDT_INTR_MPSAFE, meson_dwmac_intr, sc,
+	    FDT_INTR_MPSAFE, meson_dwmac_intr, sc,
 	    device_xname(sc->sc_dev)) == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n", intrstr);
 		return;

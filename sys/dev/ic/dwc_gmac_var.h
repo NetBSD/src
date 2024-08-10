@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac_var.h,v 1.20 2024/08/08 06:44:19 skrll Exp $ */
+/* $NetBSD: dwc_gmac_var.h,v 1.21 2024/08/10 12:16:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -28,21 +28,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifdef _KERNEL_OPT
-#include "opt_net_mpsafe.h"
-#endif
-
-/* Use DWCGMAC_MPSAFE inside the front-ends for interrupt handlers.  */
-#ifdef NET_MPSAFE
-#define DWCGMAC_MPSAFE	1
-#endif
-
-#ifdef DWCGMAC_MPSAFE
-#define DWCGMAC_FDT_INTR_MPSAFE FDT_INTR_MPSAFE
-#else
-#define DWCGMAC_FDT_INTR_MPSAFE 0
-#endif
 
 /*
  * Rx and Tx Ring counts that map into single 4K page with 16byte descriptor
@@ -122,7 +107,8 @@ struct dwc_gmac_softc {
 	bool sc_txbusy;
 	bool sc_stopping;
 	krndsource_t rnd_source;
-	kmutex_t *sc_lock;			/* lock for softc operations */
+	kmutex_t *sc_core_lock;			/* lock for softc operations */
+	kmutex_t *sc_intr_lock;			/* lock for interrupt operations */
 
 	struct if_percpuq *sc_ipq;		/* softint-based input queues */
 

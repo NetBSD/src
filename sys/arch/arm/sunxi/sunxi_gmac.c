@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gmac.c,v 1.10 2021/11/07 19:21:33 jmcneill Exp $ */
+/* $NetBSD: sunxi_gmac.c,v 1.11 2024/08/10 12:16:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gmac.c,v 1.10 2021/11/07 19:21:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gmac.c,v 1.11 2024/08/10 12:16:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -201,7 +201,7 @@ sunxi_gmac_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": GMAC\n");
 
 	if (fdtbus_intr_establish_xname(phandle, 0, IPL_NET,
-	    DWCGMAC_FDT_INTR_MPSAFE, sunxi_gmac_intr, sc,
+	    FDT_INTR_MPSAFE, sunxi_gmac_intr, sc,
 	    device_xname(self)) == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n", intrstr);
 		return;
