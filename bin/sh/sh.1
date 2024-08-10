@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.262 2024/07/13 13:43:58 kre Exp $
+.\"	$NetBSD: sh.1,v 1.263 2024/08/10 19:21:32 uwe Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1510,12 +1510,12 @@ These commands are instances of compound commands.
 The syntax of the
 .Ic if
 command is
-.Bd -literal -offset indent
+.Bd -unfilled -offset indent
 .Ic if Ar list
 .Ic then Ar list
-.Ic [ elif Ar list
-.Ic then  Ar list ] No ...
-.Ic [ else Ar list ]
+.Oo Ic elif Ar list
+.Ic then  Ar list Oc No ...
+.Op Ic else Ar list
 .Ic fi
 .Ed
 .Pp
@@ -1536,7 +1536,7 @@ reserved word, if any, is executed.
 The syntax of the
 .Ic while
 command is
-.Bd -literal -offset indent
+.Bd -unfilled -offset indent
 .Ic while Ar list
 .Ic do Ar list
 .Ic done
@@ -1555,7 +1555,7 @@ which causes it to repeat until the exit status of the first list is zero.
 The syntax of the
 .Ic for
 command is
-.Bd -literal -offset indent
+.Bd -unfilled -offset indent
 .Ic for Ar variable Op Ic in Ar word No ...
 .Ic do Ar list
 .Ic done
@@ -1586,7 +1586,7 @@ The syntax of the
 and
 .Ic continue
 commands is
-.Bd -literal -offset indent
+.Bd -unfilled -offset indent
 .Ic break Op Ar num
 .Ic continue Op Ar num
 .Ed
@@ -1616,7 +1616,7 @@ If not given, 1 is used.
 The syntax of the
 .Ic case
 command is
-.Bd -literal -offset indent
+.Bd -unfilled -offset indent
 .Ic case Ar word Ic in
 .Oo Ic \&( Oc  Ar pattern Ns Ic \&) Oo Ar list Oc Ic \&;&
 .Oo Ic \&( Oc  Ar pattern Ns Ic \&) Oo Ar list Oc Ic \&;;
