@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.113 2024/06/16 16:03:30 gutteridge Exp $
+#	$NetBSD: Makefile,v 1.114 2024/08/10 23:49:12 mrg Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -65,10 +65,10 @@ COMMON_CONFIGURE_ARGS+=	--with-default-libstdcxx-abi=new
 
 # We enabled isl support for GCC 12.  Move into normal segment when
 # removing GCC 10.
-.if ${HAVE_GCC} < 12
-ISL_CONFIGURE_ARGS+=	--without-isl
+.if ${HAVE_GCC} < 12 || defined(NOGCCISL)
+COMMON_CONFIGURE_ARGS+=	--without-isl
 .else
-ISL_CONFIGURE_ARGS+=	--with-isl=${TOOLDIR}
+COMMON_CONFIGURE_ARGS+=	--with-isl=${TOOLDIR}
 .endif
 
 CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS}

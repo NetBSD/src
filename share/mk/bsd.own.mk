@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1392 2024/07/16 21:10:16 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.1393 2024/08/10 23:49:12 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -113,6 +113,14 @@ EXTERNAL_GCC_SUBDIR?=	/does/not/exist
 .else	# MKGCC == no							# } {
 MKGCCCMDS?=	no
 .endif	# MKGCC == no							# }
+
+#
+# Build GCC with the "isl" library enabled.
+# The alpha port does not work with it, see GCC PR's 84204 and 84353.
+#
+.if ${MACHINE} == "alpha"
+NOGCCISL=	# defined
+.endif
 
 #
 # What binutils is used?
