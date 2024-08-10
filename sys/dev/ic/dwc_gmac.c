@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.91 2024/07/27 12:56:27 skrll Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.92 2024/08/10 12:11:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.91 2024/07/27 12:56:27 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.92 2024/08/10 12:11:14 skrll Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -860,7 +860,7 @@ dwc_gmac_miibus_statchg(struct ifnet *ifp)
 static int
 dwc_gmac_init(struct ifnet *ifp)
 {
-	struct dwc_gmac_softc *sc = ifp->if_softc;
+	struct dwc_gmac_softc * const sc = ifp->if_softc;
 
 	mutex_enter(sc->sc_lock);
 	int ret = dwc_gmac_init_locked(ifp);
@@ -872,7 +872,7 @@ dwc_gmac_init(struct ifnet *ifp)
 static int
 dwc_gmac_init_locked(struct ifnet *ifp)
 {
-	struct dwc_gmac_softc *sc = ifp->if_softc;
+	struct dwc_gmac_softc * const sc = ifp->if_softc;
 	uint32_t ffilt;
 
 	if (ifp->if_flags & IFF_RUNNING)
@@ -942,7 +942,7 @@ dwc_gmac_init_locked(struct ifnet *ifp)
 static void
 dwc_gmac_start(struct ifnet *ifp)
 {
-	struct dwc_gmac_softc *sc = ifp->if_softc;
+	struct dwc_gmac_softc * const sc = ifp->if_softc;
 #ifdef DWCGMAC_MPSAFE
 	KASSERT(if_is_mpsafe(ifp));
 #endif
@@ -959,7 +959,7 @@ dwc_gmac_start(struct ifnet *ifp)
 static void
 dwc_gmac_start_locked(struct ifnet *ifp)
 {
-	struct dwc_gmac_softc *sc = ifp->if_softc;
+	struct dwc_gmac_softc * const sc = ifp->if_softc;
 	int old = sc->sc_txq.t_queued;
 	int start = sc->sc_txq.t_cur;
 	struct mbuf *m0;
@@ -1001,7 +1001,7 @@ dwc_gmac_start_locked(struct ifnet *ifp)
 static void
 dwc_gmac_stop(struct ifnet *ifp, int disable)
 {
-	struct dwc_gmac_softc *sc = ifp->if_softc;
+	struct dwc_gmac_softc * const sc = ifp->if_softc;
 
 	mutex_enter(sc->sc_lock);
 	dwc_gmac_stop_locked(ifp, disable);
@@ -1011,7 +1011,7 @@ dwc_gmac_stop(struct ifnet *ifp, int disable)
 static void
 dwc_gmac_stop_locked(struct ifnet *ifp, int disable)
 {
-	struct dwc_gmac_softc *sc = ifp->if_softc;
+	struct dwc_gmac_softc * const sc = ifp->if_softc;
 
 	sc->sc_stopping = true;
 
@@ -1122,8 +1122,8 @@ dwc_gmac_queue(struct dwc_gmac_softc *sc, struct mbuf *m0)
 static int
 dwc_gmac_ifflags_cb(struct ethercom *ec)
 {
-	struct ifnet *ifp = &ec->ec_if;
-	struct dwc_gmac_softc *sc = ifp->if_softc;
+	struct ifnet * const ifp = &ec->ec_if;
+	struct dwc_gmac_softc * const sc = ifp->if_softc;
 	int ret = 0;
 
 	mutex_enter(sc->sc_lock);
@@ -1146,7 +1146,7 @@ out:
 static int
 dwc_gmac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct dwc_gmac_softc *sc = ifp->if_softc;
+	struct dwc_gmac_softc * const sc = ifp->if_softc;
 	int error = 0;
 
 	int s = splnet();
@@ -1186,7 +1186,7 @@ dwc_gmac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 static void
 dwc_gmac_tx_intr(struct dwc_gmac_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 	struct dwc_gmac_tx_data *data;
 	struct dwc_gmac_dev_dmadesc *desc;
 	int i, nsegs;
@@ -1245,7 +1245,7 @@ dwc_gmac_tx_intr(struct dwc_gmac_softc *sc)
 static void
 dwc_gmac_rx_intr(struct dwc_gmac_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 	struct dwc_gmac_dev_dmadesc *desc;
 	struct dwc_gmac_rx_data *data;
 	bus_addr_t physaddr;
