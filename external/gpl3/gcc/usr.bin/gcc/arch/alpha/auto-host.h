@@ -2215,7 +2215,7 @@
 
 /* Define if isl is in use. */
 #ifndef USED_FOR_TARGET
-#define HAVE_isl 1
+/* #undef HAVE_isl */
 #endif
 
 
