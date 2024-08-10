@@ -1,4 +1,4 @@
-/*	$NetBSD: t_utimensat.c,v 1.8 2024/08/10 15:10:17 riastradh Exp $ */
+/*	$NetBSD: t_utimensat.c,v 1.9 2024/08/10 15:20:22 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,11 +29,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_utimensat.c,v 1.8 2024/08/10 15:10:17 riastradh Exp $");
+__RCSID("$NetBSD: t_utimensat.c,v 1.9 2024/08/10 15:20:22 riastradh Exp $");
 
 #include <sys/param.h>
+
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <sys/time.h>
+
 #include <atf-c.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -58,15 +61,18 @@ static const struct timespec tptr[] = {
 };
 
 static void
-checkstattime(const struct stat *st)
+checkstattime(const struct stat *st, const struct statvfs *fs)
 {
 
-	ATF_CHECK_EQ_MSG(st->st_atimespec.tv_sec, tptr[0].tv_sec,
-	    "st->st_atimespec.tv_sec=%lld tptr[0].tv_sec=%lld",
-	    (long long)st->st_atimespec.tv_sec, (long long)tptr[0].tv_sec);
-	ATF_CHECK_EQ_MSG(st->st_atimespec.tv_nsec, tptr[0].tv_nsec,
-	    "st->st_atimespec.tv_nsec=%ld tptr[0].tv_nsec=%ld",
-	    (long)st->st_atimespec.tv_nsec, (long)tptr[0].tv_nsec);
+	if ((fs->f_flag & ST_NOATIME) == 0) {
+		ATF_CHECK_EQ_MSG(st->st_atimespec.tv_sec, tptr[0].tv_sec,
+		    "st->st_atimespec.tv_sec=%lld tptr[0].tv_sec=%lld",
+		    (long long)st->st_atimespec.tv_sec,
+		    (long long)tptr[0].tv_sec);
+		ATF_CHECK_EQ_MSG(st->st_atimespec.tv_nsec, tptr[0].tv_nsec,
+		    "st->st_atimespec.tv_nsec=%ld tptr[0].tv_nsec=%ld",
+		    (long)st->st_atimespec.tv_nsec, (long)tptr[0].tv_nsec);
+	}
 	ATF_CHECK_EQ_MSG(st->st_mtimespec.tv_sec, tptr[1].tv_sec,
 	    "st->st_mtimespec.tv_sec=%lld tptr[1].tv_sec=%lld",
 	    (long long)st->st_mtimespec.tv_sec, (long long)tptr[1].tv_sec);
@@ -85,6 +91,7 @@ ATF_TC_BODY(utimensat_fd, tc)
 	int dfd;
 	int fd;
 	struct stat st;
+	struct statvfs fs;
 
 	RL(mkdir(DIR, 0755));
 	RL(fd = open(FILE, O_CREAT|O_RDWR, 0644));
@@ -95,7 +102,8 @@ ATF_TC_BODY(utimensat_fd, tc)
 	RL(close(dfd));
 
 	RL(stat(FILE, &st));
-	checkstattime(&st);
+	RL(statvfs(FILE, &fs));
+	checkstattime(&st, &fs);
 }
 
 ATF_TC(utimensat_fdcwd);
@@ -108,6 +116,7 @@ ATF_TC_BODY(utimensat_fdcwd, tc)
 {
 	int fd;
 	struct stat st;
+	struct statvfs fs;
 
 	RL(mkdir(DIR, 0755));
 	RL(fd = open(FILE, O_CREAT|O_RDWR, 0644));
@@ -117,7 +126,8 @@ ATF_TC_BODY(utimensat_fdcwd, tc)
 	RL(utimensat(AT_FDCWD, BASEFILE, tptr, 0));
 
 	RL(stat(BASEFILE, &st));
-	checkstattime(&st);
+	RL(statvfs(BASEFILE, &fs));
+	checkstattime(&st, &fs);
 }
 
 ATF_TC(utimensat_fdcwderr);
@@ -195,6 +205,7 @@ ATF_TC_BODY(utimensat_fdlink, tc)
 {
 	int dfd;
 	struct stat st;
+	struct statvfs fs;
 
 	RL(mkdir(DIR, 0755));
 	RL(symlink(FILE, LINK)); /* NB: FILE does not exists */
@@ -208,7 +219,8 @@ ATF_TC_BODY(utimensat_fdlink, tc)
 	RL(close(dfd));
 
 	RL(lstat(LINK, &st));
-	checkstattime(&st);
+	RL(statvfs(DIR, &fs));	/* XXX should do lstatvfs(LINK, &fs) */
+	checkstattime(&st, &fs);
 }
 
 ATF_TP_ADD_TCS(tp)
