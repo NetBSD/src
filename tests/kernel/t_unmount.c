@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unmount.c,v 1.2 2024/08/10 14:44:54 bad Exp $	*/
+/*	$NetBSD: t_unmount.c,v 1.3 2024/08/11 12:58:10 bad Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2024\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_unmount.c,v 1.2 2024/08/10 14:44:54 bad Exp $");
+__RCSID("$NetBSD: t_unmount.c,v 1.3 2024/08/11 12:58:10 bad Exp $");
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -94,7 +94,6 @@ ATF_TC_BODY(async, tc)
 	    (vp->v_mount->mnt_iflag & IMNT_ONWORKLIST) != 0);
 
 
-	atf_tc_expect_fail("mount point on syncer work list. PR kern/58564");
 	ATF_REQUIRE_MSG(((vp->v_mount->mnt_iflag & IMNT_ONWORKLIST) == 0),
 	    "mount point on syncer work list");
 }
