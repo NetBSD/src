@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2024/08/10 23:49:12 mrg Exp $
+#	$NetBSD: Makefile,v 1.18 2024/08/11 08:13:14 mrg Exp $
 
 NOOBJ=# defined
 
@@ -8,7 +8,7 @@ GCC_MACHINE_ARCH=${MACHINE_ARCH:S/earmv5/earm/}
 
 .if ${MKGCC} != "no" && exists(${.CURDIR}/gcc/arch/${GCC_MACHINE_ARCH}/defs.mk)
 
-.if defined(NOGCCISL)
+.if !defined(NOGCCISL)
 ISL_SUBDIR=	../../../mit/isl/lib/libisl
 .else
 ISL_SUBDIR=
