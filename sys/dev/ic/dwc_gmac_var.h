@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac_var.h,v 1.21 2024/08/10 12:16:47 skrll Exp $ */
+/* $NetBSD: dwc_gmac_var.h,v 1.22 2024/08/11 12:48:09 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -102,15 +102,15 @@ struct dwc_gmac_softc {
 	struct dwc_gmac_rx_ring sc_rxq;
 	struct dwc_gmac_tx_ring sc_txq;
 	const struct dwc_gmac_desc_methods *sc_descm;
-	u_short sc_if_flags;			/* shadow of ether flags */
+	u_short sc_if_flags;	/* (sc_mcastlock) if_flags cache */
 	uint16_t sc_mii_clk;
-	bool sc_txbusy;
-	bool sc_stopping;
+	bool sc_txbusy;		/* (sc_txq.t_mtx) no Tx because down or busy */
+	bool sc_stopping;	/* (sc_intr_lock) ignore intr because down */
 	krndsource_t rnd_source;
-	kmutex_t *sc_core_lock;			/* lock for softc operations */
-	kmutex_t *sc_intr_lock;			/* lock for interrupt operations */
+	kmutex_t *sc_mcast_lock;	/* lock for SIOCADD/DELMULTI */
+	kmutex_t *sc_intr_lock;		/* lock for interrupt operations */
 
-	struct if_percpuq *sc_ipq;		/* softint-based input queues */
+	struct if_percpuq *sc_ipq;	/* softint-based input queues */
 
 	void (*sc_set_speed)(struct dwc_gmac_softc *, int);
 };
