@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.105 2024/04/19 00:45:41 riastradh Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.106 2024/08/11 12:58:10 bad Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.105 2024/04/19 00:45:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.106 2024/08/11 12:58:10 bad Exp $");
 
 #include "veriexec.h"
 
@@ -975,9 +975,9 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	}
 	if (error) {
 		mp->mnt_iflag &= ~IMNT_UNMOUNT;
+		mp->mnt_flag |= async;
 		if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
 			vfs_syncer_add_to_worklist(mp);
-		mp->mnt_flag |= async;
 		mutex_exit(mp->mnt_updating);
 		if (!was_suspended)
 			vfs_resume(mp);
