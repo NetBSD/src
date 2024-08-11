@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.566 2024/07/04 16:42:37 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.567 2024/08/11 13:09:58 bad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2020, 2023 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.566 2024/07/04 16:42:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.567 2024/08/11 13:09:58 bad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -741,6 +741,11 @@ do_sys_sync(struct lwp *l)
 	while ((mp = mountlist_iterator_next(iter)) != NULL) {
 		mutex_enter(mp->mnt_updating);
 		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
+			/*
+			 * Temporarily clear the MNT_ASYNC flags so that
+			 * bwrite() doesnt convert the sync writes to
+			 * delayed writes.
+			 */
 			asyncflag = mp->mnt_flag & MNT_ASYNC;
 			mp->mnt_flag &= ~MNT_ASYNC;
 			VFS_SYNC(mp, MNT_NOWAIT, l->l_cred);
