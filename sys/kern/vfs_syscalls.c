@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.567 2024/08/11 13:09:58 bad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.568 2024/08/11 13:43:20 bad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2020, 2023 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.567 2024/08/11 13:09:58 bad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.568 2024/08/11 13:43:20 bad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -749,8 +749,7 @@ do_sys_sync(struct lwp *l)
 			asyncflag = mp->mnt_flag & MNT_ASYNC;
 			mp->mnt_flag &= ~MNT_ASYNC;
 			VFS_SYNC(mp, MNT_NOWAIT, l->l_cred);
-			if (asyncflag)
-				 mp->mnt_flag |= MNT_ASYNC;
+			mp->mnt_flag |= asyncflag;
 		}
 		mutex_exit(mp->mnt_updating);
 	}
