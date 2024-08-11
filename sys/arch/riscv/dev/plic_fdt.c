@@ -1,4 +1,4 @@
-/* $NetBSD: plic_fdt.c,v 1.7 2024/08/04 08:16:25 skrll Exp $ */
+/* $NetBSD: plic_fdt.c,v 1.8 2024/08/11 08:29:12 skrll Exp $ */
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plic_fdt.c,v 1.7 2024/08/04 08:16:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plic_fdt.c,v 1.8 2024/08/11 08:29:12 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: plic_fdt.c,v 1.7 2024/08/04 08:16:25 skrll Exp $");
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "riscv,plic0" },
 	{ .compat = "sifive,plic-1.0.0" },
+	{ .compat = "thead,c900-plic" },
 	DEVICE_COMPAT_EOL
 };
 
