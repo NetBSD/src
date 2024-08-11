@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.106 2024/08/11 12:58:10 bad Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.107 2024/08/11 13:09:58 bad Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.106 2024/08/11 12:58:10 bad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.107 2024/08/11 13:09:58 bad Exp $");
 
 #include "veriexec.h"
 
@@ -961,6 +961,10 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 
 	mp->mnt_iflag |= IMNT_UNMOUNT;
 	mutex_enter(mp->mnt_updating);
+	/*
+	 * Temporarily clear the MNT_ASYNC flags so that bwrite() doesn't
+	 * convert the sync writes to delayed writes.
+	 */
 	async = mp->mnt_flag & MNT_ASYNC;
 	mp->mnt_flag &= ~MNT_ASYNC;
 	cache_purgevfs(mp);	/* remove cache entries for this file sys */
