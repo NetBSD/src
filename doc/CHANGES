@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3074 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3075 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -457,3 +457,12 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	aarch64: Switch to binutils 2.42.  [skrll 20240714]
 	hppa: Switch to binutils 2.42.  [skrll 20240715]
 	hppa: Add hyperfb, a driver for HCRX video cards.  [macallan 20240717]
+	libblocklist(3): Add blocklist_open2() that can pass a custom logger.
+		[christos 20240802]
+	df(1): Add -M (ignore non-mounted arguments) and
+		-q (suppresses warnings) options.  [kre 20240803]
+	printf(1): Add %C format conversion and -L option.  [kre 20240806]
+	awge(4): MP improvements [skrll 20240810]
+	mk: Add a way to build GCC without the isl library (NOGCCISL).
+		[mrg 20240810]
+	
