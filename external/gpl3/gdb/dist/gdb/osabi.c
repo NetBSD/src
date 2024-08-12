@@ -1,6 +1,6 @@
 /* OS ABI variant handling for GDB.
 
-   Copyright (C) 2001-2023 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,11 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 
 #include "osabi.h"
 #include "arch-utils.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "command.h"
 #include "gdb_bfd.h"
 
@@ -463,7 +462,6 @@ generic_elf_osabi_sniff_abi_tag_sections (bfd *abfd, asection *sect,
 {
   const char *name;
   unsigned int sectsize;
-  char *note;
 
   name = bfd_section_name (sect);
   sectsize = bfd_section_size (sect);
@@ -477,7 +475,7 @@ generic_elf_osabi_sniff_abi_tag_sections (bfd *abfd, asection *sect,
      compressed section.  But, since note sections are not compressed,
      deferring the reading until we recognize the section avoids any
      error.  */
-  note = (char *) alloca (sectsize);
+  char note[MAX_NOTESZ];
 
   /* .note.ABI-tag notes, used by GNU/Linux and FreeBSD.  */
   if (strcmp (name, ".note.ABI-tag") == 0)

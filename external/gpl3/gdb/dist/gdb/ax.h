@@ -1,5 +1,5 @@
 /* Definitions for expressions designed to be executed on the agent
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -81,18 +81,13 @@ enum agent_flaws
 struct agent_expr
   {
     /* Construct an empty agent expression.  */
-    explicit agent_expr (struct gdbarch *gdbarch, CORE_ADDR scope);
-
-    ~agent_expr ();
+    agent_expr (struct gdbarch *gdbarch, CORE_ADDR scope)
+      : gdbarch (gdbarch),
+	scope (scope)
+    { }
 
     /* The bytes of the expression.  */
-    unsigned char *buf;
-
-    /* The number of bytecode in the expression.  */
-    int len;
-
-    /* Allocated space available currently.  */
-    int size;
+    gdb::byte_vector buf;
 
     /* The target architecture assumed to be in effect.  */
     struct gdbarch *gdbarch;
@@ -116,14 +111,10 @@ struct agent_expr
     int max_data_size;
 
     /* Bit vector of registers needed.  Register R is needed iff
-
-       reg_mask[R / 8] & (1 << (R % 8))
-
-       is non-zero.  Note!  You may not assume that this bitmask is long
-       enough to hold bits for all the registers of the machine; the
-       agent expression code has no idea how many registers the machine
-       has.  However, the bitmask is reg_mask_len bytes long, so the
-       valid register numbers run from 0 to reg_mask_len * 8 - 1.
+       reg_mask[R] is non-zero.  Note!  You may not assume that this
+       bitmask is long enough to hold bits for all the registers of
+       the machine; the agent expression code has no idea how many
+       registers the machine has.
 
        Also note that this mask may contain registers that are needed
        for the original collection expression to work, but that are
@@ -132,8 +123,7 @@ struct agent_expr
        compiler sets the mask bit and skips generating a bytecode whose
        result is going to be discarded anyway.
     */
-    int reg_mask_len;
-    unsigned char *reg_mask;
+    std::vector<bool> reg_mask;
 
     /* For the data tracing facility, we need to insert `trace' bytecodes
        before each data fetch; this records all the memory that the
@@ -141,16 +131,16 @@ struct agent_expr
        be available when the user later tries to evaluate the expression
        in GDB.
 
-       Setting the flag 'tracing' to non-zero enables the code that
+       Setting the flag 'tracing' to true enables the code that
        emits the trace bytecodes at the appropriate points.  */
 
-    unsigned int tracing : 1;
+    bool tracing = false;
 
     /* This indicates that pointers to chars should get an added
        tracenz bytecode to record nonzero bytes, up to a length that
        is the value of trace_string.  */
 
-    int trace_string;
+    int trace_string = 0;
   };
 
 /* An agent_expr owning pointer.  */
@@ -164,7 +154,6 @@ enum agent_op
     aop_ ## NAME = VALUE,
 #include "gdbsupport/ax.def"
 #undef DEFOP
-    aop_last
   };
 
 
@@ -230,36 +219,6 @@ extern void ax_string (struct agent_expr *x, const char *str, int slen);
 
 /* Disassemble the expression EXPR, writing to F.  */
 extern void ax_print (struct ui_file *f, struct agent_expr * EXPR);
-
-/* An entry in the opcode map.  */
-struct aop_map
-  {
-
-    /* The name of the opcode.  Null means that this entry is not a
-       valid opcode --- a hole in the opcode space.  */
-    const char *name;
-
-    /* All opcodes take no operands from the bytecode stream, or take
-       unsigned integers of various sizes.  If this is a positive number
-       n, then the opcode is followed by an n-byte operand, which should
-       be printed as an unsigned integer.  If this is zero, then the
-       opcode takes no operands from the bytecode stream.
-
-       If we get more complicated opcodes in the future, don't add other
-       magic values of this; that's a crock.  Add an `enum encoding'
-       field to this, or something like that.  */
-    int op_size;
-
-    /* The size of the data operated upon, in bits, for bytecodes that
-       care about that (ref and const).  Zero for all others.  */
-    int data_size;
-
-    /* Number of stack elements consumed, and number produced.  */
-    int consumed, produced;
-  };
-
-/* Map of the bytecodes, indexed by bytecode number.  */
-extern struct aop_map aop_map[];
 
 /* Given an agent expression AX, analyze and update its requirements.  */
 

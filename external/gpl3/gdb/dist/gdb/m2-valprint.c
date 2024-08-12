@@ -1,6 +1,6 @@
 /* Support for printing Modula 2 values for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "expression.h"
@@ -164,8 +163,8 @@ m2_print_unbounded_array (struct value *value,
   LONGEST len;
   struct value *val;
 
-  struct type *type = check_typedef (value_type (value));
-  const gdb_byte *valaddr = value_contents_for_printing (value).data ();
+  struct type *type = check_typedef (value->type ());
+  const gdb_byte *valaddr = value->contents_for_printing ().data ();
 
   addr = unpack_pointer (type->field (0).type (),
 			 (type->field (0).loc_bitpos () / 8) +
@@ -260,7 +259,7 @@ m2_print_array_contents (struct value *val,
 			 const struct value_print_options *options,
 			 int len)
 {
-  struct type *type = check_typedef (value_type (val));
+  struct type *type = check_typedef (val->type ());
 
   if (type->length () > 0)
     {
@@ -270,7 +269,7 @@ m2_print_array_contents (struct value *val,
 	   || ((current_language->la_language == language_m2)
 	       && (type->code () == TYPE_CODE_CHAR)))
 	  && (options->format == 0 || options->format == 's'))
-	val_print_string (type, NULL, value_address (val), len+1, stream,
+	val_print_string (type, NULL, val->address (), len+1, stream,
 			  options);
       else
 	{
@@ -305,10 +304,10 @@ m2_language::value_print_inner (struct value *val, struct ui_file *stream,
   unsigned len;
   struct type *elttype;
   CORE_ADDR addr;
-  const gdb_byte *valaddr = value_contents_for_printing (val).data ();
-  const CORE_ADDR address = value_address (val);
+  const gdb_byte *valaddr = val->contents_for_printing ().data ();
+  const CORE_ADDR address = val->address ();
 
-  struct type *type = check_typedef (value_type (val));
+  struct type *type = check_typedef (val->type ());
   switch (type->code ())
     {
     case TYPE_CODE_ARRAY:
@@ -327,12 +326,14 @@ m2_language::value_print_inner (struct value *val, struct ui_file *stream,
 		 elements up to it.  */
 	      if (options->stop_print_at_null)
 		{
+		  unsigned int print_max_chars = get_print_max_chars (options);
 		  unsigned int temp_len;
 
 		  /* Look for a NULL char.  */
 		  for (temp_len = 0;
 		       (valaddr[temp_len]
-			&& temp_len < len && temp_len < options->print_max);
+			&& temp_len < len
+			&& temp_len < print_max_chars);
 		       temp_len++);
 		  len = temp_len;
 		}
@@ -371,7 +372,7 @@ m2_language::value_print_inner (struct value *val, struct ui_file *stream,
 	  gdb_printf (stream, "{...}");
 	  break;
 	}
-      /* Fall through.  */
+      [[fallthrough]];
     case TYPE_CODE_STRUCT:
       if (m2_is_long_set (type))
 	m2_print_long_set (type, valaddr, 0, address, stream);
@@ -449,7 +450,7 @@ m2_language::value_print_inner (struct value *val, struct ui_file *stream,
 	  value_print_inner (v, stream, recurse, options);
 	  break;
 	}
-      /* FALLTHROUGH */
+      [[fallthrough]];
 
     case TYPE_CODE_REF:
     case TYPE_CODE_ENUM:
