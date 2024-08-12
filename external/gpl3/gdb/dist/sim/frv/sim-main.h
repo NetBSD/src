@@ -1,5 +1,5 @@
 /* frv simulator support code
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
 This file is part of the GNU simulators.
@@ -27,11 +27,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
    one of -scache/-pbb. ???? */
 #define WITH_SCACHE_PBB 0
 
-#include "symcat.h"
 #include "sim-basics.h"
-#include "cgen-types.h"
-#include "frv-desc.h"
-#include "frv-opc.h"
+#include "opcodes/frv-desc.h"
+#include <stdbool.h>
+#include "opcodes/frv-opc.h"
 #include "arch.h"
 
 #define SIM_ENGINE_HALT_HOOK(SD, LAST_CPU, CIA) \
@@ -51,15 +50,7 @@ void frv_sim_engine_halt_hook (SIM_DESC, SIM_CPU *, sim_cia);
 extern void frv_sim_close (SIM_DESC sd, int quitting);
 #define SIM_CLOSE_HOOK(...) frv_sim_close (__VA_ARGS__)
 
-/* The _sim_cpu struct.  */
-
-struct _sim_cpu {
-  /* sim/common cpu base.  */
-  sim_cpu_base base;
-
-  /* Static parts of cgen.  */
-  CGEN_CPU cgen_cpu;
-
+struct frv_sim_cpu {
   /* CPU specific parts go here.
      Note that in files that don't need to access these pieces WANT_CPU_FOO
      won't be defined and thus these parts won't appear.  This is ok in the
@@ -72,45 +63,46 @@ struct _sim_cpu {
 
   /* Control information for registers */
   FRV_REGISTER_CONTROL register_control;
-#define CPU_REGISTER_CONTROL(cpu) (& (cpu)->register_control)
+#define CPU_REGISTER_CONTROL(cpu) (& FRV_SIM_CPU (cpu)->register_control)
 
   FRV_VLIW vliw;
-#define CPU_VLIW(cpu) (& (cpu)->vliw)
+#define CPU_VLIW(cpu) (& FRV_SIM_CPU (cpu)->vliw)
 
   FRV_CACHE insn_cache;
-#define CPU_INSN_CACHE(cpu) (& (cpu)->insn_cache)
+#define CPU_INSN_CACHE(cpu) (& FRV_SIM_CPU (cpu)->insn_cache)
 
   FRV_CACHE data_cache;
-#define CPU_DATA_CACHE(cpu) (& (cpu)->data_cache)
+#define CPU_DATA_CACHE(cpu) (& FRV_SIM_CPU (cpu)->data_cache)
 
   FRV_PROFILE_STATE profile_state;
-#define CPU_PROFILE_STATE(cpu) (& (cpu)->profile_state)
+#define CPU_PROFILE_STATE(cpu) (& FRV_SIM_CPU (cpu)->profile_state)
 
   int debug_state;
-#define CPU_DEBUG_STATE(cpu) ((cpu)->debug_state)
+#define CPU_DEBUG_STATE(cpu) (FRV_SIM_CPU (cpu)->debug_state)
 
   SI load_address;
-#define CPU_LOAD_ADDRESS(cpu) ((cpu)->load_address)
+#define CPU_LOAD_ADDRESS(cpu) (FRV_SIM_CPU (cpu)->load_address)
 
   SI load_length;
-#define CPU_LOAD_LENGTH(cpu) ((cpu)->load_length)
+#define CPU_LOAD_LENGTH(cpu) (FRV_SIM_CPU (cpu)->load_length)
 
   SI load_flag;
-#define CPU_LOAD_SIGNED(cpu) ((cpu)->load_flag)
-#define CPU_LOAD_LOCK(cpu) ((cpu)->load_flag)
+#define CPU_LOAD_SIGNED(cpu) (FRV_SIM_CPU (cpu)->load_flag)
+#define CPU_LOAD_LOCK(cpu) (FRV_SIM_CPU (cpu)->load_flag)
 
   SI store_flag;
-#define CPU_RSTR_INVALIDATE(cpu) ((cpu)->store_flag)
+#define CPU_RSTR_INVALIDATE(cpu) (FRV_SIM_CPU (cpu)->store_flag)
 
   unsigned long elf_flags;
-#define CPU_ELF_FLAGS(cpu) ((cpu)->elf_flags)
+#define CPU_ELF_FLAGS(cpu) (FRV_SIM_CPU (cpu)->elf_flags)
 #endif /* defined (WANT_CPU_FRVBF) */
 };
+#define FRV_SIM_CPU(cpu) ((struct frv_sim_cpu *) CPU_ARCH_DATA (cpu))
 
 /* Misc.  */
 
 /* Catch address exceptions.  */
-extern SIM_CORE_SIGNAL_FN frv_core_signal;
+extern SIM_CORE_SIGNAL_FN frv_core_signal ATTRIBUTE_NORETURN;
 #define SIM_CORE_SIGNAL(SD,CPU,CIA,MAP,NR_BYTES,ADDR,TRANSFER,ERROR) \
 frv_core_signal ((SD), (CPU), (CIA), (MAP), (NR_BYTES), (ADDR), \
 		  (TRANSFER), (ERROR))
