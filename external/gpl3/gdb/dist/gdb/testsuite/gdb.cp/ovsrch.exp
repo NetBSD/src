@@ -1,4 +1,4 @@
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2024 Free Software Foundation, Inc.
 #
 # Contributed by Red Hat, originally written by Keith Seitz.
 #
@@ -52,10 +52,12 @@ proc test_class {class} {
     gdb_test "break ${class}::hibob if (a_param == 3)" "Breakpoint (\[0-9\]).*"
 }
 
-if { [skip_cplus_tests] } { return }
+require allow_cplus_tests
 
 # Test for c++/11734
 standard_testfile ovsrch1.cc ovsrch2.cc ovsrch3.cc ovsrch4.cc
+
+include_file ovsrch.h
 
 if {[prepare_for_testing "failed to prepare" $testfile \
 	 [list $srcfile $srcfile2 $srcfile3 $srcfile4] {c++ debug}]} {
@@ -91,4 +93,3 @@ gdb_continue_to_breakpoint "stop_here_too"
 test_class A::B::inner
 
 gdb_exit
-return 0

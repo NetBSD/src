@@ -1,4 +1,4 @@
-# Copyright 2010-2023 Free Software Foundation, Inc.
+# Copyright 2010-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 load_lib "ada.exp"
 
-if { [skip_ada_tests] } { return -1 }
+require allow_ada_tests
 
 standard_ada_testfile foo
 
@@ -31,23 +31,27 @@ if {![runto "pck.adb:20"]} {
   return -1
 }
 
-# Identifying the runtime type of S can only be done when we have the debug
-# info for the GNAT runtime.
+# With some versions of the compiler, identifying the runtime type of
+# S can only be done when we have the debug info for the GNAT runtime.
+set ordinary [multi_line \
+		  "type = <ref> new pck.shape with record" \
+		  "    r: integer;" \
+		  "end record"]
+set nodebug [multi_line \
+		 "type = <ref> tagged record" \
+		 "    x: integer;" \
+		 "    y: integer;" \
+		 "end record"]
 
-if { $has_runtime_debug_info } {
-    gdb_test "ptype s" \
-	[multi_line \
-	    "type = <ref> new pck.shape with record" \
-	    "    r: integer;" \
-	    "end record"] \
-	"ptype s, with debug info"
-} else {
-    gdb_test "ptype s" \
-	[multi_line \
-	    "type = <ref> tagged record" \
-	    "    x: integer;" \
-	    "    y: integer;" \
-	    "end record" ] \
-	"ptype s, without debug info"
+gdb_test_multiple "ptype s" "ptype s" {
+    -re -wrap $ordinary {
+	pass $gdb_test_name
+    }
+    -re -wrap $nodebug {
+	if {!$has_runtime_debug_info} {
+	    xfail "$gdb_test_name (no debug info)"
+	} else {
+	    fail $gdb_test_name
+	}
+    }
 }
-

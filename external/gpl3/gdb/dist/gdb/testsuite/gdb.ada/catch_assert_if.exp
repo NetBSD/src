@@ -1,4 +1,4 @@
-# Copyright 2018-2023 Free Software Foundation, Inc.
+# Copyright 2018-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 load_lib "ada.exp"
 
-if { [skip_ada_tests] } { return -1 }
+require allow_ada_tests gnat_runtime_has_debug_info
 
 standard_ada_testfile bla
 
@@ -25,34 +25,8 @@ if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug additional
 
 clean_restart ${testfile}
 
-######################################################################
-# 1. Try catching all exceptions to check that runtime supports it.  #
-######################################################################
-
-set eol "\[\r\n\]+"
+set eol "\r\n"
 set sp "\[ \t\]*"
-
-if {![runto_main]} {
-   return 0
-}
-
-set msg "insert catchpoint on all Ada exceptions"
-gdb_test_multiple "catch exception" $msg {
-    -re "Catchpoint $decimal: all Ada exceptions$eol$gdb_prompt $" {
-	pass $msg
-    }
-    -re "Your Ada runtime appears to be missing some debugging information.*$eol$gdb_prompt $" {
-	# If the runtime was not built with enough debug information,
-	# or if it was stripped, we can not test exception
-	# catchpoints.
-	unsupported $msg
-	return -1
-    }
-}
-
-##################################################
-# 2. Try catching conditional failed assertion.  #
-##################################################
 
 # Here is the scenario:
 #  - Restart the debugger from scratch, runto_main
@@ -78,7 +52,7 @@ set bp_location [gdb_get_line_number "STOP" ${testdir}/bla.adb]
 set catchpoint_msg \
   "Catchpoint $decimal, failed assertion at $hex in bla \\\(\\\).*at .*bla.adb:$bp_location"
 gdb_test "continue" \
-         "Continuing\.$eol$catchpoint_msg$eol.*STOP" \
+	 "Continuing\.$eol$eol$catchpoint_msg$eol.*STOP" \
          "continuing to expected failed assertion"
 
 gdb_test "continue" \

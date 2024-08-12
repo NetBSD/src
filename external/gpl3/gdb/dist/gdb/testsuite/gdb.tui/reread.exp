@@ -1,0 +1,39 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Check that rereading the exec while in TUI doesn't cause trouble.
+# Used to trigger an AddressSanitizer heap-use-after-free, PR31697.
+
+tuiterm_env
+
+# Use main-one-line.c to get the line info at a predictable location without
+# resorting to a dwarf assembly test-case.
+standard_testfile main-one-line.c
+
+if {[build_executable "failed to prepare" ${testfile} ${srcfile}] == -1} {
+    return -1
+}
+
+Term::clean_restart 24 80 $testfile
+
+if {![Term::enter_tui]} {
+    unsupported "TUI not supported"
+    return
+}
+
+remote_exec build sleep 1
+gdb_touch_execfile $binfile
+
+Term::command "start"

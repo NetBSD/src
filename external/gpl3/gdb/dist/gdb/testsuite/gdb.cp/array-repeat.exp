@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Free Software Foundation, Inc.
+# Copyright 2022-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 # Test the detection and printing of repeated elements in C++ arrays.
 
-if {[skip_cplus_tests]} { continue }
+require allow_cplus_tests
 
 set lang c++
 

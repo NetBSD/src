@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2023 Free Software Foundation, Inc.
+# Copyright (C) 2011-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,8 +29,8 @@ proc restart {} {
     if ![runto_main] {
 	return 0
     }
-    # Delete all breakpoints so that the "runto_main" breakpoint above
-    # does not interfere with our testing.
+    # Delete all breakpoints, watchpoints, tracepoints, and catchpoints so that
+    # the "runto_main" breakpoint above does not interfere with our testing.
     delete_breakpoints
 
     return 1

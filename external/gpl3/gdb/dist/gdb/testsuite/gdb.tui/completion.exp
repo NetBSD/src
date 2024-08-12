@@ -1,4 +1,4 @@
-# Copyright 2015-2023 Free Software Foundation, Inc.
+# Copyright 2015-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,12 +13,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-gdb_exit
-gdb_start
+require allow_tui_tests
 
-if {[skip_tui_tests] || [target_info exists gdb,nointerrupts]} {
-    return
-}
+tuiterm_env
+
+clean_restart
+
+require {!target_info exists gdb,nointerrupts}
 
 gdb_test_no_output "set max-completions unlimited"
 
@@ -47,10 +48,26 @@ proc test_tab_completion {input_line expected_re} {
     }
 }
 
-with_test_prefix "completion of layout names" {
-    test_tab_completion "layout" "asm *next *prev *regs *split *src *"
+if { [readline_is_used] } {
+    with_test_prefix "completion of layout names" {
+	test_tab_completion "layout" "asm *next *prev *regs *split *src *"
+    }
+
+
+    with_test_prefix "completion of focus command" {
+	test_tab_completion "focus" "cmd *next *prev *src *"
+    }
 }
 
-with_test_prefix "completion of focus command" {
-    test_tab_completion "focus" "cmd *next *prev *src *"
+# Now run some completion tests when TUI mode is enabled.
+Term::clean_restart 24 80
+if {![Term::prepare_for_tui]} {
+    unsupported "TUI not supported"
+    return
 }
+
+Term::command_no_prompt_prefix "layout src"
+Term::command "complete focus "
+Term::dump_screen
+Term::check_region_contents "check focus completions" 0 17 80 5 \
+    "focus cmd\\s*focus next\\s*focus prev\\s*focus src\\s*$gdb_prompt"

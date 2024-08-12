@@ -1,4 +1,4 @@
-# Copyright 2008-2023 Free Software Foundation, Inc.
+# Copyright 2008-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,10 +18,11 @@
 # This test verifies that setting breakpoint on line in inline
 # function will fire in all instantiations of that function.
 
-if { [skip_cplus_tests] } { continue }
+require allow_cplus_tests
 
 standard_testfile mb-inline1.cc mb-inline2.cc
 set hdrfile "${testfile}.h"
+include_file $hdrfile
 
 if {[prepare_for_testing "failed to prepare" $testfile \
 	 [list $srcfile $srcfile2] {debug c++}]} {

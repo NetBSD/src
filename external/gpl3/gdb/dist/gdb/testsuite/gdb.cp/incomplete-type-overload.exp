@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Free Software Foundation, Inc.
+# Copyright 2022-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,9 +20,7 @@
 
 load_lib dwarf.exp
 
-if { [skip_cplus_tests] } { return }
-
-if { ![dwarf2_support] } { return }
+require dwarf2_support allow_cplus_tests
 
 standard_testfile .cc .S
 set asm_file [standard_output_file ${srcfile2}]
@@ -174,5 +172,5 @@ gdb_test "print foo(inc)"\
 	 "The type. 'incomplete .' isn't fully known to GDB.*"\
 	 "unsuccessful because declaration"
 gdb_test "print foo(ip)"\
-	 "Cannot resolve function foo to any overloaded instance."\
+	 "Cannot resolve function foo to any overloaded instance"\
 	 "unsuccessful because incorrect"

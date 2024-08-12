@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Free Software Foundation, Inc.
+# Copyright 2019-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,13 +13,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if {[skip_shlib_tests]} {
-    return 0
-}
+require allow_shlib_tests
 
 load_lib "ada.exp"
 
-if { [skip_ada_tests] } { return -1 }
+require allow_ada_tests shared_gnat_runtime_has_debug_info
 
 standard_ada_testfile foo
 
@@ -71,23 +69,12 @@ if {![runto_main]} {
    return 0
 }
 
-set can_catch_exceptions 0
-gdb_test_multiple "catch exception some_kind_of_error" "" {
-    -re "Catchpoint \[0-9\]+: `some_kind_of_error' Ada exception\r\n$gdb_prompt $" {
-	pass $gdb_test_name
-	set can_catch_exceptions 1
-    }
+gdb_test "catch exception some_kind_of_error" \
+    "Catchpoint \[0-9\]+: `some_kind_of_error' Ada exception"
 
-    -re "Your Ada runtime appears to be missing some debugging information.\r\nCannot insert Ada exception catchpoint in this configuration.\r\n$gdb_prompt $" {
-	    unsupported $gdb_test_name
-    }
-}
+gdb_test "cont" \
+    "Catchpoint \[0-9\]+, .* at .*foo\.adb:\[0-9\]+.*" \
+    "caught the exception"
 
-if { $can_catch_exceptions } {
-    gdb_test "cont" \
-	"Catchpoint \[0-9\]+, .* at .*foo\.adb:\[0-9\]+.*" \
-	"caught the exception"
-
-    gdb_test "print \$_ada_exception = some_package.some_kind_of_error'Address" \
-	" = true"
-}
+gdb_test "print \$_ada_exception = some_package.some_kind_of_error'Address" \
+    " = true"

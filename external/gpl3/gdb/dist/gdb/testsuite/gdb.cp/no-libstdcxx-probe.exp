@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Free Software Foundation, Inc.
+# Copyright 2019-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,20 +15,17 @@
 
 standard_testfile exceptprint.cc
 
-if {[skip_cplus_tests]} {
-    return -1
-}
+require allow_cplus_tests
 
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
     return -1
 }
 
-if {![runto_main]} {
-    return -1
-}
+# This tests that $_exception gives an error when the systemtap probes
+# are not available, so simulate this by disabling them.
+gdb_test "maint ignore-probes libstdcxx .*" ".*OBJNAME: ''"
 
-if { [skip_libstdcxx_probe_tests] == 0 } {
-    untested "Have libstdc++ stap probe"
+if {![runto_main]} {
     return -1
 }
 
