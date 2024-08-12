@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2023 Free Software Foundation, Inc.
+# Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
 # Makefile for building a staged copy of the data-directory.
 # This file is part of GDB.
@@ -36,13 +36,15 @@ exec_prefix = @exec_prefix@
 datarootdir = @datarootdir@
 datadir = @datadir@
 
+include $(srcdir)/../silent-rules.mk
+
 SHELL = @SHELL@
 
 LN_S = @LN_S@
 
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
-INSTALL_DIR = $(SHELL) $(srcdir)/../../mkinstalldirs
+INSTALL_DIR = $(SHELL) $(srcdir)/../../install-sh -d
 
 GDB_DATADIR = @GDB_DATADIR@
 
@@ -53,6 +55,7 @@ GEN_SYSCALLS_FILES = \
 	amd64-linux.xml \
 	arm-linux.xml \
 	i386-linux.xml \
+	loongarch-linux.xml \
 	mips-n32-linux.xml \
 	mips-n64-linux.xml \
 	mips-o32-linux.xml \
@@ -73,6 +76,7 @@ PYTHON_FILE_LIST = \
 	gdb/FrameDecorator.py \
 	gdb/FrameIterator.py \
 	gdb/frames.py \
+	gdb/missing_debug.py \
 	gdb/printing.py \
 	gdb/prompt.py \
 	gdb/styling.py \
@@ -82,11 +86,34 @@ PYTHON_FILE_LIST = \
 	gdb/command/__init__.py \
 	gdb/command/explore.py \
 	gdb/command/frame_filters.py \
+	gdb/command/missing_debug.py \
 	gdb/command/pretty_printers.py \
 	gdb/command/prompt.py \
 	gdb/command/type_printers.py \
 	gdb/command/unwinders.py \
 	gdb/command/xmethods.py \
+	gdb/dap/breakpoint.py \
+	gdb/dap/bt.py \
+	gdb/dap/disassemble.py \
+	gdb/dap/evaluate.py \
+	gdb/dap/events.py \
+	gdb/dap/frames.py \
+	gdb/dap/__init__.py \
+	gdb/dap/io.py \
+	gdb/dap/launch.py \
+	gdb/dap/locations.py \
+	gdb/dap/memory.py \
+	gdb/dap/modules.py \
+	gdb/dap/next.py \
+	gdb/dap/pause.py \
+	gdb/dap/scopes.py \
+	gdb/dap/server.py \
+	gdb/dap/sources.py \
+	gdb/dap/startup.py \
+	gdb/dap/state.py \
+	gdb/dap/threads.py \
+	gdb/dap/typecheck.py \
+	gdb/dap/varref.py \
 	gdb/function/__init__.py \
 	gdb/function/as_string.py \
 	gdb/function/caller_is.py \
@@ -177,7 +204,7 @@ FLAGS_TO_PASS = \
 all: stamp-syscalls stamp-python stamp-guile stamp-system-gdbinit
 
 %.xml: @MAINTAINER_MODE_TRUE@ %.xml.in apply-defaults.xsl linux-defaults.xml.in
-	$(XSLTPROC) -o $(SYSCALLS_SRCDIR)/$@ $(SYSCALLS_SRCDIR)/apply-defaults.xsl\
+	$(ECHO_GEN) $(XSLTPROC) -o $(SYSCALLS_SRCDIR)/$@ $(SYSCALLS_SRCDIR)/apply-defaults.xsl \
 		$(SYSCALLS_SRCDIR)/$@.in
 
 .PHONY: syscall-xml
@@ -194,16 +221,17 @@ clean-syscall-xml:
 # For portability's sake, we need to handle systems that don't have
 # symbolic links.
 stamp-syscalls: Makefile $(SYSCALLS_FILES)
-	rm -rf ./$(SYSCALLS_DIR)
-	mkdir ./$(SYSCALLS_DIR)
-	files='$(SYSCALLS_FILES)' ; \
+	$(ECHO_GEN)
+	$(SILENCE) rm -rf ./$(SYSCALLS_DIR)
+	$(SILENCE) mkdir ./$(SYSCALLS_DIR)
+	$(SILENCE) files='$(SYSCALLS_FILES)' ; \
 	for file in $$files ; do \
 	  f=$(SYSCALLS_SRCDIR)/$$file ; \
 	  if test -f $$f ; then \
 	    $(INSTALL_DATA) $$f ./$(SYSCALLS_DIR) ; \
 	  fi ; \
 	done
-	touch $@
+	$(SILENCE) touch $@
 
 .PHONY: clean-syscalls
 clean-syscalls:
@@ -237,8 +265,9 @@ uninstall-syscalls:
 	done
 
 stamp-python: Makefile $(PYTHON_FILES)
-	rm -rf ./$(PYTHON_DIR)
-	files='$(PYTHON_FILES)' ; \
+	$(ECHO_GEN)
+	$(SILENCE) rm -rf ./$(PYTHON_DIR)
+	$(SILENCE) files='$(PYTHON_FILES)' ; \
 	if test "x$$files" != x ; then \
 	  for file in $$files ; do \
 	    dir=`echo "$$file" | sed 's,/[^/]*$$,,'` ; \
@@ -246,7 +275,7 @@ stamp-python: Makefile $(PYTHON_FILES)
 	    $(INSTALL_DATA) $(PYTHON_SRCDIR)/$$file ./$(PYTHON_DIR)/$$dir ; \
 	  done ; \
 	fi
-	touch $@
+	$(SILENCE) touch $@
 
 .PHONY: clean-python
 clean-python:
@@ -280,8 +309,9 @@ uninstall-python:
 	fi
 
 stamp-guile: Makefile $(GUILE_SOURCE_FILES)
-	rm -rf ./$(GUILE_DIR)
-	if test "x$(GUILE_FILES)" != x ; then \
+	$(ECHO_GEN)
+	$(SILENCE) rm -rf ./$(GUILE_DIR)
+	$(SILENCE) if test "x$(GUILE_FILES)" != x ; then \
 	  files='$(GUILE_SOURCE_FILES)' ; \
 	  for file in $$files ; do \
 	    dir=`echo "$$file" | sed 's,/[^/]*$$,,'` ; \
@@ -292,11 +322,11 @@ stamp-guile: Makefile $(GUILE_SOURCE_FILES)
 	  cd ./$(GUILE_DIR) ; \
 	  for go in $$files ; do \
 	    source="`echo $$go | sed 's/\.go$$/.scm/'`" ; \
-	    echo $(GUILD) compile $(GUILD_COMPILE_FLAGS) -o "$$go" "$$source" ; \
+	    $(SILENT_ECHO) $(GUILD) compile $(GUILD_COMPILE_FLAGS) -o "$$go" "$$source" ; \
 	    $(GUILD) compile $(GUILD_COMPILE_FLAGS) -o "$$go" "$$source" || exit 1 ; \
 	  done ; \
 	fi
-	touch $@
+	$(SILENCE) touch $@
 
 .PHONY: clean-guile
 clean-guile:
@@ -330,16 +360,17 @@ uninstall-guile:
 	fi
 
 stamp-system-gdbinit: Makefile $(SYSTEM_GDBINIT_FILES)
-	rm -rf ./$(SYSTEM_GDBINIT_DIR)
-	mkdir ./$(SYSTEM_GDBINIT_DIR)
-	files='$(SYSTEM_GDBINIT_FILES)' ; \
+	$(ECHO_GEN)
+	$(SILENCE) rm -rf ./$(SYSTEM_GDBINIT_DIR)
+	$(SILENCE) mkdir ./$(SYSTEM_GDBINIT_DIR)
+	$(SILENCE) files='$(SYSTEM_GDBINIT_FILES)' ; \
 	for file in $$files ; do \
 	  f=$(SYSTEM_GDBINIT_SRCDIR)/$$file ; \
 	  if test -f $$f ; then \
 	    $(INSTALL_DATA) $$f ./$(SYSTEM_GDBINIT_DIR) ; \
 	  fi ; \
 	done
-	touch $@
+	$(SILENCE) touch $@
 
 .PHONY: clean-system-gdbinit
 clean-system-gdbinit:
@@ -398,7 +429,7 @@ maintainer-clean realclean distclean: clean
 .PHONY: install-info install-pdf install-html clean-info
 check installcheck:
 info dvi pdf html:
-install-info install-pdf install-html:
+install-info install-dvi install-pdf install-html:
 clean-info:
 
 # GNU Make has an annoying habit of putting *all* the Makefile variables
@@ -413,7 +444,7 @@ clean-info:
 MAKEOVERRIDES=
 
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
-	cd .. && $(SHELL) ./config.status data-directory/Makefile
+	$(ECHO_GEN) cd .. && $(SHELL) ./config.status $(SILENT_FLAG) data-directory/Makefile
 
 # Disable implicit make rules.
 include $(srcdir)/../disable-implicit-rules.mk

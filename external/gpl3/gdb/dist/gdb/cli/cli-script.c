@@ -1,6 +1,6 @@
 /* GDB CLI command scripting.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,24 +17,24 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "event-top.h"
 #include "value.h"
 #include <ctype.h>
 
 #include "ui-out.h"
 #include "top.h"
+#include "ui.h"
 #include "breakpoint.h"
 #include "tracepoint.h"
 #include "cli/cli-cmds.h"
 #include "cli/cli-decode.h"
 #include "cli/cli-script.h"
 #include "cli/cli-style.h"
-#include "gdbcmd.h"
 
 #include "extension.h"
 #include "interps.h"
 #include "compile/compile.h"
-#include "gdbsupport/gdb_string_view.h"
+#include <string_view>
 #include "python/python.h"
 #include "guile/guile.h"
 
@@ -52,7 +52,7 @@ static void do_define_command (const char *comname, int from_tty,
 			       const counted_command_line *commands);
 
 static void do_document_command (const char *comname, int from_tty,
-                                 const counted_command_line *commands);
+				 const counted_command_line *commands);
 
 static const char *read_next_line (std::string &buffer);
 
@@ -102,7 +102,7 @@ private:
   std::string m_command_line;
 
   /* The arguments.  Each element points inside M_COMMAND_LINE.  */
-  std::vector<gdb::string_view> m_args;
+  std::vector<std::string_view> m_args;
 };
 
 /* The stack of arguments passed to user defined functions.  We need a
@@ -567,7 +567,7 @@ execute_control_command_1 (struct command_line *cmd, int from_tty)
 	    /* Evaluate the expression.  */
 	    {
 	      scoped_value_mark mark;
-	      value *val = evaluate_expression (expr.get ());
+	      value *val = expr->evaluate ();
 	      cond_result = value_true (val);
 	    }
 
@@ -622,7 +622,7 @@ execute_control_command_1 (struct command_line *cmd, int from_tty)
 	/* Evaluate the conditional.  */
 	{
 	  scoped_value_mark mark;
-	  value *val = evaluate_expression (expr.get ());
+	  value *val = expr->evaluate ();
 
 	  /* Choose which arm to take commands from based on the value
 	     of the conditional expression.  */
@@ -1509,7 +1509,7 @@ define_command (const char *comname, int from_tty)
    command and the commands are provided.  */
 static void
 do_document_command (const char *comname, int from_tty,
-                     const counted_command_line *commands)
+		     const counted_command_line *commands)
 {
   struct cmd_list_element *alias, *prefix_cmd, *c;
   const char *comfull;
@@ -1520,6 +1520,8 @@ do_document_command (const char *comname, int from_tty,
   lookup_cmd_composition (comfull, &alias, &prefix_cmd, &c);
   if (c == nullptr)
     error (_("Undefined command: \"%s\"."), comfull);
+  else if (c == CMD_LIST_AMBIGUOUS)
+    error (_("Ambiguous command: \"%s\"."), comfull);
 
   if (c->theclass != class_user
       && (alias == nullptr || alias->theclass != class_alias))
@@ -1540,7 +1542,7 @@ do_document_command (const char *comname, int from_tty,
   if (commands == nullptr)
     {
       std::string prompt
-        = string_printf ("Type documentation for \"%s\".", comfull);
+	= string_printf ("Type documentation for \"%s\".", comfull);
       doclines = read_command_lines (prompt.c_str (), from_tty, 0, 0);
     }
   else
@@ -1696,7 +1698,7 @@ _initialize_cli_script ()
      as this helps the user to either type the command name and/or
      its prefixes.  */
   document_cmd_element = add_com ("document", class_support, document_command,
-                                  _("\
+				  _("\
 Document a user-defined command or user-defined alias.\n\
 Give command or alias name as argument.  Give documentation on following lines.\n\
 End with a line of just \"end\"."));

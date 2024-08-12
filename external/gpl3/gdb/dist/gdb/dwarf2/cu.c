@@ -1,6 +1,6 @@
 /* DWARF CU data structure
 
-   Copyright (C) 2021-2023 Free Software Foundation, Inc.
+   Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "dwarf2/cu.h"
 #include "dwarf2/read.h"
 #include "objfiles.h"
@@ -40,8 +39,10 @@ dwarf2_cu::dwarf2_cu (dwarf2_per_cu_data *per_cu,
     producer_is_icc_lt_14 (false),
     producer_is_codewarrior (false),
     producer_is_clang (false),
-    processing_has_namespace_info (false),
-    load_all_dies (false)
+    producer_is_gas_lt_2_38 (false),
+    producer_is_gas_2_39 (false),
+    producer_is_gas_ge_2_40 (false),
+    processing_has_namespace_info (false)
 {
 }
 
@@ -107,7 +108,7 @@ struct type *
 dwarf2_cu::addr_type () const
 {
   struct objfile *objfile = this->per_objfile->objfile;
-  struct type *void_type = objfile_type (objfile)->builtin_void;
+  struct type *void_type = builtin_type (objfile)->builtin_void;
   struct type *addr_type = lookup_pointer_type (void_type);
   int addr_size = this->per_cu->addr_size ();
 
