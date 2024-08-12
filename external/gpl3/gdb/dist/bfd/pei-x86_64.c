@@ -1,5 +1,5 @@
 /* BFD back-end for Intel 386 PE IMAGE COFF files.
-   Copyright (C) 2006-2022 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -58,10 +58,6 @@
 { COFF_SECTION_NAME_PARTIAL_MATCH (".gnu.linkonce.wi."), \
   COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 0 }
 
-/* Note we have to make sure not to include headers twice.
-   Not all headers are wrapped in #ifdef guards, so we define
-   PEI_HEADERS to prevent double including in coff-x86_64.c  */
-#define PEI_HEADERS
 #include "sysdep.h"
 #include "bfd.h"
 #include "libbfd.h"
@@ -555,6 +551,7 @@ pex64_bfd_print_pdata_section (bfd *abfd, void *vfile, asection *pdata_section)
 
   /* Sanity checks.  */
   if (pdata_section == NULL
+      || (pdata_section->flags & SEC_HAS_CONTENTS) == 0
       || coff_section_data (abfd, pdata_section) == NULL
       || pei_section_data (abfd, pdata_section) == NULL)
     return true;
@@ -699,6 +696,7 @@ pex64_bfd_print_pdata_section (bfd *abfd, void *vfile, asection *pdata_section)
     xdata_section = pex64_get_section_by_rva (abfd, xdata_base, ".text");
   /* Transfer xdata section into xdata array.  */
   if (!xdata_section
+      || (xdata_section->flags & SEC_HAS_CONTENTS) == 0
       || !bfd_malloc_and_get_section (abfd, xdata_section, &xdata))
     goto done;
 
