@@ -2,7 +2,7 @@
 
 # Add a .gdb_index section to a file.
 
-# Copyright (C) 2010-2020 Free Software Foundation, Inc.
+# Copyright (C) 2010-2023 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -37,6 +37,34 @@ fi
 
 file="$1"
 
+if test -L "$file"; then
+    if ! command -v readlink >/dev/null 2>&1; then
+	echo "$myname: 'readlink' missing.  Failed to follow symlink $1." 1>&2
+	exit 1
+    fi
+
+    # Count number of links followed in order to detect loops.
+    count=0
+    while test -L "$file"; do
+	target=$(readlink "$file")
+
+	case "$target" in
+	    /*)
+		file="$target"
+		;;
+	    *)
+		file="$(dirname "$file")/$target"
+		;;
+	esac
+
+	count="$((count + 1))"
+	if test "$count" -gt 10; then
+	    echo "$myname: Detected loop while following link $file"
+	    exit 1
+	fi
+    done
+fi
+
 if test ! -r "$file"; then
     echo "$myname: unable to access: $file" 1>&2
     exit 1
@@ -60,13 +88,13 @@ fi
 
 set_files ()
 {
-    local file="$1"
+    fpath="$1"
 
-    index4="${file}.gdb-index"
-    index5="${file}.debug_names"
-    debugstr="${file}.debug_str"
-    debugstrmerge="${file}.debug_str.merge"
-    debugstrerr="${file}.debug_str.err"
+    index4="${fpath}.gdb-index"
+    index5="${fpath}.debug_names"
+    debugstr="${fpath}.debug_str"
+    debugstrmerge="${fpath}.debug_str.merge"
+    debugstrerr="${fpath}.debug_str.err"
 }
 
 tmp_files=
@@ -84,6 +112,7 @@ rm -f $tmp_files
 trap "rm -f $tmp_files" 0
 
 $GDB --batch -nx -iex 'set auto-load no' \
+    -iex 'set debuginfod enabled off' \
     -ex "file $file" -ex "save gdb-index $dwarf5 $dir" || {
     # Just in case.
     status=$?
@@ -99,13 +128,12 @@ status=0
 
 handle_file ()
 {
-    local file
-    file="$1"
+    fpath="$1"
 
-    set_files "$file"
+    set_files "$fpath"
 
     if test -f "$index4" -a -f "$index5"; then
-	echo "$myname: Both index types were created for $file" 1>&2
+	echo "$myname: Both index types were created for $fpath" 1>&2
 	status=1
     elif test -f "$index4" -o -f "$index5"; then
 	if test -f "$index4"; then
@@ -118,7 +146,7 @@ handle_file ()
 	debugstradd=false
 	debugstrupdate=false
 	if test -s "$debugstr"; then
-	    if ! $OBJCOPY --dump-section .debug_str="$debugstrmerge" "$file" \
+	    if ! $OBJCOPY --dump-section .debug_str="$debugstrmerge" "$fpath" \
 		 /dev/null 2>$debugstrerr; then
 		cat >&2 $debugstrerr
 		exit 1
@@ -142,11 +170,11 @@ handle_file ()
 		   if $debugstrupdate; then \
 		       echo --update-section .debug_str="$debugstrmerge"; \
 		   fi) \
-		 "$file" "$file"
+		 "$fpath" "$fpath"
 
 	status=$?
     else
-	echo "$myname: No index was created for $file" 1>&2
+	echo "$myname: No index was created for $fpath" 1>&2
 	echo "$myname: [Was there no debuginfo? Was there already an index?]" \
 	     1>&2
     fi

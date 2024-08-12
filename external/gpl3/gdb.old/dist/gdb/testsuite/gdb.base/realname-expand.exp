@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2020 Free Software Foundation, Inc.
+# Copyright (C) 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,10 +40,12 @@ clean_restart ${testfile}
 
 gdb_test_no_output "set basenames-may-differ on"
 
-gdb_test "rbreak realname-expand-real.c:func" "^rbreak realname-expand-real.c:func\r\nBreakpoint 1 at 0x\[0-9a-f\]+: file \[^\r\n\]*/realname-expand-link\\.c, line \[0-9\]+\\.\r\nvoid func\\(void\\);"
+gdb_test "rbreak realname-expand-real.c:func" \
+    [multi_line "" \
+		"Breakpoint 1 at $hex: file \[^\r\n\]*/realname-expand-link\\.c, line $decimal\\." \
+		"void func\\(void\\);"]
 
-clean_restart ${testfile}
+delete_breakpoints
 
-gdb_test_no_output "set basenames-may-differ on"
-
-gdb_test "break realname-expand-real.c:func" "^break realname-expand-real.c:func\r\nBreakpoint 1 at 0x\[0-9a-f\]+: file \[^\r\n\]*/realname-expand-link\\.c, line \[0-9\]+\\."
+gdb_test "break realname-expand-real.c:func" \
+    "\r\nBreakpoint 2 at $hex: file \[^\r\n\]*/realname-expand-link\\.c, line $decimal\\."

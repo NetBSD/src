@@ -1,4 +1,4 @@
-#   Copyright 2012-2020 Free Software Foundation, Inc.
+#   Copyright 2012-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,14 +15,21 @@
 
 # Test 'set breakpoint condition-evaluation' settings
 
+# The skip_hw_watchpoint_tests checks if watchpoints are supported by the
+# processor.  On PowerPC, the check runs a small test program under gdb
+# to determine if the Power processor supports HW watchpoints.  The check
+# must be done before starting the test so as to not disrupt the execution
+# of the actual test.
+
+set skip_hw_watchpoint_tests_p [skip_hw_watchpoint_tests]
+
 standard_testfile
 
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
     return -1
 }
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 
@@ -112,9 +119,10 @@ proc test_break { break_command } {
 #
 proc test_watch { watch_command } {
     global gdb_prompt
+    global skip_hw_watchpoint_tests_p
 
     with_test_prefix "$watch_command" {
-	if [target_info exists gdb,no_hardware_watchpoints] {
+	if {$skip_hw_watchpoint_tests_p} {
 	    unsupported "no target support"
 	    return
 	}

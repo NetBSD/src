@@ -1,6 +1,6 @@
 /* Target dependent code for CRIS, for GDB, the GNU debugger.
 
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2023 Free Software Foundation, Inc.
 
    Contributed by Axis Communications AB.
    Written by Hendrik Ruijter, Stefan Andersson, and Orjan Friberg.
@@ -23,12 +23,14 @@
 #ifndef CRIS_TDEP_H
 #define CRIS_TDEP_H
 
+#include "gdbarch.h"
+
 /* CRIS architecture specific information.  */
-struct gdbarch_tdep
+struct cris_gdbarch_tdep : gdbarch_tdep_base
 {
-  unsigned int cris_version;
-  const char *cris_mode;
-  int cris_dwarf2_cfi;
+  unsigned int cris_version = 0;
+  const char *cris_mode = nullptr;
+  int cris_dwarf2_cfi = 0;
 };
 
 #endif /* CRIS_TDEP_H */

@@ -1,7 +1,7 @@
 /* Variables that describe the inferior process running under GDB:
    Where it is, why it stopped, and how to step it.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,9 +22,10 @@
 #define INFERIOR_H 1
 
 #include <exception>
+#include <list>
 
 struct target_waitstatus;
-struct frame_info;
+class frame_info_ptr;
 struct ui_file;
 struct type;
 struct gdbarch;
@@ -32,7 +33,6 @@ struct regcache;
 struct ui_out;
 struct terminal_info;
 struct target_desc_info;
-struct continuation;
 struct inferior;
 struct thread_info;
 
@@ -55,11 +55,15 @@ struct thread_info;
 #include "gdbsupport/refcounted-object.h"
 #include "gdbsupport/forward-scope-exit.h"
 #include "gdbsupport/gdb_unique_ptr.h"
+#include "gdbsupport/intrusive_list.h"
 
 #include "gdbsupport/common-inferior.h"
 #include "gdbthread.h"
 
 #include "process-stratum-target.h"
+#include "displaced-stepping.h"
+
+#include <unordered_map>
 
 struct infcall_suspend_state;
 struct infcall_control_state;
@@ -152,7 +156,7 @@ extern void reopen_exec_file (void);
 
 extern void default_print_registers_info (struct gdbarch *gdbarch,
 					  struct ui_file *file,
-					  struct frame_info *frame,
+					  frame_info_ptr frame,
 					  int regnum, int all);
 
 /* Default implementation of gdbarch_print_float_info.  Print
@@ -160,8 +164,29 @@ extern void default_print_registers_info (struct gdbarch *gdbarch,
 
 extern void default_print_float_info (struct gdbarch *gdbarch,
 				      struct ui_file *file,
-				      struct frame_info *frame,
+				      frame_info_ptr frame,
 				      const char *args);
+
+/* Try to determine whether TTY is GDB's input terminal.  Returns
+   TRIBOOL_UNKNOWN if we can't tell.  */
+
+extern tribool is_gdb_terminal (const char *tty);
+
+/* Helper for sharing_input_terminal.  Try to determine whether pid
+   PID is using the same TTY for input as GDB is.  Returns
+   TRIBOOL_UNKNOWN if we can't tell.  */
+
+extern tribool sharing_input_terminal (int pid);
+
+/* The type of the function that is called when SIGINT is handled.  */
+
+typedef void c_c_handler_ftype (int);
+
+/* Install a new SIGINT handler in a host-dependent way.  The previous
+   handler is returned.  It is fine to pass SIG_IGN for FN, but not
+   SIG_DFL.  */
+
+extern c_c_handler_ftype *install_sigint_handler (c_c_handler_ftype *fn);
 
 extern void child_terminal_info (struct target_ops *self, const char *, int);
 
@@ -196,13 +221,9 @@ extern ptid_t gdb_startup_inferior (pid_t pid, int num_traps);
 
 extern void setup_inferior (int from_tty);
 
-extern void post_create_inferior (struct target_ops *, int);
+extern void post_create_inferior (int from_tty);
 
 extern void attach_command (const char *, int);
-
-extern const char *get_inferior_args (void);
-
-extern void set_inferior_args (const char *);
 
 extern void set_inferior_args_vector (int, char **);
 
@@ -217,10 +238,16 @@ using delete_longjmp_breakpoint_cleanup
 
 extern void detach_command (const char *, int);
 
-extern void notice_new_inferior (struct thread_info *, int, int);
+extern void notice_new_inferior (struct thread_info *, bool, int);
 
-extern struct value *get_return_value (struct value *function,
-				       struct type *value_type);
+/* Return the value of the result of a function at the end of a 'finish'
+   command/BP.  If the result's value cannot be retrieved, return NULL.
+
+   FUNC_SYMBOL is the symbol of the function being returned from.  FUNCTION is
+   a value containing the address of the function.  */
+
+extern struct value *get_return_value (struct symbol *func_symbol,
+				       struct value *function);
 
 /* Prepare for execution command.  TARGET is the target that will run
    the command.  BACKGROUND determines whether this is a foreground
@@ -276,9 +303,6 @@ enum stop_kind
   };
 
 
-/* Possible values for gdbarch_call_dummy_location.  */
-#define ON_STACK 1
-#define AT_ENTRY_POINT 4
 
 /* Base class for target-specific inferior data.  */
 
@@ -338,7 +362,8 @@ extern void switch_to_inferior_no_thread (inferior *inf);
    listed exactly once in the inferior list, so placing an inferior in
    the inferior list is an implicit, not counted strong reference.  */
 
-class inferior : public refcounted_object
+class inferior : public refcounted_object,
+		 public intrusive_list_node<inferior>
 {
 public:
   explicit inferior (int pid);
@@ -351,12 +376,18 @@ public:
   void push_target (struct target_ops *t)
   { m_target_stack.push (t); }
 
+  /* An overload that deletes the target on failure.  */
+  void push_target (target_ops_up &&t)
+  {
+    m_target_stack.push (t.get ());
+    t.release ();
+  }
+
   /* Unpush T from this inferior's target stack.  */
-  int unpush_target (struct target_ops *t)
-  { return m_target_stack.unpush (t); }
+  int unpush_target (struct target_ops *t);
 
   /* Returns true if T is pushed in this inferior's target stack.  */
-  bool target_is_pushed (target_ops *t)
+  bool target_is_pushed (const target_ops *t) const
   { return m_target_stack.is_pushed (t); }
 
   /* Find the target beneath T in this inferior's target stack.  */
@@ -366,6 +397,22 @@ public:
   /* Return the target at the top of this inferior's target stack.  */
   target_ops *top_target ()
   { return m_target_stack.top (); }
+
+  /* Unpush all targets except the dummy target from m_target_stack.  As
+     targets are removed from m_target_stack their reference count is
+     decremented, which may cause a target to close.  */
+  void pop_all_targets ()
+  { pop_all_targets_above (dummy_stratum); }
+
+  /* Unpush all targets above STRATUM from m_target_stack.  As targets are
+     removed from m_target_stack their reference count is decremented,
+     which may cause a target to close.  */
+  void pop_all_targets_above (enum strata stratum);
+
+  /* Unpush all targets at and above STRATUM from m_target_stack.  As
+     targets are removed from m_target_stack their reference count is
+     decremented, which may cause a target to close.  */
+  void pop_all_targets_at_and_above (enum strata stratum);
 
   /* Return the target at process_stratum level in this inferior's
      target stack.  */
@@ -377,13 +424,14 @@ public:
   { return m_target_stack.at (stratum); }
 
   bool has_execution ()
-  { return target_has_execution_1 (this); }
+  { return target_has_execution (this); }
 
-  /* Pointer to next inferior in singly-linked list of inferiors.  */
-  struct inferior *next = NULL;
+  /* This inferior's thread list, sorted by creation order.  */
+  intrusive_list<thread_info> thread_list;
 
-  /* This inferior's thread list.  */
-  thread_info *thread_list = nullptr;
+  /* A map of ptid_t to thread_info*, for average O(1) ptid_t lookup.
+     Exited threads do not appear in the map.  */
+  std::unordered_map<ptid_t, thread_info *, hash_ptid> ptid_thread_map;
 
   /* Returns a range adapter covering the inferior's threads,
      including exited threads.  Used like this:
@@ -392,7 +440,7 @@ public:
 	 { .... }
   */
   inf_threads_range threads ()
-  { return inf_threads_range (this->thread_list); }
+  { return inf_threads_range (this->thread_list.begin ()); }
 
   /* Returns a range adapter covering the inferior's non-exited
      threads.  Used like this:
@@ -401,7 +449,7 @@ public:
 	 { .... }
   */
   inf_non_exited_threads_range non_exited_threads ()
-  { return inf_non_exited_threads_range (this->thread_list); }
+  { return inf_non_exited_threads_range (this->thread_list.begin ()); }
 
   /* Like inferior::threads(), but returns a range adapter that can be
      used with range-for, safely.  I.e., it is safe to delete the
@@ -412,15 +460,62 @@ public:
 	 delete f;
   */
   inline safe_inf_threads_range threads_safe ()
-  { return safe_inf_threads_range (this->thread_list); }
+  { return safe_inf_threads_range (this->thread_list.begin ()); }
 
-  /* Set/get file name for default use for standard in/out in the
-     inferior.  On Unix systems, we try to make TERMINAL_NAME the
-     inferior's controlling terminal.  If TERMINAL_NAME is nullptr or
-     the empty string, then the inferior inherits GDB's terminal (or
-     GDBserver's if spawning a remote process).  */
-  void set_tty (const char *terminal_name);
-  const char *tty ();
+  /* Delete all threads in the thread list.  If SILENT, exit threads
+     silently.  */
+  void clear_thread_list (bool silent);
+
+  /* Continuations-related methods.  A continuation is an std::function
+     to be called to finish the execution of a command when running
+     GDB asynchronously.  A continuation is executed after any thread
+     of this inferior stops.  Continuations are used by the attach
+     command and the remote target when a new inferior is detected.  */
+  void add_continuation (std::function<void ()> &&cont);
+  void do_all_continuations ();
+
+  /* Set/get file name for default use for standard in/out in the inferior.
+
+     On Unix systems, we try to make TERMINAL_NAME the inferior's controlling
+     terminal.
+
+     If TERMINAL_NAME is the empty string, then the inferior inherits GDB's
+     terminal (or GDBserver's if spawning a remote process).  */
+  void set_tty (std::string terminal_name);
+  const std::string &tty ();
+
+  /* Set the argument string to use when running this inferior.
+
+     An empty string can be used to represent "no arguments".  */
+  void set_args (std::string args)
+  {
+    m_args = std::move (args);
+  };
+
+  /* Get the argument string to use when running this inferior.
+
+     No arguments is represented by an empty string.  */
+  const std::string &args () const
+  {
+    return m_args;
+  }
+
+  /* Set the inferior current working directory.
+
+     If CWD is empty, unset the directory.  */
+  void set_cwd (std::string cwd)
+  {
+    m_cwd = std::move (cwd);
+  }
+
+  /* Get the inferior current working directory.
+
+     Return an empty string if the current working directory is not
+     specified.  */
+  const std::string &cwd () const
+  {
+    return m_cwd;
+  }
 
   /* Convenient handle (GDB inferior id).  Unique across all
      inferiors.  */
@@ -451,22 +546,6 @@ public:
   /* The program space bound to this inferior.  */
   struct program_space *pspace = NULL;
 
-  /* The arguments string to use when running.  */
-  char *args = NULL;
-
-  /* The size of elements in argv.  */
-  int argc = 0;
-
-  /* The vector version of arguments.  If ARGC is nonzero,
-     then we must compute ARGS from this (via the target).
-     This is always coming from main's argv and therefore
-     should never be freed.  */
-  char **argv = NULL;
-
-  /* The current working directory that will be used when starting
-     this inferior.  */
-  gdb::unique_xmalloc_ptr<char> cwd;
-
   /* The terminal state as set by the last target_terminal::terminal_*
      call.  */
   target_terminal_state terminal_state = target_terminal_state::is_ours;
@@ -492,24 +571,30 @@ public:
      exits or execs.  */
   bool pending_detach = false;
 
-  /* True if this inferior is a vfork parent waiting for a vfork child
-     not under our control to be done with the shared memory region,
-     either by exiting or execing.  */
-  bool waiting_for_vfork_done = false;
+  /* If non-nullptr, points to a thread that called vfork and is now waiting
+     for a vfork child not under our control to be done with the shared memory
+     region, either by exiting or execing.  */
+  thread_info *thread_waiting_for_vfork_done = nullptr;
 
   /* True if we're in the process of detaching from this inferior.  */
   bool detaching = false;
-
-  /* What is left to do for an execution command after any thread of
-     this inferior stops.  For continuations associated with a
-     specific thread, see `struct thread_info'.  */
-  continuation *continuations = NULL;
 
   /* True if setup_inferior wasn't called for this inferior yet.
      Until that is done, we must not access inferior memory or
      registers, as we haven't determined the target
      architecture/description.  */
   bool needs_setup = false;
+
+  /* True if the inferior is starting up (inside startup_inferior),
+     and we're nursing it along (through the shell) until it is ready
+     to execute its first instruction.  Until that is done, we must
+     not access inferior memory or registers, as we haven't determined
+     the target architecture/description.  */
+  bool starting_up = false;
+
+  /* True when we are reading the library list of the inferior during an
+     attach or handling a fork child.  */
+  bool in_initial_library_scan = false;
 
   /* Private data used by the target vector implementation.  */
   std::unique_ptr<private_inferior> priv;
@@ -544,20 +629,29 @@ public:
   displaced_step_inferior_state displaced_step_state;
 
   /* Per inferior data-pointers required by other GDB modules.  */
-  REGISTRY_FIELDS;
+  registry<inferior> registry_fields;
 
 private:
+
+  /* Unpush TARGET and assert that it worked.  */
+  void unpush_target_and_assert (struct target_ops *target);
+
   /* The inferior's target stack.  */
   target_stack m_target_stack;
 
   /* The name of terminal device to use for I/O.  */
-  gdb::unique_xmalloc_ptr<char> m_terminal;
+  std::string m_terminal;
+
+  /* The list of continuations.  */
+  std::list<std::function<void ()>> m_continuations;
+
+  /* The arguments string to use when running.  */
+  std::string m_args;
+
+  /* The current working directory that will be used when starting
+     this inferior.  */
+  std::string m_cwd;
 };
-
-/* Keep a registry of per-inferior data-pointers required by other GDB
-   modules.  */
-
-DECLARE_REGISTRY (inferior);
 
 /* Add an inferior to the inferior list, print a message that a new
    inferior is found, and return the pointer to the new inferior.
@@ -631,7 +725,7 @@ private:
 
 /* Traverse all inferiors.  */
 
-extern struct inferior *inferior_list;
+extern intrusive_list<inferior> inferior_list;
 
 /* Pull in the internals of the inferiors ranges and iterators.  Must
    be done after struct inferior is defined.  */
@@ -650,7 +744,7 @@ extern struct inferior *inferior_list;
 inline all_inferiors_safe_range
 all_inferiors_safe ()
 {
-  return {};
+  return all_inferiors_safe_range (nullptr, inferior_list);
 }
 
 /* Returns a range representing all inferiors, suitable to use with
@@ -663,7 +757,7 @@ all_inferiors_safe ()
 inline all_inferiors_range
 all_inferiors (process_stratum_target *proc_target = nullptr)
 {
-  return all_inferiors_range (proc_target);
+  return all_inferiors_range (proc_target, inferior_list);
 }
 
 /* Return a range that can be used to walk over all inferiors with PID
@@ -672,7 +766,7 @@ all_inferiors (process_stratum_target *proc_target = nullptr)
 inline all_non_exited_inferiors_range
 all_non_exited_inferiors (process_stratum_target *proc_target = nullptr)
 {
-  return all_non_exited_inferiors_range (proc_target);
+  return all_non_exited_inferiors_range (proc_target, inferior_list);
 }
 
 /* Prune away automatically added inferiors that aren't required
@@ -685,5 +779,12 @@ extern struct inferior *add_inferior_with_spaces (void);
 
 /* Print the current selected inferior.  */
 extern void print_selected_inferior (struct ui_out *uiout);
+
+/* Switch to inferior NEW_INF, a new inferior, and unless
+   NO_CONNECTION is true, push the process_stratum_target of ORG_INF
+   to NEW_INF.  */
+
+extern void switch_to_inferior_and_push_target
+  (inferior *new_inf, bool no_connection, inferior *org_inf);
 
 #endif /* !defined (INFERIOR_H) */

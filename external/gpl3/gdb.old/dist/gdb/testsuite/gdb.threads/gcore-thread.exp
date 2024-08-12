@@ -1,4 +1,4 @@
-# Copyright 2002-2020 Free Software Foundation, Inc.
+# Copyright 2002-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ set objfile  $binfile.o
 set corefile $binfile.test
 set core0file ${binfile}0.test
 
-if [istarget "*-*-linux"] then {
+if {[istarget "*-*-linux"]} {
     set target_cflags "-D_MIT_POSIX_THREADS"
 } else {
     set target_cflags ""
@@ -35,7 +35,7 @@ if [istarget "*-*-linux"] then {
 
 set opts [list debug]
 if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${objfile}" object $opts] != ""
-    || ([gdb_compile_pthreads "${objfile}" "${binfile}" executable [concat $opts {additional_flags=-Wl,-z,norelro}] ] != ""
+    || ([gdb_compile_pthreads "${objfile}" "${binfile}" executable [concat $opts {ldflags=-Wl,-z,norelro}] ] != ""
         && [gdb_compile_pthreads "${objfile}" "${binfile}" executable $opts] != "") } {
     return -1
 }
@@ -55,8 +55,7 @@ set nl "\[\r\n\]+"
 
 set timeout 30
 
-if { ! [ runto_main ] } then {
-    untested "could not run to main"
+if {![runto_main]} {
     return -1
 }
 
@@ -107,18 +106,20 @@ foreach symbol {__stack_user stack_used} {
 }
 
 if {"$core0file" != ""} {
-    gdb_test "gcore $core0file" "Saved corefile .*" "save a zeroed-threads corefile"
+    gdb_gcore_cmd $core0file "save a zeroed-threads corefile"
 }
 
 
 # Now restart gdb and load the corefile.
 clean_restart ${testfile}
 
-foreach name { corefile core0file } { with_test_prefix $name {
-    set core_loaded [gdb_core_cmd [subst $$name] "re-load generated corefile"]
+proc load_core { filename } {
+    global horiz nl
+
+    set core_loaded [gdb_core_cmd $filename "re-load generated corefile"]
     if { $core_loaded == -1 } {
 	# No use proceeding from here.
-	continue
+	return
     }
 
     # FIXME: now what can we test about the thread state?
@@ -139,4 +140,14 @@ foreach name { corefile core0file } { with_test_prefix $name {
 
     gdb_test "info threads" "\\* ${horiz} thread2 .*${nl}" \
 	    "thread2 is current thread in corefile"
-}}
+}
+
+foreach name { corefile core0file } {
+    set filename [subst $$name]
+    if { $filename == "" } {
+	continue
+    }
+    with_test_prefix $name {
+	load_core $filename
+    }
+}

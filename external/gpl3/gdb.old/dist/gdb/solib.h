@@ -1,6 +1,6 @@
 /* Shared library declarations for GDB, the GNU Debugger.
-   
-   Copyright (C) 1992-2020 Free Software Foundation, Inc.
+
+   Copyright (C) 1992-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,7 +26,20 @@ struct target_ops;
 struct target_so_ops;
 struct program_space;
 
+#include "gdb_bfd.h"
 #include "symfile-add-flags.h"
+
+/* Value of the 'set debug solib' configuration variable.  */
+
+extern bool debug_solib;
+
+/* Print an "solib" debug statement.  */
+
+#define solib_debug_printf(fmt, ...) \
+  debug_prefixed_printf_cond (debug_solib, "solib", fmt, ##__VA_ARGS__)
+
+#define SOLIB_SCOPED_DEBUG_START_END(fmt, ...) \
+  scoped_debug_start_end (debug_solib, "solib", fmt, ##__VA_ARGS__)
 
 /* Called when we free all symtabs, to free the shared library information
    as well.  */
@@ -47,7 +60,7 @@ extern void solib_create_inferior_hook (int from_tty);
 
 /* If ADDR lies in a shared library, return its name.  */
 
-extern char *solib_name_from_address (struct program_space *, CORE_ADDR);
+extern const char *solib_name_from_address (struct program_space *, CORE_ADDR);
 
 /* Return true if ADDR lies within SOLIB.  */
 
@@ -69,11 +82,6 @@ extern bool in_solib_dynsym_resolve_code (CORE_ADDR);
 /* Discard symbols that were auto-loaded from shared libraries.  */
 
 extern void no_shared_libraries (const char *ignored, int from_tty);
-
-/* Set the solib operations for GDBARCH to NEW_OPS.  */
-
-extern void set_solib_ops (struct gdbarch *gdbarch,
-			   const struct target_so_ops *new_ops);
 
 /* Synchronize GDB's shared object list with inferior's.
 
@@ -112,6 +120,18 @@ extern CORE_ADDR gdb_bfd_lookup_symbol_from_symtab (bfd *abfd,
 						       const void *),
 						    const void *data);
 
+/* Scan for DESIRED_DYNTAG in .dynamic section of ABFD.  If DESIRED_DYNTAG is
+   found, 1 is returned and the corresponding PTR and PTR_ADDR are set.  */
+
+extern int gdb_bfd_scan_elf_dyntag (const int desired_dyntag, bfd *abfd,
+				    CORE_ADDR *ptr, CORE_ADDR *ptr_addr);
+
+/* If FILENAME refers to an ELF shared object then attempt to return the
+   string referred to by its DT_SONAME tag.   */
+
+extern gdb::unique_xmalloc_ptr<char> gdb_bfd_read_elf_soname
+  (const char *filename);
+
 /* Enable or disable optional solib event breakpoints as appropriate.  */
 
 extern void update_solib_breakpoints (void);
@@ -119,5 +139,19 @@ extern void update_solib_breakpoints (void);
 /* Handle an solib event by calling solib_add.  */
 
 extern void handle_solib_event (void);
+
+/* Associate SONAME with BUILD_ID in ABFD's registry so that it can be
+   retrieved with get_cbfd_soname_build_id.  */
+
+extern void set_cbfd_soname_build_id (gdb_bfd_ref_ptr abfd,
+				      const char *soname,
+				      const bfd_build_id *build_id);
+
+/* If SONAME had a build-id associated with it in ABFD's registry by a
+   previous call to set_cbfd_soname_build_id then return the build-id
+   as a NULL-terminated hex string.  */
+
+extern gdb::unique_xmalloc_ptr<char> get_cbfd_soname_build_id
+  (gdb_bfd_ref_ptr abfd, const char *soname);
 
 #endif /* SOLIB_H */

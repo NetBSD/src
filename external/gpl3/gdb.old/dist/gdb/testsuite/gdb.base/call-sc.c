@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2004-2020 Free Software Foundation, Inc.
+   Copyright 2004-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -35,6 +35,7 @@ typedef t T;
 #endif
 
 T foo = '1', L;
+T init = '9';
 
 T fun()
 {
@@ -55,7 +56,10 @@ int main()
 {
   int i;
 
-  Fun(foo);	
+  /* Use a different initial value then is later used in the
+     "value foo returned" test, so in case the struct is then returned
+     on the stack, it doesn't have the correct value by accident.  */
+  Fun(init);
 
   /* An infinite loop that first clears all the variables and then
      calls the function.  This "hack" is to make re-testing easier -

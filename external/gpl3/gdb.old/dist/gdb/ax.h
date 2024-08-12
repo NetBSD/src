@@ -1,5 +1,5 @@
 /* Definitions for expressions designed to be executed on the agent
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

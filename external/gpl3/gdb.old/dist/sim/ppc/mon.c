@@ -21,47 +21,29 @@
 #ifndef _MON_C_
 #define _MON_C_
 
-#include "basics.h"
-#include "cpu.h"
-#include "mon.h"
+#include "defs.h"
+
 #include <stdio.h>
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
-
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
-
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-
-#ifdef HAVE_TIME_H
 #include <time.h>
-#endif
-
-#ifdef HAVE_SYS_TIMES_H
-#include <sys/times.h>
-#endif
-
-#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
-#endif
 
 #ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
 int getrusage();
 #endif
+
+#include "basics.h"
+#include "cpu.h"
+#include "mon.h"
 
 #define MAX_BYTE_READWRITE 9
 #define MAX_SHIFT_READWRITE 3

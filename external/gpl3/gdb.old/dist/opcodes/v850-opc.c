@@ -1,5 +1,5 @@
 /* Assemble V850 instructions.
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -1190,7 +1190,7 @@ const struct v850_operand v850_operands[] =
 
 /* The disp16 field in a format 8 insn.  */
 #define D16	(I16U + 1)
-  { 16, 16, NULL, NULL, V850_OPERAND_SIGNED | V850_OPERAND_DISP, BFD_RELOC_16 },
+  { 16, 16, NULL, NULL, V850_OPERAND_SIGNED | V850_OPERAND_DISP, BFD_RELOC_V850_LO16_SPLIT_OFFSET },
 
 /* The disp16 field in an format 7 unsigned byte load insn.  */
 #define D16_16	(D16 + 1)

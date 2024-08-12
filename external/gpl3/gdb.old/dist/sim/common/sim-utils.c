@@ -1,5 +1,5 @@
 /* Miscellaneous simulator utilities.
-   Copyright (C) 1997-2020 Free Software Foundation, Inc.
+   Copyright (C) 1997-2023 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -17,35 +17,23 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "sim-main.h"
-#include "sim-assert.h"
+/* This must come before any other includes.  */
+#include "defs.h"
 
-#ifdef HAVE_STDLIB_H
+#include <stdarg.h>
 #include <stdlib.h>
-#endif
-
-#ifdef HAVE_TIME_H
+#include <string.h>
 #include <time.h>
-#endif
-
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h> /* needed by sys/resource.h */
-#endif
-
 #ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
 #endif
+#include <sys/time.h> /* needed by sys/resource.h */
 
-#ifdef HAVE_STRING_H
-#include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
-
-#include "libiberty.h"
 #include "bfd.h"
+#include "libiberty.h"
+
+#include "sim-main.h"
+#include "sim-assert.h"
 #include "sim-utils.h"
 
 /* Allocate zero filled memory with xcalloc - xcalloc aborts if the
@@ -60,14 +48,17 @@ zalloc (unsigned long size)
 /* Allocate a sim_state struct.  */
 
 SIM_DESC
-sim_state_alloc (SIM_OPEN_KIND kind,
-		 host_callback *callback)
+sim_state_alloc_extra (SIM_OPEN_KIND kind, host_callback *callback,
+		       size_t extra_bytes)
 {
   SIM_DESC sd = ZALLOC (struct sim_state);
 
   STATE_MAGIC (sd) = SIM_MAGIC_NUMBER;
   STATE_CALLBACK (sd) = callback;
   STATE_OPEN_KIND (sd) = kind;
+
+  if (extra_bytes)
+    STATE_ARCH_DATA (sd) = zalloc (extra_bytes);
 
 #if 0
   {
@@ -107,6 +98,9 @@ sim_state_free (SIM_DESC sd)
   SIM_STATE_FREE (sd);
 #endif
 
+  free (STATE_PROG_FILE (sd));
+  free (STATE_PROG_ARGV0 (sd));
+  freeargv (STATE_PROG_ENVP (sd));
   free (sd);
 }
 

@@ -1,10 +1,11 @@
-# $NetBSD: Makefile.inc,v 1.1.1.4 2023/03/21 16:37:18 christos Exp $
+# $NetBSD: Makefile.inc,v 1.1.1.5 2024/08/12 19:58:46 christos Exp $
 
 USE_LIBEDIT=no
 USE_TUI=yes
 BINDIR=/usr/bin
 WARNS?=		0
 CPPFLAGS+=	-D_KERNTYPES
+GMPDIR=	${NETBSDSRCDIR}/external/lgpl3/gmp/lib/libgmp
 
 .include "Makefile.gdb_arch"
 

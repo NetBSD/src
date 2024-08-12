@@ -1,4 +1,4 @@
-# Copyright 2008-2020 Free Software Foundation, Inc.
+# Copyright 2008-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,6 +22,11 @@ if {[gdb_compile_pascal "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable
 }
 
 clean_restart ${testfile}
+
+if { ![runto_main] } {
+    return
+}
+
 set bp_location1 [gdb_get_line_number "set breakpoint 1 here"]
 set bp_location2 [gdb_get_line_number "set breakpoint 2 here"]
 
@@ -31,14 +36,6 @@ if { [gdb_breakpoint ${srcfile}:${bp_location1}] } {
 if { [gdb_breakpoint ${srcfile}:${bp_location2}] } {
     pass "setting breakpoint 2"
 }
-
-# Verify that "start" lands inside the right procedure.
-if { [gdb_start_cmd] < 0 } {
-    untested start
-    return -1
-}
-
-gdb_test "" ".* at .*${srcfile}.*" "start"
 
 gdb_test "cont" "Breakpoint .*:${bp_location1}.*" "going to first breakpoint"
 

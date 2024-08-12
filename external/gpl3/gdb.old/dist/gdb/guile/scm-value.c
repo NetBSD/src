@@ -1,6 +1,6 @@
 /* Scheme interface to values.
 
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,7 +34,7 @@
 
 /* The <gdb:value> smob.  */
 
-typedef struct _value_smob
+struct value_smob
 {
   /* This always appears first.  */
   gdb_smob base;
@@ -42,8 +42,8 @@ typedef struct _value_smob
   /* Doubly linked list of values in values_in_scheme.
      IWBN to use a chained_gdb_smob instead, which is doable, it just requires
      a bit more casting than normal.  */
-  struct _value_smob *next;
-  struct _value_smob *prev;
+  value_smob *next;
+  value_smob *prev;
 
   struct value *value;
 
@@ -55,7 +55,7 @@ typedef struct _value_smob
   SCM address;
   SCM type;
   SCM dynamic_type;
-} value_smob;
+};
 
 static const char value_smob_name[] = "gdb:value";
 
@@ -471,18 +471,69 @@ gdbscm_value_referenced_value (SCM self)
       struct value *res_val;
 
       switch (check_typedef (value_type (value))->code ())
-        {
-        case TYPE_CODE_PTR:
-          res_val = value_ind (value);
-          break;
-        case TYPE_CODE_REF:
-          res_val = coerce_ref (value);
-          break;
-        default:
-          error (_("Trying to get the referenced value from a value which is"
+	{
+	case TYPE_CODE_PTR:
+	  res_val = value_ind (value);
+	  break;
+	case TYPE_CODE_REF:
+	case TYPE_CODE_RVALUE_REF:
+	  res_val = coerce_ref (value);
+	  break;
+	default:
+	  error (_("Trying to get the referenced value from a value which is"
 		   " neither a pointer nor a reference"));
-        }
+	}
 
+      return vlscm_scm_from_value (res_val);
+    });
+}
+
+static SCM
+gdbscm_reference_value (SCM self, enum type_code refcode)
+{
+  value_smob *v_smob
+    = vlscm_get_value_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
+  struct value *value = v_smob->value;
+
+  return gdbscm_wrap ([=]
+    {
+      scoped_value_mark free_values;
+
+      struct value *res_val = value_ref (value, refcode);
+      return vlscm_scm_from_value (res_val);
+    });
+}
+
+/* (value-reference-value <gdb:value>) -> <gdb:value> */
+
+static SCM
+gdbscm_value_reference_value (SCM self)
+{
+  return gdbscm_reference_value (self, TYPE_CODE_REF);
+}
+
+/* (value-rvalue-reference-value <gdb:value>) -> <gdb:value> */
+
+static SCM
+gdbscm_value_rvalue_reference_value (SCM self)
+{
+  return gdbscm_reference_value (self, TYPE_CODE_RVALUE_REF);
+}
+
+/* (value-const-value <gdb:value>) -> <gdb:value> */
+
+static SCM
+gdbscm_value_const_value (SCM self)
+{
+  value_smob *v_smob
+    = vlscm_get_value_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
+  struct value *value = v_smob->value;
+
+  return gdbscm_wrap ([=]
+    {
+      scoped_value_mark free_values;
+
+      struct value *res_val = make_cv_value (1, 0, value);
       return vlscm_scm_from_value (res_val);
     });
 }
@@ -525,7 +576,7 @@ gdbscm_value_dynamic_type (SCM self)
 
       if (((type->code () == TYPE_CODE_PTR)
 	   || (type->code () == TYPE_CODE_REF))
-	  && (TYPE_TARGET_TYPE (type)->code () == TYPE_CODE_STRUCT))
+	  && (type->target_type ()->code () == TYPE_CODE_STRUCT))
 	{
 	  struct value *target;
 	  int was_pointer = type->code () == TYPE_CODE_PTR;
@@ -643,7 +694,7 @@ gdbscm_value_field (SCM self, SCM field_scm)
 
       struct value *tmp = v_smob->value;
 
-      struct value *res_val = value_struct_elt (&tmp, NULL, field.get (), NULL,
+      struct value *res_val = value_struct_elt (&tmp, {}, field.get (), NULL,
 						"struct/class/union");
 
       return vlscm_scm_from_value (res_val);
@@ -671,7 +722,7 @@ gdbscm_value_subscript (SCM self, SCM index_scm)
       struct value *index
 	= vlscm_convert_value_from_scheme (FUNC_NAME, SCM_ARG2, index_scm,
 					   &except_scm,
-					   get_type_arch (type),
+					   type->arch (),
 					   current_language);
       if (index == NULL)
 	return except_scm;
@@ -776,8 +827,8 @@ gdbscm_value_to_bytevector (SCM self)
   try
     {
       type = check_typedef (type);
-      length = TYPE_LENGTH (type);
-      contents = value_contents (value);
+      length = type->length ();
+      contents = value_contents (value).data ();
     }
   catch (const gdb_exception &except)
     {
@@ -888,7 +939,7 @@ gdbscm_value_to_integer (SCM self)
     }
 
   GDBSCM_HANDLE_GDB_EXCEPTION (exc);
-  if (TYPE_UNSIGNED (type))
+  if (type->is_unsigned ())
     return gdbscm_scm_from_ulongest (l);
   else
     return gdbscm_scm_from_longest (l);
@@ -927,10 +978,11 @@ gdbscm_value_to_real (SCM self)
     {
       if (is_floating_value (value))
 	{
-	  d = target_float_to_host_double (value_contents (value), type);
+	  d = target_float_to_host_double (value_contents (value).data (),
+					   type);
 	  check = value_from_host_double (type, d);
 	}
-      else if (TYPE_UNSIGNED (type))
+      else if (type->is_unsigned ())
 	{
 	  d = (ULONGEST) value_as_long (value);
 	  check = value_from_ulongest (type, (ULONGEST) d);
@@ -1052,7 +1104,7 @@ gdbscm_value_to_string (SCM self, SCM rest)
   gdbscm_dynwind_xfree (buffer_contents);
 
   result = scm_from_stringn ((const char *) buffer_contents,
-			     length * TYPE_LENGTH (char_type),
+			     length * char_type->length (),
 			     (encoding != NULL && *encoding != '\0'
 			      ? encoding
 			      : la_encoding),
@@ -1129,7 +1181,7 @@ gdbscm_value_to_lazy_string (SCM self, SCM rest)
 	      length = array_length;
 	    else if (array_length == -1)
 	      {
-		type = lookup_array_range_type (TYPE_TARGET_TYPE (realtype),
+		type = lookup_array_range_type (realtype->target_type (),
 						0, length - 1);
 	      }
 	    else if (length != array_length)
@@ -1138,7 +1190,7 @@ gdbscm_value_to_lazy_string (SCM self, SCM rest)
 		   specified length.  */
 		if (length > array_length)
 		  error (_("length is larger than array size"));
-		type = lookup_array_range_type (TYPE_TARGET_TYPE (type),
+		type = lookup_array_range_type (type->target_type (),
 						low_bound,
 						low_bound + length - 1);
 	      }
@@ -1351,6 +1403,21 @@ For example, for a value which is a reference to an 'int' pointer ('int *'),\n\
 value-dereference will result in a value of type 'int' while\n\
 value-referenced-value will result in a value of type 'int *'." },
 
+  { "value-reference-value", 1, 0, 0,
+    as_a_scm_t_subr (gdbscm_value_reference_value),
+    "\
+Return a <gdb:value> object which is a reference to the given value." },
+
+  { "value-rvalue-reference-value", 1, 0, 0,
+    as_a_scm_t_subr (gdbscm_value_rvalue_reference_value),
+    "\
+Return a <gdb:value> object which is an rvalue reference to the given value." },
+
+  { "value-const-value", 1, 0, 0,
+    as_a_scm_t_subr (gdbscm_value_const_value),
+    "\
+Return a <gdb:value> object which is a 'const' version of the given value." },
+
   { "value-field", 2, 0, 0, as_a_scm_t_subr (gdbscm_value_field),
     "\
 Return the specified field of the value.\n\
@@ -1404,8 +1471,8 @@ characters to be replaced with \"?\".  The default is \"error\".\n\
 If LENGTH is provided, only fetch string to the length provided.\n\
 \n\
   Arguments: <gdb:value>\n\
-             [#:encoding encoding] [#:errors \"error\"|\"substitute\"]\n\
-             [#:length length]" },
+	     [#:encoding encoding] [#:errors \"error\"|\"substitute\"]\n\
+	     [#:length length]" },
 
   { "value->lazy-string", 1, 0, 1,
     as_a_scm_t_subr (gdbscm_value_to_lazy_string),

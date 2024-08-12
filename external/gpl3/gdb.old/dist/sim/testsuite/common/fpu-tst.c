@@ -25,7 +25,7 @@ do { \
 
 static int flags;
 
-int8
+int8_t
 syst_float_flags_clear ()
 {
   int old_flags = 0;
@@ -72,7 +72,7 @@ syst_float_flags_clear ()
 sim_fpu_round rounding_mode;
 
 void
-syst_float_set_rounding_mode(int8 mode)
+syst_float_set_rounding_mode(int8_t mode)
 {
   switch (mode)
     {
@@ -93,7 +93,7 @@ syst_float_set_rounding_mode(int8 mode)
 
 
 float32
-syst_int32_to_float32(int32 a)
+syst_int32_to_float32(int32_t a)
 {
   float32 z;
   sim_fpu s;
@@ -104,7 +104,7 @@ syst_int32_to_float32(int32 a)
 }
 
 float64
-syst_int32_to_float64( int32 a )
+syst_int32_to_float64( int32_t a )
 {
   float64 z;
   sim_fpu s;
@@ -113,10 +113,10 @@ syst_int32_to_float64( int32 a )
   return z;
 }
 
-int32
+int32_t
 syst_float32_to_int32_round_to_zero( float32 a )
 {
-  int32 z;
+  int32_t z;
   sim_fpu s;
   sim_fpu_32to (&s, a);
   flags |= sim_fpu_to32i (&z, &s, sim_fpu_round_zero);
@@ -312,9 +312,9 @@ flag syst_float32_lt_quiet( float32 a, float32 b )
   return is;
 }
 
-int32 syst_float64_to_int32_round_to_zero( float64 a )
+int32_t syst_float64_to_int32_round_to_zero( float64 a )
 {
-  int32 z;
+  int32_t z;
   sim_fpu s;
   sim_fpu_64to (&s, a);
   flags |= sim_fpu_to32i (&z, &s, sim_fpu_round_zero);

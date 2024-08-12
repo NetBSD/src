@@ -1,4 +1,4 @@
-# Copyright 1998-2020 Free Software Foundation, Inc.
+# Copyright 1998-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -52,17 +52,13 @@
 
 standard_testfile break.c break1.c
 
-if [get_compiler_info] {
-    return -1
-}
-
 if {[prepare_for_testing "failed to prepare" $testfile \
 	 [list $srcfile $srcfile2] {debug nowarnings}]} {
     return -1
 }
 
-if ![runto_main] then {
-        perror "tests suppressed"
+if {![runto_main]} {
+    return
 }
 
 set timeout 30
@@ -171,6 +167,11 @@ gdb_assert {{$all_regs eq $completed_regs}} "complete 'info registers '"
 if { ![readline_is_used] } {
     return -1
 }
+
+# The bulk of this test script pre-dates the completion-support
+# library, and should probably (where possible) be converted.
+# However, for now, new tests are being added using this library.
+load_lib completion-support.exp
 
 set test "complete 'hfgfh'"
 send_gdb "hfgfh\t"
@@ -670,10 +671,9 @@ gdb_test "complete whatis &values\[0\]->z" \
 
 # ${srcdir} may be a relative path.  We want to make sure we end up
 # in the right directory - so make sure we know where it is.
-set mydir [pwd]
-cd ${srcdir}
-set fullsrcdir [pwd]
-cd ${mydir}
+with_cwd $srcdir {
+    set fullsrcdir [pwd]
+}
 
 # If the directory name contains a '+' we must escape it, adding a backslash.
 # If not, the test below will fail because it will interpret the '+' as a 
@@ -922,3 +922,56 @@ gdb_test_multiple "" "$test" {
 	pass "$test"
     }
 }
+
+# Test completion of 'p', 'x', and 'display' all using a /FMT.
+foreach_with_prefix spc { " " "" } {
+    test_gdb_complete_multiple "p${spc}/d some_union_global." "" "f" {
+	"f1"
+	"f2"
+    }
+
+    test_gdb_complete_none "p${spc}/"
+    test_gdb_complete_unique "p${spc}/d" "p${spc}/d"
+
+    # Try completion on an invalid /FMT string.  GDB doesn't attempt
+    # to validate the /FMT string during completion, the string is
+    # just assumed to be complete when the user hits TAB.
+    test_gdb_complete_unique "p${spc}/@" "p${spc}/@"
+
+    test_gdb_complete_unique "x${spc}/1w values\[0\].b"\
+	"x${spc}/1w values\[0\].b_field"
+
+    test_gdb_complete_unique "display${spc}/x values\[0\].z"\
+	"display${spc}/x values\[0\].z_field"
+}
+
+# Test 'p' using both options and /FMT.
+test_gdb_complete_multiple "p -array on -- /d some_union_global." \
+    "" "f" {
+	"f1"
+	"f2"
+    }
+
+# Check the watch commands can all complete, with and without flags.
+foreach_with_prefix cmd { "watch" "awatch" "rwatch" } {
+    foreach_with_prefix opt { "" "-l" "-location" } {
+	test_gdb_complete_multiple "${cmd} ${opt} some_union_global." \
+	    "" "f" {
+		"f1"
+		"f2"
+	    }
+    }
+}
+
+# Check that tab completion of a deprecated alias does not display the
+# warning about the alias being deprecated during tab completion.
+gdb_test_no_output "alias xxx_yyy_zzz=break"
+gdb_test_no_output "maint deprecate xxx_yyy_zzz"
+test_gdb_complete_unique "xxx_yyy_" "xxx_yyy_zzz"
+
+# Check that tab completion of a deprecated alias with a prefix does
+# not display the warning about the alias being deprecated during tab
+# completion.
+gdb_test_no_output "alias set aaa_bbb_ccc=set debug"
+gdb_test_no_output "maint deprecate set aaa_bbb_ccc"
+test_gdb_complete_unique "set aaa_bbb_" "set aaa_bbb_ccc"

@@ -1,4 +1,4 @@
-# Copyright 2011-2020 Free Software Foundation, Inc.
+# Copyright 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,7 +36,6 @@ if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile executable $options] != ""
 clean_restart ${testfile}
 
 if ![runto_main] {
-    fail "can't run to main to check for trace support"
     return -1
 }
 
@@ -75,11 +74,13 @@ proc prepare_for_trace_test {} {
 
     set testline [gdb_get_line_number "set pre-run breakpoint here"]
 
-    gdb_test "break $testline" ".*" ""
+    gdb_test "break $testline" ".*" \
+	"break at pre-run"
 
     set testline [gdb_get_line_number "set post-run breakpoint here"]
 
-    gdb_test "break $testline" ".*" ""
+    gdb_test "break $testline" ".*" \
+	"break at post-run"
 }
 
 proc run_trace_experiment {} {
@@ -99,7 +100,7 @@ proc run_trace_experiment {} {
     gdb_test "tstop" "" ""
 }
 
-proc gdb_slow_trace_speed_test { } {
+proc_with_prefix gdb_slow_trace_speed_test { } {
 
     gdb_delete_tracepoints
 
@@ -115,7 +116,7 @@ proc gdb_slow_trace_speed_test { } {
     run_trace_experiment
 }
 
-proc gdb_fast_trace_speed_test { } {
+proc_with_prefix gdb_fast_trace_speed_test { } {
     global gdb_prompt
 
     gdb_delete_tracepoints
@@ -138,7 +139,7 @@ proc gdb_fast_trace_speed_test { } {
 	}
 
     # If the fast tracepoint couldn't be set, don't bother with the run.
-    if { $run_ftrace == 1 } then {
+    if {$run_ftrace == 1} {
 
 	# Begin the test.
 	run_trace_experiment
@@ -159,7 +160,7 @@ gdb_load_shlib $ipalib
 
 runto_main
 
-if { ![gdb_target_supports_trace] } then {
+if {![gdb_target_supports_trace]} {
     unsupported "current target does not support trace"
     return 1
 }

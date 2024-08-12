@@ -1,5 +1,5 @@
 /* Print Z80, Z180, EZ80 and R800 instructions
-   Copyright (C) 2005-2020 Free Software Foundation, Inc.
+   Copyright (C) 2005-2022 Free Software Foundation, Inc.
    Contributed by Arnold Metselaar <arnold_m@operamail.com>
 
    This file is part of the GNU opcodes library.
@@ -95,6 +95,8 @@ fetch_data (struct buffer *buf, disassemble_info * info, int n)
 			      n, info);
   if (r == 0)
     buf->n_fetch += n;
+  else
+    info->memory_error_func (r, buf->base + buf->n_fetch, info);
   return !r;
 }
 
@@ -414,7 +416,7 @@ dump (struct buffer *buf, disassemble_info * info, const char *txt)
 }
 
 /* Table to disassemble machine codes with prefix 0xED.  */
-struct tab_elt opc_ed[] =
+static const struct tab_elt opc_ed[] =
 {
   { 0x30, 0xFF, prt, "mul d,e", INSS_Z80N },
   { 0x31, 0xFF, prt, "add hl,a", INSS_Z80N },
@@ -525,7 +527,7 @@ static int
 pref_ed (struct buffer *buf, disassemble_info *info,
          const char *txt ATTRIBUTE_UNUSED)
 {
-  struct tab_elt *p;
+  const struct tab_elt *p;
 
   if (fetch_data (buf, info, 1))
     {

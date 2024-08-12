@@ -1,6 +1,6 @@
 /* Target-dependent code for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,7 +23,7 @@
 #include "gdbarch.h"
 
 struct gdbarch;
-struct frame_info;
+class frame_info_ptr;
 struct value;
 struct regcache;
 struct type;
@@ -175,6 +175,8 @@ extern void ppc_collect_vsxregset (const struct regset *regset,
 				  const struct regcache *regcache,
 				  int regnum, void *vsxregs, size_t len);
 
+extern CORE_ADDR ppc64_sysv_get_return_buf_addr (type*, frame_info_ptr);
+
 /* Private data that this module attaches to struct gdbarch.  */
 
 /* ELF ABI version used by the inferior.  */
@@ -205,106 +207,106 @@ enum powerpc_long_double_abi
   POWERPC_LONG_DOUBLE_LAST
 };
 
-struct gdbarch_tdep
+struct ppc_gdbarch_tdep : gdbarch_tdep_base
   {
-    int wordsize;		/* Size in bytes of fixed-point word.  */
-    int soft_float;		/* Avoid FP registers for arguments?  */
+    int wordsize = 0;		/* Size in bytes of fixed-point word.  */
+    int soft_float = 0;		/* Avoid FP registers for arguments?  */
 
-    enum powerpc_elf_abi elf_abi;	/* ELF ABI version.  */
+    enum powerpc_elf_abi elf_abi {};	/* ELF ABI version.  */
 
     /* Format to use for the "long double" data type.  */
-    enum powerpc_long_double_abi long_double_abi;
+    enum powerpc_long_double_abi long_double_abi {};
 
     /* How to pass vector arguments.  Never set to AUTO or LAST.  */
-    enum powerpc_vector_abi vector_abi;
+    enum powerpc_vector_abi vector_abi {};
 
-    int ppc_gp0_regnum;		/* GPR register 0 */
-    int ppc_toc_regnum;		/* TOC register */
-    int ppc_ps_regnum;	        /* Processor (or machine) status (%msr) */
-    int ppc_cr_regnum;		/* Condition register */
-    int ppc_lr_regnum;		/* Link register */
-    int ppc_ctr_regnum;		/* Count register */
-    int ppc_xer_regnum;		/* Integer exception register */
+    int ppc_gp0_regnum = 0;		/* GPR register 0 */
+    int ppc_toc_regnum = 0;		/* TOC register */
+    int ppc_ps_regnum = 0;		/* Processor (or machine) status (%msr) */
+    int ppc_cr_regnum = 0;		/* Condition register */
+    int ppc_lr_regnum = 0;		/* Link register */
+    int ppc_ctr_regnum = 0;		/* Count register */
+    int ppc_xer_regnum = 0;		/* Integer exception register */
 
     /* Not all PPC and RS6000 variants will have the registers
        represented below.  A -1 is used to indicate that the register
        is not present in this variant.  */
 
     /* Floating-point registers.  */
-    int ppc_fp0_regnum;         /* Floating-point register 0.  */
-    int ppc_fpscr_regnum;	/* fp status and condition register.  */
+    int ppc_fp0_regnum = 0;	/* Floating-point register 0.  */
+    int ppc_fpscr_regnum = 0;	/* fp status and condition register.  */
 
     /* Multiplier-Quotient Register (older POWER architectures only).  */
-    int ppc_mq_regnum;
+    int ppc_mq_regnum = 0;
 
     /* POWER7 VSX registers.  */
-    int ppc_vsr0_regnum;	/* First VSX register.  */
-    int ppc_vsr0_upper_regnum;  /* First right most dword vsx register.  */
-    int ppc_efpr0_regnum;	/* First Extended FP register.  */
+    int ppc_vsr0_regnum = 0;		/* First VSX register.  */
+    int ppc_vsr0_upper_regnum = 0; 	/* First right most dword vsx register.  */
+    int ppc_efpr0_regnum = 0;		/* First Extended FP register.  */
 
     /* Altivec registers.  */
-    int ppc_vr0_regnum;		/* First AltiVec register.  */
-    int ppc_vrsave_regnum;	/* Last AltiVec register.  */
+    int ppc_vr0_regnum = 0;	/* First AltiVec register.  */
+    int ppc_vrsave_regnum = 0;	/* Last AltiVec register.  */
 
     /* Altivec pseudo-register vX aliases for the raw vrX
        registers.  */
-    int ppc_v0_alias_regnum;
+    int ppc_v0_alias_regnum = 0;
 
     /* SPE registers.  */
-    int ppc_ev0_upper_regnum;   /* First GPR upper half register.  */
-    int ppc_ev0_regnum;         /* First ev register.  */
-    int ppc_acc_regnum;         /* SPE 'acc' register.  */
-    int ppc_spefscr_regnum;     /* SPE 'spefscr' register.  */
+    int ppc_ev0_upper_regnum = 0;   /* First GPR upper half register.  */
+    int ppc_ev0_regnum = 0;         /* First ev register.  */
+    int ppc_acc_regnum = 0;         /* SPE 'acc' register.  */
+    int ppc_spefscr_regnum = 0;     /* SPE 'spefscr' register.  */
 
     /* Program Priority Register.  */
-    int ppc_ppr_regnum;
+    int ppc_ppr_regnum = 0;
 
     /* Data Stream Control Register.  */
-    int ppc_dscr_regnum;
+    int ppc_dscr_regnum = 0;
 
     /* Target Address Register.  */
-    int ppc_tar_regnum;
+    int ppc_tar_regnum = 0;
 
     /* Decimal 128 registers.  */
-    int ppc_dl0_regnum;		/* First Decimal128 argument register pair.  */
+    int ppc_dl0_regnum = 0;	/* First Decimal128 argument register pair.  */
 
-    int have_ebb;
+    int have_ebb = 0;
 
     /* PMU registers.  */
-    int ppc_mmcr0_regnum;
-    int ppc_mmcr2_regnum;
-    int ppc_siar_regnum;
-    int ppc_sdar_regnum;
-    int ppc_sier_regnum;
+    int ppc_mmcr0_regnum = 0;
+    int ppc_mmcr2_regnum = 0;
+    int ppc_siar_regnum = 0;
+    int ppc_sdar_regnum = 0;
+    int ppc_sier_regnum = 0;
 
     /* Hardware Transactional Memory registers.  */
-    int have_htm_spr;
-    int have_htm_core;
-    int have_htm_fpu;
-    int have_htm_altivec;
-    int have_htm_vsx;
-    int ppc_cppr_regnum;
-    int ppc_cdscr_regnum;
-    int ppc_ctar_regnum;
+    int have_htm_spr = 0;
+    int have_htm_core = 0;
+    int have_htm_fpu = 0;
+    int have_htm_altivec = 0;
+    int have_htm_vsx = 0;
+    int ppc_cppr_regnum = 0;
+    int ppc_cdscr_regnum = 0;
+    int ppc_ctar_regnum = 0;
 
     /* HTM pseudo registers.  */
-    int ppc_cdl0_regnum;
-    int ppc_cvsr0_regnum;
-    int ppc_cefpr0_regnum;
+    int ppc_cdl0_regnum = 0;
+    int ppc_cvsr0_regnum = 0;
+    int ppc_cefpr0_regnum = 0;
 
     /* Offset to ABI specific location where link register is saved.  */
-    int lr_frame_offset;	
+    int lr_frame_offset = 0;
 
     /* An array of integers, such that sim_regno[I] is the simulator
        register number for GDB register number I, or -1 if the
        simulator does not implement that register.  */
-    int *sim_regno;
+    int *sim_regno = nullptr;
 
     /* ISA-specific types.  */
-    struct type *ppc_builtin_type_vec64;
-    struct type *ppc_builtin_type_vec128;
+    struct type *ppc_builtin_type_vec64 = nullptr;
+    struct type *ppc_builtin_type_vec128 = nullptr;
 
-    int (*ppc_syscall_record) (struct regcache *regcache);
+    int (*ppc_syscall_record) (struct regcache *regcache) = nullptr;
 };
 
 
@@ -420,12 +422,14 @@ struct ppc_insn_pattern
   int optional;                 /* If non-zero, this insn may be absent.  */
 };
 
-extern int ppc_insns_match_pattern (struct frame_info *frame, CORE_ADDR pc,
+extern int ppc_insns_match_pattern (frame_info_ptr frame, CORE_ADDR pc,
 				    const struct ppc_insn_pattern *pattern,
 				    unsigned int *insns);
 extern CORE_ADDR ppc_insn_d_field (unsigned int insn);
 
 extern CORE_ADDR ppc_insn_ds_field (unsigned int insn);
+extern CORE_ADDR ppc_insn_prefix_dform (unsigned int insn1,
+					unsigned int insn2);
 
 extern int ppc_process_record (struct gdbarch *gdbarch,
 			       struct regcache *regcache, CORE_ADDR addr);
@@ -435,5 +439,15 @@ extern int ppc_process_record (struct gdbarch *gdbarch,
 
 /* Estimate for the maximum number of instructions in a function epilogue.  */
 #define PPC_MAX_EPILOGUE_INSTRUCTIONS  52
+
+struct ppc_inferior_data
+{
+  /* This is an optional in case we add more fields to ppc_inferior_data, we
+     don't want it instantiated as soon as we get the ppc_inferior_data for an
+     inferior.  */
+  gdb::optional<displaced_step_buffers> disp_step_buf;
+};
+
+extern ppc_inferior_data * get_ppc_per_inferior (inferior *inf);
 
 #endif /* ppc-tdep.h */

@@ -1,4 +1,4 @@
-# Copyright 1998-2020 Free Software Foundation, Inc.
+# Copyright 1998-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,20 +44,18 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [lis
     return -1
 }
 
-if [get_compiler_info] {
-    return -1
-}
-
 clean_restart ${binfile}
 
 
 #
 # set it up at a breakpoint so we can play with the variable values
 #
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
-    continue
+if {![runto_main]} {
+    return
 }
+
+# This is used as an expected result value.
+set false 0
 
 gdb_test "break marker1" ".*" ""
 
@@ -69,85 +67,68 @@ gdb_test "up" " main .*" "up from marker1"
 
 global hex
 
-gdb_test "print &ibig.i\[0\]" " = \\(int \\*\\) $hex" \
-    "print value of &ibig.i\[0\]"
+gdb_test "print &ibig.i\[0\]" " = \\(int \\*\\) $hex"
 
-gdb_test_multiple "print &cbig.c\[0\]" "print value of &cbig.c\[0\]" {
+gdb_test_multiple "print &cbig.c\[0\]" "" {
     -re ".\[0-9\]* = $hex \"\".*$gdb_prompt $" {
-        pass "print value of &cbig.c\[0\]"
+        pass $gdb_test_name
     }
     -re ".\[0-9\]* = $hex \"*\".*$gdb_prompt $" {
-        pass "print value of &cbig.c\[0\]"
+        pass $gdb_test_name
     }
 }
 
-gdb_test "print &fbig.f\[0\]" " = \\(float \\*\\) $hex" \
-    "print value of &fbig.f\[0\]"
+gdb_test "print &fbig.f\[0\]" " = \\(float \\*\\) $hex"
 
-gdb_test "print &dbig.d\[0\]" " = \\(double \\*\\) $hex" \
-    "print value of &dbig.d\[0\]"
+gdb_test "print &dbig.d\[0\]" " = \\(double \\*\\) $hex"
 
-gdb_test_multiple "print &sbig.s\[0\]" "print value of &sbig.s\[0\]" {
+gdb_test_multiple "print &sbig.s\[0\]" "" {
     -re ".\[0-9\]* = \\(short \\*\\) $hex.*$gdb_prompt $" {
-        pass "print value of &sbig.s\[0\]"
+        pass $gdb_test_name
     }
     -re ".\[0-9\]* = \\(short int \\*\\) $hex.*$gdb_prompt $" {
-        pass "print value of &sbig.s\[0\]"
+        pass $gdb_test_name
     }
 }
 
-gdb_test_multiple "print &lbig.l\[0\]" "print value of &lbig.l\[0\]" {
+gdb_test_multiple "print &lbig.l\[0\]" "" {
     -re ".\[0-9\]* = \\(long \\*\\) $hex.*$gdb_prompt $" {
-        pass "print value of &lbig.l\[0\]"
+        pass $gdb_test_name
     }
     -re ".\[0-9\]* = \\(long int \\*\\) $hex.*$gdb_prompt $" {
-        pass "print value of &lbig.l\[0\]"
+        pass $gdb_test_name
     }
 }
 
-gdb_test "print ibig.i\[100\] | 1" " = 5" \
-    "print value of ibig.i\[100\] | 1"
+gdb_test "print ibig.i\[100\] | 1" " = 5"
 
-gdb_test "print sbig.s\[90\] & 127" " = 127" \
-    "print value of sbig.s\[90\] & 127"
+gdb_test "print sbig.s\[90\] & 127" " = 127"
 
-gdb_test "print !ibig.i\[100\]" " = $false" \
-    "print value of !ibig.i\[100\]"
+gdb_test "print !ibig.i\[100\]" " = $false"
 
-gdb_test "print !sbig.s\[90\]" " = $false" \
-    "print value of !sbig.s\[90\]"
+gdb_test "print !sbig.s\[90\]" " = $false"
 
-gdb_test "print !fbig.f\[100\]" " = $false" \
-    "print value of !ibig.i\[100\]"
+gdb_test "print !fbig.f\[100\]" " = $false"
 
-gdb_test "print !dbig.d\[202\]" " = $false" \
-    "print value of !ibig.i\[100\]"
+gdb_test "print !dbig.d\[202\]" " = $false"
 
-gdb_test "print sbig.s\[90\] * 10" " = 2550" \
-    "print value of !sbig.s\[90\] * 10"
+gdb_test "print sbig.s\[90\] * 10" " = 2550"
 
-gdb_test "print ibig.i\[100\] * sbig.s\[90\]" " = 1275" \
-    "print value of ibig.i\[100\] * sbig.s\[90\]"
+gdb_test "print ibig.i\[100\] * sbig.s\[90\]" " = 1275"
 
-gdb_test "print fbig.f\[100\] * dbig.d\[202\]" " = 119.99\[0-9\]*" \
-    "print value of fbig.f\[100\] * dbig.d\[202\]"
+gdb_test "print fbig.f\[100\] * dbig.d\[202\]" " = 119.99\[0-9\]*"
 
-gdb_test "print !(sbig.s\[90\] * 2)" " = $false" \
-    "print value of !(sbig.s\[90\] * 2)"
+gdb_test "print !(sbig.s\[90\] * 2)" " = $false"
 
-gdb_test "print sizeof(sbig)" " = 800" "print value of sizeof sbig"
+gdb_test "print sizeof(sbig)" " = 800"
 
-gdb_test "print sizeof(cbig)" " = 100" "print value of sizeof cbig"
+gdb_test "print sizeof(cbig)" " = 100"
 
-gdb_test "print sizeof(lbig)/sizeof(long)" " = 900" \
-    "print value of sizeof lbig / sizeof long"
+gdb_test "print sizeof(lbig)/sizeof(long)" " = 900"
 
-gdb_test "print ibig.i\[100\] << 2" " = 20" \
-    "print value of ibig.i\[100\] << 2"
+gdb_test "print ibig.i\[100\] << 2" " = 20"
 
-gdb_test "print sbig.s\[90\] >> 4" " = 15" \
-    "print value of sbig.s\[90\] >> 4"
+gdb_test "print sbig.s\[90\] >> 4" " = 15"
 
-gdb_test "print lbig.l\[333\] >> 6" " = 15624999" \
-    "print value of lbig.l\[333\] >> 6"
+gdb_test "print lbig.l\[333\] >> 6" " = 15624999"
 

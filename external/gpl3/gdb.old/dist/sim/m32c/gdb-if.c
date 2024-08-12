@@ -1,6 +1,6 @@
 /* gdb.c --- sim interface to GDB.
 
-Copyright (C) 2005-2020 Free Software Foundation, Inc.
+Copyright (C) 2005-2023 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -18,7 +18,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include <stdio.h>
 #include <assert.h>
 #include <signal.h>
@@ -27,8 +29,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <ctype.h>
 
 #include "ansidecl.h"
-#include "gdb/callback.h"
-#include "gdb/remote-sim.h"
+#include "libiberty.h"
+#include "sim/callback.h"
+#include "sim/sim.h"
 #include "gdb/signals.h"
 #include "gdb/sim-m32c.h"
 
@@ -55,7 +58,7 @@ static struct sim_state the_minisim = {
   "This is the sole m32c minisim instance.  See libsim.a's global variables."
 };
 
-static int open;
+static int is_open;
 
 SIM_DESC
 sim_open (SIM_OPEN_KIND kind,
@@ -63,7 +66,7 @@ sim_open (SIM_OPEN_KIND kind,
 	  struct bfd *abfd, char * const *argv)
 {
   setbuf (stdout, 0);
-  if (open)
+  if (is_open)
     fprintf (stderr, "m32c minisim: re-opened sim\n");
 
   /* The 'run' interface doesn't use this function, so we don't care
@@ -85,7 +88,7 @@ sim_open (SIM_OPEN_KIND kind,
   init_mem ();
   init_regs ();
 
-  open = 1;
+  is_open = 1;
   return &the_minisim;
 }
 
@@ -104,7 +107,7 @@ sim_close (SIM_DESC sd, int quitting)
   /* Not much to do.  At least free up our memory.  */
   init_mem ();
 
-  open = 0;
+  is_open = 0;
 }
 
 static bfd *
@@ -156,7 +159,7 @@ sim_create_inferior (SIM_DESC sd, struct bfd * abfd,
 }
 
 int
-sim_read (SIM_DESC sd, SIM_ADDR mem, unsigned char *buf, int length)
+sim_read (SIM_DESC sd, SIM_ADDR mem, void *buf, int length)
 {
   check_desc (sd);
 
@@ -169,7 +172,7 @@ sim_read (SIM_DESC sd, SIM_ADDR mem, unsigned char *buf, int length)
 }
 
 int
-sim_write (SIM_DESC sd, SIM_ADDR mem, const unsigned char *buf, int length)
+sim_write (SIM_DESC sd, SIM_ADDR mem, const void *buf, int length)
 {
   check_desc (sd);
 
@@ -181,7 +184,7 @@ sim_write (SIM_DESC sd, SIM_ADDR mem, const unsigned char *buf, int length)
 
 /* Read the LENGTH bytes at BUF as an little-endian value.  */
 static DI
-get_le (unsigned char *buf, int length)
+get_le (const unsigned char *buf, int length)
 {
   DI acc = 0;
   while (--length >= 0)
@@ -288,7 +291,7 @@ reg_size (enum m32c_sim_reg regno)
 }
 
 int
-sim_fetch_register (SIM_DESC sd, int regno, unsigned char *buf, int length)
+sim_fetch_register (SIM_DESC sd, int regno, void *buf, int length)
 {
   size_t size;
 
@@ -400,7 +403,7 @@ sim_fetch_register (SIM_DESC sd, int regno, unsigned char *buf, int length)
 }
 
 int
-sim_store_register (SIM_DESC sd, int regno, unsigned char *buf, int length)
+sim_store_register (SIM_DESC sd, int regno, const void *buf, int length)
 {
   size_t size;
 
@@ -648,37 +651,25 @@ sim_stop_reason (SIM_DESC sd, enum sim_stop *reason_p, int *sigrc_p)
 void
 sim_do_command (SIM_DESC sd, const char *cmd)
 {
-  const char *args;
-  char *p = strdup (cmd);
+  const char *arg;
+  char **argv = buildargv (cmd);
 
   check_desc (sd);
 
-  /* Skip leading whitespace.  */
-  while (isspace (*p))
-    p++;
-
-  /* Find the extent of the command word.  */
-  for (p = cmd; *p; p++)
-    if (isspace (*p))
-      break;
-
-  /* Null-terminate the command word, and record the start of any
-     further arguments.  */
-  if (*p)
+  cmd = arg = "";
+  if (argv != NULL)
     {
-      *p = '\0';
-      args = p + 1;
-      while (isspace (*args))
-	args++;
+      if (argv[0] != NULL)
+	cmd = argv[0];
+      if (argv[1] != NULL)
+	arg = argv[1];
     }
-  else
-    args = p;
 
   if (strcmp (cmd, "trace") == 0)
     {
-      if (strcmp (args, "on") == 0)
+      if (strcmp (arg, "on") == 0)
 	trace = 1;
-      else if (strcmp (args, "off") == 0)
+      else if (strcmp (arg, "off") == 0)
 	trace = 0;
       else
 	printf ("The 'sim trace' command expects 'on' or 'off' "
@@ -686,9 +677,9 @@ sim_do_command (SIM_DESC sd, const char *cmd)
     }
   else if (strcmp (cmd, "verbose") == 0)
     {
-      if (strcmp (args, "on") == 0)
+      if (strcmp (arg, "on") == 0)
 	verbose = 1;
-      else if (strcmp (args, "off") == 0)
+      else if (strcmp (arg, "off") == 0)
 	verbose = 0;
       else
 	printf ("The 'sim verbose' command expects 'on' or 'off'"
@@ -698,11 +689,17 @@ sim_do_command (SIM_DESC sd, const char *cmd)
     printf ("The 'sim' command expects either 'trace' or 'verbose'"
 	    " as a subcommand.\n");
 
-  free (p);
+  freeargv (argv);
 }
 
 char **
 sim_complete_command (SIM_DESC sd, const char *text, const char *word)
+{
+  return NULL;
+}
+
+char *
+sim_memory_map (SIM_DESC sd)
 {
   return NULL;
 }

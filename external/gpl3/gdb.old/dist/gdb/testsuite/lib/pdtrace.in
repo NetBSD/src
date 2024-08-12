@@ -1,8 +1,8 @@
 #!/bin/sh
 
-# A Poor(but Free)'s Man dtrace
+# A Poor (but Free) Man's dtrace
 #
-# Copyright (C) 2014-2020 Free Software Foundation, Inc.
+# Copyright (C) 2014-2023 Free Software Foundation, Inc.
 #
 # Contributed by Oracle, Inc.
 #

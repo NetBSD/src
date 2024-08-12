@@ -1,6 +1,6 @@
 /* Low-level child interface to ptrace.
 
-   Copyright (C) 1988-2020 Free Software Foundation, Inc.
+   Copyright (C) 1988-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,6 @@
 #include "defs.h"
 #include "command.h"
 #include "inferior.h"
-#include "inflow.h"
 #include "terminal.h"
 #include "gdbcore.h"
 #include "regcache.h"
@@ -42,6 +41,12 @@ gdb_ptrace (PTRACE_TYPE_ARG1 request, ptid_t ptid, PTRACE_TYPE_ARG3 addr,
 	    PTRACE_TYPE_ARG4 data)
 {
 #ifdef __NetBSD__
+  /*
+   * On NetBSD the data field of PT_STEP contains the thread
+   * to be stepped; all other threads are continued if this value is > 0
+   */
+  if (request == PT_STEP)
+     data = ptid.lwp ();
   return ptrace (request, ptid.pid (), addr, data);
 #else
   pid_t pid = get_ptrace_pid (ptid);
@@ -49,21 +54,8 @@ gdb_ptrace (PTRACE_TYPE_ARG1 request, ptid_t ptid, PTRACE_TYPE_ARG3 addr,
 #endif
 }
 
-/* A unique_ptr helper to unpush a target.  */
-
-struct target_unpusher
-{
-  void operator() (struct target_ops *ops) const
-  {
-    unpush_target (ops);
-  }
-};
-
-/* A unique_ptr that unpushes a target on destruction.  */
-
-typedef std::unique_ptr<struct target_ops, target_unpusher> target_unpush_up;
-
-
+/* The event pipe registered as a waitable file in the event loop.  */
+event_pipe inf_ptrace_target::m_event_pipe;
 
 inf_ptrace_target::~inf_ptrace_target ()
 {}
@@ -90,15 +82,17 @@ inf_ptrace_target::create_inferior (const char *exec_file,
 				    const std::string &allargs,
 				    char **env, int from_tty)
 {
+  inferior *inf = current_inferior ();
+
   /* Do not change either targets above or the same target if already present.
      The reason is the target stack is shared across multiple inferiors.  */
-  int ops_already_pushed = target_is_pushed (this);
+  int ops_already_pushed = inf->target_is_pushed (this);
 
   target_unpush_up unpusher;
   if (! ops_already_pushed)
     {
       /* Clear possible core file with its process_stratum.  */
-      push_target (this);
+      inf->push_target (this);
       unpusher.reset (this);
     }
 
@@ -118,7 +112,7 @@ inf_ptrace_target::create_inferior (const char *exec_file,
 
   /* On some targets, there must be some explicit actions taken after
      the inferior has been started up.  */
-  target_post_startup_inferior (ptid);
+  post_startup_inferior (ptid);
 }
 
 /* Clean up a rotting corpse of an inferior after it died.  */
@@ -143,14 +137,13 @@ inf_ptrace_target::mourn_inferior ()
 void
 inf_ptrace_target::attach (const char *args, int from_tty)
 {
-  pid_t pid;
-  struct inferior *inf;
+  inferior *inf = current_inferior ();
 
   /* Do not change either targets above or the same target if already present.
      The reason is the target stack is shared across multiple inferiors.  */
-  int ops_already_pushed = target_is_pushed (this);
+  int ops_already_pushed = inf->target_is_pushed (this);
 
-  pid = parse_pid_to_attach (args);
+  pid_t pid = parse_pid_to_attach (args);
 
   if (pid == getpid ())		/* Trying to masturbate?  */
     error (_("I refuse to debug myself!"));
@@ -160,21 +153,11 @@ inf_ptrace_target::attach (const char *args, int from_tty)
     {
       /* target_pid_to_str already uses the target.  Also clear possible core
 	 file with its process_stratum.  */
-      push_target (this);
+      inf->push_target (this);
       unpusher.reset (this);
     }
 
-  if (from_tty)
-    {
-      const char *exec_file = get_exec_file (0);
-
-      if (exec_file)
-	printf_unfiltered (_("Attaching to program: %s, %s\n"), exec_file,
-			   target_pid_to_str (ptid_t (pid)).c_str ());
-      else
-	printf_unfiltered (_("Attaching to %s\n"),
-			   target_pid_to_str (ptid_t (pid)).c_str ());
-    }
+  target_announce_attach (from_tty, pid);
 
 #ifdef PT_ATTACH
   errno = 0;
@@ -185,9 +168,8 @@ inf_ptrace_target::attach (const char *args, int from_tty)
   error (_("This system does not support attaching to a process"));
 #endif
 
-  inf = current_inferior ();
   inferior_appeared (inf, pid);
-  inf->attach_flag = 1;
+  inf->attach_flag = true;
 
   /* Always add a main thread.  If some target extends the ptrace
      target, it should decorate the ptid later with more info.  */
@@ -316,10 +298,14 @@ inf_ptrace_target::resume (ptid_t ptid, int step, enum gdb_signal signal)
 
 ptid_t
 inf_ptrace_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
-			 int options)
+			 target_wait_flags target_options)
 {
   pid_t pid;
-  int status, save_errno;
+  int options, status, save_errno;
+
+  options = 0;
+  if (target_options & TARGET_WNOHANG)
+    options |= WNOHANG;
 
   do
     {
@@ -327,23 +313,38 @@ inf_ptrace_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 
       do
 	{
-	  pid = waitpid (ptid.pid (), &status, 0);
+	  pid = waitpid (ptid.pid (), &status, options);
 	  save_errno = errno;
 	}
       while (pid == -1 && errno == EINTR);
 
       clear_sigint_trap ();
 
+      if (pid == 0)
+	{
+	  gdb_assert (target_options & TARGET_WNOHANG);
+	  ourstatus->set_ignore ();
+	  return minus_one_ptid;
+	}
+
       if (pid == -1)
 	{
-	  fprintf_unfiltered (gdb_stderr,
-			      _("Child process unexpectedly missing: %s.\n"),
-			      safe_strerror (save_errno));
+	  /* In async mode the SIGCHLD might have raced and triggered
+	     a check for an event that had already been reported.  If
+	     the event was the exit of the only remaining child,
+	     waitpid() will fail with ECHILD.  */
+	  if (ptid == minus_one_ptid && save_errno == ECHILD)
+	    {
+	      ourstatus->set_no_resumed ();
+	      return minus_one_ptid;
+	    }
 
-	  /* Claim it exited with unknown signal.  */
-	  ourstatus->kind = TARGET_WAITKIND_SIGNALLED;
-	  ourstatus->value.sig = GDB_SIGNAL_UNKNOWN;
-	  return inferior_ptid;
+	  gdb_printf (gdb_stderr,
+		      _("Child process unexpectedly missing: %s.\n"),
+		      safe_strerror (save_errno));
+
+	  ourstatus->set_ignore ();
+	  return minus_one_ptid;
 	}
 
       /* Ignore terminated detached child processes.  */
@@ -352,7 +353,8 @@ inf_ptrace_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
     }
   while (pid == -1);
 
-  store_waitstatus (ourstatus, status);
+  *ourstatus = host_status_to_waitstatus (status);
+
   return ptid_t (pid);
 }
 
@@ -524,13 +526,25 @@ inf_ptrace_target::files_info ()
 {
   struct inferior *inf = current_inferior ();
 
-  printf_filtered (_("\tUsing the running image of %s %s.\n"),
-		   inf->attach_flag ? "attached" : "child",
-		   target_pid_to_str (inferior_ptid).c_str ());
+  gdb_printf (_("\tUsing the running image of %s %s.\n"),
+	      inf->attach_flag ? "attached" : "child",
+	      target_pid_to_str (inferior_ptid).c_str ());
 }
 
 std::string
 inf_ptrace_target::pid_to_str (ptid_t ptid)
 {
   return normal_pid_to_str (ptid);
+}
+
+/* Implement the "close" target method.  */
+
+void
+inf_ptrace_target::close ()
+{
+  /* Unregister from the event loop.  */
+  if (is_async_p ())
+    async (false);
+
+  inf_child_target::close ();
 }

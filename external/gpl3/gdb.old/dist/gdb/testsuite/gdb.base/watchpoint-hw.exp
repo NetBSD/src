@@ -1,4 +1,4 @@
-# Copyright 2008-2020 Free Software Foundation, Inc.
+# Copyright 2008-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,6 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+if { [use_gdb_stub] } {
+    unsupported "test requires running"
+    return
+}
 
 if {[skip_hw_watchpoint_tests]} {
     return 0
@@ -33,7 +37,7 @@ gdb_test "watch watchee" "atchpoint 1: watchee"
 # `runto_main' or `runto main' would delete the watchpoint created above.
 
 if { [gdb_start_cmd] < 0 } {
-    untested start
+    fail start
     return -1
 }
 gdb_test "" "main .* at .*" "start"

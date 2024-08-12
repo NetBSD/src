@@ -1,7 +1,7 @@
 /* *INDENT-OFF* */ /* ATTRIBUTE_PRINTF confuses indent, avoid running it
 		      for now.  */
 /* Basic, host-specific, and target-specific definitions for GDB.
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -63,6 +63,7 @@
 
 #include "gdbsupport/host-defs.h"
 #include "gdbsupport/enum-flags.h"
+#include "gdbsupport/array-view.h"
 
 /* Scope types enumerator.  List the types of scopes the compiler will
    accept.  */
@@ -117,11 +118,8 @@ using RequireLongest = gdb::Requires<gdb::Or<std::is_same<T, LONGEST>,
 
 #include "hashtab.h"
 
-/* * Enable dbx commands if set.  */
-extern int dbx_commands;
-
 /* * System root path, used to find libraries etc.  */
-extern char *gdb_sysroot;
+extern std::string gdb_sysroot;
 
 /* * GDB datadir, used to store data files.  */
 extern std::string gdb_datadir;
@@ -131,7 +129,7 @@ extern std::string gdb_datadir;
 extern std::string python_libdir;
 
 /* * Search path for separate debug files.  */
-extern char *debug_file_directory;
+extern std::string debug_file_directory;
 
 /* GDB's SIGINT handler basically sets a flag; code that might take a
    long time before it gets back to the event loop, and which ought to
@@ -234,6 +232,9 @@ enum language
 #define LANGUAGE_BITS 5
 gdb_static_assert (nr_languages <= (1 << LANGUAGE_BITS));
 
+/* The number of bytes needed to represent all languages.  */
+#define LANGUAGE_BYTES ((LANGUAGE_BITS + HOST_CHAR_BIT - 1) / HOST_CHAR_BIT)
+
 enum precision_type
   {
     single_precision,
@@ -283,7 +284,7 @@ enum return_value_convention
 
 struct symtab;
 struct breakpoint;
-struct frame_info;
+class frame_info_ptr;
 struct gdbarch;
 struct value;
 
@@ -315,13 +316,12 @@ typedef void initialize_file_ftype (void);
 
 extern char *gdb_readline_wrapper (const char *);
 
-extern const char *command_line_input (const char *, const char *);
+extern const char *command_line_input (std::string &cmd_line_buffer,
+				       const char *, const char *);
 
 extern void print_prompt (void);
 
 struct ui;
-
-extern int input_interactive_p (struct ui *);
 
 extern bool info_verbose;
 
@@ -341,12 +341,17 @@ extern const char *pc_prefix (CORE_ADDR);
 /* * Process memory area starting at ADDR with length SIZE.  Area is
    readable iff READ is non-zero, writable if WRITE is non-zero,
    executable if EXEC is non-zero.  Area is possibly changed against
-   its original file based copy if MODIFIED is non-zero.  DATA is
-   passed without changes from a caller.  */
+   its original file based copy if MODIFIED is non-zero.
+
+   MEMORY_TAGGED is true if the memory region contains memory tags, false
+   otherwise.
+
+   DATA is passed without changes from a caller.  */
 
 typedef int (*find_memory_region_ftype) (CORE_ADDR addr, unsigned long size,
 					 int read, int write, int exec,
-					 int modified, void *data);
+					 int modified, bool memory_tagged,
+					 void *data);
 
 /* * Possible lvalue types.  Like enum language, this should be in
    value.h, but needs to be here for the same reason.  */
@@ -500,20 +505,36 @@ enum symbol_needs_kind
 /* In findvar.c.  */
 
 template<typename T, typename = RequireLongest<T>>
-T extract_integer (const gdb_byte *addr, int len, enum bfd_endian byte_order);
+T extract_integer (gdb::array_view<const gdb_byte>, enum bfd_endian byte_order);
+
+static inline LONGEST
+extract_signed_integer (gdb::array_view<const gdb_byte> buf,
+			enum bfd_endian byte_order)
+{
+  return extract_integer<LONGEST> (buf, byte_order);
+}
 
 static inline LONGEST
 extract_signed_integer (const gdb_byte *addr, int len,
 			enum bfd_endian byte_order)
 {
-  return extract_integer<LONGEST> (addr, len, byte_order);
+  return extract_signed_integer (gdb::array_view<const gdb_byte> (addr, len),
+				 byte_order);
+}
+
+static inline ULONGEST
+extract_unsigned_integer (gdb::array_view<const gdb_byte> buf,
+			  enum bfd_endian byte_order)
+{
+  return extract_integer<ULONGEST> (buf, byte_order);
 }
 
 static inline ULONGEST
 extract_unsigned_integer (const gdb_byte *addr, int len,
 			  enum bfd_endian byte_order)
 {
-  return extract_integer<ULONGEST> (addr, len, byte_order);
+  return extract_unsigned_integer (gdb::array_view<const gdb_byte> (addr, len),
+				   byte_order);
 }
 
 extern int extract_long_unsigned_integer (const gdb_byte *, int,

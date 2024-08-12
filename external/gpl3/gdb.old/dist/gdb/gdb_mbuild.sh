@@ -3,7 +3,7 @@
 #  Multi-build script for testing compilation of all maintained
 #  configs of GDB.
 
-#  Copyright (C) 2002-2020 Free Software Foundation, Inc.
+#  Copyright (C) 2002-2023 Free Software Foundation, Inc.
 
 #  Contributed by Richard Earnshaw  (rearnsha@arm.com)
 
@@ -31,7 +31,7 @@ usage()
 Usage: gdb_mbuild.sh [ <options> ... ] <srcdir> <builddir>
  Options:
    -j <makejobs>  Run <makejobs> in parallel.  Passed to make.
-	          On a single cpu machine, 2 is recommended.
+		  On a single cpu machine, 2 is recommended.
    -k             Keep going.  Do not stop after the first build fails.
    --keep         Keep builds.  Do not remove each build when finished.
    -e <regexp>    Regular expression for selecting the targets to build.
@@ -79,7 +79,7 @@ do
 	keepgoing=-k
 	;;
     --keep )
-        keep=true
+	keep=true
 	;;
     -e )
 	# A regular expression for selecting targets
@@ -171,7 +171,7 @@ fail ()
 	if test "${keepgoing}" != ""
 	then
 	    #exit 1
-	    continue
+	    return 1
 	else
 	    kill $$
 	    exit 1

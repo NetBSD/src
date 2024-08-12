@@ -1,7 +1,7 @@
 /* Parts of target interface that deal with accessing memory and memory-like
    objects.
 
-   Copyright (C) 2006-2020 Free Software Foundation, Inc.
+   Copyright (C) 2006-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,7 @@
 #include "defs.h"
 #include "target.h"
 #include "memory-map.h"
+#include "inferior.h"
 
 #include "gdbsupport/gdb_sys_time.h"
 #include <algorithm>
@@ -335,7 +336,7 @@ target_write_memory_blocks (const std::vector<memory_write_request> &requests,
     {
       LONGEST len;
 
-      len = target_write_with_progress (current_top_target (),
+      len = target_write_with_progress (current_inferior ()->top_target (),
 					TARGET_OBJECT_MEMORY, NULL,
 					iter.data, iter.begin,
 					iter.end - iter.begin,
@@ -358,7 +359,7 @@ target_write_memory_blocks (const std::vector<memory_write_request> &requests,
 	{
 	  LONGEST len;
 
-	  len = target_write_with_progress (current_top_target (),
+	  len = target_write_with_progress (current_inferior ()->top_target (),
 					    TARGET_OBJECT_FLASH, NULL,
 					    iter.data, iter.begin,
 					    iter.end - iter.begin,

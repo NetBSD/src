@@ -1,5 +1,5 @@
 /* Moxie Simulator definition.
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2023 Free Software Foundation, Inc.
    Contributed by Anthony Green <green@moxielogic.com>
 
 This file is part of GDB, the GNU debugger.
@@ -37,13 +37,6 @@ struct _sim_cpu {
   unsigned_word registers[19];
 
   sim_cpu_base base;
-};
-
-struct sim_state {
-
-  sim_cpu *cpu[MAX_NR_PROCESSORS];
-
-  sim_state_base base;
 };
 
 #endif

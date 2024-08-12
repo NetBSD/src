@@ -1,4 +1,4 @@
-# Copyright 2012-2020 Free Software Foundation, Inc.
+# Copyright 2012-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 if [target_info exists gdb,nosignals] {
     verbose "Skipping catch-signal.exp because of nosignals."
-    continue
+    return
 }
 
 standard_testfile
@@ -39,7 +39,7 @@ proc test_catch_signal {signame} {
 	gdb_test "handle SIGHUP nostop noprint pass" \
 	    "SIGHUP.*No.*No.*Yes.*"
 	gdb_test "catch signal" "Catchpoint .*"
-	gdb_test "continue" "Catchpoint .*"
+	gdb_test "continue" "Catchpoint .*" "continue to first HUP"
 
 	# Now ensure that the "pass" setting worked, and also that we did not
 	# see gdb's SIGTRAP.
@@ -52,7 +52,7 @@ proc test_catch_signal {signame} {
 	gdb_breakpoint ${srcfile}:[gdb_get_line_number "second HUP"]
 	gdb_continue_to_breakpoint "second HUP"
 	gdb_test "catch signal $signame" "Catchpoint .*"
-	gdb_test "continue" "Catchpoint .*"
+	gdb_test "continue" "Catchpoint .*" "continue to catch signal $signame"
 	delete_breakpoints
 
 	# Catch just SIGUSR1 -- but it isn't sent.
@@ -83,7 +83,6 @@ proc test_catch_signal {signame} {
 	    y
 	gdb_test "catch signal SIGINT" "Catchpoint .*"
 	gdb_test "continue" "Catchpoint .* SIGINT.*"
-        
     }
 }
 

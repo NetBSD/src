@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2020 Free Software Foundation, Inc.
+# Copyright (C) 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,8 +24,7 @@ if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
 # Skip all tests if Python scripting is not enabled.
 if { [skip_python_tests] } { continue }
 
-if ![runto main] then {
-    fail "can't run to function f"
+if {![runto_main]} {
     return 0
 }
 
@@ -48,10 +47,10 @@ gdb_test "python print (gdb.selected_frame().read_var('l'))" "\r\n42"
 # the frame cache is flushed somehow after setting the limit, to force
 # frame id recomputation.
 gdb_test_no_output "set backtrace limit 1"
-gdb_continue_to_breakpoint "Block break here."
+gdb_continue_to_breakpoint "Block break here again."
 
 gdb_test "python print (gdb.newest_frame())" ".*"
 
 # Regression test to verify that Frame.function works properly for
 # inline frames.
-gdb_test "python print (gdb.newest_frame().function())" "f"
+gdb_test "python print (gdb.newest_frame().function())" "f(\\(\\))?"

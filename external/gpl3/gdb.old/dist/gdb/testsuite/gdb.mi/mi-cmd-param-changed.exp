@@ -1,4 +1,4 @@
-# Copyright 2012-2020 Free Software Foundation, Inc.
+# Copyright 2012-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,12 +28,11 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
 
 proc test_command_param_changed { } {
     global scheduler_locking_supported
+    global binfile
 
     with_test_prefix "cmd param" {
-	if [mi_gdb_start] {
-	    return
-	}
-	mi_run_to_main
+	mi_clean_restart $binfile
+	mi_runto_main
 
 	if { $scheduler_locking_supported } {
 	    foreach opt { "on" "off" "step" } {
@@ -101,6 +100,17 @@ proc test_command_param_changed { } {
 	mi_gdb_test "set ch type on" \
 	    ".*=cmd-param-changed,param=\"check type\",value=\"on\".*\\^done" \
 	    "\"set ch type on\""
+
+	# Notification is emitted for both 'set directories' and 'directory'.
+	mi_gdb_test "set directories \$cdir:\$cwd:/tmp" \
+	    ".*=cmd-param-changed,param=\"directories\",value=\".*\".*\\^done" \
+	    "\"set directories \$cdir:\$cwd:/tmp\""
+	mi_gdb_test "directory /usr/src/gdb" \
+	    ".*=cmd-param-changed,param=\"directories\",value=\".*\".*\\^done" \
+	    "\"directory /usr/src/gdb\""
+	mi_gdb_test "directory" \
+	    ".*=cmd-param-changed,param=\"directories\",value=\".*\".*\\^done" \
+	    "\"directory\""
 
 	mi_gdb_exit
     }

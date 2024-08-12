@@ -1,4 +1,4 @@
-# Copyright 1997-2020 Free Software Foundation, Inc.
+# Copyright 1997-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@
 set ws	"\[\r\n\t \]+"
 set nl	"\[\r\n\]+"
 
-if { [skip_stl_tests] } { continue }
+if { [skip_stl_tests] } { return }
 
 standard_testfile .cc
  
@@ -73,7 +73,7 @@ gdb_test_multiple "info breakpoints" $name {
       }
 }
 
-gdb_test "tbreak main" "Temporary breakpoint 4.*" \
+gdb_test "tbreak -q main" "Temporary breakpoint 4.*" \
     "Set temporary breakpoint at main"
 
 set ok 0
@@ -86,7 +86,7 @@ gdb_test_multiple "" "run to main" {
 }
 
 if { !$ok } {
-    continue
+    return
 }
 
 set name "info breakpoints (after inferior run)"

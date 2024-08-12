@@ -1,4 +1,4 @@
-/* Copyright (C) 2014-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -40,3 +40,4 @@ main:
 	STAP_PROBE1(probe, fail2_probe, 23-@$16)
 	xor	%rax,%rax
 	ret
+	.section	.note.GNU-stack,"",@progbits

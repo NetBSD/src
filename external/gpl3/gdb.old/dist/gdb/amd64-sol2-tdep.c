@@ -1,6 +1,6 @@
 /* Target-dependent code for AMD64 Solaris.
 
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2023 Free Software Foundation, Inc.
 
    Contributed by Joseph Myers, CodeSourcery, LLC.
 
@@ -67,7 +67,7 @@ static int amd64_sol2_gregset_reg_offset[] = {
    'mcontext_t' that contains the saved set of machine registers.  */
 
 static CORE_ADDR
-amd64_sol2_mcontext_addr (struct frame_info *this_frame)
+amd64_sol2_mcontext_addr (frame_info_ptr this_frame)
 {
   CORE_ADDR sp, ucontext_addr;
 
@@ -80,7 +80,7 @@ amd64_sol2_mcontext_addr (struct frame_info *this_frame)
 static void
 amd64_sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
 
   tdep->gregset_reg_offset = amd64_sol2_gregset_reg_offset;
   tdep->gregset_num_regs = ARRAY_SIZE (amd64_sol2_gregset_reg_offset);

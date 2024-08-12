@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2020 Free Software Foundation, Inc.
+# Copyright (C) 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 from perftest import perftest
 from perftest import measure
 
+
 class SolibLoadUnload1(perftest.TestCaseWithBasicMeasurements):
     def __init__(self, solib_count, measure_load):
         if measure_load:
@@ -26,7 +27,7 @@ class SolibLoadUnload1(perftest.TestCaseWithBasicMeasurements):
         else:
             name = "solib_unload"
         # We want to measure time in this test.
-        super (SolibLoadUnload1, self).__init__ (name)
+        super(SolibLoadUnload1, self).__init__(name)
         self.solib_count = solib_count
         self.measure_load = measure_load
 
@@ -38,35 +39,36 @@ class SolibLoadUnload1(perftest.TestCaseWithBasicMeasurements):
 
     def execute_test(self):
         num = self.solib_count
-        iteration = 5;
+        iteration = 5
 
         while num > 0 and iteration > 0:
             # Do inferior calls to do_test_load and do_test_unload in pairs,
             # but measure differently.
             if self.measure_load:
                 do_test_load = "call do_test_load (%d)" % num
-                func = lambda: gdb.execute (do_test_load)
+                func = lambda: gdb.execute(do_test_load)
 
                 self.measure.measure(func, num)
 
                 do_test_unload = "call do_test_unload (%d)" % num
-                gdb.execute (do_test_unload)
+                gdb.execute(do_test_unload)
 
             else:
                 do_test_load = "call do_test_load (%d)" % num
-                gdb.execute (do_test_load)
+                gdb.execute(do_test_load)
 
                 do_test_unload = "call do_test_unload (%d)" % num
-                func = lambda: gdb.execute (do_test_unload)
+                func = lambda: gdb.execute(do_test_unload)
 
                 self.measure.measure(func, num)
 
             num = num / 2
             iteration -= 1
 
+
 class SolibLoadUnload(object):
     def __init__(self, solib_count):
-        self.solib_count = solib_count;
+        self.solib_count = solib_count
 
     def run(self):
         SolibLoadUnload1(self.solib_count, True).run()

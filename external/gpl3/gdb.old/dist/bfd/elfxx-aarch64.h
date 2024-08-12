@@ -1,5 +1,5 @@
 /* AArch64-specific backend routines.
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -78,22 +78,22 @@ extern int elf64_aarch64_setup_section_lists
   (bfd *, struct bfd_link_info *);
 extern void elf64_aarch64_next_input_section
   (struct bfd_link_info *, struct bfd_section *);
-extern bfd_boolean elf64_aarch64_size_stubs
+extern bool elf64_aarch64_size_stubs
   (bfd *, bfd *, struct bfd_link_info *, bfd_signed_vma,
    struct bfd_section * (*) (const char *, struct bfd_section *),
    void (*) (void));
-extern bfd_boolean elf64_aarch64_build_stubs
+extern bool elf64_aarch64_build_stubs
   (struct bfd_link_info *);
 /* AArch64 stub generation support for ELF32.  Called from the linker.  */
 extern int elf32_aarch64_setup_section_lists
   (bfd *, struct bfd_link_info *);
 extern void elf32_aarch64_next_input_section
   (struct bfd_link_info *, struct bfd_section *);
-extern bfd_boolean elf32_aarch64_size_stubs
+extern bool elf32_aarch64_size_stubs
   (bfd *, bfd *, struct bfd_link_info *, bfd_signed_vma,
    struct bfd_section * (*) (const char *, struct bfd_section *),
    void (*) (void));
-extern bfd_boolean elf32_aarch64_build_stubs
+extern bool elf32_aarch64_build_stubs
   (struct bfd_link_info *);
 
 /* Take the PAGE component of an address or offset.  */
@@ -119,12 +119,12 @@ _bfd_aarch64_elf_put_addend (bfd *, bfd_byte *, bfd_reloc_code_real_type,
 
 extern bfd_vma
 _bfd_aarch64_elf_resolve_relocation (bfd *, bfd_reloc_code_real_type, bfd_vma,
-				     bfd_vma, bfd_vma, bfd_boolean);
+				     bfd_vma, bfd_vma, bool);
 
-extern bfd_boolean
+extern bool
 _bfd_aarch64_elf_grok_prstatus (bfd *, Elf_Internal_Note *);
 
-extern bfd_boolean
+extern bool
 _bfd_aarch64_elf_grok_psinfo (bfd *, Elf_Internal_Note *);
 
 extern char *
@@ -142,7 +142,7 @@ extern enum elf_property_kind
 _bfd_aarch64_elf_parse_gnu_properties (bfd *, unsigned int,
 				       bfd_byte *, unsigned int);
 
-extern bfd_boolean
+extern bool
 _bfd_aarch64_elf_merge_gnu_properties (struct bfd_link_info *, bfd *,
 				       elf_property *, elf_property *,
 				       uint32_t);

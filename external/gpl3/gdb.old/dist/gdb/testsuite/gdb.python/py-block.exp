@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2020 Free Software Foundation, Inc.
+# Copyright (C) 2010-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,8 +27,7 @@ if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
 # Skip all tests if Python scripting is not enabled.
 if { [skip_python_tests] } { continue }
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 
@@ -38,7 +37,8 @@ gdb_continue_to_breakpoint "Block break here."
 
 # Test initial innermost block.
 gdb_py_test_silent_cmd "python frame = gdb.selected_frame()" "Get Frame" 0
-gdb_py_test_silent_cmd "python block = frame.block()" "Get block" 0
+gdb_py_test_silent_cmd "python block = frame.block()" \
+    "Get block, initial innermost block" 0
 gdb_test "python print (block)" "<gdb.Block object at $hex>" "check block not None"
 gdb_test "python print (block.function)" "None" "first anonymous block"
 gdb_test "python print (block.start)" "${decimal}" "check start not None"
@@ -51,11 +51,14 @@ gdb_test "python print (block\[42\])" ".*TypeError: Expected a string.*" \
 
 # Test global/static blocks
 gdb_py_test_silent_cmd "python frame = gdb.selected_frame()" "Get Frame" 0
-gdb_py_test_silent_cmd "python block = frame.block()" "Get block" 0
+gdb_py_test_silent_cmd "python block = frame.block()" \
+    "Get block, frame.block" 0
 gdb_test "python print (block.is_global)" "False" "not a global block"
 gdb_test "python print (block.is_static)" "False" "not a static block"
-gdb_py_test_silent_cmd "python gblock = block.global_block" "Get block" 1
-gdb_py_test_silent_cmd "python sblock = block.static_block" "Get block" 1
+gdb_py_test_silent_cmd "python gblock = block.global_block" \
+    "Get block, global_block" 1
+gdb_py_test_silent_cmd "python sblock = block.static_block" \
+    "Get block, static_block" 1
 gdb_test "python print (gblock.is_global)" "True" "is the global block"
 gdb_test "python print (sblock.is_static)" "True" "is the static block"
 
@@ -84,9 +87,9 @@ gdb_py_test_silent_cmd "python block_iter = iter (block)" "Get Frame block" 0
 gdb_test "python print (block.is_valid())" "True" \
          "Check block validity"
 gdb_test "python print (block_iter.is_valid())" "True" \
-         "Check block validity"
+         "Check block_iter validity"
 gdb_unload
 gdb_test "python print (block.is_valid())" "False" \
-         "Check block validity"
+         "Check block validity after unload"
 gdb_test "python print (block_iter.is_valid())" "False" \
-         "Check block validity"
+         "Check block_iter validity after unload"

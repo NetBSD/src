@@ -1,6 +1,6 @@
 /* Ravenscar SPARC target support.
 
-   Copyright (C) 2004-2020 Free Software Foundation, Inc.
+   Copyright (C) 2004-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,12 +26,6 @@
 #include "sparc-ravenscar-thread.h"
 #include "gdbarch.h"
 
-struct sparc_ravenscar_ops : public ravenscar_arch_ops
-{
-  void fetch_registers (struct regcache *, int) override;
-  void store_registers (struct regcache *, int) override;
-};
-
 /* Register offsets from a referenced address (exempli gratia the
    Thread_Descriptor).  The referenced address depends on the register
    number.  The Thread_Descriptor layout and the stack layout are documented
@@ -56,121 +50,9 @@ static const int sparc_register_offsets[] =
   0x40, 0x20, 0x44, -1,   0x1C, -1,   0x4C, -1
 };
 
-/* supply register REGNUM, which has been saved on REGISTER_ADDR, to the
-   regcache.  */
-
-static void
-supply_register_at_address (struct regcache *regcache, int regnum,
-                            CORE_ADDR register_addr)
-{
-  struct gdbarch *gdbarch = regcache->arch ();
-  int buf_size = register_size (gdbarch, regnum);
-  gdb_byte *buf;
-
-  buf = (gdb_byte *) alloca (buf_size);
-  read_memory (register_addr, buf, buf_size);
-  regcache->raw_supply (regnum, buf);
-}
-
-/* Return true if, for a non-running thread, REGNUM has been saved on the
-   stack.  */
-
-static int
-register_on_stack_p (int regnum)
-{
-  return (regnum >= SPARC_L0_REGNUM && regnum <= SPARC_L7_REGNUM)
-    || (regnum >= SPARC_I0_REGNUM && regnum <= SPARC_I7_REGNUM);
-}
-
-/* Return true if, for a non-running thread, REGNUM has been saved on the
-   Thread_Descriptor.  */
-
-static int
-register_in_thread_descriptor_p (int regnum)
-{
-  return (regnum >= SPARC_O0_REGNUM && regnum <= SPARC_O7_REGNUM)
-    || (regnum == SPARC32_PSR_REGNUM)
-    || (regnum >= SPARC_G1_REGNUM && regnum <= SPARC_G7_REGNUM)
-    || (regnum == SPARC32_Y_REGNUM)
-    || (regnum == SPARC32_WIM_REGNUM)
-    || (regnum == SPARC32_FSR_REGNUM)
-    || (regnum >= SPARC_F0_REGNUM && regnum <= SPARC_F0_REGNUM + 31)
-    || (regnum == SPARC32_PC_REGNUM);
-}
-
-/* to_fetch_registers when inferior_ptid is different from the running
-   thread.  */
-
-void
-sparc_ravenscar_ops::fetch_registers (struct regcache *regcache, int regnum)
-{
-  struct gdbarch *gdbarch = regcache->arch ();
-  const int sp_regnum = gdbarch_sp_regnum (gdbarch);
-  const int num_regs = gdbarch_num_regs (gdbarch);
-  int current_regnum;
-  CORE_ADDR current_address;
-  CORE_ADDR thread_descriptor_address;
-  ULONGEST stack_address;
-
-  /* The tid is the thread_id field, which is a pointer to the thread.  */
-  thread_descriptor_address = (CORE_ADDR) inferior_ptid.tid ();
-
-  /* Read the saved SP in the context buffer.  */
-  current_address = thread_descriptor_address
-    + sparc_register_offsets [sp_regnum];
-  supply_register_at_address (regcache, sp_regnum, current_address);
-  regcache_cooked_read_unsigned (regcache, sp_regnum, &stack_address);
-
-  /* Read registers.  */
-  for (current_regnum = 0; current_regnum < num_regs; current_regnum ++)
-    {
-      if (register_in_thread_descriptor_p (current_regnum))
-        {
-          current_address = thread_descriptor_address
-            + sparc_register_offsets [current_regnum];
-          supply_register_at_address (regcache, current_regnum,
-                                      current_address);
-        }
-      else if (register_on_stack_p (current_regnum))
-        {
-          current_address = stack_address
-            + sparc_register_offsets [current_regnum];
-          supply_register_at_address (regcache, current_regnum,
-                                      current_address);
-        }
-    }
-}
-
-/* to_store_registers when inferior_ptid is different from the running
-   thread.  */
-
-void
-sparc_ravenscar_ops::store_registers (struct regcache *regcache, int regnum)
-{
-  struct gdbarch *gdbarch = regcache->arch ();
-  int buf_size = register_size (gdbarch, regnum);
-  gdb_byte buf[buf_size];
-  ULONGEST register_address;
-
-  if (register_in_thread_descriptor_p (regnum))
-    register_address =
-      inferior_ptid.tid () + sparc_register_offsets [regnum];
-  else if (register_on_stack_p (regnum))
-    {
-      regcache_cooked_read_unsigned (regcache, SPARC_SP_REGNUM,
-                                     &register_address);
-      register_address += sparc_register_offsets [regnum];
-    }
-  else
-    return;
-
-  regcache->raw_collect (regnum, buf);
-  write_memory (register_address,
-                buf,
-                buf_size);
-}
-
-static struct sparc_ravenscar_ops sparc_ravenscar_ops;
+static struct ravenscar_arch_ops sparc_ravenscar_ops (sparc_register_offsets,
+						      SPARC_L0_REGNUM,
+						      SPARC_I7_REGNUM);
 
 /* Register ravenscar_arch_ops in GDBARCH.  */
 

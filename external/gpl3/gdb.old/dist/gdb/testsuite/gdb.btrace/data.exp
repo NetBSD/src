@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <markus.t.metzger@intel.com>
 #
@@ -28,7 +28,6 @@ if [prepare_for_testing "failed to prepare" $testfile $srcfile] {
 }
 
 if ![runto_main] {
-    untested "failed to run to main"
     return -1
 }
 
@@ -40,16 +39,24 @@ gdb_test "next" ".*main\.3.*"
 gdb_test "reverse-step" ".*test\.4.*"
 
 # we can't read memory while we're replaying
-gdb_test "print glob" "unavailable\[^\\\r\\\n\]*"
-gdb_test "print loc" "unavailable\[^\\\r\\\n\]*"
+with_test_prefix "replay" {
+    with_test_prefix "default" {
+	gdb_test "print glob" "unavailable\[^\\\r\\\n\]*"
+	gdb_test "print loc" "unavailable\[^\\\r\\\n\]*"
+    }
 
-# we can read memory if we explicitly allow it.
-gdb_test_no_output "set record btrace replay-memory-access read-write"
-gdb_test "print glob" "1"
+    # we can read memory if we explicitly allow it.
+    with_test_prefix "read-write" {
+	gdb_test_no_output "set record btrace replay-memory-access read-write"
+	gdb_test "print glob" "1"
+    }
 
-# we can't if we don't explicitly allow it.
-gdb_test_no_output "set record btrace replay-memory-access read-only"
-gdb_test "print glob" "unavailable\[^\\\r\\\n\]*"
+    # we can't if we don't explicitly allow it.
+    with_test_prefix "read-only" {
+	gdb_test_no_output "set record btrace replay-memory-access read-only"
+	gdb_test "print glob" "unavailable\[^\\\r\\\n\]*"
+    }
+}
 
 # stop replaying and try again
 gdb_test "record goto end" ".*main\.3.*"

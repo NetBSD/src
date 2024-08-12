@@ -1,5 +1,5 @@
 # Type utilities.
-# Copyright (C) 2010-2020 Free Software Foundation, Inc.
+# Copyright (C) 2010-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,11 +30,12 @@ def get_basic_type(type_):
         and typedefs/references converted to the underlying type.
     """
 
-    while (type_.code == gdb.TYPE_CODE_REF or
-           type_.code == gdb.TYPE_CODE_RVALUE_REF or
-           type_.code == gdb.TYPE_CODE_TYPEDEF):
-        if (type_.code == gdb.TYPE_CODE_REF or
-            type_.code == gdb.TYPE_CODE_RVALUE_REF):
+    while (
+        type_.code == gdb.TYPE_CODE_REF
+        or type_.code == gdb.TYPE_CODE_RVALUE_REF
+        or type_.code == gdb.TYPE_CODE_TYPEDEF
+    ):
+        if type_.code == gdb.TYPE_CODE_REF or type_.code == gdb.TYPE_CODE_RVALUE_REF:
             type_ = type_.target()
         else:
             type_ = type_.strip_typedefs()
@@ -57,8 +58,7 @@ def has_field(type_, field):
     """
 
     type_ = get_basic_type(type_)
-    if (type_.code != gdb.TYPE_CODE_STRUCT and
-        type_.code != gdb.TYPE_CODE_UNION):
+    if type_.code != gdb.TYPE_CODE_STRUCT and type_.code != gdb.TYPE_CODE_UNION:
         raise TypeError("not a struct or union")
     for f in type_.fields():
         if f.is_base_class:
@@ -93,7 +93,7 @@ def make_enum_dict(enum_type):
     return enum_dict
 
 
-def deep_items (type_):
+def deep_items(type_):
     """Return an iterator that recursively traverses anonymous fields.
 
     Arguments:
@@ -105,12 +105,13 @@ def deep_items (type_):
         pairs of key, value, but for any anonymous struct or union
         field that field is traversed recursively, depth-first.
     """
-    for k, v in type_.iteritems ():
+    for k, v in type_.iteritems():
         if k:
             yield k, v
         else:
-            for i in deep_items (v.type):
+            for i in deep_items(v.type):
                 yield i
+
 
 class TypePrinter(object):
     """The base class for type printers.
@@ -134,6 +135,7 @@ class TypePrinter(object):
     def instantiate(self):
         return None
 
+
 # Helper function for computing the list of type recognizers.
 def _get_some_type_recognizers(result, plist):
     for printer in plist:
@@ -142,6 +144,7 @@ def _get_some_type_recognizers(result, plist):
             if inst is not None:
                 result.append(inst)
     return None
+
 
 def get_type_recognizers():
     "Return a list of the enabled type recognizers for the current context."
@@ -157,6 +160,7 @@ def get_type_recognizers():
 
     return result
 
+
 def apply_type_recognizers(recognizers, type_obj):
     """Apply the given list of type recognizers to the type TYPE_OBJ.
     If any recognizer in the list recognizes TYPE_OBJ, returns the name
@@ -166,6 +170,7 @@ def apply_type_recognizers(recognizers, type_obj):
         if result is not None:
             return result
     return None
+
 
 def register_type_printer(locus, printer):
     """Register a type printer.
