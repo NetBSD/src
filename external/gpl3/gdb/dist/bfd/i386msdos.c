@@ -1,5 +1,5 @@
 /* BFD back-end for MS-DOS executables.
-   Copyright (C) 1990-2022 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
    Written by Bryan Ford of the University of Utah.
 
    Contributed by the Center for Software Science at the
@@ -49,8 +49,8 @@ msdos_object_p (bfd *abfd)
   asection *section;
   bfd_size_type size;
 
-  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0
-      || (size = bfd_bread (&hdr, sizeof (hdr), abfd)) + 1 < DOS_HDR_SIZE + 1)
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0
+      || (size = bfd_read (&hdr, sizeof (hdr), abfd)) + 1 < DOS_HDR_SIZE + 1)
     {
       if (bfd_get_error () != bfd_error_system_call)
 	bfd_set_error (bfd_error_wrong_format);
@@ -71,7 +71,7 @@ msdos_object_p (bfd *abfd)
       || H_GET_16 (abfd, hdr.e_cparhdr) < 4)
     ;
   else if (bfd_seek (abfd, H_GET_32 (abfd, hdr.e_lfanew), SEEK_SET) != 0
-	   || bfd_bread (buffer, (bfd_size_type) 2, abfd) != 2)
+	   || bfd_read (buffer, 2, abfd) != 2)
     {
       if (bfd_get_error () == bfd_error_system_call)
 	return NULL;
@@ -179,8 +179,8 @@ msdos_write_object_contents (bfd *abfd)
      The program's crt0 code must relocate it to a real stack.  */
   H_PUT_16 (abfd, high_vma, &hdr[16]);
 
-  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0
-      || bfd_bwrite (hdr, (bfd_size_type) sizeof(hdr), abfd) != sizeof(hdr))
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0
+      || bfd_write (hdr, sizeof (hdr), abfd) != sizeof (hdr))
     return false;
 
   return true;
@@ -202,7 +202,7 @@ msdos_set_section_contents (bfd *abfd,
   if (bfd_section_flags (section) & SEC_LOAD)
     {
       if (bfd_seek (abfd, section->filepos + offset, SEEK_SET) != 0
-	  || bfd_bwrite (location, count, abfd) != count)
+	  || bfd_write (location, count, abfd) != count)
 	return false;
     }
 
@@ -219,8 +219,6 @@ msdos_set_section_contents (bfd *abfd,
 #define msdos_bfd_free_cached_info _bfd_generic_bfd_free_cached_info
 #define msdos_new_section_hook _bfd_generic_new_section_hook
 #define msdos_get_section_contents _bfd_generic_get_section_contents
-#define msdos_get_section_contents_in_window \
-  _bfd_generic_get_section_contents_in_window
 #define msdos_bfd_get_relocated_section_contents \
   bfd_generic_get_relocated_section_contents
 #define msdos_bfd_relax_section bfd_generic_relax_section
