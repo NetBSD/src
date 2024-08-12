@@ -1,6 +1,6 @@
 /* Python event definitions -*- c++ -*-
 
-   Copyright (C) 2017-2023 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -50,6 +50,11 @@ GDB_PY_DEFINE_EVENT_TYPE (new_thread,
 			  "NewThreadEvent",
 			  "GDB new thread event object",
 			  thread_event_object_type);
+
+GDB_PY_DEFINE_EVENT_TYPE (thread_exited,
+			  "ThreadExitedEvent",
+			  "GDB thread exited event object",
+			  event_object_type);
 
 GDB_PY_DEFINE_EVENT_TYPE (new_inferior,
 			  "NewInferiorEvent",
@@ -119,4 +124,19 @@ GDB_PY_DEFINE_EVENT_TYPE (gdb_exiting,
 GDB_PY_DEFINE_EVENT_TYPE (connection,
 			  "ConnectionEvent",
 			  "GDB connection added or removed object",
+			  event_object_type);
+
+GDB_PY_DEFINE_EVENT_TYPE (executable_changed,
+			  "ExecutableChangedEvent",
+			  "GDB executable changed event",
+			  event_object_type);
+
+GDB_PY_DEFINE_EVENT_TYPE (new_progspace,
+			  "NewProgspaceEvent",
+			  "GDB new Progspace event object",
+			  event_object_type);
+
+GDB_PY_DEFINE_EVENT_TYPE (free_progspace,
+			  "FreeProgspaceEvent",
+			  "GDB free Progspace event object",
 			  event_object_type);

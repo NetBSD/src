@@ -1,9 +1,9 @@
 # Program to fetch python compilation parameters.
 # Copied from python-config of the 2.7 release.
 
-import sys
-import os
 import getopt
+import os
+import sys
 import sysconfig
 
 valid_opts = ["prefix", "exec-prefix", "includes", "libs", "cflags", "ldflags", "help"]

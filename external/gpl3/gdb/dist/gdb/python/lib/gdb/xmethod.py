@@ -1,5 +1,5 @@
 # Python side of the support for xmethods.
-# Copyright (C) 2013-2023 Free Software Foundation, Inc.
+# Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,9 @@
 
 """Utilities for defining xmethods"""
 
-import gdb
 import re
-import sys
+
+import gdb
 
 
 class XMethod(object):
