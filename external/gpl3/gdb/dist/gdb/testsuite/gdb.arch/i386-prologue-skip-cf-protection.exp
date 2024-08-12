@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Free Software Foundation, Inc.
+# Copyright 2020-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,15 +22,9 @@
 standard_testfile .c
 set binfile ${binfile}
 
-if { ![istarget x86_64-*-*] && ![istarget i?86-*-*] } {
-    verbose "Skipping ${testfile}."
-    return
-}
+require {is_any_target x86_64-*-* i?86-*-*}
 
-if { ![supports_fcf_protection] } {
-    untested "-fcf-protection not supported"
-    return
-}
+require supports_fcf_protection
 
 set opts {debug additional_flags=-fcf-protection=full}
 

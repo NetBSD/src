@@ -1,6 +1,6 @@
 /* Register test program.
 
-   Copyright 2007-2023 Free Software Foundation, Inc.
+   Copyright 2007-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
