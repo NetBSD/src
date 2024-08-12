@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2020-2023 Free Software Foundation, Inc.
+   Copyright 2020-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -21,38 +21,56 @@
 
 #include <asm/unistd.h>
 
-/* int my_execve (const char *file, char *argv[], char *envp[]);  */
-
-.global my_execve
-my_execve:
+/* The SYSCALL macro below current supports calling syscalls with up
+   to 3 arguments, and, assumes the syscall never returns, like exec
+   and exit.  If you need to call syscalls with more arguments or you
+   need to call syscalls that actually return, you'll need to update
+   the macros.  We don't bother with optimizing setting up fewer
+   arguments for syscalls that take fewer arguments, as we're not
+   optimizating for speed or space, but for maintainability.  */
 
 #if defined(__x86_64__)
 
-	mov $__NR_execve, %rax
-	/* rdi, rsi and rdx already contain the right arguments.  */
-my_execve_syscall:
-	syscall
-	ret
+#define SYSCALL(NAME, NR)	\
+.global NAME			;\
+NAME:				;\
+	mov $NR, %rax		;\
+	/* rdi, rsi and rdx already contain the right arguments.  */ \
+NAME ## _syscall:		;\
+	syscall			;\
+	ret			;
 
 #elif defined(__i386__)
 
-	mov $__NR_execve, %eax
-	mov 4(%esp), %ebx
-	mov 8(%esp), %ecx
-	mov 12(%esp), %edx
-my_execve_syscall:
-	int $0x80
+#define SYSCALL(NAME, NR)	\
+.global NAME			;\
+NAME:				;\
+	mov $NR, %eax		;\
+	mov 4(%esp), %ebx	;\
+	mov 8(%esp), %ecx	;\
+	mov 12(%esp), %edx	;\
+NAME ## _syscall:		;\
+	int $0x80		;\
 	ret
 
 #elif defined(__aarch64__)
 
-	mov x8, #__NR_execve
-	/* x0, x1 and x2 already contain the right arguments.  */
-my_execve_syscall:
+#define SYSCALL(NAME, NR)	\
+.global NAME			;\
+NAME:				;\
+	mov x8, NR		;\
+	/* x0, x1 and x2 already contain the right arguments.  */ \
+NAME ## _syscall:		;\
 	svc #0
 
 #else
 # error "Unsupported architecture"
 #endif
+
+SYSCALL (my_execve, __NR_execve)
+
+/* void my_exit (int code);  */
+
+SYSCALL (my_exit, __NR_exit)
 
 	.section	.note.GNU-stack,"",@progbits

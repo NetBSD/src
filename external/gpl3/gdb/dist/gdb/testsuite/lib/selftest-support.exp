@@ -1,4 +1,4 @@
-# Copyright 2003-2023 Free Software Foundation, Inc.
+# Copyright 2003-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -92,15 +92,17 @@ proc selftest_setup { executable function } {
     return 0
 }
 
-# A simple way to run some self-tests.
-
-proc do_self_tests {function body} {
-    global GDB tool
-
+# Prepare for running a self-test by moving the GDB executable to a
+# location where we can use it as the inferior.  Return the filename
+# of the new location.
+#
+# If the current testing setup is not suitable for running a
+# self-test, then return an empty string.
+proc selftest_prepare {} {
     # Are we testing with a remote board?  In that case, the target
     # won't have access to the GDB's auxilliary data files
     # (data-directory, etc.).  It's simpler to just skip.
-    if [is_remote target] {
+    if { [is_remote target]  || [is_remote host] } {
 	return
     }
 
@@ -120,19 +122,31 @@ proc do_self_tests {function body} {
     # Run the test with self.  Copy the file executable file in case
     # this OS doesn't like to edit its own text space.
 
-    set GDB_FULLPATH [find_gdb $GDB]
+    set gdb_fullpath [find_gdb $::GDB]
 
     if {[is_remote host]} {
-	set xgdb x$tool
+	set xgdb x$::tool
     } else {
-	set xgdb [standard_output_file x$tool]
+	set xgdb [standard_output_file x$::tool]
     }
 
     # Remove any old copy lying around.
     remote_file host delete $xgdb
 
+    set filename [remote_download host $gdb_fullpath $xgdb]
+
+    return $filename
+}
+
+# A simple way to run some self-tests.
+
+proc do_self_tests {function body} {
+    set file [selftest_prepare]
+    if { $file eq "" } {
+	return
+    }
+
     gdb_start
-    set file [remote_download host $GDB_FULLPATH $xgdb]
 
     # When debugging GDB with GDB, some operations can take a relatively long
     # time, especially if the build is non-optimized.  Bump the timeout for the

@@ -1,4 +1,4 @@
-# Copyright 2009-2023 Free Software Foundation, Inc.
+# Copyright 2009-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -92,7 +92,11 @@ proc vgdb_start { {active_at_startup 1} } {
     set vgdbcmd "target remote | vgdb --wait=2 --max-invoke-ms=2500 --pid=$vgdbpid"
 
     if { $active_at_startup } {
-	gdb_test "$vgdbcmd" " in \\.?_start .*" "target remote for vgdb"
+	set start_re1 " in \\.?_start "
+	set start_re2 "\\.?_start \\(\\) at "
+	set start_re3 "$::hex in \\?\\? \\(\\) from "
+	gdb_test "$vgdbcmd" "($start_re1|$start_re2|$start_re3).*" \
+	    "target remote for vgdb"
     } else {
 	# Let $binfile run a bit before attaching.  This is a bit of a hack,
 	# in that it lets test-case valgrind-infcall-2.exp run to the point of
