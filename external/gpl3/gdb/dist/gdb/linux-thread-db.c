@@ -1,6 +1,6 @@
 /* libthread_db assisted debugging support, generic parts.
 
-   Copyright (C) 1999-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,14 +17,13 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include <dlfcn.h>
 #include "gdb_proc_service.h"
 #include "nat/gdb_thread_db.h"
 #include "gdbsupport/gdb_vecs.h"
 #include "bfd.h"
 #include "command.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "gdbthread.h"
 #include "inferior.h"
 #include "infrun.h"
@@ -107,7 +106,7 @@ public:
   thread_info *thread_handle_to_thread_info (const gdb_byte *thread_handle,
 					     int handle_len,
 					     inferior *inf) override;
-  gdb::byte_vector thread_info_to_thread_handle (struct thread_info *) override;
+  gdb::array_view<const gdb_byte> thread_info_to_thread_handle (struct thread_info *) override;
 };
 
 static std::string libthread_db_search_path = LIBTHREAD_DB_SEARCH_PATH;
@@ -312,6 +311,7 @@ struct thread_db_thread_info : public private_thread_info
   /* Cached thread state.  */
   td_thrhandle_t th {};
   thread_t tid {};
+  std::optional<gdb::byte_vector> thread_handle;
 };
 
 static thread_db_thread_info *
@@ -422,7 +422,7 @@ thread_from_lwp (thread_info *stopped, ptid_t ptid)
 	   thread_db_err_str (err));
 
   /* Fill the cache.  */
-  tp = find_thread_ptid (stopped->inf->process_target (), ptid);
+  tp = stopped->inf->process_target ()->find_thread (ptid);
   return record_thread (info, tp, ptid, &th, &ti);
 }
 
@@ -439,7 +439,7 @@ thread_db_notice_clone (ptid_t parent, ptid_t child)
   if (info == NULL)
     return 0;
 
-  thread_info *stopped = find_thread_ptid (linux_target, parent);
+  thread_info *stopped = linux_target->find_thread (parent);
 
   thread_from_lwp (stopped, child);
 
@@ -685,7 +685,7 @@ check_thread_db_callback (const td_thrhandle_t *th, void *arg)
      to how GDB accesses TLS could result in this passing
      without exercising the calls it's supposed to.  */
   ptid_t ptid = ptid_t (tdb_testinfo->info->pid, ti.ti_lid);
-  thread_info *thread_info = find_thread_ptid (linux_target, ptid);
+  thread_info *thread_info = linux_target->find_thread (ptid);
   if (thread_info != NULL && thread_info->priv != NULL)
     {
       LOG ("; errno");
@@ -694,7 +694,7 @@ check_thread_db_callback (const td_thrhandle_t *th, void *arg)
       switch_to_thread (thread_info);
 
       expression_up expr = parse_expression ("(int) errno");
-      struct value *val = evaluate_expression (expr.get ());
+      struct value *val = expr->evaluate ();
 
       if (tdb_testinfo->log_progress)
 	{
@@ -809,8 +809,8 @@ static bool
 libpthread_objfile_p (objfile *obj)
 {
   return (libpthread_name_p (objfile_name (obj))
-          && lookup_minimal_symbol ("pthread_create",
-	                            NULL,
+	  && lookup_minimal_symbol ("pthread_create",
+				    NULL,
 				    obj).minsym != NULL);
 }
 
@@ -1219,7 +1219,7 @@ thread_db_load (void)
     return false;
 
   /* Don't attempt to use thread_db for remote targets.  */
-  if (!(target_can_run () || core_bfd))
+  if (!(target_can_run () || current_program_space->core_bfd () != nullptr))
     return false;
 
   if (thread_db_load_search ())
@@ -1277,13 +1277,12 @@ thread_db_new_objfile (struct objfile *objfile)
   /* This observer must always be called with inferior_ptid set
      correctly.  */
 
-  if (objfile != NULL
-      /* libpthread with separate debug info has its debug info file already
+  if (/* libpthread with separate debug info has its debug info file already
 	 loaded (and notified without successful thread_db initialization)
 	 the time gdb::observers::new_objfile.notify is called for the library itself.
 	 Static executables have their separate debug info loaded already
 	 before the inferior has started.  */
-      && objfile->separate_debug_objfile_backlink == NULL
+      objfile->separate_debug_objfile_backlink == NULL
       /* Only check for thread_db if we loaded libpthread,
 	 or if this is the main symbol file.
 	 We need to check OBJF_MAINLINE to handle the case of debugging
@@ -1366,7 +1365,8 @@ record_thread (struct thread_db_info *info,
      thread with this PTID, but it's marked exited, then the kernel
      reused the tid of an old thread.  */
   if (tp == NULL || tp->state == THREAD_EXITED)
-    tp = add_thread_with_info (info->process_target, ptid, priv);
+    tp = add_thread_with_info (info->process_target, ptid,
+			       private_thread_info_up (priv));
   else
     tp->priv.reset (priv);
 
@@ -1417,7 +1417,7 @@ thread_db_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
     return ptid;
 
   /* Fill in the thread's user-level thread id and status.  */
-  thread_from_lwp (find_thread_ptid (beneath, ptid), ptid);
+  thread_from_lwp (beneath->find_thread (ptid), ptid);
 
   return ptid;
 }
@@ -1511,7 +1511,7 @@ find_new_threads_callback (const td_thrhandle_t *th_p, void *data)
     }
 
   ptid_t ptid (info->pid, ti.ti_lid);
-  tp = find_thread_ptid (info->process_target, ptid);
+  tp = info->process_target->find_thread (ptid);
   if (tp == NULL || tp->priv == NULL)
     record_thread (info, tp, ptid, th_p, &ti);
 
@@ -1655,7 +1655,7 @@ thread_db_target::update_thread_list ()
 std::string
 thread_db_target::pid_to_str (ptid_t ptid)
 {
-  thread_info *thread_info = find_thread_ptid (current_inferior (), ptid);
+  thread_info *thread_info = current_inferior ()->find_thread (ptid);
 
   if (thread_info != NULL && thread_info->priv != NULL)
     {
@@ -1723,20 +1723,20 @@ thread_db_target::thread_handle_to_thread_info (const gdb_byte *thread_handle,
 
 /* Return the thread handle associated the thread_info pointer TP.  */
 
-gdb::byte_vector
+gdb::array_view<const gdb_byte>
 thread_db_target::thread_info_to_thread_handle (struct thread_info *tp)
 {
   thread_db_thread_info *priv = get_thread_db_thread_info (tp);
 
   if (priv == NULL)
-    return gdb::byte_vector ();
+    return {};
 
   int handle_size = sizeof (priv->tid);
-  gdb::byte_vector rv (handle_size);
+  priv->thread_handle.emplace (handle_size);
 
-  memcpy (rv.data (), &priv->tid, handle_size);
+  memcpy (priv->thread_handle->data (), &priv->tid, handle_size);
 
-  return rv;
+  return *priv->thread_handle;
 }
 
 /* Get the address of the thread local variable in load module LM which
@@ -1751,7 +1751,7 @@ thread_db_target::get_thread_local_address (ptid_t ptid,
   process_stratum_target *beneath
     = as_process_stratum_target (this->beneath ());
   /* Find the matching thread.  */
-  thread_info = find_thread_ptid (beneath, ptid);
+  thread_info = beneath->find_thread (ptid);
 
   /* We may not have discovered the thread yet.  */
   if (thread_info != NULL && thread_info->priv == NULL)

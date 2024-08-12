@@ -1,5 +1,5 @@
 /* C preprocessor macro expansion commands for GDB.
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GDB.
@@ -18,14 +18,13 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
-#include "defs.h"
 #include "macrotab.h"
 #include "macroexp.h"
 #include "macroscope.h"
 #include "cli/cli-style.h"
 #include "cli/cli-utils.h"
 #include "command.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "linespec.h"
 
 
@@ -481,7 +480,7 @@ expression work together to yield a pre-processed expression."),
   add_info ("macro", info_macro_command,
 	    _("Show the definition of MACRO, and it's source location.\n\
 Usage: info macro [-a|-all] [--] MACRO\n\
-Options: \n\
+Options:\n\
   -a, --all    Output all definitions of MACRO in the current compilation\
  unit.\n\
   --           Specify the end of arguments and the beginning of the MACRO."));
