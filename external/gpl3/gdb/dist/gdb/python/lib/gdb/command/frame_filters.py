@@ -1,5 +1,5 @@
 # Frame-filter commands.
-# Copyright (C) 2013-2023 Free Software Foundation, Inc.
+# Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,8 +17,10 @@
 """GDB commands for working with frame-filters."""
 
 import sys
+
 import gdb
 import gdb.frames
+
 
 # GDB Commands.
 class SetFilterPrefixCmd(gdb.Command):
@@ -444,7 +446,7 @@ class ShowFrameFilterPriority(gdb.Command):
         if text.count(" ") == 0:
             return _complete_frame_filter_list(text, word, False)
         else:
-            printer_list = frame._return_list(text.split()[0].rstrip())
+            printer_list = gdb.frames.return_list(text.split()[0].rstrip())
             return _complete_frame_filter_name(word, printer_list)
 
     def invoke(self, arg, from_tty):
@@ -453,20 +455,15 @@ class ShowFrameFilterPriority(gdb.Command):
             return
         filter_name = command_tuple[1]
         list_name = command_tuple[0]
-        try:
-            priority = self.get_filter_priority(list_name, filter_name)
-        except Exception:
-            e = sys.exc_info()[1]
-            print("Error printing filter priority for '" + name + "':" + str(e))
-        else:
-            print(
-                "Priority of filter '"
-                + filter_name
-                + "' in list '"
-                + list_name
-                + "' is: "
-                + str(priority)
-            )
+        priority = self.get_filter_priority(list_name, filter_name)
+        print(
+            "Priority of filter '"
+            + filter_name
+            + "' in list '"
+            + list_name
+            + "' is: "
+            + str(priority)
+        )
 
 
 # Register commands

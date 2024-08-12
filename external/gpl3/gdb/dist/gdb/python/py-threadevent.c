@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,7 +15,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "py-event.h"
 #include "infrun.h"
 #include "gdbthread.h"
@@ -28,8 +27,7 @@ py_get_event_thread (ptid_t ptid)
   if (non_stop)
     {
       thread_info *thread
-	= find_thread_ptid (current_inferior ()->process_target (),
-			    ptid);
+	= current_inferior ()->find_thread (ptid);
       if (thread != nullptr)
 	return thread_to_thread_object (thread);
       PyErr_SetString (PyExc_RuntimeError, "Could not find event thread");
@@ -53,4 +51,25 @@ create_thread_event_object (PyTypeObject *py_type, PyObject *thread)
     return NULL;
 
   return thread_event_obj;
+}
+
+/* Emits a thread exit event for THREAD */
+
+int
+emit_thread_exit_event (thread_info * thread)
+{
+  if (evregpy_no_listeners_p (gdb_py_events.thread_exited))
+    return 0;
+
+  auto py_thr = thread_to_thread_object (thread);
+
+  if (py_thr == nullptr)
+    return -1;
+
+  auto inf_thr = create_thread_event_object (&thread_exited_event_object_type,
+				     py_thr.get ());
+  if (inf_thr == nullptr)
+    return -1;
+
+  return evpy_emit_event (inf_thr.get (), gdb_py_events.thread_exited);
 }
