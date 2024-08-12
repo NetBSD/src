@@ -1,5 +1,5 @@
 /* Main simulator entry points specific to the IQ2000.
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
 This file is part of the GNU simulators.
@@ -59,7 +59,6 @@ SIM_DESC
 sim_open (SIM_OPEN_KIND kind, host_callback *callback, struct bfd *abfd,
 	  char * const *argv)
 {
-  char c;
   int i;
   SIM_DESC sd = sim_state_alloc (kind, callback);
 
@@ -70,7 +69,8 @@ sim_open (SIM_OPEN_KIND kind, host_callback *callback, struct bfd *abfd,
   current_target_byte_order = BFD_ENDIAN_BIG;
 
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
+  if (sim_cpu_alloc_all_extra (sd, 0, sizeof (struct iq2000_sim_cpu))
+      != SIM_RC_OK)
     {
       free_state (sd);
       return 0;
@@ -136,7 +136,7 @@ sim_create_inferior (SIM_DESC sd, struct bfd *abfd, char * const *argv,
 {
   SIM_CPU *current_cpu = STATE_CPU (sd, 0);
   host_callback *cb = STATE_CALLBACK (sd);
-  SIM_ADDR addr;
+  bfd_vma addr;
 
   if (abfd != NULL)
     addr = bfd_get_start_address (abfd);

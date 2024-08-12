@@ -1,9 +1,9 @@
-/* BPF simulator support code header
-   Copyright (C) 2023-2024 Free Software Foundation, Inc.
+/* Example synacor simulator.
 
-   Contributed by Oracle Inc.
+   Copyright (C) 2005-2024 Free Software Foundation, Inc.
+   Contributed by Mike Frysinger.
 
-   This file is part of GDB, the GNU debugger.
+   This file is part of the GNU simulators.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,16 +18,21 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef BPF_SIM_H
-#define BPF_SIM_H
+#ifndef EXAMPLE_SYNACOR_SIM_H
+#define EXAMPLE_SYNACOR_SIM_H
 
-/* The following struct determines the state of the simulator.  */
+struct example_sim_cpu {
+  uint16_t regs[8];
+  sim_cia pc;
 
-struct bpf_sim_state
-{
-
+  /* This isn't a real register, and the stack is not directly addressable,
+     so use memory outside of the 16-bit address space.  */
+  uint32_t sp;
 };
 
-#define BPF_SIM_STATE(sd) ((struct bpf_sim_state *) STATE_ARCH_DATA (sd))
+#define EXAMPLE_SIM_CPU(cpu) ((struct example_sim_cpu *) CPU_ARCH_DATA (cpu))
 
-#endif /* ! BPF_SIM_H */
+extern void step_once (SIM_CPU *);
+extern void initialize_cpu (SIM_DESC, SIM_CPU *);
+
+#endif

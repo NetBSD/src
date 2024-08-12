@@ -1,6 +1,6 @@
 /* Example synacor simulator.
 
-   Copyright (C) 2005-2023 Free Software Foundation, Inc.
+   Copyright (C) 2005-2024 Free Software Foundation, Inc.
    Contributed by Mike Frysinger.
 
    This file is part of simulators.
@@ -26,6 +26,8 @@
 
 #include "sim-main.h"
 #include "sim-signal.h"
+
+#include "example-synacor-sim.h"
 
 /* Get the register number from the number.  */
 static uint16_t
@@ -34,7 +36,7 @@ register_num (SIM_CPU *cpu, uint16_t num)
   SIM_DESC sd = CPU_STATE (cpu);
 
   if (num < 0x8000 || num >= 0x8008)
-    sim_engine_halt (sd, cpu, NULL, cpu->pc, sim_signalled, SIM_SIGILL);
+    sim_engine_halt (sd, cpu, NULL, sim_pc_get (cpu), sim_signalled, SIM_SIGILL);
 
   return num & 0xf;
 }
@@ -44,6 +46,7 @@ static uint16_t
 interp_num (SIM_CPU *cpu, uint16_t num)
 {
   SIM_DESC sd = CPU_STATE (cpu);
+  struct example_sim_cpu *example_cpu = EXAMPLE_SIM_CPU (cpu);
 
   if (num < 0x8000)
     {
@@ -55,13 +58,13 @@ interp_num (SIM_CPU *cpu, uint16_t num)
     {
       /* Numbers 32768..32775 instead mean registers 0..7.  */
       TRACE_DECODE (cpu, "%#x is register R%i", num, num & 0xf);
-      return cpu->regs[num & 0xf];
+      return example_cpu->regs[num & 0xf];
     }
   else
     {
       /* Numbers 32776..65535 are invalid.  */
       TRACE_DECODE (cpu, "%#x is an invalid number", num);
-      sim_engine_halt (sd, cpu, NULL, cpu->pc, sim_signalled, SIM_SIGILL);
+      sim_engine_halt (sd, cpu, NULL, example_cpu->pc, sim_signalled, SIM_SIGILL);
     }
 }
 
@@ -69,6 +72,7 @@ interp_num (SIM_CPU *cpu, uint16_t num)
 void step_once (SIM_CPU *cpu)
 {
   SIM_DESC sd = CPU_STATE (cpu);
+  struct example_sim_cpu *example_cpu = EXAMPLE_SIM_CPU (cpu);
   uint16_t iw1, num1;
   sim_cia pc = sim_pc_get (cpu);
 
@@ -96,7 +100,7 @@ void step_once (SIM_CPU *cpu)
       TRACE_INSN (cpu, "SET R%i %#x", num2, num3);
 
       TRACE_REGISTER (cpu, "R%i = %#x", num2, num3);
-      cpu->regs[num2] = num3;
+      example_cpu->regs[num2] = num3;
 
       pc += 6;
     }
@@ -110,9 +114,9 @@ void step_once (SIM_CPU *cpu)
       TRACE_EXTRACT (cpu, "PUSH %#x", iw2);
       TRACE_INSN (cpu, "PUSH %#x", num2);
 
-      sim_core_write_aligned_2 (cpu, pc, write_map, cpu->sp, num2);
-      cpu->sp -= 2;
-      TRACE_REGISTER (cpu, "SP = %#x", cpu->sp);
+      sim_core_write_aligned_2 (cpu, pc, write_map, example_cpu->sp, num2);
+      example_cpu->sp -= 2;
+      TRACE_REGISTER (cpu, "SP = %#x", example_cpu->sp);
 
       pc += 4;
     }
@@ -126,12 +130,12 @@ void step_once (SIM_CPU *cpu)
       num2 = register_num (cpu, iw2);
       TRACE_EXTRACT (cpu, "POP %#x", iw2);
       TRACE_INSN (cpu, "POP R%i", num2);
-      cpu->sp += 2;
-      TRACE_REGISTER (cpu, "SP = %#x", cpu->sp);
-      result = sim_core_read_aligned_2 (cpu, pc, read_map, cpu->sp);
+      example_cpu->sp += 2;
+      TRACE_REGISTER (cpu, "SP = %#x", example_cpu->sp);
+      result = sim_core_read_aligned_2 (cpu, pc, read_map, example_cpu->sp);
 
       TRACE_REGISTER (cpu, "R%i = %#x", num2, result);
-      cpu->regs[num2] = result;
+      example_cpu->regs[num2] = result;
 
       pc += 4;
     }
@@ -153,7 +157,7 @@ void step_once (SIM_CPU *cpu)
       TRACE_DECODE (cpu, "R%i = (%#x == %#x) = %i", num2, num3, num4, result);
 
       TRACE_REGISTER (cpu, "R%i = %#x", num2, result);
-      cpu->regs[num2] = result;
+      example_cpu->regs[num2] = result;
 
       pc += 8;
     }
@@ -175,7 +179,7 @@ void step_once (SIM_CPU *cpu)
       TRACE_DECODE (cpu, "R%i = (%#x > %#x) = %i", num2, num3, num4, result);
 
       TRACE_REGISTER (cpu, "R%i = %#x", num2, result);
-      cpu->regs[num2] = result;
+      example_cpu->regs[num2] = result;
 
       pc += 8;
     }
@@ -258,7 +262,7 @@ void step_once (SIM_CPU *cpu)
 		    32768, result);
 
       TRACE_REGISTER (cpu, "R%i = %#x", num2, result);
-      cpu->regs[num2] = result;
+      example_cpu->regs[num2] = result;
 
       pc += 8;
     }
@@ -281,7 +285,7 @@ void step_once (SIM_CPU *cpu)
 		    32768, result);
 
       TRACE_REGISTER (cpu, "R%i = %#x", num2, result);
-      cpu->regs[num2] = result;
+      example_cpu->regs[num2] = result;
 
       pc += 8;
     }
@@ -302,7 +306,7 @@ void step_once (SIM_CPU *cpu)
       TRACE_DECODE (cpu, "R%i = %#x %% %#x = %#x", num2, num3, num4, result);
 
       TRACE_REGISTER (cpu, "R%i = %#x", num2, result);
-      cpu->regs[num2] = result;
+      example_cpu->regs[num2] = result;
 
       pc += 8;
     }
@@ -323,7 +327,7 @@ void step_once (SIM_CPU *cpu)
       TRACE_DECODE (cpu, "R%i = %#x & %#x = %#x", num2, num3, num4, result);
 
       TRACE_REGISTER (cpu, "R%i = %#x", num2, result);
-      cpu->regs[num2] = result;
+      example_cpu->regs[num2] = result;
 
       pc += 8;
     }
@@ -344,7 +348,7 @@ void step_once (SIM_CPU *cpu)
       TRACE_DECODE (cpu, "R%i = %#x | %#x = %#x", num2, num3, num4, result);
 
       TRACE_REGISTER (cpu, "R%i = %#x", num2, result);
-      cpu->regs[num2] = result;
+      example_cpu->regs[num2] = result;
 
       pc += 8;
     }
@@ -363,7 +367,7 @@ void step_once (SIM_CPU *cpu)
       TRACE_DECODE (cpu, "R%i = (~%#x) & 0x7fff = %#x", num2, num3, result);
 
       TRACE_REGISTER (cpu, "R%i = %#x", num2, result);
-      cpu->regs[num2] = result;
+      example_cpu->regs[num2] = result;
 
       pc += 6;
     }
@@ -385,7 +389,7 @@ void step_once (SIM_CPU *cpu)
       result = sim_core_read_aligned_2 (cpu, pc, read_map, num3);
 
       TRACE_REGISTER (cpu, "R%i = %#x", num2, result);
-      cpu->regs[num2] = result;
+      example_cpu->regs[num2] = result;
 
       pc += 6;
     }
@@ -422,9 +426,9 @@ void step_once (SIM_CPU *cpu)
       TRACE_INSN (cpu, "CALL %#x", num2);
 
       TRACE_MEMORY (cpu, "pushing %#x onto stack", (pc + 4) >> 1);
-      sim_core_write_aligned_2 (cpu, pc, write_map, cpu->sp, (pc + 4) >> 1);
-      cpu->sp -= 2;
-      TRACE_REGISTER (cpu, "SP = %#x", cpu->sp);
+      sim_core_write_aligned_2 (cpu, pc, write_map, example_cpu->sp, (pc + 4) >> 1);
+      example_cpu->sp -= 2;
+      TRACE_REGISTER (cpu, "SP = %#x", example_cpu->sp);
 
       pc = num2;
       TRACE_BRANCH (cpu, "CALL %#x", pc);
@@ -436,9 +440,9 @@ void step_once (SIM_CPU *cpu)
       uint16_t result;
 
       TRACE_INSN (cpu, "RET");
-      cpu->sp += 2;
-      TRACE_REGISTER (cpu, "SP = %#x", cpu->sp);
-      result = sim_core_read_aligned_2 (cpu, pc, read_map, cpu->sp);
+      example_cpu->sp += 2;
+      TRACE_REGISTER (cpu, "SP = %#x", example_cpu->sp);
+      result = sim_core_read_aligned_2 (cpu, pc, read_map, example_cpu->sp);
       TRACE_MEMORY (cpu, "popping %#x off of stack", result << 1);
 
       pc = result << 1;
@@ -485,7 +489,7 @@ void step_once (SIM_CPU *cpu)
 	}
 
       TRACE_REGISTER (cpu, "R%i = %#x", iw2 & 0xf, c);
-      cpu->regs[iw2 & 0xf] = c;
+      example_cpu->regs[iw2 & 0xf] = c;
 
       pc += 4;
     }
@@ -507,14 +511,18 @@ void step_once (SIM_CPU *cpu)
 static sim_cia
 pc_get (sim_cpu *cpu)
 {
-  return cpu->pc;
+  struct example_sim_cpu *example_cpu = EXAMPLE_SIM_CPU (cpu);
+
+  return example_cpu->pc;
 }
 
 /* Set the program counter for this cpu to the new pc value. */
 static void
 pc_set (sim_cpu *cpu, sim_cia pc)
 {
-  cpu->pc = pc;
+  struct example_sim_cpu *example_cpu = EXAMPLE_SIM_CPU (cpu);
+
+  example_cpu->pc = pc;
 }
 
 /* Initialize the state for a single cpu.  Usuaully this involves clearing all
@@ -522,10 +530,12 @@ pc_set (sim_cpu *cpu, sim_cia pc)
    helper functions too.  */
 void initialize_cpu (SIM_DESC sd, SIM_CPU *cpu)
 {
-  memset (cpu->regs, 0, sizeof (cpu->regs));
-  cpu->pc = 0;
+  struct example_sim_cpu *example_cpu = EXAMPLE_SIM_CPU (cpu);
+
+  memset (example_cpu->regs, 0, sizeof (example_cpu->regs));
+  example_cpu->pc = 0;
   /* Make sure it's initialized outside of the 16-bit address space.  */
-  cpu->sp = 0x80000;
+  example_cpu->sp = 0x80000;
 
   CPU_PC_FETCH (cpu) = pc_get;
   CPU_PC_STORE (cpu) = pc_set;
