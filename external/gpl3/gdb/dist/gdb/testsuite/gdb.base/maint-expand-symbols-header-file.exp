@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Free Software Foundation, Inc.
+# Copyright 2020-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,13 +40,13 @@ gdb_test_no_output "maint info symtabs" $test
 gdb_test_no_output "maint expand-symtabs maint-expand-symbols-header-file.h"
 
 # Check that the include symtab was in fact expanded.
-set file_re "\[^\r\n\]*/maint-expand-symbols-header-file.h"
+set file_re "\[^\r\n\]*maint-expand-symbols-header-file.h"
 gdb_test "maint info symtabs" \
     "\r\n\t{ symtab $file_re \\(\\(struct symtab \\*\\) $hex\\)\r\n.*" \
     "check header file psymtab expansion"
 
 # Check that the symtab the include symtab was referring to was expanded.
-set file_re "\[^\r\n\]*/maint-expand-symbols-header-file.c"
+set file_re "\[^\r\n\]*maint-expand-symbols-header-file.c"
 gdb_test "maint info symtabs" \
     "\r\n\t{ symtab $file_re \\(\\(struct symtab \\*\\) $hex\\)\r\n.*" \
     "check source file psymtab expansion"

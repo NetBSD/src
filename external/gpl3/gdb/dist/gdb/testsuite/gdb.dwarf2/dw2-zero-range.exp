@@ -1,4 +1,4 @@
-# Copyright 2021-2023 Free Software Foundation, Inc.
+# Copyright 2021-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,16 +19,70 @@
 load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2 and use gas.
-if {![dwarf2_support]} {
-    verbose "Skipping $gdb_test_file_name."
-    return 0
-}
-
-if {[skip_shlib_tests]} {
-    return 0
-}
+require dwarf2_support allow_shlib_tests
 
 standard_testfile .c -shlib.c -dw.S
+
+# Test for presence of complaint, with the lib relocated.
+
+proc_with_prefix test_relocated { exec_path lib_path complaint_re readnow_p } {
+    clean_restart $exec_path
+    gdb_load_shlib $lib_path
+
+    # Don't load the symbols for $lib_path during runto_main.
+    # Instead, we do this afterwards using "sharedlibrary $lib_path".
+    gdb_test_no_output "set auto-solib-add off"
+
+    if { ![runto_main] } {
+	return
+    }
+
+    # Test for presence of complaint.
+    with_complaints 1 {
+	set have_complaint 0
+	gdb_test_multiple "maint with dwarf synchronous on -- sharedlibrary [file tail $lib_path]" "load shared library" {
+	    -re -wrap $complaint_re {
+		set have_complaint 1
+	    }
+	    -re -wrap "" {
+	    }
+	}
+
+	# The complaint won't be seen if an index is in use.
+	if {[have_index $lib_path] == ""} {
+	    gdb_assert { $have_complaint } "complaint"
+	}
+
+	if { ! $readnow_p } {
+	    gdb_test "maint expand-symtabs $::srcfile2" $complaint_re \
+		"complaint when expanding symtab"
+	}
+    }
+}
+
+# Test for presence of complaint, with the lib unrelocated.
+
+proc_with_prefix test_unrelocated { exec_path lib_path complaint_re readnow_p } {
+    clean_restart
+    gdb_test_no_output "maint set dwarf synchronous on"
+
+    with_complaints 1 {
+	gdb_load $lib_path
+	set have_complaint [regexp $complaint_re.* $::gdb_file_cmd_msg]
+
+	# The complaint won't be seen if an index is in use.
+	if {[have_index $lib_path] == ""} {
+	    gdb_assert { $have_complaint } "complaint"
+	}
+
+	gdb_test_no_output "maint set dwarf synchronous off"
+
+	if { ! $readnow_p } {
+	    gdb_test "maint expand-symtabs $::srcfile2" $complaint_re \
+		"complaint when expanding symtab"
+	}
+    }
+}
 
 # Test with both a .debug_ranges section (DWARF 4) and a .debug_rnglists
 # section (DWARF 5).
@@ -93,74 +147,27 @@ foreach_with_prefix ranges_sect {ranges rnglists} {
 	error "invalid ranges section kind"
     }
 
-    set lib1 [standard_output_file shr1.sl]
-    set lib_opts "nodebug"
-
-    set sources [list ${srcdir}/${subdir}/$srcfile2 $asm_file]
-    if { [gdb_compile_shlib $sources ${lib1} $lib_opts] != "" } {
+    set lib_path [standard_output_file shr1-${ranges_sect}.sl]
+    set lib_sources [list ${srcdir}/${subdir}/$srcfile2 $asm_file]
+    if { [gdb_compile_shlib $lib_sources $lib_path {nodebug}] != "" } {
 	untested "failed to compile"
-	return -1
+	return
     }
 
-    set exec_opts [list debug shlib=${lib1}]
-    set sources ${srcdir}/${subdir}/${srcfile}
-    if { [gdb_compile $sources  ${binfile} executable \
-	      $exec_opts] != ""} {
+    set exec_sources ${srcdir}/${subdir}/${srcfile}
+    set exec_path ${binfile}-${ranges_sect}
+    set exec_opts [list debug shlib=${lib_path}]
+    if { [gdb_compile $exec_sources $exec_path executable $exec_opts] != ""} {
 	untested "failed to compile"
-	return -1
-    }
-
-    clean_restart $binfile
-
-    set readnow_p [readnow]
-
-    # Don't load the symbols for $lib1 during runto_main.
-    # Instead, we do this afterwards using "sharedlibrary $lib1".
-    gdb_test_no_output "set auto-solib-add off"
-
-    if { ![runto_main] } {
-	return -1
+	return
     }
 
     set complaint_re ".debug_${ranges_sect} entry has start address of zero"
-    set re \
+    set complaint_re \
 	"During symbol reading: $complaint_re \\\[in module \[^\r\n\]*\\\]"
 
-    # Test for presence of complaint, with lib1 relocated.
-    with_complaints 1 {
-	set test "Zero address complaint - relocated - psymtab"
-	set have_complaint 0
-	gdb_test_multiple "sharedlibrary $lib1" $test {
-	    -re -wrap $re {
-		set have_complaint 1
-	    }
-	    -re -wrap "" {
-	    }
-	}
+    set readnow_p [readnow]
 
-	gdb_assert { $have_complaint } $test
-    }
-
-    if { ! $readnow_p } {
-	with_complaints 1 {
-	    gdb_test "maint expand-symtabs $srcfile2" $re \
-		"Zero address complaint - relocated - symtab"
-	}
-    }
-
-    clean_restart
-    # Test for presence of complaint, with lib1 unrelocated.
-    with_complaints 1 {
-	gdb_load $lib1
-	set test "Zero address complaint - unrelocated - psymtab"
-	set have_complaint [regexp $re.* $gdb_file_cmd_msg]
-	gdb_assert { $have_complaint } $test
-    }
-
-    if { ! $readnow_p } {
-	with_complaints 1 {
-	    gdb_test "maint expand-symtabs $srcfile2" $re \
-		"Zero address complaint - unrelocated - symtab"
-	}
-    }
+    test_relocated $exec_path $lib_path $complaint_re $readnow_p
+    test_unrelocated $exec_path $lib_path $complaint_re $readnow_p
 }

@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Free Software Foundation, Inc.
+# Copyright 2020-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,13 +26,11 @@
 # directives.
 
 # Check if starti command is supported.
-require use_gdb_stub 0
+require !use_gdb_stub
 
 load_lib dwarf.exp
 
-if {![dwarf2_support]} {
-    return 0
-}
+require dwarf2_support
 
 standard_testfile .S
 

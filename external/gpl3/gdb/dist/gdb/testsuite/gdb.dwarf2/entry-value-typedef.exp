@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Free Software Foundation, Inc.
+# Copyright 2022-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,4 +42,4 @@ gdb_test "continue" "Catchpoint $::decimal \\(exception thrown\\).*"
 
 # Without the corresponding fix, GDB would hit an internal error before
 # printing the frame for main.
-gdb_test "backtrace" " $::hex in func \\(t=t@entry=@$::hex: 1234\\).* $::hex in main .*"
+gdb_test "backtrace" " $::hex (\\\[PAC\\\] )?in func \\(t=t@entry=@$::hex: 1234\\).* $::hex in main .*"

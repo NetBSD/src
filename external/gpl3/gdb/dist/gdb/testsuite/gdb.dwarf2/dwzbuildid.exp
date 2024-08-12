@@ -1,4 +1,4 @@
-# Copyright 2013-2023 Free Software Foundation, Inc.
+# Copyright 2013-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,14 +16,10 @@
 load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2 and use gas.
-if {![dwarf2_support]} {
-    return 0
-}
+require dwarf2_support
 
 # No remote host testing either.
-if {[is_remote host]} {
-    return 0
-}
+require {!is_remote host}
 
 
 # Lots of source files since we test a few cases and make new files
@@ -50,9 +46,12 @@ proc write_just_debugaltlink {filename dwzname buildid} {
 
 	# Only the DWARF reader checks .gnu_debugaltlink, so make sure
 	# there is a bit of DWARF in here.
-	cu {} {
+	cu { label cu_start } {
 	    compile_unit {{language @DW_LANG_C}} {
 	    }
+	}
+	aranges {} cu_start {
+	    arange {} 0 0
 	}
     }
 }
@@ -69,7 +68,7 @@ proc write_dwarf_file {filename buildid {value 99}} {
 
 	build_id $buildid
 
-	cu {} {
+	cu { label cu_start } {
 	    compile_unit {{language @DW_LANG_C}} {
 		int_label2: base_type {
 		    {name int}
@@ -84,6 +83,10 @@ proc write_dwarf_file {filename buildid {value 99}} {
 		}
 	    }
 	}
+
+	aranges {} cu_start {
+	    arange {} 0 0
+	}
     }
 }
 
@@ -94,11 +97,11 @@ if  { [gdb_compile ${srcdir}/${subdir}/${srcfile} ${binfile}1.o \
 
 # The values don't really matter, just whether they are equal.
 set ok_prefix 01
-set ok_suffix 0203040506
-set ok_suffix2 02030405ff
+set ok_suffix 02030405060708091011121314151617181920
+set ok_suffix2 020304050607080910111213141516171819ff
 set ok_buildid ${ok_prefix}${ok_suffix}
 set ok_buildid2 ${ok_prefix}${ok_suffix2}
-set bad_buildid ffffffffffff
+set bad_buildid [string repeat ff 20]
 
 set debugdir [standard_output_file {}]
 set basedir $debugdir/.build-id
@@ -131,41 +134,39 @@ for {set i 2} {$i <= 8} {incr i} {
 # Copy a file into the .build-id place for the "fallback" test.
 file copy -force -- ${binfile}8.o $basedir/$ok_prefix/$ok_suffix2.debug
 
-# Link the executables.
-if {[gdb_compile [list ${binfile}1.o ${binfile}2.o] ${binfile}-ok \
-	 executable {}] != ""} {
-    return -1
-}
+proc do_test {} {
+    clean_restart
 
-if {[gdb_compile [list ${binfile}1.o ${binfile}4.o] ${binfile}-mismatch \
-	 executable {quiet}] != ""} {
-    return -1
-}
+    gdb_test_no_output "set debug-file-directory $::debugdir" \
+	"set debug-file-directory"
 
-if {[gdb_compile [list ${binfile}1.o ${binfile}6.o] ${binfile}-fallback \
-	 executable {}] != ""} {
-    return -1
-}
+    gdb_load ${::binfile}-${::testname}
 
-
-foreach testname {ok mismatch fallback} {
-    with_test_prefix $testname {
-	gdb_exit
-	gdb_start
-	gdb_reinitialize_dir $srcdir/$subdir
-
-	gdb_test_no_output "set debug-file-directory $debugdir" \
-	    "set debug-file-directory"
-
-	gdb_load ${binfile}-${testname}
-
-	if {[runto_main]} {
-	    if {$testname == "mismatch"} {
-		gdb_test "print the_int" \
-		    "(No symbol table is loaded|No symbol \"the_int\" in current context).*"
-	    } else {
-		gdb_test "print the_int" " = 99"
-	    }
-	}
+    if {![runto_main]} {
+	return
     }
+
+    if {$::testname == "mismatch"} {
+	gdb_test "print the_int" \
+	    "(No symbol table is loaded|No symbol \"the_int\" in current context).*"
+    } else {
+	gdb_test "print the_int" " = 99"
+    }
+}
+
+foreach_with_prefix testname { ok mismatch fallback } {
+    if { $testname == "ok" } {
+	set objs [list ${binfile}1.o ${binfile}2.o]
+    } elseif { $testname == "mismatch" } {
+	set objs [list ${binfile}1.o ${binfile}4.o]
+    } elseif { $testname == "fallback" } {
+	set objs [list ${binfile}1.o ${binfile}6.o]
+    }
+
+    if {[gdb_compile $objs ${binfile}-$testname executable {quiet}] != ""} {
+	unsupported "compilation failed"
+	continue
+    }
+
+    do_test
 }

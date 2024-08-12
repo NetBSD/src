@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Free Software Foundation, Inc.
+# Copyright 2022-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,9 +23,7 @@
 # in the source of the shlib, and "list" should display the source where
 # the program stopped.
 
-if { [skip_shlib_tests] } {
-    return 0
-}
+require allow_shlib_tests
 
 standard_testfile .c -shlib.c
 set shlib_path [standard_output_file ${testfile}-lib.so]
@@ -34,18 +32,20 @@ if { [gdb_compile_shlib $srcdir/$subdir/$srcfile2 $shlib_path {debug}] != "" } {
     return
 }
 
-set opts [list shlib_load additional_flags=-DSHLIB_PATH="${shlib_path}"]
+set shlib_path_target [gdb_download_shlib $::shlib_path]
+
+set opts [list shlib_load additional_flags=-DSHLIB_PATH="${shlib_path_target}"]
 if { [build_executable "failed to prepare" ${testfile} ${srcfile} $opts] } {
     return
 }
 
 proc do_test {} {
     clean_restart $::binfile
-    gdb_load_shlib $::shlib_path
+    gdb_locate_shlib $::shlib_path
     gdb_test_no_output "set follow-fork-mode child"
     gdb_test_no_output "set detach-on-fork off"
 
-    runto "add" allow-pending
+    runto "add" qualified allow-pending
 
     # Since we have debug info in the shlib, we should have the file name available.
     gdb_test "frame" "add \(.*\) at .*$::srcfile2:\[0-9\]+.*"

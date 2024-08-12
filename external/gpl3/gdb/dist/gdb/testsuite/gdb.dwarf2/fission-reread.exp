@@ -1,4 +1,4 @@
-# Copyright 2012-2023 Free Software Foundation, Inc.
+# Copyright 2012-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,14 +16,10 @@
 load_lib dwarf.exp
 
 # We run objcopy locally to split out the .dwo file.
-if [is_remote host] {
-    return 0
-}
+require {!is_remote host}
 
 # This test can only be run on targets which support DWARF-2 and use gas.
-if ![dwarf2_support] {
-    return 0  
-}
+require dwarf2_support
 
 # Some targets have leading underscores on assembly symbols.
 set additional_flags [gdb_target_symbol_prefix_flags_asm]
@@ -64,7 +60,10 @@ pass "$testfile - unload"
 # Test-case for PR24620: Delete the .dwo file and verify that
 # save gdb-index doesn't crash.
 remote_file target delete $dwo
-clean_restart $binfile
+save_vars { GDBFLAGS } {
+    append GDBFLAGS " -iex \"maint set dwarf synchronous on\""
+    clean_restart $binfile
+}
 set output_dir [standard_output_file ""]
 set cmd "save gdb-index"
 gdb_test_multiple "$cmd $output_dir" $cmd {

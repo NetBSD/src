@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2007-2023 Free Software Foundation, Inc.
+# Copyright 2007-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,17 +20,11 @@
 # 'set detach-on-fork [on,off]' are the correct ones.
 
 # This test relies on "run", so it cannot run on target remote stubs.
-if { [use_gdb_stub] } {
-    untested "not supported on target remote stubs"
-    return
-}
+require !use_gdb_stub
 
 # Test relies on checking follow-fork output. Do not run if gdb debug is
 # enabled as it will be redirected to the log.
-if [gdb_debug_enabled] {
-    untested "debug is enabled"
-    return 0
-}
+require !gdb_debug_enabled
 
 standard_testfile
 
@@ -53,7 +47,7 @@ if { [build_executable "failed to prepare" $testfile $srcfile debug] } {
 set reading_re "(Reading.*from remote target\\.\\.\\.\r\n)*"
 set exited_normally_re "${reading_re}\\\[Inferior $decimal \\(.*\\) exited normally\\\]"
 # gdbserver produces a slightly different message when attaching after
-# a fork, so we have to tweak the regexp to accomodate that.
+# a fork, so we have to tweak the regexp to accommodate that.
 set attach_child_re "${reading_re}\\\[Attaching after .* fork to child .*\\\]\r\n"
 set detach_child_re "${reading_re}\\\[Detaching after fork from child .*\\\]\r\n"
 set detach_parent_re "${reading_re}\\\[Detaching after fork from parent .*\\\]\r\n"

@@ -1,4 +1,4 @@
-# Copyright 2014-2023 Free Software Foundation, Inc.
+# Copyright 2014-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,9 +18,7 @@
 load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2 and use gas.
-if {![dwarf2_support]} {
-    return 0
-}
+require dwarf2_support
 
 standard_testfile .S main.c
 
@@ -35,10 +33,10 @@ if { [build_executable "failed to prepare" ${testfile} \
 # start the debugger with -readnow.  This force expansion as soon as
 # the objfile is loaded.
 
-set saved_gdbflags $GDBFLAGS
-set GDBFLAGS "$GDBFLAGS -readnow"
-clean_restart ${testfile}
-set GDBFLAGS $saved_gdbflags
+save_vars { GDBFLAGS } {
+    set GDBFLAGS "$GDBFLAGS -readnow"
+    clean_restart ${testfile}
+}
 
 # And just to be sure that the debugger did not crash after having
 # expanded our symbols, do a life-check.

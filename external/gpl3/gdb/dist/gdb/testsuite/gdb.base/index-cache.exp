@@ -1,4 +1,4 @@
-#   Copyright 2018-2023 Free Software Foundation, Inc.
+#   Copyright 2018-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,9 @@
 # This test checks that the index-cache feature generates the expected files at
 # the expected location.
 
-standard_testfile
+standard_testfile .c -2.c
 
-if { [build_executable "failed to prepare" $testfile $srcfile \
+if { [build_executable "failed to prepare" $testfile [list $srcfile $srcfile2] \
 	  {debug ldflags=-Wl,--build-id}] } {
     return
 }
@@ -65,6 +65,10 @@ proc ls_host { dir } {
 # values.
 
 proc check_cache_stats { expected_hits expected_misses } {
+    # This test wants to check the cache, so make sure it has completed
+    # its work.
+    gdb_test_no_output "maintenance wait-for-index-cache"
+
     set re [multi_line \
 	"  Cache hits .this session.: $expected_hits" \
 	"Cache misses .this session.: $expected_misses" \
@@ -142,6 +146,15 @@ proc_with_prefix test_cache_disabled { cache_dir test_prefix } {
 	    set nfiles_created [expr [llength $files_after] - [llength $files_before]]
 	    gdb_assert "$nfiles_created == 0" "no files were created"
 
+	    # Trigger expansion of symtab containing main, if not already done.
+	    gdb_test "ptype main" "^type = int \\(void\\)"
+
+	    # Trigger expansion of symtab not containing main.
+	    gdb_test "ptype foo" "^type = int \\(void\\)"
+
+	    # Look for non-existent function.
+	    gdb_test "ptype foobar" "^No symbol \"foobar\" in current context\\."
+
 	    check_cache_stats 0 0
 	}
     }
@@ -183,6 +196,15 @@ proc_with_prefix test_cache_enabled_miss { cache_dir } {
 
 	remote_exec host rm "-f $cache_dir/$expected_created_file"
 
+	# Trigger expansion of symtab containing main, if not already done.
+	gdb_test "ptype main" "^type = int \\(void\\)"
+
+	# Trigger expansion of symtab not containing main.
+	gdb_test "ptype foo" "^type = int \\(void\\)"
+
+	# Look for non-existent function.
+	gdb_test "ptype foobar" "^No symbol \"foobar\" in current context\\."
+
 	if { $expecting_index_cache_use } {
 	    check_cache_stats 0 1
 	} else {
@@ -201,7 +223,9 @@ proc_with_prefix test_cache_enabled_hit { cache_dir } {
     global expecting_index_cache_use
 
     # Just to populate the cache.
-    run_test_with_flags $cache_dir on {}
+    with_test_prefix "populate cache" {
+	run_test_with_flags $cache_dir on {}
+    }
 
     lassign [ls_host $cache_dir] ret files_before
 
@@ -209,6 +233,15 @@ proc_with_prefix test_cache_enabled_hit { cache_dir } {
 	lassign [ls_host $cache_dir] ret files_after
 	set nfiles_created [expr [llength $files_after] - [llength $files_before]]
 	gdb_assert "$nfiles_created == 0" "no files were created"
+
+	# Trigger expansion of symtab containing main, if not already done.
+	gdb_test "ptype main" "^type = int \\(void\\)"
+
+	# Trigger expansion of symtab not containing main.
+	gdb_test "ptype foo" "^type = int \\(void\\)"
+
+	# Look for non-existent function.
+	gdb_test "ptype foobar" "^No symbol \"foobar\" in current context\\."
 
 	if { $expecting_index_cache_use } {
 	    check_cache_stats 1 0
@@ -239,7 +272,7 @@ test_cache_enabled_hit $cache_dir
 # Test again with the cache disabled, now that it is populated.
 test_cache_disabled $cache_dir "after populate"
 
-lassign [remote_exec host sh "-c \"rm $cache_dir/*.gdb-index\""] ret
+lassign [remote_exec host "sh -c" [quote_for_host rm $cache_dir/*.gdb-index]] ret
 if { $ret != 0 && $expecting_index_cache_use } {
     fail "couldn't remove files in temporary cache dir"
     return
