@@ -1,6 +1,6 @@
 /* Producer string parsers for GDB.
 
-   Copyright (C) 2012-2023 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "producer.h"
 #include "gdbsupport/selftest.h"
 #include "gdbsupport/gdb_regex.h"
@@ -54,13 +53,19 @@ producer_is_gcc (const char *producer, int *major, int *minor)
       if (minor == NULL)
 	minor = &min;
 
+      /* Skip GNU.  */
+      cs = &producer[strlen ("GNU ")];
+
+      /* Bail out for GNU AS.  */
+      if (startswith (cs, "AS "))
+	return 0;
+
       /* Skip any identifier after "GNU " - such as "C11" "C++" or "Java".
 	 A full producer string might look like:
 	 "GNU C 4.7.2"
 	 "GNU Fortran 4.8.2 20140120 (Red Hat 4.8.2-16) -mtune=generic ..."
 	 "GNU C++14 5.0.0 20150123 (experimental)"
       */
-      cs = &producer[strlen ("GNU ")];
       while (*cs && !isspace (*cs))
 	cs++;
       if (*cs && isspace (*cs))
@@ -74,6 +79,45 @@ producer_is_gcc (const char *producer, int *major, int *minor)
 }
 
 /* See producer.h.  */
+
+bool
+producer_is_gas (const char *producer, int *major, int *minor)
+{
+  if (producer == nullptr)
+    {
+      /* No producer, don't know.  */
+      return false;
+    }
+
+  /* Detect prefix.  */
+  const char prefix[] = "GNU AS ";
+  if (!startswith (producer, prefix))
+    {
+      /* Producer is not gas.  */
+      return false;
+    }
+
+  /* Skip prefix.  */
+  const char *cs = &producer[strlen (prefix)];
+
+  /* Ensure that major/minor are not nullptrs.  */
+  int maj, min;
+  if (major == nullptr)
+    major = &maj;
+  if (minor == nullptr)
+    minor = &min;
+
+  int scanned = sscanf (cs, "%d.%d", major, minor);
+  if (scanned != 2)
+    {
+      /* Unable to scan major/minor version.  */
+      return false;
+    }
+
+  return true;
+}
+
+  /* See producer.h.  */
 
 bool
 producer_is_icc_ge_19 (const char *producer)
@@ -245,6 +289,23 @@ Version 18.0 Beta";
     SELF_CHECK (!producer_is_gcc (flang_llvm_exp, &major, &minor));
     SELF_CHECK (producer_is_llvm (flang_llvm_exp));
   }
+
+  {
+    static const char gas_exp[] = "GNU AS 2.39.0";
+    int major = 0, minor = 0;
+    SELF_CHECK (!producer_is_gcc (gas_exp, &major, &minor));
+    SELF_CHECK (producer_is_gas (gas_exp, &major, &minor));
+    SELF_CHECK (major == 2 && minor == 39);
+
+    static const char gas_incomplete_exp[] = "GNU AS ";
+    SELF_CHECK (!producer_is_gas (gas_incomplete_exp, &major, &minor));
+    SELF_CHECK (!producer_is_gcc (gas_incomplete_exp, &major, &minor));
+
+    static const char gas_incomplete_exp_2[] = "GNU AS 2";
+    SELF_CHECK (!producer_is_gas (gas_incomplete_exp_2, &major, &minor));
+    SELF_CHECK (!producer_is_gcc (gas_incomplete_exp_2, &major, &minor));
+  }
+
 }
 }
 }

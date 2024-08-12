@@ -1,6 +1,6 @@
 /* Native debugging support for GNU/Linux (LWP layer).
 
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -68,8 +68,6 @@ public:
 
   const char *thread_name (struct thread_info *) override;
 
-  struct address_space *thread_address_space (ptid_t) override;
-
   bool stopped_by_watchpoint () override;
 
   bool stopped_data_address (CORE_ADDR *) override;
@@ -81,6 +79,8 @@ public:
   bool supports_stopped_by_hw_breakpoint () override;
 
   void thread_events (int) override;
+
+  bool supports_set_thread_options (gdb_thread_options options) override;
 
   bool can_async_p () override;
 
@@ -103,7 +103,7 @@ public:
 		   int flags, int mode, int warn_if_slow,
 		   fileio_error *target_errno) override;
 
-  gdb::optional<std::string>
+  std::optional<std::string>
     fileio_readlink (struct inferior *inf,
 		     const char *filename,
 		     fileio_error *target_errno) override;
@@ -128,6 +128,8 @@ public:
   void post_attach (int) override;
 
   void follow_fork (inferior *, ptid_t, target_waitkind, bool, bool) override;
+
+  void follow_clone (ptid_t) override;
 
   std::vector<static_tracepoint_marker>
     static_tracepoint_markers_by_strid (const char *id) override;
@@ -160,6 +162,12 @@ public:
 
   /* The method to call, if any, when a new clone event is detected.  */
   virtual void low_new_clone (struct lwp_info *parent, pid_t child_lwp)
+  {}
+
+  /* The method to call, if any, when we have a new (from run/attach,
+     not fork) process to debug.  The process is ptrace-stopped when
+     this is called.  */
+  virtual void low_init_process (pid_t pid)
   {}
 
   /* The method to call, if any, when a process is no longer
@@ -232,7 +240,9 @@ struct lwp_info : intrusive_list_node<lwp_info>
   /* The last resume GDB requested on this thread.  */
   resume_kind last_resume_kind = resume_continue;
 
-  /* If non-zero, a pending wait status.  */
+  /* If non-zero, a pending wait status.  A pending process exit is
+     recorded in WAITSTATUS, because W_EXITCODE(0,0) happens to be
+     0.  */
   int status = 0;
 
   /* When 'stopped' is set, this is where the lwp last stopped, with
@@ -260,9 +270,10 @@ struct lwp_info : intrusive_list_node<lwp_info>
   /* Non-zero if we expect a duplicated SIGINT.  */
   int ignore_sigint = 0;
 
-  /* If WAITSTATUS->KIND != TARGET_WAITKIND_SPURIOUS, the waitstatus
-     for this LWP's last event.  This may correspond to STATUS above,
-     or to a local variable in lin_lwp_wait.  */
+  /* If WAITSTATUS->KIND != TARGET_WAITKIND_IGNORE, the waitstatus for
+     this LWP's last event.  This usually corresponds to STATUS above,
+     however because W_EXITCODE(0,0) happens to be 0, a process exit
+     will be recorded here, while 'status == 0' is ambiguous.  */
   struct target_waitstatus waitstatus;
 
   /* Signal whether we are in a SYSCALL_ENTRY or
