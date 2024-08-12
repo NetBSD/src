@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30.4.1 2024/08/02 00:24:52 perseant Exp $
+#	$NetBSD: Makefile,v 1.30.4.2 2024/08/12 22:38:30 perseant Exp $
 #
 
 .include <bsd.own.mk>
@@ -52,6 +52,10 @@ LDADD+=-lrumpnet						# static linking
 
 LDADD+=-lutil
 
+.if (${MKEXFATFS} != "no")
+LDADD+=-lrumpfs_exfatfs
+CPPFLAGS+=-DWANT_EXFATFS_TESTS
+.endif
 .if (${MKZFS} != "no")
 LDADD+=-lrumpfs_zfs -lrumpkern_solaris -lrumpdev_rnd -lrumpkern_sysproxy
 CPPFLAGS+=-DWANT_ZFS_TESTS
