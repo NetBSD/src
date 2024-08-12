@@ -1,6 +1,6 @@
 /* GDB routines for manipulating objfiles.
 
-   Copyright (C) 1992-2023 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support, using pieces from other GDB modules.
 
@@ -22,14 +22,11 @@
 /* This file contains support routines for creating, manipulating, and
    destroying objfile structures.  */
 
-#include "defs.h"
-#include "bfd.h"		/* Binary File Description */
+#include "bfd.h"
 #include "symtab.h"
 #include "symfile.h"
 #include "objfiles.h"
-#include "gdb-stabs.h"
 #include "target.h"
-#include "bcache.h"
 #include "expression.h"
 #include "parser-defs.h"
 
@@ -48,14 +45,11 @@
 #include "exec.h"
 #include "observable.h"
 #include "complaints.h"
-#include "psymtab.h"
-#include "solist.h"
 #include "gdb_bfd.h"
 #include "btrace.h"
 #include "gdbsupport/pathstuff.h"
 
 #include <algorithm>
-#include <vector>
 
 /* Externally visible variables that are owned by this module.
    See declarations in objfile.h for more info.  */
@@ -265,7 +259,7 @@ add_to_objfile_sections (struct bfd *abfd, struct bfd_section *asect,
 	return;
     }
 
-  section = &objfile->sections[gdb_bfd_section_index (abfd, asect)];
+  section = &objfile->sections_start[gdb_bfd_section_index (abfd, asect)];
   section->objfile = objfile;
   section->the_bfd_section = asect;
   section->ovly_mapped = 0;
@@ -281,10 +275,10 @@ build_objfile_section_table (struct objfile *objfile)
 {
   int count = gdb_bfd_count_sections (objfile->obfd.get ());
 
-  objfile->sections = OBSTACK_CALLOC (&objfile->objfile_obstack,
-				      count,
-				      struct obj_section);
-  objfile->sections_end = (objfile->sections + count);
+  objfile->sections_start = OBSTACK_CALLOC (&objfile->objfile_obstack,
+					    count,
+					    struct obj_section);
+  objfile->sections_end = (objfile->sections_start + count);
   for (asection *sect : gdb_bfd_sections (objfile->obfd))
     add_to_objfile_sections (objfile->obfd.get (), sect, objfile, 0);
 
@@ -535,7 +529,7 @@ objfile::~objfile ()
 
   /* It still may reference data modules have associated with the objfile and
      the symbol file data.  */
-  forget_cached_source_info_for_objfile (this);
+  forget_cached_source_info ();
 
   breakpoint_free_objfile (this);
   btrace_free_objfile (this);
@@ -583,8 +577,6 @@ static void
 relocate_one_symbol (struct symbol *sym, struct objfile *objfile,
 		     const section_offsets &delta)
 {
-  fixup_symbol_section (sym, objfile);
-
   /* The RS6000 code from which this was taken skipped
      any symbols in STRUCT_DOMAIN or UNDEF_DOMAIN.
      But I'm leaving out that test, on the theory that
@@ -618,82 +610,46 @@ objfile_relocate1 (struct objfile *objfile,
     return 0;
 
   /* OK, get all the symtabs.  */
-  {
-    for (compunit_symtab *cust : objfile->compunits ())
-      {
-	for (symtab *s : cust->filetabs ())
-	  {
-	    struct linetable *l;
+  for (compunit_symtab *cust : objfile->compunits ())
+    {
+      struct blockvector *bv = cust->blockvector ();
+      int block_line_section = SECT_OFF_TEXT (objfile);
 
-	    /* First the line table.  */
-	    l = s->linetable ();
-	    if (l)
-	      {
-		for (int i = 0; i < l->nitems; ++i)
-		  l->item[i].pc += delta[cust->block_line_section ()];
-	      }
-	  }
-      }
+      if (bv->map () != nullptr)
+	bv->map ()->relocate (delta[block_line_section]);
 
-    for (compunit_symtab *cust : objfile->compunits ())
-      {
-	struct blockvector *bv = cust->blockvector ();
-	int block_line_section = cust->block_line_section ();
+      for (block *b : bv->blocks ())
+	{
+	  b->set_start (b->start () + delta[block_line_section]);
+	  b->set_end (b->end () + delta[block_line_section]);
 
-	if (bv->map () != nullptr)
-	  bv->map ()->relocate (delta[block_line_section]);
+	  for (blockrange &r : b->ranges ())
+	    {
+	      r.set_start (r.start () + delta[block_line_section]);
+	      r.set_end (r.end () + delta[block_line_section]);
+	    }
 
-	for (block *b : bv->blocks ())
-	  {
-	    struct symbol *sym;
-	    struct mdict_iterator miter;
-
-	    b->set_start (b->start () + delta[block_line_section]);
-	    b->set_end (b->end () + delta[block_line_section]);
-
-	    for (blockrange &r : b->ranges ())
-	      {
-		r.set_start (r.start () + delta[block_line_section]);
-		r.set_end (r.end () + delta[block_line_section]);
-	      }
-
-	    /* We only want to iterate over the local symbols, not any
-	       symbols in included symtabs.  */
-	    ALL_DICT_SYMBOLS (b->multidict (), miter, sym)
-	      {
-		relocate_one_symbol (sym, objfile, delta);
-	      }
-	  }
-      }
-  }
-
-  /* Notify the quick symbol object.  */
-  for (const auto &iter : objfile->qf)
-    iter->relocated ();
+	  /* We only want to iterate over the local symbols, not any
+	     symbols in included symtabs.  */
+	  for (struct symbol *sym : b->multidict_symbols ())
+	    relocate_one_symbol (sym, objfile, delta);
+	}
+    }
 
   /* Relocate isolated symbols.  */
-  {
-    struct symbol *iter;
+  for (symbol *iter = objfile->template_symbols; iter; iter = iter->hash_next)
+    relocate_one_symbol (iter, objfile, delta);
 
-    for (iter = objfile->template_symbols; iter; iter = iter->hash_next)
-      relocate_one_symbol (iter, objfile, delta);
-  }
-
-  {
-    int i;
-
-    for (i = 0; i < objfile->section_offsets.size (); ++i)
-      objfile->section_offsets[i] = new_offsets[i];
-  }
+  for (int i = 0; i < objfile->section_offsets.size (); ++i)
+    objfile->section_offsets[i] = new_offsets[i];
 
   /* Rebuild section map next time we need it.  */
   get_objfile_pspace_data (objfile->pspace)->section_map_dirty = 1;
 
   /* Update the table in exec_ops, used to read memory.  */
-  struct obj_section *s;
-  ALL_OBJFILE_OSECTIONS (objfile, s)
+  for (obj_section *s : objfile->sections ())
     {
-      int idx = s - objfile->sections;
+      int idx = s - objfile->sections_start;
 
       exec_set_section_address (bfd_get_filename (objfile->obfd.get ()), idx,
 				s->addr ());
@@ -909,9 +865,7 @@ sort_cmp (const struct obj_section *sect1, const obj_section *sect2)
 	     second case shouldn't occur during normal use, but std::sort
 	     does check that '!(a < a)' when compiled in debug mode.  */
 
-	  const struct obj_section *osect;
-
-	  ALL_OBJFILE_OSECTIONS (objfile1, osect)
+	  for (const obj_section *osect : objfile1->sections ())
 	    if (osect == sect2)
 	      return false;
 	    else if (osect == sect1)
@@ -1104,7 +1058,7 @@ update_section_map (struct program_space *pspace,
 {
   struct objfile_pspace_info *pspace_info;
   int alloc_size, map_size, i;
-  struct obj_section *s, **map;
+  struct obj_section **map;
 
   pspace_info = get_objfile_pspace_data (pspace);
   gdb_assert (pspace_info->section_map_dirty != 0
@@ -1115,7 +1069,7 @@ update_section_map (struct program_space *pspace,
 
   alloc_size = 0;
   for (objfile *objfile : pspace->objfiles ())
-    ALL_OBJFILE_OSECTIONS (objfile, s)
+    for (obj_section *s : objfile->sections ())
       if (insert_section_p (objfile->obfd.get (), s->the_bfd_section))
 	alloc_size += 1;
 
@@ -1131,7 +1085,7 @@ update_section_map (struct program_space *pspace,
 
   i = 0;
   for (objfile *objfile : pspace->objfiles ())
-    ALL_OBJFILE_OSECTIONS (objfile, s)
+    for (obj_section *s : objfile->sections ())
       if (insert_section_p (objfile->obfd.get (), s->the_bfd_section))
 	map[i++] = s;
 
@@ -1213,18 +1167,13 @@ find_pc_section (CORE_ADDR pc)
 
 /* Return non-zero if PC is in a section called NAME.  */
 
-int
+bool
 pc_in_section (CORE_ADDR pc, const char *name)
 {
-  struct obj_section *s;
-  int retval = 0;
-
-  s = find_pc_section (pc);
-
-  retval = (s != NULL
-	    && s->the_bfd_section->name != NULL
-	    && strcmp (s->the_bfd_section->name, name) == 0);
-  return (retval);
+  struct obj_section *s = find_pc_section (pc);
+  return (s != nullptr
+	  && s->the_bfd_section->name != nullptr
+	  && strcmp (s->the_bfd_section->name, name) == 0);
 }
 
 
@@ -1252,17 +1201,15 @@ inhibit_section_map_updates (struct program_space *pspace)
 bool
 is_addr_in_objfile (CORE_ADDR addr, const struct objfile *objfile)
 {
-  struct obj_section *osect;
-
   if (objfile == NULL)
     return false;
 
-  ALL_OBJFILE_OSECTIONS (objfile, osect)
+  for (obj_section *osect : objfile->sections ())
     {
       if (section_is_overlay (osect) && !section_is_mapped (osect))
 	continue;
 
-      if (osect->addr () <= addr && addr < osect->endaddr ())
+      if (osect->contains (addr))
 	return true;
     }
   return false;
@@ -1352,8 +1299,8 @@ objfile_int_type (struct objfile *of, int size_in_bytes, bool unsigned_p)
   /* Helper macro to examine the various builtin types.  */
 #define TRY_TYPE(F)							\
   int_type = (unsigned_p						\
-	      ? objfile_type (of)->builtin_unsigned_ ## F		\
-	      : objfile_type (of)->builtin_ ## F);			\
+	      ? builtin_type (of)->builtin_unsigned_ ## F		\
+	      : builtin_type (of)->builtin_ ## F);			\
   if (int_type != NULL && int_type->length () == size_in_bytes)	\
     return int_type
 

@@ -1,6 +1,6 @@
 /* Target-dependent code for UltraSPARC.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,9 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "arch-utils.h"
 #include "dwarf2/frame.h"
+#include "event-top.h"
+#include "extract-store-integer.h"
 #include "frame.h"
 #include "frame-base.h"
 #include "frame-unwind.h"
@@ -66,7 +67,7 @@
 
 #include <algorithm>
 #include "cli/cli-utils.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "auxv.h"
 
 #define MAX_PROC_NAME_SIZE sizeof("/proc/99999/lwp/9999/adi/lstatus")
@@ -345,7 +346,7 @@ adi_read_versions (CORE_ADDR vaddr, size_t size, gdb_byte *tags)
     {
       adi_stat_t ast = get_adi_info (inferior_ptid.pid ());
       error(_("Address at %s is not in ADI maps"),
-	    paddress (target_gdbarch (), vaddr * ast.blksize));
+	    paddress (current_inferior ()->arch (), vaddr * ast.blksize));
     }
 
   fileio_error target_errno;
@@ -366,7 +367,7 @@ adi_write_versions (CORE_ADDR vaddr, size_t size, unsigned char *tags)
     {
       adi_stat_t ast = get_adi_info (inferior_ptid.pid ());
       error(_("Address at %s is not in ADI maps"),
-	    paddress (target_gdbarch (), vaddr * ast.blksize));
+	    paddress (current_inferior ()->arch (), vaddr * ast.blksize));
     }
 
   fileio_error target_errno;
@@ -388,7 +389,8 @@ adi_print_versions (CORE_ADDR vaddr, size_t cnt, gdb_byte *tags)
     {
       QUIT;
       gdb_printf ("%s:\t",
-		  paddress (target_gdbarch (), vaddr * adi_stat.blksize));
+		  paddress (current_inferior ()->arch (),
+			    vaddr * adi_stat.blksize));
       for (int i = maxelts; i > 0 && cnt > 0; i--, cnt--)
 	{
 	  if (tags[v_idx] == 0xff)    /* no version tag */
@@ -411,12 +413,13 @@ do_examine (CORE_ADDR start, int bcnt)
 
   CORE_ADDR vstart = adi_align_address (vaddr);
   int cnt = adi_convert_byte_count (vaddr, bcnt, vstart);
-  gdb::def_vector<gdb_byte> buf (cnt);
+  gdb::byte_vector buf (cnt);
   int read_cnt = adi_read_versions (vstart, cnt, buf.data ());
   if (read_cnt == -1)
     error (_("No ADI information"));
   else if (read_cnt < cnt)
-    error(_("No ADI information at %s"), paddress (target_gdbarch (), vaddr));
+    error(_("No ADI information at %s"),
+	  paddress (current_inferior ()->arch (), vaddr));
 
   adi_print_versions (vstart, cnt, buf.data ());
 }
@@ -434,8 +437,8 @@ do_assign (CORE_ADDR start, size_t bcnt, int version)
   if (set_cnt == -1)
     error (_("No ADI information"));
   else if (set_cnt < cnt)
-    error(_("No ADI information at %s"), paddress (target_gdbarch (), vaddr));
-
+    error(_("No ADI information at %s"),
+	  paddress (current_inferior ()->arch (), vaddr));
 }
 
 /* ADI examine version tag command.
@@ -1061,13 +1064,13 @@ sparc64_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc)
 /* Normal frames.  */
 
 static struct sparc_frame_cache *
-sparc64_frame_cache (frame_info_ptr this_frame, void **this_cache)
+sparc64_frame_cache (const frame_info_ptr &this_frame, void **this_cache)
 {
   return sparc_frame_cache (this_frame, this_cache);
 }
 
 static void
-sparc64_frame_this_id (frame_info_ptr this_frame, void **this_cache,
+sparc64_frame_this_id (const frame_info_ptr &this_frame, void **this_cache,
 		       struct frame_id *this_id)
 {
   struct sparc_frame_cache *cache =
@@ -1081,7 +1084,7 @@ sparc64_frame_this_id (frame_info_ptr this_frame, void **this_cache,
 }
 
 static struct value *
-sparc64_frame_prev_register (frame_info_ptr this_frame, void **this_cache,
+sparc64_frame_prev_register (const frame_info_ptr &this_frame, void **this_cache,
 			     int regnum)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
@@ -1145,7 +1148,7 @@ static const struct frame_unwind sparc64_frame_unwind =
 
 
 static CORE_ADDR
-sparc64_frame_base_address (frame_info_ptr this_frame, void **this_cache)
+sparc64_frame_base_address (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct sparc_frame_cache *cache =
     sparc64_frame_cache (this_frame, this_cache);
@@ -1381,7 +1384,7 @@ sparc64_store_arguments (struct regcache *regcache, int nargs,
 
   for (i = 0; i < nargs; i++)
     {
-      struct type *type = value_type (args[i]);
+      struct type *type = args[i]->type ();
       int len = type->length ();
 
       if (sparc64_structure_or_union_p (type)
@@ -1411,7 +1414,7 @@ sparc64_store_arguments (struct regcache *regcache, int nargs,
 		 a problem.  */
 	      sp &= ~0xf;
 
-	      write_memory (sp, value_contents (args[i]).data (), len);
+	      write_memory (sp, args[i]->contents ().data (), len);
 	      args[i] = value_from_pointer (lookup_pointer_type (type), sp);
 	      num_elements++;
 	    }
@@ -1480,8 +1483,8 @@ sparc64_store_arguments (struct regcache *regcache, int nargs,
 
   for (i = 0; i < nargs; i++)
     {
-      const gdb_byte *valbuf = value_contents (args[i]).data ();
-      struct type *type = value_type (args[i]);
+      const gdb_byte *valbuf = args[i]->contents ().data ();
+      struct type *type = args[i]->type ();
       int len = type->length ();
       int regnum = -1;
       gdb_byte buf[16];
@@ -1764,7 +1767,7 @@ sparc64_return_value (struct gdbarch *gdbarch, struct value *function,
 static void
 sparc64_dwarf2_frame_init_reg (struct gdbarch *gdbarch, int regnum,
 			       struct dwarf2_frame_state_reg *reg,
-			       frame_info_ptr this_frame)
+			       const frame_info_ptr &this_frame)
 {
   switch (regnum)
     {
@@ -1823,7 +1826,8 @@ sparc64_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_tdesc_pseudo_register_name (gdbarch, sparc64_pseudo_register_name);
   set_tdesc_pseudo_register_type (gdbarch, sparc64_pseudo_register_type);
   set_gdbarch_pseudo_register_read (gdbarch, sparc64_pseudo_register_read);
-  set_gdbarch_pseudo_register_write (gdbarch, sparc64_pseudo_register_write);
+  set_gdbarch_deprecated_pseudo_register_write (gdbarch,
+						sparc64_pseudo_register_write);
 
   /* Register numbers of various important registers.  */
   set_gdbarch_pc_regnum (gdbarch, SPARC64_PC_REGNUM); /* %pc */
@@ -1835,6 +1839,7 @@ sparc64_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_push_dummy_call (gdbarch, sparc64_push_dummy_call);
 
   set_gdbarch_return_value (gdbarch, sparc64_return_value);
+  set_gdbarch_return_value_as_value (gdbarch, default_gdbarch_return_value);
   set_gdbarch_stabs_argument_has_addr
     (gdbarch, default_stabs_argument_has_addr);
 

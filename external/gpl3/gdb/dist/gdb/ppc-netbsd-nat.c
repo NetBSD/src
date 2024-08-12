@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/powerpc.
 
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -20,8 +20,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* We define this to get types like register_t.  */
-#include "defs.h"
-
+#define _KERNTYPES
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <machine/reg.h>

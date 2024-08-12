@@ -2,13 +2,20 @@
 # invoked from the autoconf generated configure script.
 
 # This file sets the following shell variables:
-#  gdb_target_obs	target-specific object files to use
-#  gdb_sim		simulator library for target
-#  gdb_osabi		default OS ABI to use with target
-#  gdb_have_gcore	set to "true"/"false" if this target can run gcore
+#  gdb_target_obs         target-specific object files to use
+#  gdb_sim                simulator library for target
+#  gdb_osabi              default OS ABI to use with target
+#  gdb_have_gcore         set to "true"/"false" if this target can run gcore
+#  gdb_require_amd_dbgapi set to "true" if this target requires the amd-dbgapi
+#                         target
 
 # NOTE: Every file added to a gdb_target_obs variable for any target here
-#       must also be added to either ALL_TARGET_OBS or ALL_64_TARGET_OBS
+#       must also be added to either:
+#
+#         - ALL_TARGET_OBS
+#         - ALL_64_TARGET_OBS
+#         - ALL_AMD_DBGAPI_TARGET_OBS
+#
 #	in Makefile.in!
 
 case $targ in
@@ -139,6 +146,7 @@ aarch64*-*-linux*)
 	# Target: AArch64 linux
 	gdb_target_obs="aarch64-linux-tdep.o arch/aarch64.o\
 			arch/aarch64-mte-linux.o \
+			arch/aarch64-scalable-linux.o \
 			arch/arm.o arch/arm-linux.o arch/arm-get-next-pcs.o \
 			arm-tdep.o arm-linux-tdep.o \
 			glibc-tdep.o linux-tdep.o solib-svr4.o \
@@ -165,6 +173,12 @@ alpha*-*-openbsd*)
 	# Target: OpenBSD/alpha
 	gdb_target_obs="alpha-mdebug-tdep.o alpha-bsd-tdep.o \
 			alpha-netbsd-tdep.o alpha-obsd-tdep.o netbsd-tdep.o"
+	;;
+
+amdgcn*-*-*)
+	# Target: AMDGPU
+	gdb_require_amd_dbgapi=true
+	gdb_target_obs="amdgpu-tdep.o solib-rocm.o"
 	;;
 
 am33_2.0*-*-linux*)

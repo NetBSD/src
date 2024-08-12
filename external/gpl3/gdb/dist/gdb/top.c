@@ -1,6 +1,6 @@
 /* Top level stuff for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
-#include "gdbcmd.h"
 #include "cli/cli-cmds.h"
 #include "cli/cli-script.h"
 #include "cli/cli-setshow.h"
@@ -39,6 +37,7 @@
 #include "annotate.h"
 #include "completer.h"
 #include "top.h"
+#include "ui.h"
 #include "gdbsupport/version.h"
 #include "serial.h"
 #include "main.h"
@@ -50,7 +49,6 @@
 #include "maint.h"
 #include "filenames.h"
 #include "frame.h"
-#include "gdbsupport/buffer.h"
 #include "gdbsupport/gdb_select.h"
 #include "gdbsupport/scope-exit.h"
 #include "gdbarch.h"
@@ -77,6 +75,7 @@
 
 #if defined(TUI)
 # include "tui/tui.h"
+# include "tui/tui-io.h"
 #endif
 
 #ifndef O_NOCTTY
@@ -218,10 +217,6 @@ void (*deprecated_print_frame_info_listing_hook) (struct symtab * s,
 
 int (*deprecated_query_hook) (const char *, va_list);
 
-/* Replaces most of warning.  */
-
-void (*deprecated_warning_hook) (const char *, va_list);
-
 /* These three functions support getting lines of text from the user.
    They are used in sequence.  First deprecated_readline_begin_hook is
    called with a text string that might be (for example) a message for
@@ -254,13 +249,9 @@ void (*deprecated_call_command_hook) (struct cmd_list_element * c,
 
 void (*deprecated_context_hook) (int id);
 
-/* The highest UI number ever assigned.  */
-static int highest_ui_num;
+/* See top.h.  */
 
-/* Unbuffer STREAM.  This is a wrapper around setbuf(STREAM, nullptr)
-   which applies some special rules for MS-Windows hosts.  */
-
-static void
+void
 unbuffer_stream (FILE *stream)
 {
   /* Unbuffer the input stream so that in gdb_readline_no_editing_callback,
@@ -290,118 +281,6 @@ unbuffer_stream (FILE *stream)
      stream for everyone except MS-Windows.  */
   setbuf (stream, nullptr);
 #endif
-}
-
-/* See top.h.  */
-
-ui::ui (FILE *instream_, FILE *outstream_, FILE *errstream_)
-  : num (++highest_ui_num),
-    stdin_stream (instream_),
-    instream (instream_),
-    outstream (outstream_),
-    errstream (errstream_),
-    input_fd (fileno (instream)),
-    m_input_interactive_p (ISATTY (instream)),
-    m_gdb_stdout (new pager_file (new stdio_file (outstream))),
-    m_gdb_stdin (new stdio_file (instream)),
-    m_gdb_stderr (new stderr_file (errstream)),
-    m_gdb_stdlog (new timestamped_file (m_gdb_stderr))
-{
-  unbuffer_stream (instream_);
-
-  if (ui_list == NULL)
-    ui_list = this;
-  else
-    {
-      struct ui *last;
-
-      for (last = ui_list; last->next != NULL; last = last->next)
-	;
-      last->next = this;
-    }
-}
-
-ui::~ui ()
-{
-  struct ui *ui, *uiprev;
-
-  uiprev = NULL;
-
-  for (ui = ui_list; ui != NULL; uiprev = ui, ui = ui->next)
-    if (ui == this)
-      break;
-
-  gdb_assert (ui != NULL);
-
-  if (uiprev != NULL)
-    uiprev->next = next;
-  else
-    ui_list = next;
-
-  delete m_gdb_stdin;
-  delete m_gdb_stdout;
-  delete m_gdb_stderr;
-}
-
-/* Open file named NAME for read/write, making sure not to make it the
-   controlling terminal.  */
-
-static gdb_file_up
-open_terminal_stream (const char *name)
-{
-  scoped_fd fd = gdb_open_cloexec (name, O_RDWR | O_NOCTTY, 0);
-  if (fd.get () < 0)
-    perror_with_name  (_("opening terminal failed"));
-
-  return fd.to_file ("w+");
-}
-
-/* Implementation of the "new-ui" command.  */
-
-static void
-new_ui_command (const char *args, int from_tty)
-{
-  int argc;
-  const char *interpreter_name;
-  const char *tty_name;
-
-  dont_repeat ();
-
-  gdb_argv argv (args);
-  argc = argv.count ();
-
-  if (argc < 2)
-    error (_("Usage: new-ui INTERPRETER TTY"));
-
-  interpreter_name = argv[0];
-  tty_name = argv[1];
-
-  {
-    scoped_restore save_ui = make_scoped_restore (&current_ui);
-
-    /* Open specified terminal.  Note: we used to open it three times,
-       once for each of stdin/stdout/stderr, but that does not work
-       with Windows named pipes.  */
-    gdb_file_up stream = open_terminal_stream (tty_name);
-
-    std::unique_ptr<ui> ui
-      (new struct ui (stream.get (), stream.get (), stream.get ()));
-
-    ui->async = 1;
-
-    current_ui = ui.get ();
-
-    set_top_level_interpreter (interpreter_name);
-
-    interp_pre_command_loop (top_level_interpreter ());
-
-    /* Make sure the file is not closed.  */
-    stream.release ();
-
-    ui.release ();
-  }
-
-  gdb_printf ("New UI allocated\n");
 }
 
 /* Handler for SIGHUP.  */
@@ -475,7 +354,7 @@ prepare_execute_command ()
      it.  For the duration of the command, though, use the dcache to
      help things like backtrace.  */
   if (non_stop)
-    target_dcache_invalidate ();
+    target_dcache_invalidate (current_program_space->aspace);
 
   return scoped_value_mark ();
 }
@@ -670,7 +549,7 @@ execute_command (const char *p, int from_tty)
 	   subcommands.  */
 	{
 	  std::string prefixname = c->prefixname ();
-          std::string prefixname_no_space
+	  std::string prefixname_no_space
 	    = prefixname.substr (0, prefixname.length () - 1);
 	  gdb_printf
 	    ("\"%s\" must be followed by the name of a subcommand.\n",
@@ -718,9 +597,10 @@ execute_command (const char *p, int from_tty)
   cleanup_if_error.release ();
 }
 
-/* See gdbcmd.h.  */
+/* Run FN.  Send its output to FILE, do not display it to the screen.
+   The global BATCH_FLAG will be temporarily set to true.  */
 
-void
+static void
 execute_fn_to_ui_file (struct ui_file *file, std::function<void(void)> fn)
 {
   /* GDB_STDOUT should be better already restored during these
@@ -729,25 +609,21 @@ execute_fn_to_ui_file (struct ui_file *file, std::function<void(void)> fn)
 
   scoped_restore save_async = make_scoped_restore (&current_ui->async, 0);
 
-  {
-    ui_out_redirect_pop redirect_popper (current_uiout, file);
+  ui_out_redirect_pop redirect_popper (current_uiout, file);
 
-    scoped_restore save_stdout
-      = make_scoped_restore (&gdb_stdout, file);
-    scoped_restore save_stderr
-      = make_scoped_restore (&gdb_stderr, file);
-    scoped_restore save_stdlog
-      = make_scoped_restore (&gdb_stdlog, file);
-    scoped_restore save_stdtarg
-      = make_scoped_restore (&gdb_stdtarg, file);
-    scoped_restore save_stdtargerr
-      = make_scoped_restore (&gdb_stdtargerr, file);
+  scoped_restore save_stdout
+    = make_scoped_restore (&gdb_stdout, file);
+  scoped_restore save_stderr
+    = make_scoped_restore (&gdb_stderr, file);
+  scoped_restore save_stdlog
+    = make_scoped_restore (&gdb_stdlog, file);
+  scoped_restore save_stdtarg
+    = make_scoped_restore (&gdb_stdtarg, file);
 
-    fn ();
-  }
+  fn ();
 }
 
-/* See gdbcmd.h.  */
+/* See top.h.  */
 
 void
 execute_fn_to_string (std::string &res, std::function<void(void)> fn,
@@ -762,15 +638,15 @@ execute_fn_to_string (std::string &res, std::function<void(void)> fn,
   catch (...)
     {
       /* Finally.  */
-      res = std::move (str_file.string ());
+      res = str_file.release ();
       throw;
     }
 
   /* And finally.  */
-  res = std::move (str_file.string ());
+  res = str_file.release ();
 }
 
-/* See gdbcmd.h.  */
+/* See top.h.  */
 
 void
 execute_command_to_ui_file (struct ui_file *file,
@@ -779,7 +655,7 @@ execute_command_to_ui_file (struct ui_file *file,
   execute_fn_to_ui_file (file, [=]() { execute_command (p, from_tty); });
 }
 
-/* See gdbcmd.h.  */
+/* See top.h.  */
 
 void
 execute_command_to_string (std::string &res, const char *p, int from_tty,
@@ -789,7 +665,7 @@ execute_command_to_string (std::string &res, const char *p, int from_tty,
 			term_out);
 }
 
-/* See gdbcmd.h.  */
+/* See top.h.  */
 
 void
 execute_command_to_string (const char *p, int from_tty,
@@ -881,17 +757,15 @@ save_command_line (const char *cmd)
 
    A NULL return means end of file.  */
 
-static char *
+static gdb::unique_xmalloc_ptr<char>
 gdb_readline_no_editing (const char *prompt)
 {
-  struct buffer line_buffer;
+  std::string line_buffer;
   struct ui *ui = current_ui;
   /* Read from stdin if we are executing a user defined command.  This
      is the right thing for prompt_for_continue, at least.  */
   FILE *stream = ui->instream != NULL ? ui->instream : stdin;
   int fd = fileno (stream);
-
-  buffer_init (&line_buffer);
 
   if (prompt != NULL)
     {
@@ -927,28 +801,25 @@ gdb_readline_no_editing (const char *prompt)
 
       if (c == EOF)
 	{
-	  if (line_buffer.used_size > 0)
+	  if (!line_buffer.empty ())
 	    /* The last line does not end with a newline.  Return it, and
 	       if we are called again fgetc will still return EOF and
 	       we'll return NULL then.  */
 	    break;
-	  xfree (buffer_finish (&line_buffer));
 	  return NULL;
 	}
 
       if (c == '\n')
 	{
-	  if (line_buffer.used_size > 0
-	      && line_buffer.buffer[line_buffer.used_size - 1] == '\r')
-	    line_buffer.used_size--;
+	  if (!line_buffer.empty () && line_buffer.back () == '\r')
+	    line_buffer.pop_back ();
 	  break;
 	}
 
-      buffer_grow_char (&line_buffer, c);
+      line_buffer += c;
     }
 
-  buffer_grow_char (&line_buffer, '\0');
-  return buffer_finish (&line_buffer);
+  return make_unique_xstrdup (line_buffer.c_str ());
 }
 
 /* Variables which control command line editing and history
@@ -1078,6 +949,11 @@ gdb_readline_wrapper_line (gdb::unique_xmalloc_ptr<char> &&line)
   /* Prevent operate-and-get-next from acting too early.  */
   saved_after_char_processing_hook = after_char_processing_hook;
   after_char_processing_hook = NULL;
+
+#if defined(TUI)
+  if (tui_active)
+    tui_inject_newline_into_command_window ();
+#endif
 
   /* Prevent parts of the prompt from being redisplayed if annotations
      are enabled, and readline's state getting out of sync.  We'll
@@ -1404,7 +1280,7 @@ command_line_input (std::string &cmd_line_buffer, const char *prompt_arg,
 	}
       else
 	{
-	  rl.reset (gdb_readline_no_editing (prompt));
+	  rl = gdb_readline_no_editing (prompt);
 	}
 
       cmd = handle_line_of_input (cmd_line_buffer, rl.get (),
@@ -1446,7 +1322,7 @@ print_gdb_version (struct ui_file *stream, bool interactive)
   /* Second line is a copyright notice.  */
 
   gdb_printf (stream,
-	      "Copyright (C) 2023 Free Software Foundation, Inc.\n");
+	      "Copyright (C) 2024 Free Software Foundation, Inc.\n");
 
   /* Following the copyright is a brief statement that the program is
      free software, that users are free to copy and change it on
@@ -1583,15 +1459,6 @@ This GDB was configured as follows:\n\
 "));
 #endif
 
-#if HAVE_LIBMPFR
-  gdb_printf (stream, _("\
-	     --with-mpfr\n\
-"));
-#else
-  gdb_printf (stream, _("\
-	     --without-mpfr\n\
-"));
-#endif
 #if HAVE_LIBXXHASH
   gdb_printf (stream, _("\
 	     --with-xxhash\n\
@@ -1630,6 +1497,16 @@ This GDB was configured as follows:\n\
 "));
 #endif
 
+#if HAVE_LIBCURSES
+  gdb_printf (stream, _("\
+	     --with-curses\n\
+"));
+#else
+  gdb_printf (stream, _("\
+	     --without-curses\n\
+"));
+#endif
+
 #if HAVE_GUILE
   gdb_printf (stream, _("\
 	     --with-guile\n\
@@ -1637,6 +1514,16 @@ This GDB was configured as follows:\n\
 #else
   gdb_printf (stream, _("\
 	     --without-guile\n\
+"));
+#endif
+
+#if HAVE_AMD_DBGAPI
+  gdb_printf (stream, _("\
+	     --with-amd-dbgapi\n\
+"));
+#else
+  gdb_printf (stream, _("\
+	     --without-amd-dbgapi\n\
 "));
 #endif
 
@@ -1660,6 +1547,26 @@ This GDB was configured as follows:\n\
 "));
 #endif
 
+#ifdef TUI
+  gdb_printf (stream, _("\
+	     --enable-tui\n\
+"));
+#else
+  gdb_printf (stream, _("\
+	     --disable-tui\n\
+"));
+#endif
+
+#ifdef HAVE_READLINE_READLINE_H
+  gdb_printf (stream, _("\
+	     --with-system-readline\n\
+"));
+#else
+  gdb_printf (stream, _("\
+	     --without-system-readline\n\
+"));
+#endif
+
 #ifdef RELOC_SRCDIR
   gdb_printf (stream, _("\
 	     --with-relocated-sources=%s\n\
@@ -1670,6 +1577,12 @@ This GDB was configured as follows:\n\
     gdb_printf (stream, _("\
 	     --with-separate-debug-dir=%s%s\n\
 "), DEBUGDIR, DEBUGDIR_RELOCATABLE ? " (relocatable)" : "");
+
+#ifdef ADDITIONAL_DEBUG_DIRS
+  gdb_printf (stream, _ ("\
+	     --with-additional-debug-dirs=%s\n\
+"), ADDITIONAL_DEBUG_DIRS);
+#endif
 
   if (TARGET_SYSTEM_ROOT[0])
     gdb_printf (stream, _("\
@@ -1811,6 +1724,14 @@ quit_force (int *exit_arg, int from_tty)
 {
   int exit_code = 0;
 
+  /* Clear the quit flag and sync_quit_force_run so that a
+     gdb_exception_forced_quit isn't inadvertently triggered by a QUIT
+     check while running the various cleanup/exit code below.  Note
+     that the call to 'check_quit_flag' clears the quit flag as a side
+     effect.  */
+  check_quit_flag ();
+  sync_quit_force_run = false;
+
   /* An optional expression may be used to cause gdb to terminate with the
      value of that expression.  */
   if (exit_arg)
@@ -1877,12 +1798,6 @@ quit_force (int *exit_arg, int from_tty)
       exception_print (gdb_stderr, ex);
     }
 
-  /* Destroy any values currently allocated now instead of leaving it
-     to global destructors, because that may be too late.  For
-     example, the destructors of xmethod values call into the Python
-     runtime, which is finalized via a final cleanup.  */
-  finalize_values ();
-
   /* Do any final cleanups before exiting.  */
   try
     {
@@ -1893,11 +1808,14 @@ quit_force (int *exit_arg, int from_tty)
       exception_print (gdb_stderr, ex);
     }
 
+  ext_lang_shutdown ();
+
   exit (exit_code);
 }
 
-/* The value of the "interactive-mode" setting.  */
-static enum auto_boolean interactive_mode = AUTO_BOOLEAN_AUTO;
+/* See top.h.  */
+
+auto_boolean interactive_mode = AUTO_BOOLEAN_AUTO;
 
 /* Implement the "show interactive-mode" option.  */
 
@@ -1914,20 +1832,6 @@ show_interactive_mode (struct ui_file *file, int from_tty,
     gdb_printf (file, "Debugger's interactive mode is %s.\n", value);
 }
 
-/* Returns whether GDB is running on an interactive terminal.  */
-
-bool
-ui::input_interactive_p () const
-{
-  if (batch_flag)
-    return false;
-
-  if (interactive_mode != AUTO_BOOLEAN_AUTO)
-    return interactive_mode == AUTO_BOOLEAN_TRUE;
-
-  return m_input_interactive_p;
-}
-
 static void
 dont_repeat_command (const char *ignored, int from_tty)
 {
@@ -2220,8 +2124,6 @@ show_startup_quiet (struct ui_file *file, int from_tty,
 static void
 init_main (void)
 {
-  struct cmd_list_element *c;
-
   /* Initialize the prompt to a simple "(gdb) " prompt or to whatever
      the DEFAULT_PROMPT is.  */
   set_prompt (DEFAULT_PROMPT);
@@ -2232,10 +2134,6 @@ init_main (void)
   write_history_p = 0;
 
   /* Setup important stuff for command line editing.  */
-  rl_completion_word_break_hook = gdb_completion_word_break_characters;
-  rl_attempted_completion_function = gdb_rl_attempted_completion_function;
-  set_rl_completer_word_break_characters (default_word_break_characters ());
-  rl_completer_quote_characters = get_gdb_completer_quote_characters ();
   rl_completion_display_matches_hook = cli_display_match_list;
   rl_readline_name = "gdb";
   rl_terminal_name = getenv ("TERM");
@@ -2365,7 +2263,7 @@ input settings."),
 
   add_setshow_boolean_cmd ("startup-quietly", class_support,
 			       &startup_quiet, _("\
-Set whether GDB should start up quietly."), _("		\
+Set whether GDB should start up quietly."), _("\
 Show whether GDB should start up quietly."), _("\
 This setting will not affect the current session.  Instead this command\n\
 should be added to the .gdbearlyinit file in the users home directory to\n\
@@ -2373,13 +2271,6 @@ affect future GDB sessions."),
 			       NULL,
 			       show_startup_quiet,
 			       &setlist, &showlist);
-
-  c = add_cmd ("new-ui", class_support, new_ui_command, _("\
-Create a new UI.\n\
-Usage: new-ui INTERPRETER TTY\n\
-The first argument is the name of the interpreter to run.\n\
-The second argument is the terminal the UI runs on."), &cmdlist);
-  set_cmd_completer (c, interpreter_completer);
 
   struct internalvar *major_version_var = create_internalvar ("_gdb_major");
   struct internalvar *minor_version_var = create_internalvar ("_gdb_minor");
