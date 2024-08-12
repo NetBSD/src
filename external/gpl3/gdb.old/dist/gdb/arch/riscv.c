@@ -1,4 +1,4 @@
-/* Copyright (C) 2018-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2018-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,6 +24,7 @@
 #include "../features/riscv/64bit-cpu.c"
 #include "../features/riscv/32bit-fpu.c"
 #include "../features/riscv/64bit-fpu.c"
+#include "../features/riscv/rv32e-xregs.c"
 
 #ifndef GDBSERVER
 #define STATIC_IN_GDB static
@@ -33,17 +34,22 @@
 
 /* See arch/riscv.h.  */
 
-STATIC_IN_GDB target_desc *
+STATIC_IN_GDB target_desc_up
 riscv_create_target_description (const struct riscv_gdbarch_features features)
 {
   /* Now we should create a new target description.  */
-  target_desc *tdesc = allocate_target_description ();
+  target_desc_up tdesc = allocate_target_description ();
 
 #ifndef IN_PROCESS_AGENT
   std::string arch_name = "riscv";
 
   if (features.xlen == 4)
-    arch_name.append (":rv32i");
+    {
+      if (features.embedded)
+	arch_name.append (":rv32e");
+      else
+	arch_name.append (":rv32i");
+    }
   else if (features.xlen == 8)
     arch_name.append (":rv64i");
   else if (features.xlen == 16)
@@ -56,22 +62,33 @@ riscv_create_target_description (const struct riscv_gdbarch_features features)
   else if (features.flen == 16)
     arch_name.append ("q");
 
-  set_tdesc_architecture (tdesc, arch_name.c_str ());
+  set_tdesc_architecture (tdesc.get (), arch_name.c_str ());
 #endif
 
   long regnum = 0;
 
   /* For now we only support creating 32-bit or 64-bit x-registers.  */
   if (features.xlen == 4)
-    regnum = create_feature_riscv_32bit_cpu (tdesc, regnum);
+    {
+      if (features.embedded)
+	regnum = create_feature_riscv_rv32e_xregs (tdesc.get (), regnum);
+      else
+	regnum = create_feature_riscv_32bit_cpu (tdesc.get (), regnum);
+    }
   else if (features.xlen == 8)
-    regnum = create_feature_riscv_64bit_cpu (tdesc, regnum);
+    regnum = create_feature_riscv_64bit_cpu (tdesc.get (), regnum);
 
   /* For now we only support creating 32-bit or 64-bit f-registers.  */
   if (features.flen == 4)
-    regnum = create_feature_riscv_32bit_fpu (tdesc, regnum);
+    regnum = create_feature_riscv_32bit_fpu (tdesc.get (), regnum);
   else if (features.flen == 8)
-    regnum = create_feature_riscv_64bit_fpu (tdesc, regnum);
+    regnum = create_feature_riscv_64bit_fpu (tdesc.get (), regnum);
+
+  /* Currently GDB only supports vector features coming from remote
+     targets.  We don't support creating vector features on native targets
+     (yet).  */
+  if (features.vlen != 0)
+    error (_("unable to create vector feature"));
 
   return tdesc;
 }
@@ -106,13 +123,14 @@ riscv_lookup_target_description (const struct riscv_gdbarch_features features)
   if (it != riscv_tdesc_cache.end ())
     return it->second.get ();
 
-  target_desc *tdesc = riscv_create_target_description (features);
+  target_desc_up tdesc (riscv_create_target_description (features));
 
-  /* Add to the cache.  Work around a problem with g++ 4.8 (PR96537):
-     Call the target_desc_up constructor explictly instead of implicitly.  */
-  riscv_tdesc_cache.emplace (features, target_desc_up (tdesc));
-
-  return tdesc;
+  /* Add to the cache, and return a pointer borrowed from the
+     target_desc_up.  This is safe as the cache (and the pointers
+     contained within it) are not deleted until GDB exits.  */
+  target_desc *ptr = tdesc.get ();
+  riscv_tdesc_cache.emplace (features, std::move (tdesc));
+  return ptr;
 }
 
 #endif /* !GDBSERVER */

@@ -1,6 +1,6 @@
 /* Intel 387 floating point stuff.
 
-   Copyright (C) 1988-2020 Free Software Foundation, Inc.
+   Copyright (C) 1988-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -42,7 +42,7 @@ print_i387_value (struct gdbarch *gdbarch,
      point, 19 for the digits and 6 for the exponent adds up to 27.  */
   const struct type *type = i387_ext_type (gdbarch);
   std::string str = target_float_to_string (raw, type, " %-+27.19g");
-  fprintf_filtered (file, "%s", str.c_str ());
+  gdb_printf (file, "%s", str.c_str ());
 }
 
 /* Print the classification for the register contents RAW.  */
@@ -67,16 +67,16 @@ print_i387_ext (struct gdbarch *gdbarch,
     {
       if (fraction[0] == 0x00000000 && fraction[1] == 0x00000000)
 	/* Infinity.  */
-	fprintf_filtered (file, " %cInf", (sign ? '-' : '+'));
+	gdb_printf (file, " %cInf", (sign ? '-' : '+'));
       else if (sign && fraction[0] == 0x00000000 && fraction[1] == 0x40000000)
 	/* Real Indefinite (QNaN).  */
-	fputs_unfiltered (" Real Indefinite (QNaN)", file);
+	gdb_puts (" Real Indefinite (QNaN)", file);
       else if (fraction[1] & 0x40000000)
 	/* QNaN.  */
-	fputs_filtered (" QNaN", file);
+	gdb_puts (" QNaN", file);
       else
 	/* SNaN.  */
-	fputs_filtered (" SNaN", file);
+	gdb_puts (" SNaN", file);
     }
   else if (exponent < 0x7fff && exponent > 0x0000 && integer)
     /* Normal.  */
@@ -88,14 +88,14 @@ print_i387_ext (struct gdbarch *gdbarch,
       
       if (integer)
 	/* Pseudo-denormal.  */
-	fputs_filtered (" Pseudo-denormal", file);
+	gdb_puts (" Pseudo-denormal", file);
       else if (fraction[0] || fraction[1])
 	/* Denormal.  */
-	fputs_filtered (" Denormal", file);
+	gdb_puts (" Denormal", file);
     }
   else
     /* Unsupported.  */
-    fputs_filtered (" Unsupported", file);
+    gdb_puts (" Unsupported", file);
 }
 
 /* Print the status word STATUS.  If STATUS_P is false, then STATUS
@@ -105,35 +105,35 @@ static void
 print_i387_status_word (int status_p,
 			unsigned int status, struct ui_file *file)
 {
-  fprintf_filtered (file, "Status Word:         ");
+  gdb_printf (file, "Status Word:         ");
   if (!status_p)
     {
-      fprintf_filtered (file, "%s\n", _("<unavailable>"));
+      gdb_printf (file, "%s\n", _("<unavailable>"));
       return;
     }
 
-  fprintf_filtered (file, "%s", hex_string_custom (status, 4));
-  fputs_filtered ("  ", file);
-  fprintf_filtered (file, " %s", (status & 0x0001) ? "IE" : "  ");
-  fprintf_filtered (file, " %s", (status & 0x0002) ? "DE" : "  ");
-  fprintf_filtered (file, " %s", (status & 0x0004) ? "ZE" : "  ");
-  fprintf_filtered (file, " %s", (status & 0x0008) ? "OE" : "  ");
-  fprintf_filtered (file, " %s", (status & 0x0010) ? "UE" : "  ");
-  fprintf_filtered (file, " %s", (status & 0x0020) ? "PE" : "  ");
-  fputs_filtered ("  ", file);
-  fprintf_filtered (file, " %s", (status & 0x0080) ? "ES" : "  ");
-  fputs_filtered ("  ", file);
-  fprintf_filtered (file, " %s", (status & 0x0040) ? "SF" : "  ");
-  fputs_filtered ("  ", file);
-  fprintf_filtered (file, " %s", (status & 0x0100) ? "C0" : "  ");
-  fprintf_filtered (file, " %s", (status & 0x0200) ? "C1" : "  ");
-  fprintf_filtered (file, " %s", (status & 0x0400) ? "C2" : "  ");
-  fprintf_filtered (file, " %s", (status & 0x4000) ? "C3" : "  ");
+  gdb_printf (file, "%s", hex_string_custom (status, 4));
+  gdb_puts ("  ", file);
+  gdb_printf (file, " %s", (status & 0x0001) ? "IE" : "  ");
+  gdb_printf (file, " %s", (status & 0x0002) ? "DE" : "  ");
+  gdb_printf (file, " %s", (status & 0x0004) ? "ZE" : "  ");
+  gdb_printf (file, " %s", (status & 0x0008) ? "OE" : "  ");
+  gdb_printf (file, " %s", (status & 0x0010) ? "UE" : "  ");
+  gdb_printf (file, " %s", (status & 0x0020) ? "PE" : "  ");
+  gdb_puts ("  ", file);
+  gdb_printf (file, " %s", (status & 0x0080) ? "ES" : "  ");
+  gdb_puts ("  ", file);
+  gdb_printf (file, " %s", (status & 0x0040) ? "SF" : "  ");
+  gdb_puts ("  ", file);
+  gdb_printf (file, " %s", (status & 0x0100) ? "C0" : "  ");
+  gdb_printf (file, " %s", (status & 0x0200) ? "C1" : "  ");
+  gdb_printf (file, " %s", (status & 0x0400) ? "C2" : "  ");
+  gdb_printf (file, " %s", (status & 0x4000) ? "C3" : "  ");
 
-  fputs_filtered ("\n", file);
+  gdb_puts ("\n", file);
 
-  fprintf_filtered (file,
-		    "                       TOP: %d\n", ((status >> 11) & 7));
+  gdb_printf (file,
+	      "                       TOP: %d\n", ((status >> 11) & 7));
 }
 
 /* Print the control word CONTROL.  If CONTROL_P is false, then
@@ -143,55 +143,55 @@ static void
 print_i387_control_word (int control_p,
 			 unsigned int control, struct ui_file *file)
 {
-  fprintf_filtered (file, "Control Word:        ");
+  gdb_printf (file, "Control Word:        ");
   if (!control_p)
     {
-      fprintf_filtered (file, "%s\n", _("<unavailable>"));
+      gdb_printf (file, "%s\n", _("<unavailable>"));
       return;
     }
 
-  fprintf_filtered (file, "%s", hex_string_custom (control, 4));
-  fputs_filtered ("  ", file);
-  fprintf_filtered (file, " %s", (control & 0x0001) ? "IM" : "  ");
-  fprintf_filtered (file, " %s", (control & 0x0002) ? "DM" : "  ");
-  fprintf_filtered (file, " %s", (control & 0x0004) ? "ZM" : "  ");
-  fprintf_filtered (file, " %s", (control & 0x0008) ? "OM" : "  ");
-  fprintf_filtered (file, " %s", (control & 0x0010) ? "UM" : "  ");
-  fprintf_filtered (file, " %s", (control & 0x0020) ? "PM" : "  ");
+  gdb_printf (file, "%s", hex_string_custom (control, 4));
+  gdb_puts ("  ", file);
+  gdb_printf (file, " %s", (control & 0x0001) ? "IM" : "  ");
+  gdb_printf (file, " %s", (control & 0x0002) ? "DM" : "  ");
+  gdb_printf (file, " %s", (control & 0x0004) ? "ZM" : "  ");
+  gdb_printf (file, " %s", (control & 0x0008) ? "OM" : "  ");
+  gdb_printf (file, " %s", (control & 0x0010) ? "UM" : "  ");
+  gdb_printf (file, " %s", (control & 0x0020) ? "PM" : "  ");
 
-  fputs_filtered ("\n", file);
+  gdb_puts ("\n", file);
 
-  fputs_filtered ("                       PC: ", file);
+  gdb_puts ("                       PC: ", file);
   switch ((control >> 8) & 3)
     {
     case 0:
-      fputs_filtered ("Single Precision (24-bits)\n", file);
+      gdb_puts ("Single Precision (24-bits)\n", file);
       break;
     case 1:
-      fputs_filtered ("Reserved\n", file);
+      gdb_puts ("Reserved\n", file);
       break;
     case 2:
-      fputs_filtered ("Double Precision (53-bits)\n", file);
+      gdb_puts ("Double Precision (53-bits)\n", file);
       break;
     case 3:
-      fputs_filtered ("Extended Precision (64-bits)\n", file);
+      gdb_puts ("Extended Precision (64-bits)\n", file);
       break;
     }
       
-  fputs_filtered ("                       RC: ", file);
+  gdb_puts ("                       RC: ", file);
   switch ((control >> 10) & 3)
     {
     case 0:
-      fputs_filtered ("Round to nearest\n", file);
+      gdb_puts ("Round to nearest\n", file);
       break;
     case 1:
-      fputs_filtered ("Round down\n", file);
+      gdb_puts ("Round down\n", file);
       break;
     case 2:
-      fputs_filtered ("Round up\n", file);
+      gdb_puts ("Round up\n", file);
       break;
     case 3:
-      fputs_filtered ("Round toward zero\n", file);
+      gdb_puts ("Round toward zero\n", file);
       break;
     }
 }
@@ -202,9 +202,9 @@ print_i387_control_word (int control_p,
 
 void
 i387_print_float_info (struct gdbarch *gdbarch, struct ui_file *file,
-		       struct frame_info *frame, const char *args)
+		       frame_info_ptr frame, const char *args)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (get_frame_arch (frame));
+  i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
   ULONGEST fctrl;
   int fctrl_p;
   ULONGEST fstat;
@@ -254,7 +254,7 @@ i387_print_float_info (struct gdbarch *gdbarch, struct ui_file *file,
 	  int i;
 	  int tag = -1;
 
-	  fprintf_filtered (file, "%sR%d: ", fpreg == top ? "=>" : "  ", fpreg);
+	  gdb_printf (file, "%sR%d: ", fpreg == top ? "=>" : "  ", fpreg);
 
 	  if (ftag_p)
 	    {
@@ -263,60 +263,60 @@ i387_print_float_info (struct gdbarch *gdbarch, struct ui_file *file,
 	      switch (tag)
 		{
 		case 0:
-		  fputs_filtered ("Valid   ", file);
+		  gdb_puts ("Valid   ", file);
 		  break;
 		case 1:
-		  fputs_filtered ("Zero    ", file);
+		  gdb_puts ("Zero    ", file);
 		  break;
 		case 2:
-		  fputs_filtered ("Special ", file);
+		  gdb_puts ("Special ", file);
 		  break;
 		case 3:
-		  fputs_filtered ("Empty   ", file);
+		  gdb_puts ("Empty   ", file);
 		  break;
 		}
 	    }
 	  else
-	    fputs_filtered ("Unknown ", file);
+	    gdb_puts ("Unknown ", file);
 
 	  regnum = (fpreg + 8 - top) % 8 + I387_ST0_REGNUM (tdep);
 	  regval = get_frame_register_value (frame, regnum);
 
 	  if (value_entirely_available (regval))
 	    {
-	      const gdb_byte *raw = value_contents (regval);
+	      const gdb_byte *raw = value_contents (regval).data ();
 
-	      fputs_filtered ("0x", file);
+	      gdb_puts ("0x", file);
 	      for (i = 9; i >= 0; i--)
-		fprintf_filtered (file, "%02x", raw[i]);
+		gdb_printf (file, "%02x", raw[i]);
 
 	      if (tag != -1 && tag != 3)
 		print_i387_ext (gdbarch, raw, file);
 	    }
 	  else
-	    fprintf_filtered (file, "%s", _("<unavailable>"));
+	    gdb_printf (file, "%s", _("<unavailable>"));
 
-	  fputs_filtered ("\n", file);
+	  gdb_puts ("\n", file);
 	}
     }
 
-  fputs_filtered ("\n", file);
+  gdb_puts ("\n", file);
   print_i387_status_word (fstat_p, fstat, file);
   print_i387_control_word (fctrl_p, fctrl, file);
-  fprintf_filtered (file, "Tag Word:            %s\n",
-		    ftag_p ? hex_string_custom (ftag, 4) : _("<unavailable>"));
-  fprintf_filtered (file, "Instruction Pointer: %s:",
-		    fiseg_p ? hex_string_custom (fiseg, 2) : _("<unavailable>"));
-  fprintf_filtered (file, "%s\n",
-		    fioff_p ? hex_string_custom (fioff, 8) : _("<unavailable>"));
-  fprintf_filtered (file, "Operand Pointer:     %s:",
-		    foseg_p ? hex_string_custom (foseg, 2) : _("<unavailable>"));
-  fprintf_filtered (file, "%s\n",
-		    fooff_p ? hex_string_custom (fooff, 8) : _("<unavailable>"));
-  fprintf_filtered (file, "Opcode:              %s\n",
-		    fop_p
-		    ? (hex_string_custom (fop ? (fop | 0xd800) : 0, 4))
-		    : _("<unavailable>"));
+  gdb_printf (file, "Tag Word:            %s\n",
+	      ftag_p ? hex_string_custom (ftag, 4) : _("<unavailable>"));
+  gdb_printf (file, "Instruction Pointer: %s:",
+	      fiseg_p ? hex_string_custom (fiseg, 2) : _("<unavailable>"));
+  gdb_printf (file, "%s\n",
+	      fioff_p ? hex_string_custom (fioff, 8) : _("<unavailable>"));
+  gdb_printf (file, "Operand Pointer:     %s:",
+	      foseg_p ? hex_string_custom (foseg, 2) : _("<unavailable>"));
+  gdb_printf (file, "%s\n",
+	      fooff_p ? hex_string_custom (fooff, 8) : _("<unavailable>"));
+  gdb_printf (file, "Opcode:              %s\n",
+	      fop_p
+	      ? (hex_string_custom (fop ? (fop | 0xd800) : 0, 4))
+	      : _("<unavailable>"));
 }
 
 
@@ -345,7 +345,7 @@ i387_convert_register_p (struct gdbarch *gdbarch, int regnum,
    return its contents in TO.  */
 
 int
-i387_register_to_value (struct frame_info *frame, int regnum,
+i387_register_to_value (frame_info_ptr frame, int regnum,
 			struct type *type, gdb_byte *to,
 			int *optimizedp, int *unavailablep)
 {
@@ -365,8 +365,10 @@ i387_register_to_value (struct frame_info *frame, int regnum,
 
   /* Convert to TYPE.  */
   if (!get_frame_register_bytes (frame, regnum, 0,
-				 register_size (gdbarch, regnum),
-				 from, optimizedp, unavailablep))
+				 gdb::make_array_view (from,
+						       register_size (gdbarch,
+								      regnum)),
+				 optimizedp, unavailablep))
     return 0;
 
   target_float_convert (from, i387_ext_type (gdbarch), to, type);
@@ -378,7 +380,7 @@ i387_register_to_value (struct frame_info *frame, int regnum,
    REGNUM in frame FRAME.  */
 
 void
-i387_value_to_register (struct frame_info *frame, int regnum,
+i387_value_to_register (frame_info_ptr frame, int regnum,
 			struct type *type, const gdb_byte *from)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
@@ -438,7 +440,7 @@ void
 i387_supply_fsave (struct regcache *regcache, int regnum, const void *fsave)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   const gdb_byte *regs = (const gdb_byte *) fsave;
   int i;
@@ -492,7 +494,8 @@ i387_supply_fsave (struct regcache *regcache, int regnum, const void *fsave)
 void
 i387_collect_fsave (const struct regcache *regcache, int regnum, void *fsave)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
+  gdbarch *arch = regcache->arch ();
+  i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (arch);
   gdb_byte *regs = (gdb_byte *) fsave;
   int i;
 
@@ -502,7 +505,7 @@ i387_collect_fsave (const struct regcache *regcache, int regnum, void *fsave)
     if (regnum == -1 || regnum == i)
       {
 	/* Most of the FPU control registers occupy only 16 bits in
-           the fsave area.  Give those a special treatment.  */
+	   the fsave area.  Give those a special treatment.  */
 	if (i >= I387_FCTRL_REGNUM (tdep)
 	    && i != I387_FIOFF_REGNUM (tdep) && i != I387_FOOFF_REGNUM (tdep))
 	  {
@@ -513,7 +516,7 @@ i387_collect_fsave (const struct regcache *regcache, int regnum, void *fsave)
 	    if (i == I387_FOP_REGNUM (tdep))
 	      {
 		/* The opcode occupies only 11 bits.  Make sure we
-                   don't touch the other bits.  */
+		   don't touch the other bits.  */
 		buf[1] &= ((1 << 3) - 1);
 		buf[1] |= ((FSAVE_ADDR (tdep, regs, i))[1] & ~((1 << 3) - 1));
 	      }
@@ -585,7 +588,8 @@ static int i387_tag (const gdb_byte *raw);
 void
 i387_supply_fxsave (struct regcache *regcache, int regnum, const void *fxsave)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
+  gdbarch *arch = regcache->arch ();
+  i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (arch);
   const gdb_byte *regs = (const gdb_byte *) fxsave;
   int i;
 
@@ -633,7 +637,7 @@ i387_supply_fxsave (struct regcache *regcache, int regnum, const void *fxsave)
 		    if (val[0] & (1 << fpreg))
 		      {
 			int thisreg = (fpreg + 8 - top) % 8 
-			               + I387_ST0_REGNUM (tdep);
+				       + I387_ST0_REGNUM (tdep);
 			tag = i387_tag (FXSAVE_ADDR (tdep, regs, thisreg));
 		      }
 		    else
@@ -668,7 +672,8 @@ i387_supply_fxsave (struct regcache *regcache, int regnum, const void *fxsave)
 void
 i387_collect_fxsave (const struct regcache *regcache, int regnum, void *fxsave)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
+  gdbarch *arch = regcache->arch ();
+  i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (arch);
   gdb_byte *regs = (gdb_byte *) fxsave;
   int i;
 
@@ -679,7 +684,7 @@ i387_collect_fxsave (const struct regcache *regcache, int regnum, void *fxsave)
     if (regnum == -1 || regnum == i)
       {
 	/* Most of the FPU control registers occupy only 16 bits in
-           the fxsave area.  Give those a special treatment.  */
+	   the fxsave area.  Give those a special treatment.  */
 	if (i >= I387_FCTRL_REGNUM (tdep) && i < I387_XMM0_REGNUM (tdep)
 	    && i != I387_FIOFF_REGNUM (tdep) && i != I387_FOOFF_REGNUM (tdep))
 	  {
@@ -690,7 +695,7 @@ i387_collect_fxsave (const struct regcache *regcache, int regnum, void *fxsave)
 	    if (i == I387_FOP_REGNUM (tdep))
 	      {
 		/* The opcode occupies only 11 bits.  Make sure we
-                   don't touch the other bits.  */
+		   don't touch the other bits.  */
 		buf[1] &= ((1 << 3) - 1);
 		buf[1] |= ((FXSAVE_ADDR (tdep, regs, i))[1] & ~((1 << 3) - 1));
 	      }
@@ -901,7 +906,7 @@ i387_xsave_get_clear_bv (struct gdbarch *gdbarch, const void *xsave)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   const gdb_byte *regs = (const gdb_byte *) xsave;
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
 
   /* Get `xstat_bv'.  The supported bits in `xstat_bv' are 8 bytes.  */
   ULONGEST xstate_bv = extract_unsigned_integer (XSAVE_XSTATE_BV_ADDR (regs),
@@ -921,7 +926,7 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
 {
   struct gdbarch *gdbarch = regcache->arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
   const gdb_byte *regs = (const gdb_byte *) xsave;
   int i;
   /* In 64-bit mode the split between "low" and "high" ZMM registers is at
@@ -1344,7 +1349,7 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
 {
   struct gdbarch *gdbarch = regcache->arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
   gdb_byte *p, *regs = (gdb_byte *) xsave;
   gdb_byte raw[I386_MAX_REGISTER_SIZE];
   ULONGEST initial_xstate_bv, clear_bv, xstate_bv = 0;
@@ -1405,7 +1410,7 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
 	   || regnum == I387_MXCSR_REGNUM (tdep))
     regclass = x87_ctrl_or_mxcsr;
   else
-    internal_error (__FILE__, __LINE__, _("invalid i387 regnum %d"), regnum);
+    internal_error (_("invalid i387 regnum %d"), regnum);
 
   if (gcore)
     {
@@ -1678,8 +1683,7 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
       switch (regclass)
 	{
 	default:
-	  internal_error (__FILE__, __LINE__,
-			  _("invalid i387 regclass"));
+	  internal_error (_("invalid i387 regclass"));
 
 	case pkeys:
 	  /* This is a PKEYS register.  */
@@ -1929,7 +1933,7 @@ i387_tag (const gdb_byte *raw)
 void
 i387_return_value (struct gdbarch *gdbarch, struct regcache *regcache)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
   ULONGEST fstat;
 
   /* Set the top of the floating-point register stack to 7.  The
@@ -1952,7 +1956,7 @@ i387_return_value (struct gdbarch *gdbarch, struct regcache *regcache)
 void
 i387_reset_bnd_regs (struct gdbarch *gdbarch, struct regcache *regcache)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
 
   if (I387_BND0R_REGNUM (tdep) > 0)
     {

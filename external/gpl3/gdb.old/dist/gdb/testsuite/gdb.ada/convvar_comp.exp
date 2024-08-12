@@ -1,4 +1,4 @@
-# Copyright 2018-2020 Free Software Foundation, Inc.
+# Copyright 2018-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,12 +25,19 @@ if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug ]] != "" }
 
 clean_restart ${testfile}
 
-if ![runto "break_me" ] then {
-  perror "Couldn't run ${testfile}"
+if {![runto "break_me"]} {
   return
+}
+
+set val ""
+gdb_test_multiple "print item.started" "" {
+    -re -wrap " = \\((.*)\\)" {
+	set val $expect_out(1,string)
+	pass $gdb_test_name
+    }
 }
 
 gdb_test_no_output "set variable \$item := item"
 
 gdb_test "print \$item.started" \
-         " = \\(0, 0, 0\\)"
+    " = \\($val\\)"

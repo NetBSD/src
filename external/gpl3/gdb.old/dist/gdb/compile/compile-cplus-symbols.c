@@ -1,6 +1,6 @@
 /* Convert symbols from GDB to GCC
 
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -48,17 +48,17 @@ convert_one_symbol (compile_cplus_instance *instance,
 {
   /* Squash compiler warning.  */
   gcc_type sym_type = 0;
-  const char *filename = symbol_symtab (sym.symbol)->filename;
-  unsigned short line = SYMBOL_LINE (sym.symbol);
+  const char *filename = sym.symbol->symtab ()->filename;
+  unsigned short line = sym.symbol->line ();
 
   instance->error_symbol_once (sym.symbol);
 
-  if (SYMBOL_CLASS (sym.symbol) == LOC_LABEL)
+  if (sym.symbol->aclass () == LOC_LABEL)
     sym_type = 0;
   else
-    sym_type = instance->convert_type (SYMBOL_TYPE (sym.symbol));
+    sym_type = instance->convert_type (sym.symbol->type ());
 
-  if (SYMBOL_DOMAIN (sym.symbol) == STRUCT_DOMAIN)
+  if (sym.symbol->domain () == STRUCT_DOMAIN)
     {
       /* Nothing to do.  */
     }
@@ -70,38 +70,38 @@ convert_one_symbol (compile_cplus_instance *instance,
       std::string name;
       gdb::unique_xmalloc_ptr<char> symbol_name;
 
-      switch (SYMBOL_CLASS (sym.symbol))
+      switch (sym.symbol->aclass ())
 	{
 	case LOC_TYPEDEF:
-	  if (SYMBOL_TYPE (sym.symbol)->code () == TYPE_CODE_TYPEDEF)
+	  if (sym.symbol->type ()->code () == TYPE_CODE_TYPEDEF)
 	    kind = GCC_CP_SYMBOL_TYPEDEF;
-	  else  if (SYMBOL_TYPE (sym.symbol)->code () == TYPE_CODE_NAMESPACE)
+	  else  if (sym.symbol->type ()->code () == TYPE_CODE_NAMESPACE)
 	    return;
 	  break;
 
 	case LOC_LABEL:
 	  kind = GCC_CP_SYMBOL_LABEL;
-	  addr = SYMBOL_VALUE_ADDRESS (sym.symbol);
+	  addr = sym.symbol->value_address ();
 	  break;
 
 	case LOC_BLOCK:
 	  {
 	    kind = GCC_CP_SYMBOL_FUNCTION;
-	    addr = BLOCK_START (SYMBOL_BLOCK_VALUE (sym.symbol));
-	    if (is_global && TYPE_GNU_IFUNC (SYMBOL_TYPE (sym.symbol)))
+	    addr = sym.symbol->value_block()->start ();
+	    if (is_global && sym.symbol->type ()->is_gnu_ifunc ())
 	      addr = gnu_ifunc_resolve_addr (target_gdbarch (), addr);
 	  }
 	  break;
 
 	case LOC_CONST:
-	  if (SYMBOL_TYPE (sym.symbol)->code () == TYPE_CODE_ENUM)
+	  if (sym.symbol->type ()->code () == TYPE_CODE_ENUM)
 	    {
 	      /* Already handled by convert_enum.  */
 	      return;
 	    }
 	  instance->plugin ().build_constant
 	    (sym_type, sym.symbol->natural_name (),
-	     SYMBOL_VALUE (sym.symbol), filename, line);
+	     sym.symbol->value_longest (), filename, line);
 	  return;
 
 	case LOC_CONST_BYTES:
@@ -109,7 +109,7 @@ convert_one_symbol (compile_cplus_instance *instance,
 		 sym.symbol->print_name ());
 
 	case LOC_UNDEF:
-	  internal_error (__FILE__, __LINE__, _("LOC_UNDEF found for \"%s\"."),
+	  internal_error (_("LOC_UNDEF found for \"%s\"."),
 			  sym.symbol->print_name ());
 
 	case LOC_COMMON_BLOCK:
@@ -138,7 +138,7 @@ convert_one_symbol (compile_cplus_instance *instance,
 	     by their name.  */
 	  {
 	    struct value *val;
-	    struct frame_info *frame = nullptr;
+	    frame_info_ptr frame = nullptr;
 
 	    if (symbol_read_needs_frame (sym.symbol))
 	      {
@@ -173,7 +173,7 @@ convert_one_symbol (compile_cplus_instance *instance,
 
 	case LOC_STATIC:
 	  kind = GCC_CP_SYMBOL_VARIABLE;
-	  addr = SYMBOL_VALUE_ADDRESS (sym.symbol);
+	  addr = sym.symbol->value_address ();
 	  break;
 
 	case LOC_FINAL_VALUE:
@@ -190,7 +190,7 @@ convert_one_symbol (compile_cplus_instance *instance,
 	    {
 	      compile_scope scope
 		= instance->new_scope (sym.symbol->natural_name (),
-				       SYMBOL_TYPE (sym.symbol));
+				       sym.symbol->type ());
 	      if (scope.nested_type () != GCC_TYPE_NONE)
 		{
 		  /* We found a symbol for this type that was defined inside
@@ -208,7 +208,7 @@ convert_one_symbol (compile_cplus_instance *instance,
 
 	  /* Define the decl.  */
 	  instance->plugin ().build_decl
-	    ("variable", name.c_str (), kind, sym_type,
+	    ("variable", name.c_str (), kind.raw (), sym_type,
 	     symbol_name.get (), addr, filename, line);
 
 	  /* Pop scope for non-local symbols.  */
@@ -253,17 +253,17 @@ convert_symbol_sym (compile_cplus_instance *instance,
 	  && global_sym.block != block_static_block (global_sym.block))
 	{
 	  if (compile_debug)
-	    fprintf_unfiltered (gdb_stdlog,
-				"gcc_convert_symbol \"%s\": global symbol\n",
-				identifier);
+	    gdb_printf (gdb_stdlog,
+			"gcc_convert_symbol \"%s\": global symbol\n",
+			identifier);
 	  convert_one_symbol (instance, global_sym, true, false);
 	}
     }
 
   if (compile_debug)
-    fprintf_unfiltered (gdb_stdlog,
-			"gcc_convert_symbol \"%s\": local symbol\n",
-			identifier);
+    gdb_printf (gdb_stdlog,
+		"gcc_convert_symbol \"%s\": local symbol\n",
+		identifier);
   convert_one_symbol (instance, sym, false, is_local_symbol);
 }
 
@@ -281,10 +281,10 @@ convert_symbol_bmsym (compile_cplus_instance *instance,
   gcc_type sym_type;
   CORE_ADDR addr;
 
-  addr = MSYMBOL_VALUE_ADDRESS (objfile, msym);
+  addr = msym->value_address (objfile);
 
   /* Conversion copied from write_exp_msymbol.  */
-  switch (MSYMBOL_TYPE (msym))
+  switch (msym->type ())
     {
     case mst_text:
     case mst_file_text:
@@ -323,7 +323,7 @@ convert_symbol_bmsym (compile_cplus_instance *instance,
   sym_type = instance->convert_type (type);
   instance->plugin ().push_namespace ("");
   instance->plugin ().build_decl
-    ("minsym", msym->natural_name (), kind, sym_type, nullptr, addr,
+    ("minsym", msym->natural_name (), kind.raw (), sym_type, nullptr, addr,
      nullptr, 0);
   instance->plugin ().pop_binding_level ("");
 }
@@ -337,8 +337,8 @@ gcc_cplus_convert_symbol (void *datum,
 			  const char *identifier)
 {
   if (compile_debug)
-    fprintf_unfiltered (gdb_stdlog,
-			"got oracle request for \"%s\"\n", identifier);
+    gdb_printf (gdb_stdlog,
+		"got oracle request for \"%s\"\n", identifier);
 
   bool found = false;
   compile_cplus_instance *instance = (compile_cplus_instance *) datum;
@@ -374,7 +374,7 @@ gcc_cplus_convert_symbol (void *datum,
 	    {
 	      found = true;
 	      convert_symbol_sym (instance, identifier, it,
-				  SYMBOL_DOMAIN (it.symbol));
+				  it.symbol->domain ());
 	    }
 	}
 
@@ -396,18 +396,18 @@ gcc_cplus_convert_symbol (void *datum,
     }
 
   if (compile_debug && !found)
-    fprintf_unfiltered (gdb_stdlog,
-			"gcc_convert_symbol \"%s\": lookup_symbol failed\n",
-			identifier);
+    gdb_printf (gdb_stdlog,
+		"gcc_convert_symbol \"%s\": lookup_symbol failed\n",
+		identifier);
 
   if (compile_debug)
     {
       if (found)
-	fprintf_unfiltered (gdb_stdlog, "found type for %s\n", identifier);
+	gdb_printf (gdb_stdlog, "found type for %s\n", identifier);
       else
 	{
-	  fprintf_unfiltered (gdb_stdlog, "did not find type for %s\n",
-			      identifier);
+	  gdb_printf (gdb_stdlog, "did not find type for %s\n",
+		      identifier);
 	}
     }
 
@@ -425,8 +425,8 @@ gcc_cplus_symbol_address (void *datum, struct gcc_cp_context *gcc_context,
   int found = 0;
 
   if (compile_debug)
-    fprintf_unfiltered (gdb_stdlog,
-			"got oracle request for address of %s\n", identifier);
+    gdb_printf (gdb_stdlog,
+		"got oracle request for address of %s\n", identifier);
 
   /* We can't allow exceptions to escape out of this callback.  Safest
      is to simply emit a gcc error.  */
@@ -435,14 +435,14 @@ gcc_cplus_symbol_address (void *datum, struct gcc_cp_context *gcc_context,
       struct symbol *sym
 	= lookup_symbol (identifier, nullptr, VAR_DOMAIN, nullptr).symbol;
 
-      if (sym != nullptr && SYMBOL_CLASS (sym) == LOC_BLOCK)
+      if (sym != nullptr && sym->aclass () == LOC_BLOCK)
 	{
 	  if (compile_debug)
-	    fprintf_unfiltered (gdb_stdlog,
-				"gcc_symbol_address \"%s\": full symbol\n",
-				identifier);
-	  result = BLOCK_START (SYMBOL_BLOCK_VALUE (sym));
-	  if (TYPE_GNU_IFUNC (SYMBOL_TYPE (sym)))
+	    gdb_printf (gdb_stdlog,
+			"gcc_symbol_address \"%s\": full symbol\n",
+			identifier);
+	  result = sym->value_block ()->start ();
+	  if (sym->type ()->is_gnu_ifunc ())
 	    result = gnu_ifunc_resolve_addr (target_gdbarch (), result);
 	  found = 1;
 	}
@@ -454,12 +454,12 @@ gcc_cplus_symbol_address (void *datum, struct gcc_cp_context *gcc_context,
 	  if (msym.minsym != nullptr)
 	    {
 	      if (compile_debug)
-		fprintf_unfiltered (gdb_stdlog,
-				    "gcc_symbol_address \"%s\": minimal "
-				    "symbol\n",
-				    identifier);
-	      result = BMSYMBOL_VALUE_ADDRESS (msym);
-	      if (MSYMBOL_TYPE (msym.minsym) == mst_text_gnu_ifunc)
+		gdb_printf (gdb_stdlog,
+			    "gcc_symbol_address \"%s\": minimal "
+			    "symbol\n",
+			    identifier);
+	      result = msym.value_address ();
+	      if (msym.minsym->type () == mst_text_gnu_ifunc)
 		result = gnu_ifunc_resolve_addr (target_gdbarch (), result);
 	      found = 1;
 	    }
@@ -472,17 +472,17 @@ gcc_cplus_symbol_address (void *datum, struct gcc_cp_context *gcc_context,
     }
 
   if (compile_debug && !found)
-    fprintf_unfiltered (gdb_stdlog,
-			"gcc_symbol_address \"%s\": failed\n",
-			identifier);
+    gdb_printf (gdb_stdlog,
+		"gcc_symbol_address \"%s\": failed\n",
+		identifier);
 
   if (compile_debug)
     {
       if (found)
-	fprintf_unfiltered (gdb_stdlog, "found address for %s!\n", identifier);
+	gdb_printf (gdb_stdlog, "found address for %s!\n", identifier);
       else
-	fprintf_unfiltered (gdb_stdlog,
-			    "did not find address for %s\n", identifier);
+	gdb_printf (gdb_stdlog,
+		    "did not find address for %s\n", identifier);
     }
 
   return result;

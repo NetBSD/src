@@ -1,5 +1,5 @@
 # Test macro handling of #included files.
-# Copyright 2003-2020 Free Software Foundation, Inc.
+# Copyright 2003-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -90,7 +90,7 @@ clean_restart ${binfile}
 # Any command that causes GDB to read the debugging info for the
 # lineinc.c compilation unit will do here.
 set test_name "tolerate macro info with multiple #inclusions per line"
-gdb_test_multiple "break main" $test_name {
+gdb_test_multiple "break -q main" $test_name {
     -re "Breakpoint 1 at 0x.*: file .*lineinc.c.*\\.\r\n${gdb_prompt}" {
         pass $test_name
     }

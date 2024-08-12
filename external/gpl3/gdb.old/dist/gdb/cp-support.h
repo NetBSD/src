@@ -1,5 +1,5 @@
 /* Helper routines for C++ support in GDB.
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2023 Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
    Namespace support contributed by David Carlton.
@@ -26,7 +26,7 @@
 
 #include "symtab.h"
 #include "gdbsupport/gdb_vecs.h"
-#include "gdb_obstack.h"
+#include "gdbsupport/gdb_obstack.h"
 #include "gdbsupport/array-view.h"
 #include <vector>
 
@@ -175,6 +175,9 @@ struct type *cp_find_type_baseclass_by_name (struct type *parent_type,
 extern std::unique_ptr<demangle_parse_info> cp_demangled_name_to_comp
      (const char *demangled_name, std::string *errmsg);
 
+/* Convert RESULT to a string.  ESTIMATED_LEN is used only as a guide
+   to the length of the result.  */
+
 extern gdb::unique_xmalloc_ptr<char> cp_comp_to_string
   (struct demangle_component *result, int estimated_len);
 
@@ -186,8 +189,28 @@ extern void cp_merge_demangle_parse_infos (struct demangle_parse_info *,
 
 extern struct cmd_list_element *maint_cplus_cmd_list;
 
+/* Wrappers for bfd and libiberty demangling entry points.  Note they
+   all force DMGL_VERBOSE so that callers don't need to.  This is so
+   that GDB consistently uses DMGL_VERBOSE throughout -- we want
+   libiberty's demangler to expand standard substitutions to their
+   full template name.  */
+
 /* A wrapper for bfd_demangle.  */
 
-char *gdb_demangle (const char *name, int options);
+gdb::unique_xmalloc_ptr<char> gdb_demangle (const char *name, int options);
+
+/* A wrapper for cplus_demangle_print.  */
+
+extern char *gdb_cplus_demangle_print (int options,
+				       struct demangle_component *tree,
+				       int estimated_length,
+				       size_t *p_allocated_size);
+
+/* Find an instance of the character C in the string S that is outside
+   of all parenthesis pairs, single-quoted strings, and double-quoted
+   strings.  Also, ignore the char within a template name, like a ','
+   within foo<int, int>.  */
+
+extern const char *find_toplevel_char (const char *s, char c);
 
 #endif /* CP_SUPPORT_H */

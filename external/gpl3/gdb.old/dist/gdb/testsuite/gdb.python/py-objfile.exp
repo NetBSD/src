@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2020 Free Software Foundation, Inc.
+# Copyright (C) 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,8 +27,7 @@ if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
 # Skip all tests if Python scripting is not enabled.
 if { [skip_python_tests] } { continue }
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 
@@ -93,7 +92,9 @@ gdb_test "python print (objfile.progspace)" "<gdb\.Progspace object at .*>" \
   "Get objfile program space"
 gdb_test "python print (objfile.is_valid())" "True" \
   "Get objfile validity"
-gdb_unload
+
+gdb_unload "unload 1"
+
 gdb_test "python print (objfile.is_valid())" "False" \
   "Get objfile validity after unload"
 
@@ -104,9 +105,8 @@ gdb_test "python print (objfile.random_attribute)" "42" \
 
 # Verify invalid objfile handling.
 
-if { [gdb_unload] < 0 } {
-    fail "unload all files"
-    return -1
+if { [gdb_unload "unload 2"] != 0 } {
+    return
 }
 
 gdb_test "python print(objfile.filename)" "None" \
@@ -121,7 +121,6 @@ if { [prepare_for_testing "failed to prepare" ${testfile}2 ${srcfile} {nodebug l
 }
 
 if ![runto_main] {
-    fail "can't run to main"
     return 0
 }
 

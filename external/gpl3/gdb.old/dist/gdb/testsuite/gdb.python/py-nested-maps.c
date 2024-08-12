@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2019-2020 Free Software Foundation, Inc.
+   Copyright 2019-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,13 +20,13 @@
 
 #define FIXED_MAP_SIZE 10
 
-struct key_t
+struct my_key_t
 {
   int a;
   int b;
 };
 
-struct value_t
+struct my_value_t
 {
   int x;
   int y;
@@ -37,8 +37,8 @@ struct map_t
 {
   const char *name;
   int length;
-  struct key_t *keys;
-  struct value_t *values;
+  struct my_key_t *keys;
+  struct my_value_t *values;
 
   /* This field is used only by the pretty printer.  */
   int show_header;
@@ -56,7 +56,7 @@ struct map_map_t
 struct map_t *
 create_map (const char *name)
 {
-  struct map_t *m = malloc (sizeof (struct map_t));
+  struct map_t *m = (struct map_t *) malloc (sizeof (struct map_t));
   m->name = strdup (name);
   m->length = 0;
   m->keys = NULL;
@@ -66,12 +66,12 @@ create_map (const char *name)
 }
 
 void
-add_map_element (struct map_t *m, struct key_t k, struct value_t v)
+add_map_element (struct map_t *m, struct my_key_t k, struct my_value_t v)
 {
   if (m->length == 0)
     {
-      m->keys = malloc (sizeof (struct key_t) * FIXED_MAP_SIZE);
-      m->values = malloc (sizeof (struct value_t) * FIXED_MAP_SIZE);
+      m->keys = (struct my_key_t *) malloc (sizeof (struct my_key_t) * FIXED_MAP_SIZE);
+      m->values = (struct my_value_t *) malloc (sizeof (struct my_value_t) * FIXED_MAP_SIZE);
     }
 
   m->keys[m->length] = k;
@@ -82,7 +82,7 @@ add_map_element (struct map_t *m, struct key_t k, struct value_t v)
 struct map_map_t *
 create_map_map (void)
 {
-  struct map_map_t *mm = malloc (sizeof (struct map_map_t));
+  struct map_map_t *mm = (struct map_map_t *) malloc (sizeof (struct map_map_t));
   mm->length = 0;
   mm->values = NULL;
   mm->show_header = 0;
@@ -93,7 +93,7 @@ void
 add_map_map_element (struct map_map_t *mm, struct map_t *map)
 {
   if (mm->length == 0)
-    mm->values = malloc (sizeof (struct map_t *) * FIXED_MAP_SIZE);
+    mm->values = (struct map_t **) malloc (sizeof (struct map_t *) * FIXED_MAP_SIZE);
 
   mm->values[mm->length] = map;
   mm->length++;
@@ -103,18 +103,18 @@ int
 main (void)
 {
   struct map_t *m1 = create_map ("m1");
-  struct key_t k1 = {3, 4};
-  struct key_t k2 = {4, 5};
-  struct key_t k3 = {5, 6};
-  struct key_t k4 = {6, 7};
-  struct key_t k5 = {7, 8};
-  struct key_t k6 = {8, 9};
-  struct value_t v1 = {0, 1, 2};
-  struct value_t v2 = {3, 4, 5};
-  struct value_t v3 = {6, 7, 8};
-  struct value_t v4 = {9, 0, 1};
-  struct value_t v5 = {2, 3, 4};
-  struct value_t v6 = {5, 6, 7};
+  struct my_key_t k1 = {3, 4};
+  struct my_key_t k2 = {4, 5};
+  struct my_key_t k3 = {5, 6};
+  struct my_key_t k4 = {6, 7};
+  struct my_key_t k5 = {7, 8};
+  struct my_key_t k6 = {8, 9};
+  struct my_value_t v1 = {0, 1, 2};
+  struct my_value_t v2 = {3, 4, 5};
+  struct my_value_t v3 = {6, 7, 8};
+  struct my_value_t v4 = {9, 0, 1};
+  struct my_value_t v5 = {2, 3, 4};
+  struct my_value_t v6 = {5, 6, 7};
   add_map_element (m1, k1, v1);
   add_map_element (m1, k2, v2);
   add_map_element (m1, k3, v3);

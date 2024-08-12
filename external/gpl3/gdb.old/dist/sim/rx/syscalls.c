@@ -1,6 +1,6 @@
 /* syscalls.c --- implement system calls for the RX simulator.
 
-Copyright (C) 2005-2020 Free Software Foundation, Inc.
+Copyright (C) 2005-2023 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -18,21 +18,21 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
 
-#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/time.h>
 
-#include "gdb/callback.h"
+#include "sim/callback.h"
 
 #include "cpu.h"
 #include "mem.h"
 #include "syscalls.h"
-
-#include "syscall.h"
+#include "target-newlib-syscall.h"
 
 /* The current syscall callbacks we're using.  */
 static struct host_callback_struct *callbacks;
@@ -69,7 +69,7 @@ get_callbacks (void)
 int argp, stackp;
 
 static int
-arg ()
+arg (void)
 {
   int rv = 0;
   argp++;
@@ -146,10 +146,10 @@ rx_syscall (int id)
   argp = 0;
   stackp = 4;
   if (trace)
-    printf ("\033[31m/* SYSCALL(%d) = %s */\033[0m\n", id, id <= SYS_link ? callnames[id] : "unknown");
+    printf ("\033[31m/* SYSCALL(%d) = %s */\033[0m\n", id, id <= TARGET_NEWLIB_SYS_link ? callnames[id] : "unknown");
   switch (id)
     {
-    case SYS_exit:
+    case TARGET_NEWLIB_SYS_exit:
       {
 	int ec = arg ();
 	if (verbose)
@@ -158,8 +158,9 @@ rx_syscall (int id)
       }
       break;
 
-    case SYS_open:
+    case TARGET_NEWLIB_SYS_open:
       {
+	int oflags, cflags;
 	int path = arg ();
 	/* The open function is defined as taking a variable number of arguments
 	   because the third parameter to it is optional:
@@ -167,8 +168,8 @@ rx_syscall (int id)
 	   Hence the oflags and cflags arguments will be on the stack and we need
 	   to skip the (empty) argument registers r3 and r4.  */
 	argp = 4;
-	int oflags = arg ();
-	int cflags = arg ();
+	oflags = arg ();
+	cflags = arg ();
 
 	read_target (buf, path, 256, 1);
 	if (trace)
@@ -199,7 +200,7 @@ rx_syscall (int id)
       }
       break;
 
-    case SYS_close:
+    case TARGET_NEWLIB_SYS_close:
       {
 	int fd = arg ();
 
@@ -215,7 +216,7 @@ rx_syscall (int id)
       }
       break;
 
-    case SYS_read:
+    case TARGET_NEWLIB_SYS_read:
       {
 	int fd = arg ();
 	int addr = arg ();
@@ -235,7 +236,7 @@ rx_syscall (int id)
       }
       break;
 
-    case SYS_write:
+    case TARGET_NEWLIB_SYS_write:
       {
 	int fd = arg ();
 	int addr = arg ();
@@ -258,26 +259,26 @@ rx_syscall (int id)
       }
       break;
 
-    case SYS_getpid:
+    case TARGET_NEWLIB_SYS_getpid:
       put_reg (1, 42);
       break;
 
-    case SYS_gettimeofday:
+    case TARGET_NEWLIB_SYS_gettimeofday:
       {
 	int tvaddr = arg ();
 	struct timeval tv;
 
 	rv = gettimeofday (&tv, 0);
 	if (trace)
-	  printf ("gettimeofday: %ld sec %ld usec to 0x%x\n", tv.tv_sec,
-		  tv.tv_usec, tvaddr);
+	  printf ("gettimeofday: %" PRId64 " sec %" PRId64 " usec to 0x%x\n",
+		  (int64_t)tv.tv_sec, (int64_t)tv.tv_usec, tvaddr);
 	mem_put_si (tvaddr, tv.tv_sec);
 	mem_put_si (tvaddr + 4, tv.tv_usec);
 	put_reg (1, rv);
       }
       break;
 
-    case SYS_kill:
+    case TARGET_NEWLIB_SYS_kill:
       {
 	int pid = arg ();
 	int sig = arg ();

@@ -1,4 +1,4 @@
-# Copyright 2012-2020 Free Software Foundation, Inc.
+# Copyright 2012-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,10 +26,9 @@ if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
 
 load_lib mi-support.exp
 
-if [mi_gdb_start] {
-    return
-}
-mi_run_to_main
+mi_clean_restart $binfile
+
+mi_runto_main
 
 mi_gdb_test "record" ".*=record-started,thread-group=\"i${decimal}\",method=\"full\".*\\^done" \
     "record"

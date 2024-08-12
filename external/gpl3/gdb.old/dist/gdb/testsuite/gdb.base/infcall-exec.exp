@@ -1,4 +1,4 @@
-# Copyright 2016-2020 Free Software Foundation, Inc.
+# Copyright 2016-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,14 +32,21 @@ if {[gdb_compile $srcdir/$subdir/$srcfile2 $binfile2 executable debug] != ""} {
     return -1
 }
 
+if { [is_remote target] } {
+    set binfile2 [gdb_remote_download target $binfile2]
+}
+
 clean_restart $binfile
 
 if {![runto_main]} {
-    untested "could not run to main"
     return -1
 }
 
-set expected_result "process $decimal is executing new program: $binfile2"
+set linenr [gdb_get_line_number "break here"]
+gdb_breakpoint $linenr
+gdb_continue_to_breakpoint "Ensure PATH is set" ".* break here .*"
+
+set expected_result "process $decimal is executing new program: \[^\r\n\]*$binfile2"
 append expected_result "\[\r\n\]+.*"
 append expected_result "Breakpoint 1, main .*at .*$srcfile2:$decimal"
 append expected_result ".*"

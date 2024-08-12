@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,6 +26,14 @@ standard_testfile multi-ui-errors.c
 if {[skip_gdbserver_tests]} {
     return 0
 }
+
+# Gdb needs to be running for skip_python_tests, but exit once we're done,
+# we'll start a custom gdb after this.
+clean_restart
+if { [skip_python_tests] } {
+    return 0
+}
+gdb_exit
 
 if {[build_executable "failed to prepare" ${testfile} \
 	 ${srcfile}] == -1} {

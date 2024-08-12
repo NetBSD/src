@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux i386.
 
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -215,7 +215,7 @@ fetch_regs (struct regcache *regcache, int tid)
       if (errno == EIO)
 	{
 	  /* The kernel we're running on doesn't support the GETREGS
-             request.  Reset `have_ptrace_getregs'.  */
+	     request.  Reset `have_ptrace_getregs'.  */
 	  have_ptrace_getregs = 0;
 	  return;
 	}
@@ -527,8 +527,7 @@ i386_linux_nat_target::fetch_registers (struct regcache *regcache, int regno)
       return;
     }
 
-  internal_error (__FILE__, __LINE__,
-		  _("Got request for bad register number %d."), regno);
+  internal_error (_("Got request for bad register number %d."), regno);
 }
 
 /* Store register REGNO back into the child process.  If REGNO is -1,
@@ -592,8 +591,7 @@ i386_linux_nat_target::store_registers (struct regcache *regcache, int regno)
       return;
     }
 
-  internal_error (__FILE__, __LINE__,
-		  _("Got request to store bad register number %d."), regno);
+  internal_error (_("Got request to store bad register number %d."), regno);
 }
 
 
@@ -669,12 +667,12 @@ i386_linux_nat_target::low_resume (ptid_t ptid, int step, enum gdb_signal signal
 				     gdbarch_pc_regnum (gdbarch), &pc);
 
       /* Returning from a signal trampoline is done by calling a
-         special system call (sigreturn or rt_sigreturn, see
-         i386-linux-tdep.c for more information).  This system call
-         restores the registers that were saved when the signal was
-         raised, including %eflags.  That means that single-stepping
-         won't work.  Instead, we'll have to modify the signal context
-         that's about to be restored, and set the trace flag there.  */
+	 special system call (sigreturn or rt_sigreturn, see
+	 i386-linux-tdep.c for more information).  This system call
+	 restores the registers that were saved when the signal was
+	 raised, including %eflags.  That means that single-stepping
+	 won't work.  Instead, we'll have to modify the signal context
+	 that's about to be restored, and set the trace flag there.  */
 
       /* First check if PC is at a system call.  */
       if (target_read_memory (pc, buf, LINUX_SYSCALL_LEN) == 0
@@ -698,7 +696,7 @@ i386_linux_nat_target::low_resume (ptid_t ptid, int step, enum gdb_signal signal
 		addr = sp;
 
 	      /* Set the trace flag in the context that's about to be
-                 restored.  */
+		 restored.  */
 	      addr += LINUX_SIGCONTEXT_EFLAGS_OFFSET;
 	      read_memory (addr, (gdb_byte *) &eflags, 4);
 	      eflags |= 0x0100;

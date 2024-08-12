@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -173,7 +173,6 @@ if  {[gdb_compile [list ${binfile}1.o ${binfile}2.o] \
 clean_restart ${testfile}
 
 if ![runto_main] {
-    fail "can't run to main"
     return -1
 }
 
@@ -208,7 +207,6 @@ clean_restart $binfile
 load_lib "trace-support.exp"
 
 if ![runto_main] {
-    fail "can't run to main to check for trace support"
     return -1
 }
 

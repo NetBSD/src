@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2020 Free Software Foundation, Inc.
+   Copyright 2014-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -81,9 +81,7 @@ func:
 	.long  0xf112e65f    /* xvcmpgtsp. vs40,vs50,vs60  */
 	.long  0xf112e787    /* xvcpsgndp vs40,vs50,vs60   */
 	.long  0xf11ce787    /* xvmovdp vs40,vs60          */
-	.long  0xf11ce787    /* xvmovdp vs40,vs60          */
 	.long  0xf112e687    /* xvcpsgnsp vs40,vs50,vs60   */
-	.long  0xf11ce687    /* xvmovsp vs40,vs60          */
 	.long  0xf11ce687    /* xvmovsp vs40,vs60          */
 	.long  0xf100e627    /* xvcvdpsp vs40,vs60         */
 	.long  0xf100e763    /* xvcvdpsxds vs40,vs60       */
@@ -165,18 +163,11 @@ func:
 	.long  0xf112e257    /* xxpermdi vs40,vs50,vs60,2  */
 	.long  0xf112e357    /* xxmrgld vs40,vs50,vs60     */
 	.long  0xf1129057    /* xxspltd vs40,vs50,0        */
-	.long  0xf1129057    /* xxspltd vs40,vs50,0        */
 	.long  0xf1129357    /* xxspltd vs40,vs50,1        */
-	.long  0xf1129357    /* xxspltd vs40,vs50,1        */
-	.long  0xf112e057    /* xxmrghd vs40,vs50,vs60     */
-	.long  0xf112e057    /* xxmrghd vs40,vs50,vs60     */
-	.long  0xf112e357    /* xxmrgld vs40,vs50,vs60     */
-	.long  0xf1129257    /* xxswapd vs40,vs50          */
 	.long  0xf1129257    /* xxswapd vs40,vs50          */
 	.long  0xf112e7bf    /* xxsel   vs40,vs50,vs60,vs62 */
 	.long  0xf112e217    /* xxsldwi vs40,vs50,vs60,2   */
 	.long  0xf102e293    /* xxspltw vs40,vs60,2        */
 	.long  0x7d00a699    /* lxvd2x  vs40,0,r20         */
-	.long  0x7d0aa699    /* lxvd2x  vs40,r10,r20       */
 	.long  0x7d00a799    /* stxvd2x vs40,0,r20         */
-	.long  0x7d0aa799    /* stxvd2x vs40,r10,r20       */
+	.section	.note.GNU-stack,"",@progbits

@@ -1,4 +1,4 @@
-#   Copyright 2006-2020 Free Software Foundation, Inc.
+#   Copyright 2006-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,18 +22,13 @@ if {[skip_shlib_tests]} {
 }
 
 # These targets have shared libraries, but weak symbols are not meaningful.
-if {([istarget arm*-*-symbianelf*]
-     || [istarget *-*-mingw*]
+if {([istarget *-*-mingw*]
      || [istarget *-*-cygwin*]
      || [istarget *-*-pe*])} {
     return 0
 }
 
 # This test uses GCC-specific syntax.
-if [get_compiler_info] {
-    return -1
-}
-
 if {![test_compiler_info "gcc-*"]} {
     return 0
 }
@@ -90,19 +85,21 @@ proc do_test { lib1opts lib2opts lib1first } {
 	return -1
     }
 
-    gdb_exit
-    gdb_start
-    gdb_reinitialize_dir $srcdir/$subdir
-    gdb_load ${binfile}
-    gdb_load_shlib $lib1
-    gdb_load_shlib $lib2
+    with_test_prefix $testopts {
+	gdb_exit
+	gdb_start
+	gdb_reinitialize_dir $srcdir/$subdir
+	gdb_load ${binfile}
+	gdb_load_shlib $lib1
+	gdb_load_shlib $lib2
 
-    runto_main
+	runto_main
 
-    gdb_breakpoint "bar"
+	gdb_breakpoint "bar"
 
-    gdb_test "continue" "Breakpoint .* \\.?bar .*${expected_file}\\..*" \
-	"run to breakpoint - $testopts"
+	gdb_test "continue" "Breakpoint .* \\.?bar .*${expected_file}\\..*" \
+	    "run to breakpoint"
+    }
 }
 
 foreach lib1opts {{} {debug}} {

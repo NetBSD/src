@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    Copyright 1992, 1993, 1994, 1995, 1999, 2002, 2003, 2007, 2008, 2009
    Free Software Foundation, Inc.
@@ -43,6 +43,8 @@ int main () {
     void *thread_result;
     long i;
 
+    alarm (180);
+
     pthread_barrier_init (&threads_started_barrier, NULL, NUM + 1);
 
     pthread_barrier_init (&threads_started_barrier2, NULL, 2);
@@ -61,7 +63,10 @@ int main () {
 
     pthread_join (threads[0], NULL);
 
-    sleep (180);  /* first child thread exited */
+    /* first child thread exited */
+
+    while (1)
+      sleep (1);
 
     exit (EXIT_SUCCESS);
 }

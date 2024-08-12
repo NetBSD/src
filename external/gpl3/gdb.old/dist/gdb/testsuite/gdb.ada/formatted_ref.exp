@@ -1,4 +1,4 @@
-# Copyright 2007-2020 Free Software Foundation, Inc.
+# Copyright 2007-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,7 +44,6 @@ proc get_address { var } {
             return $expect_out(1,string)
         }
     }
-    perror "couldn't find address of $var"
     return ""
 }
 
@@ -70,16 +69,23 @@ proc test_p_x_addr { var addr } {
     global gdb_prompt
 
     foreach attr {access unchecked_access unrestricted_access} {
-	set test "print/x $var'$attr"
-	gdb_test_multiple $test $test {
-	    -re "\\$\[0-9\]+ = $addr.*$gdb_prompt $" {
-		pass $test
-	    }
-	    -re "\\$\[0-9\]+ = 0x\[a-f0-9+\]+.*$gdb_prompt $" {
-		fail "$test (prints unexpected address)"
+	foreach space {"" "  "} {
+	    set test "print/x $var'$space$attr"
+	    gdb_test_multiple $test $test {
+		-re "\\$\[0-9\]+ = $addr.*$gdb_prompt $" {
+		    pass $test
+		}
+		-re "\\$\[0-9\]+ = 0x\[a-f0-9+\]+.*$gdb_prompt $" {
+		    fail "$test (prints unexpected address)"
+		}
 	    }
 	}
     }
+
+    gdb_test "complete print/x $var'unres" "print/x $var'unrestricted_access"
+    gdb_test_no_output "complete print/x $var'abcd"
+    gdb_test "complete print $var'f" "print $var'first"
+
     return 0
 }
 
@@ -90,7 +96,30 @@ proc test_p_op1_equals_op2 {op1 op2} {
 
 clean_restart ${testfile}
 
-runto defs.adb:[gdb_get_line_number "marker here" ${testdir}/defs.adb ]
+set bp_location \
+    defs.adb:[gdb_get_line_number "marker here" ${testdir}/defs.adb]
+
+# Workaround gcc PR101575.
+#runto $bp_location
+gdb_breakpoint "$bp_location"
+gdb_run_cmd
+set re "Breakpoint $decimal, defs.f1 \\(.*\\) at .*:$decimal.*"
+set re_xfail "Breakpoint $decimal, defs__struct1IP \\(\\) at .*:$decimal.*"
+set ok 1
+gdb_test_multiple "" "Runto to $bp_location" {
+    -re -wrap $re {
+	if { $ok } {
+	    pass $gdb_test_name
+	} else {
+	    xfail $gdb_test_name
+	}
+    }
+    -re -wrap $re_xfail {
+	set ok 0
+	send_gdb "continue\n"
+	exp_continue
+    }
+}
 
 set s1_address  [get_address "s1"]
 

@@ -25,13 +25,7 @@
 #include "device.h"
 #include "tree.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
 
 
 typedef struct _device_callbacks device_callbacks;

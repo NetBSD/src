@@ -1,6 +1,6 @@
 /* GNU/Linux S/390 specific low level interface, for the remote server
    for GDB.
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -1503,9 +1503,8 @@ add_insns (const unsigned char *start, int len)
 {
   CORE_ADDR buildaddr = current_insn_ptr;
 
-  if (debug_threads)
-    debug_printf ("Adding %d bytes of insn at %s\n",
-		  len, paddress (buildaddr));
+  threads_debug_printf ("Adding %d bytes of insn at %s",
+			len, paddress (buildaddr));
 
   append_insns (&buildaddr, len, start);
   current_insn_ptr = buildaddr;
@@ -1908,15 +1907,13 @@ s390_emit_const (LONGEST num)
     0x98, 0x23, 0x10, 0x00,	/* lm %r2, %r3, 0(%r1) */
   };
   if (num < 0x8000 && num >= 0)
-  {
     add_insns (buf_s, sizeof buf_s);
-  }
   else
-  {
-    s390_emit_litpool (8);
-    add_insns ((unsigned char *) &n, sizeof n);
-    add_insns (buf_l, sizeof buf_l);
-  }
+    {
+      s390_emit_litpool (8);
+      add_insns ((unsigned char *) &n, sizeof n);
+      add_insns (buf_l, sizeof buf_l);
+    }
 }
 
 /* The "emit_call" emit_ops method for s390.  */
@@ -2027,15 +2024,13 @@ s390_emit_set_r2 (int arg1)
     0x58, 0x20, 0x10, 0x00,	/* l %r2, 0(%r1) */
   };
   if (arg1 < 0x8000 && arg1 >= -0x8000)
-  {
     add_insns (buf_s, sizeof buf_s);
-  }
   else
-  {
-    s390_emit_litpool (4);
-    add_insns ((unsigned char *) &arg1, sizeof arg1);
-    add_insns (buf_l, sizeof buf_l);
-  }
+    {
+      s390_emit_litpool (4);
+      add_insns ((unsigned char *) &arg1, sizeof arg1);
+      add_insns (buf_l, sizeof buf_l);
+    }
 }
 
 /* The "emit_int_call_1" emit_ops method for s390.  */
@@ -2553,15 +2548,13 @@ s390x_emit_const (LONGEST num)
     0xe3, 0x20, 0x10, 0x00, 0x00, 0x04,	/* lg %r2, 0(%r1) */
   };
   if (num < 0x8000 && num >= -0x8000)
-  {
     add_insns (buf_s, sizeof buf_s);
-  }
   else
-  {
-    s390_emit_litpool (8);
-    add_insns ((unsigned char *) &n, sizeof n);
-    add_insns (buf_l, sizeof buf_l);
-  }
+    {
+      s390_emit_litpool (8);
+      add_insns ((unsigned char *) &n, sizeof n);
+      add_insns (buf_l, sizeof buf_l);
+    }
 }
 
 /* The "emit_call" emit_ops method for s390x.  */

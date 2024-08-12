@@ -1,6 +1,6 @@
 /* Wrapper for waitpid for GNU/Linux (LWP layer).
 
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,6 +25,6 @@ extern int my_waitpid (int pid, int *status, int flags);
 
 /* Convert wait status STATUS to a string.  Used for printing debug
    messages only.  */
-extern char *status_to_str (int status);
+extern std::string status_to_str (int status);
 
 #endif /* NAT_LINUX_WAITPID_H */

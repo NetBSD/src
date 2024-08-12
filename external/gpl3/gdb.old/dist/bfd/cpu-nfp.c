@@ -1,5 +1,5 @@
 /* BFD library support routines for the NFP.
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2022 Free Software Foundation, Inc.
    Contributed by Francois H. Theron <francois.theron@netronome.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -55,7 +55,7 @@ bfd_nfp_compatible (const bfd_arch_info_type * a,
 }
 
 static const bfd_arch_info_type arch_info_struct =
-  N (bfd_mach_nfp3200, "NFP-32xx", FALSE, NULL);
+  N (bfd_mach_nfp3200, "NFP-32xx", false, NULL);
 
 const bfd_arch_info_type bfd_nfp_arch =
-  N (bfd_mach_nfp6000, "NFP-6xxx", TRUE, &arch_info_struct);
+  N (bfd_mach_nfp6000, "NFP-6xxx", true, &arch_info_struct);

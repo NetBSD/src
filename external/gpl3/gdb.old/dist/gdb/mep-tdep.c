@@ -1,6 +1,6 @@
 /* Target-dependent code for the Toshiba MeP for GDB, the GNU debugger.
 
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2023 Free Software Foundation, Inc.
 
    Contributed by Red Hat, Inc.
 
@@ -37,7 +37,6 @@
 #include "regcache.h"
 #include "remote.h"
 #include "sim-regno.h"
-#include "disasm.h"
 #include "trad-frame.h"
 #include "reggroups.h"
 #include "elf-bfd.h"
@@ -45,6 +44,7 @@
 #include "prologue-value.h"
 #include "cgen/bitset.h"
 #include "infcall.h"
+#include "gdbarch.h"
 
 /* Get the user's customized MeP coprocessor register names from
    libopcodes.  */
@@ -116,7 +116,7 @@
      options are present on the current processor.  */
 
 
-struct gdbarch_tdep
+struct mep_gdbarch_tdep : gdbarch_tdep_base
 {
   /* A CGEN cpu descriptor for this BFD architecture and machine.
 
@@ -124,7 +124,7 @@ struct gdbarch_tdep
      MeP libopcodes machinery actually puts off module-specific
      customization until the last minute.  So this contains
      information about all supported me_modules.  */
-  CGEN_CPU_DESC cpu_desc;
+  CGEN_CPU_DESC cpu_desc = nullptr;
 
   /* The me_module index from the ELF file we used to select this
      architecture, or CONFIG_NONE if there was none.
@@ -140,7 +140,7 @@ struct gdbarch_tdep
      create a separate instance of the gdbarch structure for each
      me_module value mep_gdbarch_init sees, and store the me_module
      value from the ELF file here.  */
-  CONFIG_ATTR me_module;
+  CONFIG_ATTR me_module {};
 };
 
 
@@ -154,9 +154,9 @@ struct gdbarch_tdep
    return zero.  */
 static const CGEN_HW_ENTRY *
 find_hw_entry_by_prefix_and_isa (CGEN_CPU_DESC desc,
-                                 const char *prefix,
-                                 CGEN_BITSET *copro_isa_mask,
-                                 CGEN_BITSET *generic_isa_mask)
+				 const char *prefix,
+				 CGEN_BITSET *copro_isa_mask,
+				 CGEN_BITSET *generic_isa_mask)
 {
   int prefix_len = strlen (prefix);
   int i;
@@ -165,15 +165,15 @@ find_hw_entry_by_prefix_and_isa (CGEN_CPU_DESC desc,
     {
       const CGEN_HW_ENTRY *hw = desc->hw_table.entries[i];
       if (strncmp (prefix, hw->name, prefix_len) == 0)
-        {
-          CGEN_BITSET *hw_isa_mask
-            = ((CGEN_BITSET *)
-               &CGEN_ATTR_CGEN_HW_ISA_VALUE (CGEN_HW_ATTRS (hw)));
+	{
+	  CGEN_BITSET *hw_isa_mask
+	    = ((CGEN_BITSET *)
+	       &CGEN_ATTR_CGEN_HW_ISA_VALUE (CGEN_HW_ATTRS (hw)));
 
-          if (cgen_bitset_intersect_p (hw_isa_mask, copro_isa_mask)
-              && ! cgen_bitset_intersect_p (hw_isa_mask, generic_isa_mask))
-            return hw;
-        }
+	  if (cgen_bitset_intersect_p (hw_isa_mask, copro_isa_mask)
+	      && ! cgen_bitset_intersect_p (hw_isa_mask, generic_isa_mask))
+	    return hw;
+	}
     }
 
   return 0;
@@ -192,7 +192,7 @@ find_hw_entry_by_type (CGEN_CPU_DESC desc, CGEN_HW_TYPE type)
       const CGEN_HW_ENTRY *hw = desc->hw_table.entries[i];
 
       if (hw->type == type)
-        return hw;
+	return hw;
     }
 
   return 0;
@@ -206,8 +206,8 @@ find_hw_entry_by_type (CGEN_CPU_DESC desc, CGEN_HW_TYPE type)
    whose hardware type is GENERIC_TYPE.  */
 static const CGEN_HW_ENTRY *
 me_module_register_set (CONFIG_ATTR me_module,
-                        const char *prefix,
-                        CGEN_HW_TYPE generic_type)
+			const char *prefix,
+			CGEN_HW_TYPE generic_type)
 {
   /* This is kind of tricky, because the hardware table is constructed
      in a way that isn't very helpful.  Perhaps we can fix that, but
@@ -259,7 +259,9 @@ me_module_register_set (CONFIG_ATTR me_module,
        mask contains any of the me_module's coprocessor ISAs,
        specifically excluding the generic coprocessor register sets.  */
 
-  CGEN_CPU_DESC desc = gdbarch_tdep (target_gdbarch ())->cpu_desc;
+  mep_gdbarch_tdep *tdep
+    = gdbarch_tdep<mep_gdbarch_tdep> (target_gdbarch ());
+  CGEN_CPU_DESC desc = tdep->cpu_desc;
   const CGEN_HW_ENTRY *hw;
 
   if (me_module == CONFIG_NONE)
@@ -315,11 +317,11 @@ register_name_from_keyword (CGEN_KEYWORD *keyword_table, int regnum)
       char *name = entry->name;
 
       /* The CGEN keyword entries for register names include the
-         leading $, which appears in MeP assembly as well as in GDB.
-         But we don't want to return that; GDB core code adds that
-         itself.  */
+	 leading $, which appears in MeP assembly as well as in GDB.
+	 But we don't want to return that; GDB core code adds that
+	 itself.  */
       if (name[0] == '$')
-        name++;
+	name++;
 
       return name;
     }
@@ -624,7 +626,7 @@ enum
 #define IS_CR64_REGNUM(n)    (IN_SET (CR64,    (n)))
 #define IS_FP_CR64_REGNUM(n) (IN_SET (FP_CR64, (n)))
 #define IS_CR_REGNUM(n)      (IS_CR32_REGNUM (n) || IS_FP_CR32_REGNUM (n) \
-                              || IS_CR64_REGNUM (n) || IS_FP_CR64_REGNUM (n))
+			      || IS_CR64_REGNUM (n) || IS_FP_CR64_REGNUM (n))
 #define IS_CCR_REGNUM(n)     (IN_SET (CCR,     (n)))
 
 #define IS_RAW_REGNUM(n)     (IN_SET (RAW,     (n)))
@@ -661,7 +663,7 @@ struct mep_csr_register
    We just list the register numbers here explicitly to help catch
    typos.  */
 #define CSR(name) MEP_RAW_ ## name ## _REGNUM, MEP_ ## name ## _REGNUM
-struct mep_csr_register mep_csr_registers[] = {
+static mep_csr_register mep_csr_registers[] = {
   { CSR(PC),    0xffffffff },   /* manual says r/o, but we can write it */
   { CSR(LP),    0xffffffff },
   { CSR(SAR),   0x0000003f },
@@ -756,11 +758,11 @@ mep_init_pseudoregister_maps (void)
       int pseudofp64 = MEP_FIRST_FP_CR64_REGNUM + i;
 
       /* Truly, the raw->pseudo mapping depends on the current module.
-         But we use the raw->pseudo mapping when we read the debugging
-         info; at that point, we don't know what module we'll actually
-         be running yet.  So, we always supply the 64-bit register
-         numbers; GDB knows how to pick a smaller value out of a
-         larger register properly.  */
+	 But we use the raw->pseudo mapping when we read the debugging
+	 info; at that point, we don't know what module we'll actually
+	 be running yet.  So, we always supply the 64-bit register
+	 numbers; GDB knows how to pick a smaller value out of a
+	 larger register properly.  */
       mep_raw_to_pseudo[raw] = pseudo64;
       mep_pseudo_to_raw[pseudo32] = raw;
       mep_pseudo_to_raw[pseudofp32] = raw;
@@ -798,7 +800,7 @@ mep_pseudo_cr_size (int pseudo)
       || IS_FP_CR32_REGNUM (pseudo))
     return 32;
   else if (IS_CR64_REGNUM (pseudo)
-           || IS_FP_CR64_REGNUM (pseudo))
+	   || IS_FP_CR64_REGNUM (pseudo))
     return 64;
   else
     gdb_assert_not_reached ("unexpected coprocessor pseudo register");
@@ -812,7 +814,7 @@ static int
 mep_pseudo_cr_is_float (int pseudo)
 {
   return (IS_FP_CR32_REGNUM (pseudo)
-          || IS_FP_CR64_REGNUM (pseudo));
+	  || IS_FP_CR64_REGNUM (pseudo));
 }
 
 
@@ -844,7 +846,7 @@ mep_pseudo_cr_index (int pseudo)
 static CONFIG_ATTR
 current_me_module (void)
 {
-  if (target_has_registers)
+  if (target_has_registers ())
     {
       ULONGEST regval;
       regcache_cooked_read_unsigned (get_current_regcache (),
@@ -852,7 +854,11 @@ current_me_module (void)
       return (CONFIG_ATTR) regval;
     }
   else
-    return gdbarch_tdep (target_gdbarch ())->me_module;
+    {
+      mep_gdbarch_tdep *tdep
+	= gdbarch_tdep<mep_gdbarch_tdep> (target_gdbarch ());
+      return tdep->me_module;
+    }
 }
 
 
@@ -867,7 +873,7 @@ current_me_module (void)
 static unsigned int
 current_options (void)
 {
-  if (target_has_registers)
+  if (target_has_registers ())
     {
       ULONGEST regval;
       regcache_cooked_read_unsigned (get_current_regcache (),
@@ -953,10 +959,10 @@ mep_register_name (struct gdbarch *gdbarch, int regnr)
   else if (IS_CSR_REGNUM (regnr))
     {
       /* The 'hi' and 'lo' registers are only present on processors
-         that have the 'MUL' or 'DIV' instructions enabled.  */
+	 that have the 'MUL' or 'DIV' instructions enabled.  */
       if ((regnr == MEP_HI_REGNUM || regnr == MEP_LO_REGNUM)
-          && (! (current_options () & (MEP_OPT_MUL | MEP_OPT_DIV))))
-        return "";
+	  && (! (current_options () & (MEP_OPT_MUL | MEP_OPT_DIV))))
+	return "";
 
       return csr_names[regnr - MEP_FIRST_CSR_REGNUM];
     }
@@ -968,24 +974,24 @@ mep_register_name (struct gdbarch *gdbarch, int regnr)
 
       /* Does this module have a coprocessor at all?  */
       if (! (current_options () & MEP_OPT_COP))
-        return "";
+	return "";
 
       names = current_cr_names ();
       if (! names)
-        /* This module's coprocessor has no general-purpose registers.  */
-        return "";
+	/* This module's coprocessor has no general-purpose registers.  */
+	return "";
 
       cr_size = current_cop_data_bus_width ();
       if (cr_size != mep_pseudo_cr_size (regnr))
-        /* This module's coprocessor's GPR's are of a different size.  */
-        return "";
+	/* This module's coprocessor's GPR's are of a different size.  */
+	return "";
 
       cr_is_float = current_cr_is_float ();
       /* The extra ! operators ensure we get boolean equality, not
-         numeric equality.  */
+	 numeric equality.  */
       if (! cr_is_float != ! mep_pseudo_cr_is_float (regnr))
-        /* This module's coprocessor's GPR's are of a different type.  */
-        return "";
+	/* This module's coprocessor's GPR's are of a different type.  */
+	return "";
 
       return register_name_from_keyword (names, mep_pseudo_cr_index (regnr));
     }
@@ -993,16 +999,16 @@ mep_register_name (struct gdbarch *gdbarch, int regnr)
     {
       /* Does this module have a coprocessor at all?  */
       if (! (current_options () & MEP_OPT_COP))
-        return "";
+	return "";
 
       {
-        CGEN_KEYWORD *names = current_ccr_names ();
+	CGEN_KEYWORD *names = current_ccr_names ();
 
-        if (! names)
-          /* This me_module's coprocessor has no control registers.  */
-          return "";
+	if (! names)
+	  /* This me_module's coprocessor has no control registers.  */
+	  return "";
 
-        return register_name_from_keyword (names, regnr-MEP_FIRST_CCR_REGNUM);
+	return register_name_from_keyword (names, regnr-MEP_FIRST_CCR_REGNUM);
       }
     }
 
@@ -1010,19 +1016,19 @@ mep_register_name (struct gdbarch *gdbarch, int regnr)
      would affect the output of 'info all-registers', which would
      disturb the test suites.  So we leave it invisible.  */
   else
-    return NULL;
+    return "";
 }
 
 
 /* Custom register groups for the MeP.  */
-static struct reggroup *mep_csr_reggroup; /* control/special */
-static struct reggroup *mep_cr_reggroup;  /* coprocessor general-purpose */
-static struct reggroup *mep_ccr_reggroup; /* coprocessor control */
+static const reggroup *mep_csr_reggroup; /* control/special */
+static const reggroup *mep_cr_reggroup;  /* coprocessor general-purpose */
+static const reggroup *mep_ccr_reggroup; /* coprocessor control */
 
 
 static int
 mep_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
-                         struct reggroup *group)
+			 const struct reggroup *group)
 {
   /* Filter reserved or unused register numbers.  */
   {
@@ -1036,14 +1042,14 @@ mep_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
      the existing behavior, so we'd want to run that by them.  */
   if (group == general_reggroup)
     return (IS_GPR_REGNUM (regnum)
-            || IS_CSR_REGNUM (regnum));
+	    || IS_CSR_REGNUM (regnum));
 
   /* Everything is in the 'all' reggroup, except for the raw CSR's.  */
   else if (group == all_reggroup)
     return (IS_GPR_REGNUM (regnum)
-            || IS_CSR_REGNUM (regnum)
-            || IS_CR_REGNUM (regnum)
-            || IS_CCR_REGNUM (regnum));
+	    || IS_CSR_REGNUM (regnum)
+	    || IS_CR_REGNUM (regnum)
+	    || IS_CCR_REGNUM (regnum));
 
   /* All registers should be saved and restored, except for the raw
      CSR's.
@@ -1056,9 +1062,9 @@ mep_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
      hardware engine, perhaps.  */
   else if (group == save_reggroup || group == restore_reggroup)
     return (IS_GPR_REGNUM (regnum)
-            || IS_CSR_REGNUM (regnum)
-            || IS_CR_REGNUM (regnum)
-            || IS_CCR_REGNUM (regnum));
+	    || IS_CSR_REGNUM (regnum)
+	    || IS_CR_REGNUM (regnum)
+	    || IS_CCR_REGNUM (regnum));
 
   else if (group == mep_csr_reggroup)
     return IS_CSR_REGNUM (regnum);
@@ -1090,21 +1096,21 @@ mep_register_type (struct gdbarch *gdbarch, int reg_nr)
     {
       int size = mep_pseudo_cr_size (reg_nr);
       if (size == 32)
-        {
-          if (mep_pseudo_cr_is_float (reg_nr))
-            return builtin_type (gdbarch)->builtin_float;
-          else
-            return builtin_type (gdbarch)->builtin_uint32;
-        }
+	{
+	  if (mep_pseudo_cr_is_float (reg_nr))
+	    return builtin_type (gdbarch)->builtin_float;
+	  else
+	    return builtin_type (gdbarch)->builtin_uint32;
+	}
       else if (size == 64)
-        {
-          if (mep_pseudo_cr_is_float (reg_nr))
-            return builtin_type (gdbarch)->builtin_double;
-          else
-            return builtin_type (gdbarch)->builtin_uint64;
-        }
+	{
+	  if (mep_pseudo_cr_is_float (reg_nr))
+	    return builtin_type (gdbarch)->builtin_double;
+	  else
+	    return builtin_type (gdbarch)->builtin_uint64;
+	}
       else
-        gdb_assert_not_reached ("unexpected cr size");
+	gdb_assert_not_reached ("unexpected cr size");
     }
 
   /* All other registers are 32 bits long.  */
@@ -1115,8 +1121,8 @@ mep_register_type (struct gdbarch *gdbarch, int reg_nr)
 static enum register_status
 mep_pseudo_cr32_read (struct gdbarch *gdbarch,
 		      readable_regcache *regcache,
-                      int cookednum,
-                      gdb_byte *buf)
+		      int cookednum,
+		      gdb_byte *buf)
 {
   enum register_status status;
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -1125,8 +1131,8 @@ mep_pseudo_cr32_read (struct gdbarch *gdbarch,
   int rawnum = mep_pseudo_to_raw[cookednum];
   gdb_byte buf64[8];
 
-  gdb_assert (TYPE_LENGTH (register_type (gdbarch, rawnum)) == sizeof (buf64));
-  gdb_assert (TYPE_LENGTH (register_type (gdbarch, cookednum)) == 4);
+  gdb_assert (register_type (gdbarch, rawnum)->length () == sizeof (buf64));
+  gdb_assert (register_type (gdbarch, cookednum)->length () == 4);
   status = regcache->raw_read (rawnum, buf64);
   if (status == REG_VALID)
     {
@@ -1140,9 +1146,9 @@ mep_pseudo_cr32_read (struct gdbarch *gdbarch,
 
 static enum register_status
 mep_pseudo_cr64_read (struct gdbarch *gdbarch,
-                      readable_regcache *regcache,
-                      int cookednum,
-                      gdb_byte *buf)
+		      readable_regcache *regcache,
+		      int cookednum,
+		      gdb_byte *buf)
 {
   return regcache->raw_read (mep_pseudo_to_raw[cookednum], buf);
 }
@@ -1151,17 +1157,17 @@ mep_pseudo_cr64_read (struct gdbarch *gdbarch,
 static enum register_status
 mep_pseudo_register_read (struct gdbarch *gdbarch,
 			  readable_regcache *regcache,
-                          int cookednum,
-                          gdb_byte *buf)
+			  int cookednum,
+			  gdb_byte *buf)
 {
   if (IS_CSR_REGNUM (cookednum)
       || IS_CCR_REGNUM (cookednum))
     return regcache->raw_read (mep_pseudo_to_raw[cookednum], buf);
   else if (IS_CR32_REGNUM (cookednum)
-           || IS_FP_CR32_REGNUM (cookednum))
+	   || IS_FP_CR32_REGNUM (cookednum))
     return mep_pseudo_cr32_read (gdbarch, regcache, cookednum, buf);
   else if (IS_CR64_REGNUM (cookednum)
-           || IS_FP_CR64_REGNUM (cookednum))
+	   || IS_FP_CR64_REGNUM (cookednum))
     return mep_pseudo_cr64_read (gdbarch, regcache, cookednum, buf);
   else
     gdb_assert_not_reached ("unexpected pseudo register");
@@ -1170,9 +1176,9 @@ mep_pseudo_register_read (struct gdbarch *gdbarch,
 
 static void
 mep_pseudo_csr_write (struct gdbarch *gdbarch,
-                      struct regcache *regcache,
-                      int cookednum,
-                      const gdb_byte *buf)
+		      struct regcache *regcache,
+		      int cookednum,
+		      const gdb_byte *buf)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int size = register_size (gdbarch, cookednum);
@@ -1189,21 +1195,21 @@ mep_pseudo_csr_write (struct gdbarch *gdbarch,
       ULONGEST old_bits;
       ULONGEST new_bits;
       ULONGEST mixed_bits;
-          
+	  
       regcache_raw_read_unsigned (regcache, r->raw, &old_bits);
       new_bits = extract_unsigned_integer (buf, size, byte_order);
       mixed_bits = ((r->writeable_bits & new_bits)
-                    | (~r->writeable_bits & old_bits));
+		    | (~r->writeable_bits & old_bits));
       regcache_raw_write_unsigned (regcache, r->raw, mixed_bits);
     }
 }
-                      
+		      
 
 static void
 mep_pseudo_cr32_write (struct gdbarch *gdbarch,
-                       struct regcache *regcache,
-                       int cookednum,
-                       const gdb_byte *buf)
+		       struct regcache *regcache,
+		       int cookednum,
+		       const gdb_byte *buf)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   /* Expand the 32-bit value into a 64-bit value, and write that to
@@ -1211,8 +1217,8 @@ mep_pseudo_cr32_write (struct gdbarch *gdbarch,
   int rawnum = mep_pseudo_to_raw[cookednum];
   gdb_byte buf64[8];
   
-  gdb_assert (TYPE_LENGTH (register_type (gdbarch, rawnum)) == sizeof (buf64));
-  gdb_assert (TYPE_LENGTH (register_type (gdbarch, cookednum)) == 4);
+  gdb_assert (register_type (gdbarch, rawnum)->length () == sizeof (buf64));
+  gdb_assert (register_type (gdbarch, cookednum)->length () == 4);
   /* Slow, but legible.  */
   store_unsigned_integer (buf64, 8, byte_order,
 			  extract_unsigned_integer (buf, 4, byte_order));
@@ -1222,9 +1228,9 @@ mep_pseudo_cr32_write (struct gdbarch *gdbarch,
 
 static void
 mep_pseudo_cr64_write (struct gdbarch *gdbarch,
-                     struct regcache *regcache,
-                     int cookednum,
-                     const gdb_byte *buf)
+		     struct regcache *regcache,
+		     int cookednum,
+		     const gdb_byte *buf)
 {
   regcache->raw_write (mep_pseudo_to_raw[cookednum], buf);
 }
@@ -1232,17 +1238,17 @@ mep_pseudo_cr64_write (struct gdbarch *gdbarch,
 
 static void
 mep_pseudo_register_write (struct gdbarch *gdbarch,
-                           struct regcache *regcache,
-                           int cookednum,
-                           const gdb_byte *buf)
+			   struct regcache *regcache,
+			   int cookednum,
+			   const gdb_byte *buf)
 {
   if (IS_CSR_REGNUM (cookednum))
     mep_pseudo_csr_write (gdbarch, regcache, cookednum, buf);
   else if (IS_CR32_REGNUM (cookednum)
-           || IS_FP_CR32_REGNUM (cookednum))
+	   || IS_FP_CR32_REGNUM (cookednum))
     mep_pseudo_cr32_write (gdbarch, regcache, cookednum, buf);
   else if (IS_CR64_REGNUM (cookednum)
-           || IS_FP_CR64_REGNUM (cookednum))
+	   || IS_FP_CR64_REGNUM (cookednum))
     mep_pseudo_cr64_write (gdbarch, regcache, cookednum, buf);
   else if (IS_CCR_REGNUM (cookednum))
     regcache->raw_write (mep_pseudo_to_raw[cookednum], buf);
@@ -1263,9 +1269,9 @@ mep_gdb_print_insn (bfd_vma pc, disassemble_info * info)
   if (s)
     {
       /* The libopcodes disassembly code uses the section to find the
-         BFD, the BFD to find the ELF header, the ELF header to find
-         the me_module index, and the me_module index to select the
-         right instructions to print.  */
+	 BFD, the BFD to find the ELF header, the ELF header to find
+	 the me_module index, and the me_module index to select the
+	 right instructions to print.  */
       info->section = s->the_bfd_section;
     }
 
@@ -1345,9 +1351,9 @@ mep_pc_in_vliw_section (CORE_ADDR pc)
       void
       foo (void)
       {
-        asm ("movu $1, 0x123456");
-        asm ("sb $1,0x5678($2)");
-        asm ("clip $1, 19");
+	asm ("movu $1, 0x123456");
+	asm ("sb $1,0x5678($2)");
+	asm ("clip $1, 19");
       }
 
    compiles to this big-endian code:
@@ -1418,22 +1424,22 @@ mep_get_insn (struct gdbarch *gdbarch, CORE_ADDR pc, unsigned long *insn)
       vliw_mode = current_options () & (MEP_OPT_VL32 | MEP_OPT_VL64);
 
       /* If PC is in a VLIW section, but the current core doesn't say
-         that it supports either VLIW mode, then we don't have enough
-         information to parse the instruction stream it contains.
-         Since the "undifferentiated" standard core doesn't have
-         either VLIW mode bit set, this could happen.
+	 that it supports either VLIW mode, then we don't have enough
+	 information to parse the instruction stream it contains.
+	 Since the "undifferentiated" standard core doesn't have
+	 either VLIW mode bit set, this could happen.
 
-         But it shouldn't be an error to (say) set a breakpoint in a
-         VLIW section, if you know you'll never reach it.  (Perhaps
-         you have a script that sets a bunch of standard breakpoints.)
+	 But it shouldn't be an error to (say) set a breakpoint in a
+	 VLIW section, if you know you'll never reach it.  (Perhaps
+	 you have a script that sets a bunch of standard breakpoints.)
 
-         So we'll just return zero here, and hope for the best.  */
+	 So we'll just return zero here, and hope for the best.  */
       if (! (vliw_mode & (MEP_OPT_VL32 | MEP_OPT_VL64)))
-        return 0;
+	return 0;
 
       /* If both VL32 and VL64 are set, that's bogus, too.  */
       if (vliw_mode == (MEP_OPT_VL32 | MEP_OPT_VL64))
-        return 0;
+	return 0;
     }
   else
     vliw_mode = 0;
@@ -1457,18 +1463,18 @@ mep_get_insn (struct gdbarch *gdbarch, CORE_ADDR pc, unsigned long *insn)
   if (vliw_mode)
     {
       /* In 32-bit VLIW code, all bundles are 32 bits long.  We ignore the
-         coprocessor half of a core / copro bundle.  */
+	 coprocessor half of a core / copro bundle.  */
       if (vliw_mode == MEP_OPT_VL32)
-        insn_len = 4;
+	insn_len = 4;
 
       /* In 64-bit VLIW code, all bundles are 64 bits long.  We ignore the
-         coprocessor half of a core / copro bundle.  */
+	 coprocessor half of a core / copro bundle.  */
       else if (vliw_mode == MEP_OPT_VL64)
-        insn_len = 8;
+	insn_len = 8;
 
       /* We'd better be in either core, 32-bit VLIW, or 64-bit VLIW mode.  */
       else
-        gdb_assert_not_reached ("unexpected vliw mode");
+	gdb_assert_not_reached ("unexpected vliw mode");
     }
   
   /* Otherwise, the top two bits of the major opcode are (again) what
@@ -1546,7 +1552,7 @@ mep_get_insn (struct gdbarch *gdbarch, CORE_ADDR pc, unsigned long *insn)
 #define ADD_OFFSET(i)         (SFIELD (i, 18, 6))
 
 /* LDC Rn,imm5		      0111_nnnn_iiii_101I xxxx_xxxx_xxxx_xxxx
-                              imm5 = I||i[7:4] */
+			      imm5 = I||i[7:4] */
 #define IS_LDC(i)	      (((i) & 0xf00e0000) == 0x700a0000)
 #define LDC_IMM(i)            ((FIELD (i, 16, 1) << 4) | FIELD (i, 20, 4))
 #define LDC_TARGET(i)         (FIELD (i, 24, 4))
@@ -1610,8 +1616,8 @@ static int
 is_arg_reg (pv_t value)
 {
   return (value.kind == pvk_register
-          && MEP_R1_REGNUM <= value.reg && value.reg <= MEP_R4_REGNUM
-          && value.k == 0);
+	  && MEP_R1_REGNUM <= value.reg && value.reg <= MEP_R4_REGNUM
+	  && value.k == 0);
 }
 
 /* Return non-zero if a store of REG's current value VALUE to ADDR is
@@ -1628,8 +1634,8 @@ is_arg_spill (struct gdbarch *gdbarch, pv_t value, pv_t addr,
 	      struct pv_area *stack)
 {
   return (is_arg_reg (value)
-          && pv_is_register (addr, MEP_SP_REGNUM)
-          && ! stack->find_reg (gdbarch, value.reg, 0));
+	  && pv_is_register (addr, MEP_SP_REGNUM)
+	  && ! stack->find_reg (gdbarch, value.reg, 0));
 }
 
 
@@ -1657,7 +1663,7 @@ check_for_saved (void *result_untyped, pv_t addr, CORE_ADDR size, pv_t value)
 static void
 mep_analyze_prologue (struct gdbarch *gdbarch,
 		      CORE_ADDR start_pc, CORE_ADDR limit_pc,
-                      struct mep_prologue *result)
+		      struct mep_prologue *result)
 {
   CORE_ADDR pc;
   unsigned long insn;
@@ -1684,116 +1690,116 @@ mep_analyze_prologue (struct gdbarch *gdbarch,
       next_pc = mep_get_insn (gdbarch, pc, &insn);
 
       /* A zero return from mep_get_insn means that either we weren't
-         able to read the instruction from memory, or that we don't
-         have enough information to be able to reliably decode it.  So
-         we'll store here and hope for the best.  */
+	 able to read the instruction from memory, or that we don't
+	 have enough information to be able to reliably decode it.  So
+	 we'll store here and hope for the best.  */
       if (! next_pc)
-        break;
+	break;
 
       /* Note the current values of the SP and FP, so we can tell if
-         this instruction changed them, below.  */
+	 this instruction changed them, below.  */
       pre_insn_fp = reg[MEP_FP_REGNUM];
       pre_insn_sp = reg[MEP_SP_REGNUM];
 
       if (IS_ADD (insn))
-        {
-          int rn = ADD_TARGET (insn);
-          CORE_ADDR imm6 = ADD_OFFSET (insn);
+	{
+	  int rn = ADD_TARGET (insn);
+	  CORE_ADDR imm6 = ADD_OFFSET (insn);
 
-          reg[rn] = pv_add_constant (reg[rn], imm6);
-        }
+	  reg[rn] = pv_add_constant (reg[rn], imm6);
+	}
       else if (IS_ADD3_16 (insn))
 	{
-          int rn = ADD3_16_TARGET (insn);
-          int imm7 = ADD3_16_OFFSET (insn);
+	  int rn = ADD3_16_TARGET (insn);
+	  int imm7 = ADD3_16_OFFSET (insn);
 
-          reg[rn] = pv_add_constant (reg[MEP_SP_REGNUM], imm7);
-        }
+	  reg[rn] = pv_add_constant (reg[MEP_SP_REGNUM], imm7);
+	}
       else if (IS_ADD3_32 (insn))
 	{
-          int rn = ADD3_32_TARGET (insn);
-          int rm = ADD3_32_SOURCE (insn);
-          int imm16 = ADD3_32_OFFSET (insn);
+	  int rn = ADD3_32_TARGET (insn);
+	  int rm = ADD3_32_SOURCE (insn);
+	  int imm16 = ADD3_32_OFFSET (insn);
 
-          reg[rn] = pv_add_constant (reg[rm], imm16);
+	  reg[rn] = pv_add_constant (reg[rm], imm16);
 	}
       else if (IS_SW_REG (insn))
-        {
-          int rn = SW_REG_SOURCE (insn);
-          int rm = SW_REG_BASE (insn);
+	{
+	  int rn = SW_REG_SOURCE (insn);
+	  int rm = SW_REG_BASE (insn);
 
-          /* If simulating this store would require us to forget
-             everything we know about the stack frame in the name of
-             accuracy, it would be better to just quit now.  */
-          if (stack.store_would_trash (reg[rm]))
-            break;
-          
-          if (is_arg_spill (gdbarch, reg[rn], reg[rm], &stack))
-            after_last_frame_setup_insn = next_pc;
+	  /* If simulating this store would require us to forget
+	     everything we know about the stack frame in the name of
+	     accuracy, it would be better to just quit now.  */
+	  if (stack.store_would_trash (reg[rm]))
+	    break;
+	  
+	  if (is_arg_spill (gdbarch, reg[rn], reg[rm], &stack))
+	    after_last_frame_setup_insn = next_pc;
 
-          stack.store (reg[rm], 4, reg[rn]);
-        }
+	  stack.store (reg[rm], 4, reg[rn]);
+	}
       else if (IS_SW_IMMD (insn))
-        {
-          int rn = SW_IMMD_SOURCE (insn);
-          int offset = SW_IMMD_OFFSET (insn);
-          pv_t addr = pv_add_constant (reg[MEP_SP_REGNUM], offset);
+	{
+	  int rn = SW_IMMD_SOURCE (insn);
+	  int offset = SW_IMMD_OFFSET (insn);
+	  pv_t addr = pv_add_constant (reg[MEP_SP_REGNUM], offset);
 
-          /* If simulating this store would require us to forget
-             everything we know about the stack frame in the name of
-             accuracy, it would be better to just quit now.  */
-          if (stack.store_would_trash (addr))
-            break;
+	  /* If simulating this store would require us to forget
+	     everything we know about the stack frame in the name of
+	     accuracy, it would be better to just quit now.  */
+	  if (stack.store_would_trash (addr))
+	    break;
 
-          if (is_arg_spill (gdbarch, reg[rn], addr, &stack))
-            after_last_frame_setup_insn = next_pc;
+	  if (is_arg_spill (gdbarch, reg[rn], addr, &stack))
+	    after_last_frame_setup_insn = next_pc;
 
-          stack.store (addr, 4, reg[rn]);
-        }
+	  stack.store (addr, 4, reg[rn]);
+	}
       else if (IS_MOV (insn))
 	{
-          int rn = MOV_TARGET (insn);
-          int rm = MOV_SOURCE (insn);
+	  int rn = MOV_TARGET (insn);
+	  int rm = MOV_SOURCE (insn);
 
-          reg[rn] = reg[rm];
+	  reg[rn] = reg[rm];
 
 	  if (pv_is_register (reg[rm], rm) && is_arg_reg (reg[rm]))
 	    after_last_frame_setup_insn = next_pc;
 	}
       else if (IS_SB (insn) || IS_SH (insn) || IS_SW (insn))
 	{
-          int rn = SWBH_32_SOURCE (insn);
-          int rm = SWBH_32_BASE (insn);
-          int disp = SWBH_32_OFFSET (insn);
-          int size = (IS_SB (insn) ? 1
-                      : IS_SH (insn) ? 2
-                      : (gdb_assert (IS_SW (insn)), 4));
-          pv_t addr = pv_add_constant (reg[rm], disp);
+	  int rn = SWBH_32_SOURCE (insn);
+	  int rm = SWBH_32_BASE (insn);
+	  int disp = SWBH_32_OFFSET (insn);
+	  int size = (IS_SB (insn) ? 1
+		      : IS_SH (insn) ? 2
+		      : (gdb_assert (IS_SW (insn)), 4));
+	  pv_t addr = pv_add_constant (reg[rm], disp);
 
-          if (stack.store_would_trash (addr))
-            break;
+	  if (stack.store_would_trash (addr))
+	    break;
 
-          if (is_arg_spill (gdbarch, reg[rn], addr, &stack))
-            after_last_frame_setup_insn = next_pc;
+	  if (is_arg_spill (gdbarch, reg[rn], addr, &stack))
+	    after_last_frame_setup_insn = next_pc;
 
-          stack.store (addr, size, reg[rn]);
+	  stack.store (addr, size, reg[rn]);
 	}
       else if (IS_LDC (insn))
 	{
-          int rn = LDC_TARGET (insn);
-          int cr = LDC_IMM (insn) + MEP_FIRST_CSR_REGNUM;
+	  int rn = LDC_TARGET (insn);
+	  int cr = LDC_IMM (insn) + MEP_FIRST_CSR_REGNUM;
 
-          reg[rn] = reg[cr];
+	  reg[rn] = reg[cr];
 	}
       else if (IS_LW (insn))
-        {
-          int rn = LW_TARGET (insn);
-          int rm = LW_BASE (insn);
-          int offset = LW_OFFSET (insn);
-          pv_t addr = pv_add_constant (reg[rm], offset);
+	{
+	  int rn = LW_TARGET (insn);
+	  int rm = LW_BASE (insn);
+	  int offset = LW_OFFSET (insn);
+	  pv_t addr = pv_add_constant (reg[rm], offset);
 
-          reg[rn] = stack.fetch (addr, 4);
-        }
+	  reg[rn] = stack.fetch (addr, 4);
+	}
       else if (IS_BRA (insn) && BRA_DISP (insn) > 0)
 	{
 	  /* When a loop appears as the first statement of a function
@@ -1819,42 +1825,42 @@ mep_analyze_prologue (struct gdbarch *gdbarch,
 	  break;
 	}
       else
-        /* We've hit some instruction we don't know how to simulate.
-           Strictly speaking, we should set every value we're
-           tracking to "unknown".  But we'll be optimistic, assume
-           that we have enough information already, and stop
-           analysis here.  */
-        break;
+	/* We've hit some instruction we don't know how to simulate.
+	   Strictly speaking, we should set every value we're
+	   tracking to "unknown".  But we'll be optimistic, assume
+	   that we have enough information already, and stop
+	   analysis here.  */
+	break;
 
       /* If this instruction changed the FP or decreased the SP (i.e.,
-         allocated more stack space), then this may be a good place to
-         declare the prologue finished.  However, there are some
-         exceptions:
+	 allocated more stack space), then this may be a good place to
+	 declare the prologue finished.  However, there are some
+	 exceptions:
 
-         - If the instruction just changed the FP back to its original
-           value, then that's probably a restore instruction.  The
-           prologue should definitely end before that.  
+	 - If the instruction just changed the FP back to its original
+	   value, then that's probably a restore instruction.  The
+	   prologue should definitely end before that.  
 
-         - If the instruction increased the value of the SP (that is,
-           shrunk the frame), then it's probably part of a frame
-           teardown sequence, and the prologue should end before that.  */
+	 - If the instruction increased the value of the SP (that is,
+	   shrunk the frame), then it's probably part of a frame
+	   teardown sequence, and the prologue should end before that.  */
 
       if (! pv_is_identical (reg[MEP_FP_REGNUM], pre_insn_fp))
-        {
-          if (! pv_is_register_k (reg[MEP_FP_REGNUM], MEP_FP_REGNUM, 0))
-            after_last_frame_setup_insn = next_pc;
-        }
+	{
+	  if (! pv_is_register_k (reg[MEP_FP_REGNUM], MEP_FP_REGNUM, 0))
+	    after_last_frame_setup_insn = next_pc;
+	}
       else if (! pv_is_identical (reg[MEP_SP_REGNUM], pre_insn_sp))
-        {
-          /* The comparison of constants looks odd, there, because .k
-             is unsigned.  All it really means is that the new value
-             is lower than it was before the instruction.  */
-          if (pv_is_register (pre_insn_sp, MEP_SP_REGNUM)
-              && pv_is_register (reg[MEP_SP_REGNUM], MEP_SP_REGNUM)
-              && ((pre_insn_sp.k - reg[MEP_SP_REGNUM].k)
-                  < (reg[MEP_SP_REGNUM].k - pre_insn_sp.k)))
-            after_last_frame_setup_insn = next_pc;
-        }
+	{
+	  /* The comparison of constants looks odd, there, because .k
+	     is unsigned.  All it really means is that the new value
+	     is lower than it was before the instruction.  */
+	  if (pv_is_register (pre_insn_sp, MEP_SP_REGNUM)
+	      && pv_is_register (reg[MEP_SP_REGNUM], MEP_SP_REGNUM)
+	      && ((pre_insn_sp.k - reg[MEP_SP_REGNUM].k)
+		  < (reg[MEP_SP_REGNUM].k - pre_insn_sp.k)))
+	    after_last_frame_setup_insn = next_pc;
+	}
 
       pc = next_pc;
     }
@@ -1904,23 +1910,23 @@ typedef BP_MANIPULATION (mep_break_insn) mep_breakpoint;
 
 
 static struct mep_prologue *
-mep_analyze_frame_prologue (struct frame_info *this_frame,
-                            void **this_prologue_cache)
+mep_analyze_frame_prologue (frame_info_ptr this_frame,
+			    void **this_prologue_cache)
 {
   if (! *this_prologue_cache)
     {
       CORE_ADDR func_start, stop_addr;
 
       *this_prologue_cache 
-        = FRAME_OBSTACK_ZALLOC (struct mep_prologue);
+	= FRAME_OBSTACK_ZALLOC (struct mep_prologue);
 
       func_start = get_frame_func (this_frame);
       stop_addr = get_frame_pc (this_frame);
 
       /* If we couldn't find any function containing the PC, then
-         just initialize the prologue cache, but don't do anything.  */
+	 just initialize the prologue cache, but don't do anything.  */
       if (! func_start)
-        stop_addr = func_start;
+	stop_addr = func_start;
 
       mep_analyze_prologue (get_frame_arch (this_frame),
 			    func_start, stop_addr,
@@ -1934,8 +1940,8 @@ mep_analyze_frame_prologue (struct frame_info *this_frame,
 /* Given the next frame and a prologue cache, return this frame's
    base.  */
 static CORE_ADDR
-mep_frame_base (struct frame_info *this_frame,
-                void **this_prologue_cache)
+mep_frame_base (frame_info_ptr this_frame,
+		void **this_prologue_cache)
 {
   struct mep_prologue *p
     = mep_analyze_frame_prologue (this_frame, this_prologue_cache);
@@ -1949,31 +1955,31 @@ mep_frame_base (struct frame_info *this_frame,
   if (p->has_frame_ptr)
     {
       CORE_ADDR fp
-        = get_frame_register_unsigned (this_frame, MEP_FP_REGNUM);
+	= get_frame_register_unsigned (this_frame, MEP_FP_REGNUM);
       return fp - p->frame_ptr_offset;
     }
   else
     {
       CORE_ADDR sp
-        = get_frame_register_unsigned (this_frame, MEP_SP_REGNUM);
+	= get_frame_register_unsigned (this_frame, MEP_SP_REGNUM);
       return sp - p->frame_size;
     }
 }
 
 
 static void
-mep_frame_this_id (struct frame_info *this_frame,
-                   void **this_prologue_cache,
-                   struct frame_id *this_id)
+mep_frame_this_id (frame_info_ptr this_frame,
+		   void **this_prologue_cache,
+		   struct frame_id *this_id)
 {
   *this_id = frame_id_build (mep_frame_base (this_frame, this_prologue_cache),
-                             get_frame_func (this_frame));
+			     get_frame_func (this_frame));
 }
 
 
 static struct value *
-mep_frame_prev_register (struct frame_info *this_frame,
-                         void **this_prologue_cache, int regnum)
+mep_frame_prev_register (frame_info_ptr this_frame,
+			 void **this_prologue_cache, int regnum)
 {
   struct mep_prologue *p
     = mep_analyze_frame_prologue (this_frame, this_prologue_cache);
@@ -2017,35 +2023,35 @@ mep_frame_prev_register (struct frame_info *this_frame,
 	return frame_unwind_got_constant (this_frame, regnum, frame_base);
 
       /* If prologue analysis says we saved this register somewhere,
-         return a description of the stack slot holding it.  */
+	 return a description of the stack slot holding it.  */
       if (p->reg_offset[regnum] != 1)
 	value = frame_unwind_got_memory (this_frame, regnum,
 					 frame_base + p->reg_offset[regnum]);
 
       /* Otherwise, presume we haven't changed the value of this
-         register, and get it from the next frame.  */
+	 register, and get it from the next frame.  */
       else
 	value = frame_unwind_got_register (this_frame, regnum, regnum);
 
       /* If we need to toggle the operating mode, do so.  */
       if (regnum == MEP_PSW_REGNUM)
-        {
+	{
 	  CORE_ADDR psw, lp;
 
 	  psw = value_as_long (value);
 	  release_value (value);
 
-          /* Get the LP's value, too.  */
+	  /* Get the LP's value, too.  */
 	  value = get_frame_register_value (this_frame, MEP_LP_REGNUM);
 	  lp = value_as_long (value);
 	  release_value (value);
 
-          /* If LP.LTOM is set, then toggle PSW.OM.  */
+	  /* If LP.LTOM is set, then toggle PSW.OM.  */
 	  if (lp & 0x1)
 	    psw ^= 0x1000;
 
 	  return frame_unwind_got_constant (this_frame, regnum, psw);
-        }
+	}
 
       return value;
     }
@@ -2053,6 +2059,7 @@ mep_frame_prev_register (struct frame_info *this_frame,
 
 
 static const struct frame_unwind mep_frame_unwind = {
+  "mep prologue",
   NORMAL_FRAME,
   default_frame_unwind_stop_reason,
   mep_frame_this_id,
@@ -2068,15 +2075,15 @@ static const struct frame_unwind mep_frame_unwind = {
 static int
 mep_use_struct_convention (struct type *type)
 {
-  return (TYPE_LENGTH (type) > MEP_GPR_SIZE);
+  return (type->length () > MEP_GPR_SIZE);
 }
 
 
 static void
 mep_extract_return_value (struct gdbarch *arch,
-                          struct type *type,
-                          struct regcache *regcache,
-                          gdb_byte *valbuf)
+			  struct type *type,
+			  struct regcache *regcache,
+			  gdb_byte *valbuf)
 {
   int byte_order = gdbarch_byte_order (arch);
 
@@ -2087,41 +2094,41 @@ mep_extract_return_value (struct gdbarch *arch,
 
   /* Return values > MEP_GPR_SIZE bytes are returned in memory,
      pointed to by R0.  */
-  gdb_assert (TYPE_LENGTH (type) <= MEP_GPR_SIZE);
+  gdb_assert (type->length () <= MEP_GPR_SIZE);
 
   if (byte_order == BFD_ENDIAN_BIG)
-    offset = MEP_GPR_SIZE - TYPE_LENGTH (type);
+    offset = MEP_GPR_SIZE - type->length ();
   else
     offset = 0;
 
   /* Return values that do fit in a single register are returned in R0.  */
-  regcache->cooked_read_part (MEP_R0_REGNUM, offset, TYPE_LENGTH (type),
+  regcache->cooked_read_part (MEP_R0_REGNUM, offset, type->length (),
 			      valbuf);
 }
 
 
 static void
 mep_store_return_value (struct gdbarch *arch,
-                        struct type *type,
-                        struct regcache *regcache,
-                        const gdb_byte *valbuf)
+			struct type *type,
+			struct regcache *regcache,
+			const gdb_byte *valbuf)
 {
   int byte_order = gdbarch_byte_order (arch);
 
   /* Values that fit in a single register go in R0.  */
-  if (TYPE_LENGTH (type) <= MEP_GPR_SIZE)
+  if (type->length () <= MEP_GPR_SIZE)
     {
       /* Values that don't occupy a full register appear at the least
-         significant end of the value.  This is the offset to where the
-         value starts.  */
+	 significant end of the value.  This is the offset to where the
+	 value starts.  */
       int offset;
 
       if (byte_order == BFD_ENDIAN_BIG)
-        offset = MEP_GPR_SIZE - TYPE_LENGTH (type);
+	offset = MEP_GPR_SIZE - type->length ();
       else
-        offset = 0;
+	offset = 0;
 
-      regcache->cooked_write_part (MEP_R0_REGNUM, offset, TYPE_LENGTH (type),
+      regcache->cooked_write_part (MEP_R0_REGNUM, offset, type->length (),
 				   valbuf);
     }
 
@@ -2149,7 +2156,7 @@ mep_return_value (struct gdbarch *gdbarch, struct value *function,
 	     returned in R0.  Fetch R0's value and then read the memory
 	     at that address.  */
 	  regcache_raw_read_unsigned (regcache, MEP_R0_REGNUM, &addr);
-	  read_memory (addr, readbuf, TYPE_LENGTH (type));
+	  read_memory (addr, readbuf, type->length ());
 	}
       if (writebuf)
 	{
@@ -2215,22 +2222,22 @@ mep_frame_align (struct gdbarch *gdbarch, CORE_ADDR sp)
    new stack pointer.  */
 static CORE_ADDR
 push_large_arguments (CORE_ADDR sp, int argc, struct value **argv,
-                      CORE_ADDR copy[])
+		      CORE_ADDR copy[])
 {
   int i;
 
   for (i = 0; i < argc; i++)
     {
-      unsigned arg_len = TYPE_LENGTH (value_type (argv[i]));
+      unsigned arg_len = value_type (argv[i])->length ();
 
       if (arg_len > MEP_GPR_SIZE)
-        {
-          /* Reserve space for the copy, and then round the SP down, to
-             make sure it's all aligned properly.  */
-          sp = (sp - arg_len) & -4;
-          write_memory (sp, value_contents (argv[i]), arg_len);
-          copy[i] = sp;
-        }
+	{
+	  /* Reserve space for the copy, and then round the SP down, to
+	     make sure it's all aligned properly.  */
+	  sp = (sp - arg_len) & -4;
+	  write_memory (sp, value_contents (argv[i]).data (), arg_len);
+	  copy[i] = sp;
+	}
     }
 
   return sp;
@@ -2239,10 +2246,10 @@ push_large_arguments (CORE_ADDR sp, int argc, struct value **argv,
 
 static CORE_ADDR
 mep_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
-                     struct regcache *regcache, CORE_ADDR bp_addr,
-                     int argc, struct value **argv, CORE_ADDR sp,
+		     struct regcache *regcache, CORE_ADDR bp_addr,
+		     int argc, struct value **argv, CORE_ADDR sp,
 		     function_call_return_method return_method,
-                     CORE_ADDR struct_addr)
+		     CORE_ADDR struct_addr)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR *copy = (CORE_ADDR *) alloca (argc * sizeof (copy[0]));
@@ -2281,29 +2288,29 @@ mep_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       ULONGEST value;
 
       /* Arguments that fit in a GPR get expanded to fill the GPR.  */
-      if (TYPE_LENGTH (value_type (argv[i])) <= MEP_GPR_SIZE)
-        value = extract_unsigned_integer (value_contents (argv[i]),
-                                          TYPE_LENGTH (value_type (argv[i])),
+      if (value_type (argv[i])->length () <= MEP_GPR_SIZE)
+	value = extract_unsigned_integer (value_contents (argv[i]).data (),
+					  value_type (argv[i])->length (),
 					  byte_order);
 
       /* Arguments too large to fit in a GPR get copied to the stack,
-         and we pass a pointer to the copy.  */
+	 and we pass a pointer to the copy.  */
       else
-        value = copy[i];
+	value = copy[i];
 
       /* We use $1 -- $4 for passing arguments, then use the stack.  */
       if (arg_reg <= MEP_R4_REGNUM)
-        {
-          regcache_cooked_write_unsigned (regcache, arg_reg, value);
-          arg_reg++;
-        }
+	{
+	  regcache_cooked_write_unsigned (regcache, arg_reg, value);
+	  arg_reg++;
+	}
       else
-        {
-          gdb_byte buf[MEP_GPR_SIZE];
-          store_unsigned_integer (buf, MEP_GPR_SIZE, byte_order, value);
-          write_memory (arg_stack, buf, MEP_GPR_SIZE);
-          arg_stack += MEP_GPR_SIZE;
-        }
+	{
+	  gdb_byte buf[MEP_GPR_SIZE];
+	  store_unsigned_integer (buf, MEP_GPR_SIZE, byte_order, value);
+	  write_memory (arg_stack, buf, MEP_GPR_SIZE);
+	  arg_stack += MEP_GPR_SIZE;
+	}
     }
 
   gdb_assert (arg_stack <= arg_stack_end);
@@ -2325,7 +2332,6 @@ static struct gdbarch *
 mep_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
   struct gdbarch *gdbarch;
-  struct gdbarch_tdep *tdep;
 
   /* Which me_module are we building a gdbarch object for?  */
   CONFIG_ATTR me_module;
@@ -2335,14 +2341,14 @@ mep_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   if (info.abfd)
     {
       /* The way to get the me_module code depends on the object file
-         format.  At the moment, we only know how to handle ELF.  */
+	 format.  At the moment, we only know how to handle ELF.  */
       if (bfd_get_flavour (info.abfd) == bfd_target_elf_flavour)
 	{
 	  int flag = elf_elfheader (info.abfd)->e_flags & EF_MEP_INDEX_MASK;
 	  me_module = (CONFIG_ATTR) flag;
 	}
       else
-        me_module = CONFIG_NONE;
+	me_module = CONFIG_NONE;
     }
   else
     me_module = CONFIG_NONE;
@@ -2352,28 +2358,28 @@ mep_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   if (info.abfd)
     {
       /* The negations on either side make the comparison treat all
-         non-zero (true) values as equal.  */
+	 non-zero (true) values as equal.  */
       if (! bfd_big_endian (info.abfd) != ! me_module_big_endian (me_module))
-        {
-          const char *module_name = me_module_name (me_module);
-          const char *module_endianness
-            = me_module_big_endian (me_module) ? "big" : "little";
-          const char *file_name = bfd_get_filename (info.abfd);
-          const char *file_endianness
-            = bfd_big_endian (info.abfd) ? "big" : "little";
-          
-          fputc_unfiltered ('\n', gdb_stderr);
-          if (module_name)
-            warning (_("the MeP module '%s' is %s-endian, but the executable\n"
+	{
+	  const char *module_name = me_module_name (me_module);
+	  const char *module_endianness
+	    = me_module_big_endian (me_module) ? "big" : "little";
+	  const char *file_name = bfd_get_filename (info.abfd);
+	  const char *file_endianness
+	    = bfd_big_endian (info.abfd) ? "big" : "little";
+	  
+	  gdb_putc ('\n', gdb_stderr);
+	  if (module_name)
+	    warning (_("the MeP module '%s' is %s-endian, but the executable\n"
 		       "%s is %s-endian."),
-                     module_name, module_endianness,
-                     file_name, file_endianness);
-          else
-            warning (_("the selected MeP module is %s-endian, but the "
+		     module_name, module_endianness,
+		     file_name, file_endianness);
+	  else
+	    warning (_("the selected MeP module is %s-endian, but the "
 		       "executable\n"
 		       "%s is %s-endian."),
-                     module_endianness, file_name, file_endianness);
-        }
+		     module_endianness, file_name, file_endianness);
+	}
     }
 
   /* Find a candidate among the list of architectures we've created
@@ -2383,22 +2389,27 @@ mep_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   for (arches = gdbarch_list_lookup_by_info (arches, &info); 
        arches != NULL;
        arches = gdbarch_list_lookup_by_info (arches->next, &info))
-    if (gdbarch_tdep (arches->gdbarch)->me_module == me_module)
-      return arches->gdbarch;
+    {
+      mep_gdbarch_tdep *tdep
+	= gdbarch_tdep<mep_gdbarch_tdep> (arches->gdbarch);
 
-  tdep = XCNEW (struct gdbarch_tdep);
+      if (tdep->me_module == me_module)
+	return arches->gdbarch;
+    }
+
+  mep_gdbarch_tdep *tdep = new mep_gdbarch_tdep;
   gdbarch = gdbarch_alloc (&info, tdep);
 
   /* Get a CGEN CPU descriptor for this architecture.  */
   {
     const char *mach_name = info.bfd_arch_info->printable_name;
     enum cgen_endian endian = (info.byte_order == BFD_ENDIAN_BIG
-                               ? CGEN_ENDIAN_BIG
-                               : CGEN_ENDIAN_LITTLE);
+			       ? CGEN_ENDIAN_BIG
+			       : CGEN_ENDIAN_LITTLE);
 
     tdep->cpu_desc = mep_cgen_cpu_open (CGEN_CPU_OPEN_BFDMACH, mach_name,
-                                        CGEN_CPU_OPEN_ENDIAN, endian,
-                                        CGEN_CPU_OPEN_END);
+					CGEN_CPU_OPEN_ENDIAN, endian,
+					CGEN_CPU_OPEN_END);
   }
 
   tdep->me_module = me_module;
@@ -2416,10 +2427,6 @@ mep_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_stab_reg_to_regnum (gdbarch, mep_debug_reg_to_regnum);
 
   set_gdbarch_register_reggroup_p (gdbarch, mep_register_reggroup_p);
-  reggroup_add (gdbarch, all_reggroup);
-  reggroup_add (gdbarch, general_reggroup);
-  reggroup_add (gdbarch, save_reggroup);
-  reggroup_add (gdbarch, restore_reggroup);
   reggroup_add (gdbarch, mep_csr_reggroup);
   reggroup_add (gdbarch, mep_cr_reggroup);
   reggroup_add (gdbarch, mep_ccr_reggroup);
@@ -2456,7 +2463,7 @@ _initialize_mep_tdep ()
   mep_cr_reggroup  = reggroup_new ("cr", USER_REGGROUP); 
   mep_ccr_reggroup = reggroup_new ("ccr", USER_REGGROUP);
 
-  register_gdbarch_init (bfd_arch_mep, mep_gdbarch_init);
+  gdbarch_register (bfd_arch_mep, mep_gdbarch_init);
 
   mep_init_pseudoregister_maps ();
 }

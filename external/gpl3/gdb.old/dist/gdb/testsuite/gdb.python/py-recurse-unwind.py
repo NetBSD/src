@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2020 Free Software Foundation, Inc.
+# Copyright (C) 2016-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 # This unwinder never does any unwinding.  It'll (pretend to) "sniff"
 # the frame and ultimately return None, indicating that actual unwinding
 # should be performed by some other unwinder.
-# 
+#
 # But, prior to returning None, it will attempt to obtain the value
 # associated with a symbol via a call to gdb.parse_and_eval().  In
 # the course of doing this evaluation, GDB will potentially access
@@ -28,23 +28,24 @@
 import gdb
 from gdb.unwinder import Unwinder
 
+
 class TestUnwinder(Unwinder):
 
     count = 0
 
     @classmethod
-    def reset_count (cls):
+    def reset_count(cls):
         cls.count = 0
 
     @classmethod
-    def inc_count (cls):
+    def inc_count(cls):
         cls.count += 1
 
-    test = 'check_undefined_symbol'
+    test = "check_undefined_symbol"
 
     @classmethod
-    def set_test (cls, test) :
-       cls.test = test
+    def set_test(cls, test):
+        cls.test = test
 
     def __init__(self):
         Unwinder.__init__(self, "test unwinder")
@@ -59,19 +60,19 @@ class TestUnwinder(Unwinder):
         self.recurse_level += 1
         TestUnwinder.inc_count()
 
-        if TestUnwinder.test == 'check_user_reg_pc' :
+        if TestUnwinder.test == "check_user_reg_pc":
 
-            pc = pending_frame.read_register('pc')
-            pc_as_int = int(pc.cast(gdb.lookup_type('int')))
+            pc = pending_frame.read_register("pc")
+            pc_as_int = int(pc.cast(gdb.lookup_type("int")))
             # gdb.write("In unwinder: pc=%x\n" % pc_as_int)
 
-        elif TestUnwinder.test == 'check_pae_pc' :
+        elif TestUnwinder.test == "check_pae_pc":
 
-            pc = gdb.parse_and_eval('$pc')
-            pc_as_int = int(pc.cast(gdb.lookup_type('int')))
+            pc = gdb.parse_and_eval("$pc")
+            pc_as_int = int(pc.cast(gdb.lookup_type("int")))
             # gdb.write("In unwinder: pc=%x\n" % pc_as_int)
 
-        elif TestUnwinder.test == 'check_undefined_symbol' :
+        elif TestUnwinder.test == "check_undefined_symbol":
 
             try:
                 val = gdb.parse_and_eval("undefined_symbol")
@@ -82,6 +83,7 @@ class TestUnwinder(Unwinder):
         self.recurse_level -= 1
 
         return None
+
 
 gdb.unwinder.register_unwinder(None, TestUnwinder(), True)
 gdb.write("Python script imported\n")

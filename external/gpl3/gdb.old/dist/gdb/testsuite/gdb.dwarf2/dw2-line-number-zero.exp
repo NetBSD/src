@@ -1,4 +1,4 @@
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,20 +16,17 @@ load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2 and use gas.
 if {![dwarf2_support]} {
-    verbose "Skipping dw2-line-number-zero test."
+    verbose "Skipping $gdb_test_file_name."
     return 0
 }
 
 # The .c files use __attribute__.
-if [get_compiler_info] {
-    return -1
-}
-if !$gcc_compiled {
-    verbose "Skipping dw2-line-number-zero test."
+if ![is_c_compiler_gcc] {
+    verbose "Skipping $gdb_test_file_name."
     return 0
 }
 
-standard_testfile .c dw2-line-number-zero-dw.S
+standard_testfile .c -dw.S
 
 set asm_file [standard_output_file $srcfile2]
 Dwarf::assemble $asm_file {
@@ -62,46 +59,46 @@ Dwarf::assemble $asm_file {
 	file_name "$srcfile" 1
 
 	program {
-	    {DW_LNE_set_address bar1_label}
-	    {line 27}
-	    {DW_LNS_copy}
+	    DW_LNE_set_address bar1_label
+	    line 27
+	    DW_LNS_copy
 
-	    {DW_LNE_set_address bar1_label_2}
-	    {line 29}
-	    {DW_LNS_copy}
+	    DW_LNE_set_address bar1_label_2
+	    line 29
+	    DW_LNS_copy
 
-	    {DW_LNE_set_address bar1_label_3}
-	    {line 0}
-	    {DW_LNS_copy}
+	    DW_LNE_set_address bar1_label_3
+	    line 0
+	    DW_LNS_copy
 
-	    {DW_LNE_set_address bar1_label_4}
-	    {line 33}
-	    {DW_LNS_copy}
+	    DW_LNE_set_address bar1_label_4
+	    line 33
+	    DW_LNS_copy
 
-	    {DW_LNE_set_address bar1_label_5}
-	    {DW_LNE_end_sequence}
+	    DW_LNE_set_address bar1_label_5
+	    DW_LNE_end_sequence
 
 
-	    {DW_LNE_set_address bar2_label}
-	    {line 41}
-	    {DW_LNS_copy}
+	    DW_LNE_set_address bar2_label
+	    line 41
+	    DW_LNS_copy
 
-	    {DW_LNE_set_address bar2_label_2}
-	    {line 43}
-	    {DW_LNS_copy}
+	    DW_LNE_set_address bar2_label_2
+	    line 43
+	    DW_LNS_copy
 
-	    {DW_LNE_set_address bar2_label_3}
-	    {line 0}
-	    {DW_LNS_negate_stmt}
-	    {DW_LNS_copy}
-	    {DW_LNS_negate_stmt}
+	    DW_LNE_set_address bar2_label_3
+	    line 0
+	    DW_LNS_negate_stmt
+	    DW_LNS_copy
+	    DW_LNS_negate_stmt
 
-	    {DW_LNE_set_address bar2_label_4}
-	    {line 47}
-	    {DW_LNS_copy}
+	    DW_LNE_set_address bar2_label_4
+	    line 47
+	    DW_LNS_copy
 
-	    {DW_LNE_set_address bar2_label_5}
-	    {DW_LNE_end_sequence}
+	    DW_LNE_set_address bar2_label_5
+	    DW_LNE_end_sequence
 	}
     }
 }

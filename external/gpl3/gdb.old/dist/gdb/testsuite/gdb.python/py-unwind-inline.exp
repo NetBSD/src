@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Free Software Foundation, Inc.
+# Copyright (C) 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,8 +29,7 @@ if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
 if { [skip_python_tests] } { continue }
 
 # The following tests require execution.
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 

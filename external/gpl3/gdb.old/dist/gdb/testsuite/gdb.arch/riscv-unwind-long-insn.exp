@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,18 +27,19 @@ if {![istarget "riscv*-*-*"]} {
     return
 }
 
+standard_testfile riscv-unwind-long-insn.c \
+    riscv-unwind-long-insn.S
+
 foreach_with_prefix {insn_size} {6 8} {
-    standard_testfile riscv-unwind-long-insn.c \
-	riscv-unwind-long-insn-${insn_size}.s
+    set flags [list debug additional_flags=-DBAD_INSN_LEN=${insn_size}]
 
     set testfile "${testfile}-${insn_size}"
     if {[prepare_for_testing "failed to prepare" $testfile \
-	     "$srcfile $srcfile2"  debug]} {
+	     "$srcfile $srcfile2" $flags]} {
 	return -1
     }
 
-    if ![runto_main] then {
-	fail "can't run to main"
+    if {![runto_main]} {
 	return 0
     }
 

@@ -1,5 +1,5 @@
 /* GDB-friendly replacement for <assert.h>.
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -33,29 +33,19 @@
 
 #define gdb_assert(expr)                                                      \
   ((void) ((expr) ? 0 :                                                       \
-	   (gdb_assert_fail (#expr, __FILE__, __LINE__, FUNCTION_NAME), 0)))
+	   (gdb_assert_fail (#expr, __FILE__, __LINE__, __func__), 0)))
 
 /* This prints an "Assertion failed" message, asking the user if they
    want to continue, dump core, or just exit.  */
-#if defined (FUNCTION_NAME)
 #define gdb_assert_fail(assertion, file, line, function)                      \
-  internal_error (file, line, _("%s: Assertion `%s' failed."),                \
-		  function, assertion)
-#else
-#define gdb_assert_fail(assertion, file, line, function)                      \
-  internal_error (file, line, _("Assertion `%s' failed."),                    \
-		  assertion)
-#endif
+  internal_error_loc (file, line, _("%s: Assertion `%s' failed."),                \
+		      function, assertion)
 
 /* The canonical form of gdb_assert (0).
    MESSAGE is a string to include in the error message.  */
 
-#if defined (FUNCTION_NAME)
-#define gdb_assert_not_reached(message) \
-  internal_error (__FILE__, __LINE__, "%s: %s", FUNCTION_NAME, _(message))
-#else
-#define gdb_assert_not_reached(message) \
-  internal_error (__FILE__, __LINE__, _(message))
-#endif
+#define gdb_assert_not_reached(message, ...) \
+  internal_error_loc (__FILE__, __LINE__, _("%s: " message), __func__, \
+		      ##__VA_ARGS__)
 
 #endif /* COMMON_GDB_ASSERT_H */

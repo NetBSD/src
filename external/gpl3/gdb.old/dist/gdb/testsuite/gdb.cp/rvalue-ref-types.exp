@@ -1,4 +1,4 @@
-# Copyright 1999-2020 Free Software Foundation, Inc.
+# Copyright 1999-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 # Tests for reference types with short type variables in GDB, based on
 # gdb.cp/ref-types.exp.
 
-if { [skip_cplus_tests] } { continue }
+if { [skip_cplus_tests] } { return }
 
 standard_testfile .cc
 
@@ -29,12 +29,10 @@ if {[prepare_for_testing $testfile.exp $testfile $srcfile \
 # Set it up at a breakpoint so we can play with the variable values.
 #
 if {![runto_main]} {
-    untested "couldn't run to breakpoint"
     return -1
 }
 
 if {![runto 'marker1']} {
-    untested "couldn't run to marker1"
     return -1
 }
 
@@ -63,9 +61,8 @@ gdb_test "print rrat\[2\]" ".$decimal = 2" "print value of rrat\[2\]"
 gdb_test "print rrat\[3\]" ".$decimal = 3" "print value of rrat\[3\]"
 
 
-if {![runto 'f']} then {
-    perror "couldn't run to f"
-    continue
+if {![runto 'f']} {
+    return
 }
 
 gdb_test "up" ".main2.*" "up from f"

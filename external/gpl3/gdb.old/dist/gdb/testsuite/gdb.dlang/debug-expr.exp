@@ -1,4 +1,4 @@
-# Copyright 2017-2020 Free Software Foundation, Inc.
+# Copyright 2017-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,20 +21,7 @@ gdb_start
 gdb_test_no_output "set language d"
 gdb_test_no_output "set debug expression 1"
 
-# Test whether the expression debug machinery accepts the expression.
-
-proc test_debug_expr { cmd output } {
-    global gdb_prompt
-
-    gdb_test_multiple $cmd "" {
-	-re ".*Invalid expression.*\r\n$gdb_prompt $" {
-	    fail $cmd
-	}
-	-re ".*\[\r\n\]$output\r\n$gdb_prompt $" {
-	    pass $cmd
-	}
-    }
-}
-
 # This caused gdb to segfault.
-test_debug_expr "print *(int*)(0)" "Cannot access memory at address 0x0"
+gdb_test_debug_expr "print *(int*)(0)" \
+    "Cannot access memory at address 0x0" \
+    "dereference a null pointer"

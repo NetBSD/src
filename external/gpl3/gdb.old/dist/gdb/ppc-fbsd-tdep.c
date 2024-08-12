@@ -1,6 +1,6 @@
 /* Target-dependent code for PowerPC systems running FreeBSD.
 
-   Copyright (C) 2013-2020 Free Software Foundation, Inc.
+   Copyright (C) 2013-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -126,7 +126,7 @@ ppcfbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
 				      void *cb_data,
 				      const struct regcache *regcache)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
 
   if (tdep->wordsize == 4)
     cb (".reg", 148, 148, &ppc32_fbsd_gregset, NULL, cb_data);
@@ -150,7 +150,7 @@ static const int ppcfbsd_sigreturn_offset[] = {
 
 static int
 ppcfbsd_sigtramp_frame_sniffer (const struct frame_unwind *self,
-				struct frame_info *this_frame,
+				frame_info_ptr this_frame,
 				void **this_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
@@ -176,7 +176,7 @@ ppcfbsd_sigtramp_frame_sniffer (const struct frame_unwind *self,
       unsigned long insn;
 
       if (!safe_frame_unwind_memory (this_frame, start_pc + *offset,
-				     buf, sizeof buf))
+				     {buf, sizeof buf}))
 	continue;
 
       /* Check for "li r0,SYS_sigreturn".  */
@@ -197,10 +197,10 @@ ppcfbsd_sigtramp_frame_sniffer (const struct frame_unwind *self,
 }
 
 static struct trad_frame_cache *
-ppcfbsd_sigtramp_frame_cache (struct frame_info *this_frame, void **this_cache)
+ppcfbsd_sigtramp_frame_cache (frame_info_ptr this_frame, void **this_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
   struct trad_frame_cache *cache;
   CORE_ADDR addr, base, func;
   gdb_byte buf[PPC_INSN_SIZE];
@@ -214,7 +214,7 @@ ppcfbsd_sigtramp_frame_cache (struct frame_info *this_frame, void **this_cache)
 
   func = get_frame_pc (this_frame);
   func &= ~(ppcfbsd_page_size - 1);
-  if (!safe_frame_unwind_memory (this_frame, func, buf, sizeof buf))
+  if (!safe_frame_unwind_memory (this_frame, func, {buf, sizeof buf}))
     return cache;
 
   base = get_frame_register_unsigned (this_frame, gdbarch_sp_regnum (gdbarch));
@@ -243,7 +243,7 @@ ppcfbsd_sigtramp_frame_cache (struct frame_info *this_frame, void **this_cache)
 }
 
 static void
-ppcfbsd_sigtramp_frame_this_id (struct frame_info *this_frame,
+ppcfbsd_sigtramp_frame_this_id (frame_info_ptr this_frame,
 				void **this_cache, struct frame_id *this_id)
 {
   struct trad_frame_cache *cache =
@@ -253,7 +253,7 @@ ppcfbsd_sigtramp_frame_this_id (struct frame_info *this_frame,
 }
 
 static struct value *
-ppcfbsd_sigtramp_frame_prev_register (struct frame_info *this_frame,
+ppcfbsd_sigtramp_frame_prev_register (frame_info_ptr this_frame,
 				      void **this_cache, int regnum)
 {
   struct trad_frame_cache *cache =
@@ -263,6 +263,7 @@ ppcfbsd_sigtramp_frame_prev_register (struct frame_info *this_frame,
 }
 
 static const struct frame_unwind ppcfbsd_sigtramp_frame_unwind = {
+  "ppc freebsd sigtramp",
   SIGTRAMP_FRAME,
   default_frame_unwind_stop_reason,
   ppcfbsd_sigtramp_frame_this_id,
@@ -286,7 +287,7 @@ static CORE_ADDR
 ppcfbsd_get_thread_local_address (struct gdbarch *gdbarch, ptid_t ptid,
 				  CORE_ADDR lm_addr, CORE_ADDR offset)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
   struct regcache *regcache;
   int tp_offset, tp_regnum;
 
@@ -318,7 +319,7 @@ ppcfbsd_get_thread_local_address (struct gdbarch *gdbarch, ptid_t ptid,
 static void
 ppcfbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
 
   /* Generic FreeBSD support. */
   fbsd_init_abi (info, gdbarch);

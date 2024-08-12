@@ -1,6 +1,6 @@
 /* Base/prototype target for default child (native) targets.
 
-   Copyright (C) 1988-2020 Free Software Foundation, Inc.
+   Copyright (C) 1988-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -51,27 +51,19 @@ inf_child_target::info () const
   return inf_child_target_info;
 }
 
-/* Helper function for child_wait and the derivatives of child_wait.
-   HOSTSTATUS is the waitstatus from wait() or the equivalent; store our
-   translation of that in OURSTATUS.  */
-void
-store_waitstatus (struct target_waitstatus *ourstatus, int hoststatus)
+/* See inf-child.h.  */
+
+target_waitstatus
+host_status_to_waitstatus (int hoststatus)
 {
   if (WIFEXITED (hoststatus))
-    {
-      ourstatus->kind = TARGET_WAITKIND_EXITED;
-      ourstatus->value.integer = WEXITSTATUS (hoststatus);
-    }
+    return target_waitstatus ().set_exited (WEXITSTATUS (hoststatus));
   else if (!WIFSTOPPED (hoststatus))
-    {
-      ourstatus->kind = TARGET_WAITKIND_SIGNALLED;
-      ourstatus->value.sig = gdb_signal_from_host (WTERMSIG (hoststatus));
-    }
+    return target_waitstatus ().set_signalled
+      (gdb_signal_from_host (WTERMSIG (hoststatus)));
   else
-    {
-      ourstatus->kind = TARGET_WAITKIND_STOPPED;
-      ourstatus->value.sig = gdb_signal_from_host (WSTOPSIG (hoststatus));
-    }
+    return target_waitstatus ().set_stopped
+      (gdb_signal_from_host (WSTOPSIG (hoststatus)));
 }
 
 inf_child_target::~inf_child_target ()
@@ -166,10 +158,10 @@ inf_child_open_target (const char *arg, int from_tty)
   gdb_assert (dynamic_cast<inf_child_target *> (target) != NULL);
 
   target_preopen (from_tty);
-  push_target (target);
+  current_inferior ()->push_target (target);
   inf_child_explicitly_opened = 1;
   if (from_tty)
-    printf_filtered ("Done.  Use the \"run\" command to start a process.\n");
+    gdb_printf ("Done.  Use the \"run\" command to start a process.\n");
 }
 
 /* Implement the to_disconnect target_ops method.  */
@@ -207,14 +199,7 @@ void
 inf_child_target::maybe_unpush_target ()
 {
   if (!inf_child_explicitly_opened)
-    unpush_target (this);
-}
-
-void
-inf_child_target::post_startup_inferior (ptid_t ptid)
-{
-  /* This target doesn't require a meaningful "post startup inferior"
-     operation by a debugger.  */
+    current_inferior ()->unpush_target (this);
 }
 
 bool
@@ -235,7 +220,7 @@ inf_child_target::can_attach ()
   return true;
 }
 
-char *
+const char *
 inf_child_target::pid_to_exec_file (int pid)
 {
   /* This target doesn't support translation of a process ID to the
@@ -248,7 +233,7 @@ inf_child_target::pid_to_exec_file (int pid)
 int
 inf_child_target::fileio_open (struct inferior *inf, const char *filename,
 			       int flags, int mode, int warn_if_slow,
-			       int *target_errno)
+			       fileio_error *target_errno)
 {
   int nat_flags;
   mode_t nat_mode;
@@ -261,7 +246,7 @@ inf_child_target::fileio_open (struct inferior *inf, const char *filename,
       return -1;
     }
 
-  fd = gdb_open_cloexec (filename, nat_flags, nat_mode);
+  fd = gdb_open_cloexec (filename, nat_flags, nat_mode).release ();
   if (fd == -1)
     *target_errno = host_to_fileio_error (errno);
 
@@ -272,7 +257,7 @@ inf_child_target::fileio_open (struct inferior *inf, const char *filename,
 
 int
 inf_child_target::fileio_pwrite (int fd, const gdb_byte *write_buf, int len,
-				 ULONGEST offset, int *target_errno)
+				 ULONGEST offset, fileio_error *target_errno)
 {
   int ret;
 
@@ -299,7 +284,7 @@ inf_child_target::fileio_pwrite (int fd, const gdb_byte *write_buf, int len,
 
 int
 inf_child_target::fileio_pread (int fd, gdb_byte *read_buf, int len,
-				ULONGEST offset, int *target_errno)
+				ULONGEST offset, fileio_error *target_errno)
 {
   int ret;
 
@@ -325,7 +310,7 @@ inf_child_target::fileio_pread (int fd, gdb_byte *read_buf, int len,
 /* Implementation of to_fileio_fstat.  */
 
 int
-inf_child_target::fileio_fstat (int fd, struct stat *sb, int *target_errno)
+inf_child_target::fileio_fstat (int fd, struct stat *sb, fileio_error *target_errno)
 {
   int ret;
 
@@ -339,7 +324,7 @@ inf_child_target::fileio_fstat (int fd, struct stat *sb, int *target_errno)
 /* Implementation of to_fileio_close.  */
 
 int
-inf_child_target::fileio_close (int fd, int *target_errno)
+inf_child_target::fileio_close (int fd, fileio_error *target_errno)
 {
   int ret;
 
@@ -354,7 +339,7 @@ inf_child_target::fileio_close (int fd, int *target_errno)
 
 int
 inf_child_target::fileio_unlink (struct inferior *inf, const char *filename,
-				 int *target_errno)
+				 fileio_error *target_errno)
 {
   int ret;
 
@@ -369,7 +354,7 @@ inf_child_target::fileio_unlink (struct inferior *inf, const char *filename,
 
 gdb::optional<std::string>
 inf_child_target::fileio_readlink (struct inferior *inf, const char *filename,
-				   int *target_errno)
+				   fileio_error *target_errno)
 {
   /* We support readlink only on systems that also provide a compile-time
      maximum path length (PATH_MAX), at least for now.  */
@@ -407,6 +392,24 @@ bool
 inf_child_target::can_use_agent ()
 {
   return agent_loaded_p ();
+}
+
+void
+inf_child_target::follow_exec (inferior *follow_inf, ptid_t ptid,
+			       const char *execd_pathname)
+{
+  inferior *orig_inf = current_inferior ();
+
+  process_stratum_target::follow_exec (follow_inf, ptid, execd_pathname);
+
+  if (orig_inf != follow_inf)
+    {
+      /* If the target was implicitly push in the original inferior, unpush
+         it.  */
+      scoped_restore_current_thread restore_thread;
+      switch_to_inferior_no_thread (orig_inf);
+      maybe_unpush_target ();
+    }
 }
 
 /* See inf-child.h.  */

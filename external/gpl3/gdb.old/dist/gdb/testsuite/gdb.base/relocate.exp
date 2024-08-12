@@ -1,4 +1,4 @@
-# Copyright 2002-2020 Free Software Foundation, Inc.
+# Copyright 2002-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -222,8 +222,9 @@ if { "${function_foo_addr}" == "${new_function_foo_addr}" } {
 
 set offset 0x10000
 clean_restart
+set readnow_re "Expanding full symbols from ${binfile}\.\.\."
 gdb_test "symbol-file -o $offset $binfile" \
-    "Reading symbols from ${binfile}\.\.\." \
+    "Reading symbols from ${binfile}\.\.\.(\r\n$readnow_re)?" \
     "symbol-file with offset"
 
 with_test_prefix "static vars" {
@@ -253,7 +254,7 @@ with_test_prefix "functions" {
 set offset 0x10000
 clean_restart
 gdb_test "add-symbol-file -o $offset $binfile" \
-    "Reading symbols from ${binfile}\.\.\." \
+    "Reading symbols from ${binfile}\.\.\.(\r\n$readnow_re)?" \
     "add-symbol-file with offset" \
     "add symbol table from file \".*${testfile}\\.o\" with all sections offset by $offset\[\r\n\]+\\(y or n\\) " \
     "y"
@@ -284,7 +285,7 @@ with_test_prefix "functions, 2nd" {
 set text [ format "0x%x" [expr ${function_foo_addr} + 0x20000] ]
 clean_restart
 gdb_test "add-symbol-file $binfile -o $offset $text" \
-    "Reading symbols from ${binfile}\.\.\." \
+    "Reading symbols from ${binfile}\.\.\.(\r\n$readnow_re)?" \
     "add-symbol-file with offset, text address given" \
     "add symbol table from file \".*${testfile}\\.o\" at\[ \t\r\n\]+\.text_addr = ${text}\[\r\n\]+with other sections offset by ${offset}\[\r\n\]+\\(y or n\\) " \
     "y"
@@ -301,7 +302,7 @@ with_test_prefix "functions, 3rd" {
 set data [ format "0x%x" [expr ${global_foo_addr} + 0x20000] ]
 clean_restart
 gdb_test "add-symbol-file $binfile -o $offset -s .data $data" \
-    "Reading symbols from ${binfile}\.\.\." \
+    "Reading symbols from ${binfile}\.\.\.(\r\n$readnow_re)?" \
     "add-symbol-file with offset, data address given" \
     "add symbol table from file \".*${testfile}\\.o\" at\[ \t\r\n\]+\.data_addr = ${data}\[\r\n\]+with other sections offset by ${offset}\[\r\n\]+\\(y or n\\) " \
     "y"

@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <!DOCTYPE syscalls_info SYSTEM "gdb-syscalls.dtd">
-<!-- Copyright (C) 2011-2020 Free Software Foundation, Inc.
+<!-- Copyright (C) 2011-2023 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
      notice and this notice are preserved.  -->
 <!-- This file was generated using the following file:
-     
-     /usr/src/linux/arch/mips/include/asm/unistd.h
+
+     arch/mips/kernel/syscalls/syscall_n32.tbl
 
      The file mentioned above belongs to the Linux Kernel.  -->
 <syscalls_info>
@@ -188,7 +188,6 @@
   <syscall name="getpmsg" number="6174"/>
   <syscall name="putpmsg" number="6175"/>
   <syscall name="afs_syscall" number="6176"/>
-  <syscall name="reserved177" number="6177"/>
   <syscall name="gettid" number="6178"/>
   <syscall name="readahead" number="6179" groups="descriptor"/>
   <syscall name="setxattr" number="6180" groups="file"/>
@@ -204,7 +203,6 @@
   <syscall name="lremovexattr" number="6190" groups="file"/>
   <syscall name="fremovexattr" number="6191" groups="descriptor"/>
   <syscall name="tkill" number="6192" groups="signal"/>
-  <syscall name="reserved193" number="6193"/>
   <syscall name="futex" number="6194"/>
   <syscall name="sched_setaffinity" number="6195"/>
   <syscall name="sched_getaffinity" number="6196"/>
@@ -313,4 +311,80 @@
   <syscall name="fanotify_init" number="6300" groups="descriptor"/>
   <syscall name="fanotify_mark" number="6301" groups="descriptor,file"/>
   <syscall name="prlimit64" number="6302"/>
+  <syscall name="name_to_handle_at" number="6303" groups="descriptor,file"/>
+  <syscall name="open_by_handle_at" number="6304" groups="descriptor"/>
+  <syscall name="clock_adjtime" number="6305"/>
+  <syscall name="syncfs" number="6306" groups="descriptor"/>
+  <syscall name="sendmmsg" number="6307" groups="network"/>
+  <syscall name="setns" number="6308" groups="descriptor"/>
+  <syscall name="process_vm_readv" number="6309"/>
+  <syscall name="process_vm_writev" number="6310"/>
+  <syscall name="kcmp" number="6311"/>
+  <syscall name="finit_module" number="6312" groups="descriptor"/>
+  <syscall name="sched_setattr" number="6313"/>
+  <syscall name="sched_getattr" number="6314"/>
+  <syscall name="renameat2" number="6315"/>
+  <syscall name="seccomp" number="6316"/>
+  <syscall name="getrandom" number="6317"/>
+  <syscall name="memfd_create" number="6318"/>
+  <syscall name="bpf" number="6319"/>
+  <syscall name="execveat" number="6320"/>
+  <syscall name="userfaultfd" number="6321"/>
+  <syscall name="membarrier" number="6322"/>
+  <syscall name="mlock2" number="6323"/>
+  <syscall name="copy_file_range" number="6324"/>
+  <syscall name="preadv2" number="6325"/>
+  <syscall name="pwritev2" number="6326"/>
+  <syscall name="pkey_mprotect" number="6327"/>
+  <syscall name="pkey_alloc" number="6328"/>
+  <syscall name="pkey_free" number="6329"/>
+  <syscall name="statx" number="6330"/>
+  <syscall name="rseq" number="6331"/>
+  <syscall name="io_pgetevents" number="6332"/>
+  <syscall name="clock_gettime64" number="6403"/>
+  <syscall name="clock_settime64" number="6404"/>
+  <syscall name="clock_adjtime64" number="6405"/>
+  <syscall name="clock_getres_time64" number="6406"/>
+  <syscall name="clock_nanosleep_time64" number="6407"/>
+  <syscall name="timer_gettime64" number="6408"/>
+  <syscall name="timer_settime64" number="6409"/>
+  <syscall name="timerfd_gettime64" number="6410"/>
+  <syscall name="timerfd_settime64" number="6411"/>
+  <syscall name="utimensat_time64" number="6412"/>
+  <syscall name="pselect6_time64" number="6413"/>
+  <syscall name="ppoll_time64" number="6414"/>
+  <syscall name="io_pgetevents_time64" number="6416"/>
+  <syscall name="recvmmsg_time64" number="6417"/>
+  <syscall name="mq_timedsend_time64" number="6418"/>
+  <syscall name="mq_timedreceive_time64" number="6419"/>
+  <syscall name="semtimedop_time64" number="6420"/>
+  <syscall name="rt_sigtimedwait_time64" number="6421"/>
+  <syscall name="futex_time64" number="6422"/>
+  <syscall name="sched_rr_get_interval_time64" number="6423"/>
+  <syscall name="pidfd_send_signal" number="6424"/>
+  <syscall name="io_uring_setup" number="6425"/>
+  <syscall name="io_uring_enter" number="6426"/>
+  <syscall name="io_uring_register" number="6427"/>
+  <syscall name="open_tree" number="6428"/>
+  <syscall name="move_mount" number="6429"/>
+  <syscall name="fsopen" number="6430"/>
+  <syscall name="fsconfig" number="6431"/>
+  <syscall name="fsmount" number="6432"/>
+  <syscall name="fspick" number="6433"/>
+  <syscall name="pidfd_open" number="6434"/>
+  <syscall name="clone3" number="6435"/>
+  <syscall name="close_range" number="6436"/>
+  <syscall name="openat2" number="6437"/>
+  <syscall name="pidfd_getfd" number="6438"/>
+  <syscall name="faccessat2" number="6439"/>
+  <syscall name="process_madvise" number="6440"/>
+  <syscall name="epoll_pwait2" number="6441"/>
+  <syscall name="mount_setattr" number="6442"/>
+  <syscall name="quotactl_fd" number="6443"/>
+  <syscall name="landlock_create_ruleset" number="6444"/>
+  <syscall name="landlock_add_rule" number="6445"/>
+  <syscall name="landlock_restrict_self" number="6446"/>
+  <syscall name="process_mrelease" number="6448"/>
+  <syscall name="futex_waitv" number="6449"/>
+  <syscall name="set_mempolicy_home_node" number="6450"/>
 </syscalls_info>

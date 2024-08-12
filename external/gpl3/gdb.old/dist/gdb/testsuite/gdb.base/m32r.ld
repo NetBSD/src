@@ -2,34 +2,43 @@ OUTPUT_FORMAT("elf32-m32r", "elf32-m32r",
 	      "elf32-m32r")
 OUTPUT_ARCH(m32r)
 ENTRY(_start)
- SEARCH_DIR(/usr/cygnus/m32r-961018/H-sparc-sun-sunos4.1//lib);
+
+MEMORY
+{
+  RAM : ORIGIN = 0x208000, LENGTH = 0x100000
+  OVLY_1 : ORIGIN = 0x300000, LENGTH = 0x40000
+  OVLY_2 : ORIGIN = 0x340000, LENGTH = 0x40000
+  OVLY_3 : ORIGIN = 0x380000, LENGTH = 0x40000
+  OVLY_4 : ORIGIN = 0x3c0000, LENGTH = 0x40000
+  OVLY_STORAGE : ORIGIN = 0x400000, LENGTH = 0x100000
+}
+
 /* Do we need any of these for elf?
    __DYNAMIC = 0;    */
 SECTIONS
 {
-     OVERLAY 0x300000 : AT (0x400000)
-        {
-          .ovly0 { foo.o(.text) }
-          .ovly1 { bar.o(.text) }
-        }
-     OVERLAY 0x380000 : AT (0x480000)
-        {
-          .ovly2 { baz.o(.text) }
-          .ovly3 { grbx.o(.text) }
-        }
-     OVERLAY 0x340000 : AT (0x440000)
-        {
-          .data00 { foo.o(.data) }
-          .data01 { bar.o(.data) }
-        }
-     OVERLAY 0x3C0000 : AT (0x4C0000)
-        {
-          .data02 { baz.o(.data) }
-          .data03 { grbx.o(.data) }
-        }
+   OVERLAY :
+      {
+        .ovly0 { */overlays2.o(.text) }
+        .ovly1 { */overlays3.o(.text) }
+      } >OVLY_1 AT>OVLY_STORAGE
+   OVERLAY :
+      {
+        .ovly2 { */overlays4.o(.text) }
+        .ovly3 { */overlays5.o(.text) }
+      } >OVLY_3 AT>OVLY_STORAGE
+   OVERLAY :
+      {
+        .data00 { */overlays2.o(.data) }
+        .data01 { */overlays3.o(.data) }
+      } >OVLY_2 AT>OVLY_STORAGE
+   OVERLAY :
+      {
+        .data02 { */overlays4.o(.data) }
+        .data03 { */overlays5.o(.data) }
+      } >OVLY_4 AT>OVLY_STORAGE
 
   /* Read-only sections, merged into text segment: */
-  . = 0x208000;
   .interp        : { *(.interp) 	}
   .hash          : { *(.hash)		}
   .dynsym        : { *(.dynsym)		}
@@ -54,20 +63,21 @@ SECTIONS
   .rela.bss      : { *(.rela.bss)	}
   .rel.plt       : { *(.rel.plt)	}
   .rela.plt      : { *(.rela.plt)	}
-  .init          : { *(.init)		} =0
-  .plt           : { *(.plt)		}
+  .init          : { *(.init)		} >RAM AT>RAM =0
+  .plt           : { *(.plt)		} >RAM AT>RAM
+
   .text          :
   {
     *(.text)
     /* .gnu.warning sections are handled specially by elf32.em.  */
     *(.gnu.warning)
     *(.gnu.linkonce.t*)
-  } =0
+  } >RAM AT>RAM =0
   _etext = .;
   PROVIDE (etext = .);
-  .fini          : { *(.fini)		} =0
-  .rodata        : { *(.rodata) *(.gnu.linkonce.r*) }
-  .rodata1       : { *(.rodata1)	}
+  .fini          : { *(.fini)		} >RAM AT>RAM =0
+  .rodata        : { *(.rodata) *(.gnu.linkonce.r*) } >RAM AT>RAM
+  .rodata1       : { *(.rodata1)	} >RAM AT>RAM
   /* Adjust the address for the data segment.  We want to adjust up to
      the same address within the page on the next page up.  */
   . = ALIGN(32) + (ALIGN(8) & (32 - 1));
@@ -120,21 +130,21 @@ SECTIONS
 	LONG((_novlys - _ovly_table) / 16);
 
     CONSTRUCTORS
-  }
-  .data1         : { *(.data1)		}
-  .ctors         : { *(.ctors)		}
-  .dtors         : { *(.dtors)		}
-  .got           : { *(.got.plt) *(.got)}
-  .dynamic       : { *(.dynamic)	}
+  } >RAM AT>RAM
+  .data1         : { *(.data1)		} >RAM AT>RAM
+  .ctors         : { *(.ctors)		} >RAM AT>RAM
+  .dtors         : { *(.dtors)		} >RAM AT>RAM
+  .got           : { *(.got.plt) *(.got)} >RAM AT>RAM
+  .dynamic       : { *(.dynamic)	} >RAM AT>RAM
   /* We want the small data sections together, so single-instruction offsets
      can access them all, and initialized data all before uninitialized, so
      we can shorten the on-disk segment size.  */
-  .sdata         : { *(.sdata)		}
+  .sdata         : { *(.sdata)		} >RAM AT>RAM
   _edata  =  .;
   PROVIDE (edata = .);
   __bss_start = .;
-  .sbss          : { *(.sbss) *(.scommon) }
-  .bss           : { *(.dynbss) *(.bss) *(COMMON) }
+  .sbss          : { *(.sbss) *(.scommon) } >RAM AT>RAM
+  .bss           : { *(.dynbss) *(.bss) *(COMMON) } >RAM AT>RAM
   _end = . ;
   PROVIDE (end = .);
   /* Stabs debugging sections.  */

@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2020 Free Software Foundation, Inc.
+# Copyright (C) 2015-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,6 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import gdb
+
 
 def safe_execute(command):
     """Execute command, ignoring any gdb errors."""
@@ -37,7 +38,7 @@ def select_file(file_name):
     """
     safe_execute("set confirm off")
     safe_execute("kill")
-    print ("Selecting file %s" % (file_name))
+    print("Selecting file %s" % (file_name))
     if file_name is None:
         gdb.execute("file")
     else:

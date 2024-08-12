@@ -1,6 +1,6 @@
 /* Type stack for GDB parser.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -67,8 +67,9 @@ type_stack::insert (struct expr_builder *pstate, const char *string)
 
   element.piece = tp_space_identifier;
   insert_into (slot, element);
-  element.int_val = address_space_name_to_int (pstate->gdbarch (),
-					       string);
+  element.int_val
+    = address_space_name_to_type_instance_flags (pstate->gdbarch (),
+						 string);
   insert_into (slot, element);
 }
 
@@ -109,7 +110,7 @@ type_stack::follow_types (struct type *follow_type)
   int done = 0;
   int make_const = 0;
   int make_volatile = 0;
-  int make_addr_space = 0;
+  type_instance_flags make_addr_space = 0;
   bool make_restrict = false;
   bool make_atomic = false;
   int array_size;
@@ -128,7 +129,7 @@ type_stack::follow_types (struct type *follow_type)
 	make_volatile = 1;
 	break;
       case tp_space_identifier:
-	make_addr_space = pop_int ();
+	make_addr_space = (enum type_instance_flag_value) pop_int ();
 	break;
       case tp_atomic:
 	make_atomic = true;

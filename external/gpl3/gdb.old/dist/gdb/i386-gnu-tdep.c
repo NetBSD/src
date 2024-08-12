@@ -1,5 +1,5 @@
 /* Target-dependent code for the GNU Hurd.
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -56,14 +56,14 @@ static const gdb_byte gnu_sigtramp_code[] =
    start of the routine.  Otherwise, return 0.  */
 
 static CORE_ADDR
-i386_gnu_sigtramp_start (struct frame_info *this_frame)
+i386_gnu_sigtramp_start (frame_info_ptr this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
   gdb_byte buf[GNU_SIGTRAMP_LEN];
 
   if (!safe_frame_unwind_memory (this_frame,
 				 pc + GNU_SIGTRAMP_TAIL - GNU_SIGTRAMP_LEN,
-				 buf, GNU_SIGTRAMP_LEN))
+				 buf))
     return 0;
 
   if (memcmp (buf, gnu_sigtramp_code, GNU_SIGTRAMP_LEN) != 0)
@@ -76,7 +76,7 @@ i386_gnu_sigtramp_start (struct frame_info *this_frame)
    routine.  */
 
 static int
-i386_gnu_sigtramp_p (struct frame_info *this_frame)
+i386_gnu_sigtramp_p (frame_info_ptr this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
   const char *name;
@@ -97,7 +97,7 @@ i386_gnu_sigtramp_p (struct frame_info *this_frame)
    address of the associated sigcontext structure.  */
 
 static CORE_ADDR
-i386_gnu_sigcontext_addr (struct frame_info *this_frame)
+i386_gnu_sigcontext_addr (frame_info_ptr this_frame)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -173,7 +173,7 @@ static int i386gnu_gregset_reg_offset[] =
 static void
 i386gnu_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
 
   /* GNU uses ELF.  */
   i386_elf_init_abi (info, gdbarch);

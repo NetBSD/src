@@ -1,7 +1,7 @@
 /* Target-dependent header for the RISC-V architecture, for GDB, the
    GNU Debugger.
 
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,6 +22,7 @@
 #define RISCV_TDEP_H
 
 #include "arch/riscv.h"
+#include "gdbarch.h"
 
 /* RiscV register numbers.  */
 enum
@@ -34,6 +35,7 @@ enum
   RISCV_FP_REGNUM = 8,		/* Frame Pointer.  */
   RISCV_A0_REGNUM = 10,		/* First argument.  */
   RISCV_A1_REGNUM = 11,		/* Second argument.  */
+  RISCV_A7_REGNUM = 17,		/* Seventh argument.  */
   RISCV_PC_REGNUM = 32,		/* Program Counter.  */
 
   RISCV_NUM_INTEGER_REGS = 32,
@@ -53,7 +55,11 @@ enum
 
   RISCV_PRIV_REGNUM = 4161,
 
-  RISCV_LAST_REGNUM = RISCV_PRIV_REGNUM
+  RISCV_V0_REGNUM,
+
+  RISCV_V31_REGNUM = RISCV_V0_REGNUM + 31,
+
+  RISCV_LAST_REGNUM = RISCV_V31_REGNUM
 };
 
 /* RiscV DWARF register numbers.  */
@@ -63,10 +69,14 @@ enum
   RISCV_DWARF_REGNUM_X31 = 31,
   RISCV_DWARF_REGNUM_F0 = 32,
   RISCV_DWARF_REGNUM_F31 = 63,
+  RISCV_DWARF_REGNUM_V0 = 96,
+  RISCV_DWARF_REGNUM_V31 = 127,
+  RISCV_DWARF_FIRST_CSR = 4096,
+  RISCV_DWARF_LAST_CSR = 8191,
 };
 
 /* RISC-V specific per-architecture information.  */
-struct gdbarch_tdep
+struct riscv_gdbarch_tdep : gdbarch_tdep_base
 {
   /* Features about the target hardware that impact how the gdbarch is
      configured.  Two gdbarch instances are compatible only if this field
@@ -79,6 +89,12 @@ struct gdbarch_tdep
 
   /* ISA-specific data types.  */
   struct type *riscv_fpreg_d_type = nullptr;
+
+  /* The location of these registers, set to -2 by default so we don't
+     match against -1 which is frequently used to mean "all registers",
+     e.g. in the regcache supply/collect code.  */
+  int fflags_regnum = -2;
+  int frm_regnum = -2;
 
   /* Use for tracking unknown CSRs in the target description.
      UNKNOWN_CSRS_FIRST_REGNUM is the number assigned to the first unknown
@@ -94,6 +110,9 @@ struct gdbarch_tdep
   int duplicate_frm_regnum = -1;
   int duplicate_fcsr_regnum = -1;
 
+  /* Return the expected next PC assuming FRAME is stopped at a syscall
+     instruction.  */
+  CORE_ADDR (*syscall_next_pc) (frame_info_ptr frame) = nullptr;
 };
 
 
@@ -126,8 +145,39 @@ extern int riscv_abi_xlen (struct gdbarch *gdbarch);
    with RISCV_ISA_FLEN.  */
 extern int riscv_abi_flen (struct gdbarch *gdbarch);
 
+/* Return true if GDBARCH is using the embedded x-regs abi, that is the
+   target only has 16 x-registers, which includes a reduced number of
+   argument registers.  */
+extern bool riscv_abi_embedded (struct gdbarch *gdbarch);
+
 /* Single step based on where the current instruction will take us.  */
 extern std::vector<CORE_ADDR> riscv_software_single_step
   (struct regcache *regcache);
+
+/* Supply register REGNUM from the buffer REGS (length LEN) into
+   REGCACHE.  REGSET describes the layout of the buffer.  If REGNUM is -1
+   then all registers described by REGSET are supplied.
+
+   The register RISCV_ZERO_REGNUM should not be described by REGSET,
+   however, this register (which always has the value 0) will be supplied
+   by this function if requested.
+
+   The registers RISCV_CSR_FFLAGS_REGNUM and RISCV_CSR_FRM_REGNUM should
+   not be described by REGSET, however, these register will be provided if
+   requested assuming either:
+   (a) REGCACHE already contains the value of RISCV_CSR_FCSR_REGNUM, or
+   (b) REGSET describes the location of RISCV_CSR_FCSR_REGNUM in the REGS
+       buffer.
+
+   This function can be used as the supply function for either x-regs or
+   f-regs when loading corefiles, and doesn't care which abi is currently
+   in use.  */
+
+extern void riscv_supply_regset (const struct regset *regset,
+				  struct regcache *regcache, int regnum,
+				  const void *regs, size_t len);
+
+/* The names of the RISC-V target description features.  */
+extern const char *riscv_feature_name_csr;
 
 #endif /* RISCV_TDEP_H */

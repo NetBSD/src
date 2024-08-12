@@ -1,4 +1,4 @@
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,6 +32,11 @@ if {![Term::prepare_for_tui]} {
     return
 }
 
+if { $gdb_file_cmd_debug_info == "nodebug" } {
+    unsupported "no debug info"
+    return
+}
+
 # This puts us into TUI mode, and should display the ASM window.
 Term::command_no_prompt_prefix "layout asm"
 Term::check_box_contents "check asm box contents" 0 0 80 15 "<_start>"
@@ -43,7 +48,9 @@ set first_line [Term::get_line 1]
 # instruction in the program.
 Term::command "+ 13"
 Term::check_box_contents "check asm box contents again" 0 0 80 15 \
-    "^ *$hex\[^\n\]+\n +\n"
+    [multi_line \
+	 "^ *$hex\[^\r\n\]+" \
+	 "\\s+"]
 
 # Now scroll backward again, we should return to the start of the
 # program.

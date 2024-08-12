@@ -1,6 +1,6 @@
 /* JIT declarations for GDB, the GNU Debugger.
 
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,7 @@
 #ifndef JIT_H
 #define JIT_H
 
+struct inferior;
 struct objfile;
 struct minimal_symbol;
 
@@ -27,12 +28,12 @@ struct minimal_symbol;
    these actions.  These values are used by the inferior, so the
    values of these enums cannot be changed.  */
 
-typedef enum
+enum jit_actions_t
 {
   JIT_NOACTION = 0,
   JIT_REGISTER,
   JIT_UNREGISTER
-} jit_actions_t;
+};
 
 /* This struct describes a single symbol file in a linked list of
    symbol files describing generated code.  As the inferior generates
@@ -94,20 +95,22 @@ struct jiter_objfile_data
 
 struct jited_objfile_data
 {
-  jited_objfile_data (CORE_ADDR addr)
-    : addr (addr)
+  jited_objfile_data (CORE_ADDR addr, CORE_ADDR symfile_addr,
+		      ULONGEST symfile_size)
+    : addr (addr),
+      symfile_addr (symfile_addr),
+      symfile_size (symfile_size)
   {}
 
   /* Address of struct jit_code_entry for this objfile.  */
   CORE_ADDR addr;
+
+  /* Value of jit_code_entry->symfile_addr for this objfile.  */
+  CORE_ADDR symfile_addr;
+
+  /* Value of jit_code_entry->symfile_size for this objfile.  */
+  ULONGEST symfile_size;
 };
-
-/* Looks for the descriptor and registration symbols and breakpoints
-   the registration function.  If it finds both, it registers all the
-   already JITed code.  If it has already found the symbols, then it
-   doesn't try again.  */
-
-extern void jit_inferior_created_hook (void);
 
 /* Re-establish the jit breakpoint(s).  */
 

@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 # this case -flto.
 
 if [skip_cplus_tests] {
-    continue
+    return
 }
 
 load_lib dwarf.exp
@@ -136,15 +136,14 @@ gdb_test_no_output "set language c++"
 
 set psymtabs_p [psymtabs_p]
 
-# Verify that the partial symtab for the unit importing the partial unit does
-# not contain the static partial symbol int, which is defined in the partial
-# unit.  Test-case for PR25646.
+# Verify that the partial symtab for CU "<artificial>" does
+# not contain the static partial symbol int, which is defined in the
+# CU "imported_unit.c".  Test-case for PR25646.
 set test "no static partial symbols in importing unit"
 if { $psymtabs_p } {
     gdb_test "main print psymbols" \
 	[multi_line \
-	     "  Depends on 1 other partial symtabs\." \
-	     "\[^\r\n\]*" \
+	 "  Depends on 0 other partial symtabs\." \
 	     "  Global partial symbols:" \
 	     "    `main', function, $hex" \
 	     "" \

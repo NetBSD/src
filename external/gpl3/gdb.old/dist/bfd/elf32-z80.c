@@ -1,5 +1,5 @@
 /* Zilog (e)Z80-specific support for 32-bit ELF
-   Copyright (C) 1999-2019 Free Software Foundation, Inc.
+   Copyright (C) 1999-2022 Free Software Foundation, Inc.
    (Heavily copied from the S12Z port by Sergey Belyashov (sergey.belyashov@gmail.com))
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -30,7 +30,7 @@
 /* All users of this file have bfd_octets_per_byte (abfd, sec) == 1.  */
 #define OCTETS_PER_BYTE(ABFD, SEC) 1
 
-typedef struct {
+typedef const struct {
   bfd_reloc_code_real_type r_type;
   reloc_howto_type howto;
 } bfd_howto_type;
@@ -50,224 +50,224 @@ bfd_howto_type elf_z80_howto_table[] =
   BFD_HOWTO (BFD_RELOC_NONE,
 	 R_Z80_NONE,		/* type */
 	 0,			/* rightshift */
-	 3,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_NONE",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 8 bit relocation */
   BFD_HOWTO (BFD_RELOC_8,
 	 R_Z80_8,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "r_imm8",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x00,			/* src_mask */
 	 0xff,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 8 bit index register displacement relocation */
   BFD_HOWTO (BFD_RELOC_Z80_DISP8,
 	 R_Z80_8_DIS,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "r_off",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x00,			/* src_mask */
 	 0xff,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 8 bit PC-rel relocation */
   BFD_HOWTO (BFD_RELOC_8_PCREL,
 	 R_Z80_8_PCREL,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "r_jr",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x00,			/* src_mask */
 	 0xff,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* An 16 bit absolute relocation */
   BFD_HOWTO (BFD_RELOC_16,
 	 R_Z80_16,		/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "r_imm16",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x00000000,		/* src_mask */
 	 0x0000ffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 24 bit absolute relocation emitted by ADL mode operands */
   BFD_HOWTO (BFD_RELOC_24,
 	 R_Z80_24,		/* type */
 	 0,			/* rightshift */
-	 5,			/* size (0 = byte, 1 = short, 2 = long) */
+	 3,			/* size */
 	 24,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "r_imm24",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x00000000,		/* src_mask */
 	 0x00ffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   BFD_HOWTO (BFD_RELOC_32,
 	 R_Z80_32,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "r_imm32",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x00000000,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* First (lowest) 8 bits of multibyte relocation */
   BFD_HOWTO (BFD_RELOC_Z80_BYTE0,
 	 R_Z80_BYTE0,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "r_byte0",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xff,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* Second 8 bits of multibyte relocation */
   BFD_HOWTO (BFD_RELOC_Z80_BYTE1,
 	 R_Z80_BYTE1,		/* type */
 	 8,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "r_byte1",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xff,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* Third 8 bits of multibyte relocation */
   BFD_HOWTO (BFD_RELOC_Z80_BYTE2,
 	 R_Z80_BYTE2,		/* type */
 	 16,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "r_byte2",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xff,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* Fourth (highest) 8 bits of multibyte relocation */
   BFD_HOWTO (BFD_RELOC_Z80_BYTE3,
 	 R_Z80_BYTE3,		/* type */
 	 24,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "r_byte3",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xff,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* An 16 bit absolute relocation of lower word of multibyte value */
   BFD_HOWTO (BFD_RELOC_Z80_WORD0,
 	 R_Z80_WORD0,		/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "r_word0",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* An 16 bit absolute relocation of higher word of multibyte value */
   BFD_HOWTO (BFD_RELOC_Z80_WORD1,
 	 R_Z80_WORD1,		/* type */
 	 16,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "r_word1",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* An 16 bit big endian absolute relocation */
   BFD_HOWTO (BFD_RELOC_Z80_16_BE,
 	 R_Z80_16_BE,		/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,	/* complain_on_overflow */
 	 z80_elf_16_be_reloc,	/* special_function */
 	 "r_imm16be",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x00000000,		/* src_mask */
 	 0x0000ffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 };
 
 static reloc_howto_type *
@@ -335,7 +335,7 @@ z80_rtype_to_howto (bfd *abfd, unsigned r_type)
 
 /* Set the howto pointer for an z80 ELF reloc.  */
 
-static bfd_boolean
+static bool
 z80_info_to_howto_rela (bfd *abfd, arelent *cache_ptr, Elf_Internal_Rela *dst)
 {
   unsigned int  r_type = ELF32_R_TYPE (dst->r_info);
@@ -343,10 +343,10 @@ z80_info_to_howto_rela (bfd *abfd, arelent *cache_ptr, Elf_Internal_Rela *dst)
   if (howto != NULL)
     {
       cache_ptr->howto = howto;
-      return TRUE;
+      return true;
     }
   bfd_set_error (bfd_error_bad_value);
-  return FALSE;
+  return false;
 }
 
 static bfd_reloc_status_type
@@ -362,7 +362,7 @@ z80_elf_final_link_relocate (unsigned long r_type,
 			     asection *sym_sec ATTRIBUTE_UNUSED,
 			     int is_local ATTRIBUTE_UNUSED)
 {
-  bfd_boolean r;
+  bool r;
   reloc_howto_type *howto;
 
   switch (r_type)
@@ -383,7 +383,7 @@ z80_elf_final_link_relocate (unsigned long r_type,
   return r ? bfd_reloc_ok : bfd_reloc_notsupported;
 }
 
-static bfd_boolean
+static int
 z80_elf_relocate_section (bfd *output_bfd,
 			  struct bfd_link_info *info,
 			  bfd *input_bfd,
@@ -425,7 +425,7 @@ z80_elf_relocate_section (bfd *output_bfd,
 	}
       else
 	{
-	  bfd_boolean unresolved_reloc, warned, ignored;
+	  bool unresolved_reloc, warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
@@ -455,14 +455,14 @@ z80_elf_relocate_section (bfd *output_bfd,
 				   info, sec, h == NULL);
     }
 
-  return TRUE;
+  return true;
 }
 
 /* The final processing done just before writing out a Z80 ELF object
    file.  This gets the Z80 architecture right based on the machine
    number.  */
 
-static bfd_boolean
+static bool
 z80_elf_final_write_processing (bfd *abfd)
 {
   unsigned long val = bfd_get_mach (abfd);
@@ -504,7 +504,7 @@ z80_elf_final_write_processing (bfd *abfd)
 }
 
 /* Set the right machine number.  */
-static bfd_boolean
+static bool
 z80_elf_object_p (bfd *abfd)
 {
   unsigned int mach;
@@ -550,7 +550,7 @@ z80_elf_object_p (bfd *abfd)
   return bfd_default_set_arch_mach (abfd, bfd_arch_z80, mach);
 }
 
-static int
+static bool
 z80_is_local_label_name (bfd *	abfd ATTRIBUTE_UNUSED,
 			 const char * name)
 {

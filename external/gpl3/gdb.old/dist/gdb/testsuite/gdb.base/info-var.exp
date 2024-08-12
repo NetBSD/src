@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,13 @@ gdb_test "info variables" \
 	 "All defined variables:" \
 	 "" \
 	 "File .*${srcfile}:" \
-	 "18:\[ \t\]+static int f1_var;" \
+	 "19:\\s+int \\* const foo_1\\\[3\\\];" \
+	 "20:\\s+const int \\*foo_2\\\[3\\\];" \
+	 "21:\\s+int \\*foo_3\\\[3\\\];" \
+	 "22:\\s+const int foo_4\\\[3\\\];" \
+	 "23:\\s+const int foo_5\\\[3\\\];" \
+	 "24:\\s+int foo_6\\\[3\\\];" \
+	 "26:\\s+static int f1_var;" \
 	 "" \
 	 "File .*${srcfile2}:" \
 	 "18:\[ \t\]+int global_var;" \
@@ -48,7 +54,13 @@ gdb_test "info variables -n" \
 	 "All defined variables:" \
 	 "" \
 	 "File .*${srcfile}:" \
-	 "18:\[ \t\]+static int f1_var;" \
+	 "19:\\s+int \\* const foo_1\\\[3\\\];" \
+	 "20:\\s+const int \\*foo_2\\\[3\\\];" \
+	 "21:\\s+int \\*foo_3\\\[3\\\];" \
+	 "22:\\s+const int foo_4\\\[3\\\];" \
+	 "23:\\s+const int foo_5\\\[3\\\];" \
+	 "24:\\s+int foo_6\\\[3\\\];" \
+	 "26:\\s+static int f1_var;" \
 	 "" \
 	 "File .*${srcfile2}:" \
 	 "18:\[ \t\]+int global_var;" \

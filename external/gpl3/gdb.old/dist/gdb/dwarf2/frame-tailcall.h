@@ -1,6 +1,6 @@
 /* Definitions for virtual tail call frames unwinder for GDB.
 
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,18 +20,18 @@
 #ifndef DWARF2_FRAME_TAILCALL_H
 #define DWARF2_FRAME_TAILCALL_H 1
 
-struct frame_info;
+class frame_info_ptr;
 struct frame_unwind;
 
 /* The tail call frame unwinder.  */
 
 extern void
-  dwarf2_tailcall_sniffer_first (struct frame_info *this_frame,
+  dwarf2_tailcall_sniffer_first (frame_info_ptr this_frame,
 				 void **tailcall_cachep,
 				 const LONGEST *entry_cfa_sp_offsetp);
 
 extern struct value *
-  dwarf2_tailcall_prev_register_first (struct frame_info *this_frame,
+  dwarf2_tailcall_prev_register_first (frame_info_ptr this_frame,
 				       void **tailcall_cachep, int regnum);
 
 extern const struct frame_unwind dwarf2_tailcall_frame_unwind;

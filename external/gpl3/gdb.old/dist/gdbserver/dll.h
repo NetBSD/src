@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,8 @@
 
 #include <list>
 
+struct process_info;
+
 struct dll_info
 {
   dll_info (const std::string &name_, CORE_ADDR base_addr_)
@@ -30,11 +32,12 @@ struct dll_info
   CORE_ADDR base_addr;
 };
 
-extern std::list<dll_info> all_dlls;
-extern int dlls_changed;
-
 extern void clear_dlls (void);
 extern void loaded_dll (const char *name, CORE_ADDR base_addr);
+extern void loaded_dll (process_info *proc, const char *name,
+			CORE_ADDR base_addr);
 extern void unloaded_dll (const char *name, CORE_ADDR base_addr);
+extern void unloaded_dll (process_info *proc, const char *name,
+			  CORE_ADDR base_addr);
 
 #endif /* GDBSERVER_DLL_H */

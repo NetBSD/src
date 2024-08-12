@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/powerpc.
 
-   Copyright (C) 2004-2020 Free Software Foundation, Inc.
+   Copyright (C) 2004-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -117,7 +117,7 @@ static const int ppcobsd_sigreturn_offset[] = {
 
 static int
 ppcobsd_sigtramp_frame_sniffer (const struct frame_unwind *self,
-				struct frame_info *this_frame,
+				frame_info_ptr this_frame,
 				void **this_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
@@ -137,7 +137,7 @@ ppcobsd_sigtramp_frame_sniffer (const struct frame_unwind *self,
       unsigned long insn;
 
       if (!safe_frame_unwind_memory (this_frame, start_pc + *offset,
-				     buf, sizeof buf))
+				     {buf, sizeof buf}))
 	continue;
 
       /* Check for "li r0,SYS_sigreturn".  */
@@ -158,10 +158,10 @@ ppcobsd_sigtramp_frame_sniffer (const struct frame_unwind *self,
 }
 
 static struct trad_frame_cache *
-ppcobsd_sigtramp_frame_cache (struct frame_info *this_frame, void **this_cache)
+ppcobsd_sigtramp_frame_cache (frame_info_ptr this_frame, void **this_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct trad_frame_cache *cache;
   CORE_ADDR addr, base, func;
@@ -177,7 +177,7 @@ ppcobsd_sigtramp_frame_cache (struct frame_info *this_frame, void **this_cache)
 
   func = get_frame_pc (this_frame);
   func &= ~(ppcobsd_page_size - 1);
-  if (!safe_frame_unwind_memory (this_frame, func, buf, sizeof buf))
+  if (!safe_frame_unwind_memory (this_frame, func, {buf, sizeof buf}))
     return cache;
 
   /* Calculate the offset where we can find `struct sigcontext'.  We
@@ -212,7 +212,7 @@ ppcobsd_sigtramp_frame_cache (struct frame_info *this_frame, void **this_cache)
 }
 
 static void
-ppcobsd_sigtramp_frame_this_id (struct frame_info *this_frame,
+ppcobsd_sigtramp_frame_this_id (frame_info_ptr this_frame,
 				void **this_cache, struct frame_id *this_id)
 {
   struct trad_frame_cache *cache =
@@ -222,7 +222,7 @@ ppcobsd_sigtramp_frame_this_id (struct frame_info *this_frame,
 }
 
 static struct value *
-ppcobsd_sigtramp_frame_prev_register (struct frame_info *this_frame,
+ppcobsd_sigtramp_frame_prev_register (frame_info_ptr this_frame,
 				      void **this_cache, int regnum)
 {
   struct trad_frame_cache *cache =
@@ -232,6 +232,7 @@ ppcobsd_sigtramp_frame_prev_register (struct frame_info *this_frame,
 }
 
 static const struct frame_unwind ppcobsd_sigtramp_frame_unwind = {
+  "ppc openbsd sigtramp",
   SIGTRAMP_FRAME,
   default_frame_unwind_stop_reason,
   ppcobsd_sigtramp_frame_this_id,

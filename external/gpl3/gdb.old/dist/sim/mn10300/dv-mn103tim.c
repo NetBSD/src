@@ -1,6 +1,6 @@
 /*  This file is part of the program GDB, the GNU debugger.
     
-    Copyright (C) 1998-2020 Free Software Foundation, Inc.
+    Copyright (C) 1998-2023 Free Software Foundation, Inc.
     Contributed by Cygnus Solutions.
     
     This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
     */
+
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include "sim-main.h"
 #include "hw-main.h"
@@ -94,12 +97,12 @@ enum timer_register_types {
 #define NR_TIMERS 7
 
 typedef struct _mn10300_timer_regs {
-  unsigned32 base;
-  unsigned8  mode;
+  uint32_t base;
+  uint8_t  mode;
 } mn10300_timer_regs;
 
 typedef struct _mn10300_timer {
-  unsigned32 div_ratio, start;
+  uint32_t div_ratio, start;
   struct hw_event *event;
 } mn10300_timer;
 
@@ -110,8 +113,8 @@ struct mn103tim {
   mn10300_timer timer[NR_TIMERS];
 
   /* treat timer 6 registers specially. */
-  unsigned16   tm6md0, tm6md1, tm6bc, tm6ca, tm6cb; 
-  unsigned8  tm6mda, tm6mdb;  /* compare/capture mode regs for timer 6 */
+  uint16_t   tm6md0, tm6md1, tm6bc, tm6ca, tm6cb; 
+  uint8_t  tm6mda, tm6mdb;  /* compare/capture mode regs for timer 6 */
 };
 
 /* output port ID's */
@@ -284,8 +287,8 @@ read_mode_reg (struct hw *me,
 	       void *dest,
 	       unsigned nr_bytes)
 {
-  unsigned16 val16;
-  unsigned32 val32;
+  uint16_t val16;
+  uint32_t val32;
 
   switch ( nr_bytes )
     {
@@ -293,24 +296,24 @@ read_mode_reg (struct hw *me,
       /* Accessing 1 byte is ok for all mode registers. */
       if ( timer_nr == 6 )
 	{
-	  *(unsigned8*)dest = timers->tm6md0;
+	  *(uint8_t*)dest = timers->tm6md0;
 	}
       else
 	{
-	  *(unsigned8*)dest = timers->reg[timer_nr].mode;
+	  *(uint8_t*)dest = timers->reg[timer_nr].mode;
 	}
       break;
 
     case 2:
       if ( timer_nr == 6 )
 	{
-	  *(unsigned16 *)dest = (timers->tm6md0 << 8) | timers->tm6md1;
+	  *(uint16_t *)dest = (timers->tm6md0 << 8) | timers->tm6md1;
 	}
       else if ( timer_nr == 0 || timer_nr == 2 )
 	{
 	  val16 = (timers->reg[timer_nr].mode << 8)
 	    | timers->reg[timer_nr+1].mode;
-	  *(unsigned16*)dest = val16;
+	  *(uint16_t*)dest = val16;
 	}
       else
 	{
@@ -325,7 +328,7 @@ read_mode_reg (struct hw *me,
 	    | (timers->reg[1].mode << 16)
 	    | (timers->reg[2].mode << 8)
 	    | timers->reg[3].mode;
-	  *(unsigned32*)dest = val32;
+	  *(uint32_t*)dest = val32;
 	}
       else
 	{
@@ -347,8 +350,8 @@ read_base_reg (struct hw *me,
 	       void *dest,
 	       unsigned  nr_bytes)
 {
-  unsigned16 val16;
-  unsigned32 val32;
+  uint16_t val16;
+  uint32_t val32;
 
   /* Check nr_bytes: accesses of 1, 2 and 4 bytes allowed depending on timer. */
   switch ( nr_bytes )
@@ -357,7 +360,7 @@ read_base_reg (struct hw *me,
       /* Reading 1 byte is ok for all registers. */
       if ( timer_nr < NR_8BIT_TIMERS )
 	{
-	  *(unsigned8*)dest = timers->reg[timer_nr].base;
+	  *(uint8_t*)dest = timers->reg[timer_nr].base;
 	}
       break;
 
@@ -377,7 +380,7 @@ read_base_reg (struct hw *me,
 	    {
 	      val16 = timers->reg[timer_nr].base;
 	    }
-	  *(unsigned16*)dest = val16;
+	  *(uint16_t*)dest = val16;
 	}
       break;
 
@@ -386,12 +389,12 @@ read_base_reg (struct hw *me,
 	{
 	  val32 = (timers->reg[0].base << 24) | (timers->reg[1].base << 16)
 	    | (timers->reg[2].base << 8) | timers->reg[3].base;
-	  *(unsigned32*)dest = val32;
+	  *(uint32_t*)dest = val32;
 	}
       else if ( timer_nr == 4 ) 
 	{
 	  val32 = (timers->reg[4].base << 16) | timers->reg[5].base;
-	  *(unsigned32*)dest = val32;
+	  *(uint32_t*)dest = val32;
 	}
       else
 	{
@@ -413,7 +416,7 @@ read_counter (struct hw *me,
 	      void *dest,
 	      unsigned  nr_bytes)
 {
-  unsigned32 val;
+  uint32_t val;
 
   if ( NULL == timers->timer[timer_nr].event )
     {
@@ -446,15 +449,15 @@ read_counter (struct hw *me,
 
   switch (nr_bytes) {
   case 1:
-    *(unsigned8 *)dest = val;
+    *(uint8_t *)dest = val;
     break;
     
   case 2:
-    *(unsigned16 *)dest = val;
+    *(uint16_t *)dest = val;
     break;
 
   case 4:
-    *(unsigned32 *)dest = val;
+    *(uint32_t *)dest = val;
     break;
 
   default:
@@ -471,26 +474,26 @@ read_special_timer6_reg (struct hw *me,
 			 void *dest,
 			 unsigned  nr_bytes)
 {
-  unsigned32 val;
+  uint32_t val;
 
   switch (nr_bytes) {
   case 1:
     {
       switch ( timer_nr ) {
       case TM6MDA:
-	*(unsigned8 *)dest = timers->tm6mda;
+	*(uint8_t *)dest = timers->tm6mda;
 	break;
     
       case TM6MDB:
-	*(unsigned8 *)dest = timers->tm6mdb;
+	*(uint8_t *)dest = timers->tm6mdb;
 	break;
     
       case TM6CA:
-	*(unsigned8 *)dest = timers->tm6ca;
+	*(uint8_t *)dest = timers->tm6ca;
 	break;
     
       case TM6CB:
-	*(unsigned8 *)dest = timers->tm6cb;
+	*(uint8_t *)dest = timers->tm6cb;
 	break;
       
       default:
@@ -502,11 +505,11 @@ read_special_timer6_reg (struct hw *me,
   case 2:
     if ( timer_nr == TM6CA )
       {
-	*(unsigned16 *)dest = timers->tm6ca;
+	*(uint16_t *)dest = timers->tm6ca;
       }
     else if ( timer_nr == TM6CB )
       {
-	*(unsigned16 *)dest = timers->tm6cb;
+	*(uint16_t *)dest = timers->tm6cb;
       }
     else
       {
@@ -567,7 +570,7 @@ do_counter_event (struct hw *me,
 		  void *data)
 {
   struct mn103tim *timers = hw_data(me);
-  long timer_nr = (long) data;
+  long timer_nr = (uintptr_t) data;
   int next_timer;
 
   /* Check if counting is still enabled. */
@@ -593,7 +596,7 @@ do_counter_event (struct hw *me,
       /* FIX: Check if div_ratio has changed and if it's now 0. */
       timers->timer[timer_nr].event
 	= hw_event_queue_schedule (me, timers->timer[timer_nr].div_ratio,
-				   do_counter_event, (void *)timer_nr);
+				   do_counter_event, (void *)(uintptr_t)timer_nr);
     }
   else
     {
@@ -608,7 +611,7 @@ do_counter6_event (struct hw *me,
 		  void *data)
 {
   struct mn103tim *timers = hw_data(me);
-  long timer_nr = (long) data;
+  long timer_nr = (uintptr_t) data;
   int next_timer;
 
   /* Check if counting is still enabled. */
@@ -622,7 +625,7 @@ do_counter6_event (struct hw *me,
       /* FIX: Check if div_ratio has changed and if it's now 0. */
       timers->timer[timer_nr].event
 	= hw_event_queue_schedule (me, timers->timer[timer_nr].div_ratio,
-				   do_counter6_event, (void *)timer_nr);
+				   do_counter6_event, (void *)(uintptr_t)timer_nr);
     }
   else
     {
@@ -639,8 +642,8 @@ write_base_reg (struct hw *me,
 		unsigned  nr_bytes)
 {
   unsigned i;
-  const unsigned8 *buf8 = source;
-  const unsigned16 *buf16 = source;
+  const uint8_t *buf8 = source;
+  const uint16_t *buf16 = source;
 
   /* If TMnCNE == 0 (counting is off),  writing to the base register
      (TMnBR) causes a simultaneous write to the counter reg (TMnBC).
@@ -710,8 +713,8 @@ write_mode_reg (struct hw *me,
      /* for timers 0 to 5 */
 {
   unsigned i;
-  unsigned8 mode_val, next_mode_val;
-  unsigned32 div_ratio;
+  uint8_t mode_val, next_mode_val;
+  uint32_t div_ratio;
 
   if ( nr_bytes != 1 )
     {
@@ -719,7 +722,7 @@ write_mode_reg (struct hw *me,
 		timer_nr);
     }
 
-  mode_val = *(unsigned8 *)source;
+  mode_val = *(uint8_t *)source;
   timers->reg[timer_nr].mode = mode_val;
       
   if ( ( mode_val & count_and_load_mask ) == count_and_load_mask )
@@ -805,7 +808,7 @@ write_mode_reg (struct hw *me,
 	      timers->timer[timer_nr].event
 		= hw_event_queue_schedule(me, div_ratio,
 					  do_counter_event,
-					  (void *)(timer_nr)); 
+					  (void *)(uintptr_t)timer_nr);
 	    }
 	}
     }
@@ -837,8 +840,8 @@ write_tm6md (struct hw *me,
 	     const void *source,
 	     unsigned nr_bytes)
 {
-  unsigned8 mode_val0 = 0x00, mode_val1 = 0x00;
-  unsigned32 div_ratio;
+  uint8_t mode_val0 = 0x00, mode_val1 = 0x00;
+  uint32_t div_ratio;
   long timer_nr = 6;
 
   unsigned_word offset = address - timers->block[0].base;
@@ -851,7 +854,7 @@ write_tm6md (struct hw *me,
   if ( offset == 0x84 )  /* address of TM6MD */
     {
       /*  Fill in first byte of mode */
-      mode_val0 = *(unsigned8 *)source;
+      mode_val0 = *(uint8_t *)source;
       timers->tm6md0 = mode_val0;
     
       if ( ( mode_val0 & 0x26 ) != 0 )
@@ -865,11 +868,11 @@ write_tm6md (struct hw *me,
       /*  Fill in second byte of mode */
       if ( nr_bytes == 2 )
 	{
-	  mode_val1 = *(unsigned8 *)source+1;
+	  mode_val1 = *(uint8_t *)source+1;
 	}
       else
 	{
-	  mode_val1 = *(unsigned8 *)source;
+	  mode_val1 = *(uint8_t *)source;
 	}
 
       timers->tm6md1 = mode_val1;
@@ -905,7 +908,7 @@ write_tm6md (struct hw *me,
 	  timers->timer[timer_nr].event
 	    = hw_event_queue_schedule(me, div_ratio,
 				      do_counter6_event,
-				      (void *)(timer_nr)); 
+				      (void *)(uintptr_t)timer_nr);
 	}
     }
   else
@@ -928,26 +931,26 @@ write_special_timer6_reg (struct hw *me,
 			  const void *source,
 			  unsigned  nr_bytes)
 {
-  unsigned32 val;
+  uint32_t val;
 
   switch (nr_bytes) {
   case 1:
     {
       switch ( timer_nr ) {
       case TM6MDA:
-	timers->tm6mda = *(unsigned8 *)source;
+	timers->tm6mda = *(uint8_t *)source;
 	break;
     
       case TM6MDB:
-	timers->tm6mdb = *(unsigned8 *)source;
+	timers->tm6mdb = *(uint8_t *)source;
 	break;
     
       case TM6CA:
-	timers->tm6ca = *(unsigned8 *)source;
+	timers->tm6ca = *(uint8_t *)source;
 	break;
     
       case TM6CB:
-	timers->tm6cb = *(unsigned8 *)source;
+	timers->tm6cb = *(uint8_t *)source;
 	break;
       
       default:
@@ -959,11 +962,11 @@ write_special_timer6_reg (struct hw *me,
   case 2:
     if ( timer_nr == TM6CA )
       {
-	timers->tm6ca = *(unsigned16 *)source;
+	timers->tm6ca = *(uint16_t *)source;
       }
     else if ( timer_nr == TM6CB )
       {
-	timers->tm6cb = *(unsigned16 *)source;
+	timers->tm6cb = *(uint16_t *)source;
       }
     else
       {
@@ -989,7 +992,7 @@ mn103tim_io_write_buffer (struct hw *me,
   enum timer_register_types timer_reg;
 
   HW_TRACE ((me, "write to 0x%08lx length %d with 0x%x", (long) base,
-	     (int) nr_bytes, *(unsigned32 *)source));
+	     (int) nr_bytes, *(uint32_t *)source));
 
   timer_reg = decode_addr (me, timers, base);
 

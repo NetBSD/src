@@ -1,12 +1,12 @@
-/* Copyright (C) 1991-1999, 2004-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2022 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
-   (at your option) any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published
+   by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
@@ -17,6 +17,12 @@
 #if !_LIBC
 # include <config.h>
 # include <unistd.h>
+# include "pathmax.h"
+#else
+# define HAVE_OPENAT 1
+# define D_INO_IN_DIRENT 1
+# define HAVE_MSVC_INVALID_PARAMETER_HANDLER 0
+# define HAVE_MINIMALLY_WORKING_GETCWD 0
 #endif
 
 #include <errno.h>
@@ -65,8 +71,6 @@
 # define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
-#include "pathmax.h"
-
 /* In this file, PATH_MAX only serves as a threshold for choosing among two
    algorithms.  */
 #ifndef PATH_MAX
@@ -84,11 +88,24 @@
 #endif
 
 #if !_LIBC
-# define __getcwd rpl_getcwd
-# define __lstat lstat
+# define GETCWD_RETURN_TYPE char *
+# define __close_nocancel_nostatus close
+# define __getcwd_generic rpl_getcwd
+# undef stat64
+# define stat64    stat
+# define __fstat64 fstat
+# define __fstatat64 fstatat
+# define __lstat64 lstat
 # define __closedir closedir
 # define __opendir opendir
-# define __readdir readdir
+# define __readdir64 readdir
+# define __fdopendir fdopendir
+# define __openat openat
+# define __rewinddir rewinddir
+# define __openat64 openat
+# define dirent64 dirent
+#else
+# include <not-cancel.h>
 #endif
 
 /* The results of opendir() in this file are not used with dirfd and fchdir,
@@ -104,7 +121,7 @@
 # undef closedir
 #endif
 
-#ifdef _MSC_VER
+#if defined _WIN32 && !defined __CYGWIN__
 # if HAVE_MSVC_INVALID_PARAMETER_HANDLER
 static char *
 getcwd_nothrow (char *buf, size_t size)
@@ -138,8 +155,8 @@ getcwd_nothrow (char *buf, size_t size)
    if BUF is NULL, an array is allocated with 'malloc'; the array is SIZE
    bytes long, unless SIZE == 0, in which case it is as big as necessary.  */
 
-char *
-__getcwd (char *buf, size_t size)
+GETCWD_RETURN_TYPE
+__getcwd_generic (char *buf, size_t size)
 {
   /* Lengths of big file name components and entire file names, and a
      deep level of file name nesting.  These numbers are not upper
@@ -167,7 +184,7 @@ __getcwd (char *buf, size_t size)
   ino_t rootino, thisino;
   char *dir;
   register char *dirp;
-  struct stat st;
+  struct stat64 st;
   size_t allocated = size;
   size_t used;
 
@@ -210,7 +227,6 @@ __getcwd (char *buf, size_t size)
     return NULL;
 # endif
 #endif
-
   if (size == 0)
     {
       if (buf != NULL)
@@ -234,19 +250,19 @@ __getcwd (char *buf, size_t size)
   dirp = dir + allocated;
   *--dirp = '\0';
 
-  if (__lstat (".", &st) < 0)
+  if (__lstat64 (".", &st) < 0)
     goto lose;
   thisdev = st.st_dev;
   thisino = st.st_ino;
 
-  if (__lstat ("/", &st) < 0)
+  if (__lstat64 ("/", &st) < 0)
     goto lose;
   rootdev = st.st_dev;
   rootino = st.st_ino;
 
   while (!(thisdev == rootdev && thisino == rootino))
     {
-      struct dirent *d;
+      struct dirent64 *d;
       dev_t dotdev;
       ino_t dotino;
       bool mount_point;
@@ -257,16 +273,16 @@ __getcwd (char *buf, size_t size)
 
       /* Look at the parent directory.  */
 #if HAVE_OPENAT_SUPPORT
-      fd = openat (fd, "..", O_RDONLY);
+      fd = __openat64 (fd, "..", O_RDONLY);
       if (fd < 0)
         goto lose;
       fd_needs_closing = true;
-      parent_status = fstat (fd, &st);
+      parent_status = __fstat64 (fd, &st);
 #else
       dotlist[dotlen++] = '.';
       dotlist[dotlen++] = '.';
       dotlist[dotlen] = '\0';
-      parent_status = __lstat (dotlist, &st);
+      parent_status = __lstat64 (dotlist, &st);
 #endif
       if (parent_status != 0)
         goto lose;
@@ -284,7 +300,7 @@ __getcwd (char *buf, size_t size)
 
       /* Search for the last directory.  */
 #if HAVE_OPENAT_SUPPORT
-      dirstream = fdopendir (fd);
+      dirstream = __fdopendir (fd);
       if (dirstream == NULL)
         goto lose;
       fd_needs_closing = false;
@@ -299,7 +315,7 @@ __getcwd (char *buf, size_t size)
           /* Clear errno to distinguish EOF from error if readdir returns
              NULL.  */
           __set_errno (0);
-          d = __readdir (dirstream);
+          d = __readdir64 (dirstream);
 
           /* When we've iterated through all directory entries without finding
              one with a matching d_ino, rewind the stream and consider each
@@ -311,8 +327,8 @@ __getcwd (char *buf, size_t size)
           if (d == NULL && errno == 0 && use_d_ino)
             {
               use_d_ino = false;
-              rewinddir (dirstream);
-              d = __readdir (dirstream);
+              __rewinddir (dirstream);
+              d = __readdir64 (dirstream);
             }
 
           if (d == NULL)
@@ -338,7 +354,7 @@ __getcwd (char *buf, size_t size)
           {
             int entry_status;
 #if HAVE_OPENAT_SUPPORT
-            entry_status = fstatat (fd, d->d_name, &st, AT_SYMLINK_NOFOLLOW);
+            entry_status = __fstatat64 (fd, d->d_name, &st, AT_SYMLINK_NOFOLLOW);
 #else
             /* Compute size needed for this file name, or for the file
                name ".." in the same directory, whichever is larger.
@@ -375,7 +391,7 @@ __getcwd (char *buf, size_t size)
               }
 
             memcpy (dotlist + dotlen, d->d_name, _D_ALLOC_NAMLEN (d));
-            entry_status = __lstat (dotlist, &st);
+            entry_status = __lstat64 (dotlist, &st);
 #endif
             /* We don't fail here if we cannot stat() a directory entry.
                This can happen when (network) file systems fail.  If this
@@ -461,7 +477,7 @@ __getcwd (char *buf, size_t size)
       __closedir (dirstream);
 #if HAVE_OPENAT_SUPPORT
     if (fd_needs_closing)
-      close (fd);
+       __close_nocancel_nostatus (fd);
 #else
     if (dotlist != dots)
       free (dotlist);
@@ -473,6 +489,7 @@ __getcwd (char *buf, size_t size)
   return NULL;
 }
 
-#ifdef weak_alias
+#if defined _LIBC && !defined GETCWD_RETURN_TYPE
+libc_hidden_def (__getcwd)
 weak_alias (__getcwd, getcwd)
 #endif

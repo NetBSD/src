@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ load_lib "fortran.exp"
 
 standard_testfile ".f90"
 
-if {[prepare_for_testing ${testfile}.exp ${testfile} \
+if {[build_executable ${testfile}.exp ${testfile} \
 	 ${srcfile} {debug f90}]} {
     return -1
 }
@@ -50,6 +50,32 @@ proc do_bp_tests {with_src_prefix_p with_nest_prefix_p} {
 	set nest_prefix ""
     }
 
+    # Normally, info symbol prints the symbol table name for any fortran
+    # symbols (since symbol lookup happens via the minimal symbol
+    # table).  This would correspond to the linkage name in the full symbol
+    # table.
+    # For gfortran (and maybe others) these names currently have the form
+    # XXXX.NUMBER where XXXX is the symbol name and NUMBER a compiler generated
+    # appendix for mangling.  This mangled name gets recognized by the Ada
+    # demangler/decoder and decoded as Ada (setting the symbol language to Ada)
+    # to XXXX.  This leads to the somewhat unexpected output of XXXX over
+    # XXXX.NUMBER for info symbol.
+    # For ifort and ifx the generated linkage names have the form
+    # SCOPEA_SCOPEB_XXXX_ which is not recognized by the Ada demangler and thus
+    # printed as is.
+    # Note that there is no Fortran mangling standard.  We keep the
+    # gfortran behavior as is and extend the test to reflect ifx and ifort
+    # mangling.
+    proc get_linkage_name_pattern {symbol_name} {
+
+	if { [test_compiler_info {ifort-*} f90]
+	     || [test_compiler_info {ifx-*} f90] } {
+	    return "\(?:.*_\)?${symbol_name}_?"
+	} else {
+	    return ${symbol_name}
+	}
+    }
+
     # Test setting up breakpoints and otherwise examining nested
     # functions before the program starts.
     with_test_prefix "before start" {
@@ -68,7 +94,7 @@ proc do_bp_tests {with_src_prefix_p with_nest_prefix_p} {
 		     # is a failure, just a limitation in current GDB.
 		     if { ${with_nest_prefix_p} } {
 			 gdb_test "info symbol ${nest_prefix}${function}" \
-			     "${function} in section .*"
+			     "[get_linkage_name_pattern ${function}] in section .*"
 			 gdb_test "whatis ${nest_prefix}${function}" \
 			     "type = ${type}"
 			 gdb_test "ptype ${nest_prefix}${function}" \
@@ -82,9 +108,8 @@ proc do_bp_tests {with_src_prefix_p with_nest_prefix_p} {
     }
 
     # Break on a contained function and run to it.
-    if {![runto ${src_prefix}[gdb_get_line_number "pre_init"]]} then {
-	perror "couldn't run to breakpoint pre_init"
-	continue
+    if {![runto ${src_prefix}[gdb_get_line_number "pre_init"]]} {
+	return
     }
 
     # Call a contained function.
@@ -134,7 +159,7 @@ proc do_bp_tests {with_src_prefix_p with_nest_prefix_p} {
 		 set type [lindex $entry 1]
 		 with_test_prefix $function {
 		     gdb_test "info symbol ${nest_prefix}$function" \
-			 "$function in section .*"
+			 "[get_linkage_name_pattern $function] in section .*"
 		     gdb_test "whatis ${nest_prefix}$function" \
 			 "type = ${type}"
 		     gdb_test "ptype ${nest_prefix}$function" \

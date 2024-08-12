@@ -1,5 +1,5 @@
 /* SPARC-specific support for 32-bit ELF
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -30,13 +30,13 @@
 
 /* Support for core dump NOTE sections.  */
 
-static bfd_boolean
+static bool
 elf32_sparc_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 {
   switch (note->descsz)
     {
     default:
-      return FALSE;
+      return false;
 
     case 260:			/* Solaris prpsinfo_t.  */
       elf_tdata (abfd)->core->program
@@ -53,7 +53,7 @@ elf32_sparc_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
       break;
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Functions for dealing with the e_flags field.
@@ -66,25 +66,25 @@ elf32_sparc_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 /* Merge backend specific data from an object file to the output
    object file when linking.  */
 
-static bfd_boolean
+static bool
 elf32_sparc_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
   bfd *obfd = info->output_bfd;
-  bfd_boolean error;
+  bool error;
   unsigned long ibfd_mach;
   /* FIXME: This should not be static.  */
   static unsigned long previous_ibfd_e_flags = (unsigned long) -1;
 
   if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
       || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
-    return TRUE;
+    return true;
 
-  error = FALSE;
+  error = false;
 
   ibfd_mach = bfd_get_mach (ibfd);
   if (bfd_mach_sparc_64bit_p (ibfd_mach))
     {
-      error = TRUE;
+      error = true;
       _bfd_error_handler
 	(_("%pB: compiled for a 64 bit system and target is 32 bit"), ibfd);
     }
@@ -100,14 +100,14 @@ elf32_sparc_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
     {
       _bfd_error_handler
 	(_("%pB: linking little endian files with big endian files"), ibfd);
-      error = TRUE;
+      error = true;
     }
   previous_ibfd_e_flags = elf_elfheader (ibfd)->e_flags & EF_SPARC_LEDATA;
 
   if (error)
     {
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
 
   return _bfd_sparc_elf_merge_private_bfd_data (ibfd, info);
@@ -160,7 +160,7 @@ sparc_final_write_processing (bfd *abfd)
     }
 }
 
-static bfd_boolean
+static bool
 elf32_sparc_final_write_processing (bfd *abfd)
 {
   sparc_final_write_processing (abfd);
@@ -271,7 +271,7 @@ elf32_sparc_reloc_type_class (const struct bfd_link_info *info,
 #define elf_backend_want_dynrelro 1
 #define elf_backend_rela_normal 1
 
-#define elf_backend_linux_prpsinfo32_ugid16	TRUE
+#define elf_backend_linux_prpsinfo32_ugid16	true
 
 #include "elf32-target.h"
 
@@ -293,7 +293,7 @@ elf32_sparc_reloc_type_class (const struct bfd_link_info *info,
 #undef	elf_backend_strtab_flags
 #define elf_backend_strtab_flags	SHF_STRINGS
 
-static bfd_boolean
+static bool
 elf32_sparc_copy_solaris_special_section_fields (const bfd *ibfd ATTRIBUTE_UNUSED,
 						 bfd *obfd ATTRIBUTE_UNUSED,
 						 const Elf_Internal_Shdr *isection ATTRIBUTE_UNUSED,
@@ -301,7 +301,7 @@ elf32_sparc_copy_solaris_special_section_fields (const bfd *ibfd ATTRIBUTE_UNUSE
 {
   /* PR 19938: FIXME: Need to add code for setting the sh_info
      and sh_link fields of Solaris specific section types.  */
-  return FALSE;
+  return false;
 }
 
 #undef  elf_backend_copy_special_section_fields
@@ -312,7 +312,7 @@ elf32_sparc_copy_solaris_special_section_fields (const bfd *ibfd ATTRIBUTE_UNUSE
 /* A final_write_processing hook that does both the SPARC- and VxWorks-
    specific handling.  */
 
-static bfd_boolean
+static bool
 elf32_sparc_vxworks_final_write_processing (bfd *abfd)
 {
   sparc_final_write_processing (abfd);

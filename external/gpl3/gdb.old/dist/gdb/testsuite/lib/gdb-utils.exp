@@ -1,4 +1,4 @@
-# Copyright 2014-2020 Free Software Foundation, Inc.
+# Copyright 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,6 +38,18 @@ proc string_to_regexp {str} {
     return $result
 }
 
+# Given a list of strings, adds backslashes as needed to each string to
+# create a regexp that will match the string, and join the result.
+
+proc string_list_to_regexp { args } {
+    set result ""
+    foreach arg $args {
+	set arg [string_to_regexp $arg]
+       append result $arg
+    }
+    return $result
+}
+
 # Wrap STR in an ANSI terminal escape sequences -- one to set the
 # style to STYLE, and one to reset the style to the default.  The
 # return value is suitable for use as a regular expression.
@@ -55,6 +67,36 @@ proc style {str style} {
 	variable { set style 36 }
 	address { set style 34 }
 	metadata { set style 2 }
+	version { set style "35;1" }
+	none { return $str }
     }
     return "\033\\\[${style}m${str}\033\\\[m"
+}
+
+# gdb_get_bp_addr num
+#
+# Purpose:
+#    Get address of a particular breakpoint.
+#
+# Parameter:
+#    The parameter "num" indicates the number of the breakpoint to get.
+#    Note that *currently* this parameter must be an integer value.
+#    E.g., -1 means that we're gonna get the first internal breakpoint;
+#    2 means to get the second user-defined breakpoint.
+#
+# Return:
+#    First address for a particular breakpoint.
+#
+# TODO:
+#    It would be nice if this procedure could accept floating point value.
+#    E.g., 'gdb_get_bp_addr 1.2' means to get the address of the second
+#    location of breakpoint #1.
+#
+proc gdb_get_bp_addr { num } {
+    gdb_test_multiple "maint info break $num" "find address of specified bp $num" {
+	-re -wrap ".*(0x\[0-9a-f\]+).*" {
+	    return $expect_out(1,string)
+	}
+    }
+    return ""
 }

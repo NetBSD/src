@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,13 +15,17 @@
 
 standard_testfile .c
 
-if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
+set test_sso [expr \
+		  [supports_scalar_storage_order_attribute] \
+		  && [supports_gnuc]]
+
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
+	  [list debug additional_flags=-DTEST_SSO=$test_sso]] } {
   return -1
 }
 
 set bp_location [gdb_get_line_number "START"]
-if ![runto "endianity.c:$bp_location" ] then {
-  fail "couldn't run to start"
+if {![runto "endianity.c:$bp_location"]} {
   return -1
 }
 
@@ -34,12 +38,15 @@ gdb_test "print o.x = 2" "= 2"
 gdb_test "print o.f = 1.5" "= 1.5"
 gdb_test "print o.d = -23.125" "= -23.125"
 
-# scalar_storage_order requires gcc >= 6
-if { ([test_compiler_info {gcc-[0-5]-*}] || ![test_compiler_info gcc*]) } {
-  setup_xfail "*-*-*"
-}
-gdb_test "x/x &o.v" "0x04000000"
-gdb_test "x/xh &o.w" "0x0300"
-
 gdb_test "print o" "= {v = 4, w = 3, x = 2, f = 1.5, cplx = 1.25 \\+ 7.25i, d = -23.125}" \
     "print o after assignment"
+
+if { !$test_sso } {
+    # The rest of the testcase requires Scalar Storage Order support.
+    # This compiler does not support it, so skip the rest.
+    unsupported "No scalar storage order support"
+    return -1
+}
+
+gdb_test "x/x &o.v" "0x04000000"
+gdb_test "x/xh &o.w" "0x0300"

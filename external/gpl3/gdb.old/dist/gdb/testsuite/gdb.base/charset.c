@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2001-2020 Free Software Foundation, Inc.
+   Copyright 2001-2023 Free Software Foundation, Inc.
 
    Contributed by Red Hat, originally written by Jim Blandy.
 
@@ -49,17 +49,22 @@ char iso_8859_1_string[NUM_CHARS];
 char ebcdic_us_string[NUM_CHARS];
 char ibm1047_string[NUM_CHARS];
 
+#ifndef __cplusplus
+
 /* We make a phony wchar_t and then pretend that this platform uses
    UTF-32 (or UTF-16, depending on the size -- same difference for the
    purposes of this test).  */
 typedef unsigned int wchar_t;
-wchar_t utf_32_string[NUM_CHARS];
 
 /* We also define a couple phony types for testing the u'' and U''
    support.  It is ok if these have the wrong size on some platforms
    -- the test case will skip the tests in that case.  */
 typedef unsigned short char16_t;
 typedef unsigned int char32_t;
+
+#endif
+
+wchar_t utf_32_string[NUM_CHARS];
 
 /* Make sure to use the typedefs.  */
 char16_t uvar;
@@ -178,7 +183,7 @@ int main ()
                47, 22, 12,
                37, 13, 5,
                11, 74, 17);
-  /* In EBCDIC, the upper-case letters are broken into three separate runs.  */
+  /* In IBM1047, the upper-case letters are broken into three separate runs.  */
   fill_run (ibm1047_string, 7, 9, 193);
   fill_run (ibm1047_string, 16, 9, 209);
   fill_run (ibm1047_string, 25, 8, 226);

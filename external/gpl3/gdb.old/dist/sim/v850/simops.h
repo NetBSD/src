@@ -79,8 +79,8 @@ int OP_307E0 (void);
 int v850_float_compare(SIM_DESC sd, int cmp, sim_fpu wop1, sim_fpu wop2, int double_op_p);
 
 /* MEMORY ACCESS */
-unsigned32 load_data_mem(SIM_DESC sd, SIM_ADDR addr, int len);
-void store_data_mem(SIM_DESC sd, SIM_ADDR addr, int len, unsigned32 data);
+uint32_t load_data_mem(SIM_DESC sd, SIM_ADDR addr, int len);
+void store_data_mem(SIM_DESC sd, SIM_ADDR addr, int len, uint32_t data);
 
 unsigned long Add32 (unsigned long a1, unsigned long a2, int * carry);
 

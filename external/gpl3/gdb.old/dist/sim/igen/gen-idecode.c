@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -38,7 +38,7 @@
 
 
 static void
-lf_print_opcodes (lf *file, gen_entry *table)
+lf_print_opcodes (lf *file, const gen_entry *table)
 {
   if (table !=NULL)
     {
@@ -80,7 +80,7 @@ print_idecode_ifetch (lf *file,
 
 
 static void
-lf_print_table_name (lf *file, gen_entry *table)
+lf_print_table_name (lf *file, const gen_entry *table)
 {
   lf_printf (file, "idecode_table");
   lf_print_opcodes (file, table);
@@ -89,7 +89,7 @@ lf_print_table_name (lf *file, gen_entry *table)
 
 
 static void
-print_idecode_table (lf *file, gen_entry *entry, const char *result)
+print_idecode_table (lf *file, const gen_entry *entry, const char *result)
 {
   lf_printf (file, "/* prime the search */\n");
   lf_printf (file, "idecode_table_entry *table = ");
@@ -154,7 +154,8 @@ print_idecode_table (lf *file, gen_entry *entry, const char *result)
 
 
 static void
-print_idecode_table_start (lf *file, gen_entry *table, int depth, void *data)
+print_idecode_table_start (lf *file,
+			   const gen_entry *table, int depth, void *data)
 {
   ASSERT (depth == 0);
   /* start of the table */
@@ -168,9 +169,10 @@ print_idecode_table_start (lf *file, gen_entry *table, int depth, void *data)
 }
 
 static void
-print_idecode_table_leaf (lf *file, gen_entry *entry, int depth, void *data)
+print_idecode_table_leaf (lf *file,
+			  const gen_entry *entry, int depth, void *data)
 {
-  gen_entry *master_entry;
+  const gen_entry *master_entry;
   ASSERT (entry->parent != NULL);
   ASSERT (depth == 0);
   if (entry->combined_parent == NULL)
@@ -241,7 +243,8 @@ print_idecode_table_leaf (lf *file, gen_entry *entry, int depth, void *data)
 }
 
 static void
-print_idecode_table_end (lf *file, gen_entry *table, int depth, void *data)
+print_idecode_table_end (lf *file,
+			 const gen_entry *table, int depth, void *data)
 {
   ASSERT (depth == 0);
   if (table->opcode_rule->gen == array_gen)
@@ -254,7 +257,7 @@ print_idecode_table_end (lf *file, gen_entry *table, int depth, void *data)
 
 
 static void
-print_goto_switch_name (lf *file, gen_entry *entry)
+print_goto_switch_name (lf *file, const gen_entry *entry)
 {
   lf_printf (file, "case_");
   if (entry->opcode == NULL)
@@ -276,7 +279,7 @@ print_goto_switch_name (lf *file, gen_entry *entry)
 
 static void
 print_goto_switch_table_leaf (lf *file,
-			      gen_entry *entry, int depth, void *data)
+			      const gen_entry *entry, int depth, void *data)
 {
   ASSERT (entry->parent != NULL);
   ASSERT (depth == 0);
@@ -292,7 +295,7 @@ print_goto_switch_table_leaf (lf *file,
 }
 
 static void
-print_goto_switch_break (lf *file, gen_entry *entry)
+print_goto_switch_break (lf *file, const gen_entry *entry)
 {
   lf_printf (file, "goto break_");
   lf_print_table_name (file, entry->parent);
@@ -301,7 +304,7 @@ print_goto_switch_break (lf *file, gen_entry *entry)
 
 
 static void
-print_goto_switch_table (lf *file, gen_entry *table)
+print_goto_switch_table (lf *file, const gen_entry *table)
 {
   lf_printf (file, "const static void *");
   lf_print_table_name (file, table);
@@ -315,10 +318,12 @@ print_goto_switch_table (lf *file, gen_entry *table)
 }
 
 
-void print_idecode_switch (lf *file, gen_entry *table, const char *result);
+void print_idecode_switch
+  (lf *file, const gen_entry *table, const char *result);
 
 static void
-print_idecode_switch_start (lf *file, gen_entry *table, int depth, void *data)
+print_idecode_switch_start (lf *file,
+			    const gen_entry *table, int depth, void *data)
 {
   /* const char *result = data; */
   ASSERT (depth == 0);
@@ -373,7 +378,8 @@ print_idecode_switch_start (lf *file, gen_entry *table, int depth, void *data)
 
 
 static void
-print_idecode_switch_leaf (lf *file, gen_entry *entry, int depth, void *data)
+print_idecode_switch_leaf (lf *file,
+			   const gen_entry *entry, int depth, void *data)
 {
   const char *result = data;
   ASSERT (entry->parent != NULL);
@@ -401,7 +407,7 @@ print_idecode_switch_leaf (lf *file, gen_entry *entry, int depth, void *data)
 	   || entry->parent->opcode_rule->gen == padded_switch_gen)
     {
       /* case: <opcode-nr> - switch */
-      gen_entry *cob;
+      const gen_entry *cob;
       for (cob = entry; cob != NULL; cob = cob->combined_next)
 	lf_printf (file, "case %d:\n", cob->opcode_nr);
     }
@@ -505,7 +511,8 @@ print_idecode_switch_illegal (lf *file, const char *result)
 }
 
 static void
-print_idecode_switch_end (lf *file, gen_entry *table, int depth, void *data)
+print_idecode_switch_end (lf *file,
+			  const gen_entry *table, int depth, void *data)
 {
   const char *result = data;
   ASSERT (depth == 0);
@@ -565,7 +572,7 @@ print_idecode_switch_end (lf *file, gen_entry *table, int depth, void *data)
 
 
 void
-print_idecode_switch (lf *file, gen_entry *table, const char *result)
+print_idecode_switch (lf *file, const gen_entry *table, const char *result)
 {
   gen_entry_traverse_tree (file, table,
 			   0,
@@ -577,7 +584,7 @@ print_idecode_switch (lf *file, gen_entry *table, const char *result)
 
 static void
 print_idecode_switch_function_header (lf *file,
-				      gen_entry *table,
+				      const gen_entry *table,
 				      int is_function_definition,
 				      int nr_prefetched_words)
 {
@@ -622,7 +629,8 @@ print_idecode_switch_function_header (lf *file,
 
 
 static void
-idecode_declare_if_switch (lf *file, gen_entry *table, int depth, void *data)
+idecode_declare_if_switch (lf *file,
+			   const gen_entry *table, int depth, void *data)
 {
   if ((table->opcode_rule->gen == switch_gen || table->opcode_rule->gen == goto_switch_gen || table->opcode_rule->gen == padded_switch_gen) &&table->parent != NULL	/* don't declare the top one yet */
       && table->parent->opcode_rule->gen == array_gen)
@@ -636,7 +644,8 @@ idecode_declare_if_switch (lf *file, gen_entry *table, int depth, void *data)
 
 
 static void
-idecode_expand_if_switch (lf *file, gen_entry *table, int depth, void *data)
+idecode_expand_if_switch (lf *file,
+			  const gen_entry *table, int depth, void *data)
 {
   if ((table->opcode_rule->gen == switch_gen || table->opcode_rule->gen == goto_switch_gen || table->opcode_rule->gen == padded_switch_gen) &&table->parent != NULL	/* don't expand the top one yet */
       && table->parent->opcode_rule->gen == array_gen)
@@ -664,7 +673,9 @@ idecode_expand_if_switch (lf *file, gen_entry *table, int depth, void *data)
 
 
 void
-print_idecode_lookups (lf *file, gen_entry *table, cache_entry *cache_rules)
+print_idecode_lookups (lf *file,
+		       const gen_entry *table,
+		       cache_entry *cache_rules)
 {
   int depth;
 
@@ -689,7 +700,7 @@ print_idecode_lookups (lf *file, gen_entry *table, cache_entry *cache_rules)
 
 
 void
-print_idecode_body (lf *file, gen_entry *table, const char *result)
+print_idecode_body (lf *file, const gen_entry *table, const char *result)
 {
   if (table->opcode_rule->gen == switch_gen
       || table->opcode_rule->gen == goto_switch_gen
@@ -713,7 +724,8 @@ print_idecode_body (lf *file, gen_entry *table, const char *result)
 
 void
 print_idecode_validate (lf *file,
-			insn_entry * instruction, insn_opcodes *opcode_paths)
+			const insn_entry *instruction,
+			const insn_opcodes *opcode_paths)
 {
   /* Validate: unchecked instruction fields
 
@@ -764,7 +776,7 @@ print_idecode_validate (lf *file,
 	       relevant bit */
 	    if (opcode_paths != NULL)
 	      {
-		insn_opcodes *entry;
+		const insn_opcodes *entry;
 		for (entry = opcode_paths; entry != NULL; entry = entry->next)
 		  {
 		    opcode_field *opcode;
@@ -984,8 +996,8 @@ print_idecode_globals (lf *file)
   lf_printf (file, "\n");
   lf_printf (file, "typedef struct _idecode_table_entry {\n");
   lf_printf (file, "  int shift;\n");
-  lf_printf (file, "  unsigned%d mask;\n", options.insn_bit_size);
-  lf_printf (file, "  unsigned%d value;\n", options.insn_bit_size);
+  lf_printf (file, "  uint%d_t mask;\n", options.insn_bit_size);
+  lf_printf (file, "  uint%d_t value;\n", options.insn_bit_size);
   lf_printf (file, "  void *function_or_table;\n");
   lf_printf (file, "} idecode_table_entry;\n");
 }

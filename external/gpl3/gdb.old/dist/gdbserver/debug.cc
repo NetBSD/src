@@ -1,5 +1,5 @@
 /* Debugging routines for the remote server for GDB.
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,14 +20,14 @@
 #include <chrono>
 
 #if !defined (IN_PROCESS_AGENT)
-int remote_debug = 0;
+bool remote_debug = false;
 #endif
 
 /* Output file for debugging.  Default to standard error.  */
-FILE *debug_file = stderr;
+static FILE *debug_file = stderr;
 
 /* See debug.h.  */
-int debug_threads;
+bool debug_threads;
 
 /* Include timestamps in debugging output.  */
 int debug_timestamp;
@@ -63,6 +63,10 @@ debug_set_output (const char *new_debug_file)
 }
 
 #endif
+
+/* See gdbsupport/common-debug.h.  */
+
+int debug_print_depth = 0;
 
 /* Print a debugging message.
    If the text begins a new line it is preceded by a timestamp.
@@ -104,30 +108,6 @@ void
 debug_flush (void)
 {
   fflush (debug_file);
-}
-
-/* Notify the user that the code is entering FUNCTION_NAME.
-   FUNCTION_NAME is the name of the calling function, or NULL if unknown.
-
-   This is intended to be called via the debug_enter macro.  */
-
-void
-do_debug_enter (const char *function_name)
-{
-  if (function_name != NULL)
-    debug_printf (">>>> entering %s\n", function_name);
-}
-
-/* Notify the user that the code is exiting FUNCTION_NAME.
-   FUNCTION_NAME is the name of the calling function, or NULL if unknown.
-
-   This is intended to be called via the debug_exit macro.  */
-
-void
-do_debug_exit (const char *function_name)
-{
-  if (function_name != NULL)
-    debug_printf ("<<<< exiting %s\n", function_name);
 }
 
 /* See debug.h.  */

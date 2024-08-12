@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2014-2020 Free Software Foundation, Inc.
+# Copyright 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,10 +32,13 @@ proc test {non_stop displaced always_inserted} {
     global binfile
     global linenum_for_user_bp
     global linenum_for_step_resume
+    global GDBFLAGS
 
-    clean_restart $binfile
+    save_vars { GDBFLAGS } {
+	set GDBFLAGS "$GDBFLAGS -ex \"set non-stop $non_stop\""
+	clean_restart $binfile
+    }
 
-    gdb_test_no_output "set non-stop $non_stop"
     gdb_test_no_output "set displaced-stepping $displaced"
     gdb_test_no_output "set breakpoint always-inserted $always_inserted"
 

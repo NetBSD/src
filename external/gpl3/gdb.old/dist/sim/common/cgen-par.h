@@ -1,5 +1,5 @@
 /* Simulator header for cgen parallel support.
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2023 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
 This file is part of the GNU instruction set simulator.
@@ -38,7 +38,7 @@ enum cgen_write_queue_kind {
 typedef struct {
   enum cgen_write_queue_kind kind; /* Used to select union member below.  */
   IADDR insn_address;       /* Address of the insn performing the write.  */
-  unsigned32 flags;         /* Target specific flags.  */
+  uint32_t flags;         /* Target specific flags.  */
   long       word1;         /* Target specific field.  */
   union {
     struct {
