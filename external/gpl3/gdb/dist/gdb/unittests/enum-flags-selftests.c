@@ -1,6 +1,6 @@
 /* Self tests for enum-flags for GDB, the GNU debugger.
 
-   Copyright (C) 2016-2023 Free Software Foundation, Inc.
+   Copyright (C) 2016-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "gdbsupport/enum-flags.h"
 #include "gdbsupport/valid-expr.h"
 #include "gdbsupport/selftest.h"
@@ -63,13 +62,9 @@ DEF_ENUM_FLAGS_TYPE (RE, EF);
 DEF_ENUM_FLAGS_TYPE (RE2, EF2);
 DEF_ENUM_FLAGS_TYPE (URE, UEF);
 
-#if HAVE_IS_TRIVIALLY_COPYABLE
-
 /* So that std::vectors of types that have enum_flags fields can
    reallocate efficiently memcpy.  */
-gdb_static_assert (std::is_trivially_copyable<EF>::value);
-
-#endif
+static_assert (std::is_trivially_copyable<EF>::value);
 
 /* A couple globals used as lvalues in the CHECK_VALID expressions
    below.  Their names (and types) match the uppercase type names
@@ -253,10 +248,8 @@ CHECK_VALID (true,  EF,   true ? RE () : EF ())
 
 CHECK_VALID (true,  int,  true ? EF () : EF2 ())
 CHECK_VALID (true,  int,  true ? EF2 () : EF ())
-#if GCC_VERSION >= 5003 || defined __clang__
 CHECK_VALID (true,  int,  true ? EF () : RE2 ())
 CHECK_VALID (true,  int,  true ? RE2 () : EF ())
-#endif
 
 /* Same, but with an unsigned enum.  */
 
@@ -264,10 +257,8 @@ typedef unsigned int uns;
 
 CHECK_VALID (true,  uns,  true ? EF () : UEF ())
 CHECK_VALID (true,  uns,  true ? UEF () : EF ())
-#if GCC_VERSION >= 5003 || defined __clang__
 CHECK_VALID (true,  uns,  true ? EF () : URE ())
 CHECK_VALID (true,  uns,  true ? URE () : EF ())
-#endif
 
 /* Unfortunately this can't work due to the way C++ computes the
    return type of the ternary conditional operator.  int isn't
@@ -279,10 +270,8 @@ CHECK_VALID (true,  uns,  true ? URE () : EF ())
      error: operands to ?: have different types ‘enum_flags<RE>’ and ‘int’
    Confirmed to work with gcc 4.9, 5.3 and clang 3.7.
 */
-#if GCC_VERSION >= 4009 || defined __clang__
 CHECK_VALID (false, void, true ? EF () : 0)
 CHECK_VALID (false, void, true ? 0 : EF ())
-#endif
 
 /* Check that the ++/--/<</>>/<<=/>>= operators are deleted.  */
 
@@ -359,20 +348,46 @@ CHECK_VALID (true,  bool, NF (1) == char (1))
 
 enum test_flag
   {
-    FLAG1 = 1 << 1,
-    FLAG2 = 1 << 2,
-    FLAG3 = 1 << 3,
+    FLAG1 = 1 << 0,
+    FLAG2 = 1 << 1,
+    FLAG3 = 1 << 2,
+    FLAG4 = 1 << 3,
   };
 
 enum test_uflag : unsigned
   {
-    UFLAG1 = 1 << 1,
-    UFLAG2 = 1 << 2,
-    UFLAG3 = 1 << 3,
+    UFLAG1 = 1 << 0,
+    UFLAG2 = 1 << 1,
+    UFLAG3 = 1 << 2,
+    UFLAG4 = 1 << 3,
   };
 
 DEF_ENUM_FLAGS_TYPE (test_flag, test_flags);
 DEF_ENUM_FLAGS_TYPE (test_uflag, test_uflags);
+
+/* to_string enumerator->string mapping functions used to test
+   enum_flags::to_string.  These intentionally miss mapping a couple
+   enumerators each (xFLAG2, xFLAG4).  */
+
+static std::string
+to_string_flags (test_flags flags)
+{
+  static constexpr test_flags::string_mapping mapping[] = {
+    MAP_ENUM_FLAG (FLAG1),
+    MAP_ENUM_FLAG (FLAG3),
+  };
+  return flags.to_string (mapping);
+}
+
+static std::string
+to_string_uflags (test_uflags flags)
+{
+  static constexpr test_uflags::string_mapping mapping[] = {
+    MAP_ENUM_FLAG (UFLAG1),
+    MAP_ENUM_FLAG (UFLAG3),
+  };
+  return flags.to_string (mapping);
+}
 
 static void
 self_test ()
@@ -381,7 +396,7 @@ self_test ()
   {
     constexpr test_flags f;
 
-    gdb_static_assert (f == 0);
+    static_assert (f == 0);
   }
 
   /* Check that assignment from zero works.  */
@@ -402,16 +417,16 @@ self_test ()
     constexpr test_flags zero3 {0};
     constexpr test_flags zero4 = {0};
 
-    gdb_static_assert (zero1 == 0);
-    gdb_static_assert (zero2 == 0);
-    gdb_static_assert (zero3 == 0);
-    gdb_static_assert (zero4 == 0);
+    static_assert (zero1 == 0);
+    static_assert (zero2 == 0);
+    static_assert (zero3 == 0);
+    static_assert (zero4 == 0);
   }
 
   /* Check construction from enum value.  */
   {
-    gdb_static_assert (test_flags (FLAG1) == FLAG1);
-    gdb_static_assert (test_flags (FLAG2) != FLAG1);
+    static_assert (test_flags (FLAG1) == FLAG1);
+    static_assert (test_flags (FLAG2) != FLAG1);
   }
 
   /* Check copy/assignment.  */
@@ -423,10 +438,10 @@ self_test ()
     constexpr test_flags f3 {src};
     constexpr test_flags f4 = {src};
 
-    gdb_static_assert (f1 == FLAG1);
-    gdb_static_assert (f2 == FLAG1);
-    gdb_static_assert (f3 == FLAG1);
-    gdb_static_assert (f4 == FLAG1);
+    static_assert (f1 == FLAG1);
+    static_assert (f2 == FLAG1);
+    static_assert (f3 == FLAG1);
+    static_assert (f4 == FLAG1);
   }
 
   /* Check moving.  */
@@ -444,7 +459,7 @@ self_test ()
      to test_flags would fail.  */
   {
     constexpr test_flags f = FLAG1 | FLAG2;
-    gdb_static_assert (f == (FLAG1 | FLAG2));
+    static_assert (f == (FLAG1 | FLAG2));
   }
 
   /* Similarly, check that "FLAG1 | FLAG2" on the rhs of an assignment
@@ -466,8 +481,8 @@ self_test ()
     constexpr int some_bits (FLAG1 | FLAG2);
 
     /* And comparison with int works too.  */
-    gdb_static_assert (some_bits == (FLAG1 | FLAG2));
-    gdb_static_assert (some_bits == test_flags (FLAG1 | FLAG2));
+    static_assert (some_bits == (FLAG1 | FLAG2));
+    static_assert (some_bits == test_flags (FLAG1 | FLAG2));
   }
 
   /* Check operator| and operator|=.  Particularly interesting is
@@ -510,7 +525,7 @@ self_test ()
   /* Check the ^/^= operators.  */
   {
     constexpr test_flags f = FLAG1 ^ FLAG2;
-    gdb_static_assert (f == (FLAG1 ^ FLAG2));
+    static_assert (f == (FLAG1 ^ FLAG2));
   }
 
   {
@@ -528,7 +543,7 @@ self_test ()
   {
     constexpr test_uflags f1 = ~UFLAG1;
     constexpr test_uflags f2 = ~f1;
-    gdb_static_assert (f2 == UFLAG1);
+    static_assert (f2 == UFLAG1);
   }
 
   /* Check the ternary operator.  */
@@ -536,18 +551,18 @@ self_test ()
   {
     /* raw enum, raw enum */
     constexpr test_flags f1 = true ? FLAG1 : FLAG2;
-    gdb_static_assert (f1 == FLAG1);
+    static_assert (f1 == FLAG1);
     constexpr test_flags f2 = false ? FLAG1 : FLAG2;
-    gdb_static_assert (f2 == FLAG2);
+    static_assert (f2 == FLAG2);
   }
 
   {
     /* enum flags, raw enum */
     constexpr test_flags src = FLAG1;
     constexpr test_flags f1 = true ? src : FLAG2;
-    gdb_static_assert (f1 == FLAG1);
+    static_assert (f1 == FLAG1);
     constexpr test_flags f2 = false ? src : FLAG2;
-    gdb_static_assert (f2 == FLAG2);
+    static_assert (f2 == FLAG2);
   }
 
   {
@@ -555,9 +570,9 @@ self_test ()
     constexpr test_flags src1 = FLAG1;
     constexpr test_flags src2 = FLAG2;
     constexpr test_flags f1 = true ? src1 : src2;
-    gdb_static_assert (f1 == src1);
+    static_assert (f1 == src1);
     constexpr test_flags f2 = false ? src1 : src2;
-    gdb_static_assert (f2 == src2);
+    static_assert (f2 == src2);
   }
 
   /* Check that we can use flags in switch expressions (requires
@@ -580,6 +595,37 @@ self_test ()
       }
 
     SELF_CHECK (ok);
+  }
+
+  /* Check string conversion.  */
+  {
+    SELF_CHECK (to_string_uflags (0)
+		== "0x0 []");
+    SELF_CHECK (to_string_uflags (UFLAG1)
+		== "0x1 [UFLAG1]");
+    SELF_CHECK (to_string_uflags (UFLAG1 | UFLAG3)
+		== "0x5 [UFLAG1 UFLAG3]");
+    SELF_CHECK (to_string_uflags (UFLAG1 | UFLAG2 | UFLAG3)
+		== "0x7 [UFLAG1 UFLAG3 0x2]");
+    SELF_CHECK (to_string_uflags (UFLAG2)
+		== "0x2 [0x2]");
+    /* Check that even with multiple unmapped flags, we only print one
+       unmapped hex number (0xa, in this case).  */
+    SELF_CHECK (to_string_uflags (UFLAG1 | UFLAG2 | UFLAG3 | UFLAG4)
+		== "0xf [UFLAG1 UFLAG3 0xa]");
+
+    SELF_CHECK (to_string_flags (0)
+		== "0x0 []");
+    SELF_CHECK (to_string_flags (FLAG1)
+		== "0x1 [FLAG1]");
+    SELF_CHECK (to_string_flags (FLAG1 | FLAG3)
+		== "0x5 [FLAG1 FLAG3]");
+    SELF_CHECK (to_string_flags (FLAG1 | FLAG2 | FLAG3)
+		== "0x7 [FLAG1 FLAG3 0x2]");
+    SELF_CHECK (to_string_flags (FLAG2)
+		== "0x2 [0x2]");
+    SELF_CHECK (to_string_flags (FLAG1 | FLAG2 | FLAG3 | FLAG4)
+		== "0xf [FLAG1 FLAG3 0xa]");
   }
 }
 

@@ -1,6 +1,6 @@
 /* Self tests of the gmp-utils API.
 
-   Copyright (C) 2019-2023 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,7 @@
 
 #include "gmp-utils.h"
 #include "gdbsupport/selftest.h"
+#include "extract-store-integer.h"
 
 #include <math.h>
 
@@ -28,7 +29,7 @@ namespace selftests {
 
    This function limits itself to values which are in range (out-of-range
    values will be tested separately).  In doing so, it tries to be reasonably
-   exhaustive, by testing the edges, as well as a resonable set of values
+   exhaustive, by testing the edges, as well as a reasonable set of values
    including negative ones, zero, and positive values.  */
 
 static void
@@ -42,8 +43,8 @@ gdb_mpz_as_integer ()
   /* Start with the smallest LONGEST  */
   l_expected = (LONGEST) 1 << (sizeof (LONGEST) * 8 - 1);
 
-  mpz_ui_pow_ui (v.val, 2, sizeof (LONGEST) * 8 - 1);
-  mpz_neg (v.val, v.val);
+  v = gdb_mpz::pow (2, sizeof (LONGEST) * 8 - 1);
+  v.negate ();
 
   SELF_CHECK (v.as_integer<LONGEST> () == l_expected);
 
@@ -52,13 +53,13 @@ gdb_mpz_as_integer ()
   for (int i = -256; i <= 256; i++)
     {
       l_expected = (LONGEST) i;
-      mpz_set_si (v.val, i);
+      v = i;
       SELF_CHECK (v.as_integer<LONGEST> () == l_expected);
 
       if (i >= 0)
 	{
 	  ul_expected = (ULONGEST) i;
-	  mpz_set_ui (v.val, i);
+	  v = ul_expected;
 	  SELF_CHECK (v.as_integer<ULONGEST> () == ul_expected);
 	}
     }
@@ -67,16 +68,16 @@ gdb_mpz_as_integer ()
   l_expected = LONGEST_MAX;
   ul_expected = (ULONGEST) l_expected;
 
-  mpz_ui_pow_ui (v.val, 2, sizeof (LONGEST) * 8 - 1);
-  mpz_sub_ui (v.val, v.val, 1);
+  v = gdb_mpz::pow (2, sizeof (LONGEST) * 8 - 1);
+  v -= 1;
 
   SELF_CHECK (v.as_integer<LONGEST> () == l_expected);
   SELF_CHECK (v.as_integer<ULONGEST> () == ul_expected);
 
   /* Try with ULONGEST_MAX.  */
   ul_expected = ULONGEST_MAX;
-  mpz_ui_pow_ui (v.val, 2, sizeof (LONGEST) * 8);
-  mpz_sub_ui (v.val, v.val, 1);
+  v = gdb_mpz::pow (2, sizeof (LONGEST) * 8);
+  v -= 1;
 
   SELF_CHECK (v.as_integer<ULONGEST> () == ul_expected);
 }
@@ -115,9 +116,9 @@ gdb_mpz_as_integer_out_of_range ()
   gdb_mpz v;
 
   /* Try LONGEST_MIN minus 1.  */
-  mpz_ui_pow_ui (v.val, 2, sizeof (LONGEST) * 8 - 1);
-  mpz_neg (v.val, v.val);
-  mpz_sub_ui (v.val, v.val, 1);
+  v = gdb_mpz::pow (2, sizeof (LONGEST) * 8 - 1);
+  v.negate ();
+  v -= 1;
 
   check_as_integer_raises_out_of_range_error<ULONGEST> (v);
   check_as_integer_raises_out_of_range_error<LONGEST> (v);
@@ -130,14 +131,14 @@ gdb_mpz_as_integer_out_of_range ()
 
   /* Try LONGEST_MAX plus 1.  */
   v = LONGEST_MAX;
-  mpz_add_ui (v.val, v.val, 1);
+  v += 1;
 
   SELF_CHECK (v.as_integer<ULONGEST> () == (ULONGEST) LONGEST_MAX + 1);
   check_as_integer_raises_out_of_range_error<LONGEST> (v);
 
   /* Try ULONGEST_MAX plus 1.  */
   v = ULONGEST_MAX;
-  mpz_add_ui (v.val, v.val, 1);
+  v += 1;
 
   check_as_integer_raises_out_of_range_error<ULONGEST> (v);
   check_as_integer_raises_out_of_range_error<LONGEST> (v);
@@ -169,8 +170,8 @@ store_and_read_back (T val, size_t buf_len, enum bfd_endian byte_order,
   store_integer (buf, buf_len, byte_order, val);
 
   /* Pre-initialize ACTUAL to something that's not the expected value.  */
-  mpz_set (actual.val, expected.val);
-  mpz_sub_ui (actual.val, actual.val, 500);
+  actual = expected;
+  actual -= 500;
 
   actual.read ({buf, buf_len}, byte_order, !std::is_signed<T>::value);
 }
@@ -196,10 +197,10 @@ gdb_mpz_read_all_from_small ()
       gdb_mpz expected, actual;
 
       store_and_read_back (l, buf_len, BFD_ENDIAN_BIG, expected, actual);
-      SELF_CHECK (mpz_cmp (actual.val, expected.val) == 0);
+      SELF_CHECK (actual ==  expected);
 
       store_and_read_back (l, buf_len, BFD_ENDIAN_LITTLE, expected, actual);
-      SELF_CHECK (mpz_cmp (actual.val, expected.val) == 0);
+      SELF_CHECK (actual == expected);
     }
 
   /* Do the same as above, but with an unsigned type.  */
@@ -211,10 +212,10 @@ gdb_mpz_read_all_from_small ()
       gdb_mpz expected, actual;
 
       store_and_read_back (ul, buf_len, BFD_ENDIAN_BIG, expected, actual);
-      SELF_CHECK (mpz_cmp (actual.val, expected.val) == 0);
+      SELF_CHECK (actual == expected);
 
       store_and_read_back (ul, buf_len, BFD_ENDIAN_LITTLE, expected, actual);
-      SELF_CHECK (mpz_cmp (actual.val, expected.val) == 0);
+      SELF_CHECK (actual == expected);
     }
 }
 
@@ -231,11 +232,11 @@ gdb_mpz_read_min_max ()
 
   store_and_read_back (l_min, sizeof (LONGEST), BFD_ENDIAN_BIG,
 		       expected, actual);
-  SELF_CHECK (mpz_cmp (actual.val, expected.val) == 0);
+  SELF_CHECK (actual == expected);
 
   store_and_read_back (l_min, sizeof (LONGEST), BFD_ENDIAN_LITTLE,
 		       expected, actual);
-  SELF_CHECK (mpz_cmp (actual.val, expected.val) == 0);
+  SELF_CHECK (actual == expected);
 
   /* Same with LONGEST_MAX.  */
 
@@ -243,11 +244,11 @@ gdb_mpz_read_min_max ()
 
   store_and_read_back (l_max, sizeof (LONGEST), BFD_ENDIAN_BIG,
 		       expected, actual);
-  SELF_CHECK (mpz_cmp (actual.val, expected.val) == 0);
+  SELF_CHECK (actual == expected);
 
   store_and_read_back (l_max, sizeof (LONGEST), BFD_ENDIAN_LITTLE,
 		       expected, actual);
-  SELF_CHECK (mpz_cmp (actual.val, expected.val) == 0);
+  SELF_CHECK (actual == expected);
 
   /* Same with the smallest ULONGEST.  */
 
@@ -255,11 +256,11 @@ gdb_mpz_read_min_max ()
 
   store_and_read_back (ul_min, sizeof (ULONGEST), BFD_ENDIAN_BIG,
 		       expected, actual);
-  SELF_CHECK (mpz_cmp (actual.val, expected.val) == 0);
+  SELF_CHECK (actual == expected);
 
   store_and_read_back (ul_min, sizeof (ULONGEST), BFD_ENDIAN_LITTLE,
 		       expected, actual);
-  SELF_CHECK (mpz_cmp (actual.val, expected.val) == 0);
+  SELF_CHECK (actual == expected);
 
   /* Same with ULONGEST_MAX.  */
 
@@ -267,11 +268,11 @@ gdb_mpz_read_min_max ()
 
   store_and_read_back (ul_max, sizeof (ULONGEST), BFD_ENDIAN_BIG,
 		       expected, actual);
-  SELF_CHECK (mpz_cmp (actual.val, expected.val) == 0);
+  SELF_CHECK (actual == expected);
 
   store_and_read_back (ul_max, sizeof (ULONGEST), BFD_ENDIAN_LITTLE,
 		       expected, actual);
-  SELF_CHECK (mpz_cmp (actual.val, expected.val) == 0);
+  SELF_CHECK (actual == expected);
 }
 
 /* A helper function which creates a gdb_mpz object from the given
@@ -398,8 +399,8 @@ read_fp_test (int unscaled, const gdb_mpq &scaling_factor,
 
   actual.read_fixed_point ({buf, len}, byte_order, 0, scaling_factor);
 
-  mpq_set_si (expected.val, unscaled, 1);
-  mpq_mul (expected.val, expected.val, scaling_factor.val);
+  expected = gdb_mpq (unscaled, 1);
+  expected *= scaling_factor;
 }
 
 /* Perform various tests of the gdb_mpq::read_fixed_point method.  */
@@ -408,38 +409,37 @@ static void
 gdb_mpq_read_fixed_point ()
 {
   gdb_mpq expected, actual;
-  gdb_mpq scaling_factor;
 
   /* Pick an arbitrary scaling_factor; this operation is trivial enough
      thanks to GMP that the value we use isn't really important.  */
-  mpq_set_ui (scaling_factor.val, 3, 5);
+  gdb_mpq scaling_factor (3, 5);
 
   /* Try a few values, both negative and positive... */
 
   read_fp_test (-256, scaling_factor, BFD_ENDIAN_BIG, expected, actual);
-  SELF_CHECK (mpq_cmp (actual.val, expected.val) == 0);
+  SELF_CHECK (actual == expected);
   read_fp_test (-256, scaling_factor, BFD_ENDIAN_LITTLE, expected, actual);
-  SELF_CHECK (mpq_cmp (actual.val, expected.val) == 0);
+  SELF_CHECK (actual == expected);
 
   read_fp_test (-1, scaling_factor, BFD_ENDIAN_BIG, expected, actual);
-  SELF_CHECK (mpq_cmp (actual.val, expected.val) == 0);
+  SELF_CHECK (actual == expected);
   read_fp_test (-1, scaling_factor, BFD_ENDIAN_LITTLE, expected, actual);
-  SELF_CHECK (mpq_cmp (actual.val, expected.val) == 0);
+  SELF_CHECK (actual == expected);
 
   read_fp_test (0, scaling_factor, BFD_ENDIAN_BIG, expected, actual);
-  SELF_CHECK (mpq_cmp (actual.val, expected.val) == 0);
+  SELF_CHECK (actual == expected);
   read_fp_test (0, scaling_factor, BFD_ENDIAN_LITTLE, expected, actual);
-  SELF_CHECK (mpq_cmp (actual.val, expected.val) == 0);
+  SELF_CHECK (actual == expected);
 
   read_fp_test (1, scaling_factor, BFD_ENDIAN_BIG, expected, actual);
-  SELF_CHECK (mpq_cmp (actual.val, expected.val) == 0);
+  SELF_CHECK (actual == expected);
   read_fp_test (1, scaling_factor, BFD_ENDIAN_LITTLE, expected, actual);
-  SELF_CHECK (mpq_cmp (actual.val, expected.val) == 0);
+  SELF_CHECK (actual == expected);
 
   read_fp_test (1025, scaling_factor, BFD_ENDIAN_BIG, expected, actual);
-  SELF_CHECK (mpq_cmp (actual.val, expected.val) == 0);
+  SELF_CHECK (actual == expected);
   read_fp_test (1025, scaling_factor, BFD_ENDIAN_LITTLE, expected, actual);
-  SELF_CHECK (mpq_cmp (actual.val, expected.val) == 0);
+  SELF_CHECK (actual == expected);
 }
 
 /* A helper function which builds a gdb_mpq object from the given
@@ -462,9 +462,7 @@ write_fp_test (int numerator, unsigned int denominator,
   gdb_byte buf[len];
   memset (buf, 0, len);
 
-  gdb_mpq v;
-  mpq_set_si (v.val, numerator, denominator);
-  mpq_canonicalize (v.val);
+  gdb_mpq v (numerator, denominator);
   v.write_fixed_point ({buf, len}, byte_order, 0, scaling_factor);
 
   return extract_unsigned_integer (buf, len, byte_order);
@@ -478,8 +476,7 @@ gdb_mpq_write_fixed_point ()
   /* Pick an arbitrary factor; this operations is sufficiently trivial
      with the use of GMP that the value of this factor is not really
      all that important.  */
-  gdb_mpq scaling_factor;
-  mpq_set_ui (scaling_factor.val, 1, 3);
+  gdb_mpq scaling_factor (1, 3);
 
   gdb_mpq vq;
 

@@ -1,5 +1,5 @@
 /* MI Command Set for GDB, the GNU debugger.
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
 
@@ -18,7 +18,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "top.h"
 #include "mi-cmds.h"
 #include "mi-main.h"
@@ -38,7 +37,7 @@ struct mi_command_mi : public mi_command
      constructor, FUNC is the function called from do_invoke, which
      implements this MI command.  */
   mi_command_mi (const char *name, mi_cmd_argv_ftype func,
-                 int *suppress_notification)
+		 int *suppress_notification)
     : mi_command (name, suppress_notification),
       m_argv_function (func)
   {
@@ -49,13 +48,13 @@ struct mi_command_mi : public mi_command
      with arguments contained within PARSE.  */
   void invoke (struct mi_parse *parse) const override
   {
-    mi_parse_argv (parse->args, parse);
+    parse->parse_argv ();
 
     if (parse->argv == nullptr)
-      error (_("Problem parsing arguments: %s %s"), parse->command,
-	     parse->args);
+      error (_("Problem parsing arguments: %s %s"), parse->command.get (),
+	     parse->args ());
 
-    this->m_argv_function (parse->command, parse->argv, parse->argc);
+    this->m_argv_function (parse->command.get (), parse->argv, parse->argc);
   }
 
 private:
@@ -75,7 +74,7 @@ struct mi_command_cli : public mi_command
      forwarded to CLI_NAME as its argument string, otherwise, if ARGS_P is
      false, nullptr is send to CLI_NAME as its argument string.  */
   mi_command_cli (const char *name, const char *cli_name, bool args_p,
-                  int *suppress_notification)
+		  int *suppress_notification)
     : mi_command (name, suppress_notification),
       m_cli_name (cli_name),
       m_args_p (args_p)
@@ -87,7 +86,7 @@ struct mi_command_cli : public mi_command
      is passed through to the CLI function as its argument string.  */
   void invoke (struct mi_parse *parse) const override
   {
-    const char *args = m_args_p ? parse->args : nullptr;
+    const char *args = m_args_p ? parse->args () : nullptr;
     mi_execute_cli_command (m_cli_name, m_args_p, args);
   }
 
@@ -183,7 +182,7 @@ mi_command::mi_command (const char *name, int *suppress_notification)
 
 /* See mi-cmds.h.  */
 
-gdb::optional<scoped_restore_tmpl<int>>
+std::optional<scoped_restore_tmpl<int>>
 mi_command::do_suppress_notification () const
 {
   if (m_suppress_notification != nullptr)
@@ -232,11 +231,11 @@ add_builtin_mi_commands ()
   add_mi_cmd_mi ("catch-unload", mi_cmd_catch_unload,
 		 &mi_suppress_notification.breakpoint);
   add_mi_cmd_mi ("catch-throw", mi_cmd_catch_throw,
-                 &mi_suppress_notification.breakpoint),
+		 &mi_suppress_notification.breakpoint),
   add_mi_cmd_mi ("catch-rethrow", mi_cmd_catch_rethrow,
-                 &mi_suppress_notification.breakpoint),
+		 &mi_suppress_notification.breakpoint),
   add_mi_cmd_mi ("catch-catch", mi_cmd_catch_catch,
-                 &mi_suppress_notification.breakpoint),
+		 &mi_suppress_notification.breakpoint),
   add_mi_cmd_mi ("complete", mi_cmd_complete);
   add_mi_cmd_mi ("data-disassemble", mi_cmd_disassemble);
   add_mi_cmd_mi ("data-evaluate-expression", mi_cmd_data_evaluate_expression);
@@ -315,9 +314,9 @@ add_builtin_mi_commands ()
   add_mi_cmd_mi ("symbol-info-types", mi_cmd_symbol_info_types);
   add_mi_cmd_mi ("symbol-info-modules", mi_cmd_symbol_info_modules);
   add_mi_cmd_mi ("symbol-info-module-functions",
-                 mi_cmd_symbol_info_module_functions);
+		 mi_cmd_symbol_info_module_functions);
   add_mi_cmd_mi ("symbol-info-module-variables",
-                 mi_cmd_symbol_info_module_variables);
+		 mi_cmd_symbol_info_module_variables);
   add_mi_cmd_cli ("target-attach", "attach", 1);
   add_mi_cmd_mi ("target-detach", mi_cmd_target_detach);
   add_mi_cmd_cli ("target-disconnect", "disconnect", 0);
