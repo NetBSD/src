@@ -1,5 +1,5 @@
 /* Inline functions.
-   Copyright (C) 2020-2022 Free Software Foundation, Inc.
+   Copyright (C) 2020-2024 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -89,6 +89,23 @@ ctf_assert_internal (ctf_dict_t *fp, const char *file, size_t line,
 
   return expr;
 }
+
+static inline int
+ctf_set_errno (ctf_dict_t *fp, int err)
+{
+  fp->ctf_errno = err;
+  /* Don't rely on CTF_ERR here as it will not properly sign extend on 64-bit
+     Windows ABI.  */
+  return -1;
+}
+
+static inline ctf_id_t
+ctf_set_typed_errno (ctf_dict_t *fp, int err)
+{
+  fp->ctf_errno = err;
+  return CTF_ERR;
+}
+
 
 #ifdef	__cplusplus
 }

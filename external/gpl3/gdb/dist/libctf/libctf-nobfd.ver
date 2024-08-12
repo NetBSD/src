@@ -161,11 +161,6 @@ LIBCTF_1.0 {
 	ctf_link_shuffle_syms;
 	ctf_link_write;
 
-	ctf_fdopen;                             /* libctf only.  */
-	ctf_open;                               /* libctf only.  */
-	ctf_arc_open;                           /* libctf only.  */
-	ctf_bfdopen;                            /* libctf only.  */
-	ctf_bfdopen_ctfsect;                    /* libctf only.  */
     local:
 	*;
 };
