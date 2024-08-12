@@ -100,21 +100,21 @@ INLINE_CPU\
 INLINE_CPU\
 (void) cpu_restart
 (cpu *processor,
- unsigned_word nia);
+ unsigned_word nia) ATTRIBUTE_NORETURN;
 
 INLINE_CPU\
 (void) cpu_halt
 (cpu *processor,
  unsigned_word nia,
  stop_reason reason,
- int signal);
+ int signal) ATTRIBUTE_NORETURN;
 
 EXTERN_CPU\
 (void) cpu_error
 (cpu *processor,
  unsigned_word cia,
  const char *fmt,
- ...) ATTRIBUTE_PRINTF_3;
+ ...) ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF_3;
 
 
 /* The processors local concept of time */

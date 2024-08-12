@@ -26,9 +26,7 @@
 #include <stdio.h>
 
 #include <string.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #include <stdlib.h>
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -38,7 +36,6 @@
 
 #ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
-int getrusage();
 #endif
 
 #include "basics.h"

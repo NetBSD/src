@@ -21,7 +21,7 @@
 #ifndef _DEBUG_H_
 #define _DEBUG_H_
 
-#include "filter_filename.h"
+#include "libiberty.h"
 
 typedef enum {
   trace_invalid,
@@ -87,7 +87,7 @@ extern int ppc_trace[nr_trace_options];
 do { \
   if (WITH_TRACE) { \
     if (ppc_trace[OBJECT]) { \
-      sim_io_printf_filtered("%s:%d: ", filter_filename(__FILE__), __LINE__); \
+      sim_io_printf_filtered("%s:%d: ", lbasename(__FILE__), __LINE__); \
       sim_io_printf_filtered ARGS; \
     } \
   } \
@@ -113,7 +113,7 @@ do { \
 	|| ppc_trace[trace_##OBJECT##_device] \
 	|| trace_device) { \
       sim_io_printf_filtered("%s:%d:%s:%s%s ",					\
-			     filter_filename(__FILE__), __LINE__, #OBJECT, \
+			     lbasename(__FILE__), __LINE__, #OBJECT, \
 			     trace_device ? device_path(me) : "",	\
 			     trace_device ? ":" : "");			\
       sim_io_printf_filtered ARGS; \
@@ -125,14 +125,14 @@ do { \
 #define DITRACE(OBJECT, ARGS) \
 do { \
   if (WITH_TRACE) { \
-    device *me = device_instance_device(instance); \
-    int trace_device = device_trace(me); \
+    device *_me = device_instance_device(instance); \
+    int trace_device = device_trace(_me); \
     if (ppc_trace[trace_devices] \
 	|| ppc_trace[trace_##OBJECT##_device] \
 	|| trace_device) { \
       sim_io_printf_filtered("%s:%d:%s:%s%s ", \
-			     filter_filename(__FILE__), __LINE__, #OBJECT, \
-			     trace_device ? device_path(me) : "",	\
+			     lbasename(__FILE__), __LINE__, #OBJECT, \
+			     trace_device ? device_path(_me) : "",	\
 			     trace_device ? ":" : "");			\
       sim_io_printf_filtered ARGS; \
     } \
@@ -144,7 +144,7 @@ do { \
 do { \
   if (WITH_TRACE) { \
     if (ppc_trace[trace_##OBJECT##_package]) { \
-      sim_io_printf_filtered("%s:%d:%s: ", filter_filename(__FILE__), __LINE__, #OBJECT); \
+      sim_io_printf_filtered("%s:%d:%s: ", lbasename(__FILE__), __LINE__, #OBJECT); \
       sim_io_printf_filtered ARGS; \
     } \
   } \
@@ -156,7 +156,7 @@ do { \
   if (WITH_ASSERT) { \
     if (!(EXPRESSION)) { \
       error("%s:%d: assertion failed - %s\n", \
-	    filter_filename(__FILE__), __LINE__, #EXPRESSION); \
+	    lbasename(__FILE__), __LINE__, #EXPRESSION); \
     } \
   } \
 } while (0)
