@@ -1,6 +1,6 @@
 /* Safe version of strerror for GDB, the GNU debugger.
 
-   Copyright (C) 2006-2023 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common-defs.h"
 #include <string.h>
 
 /* There are two different versions of strerror_r; one is GNU-specific, the

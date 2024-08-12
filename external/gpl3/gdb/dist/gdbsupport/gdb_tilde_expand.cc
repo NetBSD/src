@@ -1,6 +1,6 @@
 /* Perform tilde expansion on paths for GDB and gdbserver.
 
-   Copyright (C) 2017-2023 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common-defs.h"
 #include <algorithm>
 #include "filenames.h"
 #include "gdb_tilde_expand.h"
@@ -90,10 +89,8 @@ gdb_tilde_expand (const char *dir)
   /* Look for the first dir separator (if any) and split d around it.  */
   const auto first_sep
     = std::find_if (d.cbegin (), d.cend(),
-                    [] (const char c) -> bool
-                    {
-                      return IS_DIR_SEPARATOR (c);
-                    });
+		    [] (const char c) -> bool
+		      { return IS_DIR_SEPARATOR (c); });
   const std::string to_expand (d.cbegin (), first_sep);
   const std::string remainder (first_sep, d.cend ());
 

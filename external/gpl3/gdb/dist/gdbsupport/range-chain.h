@@ -1,5 +1,5 @@
 /* A range adapter that wraps multiple ranges
-   Copyright (C) 2022-2023 Free Software Foundation, Inc.
+   Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -90,7 +90,7 @@ struct range_chain
     /* The current iterator into one of the vector ranges.  If no
        value then this (outer) iterator is at the end of the overall
        range.  */
-    gdb::optional<typename Range::iterator> m_current;
+    std::optional<typename Range::iterator> m_current;
     /* Vector of ranges.  */
     const std::vector<Range> &m_ranges;
   };

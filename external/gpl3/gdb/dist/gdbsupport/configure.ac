@@ -1,5 +1,5 @@
 dnl Autoconf configure script for GDB support library
-dnl Copyright (C) 2020-2023 Free Software Foundation, Inc.
+dnl Copyright (C) 2020-2024 Free Software Foundation, Inc.
 dnl
 dnl This program is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -41,9 +41,9 @@ AC_PROG_RANLIB
 AC_USE_SYSTEM_EXTENSIONS
 ACX_LARGEFILE
 
-# We require a C++11 compiler.  Check if one is available, and if
+# We require a C++17 compiler.  Check if one is available, and if
 # necessary, set CXX_DIALECT to some -std=xxx switch.
-AX_CXX_COMPILE_STDCXX(11, , mandatory)
+AX_CXX_COMPILE_STDCXX(17, , mandatory)
 
 dnl Set up for gettext.
 ZW_GNU_GETTEXT_SISTER_DIR

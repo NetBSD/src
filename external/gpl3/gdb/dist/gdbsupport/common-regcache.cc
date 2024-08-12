@@ -1,6 +1,6 @@
 /* Cache and manage the values of registers for GDB, the GNU debugger.
 
-   Copyright (C) 2015-2023 Free Software Foundation, Inc.
+   Copyright (C) 2015-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,13 +17,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common-defs.h"
 #include "common-regcache.h"
 
 /* Return the register's value or throw if it's not available.  */
 
 ULONGEST
-regcache_raw_get_unsigned (struct regcache *regcache, int regnum)
+regcache_raw_get_unsigned (reg_buffer_common *regcache, int regnum)
 {
   ULONGEST value;
   enum register_status status;
