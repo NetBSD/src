@@ -1,6 +1,6 @@
 /* Disassemble Xilinx microblaze instructions.
 
-   Copyright (C) 2009-2022 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -35,7 +35,7 @@
 #define get_int_field_imm(instr)   ((instr & IMM_MASK) >> IMM_LOW)
 #define get_int_field_r1(instr)    ((instr & RA_MASK) >> RA_LOW)
 
-#define NUM_STRBUFS 3
+#define NUM_STRBUFS 4
 #define STRBUF_SIZE 25
 
 struct string_buf
@@ -87,6 +87,21 @@ get_field_imm5_mbar (struct string_buf *buf, long instr)
   char *p = strbuf (buf);
 
   sprintf (p, "%d", (short)((instr & IMM5_MBAR_MASK) >> IMM_MBAR));
+  return p;
+}
+
+static char *
+get_field_immw (struct string_buf *buf, long instr)
+{
+  char *p = strbuf (buf);
+
+  if (instr & 0x00004000)
+    sprintf (p, "%d", (short)(((instr & IMM5_WIDTH_MASK)
+				>> IMM_WIDTH_LOW))); /* bsefi */
+  else
+    sprintf (p, "%d", (short)(((instr & IMM5_WIDTH_MASK) >>
+				IMM_WIDTH_LOW) - ((instr & IMM5_MASK) >>
+				IMM_LOW) + 1)); /* bsifi */
   return p;
 }
 
@@ -264,7 +279,7 @@ print_insn_microblaze (bfd_vma memaddr, struct disassemble_info * info)
   prev_insn_vma = curr_insn_vma;
 
   if (op->name == NULL)
-    print_func (stream, ".short 0x%04x", (unsigned int) inst);
+    print_func (stream, ".long 0x%04x", (unsigned int) inst);
   else
     {
       print_func (stream, "%s", op->name);
@@ -426,6 +441,14 @@ print_insn_microblaze (bfd_vma memaddr, struct disassemble_info * info)
 	  break;
 	  /* For mbar 16 or sleep insn.  */
 	case INST_TYPE_NONE:
+	  break;
+	  /* For bit field insns.  */
+	case INST_TYPE_RD_R1_IMMW_IMMS:
+	  print_func (stream, "\t%s, %s, %s, %s",
+		      get_field_rd (&buf, inst),
+		      get_field_r1 (&buf, inst),
+		      get_field_immw (&buf, inst),
+		      get_field_imm5 (&buf, inst));
 	  break;
 	  /* For tuqula instruction */
 	case INST_TYPE_RD:
