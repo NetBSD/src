@@ -1,6 +1,6 @@
 /* Example synacor simulator.
 
-   Copyright (C) 2005-2023 Free Software Foundation, Inc.
+   Copyright (C) 2005-2024 Free Software Foundation, Inc.
    Contributed by Mike Frysinger.
 
    This file is part of simulators.
@@ -31,6 +31,8 @@
 #include "sim/callback.h"
 #include "sim-main.h"
 #include "sim-options.h"
+
+#include "example-synacor-sim.h"
 
 /* This function is the main loop.  It should process ticks and decode+execute
    a single instruction.
@@ -88,7 +90,8 @@ sim_open (SIM_OPEN_KIND kind, host_callback *callback,
   current_target_byte_order = BFD_ENDIAN_LITTLE;
 
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
+  if (sim_cpu_alloc_all_extra (sd, 0, sizeof (struct example_sim_cpu))
+      != SIM_RC_OK)
     {
       free_state (sd);
       return 0;

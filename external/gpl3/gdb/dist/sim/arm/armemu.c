@@ -1023,7 +1023,7 @@ handle_v6_insn (ARMul_State * state, ARMword instr)
 	Rn = BITS (0, 3);
 	if (Rn != 0xF)
 	  {
-	    ARMword val = state->Reg[Rn] & ~(-(1 << ((msb + 1) - lsb)));
+	    val = state->Reg[Rn] & ~(-(1 << ((msb + 1) - lsb)));
 	    state->Reg[Rd] |= val << lsb;
 	  }
 	return 1;
@@ -1434,8 +1434,6 @@ ARMul_Emulate26 (ARMul_State * state)
 	    {
 	      if (BITS (25, 27) == 5) /* BLX(1) */
 		{
-		  ARMword dest;
-
 		  state->Reg[14] = pc + 4;
 
 		  /* Force entry into Thumb mode.  */
@@ -1568,10 +1566,10 @@ check_PMUintr:
 
 		  if (do_int && (cp14r0 & ARMul_CP14_R0_INTEN2))
 		    {
-		      ARMword temp;
+		      ARMword cp;
 
-		      if (state->CPRead[13] (state, 8, & temp)
-			  && (temp & ARMul_CP13_R8_PMUS))
+		      if (state->CPRead[13] (state, 8, & cp)
+			  && (cp & ARMul_CP13_R8_PMUS))
 		        ARMul_Abort (state, ARMul_FIQV);
 		      else
 		        ARMul_Abort (state, ARMul_IRQV);
@@ -1604,8 +1602,8 @@ check_PMUintr:
 		  if (BITS (4, 7) == 0xD)
 		    {
 		      /* XScale Load Consecutive insn.  */
-		      ARMword temp = GetLS7RHS (state, instr);
-		      ARMword temp2 = BIT (23) ? LHS + temp : LHS - temp;
+		      ARMword temp1 = GetLS7RHS (state, instr);
+		      ARMword temp2 = BIT (23) ? LHS + temp1 : LHS - temp1;
 		      ARMword addr = BIT (24) ? temp2 : LHS;
 
 		      if (BIT (12))
@@ -1630,8 +1628,8 @@ check_PMUintr:
 		  else if (BITS (4, 7) == 0xF)
 		    {
 		      /* XScale Store Consecutive insn.  */
-		      ARMword temp = GetLS7RHS (state, instr);
-		      ARMword temp2 = BIT (23) ? LHS + temp : LHS - temp;
+		      ARMword temp1 = GetLS7RHS (state, instr);
+		      ARMword temp2 = BIT (23) ? LHS + temp1 : LHS - temp1;
 		      ARMword addr = BIT (24) ? temp2 : LHS;
 
 		      if (BIT (12))
@@ -2313,15 +2311,13 @@ check_PMUintr:
 		  if (BITS (4, 7) == 3)
 		    {
 		      /* BLX(2) */
-		      ARMword temp;
-
 		      if (TFLAG)
-			temp = (pc + 2) | 1;
+			dest = (pc + 2) | 1;
 		      else
-			temp = pc + 4;
+			dest = pc + 4;
 
 		      WriteR15Branch (state, state->Reg[RHSReg]);
-		      state->Reg[14] = temp;
+		      state->Reg[14] = dest;
 		      break;
 		    }
 		}
@@ -2487,7 +2483,7 @@ check_PMUintr:
 		      /* ElSegundo SMLALxy insn.  */
 		      ARMdword op1 = state->Reg[BITS (0, 3)];
 		      ARMdword op2 = state->Reg[BITS (8, 11)];
-		      ARMdword dest;
+		      ARMdword result;
 
 		      if (BIT (5))
 			op1 >>= 16;
@@ -2500,11 +2496,11 @@ check_PMUintr:
 		      if (op2 & 0x8000)
 			op2 -= 65536;
 
-		      dest = (ARMdword) state->Reg[BITS (16, 19)] << 32;
-		      dest |= state->Reg[BITS (12, 15)];
-		      dest += op1 * op2;
-		      state->Reg[BITS (12, 15)] = dest;
-		      state->Reg[BITS (16, 19)] = dest >> 32;
+		      result = (ARMdword) state->Reg[BITS (16, 19)] << 32;
+		      result |= state->Reg[BITS (12, 15)];
+		      result += op1 * op2;
+		      state->Reg[BITS (12, 15)] = result;
+		      state->Reg[BITS (16, 19)] = result >> 32;
 		      break;
 		    }
 
@@ -4388,7 +4384,7 @@ check_PMUintr:
 		    ARMul_UndefInstr (state, instr);
 		  break;
 		}
-	      /* Drop through.  */
+	      ATTRIBUTE_FALLTHROUGH;
 
 	    case 0xc0:		/* Store , No WriteBack , Post Dec.  */
 	      ARMul_STC (state, instr, LHS);
@@ -4435,7 +4431,7 @@ check_PMUintr:
 		    ARMul_UndefInstr (state, instr);
 		  break;
 		}
-	      /* Drop through.  */
+	      ATTRIBUTE_FALLTHROUGH;
 
 	    case 0xc1:		/* Load , No WriteBack , Post Dec.  */
 	      ARMul_LDC (state, instr, LHS);
@@ -4622,7 +4618,7 @@ check_PMUintr:
 		  default:
 		    break;
 		  }
-	      /* Drop through.  */
+	      ATTRIBUTE_FALLTHROUGH;
 
 	    case 0xe0:
 	    case 0xe4:
