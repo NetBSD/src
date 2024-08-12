@@ -1,5 +1,5 @@
 /* Target signal translation functions for GDB.
-   Copyright (C) 1990-2023 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
    This file is part of GDB.
@@ -25,7 +25,7 @@
 /* Predicate to gdb_signal_to_host(). Return non-zero if the enum
    targ_signal SIGNO has an equivalent ``host'' representation.  */
 /* FIXME: cagney/1999-11-22: The name below was chosen in preference
-   to the shorter gdb_signal_p() because it is far less ambigious.
+   to the shorter gdb_signal_p() because it is far less ambiguous.
    In this context ``gdb_signal'' refers to GDB's internal
    representation of the target's set of signals while ``host signal''
    refers to the target operating system's signal.  Confused?  */

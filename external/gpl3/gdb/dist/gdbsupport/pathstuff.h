@@ -1,6 +1,6 @@
 /* Path manipulation routines for GDB and gdbserver.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -76,7 +76,7 @@ std::string
 path_join (Args... paths)
 {
   /* It doesn't make sense to join less than two paths.  */
-  gdb_static_assert (sizeof... (Args) >= 2);
+  static_assert (sizeof... (Args) >= 2);
 
   std::array<const char *, sizeof... (Args)> path_array
     { paths... };

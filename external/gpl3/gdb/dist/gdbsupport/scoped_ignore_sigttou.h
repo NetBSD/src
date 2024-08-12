@@ -1,6 +1,6 @@
-/* Support for signoring SIGTTOU.
+/* Support for ignoring SIGTTOU.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,7 +26,7 @@
 #ifdef SIGTTOU
 
 /* Simple wrapper that allows lazy initialization / destruction of T.
-   Slightly more efficient than gdb::optional, because it doesn't
+   Slightly more efficient than std::optional, because it doesn't
    carry storage to track whether the object has been initialized.  */
 template<typename T>
 class lazy_init

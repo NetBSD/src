@@ -1,4 +1,4 @@
-/* Copyright (C) 2022-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -37,7 +37,7 @@
    an enum -- but may not work on all compilers.  */
 
 /* Clang targeting Windows does not support attribute gcc_struct, so
-   we use the alternative byte array implemention there. */
+   we use the alternative byte array implementation there. */
 #if defined _WIN32 && defined __clang__
 # define PACKED_USE_ARRAY 1
 #else
@@ -62,7 +62,7 @@ public:
 
   packed (T val)
   {
-    gdb_static_assert (sizeof (ULONGEST) >= sizeof (T));
+    static_assert (sizeof (ULONGEST) >= sizeof (T));
 
 #if PACKED_USE_ARRAY
     ULONGEST tmp = val;
@@ -76,17 +76,15 @@ public:
 #endif
 
     /* Ensure size and aligment are what we expect.  */
-    gdb_static_assert (sizeof (packed) == Bytes);
-    gdb_static_assert (alignof (packed) == 1);
+    static_assert (sizeof (packed) == Bytes);
+    static_assert (alignof (packed) == 1);
 
     /* Make sure packed can be wrapped with std::atomic.  */
-#if HAVE_IS_TRIVIALLY_COPYABLE
-    gdb_static_assert (std::is_trivially_copyable<packed>::value);
-#endif
-    gdb_static_assert (std::is_copy_constructible<packed>::value);
-    gdb_static_assert (std::is_move_constructible<packed>::value);
-    gdb_static_assert (std::is_copy_assignable<packed>::value);
-    gdb_static_assert (std::is_move_assignable<packed>::value);
+    static_assert (std::is_trivially_copyable<packed>::value);
+    static_assert (std::is_copy_constructible<packed>::value);
+    static_assert (std::is_move_constructible<packed>::value);
+    static_assert (std::is_copy_assignable<packed>::value);
+    static_assert (std::is_move_assignable<packed>::value);
   }
 
   operator T () const noexcept

@@ -1,6 +1,6 @@
 /* Thread pool
 
-   Copyright (C) 2019-2023 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,13 +23,14 @@
 #include <queue>
 #include <vector>
 #include <functional>
+#include <chrono>
 #if CXX_STD_THREAD
 #include <thread>
 #include <mutex>
 #include <condition_variable>
 #include <future>
 #endif
-#include "gdbsupport/gdb_optional.h"
+#include <optional>
 
 namespace gdb
 {
@@ -40,7 +41,18 @@ namespace gdb
 template<typename T>
 using future = std::future<T>;
 
+/* ... and the standard future_status.  */
+using future_status = std::future_status;
+
 #else /* CXX_STD_THREAD */
+
+/* A compatibility enum for std::future_status.  This is just the
+   subset needed by gdb.  */
+enum class future_status
+{
+  ready,
+  timeout,
+};
 
 /* A compatibility wrapper for std::future.  Once <thread> and
    <future> are available in all GCC builds -- should that ever happen
@@ -71,6 +83,13 @@ public:
 
   void wait () const { }
 
+  template<class Rep, class Period>
+  future_status wait_for (const std::chrono::duration<Rep,Period> &duration)
+    const
+  {
+    return future_status::ready;
+  }
+
   T get () { return std::move (m_value); }
 
 private:
@@ -85,6 +104,14 @@ class future<void>
 {
 public:
   void wait () const { }
+
+  template<class Rep, class Period>
+  future_status wait_for (const std::chrono::duration<Rep,Period> &duration)
+    const
+  {
+    return future_status::ready;
+  }
+
   void get () { }
 };
 
@@ -171,12 +198,13 @@ private:
      to represent a task.  If the optional is empty, then this means
      that the receiving thread should terminate.  If the optional is
      non-empty, then it is an actual task to evaluate.  */
-  std::queue<optional<task_t>> m_tasks;
+  std::queue<std::optional<task_t>> m_tasks;
 
   /* A condition variable and mutex that are used for communication
      between the main thread and the worker threads.  */
   std::condition_variable m_tasks_cv;
   std::mutex m_tasks_mutex;
+  bool m_sized_at_least_once = false;
 #endif /* CXX_STD_THREAD */
 };
 

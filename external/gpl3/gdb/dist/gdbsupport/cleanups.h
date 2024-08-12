@@ -1,5 +1,5 @@
 /* Cleanups.
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,21 +19,12 @@
 #ifndef COMMON_CLEANUPS_H
 #define COMMON_CLEANUPS_H
 
-/* Outside of cleanups.c, this is an opaque type.  */
-struct cleanup;
+#include <functional>
 
-/* NOTE: cagney/2000-03-04: This typedef is strictly for the
-   make_cleanup function declarations below.  Do not use this typedef
-   as a cast when passing functions into the make_cleanup() code.
-   Instead either use a bounce function or add a wrapper function.
-   Calling a f(char*) function with f(void*) is non-portable.  */
-typedef void (make_cleanup_ftype) (void *);
+/* Register a function that will be called on exit.  */
+extern void add_final_cleanup (std::function<void ()> &&func);
 
-/* Function type for the dtor in make_cleanup_dtor.  */
-typedef void (make_cleanup_dtor_ftype) (void *);
-
-extern struct cleanup *make_final_cleanup (make_cleanup_ftype *, void *);
-
+/* Run all the registered functions.  */
 extern void do_final_cleanups ();
 
 #endif /* COMMON_CLEANUPS_H */

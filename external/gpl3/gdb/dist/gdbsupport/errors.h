@@ -1,6 +1,6 @@
 /* Declarations for error-reporting facilities.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -83,11 +83,18 @@ extern void internal_vwarning (const char *file, int line,
      ATTRIBUTE_PRINTF (3, 0);
 
 
-/* Like "error", but the error message is constructed by combining
-   STRING with the system error message for errno.  This function does
-   not return.  This function must be provided by the client.  */
+/* Return a newly allocated string, containing the PREFIX followed
+   by the system error message for errno (separated by a colon).
+   If ERRNUM is given, then use it in place of errno.  */
 
-extern void perror_with_name (const char *string) ATTRIBUTE_NORETURN;
+extern std::string perror_string (const char *prefix, int errnum = 0);
+
+/* Like "error", but the error message is constructed by combining
+   STRING with the system error message for errno.  If ERRNUM is given,
+   then use it in place of errno.  This function does not return.  */
+
+extern void perror_with_name (const char *string, int errnum = 0)
+    ATTRIBUTE_NORETURN;
 
 /* Call this function to handle memory allocation failures.  This
    function does not return.  This function must be provided by the
@@ -112,6 +119,13 @@ extern void flush_streams ();
    of GetLastError.  */
 
 extern const char *strwinerror (ULONGEST error);
+
+/* Like perror_with_name, but for Windows errors.  Throw an exception
+   including STRING and the system text for the given error
+   number.  */
+
+extern void throw_winerror_with_name (const char *string, ULONGEST err)
+  ATTRIBUTE_NORETURN;
 
 #endif /* USE_WIN32API */
 

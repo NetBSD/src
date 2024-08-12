@@ -1,5 +1,5 @@
 /* Low-level file-handling.
-   Copyright (C) 2012-2023 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -131,6 +131,10 @@ extern bool mkdir_recursive (const char *dir);
 
 /* Read the entire content of file PATH into an std::string.  */
 
-extern gdb::optional<std::string> read_text_file_to_string (const char *path);
+extern std::optional<std::string> read_text_file_to_string (const char *path);
+
+/* Read the remaining content from FILE into an std::string.  */
+
+extern std::string read_remainder_of_file (FILE *file);
 
 #endif /* COMMON_FILESTUFF_H */

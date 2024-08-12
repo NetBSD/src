@@ -1,4 +1,4 @@
-/* Copyright (C) 2014-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common-defs.h"
 #include "btrace-common.h"
 
 
@@ -134,8 +133,7 @@ btrace_data_append (struct btrace_data *dst,
 	case BTRACE_FORMAT_NONE:
 	  dst->format = BTRACE_FORMAT_BTS;
 	  dst->variant.bts.blocks = new std::vector<btrace_block>;
-
-	  /* Fall-through.  */
+	  [[fallthrough]];
 	case BTRACE_FORMAT_BTS:
 	  {
 	    unsigned int blk;
@@ -163,8 +161,7 @@ btrace_data_append (struct btrace_data *dst,
 	  dst->format = BTRACE_FORMAT_PT;
 	  dst->variant.pt.data = NULL;
 	  dst->variant.pt.size = 0;
-
-	  /* fall-through.  */
+	  [[fallthrough]];
 	case BTRACE_FORMAT_PT:
 	  {
 	    gdb_byte *data;

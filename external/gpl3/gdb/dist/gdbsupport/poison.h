@@ -1,6 +1,6 @@
 /* Poison symbols at compile time.
 
-   Copyright (C) 2017-2023 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -49,14 +49,12 @@ be a compile-time error.  */
 template<typename T>
 struct IsMemsettable
   : gdb::Or<std::is_void<T>,
-	    std::is_pod<T>>
+	    gdb::And<std::is_standard_layout<T>, std::is_trivial<T>>>
 {};
 
 template <typename T,
 	  typename = gdb::Requires<gdb::Not<IsMemsettable<T>>>>
 void *memset (T *s, int c, size_t n) = delete;
-
-#if HAVE_IS_TRIVIALLY_COPYABLE
 
 /* Similarly, poison memcpy and memmove of non trivially-copyable
    types, which is undefined.  */
@@ -83,17 +81,11 @@ template <typename D, typename S,
 	  typename = gdb::Requires<gdb::Not<BothAreRelocatable<D, S>>>>
 void *memmove (D *dest, const S *src, size_t n) = delete;
 
-#endif /* HAVE_IS_TRIVIALLY_COPYABLE */
-
 /* Poison XNEW and friends to catch usages of malloc-style allocations on
    objects that require new/delete.  */
 
 template<typename T>
-#if HAVE_IS_TRIVIALLY_CONSTRUCTIBLE
 using IsMallocable = std::is_trivially_constructible<T>;
-#else
-using IsMallocable = std::true_type;
-#endif
 
 template<typename T>
 using IsFreeable = gdb::Or<std::is_trivially_destructible<T>, std::is_void<T>>;

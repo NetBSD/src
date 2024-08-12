@@ -1,5 +1,5 @@
 /* Intrusive double linked list for GDB, the GNU debugger.
-   Copyright (C) 2021-2023 Free Software Foundation, Inc.
+   Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -86,7 +86,7 @@ struct intrusive_list_base_iterator
   using node_type = intrusive_list_node<T>;
 
   /* Create an iterator pointing to ELEM.  */
-  explicit intrusive_list_base_iterator (T *elem)
+  explicit intrusive_list_base_iterator (pointer elem)
     : m_elem (elem)
   {}
 
@@ -108,7 +108,7 @@ struct intrusive_list_base_iterator
   { return m_elem != other.m_elem; }
 
 protected:
-  static node_type *as_node (T *elem)
+  static node_type *as_node (pointer elem)
   { return AsNode::as_node (elem); }
 
   /* A past-end-the iterator points to the list's head.  */
@@ -347,9 +347,9 @@ public:
       return this->push_back_non_empty (elem);
 
     intrusive_list_node<T> *elem_node = as_node (&elem);
-    T *pos_elem = &*pos;
+    pointer pos_elem = &*pos;
     intrusive_list_node<T> *pos_node = as_node (pos_elem);
-    T *prev_elem = pos_node->prev;
+    pointer prev_elem = pos_node->prev;
     intrusive_list_node<T> *prev_node = as_node (prev_elem);
 
     gdb_assert (elem_node->next == INTRUSIVE_LIST_UNLINKED_VALUE);
@@ -374,11 +374,11 @@ public:
       }
 
     /* [A ... B] + [C ... D] */
-    T *b_elem = m_back;
+    pointer b_elem = m_back;
     node_type *b_node = as_node (b_elem);
-    T *c_elem = other.m_front;
+    pointer c_elem = other.m_front;
     node_type *c_node = as_node (c_elem);
-    T *d_elem = other.m_back;
+    pointer d_elem = other.m_back;
 
     b_node->next = c_elem;
     c_node->prev = b_elem;
@@ -402,7 +402,7 @@ public:
 
 private:
   /* Push ELEM in the list, knowing the list is empty.  */
-  void push_empty (T &elem)
+  void push_empty (reference elem)
   {
     gdb_assert (this->empty ());
 
@@ -418,7 +418,7 @@ private:
   }
 
   /* Push ELEM at the front of the list, knowing the list is not empty.  */
-  void push_front_non_empty (T &elem)
+  void push_front_non_empty (reference elem)
   {
     gdb_assert (!this->empty ());
 
@@ -435,7 +435,7 @@ private:
   }
 
   /* Push ELEM at the back of the list, knowing the list is not empty.  */
-  void push_back_non_empty (T &elem)
+  void push_back_non_empty (reference elem)
   {
     gdb_assert (!this->empty ());
 
@@ -451,7 +451,7 @@ private:
     m_back = &elem;
   }
 
-  void erase_element (T &elem)
+  void erase_element (reference elem)
   {
     intrusive_list_node<T> *elem_node = as_node (&elem);
 
@@ -585,13 +585,13 @@ public:
   }
 
 private:
-  static node_type *as_node (T *elem)
+  static node_type *as_node (pointer elem)
   {
     return AsNode::as_node (elem);
   }
 
-  T *m_front = nullptr;
-  T *m_back = nullptr;
+  pointer m_front = nullptr;
+  pointer m_back = nullptr;
 };
 
 #endif /* GDBSUPPORT_INTRUSIVE_LIST_H */

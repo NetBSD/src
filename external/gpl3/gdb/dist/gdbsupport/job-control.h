@@ -1,7 +1,7 @@
 /* Job control and terminal related functions, for GDB and gdbserver
    when running under Unix.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

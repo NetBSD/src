@@ -1,5 +1,5 @@
 dnl Autoconf configure script for GDB, the GNU debugger.
-dnl Copyright (C) 1995-2023 Free Software Foundation, Inc.
+dnl Copyright (C) 1995-2024 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
 dnl
@@ -44,7 +44,7 @@ build_warnings="-Wall -Wpointer-arith \
 -Wno-mismatched-tags \
 -Wno-error=deprecated-register \
 -Wsuggest-override \
--Wimplicit-fallthrough=3 \
+-Wimplicit-fallthrough=5 \
 -Wduplicated-cond \
 -Wshadow=local \
 -Wdeprecated-copy \
@@ -52,6 +52,7 @@ build_warnings="-Wall -Wpointer-arith \
 -Wredundant-move \
 -Wmissing-declarations \
 -Wstrict-null-sentinel \
+-Wno-vla-cxx-extension \
 "
 
 # The -Wmissing-prototypes flag will be accepted by GCC, but results
