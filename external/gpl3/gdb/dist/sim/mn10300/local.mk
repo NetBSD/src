@@ -1,6 +1,6 @@
 ## See sim/Makefile.am
 ##
-## Copyright (C) 1996-2023 Free Software Foundation, Inc.
+## Copyright (C) 1996-2024 Free Software Foundation, Inc.
 ## Written by Cygnus Support.
 ##
 ## This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,38 @@
 ## You should have received a copy of the GNU General Public License
 ## along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+AM_CPPFLAGS_%C% = \
+	-DPOLL_QUIT_INTERVAL=0x20 \
+	-DWITH_TARGET_WORD_BITSIZE=32 -DWITH_TARGET_WORD_MSB=31
+
+nodist_%C%_libsim_a_SOURCES = \
+	%D%/modules.c
+%C%_libsim_a_SOURCES = \
+	$(common_libcommon_a_SOURCES)
+%C%_libsim_a_LIBADD = \
+	%D%/itable.o \
+	%D%/semantics.o \
+	%D%/idecode.o \
+	%D%/icache.o \
+	%D%/engine.o \
+	%D%/irun.o \
+	%D%/support.o \
+	$(patsubst %,%D%/%,$(SIM_NEW_COMMON_OBJS)) \
+	$(patsubst %,%D%/dv-%.o,$(SIM_HW_DEVICES)) \
+	$(patsubst %,%D%/dv-%.o,$(%C%_SIM_EXTRA_HW_DEVICES)) \
+	%D%/interp.o \
+	%D%/op_utils.o \
+	%D%/sim-resume.o
+$(%C%_libsim_a_OBJECTS) $(%C%_libsim_a_LIBADD): %D%/hw-config.h
+
+noinst_LIBRARIES += %D%/libsim.a
+
+## Override wildcards that trigger common/modules.c to be (incorrectly) used.
+%D%/modules.o: %D%/modules.c
+
+%D%/%.o: common/%.c ; $(SIM_COMPILE)
+-@am__include@ %D%/$(DEPDIR)/*.Po
+
 %C%_run_SOURCES =
 %C%_run_LDADD = \
 	%D%/nrun.o \
@@ -24,6 +56,17 @@
 
 noinst_PROGRAMS += %D%/run
 
+%C%_SIM_EXTRA_HW_DEVICES = mn103cpu mn103int mn103tim mn103ser mn103iop
+
+## List all generated headers to help Automake dependency tracking.
+BUILT_SOURCES += \
+	%D%/icache.h \
+	%D%/idecode.h \
+	%D%/semantics.h \
+	%D%/model.h \
+	%D%/support.h \
+	%D%/itable.h \
+	%D%/engine.h
 %C%_BUILT_SRC_FROM_IGEN = \
 	%D%/icache.h \
 	%D%/icache.c \
@@ -44,8 +87,8 @@ noinst_PROGRAMS += %D%/run
 	$(%C%_BUILT_SRC_FROM_IGEN) \
 	%D%/stamp-igen
 
-## This makes sure build tools are available before building the arch-subdirs.
-SIM_ALL_RECURSIVE_DEPS += $(%C%_BUILD_OUTPUTS)
+## Generating modules.c requires all sources to scan.
+%D%/modules.c: | $(%C%_BUILD_OUTPUTS)
 
 $(%C%_BUILT_SRC_FROM_IGEN): %D%/stamp-igen
 
@@ -63,36 +106,21 @@ $(%C%_BUILT_SRC_FROM_IGEN): %D%/stamp-igen
 		-i $(%C%_IGEN_INSN) \
 		-o $(%C%_IGEN_DC) \
 		-x \
-		-n icache.h    -hc %D%/tmp-icache.h \
-		-n icache.c    -c  %D%/tmp-icache.c \
-		-n semantics.h -hs %D%/tmp-semantics.h \
-		-n semantics.c -s  %D%/tmp-semantics.c \
-		-n idecode.h   -hd %D%/tmp-idecode.h \
-		-n idecode.c   -d  %D%/tmp-idecode.c \
-		-n model.h     -hm %D%/tmp-model.h \
-		-n model.c     -m  %D%/tmp-model.c \
-		-n support.h   -hf %D%/tmp-support.h \
-		-n support.c   -f  %D%/tmp-support.c \
-		-n itable.h    -ht %D%/tmp-itable.h \
-		-n itable.c    -t  %D%/tmp-itable.c \
-		-n engine.h    -he %D%/tmp-engine.h \
-		-n engine.c    -e  %D%/tmp-engine.c \
-		-n irun.c      -r  %D%/tmp-irun.c
-	$(AM_V_at)$(SHELL) $(srcroot)/move-if-change %D%/tmp-icache.h %D%/icache.h
-	$(AM_V_at)$(SHELL) $(srcroot)/move-if-change %D%/tmp-icache.c %D%/icache.c
-	$(AM_V_at)$(SHELL) $(srcroot)/move-if-change %D%/tmp-idecode.h %D%/idecode.h
-	$(AM_V_at)$(SHELL) $(srcroot)/move-if-change %D%/tmp-idecode.c %D%/idecode.c
-	$(AM_V_at)$(SHELL) $(srcroot)/move-if-change %D%/tmp-semantics.h %D%/semantics.h
-	$(AM_V_at)$(SHELL) $(srcroot)/move-if-change %D%/tmp-semantics.c %D%/semantics.c
-	$(AM_V_at)$(SHELL) $(srcroot)/move-if-change %D%/tmp-model.h %D%/model.h
-	$(AM_V_at)$(SHELL) $(srcroot)/move-if-change %D%/tmp-model.c %D%/model.c
-	$(AM_V_at)$(SHELL) $(srcroot)/move-if-change %D%/tmp-support.h %D%/support.h
-	$(AM_V_at)$(SHELL) $(srcroot)/move-if-change %D%/tmp-support.c %D%/support.c
-	$(AM_V_at)$(SHELL) $(srcroot)/move-if-change %D%/tmp-itable.h %D%/itable.h
-	$(AM_V_at)$(SHELL) $(srcroot)/move-if-change %D%/tmp-itable.c %D%/itable.c
-	$(AM_V_at)$(SHELL) $(srcroot)/move-if-change %D%/tmp-engine.h %D%/engine.h
-	$(AM_V_at)$(SHELL) $(srcroot)/move-if-change %D%/tmp-engine.c %D%/engine.c
-	$(AM_V_at)$(SHELL) $(srcroot)/move-if-change %D%/tmp-irun.c %D%/irun.c
+		-n icache.h    -hc %D%/icache.h \
+		-n icache.c    -c  %D%/icache.c \
+		-n semantics.h -hs %D%/semantics.h \
+		-n semantics.c -s  %D%/semantics.c \
+		-n idecode.h   -hd %D%/idecode.h \
+		-n idecode.c   -d  %D%/idecode.c \
+		-n model.h     -hm %D%/model.h \
+		-n model.c     -m  %D%/model.c \
+		-n support.h   -hf %D%/support.h \
+		-n support.c   -f  %D%/support.c \
+		-n itable.h    -ht %D%/itable.h \
+		-n itable.c    -t  %D%/itable.c \
+		-n engine.h    -he %D%/engine.h \
+		-n engine.c    -e  %D%/engine.c \
+		-n irun.c      -r  %D%/irun.c
 	$(AM_V_at)touch $@
 
 MOSTLYCLEANFILES += $(%C%_BUILD_OUTPUTS)

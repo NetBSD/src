@@ -4024,8 +4024,8 @@
       sp += 4;
     }
 
-  if (STATE_ARCHITECTURE (sd)->mach == bfd_mach_am33
-      || STATE_ARCHITECTURE (sd)->mach == bfd_mach_am33_2
+  if (STATE_ARCHITECTURE (SD)->mach == bfd_mach_am33
+      || STATE_ARCHITECTURE (SD)->mach == bfd_mach_am33_2
       )
     {
       if (mask & 0x1)
@@ -4080,8 +4080,8 @@
   PC = cia;
   mask = REGS;
 
-  if (STATE_ARCHITECTURE (sd)->mach == bfd_mach_am33
-      || STATE_ARCHITECTURE (sd)->mach == bfd_mach_am33_2
+  if (STATE_ARCHITECTURE (SD)->mach == bfd_mach_am33
+      || STATE_ARCHITECTURE (SD)->mach == bfd_mach_am33_2
       )
     {
       if (mask & 0x4)
@@ -4183,8 +4183,8 @@
 
   mask = REGS;
 
-  if (STATE_ARCHITECTURE (sd)->mach == bfd_mach_am33
-      || STATE_ARCHITECTURE (sd)->mach == bfd_mach_am33_2
+  if (STATE_ARCHITECTURE (SD)->mach == bfd_mach_am33
+      || STATE_ARCHITECTURE (SD)->mach == bfd_mach_am33_2
       )
     {
       if (mask & 0x4)
@@ -4293,8 +4293,8 @@
 
   mask = REGS;
 
-  if (STATE_ARCHITECTURE (sd)->mach == bfd_mach_am33
-      || STATE_ARCHITECTURE (sd)->mach == bfd_mach_am33_2
+  if (STATE_ARCHITECTURE (SD)->mach == bfd_mach_am33
+      || STATE_ARCHITECTURE (SD)->mach == bfd_mach_am33_2
       )
     {
       if (mask & 0x4)
@@ -4401,8 +4401,8 @@
   offset = -4;
   mask = REGS;
 
-  if (STATE_ARCHITECTURE (sd)->mach == bfd_mach_am33
-      || STATE_ARCHITECTURE (sd)->mach == bfd_mach_am33_2
+  if (STATE_ARCHITECTURE (SD)->mach == bfd_mach_am33
+      || STATE_ARCHITECTURE (SD)->mach == bfd_mach_am33_2
       )
     {
 
@@ -4507,8 +4507,8 @@
   offset = -4;
   mask = REGS;
 
-  if (STATE_ARCHITECTURE (sd)->mach == bfd_mach_am33
-      || STATE_ARCHITECTURE (sd)->mach == bfd_mach_am33_2
+  if (STATE_ARCHITECTURE (SD)->mach == bfd_mach_am33
+      || STATE_ARCHITECTURE (SD)->mach == bfd_mach_am33_2
       )
     {
 
