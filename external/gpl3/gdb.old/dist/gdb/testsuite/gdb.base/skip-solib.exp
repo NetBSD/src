@@ -1,4 +1,4 @@
-#   Copyright 2011-2020 Free Software Foundation, Inc.
+#   Copyright 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,8 +20,9 @@
 #
 
 # This only works on GNU/Linux.
-if { ![isnative] || [is_remote host] || ![istarget *-linux*] || [skip_shlib_tests]} {
-    continue
+if { ![isnative] || [is_remote host] || ![istarget *-linux*]
+     || [skip_shlib_tests]} {
+    return
 }
 
 set test "skip-solib"
@@ -39,82 +40,79 @@ set binfile_lib [standard_output_file ${libname}.so]
 # the main program.
 #
 
-if {[gdb_compile_shlib ${srcdir}/${subdir}/${srcfile_lib} ${binfile_lib} [list debug additional_flags=-fPIC -Wl,-soname,${libname}.so]] != ""} {
+if {[gdb_compile_shlib ${srcdir}/${subdir}/${srcfile_lib} ${binfile_lib} \
+	 [list debug]] != ""} {
     return -1
 }
 
-if {[gdb_compile "${srcdir}/${subdir}/${srcfile_main}" "${binfile_main}.o" object debug] != ""} {
+if {[gdb_compile "${srcdir}/${subdir}/${srcfile_main}" "${binfile_main}.o" \
+	 object debug] != ""} {
     return -1
 }
 
 set testobjdir [standard_output_file {}]
 if {[gdb_compile "${binfile_main}.o" "${binfile_main}" executable \
-                 [list debug "additional_flags=-L$testobjdir -l${test} \
-                                               -Wl,-rpath=$testobjdir"]] != ""} {
+	 [list debug "additional_flags=-L$testobjdir" \
+	      "additional_flags=-l${test}" \
+	      "ldflags=-Wl,-rpath=$testobjdir"]] != ""} {
     return -1
 }
 
-clean_restart ${executable_main}
+#
+# Test ignoring of a file inside a solib.
+#
+with_test_prefix "ignoring solib file" {
+
+    clean_restart ${executable_main}
+
+    gdb_test "skip file ${srcfile_lib}" \
+	"File ${srcfile_lib} will be skipped when stepping." \
+	"skip file"
+
+    gdb_test "info skip" \
+	[multi_line \
+	     "Num\\s+Enb\\s+Glob\\s+File\\s+RE\\s+Function\\s*" \
+	     "1\\s+y\\s+n\\s+${srcfile_lib}\\s+n\\s+<none>\\s*"]
+
+    if ![runto_main] {
+	return
+    }
+
+    #
+    # We shouldn't step into square(), since we skipped skip-solib-lib.c.
+    #
+    gdb_test "step" ""
+    gdb_test "bt" "#0\\s+main.*"
+}
 
 #
-# At this point, if we try to skip the file ${srcfile_lib} or the function
-# multiply(), we should get a prompt asking us if we want to enable the
-# skip entry pending a shared library load.
+# Now test ignoring of a function inside a solib.
 #
+with_test_prefix "ignoring solib function" {
+    clean_restart ${executable_main}
 
-gdb_test "skip file ${srcfile_lib}" \
-  "File ${srcfile_lib} will be skipped when stepping." \
-  "ignoring file in solib" \
-  "No source file named ${srcfile_lib}.*
-Ignore file pending future shared library load.*" \
-  "y"
+    gdb_test "skip function multiply" \
+	"Function multiply will be skipped when stepping\\." \
+	"skip function"
 
-#
-# Checkinfo skip list.
-#
-gdb_test "info skip" \
-  "Num\\s+Enb\\s+Glob\\s+File\\s+RE\\s+Function\\s*
-1\\s+y\\s+n\\s+${srcfile_lib}\\s+n\\s+<none>\\s*" \
-  "info skip with pending file"
+    if ![runto_main] {
+	return
+    }
 
-if ![runto_main] { fail "skip tests suppressed" }
+    #
+    # Our first step should take us into square.
+    #
+    gdb_test "step" "square.*" "step into other function"
 
-#
-# We shouldn't step into square(), since we skipped skip-solib-lib.c.
-#
-gdb_test "step" ""
-gdb_test "bt" "#0\\s+main.*" "step after ignoring solib file."
+    gdb_test "info skip" \
+	[multi_line \
+	     "Num\\s+Enb\\s+Glob\\s+File\\s+RE\\s+Function\\s*" \
+	     "1\\s+y\\s+n\\s+<none>\\s+n\\s+multiply\\s*"]
 
-#
-# Now restart gdb and testing ignoring of a function inside a solib.
-#
-clean_restart ${executable_main}
-
-gdb_test "skip function multiply" \
-  "Function multiply will be skipped when stepping\\." \
-  "ignoring function in solib" \
-"No function found named multiply..*
-Ignore function pending future shared library load.*" \
-  "y"
-
-if ![runto_main] { fail "skip tests suppressed" }
-
-#
-# Our first step should take us into square.
-#
-gdb_test "step" "square.*"
-
-#
-# Now our entry should no longer be pending.
-#
-gdb_test "info skip" \
-  "Num\\s+Enb\\s+Glob\\s+File\\s+RE\\s+Function\\s*
-1\\s+y\\s+n\\s+<none>\\s+n\\s+multiply\\s*" \
-  "info skip for function multiply"
-
-#
-# This step shouldn't go into multiply -- we should skip it and go on to the
-# last line of square.
-#
-gdb_test "step" ""
-gdb_test "bt" "#0\\s+square.*"
+    #
+    # This step shouldn't go into multiply -- we should skip it and go on to
+    # the last line of square.
+    #
+    gdb_test "step" ""
+    gdb_test "bt" "#0\\s+square.*"
+}

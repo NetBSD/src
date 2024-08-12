@@ -1,5 +1,5 @@
 /* MI Command Set - symbol commands.
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -50,16 +50,16 @@ mi_cmd_symbol_list_lines (const char *command, char **argv, int argc)
      already sorted by increasing values in the symbol table, so no
      need to perform any other sorting.  */
 
-  gdbarch = SYMTAB_OBJFILE (s)->arch ();
+  gdbarch = s->compunit ()->objfile ()->arch ();
 
   ui_out_emit_list list_emitter (uiout, "lines");
-  if (SYMTAB_LINETABLE (s) != NULL && SYMTAB_LINETABLE (s)->nitems > 0)
-    for (i = 0; i < SYMTAB_LINETABLE (s)->nitems; i++)
-    {
-      ui_out_emit_tuple tuple_emitter (uiout, NULL);
-      uiout->field_core_addr ("pc", gdbarch, SYMTAB_LINETABLE (s)->item[i].pc);
-      uiout->field_signed ("line", SYMTAB_LINETABLE (s)->item[i].line);
-    }
+  if (s->linetable () != NULL && s->linetable ()->nitems > 0)
+    for (i = 0; i < s->linetable ()->nitems; i++)
+      {
+	ui_out_emit_tuple tuple_emitter (uiout, NULL);
+	uiout->field_core_addr ("pc", gdbarch, s->linetable ()->item[i].pc);
+	uiout->field_signed ("line", s->linetable ()->item[i].line);
+      }
 }
 
 /* Used by the -symbol-info-* and -symbol-info-module-* commands to print
@@ -74,14 +74,14 @@ output_debug_symbol (ui_out *uiout, enum search_domain kind,
 {
   ui_out_emit_tuple tuple_emitter (uiout, NULL);
 
-  if (SYMBOL_LINE (sym) != 0)
-    uiout->field_unsigned ("line", SYMBOL_LINE (sym));
+  if (sym->line () != 0)
+    uiout->field_unsigned ("line", sym->line ());
   uiout->field_string ("name", sym->print_name ());
 
   if (kind == FUNCTIONS_DOMAIN || kind == VARIABLES_DOMAIN)
     {
       string_file tmp_stream;
-      type_print (SYMBOL_TYPE (sym), "", &tmp_stream, -1);
+      type_print (sym->type (), "", &tmp_stream, -1);
       uiout->field_string ("type", tmp_stream.string ());
 
       std::string str = symbol_to_info_string (sym, block, kind);
@@ -100,7 +100,7 @@ output_nondebug_symbol (ui_out *uiout,
   ui_out_emit_tuple tuple_emitter (uiout, NULL);
 
   uiout->field_core_addr ("address", gdbarch,
-			  BMSYMBOL_VALUE_ADDRESS (msymbol));
+			  msymbol.value_address ());
   uiout->field_string ("name", msymbol.minsym->print_name ());
 }
 
@@ -132,7 +132,7 @@ mi_symbol_info (enum search_domain kind, const char *name_regexp,
       /* As long as we have debug symbols...  */
       while (i < symbols.size () && symbols[i].msymbol.minsym == nullptr)
 	{
-	  symtab *symtab = symbol_symtab (symbols[i].symbol);
+	  symtab *symtab = symbols[i].symbol->symtab ();
 	  ui_out_emit_tuple symtab_tuple_emitter (uiout, nullptr);
 
 	  uiout->field_string ("filename",
@@ -144,7 +144,7 @@ mi_symbol_info (enum search_domain kind, const char *name_regexp,
 	  /* As long as we have debug symbols from this symtab...  */
 	  for (; (i < symbols.size ()
 		  && symbols[i].msymbol.minsym == nullptr
-		  && symbol_symtab (symbols[i].symbol) == symtab);
+		  && symbols[i].symbol->symtab () == symtab);
 	       ++i)
 	    {
 	      symbol_search &s = symbols[i];
@@ -256,7 +256,7 @@ output_module_symbols_in_single_module_and_file
 
   /* The symbol for the first result, and the symtab in which it resides.  */
   const symbol *first_result_symbol = iter->second.symbol;
-  symtab *first_symbtab = symbol_symtab (first_result_symbol);
+  symtab *first_symbtab = first_result_symbol->symtab ();
 
   /* Formatted output.  */
   ui_out_emit_tuple current_file (uiout, nullptr);
@@ -269,7 +269,7 @@ output_module_symbols_in_single_module_and_file
      we change module, or we change symtab.  */
   for (; (iter != end
 	  && first_module_symbol == iter->first.symbol
-	  && first_symbtab == symbol_symtab (iter->second.symbol));
+	  && first_symbtab == iter->second.symbol->symtab ());
        ++iter)
     output_debug_symbol (uiout, kind, iter->second.symbol,
 			 iter->second.block);

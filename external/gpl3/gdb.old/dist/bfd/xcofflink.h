@@ -1,5 +1,5 @@
 /* POWER/PowerPC XCOFF linker support.
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -18,24 +18,43 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-extern bfd_boolean bfd_xcoff_split_import_path
+/* Used to pass info between ld and bfd.  */
+struct bfd_xcoff_link_params
+{
+  /* Linker stub bfd.  */
+  bfd *stub_bfd;
+
+  /* Linker call-backs.  */
+  asection * (*add_stub_section) (const char *, asection *);
+  void (*layout_sections_again) (void);
+};
+
+extern bool bfd_xcoff_split_import_path
   (bfd *, const char *, const char **, const char **);
-extern bfd_boolean bfd_xcoff_set_archive_import_path
+extern bool bfd_xcoff_set_archive_import_path
   (struct bfd_link_info *, bfd *, const char *);
-extern bfd_boolean bfd_xcoff_link_record_set
+extern bool bfd_xcoff_link_record_set
   (bfd *, struct bfd_link_info *, struct bfd_link_hash_entry *, bfd_size_type);
-extern bfd_boolean bfd_xcoff_import_symbol
+extern bool bfd_xcoff_import_symbol
   (bfd *, struct bfd_link_info *, struct bfd_link_hash_entry *, bfd_vma,
    const char *, const char *, const char *, unsigned int);
-extern bfd_boolean bfd_xcoff_export_symbol
+extern bool bfd_xcoff_export_symbol
   (bfd *, struct bfd_link_info *, struct bfd_link_hash_entry *);
-extern bfd_boolean bfd_xcoff_link_count_reloc
+extern bool bfd_xcoff_link_count_reloc
   (bfd *, struct bfd_link_info *, const char *);
-extern bfd_boolean bfd_xcoff_record_link_assignment
+extern bool bfd_xcoff_record_link_assignment
   (bfd *, struct bfd_link_info *, const char *);
-extern bfd_boolean bfd_xcoff_size_dynamic_sections
+extern bool bfd_xcoff_size_dynamic_sections
   (bfd *, struct bfd_link_info *, const char *, const char *,
-   unsigned long, unsigned long, unsigned long, bfd_boolean,
-   int, bfd_boolean, unsigned int, struct bfd_section **, bfd_boolean);
-extern bfd_boolean bfd_xcoff_link_generate_rtinit
-  (bfd *, const char *, const char *, bfd_boolean);
+   unsigned long, unsigned long, unsigned long, bool,
+   int, bool, unsigned int, struct bfd_section **, bool);
+extern bool bfd_xcoff_build_dynamic_sections
+  (bfd *, struct bfd_link_info *);
+extern bool bfd_xcoff_link_generate_rtinit
+  (bfd *, const char *, const char *, bool);
+extern bool bfd_xcoff_link_init
+  (struct bfd_link_info *, struct bfd_xcoff_link_params *);
+extern bool bfd_xcoff_size_stubs
+  (struct bfd_link_info *info);
+extern bool bfd_xcoff_build_stubs
+  (struct bfd_link_info *info);

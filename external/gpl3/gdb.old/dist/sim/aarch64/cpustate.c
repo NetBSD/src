@@ -1,6 +1,6 @@
 /* cpustate.h -- Prototypes for AArch64 simulator functions.
 
-   Copyright (C) 2015-2020 Free Software Foundation, Inc.
+   Copyright (C) 2015-2023 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -19,10 +19,14 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include <stdio.h>
 #include <math.h>
 
 #include "sim-main.h"
+#include "sim-signal.h"
 #include "cpustate.h"
 #include "simulator.h"
 #include "libiberty.h"
@@ -379,7 +383,7 @@ aarch64_set_FP_float (sim_cpu *cpu, VReg reg, float val)
 
       v.s = val;
       TRACE_REGISTER (cpu,
-		      "FR[%d].s changes from %f to %f [hex: %0lx]",
+		      "FR[%d].s changes from %f to %f [hex: %0" PRIx64 "]",
 		      reg, cpu->fr[reg].s, val, v.v[0]);
     }
 
@@ -397,7 +401,7 @@ aarch64_set_FP_double (sim_cpu *cpu, VReg reg, double val)
 
       v.d = val;
       TRACE_REGISTER (cpu,
-		      "FR[%d].d changes from %f to %f [hex: %0lx]",
+		      "FR[%d].d changes from %f to %f [hex: %0" PRIx64 "]",
 		      reg, cpu->fr[reg].d, val, v.v[0]);
     }
   cpu->fr[reg].d = val;
@@ -409,7 +413,8 @@ aarch64_set_FP_long_double (sim_cpu *cpu, VReg reg, FRegister a)
   if (cpu->fr[reg].v[0] != a.v[0]
       || cpu->fr[reg].v[1] != a.v[1])
     TRACE_REGISTER (cpu,
-		    "FR[%d].q changes from [%0lx %0lx] to [%0lx %0lx] ",
+		    "FR[%d].q changes from [%0" PRIx64 " %0" PRIx64 "] to [%0"
+		    PRIx64 " %0" PRIx64 "] ",
 		    reg,
 		    cpu->fr[reg].v[0], cpu->fr[reg].v[1],
 		    a.v[0], a.v[1]);
@@ -518,7 +523,7 @@ aarch64_get_vec_double (sim_cpu *cpu, VReg reg, unsigned element)
 void
 aarch64_set_vec_u64 (sim_cpu *cpu, VReg reg, unsigned element, uint64_t val)
 {
-  SET_VEC_ELEMENT (reg, element, val, v, "%16lx");
+  SET_VEC_ELEMENT (reg, element, val, v, "%16" PRIx64);
 }
 
 void
@@ -542,7 +547,7 @@ aarch64_set_vec_u8 (sim_cpu *cpu, VReg reg, unsigned element, uint8_t val)
 void
 aarch64_set_vec_s64 (sim_cpu *cpu, VReg reg, unsigned element, int64_t val)
 {
-  SET_VEC_ELEMENT (reg, element, val, V, "%16lx");
+  SET_VEC_ELEMENT (reg, element, val, V, "%16" PRIx64);
 }
 
 void

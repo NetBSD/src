@@ -1,5 +1,5 @@
 /* BFD support for the ns32k architecture.
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2022 Free Software Foundation, Inc.
    Almost totally rewritten by Ian Dall from initial work
    by Andrew Cagney.
 
@@ -31,11 +31,11 @@
 
 static const bfd_arch_info_type arch_info_struct[] =
 {
-  N (32532, "ns32k:32532", TRUE, 0), /* The word ns32k will match this too.  */
+  N (32532, "ns32k:32532", true, 0), /* The word ns32k will match this too.  */
 };
 
 const bfd_arch_info_type bfd_ns32k_arch =
-  N (32032, "ns32k:32032", FALSE, &arch_info_struct[0]);
+  N (32032, "ns32k:32032", false, &arch_info_struct[0]);
 
 bfd_vma
 _bfd_ns32k_get_displacement (bfd_byte *buffer, int size)
@@ -508,9 +508,12 @@ do_ns32k_reloc (bfd *      abfd,
   x = ( (x & ~howto->dst_mask) | (((x & howto->src_mask) +  relocation) & howto->dst_mask))
 
   location = (bfd_byte *) data + addr;
-  switch (howto->size)
+  switch (bfd_get_reloc_size (howto))
     {
     case 0:
+      break;
+
+    case 1:
       {
 	bfd_vma x = get_data (location, 1);
 	DOIT (x);
@@ -518,7 +521,7 @@ do_ns32k_reloc (bfd *      abfd,
       }
       break;
 
-    case 1:
+    case 2:
       if (relocation)
 	{
 	  bfd_vma x = get_data (location, 2);
@@ -526,7 +529,7 @@ do_ns32k_reloc (bfd *      abfd,
 	  put_data ((bfd_vma) x, location, 2);
 	}
       break;
-    case 2:
+    case 4:
       if (relocation)
 	{
 	  bfd_vma x = get_data (location, 4);
@@ -535,11 +538,7 @@ do_ns32k_reloc (bfd *      abfd,
 	}
       break;
 
-    case 3:
-      /* Do nothing.  */
-      break;
-
-    case 4:
+    case 8:
 #ifdef BFD64
       if (relocation)
 	{
@@ -572,11 +571,9 @@ _bfd_do_ns32k_reloc_contents (reloc_howto_type *howto,
 {
   int size;
   bfd_vma x;
-  bfd_boolean overflow;
+  bool overflow;
 
-  /* If the size is negative, negate RELOCATION.  This isn't very
-     general.  */
-  if (howto->size < 0)
+  if (howto->negate)
     relocation = -relocation;
 
   /* Get the value we are going to relocate.  */
@@ -601,7 +598,7 @@ _bfd_do_ns32k_reloc_contents (reloc_howto_type *howto,
      which we don't check for.  We must either check at every single
      operation, which would be tedious, or we must do the computations
      in a type larger than bfd_vma, which would be inefficient.  */
-  overflow = FALSE;
+  overflow = false;
   if (howto->complain_on_overflow != complain_overflow_dont)
     {
       bfd_vma check;
@@ -676,7 +673,7 @@ _bfd_do_ns32k_reloc_contents (reloc_howto_type *howto,
 
 	    if (signed_check > reloc_signed_max
 		|| signed_check < reloc_signed_min)
-	      overflow = TRUE;
+	      overflow = true;
 	  }
 	  break;
 	case complain_overflow_unsigned:
@@ -688,7 +685,7 @@ _bfd_do_ns32k_reloc_contents (reloc_howto_type *howto,
 	    (((1 << (howto->bitsize - 1)) - 1) << 1) | 1;
 
 	    if (check > reloc_unsigned_max)
-	      overflow = TRUE;
+	      overflow = true;
 	  }
 	  break;
 	case complain_overflow_bitfield:
@@ -701,7 +698,7 @@ _bfd_do_ns32k_reloc_contents (reloc_howto_type *howto,
 	    if ((check & ~reloc_bits) != 0
 		&& (((bfd_vma) signed_check & ~reloc_bits)
 		    != (-(bfd_vma) 1 & ~reloc_bits)))
-	      overflow = TRUE;
+	      overflow = true;
 	  }
 	  break;
 	default:

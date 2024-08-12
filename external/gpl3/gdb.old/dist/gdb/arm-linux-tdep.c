@@ -1,6 +1,6 @@
 /* GNU/Linux on ARM target support.
 
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,6 +32,7 @@
 #include "breakpoint.h"
 #include "auxv.h"
 #include "xml-syscall.h"
+#include "expop.h"
 
 #include "aarch32-tdep.h"
 #include "arch/arm.h"
@@ -276,7 +277,7 @@ static struct arm_get_next_pcs_ops arm_linux_get_next_pcs_ops = {
 };
 
 static void
-arm_linux_sigtramp_cache (struct frame_info *this_frame,
+arm_linux_sigtramp_cache (frame_info_ptr this_frame,
 			  struct trad_frame_cache *this_cache,
 			  CORE_ADDR func, int regs_offset)
 {
@@ -299,7 +300,7 @@ arm_linux_sigtramp_cache (struct frame_info *this_frame,
 /* See arm-linux.h for stack layout details.  */
 static void
 arm_linux_sigreturn_init (const struct tramp_frame *self,
-			  struct frame_info *this_frame,
+			  frame_info_ptr this_frame,
 			  struct trad_frame_cache *this_cache,
 			  CORE_ADDR func)
 {
@@ -319,7 +320,7 @@ arm_linux_sigreturn_init (const struct tramp_frame *self,
 
 static void
 arm_linux_rt_sigreturn_init (const struct tramp_frame *self,
-			  struct frame_info *this_frame,
+			  frame_info_ptr this_frame,
 			  struct trad_frame_cache *this_cache,
 			  CORE_ADDR func)
 {
@@ -342,7 +343,7 @@ arm_linux_rt_sigreturn_init (const struct tramp_frame *self,
 
 static void
 arm_linux_restart_syscall_init (const struct tramp_frame *self,
-				struct frame_info *this_frame,
+				frame_info_ptr this_frame,
 				struct trad_frame_cache *this_cache,
 				CORE_ADDR func)
 {
@@ -711,7 +712,7 @@ arm_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
 					void *cb_data,
 					const struct regcache *regcache)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  arm_gdbarch_tdep *tdep = gdbarch_tdep<arm_gdbarch_tdep> (gdbarch);
 
   cb (".reg", ARM_LINUX_SIZEOF_GREGSET, ARM_LINUX_SIZEOF_GREGSET,
       &arm_linux_gregset, NULL, cb_data);
@@ -728,21 +729,22 @@ arm_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
 
 static const struct target_desc *
 arm_linux_core_read_description (struct gdbarch *gdbarch,
-                                 struct target_ops *target,
-                                 bfd *abfd)
+				 struct target_ops *target,
+				 bfd *abfd)
 {
-  CORE_ADDR arm_hwcap = linux_get_hwcap (target);
+  gdb::optional<gdb::byte_vector> auxv = target_read_auxv_raw (target);
+  CORE_ADDR arm_hwcap = linux_get_hwcap (auxv, target, gdbarch);
 
   if (arm_hwcap & HWCAP_VFP)
     {
       /* NEON implies VFPv3-D32 or no-VFP unit.  Say that we only support
-         Neon with VFPv3-D32.  */
+	 Neon with VFPv3-D32.  */
       if (arm_hwcap & HWCAP_NEON)
 	return aarch32_read_description ();
       else if ((arm_hwcap & (HWCAP_VFPv3 | HWCAP_VFPv3D16)) == HWCAP_VFPv3)
-	return arm_read_description (ARM_FP_TYPE_VFPV3);
+	return arm_read_description (ARM_FP_TYPE_VFPV3, false);
 
-      return arm_read_description (ARM_FP_TYPE_VFPV2);
+      return arm_read_description (ARM_FP_TYPE_VFPV2, false);
     }
 
   return nullptr;
@@ -754,7 +756,7 @@ arm_linux_core_read_description (struct gdbarch *gdbarch,
    will return to ARM or Thumb code.  Return 0 if it is not a
    rt_sigreturn/sigreturn syscall.  */
 static int
-arm_linux_sigreturn_return_addr (struct frame_info *frame,
+arm_linux_sigreturn_return_addr (frame_info_ptr frame,
 				 unsigned long svc_number,
 				 CORE_ADDR *pc, int *is_thumb)
 {
@@ -850,12 +852,12 @@ arm_linux_get_syscall_number (struct gdbarch *gdbarch,
 
       if (svc_operand)
 	{
-          /* OABI */
+	  /* OABI */
 	  svc_number = svc_operand - 0x900000;
 	}
       else
 	{
-          /* EABI */
+	  /* EABI */
 	  regcache_cooked_read_unsigned (regs, 7, &svc_number);
 	}
     }
@@ -946,7 +948,7 @@ arm_linux_software_single_step (struct regcache *regcache)
 static void
 arm_linux_cleanup_svc (struct gdbarch *gdbarch,
 		       struct regcache *regs,
-		       arm_displaced_step_closure *dsc)
+		       arm_displaced_step_copy_insn_closure *dsc)
 {
   ULONGEST apparent_pc;
   int within_scratch;
@@ -957,15 +959,11 @@ arm_linux_cleanup_svc (struct gdbarch *gdbarch,
 		    && apparent_pc < (dsc->scratch_base
 				      + ARM_DISPLACED_MODIFIED_INSNS * 4 + 4));
 
-  if (debug_displaced)
-    {
-      fprintf_unfiltered (gdb_stdlog, "displaced: PC is apparently %.8lx after "
-			  "SVC step ", (unsigned long) apparent_pc);
-      if (within_scratch)
-        fprintf_unfiltered (gdb_stdlog, "(within scratch space)\n");
-      else
-        fprintf_unfiltered (gdb_stdlog, "(outside scratch space)\n");
-    }
+  displaced_debug_printf ("PC is apparently %.8lx after SVC step %s",
+			  (unsigned long) apparent_pc,
+			  (within_scratch
+			   ? "(within scratch space)"
+			   : "(outside scratch space)"));
 
   if (within_scratch)
     displaced_write_reg (regs, dsc, ARM_PC_REGNUM,
@@ -974,11 +972,11 @@ arm_linux_cleanup_svc (struct gdbarch *gdbarch,
 
 static int
 arm_linux_copy_svc (struct gdbarch *gdbarch, struct regcache *regs,
-		    arm_displaced_step_closure *dsc)
+		    arm_displaced_step_copy_insn_closure *dsc)
 {
   CORE_ADDR return_to = 0;
 
-  struct frame_info *frame;
+  frame_info_ptr frame;
   unsigned int svc_number = displaced_read_reg (regs, dsc, 7);
   int is_sigreturn = 0;
   int is_thumb;
@@ -991,16 +989,12 @@ arm_linux_copy_svc (struct gdbarch *gdbarch, struct regcache *regs,
     {
       struct symtab_and_line sal;
 
-      if (debug_displaced)
-	fprintf_unfiltered (gdb_stdlog, "displaced: found "
-			    "sigreturn/rt_sigreturn SVC call.  PC in "
-			    "frame = %lx\n",
-			    (unsigned long) get_frame_pc (frame));
+      displaced_debug_printf ("found sigreturn/rt_sigreturn SVC call.  "
+			      "PC in frame = %lx",
+			      (unsigned long) get_frame_pc (frame));
 
-      if (debug_displaced)
-	fprintf_unfiltered (gdb_stdlog, "displaced: unwind pc = %lx.  "
-			    "Setting momentary breakpoint.\n",
-			    (unsigned long) return_to);
+      displaced_debug_printf ("unwind pc = %lx.  Setting momentary breakpoint.",
+			      (unsigned long) return_to);
 
       gdb_assert (inferior_thread ()->control.step_resume_breakpoint
 		  == NULL);
@@ -1025,19 +1019,18 @@ arm_linux_copy_svc (struct gdbarch *gdbarch, struct regcache *regs,
 	     breakpoint set above.  */
 	  insert_breakpoints ();
 	}
-      else if (debug_displaced)
-	fprintf_unfiltered (gdb_stderr, "displaced: couldn't find previous "
-			    "frame to set momentary breakpoint for "
-			    "sigreturn/rt_sigreturn\n");
+      else
+	displaced_debug_printf ("couldn't find previous frame to set momentary "
+				"breakpoint for sigreturn/rt_sigreturn");
     }
-  else if (debug_displaced)
-    fprintf_unfiltered (gdb_stdlog, "displaced: found SVC call\n");
+  else
+    displaced_debug_printf ("found SVC call");
 
   /* Preparation: If we detect sigreturn, set momentary breakpoint at resume
 		  location, else nothing.
      Insn: unmodified svc.
      Cleanup: if pc lands in scratch space, pc <- insn_addr + insn_size
-              else leave pc alone.  */
+	      else leave pc alone.  */
 
 
   dsc->cleanup = &arm_linux_cleanup_svc;
@@ -1065,7 +1058,7 @@ arm_linux_copy_svc (struct gdbarch *gdbarch, struct regcache *regs,
 static void
 cleanup_kernel_helper_return (struct gdbarch *gdbarch,
 			      struct regcache *regs,
-			      arm_displaced_step_closure *dsc)
+			      arm_displaced_step_copy_insn_closure *dsc)
 {
   displaced_write_reg (regs, dsc, ARM_LR_REGNUM, dsc->tmp[0], CANNOT_WRITE_PC);
   displaced_write_reg (regs, dsc, ARM_PC_REGNUM, dsc->tmp[0], BRANCH_WRITE_PC);
@@ -1074,7 +1067,7 @@ cleanup_kernel_helper_return (struct gdbarch *gdbarch,
 static void
 arm_catch_kernel_helper_return (struct gdbarch *gdbarch, CORE_ADDR from,
 				CORE_ADDR to, struct regcache *regs,
-				arm_displaced_step_closure *dsc)
+				arm_displaced_step_copy_insn_closure *dsc)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
 
@@ -1086,7 +1079,7 @@ arm_catch_kernel_helper_return (struct gdbarch *gdbarch, CORE_ADDR from,
   dsc->wrote_to_pc = 1;
 
   /* Preparation: tmp[0] <- r14
-                  r14 <- <scratch space>+4
+		  r14 <- <scratch space>+4
 		  *(<scratch space>+8) <- from
      Insn: ldr pc, [r14, #4]
      Cleanup: r14 <- tmp[0], pc <- tmp[0].  */
@@ -1103,21 +1096,20 @@ arm_catch_kernel_helper_return (struct gdbarch *gdbarch, CORE_ADDR from,
    the program has stepped into a Linux kernel helper routine (which must be
    handled as a special case).  */
 
-static displaced_step_closure_up
+static displaced_step_copy_insn_closure_up
 arm_linux_displaced_step_copy_insn (struct gdbarch *gdbarch,
 				    CORE_ADDR from, CORE_ADDR to,
 				    struct regcache *regs)
 {
-  std::unique_ptr<arm_displaced_step_closure> dsc
-    (new arm_displaced_step_closure);
+  std::unique_ptr<arm_displaced_step_copy_insn_closure> dsc
+    (new arm_displaced_step_copy_insn_closure);
 
   /* Detect when we enter an (inaccessible by GDB) Linux kernel helper, and
      stop at the return location.  */
   if (from > 0xffff0000)
     {
-      if (debug_displaced)
-        fprintf_unfiltered (gdb_stdlog, "displaced: detected kernel helper "
-			    "at %.8lx\n", (unsigned long) from);
+      displaced_debug_printf ("detected kernel helper at %.8lx",
+			      (unsigned long) from);
 
       arm_catch_kernel_helper_return (gdbarch, from, to, regs, dsc.get ());
     }
@@ -1132,7 +1124,7 @@ arm_linux_displaced_step_copy_insn (struct gdbarch *gdbarch,
   arm_displaced_init_closure (gdbarch, from, to, dsc.get ());
 
   /* This is a work around for a problem with g++ 4.8.  */
-  return displaced_step_closure_up (dsc.release ());
+  return displaced_step_copy_insn_closure_up (dsc.release ());
 }
 
 /* Implementation of `gdbarch_stap_is_single_operand', as defined in
@@ -1156,7 +1148,7 @@ arm_stap_is_single_operand (struct gdbarch *gdbarch, const char *s)
    It returns one if the special token has been parsed successfully,
    or zero if the current token is not considered special.  */
 
-static int
+static expr::operation_up
 arm_stap_parse_special_token (struct gdbarch *gdbarch,
 			      struct stap_parse_info *p)
 {
@@ -1171,7 +1163,6 @@ arm_stap_parse_special_token (struct gdbarch *gdbarch,
       int len, offset;
       int got_minus = 0;
       long displacement;
-      struct stoken str;
 
       ++tmp;
       start = tmp;
@@ -1181,7 +1172,7 @@ arm_stap_parse_special_token (struct gdbarch *gdbarch,
 	++tmp;
 
       if (*tmp != ',')
-	return 0;
+	return {};
 
       len = tmp - start;
       regname = (char *) alloca (len + 2);
@@ -1222,43 +1213,38 @@ arm_stap_parse_special_token (struct gdbarch *gdbarch,
 
       /* Skipping last `]'.  */
       if (*tmp++ != ']')
-	return 0;
+	return {};
+      p->arg = tmp;
+
+      using namespace expr;
 
       /* The displacement.  */
-      write_exp_elt_opcode (&p->pstate, OP_LONG);
-      write_exp_elt_type (&p->pstate, builtin_type (gdbarch)->builtin_long);
-      write_exp_elt_longcst (&p->pstate, displacement);
-      write_exp_elt_opcode (&p->pstate, OP_LONG);
+      struct type *long_type = builtin_type (gdbarch)->builtin_long;
       if (got_minus)
-	write_exp_elt_opcode (&p->pstate, UNOP_NEG);
+	displacement = -displacement;
+      operation_up disp = make_operation<long_const_operation> (long_type,
+								displacement);
 
       /* The register name.  */
-      write_exp_elt_opcode (&p->pstate, OP_REGISTER);
-      str.ptr = regname;
-      str.length = len;
-      write_exp_string (&p->pstate, str);
-      write_exp_elt_opcode (&p->pstate, OP_REGISTER);
+      operation_up reg
+	= make_operation<register_operation> (regname);
 
-      write_exp_elt_opcode (&p->pstate, BINOP_ADD);
+      operation_up sum
+	= make_operation<add_operation> (std::move (reg), std::move (disp));
 
       /* Casting to the expected type.  */
-      write_exp_elt_opcode (&p->pstate, UNOP_CAST);
-      write_exp_elt_type (&p->pstate, lookup_pointer_type (p->arg_type));
-      write_exp_elt_opcode (&p->pstate, UNOP_CAST);
-
-      write_exp_elt_opcode (&p->pstate, UNOP_IND);
-
-      p->arg = tmp;
+      struct type *arg_ptr_type = lookup_pointer_type (p->arg_type);
+      sum = make_operation<unop_cast_operation> (std::move (sum),
+						 arg_ptr_type);
+      return make_operation<unop_ind_operation> (std::move (sum));
     }
-  else
-    return 0;
 
-  return 1;
+  return {};
 }
 
 /* ARM process record-replay constructs: syscall, signal etc.  */
 
-struct linux_record_tdep arm_linux_record_tdep;
+static linux_record_tdep arm_linux_record_tdep;
 
 /* arm_canonicalize_syscall maps from the native arm Linux set
    of syscall ids into a canonical set of syscall ids used by
@@ -1625,6 +1611,7 @@ arm_canonicalize_syscall (int syscall)
     case 378: return gdb_sys_kcmp;
     case 379: return gdb_sys_finit_module;
       */
+    case 384: return gdb_sys_getrandom;
     case 983041: /* ARM_breakpoint */ return gdb_sys_no_syscall;
     case 983042: /* ARM_cacheflush */ return gdb_sys_no_syscall;
     case 983043: /* ARM_usr26 */ return gdb_sys_no_syscall;
@@ -1644,7 +1631,7 @@ arm_all_but_pc_registers_record (struct regcache *regcache)
   for (i = 0; i < ARM_PC_REGNUM; i++)
     {
       if (record_full_arch_list_add_reg (regcache, ARM_A1_REGNUM + i))
-        return -1;
+	return -1;
     }
 
   if (record_full_arch_list_add_reg (regcache, ARM_PS_REGNUM))
@@ -1665,9 +1652,10 @@ arm_linux_syscall_record (struct regcache *regcache, unsigned long svc_number)
 
   if (syscall_gdb == gdb_sys_no_syscall)
     {
-      printf_unfiltered (_("Process record and replay target doesn't "
-                           "support syscall number %s\n"),
-                           plongest (svc_number));
+      gdb_printf (gdb_stderr,
+		  _("Process record and replay target doesn't "
+		    "support syscall number %s\n"),
+		  plongest (svc_number));
       return -1;
     }
 
@@ -1680,7 +1668,7 @@ arm_linux_syscall_record (struct regcache *regcache, unsigned long svc_number)
    }
 
   ret = record_linux_system_call (syscall_gdb, regcache,
-                                  &arm_linux_record_tdep);
+				  &arm_linux_record_tdep);
   if (ret != 0)
     return ret;
 
@@ -1700,7 +1688,7 @@ arm_linux_syscall_record (struct regcache *regcache, unsigned long svc_number)
 /* Implement the skip_trampoline_code gdbarch method.  */
 
 static CORE_ADDR
-arm_linux_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
+arm_linux_skip_trampoline_code (frame_info_ptr frame, CORE_ADDR pc)
 {
   CORE_ADDR target_pc = arm_skip_stub (frame, pc);
 
@@ -1729,9 +1717,9 @@ arm_linux_init_abi (struct gdbarch_info info,
 								    NULL };
   static const char *const stap_register_indirection_suffixes[] = { "]",
 								    NULL };
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  arm_gdbarch_tdep *tdep = gdbarch_tdep<arm_gdbarch_tdep> (gdbarch);
 
-  linux_init_abi (info, gdbarch);
+  linux_init_abi (info, gdbarch, 1);
 
   tdep->lowest_pc = 0x8000;
   if (info.byte_order_for_code == BFD_ENDIAN_BIG)
@@ -1771,14 +1759,13 @@ arm_linux_init_abi (struct gdbarch_info info,
       break;
     default:
       internal_error
-	(__FILE__, __LINE__,
-         _("arm_linux_init_abi: Floating point model not supported"));
+	(_("arm_linux_init_abi: Floating point model not supported"));
       break;
     }
   tdep->jb_elt_size = ARM_LINUX_JB_ELEMENT_SIZE;
 
   set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+    (gdbarch, linux_ilp32_fetch_link_map_offsets);
 
   /* Single stepping.  */
   set_gdbarch_software_single_step (gdbarch, arm_linux_software_single_step);
@@ -1789,7 +1776,7 @@ arm_linux_init_abi (struct gdbarch_info info,
 
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
-                                             svr4_fetch_objfile_link_map);
+					     svr4_fetch_objfile_link_map);
 
   tramp_frame_prepend_unwinder (gdbarch,
 				&arm_linux_sigreturn_tramp_frame);
@@ -1817,7 +1804,6 @@ arm_linux_init_abi (struct gdbarch_info info,
   set_gdbarch_displaced_step_copy_insn (gdbarch,
 					arm_linux_displaced_step_copy_insn);
   set_gdbarch_displaced_step_fixup (gdbarch, arm_displaced_step_fixup);
-  set_gdbarch_displaced_step_location (gdbarch, linux_displaced_step_location);
 
   /* Reversible debugging, process record.  */
   set_gdbarch_process_record (gdbarch, arm_process_record);

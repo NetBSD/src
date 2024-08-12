@@ -1,5 +1,5 @@
 #    Makefile template for Configure for the PRU sim library.
-#    Copyright (C) 1990-2020 Free Software Foundation, Inc.
+#    Copyright (C) 1990-2023 Free Software Foundation, Inc.
 #    Written by Dimitar Dimitrov <dimitar@dinux.eu>
 #
 #    Based on the MCore sim library
@@ -23,7 +23,5 @@ SIM_OBJS = \
 	$(SIM_NEW_COMMON_OBJS) \
 	interp.o \
 	sim-resume.o
-
-NL_TARGET = -DNL_TARGET_pru
 
 ## COMMON_POST_CONFIG_FRAG

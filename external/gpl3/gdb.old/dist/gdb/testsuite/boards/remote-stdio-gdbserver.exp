@@ -1,4 +1,4 @@
-# Copyright 2011-2020 Free Software Foundation, Inc.
+# Copyright 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 # To use this file:
 # bash$ cd ${build_dir}/gdb
 # bash$ make check RUNTESTFLAGS="--target_board=remote-stdio-gdbserver \
-#    REMOTE_USERNAME=... REMOTE_HOSTNAME=... REMOTE_PORTNUM=... \
+#    REMOTE_USERNAME=... REMOTE_HOSTNAME=... \
 #    [REMOTE_TMPDIR=${remote_dir}] [GDBSERVER=${remote_gdbserver}]"
 
 load_board_description "stdio-gdbserver-base"
@@ -39,21 +39,19 @@ if [info exists REMOTE_HOSTNAME] {
     set_board_info hostname unspecified_hostname
 }
 
-# The two programs have different syntax to set the remote port, so
-# set it as part of the program name rather than in get_remote_login.
-
-if [info exists REMOTE_PORTNUM] {
-    set_board_info portnum $REMOTE_PORTNUM
-    set_board_info rsh_prog "/usr/bin/ssh -p$REMOTE_PORTNUM"
-    set_board_info rcp_prog "/usr/bin/scp -P$REMOTE_PORTNUM"
-} else {
-    set_board_info rsh_prog /usr/bin/ssh
-    set_board_info rcp_prog /usr/bin/scp
-}
+set_board_info rsh_prog /usr/bin/ssh
+set_board_info rcp_prog /usr/bin/scp
 
 # Some remote machines don't have writable home directories.
 if [info exists REMOTE_TMPDIR] {
     set_board_info remotedir $REMOTE_TMPDIR
+}
+
+unset_board_info gdb_server_prog
+if [info exists GDBSERVER] {
+    set_board_info gdb_server_prog $GDBSERVER
+} else {
+    set_board_info gdb_server_prog /usr/bin/gdbserver
 }
 
 proc get_remote_login { } {
@@ -70,7 +68,8 @@ proc get_remote_login { } {
 proc get_target_remote_pipe_cmd { } {
     set target_exec [gdbserver_download_current_prog]
     set rsh_cmd "[board_info [target_info name] rsh_prog] [get_remote_login]"
-    return "$rsh_cmd /usr/bin/gdbserver --once stdio $target_exec"
+    set gdbserver "[board_info [target_info name] gdb_server_prog]"
+    return "$rsh_cmd $gdbserver --once stdio $target_exec"
 }
 
 proc ${board}_file { dest op args } {
@@ -78,4 +77,16 @@ proc ${board}_file { dest op args } {
 	return [remote_exec target "rm -f $args"]
     }
     return [eval [list standard_file $dest $op] $args]
+}
+
+proc ${board}_spawn { board cmd } {
+    global board_info
+
+    set remote [board_info $board hostname]
+    set username [board_info $board username]
+    set RSH [board_info $board rsh_prog]
+
+    spawn $RSH -t -l $username $remote $cmd
+    set board_info($board,fileid) $spawn_id
+    return $spawn_id
 }

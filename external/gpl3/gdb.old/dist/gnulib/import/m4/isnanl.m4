@@ -1,5 +1,5 @@
-# isnanl.m4 serial 21
-dnl Copyright (C) 2007-2020 Free Software Foundation, Inc.
+# isnanl.m4 serial 22
+dnl Copyright (C) 2007-2022 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -68,12 +68,9 @@ AC_DEFUN([gl_HAVE_ISNANL_NO_LIBM],
       AC_LINK_IFELSE(
         [AC_LANG_PROGRAM(
            [[#include <math.h>
-             #ifndef __has_builtin
-             # define __has_builtin(name) 0
-             #endif
-             #if __GNUC__ >= 4 && (!defined __clang__ || __has_builtin (__builtin_isnanl))
+             #if (__GNUC__ >= 4) || (__clang_major__ >= 4)
              # undef isnanl
-             # define isnanl(x) __builtin_isnanl ((long double)(x))
+             # define isnanl(x) __builtin_isnan ((long double)(x))
              #elif defined isnan
              # undef isnanl
              # define isnanl(x) isnan ((long double)(x))
@@ -96,12 +93,9 @@ AC_DEFUN([gl_HAVE_ISNANL_IN_LIBM],
       AC_LINK_IFELSE(
         [AC_LANG_PROGRAM(
            [[#include <math.h>
-             #ifndef __has_builtin
-             # define __has_builtin(name) 0
-             #endif
-             #if __GNUC__ >= 4 && (!defined __clang__ || __has_builtin (__builtin_isnanl))
+             #if (__GNUC__ >= 4) || (__clang_major__ >= 4)
              # undef isnanl
-             # define isnanl(x) __builtin_isnanl ((long double)(x))
+             # define isnanl(x) __builtin_isnan ((long double)(x))
              #elif defined isnan
              # undef isnanl
              # define isnanl(x) isnan ((long double)(x))
@@ -129,12 +123,9 @@ AC_DEFUN([gl_FUNC_ISNANL_WORKS],
 #include <float.h>
 #include <limits.h>
 #include <math.h>
-#ifndef __has_builtin
-# define __has_builtin(name) 0
-#endif
-#if __GNUC__ >= 4 && (!defined __clang__ || __has_builtin (__builtin_isnanl))
+#if (__GNUC__ >= 4) || (__clang_major__ >= 4)
 # undef isnanl
-# define isnanl(x) __builtin_isnanl ((long double)(x))
+# define isnanl(x) __builtin_isnan ((long double)(x))
 #elif defined isnan
 # undef isnanl
 # define isnanl(x) isnan ((long double)(x))

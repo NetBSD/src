@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,11 +34,11 @@
 #define STATIC_IN_GDB
 #endif
 
-STATIC_IN_GDB target_desc *
-arc_create_target_description (const struct arc_gdbarch_features &features)
+STATIC_IN_GDB target_desc_up
+arc_create_target_description (const struct arc_arch_features &features)
 {
   /* Create a new target description.  */
-  target_desc *tdesc = allocate_target_description ();
+  target_desc_up tdesc = allocate_target_description ();
 
 #ifndef IN_PROCESS_AGENT
   std::string arch_name;
@@ -54,10 +54,10 @@ arc_create_target_description (const struct arc_gdbarch_features &features)
       std::string msg = string_printf
 	("Cannot determine architecture: ISA=%d; bitness=%d",
 	 features.isa, 8 * features.reg_size);
-      gdb_assert_not_reached (msg.c_str ());
+      gdb_assert_not_reached ("%s", msg.c_str ());
     }
 
-  set_tdesc_architecture (tdesc, arch_name.c_str ());
+  set_tdesc_architecture (tdesc.get (), arch_name.c_str ());
 #endif
 
   long regnum = 0;
@@ -65,17 +65,17 @@ arc_create_target_description (const struct arc_gdbarch_features &features)
   switch (features.isa)
     {
     case ARC_ISA_ARCV1:
-      regnum = create_feature_arc_v1_core (tdesc, regnum);
-      regnum = create_feature_arc_v1_aux (tdesc, regnum);
+      regnum = create_feature_arc_v1_core (tdesc.get (), regnum);
+      regnum = create_feature_arc_v1_aux (tdesc.get (), regnum);
       break;
     case ARC_ISA_ARCV2:
-      regnum = create_feature_arc_v2_core (tdesc, regnum);
-      regnum = create_feature_arc_v2_aux (tdesc, regnum);
+      regnum = create_feature_arc_v2_core (tdesc.get (), regnum);
+      regnum = create_feature_arc_v2_aux (tdesc.get (), regnum);
       break;
     default:
       std::string msg = string_printf
 	("Cannot choose target description XML: %d", features.isa);
-      gdb_assert_not_reached (msg.c_str ());
+      gdb_assert_not_reached ("%s", msg.c_str ());
     }
 
   return tdesc;
@@ -84,10 +84,10 @@ arc_create_target_description (const struct arc_gdbarch_features &features)
 #ifndef GDBSERVER
 
 /* Wrapper used by std::unordered_map to generate hash for features set.  */
-struct arc_gdbarch_features_hasher
+struct arc_arch_features_hasher
 {
   std::size_t
-  operator() (const arc_gdbarch_features &features) const noexcept
+  operator() (const arc_arch_features &features) const noexcept
   {
     return features.hash ();
   }
@@ -95,14 +95,14 @@ struct arc_gdbarch_features_hasher
 
 /* Cache of previously created target descriptions, indexed by the hash
    of the features set used to create them.  */
-static std::unordered_map<arc_gdbarch_features,
+static std::unordered_map<arc_arch_features,
 			  const target_desc_up,
-			  arc_gdbarch_features_hasher> arc_tdesc_cache;
+			  arc_arch_features_hasher> arc_tdesc_cache;
 
 /* See arch/arc.h.  */
 
 const target_desc *
-arc_lookup_target_description (const struct arc_gdbarch_features &features)
+arc_lookup_target_description (const struct arc_arch_features &features)
 {
   /* Lookup in the cache first.  If found, return the pointer from the
      "target_desc_up" type which is a "unique_ptr".  This should be fine
@@ -111,12 +111,15 @@ arc_lookup_target_description (const struct arc_gdbarch_features &features)
   if (it != arc_tdesc_cache.end ())
     return it->second.get ();
 
-  target_desc *tdesc = arc_create_target_description (features);
+  target_desc_up tdesc = arc_create_target_description (features);
 
-  /* Add the newly created target description to the repertoire.  */
-  arc_tdesc_cache.emplace (features, tdesc);
 
-  return tdesc;
+  /* Add to the cache, and return a pointer borrowed from the
+     target_desc_up.  This is safe as the cache (and the pointers
+     contained within it) are not deleted until GDB exits.  */
+  target_desc *ptr = tdesc.get ();
+  arc_tdesc_cache.emplace (features, std::move (tdesc));
+  return ptr;
 }
 
 #endif /* !GDBSERVER */

@@ -1,4 +1,4 @@
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -93,6 +93,13 @@ namespace eval ::CheckTestNames {
 	return $message
     }
 
+    # Check if MESSAGE is a well-formed test name.
+    proc _check_well_formed_name { message } {
+	if { [regexp \n $message]} {
+	    warning "Newline in test name"
+	}
+    }
+
     # Check if MESSAGE contains either the source path or the build path.
     # This will result in test names that can't easily be compared between
     # different runs of GDB.
@@ -110,6 +117,8 @@ namespace eval ::CheckTestNames {
 	if [ _check_duplicates $message ] {
 	    clone_output "DUPLICATE: $message"
 	}
+
+	_check_well_formed_name $message
     }
 
     # If COUNT is greater than zero, disply PREFIX followed by COUNT.

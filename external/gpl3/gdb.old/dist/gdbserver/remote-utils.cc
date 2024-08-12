@@ -1,5 +1,5 @@
 /* Remote utility routines for the remote server for GDB.
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -102,6 +102,10 @@ static int remote_desc = -1;
 static int listen_desc = -1;
 
 #ifdef USE_WIN32API
+/* gnulib wraps these as macros, undo them.  */
+# undef read
+# undef write
+
 # define read(fd, buf, len) recv (fd, (char *) buf, len, 0)
 # define write(fd, buf, len) send (fd, (char *) buf, len, 0)
 #endif
@@ -140,8 +144,7 @@ handle_accept_event (int err, gdb_client_data client_data)
   struct sockaddr_storage sockaddr;
   socklen_t len = sizeof (sockaddr);
 
-  if (debug_threads)
-    debug_printf ("handling possible accept event\n");
+  threads_debug_printf ("handling possible accept event");
 
   remote_desc = accept (listen_desc, (struct sockaddr *) &sockaddr, &len);
   if (remote_desc == -1)
@@ -194,7 +197,7 @@ handle_accept_event (int err, gdb_client_data client_data)
   enable_async_notification (remote_desc);
 
   /* Register the event loop handler.  */
-  add_file_handler (remote_desc, handle_serial_event, NULL);
+  add_file_handler (remote_desc, handle_serial_event, NULL, "remote-net");
 
   /* We have a new GDB connection now.  If we were disconnected
      tracing, there's a window where the target could report a stop
@@ -293,8 +296,7 @@ remote_prepare (const char *name)
       ((struct sockaddr_in6 *) iter->ai_addr)->sin6_addr = in6addr_any;
       break;
     default:
-      internal_error (__FILE__, __LINE__,
-		      _("Invalid 'ai_family' %d\n"), iter->ai_family);
+      internal_error (_("Invalid 'ai_family' %d\n"), iter->ai_family);
     }
 
   if (bind (listen_desc, iter->ai_addr, iter->ai_addrlen) != 0)
@@ -331,7 +333,7 @@ remote_open (const char *name)
       enable_async_notification (remote_desc);
 
       /* Register the event loop handler.  */
-      add_file_handler (remote_desc, handle_serial_event, NULL);
+      add_file_handler (remote_desc, handle_serial_event, NULL, "remote-stdio");
     }
 #ifndef USE_WIN32API
   else if (port_str == NULL)
@@ -372,7 +374,8 @@ remote_open (const char *name)
       enable_async_notification (remote_desc);
 
       /* Register the event loop handler.  */
-      add_file_handler (remote_desc, handle_serial_event, NULL);
+      add_file_handler (remote_desc, handle_serial_event, NULL,
+			"remote-device");
     }
 #endif /* USE_WIN32API */
   else
@@ -398,7 +401,8 @@ remote_open (const char *name)
       fflush (stderr);
 
       /* Register the event loop handler.  */
-      add_file_handler (listen_desc, handle_accept_event, NULL);
+      add_file_handler (listen_desc, handle_accept_event, NULL,
+			"remote-listen");
     }
 }
 
@@ -575,7 +579,7 @@ read_ptid (const char *buf, const char **obuf)
 
       if (obuf)
 	*obuf = pp;
-      return ptid_t (pid, tid, 0);
+      return ptid_t (pid, tid);
     }
 
   /* No multi-process.  Just a tid.  */
@@ -588,7 +592,7 @@ read_ptid (const char *buf, const char **obuf)
 
   if (obuf)
     *obuf = pp;
-  return ptid_t (pid, tid, 0);
+  return ptid_t (pid, tid);
 }
 
 /* Write COUNT bytes in BUF to the client.
@@ -665,22 +669,15 @@ putpkt_binary_1 (char *buf, int cnt, int is_notif)
       if (cs.noack_mode || is_notif)
 	{
 	  /* Don't expect an ack then.  */
-	  if (remote_debug)
-	    {
-	      if (is_notif)
-		debug_printf ("putpkt (\"%s\"); [notif]\n", buf2);
-	      else
-		debug_printf ("putpkt (\"%s\"); [noack mode]\n", buf2);
-	      debug_flush ();
-	    }
+	  if (is_notif)
+	    remote_debug_printf ("putpkt (\"%s\"); [notif]", buf2);
+	  else
+	    remote_debug_printf ("putpkt (\"%s\"); [noack mode]", buf2);
+
 	  break;
 	}
 
-      if (remote_debug)
-	{
-	  debug_printf ("putpkt (\"%s\"); [looking for ack]\n", buf2);
-	  debug_flush ();
-	}
+      remote_debug_printf ("putpkt (\"%s\"); [looking for ack]", buf2);
 
       cc = readchar ();
 
@@ -690,11 +687,7 @@ putpkt_binary_1 (char *buf, int cnt, int is_notif)
 	  return -1;
 	}
 
-      if (remote_debug)
-	{
-	  debug_printf ("[received '%c' (0x%x)]\n", cc, cc);
-	  debug_flush ();
-	}
+      remote_debug_printf ("[received '%c' (0x%x)]", cc, cc);
 
       /* Check for an input interrupt while we're here.  */
       if (cc == '\003' && current_thread != NULL)
@@ -863,8 +856,7 @@ readchar (void)
 	{
 	  if (readchar_bufcnt == 0)
 	    {
-	      if (remote_debug)
-		debug_printf ("readchar: Got EOF\n");
+	      remote_debug_printf ("readchar: Got EOF");
 	    }
 	  else
 	    perror ("readchar");
@@ -945,11 +937,8 @@ getpkt (char *buf)
 
 	  if (c == '$')
 	    break;
-	  if (remote_debug)
-	    {
-	      debug_printf ("[getpkt: discarding char '%c']\n", c);
-	      debug_flush ();
-	    }
+
+	  remote_debug_printf ("[getpkt: discarding char '%c']", c);
 
 	  if (c < 0)
 	    return -1;
@@ -992,29 +981,15 @@ getpkt (char *buf)
 
   if (!cs.noack_mode)
     {
-      if (remote_debug)
-	{
-	  debug_printf ("getpkt (\"%s\");  [sending ack] \n", buf);
-	  debug_flush ();
-	}
+      remote_debug_printf ("getpkt (\"%s\");  [sending ack]", buf);
 
       if (write_prim ("+", 1) != 1)
 	return -1;
 
-      if (remote_debug)
-	{
-	  debug_printf ("[sent ack]\n");
-	  debug_flush ();
-	}
+      remote_debug_printf ("[sent ack]");
     }
   else
-    {
-      if (remote_debug)
-	{
-	  debug_printf ("getpkt (\"%s\");  [no ack sent] \n", buf);
-	  debug_flush ();
-	}
-    }
+    remote_debug_printf ("getpkt (\"%s\");  [no ack sent]", buf);
 
   /* The readchar above may have already read a '\003' out of the socket
      and moved it to the local buffer.  For example, when GDB sends
@@ -1075,15 +1050,13 @@ outreg (struct regcache *regcache, int regno, char *buf)
 }
 
 void
-prepare_resume_reply (char *buf, ptid_t ptid,
-		      struct target_waitstatus *status)
+prepare_resume_reply (char *buf, ptid_t ptid, const target_waitstatus &status)
 {
   client_state &cs = get_client_state ();
-  if (debug_threads)
-    debug_printf ("Writing resume reply for %s:%d\n",
-		  target_pid_to_str (ptid), status->kind);
+  threads_debug_printf ("Writing resume reply for %s:%d",
+			target_pid_to_str (ptid).c_str (), status.kind ());
 
-  switch (status->kind)
+  switch (status.kind ())
     {
     case TARGET_WAITKIND_STOPPED:
     case TARGET_WAITKIND_FORKED:
@@ -1094,31 +1067,31 @@ prepare_resume_reply (char *buf, ptid_t ptid,
     case TARGET_WAITKIND_SYSCALL_ENTRY:
     case TARGET_WAITKIND_SYSCALL_RETURN:
       {
-	struct thread_info *saved_thread;
 	const char **regp;
 	struct regcache *regcache;
+	char *buf_start = buf;
 
-	if ((status->kind == TARGET_WAITKIND_FORKED && cs.report_fork_events)
-	    || (status->kind == TARGET_WAITKIND_VFORKED 
+	if ((status.kind () == TARGET_WAITKIND_FORKED && cs.report_fork_events)
+	    || (status.kind () == TARGET_WAITKIND_VFORKED
 		&& cs.report_vfork_events))
 	  {
 	    enum gdb_signal signal = GDB_SIGNAL_TRAP;
-	    const char *event = (status->kind == TARGET_WAITKIND_FORKED
+	    const char *event = (status.kind () == TARGET_WAITKIND_FORKED
 				 ? "fork" : "vfork");
 
 	    sprintf (buf, "T%02x%s:", signal, event);
 	    buf += strlen (buf);
-	    buf = write_ptid (buf, status->value.related_pid);
+	    buf = write_ptid (buf, status.child_ptid ());
 	    strcat (buf, ";");
 	  }
-	else if (status->kind == TARGET_WAITKIND_VFORK_DONE 
+	else if (status.kind () == TARGET_WAITKIND_VFORK_DONE
 		 && cs.report_vfork_events)
 	  {
 	    enum gdb_signal signal = GDB_SIGNAL_TRAP;
 
 	    sprintf (buf, "T%02xvforkdone:;", signal);
 	  }
-	else if (status->kind == TARGET_WAITKIND_EXECD && cs.report_exec_events)
+	else if (status.kind () == TARGET_WAITKIND_EXECD && cs.report_exec_events)
 	  {
 	    enum gdb_signal signal = GDB_SIGNAL_TRAP;
 	    const char *event = "exec";
@@ -1128,34 +1101,32 @@ prepare_resume_reply (char *buf, ptid_t ptid,
 	    buf += strlen (buf);
 
 	    /* Encode pathname to hexified format.  */
-	    bin2hex ((const gdb_byte *) status->value.execd_pathname,
+	    bin2hex ((const gdb_byte *) status.execd_pathname (),
 		     hexified_pathname,
-		     strlen (status->value.execd_pathname));
+		     strlen (status.execd_pathname ()));
 
 	    sprintf (buf, "%s;", hexified_pathname);
-	    xfree (status->value.execd_pathname);
-	    status->value.execd_pathname = NULL;
 	    buf += strlen (buf);
 	  }
-	else if (status->kind == TARGET_WAITKIND_THREAD_CREATED
+	else if (status.kind () == TARGET_WAITKIND_THREAD_CREATED
 		 && cs.report_thread_events)
 	  {
 	    enum gdb_signal signal = GDB_SIGNAL_TRAP;
 
 	    sprintf (buf, "T%02xcreate:;", signal);
 	  }
-	else if (status->kind == TARGET_WAITKIND_SYSCALL_ENTRY
-		 || status->kind == TARGET_WAITKIND_SYSCALL_RETURN)
+	else if (status.kind () == TARGET_WAITKIND_SYSCALL_ENTRY
+		 || status.kind () == TARGET_WAITKIND_SYSCALL_RETURN)
 	  {
 	    enum gdb_signal signal = GDB_SIGNAL_TRAP;
-	    const char *event = (status->kind == TARGET_WAITKIND_SYSCALL_ENTRY
+	    const char *event = (status.kind () == TARGET_WAITKIND_SYSCALL_ENTRY
 				 ? "syscall_entry" : "syscall_return");
 
 	    sprintf (buf, "T%02x%s:%x;", signal, event,
-		     status->value.syscall_number);
+		     status.syscall_number ());
 	  }
 	else
-	  sprintf (buf, "T%02x", status->value.sig);
+	  sprintf (buf, "T%02x", status.sig ());
 
 	if (disable_packet_T)
 	  {
@@ -1169,17 +1140,17 @@ prepare_resume_reply (char *buf, ptid_t ptid,
 	       An 'S' stop packet always looks like 'Sxx', so all we do
 	       here is convert the buffer from a T packet to an S packet
 	       and the avoid adding any extra content by breaking out.  */
-	    gdb_assert (*buf == 'T');
-	    gdb_assert (isxdigit (*(buf + 1)));
-	    gdb_assert (isxdigit (*(buf + 2)));
-	    *buf = 'S';
-	    *(buf + 3) = '\0';
+	    gdb_assert (buf_start[0] == 'T');
+	    gdb_assert (isxdigit (buf_start[1]));
+	    gdb_assert (isxdigit (buf_start[2]));
+	    buf_start[0] = 'S';
+	    buf_start[3] = '\0';
 	    break;
 	  }
 
 	buf += strlen (buf);
 
-	saved_thread = current_thread;
+	scoped_restore_current_thread restore_thread;
 
 	switch_to_thread (the_target, ptid);
 
@@ -1264,32 +1235,30 @@ prepare_resume_reply (char *buf, ptid_t ptid,
 	      }
 	  }
 
-	if (dlls_changed)
+	if (current_process ()->dlls_changed)
 	  {
 	    strcpy (buf, "library:;");
 	    buf += strlen (buf);
-	    dlls_changed = 0;
+	    current_process ()->dlls_changed = false;
 	  }
-
-	current_thread = saved_thread;
       }
       break;
     case TARGET_WAITKIND_EXITED:
       if (cs.multi_process)
 	sprintf (buf, "W%x;process:%x",
-		 status->value.integer, ptid.pid ());
+		 status.exit_status (), ptid.pid ());
       else
-	sprintf (buf, "W%02x", status->value.integer);
+	sprintf (buf, "W%02x", status.exit_status ());
       break;
     case TARGET_WAITKIND_SIGNALLED:
       if (cs.multi_process)
 	sprintf (buf, "X%x;process:%x",
-		 status->value.sig, ptid.pid ());
+		 status.sig (), ptid.pid ());
       else
-	sprintf (buf, "X%02x", status->value.sig);
+	sprintf (buf, "X%02x", status.sig ());
       break;
     case TARGET_WAITKIND_THREAD_EXITED:
-      sprintf (buf, "w%x;", status->value.integer);
+      sprintf (buf, "w%x;", status.exit_status ());
       buf += strlen (buf);
       buf = write_ptid (buf, ptid);
       break;
@@ -1302,31 +1271,11 @@ prepare_resume_reply (char *buf, ptid_t ptid,
     }
 }
 
-void
-decode_m_packet (char *from, CORE_ADDR *mem_addr_ptr, unsigned int *len_ptr)
-{
-  int i = 0, j = 0;
-  char ch;
-  *mem_addr_ptr = *len_ptr = 0;
+/* See remote-utils.h.  */
 
-  while ((ch = from[i++]) != ',')
-    {
-      *mem_addr_ptr = *mem_addr_ptr << 4;
-      *mem_addr_ptr |= fromhex (ch) & 0x0f;
-    }
-
-  for (j = 0; j < 4; j++)
-    {
-      if ((ch = from[i++]) == 0)
-	break;
-      *len_ptr = *len_ptr << 4;
-      *len_ptr |= fromhex (ch) & 0x0f;
-    }
-}
-
-void
-decode_M_packet (char *from, CORE_ADDR *mem_addr_ptr, unsigned int *len_ptr,
-		 unsigned char **to_p)
+const char *
+decode_m_packet_params (const char *from, CORE_ADDR *mem_addr_ptr,
+			unsigned int *len_ptr, const char end_marker)
 {
   int i = 0;
   char ch;
@@ -1338,16 +1287,32 @@ decode_M_packet (char *from, CORE_ADDR *mem_addr_ptr, unsigned int *len_ptr,
       *mem_addr_ptr |= fromhex (ch) & 0x0f;
     }
 
-  while ((ch = from[i++]) != ':')
+  while ((ch = from[i++]) != end_marker)
     {
       *len_ptr = *len_ptr << 4;
       *len_ptr |= fromhex (ch) & 0x0f;
     }
 
+  return from + i;
+}
+
+void
+decode_m_packet (const char *from, CORE_ADDR *mem_addr_ptr,
+		 unsigned int *len_ptr)
+{
+  decode_m_packet_params (from, mem_addr_ptr, len_ptr, '\0');
+}
+
+void
+decode_M_packet (const char *from, CORE_ADDR *mem_addr_ptr,
+		 unsigned int *len_ptr, unsigned char **to_p)
+{
+  from = decode_m_packet_params (from, mem_addr_ptr, len_ptr, ':');
+
   if (*to_p == NULL)
     *to_p = (unsigned char *) xmalloc (*len_ptr);
 
-  hex2bin (&from[i++], *to_p, *len_ptr);
+  hex2bin (from, *to_p, *len_ptr);
 }
 
 int

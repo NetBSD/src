@@ -1,6 +1,6 @@
 /* Objective-C language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2023 Free Software Foundation, Inc.
 
    Contributed by Apple Computer, Inc.
    Written by Michael Snyder.
@@ -33,16 +33,17 @@
 #include "value.h"
 #include "symfile.h"
 #include "objfiles.h"
-#include "target.h"		/* for target_has_execution */
+#include "target.h"
 #include "gdbcore.h"
 #include "gdbcmd.h"
 #include "frame.h"
-#include "gdb_regex.h"
+#include "gdbsupport/gdb_regex.h"
 #include "regcache.h"
 #include "block.h"
 #include "infcall.h"
 #include "valprint.h"
 #include "cli/cli-utils.h"
+#include "c-exp.h"
 
 #include <ctype.h>
 #include <algorithm>
@@ -75,7 +76,7 @@ struct objc_method {
   CORE_ADDR imp;
 };
 
-static const struct objfile_key<unsigned int> objc_objfile_data;
+static const registry<objfile>::key<unsigned int> objc_objfile_data;
 
 /* Lookup a structure type named "struct NAME", visible in lexical
    block BLOCK.  If NOERR is nonzero, return zero if NAME is not
@@ -95,7 +96,7 @@ lookup_struct_typedef (const char *name, const struct block *block, int noerr)
       else 
 	error (_("No struct type named %s."), name);
     }
-  if (SYMBOL_TYPE (sym)->code () != TYPE_CODE_STRUCT)
+  if (sym->type ()->code () != TYPE_CODE_STRUCT)
     {
       if (noerr)
 	return 0;
@@ -112,7 +113,7 @@ lookup_objc_class (struct gdbarch *gdbarch, const char *classname)
   struct type *char_type = builtin_type (gdbarch)->builtin_char;
   struct value * function, *classval;
 
-  if (! target_has_execution)
+  if (! target_has_execution ())
     {
       /* Can't call into inferior to lookup class.  */
       return 0;
@@ -141,7 +142,7 @@ lookup_child_selector (struct gdbarch *gdbarch, const char *selname)
   struct type *char_type = builtin_type (gdbarch)->builtin_char;
   struct value * function, *selstring;
 
-  if (! target_has_execution)
+  if (! target_has_execution ())
     {
       /* Can't call into inferior to lookup selector.  */
       return 0;
@@ -164,7 +165,7 @@ lookup_child_selector (struct gdbarch *gdbarch, const char *selname)
 }
 
 struct value * 
-value_nsstring (struct gdbarch *gdbarch, char *ptr, int len)
+value_nsstring (struct gdbarch *gdbarch, const char *ptr, int len)
 {
   struct type *char_type = builtin_type (gdbarch)->builtin_char;
   struct value *stringValue[3];
@@ -172,7 +173,7 @@ value_nsstring (struct gdbarch *gdbarch, char *ptr, int len)
   struct symbol *sym;
   struct type *type;
 
-  if (!target_has_execution)
+  if (!target_has_execution ())
     return 0;		/* Can't call into inferior to create NSString.  */
 
   stringValue[2] = value_string(ptr, len, char_type);
@@ -209,142 +210,11 @@ value_nsstring (struct gdbarch *gdbarch, char *ptr, int len)
   if (sym == NULL)
     type = builtin_type (gdbarch)->builtin_data_ptr;
   else
-    type = lookup_pointer_type(SYMBOL_TYPE (sym));
+    type = lookup_pointer_type(sym->type ());
 
   deprecated_set_value_type (nsstringValue, type);
   return nsstringValue;
 }
-
-/* Objective-C name demangling.  */
-
-char *
-objc_demangle (const char *mangled, int options)
-{
-  char *demangled, *cp;
-
-  if (mangled[0] == '_' &&
-     (mangled[1] == 'i' || mangled[1] == 'c') &&
-      mangled[2] == '_')
-    {
-      cp = demangled = (char *) xmalloc (strlen (mangled) + 2);
-
-      if (mangled[1] == 'i')
-	*cp++ = '-';		/* for instance method */
-      else
-	*cp++ = '+';		/* for class    method */
-
-      *cp++ = '[';		/* opening left brace  */
-      strcpy(cp, mangled+3);	/* Tack on the rest of the mangled name.  */
-
-      while (*cp && *cp == '_')
-	cp++;			/* Skip any initial underbars in class
-				   name.  */
-
-      cp = strchr(cp, '_');
-      if (!cp)	                /* Find first non-initial underbar.  */
-	{
-	  xfree(demangled);	/* not mangled name */
-	  return NULL;
-	}
-      if (cp[1] == '_')		/* Easy case: no category name.    */
-	{
-	  *cp++ = ' ';		/* Replace two '_' with one ' '.   */
-	  strcpy(cp, mangled + (cp - demangled) + 2);
-	}
-      else
-	{
-	  *cp++ = '(';		/* Less easy case: category name.  */
-	  cp = strchr(cp, '_');
-	  if (!cp)
-	    {
-	      xfree(demangled);	/* not mangled name */
-	      return NULL;
-	    }
-	  *cp++ = ')';
-	  *cp++ = ' ';		/* Overwriting 1st char of method name...  */
-	  strcpy(cp, mangled + (cp - demangled));	/* Get it back.  */
-	}
-
-      while (*cp && *cp == '_')
-	cp++;			/* Skip any initial underbars in
-				   method name.  */
-
-      for (; *cp; cp++)
-	if (*cp == '_')
-	  *cp = ':';		/* Replace remaining '_' with ':'.  */
-
-      *cp++ = ']';		/* closing right brace */
-      *cp++ = 0;		/* string terminator */
-      return demangled;
-    }
-  else
-    return NULL;	/* Not an objc mangled name.  */
-}
-
-
-/* Table mapping opcodes into strings for printing operators
-   and precedences of the operators.  */
-
-static const struct op_print objc_op_print_tab[] =
-  {
-    {",",  BINOP_COMMA, PREC_COMMA, 0},
-    {"=",  BINOP_ASSIGN, PREC_ASSIGN, 1},
-    {"||", BINOP_LOGICAL_OR, PREC_LOGICAL_OR, 0},
-    {"&&", BINOP_LOGICAL_AND, PREC_LOGICAL_AND, 0},
-    {"|",  BINOP_BITWISE_IOR, PREC_BITWISE_IOR, 0},
-    {"^",  BINOP_BITWISE_XOR, PREC_BITWISE_XOR, 0},
-    {"&",  BINOP_BITWISE_AND, PREC_BITWISE_AND, 0},
-    {"==", BINOP_EQUAL, PREC_EQUAL, 0},
-    {"!=", BINOP_NOTEQUAL, PREC_EQUAL, 0},
-    {"<=", BINOP_LEQ, PREC_ORDER, 0},
-    {">=", BINOP_GEQ, PREC_ORDER, 0},
-    {">",  BINOP_GTR, PREC_ORDER, 0},
-    {"<",  BINOP_LESS, PREC_ORDER, 0},
-    {">>", BINOP_RSH, PREC_SHIFT, 0},
-    {"<<", BINOP_LSH, PREC_SHIFT, 0},
-    {"+",  BINOP_ADD, PREC_ADD, 0},
-    {"-",  BINOP_SUB, PREC_ADD, 0},
-    {"*",  BINOP_MUL, PREC_MUL, 0},
-    {"/",  BINOP_DIV, PREC_MUL, 0},
-    {"%",  BINOP_REM, PREC_MUL, 0},
-    {"@",  BINOP_REPEAT, PREC_REPEAT, 0},
-    {"-",  UNOP_NEG, PREC_PREFIX, 0},
-    {"!",  UNOP_LOGICAL_NOT, PREC_PREFIX, 0},
-    {"~",  UNOP_COMPLEMENT, PREC_PREFIX, 0},
-    {"*",  UNOP_IND, PREC_PREFIX, 0},
-    {"&",  UNOP_ADDR, PREC_PREFIX, 0},
-    {"sizeof ", UNOP_SIZEOF, PREC_PREFIX, 0},
-    {"++", UNOP_PREINCREMENT, PREC_PREFIX, 0},
-    {"--", UNOP_PREDECREMENT, PREC_PREFIX, 0},
-    {NULL, OP_NULL, PREC_NULL, 0}
-};
-
-static const char *objc_extensions[] =
-{
-  ".m", NULL
-};
-
-/* Constant data representing the Objective-C language.  */
-
-extern const struct language_data objc_language_data =
-{
-  "objective-c",		/* Language name */
-  "Objective-C",
-  language_objc,
-  range_check_off,
-  case_sensitive_on,
-  array_row_major,
-  macro_expansion_c,
-  objc_extensions,
-  &exp_descriptor_standard,
-  "self",		        /* name_of_this */
-  false,			/* la_store_sym_names_in_linkage_form_p */
-  objc_op_print_tab,		/* Expression operators for printing */
-  1,				/* C-style arrays */
-  0,				/* String lower bound */
-  &default_varobj_ops,
-  "{...}"			/* la_struct_too_deep_ellipsis */
-};
 
 /* Class representing the Objective-C language.  */
 
@@ -352,8 +222,26 @@ class objc_language : public language_defn
 {
 public:
   objc_language ()
-    : language_defn (language_objc, objc_language_data)
+    : language_defn (language_objc)
   { /* Nothing.  */ }
+
+  /* See language.h.  */
+
+  const char *name () const override
+  { return "objective-c"; }
+
+  /* See language.h.  */
+
+  const char *natural_name () const override
+  { return "Objective-C"; }
+
+  /* See language.h.  */
+
+  const std::vector<const char *> &filename_extensions () const override
+  {
+    static const std::vector<const char *> extensions = { ".m" };
+    return extensions;
+  }
 
   /* See language.h.  */
   void language_arch_info (struct gdbarch *gdbarch,
@@ -363,18 +251,24 @@ public:
   }
 
   /* See language.h.  */
-  bool sniff_from_mangled_name (const char *mangled,
-				char **demangled) const override
+  bool sniff_from_mangled_name
+       (const char *mangled, gdb::unique_xmalloc_ptr<char> *demangled)
+       const override
   {
-    *demangled = objc_demangle (mangled, 0);
+    *demangled = demangle_symbol (mangled, 0);
     return *demangled != NULL;
   }
 
   /* See language.h.  */
 
-  char *demangle (const char *mangled, int options) const override
+  gdb::unique_xmalloc_ptr<char> demangle_symbol (const char *mangled,
+						 int options) const override;
+
+  /* See language.h.  */
+
+  bool can_print_type_offsets () const override
   {
-    return objc_demangle (mangled, options);
+    return true;
   }
 
   /* See language.h.  */
@@ -383,12 +277,12 @@ public:
 		   struct ui_file *stream, int show, int level,
 		   const struct type_print_options *flags) const override
   {
-    c_print_type (type, varstring, stream, show, level, flags);
+    c_print_type (type, varstring, stream, show, level, la_language, flags);
   }
 
   /* See language.h.  */
 
-  CORE_ADDR skip_trampoline (struct frame_info *frame,
+  CORE_ADDR skip_trampoline (frame_info_ptr frame,
 			     CORE_ADDR stop_pc) const override
   {
     struct gdbarch *gdbarch = get_frame_arch (frame);
@@ -419,7 +313,83 @@ public:
 
     return real_stop_pc;
   }
+
+  /* See language.h.  */
+
+  const char *name_of_this () const override
+  { return "self"; }
+
+  /* See language.h.  */
+
+  enum macro_expansion macro_expansion () const override
+  { return macro_expansion_c; }
 };
+
+/* See declaration of objc_language::demangle_symbol above.  */
+
+gdb::unique_xmalloc_ptr<char>
+objc_language::demangle_symbol (const char *mangled, int options) const
+{
+  char *demangled, *cp;
+
+  if (mangled[0] == '_'
+      && (mangled[1] == 'i' || mangled[1] == 'c')
+      && mangled[2] == '_')
+    {
+      cp = demangled = (char *) xmalloc (strlen (mangled) + 2);
+
+      if (mangled[1] == 'i')
+	*cp++ = '-';		/* for instance method */
+      else
+	*cp++ = '+';		/* for class    method */
+
+      *cp++ = '[';		/* opening left brace  */
+      strcpy(cp, mangled+3);	/* Tack on the rest of the mangled name.  */
+
+      while (*cp != '\0' && *cp == '_')
+	cp++;			/* Skip any initial underbars in class
+				   name.  */
+
+      cp = strchr(cp, '_');
+      if (cp == nullptr)	/* Find first non-initial underbar.  */
+	{
+	  xfree(demangled);	/* not mangled name */
+	  return nullptr;
+	}
+      if (cp[1] == '_')		/* Easy case: no category name.    */
+	{
+	  *cp++ = ' ';		/* Replace two '_' with one ' '.   */
+	  strcpy(cp, mangled + (cp - demangled) + 2);
+	}
+      else
+	{
+	  *cp++ = '(';		/* Less easy case: category name.  */
+	  cp = strchr(cp, '_');
+	  if (cp == nullptr)
+	    {
+	      xfree(demangled);	/* not mangled name */
+	      return nullptr;
+	    }
+	  *cp++ = ')';
+	  *cp++ = ' ';		/* Overwriting 1st char of method name...  */
+	  strcpy(cp, mangled + (cp - demangled));	/* Get it back.  */
+	}
+
+      while (*cp != '\0' && *cp == '_')
+	cp++;			/* Skip any initial underbars in
+				   method name.  */
+
+      for (; *cp != '\0'; cp++)
+	if (*cp == '_')
+	  *cp = ':';		/* Replace remaining '_' with ':'.  */
+
+      *cp++ = ']';		/* closing right brace */
+      *cp++ = 0;		/* string terminator */
+      return gdb::unique_xmalloc_ptr<char> (demangled);
+    }
+  else
+    return nullptr;	/* Not an objc mangled name.  */
+}
 
 /* Single instance of the class representing the Objective-C language.  */
 
@@ -501,15 +471,20 @@ end_msglist (struct parser_state *ps)
   char *p = msglist_sel;
   CORE_ADDR selid;
 
+  std::vector<expr::operation_up> args = ps->pop_vector (val);
+  expr::operation_up target = ps->pop ();
+
   selname_chain = sel->next;
   msglist_len = sel->msglist_len;
   msglist_sel = sel->msglist_sel;
   selid = lookup_child_selector (ps->gdbarch (), p);
   if (!selid)
     error (_("Can't find selector \"%s\""), p);
-  write_exp_elt_longcst (ps, selid);
+
+  ps->push_new<expr::objc_msgcall_operation> (selid, std::move (target),
+					      std::move (args));
+
   xfree(p);
-  write_exp_elt_longcst (ps, val);	/* Number of args */
   xfree(sel);
 
   return val;
@@ -653,8 +628,8 @@ info_selectors_command (const char *regexp, int from_tty)
     }
   if (matches)
     {
-      printf_filtered (_("Selectors matching \"%s\":\n\n"), 
-		       regexp ? regexp : "*");
+      gdb_printf (_("Selectors matching \"%s\":\n\n"), 
+		  regexp ? regexp : "*");
 
       sym_arr = XALLOCAVEC (struct symbol *, matches);
       matches = 0;
@@ -698,13 +673,13 @@ info_selectors_command (const char *regexp, int from_tty)
 	    *p++ = *name++;
 	  *p++ = '\0';
 	  /* Print in columns.  */
-	  puts_filtered_tabular(asel, maxlen + 1, 0);
+	  puts_tabular(asel, maxlen + 1, 0);
 	}
       begin_line();
     }
   else
-    printf_filtered (_("No selectors matching \"%s\"\n"),
-		     regexp ? regexp : "*");
+    gdb_printf (_("No selectors matching \"%s\"\n"),
+		regexp ? regexp : "*");
 }
 
 /*
@@ -795,8 +770,8 @@ info_classes_command (const char *regexp, int from_tty)
     }
   if (matches)
     {
-      printf_filtered (_("Classes matching \"%s\":\n\n"), 
-		       regexp ? regexp : "*");
+      gdb_printf (_("Classes matching \"%s\":\n\n"), 
+		  regexp ? regexp : "*");
       sym_arr = XALLOCAVEC (struct symbol *, matches);
       matches = 0;
       for (objfile *objfile : current_program_space->objfiles ())
@@ -832,12 +807,12 @@ info_classes_command (const char *regexp, int from_tty)
 	    *p++ = *name++;
 	  *p++ = '\0';
 	  /* Print in columns.  */
-	  puts_filtered_tabular(aclass, maxlen + 1, 0);
+	  puts_tabular(aclass, maxlen + 1, 0);
 	}
       begin_line();
     }
   else
-    printf_filtered (_("No classes matching \"%s\"\n"), regexp ? regexp : "*");
+    gdb_printf (_("No classes matching \"%s\"\n"), regexp ? regexp : "*");
 }
 
 static char * 
@@ -1188,10 +1163,10 @@ print_object_command (const char *args, int from_tty)
 
   {
     expression_up expr = parse_expression (args);
-    int pc = 0;
 
-    object = evaluate_subexp (builtin_type (expr->gdbarch)->builtin_data_ptr,
-			      expr.get (), &pc, EVAL_NORMAL);
+    object
+      = evaluate_expression (expr.get (),
+			     builtin_type (expr->gdbarch)->builtin_data_ptr);
   }
 
   /* Validate the address for sanity.  */
@@ -1213,12 +1188,12 @@ print_object_command (const char *args, int from_tty)
     do
       { /* Read and print characters up to EOS.  */
 	QUIT;
-	printf_filtered ("%c", c);
+	gdb_printf ("%c", c);
 	read_memory (string_addr + i++, &c, 1);
       } while (c != 0);
   else
-    printf_filtered(_("<object returns empty description>"));
-  printf_filtered ("\n");
+    gdb_printf(_("<object returns empty description>"));
+  gdb_printf ("\n");
 }
 
 /* The data structure 'methcalls' is used to detect method calls (thru
@@ -1281,7 +1256,7 @@ find_objc_msgsend (void)
 	  continue; 
 	}
 
-      methcalls[i].begin = BMSYMBOL_VALUE_ADDRESS (func);
+      methcalls[i].begin = func.value_address ();
       methcalls[i].end = minimal_symbol_upper_bound (func);
     }
 }
@@ -1353,9 +1328,10 @@ _initialize_objc_language ()
 	    _("All Objective-C selectors, or those matching REGEXP."));
   add_info ("classes", info_classes_command,
 	    _("All Objective-C classes, or those matching REGEXP."));
-  add_com ("print-object", class_vars, print_object_command, 
-	   _("Ask an Objective-C object to print itself."));
-  add_com_alias ("po", "print-object", class_vars, 1);
+  cmd_list_element *print_object_cmd
+    = add_com ("print-object", class_vars, print_object_command,
+	       _("Ask an Objective-C object to print itself."));
+  add_com_alias ("po", print_object_cmd, class_vars, 1);
 }
 
 static void 
@@ -1489,7 +1465,7 @@ find_implementation (struct gdbarch *gdbarch,
 static int
 resolve_msgsend (CORE_ADDR pc, CORE_ADDR *new_pc)
 {
-  struct frame_info *frame = get_current_frame ();
+  frame_info_ptr frame = get_current_frame ();
   struct gdbarch *gdbarch = get_frame_arch (frame);
   struct type *ptr_type = builtin_type (gdbarch)->builtin_func_ptr;
 
@@ -1511,7 +1487,7 @@ resolve_msgsend (CORE_ADDR pc, CORE_ADDR *new_pc)
 static int
 resolve_msgsend_stret (CORE_ADDR pc, CORE_ADDR *new_pc)
 {
-  struct frame_info *frame = get_current_frame ();
+  frame_info_ptr frame = get_current_frame ();
   struct gdbarch *gdbarch = get_frame_arch (frame);
   struct type *ptr_type = builtin_type (gdbarch)->builtin_func_ptr;
 
@@ -1533,7 +1509,7 @@ resolve_msgsend_stret (CORE_ADDR pc, CORE_ADDR *new_pc)
 static int
 resolve_msgsend_super (CORE_ADDR pc, CORE_ADDR *new_pc)
 {
-  struct frame_info *frame = get_current_frame ();
+  frame_info_ptr frame = get_current_frame ();
   struct gdbarch *gdbarch = get_frame_arch (frame);
   struct type *ptr_type = builtin_type (gdbarch)->builtin_func_ptr;
 
@@ -1561,7 +1537,7 @@ resolve_msgsend_super (CORE_ADDR pc, CORE_ADDR *new_pc)
 static int
 resolve_msgsend_super_stret (CORE_ADDR pc, CORE_ADDR *new_pc)
 {
-  struct frame_info *frame = get_current_frame ();
+  frame_info_ptr frame = get_current_frame ();
   struct gdbarch *gdbarch = get_frame_arch (frame);
   struct type *ptr_type = builtin_type (gdbarch)->builtin_func_ptr;
 

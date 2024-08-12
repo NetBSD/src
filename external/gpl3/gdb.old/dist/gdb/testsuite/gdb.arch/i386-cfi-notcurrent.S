@@ -1,4 +1,4 @@
-/* Copyright 2012-2020 Free Software Foundation, Inc.
+/* Copyright 2012-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -74,3 +74,4 @@ main:
 	.cfi_endproc
 .LFE2:
 	.size	main, .-main
+	.section	.note.GNU-stack,"",@progbits

@@ -1,5 +1,5 @@
 /* Run a function on the main thread
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,5 +24,9 @@
 /* Send a runnable to the main thread.  */
 
 extern void run_on_main_thread (std::function<void ()> &&);
+
+/* Return true on the main thread.  */
+
+extern bool is_main_thread ();
 
 #endif /* GDB_RUN_ON_MAIN_THREAD_H */

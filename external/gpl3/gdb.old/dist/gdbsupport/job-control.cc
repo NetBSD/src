@@ -1,7 +1,7 @@
 /* Job control and terminal related functions, for GDB and gdbserver
    when running under Unix.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -46,8 +46,8 @@ gdb_setpgid ()
     {
 #ifdef HAVE_SETPGID
       /* The call setpgid (0, 0) is supposed to work and mean the same
-         thing as this, but on Ultrix 4.2A it fails with EPERM (and
-         setpgid (getpid (), getpid ()) succeeds).  */
+	 thing as this, but on Ultrix 4.2A it fails with EPERM (and
+	 setpgid (getpid (), getpid ()) succeeds).  */
       retval = setpgid (getpid (), getpid ());
 #else
 #ifdef HAVE_SETPGRP

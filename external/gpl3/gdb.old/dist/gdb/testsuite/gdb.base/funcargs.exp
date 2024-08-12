@@ -1,4 +1,4 @@
-# Copyright 1992-2020 Free Software Foundation, Inc.
+# Copyright 1992-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,15 +18,11 @@
 
 standard_testfile
 
+set gcc_compiled [is_c_compiler_gcc]
+
 set compile_flags {debug nowarnings quiet}
 if [support_complex_tests] {
     lappend compile_flags "additional_flags=-DTEST_COMPLEX"
-}
-
-# Create and source the file that provides information about the compiler
-# used to compile the test case.
-if [get_compiler_info] {
-    return -1
 }
 
 set skip_float_test [gdb_skip_float_test]
@@ -39,7 +35,7 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile $compile_flags]}
 # Locate actual args; integral types.
 #
 
-proc integral_args {} {
+proc_with_prefix integral_args {} {
     global gdb_prompt
     global det_file
     global gcc_compiled
@@ -53,7 +49,7 @@ proc integral_args {} {
     gdb_breakpoint call0e
 
     # Run; should stop at call0a and print actual arguments.
-    if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
+    if {!$gcc_compiled} { setup_xfail "rs6000-*-*" }
     gdb_run_cmd
     gdb_test "" " call0a \\(c=97 'a', s=1, i=2, l=3\\) .*" "run to call0a"
 
@@ -65,25 +61,16 @@ proc integral_args {} {
     gdb_test "print l " ".* = 3" "print l after run to call0a"
 
     # Continue; should stop at call0b and print actual arguments.
-    if [gdb_test "cont" ".* call0b \\(s=1, i=2, l=3, c=97 'a'\\) .*" "continue to call0b"] {
-	gdb_suppress_tests
-    }
+    gdb_test "cont" ".* call0b \\(s=1, i=2, l=3, c=97 'a'\\) .*" "continue to call0b"
 
     # Continue; should stop at call0c and print actual arguments.
-    if [gdb_test "cont" ".* call0c \\(i=2, l=3, c=97 'a', s=1\\) .*" "continue to call0c"] {
-	gdb_suppress_tests
-    }
+    gdb_test "cont" ".* call0c \\(i=2, l=3, c=97 'a', s=1\\) .*" "continue to call0c"
 
     # Continue; should stop at call0d and print actual arguments.
-    if [gdb_test "cont" ".* call0d \\(l=3, c=97 'a', s=1, i=2\\) .*" "continue to call0d";] {
-	gdb_suppress_tests
-    }
+    gdb_test "cont" ".* call0d \\(l=3, c=97 'a', s=1, i=2\\) .*" "continue to call0d"
 
     # Continue; should stop at call0e and print actual arguments.
-    if [gdb_test "cont" ".* call0e \\(c1=97 'a', l=3, c2=97 'a', i=2, c3=97 'a', s=1, c4=97 'a', c5=97 'a'\\) .*" "continue to call0e" ] {
-	gdb_suppress_tests
-    }
-    gdb_stop_suppressing_tests
+    gdb_test "cont" ".* call0e \\(c1=97 'a', l=3, c2=97 'a', i=2, c3=97 'a', s=1, c4=97 'a', c5=97 'a'\\) .*" "continue to call0e"
 }
 
 #
@@ -104,7 +91,7 @@ proc unsigned_integral_args {} {
     gdb_breakpoint call1e
 
     # Run; should stop at call1a and print actual arguments.
-    if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
+    if {!$gcc_compiled} { setup_xfail "rs6000-*-*" }
     gdb_run_cmd
     gdb_test "" " call1a \\(uc=98 'b', us=6, ui=7, ul=8\\) .*" "run to call1a"
 
@@ -114,27 +101,18 @@ proc unsigned_integral_args {} {
     gdb_test "print us" ".* = 6"
     gdb_test "print ui" ".* = 7"
     gdb_test "print ul" ".* = 8"
-    
+
     # Continue; should stop at call1b and print actual arguments.
-    if [gdb_test "cont" ".* call1b \\(us=6, ui=7, ul=8, uc=98 'b'\\) .*" "continue to call1b"] {
-	gdb_suppress_tests
-    }
+    gdb_test "cont" ".* call1b \\(us=6, ui=7, ul=8, uc=98 'b'\\) .*" "continue to call1b"
 
     # Continue; should stop at call1c and print actual arguments.
-    if [gdb_test "cont" ".* call1c \\(ui=7, ul=8, uc=98 'b', us=6\\) .*" "continue to call1c"] {
-	gdb_suppress_tests
-    }
+    gdb_test "cont" ".* call1c \\(ui=7, ul=8, uc=98 'b', us=6\\) .*" "continue to call1c"
 
     # Continue; should stop at call1d and print actual arguments.
-    if [gdb_test "cont" ".* call1d \\(ul=8, uc=98 'b', us=6, ui=7\\) .*" "continue to call1d"] {
-	gdb_suppress_tests
-    }
+    gdb_test "cont" ".* call1d \\(ul=8, uc=98 'b', us=6, ui=7\\) .*" "continue to call1d"
 
     # Continue; should stop at call1e and print actual arguments.
-    if [gdb_test "cont" ".* call1e \\(uc1=98 'b', ul=8, uc2=98 'b', ui=7, uc3=98 'b', us=6, uc4=98 'b', uc5=98 'b'\\) .*" "continue to call1e"] {
-	gdb_suppress_tests
-    }
-    gdb_stop_suppressing_tests
+    gdb_test "cont" ".* call1e \\(uc1=98 'b', ul=8, uc2=98 'b', ui=7, uc3=98 'b', us=6, uc4=98 'b', uc5=98 'b'\\) .*" "continue to call1e"
 }
 
 #
@@ -159,7 +137,7 @@ proc float_and_integral_args {} {
 
     # Run; should stop at call2a and print actual arguments.
 
-    if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
+    if {!$gcc_compiled} { setup_xfail "rs6000-*-*" }
     gdb_run_cmd
     set test "run to call2a"
     gdb_test_multiple "" $test {
@@ -183,39 +161,25 @@ proc float_and_integral_args {} {
 
     setup_xfail "rs6000-*-*"
     # Continue; should stop at call2b and print actual arguments.
-    if [gdb_test "cont" ".* call2b \\(f1=4, s=1, d1=5, i=2, f2=4, l=3, d2=5, c=97 'a'\\) .*" "continue to call2b"] {
-	gdb_suppress_tests
-    }
+    gdb_test "cont" ".* call2b \\(f1=4, s=1, d1=5, i=2, f2=4, l=3, d2=5, c=97 'a'\\) .*" "continue to call2b"
 
     # Continue; should stop at call2c and print actual arguments.
-    if [gdb_test "cont" ".* call2c \\(s=1, d1=5, i=2, f2=4, l=3, d2=5, c=97 'a', f1=4\\) .*" "continue to call2c"] {
-	gdb_suppress_tests
-    }
+    gdb_test "cont" ".* call2c \\(s=1, d1=5, i=2, f2=4, l=3, d2=5, c=97 'a', f1=4\\) .*" "continue to call2c"
 
     # Continue; should stop at call2d and print actual arguments.
-    if [gdb_test "cont" ".* call2d \\(d1=5, i=2, f2=4, l=3, d2=5, c=97 'a', f1=4, s=1\\) .*" "continue to call2d"] {
-	gdb_suppress_tests
-    }
+    gdb_test "cont" ".* call2d \\(d1=5, i=2, f2=4, l=3, d2=5, c=97 'a', f1=4, s=1\\) .*" "continue to call2d"
 
     # Continue; should stop at call2e and print actual arguments.
-    if [gdb_test "cont" ".* call2e \\(i=2, f2=4, l=3, d2=5, c=97 'a', f1=4, s=1, d1=5\\) .*" "continue to call2e"] {
-	gdb_suppress_tests
-    }
+    gdb_test "cont" ".* call2e \\(i=2, f2=4, l=3, d2=5, c=97 'a', f1=4, s=1, d1=5\\) .*" "continue to call2e"
 
     # Continue; should stop at call2f and print actual arguments.
-    if [gdb_test "cont" ".* call2f \\(f2=4, l=3, d2=5, c=97 'a', f1=4, s=1, d1=5, i=2\\) .*" "continue to call2f"] {
-	gdb_suppress_tests
-    }
+    gdb_test "cont" ".* call2f \\(f2=4, l=3, d2=5, c=97 'a', f1=4, s=1, d1=5, i=2\\) .*" "continue to call2f"
 
     # Continue; should stop at call2g and print actual arguments.
-    if [gdb_test "cont" ".* call2g \\(l=3, d2=5, c=97 'a', f1=4, s=1, d1=5, i=2, f2=4\\) .*" "continue to call2g"] {
-	gdb_suppress_tests
-    }
+    gdb_test "cont" ".* call2g \\(l=3, d2=5, c=97 'a', f1=4, s=1, d1=5, i=2, f2=4\\) .*" "continue to call2g"
 
     # Continue; should stop at call2h and print actual arguments.
-    if [gdb_test "cont" ".* call2h \\(d2=5, c=97 'a', f1=4, s=1, d1=5, i=2, f2=4, l=3\\) .*" "continue to call2h"] {
-	gdb_suppress_tests
-    }
+    gdb_test "cont" ".* call2h \\(d2=5, c=97 'a', f1=4, s=1, d1=5, i=2, f2=4, l=3\\) .*" "continue to call2h"
 
     # monitor only allows 8 breakpoints; w89k board allows 10, so
     # break them up into two groups.
@@ -223,10 +187,7 @@ proc float_and_integral_args {} {
     gdb_breakpoint call2i
 
     # Continue; should stop at call2i and print actual arguments.
-    if [gdb_test "cont" ".* call2i \\(c1=97 'a', f1=4, c2=97 'a', c3=97 'a', d1=5, c4=97 'a', c5=97 'a', c6=97 'a', f2=4, s=1, c7=97 'a', d2=5\\) .*" "continue to call2i"] {
-	gdb_suppress_tests
-    }
-    gdb_stop_suppressing_tests
+    gdb_test "cont" ".* call2i \\(c1=97 'a', f1=4, c2=97 'a', c3=97 'a', d1=5, c4=97 'a', c5=97 'a', c6=97 'a', f2=4, s=1, c7=97 'a', d2=5\\) .*" "continue to call2i"
 }
 
 
@@ -234,7 +195,7 @@ proc float_and_integral_args {} {
 # Locate actual args; _Complex types.
 #
 
-proc complex_args {} {
+proc_with_prefix complex_args {} {
     global gdb_prompt
 
     delete_breakpoints
@@ -261,7 +222,7 @@ proc complex_args {} {
 #
 # Locate actual args; _Complex types and integral.
 #
-proc complex_integral_args {} {
+proc_with_prefix complex_integral_args {} {
     global gdb_prompt
 
     delete_breakpoints
@@ -279,7 +240,7 @@ proc complex_integral_args {} {
 #
 # Locate actual args; _Complex types and integral/float.
 #
-proc complex_float_integral_args {} {
+proc_with_prefix complex_float_integral_args {} {
     global gdb_prompt
 
     delete_breakpoints
@@ -298,7 +259,7 @@ proc complex_float_integral_args {} {
 # Locate actual args; dereference pointers to ints and floats.
 #
 
-proc pointer_args {} {
+proc_with_prefix pointer_args {} {
     global gdb_prompt
     global hex
     global det_file
@@ -322,9 +283,7 @@ proc pointer_args {} {
 
     # Continue; should stop at call3b and print actual arguments.
     # Try dereferencing the arguments.
-    if [gdb_test "cont" ".* call3b \\(ucp=$hex <uc> \"b.*\", usp=$hex <us>, uip=$hex <ui>, ulp=$hex <ul>\\) .*" "continue to call3b"] {
-	gdb_suppress_tests
-    }
+    gdb_test "cont" ".* call3b \\(ucp=$hex <uc> \"b.*\", usp=$hex <us>, uip=$hex <ui>, ulp=$hex <ul>\\) .*" "continue to call3b"
 
     gdb_test "print *ucp" ".* = 98 'b'"
     gdb_test "print *usp" ".* = 6"
@@ -333,22 +292,17 @@ proc pointer_args {} {
 
     # Continue; should stop at call3c and print actual arguments.
     # Try dereferencing the arguments.
-    if [gdb_test "cont" ".* call3c \\(fp=$hex <f>, dp=$hex <d>\\) .*" "continue to call3c"] {
-	gdb_suppress_tests
-    }
+    gdb_test "cont" ".* call3c \\(fp=$hex <f>, dp=$hex <d>\\) .*" "continue to call3c"
 
     gdb_test "print *fp" ".* = 4"
     gdb_test "print *dp" ".* = 5"
-
-#    pass "locate actual args, pointer types"
-    gdb_stop_suppressing_tests
 }
 
 #
 # Locate actual args; structures and unions passed by reference.
 #
 
-proc structs_by_reference {} {
+proc_with_prefix structs_by_reference {} {
     global gdb_prompt
     global hex
     global det_file
@@ -391,14 +345,13 @@ proc structs_by_reference {} {
     }
 
     pass "locate actual args, structs/unions passed by reference"
-    gdb_stop_suppressing_tests
 }
 
 #
 # Locate actual args; structures and unions passed by value.
 #
 
-proc structs_by_value {} {
+proc_with_prefix structs_by_value {} {
     global gdb_prompt
     global hex
     global det_file
@@ -452,15 +405,13 @@ proc structs_by_value {} {
     } else {
 	fail "print un (unknown case)"
     }
-
-    gdb_stop_suppressing_tests
 }
 
 #
 # Locate actual args; discard, shuffle, and call
 #
 
-proc discard_and_shuffle {} {
+proc_with_prefix discard_and_shuffle {} {
     global gdb_prompt
     global hex
     global decimal
@@ -500,12 +451,10 @@ proc discard_and_shuffle {} {
 
     gdb_continue call6b
 
-    if [gdb_test_sequence "backtrace 100" "backtrace from call6b" {
+    gdb_test_sequence "backtrace 100" "backtrace from call6b" {
 	"\[\r\n\]#0 .* call6b \\(s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#1 .* call6a \\(c=97 'a', s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#2 .* main \\(.*\\) at "
-    } ] {
-	gdb_suppress_tests
     }
 
     # Continue; should stop at call6c and print actual arguments.
@@ -513,27 +462,24 @@ proc discard_and_shuffle {} {
 
     gdb_continue call6c
 
-    if [gdb_test_sequence "backtrace 100" "backtrace from call6c" {
+    gdb_test_sequence "backtrace 100" "backtrace from call6c" {
 	"\[\r\n\]#0 .* call6c \\(i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#1 .* call6b \\(s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#2 .* call6a \\(c=97 'a', s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#3 .* main \\(.*\\) at "
-    } ] {
-	gdb_suppress_tests
     }
+
     # Continue; should stop at call6d and print actual arguments.
     # Print backtrace.
 
     gdb_continue call6d
 
-    if [gdb_test_sequence "backtrace 100" "backtrace from call6d" {
+    gdb_test_sequence "backtrace 100" "backtrace from call6d" {
 	"\[\r\n\]#0 .* call6d \\(l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#1 .* call6c \\(i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#2 .* call6b \\(s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#3 .* call6a \\(c=97 'a', s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#4 .* main \\(.*\\) at "
-    } ] {
-	gdb_suppress_tests
     }
 
     # Continue; should stop at call6e and print actual arguments.
@@ -541,15 +487,13 @@ proc discard_and_shuffle {} {
 
     gdb_continue call6e
 
-    if [gdb_test_sequence "backtrace 100" "backtrace from call6e" {
+    gdb_test_sequence "backtrace 100" "backtrace from call6e" {
 	"\[\r\n\]#0 .* call6e \\(f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#1 .* call6d \\(l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#2 .* call6c \\(i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#3 .* call6b \\(s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#4 .* call6a \\(c=97 'a', s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#5 .* main \\(.*\\) at "
-    } ] {
-	gdb_suppress_tests
     }
 
     # Continue; should stop at call6f and print actual arguments.
@@ -557,7 +501,7 @@ proc discard_and_shuffle {} {
 
     gdb_continue call6f
 
-    if [gdb_test_sequence "backtrace 100" "backtrace from call6f" {
+    gdb_test_sequence "backtrace 100" "backtrace from call6f" {
 	"\[\r\n\]#0 .* call6f \\(d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#1 .* call6e \\(f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#2 .* call6d \\(l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
@@ -565,8 +509,6 @@ proc discard_and_shuffle {} {
 	"\[\r\n\]#4 .* call6b \\(s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#5 .* call6a \\(c=97 'a', s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#6 .* main \\(.*\\) at "
-    } ] {
-	gdb_suppress_tests
     }
 
     # Continue; should stop at call6g and print actual arguments.
@@ -574,7 +516,7 @@ proc discard_and_shuffle {} {
 
     gdb_continue call6g
 
-    if [gdb_test_sequence "backtrace 100" "backtrace from call6g" {
+    gdb_test_sequence "backtrace 100" "backtrace from call6g" {
 	"\[\r\n\]#0 .* call6g \\(uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#1 .* call6f \\(d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#2 .* call6e \\(f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
@@ -583,8 +525,6 @@ proc discard_and_shuffle {} {
 	"\[\r\n\]#5 .* call6b \\(s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#6 .* call6a \\(c=97 'a', s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#7 .* main \\(.*\\) at "
-    } ] {
-	gdb_suppress_tests
     }
 
     # Continue; should stop at call6h and print actual arguments.
@@ -592,7 +532,7 @@ proc discard_and_shuffle {} {
 
     gdb_continue call6h
 
-    if [gdb_test_sequence "backtrace 100" "backtrace from call6h" {
+    gdb_test_sequence "backtrace 100" "backtrace from call6h" {
 	"\[\r\n\]#0 .* call6h \\(us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#1 .* call6g \\(uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#2 .* call6f \\(d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
@@ -602,8 +542,6 @@ proc discard_and_shuffle {} {
 	"\[\r\n\]#6 .* call6b \\(s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#7 .* call6a \\(c=97 'a', s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#8 .* main \\(.*\\) at "
-    } ] {
-	gdb_suppress_tests
     }
 
     # monitor only allows 8 breakpoints; w89k board allows 10, so
@@ -618,7 +556,7 @@ proc discard_and_shuffle {} {
 
     gdb_continue call6i
 
-    if [gdb_test_sequence "backtrace 100" "backtrace from call6i" {
+    gdb_test_sequence "backtrace 100" "backtrace from call6i" {
 	"\[\r\n\]#0 .* call6i \\(ui=7, ul=8\\) "
 	"\[\r\n\]#1 .* call6h \\(us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#2 .* call6g \\(uc=98 'b', us=6, ui=7, ul=8\\) "
@@ -629,8 +567,6 @@ proc discard_and_shuffle {} {
 	"\[\r\n\]#7 .* call6b \\(s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#8 .* call6a \\(c=97 'a', s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#9 .* main \\(.*\\) at "
-    } ] {
-	gdb_suppress_tests
     }
 
     # Continue; should stop at call6j and print actual arguments.
@@ -638,7 +574,7 @@ proc discard_and_shuffle {} {
 
     gdb_continue call6j
 
-    if [gdb_test_sequence "backtrace 100" "backtrace from call6j" {
+    gdb_test_sequence "backtrace 100" "backtrace from call6j" {
 	"\[\r\n\]#0 .* call6j \\(ul=8\\) "
 	"\[\r\n\]#1 .* call6i \\(ui=7, ul=8\\) "
 	"\[\r\n\]#2 .* call6h \\(us=6, ui=7, ul=8\\) "
@@ -650,15 +586,13 @@ proc discard_and_shuffle {} {
 	"\[\r\n\]#8 .* call6b \\(s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#9 .* call6a \\(c=97 'a', s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#10 .* main \\(.*\\) at "
-    } ] {
-	gdb_suppress_tests
     }
 
     # Continue; should stop at call6k and print actual arguments.
     # Print backtrace.
     gdb_continue call6k
 
-    if [gdb_test_sequence "backtrace 100" "backtrace from call6k" {
+    gdb_test_sequence "backtrace 100" "backtrace from call6k" {
 	"\[\r\n\]#0 .* call6k \\(\\) "
 	"\[\r\n\]#1 .* call6j \\(ul=8\\) "
 	"\[\r\n\]#2 .* call6i \\(ui=7, ul=8\\) "
@@ -671,10 +605,7 @@ proc discard_and_shuffle {} {
 	"\[\r\n\]#9 .* call6b \\(s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#10 .* call6a \\(c=97 'a', s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#11 .* main \\(.*\\) at "
-    } ] {
-	gdb_suppress_tests
     }
-    gdb_stop_suppressing_tests
 }
 
 
@@ -682,7 +613,7 @@ proc discard_and_shuffle {} {
 # Locate actual args; shuffle round robin and call
 #
 
-proc shuffle_round_robin {} {
+proc_with_prefix shuffle_round_robin {} {
     global gdb_prompt
     global hex
     global decimal
@@ -706,7 +637,7 @@ proc shuffle_round_robin {} {
     gdb_run_cmd
     gdb_test "" "Breakpoint $decimal, call7a .*" "run to call7a"
 
-    if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
+    if {!$gcc_compiled} { setup_xfail "rs6000-*-*" }
     gdb_test_multiple "backtrace 100" "backtrace from call7a" {
 	-re " call7a \\(c=97 'a', i=2, s=1, l=3, f=4, uc=98 'b', d=5, us=6, ul=8, ui=7\\) .* main \\(.*\\) .*$gdb_prompt $" {
 	    pass "backtrace from call7a"
@@ -721,7 +652,7 @@ proc shuffle_round_robin {} {
 
     gdb_continue call7b
 
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
+    if {$gcc_compiled} { setup_xfail "rs6000-*-*" }
 
     gdb_test_sequence "backtrace 100" "backtrace from call7b" {
 	"\[\r\n\]#0 .* call7b \\(i=2, s=1, l=3, f=4, uc=98 'b', d=5, us=6, ul=8, ui=7, c=97 'a'\\) "
@@ -873,14 +804,13 @@ proc shuffle_round_robin {} {
 	"\[\r\n\]#10 .* call7a \\(c=97 'a', i=2, s=1, l=3, f=4, uc=98 'b', d=5, us=6, ul=8, ui=7\\) "
 	"\[\r\n\]#11 .* main \\(.*\\) at "
     }
-    gdb_stop_suppressing_tests
 }
 
 #
 # Locate actual args; recursive passing of structs by value
 #
 
-proc recursive_structs_by_value {} {
+proc_with_prefix recursive_structs_by_value {} {
     global gdb_prompt
     global hex
     global decimal
@@ -905,26 +835,27 @@ proc recursive_structs_by_value {} {
 	"\[\r\n\]#6 .* test_struct_args \\(\\) "
 	"\[\r\n\]#7 .* main \\(.*\\) at "
     }
-    gdb_stop_suppressing_tests
 }
 
 #
 # Test for accessing local stack variables in functions which call alloca
 #
-proc localvars_after_alloca { } {
+proc_with_prefix localvars_after_alloca { } {
     global gdb_prompt
     global hex
     global decimal
     global gcc_compiled
 
-    if { ! [ runto localvars_after_alloca ] } then { gdb_suppress_tests; }
+    if { ![runto localvars_after_alloca] } {
+	return
+    }
 
     # Print each arg as a double check to see if we can print
     # them here as well as with backtrace.
 
-    if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
+    if {!$gcc_compiled} { setup_xfail "rs6000-*-*" }
     gdb_test "print c" " = 97 'a'" "print c after runto localvars_after_alloca"
-    if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
+    if {!$gcc_compiled} { setup_xfail "rs6000-*-*" }
     gdb_test "print s" " = 1" "print s after runto localvars_after_alloca"
     gdb_test "print i" " = 2" "print i after runto localvars_after_alloca"
     gdb_test "print l" " = 3" "print l after runto localvars_after_alloca"
@@ -941,30 +872,30 @@ proc localvars_after_alloca { } {
     gdb_test "print l" " = 3" "print l in localvars_after_alloca"
 
     gdb_test "backtrace 8" "#0.*localvars_after_alloca \\(c=97 'a', s=1, i=2, l=3\\).*#1.*main.*" "backtrace after alloca"
-    gdb_stop_suppressing_tests
 }
 
-proc call_after_alloca { } {
+proc_with_prefix call_after_alloca { } {
     global gdb_prompt
     global hex
     global decimal
     global gcc_compiled
 
-    if { ! [ runto call_after_alloca_subr ] } then { gdb_suppress_tests; }
+    if { ![runto call_after_alloca_subr] } {
+	return
+    }
 
     # Print each arg as a double check to see if we can print
     # them here as well as with backtrace.
 
-    if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
+    if {!$gcc_compiled} { setup_xfail "rs6000-*-*" }
     gdb_test "print c" " = 97 'a'" "print c in call_after_alloca"
-    if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
+    if {!$gcc_compiled} { setup_xfail "rs6000-*-*" }
     gdb_test "print s" " = 1" "print s in call_after_alloca"
     gdb_test "print i" " = 2" "print i in call_after_alloca"
     gdb_test "print l" " = 3" "print l in call_after_alloca"
 
-    if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
+    if {!$gcc_compiled} { setup_xfail "rs6000-*-*" }
     gdb_test "backtrace 8" "#0.*call_after_alloca_subr \\(c=97 'a', s=1, i=2, l=3, uc=98 'b', us=11, ui=12, ul=13\\).*#1.*call_after_alloca \\(c=97 'a', s=1, i=2, l=3\\).*#2.*main.*" "backtrace from call_after_alloca_subr"
-    gdb_stop_suppressing_tests
 }
 
 #
@@ -972,7 +903,7 @@ proc call_after_alloca { } {
 # and finally stepping into indirect calls.  The point is that on the PA
 # these use a funky `dyncall' mechanism which GDB needs to know about.
 #
-proc localvars_in_indirect_call { } {
+proc_with_prefix localvars_in_indirect_call { } {
     global gdb_prompt
     global hex
     global decimal
@@ -981,7 +912,9 @@ proc localvars_in_indirect_call { } {
     # Can not use "runto call0a" as call0a is called several times
     # during single run.  Instead stop in a marker function and
     # take control from there.
-    if { ! [ runto marker_indirect_call ] } then { gdb_suppress_tests; }
+    if { ![runto marker_indirect_call] } {
+	return
+    }
 
     # break on the next call to call0a, then delete all the breakpoints
     # and start testing.
@@ -992,14 +925,14 @@ proc localvars_in_indirect_call { } {
     # Print each arg as a double check to see if we can print
     # them here as well as with backtrace.
 
-    if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
+    if {!$gcc_compiled} { setup_xfail "rs6000-*-*" }
     gdb_test "print c" " = 97 'a'" "print c in localvars_in_indirect_call"
-    if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
+    if {!$gcc_compiled} { setup_xfail "rs6000-*-*" }
     gdb_test "print s" " = 1" "print s in localvars_in_indirect_call"
     gdb_test "print i" " = 2" "print i in localvars_in_indirect_call"
     gdb_test "print l" " = 3" "print l in localvars_in_indirect_call"
 
-    if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
+    if {!$gcc_compiled} { setup_xfail "rs6000-*-*" }
     gdb_test "backtrace 8" \
 	"#0.*call0a \\(c=97 'a', s=1, i=2, l=3\\).*#1.*main.*" \
 	"backtrace in indirectly called function"
@@ -1026,18 +959,15 @@ proc localvars_in_indirect_call { } {
 	}
 	-re ".*$gdb_prompt $" {
 	    fail "finish from indirectly called function"
-	    gdb_suppress_tests
 	}
-	default { 
+	default {
 	    fail "finish from indirectly called function"
-	    gdb_suppress_tests
 	}
     }
 
-    if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
+    if {!$gcc_compiled} { setup_xfail "rs6000-*-*" }
     gdb_test "step" "call0a \\(c=97 'a', s=1, i=2, l=3\\).*" \
 	"stepping into indirectly called function"
-    gdb_stop_suppressing_tests
 }
 
 #
@@ -1045,13 +975,15 @@ proc localvars_in_indirect_call { } {
 # cascaded) on both the call path and the gdb_suppress_tests; path.
 # to handle trampolines.
 #
-proc test_stepping_over_trampolines { } {
+proc_with_prefix stepping_over_trampolines { } {
     global gdb_prompt
     global hex
     global decimal
 
     # Stop in a marker function and take control from there.
-    if { ! [ runto marker_call_with_trampolines ] } then { gdb_suppress_tests; }
+    if { ![runto marker_call_with_trampolines] } {
+	return
+    }
 
     # Cater for gdb stopping in midline, see comment for finish above.
     gdb_test_multiple "finish" "finish from marker_call_with_trampolines" {
@@ -1065,9 +997,8 @@ proc test_stepping_over_trampolines { } {
 	-re ".*$gdb_prompt $" {
 	    fail "finish from marker_call_with_trampolines"
 	}
-	default { 
+	default {
 	    fail "finish from marker_call_with_trampolines"
-	    gdb_suppress_tests
 	}
     }
 
@@ -1086,7 +1017,6 @@ proc test_stepping_over_trampolines { } {
     gdb_test_multiple "step" "stepping back to main from function called with trampolines" {
 	-re "main .* at.*$gdb_prompt $" {
 	    pass "stepping back to main from function called with trampolines"
-	    gdb_suppress_tests
 	}
 	-re "\}.*End of call_with_trampolines.*$gdb_prompt $" {
 	    send_gdb "step\n"
@@ -1097,10 +1027,8 @@ proc test_stepping_over_trampolines { } {
 	}
 	default {
 	    fail "stepping back to main from function called with trampolines"
-	    gdb_suppress_tests
 	}
     }
-    gdb_stop_suppressing_tests
 }
 
 set prev_timeout $timeout
@@ -1174,6 +1102,6 @@ recursive_structs_by_value
 localvars_after_alloca
 call_after_alloca
 localvars_in_indirect_call
-test_stepping_over_trampolines
+stepping_over_trampolines
 
 set timeout $prev_timeout

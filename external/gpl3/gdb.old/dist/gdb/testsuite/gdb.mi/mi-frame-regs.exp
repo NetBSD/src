@@ -1,4 +1,4 @@
-# Copyright 2018-2020 Free Software Foundation, Inc.
+# Copyright 2018-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ standard_testfile basics.c
 
 if {[gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
 		 executable {debug}] != "" } then {
-     untested mi-frame-regs.exp
+     untested "failed to compile"
      return -1
 }
 
@@ -58,17 +58,16 @@ proc breakpoint_address {bpnum} {
 # breakpoints in different functions.
 
 proc_with_prefix do_floating_varobj_test {} {
-    global srcfile
+    global srcfile binfile
     global hex
     global expect_out
 
-    gdb_exit
-    if {[mi_gdb_start]} then {
+    if {[mi_clean_restart $binfile]} {
 	fail "couldn't start gdb"
 	return
     }
 
-    mi_run_to_main
+    mi_runto_main
 
     # Create a floating varobj for $pc.
     mi_gdb_test "-var-create --thread 1 --frame 0 - @ \$pc" \
@@ -99,7 +98,7 @@ proc_with_prefix do_floating_varobj_test {} {
 
 	# Get the address of the current breakpoint.
 	set bpaddr [breakpoint_address $bpnum]
-	if {$bpaddr == ""} then { return }
+	if {$bpaddr == ""} { return }
 
 	# Check that the addresses are the same.
 	gdb_assert [expr $bpaddr == $pcval] "\$pc equals address of breakpoint in callee$i"
@@ -111,16 +110,15 @@ proc_with_prefix do_floating_varobj_test {} {
 # counter changes (without substantially changing the stack).
 
 proc_with_prefix do_fixed_varobj_test {} {
-    global srcfile
+    global srcfile binfile
     global hex
 
-    gdb_exit
-    if {[mi_gdb_start]} then {
+    if {[mi_clean_restart $binfile] != 0} {
 	fail "couldn't start gdb"
 	return
     }
 
-    mi_run_to_main
+    mi_runto_main
 
     # Run to the function 'callee3' so we have several frames.
     mi_create_breakpoint "basics.c:callee3" \
@@ -147,7 +145,7 @@ proc_with_prefix do_fixed_varobj_test {} {
 
     for {set i 0} {$i < 4} {incr i} {
 
-	if { $i == 1 } then { set first_unchanging_varnum $varnum }
+	if {$i == 1} { set first_unchanging_varnum $varnum }
 
 	mi_gdb_test "-var-create --thread 1 --frame $i - \* \$pc" \
 	    "\\^done,.*value=\"$hex.*" \

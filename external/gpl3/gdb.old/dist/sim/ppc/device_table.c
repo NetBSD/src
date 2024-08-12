@@ -23,10 +23,7 @@
 
 #include "device_table.h"
 
-#if HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
-
 #include <ctype.h>
 
 

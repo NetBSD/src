@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Free Software Foundation, Inc.
+# Copyright 2010-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,7 +38,31 @@ if [is_remote host] {
     }
 }
 gdb_test_no_output "set complaints 100"
-gdb_test "file $binfile" {Reading symbols from .*\.\.\.\r\nDuring symbol reading: location description stack underflow\r\nDuring symbol reading: location description stack overflow} "check partial symtab errors"
+set w1 0
+set w2 0
+gdb_test_multiple "file $binfile" "file command" {
+    -re "\r\nReading symbols from \[^\r\n\]*\\.\\.\\." {
+	exp_continue
+    }
+    -re "^\r\nDuring symbol reading: location description stack underflow" {
+	set w1 1
+	exp_continue
+    }
+    -re "^\r\nDuring symbol reading: location description stack overflow" {
+	set w2 1
+	exp_continue
+    }
+    -re -wrap "" {
+	pass $gdb_test_name
+    }
+}
+
+set readnow_p [readnow]
+
+if { $readnow_p } {
+    setup_kfail "gdb/26796" *-*-*
+}
+gdb_assert {$w1 && $w2}
 
 gdb_test "p underflow" {Asked for position 0 of stack, stack only has 0 elements on it\.}
 gdb_test "p overflow" " = 2"

@@ -1,4 +1,4 @@
-# Copyright 2018-2020 Free Software Foundation, Inc.
+# Copyright 2018-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 # Test initial values of x87 control registers, before any x87
 # instructions have been executed in the inferior.
 
-if ![is_amd64_regs_target] then {
+if {![is_amd64_regs_target]} {
     return
 }
 
@@ -27,7 +27,7 @@ standard_testfile .S
 set options [list debug \
 		 additional_flags=-static \
 		 additional_flags=-nostartfiles]
-if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} $options] } {
+if { [build_executable "failed to prepare" ${testfile} ${srcfile} $options] } {
     return -1
 }
 
@@ -45,8 +45,7 @@ proc_with_prefix check_x87_regs_around_init {} {
     clean_restart ${binfile}
 
     # Get things started.
-    if ![runto_main] then {
-	fail "can't run to main"
+    if {![runto_main]} {
 	return 0
     }
 
@@ -120,8 +119,7 @@ proc_with_prefix check_setting_mxcsr_before_enable {} {
 
     clean_restart ${binfile}
 
-    if ![runto_main] then {
-	fail "can't run to main"
+    if {![runto_main]} {
 	return 0
     }
 
@@ -155,8 +153,7 @@ proc_with_prefix check_setting_x87_regs_before_enable {} {
 
     clean_restart ${binfile}
 
-    if ![runto_main] then {
-	fail "can't run to main"
+    if {![runto_main]} {
 	return 0
     }
 

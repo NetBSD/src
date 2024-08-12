@@ -1,5 +1,5 @@
 /* Simulation code for the CR16 processor.
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2023 Free Software Foundation, Inc.
    Contributed by M Ranga Swami Reddy <MR.Swami.Reddy@nsc.com>
 
    This file is part of GDB, the GNU debugger.
@@ -18,12 +18,11 @@
    along with this program. If not, see <http://www.gnu.org/licenses/>.  */
 
 
-#include "config.h"
 #include <stdio.h>
 #include <ctype.h>
 #include <limits.h>
 #include "ansidecl.h"
-#include "gdb/callback.h"
+#include "sim/callback.h"
 #include "opcode/cr16.h"
 #include "bfd.h"
 
@@ -41,29 +40,20 @@
 
 extern int cr16_debug;
 
-#include "gdb/remote-sim.h"
+#include "sim/sim.h"
 #include "sim-config.h"
 #include "sim-types.h"
 
-typedef unsigned8 uint8;
-typedef signed8 int8;
-typedef unsigned16 uint16;
-typedef signed16 int16;
-typedef unsigned32 uint32;
-typedef signed32 int32;
-typedef unsigned64 uint64;
-typedef signed64 int64;
-
 /* FIXME: CR16 defines */
-typedef uint16 reg_t;
-typedef uint32 creg_t;
+typedef uint16_t reg_t;
+typedef uint32_t creg_t;
 
 struct simops 
 {
-  char mnimonic[12];
-  uint32 size;
-  uint32 mask;
-  uint32 opcode;
+  char mnemonic[12];
+  uint32_t size;
+  uint32_t mask;
+  uint32_t opcode;
   int format;
   char fname[12];
   void (*func)(SIM_DESC, SIM_CPU *);
@@ -206,7 +196,7 @@ struct _state
 
 #define GPR32(N) \
      (N < 12) ? \
-     ((((uint16) State.regs[(N) + 1]) << 16) | (uint16) State.regs[(N)]) \
+     ((((uint16_t) State.regs[(N) + 1]) << 16) | (uint16_t) State.regs[(N)]) \
      : GPR (N) 
 
 #define SET_GPR32(N,VAL) do { \
@@ -233,7 +223,7 @@ struct _state
 
   /* trace data */
   struct {
-    uint16 psw;
+    uint16_t psw;
   } trace;
 
   int	pc_changed;
@@ -243,11 +233,13 @@ struct _state
 
   enum _ins_type ins_type;
 
-} State;
+};
+
+extern struct _state State;
 
 
-extern uint32 OP[4];
-extern uint32 sign_flag;
+extern uint32_t OP[4];
+extern uint32_t sign_flag;
 extern struct simops Simops[];
 
 enum
@@ -393,7 +385,7 @@ enum
 
 /* Yes, this is as whacked as it looks.  The sim currently reads little endian
    for 16 bits, but then merge them like big endian to get 32 bits.  */
-static inline uint32 get_longword (SIM_CPU *cpu, address_word addr)
+static inline uint32_t get_longword (SIM_CPU *cpu, address_word addr)
 {
   return (RW (addr) << 16) | RW (addr + 2);
 }

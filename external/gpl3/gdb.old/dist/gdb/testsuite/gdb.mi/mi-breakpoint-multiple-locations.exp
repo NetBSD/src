@@ -1,4 +1,4 @@
-# Copyright 2018-2020 Free Software Foundation, Inc.
+# Copyright 2018-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -53,15 +53,12 @@ proc make_breakpoints_pattern { expect_fixed_output bp_num loc1_en loc2_en } {
 proc do_test { mi_version use_fix_flag expect_fixed_output } {
     with_test_prefix "mi_version=${mi_version}" {
 	with_test_prefix "use_fix_flag=${use_fix_flag}" {
-	    global MIFLAGS decimal
+	    global MIFLAGS decimal binfile
 	    set MIFLAGS "-i=mi${mi_version}"
 
-	    gdb_exit
-	    if {[mi_gdb_start]} {
-		return
-	    }
+	    mi_clean_restart $binfile
 
-	    mi_run_to_main
+	    mi_runto_main
 
 	    if $use_fix_flag {
 		mi_gdb_test "-fix-multi-location-breakpoint-output" "\\^done" \
@@ -70,12 +67,12 @@ proc do_test { mi_version use_fix_flag expect_fixed_output } {
 
 	    # Check the breakpoint-created event.
 	    set pattern [make_breakpoints_pattern $expect_fixed_output 2 y y]
-	    mi_gdb_test "break add" \
-		[multi_line "&\"break add\\\\n\"" \
+	    mi_gdb_test "break a_very_unique_name" \
+		[multi_line "&\"break a_very_unique_name\\\\n\"" \
 			    "~\"Breakpoint ${decimal} at.*\\(2 locations\\)\\\\n\"" \
 			    "=breakpoint-created,${pattern}" \
 			    "\\^done" ] \
-		"break add"
+		"break a_very_unique_name"
 
 	    # Check the -break-info output.
 	    mi_gdb_test "-break-info" \
@@ -84,7 +81,7 @@ proc do_test { mi_version use_fix_flag expect_fixed_output } {
 
 	    # Check the -break-insert response.
 	    set pattern [make_breakpoints_pattern $expect_fixed_output 3 y y]
-	    mi_gdb_test "-break-insert add" "\\^done,${pattern}" "insert breakpoint with MI command"
+	    mi_gdb_test "-break-insert a_very_unique_name" "\\^done,${pattern}" "insert breakpoint with MI command"
 
 	    # Modify enableness through MI commands shouldn't trigger MI
 	    # notification.

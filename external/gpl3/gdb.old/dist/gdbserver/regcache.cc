@@ -1,5 +1,5 @@
 /* Register support routines for the remote server for GDB.
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -49,14 +49,13 @@ get_thread_regcache (struct thread_info *thread, int fetch)
 
   if (fetch && regcache->registers_valid == 0)
     {
-      struct thread_info *saved_thread = current_thread;
+      scoped_restore_current_thread restore_thread;
 
-      current_thread = thread;
+      switch_to_thread (thread);
       /* Invalidate all registers, to prevent stale left-overs.  */
       memset (regcache->register_status, REG_UNAVAILABLE,
 	      regcache->tdesc->reg_defs.size ());
       fetch_inferior_registers (regcache, -1);
-      current_thread = saved_thread;
       regcache->registers_valid = 1;
     }
 
@@ -83,11 +82,10 @@ regcache_invalidate_thread (struct thread_info *thread)
 
   if (regcache->registers_valid)
     {
-      struct thread_info *saved_thread = current_thread;
+      scoped_restore_current_thread restore_thread;
 
-      current_thread = thread;
+      switch_to_thread (thread);
       store_inferior_registers (regcache, -1);
-      current_thread = saved_thread;
     }
 
   regcache->registers_valid = 0;
@@ -246,16 +244,28 @@ registers_from_string (struct regcache *regcache, char *buf)
   hex2bin (buf, registers, len / 2);
 }
 
-int
-find_regno (const struct target_desc *tdesc, const char *name)
+/* See regcache.h */
+
+gdb::optional<int>
+find_regno_no_throw (const struct target_desc *tdesc, const char *name)
 {
   for (int i = 0; i < tdesc->reg_defs.size (); ++i)
     {
       if (strcmp (name, find_register_by_number (tdesc, i).name) == 0)
 	return i;
     }
-  internal_error (__FILE__, __LINE__, "Unknown register %s requested",
-		  name);
+  return {};
+}
+
+int
+find_regno (const struct target_desc *tdesc, const char *name)
+{
+  gdb::optional<int> regnum = find_regno_no_throw (tdesc, name);
+
+  if (regnum.has_value ())
+    return *regnum;
+
+  internal_error ("Unknown register %s requested", name);
 }
 
 static void
@@ -300,7 +310,7 @@ regcache_register_size (const struct regcache *regcache, int n)
 }
 
 static unsigned char *
-register_data (const struct regcache *regcache, int n, int fetch)
+register_data (const struct regcache *regcache, int n)
 {
   return (regcache->registers
 	  + find_register_by_number (regcache->tdesc, n).offset / 8);
@@ -319,7 +329,7 @@ regcache::raw_supply (int n, const void *buf)
 {
   if (buf)
     {
-      memcpy (register_data (this, n, 0), buf, register_size (tdesc, n));
+      memcpy (register_data (this, n), buf, register_size (tdesc, n));
 #ifndef IN_PROCESS_AGENT
       if (register_status != NULL)
 	register_status[n] = REG_VALID;
@@ -327,7 +337,7 @@ regcache::raw_supply (int n, const void *buf)
     }
   else
     {
-      memset (register_data (this, n, 0), 0, register_size (tdesc, n));
+      memset (register_data (this, n), 0, register_size (tdesc, n));
 #ifndef IN_PROCESS_AGENT
       if (register_status != NULL)
 	register_status[n] = REG_UNAVAILABLE;
@@ -340,7 +350,7 @@ regcache::raw_supply (int n, const void *buf)
 void
 supply_register_zeroed (struct regcache *regcache, int n)
 {
-  memset (register_data (regcache, n, 0), 0,
+  memset (register_data (regcache, n), 0,
 	  register_size (regcache->tdesc, n));
 #ifndef IN_PROCESS_AGENT
   if (regcache->register_status != NULL)
@@ -420,7 +430,7 @@ collect_register (struct regcache *regcache, int n, void *buf)
 void
 regcache::raw_collect (int n, void *buf) const
 {
-  memcpy (buf, register_data (this, n, 1), register_size (tdesc, n));
+  memcpy (buf, register_data (this, n), register_size (tdesc, n));
 }
 
 enum register_status
@@ -437,8 +447,8 @@ regcache_raw_read_unsigned (struct regcache *regcache, int regnum,
 
   if (size > (int) sizeof (ULONGEST))
     error (_("That operation is not available on integers of more than"
-            "%d bytes."),
-          (int) sizeof (ULONGEST));
+	    "%d bytes."),
+	  (int) sizeof (ULONGEST));
 
   *val = 0;
   collect_register (regcache, regnum, val);
@@ -461,7 +471,7 @@ regcache_raw_get_unsigned_by_name (struct regcache *regcache,
 void
 collect_register_as_string (struct regcache *regcache, int n, char *buf)
 {
-  bin2hex (register_data (regcache, n, 1), buf,
+  bin2hex (register_data (regcache, n), buf,
 	   register_size (regcache->tdesc, n));
 }
 
@@ -508,7 +518,7 @@ regcache::raw_compare (int regnum, const void *buf, int offset) const
 {
   gdb_assert (buf != NULL);
 
-  const unsigned char *regbuf = register_data (this, regnum, 1);
+  const unsigned char *regbuf = register_data (this, regnum);
   int size = register_size (tdesc, regnum);
   gdb_assert (size >= offset);
 

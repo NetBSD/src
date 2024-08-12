@@ -1,5 +1,5 @@
 /* Simulation code for the MIPS MDMX ASE.
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2023 Free Software Foundation, Inc.
    Contributed by Ed Satterthwaite and Chris Demetriou, of Broadcom
    Corporation (SiByte).
 
@@ -17,6 +17,9 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include <stdio.h>
 
@@ -37,24 +40,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
    The 24-bit accumulators are signed and are represented as 32-bit
    signed values, which are reduced to 24-bit signed values prior to
    Round and Clamp operations.
-  
+
    A 16-bit packed halfword element (QH) is always signed.
    The 48-bit accumulators are signed and are represented as 64-bit
    signed values, which are reduced to 48-bit signed values prior to
    Round and Clamp operations.
-  
+
    The code below assumes a 2's-complement representation of signed
    quantities.  Care is required to clear extended sign bits when
    repacking fields.
-  
+
    The code (and the code for arithmetic shifts in mips.igen) also makes
    the (not guaranteed portable) assumption that right shifts of signed
    quantities in C do sign extension.  */
 
-typedef unsigned64 unsigned48;
+typedef uint64_t unsigned48;
 #define MASK48 (UNSIGNED64 (0xffffffffffff))
 
-typedef unsigned32 unsigned24;
+typedef uint32_t unsigned24;
 #define MASK24 (UNSIGNED32 (0xffffff))
 
 typedef enum {
@@ -68,12 +71,12 @@ typedef enum {
   sel_imm           /* immediate select */
 } VT_select;
 
-#define OB_MAX  ((unsigned8)0xFF)
-#define QH_MIN  ((signed16)0x8000)
-#define QH_MAX  ((signed16)0x7FFF)
+#define OB_MAX  ((uint8_t)0xFF)
+#define QH_MIN  ((int16_t)0x8000)
+#define QH_MAX  ((int16_t)0x7FFF)
 
-#define OB_CLAMP(x)  ((unsigned8)((x) > OB_MAX ? OB_MAX : (x)))
-#define QH_CLAMP(x)  ((signed16)((x) < QH_MIN ? QH_MIN : \
+#define OB_CLAMP(x)  ((uint8_t)((x) > OB_MAX ? OB_MAX : (x)))
+#define QH_CLAMP(x)  ((int16_t)((x) < QH_MIN ? QH_MIN : \
                                 ((x) > QH_MAX ? QH_MAX : (x))))
 
 #define MX_FMT(fmtsel) (((fmtsel) & 0x1) == 0 ? mdmx_ob : mdmx_qh)
@@ -81,170 +84,170 @@ typedef enum {
                        (((fmtsel) & 0x18) == 0x10 ? sel_vect : sel_imm))
 
 #define QH_ELEM(v,fmtsel) \
-        ((signed16)(((v) >> (((fmtsel) & 0xC) << 2)) & 0xFFFF))
+        ((int16_t)(((v) >> (((fmtsel) & 0xC) << 2)) & 0xFFFF))
 #define OB_ELEM(v,fmtsel) \
-        ((unsigned8)(((v) >> (((fmtsel) & 0xE) << 2)) & 0xFF))
+        ((uint8_t)(((v) >> (((fmtsel) & 0xE) << 2)) & 0xFF))
 
 
-typedef signed16 (*QH_FUNC)(signed16, signed16);
-typedef unsigned8 (*OB_FUNC)(unsigned8, unsigned8);
+typedef int16_t (*QH_FUNC)(int16_t, int16_t);
+typedef uint8_t (*OB_FUNC)(uint8_t, uint8_t);
 
 /* vectorized logical operators */
 
-static signed16
-AndQH(signed16 ts, signed16 tt)
+static int16_t
+AndQH(int16_t ts, int16_t tt)
 {
-  return (signed16)((unsigned16)ts & (unsigned16)tt);
+  return (int16_t)((uint16_t)ts & (uint16_t)tt);
 }
 
-static unsigned8
-AndOB(unsigned8 ts, unsigned8 tt)
+static uint8_t
+AndOB(uint8_t ts, uint8_t tt)
 {
   return ts & tt;
 }
 
-static signed16
-NorQH(signed16 ts, signed16 tt)
+static int16_t
+NorQH(int16_t ts, int16_t tt)
 {
-  return (signed16)(((unsigned16)ts | (unsigned16)tt) ^ 0xFFFF);
+  return (int16_t)(((uint16_t)ts | (uint16_t)tt) ^ 0xFFFF);
 }
 
-static unsigned8
-NorOB(unsigned8 ts, unsigned8 tt)
+static uint8_t
+NorOB(uint8_t ts, uint8_t tt)
 {
   return (ts | tt) ^ 0xFF;
 }
 
-static signed16
-OrQH(signed16 ts, signed16 tt)
+static int16_t
+OrQH(int16_t ts, int16_t tt)
 {
-  return (signed16)((unsigned16)ts | (unsigned16)tt);
+  return (int16_t)((uint16_t)ts | (uint16_t)tt);
 }
 
-static unsigned8
-OrOB(unsigned8 ts, unsigned8 tt)
+static uint8_t
+OrOB(uint8_t ts, uint8_t tt)
 {
   return ts | tt;
 }
 
-static signed16
-XorQH(signed16 ts, signed16 tt)
+static int16_t
+XorQH(int16_t ts, int16_t tt)
 {
-  return (signed16)((unsigned16)ts ^ (unsigned16)tt);
+  return (int16_t)((uint16_t)ts ^ (uint16_t)tt);
 }
 
-static unsigned8
-XorOB(unsigned8 ts, unsigned8 tt)
+static uint8_t
+XorOB(uint8_t ts, uint8_t tt)
 {
   return ts ^ tt;
 }
 
-static signed16
-SLLQH(signed16 ts, signed16 tt)
+static int16_t
+SLLQH(int16_t ts, int16_t tt)
 {
-  unsigned32 s = (unsigned32)tt & 0xF;
-  return (signed16)(((unsigned32)ts << s) & 0xFFFF);
+  uint32_t s = (uint32_t)tt & 0xF;
+  return (int16_t)(((uint32_t)ts << s) & 0xFFFF);
 }
 
-static unsigned8
-SLLOB(unsigned8 ts, unsigned8 tt)
+static uint8_t
+SLLOB(uint8_t ts, uint8_t tt)
 {
-  unsigned32 s = tt & 0x7;
+  uint32_t s = tt & 0x7;
   return (ts << s) & 0xFF;
 }
 
-static signed16
-SRLQH(signed16 ts, signed16 tt)
+static int16_t
+SRLQH(int16_t ts, int16_t tt)
 {
-  unsigned32 s = (unsigned32)tt & 0xF;
-  return (signed16)((unsigned16)ts >> s);
+  uint32_t s = (uint32_t)tt & 0xF;
+  return (int16_t)((uint16_t)ts >> s);
 }
 
-static unsigned8
-SRLOB(unsigned8 ts, unsigned8 tt)
+static uint8_t
+SRLOB(uint8_t ts, uint8_t tt)
 {
-  unsigned32 s = tt & 0x7;
+  uint32_t s = tt & 0x7;
   return ts >> s;
 }
 
 
 /* Vectorized arithmetic operators.  */
 
-static signed16
-AddQH(signed16 ts, signed16 tt)
+static int16_t
+AddQH(int16_t ts, int16_t tt)
 {
-  signed32 t = (signed32)ts + (signed32)tt;
+  int32_t t = (int32_t)ts + (int32_t)tt;
   return QH_CLAMP(t);
 }
 
-static unsigned8
-AddOB(unsigned8 ts, unsigned8 tt)
+static uint8_t
+AddOB(uint8_t ts, uint8_t tt)
 {
-  unsigned32 t = (unsigned32)ts + (unsigned32)tt;
+  uint32_t t = (uint32_t)ts + (uint32_t)tt;
   return OB_CLAMP(t);
 }
 
-static signed16
-SubQH(signed16 ts, signed16 tt)
+static int16_t
+SubQH(int16_t ts, int16_t tt)
 {
-  signed32 t = (signed32)ts - (signed32)tt;
+  int32_t t = (int32_t)ts - (int32_t)tt;
   return QH_CLAMP(t);
 }
 
-static unsigned8
-SubOB(unsigned8 ts, unsigned8 tt)
+static uint8_t
+SubOB(uint8_t ts, uint8_t tt)
 {
-  signed32 t;
-  t = (signed32)ts - (signed32)tt;
+  int32_t t;
+  t = (int32_t)ts - (int32_t)tt;
   if (t < 0)
     t = 0;
-  return (unsigned8)t;
+  return (uint8_t)t;
 }
 
-static signed16
-MinQH(signed16 ts, signed16 tt)
+static int16_t
+MinQH(int16_t ts, int16_t tt)
 {
   return (ts < tt ? ts : tt);
 }
 
-static unsigned8
-MinOB(unsigned8 ts, unsigned8 tt)
+static uint8_t
+MinOB(uint8_t ts, uint8_t tt)
 {
   return (ts < tt ? ts : tt);
 }
 
-static signed16
-MaxQH(signed16 ts, signed16 tt)
+static int16_t
+MaxQH(int16_t ts, int16_t tt)
 {
   return (ts > tt ? ts : tt);
 }
 
-static unsigned8
-MaxOB(unsigned8 ts, unsigned8 tt)
+static uint8_t
+MaxOB(uint8_t ts, uint8_t tt)
 {
   return (ts > tt ? ts : tt);
 }
 
-static signed16
-MulQH(signed16 ts, signed16 tt)
+static int16_t
+MulQH(int16_t ts, int16_t tt)
 {
-  signed32 t = (signed32)ts * (signed32)tt;
+  int32_t t = (int32_t)ts * (int32_t)tt;
   return QH_CLAMP(t);
 }
 
-static unsigned8
-MulOB(unsigned8 ts, unsigned8 tt)
+static uint8_t
+MulOB(uint8_t ts, uint8_t tt)
 {
-  unsigned32 t = (unsigned32)ts * (unsigned32)tt;
+  uint32_t t = (uint32_t)ts * (uint32_t)tt;
   return OB_CLAMP(t);
 }
 
 /* "msgn" and "sra" are defined only for QH format.  */
 
-static signed16
-MsgnQH(signed16 ts, signed16 tt)
+static int16_t
+MsgnQH(int16_t ts, int16_t tt)
 {
-  signed16 t;
+  int16_t t;
   if (ts < 0)
     t = (tt == QH_MIN ? QH_MAX : -tt);
   else if (ts == 0)
@@ -254,26 +257,26 @@ MsgnQH(signed16 ts, signed16 tt)
   return t;
 }
 
-static signed16
-SRAQH(signed16 ts, signed16 tt)
+static int16_t
+SRAQH(int16_t ts, int16_t tt)
 {
-  unsigned32 s = (unsigned32)tt & 0xF;
-  return (signed16)((signed32)ts >> s);
+  uint32_t s = (uint32_t)tt & 0xF;
+  return (int16_t)((int32_t)ts >> s);
 }
 
 
 /* "pabsdiff" and "pavg" are defined only for OB format.  */
 
-static unsigned8
-AbsDiffOB(unsigned8 ts, unsigned8 tt)
+static uint8_t
+AbsDiffOB(uint8_t ts, uint8_t tt)
 {
   return (ts >= tt ? ts - tt : tt - ts);
 }
 
-static unsigned8
-AvgOB(unsigned8 ts, unsigned8 tt)
+static uint8_t
+AvgOB(uint8_t ts, uint8_t tt)
 {
-  return ((unsigned32)ts + (unsigned32)tt + 1) >> 1;
+  return ((uint32_t)ts + (uint32_t)tt + 1) >> 1;
 }
 
 
@@ -294,35 +297,35 @@ static const OB_FUNC ob_func[] = {
 /* Auxiliary functions for CPR updates.  */
 
 /* Vector mapping for QH format.  */
-static unsigned64
-qh_vector_op(unsigned64 v1, unsigned64 v2, QH_FUNC func)
+static uint64_t
+qh_vector_op(uint64_t v1, uint64_t v2, QH_FUNC func)
 {
-  unsigned64 result = 0;
+  uint64_t result = 0;
   int  i;
-  signed16 h, h1, h2;
+  int16_t h, h1, h2;
 
   for (i = 0; i < 64; i += 16)
     {
-      h1 = (signed16)(v1 & 0xFFFF);  v1 >>= 16;
-      h2 = (signed16)(v2 & 0xFFFF);  v2 >>= 16;
+      h1 = (int16_t)(v1 & 0xFFFF);  v1 >>= 16;
+      h2 = (int16_t)(v2 & 0xFFFF);  v2 >>= 16;
       h = (*func)(h1, h2);
-      result |= ((unsigned64)((unsigned16)h) << i);
+      result |= ((uint64_t)((uint16_t)h) << i);
     }
   return result;
 }
 
-static unsigned64
-qh_map_op(unsigned64 v1, signed16 h2, QH_FUNC func)
+static uint64_t
+qh_map_op(uint64_t v1, int16_t h2, QH_FUNC func)
 {
-  unsigned64 result = 0;
+  uint64_t result = 0;
   int  i;
-  signed16 h, h1;
+  int16_t h, h1;
 
   for (i = 0; i < 64; i += 16)
     {
-      h1 = (signed16)(v1 & 0xFFFF);  v1 >>= 16;
+      h1 = (int16_t)(v1 & 0xFFFF);  v1 >>= 16;
       h = (*func)(h1, h2);
-      result |= ((unsigned64)((unsigned16)h) << i);
+      result |= ((uint64_t)((uint16_t)h) << i);
     }
   return result;
 }
@@ -330,51 +333,51 @@ qh_map_op(unsigned64 v1, signed16 h2, QH_FUNC func)
 
 /* Vector operations for OB format.  */
 
-static unsigned64
-ob_vector_op(unsigned64 v1, unsigned64 v2, OB_FUNC func)
+static uint64_t
+ob_vector_op(uint64_t v1, uint64_t v2, OB_FUNC func)
 {
-  unsigned64 result = 0;
+  uint64_t result = 0;
   int  i;
-  unsigned8 b, b1, b2;
+  uint8_t b, b1, b2;
 
   for (i = 0; i < 64; i += 8)
     {
       b1 = v1 & 0xFF;  v1 >>= 8;
       b2 = v2 & 0xFF;  v2 >>= 8;
       b = (*func)(b1, b2);
-      result |= ((unsigned64)b << i);
+      result |= ((uint64_t)b << i);
     }
   return result;
 }
 
-static unsigned64
-ob_map_op(unsigned64 v1, unsigned8 b2, OB_FUNC func)
+static uint64_t
+ob_map_op(uint64_t v1, uint8_t b2, OB_FUNC func)
 {
-  unsigned64 result = 0;
+  uint64_t result = 0;
   int  i;
-  unsigned8 b, b1;
+  uint8_t b, b1;
 
   for (i = 0; i < 64; i += 8)
     {
       b1 = v1 & 0xFF;  v1 >>= 8;
       b = (*func)(b1, b2);
-      result |= ((unsigned64)b << i);
+      result |= ((uint64_t)b << i);
     }
   return result;
 }
 
 
 /* Primary entry for operations that update CPRs.  */
-unsigned64
+uint64_t
 mdmx_cpr_op(sim_cpu *cpu,
 	    address_word cia,
 	    int op,
-	    unsigned64 op1,
+	    uint64_t op1,
 	    int vt,
-	    MX_fmtsel fmtsel) 
+	    MX_fmtsel fmtsel)
 {
-  unsigned64 op2;
-  unsigned64 result = 0;
+  uint64_t op2;
+  uint64_t result = 0;
 
   switch (MX_FMT (fmtsel))
     {
@@ -419,16 +422,16 @@ mdmx_cpr_op(sim_cpu *cpu,
 /* Operations that update CCs */
 
 static void
-qh_vector_test(sim_cpu *cpu, unsigned64 v1, unsigned64 v2, int cond)
+qh_vector_test(sim_cpu *cpu, uint64_t v1, uint64_t v2, int cond)
 {
   int  i;
-  signed16 h1, h2;
+  int16_t h1, h2;
   int  boolean;
 
   for (i = 0; i < 4; i++)
     {
-      h1 = (signed16)(v1 & 0xFFFF);  v1 >>= 16;
-      h2 = (signed16)(v2 & 0xFFFF);  v2 >>= 16;
+      h1 = (int16_t)(v1 & 0xFFFF);  v1 >>= 16;
+      h2 = (int16_t)(v2 & 0xFFFF);  v2 >>= 16;
       boolean = ((cond & MX_C_EQ) && (h1 == h2)) ||
 	((cond & MX_C_LT) && (h1 < h2));
       SETFCC(i, boolean);
@@ -436,15 +439,15 @@ qh_vector_test(sim_cpu *cpu, unsigned64 v1, unsigned64 v2, int cond)
 }
 
 static void
-qh_map_test(sim_cpu *cpu, unsigned64 v1, signed16 h2, int cond)
+qh_map_test(sim_cpu *cpu, uint64_t v1, int16_t h2, int cond)
 {
   int  i;
-  signed16 h1;
+  int16_t h1;
   int  boolean;
 
   for (i = 0; i < 4; i++)
     {
-      h1 = (signed16)(v1 & 0xFFFF);  v1 >>= 16;
+      h1 = (int16_t)(v1 & 0xFFFF);  v1 >>= 16;
       boolean = ((cond & MX_C_EQ) && (h1 == h2)) ||
 	((cond & MX_C_LT) && (h1 < h2));
       SETFCC(i, boolean);
@@ -452,10 +455,10 @@ qh_map_test(sim_cpu *cpu, unsigned64 v1, signed16 h2, int cond)
 }
 
 static void
-ob_vector_test(sim_cpu *cpu, unsigned64 v1, unsigned64 v2, int cond)
+ob_vector_test(sim_cpu *cpu, uint64_t v1, uint64_t v2, int cond)
 {
   int  i;
-  unsigned8 b1, b2;
+  uint8_t b1, b2;
   int  boolean;
 
   for (i = 0; i < 8; i++)
@@ -469,15 +472,15 @@ ob_vector_test(sim_cpu *cpu, unsigned64 v1, unsigned64 v2, int cond)
 }
 
 static void
-ob_map_test(sim_cpu *cpu, unsigned64 v1, unsigned8 b2, int cond)
+ob_map_test(sim_cpu *cpu, uint64_t v1, uint8_t b2, int cond)
 {
   int  i;
-  unsigned8 b1;
+  uint8_t b1;
   int  boolean;
 
   for (i = 0; i < 8; i++)
     {
-      b1 = (unsigned8)(v1 & 0xFF);  v1 >>= 8;
+      b1 = (uint8_t)(v1 & 0xFF);  v1 >>= 8;
       boolean = ((cond & MX_C_EQ) && (b1 == b2)) ||
 	((cond & MX_C_LT) && (b1 < b2));
       SETFCC(i, boolean);
@@ -489,11 +492,11 @@ void
 mdmx_cc_op(sim_cpu *cpu,
 	   address_word cia,
 	   int cond,
-	   unsigned64 v1,
+	   uint64_t v1,
 	   int vt,
 	   MX_fmtsel fmtsel)
 {
-  unsigned64 op2;
+  uint64_t op2;
 
   switch (MX_FMT (fmtsel))
     {
@@ -535,89 +538,89 @@ mdmx_cc_op(sim_cpu *cpu,
 
 /* Pick operations.  */
 
-static unsigned64
-qh_vector_pick(sim_cpu *cpu, unsigned64 v1, unsigned64 v2, int tf)
+static uint64_t
+qh_vector_pick(sim_cpu *cpu, uint64_t v1, uint64_t v2, int tf)
 {
-  unsigned64 result = 0;
+  uint64_t result = 0;
   int  i, s;
-  unsigned16 h;
+  uint16_t h;
 
   s = 0;
   for (i = 0; i < 4; i++)
     {
       h = ((GETFCC(i) == tf) ? (v1 & 0xFFFF) : (v2 & 0xFFFF));
       v1 >>= 16;  v2 >>= 16;
-      result |= ((unsigned64)h << s);
+      result |= ((uint64_t)h << s);
       s += 16;
     }
   return result;
 }
 
-static unsigned64
-qh_map_pick(sim_cpu *cpu, unsigned64 v1, signed16 h2, int tf)
+static uint64_t
+qh_map_pick(sim_cpu *cpu, uint64_t v1, int16_t h2, int tf)
 {
-  unsigned64 result = 0;
+  uint64_t result = 0;
   int  i, s;
-  unsigned16 h;
+  uint16_t h;
 
   s = 0;
   for (i = 0; i < 4; i++)
     {
-      h = (GETFCC(i) == tf) ? (v1 & 0xFFFF) : (unsigned16)h2;
+      h = (GETFCC(i) == tf) ? (v1 & 0xFFFF) : (uint16_t)h2;
       v1 >>= 16;
-      result |= ((unsigned64)h << s);
+      result |= ((uint64_t)h << s);
       s += 16;
     }
   return result;
 }
 
-static unsigned64
-ob_vector_pick(sim_cpu *cpu, unsigned64 v1, unsigned64 v2, int tf)
+static uint64_t
+ob_vector_pick(sim_cpu *cpu, uint64_t v1, uint64_t v2, int tf)
 {
-  unsigned64 result = 0;
+  uint64_t result = 0;
   int  i, s;
-  unsigned8 b;
+  uint8_t b;
 
   s = 0;
   for (i = 0; i < 8; i++)
     {
       b = (GETFCC(i) == tf) ? (v1 & 0xFF) : (v2 & 0xFF);
       v1 >>= 8;  v2 >>= 8;
-      result |= ((unsigned64)b << s);
+      result |= ((uint64_t)b << s);
       s += 8;
     }
   return result;
 }
 
-static unsigned64
-ob_map_pick(sim_cpu *cpu, unsigned64 v1, unsigned8 b2, int tf)
+static uint64_t
+ob_map_pick(sim_cpu *cpu, uint64_t v1, uint8_t b2, int tf)
 {
-  unsigned64 result = 0;
+  uint64_t result = 0;
   int  i, s;
-  unsigned8 b;
+  uint8_t b;
 
   s = 0;
   for (i = 0; i < 8; i++)
     {
       b = (GETFCC(i) == tf) ? (v1 & 0xFF) : b2;
       v1 >>= 8;
-      result |= ((unsigned64)b << s);
+      result |= ((uint64_t)b << s);
       s += 8;
     }
   return result;
 }
 
 
-unsigned64
+uint64_t
 mdmx_pick_op(sim_cpu *cpu,
 	     address_word cia,
 	     int tf,
-	     unsigned64 v1,
+	     uint64_t v1,
 	     int vt,
 	     MX_fmtsel fmtsel)
 {
-  unsigned64 result = 0;
-  unsigned64 op2;
+  uint64_t result = 0;
+  uint64_t op2;
 
   switch (MX_FMT (fmtsel))
     {
@@ -660,111 +663,111 @@ mdmx_pick_op(sim_cpu *cpu,
 
 /* Accumulators.  */
 
-typedef void (*QH_ACC)(signed48 *a, signed16 ts, signed16 tt);
+typedef void (*QH_ACC)(signed48 *a, int16_t ts, int16_t tt);
 
 static void
-AccAddAQH(signed48 *a, signed16 ts, signed16 tt)
+AccAddAQH(signed48 *a, int16_t ts, int16_t tt)
 {
   *a += (signed48)ts + (signed48)tt;
 }
 
 static void
-AccAddLQH(signed48 *a, signed16 ts, signed16 tt)
+AccAddLQH(signed48 *a, int16_t ts, int16_t tt)
 {
   *a = (signed48)ts + (signed48)tt;
 }
 
 static void
-AccMulAQH(signed48 *a, signed16 ts, signed16 tt)
+AccMulAQH(signed48 *a, int16_t ts, int16_t tt)
 {
   *a += (signed48)ts * (signed48)tt;
 }
 
 static void
-AccMulLQH(signed48 *a, signed16 ts, signed16 tt)
+AccMulLQH(signed48 *a, int16_t ts, int16_t tt)
 {
   *a = (signed48)ts * (signed48)tt;
 }
 
 static void
-SubMulAQH(signed48 *a, signed16 ts, signed16 tt)
+SubMulAQH(signed48 *a, int16_t ts, int16_t tt)
 {
   *a -= (signed48)ts * (signed48)tt;
 }
 
 static void
-SubMulLQH(signed48 *a, signed16 ts, signed16 tt)
+SubMulLQH(signed48 *a, int16_t ts, int16_t tt)
 {
   *a = -((signed48)ts * (signed48)tt);
 }
 
 static void
-AccSubAQH(signed48 *a, signed16 ts, signed16 tt)
+AccSubAQH(signed48 *a, int16_t ts, int16_t tt)
 {
   *a += (signed48)ts - (signed48)tt;
 }
 
 static void
-AccSubLQH(signed48 *a, signed16 ts, signed16 tt)
+AccSubLQH(signed48 *a, int16_t ts, int16_t tt)
 {
   *a =  (signed48)ts - (signed48)tt;
 }
 
 
-typedef void (*OB_ACC)(signed24 *acc, unsigned8 ts, unsigned8 tt);
+typedef void (*OB_ACC)(signed24 *acc, uint8_t ts, uint8_t tt);
 
 static void
-AccAddAOB(signed24 *a, unsigned8 ts, unsigned8 tt)
+AccAddAOB(signed24 *a, uint8_t ts, uint8_t tt)
 {
   *a += (signed24)ts + (signed24)tt;
 }
 
 static void
-AccAddLOB(signed24 *a, unsigned8 ts, unsigned8 tt)
+AccAddLOB(signed24 *a, uint8_t ts, uint8_t tt)
 {
   *a = (signed24)ts + (signed24)tt;
 }
 
 static void
-AccMulAOB(signed24 *a, unsigned8 ts, unsigned8 tt)
+AccMulAOB(signed24 *a, uint8_t ts, uint8_t tt)
 {
   *a += (signed24)ts * (signed24)tt;
 }
 
 static void
-AccMulLOB(signed24 *a, unsigned8 ts, unsigned8 tt)
+AccMulLOB(signed24 *a, uint8_t ts, uint8_t tt)
 {
   *a = (signed24)ts * (signed24)tt;
 }
 
 static void
-SubMulAOB(signed24 *a, unsigned8 ts, unsigned8 tt)
+SubMulAOB(signed24 *a, uint8_t ts, uint8_t tt)
 {
   *a -= (signed24)ts * (signed24)tt;
 }
 
 static void
-SubMulLOB(signed24 *a, unsigned8 ts, unsigned8 tt)
+SubMulLOB(signed24 *a, uint8_t ts, uint8_t tt)
 {
   *a = -((signed24)ts * (signed24)tt);
 }
 
 static void
-AccSubAOB(signed24 *a, unsigned8 ts, unsigned8 tt)
+AccSubAOB(signed24 *a, uint8_t ts, uint8_t tt)
 {
   *a += (signed24)ts - (signed24)tt;
 }
 
 static void
-AccSubLOB(signed24 *a, unsigned8 ts, unsigned8 tt)
+AccSubLOB(signed24 *a, uint8_t ts, uint8_t tt)
 {
   *a = (signed24)ts - (signed24)tt;
 }
 
 static void
-AccAbsDiffOB(signed24 *a, unsigned8 ts, unsigned8 tt)
+AccAbsDiffOB(signed24 *a, uint8_t ts, uint8_t tt)
 {
-  unsigned8 t = (ts >= tt ? ts - tt : tt - ts);
+  uint8_t t = (ts >= tt ? ts - tt : tt - ts);
   *a += (signed24)t;
 }
 
@@ -772,7 +775,7 @@ AccAbsDiffOB(signed24 *a, unsigned8 ts, unsigned8 tt)
 /* Dispatch tables for operations that update a CPR.  */
 
 static const QH_ACC qh_acc[] = {
-  AccAddAQH, AccAddAQH, AccMulAQH, AccMulLQH,
+  AccAddAQH, AccAddLQH, AccMulAQH, AccMulLQH,
   SubMulAQH, SubMulLQH, AccSubAQH, AccSubLQH,
   NULL
 };
@@ -785,37 +788,37 @@ static const OB_ACC ob_acc[] = {
 
 
 static void
-qh_vector_acc(signed48 a[], unsigned64 v1, unsigned64 v2, QH_ACC acc)
+qh_vector_acc(signed48 a[], uint64_t v1, uint64_t v2, QH_ACC acc)
 {
   int  i;
-  signed16 h1, h2;
+  int16_t h1, h2;
 
   for (i = 0; i < 4; i++)
     {
-      h1 = (signed16)(v1 & 0xFFFF);  v1 >>= 16;
-      h2 = (signed16)(v2 & 0xFFFF);  v2 >>= 16;
+      h1 = (int16_t)(v1 & 0xFFFF);  v1 >>= 16;
+      h2 = (int16_t)(v2 & 0xFFFF);  v2 >>= 16;
       (*acc)(&a[i], h1, h2);
     }
 }
 
 static void
-qh_map_acc(signed48 a[], unsigned64 v1, signed16 h2, QH_ACC acc)
+qh_map_acc(signed48 a[], uint64_t v1, int16_t h2, QH_ACC acc)
 {
   int  i;
-  signed16 h1;
+  int16_t h1;
 
   for (i = 0; i < 4; i++)
     {
-      h1 = (signed16)(v1 & 0xFFFF);  v1 >>= 16;
+      h1 = (int16_t)(v1 & 0xFFFF);  v1 >>= 16;
       (*acc)(&a[i], h1, h2);
     }
 }
 
 static void
-ob_vector_acc(signed24 a[], unsigned64 v1, unsigned64 v2, OB_ACC acc)
+ob_vector_acc(signed24 a[], uint64_t v1, uint64_t v2, OB_ACC acc)
 {
   int  i;
-  unsigned8  b1, b2;
+  uint8_t  b1, b2;
 
   for (i = 0; i < 8; i++)
     {
@@ -826,10 +829,10 @@ ob_vector_acc(signed24 a[], unsigned64 v1, unsigned64 v2, OB_ACC acc)
 }
 
 static void
-ob_map_acc(signed24 a[], unsigned64 v1, unsigned8 b2, OB_ACC acc)
+ob_map_acc(signed24 a[], uint64_t v1, uint8_t b2, OB_ACC acc)
 {
   int  i;
-  unsigned8 b1;
+  uint8_t b1;
 
   for (i = 0; i < 8; i++)
     {
@@ -844,11 +847,11 @@ void
 mdmx_acc_op(sim_cpu *cpu,
 	    address_word cia,
 	    int op,
-	    unsigned64 op1,
+	    uint64_t op1,
 	    int vt,
-	    MX_fmtsel fmtsel) 
+	    MX_fmtsel fmtsel)
 {
-  unsigned64 op2;
+  uint64_t op2;
 
   switch (MX_FMT (fmtsel))
     {
@@ -890,13 +893,13 @@ mdmx_acc_op(sim_cpu *cpu,
 
 /* Reading and writing accumulator (no conversion).  */
 
-unsigned64
+uint64_t
 mdmx_rac_op(sim_cpu *cpu,
 	    address_word cia,
 	    int op,
-	    int fmt) 
+	    int fmt)
 {
-  unsigned64    result;
+  uint64_t    result;
   unsigned int  shift;
   int           i;
 
@@ -931,8 +934,8 @@ void
 mdmx_wacl(sim_cpu *cpu,
 	  address_word cia,
 	  int fmt,
-	  unsigned64 vs,
-	  unsigned64 vt) 
+	  uint64_t vs,
+	  uint64_t vt)
 {
   int           i;
 
@@ -941,7 +944,7 @@ mdmx_wacl(sim_cpu *cpu,
     case MX_FMT_QH:
       for (i = 0; i < 4; i++)
 	{
-	  signed32  s = (signed16)(vs & 0xFFFF);
+	  int32_t  s = (int16_t)(vs & 0xFFFF);
 	  ACC.qh[i] = ((signed48)s << 16) | (vt & 0xFFFF);
 	  vs >>= 16;  vt >>= 16;
 	}
@@ -949,7 +952,7 @@ mdmx_wacl(sim_cpu *cpu,
     case MX_FMT_OB:
       for (i = 0; i < 8; i++)
 	{
-	  signed16  s = (signed8)(vs & 0xFF);
+	  int16_t  s = (int8_t)(vs & 0xFF);
 	  ACC.ob[i] = ((signed24)s << 8) | (vt & 0xFF);
 	  vs >>= 8;   vt >>= 8;
 	}
@@ -963,7 +966,7 @@ void
 mdmx_wach(sim_cpu *cpu,
 	  address_word cia,
 	  int fmt,
-	  unsigned64 vs)
+	  uint64_t vs)
 {
   int           i;
 
@@ -972,7 +975,7 @@ mdmx_wach(sim_cpu *cpu,
     case MX_FMT_QH:
       for (i = 0; i < 4; i++)
 	{
-	  signed32  s = (signed16)(vs & 0xFFFF);
+	  int32_t  s = (int16_t)(vs & 0xFFFF);
 	  ACC.qh[i] &= ~((signed48)0xFFFF << 32);
 	  ACC.qh[i] |=  ((signed48)s << 32);
 	  vs >>= 16;
@@ -995,16 +998,16 @@ mdmx_wach(sim_cpu *cpu,
 /* Reading and writing accumulator (rounding conversions).
    Enumerating function guarantees s >= 0 for QH ops.  */
 
-typedef signed16 (*QH_ROUND)(signed48 a, signed16 s);
+typedef int16_t (*QH_ROUND)(signed48 a, int16_t s);
 
 #define QH_BIT(n)  ((unsigned48)1 << (n))
 #define QH_ONES(n) (((unsigned48)1 << (n))-1)
 
-static signed16
-RNASQH(signed48 a, signed16 s)
+static int16_t
+RNASQH(signed48 a, int16_t s)
 {
   signed48 t;
-  signed16 result = 0;
+  int16_t result = 0;
 
   if (s > 48)
     result = 0;
@@ -1028,16 +1031,16 @@ RNASQH(signed48 a, signed16 s)
 	  if (t < QH_MIN)
 	    t = QH_MIN;
 	}
-      result = (signed16)t;
+      result = (int16_t)t;
     }
   return result;
 }
 
-static signed16
-RNAUQH(signed48 a, signed16 s)
+static int16_t
+RNAUQH(signed48 a, int16_t s)
 {
   unsigned48 t;
-  signed16 result;
+  int16_t result;
 
   if (s > 48)
     result = 0;
@@ -1050,16 +1053,16 @@ RNAUQH(signed48 a, signed16 s)
 	t++;
       if (t > 0xFFFF)
 	t = 0xFFFF;
-      result = (signed16)t;
+      result = (int16_t)t;
     }
   return result;
 }
 
-static signed16
-RNESQH(signed48 a, signed16 s)
+static int16_t
+RNESQH(signed48 a, int16_t s)
 {
   signed48 t;
-  signed16 result = 0;
+  int16_t result = 0;
 
   if (s > 47)
     result = 0;
@@ -1083,16 +1086,16 @@ RNESQH(signed48 a, signed16 s)
 	  if (t < QH_MIN)
 	    t = QH_MIN;
 	}
-      result = (signed16)t;
+      result = (int16_t)t;
     }
   return result;
 }
 
-static signed16
-RNEUQH(signed48 a, signed16 s)
+static int16_t
+RNEUQH(signed48 a, int16_t s)
 {
   unsigned48 t;
-  signed16 result;
+  int16_t result;
 
   if (s > 48)
     result = 0;
@@ -1110,16 +1113,16 @@ RNEUQH(signed48 a, signed16 s)
 	}
       if (t > 0xFFFF)
 	t = 0xFFFF;
-      result = (signed16)t;
+      result = (int16_t)t;
     }
   return result;
 }
 
-static signed16
-RZSQH(signed48 a, signed16 s)
+static int16_t
+RZSQH(signed48 a, int16_t s)
 {
   signed48 t;
-  signed16 result = 0;
+  int16_t result = 0;
 
   if (s > 47)
     result = 0;
@@ -1136,16 +1139,16 @@ RZSQH(signed48 a, signed16 s)
 	  if (t < QH_MIN)
 	    t = QH_MIN;
 	}
-      result = (signed16)t;
+      result = (int16_t)t;
     }
   return result;
 }
 
-static signed16
-RZUQH(signed48 a, signed16 s)
+static int16_t
+RZUQH(signed48 a, int16_t s)
 {
   unsigned48 t;
-  signed16 result = 0;
+  int16_t result = 0;
 
   if (s > 48)
     result = 0;
@@ -1156,21 +1159,21 @@ RZUQH(signed48 a, signed16 s)
       t = ((unsigned48)a & MASK48) >> s;
       if (t > 0xFFFF)
 	t = 0xFFFF;
-      result = (signed16)t;
+      result = (int16_t)t;
     }
   return result;
 }
 
 
-typedef unsigned8 (*OB_ROUND)(signed24 a, unsigned8 s);
+typedef uint8_t (*OB_ROUND)(signed24 a, uint8_t s);
 
 #define OB_BIT(n)  ((unsigned24)1 << (n))
 #define OB_ONES(n) (((unsigned24)1 << (n))-1)
 
-static unsigned8
-RNAUOB(signed24 a, unsigned8 s)
+static uint8_t
+RNAUOB(signed24 a, uint8_t s)
 {
-  unsigned8 result;
+  uint8_t result;
   unsigned24 t;
 
   if (s > 24)
@@ -1187,10 +1190,10 @@ RNAUOB(signed24 a, unsigned8 s)
   return result;
 }
 
-static unsigned8
-RNEUOB(signed24 a, unsigned8 s)
+static uint8_t
+RNEUOB(signed24 a, uint8_t s)
 {
-  unsigned8 result;
+  uint8_t result;
   unsigned24 t;
 
   if (s > 24)
@@ -1212,10 +1215,10 @@ RNEUOB(signed24 a, unsigned8 s)
   return result;
 }
 
-static unsigned8
-RZUOB(signed24 a, unsigned8 s)
+static uint8_t
+RZUOB(signed24 a, uint8_t s)
 {
-  unsigned8 result;
+  uint8_t result;
   unsigned24 t;
 
   if (s >= 24)
@@ -1238,17 +1241,17 @@ static const OB_ROUND ob_round[] = {
 };
 
 
-static unsigned64
-qh_vector_round(sim_cpu *cpu, address_word cia, unsigned64 v2, QH_ROUND round)
+static uint64_t
+qh_vector_round(sim_cpu *cpu, address_word cia, uint64_t v2, QH_ROUND round)
 {
-  unsigned64 result = 0;
+  uint64_t result = 0;
   int  i, s;
-  signed16 h, h2;
+  int16_t h, h2;
 
   s = 0;
   for (i = 0; i < 4; i++)
     {
-      h2 = (signed16)(v2 & 0xFFFF);
+      h2 = (int16_t)(v2 & 0xFFFF);
       if (h2 >= 0)
 	h = (*round)(ACC.qh[i], h2);
       else
@@ -1257,18 +1260,18 @@ qh_vector_round(sim_cpu *cpu, address_word cia, unsigned64 v2, QH_ROUND round)
 	  h = 0xdead;
 	}
       v2 >>= 16;
-      result |= ((unsigned64)((unsigned16)h) << s);
+      result |= ((uint64_t)((uint16_t)h) << s);
       s += 16;
     }
   return result;
 }
 
-static unsigned64
-qh_map_round(sim_cpu *cpu, address_word cia, signed16 h2, QH_ROUND round)
+static uint64_t
+qh_map_round(sim_cpu *cpu, address_word cia, int16_t h2, QH_ROUND round)
 {
-  unsigned64 result = 0;
+  uint64_t result = 0;
   int  i, s;
-  signed16  h;
+  int16_t  h;
 
   s = 0;
   for (i = 0; i < 4; i++)
@@ -1280,57 +1283,57 @@ qh_map_round(sim_cpu *cpu, address_word cia, signed16 h2, QH_ROUND round)
 	  UnpredictableResult ();
 	  h = 0xdead;
 	}
-      result |= ((unsigned64)((unsigned16)h) << s);
+      result |= ((uint64_t)((uint16_t)h) << s);
       s += 16;
     }
   return result;
 }
 
-static unsigned64
-ob_vector_round(sim_cpu *cpu, address_word cia, unsigned64 v2, OB_ROUND round)
+static uint64_t
+ob_vector_round(sim_cpu *cpu, address_word cia, uint64_t v2, OB_ROUND round)
 {
-  unsigned64 result = 0;
+  uint64_t result = 0;
   int  i, s;
-  unsigned8 b, b2;
+  uint8_t b, b2;
 
   s = 0;
   for (i = 0; i < 8; i++)
     {
       b2 = v2 & 0xFF;  v2 >>= 8;
       b = (*round)(ACC.ob[i], b2);
-      result |= ((unsigned64)b << s);
+      result |= ((uint64_t)b << s);
       s += 8;
     }
   return result;
 }
 
-static unsigned64
-ob_map_round(sim_cpu *cpu, address_word cia, unsigned8 b2, OB_ROUND round)
+static uint64_t
+ob_map_round(sim_cpu *cpu, address_word cia, uint8_t b2, OB_ROUND round)
 {
-  unsigned64 result = 0;
+  uint64_t result = 0;
   int  i, s;
-  unsigned8 b;
+  uint8_t b;
 
   s = 0;
   for (i = 0; i < 8; i++)
     {
       b = (*round)(ACC.ob[i], b2);
-      result |= ((unsigned64)b << s);
+      result |= ((uint64_t)b << s);
       s += 8;
     }
   return result;
 }
 
 
-unsigned64
+uint64_t
 mdmx_round_op(sim_cpu *cpu,
 	      address_word cia,
 	      int rm,
 	      int vt,
-	      MX_fmtsel fmtsel) 
+	      MX_fmtsel fmtsel)
 {
-  unsigned64 op2;
-  unsigned64 result = 0;
+  uint64_t op2;
+  uint64_t result = 0;
 
   switch (MX_FMT (fmtsel))
     {
@@ -1406,14 +1409,14 @@ static const sh_map qh_shuffle[][4] = {
 };
 
 
-unsigned64
+uint64_t
 mdmx_shuffle(sim_cpu *cpu,
 	     address_word cia,
 	     int shop,
-	     unsigned64 op1,
-	     unsigned64 op2)
+	     uint64_t op1,
+	     uint64_t op2)
 {
-  unsigned64 result = 0;
+  uint64_t result = 0;
   int  i, s;
   int  op;
 
@@ -1423,7 +1426,7 @@ mdmx_shuffle(sim_cpu *cpu,
       s = 0;
       for (i = 0; i < 4; i++)
 	{
-	  unsigned64 v;
+	  uint64_t v;
 
 	  switch (qh_shuffle[op][i].source)
 	    {
@@ -1447,7 +1450,7 @@ mdmx_shuffle(sim_cpu *cpu,
       s = 0;
       for (i = 0; i < 8; i++)
 	{
-	  unsigned8 b;
+	  uint8_t b;
 	  unsigned int ishift = 8*ob_shuffle[op][i].index;
 
 	  switch (ob_shuffle[op][i].source)
@@ -1465,7 +1468,7 @@ mdmx_shuffle(sim_cpu *cpu,
 	      Unpredictable ();
 	      b = 0;
 	    }
-	  result |= ((unsigned64)b << s);
+	  result |= ((uint64_t)b << s);
 	  s += 8;
 	}
     }

@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2020 Free Software Foundation, Inc.
+# Copyright (C) 2018-2023 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -18,11 +18,6 @@
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-gdb_exit
-if {[mi_gdb_start]} {
-    continue
-}
-
 #
 # Start here
 #
@@ -31,6 +26,8 @@ standard_testfile
 if {[gdb_compile "$srcdir/$subdir/$srcfile" $binfile executable {debug}] != "" } {
     return -1
 }
+
+mi_clean_restart $binfile
 
 # Skip all tests if Python scripting is not enabled.
 if { [mi_skip_python_tests] } { continue }
@@ -48,9 +45,7 @@ mi_gdb_test "set python print-stack full" \
   ".*\\^done" \
   "set python print-stack full"
 
-
-mi_run_to_main
-
+mi_runto_main
 
 mi_continue_to_line [gdb_get_line_number "next line" ${srcfile}] \
   "step to breakpoint"
@@ -90,3 +85,15 @@ mi_gdb_test "-var-list-children c1.car.atom" \
 mi_gdb_test "-var-info-path-expression c1.car.atom.ival" \
   "\\^error,msg=\".*\"" \
   "-var-info-path-expression c1.car.atom.ival"
+
+
+# Regression test for a crasher that would occur when deleting a
+# varobj that held an iterator that hadn't yet been completed.
+# See PR varobj/28131.
+mi_gdb_test "-var-create c1_again * &c1" \
+   "\\^done.*" \
+   "-var-create c1_again * &c1"
+mi_gdb_test "-var-list-children c1_again 0 1" \
+  "\\^done,numchild=\"1\",children=.child=\{name=\"c1_again.car\".*" \
+  "-var-list-children c1_again"
+mi_delete_varobj c1_again "delete c1_again"

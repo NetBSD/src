@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2015-2020 Free Software Foundation, Inc.
+   Copyright 2015-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ static foo *foo_array = NULL;
 int
 main (void)
 {
-  foo_array = calloc (3, sizeof (*foo_array));
+  foo_array = (foo *) calloc (3, sizeof (*foo_array));
   foo_array[1].a = 10;
   foo_array[2].b = 20;
   return 0; /* BREAK */

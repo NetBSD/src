@@ -1,4 +1,4 @@
-# Copyright (C) 2003-2020 Free Software Foundation, Inc.
+# Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,12 +30,12 @@ set asm-flags ""
 set link-flags "-m h8300sxelf"
 
 
-if {[target_assemble $srcfile $objfile "${asm-flags}"] != ""} then {
+if {[target_assemble $srcfile $objfile "${asm-flags}"] != ""} {
      untested "failed to assemble"
      return -1
 }
 
-if {[target_link $objfile $binfile "${link-flags}"] != ""} then {
+if {[target_link $objfile $binfile "${link-flags}"] != ""} {
      untested "failed to link"
      return -1
 }

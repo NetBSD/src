@@ -1,7 +1,7 @@
 /* Functions specific to running gdb native on IA-64 running
    GNU/Linux.
 
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -404,7 +404,7 @@ ia64_cannot_store_register (struct gdbarch *gdbarch, int regno)
   return regno < 0
 	 || regno >= gdbarch_num_regs (gdbarch)
 	 || u_offsets[regno] == -1
-         || regno == IA64_BSPSTORE_REGNUM;
+	 || regno == IA64_BSPSTORE_REGNUM;
 }
 
 void
@@ -542,7 +542,7 @@ ia64_linux_nat_target::enable_watchpoints_in_psr (ptid_t ptid)
   if (!(psr & IA64_PSR_DB))
     {
       psr |= IA64_PSR_DB;	/* Set the db bit - this enables hardware
-			           watchpoints and breakpoints.  */
+				   watchpoints and breakpoints.  */
       regcache_cooked_write_unsigned (regcache, IA64_PSR_REGNUM, psr);
     }
 }
@@ -589,7 +589,6 @@ ia64_linux_nat_target::insert_watchpoint (CORE_ADDR addr, int len,
 					  enum target_hw_bp_type type,
 					  struct expression *cond)
 {
-  struct lwp_info *lp;
   int idx;
   long dbr_addr, dbr_mask;
   int max_watchpoints = 4;
@@ -630,7 +629,8 @@ ia64_linux_nat_target::insert_watchpoint (CORE_ADDR addr, int len,
 
   debug_registers[2 * idx] = dbr_addr;
   debug_registers[2 * idx + 1] = dbr_mask;
-  ALL_LWPS (lp)
+
+  for (const lwp_info *lp : all_lwps ())
     {
       store_debug_register_pair (lp->ptid, idx, &dbr_addr, &dbr_mask);
       enable_watchpoints_in_psr (lp->ptid);
@@ -657,14 +657,12 @@ ia64_linux_nat_target::remove_watchpoint (CORE_ADDR addr, int len,
       dbr_mask = debug_registers[2 * idx + 1];
       if ((dbr_mask & (0x3UL << 62)) && addr == (CORE_ADDR) dbr_addr)
 	{
-	  struct lwp_info *lp;
-
 	  debug_registers[2 * idx] = 0;
 	  debug_registers[2 * idx + 1] = 0;
 	  dbr_addr = 0;
 	  dbr_mask = 0;
 
-	  ALL_LWPS (lp)
+	  for (const lwp_info *lp : all_lwps ())
 	    store_debug_register_pair (lp->ptid, idx, &dbr_addr, &dbr_mask);
 
 	  return 0;
@@ -706,7 +704,7 @@ ia64_linux_nat_target::stopped_data_address (CORE_ADDR *addr_p)
 
   regcache_cooked_read_unsigned (regcache, IA64_PSR_REGNUM, &psr);
   psr |= IA64_PSR_DD;	/* Set the dd bit - this will disable the watchpoint
-                           for the next instruction.  */
+			   for the next instruction.  */
   regcache_cooked_write_unsigned (regcache, IA64_PSR_REGNUM, psr);
 
   *addr_p = (CORE_ADDR) siginfo.si_addr;
@@ -887,7 +885,7 @@ ia64_linux_nat_target::xfer_partial (enum target_object object,
 
       /* Probe for the table size once.  */
       if (gate_table_size == 0)
-        gate_table_size = syscall (__NR_getunwind, NULL, 0);
+	gate_table_size = syscall (__NR_getunwind, NULL, 0);
       if (gate_table_size < 0)
 	return TARGET_XFER_E_IO;
 

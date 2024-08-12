@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2018-2020 Free Software Foundation, Inc.
+# Copyright 2018-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,15 +28,23 @@ if { [skip_gdbserver_tests] } {
 }
 
 standard_testfile
-if [prepare_for_testing "failed to prepare" $testfile $srcfile] {
+if { [build_executable "failed to prepare" $testfile $srcfile] == -1 } {
     return -1
 }
 
 # Run the tests with different features of GDBserver disabled.
 proc run_test { disable_feature target_nonstop } {
-    global binfile gdb_prompt decimal
+    global binfile gdb_prompt decimal GDBFLAGS
 
-    clean_restart ${binfile}
+    save_vars { GDBFLAGS } {
+	# If GDB and GDBserver are both running locally, set the sysroot to avoid
+	# reading files via the remote protocol.
+	if { ![is_remote host] && ![is_remote target] } {
+	    set GDBFLAGS "$GDBFLAGS -ex \"set sysroot\""
+	}
+
+	clean_restart ${binfile}
+    }
 
     # Make sure we're disconnected, in case we're testing with an
     # extended-remote board, therefore already connected.
@@ -103,4 +111,14 @@ foreach_with_prefix to_disable { "" Tthread T } {
     foreach_with_prefix t_nonstop { off on } {
 	run_test $to_disable $t_nonstop
     }
+}
+
+# Regression for PR gdb/26819: Cover the case when GDBserver does not report
+# any threads (i.e. the remote target has no concept of threads).
+#
+# Scenario 1: Disable 'T' and 'qfThreadInfo' packets
+# Scenario 2: Disable all threading packets
+foreach_with_prefix to_disable { "T,qfThreadInfo" "threads" } {
+    # Non-stop mode not applicable - off.
+    run_test $to_disable off
 }

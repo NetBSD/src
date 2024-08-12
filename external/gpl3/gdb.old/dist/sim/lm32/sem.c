@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2020 Free Software Foundation, Inc.
+Copyright 1996-2023 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 

@@ -1,5 +1,5 @@
 /* Definitions used by the GDB event loop.
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2023 Free Software Foundation, Inc.
    Written by Elena Zannoni <ezannoni@cygnus.com> of Cygnus Solutions.
 
    This file is part of GDB.
@@ -76,10 +76,22 @@ typedef void (timer_handler_func) (gdb_client_data);
 
 /* Exported functions from event-loop.c */
 
-extern int gdb_do_one_event (void);
+extern int gdb_do_one_event (int mstimeout = -1);
 extern void delete_file_handler (int fd);
-extern void add_file_handler (int fd, handler_func *proc, 
-			      gdb_client_data client_data);
+
+/* Add a file handler/descriptor to the list of descriptors we are
+   interested in.
+
+   FD is the file descriptor for the file/stream to be listened to.
+
+   NAME is a user-friendly name for the handler.
+
+   If IS_UI is set, this file descriptor is used for a user interface.  */
+
+extern void add_file_handler (int fd, handler_func *proc,
+			      gdb_client_data client_data,
+			      std::string &&name, bool is_ui = false);
+
 extern int create_timer (int milliseconds, 
 			 timer_handler_func *proc, 
 			 gdb_client_data client_data);
@@ -98,5 +110,39 @@ extern int invoke_async_signal_handlers ();
    ready.  */
 
 extern int check_async_event_handlers ();
+
+enum class debug_event_loop_kind
+{
+  OFF,
+
+  /* Print all event-loop related messages, except events from user-interface
+     event sources.  */
+  ALL_EXCEPT_UI,
+
+  /* Print all event-loop related messages.  */
+  ALL,
+};
+
+/* True if we are printing event loop debug statements.  */
+extern debug_event_loop_kind debug_event_loop;
+
+/* Print an "event loop" debug statement.  */
+
+#define event_loop_debug_printf(fmt, ...) \
+  debug_prefixed_printf_cond (debug_event_loop != debug_event_loop_kind::OFF, \
+			      "event-loop", fmt, ##__VA_ARGS__)
+
+/* Print an "event loop" debug statement that is know to come from a UI-related
+   event (e.g. calling the event handler for the fd of the CLI).  */
+
+#define event_loop_ui_debug_printf(is_ui, fmt, ...) \
+  do \
+    { \
+      if (debug_event_loop == debug_event_loop_kind::ALL \
+	  || (debug_event_loop == debug_event_loop_kind::ALL_EXCEPT_UI \
+	      && !is_ui)) \
+	debug_prefixed_printf ("event-loop", __func__, fmt, ##__VA_ARGS__); \
+    } \
+  while (0)
 
 #endif /* EVENT_LOOP_H */

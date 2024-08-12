@@ -1,5 +1,5 @@
 /* Moxie Simulator definition.
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
 This file is part of GDB, the GNU debugger.
 
@@ -36,34 +36,26 @@ typedef union
     int pc;
 
     /* System registers.  For sh-dsp this also includes A0 / X0 / X1 / Y0 / Y1
-       which are located in fregs, i.e. strictly speaking, these are
-       out-of-bounds accesses of sregs.i .  This wart of the code could be
-       fixed by making fregs part of sregs, and including pc too - to avoid
-       alignment repercussions - but this would cause very onerous union /
-       structure nesting, which would only be managable with anonymous
-       unions and structs.  */
-    union
-      {
-	struct
-	  {
-	    int mach;
-	    int macl;
-	    int pr;
-	    int dummy3, dummy4;
-	    int fpul; /* A1 for sh-dsp -  but only for movs etc.  */
-	    int fpscr; /* dsr for sh-dsp */
-	  } named;
-	int i[7];
-      } sregs;
+       which are located in fregs.  Probably should include pc too - to avoid
+       alignment repercussions.  */
+    union {
+      struct {
+	int mach;
+	int macl;
+	int pr;
+	int dummy3, dummy4;
+	int fpul; /* A1 for sh-dsp -  but only for movs etc.  */
+	int fpscr; /* dsr for sh-dsp */
 
-    /* sh3e / sh-dsp */
-    union fregs_u
-      {
-	float f[16];
-	double d[8];
-	int i[16];
-      }
-    fregs[2];
+	/* sh3e / sh-dsp */
+	union fregs_u {
+	  float f[16];
+	  double d[8];
+	  int i[16];
+	} fregs[2];
+      };
+      int sregs[39];
+    };
 
     /* Control registers; on the SH4, ldc / stc is privileged, except when
        accessing gbr.  */
@@ -88,9 +80,9 @@ typedef union
 	    int tbr;
 	    int ibcr;		/* sh2a bank control register */
 	    int ibnr;		/* sh2a bank number register */
-	  } named;
-	int i[16];
-      } cregs;
+	  };
+	int cregs[16];
+      };
 
     unsigned char *insn_end;
 
@@ -129,13 +121,6 @@ extern saved_state_type saved_state;
 struct _sim_cpu {
 
   sim_cpu_base base;
-};
-
-struct sim_state {
-
-  sim_cpu *cpu[MAX_NR_PROCESSORS];
-
-  sim_state_base base;
 };
 
 #endif

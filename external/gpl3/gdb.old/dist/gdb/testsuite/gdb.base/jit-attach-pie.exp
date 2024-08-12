@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2020 Free Software Foundation, Inc.
+# Copyright (C) 2016-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ standard_testfile .c
 set executable ${testfile}
 
 if { [build_executable ${testfile}.exp $executable $srcfile \
-			  [list debug pthreads "additional_flags=-fPIE" "ldflags=-pie"]] } {
+			  [list debug pthreads pie]] } {
     return -1
 }
 

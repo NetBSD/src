@@ -1,4 +1,4 @@
-# Copyright 2008-2020 Free Software Foundation, Inc.
+# Copyright 2008-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -61,8 +61,6 @@ proc test {} {
     global binfile
     global gdb_prompt
     global decimal
-
-    clean_restart ${binfile}
 
     set test_spawn_id [spawn_wait_for_attach $binfile]
     set testpid [spawn_id_get_pid $test_spawn_id]
@@ -170,7 +168,8 @@ proc test {} {
 # failure.
 set options { "additional_flags=-DTIMEOUT=$timeout" debug pthreads }
 
-if {[prepare_for_testing "failed to prepare" $testfile $srcfile $options] == -1} {
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile \
+	 $options] == -1} {
     return -1
 }
 

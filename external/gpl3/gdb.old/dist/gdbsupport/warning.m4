@@ -1,5 +1,5 @@
 dnl Autoconf configure script for GDB, the GNU debugger.
-dnl Copyright (C) 1995-2020 Free Software Foundation, Inc.
+dnl Copyright (C) 1995-2023 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
 dnl
@@ -51,9 +51,15 @@ build_warnings="-Wall -Wpointer-arith \
 -Wdeprecated-copy-dtor \
 -Wredundant-move \
 -Wmissing-declarations \
--Wmissing-prototypes \
 -Wstrict-null-sentinel \
 "
+
+# The -Wmissing-prototypes flag will be accepted by GCC, but results
+# in a warning being printed about the flag not being valid for C++,
+# this is something to do with using ccache, and argument ordering.
+if test "$GDB_COMPILER_TYPE" != gcc; then
+  build_warnings="$build_warnings -Wmissing-prototypes"
+fi
 
 case "${host}" in
   *-*-mingw32*)
@@ -139,15 +145,23 @@ then
 	      # Check for https://gcc.gnu.org/bugzilla/show_bug.cgi?id=38958,
 	      # fixed in GCC 4.9.  This test is derived from the gdb
 	      # source code that triggered this bug in GCC.
-	      AC_TRY_COMPILE(
-	        [struct scoped_restore_base {};
-                 struct scoped_restore_tmpl : public scoped_restore_base {
-		   ~scoped_restore_tmpl() {}
-		 };],
-		[const scoped_restore_base &b = scoped_restore_tmpl();],
-		WARN_CFLAGS="${WARN_CFLAGS} $w",)
+	      AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM(
+		   [struct scoped_restore_base {};
+		    struct scoped_restore_tmpl : public scoped_restore_base {
+		      ~scoped_restore_tmpl() {}
+		    };],
+		   [const scoped_restore_base &b = scoped_restore_tmpl();]
+		 )],
+		[WARN_CFLAGS="${WARN_CFLAGS} $w"],
+		[]
+	      )
 	    else
-	      AC_TRY_COMPILE([],[],WARN_CFLAGS="${WARN_CFLAGS} $w",)
+	      AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM([], [])],
+		[WARN_CFLAGS="${WARN_CFLAGS} $w"],
+		[]
+	      )
 	    fi
 	    CFLAGS="$saved_CFLAGS"
 	    CXXFLAGS="$saved_CXXFLAGS"

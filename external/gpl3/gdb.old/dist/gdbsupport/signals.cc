@@ -1,5 +1,5 @@
 /* Target signal translation functions for GDB.
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2023 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
    This file is part of GDB.
@@ -601,20 +601,20 @@ do_gdb_signal_to_host (enum gdb_signal oursig,
 	  && oursig <= GDB_SIGNAL_REALTIME_63)
 	{
 	  /* This block of signals is continuous, and
-             GDB_SIGNAL_REALTIME_33 is 33 by definition.  */
+	     GDB_SIGNAL_REALTIME_33 is 33 by definition.  */
 	  retsig = (int) oursig - (int) GDB_SIGNAL_REALTIME_33 + 33;
 	}
       else if (oursig == GDB_SIGNAL_REALTIME_32)
 	{
 	  /* GDB_SIGNAL_REALTIME_32 isn't contiguous with
-             GDB_SIGNAL_REALTIME_33.  It is 32 by definition.  */
+	     GDB_SIGNAL_REALTIME_33.  It is 32 by definition.  */
 	  retsig = 32;
 	}
       else if (oursig >= GDB_SIGNAL_REALTIME_64
 	  && oursig <= GDB_SIGNAL_REALTIME_127)
 	{
 	  /* This block of signals is continuous, and
-             GDB_SIGNAL_REALTIME_64 is 64 by definition.  */
+	     GDB_SIGNAL_REALTIME_64 is 64 by definition.  */
 	  retsig = (int) oursig - (int) GDB_SIGNAL_REALTIME_64 + 64;
 	}
 
@@ -643,7 +643,7 @@ gdb_signal_to_host (enum gdb_signal oursig)
   if (!oursig_ok)
     {
       /* The user might be trying to do "signal SIGSAK" where this system
-         doesn't have SIGSAK.  */
+	 doesn't have SIGSAK.  */
       warning (_("Signal %s does not exist on this system."),
 	       gdb_signal_to_name (oursig));
       return 0;

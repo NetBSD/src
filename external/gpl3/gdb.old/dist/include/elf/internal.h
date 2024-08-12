@@ -1,5 +1,5 @@
 /* ELF support for BFD.
-   Copyright (C) 1991-2020 Free Software Foundation, Inc.
+   Copyright (C) 1991-2022 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, from information published
    in "UNIX System V Release 4, Programmers Guide: ANSI C and
@@ -339,6 +339,7 @@ struct elf_segment_map
 	    || (segment)->p_type == PT_GNU_EH_FRAME			\
 	    || (segment)->p_type == PT_GNU_STACK			\
 	    || (segment)->p_type == PT_GNU_RELRO			\
+	    || (segment)->p_type == PT_GNU_SFRAME			\
 	    || ((segment)->p_type >= PT_GNU_MBIND_LO			\
 		&& (segment)->p_type <= PT_GNU_MBIND_HI)))		\
    /* Any section besides one of type SHT_NOBITS must have file		\

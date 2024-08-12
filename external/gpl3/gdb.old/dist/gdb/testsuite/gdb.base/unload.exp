@@ -1,4 +1,4 @@
-#   Copyright 2003-2020 Free Software Foundation, Inc.
+#   Copyright 2003-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,10 +41,6 @@ set lib_dlopen [shlib_target_file ${libname}]
 set lib_dlopen2 [shlib_target_file ${libname2}]
 set lib_syms [shlib_symbol_file ${libname}]
 set lib_syms2 [shlib_symbol_file ${libname2}]
-
-if [get_compiler_info] {
-    return -1
-}
 
 set lib_opts debug
 set exec_opts [list debug shlib_load additional_flags=-DSHLIB_NAME=\"${lib_dlopen}\" additional_flags=-DSHLIB_NAME2=\"${lib_dlopen2}\"]
@@ -119,7 +115,7 @@ gdb_breakpoint "$testfile.c:[gdb_get_line_number "y-set-1" $testfile.c]" tempora
 
 gdb_test "continue" \
 "Continuing.*warning: Temporarily disabling breakpoints for.*${lib_syms}.*y-set-1.*" \
-"continuing to unloaded libfile"
+"continuing to unloaded libfile, two"
 
 set unloadshr_line2 [gdb_get_line_number "unloadshr2 break" ${libsrcfile2}]
 

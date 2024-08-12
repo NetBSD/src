@@ -27,14 +27,7 @@
 #include "emul_generic.h"
 #include "emul_chirp.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
-
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -267,9 +260,9 @@ chirp_emul_peer(os_emul_data *data,
   if (chirp_read_t2h_args(&args, sizeof(args), 1, 1, data, processor, cia))
     return -1;
   phandle = external_to_device(data->root, args.phandle);
-  TRACE(trace_os_emul, ("peer - in - phandle=0x%lx(0x%lx`%s')\n",
+  TRACE(trace_os_emul, ("peer - in - phandle=0x%lx(%p`%s')\n",
 			(unsigned long)args.phandle,
-			(unsigned long)phandle,
+			phandle,
 			(phandle == NULL ? "" : device_name(phandle))));
   /* find the peer */
   if (args.phandle == 0) {
@@ -288,9 +281,9 @@ chirp_emul_peer(os_emul_data *data,
       args.sibling_phandle = device_to_external(sibling_phandle);
   }
   /* write the arguments back out */
-  TRACE(trace_os_emul, ("peer - out - sibling_phandle=0x%lx(0x%lx`%s')\n",
+  TRACE(trace_os_emul, ("peer - out - sibling_phandle=0x%lx(%p`%s')\n",
 			(unsigned long)args.sibling_phandle,
-			(unsigned long)sibling_phandle,
+			sibling_phandle,
 			(sibling_phandle == NULL ? "" : device_name(sibling_phandle))));
   chirp_write_h2t_args(&args,
 		       sizeof(args),
@@ -316,9 +309,9 @@ chirp_emul_child(os_emul_data *data,
   if (chirp_read_t2h_args(&args, sizeof(args), 1, 1, data, processor, cia))
     return -1;
   phandle = external_to_device(data->root, args.phandle);
-  TRACE(trace_os_emul, ("child - in - phandle=0x%lx(0x%lx`%s')\n",
+  TRACE(trace_os_emul, ("child - in - phandle=0x%lx(%p`%s')\n",
 			(unsigned long)args.phandle,
-			(unsigned long)phandle,
+			phandle,
 			(phandle == NULL ? "" : device_name(phandle))));
   /* find a child */
   if (args.phandle == 0
@@ -334,9 +327,9 @@ chirp_emul_child(os_emul_data *data,
       args.child_phandle = device_to_external(child_phandle);
   }
   /* write the result out */
-  TRACE(trace_os_emul, ("child - out - child_phandle=0x%lx(0x%lx`%s')\n",
+  TRACE(trace_os_emul, ("child - out - child_phandle=0x%lx(%p`%s')\n",
 			(unsigned long)args.child_phandle,
-			(unsigned long)child_phandle,
+			child_phandle,
 			(child_phandle == NULL ? "" : device_name(child_phandle))));
   chirp_write_h2t_args(&args,
 		       sizeof(args),
@@ -362,9 +355,9 @@ chirp_emul_parent(os_emul_data *data,
   if (chirp_read_t2h_args(&args, sizeof(args), 1, 1, data, processor, cia))
     return -1;
   phandle = external_to_device(data->root, args.phandle);
-  TRACE(trace_os_emul, ("parent - in - phandle=0x%lx(0x%lx`%s')\n",
+  TRACE(trace_os_emul, ("parent - in - phandle=0x%lx(%p`%s')\n",
 			(unsigned long)args.phandle,
-			(unsigned long)phandle,
+			phandle,
 			(phandle == NULL ? "" : device_name(phandle))));
   /* find a parent */
   if (args.phandle == 0
@@ -380,9 +373,9 @@ chirp_emul_parent(os_emul_data *data,
       args.parent_phandle = device_to_external(parent_phandle);
   }
   /* return the result */
-  TRACE(trace_os_emul, ("parent - out - parent_phandle=0x%lx(0x%lx`%s')\n",
+  TRACE(trace_os_emul, ("parent - out - parent_phandle=0x%lx(%p`%s')\n",
 			(unsigned long)args.parent_phandle,
-			(unsigned long)parent_phandle,
+			parent_phandle,
 			(parent_phandle == NULL ? "" : device_name(parent_phandle))));
   chirp_write_h2t_args(&args,
 		       sizeof(args),
@@ -408,9 +401,9 @@ chirp_emul_instance_to_package(os_emul_data *data,
   if (chirp_read_t2h_args(&args, sizeof(args), 1, 1, data, processor, cia))
     return -1;
   ihandle = external_to_device_instance(data->root, args.ihandle);
-  TRACE(trace_os_emul, ("instance-to-package - in - ihandle=0x%lx(0x%lx`%s')\n",
+  TRACE(trace_os_emul, ("instance-to-package - in - ihandle=0x%lx(%p`%s')\n",
 			(unsigned long)args.ihandle,
-			(unsigned long)ihandle,
+			ihandle,
 			ihandle_name(ihandle)));
   /* find the corresponding phandle */
   if (ihandle == NULL) {
@@ -422,9 +415,9 @@ chirp_emul_instance_to_package(os_emul_data *data,
     args.phandle = device_to_external(phandle);
   }
   /* return the result */
-  TRACE(trace_os_emul, ("instance-to-package - out - phandle=0x%lx(0x%lx`%s')\n",
+  TRACE(trace_os_emul, ("instance-to-package - out - phandle=0x%lx(%p`%s')\n",
 			(unsigned long)args.phandle,
-			(unsigned long)phandle,
+			phandle,
 			(phandle == NULL ? "" : device_name(phandle))));
   chirp_write_h2t_args(&args,
 		       sizeof(args),
@@ -455,9 +448,9 @@ chirp_emul_getproplen(os_emul_data *data,
 		   args.name,
 		   sizeof(name),
 		   processor, cia);
-  TRACE(trace_os_emul, ("getproplen - in - phandle=0x%lx(0x%lx`%s') name=`%s'\n",
+  TRACE(trace_os_emul, ("getproplen - in - phandle=0x%lx(%p`%s') name=`%s'\n",
 			(unsigned long)args.phandle,
-			(unsigned long)phandle,
+			phandle,
 			(phandle == NULL ? "" : device_name(phandle)),
 			name));
   /* find our prop and get its length */
@@ -508,9 +501,9 @@ chirp_emul_getprop(os_emul_data *data,
 		   args.name,
 		   sizeof(name),
 		   processor, cia);
-  TRACE(trace_os_emul, ("getprop - in - phandle=0x%lx(0x%lx`%s') name=`%s' buf=0x%lx buflen=%ld\n",
+  TRACE(trace_os_emul, ("getprop - in - phandle=0x%lx(%p`%s') name=`%s' buf=0x%lx buflen=%ld\n",
 			(unsigned long)args.phandle,
-			(unsigned long)phandle,
+			phandle,
 			(phandle == NULL ? "" : device_name(phandle)),
 			name,
 			(unsigned long)args.buf,
@@ -539,9 +532,9 @@ chirp_emul_getprop(os_emul_data *data,
 			      device_find_string_property(phandle, name)));
 	break;
       case ihandle_property:
-	TRACE(trace_os_emul, ("getprop - ihandle=0x%lx(0x%lx`%s')\n",
-			      BE2H_cell(*(unsigned_cell*)prop->array),
-			      (unsigned long)device_find_ihandle_property(phandle, name),
+	TRACE(trace_os_emul, ("getprop - ihandle=0x%lx(%p`%s')\n",
+			      (unsigned long)BE2H_cell(*(unsigned_cell*)prop->array),
+			      device_find_ihandle_property(phandle, name),
 			      ihandle_name(device_find_ihandle_property(phandle, name))));
 	break;
       default:
@@ -592,9 +585,9 @@ chirp_emul_nextprop(os_emul_data *data,
     /* If previous is NULL, make it look like the empty string.  The
        next property after the empty string is the first property.  */
     strcpy (previous, "");
-  TRACE(trace_os_emul, ("nextprop - in - phandle=0x%lx(0x%lx`%s') previous=`%s' buf=0x%lx\n",
+  TRACE(trace_os_emul, ("nextprop - in - phandle=0x%lx(%p`%s') previous=`%s' buf=0x%lx\n",
 			(unsigned long)args.phandle,
-			(unsigned long)phandle,
+			phandle,
 			(phandle == NULL ? "" : device_name(phandle)),
 			previous,
 			(unsigned long)args.buf));
@@ -735,9 +728,9 @@ chirp_emul_finddevice(os_emul_data *data,
   else
     args.phandle = device_to_external(phandle);
   /* return its phandle */
-  TRACE(trace_os_emul, ("finddevice - out - phandle=0x%lx(0x%lx`%s')\n",
+  TRACE(trace_os_emul, ("finddevice - out - phandle=0x%lx(%p`%s')\n",
 			(unsigned long)args.phandle,
-			(unsigned long)phandle,
+			phandle,
 			(phandle == NULL ? "" : device_name(phandle))));
   chirp_write_h2t_args(&args,
 		       sizeof(args),
@@ -766,9 +759,9 @@ chirp_emul_instance_to_path(os_emul_data *data,
   if (chirp_read_t2h_args(&args, sizeof(args), 3, 1, data, processor, cia))
     return -1;
   ihandle = external_to_device_instance(data->root, args.ihandle);
-  TRACE(trace_os_emul, ("instance-to-path - in - ihandle=0x%lx(0x%lx`%s') buf=0x%lx buflen=%ld\n",
+  TRACE(trace_os_emul, ("instance-to-path - in - ihandle=0x%lx(%p`%s') buf=0x%lx buflen=%ld\n",
 			(unsigned long)args.ihandle,
-			(unsigned long)ihandle,
+			ihandle,
 			ihandle_name(ihandle),
 			(unsigned long)args.buf,
 			(unsigned long)args.buflen));
@@ -816,9 +809,9 @@ chirp_emul_package_to_path(os_emul_data *data,
   if (chirp_read_t2h_args(&args, sizeof(args), 3, 1, data, processor, cia))
     return -1;
   phandle = external_to_device(data->root, args.phandle);
-  TRACE(trace_os_emul, ("package-to-path - in - phandle=0x%lx(0x%lx`%s') buf=0x%lx buflen=%ld\n",
+  TRACE(trace_os_emul, ("package-to-path - in - phandle=0x%lx(%p`%s') buf=0x%lx buflen=%ld\n",
 			(unsigned long)args.phandle,
-			(unsigned long)phandle,
+			phandle,
 			(phandle == NULL ? "" : device_name(phandle)),
 			(unsigned long)args.buf,
 			(unsigned long)args.buflen));
@@ -879,12 +872,12 @@ chirp_emul_call_method(os_emul_data *data,
   n_stack_returns = data->n_returns - 1;
   stack_catch_result = n_stack_args;
   stack_returns = stack_catch_result + 1;
-  TRACE(trace_os_emul, ("call-method - in - n_args=%ld n_returns=%ld method=`%s' ihandle=0x%lx(0x%lx`%s')\n",
+  TRACE(trace_os_emul, ("call-method - in - n_args=%ld n_returns=%ld method=`%s' ihandle=0x%lx(%p`%s')\n",
 			(unsigned long)data->n_args,
 			(unsigned long)data->n_returns,
 			method,
 			(unsigned long)args.ihandle,
-			(unsigned long)ihandle,
+			ihandle,
 			ihandle_name(ihandle)));
   /* see if we can emulate this method */
   if (ihandle == NULL) {
@@ -942,9 +935,9 @@ chirp_emul_open(os_emul_data *data,
   else
     args.ihandle = device_instance_to_external(ihandle);
   /* return the ihandle result */
-  TRACE(trace_os_emul, ("open - out - ihandle=0x%lx(0x%lx`%s')\n",
+  TRACE(trace_os_emul, ("open - out - ihandle=0x%lx(%p`%s')\n",
 			(unsigned long)args.ihandle,
-			(unsigned long)ihandle,
+			ihandle,
 			ihandle_name(ihandle)));
   chirp_write_h2t_args(&args,
 		       sizeof(args),
@@ -968,9 +961,9 @@ chirp_emul_close(os_emul_data *data,
   if (chirp_read_t2h_args(&args, sizeof(args), 1, 0, data, processor, cia))
     return -1;
   ihandle = external_to_device_instance(data->root, args.ihandle);
-  TRACE(trace_os_emul, ("close - in - ihandle=0x%lx(0x%lx`%s')\n",
+  TRACE(trace_os_emul, ("close - in - ihandle=0x%lx(%p`%s')\n",
 			(unsigned long)args.ihandle,
-			(unsigned long)ihandle,
+			ihandle,
 			ihandle_name(ihandle)));
   /* close the device */
   if (ihandle == NULL) {
@@ -1008,9 +1001,9 @@ chirp_emul_read(os_emul_data *data,
   if (chirp_read_t2h_args(&args, sizeof(args), 3, 1, data, processor, cia))
     return -1;
   ihandle = external_to_device_instance(data->root, args.ihandle);
-  TRACE(trace_os_emul, ("read - in - ihandle=0x%lx(0x%lx`%s') addr=0x%lx len=%ld\n",
+  TRACE(trace_os_emul, ("read - in - ihandle=0x%lx(%p`%s') addr=0x%lx len=%ld\n",
 			(unsigned long)args.ihandle,
-			(unsigned long)ihandle,
+			ihandle,
 			ihandle_name(ihandle),
 			(unsigned long)args.addr,
 			(unsigned long)args.len));
@@ -1100,9 +1093,9 @@ chirp_emul_write(os_emul_data *data,
 		   processor, cia);
   buf[actual] = '\0';
   ihandle = external_to_device_instance(data->root, args.ihandle);
-  TRACE(trace_os_emul, ("write - in - ihandle=0x%lx(0x%lx`%s') `%s' (%ld)\n",
+  TRACE(trace_os_emul, ("write - in - ihandle=0x%lx(%p`%s') `%s' (%ld)\n",
 			(unsigned long)args.ihandle,
-			(unsigned long)ihandle,
+			ihandle,
 			ihandle_name(ihandle),
 			buf, (long)actual));
   if (ihandle == NULL) {
@@ -1146,11 +1139,12 @@ chirp_emul_seek(os_emul_data *data,
   if (chirp_read_t2h_args(&args, sizeof(args), 3, 1, data, processor, cia))
     return -1;
   ihandle = external_to_device_instance(data->root, args.ihandle);
-  TRACE(trace_os_emul, ("seek - in - ihandle=0x%lx(0x%lx`%s') pos.hi=0x%lx pos.lo=0x%lx\n",
+  TRACE(trace_os_emul, ("seek - in - ihandle=0x%lx(%p`%s') pos.hi=0x%lx pos.lo=0x%lx\n",
 			(unsigned long)args.ihandle,
-			(unsigned long)ihandle,
+			ihandle,
 			ihandle_name(ihandle),
-			args.pos_hi, args.pos_lo));
+			(unsigned long)args.pos_hi,
+			(unsigned long)args.pos_lo));
   if (ihandle == NULL) {
     /* OpenFirmware doesn't define this error */
     error("chirp: invalid ihandle passed to seek method");
@@ -1387,7 +1381,7 @@ chirp_emul_milliseconds(os_emul_data *data,
     /*out*/
     unsigned_cell ms;
   } args;
-  unsigned64 time;
+  uint64_t time;
   /* read in the arguments */
   if (chirp_read_t2h_args(&args, sizeof(args), 1, 1, data, processor, cia))
     return -1;
@@ -1471,12 +1465,12 @@ static chirp_services services[] = {
 
 
 typedef struct _chirp_note_desc {
-  signed32 real_mode;
-  signed32 real_base;
-  signed32 real_size;
-  signed32 virt_base;
-  signed32 virt_size;
-  signed32 load_base;
+  int32_t real_mode;
+  int32_t real_base;
+  int32_t real_size;
+  int32_t virt_base;
+  int32_t virt_size;
+  int32_t load_base;
 } chirp_note_desc;
 
 typedef enum {
@@ -1490,15 +1484,15 @@ typedef struct _chirp_note {
 } chirp_note;
 
 typedef struct _chirp_note_head {
-  unsigned32 namesz;
-  unsigned32 descsz;
-  unsigned32 type;
+  uint32_t namesz;
+  uint32_t descsz;
+  uint32_t type;
 } chirp_note_head;
 
 static void
 map_over_chirp_note(bfd *image,
 		    asection *sect,
-		    PTR obj)
+		    void *obj)
 {
   chirp_note *note = (chirp_note*)obj;
   if (strcmp(sect->name, ".note") == 0) {
@@ -1515,7 +1509,7 @@ map_over_chirp_note(bfd *image,
       return;
     /* check the name field */
     if (head.namesz > sizeof(name)) {
-      error("chirp: note name too long (%d > %d)\n", (int)head.namesz, sizeof(name));
+      error("chirp: note name too long (%d > %d)\n", (int)head.namesz, (int)sizeof(name));
     }
     if (!bfd_get_section_contents(image, sect,
 				  name, sizeof(head), head.namesz)) {
@@ -1525,7 +1519,7 @@ map_over_chirp_note(bfd *image,
       printf_filtered("chirp: note name (%s) not `PowerPC'\n", name);
     }
     /* check the size */
-    if (head.descsz == sizeof(note->desc) - sizeof(signed32)) {
+    if (head.descsz == sizeof(note->desc) - sizeof(int32_t)) {
       sim_io_printf_filtered("chirp: note descriptor missing load-base\n");
     }
     else if (head.descsz != sizeof(note->desc)) {
@@ -1549,7 +1543,7 @@ map_over_chirp_note(bfd *image,
     if (head.descsz == sizeof(note->desc))
       note->desc.load_base = bfd_get_32(image, (void*)&note->desc.load_base);
     else
-      note->desc.load_base = (signed32)-1;
+      note->desc.load_base = (int32_t)-1;
   }
 }
 
@@ -1654,7 +1648,7 @@ emul_chirp_create(device *root,
 
   /* resolve real-base */
   if (note.found == note_correct
-      && note.desc.real_base != (signed32)-1)
+      && note.desc.real_base != (int32_t)-1)
     chirp->real_base = note.desc.real_base;
   else if (tree_find_property(root, "/options/real-base") != NULL)
     chirp->real_base = tree_find_integer_property(root, "/options/real-base");
@@ -1670,7 +1664,7 @@ emul_chirp_create(device *root,
 
   /* resolve real-size */
   if (note.found == note_correct
-      && note.desc.real_size != (signed32)-1
+      && note.desc.real_size != (int32_t)-1
       && note.desc.real_size != 0
       && chirp->real_size > note.desc.real_size)
     error("chirp: insufficient physical memory for firmware\n");
@@ -1703,7 +1697,7 @@ emul_chirp_create(device *root,
   /* resolve virt-size */
   chirp->virt_size = chirp->real_size;
   if (note.found == note_correct
-     && note.desc.virt_size != (signed32)-1
+     && note.desc.virt_size != (int32_t)-1
       && note.desc.virt_size != 0
       && !chirp->real_mode
       && chirp->virt_size > note.desc.virt_size)
@@ -1718,7 +1712,7 @@ emul_chirp_create(device *root,
 
   /* resolve load-base */
   if (note.found == note_correct
-      && note.desc.load_base != (signed32)-1)
+      && note.desc.load_base != (int32_t)-1)
     chirp->load_base = note.desc.load_base;
   else if (tree_find_property(root, "/options/load-base") != NULL)
     chirp->load_base = tree_find_integer_property(root, "/options/load-base");
@@ -1977,12 +1971,14 @@ emul_chirp_instruction_call(cpu *processor,
     }
     if (emul_data->n_args > 6) { /* See iee1275 requirements on nr returns */
       error("OpenFirmware service %s called from 0x%lx with args 0x%lx, too many args (%d)\n",
+	    service_name,
 	    (unsigned long)emul_data->return_address,
 	    (unsigned long)emul_data->arguments,
 	    emul_data->n_returns);
     }
     if (emul_data->n_returns > 6) {
       error("OpenFirmware service %s called from 0x%lx with args 0x%lx,  with too many returns (%d)\n",
+	    service_name,
 	    (unsigned long)emul_data->return_address,
 	    (unsigned long)emul_data->arguments,
 	    emul_data->n_args);

@@ -5,18 +5,18 @@
 #include "osabi.h"
 #include "target-descriptions.h"
 
-struct target_desc *tdesc_sparc32_solaris;
+const struct target_desc *tdesc_sparc32_solaris;
 static void
 initialize_tdesc_sparc32_solaris (void)
 {
-  struct target_desc *result = allocate_target_description ();
+  target_desc_up result = allocate_target_description ();
+  set_tdesc_architecture (result.get (), bfd_scan_arch ("sparc"));
+
+  set_tdesc_osabi (result.get (), osabi_from_tdesc_string ("Solaris"));
+
   struct tdesc_feature *feature;
 
-  set_tdesc_architecture (result, bfd_scan_arch ("sparc"));
-
-  set_tdesc_osabi (result, osabi_from_tdesc_string ("Solaris"));
-
-  feature = tdesc_create_feature (result, "org.gnu.gdb.sparc.cpu");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.sparc.cpu");
   tdesc_create_reg (feature, "g0", 0, 1, NULL, 32, "uint32");
   tdesc_create_reg (feature, "g1", 1, 1, NULL, 32, "uint32");
   tdesc_create_reg (feature, "g2", 2, 1, NULL, 32, "uint32");
@@ -50,7 +50,7 @@ initialize_tdesc_sparc32_solaris (void)
   tdesc_create_reg (feature, "fp", 30, 1, NULL, 32, "uint32");
   tdesc_create_reg (feature, "i7", 31, 1, NULL, 32, "uint32");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.sparc.cp0");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.sparc.cp0");
   tdesc_create_reg (feature, "y", 64, 1, NULL, 32, "uint32");
   tdesc_create_reg (feature, "psr", 65, 1, NULL, 32, "uint32");
   tdesc_create_reg (feature, "wim", 66, 1, NULL, 32, "uint32");
@@ -60,7 +60,7 @@ initialize_tdesc_sparc32_solaris (void)
   tdesc_create_reg (feature, "fsr", 70, 1, NULL, 32, "uint32");
   tdesc_create_reg (feature, "csr", 71, 1, NULL, 32, "uint32");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.sparc.fpu");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.sparc.fpu");
   tdesc_create_reg (feature, "f0", 32, 1, NULL, 32, "ieee_single");
   tdesc_create_reg (feature, "f1", 33, 1, NULL, 32, "ieee_single");
   tdesc_create_reg (feature, "f2", 34, 1, NULL, 32, "ieee_single");
@@ -94,5 +94,5 @@ initialize_tdesc_sparc32_solaris (void)
   tdesc_create_reg (feature, "f30", 62, 1, NULL, 32, "ieee_single");
   tdesc_create_reg (feature, "f31", 63, 1, NULL, 32, "ieee_single");
 
-  tdesc_sparc_solaris = result;
+  tdesc_sparc32_solaris = result.release ();
 }

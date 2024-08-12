@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2020 Free Software Foundation, Inc.
+# Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ class TimeTPrinter:
         self.val = val
 
     def to_string(self):
-        secs = int(self.val['secs'])
+        secs = int(self.val["secs"])
         return "%s (%d)" % (asctime(gmtime(secs)), secs)
 
 

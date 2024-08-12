@@ -102,10 +102,11 @@ _rl_abort_internal (void)
   rl_clear_message ();
   _rl_reset_argument ();
   rl_clear_pending_input ();
+  rl_deactivate_mark ();
 
-  RL_UNSETSTATE (RL_STATE_MACRODEF);
   while (rl_executing_macro)
     _rl_pop_executing_macro ();
+  _rl_kill_kbd_macro ();
 
   RL_UNSETSTATE (RL_STATE_MULTIKEY);	/* XXX */
 
@@ -502,17 +503,14 @@ _rl_tropen (void)
   if (_rl_tracefp)
     fclose (_rl_tracefp);
 #if defined (_WIN32) && !defined (__CYGWIN__)
-  /* Windows doesn't have /var/tmp, so open the trace file in the
-     user's temporary directory instead.  */
-  snprintf (fnbuf, sizeof (fnbuf), "%s/rltrace.%ld",
-	   (sh_get_env_value ("TEMP")
-	    ? sh_get_env_value ("TEMP")
-	    : "."),
-	   getpid ());
+  x = sh_get_env_value ("TEMP");
+  if (x == 0)
+    x = ".";
 #else
-  sprintf (fnbuf, "/var/tmp/rltrace.%ld", (long) getpid ());
+  x = "/var/tmp";
 #endif
-  unlink (fnbuf);
+  snprintf (fnbuf, sizeof (fnbuf), "%s/rltrace.%ld", x, (long)getpid());
+  unlink(fnbuf);
   _rl_tracefp = fopen (fnbuf, "w+");
   return _rl_tracefp != 0;
 }

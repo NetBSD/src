@@ -1,4 +1,4 @@
---  Copyright 2016-2020 Free Software Foundation, Inc.
+--  Copyright 2016-2023 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -13,6 +13,8 @@
 --  You should have received a copy of the GNU General Public License
 --  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+with System;
+
 package target_wrapper is
 
    type Float_Array_3 is array (1 .. 3) of Float;
@@ -22,5 +24,11 @@ package target_wrapper is
    end record;
 
    Assign_Arr_Input : parameters;
+
+   type IArray is array (Integer range <>) of Integer;
+
+   procedure Put (A : in out IArray);
+
+   procedure Do_Nothing (A : System.Address);
 
 end target_wrapper;

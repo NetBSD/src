@@ -1,4 +1,4 @@
-# Copyright 2018-2020 Free Software Foundation, Inc.
+# Copyright 2018-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,15 +23,12 @@ if {![dwarf2_support]} {
     return 0
 }
 
-if [get_compiler_info] {
-    return -1
-}
-if !$gcc_compiled {
+if ![is_c_compiler_gcc] {
     unsupported "gcc required for this test"
     return 0
 }
 
-standard_testfile dw2-ranges-main.c dw2-ranges-psym.c dw2-ranges-psym-dw.S
+standard_testfile main.c .c -dw.S
 
 # We need to know the size of integer and address types in order to
 # write some of the debugging info we'd like to generate.
@@ -108,22 +105,25 @@ Dwarf::assemble $asm_file {
     # Generate ranges data.
     ranges {is_64 [is_64_target]} {
 	func_ranges_label: sequence {
-	    {range {$foo_start } $foo_end}
-	    {range {$foo_low_start} $foo_low_end}
+	    range $foo_start $foo_end
+	    range $foo_low_start $foo_low_end
 	}
 	cu_ranges_label: sequence {
-	    {range {$foo_start } $foo_end}
-	    {range {$foo_low_start} $foo_low_end}
-	    {range {$bar_start} $bar_end}
-	    {range {$baz_start} $baz_end}
+	    range $foo_start $foo_end
+	    range $foo_low_start $foo_low_end
+	    range $bar_start $bar_end
+	    range $baz_start $baz_end
 	}
     }
 }
 
-if { [prepare_for_testing "failed to prepare" ${testfile} \
+if { [build_executable "failed to prepare" ${testfile} \
 	  [list $srcfile $srcfile2 $asm_file] {nodebug}] } {
     return -1
 }
+
+clean_restart
+gdb_load_no_complaints $binfile
 
 if ![runto_main] {
     return -1

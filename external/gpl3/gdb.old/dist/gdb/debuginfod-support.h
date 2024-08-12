@@ -1,5 +1,5 @@
 /* debuginfod utilities for GDB.
-   Copyright (C) 2020 Free Software Foundation, Inc.
+   Copyright (C) 2020-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,8 @@
 
 #ifndef DEBUGINFOD_SUPPORT_H
 #define DEBUGINFOD_SUPPORT_H
+
+#include "gdbsupport/scoped_fd.h"
 
 /* Query debuginfod servers for a source file associated with an
    executable with BUILD_ID.  BUILD_ID can be given as a binary blob or
@@ -59,4 +61,21 @@ debuginfod_debuginfo_query (const unsigned char *build_id,
 			    const char *filename,
 			    gdb::unique_xmalloc_ptr<char> *destname);
 
+/* Query debuginfod servers for an executable file with BUILD_ID.
+   BUILD_ID can be given as a binary blob or a null-terminated string.
+   If given as a binary blob, BUILD_ID_LEN should be the number of bytes.
+   If given as a null-terminated string, BUILD_ID_LEN should be 0.
+
+   FILENAME should be the name or path associated with the executable.
+   It is used for printing messages to the user.
+
+   If the file is successfully retrieved, its path on the local machine
+   is stored in DESTNAME.  If GDB is not built with debuginfod, this
+   function returns -ENOSYS.  */
+
+extern scoped_fd debuginfod_exec_query (const unsigned char *build_id,
+					int build_id_len,
+					const char *filename,
+					gdb::unique_xmalloc_ptr<char>
+					  *destname);
 #endif /* DEBUGINFOD_SUPPORT_H */

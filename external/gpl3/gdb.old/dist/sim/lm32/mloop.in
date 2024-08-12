@@ -32,6 +32,7 @@ case "x$1" in
 xsupport)
 
 cat <<EOF
+#include <stdlib.h>
 
 static INLINE const IDESC *
 extract (SIM_CPU *current_cpu, PCADDR pc, CGEN_INSN_INT insn,

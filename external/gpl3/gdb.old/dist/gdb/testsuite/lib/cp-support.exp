@@ -1,6 +1,6 @@
 # This test code is part of GDB, the GNU debugger.
 
-# Copyright 2003-2020 Free Software Foundation, Inc.
+# Copyright 2003-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -245,12 +245,13 @@ proc cp_test_ptype_class { in_exp in_testname in_key in_tag in_class_table
 			   { in_ptype_arg /r } { recursive_qid 0 } } {
     global gdb_prompt
     set wsopt "\[\r\n\t \]*"
+    set hwsopt "\[\t \]*"
 
     if {$recursive_qid == 0} {
 	# The test name defaults to the command, but without the
 	# arguments, for historical reasons.
 
-	if { "$in_testname" == "" } then { set in_testname "ptype $in_exp" }
+	if {"$in_testname" == ""} { set in_testname "ptype $in_exp" }
 
 	set in_command "ptype${in_ptype_arg} $in_exp"
     }
@@ -258,8 +259,8 @@ proc cp_test_ptype_class { in_exp in_testname in_key in_tag in_class_table
     # Save class tables in a history array for reuse.
 
     global cp_class_table_history
-    if { $in_class_table == "ibid" } then {
-	if { ! [info exists cp_class_table_history("$in_key,$in_tag") ] } then {
+    if {$in_class_table == "ibid"} {
+	if {![info exists cp_class_table_history("$in_key,$in_tag")]} {
 	    fail "$in_testname // bad ibid"
 	    return false
 	}
@@ -306,23 +307,40 @@ proc cp_test_ptype_class { in_exp in_testname in_key in_tag in_class_table
 			    "$in_tag\\((int|void|)\\);"]
 
     # Partial regexp for parsing the struct/class header.
-    set regexp_header "(struct|class)${wsopt}(\[^ \t\]*)${wsopt}"
-    append regexp_header "(\\\[with .*\\\]${wsopt})?((:\[^\{\]*)?)${wsopt}\{"
+    set regexp_header "(struct|class)${hwsopt}(\[^ \t\]*)${hwsopt}"
+    append regexp_header "(\\\[with .*\\\]${hwsopt})?((:\[^\{\]*)?)${hwsopt}\{"
     if {$recursive_qid == 0} {
 	# Actually do the ptype.
-
 	# For processing the output of ptype, we must get to the prompt.
-	set the_regexp "type = ${regexp_header}"
-	append the_regexp "(.*)\}${wsopt}(\[^\r\n\]*)\[\r\n\]+$gdb_prompt $"
 	set parse_okay 0
+	set state 0
+	set actual_body ""
 	gdb_test_multiple "$in_command" "$in_testname // parse failed" {
-	    -re $the_regexp {
-		set parse_okay          1
+	    -re "type = ${regexp_header}" {
+		if { $state == 0 } { set state 1 } else { set state -1 }
 		set actual_key          $expect_out(1,string)
 		set actual_tag          $expect_out(2,string)
 		set actual_base_string  $expect_out(4,string)
-		set actual_body         $expect_out(6,string)
-		set actual_tail         $expect_out(7,string)
+		exp_continue
+	    }
+	    -re "^\r\n\}${hwsopt}(\[^\r\n\]*)(?=\r\n)" {
+		if { $state == 1 } { set state 2 } else { set state -2 }
+		set actual_tail $expect_out(1,string)
+		exp_continue
+	    }
+	    -re "^\r\n(\[^\r\n\]*)(?=\r\n)" {
+		if { $state != 1 } { set $state -3 }
+		if { $actual_body == "" } {
+		    set actual_body $expect_out(1,string)
+		} else {
+		    append actual_body "\n$expect_out(1,string)"
+		}
+		exp_continue
+	    }
+	    -re -wrap "" {
+		if { $state == 2 } {
+		    set parse_okay 1
+		}
 	    }
 	}
     } else {
@@ -367,7 +385,7 @@ proc cp_test_ptype_class { in_exp in_testname in_key in_tag in_class_table
 
     # Check the actual tag.
 
-    if { "$actual_tag" != "$in_tag" } then {
+    if {"$actual_tag" != "$in_tag"} {
 	cp_check_errata "$in_tag" "$actual_tag" $in_errata_table
 	fail "$in_testname // wrong tag: $actual_tag"
 	return false
@@ -377,18 +395,18 @@ proc cp_test_ptype_class { in_exp in_testname in_key in_tag in_class_table
     # First parse them into a list.
 
     set list_actual_bases { }
-    if { "$actual_base_string" != "" } then {
+    if {"$actual_base_string" != ""} {
 	regsub "^:${wsopt}" $actual_base_string "" actual_base_string
 	set list_actual_bases [split $actual_base_string ","]
     }
 
     # Check the base count.
 
-    if { [llength $list_actual_bases] < [llength $list_bases] } then {
+    if {[llength $list_actual_bases] < [llength $list_bases]} {
 	fail "$in_testname // too few bases"
 	return false
     }
-    if { [llength $list_actual_bases] > [llength $list_bases] } then {
+    if {[llength $list_actual_bases] > [llength $list_bases]} {
 	fail "$in_testname // too many bases"
 	return false
     }
@@ -398,7 +416,7 @@ proc cp_test_ptype_class { in_exp in_testname in_key in_tag in_class_table
     foreach actual_base $list_actual_bases {
 	set actual_base [string trim $actual_base]
 	set base [lindex $list_bases 0]
-	if { "$actual_base" != "$base" } then {
+	if {"$actual_base" != "$base"} {
 	    cp_check_errata "$base" "$actual_base" $in_errata_table
 	    fail "$in_testname // wrong base: $actual_base"
 	    return false
@@ -431,13 +449,13 @@ proc cp_test_ptype_class { in_exp in_testname in_key in_tag in_class_table
 	# Get the next line.
 
 	set actual_line [cp_support_internal::next_line $line_queue]
-	if { "$actual_line" == "" } then { continue }
+	if {"$actual_line" == ""} { continue }
 
 	# Access specifiers.
 
-	if { [regexp "^(public|protected|private)${wsopt}:\$" "$actual_line" s0 s1] } then {
+	if {[regexp "^(public|protected|private)${wsopt}:\$" "$actual_line" s0 s1]} {
 	    set access "$s1"
-	    if { $last_was_access } then {
+	    if {$last_was_access} {
 		fail "$in_testname // redundant access specifier"
 		queue delete $line_queue
 		return false
@@ -450,10 +468,10 @@ proc cp_test_ptype_class { in_exp in_testname in_key in_tag in_class_table
 
 	# Optional virtual base pointer.
 
-	if { [ llength $list_vbases ] > 0 } then {
+	if {[llength $list_vbases] > 0} {
 	    set vbase [lindex $list_vbases 0]
-	    if { [ regexp "$vbase \\*(_vb.|_vb\\\$|__vb_)\[0-9\]*$vbase;" $actual_line ] } then {
-		if { "$access" != "private" } then {
+	    if {[regexp "$vbase \\*(_vb.|_vb\\\$|__vb_)\[0-9\]*$vbase;" $actual_line]} {
+		if {"$access" != "private"} {
 		    cp_check_errata "private" "$access" $in_errata_table
 		    fail "$in_testname // wrong access specifier for virtual base: $access"
 		    queue delete $line_queue
@@ -467,7 +485,7 @@ proc cp_test_ptype_class { in_exp in_testname in_key in_tag in_class_table
 
 	# Data field.
 
-	if { [llength $list_fields] > 0 } then {
+	if {[llength $list_fields] > 0} {
 	    set field_access [lindex [lindex $list_fields 0] 0]
 	    set field_decl   [lindex [lindex $list_fields 0] 1]
 	    if {$recursive_qid > 0} {
@@ -476,8 +494,8 @@ proc cp_test_ptype_class { in_exp in_testname in_key in_tag in_class_table
 		cp_ptype_class_verbose "\tfield_decl=$field_decl"
 		cp_ptype_class_verbose "\taccess=$access"
 	    }
-	    if { "$actual_line" == "$field_decl" } then {
-		if { "$access" != "$field_access" } then {
+	    if {"$actual_line" == "$field_decl"} {
+		if {"$access" != "$field_access"} {
 		    cp_check_errata "$field_access" "$access" $in_errata_table
 		    fail "$in_testname // wrong access specifier for field: $access"
 		    queue delete $line_queue
@@ -496,11 +514,11 @@ proc cp_test_ptype_class { in_exp in_testname in_key in_tag in_class_table
 
 	# Method function.
 
-	if { [llength $list_methods] > 0 } then {
+	if {[llength $list_methods] > 0} {
 	    set method_access [lindex [lindex $list_methods 0] 0]
 	    set method_decl   [lindex [lindex $list_methods 0] 1]
-	    if { "$actual_line" == "$method_decl" } then {
-		if { "$access" != "$method_access" } then {
+	    if {"$actual_line" == "$method_decl"} {
+		if {"$access" != "$method_access"} {
 		    cp_check_errata "$method_access" "$access" $in_errata_table
 		    fail "$in_testname // wrong access specifier for method: $access"
 		    queue delete $line_queue
@@ -512,8 +530,8 @@ proc cp_test_ptype_class { in_exp in_testname in_key in_tag in_class_table
 
 	    # gcc 2.95.3 shows "foo()" as "foo(void)".
 	    regsub -all "\\(\\)" $method_decl "(void)" method_decl
-	    if { "$actual_line" == "$method_decl" } then {
-		if { "$access" != "$method_access" } then {
+	    if {"$actual_line" == "$method_decl"} {
+		if {"$access" != "$method_access"} {
 		    cp_check_errata "$method_access" "$access" $in_errata_table
 		    fail "$in_testname // wrong access specifier for method: $access"
 		    queue delete $line_queue
@@ -671,16 +689,16 @@ proc cp_test_ptype_class { in_exp in_testname in_key in_tag in_class_table
 	    set synth_access  [lindex $synth 1]
 	    set synth_re      [lindex $synth 2]
 
-	    if { [ regexp "$synth_re" "$actual_line" ] } then {
+	    if {[regexp "$synth_re" "$actual_line"]} {
 
-		if { "$access" != "$synth_access" } then {
+		if {"$access" != "$synth_access"} {
 		    cp_check_errata "$synth_access" "$access" $in_errata_table
 		    fail "$in_testname // wrong access specifier for synthetic operator: $access"
 		    queue delete $line_queue
 		    return false
 		}
 
-		if { $synth_count > 0 } then {
+		if {$synth_count > 0} {
 		    cp_check_errata "$actual_line" "$actual_line" $in_errata_table
 		    fail "$in_testname // duplicate synthetic operator: $actual_line"
 		}
@@ -697,7 +715,7 @@ proc cp_test_ptype_class { in_exp in_testname in_key in_tag in_class_table
 		break
 	    }
 	}
-	if { $synth_match } then { continue }
+	if {$synth_match} { continue }
 
 	# If checking a nested type/recursively and we see a closing curly
 	# brace, we're done.
@@ -707,7 +725,7 @@ proc cp_test_ptype_class { in_exp in_testname in_key in_tag in_class_table
 
 	# Unrecognized line.
 
-	if { [llength $list_methods] > 0 } then {
+	if {[llength $list_methods] > 0} {
 	    set method_decl [lindex [lindex $list_methods 0] 1]
 	    cp_check_errata "$method_decl" "$actual_line" $in_errata_table
 	}
@@ -724,19 +742,19 @@ proc cp_test_ptype_class { in_exp in_testname in_key in_tag in_class_table
 
     # Check for missing elements.
 
-    if { $vbase_match } then {
-	if { [llength $list_vbases] > 0 } then {
+    if {$vbase_match} {
+	if {[llength $list_vbases] > 0} {
 	    fail "$in_testname // missing virtual base pointers"
 	    return false
 	}
     }
 
-    if { [llength $list_fields] > 0 } then {
+    if {[llength $list_fields] > 0} {
 	fail "$in_testname // missing fields"
 	return false
     }
 
-    if { [llength $list_methods] > 0 } then {
+    if {[llength $list_methods] > 0} {
 	fail "$in_testname // missing methods"
 	return false
     }
@@ -749,7 +767,7 @@ proc cp_test_ptype_class { in_exp in_testname in_key in_tag in_class_table
     # Check the tail.
 
     set actual_tail [string trim $actual_tail]
-    if { "$actual_tail" != "$in_tail" } then {
+    if {"$actual_tail" != "$in_tail"} {
 	cp_check_errata "$in_tail" "$actual_tail" $in_errata_table
 	fail "$in_testname // wrong tail: $actual_tail"
 	return false

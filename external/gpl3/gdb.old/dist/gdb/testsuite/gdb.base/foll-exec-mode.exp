@@ -1,4 +1,4 @@
-#    Copyright 1997-2020 Free Software Foundation, Inc.
+#    Copyright 1997-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,13 +30,13 @@
 # required for follow-exec-mode testing.
 if { [target_info exists gdb_protocol]
      && [target_info gdb_protocol] == "remote" } {
-    continue
+    return
 }
 
 # Until "catch exec" is implemented on other targets...
 #
-if {![istarget "*-linux*"]} then {
-     continue
+if {![istarget "*-linux*"]} {
+     return
 }
 
 standard_testfile foll-exec-mode.c
@@ -68,8 +68,7 @@ proc do_catch_exec_test { } {
 
     # Start the program running, and stop at main.
     #
-    if ![runto_main] then {
-	fail "couldn't run ${testfile}"
+    if {![runto_main]} {
 	return
     }
 
@@ -100,7 +99,7 @@ proc do_catch_exec_test { } {
 # before re-running.
 
 proc do_follow_exec_mode_tests { mode cmd infswitch } {
-    global binfile srcfile srcfile2 testfile testfile2
+    global binfile srcfile srcfile2 testfile testfile2 bkptno_numopt_re
     global gdb_prompt
 
     with_test_prefix "$mode,$cmd,$infswitch" {
@@ -108,10 +107,11 @@ proc do_follow_exec_mode_tests { mode cmd infswitch } {
 
 	# Start the program running, and stop at main.
 	#
-	if ![runto_main] then {
-	    fail "couldn't run ${testfile}"
+	if {![runto_main]} {
 	    return
 	}
+
+	set target_is_native [gdb_is_target_native]
 
 	# Set the follow-exec mode.
 	#
@@ -125,7 +125,7 @@ proc do_follow_exec_mode_tests { mode cmd infswitch } {
 	# Set up the output we expect to see after we execute past the exec.
 	#
 	set execd_line [gdb_get_line_number "after-exec" $srcfile2]
-	set expected_re ".*xecuting new program: .*${testfile2}.*Breakpoint .,.*${srcfile2}:${execd_line}.*$gdb_prompt $"
+	set expected_re ".*xecuting new program: .*${testfile2}.*Breakpoint ${bkptno_numopt_re},.*${srcfile2}:${execd_line}.*$gdb_prompt $"
 
 	# Set a breakpoint after the exec call if we aren't single-stepping
 	# past it.
@@ -147,8 +147,18 @@ proc do_follow_exec_mode_tests { mode cmd infswitch } {
 	#
 	if {$mode == "same"} {
 	    set expected_re "\\* 1.*process.*"
+	} elseif { $mode == "new" } {
+	    # If using the native target, we want to specifically check that the
+	    # process target, which was automatically pushed when running, was
+	    # automatically unpushed from inferior 1 on exec.  Use a
+	    # different regexp that verifies the Connection field is empty.
+	    if { $target_is_native } {
+		set expected_re "  1.*<null> +[string_to_regexp $binfile].*\r\n\\* 2.*process.*$testfile2 .*"
+	    } else {
+		set expected_re "  1.*null.*$testfile.*\r\n\\* 2.*process.*$testfile2 .*"
+	    }
 	} else {
-	    set expected_re "  1.*null.*$testfile.*\r\n\\* 2.*process.*$testfile2 .*"
+	    error "Invalid mode: $mode"
 	}
 
 	# Check that the inferior list is correct:
@@ -179,7 +189,7 @@ proc do_follow_exec_mode_tests { mode cmd infswitch } {
 		send_gdb "y\n"
 		exp_continue
 	    }
-	    -re "Starting program: .*$expected_inf.*Breakpoint .,.*\r\n$gdb_prompt $" {
+	    -re "Starting program: .*$expected_inf.*Breakpoint $bkptno_numopt_re,.*\r\n$gdb_prompt $" {
 		pass $test
 	    }
 	}

@@ -1,4 +1,4 @@
-/* Copyright 2012-2020 Free Software Foundation, Inc.
+/* Copyright 2012-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -70,8 +70,8 @@ f:
 	.cfi_endproc
 .LFE1:
 	.size	f, .-f
-	.type	g0, @function
-g0:
+	.type	test_g0, @function
+test_g0:
 .LFB2:
 	.cfi_startproc
 	pushl	%ebp
@@ -87,9 +87,9 @@ g0:
 	ret
 	.cfi_endproc
 .LFE2:
-	.size	g0, .-g0
-	.type	g1, @function
-g1:
+	.size	test_g0, .-test_g0
+	.type	test_g1, @function
+test_g1:
 .LFB3:
 	.cfi_startproc
 	pushl	%ebp
@@ -105,9 +105,9 @@ g1:
 	ret
 	.cfi_endproc
 .LFE3:
-	.size	g1, .-g1
-	.type	g2, @function
-g2:
+	.size	test_g1, .-test_g1
+	.type	test_g2, @function
+test_g2:
 .LFB4:
 	.cfi_startproc
 	pushl	%ebp
@@ -123,9 +123,9 @@ g2:
 	ret
 	.cfi_endproc
 .LFE4:
-	.size	g2, .-g2
-	.type	g3, @function
-g3:
+	.size	test_g2, .-test_g2
+	.type	test_g3, @function
+test_g3:
 .LFB5:
 	.cfi_startproc
 	pushl	%ebp
@@ -141,9 +141,9 @@ g3:
 	ret
 	.cfi_endproc
 .LFE5:
-	.size	g3, .-g3
-	.type	g4, @function
-g4:
+	.size	test_g3, .-test_g3
+	.type	test_g4, @function
+test_g4:
 .LFB6:
 	.cfi_startproc
 	pushl	%ebp
@@ -159,7 +159,7 @@ g4:
 	ret
 	.cfi_endproc
 .LFE6:
-	.size	g4, .-g4
+	.size	test_g4, .-test_g4
 	.globl	main
 	.type	main, @function
 main:
@@ -174,25 +174,25 @@ main:
 	andl	$-16, %esp
 	subl	$16, %esp
 	.cfi_offset 3, -12
-	call	g0
+	call	test_g0
 	movl	%eax, %ebx
 	movl	$1, (%esp)
-	call	g1
+	call	test_g1
 	addl	%eax, %ebx
 	movl	$2, 4(%esp)
 	movl	$1, (%esp)
-	call	g2
+	call	test_g2
 	addl	%eax, %ebx
 	movl	$3, 8(%esp)
 	movl	$2, 4(%esp)
 	movl	$1, (%esp)
-	call	g3
+	call	test_g3
 	addl	%eax, %ebx
 	movl	$4, 12(%esp)
 	movl	$3, 8(%esp)
 	movl	$2, 4(%esp)
 	movl	$1, (%esp)
-	call	g4
+	call	test_g4
 	addl	%ebx, %eax
 	movl	-4(%ebp), %ebx
 	leave

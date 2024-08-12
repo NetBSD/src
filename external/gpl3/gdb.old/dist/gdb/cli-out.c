@@ -1,6 +1,6 @@
 /* Output generating routines for GDB CLI.
 
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2023 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions.
    Written by Fernando Nasser for Cygnus.
@@ -26,6 +26,7 @@
 #include "completer.h"
 #include "readline/readline.h"
 #include "cli/cli-style.h"
+#include "top.h"
 
 /* These are the CLI output functions */
 
@@ -171,10 +172,10 @@ cli_ui_out::do_field_string (int fldno, int width, ui_align align,
 
   if (string)
     {
-      if (test_flags (unfiltered_output))
-	fputs_styled_unfiltered (string, style, m_streams.back ());
-      else
-	fputs_styled (string, style, m_streams.back ());
+      ui_file *stream = m_streams.back ();
+      stream->emit_style_escape (style);
+      stream->puts (string);
+      stream->emit_style_escape (ui_file_style ());
     }
 
   if (after)
@@ -205,10 +206,7 @@ cli_ui_out::do_spaces (int numspaces)
   if (m_suppress_output)
     return;
 
-  if (test_flags (unfiltered_output))
-    print_spaces (numspaces, m_streams.back ());
-  else
-    print_spaces_filtered (numspaces, m_streams.back ());
+  print_spaces (numspaces, m_streams.back ());
 }
 
 void
@@ -217,10 +215,7 @@ cli_ui_out::do_text (const char *string)
   if (m_suppress_output)
     return;
 
-  if (test_flags (unfiltered_output))
-    fputs_unfiltered (string, m_streams.back ());
-  else
-    fputs_filtered (string, m_streams.back ());
+  gdb_puts (string, m_streams.back ());
 }
 
 void
@@ -230,20 +225,23 @@ cli_ui_out::do_message (const ui_file_style &style,
   if (m_suppress_output)
     return;
 
-  /* Use the "no_gdbfmt" variant here to avoid recursion.
-     vfprintf_styled calls into cli_ui_out::message to handle the
-     gdb-specific printf formats.  */
-  vfprintf_styled_no_gdbfmt (m_streams.back (), style,
-			     !test_flags (unfiltered_output), format, args);
+  std::string str = string_vprintf (format, args);
+  if (!str.empty ())
+    {
+      ui_file *stream = m_streams.back ();
+      stream->emit_style_escape (style);
+      stream->puts (str.c_str ());
+      stream->emit_style_escape (ui_file_style ());
+    }
 }
 
 void
-cli_ui_out::do_wrap_hint (const char *identstring)
+cli_ui_out::do_wrap_hint (int indent)
 {
   if (m_suppress_output)
     return;
 
-  wrap_here (identstring);
+  m_streams.back ()->wrap_here (indent);
 }
 
 void
@@ -265,15 +263,165 @@ cli_ui_out::do_redirect (ui_file *outstream)
     m_streams.pop_back ();
 }
 
+/* Initialize a progress update to be displayed with
+   cli_ui_out::do_progress_notify.  */
+
+void
+cli_ui_out::do_progress_start ()
+{
+  m_progress_info.emplace_back ();
+}
+
+#define MIN_CHARS_PER_LINE 50
+#define MAX_CHARS_PER_LINE 4096
+
+/* Print a progress update.  MSG is a string to be printed on the line above
+   the progress bar.  TOTAL is the size of the download whose progress is
+   being displayed.  UNIT should be the unit of TOTAL (ex. "K"). If HOWMUCH
+   is between 0.0 and 1.0, a progress bar is displayed indicating the percentage
+   of completion and the download size.  If HOWMUCH is negative, a progress
+   indicator will tick across the screen.  If the output stream is not a tty
+   then only MSG is printed.
+
+   - printed for tty, HOWMUCH between 0.0 and 1.0:
+	<MSG
+	[#########                  ]  HOWMUCH*100% (TOTAL UNIT)\r>
+   - printed for tty, HOWMUCH < 0.0:
+	<MSG
+	[    ###                    ]\r>
+   - printed for not-a-tty:
+	<MSG...\n>
+*/
+
+void
+cli_ui_out::do_progress_notify (const std::string &msg,
+				const char *unit,
+				double howmuch, double total)
+{
+  int chars_per_line = get_chars_per_line ();
+  struct ui_file *stream = m_streams.back ();
+  cli_progress_info &info (m_progress_info.back ());
+
+  if (chars_per_line > MAX_CHARS_PER_LINE)
+    chars_per_line = MAX_CHARS_PER_LINE;
+
+  if (info.state == progress_update::START)
+    {
+      if (stream->isatty ()
+	  && current_ui->input_interactive_p ()
+	  && chars_per_line >= MIN_CHARS_PER_LINE)
+	{
+	  gdb_printf (stream, "%s\n", msg.c_str ());
+	  info.state = progress_update::BAR;
+	}
+      else
+	{
+	  gdb_printf (stream, "%s...\n", msg.c_str ());
+	  info.state = progress_update::WORKING;
+	}
+    }
+
+  if (info.state != progress_update::BAR
+      || chars_per_line < MIN_CHARS_PER_LINE)
+    return;
+
+  if (total > 0 && howmuch >= 0 && howmuch <= 1.0)
+    {
+      std::string progress = string_printf (" %3.f%% (%.2f %s)",
+					    howmuch * 100, total,
+					    unit);
+      int width = chars_per_line - progress.size () - 4;
+      int max = width * howmuch;
+
+      std::string display = "\r[";
+
+      for (int i = 0; i < width; ++i)
+	if (i < max)
+	  display += "#";
+	else
+	  display += " ";
+
+      display += "]" + progress;
+      gdb_printf (stream, "%s", display.c_str ());
+      gdb_flush (stream);
+    }
+  else
+    {
+      using namespace std::chrono;
+      milliseconds diff = duration_cast<milliseconds>
+	(steady_clock::now () - info.last_update);
+
+      /* Advance the progress indicator at a rate of 1 tick every
+	 every 0.5 seconds.  */
+      if (diff.count () >= 500)
+	{
+	  int width = chars_per_line - 4;
+
+	  gdb_printf (stream, "\r[");
+	  for (int i = 0; i < width; ++i)
+	    {
+	      if (i == info.pos % width
+		  || i == (info.pos + 1) % width
+		  || i == (info.pos + 2) % width)
+		gdb_printf (stream, "#");
+	      else
+		gdb_printf (stream, " ");
+	    }
+
+	  gdb_printf (stream, "]");
+	  gdb_flush (stream);
+	  info.last_update = steady_clock::now ();
+	  info.pos++;
+	}
+    }
+
+  return;
+}
+
+/* Clear the current line of the most recent progress update.  Overwrites
+   the current line with whitespace.  */
+
+void
+cli_ui_out::clear_current_line ()
+{
+  struct ui_file *stream = m_streams.back ();
+  int chars_per_line = get_chars_per_line ();
+
+  if (!stream->isatty ()
+      || !current_ui->input_interactive_p ()
+      || chars_per_line < MIN_CHARS_PER_LINE)
+    return;
+
+  if (chars_per_line > MAX_CHARS_PER_LINE)
+    chars_per_line = MAX_CHARS_PER_LINE;
+
+  gdb_printf (stream, "\r");
+  for (int i = 0; i < chars_per_line; ++i)
+    gdb_printf (stream, " ");
+  gdb_printf (stream, "\r");
+
+  gdb_flush (stream);
+}
+
+/* Remove the most recent progress update from the progress_info stack
+   and overwrite the current line with whitespace.  */
+
+void
+cli_ui_out::do_progress_end ()
+{
+  struct ui_file *stream = m_streams.back ();
+  m_progress_info.pop_back ();
+
+  if (stream->isatty ())
+    clear_current_line ();
+}
+
 /* local functions */
 
 void
 cli_ui_out::field_separator ()
 {
-  if (test_flags (unfiltered_output))
-    fputc_unfiltered (' ', m_streams.back ());
-  else
-    fputc_filtered (' ', m_streams.back ());
+  gdb_putc (' ', m_streams.back ());
 }
 
 /* Constructor for cli_ui_out.  */
@@ -289,14 +437,6 @@ cli_ui_out::cli_ui_out (ui_file *stream, ui_out_flags flags)
 
 cli_ui_out::~cli_ui_out ()
 {
-}
-
-/* Initialize private members at startup.  */
-
-cli_ui_out *
-cli_out_new (struct ui_file *stream)
-{
-  return new cli_ui_out (stream, ui_source_list);
 }
 
 ui_file *

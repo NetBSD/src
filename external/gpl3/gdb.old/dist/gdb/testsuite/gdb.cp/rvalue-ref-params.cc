@@ -1,6 +1,6 @@
 /* This test script is part of GDB, the GNU debugger.
 
-   Copyright 2006-2020 Free Software Foundation, Inc.
+   Copyright 2006-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -42,6 +42,18 @@ f2 (Child &&C)
   return f1 (std::move (C));                 /* Set breakpoint marker2 here.  */
 }
 
+int
+f3 (int &&var_i)
+{
+  return var_i + 1;
+}
+
+int
+f4 (float &&var_f)
+{
+  return static_cast <int> (var_f);
+}
+
 struct OtherParent
 {
   OtherParent (int other_id0) : other_id (other_id0) { }
@@ -65,6 +77,10 @@ mf2 (MultiChild &&C)
   return mf1 (std::move (C));
 }
 
+/* These are used from within GDB.  */
+int global_int = 7;
+float global_float = 3.5f;
+
 int
 main ()
 {
@@ -80,6 +96,9 @@ main ()
   MultiChild &MQR = MQ;
 
   mf2 (std::move (MQ));			/* Set breakpoint MQ here.  */
+
+  (void) f3 (-1);
+  (void) f4 (3.5);
 
   return 0;
 }

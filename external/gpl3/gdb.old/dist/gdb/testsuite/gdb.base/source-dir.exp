@@ -1,4 +1,4 @@
-# Copyright 2014-2020 Free Software Foundation, Inc.
+# Copyright 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -87,30 +87,27 @@ proc test_truncated_comp_dir {} {
         return
     }
 
-    set original_dir [pwd]
     set working_dir [standard_output_file ""]
-    cd ${working_dir}
+    with_cwd $working_dir {
+	set strip_dir [file normalize "${working_dir}/../.."]
 
-    set strip_dir [file normalize "${working_dir}/../.."]
+	set new_srcfile [standard_output_file ${srcfile}]
+	set fd [open "$new_srcfile" w]
+	puts $fd "int
+	main ()
+	{
+	  return 0;
+	}"
+	close $fd
 
-    set new_srcfile [standard_output_file ${srcfile}]
-    set fd [open "$new_srcfile" w]
-    puts $fd "int
-    main ()
-    {
-      return 0;
-    }"
-    close $fd
-
-    set options \
-	"debug additional_flags=-fdebug-prefix-map=${strip_dir}="
-    if  { [gdb_compile "${srcfile}" "${binfile}" \
-	       executable ${options}] != "" } {
-	untested "failed to compile"
-	return -1
+	set options \
+	    "debug additional_flags=-fdebug-prefix-map=${strip_dir}="
+	if  { [gdb_compile "${srcfile}" "${binfile}" \
+		   executable ${options}] != "" } {
+	    untested "failed to compile"
+	    return -1
+	}
     }
-
-    cd ${original_dir}
 
     clean_restart ${binfile}
 
@@ -122,8 +119,7 @@ proc test_truncated_comp_dir {} {
     gdb_test "show directories" \
 	"\r\nSource directories searched: \\\$cdir\[:;\]\\\$cwd"
 
-    if ![runto_main] then {
-	fail "can't run to main"
+    if {![runto_main]} {
 	return 0
     }
 
@@ -163,5 +159,46 @@ proc test_truncated_comp_dir {} {
 	"info source after setting directory search list"
 }
 
+proc test_change_search_directory_with_empty_dirname {} {
+    gdb_start
+
+    # Add 3 entries to the source directories list:
+    # - ""
+    # - "/foo"
+    # - "/bar"
+    # Since /foo and /bar probably do not exist, ignore the warnings printed by
+    # GDB.
+    if { [ishost *-*-mingw*] } {
+	gdb_test "set directories ;/foo;/bar" ".*"
+    } else {
+	gdb_test "set directories :/foo:/bar" ".*"
+    }
+
+    # The first entry added ("") should be ignored, only /foo and /bar are
+    # effectively added.
+    with_test_prefix "initial_directory_state" {
+	gdb_test "show directories" \
+	    [search_dir_list [list \
+				  "/foo" \
+				  "/bar" \
+				  "\\\$cdir" \
+				  "\\\$cwd"]]
+    }
+
+    # Arguments can be quoted.  Check a empty string has the same effect as
+    # 'set directory' (i.e. reset to $cdir:$cwd)
+    gdb_test_no_output "set directories \"\""
+
+    with_test_prefix "directory_after_reset" {
+	gdb_test "show directories" \
+	    [search_dir_list [list \
+				  "\\\$cdir" \
+				  "\\\$cwd"]]
+    }
+
+    gdb_exit
+}
+
 test_changing_search_directory
+test_change_search_directory_with_empty_dirname
 test_truncated_comp_dir

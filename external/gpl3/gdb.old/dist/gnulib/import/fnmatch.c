@@ -1,17 +1,17 @@
-/* Copyright (C) 1991-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2022 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
-   modify it under the terms of the GNU General Public
+   modify it under the terms of the GNU Lesser General Public
    License as published by the Free Software Foundation; either
-   version 3 of the License, or (at your option) any later version.
+   version 2.1 of the License, or (at your option) any later version.
 
    The GNU C Library is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-   General Public License for more details.
+   Lesser General Public License for more details.
 
-   You should have received a copy of the GNU General Public
+   You should have received a copy of the GNU Lesser General Public
    License along with the GNU C Library; if not, see
    <https://www.gnu.org/licenses/>.  */
 
@@ -64,10 +64,10 @@ extern int fnmatch (const char *pattern, const char *string, int flags);
 #endif
 
 #ifdef _LIBC
-# if __GNUC__ < 7
-#  define FALLTHROUGH ((void) 0)
-# else
+# if __GNUC__ >= 7
 #  define FALLTHROUGH __attribute__ ((__fallthrough__))
+# else
+#  define FALLTHROUGH ((void) 0)
 # endif
 #else
 # include "attribute.h"
@@ -75,6 +75,12 @@ extern int fnmatch (const char *pattern, const char *string, int flags);
 
 #include <intprops.h>
 #include <flexmember.h>
+
+#ifdef _LIBC
+typedef ptrdiff_t idx_t;
+#else
+# include "idx.h"
+#endif
 
 /* We often have to test for FNM_FILE_NAME and FNM_PERIOD being both set.  */
 #define NO_LEADING_PERIOD(flags) \

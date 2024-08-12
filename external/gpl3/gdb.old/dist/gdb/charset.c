@@ -1,6 +1,6 @@
 /* Character set conversion support for GDB.
 
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,7 @@
 #include "defs.h"
 #include "charset.h"
 #include "gdbcmd.h"
-#include "gdb_obstack.h"
+#include "gdbsupport/gdb_obstack.h"
 #include "gdbsupport/gdb_wait.h"
 #include "charset-list.h"
 #include "gdbsupport/environ.h"
@@ -232,11 +232,11 @@ show_host_charset_name (struct ui_file *file, int from_tty,
 			const char *value)
 {
   if (!strcmp (value, "auto"))
-    fprintf_filtered (file,
-		      _("The host character set is \"auto; currently %s\".\n"),
-		      auto_host_charset_name);
+    gdb_printf (file,
+		_("The host character set is \"auto; currently %s\".\n"),
+		auto_host_charset_name);
   else
-    fprintf_filtered (file, _("The host character set is \"%s\".\n"), value);
+    gdb_printf (file, _("The host character set is \"%s\".\n"), value);
 }
 
 static const char *target_charset_name = "auto";
@@ -245,13 +245,13 @@ show_target_charset_name (struct ui_file *file, int from_tty,
 			  struct cmd_list_element *c, const char *value)
 {
   if (!strcmp (value, "auto"))
-    fprintf_filtered (file,
-		      _("The target character set is \"auto; "
-		        "currently %s\".\n"),
-		      gdbarch_auto_charset (get_current_arch ()));
+    gdb_printf (file,
+		_("The target character set is \"auto; "
+		  "currently %s\".\n"),
+		gdbarch_auto_charset (get_current_arch ()));
   else
-    fprintf_filtered (file, _("The target character set is \"%s\".\n"),
-		      value);
+    gdb_printf (file, _("The target character set is \"%s\".\n"),
+		value);
 }
 
 static const char *target_wide_charset_name = "auto";
@@ -262,22 +262,22 @@ show_target_wide_charset_name (struct ui_file *file,
 			       const char *value)
 {
   if (!strcmp (value, "auto"))
-    fprintf_filtered (file,
-		      _("The target wide character set is \"auto; "
-		        "currently %s\".\n"),
-		      gdbarch_auto_wide_charset (get_current_arch ()));
+    gdb_printf (file,
+		_("The target wide character set is \"auto; "
+		  "currently %s\".\n"),
+		gdbarch_auto_wide_charset (get_current_arch ()));
   else
-    fprintf_filtered (file, _("The target wide character set is \"%s\".\n"),
-		      value);
+    gdb_printf (file, _("The target wide character set is \"%s\".\n"),
+		value);
 }
 
-static const char *default_charset_names[] =
+static const char * const default_charset_names[] =
 {
   DEFAULT_CHARSET_NAMES
   0
 };
 
-static const char **charset_enum;
+static const char * const *charset_enum;
 
 
 /* If the target wide character set has big- or little-endian
@@ -461,20 +461,6 @@ host_letter_to_control_character (char c)
   if (c == '?')
     return 0177;
   return c & 0237;
-}
-
-/* Convert a host character, C, to its hex value.  C must already have
-   been validated using isxdigit.  */
-
-int
-host_hex_value (char c)
-{
-  if (isdigit (c))
-    return c - '0';
-  if (c >= 'a' && c <= 'f')
-    return 10 + c - 'a';
-  gdb_assert (c >= 'A' && c <= 'F');
-  return 10 + c - 'A';
 }
 
 
@@ -708,7 +694,13 @@ struct charset_vector
 {
   ~charset_vector ()
   {
-    clear ();
+    /* Note that we do not call charset_vector::clear, which would also xfree
+       the elements.  This destructor is only called after exit, at which point
+       those will be freed anyway on process exit, so not freeing them now is
+       not classified as a memory leak.  OTOH, freeing them now might be
+       classified as a data race, because some worker thread might still be
+       accessing them.  */
+    charsets.clear ();
   }
 
   void clear ()
@@ -960,35 +952,31 @@ intermediate_encoding (void)
 {
   iconv_t desc;
   static const char *stored_result = NULL;
-  char *result;
+  gdb::unique_xmalloc_ptr<char> result;
 
   if (stored_result)
     return stored_result;
   result = xstrprintf ("UTF-%d%s", (int) (sizeof (gdb_wchar_t) * 8),
 		       ENDIAN_SUFFIX);
   /* Check that the name is supported by iconv_open.  */
-  desc = iconv_open (result, host_charset ());
+  desc = iconv_open (result.get (), host_charset ());
   if (desc != (iconv_t) -1)
     {
       iconv_close (desc);
-      stored_result = result;
-      return result;
+      stored_result = result.release ();
+      return stored_result;
     }
-  /* Not valid, free the allocated memory.  */
-  xfree (result);
   /* Second try, with UCS-2 type.  */
   result = xstrprintf ("UCS-%d%s", (int) sizeof (gdb_wchar_t),
 		       ENDIAN_SUFFIX);
   /* Check that the name is supported by iconv_open.  */
-  desc = iconv_open (result, host_charset ());
+  desc = iconv_open (result.get (), host_charset ());
   if (desc != (iconv_t) -1)
     {
       iconv_close (desc);
-      stored_result = result;
-      return result;
+      stored_result = result.release ();
+      return stored_result;
     }
-  /* Not valid, free the allocated memory.  */
-  xfree (result);
   /* No valid charset found, generate error here.  */
   error (_("Unable to find a valid charset for string conversions"));
 }
@@ -1004,7 +992,7 @@ _initialize_charset ()
   find_charset_names ();
 
   if (charsets.charsets.size () > 1)
-    charset_enum = (const char **) charsets.charsets.data ();
+    charset_enum = (const char * const *) charsets.charsets.data ();
   else
     charset_enum = default_charset_names;
 
@@ -1033,6 +1021,9 @@ _initialize_charset ()
 #endif
 #endif
 
+  /* Recall that the first element is always "auto".  */
+  host_charset_name = charset_enum[0];
+  gdb_assert (strcmp (host_charset_name, "auto") == 0);
   add_setshow_enum_cmd ("charset", class_support,
 			charset_enum, &host_charset_name, _("\
 Set the host and target character sets."), _("\
@@ -1061,6 +1052,9 @@ To see a list of the character sets GDB supports, type `set host-charset <TAB>'.
 			show_host_charset_name,
 			&setlist, &showlist);
 
+  /* Recall that the first element is always "auto".  */
+  target_charset_name = charset_enum[0];
+  gdb_assert (strcmp (target_charset_name, "auto") == 0);
   add_setshow_enum_cmd ("target-charset", class_support,
 			charset_enum, &target_charset_name, _("\
 Set the target character set."), _("\
@@ -1073,6 +1067,9 @@ To see a list of the character sets GDB supports, type `set target-charset'<TAB>
 			show_target_charset_name,
 			&setlist, &showlist);
 
+  /* Recall that the first element is always "auto".  */
+  target_wide_charset_name = charset_enum[0];
+  gdb_assert (strcmp (target_wide_charset_name, "auto") == 0);
   add_setshow_enum_cmd ("target-wide-charset", class_support,
 			charset_enum, &target_wide_charset_name,
 			_("\

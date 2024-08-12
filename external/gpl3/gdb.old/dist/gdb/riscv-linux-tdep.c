@@ -1,5 +1,5 @@
 /* Target-dependent code for GNU/Linux on RISC-V processors.
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,6 +27,11 @@
 #include "trad-frame.h"
 #include "gdbarch.h"
 
+/* The following value is derived from __NR_rt_sigreturn in
+   <include/uapi/asm-generic/unistd.h> from the Linux source tree.  */
+
+#define RISCV_NR_rt_sigreturn 139
+
 /* Define the general register mapping.  The kernel puts the PC at offset 0,
    gdb puts it at offset 32.  Register x0 is always 0 and can be ignored.
    Registers x1 to x31 are in the same place.  */
@@ -52,23 +57,23 @@ static const struct regcache_map_entry riscv_linux_fregmap[] =
 
 static const struct regset riscv_linux_gregset =
 {
-  riscv_linux_gregmap, regcache_supply_regset, regcache_collect_regset
+  riscv_linux_gregmap, riscv_supply_regset, regcache_collect_regset
 };
 
 /* Define the FP register regset.  */
 
 static const struct regset riscv_linux_fregset =
 {
-  riscv_linux_fregmap, regcache_supply_regset, regcache_collect_regset
+  riscv_linux_fregmap, riscv_supply_regset, regcache_collect_regset
 };
 
 /* Define hook for core file support.  */
 
 static void
 riscv_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
-                                          iterate_over_regset_sections_cb *cb,
-                                          void *cb_data,
-                                          const struct regcache *regcache)
+					  iterate_over_regset_sections_cb *cb,
+					  void *cb_data,
+					  const struct regcache *regcache)
 {
   cb (".reg", (32 * riscv_isa_xlen (gdbarch)), (32 * riscv_isa_xlen (gdbarch)),
       &riscv_linux_gregset, NULL, cb_data);
@@ -81,7 +86,7 @@ riscv_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
 /* Signal trampoline support.  */
 
 static void riscv_linux_sigframe_init (const struct tramp_frame *self,
-				       struct frame_info *this_frame,
+				       frame_info_ptr this_frame,
 				       struct trad_frame_cache *this_cache,
 				       CORE_ADDR func);
 
@@ -120,7 +125,7 @@ static const struct tramp_frame riscv_linux_sigframe = {
 
 static void
 riscv_linux_sigframe_init (const struct tramp_frame *self,
-			   struct frame_info *this_frame,
+			   frame_info_ptr this_frame,
 			   struct trad_frame_cache *this_cache,
 			   CORE_ADDR func)
 {
@@ -154,19 +159,36 @@ riscv_linux_sigframe_init (const struct tramp_frame *self,
   trad_frame_set_id (this_cache, frame_id_build (frame_sp, func));
 }
 
+/* When FRAME is at a syscall instruction (ECALL), return the PC of the next
+   instruction to be executed.  */
+
+static CORE_ADDR
+riscv_linux_syscall_next_pc (frame_info_ptr frame)
+{
+  const CORE_ADDR pc = get_frame_pc (frame);
+  const ULONGEST a7 = get_frame_register_unsigned (frame, RISCV_A7_REGNUM);
+
+  if (a7 == RISCV_NR_rt_sigreturn)
+    return frame_unwind_caller_pc (frame);
+
+  return pc + 4 /* Length of the ECALL insn.  */;
+}
+
 /* Initialize RISC-V Linux ABI info.  */
 
 static void
 riscv_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  linux_init_abi (info, gdbarch);
+  riscv_gdbarch_tdep *tdep = gdbarch_tdep<riscv_gdbarch_tdep> (gdbarch);
+
+  linux_init_abi (info, gdbarch, 0);
 
   set_gdbarch_software_single_step (gdbarch, riscv_software_single_step);
 
   set_solib_svr4_fetch_link_map_offsets (gdbarch,
 					 (riscv_isa_xlen (gdbarch) == 4
-					  ? svr4_ilp32_fetch_link_map_offsets
-					  : svr4_lp64_fetch_link_map_offsets));
+					  ? linux_ilp32_fetch_link_map_offsets
+					  : linux_lp64_fetch_link_map_offsets));
 
   /* GNU/Linux uses SVR4-style shared libraries.  */
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
@@ -176,12 +198,14 @@ riscv_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
-                                             svr4_fetch_objfile_link_map);
+					     svr4_fetch_objfile_link_map);
 
   set_gdbarch_iterate_over_regset_sections
     (gdbarch, riscv_linux_iterate_over_regset_sections);
 
   tramp_frame_prepend_unwinder (gdbarch, &riscv_linux_sigframe);
+
+  tdep->syscall_next_pc = riscv_linux_syscall_next_pc;
 }
 
 /* Initialize RISC-V Linux target support.  */

@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,26 +35,26 @@ if {![Term::enter_tui]} {
 set layouts {
     {src src {{0 0 80 15}} {{0 0 90 26}}
 	{{"no source" "No Source Available"}}}
-    {regs src-regs {{0 0 80 7} {0 6 80 9}} {{0 0 90 13} {0 12 90 13}}
+    {regs src-regs {{0 0 80 8} {0 7 80 8}} {{0 0 90 13} {0 12 90 13}}
 	{
 	    {"no source" "No Source Available"}
 	    {"no regs" "Register Values Unavailable"}
 	}}
-    {asm asm {{0 0 80 13}} {{0 0 90 26}}
+    {asm asm {{0 0 80 15}} {{0 0 90 26}}
 	{
 	    {"no asm" "No Assembly Available"}
 	}}
-    {regs asm-regs {{0 0 80 7} {0 6 80 9}} {{0 0 90 13} {0 12 90 13}}
+    {regs asm-regs {{0 0 80 8} {0 7 80 8}} {{0 0 90 13} {0 12 90 13}}
 	{
 	    {"no asm" "No Assembly Available"}
 	    {"no regs" "Register Values Unavailable"}
 	}}
-    {split split {{0 0 80 6} {0 5 80 8}} {{0 0 90 13} {0 12 90 13}}
+    {split split {{0 0 80 8} {0 7 80 8}} {{0 0 90 13} {0 12 90 13}}
 	{
 	    {"no source" "No Source Available"}
 	    {"no asm" "No Assembly Available"}
 	}}
-    {regs split-regs {{0 0 80 6} {0 5 80 8}} {{0 0 90 13} {0 12 90 13}}
+    {regs split-regs {{0 0 80 8} {0 7 80 8}} {{0 0 90 13} {0 12 90 13}}
 	{
 	    {"no asm" "No Assembly Available"}
 	    {"no regs" "Register Values Unavailable"}
@@ -97,5 +97,9 @@ foreach layout $layouts {
 	    check_text $text_list
 	}
 	Term::resize 24 80
+	with_test_prefix "80x24 again" {
+	    check_boxes $small_boxes
+	    check_text $text_list
+	}
     }
 }

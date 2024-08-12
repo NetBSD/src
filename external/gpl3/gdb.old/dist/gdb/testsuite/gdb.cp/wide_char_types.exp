@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2017-2020 Free Software Foundation, Inc.
+# Copyright 2017-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -47,8 +47,7 @@ proc wide_char_types_program {lang} {
 	return -1
     }
 
-    if ![runto_main] then {
-	fail "can't run to main"
+    if {![runto_main]} {
 	return 0
     }
     do_test_wide_char $lang "u16" "u32" "wchar"

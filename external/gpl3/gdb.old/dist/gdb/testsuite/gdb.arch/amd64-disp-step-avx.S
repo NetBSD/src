@@ -1,4 +1,4 @@
-/* Copyright 2009-2020 Free Software Foundation, Inc.
+/* Copyright 2009-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -75,3 +75,4 @@ done:
 var128:
 	.8byte 0xaa55aa55aa55aa55
 	.8byte 0x55aa55aa55aa55aa
+	.section	.note.GNU-stack,"",@progbits

@@ -2,7 +2,7 @@
 
 # Build script to build GDB with all targets enabled.
 
-# Copyright (C) 2008-2020 Free Software Foundation, Inc.
+# Copyright (C) 2008-2023 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -39,7 +39,7 @@ Options:
   -e <regexp>    Regular expression for selecting the targets to build.
   --force        Force rebuild.
   -j <makejobs>  Run <makejobs> in parallel.  Passed to make.
-                 On a single cpu machine, 2 is recommended.
+		 On a single cpu machine, 2 is recommended.
  Arguments:
    <srcdir>       Source code directory.
    <builddir>     Build directory.
@@ -66,9 +66,9 @@ do
       makejobs="-j $1"
       ;;
       --clean )
-        # Shall the build directory be deleted after processing?
-        clean=true
-        ;;
+	# Shall the build directory be deleted after processing?
+	clean=true
+	;;
     -e )
       # A regular expression for selecting targets
       shift

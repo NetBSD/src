@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,89 +23,51 @@ if { [skip_ada_tests] } { return -1 }
 
 standard_ada_testfile foo
 
-set ofile ${binfile}.o
-
 set srcfile2 [file join [file dirname $srcfile] some_package.adb]
-set ofile2 [standard_output_file some_package.o]
 set sofile [standard_output_file libsome_package.so]
 
 set outdir [file dirname $binfile]
 
-# To make an Ada shared library we have to jump through a number of
-# hoops.
-
-# First compile to a .o.  We can't compile directly to a .so because
-# GCC rejects that:
-#    $ gcc -g -shared -fPIC -o qqz.o some_package.adb
-#    gcc: error: -c or -S required for Ada
-# And, we can't compile in "ada" mode because dejagnu will try to
-# invoke gnatmake, which we don't want.
-if {[target_compile_ada_from_dir $outdir $srcfile2 $ofile2 \
-	 object {debug additional_flags=-fPIC}] != ""} {
+# Create the shared library.
+if {[gdb_compile_shlib $srcfile2 $sofile {ada debug}] != ""} {
     return -1
 }
 
-# Now turn the .o into a shared library.
-if {[gdb_compile_shlib $ofile2 $sofile \
-	 {debug additional_flags=-fPIC}] != ""} {
-    return -1
+# Set linkarg such that the executable can find the shared library.
+if {[istarget "*-*-mingw*"]
+    || [istarget *-*-cygwin*]
+    || [istarget *-*-pe*]} {
+    # Do not need anything.
+    set linkarg ""
+} elseif {[istarget *-*-freebsd*] || [istarget *-*-openbsd*]} {
+    set linkarg "-Wl,-rpath,$outdir"
+} else {
+    set linkarg "-Wl,-rpath,\\\$ORIGIN"
 }
 
-# Now we can compile the main program to an object file; but again, we
-# can't compile directly using gnatmake.
-if {[target_compile_ada_from_dir $outdir $srcfile $ofile object debug] != ""} {
-    return -1
+# Make sure we link against the shared GNAT run time.
+set gnatbind_options [list -bargs -shared -margs]
+
+# Link against the shared library.
+set gnatlink_options [list -largs $linkarg -Wl,-lsome_package -margs]
+
+set options [list debug]
+foreach option [concat $gnatbind_options $gnatlink_options] {
+    lappend options [concat "additional_flags=" $option]
 }
 
-set gnatbind [find_ada_tool gnatbind]
-set gnatlink [find_ada_tool gnatlink]
-
-with_cwd $outdir {
-    # Test if gnatbind is supported
-    set status [remote_exec host "$gnatbind --version"]
-    if {[lindex $status 0] == -1} {
-	unsupported "gnatbind foo"
-	return -1
-    }
-    # Bind.
-    set status [remote_exec host "$gnatbind -shared foo"]
-    if {[lindex $status 0] == 0} {
-	pass "gnatbind foo"
-    } else {
-	fail "gnatbind foo"
-	return -1
-    }
-
-    # Test if gnatlink is supported
-    set status [remote_exec host "$gnatlink --version"]
-    if {[lindex $status 0] == -1} {
-	unsupported "gnatlink foo"
-	return -1
-    }
-    # Finally, link.
-    if {[istarget "*-*-mingw*"]
-	|| [istarget *-*-cygwin*]
-	|| [istarget *-*-pe*]
-	|| [istarget arm*-*-symbianelf*]} {
-	# Do not need anything.
-	set linkarg ""
-    } elseif {[istarget *-*-freebsd*] || [istarget *-*-openbsd*]} {
-	set linkarg "-Wl,-rpath,$outdir"
-    } else {
-	set linkarg "-Wl,-rpath,\\\$ORIGIN"
-    }
-    set status [remote_exec host "$gnatlink foo $linkarg -Wl,-lsome_package"]
-    if {[lindex $status 0] == 0} {
-	pass "gnatlink foo"
-    } else {
-	fail "gnatlink foo"
-	return -1
-    }
+# Create executable.
+if {[gdb_compile_ada $srcfile $binfile executable $options] != ""} {
+    return -1
 }
 
 clean_restart ${testfile}
 
-if {![runto_main]} then {
+# Do whatever is necessary to make sure that the shared library is
+# loaded for remote targets.
+gdb_load_shlib $sofile
+
+if {![runto_main]} {
    return 0
 }
 

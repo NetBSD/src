@@ -1,4 +1,4 @@
-# Copyright 2008-2020 Free Software Foundation, Inc.
+# Copyright 2008-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ if { [prepare_for_testing "failed to prepare" $testfile $srcfile] } {
     return -1
 }
 
-runto main
+runto_main
 
 if [supports_process_record] {
     # Activate process record/replay
@@ -86,7 +86,8 @@ gdb_test "step 3" ".*STEP TEST 2.*" "step test 2"
 
 # step over call
 
-gdb_test "step" ".*NEXT OVER THIS CALL.*" "step up to call"
+gdb_test "step" ".*NEXT OVER THIS RECURSION.*" "step up to call"
+gdb_test "next" ".*NEXT OVER THIS CALL.*" "skip recursive call"
 gdb_test "next" ".*STEP INTO THIS CALL.*" "next over call"
 
 # step into call
@@ -124,6 +125,8 @@ gdb_test_multiple "stepi" "$test_message" {
 
 # stepi into a function call
 
+set alphanum_re "\[a-zA-Z0-9\]"
+set pic_thunk_re  "__$alphanum_re*\\.get_pc_thunk\\.$alphanum_re* \\(\\)"
 set test_message "stepi into function call"
 gdb_test_multiple "stepi" "$test_message" {
     -re "ARRIVED IN CALLEE.*$gdb_prompt $" {
@@ -140,6 +143,10 @@ gdb_test_multiple "stepi" "$test_message" {
 	exp_continue
     }
     -re "STEPI TEST.*$gdb_prompt $" {
+	send_gdb "stepi\n"
+	exp_continue
+    }
+    -re "$pic_thunk_re.*$gdb_prompt $" {
 	send_gdb "stepi\n"
 	exp_continue
     }
@@ -216,6 +223,10 @@ gdb_test_multiple "stepi" "$test_message" {
 	send_gdb "stepi\n" 
 	exp_continue
     }
+    -re "$pic_thunk_re.*$gdb_prompt $" {
+	send_gdb "stepi\n"
+	exp_continue
+    }
     -re "${hex} in main .*:$stepi_location.*STEPI TEST.*$gdb_prompt $" {
 	send_gdb "stepi\n"
 	exp_continue
@@ -270,9 +281,10 @@ gdb_test_multiple "step" "$test_message" {
     }
 }
 
-# next backward over call
+# Next backward over calls.
 
 gdb_test "next" ".*NEXT OVER THIS CALL.*" "reverse next over call"
+gdb_test "next" ".*NEXT OVER THIS RECURSION.*" "reverse next over recursive call"
 
 # step/next backward with count
 

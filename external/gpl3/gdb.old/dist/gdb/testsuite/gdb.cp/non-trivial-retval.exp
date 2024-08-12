@@ -1,4 +1,4 @@
-# Copyright 2014-2020 Free Software Foundation, Inc.
+# Copyright 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,11 +15,18 @@
 
 # This file is part of the gdb testsuite
 
+set additional_flags ""
+
 if {[skip_cplus_tests]} { continue }
 
 standard_testfile .cc
 
-if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
+if {[have_fvar_tracking]} {
+    set additional_flags "additional_flags= -fvar-tracking"
+}
+
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile [list debug c++ $additional_flags]]} {
+
     return -1
 }
 
@@ -35,3 +42,29 @@ gdb_test "p f2 (i1, i2)" ".* = {b = 123}"
 gdb_test "p f22 (i1, i2)" ".* = {b1 = 123}"
 gdb_test "p f3 (i1, i2)" ".* = {.* c = 123}"
 gdb_test "p f4 (i1, i2)" ".* = {.* e = 123}"
+
+gdb_breakpoint "f1"
+gdb_breakpoint "f2"
+gdb_breakpoint "f22"
+gdb_breakpoint "f3"
+gdb_breakpoint "f4"
+
+gdb_continue_to_breakpoint "Break in f1"
+gdb_test "finish" " = {a = 123}" \
+    "finish from f1"
+
+gdb_continue_to_breakpoint "Break in f2"
+gdb_test "finish" " = {b = 123}" \
+    "finish from f2"
+
+gdb_continue_to_breakpoint "Break in f22"
+gdb_test "finish" " = {b1 = 123}" \
+    "finish from f22"
+
+gdb_continue_to_breakpoint "Break in f3"
+gdb_test "finish" " = {.* c = 123}" \
+    "finish from f3"
+
+gdb_continue_to_breakpoint "Break in f4"
+gdb_test "finish" " = {.* e = 123}" \
+    "finish from f4"

@@ -1,5 +1,5 @@
 /* Thread command's finish-state machine, for GDB, the GNU debugger.
-   Copyright (C) 2015-2020 Free Software Foundation, Inc.
+   Copyright (C) 2015-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -106,7 +106,7 @@ protected:
      FSM finishes successfully.  */
   virtual enum async_reply_reason do_async_reply_reason ()
   {
-    gdb_assert_not_reached (_("should not call async_reply_reason here"));
+    gdb_assert_not_reached ("should not call async_reply_reason here");
   }
 };
 

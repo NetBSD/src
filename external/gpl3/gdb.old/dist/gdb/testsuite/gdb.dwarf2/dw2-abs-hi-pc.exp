@@ -1,4 +1,4 @@
-# Copyright 2014-2020 Free Software Foundation, Inc.
+# Copyright 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,9 +20,34 @@ if {![dwarf2_support]} {
 }
 
 standard_testfile
-set executable ${testfile}
 
-if {[build_executable ${testfile}.exp ${executable} "${testfile}.c ${testfile}-hello-dbg.S ${testfile}-hello.c ${testfile}-world-dbg.S ${testfile}-world.c" "nodebug"] == -1} {
+set sources \
+    [list \
+	 ${testfile}.c \
+	 ${testfile}-hello.c \
+	 ${testfile}-world.c]
+set sources [lmap i $sources { string cat "${srcdir}/${subdir}/" $i }]
+lassign [function_range hello $sources] \
+    hello_start hello_len
+lassign [function_range world $sources] \
+    world_start world_len
+
+set sources \
+    [list \
+	 ${testfile}.c \
+	 ${testfile}-hello-dbg.S \
+	 ${testfile}-hello.c \
+	 ${testfile}-world-dbg.S \
+	 ${testfile}-world.c]
+set flags \
+    [list \
+	 "nodebug" \
+	 "additional_flags=\"-DHELLO_START=$hello_start\"" \
+	 "additional_flags=\"-DHELLO_END=$hello_start + $hello_len\"" \
+	 "additional_flags=\"-DWORLD_START=$world_start\"" \
+	 "additional_flags=\"-DWORLD_END=$world_start + $world_len\""]
+set executable ${testfile}
+if {[build_executable ${testfile}.exp ${executable} $sources $flags] == -1} {
     return -1
 }
 

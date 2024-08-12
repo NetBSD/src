@@ -1,6 +1,6 @@
 /* DWARF stringify code
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,5 +34,8 @@ extern const char *dwarf_bool_name (unsigned mybool);
 
 /* Convert a DWARF type code into its string name.  */
 extern const char *dwarf_type_encoding_name (unsigned enc);
+
+/* Convert a DWARF unit type into its string name.  */
+extern const char *dwarf_unit_type_name (int unit_type);
 
 #endif /* GDB_DWARF2_STRINGIFY_H */

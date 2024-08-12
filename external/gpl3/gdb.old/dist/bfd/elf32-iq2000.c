@@ -1,5 +1,5 @@
 /* IQ2000-specific support for 32-bit ELF.
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -35,54 +35,54 @@ static reloc_howto_type iq2000_elf_howto_table [] =
 
   HOWTO (R_IQ2000_NONE,		     /* type */
 	 0,			     /* rightshift */
-	 3,			     /* size (0 = byte, 1 = short, 2 = long) */
+	 0,			     /* size */
 	 0,			     /* bitsize */
-	 FALSE,			     /* pc_relative */
+	 false,			     /* pc_relative */
 	 0,			     /* bitpos */
 	 complain_overflow_dont,     /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	     /* special_function */
 	 "R_IQ2000_NONE",	     /* name */
-	 FALSE,			     /* partial_inplace */
+	 false,			     /* partial_inplace */
 	 0,			     /* src_mask */
 	 0,			     /* dst_mask */
-	 FALSE),		     /* pcrel_offset */
+	 false),		     /* pcrel_offset */
 
   /* A 16 bit absolute relocation.  */
   HOWTO (R_IQ2000_16,		     /* type */
 	 0,			     /* rightshift */
-	 1,			     /* size (0 = byte, 1 = short, 2 = long) */
+	 2,			     /* size */
 	 16,			     /* bitsize */
-	 FALSE,			     /* pc_relative */
+	 false,			     /* pc_relative */
 	 0,			     /* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	     /* special_function */
 	 "R_IQ2000_16",		     /* name */
-	 FALSE,			     /* partial_inplace */
+	 false,			     /* partial_inplace */
 	 0x0000,		     /* src_mask */
 	 0xffff,		     /* dst_mask */
-	 FALSE),		     /* pcrel_offset */
+	 false),		     /* pcrel_offset */
 
   /* A 32 bit absolute relocation.  */
   HOWTO (R_IQ2000_32,		     /* type */
 	 0,			     /* rightshift */
-	 2,			     /* size (0 = byte, 1 = short, 2 = long) */
+	 4,			     /* size */
 	 31,			     /* bitsize */
-	 FALSE,			     /* pc_relative */
+	 false,			     /* pc_relative */
 	 0,			     /* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	     /* special_function */
 	 "R_IQ2000_32",		     /* name */
-	 FALSE,			     /* partial_inplace */
+	 false,			     /* partial_inplace */
 	 0x00000000,		     /* src_mask */
 	 0x7fffffff,		     /* dst_mask */
-	 FALSE),		     /* pcrel_offset */
+	 false),		     /* pcrel_offset */
 
   /* 26 bit branch address.  */
   HOWTO (R_IQ2000_26,		/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 26,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 				/* This needs complex overflow
@@ -90,115 +90,115 @@ static reloc_howto_type iq2000_elf_howto_table [] =
 				   bits must match the PC.  */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_IQ2000_26",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x00000000,		/* src_mask */
 	 0x03ffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 16 bit PC relative reference.  */
   HOWTO (R_IQ2000_PC16,		/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_IQ2000_PC16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0000,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* high 16 bits of symbol value.  */
   HOWTO (R_IQ2000_HI16,		/* type */
 	 16,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 15,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 iq2000_elf_howto_hi16_reloc,	/* special_function */
 	 "R_IQ2000_HI16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0000,		/* src_mask */
 	 0x7fff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* Low 16 bits of symbol value.  */
   HOWTO (R_IQ2000_LO16,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_IQ2000_LO16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0000,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 16-bit jump offset.  */
   HOWTO (R_IQ2000_OFFSET_16,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_IQ2000_OFFSET_16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0000,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 21-bit jump offset.  */
   HOWTO (R_IQ2000_OFFSET_21,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 21,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_IQ2000_OFFSET_21",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x000000,		/* src_mask */
 	 0x1fffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* unsigned high 16 bits of value.  */
   HOWTO (R_IQ2000_OFFSET_21,	/* type */
 	 16,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_IQ2000_UHI16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0000,		/* src_mask */
 	 0x7fff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 32 bit absolute debug relocation.  */
   HOWTO (R_IQ2000_32_DEBUG,	     /* type */
 	 0,			     /* rightshift */
-	 2,			     /* size (0 = byte, 1 = short, 2 = long) */
+	 4,			     /* size */
 	 32,			     /* bitsize */
-	 FALSE,			     /* pc_relative */
+	 false,			     /* pc_relative */
 	 0,			     /* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	     /* special_function */
 	 "R_IQ2000_32",		     /* name */
-	 FALSE,			     /* partial_inplace */
+	 false,			     /* partial_inplace */
 	 0x00000000,		     /* src_mask */
 	 0xffffffff,		     /* dst_mask */
-	 FALSE),		     /* pcrel_offset */
+	 false),		     /* pcrel_offset */
 
 };
 
@@ -206,33 +206,33 @@ static reloc_howto_type iq2000_elf_howto_table [] =
 static reloc_howto_type iq2000_elf_vtinherit_howto =
   HOWTO (R_IQ2000_GNU_VTINHERIT,    /* type */
 	 0,			   /* rightshift */
-	 2,			   /* size (0 = byte, 1 = short, 2 = long) */
+	 4,			   /* size */
 	 0,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_dont,   /* complain_on_overflow */
 	 NULL,			   /* special_function */
 	 "R_IQ2000_GNU_VTINHERIT",  /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0,			   /* src_mask */
 	 0,			   /* dst_mask */
-	 FALSE);		   /* pcrel_offset */
+	 false);		   /* pcrel_offset */
 
 /* GNU extension to record C++ vtable member usage.  */
 static reloc_howto_type iq2000_elf_vtentry_howto =
   HOWTO (R_IQ2000_GNU_VTENTRY,	   /* type */
 	 0,			   /* rightshift */
-	 2,			   /* size (0 = byte, 1 = short, 2 = long) */
+	 4,			   /* size */
 	 0,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_dont,   /* complain_on_overflow */
 	 NULL,			   /* special_function */
 	 "R_IQ2000_GNU_VTENTRY",    /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0,			   /* src_mask */
 	 0,			   /* dst_mask */
-	 FALSE);		   /* pcrel_offset */
+	 false);		   /* pcrel_offset */
 
 
 static bfd_reloc_status_type
@@ -417,7 +417,7 @@ iq2000_final_link_relocate (reloc_howto_type *	howto,
 
 /* Set the howto pointer for a IQ2000 ELF reloc.  */
 
-static bfd_boolean
+static bool
 iq2000_info_to_howto_rela (bfd * abfd ATTRIBUTE_UNUSED,
 			   arelent * cache_ptr,
 			   Elf_Internal_Rela * dst)
@@ -442,19 +442,19 @@ iq2000_info_to_howto_rela (bfd * abfd ATTRIBUTE_UNUSED,
 	  _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			      abfd, r_type);
 	  bfd_set_error (bfd_error_bad_value);
-	  return FALSE;
+	  return false;
 	}
       cache_ptr->howto = & iq2000_elf_howto_table [r_type];
       break;
     }
-  return TRUE;
+  return true;
 }
 
 /* Look through the relocs for a section during the first phase.
    Since we don't do .gots or .plts, we just need to consider the
    virtual table relocs for gc.	 */
 
-static bfd_boolean
+static bool
 iq2000_elf_check_relocs (bfd *abfd,
 			 struct bfd_link_info *info,
 			 asection *sec,
@@ -464,10 +464,10 @@ iq2000_elf_check_relocs (bfd *abfd,
   struct elf_link_hash_entry **sym_hashes;
   const Elf_Internal_Rela *rel;
   const Elf_Internal_Rela *rel_end;
-  bfd_boolean changed = FALSE;
+  bool changed = false;
 
   if (bfd_link_relocatable (info))
-    return TRUE;
+    return true;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (abfd);
@@ -495,25 +495,25 @@ iq2000_elf_check_relocs (bfd *abfd,
 	     hierarchy.  Reconstruct it for later use during GC.  */
 	case R_IQ2000_GNU_VTINHERIT:
 	  if (!bfd_elf_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
-	    return FALSE;
+	    return false;
 	  break;
 
 	  /* This relocation describes which C++ vtable entries
 	     are actually used.  Record for later use during GC.  */
 	case R_IQ2000_GNU_VTENTRY:
 	  if (!bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
-	    return FALSE;
+	    return false;
 	  break;
 
 	case R_IQ2000_32:
 	  /* For debug section, change to special harvard-aware relocations.  */
-	  if (CONST_STRNEQ (sec->name, ".debug")
-	      || CONST_STRNEQ (sec->name, ".stab")
-	      || CONST_STRNEQ (sec->name, ".eh_frame"))
+	  if (startswith (sec->name, ".debug")
+	      || startswith (sec->name, ".stab")
+	      || startswith (sec->name, ".eh_frame"))
 	    {
 	      ((Elf_Internal_Rela *) rel)->r_info
 		= ELF32_R_INFO (ELF32_R_SYM (rel->r_info), R_IQ2000_32_DEBUG);
-	      changed = TRUE;
+	      changed = true;
 	    }
 	  break;
 	}
@@ -524,7 +524,7 @@ iq2000_elf_check_relocs (bfd *abfd,
        we'll free the relocs and lose our changes.  */
     elf_section_data (sec)->relocs = (Elf_Internal_Rela *) relocs;
 
-  return TRUE;
+  return true;
 }
 
 
@@ -561,7 +561,7 @@ iq2000_elf_check_relocs (bfd *abfd,
    section, which means that the addend must be adjusted
    accordingly.	 */
 
-static bfd_boolean
+static int
 iq2000_elf_relocate_section (bfd *		     output_bfd ATTRIBUTE_UNUSED,
 			     struct bfd_link_info *  info,
 			     bfd *		     input_bfd,
@@ -629,8 +629,8 @@ iq2000_elf_relocate_section (bfd *		     output_bfd ATTRIBUTE_UNUSED,
 	}
       else
 	{
-	  bfd_boolean unresolved_reloc;
-	  bfd_boolean warned, ignored;
+	  bool unresolved_reloc;
+	  bool warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
@@ -684,7 +684,7 @@ iq2000_elf_relocate_section (bfd *		     output_bfd ATTRIBUTE_UNUSED,
 
 	    case bfd_reloc_undefined:
 	      (*info->callbacks->undefined_symbol)
-		(info, name, input_bfd, input_section, rel->r_offset, TRUE);
+		(info, name, input_bfd, input_section, rel->r_offset, true);
 	      break;
 
 	    case bfd_reloc_outofrange:
@@ -710,7 +710,7 @@ iq2000_elf_relocate_section (bfd *		     output_bfd ATTRIBUTE_UNUSED,
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 
@@ -755,24 +755,24 @@ elf32_iq2000_machine (bfd *abfd)
 
 /* Function to set the ELF flag bits.  */
 
-static bfd_boolean
+static bool
 iq2000_elf_set_private_flags (bfd *abfd, flagword flags)
 {
   elf_elfheader (abfd)->e_flags = flags;
-  elf_flags_init (abfd) = TRUE;
-  return TRUE;
+  elf_flags_init (abfd) = true;
+  return true;
 }
 
 /* Merge backend specific data from an object
    file to the output object file when linking.  */
 
-static bfd_boolean
+static bool
 iq2000_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
   bfd *obfd = info->output_bfd;
   flagword old_flags, old_partial;
   flagword new_flags, new_partial;
-  bfd_boolean error = FALSE;
+  bool error = false;
   char new_opt[80];
   char old_opt[80];
 
@@ -783,7 +783,7 @@ iq2000_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   if (!elf_flags_init (obfd))
     {
       /* First call, no flags set.  */
-      elf_flags_init (obfd) = TRUE;
+      elf_flags_init (obfd) = true;
       elf_elfheader (obfd)->e_flags = new_flags;
     }
 
@@ -824,7 +824,7 @@ iq2000_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
       /* Print out any mismatches from above.  */
       if (new_opt[0])
 	{
-	  error = TRUE;
+	  error = true;
 	  _bfd_error_handler
 	    /* xgettext:c-format */
 	    (_("%pB: compiled with %s and linked with modules compiled with %s"),
@@ -837,7 +837,7 @@ iq2000_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
       /* Warn about any other mismatches.  */
       if (new_flags != old_flags)
 	{
-	  error = TRUE;
+	  error = true;
 
 	  _bfd_error_handler
 	    /* xgettext:c-format */
@@ -853,7 +853,7 @@ iq2000_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 }
 
 
-static bfd_boolean
+static bool
 iq2000_elf_print_private_bfd_data (bfd *abfd, void * ptr)
 {
   FILE *file = (FILE *) ptr;
@@ -880,16 +880,16 @@ iq2000_elf_print_private_bfd_data (bfd *abfd, void * ptr)
     }
 
   fputc ('\n', file);
-  return TRUE;
+  return true;
 }
 
 static
-bfd_boolean
+bool
 iq2000_elf_object_p (bfd *abfd)
 {
   bfd_default_set_arch_mach (abfd, bfd_arch_iq2000,
 			     elf32_iq2000_machine (abfd));
-  return TRUE;
+  return true;
 }
 
 

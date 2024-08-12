@@ -1,5 +1,5 @@
 /* MIPS ELF support for BFD.
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2022 Free Software Foundation, Inc.
 
    By Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>, from
    information in the System V Application Binary Interface, MIPS

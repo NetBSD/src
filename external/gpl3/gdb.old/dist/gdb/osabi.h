@@ -1,5 +1,5 @@
 /* OS ABI variant handling for GDB.
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2023 Free Software Foundation, Inc.
    
    This file is part of GDB.
 
@@ -41,7 +41,6 @@ enum gdb_osabi
   GDB_OSABI_AIX,
   GDB_OSABI_DICOS,
   GDB_OSABI_DARWIN,
-  GDB_OSABI_SYMBIAN,
   GDB_OSABI_OPENVMS,
   GDB_OSABI_LYNXOS178,
   GDB_OSABI_NEWLIB,
@@ -65,7 +64,7 @@ void gdbarch_register_osabi_sniffer (enum bfd_architecture,
    ABI for each architecture and machine type combination.  */
 void gdbarch_register_osabi (enum bfd_architecture, unsigned long,
 			     enum gdb_osabi,
-                             void (*)(struct gdbarch_info,
+			     void (*)(struct gdbarch_info,
 				      struct gdbarch *));
 
 /* Lookup the OS ABI corresponding to the specified BFD.  */
@@ -74,6 +73,9 @@ enum gdb_osabi gdbarch_lookup_osabi (bfd *);
 /* Lookup the OS ABI corresponding to the specified target description
    string.  */
 enum gdb_osabi osabi_from_tdesc_string (const char *text);
+
+/* Return true if there's an OS ABI handler for INFO.  */
+bool has_gdb_osabi_handler (struct gdbarch_info info);
 
 /* Initialize the gdbarch for the specified OS ABI variant.  */
 void gdbarch_init_osabi (struct gdbarch_info, struct gdbarch *);
@@ -86,8 +88,8 @@ const char *gdbarch_osabi_name (enum gdb_osabi);
 const char *osabi_triplet_regexp (enum gdb_osabi osabi);
 
 /* Helper routine for ELF file sniffers.  This looks at ABI tag note
-   sections to determine the OS ABI from the note.  It should be called
-   via bfd_map_over_sections.  */
-void generic_elf_osabi_sniff_abi_tag_sections (bfd *, asection *, void *);
+   sections to determine the OS ABI from the note.  */
+void generic_elf_osabi_sniff_abi_tag_sections (bfd *, asection *,
+					       enum gdb_osabi *);
 
 #endif /* OSABI_H */

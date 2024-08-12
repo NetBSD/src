@@ -1,6 +1,6 @@
 /* Low-level DWARF 2 reading code
 
-   Copyright (C) 1994-2020 Free Software Foundation, Inc.
+   Copyright (C) 1994-2023 Free Software Foundation, Inc.
 
    Adapted by Gary Funck (gary@intrepid.com), Intrepid Technology,
    Inc.  with support from Florida State University (under contract
@@ -127,8 +127,7 @@ read_offset (bfd *abfd, const gdb_byte *buf, unsigned int offset_size)
       retval = bfd_get_64 (abfd, buf);
       break;
     default:
-      internal_error (__FILE__, __LINE__,
-		      _("read_offset_1: bad switch [in module %s]"),
+      internal_error (_("read_offset_1: bad switch [in module %s]"),
 		      bfd_get_filename (abfd));
     }
 

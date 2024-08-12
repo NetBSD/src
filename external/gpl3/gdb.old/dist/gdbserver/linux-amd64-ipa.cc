@@ -1,7 +1,7 @@
 /* GNU/Linux/x86-64 specific low level interface, for the in-process
    agent library for GDB.
 
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -159,8 +159,7 @@ supply_static_tracepoint_registers (struct regcache *regcache,
 	    }
 	    break;
 	  default:
-	    internal_error (__FILE__, __LINE__,
-			    "unhandled register size: %d",
+	    internal_error ("unhandled register size: %d",
 			    x86_64_st_collect_regmap[i].size);
 	    break;
 	  }
@@ -190,8 +189,7 @@ get_ipa_tdesc (int idx)
 {
   if (idx >= X86_TDESC_LAST)
     {
-      internal_error (__FILE__, __LINE__,
-		      "unknown ipa tdesc index: %d", idx);
+      internal_error ("unknown ipa tdesc index: %d", idx);
     }
 
 #if defined __ILP32__
@@ -210,8 +208,7 @@ get_ipa_tdesc (int idx)
   return amd64_linux_read_description (idx2mask[idx], false);
 #endif
 
-  internal_error (__FILE__, __LINE__,
-		  "unknown ipa tdesc index: %d", idx);
+  internal_error ("unknown ipa tdesc index: %d", idx);
 }
 
 /* Allocate buffer for the jump pads.  The branch instruction has a

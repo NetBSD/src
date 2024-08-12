@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 load_lib "fortran.exp"
 load_lib "sym-info-cmds.exp"
 
-if { [skip_fortran_tests] } { continue }
+if { [skip_fortran_tests] } { return }
 
 standard_testfile info-types.f90 info-types-2.f90
 
@@ -29,7 +29,7 @@ if { [prepare_for_testing "failed to prepare" $testfile \
 
 if { ![fortran_runto_main] } {
     perror "Could not run to main."
-    continue
+    return
 }
 
 set integer4 [fortran_int4]
@@ -41,12 +41,26 @@ set real4 [fortran_real4]
 GDBInfoSymbols::run_command "info types"
 GDBInfoSymbols::check_header "All defined types:"
 
-GDBInfoSymbols::check_entry "${srcfile}" "" "${character1}"
+GDBInfoSymbols::check_optional_entry "${srcfile}" "" "${character1}"
 GDBInfoSymbols::check_entry "${srcfile}" "" "${integer4}"
 GDBInfoSymbols::check_entry "${srcfile}" "" "${logical4}"
 GDBInfoSymbols::check_entry "${srcfile}" "$decimal" "Type m1t1;"
 GDBInfoSymbols::check_entry "${srcfile}" "" "${real4}"
-GDBInfoSymbols::check_entry "${srcfile}" "37" "Type s1;"
+
+# The emission of the 'Type s1' at global scope is actually not expected.  The
+# type is defined inside the Fortran program and thus scoped to it as well.
+# However, gfortran (13) emits its DIE as a child of the whole cu, while flang
+# and ifx emit the DIE as a child of the main program info_types_test.  As
+# 'info types' only checks for types stored in the GLOBAL_BLOCK, or
+# STATIC_BLOCK we should not expect this type as an output here.  Still, we
+# leave the test here for now (for gfortarn only) as it also covers a line info
+# bug (see gcc/105454).  The bug for the type scoping can be found at
+# gcc/105785.  Should gfortran fix this in some future version this test will
+# start to fail and should be removed.
+if { [test_compiler_info {gfortran-*} f90] } {
+    setup_xfail *-*-* gcc/105454
+    GDBInfoSymbols::check_entry "${srcfile}" "41" "Type s1;"
+}
 
 return 0
 
@@ -62,5 +76,5 @@ gdb_test "info types" \
 	 "(35:\[\t \]+Type __vtype_mod1_M1t1;" \
 	 ")?$decimal:\[\t \]+Type m1t1;" \
 	 "\[\t \]+${real4}" \
-	 "37:\[\t \]+Type s1;(" \
+	 "41:\[\t \]+Type s1;(" \
 	 ".*)?"]

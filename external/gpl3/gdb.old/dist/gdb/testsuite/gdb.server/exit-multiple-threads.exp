@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,7 +39,17 @@ standard_testfile
 # Places a breakpoint in function 'breakpt' and then continues to the
 # breakpoint, at which point it runs 'info threads'.
 proc prepare_for_test { executable disable_multi_process } {
-    clean_restart ${executable}
+    global GDBFLAGS
+
+    save_vars { GDBFLAGS } {
+	# If GDB and GDBserver are both running locally, set the sysroot to avoid
+	# reading files via the remote protocol.
+	if { ![is_remote host] && ![is_remote target] } {
+	    set GDBFLAGS "$GDBFLAGS -ex \"set sysroot\""
+	}
+
+	clean_restart ${executable}
+    }
 
     # Make sure we're disconnected, in case we're testing with an
     # extended-remote board, therefore already connected.
@@ -125,7 +135,7 @@ foreach_with_prefix test { exit signal } {
     set func "run_${test}_test"
 
     set executable "$binfile-${test}"
-    if [prepare_for_testing "failed to prepare" $executable $srcfile \
+    if [build_executable "failed to prepare" $executable $srcfile \
 	    [list debug pthreads additional_flags=-D${def}]] {
 	return -1
     }

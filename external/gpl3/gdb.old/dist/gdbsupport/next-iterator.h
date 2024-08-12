@@ -1,5 +1,5 @@
 /* A "next" iterator for GDB, the GNU debugger.
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,8 @@
 
 #ifndef COMMON_NEXT_ITERATOR_H
 #define COMMON_NEXT_ITERATOR_H
+
+#include "gdbsupport/iterator-range.h"
 
 /* An iterator that uses the 'next' field of a type to iterate.  This
    can be used with various GDB types that are stored as linked
@@ -70,33 +72,9 @@ private:
   T *m_item;
 };
 
-/* A range adapter that allows iterating over a linked list.  */
+/* A convenience wrapper to make a range type around a next_iterator.  */
 
-template<typename T, typename Iterator = next_iterator<T>>
-class next_adapter
-{
-public:
-
-  explicit next_adapter (T *item)
-    : m_item (item)
-  {
-  }
-
-  using iterator = Iterator;
-
-  iterator begin () const
-  {
-    return iterator (m_item);
-  }
-
-  iterator end () const
-  {
-    return iterator ();
-  }
-
-private:
-
-  T *m_item;
-};
+template <typename T>
+using next_range = iterator_range<next_iterator<T>>;
 
 #endif /* COMMON_NEXT_ITERATOR_H */

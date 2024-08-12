@@ -1,6 +1,6 @@
 /* scoped_fd, automatically close a file descriptor
 
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,7 @@
 #define COMMON_SCOPED_FD_H
 
 #include <unistd.h>
-#include "filestuff.h"
+#include "gdb_file.h"
 
 /* A smart-pointer-like class to automatically close a file descriptor.  */
 
