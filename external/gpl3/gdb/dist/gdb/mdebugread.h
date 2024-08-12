@@ -1,6 +1,6 @@
 /* Read a symbol table in ECOFF format (Third-Eye).
 
-   Copyright (C) 2004-2023 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,7 @@
 #ifndef MDEBUGREAD_H
 #define MDEBUGREAD_H
 
-#include "coff/sym.h"		/* Needed for PDR below.  */
+#include "coff/sym.h"
 #include "coff/symconst.h"
 
 /* Specific information about a procedure.  Architectures (ab)uses
