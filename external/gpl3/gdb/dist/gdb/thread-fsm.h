@@ -1,5 +1,5 @@
 /* Thread command's finish-state machine, for GDB, the GNU debugger.
-   Copyright (C) 2015-2023 Free Software Foundation, Inc.
+   Copyright (C) 2015-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,10 +19,29 @@
 #ifndef THREAD_FSM_H
 #define THREAD_FSM_H
 
-#include "mi/mi-common.h" /* For enum async_reply_reason.  */
+#include "mi/mi-common.h"
 
 struct return_value_info;
 struct thread_fsm_ops;
+struct type;
+struct value;
+
+/* The captured function return value/type and its position in the
+   value history.  */
+
+struct return_value_info
+{
+  /* The captured return value.  May be NULL if we weren't able to
+     retrieve it.  See get_return_value.  */
+  struct value *value;
+
+  /* The return type.  In some cases, we'll not be able extract the
+     return value, but we always know the type.  */
+  struct type *type;
+
+  /* If we captured a value, this is the value history index.  */
+  int value_history_index;
+};
 
 /* A thread finite-state machine structure contains the necessary info
    and callbacks to manage the state machine protocol of a thread's

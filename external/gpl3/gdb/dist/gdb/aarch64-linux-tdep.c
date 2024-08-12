@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux AArch64.
 
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -18,8 +18,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 
+#include "extract-store-integer.h"
 #include "gdbarch.h"
 #include "glibc-tdep.h"
 #include "linux-tdep.h"
@@ -48,6 +48,7 @@
 #include "linux-record.h"
 
 #include "arch/aarch64-mte-linux.h"
+#include "arch/aarch64-scalable-linux.h"
 
 #include "arch-utils.h"
 #include "value.h"
@@ -56,9 +57,10 @@
 
 #include "elf/common.h"
 #include "elf/aarch64.h"
+#include "arch/aarch64-insn.h"
 
-/* For inferior_ptid and current_inferior ().  */
-#include "inferior.h"
+/* For std::pow */
+#include <cmath>
 
 /* Signal frame handling.
 
@@ -155,6 +157,9 @@
 #define AARCH64_EXTRA_MAGIC			0x45585401
 #define AARCH64_FPSIMD_MAGIC			0x46508001
 #define AARCH64_SVE_MAGIC			0x53564501
+#define AARCH64_ZA_MAGIC			0x54366345
+#define AARCH64_TPIDR2_MAGIC			0x54504902
+#define AARCH64_ZT_MAGIC			0x5a544e01
 
 /* Defines for the extra_context that follows an AARCH64_EXTRA_MAGIC.  */
 #define AARCH64_EXTRA_DATAP_OFFSET		8
@@ -167,13 +172,76 @@
 
 /* Defines for the sve structure that follows an AARCH64_SVE_MAGIC.  */
 #define AARCH64_SVE_CONTEXT_VL_OFFSET		8
+#define AARCH64_SVE_CONTEXT_FLAGS_OFFSET	10
 #define AARCH64_SVE_CONTEXT_REGS_OFFSET		16
 #define AARCH64_SVE_CONTEXT_P_REGS_OFFSET(vq) (32 * vq * 16)
 #define AARCH64_SVE_CONTEXT_FFR_OFFSET(vq) \
   (AARCH64_SVE_CONTEXT_P_REGS_OFFSET (vq) + (16 * vq * 2))
 #define AARCH64_SVE_CONTEXT_SIZE(vq) \
   (AARCH64_SVE_CONTEXT_FFR_OFFSET (vq) + (vq * 2))
+/* Flag indicating the SVE Context describes streaming mode.  */
+#define SVE_SIG_FLAG_SM				0x1
 
+/* SME constants.  */
+#define AARCH64_SME_CONTEXT_SVL_OFFSET		8
+#define AARCH64_SME_CONTEXT_REGS_OFFSET		16
+#define AARCH64_SME_CONTEXT_ZA_SIZE(svq) \
+  ((sve_vl_from_vq (svq) * sve_vl_from_vq (svq)))
+#define AARCH64_SME_CONTEXT_SIZE(svq) \
+  (AARCH64_SME_CONTEXT_REGS_OFFSET + AARCH64_SME_CONTEXT_ZA_SIZE (svq))
+
+/* TPIDR2 register value offset in the TPIDR2 signal frame context.  */
+#define AARCH64_TPIDR2_CONTEXT_TPIDR2_OFFSET	8
+
+/* SME2 (ZT) constants.  */
+/* Offset of the field containing the number of registers in the SME2 signal
+   context state.  */
+#define AARCH64_SME2_CONTEXT_NREGS_OFFSET	8
+/* Offset of the beginning of the register data for the first ZT register in
+   the signal context state.  */
+#define AARCH64_SME2_CONTEXT_REGS_OFFSET	16
+
+/* Holds information about the signal frame.  */
+struct aarch64_linux_sigframe
+{
+  /* The stack pointer value.  */
+  CORE_ADDR sp = 0;
+  /* The sigcontext address.  */
+  CORE_ADDR sigcontext_address = 0;
+  /* The start/end signal frame section addresses.  */
+  CORE_ADDR section = 0;
+  CORE_ADDR section_end = 0;
+
+  /* Starting address of the section containing the general purpose
+     registers.  */
+  CORE_ADDR gpr_section = 0;
+  /* Starting address of the section containing the FPSIMD registers.  */
+  CORE_ADDR fpsimd_section = 0;
+  /* Starting address of the section containing the SVE registers.  */
+  CORE_ADDR sve_section = 0;
+  /* Starting address of the section containing the ZA register.  */
+  CORE_ADDR za_section = 0;
+  /* Starting address of the section containing the TPIDR2 register.  */
+  CORE_ADDR tpidr2_section = 0;
+  /* Starting address of the section containing the ZT registers.  */
+  CORE_ADDR zt_section = 0;
+  /* Starting address of the section containing extra information.  */
+  CORE_ADDR extra_section = 0;
+
+  /* The vector length (SVE or SSVE).  */
+  ULONGEST vl = 0;
+  /* The streaming vector length (SSVE/ZA).  */
+  ULONGEST svl = 0;
+  /* Number of ZT registers in this context.  */
+  unsigned int zt_register_count = 0;
+
+  /* True if we are in streaming mode, false otherwise.  */
+  bool streaming_mode = false;
+  /* True if we have a ZA payload, false otherwise.  */
+  bool za_payload = false;
+  /* True if we have a ZT entry in the signal context, false otherwise.  */
+  bool zt_available = false;
+};
 
 /* Read an aarch64_ctx, returning the magic value, and setting *SIZE to the
    size, or return 0 on error.  */
@@ -199,14 +267,13 @@ read_aarch64_ctx (CORE_ADDR ctx_addr, enum bfd_endian byte_order,
 /* Given CACHE, use the trad_frame* functions to restore the FPSIMD
    registers from a signal frame.
 
-   VREG_NUM is the number of the V register being restored, OFFSET is the
-   address containing the register value, BYTE_ORDER is the endianness and
-   HAS_SVE tells us if we have a valid SVE context or not.  */
+   FPSIMD_CONTEXT is the address of the signal frame context containing FPSIMD
+   data.  */
 
 static void
-aarch64_linux_restore_vreg (struct trad_frame_cache *cache, int num_regs,
-			    int vreg_num, CORE_ADDR offset,
-			    enum bfd_endian byte_order, bool has_sve)
+aarch64_linux_restore_vregs (struct gdbarch *gdbarch,
+			     struct trad_frame_cache *cache,
+			     CORE_ADDR fpsimd_context)
 {
   /* WARNING: SIMD state is laid out in memory in target-endian format.
 
@@ -218,11 +285,22 @@ aarch64_linux_restore_vreg (struct trad_frame_cache *cache, int num_regs,
      2 - If the target is little endian, then SIMD state is little endian, so
      no byteswap is needed. */
 
-  if (byte_order == BFD_ENDIAN_BIG)
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+  int num_regs = gdbarch_num_regs (gdbarch);
+  aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep> (gdbarch);
+
+  for (int i = 0; i < 32; i++)
     {
+      CORE_ADDR offset = (fpsimd_context + AARCH64_FPSIMD_V0_OFFSET
+			  + (i * AARCH64_FPSIMD_VREG_SIZE));
+
       gdb_byte buf[V_REGISTER_SIZE];
 
-      if (target_read_memory (offset, buf, V_REGISTER_SIZE) != 0)
+      /* Read the contents of the V register.  */
+      if (target_read_memory (offset, buf, V_REGISTER_SIZE))
+	error (_("Failed to read fpsimd register from signal context."));
+
+      if (byte_order == BFD_ENDIAN_BIG)
 	{
 	  size_t size = V_REGISTER_SIZE/2;
 
@@ -237,130 +315,215 @@ aarch64_linux_restore_vreg (struct trad_frame_cache *cache, int num_regs,
 	  store_unsigned_integer (buf + size , size, BFD_ENDIAN_LITTLE, u64);
 
 	  /* Now we can store the correct bytes for the V register.  */
-	  trad_frame_set_reg_value_bytes (cache, AARCH64_V0_REGNUM + vreg_num,
+	  trad_frame_set_reg_value_bytes (cache, AARCH64_V0_REGNUM + i,
 					  {buf, V_REGISTER_SIZE});
 	  trad_frame_set_reg_value_bytes (cache,
 					  num_regs + AARCH64_Q0_REGNUM
-					  + vreg_num, {buf, Q_REGISTER_SIZE});
+					  + i, {buf, Q_REGISTER_SIZE});
 	  trad_frame_set_reg_value_bytes (cache,
 					  num_regs + AARCH64_D0_REGNUM
-					  + vreg_num, {buf, D_REGISTER_SIZE});
+					  + i, {buf, D_REGISTER_SIZE});
 	  trad_frame_set_reg_value_bytes (cache,
 					  num_regs + AARCH64_S0_REGNUM
-					  + vreg_num, {buf, S_REGISTER_SIZE});
+					  + i, {buf, S_REGISTER_SIZE});
 	  trad_frame_set_reg_value_bytes (cache,
 					  num_regs + AARCH64_H0_REGNUM
-					  + vreg_num, {buf, H_REGISTER_SIZE});
+					  + i, {buf, H_REGISTER_SIZE});
 	  trad_frame_set_reg_value_bytes (cache,
 					  num_regs + AARCH64_B0_REGNUM
-					  + vreg_num, {buf, B_REGISTER_SIZE});
+					  + i, {buf, B_REGISTER_SIZE});
 
-	  if (has_sve)
+	  if (tdep->has_sve ())
 	    trad_frame_set_reg_value_bytes (cache,
 					    num_regs + AARCH64_SVE_V0_REGNUM
-					    + vreg_num, {buf, V_REGISTER_SIZE});
+					    + i, {buf, V_REGISTER_SIZE});
 	}
-      return;
+      else
+	{
+	  /* Little endian, just point at the address containing the register
+	     value.  */
+	  trad_frame_set_reg_addr (cache, AARCH64_V0_REGNUM + i, offset);
+	  trad_frame_set_reg_addr (cache, num_regs + AARCH64_Q0_REGNUM + i,
+				   offset);
+	  trad_frame_set_reg_addr (cache, num_regs + AARCH64_D0_REGNUM + i,
+				   offset);
+	  trad_frame_set_reg_addr (cache, num_regs + AARCH64_S0_REGNUM + i,
+				   offset);
+	  trad_frame_set_reg_addr (cache, num_regs + AARCH64_H0_REGNUM + i,
+				   offset);
+	  trad_frame_set_reg_addr (cache, num_regs + AARCH64_B0_REGNUM + i,
+				   offset);
+
+	  if (tdep->has_sve ())
+	    trad_frame_set_reg_addr (cache, num_regs + AARCH64_SVE_V0_REGNUM
+				     + i, offset);
+	}
+
+      if (tdep->has_sve ())
+	{
+	  /* If SVE is supported for this target, zero out the Z
+	     registers then copy the first 16 bytes of each of the V
+	     registers to the associated Z register.  Otherwise the Z
+	     registers will contain uninitialized data.  */
+	  std::vector<gdb_byte> z_buffer (tdep->vq * 16);
+
+	  /* We have already handled the endianness swap above, so we don't need
+	     to worry about it here.  */
+	  memcpy (z_buffer.data (), buf, V_REGISTER_SIZE);
+	  trad_frame_set_reg_value_bytes (cache,
+					  AARCH64_SVE_Z0_REGNUM + i,
+					  z_buffer);
+	}
     }
-
-  /* Little endian, just point at the address containing the register
-     value.  */
-  trad_frame_set_reg_addr (cache, AARCH64_V0_REGNUM + vreg_num, offset);
-  trad_frame_set_reg_addr (cache, num_regs + AARCH64_Q0_REGNUM + vreg_num,
-			   offset);
-  trad_frame_set_reg_addr (cache, num_regs + AARCH64_D0_REGNUM + vreg_num,
-			   offset);
-  trad_frame_set_reg_addr (cache, num_regs + AARCH64_S0_REGNUM + vreg_num,
-			   offset);
-  trad_frame_set_reg_addr (cache, num_regs + AARCH64_H0_REGNUM + vreg_num,
-			   offset);
-  trad_frame_set_reg_addr (cache, num_regs + AARCH64_B0_REGNUM + vreg_num,
-			   offset);
-
-  if (has_sve)
-    trad_frame_set_reg_addr (cache, num_regs + AARCH64_SVE_V0_REGNUM
-			     + vreg_num, offset);
-
 }
 
-/* Implement the "init" method of struct tramp_frame.  */
+/* Given a signal frame THIS_FRAME, read the signal frame information into
+   SIGNAL_FRAME.  */
 
 static void
-aarch64_linux_sigframe_init (const struct tramp_frame *self,
-			     frame_info_ptr this_frame,
-			     struct trad_frame_cache *this_cache,
-			     CORE_ADDR func)
+aarch64_linux_read_signal_frame_info (const frame_info_ptr &this_frame,
+				      aarch64_linux_sigframe &signal_frame)
 {
-  struct gdbarch *gdbarch = get_frame_arch (this_frame);
-  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep> (gdbarch);
-  CORE_ADDR sp = get_frame_register_unsigned (this_frame, AARCH64_SP_REGNUM);
-  CORE_ADDR sigcontext_addr = (sp + AARCH64_RT_SIGFRAME_UCONTEXT_OFFSET
-			       + AARCH64_UCONTEXT_SIGCONTEXT_OFFSET );
-  CORE_ADDR section = sigcontext_addr + AARCH64_SIGCONTEXT_RESERVED_OFFSET;
-  CORE_ADDR section_end = section + AARCH64_SIGCONTEXT_RESERVED_SIZE;
-  CORE_ADDR fpsimd = 0;
-  CORE_ADDR sve_regs = 0;
+  signal_frame.sp = get_frame_register_unsigned (this_frame, AARCH64_SP_REGNUM);
+  signal_frame.sigcontext_address
+    = signal_frame.sp + AARCH64_RT_SIGFRAME_UCONTEXT_OFFSET
+      + AARCH64_UCONTEXT_SIGCONTEXT_OFFSET;
+  signal_frame.section
+    = signal_frame.sigcontext_address + AARCH64_SIGCONTEXT_RESERVED_OFFSET;
+  signal_frame.section_end
+    = signal_frame.section + AARCH64_SIGCONTEXT_RESERVED_SIZE;
+
+  signal_frame.gpr_section
+    = signal_frame.sigcontext_address + AARCH64_SIGCONTEXT_XO_OFFSET;
+
+  /* Search for all the other sections, stopping at null.  */
+  CORE_ADDR section = signal_frame.section;
+  CORE_ADDR section_end = signal_frame.section_end;
   uint32_t size, magic;
   bool extra_found = false;
-  int num_regs = gdbarch_num_regs (gdbarch);
+  enum bfd_endian byte_order
+    = gdbarch_byte_order (get_frame_arch (this_frame));
 
-  /* Read in the integer registers.  */
-
-  for (int i = 0; i < 31; i++)
-    {
-      trad_frame_set_reg_addr (this_cache,
-			       AARCH64_X0_REGNUM + i,
-			       sigcontext_addr + AARCH64_SIGCONTEXT_XO_OFFSET
-				 + i * AARCH64_SIGCONTEXT_REG_SIZE);
-    }
-  trad_frame_set_reg_addr (this_cache, AARCH64_SP_REGNUM,
-			   sigcontext_addr + AARCH64_SIGCONTEXT_XO_OFFSET
-			     + 31 * AARCH64_SIGCONTEXT_REG_SIZE);
-  trad_frame_set_reg_addr (this_cache, AARCH64_PC_REGNUM,
-			   sigcontext_addr + AARCH64_SIGCONTEXT_XO_OFFSET
-			     + 32 * AARCH64_SIGCONTEXT_REG_SIZE);
-
-  /* Search for the FP and SVE sections, stopping at null.  */
   while ((magic = read_aarch64_ctx (section, byte_order, &size)) != 0
 	 && size != 0)
     {
       switch (magic)
 	{
 	case AARCH64_FPSIMD_MAGIC:
-	  fpsimd = section;
-	  section += size;
-	  break;
+	  {
+	    signal_frame.fpsimd_section = section;
+	    section += size;
+	    break;
+	  }
 
 	case AARCH64_SVE_MAGIC:
 	  {
 	    /* Check if the section is followed by a full SVE dump, and set
 	       sve_regs if it is.  */
 	    gdb_byte buf[4];
-	    uint16_t vq;
 
-	    if (!tdep->has_sve ())
-	      break;
-
+	    /* Extract the vector length.  */
 	    if (target_read_memory (section + AARCH64_SVE_CONTEXT_VL_OFFSET,
 				    buf, 2) != 0)
 	      {
+		warning (_("Failed to read the vector length from the SVE "
+			   "signal frame context."));
 		section += size;
 		break;
 	      }
-	    vq = sve_vq_from_vl (extract_unsigned_integer (buf, 2, byte_order));
 
-	    if (vq != tdep->vq)
-	      error (_("Invalid vector length in signal frame %d vs %s."), vq,
-		     pulongest (tdep->vq));
+	    signal_frame.vl = extract_unsigned_integer (buf, 2, byte_order);
 
+	    /* Extract the flags to check if we are in streaming mode.  */
+	    if (target_read_memory (section
+				    + AARCH64_SVE_CONTEXT_FLAGS_OFFSET,
+				    buf, 2) != 0)
+	      {
+		warning (_("Failed to read the flags from the SVE signal frame"
+			   " context."));
+		section += size;
+		break;
+	      }
+
+	    uint16_t flags = extract_unsigned_integer (buf, 2, byte_order);
+
+	    /* Is this SSVE data? If so, we are in streaming mode.  */
+	    signal_frame.streaming_mode
+	      = (flags & SVE_SIG_FLAG_SM) ? true : false;
+
+	    ULONGEST vq = sve_vq_from_vl (signal_frame.vl);
 	    if (size >= AARCH64_SVE_CONTEXT_SIZE (vq))
-	      sve_regs = section + AARCH64_SVE_CONTEXT_REGS_OFFSET;
-
+	      {
+		signal_frame.sve_section
+		  = section + AARCH64_SVE_CONTEXT_REGS_OFFSET;
+	      }
 	    section += size;
 	    break;
 	  }
 
+	case AARCH64_ZA_MAGIC:
+	  {
+	    /* Check if the section is followed by a full ZA dump, and set
+	       za_state if it is.  */
+	    gdb_byte buf[2];
+
+	    /* Extract the streaming vector length.  */
+	    if (target_read_memory (section + AARCH64_SME_CONTEXT_SVL_OFFSET,
+				    buf, 2) != 0)
+	      {
+		warning (_("Failed to read the streaming vector length from "
+			   "ZA signal frame context."));
+		section += size;
+		break;
+	      }
+
+	    signal_frame.svl = extract_unsigned_integer (buf, 2, byte_order);
+	    ULONGEST svq = sve_vq_from_vl (signal_frame.svl);
+
+	    if (size >= AARCH64_SME_CONTEXT_SIZE (svq))
+	      {
+		signal_frame.za_section
+		  = section + AARCH64_SME_CONTEXT_REGS_OFFSET;
+		signal_frame.za_payload = true;
+	      }
+	    section += size;
+	    break;
+	  }
+
+	case AARCH64_TPIDR2_MAGIC:
+	  {
+	    /* This is context containing the tpidr2 register.  */
+	    signal_frame.tpidr2_section = section;
+	    section += size;
+	    break;
+	  }
+	case AARCH64_ZT_MAGIC:
+	  {
+	    gdb_byte buf[2];
+
+	    /* Extract the number of ZT registers available in this
+	       context.  */
+	    if (target_read_memory (section + AARCH64_SME2_CONTEXT_NREGS_OFFSET,
+				    buf, 2) != 0)
+	      {
+		warning (_("Failed to read the number of ZT registers from the "
+			   "ZT signal frame context."));
+		section += size;
+		break;
+	      }
+
+	    signal_frame.zt_register_count
+	      = extract_unsigned_integer (buf, 2, byte_order);
+
+	    /* This is a context containing the ZT registers.  This should only
+	       exist if we also have the ZA context.  The presence of the ZT
+	       context without the ZA context is invalid.  */
+	    signal_frame.zt_section = section;
+	    signal_frame.zt_available = true;
+
+	    section += size;
+	    break;
+	  }
 	case AARCH64_EXTRA_MAGIC:
 	  {
 	    /* Extra is always the last valid section in reserved and points to
@@ -372,11 +535,14 @@ aarch64_linux_sigframe_init (const struct tramp_frame *self,
 	    if (target_read_memory (section + AARCH64_EXTRA_DATAP_OFFSET,
 				    buf, 8) != 0)
 	      {
+		warning (_("Failed to read the extra section address from the"
+			   " signal frame context."));
 		section += size;
 		break;
 	      }
 
 	    section = extract_unsigned_integer (buf, 8, byte_order);
+	    signal_frame.extra_section = section;
 	    extra_found = true;
 	    break;
 	  }
@@ -393,13 +559,56 @@ aarch64_linux_sigframe_init (const struct tramp_frame *self,
 	break;
     }
 
-  if (sve_regs != 0)
-    {
-      CORE_ADDR offset;
+    /* Sanity check that if the ZT entry exists, the ZA entry must also
+       exist.  */
+    if (signal_frame.zt_available && !signal_frame.za_payload)
+      error (_("While reading signal context information, found a ZT context "
+	       "without a ZA context, which is invalid."));
+}
 
+/* Implement the "init" method of struct tramp_frame.  */
+
+static void
+aarch64_linux_sigframe_init (const struct tramp_frame *self,
+			     const frame_info_ptr &this_frame,
+			     struct trad_frame_cache *this_cache,
+			     CORE_ADDR func)
+{
+  /* Read the signal context information.  */
+  struct aarch64_linux_sigframe signal_frame;
+  aarch64_linux_read_signal_frame_info (this_frame, signal_frame);
+
+  /* Now we have all the data required to restore the registers from the
+     signal frame.  */
+
+  /* Restore the general purpose registers.  */
+  CORE_ADDR offset = signal_frame.gpr_section;
+  for (int i = 0; i < 31; i++)
+    {
+      trad_frame_set_reg_addr (this_cache, AARCH64_X0_REGNUM + i, offset);
+      offset += AARCH64_SIGCONTEXT_REG_SIZE;
+    }
+  trad_frame_set_reg_addr (this_cache, AARCH64_SP_REGNUM, offset);
+  offset += AARCH64_SIGCONTEXT_REG_SIZE;
+  trad_frame_set_reg_addr (this_cache, AARCH64_PC_REGNUM, offset);
+
+  struct gdbarch *gdbarch = get_frame_arch (this_frame);
+  aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep> (gdbarch);
+
+  /* Restore the SVE / FPSIMD registers.  */
+  if (tdep->has_sve () && signal_frame.sve_section != 0)
+    {
+      ULONGEST vq = sve_vq_from_vl (signal_frame.vl);
+      CORE_ADDR sve_regs = signal_frame.sve_section;
+
+      /* Restore VG.  */
+      trad_frame_set_reg_value (this_cache, AARCH64_SVE_VG_REGNUM,
+				sve_vg_from_vl (signal_frame.vl));
+
+      int num_regs = gdbarch_num_regs (gdbarch);
       for (int i = 0; i < 32; i++)
 	{
-	  offset = sve_regs + (i * tdep->vq * 16);
+	  offset = sve_regs + (i * vq * 16);
 	  trad_frame_set_reg_addr (this_cache, AARCH64_SVE_Z0_REGNUM + i,
 				   offset);
 	  trad_frame_set_reg_addr (this_cache,
@@ -417,37 +626,111 @@ aarch64_linux_sigframe_init (const struct tramp_frame *self,
 				   offset);
 	}
 
-      offset = sve_regs + AARCH64_SVE_CONTEXT_P_REGS_OFFSET (tdep->vq);
+      offset = sve_regs + AARCH64_SVE_CONTEXT_P_REGS_OFFSET (vq);
       for (int i = 0; i < 16; i++)
 	trad_frame_set_reg_addr (this_cache, AARCH64_SVE_P0_REGNUM + i,
-				 offset + (i * tdep->vq * 2));
+				 offset + (i * vq * 2));
 
-      offset = sve_regs + AARCH64_SVE_CONTEXT_FFR_OFFSET (tdep->vq);
+      offset = sve_regs + AARCH64_SVE_CONTEXT_FFR_OFFSET (vq);
       trad_frame_set_reg_addr (this_cache, AARCH64_SVE_FFR_REGNUM, offset);
     }
 
-  if (fpsimd != 0)
+  /* Restore the FPSIMD registers.  */
+  if (signal_frame.fpsimd_section != 0)
     {
+      CORE_ADDR fpsimd = signal_frame.fpsimd_section;
+
       trad_frame_set_reg_addr (this_cache, AARCH64_FPSR_REGNUM,
 			       fpsimd + AARCH64_FPSIMD_FPSR_OFFSET);
       trad_frame_set_reg_addr (this_cache, AARCH64_FPCR_REGNUM,
 			       fpsimd + AARCH64_FPSIMD_FPCR_OFFSET);
 
       /* If there was no SVE section then set up the V registers.  */
-      if (sve_regs == 0)
-	{
-	  for (int i = 0; i < 32; i++)
-	    {
-	      CORE_ADDR offset = (fpsimd + AARCH64_FPSIMD_V0_OFFSET
-				  + (i * AARCH64_FPSIMD_VREG_SIZE));
+      if (!tdep->has_sve () || signal_frame.sve_section == 0)
+	aarch64_linux_restore_vregs (gdbarch, this_cache, fpsimd);
+    }
 
-	      aarch64_linux_restore_vreg (this_cache, num_regs, i, offset,
-					  byte_order, tdep->has_sve ());
-	    }
+  /* Restore the SME registers.  */
+  if (tdep->has_sme ())
+    {
+      if (signal_frame.za_section != 0)
+	{
+	  /* Restore the ZA state.  */
+	  trad_frame_set_reg_addr (this_cache, tdep->sme_za_regnum,
+				   signal_frame.za_section);
+	}
+
+      /* Restore/Reconstruct SVCR.  */
+      ULONGEST svcr = 0;
+      svcr |= signal_frame.za_payload ? SVCR_ZA_BIT : 0;
+      svcr |= signal_frame.streaming_mode ? SVCR_SM_BIT : 0;
+      trad_frame_set_reg_value (this_cache, tdep->sme_svcr_regnum, svcr);
+
+      /* Restore SVG.  */
+      trad_frame_set_reg_value (this_cache, tdep->sme_svg_regnum,
+				sve_vg_from_vl (signal_frame.svl));
+
+      /* Handle SME2 (ZT).  */
+      if (tdep->has_sme2 ()
+	  && signal_frame.za_section != 0
+	  && signal_frame.zt_register_count > 0)
+	{
+	  /* Is ZA state available?  */
+	  gdb_assert (svcr & SVCR_ZA_BIT);
+
+	  /* Restore the ZT state.  For now we assume that we only have
+	     a single ZT register.  If/When more ZT registers appear, we
+	     should update the code to handle that case accordingly.  */
+	  trad_frame_set_reg_addr (this_cache, tdep->sme2_zt0_regnum,
+				   signal_frame.zt_section
+				   + AARCH64_SME2_CONTEXT_REGS_OFFSET);
 	}
     }
 
-  trad_frame_set_id (this_cache, frame_id_build (sp, func));
+  /* Restore the tpidr2 register, if the target supports it and if there is
+     an entry for it.  */
+  if (signal_frame.tpidr2_section != 0 && tdep->has_tls ()
+      && tdep->tls_register_count >= 2)
+    {
+      /* Restore tpidr2.  */
+      trad_frame_set_reg_addr (this_cache, tdep->tls_regnum_base + 1,
+			       signal_frame.tpidr2_section
+			       + AARCH64_TPIDR2_CONTEXT_TPIDR2_OFFSET);
+    }
+
+  trad_frame_set_id (this_cache, frame_id_build (signal_frame.sp, func));
+}
+
+/* Implements the "prev_arch" method of struct tramp_frame.  */
+
+static struct gdbarch *
+aarch64_linux_sigframe_prev_arch (const frame_info_ptr &this_frame,
+				  void **frame_cache)
+{
+  struct trad_frame_cache *cache
+    = (struct trad_frame_cache *) *frame_cache;
+
+  gdb_assert (cache != nullptr);
+
+  struct aarch64_linux_sigframe signal_frame;
+  aarch64_linux_read_signal_frame_info (this_frame, signal_frame);
+
+  /* The SVE vector length and the SME vector length may change from frame to
+     frame.  Make sure we report the correct architecture to the previous
+     frame.
+
+     We can reuse the next frame's architecture here, as it should be mostly
+     the same, except for potential different vg and svg values.  */
+  const struct target_desc *tdesc
+    = gdbarch_target_desc (get_frame_arch (this_frame));
+  aarch64_features features = aarch64_features_from_target_desc (tdesc);
+  features.vq = sve_vq_from_vl (signal_frame.vl);
+  features.svq = (uint8_t) sve_vq_from_vl (signal_frame.svl);
+
+  struct gdbarch_info info;
+  info.bfd_arch_info = bfd_lookup_arch (bfd_arch_aarch64, bfd_mach_aarch64);
+  info.target_desc = aarch64_read_description (features);
+  return gdbarch_find_by_info (info);
 }
 
 static const struct tramp_frame aarch64_linux_rt_sigframe =
@@ -464,7 +747,9 @@ static const struct tramp_frame aarch64_linux_rt_sigframe =
     {0xd4000001, ULONGEST_MAX},
     {TRAMP_SENTINEL_INSN, ULONGEST_MAX}
   },
-  aarch64_linux_sigframe_init
+  aarch64_linux_sigframe_init,
+  nullptr, /* validate */
+  aarch64_linux_sigframe_prev_arch, /* prev_arch */
 };
 
 /* Register maps.  */
@@ -525,50 +810,55 @@ const struct regset aarch64_linux_fpregset =
 
 #define SVE_HEADER_FLAG_SVE		1
 
-/* Get VQ value from SVE section in the core dump.  */
+/* Get the vector quotient (VQ) or streaming vector quotient (SVQ) value
+   from the section named SECTION_NAME.
+
+   Return non-zero if successful and 0 otherwise.  */
 
 static uint64_t
-aarch64_linux_core_read_vq (struct gdbarch *gdbarch, bfd *abfd)
+aarch64_linux_core_read_vq (struct gdbarch *gdbarch, bfd *abfd,
+			    const char *section_name)
 {
-  gdb_byte header[SVE_HEADER_SIZE];
-  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  asection *sve_section = bfd_get_section_by_name (abfd, ".reg-aarch-sve");
+  gdb_assert (section_name != nullptr);
 
-  if (sve_section == nullptr)
+  asection *section = bfd_get_section_by_name (abfd, section_name);
+
+  if (section == nullptr)
     {
       /* No SVE state.  */
       return 0;
     }
 
-  size_t size = bfd_section_size (sve_section);
+  size_t size = bfd_section_size (section);
 
   /* Check extended state size.  */
   if (size < SVE_HEADER_SIZE)
     {
-      warning (_("'.reg-aarch-sve' section in core file too small."));
+      warning (_("'%s' core file section is too small. "
+		 "Expected %s bytes, got %s bytes"), section_name,
+		 pulongest (SVE_HEADER_SIZE), pulongest (size));
       return 0;
     }
 
-  if (!bfd_get_section_contents (abfd, sve_section, header, 0, SVE_HEADER_SIZE))
+  gdb_byte header[SVE_HEADER_SIZE];
+
+  if (!bfd_get_section_contents (abfd, section, header, 0, SVE_HEADER_SIZE))
     {
       warning (_("Couldn't read sve header from "
-		 "'.reg-aarch-sve' section in core file."));
+		 "'%s' core file section."), section_name);
       return 0;
     }
 
-  uint64_t vl = extract_unsigned_integer (header + SVE_HEADER_VL_OFFSET,
-					  SVE_HEADER_VL_LENGTH, byte_order);
-  uint64_t vq = sve_vq_from_vl (vl);
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+  uint64_t vq
+    = sve_vq_from_vl (extract_unsigned_integer (header + SVE_HEADER_VL_OFFSET,
+						SVE_HEADER_VL_LENGTH,
+						byte_order));
 
-  if (vq > AARCH64_MAX_SVE_VQ)
+  if (vq > AARCH64_MAX_SVE_VQ || vq == 0)
     {
-      warning (_("SVE Vector length in core file not supported by this version"
-		 " of GDB.  (VQ=%s)"), pulongest (vq));
-      return 0;
-    }
-  else if (vq == 0)
-    {
-      warning (_("SVE Vector length in core file is invalid. (VQ=%s"),
+      warning (_("SVE/SSVE vector length in core file is invalid."
+		 " (max vq=%d) (detected vq=%s)"), AARCH64_MAX_SVE_VQ,
 	       pulongest (vq));
       return 0;
     }
@@ -576,14 +866,53 @@ aarch64_linux_core_read_vq (struct gdbarch *gdbarch, bfd *abfd)
   return vq;
 }
 
+/* Get the vector quotient (VQ) value from CORE_BFD's sections.
+
+   Return non-zero if successful and 0 otherwise.  */
+
+static uint64_t
+aarch64_linux_core_read_vq_from_sections (struct gdbarch *gdbarch,
+					  bfd *core_bfd)
+{
+  /* First check if we have a SSVE section.  If so, check if it is active.  */
+  asection *section = bfd_get_section_by_name (core_bfd, ".reg-aarch-ssve");
+
+  if (section != nullptr)
+    {
+      /* We've found a SSVE section, so now fetch its data.  */
+      gdb_byte header[SVE_HEADER_SIZE];
+
+      if (bfd_get_section_contents (core_bfd, section, header, 0,
+				    SVE_HEADER_SIZE))
+	{
+	  /* Check if the SSVE section has SVE contents.  */
+	  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+	  uint16_t flags
+	    = extract_unsigned_integer (header + SVE_HEADER_FLAGS_OFFSET,
+					SVE_HEADER_FLAGS_LENGTH, byte_order);
+
+	  if (flags & SVE_HEADER_FLAG_SVE)
+	    {
+	      /* The SSVE state is active, so return the vector length from the
+		 the SSVE section.  */
+	      return aarch64_linux_core_read_vq (gdbarch, core_bfd,
+						 ".reg-aarch-ssve");
+	    }
+	}
+    }
+
+  /* No valid SSVE section.  Return the vq from the SVE section (if any).  */
+  return aarch64_linux_core_read_vq (gdbarch, core_bfd, ".reg-aarch-sve");
+}
+
 /* Supply register REGNUM from BUF to REGCACHE, using the register map
    in REGSET.  If REGNUM is -1, do this for all registers in REGSET.
-   If BUF is NULL, set the registers to "unavailable" status.  */
+   If BUF is nullptr, set the registers to "unavailable" status.  */
 
 static void
-aarch64_linux_supply_sve_regset (const struct regset *regset,
-				 struct regcache *regcache,
-				 int regnum, const void *buf, size_t size)
+supply_sve_regset (const struct regset *regset,
+		   struct regcache *regcache,
+		   int regnum, const void *buf, size_t size)
 {
   gdb_byte *header = (gdb_byte *) buf;
   struct gdbarch *gdbarch = regcache->arch ();
@@ -635,14 +964,89 @@ aarch64_linux_supply_sve_regset (const struct regset *regset,
     }
 }
 
+/* Collect an inactive SVE register set state.  This is equivalent to a
+   fpsimd layout.
+
+   Collect the data from REGCACHE to BUF, using the register
+   map in REGSET.  */
+
+static void
+collect_inactive_sve_regset (const struct regcache *regcache,
+			     void *buf, size_t size, int vg_regnum)
+{
+  gdb_byte *header = (gdb_byte *) buf;
+  struct gdbarch *gdbarch = regcache->arch ();
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+
+  gdb_assert (buf != nullptr);
+  gdb_assert (size >= SVE_CORE_DUMMY_SIZE);
+
+  /* Zero out everything first.  */
+  memset ((gdb_byte *) buf, 0, SVE_CORE_DUMMY_SIZE);
+
+  /* BUF starts with a SVE header prior to the register dump.  */
+
+  /* Dump the default size of an empty SVE payload.  */
+  uint32_t real_size = SVE_CORE_DUMMY_SIZE;
+  store_unsigned_integer (header + SVE_HEADER_SIZE_OFFSET,
+			  SVE_HEADER_SIZE_LENGTH, byte_order, real_size);
+
+  /* Dump a dummy max size.  */
+  uint32_t max_size = SVE_CORE_DUMMY_MAX_SIZE;
+  store_unsigned_integer (header + SVE_HEADER_MAX_SIZE_OFFSET,
+			  SVE_HEADER_MAX_SIZE_LENGTH, byte_order, max_size);
+
+  /* Dump the vector length.  */
+  ULONGEST vg = 0;
+  regcache->raw_collect (vg_regnum, &vg);
+  uint16_t vl = sve_vl_from_vg (vg);
+  store_unsigned_integer (header + SVE_HEADER_VL_OFFSET, SVE_HEADER_VL_LENGTH,
+			  byte_order, vl);
+
+  /* Dump the standard maximum vector length.  */
+  uint16_t max_vl = SVE_CORE_DUMMY_MAX_VL;
+  store_unsigned_integer (header + SVE_HEADER_MAX_VL_OFFSET,
+			  SVE_HEADER_MAX_VL_LENGTH, byte_order,
+			  max_vl);
+
+  /* The rest of the fields are zero.  */
+  uint16_t flags = SVE_CORE_DUMMY_FLAGS;
+  store_unsigned_integer (header + SVE_HEADER_FLAGS_OFFSET,
+			  SVE_HEADER_FLAGS_LENGTH, byte_order,
+			  flags);
+  uint16_t reserved = SVE_CORE_DUMMY_RESERVED;
+  store_unsigned_integer (header + SVE_HEADER_RESERVED_OFFSET,
+			  SVE_HEADER_RESERVED_LENGTH, byte_order, reserved);
+
+  /* We are done with the header part of it.  Now dump the register state
+     in the FPSIMD format.  */
+
+  /* Dump the first 128 bits of each of the Z registers.  */
+  header += AARCH64_SVE_CONTEXT_REGS_OFFSET;
+  for (int i = 0; i < AARCH64_SVE_Z_REGS_NUM; i++)
+    regcache->raw_collect_part (AARCH64_SVE_Z0_REGNUM + i, 0, V_REGISTER_SIZE,
+				header + V_REGISTER_SIZE * i);
+
+  /* Dump FPSR and FPCR.  */
+  header += 32 * V_REGISTER_SIZE;
+  regcache->raw_collect (AARCH64_FPSR_REGNUM, header);
+  regcache->raw_collect (AARCH64_FPCR_REGNUM, header + 4);
+
+  /* Dump two reserved empty fields of 4 bytes.  */
+  header += 8;
+  memset (header, 0, 8);
+
+  /* We should have a FPSIMD-formatted register dump now.  */
+}
+
 /* Collect register REGNUM from REGCACHE to BUF, using the register
    map in REGSET.  If REGNUM is -1, do this for all registers in
    REGSET.  */
 
 static void
-aarch64_linux_collect_sve_regset (const struct regset *regset,
-				  const struct regcache *regcache,
-				  int regnum, void *buf, size_t size)
+collect_sve_regset (const struct regset *regset,
+		    const struct regcache *regcache,
+		    int regnum, void *buf, size_t size)
 {
   gdb_byte *header = (gdb_byte *) buf;
   struct gdbarch *gdbarch = regcache->arch ();
@@ -657,22 +1061,366 @@ aarch64_linux_collect_sve_regset (const struct regset *regset,
 
   store_unsigned_integer (header + SVE_HEADER_SIZE_OFFSET,
 			  SVE_HEADER_SIZE_LENGTH, byte_order, size);
+  uint32_t max_size = SVE_CORE_DUMMY_MAX_SIZE;
   store_unsigned_integer (header + SVE_HEADER_MAX_SIZE_OFFSET,
-			  SVE_HEADER_MAX_SIZE_LENGTH, byte_order, size);
+			  SVE_HEADER_MAX_SIZE_LENGTH, byte_order, max_size);
   store_unsigned_integer (header + SVE_HEADER_VL_OFFSET, SVE_HEADER_VL_LENGTH,
 			  byte_order, sve_vl_from_vq (vq));
+  uint16_t max_vl = SVE_CORE_DUMMY_MAX_VL;
   store_unsigned_integer (header + SVE_HEADER_MAX_VL_OFFSET,
 			  SVE_HEADER_MAX_VL_LENGTH, byte_order,
-			  sve_vl_from_vq (vq));
+			  max_vl);
+  uint16_t flags = SVE_HEADER_FLAG_SVE;
   store_unsigned_integer (header + SVE_HEADER_FLAGS_OFFSET,
 			  SVE_HEADER_FLAGS_LENGTH, byte_order,
-			  SVE_HEADER_FLAG_SVE);
+			  flags);
+  uint16_t reserved = SVE_CORE_DUMMY_RESERVED;
   store_unsigned_integer (header + SVE_HEADER_RESERVED_OFFSET,
-			  SVE_HEADER_RESERVED_LENGTH, byte_order, 0);
+			  SVE_HEADER_RESERVED_LENGTH, byte_order, reserved);
 
   /* The SVE register dump follows.  */
   regcache->collect_regset (regset, regnum, (gdb_byte *) buf + SVE_HEADER_SIZE,
 			    size - SVE_HEADER_SIZE);
+}
+
+/* Supply register REGNUM from BUF to REGCACHE, using the register map
+   in REGSET.  If REGNUM is -1, do this for all registers in REGSET.
+   If BUF is NULL, set the registers to "unavailable" status.  */
+
+static void
+aarch64_linux_supply_sve_regset (const struct regset *regset,
+				 struct regcache *regcache,
+				 int regnum, const void *buf, size_t size)
+{
+  struct gdbarch *gdbarch = regcache->arch ();
+  aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep> (gdbarch);
+
+  if (tdep->has_sme ())
+    {
+      ULONGEST svcr = 0;
+      regcache->raw_collect (tdep->sme_svcr_regnum, &svcr);
+
+      /* Is streaming mode enabled?  */
+      if (svcr & SVCR_SM_BIT)
+	/* If so, don't load SVE data from the SVE section.  The data to be
+	   used is in the SSVE section.  */
+	return;
+    }
+  /* If streaming mode is not enabled, load the SVE regcache data from the SVE
+     section.  */
+  supply_sve_regset (regset, regcache, regnum, buf, size);
+}
+
+/* Collect register REGNUM from REGCACHE to BUF, using the register
+   map in REGSET.  If REGNUM is -1, do this for all registers in
+   REGSET.  */
+
+static void
+aarch64_linux_collect_sve_regset (const struct regset *regset,
+				  const struct regcache *regcache,
+				  int regnum, void *buf, size_t size)
+{
+  struct gdbarch *gdbarch = regcache->arch ();
+  aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep> (gdbarch);
+  bool streaming_mode = false;
+
+  if (tdep->has_sme ())
+    {
+      ULONGEST svcr = 0;
+      regcache->raw_collect (tdep->sme_svcr_regnum, &svcr);
+
+      /* Is streaming mode enabled?  */
+      if (svcr & SVCR_SM_BIT)
+	{
+	  /* If so, don't dump SVE regcache data to the SVE section.  The SVE
+	     data should be dumped to the SSVE section.  Dump an empty SVE
+	     block instead.  */
+	  streaming_mode = true;
+	}
+    }
+
+  /* If streaming mode is not enabled or there is no SME support, dump the
+     SVE regcache data to the SVE section.  */
+
+  /* Check if we have an active SVE state (non-zero Z/P/FFR registers).
+     If so, then we need to dump registers in the SVE format.
+
+     Otherwise we should dump the registers in the FPSIMD format.  */
+  if (sve_state_is_empty (regcache) || streaming_mode)
+    collect_inactive_sve_regset (regcache, buf, size, AARCH64_SVE_VG_REGNUM);
+  else
+    collect_sve_regset (regset, regcache, regnum, buf, size);
+}
+
+/* Supply register REGNUM from BUF to REGCACHE, using the register map
+   in REGSET.  If REGNUM is -1, do this for all registers in REGSET.
+   If BUF is NULL, set the registers to "unavailable" status.  */
+
+static void
+aarch64_linux_supply_ssve_regset (const struct regset *regset,
+				  struct regcache *regcache,
+				  int regnum, const void *buf, size_t size)
+{
+  gdb_byte *header = (gdb_byte *) buf;
+  struct gdbarch *gdbarch = regcache->arch ();
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+  aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep> (gdbarch);
+
+  uint16_t flags = extract_unsigned_integer (header + SVE_HEADER_FLAGS_OFFSET,
+					     SVE_HEADER_FLAGS_LENGTH,
+					     byte_order);
+
+  /* Since SVCR's bits are inferred from the data we have in the header of the
+     SSVE section, we need to initialize it to zero first, so that it doesn't
+     carry garbage data.  */
+  ULONGEST svcr = 0;
+  regcache->raw_supply (tdep->sme_svcr_regnum, &svcr);
+
+  /* Is streaming mode enabled?  */
+  if (flags & SVE_HEADER_FLAG_SVE)
+    {
+      /* Streaming mode is active, so flip the SM bit.  */
+      svcr = SVCR_SM_BIT;
+      regcache->raw_supply (tdep->sme_svcr_regnum, &svcr);
+
+      /* Fetch the SVE data from the SSVE section.  */
+      supply_sve_regset (regset, regcache, regnum, buf, size);
+    }
+}
+
+/* Collect register REGNUM from REGCACHE to BUF, using the register
+   map in REGSET.  If REGNUM is -1, do this for all registers in
+   REGSET.  */
+
+static void
+aarch64_linux_collect_ssve_regset (const struct regset *regset,
+				   const struct regcache *regcache,
+				   int regnum, void *buf, size_t size)
+{
+  struct gdbarch *gdbarch = regcache->arch ();
+  aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep> (gdbarch);
+  ULONGEST svcr = 0;
+  regcache->raw_collect (tdep->sme_svcr_regnum, &svcr);
+
+  /* Is streaming mode enabled?  */
+  if (svcr & SVCR_SM_BIT)
+    {
+      /* If so, dump SVE regcache data to the SSVE section.  */
+      collect_sve_regset (regset, regcache, regnum, buf, size);
+    }
+  else
+    {
+      /* Otherwise dump an empty SVE block to the SSVE section with the
+	 streaming vector length.  */
+      collect_inactive_sve_regset (regcache, buf, size, tdep->sme_svg_regnum);
+    }
+}
+
+/* Supply register REGNUM from BUF to REGCACHE, using the register map
+   in REGSET.  If REGNUM is -1, do this for all registers in REGSET.
+   If BUF is NULL, set the registers to "unavailable" status.  */
+
+static void
+aarch64_linux_supply_za_regset (const struct regset *regset,
+				struct regcache *regcache,
+				int regnum, const void *buf, size_t size)
+{
+  gdb_byte *header = (gdb_byte *) buf;
+  struct gdbarch *gdbarch = regcache->arch ();
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+
+  /* Handle an empty buffer.  */
+  if (buf == nullptr)
+    return regcache->supply_regset (regset, regnum, nullptr, size);
+
+  if (size < SVE_HEADER_SIZE)
+    error (_("ZA state header size (%s) invalid.  Should be at least %s."),
+	   pulongest (size), pulongest (SVE_HEADER_SIZE));
+
+  /* The ZA register note in a core file can have a couple of states:
+
+     1 - Just the header without the payload.  This means that there is no
+	 ZA data, and we should populate only SVCR and SVG registers on GDB's
+	 side.  The ZA data should be marked as unavailable.
+
+     2 - The header with an additional data payload.  This means there is
+	 actual ZA data, and we should populate ZA, SVCR and SVG.  */
+
+  aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep> (gdbarch);
+
+  /* Populate SVG.  */
+  ULONGEST svg
+    = sve_vg_from_vl (extract_unsigned_integer (header + SVE_HEADER_VL_OFFSET,
+						SVE_HEADER_VL_LENGTH,
+						byte_order));
+  regcache->raw_supply (tdep->sme_svg_regnum, &svg);
+
+  size_t data_size
+    = extract_unsigned_integer (header + SVE_HEADER_SIZE_OFFSET,
+				SVE_HEADER_SIZE_LENGTH, byte_order)
+      - SVE_HEADER_SIZE;
+
+  /* Populate SVCR.  */
+  bool has_za_payload = (data_size > 0);
+  ULONGEST svcr;
+  regcache->raw_collect (tdep->sme_svcr_regnum, &svcr);
+
+  /* If we have a ZA payload, enable bit 2 of SVCR, otherwise clear it.  This
+     register gets updated by the SVE/SSVE-handling functions as well, as they
+     report the SM bit 1.  */
+  if (has_za_payload)
+    svcr |= SVCR_ZA_BIT;
+  else
+    svcr &= ~SVCR_ZA_BIT;
+
+  /* Update SVCR in the register buffer.  */
+  regcache->raw_supply (tdep->sme_svcr_regnum, &svcr);
+
+  /* Populate the register cache with ZA register contents, if we have any.  */
+  buf = has_za_payload ? (gdb_byte *) buf + SVE_HEADER_SIZE : nullptr;
+
+  size_t za_bytes = std::pow (sve_vl_from_vg (svg), 2);
+
+  /* Update ZA in the register buffer.  */
+  if (has_za_payload)
+    {
+      /* Check that the payload size is sane.  */
+      if (size < SVE_HEADER_SIZE + za_bytes)
+	{
+	  error (_("ZA header + payload size (%s) invalid.  Should be at "
+		   "least %s."),
+		 pulongest (size), pulongest (SVE_HEADER_SIZE + za_bytes));
+	}
+
+      regcache->raw_supply (tdep->sme_za_regnum, buf);
+    }
+  else
+    {
+      gdb_byte za_zeroed[za_bytes];
+      memset (za_zeroed, 0, za_bytes);
+      regcache->raw_supply (tdep->sme_za_regnum, za_zeroed);
+    }
+}
+
+/* Collect register REGNUM from REGCACHE to BUF, using the register
+   map in REGSET.  If REGNUM is -1, do this for all registers in
+   REGSET.  */
+
+static void
+aarch64_linux_collect_za_regset (const struct regset *regset,
+				 const struct regcache *regcache,
+				 int regnum, void *buf, size_t size)
+{
+  gdb_assert (buf != nullptr);
+
+  /* Sanity check the dump size.  */
+  gdb_assert (size >= SVE_HEADER_SIZE);
+
+  /* The ZA register note in a core file can have a couple of states:
+
+     1 - Just the header without the payload.  This means that there is no
+	 ZA data, and we should dump just the header.
+
+     2 - The header with an additional data payload.  This means there is
+	 actual ZA data, and we should dump both the header and the ZA data
+	 payload.  */
+
+  aarch64_gdbarch_tdep *tdep
+    = gdbarch_tdep<aarch64_gdbarch_tdep> (regcache->arch ());
+
+  /* Determine if we have ZA state from the SVCR register ZA bit.  */
+  ULONGEST svcr;
+  regcache->raw_collect (tdep->sme_svcr_regnum, &svcr);
+
+  /* Check the ZA payload.  */
+  bool has_za_payload = (svcr & SVCR_ZA_BIT) != 0;
+  size = has_za_payload ? size : SVE_HEADER_SIZE;
+
+  /* Write the size and max_size fields.  */
+  gdb_byte *header = (gdb_byte *) buf;
+  enum bfd_endian byte_order = gdbarch_byte_order (regcache->arch ());
+  store_unsigned_integer (header + SVE_HEADER_SIZE_OFFSET,
+			  SVE_HEADER_SIZE_LENGTH, byte_order, size);
+
+  uint32_t max_size
+    = SVE_HEADER_SIZE + std::pow (sve_vl_from_vq (tdep->sme_svq), 2);
+  store_unsigned_integer (header + SVE_HEADER_MAX_SIZE_OFFSET,
+			  SVE_HEADER_MAX_SIZE_LENGTH, byte_order, max_size);
+
+  /* Output the other fields of the ZA header (vl, max_vl, flags and
+     reserved).  */
+  uint64_t svq = tdep->sme_svq;
+  store_unsigned_integer (header + SVE_HEADER_VL_OFFSET, SVE_HEADER_VL_LENGTH,
+			  byte_order, sve_vl_from_vq (svq));
+
+  uint16_t max_vl = SVE_CORE_DUMMY_MAX_VL;
+  store_unsigned_integer (header + SVE_HEADER_MAX_VL_OFFSET,
+			  SVE_HEADER_MAX_VL_LENGTH, byte_order,
+			  max_vl);
+
+  uint16_t flags = SVE_CORE_DUMMY_FLAGS;
+  store_unsigned_integer (header + SVE_HEADER_FLAGS_OFFSET,
+			  SVE_HEADER_FLAGS_LENGTH, byte_order, flags);
+
+  uint16_t reserved = SVE_CORE_DUMMY_RESERVED;
+  store_unsigned_integer (header + SVE_HEADER_RESERVED_OFFSET,
+			  SVE_HEADER_RESERVED_LENGTH, byte_order, reserved);
+
+  buf = has_za_payload ? (gdb_byte *) buf + SVE_HEADER_SIZE : nullptr;
+
+  /* Dump the register cache contents for the ZA register to the buffer.  */
+  regcache->collect_regset (regset, regnum, (gdb_byte *) buf,
+			    size - SVE_HEADER_SIZE);
+}
+
+/* Supply register REGNUM from BUF to REGCACHE, using the register map
+   in REGSET.  If REGNUM is -1, do this for all registers in REGSET.
+   If BUF is NULL, set the registers to "unavailable" status.  */
+
+static void
+aarch64_linux_supply_zt_regset (const struct regset *regset,
+				struct regcache *regcache,
+				int regnum, const void *buf, size_t size)
+{
+  /* Read the ZT register note from a core file into the register buffer.  */
+
+  /* Make sure the buffer contains at least the expected amount of data we are
+     supposed to get.  */
+  gdb_assert (size >= AARCH64_SME2_ZT0_SIZE);
+
+  /* Handle an empty buffer.  */
+  if (buf == nullptr)
+    return regcache->supply_regset (regset, regnum, nullptr, size);
+
+  aarch64_gdbarch_tdep *tdep
+    = gdbarch_tdep<aarch64_gdbarch_tdep> (regcache->arch ());
+
+  /* Supply the ZT0 register contents.  */
+  regcache->raw_supply (tdep->sme2_zt0_regnum, buf);
+}
+
+/* Collect register REGNUM from REGCACHE to BUF, using the register
+   map in REGSET.  If REGNUM is -1, do this for all registers in
+   REGSET.  */
+
+static void
+aarch64_linux_collect_zt_regset (const struct regset *regset,
+				 const struct regcache *regcache,
+				 int regnum, void *buf, size_t size)
+{
+  /* Read the ZT register contents from the register buffer into the core
+     file section.  */
+
+  /* Make sure the buffer can hold the data we need to return.  */
+  gdb_assert (size >= AARCH64_SME2_ZT0_SIZE);
+  gdb_assert (buf != nullptr);
+
+  aarch64_gdbarch_tdep *tdep
+    = gdbarch_tdep<aarch64_gdbarch_tdep> (regcache->arch ());
+
+  /* Dump the register cache contents for the ZT register to the buffer.  */
+  regcache->collect_regset (regset, tdep->sme2_zt0_regnum, buf,
+			    AARCH64_SME2_ZT0_SIZE);
 }
 
 /* Implement the "iterate_over_regset_sections" gdbarch method.  */
@@ -701,6 +1449,30 @@ aarch64_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
 	  { 0 }
 	};
 
+      const struct regset aarch64_linux_ssve_regset =
+	{
+	  sve_regmap,
+	  aarch64_linux_supply_ssve_regset, aarch64_linux_collect_ssve_regset,
+	  REGSET_VARIABLE_SIZE
+	};
+
+      /* If SME is supported in the core file, process the SSVE section first,
+	 and the SVE section last.  This is because we need information from
+	 the SSVE set to determine if streaming mode is active.  If streaming
+	 mode is active, we need to extract the data from the SSVE section.
+
+	 Otherwise, if streaming mode is not active, we fetch the data from the
+	 SVE section.  */
+      if (tdep->has_sme ())
+	{
+	  cb (".reg-aarch-ssve",
+	      SVE_HEADER_SIZE
+	      + regcache_map_entry_size (aarch64_linux_fpregmap),
+	      SVE_HEADER_SIZE + regcache_map_entry_size (sve_regmap),
+	      &aarch64_linux_ssve_regset, "SSVE registers", cb_data);
+	}
+
+      /* Handle the SVE register set.  */
       const struct regset aarch64_linux_sve_regset =
 	{
 	  sve_regmap,
@@ -717,6 +1489,56 @@ aarch64_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
     cb (".reg2", AARCH64_LINUX_SIZEOF_FPREGSET, AARCH64_LINUX_SIZEOF_FPREGSET,
 	&aarch64_linux_fpregset, NULL, cb_data);
 
+  if (tdep->has_sme ())
+    {
+      /* Setup the register set information for a ZA register set core
+	 dump.  */
+
+      /* Create this on the fly in order to handle the ZA register size.  */
+      const struct regcache_map_entry za_regmap[] =
+	{
+	  { 1, tdep->sme_za_regnum,
+	    (int) std::pow (sve_vl_from_vq (tdep->sme_svq), 2) },
+	  { 0 }
+	};
+
+      const struct regset aarch64_linux_za_regset =
+	{
+	  za_regmap,
+	  aarch64_linux_supply_za_regset, aarch64_linux_collect_za_regset,
+	  REGSET_VARIABLE_SIZE
+	};
+
+      cb (".reg-aarch-za",
+	  SVE_HEADER_SIZE,
+	  SVE_HEADER_SIZE + std::pow (sve_vl_from_vq (tdep->sme_svq), 2),
+	  &aarch64_linux_za_regset, "ZA register", cb_data);
+
+      /* Handle SME2 (ZT) as well, which is only available if SME is
+	 available.  */
+      if (tdep->has_sme2 ())
+	{
+	  const struct regcache_map_entry zt_regmap[] =
+	    {
+	      { 1, tdep->sme2_zt0_regnum, AARCH64_SME2_ZT0_SIZE },
+	      { 0 }
+	    };
+
+	  /* We set the register set size to REGSET_VARIABLE_SIZE here because
+	     in the future there might be more ZT registers.  */
+	  const struct regset aarch64_linux_zt_regset =
+	    {
+	      zt_regmap,
+	      aarch64_linux_supply_zt_regset, aarch64_linux_collect_zt_regset,
+	      REGSET_VARIABLE_SIZE
+	    };
+
+	  cb (".reg-aarch-zt",
+	      AARCH64_SME2_ZT0_SIZE,
+	      AARCH64_SME2_ZT0_SIZE,
+	      &aarch64_linux_zt_regset, "ZT registers", cb_data);
+	}
+    }
 
   if (tdep->has_pauth ())
     {
@@ -790,12 +1612,21 @@ static const struct target_desc *
 aarch64_linux_core_read_description (struct gdbarch *gdbarch,
 				     struct target_ops *target, bfd *abfd)
 {
-  gdb::optional<gdb::byte_vector> auxv = target_read_auxv_raw (target);
+  std::optional<gdb::byte_vector> auxv = target_read_auxv_raw (target);
   CORE_ADDR hwcap = linux_get_hwcap (auxv, target, gdbarch);
   CORE_ADDR hwcap2 = linux_get_hwcap2 (auxv, target, gdbarch);
 
   aarch64_features features;
-  features.vq = aarch64_linux_core_read_vq (gdbarch, abfd);
+
+  /* We need to extract the SVE data from the .reg-aarch-sve section or the
+     .reg-aarch-ssve section depending on which one was active when the core
+     file was generated.
+
+     If the SSVE section contains SVE data, then it is considered active.
+     Otherwise the SVE section is considered active.  This guarantees we will
+     have the correct target description with the correct SVE vector
+     length.  */
+  features.vq = aarch64_linux_core_read_vq_from_sections (gdbarch, abfd);
   features.pauth = hwcap & AARCH64_HWCAP_PACA;
   features.mte = hwcap2 & HWCAP2_MTE;
 
@@ -807,6 +1638,22 @@ aarch64_linux_core_read_description (struct gdbarch *gdbarch,
       /* Convert the size to the number of actual registers, by
 	 dividing by 8.  */
       features.tls = size / AARCH64_TLS_REGISTER_SIZE;
+    }
+
+  features.svq
+    = aarch64_linux_core_read_vq (gdbarch, abfd, ".reg-aarch-za");
+
+  /* Are the ZT registers available?  */
+  if (bfd_get_section_by_name (abfd, ".reg-aarch-zt") != nullptr)
+    {
+      /* Check if ZA is also available, otherwise this is an invalid
+	 combination.  */
+      if (bfd_get_section_by_name (abfd, ".reg-aarch-za") != nullptr)
+	features.sme2 = true;
+      else
+	warning (_("While reading core file sections, found ZT registers entry "
+		   "but no ZA register entry.  The ZT contents will be "
+		   "ignored"));
     }
 
   return aarch64_read_description (features);
@@ -1583,7 +2430,7 @@ aarch64_linux_gcc_target_options (struct gdbarch *gdbarch)
 
    Return the allocation tag if successful and nullopt otherwise.  */
 
-static gdb::optional<CORE_ADDR>
+static std::optional<CORE_ADDR>
 aarch64_mte_get_atag (CORE_ADDR address)
 {
   gdb::byte_vector tags;
@@ -1605,17 +2452,13 @@ aarch64_mte_get_atag (CORE_ADDR address)
 /* Implement the tagged_address_p gdbarch method.  */
 
 static bool
-aarch64_linux_tagged_address_p (struct gdbarch *gdbarch, struct value *address)
+aarch64_linux_tagged_address_p (struct gdbarch *gdbarch, CORE_ADDR address)
 {
-  gdb_assert (address != nullptr);
-
-  CORE_ADDR addr = value_as_address (address);
-
   /* Remove the top byte for the memory range check.  */
-  addr = gdbarch_remove_non_address_bits (gdbarch, addr);
+  address = gdbarch_remove_non_address_bits (gdbarch, address);
 
   /* Check if the page that contains ADDRESS is mapped with PROT_MTE.  */
-  if (!linux_address_in_memtag_page (addr))
+  if (!linux_address_in_memtag_page (address))
     return false;
 
   /* We have a valid tag in the top byte of the 64-bit address.  */
@@ -1630,14 +2473,10 @@ aarch64_linux_memtag_matches_p (struct gdbarch *gdbarch,
 {
   gdb_assert (address != nullptr);
 
-  /* Make sure we are dealing with a tagged address to begin with.  */
-  if (!aarch64_linux_tagged_address_p (gdbarch, address))
-    return true;
-
   CORE_ADDR addr = value_as_address (address);
 
   /* Fetch the allocation tag for ADDRESS.  */
-  gdb::optional<CORE_ADDR> atag
+  std::optional<CORE_ADDR> atag
     = aarch64_mte_get_atag (gdbarch_remove_non_address_bits (gdbarch, addr));
 
   if (!atag.has_value ())
@@ -1671,17 +2510,13 @@ aarch64_linux_set_memtags (struct gdbarch *gdbarch, struct value *address,
 
       /* Update the value's content with the tag.  */
       enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-      gdb_byte *srcbuf = value_contents_raw (address).data ();
+      gdb_byte *srcbuf = address->contents_raw ().data ();
       store_unsigned_integer (srcbuf, sizeof (addr), byte_order, addr);
     }
   else
     {
       /* Remove the top byte.  */
       addr = gdbarch_remove_non_address_bits (gdbarch, addr);
-
-      /* Make sure we are dealing with a tagged address to begin with.  */
-      if (!aarch64_linux_tagged_address_p (gdbarch, address))
-	return false;
 
       /* With G being the number of tag granules and N the number of tags
 	 passed in, we can have the following cases:
@@ -1729,13 +2564,9 @@ aarch64_linux_get_memtag (struct gdbarch *gdbarch, struct value *address,
     tag = aarch64_mte_get_ltag (addr);
   else
     {
-      /* Make sure we are dealing with a tagged address to begin with.  */
-      if (!aarch64_linux_tagged_address_p (gdbarch, address))
-	return nullptr;
-
       /* Remove the top byte.  */
       addr = gdbarch_remove_non_address_bits (gdbarch, addr);
-      gdb::optional<CORE_ADDR> atag = aarch64_mte_get_atag (addr);
+      std::optional<CORE_ADDR> atag = aarch64_mte_get_atag (addr);
 
       if (!atag.has_value ())
 	return nullptr;
@@ -1807,7 +2638,7 @@ aarch64_linux_report_signal_info (struct gdbarch *gdbarch,
       uiout->field_core_addr ("fault-addr", gdbarch, fault_addr);
       uiout->text ("\n");
 
-      gdb::optional<CORE_ADDR> atag
+      std::optional<CORE_ADDR> atag
 	= aarch64_mte_get_atag (gdbarch_remove_non_address_bits (gdbarch,
 								 fault_addr));
       gdb_byte ltag = aarch64_mte_get_ltag (fault_addr);
@@ -1983,69 +2814,31 @@ aarch64_linux_decode_memtag_section (struct gdbarch *gdbarch,
   return tags;
 }
 
-/* AArch64 implementation of the remove_non_address_bits gdbarch hook.  Remove
-   non address bits from a pointer value.  */
+/* AArch64 Linux implementation of the
+   gdbarch_use_target_description_from_corefile_notes hook.  */
 
-static CORE_ADDR
-aarch64_remove_non_address_bits (struct gdbarch *gdbarch, CORE_ADDR pointer)
+static bool
+aarch64_use_target_description_from_corefile_notes (gdbarch *gdbarch,
+						    bfd *obfd)
 {
-  /* By default, we assume TBI and discard the top 8 bits plus the VA range
-     select bit (55).  Below we try to fetch information about pointer
-     authentication masks in order to make non-address removal more
-     precise.  */
-  CORE_ADDR mask = AARCH64_TOP_BITS_MASK;
+  /* Sanity check.  */
+  gdb_assert (obfd != nullptr);
 
-  /* Check if we have an inferior first.  If not, just use the default
-     mask.
+  /* If the corefile contains any SVE or SME register data, we don't want to
+     use the target description note, as it may be incorrect.
 
-     We use the inferior_ptid here because the pointer authentication masks
-     should be the same across threads of a process.  Since we may not have
-     access to the current thread (gdb may have switched to no inferiors
-     momentarily), we use the inferior ptid.  */
-  if (inferior_ptid != null_ptid)
-    {
-      /* If we do have an inferior, attempt to fetch its thread's thread_info
-	 struct.  */
-      thread_info *thread
-	= find_thread_ptid (current_inferior ()->process_target (),
-			    inferior_ptid);
+     Currently the target description note contains a potentially incorrect
+     target description if the originating program changed the SVE or SME
+     vector lengths mid-execution.
 
-      /* If the thread is running, we will not be able to fetch the mask
-	 registers.  */
-      if (thread != nullptr && thread->state != THREAD_RUNNING)
-	{
-	  /* Otherwise, fetch the register cache and the masks.  */
-	  struct regcache *regs
-	    = get_thread_regcache (current_inferior ()->process_target (),
-				   inferior_ptid);
+     Once we support per-thread target description notes in the corefiles, we
+     can always trust those notes whenever they are available.  */
+  if (bfd_get_section_by_name (obfd, ".reg-aarch-sve") != nullptr
+      || bfd_get_section_by_name (obfd, ".reg-aarch-za") != nullptr
+      || bfd_get_section_by_name (obfd, ".reg-aarch-zt") != nullptr)
+    return false;
 
-	  /* Use the gdbarch from the register cache to check for pointer
-	     authentication support, as it matches the features found in
-	     that particular thread.  */
-	  aarch64_gdbarch_tdep *tdep
-	    = gdbarch_tdep<aarch64_gdbarch_tdep> (regs->arch ());
-
-	  /* Is there pointer authentication support?  */
-	  if (tdep->has_pauth ())
-	    {
-	      /* We have both a code mask and a data mask.  For now they are
-		 the same, but this may change in the future.  */
-	      CORE_ADDR cmask, dmask;
-
-	      if (regs->cooked_read (tdep->pauth_reg_base, &dmask)
-		  != REG_VALID)
-		dmask = mask;
-
-	      if (regs->cooked_read (tdep->pauth_reg_base + 1, &cmask)
-		  != REG_VALID)
-		cmask = mask;
-
-	      mask |= aarch64_mask_from_pac_registers (cmask, dmask);
-	    }
-	}
-    }
-
-  return aarch64_remove_top_bits (pointer, mask);
+  return true;
 }
 
 static void
@@ -2099,12 +2892,6 @@ aarch64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_process_record (gdbarch, aarch64_process_record);
   /* Syscall record.  */
   tdep->aarch64_syscall_record = aarch64_linux_syscall_record;
-
-  /* The top byte of a user space address known as the "tag",
-     is ignored by the kernel and can be regarded as additional
-     data associated with the address.  */
-  set_gdbarch_remove_non_address_bits (gdbarch,
-				       aarch64_remove_non_address_bits);
 
   /* MTE-specific settings and hooks.  */
   if (tdep->has_mte ())
@@ -2314,7 +3101,9 @@ aarch64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_get_syscall_number (gdbarch, aarch64_linux_get_syscall_number);
 
   /* Displaced stepping.  */
-  set_gdbarch_max_insn_length (gdbarch, 4 * AARCH64_DISPLACED_MODIFIED_INSNS);
+  set_gdbarch_max_insn_length (gdbarch, 4);
+  set_gdbarch_displaced_step_buffer_length
+    (gdbarch, 4 * AARCH64_DISPLACED_MODIFIED_INSNS);
   set_gdbarch_displaced_step_copy_insn (gdbarch,
 					aarch64_displaced_step_copy_insn);
   set_gdbarch_displaced_step_fixup (gdbarch, aarch64_displaced_step_fixup);
@@ -2322,6 +3111,12 @@ aarch64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 					    aarch64_displaced_step_hw_singlestep);
 
   set_gdbarch_gcc_target_options (gdbarch, aarch64_linux_gcc_target_options);
+
+  /* Hook to decide if the target description should be obtained from
+     corefile target description note(s) or inferred from the corefile
+     sections.  */
+  set_gdbarch_use_target_description_from_corefile_notes (gdbarch,
+			    aarch64_use_target_description_from_corefile_notes);
 }
 
 #if GDB_SELF_TEST

@@ -1,6 +1,6 @@
 /* Native-dependent code for FreeBSD/arm.
 
-   Copyright (C) 2017-2023 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "inferior.h"
 #include "target.h"
 
@@ -92,6 +91,9 @@ arm_fbsd_nat_target::read_description ()
 {
   const struct target_desc *desc;
   bool tls = false;
+
+  if (inferior_ptid == null_ptid)
+    return this->beneath ()->read_description ();
 
 #ifdef PT_GETREGSET
   tls = have_regset (inferior_ptid, NT_ARM_TLS) != 0;
