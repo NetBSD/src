@@ -1,4 +1,4 @@
-/* Copyright 2010-2020 Free Software Foundation, Inc.
+/* Copyright 2010-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -391,3 +391,4 @@ test_add_rn_pc_end:
 	bx lr
 	.size test_add_rn_pc, .-test_add_rn_pc
 #endif
+	.section	.note.GNU-stack,"",%progbits

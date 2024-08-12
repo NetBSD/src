@@ -1,5 +1,5 @@
 /* Linux-specific PROCFS manipulation routines.
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -308,7 +308,7 @@ linux_proc_attach_tgid_threads (pid_t pid,
 	  lwp = strtoul (dp->d_name, NULL, 10);
 	  if (lwp != 0)
 	    {
-	      ptid_t ptid = ptid_t (pid, lwp, 0);
+	      ptid_t ptid = ptid_t (pid, lwp);
 
 	      if (attach_lwp (ptid))
 		new_threads_found = 1;
@@ -341,7 +341,7 @@ linux_proc_task_list_dir_exists (pid_t pid)
 
 /* See linux-procfs.h.  */
 
-char *
+const char *
 linux_proc_pid_to_exec_file (int pid)
 {
   static char buf[PATH_MAX];

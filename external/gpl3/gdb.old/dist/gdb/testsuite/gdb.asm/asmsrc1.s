@@ -85,3 +85,4 @@
 	gdbasm_datavar	staticvar	5
 
 	.include "note.inc"
+	.section	.note.GNU-stack,"",@progbits

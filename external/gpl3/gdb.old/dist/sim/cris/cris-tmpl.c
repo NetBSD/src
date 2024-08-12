@@ -1,5 +1,5 @@
 /* CRIS base simulator support code
-   Copyright (C) 2004-2020 Free Software Foundation, Inc.
+   Copyright (C) 2004-2023 Free Software Foundation, Inc.
    Contributed by Axis Communications.
 
 This file is part of the GNU simulators.
@@ -19,11 +19,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* The infrastructure is based on that of i960.c.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #define WANT_CPU
 
 #include "sim-main.h"
 #include "cgen-mem.h"
 #include "cgen-ops.h"
+
+#include <stdlib.h>
 
 #define MY(f) XCONCAT3(crisv,BASENUM,f)
 
@@ -73,8 +78,8 @@ MY (f_break_handler) (SIM_CPU *cpu, USI breaknum, USI pc)
    Note the contents of BUF are in target byte order.  */
 
 int
-MY (f_fetch_register) (SIM_CPU *current_cpu, int rn,
-		      unsigned char *buf, int len ATTRIBUTE_UNUSED)
+MY (f_fetch_register) (SIM_CPU *current_cpu, int rn, void *buf,
+		      int len ATTRIBUTE_UNUSED)
 {
   SETTSI (buf, XCONCAT3(crisv,BASENUM,f_h_gr_get) (current_cpu, rn));
   return -1;
@@ -84,8 +89,8 @@ MY (f_fetch_register) (SIM_CPU *current_cpu, int rn,
    Note the contents of BUF are in target byte order.  */
 
 int
-MY (f_store_register) (SIM_CPU *current_cpu, int rn,
-		      unsigned char *buf, int len ATTRIBUTE_UNUSED)
+MY (f_store_register) (SIM_CPU *current_cpu, int rn, const void *buf,
+		      int len ATTRIBUTE_UNUSED)
 {
   XCONCAT3(crisv,BASENUM,f_h_gr_set) (current_cpu, rn, GETTSI (buf));
   return -1;
@@ -118,7 +123,7 @@ MY (f_model_insn_before) (SIM_CPU *current_cpu, int first_p ATTRIBUTE_UNUSED)
   {
     int i;
     char flags[7];
-    unsigned64 cycle_count;
+    uint64_t cycle_count;
 
     SIM_DESC sd = CPU_STATE (current_cpu);
 
@@ -191,6 +196,7 @@ MY (f_model_insn_after) (SIM_CPU *current_cpu, int last_p ATTRIBUTE_UNUSED,
 #endif
 }
 
+#if 0
 /* Initialize cycle counting for an insn.
    FIRST_P is non-zero if this is the first insn in a set of parallel
    insns.  */
@@ -213,7 +219,6 @@ MY (f_model_update_insn_cycles) (SIM_CPU *current_cpu ATTRIBUTE_UNUSED,
   abort ();
 }
 
-#if 0
 void
 MY (f_model_record_cycles) (SIM_CPU *current_cpu, unsigned long cycles)
 {
@@ -235,7 +240,7 @@ MY (f_model_mark_set_h_gr) (SIM_CPU *current_cpu, ARGBUF *abuf)
 
 /* Set the thread register contents.  */
 
-void
+static void
 MY (set_target_thread_data) (SIM_CPU *current_cpu, USI val)
 {
   (CPU (XCONCAT2 (h_sr_v, BASENUM) [CRIS_TLS_REGISTER])) = val;
@@ -243,7 +248,7 @@ MY (set_target_thread_data) (SIM_CPU *current_cpu, USI val)
 
 /* Create the context for a thread.  */
 
-void *
+static void *
 MY (make_thread_cpu_data) (SIM_CPU *current_cpu, void *context)
 {
   void *info = xmalloc (current_cpu->thread_cpu_data_size);

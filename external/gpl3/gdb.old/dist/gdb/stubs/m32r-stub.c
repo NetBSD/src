@@ -491,9 +491,9 @@ handle_exception (int exceptionVector)
 	  else			/* continuing, not single-stepping */
 	    {
 	      /* OK, about to do a "continue".  First check to see if the 
-	         target pc is on an odd boundary (second instruction in the 
-	         word).  If so, we must do a single-step first, because 
-	         ya can't jump or return back to an odd boundary!  */
+		 target pc is on an odd boundary (second instruction in the 
+		 word).  If so, we must do a single-step first, because 
+		 ya can't jump or return back to an odd boundary!  */
 	      if ((registers[PC] & 2) != 0)
 		prepare_to_step (1);
 	    }
@@ -817,7 +817,7 @@ bin2mem (unsigned char *buf, unsigned char *mem, int count, int may_fault)
   for (i = 0; i < count; i++)
     {
       /* Check for any escaped characters. Be paranoid and
-         only unescape chars that should be escaped. */
+	 only unescape chars that should be escaped. */
       if (*buf == 0x7d)
 	{
 	  switch (*(buf + 1))
@@ -1636,9 +1636,9 @@ breakpoint (void)
 /* STDOUT section:
    Stuff pertaining to simulating stdout by sending chars to gdb to be echoed.
    Functions: gdb_putchar(char ch)
-              gdb_puts(char *str)
-              gdb_write(char *str, int len)
-              gdb_error(char *format, char *parm)
+	      gdb_puts(char *str)
+	      gdb_write(char *str, int len)
+	      gdb_error(char *format, char *parm)
 	      */
 
 /* Function: gdb_putchar(int)

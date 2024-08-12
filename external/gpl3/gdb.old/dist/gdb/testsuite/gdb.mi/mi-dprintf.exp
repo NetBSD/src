@@ -1,4 +1,4 @@
-#   Copyright (C) 2013-2020 Free Software Foundation, Inc.
+#   Copyright (C) 2013-2023 Free Software Foundation, Inc.
 #   Contributed by Hui Zhu  <hui@codesourcery.com>
 
 # This program is free software; you can redistribute it and/or modify
@@ -17,11 +17,6 @@
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-gdb_exit
-if [mi_gdb_start] {
-    continue
-}
-
 standard_testfile
 
 if {[build_executable $testfile.exp $testfile $srcfile {debug}] == -1} {
@@ -29,12 +24,11 @@ if {[build_executable $testfile.exp $testfile $srcfile {debug}] == -1} {
     return -1
 }
 
-mi_delete_breakpoints
-
 set bp_location1 [gdb_get_line_number "set breakpoint 1 here"]
 set dp_location1 [gdb_get_line_number "set dprintf 1 here"]
 
-mi_run_to_main
+mi_clean_restart $binfile
+mi_runto_main
 
 set i 0
 mi_gdb_test "[incr i]-dprintf-insert" \

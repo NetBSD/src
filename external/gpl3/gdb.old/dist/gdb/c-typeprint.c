@@ -1,5 +1,5 @@
 /* Support for printing C and C++ types for GDB, the GNU debugger.
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "gdb_obstack.h"
+#include "gdbsupport/gdb_obstack.h"
 #include "bfd.h"		/* Binary File Description.  */
 #include "symtab.h"
 #include "gdbtypes.h"
@@ -91,7 +91,7 @@ print_name_maybe_canonical (const char *name,
 				     find_typedef_for_canonicalize,
 				     (void *) flags);
 
-  fputs_filtered (s != nullptr ? s.get () : name, stream);
+  gdb_puts (s != nullptr ? s.get () : name, stream);
 }
 
 
@@ -119,9 +119,10 @@ c_print_type_1 (struct type *type,
   code = type->code ();
   if (local_name != NULL)
     {
-      fputs_filtered (local_name, stream);
+      c_type_print_modifier (type, stream, 0, 1, language);
+      gdb_puts (local_name, stream);
       if (varstring != NULL && *varstring != '\0')
-	fputs_filtered (" ", stream);
+	gdb_puts (" ", stream);
     }
   else
     {
@@ -133,11 +134,11 @@ c_print_type_1 (struct type *type,
 	      && (code == TYPE_CODE_PTR || code == TYPE_CODE_FUNC
 		  || code == TYPE_CODE_METHOD
 		  || (code == TYPE_CODE_ARRAY
-		      && !TYPE_VECTOR (type))
+		      && !type->is_vector ())
 		  || code == TYPE_CODE_MEMBERPTR
 		  || code == TYPE_CODE_METHODPTR
 		  || TYPE_IS_REFERENCE (type))))
-	fputs_filtered (" ", stream);
+	gdb_puts (" ", stream);
       need_post_space = (varstring != NULL && strcmp (varstring, "") != 0);
       c_type_print_varspec_prefix (type, stream, show, 0, need_post_space,
 				   language, flags, podata);
@@ -151,7 +152,7 @@ c_print_type_1 (struct type *type,
 	fputs_styled (varstring, variable_name_style.style (), stream);
 
       /* For demangled function names, we have the arglist as part of
-         the name, so don't print an additional pair of ()'s.  */
+	 the name, so don't print an additional pair of ()'s.  */
       if (local_name == NULL)
 	{
 	  demangled_args = strchr (varstring, '(') != NULL;
@@ -161,22 +162,6 @@ c_print_type_1 (struct type *type,
 	}
     }
 }
-
-/* LEVEL is the depth to indent lines by.  */
-
-void
-c_print_type (struct type *type,
-	      const char *varstring,
-	      struct ui_file *stream,
-	      int show, int level,
-	      const struct type_print_options *flags)
-{
-  struct print_offset_data podata;
-
-  c_print_type_1 (type, varstring, stream, show, level,
-		  current_language->la_language, flags, &podata);
-}
-
 
 /* See c-lang.h.  */
 
@@ -188,7 +173,7 @@ c_print_type (struct type *type,
 	      enum language language,
 	      const struct type_print_options *flags)
 {
-  struct print_offset_data podata;
+  struct print_offset_data podata (flags);
 
   c_print_type_1 (type, varstring, stream, show, level, language, flags,
 		  &podata);
@@ -204,14 +189,14 @@ c_print_typedef (struct type *type,
 		 struct ui_file *stream)
 {
   type = check_typedef (type);
-  fprintf_filtered (stream, "typedef ");
+  gdb_printf (stream, "typedef ");
   type_print (type, "", stream, -1);
-  if ((SYMBOL_TYPE (new_symbol))->name () == 0
-      || strcmp ((SYMBOL_TYPE (new_symbol))->name (),
+  if ((new_symbol->type ())->name () == 0
+      || strcmp ((new_symbol->type ())->name (),
 		 new_symbol->linkage_name ()) != 0
-      || SYMBOL_TYPE (new_symbol)->code () == TYPE_CODE_TYPEDEF)
-    fprintf_filtered (stream, " %s", new_symbol->print_name ());
-  fprintf_filtered (stream, ";");
+      || new_symbol->type ()->code () == TYPE_CODE_TYPEDEF)
+    gdb_printf (stream, " %s", new_symbol->print_name ());
+  gdb_printf (stream, ";");
 }
 
 /* If TYPE is a derived type, then print out derivation information.
@@ -249,22 +234,22 @@ cp_type_print_derivation_info (struct ui_file *stream,
 
   for (i = 0; i < TYPE_N_BASECLASSES (type); i++)
     {
-      wrap_here ("        ");
-      fputs_filtered (i == 0 ? ": " : ", ", stream);
-      fprintf_filtered (stream, "%s%s ",
-			BASETYPE_VIA_PUBLIC (type, i)
-			? "public" : (TYPE_FIELD_PROTECTED (type, i)
-				      ? "protected" : "private"),
-			BASETYPE_VIA_VIRTUAL (type, i) ? " virtual" : "");
+      stream->wrap_here (8);
+      gdb_puts (i == 0 ? ": " : ", ", stream);
+      gdb_printf (stream, "%s%s ",
+		  BASETYPE_VIA_PUBLIC (type, i)
+		  ? "public" : (TYPE_FIELD_PROTECTED (type, i)
+				? "protected" : "private"),
+		  BASETYPE_VIA_VIRTUAL (type, i) ? " virtual" : "");
       name = TYPE_BASECLASS (type, i)->name ();
       if (name)
 	print_name_maybe_canonical (name, flags, stream);
       else
-	fprintf_filtered (stream, "(null)");
+	gdb_printf (stream, "(null)");
     }
   if (i > 0)
     {
-      fputs_filtered (" ", stream);
+      gdb_puts (" ", stream);
     }
 }
 
@@ -279,46 +264,55 @@ cp_type_print_method_args (struct type *mtype, const char *prefix,
 {
   struct field *args = mtype->fields ();
   int nargs = mtype->num_fields ();
-  int varargs = TYPE_VARARGS (mtype);
+  int varargs = mtype->has_varargs ();
   int i;
 
-  fprintf_symbol_filtered (stream, prefix,
-			   language_cplus, DMGL_ANSI);
-  fprintf_symbol_filtered (stream, varstring,
-			   language_cplus, DMGL_ANSI);
-  fputs_filtered ("(", stream);
+  fprintf_symbol (stream, prefix,
+		  language_cplus, DMGL_ANSI);
+  fprintf_symbol (stream, varstring,
+		  language_cplus, DMGL_ANSI);
+  gdb_puts ("(", stream);
 
-  /* Skip the class variable.  We keep this here to accommodate older
-     compilers and debug formats which may not support artificial
-     parameters.  */
-  i = staticp ? 0 : 1;
-  if (nargs > i)
+  int printed_args = 0;
+  for (i = 0; i < nargs; ++i)
     {
-      while (i < nargs)
+      if (i == 0 && !staticp)
 	{
-	  struct field arg = args[i++];
-
-	  /* Skip any artificial arguments.  */
-	  if (FIELD_ARTIFICIAL (arg))
-	    continue;
-
-	  c_print_type (arg.type (), "", stream, 0, 0, flags);
-
-	  if (i == nargs && varargs)
-	    fprintf_filtered (stream, ", ...");
-	  else if (i < nargs)
-	    {
-	      fprintf_filtered (stream, ", ");
-	      wrap_here ("        ");
-	    }
+	  /* Skip the class variable.  We keep this here to accommodate older
+	     compilers and debug formats which may not support artificial
+	     parameters.  */
+	  continue;
 	}
-    }
-  else if (varargs)
-    fprintf_filtered (stream, "...");
-  else if (language == language_cplus)
-    fprintf_filtered (stream, "void");
 
-  fprintf_filtered (stream, ")");
+      struct field arg = args[i];
+      /* Skip any artificial arguments.  */
+      if (FIELD_ARTIFICIAL (arg))
+	continue;
+
+      if (printed_args > 0)
+	{
+	  gdb_printf (stream, ", ");
+	  stream->wrap_here (8);
+	}
+
+      c_print_type (arg.type (), "", stream, 0, 0, language, flags);
+      printed_args++;
+    }
+
+  if (varargs)
+    {
+      if (printed_args == 0)
+	gdb_printf (stream, "...");
+      else
+	gdb_printf (stream, ", ...");
+    }
+  else if (printed_args == 0)
+    {
+      if (language == language_cplus)
+	gdb_printf (stream, "void");
+    }
+
+  gdb_printf (stream, ")");
 
   /* For non-static methods, read qualifiers from the type of
      THIS.  */
@@ -328,21 +322,21 @@ cp_type_print_method_args (struct type *mtype, const char *prefix,
 
       gdb_assert (nargs > 0);
       gdb_assert (args[0].type ()->code () == TYPE_CODE_PTR);
-      domain = TYPE_TARGET_TYPE (args[0].type ());
+      domain = args[0].type ()->target_type ();
 
       if (TYPE_CONST (domain))
-	fprintf_filtered (stream, " const");
+	gdb_printf (stream, " const");
 
       if (TYPE_VOLATILE (domain))
-	fprintf_filtered (stream, " volatile");
+	gdb_printf (stream, " volatile");
 
       if (TYPE_RESTRICT (domain))
-	fprintf_filtered (stream, (language == language_cplus
-				   ? " __restrict__"
-				   : " restrict"));
+	gdb_printf (stream, (language == language_cplus
+			     ? " __restrict__"
+			     : " restrict"));
 
       if (TYPE_ATOMIC (domain))
-	fprintf_filtered (stream, " _Atomic");
+	gdb_printf (stream, " _Atomic");
     }
 }
 
@@ -381,15 +375,15 @@ c_type_print_varspec_prefix (struct type *type,
   switch (type->code ())
     {
     case TYPE_CODE_PTR:
-      c_type_print_varspec_prefix (TYPE_TARGET_TYPE (type),
+      c_type_print_varspec_prefix (type->target_type (),
 				   stream, show, 1, 1, language, flags,
 				   podata);
-      fprintf_filtered (stream, "*");
+      gdb_printf (stream, "*");
       c_type_print_modifier (type, stream, 1, need_post_space, language);
       break;
 
     case TYPE_CODE_MEMBERPTR:
-      c_type_print_varspec_prefix (TYPE_TARGET_TYPE (type),
+      c_type_print_varspec_prefix (type->target_type (),
 				   stream, show, 0, 0, language, flags, podata);
       name = TYPE_SELF_TYPE (type)->name ();
       if (name)
@@ -398,14 +392,14 @@ c_type_print_varspec_prefix (struct type *type,
 	c_type_print_base_1 (TYPE_SELF_TYPE (type),
 			     stream, -1, passed_a_ptr, language, flags,
 			     podata);
-      fprintf_filtered (stream, "::*");
+      gdb_printf (stream, "::*");
       break;
 
     case TYPE_CODE_METHODPTR:
-      c_type_print_varspec_prefix (TYPE_TARGET_TYPE (type),
+      c_type_print_varspec_prefix (type->target_type (),
 				   stream, show, 0, 0, language, flags,
 				   podata);
-      fprintf_filtered (stream, "(");
+      gdb_printf (stream, "(");
       name = TYPE_SELF_TYPE (type)->name ();
       if (name)
 	print_name_maybe_canonical (name, flags, stream);
@@ -413,37 +407,37 @@ c_type_print_varspec_prefix (struct type *type,
 	c_type_print_base_1 (TYPE_SELF_TYPE (type),
 			     stream, -1, passed_a_ptr, language, flags,
 			     podata);
-      fprintf_filtered (stream, "::*");
+      gdb_printf (stream, "::*");
       break;
 
     case TYPE_CODE_REF:
     case TYPE_CODE_RVALUE_REF:
-      c_type_print_varspec_prefix (TYPE_TARGET_TYPE (type),
+      c_type_print_varspec_prefix (type->target_type (),
 				   stream, show, 1, 0, language, flags,
 				   podata);
-      fprintf_filtered (stream, type->code () == TYPE_CODE_REF ? "&" : "&&");
+      gdb_printf (stream, type->code () == TYPE_CODE_REF ? "&" : "&&");
       c_type_print_modifier (type, stream, 1, need_post_space, language);
       break;
 
     case TYPE_CODE_METHOD:
     case TYPE_CODE_FUNC:
-      c_type_print_varspec_prefix (TYPE_TARGET_TYPE (type),
+      c_type_print_varspec_prefix (type->target_type (),
 				   stream, show, 0, 0, language, flags,
 				   podata);
       if (passed_a_ptr)
-	fprintf_filtered (stream, "(");
+	gdb_printf (stream, "(");
       break;
 
     case TYPE_CODE_ARRAY:
-      c_type_print_varspec_prefix (TYPE_TARGET_TYPE (type),
-				   stream, show, 0, 0, language, flags,
-				   podata);
+      c_type_print_varspec_prefix (type->target_type (),
+				   stream, show, 0, need_post_space,
+				   language, flags, podata);
       if (passed_a_ptr)
-	fprintf_filtered (stream, "(");
+	gdb_printf (stream, "(");
       break;
 
     case TYPE_CODE_TYPEDEF:
-      c_type_print_varspec_prefix (TYPE_TARGET_TYPE (type),
+      c_type_print_varspec_prefix (type->target_type (),
 				   stream, show, passed_a_ptr, 0,
 				   language, flags, podata);
       break;
@@ -465,8 +459,9 @@ c_type_print_varspec_prefix (struct type *type,
     case TYPE_CODE_COMPLEX:
     case TYPE_CODE_NAMESPACE:
     case TYPE_CODE_DECFLOAT:
+    case TYPE_CODE_FIXED_POINT:
       /* These types need no prefix.  They are listed here so that
-         gcc -Wall will reveal any types that haven't been handled.  */
+	 gcc -Wall will reveal any types that haven't been handled.  */
       break;
     default:
       error (_("type not handled in c_type_print_varspec_prefix()"));
@@ -495,49 +490,50 @@ c_type_print_modifier (struct type *type, struct ui_file *stream,
   if (TYPE_CONST (type) && !TYPE_IS_REFERENCE (type))
     {
       if (need_pre_space)
-	fprintf_filtered (stream, " ");
-      fprintf_filtered (stream, "const");
+	gdb_printf (stream, " ");
+      gdb_printf (stream, "const");
       did_print_modifier = 1;
     }
 
   if (TYPE_VOLATILE (type))
     {
       if (did_print_modifier || need_pre_space)
-	fprintf_filtered (stream, " ");
-      fprintf_filtered (stream, "volatile");
+	gdb_printf (stream, " ");
+      gdb_printf (stream, "volatile");
       did_print_modifier = 1;
     }
 
   if (TYPE_RESTRICT (type))
     {
       if (did_print_modifier || need_pre_space)
-	fprintf_filtered (stream, " ");
-      fprintf_filtered (stream, (language == language_cplus
-				 ? "__restrict__"
-				 : "restrict"));
+	gdb_printf (stream, " ");
+      gdb_printf (stream, (language == language_cplus
+			   ? "__restrict__"
+			   : "restrict"));
       did_print_modifier = 1;
     }
 
   if (TYPE_ATOMIC (type))
     {
       if (did_print_modifier || need_pre_space)
-	fprintf_filtered (stream, " ");
-      fprintf_filtered (stream, "_Atomic");
+	gdb_printf (stream, " ");
+      gdb_printf (stream, "_Atomic");
       did_print_modifier = 1;
     }
 
-  address_space_id = address_space_int_to_name (get_type_arch (type),
-						TYPE_INSTANCE_FLAGS (type));
+  address_space_id
+    = address_space_type_instance_flags_to_name (type->arch (),
+						 type->instance_flags ());
   if (address_space_id)
     {
       if (did_print_modifier || need_pre_space)
-	fprintf_filtered (stream, " ");
-      fprintf_filtered (stream, "@%s", address_space_id);
+	gdb_printf (stream, " ");
+      gdb_printf (stream, "@%s", address_space_id);
       did_print_modifier = 1;
     }
 
   if (did_print_modifier && need_post_space)
-    fprintf_filtered (stream, " ");
+    gdb_printf (stream, " ");
 }
 
 
@@ -558,7 +554,7 @@ c_type_print_args (struct type *type, struct ui_file *stream,
   int i;
   int printed_any = 0;
 
-  fprintf_filtered (stream, "(");
+  gdb_printf (stream, "(");
 
   for (i = 0; i < type->num_fields (); i++)
     {
@@ -569,8 +565,8 @@ c_type_print_args (struct type *type, struct ui_file *stream,
 
       if (printed_any)
 	{
-	  fprintf_filtered (stream, ", ");
-	  wrap_here ("    ");
+	  gdb_printf (stream, ", ");
+	  stream->wrap_here (4);
 	}
 
       param_type = type->field (i).type ();
@@ -591,23 +587,23 @@ c_type_print_args (struct type *type, struct ui_file *stream,
       printed_any = 1;
     }
 
-  if (printed_any && TYPE_VARARGS (type))
+  if (printed_any && type->has_varargs ())
     {
       /* Print out a trailing ellipsis for varargs functions.  Ignore
 	 TYPE_VARARGS if the function has no named arguments; that
 	 represents unprototyped (K&R style) C functions.  */
-      if (printed_any && TYPE_VARARGS (type))
+      if (printed_any && type->has_varargs ())
 	{
-	  fprintf_filtered (stream, ", ");
-	  wrap_here ("    ");
-	  fprintf_filtered (stream, "...");
+	  gdb_printf (stream, ", ");
+	  stream->wrap_here (4);
+	  gdb_printf (stream, "...");
 	}
     }
   else if (!printed_any
-	   && (TYPE_PROTOTYPED (type) || language == language_cplus))
-    fprintf_filtered (stream, "void");
+	   && (type->is_prototyped () || language == language_cplus))
+    gdb_printf (stream, "void");
 
-  fprintf_filtered (stream, ")");
+  gdb_printf (stream, ")");
 }
 
 /* Return true iff the j'th overloading of the i'th method of TYPE
@@ -672,16 +668,16 @@ is_type_conversion_operator (struct type *type, int i, int j)
    form.  Even the author of this function feels that writing little
    parsers like this everywhere is stupid.  */
 
-static char *
-remove_qualifiers (char *qid)
+static const char *
+remove_qualifiers (const char *qid)
 {
   int quoted = 0;	/* Zero if we're not in quotes;
 			   '"' if we're in a double-quoted string;
 			   '\'' if we're in a single-quoted string.  */
   int depth = 0;	/* Number of unclosed parens we've seen.  */
   char *parenstack = (char *) alloca (strlen (qid));
-  char *scan;
-  char *last = 0;	/* The character after the rightmost
+  const char *scan;
+  const char *last = 0;	/* The character after the rightmost
 			   `::' token we've seen so far.  */
 
   for (scan = qid; *scan; scan++)
@@ -772,57 +768,57 @@ c_type_print_varspec_suffix (struct type *type,
     case TYPE_CODE_ARRAY:
       {
 	LONGEST low_bound, high_bound;
-	int is_vector = TYPE_VECTOR (type);
+	int is_vector = type->is_vector ();
 
 	if (passed_a_ptr)
-	  fprintf_filtered (stream, ")");
+	  gdb_printf (stream, ")");
 
-	fprintf_filtered (stream, (is_vector ?
-				   " __attribute__ ((vector_size(" : "["));
+	gdb_printf (stream, (is_vector ?
+			     " __attribute__ ((vector_size(" : "["));
 	/* Bounds are not yet resolved, print a bounds placeholder instead.  */
 	if (type->bounds ()->high.kind () == PROP_LOCEXPR
 	    || type->bounds ()->high.kind () == PROP_LOCLIST)
-	  fprintf_filtered (stream, "variable length");
+	  gdb_printf (stream, "variable length");
 	else if (get_array_bounds (type, &low_bound, &high_bound))
-	  fprintf_filtered (stream, "%s", 
-			    plongest (high_bound - low_bound + 1));
-	fprintf_filtered (stream, (is_vector ? ")))" : "]"));
+	  gdb_printf (stream, "%s", 
+		      plongest (high_bound - low_bound + 1));
+	gdb_printf (stream, (is_vector ? ")))" : "]"));
 
-	c_type_print_varspec_suffix (TYPE_TARGET_TYPE (type), stream,
+	c_type_print_varspec_suffix (type->target_type (), stream,
 				     show, 0, 0, language, flags);
       }
       break;
 
     case TYPE_CODE_MEMBERPTR:
-      c_type_print_varspec_suffix (TYPE_TARGET_TYPE (type), stream,
+      c_type_print_varspec_suffix (type->target_type (), stream,
 				   show, 0, 0, language, flags);
       break;
 
     case TYPE_CODE_METHODPTR:
-      fprintf_filtered (stream, ")");
-      c_type_print_varspec_suffix (TYPE_TARGET_TYPE (type), stream,
+      gdb_printf (stream, ")");
+      c_type_print_varspec_suffix (type->target_type (), stream,
 				   show, 0, 0, language, flags);
       break;
 
     case TYPE_CODE_PTR:
     case TYPE_CODE_REF:
     case TYPE_CODE_RVALUE_REF:
-      c_type_print_varspec_suffix (TYPE_TARGET_TYPE (type), stream,
+      c_type_print_varspec_suffix (type->target_type (), stream,
 				   show, 1, 0, language, flags);
       break;
 
     case TYPE_CODE_METHOD:
     case TYPE_CODE_FUNC:
       if (passed_a_ptr)
-	fprintf_filtered (stream, ")");
+	gdb_printf (stream, ")");
       if (!demangled_args)
 	c_type_print_args (type, stream, 0, language, flags);
-      c_type_print_varspec_suffix (TYPE_TARGET_TYPE (type), stream,
+      c_type_print_varspec_suffix (type->target_type (), stream,
 				   show, passed_a_ptr, 0, language, flags);
       break;
 
     case TYPE_CODE_TYPEDEF:
-      c_type_print_varspec_suffix (TYPE_TARGET_TYPE (type), stream,
+      c_type_print_varspec_suffix (type->target_type (), stream,
 				   show, passed_a_ptr, 0, language, flags);
       break;
 
@@ -843,9 +839,10 @@ c_type_print_varspec_suffix (struct type *type,
     case TYPE_CODE_COMPLEX:
     case TYPE_CODE_NAMESPACE:
     case TYPE_CODE_DECFLOAT:
+    case TYPE_CODE_FIXED_POINT:
       /* These types do not need a suffix.  They are listed so that
-         gcc -Wall will report types that may not have been
-         considered.  */
+	 gcc -Wall will report types that may not have been
+	 considered.  */
       break;
     default:
       error (_("type not handled in c_type_print_varspec_suffix()"));
@@ -868,7 +865,8 @@ c_type_print_varspec_suffix (struct type *type,
 
 static void
 c_type_print_template_args (const struct type_print_options *flags,
-			    struct type *type, struct ui_file *stream)
+			    struct type *type, struct ui_file *stream,
+			    enum language language)
 {
   int first = 1, i;
 
@@ -879,30 +877,30 @@ c_type_print_template_args (const struct type_print_options *flags,
     {
       struct symbol *sym = TYPE_TEMPLATE_ARGUMENT (type, i);
 
-      if (SYMBOL_CLASS (sym) != LOC_TYPEDEF)
+      if (sym->aclass () != LOC_TYPEDEF)
 	continue;
 
       if (first)
 	{
-	  wrap_here ("    ");
-	  fprintf_filtered (stream, _("[with %s = "), sym->linkage_name ());
+	  stream->wrap_here (4);
+	  gdb_printf (stream, _("[with %s = "), sym->linkage_name ());
 	  first = 0;
 	}
       else
 	{
-	  fputs_filtered (", ", stream);
-	  wrap_here ("         ");
-	  fprintf_filtered (stream, "%s = ", sym->linkage_name ());
+	  gdb_puts (", ", stream);
+	  stream->wrap_here (9);
+	  gdb_printf (stream, "%s = ", sym->linkage_name ());
 	}
 
-      c_print_type (SYMBOL_TYPE (sym), "", stream, -1, 0, flags);
+      c_print_type (sym->type (), "", stream, -1, 0, language, flags);
     }
 
   if (!first)
-    fputs_filtered (_("] "), stream);
+    gdb_puts (_("] "), stream);
 }
 
-/* Use 'print_spaces_filtered', but take into consideration the
+/* Use 'print_spaces', but take into consideration the
    type_print_options FLAGS in order to determine how many whitespaces
    will be printed.  */
 
@@ -911,9 +909,9 @@ print_spaces_filtered_with_print_options
   (int level, struct ui_file *stream, const struct type_print_options *flags)
 {
   if (!flags->print_offsets)
-    print_spaces_filtered (level, stream);
+    print_spaces (level, stream);
   else
-    print_spaces_filtered (level + print_offset_data::indentation, stream);
+    print_spaces (level + print_offset_data::indentation, stream);
 }
 
 /* Output an access specifier to STREAM, if needed.  LAST_ACCESS is the
@@ -931,7 +929,7 @@ output_access_specifier (struct ui_file *stream,
 	{
 	  last_access = s_protected;
 	  print_spaces_filtered_with_print_options (level + 2, stream, flags);
-	  fprintf_filtered (stream, "protected:\n");
+	  gdb_printf (stream, "protected:\n");
 	}
     }
   else if (is_private)
@@ -940,7 +938,7 @@ output_access_specifier (struct ui_file *stream,
 	{
 	  last_access = s_private;
 	  print_spaces_filtered_with_print_options (level + 2, stream, flags);
-	  fprintf_filtered (stream, "private:\n");
+	  gdb_printf (stream, "private:\n");
 	}
     }
   else
@@ -949,7 +947,7 @@ output_access_specifier (struct ui_file *stream,
 	{
 	  last_access = s_public;
 	  print_spaces_filtered_with_print_options (level + 2, stream, flags);
-	  fprintf_filtered (stream, "public:\n");
+	  gdb_printf (stream, "public:\n");
 	}
     }
 
@@ -962,7 +960,7 @@ output_access_specifier (struct ui_file *stream,
 static bool
 need_access_label_p (struct type *type)
 {
-  if (TYPE_DECLARED_CLASS (type))
+  if (type->is_declared_class ())
     {
       QUIT;
       for (int i = TYPE_N_BASECLASSES (type); i < type->num_fields (); i++)
@@ -1057,11 +1055,11 @@ c_type_print_base_struct_union (struct type *type, struct ui_file *stream,
 
   c_type_print_modifier (type, stream, 0, 1, language);
   if (type->code () == TYPE_CODE_UNION)
-    fprintf_filtered (stream, "union ");
-  else if (TYPE_DECLARED_CLASS (type))
-    fprintf_filtered (stream, "class ");
+    gdb_printf (stream, "union ");
+  else if (type->is_declared_class ())
+    gdb_printf (stream, "class ");
   else
-    fprintf_filtered (stream, "struct ");
+    gdb_printf (stream, "struct ");
 
   /* Print the tag if it exists.  The HP aCC compiler emits a
      spurious "{unnamed struct}"/"{unnamed union}"/"{unnamed
@@ -1075,7 +1073,7 @@ c_type_print_base_struct_union (struct type *type, struct ui_file *stream,
 	 here.  */
       print_name_maybe_canonical (type->name (), flags, stream);
       if (show > 0)
-	fputs_filtered (" ", stream);
+	gdb_puts (" ", stream);
     }
 
   if (show < 0)
@@ -1083,14 +1081,14 @@ c_type_print_base_struct_union (struct type *type, struct ui_file *stream,
       /* If we just printed a tag name, no need to print anything
 	 else.  */
       if (type->name () == NULL)
-	fprintf_filtered (stream, "{...}");
+	gdb_printf (stream, "{...}");
     }
   else if (show > 0 || type->name () == NULL)
     {
       struct type *basetype;
       int vptr_fieldno;
 
-      c_type_print_template_args (&local_flags, type, stream);
+      c_type_print_template_args (&local_flags, type, stream, language);
 
       /* Add in template parameters when printing derivation info.  */
       if (local_flags.local_typedefs != NULL)
@@ -1113,19 +1111,18 @@ c_type_print_base_struct_union (struct type *type, struct ui_file *stream,
 	  local_flags.local_typedefs->recursively_update (type);
 	}
 
-      fprintf_filtered (stream, "{\n");
+      gdb_printf (stream, "{\n");
 
       if (type->num_fields () == 0 && TYPE_NFN_FIELDS (type) == 0
 	  && TYPE_TYPEDEF_FIELD_COUNT (type) == 0)
 	{
-	  if (TYPE_STUB (type))
-	    fprintfi_filtered (level + 4, stream,
-			       _("%p[<incomplete type>%p]\n"),
-			       metadata_style.style ().ptr (), nullptr);
+	  print_spaces_filtered_with_print_options (level + 4, stream, flags);
+	  if (type->is_stub ())
+	    gdb_printf (stream, _("%p[<incomplete type>%p]\n"),
+			metadata_style.style ().ptr (), nullptr);
 	  else
-	    fprintfi_filtered (level + 4, stream,
-			       _("%p[<no data fields>%p]\n"),
-			       metadata_style.style ().ptr (), nullptr);
+	    gdb_printf (stream, _("%p[<no data fields>%p]\n"),
+			metadata_style.style ().ptr (), nullptr);
 	}
 
       /* Start off with no specific section type, so we can print
@@ -1146,7 +1143,7 @@ c_type_print_base_struct_union (struct type *type, struct ui_file *stream,
       int len = type->num_fields ();
       vptr_fieldno = get_vptr_fieldno (type, &basetype);
 
-      struct print_offset_data local_podata;
+      struct print_offset_data local_podata (flags);
 
       for (int i = TYPE_N_BASECLASSES (type); i < len; i++)
 	{
@@ -1172,9 +1169,9 @@ c_type_print_base_struct_union (struct type *type, struct ui_file *stream,
 	  if (flags->print_offsets)
 	    podata->update (type, i, stream);
 
-	  print_spaces_filtered (level + 4, stream);
+	  print_spaces (level + 4, stream);
 	  if (is_static)
-	    fprintf_filtered (stream, "static ");
+	    gdb_printf (stream, "static ");
 
 	  int newshow = show - 1;
 
@@ -1190,7 +1187,7 @@ c_type_print_base_struct_union (struct type *type, struct ui_file *stream,
 	      /* Make sure we carry our offset when we expand the
 		 struct/union.  */
 	      local_podata.offset_bitpos
-		= podata->offset_bitpos + TYPE_FIELD_BITPOS (type, i);
+		= podata->offset_bitpos + type->field (i).loc_bitpos ();
 	      /* We're entering a struct/union.  Right now,
 		 PODATA->END_BITPOS points right *after* the
 		 struct/union.  However, when printing the first field
@@ -1200,11 +1197,11 @@ c_type_print_base_struct_union (struct type *type, struct ui_file *stream,
 		 the whole struct/union.  */
 	      local_podata.end_bitpos
 		= podata->end_bitpos
-		  - TYPE_LENGTH (type->field (i).type ()) * TARGET_CHAR_BIT;
+		  - type->field (i).type ()->length () * TARGET_CHAR_BIT;
 	    }
 
 	  c_print_type_1 (type->field (i).type (),
-			  TYPE_FIELD_NAME (type, i),
+			  type->field (i).name (),
 			  stream, newshow, level + 4,
 			  language, &local_flags, &local_podata);
 
@@ -1215,10 +1212,10 @@ c_type_print_base_struct_union (struct type *type, struct ui_file *stream,
 		 unnamed fields.  This would lead to misleading
 		 results if the compiler does not put out fields
 		 for such things (I don't know what it does).  */
-	      fprintf_filtered (stream, " : %d",
-				TYPE_FIELD_BITSIZE (type, i));
+	      gdb_printf (stream, " : %d",
+			  TYPE_FIELD_BITSIZE (type, i));
 	    }
-	  fprintf_filtered (stream, ";\n");
+	  gdb_printf (stream, ";\n");
 	}
 
       /* If there are both fields and methods, put a blank line
@@ -1239,7 +1236,7 @@ c_type_print_base_struct_union (struct type *type, struct ui_file *stream,
 	      real_len++;
 	}
       if (real_len > 0 && section_type != s_none)
-	fprintf_filtered (stream, "\n");
+	gdb_printf (stream, "\n");
 
       /* C++: print out the methods.  */
       for (int i = 0; i < len; i++)
@@ -1255,7 +1252,6 @@ c_type_print_base_struct_union (struct type *type, struct ui_file *stream,
 	    {
 	      const char *mangled_name;
 	      gdb::unique_xmalloc_ptr<char> mangled_name_holder;
-	      char *demangled_name;
 	      const char *physname = TYPE_FN_FIELD_PHYSNAME (f, j);
 	      int is_full_physname_constructor =
 		TYPE_FN_FIELD_CONSTRUCTOR (f, j)
@@ -1276,16 +1272,16 @@ c_type_print_base_struct_union (struct type *type, struct ui_file *stream,
 	      print_spaces_filtered_with_print_options (level + 4, stream,
 							flags);
 	      if (TYPE_FN_FIELD_VIRTUAL_P (f, j))
-		fprintf_filtered (stream, "virtual ");
+		gdb_printf (stream, "virtual ");
 	      else if (TYPE_FN_FIELD_STATIC_P (f, j))
-		fprintf_filtered (stream, "static ");
-	      if (TYPE_TARGET_TYPE (TYPE_FN_FIELD_TYPE (f, j)) == 0)
+		gdb_printf (stream, "static ");
+	      if (TYPE_FN_FIELD_TYPE (f, j)->target_type () == 0)
 		{
 		  /* Keep GDB from crashing here.  */
-		  fprintf_filtered (stream,
-				    _("%p[<undefined type>%p] %s;\n"),
-				    metadata_style.style ().ptr (), nullptr,
-				    TYPE_FN_FIELD_PHYSNAME (f, j));
+		  gdb_printf (stream,
+			      _("%p[<undefined type>%p] %s;\n"),
+			      metadata_style.style ().ptr (), nullptr,
+			      TYPE_FN_FIELD_PHYSNAME (f, j));
 		  break;
 		}
 	      else if (!is_constructor	/* Constructors don't
@@ -1295,10 +1291,10 @@ c_type_print_base_struct_union (struct type *type, struct ui_file *stream,
 		       && !is_type_conversion_operator (type, i, j))
 		{
 		  c_print_type_no_offsets
-		    (TYPE_TARGET_TYPE (TYPE_FN_FIELD_TYPE (f, j)),
+		    (TYPE_FN_FIELD_TYPE (f, j)->target_type (),
 		     "", stream, -1, 0, language, &local_flags, podata);
 
-		  fputs_filtered (" ", stream);
+		  gdb_puts (" ", stream);
 		}
 	      if (TYPE_FN_FIELD_STUB (f, j))
 		{
@@ -1309,9 +1305,9 @@ c_type_print_base_struct_union (struct type *type, struct ui_file *stream,
 	      else
 		mangled_name = TYPE_FN_FIELD_PHYSNAME (f, j);
 
-	      demangled_name =
-		gdb_demangle (mangled_name,
-			      DMGL_ANSI | DMGL_PARAMS);
+	      gdb::unique_xmalloc_ptr<char> demangled_name
+		= gdb_demangle (mangled_name,
+				DMGL_ANSI | DMGL_PARAMS);
 	      if (demangled_name == NULL)
 		{
 		  /* In some cases (for instance with the HP
@@ -1338,9 +1334,9 @@ c_type_print_base_struct_union (struct type *type, struct ui_file *stream,
 		}
 	      else
 		{
-		  char *p;
-		  char *demangled_no_class
-		    = remove_qualifiers (demangled_name);
+		  const char *p;
+		  const char *demangled_no_class
+		    = remove_qualifiers (demangled_name.get ());
 
 		  /* Get rid of the `static' appended by the
 		     demangler.  */
@@ -1348,22 +1344,15 @@ c_type_print_base_struct_union (struct type *type, struct ui_file *stream,
 		  if (p != NULL)
 		    {
 		      int length = p - demangled_no_class;
-		      char *demangled_no_static;
-
-		      demangled_no_static
-			= (char *) xmalloc (length + 1);
-		      strncpy (demangled_no_static,
-			       demangled_no_class, length);
-		      *(demangled_no_static + length) = '\0';
-		      fputs_filtered (demangled_no_static, stream);
-		      xfree (demangled_no_static);
+		      std::string demangled_no_static (demangled_no_class,
+						       length);
+		      gdb_puts (demangled_no_static.c_str (), stream);
 		    }
 		  else
-		    fputs_filtered (demangled_no_class, stream);
-		  xfree (demangled_name);
+		    gdb_puts (demangled_no_class, stream);
 		}
 
-	      fprintf_filtered (stream, ";\n");
+	      gdb_printf (stream, ";\n");
 	    }
 	}
 
@@ -1375,7 +1364,7 @@ c_type_print_base_struct_union (struct type *type, struct ui_file *stream,
 	    --semi_local_flags.print_nested_type_limit;
 
 	  if (type->num_fields () != 0 || TYPE_NFN_FIELDS (type) != 0)
-	    fprintf_filtered (stream, "\n");
+	    gdb_printf (stream, "\n");
 
 	  for (int i = 0; i < TYPE_NESTED_TYPES_COUNT (type); ++i)
 	    {
@@ -1384,7 +1373,7 @@ c_type_print_base_struct_union (struct type *type, struct ui_file *stream,
 	      c_print_type_no_offsets (TYPE_NESTED_TYPES_FIELD_TYPE (type, i),
 				       "", stream, show, level + 4,
 				       language, &semi_local_flags, podata);
-	      fprintf_filtered (stream, ";\n");
+	      gdb_printf (stream, ";\n");
 	    }
 	}
 
@@ -1394,7 +1383,7 @@ c_type_print_base_struct_union (struct type *type, struct ui_file *stream,
 	{
 	  if (type->num_fields () != 0 || TYPE_NFN_FIELDS (type) != 0
 	      || TYPE_NESTED_TYPES_COUNT (type) != 0)
-	    fprintf_filtered (stream, "\n");
+	    gdb_printf (stream, "\n");
 
 	  for (int i = 0; i < TYPE_TYPEDEF_FIELD_COUNT (type); i++)
 	    {
@@ -1402,7 +1391,7 @@ c_type_print_base_struct_union (struct type *type, struct ui_file *stream,
 
 	      /* Dereference the typedef declaration itself.  */
 	      gdb_assert (target->code () == TYPE_CODE_TYPEDEF);
-	      target = TYPE_TARGET_TYPE (target);
+	      target = target->target_type ();
 
 	      if (need_access_label)
 		{
@@ -1413,7 +1402,7 @@ c_type_print_base_struct_union (struct type *type, struct ui_file *stream,
 		}
 	      print_spaces_filtered_with_print_options (level + 4, stream,
 							flags);
-	      fprintf_filtered (stream, "typedef ");
+	      gdb_printf (stream, "typedef ");
 
 	      /* We want to print typedefs with substitutions
 		 from the template parameters or globally-known
@@ -1422,7 +1411,7 @@ c_type_print_base_struct_union (struct type *type, struct ui_file *stream,
 				       TYPE_TYPEDEF_FIELD_NAME (type, i),
 				       stream, show - 1, level + 4,
 				       language, &semi_local_flags, podata);
-	      fprintf_filtered (stream, ";\n");
+	      gdb_printf (stream, ";\n");
 	    }
 	}
 
@@ -1431,12 +1420,12 @@ c_type_print_base_struct_union (struct type *type, struct ui_file *stream,
 	  if (show > 0)
 	    podata->finish (type, level, stream);
 
-	  print_spaces_filtered (print_offset_data::indentation, stream);
+	  print_spaces (print_offset_data::indentation, stream);
 	  if (level == 0)
-	    print_spaces_filtered (2, stream);
+	    print_spaces (2, stream);
 	}
 
-      fprintfi_filtered (level, stream, "}");
+      gdb_printf (stream, "%*s}", level, "");
     }
 }
 
@@ -1493,16 +1482,16 @@ c_type_print_base_1 (struct type *type, struct ui_file *stream,
       if (language == language_c || language == language_minimal)
 	{
 	  if (type->code () == TYPE_CODE_UNION)
-	    fprintf_filtered (stream, "union ");
+	    gdb_printf (stream, "union ");
 	  else if (type->code () == TYPE_CODE_STRUCT)
 	    {
-	      if (TYPE_DECLARED_CLASS (type))
-		fprintf_filtered (stream, "class ");
+	      if (type->is_declared_class ())
+		gdb_printf (stream, "class ");
 	      else
-		fprintf_filtered (stream, "struct ");
+		gdb_printf (stream, "struct ");
 	    }
 	  else if (type->code () == TYPE_CODE_ENUM)
-	    fprintf_filtered (stream, "enum ");
+	    gdb_printf (stream, "enum ");
 	}
 
       print_name_maybe_canonical (type->name (), flags, stream);
@@ -1515,19 +1504,19 @@ c_type_print_base_1 (struct type *type, struct ui_file *stream,
     {
     case TYPE_CODE_TYPEDEF:
       /* If we get here, the typedef doesn't have a name, and we
-	 couldn't resolve TYPE_TARGET_TYPE.  Not much we can do.  */
+	 couldn't resolve type::target_type.  Not much we can do.  */
       gdb_assert (type->name () == NULL);
-      gdb_assert (TYPE_TARGET_TYPE (type) == NULL);
+      gdb_assert (type->target_type () == NULL);
       fprintf_styled (stream, metadata_style.style (),
 		      _("<unnamed typedef>"));
       break;
 
     case TYPE_CODE_FUNC:
     case TYPE_CODE_METHOD:
-      if (TYPE_TARGET_TYPE (type) == NULL)
+      if (type->target_type () == NULL)
 	type_print_unknown_return_type (stream);
       else
-	c_type_print_base_1 (TYPE_TARGET_TYPE (type),
+	c_type_print_base_1 (type->target_type (),
 			     stream, show, level, language, flags, podata);
       break;
     case TYPE_CODE_ARRAY:
@@ -1536,7 +1525,7 @@ c_type_print_base_1 (struct type *type, struct ui_file *stream,
     case TYPE_CODE_REF:
     case TYPE_CODE_RVALUE_REF:
     case TYPE_CODE_METHODPTR:
-      c_type_print_base_1 (TYPE_TARGET_TYPE (type),
+      c_type_print_base_1 (type->target_type (),
 			   stream, show, level, language, flags, podata);
       break;
 
@@ -1548,29 +1537,29 @@ c_type_print_base_1 (struct type *type, struct ui_file *stream,
 
     case TYPE_CODE_ENUM:
       c_type_print_modifier (type, stream, 0, 1, language);
-      fprintf_filtered (stream, "enum ");
-      if (TYPE_DECLARED_CLASS (type))
-	fprintf_filtered (stream, "class ");
+      gdb_printf (stream, "enum ");
+      if (type->is_declared_class ())
+	gdb_printf (stream, "class ");
       /* Print the tag name if it exists.
-         The aCC compiler emits a spurious 
-         "{unnamed struct}"/"{unnamed union}"/"{unnamed enum}"
-         tag for unnamed struct/union/enum's, which we don't
-         want to print.  */
+	 The aCC compiler emits a spurious 
+	 "{unnamed struct}"/"{unnamed union}"/"{unnamed enum}"
+	 tag for unnamed struct/union/enum's, which we don't
+	 want to print.  */
       if (type->name () != NULL
 	  && !startswith (type->name (), "{unnamed"))
 	{
 	  print_name_maybe_canonical (type->name (), flags, stream);
 	  if (show > 0)
-	    fputs_filtered (" ", stream);
+	    gdb_puts (" ", stream);
 	}
 
-      wrap_here ("    ");
+      stream->wrap_here (4);
       if (show < 0)
 	{
 	  /* If we just printed a tag name, no need to print anything
 	     else.  */
 	  if (type->name () == NULL)
-	    fprintf_filtered (stream, "{...}");
+	    gdb_printf (stream, "{...}");
 	}
       else if (show > 0 || type->name () == NULL)
 	{
@@ -1584,33 +1573,33 @@ c_type_print_base_1 (struct type *type, struct ui_file *stream,
 	     print too much than too little; but conversely not to
 	     print something egregiously outside the current
 	     language's syntax.  */
-	  if (language == language_cplus && TYPE_TARGET_TYPE (type) != NULL)
+	  if (language == language_cplus && type->target_type () != NULL)
 	    {
-	      struct type *underlying = check_typedef (TYPE_TARGET_TYPE (type));
+	      struct type *underlying = check_typedef (type->target_type ());
 
 	      if (underlying->name () != NULL)
-		fprintf_filtered (stream, ": %s ", underlying->name ());
+		gdb_printf (stream, ": %s ", underlying->name ());
 	    }
 
-	  fprintf_filtered (stream, "{");
+	  gdb_printf (stream, "{");
 	  len = type->num_fields ();
 	  for (i = 0; i < len; i++)
 	    {
 	      QUIT;
 	      if (i)
-		fprintf_filtered (stream, ", ");
-	      wrap_here ("    ");
-	      fputs_styled (TYPE_FIELD_NAME (type, i),
+		gdb_printf (stream, ", ");
+	      stream->wrap_here (4);
+	      fputs_styled (type->field (i).name (),
 			    variable_name_style.style (), stream);
-	      if (lastval != TYPE_FIELD_ENUMVAL (type, i))
+	      if (lastval != type->field (i).loc_enumval ())
 		{
-		  fprintf_filtered (stream, " = %s",
-				    plongest (TYPE_FIELD_ENUMVAL (type, i)));
-		  lastval = TYPE_FIELD_ENUMVAL (type, i);
+		  gdb_printf (stream, " = %s",
+			      plongest (type->field (i).loc_enumval ()));
+		  lastval = type->field (i).loc_enumval ();
 		}
 	      lastval++;
 	    }
-	  fprintf_filtered (stream, "}");
+	  gdb_printf (stream, "}");
 	}
       break;
 
@@ -1621,60 +1610,62 @@ c_type_print_base_1 (struct type *type, struct ui_file *stream,
 	local_flags.local_typedefs = NULL;
 
 	c_type_print_modifier (type, stream, 0, 1, language);
-	fprintf_filtered (stream, "flag ");
+	gdb_printf (stream, "flag ");
 	print_name_maybe_canonical (type->name (), flags, stream);
 	if (show > 0)
 	  {
-	    fputs_filtered (" ", stream);
-	    fprintf_filtered (stream, "{\n");
+	    gdb_puts (" ", stream);
+	    gdb_printf (stream, "{\n");
 	    if (type->num_fields () == 0)
 	      {
-		if (TYPE_STUB (type))
-		  fprintfi_filtered (level + 4, stream,
-				     _("%p[<incomplete type>%p]\n"),
-				     metadata_style.style ().ptr (), nullptr);
+		if (type->is_stub ())
+		  gdb_printf (stream,
+			      _("%*s%p[<incomplete type>%p]\n"),
+			      level + 4, "",
+			      metadata_style.style ().ptr (), nullptr);
 		else
-		  fprintfi_filtered (level + 4, stream,
-				     _("%p[<no data fields>%p]\n"),
-				     metadata_style.style ().ptr (), nullptr);
+		  gdb_printf (stream,
+			      _("%*s%p[<no data fields>%p]\n"),
+			      level + 4, "",
+			      metadata_style.style ().ptr (), nullptr);
 	      }
 	    len = type->num_fields ();
 	    for (i = 0; i < len; i++)
 	      {
 		QUIT;
-		print_spaces_filtered (level + 4, stream);
+		print_spaces (level + 4, stream);
 		/* We pass "show" here and not "show - 1" to get enum types
 		   printed.  There's no other way to see them.  */
 		c_print_type_1 (type->field (i).type (),
-				TYPE_FIELD_NAME (type, i),
+				type->field (i).name (),
 				stream, show, level + 4,
 				language, &local_flags, podata);
-		fprintf_filtered (stream, " @%s",
-				  plongest (TYPE_FIELD_BITPOS (type, i)));
+		gdb_printf (stream, " @%s",
+			    plongest (type->field (i).loc_bitpos ()));
 		if (TYPE_FIELD_BITSIZE (type, i) > 1)
 		  {
-		    fprintf_filtered (stream, "-%s",
-				      plongest (TYPE_FIELD_BITPOS (type, i)
-						+ TYPE_FIELD_BITSIZE (type, i)
-						- 1));
+		    gdb_printf (stream, "-%s",
+				plongest (type->field (i).loc_bitpos ()
+					  + TYPE_FIELD_BITSIZE (type, i)
+					  - 1));
 		  }
-		fprintf_filtered (stream, ";\n");
+		gdb_printf (stream, ";\n");
 	      }
-	    fprintfi_filtered (level, stream, "}");
+	    gdb_printf (stream, "%*s}", level, "");
 	  }
       }
       break;
 
     case TYPE_CODE_VOID:
-      fprintf_filtered (stream, "void");
+      gdb_printf (stream, "void");
       break;
 
     case TYPE_CODE_UNDEF:
-      fprintf_filtered (stream, _("struct <unknown>"));
+      gdb_printf (stream, _("struct <unknown>"));
       break;
 
     case TYPE_CODE_ERROR:
-      fprintf_filtered (stream, "%s", TYPE_ERROR_NAME (type));
+      gdb_printf (stream, "%s", TYPE_ERROR_NAME (type));
       break;
 
     case TYPE_CODE_RANGE:
@@ -1682,16 +1673,20 @@ c_type_print_base_1 (struct type *type, struct ui_file *stream,
       fprintf_styled (stream, metadata_style.style (), _("<range type>"));
       break;
 
+    case TYPE_CODE_FIXED_POINT:
+      print_type_fixed_point (type, stream);
+      break;
+
     case TYPE_CODE_NAMESPACE:
-      fputs_filtered ("namespace ", stream);
-      fputs_filtered (type->name (), stream);
+      gdb_puts ("namespace ", stream);
+      gdb_puts (type->name (), stream);
       break;
 
     default:
       /* Handle types not explicitly handled by the other cases, such
-         as fundamental types.  For these, just print whatever the
-         type name is, as recorded in the type itself.  If there is no
-         type name, then complain.  */
+	 as fundamental types.  For these, just print whatever the
+	 type name is, as recorded in the type itself.  If there is no
+	 type name, then complain.  */
       if (type->name () != NULL)
 	{
 	  c_type_print_modifier (type, stream, 0, 1, language);
@@ -1715,7 +1710,7 @@ c_type_print_base (struct type *type, struct ui_file *stream,
 		   int show, int level,
 		   const struct type_print_options *flags)
 {
-  struct print_offset_data podata;
+  struct print_offset_data podata (flags);
 
   c_type_print_base_1 (type, stream, show, level,
 		       current_language->la_language, flags, &podata);

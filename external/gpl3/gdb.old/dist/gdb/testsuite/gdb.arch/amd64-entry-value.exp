@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2020 Free Software Foundation, Inc.
+# Copyright (C) 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -253,7 +253,7 @@ gdb_test "bt" "^bt\r\n#0 +d \\(i=<optimized out>, j=<optimized out>\\)\[^\r\n\]*
 
 gdb_continue_to_breakpoint "self: breakhere"
 
-gdb_test "bt" "^bt\r\n#0 +d \\(i=<optimized out>, j=<optimized out>\\)\[^\r\n\]*\r\n#1 +0x\[0-9a-f\]+ in self \\(i=<optimized out>\\)\[^\r\n\]*\r\n#2 +0x\[0-9a-f\]+ in main \\(\\)\[^\r\n\]*" \
+gdb_test "bt" "^bt\r\n#0 +d \\(i=<optimized out>, j=<optimized out>\\)\[^\r\n\]*\r\n#1 +0x\[0-9a-f\]+ in self \\(i=<optimized out>\\)\[^\r\n\]*\r\n#2 +0x\[0-9a-f\]+ in self2 \\(i=<optimized out>\\)\[^\r\n\]*\r\n#3 +0x\[0-9a-f\]+ in self \\(i=<optimized out>\\)\[^\r\n\]*\r\n#4 +0x\[0-9a-f\]+ in main \\(\\)\[^\r\n\]*" \
 	 "self: bt"
 
 gdb_test_no_output "set debug entry-values 1"

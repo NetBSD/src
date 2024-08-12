@@ -1,5 +1,5 @@
 # Simulator main loop for CRIS. -*- C -*-
-# Copyright (C) 2004-2020 Free Software Foundation, Inc.
+# Copyright (C) 2004-2023 Free Software Foundation, Inc.
 # Contributed by Axis Communications.
 #
 # This file is part of the GNU simulators.
@@ -42,6 +42,8 @@ case "x$1" in
 xsupport)
 
 cat <<EOF
+#include <stdlib.h>
+
 /* It seems we don't have a templated header file corresponding to
    cris-tmpl.c, so we have to get out declarations the hackish way.  */
 extern void @cpu@_specific_init (SIM_CPU *current_cpu);
@@ -65,7 +67,8 @@ extract (SIM_CPU *current_cpu, PCADDR pc, CGEN_INSN_INT insn, ARGBUF *abuf,
   return id;
 }
 
-static INLINE SEM_PC
+/* This might not be used directly depending on the fast compile mode.  */
+ATTRIBUTE_UNUSED static INLINE SEM_PC
 execute (SIM_CPU *current_cpu, SCACHE *sc, int fast_p)
 {
   SEM_PC vpc;

@@ -1,5 +1,5 @@
 /* Mach-O support for BFD.
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -136,6 +136,7 @@ const bfd_target TARGET_NAME =
   ' ',				/* ar_pad_char.  */
   16,				/* ar_max_namelen.  */
   TARGET_PRIORITY,	/* match priority.  */
+  TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
 
 #if TARGET_BIG_ENDIAN
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,

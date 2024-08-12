@@ -1,6 +1,6 @@
 /* GDB hooks for TUI.
 
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -62,9 +62,9 @@ static bool tui_refreshing_registers = false;
 /* Observer for the register_changed notification.  */
 
 static void
-tui_register_changed (struct frame_info *frame, int regno)
+tui_register_changed (frame_info_ptr frame, int regno)
 {
-  struct frame_info *fi;
+  frame_info_ptr fi;
 
   if (!tui_is_window_visible (DATA_WIN))
     return;
@@ -129,7 +129,7 @@ tui_refresh_frame_and_register_information ()
 
   if (from_stack && has_stack_frames ())
     {
-      struct frame_info *fi = get_selected_frame (NULL);
+      frame_info_ptr fi = get_selected_frame (NULL);
 
       /* Display the frame position (even if there is no symbols or
 	 the PC is not known).  */
@@ -190,7 +190,7 @@ tui_before_prompt (const char *current_gdb_prompt)
 /* Observer for the normal_stop notification.  */
 
 static void
-tui_normal_stop (struct bpstats *bs, int print_frame)
+tui_normal_stop (struct bpstat *bs, int print_frame)
 {
   from_stack = true;
 }
@@ -222,7 +222,7 @@ static void
 attach_or_detach (T &observable, typename T::func_type func, bool attach)
 {
   if (attach)
-    observable.attach (func, tui_observers_token);
+    observable.attach (func, tui_observers_token, "tui-hooks");
   else
     observable.detach (tui_observers_token);
 }
@@ -282,5 +282,5 @@ void
 _initialize_tui_hooks ()
 {
   /* Install the permanent hooks.  */
-  gdb::observers::new_objfile.attach (tui_new_objfile_hook);
+  gdb::observers::new_objfile.attach (tui_new_objfile_hook, "tui-hooks");
 }

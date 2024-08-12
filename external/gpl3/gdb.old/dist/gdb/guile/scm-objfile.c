@@ -1,6 +1,6 @@
 /* Scheme interface to objfiles.
 
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,10 +25,9 @@
 #include "language.h"
 #include "guile-internal.h"
 
-/* The <gdb:objfile> smob.
-   The typedef for this struct is in guile-internal.h.  */
+/* The <gdb:objfile> smob.  */
 
-struct _objfile_smob
+struct objfile_smob
 {
   /* This always appears first.  */
   gdb_smob base;
@@ -50,7 +49,18 @@ static const char objfile_smob_name[] = "gdb:objfile";
 /* The tag Guile knows the objfile smob by.  */
 static scm_t_bits objfile_smob_tag;
 
-static const struct objfile_data *ofscm_objfile_data_key;
+/* Objfile registry cleanup handler for when an objfile is deleted.  */
+struct ofscm_deleter
+{
+  void operator() (objfile_smob *o_smob)
+  {
+    o_smob->objfile = NULL;
+    scm_gc_unprotect_object (o_smob->containing_scm);
+  }
+};
+
+static const registry<objfile>::key<objfile_smob, ofscm_deleter>
+     ofscm_objfile_data_key;
 
 /* Return the list of pretty-printers registered with O_SMOB.  */
 
@@ -102,27 +112,6 @@ ofscm_make_objfile_smob (void)
   return o_scm;
 }
 
-/* Clear the OBJFILE pointer in O_SMOB and unprotect the object from GC.  */
-
-static void
-ofscm_release_objfile (objfile_smob *o_smob)
-{
-  o_smob->objfile = NULL;
-  scm_gc_unprotect_object (o_smob->containing_scm);
-}
-
-/* Objfile registry cleanup handler for when an objfile is deleted.  */
-
-static void
-ofscm_handle_objfile_deleted (struct objfile *objfile, void *datum)
-{
-  objfile_smob *o_smob = (objfile_smob *) datum;
-
-  gdb_assert (o_smob->objfile == objfile);
-
-  ofscm_release_objfile (o_smob);
-}
-
 /* Return non-zero if SCM is a <gdb:objfile> object.  */
 
 static int
@@ -148,7 +137,7 @@ ofscm_objfile_smob_from_objfile (struct objfile *objfile)
 {
   objfile_smob *o_smob;
 
-  o_smob = (objfile_smob *) objfile_data (objfile, ofscm_objfile_data_key);
+  o_smob = ofscm_objfile_data_key.get (objfile);
   if (o_smob == NULL)
     {
       SCM o_scm = ofscm_make_objfile_smob ();
@@ -156,7 +145,7 @@ ofscm_objfile_smob_from_objfile (struct objfile *objfile)
       o_smob = (objfile_smob *) SCM_SMOB_DATA (o_scm);
       o_smob->objfile = objfile;
 
-      set_objfile_data (objfile, ofscm_objfile_data_key, o_smob);
+      ofscm_objfile_data_key.set (objfile, o_smob);
       scm_gc_protect_object (o_smob->containing_scm);
     }
 
@@ -311,16 +300,11 @@ gdbscm_source_objfile_script (const struct extension_language_defn *extlang,
 			      struct objfile *objfile, FILE *file,
 			      const char *filename)
 {
-  char *msg;
-
   ofscm_current_objfile = objfile;
 
-  msg = gdbscm_safe_source_script (filename);
+  gdb::unique_xmalloc_ptr<char> msg = gdbscm_safe_source_script (filename);
   if (msg != NULL)
-    {
-      fprintf_filtered (gdb_stderr, "%s", msg);
-      xfree (msg);
-    }
+    gdb_printf (gdb_stderr, "%s", msg.get ());
 
   ofscm_current_objfile = NULL;
 }
@@ -341,7 +325,7 @@ gdbscm_execute_objfile_script (const struct extension_language_defn *extlang,
   gdb::unique_xmalloc_ptr<char> msg
     = gdbscm_safe_eval_string (script, 0 /* display_result */);
   if (msg != NULL)
-    fprintf_filtered (gdb_stderr, "%s", msg.get ());
+    gdb_printf (gdb_stderr, "%s", msg.get ());
 
   ofscm_current_objfile = NULL;
 }
@@ -429,7 +413,4 @@ gdbscm_initialize_objfiles (void)
   scm_set_smob_print (objfile_smob_tag, ofscm_print_objfile_smob);
 
   gdbscm_define_functions (objfile_functions, 1);
-
-  ofscm_objfile_data_key
-    = register_objfile_data_with_cleanup (NULL, ofscm_handle_objfile_deleted);
 }

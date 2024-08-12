@@ -1,6 +1,6 @@
 /* This test program is part of GDB, the GNU debugger.
 
-   Copyright 2016-2020 Free Software Foundation, Inc.
+   Copyright 2016-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,13 +16,57 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <unistd.h>
+#include <stdlib.h>
+#include <limits.h>
+#include <string.h>
+#include <stdio.h>
+#include <assert.h>
+
+static void
+set_path (int argc, char ** argv)
+{
+  if (argc < 1)
+    return;
+
+  char path[PATH_MAX];
+  strcpy (path, argv[0]);
+  int len = strlen (path);
+
+  /* Make a path name out of an exec name.  */
+  int i;
+  for (i = len - 1; i >= 0; i--)
+    {
+      char c = path[i];
+      if (c == '/' || c == '\\')
+	{
+	  path[i] = '\0';
+	  break;
+	}
+    }
+  len = i;
+
+  if (len == 0)
+    return;
+
+  /* Prefix with "PATH=".  */
+  const char *prefix = "PATH=";
+  int prefix_len = strlen (prefix);
+  memmove (path + prefix_len, path, len);
+  path[prefix_len + len] = '\0';
+  memcpy (path, prefix, prefix_len);
+
+  printf ("PATH SETTING: '%s'\n", path);
+  putenv (path);
+}
 
 int
 main (int argc, char ** argv)
 {
-  const char *prog = "inf-exec2";
+  set_path (argc, argv);
+  const char *prog = "infcall-exec2";
 
-  execlp (prog, prog, (char *) 0);
+  int res = execlp (prog, prog, (char *) 0); /* break here */
+  assert (res != -1);
 
   return 0;
 }

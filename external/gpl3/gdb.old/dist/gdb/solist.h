@@ -1,5 +1,5 @@
 /* Shared library declarations for GDB, the GNU Debugger.
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,7 @@
 /* For domain_enum domain.  */
 #include "symtab.h"
 #include "gdb_bfd.h"
+#include "target-section.h"
 
 /* Base class for target-specific link map information.  */
 
@@ -71,8 +72,7 @@ struct so_list
      the file cannot be found or after the command "nosharedlibrary".  */
   struct objfile *objfile;
 
-  struct target_section *sections;
-  struct target_section *sections_end;
+  target_section_table *sections;
 
   /* Record the range of addresses belonging to this shared library.
      There may not be just one (e.g. if two segments are relocated
@@ -163,6 +163,8 @@ struct target_so_ops
   void (*handle_event) (void);
 };
 
+using so_list_range = next_range<so_list>;
+
 /* Free the memory associated with a (so_list *).  */
 void free_so (struct so_list *so);
 
@@ -191,8 +193,5 @@ extern gdb_bfd_ref_ptr solib_bfd_fopen (const char *pathname, int fd);
 
 /* Find solib binary file and open it.  */
 extern gdb_bfd_ref_ptr solib_bfd_open (const char *in_pathname);
-
-/* FIXME: gdbarch needs to control this variable.  */
-extern struct target_so_ops *current_target_so_ops;
 
 #endif

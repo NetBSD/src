@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2011-2020 Free Software Foundation, Inc.
+   Copyright 2011-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@
 
 #if (defined __x86_64__ || defined __i386__)
 
-static void
+static void __attribute__ ((used))
 x86_trace_dummy ()
 {
   int x = 0;

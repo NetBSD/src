@@ -1,5 +1,5 @@
 /* GNU/Linux on  TI C6x target support.
-   Copyright (C) 2011-2020 Free Software Foundation, Inc.
+   Copyright (C) 2011-2023 Free Software Foundation, Inc.
    Contributed by Yao Qi <yao@codesourcery.com>
 
    This file is part of GDB.
@@ -19,6 +19,8 @@
 
 #ifndef TIC6X_TDEP_H
 #define TIC6X_TDEP_H
+
+#include "gdbarch.h"
 
 enum
 {
@@ -44,15 +46,15 @@ extern const gdb_byte tic6x_bkpt_illegal_opcode_be[];
 extern const gdb_byte tic6x_bkpt_illegal_opcode_le[];
 
 /* Target-dependent structure in gdbarch.  */
-struct gdbarch_tdep
+struct tic6x_gdbarch_tdep : gdbarch_tdep_base
 {
   /* Return the expected next PC if FRAME is stopped at a syscall
      instruction.  */
-  CORE_ADDR (*syscall_next_pc) (struct frame_info *frame);
+  CORE_ADDR (*syscall_next_pc) (frame_info_ptr frame) = nullptr;
 
-  const gdb_byte *breakpoint; /* Breakpoint instruction.  */
+  const gdb_byte *breakpoint = nullptr; /* Breakpoint instruction.  */
 
-  int has_gp; /* Has general purpose registers A16 - A31 and B16 - B31.  */
+  int has_gp = 0; /* Has general purpose registers A16 - A31 and B16 - B31.  */
 };
 
 #endif /* TIC6X_TDEP_H */

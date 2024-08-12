@@ -1,6 +1,6 @@
 /* Target-dependent code for Analog Devices Blackfin processor, for GDB.
 
-   Copyright (C) 2005-2020 Free Software Foundation, Inc.
+   Copyright (C) 2005-2023 Free Software Foundation, Inc.
 
    Contributed by Analog Devices, Inc.
 
@@ -21,6 +21,8 @@
 
 #ifndef BFIN_TDEP_H
 #define BFIN_TDEP_H
+
+#include "gdbarch.h"
 
 enum gdb_regnum {
   /* Core Registers */
@@ -94,10 +96,10 @@ enum bfin_abi
 };
 
 /* Target-dependent structure in gdbarch.  */
-struct gdbarch_tdep
+struct bfin_gdbarch_tdep : gdbarch_tdep_base
 {
   /* Which ABI is in use?  */
-  enum bfin_abi bfin_abi;
+  enum bfin_abi bfin_abi {};
 };
 
 /* Return the Blackfin ABI associated with GDBARCH.  */

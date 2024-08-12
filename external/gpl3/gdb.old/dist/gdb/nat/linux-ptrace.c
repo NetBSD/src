@@ -1,5 +1,5 @@
 /* Linux-specific ptrace manipulation routines.
-   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+   Copyright (C) 2012-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -301,20 +301,6 @@ linux_fork_to_function (gdb_byte *child_stack, int (*function) (void *))
 }
 
 /* A helper function for linux_check_ptrace_features, called after
-   the child forks a grandchild.  */
-
-static int
-linux_grandchild_function (void *child_stack)
-{
-  /* Free any allocated stack.  */
-  xfree (child_stack);
-
-  /* This code is only reacheable by the grandchild (child's child)
-     process.  */
-  _exit (0);
-}
-
-/* A helper function for linux_check_ptrace_features, called after
    the parent process forks a child.  The child allows itself to
    be traced by its parent.  */
 
@@ -324,16 +310,11 @@ linux_child_function (void *child_stack)
   ptrace (PTRACE_TRACEME, 0, (PTRACE_TYPE_ARG3) 0, (PTRACE_TYPE_ARG4) 0);
   kill (getpid (), SIGSTOP);
 
-  /* Fork a grandchild.  */
-  linux_fork_to_function ((gdb_byte *) child_stack, linux_grandchild_function);
-
   /* This code is only reacheable by the child (grandchild's parent)
      process.  */
   _exit (0);
 }
 
-static void linux_test_for_tracesysgood (int child_pid);
-static void linux_test_for_tracefork (int child_pid);
 static void linux_test_for_exitkill (int child_pid);
 
 /* Determine ptrace features available on this target.  */
@@ -343,8 +324,15 @@ linux_check_ptrace_features (void)
 {
   int child_pid, ret, status;
 
-  /* Initialize the options.  */
-  supported_ptrace_options = 0;
+  /* Initialize the options.  We consider that these options are always
+     supported.  */
+  supported_ptrace_options
+    = (PTRACE_O_TRACESYSGOOD
+       | PTRACE_O_TRACECLONE
+       | PTRACE_O_TRACEFORK
+       | PTRACE_O_TRACEVFORK
+       | PTRACE_O_TRACEVFORKDONE
+       | PTRACE_O_TRACEEXEC);
 
   /* Fork a child so we can do some testing.  The child will call
      linux_child_function and will get traced.  The child will
@@ -362,102 +350,10 @@ linux_check_ptrace_features (void)
     error (_("linux_check_ptrace_features: waitpid: unexpected status %d."),
 	   status);
 
-  linux_test_for_tracesysgood (child_pid);
-
-  linux_test_for_tracefork (child_pid);
-
   linux_test_for_exitkill (child_pid);
 
   /* Kill child_pid.  */
   kill_child (child_pid, "linux_check_ptrace_features");
-}
-
-/* Determine if PTRACE_O_TRACESYSGOOD can be used to catch
-   syscalls.  */
-
-static void
-linux_test_for_tracesysgood (int child_pid)
-{
-  int ret;
-
-  ret = ptrace (PTRACE_SETOPTIONS, child_pid, (PTRACE_TYPE_ARG3) 0,
-		(PTRACE_TYPE_ARG4) PTRACE_O_TRACESYSGOOD);
-
-  if (ret == 0)
-    supported_ptrace_options |= PTRACE_O_TRACESYSGOOD;
-}
-
-/* Determine if PTRACE_O_TRACEFORK can be used to follow fork
-   events.  */
-
-static void
-linux_test_for_tracefork (int child_pid)
-{
-  int ret, status;
-  long second_pid;
-
-  /* First, set the PTRACE_O_TRACEFORK option.  If this fails, we
-     know for sure that it is not supported.  */
-  ret = ptrace (PTRACE_SETOPTIONS, child_pid, (PTRACE_TYPE_ARG3) 0,
-		(PTRACE_TYPE_ARG4) PTRACE_O_TRACEFORK);
-
-  if (ret != 0)
-    return;
-
-  /* Check if the target supports PTRACE_O_TRACEVFORKDONE.  */
-  ret = ptrace (PTRACE_SETOPTIONS, child_pid, (PTRACE_TYPE_ARG3) 0,
-		(PTRACE_TYPE_ARG4) (PTRACE_O_TRACEFORK
-				    | PTRACE_O_TRACEVFORKDONE));
-  if (ret == 0)
-    supported_ptrace_options |= PTRACE_O_TRACEVFORKDONE;
-
-  /* Setting PTRACE_O_TRACEFORK did not cause an error, however we
-     don't know for sure that the feature is available; old
-     versions of PTRACE_SETOPTIONS ignored unknown options.
-     Therefore, we attach to the child process, use PTRACE_SETOPTIONS
-     to enable fork tracing, and let it fork.  If the process exits,
-     we assume that we can't use PTRACE_O_TRACEFORK; if we get the
-     fork notification, and we can extract the new child's PID, then
-     we assume that we can.
-
-     We do not explicitly check for vfork tracing here.  It is
-     assumed that vfork tracing is available whenever fork tracing
-     is available.  */
-  ret = ptrace (PTRACE_CONT, child_pid, (PTRACE_TYPE_ARG3) 0,
-		(PTRACE_TYPE_ARG4) 0);
-  if (ret != 0)
-    warning (_("linux_test_for_tracefork: failed to resume child"));
-
-  ret = my_waitpid (child_pid, &status, 0);
-
-  /* Check if we received a fork event notification.  */
-  if (ret == child_pid && WIFSTOPPED (status)
-      && linux_ptrace_get_extended_event (status) == PTRACE_EVENT_FORK)
-    {
-      /* We did receive a fork event notification.  Make sure its PID
-	 is reported.  */
-      second_pid = 0;
-      ret = ptrace (PTRACE_GETEVENTMSG, child_pid, (PTRACE_TYPE_ARG3) 0,
-		    (PTRACE_TYPE_ARG4) &second_pid);
-      if (ret == 0 && second_pid != 0)
-	{
-	  int second_status;
-
-	  /* We got the PID from the grandchild, which means fork
-	     tracing is supported.  */
-	  supported_ptrace_options |= PTRACE_O_TRACECLONE;
-	  supported_ptrace_options |= (PTRACE_O_TRACEFORK
-				       | PTRACE_O_TRACEVFORK
-				       | PTRACE_O_TRACEEXEC);
-
-	  /* Do some cleanup and kill the grandchild.  */
-	  my_waitpid (second_pid, &second_status, 0);
-	  kill_child (second_pid, "linux_test_for_tracefork");
-	}
-    }
-  else
-    warning (_("linux_test_for_tracefork: unexpected result from waitpid "
-	     "(%d, status 0x%x)"), ret, status);
 }
 
 /* Determine if PTRACE_O_EXITKILL can be used.  */
@@ -505,70 +401,6 @@ linux_disable_event_reporting (pid_t pid)
 {
   /* Set the options.  */
   ptrace (PTRACE_SETOPTIONS, pid, (PTRACE_TYPE_ARG3) 0, 0);
-}
-
-/* Returns non-zero if PTRACE_OPTIONS is contained within
-   SUPPORTED_PTRACE_OPTIONS, therefore supported.  Returns 0
-   otherwise.  */
-
-static int
-ptrace_supports_feature (int ptrace_options)
-{
-  if (supported_ptrace_options == -1)
-    linux_check_ptrace_features ();
-
-  return ((supported_ptrace_options & ptrace_options) == ptrace_options);
-}
-
-/* Returns non-zero if PTRACE_EVENT_FORK is supported by ptrace,
-   0 otherwise.  Note that if PTRACE_EVENT_FORK is supported so is
-   PTRACE_EVENT_CLONE, PTRACE_EVENT_EXEC and PTRACE_EVENT_VFORK,
-   since they were all added to the kernel at the same time.  */
-
-int
-linux_supports_tracefork (void)
-{
-  return ptrace_supports_feature (PTRACE_O_TRACEFORK);
-}
-
-/* Returns non-zero if PTRACE_EVENT_EXEC is supported by ptrace,
-   0 otherwise.  Note that if PTRACE_EVENT_FORK is supported so is
-   PTRACE_EVENT_CLONE, PTRACE_EVENT_FORK and PTRACE_EVENT_VFORK,
-   since they were all added to the kernel at the same time.  */
-
-int
-linux_supports_traceexec (void)
-{
-  return ptrace_supports_feature (PTRACE_O_TRACEEXEC);
-}
-
-/* Returns non-zero if PTRACE_EVENT_CLONE is supported by ptrace,
-   0 otherwise.  Note that if PTRACE_EVENT_CLONE is supported so is
-   PTRACE_EVENT_FORK, PTRACE_EVENT_EXEC and PTRACE_EVENT_VFORK,
-   since they were all added to the kernel at the same time.  */
-
-int
-linux_supports_traceclone (void)
-{
-  return ptrace_supports_feature (PTRACE_O_TRACECLONE);
-}
-
-/* Returns non-zero if PTRACE_O_TRACEVFORKDONE is supported by
-   ptrace, 0 otherwise.  */
-
-int
-linux_supports_tracevforkdone (void)
-{
-  return ptrace_supports_feature (PTRACE_O_TRACEVFORKDONE);
-}
-
-/* Returns non-zero if PTRACE_O_TRACESYSGOOD is supported by ptrace,
-   0 otherwise.  */
-
-int
-linux_supports_tracesysgood (void)
-{
-  return ptrace_supports_feature (PTRACE_O_TRACESYSGOOD);
 }
 
 /* Display possible problems on this system.  Display them only once per GDB

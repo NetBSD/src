@@ -1,4 +1,4 @@
-# Copyright 2016-2020 Free Software Foundation, Inc.
+# Copyright 2016-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -60,7 +60,7 @@ proc test {inftty_mode mi_mode force_fail} {
 	lappend start_ops "separate-mi-tty"
     }
 
-    if [eval mi_gdb_start $start_ops] {
+    if [mi_gdb_start $start_ops] {
 	return
     }
 
@@ -89,36 +89,60 @@ proc test {inftty_mode mi_mode force_fail} {
     if {$force_fail} {
 	set saw_perm_error 0
 	set saw_mi_error 0
+	set already_failed 0
 	set test "run failure detected"
 	send_gdb "-exec-run --start\n"
 
-	while {1} {
-	    gdb_expect {
-		-i "$inferior_spawn_id"
-		-re ".*Cannot exec.*Permission denied" {
-		    set saw_perm_error 1
-		    verbose -log "saw mi error"
-		}
-		-i "$gdb_spawn_id"
-		-re "\\^error,msg=\"During startup program exited with code 127" {
-		    set saw_mi_error 1
-		    verbose -log "saw mi error"
-		}
-		timeout {
-		    fail "$test (timeout)"
-		    break
-		}
-		-i "$gdb_main_spawn_id"
-		eof {
-		    fail "$test (eof)"
-		    break
-		}
-	    }
+	# Redirect through SPAWN_LIST global.  If the
+	# inferior_spawn_id is not the same as gdb_spawn_id, e.g. when
+	# testing with gdbserver, the gdbserver can exit after
+	# emitting it's error message.
+	#
+	# If inferior_spawn_id exits then we may see the eof from that
+	# spawn-id before we see the pattern from the gdb_spawn_id,
+	# which will kick us out of the gdb_expect, and cause us to
+	# fail the test.
+	#
+	# Instead we clean SPAWN_LIST once we've seen the expected
+	# pattern from that spawn-id, and after that we no longer care
+	# when gdbserver exits.
+	global spawn_list
+	set spawn_list "$inferior_spawn_id"
 
-	    if {$saw_perm_error && $saw_mi_error} {
-		pass $test
-		break
+	gdb_expect {
+	    -i spawn_list
+	    -re ".*Cannot exec.*Permission denied" {
+		set saw_perm_error 1
+		set spawn_list ""
+		verbose -log "saw perm error"
+		if {!$saw_mi_error} {
+		    exp_continue
+		}
 	    }
+	    -i "$gdb_spawn_id"
+	    -re "\\^error,msg=\"(During startup program exited with code 127|Running .* on the remote target failed)" {
+		set saw_mi_error 1
+		verbose -log "saw mi error"
+		if {!$saw_perm_error} {
+		    exp_continue
+		}
+	    }
+	    timeout {
+		set already_failed 1
+		fail "$test (timeout)"
+	    }
+	    -i "$gdb_main_spawn_id"
+	    eof {
+		set already_failed 1
+		fail "$test (eof)"
+	    }
+	}
+
+	if {$saw_perm_error && $saw_mi_error} {
+	    pass $test
+	} elseif {!$already_failed} {
+	    verbose -log "saw_perm_error=$saw_perm_error; saw_mi_error=$saw_mi_error"
+	    fail $test
 	}
     } else {
 	mi_run_cmd "--start"
@@ -147,7 +171,7 @@ proc test {inftty_mode mi_mode force_fail} {
 # Create a not-executable copy of the program, in order to exercise
 # vfork->exec failing.
 gdb_remote_download host $binfile $binfile.nox
-remote_spawn target "chmod \"a-x\" $binfile.nox"
+remote_exec target "chmod \"a-x\" $binfile.nox"
 
 foreach_with_prefix inferior-tty {"main" "separate"} {
     foreach_with_prefix mi {"main" "separate"} {
@@ -156,3 +180,5 @@ foreach_with_prefix inferior-tty {"main" "separate"} {
 	}
     }
 }
+
+mi_gdb_exit

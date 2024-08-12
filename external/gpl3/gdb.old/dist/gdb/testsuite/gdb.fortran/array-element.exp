@@ -1,4 +1,4 @@
-# Copyright 2005-2020 Free Software Foundation, Inc.
+# Copyright 2005-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,13 +26,12 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug f90}]} {
     return -1
 }
 
-if ![runto sub_] then {
-    perror "couldn't run to breakpoint sub_"
-    continue
+if {![runto sub_]} {
+    return
 }
 
-gdb_breakpoint [gdb_get_line_number "continue"]
-gdb_continue_to_breakpoint "continue"
+gdb_breakpoint [gdb_get_line_number "return"]
+gdb_continue_to_breakpoint "return"
 
 gdb_test "print a(1)" ".*1 = 1.*" "print the first element of array a"
 gdb_test "print a(2)" ".*2 = 2.*" "print the second element of array a"

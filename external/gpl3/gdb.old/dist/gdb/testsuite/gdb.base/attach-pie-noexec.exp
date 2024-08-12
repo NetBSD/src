@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2020 Free Software Foundation, Inc.
+# Copyright (C) 2011-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,11 +20,10 @@ if {![can_spawn_for_attach]} {
 standard_testfile .c
 set executable ${testfile}
 
-if { [prepare_for_testing "failed to prepare" $executable "" [list debug "additional_flags=-fPIE" "ldflags=-pie"]] } {
+if { [prepare_for_testing "failed to prepare" $executable "" [list debug pie]] } {
     return -1
 }
 
-clean_restart $executable
 set arch ""
 set test "show architecture"
 gdb_test_multiple $test $test {
@@ -60,7 +59,10 @@ set testpid [spawn_id_get_pid $test_spawn_id]
 
 gdb_start
 file delete -- $binfile
-gdb_test "attach $testpid" "Attaching to process $testpid\r\n.*" "attach"
+if { ![gdb_attach $testpid] } {
+    kill_wait_spawned_process $test_spawn_id
+    return
+}
 gdb_test "set architecture $arch" "The target architecture is set to \"$arch\"\\."
 gdb_test "info shared" "From\[ \t\]+To\[ \t\]+Syms Read\[ \t\]+Shared Object Library\r\n0x.*"
 

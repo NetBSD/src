@@ -7,7 +7,7 @@
 #define NAT_X86_GCC_CPUID_H
 
 /*
- * Copyright (C) 2007-2020 Free Software Foundation, Inc.
+ * Copyright (C) 2007-2023 Free Software Foundation, Inc.
  *
  * This file is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

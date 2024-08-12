@@ -1,4 +1,4 @@
-# Copyright 2014-2020 Free Software Foundation, Inc.
+# Copyright 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ if {![dwarf2_support]} {
     return 0
 }
 
-standard_testfile .c comp-unit-lang.S
+standard_testfile .c .S
 
 # Assemble the DWARF using CU_LANG as compilation unit's language.
 # Run to a function in that compilation unit and check that GDB

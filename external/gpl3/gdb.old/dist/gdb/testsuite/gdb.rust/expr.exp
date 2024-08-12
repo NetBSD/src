@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2020 Free Software Foundation, Inc.
+# Copyright (C) 2016-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 # Rust compiler.  This serves as a smoke test.
 
 load_lib "rust-support.exp"
-if {[skip_rust_tests]} { continue }
+if {[skip_rust_tests]} { return }
 
 gdb_start
 
@@ -25,7 +25,7 @@ gdb_test_no_output "set var \$something = 27"
 
 if {![set_lang_rust]} {
     warning "Rust expression tests suppressed."
-    continue
+    return
 }
 
 gdb_test "print 9__97" " = 997"
@@ -111,6 +111,8 @@ gdb_test "print ()" " = \\(\\)"
 gdb_test "print \[1,2,3,4\]" " = \\\[1, 2, 3, 4\\\]"
 gdb_test "ptype \[1,2,3,4\]" "type = \\\[i32; 4\\\]"
 gdb_test "print \[mut 1,2,3,4\]" " = \\\[1, 2, 3, 4\\\]"
+gdb_test "print \[1,2 3" "',' or ']' expected"
+gdb_test "print \[1 2" "',', ';', or ']' expected"
 
 gdb_test "print b\"hi rust\"" " = b\"hi rust\""
 # This isn't rusty syntax yet, but that's another bug -- this is just
@@ -136,6 +138,12 @@ gdb_test "print \[mut 23usize; 4\]" " = \\\[23, 23, 23, 23\\\]"
 # Test lexer corner cases.
 gdb_test "print 0x0 as *mut ()" " = \\\(\\*mut \\\(\\\)\\\) 0x0"
 gdb_test "print 0x0 as fn(i64) -> ()" " = \\\(\\*mut fn \\\(i64\\\) -> \\\(\\\)\\\) 0x0"
-gdb_test "print r#" "syntax error in expression, near `#'\\."
+
+# The lexer doesn't treat this as a failure, but rather as two tokens,
+# and we error out while trying to look up 'r'.  This is fine, though
+# -- what's important is that it isn't accepted.
+gdb_test "print r#" "No symbol 'r' in current context"
 
 gdb_test "printf \"%d %d\\n\", 23+1, 23-1" "24 22"
+
+gdb_test "print 5," "Syntax error near ','"

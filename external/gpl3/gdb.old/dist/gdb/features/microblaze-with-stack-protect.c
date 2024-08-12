@@ -5,14 +5,14 @@
 #include "osabi.h"
 #include "target-descriptions.h"
 
-struct target_desc *tdesc_microblaze_with_stack_protect;
+const struct target_desc *tdesc_microblaze_with_stack_protect;
 static void
 initialize_tdesc_microblaze_with_stack_protect (void)
 {
-  struct target_desc *result = allocate_target_description ();
+  target_desc_up result = allocate_target_description ();
   struct tdesc_feature *feature;
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.microblaze.core");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.microblaze.core");
   tdesc_create_reg (feature, "r0", 0, 1, NULL, 32, "int");
   tdesc_create_reg (feature, "r1", 1, 1, NULL, 32, "data_ptr");
   tdesc_create_reg (feature, "r2", 2, 1, NULL, 32, "int");
@@ -71,9 +71,9 @@ initialize_tdesc_microblaze_with_stack_protect (void)
   tdesc_create_reg (feature, "rtlblo", 55, 1, NULL, 32, "int");
   tdesc_create_reg (feature, "rtlbhi", 56, 1, NULL, 32, "int");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.microblaze.stack-protect");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.microblaze.stack-protect");
   tdesc_create_reg (feature, "rslr", 57, 1, NULL, 32, "int");
   tdesc_create_reg (feature, "rshr", 58, 1, NULL, 32, "int");
 
-  tdesc_microblaze_with_stack_protect = result;
+  tdesc_microblaze_with_stack_protect = result.release ();
 }

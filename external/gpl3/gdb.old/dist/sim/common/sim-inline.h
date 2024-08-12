@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -23,6 +23,7 @@
 #ifndef SIM_INLINE_H
 #define SIM_INLINE_H
 
+#include "ansidecl.h"
 
 /* INLINE CODE SELECTION:
 
@@ -325,24 +326,10 @@
 #endif
 
 
-/* Your compiler's no-return reserved word */
-
-#ifndef NORETURN
-#define NORETURN
-#endif
-
-
-
 /* Your compilers's unused reserved word */
 
 #if !defined (UNUSED)
-#if (!defined (__GNUC__) \
-     || (__GNUC__ < 2) \
-     || (__GNUC__ == 2 && __GNUC_MINOR__ < 7))
-#define UNUSED
-#else
-#define UNUSED __attribute__((__unused__))
-#endif
+#define UNUSED ATTRIBUTE_UNUSED
 #endif
 
 
@@ -359,10 +346,10 @@
      && !defined (SIM_ARANGE_C) \
      && (REVEAL_MODULE_P (SIM_ARANGE_INLINE)))
 # if (SIM_ARANGE_INLINE & INLINE_GLOBALS)
-#  define INLINE_SIM_ARANGE(TYPE) static INLINE TYPE UNUSED
+#  define INLINE_SIM_ARANGE(TYPE) static INLINE UNUSED TYPE
 #  define EXTERN_SIM_ARANGE_P 0
 # else
-#  define INLINE_SIM_ARANGE(TYPE) static TYPE UNUSED
+#  define INLINE_SIM_ARANGE(TYPE) static UNUSED TYPE
 #  define EXTERN_SIM_ARANGE_P 0
 # endif
 #else
@@ -397,10 +384,10 @@
      && !defined (SIM_BITS_C) \
      && (REVEAL_MODULE_P (SIM_BITS_INLINE)))
 # if (SIM_BITS_INLINE & INLINE_GLOBALS)
-#  define INLINE_SIM_BITS(TYPE) static INLINE TYPE UNUSED
+#  define INLINE_SIM_BITS(TYPE) static INLINE UNUSED TYPE
 #  define EXTERN_SIM_BITS_P 0
 # else
-#  define INLINE_SIM_BITS(TYPE) static TYPE UNUSED
+#  define INLINE_SIM_BITS(TYPE) static UNUSED TYPE
 #  define EXTERN_SIM_BITS_P 0
 # endif
 #else
@@ -428,10 +415,10 @@
      && !defined (SIM_CORE_C) \
      && (REVEAL_MODULE_P (SIM_CORE_INLINE)))
 # if (SIM_CORE_INLINE & INLINE_GLOBALS)
-#  define INLINE_SIM_CORE(TYPE) static INLINE TYPE UNUSED
+#  define INLINE_SIM_CORE(TYPE) static INLINE UNUSED TYPE
 #  define EXTERN_SIM_CORE_P 0
 #else
-#  define INLINE_SIM_CORE(TYPE) static TYPE UNUSED
+#  define INLINE_SIM_CORE(TYPE) static UNUSED TYPE
 #  define EXTERN_SIM_CORE_P 0
 #endif
 #else
@@ -459,10 +446,10 @@
      && !defined (SIM_ENDIAN_C) \
      && (REVEAL_MODULE_P (SIM_ENDIAN_INLINE)))
 # if (SIM_ENDIAN_INLINE & INLINE_GLOBALS)
-#  define INLINE_SIM_ENDIAN(TYPE) static INLINE TYPE UNUSED
+#  define INLINE_SIM_ENDIAN(TYPE) static INLINE UNUSED TYPE
 #  define EXTERN_SIM_ENDIAN_P 0
 # else
-#  define INLINE_SIM_ENDIAN(TYPE) static TYPE UNUSED
+#  define INLINE_SIM_ENDIAN(TYPE) static UNUSED TYPE
 #  define EXTERN_SIM_ENDIAN_P 0
 # endif
 #else
@@ -490,10 +477,10 @@
      && !defined (SIM_EVENTS_C) \
      && (REVEAL_MODULE_P (SIM_EVENTS_INLINE)))
 # if (SIM_EVENTS_INLINE & INLINE_GLOBALS)
-#  define INLINE_SIM_EVENTS(TYPE) static INLINE TYPE UNUSED
+#  define INLINE_SIM_EVENTS(TYPE) static INLINE UNUSED TYPE
 #  define EXTERN_SIM_EVENTS_P 0
 # else
-#  define INLINE_SIM_EVENTS(TYPE) static TYPE UNUSED
+#  define INLINE_SIM_EVENTS(TYPE) static UNUSED TYPE
 #  define EXTERN_SIM_EVENTS_P 0
 # endif
 #else
@@ -521,10 +508,10 @@
      && !defined (SIM_FPU_C) \
      && (REVEAL_MODULE_P (SIM_FPU_INLINE)))
 # if (SIM_FPU_INLINE & INLINE_GLOBALS)
-#  define INLINE_SIM_FPU(TYPE) static INLINE TYPE UNUSED
+#  define INLINE_SIM_FPU(TYPE) static INLINE UNUSED TYPE
 #  define EXTERN_SIM_FPU_P 0
 # else
-#  define INLINE_SIM_FPU(TYPE) static TYPE UNUSED
+#  define INLINE_SIM_FPU(TYPE) static UNUSED TYPE
 #  define EXTERN_SIM_FPU_P 0
 # endif
 #else
@@ -548,10 +535,10 @@
      && !defined (SIM_TYPES_C) \
      && (REVEAL_MODULE_P (SIM_TYPES_INLINE)))
 # if (SIM_TYPES_INLINE & INLINE_GLOBALS)
-#  define INLINE_SIM_TYPES(TYPE) static INLINE TYPE UNUSED
+#  define INLINE_SIM_TYPES(TYPE) static INLINE UNUSED TYPE
 #  define EXTERN_SIM_TYPES_P 0
 # else
-#  define INLINE_SIM_TYPES(TYPE) static TYPE UNUSED
+#  define INLINE_SIM_TYPES(TYPE) static UNUSED TYPE
 #  define EXTERN_SIM_TYPES_P 0
 # endif
 #else
@@ -579,10 +566,10 @@
      && !defined (SIM_MAIN_C) \
      && (REVEAL_MODULE_P (SIM_MAIN_INLINE)))
 # if (SIM_MAIN_INLINE & INLINE_GLOBALS)
-#  define INLINE_SIM_MAIN(TYPE) static INLINE TYPE UNUSED
+#  define INLINE_SIM_MAIN(TYPE) static INLINE UNUSED TYPE
 #  define EXTERN_SIM_MAIN_P 0
 # else
-#  define INLINE_SIM_MAIN(TYPE) static TYPE UNUSED
+#  define INLINE_SIM_MAIN(TYPE) static UNUSED TYPE
 #  define EXTERN_SIM_MAIN_P 0
 # endif
 #else
@@ -604,10 +591,10 @@
      && !defined (ENGINE_C) \
      && (REVEAL_MODULE_P (ENGINE_INLINE)))
 # if (ENGINE_INLINE & INLINE_GLOBALS)
-#  define INLINE_ENGINE(TYPE) static INLINE TYPE UNUSED
+#  define INLINE_ENGINE(TYPE) static INLINE UNUSED TYPE
 #  define EXTERN_ENGINE_P 0
 # else
-#  define INLINE_ENGINE(TYPE) static TYPE UNUSED
+#  define INLINE_ENGINE(TYPE) static UNUSED TYPE
 #  define EXTERN_ENGINE_P 0
 # endif
 #else
@@ -631,10 +618,10 @@
      && !defined (ICACHE_C) \
      && (REVEAL_MODULE_P (ICACHE_INLINE)))
 # if (ICACHE_INLINE & INLINE_GLOBALS)
-#  define INLINE_ICACHE(TYPE) static INLINE TYPE UNUSED
+#  define INLINE_ICACHE(TYPE) static INLINE UNUSED TYPE
 #  define EXTERN_ICACHE_P 0
 #else
-#  define INLINE_ICACHE(TYPE) static TYPE UNUSED
+#  define INLINE_ICACHE(TYPE) static UNUSED TYPE
 #  define EXTERN_ICACHE_P 0
 #endif
 #else
@@ -658,10 +645,10 @@
      && !defined (IDECODE_C) \
      && (REVEAL_MODULE_P (IDECODE_INLINE)))
 # if (IDECODE_INLINE & INLINE_GLOBALS)
-#  define INLINE_IDECODE(TYPE) static INLINE TYPE UNUSED
+#  define INLINE_IDECODE(TYPE) static INLINE UNUSED TYPE
 #  define EXTERN_IDECODE_P 0
 #else
-#  define INLINE_IDECODE(TYPE) static TYPE UNUSED
+#  define INLINE_IDECODE(TYPE) static UNUSED TYPE
 #  define EXTERN_IDECODE_P 0
 #endif
 #else
@@ -685,10 +672,10 @@
      && !defined (SEMANTICS_C) \
      && (REVEAL_MODULE_P (SEMANTICS_INLINE)))
 # if (SEMANTICS_INLINE & INLINE_GLOBALS)
-#  define INLINE_SEMANTICS(TYPE) static INLINE TYPE UNUSED
+#  define INLINE_SEMANTICS(TYPE) static INLINE UNUSED TYPE
 #  define EXTERN_SEMANTICS_P 0
 #else
-#  define INLINE_SEMANTICS(TYPE) static TYPE UNUSED
+#  define INLINE_SEMANTICS(TYPE) static UNUSED TYPE
 #  define EXTERN_SEMANTICS_P 0
 #endif
 #else
@@ -699,7 +686,7 @@
 #if EXTERN_SEMANTICS_P
 # define EXTERN_SEMANTICS(TYPE) TYPE
 #else
-# define EXTERN_SEMANTICS(TYPE) static TYPE UNUSED
+# define EXTERN_SEMANTICS(TYPE) static UNUSED TYPE
 #endif
 
 #if (SEMANTICS_INLINE & INLINE_LOCALS)
@@ -722,10 +709,10 @@
      && !defined (SUPPORT_C) \
      && (REVEAL_MODULE_P (SUPPORT_INLINE)))
 # if (SUPPORT_INLINE & INLINE_GLOBALS)
-#  define INLINE_SUPPORT(TYPE) static INLINE TYPE UNUSED
+#  define INLINE_SUPPORT(TYPE) static INLINE UNUSED TYPE
 #  define EXTERN_SUPPORT_P 0
 #else
-#  define INLINE_SUPPORT(TYPE) static TYPE UNUSED
+#  define INLINE_SUPPORT(TYPE) static UNUSED TYPE
 #  define EXTERN_SUPPORT_P 0
 #endif
 #else

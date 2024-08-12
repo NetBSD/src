@@ -1,6 +1,6 @@
 /* Simulator for Analog Devices Blackfin processors.
 
-   Copyright (C) 2005-2020 Free Software Foundation, Inc.
+   Copyright (C) 2005-2023 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -32,6 +32,7 @@ struct bfin_board_data {
 void bfin_model_cpu_init (SIM_DESC, SIM_CPU *);
 bu32 bfin_model_get_chipid (SIM_DESC);
 bu32 bfin_model_get_dspid (SIM_DESC);
+extern const SIM_MACH * const bfin_sim_machs[];
 
 #define BFIN_COREMMR_CEC_BASE		0xFFE02100
 #define BFIN_COREMMR_CEC_SIZE		(4 * 5)

@@ -1,5 +1,5 @@
 /* Generic simulator watchpoint support.
-   Copyright (C) 1997-2020 Free Software Foundation, Inc.
+   Copyright (C) 1997-2023 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -17,26 +17,20 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "config.h"
-#include "sim-main.h"
-#include "sim-options.h"
-
-#include "sim-assert.h"
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include <ctype.h>
 #include <stdio.h>
-
-#ifdef HAVE_STRING_H
-#include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
-
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
+#include <string.h>
+
+#include "libiberty.h"
+
+#include "sim-main.h"
+#include "sim-options.h"
+#include "sim-signal.h"
+#include "sim-assert.h"
 
 enum {
   OPTION_WATCH_DELETE                      = OPTION_START,
@@ -176,18 +170,16 @@ schedule_watchpoint (SIM_DESC sd,
 		     sim_watch_point *point)
 {
   sim_watchpoints *watch = STATE_WATCHPOINTS (sd);
+
   switch (point->type)
     {
     case pc_watchpoint:
-      point->event = sim_events_watch_sim (sd,
-					   watch->pc,
-					   watch->sizeof_pc,
-					   0/* host-endian */,
-					   point->is_within,
-					   point->arg0, point->arg1,
-					   /* PC in arg0..arg1 */
-					   handle_watchpoint,
-					   point);
+      point->event = sim_events_watch_pc (sd,
+					  point->is_within,
+					  point->arg0, point->arg1,
+					  /* PC in arg0..arg1 */
+					  handle_watchpoint,
+					  point);
       return SIM_RC_OK;
     case clock_watchpoint:
       point->event = sim_events_watch_clock (sd,
@@ -264,7 +256,7 @@ do_watchpoint_create (SIM_DESC sd,
 
   (*point)->arg0 = strtoul (arg, &arg, 0);
   if (arg[0] == ',')
-    (*point)->arg0 = strtoul (arg, NULL, 0);
+    (*point)->arg1 = strtoul (arg + 1, NULL, 0);
   else
     (*point)->arg1 = (*point)->arg0;
 
@@ -385,7 +377,16 @@ static const OPTION watchpoint_options[] =
 
 static const char *default_interrupt_names[] = { "int", 0, };
 
-
+/* This default handler is "good enough" for targets that just want to trap into
+   gdb when watchpoints are hit, and have only configured the STATE_WATCHPOINTS
+   pc field.  */
+static void
+default_interrupt_handler (SIM_DESC sd, void *data)
+{
+  sim_cpu *cpu = STATE_CPU (sd, 0);
+  address_word cia = CPU_PC_GET (cpu);
+  sim_engine_halt (sd, cpu, NULL, cia, sim_stopped, SIM_SIGTRAP);
+}
 
 SIM_RC
 sim_watchpoint_install (SIM_DESC sd)
@@ -398,6 +399,8 @@ sim_watchpoint_install (SIM_DESC sd)
   /* fill in some details */
   if (watch->interrupt_names == NULL)
     watch->interrupt_names = default_interrupt_names;
+  if (watch->interrupt_handler == NULL)
+    watch->interrupt_handler = default_interrupt_handler;
   watch->nr_interrupts = 0;
   while (watch->interrupt_names[watch->nr_interrupts] != NULL)
     watch->nr_interrupts++;

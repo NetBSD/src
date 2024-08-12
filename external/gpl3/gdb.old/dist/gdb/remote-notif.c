@@ -1,6 +1,6 @@
 /* Remote notification in GDB protocol
 
-   Copyright (C) 1988-2020 Free Software Foundation, Inc.
+   Copyright (C) 1988-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -63,8 +63,8 @@ remote_notif_ack (remote_target *remote,
   notif_event_up event = nc->alloc_event ();
 
   if (notif_debug)
-    fprintf_unfiltered (gdb_stdlog, "notif: ack '%s'\n",
-			nc->ack_command);
+    gdb_printf (gdb_stdlog, "notif: ack '%s'\n",
+		nc->ack_command);
 
   nc->parse (remote, nc, buf, event.get ());
   nc->ack (remote, nc, buf, event.release ());
@@ -79,7 +79,7 @@ remote_notif_parse (remote_target *remote,
   notif_event_up event = nc->alloc_event ();
 
   if (notif_debug)
-    fprintf_unfiltered (gdb_stdlog, "notif: parse '%s'\n", nc->name);
+    gdb_printf (gdb_stdlog, "notif: parse '%s'\n", nc->name);
 
   nc->parse (remote, nc, buf, event.get ());
 
@@ -108,8 +108,10 @@ remote_notif_process (struct remote_notif_state *state,
 static void
 remote_async_get_pending_events_handler (gdb_client_data data)
 {
-  gdb_assert (target_is_non_stop_p ());
-  remote_notif_process ((struct remote_notif_state *) data, NULL);
+  remote_notif_state *notif_state = (remote_notif_state *) data;
+  clear_async_event_handler (notif_state->get_pending_events_token);
+  gdb_assert (remote_target_is_non_stop_p (notif_state->remote));
+  remote_notif_process (notif_state, NULL);
 }
 
 /* Remote notification handler.  Parse BUF, queue notification and
@@ -143,8 +145,8 @@ handle_notification (struct remote_notif_state *state, const char *buf)
 	 reason thought we didn't, possibly due to timeout on its side.
 	 Just ignore it.  */
       if (notif_debug)
-	fprintf_unfiltered (gdb_stdlog,
-			    "notif: ignoring resent notification\n");
+	gdb_printf (gdb_stdlog,
+		    "notif: ignoring resent notification\n");
     }
   else
     {
@@ -200,9 +202,9 @@ handle_notification (struct remote_notif_state *state, const char *buf)
 	}
 
       if (notif_debug)
-	fprintf_unfiltered (gdb_stdlog,
-			    "notif: Notification '%s' captured\n",
-			    nc->name);
+	gdb_printf (gdb_stdlog,
+		    "notif: Notification '%s' captured\n",
+		    nc->name);
     }
 }
 
@@ -219,7 +221,7 @@ remote_notif_state_allocate (remote_target *remote)
 
   notif_state->get_pending_events_token
     = create_async_event_handler (remote_async_get_pending_events_handler,
-				  notif_state);
+				  notif_state, "remote-notif");
 
   return notif_state;
 }

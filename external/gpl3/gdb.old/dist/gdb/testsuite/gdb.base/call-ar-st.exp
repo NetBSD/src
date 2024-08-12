@@ -1,4 +1,4 @@
-#   Copyright 1998-2020 Free Software Foundation, Inc.
+#   Copyright 1998-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,15 +23,11 @@ standard_testfile
 # test.
 if [target_info exists gdb,cannot_call_functions] {
     unsupported "this target can not call functions"
-    continue
+    return
 }
 
 # Create and source the file that provides information about the compiler
 # used to compile the test case.
-
-if [get_compiler_info] {
-    return -1
-}
 
 set skip_float_test [gdb_skip_float_test]
 
@@ -48,9 +44,8 @@ gdb_test_no_output "set print address off"
 gdb_test_no_output "set width 0"
 
 
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
-    continue
+if {![runto_main]} {
+    return
 }
 
 get_debug_format
@@ -151,10 +146,21 @@ if {!$skip_float_test && \
     gdb_test "continue" ".*" ""
 }
 
+# Return a regexp that matches the linkage name of SYM, assuming SYM
+# is a local static variable inside the main function.
+proc main_static_local_re {sym} {
+    # Clang prepends the function name + '.'.
+    return "(main\\.)?${sym}"
+}
+
 #step
 set stop_line [gdb_get_line_number "-step1-"]
 gdb_test "step" \
-    "print_all_arrays \\(array_i=<integer_array.*>, array_c=<char_array.*> .ZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZa., array_f=<float_array.*>, array_d=<double_array.*>\\) at .*$srcfile:$stop_line\[ \t\r\n\]+$stop_line.*print_int_array\\(array_i\\);.*" \
+    "print_all_arrays \\(array_i=<[main_static_local_re integer_array]>,\
+			 array_c=<[main_static_local_re char_array]> .ZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZa.,\
+			 array_f=<[main_static_local_re float_array]>,\
+			 array_d=<[main_static_local_re double_array]>\\)\
+			 at .*$srcfile:$stop_line\[ \t\r\n\]+$stop_line.*print_int_array\\(array_i\\);.*" \
     "step inside print_all_arrays"
 
 #step -over
@@ -425,7 +431,7 @@ if {!$skip_float_test && \
     # On 32-bit SPARC, some of the args are passed by ref, others by
     # value, and GDB gets confused and says "Invalid cast" because it
     # thinks it has to cast the structure into a pointer to structure.
-    if { [test_debug_format "stabs"] } then {
+    if {[test_debug_format "stabs"]} {
 	setup_kfail "gdb/1539" "sparc-*-*"
     }
 

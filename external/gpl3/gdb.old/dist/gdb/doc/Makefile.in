@@ -1,4 +1,4 @@
-##Copyright (C) 1991-2020 Free Software Foundation, Inc.
+##Copyright (C) 1991-2023 Free Software Foundation, Inc.
 
 # Makefile for GDB documentation.
 # This file is part of GDB.
@@ -121,6 +121,11 @@ PDFTEX = pdftex
 # Program to generate Postscript files from DVI files.
 DVIPS = dvips
 
+# Readline includes.
+READLINE_SYSTEM_DOC_INCLUDES =
+READLINE_INTREE_DOC_INCLUDES = $(READLINE_DIR)/rluser.texi $(READLINE_DIR)/hsuser.texi
+READLINE_DOC_SOURCE_INCLUDES = @READLINE_DOC_SOURCE_INCLUDES@
+
 # Main GDB manual
 # Note that this unconditionally includes the readline texi files,
 # even when --with-system-readline is used.  This is harmless because
@@ -129,8 +134,7 @@ GDB_DOC_SOURCE_INCLUDES = \
 	$(srcdir)/fdl.texi \
 	$(srcdir)/gpl.texi \
 	$(srcdir)/agentexpr.texi \
-	$(READLINE_DIR)/rluser.texi \
-	$(READLINE_DIR)/hsuser.texi
+	$(READLINE_DOC_SOURCE_INCLUDES)
 GDB_DOC_BUILD_INCLUDES = \
 	gdb-cfg.texi \
 	GDBvn.texi
@@ -180,6 +184,7 @@ MAN5S = gdbinit.5
 MANS = $(MAN1S) $(MAN5S)
 
 HAVE_NATIVE_GCORE_TARGET = @HAVE_NATIVE_GCORE_TARGET@
+HAVE_NATIVE_GCORE_HOST = @HAVE_NATIVE_GCORE_HOST@
 
 ###
 
@@ -230,7 +235,7 @@ Doxyfile-gdbserver:	$(srcdir)/Doxyfile-gdbserver.in
 
 all-doc: info dvi ps # pdf
 diststuff: info man
-	rm -f gdb-cfg.texi GDBvn.texi
+	rm -f gdb-cfg.texi
 
 install-info: $(INFO_DEPS)
 	$(SHELL) $(srcdir)/../../mkinstalldirs $(DESTDIR)$(infodir)
@@ -412,6 +417,8 @@ refcard.pdf : refcard.tex $(REFEDITS)
 
 # File to record current GDB version number.
 GDBvn.texi : version.subst
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_GDBvn.texi:
 	echo "@set GDBVN `sed q version.subst`" > ./GDBvn.new
 	if [ -n "$(PKGVERSION)" ]; then \
 	  echo "@set VERSION_PACKAGE $(PKGVERSION)" >> ./GDBvn.new; \
@@ -666,10 +673,9 @@ mostlyclean:
 	rm -f $(STABS_TEX_TMPS)
 	rm -f $(ANNOTATE_TEX_TMPS)
 	rm -f sedref.dvi sedref.tex tmp.sed
-	rm -f version.subst
 
 clean: mostlyclean
-	rm -f gdb-cfg.texi GDBvn.texi
+	rm -f gdb-cfg.texi
 
 distclean: clean
 	rm -f Makefile
@@ -679,7 +685,7 @@ distclean: clean
 # "clean" or "distclean".  Use maintainer-clean to remove them.
 
 maintainer-clean realclean: distclean
-	rm -f GDBvn.texi *.info* *.dvi *.ps *.html *.pdf $(MANS)
+	rm -f GDBvn.texi version.subst *.info* *.dvi *.ps *.html *.pdf $(MANS)
 
 install: install-info install-man
 

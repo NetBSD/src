@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,13 +19,6 @@
 if {[is_remote target] || [skip_shlib_tests]} {
     untested "skipping remote target and shared library tests"
     return -1
-}
-
-# This is required by gdb_compile_shlib.
-if {[get_compiler_info]} {
-    warning "Could not get compiler info"
-    untested "no compiler info"
-    return 1
 }
 
 # Build "wrong" and "right" versions of the libraries in separate directories.
@@ -54,7 +47,7 @@ set binfile2_lib [standard_output_file ${libname2}.so]
 
 set lib_flags [list debug ldflags=-Wl,-Bsymbolic]
 set wrong_lib_flags "$lib_flags additional_flags=-DARRAY_SIZE=1"
-set right_lib_flags "$lib_flags additional_flags=-DARRAY_SIZE=8192 -DRIGHT"
+set right_lib_flags "$lib_flags additional_flags=-DARRAY_SIZE=8192 additional_flags=-DRIGHT"
 
 # Binary file.
 standard_testfile .c
@@ -85,7 +78,6 @@ if { [gdb_compile $srcdir/$subdir/${srcfile} ${binfile} \
 clean_restart $testfile
 
 if { ![runto_main] } {
-    fail "can't run to main"
     return
 }
 

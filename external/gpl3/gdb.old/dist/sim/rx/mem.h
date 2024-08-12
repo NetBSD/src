@@ -1,6 +1,6 @@
 /* mem.h --- interface to memory for M32C simulator.
 
-Copyright (C) 2005-2020 Free Software Foundation, Inc.
+Copyright (C) 2005-2023 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -37,6 +37,8 @@ void init_mem (void);
 void mem_usage_stats (void);
 unsigned long mem_usage_cycles (void);
 
+#undef PAGE_SIZE	/* Cleanup system headers.  */
+
 /* rx_mem_ptr returns a pointer which is valid as long as the address
    requested remains within the same page.  */
 #define PAGE_BITS 12
@@ -53,7 +55,7 @@ void mem_put_hi (int address, unsigned short value);
 void mem_put_psi (int address, unsigned long value);
 void mem_put_si (int address, unsigned long value);
 
-void mem_put_blk (int address, void *bufptr, int nbytes);
+void mem_put_blk (int address, void *bufptr_void, int nbytes);
 
 unsigned char mem_get_pc (int address);
 
@@ -62,7 +64,7 @@ unsigned short mem_get_hi (int address);
 unsigned long mem_get_psi (int address);
 unsigned long mem_get_si (int address);
 
-void mem_get_blk (int address, void *bufptr, int nbytes);
+void mem_get_blk (int address, void *bufptr_void, int nbytes);
 
 int sign_ext (int v, int bits);
 

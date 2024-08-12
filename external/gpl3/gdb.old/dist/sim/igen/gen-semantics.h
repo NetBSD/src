@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -72,14 +72,18 @@
 
 extern void print_semantic_declaration
   (lf *file,
-   insn_entry * insn,
-   opcode_bits *bits, insn_opcodes *opcodes, int nr_prefetched_words);
+   const insn_entry *insn,
+   const opcode_bits *bits,
+   const insn_opcodes *opcodes,
+   int nr_prefetched_words);
 
 extern void print_semantic_definition
   (lf *file,
-   insn_entry * insn,
-   opcode_bits *bits,
-   insn_opcodes *opcodes, cache_entry *cache_rules, int nr_prefetched_words);
+   const insn_entry *insn,
+   const opcode_bits *bits,
+   const insn_opcodes *opcodes,
+   cache_entry *cache_rules,
+   int nr_prefetched_words);
 
 
 typedef enum
@@ -95,5 +99,6 @@ extern void print_idecode_invalid
 
 extern void print_semantic_body
   (lf *file,
-   insn_entry * instruction,
-   opcode_bits *expanded_bits, insn_opcodes *opcodes);
+   const insn_entry *instruction,
+   const opcode_bits *expanded_bits,
+   const insn_opcodes *opcodes);

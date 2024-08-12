@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -38,7 +38,7 @@ sub_val (insn_uint val, int val_last_pos, int first_pos, int last_pos)
 }
 
 static void
-update_depth (lf *file, gen_entry *entry, int depth, void *data)
+update_depth (lf *file, const gen_entry *entry, int depth, void *data)
 {
   int *max_depth = (int *) data;
   if (*max_depth < depth)
@@ -47,7 +47,7 @@ update_depth (lf *file, gen_entry *entry, int depth, void *data)
 
 
 int
-gen_entry_depth (gen_entry *table)
+gen_entry_depth (const gen_entry *table)
 {
   int depth = 0;
   gen_entry_traverse_tree (NULL, table, 1, NULL,	/*start */
@@ -58,7 +58,9 @@ gen_entry_depth (gen_entry *table)
 
 
 static void
-print_gen_entry_path (line_ref *line, gen_entry *table, error_func *print)
+print_gen_entry_path (const line_ref *line,
+		      const gen_entry *table,
+		      error_func *print)
 {
   if (table->parent == NULL)
     {
@@ -75,12 +77,13 @@ print_gen_entry_path (line_ref *line, gen_entry *table, error_func *print)
 }
 
 static void
-print_gen_entry_insns (gen_entry *table,
+print_gen_entry_insns (const gen_entry *table,
 		       error_func *print,
-		       char *first_message, char *next_message)
+		       const char *first_message,
+		       const char *next_message)
 {
   insn_list *i;
-  char *message;
+  const char *message;
   message = first_message;
   for (i = table->insns; i != NULL; i = i->next)
     {
@@ -94,7 +97,7 @@ print_gen_entry_insns (gen_entry *table,
 
 /* same as strcmp */
 static int
-insn_field_cmp (insn_word_entry *l, insn_word_entry *r)
+insn_field_cmp (const insn_word_entry *l, const insn_word_entry *r)
 {
   while (1)
     {
@@ -170,7 +173,7 @@ insn_field_cmp (insn_word_entry *l, insn_word_entry *r)
 
 /* same as strcmp */
 static int
-insn_word_cmp (insn_word_entry *l, insn_word_entry *r)
+insn_word_cmp (const insn_word_entry *l, const insn_word_entry *r)
 {
   while (1)
     {
@@ -199,7 +202,7 @@ insn_word_cmp (insn_word_entry *l, insn_word_entry *r)
 
 /* same as strcmp */
 static int
-opcode_bit_cmp (opcode_bits *l, opcode_bits *r)
+opcode_bit_cmp (const opcode_bits *l, const opcode_bits *r)
 {
   if (l == NULL && r == NULL)
     return 0;			/* all previous bits the same */
@@ -233,7 +236,7 @@ opcode_bit_cmp (opcode_bits *l, opcode_bits *r)
 
 /* same as strcmp */
 static int
-opcode_bits_cmp (opcode_bits *l, opcode_bits *r)
+opcode_bits_cmp (const opcode_bits *l, const opcode_bits *r)
 {
   while (1)
     {
@@ -452,7 +455,7 @@ insn_list_insert (insn_list **cur_insn_ptr,
 
 extern void
 gen_entry_traverse_tree (lf *file,
-			 gen_entry *table,
+			 const gen_entry *table,
 			 int depth,
 			 gen_entry_handler * start,
 			 gen_entry_handler * leaf,
@@ -498,7 +501,9 @@ gen_entry_traverse_tree (lf *file,
 /* create a list element containing a single gen_table entry */
 
 static gen_list *
-make_table (insn_table *isa, decode_table *rules, model_entry *model)
+make_table (const insn_table *isa,
+	    const decode_table *rules,
+	    const model_entry *model)
 {
   insn_entry *insn;
   gen_list *entry = ZALLOC (gen_list);
@@ -524,7 +529,7 @@ make_table (insn_table *isa, decode_table *rules, model_entry *model)
 
 
 gen_table *
-make_gen_tables (insn_table *isa, decode_table *rules)
+make_gen_tables (const insn_table *isa, const decode_table *rules)
 {
   gen_table *gen = ZALLOC (gen_table);
   gen->isa = isa;
@@ -560,9 +565,9 @@ make_gen_tables (insn_table *isa, decode_table *rules)
 /* Is the bit, according to the decode rule, identical across all the
    instructions? */
 static int
-insns_bit_useless (insn_list *insns, decode_table *rule, int bit_nr)
+insns_bit_useless (const insn_list *insns, const decode_table *rule, int bit_nr)
 {
-  insn_list *entry;
+  const insn_list *entry;
   int value = -1;
   int is_useless = 1;		/* cleared if something actually found */
 
@@ -710,7 +715,7 @@ insns_bit_useless (insn_list *insns, decode_table *rule, int bit_nr)
 
 static opcode_field *
 gen_entry_find_opcode_field (insn_list *insns,
-			     decode_table *rule, int string_only)
+			     const decode_table *rule, int string_only)
 {
   opcode_field curr_opcode;
   ASSERT (rule != NULL);
@@ -987,7 +992,7 @@ gen_entry_expand_opcode (gen_entry *table,
 				}
 			      if (bit == NULL && t == NULL)
 				error (instruction->line,
-				       "Conditional `%s' of field `%s' isn't expanded",
+				       "Conditional `%s' of field `%s' isn't expanded\n",
 				       condition->string, field->val_string);
 			      switch (condition->test)
 				{
@@ -1118,9 +1123,9 @@ insns_match_conditions (insn_list *insns, decode_cond *conditions)
 }
 
 static int
-insns_match_nr_words (insn_list *insns, int nr_words)
+insns_match_nr_words (const insn_list *insns, int nr_words)
 {
-  insn_list *i;
+  const insn_list *i;
   for (i = insns; i != NULL; i = i->next)
     {
       if (i->insn->nr_words < nr_words)
@@ -1130,11 +1135,11 @@ insns_match_nr_words (insn_list *insns, int nr_words)
 }
 
 static int
-insn_list_cmp (insn_list *l, insn_list *r)
+insn_list_cmp (const insn_list *l, const insn_list *r)
 {
   while (1)
     {
-      insn_entry *insn;
+      const insn_entry *insn;
       if (l == NULL && r == NULL)
 	return 0;
       if (l == NULL)
@@ -1157,7 +1162,7 @@ insn_list_cmp (insn_list *l, insn_list *r)
 static void
 gen_entry_expand_insns (gen_entry *table)
 {
-  decode_table *opcode_rule;
+  const decode_table *opcode_rule;
 
   ASSERT (table->nr_insns >= 1);
 
@@ -1456,7 +1461,7 @@ gen_tables_expand_insns (gen_table *gen)
    worked. */
 
 static void
-make_gen_semantics_list (lf *file, gen_entry *entry, int depth, void *data)
+make_gen_semantics_list (lf *file, const gen_entry *entry, int depth, void *data)
 {
   gen_table *gen = (gen_table *) data;
   insn_list *insn;
@@ -1506,7 +1511,7 @@ dump_opcode_field (lf *file,
 		   char *prefix,
 		   opcode_field *field, char *suffix, int levels)
 {
-  lf_printf (file, "%s(opcode_field *) 0x%lx", prefix, (long) field);
+  lf_printf (file, "%s(opcode_field *) %p", prefix, field);
   if (levels && field != NULL)
     {
       lf_indent (file, +1);
@@ -1526,7 +1531,7 @@ static void
 dump_opcode_bits (lf *file,
 		  char *prefix, opcode_bits *bits, char *suffix, int levels)
 {
-  lf_printf (file, "%s(opcode_bits *) 0x%lx", prefix, (long) bits);
+  lf_printf (file, "%s(opcode_bits *) %p", prefix, bits);
 
   if (levels && bits != NULL)
     {
@@ -1545,13 +1550,13 @@ dump_opcode_bits (lf *file,
 static void
 dump_insn_list (lf *file, char *prefix, insn_list *entry, char *suffix)
 {
-  lf_printf (file, "%s(insn_list *) 0x%lx", prefix, (long) entry);
+  lf_printf (file, "%s(insn_list *) %p", prefix, entry);
 
   if (entry != NULL)
     {
       lf_indent (file, +1);
       dump_insn_entry (file, "\n(insn ", entry->insn, ")");
-      lf_printf (file, "\n(next 0x%lx)", (long) entry->next);
+      lf_printf (file, "\n(next %p)", entry->next);
       lf_indent (file, -1);
     }
   lf_printf (file, "%s", suffix);
@@ -1578,7 +1583,7 @@ dump_gen_entry (lf *file,
 		char *prefix, gen_entry *table, char *suffix, int levels)
 {
 
-  lf_printf (file, "%s(gen_entry *) 0x%lx", prefix, (long) table);
+  lf_printf (file, "%s(gen_entry *) %p", prefix, table);
 
   if (levels && table !=NULL)
     {
@@ -1609,9 +1614,9 @@ dump_gen_list (lf *file,
 {
   while (entry != NULL)
     {
-      lf_printf (file, "%s(gen_list *) 0x%lx", prefix, (long) entry);
+      lf_printf (file, "%s(gen_list *) %p", prefix, entry);
       dump_gen_entry (file, "\n(", entry->table, ")", levels);
-      lf_printf (file, "\n(next (gen_list *) 0x%lx)", (long) entry->next);
+      lf_printf (file, "\n(next (gen_list *) %p)", entry->next);
       lf_printf (file, "%s", suffix);
     }
 }
@@ -1621,9 +1626,9 @@ static void
 dump_gen_table (lf *file,
 		char *prefix, gen_table *gen, char *suffix, int levels)
 {
-  lf_printf (file, "%s(gen_table *) 0x%lx", prefix, (long) gen);
-  lf_printf (file, "\n(isa (insn_table *) 0x%lx)", (long) gen->isa);
-  lf_printf (file, "\n(rules (decode_table *) 0x%lx)", (long) gen->rules);
+  lf_printf (file, "%s(gen_table *) %p", prefix, gen);
+  lf_printf (file, "\n(isa (insn_table *) %p)", gen->isa);
+  lf_printf (file, "\n(rules (decode_table *) %p)", gen->rules);
   dump_gen_list (file, "\n(", gen->tables, ")", levels);
   lf_printf (file, "%s", suffix);
 }
@@ -1643,7 +1648,7 @@ main (int argc, char **argv)
     error (NULL,
 	   "Usage: insn <filter-in> <hi-bit-nr> <insn-bit-size> <widths> <decode-table> <insn-table>\n");
 
-  INIT_OPTIONS (options);
+  INIT_OPTIONS ();
 
   filter_parse (&options.flags_filter, argv[1]);
 

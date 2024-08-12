@@ -1,4 +1,4 @@
-# Copyright 2008-2020 Free Software Foundation, Inc.
+# Copyright 2008-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,6 +41,9 @@ set one_pattern_found "${newline}1 pattern found\[.\]"
 set two_patterns_found "${newline}2 patterns found\[.\]"
 
 # Test string pattern.
+
+# For when the testcase is built in C++ mode.
+gdb_test_no_output "set print asm-demangle on"
 
 gdb_test_no_output "set *(int32_t*) &int8_search_buf\[10\] = 0x61616161" ""
 
@@ -106,11 +109,11 @@ gdb_test_no_output "set int16_search_buf\[10\] = 0x1234" ""
 
 gdb_test "find /h &int16_search_buf\[0\], +sizeof(int16_search_buf), 0x1234" \
     "${hex_number}.*<int16_search_buf\\+20>${one_pattern_found}" \
-    "find 16-bit pattern"
+    "find 16-bit pattern /h"
 
 gdb_test "find &int16_search_buf\[0\], +sizeof(int16_search_buf), (int16_t) 0x1234" \
     "${hex_number}.*<int16_search_buf\\+20>${one_pattern_found}" \
-    "find 16-bit pattern"
+    "find 16-bit pattern cast"
 
 # Test 32-bit pattern.
 
@@ -118,11 +121,11 @@ gdb_test_no_output "set int32_search_buf\[10\] = 0x12345678" ""
 
 gdb_test "find &int32_search_buf\[0\], +sizeof(int32_search_buf), (int32_t) 0x12345678" \
     "${hex_number}.*<int32_search_buf\\+40>${one_pattern_found}" \
-    "find 32-bit pattern"
+    "find 32-bit pattern cast"
 
 gdb_test "find /w &int32_search_buf\[0\], +sizeof(int32_search_buf), 0x12345678" \
     "${hex_number}.*<int32_search_buf\\+40>${one_pattern_found}" \
-    "find 32-bit pattern"
+    "find 32-bit pattern /w"
 
 # Test 64-bit pattern.
 
@@ -130,11 +133,11 @@ gdb_test_no_output "set int64_search_buf\[10\] = 0xfedcba9876543210LL" ""
 
 gdb_test "find &int64_search_buf\[0\], +sizeof(int64_search_buf), (int64_t) 0xfedcba9876543210LL" \
     "${hex_number}.*<int64_search_buf\\+80>${one_pattern_found}" \
-    "find 64-bit pattern"
+    "find 64-bit pattern cast"
 
 gdb_test "find /g &int64_search_buf\[0\], +sizeof(int64_search_buf), 0xfedcba9876543210LL" \
     "${hex_number}.*<int64_search_buf\\+80>${one_pattern_found}" \
-    "find 64-bit pattern"
+    "find 64-bit pattern /g"
 
 # Test mixed-sized patterns.
 

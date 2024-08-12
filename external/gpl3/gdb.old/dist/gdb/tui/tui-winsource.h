@@ -1,6 +1,6 @@
 /* TUI display source/assembly window.
 
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -107,6 +107,20 @@ protected:
   virtual bool set_contents (struct gdbarch *gdbarch,
 			     const struct symtab_and_line &sal) = 0;
 
+  /* Return the number of extra margin characters needed by this
+     instance.  */
+  virtual int extra_margin () const
+  {
+    return 0;
+  }
+
+  /* Display the line number in the window margin.  OFFSET indicates
+     which line to display; it is 0-based, with 0 meaning the line at
+     the top of the window.  */
+  virtual void show_line_number (int offset) const
+  {
+  }
+
   /* Redraw the complete line of a source or disassembly window.  */
   void show_source_line (int lineno);
 
@@ -118,6 +132,9 @@ protected:
   struct gdbarch *m_gdbarch = nullptr;
 
   std::vector<tui_source_element> m_content;
+
+  /* Length of longest line to be displayed.  */
+  int m_max_length;
 
 public:
 
@@ -136,7 +153,7 @@ public:
 
   /* Update the window to display the given location.  Does nothing if
      the location is already displayed.  */
-  virtual void maybe_update (struct frame_info *fi, symtab_and_line sal) = 0;
+  virtual void maybe_update (frame_info_ptr fi, symtab_and_line sal) = 0;
 
   void update_source_window_as_is  (struct gdbarch *gdbarch,
 				    const struct symtab_and_line &sal);
@@ -154,6 +171,8 @@ public:
   /* Erase the source content.  */
   virtual void erase_source_content () = 0;
 
+  void refresh_window () override;
+
   /* Return the start address and gdbarch.  */
   virtual void display_start_addr (struct gdbarch **gdbarch_p,
 				   CORE_ADDR *addr_p) = 0;
@@ -167,6 +186,9 @@ private:
 
   /* A token used to register and unregister an observer.  */
   gdb::observers::token m_observable;
+
+  /* Pad used to display fixme mumble  */
+  std::unique_ptr<WINDOW, curses_deleter> m_pad;
 };
 
 
@@ -264,19 +286,15 @@ extern void tui_display_main (void);
 extern void tui_update_source_windows_with_addr (struct gdbarch *, CORE_ADDR);
 extern void tui_update_source_windows_with_line (struct symtab_and_line sal);
 
-/* Extract some source text from PTR.  LINE_NO is the line number.  If
-   it is positive, it is printed at the start of the line.  FIRST_COL
-   is the first column to extract, and LINE_WIDTH is the number of
-   characters to display.  NDIGITS is used to format the line number
-   (if it is positive).  If NDIGITS is greater than 0, then that many
-   digits are used; otherwise the line number is formatted with 6
-   digits and the text is aligned to the next tab stop.  Returns a
-   string holding the desired text.  PTR is updated to point to the
-   start of the next line.  */
+/* Extract some source text from PTR.  Returns a string holding the
+   desired text.  PTR is updated to point to the start of the next
+   line.  If LENGTH is non-NULL, then the length of the line is stored
+   there.  Escape sequences are not counted against the length.
+   Actually an approximation is used -- each byte of a multi-byte
+   sequence counts as a character here.  */
 
 extern std::string tui_copy_source_line (const char **ptr,
-					 int line_no, int first_col,
-					 int line_width, int ndigits);
+					 int *length = nullptr);
 
 /* Constant definitions. */
 #define SCROLL_THRESHOLD 2	/* Threshold for lazy scroll.  */

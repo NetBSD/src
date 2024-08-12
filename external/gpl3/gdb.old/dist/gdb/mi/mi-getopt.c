@@ -1,5 +1,5 @@
 /* MI Command Set - MI Option Parser.
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2023 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -33,8 +33,7 @@ mi_getopt_1 (const char *prefix, int argc, char **argv,
 
   /* We assume that argv/argc are ok.  */
   if (*oind > argc || *oind < 0)
-    internal_error (__FILE__, __LINE__,
-		    _("mi_getopt_long: oind out of bounds"));
+    internal_error (_("mi_getopt_long: oind out of bounds"));
   if (*oind == argc)
     return -1;
   arg = argv[*oind];
