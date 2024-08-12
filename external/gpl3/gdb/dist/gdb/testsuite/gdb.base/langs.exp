@@ -1,4 +1,4 @@
-#   Copyright (C) 1997-2023 Free Software Foundation, Inc.
+#   Copyright (C) 1997-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -93,10 +93,7 @@ if {[runto csub]} {
     gdb_continue_to_end "first session"
 }
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load $binfile
+clean_restart $binfile
 
 # Try exercising the "minimal" language a bit...
 
@@ -124,4 +121,3 @@ if {[runto csub]} {
 }
 
 set timeout $oldtimeout
-return 0

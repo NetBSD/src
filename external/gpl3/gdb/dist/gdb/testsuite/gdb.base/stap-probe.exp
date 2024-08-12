@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2023 Free Software Foundation, Inc.
+# Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -113,8 +113,15 @@ proc check_for_usable_xmm0_probe { binfile } {
 proc stap_test {exec_name {args ""}} {
     global testfile hex srcfile
 
+    set flags {}
+    lappend flags debug
+    lappend_include_file flags $::srcdir/lib/attributes.h
+    if { $args != "" } {
+	set flags [concat $flags $args]
+    }
+
     if {[prepare_for_testing "failed to prepare" ${exec_name} $srcfile \
-	   [concat $args debug]]} {
+	     $flags]} {
 	return -1
     }
 
@@ -233,10 +240,18 @@ proc stap_test {exec_name {args ""}} {
 }
 
 proc stap_test_no_debuginfo {exec_name {args ""}} {
-    global testfile hex
+    global hex
 
-    if {[prepare_for_testing "failed to prepare" ${exec_name} ${testfile}.c \
-	   [concat $args nodebug optimize=-O2]]} {
+    set flags {}
+    lappend flags nodebug
+    lappend flags optimize=-O2
+    lappend_include_file flags $::srcdir/lib/attributes.h
+    if { $args != "" } {
+	set flags [concat $flags $args]
+    }
+
+    if {[prepare_for_testing "failed to prepare" ${exec_name} $::srcfile \
+	     $flags]} {
 	return -1
     }
 

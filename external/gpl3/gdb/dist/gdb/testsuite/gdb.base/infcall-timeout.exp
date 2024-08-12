@@ -1,0 +1,115 @@
+# Copyright 2022-2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test GDB's direct-call-timeout setting, that is, ensure that if an
+# inferior function call, invoked from e.g. a 'print' command, takes
+# too long, then GDB can interrupt it, and return control to the user.
+
+standard_testfile
+
+if { [build_executable "failed to prepare" ${binfile} "${srcfile}" \
+	  {debug}] == -1 } {
+    return
+}
+
+# Start GDB according to TARGET_ASYNC, TARGET_NON_STOP, and NON_STOP,
+# then adjust the direct-call-timeout, and make an inferior function
+# call that will never return.  GDB should eventually timeout and stop
+# the inferior.
+#
+# When UNWIND is "off" the inferior wil be left in the frame where the
+# timeout occurs, otherwise, when UNWIND is "on", GDB should unwind
+# back to the frame where the inferior call was made.
+proc run_test { target_async target_non_stop non_stop unwind } {
+    save_vars { ::GDBFLAGS } {
+	append ::GDBFLAGS \
+	    " -ex \"maint set target-non-stop $target_non_stop\""
+	append ::GDBFLAGS \
+	    " -ex \"set non-stop $non_stop\""
+	append ::GDBFLAGS \
+	    " -ex \"maintenance set target-async ${target_async}\""
+
+	clean_restart ${::binfile}
+    }
+
+    if {![runto_main]} {
+	return
+    }
+
+    gdb_test_no_output "set direct-call-timeout 5"
+    gdb_test_no_output "set unwind-on-timeout $unwind"
+
+    if { $unwind } {
+	gdb_test "print function_that_never_returns ()" \
+	    [multi_line \
+		 "The program being debugged timed out while in a function called from GDB\\." \
+		 "GDB has restored the context to what it was before the call\\." \
+		 "To change this behavior use \"set unwind-on-timeout off\"\\." \
+		 "Evaluation of the expression containing the function" \
+		 "\\(function_that_never_returns\\) will be abandoned\\."]
+
+	gdb_test "bt" \
+	    "#0\\s+main \\(\\).*"
+    } else {
+	# When non-stop mode is off we get slightly different output from GDB.
+	if { ([target_info gdb_protocol] == "remote"
+	      || [target_info gdb_protocol] == "extended-remote")
+	     && !$target_non_stop } {
+	    set stopped_line_pattern "Program received signal SIGINT, Interrupt\\."
+	} else {
+	    set stopped_line_pattern "Program stopped\\."
+	}
+
+	gdb_test "print function_that_never_returns ()" \
+	    [multi_line \
+		 $stopped_line_pattern \
+		 ".*" \
+		 "The program being debugged timed out while in a function called from GDB\\." \
+		 "GDB remains in the frame where the timeout occurred\\." \
+		 "To change this behavior use \"set unwind-on-timeout on\"\\." \
+		 "Evaluation of the expression containing the function" \
+		 "\\(function_that_never_returns\\) will be abandoned\\." \
+		 "When the function is done executing, GDB will silently stop\\."]
+
+	gdb_test "bt" \
+	    ".* function_that_never_returns .*<function called from gdb>.*"
+    }
+}
+
+foreach_with_prefix target_async { "on" "off" } {
+
+    if { !$target_async } {
+	# GDB can't timeout while waiting for a thread if the target
+	# runs with async-mode turned off; once the target is running
+	# GDB is effectively blocked until the target stops for some
+	# reason.
+	continue
+    }
+
+    foreach_with_prefix target_non_stop { "on" "off" } {
+	foreach_with_prefix non_stop { "on" "off" } {
+	    if { $non_stop && !$target_non_stop } {
+		# It doesn't make sense to operate GDB in non-stop
+		# mode when the target has (in theory) non-stop mode
+		# disabled.
+		continue
+	    }
+
+	    foreach_with_prefix unwind { "on" "off" } {
+		run_test $target_async $target_non_stop $non_stop $unwind
+	    }
+	}
+    }
+}

@@ -1,4 +1,4 @@
-# Copyright 2017-2023 Free Software Foundation, Inc.
+# Copyright 2017-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,7 @@
 load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2 and use gas.
-if {![dwarf2_support]} {
-    return 0
-}
+require dwarf2_support
 
 standard_testfile main.c -dw.S
 
@@ -29,7 +27,7 @@ Dwarf::assemble $asm_file {
 
     cu { addr_size 4 } {
 	compile_unit {} {
-	    declare_labels int_label ushort_label struct_label
+	    declare_labels int_label ushort_label struct_label struct_label_2
 
 	    int_label: DW_TAG_base_type {
 		{DW_AT_byte_size 4 DW_FORM_udata}
@@ -45,6 +43,23 @@ Dwarf::assemble $asm_file {
 	    struct_label: DW_TAG_structure_type {
 		{DW_AT_name "S"}
 		{DW_AT_byte_size 8 DW_FORM_udata}
+	    } {
+		DW_TAG_member {
+		    {DW_AT_name "a"}
+		    {DW_AT_type :${int_label}}
+		    {DW_AT_data_member_location 0 DW_FORM_udata}
+		}
+
+		DW_TAG_member {
+		    {DW_AT_name "b"}
+		    {DW_AT_type :${ushort_label}}
+		    {DW_AT_data_member_location 4 DW_FORM_udata}
+		}
+	    }
+
+	    struct_label_2: DW_TAG_structure_type {
+		{DW_AT_name "S_2"}
+		{DW_AT_byte_size 6 DW_FORM_udata}
 	    } {
 		DW_TAG_member {
 		    {DW_AT_name "a"}
@@ -86,6 +101,20 @@ Dwarf::assemble $asm_file {
 		    DW_OP_piece 8
 		} SPECIAL_expr}
 	    }
+
+	    DW_TAG_variable {
+		{DW_AT_name "s3"}
+		{DW_AT_type :${struct_label_2}}
+		{DW_AT_external 1 DW_FORM_flag}
+		{DW_AT_location {
+		    DW_OP_constu 0
+		    DW_OP_stack_value
+		    DW_OP_piece 4
+		    DW_OP_constu 1
+		    DW_OP_stack_value
+		    DW_OP_piece 2
+		} SPECIAL_expr}
+	    }
 	}
     }
 }
@@ -98,3 +127,22 @@ if { [prepare_for_testing "failed to prepare" ${testfile} \
 gdb_test "p s1" " = {a = 1, b = 0}"
 gdb_test "p s2" \
     "access outside bounds of object referenced via synthetic pointer"
+
+# When fetching a lazy value, GDB typically tries to fetch the 'full'
+# object based on the enclosing type.  GDB does not support the reading
+# of a pieced value with a (possibly larger) enclosing type.  However,
+# the user may want to print a value casted to a different type,
+# e.g. print (<type> []) <variable>.  This cast causes an update of the
+# value's type.  In case of a pieced value, GDB failed to fetch the
+# value's content.
+# This test verifies that GDB can print a pieced value casted to a
+# different type.
+gdb_test "p (int \[\]) s1" " = \\{1, <optimized out>\\}"
+gdb_test "p (short \[\]) s1" " = \\{1, 0, 0, <optimized out>\\}"
+
+# Test for correct output if the size of the original object is not a
+# multiple of the array's element size.
+gdb_test "p s3" " = {a = 0, b = 1}"
+gdb_test "p (int \[\]) s3" [multi_line \
+				"warning: array element type size does not divide object size in cast" \
+				"\\$\\d = \\{0\\}"]
