@@ -1,5 +1,5 @@
 /* General utility routines for the remote server for GDB.
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

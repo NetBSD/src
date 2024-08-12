@@ -1,6 +1,6 @@
 /* GNU/Linux/x86-64 specific low level interface, for the remote server
    for GDB.
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -48,9 +48,9 @@
 #include "linux-x86-tdesc.h"
 
 #ifdef __x86_64__
-static struct target_desc *tdesc_amd64_linux_no_xml;
+static target_desc_up tdesc_amd64_linux_no_xml;
 #endif
-static struct target_desc *tdesc_i386_linux_no_xml;
+static target_desc_up tdesc_i386_linux_no_xml;
 
 
 static unsigned char jump_insn[] = { 0xe9, 0, 0, 0, 0 };
@@ -58,13 +58,13 @@ static unsigned char small_jump_insn[] = { 0x66, 0xe9, 0, 0 };
 
 /* Backward compatibility for gdb without XML support.  */
 
-static const char *xmltarget_i386_linux_no_xml = "@<target>\
+static const char xmltarget_i386_linux_no_xml[] = "@<target>\
 <architecture>i386</architecture>\
 <osabi>GNU/Linux</osabi>\
 </target>";
 
 #ifdef __x86_64__
-static const char *xmltarget_amd64_linux_no_xml = "@<target>\
+static const char xmltarget_amd64_linux_no_xml[] = "@<target>\
 <architecture>i386:x86-64</architecture>\
 <osabi>GNU/Linux</osabi>\
 </target>";
@@ -271,13 +271,12 @@ static /*const*/ int i386_regmap[] =
 
 #ifdef __x86_64__
 
-/* Returns true if the current inferior belongs to a x86-64 process,
-   per the tdesc.  */
+/* Returns true if THREAD belongs to a x86-64 process, per the tdesc.  */
 
 static int
-is_64bit_tdesc (void)
+is_64bit_tdesc (thread_info *thread)
 {
-  struct regcache *regcache = get_thread_regcache (current_thread, 0);
+  struct regcache *regcache = get_thread_regcache (thread, 0);
 
   return register_size (regcache->tdesc, 0) == 8;
 }
@@ -292,7 +291,9 @@ ps_get_thread_area (struct ps_prochandle *ph,
 		    lwpid_t lwpid, int idx, void **base)
 {
 #ifdef __x86_64__
-  int use_64bit = is_64bit_tdesc ();
+  lwp_info *lwp = find_lwp_pid (ptid_t (lwpid));
+  gdb_assert (lwp != nullptr);
+  int use_64bit = is_64bit_tdesc (get_lwp_thread (lwp));
 
   if (use_64bit)
     {
@@ -334,8 +335,10 @@ ps_get_thread_area (struct ps_prochandle *ph,
 int
 x86_target::low_get_thread_area (int lwpid, CORE_ADDR *addr)
 {
+  lwp_info *lwp = find_lwp_pid (ptid_t (lwpid));
+  gdb_assert (lwp != nullptr);
 #ifdef __x86_64__
-  int use_64bit = is_64bit_tdesc ();
+  int use_64bit = is_64bit_tdesc (get_lwp_thread (lwp));
 
   if (use_64bit)
     {
@@ -351,7 +354,6 @@ x86_target::low_get_thread_area (int lwpid, CORE_ADDR *addr)
 #endif
 
   {
-    struct lwp_info *lwp = find_lwp_pid (ptid_t (lwpid));
     struct thread_info *thr = get_lwp_thread (lwp);
     struct regcache *regcache = get_thread_regcache (thr, 1);
     unsigned int desc[4];
@@ -379,7 +381,7 @@ bool
 x86_target::low_cannot_store_register (int regno)
 {
 #ifdef __x86_64__
-  if (is_64bit_tdesc ())
+  if (is_64bit_tdesc (current_thread))
     return false;
 #endif
 
@@ -390,11 +392,40 @@ bool
 x86_target::low_cannot_fetch_register (int regno)
 {
 #ifdef __x86_64__
-  if (is_64bit_tdesc ())
+  if (is_64bit_tdesc (current_thread))
     return false;
 #endif
 
   return regno >= I386_NUM_REGS;
+}
+
+static void
+collect_register_i386 (struct regcache *regcache, int regno, void *buf)
+{
+  collect_register (regcache, regno, buf);
+
+#ifdef __x86_64__
+  /* In case of x86_64 -m32, collect_register only writes 4 bytes, but the
+     space reserved in buf for the register is 8 bytes.  Make sure the entire
+     reserved space is initialized.  */
+
+  gdb_assert (register_size (regcache->tdesc, regno) == 4);
+
+  if (regno == RAX)
+    {
+      /* Sign extend EAX value to avoid potential syscall restart
+	 problems.
+
+	 See amd64_linux_collect_native_gregset() in
+	 gdb/amd64-linux-nat.c for a detailed explanation.  */
+      *(int64_t *) buf = *(int32_t *) buf;
+    }
+  else
+    {
+      /* Zero-extend.  */
+      *(uint64_t *) buf = *(uint32_t *) buf;
+    }
+#endif
 }
 
 static void
@@ -411,32 +442,14 @@ x86_fill_gregset (struct regcache *regcache, void *buf)
 
       return;
     }
-
-  /* 32-bit inferior registers need to be zero-extended.
-     Callers would read uninitialized memory otherwise.  */
-  memset (buf, 0x00, X86_64_USER_REGS * 8);
 #endif
 
   for (i = 0; i < I386_NUM_REGS; i++)
-    collect_register (regcache, i, ((char *) buf) + i386_regmap[i]);
+    collect_register_i386 (regcache, i, ((char *) buf) + i386_regmap[i]);
 
-  collect_register_by_name (regcache, "orig_eax",
-			    ((char *) buf) + ORIG_EAX * REGSIZE);
-
-#ifdef __x86_64__
-  /* Sign extend EAX value to avoid potential syscall restart
-     problems. 
-
-     See amd64_linux_collect_native_gregset() in gdb/amd64-linux-nat.c
-     for a detailed explanation.  */
-  if (register_size (regcache->tdesc, 0) == 4)
-    {
-      void *ptr = ((gdb_byte *) buf
-                   + i386_regmap[find_regno (regcache->tdesc, "eax")]);
-
-      *(int64_t *) ptr = *(int32_t *) ptr;
-    }
-#endif
+  /* Handle ORIG_EAX, which is not in i386_regmap.  */
+  collect_register_i386 (regcache, find_regno (regcache->tdesc, "orig_eax"),
+			 ((char *) buf) + ORIG_EAX * REGSIZE);
 }
 
 static void
@@ -804,7 +817,7 @@ x86_target::low_siginfo_fixup (siginfo_t *ptrace, gdb_byte *inf, int direction)
   int is_elf64 = linux_pid_exe_is_elf_64_file (tid, &machine);
 
   /* Is the inferior 32-bit?  If so, then fixup the siginfo object.  */
-  if (!is_64bit_tdesc ())
+  if (!is_64bit_tdesc (current_thread))
       return amd64_linux_siginfo_fixup_common (ptrace, inf, direction,
 					       FIXUP_32);
   /* No fixup for native x32 GDB.  */
@@ -899,10 +912,10 @@ x86_linux_read_description (void)
       /* Don't use XML.  */
 #ifdef __x86_64__
       if (machine == EM_X86_64)
-	return tdesc_amd64_linux_no_xml;
+	return tdesc_amd64_linux_no_xml.get ();
       else
 #endif
-	return tdesc_i386_linux_no_xml;
+	return tdesc_i386_linux_no_xml.get ();
     }
 
   if (have_ptrace_getregset == -1)
@@ -980,7 +993,7 @@ x86_linux_read_description (void)
 void
 x86_target::update_xmltarget ()
 {
-  struct thread_info *saved_thread = current_thread;
+  scoped_restore_current_thread restore_thread;
 
   /* Before changing the register cache's internal layout, flush the
      contents of the current valid caches back to the threads, and
@@ -991,12 +1004,10 @@ x86_target::update_xmltarget ()
     int pid = proc->pid;
 
     /* Look up any thread of this process.  */
-    current_thread = find_any_thread_of_pid (pid);
+    switch_to_thread (find_any_thread_of_pid (pid));
 
     low_arch_setup ();
   });
-
-  current_thread = saved_thread;
 }
 
 /* Process qSupported query, "xmlRegisters=".  Update the buffer size for
@@ -1069,7 +1080,7 @@ const regs_info *
 x86_target::get_regs_info ()
 {
 #ifdef __x86_64__
-  if (is_64bit_tdesc ())
+  if (is_64bit_tdesc (current_thread))
     return &amd64_linux_regs_info;
   else
 #endif
@@ -1544,7 +1555,7 @@ x86_target::install_fast_tracepoint_jump_pad (CORE_ADDR tpoint,
 					      char *err)
 {
 #ifdef __x86_64__
-  if (is_64bit_tdesc ())
+  if (is_64bit_tdesc (current_thread))
     return amd64_install_fast_tracepoint_jump_pad (tpoint, tpaddr,
 						   collector, lockaddr,
 						   orig_size, jump_entry,
@@ -1578,7 +1589,7 @@ x86_target::get_min_fast_tracepoint_insn_len ()
 #ifdef __x86_64__
   /*  On x86-64, 5-byte jump instructions with a 4-byte offset are always
       used for fast tracepoints.  */
-  if (is_64bit_tdesc ())
+  if (is_64bit_tdesc (current_thread))
     return 5;
 #endif
 
@@ -1619,9 +1630,8 @@ add_insns (unsigned char *start, int len)
 {
   CORE_ADDR buildaddr = current_insn_ptr;
 
-  if (debug_threads)
-    debug_printf ("Adding %d bytes of insn at %s\n",
-		  len, paddress (buildaddr));
+  threads_debug_printf ("Adding %d bytes of insn at %s",
+			len, paddress (buildaddr));
 
   append_insns (&buildaddr, len, start);
   current_insn_ptr = buildaddr;
@@ -2208,7 +2218,7 @@ amd64_emit_ge_goto (int *offset_p, int *size_p)
     *size_p = 4;
 }
 
-struct emit_ops amd64_emit_ops =
+static emit_ops amd64_emit_ops =
   {
     amd64_emit_prologue,
     amd64_emit_epilogue,
@@ -2877,7 +2887,7 @@ i386_emit_ge_goto (int *offset_p, int *size_p)
     *size_p = 4;
 }
 
-struct emit_ops i386_emit_ops =
+static emit_ops i386_emit_ops =
   {
     i386_emit_prologue,
     i386_emit_epilogue,
@@ -2923,7 +2933,7 @@ emit_ops *
 x86_target::emit_ops ()
 {
 #ifdef __x86_64__
-  if (is_64bit_tdesc ())
+  if (is_64bit_tdesc (current_thread))
     return &amd64_emit_ops;
   else
 #endif
@@ -2955,7 +2965,7 @@ x86_target::get_ipa_tdesc_idx ()
   return amd64_get_ipa_tdesc_idx (tdesc);
 #endif
 
-  if (tdesc == tdesc_i386_linux_no_xml)
+  if (tdesc == tdesc_i386_linux_no_xml.get ())
     return X86_TDESC_SSE;
 
   return i386_get_ipa_tdesc_idx (tdesc);
@@ -2971,14 +2981,14 @@ initialize_low_arch (void)
   /* Initialize the Linux target descriptions.  */
 #ifdef __x86_64__
   tdesc_amd64_linux_no_xml = allocate_target_description ();
-  copy_target_description (tdesc_amd64_linux_no_xml,
+  copy_target_description (tdesc_amd64_linux_no_xml.get (),
 			   amd64_linux_read_description (X86_XSTATE_SSE_MASK,
 							 false));
   tdesc_amd64_linux_no_xml->xmltarget = xmltarget_amd64_linux_no_xml;
 #endif
 
   tdesc_i386_linux_no_xml = allocate_target_description ();
-  copy_target_description (tdesc_i386_linux_no_xml,
+  copy_target_description (tdesc_i386_linux_no_xml.get (),
 			   i386_linux_read_description (X86_XSTATE_SSE_MASK));
   tdesc_i386_linux_no_xml->xmltarget = xmltarget_i386_linux_no_xml;
 

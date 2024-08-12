@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2020 Free Software Foundation, Inc.
+# Copyright (C) 2015-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,4 +23,4 @@ import gdb
 # parameter change notification.
 gdb.execute("set width 101", to_string=True)
 # And finally a command that will use the console stream without redirection
-gdb.execute("list main")
+gdb.execute("list -q main")

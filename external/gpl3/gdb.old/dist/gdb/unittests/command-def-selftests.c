@@ -1,6 +1,6 @@
 /* Self tests for GDB command definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -37,9 +37,8 @@ static unsigned int nr_failed_invariants;
 static void
 broken_doc_invariant (const char *prefix, const char *name, const char *msg)
 {
-  fprintf_filtered (gdb_stdout,
-		    "help doc broken invariant: command '%s%s' help doc %s\n",
-		    prefix, name, msg);
+  gdb_printf ("help doc broken invariant: command '%s%s' help doc %s\n",
+	      prefix, name, msg);
   nr_failed_invariants++;
 }
 
@@ -83,11 +82,11 @@ check_doc (struct cmd_list_element *commandlist, const char *prefix)
       /* Check if this command has subcommands and is not an
 	 abbreviation.  We skip checking subcommands of abbreviations
 	 in order to avoid duplicates in the output.  */
-      if (c->prefixlist != NULL && !c->abbrev_flag)
+      if (c->is_prefix () && !c->abbrev_flag)
 	{
 	  /* Recursively call ourselves on the subcommand list,
 	     passing the right prefix in.  */
-	  check_doc (*c->prefixlist, c->prefixname);
+	  check_doc (*c->subcommands, c->prefixname ().c_str ());
 	}
     }
 }
@@ -107,13 +106,13 @@ help_doc_invariants_tests ()
 namespace command_structure_tests {
 
 /* Nr of commands in which a duplicated list is found.  */
-unsigned int nr_duplicates = 0;
+static unsigned int nr_duplicates = 0;
 /* Nr of commands in a list having no valid prefix cmd.  */
-unsigned int nr_invalid_prefixcmd = 0;
+static unsigned int nr_invalid_prefixcmd = 0;
 
 /* A map associating a list with the prefix leading to it.  */
 
-std::map<cmd_list_element **, const char *> lists;
+static std::map<cmd_list_element **, const char *> lists;
 
 /* Store each command list in lists, associated with the prefix to reach it.  A
    list must only be found once.
@@ -130,13 +129,12 @@ traverse_command_structure (struct cmd_list_element **list,
   auto dupl = lists.find (list);
   if (dupl != lists.end ())
     {
-      fprintf_filtered (gdb_stdout,
-			"list %p duplicated,"
-			" reachable via prefix '%s' and '%s'."
-			"  Duplicated list first command is '%s'\n",
-			list,
-			prefix, dupl->second,
-			(*list)->name);
+      gdb_printf ("list %p duplicated,"
+		  " reachable via prefix '%s' and '%s'."
+		  "  Duplicated list first command is '%s'\n",
+		  list,
+		  prefix, dupl->second,
+		  (*list)->name);
       nr_duplicates++;
       return;
     }
@@ -155,27 +153,25 @@ traverse_command_structure (struct cmd_list_element **list,
     {
       /* If this command has subcommands and is not an alias,
 	 traverse the subcommands.  */
-      if (c->prefixlist != NULL && c->cmd_pointer == nullptr)
+      if (c->is_prefix () && !c->is_alias ())
 	{
 	  /* Recursively call ourselves on the subcommand list,
 	     passing the right prefix in.  */
-	  traverse_command_structure (c->prefixlist, c->prefixname);
+	  traverse_command_structure (c->subcommands, c->prefixname ().c_str ());
 	}
       if (prefixcmd != c->prefix
 	  || (prefixcmd == nullptr && *list != cmdlist))
 	{
 	  if (c->prefix == nullptr)
-	    fprintf_filtered (gdb_stdout,
-			      "list %p reachable via prefix '%s'."
-			      "  command '%s' has null prefixcmd\n",
-			      list,
-			      prefix, c->name);
+	    gdb_printf ("list %p reachable via prefix '%s'."
+			"  command '%s' has null prefixcmd\n",
+			list,
+			prefix, c->name);
 	  else
-	    fprintf_filtered (gdb_stdout,
-			      "list %p reachable via prefix '%s'."
-			      "  command '%s' has a different prefixcmd\n",
-			      list,
-			      prefix, c->name);
+	    gdb_printf ("list %p reachable via prefix '%s'."
+			"  command '%s' has a different prefixcmd\n",
+			list,
+			prefix, c->name);
 	  nr_invalid_prefixcmd++;
 	}
     }

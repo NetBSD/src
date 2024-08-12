@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -95,10 +95,10 @@ init_target_desc (struct target_desc *tdesc,
 
 /* See gdbsupport/tdesc.h.  */
 
-struct target_desc *
+target_desc_up
 allocate_target_description (void)
 {
-  return new target_desc ();
+  return target_desc_up (new target_desc ());
 }
 
 /* See gdbsupport/tdesc.h.  */

@@ -1,5 +1,5 @@
 /* s12z-dis.h -- Header file for s12z-dis.c and s12z-decode.c
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 

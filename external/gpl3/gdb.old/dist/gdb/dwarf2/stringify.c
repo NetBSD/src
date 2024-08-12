@@ -1,6 +1,6 @@
 /* DWARF stringify code
 
-   Copyright (C) 1994-2020 Free Software Foundation, Inc.
+   Copyright (C) 1994-2023 Free Software Foundation, Inc.
 
    Adapted by Gary Funck (gary@intrepid.com), Intrepid Technology,
    Inc.  with support from Florida State University (under contract
@@ -109,6 +109,19 @@ dwarf_type_encoding_name (unsigned enc)
 
   if (name == NULL)
     return dwarf_unknown ("ATE", enc);
+
+  return name;
+}
+
+/* See stringify.h.  */
+
+const char *
+dwarf_unit_type_name (int unit_type)
+{
+  const char *name = get_DW_UT_name (unit_type);
+
+  if (name == nullptr)
+    return dwarf_unknown ("UT", unit_type);
 
   return name;
 }

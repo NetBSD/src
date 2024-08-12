@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2015-2020 Free Software Foundation, Inc.
+# Copyright 2015-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,9 +46,11 @@ gdb_test "attach $test_pid" "Attaching to process.*" "attach to pid"
 
 # Kill the first two inferiors, and detach the third.
 gdb_test_no_output "kill inferiors 1 2"
+gdb_test "info inferiors 3" "\r\n\\* 3 \[^\r\n\]+" "inf 3 is still current"
 gdb_test "inferior 1" "Switching to inferior 1.*"
 gdb_test "kill" "The program is not being run.*"
 gdb_test "detach inferiors 3" "Detaching from program.*process $test_pid.*"
+gdb_test "info inferiors 1" "\r\n\\* 1 \[^\r\n\]+" "inf 1 is still current"
 
 # No inferiors should be running anymore.
 gdb_test "kill inferiors 1 2 3" \

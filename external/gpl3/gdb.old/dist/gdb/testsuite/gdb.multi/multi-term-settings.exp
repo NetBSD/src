@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2017-2020 Free Software Foundation, Inc.
+# Copyright 2017-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -57,7 +57,6 @@ proc create_inferior {which_inf inf_how} {
     # Run to main and delete breakpoints.
     proc my_runto_main {} {
 	if ![runto_main] {
-	    fail "run to main"
 	    return 0
 	} else {
 	    # Delete breakpoints otherwise GDB would try to step over
@@ -95,6 +94,22 @@ proc create_inferior {which_inf inf_how} {
 	if {[gdb_test "attach $testpid" \
 		 "Attaching to program: .*, process $testpid.*(in|at).*" \
 		 "attach"] == 0} {
+
+	    # The program is now stopped, but if testing against
+	    # gdbserver, then the inferior's output emmitted before it
+	    # stopped isn't flushed unless we explicitly do so,
+	    # because it is on a different spawn_id.  Do it now, to
+	    # avoid confusing tests further below.
+	    gdb_test_multiple "" "flush inferior output" {
+		-timeout 1
+		-i $test_spawn_id -re "pid=" {
+		    exp_continue
+		}
+		timeout {
+		    pass $gdb_test_name
+		}
+	    }
+
 	    return $test_spawn_id
 	}
     } else {
@@ -179,9 +194,9 @@ proc coretest {inf1_how inf2_how} {
 	uplevel 1 {
 	    if {$count1 >= 3 && $count2 >= 3} {
 		if $expect_ttou {
-		    fail "$test (expected SIGTTOU)"
+		    fail "$gdb_test_name (expected SIGTTOU)"
 		} else {
-		    pass $test
+		    pass $gdb_test_name
 		}
 	    } else {
 		exp_continue
@@ -195,8 +210,20 @@ proc coretest {inf1_how inf2_how} {
     set count1 0
     set count2 0
 
-    set test "continue"
-    gdb_test_multiple $test $test {
+    # We're going to interrupt with Ctrl-C.  For this to work we must
+    # be sure to consume the "Continuing." message first, or GDB may
+    # still own the terminal.  Also, note that in the attach case, we
+    # flushed inferior output right after attaching, so that we're
+    # sure that the "pid=" lines we see are emitted by the inferior
+    # after it is continued, instead of having been emitted before it
+    # was attached to.
+    gdb_test_multiple "continue" "continue, hand over terminal" {
+	-re "Continuing" {
+	    pass $gdb_test_name
+	}
+    }
+
+    gdb_test_multiple "" "continue" {
 	-i $infs_spawn_ids -re "pid=$pid1, count=" {
 	    incr count1
 	    pass_or_exp_continue
@@ -207,9 +234,9 @@ proc coretest {inf1_how inf2_how} {
 	}
 	-i $gdb_spawn_id -re "received signal SIGTTOU.*$gdb_prompt " {
 	    if $expect_ttou {
-		pass "$test (expected SIGTTOU)"
+		pass "$gdb_test_name (expected SIGTTOU)"
 	    } else {
-		fail "$test (SIGTTOU)"
+		fail "$gdb_test_name (SIGTTOU)"
 	    }
 	}
     }

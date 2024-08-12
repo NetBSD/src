@@ -1,7 +1,7 @@
-# serial 12
+# serial 14
 # See if we need to provide fdopendir.
 
-dnl Copyright (C) 2009-2020 Free Software Foundation, Inc.
+dnl Copyright (C) 2009-2022 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -25,10 +25,12 @@ AC_DEFUN([gl_FUNC_FDOPENDIR],
   else
     AC_CACHE_CHECK([whether fdopendir works],
       [gl_cv_func_fdopendir_works],
-      [AC_RUN_IFELSE([AC_LANG_PROGRAM([[
+      [AC_RUN_IFELSE(
+         [AC_LANG_PROGRAM([[
 #include <dirent.h>
 #include <fcntl.h>
 #include <unistd.h>
+]GL_MDA_DEFINES[
 #if !HAVE_DECL_FDOPENDIR
 extern
 # ifdef __cplusplus
@@ -36,12 +38,14 @@ extern
 # endif
 DIR *fdopendir (int);
 #endif
-]], [int result = 0;
-     int fd = open ("conftest.c", O_RDONLY);
-     if (fd < 0) result |= 1;
-     if (fdopendir (fd)) result |= 2;
-     if (close (fd)) result |= 4;
-     return result;])],
+]],
+            [[int result = 0;
+              int fd = open ("conftest.c", O_RDONLY);
+              if (fd < 0) result |= 1;
+              if (fdopendir (fd)) result |= 2;
+              if (close (fd)) result |= 4;
+              return result;
+            ]])],
          [gl_cv_func_fdopendir_works=yes],
          [gl_cv_func_fdopendir_works=no],
          [case "$host_os" in
@@ -49,8 +53,6 @@ DIR *fdopendir (int);
             *-gnu*)  gl_cv_func_fdopendir_works="guessing yes" ;;
                      # Guess yes on musl systems.
             *-musl*) gl_cv_func_fdopendir_works="guessing yes" ;;
-                     # Guess yes on bsd.
-            *bsd*)   gl_cv_func_fdopendir_works="guessing yes" ;;
                      # If we don't know, obey --enable-cross-guesses.
             *)       gl_cv_func_fdopendir_works="$gl_cross_guess_normal" ;;
           esac

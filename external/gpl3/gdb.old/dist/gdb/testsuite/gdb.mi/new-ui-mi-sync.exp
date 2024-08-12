@@ -1,4 +1,4 @@
-# Copyright 2016-2020 Free Software Foundation, Inc.
+# Copyright 2016-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -63,7 +63,7 @@ proc do_test {sync_command} {
 	    return
 	}
     } else {
-	if {[mi_runto main] < 0} {
+	if {[mi_runto_main] < 0} {
 	    return
 	}
 	if {[mi_send_resuming_command_raw "123-exec-continue" $test] >= 0} {

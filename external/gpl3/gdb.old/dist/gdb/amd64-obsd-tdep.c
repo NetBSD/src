@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/amd64.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -45,7 +45,7 @@ static const int amd64obsd_page_size = 4096;
    routine.  */
 
 static int
-amd64obsd_sigtramp_p (struct frame_info *this_frame)
+amd64obsd_sigtramp_p (frame_info_ptr this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
   CORE_ADDR start_pc = (pc & ~(amd64obsd_page_size - 1));
@@ -78,7 +78,7 @@ amd64obsd_sigtramp_p (struct frame_info *this_frame)
 
   /* If we can't read the instructions at START_PC, return zero.  */
   buf = (gdb_byte *) alloca ((sizeof sigreturn) + 1);
-  if (!safe_frame_unwind_memory (this_frame, start_pc + 6, buf, buflen))
+  if (!safe_frame_unwind_memory (this_frame, start_pc + 6, {buf, buflen}))
     return 0;
 
   /* Check for sigreturn(2).  Depending on how the assembler encoded
@@ -98,7 +98,7 @@ amd64obsd_sigtramp_p (struct frame_info *this_frame)
    address of the associated sigcontext structure.  */
 
 static CORE_ADDR
-amd64obsd_sigcontext_addr (struct frame_info *this_frame)
+amd64obsd_sigcontext_addr (frame_info_ptr this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
   ULONGEST offset = (pc & (amd64obsd_page_size - 1));
@@ -106,11 +106,11 @@ amd64obsd_sigcontext_addr (struct frame_info *this_frame)
   /* The %rsp register points at `struct sigcontext' upon entry of a
      signal trampoline.  The relevant part of the trampoline is
 
-        call    *%rax
-        movq    %rsp, %rdi
-        pushq   %rdi
-        movq    $SYS_sigreturn,%rax
-        int     $0x80
+	call    *%rax
+	movq    %rsp, %rdi
+	pushq   %rdi
+	movq    $SYS_sigreturn,%rax
+	int     $0x80
 
      (see /usr/src/sys/arch/amd64/amd64/locore.S).  The `pushq'
      instruction clobbers %rsp, but its value is saved in `%rdi'.  */
@@ -238,7 +238,7 @@ amd64obsd_supply_uthread (struct regcache *regcache,
       sp = read_memory_unsigned_integer (sp_addr, 8, byte_order);
 
       /* Adjust the stack pointer such that it looks as if we just
-         returned from _thread_machdep_switch.  */
+	 returned from _thread_machdep_switch.  */
       offset = amd64obsd_uthread_reg_offset[AMD64_RIP_REGNUM] + 8;
       store_unsigned_integer (buf, 8, byte_order, sp + offset);
       regcache->raw_supply (AMD64_RSP_REGNUM, buf);
@@ -250,7 +250,7 @@ amd64obsd_supply_uthread (struct regcache *regcache,
 	  && (regnum == -1 || regnum == i))
 	{
 	  /* Fetch stack pointer from thread structure (if we didn't
-             do so already).  */
+	     do so already).  */
 	  if (sp == 0)
 	    sp = read_memory_unsigned_integer (sp_addr, 8, byte_order);
 
@@ -279,7 +279,7 @@ amd64obsd_collect_uthread (const struct regcache *regcache,
       int offset;
 
       /* Calculate the stack pointer (frame pointer) that will be
-         stored into the thread structure.  */
+	 stored into the thread structure.  */
       offset = amd64obsd_uthread_reg_offset[AMD64_RIP_REGNUM] + 8;
       regcache->raw_collect (AMD64_RSP_REGNUM, buf);
       sp = extract_unsigned_integer (buf, 8, byte_order) - offset;
@@ -288,7 +288,7 @@ amd64obsd_collect_uthread (const struct regcache *regcache,
       write_memory_unsigned_integer (sp_addr, 8, byte_order, sp);
 
       /* The stack pointer was (potentially) modified.  Make sure we
-         build a proper stack frame.  */
+	 build a proper stack frame.  */
       regnum = -1;
     }
 
@@ -298,7 +298,7 @@ amd64obsd_collect_uthread (const struct regcache *regcache,
 	  && (regnum == -1 || regnum == i))
 	{
 	  /* Fetch stack pointer from thread structure (if we didn't
-             calculate it already).  */
+	     calculate it already).  */
 	  if (sp == 0)
 	    sp = read_memory_unsigned_integer (sp_addr, 8, byte_order);
 
@@ -315,7 +315,7 @@ amd64obsd_collect_uthread (const struct regcache *regcache,
 #define amd64obsd_tf_reg_offset amd64obsd_sc_reg_offset
 
 static struct trad_frame_cache *
-amd64obsd_trapframe_cache (struct frame_info *this_frame, void **this_cache)
+amd64obsd_trapframe_cache (frame_info_ptr this_frame, void **this_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -362,7 +362,7 @@ amd64obsd_trapframe_cache (struct frame_info *this_frame, void **this_cache)
 }
 
 static void
-amd64obsd_trapframe_this_id (struct frame_info *this_frame,
+amd64obsd_trapframe_this_id (frame_info_ptr this_frame,
 			     void **this_cache, struct frame_id *this_id)
 {
   struct trad_frame_cache *cache =
@@ -372,7 +372,7 @@ amd64obsd_trapframe_this_id (struct frame_info *this_frame,
 }
 
 static struct value *
-amd64obsd_trapframe_prev_register (struct frame_info *this_frame,
+amd64obsd_trapframe_prev_register (frame_info_ptr this_frame,
 				   void **this_cache, int regnum)
 {
   struct trad_frame_cache *cache =
@@ -383,7 +383,7 @@ amd64obsd_trapframe_prev_register (struct frame_info *this_frame,
 
 static int
 amd64obsd_trapframe_sniffer (const struct frame_unwind *self,
-			     struct frame_info *this_frame,
+			     frame_info_ptr this_frame,
 			     void **this_prologue_cache)
 {
   ULONGEST cs;
@@ -402,10 +402,12 @@ amd64obsd_trapframe_sniffer (const struct frame_unwind *self,
 		   || (startswith (name, "Xintr"))));
 }
 
-static const struct frame_unwind amd64obsd_trapframe_unwind = {
+static const struct frame_unwind amd64obsd_trapframe_unwind =
+{
   /* FIXME: kettenis/20051219: This really is more like an interrupt
      frame, but SIGTRAMP_FRAME would print <signal handler called>,
      which really is not what we want here.  */
+  "amd64 openbsd trap",
   NORMAL_FRAME,
   default_frame_unwind_stop_reason,
   amd64obsd_trapframe_this_id,
@@ -418,7 +420,7 @@ static const struct frame_unwind amd64obsd_trapframe_unwind = {
 static void
 amd64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
 
   amd64_init_abi (info, gdbarch,
 		  amd64_target_description (X86_XSTATE_SSE_MASK, true));

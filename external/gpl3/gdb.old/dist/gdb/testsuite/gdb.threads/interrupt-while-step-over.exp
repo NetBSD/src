@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2020 Free Software Foundation, Inc.
+# Copyright (C) 2016-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +24,6 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile \
 }
 
 if {![runto_main]} {
-    fail "can't run to main"
     return -1
 }
 
@@ -175,7 +174,6 @@ proc testdriver {displaced} {
     gdb_test_no_output "set displaced-stepping $displaced"
 
     if ![runto all_started] {
-	fail "couldn't run to all_started"
 	return
     }
     set break_line [gdb_get_line_number "set breakpoint here"]

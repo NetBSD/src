@@ -1,5 +1,5 @@
 /* Agent expression code for remote server.
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -39,19 +39,16 @@ ax_vdebug (const char *fmt, ...)
 #ifdef IN_PROCESS_AGENT
   fprintf (stderr, PROG "/ax: %s\n", buf);
 #else
-  debug_printf (PROG "/ax: %s\n", buf);
+  threads_debug_printf (PROG "/ax: %s", buf);
 #endif
   va_end (ap);
 }
 
-#define ax_debug_1(level, fmt, args...)	\
+#define ax_debug(fmt, args...) \
   do {						\
-    if (level <= debug_threads)			\
+    if (debug_threads)			\
       ax_vdebug ((fmt), ##args);		\
   } while (0)
-
-#define ax_debug(FMT, args...)		\
-  ax_debug_1 (1, FMT, ##args)
 
 /* This enum must exactly match what is documented in
    gdb/doc/agentexpr.texi, including all the numerical values.  */
@@ -65,7 +62,7 @@ enum gdb_agent_op
     gdb_agent_op_last
   };
 
-static const char *gdb_agent_op_names [gdb_agent_op_last] =
+static const char * const gdb_agent_op_names [gdb_agent_op_last] =
   {
     "?undef?"
 #define DEFOP(NAME, SIZE, DATA_SIZE, CONSUMED, PRODUCED, VALUE)  , # NAME
@@ -146,7 +143,7 @@ CORE_ADDR current_insn_ptr;
 
 int emit_error;
 
-struct bytecode_address
+static struct bytecode_address
 {
   int pc;
   CORE_ADDR address;
@@ -873,16 +870,16 @@ ax_printf (CORE_ADDR fn, CORE_ADDR chan, const char *format,
 		read_inferior_memory (tem, str, j);
 	      str[j] = 0;
 
-              printf (current_substring, (char *) str);
+	      printf (current_substring, (char *) str);
 	    }
 	    break;
 
 	  case long_long_arg:
-#if defined (CC_HAS_LONG_LONG) && defined (PRINTF_HAS_LONG_LONG)
+#if defined (PRINTF_HAS_LONG_LONG)
 	    {
 	      long long val = args[i];
 
-              printf (current_substring, val);
+	      printf (current_substring, val);
 	      break;
 	    }
 #else
@@ -1210,8 +1207,7 @@ gdb_eval_agent_expr (struct eval_agent_expr_context *ctx,
 		top = cnv.u8.val;
 		break;
 	      default:
-		internal_error (__FILE__, __LINE__,
-				"unhandled register size");
+		internal_error ("unhandled register size");
 	      }
 	  }
 	  break;

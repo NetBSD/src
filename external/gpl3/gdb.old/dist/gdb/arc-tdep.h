@@ -1,6 +1,6 @@
 /* Target dependent code for ARC architecture, for GDB.
 
-   Copyright 2005-2020 Free Software Foundation, Inc.
+   Copyright 2005-2023 Free Software Foundation, Inc.
    Contributed by Synopsys Inc.
 
    This file is part of GDB.
@@ -85,7 +85,9 @@ enum arc_regnum
     ARC_LP_END_REGNUM,
     /* Branch target address.  */
     ARC_BTA_REGNUM,
-    ARC_LAST_AUX_REGNUM = ARC_BTA_REGNUM,
+    /* Exception return address.  */
+    ARC_ERET_REGNUM,
+    ARC_LAST_AUX_REGNUM = ARC_ERET_REGNUM,
     ARC_LAST_REGNUM = ARC_LAST_AUX_REGNUM,
 
     /* Additional ABI constants.  */
@@ -105,20 +107,41 @@ enum arc_regnum
 /* STATUS32 register: current instruction is a delay slot.  */
 #define ARC_STATUS32_DE_MASK (1 << 6)
 
-#define arc_print(fmt, args...) fprintf_unfiltered (gdb_stdlog, fmt, ##args)
+/* Special value for register offset arrays.  */
+#define ARC_OFFSET_NO_REGISTER (-1)
 
-extern int arc_debug;
+#define arc_print(fmt, args...) gdb_printf (gdb_stdlog, fmt, ##args)
+
+extern bool arc_debug;
+
+/* Print an "arc" debug statement.  */
+
+#define arc_debug_printf(fmt, ...) \
+  debug_prefixed_printf_cond (arc_debug, "arc", fmt, ##__VA_ARGS__)
 
 /* Target-dependent information.  */
 
-struct gdbarch_tdep
+struct arc_gdbarch_tdep : gdbarch_tdep_base
 {
   /* Offset to PC value in jump buffer.  If this is negative, longjmp
      support will be disabled.  */
-  int jb_pc;
+  int jb_pc = 0;
 
   /* Whether target has hardware (aka zero-delay) loops.  */
-  bool has_hw_loops;
+  bool has_hw_loops = false;
+
+  /* Detect sigtramp.  */
+  bool (*is_sigtramp) (frame_info_ptr) = nullptr;
+
+  /* Get address of sigcontext for sigtramp.  */
+  CORE_ADDR (*sigcontext_addr) (frame_info_ptr) = nullptr;
+
+  /* Offset of registers in `struct sigcontext'.  */
+  const int *sc_reg_offset = nullptr;
+
+  /* Number of registers in sc_reg_offsets.  Most likely a ARC_LAST_REGNUM,
+     but in theory it could be less, so it is kept separate.  */
+  int sc_num_regs = 0;
 };
 
 /* Utility functions used by other ARC-specific modules.  */
@@ -163,11 +186,6 @@ arc_arch_is_em (const struct bfd_arch_info* arch)
    can't be set to an actual NULL value - that would cause a crash.  */
 int arc_delayed_print_insn (bfd_vma addr, struct disassemble_info *info);
 
-/* Return properly initialized disassemble_info for ARC disassembler - it will
-   not print disassembled instructions to stderr.  */
-
-struct disassemble_info arc_disassemble_info (struct gdbarch *gdbarch);
-
 /* Get branch/jump target address for the INSN.  Note that this function
    returns branch target and doesn't evaluate if this branch is taken or not.
    For the indirect jumps value depends in register state, hence can change.
@@ -181,5 +199,10 @@ CORE_ADDR arc_insn_get_branch_target (const struct arc_instruction &insn);
    instruction length with LIMM".  */
 
 CORE_ADDR arc_insn_get_linear_next_pc (const struct arc_instruction &insn);
+
+/* Create an arc_arch_features instance from the provided data.  */
+
+arc_arch_features arc_arch_features_create (const bfd *abfd,
+					    const unsigned long mach);
 
 #endif /* ARC_TDEP_H */

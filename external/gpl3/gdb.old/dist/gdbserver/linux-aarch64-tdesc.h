@@ -1,6 +1,6 @@
 /* Low level support for aarch64, shared between gdbserver and IPA.
 
-   Copyright (C) 2016-2020 Free Software Foundation, Inc.
+   Copyright (C) 2016-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,9 @@
 #ifndef GDBSERVER_LINUX_AARCH64_TDESC_H
 #define GDBSERVER_LINUX_AARCH64_TDESC_H
 
-const target_desc * aarch64_linux_read_description (uint64_t vq, bool pauth_p);
+#include "arch/aarch64.h"
+
+const target_desc *
+  aarch64_linux_read_description (const aarch64_features &features);
 
 #endif /* GDBSERVER_LINUX_AARCH64_TDESC_H */

@@ -1,6 +1,6 @@
 /* Target-dependent code for FreeBSD/sparc64.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -89,7 +89,7 @@ sparc64fbsd_pc_in_sigtramp (CORE_ADDR pc, const char *name)
 }
 
 static struct sparc_frame_cache *
-sparc64fbsd_sigtramp_frame_cache (struct frame_info *this_frame,
+sparc64fbsd_sigtramp_frame_cache (frame_info_ptr this_frame,
 				   void **this_cache)
 {
   struct sparc_frame_cache *cache;
@@ -114,55 +114,55 @@ sparc64fbsd_sigtramp_frame_cache (struct frame_info *this_frame,
   /* The following registers travel in the `mc_local' slots of
      `mcontext_t'.  */
   addr = mcontext_addr + 16 * 8;
-  cache->saved_regs[SPARC64_FPRS_REGNUM].addr = addr + 0 * 8;
-  cache->saved_regs[SPARC64_FSR_REGNUM].addr = addr + 1 * 8;
+  cache->saved_regs[SPARC64_FPRS_REGNUM].set_addr (addr + 0 * 8);
+  cache->saved_regs[SPARC64_FSR_REGNUM].set_addr (addr + 1 * 8);
 
   /* The following registers travel in the `mc_in' slots of
      `mcontext_t'.  */
   addr = mcontext_addr + 24 * 8;
-  cache->saved_regs[SPARC64_NPC_REGNUM].addr = addr + 0 * 8;
-  cache->saved_regs[SPARC64_PC_REGNUM].addr = addr + 1 * 8;
-  cache->saved_regs[SPARC64_STATE_REGNUM].addr = addr + 2 * 8;
-  cache->saved_regs[SPARC64_Y_REGNUM].addr = addr + 4 * 8;
+  cache->saved_regs[SPARC64_NPC_REGNUM].set_addr (addr + 0 * 8);
+  cache->saved_regs[SPARC64_PC_REGNUM].set_addr (addr + 1 * 8);
+  cache->saved_regs[SPARC64_STATE_REGNUM].set_addr (addr + 2 * 8);
+  cache->saved_regs[SPARC64_Y_REGNUM].set_addr (addr + 4 * 8);
 
   /* The `global' and `out' registers travel in the `mc_global' and
      `mc_out' slots of `mcontext_t', except for %g0.  Since %g0 is
      always zero, keep the identity encoding.  */
   for (regnum = SPARC_G1_REGNUM, addr = mcontext_addr + 8;
        regnum <= SPARC_O7_REGNUM; regnum++, addr += 8)
-    cache->saved_regs[regnum].addr = addr;
+    cache->saved_regs[regnum].set_addr (addr);
 
   /* The `local' and `in' registers have been saved in the register
      save area.  */
-  addr = cache->saved_regs[SPARC_SP_REGNUM].addr;
+  addr = cache->saved_regs[SPARC_SP_REGNUM].addr ();
   sp = get_frame_memory_unsigned (this_frame, addr, 8);
   for (regnum = SPARC_L0_REGNUM, addr = sp + BIAS;
        regnum <= SPARC_I7_REGNUM; regnum++, addr += 8)
-    cache->saved_regs[regnum].addr = addr;
+    cache->saved_regs[regnum].set_addr (addr);
 
   /* The floating-point registers are only saved if the FEF bit in
      %fprs has been set.  */
 
 #define FPRS_FEF	(1 << 2)
 
-  addr = cache->saved_regs[SPARC64_FPRS_REGNUM].addr;
+  addr = cache->saved_regs[SPARC64_FPRS_REGNUM].addr ();
   fprs = get_frame_memory_unsigned (this_frame, addr, 8);
   if (fprs & FPRS_FEF)
     {
       for (regnum = SPARC_F0_REGNUM, addr = mcontext_addr + 32 * 8;
 	   regnum <= SPARC_F31_REGNUM; regnum++, addr += 4)
-	cache->saved_regs[regnum].addr = addr;
+	cache->saved_regs[regnum].set_addr (addr);
 
       for (regnum = SPARC64_F32_REGNUM;
 	   regnum <= SPARC64_F62_REGNUM; regnum++, addr += 8)
-	cache->saved_regs[regnum].addr = addr;
+	cache->saved_regs[regnum].set_addr (addr);
     }
 
   return cache;
 }
 
 static void
-sparc64fbsd_sigtramp_frame_this_id (struct frame_info *this_frame,
+sparc64fbsd_sigtramp_frame_this_id (frame_info_ptr this_frame,
 				    void **this_cache,
 				    struct frame_id *this_id)
 {
@@ -173,7 +173,7 @@ sparc64fbsd_sigtramp_frame_this_id (struct frame_info *this_frame,
 }
 
 static struct value *
-sparc64fbsd_sigtramp_frame_prev_register (struct frame_info *this_frame,
+sparc64fbsd_sigtramp_frame_prev_register (frame_info_ptr this_frame,
 					  void **this_cache, int regnum)
 {
   struct sparc_frame_cache *cache =
@@ -184,7 +184,7 @@ sparc64fbsd_sigtramp_frame_prev_register (struct frame_info *this_frame,
 
 static int
 sparc64fbsd_sigtramp_frame_sniffer (const struct frame_unwind *self,
-				    struct frame_info *this_frame,
+				    frame_info_ptr this_frame,
 				    void **this_cache)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
@@ -199,6 +199,7 @@ sparc64fbsd_sigtramp_frame_sniffer (const struct frame_unwind *self,
 
 static const struct frame_unwind sparc64fbsd_sigtramp_frame_unwind =
 {
+  "sparc64 freebsd sigtramp",
   SIGTRAMP_FRAME,
   default_frame_unwind_stop_reason,
   sparc64fbsd_sigtramp_frame_this_id,
@@ -221,7 +222,7 @@ static const struct regset sparc64fbsd_fpregset =
 static void
 sparc64fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  sparc_gdbarch_tdep *tdep = gdbarch_tdep<sparc_gdbarch_tdep> (gdbarch);
 
   /* Generic FreeBSD support. */
   fbsd_init_abi (info, gdbarch);

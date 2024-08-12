@@ -1,6 +1,6 @@
 /* Low level interface to i386 running the GNU Hurd.
 
-   Copyright (C) 1992-2020 Free Software Foundation, Inc.
+   Copyright (C) 1992-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -230,7 +230,7 @@ i386_gnu_nat_target::store_registers (struct regcache *regcache, int regno)
 	}
 
       /* Save the T bit.  We might try to restore the %eflags register
-         below, but changing the T bit would seriously confuse GDB.  */
+	 below, but changing the T bit would seriously confuse GDB.  */
       trace = ((struct i386_thread_state *)state)->efl & 0x100;
 
       if (!was_aborted && was_valid)

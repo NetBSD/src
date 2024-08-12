@@ -1,6 +1,6 @@
 /* Target-dependent code for FreeBSD/aarch64.
 
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,7 @@
 #include "fbsd-tdep.h"
 #include "aarch64-tdep.h"
 #include "aarch64-fbsd-tdep.h"
+#include "inferior.h"
 #include "osabi.h"
 #include "solib-svr4.h"
 #include "target.h"
@@ -46,6 +47,14 @@ static const struct regcache_map_entry aarch64_fbsd_fpregmap[] =
     { 32, AARCH64_V0_REGNUM, 16 }, /* v0 ... v31 */
     { 1, AARCH64_FPSR_REGNUM, 4 },
     { 1, AARCH64_FPCR_REGNUM, 4 },
+    { 0 }
+  };
+
+/* Register numbers are relative to tdep->tls_regnum_base.  */
+
+static const struct regcache_map_entry aarch64_fbsd_tls_regmap[] =
+  {
+    { 1, 0, 8 },	/* tpidr */
     { 0 }
   };
 
@@ -79,7 +88,7 @@ static const struct regcache_map_entry aarch64_fbsd_fpregmap[] =
 
 static void
 aarch64_fbsd_sigframe_init (const struct tramp_frame *self,
-			     struct frame_info *this_frame,
+			     frame_info_ptr this_frame,
 			     struct trad_frame_cache *this_cache,
 			     CORE_ADDR func)
 {
@@ -134,6 +143,34 @@ const struct regset aarch64_fbsd_fpregset =
     regcache_supply_regset, regcache_collect_regset
   };
 
+static void
+aarch64_fbsd_supply_tls_regset (const struct regset *regset,
+				struct regcache *regcache,
+				int regnum, const void *buf, size_t size)
+{
+  struct gdbarch *gdbarch = regcache->arch ();
+  aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep> (gdbarch);
+
+  regcache->supply_regset (regset, tdep->tls_regnum_base, regnum, buf, size);
+}
+
+static void
+aarch64_fbsd_collect_tls_regset (const struct regset *regset,
+				 const struct regcache *regcache,
+				 int regnum, void *buf, size_t size)
+{
+  struct gdbarch *gdbarch = regcache->arch ();
+  aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep> (gdbarch);
+
+  regcache->collect_regset (regset, tdep->tls_regnum_base, regnum, buf, size);
+}
+
+const struct regset aarch64_fbsd_tls_regset =
+  {
+    aarch64_fbsd_tls_regmap,
+    aarch64_fbsd_supply_tls_regset, aarch64_fbsd_collect_tls_regset
+  };
+
 /* Implement the "iterate_over_regset_sections" gdbarch method.  */
 
 static void
@@ -142,10 +179,55 @@ aarch64_fbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
 					   void *cb_data,
 					   const struct regcache *regcache)
 {
+  aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep> (gdbarch);
+
   cb (".reg", AARCH64_FBSD_SIZEOF_GREGSET, AARCH64_FBSD_SIZEOF_GREGSET,
       &aarch64_fbsd_gregset, NULL, cb_data);
   cb (".reg2", AARCH64_FBSD_SIZEOF_FPREGSET, AARCH64_FBSD_SIZEOF_FPREGSET,
       &aarch64_fbsd_fpregset, NULL, cb_data);
+
+  if (tdep->has_tls ())
+    cb (".reg-aarch-tls", AARCH64_FBSD_SIZEOF_TLSREGSET,
+	AARCH64_FBSD_SIZEOF_TLSREGSET, &aarch64_fbsd_tls_regset,
+	"TLS register", cb_data);
+}
+
+/* Implement the "core_read_description" gdbarch method.  */
+
+static const struct target_desc *
+aarch64_fbsd_core_read_description (struct gdbarch *gdbarch,
+				    struct target_ops *target, bfd *abfd)
+{
+  asection *tls = bfd_get_section_by_name (abfd, ".reg-aarch-tls");
+
+  aarch64_features features;
+  features.tls = tls != nullptr? 1 : 0;
+
+  return aarch64_read_description (features);
+}
+
+/* Implement the get_thread_local_address gdbarch method.  */
+
+static CORE_ADDR
+aarch64_fbsd_get_thread_local_address (struct gdbarch *gdbarch, ptid_t ptid,
+				       CORE_ADDR lm_addr, CORE_ADDR offset)
+{
+  aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep> (gdbarch);
+  struct regcache *regcache;
+
+  regcache = get_thread_arch_regcache (current_inferior ()->process_target (),
+				       ptid, gdbarch);
+
+  target_fetch_registers (regcache, tdep->tls_regnum_base);
+
+  ULONGEST tpidr;
+  if (regcache->cooked_read (tdep->tls_regnum_base, &tpidr) != REG_VALID)
+    error (_("Unable to fetch %%tpidr"));
+
+  /* %tpidr points to the TCB whose first member is the dtv
+      pointer.  */
+  CORE_ADDR dtv_addr = tpidr;
+  return fbsd_get_thread_local_address (gdbarch, dtv_addr, lm_addr, offset);
 }
 
 /* Implement the 'init_osabi' method of struct gdb_osabi_handler.  */
@@ -153,7 +235,7 @@ aarch64_fbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
 static void
 aarch64_fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep> (gdbarch);
 
   /* Generic FreeBSD support.  */
   fbsd_init_abi (info, gdbarch);
@@ -168,6 +250,16 @@ aarch64_fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   set_gdbarch_iterate_over_regset_sections
     (gdbarch, aarch64_fbsd_iterate_over_regset_sections);
+  set_gdbarch_core_read_description (gdbarch,
+				     aarch64_fbsd_core_read_description);
+
+  if (tdep->has_tls ())
+    {
+      set_gdbarch_fetch_tls_load_module_address (gdbarch,
+						 svr4_fetch_objfile_link_map);
+      set_gdbarch_get_thread_local_address
+	(gdbarch, aarch64_fbsd_get_thread_local_address);
+    }
 }
 
 void _initialize_aarch64_fbsd_tdep ();

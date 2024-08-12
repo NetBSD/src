@@ -1,5 +1,5 @@
 /* Trap handlers for eBPF.
-   Copyright (C) 2020 Free Software Foundation, Inc.
+   Copyright (C) 2020-2023 Free Software Foundation, Inc.
 
    This file is part of GDB, the GNU debugger.
 
@@ -15,6 +15,9 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #define WANT_CPU bpfbf
 #define WANT_CPU_BPFBF

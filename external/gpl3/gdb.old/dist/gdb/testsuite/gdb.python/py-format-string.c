@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2019-2020 Free Software Foundation, Inc.
+   Copyright 2019-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -22,6 +22,11 @@ typedef struct point
   int x;
   int y;
 } point_t;
+
+typedef struct
+{
+  point_t the_point;
+} struct_point_t;
 
 typedef union
 {
@@ -84,6 +89,7 @@ main ()
   point_t &a_point_t_ref = a_point_t;
 #endif
   struct point another_point = { 123, 456 };
+  struct_point_t a_struct_with_point = { a_point_t };
 
   struct_union_t a_struct_with_union;
   /* Fill the union in an endianness-independent way.  */

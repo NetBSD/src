@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2015-2020 Free Software Foundation, Inc.
+   Copyright 2015-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -41,6 +41,8 @@ main (void)
 {
   int i;
 
+  alarm (300);
+
   pthread_barrier_init (&barrier, NULL, NUM_THREADS);
 
   for (i = 0; i < NUM_THREADS; i++)
@@ -53,6 +55,8 @@ main (void)
       assert (res == 0);
     }
 
-  sleep (300);
+  while (1)
+    sleep (1);
+
   return 0;
 }

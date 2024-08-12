@@ -1,4 +1,4 @@
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,6 +43,10 @@ set_board_info c++compiler avr-g++
 
 set_board_info cflags "-mmcu=${simavr_mcu}"
 set_board_info ldflags "-mmcu=${simavr_mcu}"
+
+# As of version 10, GCC produces stabs by default for AVR.  Force it to use
+# DWARF.
+set_board_info debug_flags "-gdwarf-4"
 
 set_board_info use_gdb_stub 1
 set_board_info gdb_protocol "remote"

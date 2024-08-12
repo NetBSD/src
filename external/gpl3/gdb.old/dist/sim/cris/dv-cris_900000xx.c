@@ -1,6 +1,6 @@
 /* Handle 0x900000xx addresses in the sim.
 
-   Copyright (C) 2004-2020 Free Software Foundation, Inc.
+   Copyright (C) 2004-2023 Free Software Foundation, Inc.
    Contributed by Axis Communications.
 
    This file is part of the GNU simulators.
@@ -17,6 +17,9 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include "sim-main.h"
 #include "hw-main.h"

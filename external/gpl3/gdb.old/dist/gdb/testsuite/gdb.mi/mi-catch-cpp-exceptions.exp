@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 # Test the -catch-throw, -catch-rethrow, and -catch-catch MI commands.
 
-if { [skip_cplus_tests] } { continue }
+if { [skip_cplus_tests] } { return }
 
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
@@ -27,13 +27,8 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
     return -1
 }
 
-if [mi_gdb_start] {
-    continue
-}
-mi_delete_breakpoints
-mi_gdb_reinitialize_dir $srcdir/$subdir
-mi_gdb_load ${binfile}
-if {![mi_run_to_main]} {
+mi_clean_restart $binfile
+if {[mi_runto_main] < 0} {
     return -1
 }
 set libstdcxx_probe_tests_supported [expr ![mi_skip_libstdcxx_probe_tests]]
@@ -52,14 +47,14 @@ proc restart_for_test {} {
     global main_lineno
 
     if {[mi_gdb_start]} {
-	continue
+	return
     }
 
     mi_delete_breakpoints
     mi_gdb_reinitialize_dir $srcdir/$subdir
     mi_gdb_load ${binfile}
 
-    mi_runto main
+    mi_runto_main
 
     mi_create_breakpoint \
 	"$srcfile:${main_lineno}" "break before exiting program" \
@@ -188,8 +183,8 @@ with_test_prefix "all with -t" {
 
 if { $libstdcxx_probe_tests_supported  == 1 } {
     # Check that the temporary switch works when used with a regexp.
-    restart_for_test
     with_test_prefix "all with -t and regexp" {
+	restart_for_test
 	setup_catchpoint "throw" "-t -r my_ex"
 	setup_catchpoint "rethrow" "-t -r _except"
 	setup_catchpoint "catch" "-t -r my_exception"

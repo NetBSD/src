@@ -3,7 +3,7 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zutil.c,v 1.1.1.4 2023/03/21 16:41:53 christos Exp $ */
+/* @(#) Id */
 
 #include "zutil.h"
 #ifndef Z_SOLO
@@ -136,8 +136,8 @@ const char * ZEXPORT zError(err)
     return ERR_MSG(err);
 }
 
-#if defined(_WIN32_WCE)
-    /* The Microsoft C Run-Time Library for Windows CE doesn't have
+#if defined(_WIN32_WCE) && _WIN32_WCE < 0x800
+    /* The older Microsoft C Run-Time Library for Windows CE doesn't have
      * errno.  We define it as a global variable to simplify porting.
      * Its value is always 0 and should not be used.
      */

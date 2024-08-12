@@ -1,6 +1,6 @@
 /* Disable address space randomization based on inferior personality.
 
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,12 +20,11 @@
 #include "gdbsupport/common-defs.h"
 #include "nat/linux-personality.h"
 
-#ifdef HAVE_PERSONALITY
-# include <sys/personality.h>
+#include <sys/personality.h>
+
 # if !HAVE_DECL_ADDR_NO_RANDOMIZE
 #  define ADDR_NO_RANDOMIZE 0x0040000
 # endif /* ! HAVE_DECL_ADDR_NO_RANDOMIZE */
-#endif /* HAVE_PERSONALITY */
 
 /* See comment on nat/linux-personality.h.  */
 
@@ -34,7 +33,6 @@ maybe_disable_address_space_randomization (int disable_randomization)
   : m_personality_set (false),
     m_personality_orig (0)
 {
-#ifdef HAVE_PERSONALITY
   if (disable_randomization)
     {
       errno = 0;
@@ -49,14 +47,11 @@ maybe_disable_address_space_randomization (int disable_randomization)
 	warning (_("Error disabling address space randomization: %s"),
 		 safe_strerror (errno));
     }
-#endif /* HAVE_PERSONALITY */
 }
 
 maybe_disable_address_space_randomization::
 ~maybe_disable_address_space_randomization ()
 {
-#ifdef HAVE_PERSONALITY
-
   if (m_personality_set)
     {
       errno = 0;
@@ -65,5 +60,4 @@ maybe_disable_address_space_randomization::
 	warning (_("Error restoring address space randomization: %s"),
 		 safe_strerror (errno));
     }
-#endif /* HAVE_PERSONALITY */
 }

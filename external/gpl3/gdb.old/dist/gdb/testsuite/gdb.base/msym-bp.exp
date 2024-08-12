@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -60,8 +60,8 @@ proc test {debug} {
 		    "in foo at .*msym-bp-2.c:$decimal"
 	    } else {
 		test_info_break_2 \
-		    "<foo\\+$decimal>" \
-		    "<foo\\+$decimal>"
+		    "<foo(\\+$decimal)?>" \
+		    "<foo(\\+$decimal)?>"
 	    }
 	}
     }
@@ -69,7 +69,6 @@ proc test {debug} {
     test_break "before run"
 
     if ![runto_main] {
-	fail "can't run to main"
 	return
     }
 

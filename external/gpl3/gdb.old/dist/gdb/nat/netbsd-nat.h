@@ -1,6 +1,6 @@
 /* Internal interfaces for the NetBSD code.
 
-   Copyright (C) 2006-2020 Free Software Foundation, Inc.
+   Copyright (C) 2006-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -67,6 +67,28 @@ extern void enable_proc_events (pid_t pid);
 extern int qxfer_siginfo (pid_t pid, const char *annex, unsigned char *readbuf,
 			  unsigned const char *writebuf, CORE_ADDR offset,
 			  int len);
+
+/* Write gdb's LEN bytes from WRITEBUF and copy it to OFFSET in inferior
+   process' address space. The inferior is specified by PID.
+   Returns 0 on success or errno on failure and the number of bytes
+   on a successful transfer in XFERED_LEN.
+
+   This function assumes internally that the queried process is stopped and
+   traced.  */
+
+extern int write_memory (pid_t pid, unsigned const char *writebuf,
+			 CORE_ADDR offset, size_t len, size_t *xfered_len);
+
+/* Read inferior process's LEN bytes from OFFSET and copy it to WRITEBUF in
+   gdb's address space.
+   Returns 0 on success or errno on failure and the number of bytes
+   on a successful transfer in XFERED_LEN.
+
+   This function assumes internally that the queried process is stopped and
+   traced.  */
+
+extern int read_memory (pid_t pid, unsigned char *readbuf, CORE_ADDR offset,
+			size_t len, size_t *xfered_len);
 }
 
 #endif

@@ -1,4 +1,4 @@
-# Copyright (C) 1989-2020 Free Software Foundation, Inc.
+# Copyright (C) 1989-2023 Free Software Foundation, Inc.
 
 # This file is part of GDB.
 
@@ -26,23 +26,7 @@ target_alias = @target_noncanonical@
 program_transform_name = @program_transform_name@
 bindir = @bindir@
 libdir = @libdir@
-tooldir = $(libdir)/$(target_alias)
 
-datarootdir = @datarootdir@
-datadir = @datadir@
-mandir = @mandir@
-man1dir = $(mandir)/man1
-man2dir = $(mandir)/man2
-man3dir = $(mandir)/man3
-man4dir = $(mandir)/man4
-man5dir = $(mandir)/man5
-man6dir = $(mandir)/man6
-man7dir = $(mandir)/man7
-man8dir = $(mandir)/man8
-man9dir = $(mandir)/man9
-infodir = @infodir@
-htmldir = $(prefix)/html
-includedir = @includedir@
 CONFIG_SRC_SUBDIR = @CONFIG_SRC_SUBDIR@
 
 install_sh = @install_sh@
@@ -83,8 +67,11 @@ include $(srcdir)/../gdb/silent-rules.mk
 # GNU make is used.  The overrides implement dependency tracking.
 COMPILE.pre = $(CXX) $(CXX_DIALECT)
 COMPILE.post = -c -o $@
-COMPILE = $(ECHO_CXX) $(COMPILE.pre) $(INTERNAL_CFLAGS) $(COMPILE.post)
 POSTCOMPILE = @true
+
+# CXXFLAGS is at the very end on purpose, so that user-supplied flags can
+# override internal flags.
+COMPILE = $(ECHO_CXX) $(COMPILE.pre) $(INTERNAL_CFLAGS) $(CXXFLAGS) $(COMPILE.post)
 
 # It is also possible that you will need to add -I/usr/include/sys to the
 # CFLAGS section if your system doesn't have fcntl.h in /usr/include (which
@@ -100,7 +87,16 @@ INCLUDE_DIR = ${srcdir}/../include
 INCLUDE_DEP = $$(INCLUDE_DIR)
 
 LIBIBERTY_BUILDDIR = ../libiberty
-LIBIBERTY = $(LIBIBERTY_BUILDDIR)/libiberty.a
+LIBIBERTY_NORMAL = $(LIBIBERTY_BUILDDIR)/libiberty.a
+LIBIBERTY_NOASAN = $(LIBIBERTY_BUILDDIR)/noasan/libiberty.a
+LIBIBERTY_PIC = $(LIBIBERTY_BUILDDIR)/pic/libiberty.a
+LIBIBERTY_FOR_SHLIB = \
+  $(if $(wildcard $(LIBIBERTY_NOASAN)),\
+       $(LIBIBERTY_NOASAN),\
+       $(if $(wildcard $(LIBIBERTY_PIC)),\
+	    $(LIBIBERTY_PIC),\
+	    $(LIBIBERTY_NORMAL)))
+LIBIBERTY = $(LIBIBERTY_NORMAL)
 
 GDBSUPPORT_BUILDDIR = ../gdbsupport
 GDBSUPPORT = $(GDBSUPPORT_BUILDDIR)/libgdbsupport.a
@@ -110,9 +106,8 @@ ustlibs = @ustlibs@
 ustinc = @ustinc@
 
 # gnulib
-GNULIB_BUILDDIR = ../gnulib
-LIBGNU = $(GNULIB_BUILDDIR)/import/libgnu.a
-INCGNU = -I$(srcdir)/../gnulib/import -I$(GNULIB_BUILDDIR)/import
+GNULIB_PARENT_DIR = ..
+include $(GNULIB_PARENT_DIR)/gnulib/Makefile.gnulib.inc
 
 # Where is the INTL library?  Typically in ../intl.
 INTL = @LIBINTL@
@@ -158,7 +153,7 @@ PTHREAD_LIBS = @PTHREAD_LIBS@
 WIN32APILIBS = @WIN32APILIBS@
 
 # INTERNAL_CFLAGS is the aggregate of all other *CFLAGS macros.
-INTERNAL_CFLAGS_BASE = ${CXXFLAGS} ${GLOBAL_CFLAGS} \
+INTERNAL_CFLAGS_BASE = ${GLOBAL_CFLAGS} \
 	${PROFILE_CFLAGS} ${INCLUDE_CFLAGS} ${CPPFLAGS} $(PTHREAD_CFLAGS)
 INTERNAL_WARN_CFLAGS = ${INTERNAL_CFLAGS_BASE} $(WARN_CFLAGS)
 INTERNAL_CFLAGS = ${INTERNAL_WARN_CFLAGS} $(WERROR_CFLAGS) -DGDBSERVER
@@ -175,16 +170,19 @@ SFILES = \
 	$(srcdir)/dll.cc \
 	$(srcdir)/gdbreplay.cc \
 	$(srcdir)/hostio.cc \
-	$(srcdir)/hostio-errno.cc \
 	$(srcdir)/i387-fp.cc \
 	$(srcdir)/inferiors.cc \
 	$(srcdir)/linux-aarch64-low.cc \
+	$(srcdir)/linux-arc-low.cc \
 	$(srcdir)/linux-arm-low.cc \
+	$(srcdir)/linux-csky-low.cc \
 	$(srcdir)/linux-ia64-low.cc \
+	$(srcdir)/linux-loongarch-low.cc \
 	$(srcdir)/linux-low.cc \
 	$(srcdir)/linux-m68k-low.cc \
 	$(srcdir)/linux-mips-low.cc \
 	$(srcdir)/linux-nios2-low.cc \
+	$(srcdir)/linux-or1k-low.cc \
 	$(srcdir)/linux-ppc-low.cc \
 	$(srcdir)/linux-riscv-low.cc \
 	$(srcdir)/linux-s390-low.cc \
@@ -193,7 +191,9 @@ SFILES = \
 	$(srcdir)/linux-x86-low.cc \
 	$(srcdir)/linux-xtensa-low.cc \
 	$(srcdir)/mem-break.cc \
+	$(srcdir)/netbsd-aarch64-low.cc \
 	$(srcdir)/netbsd-amd64-low.cc \
+	$(srcdir)/netbsd-i386-low.cc \
 	$(srcdir)/netbsd-low.cc \
 	$(srcdir)/netbsd-low.h \
 	$(srcdir)/proc-service.cc \
@@ -209,11 +209,15 @@ SFILES = \
 	$(srcdir)/win32-low.cc \
 	$(srcdir)/x86-low.cc \
 	$(srcdir)/../gdb/alloc.c \
+	$(srcdir)/../gdb/arch/arc.c \
 	$(srcdir)/../gdb/arch/arm.c \
 	$(srcdir)/../gdb/arch/arm-get-next-pcs.c \
 	$(srcdir)/../gdb/arch/arm-linux.c \
+	$(srcdir)/../gdb/arch/csky.c \
+	$(srcdir)/../gdb/arch/loongarch.c \
 	$(srcdir)/../gdb/arch/ppc-linux-common.c \
 	$(srcdir)/../gdb/arch/riscv.c \
+	$(srcdir)/../gdb/nat/aarch64-mte-linux-ptrace.c \
 	$(srcdir)/../gdb/nat/aarch64-sve-linux-ptrace.c \
 	$(srcdir)/../gdb/nat/linux-btrace.c \
 	$(srcdir)/../gdb/nat/linux-namespaces.c \
@@ -223,6 +227,7 @@ SFILES = \
 	$(srcdir)/../gdb/nat/ppc-linux.c \
 	$(srcdir)/../gdb/nat/riscv-linux-tdesc.c \
 	$(srcdir)/../gdb/nat/fork-inferior.c \
+	$(srcdir)/../gdb/target/target.c \
 	$(srcdir)/../gdb/target/waitstatus.c
 
 DEPFILES = @GDBSERVER_DEPFILES@
@@ -250,6 +255,7 @@ OBS = \
 	tracepoint.o \
 	utils.o \
 	version.o \
+	target/target.o \
 	target/waitstatus.o \
 	$(DEPFILES) \
 	$(LIBOBJS) \
@@ -275,16 +281,7 @@ extra_libraries = @extra_libraries@
 FLAGS_TO_PASS = \
 	"prefix=$(prefix)" \
 	"exec_prefix=$(exec_prefix)" \
-	"infodir=$(infodir)" \
-	"datarootdir=$(datarootdir)" \
-	"docdir=$(docdir)" \
-	"htmldir=$(htmldir)" \
-	"pdfdir=$(pdfdir)" \
 	"libdir=$(libdir)" \
-	"mandir=$(mandir)" \
-	"datadir=$(datadir)" \
-	"includedir=$(includedir)" \
-	"against=$(against)" \
 	"DESTDIR=$(DESTDIR)" \
 	"AR=$(AR)" \
 	"AR_FLAGS=$(AR_FLAGS)" \
@@ -336,7 +333,10 @@ install-strip:
 uninstall: force
 	n=`echo gdbserver | sed '$(program_transform_name)'`; \
 	if [ x$$n = x ]; then n=gdbserver; else true; fi; \
-	rm -f $(DESTDIR)/$(bindir)/$$n$(EXEEXT) $(DESTDIR)$(man1dir)/$$n.1
+	if [ x"$(IPA_DEPFILES)" != x ]; then \
+		rm -f $(DESTDIR)$(libdir)/$(IPA_LIB); \
+	fi; \
+	rm -f $(DESTDIR)/$(bindir)/$$n$(EXEEXT)
 
 installcheck:
 check:
@@ -351,17 +351,19 @@ gdbserver$(EXEEXT): $(sort $(OBS)) ${CDEPS} $(LIBGNU) $(LIBIBERTY) \
 		$(INTL_DEPS) $(GDBSUPPORT)
 	$(SILENCE) rm -f gdbserver$(EXEEXT)
 	$(ECHO_CXXLD) $(CC_LD) $(INTERNAL_CFLAGS) $(INTERNAL_LDFLAGS) \
+		$(CXXFLAGS) \
 		-o gdbserver$(EXEEXT) $(OBS) $(GDBSUPPORT) $(LIBGNU) \
-		$(LIBIBERTY) $(INTL) $(GDBSERVER_LIBS) $(XM_CLIBS) \
-		$(WIN32APILIBS)
+		$(LIBGNU_EXTRA_LIBS) $(LIBIBERTY) $(INTL) \
+		$(GDBSERVER_LIBS) $(XM_CLIBS) $(WIN32APILIBS)
 
 gdbreplay$(EXEEXT): $(sort $(GDBREPLAY_OBS)) $(LIBGNU) $(LIBIBERTY) \
 		$(INTL_DEPS) $(GDBSUPPORT)
 	$(SILENCE) rm -f gdbreplay$(EXEEXT)
 	$(ECHO_CXXLD) $(CC_LD) $(INTERNAL_CFLAGS) $(INTERNAL_LDFLAGS) \
+		$(CXXFLAGS) \
 		-o gdbreplay$(EXEEXT) $(GDBREPLAY_OBS) $(XM_CLIBS) \
-		$(GDBSUPPORT) $(LIBGNU) $(LIBIBERTY) $(INTL) \
-		$(WIN32APILIBS)
+		$(GDBSUPPORT) $(LIBGNU) $(LIBGNU_EXTRA_LIBS) \
+		$(LIBIBERTY) $(INTL) $(WIN32APILIBS)
 
 IPA_OBJS = \
 	alloc-ipa.o \
@@ -386,7 +388,8 @@ $(IPA_LIB): $(sort $(IPA_OBJS)) ${CDEPS}
 	$(SILENCE) rm -f $(IPA_LIB)
 	$(ECHO_CXXLD) $(CC_LD) -shared -fPIC -Wl,--soname=$(IPA_LIB) \
 		-Wl,--no-undefined $(INTERNAL_CFLAGS) $(INTERNAL_LDFLAGS) \
-		-o $(IPA_LIB) ${IPA_OBJS} -ldl -pthread
+		 $(CXXFLAGS) \
+		-o $(IPA_LIB) ${IPA_OBJS} $(LIBIBERTY_FOR_SHLIB) -ldl -pthread
 
 # Put the proper machine-specific files first, so M-. on a machine
 # specific routine gets the one for the correct machine.
@@ -415,8 +418,7 @@ mostlyclean clean:
 	done
 
 maintainer-clean realclean distclean: clean
-	rm -f Makefile config.status config.h stamp-h config.log
-	rm -f Makefile
+	rm -f Makefile config.status config.h stamp-h config.log config.cache
 	for i in $(CONFIG_SRC_SUBDIR); do \
 		rmdir $$i/$(DEPDIR); \
 	done
@@ -472,7 +474,8 @@ UST_CFLAGS = $(ustinc) -DCONFIG_UST_GDB_INTEGRATION
 # Undo gnulib replacements for the IPA shared library build.
 # The gnulib headers are still needed, but gnulib is not linked
 # into the IPA lib so replacement apis don't work.
-UNDO_GNULIB_CFLAGS = -Drpl_strerror_r=strerror_r
+UNDO_GNULIB_CFLAGS = -Drpl_strerror_r=strerror_r -Drpl_free=free \
+	-Drpl_malloc=malloc -Drpl_realloc=realloc
 
 # Note, we only build the IPA if -fvisibility=hidden is supported in
 # the first place.
@@ -481,7 +484,9 @@ IPAGENT_CFLAGS = $(INTERNAL_CFLAGS) $(UST_CFLAGS) \
 	-fPIC -DIN_PROCESS_AGENT \
 	-fvisibility=hidden
 
-IPAGENT_COMPILE = $(ECHO_CXX) $(COMPILE.pre) $(IPAGENT_CFLAGS) $(COMPILE.post)
+# CXXFLAGS is at the very end on purpose, so that user-supplied flags can
+# override internal flags.
+IPAGENT_COMPILE = $(ECHO_CXX) $(COMPILE.pre) $(IPAGENT_CFLAGS) $(CXXFLAGS) $(COMPILE.post)
 
 # Rules for special cases.
 

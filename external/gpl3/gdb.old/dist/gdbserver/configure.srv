@@ -8,8 +8,6 @@
 #   srv_regobj		The register protocol appropriate for this target.
 #   srv_tgtobj		Any other target-specific modules appropriate
 #			for this target.
-#   srv_hostio_err	The object implementing the hostio_last_error
-#			target method.
 #   srv_xmlfiles	All XML files which should be available for
 #			gdbserver in this configuration.
 #   ipa_obj		Any other target-specific modules appropriate
@@ -23,9 +21,6 @@
 #			PTRACE_GETREGS.
 #   srv_linux_usrregs	Set to "yes" if we can get at registers via
 #			PTRACE_PEEKUSR / PTRACE_POKEUSR.
-
-# Default hostio_last_error implementation
-srv_hostio_err_objs="hostio-errno.o"
 
 ipa_ppc_linux_regobj="powerpc-32l-ipa.o powerpc-altivec32l-ipa.o powerpc-vsx32l-ipa.o powerpc-isa205-32l-ipa.o powerpc-isa205-altivec32l-ipa.o powerpc-isa205-vsx32l-ipa.o powerpc-isa205-ppr-dscr-vsx32l-ipa.o powerpc-isa207-vsx32l-ipa.o powerpc-isa207-htm-vsx32l-ipa.o powerpc-e500l-ipa.o powerpc-64l-ipa.o powerpc-altivec64l-ipa.o powerpc-vsx64l-ipa.o powerpc-isa205-64l-ipa.o powerpc-isa205-altivec64l-ipa.o powerpc-isa205-vsx64l-ipa.o powerpc-isa205-ppr-dscr-vsx64l-ipa.o powerpc-isa207-vsx64l-ipa.o powerpc-isa207-htm-vsx64l-ipa.o"
 
@@ -44,6 +39,7 @@ fi
 
 case "${gdbserver_host}" in
   aarch64*-*-linux*)	srv_tgtobj="linux-aarch64-low.o"
+			srv_tgtobj="$srv_tgtobj nat/aarch64-hw-point.o"
 			srv_tgtobj="$srv_tgtobj nat/aarch64-linux-hw-point.o"
 			srv_tgtobj="$srv_tgtobj linux-aarch32-low.o"
 			srv_tgtobj="$srv_tgtobj linux-aarch32-tdesc.o"
@@ -52,7 +48,9 @@ case "${gdbserver_host}" in
 			srv_tgtobj="$srv_tgtobj nat/aarch64-linux.o"
 			srv_tgtobj="$srv_tgtobj arch/aarch64-insn.o"
 			srv_tgtobj="$srv_tgtobj arch/aarch64.o"
+			srv_tgtobj="$srv_tgtobj arch/aarch64-mte-linux.o"
 			srv_tgtobj="$srv_tgtobj linux-aarch64-tdesc.o"
+			srv_tgtobj="$srv_tgtobj nat/aarch64-mte-linux-ptrace.o"
 			srv_tgtobj="$srv_tgtobj nat/aarch64-sve-linux-ptrace.o"
 			srv_tgtobj="${srv_tgtobj} $srv_linux_obj"
 			srv_linux_regsets=yes
@@ -60,6 +58,23 @@ case "${gdbserver_host}" in
 			ipa_obj="linux-aarch64-ipa.o"
 			ipa_obj="${ipa_obj} linux-aarch64-tdesc-ipa.o"
 			ipa_obj="${ipa_obj} arch/aarch64-ipa.o"
+			;;
+  aarch64*-*-netbsd*)	srv_regobj=""
+			srv_tgtobj="netbsd-low.o netbsd-aarch64-low.o fork-child.o"
+			srv_tgtobj="${srv_tgtobj} nat/fork-inferior.o"
+			srv_tgtobj="${srv_tgtobj} nat/netbsd-nat.o"
+			srv_tgtobj="${srv_tgtobj} arch/aarch64-insn.o arch/aarch64.o"
+			;;
+  arc*-*-linux*)
+			srv_regobj=""
+			srv_tgtobj="linux-arc-low.o arch/arc.o $srv_linux_obj"
+			srv_xmlfiles="arc/v1-core.xml"
+			srv_xmlfiles="${srv_xmlfiles} arc/v1-aux.xml"
+			srv_xmlfiles="${srv_xmlfiles} arc/v2-core.xml"
+			srv_xmlfiles="${srv_xmlfiles} arc/v2-aux.xml"
+			srv_linux_regsets=yes
+			srv_linux_usrregs=yes
+			srv_linux_thread_db=yes
 			;;
   arm*-*-linux*)	srv_tgtobj="$srv_linux_obj linux-arm-low.o"
 			srv_tgtobj="$srv_tgtobj linux-arm-tdesc.o"
@@ -70,6 +85,11 @@ case "${gdbserver_host}" in
 			srv_tgtobj="${srv_tgtobj} arch/arm-linux.o"
 			srv_tgtobj="${srv_tgtobj} arch/arm-get-next-pcs.o"
 			srv_linux_usrregs=yes
+			srv_linux_regsets=yes
+			srv_linux_thread_db=yes
+			;;
+  csky*-*linux*)	srv_tgtobj="$srv_linux_obj linux-csky-low.o"
+			srv_tgtobj="${srv_tgtobj} arch/csky.o"
 			srv_linux_regsets=yes
 			srv_linux_thread_db=yes
 			;;
@@ -101,9 +121,21 @@ case "${gdbserver_host}" in
 			srv_tgtobj="${srv_tgtobj} arch/i386.o"
 			srv_mingw=yes
 			;;
+  i[34567]86-*-netbsd*)	srv_regobj=""
+			srv_tgtobj="netbsd-low.o netbsd-i386-low.o fork-child.o"
+			srv_tgtobj="${srv_tgtobj} nat/fork-inferior.o"
+			srv_tgtobj="${srv_tgtobj} nat/netbsd-nat.o"
+			srv_tgtobj="${srv_tgtobj} arch/i386.o"
+			;;
   ia64-*-linux*)	srv_regobj=reg-ia64.o
 			srv_tgtobj="$srv_linux_obj linux-ia64-low.o"
 			srv_linux_usrregs=yes
+			;;
+  loongarch*-*-linux*)	srv_tgtobj="arch/loongarch.o linux-loongarch-low.o"
+			srv_tgtobj="${srv_tgtobj} ${srv_linux_obj}"
+			srv_linux_regsets=yes
+			srv_linux_usrregs=yes
+			srv_linux_thread_db=yes
 			;;
   m68*-*-linux*)	if test "$gdb_cv_m68k_is_coldfire" = yes; then
                           srv_regobj=reg-cf.o
@@ -151,6 +183,14 @@ case "${gdbserver_host}" in
 			srv_tgtobj="$srv_linux_obj linux-nios2-low.o"
 			srv_xmlfiles="nios2-linux.xml"
 			srv_xmlfiles="${srv_xmlfiles} nios2-cpu.xml"
+			srv_linux_regsets=yes
+			srv_linux_usrregs=yes
+			srv_linux_thread_db=yes
+			;;
+  or1k*-*-linux*)	srv_regobj="or1k-linux.o"
+			srv_tgtobj="$srv_linux_obj linux-or1k-low.o"
+			srv_xmlfiles="or1k-linux.xml"
+			srv_xmlfiles="${srv_xmlfiles} or1k-core.xml"
 			srv_linux_regsets=yes
 			srv_linux_usrregs=yes
 			srv_linux_thread_db=yes

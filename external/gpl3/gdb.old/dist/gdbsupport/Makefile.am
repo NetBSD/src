@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2020 Free Software Foundation, Inc.
+#   Copyright (C) 2020-2023 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,6 +35,10 @@ if SELFTEST
 selftest = selftest.cc
 endif
 
+if HAVE_PIPE_OR_PIPE2
+eventpipe = event-pipe.cc
+endif
+
 libgdbsupport_a_SOURCES = \
     agent.cc \
     btrace-common.cc \
@@ -52,6 +56,9 @@ libgdbsupport_a_SOURCES = \
     filestuff.cc \
     format.cc \
     gdb-dlfcn.cc \
+    gdb-hashtab.cc \
+    gdb_obstack.cc \
+    gdb_regex.cc \
     gdb_tilde_expand.cc \
     gdb_wait.cc \
     gdb_vecs.cc \
@@ -65,11 +72,13 @@ libgdbsupport_a_SOURCES = \
     run-time-clock.cc \
     safe-strerror.cc \
     scoped_mmap.cc \
+    search.cc \
     signals.cc \
     signals-state-save-restore.cc \
     tdesc.cc \
     thread-pool.cc \
     xml-utils.cc \
+    ${eventpipe} \
     $(selftest)
 
 # Double-check that no defines are missing from our configury.

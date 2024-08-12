@@ -1,4 +1,4 @@
-# Copyright 2011-2020 Free Software Foundation, Inc.
+# Copyright 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,11 +19,6 @@
 if {[skip_shlib_tests]} {
     untested "skipping shared library tests"
     return -1
-}
-
-if {[get_compiler_info]} {
-    untested "could not get compiler info"
-    return 1
 }
 
 load_lib jit-elf-helpers.exp
@@ -78,10 +73,10 @@ proc one_jit_test {solib_binfiles_target match_str} {
     with_test_prefix "one_jit_test-$count" {
 	global test_verbose
 	global main_loader_binfile main_loader_srcfile
-	global main_solib_binfile main_solib_srcfile
+	global main_solib_binfile main_solib_binfile_target main_solib_srcfile
 
 	clean_restart $main_loader_binfile
-	gdb_load_shlib $main_solib_binfile
+	gdb_locate_shlib $main_solib_binfile
 
 	# This is just to help debugging when things fail
 	if {$test_verbose > 0} {
@@ -89,14 +84,13 @@ proc one_jit_test {solib_binfiles_target match_str} {
 	}
 
 	if { ![runto_main] } {
-	    fail "can't run to main"
 	    return
 	}
 
 	gdb_breakpoint [gdb_get_line_number "break here before-dlopen" \
 			    $main_loader_srcfile]
 	gdb_continue_to_breakpoint "break here before-dlopen"
-	gdb_test_no_output "set var jit_libname = \"$main_solib_binfile\"" \
+	gdb_test_no_output "set var jit_libname = \"$main_solib_binfile_target\"" \
 	    "setting library name"
 
 	gdb_breakpoint [gdb_get_line_number "break here after-dlopen" \
@@ -146,6 +140,9 @@ if { [compile_jit_elf_main_as_so $main_solib_srcfile $main_solib_binfile \
     return
 }
 
+set main_solib_binfile_target \
+    [gdb_download_shlib $main_solib_binfile]
+
 # Compile the "real" main for this test.
 if { [compile_jit_dlmain {shlib_load}] < 0 } {
     return
@@ -167,6 +164,6 @@ foreach solib $jit_solibs_target {
     set input [string range $solib 0 [expr { [string length $solib] - 2 }]]
     gdb_test \
 	"complete jit-reader-load [standard_output_file $input]" \
-	"jit-reader-load $solib" \
+	"jit-reader-load \[^\r\n\]*$solib" \
 	"test jit-reader-load filename completion [file tail $solib]"
 }
