@@ -1,9 +1,9 @@
-/* *INDENT-OFF* */ /* THIS FILE IS GENERATED -*- buffer-read-only: t -*- */
+/* THIS FILE IS GENERATED -*- buffer-read-only: t -*- */
 /* vi:set ro: */
 
 /* Dynamic architecture support for GDB, the GNU debugger.
 
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -196,15 +196,35 @@ extern void set_gdbarch_pseudo_register_read (struct gdbarch *gdbarch, gdbarch_p
 
 extern bool gdbarch_pseudo_register_read_value_p (struct gdbarch *gdbarch);
 
-typedef struct value * (gdbarch_pseudo_register_read_value_ftype) (struct gdbarch *gdbarch, readable_regcache *regcache, int cookednum);
-extern struct value * gdbarch_pseudo_register_read_value (struct gdbarch *gdbarch, readable_regcache *regcache, int cookednum);
+typedef struct value * (gdbarch_pseudo_register_read_value_ftype) (struct gdbarch *gdbarch, const frame_info_ptr &next_frame, int cookednum);
+extern struct value * gdbarch_pseudo_register_read_value (struct gdbarch *gdbarch, const frame_info_ptr &next_frame, int cookednum);
 extern void set_gdbarch_pseudo_register_read_value (struct gdbarch *gdbarch, gdbarch_pseudo_register_read_value_ftype *pseudo_register_read_value);
+
+/* Write bytes in BUF to pseudo register with number PSEUDO_REG_NUM.
+
+   Raw registers backing the pseudo register should be written to using
+   NEXT_FRAME. */
 
 extern bool gdbarch_pseudo_register_write_p (struct gdbarch *gdbarch);
 
-typedef void (gdbarch_pseudo_register_write_ftype) (struct gdbarch *gdbarch, struct regcache *regcache, int cookednum, const gdb_byte *buf);
-extern void gdbarch_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache, int cookednum, const gdb_byte *buf);
+typedef void (gdbarch_pseudo_register_write_ftype) (struct gdbarch *gdbarch, const frame_info_ptr &next_frame, int pseudo_reg_num, gdb::array_view<const gdb_byte> buf);
+extern void gdbarch_pseudo_register_write (struct gdbarch *gdbarch, const frame_info_ptr &next_frame, int pseudo_reg_num, gdb::array_view<const gdb_byte> buf);
 extern void set_gdbarch_pseudo_register_write (struct gdbarch *gdbarch, gdbarch_pseudo_register_write_ftype *pseudo_register_write);
+
+/* Write bytes to a pseudo register.
+
+   This is marked as deprecated because it gets passed a regcache for
+   implementations to write raw registers in.  This doesn't work for unwound
+   frames, where the raw registers backing the pseudo registers may have been
+   saved elsewhere.
+
+   Implementations should be migrated to implement pseudo_register_write instead. */
+
+extern bool gdbarch_deprecated_pseudo_register_write_p (struct gdbarch *gdbarch);
+
+typedef void (gdbarch_deprecated_pseudo_register_write_ftype) (struct gdbarch *gdbarch, struct regcache *regcache, int cookednum, const gdb_byte *buf);
+extern void gdbarch_deprecated_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache, int cookednum, const gdb_byte *buf);
+extern void set_gdbarch_deprecated_pseudo_register_write (struct gdbarch *gdbarch, gdbarch_deprecated_pseudo_register_write_ftype *deprecated_pseudo_register_write);
 
 extern int gdbarch_num_regs (struct gdbarch *gdbarch);
 extern void set_gdbarch_num_regs (struct gdbarch *gdbarch, int num_regs);
@@ -315,8 +335,8 @@ extern void set_gdbarch_register_type (struct gdbarch *gdbarch, gdbarch_register
    should match the address at which the breakpoint was set in the dummy
    frame. */
 
-typedef struct frame_id (gdbarch_dummy_id_ftype) (struct gdbarch *gdbarch, frame_info_ptr this_frame);
-extern struct frame_id gdbarch_dummy_id (struct gdbarch *gdbarch, frame_info_ptr this_frame);
+typedef struct frame_id (gdbarch_dummy_id_ftype) (struct gdbarch *gdbarch, const frame_info_ptr &this_frame);
+extern struct frame_id gdbarch_dummy_id (struct gdbarch *gdbarch, const frame_info_ptr &this_frame);
 extern void set_gdbarch_dummy_id (struct gdbarch *gdbarch, gdbarch_dummy_id_ftype *dummy_id);
 
 /* Implement DUMMY_ID and PUSH_DUMMY_CALL, then delete
@@ -342,22 +362,22 @@ extern void set_gdbarch_push_dummy_code (struct gdbarch *gdbarch, gdbarch_push_d
 
 /* Return true if the code of FRAME is writable. */
 
-typedef int (gdbarch_code_of_frame_writable_ftype) (struct gdbarch *gdbarch, frame_info_ptr frame);
-extern int gdbarch_code_of_frame_writable (struct gdbarch *gdbarch, frame_info_ptr frame);
+typedef int (gdbarch_code_of_frame_writable_ftype) (struct gdbarch *gdbarch, const frame_info_ptr &frame);
+extern int gdbarch_code_of_frame_writable (struct gdbarch *gdbarch, const frame_info_ptr &frame);
 extern void set_gdbarch_code_of_frame_writable (struct gdbarch *gdbarch, gdbarch_code_of_frame_writable_ftype *code_of_frame_writable);
 
-typedef void (gdbarch_print_registers_info_ftype) (struct gdbarch *gdbarch, struct ui_file *file, frame_info_ptr frame, int regnum, int all);
-extern void gdbarch_print_registers_info (struct gdbarch *gdbarch, struct ui_file *file, frame_info_ptr frame, int regnum, int all);
+typedef void (gdbarch_print_registers_info_ftype) (struct gdbarch *gdbarch, struct ui_file *file, const frame_info_ptr &frame, int regnum, int all);
+extern void gdbarch_print_registers_info (struct gdbarch *gdbarch, struct ui_file *file, const frame_info_ptr &frame, int regnum, int all);
 extern void set_gdbarch_print_registers_info (struct gdbarch *gdbarch, gdbarch_print_registers_info_ftype *print_registers_info);
 
-typedef void (gdbarch_print_float_info_ftype) (struct gdbarch *gdbarch, struct ui_file *file, frame_info_ptr frame, const char *args);
-extern void gdbarch_print_float_info (struct gdbarch *gdbarch, struct ui_file *file, frame_info_ptr frame, const char *args);
+typedef void (gdbarch_print_float_info_ftype) (struct gdbarch *gdbarch, struct ui_file *file, const frame_info_ptr &frame, const char *args);
+extern void gdbarch_print_float_info (struct gdbarch *gdbarch, struct ui_file *file, const frame_info_ptr &frame, const char *args);
 extern void set_gdbarch_print_float_info (struct gdbarch *gdbarch, gdbarch_print_float_info_ftype *print_float_info);
 
 extern bool gdbarch_print_vector_info_p (struct gdbarch *gdbarch);
 
-typedef void (gdbarch_print_vector_info_ftype) (struct gdbarch *gdbarch, struct ui_file *file, frame_info_ptr frame, const char *args);
-extern void gdbarch_print_vector_info (struct gdbarch *gdbarch, struct ui_file *file, frame_info_ptr frame, const char *args);
+typedef void (gdbarch_print_vector_info_ftype) (struct gdbarch *gdbarch, struct ui_file *file, const frame_info_ptr &frame, const char *args);
+extern void gdbarch_print_vector_info (struct gdbarch *gdbarch, struct ui_file *file, const frame_info_ptr &frame, const char *args);
 extern void set_gdbarch_print_vector_info (struct gdbarch *gdbarch, gdbarch_print_vector_info_ftype *print_vector_info);
 
 /* MAP a GDB RAW register number onto a simulator register number.  See
@@ -382,8 +402,8 @@ extern void set_gdbarch_cannot_store_register (struct gdbarch *gdbarch, gdbarch_
 
 extern bool gdbarch_get_longjmp_target_p (struct gdbarch *gdbarch);
 
-typedef int (gdbarch_get_longjmp_target_ftype) (frame_info_ptr frame, CORE_ADDR *pc);
-extern int gdbarch_get_longjmp_target (struct gdbarch *gdbarch, frame_info_ptr frame, CORE_ADDR *pc);
+typedef int (gdbarch_get_longjmp_target_ftype) (const frame_info_ptr &frame, CORE_ADDR *pc);
+extern int gdbarch_get_longjmp_target (struct gdbarch *gdbarch, const frame_info_ptr &frame, CORE_ADDR *pc);
 extern void set_gdbarch_get_longjmp_target (struct gdbarch *gdbarch, gdbarch_get_longjmp_target_ftype *get_longjmp_target);
 
 extern int gdbarch_believe_pcc_promotion (struct gdbarch *gdbarch);
@@ -393,21 +413,21 @@ typedef int (gdbarch_convert_register_p_ftype) (struct gdbarch *gdbarch, int reg
 extern int gdbarch_convert_register_p (struct gdbarch *gdbarch, int regnum, struct type *type);
 extern void set_gdbarch_convert_register_p (struct gdbarch *gdbarch, gdbarch_convert_register_p_ftype *convert_register_p);
 
-typedef int (gdbarch_register_to_value_ftype) (frame_info_ptr frame, int regnum, struct type *type, gdb_byte *buf, int *optimizedp, int *unavailablep);
-extern int gdbarch_register_to_value (struct gdbarch *gdbarch, frame_info_ptr frame, int regnum, struct type *type, gdb_byte *buf, int *optimizedp, int *unavailablep);
+typedef int (gdbarch_register_to_value_ftype) (const frame_info_ptr &frame, int regnum, struct type *type, gdb_byte *buf, int *optimizedp, int *unavailablep);
+extern int gdbarch_register_to_value (struct gdbarch *gdbarch, const frame_info_ptr &frame, int regnum, struct type *type, gdb_byte *buf, int *optimizedp, int *unavailablep);
 extern void set_gdbarch_register_to_value (struct gdbarch *gdbarch, gdbarch_register_to_value_ftype *register_to_value);
 
-typedef void (gdbarch_value_to_register_ftype) (frame_info_ptr frame, int regnum, struct type *type, const gdb_byte *buf);
-extern void gdbarch_value_to_register (struct gdbarch *gdbarch, frame_info_ptr frame, int regnum, struct type *type, const gdb_byte *buf);
+typedef void (gdbarch_value_to_register_ftype) (const frame_info_ptr &frame, int regnum, struct type *type, const gdb_byte *buf);
+extern void gdbarch_value_to_register (struct gdbarch *gdbarch, const frame_info_ptr &frame, int regnum, struct type *type, const gdb_byte *buf);
 extern void set_gdbarch_value_to_register (struct gdbarch *gdbarch, gdbarch_value_to_register_ftype *value_to_register);
 
 /* Construct a value representing the contents of register REGNUM in
-   frame FRAME_ID, interpreted as type TYPE.  The routine needs to
+   frame THIS_FRAME, interpreted as type TYPE.  The routine needs to
    allocate and return a struct value with all value attributes
    (but not the value contents) filled in. */
 
-typedef struct value * (gdbarch_value_from_register_ftype) (struct gdbarch *gdbarch, struct type *type, int regnum, struct frame_id frame_id);
-extern struct value * gdbarch_value_from_register (struct gdbarch *gdbarch, struct type *type, int regnum, struct frame_id frame_id);
+typedef struct value * (gdbarch_value_from_register_ftype) (struct gdbarch *gdbarch, struct type *type, int regnum, const frame_info_ptr &this_frame);
+extern struct value * gdbarch_value_from_register (struct gdbarch *gdbarch, struct type *type, int regnum, const frame_info_ptr &this_frame);
 extern void set_gdbarch_value_from_register (struct gdbarch *gdbarch, gdbarch_value_from_register_ftype *value_from_register);
 
 typedef CORE_ADDR (gdbarch_pointer_to_address_ftype) (struct gdbarch *gdbarch, struct type *type, const gdb_byte *buf);
@@ -433,13 +453,29 @@ extern void set_gdbarch_integer_to_address (struct gdbarch *gdbarch, gdbarch_int
    If WRITEBUF is not NULL, it contains a return value which will be
    stored into the appropriate register.  This can be used when we want
    to force the value returned by a function (see the "return" command
-   for instance). */
+   for instance).
 
-extern bool gdbarch_return_value_p (struct gdbarch *gdbarch);
+   NOTE: it is better to implement return_value_as_value instead, as that
+   method can properly handle variably-sized types. */
 
 typedef enum return_value_convention (gdbarch_return_value_ftype) (struct gdbarch *gdbarch, struct value *function, struct type *valtype, struct regcache *regcache, gdb_byte *readbuf, const gdb_byte *writebuf);
-extern enum return_value_convention gdbarch_return_value (struct gdbarch *gdbarch, struct value *function, struct type *valtype, struct regcache *regcache, gdb_byte *readbuf, const gdb_byte *writebuf);
 extern void set_gdbarch_return_value (struct gdbarch *gdbarch, gdbarch_return_value_ftype *return_value);
+
+/* Return the return-value convention that will be used by FUNCTION
+   to return a value of type VALTYPE.  FUNCTION may be NULL in which
+   case the return convention is computed based only on VALTYPE.
+
+   If READ_VALUE is not NULL, extract the return value and save it in
+   this pointer.
+
+   If WRITEBUF is not NULL, it contains a return value which will be
+   stored into the appropriate register.  This can be used when we want
+   to force the value returned by a function (see the "return" command
+   for instance). */
+
+typedef enum return_value_convention (gdbarch_return_value_as_value_ftype) (struct gdbarch *gdbarch, struct value *function, struct type *valtype, struct regcache *regcache, struct value **read_value, const gdb_byte *writebuf);
+extern enum return_value_convention gdbarch_return_value_as_value (struct gdbarch *gdbarch, struct value *function, struct type *valtype, struct regcache *regcache, struct value **read_value, const gdb_byte *writebuf);
+extern void set_gdbarch_return_value_as_value (struct gdbarch *gdbarch, gdbarch_return_value_as_value_ftype *return_value_as_value);
 
 /* Return the address at which the value being returned from
    the current function will be stored.  This routine is only
@@ -448,9 +484,30 @@ extern void set_gdbarch_return_value (struct gdbarch *gdbarch, gdbarch_return_va
 
    May return 0 when unable to determine that address. */
 
-typedef CORE_ADDR (gdbarch_get_return_buf_addr_ftype) (struct type *val_type, frame_info_ptr cur_frame);
-extern CORE_ADDR gdbarch_get_return_buf_addr (struct gdbarch *gdbarch, struct type *val_type, frame_info_ptr cur_frame);
+typedef CORE_ADDR (gdbarch_get_return_buf_addr_ftype) (struct type *val_type, const frame_info_ptr &cur_frame);
+extern CORE_ADDR gdbarch_get_return_buf_addr (struct gdbarch *gdbarch, struct type *val_type, const frame_info_ptr &cur_frame);
 extern void set_gdbarch_get_return_buf_addr (struct gdbarch *gdbarch, gdbarch_get_return_buf_addr_ftype *get_return_buf_addr);
+
+/* Return true if the typedef record needs to be replaced.".
+
+   Return 0 by default */
+
+typedef bool (gdbarch_dwarf2_omit_typedef_p_ftype) (struct type *target_type, const char *producer, const char *name);
+extern bool gdbarch_dwarf2_omit_typedef_p (struct gdbarch *gdbarch, struct type *target_type, const char *producer, const char *name);
+extern void set_gdbarch_dwarf2_omit_typedef_p (struct gdbarch *gdbarch, gdbarch_dwarf2_omit_typedef_p_ftype *dwarf2_omit_typedef_p);
+
+/* Update PC when trying to find a call site.  This is useful on
+   architectures where the call site PC, as reported in the DWARF, can be
+   incorrect for some reason.
+
+   The passed-in PC will be an address in the inferior.  GDB will have
+   already failed to find a call site at this PC.  This function may
+   simply return its parameter if it thinks that should be the correct
+   address. */
+
+typedef CORE_ADDR (gdbarch_update_call_site_pc_ftype) (struct gdbarch *gdbarch, CORE_ADDR pc);
+extern CORE_ADDR gdbarch_update_call_site_pc (struct gdbarch *gdbarch, CORE_ADDR pc);
+extern void set_gdbarch_update_call_site_pc (struct gdbarch *gdbarch, gdbarch_update_call_site_pc_ftype *update_call_site_pc);
 
 /* Return true if the return value of function is stored in the first hidden
    parameter.  In theory, this feature should be language-dependent, specified
@@ -490,8 +547,8 @@ typedef CORE_ADDR (gdbarch_skip_entrypoint_ftype) (struct gdbarch *gdbarch, CORE
 extern CORE_ADDR gdbarch_skip_entrypoint (struct gdbarch *gdbarch, CORE_ADDR ip);
 extern void set_gdbarch_skip_entrypoint (struct gdbarch *gdbarch, gdbarch_skip_entrypoint_ftype *skip_entrypoint);
 
-typedef int (gdbarch_inner_than_ftype) (CORE_ADDR lhs, CORE_ADDR rhs);
-extern int gdbarch_inner_than (struct gdbarch *gdbarch, CORE_ADDR lhs, CORE_ADDR rhs);
+typedef bool (gdbarch_inner_than_ftype) (CORE_ADDR lhs, CORE_ADDR rhs);
+extern bool gdbarch_inner_than (struct gdbarch *gdbarch, CORE_ADDR lhs, CORE_ADDR rhs);
 extern void set_gdbarch_inner_than (struct gdbarch *gdbarch, gdbarch_inner_than_ftype *inner_than);
 
 typedef const gdb_byte * (gdbarch_breakpoint_from_pc_ftype) (struct gdbarch *gdbarch, CORE_ADDR *pcptr, int *lenptr);
@@ -537,7 +594,7 @@ extern void set_gdbarch_memory_remove_breakpoint (struct gdbarch *gdbarch, gdbar
 extern CORE_ADDR gdbarch_decr_pc_after_break (struct gdbarch *gdbarch);
 extern void set_gdbarch_decr_pc_after_break (struct gdbarch *gdbarch, CORE_ADDR decr_pc_after_break);
 
-/* A function can be addressed by either it's "pointer" (possibly a
+/* A function can be addressed by either its "pointer" (possibly a
    descriptor address) or "entry point" (first executable instruction).
    The method "convert_from_func_ptr_addr" converting the former to the
    latter.  gdbarch_deprecated_function_start_offset is being used to implement
@@ -578,12 +635,12 @@ extern void set_gdbarch_get_thread_local_address (struct gdbarch *gdbarch, gdbar
 extern CORE_ADDR gdbarch_frame_args_skip (struct gdbarch *gdbarch);
 extern void set_gdbarch_frame_args_skip (struct gdbarch *gdbarch, CORE_ADDR frame_args_skip);
 
-typedef CORE_ADDR (gdbarch_unwind_pc_ftype) (struct gdbarch *gdbarch, frame_info_ptr next_frame);
-extern CORE_ADDR gdbarch_unwind_pc (struct gdbarch *gdbarch, frame_info_ptr next_frame);
+typedef CORE_ADDR (gdbarch_unwind_pc_ftype) (struct gdbarch *gdbarch, const frame_info_ptr &next_frame);
+extern CORE_ADDR gdbarch_unwind_pc (struct gdbarch *gdbarch, const frame_info_ptr &next_frame);
 extern void set_gdbarch_unwind_pc (struct gdbarch *gdbarch, gdbarch_unwind_pc_ftype *unwind_pc);
 
-typedef CORE_ADDR (gdbarch_unwind_sp_ftype) (struct gdbarch *gdbarch, frame_info_ptr next_frame);
-extern CORE_ADDR gdbarch_unwind_sp (struct gdbarch *gdbarch, frame_info_ptr next_frame);
+typedef CORE_ADDR (gdbarch_unwind_sp_ftype) (struct gdbarch *gdbarch, const frame_info_ptr &next_frame);
+extern CORE_ADDR gdbarch_unwind_sp (struct gdbarch *gdbarch, const frame_info_ptr &next_frame);
 extern void set_gdbarch_unwind_sp (struct gdbarch *gdbarch, gdbarch_unwind_sp_ftype *unwind_sp);
 
 /* DEPRECATED_FRAME_LOCALS_ADDRESS as been replaced by the per-frame
@@ -591,8 +648,8 @@ extern void set_gdbarch_unwind_sp (struct gdbarch *gdbarch, gdbarch_unwind_sp_ft
 
 extern bool gdbarch_frame_num_args_p (struct gdbarch *gdbarch);
 
-typedef int (gdbarch_frame_num_args_ftype) (frame_info_ptr frame);
-extern int gdbarch_frame_num_args (struct gdbarch *gdbarch, frame_info_ptr frame);
+typedef int (gdbarch_frame_num_args_ftype) (const frame_info_ptr &frame);
+extern int gdbarch_frame_num_args (struct gdbarch *gdbarch, const frame_info_ptr &frame);
 extern void set_gdbarch_frame_num_args (struct gdbarch *gdbarch, gdbarch_frame_num_args_ftype *frame_num_args);
 
 extern bool gdbarch_frame_align_p (struct gdbarch *gdbarch);
@@ -650,8 +707,8 @@ extern void set_gdbarch_memtag_to_string (struct gdbarch *gdbarch, gdbarch_memta
 /* Return true if ADDRESS contains a tag and false otherwise.  ADDRESS
    must be either a pointer or a reference type. */
 
-typedef bool (gdbarch_tagged_address_p_ftype) (struct gdbarch *gdbarch, struct value *address);
-extern bool gdbarch_tagged_address_p (struct gdbarch *gdbarch, struct value *address);
+typedef bool (gdbarch_tagged_address_p_ftype) (struct gdbarch *gdbarch, CORE_ADDR address);
+extern bool gdbarch_tagged_address_p (struct gdbarch *gdbarch, CORE_ADDR address);
 extern void set_gdbarch_tagged_address_p (struct gdbarch *gdbarch, gdbarch_tagged_address_p_ftype *tagged_address_p);
 
 /* Return true if the tag from ADDRESS matches the memory tag for that
@@ -711,8 +768,8 @@ extern void set_gdbarch_software_single_step (struct gdbarch *gdbarch, gdbarch_s
 
 extern bool gdbarch_single_step_through_delay_p (struct gdbarch *gdbarch);
 
-typedef int (gdbarch_single_step_through_delay_ftype) (struct gdbarch *gdbarch, frame_info_ptr frame);
-extern int gdbarch_single_step_through_delay (struct gdbarch *gdbarch, frame_info_ptr frame);
+typedef int (gdbarch_single_step_through_delay_ftype) (struct gdbarch *gdbarch, const frame_info_ptr &frame);
+extern int gdbarch_single_step_through_delay (struct gdbarch *gdbarch, const frame_info_ptr &frame);
 extern void set_gdbarch_single_step_through_delay (struct gdbarch *gdbarch, gdbarch_single_step_through_delay_ftype *single_step_through_delay);
 
 /* FIXME: cagney/2003-08-28: Need to find a better way of selecting the
@@ -722,14 +779,14 @@ typedef int (gdbarch_print_insn_ftype) (bfd_vma vma, struct disassemble_info *in
 extern int gdbarch_print_insn (struct gdbarch *gdbarch, bfd_vma vma, struct disassemble_info *info);
 extern void set_gdbarch_print_insn (struct gdbarch *gdbarch, gdbarch_print_insn_ftype *print_insn);
 
-typedef CORE_ADDR (gdbarch_skip_trampoline_code_ftype) (frame_info_ptr frame, CORE_ADDR pc);
-extern CORE_ADDR gdbarch_skip_trampoline_code (struct gdbarch *gdbarch, frame_info_ptr frame, CORE_ADDR pc);
+typedef CORE_ADDR (gdbarch_skip_trampoline_code_ftype) (const frame_info_ptr &frame, CORE_ADDR pc);
+extern CORE_ADDR gdbarch_skip_trampoline_code (struct gdbarch *gdbarch, const frame_info_ptr &frame, CORE_ADDR pc);
 extern void set_gdbarch_skip_trampoline_code (struct gdbarch *gdbarch, gdbarch_skip_trampoline_code_ftype *skip_trampoline_code);
 
 /* Vtable of solib operations functions. */
 
-extern const struct target_so_ops * gdbarch_so_ops (struct gdbarch *gdbarch);
-extern void set_gdbarch_so_ops (struct gdbarch *gdbarch, const struct target_so_ops * so_ops);
+extern const solib_ops * gdbarch_so_ops (struct gdbarch *gdbarch);
+extern void set_gdbarch_so_ops (struct gdbarch *gdbarch, const solib_ops * so_ops);
 
 /* If in_solib_dynsym_resolve_code() returns true, and SKIP_SOLIB_RESOLVER
    evaluates non-zero, this is the address where the debugger will place
@@ -870,8 +927,8 @@ extern void set_gdbarch_register_reggroup_p (struct gdbarch *gdbarch, gdbarch_re
 
 extern bool gdbarch_fetch_pointer_argument_p (struct gdbarch *gdbarch);
 
-typedef CORE_ADDR (gdbarch_fetch_pointer_argument_ftype) (frame_info_ptr frame, int argi, struct type *type);
-extern CORE_ADDR gdbarch_fetch_pointer_argument (struct gdbarch *gdbarch, frame_info_ptr frame, int argi, struct type *type);
+typedef CORE_ADDR (gdbarch_fetch_pointer_argument_ftype) (const frame_info_ptr &frame, int argi, struct type *type);
+extern CORE_ADDR gdbarch_fetch_pointer_argument (struct gdbarch *gdbarch, const frame_info_ptr &frame, int argi, struct type *type);
 extern void set_gdbarch_fetch_pointer_argument (struct gdbarch *gdbarch, gdbarch_fetch_pointer_argument_ftype *fetch_pointer_argument);
 
 /* Iterate over all supported register notes in a core file.  For each
@@ -976,6 +1033,15 @@ typedef LONGEST (gdbarch_core_xfer_siginfo_ftype) (struct gdbarch *gdbarch, gdb_
 extern LONGEST gdbarch_core_xfer_siginfo (struct gdbarch *gdbarch, gdb_byte *readbuf, ULONGEST offset, ULONGEST len);
 extern void set_gdbarch_core_xfer_siginfo (struct gdbarch *gdbarch, gdbarch_core_xfer_siginfo_ftype *core_xfer_siginfo);
 
+/* Read x86 XSAVE layout information from core file into XSAVE_LAYOUT.
+   Returns true if the layout was read successfully. */
+
+extern bool gdbarch_core_read_x86_xsave_layout_p (struct gdbarch *gdbarch);
+
+typedef bool (gdbarch_core_read_x86_xsave_layout_ftype) (struct gdbarch *gdbarch, x86_xsave_layout &xsave_layout);
+extern bool gdbarch_core_read_x86_xsave_layout (struct gdbarch *gdbarch, x86_xsave_layout &xsave_layout);
+extern void set_gdbarch_core_read_x86_xsave_layout (struct gdbarch *gdbarch, gdbarch_core_read_x86_xsave_layout_ftype *core_read_x86_xsave_layout);
+
 /* BFD target to use when generating a core file. */
 
 extern bool gdbarch_gcore_bfd_target_p (struct gdbarch *gdbarch);
@@ -1023,8 +1089,8 @@ extern void set_gdbarch_max_insn_length (struct gdbarch *gdbarch, ULONGEST max_i
    see the comments in infrun.c.
 
    The TO area is only guaranteed to have space for
-   gdbarch_max_insn_length (arch) bytes, so this function must not
-   write more bytes than that to that area.
+   gdbarch_displaced_step_buffer_length (arch) octets, so this
+   function must not write more octets than that to this area.
 
    If you do not provide this function, GDB assumes that the
    architecture does not support displaced stepping.
@@ -1052,9 +1118,9 @@ typedef bool (gdbarch_displaced_step_hw_singlestep_ftype) (struct gdbarch *gdbar
 extern bool gdbarch_displaced_step_hw_singlestep (struct gdbarch *gdbarch);
 extern void set_gdbarch_displaced_step_hw_singlestep (struct gdbarch *gdbarch, gdbarch_displaced_step_hw_singlestep_ftype *displaced_step_hw_singlestep);
 
-/* Fix up the state resulting from successfully single-stepping a
-   displaced instruction, to give the result we would have gotten from
-   stepping the instruction in its original location.
+/* Fix up the state after attempting to single-step a displaced
+   instruction, to give the result we would have gotten from stepping the
+   instruction in its original location.
 
    REGS is the register state resulting from single-stepping the
    displaced instruction.
@@ -1062,17 +1128,24 @@ extern void set_gdbarch_displaced_step_hw_singlestep (struct gdbarch *gdbarch, g
    CLOSURE is the result from the matching call to
    gdbarch_displaced_step_copy_insn.
 
-   If you provide gdbarch_displaced_step_copy_insn.but not this
-   function, then GDB assumes that no fixup is needed after
-   single-stepping the instruction.
+   FROM is the address where the instruction was original located, TO is
+   the address of the displaced buffer where the instruction was copied
+   to for stepping.
+
+   COMPLETED_P is true if GDB stopped as a result of the requested step
+   having completed (e.g. the inferior stopped with SIGTRAP), otherwise
+   COMPLETED_P is false and GDB stopped for some other reason.  In the
+   case where a single instruction is expanded to multiple replacement
+   instructions for stepping then it may be necessary to read the current
+   program counter from REGS in order to decide how far through the
+   series of replacement instructions the inferior got before stopping,
+   this may impact what will need fixing up in this function.
 
    For a general explanation of displaced stepping and how GDB uses it,
    see the comments in infrun.c. */
 
-extern bool gdbarch_displaced_step_fixup_p (struct gdbarch *gdbarch);
-
-typedef void (gdbarch_displaced_step_fixup_ftype) (struct gdbarch *gdbarch, struct displaced_step_copy_insn_closure *closure, CORE_ADDR from, CORE_ADDR to, struct regcache *regs);
-extern void gdbarch_displaced_step_fixup (struct gdbarch *gdbarch, struct displaced_step_copy_insn_closure *closure, CORE_ADDR from, CORE_ADDR to, struct regcache *regs);
+typedef void (gdbarch_displaced_step_fixup_ftype) (struct gdbarch *gdbarch, struct displaced_step_copy_insn_closure *closure, CORE_ADDR from, CORE_ADDR to, struct regcache *regs, bool completed_p);
+extern void gdbarch_displaced_step_fixup (struct gdbarch *gdbarch, struct displaced_step_copy_insn_closure *closure, CORE_ADDR from, CORE_ADDR to, struct regcache *regs, bool completed_p);
 extern void set_gdbarch_displaced_step_fixup (struct gdbarch *gdbarch, gdbarch_displaced_step_fixup_ftype *displaced_step_fixup);
 
 /* Prepare THREAD for it to displaced step the instruction at its current PC.
@@ -1085,10 +1158,14 @@ typedef displaced_step_prepare_status (gdbarch_displaced_step_prepare_ftype) (st
 extern displaced_step_prepare_status gdbarch_displaced_step_prepare (struct gdbarch *gdbarch, thread_info *thread, CORE_ADDR &displaced_pc);
 extern void set_gdbarch_displaced_step_prepare (struct gdbarch *gdbarch, gdbarch_displaced_step_prepare_ftype *displaced_step_prepare);
 
-/* Clean up after a displaced step of THREAD. */
+/* Clean up after a displaced step of THREAD.
 
-typedef displaced_step_finish_status (gdbarch_displaced_step_finish_ftype) (struct gdbarch *gdbarch, thread_info *thread, gdb_signal sig);
-extern displaced_step_finish_status gdbarch_displaced_step_finish (struct gdbarch *gdbarch, thread_info *thread, gdb_signal sig);
+   It is possible for the displaced-stepped instruction to have caused
+   the thread to exit.  The implementation can detect this case by
+   checking if WS.kind is TARGET_WAITKIND_THREAD_EXITED. */
+
+typedef displaced_step_finish_status (gdbarch_displaced_step_finish_ftype) (struct gdbarch *gdbarch, thread_info *thread, const target_waitstatus &ws);
+extern displaced_step_finish_status gdbarch_displaced_step_finish (struct gdbarch *gdbarch, thread_info *thread, const target_waitstatus &ws);
 extern void set_gdbarch_displaced_step_finish (struct gdbarch *gdbarch, gdbarch_displaced_step_finish_ftype *displaced_step_finish);
 
 /* Return the closure associated to the displaced step buffer that is at ADDR. */
@@ -1105,6 +1182,14 @@ extern void set_gdbarch_displaced_step_copy_insn_closure_by_addr (struct gdbarch
 typedef void (gdbarch_displaced_step_restore_all_in_ptid_ftype) (inferior *parent_inf, ptid_t child_ptid);
 extern void gdbarch_displaced_step_restore_all_in_ptid (struct gdbarch *gdbarch, inferior *parent_inf, ptid_t child_ptid);
 extern void set_gdbarch_displaced_step_restore_all_in_ptid (struct gdbarch *gdbarch, gdbarch_displaced_step_restore_all_in_ptid_ftype *displaced_step_restore_all_in_ptid);
+
+/* The maximum length in octets required for a displaced-step instruction
+   buffer.  By default this will be the same as gdbarch::max_insn_length,
+   but should be overridden for architectures that might expand a
+   displaced-step instruction to multiple replacement instructions. */
+
+extern ULONGEST gdbarch_displaced_step_buffer_length (struct gdbarch *gdbarch);
+extern void set_gdbarch_displaced_step_buffer_length (struct gdbarch *gdbarch, ULONGEST displaced_step_buffer_length);
 
 /* Relocate an instruction to execute at a different address.  OLDLOC
    is the address in the inferior memory where the instruction to
@@ -1630,8 +1715,8 @@ extern void set_gdbarch_addressable_memory_unit_size (struct gdbarch *gdbarch, g
 extern const char * gdbarch_disassembler_options_implicit (struct gdbarch *gdbarch);
 extern void set_gdbarch_disassembler_options_implicit (struct gdbarch *gdbarch, const char * disassembler_options_implicit);
 
-extern char ** gdbarch_disassembler_options (struct gdbarch *gdbarch);
-extern void set_gdbarch_disassembler_options (struct gdbarch *gdbarch, char ** disassembler_options);
+extern std::string * gdbarch_disassembler_options (struct gdbarch *gdbarch);
+extern void set_gdbarch_disassembler_options (struct gdbarch *gdbarch, std::string * disassembler_options);
 
 extern const disasm_options_and_args_t * gdbarch_valid_disassembler_options (struct gdbarch *gdbarch);
 extern void set_gdbarch_valid_disassembler_options (struct gdbarch *gdbarch, const disasm_options_and_args_t * valid_disassembler_options);
@@ -1647,8 +1732,8 @@ extern void set_gdbarch_type_align (struct gdbarch *gdbarch, gdbarch_type_align_
 
 /* Return a string containing any flags for the given PC in the given FRAME. */
 
-typedef std::string (gdbarch_get_pc_address_flags_ftype) (frame_info_ptr frame, CORE_ADDR pc);
-extern std::string gdbarch_get_pc_address_flags (struct gdbarch *gdbarch, frame_info_ptr frame, CORE_ADDR pc);
+typedef std::string (gdbarch_get_pc_address_flags_ftype) (const frame_info_ptr &frame, CORE_ADDR pc);
+extern std::string gdbarch_get_pc_address_flags (struct gdbarch *gdbarch, const frame_info_ptr &frame, CORE_ADDR pc);
 extern void set_gdbarch_get_pc_address_flags (struct gdbarch *gdbarch, gdbarch_get_pc_address_flags_ftype *get_pc_address_flags);
 
 /* Read core file mappings */
@@ -1656,3 +1741,13 @@ extern void set_gdbarch_get_pc_address_flags (struct gdbarch *gdbarch, gdbarch_g
 typedef void (gdbarch_read_core_file_mappings_ftype) (struct gdbarch *gdbarch, struct bfd *cbfd, read_core_file_mappings_pre_loop_ftype pre_loop_cb, read_core_file_mappings_loop_ftype loop_cb);
 extern void gdbarch_read_core_file_mappings (struct gdbarch *gdbarch, struct bfd *cbfd, read_core_file_mappings_pre_loop_ftype pre_loop_cb, read_core_file_mappings_loop_ftype loop_cb);
 extern void set_gdbarch_read_core_file_mappings (struct gdbarch *gdbarch, gdbarch_read_core_file_mappings_ftype *read_core_file_mappings);
+
+/* Return true if the target description for all threads should be read from the
+   target description core file note(s).  Return false if the target description
+   for all threads should be inferred from the core file contents/sections.
+
+   The corefile's bfd is passed through COREFILE_BFD. */
+
+typedef bool (gdbarch_use_target_description_from_corefile_notes_ftype) (struct gdbarch *gdbarch, struct bfd *corefile_bfd);
+extern bool gdbarch_use_target_description_from_corefile_notes (struct gdbarch *gdbarch, struct bfd *corefile_bfd);
+extern void set_gdbarch_use_target_description_from_corefile_notes (struct gdbarch *gdbarch, gdbarch_use_target_description_from_corefile_notes_ftype *use_target_description_from_corefile_notes);

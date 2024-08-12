@@ -1,6 +1,6 @@
 /* Parser for linespec for the GNU debugger, GDB.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "symtab.h"
 #include "frame.h"
 #include "command.h"
@@ -254,9 +253,9 @@ enum linespec_token_type
 
 /* List of keywords.  This is NULL-terminated so that it can be used
    as enum completer.  */
-const char * const linespec_keywords[] = { "if", "thread", "task", "-force-condition", NULL };
+const char * const linespec_keywords[] = { "if", "thread", "task", "inferior", "-force-condition", NULL };
 #define IF_KEYWORD_INDEX 0
-#define FORCE_KEYWORD_INDEX 3
+#define FORCE_KEYWORD_INDEX 4
 
 /* A token of the linespec lexer  */
 
@@ -350,7 +349,7 @@ struct linespec_parser
 
 static void iterate_over_file_blocks
   (struct symtab *symtab, const lookup_name_info &name,
-   domain_enum domain,
+   domain_search_flags domain,
    gdb::function_view<symbol_found_callback_ftype> callback);
 
 static void initialize_defaults (struct symtab **default_symtab,
@@ -387,13 +386,13 @@ static int symbol_to_sal (struct symtab_and_line *result,
 
 static void add_matching_symbols_to_info (const char *name,
 					  symbol_name_match_type name_match_type,
-					  enum search_domain search_domain,
+					  domain_search_flags domain_search_flags,
 					  struct collect_info *info,
 					  struct program_space *pspace);
 
 static void add_all_symbol_names_from_pspace
     (struct collect_info *info, struct program_space *pspace,
-     const std::vector<const char *> &names, enum search_domain search_domain);
+     const std::vector<const char *> &names, domain_search_flags domain_search_flags);
 
 static std::vector<symtab *>
   collect_symtabs_from_filename (const char *file,
@@ -403,7 +402,7 @@ static std::vector<symtab_and_line> decode_digits_ordinary
   (struct linespec_state *self,
    linespec *ls,
    int line,
-   linetable_entry **best_entry);
+   const linetable_entry **best_entry);
 
 static std::vector<symtab_and_line> decode_digits_list_mode
   (struct linespec_state *self,
@@ -1154,8 +1153,7 @@ static void
 iterate_over_all_matching_symtabs
   (struct linespec_state *state,
    const lookup_name_info &lookup_name,
-   const domain_enum name_domain,
-   enum search_domain search_domain,
+   const domain_search_flags domain,
    struct program_space *search_pspace, bool include_inline,
    gdb::function_view<symbol_found_callback_ftype> callback)
 {
@@ -1173,15 +1171,13 @@ iterate_over_all_matching_symtabs
 	  objfile->expand_symtabs_matching (NULL, &lookup_name, NULL, NULL,
 					    (SEARCH_GLOBAL_BLOCK
 					     | SEARCH_STATIC_BLOCK),
-					    UNDEF_DOMAIN,
-					    search_domain);
+					    domain);
 
 	  for (compunit_symtab *cu : objfile->compunits ())
 	    {
 	      struct symtab *symtab = cu->primary_filetab ();
 
-	      iterate_over_file_blocks (symtab, lookup_name, name_domain,
-					callback);
+	      iterate_over_file_blocks (symtab, lookup_name, domain, callback);
 
 	      if (include_inline)
 		{
@@ -1193,7 +1189,7 @@ iterate_over_all_matching_symtabs
 		    {
 		      block = bv->block (i);
 		      state->language->iterate_over_symbols
-			(block, lookup_name, name_domain,
+			(block, lookup_name, domain,
 			 [&] (block_symbol *bsym)
 			 {
 			   /* Restrict calls to CALLBACK to symbols
@@ -1226,7 +1222,8 @@ get_current_search_block (void)
 static void
 iterate_over_file_blocks
   (struct symtab *symtab, const lookup_name_info &name,
-   domain_enum domain, gdb::function_view<symbol_found_callback_ftype> callback)
+   domain_search_flags domain,
+   gdb::function_view<symbol_found_callback_ftype> callback)
 {
   const struct block *block;
 
@@ -1784,9 +1781,9 @@ linespec_parse_basic (linespec_parser *parser)
       if (!parser->completion_quote_char
 	  && strcmp (PARSER_STREAM (parser), ":") == 0)
 	{
-	  completion_tracker tmp_tracker;
+	  completion_tracker tmp_tracker (false);
 	  const char *source_filename
-	    = PARSER_EXPLICIT (parser)->source_filename;
+	    = PARSER_EXPLICIT (parser)->source_filename.get ();
 	  symbol_name_match_type match_type
 	    = PARSER_EXPLICIT (parser)->func_name_match_type;
 
@@ -1806,7 +1803,7 @@ linespec_parse_basic (linespec_parser *parser)
 	    }
 	}
 
-      PARSER_EXPLICIT (parser)->function_name = name.release ();
+      PARSER_EXPLICIT (parser)->function_name = std::move (name);
     }
   else
     {
@@ -1823,7 +1820,7 @@ linespec_parse_basic (linespec_parser *parser)
 	{
 	  PARSER_RESULT (parser)->function_symbols = std::move (symbols);
 	  PARSER_RESULT (parser)->minimal_symbols = std::move (minimal_symbols);
-	  PARSER_EXPLICIT (parser)->function_name = name.release ();
+	  PARSER_EXPLICIT (parser)->function_name = std::move (name);
 	}
       else
 	{
@@ -1838,7 +1835,7 @@ linespec_parse_basic (linespec_parser *parser)
 	      PARSER_RESULT (parser)->labels.label_symbols = std::move (labels);
 	      PARSER_RESULT (parser)->labels.function_symbols
 		  = std::move (symbols);
-	      PARSER_EXPLICIT (parser)->label_name = name.release ();
+	      PARSER_EXPLICIT (parser)->label_name = std::move (name);
 	    }
 	  else if (token.type == LSTOKEN_STRING
 		   && *LS_TOKEN_STOKEN (token).ptr == '$')
@@ -1851,7 +1848,7 @@ linespec_parse_basic (linespec_parser *parser)
 		{
 		  /* The user-specified variable was not valid.  Do not
 		     throw an error here.  parse_linespec will do it for us.  */
-		  PARSER_EXPLICIT (parser)->function_name = name.release ();
+		  PARSER_EXPLICIT (parser)->function_name = std::move (name);
 		  return;
 		}
 	    }
@@ -1861,7 +1858,7 @@ linespec_parse_basic (linespec_parser *parser)
 		 an error here.  parse_linespec will do it for us.  */
 
 	      /* Save a copy of the name we were trying to lookup.  */
-	      PARSER_EXPLICIT (parser)->function_name = name.release ();
+	      PARSER_EXPLICIT (parser)->function_name = std::move (name);
 	      return;
 	    }
 	}
@@ -1947,13 +1944,14 @@ linespec_parse_basic (linespec_parser *parser)
 		    = std::move (labels);
 		  PARSER_RESULT (parser)->labels.function_symbols
 		    = std::move (symbols);
-		  PARSER_EXPLICIT (parser)->label_name = name.release ();
+		  PARSER_EXPLICIT (parser)->label_name = std::move (name);
 		}
 	      else
 		{
 		  /* We don't know what it was, but it isn't a label.  */
 		  undefined_label_error
-		    (PARSER_EXPLICIT (parser)->function_name, name.get ());
+		    (PARSER_EXPLICIT (parser)->function_name.get (),
+		     name.get ());
 		}
 
 	    }
@@ -2012,7 +2010,8 @@ canonicalize_linespec (struct linespec_state *state, const linespec *ls)
 	  /* No function was specified, so add the symbol name.  */
 	  gdb_assert (ls->labels.function_symbols.size () == 1);
 	  block_symbol s = ls->labels.function_symbols.front ();
-	  explicit_loc->function_name = xstrdup (s.symbol->natural_name ());
+	  explicit_loc->function_name
+	    = make_unique_xstrdup (s.symbol->natural_name ());
 	}
     }
 
@@ -2079,7 +2078,7 @@ create_sals_line_offset (struct linespec_state *self,
     values = decode_digits_list_mode (self, ls, val);
   else
     {
-      struct linetable_entry *best_entry = NULL;
+      const linetable_entry *best_entry = NULL;
       int i, j;
 
       std::vector<symtab_and_line> intermediate_results
@@ -2128,7 +2127,7 @@ create_sals_line_offset (struct linespec_state *self,
 	if (filter[i])
 	  {
 	    struct symbol *sym = (blocks[i]
-				  ? block_containing_function (blocks[i])
+				  ? blocks[i]->containing_function ()
 				  : NULL);
 
 	    if (self->funfirstline)
@@ -2143,7 +2142,7 @@ create_sals_line_offset (struct linespec_state *self,
     {
       if (ls->explicit_loc.source_filename)
 	throw_error (NOT_FOUND_ERROR, _("No line %d in file \"%s\"."),
-		     val.line, ls->explicit_loc.source_filename);
+		     val.line, ls->explicit_loc.source_filename.get ());
       else
 	throw_error (NOT_FOUND_ERROR, _("No line %d in the current file."),
 		     val.line);
@@ -2283,13 +2282,13 @@ convert_linespec_to_sals (struct linespec_state *state, linespec *ls)
 	/* Make sure we have a filename for canonicalization.  */
 	if (ls->explicit_loc.source_filename == NULL)
 	  {
-	    const char *fullname = symtab_to_fullname (state->default_symtab);
+	    const char *filename = state->default_symtab->filename;
 
 	    /* It may be more appropriate to keep DEFAULT_SYMTAB in its symtab
 	       form so that displaying SOURCE_FILENAME can follow the current
 	       FILENAME_DISPLAY_STRING setting.  But as it is used only rarely
 	       it has been kept for code simplicity only in absolute form.  */
-	    ls->explicit_loc.source_filename = xstrdup (fullname);
+	    ls->explicit_loc.source_filename = make_unique_xstrdup (filename);
 	  }
     }
   else
@@ -2334,7 +2333,8 @@ convert_explicit_location_spec_to_linespec
 	{
 	  source_file_not_found_error (source_filename);
 	}
-      result->explicit_loc.source_filename = xstrdup (source_filename);
+      result->explicit_loc.source_filename
+	= make_unique_xstrdup (source_filename);
     }
   else
     {
@@ -2352,9 +2352,10 @@ convert_explicit_location_spec_to_linespec
 
       if (symbols.empty () && minimal_symbols.empty ())
 	symbol_not_found_error (function_name,
-				result->explicit_loc.source_filename);
+				result->explicit_loc.source_filename.get ());
 
-      result->explicit_loc.function_name = xstrdup (function_name);
+      result->explicit_loc.function_name
+	= make_unique_xstrdup (function_name);
       result->function_symbols = std::move (symbols);
       result->minimal_symbols = std::move (minimal_symbols);
     }
@@ -2367,10 +2368,10 @@ convert_explicit_location_spec_to_linespec
 			      &symbols, label_name);
 
       if (labels.empty ())
-	undefined_label_error (result->explicit_loc.function_name,
+	undefined_label_error (result->explicit_loc.function_name.get (),
 			       label_name);
 
-      result->explicit_loc.label_name = xstrdup (label_name);
+      result->explicit_loc.label_name = make_unique_xstrdup (label_name);
       result->labels.label_symbols = labels;
       result->labels.function_symbols = std::move (symbols);
     }
@@ -2388,10 +2389,10 @@ convert_explicit_location_spec_to_sals
    const explicit_location_spec *explicit_spec)
 {
   convert_explicit_location_spec_to_linespec (self, result,
-					      explicit_spec->source_filename,
-					      explicit_spec->function_name,
+					      explicit_spec->source_filename.get (),
+					      explicit_spec->function_name.get (),
 					      explicit_spec->func_name_match_type,
-					      explicit_spec->label_name,
+					      explicit_spec->label_name.get (),
 					      explicit_spec->line_offset);
   return convert_linespec_to_sals (self, result);
 }
@@ -2565,7 +2566,7 @@ parse_linespec (linespec_parser *parser, const char *arg,
       if (file_exception.reason >= 0)
 	{
 	  /* Symtabs were found for the file.  Record the filename.  */
-	  PARSER_EXPLICIT (parser)->source_filename = user_filename.release ();
+	  PARSER_EXPLICIT (parser)->source_filename = std::move (user_filename);
 
 	  /* Get the next token.  */
 	  token = linespec_lexer_consume_token (parser);
@@ -2610,8 +2611,9 @@ parse_linespec (linespec_parser *parser, const char *arg,
 	throw_exception (std::move (file_exception));
 
       /* Otherwise, the symbol is not found.  */
-      symbol_not_found_error (PARSER_EXPLICIT (parser)->function_name,
-			      PARSER_EXPLICIT (parser)->source_filename);
+      symbol_not_found_error
+	(PARSER_EXPLICIT (parser)->function_name.get (),
+	 PARSER_EXPLICIT (parser)->source_filename.get ());
     }
 
  convert_to_sals:
@@ -2928,7 +2930,7 @@ linespec_complete (completion_tracker &tracker, const char *text,
     {
       parser.complete_what = linespec_complete_what::NOTHING;
 
-      const char *func_name = PARSER_EXPLICIT (&parser)->function_name;
+      const char *func_name = PARSER_EXPLICIT (&parser)->function_name.get ();
 
       std::vector<block_symbol> function_symbols;
       std::vector<bound_minimal_symbol> minimal_symbols;
@@ -2985,10 +2987,11 @@ linespec_complete (completion_tracker &tracker, const char *text,
 
       const char *word = parser.completion_word;
 
-      complete_linespec_component (&parser, tracker,
-				   parser.completion_word,
-				   linespec_complete_what::FUNCTION,
-				   PARSER_EXPLICIT (&parser)->source_filename);
+      complete_linespec_component
+	(&parser, tracker,
+	 parser.completion_word,
+	 linespec_complete_what::FUNCTION,
+	 PARSER_EXPLICIT (&parser)->source_filename.get ());
 
       parser.complete_what = linespec_complete_what::NOTHING;
 
@@ -3028,10 +3031,11 @@ linespec_complete (completion_tracker &tracker, const char *text,
 
   tracker.advance_custom_word_point_by (parser.completion_word - orig);
 
-  complete_linespec_component (&parser, tracker,
-			       parser.completion_word,
-			       parser.complete_what,
-			       PARSER_EXPLICIT (&parser)->source_filename);
+  complete_linespec_component
+    (&parser, tracker,
+     parser.completion_word,
+     parser.complete_what,
+     PARSER_EXPLICIT (&parser)->source_filename.get ());
 
   /* If we're past the "filename:function:label:offset" linespec, and
      didn't find any match, then assume the user might want to create
@@ -3072,7 +3076,8 @@ location_spec_to_sals (linespec_parser *parser,
       {
 	const linespec_location_spec *ls = as_linespec_location_spec (locspec);
 	PARSER_STATE (parser)->is_linespec = 1;
-	result = parse_linespec (parser, ls->spec_string, ls->match_type);
+	result = parse_linespec (parser, ls->spec_string.get (),
+				 ls->match_type);
       }
       break;
 
@@ -3220,7 +3225,8 @@ decode_line_with_current_source (const char *string, int flags)
   location_spec_up locspec = string_to_location_spec (&string,
 						      current_language);
   std::vector<symtab_and_line> sals
-    = decode_line_1 (locspec.get (), flags, NULL, cursal.symtab, cursal.line);
+    = decode_line_1 (locspec.get (), flags, cursal.pspace, cursal.symtab,
+		    cursal.line);
 
   if (*string)
     error (_("Junk at end of line specification: %s"), string);
@@ -3322,7 +3328,7 @@ decode_objc (struct linespec_state *self, linespec *ls, const char *arg)
     return {};
 
   add_all_symbol_names_from_pspace (&info, NULL, symbol_names,
-				    FUNCTIONS_DOMAIN);
+				    SEARCH_FUNCTION_DOMAIN);
 
   std::vector<symtab_and_line> values;
   if (!symbols.empty () || !minimal_symbols.empty ())
@@ -3333,7 +3339,7 @@ decode_objc (struct linespec_state *self, linespec *ls, const char *arg)
       memcpy (saved_arg, arg, new_argptr - arg);
       saved_arg[new_argptr - arg] = '\0';
 
-      ls->explicit_loc.function_name = xstrdup (saved_arg);
+      ls->explicit_loc.function_name = make_unique_xstrdup (saved_arg);
       ls->function_symbols = std::move (symbols);
       ls->minimal_symbols = std::move (minimal_symbols);
       values = convert_linespec_to_sals (self, ls);
@@ -3348,7 +3354,7 @@ decode_objc (struct linespec_state *self, linespec *ls, const char *arg)
 	  if (ls->explicit_loc.source_filename)
 	    {
 	      holder = string_printf ("%s:%s",
-				      ls->explicit_loc.source_filename,
+				      ls->explicit_loc.source_filename.get (),
 				      saved_arg);
 	      str = holder.c_str ();
 	    }
@@ -3439,14 +3445,9 @@ lookup_prefix_sym (struct linespec_state *state,
   for (const auto &elt : file_symtabs)
     {
       if (elt == nullptr)
-	{
-	  iterate_over_all_matching_symtabs (state, lookup_name,
-					     STRUCT_DOMAIN, ALL_DOMAIN,
-					     NULL, false, collector);
-	  iterate_over_all_matching_symtabs (state, lookup_name,
-					     VAR_DOMAIN, ALL_DOMAIN,
-					     NULL, false, collector);
-	}
+	iterate_over_all_matching_symtabs (state, lookup_name,
+					   SEARCH_STRUCT_DOMAIN | SEARCH_VFT,
+					   NULL, false, collector);
       else
 	{
 	  /* Program spaces that are executing startup should have
@@ -3455,8 +3456,9 @@ lookup_prefix_sym (struct linespec_state *state,
 
 	  gdb_assert (!pspace->executing_startup);
 	  set_current_program_space (pspace);
-	  iterate_over_file_blocks (elt, lookup_name, STRUCT_DOMAIN, collector);
-	  iterate_over_file_blocks (elt, lookup_name, VAR_DOMAIN, collector);
+	  iterate_over_file_blocks (elt, lookup_name,
+				    SEARCH_STRUCT_DOMAIN | SEARCH_VFT,
+				    collector);
 	}
     }
 
@@ -3522,12 +3524,12 @@ static void
 add_all_symbol_names_from_pspace (struct collect_info *info,
 				  struct program_space *pspace,
 				  const std::vector<const char *> &names,
-				  enum search_domain search_domain)
+				  domain_search_flags domain_search_flags)
 {
   for (const char *iter : names)
     add_matching_symbols_to_info (iter,
 				  symbol_name_match_type::FULL,
-				  search_domain, info, pspace);
+				  domain_search_flags, info, pspace);
 }
 
 static void
@@ -3621,7 +3623,7 @@ find_method (struct linespec_state *self,
 	     iterate over the symbol tables looking for all
 	     matches in this pspace.  */
 	  add_all_symbol_names_from_pspace (&info, pspace, result_names,
-					    FUNCTIONS_DOMAIN);
+					    SEARCH_FUNCTION_DOMAIN);
 
 	  superclass_vec.clear ();
 	  last_result_len = result_names.size ();
@@ -3744,7 +3746,7 @@ symtabs_from_filename (const char *filename,
 void
 symbol_searcher::find_all_symbols (const std::string &name,
 				   const struct language_defn *language,
-				   enum search_domain search_domain,
+				   domain_search_flags domain_search_flags,
 				   std::vector<symtab *> *search_symtabs,
 				   struct program_space *search_pspace)
 {
@@ -3766,7 +3768,7 @@ symbol_searcher::find_all_symbols (const std::string &name,
   info.file_symtabs = search_symtabs;
 
   add_matching_symbols_to_info (name.c_str (), symbol_name_match_type::WILD,
-				search_domain, &info, search_pspace);
+				domain_search_flags, &info, search_pspace);
 }
 
 /* Look up a function symbol named NAME in symtabs FILE_SYMTABS.  Matching
@@ -3790,11 +3792,16 @@ find_function_symbols (struct linespec_state *state,
 
   /* Try NAME as an Objective-C selector.  */
   find_imps (name, &symbol_names);
+
+  domain_search_flags flags = SEARCH_FUNCTION_DOMAIN;
+  if (state->list_mode)
+    flags = SEARCH_VFT;
+
   if (!symbol_names.empty ())
     add_all_symbol_names_from_pspace (&info, state->search_pspace,
-				      symbol_names, FUNCTIONS_DOMAIN);
+				      symbol_names, flags);
   else
-    add_matching_symbols_to_info (name, name_match_type, FUNCTIONS_DOMAIN,
+    add_matching_symbols_to_info (name, name_match_type, flags,
 				  &info, state->search_pspace);
 }
 
@@ -3900,17 +3907,14 @@ find_label_symbols_in_block (const struct block *block,
 {
   if (completion_mode)
     {
-      struct block_iterator iter;
-      struct symbol *sym;
       size_t name_len = strlen (name);
 
       int (*cmp) (const char *, const char *, size_t);
       cmp = case_sensitivity == case_sensitive_on ? strncmp : strncasecmp;
 
-      ALL_BLOCK_SYMBOLS (block, iter, sym)
+      for (struct symbol *sym : block_iterator_range (block))
 	{
-	  if (symbol_matches_domain (sym->language (),
-				     sym->domain (), LABEL_DOMAIN)
+	  if (sym->domain () == LABEL_DOMAIN
 	      && cmp (sym->search_name (), name, name_len) == 0)
 	    {
 	      result->push_back ({sym, block});
@@ -3921,7 +3925,7 @@ find_label_symbols_in_block (const struct block *block,
   else
     {
       struct block_symbol label_sym
-	= lookup_symbol (name, block, LABEL_DOMAIN, 0);
+	= lookup_symbol (name, block, SEARCH_LABEL_DOMAIN, 0);
 
       if (label_sym.symbol != NULL)
 	{
@@ -4028,7 +4032,7 @@ static std::vector<symtab_and_line>
 decode_digits_ordinary (struct linespec_state *self,
 			linespec *ls,
 			int line,
-			struct linetable_entry **best_entry)
+			const linetable_entry **best_entry)
 {
   std::vector<symtab_and_line> sals;
   for (const auto &elt : ls->file_symtabs)
@@ -4081,7 +4085,7 @@ linespec_parse_variable (struct linespec_state *self, const char *variable)
       sscanf ((variable[1] == '$') ? variable + 2 : variable + 1, "%d", &index);
       val_history
 	= access_value_history ((variable[1] == '$') ? -index : index);
-      if (value_type (val_history)->code () != TYPE_CODE_INT)
+      if (val_history->type ()->code () != TYPE_CODE_INT)
 	error (_("History values used in line "
 		 "specs must have integer values."));
       offset.offset = value_as_long (val_history);
@@ -4129,7 +4133,7 @@ minsym_found (struct linespec_state *self, struct objfile *objfile,
 	      struct minimal_symbol *msymbol,
 	      std::vector<symtab_and_line> *result)
 {
-  bool want_start_sal;
+  bool want_start_sal = false;
 
   CORE_ADDR func_addr;
   bool is_function = msymbol_is_function (objfile, msymbol, &func_addr);
@@ -4283,6 +4287,10 @@ search_minsyms_for_name (struct collect_info *info,
 	      if (&item2 == &item)
 		continue;
 
+	      /* Ignore other trampoline symbols.  */
+	      if (item2.minsym->type () == mst_solib_trampoline)
+		continue;
+
 	      /* Trampoline symbols can only jump to exported
 		 symbols.  */
 	      if (msymbol_type_is_static (item2.minsym->type ()))
@@ -4312,7 +4320,7 @@ search_minsyms_for_name (struct collect_info *info,
 static void
 add_matching_symbols_to_info (const char *name,
 			      symbol_name_match_type name_match_type,
-			      enum search_domain search_domain,
+			      domain_search_flags domain_search_flags,
 			      struct collect_info *info,
 			      struct program_space *pspace)
 {
@@ -4323,7 +4331,7 @@ add_matching_symbols_to_info (const char *name,
       if (elt == nullptr)
 	{
 	  iterate_over_all_matching_symtabs (info->state, lookup_name,
-					     VAR_DOMAIN, search_domain,
+					     domain_search_flags,
 					     pspace, true,
 					     [&] (block_symbol *bsym)
 	    { return info->add_symbol (bsym); });
@@ -4338,7 +4346,7 @@ add_matching_symbols_to_info (const char *name,
 	  program_space *elt_pspace = elt->compunit ()->objfile ()->pspace;
 	  gdb_assert (!elt_pspace->executing_startup);
 	  set_current_program_space (elt_pspace);
-	  iterate_over_file_blocks (elt, lookup_name, VAR_DOMAIN,
+	  iterate_over_file_blocks (elt, lookup_name, SEARCH_VFT,
 				    [&] (block_symbol *bsym)
 	    { return info->add_symbol (bsym); });
 
