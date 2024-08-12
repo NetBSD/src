@@ -1,5 +1,5 @@
 /* Disassemble ft32 instructions.
-   Copyright (C) 2013-2022 Free Software Foundation, Inc.
+   Copyright (C) 2013-2024 Free Software Foundation, Inc.
    Contributed by FTDI (support@ftdichip.com)
 
    This file is part of the GNU opcodes library.
@@ -27,7 +27,7 @@
 #include "opcode/ft32.h"
 #include "disassemble.h"
 
-extern const ft32_opc_info_t ft32_opc_info[128];
+extern const ft32_opc_info_t ft32_opc_info[];
 
 static fprintf_ftype fpr;
 static void *stream;
