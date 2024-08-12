@@ -3,8 +3,7 @@
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
-#include <fs/exfatfs/exfatfs.h>
-/*#include <fs/exfatfs/exfatfs_mount.h>*/
+#include <fs/exfatfs/exfatfs_mount.h>
 #include <err.h>
 #include <grp.h>
 #include <pwd.h>
@@ -15,7 +14,7 @@
 #include <unistd.h>
 #include <util.h>
 
-#define EXFATFSMNT_BITS "\177\20" /* XXX */
+#define EXFATFSMNT_BITS "\177\20" /* XXX  there are no flags yet */
 
 #include <mntopts.h>
 

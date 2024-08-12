@@ -1,4 +1,4 @@
-/* $NetBSD: exfatfs_mount.h,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $ */
+/* $NetBSD: exfatfs_mount.h,v 1.1.2.3 2024/08/12 22:32:11 perseant Exp $ */
 
 /*-
  * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
@@ -29,10 +29,26 @@
 #ifndef EXFATFS_MOUNT_H_
 #define EXFATFS_MOUNT_H_
 
+#include <sys/types.h>
+
+/*
+ *  Arguments to mount EXFAT filesystems.
+ */
+struct exfatfs_args {
+	char	*fspec;		/* blocks special holding the fs to mount */
+	uid_t	uid;		/* uid that owns files */
+	gid_t	gid;		/* gid that owns files */
+	mode_t	mask;		/* mask to be applied for file perms */
+	int	flags;		/* see below */
+	int	version;	/* version of the struct */
+#define EXFATFSMNT_VERSION      1
+	mode_t	dirmask;	/* mask to be applied for directory perms */
+	int	gmtoff;		/* offset from UTC in seconds */
+};
+
+#ifdef _KERNEL
 #define	MPTOXMP(mp)	((struct exfatfs_mount *)(mp)->mnt_data)
 #define	XMPTOMP(xmp)	((xmp)->xm_mp)
-
-#include <sys/types.h>
 
 struct exfatfs_mount {
 	struct mount *xm_mp;
@@ -44,5 +60,6 @@ struct exfatfs_mount {
 };
 
 #define EXFATFSMNT_MNTOPT 0x0
+#endif /* _KERNEL */
 
 #endif /* EXFATFS_MOUNT_H_ */

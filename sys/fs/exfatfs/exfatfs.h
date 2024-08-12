@@ -1,4 +1,4 @@
-/* $NetBSD: exfatfs.h,v 1.1.2.6 2024/08/02 00:16:55 perseant Exp $ */
+/* $NetBSD: exfatfs.h,v 1.1.2.7 2024/08/12 22:32:11 perseant Exp $ */
 
 /*-
  * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
@@ -144,23 +144,6 @@ struct exfatfs {
 	  + ((clust) << (fs)->xf_SectorsPerClusterShift))		\
 	 << ((fs)->xf_BytesPerSectorShift - DEV_BSHIFT))
 #endif
-
-/*
- *  Arguments to mount EXFAT filesystems.
- */
-struct exfatfs_args {
-        char    *fspec;         /* blocks special holding the fs to mount */
-        uid_t   uid;            /* uid that owns msdosfs files */
-        gid_t   gid;            /* gid that owns msdosfs files */
-        mode_t  mask;           /* mask to be applied for msdosfs perms */
-        int     flags;          /* see below */
-
-        /* Following items added after versioning support */
-        int     version;        /* version of the struct */
-#define EXFATFSMNT_VERSION      1
-        mode_t  dirmask;        /* mask to be applied for msdosfs perms */
-        int     gmtoff;         /* offset from UTC in seconds */
-};
 
 #define EXFATFS_LABELMAX 11
 #define EXFATFS_NAMEMAX 255
