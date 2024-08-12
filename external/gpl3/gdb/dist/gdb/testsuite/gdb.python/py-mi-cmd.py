@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2023 Free Software Foundation, Inc.
+# Copyright (C) 2019-2024 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -117,4 +117,31 @@ def free_invoke(obj, args):
 # Run some test involving catching exceptions.  It's easier to write
 # these as a Python function which is then called from the exp script.
 def run_exception_tests():
+    print("PASS")
+
+
+# Run some execute_mi tests.  This is easier to do from Python.
+def run_execute_mi_tests():
+    # Install the command.
+    cmd = pycmd1("-pycmd")
+    # Pass in a representative subset of the pycmd1 keys, and then
+    # check that the result via MI is the same as the result via a
+    # direct Python call.  Note that some results won't compare as
+    # equal -- for example, a Python MI command can return a tuple,
+    # but that will be translated to a Python list.
+    for name in ("int", "str", "dct"):
+        expect = cmd.invoke([name])
+        got = gdb.execute_mi("-pycmd", name)
+        if expect != got:
+            print("FAIL: saw " + repr(got) + ", but expected " + repr(expect))
+            return
+    ok = False
+    try:
+        gdb.execute_mi("-pycmd", "exp")
+    # Due to the "denaturation" problem, we have to expect a gdb.error
+    # here and not a gdb.GdbError.
+    except gdb.error:
+        ok = True
+    if not ok:
+        print("FAIL: did not throw exception")
     print("PASS")

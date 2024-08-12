@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2011-2023 Free Software Foundation, Inc.
+   Copyright 2011-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -32,6 +32,19 @@ int increase_1 (int *a)
 void increase (int *a)
 {
   increase_1 (a);
+}
+
+int increase_2 (int *a)
+{
+  *a += 10;
+  return -8;
+}
+
+inline void __attribute__((always_inline))
+increase_inlined (int *a)
+{
+  increase_2 (a);
+  *a += 5;
 }
 
 int
@@ -85,6 +98,7 @@ int main (int argc, char *argv[])
   increase (&i);
   increase (&i);
   increase (&i);
+  increase_inlined (&i);
 
   for (i = 0; i < 10; i++)
     {

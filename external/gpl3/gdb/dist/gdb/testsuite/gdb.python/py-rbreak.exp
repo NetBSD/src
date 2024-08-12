@@ -1,4 +1,4 @@
-# Copyright (C) 2017-2023 Free Software Foundation, Inc.
+# Copyright (C) 2017-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,24 +18,29 @@
 
 load_lib gdb-python.exp
 
+require allow_python_tests
+
 standard_testfile py-rbreak.c py-rbreak-func2.c
 
 if {[prepare_for_testing "failed to prepare" ${testfile} [list $srcfile $srcfile2]] } {
     return 1
 }
 
-# Skip all tests if Python scripting is not enabled.
-if { [skip_python_tests] } { continue }
-
 if {![runto_main]} {
     return 0
 }
 
 gdb_test_no_output "nosharedlibrary"
-gdb_py_test_silent_cmd "py sl = gdb.rbreak(\"^\[^_\]\",minsyms=False)" \
+gdb_py_test_silent_cmd "py sl = gdb.rbreak(\"\",minsyms=False)" \
     "get all function breakpoints" 0
-gdb_test "py print(len(sl))" "11" \
-    "check number of returned breakpoints is 11"
+set min_breakpoints 11
+gdb_test_multiple "py print(len(sl))" \
+    "check number of returned breakpoints is at least $min_breakpoints" {
+	-re -wrap "($decimal)" {
+	    set n $expect_out(1,string)
+	    gdb_assert { $n >= $min_breakpoints } $gdb_test_name
+	}
+    }
 gdb_py_test_silent_cmd "py sl = gdb.rbreak(\"main\.\*\",minsyms=False)" \
     "get main function breakpoint" 0
 gdb_test "py print(len(sl))" "1" \

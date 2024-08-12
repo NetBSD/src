@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2023 Free Software Foundation, Inc.
+# Copyright (C) 2010-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,15 +16,17 @@
 # This file is part of the GDB testsuite.  It tests the mechanism
 # exposing breakpoints to Python.
 
-# The skip_hw_watchpoint_tests checks if watchpoints are supported by the
+# The allow_hw_watchpoint_tests checks if watchpoints are supported by the
 # processor.  On PowerPC, the check runs a small test program under gdb
 # to determine if the Power processor supports HW watchpoints.  The check
 # must be done before starting the test so as to not disrupt the execution
 # of the actual test.
 
-set skip_hw_watchpoint_tests_p [skip_hw_watchpoint_tests]
+set allow_hw_watchpoint_tests_p [allow_hw_watchpoint_tests]
 
 load_lib gdb-python.exp
+
+require allow_python_tests
 
 standard_testfile
 
@@ -34,8 +36,37 @@ if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} ${options}]
     return -1
 }
 
-# Skip all tests if Python scripting is not enabled.
-if { [skip_python_tests] } { continue }
+set past_throw_catch_line [gdb_get_line_number "Past throw-catch."]
+
+# Build a regexp string that can match against the repr of a gdb.Breakpoint
+# object.  Accepts arguments -enabled, -number, -hits, -thread, -task, and
+# -enable_count.  The -enabled argument is a boolean, while all of the others
+# take a regexp string.
+proc build_bp_repr { args } {
+    parse_args [list {enabled True} [list number "-?$::decimal"] \
+		    [list hits $::decimal] {thread ""} {task ""} \
+		    {enable_count ""}]
+
+    set pattern "<gdb\\.Breakpoint"
+
+    if {!$enabled} {
+	set pattern "$pattern disabled"
+    }
+
+    set pattern "$pattern number=$number hits=$hits"
+
+    if {$thread ne ""} {
+	set pattern "$pattern thread=$thread"
+    }
+    if {$task ne ""} {
+	set pattern "$pattern task=$task"
+    }
+    if {$enable_count ne ""} {
+	set pattern "$pattern enable_count=$enable_count"
+    }
+    set pattern "${pattern}>"
+    return $pattern
+}
 
 proc_with_prefix test_bkpt_basic { } {
     global srcfile testfile hex decimal
@@ -53,10 +84,10 @@ proc_with_prefix test_bkpt_basic { } {
     # Now there should be one breakpoint: main.
     gdb_py_test_silent_cmd "python blist = gdb.breakpoints()" \
 	"Get Breakpoint List" 0
-    gdb_test "python print (blist\[0\])" \
-	"<gdb.Breakpoint object at $hex>" "Check obj exists @main"
+    gdb_test "python print (repr (blist\[0\]))" \
+	[build_bp_repr -number 1 -hits 1] "Check obj exists @main"
     gdb_test "python print (blist\[0\].location)" \
-	"main." "Check breakpoint location @main"
+	"main" "Check breakpoint location @main"
     gdb_test "python print (blist\[0\].pending)" "False" \
 	"Check pending status of main breakpoint"
 
@@ -71,12 +102,12 @@ proc_with_prefix test_bkpt_basic { } {
 	"Get Breakpoint List" 0
     gdb_test "python print (len(blist))" \
 	"2" "Check for two breakpoints"
-    gdb_test "python print (blist\[0\])" \
-	"<gdb.Breakpoint object at $hex>" "Check obj exists @main 2"
+    gdb_test "python print (repr (blist\[0\]))" \
+	[build_bp_repr -number 1 -hits 1] "Check obj exists @main 2"
     gdb_test "python print (blist\[0\].location)" \
-	"main." "Check breakpoint location @main 2"
-    gdb_test "python print (blist\[1\])" \
-	"<gdb.Breakpoint object at $hex>" "Check obj exists @mult_line"
+	"main" "Check breakpoint location @main 2"
+    gdb_test "python print (repr (blist\[1\]))" \
+	[build_bp_repr -number 2 -hits 1] "Check obj exists @mult_line"
 
     gdb_test "python print (blist\[1\].location)" \
 	"py-breakpoint\.c:${mult_line}*" \
@@ -101,6 +132,9 @@ proc_with_prefix test_bkpt_basic { } {
 	"True" "Check breakpoint enabled."
     gdb_py_test_silent_cmd  "python blist\[1\].enabled = False" \
 	"Set breakpoint disabled." 0
+    gdb_test "python print (repr (blist\[1\]))" \
+	[build_bp_repr -enabled False -number 2 -hits 6] \
+	"Check repr for a disabled breakpoint"
     gdb_continue_to_breakpoint "Break at add 2" ".*Break at add.*"
     gdb_py_test_silent_cmd  "python blist\[1\].enabled = True" \
 	"Set breakpoint enabled." 0
@@ -112,6 +146,15 @@ proc_with_prefix test_bkpt_basic { } {
 	"Get Breakpoint List" 0
     gdb_test "python print (blist\[1\].thread)" \
 	"None" "Check breakpoint thread"
+    gdb_py_test_silent_cmd "python blist\[1\].thread = 1" \
+	"set breakpoint thread" 0
+    gdb_test "python print (repr (blist\[1\]))" \
+	[build_bp_repr -number 2 -hits 7 -thread 1] \
+	"Check repr for a thread breakpoint"
+    gdb_py_test_silent_cmd "python blist\[1\].thread = None" \
+	"clear breakpoint thread" 0
+    gdb_test "python print (blist\[1\].inferior)" \
+	"None" "Check breakpoint inferior"
     gdb_test "python print (blist\[1\].type == gdb.BP_BREAKPOINT)" \
 	"True" "Check breakpoint type"
     gdb_test "python print (blist\[0\].number)" \
@@ -147,7 +190,7 @@ proc_with_prefix test_bkpt_deletion { } {
     gdb_py_test_silent_cmd  "python dp1.delete()" \
 	"Delete Breakpoint" 0
     gdb_test "python print (dp1.number)" \
-	"RuntimeError: Breakpoint 2 is invalid.*" \
+	"RuntimeError.*: Breakpoint 2 is invalid.*" \
 	"Check breakpoint invalidated"
     gdb_py_test_silent_cmd "python del_list = gdb.breakpoints()" \
 	"Get Breakpoint List" 0
@@ -205,13 +248,53 @@ proc_with_prefix test_bkpt_cond_and_cmds { } {
     gdb_py_test_silent_cmd "python last_bp = blist\[len(blist)-1\]" \
 	"Find last breakpoint" 0
     gdb_test "python print (last_bp.commands)" \
-	"print \"Command for breakpoint has been executed.\".*print result"
+	"print \"Command for breakpoint has been executed.\".*print result\r\n"
 
     gdb_test_no_output "python last_bp.commands = 'echo hi\\necho there'" \
 	"set commands"
     # Note the length is 3 because the string ends in a \n.
     gdb_test "python print (len(last_bp.commands.split('\\n')))" "3" \
 	"check number of lines in commands"
+}
+
+# Test breakpoint thread and inferior attributes.
+proc_with_prefix test_bkpt_thread_and_inferior { } {
+    global srcfile testfile hex decimal
+
+    # Start with a fresh gdb.
+    clean_restart ${testfile}
+
+    if {![runto_main]} {
+	return 0
+    }
+
+    with_test_prefix "thread" {
+	delete_breakpoints
+	gdb_test "break multiply thread 1"
+	gdb_test "python bp = gdb.breakpoints ()\[0\]"
+	gdb_test "python print(bp.thread)" "1"
+	gdb_test "python print(bp.inferior)" "None"
+	gdb_test "python bp.inferior = 1" \
+	    "RuntimeError.*: Cannot have both 'thread' and 'inferior' conditions on a breakpoint.*"
+	gdb_test_no_output "python bp.thread = None"
+	gdb_test_no_output "python bp.inferior = 1" \
+	    "set the inferior now the thread has been cleared"
+	gdb_test "info breakpoints" "stop only in inferior 1\r\n.*"
+    }
+
+    with_test_prefix "inferior" {
+	delete_breakpoints
+	gdb_test "break multiply inferior 1"
+	gdb_test "python bp = gdb.breakpoints ()\[0\]"
+	gdb_test "python print(bp.thread)" "None"
+	gdb_test "python print(bp.inferior)" "1"
+	gdb_test "python bp.thread = 1" \
+	    "RuntimeError.*: Cannot have both 'thread' and 'inferior' conditions on a breakpoint.*"
+	gdb_test_no_output "python bp.inferior = None"
+	gdb_test_no_output "python bp.thread = 1" \
+	    "set the thread now the inferior has been cleared"
+	gdb_test "info breakpoints" "stop only in thread 1\r\n.*"
+    }
 }
 
 proc_with_prefix test_bkpt_invisible { } {
@@ -230,8 +313,8 @@ proc_with_prefix test_bkpt_invisible { } {
 	"Set invisible breakpoint" 0
     gdb_py_test_silent_cmd "python ilist = gdb.breakpoints()" \
 	"Get Breakpoint List" 0
-    gdb_test "python print (ilist\[0\])" \
-	"<gdb.Breakpoint object at $hex>" "Check invisible bp obj exists 1"
+    gdb_test "python print (repr (ilist\[0\]))" \
+	[build_bp_repr -number 2 -hits 0] "Check invisible bp obj exists 1"
     gdb_test "python print (ilist\[0\].location)" \
 	"py-breakpoint\.c:$ibp_location*" "Check breakpoint location 1"
     gdb_test "python print (ilist\[0\].visible)" \
@@ -243,13 +326,14 @@ proc_with_prefix test_bkpt_invisible { } {
 	"Set invisible breakpoint" 0
     gdb_py_test_silent_cmd "python ilist = gdb.breakpoints()" \
 	"Get Breakpoint List" 0
-    gdb_test "python print (ilist\[0\])" \
-	"<gdb.Breakpoint object at $hex>" "Check invisible bp obj exists 2"
+    gdb_test "python print (repr (ilist\[0\]))" \
+	[build_bp_repr -number "-$decimal" -hits 0] \
+	"Check invisible bp obj exists 2"
     gdb_test "python print (ilist\[0\].location)" \
 	"py-breakpoint\.c:$ibp_location*" "Check breakpoint location 2"
     gdb_test "python print (ilist\[0\].visible)" \
 	"False" "Check breakpoint visibility 2"
-    gdb_test "info breakpoints" "No breakpoints or watchpoints.*" \
+    gdb_test "info breakpoints" "No breakpoints, watchpoints, tracepoints, or catchpoints.*" \
 	"Check info breakpoints does not show invisible breakpoints"
     gdb_test "maint info breakpoints" \
 	"py-breakpoint\.c:$ibp_location.*" \
@@ -260,7 +344,7 @@ proc_with_prefix test_hardware_breakpoints { } {
     global srcfile testfile hex decimal
 
     # Skip these tests if the HW does not support hardware breakpoints.
-    if { [skip_hw_breakpoint_tests] } { return 0 }
+    if { ![allow_hw_breakpoint_tests] } { return 0 }
 
     # Start with a fresh gdb.
     clean_restart ${testfile}
@@ -271,7 +355,8 @@ proc_with_prefix test_hardware_breakpoints { } {
 
     delete_breakpoints
 
-    gdb_test "python hbp1 = gdb.Breakpoint(\"add\", type=gdb.BP_HARDWARE_BREAKPOINT)" \
+    set bp_args {"add", type=gdb.BP_HARDWARE_BREAKPOINT, qualified=True}
+    gdb_test "python hbp1 = gdb.Breakpoint($bp_args)" \
 	".*Hardware assisted breakpoint ($decimal)+ at .*$srcfile, line ($decimal)+\." \
 	"Set hardware breakpoint"
     gdb_test "python print (gdb.breakpoints()\[0\].type == gdb.BP_HARDWARE_BREAKPOINT)" \
@@ -283,17 +368,17 @@ proc_with_prefix test_hardware_breakpoints { } {
 
 proc_with_prefix test_watchpoints { } {
     global srcfile testfile hex decimal
-    global skip_hw_watchpoint_tests_p
+    global allow_hw_watchpoint_tests_p
 
     # Start with a fresh gdb.
     clean_restart ${testfile}
 
     # Disable hardware watchpoints if necessary.
-    if {$skip_hw_watchpoint_tests_p} {
+    if {!$allow_hw_watchpoint_tests_p} {
 	gdb_test_no_output "set can-use-hw-watchpoints 0" ""
     }
 
-    if {![runto_main]} {
+    if {![runto $srcfile:$::past_throw_catch_line]} {
 	return 0
     }
 
@@ -307,16 +392,16 @@ proc_with_prefix test_watchpoints { } {
 
 proc_with_prefix test_bkpt_internal { } {
     global srcfile testfile hex decimal
-    global skip_hw_watchpoint_tests_p
+    global allow_hw_watchpoint_tests_p
 
     # Start with a fresh gdb.
     clean_restart ${testfile}
 
     # Disable hardware watchpoints if necessary.
-    if {$skip_hw_watchpoint_tests_p} {
+    if {!$allow_hw_watchpoint_tests_p} {
 	gdb_test_no_output "set can-use-hw-watchpoints 0" ""
     }
-    if {![runto_main]} {
+    if {![runto $srcfile:$::past_throw_catch_line]} {
 	return 0
     }
     delete_breakpoints
@@ -343,7 +428,7 @@ proc_with_prefix test_bkpt_internal { } {
     gdb_py_test_silent_cmd  "python wp1 = gdb.Breakpoint (\"result\", type=gdb.BP_WATCHPOINT, wp_class=gdb.WP_WRITE, internal=True )" \
 	"Set watchpoint" 0
     gdb_test "info breakpoints" \
-	"No breakpoints or watchpoints.*" \
+	"No breakpoints, watchpoints, tracepoints, or catchpoints.*" \
 	"Check info breakpoints does not show invisible breakpoints"
     gdb_test "maint info breakpoints" \
 	".*watchpoint.*result.*" \
@@ -355,13 +440,13 @@ proc_with_prefix test_bkpt_internal { } {
 
 proc_with_prefix test_bkpt_eval_funcs { } {
     global srcfile testfile hex decimal
-    global skip_hw_watchpoint_tests_p
+    global allow_hw_watchpoint_tests_p
 
     # Start with a fresh gdb.
     clean_restart ${testfile}
 
     # Disable hardware watchpoints if necessary.
-    if {$skip_hw_watchpoint_tests_p} {
+    if {!$allow_hw_watchpoint_tests_p} {
 	gdb_test_no_output "set can-use-hw-watchpoints 0" ""
     }
     if {![runto_main]} {
@@ -437,7 +522,7 @@ proc_with_prefix test_bkpt_eval_funcs { } {
 	"end" ""
 
     gdb_test "python eval_bp2.stop = stop_func"  \
-	"RuntimeError: Only one stop condition allowed.  There is currently a GDB.*" \
+	"RuntimeError.*: Only one stop condition allowed.  There is currently a GDB.*" \
 	"assign stop function to a breakpoint that has a condition"
 
     delete_breakpoints
@@ -504,9 +589,9 @@ proc_with_prefix test_bkpt_temporary { } {
 	".*$srcfile:$ibp_location.*"
     gdb_test "python print (ibp.count)" "1" \
 	"Check temporary stop callback executed before deletion."
-    gdb_test "python print (ibp.temporary)" "RuntimeError: Breakpoint 2 is invalid.*" \
+    gdb_test "python print (ibp.temporary)" "RuntimeError.*: Breakpoint 2 is invalid.*" \
 	"Check temporary breakpoint is deleted after being hit"
-    gdb_test "info breakpoints" "No breakpoints or watchpoints.*" \
+    gdb_test "info breakpoints" "No breakpoints, watchpoints, tracepoints, or catchpoints.*" \
 	"Check info breakpoints shows temporary breakpoint is deleted"
 }
 
@@ -515,7 +600,7 @@ proc_with_prefix test_bkpt_temporary { } {
 proc_with_prefix test_bkpt_address {} {
     global gdb_prompt decimal srcfile
 
-    # Delete all breakpoints
+    # Delete all breakpoints, watchpoints, tracepoints, and catchpoints
     delete_breakpoints
 
     gdb_test "python gdb.Breakpoint(\"*main\")" \
@@ -622,7 +707,7 @@ proc_with_prefix test_bkpt_explicit_loc {} {
 
     delete_breakpoints
     gdb_test "python bp1 = gdb.Breakpoint (line=bp1)" \
-	"RuntimeError: Line keyword should be an integer or a string.*" \
+	"RuntimeError.*: Line keyword should be an integer or a string.*" \
 	"set explicit breakpoint by invalid line type"
 
     delete_breakpoints
@@ -651,7 +736,7 @@ proc_with_prefix test_bkpt_explicit_loc {} {
 
     delete_breakpoints
     gdb_test "python bp1 = gdb.Breakpoint (source=\"$srcfile\")" \
-	"RuntimeError: Specifying a source must also include a line, label or function.*" \
+	"RuntimeError.*: Specifying a source must also include a line, label or function.*" \
 	"set invalid explicit breakpoint by source only"
 
     gdb_test "python bp1 = gdb.Breakpoint (source=\"foo.c\", line=\"5\")" \
@@ -774,8 +859,8 @@ proc_with_prefix test_catchpoints {} {
     # the python api.
     gdb_test "python gdb.Breakpoint (\"syscall\", type=gdb.BP_CATCHPOINT)" \
 	[multi_line \
-	     "gdb.error: BP_CATCHPOINT not supported" \
-	     "Error while executing Python code\\."] \
+	     "gdb.error.*: BP_CATCHPOINT not supported" \
+	     "Error occurred in Python:.*"] \
 	"create a catchpoint via the api"
 
     # Setup a catchpoint.
@@ -833,6 +918,14 @@ proc_with_prefix test_bkpt_auto_disable { } {
     set mult_line [gdb_get_line_number "Break at multiply."]
     gdb_breakpoint ${mult_line}
     gdb_test_no_output "enable count 1 2" "one shot enable"
+
+    # Find the Python gdb.Breakpoint object for breakpoint #2.
+    gdb_py_test_silent_cmd \
+	"python bp = \[b for b in gdb.breakpoints() if b.number == 2\]\[0\]" \
+	"Get breakpoint number 2" 0
+    gdb_test "python print (repr (bp))" \
+	[build_bp_repr -number 2 -hits 0 -enable_count 1]
+
     # Python 2 doesn't support print in lambda function, so use a named
     # function instead.
     gdb_test_multiline "Define print_bp_enabled" \
@@ -849,6 +942,7 @@ proc_with_prefix test_bkpt_auto_disable { } {
 test_bkpt_basic
 test_bkpt_deletion
 test_bkpt_cond_and_cmds
+test_bkpt_thread_and_inferior
 test_bkpt_invisible
 test_hardware_breakpoints
 test_catchpoints
