@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2017-2023 Free Software Foundation, Inc.
+   Copyright 2017-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -56,16 +56,17 @@ struct overload2_arg9 {};
 struct overload2_arga {};
 
 #define GEN_OVERLOAD2_FUNCTIONS(ARG1, ARG2)		\
-  void							\
+  void __attribute__ ((used))				\
   overload2_function (ARG1)				\
   {}							\
 							\
   struct struct_overload2_test				\
   {							\
-    void overload2_function (ARG2);			\
+    void __attribute__ ((used))				\
+      overload2_function (ARG2);			\
   };							\
 							\
-  void							\
+  void __attribute__ ((used))				\
   struct_overload2_test::overload2_function (ARG2)	\
   {}
 
@@ -99,23 +100,25 @@ namespace ns_overload2_test
 /* Code for the overload-3 test.  */
 
 #define GEN_OVERLOAD3_FUNCTIONS(ARG1, ARG2)		\
-  void							\
+  void __attribute__ ((used))				\
   overload3_function (ARG1)				\
   {}							\
-  void							\
+  void __attribute__ ((used))				\
   overload3_function (ARG2)				\
   {}							\
 							\
   struct struct_overload3_test				\
   {							\
-    void overload3_function (ARG1);			\
-    void overload3_function (ARG2);			\
+    void __attribute__ ((used))				\
+      overload3_function (ARG1);			\
+    void __attribute__ ((used))				\
+      overload3_function (ARG2);			\
   };							\
 							\
-  void							\
+  void __attribute__ ((used))				\
   struct_overload3_test::overload3_function (ARG1)	\
   {}							\
-  void							\
+  void __attribute__ ((used))				\
   struct_overload3_test::overload3_function (ARG2)	\
   {}
 
@@ -343,15 +346,15 @@ namespace ns2_incomplete_scope_colon_test
 
 namespace
 {
-  void anon_ns_function ()
+  void __attribute__ ((used)) anon_ns_function ()
   {}
 
   struct anon_ns_struct
   {
-    void anon_ns_function ();
+    void __attribute__ ((used)) anon_ns_function ();
   };
 
-  void
+  void __attribute__ ((used))
   anon_ns_struct::anon_ns_function ()
   {}
 }
@@ -361,15 +364,15 @@ namespace the_anon_ns_wrapper_ns
 
 namespace
 {
-  void anon_ns_function ()
+  void __attribute__ ((used)) anon_ns_function ()
   {}
 
   struct anon_ns_struct
   {
-    void anon_ns_function ();
+    void __attribute__ ((used)) anon_ns_function ();
   };
 
-  void
+  void __attribute__ ((used))
   anon_ns_struct::anon_ns_function ()
   {}
 }

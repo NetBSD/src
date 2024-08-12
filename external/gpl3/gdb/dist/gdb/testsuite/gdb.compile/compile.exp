@@ -1,4 +1,4 @@
-# Copyright 2014-2023 Free Software Foundation, Inc.
+# Copyright 2014-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,12 +17,10 @@ load_lib compile-support.exp
 
 standard_testfile .c compile-shlib.c compile-constvar.S compile-nodebug.c
 
-set options {}
-if [test_compiler_info gcc*] {
-    lappend options additional_flags=-g3
-}
+require is_c_compiler_gcc
+set options {additional_flags=-g3}
 
-if { ![istarget x86_64-*-* ] || ![is_lp64_target] } {
+if { ![is_x86_64_m64_target] } {
     verbose "Skipping x86_64 LOC_CONST test."
     set srcfile3 ""
 }
@@ -159,9 +157,14 @@ gdb_test "return" "\r\n#0  main .*" "return" \
 	 "Make _gdb_expr return now\\? \\(y or n\\) " "y"
 gdb_test "info sym $infcall_pc" "\r\nNo symbol matches .*" "info sym not found"
 
-gdb_test_no_output "set unwindonsignal on"
+gdb_test_no_output "set unwind-on-signal on"
 gdb_test "compile code *(volatile int *) 0 = 0;" \
-    "The program being debugged was signaled while in a function called from GDB\\.\r\nGDB has restored the context to what it was before the call\\.\r\n.*" \
+    [multi_line \
+	 "The program being debugged received signal SIGSEGV, Segmentation fault" \
+	 "while in a function called from GDB\\.  GDB has restored the context" \
+	 "to what it was before the call\\.  To change this behavior use" \
+	 "\"set unwind-on-signal off\"\\.  Evaluation of the expression containing" \
+	 "the function \\(_gdb_expr\\) will be abandoned\\."] \
     "compile code segfault second"
 
 gdb_breakpoint [gdb_get_line_number "break-here"]
@@ -304,7 +307,7 @@ gdb_test "compile code globalvar = func_nodebug (75);" \
     "call func_nodebug"
 gdb_test "p globalvar" " = -75" "expect -75"
 gdb_test \
-    "compile code int (*funcp) (int) = func_nodebug; globalvar = funcp (76);" \
+    "compile code int (*funcp) (int) = (int (*) (int)) func_nodebug; globalvar = funcp (76);" \
     "warning: function has unknown return type; assuming int" \
     "call func_nodebug indirectly"
 gdb_test "p globalvar" " = -76" "expect -76"
@@ -314,7 +317,12 @@ gdb_test "p globalvar" " = -76" "expect -76"
 
 gdb_test_no_output "set debug compile on"
 gdb_test "compile code static const int readonly = 1; *(int *) &readonly = 2;" \
-    "The program being debugged was signaled while in a function called from GDB\\.\r\nGDB has restored the context to what it was before the call\\.\r\n.*"
+    [multi_line \
+	 "The program being debugged received signal SIGSEGV, Segmentation fault" \
+	 "while in a function called from GDB\\.  GDB has restored the context" \
+	 "to what it was before the call\\.  To change this behavior use" \
+	 "\"set unwind-on-signal off\"\\.  Evaluation of the expression containing" \
+	 "the function \\(_gdb_expr\\) will be abandoned\\."]
 gdb_test_no_output "set debug compile off"
 
 
@@ -366,10 +374,7 @@ if { $srcfile3 != "" } {
 
 # Shared library tests.
 
-if {[skip_shlib_tests]} {
-    untested "skipping shlib tests"
-    return;
-}
+require allow_shlib_tests
 
 set libbin [standard_output_file ${testfile}-shlib.so]
 set binfile [standard_output_file ${testfile}-shlib]
@@ -392,3 +397,6 @@ gdb_test "p globalvar" " = 1" "expect 1"
 
 gdb_test_no_output "compile code shlibvar += 5;" "modify shared library variable"
 gdb_test "p shlibvar" " = 15" "expect 15"
+
+# This used to fail due to alignment.  PR compile/31397.
+gdb_test_no_output "compile code swa.val\[0\] = 1"
