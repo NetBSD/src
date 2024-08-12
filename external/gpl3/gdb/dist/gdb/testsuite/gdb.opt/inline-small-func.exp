@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Free Software Foundation, Inc.
+# Copyright 2020-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,8 +45,8 @@ if ![runto_main] {
     return -1
 }
 
-# Delete all breakpoints so that the output of "info breakpoints"
-# below will only contain a single breakpoint.
+# Delete all breakpoints, watchpoints, tracepoints, and catchpoints so that
+# the output of "info breakpoints" below will only contain a single breakpoint.
 delete_breakpoints
 
 # Place a breakpoint within the function in the header file.

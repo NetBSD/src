@@ -1,4 +1,4 @@
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2024 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -47,7 +47,8 @@ proc test_tstart_tstop_tstart { } {
 	}
 
 	gdb_test "trace func1" "Tracepoint \[0-9\] at $hex: file.*"
-	gdb_test_no_output "tstart"
+	gdb_test_no_output "tstart" \
+	    "first tstart"
 
 	gdb_breakpoint "end" qualified
 	gdb_test "continue" "Continuing\\.\[ \r\n\]+Breakpoint.*" \
@@ -55,7 +56,8 @@ proc test_tstart_tstop_tstart { } {
 
 	gdb_test_no_output "tstop"
 
-	gdb_test_no_output "tstart"
+	gdb_test_no_output "tstart" \
+	    "second tstart"
     }
 }
 
@@ -103,12 +105,14 @@ proc test_buffer_full_tstart { } {
 	    "" \
 	    "collect buf" "^$"
 
-	gdb_test_no_output "tstart"
+	gdb_test_no_output "tstart" \
+	    "first tstart"
 	gdb_breakpoint "end" qualified
 	gdb_test "continue" "Continuing\\.\[ \r\n\]+Breakpoint.*" "continue to end"
 
 	gdb_test "tstatus" ".*buffer was full.*"
-	gdb_test_no_output "tstart"
+	gdb_test_no_output "tstart" \
+	    "second tstart"
     }
 }
 

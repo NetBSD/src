@@ -1,0 +1,174 @@
+# Copyright 2022-2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test for conditional breakpoints where the breakpoint condition includes
+# an inferior function call.
+#
+# The tests in this script are testing what happens when an event arrives in
+# another thread while GDB is waiting for the inferior function call (in the
+# breakpoint condition) to finish.
+#
+# The expectation is that GDB will queue events for other threads and wait
+# for the inferior function call to complete, if the condition is true, then
+# the conditional breakpoint should be reported first.  The other thread
+# event should of course, not get lost, and should be reported as soon as
+# the user tries to continue the inferior.
+#
+# If the conditional breakpoint ends up not being taken (the condition is
+# false), then the other thread event should be reported immediately.
+#
+# This script tests what happens when the other thread event is (a) the
+# other thread hitting a breakpoint, and (b) the other thread taking a
+# signal (SIGSEGV in this case).
+
+standard_testfile
+
+if { [build_executable "failed to prepare" ${binfile} "${srcfile}" \
+	  {debug pthreads}] == -1 } {
+    return
+}
+
+set cond_bp_line [gdb_get_line_number "First thread breakpoint"]
+set other_bp_line [gdb_get_line_number "Other thread breakpoint"]
+set final_bp_line [gdb_get_line_number "Final breakpoint here"]
+set signal_line [gdb_get_line_number "Signal here"]
+
+# Start GDB based on TARGET_ASYNC and TARGET_NON_STOP, and then runto main.
+proc start_gdb_and_runto_main { target_async target_non_stop } {
+    save_vars { ::GDBFLAGS } {
+	append ::GDBFLAGS \
+	    " -ex \"maint set target-non-stop $target_non_stop\""
+	append ::GDBFLAGS \
+	    " -ex \"maintenance set target-async ${target_async}\""
+
+	clean_restart ${::binfile}
+    }
+
+    if { ![runto_main] } {
+	return -1
+    }
+
+    return 0
+}
+
+# Run a test of GDB's conditional breakpoints, where the conditions include
+# inferior function calls.  While the inferior function call is executing
+# another thread will hit a breakpoint (when OTHER_THREAD_SIGNAL is false),
+# or receive a signal (when OTHER_THREAD_SIGNAL is true).  GDB should report
+# the conditional breakpoint first (if the condition is true), and then
+# report the second thread event once the inferior is continued again.
+#
+# When STOP_AT_COND is true then the conditional breakpoint will have a
+# condition that evaluates to true (and GDB will stop at the breakpoint),
+# otherwise, the condition will evaluate to false (and GDB will not stop at
+# the breakpoint).
+proc run_condition_test { stop_at_cond other_thread_signal \
+			      target_async target_non_stop } {
+    if { [start_gdb_and_runto_main $target_async \
+	      $target_non_stop] == -1 } {
+	return
+    }
+
+    # Setup the conditional breakpoint.
+    if { $stop_at_cond } {
+	set cond_func "condition_true_func"
+    } else {
+	set cond_func "condition_false_func"
+    }
+    gdb_breakpoint \
+	"${::srcfile}:${::cond_bp_line} if (${cond_func} ())"
+    set cond_bp_num [get_integer_valueof "\$bpnum" "*UNKNOWN*" \
+			"get number for conditional breakpoint"]
+
+    if { $other_thread_signal } {
+	# Arrange for the other thread to raise a signal while GDB is
+	# evaluating the breakpoint condition.
+	gdb_test_no_output "set raise_signal = 1"
+    } else {
+	# And a breakpoint that will be hit by another thread only once the
+	# breakpoint condition starts to be evaluated.
+	gdb_breakpoint "${::srcfile}:${::other_bp_line}"
+	set other_bp_num [get_integer_valueof "\$bpnum" "*UNKNOWN*" \
+			      "get number for other breakpoint"]
+    }
+
+    # A final breakpoint once the test has completed.
+    gdb_breakpoint "${::srcfile}:${::final_bp_line}"
+    set final_bp_num [get_integer_valueof "\$bpnum" "*UNKNOWN*" \
+			  "get number for final breakpoint"]
+
+    if { $stop_at_cond } {
+	# Continue.  The first breakpoint we hit should be the conditional
+	# breakpoint.  The other thread will have hit its breakpoint, but
+	# that will have been deferred until the conditional breakpoint is
+	# reported.
+	gdb_test "continue" \
+	    [multi_line \
+		 "Continuing\\." \
+		 ".*" \
+		 "" \
+		 "Thread ${::decimal} \"\[^\"\r\n\]+\" hit Breakpoint ${cond_bp_num}, worker_func \[^\r\n\]+:${::cond_bp_line}" \
+		 "${::decimal}\\s+\[^\r\n\]+First thread breakpoint\[^\r\n\]+"] \
+	    "hit the conditional breakpoint"
+    }
+
+    if { $other_thread_signal } {
+	# Now continue again, the other thread will now report that it
+	# received a signal.
+	gdb_test "continue" \
+	    [multi_line \
+		 "Continuing\\." \
+		 ".*" \
+		 "Thread ${::decimal} \"\[^\"\r\n\]+\" received signal SIGSEGV, Segmentation fault\\." \
+		 "\\\[Switching to Thread \[^\r\n\]+\\\]" \
+		 "${::hex} in worker_func \[^\r\n\]+:${::signal_line}" \
+		 "${::decimal}\\s+\[^\r\n\]+Signal here\[^\r\n\]+"] \
+	    "received signal in other thread"
+    } else {
+	# Now continue again, the other thread will now report its
+	# breakpoint.
+	gdb_test "continue" \
+	    [multi_line \
+		 "Continuing\\." \
+		 ".*" \
+		 "" \
+		 "Thread ${::decimal} \"\[^\"\r\n\]+\" hit Breakpoint ${other_bp_num}, worker_func \[^\r\n\]+:${::other_bp_line}" \
+		 "${::decimal}\\s+\[^\r\n\]+Other thread breakpoint\[^\r\n\]+"] \
+	    "hit the breakpoint in other thread"
+
+	# Run to the stop marker.
+	gdb_test "continue" \
+	    [multi_line \
+		 "Continuing\\." \
+		 ".*" \
+		 "" \
+		 "Thread ${::decimal} \"\[^\"\r\n\]+\" hit Breakpoint ${final_bp_num}, stop_marker \[^\r\n\]+:${::final_bp_line}" \
+		 "${::decimal}\\s+\[^\r\n\]+Final breakpoint here\[^\r\n\]+"] \
+	    "hit the final breakpoint"
+    }
+
+    gdb_exit
+}
+
+foreach_with_prefix target_async { "on" "off" } {
+    foreach_with_prefix target_non_stop { "on" "off" } {
+	foreach_with_prefix other_thread_signal { true false } {
+	    foreach_with_prefix stop_at_cond { true false } {
+		run_condition_test $stop_at_cond $other_thread_signal \
+		    $target_async $target_non_stop
+	    }
+	}
+    }
+}

@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2021-2023 Free Software Foundation, Inc.
+# Copyright 2021-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,20 +30,19 @@
 
 load_lib gdbserver-support.exp
 
-if { [skip_gdbserver_tests] } {
-    verbose "skipping gdbserver tests"
-    return -1
-}
+require allow_gdbserver_tests
 
 standard_testfile
 if { [build_executable "failed to prepare" $testfile $srcfile {debug pthreads}] == -1 } {
     return -1
 }
 
+set target_binfile [gdb_remote_download target $binfile]
+
 # Run the tests with different features of GDBserver disabled.
 # TARGET_NON_STOP is passed to "maint set target-non-stop".
 proc run_test { target_non_stop disable_feature } {
-    global binfile gdb_prompt decimal hex
+    global binfile gdb_prompt decimal hex tdlabel_re
     global GDBFLAGS
 
     save_vars { GDBFLAGS } {
@@ -66,13 +65,17 @@ proc run_test { target_non_stop disable_feature } {
     if { $disable_feature != "" } {
 	set packet_arg "--disable-packet=${disable_feature}"
     }
-    set res [gdbserver_start $packet_arg $binfile]
+    set res [gdbserver_start $packet_arg $::target_binfile]
     set gdbserver_protocol [lindex $res 0]
     set gdbserver_gdbport [lindex $res 1]
 
     # Disable XML-based thread listing, and multi-process extensions.
-    gdb_test_no_output "set remote threads-packet off"
-    gdb_test_no_output "set remote multiprocess-feature-packet off"
+    gdb_test \
+	"set remote threads-packet off" \
+	"Support for the 'qXfer:threads:read' packet on future remote targets is set to \"off\"."
+    gdb_test \
+	"set remote multiprocess-feature-packet off" \
+	"Support for the 'multiprocess-feature' packet on future remote targets is set to \"off\"."
 
     set res [gdb_target_cmd $gdbserver_protocol $gdbserver_gdbport]
     if ![gdb_assert {$res == 0} "connect"] {
@@ -81,13 +84,13 @@ proc run_test { target_non_stop disable_feature } {
 
     # There should be only one thread listed at this point.
     gdb_test_multiple "info threads" "" {
-	-re "2 Thread.*$gdb_prompt $" {
+	-re "2 ${tdlabel_re}.*$gdb_prompt $" {
 	    fail $gdb_test_name
 	}
 	-re "has terminated.*$gdb_prompt $" {
 	    fail $gdb_test_name
 	}
-	-re "\\\* 1\[\t \]*Thread\[^\r\n\]*\r\n$gdb_prompt $" {
+	-re "\\\* 1\[\t \]*${tdlabel_re}\[^\r\n\]*\r\n$gdb_prompt $" {
 	    pass $gdb_test_name
 	}
     }
@@ -97,7 +100,7 @@ proc run_test { target_non_stop disable_feature } {
 
     # There should be two threads at this point with thread 1 selected.
     gdb_test "info threads" \
-	"\\\* 1\[\t \]*Thread\[^\r\n\]*\r\n  2\[\t \]*Thread\[^\r\n\]*" \
+	"\\\* 1\[\t \]*${tdlabel_re}\[^\r\n\]*\r\n  2\[\t \]*${tdlabel_re}\[^\r\n\]*" \
 	"second thread should now exist"
 
     # Switch threads.
@@ -121,7 +124,7 @@ proc run_test { target_non_stop disable_feature } {
 
     # Check that thread 2 is still selected.
     gdb_test "info threads" \
-	"  1\[\t \]*Thread\[^\r\n\]*\r\n\\\* 2\[\t \]*Thread\[^\r\n\]*" \
+	"  1\[\t \]*${tdlabel_re}\[^\r\n\]*\r\n\\\* 2\[\t \]*${tdlabel_re}\[^\r\n\]*" \
 	"second thread should still be selected after stepi"
 
     # Turn scheduler locking off again so that when we continue all

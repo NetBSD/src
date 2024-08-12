@@ -1,4 +1,4 @@
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2024 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -21,10 +21,7 @@ set expfile $testfile.exp
 # Some targets have leading underscores on assembly symbols.
 set additional_flags [gdb_target_symbol_prefix_flags]
 
-if ![gdb_trace_common_supports_arch] {
-    unsupported "no trace-common.h support for arch"
-    return -1
-}
+require gdb_trace_common_supports_arch
 
 if [prepare_for_testing "failed to prepare" $executable $srcfile \
 	[list debug $additional_flags]] {
@@ -345,9 +342,7 @@ foreach at_first_loc { "1" "0" } {
 break_trace_same_addr_6 "trace" "enable" "trace" "disable"
 break_trace_same_addr_6 "trace" "disable" "trace" "enable"
 
-if {[skip_shlib_tests]} {
-    return 0
-}
+require allow_shlib_tests
 
 set libipa [get_in_proc_agent]
 set remote_libipa [gdb_load_shlib $libipa]
