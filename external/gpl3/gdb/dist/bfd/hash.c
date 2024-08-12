@@ -1,5 +1,5 @@
 /* hash.c -- hash table routines for BFD
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
    Written by Steve Chamberlain <sac@cygnus.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -295,6 +295,50 @@ SUBSUBSECTION
 	linker hash table, uses macros for the lookup and traversal
 	routines.  These are <<aout_link_hash_lookup>> and
 	<<aout_link_hash_traverse>> in aoutx.h.
+
+EXTERNAL
+.{* An element in the hash table.  Most uses will actually use a larger
+.   structure, and an instance of this will be the first field.  *}
+.
+.struct bfd_hash_entry
+.{
+.  {* Next entry for this hash code.  *}
+.  struct bfd_hash_entry *next;
+.  {* String being hashed.  *}
+.  const char *string;
+.  {* Hash code.  This is the full hash code, not the index into the
+.     table.  *}
+.  unsigned long hash;
+.};
+.
+.{* A hash table.  *}
+.
+.struct bfd_hash_table
+.{
+.  {* The hash array.  *}
+.  struct bfd_hash_entry **table;
+.  {* A function used to create new elements in the hash table.  The
+.     first entry is itself a pointer to an element.  When this
+.     function is first invoked, this pointer will be NULL.  However,
+.     having the pointer permits a hierarchy of method functions to be
+.     built each of which calls the function in the superclass.  Thus
+.     each function should be written to allocate a new block of memory
+.     only if the argument is NULL.  *}
+.  struct bfd_hash_entry *(*newfunc)
+.    (struct bfd_hash_entry *, struct bfd_hash_table *, const char *);
+.  {* An objalloc for this hash table.  This is a struct objalloc *,
+.     but we use void * to avoid requiring the inclusion of objalloc.h.  *}
+.  void *memory;
+.  {* The number of slots in the hash table.  *}
+.  unsigned int size;
+.  {* The number of entries in the hash table.  *}
+.  unsigned int count;
+.  {* The size of elements.  *}
+.  unsigned int entsize;
+.  {* If non-zero, don't grow the hash table.  *}
+.  unsigned int frozen:1;
+.};
+.
 */
 
 /* The default number of entries to use when creating a hash table.  */
@@ -304,50 +348,49 @@ SUBSUBSECTION
    greater than N, and near a power of two.  Copied from libiberty.
    Returns zero for ridiculously large N to signify an error.  */
 
-static unsigned long
-higher_prime_number (unsigned long n)
+static uint32_t
+higher_prime_number (uint32_t n)
 {
   /* These are primes that are near, but slightly smaller than, a
      power of two.  */
-  static const unsigned long primes[] =
+  static const uint32_t primes[] =
     {
-      (unsigned long) 31,
-      (unsigned long) 61,
-      (unsigned long) 127,
-      (unsigned long) 251,
-      (unsigned long) 509,
-      (unsigned long) 1021,
-      (unsigned long) 2039,
-      (unsigned long) 4093,
-      (unsigned long) 8191,
-      (unsigned long) 16381,
-      (unsigned long) 32749,
-      (unsigned long) 65521,
-      (unsigned long) 131071,
-      (unsigned long) 262139,
-      (unsigned long) 524287,
-      (unsigned long) 1048573,
-      (unsigned long) 2097143,
-      (unsigned long) 4194301,
-      (unsigned long) 8388593,
-      (unsigned long) 16777213,
-      (unsigned long) 33554393,
-      (unsigned long) 67108859,
-      (unsigned long) 134217689,
-      (unsigned long) 268435399,
-      (unsigned long) 536870909,
-      (unsigned long) 1073741789,
-      (unsigned long) 2147483647,
-					/* 4294967291L */
-      ((unsigned long) 2147483647) + ((unsigned long) 2147483644),
+      UINT32_C (31),
+      UINT32_C (61),
+      UINT32_C (127),
+      UINT32_C (251),
+      UINT32_C (509),
+      UINT32_C (1021),
+      UINT32_C (2039),
+      UINT32_C (4093),
+      UINT32_C (8191),
+      UINT32_C (16381),
+      UINT32_C (32749),
+      UINT32_C (65521),
+      UINT32_C (131071),
+      UINT32_C (262139),
+      UINT32_C (524287),
+      UINT32_C (1048573),
+      UINT32_C (2097143),
+      UINT32_C (4194301),
+      UINT32_C (8388593),
+      UINT32_C (16777213),
+      UINT32_C (33554393),
+      UINT32_C (67108859),
+      UINT32_C (134217689),
+      UINT32_C (268435399),
+      UINT32_C (536870909),
+      UINT32_C (1073741789),
+      UINT32_C (2147483647),
+      UINT32_C (4294967291)
   };
 
-  const unsigned long *low = &primes[0];
-  const unsigned long *high = &primes[sizeof (primes) / sizeof (primes[0])];
+  const uint32_t *low = &primes[0];
+  const uint32_t *high = &primes[sizeof (primes) / sizeof (primes[0])];
 
   while (low != high)
     {
-      const unsigned long *mid = low + (high - low) / 2;
+      const uint32_t *mid = low + (high - low) / 2;
       if (n >= *mid)
 	low = mid + 1;
       else
@@ -360,9 +403,22 @@ higher_prime_number (unsigned long n)
   return *low;
 }
 
-static unsigned long bfd_default_hash_table_size = DEFAULT_SIZE;
+static unsigned int bfd_default_hash_table_size = DEFAULT_SIZE;
 
-/* Create a new hash table, given a number of entries.  */
+/*
+FUNCTION
+	bfd_hash_table_init_n
+
+SYNOPSIS
+	bool bfd_hash_table_init_n
+	  (struct bfd_hash_table *,
+	   struct bfd_hash_entry *(* {*newfunc*})
+	     (struct bfd_hash_entry *, struct bfd_hash_table *, const char *),
+	   unsigned int {*entsize*}, unsigned int {*size*});
+
+DESCRIPTION
+	Create a new hash table, given a number of entries.
+*/
 
 bool
 bfd_hash_table_init_n (struct bfd_hash_table *table,
@@ -405,7 +461,20 @@ bfd_hash_table_init_n (struct bfd_hash_table *table,
   return true;
 }
 
-/* Create a new hash table with the default number of entries.  */
+/*
+FUNCTION
+	bfd_hash_table_init
+
+SYNOPSIS
+	bool bfd_hash_table_init
+	  (struct bfd_hash_table *,
+	   struct bfd_hash_entry *(* {*newfunc*})
+	     (struct bfd_hash_entry *, struct bfd_hash_table *, const char *),
+	   unsigned int {*entsize*});
+
+DESCRIPTION
+	Create a new hash table with the default number of entries.
+*/
 
 bool
 bfd_hash_table_init (struct bfd_hash_table *table,
@@ -418,7 +487,16 @@ bfd_hash_table_init (struct bfd_hash_table *table,
 				bfd_default_hash_table_size);
 }
 
-/* Free a hash table.  */
+/*
+FUNCTION
+	bfd_hash_table_free
+
+SYNOPSIS
+	void bfd_hash_table_free (struct bfd_hash_table *);
+
+DESCRIPTION
+	Free a hash table.
+*/
 
 void
 bfd_hash_table_free (struct bfd_hash_table *table)
@@ -452,7 +530,18 @@ bfd_hash_hash (const char *string, unsigned int *lenp)
   return hash;
 }
 
-/* Look up a string in a hash table.  */
+/*
+FUNCTION
+	bfd_hash_lookup
+
+SYNOPSIS
+	struct bfd_hash_entry *bfd_hash_lookup
+	  (struct bfd_hash_table *, const char *,
+	   bool {*create*}, bool {*copy*});
+
+DESCRIPTION
+	Look up a string in a hash table.
+*/
 
 struct bfd_hash_entry *
 bfd_hash_lookup (struct bfd_hash_table *table,
@@ -497,7 +586,19 @@ bfd_hash_lookup (struct bfd_hash_table *table,
   return bfd_hash_insert (table, string, hash);
 }
 
-/* Insert an entry in a hash table.  */
+/*
+FUNCTION
+	bfd_hash_insert
+
+SYNOPSIS
+	struct bfd_hash_entry *bfd_hash_insert
+	  (struct bfd_hash_table *,
+	   const char *,
+	   unsigned long {*hash*});
+
+DESCRIPTION
+	Insert an entry in a hash table.
+*/
 
 struct bfd_hash_entry *
 bfd_hash_insert (struct bfd_hash_table *table,
@@ -562,7 +663,18 @@ bfd_hash_insert (struct bfd_hash_table *table,
   return hashp;
 }
 
-/* Rename an entry in a hash table.  */
+/*
+FUNCTION
+	bfd_hash_rename
+
+SYNOPSIS
+	void bfd_hash_rename (struct bfd_hash_table *,
+			      const char *,
+			      struct bfd_hash_entry *);
+
+DESCRIPTION
+	Rename an entry in a hash table.
+*/
 
 void
 bfd_hash_rename (struct bfd_hash_table *table,
@@ -587,7 +699,18 @@ bfd_hash_rename (struct bfd_hash_table *table,
   table->table[_index] = ent;
 }
 
-/* Replace an entry in a hash table.  */
+/*
+FUNCTION
+	bfd_hash_replace
+
+SYNOPSIS
+	void bfd_hash_replace (struct bfd_hash_table *,
+			       struct bfd_hash_entry * {*old*},
+			       struct bfd_hash_entry * {*new*});
+
+DESCRIPTION
+	Replace an entry in a hash table.
+*/
 
 void
 bfd_hash_replace (struct bfd_hash_table *table,
@@ -612,7 +735,17 @@ bfd_hash_replace (struct bfd_hash_table *table,
   abort ();
 }
 
-/* Allocate space in a hash table.  */
+/*
+FUNCTION
+	bfd_hash_allocate
+
+SYNOPSIS
+	void *bfd_hash_allocate (struct bfd_hash_table *,
+				 unsigned int {*size*});
+
+DESCRIPTION
+	Allocate space in a hash table.
+*/
 
 void *
 bfd_hash_allocate (struct bfd_hash_table *table,
@@ -626,7 +759,19 @@ bfd_hash_allocate (struct bfd_hash_table *table,
   return ret;
 }
 
-/* Base method for creating a new hash table entry.  */
+/*
+FUNCTION
+	bfd_hash_newfunc
+
+SYNOPSIS
+	struct bfd_hash_entry *bfd_hash_newfunc
+	  (struct bfd_hash_entry *,
+	   struct bfd_hash_table *,
+	   const char *);
+
+DESCRIPTION
+	Base method for creating a new hash table entry.
+*/
 
 struct bfd_hash_entry *
 bfd_hash_newfunc (struct bfd_hash_entry *entry,
@@ -639,12 +784,24 @@ bfd_hash_newfunc (struct bfd_hash_entry *entry,
   return entry;
 }
 
-/* Traverse a hash table.  */
+/*
+FUNCTION
+	bfd_hash_traverse
+
+SYNOPSIS
+	void bfd_hash_traverse
+	  (struct bfd_hash_table *,
+	   bool (*) (struct bfd_hash_entry *, void *),
+	   void *);
+
+DESCRIPTION
+	Traverse a hash table.
+*/
 
 void
 bfd_hash_traverse (struct bfd_hash_table *table,
 		   bool (*func) (struct bfd_hash_entry *, void *),
-		   void * info)
+		   void *info)
 {
   unsigned int i;
 
@@ -660,15 +817,26 @@ bfd_hash_traverse (struct bfd_hash_table *table,
  out:
   table->frozen = 0;
 }
-
-unsigned long
-bfd_hash_set_default_size (unsigned long hash_size)
+
+/*
+FUNCTION
+	bfd_hash_set_default_size
+
+SYNOPSIS
+	unsigned int bfd_hash_set_default_size (unsigned int);
+
+DESCRIPTION
+	Set hash table default size.
+*/
+
+unsigned int
+bfd_hash_set_default_size (unsigned int hash_size)
 {
   /* These silly_size values result in around 1G and 32M of memory
      being allocated for the table of pointers.  Note that the number
      of elements allocated will be almost twice the size of any power
      of two chosen here.  */
-  unsigned long silly_size = sizeof (size_t) > 4 ? 0x4000000 : 0x400000;
+  unsigned int silly_size = sizeof (size_t) > 4 ? 0x4000000 : 0x400000;
   if (hash_size > silly_size)
     hash_size = silly_size;
   else if (hash_size != 0)
@@ -756,7 +924,16 @@ strtab_hash_newfunc (struct bfd_hash_entry *entry,
   ((struct strtab_hash_entry *) \
    bfd_hash_lookup (&(t)->table, (string), (create), (copy)))
 
-/* Create a new strtab.  */
+/*
+INTERNAL_FUNCTION
+	_bfd_stringtab_init
+
+SYNOPSIS
+	struct bfd_strtab_hash *_bfd_stringtab_init (void);
+
+DESCRIPTION
+	Create a new strtab.
+*/
 
 struct bfd_strtab_hash *
 _bfd_stringtab_init (void)
@@ -783,9 +960,19 @@ _bfd_stringtab_init (void)
   return table;
 }
 
-/* Create a new strtab in which the strings are output in the format
-   used in the XCOFF .debug section: a two byte length precedes each
-   string.  */
+/*
+INTERNAL_FUNCTION
+	_bfd_xcoff_stringtab_init
+
+SYNOPSIS
+	struct bfd_strtab_hash *_bfd_xcoff_stringtab_init
+	  (bool {*isxcoff64*});
+
+DESCRIPTION
+	Create a new strtab in which the strings are output in the format
+	used in the XCOFF .debug section: a two byte length precedes each
+	string.
+*/
 
 struct bfd_strtab_hash *
 _bfd_xcoff_stringtab_init (bool isxcoff64)
@@ -798,7 +985,16 @@ _bfd_xcoff_stringtab_init (bool isxcoff64)
   return ret;
 }
 
-/* Free a strtab.  */
+/*
+INTERNAL_FUNCTION
+	_bfd_stringtab_free
+
+SYNOPSIS
+	void _bfd_stringtab_free (struct bfd_strtab_hash *);
+
+DESCRIPTION
+	Free a strtab.
+*/
 
 void
 _bfd_stringtab_free (struct bfd_strtab_hash *table)
@@ -807,10 +1003,21 @@ _bfd_stringtab_free (struct bfd_strtab_hash *table)
   free (table);
 }
 
-/* Get the index of a string in a strtab, adding it if it is not
-   already present.  If HASH is FALSE, we don't really use the hash
-   table, and we don't eliminate duplicate strings.  If COPY is true
-   then store a copy of STR if creating a new entry.  */
+/*
+INTERNAL_FUNCTION
+	_bfd_stringtab_add
+
+SYNOPSIS
+	bfd_size_type _bfd_stringtab_add
+	  (struct bfd_strtab_hash *, const char *,
+	   bool {*hash*}, bool {*copy*});
+
+DESCRIPTION
+	Get the index of a string in a strtab, adding it if it is not
+	already present.  If HASH is FALSE, we don't really use the hash
+	table, and we don't eliminate duplicate strings.  If COPY is true
+	then store a copy of STR if creating a new entry.
+*/
 
 bfd_size_type
 _bfd_stringtab_add (struct bfd_strtab_hash *tab,
@@ -865,7 +1072,16 @@ _bfd_stringtab_add (struct bfd_strtab_hash *tab,
   return entry->index;
 }
 
-/* Get the number of bytes in a strtab.  */
+/*
+INTERNAL_FUNCTION
+	_bfd_stringtab_size
+
+SYNOPSIS
+	bfd_size_type _bfd_stringtab_size (struct bfd_strtab_hash *);
+
+DESCRIPTION
+	Get the number of bytes in a strtab.
+*/
 
 bfd_size_type
 _bfd_stringtab_size (struct bfd_strtab_hash *tab)
@@ -873,8 +1089,17 @@ _bfd_stringtab_size (struct bfd_strtab_hash *tab)
   return tab->size;
 }
 
-/* Write out a strtab.  ABFD must already be at the right location in
-   the file.  */
+/*
+INTERNAL_FUNCTION
+	_bfd_stringtab_emit
+
+SYNOPSIS
+	bool _bfd_stringtab_emit (bfd *, struct bfd_strtab_hash *);
+
+DESCRIPTION
+	Write out a strtab.  ABFD must already be at the right location in
+	the file.
+*/
 
 bool
 _bfd_stringtab_emit (bfd *abfd, struct bfd_strtab_hash *tab)
@@ -894,8 +1119,8 @@ _bfd_stringtab_emit (bfd *abfd, struct bfd_strtab_hash *tab)
 	  bfd_byte buf[4];
 
 	  /* The output length includes the null byte.  */
-	  bfd_put_32 (abfd, (bfd_vma) len, buf);
-	  if (bfd_bwrite ((void *) buf, (bfd_size_type) 4, abfd) != 4)
+	  bfd_put_32 (abfd, len, buf);
+	  if (bfd_write (buf, 4, abfd) != 4)
 	    return false;
 	}
       else if (tab->length_field_size == 2)
@@ -903,12 +1128,12 @@ _bfd_stringtab_emit (bfd *abfd, struct bfd_strtab_hash *tab)
 	  bfd_byte buf[2];
 
 	  /* The output length includes the null byte.  */
-	  bfd_put_16 (abfd, (bfd_vma) len, buf);
-	  if (bfd_bwrite ((void *) buf, (bfd_size_type) 2, abfd) != 2)
+	  bfd_put_16 (abfd, len, buf);
+	  if (bfd_write (buf, 2, abfd) != 2)
 	    return false;
 	}
 
-      if (bfd_bwrite ((void *) str, (bfd_size_type) len, abfd) != len)
+      if (bfd_write (str, len, abfd) != len)
 	return false;
     }
 
