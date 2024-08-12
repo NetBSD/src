@@ -53,7 +53,7 @@ include/
 	See also binutils/, gdb/, sid/, gcc/, libiberty/ etc.
 
 intl/; config.rhost; libiberty/; libiberty's part of include/;
-compile; depcomp; install-sh; missing; ylwrap; config/
+compile; depcomp; install-sh; missing; ylwrap; config/; libbacktrace
 	gcc: http://gcc.gnu.org
 	Changes need to be done in tandem with the official GCC
 	sources or submitted to the master file maintainer and brought
