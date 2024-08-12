@@ -1,6 +1,6 @@
 /* Scheme interface to blocks.
 
-   Copyright (C) 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,6 @@
 /* See README file in this directory for implementation notes, coding
    conventions, et.al.  */
 
-#include "defs.h"
 #include "block.h"
 #include "dictionary.h"
 #include "objfiles.h"
@@ -438,7 +437,7 @@ gdbscm_block_global_block (SCM self)
   const struct block *block = b_smob->block;
   const struct block *global_block;
 
-  global_block = block_global_block (block);
+  global_block = block->global_block ();
 
   return bkscm_scm_from_block (global_block, b_smob->objfile);
 }
@@ -458,7 +457,7 @@ gdbscm_block_static_block (SCM self)
   if (block->superblock () == NULL)
     return SCM_BOOL_F;
 
-  static_block = block_static_block (block);
+  static_block = block->static_block ();
 
   return bkscm_scm_from_block (static_block, b_smob->objfile);
 }
@@ -501,20 +500,15 @@ gdbscm_block_symbols (SCM self)
   block_smob *b_smob
     = bkscm_get_valid_block_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   const struct block *block = b_smob->block;
-  struct block_iterator iter;
-  struct symbol *sym;
   SCM result;
 
   result = SCM_EOL;
 
-  sym = block_iterator_first (block, &iter);
-
-  while (sym != NULL)
+  for (struct symbol *sym : block_iterator_range (block))
     {
       SCM s_scm = syscm_scm_from_symbol (sym);
 
       result = scm_cons (s_scm, result);
-      sym = block_iterator_next (&iter);
     }
 
   return scm_reverse_x (result, SCM_EOL);

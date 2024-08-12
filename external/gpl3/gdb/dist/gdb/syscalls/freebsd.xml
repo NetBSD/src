@@ -1,6 +1,6 @@
 <?xml version="1.0"?> <!-- THIS FILE IS GENERATED -*- buffer-read-only: t -*-  -->
 <!-- vi:set ro: -->
-<!-- Copyright (C) 2009-2023 Free Software Foundation, Inc.
+<!-- Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
@@ -123,6 +123,7 @@
   <syscall name="mkdir" number="136"/>
   <syscall name="rmdir" number="137"/>
   <syscall name="utimes" number="138"/>
+  <syscall name="sigreturn" number="139"/>
   <syscall name="adjtime" number="140"/>
   <syscall name="setsid" number="147"/>
   <syscall name="quotactl" number="148"/>
@@ -338,7 +339,7 @@
   <syscall name="getcontext" number="421"/>
   <syscall name="setcontext" number="422"/>
   <syscall name="swapcontext" number="423"/>
-  <syscall name="swapoff" number="424"/>
+  <syscall name="freebsd13_swapoff" number="424" alias="swapoff"/>
   <syscall name="__acl_get_link" number="425"/>
   <syscall name="__acl_set_link" number="426"/>
   <syscall name="__acl_delete_link" number="427"/>
@@ -348,6 +349,8 @@
   <syscall name="thr_exit" number="431"/>
   <syscall name="thr_self" number="432"/>
   <syscall name="thr_kill" number="433"/>
+  <syscall name="freebsd10__umtx_lock" number="434" alias="_umtx_lock"/>
+  <syscall name="freebsd10__umtx_unlock" number="435" alias="_umtx_unlock"/>
   <syscall name="jail_attach" number="436"/>
   <syscall name="extattr_list_fd" number="437"/>
   <syscall name="extattr_list_file" number="438"/>
@@ -484,4 +487,15 @@
   <syscall name="__realpathat" number="574"/>
   <syscall name="close_range" number="575"/>
   <syscall name="rpctls_syscall" number="576"/>
+  <syscall name="__specialfd" number="577"/>
+  <syscall name="aio_writev" number="578"/>
+  <syscall name="aio_readv" number="579"/>
+  <syscall name="fspacectl" number="580"/>
+  <syscall name="sched_getcpu" number="581"/>
+  <syscall name="swapoff" number="582"/>
+  <syscall name="kqueuex" number="583"/>
+  <syscall name="membarrier" number="584"/>
+  <syscall name="timerfd_create" number="585"/>
+  <syscall name="timerfd_gettime" number="586"/>
+  <syscall name="timerfd_settime" number="587"/>
 </syscalls_info>

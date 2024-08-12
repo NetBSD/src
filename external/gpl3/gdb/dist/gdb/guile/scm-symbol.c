@@ -1,6 +1,6 @@
 /* Scheme interface to symbols.
 
-   Copyright (C) 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,6 @@
 /* See README file in this directory for implementation notes, coding
    conventions, et.al.  */
 
-#include "defs.h"
 #include "block.h"
 #include "frame.h"
 #include "symtab.h"
@@ -617,7 +616,8 @@ gdbscm_lookup_symbol (SCM name_scm, SCM rest)
   gdbscm_gdb_exception except {};
   try
     {
-      symbol = lookup_symbol (name, block, (domain_enum) domain,
+      domain_search_flags flags = from_scripting_domain (domain);
+      symbol = lookup_symbol (name, block, flags,
 			      &is_a_field_of_this).symbol;
     }
   catch (const gdb_exception &ex)
@@ -654,7 +654,8 @@ gdbscm_lookup_global_symbol (SCM name_scm, SCM rest)
 
   try
     {
-      symbol = lookup_global_symbol (name, NULL, (domain_enum) domain).symbol;
+      domain_search_flags flags = from_scripting_domain (domain);
+      symbol = lookup_global_symbol (name, NULL, flags).symbol;
     }
   catch (const gdb_exception &ex)
     {
@@ -693,15 +694,18 @@ static const scheme_integer_constant symbol_integer_constants[] =
   X (LOC_OPTIMIZED_OUT),
   X (LOC_COMPUTED),
   X (LOC_REGPARM_ADDR),
-
-  X (UNDEF_DOMAIN),
-  X (VAR_DOMAIN),
-  X (STRUCT_DOMAIN),
-  X (LABEL_DOMAIN),
-  X (VARIABLES_DOMAIN),
-  X (FUNCTIONS_DOMAIN),
-  X (TYPES_DOMAIN),
 #undef X
+
+#define SYM_DOMAIN(X) \
+  { "SYMBOL_" #X "_DOMAIN", to_scripting_domain (X ## _DOMAIN) },	\
+  { "SEARCH_" #X "_DOMAIN", to_scripting_domain (SEARCH_ ## X ## _DOMAIN) },
+#include "sym-domains.def"
+#undef SYM_DOMAIN
+
+  /* Historical.  */
+  { "SYMBOL_VARIABLES_DOMAIN", to_scripting_domain (SEARCH_VAR_DOMAIN) },
+  { "SYMBOL_FUNCTIONS_DOMAIN", to_scripting_domain (SEARCH_FUNCTION_DOMAIN) },
+  { "SYMBOL_TYPES_DOMAIN", to_scripting_domain (SEARCH_TYPE_DOMAIN) },
 
   END_INTEGER_CONSTANTS
 };
