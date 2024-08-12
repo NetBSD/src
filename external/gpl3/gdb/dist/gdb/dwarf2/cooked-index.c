@@ -1,6 +1,6 @@
 /* DIE indexing 
 
-   Copyright (C) 2022-2023 Free Software Foundation, Inc.
+   Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,16 +17,44 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "dwarf2/cooked-index.h"
 #include "dwarf2/read.h"
+#include "dwarf2/stringify.h"
+#include "dwarf2/index-cache.h"
 #include "cp-support.h"
 #include "c-lang.h"
 #include "ada-lang.h"
+#include "event-top.h"
 #include "split-name.h"
+#include "observable.h"
+#include "run-on-main-thread.h"
 #include <algorithm>
-#include "safe-ctype.h"
+#include "gdbsupport/gdb-safe-ctype.h"
 #include "gdbsupport/selftest.h"
+#include <chrono>
+#include <unordered_set>
+#include "cli/cli-cmds.h"
+
+/* We don't want gdb to exit while it is in the process of writing to
+   the index cache.  So, all live cooked index vectors are stored
+   here, and then these are all waited for before exit proceeds.  */
+static std::unordered_set<cooked_index *> active_vectors;
+
+/* See cooked-index.h.  */
+
+std::string
+to_string (cooked_index_flag flags)
+{
+  static constexpr cooked_index_flag::string_mapping mapping[] = {
+    MAP_ENUM_FLAG (IS_MAIN),
+    MAP_ENUM_FLAG (IS_STATIC),
+    MAP_ENUM_FLAG (IS_LINKAGE),
+    MAP_ENUM_FLAG (IS_TYPE_DECLARATION),
+    MAP_ENUM_FLAG (IS_PARENT_DEFERRED),
+  };
+
+  return flags.to_string (mapping);
+}
 
 /* See cooked-index.h.  */
 
@@ -36,6 +64,23 @@ language_requires_canonicalization (enum language lang)
   return (lang == language_ada
 	  || lang == language_c
 	  || lang == language_cplus);
+}
+
+/* Return true if a plain "main" could be the main program for this
+   language.  Languages that are known to use some other mechanism are
+   excluded here.  */
+
+static bool
+language_may_use_plain_main (enum language lang)
+{
+  /* No need to handle "unknown" here.  */
+  return (lang == language_c
+	  || lang == language_objc
+	  || lang == language_cplus
+	  || lang == language_m2
+	  || lang == language_asm
+	  || lang == language_opencl
+	  || lang == language_minimal);
 }
 
 /* See cooked-index.h.  */
@@ -153,16 +198,28 @@ test_compare ()
 
 /* See cooked-index.h.  */
 
+bool
+cooked_index_entry::matches (domain_search_flags kind) const
+{
+  /* Just reject type declarations.  */
+  if ((flags & IS_TYPE_DECLARATION) != 0)
+    return false;
+
+  return tag_matches_domain (tag, kind, lang);
+}
+
+/* See cooked-index.h.  */
+
 const char *
 cooked_index_entry::full_name (struct obstack *storage, bool for_main) const
 {
   const char *local_name = for_main ? name : canonical;
 
-  if ((flags & IS_LINKAGE) != 0 || parent_entry == nullptr)
+  if ((flags & IS_LINKAGE) != 0 || get_parent () == nullptr)
     return local_name;
 
   const char *sep = nullptr;
-  switch (per_cu->lang ())
+  switch (lang)
     {
     case language_cplus:
     case language_rust:
@@ -179,7 +236,7 @@ cooked_index_entry::full_name (struct obstack *storage, bool for_main) const
       return local_name;
     }
 
-  parent_entry->write_scope (storage, sep, for_main);
+  get_parent ()->write_scope (storage, sep, for_main);
   obstack_grow0 (storage, local_name, strlen (local_name));
   return (const char *) obstack_finish (storage);
 }
@@ -191,8 +248,8 @@ cooked_index_entry::write_scope (struct obstack *storage,
 				 const char *sep,
 				 bool for_main) const
 {
-  if (parent_entry != nullptr)
-    parent_entry->write_scope (storage, sep, for_main);
+  if (get_parent () != nullptr)
+    get_parent ()->write_scope (storage, sep, for_main);
   const char *local_name = for_main ? name : canonical;
   obstack_grow (storage, local_name, strlen (local_name));
   obstack_grow (storage, sep, strlen (sep));
@@ -200,13 +257,14 @@ cooked_index_entry::write_scope (struct obstack *storage,
 
 /* See cooked-index.h.  */
 
-const cooked_index_entry *
-cooked_index::add (sect_offset die_offset, enum dwarf_tag tag,
-		   cooked_index_flag flags, const char *name,
-		   const cooked_index_entry *parent_entry,
-		   dwarf2_per_cu_data *per_cu)
+cooked_index_entry *
+cooked_index_shard::add (sect_offset die_offset, enum dwarf_tag tag,
+			 cooked_index_flag flags, enum language lang,
+			 const char *name,
+			 cooked_index_entry_ref parent_entry,
+			 dwarf2_per_cu_data *per_cu)
 {
-  cooked_index_entry *result = create (die_offset, tag, flags, name,
+  cooked_index_entry *result = create (die_offset, tag, flags, lang, name,
 				       parent_entry, per_cu);
   m_entries.push_back (result);
 
@@ -214,33 +272,32 @@ cooked_index::add (sect_offset die_offset, enum dwarf_tag tag,
      implicit "main" discovery.  */
   if ((flags & IS_MAIN) != 0)
     m_main = result;
+  else if ((flags & IS_PARENT_DEFERRED) == 0
+	   && parent_entry.resolved == nullptr
+	   && m_main == nullptr
+	   && language_may_use_plain_main (lang)
+	   && strcmp (name, "main") == 0)
+    m_main = result;
 
   return result;
 }
 
 /* See cooked-index.h.  */
 
-void
-cooked_index::finalize ()
-{
-  m_future = gdb::thread_pool::g_thread_pool->post_task ([this] ()
-    {
-      do_finalize ();
-    });
-}
-
-/* See cooked-index.h.  */
-
 gdb::unique_xmalloc_ptr<char>
-cooked_index::handle_gnat_encoded_entry (cooked_index_entry *entry,
-					 htab_t gnat_entries)
+cooked_index_shard::handle_gnat_encoded_entry (cooked_index_entry *entry,
+					       htab_t gnat_entries)
 {
-  std::string canonical = ada_decode (entry->name, false, false);
+  /* We decode Ada names in a particular way: operators and wide
+     characters are left as-is.  This is done to make name matching a
+     bit simpler; and for wide characters, it means the choice of Ada
+     source charset does not affect the indexer directly.  */
+  std::string canonical = ada_decode (entry->name, false, false, false);
   if (canonical.empty ())
     return {};
-  std::vector<gdb::string_view> names = split_name (canonical.c_str (),
-						    split_style::DOT);
-  gdb::string_view tail = names.back ();
+  std::vector<std::string_view> names = split_name (canonical.c_str (),
+						    split_style::DOT_STYLE);
+  std::string_view tail = names.back ();
   names.pop_back ();
 
   const cooked_index_entry *parent = nullptr;
@@ -257,7 +314,7 @@ cooked_index::handle_gnat_encoded_entry (cooked_index_entry *entry,
 	  gdb::unique_xmalloc_ptr<char> new_name
 	    = make_unique_xstrndup (name.data (), name.length ());
 	  last = create (entry->die_offset, DW_TAG_namespace,
-			 0, new_name.get (), parent,
+			 0, language_ada, new_name.get (), parent,
 			 entry->per_cu);
 	  last->canonical = last->name;
 	  m_names.push_back (std::move (new_name));
@@ -267,14 +324,14 @@ cooked_index::handle_gnat_encoded_entry (cooked_index_entry *entry,
       parent = last;
     }
 
-  entry->parent_entry = parent;
+  entry->set_parent (parent);
   return make_unique_xstrndup (tail.data (), tail.length ());
 }
 
 /* See cooked-index.h.  */
 
 void
-cooked_index::do_finalize ()
+cooked_index_shard::finalize (const parent_map_map *parent_maps)
 {
   auto hash_name_ptr = [] (const void *p)
     {
@@ -305,7 +362,7 @@ cooked_index::do_finalize ()
   auto eq_entry = [] (const void *a, const void *b) -> int
     {
       const cooked_index_entry *ae = (const cooked_index_entry *) a;
-      const gdb::string_view *sv = (const gdb::string_view *) b;
+      const std::string_view *sv = (const std::string_view *) b;
       return (strlen (ae->canonical) == sv->length ()
 	      && strncasecmp (ae->canonical, sv->data (), sv->length ()) == 0);
     };
@@ -315,12 +372,19 @@ cooked_index::do_finalize ()
 
   for (cooked_index_entry *entry : m_entries)
     {
+      if ((entry->flags & IS_PARENT_DEFERRED) != 0)
+	{
+	  const cooked_index_entry *new_parent
+	    = parent_maps->find (entry->get_deferred_parent ());
+	  entry->resolve_parent (new_parent);
+	}
+
       /* Note that this code must be kept in sync with
 	 language_requires_canonicalization.  */
       gdb_assert (entry->canonical == nullptr);
       if ((entry->flags & IS_LINKAGE) != 0)
 	entry->canonical = entry->name;
-      else if (entry->per_cu->lang () == language_ada)
+      else if (entry->lang == language_ada)
 	{
 	  gdb::unique_xmalloc_ptr<char> canon_name
 	    = handle_gnat_encoded_entry (entry, gnat_entries.get ());
@@ -332,15 +396,14 @@ cooked_index::do_finalize ()
 	      m_names.push_back (std::move (canon_name));
 	    }
 	}
-      else if (entry->per_cu->lang () == language_cplus
-	       || entry->per_cu->lang () == language_c)
+      else if (entry->lang == language_cplus || entry->lang == language_c)
 	{
 	  void **slot = htab_find_slot (seen_names.get (), entry,
 					INSERT);
 	  if (*slot == nullptr)
 	    {
 	      gdb::unique_xmalloc_ptr<char> canon_name
-		= (entry->per_cu->lang () == language_cplus
+		= (entry->lang == language_cplus
 		   ? cp_canonicalize_string (entry->name)
 		   : c_canonicalize_name (entry->name));
 	      if (canon_name == nullptr)
@@ -350,6 +413,7 @@ cooked_index::do_finalize ()
 		  entry->canonical = canon_name.get ();
 		  m_names.push_back (std::move (canon_name));
 		}
+	      *slot = entry;
 	    }
 	  else
 	    {
@@ -373,23 +437,21 @@ cooked_index::do_finalize ()
 
 /* See cooked-index.h.  */
 
-cooked_index::range
-cooked_index::find (const std::string &name, bool completing)
+cooked_index_shard::range
+cooked_index_shard::find (const std::string &name, bool completing) const
 {
-  wait ();
-
   cooked_index_entry::comparison_mode mode = (completing
 					      ? cooked_index_entry::COMPLETE
 					      : cooked_index_entry::MATCH);
 
-  auto lower = std::lower_bound (m_entries.begin (), m_entries.end (), name,
+  auto lower = std::lower_bound (m_entries.cbegin (), m_entries.cend (), name,
 				 [=] (const cooked_index_entry *entry,
 				      const std::string &n)
   {
     return cooked_index_entry::compare (entry->canonical, n.c_str (), mode) < 0;
   });
 
-  auto upper = std::upper_bound (m_entries.begin (), m_entries.end (), name,
+  auto upper = std::upper_bound (m_entries.cbegin (), m_entries.cend (), name,
 				 [=] (const std::string &n,
 				      const cooked_index_entry *entry)
   {
@@ -399,18 +461,232 @@ cooked_index::find (const std::string &name, bool completing)
   return range (lower, upper);
 }
 
-cooked_index_vector::cooked_index_vector (vec_type &&vec)
-  : m_vector (std::move (vec))
+/* See cooked-index.h.  */
+
+void
+cooked_index_worker::start ()
 {
+  gdb::thread_pool::g_thread_pool->post_task ([=] ()
+  {
+    try
+      {
+	do_reading ();
+      }
+    catch (const gdb_exception &exc)
+      {
+	m_failed = exc;
+	set (cooked_state::CACHE_DONE);
+      }
+
+    bfd_thread_cleanup ();
+  });
+}
+
+/* See cooked-index.h.  */
+
+bool
+cooked_index_worker::wait (cooked_state desired_state, bool allow_quit)
+{
+  bool done;
+#if CXX_STD_THREAD
+  {
+    std::unique_lock<std::mutex> lock (m_mutex);
+
+    /* This may be called from a non-main thread -- this functionality
+       is needed for the index cache -- but in this case we require
+       that the desired state already have been attained.  */
+    gdb_assert (is_main_thread () || desired_state <= m_state);
+
+    while (desired_state > m_state)
+      {
+	if (allow_quit)
+	  {
+	    std::chrono::milliseconds duration { 15 };
+	    if (m_cond.wait_for (lock, duration) == std::cv_status::timeout)
+	      QUIT;
+	  }
+	else
+	  m_cond.wait (lock);
+      }
+    done = m_state == cooked_state::CACHE_DONE;
+  }
+#else
+  /* Without threads, all the work is done immediately on the main
+     thread, and there is never anything to wait for.  */
+  done = desired_state == cooked_state::CACHE_DONE;
+#endif /* CXX_STD_THREAD */
+
+  /* Only the main thread is allowed to report complaints and the
+     like.  */
+  if (!is_main_thread ())
+    return false;
+
+  if (m_reported)
+    return done;
+  m_reported = true;
+
+  /* Emit warnings first, maybe they were emitted before an exception
+     (if any) was thrown.  */
+  m_warnings.emit ();
+
+  if (m_failed.has_value ())
+    {
+      /* do_reading failed -- report it.  */
+      exception_print (gdb_stderr, *m_failed);
+      m_failed.reset ();
+      return done;
+    }
+
+  /* Only show a given exception a single time.  */
+  std::unordered_set<gdb_exception> seen_exceptions;
+  for (auto &one_result : m_results)
+    {
+      re_emit_complaints (std::get<1> (one_result));
+      for (auto &one_exc : std::get<2> (one_result))
+	if (seen_exceptions.insert (one_exc).second)
+	  exception_print (gdb_stderr, one_exc);
+    }
+
+  print_stats ();
+
+  struct objfile *objfile = m_per_objfile->objfile;
+  dwarf2_per_bfd *per_bfd = m_per_objfile->per_bfd;
+  cooked_index *table
+    = (gdb::checked_static_cast<cooked_index *>
+       (per_bfd->index_table.get ()));
+
+  auto_obstack temp_storage;
+  enum language lang = language_unknown;
+  const char *main_name = table->get_main_name (&temp_storage, &lang);
+  if (main_name != nullptr)
+    set_objfile_main_name (objfile, main_name, lang);
+
+  /* dwarf_read_debug_printf ("Done building psymtabs of %s", */
+  /* 			   objfile_name (objfile)); */
+
+  return done;
+}
+
+/* See cooked-index.h.  */
+
+void
+cooked_index_worker::set (cooked_state desired_state)
+{
+  gdb_assert (desired_state != cooked_state::INITIAL);
+
+#if CXX_STD_THREAD
+  std::lock_guard<std::mutex> guard (m_mutex);
+  gdb_assert (desired_state > m_state);
+  m_state = desired_state;
+  m_cond.notify_one ();
+#else
+  /* Without threads, all the work is done immediately on the main
+     thread, and there is never anything to do.  */
+#endif /* CXX_STD_THREAD */
+}
+
+/* See cooked-index.h.  */
+
+void
+cooked_index_worker::write_to_cache (const cooked_index *idx,
+				     deferred_warnings *warn) const
+{
+  if (idx != nullptr)
+    {
+      /* Writing to the index cache may cause a warning to be emitted.
+	 See PR symtab/30837.  This arranges to capture all such
+	 warnings.  This is safe because we know the deferred_warnings
+	 object isn't in use by any other thread at this point.  */
+      scoped_restore_warning_hook defer (warn);
+      m_cache_store.store ();
+    }
+}
+
+cooked_index::cooked_index (dwarf2_per_objfile *per_objfile,
+			    std::unique_ptr<cooked_index_worker> &&worker)
+  : m_state (std::move (worker)),
+    m_per_bfd (per_objfile->per_bfd)
+{
+  /* ACTIVE_VECTORS is not locked, and this assert ensures that this
+     will be caught if ever moved to the background.  */
+  gdb_assert (is_main_thread ());
+  active_vectors.insert (this);
+}
+
+void
+cooked_index::start_reading ()
+{
+  m_state->start ();
+}
+
+void
+cooked_index::wait (cooked_state desired_state, bool allow_quit)
+{
+  gdb_assert (desired_state != cooked_state::INITIAL);
+
+  /* If the state object has been deleted, then that means waiting is
+     completely done.  */
+  if (m_state == nullptr)
+    return;
+
+  if (m_state->wait (desired_state, allow_quit))
+    {
+      /* Only the main thread can modify this.  */
+      gdb_assert (is_main_thread ());
+      m_state.reset (nullptr);
+    }
+}
+
+void
+cooked_index::set_contents (vec_type &&vec, deferred_warnings *warn,
+			    const parent_map_map *parent_maps)
+{
+  gdb_assert (m_vector.empty ());
+  m_vector = std::move (vec);
+
+  m_state->set (cooked_state::MAIN_AVAILABLE);
+
+  /* This is run after finalization is done -- but not before.  If
+     this task were submitted earlier, it would have to wait for
+     finalization.  However, that would take a slot in the global
+     thread pool, and if enough such tasks were submitted at once, it
+     would cause a livelock.  */
+  gdb::task_group finalizers ([=] ()
+  {
+    m_state->set (cooked_state::FINALIZED);
+    m_state->write_to_cache (index_for_writing (), warn);
+    m_state->set (cooked_state::CACHE_DONE);
+  });
+
   for (auto &idx : m_vector)
-    idx->finalize ();
+    {
+      auto this_index = idx.get ();
+      finalizers.add_task ([=] () { this_index->finalize (parent_maps); });
+    }
+
+  finalizers.start ();
+}
+
+cooked_index::~cooked_index ()
+{
+  /* Wait for index-creation to be done, though this one must also
+     waited for by the per-BFD object to ensure the required data
+     remains live.  */
+  wait (cooked_state::CACHE_DONE);
+
+  /* Remove our entry from the global list.  See the assert in the
+     constructor to understand this.  */
+  gdb_assert (is_main_thread ());
+  active_vectors.erase (this);
 }
 
 /* See cooked-index.h.  */
 
 dwarf2_per_cu_data *
-cooked_index_vector::lookup (CORE_ADDR addr)
+cooked_index::lookup (unrelocated_addr addr)
 {
+  /* Ensure that the address maps are ready.  */
+  wait (cooked_state::MAIN_AVAILABLE, true);
   for (const auto &index : m_vector)
     {
       dwarf2_per_cu_data *result = index->lookup (addr);
@@ -422,10 +698,12 @@ cooked_index_vector::lookup (CORE_ADDR addr)
 
 /* See cooked-index.h.  */
 
-std::vector<addrmap *>
-cooked_index_vector::get_addrmaps ()
+std::vector<const addrmap *>
+cooked_index::get_addrmaps ()
 {
-  std::vector<addrmap *> result;
+  /* Ensure that the address maps are ready.  */
+  wait (cooked_state::MAIN_AVAILABLE, true);
+  std::vector<const addrmap *> result;
   for (const auto &index : m_vector)
     result.push_back (index->m_addrmap);
   return result;
@@ -433,10 +711,11 @@ cooked_index_vector::get_addrmaps ()
 
 /* See cooked-index.h.  */
 
-cooked_index_vector::range
-cooked_index_vector::find (const std::string &name, bool completing)
+cooked_index::range
+cooked_index::find (const std::string &name, bool completing)
 {
-  std::vector<cooked_index::range> result_range;
+  wait (cooked_state::FINALIZED, true);
+  std::vector<cooked_index_shard::range> result_range;
   result_range.reserve (m_vector.size ());
   for (auto &entry : m_vector)
     result_range.push_back (entry->find (name, completing));
@@ -445,26 +724,158 @@ cooked_index_vector::find (const std::string &name, bool completing)
 
 /* See cooked-index.h.  */
 
-const cooked_index_entry *
-cooked_index_vector::get_main () const
+const char *
+cooked_index::get_main_name (struct obstack *obstack, enum language *lang)
+  const
 {
-  const cooked_index_entry *result = nullptr;
+  const cooked_index_entry *entry = get_main ();
+  if (entry == nullptr)
+    return nullptr;
 
+  *lang = entry->lang;
+  return entry->full_name (obstack, true);
+}
+
+/* See cooked_index.h.  */
+
+const cooked_index_entry *
+cooked_index::get_main () const
+{
+  const cooked_index_entry *best_entry = nullptr;
   for (const auto &index : m_vector)
     {
       const cooked_index_entry *entry = index->get_main ();
-      /* Choose the first "main" we see.  The choice among several is
-	 arbitrary.  See the comment by the sole caller to understand
-	 the rationale for filtering by language.  */
-      if (entry != nullptr
-	  && !language_requires_canonicalization (entry->per_cu->lang ()))
+      /* Choose the first "main" we see.  We only do this for names
+	 not requiring canonicalization.  At this point in the process
+	 names might not have been canonicalized.  However, currently,
+	 languages that require this step also do not use
+	 DW_AT_main_subprogram.  An assert is appropriate here because
+	 this filtering is done in get_main.  */
+      if (entry != nullptr)
 	{
-	  result = entry;
-	  break;
+	  if ((entry->flags & IS_MAIN) != 0)
+	    {
+	      if (!language_requires_canonicalization (entry->lang))
+		{
+		  /* There won't be one better than this.  */
+		  return entry;
+		}
+	    }
+	  else
+	    {
+	      /* This is one that is named "main".  Here we don't care
+		 if the language requires canonicalization, due to how
+		 the entry is detected.  Entries like this have worse
+		 priority than IS_MAIN entries.  */
+	      if (best_entry == nullptr)
+		best_entry = entry;
+	    }
 	}
     }
 
-  return result;
+  return best_entry;
+}
+
+quick_symbol_functions_up
+cooked_index::make_quick_functions () const
+{
+  return quick_symbol_functions_up (new cooked_index_functions);
+}
+
+/* See cooked-index.h.  */
+
+void
+cooked_index::dump (gdbarch *arch)
+{
+  auto_obstack temp_storage;
+
+  gdb_printf ("  entries:\n");
+  gdb_printf ("\n");
+
+  size_t i = 0;
+  for (const cooked_index_entry *entry : this->all_entries ())
+    {
+      QUIT;
+
+      gdb_printf ("    [%zu] ((cooked_index_entry *) %p)\n", i++, entry);
+      gdb_printf ("    name:       %s\n", entry->name);
+      gdb_printf ("    canonical:  %s\n", entry->canonical);
+      gdb_printf ("    qualified:  %s\n", entry->full_name (&temp_storage, false));
+      gdb_printf ("    DWARF tag:  %s\n", dwarf_tag_name (entry->tag));
+      gdb_printf ("    flags:      %s\n", to_string (entry->flags).c_str ());
+      gdb_printf ("    DIE offset: %s\n", sect_offset_str (entry->die_offset));
+
+      if ((entry->flags & IS_PARENT_DEFERRED) != 0)
+	gdb_printf ("    parent:     deferred (%" PRIx64 ")\n",
+		    entry->get_deferred_parent ());
+      else if (entry->get_parent () != nullptr)
+	gdb_printf ("    parent:     ((cooked_index_entry *) %p) [%s]\n",
+		    entry->get_parent (), entry->get_parent ()->name);
+      else
+	gdb_printf ("    parent:     ((cooked_index_entry *) 0)\n");
+
+      gdb_printf ("\n");
+    }
+
+  const cooked_index_entry *main_entry = this->get_main ();
+  if (main_entry != nullptr)
+    gdb_printf ("  main: ((cooked_index_entry *) %p) [%s]\n", main_entry,
+		  main_entry->name);
+  else
+    gdb_printf ("  main: ((cooked_index_entry *) 0)\n");
+
+  gdb_printf ("\n");
+  gdb_printf ("  address maps:\n");
+  gdb_printf ("\n");
+
+  std::vector<const addrmap *> addrmaps = this->get_addrmaps ();
+  for (i = 0; i < addrmaps.size (); ++i)
+    {
+      const addrmap &addrmap = *addrmaps[i];
+
+      gdb_printf ("    [%zu] ((addrmap *) %p)\n", i, &addrmap);
+      gdb_printf ("\n");
+
+      addrmap.foreach ([arch] (CORE_ADDR start_addr, const void *obj)
+	{
+	  QUIT;
+
+	  const char *start_addr_str = paddress (arch, start_addr);
+
+	  if (obj != nullptr)
+	    {
+	      const dwarf2_per_cu_data *per_cu
+		= static_cast<const dwarf2_per_cu_data *> (obj);
+	      gdb_printf ("      [%s] ((dwarf2_per_cu_data *) %p)\n",
+			  start_addr_str, per_cu);
+	    }
+	  else
+	    gdb_printf ("      [%s] ((dwarf2_per_cu_data *) 0)\n",
+			start_addr_str);
+
+	  return 0;
+	});
+
+      gdb_printf ("\n");
+    }
+}
+
+/* Wait for all the index cache entries to be written before gdb
+   exits.  */
+static void
+wait_for_index_cache (int)
+{
+  gdb_assert (is_main_thread ());
+  for (cooked_index *item : active_vectors)
+    item->wait_completely ();
+}
+
+/* A maint command to wait for the cache.  */
+
+static void
+maintenance_wait_for_index_cache (const char *args, int from_tty)
+{
+  wait_for_index_cache (0);
 }
 
 void _initialize_cooked_index ();
@@ -474,4 +885,12 @@ _initialize_cooked_index ()
 #if GDB_SELF_TEST
   selftests::register_test ("cooked_index_entry::compare", test_compare);
 #endif
+
+  add_cmd ("wait-for-index-cache", class_maintenance,
+	   maintenance_wait_for_index_cache, _("\
+Wait until all pending writes to the index cache have completed.\n\
+Usage: maintenance wait-for-index-cache"),
+	   &maintenancelist);
+
+  gdb::observers::gdb_exiting.attach (wait_for_index_cache, "cooked-index");
 }

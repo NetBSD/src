@@ -1,6 +1,6 @@
 /* DWARF attributes
 
-   Copyright (C) 1994-2023 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
 
    Adapted by Gary Funck (gary@intrepid.com), Intrepid Technology,
    Inc.  with support from Florida State University (under contract
@@ -28,8 +28,8 @@
 #define GDB_DWARF2_ATTRIBUTE_H
 
 #include "dwarf2.h"
-#include "gdbtypes.h"
-#include "gdbsupport/gdb_optional.h"
+#include "dwarf2/types.h"
+#include <optional>
 
 /* Blocks are a bunch of untyped bytes.  */
 struct dwarf_block
@@ -45,7 +45,7 @@ struct attribute
 {
   /* Read the given attribute value as an address, taking the
      attribute's form into account.  */
-  CORE_ADDR as_address () const;
+  unrelocated_addr as_address () const;
 
   /* If the attribute has a string form, return the string value;
      otherwise return NULL.  */
@@ -261,7 +261,7 @@ struct attribute
   }
 
   /* Set this attribute to an address.  */
-  void set_address (CORE_ADDR addr)
+  void set_address (unrelocated_addr addr)
   {
     gdb_assert (form == DW_FORM_addr
 		|| ((form == DW_FORM_addrx
@@ -319,7 +319,7 @@ struct attribute
       struct dwarf_block *blk;
       ULONGEST unsnd;
       LONGEST snd;
-      CORE_ADDR addr;
+      unrelocated_addr addr;
       ULONGEST signature;
     }
   u;

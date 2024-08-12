@@ -1,6 +1,6 @@
 /* DWARF 2 location expression support for GDB.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -37,9 +37,10 @@ extern unsigned int entry_values_debug;
 
 /* Find a particular location expression from a location list.  */
 const gdb_byte *dwarf2_find_location_expression
-  (struct dwarf2_loclist_baton *baton,
+  (const dwarf2_loclist_baton *baton,
    size_t *locexpr_length,
-   CORE_ADDR pc);
+   CORE_ADDR pc,
+   bool at_entry = false);
 
 /* Find the frame base information for FRAMEFUNC at PC.  START is an
    out parameter which is set to point to the DWARF expression to
@@ -64,9 +65,9 @@ value *compute_var_value (const char *name);
    Function always returns non-NULL, it throws NO_ENTRY_VALUE_ERROR
    otherwise.  */
 
-struct call_site_parameter *dwarf_expr_reg_to_entry_parameter
-  (frame_info_ptr frame, enum call_site_parameter_kind kind,
-   union call_site_parameter_u kind_u, dwarf2_per_cu_data **per_cu_return,
+call_site_parameter *dwarf_expr_reg_to_entry_parameter
+  (const frame_info_ptr &frame, call_site_parameter_kind kind,
+   call_site_parameter_u kind_u, dwarf2_per_cu_data **per_cu_return,
    dwarf2_per_objfile **per_objfile_return);
 
 
@@ -75,13 +76,11 @@ struct call_site_parameter *dwarf_expr_reg_to_entry_parameter
    of FRAME.  AS_LVAL defines if the resulting struct value is expected to
    be a value or a location description.  */
 
-struct value *dwarf2_evaluate_loc_desc (struct type *type,
-					frame_info_ptr frame,
-					const gdb_byte *data,
-					size_t size,
-					dwarf2_per_cu_data *per_cu,
-					dwarf2_per_objfile *per_objfile,
-					bool as_lval = true);
+value *dwarf2_evaluate_loc_desc (type *type, const frame_info_ptr &frame,
+				 const gdb_byte *data, size_t size,
+				 dwarf2_per_cu_data *per_cu,
+				 dwarf2_per_objfile *per_objfile,
+				 bool as_lval = true);
 
 /* A chain of addresses that might be needed to resolve a dynamic
    property.  */
@@ -120,8 +119,8 @@ struct property_addr_info
    bottom of the stack.  */
 
 bool dwarf2_evaluate_property (const struct dynamic_prop *prop,
-			       frame_info_ptr frame,
-			       const struct property_addr_info *addr_stack,
+			       const frame_info_ptr &frame,
+			       const property_addr_info *addr_stack,
 			       CORE_ADDR *value,
 			       gdb::array_view<CORE_ADDR> push_values = {});
 
@@ -180,7 +179,7 @@ struct dwarf2_loclist_baton
 {
   /* The initial base address for the location list, based on the compilation
      unit.  */
-  CORE_ADDR base_address;
+  unrelocated_addr base_address;
 
   /* Pointer to the start of the location list.  */
   const gdb_byte *data;
@@ -246,9 +245,11 @@ struct dwarf2_property_baton
 
 extern const struct symbol_computed_ops dwarf2_locexpr_funcs;
 extern const struct symbol_computed_ops dwarf2_loclist_funcs;
+extern const struct symbol_computed_ops ada_imported_funcs;
 
 extern const struct symbol_block_ops dwarf2_block_frame_base_locexpr_funcs;
 extern const struct symbol_block_ops dwarf2_block_frame_base_loclist_funcs;
+extern const struct symbol_block_ops ada_function_alias_funcs;
 
 /* Determined tail calls for constructing virtual tail call frames.  */
 
@@ -293,7 +294,7 @@ extern void invalid_synthetic_pointer ();
 
 extern struct value *indirect_synthetic_pointer
   (sect_offset die, LONGEST byte_offset, dwarf2_per_cu_data *per_cu,
-   dwarf2_per_objfile *per_objfile, frame_info_ptr frame,
+   dwarf2_per_objfile *per_objfile, const frame_info_ptr &frame,
    struct type *type, bool resolve_abstract_p = false);
 
 /* Read parameter of TYPE at (callee) FRAME's function entry.  KIND and KIND_U
@@ -304,7 +305,7 @@ extern struct value *indirect_synthetic_pointer
    it cannot resolve the parameter for any reason.  */
 
 extern struct value *value_of_dwarf_reg_entry (struct type *type,
-					       struct frame_info_ptr frame,
+					       const frame_info_ptr &frame,
 					       enum call_site_parameter_kind kind,
 					       union call_site_parameter_u kind_u);
 #endif /* DWARF2LOC_H */
