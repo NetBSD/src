@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,7 +15,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "gcore-elf.h"
 #include "elf-bfd.h"
 #include "target.h"
@@ -128,9 +127,8 @@ gcore_elf_build_thread_register_notes
   (struct gdbarch *gdbarch, struct thread_info *info, gdb_signal stop_signal,
    bfd *obfd, gdb::unique_xmalloc_ptr<char> *note_data, int *note_size)
 {
-  struct regcache *regcache
-    = get_thread_arch_regcache (info->inf->process_target (),
-				info->ptid, gdbarch);
+  regcache *regcache
+    = get_thread_arch_regcache (info->inf, info->ptid, gdbarch);
   target_fetch_registers (regcache, -1);
   gcore_elf_collect_thread_registers (regcache, info->ptid, obfd,
 				      note_data, note_size, stop_signal);
@@ -139,12 +137,12 @@ gcore_elf_build_thread_register_notes
 /* See gcore-elf.h.  */
 
 void
-gcore_elf_make_tdesc_note (bfd *obfd,
+gcore_elf_make_tdesc_note (struct gdbarch *gdbarch, bfd *obfd,
 			   gdb::unique_xmalloc_ptr<char> *note_data,
 			   int *note_size)
 {
   /* Append the target description to the core file.  */
-  const struct target_desc *tdesc = gdbarch_target_desc (target_gdbarch ());
+  const struct target_desc *tdesc = gdbarch_target_desc (gdbarch);
   const char *tdesc_xml
     = tdesc == nullptr ? nullptr : tdesc_get_features_xml (tdesc);
   if (tdesc_xml != nullptr && *tdesc_xml != '\0')

@@ -1,6 +1,6 @@
 /* Definitions for BFD wrappers used by GDB.
 
-   Copyright (C) 2011-2023 Free Software Foundation, Inc.
+   Copyright (C) 2011-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,6 +22,7 @@
 
 #include "registry.h"
 #include "gdbsupport/byte-vector.h"
+#include "gdbsupport/function-view.h"
 #include "gdbsupport/gdb_ref_ptr.h"
 #include "gdbsupport/iterator-range.h"
 #include "gdbsupport/next-iterator.h"
@@ -43,6 +44,14 @@ struct registry_accessor<bfd>
    otherwise.  */
 
 int is_target_filename (const char *name);
+
+/* An overload for strings.  */
+
+static inline int
+is_target_filename (const std::string &name)
+{
+  return is_target_filename (name.c_str ());
+}
 
 /* Returns nonzero if the filename associated with ABFD starts with
    TARGET_SYSROOT_PREFIX, zero otherwise.  */
@@ -150,23 +159,35 @@ gdb_bfd_ref_ptr gdb_bfd_openr (const char *, const char *);
 
 gdb_bfd_ref_ptr gdb_bfd_openw (const char *, const char *);
 
-/* A wrapper for bfd_openr_iovec that initializes the gdb-specific
-   reference count.  */
+/* The base class for BFD "iovec" implementations.  This is used by
+   gdb_bfd_openr_iovec and enables better type safety.  */
+
+class gdb_bfd_iovec_base
+{
+protected:
+
+  gdb_bfd_iovec_base () = default;
+
+public:
+
+  virtual ~gdb_bfd_iovec_base () = default;
+
+  /* The "read" callback.  */
+  virtual file_ptr read (bfd *abfd, void *buffer, file_ptr nbytes,
+			 file_ptr offset) = 0;
+
+  /* The "stat" callback.  */
+  virtual int stat (struct bfd *abfd, struct stat *sb) = 0;
+};
+
+/* The type of the function used to open a new iovec-based BFD.  */
+using gdb_iovec_opener_ftype
+     = gdb::function_view<gdb_bfd_iovec_base * (bfd *)>;
+
+/* A type-safe wrapper for bfd_openr_iovec.  */
 
 gdb_bfd_ref_ptr gdb_bfd_openr_iovec (const char *filename, const char *target,
-				     void *(*open_func) (struct bfd *nbfd,
-							 void *open_closure),
-				     void *open_closure,
-				     file_ptr (*pread_func) (struct bfd *nbfd,
-							     void *stream,
-							     void *buf,
-							     file_ptr nbytes,
-							     file_ptr offset),
-				     int (*close_func) (struct bfd *nbfd,
-							void *stream),
-				     int (*stat_func) (struct bfd *abfd,
-						       void *stream,
-						       struct stat *sb));
+				     gdb_iovec_opener_ftype open_fn);
 
 /* A wrapper for bfd_openr_next_archived_file that initializes the
    gdb-specific reference count.  */
@@ -236,5 +257,10 @@ gdb_bfd_sections (const gdb_bfd_ref_ptr &abfd)
    bfd_check_format_matches, and will be freed.  */
 
 extern std::string gdb_bfd_errmsg (bfd_error_type error_tag, char **matching);
+
+/* A wrapper for bfd_init that also handles setting up for
+   multi-threading.  */
+
+extern void gdb_bfd_init ();
 
 #endif /* GDB_BFD_H */
