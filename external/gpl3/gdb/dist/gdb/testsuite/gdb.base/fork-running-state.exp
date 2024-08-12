@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2023 Free Software Foundation, Inc.
+# Copyright (C) 2016-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,14 +46,9 @@ proc do_test { detach_on_fork follow_fork non_stop schedule_multiple } {
 	 && ([target_info gdb_protocol] == "remote"
 	     || [target_info gdb_protocol] == "extended-remote")} {
 
-	set test "maint show target-non-stop"
-	gdb_test_multiple "maint show target-non-stop" $test {
-	    -re "(is|currently) on.*$gdb_prompt $" {
-	    }
-	    -re "(is|currently) off.*$gdb_prompt $" {
-		unsupported "can't issue info threads while target is running"
-		return 0
-	    }
+	if {![is_target_non_stop]} {
+	    unsupported "can't issue info threads while target is running"
+	    return 0
 	}
     }
 

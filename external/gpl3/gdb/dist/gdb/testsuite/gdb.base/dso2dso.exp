@@ -1,4 +1,4 @@
-# Copyright 2015-2023 Free Software Foundation, Inc.
+# Copyright 2015-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,9 +23,7 @@
 # also happens to exercise an issue with displaced stepping on amd64
 # when libdso1 is mapped at an address greater than 0xffffffff.
 
-if { [skip_shlib_tests] } {
-    return 0
-}
+require allow_shlib_tests
 
 standard_testfile
 

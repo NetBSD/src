@@ -1,4 +1,4 @@
-# Copyright 2015-2023 Free Software Foundation, Inc.
+# Copyright 2015-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,19 +18,13 @@
 # Test the setting of "history size" via $HOME/.gdbinit
 
 # This test depends on being able to set $HOME and $GDBHISTSIZE.
-# We cannot expect remote hosts to see environment variables set on the
-# local machine.
 
 # Do not run if gdb debug is enabled - it interferes with the command history.
-if [gdb_debug_enabled] {
-    untested "debug is enabled"
-    return 0
-}
+require !gdb_debug_enabled
 
-if { [is_remote host] } {
-    unsupported "can't set environment variables on remote host"
-    return -1
-}
+# We cannot expect remote hosts to see environment variables set on the
+# local machine.
+require {!is_remote host}
 
 # Check that the history size is properly set to SIZE when reading the .gdbinit
 # file located in HOME with the environment variable GDBHISTSIZE optionally

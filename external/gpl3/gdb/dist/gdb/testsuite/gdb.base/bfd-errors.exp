@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Free Software Foundation, Inc.
+# Copyright 2022-2024 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -46,9 +46,7 @@
 
 # This test can't be run on targets lacking shared library support
 # or for non-ELF targets.
-if { [skip_shlib_tests] || ![is_elf_target] } {
-    return 0
-}
+require allow_shlib_tests is_elf_target
 
 # Library file names and flags:
 set lib_basename ${::gdb_test_file_name}-lib
@@ -182,4 +180,3 @@ gdb_assert { $more_than_one == 0 } "consolidated bfd errors"
 gdb_assert { [array size bfd_error_count] >= 2 } "print all unique bfd errors"
 
 gdb_exit
-return 0

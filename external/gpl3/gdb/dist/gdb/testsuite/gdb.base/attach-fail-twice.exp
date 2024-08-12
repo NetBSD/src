@@ -1,0 +1,94 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test doing a "attach" that fails, and then another "attach".
+
+require can_spawn_for_attach
+
+standard_testfile
+
+if {[build_executable "failed to build" $testfile $srcfile {debug}]} {
+    return -1
+}
+
+set test_spawn_id [spawn_wait_for_attach $binfile]
+set testpid [spawn_id_get_pid $test_spawn_id]
+
+# Test an attach that fails.
+
+proc test_bad_attach {test} {
+    global testpid gdb_prompt
+
+    set boguspid 0
+    if { [istarget "*-*-*bsd*"] } {
+	# In FreeBSD 5.0, PID 0 is used for "swapper".  Use -1 instead
+	# (which should have the desired effect on any version of
+	# FreeBSD, and probably other *BSD's too).
+	set boguspid -1
+    }
+    gdb_test_multiple "attach $boguspid" $test {
+	-re "Attaching to.*, process $boguspid.*No such process.*$gdb_prompt $" {
+	    # Response expected on ptrace-based systems (i.e. GNU/Linux).
+	    pass "$test"
+	}
+	-re "Attaching to.*, process $boguspid.*denied.*$gdb_prompt $" {
+	    pass "$gdb_test_name"
+	}
+	-re "Attaching to.*, process $boguspid.*not permitted.*$gdb_prompt $" {
+	    pass "$gdb_test_name"
+	}
+	-re "Attaching to.*, process .*couldn't open /proc file.*$gdb_prompt $" {
+	    # Response expected from /proc-based systems.
+	    pass "$gdb_test_name"
+	}
+	-re "Can't attach to process..*$gdb_prompt $" {
+	    # Response expected on Windows.
+	    pass "$gdb_test_name"
+	}
+	-re "Attaching to.*, process $boguspid.*failed.*$gdb_prompt $" {
+	    # Response expected on the extended-remote target.
+	    pass "$gdb_test_name"
+	}
+    }
+}
+
+# Test an attach that succeeds.
+
+proc test_good_attach {test} {
+    gdb_test "attach $::testpid" \
+	"Attaching to program.*, process $::testpid.*" \
+	"$test"
+
+    set thread_count [get_valueof "" "\$_inferior_thread_count" -1]
+    gdb_assert {$thread_count > 0} \
+	"attached"
+}
+
+proc_with_prefix test {} {
+    clean_restart $::binfile
+
+    # GDB used to have a bug on Windows where failing to attach once
+    # made a subsequent "attach" or "run" hang.  So it's important for
+    # this regression test that we try to attach more than once.
+
+    test_bad_attach "bad attach 1"
+    test_bad_attach "bad attach 2"
+
+    # For good measure, test that we can attach to something after
+    # failing to attach previously.
+    test_good_attach "good attach"
+}
+
+test

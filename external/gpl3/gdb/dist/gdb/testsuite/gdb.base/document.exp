@@ -1,4 +1,4 @@
-# Copyright 1998-2023 Free Software Foundation, Inc.
+# Copyright 1998-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,3 +32,13 @@ gdb_test "help do-document" "usage: do-document" "invoke help do-document"
 # Test that document of a non-existing command prints an error.  There
 # was a regression at one point causing this to crash.
 gdb_test "document nosuchcommand" "Undefined command: \"nosuchcommand\"\\."
+
+# Test that document of an ambiguous command prints an error.
+foreach_with_prefix cmd {1 2} {
+    gdb_test_multiple "define ambiguous_command_$cmd" "" {
+	-re "Type commands for definition of \"ambiguous_command_$cmd\".\r\nEnd with a line saying just \"end\".\r\n>$" {
+	    gdb_test "end" "" "define ambiguous_command_$cmd"
+	}
+    }
+}
+gdb_test "document ambiguous_command" "Ambiguous command: \"ambiguous_command\"."

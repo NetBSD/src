@@ -1,4 +1,4 @@
-#   Copyright 1988-2023 Free Software Foundation, Inc.
+#   Copyright 1988-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,17 +17,22 @@
 # test special commands (if, while, etc)
 #
 
-# The skip_hw_watchpoint_tests checks if watchpoints are supported by the
+# The allow_hw_watchpoint_tests checks if watchpoints are supported by the
 # processor.  On PowerPC, the check runs a small test program under gdb
 # to determine if the Power processor supports HW watchpoints.  The check
 # must be done before starting the test so as to not disrupt the execution
 # of the actual test.
 
-set skip_hw_watchpoint_tests_p [skip_hw_watchpoint_tests]
+set allow_hw_watchpoint_tests_p [allow_hw_watchpoint_tests]
 
-standard_testfile
+standard_testfile run.c
 
-if { [prepare_for_testing "failed to prepare" commands run.c {debug additional_flags=-DFAKEARGV}] } {
+set flags {}
+lappend flags debug
+lappend flags additional_flags=-DFAKEARGV
+lappend_include_file flags $srcdir/lib/unbuffer_output.c
+
+if { [prepare_for_testing "failed to prepare" $testfile $srcfile $flags] } {
     return -1
 }
 
@@ -550,10 +555,10 @@ proc_with_prefix user_defined_command_manyargs_test {} {
 
 proc_with_prefix watchpoint_command_test {} {
     global gdb_prompt
-    global skip_hw_watchpoint_tests_p
+    global allow_hw_watchpoint_tests_p
 
     # Disable hardware watchpoints if necessary.
-    if {$skip_hw_watchpoint_tests_p} {
+    if {!$allow_hw_watchpoint_tests_p} {
 	gdb_test_no_output "set can-use-hw-watchpoints 0" ""
     }
 
@@ -720,7 +725,7 @@ maintenance deprecate set qqq_aaa"
 
 proc_with_prefix deprecated_command_alias_help_test {} {
     gdb_test_multiline "define real_command" \
-	"define real_command" "End with a line saying just \"end\".." \
+	"define real_command" "End with a line saying just \"end\"\\." \
 	"print 1" "" \
 	"end" ""
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2023 Free Software Foundation, Inc.
+# Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,13 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if {[skip_shlib_tests]} {
-    return 0
-}
-
-if {[skip_ifunc_tests]} {
-    return 0
-}
+require allow_shlib_tests allow_ifunc_tests
 
 standard_testfile .c
 set staticexecutable ${testfile}-static
@@ -287,7 +281,7 @@ proc misc_tests {resolver_attr resolver_debug final_debug} {
 
     # Also test a former patch regression:
     # Continuing.
-    # Error in testing breakpoint condition:
+    # Error in testing condition for breakpoint NUM:
     # Attempt to take address of value not located in memory.
     #
     # Breakpoint 2, main () at ./gdb.base/gnu-ifunc.c:33

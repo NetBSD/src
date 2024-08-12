@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 1993-2023 Free Software Foundation, Inc.
+   Copyright 1993-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -646,15 +646,12 @@ Outer Outer::instance;
 int
 main()
 {
+  int Foo::* pmi = &Foo::y;
+
   dummy();
   inheritance1 ();
   inheritance3 ();
   enums1 ();
-
-  /* FIXME: pmi gets optimized out.  Need to do some more computation with
-     it or something.  (No one notices, because the test is xfail'd anyway,
-     but that probably won't always be true...).  */
-  int Foo::* pmi = &Foo::y;
 
   /* Make sure the AIX linker doesn't remove the variable.  */
   v_tagless.one = 5;

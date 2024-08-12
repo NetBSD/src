@@ -1,4 +1,4 @@
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 #
 # test running programs
 #
-if { [skip_cplus_tests] } { continue }
+require allow_cplus_tests
 
 standard_testfile .cc
 
@@ -48,10 +48,10 @@ proc set_breakpoint_on_gcd_function {} {
 
 set_breakpoint_on_gcd_function
 
-set saved_gdbflags $GDBFLAGS
-set GDBFLAGS "$GDBFLAGS --readnow"
-clean_restart ${testfile}
-set GDBFLAGS $saved_gdbflags
+save_vars { GDBFLAGS } {
+    set GDBFLAGS "$GDBFLAGS --readnow"
+    clean_restart ${testfile}
+}
 
 with_test_prefix "readnow" {
     set_breakpoint_on_gcd_function

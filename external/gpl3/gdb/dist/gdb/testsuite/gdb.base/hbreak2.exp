@@ -1,4 +1,4 @@
-#   Copyright 1988-2023 Free Software Foundation, Inc.
+#   Copyright 1988-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -228,7 +228,7 @@ gdb_test "continue" \
     "continue to hardware breakpoint at }"
 
 #
-# Delete all breakpoints so we can start over, course this can be a test too.
+# Delete all breakpoints, watchpoints, tracepoints, and catchpoints so we can start over, course this can be a test too.
 #
 delete_breakpoints
 
