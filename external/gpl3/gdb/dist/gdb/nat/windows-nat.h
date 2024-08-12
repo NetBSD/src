@@ -1,5 +1,5 @@
 /* Internal interfaces for the Windows code
-   Copyright (C) 1995-2023 Free Software Foundation, Inc.
+   Copyright (C) 1995-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,7 +23,7 @@
 #include <psapi.h>
 #include <vector>
 
-#include "gdbsupport/gdb_optional.h"
+#include <optional>
 #include "target/waitstatus.h"
 
 #define STATUS_WX86_BREAKPOINT 0x4000001F
@@ -246,7 +246,7 @@ struct windows_process_info
      remove it from the list of pending stops, set 'current_event', and
      return it.  Otherwise, return an empty optional.  */
 
-  gdb::optional<pending_stop> fetch_pending_stop (bool debug_events);
+  std::optional<pending_stop> fetch_pending_stop (bool debug_events);
 
   const char *pid_to_exec_file (int);
 

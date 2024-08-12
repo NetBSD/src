@@ -1,4 +1,4 @@
-/* Copyright (C) 1986-2023 Free Software Foundation, Inc.
+/* Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "regcache.h"
 #include "gdbsupport/def-vector.h"
 #include "valprint.h"
@@ -24,6 +23,7 @@
 #include "reggroups.h"
 #include "target.h"
 #include "gdbarch.h"
+#include "inferior.h"
 
 /* Dump registers from regcache, used for dumping raw registers and
    cooked registers.  */
@@ -56,7 +56,7 @@ protected:
 	    if (size == 0)
 	      return;
 
-	    gdb::def_vector<gdb_byte> buf (size);
+	    gdb::byte_vector buf (size);
 	    auto status = m_regcache->cooked_read (regnum, buf.data ());
 
 	    if (status == REG_UNKNOWN)
@@ -232,9 +232,9 @@ regcache_print (const char *args, enum regcache_dump_what what_to_dump)
   gdbarch *gdbarch;
 
   if (target_has_registers ())
-    gdbarch = get_current_regcache ()->arch ();
+    gdbarch = get_thread_regcache (inferior_thread ())->arch ();
   else
-    gdbarch = target_gdbarch ();
+    gdbarch = current_inferior ()->arch ();
 
   switch (what_to_dump)
     {
@@ -253,15 +253,15 @@ regcache_print (const char *args, enum regcache_dump_what what_to_dump)
 	auto dump_pseudo = (what_to_dump == regcache_dump_cooked);
 
 	if (target_has_registers ())
-	  dump.reset (new register_dump_regcache (get_current_regcache (),
+	  dump.reset (new register_dump_regcache (get_thread_regcache
+						    (inferior_thread ()),
 						  dump_pseudo));
 	else
 	  {
 	    /* For the benefit of "maint print registers" & co when
 	       debugging an executable, allow dumping a regcache even when
 	       there is no thread selected / no registers.  */
-	    dump.reset (new register_dump_reg_buffer (target_gdbarch (),
-						      dump_pseudo));
+	    dump.reset (new register_dump_reg_buffer (gdbarch, dump_pseudo));
 	  }
       }
       break;

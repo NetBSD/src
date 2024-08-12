@@ -1,6 +1,6 @@
 /* Maintenance commands for testing the options framework.
 
-   Copyright (C) 2019-2023 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "cli/cli-option.h"
 
 /* This file defines three "maintenance test-options" subcommands to
@@ -61,13 +60,15 @@
    available kinds of commands (boolean, enum, flag, string, uinteger):
 
     (gdb) maint test-options require-delimiter -[TAB]
-    -bool      -enum      -flag      -string     -uinteger   -xx1       -xx2
+    -bool                -pinteger-unlimited  -xx1
+    -enum                -string              -xx2
+    -flag                -uinteger-unlimited
 
     (gdb) maint test-options require-delimiter -bool o[TAB]
     off  on
     (gdb) maint test-options require-delimiter -enum [TAB]
     xxx  yyy  zzz
-    (gdb) maint test-options require-delimiter -uinteger [TAB]
+    (gdb) maint test-options require-delimiter -uinteger-unlimited [TAB]
     NUMBER     unlimited
 
    '-xx1' and '-xx2' are flag options too.  They exist in order to
@@ -76,14 +77,14 @@
   Invoking the commands makes them print out the options parsed:
 
    (gdb) maint test-options unknown-is-error -flag -enum yyy cmdarg
-   -flag 1 -xx1 0 -xx2 0 -bool 0 -enum yyy -uint 0 -zuint-unl 0 -- cmdarg
+   -flag 1 -xx1 0 -xx2 0 -bool 0 -enum yyy -uint-unl 0 -pint-unl 0 -string '' -- cmdarg
 
    (gdb) maint test-options require-delimiter -flag -enum yyy cmdarg
-   -flag 0 -xx1 0 -xx2 0 -bool 0 -enum xxx -uint 0  -zuint-unl 0 -- -flag -enum yyy cmdarg
+   -flag 0 -xx1 0 -xx2 0 -bool 0 -enum xxx -uint-unl 0 -pint-unl 0 -string '' -- -flag -enum yyy cmdarg
    (gdb) maint test-options require-delimiter -flag -enum yyy cmdarg --
    Unrecognized option at: cmdarg --
    (gdb) maint test-options require-delimiter -flag -enum yyy -- cmdarg
-   -flag 1 -xx1 0 -xx2 0 -bool 0 -enum yyy -uint 0 -zuint-unl 0 -- cmdarg
+   -flag 1 -xx1 0 -xx2 0 -bool 0 -enum yyy -uint-unl 0 -pint-unl 0 -string '' -- cmdarg
 
   The "maint show test-options-completion-result" command exists in
   order to do something similar for completion:
@@ -131,8 +132,8 @@ struct test_options_opts
   bool xx2_opt = false;
   bool boolean_opt = false;
   const char *enum_opt = test_options_enum_values_xxx;
-  unsigned int uint_opt = 0;
-  int zuint_unl_opt = 0;
+  unsigned int uint_unl_opt = 0;
+  int pint_unl_opt = 0;
   std::string string_opt;
 
   test_options_opts () = default;
@@ -145,18 +146,18 @@ struct test_options_opts
   {
     gdb_printf (file,
 		_("-flag %d -xx1 %d -xx2 %d -bool %d "
-		  "-enum %s -uint %s -zuint-unl %s -string '%s' -- %s\n"),
+		  "-enum %s -uint-unl %s -pint-unl %s -string '%s' -- %s\n"),
 		flag_opt,
 		xx1_opt,
 		xx2_opt,
 		boolean_opt,
 		enum_opt,
-		(uint_opt == UINT_MAX
+		(uint_unl_opt == UINT_MAX
 		 ? "unlimited"
-		 : pulongest (uint_opt)),
-		(zuint_unl_opt == -1
+		 : pulongest (uint_unl_opt)),
+		(pint_unl_opt == -1
 		 ? "unlimited"
-		 : plongest (zuint_unl_opt)),
+		 : plongest (pint_unl_opt)),
 		string_opt.c_str (),
 		args);
   }
@@ -203,22 +204,24 @@ static const gdb::option::option_def test_options_option_defs[] = {
     N_("An enum option."),
   },
 
-  /* A uinteger option.  */
+  /* A uinteger + "unlimited" option.  */
   gdb::option::uinteger_option_def<test_options_opts> {
-    "uinteger",
-    [] (test_options_opts *opts) { return &opts->uint_opt; },
+    "uinteger-unlimited",
+    [] (test_options_opts *opts) { return &opts->uint_unl_opt; },
+    uinteger_unlimited_literals,
     nullptr, /* show_cmd_cb */
     N_("A uinteger option."),
     nullptr, /* show_doc */
     N_("A help doc that spawns\nmultiple lines."),
   },
 
-  /* A zuinteger_unlimited option.  */
-  gdb::option::zuinteger_unlimited_option_def<test_options_opts> {
-    "zuinteger-unlimited",
-    [] (test_options_opts *opts) { return &opts->zuint_unl_opt; },
+  /* A pinteger + "unlimited" option.  */
+  gdb::option::pinteger_option_def<test_options_opts> {
+    "pinteger-unlimited",
+    [] (test_options_opts *opts) { return &opts->pint_unl_opt; },
+    pinteger_unlimited_literals,
     nullptr, /* show_cmd_cb */
-    N_("A zuinteger-unlimited option."),
+    N_("A pinteger-unlimited option."),
     nullptr, /* show_doc */
     nullptr, /* help_doc */
   },
