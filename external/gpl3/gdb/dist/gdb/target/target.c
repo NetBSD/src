@@ -1,6 +1,6 @@
 /* String reading
 
-   Copyright (C) 2022-2023 Free Software Foundation, Inc.
+   Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "gdbsupport/common-defs.h"
 #include "target/target.h"
 
 /* Read LEN bytes of target memory at address MEMADDR, placing the
@@ -187,4 +186,16 @@ target_read_string (CORE_ADDR memaddr, int len, int *bytes_read)
     return {};
 
   return gdb::unique_xmalloc_ptr<char> ((char *) buffer.release ());
+}
+
+/* See target/target.h.  */
+
+std::string
+to_string (gdb_thread_options options)
+{
+  static constexpr gdb_thread_options::string_mapping mapping[] = {
+    MAP_ENUM_FLAG (GDB_THREAD_OPTION_CLONE),
+    MAP_ENUM_FLAG (GDB_THREAD_OPTION_EXIT),
+  };
+  return options.to_string (mapping);
 }

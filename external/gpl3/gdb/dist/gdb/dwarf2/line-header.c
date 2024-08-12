@@ -1,6 +1,6 @@
 /* DWARF 2 debugging format support for GDB.
 
-   Copyright (C) 1994-2023 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "dwarf2/comp-unit-head.h"
 #include "dwarf2/leb.h"
 #include "dwarf2/line-header.h"
@@ -160,8 +159,8 @@ read_formatted_entries (dwarf2_per_objfile *per_objfile, bfd *abfd,
 	  ULONGEST form  = read_unsigned_leb128 (abfd, format, &bytes_read);
 	  format += bytes_read;
 
-	  gdb::optional<const char *> string;
-	  gdb::optional<unsigned int> uint;
+	  std::optional<const char *> string;
+	  std::optional<unsigned int> uint;
 
 	  switch (form)
 	    {

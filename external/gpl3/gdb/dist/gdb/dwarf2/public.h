@@ -1,6 +1,6 @@
 /* Public API for gdb DWARF reader
 
-   Copyright (C) 2021-2023 Free Software Foundation, Inc.
+   Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,10 +20,6 @@
 #ifndef DWARF2_PUBLIC_H
 #define DWARF2_PUBLIC_H
 
-extern int dwarf2_has_info (struct objfile *,
-                            const struct dwarf2_debug_sections *,
-			    bool = false);
-
 /* A DWARF names index variant.  */
 enum class dw_index_kind
 {
@@ -34,9 +30,17 @@ enum class dw_index_kind
   DEBUG_NAMES,
 };
 
-/* Initialize for reading DWARF for OBJFILE, and push the appropriate
-   entry on the objfile's "qf" list.  */
-extern void dwarf2_initialize_objfile (struct objfile *objfile);
+/* Try to locate the sections we need for DWARF 2 debugging
+   information.  If these are found, begin reading the DWARF and
+   return true.  Otherwise, return false.  NAMES points to the dwarf2
+   section names, or is NULL if the standard ELF names are used.
+   CAN_COPY is true for formats where symbol interposition is possible
+   and so symbol values must follow copy relocation rules.  */
+
+extern bool dwarf2_initialize_objfile
+     (struct objfile *,
+      const struct dwarf2_debug_sections * = nullptr,
+      bool = false);
 
 extern void dwarf2_build_frame_info (struct objfile *);
 
