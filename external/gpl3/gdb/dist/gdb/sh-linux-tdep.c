@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux Super-H.
 
-   Copyright (C) 2005-2023 Free Software Foundation, Inc.
+   Copyright (C) 2005-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "osabi.h"
 
 #include "solib-svr4.h"
@@ -77,7 +76,7 @@ static const struct sh_corefile_regmap fpregs_table[] =
 /* SH signal handler frame support.  */
 
 static void
-sh_linux_sigtramp_cache (frame_info_ptr this_frame,
+sh_linux_sigtramp_cache (const frame_info_ptr &this_frame,
 			 struct trad_frame_cache *this_cache,
 			 CORE_ADDR func, int regs_offset)
 {
@@ -114,7 +113,7 @@ sh_linux_sigtramp_cache (frame_info_ptr this_frame,
 
 static void
 sh_linux_sigreturn_init (const struct tramp_frame *self,
-			 frame_info_ptr this_frame,
+			 const frame_info_ptr &this_frame,
 			 struct trad_frame_cache *this_cache,
 			 CORE_ADDR func)
 {
@@ -125,7 +124,7 @@ sh_linux_sigreturn_init (const struct tramp_frame *self,
 
 static void
 sh_linux_rt_sigreturn_init (const struct tramp_frame *self,
-			    frame_info_ptr this_frame,
+			    const frame_info_ptr &this_frame,
 			    struct trad_frame_cache *this_cache,
 			    CORE_ADDR func)
 {
