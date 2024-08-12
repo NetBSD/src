@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_extern.c,v 1.1.2.7 2024/08/02 00:16:55 perseant Exp $	*/
+/*	$NetBSD: exfatfs_extern.c,v 1.1.2.8 2024/08/12 22:43:36 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -274,6 +274,7 @@ exfatfs_locate_valid_superblock(struct vnode *devvp, size_t secshift, struct exf
 	/*
 	 * Check both boot blocks and checksums to find a valid one
 	 */
+	last_error = 0;
 	for (boot_offset = 0; boot_offset <= 12; boot_offset += 12) {
 		/* Innocent until proven guilty */
 		badsb = 0;
@@ -362,6 +363,9 @@ exfatfs_locate_valid_superblock(struct vnode *devvp, size_t secshift, struct exf
 
 	if (*fsp)
 		last_error = 0;
+	else if (last_error == 0)
+		last_error = EINVAL;
+
 	return last_error;
 }
 	
@@ -406,15 +410,15 @@ int exfatfs_mountfs_shared(struct vnode *devvp, struct exfatfs_mount *xmp,
 	LIST_INIT(&fs->xf_newxip);
 	fs->xf_devvp = devvp;
 	fs->xf_mp = xmp;
-	if (xmp != NULL) {
-		xmp->xm_fs = fs;
+#ifdef _KERNEL
+	xmp->xm_fs = fs;
 
-		/* If mounting for write, mark the fs dirty */
-		if (!(xmp->xm_flags & EXFATFSMNT_RONLY)) {
-			fs->xf_VolumeFlags |= EXFATFS_VOLUME_DIRTY;
-			exfatfs_write_sb(fs, 0);
-		}
+	/* If mounting for write, mark the fs dirty */
+	if (!(xmp->xm_flags & EXFATFSMNT_RONLY)) {
+		fs->xf_VolumeFlags |= EXFATFS_VOLUME_DIRTY;
+		exfatfs_write_sb(fs, 0);
 	}
+#endif
 	
 	exfatfs_finish_mountfs(fs);
 
@@ -639,33 +643,36 @@ exfatfs_check_bootblock(struct exfatfs *fs)
 	}
 	if (fs->xf_VolumeLength < (1U << (20U - fs->xf_BytesPerSectorShift)))
 		return "VolumeLength is too small";
-	if (fs->xf_FatOffset < 24 || fs->xf_FatOffset
-	    > fs->xf_ClusterHeapOffset
+	if (fs->xf_FatOffset < 24)
+		return "FatOffset is too small";
+ 	if (fs->xf_FatOffset > fs->xf_ClusterHeapOffset
 	    - (fs->xf_FatLength * fs->xf_NumberOfFats))
-		return "FatOffset invalid";
+		return "FatOffset is too large";
 	if (fs->xf_FatLength < ((fs->xf_ClusterCount + 2) * 4)
 	    >> fs->xf_BytesPerSectorShift)
-		return "FatLength %lu is too small";
+		return "FatLength is too small";
 	if (fs->xf_FatLength > (fs->xf_ClusterHeapOffset - fs->xf_FatOffset)
 	    / fs->xf_NumberOfFats)
 		return "FatLength is too large";
 	if (fs->xf_ClusterHeapOffset < fs->xf_FatOffset
 	    + fs->xf_FatLength * fs->xf_NumberOfFats)
 		return "ClusterHeapOffset is too small";
-	if (fs->xf_ClusterHeapOffset > (MIN(~(u_int32_t)0,
-					   fs->xf_VolumeLength)
-					- fs->xf_ClusterCount)
-	    << fs->xf_SectorsPerClusterShift)
+#if 0
+	if (fs->xf_ClusterHeapOffset > ~(u_int32_t)0)
+		return "ClusterHeapOffset impossibly large";
+#endif /* 0 */
+	if (fs->xf_ClusterHeapOffset > fs->xf_VolumeLength
+		- (fs->xf_ClusterCount << fs->xf_SectorsPerClusterShift))
 		return "ClusterHeapOffset is too large";
 	if (fs->xf_ClusterCount < (fs->xf_VolumeLength
 				   - fs->xf_ClusterHeapOffset)
 	    >> fs->xf_SectorsPerClusterShift)
 		return "ClusterCount is too small";
 	if (fs->xf_ClusterCount > ~(u_int32_t)0 - 10)
-		return "ClusterCount is too small";
+		return "ClusterCount is too large";
 	if (fs->xf_FirstClusterOfRootDirectory < 2
 	    || fs->xf_FirstClusterOfRootDirectory > fs->xf_ClusterCount + 1)
-		return "FirstClusterOfRootDriectory is out of bounds";
+		return "FirstClusterOfRootDirectory is out of bounds";
 	if ((fs->xf_FileSystemRevision >> 8) > 99
 	    || (fs->xf_FileSystemRevision & 0xFF) > 99)
 		return "FileSystemRevision out of bounds";
