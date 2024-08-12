@@ -1,5 +1,5 @@
 /* BFD backend for Extended Tektronix Hex Format  objects.
-   Copyright (C) 1992-2022 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support <sac@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -515,7 +515,7 @@ pass_over (bfd *abfd, bool (*func) (bfd *, int, char *, char *))
   bool is_eof = false;
 
   /* To the front of the file.  */
-  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0)
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0)
     return false;
 
   while (! is_eof)
@@ -524,15 +524,15 @@ pass_over (bfd *abfd, bool (*func) (bfd *, int, char *, char *))
       char type;
 
       /* Find first '%'.  */
-      is_eof = (bool) (bfd_bread (src, (bfd_size_type) 1, abfd) != 1);
+      is_eof = bfd_read (src, 1, abfd) != 1;
       while (!is_eof && *src != '%')
-	is_eof = (bool) (bfd_bread (src, (bfd_size_type) 1, abfd) != 1);
+	is_eof = bfd_read (src, 1, abfd) != 1;
 
       if (is_eof)
 	break;
 
       /* Fetch the type and the length and the checksum.  */
-      if (bfd_bread (src, (bfd_size_type) 5, abfd) != 5)
+      if (bfd_read (src, 5, abfd) != 5)
 	return false;
 
       type = src[2];
@@ -546,7 +546,7 @@ pass_over (bfd *abfd, bool (*func) (bfd *, int, char *, char *))
       if (chars_on_line >= MAXCHUNK)
 	return false;
 
-      if (bfd_bread (src, (bfd_size_type) chars_on_line, abfd) != chars_on_line)
+      if (bfd_read (src, chars_on_line, abfd) != chars_on_line)
 	return false;
 
       /* Put a null at the end.  */
@@ -607,8 +607,8 @@ tekhex_object_p (bfd *abfd)
 
   tekhex_init ();
 
-  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0
-      || bfd_bread (b, (bfd_size_type) 4, abfd) != 4)
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0
+      || bfd_read (b, 4, abfd) != 4)
     return NULL;
 
   if (b[0] != '%' || !ISHEX (b[1]) || !ISHEX (b[2]) || !ISHEX (b[3]))
@@ -788,11 +788,11 @@ out (bfd *abfd, int type, char *start, char *end)
   sum += sum_block[(unsigned char) front[2]];
   sum += sum_block[(unsigned char) front[3]];	/* Type.  */
   TOHEX (front + 4, sum);
-  if (bfd_bwrite (front, (bfd_size_type) 6, abfd) != 6)
+  if (bfd_write (front, 6, abfd) != 6)
     abort ();
   end[0] = '\n';
   wrlen = end - start + 1;
-  if (bfd_bwrite (start, wrlen, abfd) != wrlen)
+  if (bfd_write (start, wrlen, abfd) != wrlen)
     abort ();
 }
 
@@ -897,7 +897,7 @@ tekhex_write_object_contents (bfd *abfd)
     }
 
   /* And the terminator.  */
-  if (bfd_bwrite ("%0781010\n", (bfd_size_type) 9, abfd) != 9)
+  if (bfd_write ("%0781010\n", 9, abfd) != 9)
     abort ();
   return true;
 }
@@ -991,7 +991,6 @@ tekhex_print_symbol (bfd *abfd,
 #define tekhex_bfd_copy_link_hash_symbol_type	    _bfd_generic_copy_link_hash_symbol_type
 #define tekhex_bfd_final_link			    _bfd_generic_final_link
 #define tekhex_bfd_link_split_section		    _bfd_generic_link_split_section
-#define tekhex_get_section_contents_in_window	    _bfd_generic_get_section_contents_in_window
 #define tekhex_bfd_link_check_relocs		    _bfd_generic_link_check_relocs
 
 const bfd_target tekhex_vec =
