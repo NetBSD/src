@@ -1,6 +1,6 @@
 /* Target description support for GDB.
 
-   Copyright (C) 2006-2023 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery.
 
@@ -19,9 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "arch-utils.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "gdbtypes.h"
 #include "reggroups.h"
 #include "target.h"
@@ -35,7 +34,7 @@
 #include "inferior.h"
 #include <algorithm>
 #include "completer.h"
-#include "readline/tilde.h" /* tilde_expand */
+#include "readline/tilde.h"
 
 /* Types.  */
 
@@ -116,34 +115,35 @@ make_gdb_type (struct gdbarch *gdbarch, struct tdesc_type *ttype)
       if (m_type != NULL)
 	return;
 
+      type_allocator alloc (m_gdbarch);
       switch (e->kind)
 	{
 	case TDESC_TYPE_IEEE_HALF:
-	  m_type = arch_float_type (m_gdbarch, -1, "builtin_type_ieee_half",
+	  m_type = init_float_type (alloc, -1, "builtin_type_ieee_half",
 				    floatformats_ieee_half);
 	  return;
 
 	case TDESC_TYPE_IEEE_SINGLE:
-	  m_type = arch_float_type (m_gdbarch, -1, "builtin_type_ieee_single",
+	  m_type = init_float_type (alloc, -1, "builtin_type_ieee_single",
 				    floatformats_ieee_single);
 	  return;
 
 	case TDESC_TYPE_IEEE_DOUBLE:
-	  m_type = arch_float_type (m_gdbarch, -1, "builtin_type_ieee_double",
+	  m_type = init_float_type (alloc, -1, "builtin_type_ieee_double",
 				    floatformats_ieee_double);
 	  return;
 	case TDESC_TYPE_ARM_FPA_EXT:
-	  m_type = arch_float_type (m_gdbarch, -1, "builtin_type_arm_ext",
+	  m_type = init_float_type (alloc, -1, "builtin_type_arm_ext",
 				    floatformats_arm_ext);
 	  return;
 
 	case TDESC_TYPE_I387_EXT:
-	  m_type = arch_float_type (m_gdbarch, -1, "builtin_type_i387_ext",
+	  m_type = init_float_type (alloc, -1, "builtin_type_i387_ext",
 				    floatformats_i387_ext);
 	  return;
 
 	case TDESC_TYPE_BFLOAT16:
-	  m_type = arch_float_type (m_gdbarch, -1, "builtin_type_bfloat16",
+	  m_type = init_float_type (alloc, -1, "builtin_type_bfloat16",
 				    floatformats_bfloat16);
 	  return;
 	}
@@ -231,7 +231,7 @@ make_gdb_type (struct gdbarch *gdbarch, struct tdesc_type *ttype)
 		fld->set_loc_bitpos (total_size - f.start - bitsize);
 	      else
 		fld->set_loc_bitpos (f.start);
-	      FIELD_BITSIZE (fld[0]) = bitsize;
+	      fld->set_bitsize (bitsize);
 	    }
 	  else
 	    {
@@ -284,8 +284,9 @@ make_gdb_type (struct gdbarch *gdbarch, struct tdesc_type *ttype)
 
     void make_gdb_type_enum (const tdesc_type_with_fields *e)
     {
-      m_type = arch_type (m_gdbarch, TYPE_CODE_ENUM, e->size * TARGET_CHAR_BIT,
-			  e->name.c_str ());
+      m_type = (type_allocator (m_gdbarch)
+		.new_type (TYPE_CODE_ENUM, e->size * TARGET_CHAR_BIT,
+			   e->name.c_str ()));
 
       m_type->set_is_unsigned (true);
 
@@ -436,44 +437,6 @@ struct tdesc_arch_data
   gdbarch_register_reggroup_p_ftype *pseudo_register_reggroup_p = NULL;
 };
 
-/* Info about an inferior's target description.  There's one of these
-   for each inferior.  */
-
-struct target_desc_info
-{
-  /* A flag indicating that a description has already been fetched
-     from the target, so it should not be queried again.  */
-
-  bool fetched = false;
-
-  /* The description fetched from the target, or NULL if the target
-     did not supply any description.  Only valid when
-     FETCHED is set.  Only the description initialization
-     code should access this; normally, the description should be
-     accessed through the gdbarch object.  */
-
-  const struct target_desc *tdesc = nullptr;
-
-  /* If not empty, the filename to read a target description from, as set by
-     "set tdesc filename ...".
-
-     If empty, there is not filename specified by the user.  */
-
-  std::string filename;
-};
-
-/* Get the inferior INF's target description info, allocating one on
-   the stop if necessary.  */
-
-static struct target_desc_info *
-get_tdesc_info (struct inferior *inf)
-{
-  if (inf->tdesc_info == NULL)
-    inf->tdesc_info = new target_desc_info;
-
-  return inf->tdesc_info;
-}
-
 /* A handle for architecture-specific data associated with the
    target description (see struct tdesc_arch_data).  */
 
@@ -489,33 +452,6 @@ get_arch_data (struct gdbarch *gdbarch)
   return result;
 }
 
-/* See target-descriptions.h.  */
-
-int
-target_desc_info_from_user_p (struct target_desc_info *info)
-{
-  return info != nullptr && !info->filename.empty ();
-}
-
-/* See target-descriptions.h.  */
-
-void
-copy_inferior_target_desc_info (struct inferior *destinf, struct inferior *srcinf)
-{
-  struct target_desc_info *src = get_tdesc_info (srcinf);
-  struct target_desc_info *dest = get_tdesc_info (destinf);
-
-  *dest = *src;
-}
-
-/* See target-descriptions.h.  */
-
-void
-target_desc_info_free (struct target_desc_info *tdesc_info)
-{
-  delete tdesc_info;
-}
-
 /* The string manipulated by the "set tdesc filename ..." command.  */
 
 static std::string tdesc_filename_cmd_string;
@@ -526,7 +462,7 @@ static std::string tdesc_filename_cmd_string;
 void
 target_find_description (void)
 {
-  target_desc_info *tdesc_info = get_tdesc_info (current_inferior ());
+  target_desc_info *tdesc_info = &current_inferior ()->tdesc_info;
 
   /* If we've already fetched a description from the target, don't do
      it again.  This allows a target to fetch the description early,
@@ -538,7 +474,7 @@ target_find_description (void)
   /* The current architecture should not have any target description
      specified.  It should have been cleared, e.g. when we
      disconnected from the previous target.  */
-  gdb_assert (gdbarch_target_desc (target_gdbarch ()) == NULL);
+  gdb_assert (gdbarch_target_desc (current_inferior ()->arch ()) == NULL);
 
   /* First try to fetch an XML description from the user-specified
      file.  */
@@ -565,12 +501,15 @@ target_find_description (void)
 
       info.target_desc = tdesc_info->tdesc;
       if (!gdbarch_update_p (info))
-	warning (_("Architecture rejected target-supplied description"));
+	{
+	  warning (_("Architecture rejected target-supplied description"));
+	  tdesc_info->tdesc = nullptr;
+	}
       else
 	{
 	  struct tdesc_arch_data *data;
 
-	  data = get_arch_data (target_gdbarch ());
+	  data = get_arch_data (current_inferior ()->arch ());
 	  if (tdesc_has_registers (tdesc_info->tdesc)
 	      && data->arch_regs.empty ())
 	    warning (_("Target-supplied registers are not supported "
@@ -589,7 +528,7 @@ target_find_description (void)
 void
 target_clear_description (void)
 {
-  target_desc_info *tdesc_info = get_tdesc_info (current_inferior ());
+  target_desc_info *tdesc_info = &current_inferior ()->tdesc_info;
 
   if (!tdesc_info->fetched)
     return;
@@ -609,7 +548,7 @@ target_clear_description (void)
 const struct target_desc *
 target_current_description (void)
 {
-  target_desc_info *tdesc_info = get_tdesc_info (current_inferior ());
+  target_desc_info *tdesc_info = &current_inferior ()->tdesc_info;
 
   if (tdesc_info->fetched)
     return tdesc_info->tdesc;
@@ -1284,7 +1223,7 @@ static void
 set_tdesc_filename_cmd (const char *args, int from_tty,
 			struct cmd_list_element *c)
 {
-  target_desc_info *tdesc_info = get_tdesc_info (current_inferior ());
+  target_desc_info *tdesc_info = &current_inferior ()->tdesc_info;
 
   tdesc_info->filename = tdesc_filename_cmd_string;
 
@@ -1297,7 +1236,7 @@ show_tdesc_filename_cmd (struct ui_file *file, int from_tty,
 			 struct cmd_list_element *c,
 			 const char *value)
 {
-  value = get_tdesc_info (current_inferior ())->filename.data ();
+  value = current_inferior ()->tdesc_info.filename.data ();
 
   if (value != NULL && *value != '\0')
     gdb_printf (file,
@@ -1312,7 +1251,7 @@ show_tdesc_filename_cmd (struct ui_file *file, int from_tty,
 static void
 unset_tdesc_filename_cmd (const char *args, int from_tty)
 {
-  target_desc_info *tdesc_info = get_tdesc_info (current_inferior ());
+  target_desc_info *tdesc_info = &current_inferior ()->tdesc_info;
 
   tdesc_info->filename.clear ();
   target_clear_description ();
@@ -1359,7 +1298,6 @@ public:
     gdb_printf ("  Original: %s */\n\n",
 		lbasename (m_filename_after_features.c_str ()));
 
-    gdb_printf ("#include \"defs.h\"\n");
     gdb_printf ("#include \"osabi.h\"\n");
     gdb_printf ("#include \"target-descriptions.h\"\n");
     gdb_printf ("\n");
@@ -1768,7 +1706,7 @@ maint_print_c_tdesc_cmd (const char *args, int from_tty)
 	 architecture's.  This lets a GDB for one architecture generate C
 	 for another architecture's description, even though the gdbarch
 	 initialization code will reject the new description.  */
-      target_desc_info *tdesc_info = get_tdesc_info (current_inferior ());
+      target_desc_info *tdesc_info = &current_inferior ()->tdesc_info;
       tdesc = tdesc_info->tdesc;
       filename = tdesc_info->filename.data ();
     }
@@ -1841,7 +1779,7 @@ maint_print_xml_tdesc_cmd (const char *args, int from_tty)
 	 architecture's.  This lets a GDB for one architecture generate XML
 	 for another architecture's description, even though the gdbarch
 	 initialization code will reject the new description.  */
-      tdesc = get_tdesc_info (current_inferior ())->tdesc;
+      tdesc = current_inferior ()->tdesc_info.tdesc;
     }
   else
     {

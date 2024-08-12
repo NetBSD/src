@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -37,11 +37,12 @@ extern void gcore_elf_build_thread_register_notes
    bfd *obfd, gdb::unique_xmalloc_ptr<char> *note_data, int *note_size);
 
 /* Add content to *NOTE_DATA (and update *NOTE_SIZE) to include a note
-   containing the current targtet's target description.  The core file is
+   containing the target description for GDBARCH.  The core file is
    being written to OBFD.  If something goes wrong then *NOTE_DATA can be
    set to nullptr.  */
 
 extern void gcore_elf_make_tdesc_note
-  (bfd *obfd, gdb::unique_xmalloc_ptr<char> *note_data, int *note_size);
+  (struct gdbarch *gdbarch, bfd *obfd,
+   gdb::unique_xmalloc_ptr<char> *note_data, int *note_size);
 
 #endif /* GCORE_ELF_H */

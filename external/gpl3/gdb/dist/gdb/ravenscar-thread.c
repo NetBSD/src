@@ -1,6 +1,6 @@
 /* Ada Ravenscar thread support.
 
-   Copyright (C) 2004-2023 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "gdbcore.h"
 #include "gdbthread.h"
 #include "ada-lang.h"
@@ -26,7 +26,7 @@
 #include "command.h"
 #include "ravenscar-thread.h"
 #include "observable.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "top.h"
 #include "regcache.h"
 #include "objfiles.h"
@@ -127,7 +127,7 @@ struct ravenscar_thread_target final : public target_ops
     process_stratum_target *proc_target
       = as_process_stratum_target (this->beneath ());
     ptid_t underlying = get_base_thread_from_ravenscar_task (tp->ptid);
-    tp = find_thread_ptid (proc_target, underlying);
+    tp = proc_target->find_thread (underlying);
 
     return beneath ()->enable_btrace (tp, conf);
   }
@@ -161,7 +161,7 @@ private:
     process_stratum_target *proc_target
       = as_process_stratum_target (this->beneath ());
     ptid_t underlying = get_base_thread_from_ravenscar_task (ptid);
-    switch_to_thread (find_thread_ptid (proc_target, underlying));
+    switch_to_thread (proc_target->find_thread (underlying));
   }
 
   /* Some targets use lazy FPU initialization.  On these, the FP
@@ -312,7 +312,7 @@ ravenscar_thread_target::add_active_thread ()
   /* The running thread may not have been added to
      system.tasking.debug's list yet; so ravenscar_update_thread_list
      may not always add it to the thread list.  Add it here.  */
-  thread_info *active_thr = find_thread_ptid (proc_target, active_ptid);
+  thread_info *active_thr = proc_target->find_thread (active_ptid);
   if (active_thr == nullptr)
     {
       active_thr = ::add_thread (proc_target, active_ptid);
@@ -383,7 +383,7 @@ get_running_thread_id (int cpu)
   gdb_byte *buf;
   CORE_ADDR object_addr;
   struct type *builtin_type_void_data_ptr
-    = builtin_type (target_gdbarch ())->builtin_data_ptr;
+    = builtin_type (current_inferior ()->arch ())->builtin_data_ptr;
 
   if (!object_msym.minsym)
     return 0;
@@ -452,7 +452,7 @@ ravenscar_thread_target::wait (ptid_t ptid,
 void
 ravenscar_thread_target::add_thread (struct ada_task_info *task)
 {
-  if (find_thread_ptid (current_inferior (), task->ptid) == NULL)
+  if (current_inferior ()->find_thread (task->ptid) == NULL)
     {
       ::add_thread (current_inferior ()->process_target (), task->ptid);
       m_cpu_map[task->ptid.tid ()] = task->base_cpu;
@@ -473,7 +473,7 @@ ravenscar_thread_target::update_thread_list ()
      (m_base_ptid) and the running thread, that may not have been included
      to system.tasking.debug's list yet.  */
 
-  iterate_over_live_ada_tasks ([=] (struct ada_task_info *task)
+  iterate_over_live_ada_tasks ([this] (struct ada_task_info *task)
 			       {
 				 this->add_thread (task);
 			       });
@@ -648,7 +648,8 @@ ravenscar_thread_target::get_fpu_state (struct regcache *regcache,
   if (fpu_context.minsym == nullptr)
     return NO_FP_REGISTERS;
 
-  struct type *ptr_type = builtin_type (target_gdbarch ())->builtin_data_ptr;
+  type *ptr_type
+    = builtin_type (current_inferior ()->arch ())->builtin_data_ptr;
   ptr_type = lookup_pointer_type (ptr_type);
   value *val = value_from_pointer (ptr_type, fpu_context.value_address ());
 
@@ -684,7 +685,7 @@ ravenscar_thread_target::fetch_registers (struct regcache *regcache,
       struct gdbarch *gdbarch = regcache->arch ();
       bool is_active = task_is_currently_active (ptid);
       struct ravenscar_arch_ops *arch_ops = gdbarch_ravenscar_ops (gdbarch);
-      gdb::optional<fpu_state> fp_state;
+      std::optional<fpu_state> fp_state;
 
       int low_reg = regnum == -1 ? 0 : regnum;
       int high_reg = regnum == -1 ? gdbarch_num_regs (gdbarch) : regnum + 1;
@@ -730,7 +731,7 @@ ravenscar_thread_target::store_registers (struct regcache *regcache,
       struct gdbarch *gdbarch = regcache->arch ();
       bool is_active = task_is_currently_active (ptid);
       struct ravenscar_arch_ops *arch_ops = gdbarch_ravenscar_ops (gdbarch);
-      gdb::optional<fpu_state> fp_state;
+      std::optional<fpu_state> fp_state;
 
       int low_reg = regnum == -1 ? 0 : regnum;
       int high_reg = regnum == -1 ? gdbarch_num_regs (gdbarch) : regnum + 1;
@@ -874,7 +875,7 @@ ravenscar_inferior_created (inferior *inf)
   const char *err_msg;
 
   if (!ravenscar_task_support
-      || gdbarch_ravenscar_ops (target_gdbarch ()) == NULL
+      || gdbarch_ravenscar_ops (current_inferior ()->arch ()) == NULL
       || !has_ravenscar_runtime ())
     return;
 
