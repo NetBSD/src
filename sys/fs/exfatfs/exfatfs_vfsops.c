@@ -1,4 +1,4 @@
-/* $NetBSD: exfatfs_vfsops.c,v 1.1.2.6 2024/08/02 00:16:55 perseant Exp $ */
+/* $NetBSD: exfatfs_vfsops.c,v 1.1.2.7 2024/08/12 22:28:04 perseant Exp $ */
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_vfsops.c,v 1.1.2.6 2024/08/02 00:16:55 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_vfsops.c,v 1.1.2.7 2024/08/12 22:28:04 perseant Exp $");
 
 struct vm_page;
 
@@ -91,7 +91,6 @@ MALLOC_JUSTDEFINE(M_EXFATFSTMP, "EXFATFS temp", "EXFAT FS temp. structures");
 
 static struct sysctllog *exfatfs_sysctl_log;
 struct pool exfatfs_xfinode_pool;
-struct pool exfatfs_bitmap_pool;
 struct pool exfatfs_dirent_pool;
 extern const struct vnodeopv_desc exfatfs_vnodeop_opv_desc;
 
@@ -196,7 +195,6 @@ exfatfs_init(void)
   	pool_init(&exfatfs_xfinode_pool, sizeof(struct xfinode), 0, 0, 0,
 	    "exfatfsinopl", &pool_allocator_nointr, IPL_NONE);
 	pool_sethiwat(&exfatfs_xfinode_pool, 1);
-	pool_sethiwat(&exfatfs_bitmap_pool, 1);
   	pool_init(&exfatfs_dirent_pool, sizeof(struct exfatfs_dirent), 0, 0, 0,
 	    "exfatfsdirentpl", &pool_allocator_nointr, IPL_NONE);
 	pool_sethiwat(&exfatfs_dirent_pool, 1);
