@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2020 Free Software Foundation, Inc.
+Copyright (C) 1996-2023 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -25,7 +25,7 @@ This file is part of the GNU simulators.
 #include "sim-main.h"
 #include "bfd.h"
 
-const SIM_MACH *sim_machs[] =
+const SIM_MACH * const bpf_sim_machs[] =
 {
 #ifdef HAVE_CPU_BPFBF
   & bpf_mach,

@@ -1,5 +1,5 @@
 /* Remote utility routines for the remote server for GDB.
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -41,13 +41,21 @@ void enable_async_io (void);
 void disable_async_io (void);
 void check_remote_input_interrupt_request (void);
 void prepare_resume_reply (char *buf, ptid_t ptid,
-			   struct target_waitstatus *status);
+			   const target_waitstatus &status);
 
 const char *decode_address_to_semicolon (CORE_ADDR *addrp, const char *start);
 void decode_address (CORE_ADDR *addrp, const char *start, int len);
-void decode_m_packet (char *from, CORE_ADDR * mem_addr_ptr,
+
+/* Given an input string FROM, decode MEM_ADDR_PTR, a memory address in hex
+   form,  and LEN_PTR, a length argument in hex form, from the pattern
+   "<MEM_ADDR_PTR>,<LEN_PTR><END_MARKER>", with END_MARKER being an end marker
+   character.  */
+const char *decode_m_packet_params (const char *from, CORE_ADDR *mem_addr_ptr,
+				    unsigned int *len_ptr,
+				    const char end_marker);
+void decode_m_packet (const char *from, CORE_ADDR * mem_addr_ptr,
 		      unsigned int *len_ptr);
-void decode_M_packet (char *from, CORE_ADDR * mem_addr_ptr,
+void decode_M_packet (const char *from, CORE_ADDR * mem_addr_ptr,
 		      unsigned int *len_ptr, unsigned char **to_p);
 int decode_X_packet (char *from, int packet_len, CORE_ADDR * mem_addr_ptr,
 		     unsigned int *len_ptr, unsigned char **to_p);

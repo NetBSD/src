@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# Copyright (C) 2020 Free Software Foundation, Inc.
+# Copyright (C) 2020-2023 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -29,14 +29,14 @@
 
 if [ $# -ne 1 ]; then
    echo "Error: Path to syscall.h missing. Aborting."
-   echo "Usage: update-gnulib.sh <path-to-syscall.h>"
+   echo "Usage: update-netbsd.sh <path-to-syscall.h>"
    exit 1
 fi
 
 cat > netbsd.xml.tmp <<EOF
 <?xml version="1.0"?> <!-- THIS FILE IS GENERATED -*- buffer-read-only: t -*-  -->
 <!-- vi:set ro: -->
-<!-- Copyright (C) 2020 Free Software Foundation, Inc.
+<!-- Copyright (C) 2020-2023 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright

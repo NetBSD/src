@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2019-2020 Free Software Foundation, Inc.
+   Copyright 2019-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -35,4 +35,4 @@ tree_check (tree *t, int i)
     abort();
   tree *x = t;
   return x;
-}
+} // tree_check

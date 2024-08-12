@@ -1,6 +1,6 @@
 # Simulator main loop for or1k. -*- C -*-
 #
-# Copyright (C) 2017-2020 Free Software Foundation, Inc.
+# Copyright (C) 2017-2023 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Simulators.
 #
@@ -42,6 +42,7 @@ case "x$1" in
 xsupport)
 
 cat <<EOF
+#include <stdlib.h>
 
 static INLINE const IDESC *
 extract (SIM_CPU *current_cpu, PCADDR pc, CGEN_INSN_INT insn,

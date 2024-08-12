@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2020 Free Software Foundation, Inc.
+# Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,14 +18,22 @@
 
 import gdb
 
-class PointPrinter (object):
-    def __init__ (self, val):
+saved_options = {}
+
+
+class PointPrinter(object):
+    def __init__(self, val):
         self.val = val
 
-    def to_string (self):
-        return 'Pretty Point (%s, %s)' % (self.val['x'], self.val['y'])
+    def to_string(self):
+        global saved_options
+        saved_options = gdb.print_options()
+        if saved_options["summary"]:
+            return "No Data"
+        return "Pretty Point (%s, %s)" % (self.val["x"], self.val["y"])
 
-def test_lookup_function (val):
+
+def test_lookup_function(val):
     "Look-up and return a pretty-printer that can print val."
 
     # Get the type.
@@ -33,17 +41,18 @@ def test_lookup_function (val):
 
     # If it points to a reference, get the reference.
     if type.code == gdb.TYPE_CODE_REF:
-        type = type.target ()
+        type = type.target()
 
     # Get the unqualified type, stripped of typedefs.
-    type = type.unqualified ().strip_typedefs ()
+    type = type.unqualified().strip_typedefs()
 
     # Get the type name.
     typename = type.tag
 
-    if typename == 'point':
-        return PointPrinter (val)
+    if typename == "point":
+        return PointPrinter(val)
 
     return None
 
-gdb.pretty_printers.append (test_lookup_function)
+
+gdb.pretty_printers.append(test_lookup_function)

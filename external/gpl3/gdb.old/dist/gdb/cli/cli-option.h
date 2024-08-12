@@ -1,6 +1,6 @@
 /* CLI options framework, for GDB.
 
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -86,7 +86,7 @@ public:
       unsigned int *(*uinteger) (const option_def &, void *ctx);
       int *(*integer) (const option_def &, void *ctx);
       const char **(*enumeration) (const option_def &, void *ctx);
-      char **(*string) (const option_def &, void *ctx);
+      std::string *(*string) (const option_def &, void *ctx);
     }
   var_address;
 
@@ -268,7 +268,7 @@ template<typename Context>
 struct string_option_def : option_def
 {
   string_option_def (const char *long_option_,
-		     char **(*get_var_address_cb_) (Context *),
+		     std::string *(*get_var_address_cb_) (Context *),
 		     show_value_ftype *show_cmd_cb_,
 		     const char *set_doc_,
 		     const char *show_doc_ = nullptr,

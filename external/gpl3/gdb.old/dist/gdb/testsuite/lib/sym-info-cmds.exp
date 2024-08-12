@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -163,6 +163,16 @@ namespace eval GDBInfoSymbols {
 	gdb_assert {[regexp -- $pattern $_header]} $testname
     }
 
+    # Call check_entry_1 with OPTIONAL == 0.
+    proc check_entry { filename lineno text { testname "" } } {
+	check_entry_1 $filename $lineno $text 0 $testname
+    }
+
+    # Call check_entry_1 with OPTIONAL == 1.
+    proc check_optional_entry { filename lineno text { testname "" } } {
+	check_entry_1 $filename $lineno $text 1 $testname
+    }
+
     # Check that we have an entry in _entries matching FILENAME,
     # LINENO, and TEXT.  If LINENO is the empty string it is replaced
     # with the string NONE in order to match a similarly missing line
@@ -174,7 +184,7 @@ namespace eval GDBInfoSymbols {
     # If a matching entry is found then it is removed from the
     # _entries list, this allows us to check for duplicates using the
     # check_no_entry call.
-    proc check_entry { filename lineno text { testname "" } } {
+    proc check_entry_1 { filename lineno text optional testname } {
 	variable _entries
 	variable _last_command
 
@@ -209,7 +219,11 @@ namespace eval GDBInfoSymbols {
 	}
 
 	set _entries $new_entries
-	gdb_assert { $found_match } $testname
+	if { $optional && ! $found_match } {
+	    unsupported $testname
+	} else {
+	    gdb_assert { $found_match } $testname
+	}
     }
 
     # Check that there is no entry in the _entries list matching

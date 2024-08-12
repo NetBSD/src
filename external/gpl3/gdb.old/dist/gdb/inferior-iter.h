@@ -1,6 +1,6 @@
 /* Inferior iterators and ranges for GDB, the GNU debugger.
 
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,18 +36,21 @@ public:
   typedef int difference_type;
 
   /* Create an iterator pointing at HEAD.  */
-  all_inferiors_iterator (process_stratum_target *proc_target, inferior *head)
-    : m_proc_target (proc_target)
+  all_inferiors_iterator (process_stratum_target *proc_target,
+			  const intrusive_list<inferior> &list)
+    : m_proc_target (proc_target), m_inf_iter (list.begin ())
   {
+    intrusive_list<inferior>::iterator end;
+
     /* Advance M_INF to the first inferior's position.  */
-    for (m_inf = head; m_inf != NULL; m_inf = m_inf->next)
+    for (; m_inf_iter != end; ++m_inf_iter)
       if (m_inf_matches ())
 	return;
   }
 
   /* Create a one-past-end iterator.  */
   all_inferiors_iterator ()
-    : m_proc_target (nullptr), m_inf (nullptr)
+    : m_proc_target (nullptr)
   {}
 
   all_inferiors_iterator &operator++ ()
@@ -57,38 +60,45 @@ public:
   }
 
   inferior *operator* () const
-  { return m_inf; }
+  { return &*m_inf_iter; }
 
   bool operator!= (const all_inferiors_iterator &other) const
-  { return m_inf != other.m_inf; }
+  { return m_inf_iter != other.m_inf_iter; }
 
 private:
   /* Advance to next inferior, skipping filtered inferiors.  */
   void advance ()
   {
+    intrusive_list<inferior>::iterator end;
+
     /* The loop below is written in the natural way as-if we'd always
        start at the beginning of the inferior list.  This
        fast-forwards the algorithm to the actual current position.  */
     goto start;
 
-    while (m_inf != NULL)
+    while (m_inf_iter != end)
       {
 	if (m_inf_matches ())
 	  return;
       start:
-	m_inf = m_inf->next;
+	++m_inf_iter;
       }
   }
 
   bool m_inf_matches ()
   {
     return (m_proc_target == nullptr
-	    || m_proc_target == m_inf->process_target ());
+	    || m_proc_target == m_inf_iter->process_target ());
   }
 
   process_stratum_target *m_proc_target;
-  inferior *m_inf;
+  intrusive_list<inferior>::iterator m_inf_iter;
 };
+
+/* A range adapter that makes it possible to iterate over all
+   inferiors with range-for.  */
+
+using all_inferiors_range = iterator_range<all_inferiors_iterator>;
 
 /* Filter for filtered_iterator.  Filters out exited inferiors.  */
 
@@ -106,21 +116,10 @@ using all_non_exited_inferiors_iterator
   = filtered_iterator<all_inferiors_iterator, exited_inferior_filter>;
 
 /* A range adapter that makes it possible to iterate over all
-   inferiors with range-for.  */
-struct all_inferiors_range
-{
-  all_inferiors_range (process_stratum_target *proc_target = nullptr)
-    : m_filter_target (proc_target)
-  {}
+   non-exited inferiors with range-for.  */
 
-  all_inferiors_iterator begin () const
-  { return all_inferiors_iterator (m_filter_target, inferior_list); }
-  all_inferiors_iterator end () const
-  { return all_inferiors_iterator (); }
-
-private:
-  process_stratum_target *m_filter_target;
-};
+using all_non_exited_inferiors_range
+  = iterator_range<all_non_exited_inferiors_iterator>;
 
 /* Iterate over all inferiors, safely.  */
 
@@ -131,51 +130,6 @@ using all_inferiors_safe_iterator
    inferiors with range-for "safely".  I.e., it is safe to delete the
    currently-iterated inferior.  */
 
-struct all_inferiors_safe_range
-{
-  explicit all_inferiors_safe_range (process_stratum_target *filter_target)
-    : m_filter_target (filter_target)
-  {}
-
-  all_inferiors_safe_range ()
-    : m_filter_target (nullptr)
-  {}
-
-  all_inferiors_safe_iterator begin () const
-  {
-    return (all_inferiors_safe_iterator
-	    (all_inferiors_iterator (m_filter_target, inferior_list)));
-  }
-
-  all_inferiors_safe_iterator end () const
-  { return all_inferiors_safe_iterator (); }
-
-private:
-  /* The filter.  */
-  process_stratum_target *m_filter_target;
-};
-
-/* A range adapter that makes it possible to iterate over all
-   non-exited inferiors with range-for.  */
-
-struct all_non_exited_inferiors_range
-{
-  explicit all_non_exited_inferiors_range (process_stratum_target *filter_target)
-    : m_filter_target (filter_target)
-  {}
-
-  all_non_exited_inferiors_range ()
-    : m_filter_target (nullptr)
-  {}
-
-  all_non_exited_inferiors_iterator begin () const
-  { return all_non_exited_inferiors_iterator (m_filter_target, inferior_list); }
-  all_non_exited_inferiors_iterator end () const
-  { return all_non_exited_inferiors_iterator (); }
-
-private:
-  /* The filter.  */
-  process_stratum_target *m_filter_target;
-};
+using all_inferiors_safe_range = iterator_range<all_inferiors_safe_iterator>;
 
 #endif /* !defined (INFERIOR_ITER_H) */

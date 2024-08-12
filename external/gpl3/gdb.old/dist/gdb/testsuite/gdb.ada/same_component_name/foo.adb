@@ -1,4 +1,4 @@
---  Copyright 2017-2020 Free Software Foundation, Inc.
+--  Copyright 2017-2023 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@ procedure Foo is
    B  : Bottom_T;
    M  : Middle_T;
    DM : Dyn_Middle_T (24);
+   DMA : Dyn_Middle_A := new Dyn_Middle_T (24);
 begin
    Assign (Top_T (B), 12);
    Assign (B, 10.0);
@@ -33,4 +34,6 @@ begin
 
    Assign (Dyn_Top_T (DM), 12);
    Assign (DM, 'V');
+
+   Do_Nothing(DMA'Address); -- STOP
 end Foo;

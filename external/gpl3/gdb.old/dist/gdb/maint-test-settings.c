@@ -1,6 +1,6 @@
 /* Maintenance commands for testing the settings framework.
 
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -44,13 +44,13 @@ static unsigned int maintenance_test_settings_zuinteger;
 
 static int maintenance_test_settings_zuinteger_unlimited;
 
-static char *maintenance_test_settings_string;
+static std::string maintenance_test_settings_string;
 
-static char *maintenance_test_settings_string_noescape;
+static std::string maintenance_test_settings_string_noescape;
 
-static char *maintenance_test_settings_optional_filename;
+static std::string maintenance_test_settings_optional_filename;
 
-static char *maintenance_test_settings_filename;
+static std::string maintenance_test_settings_filename;
 
 /* Enum values for the "maintenance set/show test-settings boolean"
    commands.  */
@@ -75,7 +75,7 @@ maintenance_show_test_settings_value_cmd
   (struct ui_file *file, int from_tty,
    struct cmd_list_element *c, const char *value)
 {
-  fprintf_filtered (file, (("%s\n")), value);
+  gdb_printf (file, (("%s\n")), value);
 }
 
 
@@ -83,23 +83,16 @@ void _initialize_maint_test_settings ();
 void
 _initialize_maint_test_settings ()
 {
-  maintenance_test_settings_filename = xstrdup ("/foo/bar");
+  maintenance_test_settings_filename = "/foo/bar";
 
-  add_basic_prefix_cmd ("test-settings", class_maintenance,
-			_("\
+  add_setshow_prefix_cmd ("test-settings", class_maintenance,
+			  _("\
 Set GDB internal variables used for set/show command infrastructure testing."),
-			&maintenance_set_test_settings_list,
-			"maintenance set test-settings ",
-			0/*allow-unknown*/,
-			&maintenance_set_cmdlist);
-
-  add_show_prefix_cmd ("test-settings", class_maintenance,
-		       _("\
+			  _("\
 Show GDB internal variables used for set/show command infrastructure testing."),
-		       &maintenance_show_test_settings_list,
-		       "maintenance show test-settings ",
-		       0/*allow-unknown*/,
-		       &maintenance_show_cmdlist);
+			  &maintenance_set_test_settings_list,
+			  &maintenance_show_test_settings_list,
+			  &maintenance_set_cmdlist, &maintenance_show_cmdlist);
 
   add_setshow_boolean_cmd ("boolean", class_maintenance,
 			   &maintenance_test_settings_boolean, _("\

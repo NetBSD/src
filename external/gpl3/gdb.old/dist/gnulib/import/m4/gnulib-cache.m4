@@ -1,8 +1,8 @@
-# Copyright (C) 2002-2020 Free Software Foundation, Inc.
+# Copyright (C) 2002-2022 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # This file is distributed in the hope that it will be useful,
@@ -38,37 +38,51 @@
 #  --no-libtool \
 #  --macro-prefix=gl \
 #  --no-vc-files \
+#  accept \
 #  alloca \
+#  bind \
 #  canonicalize-lgpl \
+#  chown \
+#  connect \
 #  count-one-bits \
 #  dirent \
 #  dirfd \
 #  errno \
+#  ffs \
 #  fnmatch-gnu \
 #  frexpl \
+#  gendocs \
 #  getcwd \
+#  getline \
 #  gettimeofday \
+#  gitlog-to-changelog \
 #  glob \
 #  inet_ntop \
 #  inttypes \
 #  limits-h \
+#  listen \
 #  lstat \
 #  memchr \
 #  memmem \
 #  mkdir \
 #  mkdtemp \
 #  mkostemp \
+#  netdb \
 #  pathmax \
 #  rawmemchr \
 #  readlink \
 #  rename \
+#  select \
 #  setenv \
+#  setsockopt \
 #  signal-h \
+#  socket \
 #  strchrnul \
 #  strerror_r-posix \
 #  strstr \
 #  strtok_r \
 #  sys_stat \
+#  sys_wait \
 #  time_r \
 #  unistd \
 #  unsetenv \
@@ -79,37 +93,51 @@
 # Specification in the form of a few gnulib-tool.m4 macro invocations:
 gl_LOCAL_DIR([])
 gl_MODULES([
+  accept
   alloca
+  bind
   canonicalize-lgpl
+  chown
+  connect
   count-one-bits
   dirent
   dirfd
   errno
+  ffs
   fnmatch-gnu
   frexpl
+  gendocs
   getcwd
+  getline
   gettimeofday
+  gitlog-to-changelog
   glob
   inet_ntop
   inttypes
   limits-h
+  listen
   lstat
   memchr
   memmem
   mkdir
   mkdtemp
   mkostemp
+  netdb
   pathmax
   rawmemchr
   readlink
   rename
+  select
   setenv
+  setsockopt
   signal-h
+  socket
   strchrnul
   strerror_r-posix
   strstr
   strtok_r
   sys_stat
+  sys_wait
   time_r
   unistd
   unsetenv

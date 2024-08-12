@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# Copyright (C) 2011-2020 Free Software Foundation, Inc.
+# Copyright (C) 2011-2023 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -30,37 +30,51 @@
 
 # The list of gnulib modules we are importing in GDB.
 IMPORTED_GNULIB_MODULES="\
+    accept \
     alloca \
+    bind \
     canonicalize-lgpl \
+    chown \
+    connect \
     count-one-bits \
     dirent \
     dirfd \
     errno \
+    ffs \
     fnmatch-gnu \
     frexpl \
+    gendocs \
     getcwd \
+    getline \
     gettimeofday \
+    gitlog-to-changelog \
     glob \
     inet_ntop
     inttypes \
     lstat \
     limits-h \
+    listen \
     memchr \
     memmem \
     mkdir \
     mkdtemp \
     mkostemp \
+    netdb \
     pathmax \
     rawmemchr \
     readlink \
     rename \
+    select \
     setenv \
+    setsockopt \
     signal-h \
+    socket \
     strchrnul \
     strerror_r-posix \
     strstr \
     strtok_r \
     sys_stat \
+    sys_wait \
     time_r \
     unistd \
     unsetenv \
@@ -70,7 +84,7 @@ IMPORTED_GNULIB_MODULES="\
 "
 
 # The gnulib commit ID to use for the update.
-GNULIB_COMMIT_SHA1="4e3f2d4cfdba14e1d89479362061a9280f2f22b6"
+GNULIB_COMMIT_SHA1="bd11400942d63de12371988dca8144925de9e2c3"
 
 # The expected version number for the various auto tools we will
 # use after the import.
@@ -174,6 +188,7 @@ apply_patches ()
 }
 
 apply_patches "patches/0001-use-windows-stat"
+apply_patches "patches/0002-no-solaris-_gl_attribute_dealloc"
 
 # Regenerate all necessary files...
 aclocal &&

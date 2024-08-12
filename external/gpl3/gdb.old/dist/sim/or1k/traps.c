@@ -1,5 +1,5 @@
 /* OpenRISC exception, interrupts, syscall and trap support
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB, the GNU debugger.
 
@@ -16,10 +16,14 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #define WANT_CPU_OR1K32BF
 #define WANT_CPU
 
 #include "sim-main.h"
+#include "sim-signal.h"
 #include "cgen-ops.h"
 
 /* Implement the sim invalid instruction function.  This will set the error
@@ -101,7 +105,7 @@ or1k32bf_fpu_error (CGEN_FPU* fpu, int status)
 	     per-instruction callbacks are not triggered which would allow
 	     us to track the PC.  This means we cannot track which
 	     instruction caused the FPU error.  */
-	  if (STATE_RUN_FAST_P (sd) == 1)
+	  if (!PROFILE_ANY_P (current_cpu) && !TRACE_ANY_P (current_cpu))
 	    sim_io_eprintf
 	      (sd, "WARNING: ignoring fpu error caught in fast mode.\n");
 	  else
@@ -128,6 +132,7 @@ or1k32bf_exception (sim_cpu *current_cpu, USI pc, USI exnum)
     }
   else
     {
+      IADDR handler_pc;
 
       /* Calculate the exception program counter.  */
       switch (exnum)
@@ -162,8 +167,8 @@ or1k32bf_exception (sim_cpu *current_cpu, USI pc, USI exnum)
       current_cpu->next_delay_slot = 0;
 
       /* Jump program counter into handler.  */
-      IADDR handler_pc =
-	(GET_H_SYS_SR_EPH ()? 0xf0000000 : 0x00000000) + (exnum << 8);
+      handler_pc =
+	(GET_H_SYS_SR_EPH () ? 0xf0000000 : 0x00000000) + (exnum << 8);
 
       sim_engine_restart (sd, current_cpu, NULL, handler_pc);
     }
@@ -191,6 +196,7 @@ USI
 or1k32bf_mfspr (sim_cpu *current_cpu, USI addr)
 {
   SIM_DESC sd = CPU_STATE (current_cpu);
+  SI val;
 
   if (!GET_H_SYS_SR_SM () && !GET_H_SYS_SR_SUMRA ())
     {
@@ -202,7 +208,7 @@ or1k32bf_mfspr (sim_cpu *current_cpu, USI addr)
   if (addr >= NUM_SPR)
     goto bad_address;
 
-  SI val = GET_H_SPR (addr);
+  val = GET_H_SPR (addr);
 
   switch (addr)
     {

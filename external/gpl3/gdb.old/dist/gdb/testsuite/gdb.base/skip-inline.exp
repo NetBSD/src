@@ -1,4 +1,4 @@
-#   Copyright 2019-2020 Free Software Foundation, Inc.
+#   Copyright 2019-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@
 
 standard_testfile
 
+set epilogue [have_epilogue_line_info]
+
 if { [prepare_for_testing "failed to prepare" "skip-inline" \
 			  {skip-inline.c skip1.c } \
 			  {debug nowarnings}] } {
@@ -24,69 +26,80 @@ if { [prepare_for_testing "failed to prepare" "skip-inline" \
 set srcfile skip-inline.c
 set srcfile1 skip1.c
 
-if ![runto_main] {
-    fail "can't run to main"
-    return
+proc_with_prefix single_step { } {
+    if ![runto_main] {
+	return
+    }
+
+    gdb_test "bt" "\\s*\\#0\\s+main.*" "in the main"
+    gdb_test "step" ".*" "step into baz, since foo will be skipped"
+    gdb_test "bt" "\\s*\\#0\\s+baz.*" "in the baz, since foo was skipped"
+    gdb_step_until ".*x = 0; x = baz \\(foo \\(\\)\\).*"
+    gdb_test "bt" "\\s*\\#0\\s+main.*" "again in the main"
+    gdb_test "step" ".*" "step again into baz, since foo will be skipped"
+    gdb_test "bt" "\\s*\\#0\\s+baz.*" "again in the baz"
+    gdb_step_until "main \\(\\) at .*" "step back to main, again"
+    gdb_test "bt" "\\s*\\#0.*main.*" "again back to main"
+}
+
+proc_with_prefix double_step { } {
+    if ![runto_main] {
+	return
+    }
+
+    with_test_prefix "double step" {
+	gdb_test "bt" "\\s*\\#0\\s+main.*" "in the main"
+	gdb_test "step 2" ".*" "step into baz, since foo will be skipped"
+	gdb_test "bt" "\\s*\\#0\\s+baz.*" "still in the baz"
+	gdb_test "step" ".*" "step back to main"
+	gdb_test "bt" "\\s*\\#0\\s+main.*" "again in the main"
+	gdb_test "step 2" ".*" "step again into baz, since foo will be skipped"
+	gdb_test "bt" "\\s*\\#0\\s+baz.*" "again in the baz"
+	gdb_test "step" ".*" "step back to main, again"
+	gdb_test "bt" "\\s*\\#0\\s+main.*" "again back to main"
+    }
+}
+
+proc_with_prefix triple_step { } {
+    if ![runto_main] {
+	return
+    }
+
+    with_test_prefix "triple step" {
+	gdb_test "bt" "\\s*\\#0\\s+main.*" "in the main"
+	gdb_test "step 3" ".*" "step over baz"
+	gdb_test "bt" "\\s*\\#0\\s+main.*" "again in the main"
+	gdb_test "step 3" ".*" "step over baz, again"
+	gdb_test "bt" "\\s*\\#0\\s+main.*" "again back to main"
+    }
+}
+
+proc_with_prefix skip_current_frame { } {
+    if ![runto_main] {
+	return
+    }
+
+    gdb_test "skip delete" ".*" "skip delete"
+
+    gdb_test "bt" "\\s*\\#0\\s+main.*" "in the main"
+    gdb_test "step" ".*" "step into foo"
+    gdb_test "bt" "\\s*\\#0\\s+foo.*" "in the foo"
+    gdb_test "skip" "Function foo will be skipped when stepping\." "skip"
 }
 
 # Create a skiplist entry for a specified file and function.
 
 gdb_test "skip function foo" "Function foo will be skipped when stepping\."
 
-gdb_test "bt" "\\s*\\#0\\s+main.*" "in the main"
-gdb_test "step" ".*" "step into baz, since foo will be skipped"
-gdb_test "bt" "\\s*\\#0\\s+baz.*" "in the baz, since foo was skipped"
-gdb_test "step" ".*" "step in the baz"
-gdb_test "bt" "\\s*\\#0\\s+baz.*" "still in the baz"
-gdb_test "step" ".*" "step back to main"
-gdb_test "bt" "\\s*\\#0\\s+main.*" "again in the main"
-gdb_test "step" ".*" "step again into baz, since foo will be skipped"
-gdb_test "bt" "\\s*\\#0\\s+baz.*" "again in the baz"
-gdb_test "step" ".*" "step in the baz, again"
-gdb_test "bt" "\\s*\\#0\\s+baz.*" "still in the baz, again"
-gdb_test "step" ".*" "step back to main, again"
-gdb_test "bt" "\\s*\\#0\\s+main.*" "again back to main"
+single_step
 
-if ![runto_main] {
-    fail "can't run to main"
-    return
+# Some compilers link the epilogue of functions to the line containing the
+# closing brace, while others dont.  The behavior ends up so out of sync
+# with multiple steps at a time, that completely different procs would need
+# to be made, and it is frankly unnecessary.
+if {$epilogue} {
+    double_step
+    triple_step
 }
 
-with_test_prefix "double step" {
-    gdb_test "bt" "\\s*\\#0\\s+main.*" "in the main"
-    gdb_test "step 2" ".*" "step into baz, since foo will be skipped"
-    gdb_test "bt" "\\s*\\#0\\s+baz.*" "still in the baz"
-    gdb_test "step" ".*" "step back to main"
-    gdb_test "bt" "\\s*\\#0\\s+main.*" "again in the main"
-    gdb_test "step 2" ".*" "step again into baz, since foo will be skipped"
-    gdb_test "bt" "\\s*\\#0\\s+baz.*" "again in the baz"
-    gdb_test "step" ".*" "step back to main, again"
-    gdb_test "bt" "\\s*\\#0\\s+main.*" "again back to main"
-}
-
-if ![runto_main] {
-    fail "can't run to main"
-    return
-}
-
-with_test_prefix "triple step" {
-    gdb_test "bt" "\\s*\\#0\\s+main.*" "in the main"
-    gdb_test "step 3" ".*" "step over baz"
-    gdb_test "bt" "\\s*\\#0\\s+main.*" "again in the main"
-    gdb_test "step 3" ".*" "step over baz, again"
-    gdb_test "bt" "\\s*\\#0\\s+main.*" "again back to main"
-}
-
-if ![runto_main] {
-    fail "can't run to main"
-    return
-}
-
-gdb_test "skip delete" ".*" "skip delete"
-
-with_test_prefix "skip current frame" {
-    gdb_test "bt" "\\s*\\#0\\s+main.*" "in the main"
-    gdb_test "step" ".*" "step into foo"
-    gdb_test "bt" "\\s*\\#0\\s+foo.*" "in the foo"
-    gdb_test "skip" "Function foo will be skipped when stepping\." "skip"
-}
+skip_current_frame

@@ -1,5 +1,5 @@
 /* OpenRISC simulator support code header
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB, the GNU debugger.
 
@@ -68,9 +68,8 @@ void or1k32bf_nop (sim_cpu *current_cpu, USI uimm16);
 USI or1k32bf_mfspr (sim_cpu *current_cpu, USI addr);
 void or1k32bf_mtspr (sim_cpu *current_cpu, USI addr, USI val);
 
-int or1k32bf_fetch_register (sim_cpu *current_cpu, int rn, unsigned char *buf,
-			     int len);
-int or1k32bf_store_register (sim_cpu *current_cpu, int rn, unsigned char *buf,
+int or1k32bf_fetch_register (sim_cpu *current_cpu, int rn, void *buf, int len);
+int or1k32bf_store_register (sim_cpu *current_cpu, int rn, const void *buf,
 			     int len);
 int or1k32bf_model_or1200_u_exec (sim_cpu *current_cpu, const IDESC *idesc,
 				  int unit_num, int referenced);

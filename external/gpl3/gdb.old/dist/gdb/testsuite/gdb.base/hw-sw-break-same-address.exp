@@ -1,4 +1,4 @@
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +29,6 @@ if { [prepare_for_testing "failed to prepare" ${test} ${srcfile}] } {
 }
 
 if ![runto_main] {
-    fail "can't run to main"
     return -1
 }
 
@@ -42,11 +41,11 @@ gdb_test_no_output "set confirm off"
 # Test inserting a hw breakpoint first, then a sw breakpoint at the
 # same address.
 with_test_prefix "hw-sw" {
-    gdb_test "hbreak main" \
+    gdb_test "hbreak -q main" \
 	"Hardware assisted breakpoint .* at .*" \
 	"hbreak"
 
-    gdb_test "break main" \
+    gdb_test "break -q main" \
 	"Note: breakpoint .* also set at .*\r\nBreakpoint .* at .*" \
 	"break"
 
@@ -61,11 +60,11 @@ with_test_prefix "hw-sw" {
 # Now the opposite: test inserting a sw breakpoint first, then a hw
 # breakpoint at the same address.
 with_test_prefix "sw-hw" {
-    gdb_test "break main" \
+    gdb_test "break -q main" \
 	"Breakpoint .* at .*" \
 	"break"
 
-    gdb_test "hbreak main" \
+    gdb_test "hbreak -q main" \
 	"Note: breakpoint .* also set at .*\r\nHardware assisted breakpoint .* at .*" \
 	"hbreak"
 

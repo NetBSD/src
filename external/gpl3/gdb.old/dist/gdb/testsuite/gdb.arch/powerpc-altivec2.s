@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2020 Free Software Foundation, Inc.
+   Copyright 2014-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -133,3 +133,4 @@ func:
 	.long  0x11e0f7c3    /* vpopcntd v15,v30           */
 	.long  0x105f36c7    /* vcmpgtud. v2,v31,v6        */
 	.long  0x128f17c7    /* vcmpgtsd. v20,v15,v2       */
+	.section	.note.GNU-stack,"",@progbits

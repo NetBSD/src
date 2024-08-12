@@ -1,4 +1,4 @@
-/* Copyright 2016-2020 Free Software Foundation, Inc.
+/* Copyright 2016-2023 Free Software Foundation, Inc.
    Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
 
    This file is part of the PRU simulator.
@@ -222,7 +222,7 @@ INSTRUCTION (loop,
 	     OP2 = (IO ? IMM8 + 1 : RS2_w0);
 	     if (OP2 == 0)
 	      {
-		PC = LOOPEND;
+		PC = PC + LOOP_JMPOFFS;
 	      }
 	     else
 	      {
@@ -237,7 +237,7 @@ INSTRUCTION (iloop,
 	     OP2 = (IO ? IMM8 + 1 : RS2_w0);
 	     if (OP2 == 0)
 	      {
-		PC = LOOPEND;
+		PC = PC + LOOP_JMPOFFS;
 	      }
 	     else
 	      {
@@ -246,4 +246,19 @@ INSTRUCTION (iloop,
 		LOOPCNT = OP2;
 		LOOP_IN_PROGRESS = 1;
 		PC++;
+	     })
+
+INSTRUCTION (lmbd,
+	     {
+	     int lmbd_i;
+
+	     OP2 = (IO ? IMM8 : RS2);
+
+	     for (lmbd_i = RS1_WIDTH - 1; lmbd_i >= 0; lmbd_i--)
+	       {
+		 if (!(((RS1 >> lmbd_i) ^ OP2) & 1))
+		   break;
+	       }
+	     RD = (lmbd_i < 0) ? 32 : lmbd_i;
+	     PC++;
 	     })

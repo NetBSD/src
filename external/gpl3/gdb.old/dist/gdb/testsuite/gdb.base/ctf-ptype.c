@@ -1,6 +1,6 @@
 /* This test program is part of GDB, the GNU debugger.
 
-   Copyright 2019-2020 Free Software Foundation, Inc.
+   Copyright 2019-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -123,6 +123,18 @@ typedef struct {
 /* GCC seems to want a variable of this type, or else it won't put out
    a symbol.  */
 t_struct3 v_struct3;
+
+/**** Some misc more complicated things *******/
+
+struct link {
+	struct link *next;
+#ifdef __STDC__
+	struct link *(*linkfunc) (struct link *self, int flags);
+#else
+	struct link *(*linkfunc) ();
+#endif
+	struct t_struct stuff[3];
+} *s_link;
 
 /**** unions *******/
 

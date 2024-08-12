@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2016-2020 Free Software Foundation, Inc.
+# Copyright 2016-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ if { [skip_gdbserver_tests] } {
     return 0
 }
 
-if { [prepare_for_testing "failed to prepare" $testfile $srcfile debug] } {
+if { [build_executable "failed to prepare" $testfile $srcfile debug] } {
     return -1
 }
 
@@ -46,21 +46,15 @@ proc connect_no_symbol_file { sysroot action } {
 
     with_test_prefix "setup" {
 	# Copy the symbol file to the target.
-	gdb_remote_download target $binfile.bak $binfile 
+	set target_exec [gdb_remote_download target $binfile.bak $binfile]
 
 	# Make sure we're disconnected, in case we're testing with an
 	# extended-remote board, therefore already connected.
 	gdb_test "disconnect" ".*"
 
-	# Discard any symbol files that we have opened.
-	gdb_test "file" ".*" "discard symbol table" \
-	    {Discard symbol table from `.*'\? \(y or n\) } "y"
-
 	# Set sysroot to something non-target and possibly also invalid so that
 	# GDB is unable to open the symbol file.
 	gdb_test_no_output "set sysroot $sysroot" "adjust sysroot"
-
-	set target_exec [gdbserver_download_current_prog]
 
 	# Start GDBserver.
 	set res [gdbserver_start "" $target_exec]
@@ -69,10 +63,10 @@ proc connect_no_symbol_file { sysroot action } {
 	set gdbserver_gdbport [lindex $res 1]
 
 	# Perform test actions to the symbol file on the target.
-	if { $action == "delete" } then {
-	  remote_file target delete $binfile
+	if {$action == "delete"} {
+	  remote_file target delete $target_exec
 	} elseif { $action == "permission" } {
-	  remote_spawn target "chmod 000 $binfile"
+	  remote_exec target "chmod 000 $target_exec"
 	}
        
 	# Connect to GDBserver.
@@ -81,13 +75,26 @@ proc connect_no_symbol_file { sysroot action } {
 
     # Check if GDB succeeded connecting to GDBserver by attempting to detach
     # from the process.
-    gdb_test "detach" \
-	".*Detaching from program: , process.*Ending remote debugging.*" \
-	"connection to GDBserver succeeded"
+    # Use an explicit fail clause to prevent the implicit clause matching
+    # "Ending remote debugging" from triggering, which would cause silent
+    # failure.
+    set ok 0
+    gdb_test_multiple "detach" "" {
+	-re "\r\nDetaching from \[^\r\n\]*" {
+	    set ok 1
+	    exp_continue
+	}
+	-re -wrap "" {
+	}
+    }
+    gdb_assert $ok "connection to GDBserver succeeded"
 }
 
 # Make sure we have the original symbol file in a safe place to copy from.
 gdb_remote_download host $binfile $binfile.bak
+
+# Start with no executable loaded.
+clean_restart
 
 # Run the test with different permutations.
 foreach_with_prefix sysroot {"" "target:"} {

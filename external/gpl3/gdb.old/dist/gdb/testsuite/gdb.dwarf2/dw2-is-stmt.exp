@@ -1,4 +1,4 @@
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,14 +31,11 @@ if {![dwarf2_support]} {
 }
 
 # The .c files use __attribute__.
-if [get_compiler_info] {
-    return -1
-}
-if !$gcc_compiled {
+if ![is_c_compiler_gcc] {
     return 0
 }
 
-standard_testfile dw2-is-stmt.c dw2-is-stmt.S
+standard_testfile .c .S
 
 set asm_file [standard_output_file $srcfile2]
 Dwarf::assemble $asm_file {
@@ -68,35 +65,35 @@ Dwarf::assemble $asm_file {
 	file_name "$srcfile" 1
 
 	program {
-	    {DW_LNE_set_address main}
-	    {line [gdb_get_line_number "main prologue"]}
-	    {DW_LNS_negate_stmt}
-	    {DW_LNS_copy}
+	    DW_LNE_set_address main
+	    line [gdb_get_line_number "main prologue"]
+	    DW_LNS_negate_stmt
+	    DW_LNS_copy
 
-	    {DW_LNE_set_address line_label_1}
-	    {line [gdb_get_line_number "main, set var to 99"]}
-	    {DW_LNS_copy}
+	    DW_LNE_set_address line_label_1
+	    line [gdb_get_line_number "main, set var to 99"]
+	    DW_LNS_copy
 
-	    {DW_LNE_set_address line_label_2}
-	    {line [gdb_get_line_number "main, set var to 0"]}
-	    {DW_LNS_negate_stmt}
-	    {DW_LNS_copy}
+	    DW_LNE_set_address line_label_2
+	    line [gdb_get_line_number "main, set var to 0"]
+	    DW_LNS_negate_stmt
+	    DW_LNS_copy
 
-	    {DW_LNE_set_address line_label_3}
-	    {DW_LNS_negate_stmt}
-	    {DW_LNS_copy}
+	    DW_LNE_set_address line_label_3
+	    DW_LNS_negate_stmt
+	    DW_LNS_copy
 
-	    {DW_LNE_set_address line_label_4}
-	    {DW_LNS_negate_stmt}
-	    {DW_LNS_copy}
+	    DW_LNE_set_address line_label_4
+	    DW_LNS_negate_stmt
+	    DW_LNS_copy
 
-	    {DW_LNE_set_address line_label_5}
-	    {line [gdb_get_line_number "main end"]}
-	    {DW_LNS_negate_stmt}
-	    {DW_LNS_copy}
+	    DW_LNE_set_address line_label_5
+	    line [gdb_get_line_number "main end"]
+	    DW_LNS_negate_stmt
+	    DW_LNS_copy
 
-	    {DW_LNE_set_address ${main_end}}
-	    {DW_LNE_end_sequence}
+	    DW_LNE_set_address ${main_end}
+	    DW_LNE_end_sequence
 	}
     }
 }
@@ -188,59 +185,67 @@ runto_main
 # be a single instruction between line_label_1 and line_label_2, but
 # we allow for up to 25 (just a random number).
 
-set $i 0
-set pc [get_hexadecimal_valueof "\$pc" "NO-PC" \
-	   "get pc before stepi loop at line_label_1"]
-while { $pc < $ll2 } {
-    incr i
-    set line_changed -1
-    gdb_test_multiple "stepi" "stepi until line_label_2, $i" {
-	-re "main, set var to 99.*$gdb_prompt" {
-	    set line_changed 0
-	}
-	-re "main, set var to 0.*$gdb_prompt " {
-	    set line_changed 1
-	}
-    }
-    gdb_assert { $line_changed != -1 } \
-	"ensure we saw a valid line pattern, $i"
+with_test_prefix "stepi until line_label_2" {
+    set i 0
     set pc [get_hexadecimal_valueof "\$pc" "NO-PC" \
-		"get pc inside stepi loop from line_label_1, $i"]
-    if { $ll2 == $pc } {
-	gdb_assert { $line_changed } \
-	    "line must change at line_label_2"
-    } else {
-	gdb_assert { !$line_changed } \
-	    "line should not change until line_label_2, $i"
+		"get pc before stepi loop at line_label_1"]
+    while { $pc < $ll2 } {
+	incr i
+	with_test_prefix $i {
+	    set line_changed -1
+	    gdb_test_multiple "stepi" "stepi until line_label_2" {
+		-re "main, set var to 99.*$gdb_prompt" {
+		    set line_changed 0
+		}
+		-re "main, set var to 0.*$gdb_prompt " {
+		    set line_changed 1
+		}
+	    }
+	    gdb_assert { $line_changed != -1 } \
+		"ensure we saw a valid line pattern"
+	    set pc [get_hexadecimal_valueof "\$pc" "NO-PC" \
+			"get pc inside stepi loop from line_label_1"]
+	    if { $ll2 == $pc } {
+		gdb_assert { $line_changed } \
+		    "line must change at line_label_2"
+	    } else {
+		gdb_assert { !$line_changed } \
+		    "line should not change until line_label_2"
+	    }
+	}
     }
 }
 
 # Now single instruction step forward until GDB reports a new source
 # line, at which point we should be at line_label_5.
 
-set $i 0
-set pc [get_hexadecimal_valueof "\$pc" "NO-PC" \
-	   "get pc before stepi loop at line_label_2"]
-while { $pc < $ll5 } {
-    incr i
-    set line_changed -1
-    gdb_test_multiple "stepi" "stepi until line_label_5, $i" {
-	-re "main, set var to 0.*$gdb_prompt" {
-	    set line_changed 0
-	}
-	-re "main end.*$gdb_prompt " {
-	    set line_changed 1
-	}
-    }
-    gdb_assert { $line_changed != -1 } \
-	"ensure we saw a valid line pattern, $i"
+with_test_prefix "stepi until line_label_5" {
+    set i 0
     set pc [get_hexadecimal_valueof "\$pc" "NO-PC" \
-		"get pc inside stepi loop from line_label_2, $i"]
-    if { $ll5 == $pc } {
-	gdb_assert { $line_changed } \
-	    "line must change at line_label_5"
-    } else {
-	gdb_assert { !$line_changed } \
-	    "line should not change until line_label_5, $i"
+		"get pc before stepi loop at line_label_2"]
+    while { $pc < $ll5 } {
+	incr i
+	with_test_prefix $i {
+	    set line_changed -1
+	    gdb_test_multiple "stepi" "stepi until line_label_5" {
+		-re "main, set var to 0.*$gdb_prompt" {
+		    set line_changed 0
+		}
+		-re "main end.*$gdb_prompt " {
+		    set line_changed 1
+		}
+	    }
+	    gdb_assert { $line_changed != -1 } \
+		"ensure we saw a valid line pattern"
+	    set pc [get_hexadecimal_valueof "\$pc" "NO-PC" \
+			"get pc inside stepi loop from line_label_2"]
+	    if { $ll5 == $pc } {
+		gdb_assert { $line_changed } \
+		    "line must change at line_label_5"
+	    } else {
+		gdb_assert { !$line_changed } \
+		    "line should not change until line_label_5"
+	    }
+	}
     }
 }

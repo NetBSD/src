@@ -1,6 +1,6 @@
 /* Self tests for general utility routines for GDB, the GNU debugger.
 
-   Copyright (C) 2016-2020 Free Software Foundation, Inc.
+   Copyright (C) 2016-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -80,7 +80,8 @@ string_vprintf_tests ()
 /* Type of both 'string_appendf' and the 'string_vappendf_wrapper'
    function below.  Used to run the same tests against both
    string_appendf and string_vappendf.  */
-typedef void (string_appendf_func) (std::string &str, const char *fmt, ...)
+typedef std::string &(string_appendf_func) (std::string &str, const char *fmt,
+					    ...)
   ATTRIBUTE_PRINTF (2, 3);
 
 static void
@@ -101,7 +102,7 @@ test_appendf_func (string_appendf_func *func)
   SELF_CHECK (str == "test23foo 45 bar");
 }
 
-static void ATTRIBUTE_PRINTF (2, 3)
+static std::string & ATTRIBUTE_PRINTF (2, 3)
 string_vappendf_wrapper (std::string &str, const char *fmt, ...)
 {
   va_list vp;
@@ -109,6 +110,8 @@ string_vappendf_wrapper (std::string &str, const char *fmt, ...)
   va_start (vp, fmt);
   string_vappendf (str, fmt, vp);
   va_end (vp);
+
+  return str;
 }
 
 static void

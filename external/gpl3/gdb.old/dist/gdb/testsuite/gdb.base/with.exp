@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -99,14 +99,14 @@ with_test_prefix "maint" {
     test_with_error "boolean" "2" "\"on\" or \"off\" expected\\."
     test_with_error "uinteger" "-1" "integer -1 out of range"
     test_with_error "uinteger" "" \
-	"Argument required \\(integer to set it to, or \"unlimited\"\\.\\)\\."
+	"Argument required \\(integer to set it to, or \"unlimited\"\\)\\."
     test_with_error "zuinteger" "-1" "integer -1 out of range"
     test_with_error "zuinteger" "" \
-	"Argument required \\(integer to set it to\\.\\)\\."
+	"Argument required \\(integer to set it to\\)\\."
     test_with_error "zuinteger-unlimited" "-2" \
 	"only -1 is allowed to set as unlimited"
     test_with_error "zuinteger-unlimited" "" \
-	"Argument required \\(integer to set it to, or \"unlimited\"\\.\\)\\."
+	"Argument required \\(integer to set it to, or \"unlimited\"\\)\\."
     test_with_error "filename" "" \
 	"Argument required \\(filename to set it to\\.\\)\\."
     test_with_error "enum" "" \
@@ -209,7 +209,6 @@ with_test_prefix "run control" {
     clean_restart $binfile
 
     if ![runto_main] {
-	fail "cannot run to main"
 	return
     }
 
@@ -238,13 +237,13 @@ with_test_prefix "errors" {
     gdb_test "with w" \
 	"Ambiguous set command \"w\": watchdog, width, write\\."
     gdb_test "with print m" \
-	"Ambiguous set print command \"m\": max-depth, max-symbolic-offset\\."
+	"Ambiguous set print command \"m\": max-depth, max-symbolic-offset, memory-tag-violations\\."
 
     gdb_test "with variable xxx=1" \
 	"Cannot use this setting with the \"with\" command"
 
     gdb_test "with print elements -- p 1" \
-	"Argument required \\(integer to set it to, or \"unlimited\"\\.\\)\\."
+	"Argument required \\(integer to set it to, or \"unlimited\"\\)\\."
 
     gdb_test "with -- p 1" \
 	"Missing setting before '--' delimiter"

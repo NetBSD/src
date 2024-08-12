@@ -1,4 +1,4 @@
-/* Copyright (C) 2019-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2019-2022 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -165,12 +165,39 @@ LIBCTF_1.0 {
 	ctf_link_shuffle_syms;
 	ctf_link_write;
 
-	/* In libctf alone.  */
-
-	ctf_fdopen;
-	ctf_open;
-	ctf_bfdopen;
-	ctf_bfdopen_ctfsect;
+	ctf_fdopen;                             /* libctf only.  */
+	ctf_open;                               /* libctf only.  */
+	ctf_bfdopen;                            /* libctf only.  */
+	ctf_bfdopen_ctfsect;                    /* libctf only.  */
     local:
 	*;
 };
+
+LIBCTF_1.1 {
+    global:
+	ctf_dict_open;
+	ctf_dict_open_sections;
+	ctf_dict_close;
+	ctf_parent_dict;
+
+	ctf_symbol_next;
+	ctf_add_objt_sym;
+	ctf_add_func_sym;
+
+	ctf_link_add_linker_symbol;
+
+	ctf_arc_lookup_symbol;
+	ctf_arc_flush_caches;
+
+	ctf_getsymsect;
+	ctf_getstrsect;
+	ctf_symsect_endianness;
+	ctf_arc_symsect_endianness;
+} LIBCTF_1.0;
+
+LIBCTF_1.2 {
+    global:
+	ctf_lookup_by_symbol_name;
+	ctf_arc_lookup_symbol_name;
+	ctf_add_unknown;
+} LIBCTF_1.1;

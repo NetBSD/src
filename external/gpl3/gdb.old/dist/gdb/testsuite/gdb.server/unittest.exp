@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2017-2020 Free Software Foundation, Inc.
+# Copyright 2017-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ set gdbserver_command "$gdbserver --selftest"
 set server_spawn_id [remote_spawn target $gdbserver_command]
 
 set test "unit tests"
-gdb_expect {
+expect {
     -i $server_spawn_id
     -re "Ran ($decimal) unit tests, 0 failed" {
 	set num_ran $expect_out(1,string)

@@ -1,4 +1,4 @@
-# Copyright 2012-2020 Free Software Foundation, Inc.
+# Copyright 2012-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,6 +17,9 @@
 # We can't really use displaced stepping with Valgrind, so what this
 # really tests is that GDB falls back to in-line stepping
 # automatically instead of getting stuck or crashing.
+
+# Valgrind gdbserver requires gdb with xml support.
+require gdb_skip_xml_test 0
 
 load_lib valgrind.exp
 

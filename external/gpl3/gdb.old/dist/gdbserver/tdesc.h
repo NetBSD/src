@@ -1,5 +1,5 @@
 /* Target description definitions for remote server for GDB.
-   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+   Copyright (C) 2012-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

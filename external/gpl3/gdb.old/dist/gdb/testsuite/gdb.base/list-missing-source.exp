@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 standard_testfile
 
 # Create a source file in the output directory.
-set srcfile [standard_output_file main.c]
+set srcfile [standard_output_file list-missing-source.c]
 set fd [open "$srcfile" w]
 puts $fd {
 int
@@ -45,8 +45,7 @@ remote_file host delete $srcfile
 # Now start GDB, run to main and try to list the source.
 clean_restart ${binfile}
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 

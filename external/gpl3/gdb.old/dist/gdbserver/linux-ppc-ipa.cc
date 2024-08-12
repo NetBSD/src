@@ -1,7 +1,7 @@
 /* GNU/Linux/PowerPC specific low level interface, for the in-process
    agent library for GDB.
 
-   Copyright (C) 2016-2020 Free Software Foundation, Inc.
+   Copyright (C) 2016-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -218,8 +218,7 @@ get_ipa_tdesc (int idx)
       return tdesc_powerpc_e500l;
 #endif
     default:
-      internal_error (__FILE__, __LINE__,
-                     "unknown ipa tdesc index: %d", idx);
+      internal_error ("unknown ipa tdesc index: %d", idx);
 #ifdef __powerpc64__
       return tdesc_powerpc_64l;
 #else

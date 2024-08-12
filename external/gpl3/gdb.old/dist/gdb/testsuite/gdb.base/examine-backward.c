@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2015-2020 Free Software Foundation, Inc.
+   Copyright 2015-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -36,11 +36,11 @@ literals.  The content of each array is the same as followings:
    TestStrings, to avoid showing garbage when we look for strings
    backwards from TestStrings.  */
 
-const char Barrier[] = {
+const unsigned char Barrier[] = {
   0x00,
 };
 
-const char TestStrings[] = {
+const unsigned char TestStrings[] = {
   0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48,
   0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, 0x50,
   0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58,
@@ -92,6 +92,9 @@ const int TestStringsW[] = {
 int
 main (void)
 {
+  /* Clang++ eliminates the variables if nothing references them.  */
+  int dummy = Barrier[0] + TestStrings[0] + TestStringsH[0] + TestStringsW[0];
+
   /* Backward disassemble test requires at least 20 instructions in
      this function.  Adding a simple bubble sort.  */
   int i, j;

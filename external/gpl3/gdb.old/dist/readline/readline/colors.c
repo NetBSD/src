@@ -2,7 +2,7 @@
 
    Modified by Chet Ramey for Readline.
 
-   Copyright (C) 1985, 1988, 1990-1991, 1995-2010, 2012, 2015, 2017
+   Copyright (C) 1985, 1988, 1990-1991, 1995-2010, 2012, 2015, 2017, 2019
    Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -31,6 +31,13 @@
 #endif
 
 #include "rlconf.h"
+
+#if defined __TANDEM
+#  define _XOPEN_SOURCE_EXTENDED 1
+#  define _TANDEM_SOURCE 1
+#  include <sys/types.h>
+#  include <sys/stat.h>
+#endif
 
 #include <stdio.h>
 

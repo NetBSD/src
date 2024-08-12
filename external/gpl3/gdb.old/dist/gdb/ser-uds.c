@@ -1,6 +1,6 @@
 /* Serial interface for local domain connections on Un*x like systems.
 
-   Copyright (C) 1992-2020 Free Software Foundation, Inc.
+   Copyright (C) 1992-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -38,8 +38,8 @@ uds_open (struct serial *scb, const char *name)
   if (strlen (name) > UNIX_PATH_MAX - 1)
     {
       warning
-        (_("The socket name is too long.  It may be no longer than %s bytes."),
-         pulongest (UNIX_PATH_MAX - 1L));
+	(_("The socket name is too long.  It may be no longer than %s bytes."),
+	 pulongest (UNIX_PATH_MAX - 1L));
       return -1;
     }
 

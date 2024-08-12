@@ -1,6 +1,6 @@
 /* FreeBSD/aarch64 target support, prototypes.
 
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,7 +32,11 @@
    alignment.  */
 #define AARCH64_FBSD_SIZEOF_FPREGSET (33 * V_REGISTER_SIZE)
 
+/* The TLS regset consists of a single register.  */
+#define	AARCH64_FBSD_SIZEOF_TLSREGSET (X_REGISTER_SIZE)
+
 extern const struct regset aarch64_fbsd_gregset;
 extern const struct regset aarch64_fbsd_fpregset;
+extern const struct regset aarch64_fbsd_tls_regset;
 
 #endif /* AARCH64_FBSD_TDEP_H */

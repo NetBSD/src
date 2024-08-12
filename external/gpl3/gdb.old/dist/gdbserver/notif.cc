@@ -1,5 +1,5 @@
 /* Notification to GDB.
-   Copyright (C) 1989-2020 Free Software Foundation, Inc.
+   Copyright (C) 1989-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -102,9 +102,8 @@ handle_notif_ack (char *own_buf, int packet_len)
       struct notif_event *head = np->queue.front ();
       np->queue.pop_front ();
 
-      if (remote_debug)
-	debug_printf ("%s: acking %d\n", np->ack_name,
-		      (int) np->queue.size ());
+      remote_debug_printf ("%s: acking %d", np->ack_name,
+			   (int) np->queue.size ());
 
       delete head;
     }
@@ -122,9 +121,8 @@ notif_event_enque (struct notif_server *notif,
 {
   notif->queue.push_back (event);
 
-  if (remote_debug)
-    debug_printf ("pending events: %s %d\n", notif->notif_name,
-		  (int) notif->queue.size ());
+  remote_debug_printf ("pending events: %s %d", notif->notif_name,
+		       (int) notif->queue.size ());
 
 }
 
