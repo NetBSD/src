@@ -1,6 +1,6 @@
 /* GNU/Linux/PowerPC specific low level interface, for the remote server for
    GDB.
-   Copyright (C) 1995-2023 Free Software Foundation, Inc.
+   Copyright (C) 1995-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "server.h"
 #include "linux-low.h"
 
 #include "elf/common.h"
@@ -894,8 +893,8 @@ ppc_target::low_arch_setup ()
 
   /* The value of current_process ()->tdesc needs to be set for this
      call.  */
-  ppc_hwcap = linux_get_hwcap (features.wordsize);
-  ppc_hwcap2 = linux_get_hwcap2 (features.wordsize);
+  ppc_hwcap = linux_get_hwcap (current_thread->id.pid (), features.wordsize);
+  ppc_hwcap2 = linux_get_hwcap2 (current_thread->id.pid (), features.wordsize);
 
   features.isa205 = ppc_linux_has_isa205 (ppc_hwcap);
 
@@ -1097,7 +1096,7 @@ is_elfv2_inferior (void)
   const struct target_desc *tdesc = current_process ()->tdesc;
   int wordsize = register_size (tdesc, 0);
 
-  if (!linux_get_auxv (wordsize, AT_PHDR, &phdr))
+  if (!linux_get_auxv (current_thread->id.pid (), wordsize, AT_PHDR, &phdr))
     return def_res;
 
   /* Assume ELF header is at the beginning of the page where program headers
@@ -1872,7 +1871,7 @@ emit_insns (uint32_t *buf, int n)
 
 /* Regardless of endian, register 3 is always high part, 4 is low part.
    These defines are used when the register pair is stored/loaded.
-   Likewise, to simplify code, have a similiar define for 5:6. */
+   Likewise, to simplify code, have a similar define for 5:6. */
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #define TOP_FIRST	"4"
