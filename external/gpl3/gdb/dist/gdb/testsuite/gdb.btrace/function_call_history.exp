@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2013-2023 Free Software Foundation, Inc.
+# Copyright 2013-2024 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <christian.himpel@intel.com>
 #
@@ -17,10 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if { [skip_btrace_tests] } {
-    unsupported "target does not support record-btrace"
-    return -1
-}
+require allow_btrace_tests
 
 # We expect a specific function call history.  This gets messed up with
 # PIE on 32-bit.
@@ -190,7 +187,7 @@ set expected_range [multi_line \
 gdb_test "record function-call-history 4,10" $expected_range
 gdb_test "record function-call-history 4,+7" $expected_range
 gdb_test "record function-call-history 10,-7" $expected_range
-gdb_test "record function-call-history 4,4" "4\tinc\r"
+gdb_test "record function-call-history 4,4" "4\tinc"
 
 # set bp after fib recursion and continue
 set bp_location [gdb_get_line_number "bp.2" $testfile.c]

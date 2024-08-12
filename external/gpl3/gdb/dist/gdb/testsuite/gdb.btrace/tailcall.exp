@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2013-2023 Free Software Foundation, Inc.
+# Copyright 2013-2024 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <markus.t.metzger@intel.com>
 #
@@ -17,10 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if { [skip_btrace_tests] } {
-    unsupported "target does not support record-btrace"
-    return -1
-}
+require allow_btrace_tests
 
 # This test requires the compiler to generate a tail call.  To guarantee that
 # we always get one, we use an assembly source file.
@@ -52,6 +49,11 @@ if ![runto_main] {
     return -1
 }
 
+# When GDB prints the file for a stop location, it may print the full path
+# depending on what information the compiler added.  This regexp allows for
+# that path to be present, but does not require it.
+set optional_filepath {[^\n]*}
+
 # we want to see the full trace for this test
 gdb_test_no_output "set record function-call-history-size 0"
 
@@ -76,39 +78,39 @@ gdb_test "record function-call-history /c 1" [multi_line \
   ] "indented"
 
 # go into bar
-gdb_test "record goto 4" ".*bar \\(\\) at .*tailcall.c:24\r\n.*"
+gdb_test "record goto 4" ".*bar \\(\\) at ${optional_filepath}tailcall.c:24\r\n.*"
 
 # check the backtrace
 gdb_test "backtrace" [multi_line \
-  "#0.*bar \\(\\) at tailcall.c:24" \
-  "#1.*foo \\(\\) at tailcall.c:29" \
-  "#2.*main \\(\\) at tailcall.c:37" \
+  "#0.*bar \\(\\) at ${optional_filepath}tailcall.c:24" \
+  "#1.*foo \\(\\) at ${optional_filepath}tailcall.c:29" \
+  "#2.*main \\(\\) at ${optional_filepath}tailcall.c:37" \
   "Backtrace stopped: not enough registers or memory available to unwind further" \
   ]
 
 # walk the backtrace
-gdb_test "up" "#1\[^\r\n\]*foo \\(\\) at tailcall.c:29\r\n.*" "up to foo"
-gdb_test "up" "#2\[^\r\n\]*main \\(\\) at tailcall.c:37\r\n.*" "up to main"
-gdb_test "down" "#1\[^\r\n\]*foo \\(\\) at tailcall.c:29\r\n.*" "down to foo"
+gdb_test "up" "#1\[^\r\n\]*foo \\(\\) at ${optional_filepath}tailcall.c:29\r\n.*" "up to foo"
+gdb_test "up" "#2\[^\r\n\]*main \\(\\) at ${optional_filepath}tailcall.c:37\r\n.*" "up to main"
+gdb_test "down" "#1\[^\r\n\]*foo \\(\\) at ${optional_filepath}tailcall.c:29\r\n.*" "down to foo"
 
 # test stepping into and out of tailcalls.
-gdb_test "finish" "\[^\r\n\]*main \\(\\) at tailcall.c:38\r\n.*" \
+gdb_test "finish" "\[^\r\n\]*main \\(\\) at ${optional_filepath}tailcall.c:38\r\n.*" \
     "finish.1"
-gdb_test "reverse-step" "\[^\r\n\]*bar \\(\\) at tailcall.c:24\r\n.*" \
+gdb_test "reverse-step" "\[^\r\n\]*bar \\(\\) at ${optional_filepath}tailcall.c:24\r\n.*" \
     "reverse-step.1"
-gdb_test "reverse-finish" "\[^\r\n\]*foo \\(\\) at tailcall.c:29\r\n.*" \
+gdb_test "reverse-finish" "\[^\r\n\]*foo \\(\\) at ${optional_filepath}tailcall.c:29\r\n.*" \
     "reverse-finish.1"
-gdb_test "reverse-step" "\[^\r\n\]*main \\(\\) at tailcall.c:37\r\n.*" \
+gdb_test "reverse-step" "\[^\r\n\]*main \\(\\) at ${optional_filepath}tailcall.c:37\r\n.*" \
     "reverse-step.2"
 gdb_test "next" "\[^\r\n\]*38.*" \
     "next.1"
-gdb_test "reverse-next" "\[^\r\n\]*main \\(\\) at tailcall.c:37\r\n.*" \
+gdb_test "reverse-next" "\[^\r\n\]*main \\(\\) at ${optional_filepath}tailcall.c:37\r\n.*" \
     "reverse-next.1"
-gdb_test "step" "\[^\r\n\]*foo \\(\\) at tailcall.c:29\r\n.*" \
+gdb_test "step" "\[^\r\n\]*foo \\(\\) at ${optional_filepath}tailcall.c:29\r\n.*" \
     "step.1"
-gdb_test "finish" "\[^\r\n\]*main \\(\\) at tailcall.c:38\r\n.*" \
+gdb_test "finish" "\[^\r\n\]*main \\(\\) at ${optional_filepath}tailcall.c:38\r\n.*" \
     "finish.2"
-gdb_test "reverse-step" "\[^\r\n\]*bar \\(\\) at tailcall.c:24\r\n.*" \
+gdb_test "reverse-step" "\[^\r\n\]*bar \\(\\) at ${optional_filepath}tailcall.c:24\r\n.*" \
     "reverse-step.3"
-gdb_test "finish" "\[^\r\n\]*main \\(\\) at tailcall.c:38\r\n.*" \
+gdb_test "finish" "\[^\r\n\]*main \\(\\) at ${optional_filepath}tailcall.c:38\r\n.*" \
     "finish.3"
