@@ -1,5 +1,5 @@
 /* Plugin support for BFD.
-   Copyright (C) 2009-2022 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -27,7 +27,7 @@ void bfd_plugin_set_plugin (const char *);
 bool bfd_plugin_target_p (const bfd_target *);
 bool bfd_plugin_specified_p (void);
 bool bfd_link_plugin_object_p (bfd *);
-void register_ld_plugin_object_p (bfd_cleanup (*object_p) (bfd *));
+void register_ld_plugin_object_p (bfd_cleanup (*object_p) (bfd *, bool));
 void bfd_plugin_close_file_descriptor (bfd *, int);
 
 typedef struct plugin_data_struct

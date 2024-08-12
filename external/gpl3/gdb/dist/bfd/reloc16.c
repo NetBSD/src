@@ -1,5 +1,5 @@
 /* 8 and 16 bit COFF relocation functions, for BFD.
-   Copyright (C) 1990-2022 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -292,10 +292,10 @@ bfd_coff_reloc16_get_relocated_section_contents
     {
       arelent **parent = reloc_vector;
       arelent *reloc;
-      unsigned int dst_address = 0;
-      unsigned int src_address = 0;
-      unsigned int run;
-      unsigned int idx;
+      size_t dst_address = 0;
+      size_t src_address = 0;
+      size_t run;
+      size_t idx;
 
       /* Find how long a run we can do.  */
       while (dst_address < link_order->size)
@@ -306,6 +306,15 @@ bfd_coff_reloc16_get_relocated_section_contents
 	      /* Note that the relaxing didn't tie up the addresses in the
 		 relocation, so we use the original address to work out the
 		 run of non-relocated data.  */
+	      if (reloc->address > link_order->size
+		  || reloc->address < src_address)
+		{
+		  link_info->callbacks->einfo
+		    /* xgettext:c-format */
+		    (_("%X%P: %pB(%pA): relocation \"%pR\" goes out of range\n"),
+		     input_bfd, input_section, reloc);
+		  goto error_return;
+		}
 	      run = reloc->address - src_address;
 	      parent++;
 	    }
@@ -319,12 +328,11 @@ bfd_coff_reloc16_get_relocated_section_contents
 	    data[dst_address++] = data[src_address++];
 
 	  /* Now do the relocation.  */
-	  if (reloc)
-	    {
-	      bfd_coff_reloc16_extra_cases (input_bfd, link_info, link_order,
-					    reloc, data, &src_address,
-					    &dst_address);
-	    }
+	  if (reloc
+	      && !bfd_coff_reloc16_extra_cases (input_bfd, link_info,
+						link_order, reloc, data,
+						&src_address, &dst_address))
+	    goto error_return;
 	}
     }
   free (reloc_vector);

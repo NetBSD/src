@@ -1,5 +1,5 @@
 /* BFD back-end for binary objects.
-   Copyright (C) 1994-2022 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -103,7 +103,7 @@ binary_get_section_contents (bfd *abfd,
 			     bfd_size_type count)
 {
   if (bfd_seek (abfd, section->filepos + offset, SEEK_SET) != 0
-      || bfd_bread (location, count, abfd) != count)
+      || bfd_read (location, count, abfd) != count)
     return false;
   return true;
 }
@@ -320,7 +320,6 @@ binary_sizeof_headers (bfd *abfd ATTRIBUTE_UNUSED,
 #define binary_bfd_link_add_symbols		  _bfd_generic_link_add_symbols
 #define binary_bfd_final_link			  _bfd_generic_final_link
 #define binary_bfd_link_split_section		  _bfd_generic_link_split_section
-#define binary_get_section_contents_in_window	  _bfd_generic_get_section_contents_in_window
 #define binary_bfd_link_check_relocs		  _bfd_generic_link_check_relocs
 
 const bfd_target binary_vec =
