@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,7 +32,7 @@
 
 #if defined HAVE_EXECINFO_H			\
   && defined HAVE_EXECINFO_BACKTRACE		\
-  && !defined PRINT_BACKTRACE_ON_FATAL_SIGNAL
+  && !defined GDB_PRINT_INTERNAL_BACKTRACE_USING_LIBBACKTRACE
 # include <execinfo.h>
 # define GDB_PRINT_INTERNAL_BACKTRACE
 # define GDB_PRINT_INTERNAL_BACKTRACE_USING_EXECINFO
