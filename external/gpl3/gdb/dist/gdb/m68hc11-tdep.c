@@ -1,6 +1,6 @@
 /* Target-dependent code for Motorola 68HC11 & 68HC12
 
-   Copyright (C) 1999-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    Contributed by Stephane Carrez, stcarrez@nerim.fr
 
@@ -20,7 +20,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "frame.h"
 #include "frame-unwind.h"
 #include "frame-base.h"
@@ -28,7 +28,7 @@
 #include "trad-frame.h"
 #include "symtab.h"
 #include "gdbtypes.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "gdbcore.h"
 #include "value.h"
 #include "inferior.h"
@@ -777,7 +777,7 @@ m68hc11_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
    for it IS the sp for the next frame.  */
 
 static struct m68hc11_unwind_cache *
-m68hc11_frame_unwind_cache (frame_info_ptr this_frame,
+m68hc11_frame_unwind_cache (const frame_info_ptr &this_frame,
 			    void **this_prologue_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
@@ -874,7 +874,7 @@ m68hc11_frame_unwind_cache (frame_info_ptr this_frame,
    frame.  This will be used to create a new GDB frame struct.  */
 
 static void
-m68hc11_frame_this_id (frame_info_ptr this_frame,
+m68hc11_frame_this_id (const frame_info_ptr &this_frame,
 		       void **this_prologue_cache,
 		       struct frame_id *this_id)
 {
@@ -899,7 +899,7 @@ m68hc11_frame_this_id (frame_info_ptr this_frame,
 }
 
 static struct value *
-m68hc11_frame_prev_register (frame_info_ptr this_frame,
+m68hc11_frame_prev_register (const frame_info_ptr &this_frame,
 			     void **this_prologue_cache, int regnum)
 {
   struct value *value;
@@ -947,7 +947,7 @@ static const struct frame_unwind m68hc11_frame_unwind = {
 };
 
 static CORE_ADDR
-m68hc11_frame_base_address (frame_info_ptr this_frame, void **this_cache)
+m68hc11_frame_base_address (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct m68hc11_unwind_cache *info
     = m68hc11_frame_unwind_cache (this_frame, this_cache);
@@ -956,7 +956,7 @@ m68hc11_frame_base_address (frame_info_ptr this_frame, void **this_cache)
 }
 
 static CORE_ADDR
-m68hc11_frame_args_address (frame_info_ptr this_frame, void **this_cache)
+m68hc11_frame_args_address (const frame_info_ptr &this_frame, void **this_cache)
 {
   CORE_ADDR addr;
   struct m68hc11_unwind_cache *info
@@ -983,7 +983,7 @@ static const struct frame_base m68hc11_frame_base = {
    save_dummy_frame_tos(), and the PC match the dummy frame's breakpoint.  */
 
 static struct frame_id
-m68hc11_dummy_id (struct gdbarch *gdbarch, frame_info_ptr this_frame)
+m68hc11_dummy_id (struct gdbarch *gdbarch, const frame_info_ptr &this_frame)
 {
   ULONGEST tos;
   CORE_ADDR pc = get_frame_pc (this_frame);
@@ -997,7 +997,7 @@ m68hc11_dummy_id (struct gdbarch *gdbarch, frame_info_ptr this_frame)
 /* Get and print the register from the given frame.  */
 static void
 m68hc11_print_register (struct gdbarch *gdbarch, struct ui_file *file,
-			frame_info_ptr frame, int regno)
+			const frame_info_ptr &frame, int regno)
 {
   LONGEST rval;
 
@@ -1084,7 +1084,7 @@ m68hc11_print_register (struct gdbarch *gdbarch, struct ui_file *file,
 /* Same as 'info reg' but prints the registers in a different way.  */
 static void
 m68hc11_print_registers_info (struct gdbarch *gdbarch, struct ui_file *file,
-			      frame_info_ptr frame, int regno, int cpregs)
+			      const frame_info_ptr &frame, int regno, int cpregs)
 {
   if (regno >= 0)
     {
@@ -1170,14 +1170,14 @@ m68hc11_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
     regcache_cooked_write_unsigned (regcache, HARD_D_REGNUM, struct_addr);
   else if (nargs > 0)
     {
-      type = value_type (args[0]);
+      type = args[0]->type ();
 
       /* First argument is passed in D and X registers.  */
       if (type->length () <= 4)
 	{
 	  ULONGEST v;
 
-	  v = extract_unsigned_integer (value_contents (args[0]).data (),
+	  v = extract_unsigned_integer (args[0]->contents ().data (),
 					type->length (), byte_order);
 	  first_stack_argnum = 1;
 
@@ -1192,7 +1192,7 @@ m68hc11_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
   for (argnum = nargs - 1; argnum >= first_stack_argnum; argnum--)
     {
-      type = value_type (args[argnum]);
+      type = args[argnum]->type ();
 
       if (type->length () & 1)
 	{
@@ -1201,7 +1201,7 @@ m68hc11_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	  sp--;
 	  write_memory (sp, &zero, 1);
 	}
-      val = value_contents (args[argnum]).data ();
+      val = args[argnum]->contents ().data ();
       sp -= type->length ();
       write_memory (sp, val, type->length ());
     }
@@ -1396,7 +1396,6 @@ static struct gdbarch *
 m68hc11_gdbarch_init (struct gdbarch_info info,
 		      struct gdbarch_list *arches)
 {
-  struct gdbarch *gdbarch;
   int elf_flags;
 
   soft_reg_initialized = 0;
@@ -1423,8 +1422,10 @@ m68hc11_gdbarch_init (struct gdbarch_info info,
     }
 
   /* Need a new architecture.  Fill in a target specific vector.  */
-  m68gc11_gdbarch_tdep *tdep = new m68gc11_gdbarch_tdep;
-  gdbarch = gdbarch_alloc (&info, tdep);
+  gdbarch *gdbarch
+    = gdbarch_alloc (&info, gdbarch_tdep_up (new m68gc11_gdbarch_tdep));
+  m68gc11_gdbarch_tdep *tdep = gdbarch_tdep<m68gc11_gdbarch_tdep> (gdbarch);
+
   tdep->elf_flags = elf_flags;
 
   switch (info.bfd_arch_info->arch)
@@ -1490,7 +1491,8 @@ m68hc11_gdbarch_init (struct gdbarch_info info,
   set_gdbarch_register_name (gdbarch, m68hc11_register_name);
   set_gdbarch_register_type (gdbarch, m68hc11_register_type);
   set_gdbarch_pseudo_register_read (gdbarch, m68hc11_pseudo_register_read);
-  set_gdbarch_pseudo_register_write (gdbarch, m68hc11_pseudo_register_write);
+  set_gdbarch_deprecated_pseudo_register_write (gdbarch,
+						m68hc11_pseudo_register_write);
 
   set_gdbarch_push_dummy_call (gdbarch, m68hc11_push_dummy_call);
 

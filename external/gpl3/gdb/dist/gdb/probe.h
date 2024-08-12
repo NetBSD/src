@@ -1,6 +1,6 @@
 /* Generic SDT probe support for GDB.
 
-   Copyright (C) 2012-2023 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -143,7 +143,7 @@ public:
      corresponding to it.  The argument number is represented N.
      This function can throw an exception.  */
   virtual struct value *evaluate_argument (unsigned n,
-					   frame_info_ptr frame) = 0;
+					   const frame_info_ptr &frame) = 0;
 
   /* Compile the Nth argument of the probe to an agent expression.
      The argument number is represented by N.  */
@@ -301,7 +301,12 @@ extern struct cmd_list_element **info_probes_cmdlist_get (void);
    probe at that location, or if the probe does not have enough arguments,
    this returns NULL.  */
 
-extern struct value *probe_safe_evaluate_at_pc (frame_info_ptr frame,
+extern struct value *probe_safe_evaluate_at_pc (const frame_info_ptr &frame,
 						unsigned n);
 
+/* Return true if the PROVIDER/NAME probe from OBJFILE_NAME needs to be
+   ignored.  */
+
+bool ignore_probe_p (const char *provider, const char *name,
+		     const char *objfile_name, const char *TYPE);
 #endif /* !defined (PROBE_H) */
