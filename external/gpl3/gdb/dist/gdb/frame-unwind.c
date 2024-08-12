@@ -1,6 +1,6 @@
 /* Definitions for frame unwinder, for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "frame.h"
 #include "frame-unwind.h"
 #include "dummy-frame.h"
@@ -28,6 +28,8 @@
 #include "target.h"
 #include "gdbarch.h"
 #include "dwarf2/frame-tailcall.h"
+#include "cli/cli-cmds.h"
+#include "inferior.h"
 
 struct frame_unwind_table_entry
 {
@@ -121,7 +123,7 @@ frame_unwind_append_unwinder (struct gdbarch *gdbarch,
    unchanged and returns 0.  */
 
 static int
-frame_unwind_try_unwinder (frame_info_ptr this_frame, void **this_cache,
+frame_unwind_try_unwinder (const frame_info_ptr &this_frame, void **this_cache,
 			  const struct frame_unwind *unwinder)
 {
   int res = 0;
@@ -181,7 +183,7 @@ frame_unwind_try_unwinder (frame_info_ptr this_frame, void **this_cache,
    by this function.  Possibly initialize THIS_CACHE.  */
 
 void
-frame_unwind_find_by_frame (frame_info_ptr this_frame, void **this_cache)
+frame_unwind_find_by_frame (const frame_info_ptr &this_frame, void **this_cache)
 {
   FRAME_SCOPED_DEBUG_ENTER_EXIT;
   frame_debug_printf ("this_frame=%d", frame_relative_level (this_frame));
@@ -215,7 +217,7 @@ frame_unwind_find_by_frame (frame_info_ptr this_frame, void **this_cache)
 
 int
 default_frame_sniffer (const struct frame_unwind *self,
-		       frame_info_ptr this_frame,
+		       const frame_info_ptr &this_frame,
 		       void **this_prologue_cache)
 {
   return 1;
@@ -224,7 +226,7 @@ default_frame_sniffer (const struct frame_unwind *self,
 /* The default frame unwinder stop_reason callback.  */
 
 enum unwind_stop_reason
-default_frame_unwind_stop_reason (frame_info_ptr this_frame,
+default_frame_unwind_stop_reason (const frame_info_ptr &this_frame,
 				  void **this_cache)
 {
   struct frame_id this_id = get_frame_id (this_frame);
@@ -238,7 +240,7 @@ default_frame_unwind_stop_reason (frame_info_ptr this_frame,
 /* See frame-unwind.h.  */
 
 CORE_ADDR
-default_unwind_pc (struct gdbarch *gdbarch, frame_info_ptr next_frame)
+default_unwind_pc (struct gdbarch *gdbarch, const frame_info_ptr &next_frame)
 {
   int pc_regnum = gdbarch_pc_regnum (gdbarch);
   CORE_ADDR pc = frame_unwind_register_unsigned (next_frame, pc_regnum);
@@ -249,7 +251,7 @@ default_unwind_pc (struct gdbarch *gdbarch, frame_info_ptr next_frame)
 /* See frame-unwind.h.  */
 
 CORE_ADDR
-default_unwind_sp (struct gdbarch *gdbarch, frame_info_ptr next_frame)
+default_unwind_sp (struct gdbarch *gdbarch, const frame_info_ptr &next_frame)
 {
   int sp_regnum = gdbarch_sp_regnum (gdbarch);
   return frame_unwind_register_unsigned (next_frame, sp_regnum);
@@ -261,34 +263,35 @@ default_unwind_sp (struct gdbarch *gdbarch, frame_info_ptr next_frame)
 /* Return a value which indicates that FRAME did not save REGNUM.  */
 
 struct value *
-frame_unwind_got_optimized (frame_info_ptr frame, int regnum)
+frame_unwind_got_optimized (const frame_info_ptr &frame, int regnum)
 {
   struct gdbarch *gdbarch = frame_unwind_arch (frame);
   struct type *type = register_type (gdbarch, regnum);
 
-  return allocate_optimized_out_value (type);
+  return value::allocate_optimized_out (type);
 }
 
 /* Return a value which indicates that FRAME copied REGNUM into
    register NEW_REGNUM.  */
 
 struct value *
-frame_unwind_got_register (frame_info_ptr frame,
+frame_unwind_got_register (const frame_info_ptr &frame,
 			   int regnum, int new_regnum)
 {
-  return value_of_register_lazy (frame, new_regnum);
+  return value_of_register_lazy (get_next_frame_sentinel_okay (frame),
+				 new_regnum);
 }
 
 /* Return a value which indicates that FRAME saved REGNUM in memory at
    ADDR.  */
 
 struct value *
-frame_unwind_got_memory (frame_info_ptr frame, int regnum, CORE_ADDR addr)
+frame_unwind_got_memory (const frame_info_ptr &frame, int regnum, CORE_ADDR addr)
 {
   struct gdbarch *gdbarch = frame_unwind_arch (frame);
   struct value *v = value_at_lazy (register_type (gdbarch, regnum), addr);
 
-  set_value_stack (v, 1);
+  v->set_stack (true);
   return v;
 }
 
@@ -296,27 +299,27 @@ frame_unwind_got_memory (frame_info_ptr frame, int regnum, CORE_ADDR addr)
    REGNUM has a known constant (computed) value of VAL.  */
 
 struct value *
-frame_unwind_got_constant (frame_info_ptr frame, int regnum,
+frame_unwind_got_constant (const frame_info_ptr &frame, int regnum,
 			   ULONGEST val)
 {
   struct gdbarch *gdbarch = frame_unwind_arch (frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct value *reg_val;
 
-  reg_val = value_zero (register_type (gdbarch, regnum), not_lval);
-  store_unsigned_integer (value_contents_writeable (reg_val).data (),
+  reg_val = value::zero (register_type (gdbarch, regnum), not_lval);
+  store_unsigned_integer (reg_val->contents_writeable ().data (),
 			  register_size (gdbarch, regnum), byte_order, val);
   return reg_val;
 }
 
 struct value *
-frame_unwind_got_bytes (frame_info_ptr frame, int regnum, const gdb_byte *buf)
+frame_unwind_got_bytes (const frame_info_ptr &frame, int regnum, const gdb_byte *buf)
 {
   struct gdbarch *gdbarch = frame_unwind_arch (frame);
   struct value *reg_val;
 
-  reg_val = value_zero (register_type (gdbarch, regnum), not_lval);
-  memcpy (value_contents_raw (reg_val).data (), buf,
+  reg_val = value::zero (register_type (gdbarch, regnum), not_lval);
+  memcpy (reg_val->contents_raw ().data (), buf,
 	  register_size (gdbarch, regnum));
   return reg_val;
 }
@@ -326,14 +329,54 @@ frame_unwind_got_bytes (frame_info_ptr frame, int regnum, const gdb_byte *buf)
    CORE_ADDR to a target address if necessary.  */
 
 struct value *
-frame_unwind_got_address (frame_info_ptr frame, int regnum,
+frame_unwind_got_address (const frame_info_ptr &frame, int regnum,
 			  CORE_ADDR addr)
 {
   struct gdbarch *gdbarch = frame_unwind_arch (frame);
   struct value *reg_val;
 
-  reg_val = value_zero (register_type (gdbarch, regnum), not_lval);
-  pack_long (value_contents_writeable (reg_val).data (),
+  reg_val = value::zero (register_type (gdbarch, regnum), not_lval);
+  pack_long (reg_val->contents_writeable ().data (),
 	     register_type (gdbarch, regnum), addr);
   return reg_val;
+}
+
+/* Implement "maintenance info frame-unwinders" command.  */
+
+static void
+maintenance_info_frame_unwinders (const char *args, int from_tty)
+{
+  gdbarch *gdbarch = current_inferior ()->arch ();
+  struct frame_unwind_table *table = get_frame_unwind_table (gdbarch);
+
+  ui_out *uiout = current_uiout;
+  ui_out_emit_table table_emitter (uiout, 2, -1, "FrameUnwinders");
+  uiout->table_header (27, ui_left, "name", "Name");
+  uiout->table_header (25, ui_left, "type", "Type");
+  uiout->table_body ();
+
+  for (struct frame_unwind_table_entry *entry = table->list; entry != NULL;
+       entry = entry->next)
+    {
+      const char *name = entry->unwinder->name;
+      const char *type = frame_type_str (entry->unwinder->type);
+
+      ui_out_emit_list tuple_emitter (uiout, nullptr);
+      uiout->field_string ("name", name);
+      uiout->field_string ("type", type);
+      uiout->text ("\n");
+    }
+}
+
+void _initialize_frame_unwind ();
+void
+_initialize_frame_unwind ()
+{
+  /* Add "maint info frame-unwinders".  */
+  add_cmd ("frame-unwinders",
+	   class_maintenance,
+	   maintenance_info_frame_unwinders,
+	   _("List the frame unwinders currently in effect, "
+	     "starting with the highest priority."),
+	   &maintenanceinfolist);
 }

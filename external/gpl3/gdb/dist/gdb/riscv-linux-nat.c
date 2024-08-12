@@ -1,5 +1,5 @@
 /* Native-dependent code for GNU/Linux RISC-V.
-   Copyright (C) 2018-2023 Free Software Foundation, Inc.
+   Copyright (C) 2018-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,7 +16,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "regcache.h"
 #include "gregset.h"
 #include "linux-nat.h"
@@ -201,6 +200,9 @@ fill_fpregset (const struct regcache *regcache, prfpregset_t *fpregs,
 const struct target_desc *
 riscv_linux_nat_target::read_description ()
 {
+  if (inferior_ptid == null_ptid)
+    return this->beneath ()->read_description ();
+
   const struct riscv_gdbarch_features features
     = riscv_linux_read_features (inferior_ptid.pid ());
   return riscv_lookup_target_description (features);
