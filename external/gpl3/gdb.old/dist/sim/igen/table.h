@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -102,7 +102,8 @@ extern table_entry *table_read (table *file);
    the end of FILE_NAME is reached, return to the pushed file */
 
 extern void table_push
-  (table *file, line_ref *line, table_include *search, const char *file_name);
+  (table *file, const line_ref *line, table_include *search,
+   const char *file_name);
 
 
 /* Expand the specified field_nr using the internal expansion table.
@@ -115,16 +116,16 @@ extern void table_expand_field (table_entry *entry, int field_nr);
    leading/trailing braces were striped as part of the read, they are
    not written. */
 
-extern void table_print_code (lf *file, table_entry *entry);
+extern void table_print_code (lf *file, const table_entry *entry);
 
 
 /* Debugging */
 
 extern void dump_line_ref
-  (lf *file, char *prefix, const line_ref *line, char *suffix);
+  (lf *file, const char *prefix, const line_ref *line, const char *suffix);
 
 extern void dump_table_entry
-  (lf *file, char *prefix, const table_entry *entry, char *suffix);
+  (lf *file, const char *prefix, const table_entry *entry, const char *suffix);
 
 
 

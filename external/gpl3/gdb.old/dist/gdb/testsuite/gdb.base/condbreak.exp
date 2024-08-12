@@ -1,4 +1,4 @@
-# Copyright 1997-2020 Free Software Foundation, Inc.
+# Copyright 1997-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,13 +28,6 @@ if {[prepare_for_testing "failed to prepare" $testfile [list $srcfile $srcfile2]
     return -1
 }
 
-if [get_compiler_info] {
-    return -1
-}
-
-clean_restart ${binfile}
-
-
 set bp_location1  [gdb_get_line_number "set breakpoint 1 here"]
 set bp_location6  [gdb_get_line_number "set breakpoint 6 here"]
 set bp_location8  [gdb_get_line_number "set breakpoint 8 here" $srcfile2]
@@ -45,7 +38,7 @@ set bp_location17 [gdb_get_line_number "set breakpoint 17 here" $srcfile2]
 #
 # test break at function
 #
-gdb_test "break main" \
+gdb_test "break -q main" \
     "Breakpoint.*at.* file .*$srcfile, line.*" \
     "breakpoint function"
 
@@ -182,9 +175,9 @@ gdb_test_multiple "continue" "run until breakpoint at marker2" {
 }
 
 # Test combinations of conditional and thread-specific breakpoints.
-gdb_test "break main if (1==1) thread 999" \
+gdb_test "break -q main if (1==1) thread 999" \
     "Unknown thread 999\\."
-gdb_test "break main thread 999 if (1==1)" \
+gdb_test "break -q main thread 999 if (1==1)" \
     "Unknown thread 999\\."
 
 # Verify that both if and thread can be distinguished from a breakpoint
@@ -232,3 +225,11 @@ gdb_test "complete cond 1" "cond 1"
 gdb_test "set variable \$var = 1"
 gdb_test "complete cond \$v" "cond \\\$var"
 gdb_test "complete cond 1 values\[0\].a" "cond 1 values.0..a_field"
+
+set cond_completion "condition ($decimal|-force)"
+gdb_test "complete condition " "($cond_completion\r\n)+$cond_completion"
+gdb_test "complete cond -" "cond -force"
+
+# If '-force' is already given, it should not be suggested again.
+set cond_completion "cond -force $decimal"
+gdb_test "complete cond -force " "($cond_completion\r\n)+$cond_completion"

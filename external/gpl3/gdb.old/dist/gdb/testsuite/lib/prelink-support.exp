@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2020 Free Software Foundation, Inc.
+# Copyright (C) 2010-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -122,8 +122,10 @@ proc build_executable_own_libs {testname executable sources options {interp ""} 
 	error "This proc can be only used for native target."
     }
 
-    if {[build_executable $testname $executable $sources $options] == -1} {
-	return ""
+    with_test_prefix "initial build" {
+	if {[build_executable $testname $executable $sources $options] == -1} {
+	    return ""
+	}
     }
     set binfile [standard_output_file ${executable}]
 
@@ -181,8 +183,10 @@ proc build_executable_own_libs {testname executable sources options {interp ""} 
 	set options [linsert $options 0 "ldflags=-Wl,--dynamic-linker,$interp"]
     }
 
-    if {[build_executable $testname $executable $sources $options] == -1} {
-	return ""
+    with_test_prefix "rebuild" {
+	if {[build_executable $testname $executable $sources $options] == -1} {
+	    return ""
+	}
     }
 
     set prelink_args "--ld-library-path=$dir $binfile [concat $dests]"

@@ -1,6 +1,6 @@
 /* GDB/Scheme smobs (gsmob is pronounced "jee smob")
 
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -96,7 +96,8 @@ gdbscm_is_gsmob (SCM scm)
   return slot != NULL;
 }
 
-/* Call this to register a smob, instead of scm_make_smob_type.  */
+/* Call this to register a smob, instead of scm_make_smob_type.
+   Exports the created smob type from the current module.  */
 
 scm_t_bits
 gdbscm_make_smob_type (const char *name, size_t size)
@@ -104,6 +105,32 @@ gdbscm_make_smob_type (const char *name, size_t size)
   scm_t_bits result = scm_make_smob_type (name, size);
 
   register_gsmob (result);
+
+#if SCM_MAJOR_VERSION == 2 && SCM_MINOR_VERSION == 0
+  /* Prior to Guile 2.1.0, smob classes were only exposed via exports
+     from the (oop goops) module.  */
+  SCM bound_name = scm_string_append (scm_list_3 (scm_from_latin1_string ("<"),
+						  scm_from_latin1_string (name),
+						  scm_from_latin1_string (">")));
+  bound_name = scm_string_to_symbol (bound_name);
+  SCM smob_type = scm_public_ref (scm_list_2 (scm_from_latin1_symbol ("oop"),
+					      scm_from_latin1_symbol ("goops")),
+				  bound_name);
+#elif SCM_MAJOR_VERSION == 2 && SCM_MINOR_VERSION == 1 && SCM_MICRO_VERSION == 0
+  /* Guile 2.1.0 doesn't provide any API for looking up smob classes.
+     We could try allocating a fake instance and using scm_class_of,
+     but it's probably not worth the trouble for the sake of a single
+     development release.  */
+#  error "Unsupported Guile version"
+#else
+  /* Guile 2.1.1 and above provides scm_smob_type_class.  */
+  SCM smob_type = scm_smob_type_class (result);
+#endif
+
+  SCM smob_type_name = scm_class_name (smob_type);
+  scm_define (smob_type_name, smob_type);
+  scm_module_export (scm_current_module (), scm_list_1 (smob_type_name));
+
   return result;
 }
 
@@ -164,16 +191,13 @@ gdbscm_gsmob_kind (SCM self)
   SCM smob, result;
   scm_t_bits smobnum;
   const char *name;
-  char *kind;
 
   smob = gsscm_get_gsmob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
 
   smobnum = SCM_SMOBNUM (smob);
   name = SCM_SMOBNAME (smobnum);
-  kind = xstrprintf ("<%s>", name);
-  result = scm_from_latin1_symbol (kind);
-  xfree (kind);
-
+  gdb::unique_xmalloc_ptr<char> kind = xstrprintf ("<%s>", name);
+  result = scm_from_latin1_symbol (kind.get ());
   return result;
 }
 
@@ -181,42 +205,6 @@ gdbscm_gsmob_kind (SCM self)
 /* When underlying gdb data structures are deleted, we need to update any
    smobs with references to them.  There are several smobs that reference
    objfile-based data, so we provide helpers to manage this.  */
-
-/* Add G_SMOB to the reference chain for OBJFILE specified by DATA_KEY.
-   OBJFILE may be NULL, in which case just set prev,next to NULL.  */
-
-void
-gdbscm_add_objfile_ref (struct objfile *objfile,
-			const struct objfile_data *data_key,
-			chained_gdb_smob *g_smob)
-{
-  g_smob->prev = NULL;
-  if (objfile != NULL)
-    {
-      g_smob->next = (chained_gdb_smob *) objfile_data (objfile, data_key);
-      if (g_smob->next)
-	g_smob->next->prev = g_smob;
-      set_objfile_data (objfile, data_key, g_smob);
-    }
-  else
-    g_smob->next = NULL;
-}
-
-/* Remove G_SMOB from the reference chain for OBJFILE specified
-   by DATA_KEY.  OBJFILE may be NULL.  */
-
-void
-gdbscm_remove_objfile_ref (struct objfile *objfile,
-			   const struct objfile_data *data_key,
-			   chained_gdb_smob *g_smob)
-{
-  if (g_smob->prev)
-    g_smob->prev->next = g_smob->next;
-  else if (objfile != NULL)
-    set_objfile_data (objfile, data_key, g_smob->next);
-  if (g_smob->next)
-    g_smob->next->prev = g_smob->prev;
-}
 
 /* Create a hash table for mapping a pointer to a gdb data structure to the
    gsmob that wraps it.  */

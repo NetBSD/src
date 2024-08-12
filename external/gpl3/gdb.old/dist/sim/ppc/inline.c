@@ -21,8 +21,10 @@
 #ifndef _INLINE_C_
 #define _INLINE_C_
 
-#include "config.h"
-#include "ppc-config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
+
+#include "std-config.h"
 
 #include "inline.h"
 

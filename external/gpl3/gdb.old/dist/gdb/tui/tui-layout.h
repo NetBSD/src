@@ -1,6 +1,6 @@
 /* TUI layout window management.
 
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -55,18 +55,24 @@ public:
      "skeleton" layout.  */
   virtual std::unique_ptr<tui_layout_base> clone () const = 0;
 
-  /* Change the size and location of this layout.  */
-  virtual void apply (int x, int y, int width, int height) = 0;
+  /* Change the size and location of this layout.  When
+     PRESERVE_CMD_WIN_SIZE_P is true the current size of the TUI_CMD_WIN
+     is preserved, otherwise, the TUI_CMD_WIN will resize just like any
+     other window.  */
+  virtual void apply (int x, int y, int width, int height,
+		      bool preserve_cmd_win_size_p) = 0;
 
   /* Return the minimum and maximum height or width of this layout.
      HEIGHT is true to fetch height, false to fetch width.  */
   virtual void get_sizes (bool height, int *min_value, int *max_value) = 0;
 
-  /* True if the topmost item in this layout is boxed.  */
-  virtual bool top_boxed_p () const = 0;
+  /* True if the topmost (for vertical layouts), or the leftmost (for
+     horizontal layouts) item in this layout is boxed.  */
+  virtual bool first_edge_has_border_p () const = 0;
 
-  /* True if the bottommost item in this layout is boxed.  */
-  virtual bool bottom_boxed_p () const = 0;
+  /* True if the bottommost (for vertical layouts), or the rightmost (for
+     horizontal layouts) item in this layout is boxed.  */
+  virtual bool last_edge_has_border_p () const = 0;
 
   /* Return the name of this layout's window, or nullptr if this
      layout does not represent a single window.  */
@@ -75,9 +81,13 @@ public:
     return nullptr;
   }
 
-  /* Adjust the size of the window named NAME to NEW_HEIGHT, updating
+  /* Set the height of the window named NAME to NEW_HEIGHT, updating
      the sizes of the other windows around it.  */
-  virtual tui_adjust_result adjust_size (const char *name, int new_height) = 0;
+  virtual tui_adjust_result set_height (const char *name, int new_height) = 0;
+
+  /* Set the width of the window named NAME to NEW_WIDTH, updating
+     the sizes of the other windows around it.  */
+  virtual tui_adjust_result set_width (const char *name, int new_width) = 0;
 
   /* Remove some windows from the layout, leaving the command window
      and the window being passed in here.  */
@@ -90,6 +100,29 @@ public:
   /* Append the specification to this window to OUTPUT.  DEPTH is the
      depth of this layout in the hierarchy (zero-based).  */
   virtual void specification (ui_file *output, int depth) = 0;
+
+  /* Return a FINGERPRINT string containing an abstract representation of
+     the location of the cmd window in this layout.
+
+     When called on a complete, top-level layout, the fingerprint will be a
+     non-empty string made of 'V' and 'H' characters, followed by a single
+     'C' character.  Each 'V' and 'H' represents a vertical or horizontal
+     layout that must be passed through in order to find the cmd
+     window.
+
+     Of course, layouts are built recursively, so, when called on a partial
+     layout, if this object represents a single window, then either the
+     empty string is returned (for non-cmd windows), or a string
+     containing a single 'C' is returned.
+
+     For object representing layouts, if the layout contains the cmd
+     window then we will get back a valid fingerprint string (contains 'V'
+     and 'H', ends with 'C'), or, if this layout doesn't contain the cmd
+     window, an empty string is returned.  */
+  virtual std::string layout_fingerprint () const = 0;
+
+  /* Add all windows to the WINDOWS vector.  */
+  virtual void get_windows (std::vector<tui_win_info *> *windows) = 0;
 
   /* The most recent space allocation.  */
   int x = 0;
@@ -117,21 +150,27 @@ public:
 
   std::unique_ptr<tui_layout_base> clone () const override;
 
-  void apply (int x, int y, int width, int height) override;
+  void apply (int x, int y, int width, int height,
+	      bool preserve_cmd_win_size_p) override;
 
   const char *get_name () const override
   {
     return m_contents.c_str ();
   }
 
-  tui_adjust_result adjust_size (const char *name, int new_height) override
+  tui_adjust_result set_height (const char *name, int new_height) override
   {
     return m_contents == name ? FOUND : NOT_FOUND;
   }
 
-  bool top_boxed_p () const override;
+  tui_adjust_result set_width (const char *name, int new_width) override
+  {
+    return m_contents == name ? FOUND : NOT_FOUND;
+  }
 
-  bool bottom_boxed_p () const override;
+  bool first_edge_has_border_p () const override;
+
+  bool last_edge_has_border_p () const override;
 
   void remove_windows (const char *name) override
   {
@@ -140,6 +179,14 @@ public:
   void replace_window (const char *name, const char *new_window) override;
 
   void specification (ui_file *output, int depth) override;
+
+  std::string layout_fingerprint () const override;
+
+  /* See tui_layout_base::get_windows.  */
+  void get_windows (std::vector<tui_win_info *> *windows) override
+  {
+    windows->push_back (m_window);
+  }
 
 protected:
 
@@ -181,13 +228,24 @@ public:
 
   std::unique_ptr<tui_layout_base> clone () const override;
 
-  void apply (int x, int y, int width, int height) override;
+  void apply (int x, int y, int width, int height,
+	      bool preserve_cmd_win_size_p) override;
 
-  tui_adjust_result adjust_size (const char *name, int new_height) override;
+  tui_adjust_result set_height (const char *name, int new_height) override
+  {
+    /* Pass false as the final argument to indicate change of height.  */
+    return set_size (name, new_height, false);
+  }
 
-  bool top_boxed_p () const override;
+  tui_adjust_result set_width (const char *name, int new_width) override
+  {
+    /* Pass true as the final argument to indicate change of width.  */
+    return set_size (name, new_width, true);
+  }
 
-  bool bottom_boxed_p () const override;
+  bool first_edge_has_border_p () const override;
+
+  bool last_edge_has_border_p () const override;
 
   void remove_windows (const char *name) override;
 
@@ -195,14 +253,58 @@ public:
 
   void specification (ui_file *output, int depth) override;
 
+  std::string layout_fingerprint () const override;
+
+  /* See tui_layout_base::get_windows.  */
+  void get_windows (std::vector<tui_win_info *> *windows) override
+  {
+    for (auto &item : m_splits)
+      item.layout->get_windows (windows);
+  }
+
 protected:
 
   void get_sizes (bool height, int *min_value, int *max_value) override;
 
 private:
 
-  /* Set the weights from the current heights.  */
-  void set_weights_from_heights ();
+  /* Used to implement set_height and set_width member functions.  When
+     SET_WIDTH_P is true, set the width, otherwise, set the height of the
+     window named NAME to NEW_SIZE, updating the sizes of the other windows
+     around it as needed.  The result indicates if the window NAME was
+     found and had its size adjusted, was found but was not adjusted, or
+     was not found at all.  */
+  tui_adjust_result set_size (const char *name, int new_size,
+			      bool set_width_p);
+
+  /* Set the weights from the current heights (when m_vertical is true) or
+     widths (when m_vertical is false).  */
+  void set_weights_from_sizes ();
+
+  /* Structure used when resizing, or applying a layout.  An instance of
+     this structure is created for each sub-layout.  */
+  struct size_info
+  {
+    /* The calculated size for this sub-layout.  */
+    int size;
+
+    /* The minimum and maximum sizes for this sub-layout, obtained by
+       calling the get_sizes member function.  */
+    int min_size;
+    int max_size;
+
+    /* True if this window will share a box border with the previous
+       window in the list.  */
+    bool share_box;
+  };
+
+  /* Used for debug, prints the contents of INFO using tui_debug_printf.
+     Only call this when the global debug_tui is true.  */
+  static void tui_debug_print_size_info (const std::vector<size_info> &info);
+
+  /* Used for debug, returns a string describing the current weight of each
+     sub-layout.  */
+  std::string tui_debug_weights_to_string () const;
 
   struct split
   {
@@ -217,9 +319,6 @@ private:
 
   /* True if the windows in this split are arranged vertically.  */
   bool m_vertical;
-
-  /* True if this layout has already been applied at least once.  */
-  bool m_applied = false;
 };
 
 /* Add the specified window to the layout in a logical way.  This
@@ -242,12 +341,18 @@ extern void tui_regs_layout ();
    some other window is chosen to remain.  */
 extern void tui_remove_some_windows ();
 
-/* Apply the current layout.  */
-extern void tui_apply_current_layout ();
+/* Apply the current layout.  When PRESERVE_CMD_WIN_SIZE_P is true the
+   current size of the TUI_CMD_WIN is preserved, otherwise, the TUI_CMD_WIN
+   will resize just like any other window.  */
+extern void tui_apply_current_layout (bool);
 
 /* Adjust the window height of WIN to NEW_HEIGHT.  */
 extern void tui_adjust_window_height (struct tui_win_info *win,
 				      int new_height);
+
+/* Adjust the window width of WIN to NEW_WIDTH.  */
+extern void tui_adjust_window_width (struct tui_win_info *win,
+				     int new_width);
 
 /* The type of a function that is used to create a TUI window.  */
 

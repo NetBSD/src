@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -86,12 +86,13 @@ if {$prev_addr == ""} {
 set seen 0
 
 set test "stepi"
-if {[gdb_test_multiple "stepi" "$test" {
+set prompt "$gdb_prompt \\\[infrun\\\] fetch_inferior_event: exit\r\n$"
+if {[gdb_test_multiple "stepi" "$test" -prompt $prompt {
     -re {\[infrun\] handle_signal_stop: random signal} {
 	set seen 1
 	exp_continue
     }
-    -re "$gdb_prompt $" {
+    -re "$prompt$" {
     }
 }] != 0} {
     return

@@ -218,7 +218,7 @@ With just --enable-sim-warnings, the following -W options are enabled:
 
 
 Specify the file containing the rules for generating the instruction
-decode and execute functions from the file ppc-instructions.
+decode and execute functions from the file powerpc.igen.
 
 The form of the instruction decode and execute functions is controlled
 by an opcode table.  It specifies: the combination of switch
@@ -303,7 +303,7 @@ Create a duplicate copy of each instruction function hardwiring
 instruction fields that would have otherwise have been variable.
 
 As discussed above, igen outputs a C function generated from the file
-ppc-instructions (using the opcode rules) for each of the
+powerpc.igen (using the opcode rules) for each of the
 instructions.  Thus multiple entries in the instruction decode tables
 may be pointing back at the same function.  Enabling duplicate, will
 result in psim creating a duplicate of the instruction's function for
@@ -343,7 +343,7 @@ disabled (using: --disable-sim-duplicate).
 Include/exclude PowerPC instructions that are specific to a particular
 implementation.
 
-Some of the PowerPC instructions included in the file ppc-instructions
+Some of the PowerPC instructions included in the file powerpc.igen
 are limited to certain specific PPC implementations.  For instance,
 the instruction:
 

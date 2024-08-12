@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2023/03/21 16:55:49 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2024/08/12 20:32:37 christos Exp $
 
 LIBISPRIVATE=	yes
 NOGCCERROR=
@@ -14,7 +14,9 @@ SRCS=	debug.c filter_filename.c bits.c sim-endian.c os_emul.c emul_generic.c \
 	support.c psim.c pk_disklabel.c hw_cpu.c hw_memory.c hw_nvram.c \
 	hw_iobus.c hw_htab.c hw_disk.c hw_trace.c hw_register.c hw_vm.c \
 	hw_init.c hw_core.c hw_pal.c hw_com.c hw_eeprom.c hw_opic.c hw_glue.c \
-	hw_phb.c hw_ide.c options.c sim_calls.c callback.c targ-map.c gdb-sim.c
+	hw_phb.c hw_ide.c options.c sim_calls.c callback.c gdb-sim.c
+SRCS+=	target-newlib-errno.c target-newlib-open.c target-newlib-signal.c \
+	target-newlib-syscall.c
 
 MIC=	${HOST_SH} ${DIST}/move-if-change
 
@@ -22,6 +24,7 @@ HOST_CPPFLAGS+=	-I. \
 		-I${DIST}/sim/ppc -I${DIST}/include \
 		-I${.CURDIR}/arch/${GDB_MACHINE_ARCH} \
 		-I${.CURDIR}/../libbfd/arch/${GDB_MACHINE_ARCH} \
+		-I${.CURDIR}/../libgnulib/arch/${GDB_MACHINE_ARCH} \
 		-I${DIST}/bfd \
 		-I${DIST}/gdb \
 		-I${DIST}/gdb/config \
@@ -29,11 +32,19 @@ HOST_CPPFLAGS+=	-I. \
 		-I${.CURDIR}/../arch/${GDB_MACHINE_ARCH} \
 		-I${DIST}/sim/common
 PSIM_DEFINES=	-DHAVE_CONFIG_H \
-		-DDEFAULT_INLINE=PSIM_INLINE_LOCALS \
+		-DDEFAULT_INLINE=INLINE_LOCALS \
 		-DWITH_HOST_BYTE_ORDER=BYTE_ORDER \
 		-DWITH_SMP=5 \
+		-DSIM_COMMON_BUILD \
 		-DHAVE_TERMIOS_STRUCTURE \
-		-DHAVE_DEVZERO
+		-DHAVE_DEVZERO  \
+		-DWITH_TRACE=0 \
+		-DWITH_ASSERT=0 \
+		-DWITH_STDIO=0 \
+		-DWITH_ENVIRONMENT=0 \
+		-DWITH_RESERVED_BITS=0 \
+		-DREPORT_BUGS_TO=\"gnats@NetBSD.org\" \
+		-DPKGVERSION=\"13.2\"
 
 # we need the same -I flags for host / target.
 CPPFLAGS+=	${HOST_CPPFLAGS} ${PSIM_DEFINES}
@@ -45,7 +56,7 @@ CPPFLAGS+=	${HOST_CPPFLAGS} ${PSIM_DEFINES}
 # igen portion
 IGEN_FLAGS=	-E    -F 32,f,o  -CSRI 1024  -N 5 \
 	-o ${DIST}/sim/ppc/dc-complex \
-	-I ${DIST}/sim/ppc -i ${DIST}/sim/ppc/ppc-instructions \
+	-I ${DIST}/sim/ppc -i ${DIST}/sim/ppc/powerpc.igen \
 	-n icache.h    -hc tmp-icache.h \
 	-n icache.c    -c  tmp-icache.c \
 	-n semantics.h -hs tmp-semantics.h \
@@ -65,7 +76,7 @@ IGENOBJS= ${IGENSRCS:S/.c/.lo/}
 DPSRCS+= ${IGENED_FILES:M*.h}
 
 ${IGENED_FILES}: run-igen
-run-igen: igen ppc-instructions
+run-igen: igen powerpc.igen
 	${_MKMSG_CREATE} ${IGENED_FILES}
 	rm -f ${.TARGET}
 	./igen ${IGEN_FLAGS}
@@ -104,31 +115,6 @@ run-dgen: dgen
 
 dgen: ${DGENOBJS}
 	${HOST_LINK.c} ${DGENOBJS} -o ${.TARGET}
-
-# gentmap portion
-GENTMAPSRCS= gentmap.c
-GENTMAPOBJS= ${GENTMAPSRCS:S/.c/.lo/}
-
-gentmap: ${GENTMAPOBJS}
-	${HOST_LINK.c} ${GENTMAPOBJS} -o ${.TARGET}
-
-gentmap.c: targ-vals.def
-
-targ-vals.def: ${DIST}/sim/ppc/../common/nltvals.def
-	rm -f targ-vals.def tmp-def
-	cat ${DIST}/sim/ppc/../common/nltvals.def > tmp-vals.def
-	${MIC} tmp-vals.def targ-vals.def
-
-targ-vals.h: gentmap targ-vals.def
-	rm -f tmp-vals.h
-	./gentmap -h > tmp-vals.h
-	${MIC} tmp-vals.h targ-vals.h
-DPSRCS+= targ-vals.h
-
-targ-map.c: gentmap targ-vals.def
-	rm -f tmp-map.c
-	./gentmap -c > tmp-map.c
-	${MIC} tmp-map.c targ-map.c
 
 # hw.c / hw.h portion
 HWSRCS=	hw_cpu.c hw_memory.c hw_nvram.c hw_iobus.c hw_htab.c hw_disk.c \

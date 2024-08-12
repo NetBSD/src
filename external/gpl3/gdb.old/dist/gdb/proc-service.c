@@ -1,6 +1,6 @@
 /* <proc_service.h> implementation.
 
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -42,7 +42,8 @@
 static CORE_ADDR
 ps_addr_to_core_addr (psaddr_t addr)
 {
-  if (exec_bfd && bfd_get_sign_extend_vma (exec_bfd))
+  if (current_program_space->exec_bfd ()
+      && bfd_get_sign_extend_vma (current_program_space->exec_bfd ()))
     return (intptr_t) addr;
   else
     return (uintptr_t) addr;
@@ -53,7 +54,8 @@ ps_addr_to_core_addr (psaddr_t addr)
 static psaddr_t
 core_addr_to_ps_addr (CORE_ADDR addr)
 {
-  if (exec_bfd && bfd_get_sign_extend_vma (exec_bfd))
+  if (current_program_space->exec_bfd ()
+      && bfd_get_sign_extend_vma (current_program_space->exec_bfd ()))
     return (psaddr_t) (intptr_t) addr;
   else
     return (psaddr_t) (uintptr_t) addr;
@@ -109,7 +111,7 @@ ps_pglobal_lookup (struct ps_prochandle *ph, const char *obj,
   if (ms.minsym == NULL)
     return PS_NOSYM;
 
-  *sym_addr = core_addr_to_ps_addr (BMSYMBOL_VALUE_ADDRESS (ms));
+  *sym_addr = core_addr_to_ps_addr (ms.value_address ());
   return PS_OK;
 }
 

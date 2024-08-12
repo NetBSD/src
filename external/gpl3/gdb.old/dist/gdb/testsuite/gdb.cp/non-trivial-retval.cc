@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2020 Free Software Foundation, Inc.
+   Copyright 2014-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -142,11 +142,28 @@ f4 (int i1, int i2)
   return e;
 }
 
+/* We place a breakpoint on the call to this function.  */
+
+void
+breakpt ()
+{
+}
+
 int
 main (void)
 {
   int i1 = 23;
   int i2 = 100;
 
-  return 0;  /* Break here  */
+  breakpt ();	/* Break here.  */
+
+  /* The copy constructor of A takes a non-const reference, so we can't
+     pass in the temporary returned from f1.  */
+  (void) f1 (i1, i2);
+  B b = f2 (i1, i2);
+  B1 b1 = f22 (i1, i2);
+  C c = f3 (i1, i2);
+  E e = f4 (i1, i2);
+
+  return 0;
 }

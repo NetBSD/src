@@ -1,6 +1,6 @@
 /* Python interface to program spaces.
 
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,7 +27,7 @@
 #include "solib.h"
 #include "block.h"
 
-typedef struct
+struct pspace_object
 {
   PyObject_HEAD
 
@@ -52,12 +52,35 @@ typedef struct
 
   /* The debug method list.  */
   PyObject *xmethods;
-} pspace_object;
+};
 
 extern PyTypeObject pspace_object_type
     CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("pspace_object");
 
-static const struct program_space_data *pspy_pspace_data_key;
+/* Clear the PSPACE pointer in a Pspace object and remove the reference.  */
+struct pspace_deleter
+{
+  void operator() (pspace_object *obj)
+  {
+    /* This is a fiction, but we're in a nasty spot: The pspace is in the
+       process of being deleted, we can't rely on anything in it.  Plus
+       this is one time when the current program space and current inferior
+       are not in sync: All inferiors that use PSPACE may no longer exist.
+       We don't need to do much here, and since "there is always an inferior"
+       using target_gdbarch suffices.
+       Note: We cannot call get_current_arch because it may try to access
+       the target, which may involve accessing data in the pspace currently
+       being deleted.  */
+    struct gdbarch *arch = target_gdbarch ();
+
+    gdbpy_enter enter_py (arch);
+    gdbpy_ref<pspace_object> object (obj);
+    object->pspace = NULL;
+  }
+};
+
+static const registry<program_space>::key<pspace_object, pspace_deleter>
+     pspy_pspace_data_key;
 
 /* Require that PSPACE_OBJ be a valid program space ID.  */
 #define PSPY_REQUIRE_VALID(pspace_obj)				\
@@ -351,16 +374,19 @@ pspy_get_objfiles (PyObject *self_, PyObject *args)
 static PyObject *
 pspy_solib_name (PyObject *o, PyObject *args)
 {
-  char *soname;
-  gdb_py_ulongest pc;
+  CORE_ADDR pc;
+  PyObject *pc_obj;
+
   pspace_object *self = (pspace_object *) o;
 
   PSPY_REQUIRE_VALID (self);
 
-  if (!PyArg_ParseTuple (args, GDB_PY_LLU_ARG, &pc))
+  if (!PyArg_ParseTuple (args, "O", &pc_obj))
     return NULL;
+  if (get_addr_from_python (pc_obj, &pc) < 0)
+    return nullptr;
 
-  soname = solib_name_from_address (self->pspace, pc);
+  const char *soname = solib_name_from_address (self->pspace, pc);
   if (soname == nullptr)
     Py_RETURN_NONE;
   return host_string_to_python_string (soname).release ();
@@ -372,14 +398,17 @@ static PyObject *
 pspy_block_for_pc (PyObject *o, PyObject *args)
 {
   pspace_object *self = (pspace_object *) o;
-  gdb_py_ulongest pc;
+  CORE_ADDR pc;
+  PyObject *pc_obj;
   const struct block *block = NULL;
   struct compunit_symtab *cust = NULL;
 
   PSPY_REQUIRE_VALID (self);
 
-  if (!PyArg_ParseTuple (args, GDB_PY_LLU_ARG, &pc))
+  if (!PyArg_ParseTuple (args, "O", &pc_obj))
     return NULL;
+  if (get_addr_from_python (pc_obj, &pc) < 0)
+    return nullptr;
 
   try
     {
@@ -388,7 +417,7 @@ pspy_block_for_pc (PyObject *o, PyObject *args)
       set_current_program_space (self->pspace);
       cust = find_pc_compunit_symtab (pc);
 
-      if (cust != NULL && COMPUNIT_OBJFILE (cust) != NULL)
+      if (cust != NULL && cust->objfile () != NULL)
 	block = block_for_pc (pc);
     }
   catch (const gdb_exception &except)
@@ -396,11 +425,11 @@ pspy_block_for_pc (PyObject *o, PyObject *args)
       GDB_PY_HANDLE_EXCEPTION (except);
     }
 
-  if (cust == NULL || COMPUNIT_OBJFILE (cust) == NULL)
+  if (cust == NULL || cust->objfile () == NULL)
     Py_RETURN_NONE;
 
   if (block)
-    return block_to_block_object (block, COMPUNIT_OBJFILE (cust));
+    return block_to_block_object (block, cust->objfile ());
 
   Py_RETURN_NONE;
 }
@@ -411,24 +440,25 @@ pspy_block_for_pc (PyObject *o, PyObject *args)
 static PyObject *
 pspy_find_pc_line (PyObject *o, PyObject *args)
 {
-  gdb_py_ulongest pc_llu;
+  CORE_ADDR pc;
   PyObject *result = NULL; /* init for gcc -Wall */
+  PyObject *pc_obj;
   pspace_object *self = (pspace_object *) o;
 
   PSPY_REQUIRE_VALID (self);
 
-  if (!PyArg_ParseTuple (args, GDB_PY_LLU_ARG, &pc_llu))
+  if (!PyArg_ParseTuple (args, "O", &pc_obj))
     return NULL;
+  if (get_addr_from_python (pc_obj, &pc) < 0)
+    return nullptr;
 
   try
     {
       struct symtab_and_line sal;
-      CORE_ADDR pc;
       scoped_restore_current_program_space saver;
 
       set_current_program_space (self->pspace);
 
-      pc = (CORE_ADDR) pc_llu;
       sal = find_pc_line (pc, 0);
       result = symtab_and_line_to_sal_object (sal);
     }
@@ -456,27 +486,6 @@ pspy_is_valid (PyObject *o, PyObject *args)
 
 
 
-/* Clear the PSPACE pointer in a Pspace object and remove the reference.  */
-
-static void
-py_free_pspace (struct program_space *pspace, void *datum)
-{
-  /* This is a fiction, but we're in a nasty spot: The pspace is in the
-     process of being deleted, we can't rely on anything in it.  Plus
-     this is one time when the current program space and current inferior
-     are not in sync: All inferiors that use PSPACE may no longer exist.
-     We don't need to do much here, and since "there is always an inferior"
-     using target_gdbarch suffices.
-     Note: We cannot call get_current_arch because it may try to access
-     the target, which may involve accessing data in the pspace currently
-     being deleted.  */
-  struct gdbarch *arch = target_gdbarch ();
-
-  gdbpy_enter enter_py (arch, current_language);
-  gdbpy_ref<pspace_object> object ((pspace_object *) datum);
-  object->pspace = NULL;
-}
-
 /* Return a new reference to the Python object of type Pspace
    representing PSPACE.  If the object has already been created,
    return it.  Otherwise, create it.  Return NULL and set the Python
@@ -485,8 +494,7 @@ py_free_pspace (struct program_space *pspace, void *datum)
 gdbpy_ref<>
 pspace_to_pspace_object (struct program_space *pspace)
 {
-  PyObject *result
-    ((PyObject *) program_space_data (pspace, pspy_pspace_data_key));
+  PyObject *result = (PyObject *) pspy_pspace_data_key.get (pspace);
   if (result == NULL)
     {
       gdbpy_ref<pspace_object> object
@@ -497,19 +505,33 @@ pspace_to_pspace_object (struct program_space *pspace)
 	return NULL;
 
       object->pspace = pspace;
-      set_program_space_data (pspace, pspy_pspace_data_key, object.get ());
+      pspy_pspace_data_key.set (pspace, object.get ());
       result = (PyObject *) object.release ();
     }
 
   return gdbpy_ref<>::new_reference (result);
 }
 
+/* See python-internal.h.  */
+
+struct program_space *
+progspace_object_to_program_space (PyObject *obj)
+{
+  gdb_assert (gdbpy_is_progspace (obj));
+  return ((pspace_object *) obj)->pspace;
+}
+
+/* See python-internal.h.  */
+
+bool
+gdbpy_is_progspace (PyObject *obj)
+{
+  return PyObject_TypeCheck (obj, &pspace_object_type);
+}
+
 int
 gdbpy_initialize_pspace (void)
 {
-  pspy_pspace_data_key
-    = register_program_space_data_with_cleanup (NULL, py_free_pspace);
-
   if (PyType_Ready (&pspace_object_type) < 0)
     return -1;
 

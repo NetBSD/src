@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2023/05/08 20:57:34 skrll Exp $
+#	$NetBSD: Makefile,v 1.13 2024/08/12 20:32:12 christos Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -59,11 +59,11 @@ elf32-aarch64.c: elfnn-aarch64.c
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e s/NN/32/g < $> > $@
 
-elf32-ia64.c: elfxx-ia64.c
+elf32-ia64.c: elfnn-ia64.c
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e s/NN/32/g < $> > $@
 
-elf64-ia64.c: elfxx-ia64.c
+elf64-ia64.c: elfnn-ia64.c
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e s/NN/64/g < $> > $@
 
@@ -79,6 +79,14 @@ peigen.c: peXXigen.c
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e s/XX/pe/g < $> > $@
 
+pepigen.c: peXXigen.c
+	${_MKTARGET_CREATE}
+	${TOOL_SED} -e s/XX/pep/g < $> > $@
+
 pex64igen.c: peXXigen.c
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e s/XX/pex64/g < $> > $@
+
+pe-aarch64igen.c: peXXigen.c
+	${_MKTARGET_CREATE}
+	${TOOL_SED} -e s/XX/peAArch64/g < $> > $@

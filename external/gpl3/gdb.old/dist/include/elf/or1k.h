@@ -1,5 +1,5 @@
 /* Or1k ELF support for BFD.
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -77,6 +77,7 @@ START_RELOC_NUMBERS (elf_or1k_reloc_type)
   RELOC_NUMBER (R_OR1K_TLS_IE_LO13,   51)
   RELOC_NUMBER (R_OR1K_SLO13,         52)
   RELOC_NUMBER (R_OR1K_PLTA26,        53)
+  RELOC_NUMBER (R_OR1K_GOT_AHI16,     54)
 END_RELOC_NUMBERS (R_OR1K_max)
 
 #define EF_OR1K_NODELAY (1UL << 0)

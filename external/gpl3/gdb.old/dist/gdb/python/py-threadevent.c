@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -48,8 +48,8 @@ create_thread_event_object (PyTypeObject *py_type, PyObject *thread)
     return NULL;
 
   if (evpy_add_attribute (thread_event_obj.get (),
-                          "inferior_thread",
-                          thread) < 0)
+			  "inferior_thread",
+			  thread) < 0)
     return NULL;
 
   return thread_event_obj;

@@ -1,4 +1,4 @@
-# Copyright 1997-2020 Free Software Foundation, Inc.
+# Copyright 1997-2023 Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,14 +22,14 @@
 
 set data_overlays 1
 
-if [istarget "m32r-*-*"] then {
+if {[istarget "m32r-*-*"]} {
     set linker_script "${srcdir}/${subdir}/m32r.ld"
 } else {
     verbose "Skipping overlay test -- not implemented for this target."
     return 
 }
 
-if [istarget "*-*-linux*"] then {
+if {[istarget "*-*-linux*"]} {
     verbose "Skipping overlay test -- Linux doesn't support overlayed programs."
     return 
 }
@@ -38,7 +38,7 @@ standard_testfile overlays.c ovlymgr.c foo.c bar.c baz.c grbx.c
 
 if {[build_executable $testfile.exp $testfile \
 	 [list $srcfile $srcfile2 $srcfile3 $srcfile4 $srcfile5 $srcfile6] \
-	 {debug ldscript=-Wl,-T$linker_script}] == -1} {
+	 "debug ldscript=-Wl,-T$linker_script"] == -1} {
      untested "failed to compile"
      return -1
 }
@@ -54,8 +54,7 @@ gdb_load ${binfile}
 # set it up at a breakpoint so we can play with the variable values
 #
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 
@@ -96,7 +95,7 @@ set bar_lma  [get_func_address "bar"  "\\*bar\\*"  "bar  load address"]
 set baz_lma  [get_func_address "baz"  "\\*baz\\*"  "baz  load address"]
 set grbx_lma [get_func_address "grbx" "\\*grbx\\*" "grbx load address"]
 
-if $data_overlays then {
+if {$data_overlays} {
     gdb_test "print \$foox_lma = &foox" \
 	".* $iptrcast 0x.*"  "foox load addr"
     gdb_test "print \$barx_lma = &barx" \
@@ -126,7 +125,7 @@ gdb_test "overlay map .ovly3" ""
 gdb_test "overlay list" "Section .ovly3, loaded at.*, mapped at.*" "list ovly3"
 set grbx_vma [get_func_address "grbx" "grbx" "grbx runtime address"]
 
-if $data_overlays then {
+if {$data_overlays} {
     gdb_test "overlay map .data00" "" 
     gdb_test "overlay list" "Section .data00, loaded .*, mapped .*" "list data00"
     gdb_test "print \$foox_vma = &foox" \
@@ -153,7 +152,7 @@ gdb_test "print $foo_lma   != $foo_vma" ".* = 1"   "foo's LMA   != VMA"
 gdb_test "print $bar_lma   != $bar_vma" ".* = 1"   "bar's LMA   != VMA"
 gdb_test "print $baz_lma   != $baz_vma" ".* = 1"   "baz's LMA   != VMA"
 gdb_test "print $grbx_lma  != $grbx_vma" ".* = 1"  "grbx's LMA  != VMA"
-if $data_overlays then {
+if {$data_overlays} {
     gdb_test "print \$foox_lma  != \$foox_vma" ".* = 1"  "foox's LMA  != VMA"
     gdb_test "print \$barx_lma  != \$barx_vma" ".* = 1"  "barx's LMA  != VMA"
     gdb_test "print \$bazx_lma  != \$bazx_vma" ".* = 1"  "bazx's LMA  != VMA"
@@ -204,7 +203,7 @@ simultaneous_pair .ovly0 .ovly3
 simultaneous_pair .ovly1 .ovly2
 simultaneous_pair .ovly1 .ovly3
 
-if $data_overlays then {
+if {$data_overlays} {
     simultaneous_pair .data00 .data02
     simultaneous_pair .data00 .data03
     simultaneous_pair .data01 .data02

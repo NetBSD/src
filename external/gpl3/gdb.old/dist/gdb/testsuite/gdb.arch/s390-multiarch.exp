@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,10 +32,6 @@ standard_testfile
 set binprefix $binfile
 
 gdb_exit
-
-if { [get_compiler_info] } {
-    return -1
-}
 
 proc compile_and_dump {variant ccopts binfile} {
     global srcdir subdir srcfile
@@ -77,45 +73,49 @@ proc test_linux_v2 {} {
     return 0
 }
 
-proc test_register_valid {reg variant} {
+proc test_register_valid {reg} {
     gdb_test "info reg $reg" \
 	"$reg\[ \t\]+0x\[0-9a-z\]+\[ \t\]+.*" \
-	"'$reg' exists ($variant)"
+	"'$reg' exists"
 }
 
-proc test_register_invalid {reg variant} {
+proc test_register_invalid {reg} {
     gdb_test "info reg $reg" \
 	"Invalid register `$reg'.*" \
-	"'$reg' must not exist ($variant)"
+	"'$reg' must not exist"
 }
 
 proc test_all_core64 {core type} {
     set variant "64-bit $type"
-    gdb_core_cmd $core "core-file ($variant)"
-    if { ! [test_linux_v2] } {
-	return
+    with_test_prefix $variant {
+	gdb_core_cmd $core "core-file"
+	if { ! [test_linux_v2] } {
+	    return
+	}
+	test_register_valid "last_break"
+	gdb_core_cmd "${core}.2" "core-file #2"
+	test_register_invalid "system_call"
+	gdb_core_cmd "${core}.3" "core-file #3"
+	test_register_invalid "last_break"
     }
-    test_register_valid "last_break" $variant
-    gdb_core_cmd "${core}.2" "core-file #2 ($variant)"
-    test_register_invalid "system_call" $variant
-    gdb_core_cmd "${core}.3" "core-file #3 ($variant)"
-    test_register_invalid "last_break" $variant
 }
 
 proc test_all_core31 {core type} {
     set variant "31-bit $type"
-    gdb_core_cmd $core "core-file ($variant)"
-    if { ! [test_linux_v2] } {
-	return
+    with_test_prefix $variant {
+	gdb_core_cmd $core "core-file"
+	if { ! [test_linux_v2] } {
+	    return
+	}
+	test_register_valid "r0h"
+	test_register_valid "last_break"
+	gdb_core_cmd "${core}.1" "core-file #1 "
+	test_register_invalid "r0h"
+	gdb_core_cmd "${core}.2" "core-file #2"
+	test_register_invalid "system_call"
+	gdb_core_cmd "${core}.3" "core-file #3"
+	test_register_invalid "last_break"
     }
-    test_register_valid "r0h" $variant
-    test_register_valid "last_break" $variant
-    gdb_core_cmd "${core}.1" "core-file #1 ($variant)"
-    test_register_invalid "r0h" $variant
-    gdb_core_cmd "${core}.2" "core-file #2 ($variant)"
-    test_register_invalid "system_call" $variant
-    gdb_core_cmd "${core}.3" "core-file #3 ($variant)"
-    test_register_invalid "last_break" $variant
 }
 
 set binfile "${binprefix}-64"

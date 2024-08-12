@@ -1,17 +1,18 @@
-#	$NetBSD: Makefile,v 1.10 2023/03/21 16:54:43 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2024/08/12 20:30:05 christos Exp $
 
 NOCTF=
 .include <bsd.own.mk>
 .include "../Makefile.inc"
 
-GDBARCHDIR=${.CURDIR}/../../lib/libgdb/arch/${GDB_MACHINE_ARCH}
+GDBLIBDIR=${.CURDIR}/../../lib
+GDBARCHDIR=${GDBLIBDIR}/libgdb/arch/${GDB_MACHINE_ARCH}
 .include "${GDBARCHDIR}/defs.mk"
 
 PROG=		gdb
 
-SRCS=		gdb.c
+SRCS=		gdb.c 
 CPPFLAGS+=	-I${.CURDIR} \
-		-I${.CURDIR}/../../lib/libgnulib/arch/${GDB_MACHINE_ARCH}/gnulib \
+		-I${GNULIBDIR}/libgnulib/arch/${GDB_MACHINE_ARCH}/gnulib \
 		-I${DIST}/gdb \
 		-I${DIST}/gdbsupport \
 		-I${DIST}/gdb/config \
@@ -20,25 +21,24 @@ CPPFLAGS+=	-I${.CURDIR} \
 		-I${DIST}/readline \
 		-I${DIST}/libdecnumber \
 		-I${DIST} \
-		-I${.CURDIR}/../../lib/libbfd/arch/${GDB_MACHINE_ARCH} \
-		-I${.CURDIR}/../../lib/libgdbsupport/arch/${GDB_MACHINE_ARCH} \
-		-I${.CURDIR}/../../lib/libgnulib/arch/${GDB_MACHINE_ARCH} \
-		-I${.CURDIR}/../../lib/libgnulib/arch/${GDB_MACHINE_ARCH}/gnulib/import \
+		-I${GDBLIBDIR}/libgdbsupport/arch/${GDB_MACHINE_ARCH} \
+		-I${GDBLIBDIR}/libgdbsupport/arch/${GDB_MACHINE_ARCH}/gdbsupport \
+		-I${GDBLIBDIR}/libbfd/arch/${GDB_MACHINE_ARCH} \
+		-I${GDBLIBDIR}/libgnulib/arch/${GDB_MACHINE_ARCH} \
+		-I${GDBLIBDIR}/libgnulib/arch/${GDB_MACHINE_ARCH}/gnulib/import \
 		-I${DIST}/bfd \
 		-I${DIST}/include \
 		${GCPPFLAGS:M-D*}
+
 
 TEXINFO=	gdb.texinfo stabs.texinfo
 INFOFLAGS=	-I${DIST}/gdb/doc -I${DIST}/gdb/mi \
 		-I${DIST}/readline/readline/doc -I${.CURDIR}/.. -DGDBN=${GDBN}
 
-GDBvn.texi: ${DIST}/gdb/version.in
-	echo "@set GDBVN $$(${TOOL_CAT} ${.ALLSRC})" > ${.TARGET}
-
 gdb-cfg.texi: ${DIST}/gdb/doc/all-cfg.texi
 	${TOOL_CAT} ${.ALLSRC} > ${.TARGET}
 
-CLEANFILES+= GDBvn.texi gdb-cfg.texi
+CLEANFILES+= gdb-cfg.texi
 stabs.info gdb.info: gdb-cfg.texi GDBvn.texi
 
 FILES=		netbsd.xml
@@ -47,63 +47,45 @@ FILESDIR=	/usr/share/gdb/syscalls
 .include "../../Makefile.inc"
 .include <bsd.info.mk>
 
-LIBCTFDIR!=	     cd ${.CURDIR}/../../lib/libctf	   && ${PRINTOBJDIR}
-LIBGNULIBDIR!=	     cd ${.CURDIR}/../../lib/libgnulib	   && ${PRINTOBJDIR}
-LIBGDBSUPPORTDIR!=   cd ${.CURDIR}/../../lib/libgdbsupport && ${PRINTOBJDIR}
-LIBOPCODESDIR!=	     cd ${.CURDIR}/../../lib/libopcodes	   && ${PRINTOBJDIR}
-LIBBFDDIR!=	     cd ${.CURDIR}/../../lib/libbfd	   && ${PRINTOBJDIR}
-LIBIBERTYDIR!=	     cd ${.CURDIR}/../../lib/libiberty	   && ${PRINTOBJDIR}
-LIBGDBDIR!=	     cd ${.CURDIR}/../../lib/libgdb	   && ${PRINTOBJDIR}
-LIBDECNUMBERDIR!=    cd ${.CURDIR}/../../lib/libdecnumber  && ${PRINTOBJDIR}
-
-.if ${USE_LIBEDIT} == yes
-LIBRL=-ledit
-LIBRLDP=${LIBEDIT}
-.else
-LIBRLDIR!=  cd ${.CURDIR}/../../lib/libreadline && ${PRINTOBJDIR}
-LIBRL=      -L${LIBRLDIR} -lreadline
-LIBRLDP=    ${LIBRLDIR}/libreadline.a
-.endif
-
-LDADD+= -L${LIBGDBDIR} -lgdb
-DPADD+= ${LIBGDBDIR}/libgdb.a
+PROGDPLIBS+= gdb ${GDBLIBDIR}/libgdb
+# XXX: modula2 won't load otherwise, since nothing brings the m2-objs in.
+LIBGDBDIR!=	cd ${GDBLIBDIR}/libgdb && ${PRINTOBJDIR}
+LDADD+=		${LIBGDBDIR}/m2-lang.o
 
 # Simulator support
 .if ${GDB_MACHINE_ARCH} == powerpc || ${GDB_MACHINE_ARCH} == powerpcle || \
     ${GDB_MACHINE_ARCH} == powerpc64
-SIMOBJ!=	cd ${.CURDIR}/../../lib/libsim && ${PRINTOBJDIR}
-LDADD+=		-L${SIMOBJ} -lsim
-DPADD+=		${SIMOBJ}/libsim.a
+PROGDPLIBS+= sim ${GDBLIBDIR}/libsim
 .elif ${MACHINE_CPU} == xxmips
-SIMOBJ!=	cd ${.CURDIR}/../../lib/libsim && ${PRINTOBJDIR}
-LDADD+=		-L${SIMOBJ} -lsim
-DPADD+=		${SIMOBJ}/libsim.a
+PROGDPLIBS+= sim ${GDBLIBDIR}/libsim
 .endif
 
-LDADD+= -L${LIBOPCODESDIR} -lopcodes \
-	-L${LIBBFDDIR} -lbfd \
-	-L${LIBDECNUMBERDIR} -ldecnumber \
-	-L${LIBGDBSUPPORTDIR} -lgdbsupport \
-	-L${LIBCTFDIR} -lctf \
-	-L${LIBGNULIBDIR} -lgnulib \
-	${LIBRL} \
-	-lterminfo \
-	-L${LIBIBERTYDIR} -liberty
+PROGDPLIBS+= opcodes ${GDBLIBDIR}/libopcodes \
+    bfd ${GDBLIBDIR}/libbfd \
+    decnumber ${GDBLIBDIR}/libdecnumber \
+    gdbsupport ${GDBLIBDIR}/libgdbsupport \
+    backtrace ${GDBLIBDIR}/libbacktrace \
+    sframe ${GDBLIBDIR}/libsframe \
+    ctf ${GDBLIBDIR}/libctf \
+    gnulib ${GDBLIBDIR}/libgnulib \
+    iberty ${GDBLIBDIR}/libiberty
 
-DPADD+=	${LIBOPCODESDIR}/libopcodes.a \
-	${LIBBFDDIR}/libbfd.a \
-	${LIBDECNUMBERDIR}/libdecnumber.a \
-	${LIBGDBSUPPORTDIR}/libgdbsupport.a \
-	${LIBCTFDIR}/libctf.a \
-	${LIBGNULIBDIR}/libgnulib.a \
-	${LIBRLDP} \
-	${LIBTERMINFO} \
-	${LIBIBERTYDIR}/libiberty.a
-
-LDADD+=		-lexpat -llzma -lz -lcurses -lintl -lm -lkvm -lutil -lpthread
-DPADD+=		${LIBEXPAT} ${LIBLZMA} ${LIBZ} ${LIBCURSES} ${LIBINTL} ${LIBM} ${LIBKVM} ${LIBUTIL} ${LIBPTHREAD}
+.if ${USE_LIBEDIT} == yes
+LDADD+= -ledit
+DPADD+= ${LIBEDIT}
+.else
+PROGDPLIBS+= readline ${GDBLIBDIR}/libreadline
+.endif
 
 .include <bsd.prog.mk>
+
+LIBGMP!=	cd ${.CURDIR}/../../../../lgpl3/gmp/lib/libgmp && ${PRINTOBJDIR}
+LDADD+= -L${LIBGMP} -lgmp
+DPADD+= ${LIBGMP}/libgmp.a
+
+LDADD+=	-lexpat -llzma -lz -lcurses -lterminfo -lintl -lm -lkvm -lutil -lpthread
+DPADD+=	${LIBEXPAT} ${LIBLZMA} ${LIBZ} ${LIBCURSES} ${LIBTERMINFO} ${LIBINTL} \
+    ${LIBM} ${LIBKVM} ${LIBUTIL} ${LIBPTHREAD}
 
 # Force c++
 CWARNFLAGS.clang+=	-Wno-deprecated

@@ -204,7 +204,7 @@ window_fine:
 recursive_trap:
 	st	%l5, [%lo(in_trap_handler) + %l4]
 	sub	%sp,(16+1+6+1+72)*4,%sp	! Make room for input & locals
- 					! + hidden arg + arg spill
+					! + hidden arg + arg spill
 					! + doubleword alignment
 					! + registers[72] local var
 
@@ -309,8 +309,8 @@ retry:
       while (count < BUFMAX - 1)
 	{
 	  ch = getDebugChar ();
-          if (ch == '$')
-            goto retry;
+	  if (ch == '$')
+	    goto retry;
 	  if (ch == '#')
 	    break;
 	  checksum = checksum + ch;

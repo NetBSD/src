@@ -13,23 +13,17 @@
 # The default is $host_cpu.
 
 case $host in
- arm*-*-netbsdelf* | \
- i[34567]86-*-netbsdelf* | \
- m68*-*-netbsdelf* | \
- sparc-*-netbsdelf* | \
- vax-*-netbsdelf*)
-    ;;
  *-*-irix* | \
  *-*-solaris2.[01] | *-*-solaris2.[2-9]* | *-*-solaris2.10* | \
  alpha*-*-osf* | \
  alpha*-*-freebsd* | \
  alpha*-*-kfreebsd*-gnu | \
- arm*-*-netbsd* | \
+ arm*-*-netbsdaout* | \
  hppa*-*-hiux* | \
  i[34567]86-ncr-* | \
  i[34567]86-*-dgux* | \
  i[34567]86-*-lynxos* | \
- i[34567]86-*-netbsd* | \
+ i[34567]86-*-netbsdaout* | \
  i[34567]86-*-openbsd[0-2].* | i[34567]86-*-openbsd3.[0-3] | \
  i[34567]86-*-sco3.2v5* | \
  i[34567]86-*-sco3.2v4* | \
@@ -41,11 +35,11 @@ case $host in
  i[34567]86-*-unixware* | \
  i[34567]86-*-sysv* | \
  i[34567]86-*-isc* | \
- m68*-*-netbsd* | \
- sparc-*-netbsd* | \
+ m68*-*-netbsdaout* | \
+ sparc-*-netbsdaout* | \
  rs6000-*-lynxos* | \
  vax-*-bsd* | \
- vax-*-netbsd* | \
+ vax-*-netbsdaout* | \
  vax-*-ultrix* | \
  hppa*-*-hpux* | \
  ia64-*-hpux* | \
@@ -60,9 +54,11 @@ case "${host_cpu}" in
 
 aarch64*)		gdb_host_cpu=aarch64 ;;
 alpha*)			gdb_host_cpu=alpha ;;
+arc*)			gdb_host_cpu=arc ;;
 arm*)			gdb_host_cpu=arm ;;
 hppa*)			gdb_host_cpu=pa ;;
 i[34567]86*)		gdb_host_cpu=i386 ;;
+loongarch*)		gdb_host_cpu=loongarch ;;
 m68*)			gdb_host_cpu=m68k ;;
 mips*)			gdb_host_cpu=mips ;;
 powerpc* | rs6000)	gdb_host_cpu=powerpc ;;
@@ -92,11 +88,13 @@ alpha*-*-netbsd* | alpha*-*-knetbsd*-gnu)
 			gdb_host=nbsd ;;
 alpha*-*-openbsd*)	gdb_host=nbsd ;;
 
+arc*-*-linux*)		gdb_host=linux ;;
+
 arm*-*-freebsd*)	gdb_host=fbsd ;;
 arm*-*-linux*)		gdb_host=linux ;;
-arm*-*-netbsdelf* | arm*-*-knetbsd*-gnu)
-			gdb_host=nbsdelf ;;
-arm*-*-openbsd*)	gdb_host=nbsdelf ;;
+arm*-*-netbsd* | arm*-*-knetbsd*-gnu)
+			gdb_host=nbsd ;;
+arm*-*-openbsd*)	gdb_host=nbsd ;;
 
 hppa*-*-linux*)		gdb_host=linux ;;
 hppa*-*-netbsd*)	gdb_host=nbsd ;;
@@ -104,8 +102,8 @@ hppa*-*-openbsd*)	gdb_host=obsd ;;
 
 i[34567]86-*-freebsd* | i[34567]86-*-kfreebsd*-gnu)
 			gdb_host=fbsd ;;
-i[34567]86-*-netbsdelf* | i[34567]86-*-knetbsd*-gnu)
-			gdb_host=nbsdelf ;;
+i[34567]86-*-netbsd* | i[34567]86-*-knetbsd*-gnu)
+			gdb_host=nbsd ;;
 i[34567]86-*-go32*)	gdb_host=go32 ;;
 i[34567]86-*-mingw32*)	gdb_host=mingw
 			gdb_host_obs=mingw-hdep.o
@@ -121,9 +119,11 @@ i[34567]86-*-cygwin*)	gdb_host=cygwin ;;
 
 ia64-*-linux*)		gdb_host=linux ;;
 
+loongarch*-linux*)	gdb_host=linux ;;
+
 m68*-*-linux*)		gdb_host=linux ;;
-m68*-*-netbsdelf* | m68*-*-knetbsd*-gnu | m5407-*-netbsdelf*)
-			gdb_host=nbsdelf ;;
+m68*-*-netbsd* | m68*-*-knetbsd*-gnu | m5407-*-netbsd*)
+			gdb_host=nbsd ;;
 m68*-*-openbsd*)	gdb_host=obsd ;;
 
 m88*-*-openbsd*)	gdb_host=obsd ;;
@@ -133,6 +133,8 @@ mips*-*-netbsd* | mips*-*-knetbsd*-gnu)
 			gdb_host=nbsd ;;
 mips*-*-freebsd*)	gdb_host=fbsd ;;
 mips64*-*-openbsd*)	gdb_host=obsd64 ;;
+
+or1k-*-linux*)		gdb_host=linux ;;
 
 powerpc-*-aix* | rs6000-*-* | powerpc64-*-aix*)
 			gdb_host=aix ;;
@@ -147,12 +149,12 @@ powerpc64*-*-linux*)	gdb_host=ppc64-linux ;;
 powerpc*-*-linux*)	gdb_host=linux ;;
 
 riscv*-*-freebsd*)	gdb_host=fbsd ;;
-riscv*-*-netbsd*)	gdb_host=nbsd ;;
 riscv*-*-linux*)	gdb_host=linux ;;
+riscv*-*-netbsd*)	gdb_host=nbsd ;;
 
 s390*-*-linux*)		gdb_host=linux ;;
 
-sh*-*-netbsdelf* | sh*-*-knetbsd*-gnu)
+sh*-*-netbsd* | sh*-*-knetbsd*-gnu)
 			gdb_host=nbsd ;;
 sh*-*-openbsd*)		gdb_host=nbsd ;;
 
@@ -160,11 +162,11 @@ sparc64-*-freebsd* | sparc64-*-kfreebsd*-gnu)
 			gdb_host=fbsd ;;
 sparc-*-linux*)		gdb_host=linux ;;
 sparc64-*-linux*)	gdb_host=linux64 ;;
-sparc-*-netbsdelf* | sparc-*-knetbsd*-gnu)
-			gdb_host=nbsdelf ;;
+sparc-*-netbsd* | sparc-*-knetbsd*-gnu)
+			gdb_host=nbsd ;;
 sparc64-*-netbsd* | sparc64-*-knetbsd*-gnu)
 			gdb_host=nbsd64 ;;
-sparc-*-openbsd*)	gdb_host=nbsdelf ;;
+sparc-*-openbsd*)	gdb_host=nbsd ;;
 sparc64-*-openbsd*)	gdb_host=obsd64 ;;
 sparc-*-solaris2* | sparcv9-*-solaris2* | sparc64-*-solaris2*)
 			gdb_host=sol2
@@ -172,8 +174,8 @@ sparc-*-solaris2* | sparcv9-*-solaris2* | sparc64-*-solaris2*)
 
 tilegx-*-linux*)	gdb_host=linux ;;
 
-vax-*-netbsdelf* | vax-*-knetbsd*-gnu)
-			gdb_host=nbsdelf ;;
+vax-*-netbsd* | vax-*-knetbsd*-gnu)
+			gdb_host=nbsd ;;
 vax-*-openbsd*)		gdb_host=obsd ;;
 
 x86_64-*-linux*)	gdb_host=linux64 ;;

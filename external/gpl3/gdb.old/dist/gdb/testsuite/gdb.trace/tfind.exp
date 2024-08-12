@@ -1,4 +1,4 @@
-#   Copyright 1998-2020 Free Software Foundation, Inc.
+#   Copyright 1998-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,8 +34,6 @@ if { [gdb_compile "$srcdir/$subdir/$srcfile" "$binfile" \
     return -1
 }
 gdb_load $binfile
-gdb_test "tstop"       ".*" ""
-gdb_test "tfind none"  ".*" ""
 
 # 6.2 test help tstart
 gdb_test "help tstart" \
@@ -67,7 +65,7 @@ gdb_test "help tfind trace" "Select a trace frame by tracepoint number.*" \
 runto_main
 gdb_reinitialize_dir $srcdir/$subdir
 
-if { ![gdb_target_supports_trace] } then {
+if {![gdb_target_supports_trace]} {
     unsupported "current target does not support trace"
     return 1
 
@@ -79,7 +77,7 @@ if { ![gdb_target_supports_trace] } then {
 # define relative source line numbers:
 # all subsequent line numbers are relative to this first one (baseline)
 set baseline  [gdb_find_recursion_test_baseline $srcfile]
-if { $baseline == -1 } then {
+if {$baseline == -1} {
     fail "could not find gdb_recursion_test function"
     return
 }
@@ -125,7 +123,7 @@ gdb_test_multiple "tstart" "6.1: tstart" {
     }
 }
 
-if { $return_me == 1 } then {
+if {$return_me == 1} {
     return -1
 }
 
@@ -156,7 +154,7 @@ gdb_test_multiple "tstop" "7.1: tstop" {
     }
 }
 
-if { $return_me == 1 } then {
+if {$return_me == 1} {
     return -1
 }
 
@@ -166,7 +164,7 @@ gdb_test "tstatus" "Trace stopped by a tstop command.*" \
 
 ## record starting PC
 set save_pc [gdb_readexpr "(unsigned long) \$pc"]
-if { $save_pc == -1 } then {
+if {$save_pc == -1} {
     fail "could not read PC"
     return
 }
@@ -302,7 +300,7 @@ gdb_tfind_test "8.14: tfind 3" "3" "3"
 gdb_test "print \$trace_line" "$testline4" \
 	"8.14: tfind 3 (line $testline4)"
 
-gdb_test_no_output "set \$test_pc = \$pc" ""
+gdb_test_no_output "set \$test_pc = \$pc" "8.14: set \$test_pc"
 gdb_tfind_test "8.14: tfind none" "none" "-1"
 gdb_tfind_test "8.14: tfind pc" "pc \$test_pc" "\$trace_frame != -1" "1"
 gdb_test "print \$trace_line" "$testline4" \
@@ -316,7 +314,7 @@ gdb_test "printf \"x \%d x\\n\", \$pc == \$test_pc" \
 gdb_tfind_test "8.15: tfind 3" "3" "3"
 gdb_test "print \$trace_line" "$testline4" \
 	"8.15: tfind 3 (line $testline4)"
-gdb_test_no_output "set \$test_pc = \$pc" ""
+gdb_test_no_output "set \$test_pc = \$pc" "8.15: set \$test_pc"
 gdb_tfind_test "8.15: tfind pc" "pc" "\$pc == \$test_pc" "1"
 gdb_test "print \$trace_line" "$testline4" \
 	"8.15: tfind pc (line $testline4)"
@@ -367,4 +365,4 @@ gdb_test "tfind NoSuChOpTiOn 21" \
 	"8.32: tfind with bad subcommand"
 
 # Finished!
-gdb_tfind_test "8.17: tfind none" "none" "-1"
+gdb_tfind_test "tfind none" "none" "-1"

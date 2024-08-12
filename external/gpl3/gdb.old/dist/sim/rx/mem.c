@@ -1,6 +1,6 @@
 /* mem.c --- memory for RX simulator.
 
-Copyright (C) 2005-2020 Free Software Foundation, Inc.
+Copyright (C) 2005-2023 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -18,6 +18,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
+
 /* This slows down the simulator and we get some false negatives from
    gcc, like when it uses a long-sized hole to hold a byte-sized
    variable, knowing that it doesn't care about the other bits.  But,
@@ -25,7 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
    1.  */
 #define RDCHECK 0
 
-#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -161,7 +163,7 @@ mcs (int isput, int bytes)
 }
 
 void
-mem_usage_stats ()
+mem_usage_stats (void)
 {
   int i, j;
   int rstart = 0;
@@ -244,7 +246,7 @@ s (int address, char *dir)
 
 #define S(d) if (trace) s(address, d)
 static void
-e ()
+e (void)
 {
   if (!trace)
     return;
@@ -262,7 +264,7 @@ mtypec (int address)
 
 #define E() if (trace) e()
 
-void
+static void
 mem_put_byte (unsigned int address, unsigned char value)
 {
   unsigned char *m;
@@ -315,7 +317,7 @@ mem_put_byte (unsigned int address, unsigned char value)
       }
       break;
 
-#ifdef CYCLE_STATS
+#ifdef WITH_PROFILE
     case 0x0008c02b: /* PB.DR */
       {
 	if (value == 0)
@@ -434,13 +436,15 @@ mem_put_si (int address, unsigned long value)
 }
 
 void
-mem_put_blk (int address, void *bufptr, int nbytes)
+mem_put_blk (int address, void *bufptr_void, int nbytes)
 {
+  unsigned char *bufptr = (unsigned char *) bufptr_void;
+
   S ("<=");
   if (enable_counting)
     mem_counters[1][1] += nbytes;
   while (nbytes--)
-    mem_put_byte (address++, *(unsigned char *) bufptr++);
+    mem_put_byte (address++, *bufptr++);
   E ();
 }
 
@@ -567,13 +571,15 @@ mem_get_si (int address)
 }
 
 void
-mem_get_blk (int address, void *bufptr, int nbytes)
+mem_get_blk (int address, void *bufptr_void, int nbytes)
 {
+  char *bufptr = (char *) bufptr_void;
+
   S ("=>");
   if (enable_counting)
     mem_counters[0][1] += nbytes;
   while (nbytes--)
-    *(char *) bufptr++ = mem_get_byte (address++);
+    *bufptr++ = mem_get_byte (address++);
   E ();
 }
 

@@ -1,4 +1,4 @@
-# Copyright 1992-2020 Free Software Foundation, Inc.
+# Copyright 1992-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,15 +51,11 @@ proc test_expr { args } {
     }
     set last_ent [expr [llength $args] - 1]
     set testname [lindex $args $last_ent]
-    if [gdb_test_no_output [lindex $args 0] "$testname (setup)"] {
-	gdb_suppress_tests
-    }
+    gdb_test_no_output [lindex $args 0] "$testname (setup)"
+
     for {set x 1} {$x < $last_ent} {set x [expr $x + 2]} {
-	if [gdb_test [lindex $args $x] [lindex $args [expr $x + 1]] "$testname ([lindex $args $x])"] {
-	    gdb_suppress_tests
-	}
+	gdb_test [lindex $args $x] [lindex $args [expr $x + 1]] "$testname ([lindex $args $x])"
     }
-    gdb_stop_suppressing_tests
 }
 
 proc do_tests {} {
@@ -115,6 +111,6 @@ gdb_test "print 'misc.cc'::v_bool" " = true" \
 gdb_test "print *(v_bool_array + number_ref)" "\\$\[0-9\]* = false" \
     "pointer addition with integer reference"
 gdb_test "print *(number_ref + v_bool_array)" "\\$\[0-9\]* = false" \
-    "pointer addition with integer reference"
+    "integer reference addition with pointer"
 gdb_test "print *(v_bool_array - number_ref)" "\\$\[0-9\]* = false" \
     "pointer subtraction with integer reference"

@@ -3,7 +3,7 @@
 
    Contributed by Daniel Berlin <dberlin@redhat.com>
 
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,7 +27,7 @@ struct fn_field;
 struct type;
 struct value;
 struct ui_file;
-struct frame_info;
+class frame_info_ptr;
 
 /* The functions here that attempt to determine what sort of thing a
    mangled name refers to may well be revised in the future.  It would
@@ -135,7 +135,7 @@ extern struct value *value_virtual_fn_field (struct value **valuep,
    FULL, TOP, and USING_ENC can each be zero, in which case we don't
    provide the corresponding piece of information.  */
 extern struct type *value_rtti_type (struct value *value,
-                                     int *full, LONGEST *top,
+				     int *full, LONGEST *top,
 				     int *using_enc);
 
 /* Compute the offset of the baseclass which is the INDEXth baseclass
@@ -204,7 +204,7 @@ extern std::string cplus_typename_from_type_info (struct value *value);
    address of the routine we are thunking to and continue to there
    instead.  */
 
-CORE_ADDR cplus_skip_trampoline (struct frame_info *frame,
+CORE_ADDR cplus_skip_trampoline (frame_info_ptr frame,
 				 CORE_ADDR stop_pc);
 
 /* Return a struct that provides pass-by-reference information
@@ -247,7 +247,7 @@ struct cp_abi_ops
   struct type *(*get_typeid_type) (struct gdbarch *gdbarch);
   struct type *(*get_type_from_type_info) (struct value *value);
   std::string (*get_typename_from_type_info) (struct value *value);
-  CORE_ADDR (*skip_trampoline) (struct frame_info *, CORE_ADDR);
+  CORE_ADDR (*skip_trampoline) (frame_info_ptr, CORE_ADDR);
   struct language_pass_by_ref_info (*pass_by_reference) (struct type *type);
 };
 

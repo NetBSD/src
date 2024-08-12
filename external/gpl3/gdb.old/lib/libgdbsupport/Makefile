@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2023/03/21 16:37:31 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2024/08/12 20:32:26 christos Exp $
 
 NOCTF=
 HOSTPROG_CXX=   1

@@ -30,18 +30,8 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
-
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
 
 
 /* EMULATION
@@ -503,7 +493,7 @@ emul_bugapi_instruction_call(cpu *processor,
   switch (call_id) {
   default:
     error("emul-bugapi: unimplemented bugapi %s from address 0x%lx\n",
-	  emul_bugapi_instruction_name (call_id), SRR0);
+	  emul_bugapi_instruction_name (call_id), (unsigned long) SRR0);
     break;
 
   /* read a single character, output r3 = byte */

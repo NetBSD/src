@@ -1,5 +1,5 @@
 /* Register definitions for the FRV simulator
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2023 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
 This file is part of the GNU Simulators.
@@ -48,6 +48,8 @@ void frv_initialize_spr (SIM_CPU *);
 void frv_reset_spr (SIM_CPU *);
 
 void frv_check_spr_access (SIM_CPU *, UINT);
+void frv_check_spr_read_access (SIM_CPU *, UINT);
+void frv_check_spr_write_access (SIM_CPU *, UINT);
 
 void frv_fr_registers_available (SIM_CPU *, int *, int *);
 void frv_gr_registers_available (SIM_CPU *, int *, int *);

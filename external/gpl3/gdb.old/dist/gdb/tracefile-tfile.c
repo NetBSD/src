@@ -1,6 +1,6 @@
 /* Trace file TFILE format support in GDB.
 
-   Copyright (C) 1997-2020 Free Software Foundation, Inc.
+   Copyright (C) 1997-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,7 +25,7 @@
 #include "regcache.h"
 #include "inferior.h"
 #include "gdbthread.h"
-#include "exec.h" /* exec_bfd */
+#include "exec.h"
 #include "completer.h"
 #include "filenames.h"
 #include "remote.h"
@@ -310,7 +310,7 @@ tfile_write_tdesc (struct trace_file_writer *self)
     = (struct tfile_trace_file_writer *) self;
 
   gdb::optional<std::string> tdesc
-    = target_fetch_description_xml (current_top_target ());
+    = target_fetch_description_xml (current_inferior ()->top_target ());
 
   if (!tdesc)
     return;
@@ -471,17 +471,17 @@ tfile_target_open (const char *arg, int from_tty)
 
   gdb::unique_xmalloc_ptr<char> filename (tilde_expand (arg));
   if (!IS_ABSOLUTE_PATH (filename.get ()))
-    filename = gdb_abspath (filename.get ());
+    filename = make_unique_xstrdup (gdb_abspath (filename.get ()).c_str ());
 
   flags = O_BINARY | O_LARGEFILE;
   flags |= O_RDONLY;
-  scratch_chan = gdb_open_cloexec (filename.get (), flags, 0);
+  scratch_chan = gdb_open_cloexec (filename.get (), flags, 0).release ();
   if (scratch_chan < 0)
     perror_with_name (filename.get ());
 
   /* Looks semi-reasonable.  Toss the old trace file and work on the new.  */
 
-  unpush_target (&tfile_ops);
+  current_inferior ()->unpush_target (&tfile_ops);
 
   trace_filename = filename.release ();
   trace_fd = scratch_chan;
@@ -498,7 +498,7 @@ tfile_target_open (const char *arg, int from_tty)
 	&& (startswith (header + 1, "TRACE0\n"))))
     error (_("File is not a valid trace file."));
 
-  push_target (&tfile_ops);
+  current_inferior ()->push_target (&tfile_ops);
 
   trace_regblock_size = 0;
   ts = current_trace_status ();
@@ -551,7 +551,7 @@ tfile_target_open (const char *arg, int from_tty)
   catch (const gdb_exception &ex)
     {
       /* Remove the partially set up target.  */
-      unpush_target (&tfile_ops);
+      current_inferior ()->unpush_target (&tfile_ops);
       throw;
     }
 
@@ -571,7 +571,7 @@ tfile_target_open (const char *arg, int from_tty)
 
   merge_uploaded_tracepoints (&uploaded_tps);
 
-  post_create_inferior (&tfile_ops, from_tty);
+  post_create_inferior (from_tty);
 }
 
 /* Interpret the given line from the definitions part of the trace
@@ -634,7 +634,7 @@ tfile_target::close ()
 void
 tfile_target::files_info ()
 {
-  printf_filtered ("\t`%s'\n", trace_filename);
+  gdb_printf ("\t`%s'\n", trace_filename);
 }
 
 void
@@ -696,7 +696,7 @@ tfile_target::trace_find (enum trace_find_type type, int num,
   if (num == -1)
     {
       if (tpp)
-        *tpp = -1;
+	*tpp = -1;
       return -1;
     }
 
@@ -714,7 +714,7 @@ tfile_target::trace_find (enum trace_find_type type, int num,
 	break;
       tfile_read ((gdb_byte *) &data_size, 4);
       data_size = (unsigned int) extract_unsigned_integer
-                                     ((gdb_byte *) &data_size, 4,
+				     ((gdb_byte *) &data_size, 4,
 				      gdbarch_byte_order (target_gdbarch ()));
       offset += 4;
 
@@ -752,7 +752,7 @@ tfile_target::trace_find (enum trace_find_type type, int num,
 		    found = 1;
 		  break;
 		default:
-		  internal_error (__FILE__, __LINE__, _("unknown tfind type"));
+		  internal_error (_("unknown tfind type"));
 		}
 	    }
 	}
@@ -831,10 +831,10 @@ traceframe_walk_blocks (walk_blocks_callback_func callback,
 	case 'M':
 	  lseek (trace_fd, cur_offset + pos + 8, SEEK_SET);
 	  tfile_read ((gdb_byte *) &mlen, 2);
-          mlen = (unsigned short)
-                extract_unsigned_integer ((gdb_byte *) &mlen, 2,
-                                          gdbarch_byte_order
-                                              (target_gdbarch ()));
+	  mlen = (unsigned short)
+		extract_unsigned_integer ((gdb_byte *) &mlen, 2,
+					  gdbarch_byte_order
+					      (target_gdbarch ()));
 	  lseek (trace_fd, mlen, SEEK_CUR);
 	  pos += (8 + 2 + mlen);
 	  break;
@@ -987,7 +987,7 @@ tfile_target::xfer_partial (enum target_object object,
 		amt = len;
 
 	      if (maddr != offset)
-	        lseek (trace_fd, offset - maddr, SEEK_CUR);
+		lseek (trace_fd, offset - maddr, SEEK_CUR);
 	      tfile_read (readbuf, amt);
 	      *xfered_len = amt;
 	      return TARGET_XFER_OK;

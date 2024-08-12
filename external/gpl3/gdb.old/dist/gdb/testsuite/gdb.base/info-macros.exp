@@ -1,4 +1,4 @@
-# Copyright 2011-2020 Free Software Foundation, Inc.
+# Copyright 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,22 +21,11 @@ if [using_fission] {
     return -1
 }
 
-get_compiler_info
-if ![test_compiler_info gcc*] {
-  untested "no compiler info"
-  return -1
-}
-
-# Don't use "debug" here.  Otherwise "-g" would be appended to the gcc
-# command line, possibly overriding "-g3" (depending on gcc version).
-set options "additional_flags=-g3"
-
-if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} $options] } {
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} {debug macros}] } {
     return -1
 }
 
 if ![runto_main] {
-    untested "could not run to main"
     return -1
 }
 
@@ -59,9 +48,11 @@ gdb_test "info macro --" \
 	 "You must follow.*with the name.*you want to see.*\[^\r\n\]*\[\r\n\]"
 
 gdb_test "info macro -- " \
-	 "You must follow.*with the name.*you want to see.*\[^\r\n\]*\[\r\n\]"
+	 "You must follow.*with the name.*you want to see.*\[^\r\n\]*\[\r\n\]" \
+	 "info macro -- <EOL>"
 gdb_test "info macro  -- " \
-	 "You must follow.*with the name.*you want to see.*\[^\r\n\]*\[\r\n\]"
+	 "You must follow.*with the name.*you want to see.*\[^\r\n\]*\[\r\n\]" \
+	 "info macro  -- <EOL>"
 
 gdb_test "info macro -invalid-option" \
 	 "Unrecognized option.*Try \"help info macro\"\."
@@ -113,164 +104,80 @@ gdb_test "$test" "$r1$r2$r3$r4"
 set test "info macro  -a  --  FOO"
 gdb_test "$test" "$r1$r2$r3$r4"
 
-proc gdb_test_multiple_with_read1_timeout_factor { factor command message \
-						       user_code } {
-    with_read1_timeout_factor $factor {
-        uplevel [list gdb_test_multiple $command $message $user_code]
-    }
-}
-
 set test "info macros"
-set r1 ".*#define FOO \"hello\""
-set r2 ".*#define ONE"
-set r3 ".*\r\n$gdb_prompt"
+set r1 "#define FOO \"hello\""
+set r2 "#define ONE"
 set testname "$test 2"
-gdb_test_multiple_with_read1_timeout_factor 10 "$test" $testname {
-  -re "$r1$r2$r3" {
-     pass $testname
-  }
-  -re ".*#define TWO.*\r\n$gdb_prompt" {
-     fail $testname
-  }
-  -re ".*#define THREE.*\r\n$gdb_prompt" {
-     fail $testname
-  }
-  -re ".*#define FOUR.*\r\n$gdb_prompt" {
-     fail $testname
-  }
-}
-gdb_test "next" ".*" ""
+gdb_test_lines $test $testname $r1.*$r2 \
+    -re-not "#define TWO" \
+    -re-not "#define THREE" \
+    -re-not "#define FOUR"
 
-set r1 ".*#define FOO \" \""
-set r2 ".*#define ONE"
-set r3 ".*#define TWO"
-set r4 ".*\r\n$gdb_prompt"
+gdb_test "next" "" "next, 1"
+
+set r1 "#define FOO \" \""
+set r2 "#define ONE"
+set r3 "#define TWO"
 set testname "$test 3"
-gdb_test_multiple_with_read1_timeout_factor 10 "$test" $testname {
-  -re ".*#define THREE.*\r\n$gdb_prompt" {
-     fail $testname
-  }
-  -re ".*#define FOUR.*\r\n$gdb_prompt" {
-     fail $testname
-  }
-  -re "$r1$r2$r3$r4" {
-     pass $testname
-  }
-}
-gdb_test "next" ".*" ""
+gdb_test_lines $test $testname $r1.*$r2.*$r3 \
+    -re-not "#define THREE" \
+    -re-not "#define FOUR"
 
-# in alpabetical order...
-set r1 ".*#define FOO \"world\""
-set r2 ".*#define ONE"
-set r3 ".*#define THREE"
-set r4 ".*#define TWO"
-set r5 ".*\r\n$gdb_prompt"
+gdb_test "next" "" "next, 2"
+
+# in alphabetical order...
+set r1 "#define FOO \"world\""
+set r2 "#define ONE"
+set r3 "#define THREE"
+set r4 "#define TWO"
 set testname "$test 4"
-gdb_test_multiple_with_read1_timeout_factor 10 "$test" $testname {
-  -re ".*#define FOUR.*\r\n$gdb_prompt" {
-     fail $testname
-  }
-  -re "$r1$r2$r3$r4$r5" {
-     pass $testname
-  }
-}
+gdb_test_lines $test $testname $r1.*$r2.*$r3.*$r4 \
+    -re-not "#define FOUR"
+
 # same as above with a linespec.
 set test "info macros *\$pc"
-gdb_test_multiple_with_read1_timeout_factor 10 "$test" $test {
-  -re ".*#define FOUR.*\r\n$gdb_prompt" {
-     fail $test
-  }
-  -re "$r1$r2$r3$r4$r5" {
-     pass $test
-  }
-}
-gdb_test "next" ".*" ""
+gdb_test_lines $test "" $r1.*$r2.*$r3.*$r4 \
+    -re-not "#define FOUR"
+gdb_test "next" "" "next, 3"
 
-set r1 ".*#define FOO \" \""
-set r2 ".*#define ONE"
-set r3 ".*#define TWO."
-set r4 ".*\r\n$gdb_prompt"
+set r1 "#define FOO \" \""
+set r2 "#define ONE"
+set r3 "#define TWO."
 set test "info macros"
 set testname "$test 5"
-gdb_test_multiple_with_read1_timeout_factor 10 "$test" $test {
-  -re ".*#define THREE.*\r\n$gdb_prompt" {
-     fail $testname
-  }
-  -re ".*#define FOUR.*\r\n$gdb_prompt" {
-     fail $testname
-  }
-  -re "$r1$r2$r3$r4" {
-     pass $testname
-  }
-}
-gdb_test "next" ".*" ""
-gdb_test "next" ".*" ""
+gdb_test_lines $test $testname $r1.*$r2.*$r3 \
+    -re-not "#define THREE" \
+    -re-not "#define FOUR"
+gdb_test "next" "" "next, 4"
+gdb_test "next" "" "next, 5"
 
-set r1 ".*#define DEF_MACROS"
-set r2 ".*\r\n$gdb_prompt"
+set r1 "#define DEF_MACROS"
 set testname "$test 6"
-gdb_test_multiple_with_read1_timeout_factor 10 "$test" $testname {
-  -re ".*#define FOO \" \".*\r\n$gdb_prompt" {
-     fail $testname
-  }
-  -re ".*#define FOO \"hello\".*\r\n$gdb_prompt" {
-     fail $testname
-  }
-  -re ".*#define FOO \"world\".*\r\n$gdb_prompt" {
-     fail $testname
-  }
-  -re ".*#define FOO\\(a\\) foo = a.*" {
-     fail $testname
-  }
-  -re ".*#define ONE.*\r\n$gdb_prompt" {
-     fail $testname
-  }
-  -re ".*#define TWO.*\r\n$gdb_prompt" {
-     fail $testname
-  }
-  -re ".*#define THREE.*\r\n$gdb_prompt" {
-     fail $testname
-  }
-  -re ".*#define FOUR.*\r\n$gdb_prompt" {
-     fail $testname
-  }
-  -re "$r1$r2" {
-     pass $testname
-  }
-}
+gdb_test_lines $test $testname $r1 \
+    -re-not "#define FOO" \
+    -re-not "#define ONE" \
+    -re-not "#define TWO" \
+    -re-not "#define THREE" \
+    -re-not "#define FOUR"
 
-gdb_test "next" ".*" ""
-set r1 ".*#define DEF_MACROS"
-set r2 ".*#define FOO\\(a\\) foo = a"
-set r3 ".*#define FOUR"
-set r4 ".*\r\n$gdb_prompt"
+gdb_test "next" "" "next, 6"
+set r1 "#define DEF_MACROS"
+set r2 "#define FOO\\(a\\) foo = a"
+set r3 "#define FOUR"
 set testname "$test 7"
-gdb_test_multiple_with_read1_timeout_factor 10 "$test" $testname {
-  -re ".*#define FOO \" \".*\r\n$gdb_prompt" {
-     fail $testname
-  }
-  -re ".*#define FOO \"hello\".*\r\n$gdb_prompt" {
-     fail $testname
-  }
-  -re ".*#define FOO \"world\".*\r\n$gdb_prompt" {
-     fail $testname
-  }
-  -re ".*#define ONE.*\r\n$gdb_prompt" {
-     fail $testname
-  }
-  -re ".*#define TWO.*\r\n$gdb_prompt" {
-     fail $testname
-  }
-  -re ".*#define THREE.*\r\n$gdb_prompt" {
-     fail $testname
-  }
-  -re "$r1$r2$r3$r4" {
-     pass $testname
-  }
-}
+gdb_test_lines $test $testname $r1.*$r2.*$r3 \
+    -re-not "#define FOO \" \"" \
+    -re-not "#define FOO \"hello\"" \
+    -re-not "#define FOO \"world\"" \
+    -re-not "#define ONE" \
+    -re-not "#define TWO" \
+    -re-not "#define THREE"
 
 set test "info macros info-macros.c:42"
 
-set r1 ".*define DEF_MACROS"
-set r2 ".*define ONE"
-gdb_test "$test" "$r1$r2.*"
+set r1 "#define DEF_MACROS "
+set r2 "#define ONE"
+gdb_test_lines "$test" "" [multi_line \
+			       "" \
+			       "$r1" \
+			       "(.*\r\n)?$r2"]

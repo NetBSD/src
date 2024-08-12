@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2020 Free Software Foundation, Inc.
+# Copyright (C) 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -77,13 +77,12 @@ PerfTest::assemble {
     clean_restart $binfile
 
     if ![runto_main] {
-	fail "can't run to main"
 	return -1
     }
     return 0
 } {
     global SOLIB_COUNT
 
-    gdb_test_no_output "python SolibLoadUnload\($SOLIB_COUNT\).run()"
+    gdb_test_python_run "SolibLoadUnload\($SOLIB_COUNT\)"
     return 0
 }

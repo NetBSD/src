@@ -1,6 +1,6 @@
 /* Native debugging support for GNU/Linux (LWP layer).
 
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -46,7 +46,7 @@ public:
 
   void resume (ptid_t, int, enum gdb_signal) override;
 
-  ptid_t wait (ptid_t, struct target_waitstatus *, int) override;
+  ptid_t wait (ptid_t, struct target_waitstatus *, target_wait_flags) override;
 
   void pass_signals (gdb::array_view<const unsigned char>) override;
 
@@ -83,15 +83,11 @@ public:
   void thread_events (int) override;
 
   bool can_async_p () override;
-  bool is_async_p () override;
 
   bool supports_non_stop () override;
   bool always_non_stop_p () override;
 
-  int async_wait_fd () override;
-  void async (int) override;
-
-  void close () override;
+  void async (bool) override;
 
   void stop (ptid_t) override;
 
@@ -105,16 +101,16 @@ public:
 
   int fileio_open (struct inferior *inf, const char *filename,
 		   int flags, int mode, int warn_if_slow,
-		   int *target_errno) override;
+		   fileio_error *target_errno) override;
 
   gdb::optional<std::string>
     fileio_readlink (struct inferior *inf,
 		     const char *filename,
-		     int *target_errno) override;
+		     fileio_error *target_errno) override;
 
   int fileio_unlink (struct inferior *inf,
 		     const char *filename,
-		     int *target_errno) override;
+		     fileio_error *target_errno) override;
 
   int insert_fork_catchpoint (int) override;
   int remove_fork_catchpoint (int) override;
@@ -127,13 +123,11 @@ public:
   int set_syscall_catchpoint (int pid, bool needed, int any_count,
 			      gdb::array_view<const int> syscall_counts) override;
 
-  char *pid_to_exec_file (int pid) override;
-
-  void post_startup_inferior (ptid_t) override;
+  const char *pid_to_exec_file (int pid) override;
 
   void post_attach (int) override;
 
-  bool follow_fork (bool, bool) override;
+  void follow_fork (inferior *, ptid_t, target_waitkind, bool, bool) override;
 
   std::vector<static_tracepoint_marker>
     static_tracepoint_markers_by_strid (const char *id) override;
@@ -189,6 +183,10 @@ public:
   /* SIGTRAP-like breakpoint status events recognizer.  The default
      recognizes SIGTRAP only.  */
   virtual bool low_status_is_event (int status);
+
+protected:
+
+    void post_startup_inferior (ptid_t) override;
 };
 
 /* The final/concrete instance.  */
@@ -196,26 +194,32 @@ extern linux_nat_target *linux_target;
 
 struct arch_lwp_info;
 
-/* Structure describing an LWP.  This is public only for the purposes
-   of ALL_LWPS; target-specific code should generally not access it
-   directly.  */
+/* Structure describing an LWP.  */
 
-struct lwp_info
+struct lwp_info : intrusive_list_node<lwp_info>
 {
+  lwp_info (ptid_t ptid)
+    : ptid (ptid)
+  {}
+
+  ~lwp_info ();
+
+  DISABLE_COPY_AND_ASSIGN (lwp_info);
+
   /* The process id of the LWP.  This is a combination of the LWP id
      and overall process id.  */
-  ptid_t ptid;
+  ptid_t ptid = null_ptid;
 
   /* If this flag is set, we need to set the event request flags the
      next time we see this LWP stop.  */
-  int must_set_ptrace_flags;
+  int must_set_ptrace_flags = 0;
 
   /* Non-zero if we sent this LWP a SIGSTOP (but the LWP didn't report
      it back yet).  */
-  int signalled;
+  int signalled = 0;
 
   /* Non-zero if this LWP is stopped.  */
-  int stopped;
+  int stopped = 0;
 
   /* Non-zero if this LWP will be/has been resumed.  Note that an LWP
      can be marked both as stopped and resumed at the same time.  This
@@ -223,38 +227,38 @@ struct lwp_info
      pending.  We shouldn't let the LWP run until that wait status has
      been processed, but we should not report that wait status if GDB
      didn't try to let the LWP run.  */
-  int resumed;
+  int resumed = 0;
 
   /* The last resume GDB requested on this thread.  */
-  enum resume_kind last_resume_kind;
+  resume_kind last_resume_kind = resume_continue;
 
   /* If non-zero, a pending wait status.  */
-  int status;
+  int status = 0;
 
   /* When 'stopped' is set, this is where the lwp last stopped, with
      decr_pc_after_break already accounted for.  If the LWP is
      running and stepping, this is the address at which the lwp was
      resumed (that is, it's the previous stop PC).  If the LWP is
      running and not stepping, this is 0.  */
-  CORE_ADDR stop_pc;
+  CORE_ADDR stop_pc = 0;
 
   /* Non-zero if we were stepping this LWP.  */
-  int step;
+  int step = 0;
 
   /* The reason the LWP last stopped, if we need to track it
      (breakpoint, watchpoint, etc.).  */
-  enum target_stop_reason stop_reason;
+  target_stop_reason stop_reason = TARGET_STOPPED_BY_NO_REASON;
 
   /* On architectures where it is possible to know the data address of
      a triggered watchpoint, STOPPED_DATA_ADDRESS_P is non-zero, and
      STOPPED_DATA_ADDRESS contains such data address.  Otherwise,
      STOPPED_DATA_ADDRESS_P is false, and STOPPED_DATA_ADDRESS is
      undefined.  Only valid if STOPPED_BY_WATCHPOINT is true.  */
-  int stopped_data_address_p;
-  CORE_ADDR stopped_data_address;
+  int stopped_data_address_p = 0;
+  CORE_ADDR stopped_data_address = 0;
 
   /* Non-zero if we expect a duplicated SIGINT.  */
-  int ignore_sigint;
+  int ignore_sigint = 0;
 
   /* If WAITSTATUS->KIND != TARGET_WAITKIND_SPURIOUS, the waitstatus
      for this LWP's last event.  This may correspond to STATUS above,
@@ -269,33 +273,29 @@ struct lwp_info
   enum target_waitkind syscall_state;
 
   /* The processor core this LWP was last seen on.  */
-  int core;
+  int core = -1;
 
   /* Arch-specific additions.  */
-  struct arch_lwp_info *arch_private;
-
-  /* Previous and next pointers in doubly-linked list of known LWPs,
-     sorted by reverse creation order.  */
-  struct lwp_info *prev;
-  struct lwp_info *next;
+  struct arch_lwp_info *arch_private = nullptr;
 };
 
-/* The global list of LWPs, for ALL_LWPS.  Unlike the threads list,
-   there is always at least one LWP on the list while the GNU/Linux
-   native target is active.  */
-extern struct lwp_info *lwp_list;
+/* lwp_info iterator and range types.  */
+
+using lwp_info_iterator
+  = reference_to_pointer_iterator<intrusive_list<lwp_info>::iterator>;
+using lwp_info_range = iterator_range<lwp_info_iterator>;
+using lwp_info_safe_range = basic_safe_range<lwp_info_range>;
+
+/* Get an iterable range over all lwps.  */
+
+lwp_info_range all_lwps ();
+
+/* Same as the above, but safe against deletion while iterating.  */
+
+lwp_info_safe_range all_lwps_safe ();
 
 /* Does the current host support PTRACE_GETREGSET?  */
 extern enum tribool have_ptrace_getregset;
-
-/* Iterate over each active thread (light-weight process).  */
-#define ALL_LWPS(LP)							\
-  for ((LP) = lwp_list;							\
-       (LP) != NULL;							\
-       (LP) = (LP)->next)
-
-/* Attempt to initialize libthread_db.  */
-void check_for_thread_db (void);
 
 /* Called from the LWP layer to inform the thread_db layer that PARENT
    spawned CHILD.  Both LWPs are currently stopped.  This function
@@ -304,8 +304,11 @@ void check_for_thread_db (void);
    true on success, false if the process isn't using libpthread.  */
 extern int thread_db_notice_clone (ptid_t parent, ptid_t child);
 
-/* Return the set of signals used by the threads library.  */
-extern void lin_thread_get_thread_signals (sigset_t *mask);
+/* Return the number of signals used by the threads library.  */
+extern unsigned int lin_thread_get_thread_signal_num (void);
+
+/* Return the i-th signal used by the threads library.  */
+extern int lin_thread_get_thread_signal (unsigned int i);
 
 /* Find process PID's pending signal set from /proc/pid/status.  */
 void linux_proc_pending_signals (int pid, sigset_t *pending,
@@ -327,8 +330,8 @@ extern void linux_unstop_all_lwps (void);
 void linux_nat_switch_fork (ptid_t new_ptid);
 
 /* Store the saved siginfo associated with PTID in *SIGINFO.
-   Return 1 if it was retrieved successfully, 0 otherwise (*SIGINFO is
+   Return true if it was retrieved successfully, false otherwise (*SIGINFO is
    uninitialized in such case).  */
-int linux_nat_get_siginfo (ptid_t ptid, siginfo_t *siginfo);
+bool linux_nat_get_siginfo (ptid_t ptid, siginfo_t *siginfo);
 
 #endif /* LINUX_NAT_H */

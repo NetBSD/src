@@ -21,6 +21,7 @@
 #ifndef _PSIM_CONFIG_H_
 #define _PSIM_CONFIG_H_
 
+#include "bfd.h"
 
 /* endianness of the host/target:
 
@@ -28,24 +29,23 @@
    of the host/target it is able to eliminate slower generic endian
    handling code.
 
-   Possible values are 0 (unknown), LITTLE_ENDIAN, BIG_ENDIAN */
+   Possible values are BFD_ENDIAN_UNKNOWN, BFD_ENDIAN_LITTLE,
+   BFD_ENDIAN_BIG.  */
 
-#ifndef WITH_HOST_BYTE_ORDER
-#define WITH_HOST_BYTE_ORDER		0 /*unknown*/
+#ifdef WORDS_BIGENDIAN
+# define HOST_BYTE_ORDER BFD_ENDIAN_BIG
+#else
+# define HOST_BYTE_ORDER BFD_ENDIAN_LITTLE
 #endif
 
 #ifndef WITH_TARGET_BYTE_ORDER
-#define WITH_TARGET_BYTE_ORDER		0 /*unknown*/
+#define WITH_TARGET_BYTE_ORDER		BFD_ENDIAN_UNKNOWN
 #endif
 
-extern int current_host_byte_order;
-#define CURRENT_HOST_BYTE_ORDER (WITH_HOST_BYTE_ORDER \
-				 ? WITH_HOST_BYTE_ORDER \
-				 : current_host_byte_order)
-extern int current_target_byte_order;
-#define CURRENT_TARGET_BYTE_ORDER (WITH_TARGET_BYTE_ORDER \
-				   ? WITH_TARGET_BYTE_ORDER \
-				   : current_target_byte_order)
+extern enum bfd_endian current_target_byte_order;
+#define CURRENT_TARGET_BYTE_ORDER \
+  (WITH_TARGET_BYTE_ORDER != BFD_ENDIAN_UNKNOWN \
+   ? WITH_TARGET_BYTE_ORDER : current_target_byte_order)
 
 
 /* PowerPC XOR endian.
@@ -79,19 +79,15 @@ extern int current_target_byte_order;
 #endif
 
 
-/* Word size of host/target:
+/* Word size of target:
 
-   Set these according to your host and target requirements.  At this
+   Set these according to your target requirements.  At this
    point in time, I've only compiled (not run) for a 64bit and never
    built for a 64bit host.  This will always remain a compile time
    option */
 
 #ifndef WITH_TARGET_WORD_BITSIZE
 #define WITH_TARGET_WORD_BITSIZE        32 /* compiled only */
-#endif
-
-#ifndef WITH_HOST_WORD_BITSIZE
-#define WITH_HOST_WORD_BITSIZE		32 /* 64bit ready? */
 #endif
 
 
@@ -107,6 +103,7 @@ extern int current_target_byte_order;
    CURRENT_ENVIRONMENT specifies which of vea or oea is required for
    the current runtime. */
 
+#define ALL_ENVIRONMENT			0
 #define USER_ENVIRONMENT		1
 #define VIRTUAL_ENVIRONMENT		2
 #define OPERATING_ENVIRONMENT		3
@@ -182,7 +179,7 @@ extern int current_environment;
    This model.  Instead allows both little and big endian modes to
    either take exceptions or handle miss aligned transfers.
 
-   If 0 is specified then for big-endian mode miss alligned accesses
+   If 0 is specified then for big-endian mode miss aligned accesses
    are permitted (NONSTRICT_ALIGNMENT) while in little-endian mode the
    processor will fault on them (STRICT_ALIGNMENT). */
 
@@ -218,12 +215,6 @@ extern int current_floating_point;
 /* Debugging:
 
    Control the inclusion of debugging code. */
-
-/* Whether to check instructions for reserved bits being set */
-
-#ifndef WITH_RESERVED_BITS
-#define WITH_RESERVED_BITS		1
-#endif
 
 /* include monitoring code */
 
@@ -308,7 +299,7 @@ extern int current_stdio;
          the module is included into a file being compiled, calls to
 	 its funtions can be eliminated. 2 implies 1.
 
-      PSIM_INLINE_LOCALS:
+      INLINE_LOCALS:
 
          Make internal (static) functions within the module `inline'.
 
@@ -316,7 +307,7 @@ extern int current_stdio;
 
       INCLUDE_MODULE == (REVEAL_MODULE | INLINE_MODULE)
 
-      ALL_INLINE == (REVEAL_MODULE | INLINE_MODULE | PSIM_INLINE_LOCALS)
+      ALL_C_INLINE == (REVEAL_MODULE | INLINE_MODULE | INLINE_LOCALS)
 
    In addition to this, modules have been put into two categories.
 
@@ -414,11 +405,10 @@ extern int current_stdio;
 
    */
 
-#define REVEAL_MODULE			1
-#define INLINE_MODULE			2
+#include "../common/sim-inline.h"
+#define REVEAL_MODULE			H_REVEALS_MODULE
+#define INLINE_MODULE			C_REVEALS_MODULE
 #define INCLUDE_MODULE			(INLINE_MODULE | REVEAL_MODULE)
-#define PSIM_INLINE_LOCALS			4
-#define ALL_INLINE			7
 
 /* Your compilers inline reserved word */
 
@@ -440,7 +430,7 @@ extern int current_stdio;
 /* Default macro to simplify control several of key the inlines */
 
 #ifndef DEFAULT_INLINE
-#define	DEFAULT_INLINE			PSIM_INLINE_LOCALS
+#define	DEFAULT_INLINE			INLINE_LOCALS
 #endif
 
 /* Code that converts between hosts and target byte order.  Used on
@@ -449,21 +439,21 @@ extern int current_stdio;
    can inline for all callers */
 
 #ifndef SIM_ENDIAN_INLINE
-#define SIM_ENDIAN_INLINE		(DEFAULT_INLINE ? ALL_INLINE : 0)
+#define SIM_ENDIAN_INLINE		(DEFAULT_INLINE ? ALL_C_INLINE : 0)
 #endif
 
 /* Low level bit manipulation routines. This module can inline for all
    callers */
 
 #ifndef BITS_INLINE
-#define BITS_INLINE			(DEFAULT_INLINE ? ALL_INLINE : 0)
+#define BITS_INLINE			(DEFAULT_INLINE ? ALL_C_INLINE : 0)
 #endif
 
 /* Code that gives access to various CPU internals such as registers.
    Used every time an instruction is executed */
 
 #ifndef CPU_INLINE
-#define CPU_INLINE			(DEFAULT_INLINE ? ALL_INLINE : 0)
+#define CPU_INLINE			(DEFAULT_INLINE ? ALL_C_INLINE : 0)
 #endif
 
 /* Code that translates between an effective and real address.  Used
@@ -484,14 +474,14 @@ extern int current_stdio;
    Called once per instruction cycle */
 
 #ifndef EVENTS_INLINE
-#define EVENTS_INLINE			(DEFAULT_INLINE ? ALL_INLINE : 0)
+#define EVENTS_INLINE			(DEFAULT_INLINE ? ALL_C_INLINE : 0)
 #endif
 
 /* Code monotoring the processors performance.  It counts events on
    every instruction cycle */
 
 #ifndef MON_INLINE
-#define MON_INLINE			(DEFAULT_INLINE ? ALL_INLINE : 0)
+#define MON_INLINE			(DEFAULT_INLINE ? ALL_C_INLINE : 0)
 #endif
 
 /* Code called on the rare occasions that an interrupt occures. */
@@ -514,7 +504,7 @@ extern int current_stdio;
    a jump table. */
 
 #ifndef DEVICE_INLINE
-#define DEVICE_INLINE			(DEFAULT_INLINE ? PSIM_INLINE_LOCALS : 0)
+#define DEVICE_INLINE			(DEFAULT_INLINE ? INLINE_LOCALS : 0)
 #endif
 
 /* Code called used while the device tree is being built.
@@ -522,7 +512,7 @@ extern int current_stdio;
    Inlining this is of no benefit */
 
 #ifndef TREE_INLINE
-#define TREE_INLINE			(DEFAULT_INLINE ? PSIM_INLINE_LOCALS : 0)
+#define TREE_INLINE			(DEFAULT_INLINE ? INLINE_LOCALS : 0)
 #endif
 
 /* Code called whenever information on a Special Purpose Register is
@@ -562,7 +552,7 @@ extern int current_stdio;
    code is reduced. */
 
 #ifndef SUPPORT_INLINE
-#define SUPPORT_INLINE			PSIM_INLINE_LOCALS
+#define SUPPORT_INLINE			INLINE_LOCALS
 #endif
 
 /* Model specific code used in simulating functional units.  Note, it actaully
@@ -587,13 +577,13 @@ extern int current_stdio;
    into this file */
 
 #ifndef IDECOCE_INLINE
-#define IDECODE_INLINE			PSIM_INLINE_LOCALS
+#define IDECODE_INLINE			INLINE_LOCALS
 #endif
 
 /* psim, isn't actually inlined */
 
 #ifndef PSIM_INLINE
-#define PSIM_INLINE			PSIM_INLINE_LOCALS
+#define PSIM_INLINE			INLINE_LOCALS
 #endif
 
 /* Code to emulate os or rom compatibility.  This code is called via a

@@ -1,6 +1,6 @@
 /* Macros for general registry objects.
 
-   Copyright (C) 2011-2020 Free Software Foundation, Inc.
+   Copyright (C) 2011-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,288 +22,207 @@
 
 #include <type_traits>
 
-/* The macros here implement a template type and functions for
-   associating some user data with a container object.
+template<typename T> class registry;
 
-   A registry is associated with a struct tag name.  To attach a
-   registry to a structure, use DEFINE_REGISTRY.  This takes the
-   structure tag and an access method as arguments.  In the usual
-   case, where the registry fields appear directly in the struct, you
-   can use the 'REGISTRY_FIELDS' macro to declare the fields in the
-   struct definition, and you can pass 'REGISTRY_ACCESS_FIELD' as the
-   access argument to DEFINE_REGISTRY.  In other cases, use
-   REGISTRY_FIELDS to define the fields in the appropriate spot, and
-   then define your own accessor to find the registry field structure
-   given an instance of your type.
+/* An accessor class that is used by registry_key.
 
-   The API user requests a key from a registry during gdb
-   initialization.  Later this key can be used to associate some
-   module-specific data with a specific container object.
+   Normally, a container class has a registry<> field named
+   "registry_fields".  In this case, the default accessor is used, as
+   it simply returns the object.
 
-   The exported API is best used via the wrapper macros:
-   
-   - register_TAG_data(TAG)
-   Get a new key for the container type TAG.
-   
-   - register_TAG_data_with_cleanup(TAG, SAVE, FREE)
-   Get a new key for the container type TAG.
-   SAVE and FREE are defined as void (*) (struct TAG *object, void *data)
-   When the container object OBJECT is destroyed, first all registered SAVE
-   functions are called.
-   Then all FREE functions are called.
-   Either or both may be NULL.  DATA is the data associated with the
-   container object OBJECT.
-   
-   - clear_TAG_data(TAG, OBJECT)
-   Clear all the data associated with OBJECT.  Should be called by the
-   container implementation when a container object is destroyed.
-   
-   - set_TAG_data(TAG, OBJECT, KEY, DATA)
-   Set the data on an object.
-   
-   - TAG_data(TAG, OBJECT, KEY)
-   Fetch the data for an object; returns NULL if it has not been set.
-*/
+   However, a container may sometimes need to store the registry
+   elsewhere.  In this case, registry_accessor can be specialized to
+   perform the needed indirection.  */
 
-/* This structure is used in a container to hold the data that the
-   registry uses.  */
-
-struct registry_fields
+template<typename T>
+struct registry_accessor
 {
-  void **data;
-  unsigned num_data;
+  /* Given a container of type T, return its registry.  */
+  static registry<T> *get (T *obj)
+  {
+    return &obj->registry_fields;
+  }
 };
 
-/* This macro is used in a container struct definition to define the
-   fields used by the registry code.  */
+/* In gdb, sometimes there is a need for one module (e.g., the Python
+   Type code) to attach some data to another object (e.g., an
+   objfile); but it's also desirable that this be done such that the
+   base object (the objfile in this example) not need to know anything
+   about the attaching module (the Python code).
 
-#define REGISTRY_FIELDS				\
-  struct registry_fields registry_data
+   This is handled using the registry system.
 
-/* A convenience macro for the typical case where the registry data is
-   kept as fields of the object.  This can be passed as the ACCESS
-   method to DEFINE_REGISTRY.  */
+   A class needing to allow this sort registration can add a registry
+   field.  For example, you would write:
 
-#define REGISTRY_ACCESS_FIELD(CONTAINER) \
-  (CONTAINER)
+   class some_container { registry<some_container> registry_fields; };
 
-/* Opaque type representing a container type with a registry.  This
-   type is never defined.  This is used to factor out common
-   functionality of all struct tag names into common code.  IOW,
-   "struct tag name" pointers are cast to and from "struct
-   registry_container" pointers when calling the common registry
-   "backend" functions.  */
-struct registry_container;
+   The name of the field matters by default, see registry_accessor.
 
-/* Registry callbacks have this type.  */
-typedef void (*registry_data_callback) (struct registry_container *, void *);
+   A module wanting to attach data to instances of some_container uses
+   the "key" class to register a key.  This key can then be passed to
+   the "get" and "set" methods to handle this module's data.  */
 
-struct registry_data
+template<typename T>
+class registry
 {
-  unsigned index;
-  registry_data_callback save;
-  registry_data_callback free;
-};
+public:
 
-struct registry_data_registration
-{
-  struct registry_data *data;
-  struct registry_data_registration *next;
-};
+  registry ()
+    : m_fields (get_registrations ().size ())
+  {
+  }
 
-struct registry_data_registry
-{
-  struct registry_data_registration *registrations;
-  unsigned num_registrations;
-};
+  ~registry ()
+  {
+    clear_registry ();
+  }
 
-/* Registry backend functions.  Client code uses the frontend
-   functions defined by DEFINE_REGISTRY below instead.  */
+  DISABLE_COPY_AND_ASSIGN (registry);
 
-const struct registry_data *register_data_with_cleanup
-  (struct registry_data_registry *registry,
-   registry_data_callback save,
-   registry_data_callback free);
+  /* A type-safe registry key.
 
-void registry_alloc_data (struct registry_data_registry *registry,
-			  struct registry_fields *registry_fields);
+     The registry itself holds just a "void *".  This is not always
+     convenient to manage, so this template class can be used instead,
+     to provide a type-safe interface, that also helps manage the
+     lifetime of the stored objects.
 
-/* Cast FUNC and CONTAINER to the real types, and call FUNC, also
-   passing DATA.  */
-typedef void (*registry_callback_adaptor) (registry_data_callback func,
-					   struct registry_container *container,
-					   void *data);
+     When the container is destroyed, this key arranges to destroy the
+     underlying data using Deleter.  This defaults to
+     std::default_delete.  */
 
-void registry_clear_data (struct registry_data_registry *data_registry,
-			  registry_callback_adaptor adaptor,
-			  struct registry_container *container,
-			  struct registry_fields *fields);
+  template<typename DATA, typename Deleter = std::default_delete<DATA>>
+  class key
+  {
+  public:
 
-void registry_container_free_data (struct registry_data_registry *data_registry,
-				   registry_callback_adaptor adaptor,
-				   struct registry_container *container,
-				   struct registry_fields *fields);
+    key ()
+      : m_key (registry<T>::new_key (cleanup))
+    {
+    }
 
-void registry_set_data (struct registry_fields *fields,
-			const struct registry_data *data,
-			void *value);
+    DISABLE_COPY_AND_ASSIGN (key);
 
-void *registry_data (struct registry_fields *fields,
-		     const struct registry_data *data);
+    /* Fetch the data attached to OBJ that is associated with this key.
+       If no such data has been attached, nullptr is returned.  */
+    DATA *get (T *obj) const
+    {
+      registry<T> *reg_obj = registry_accessor<T>::get (obj);
+      return (DATA *) reg_obj->get (m_key);
+    }
 
-/* Define a new registry implementation.  */
+    /* Attach DATA to OBJ, associated with this key.  Note that any
+       previous data is simply dropped -- if destruction is needed,
+       'clear' should be called.  */
+    void set (T *obj, DATA *data) const
+    {
+      registry<T> *reg_obj = registry_accessor<T>::get (obj);
+      reg_obj->set (m_key, (typename std::remove_const<DATA> *) data);
+    }
 
-#define DEFINE_REGISTRY(TAG, ACCESS)					\
-struct registry_data_registry TAG ## _data_registry = { NULL, 0 };	\
-									\
-const struct TAG ## _data *						\
-register_ ## TAG ## _data_with_cleanup (void (*save) (struct TAG *, void *), \
-					void (*free) (struct TAG *, void *)) \
-{									\
-  return (struct TAG ## _data *)					\
-    register_data_with_cleanup (&TAG ## _data_registry,			\
-				(registry_data_callback) save,		\
-				(registry_data_callback) free);		\
-}									\
-									\
-const struct TAG ## _data *						\
-register_ ## TAG ## _data (void)					\
-{									\
-  return register_ ## TAG ## _data_with_cleanup (NULL, NULL);		\
-}									\
-									\
-static void								\
-TAG ## _alloc_data (struct TAG *container)				\
-{									\
-  struct registry_fields *rdata = &ACCESS (container)->registry_data;	\
-									\
-  registry_alloc_data (&TAG ## _data_registry, rdata);			\
-}									\
-									\
-static void								\
-TAG ## registry_callback_adaptor (registry_data_callback func,		\
-				  struct registry_container *container, \
-				  void *data)				\
-{									\
-  struct TAG *tagged_container = (struct TAG *) container;		\
-									\
-  registry_ ## TAG ## _callback tagged_func				\
-    = (registry_ ## TAG ## _callback) func;				\
-									\
-  tagged_func (tagged_container, data);					\
-}									\
-									\
-void									\
-clear_ ## TAG ## _data (struct TAG *container)				\
-{									\
-  struct registry_fields *rdata = &ACCESS (container)->registry_data;	\
-									\
-  registry_clear_data (&TAG ## _data_registry,				\
-		       TAG ## registry_callback_adaptor,		\
-		       (struct registry_container *) container,		\
-		       rdata);						\
-}									\
-									\
-static void								\
-TAG ## _free_data (struct TAG *container)				\
-{									\
-  struct registry_fields *rdata = &ACCESS (container)->registry_data;	\
-									\
-  registry_container_free_data (&TAG ## _data_registry,			\
-				TAG ## registry_callback_adaptor,	\
-				(struct registry_container *) container, \
-				rdata);					\
-}									\
-									\
-void									\
-set_ ## TAG ## _data (struct TAG *container,				\
-		      const struct TAG ## _data *data,			\
-		      void *value)					\
-{									\
-  struct registry_fields *rdata = &ACCESS (container)->registry_data;	\
-									\
-  registry_set_data (rdata,						\
-		     (struct registry_data *) data,			\
-		     value);						\
-}									\
-									\
-void *									\
-TAG ## _data (struct TAG *container, const struct TAG ## _data *data)	\
-{									\
-  struct registry_fields *rdata = &ACCESS (container)->registry_data;	\
-									\
-  return registry_data (rdata,						\
-			(struct registry_data *) data);			\
-}
+    /* If this key uses the default deleter, then this method is
+       available.  It emplaces a new instance of the associated data
+       type and attaches it to OBJ using this key.  The arguments, if
+       any, are forwarded to the constructor.  */
+    template<typename Dummy = DATA *, typename... Args>
+    typename std::enable_if<std::is_same<Deleter,
+					 std::default_delete<DATA>>::value,
+			    Dummy>::type
+    emplace (T *obj, Args &&...args) const
+    {
+      DATA *result = new DATA (std::forward<Args> (args)...);
+      set (obj, result);
+      return result;
+    }
 
+    /* Clear the data attached to OBJ that is associated with this KEY.
+       Any existing data is destroyed using the deleter, and the data is
+       reset to nullptr.  */
+    void clear (T *obj) const
+    {
+      DATA *datum = get (obj);
+      if (datum != nullptr)
+	{
+	  cleanup (datum);
+	  set (obj, nullptr);
+	}
+    }
 
-/* External declarations for the registry functions.  */
+  private:
 
-#define DECLARE_REGISTRY(TAG)						\
-struct TAG ## _data;							\
-typedef void (*registry_ ## TAG ## _callback) (struct TAG *, void *);	\
-extern const struct TAG ## _data *register_ ## TAG ## _data (void);	\
-extern const struct TAG ## _data *register_ ## TAG ## _data_with_cleanup \
- (registry_ ## TAG ## _callback save, registry_ ## TAG ## _callback free); \
-extern void clear_ ## TAG ## _data (struct TAG *);			\
-extern void set_ ## TAG ## _data (struct TAG *,				\
-				  const struct TAG ## _data *data,	\
-				  void *value);				\
-extern void *TAG ## _data (struct TAG *,				\
-			   const struct TAG ## _data *data);		\
-									\
-template<typename DATA, typename Deleter = std::default_delete<DATA>>	\
-class TAG ## _key							\
-{									\
-public:									\
-									\
-  TAG ## _key ()							\
-    : m_key (register_ ## TAG ## _data_with_cleanup (nullptr,		\
-						     cleanup))		\
-  {									\
-  }									\
-									\
-  DATA *get (struct TAG *obj) const					\
-  {									\
-    return (DATA *) TAG ## _data (obj, m_key);				\
-  }									\
-									\
-  void set (struct TAG *obj, DATA *data) const				\
-  {									\
-    set_ ## TAG ## _data (obj, m_key, data);				\
-  }									\
-									\
-  template<typename Dummy = DATA *, typename... Args>			\
-  typename std::enable_if<std::is_same<Deleter,				\
-				       std::default_delete<DATA>>::value, \
-			  Dummy>::type					\
-  emplace (struct TAG *obj, Args &&...args) const			\
-  {									\
-    DATA *result = new DATA (std::forward<Args> (args)...);		\
-    set (obj, result);							\
-    return result;							\
-  }									\
-									\
-  void clear (struct TAG *obj) const					\
-  {									\
-    DATA *datum = get (obj);						\
-    if (datum != nullptr)						\
-      {									\
-	cleanup (obj, datum);						\
-	set (obj, nullptr);						\
-      }									\
-  }									\
-									\
-private:								\
-									\
-  static void cleanup (struct TAG *obj, void *arg)			\
-  {									\
-    DATA *datum = (DATA *) arg;						\
-    Deleter d;								\
-    d (datum);								\
-  }									\
-									\
-  const struct TAG ## _data *m_key;					\
+    /* A helper function that is called by the registry to delete the
+       contained object.  */
+    static void cleanup (void *arg)
+    {
+      DATA *datum = (DATA *) arg;
+      Deleter d;
+      d (datum);
+    }
+
+    /* The underlying key.  */
+    const unsigned m_key;
+  };
+
+  /* Clear all the data associated with this container.  This is
+     dangerous and should not normally be done.  */
+  void clear_registry ()
+  {
+    /* Call all the free functions.  */
+    std::vector<registry_data_callback> &registrations
+      = get_registrations ();
+    unsigned last = registrations.size ();
+    for (unsigned i = 0; i < last; ++i)
+      {
+	void *elt = m_fields[i];
+	if (elt != nullptr)
+	  {
+	    registrations[i] (elt);
+	    m_fields[i] = nullptr;
+	  }
+      }
+  }
+
+private:
+
+  /* Registry callbacks have this type.  */
+  typedef void (*registry_data_callback) (void *);
+
+  /* Get a new key for this particular registry.  FREE is a callback.
+     When the container object is destroyed, all FREE functions are
+     called.  The data associated with the container object is passed
+     to the callback.  */
+  static unsigned new_key (registry_data_callback free)
+  {
+    std::vector<registry_data_callback> &registrations
+      = get_registrations ();
+    unsigned result = registrations.size ();
+    registrations.push_back (free);
+    return result;
+  }
+
+  /* Set the datum associated with KEY in this container.  */
+  void set (unsigned key, void *datum)
+  {
+    m_fields[key] = datum;
+  }
+
+  /* Fetch the datum associated with KEY in this container.  If 'set'
+     has not been called for this key, nullptr is returned.  */
+  void *get (unsigned key)
+  {
+    return m_fields[key];
+  }
+
+  /* The data stored in this instance.  */
+  std::vector<void *> m_fields;
+
+  /* Return a reference to the vector of all the registrations that
+     have been made.  */
+  static std::vector<registry_data_callback> &get_registrations ()
+  {
+    static std::vector<registry_data_callback> registrations;
+    return registrations;
+  }
 };
 
 #endif /* REGISTRY_H */

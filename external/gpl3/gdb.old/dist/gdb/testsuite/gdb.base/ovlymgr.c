@@ -4,6 +4,8 @@
  */
 
 #include "ovlymgr.h"
+#include <string.h>
+#include <stdlib.h>
 
 /* Local functions and data: */
 

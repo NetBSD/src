@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,6 @@ if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} {debug}] } 
 }
 
 if ![runto_main] {
-    fail "can't run to main to check for trace support"
     return -1
 }
 
@@ -41,10 +40,8 @@ gdb_exit
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-if [mi_gdb_start] {
-    return
-}
-mi_run_to_main
+mi_clean_restart $binfile
+mi_runto_main
 
 mi_gdb_test "-break-insert end" \
     "\\^done,bkpt=\{number=\"${decimal}\",type=\"breakpoint\".*\"\}" \

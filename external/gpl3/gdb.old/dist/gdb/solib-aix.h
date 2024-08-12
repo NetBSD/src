@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2013-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,7 @@
 #define SOLIB_AIX_H
 
 struct target_so_ops;
-extern struct target_so_ops solib_aix_so_ops;
+extern const struct target_so_ops solib_aix_so_ops;
 
 extern CORE_ADDR solib_aix_get_toc_value (CORE_ADDR pc);
 

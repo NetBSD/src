@@ -1,5 +1,5 @@
 /* Line completion stuff for GDB, the GNU debugger.
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,7 +36,7 @@
    calling a hook instead so we eliminate the CLI dependency.  */
 #include "gdbcmd.h"
 
-/* Needed for rl_completer_word_break_characters() and for
+/* Needed for rl_completer_word_break_characters and for
    rl_filename_completion_function.  */
 #include "readline/readline.h"
 
@@ -86,14 +86,6 @@ public:
   hashval_t hash_name () const
   {
     return htab_hash_string (m_name.get ());
-  }
-
-  /* A static function that can be passed to the htab hash system to be
-     used as a callback that deletes an item from the hash.  */
-  static void deleter (void *arg)
-  {
-    completion_hash_entry *entry = (completion_hash_entry *) arg;
-    delete entry;
   }
 
 private:
@@ -228,7 +220,7 @@ filename_completer (struct cmd_list_element *ignore,
 	 will loop indefinitely.  */
       subsequent_name = 1;
       /* Like emacs, don't complete on old versions.  Especially
-         useful in the "source" command.  */
+	 useful in the "source" command.  */
       const char *p = p_rl.get ();
       if (p[strlen (p) - 1] == '~')
 	continue;
@@ -258,14 +250,6 @@ filename_completer_handle_brkchars (struct cmd_list_element *ignore,
     (gdb_completer_file_name_break_characters);
 }
 
-/* Possible values for the found_quote flags word used by the completion
-   functions.  It says what kind of (shell-like) quoting we found anywhere
-   in the line. */
-#define RL_QF_SINGLE_QUOTE      0x01
-#define RL_QF_DOUBLE_QUOTE      0x02
-#define RL_QF_BACKSLASH         0x04
-#define RL_QF_OTHER_QUOTE       0x08
-
 /* Find the bounds of the current word for completion purposes, and
    return a pointer to the end of the word.  This mimics (and is a
    modified version of) readline's _rl_find_completion_word internal
@@ -292,7 +276,7 @@ gdb_rl_find_completion_word (struct gdb_rl_completion_word_info *info,
 			     int *qc, int *dp,
 			     const char *line_buffer)
 {
-  int scan, end, found_quote, delimiter, pass_next, isbrk;
+  int scan, end, delimiter, pass_next, isbrk;
   char quote_char;
   const char *brkchars;
   int point = strlen (line_buffer);
@@ -309,7 +293,7 @@ gdb_rl_find_completion_word (struct gdb_rl_completion_word_info *info,
     }
 
   end = point;
-  found_quote = delimiter = 0;
+  delimiter = 0;
   quote_char = '\0';
 
   brkchars = info->word_break_characters;
@@ -319,8 +303,6 @@ gdb_rl_find_completion_word (struct gdb_rl_completion_word_info *info,
       /* We have a list of characters which can be used in pairs to
 	 quote substrings for the completer.  Try to find the start of
 	 an unclosed quoted substring.  */
-      /* FOUND_QUOTE is set so we know what kind of quotes we
-	 found.  */
       for (scan = pass_next = 0;
 	   scan < end;
 	   scan++)
@@ -338,7 +320,6 @@ gdb_rl_find_completion_word (struct gdb_rl_completion_word_info *info,
 	  if (quote_char != '\'' && line_buffer[scan] == '\\')
 	    {
 	      pass_next = 1;
-	      found_quote |= RL_QF_BACKSLASH;
 	      continue;
 	    }
 
@@ -359,13 +340,6 @@ gdb_rl_find_completion_word (struct gdb_rl_completion_word_info *info,
 	      /* Found start of a quoted substring.  */
 	      quote_char = line_buffer[scan];
 	      point = scan + 1;
-	      /* Shell-like quoting conventions.  */
-	      if (quote_char == '\'')
-		found_quote |= RL_QF_SINGLE_QUOTE;
-	      else if (quote_char == '"')
-		found_quote |= RL_QF_DOUBLE_QUOTE;
-	      else
-		found_quote |= RL_QF_OTHER_QUOTE;
 	    }
 	}
     }
@@ -733,13 +707,13 @@ string_or_empty (const char *string)
 
 static void
 collect_explicit_location_matches (completion_tracker &tracker,
-				   struct event_location *location,
+				   location_spec *locspec,
 				   enum explicit_location_match_type what,
 				   const char *word,
 				   const struct language_defn *language)
 {
-  const struct explicit_location *explicit_loc
-    = get_explicit_location (location);
+  const explicit_location_spec *explicit_loc
+    = as_explicit_location_spec (locspec);
 
   /* True if the option expects an argument.  */
   bool needs_arg = true;
@@ -872,19 +846,19 @@ skip_keyword (completion_tracker &tracker,
   return -1;
 }
 
-/* A completer function for explicit locations.  This function
+/* A completer function for explicit location specs.  This function
    completes both options ("-source", "-line", etc) and values.  If
    completing a quoted string, then QUOTED_ARG_START and
    QUOTED_ARG_END point to the quote characters.  LANGUAGE is the
    current language.  */
 
 static void
-complete_explicit_location (completion_tracker &tracker,
-			    struct event_location *location,
-			    const char *text,
-			    const language_defn *language,
-			    const char *quoted_arg_start,
-			    const char *quoted_arg_end)
+complete_explicit_location_spec (completion_tracker &tracker,
+				 location_spec *locspec,
+				 const char *text,
+				 const language_defn *language,
+				 const char *quoted_arg_start,
+				 const char *quoted_arg_end)
 {
   if (*text != '-')
     return;
@@ -892,7 +866,11 @@ complete_explicit_location (completion_tracker &tracker,
   int keyword = skip_keyword (tracker, explicit_options, &text);
 
   if (keyword == -1)
-    complete_on_enum (tracker, explicit_options, text, text);
+    {
+      complete_on_enum (tracker, explicit_options, text, text);
+      /* There are keywords that start with "-".   Include them, too.  */
+      complete_on_enum (tracker, linespec_keywords, text, text);
+    }
   else
     {
       /* Completing on value.  */
@@ -938,7 +916,7 @@ complete_explicit_location (completion_tracker &tracker,
 	}
 
       /* Now gather matches  */
-      collect_explicit_location_matches (tracker, location, what, text,
+      collect_explicit_location_matches (tracker, locspec, what, text,
 					 language);
     }
 }
@@ -965,9 +943,9 @@ location_completer (struct cmd_list_element *ignore,
   const char *copy = text;
 
   explicit_completion_info completion_info;
-  event_location_up location
-    = string_to_explicit_location (&copy, current_language,
-				   &completion_info);
+  location_spec_up locspec
+    = string_to_explicit_location_spec (&copy, current_language,
+					&completion_info);
   if (completion_info.quoted_arg_start != NULL
       && completion_info.quoted_arg_end == NULL)
     {
@@ -976,7 +954,7 @@ location_completer (struct cmd_list_element *ignore,
       tracker.advance_custom_word_point_by (1);
     }
 
-  if (completion_info.saw_explicit_location_option)
+  if (completion_info.saw_explicit_location_spec_option)
     {
       if (*copy != '\0')
 	{
@@ -1009,15 +987,15 @@ location_completer (struct cmd_list_element *ignore,
 						- text);
 	  text = completion_info.last_option;
 
-	  complete_explicit_location (tracker, location.get (), text,
-				      current_language,
-				      completion_info.quoted_arg_start,
-				      completion_info.quoted_arg_end);
+	  complete_explicit_location_spec (tracker, locspec.get (), text,
+					   current_language,
+					   completion_info.quoted_arg_start,
+					   completion_info.quoted_arg_end);
 
 	}
     }
   /* This is an address or linespec location.  */
-  else if (location != NULL)
+  else if (locspec != nullptr)
     {
       /* Handle non-explicit location options.  */
 
@@ -1030,7 +1008,7 @@ location_completer (struct cmd_list_element *ignore,
 	  text = copy;
 
 	  symbol_name_match_type match_type
-	    = get_explicit_location (location.get ())->func_name_match_type;
+	    = as_explicit_location_spec (locspec.get ())->func_name_match_type;
 	  complete_address_and_linespec_locations (tracker, text, match_type);
 	}
     }
@@ -1077,107 +1055,31 @@ location_completer_handle_brkchars (struct cmd_list_element *ignore,
   location_completer (ignore, tracker, text, NULL);
 }
 
-/* Helper for expression_completer which recursively adds field and
-   method names from TYPE, a struct or union type, to the OUTPUT
-   list.  */
-
-static void
-add_struct_fields (struct type *type, completion_list &output,
-		   const char *fieldname, int namelen)
-{
-  int i;
-  int computed_type_name = 0;
-  const char *type_name = NULL;
-
-  type = check_typedef (type);
-  for (i = 0; i < type->num_fields (); ++i)
-    {
-      if (i < TYPE_N_BASECLASSES (type))
-	add_struct_fields (TYPE_BASECLASS (type, i),
-			   output, fieldname, namelen);
-      else if (TYPE_FIELD_NAME (type, i))
-	{
-	  if (TYPE_FIELD_NAME (type, i)[0] != '\0')
-	    {
-	      if (! strncmp (TYPE_FIELD_NAME (type, i), 
-			     fieldname, namelen))
-		output.emplace_back (xstrdup (TYPE_FIELD_NAME (type, i)));
-	    }
-	  else if (type->field (i).type ()->code () == TYPE_CODE_UNION)
-	    {
-	      /* Recurse into anonymous unions.  */
-	      add_struct_fields (type->field (i).type (),
-				 output, fieldname, namelen);
-	    }
-	}
-    }
-
-  for (i = TYPE_NFN_FIELDS (type) - 1; i >= 0; --i)
-    {
-      const char *name = TYPE_FN_FIELDLIST_NAME (type, i);
-
-      if (name && ! strncmp (name, fieldname, namelen))
-	{
-	  if (!computed_type_name)
-	    {
-	      type_name = type->name ();
-	      computed_type_name = 1;
-	    }
-	  /* Omit constructors from the completion list.  */
-	  if (!type_name || strcmp (type_name, name))
-	    output.emplace_back (xstrdup (name));
-	}
-    }
-}
-
 /* See completer.h.  */
 
 void
 complete_expression (completion_tracker &tracker,
 		     const char *text, const char *word)
 {
-  struct type *type = NULL;
-  gdb::unique_xmalloc_ptr<char> fieldname;
-  enum type_code code = TYPE_CODE_UNDEF;
+  expression_up exp;
+  std::unique_ptr<expr_completion_base> expr_completer;
 
   /* Perform a tentative parse of the expression, to see whether a
      field completion is required.  */
   try
     {
-      type = parse_expression_for_completion (text, &fieldname, &code);
+      exp = parse_expression_for_completion (text, &expr_completer);
     }
   catch (const gdb_exception_error &except)
     {
       return;
     }
 
-  if (fieldname != nullptr && type)
-    {
-      for (;;)
-	{
-	  type = check_typedef (type);
-	  if (type->code () != TYPE_CODE_PTR && !TYPE_IS_REFERENCE (type))
-	    break;
-	  type = TYPE_TARGET_TYPE (type);
-	}
-
-      if (type->code () == TYPE_CODE_UNION
-	  || type->code () == TYPE_CODE_STRUCT)
-	{
-	  completion_list result;
-
-	  add_struct_fields (type, result, fieldname.get (),
-			     strlen (fieldname.get ()));
-	  tracker.add_completions (std::move (result));
-	  return;
-	}
-    }
-  else if (fieldname != nullptr && code != TYPE_CODE_UNDEF)
-    {
-      collect_symbol_completion_matches_type (tracker, fieldname.get (),
-					      fieldname.get (), code);
-      return;
-    }
+  /* Part of the parse_expression_for_completion contract.  */
+  gdb_assert ((exp == nullptr) == (expr_completer == nullptr));
+  if (expr_completer != nullptr
+      && expr_completer->complete (exp.get (), tracker))
+    return;
 
   complete_files_symbols (tracker, text, word);
 }
@@ -1384,9 +1286,8 @@ complete_line_internal_1 (completion_tracker &tracker,
       result_list = 0;
     }
   else
-    {
-      c = lookup_cmd_1 (&p, cmdlist, &result_list, NULL, ignore_help_classes);
-    }
+    c = lookup_cmd_1 (&p, cmdlist, &result_list, NULL, ignore_help_classes,
+		      true);
 
   /* Move p up to the next interesting thing.  */
   while (*p == ' ' || *p == '\t')
@@ -1425,7 +1326,7 @@ complete_line_internal_1 (completion_tracker &tracker,
 	  if (result_list)
 	    {
 	      if (reason != handle_brkchars)
-		complete_on_cmdlist (*result_list->prefixlist, tracker, p,
+		complete_on_cmdlist (*result_list->subcommands, tracker, p,
 				     word, ignore_help_classes);
 	    }
 	  else
@@ -1453,12 +1354,12 @@ complete_line_internal_1 (completion_tracker &tracker,
 	    {
 	      /* The command is followed by whitespace; we need to
 		 complete on whatever comes after command.  */
-	      if (c->prefixlist)
+	      if (c->is_prefix ())
 		{
 		  /* It is a prefix command; what comes after it is
 		     a subcommand (e.g. "info ").  */
 		  if (reason != handle_brkchars)
-		    complete_on_cmdlist (*c->prefixlist, tracker, p, word,
+		    complete_on_cmdlist (*c->subcommands, tracker, p, word,
 					 ignore_help_classes);
 
 		  /* Ensure that readline does the right thing
@@ -1521,7 +1422,7 @@ complete_line_internal_1 (completion_tracker &tracker,
 	{
 	  /* There is non-whitespace beyond the command.  */
 
-	  if (c->prefixlist && !c->allow_unknown)
+	  if (c->is_prefix () && !c->allow_unknown)
 	    {
 	      /* It is an unrecognized subcommand of a prefix command,
 		 e.g. "info adsfkdj".  */
@@ -1587,13 +1488,10 @@ completion_tracker::discard_completions ()
   m_lowest_common_denominator_unique = false;
   m_lowest_common_denominator_valid = false;
 
-  /* A null check here allows this function to be used from the
-     constructor.  */
-  if (m_entries_hash != NULL)
-    htab_delete (m_entries_hash);
+  m_entries_hash.reset (nullptr);
 
   /* A callback used by the hash table to compare new entries with existing
-     entries.  We can't use the standard streq_hash function here as the
+     entries.  We can't use the standard htab_eq_string function here as the
      key to our hash is just a single string, while the values we store in
      the hash are a struct containing multiple strings.  */
   static auto entry_eq_func
@@ -1618,10 +1516,11 @@ completion_tracker::discard_completions ()
 	return entry->hash_name ();
       };
 
-  m_entries_hash = htab_create_alloc (INITIAL_COMPLETION_HTAB_SIZE,
-				      entry_hash_func, entry_eq_func,
-				      completion_hash_entry::deleter,
-				      xcalloc, xfree);
+  m_entries_hash.reset
+    (htab_create_alloc (INITIAL_COMPLETION_HTAB_SIZE,
+			entry_hash_func, entry_eq_func,
+			htab_delete_entry<completion_hash_entry>,
+			xcalloc, xfree));
 }
 
 /* See completer.h.  */
@@ -1629,7 +1528,6 @@ completion_tracker::discard_completions ()
 completion_tracker::~completion_tracker ()
 {
   xfree (m_lowest_common_denominator);
-  htab_delete (m_entries_hash);
 }
 
 /* See completer.h.  */
@@ -1645,11 +1543,12 @@ completion_tracker::maybe_add_completion
   if (max_completions == 0)
     return false;
 
-  if (htab_elements (m_entries_hash) >= max_completions)
+  if (htab_elements (m_entries_hash.get ()) >= max_completions)
     return false;
 
   hashval_t hash = htab_hash_string (name.get ());
-  slot = htab_find_slot_with_hash (m_entries_hash, name.get (), hash, INSERT);
+  slot = htab_find_slot_with_hash (m_entries_hash.get (), name.get (),
+				   hash, INSERT);
   if (*slot == HTAB_EMPTY_ENTRY)
     {
       const char *match_for_lcd_str = NULL;
@@ -1700,10 +1599,10 @@ void
 completion_tracker::remove_completion (const char *name)
 {
   hashval_t hash = htab_hash_string (name);
-  if (htab_find_slot_with_hash (m_entries_hash, name, hash, NO_INSERT)
+  if (htab_find_slot_with_hash (m_entries_hash.get (), name, hash, NO_INSERT)
       != NULL)
     {
-      htab_remove_elt_with_hash (m_entries_hash, name, hash);
+      htab_remove_elt_with_hash (m_entries_hash.get (), name, hash);
       m_lowest_common_denominator_valid = false;
     }
 }
@@ -1920,13 +1819,9 @@ reg_or_group_completer_1 (completion_tracker &tracker,
 
   if ((targets & complete_reggroup_names) != 0)
     {
-      struct reggroup *group;
-
-      for (group = reggroup_next (gdbarch, NULL);
-	   group != NULL;
-	   group = reggroup_next (gdbarch, group))
+      for (const struct reggroup *group : gdbarch_reggroups (gdbarch))
 	{
-	  name = reggroup_name (group);
+	  name = group->name ();
 	  if (strncmp (word, name, len) == 0)
 	    tracker.add_completion (make_unique_xstrdup (name));
 	}
@@ -2036,7 +1931,7 @@ gdb_completion_word_break_characters_throw ()
       rl_basic_quote_characters = NULL;
     }
 
-  return rl_completer_word_break_characters;
+  return (char *) rl_completer_word_break_characters;
 }
 
 char *
@@ -2144,7 +2039,7 @@ completion_tracker::recompute_lowest_common_denominator ()
 	return 1;
       };
 
-  htab_traverse (m_entries_hash, visitor_func, this);
+  htab_traverse (m_entries_hash.get (), visitor_func, this);
   m_lowest_common_denominator_valid = true;
 }
 
@@ -2227,7 +2122,7 @@ completion_result
 completion_tracker::build_completion_result (const char *text,
 					     int start, int end)
 {
-  size_t element_count = htab_elements (m_entries_hash);
+  size_t element_count = htab_elements (m_entries_hash.get ());
 
   if (element_count == 0)
     return {};
@@ -2256,9 +2151,11 @@ completion_tracker::build_completion_result (const char *text,
       /* If the tracker wants to, or we already have a space at the
 	 end of the match, tell readline to skip appending
 	 another.  */
+      char *match = match_list[0];
       bool completion_suppress_append
 	= (suppress_append_ws ()
-	   || match_list[0][strlen (match_list[0]) - 1] == ' ');
+	   || (match[0] != '\0'
+	       && match[strlen (match) - 1] == ' '));
 
       return completion_result (match_list, 1, completion_suppress_append);
     }
@@ -2294,7 +2191,7 @@ completion_tracker::build_completion_result (const char *text,
 	  };
 
       /* Build the completion list and add a null at the end.  */
-      htab_traverse_noresize (m_entries_hash, func, &builder);
+      htab_traverse_noresize (m_entries_hash.get (), func, &builder);
       match_list[builder.index] = NULL;
 
       return completion_result (match_list, builder.index - 1, false);
@@ -2653,8 +2550,8 @@ gdb_printable_part (char *pathname)
   else if (temp[1] == '\0')
     {
       for (x = temp - 1; x > pathname; x--)
-        if (*x == '/')
-          break;
+	if (*x == '/')
+	  break;
       return ((*x == '/') ? x + 1 : pathname);
     }
   else
@@ -2756,15 +2653,15 @@ gdb_fnprint (const char *to_print, int prefix_bytes,
   while (*s)
     {
       if (CTRL_CHAR (*s))
-        {
-          displayer->putch (displayer, '^');
-          displayer->putch (displayer, UNCTRL (*s));
-          printed_len += 2;
-          s++;
+	{
+	  displayer->putch (displayer, '^');
+	  displayer->putch (displayer, UNCTRL (*s));
+	  printed_len += 2;
+	  s++;
 #if defined (HANDLE_MULTIBYTE)
 	  memset (&ps, 0, sizeof (mbstate_t));
 #endif
-        }
+	}
       else if (*s == RUBOUT)
 	{
 	  displayer->putch (displayer, '^');

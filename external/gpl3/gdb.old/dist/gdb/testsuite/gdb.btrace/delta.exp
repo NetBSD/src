@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <markus.t.metzger@intel.com>
 #
@@ -28,7 +28,6 @@ if [prepare_for_testing "failed to prepare" $testfile $srcfile] {
 }
 
 if ![runto_main] {
-    untested "failed to run to main"
     return -1
 }
 
@@ -58,9 +57,6 @@ proc check_trace {} {
     "Recording format: .*" \
     "Recorded 1 instructions in 1 functions \\\(0 gaps\\\) for .*" \
     ]
-  gdb_test "record instruction-history /f 1" \
-    "1\t   0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tmov *\\\$0x0,%eax\r"
-  gdb_test "record function-call-history /c 1" "1\tmain"
 }
 
 # make sure we don't extend the trace when we ask twice.
@@ -73,18 +69,18 @@ with_test_prefix "twice" {
 }
 
 # check that we can reverse-stepi that instruction
-gdb_test "reverse-stepi"
-gdb_test "info record" [multi_line \
-  "Active record target: record-btrace" \
-  "Recording format: .*" \
-  "Recorded 1 instructions in 1 functions \\\(0 gaps\\\) for .*" \
-  "Replay in progress\.  At instruction 1\." \
-  ] "reverse-stepi"
+with_test_prefix "reverse" {
+    gdb_test "reverse-stepi"
+    gdb_test "info record" [multi_line \
+      "Active record target: record-btrace" \
+      "Recording format: .*" \
+      "Recorded 1 instructions in 1 functions \\\(0 gaps\\\) for .*" \
+      "Replay in progress\.  At instruction 1\." \
+    ]
+}
 
 # and back
-gdb_test "stepi"
-gdb_test "info record" [multi_line \
-  "Active record target: record-btrace" \
-  "Recording format: .*" \
-  "Recorded 1 instructions in 1 functions \\\(0 gaps\\\) for .*" \
-  ] "and back"
+with_test_prefix "forward" {
+    gdb_test "stepi"
+    check_trace
+}

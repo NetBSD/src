@@ -24,29 +24,14 @@
 
 #include <stdio.h>
 #include <ctype.h>
-
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
-
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
 
-#if !defined (__attribute__) && (!defined(__GNUC__) || __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 7))
-#define __attribute__(arg)
-#endif
-
-
-
+#include "ansidecl.h"
 #include "filter_filename.h"
 
-extern void error
-(char *msg, ...);
+extern void error (const char *msg, ...)
+  ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (1, 2);
 
 #define ASSERT(EXPRESSION) \
 do { \
@@ -62,8 +47,8 @@ do { \
 extern void *zalloc
 (long size);
 
-extern void dumpf
-(int indent, char *msg, ...);
+extern void dumpf (int indent, const char *msg, ...)
+  ATTRIBUTE_PRINTF (2, 3);
 
 extern unsigned target_a2i
 (int ms_bit_nr,

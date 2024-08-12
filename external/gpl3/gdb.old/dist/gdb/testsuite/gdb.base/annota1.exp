@@ -1,4 +1,4 @@
-# Copyright 1999-2020 Free Software Foundation, Inc.
+# Copyright 1999-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -100,7 +100,7 @@ gdb_test_multiple "info break" "breakpoint info" {
 	pass $gdb_test_name
     }
     -re "\r\n\032\032post-prompt\r\n\r\n\032\032breakpoints-headers\r\n\r\n\032\032field 0\r\nNum     \r\n\032\032field 1\r\nType           \r\n\032\032field 2\r\nDisp \r\n\032\032field 3\r\nEnb \r\n\032\032field 4\r\nAddress    +\r\n\032\032field 5\r\nWhat\r\n\r\n\032\032breakpoints-table\r\n\r\n\032\032record\r\n\r\n\032\032field 0\r\n1       \r\n\032\032field 1\r\nbreakpoint     \r\n\032\032field 2\r\nkeep \r\n\032\032field 3\r\ny   \r\n\032\032field 4\r\n$hex +\r\n\032\032field 5\r\nin main at .*${srcfile}:$main_line\r\n\r\n\032\032breakpoints-table-end\r\n$gdb_prompt$" {
-	setup_xfail "*-*-*" 1270
+	setup_xfail "*-*-*" 8375
 	fail $gdb_test_name
     }
 }
@@ -126,27 +126,73 @@ gdb_test_multiple "info break" "breakpoint info" {
 #
 #exp_internal 1
 set binexp [string_to_regexp $binfile]
+
+set warning_slow_re \
+    "warning: File transfers from remote targets can be slow\[^\r\n\]+\r\n"
+set warning_gdb_index_re \
+    [multi_line \
+	 "warning: Skipping \[^\r\n\]+ .gdb_index section in \[^\r\n\]+" \
+	 "Do \"set use-deprecated-index-sections on\" before the file is read" \
+	 "to use the section anyway\\.\r\n"]
+set reading_re \
+    "Reading \[^\r\n\]+\r\n"
+set libthread_db_re \
+    [multi_line \
+	 "\\\[Thread debugging using libthread_db enabled\\\]" \
+	 "Using host libthread_db library \[^\r\n\]+\r\n"]
+
+set optional_re \
+    [list \
+	 "\(" \
+	 "\($reading_re)" \
+	 "|" \
+	 "\($warning_slow_re\)" \
+	 "|" \
+	 "\($libthread_db_re\)" \
+	 "|" \
+	 "\(\r\n$warning_gdb_index_re\)?" \
+	 "\)*"]
+set optional_re [join $optional_re ""]
+
+set run_re \
+    [list \
+	 "\r\n\032\032post-prompt\r\n" \
+	 "Starting program: $binexp \r\n" \
+	 $optional_re \
+	 "\(\r\n\032\032breakpoints-invalid\r\n\)?" \
+	 $optional_re \
+	 "\r\n\032\032starting\r\n" \
+	 $optional_re \
+	 "\r\n\032\032frames-invalid\r\n" \
+	 $optional_re \
+	 "\r\n\032\032breakpoints-invalid\r\n" \
+	 $optional_re \
+	 "\r\n\032\032breakpoint 1\r\n" \
+	 "\r\n" \
+	 "Breakpoint 1, " \
+	 "\r\n\032\032frame-begin 0 $hex\r\n" \
+	 "\r\n\032\032frame-function-name\r\n" \
+	 "main" \
+	 "\r\n\032\032frame-args\r\n" \
+	 " \\(\\)" \
+	 "\r\n\032\032frame-source-begin\r\n" \
+	 " at " \
+	 "\r\n\032\032frame-source-file\r\n" \
+	 ".*annota1.c" \
+	 "\r\n\032\032frame-source-file-end\r\n" \
+	 ":" \
+	 "\r\n\032\032frame-source-line\r\n" \
+	 "$main_line" \
+	 "\r\n\032\032frame-source-end\r\n" \
+	 "\r\n" \
+	 "\r\n\032\032source.*$srcfile:$main_line:.*:beg:$hex\r\n" \
+	 "\r\n\032\032frame-end\r\n" \
+	 "\r\n\032\032stopped\r\n"]
+
+set run_re [join $run_re ""]
+
 gdb_test_multiple "run" "run until main breakpoint" {
-    -re [join { "\r\n\032\032post-prompt\r\nStarting program: $binexp " \
-		    "\(\(\r\nReading \[^\r\n\]+\)|\(\r\nwarning: File transfers from remote targets can be slow\[^\r\n\]+\)\)*" \
-		    "\(\r\nwarning: Skipping \[^\r\n\]+ .gdb_index section in \[^\r\n\]+\r\nDo \"set use-deprecated-index-sections on\" before the file is read\r\nto use the section anyway\\.\)?" \
-		    "\(\(\r\n\r\n\032\032frames-invalid\)|\(\r\n\r\n\032\032breakpoints-invalid\)\)*\r\n\r\n" \
-		    "\032\032starting\(\(\r\nReading \[^\r\n\]+\)|\(\r\nwarning: File transfers from remote targets can be slow\[^\r\n\]+\)\)*" \
-		    "\(\(\r\n\r\n\032\032frames-invalid\)|\(\r\n\r\n\032\032breakpoints-invalid\)\)*\r\n\r\n" \
-		    "\032\032breakpoint 1\r\n\r\n" \
-		    "Breakpoint 1, \r\n" \
-		    "\032\032frame-begin 0 $hex\r\n\r\n" \
-		    "\032\032frame-function-name\r\n" \
-		    "main\r\n" \
-		    "\032\032frame-args\r\n \\(\\)\r\n" \
-		    "\032\032frame-source-begin\r\n at \r\n" \
-		    "\032\032frame-source-file\r\n.*annota1.c\r\n" \
-		    "\032\032frame-source-file-end\r\n:\r\n" \
-		    "\032\032frame-source-line\r\n$main_line\r\n" \
-		    "\032\032frame-source-end\r\n\r\n\r\n" \
-		    "\032\032source.*$srcfile:$main_line:.*:beg:$hex\r\n\r\n" \
-		    "\032\032frame-end\r\n\r\n" \
-		    "\032\032stopped.*$gdb_prompt$" } ] {
+    -re $run_re.*$gdb_prompt$ {
 	pass $gdb_test_name
     }
 }
@@ -249,7 +295,7 @@ gdb_test_multiple "backtrace" "backtrace from shlibrary" {
 	pass $gdb_test_name
     }
     -re "$pat_begin.*$srcfile$pat_end" {
-	setup_xfail "*-*-*" 1270
+	setup_xfail "*-*-*" 8375
 	fail $gdb_test_name
     }
 }
@@ -272,7 +318,7 @@ if [target_info exists gdb,nosignals] {
 	    pass $gdb_test_name
 	}
 	-re "\r\n\032\032post-prompt\r\nContinuing with signal SIGUSR1.\r\n\r\n\032\032starting\(\(\r\n\r\n\032\032frames-invalid\)|\(\r\n\r\n\032\032breakpoints-invalid\)\)+\r\n\r\n\032\032breakpoint 2\r\n\r\nBreakpoint 2, \r\n\032\032frame-begin 0 $hex\r\n\r\n\032\032frame-function-name\r\nhandle_USR1\r\n\032\032frame-args\r\n \\(\r\n\032\032arg-begin\r\nsig\r\n\032\032arg-name-end\r\n=\r\n\032\032arg-value -\r\n$decimal\r\n\032\032arg-end\r\n\\)\r\n\032\032frame-source-begin\r\n at \r\n\032\032frame-source-file\r\n.*${srcfile}\r\n\032\032frame-source-file-end\r\n:\r\n\032\032frame-source-line\r\n.*\r\n\032\032frame-source-end\r\n\r\n\r\n\032\032source.*annota1.c:.*:.*:beg:$hex\r\n\r\n\032\032frame-end\r\n\r\n\032\032stopped\r\n$gdb_prompt$" {
-	    setup_xfail "*-*-*" 1270
+	    setup_xfail "*-*-*" 8375
 	    fail $gdb_test_name
 	}
     }
@@ -318,7 +364,7 @@ gdb_test_multiple "break ${srcfile}:${main_line}" "break in main" {
 	pass $gdb_test_name
     }
     -re "post-prompt.*Breakpoint 4 at $hex: file .*${srcfile}, line $main_line.*\032\032breakpoints-invalid.*$gdb_prompt$" {
-	setup_xfail "*-*-*" 1270
+	setup_xfail "*-*-*" 8375
 	fail $gdb_test_name
     }
 }
@@ -339,6 +385,12 @@ gdb_test_multiple "display value" "set up display" {
     }
 }
 
+# Get the core into the output directory.
+if {![is_remote host]} {
+    gdb_test -prompt "$gdb_prompt$" \
+	"set cwd [file dirname $binfile]" "" \
+	"set inferior cwd to test directory"
+}
 
 # should ask query. Test annotate-query.
 # we don't care about anything else here, only the query.
@@ -433,17 +485,7 @@ if [target_info exists gdb,nosignals] {
 }
 
 # Check for production of a core file and remove it!
-
-set test "cleanup core file"
-if { [remote_file host exists core] } {
-    remote_file host delete core
-    pass "$test (removed)"
-} elseif { $pid != -1 && [remote_file host exists core.$pid] } {
-    remote_file host delete core.$pid
-    pass "$test (removed)"
-} else {
-    pass "$test (not dumped)"
-}
+remove_core $pid
 
 proc thread_test {} {
     global subdir srcdir testfile srcfile binfile
@@ -453,14 +495,13 @@ proc thread_test {} {
     set binfile [standard_output_file ${testfile}-watch_thread_num]
     set gdb_prompt $old_gdb_prompt
 
-    if { ![get_compiler_info] && [gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] == "" } {
+    if { [gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] == "" } {
 
 	gdb_exit
 	gdb_start
 	gdb_reinitialize_dir $srcdir/$subdir
 	gdb_load ${binfile}
-	if { ![runto main] } then {
-	    fail "run to main"
+	if {![runto_main]} {
 	    return
 	}
 

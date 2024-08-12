@@ -1,5 +1,5 @@
 /* s390-opc.c -- S390 opcode list
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2022 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of the GNU opcodes library.
@@ -218,32 +218,34 @@ const struct s390_operand s390_operands[] =
   { 8, 8, 0 },
 #define U8_16       68            /* 8 bit unsigned value starting at 16 */
   { 8, 16, 0 },
-#define U8_24       69            /* 8 bit unsigned value starting at 24 */
+#define U6_26       69            /* 6 bit unsigned value starting at 26 */
+  { 6, 26, 0 },
+#define U8_24       70            /* 8 bit unsigned value starting at 24 */
   { 8, 24, 0 },
-#define U8_28       70            /* 8 bit unsigned value starting at 28 */
+#define U8_28       71            /* 8 bit unsigned value starting at 28 */
   { 8, 28, 0 },
-#define U8_32       71            /* 8 bit unsigned value starting at 32 */
+#define U8_32       72            /* 8 bit unsigned value starting at 32 */
   { 8, 32, 0 },
-#define U12_16      72            /* 12 bit unsigned value starting at 16 */
+#define U12_16      73            /* 12 bit unsigned value starting at 16 */
   { 12, 16, 0 },
-#define U16_16      73            /* 16 bit unsigned value starting at 16 */
+#define U16_16      74            /* 16 bit unsigned value starting at 16 */
   { 16, 16, 0 },
-#define U16_32      74		  /* 16 bit unsigned value starting at 32 */
+#define U16_32      75		  /* 16 bit unsigned value starting at 32 */
   { 16, 32, 0 },
-#define U32_16      75		  /* 32 bit unsigned value starting at 16 */
+#define U32_16      76		  /* 32 bit unsigned value starting at 16 */
   { 32, 16, 0 },
 
 /* PC-relative address operands.  */
 
-#define J12_12      76            /* 12 bit PC relative offset at 12 */
+#define J12_12      77            /* 12 bit PC relative offset at 12 */
   { 12, 12, S390_OPERAND_PCREL },
-#define J16_16      77            /* 16 bit PC relative offset at 16 */
+#define J16_16      78            /* 16 bit PC relative offset at 16 */
   { 16, 16, S390_OPERAND_PCREL },
-#define J16_32      78            /* 16 bit PC relative offset at 32 */
+#define J16_32      79            /* 16 bit PC relative offset at 32 */
   { 16, 32, S390_OPERAND_PCREL },
-#define J24_24      79            /* 24 bit PC relative offset at 24 */
+#define J24_24      80            /* 24 bit PC relative offset at 24 */
   { 24, 24, S390_OPERAND_PCREL },
-#define J32_16      80            /* 32 bit PC relative offset at 16 */
+#define J32_16      81            /* 32 bit PC relative offset at 16 */
   { 32, 16, S390_OPERAND_PCREL },
 
 };
@@ -313,6 +315,7 @@ const struct s390_operand s390_operands[] =
 #define INSTR_RIE_R0U0     6, { R_8,U16_16,0,0,0,0 }             /* e.g. clfitne */
 #define INSTR_RIE_RUI0     6, { R_8,I16_16,U4_12,0,0,0 }         /* e.g. lochi */
 #define INSTR_RIE_RRUUU    6, { R_8,R_12,U8_16,U8_24,U8_32,0 }   /* e.g. rnsbg */
+#define INSTR_RIE_RRUUU2   6, { R_8,R_12,U8_16,U6_26,U8_32,0 }   /* e.g. rnsbg */
 #define INSTR_RIL_0P       6, { J32_16,0,0,0,0 }                 /* e.g. jg    */
 #define INSTR_RIL_RP       6, { R_8,J32_16,0,0,0,0 }             /* e.g. brasl */
 #define INSTR_RIL_UP       6, { U4_8,J32_16,0,0,0,0 }            /* e.g. brcl  */
@@ -359,6 +362,7 @@ const struct s390_operand s390_operands[] =
 #define INSTR_RRF_RURR2    4, { R_24,R_16,R_28,U4_20,0,0 }       /* e.g. lptea */
 #define INSTR_RRF_R0RR     4, { R_24,R_16,R_28,0,0,0 }           /* e.g. idte  */
 #define INSTR_RRF_R0RR2    4, { R_24,R_28,R_16,0,0,0 }           /* e.g. ark   */
+#define INSTR_RRF_R0RER    4, { RE_24,R_28,R_16,0,0,0 }          /* e.g. mgrk  */
 #define INSTR_RRF_R0RR3    4, { R_24,R_28,R_16,0,0,0 }           /* e.g. selrz */
 #define INSTR_RRF_U0FF     4, { F_24,U4_16,F_28,0,0,0 }          /* e.g. fidbr */
 #define INSTR_RRF_U0FEFE   4, { FE_24,U4_16,FE_28,0,0,0 }        /* e.g. fixbr */
@@ -439,6 +443,7 @@ const struct s390_operand s390_operands[] =
 #define INSTR_RX_URRD      4, { U4_8,D_20,X_12,B_16,0,0 }        /* e.g. bc    */
 #define INSTR_SI_RD        4, { D_20,B_16,0,0,0,0 }              /* e.g. lpsw  */
 #define INSTR_SI_URD       4, { D_20,B_16,U8_8,0,0,0 }           /* e.g. cli   */
+#define INSTR_SIY_RD       6, { D20_20,B_16,0,0,0,0 }            /* e.g. lpswey*/
 #define INSTR_SIY_URD      6, { D20_20,B_16,U8_8,0,0,0 }         /* e.g. tmy   */
 #define INSTR_SIY_IRD      6, { D20_20,B_16,I8_8,0,0,0 }         /* e.g. asi   */
 #define INSTR_SIL_RDI      6, { D_20,B_16,I16_32,0,0,0 }         /* e.g. chhsi */
@@ -534,6 +539,7 @@ const struct s390_operand s390_operands[] =
 #define MASK_RIE_R0U0     { 0xff, 0x0f, 0x00, 0x00, 0xff, 0xff }
 #define MASK_RIE_RUI0     { 0xff, 0x00, 0x00, 0x00, 0xff, 0xff }
 #define MASK_RIE_RRUUU    { 0xff, 0x00, 0x00, 0x00, 0x00, 0xff }
+#define MASK_RIE_RRUUU2   { 0xff, 0x00, 0x00, 0xc0, 0x00, 0xff }
 #define MASK_RIL_0P       { 0xff, 0xff, 0x00, 0x00, 0x00, 0x00 }
 #define MASK_RIL_RP       { 0xff, 0x0f, 0x00, 0x00, 0x00, 0x00 }
 #define MASK_RIL_UP       { 0xff, 0x0f, 0x00, 0x00, 0x00, 0x00 }
@@ -580,6 +586,7 @@ const struct s390_operand s390_operands[] =
 #define MASK_RRF_RURR2    { 0xff, 0xff, 0x00, 0x00, 0x00, 0x00 }
 #define MASK_RRF_R0RR     { 0xff, 0xff, 0x00, 0x00, 0x00, 0x00 }
 #define MASK_RRF_R0RR2    { 0xff, 0xff, 0x00, 0x00, 0x00, 0x00 }
+#define MASK_RRF_R0RER    { 0xff, 0xff, 0x00, 0x00, 0x00, 0x00 }
 #define MASK_RRF_R0RR3    { 0xff, 0xff, 0x0f, 0x00, 0x00, 0x00 }
 #define MASK_RRF_U0FF     { 0xff, 0xff, 0x0f, 0x00, 0x00, 0x00 }
 #define MASK_RRF_U0FEFE   { 0xff, 0xff, 0x0f, 0x00, 0x00, 0x00 }
@@ -660,6 +667,7 @@ const struct s390_operand s390_operands[] =
 #define MASK_RX_URRD      { 0xff, 0x00, 0x00, 0x00, 0x00, 0x00 }
 #define MASK_SI_RD        { 0xff, 0x00, 0x00, 0x00, 0x00, 0x00 }
 #define MASK_SI_URD       { 0xff, 0x00, 0x00, 0x00, 0x00, 0x00 }
+#define MASK_SIY_RD       { 0xff, 0xff, 0x00, 0x00, 0x00, 0xff }
 #define MASK_SIY_URD      { 0xff, 0x00, 0x00, 0x00, 0x00, 0xff }
 #define MASK_SIY_IRD      { 0xff, 0x00, 0x00, 0x00, 0x00, 0xff }
 #define MASK_SIL_RDI      { 0xff, 0xff, 0x00, 0x00, 0x00, 0x00 }

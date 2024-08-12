@@ -1,6 +1,6 @@
 /* Linux-specific functions to retrieve OS data.
    
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

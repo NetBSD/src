@@ -1,27 +1,21 @@
 #include <stdio.h>
 #include <ctype.h>
 #include "ansidecl.h"
-#include "gdb/callback.h"
+#include "sim/callback.h"
 #include "opcode/mn10300.h"
 #include <limits.h>
-#include "gdb/remote-sim.h"
+#include "sim/sim.h"
 #include "bfd.h"
 #include "sim-fpu.h"
+#include "sim-signal.h"
 
 extern SIM_DESC simulator;
 
-typedef unsigned8 uint8;
-typedef signed8 int8;
-typedef unsigned16 uint16;
-typedef signed16 int16;
-typedef unsigned32 uint32;
-typedef signed32 int32;
-
 typedef struct
 {
-  uint32 low, high;
+  uint32_t low, high;
 } dword;
-typedef uint32 reg_t;
+typedef uint32_t reg_t;
 
 struct simops 
 {
@@ -158,13 +152,13 @@ sim_core_read_unaligned_4 (STATE_CPU (simulator, 0), PC, read_map, (ADDR))
 u642dw (sim_core_read_unaligned_8 (STATE_CPU (simulator, 0), \
 				   PC, read_map, (ADDR)))
 
-static INLINE dword
-u642dw (unsigned64 dw)
+static INLINE2 dword
+u642dw (uint64_t dw)
 {
   dword r;
 
-  r.low = (unsigned32)dw;
-  r.high = (unsigned32)(dw >> 32);
+  r.low = (uint32_t)dw;
+  r.high = (uint32_t)(dw >> 32);
   return r;
 }
 
@@ -185,21 +179,21 @@ sim_core_write_unaligned_4 (STATE_CPU (simulator, 0), \
 sim_core_write_unaligned_8 (STATE_CPU (simulator, 0), \
 			    PC, write_map, (ADDR), dw2u64 (DATA))
 
-static INLINE unsigned64
+static INLINE2 uint64_t
 dw2u64 (dword data)
 {
-  return data.low | (((unsigned64)data.high) << 32);
+  return data.low | (((uint64_t)data.high) << 32);
 }
 
 /* Function declarations.  */
 
-INLINE_SIM_MAIN (void) genericAdd (unsigned32 source, unsigned32 destReg);
-INLINE_SIM_MAIN (void) genericSub (unsigned32 source, unsigned32 destReg);
-INLINE_SIM_MAIN (void) genericCmp (unsigned32 leftOpnd, unsigned32 rightOpnd);
-INLINE_SIM_MAIN (void) genericOr (unsigned32 source, unsigned32 destReg);
-INLINE_SIM_MAIN (void) genericXor (unsigned32 source, unsigned32 destReg);
-INLINE_SIM_MAIN (void) genericBtst (unsigned32 leftOpnd, unsigned32 rightOpnd);
-INLINE_SIM_MAIN (void) do_syscall (void);
+INLINE_SIM_MAIN (void) genericAdd (uint32_t source, uint32_t destReg);
+INLINE_SIM_MAIN (void) genericSub (uint32_t source, uint32_t destReg);
+INLINE_SIM_MAIN (void) genericCmp (uint32_t leftOpnd, uint32_t rightOpnd);
+INLINE_SIM_MAIN (void) genericOr (uint32_t source, uint32_t destReg);
+INLINE_SIM_MAIN (void) genericXor (uint32_t source, uint32_t destReg);
+INLINE_SIM_MAIN (void) genericBtst (uint32_t leftOpnd, uint32_t rightOpnd);
+INLINE_SIM_MAIN (void) do_syscall (SIM_DESC sd);
 void program_interrupt (SIM_DESC sd, sim_cpu *cpu, sim_cia cia, SIM_SIGNAL sig);
 
 void mn10300_cpu_exception_trigger(SIM_DESC sd, sim_cpu* cpu, address_word pc);

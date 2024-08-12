@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -25,6 +25,9 @@
 
 #undef SIM_INLINE_P
 #define SIM_INLINE_P 1
+
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include "sim-inline.h"
 #include "sim-main.h"

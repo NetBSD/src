@@ -1,6 +1,6 @@
 /* Process record and replay target code for GNU/Linux.
 
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -92,71 +92,71 @@ struct linux_record_tdep
   int size_time_t;
 
   /* The values of the second argument of system call "sys_ioctl".  */
-  int ioctl_TCGETS;
-  int ioctl_TCSETS;
-  int ioctl_TCSETSW;
-  int ioctl_TCSETSF;
-  int ioctl_TCGETA;
-  int ioctl_TCSETA;
-  int ioctl_TCSETAW;
-  int ioctl_TCSETAF;
-  int ioctl_TCSBRK;
-  int ioctl_TCXONC;
-  int ioctl_TCFLSH;
-  int ioctl_TIOCEXCL;
-  int ioctl_TIOCNXCL;
-  int ioctl_TIOCSCTTY;
-  int ioctl_TIOCGPGRP;
-  int ioctl_TIOCSPGRP;
-  int ioctl_TIOCOUTQ;
-  int ioctl_TIOCSTI;
-  int ioctl_TIOCGWINSZ;
-  int ioctl_TIOCSWINSZ;
-  int ioctl_TIOCMGET;
-  int ioctl_TIOCMBIS;
-  int ioctl_TIOCMBIC;
-  int ioctl_TIOCMSET;
-  int ioctl_TIOCGSOFTCAR;
-  int ioctl_TIOCSSOFTCAR;
-  int ioctl_FIONREAD;
-  int ioctl_TIOCINQ;
-  int ioctl_TIOCLINUX;
-  int ioctl_TIOCCONS;
-  int ioctl_TIOCGSERIAL;
-  int ioctl_TIOCSSERIAL;
-  int ioctl_TIOCPKT;
-  int ioctl_FIONBIO;
-  int ioctl_TIOCNOTTY;
-  int ioctl_TIOCSETD;
-  int ioctl_TIOCGETD;
-  int ioctl_TCSBRKP;
-  int ioctl_TIOCTTYGSTRUCT;
-  int ioctl_TIOCSBRK;
-  int ioctl_TIOCCBRK;
-  int ioctl_TIOCGSID;
-  int ioctl_TCGETS2;
-  int ioctl_TCSETS2;
-  int ioctl_TCSETSW2;
-  int ioctl_TCSETSF2;
-  int ioctl_TIOCGPTN;
-  int ioctl_TIOCSPTLCK;
-  int ioctl_FIONCLEX;
-  int ioctl_FIOCLEX;
-  int ioctl_FIOASYNC;
-  int ioctl_TIOCSERCONFIG;
-  int ioctl_TIOCSERGWILD;
-  int ioctl_TIOCSERSWILD;
-  int ioctl_TIOCGLCKTRMIOS;
-  int ioctl_TIOCSLCKTRMIOS;
-  int ioctl_TIOCSERGSTRUCT;
-  int ioctl_TIOCSERGETLSR;
-  int ioctl_TIOCSERGETMULTI;
-  int ioctl_TIOCSERSETMULTI;
-  int ioctl_TIOCMIWAIT;
-  int ioctl_TIOCGICOUNT;
-  int ioctl_TIOCGHAYESESP;
-  int ioctl_TIOCSHAYESESP;
-  int ioctl_FIOQSIZE;
+  ULONGEST ioctl_TCGETS;
+  ULONGEST ioctl_TCSETS;
+  ULONGEST ioctl_TCSETSW;
+  ULONGEST ioctl_TCSETSF;
+  ULONGEST ioctl_TCGETA;
+  ULONGEST ioctl_TCSETA;
+  ULONGEST ioctl_TCSETAW;
+  ULONGEST ioctl_TCSETAF;
+  ULONGEST ioctl_TCSBRK;
+  ULONGEST ioctl_TCXONC;
+  ULONGEST ioctl_TCFLSH;
+  ULONGEST ioctl_TIOCEXCL;
+  ULONGEST ioctl_TIOCNXCL;
+  ULONGEST ioctl_TIOCSCTTY;
+  ULONGEST ioctl_TIOCGPGRP;
+  ULONGEST ioctl_TIOCSPGRP;
+  ULONGEST ioctl_TIOCOUTQ;
+  ULONGEST ioctl_TIOCSTI;
+  ULONGEST ioctl_TIOCGWINSZ;
+  ULONGEST ioctl_TIOCSWINSZ;
+  ULONGEST ioctl_TIOCMGET;
+  ULONGEST ioctl_TIOCMBIS;
+  ULONGEST ioctl_TIOCMBIC;
+  ULONGEST ioctl_TIOCMSET;
+  ULONGEST ioctl_TIOCGSOFTCAR;
+  ULONGEST ioctl_TIOCSSOFTCAR;
+  ULONGEST ioctl_FIONREAD;
+  ULONGEST ioctl_TIOCINQ;
+  ULONGEST ioctl_TIOCLINUX;
+  ULONGEST ioctl_TIOCCONS;
+  ULONGEST ioctl_TIOCGSERIAL;
+  ULONGEST ioctl_TIOCSSERIAL;
+  ULONGEST ioctl_TIOCPKT;
+  ULONGEST ioctl_FIONBIO;
+  ULONGEST ioctl_TIOCNOTTY;
+  ULONGEST ioctl_TIOCSETD;
+  ULONGEST ioctl_TIOCGETD;
+  ULONGEST ioctl_TCSBRKP;
+  ULONGEST ioctl_TIOCTTYGSTRUCT;
+  ULONGEST ioctl_TIOCSBRK;
+  ULONGEST ioctl_TIOCCBRK;
+  ULONGEST ioctl_TIOCGSID;
+  ULONGEST ioctl_TCGETS2;
+  ULONGEST ioctl_TCSETS2;
+  ULONGEST ioctl_TCSETSW2;
+  ULONGEST ioctl_TCSETSF2;
+  ULONGEST ioctl_TIOCGPTN;
+  ULONGEST ioctl_TIOCSPTLCK;
+  ULONGEST ioctl_FIONCLEX;
+  ULONGEST ioctl_FIOCLEX;
+  ULONGEST ioctl_FIOASYNC;
+  ULONGEST ioctl_TIOCSERCONFIG;
+  ULONGEST ioctl_TIOCSERGWILD;
+  ULONGEST ioctl_TIOCSERSWILD;
+  ULONGEST ioctl_TIOCGLCKTRMIOS;
+  ULONGEST ioctl_TIOCSLCKTRMIOS;
+  ULONGEST ioctl_TIOCSERGSTRUCT;
+  ULONGEST ioctl_TIOCSERGETLSR;
+  ULONGEST ioctl_TIOCSERGETMULTI;
+  ULONGEST ioctl_TIOCSERSETMULTI;
+  ULONGEST ioctl_TIOCMIWAIT;
+  ULONGEST ioctl_TIOCGICOUNT;
+  ULONGEST ioctl_TIOCGHAYESESP;
+  ULONGEST ioctl_TIOCSHAYESESP;
+  ULONGEST ioctl_FIOQSIZE;
 
   /* The values of the second argument of system call "sys_fcntl"
      and "sys_fcntl64".  */
@@ -510,6 +510,8 @@ enum gdb_syscall {
   gdb_sys_dup3 = 330,
   gdb_sys_pipe2 = 331,
   gdb_sys_inotify_init1 = 332,
+  gdb_sys_getrandom = 355,
+  gdb_sys_statx = 383,
   gdb_sys_socket = 500,
   gdb_sys_connect = 501,
   gdb_sys_accept = 502,

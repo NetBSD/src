@@ -1,5 +1,5 @@
 # This testcase is part of GDB, the GNU debugger.
-# Copyright 1993-2020 Free Software Foundation, Inc.
+# Copyright 1993-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ proc test_input_radix { iradix iradixhex iradixoctal } {
 	"initialize radix, input radix $iradix"
     gdb_test "set input-radix $iradix" \
 	"Input radix now set to decimal $iradix, hex $iradixhex, octal $iradixoctal."
-    if { $iradix == 10 } then {
+    if {$iradix == 10} {
 	gdb_test "show radix" \
 	    "Input and output radices set to decimal 10, hex a, octal 12." \
 	    "show radix, input radix $iradix"
@@ -110,7 +110,7 @@ proc test_output_radix { oradix oradixhex oradixoctal } {
 	"initialize radix, output radix $oradix"
     gdb_test "set output-radix $oradix" \
 	"Output radix now set to decimal $oradix, hex $oradixhex, octal $oradixoctal."
-    if { $oradix == 10 } then {
+    if {$oradix == 10} {
 	gdb_test "show radix" \
 	    "Input and output radices set to decimal 10, hex a, octal 12." \
 	    "show radix, output radix $oradix"

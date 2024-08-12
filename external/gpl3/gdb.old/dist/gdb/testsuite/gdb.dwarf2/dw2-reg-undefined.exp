@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -78,7 +78,10 @@ for {set f 0} {$f < 3} {incr f} {
 # Test that the debug log statement in frame_unwind_register_value produces
 # "not saved" and not "optimized out".
 gdb_test "set debug frame 1"
-gdb_test {print $rax} {frame_unwind_register_value[^\r\n]+rax[^\r\n]+not saved.*}
+gdb_test {print $rax} [multi_line \
+			{    \[frame\] frame_unwind_register_value: frame=0, regnum=0\(rax\)} \
+			{    \[frame\] frame_unwind_register_value:   -> <not saved>} \
+			{.*}]
 gdb_test "set debug frame 0"
 
 # Test that history values show "not saved" and not "optimized out".

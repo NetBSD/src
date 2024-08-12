@@ -1,6 +1,6 @@
 /* Handle different target file systems for GDB, the GNU Debugger.
 
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -64,16 +64,16 @@ show_target_file_system_kind_command (struct ui_file *file,
 				      const char *value)
 {
   if (target_file_system_kind == file_system_kind_auto)
-    fprintf_filtered (file, _("\
+    gdb_printf (file, _("\
 The assumed file system kind for target reported file names \
 is \"%s\" (currently \"%s\").\n"),
-		      value,
-		      effective_target_file_system_kind ());
+		value,
+		effective_target_file_system_kind ());
   else
-    fprintf_filtered (file, _("\
+    gdb_printf (file, _("\
 The assumed file system kind for target reported file names \
 is \"%s\".\n"),
-		      value);
+		value);
 }
 
 void _initialize_filesystem ();

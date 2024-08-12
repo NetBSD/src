@@ -48,16 +48,6 @@ struct _sim_cpu {
 #endif
 };
 
-/* The sim_state struct.  */
-
-struct sim_state {
-  sim_cpu *cpu[MAX_NR_PROCESSORS];
-
-  CGEN_STATE cgen_state;
-
-  sim_state_base base;
-};
-
 /* Misc.  */
 
 /* Catch address exceptions.  */
@@ -65,12 +55,5 @@ extern SIM_CORE_SIGNAL_FN m32r_core_signal;
 #define SIM_CORE_SIGNAL(SD,CPU,CIA,MAP,NR_BYTES,ADDR,TRANSFER,ERROR) \
 m32r_core_signal ((SD), (CPU), (CIA), (MAP), (NR_BYTES), (ADDR), \
 		  (TRANSFER), (ERROR))
-
-/* Default memory size.  */
-#ifdef M32R_LINUX
-#define M32R_DEFAULT_MEM_SIZE 0x2000000 /* 32M */
-#else
-#define M32R_DEFAULT_MEM_SIZE 0x800000 /* 8M */
-#endif
 
 #endif /* SIM_MAIN_H */

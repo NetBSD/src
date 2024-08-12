@@ -1,5 +1,5 @@
 /* frv simulator support code
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
 This file is part of the GNU simulators.
@@ -17,6 +17,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #define WANT_CPU
 #define WANT_CPU_FRVBF
 
@@ -28,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "bfd.h"
 #include "gdb/sim-frv.h"
 #include <math.h>
+#include <stdlib.h>
 
 /* Maintain a flag in order to know when to write the address of the next
    VLIW instruction into the LR register.  Used by JMPL. JMPIL, and CALL
@@ -36,7 +40,7 @@ int frvbf_write_next_vliw_addr_to_LR;
 
 /* The contents of BUF are in target byte order.  */
 int
-frvbf_fetch_register (SIM_CPU *current_cpu, int rn, unsigned char *buf, int len)
+frvbf_fetch_register (SIM_CPU *current_cpu, int rn, void *buf, int len)
 {
   if (SIM_FRV_GR0_REGNUM <= rn && rn <= SIM_FRV_GR63_REGNUM)
     {
@@ -85,7 +89,7 @@ frvbf_fetch_register (SIM_CPU *current_cpu, int rn, unsigned char *buf, int len)
 /* The contents of BUF are in target byte order.  */
 
 int
-frvbf_store_register (SIM_CPU *current_cpu, int rn, unsigned char *buf, int len)
+frvbf_store_register (SIM_CPU *current_cpu, int rn, const void *buf, int len)
 {
   if (SIM_FRV_GR0_REGNUM <= rn && rn <= SIM_FRV_GR63_REGNUM)
     {
@@ -1178,10 +1182,12 @@ frvbf_shift_left_arith_saturate (SIM_CPU *current_cpu, SI arg1, SI arg2)
 
   /* Signed shift by 31 or greater saturates by definition.  */
   if (arg2 >= 31)
-    if (arg1 > 0)
-      return (SI) 0x7fffffff;
-    else
-      return (SI) 0x80000000;
+    {
+      if (arg1 > 0)
+	return (SI) 0x7fffffff;
+      else
+	return (SI) 0x80000000;
+    }
 
   /* OK, arg2 is between 1 and 31.  */
   neg_arg1 = (arg1 < 0);

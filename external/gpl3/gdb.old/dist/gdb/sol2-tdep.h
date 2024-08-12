@@ -1,6 +1,6 @@
 /* Target-dependent code for Solaris.
 
-   Copyright (C) 2006-2020 Free Software Foundation, Inc.
+   Copyright (C) 2006-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,7 +22,7 @@
 
 struct gdbarch;
 
-int sol2_sigtramp_p (struct frame_info *this_frame);
+int sol2_sigtramp_p (frame_info_ptr this_frame);
 
 void sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch);
 

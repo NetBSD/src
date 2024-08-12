@@ -1,8 +1,8 @@
 /*  This file is part of the program GDB, the GNU debugger.
-    
-    Copyright (C) 1998-2020 Free Software Foundation, Inc.
+
+    Copyright (C) 1998-2023 Free Software Foundation, Inc.
     Contributed by Cygnus Solutions.
-    
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 3 of the License, or
@@ -15,29 +15,31 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    
+
     */
 
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include "sim-main.h"
 #include "hw-main.h"
 
 /* DEVICE
 
-   
+
    tx3904cpu - tx3904 cpu virtual device
 
-   
+
    DESCRIPTION
 
-   
+
    Implements the external tx3904 functionality.  This includes the
    delivery of of interrupts generated from other devices and the
    handling of device specific registers.
 
 
    PROPERTIES
-   
+
    none
 
 
@@ -86,7 +88,7 @@ struct tx3904cpu {
 
 
 
-/* input port ID's */ 
+/* input port ID's */
 
 enum {
   RESET_PORT,
@@ -168,13 +170,13 @@ deliver_tx3904cpu_interrupt (struct hw *me,
 	 was cleared with a negative pending_level. */
       CAUSE &= ~ (cause_IP_mask << cause_IP_shift);
 
-      if(controller->pending_level > 0) /* interrupt set */
+      if (controller->pending_level > 0) /* interrupt set */
 	{
 	  /* set hardware-interrupt subfields of CAUSE register */
 	  CAUSE |= (controller->pending_level & cause_IP_mask) << cause_IP_shift;
 
 	  /* check for enabled / unmasked interrupts */
-	  if((SR & status_IEc) &&
+	  if ((SR & status_IEc) &&
 	     (controller->pending_level & ((SR >> status_IM_shift) & status_IM_mask)))
 	    {
 	      controller->pending_level = 0;
@@ -183,7 +185,7 @@ deliver_tx3904cpu_interrupt (struct hw *me,
 	  else
 	    {
 	      /* reschedule soon */
-	      if(controller->event != NULL)
+	      if (controller->event != NULL)
 		hw_event_queue_deschedule(me, controller->event);
 	      controller->event =
 		hw_event_queue_schedule (me, 1, deliver_tx3904cpu_interrupt, NULL);
@@ -205,26 +207,26 @@ tx3904cpu_port_event (struct hw *me,
   struct tx3904cpu *controller = hw_data (me);
 
   switch (my_port)
-    {      
+    {
     case RESET_PORT:
       controller->pending_reset = 1;
       HW_TRACE ((me, "port-in reset"));
       break;
-      
+
     case NMI_PORT:
       controller->pending_nmi = 1;
       HW_TRACE ((me, "port-in nmi"));
       break;
-      
+
     case LEVEL_PORT:
       /* level == 0 means that the interrupt was cleared */
-      if(level == 0)
+      if (level == 0)
 	controller->pending_level = -1; /* signal end of interrupt */
       else
 	controller->pending_level = level;
       HW_TRACE ((me, "port-in level=%d", level));
       break;
-      
+
     default:
       hw_abort (me, "bad switch");
       break;
@@ -232,7 +234,7 @@ tx3904cpu_port_event (struct hw *me,
 
   /* Schedule an event to be delivered immediately after current
      instruction. */
-  if(controller->event != NULL)
+  if (controller->event != NULL)
     hw_event_queue_deschedule(me, controller->event);
   controller->event =
     hw_event_queue_schedule (me, 0, deliver_tx3904cpu_interrupt, NULL);

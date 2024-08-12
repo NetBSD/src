@@ -1,5 +1,5 @@
 /* Common target dependent code for GDB on Alpha systems.
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,8 @@
 
 #ifndef ALPHA_TDEP_H
 #define ALPHA_TDEP_H
+
+#include "gdbarch.h"
 
 struct regcache;
 
@@ -68,38 +70,38 @@ struct regcache;
 #define ALPHA_NUM_ARG_REGS   6
 
 /* Target-dependent structure in gdbarch.  */
-struct gdbarch_tdep
+struct alpha_gdbarch_tdep : gdbarch_tdep_base
 {
-  CORE_ADDR vm_min_address;	/* Used by alpha_heuristic_proc_start.  */
+  CORE_ADDR vm_min_address = 0;	/* Used by alpha_heuristic_proc_start.  */
 
   /* If PC is inside a dynamically-generated signal trampoline function
      (i.e. one copied onto the user stack at run-time), return how many
      bytes PC is beyond the start of that function.  Otherwise, return -1.  */
-  LONGEST (*dynamic_sigtramp_offset) (struct gdbarch *, CORE_ADDR);
+  LONGEST (*dynamic_sigtramp_offset) (struct gdbarch *, CORE_ADDR) = nullptr;
 
   /* Translate a signal handler stack base address into the address of
      the sigcontext structure for that signal handler.  */
-  CORE_ADDR (*sigcontext_addr) (struct frame_info *);
+  CORE_ADDR (*sigcontext_addr) (frame_info_ptr) = nullptr;
 
   /* Does the PC fall in a signal trampoline.  */
   /* NOTE: cagney/2004-04-30: Do not copy/clone this code.  Instead
      look at tramp-frame.h and other simpler per-architecture
      sigtramp unwinders.  */
   int (*pc_in_sigtramp) (struct gdbarch *gdbarch, CORE_ADDR pc,
-			 const char *name);
+			 const char *name) = nullptr;
 
   /* If TYPE will be returned in memory, return true.  */
-  int (*return_in_memory) (struct type *type);
+  int (*return_in_memory) (struct type *type) = nullptr;
 
   /* Offset of registers in `struct sigcontext'.  */
-  int sc_pc_offset;
-  int sc_regs_offset;
-  int sc_fpregs_offset;
+  int sc_pc_offset = 0;
+  int sc_regs_offset = 0;
+  int sc_fpregs_offset = 0;
 
-  int jb_pc;			/* Offset to PC value in jump buffer.
+  int jb_pc = 0;			/* Offset to PC value in jump buffer.
 				   If htis is negative, longjmp support
 				   will be disabled.  */
-  size_t jb_elt_size;		/* And the size of each entry in the buf.  */
+  size_t jb_elt_size = 0;		/* And the size of each entry in the buf.  */
 };
 
 extern unsigned int alpha_read_insn (struct gdbarch *gdbarch, CORE_ADDR pc);

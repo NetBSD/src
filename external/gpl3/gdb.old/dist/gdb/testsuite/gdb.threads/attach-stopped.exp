@@ -1,4 +1,4 @@
-# Copyright 2008-2020 Free Software Foundation, Inc.
+# Copyright 2008-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 # This test only works on Linux
 if { ![isnative] || [is_remote host] || [use_gdb_stub]
      || ![istarget *-linux*] } {
-    continue
+    return
 }
 
 standard_testfile
@@ -39,10 +39,6 @@ proc corefunc { threadtype } {
     global srcdir
     global subdir
     global gdb_prompt
-
-    if [get_compiler_info] {
-	return -1
-    }
 
     set test_spawn_id [spawn_wait_for_attach $binfile]
     set testpid [spawn_id_get_pid $test_spawn_id]

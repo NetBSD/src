@@ -1,6 +1,6 @@
 /* Target-dependent code for UltraSPARC.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,7 @@
 #ifndef SPARC64_TDEP_H
 #define SPARC64_TDEP_H 1
 
-struct frame_info;
+class frame_info_ptr;
 struct gdbarch;
 struct regcache;
 struct sparc_gregmap;
@@ -124,14 +124,14 @@ extern const struct sparc_fpregmap sparc64_sol2_fpregmap;
 /* Register offsets for FreeBSD/sparc64.  */
 extern const struct sparc_gregmap sparc64fbsd_gregmap;
 
-/* Functions and variables exported from sparc64-nbsd-tdep.c.  */
+/* Functions and variables exported from sparc64-netbsd-tdep.c.  */
 
 /* Register offsets for NetBSD/sparc64.  */
 extern const struct sparc_gregmap sparc64nbsd_gregmap;
 
 extern struct trad_frame_saved_reg *
   sparc64nbsd_sigcontext_saved_regs (CORE_ADDR sigcontext_addr,
-				     struct frame_info *next_frame);
+				     frame_info_ptr next_frame);
 
 extern const struct sparc_fpregmap sparc64_bsd_fpregmap;
 

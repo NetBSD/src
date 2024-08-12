@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2020 Free Software Foundation, Inc.
+# Copyright (C) 2011-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,8 +31,6 @@ proc default_prompt_gdb_start { } {
     global timeout
     global gdb_spawn_id
 
-    gdb_stop_suppressing_tests
-
     verbose "Spawning $GDB $INTERNAL_GDBFLAGS $GDBFLAGS"
 
     if [info exists gdb_spawn_id] {
@@ -40,7 +38,7 @@ proc default_prompt_gdb_start { } {
     }
 
     if ![is_remote host] {
-	if { [which $GDB] == 0 } then {
+	if {[which $GDB] == 0} {
 	    perror "$GDB does not exist."
 	    exit 1
 	}

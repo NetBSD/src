@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2020 Free Software Foundation, Inc.
+# Copyright (C) 2010-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +24,6 @@ if { [prepare_for_testing "failed to prepare" ui-redirect start.c] } {
 }
 
 if ![runto_main] {
-    fail "can't run to main"
     return -1
 }
 
@@ -47,7 +46,7 @@ gdb_breakpoint "foo"
 gdb_breakpoint "bar"
 
 set cmds [multi_line_input \
-	      "break main" \
+	      "break -qualified main" \
 	      "  commands" \
 	      "    print 1" \
 	      "  end" \
@@ -77,30 +76,30 @@ with_test_prefix "userdefined" {
 
 with_test_prefix "logging" {
     gdb_test_no_output "set logging file /dev/null"
-    gdb_test "set logging on" \
+    gdb_test "set logging enabled on" \
     "Copying output to /dev/null.*Copying debug output to /dev/null\\."
     gdb_test "save breakpoints $cmds_file" "Saved to file '$cmds_file'\\." \
 	"save breakpoints cmds.txt"
     cmp_file_string "$cmds_file" "$cmds" "cmds.txt"
     gdb_test "userdefined" "#0  main ().*"
-    gdb_test "set logging off" "Done logging to /dev/null\\."
+    gdb_test "set logging enabled off" "Done logging to /dev/null\\."
     gdb_test "help" "List of classes of commands:.*"
 }
 
 with_test_prefix "redirect" {
     gdb_test "set logging redirect on"
-    gdb_test "set logging on" \
+    gdb_test "set logging enabled on" \
     "Redirecting output to /dev/null.*Copying debug output to /dev/null\\."
     gdb_test_no_output "save breakpoints $cmds_file" "save breakpoints cmds.txt"
     cmp_file_string "$cmds_file" "$cmds" "cmds.txt"
     gdb_test_no_output "userdefined"
-    gdb_test "set logging off" "Done logging to /dev/null\\."
+    gdb_test "set logging enabled off" "Done logging to /dev/null\\."
     gdb_test "help" "List of classes of commands:.*"
+    gdb_test_no_output "set logging redirect off"
 }
 
 with_test_prefix "redirect while already logging" {
-    gdb_test_no_output "set logging redirect off"
-    gdb_test "set logging on" \
+    gdb_test "set logging enabled on" \
     "Copying output to /dev/null.*Copying debug output to /dev/null\\."
     gdb_test "set logging redirect on" \
     ".*warning: Currently logging .*Turn the logging off and on to make the new setting effective.*"
@@ -108,28 +107,41 @@ with_test_prefix "redirect while already logging" {
 	"save breakpoints cmds.txt"
     cmp_file_string "$cmds_file" "$cmds" "cmds.txt"
     gdb_test "userdefined" "#0  main ().*"
-    gdb_test "set logging off" "Done logging to /dev/null\\."
+    gdb_test "set logging enabled off" "Done logging to /dev/null\\."
     gdb_test "help" "List of classes of commands:.*"
     gdb_test_no_output "set logging redirect off"
 }
 
 with_test_prefix "debugging" {
     gdb_test "set debug infrun 1"
-    gdb_test "set logging on" \
+    gdb_test "set logging enabled on" \
     "Copying output to /dev/null.*Copying debug output to /dev/null\\."
-    gdb_test "continue" {Continuing.*\[infrun\] .*\[infrun\] .*Breakpoint [0-9]+, foo.*}
+
+    gdb_test \
+	-prompt "$gdb_prompt \\\[infrun\\\] fetch_inferior_event: exit\r\n$" \
+	"continue" \
+	"Continuing.*\\\[infrun\\\] .*\\\[infrun\\\] .*Breakpoint \[0-9\]+, foo.*"
+
     gdb_test "set debug infrun 0"
-    gdb_test "set logging off" "Done logging to /dev/null\\."
+    gdb_test "set logging enabled off" "Done logging to /dev/null\\."
     gdb_test "help" "List of classes of commands:.*"
 }
 
 with_test_prefix "redirect debugging" {
     gdb_test_no_output "set logging debugredirect on"
     gdb_test "set debug infrun 1"
-    gdb_test "set logging on" \
+    gdb_test "set logging enabled on" \
     "Copying output to /dev/null.*Redirecting debug output to /dev/null\\."
     gdb_test "continue" "Continuing.*((?!infrun).).*Breakpoint \[0-9\]+, bar.*"
     gdb_test "set debug infrun 0"
-    gdb_test "set logging off" "Done logging to /dev/null\\."
+    gdb_test "set logging enabled off" "Done logging to /dev/null\\."
     gdb_test "help" "List of classes of commands:.*"
+}
+
+with_test_prefix "redirect logging and debuging" {
+    gdb_test_no_output "set logging redirect on"
+    gdb_test_no_output "set logging debugredirect on"
+    gdb_test "set logging enabled on" \
+    "Redirecting output to /dev/null.*Redirecting debug output to /dev/null\\."
+    gdb_test "set logging enabled off" "Done logging to /dev/null\\."
 }

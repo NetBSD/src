@@ -603,20 +603,28 @@ WINDRES_FOR_TARGET
 STRIP_FOR_TARGET
 READELF_FOR_TARGET
 RANLIB_FOR_TARGET
+OTOOL_FOR_TARGET
 OBJDUMP_FOR_TARGET
 OBJCOPY_FOR_TARGET
 NM_FOR_TARGET
 LIPO_FOR_TARGET
 LD_FOR_TARGET
+DSYMUTIL_FOR_TARGET
 DLLTOOL_FOR_TARGET
 AS_FOR_TARGET
 AR_FOR_TARGET
+GDC_FOR_TARGET
 GOC_FOR_TARGET
 GFORTRAN_FOR_TARGET
 GCC_FOR_TARGET
 CXX_FOR_TARGET
 CC_FOR_TARGET
+RANLIB_PLUGIN_OPTION
+AR_PLUGIN_OPTION
+PKG_CONFIG_PATH
+GDCFLAGS
 READELF
+OTOOL
 OBJDUMP
 OBJCOPY
 WINDMC
@@ -626,6 +634,7 @@ RANLIB
 NM
 LIPO
 LD
+DSYMUTIL
 DLLTOOL
 AS
 AR
@@ -643,11 +652,15 @@ RANLIB_FOR_BUILD
 NM_FOR_BUILD
 LD_FOR_BUILD
 LDFLAGS_FOR_BUILD
+GDC_FOR_BUILD
 GOC_FOR_BUILD
 GFORTRAN_FOR_BUILD
+DSYMUTIL_FOR_BUILD
 DLLTOOL_FOR_BUILD
 CXX_FOR_BUILD
 CXXFLAGS_FOR_BUILD
+CPPFLAGS_FOR_BUILD
+CPP_FOR_BUILD
 CFLAGS_FOR_BUILD
 CC_FOR_BUILD
 AS_FOR_BUILD
@@ -690,7 +703,13 @@ extra_mpc_gmp_configure_flags
 extra_mpfr_configure_flags
 gmpinc
 gmplibs
+PGO_BUILD_LTO_CFLAGS
+PGO_BUILD_USE_CFLAGS
+PGO_BUILD_GEN_CFLAGS
+HAVE_CXX11_FOR_BUILD
+HAVE_CXX11
 do_compare
+GDC
 GNATMAKE
 GNATBIND
 ac_ct_CXX
@@ -778,11 +797,16 @@ ac_user_opts='
 enable_option_checking
 with_build_libsubdir
 with_system_zlib
+with_zstd
 enable_as_accelerator_for
 enable_offload_targets
+enable_offload_defaulted
 enable_gold
 enable_ld
+enable_gprofng
 enable_compressed_debug_sections
+enable_default_compressed_debug_sections_algorithm
+enable_year2038
 enable_libquadmath
 enable_libquadmath_support
 enable_libada
@@ -790,14 +814,13 @@ enable_libssp
 enable_libstdcxx
 enable_liboffloadmic
 enable_bootstrap
+enable_pgo_build
 with_mpc
 with_mpc_include
 with_mpc_lib
-with_mpfr_dir
 with_mpfr
 with_mpfr_include
 with_mpfr_lib
-with_gmp_dir
 with_gmp
 with_gmp_include
 with_gmp_lib
@@ -847,6 +870,7 @@ target_configargs
 AR
 AS
 DLLTOOL
+DSYMUTIL
 LD
 LIPO
 NM
@@ -856,20 +880,24 @@ WINDRES
 WINDMC
 OBJCOPY
 OBJDUMP
+OTOOL
 READELF
 CC_FOR_TARGET
 CXX_FOR_TARGET
 GCC_FOR_TARGET
 GFORTRAN_FOR_TARGET
 GOC_FOR_TARGET
+GDC_FOR_TARGET
 AR_FOR_TARGET
 AS_FOR_TARGET
 DLLTOOL_FOR_TARGET
+DSYMUTIL_FOR_TARGET
 LD_FOR_TARGET
 LIPO_FOR_TARGET
 NM_FOR_TARGET
 OBJCOPY_FOR_TARGET
 OBJDUMP_FOR_TARGET
+OTOOL_FOR_TARGET
 RANLIB_FOR_TARGET
 READELF_FOR_TARGET
 STRIP_FOR_TARGET
@@ -1506,11 +1534,21 @@ Optional Features:
                           enable offloading to devices from comma-separated
                           LIST of TARGET[=DIR]. Use optional path to find
                           offload target compiler during the build
+  --enable-offload-defaulted
+		If enabled, configured but not installed offload compilers and
+		libgomp plugins are silently ignored.  Useful for distribution
+		compilers where those are in separate optional packages.
+
   --enable-gold[=ARG]     build gold [ARG={default,yes,no}]
   --enable-ld[=ARG]       build ld [ARG={default,yes,no}]
+  --enable-gprofng[=ARG]  build gprofng [ARG={yes,no}]
   --enable-compressed-debug-sections={all,gas,gold,ld,none}
                           Enable compressed debug sections for gas, gold or ld
                           by default
+  --enable-default-compressed-debug-sections-algorithm={zlib,zstd}
+                          Default compression algorithm for
+                          --enable-compressed-debug-sections.
+  --enable-year2038       enable support for timestamps past the year 2038
   --disable-libquadmath   do not build libquadmath directory
   --disable-libquadmath-support
                           disable libquadmath support for Fortran
@@ -1520,6 +1558,8 @@ Optional Features:
   --enable-liboffloadmic=ARG
                           build liboffloadmic [ARG={no,host,target}]
   --enable-bootstrap      enable bootstrapping [yes if native build]
+  --enable-pgo-build[=lto]
+                          enable the PGO build
   --disable-isl-version-check
                           disable check for isl version
   --enable-lto            enable link time optimization support
@@ -1553,19 +1593,19 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-build-libsubdir=DIR  Directory where to find libraries for build system
   --with-system-zlib      use installed libz
+  --with-zstd             Support zstd compressed debug sections
+                          (default=auto)
   --with-mpc=PATH         specify prefix directory for installed MPC package.
                           Equivalent to --with-mpc-include=PATH/include plus
                           --with-mpc-lib=PATH/lib
   --with-mpc-include=PATH specify directory for installed MPC include files
   --with-mpc-lib=PATH     specify directory for the installed MPC library
-  --with-mpfr-dir=PATH    this option has been REMOVED
   --with-mpfr=PATH        specify prefix directory for installed MPFR package.
                           Equivalent to --with-mpfr-include=PATH/include plus
                           --with-mpfr-lib=PATH/lib
   --with-mpfr-include=PATH
                           specify directory for installed MPFR include files
   --with-mpfr-lib=PATH    specify directory for the installed MPFR library
-  --with-gmp-dir=PATH     this option has been REMOVED
   --with-gmp=PATH         specify prefix directory for the installed GMP
                           package. Equivalent to
                           --with-gmp-include=PATH/include plus
@@ -1627,6 +1667,7 @@ Some influential environment variables:
   AR          AR for the host
   AS          AS for the host
   DLLTOOL     DLLTOOL for the host
+  DSYMUTIL    DSYMUTIL for the host
   LD          LD for the host
   LIPO        LIPO for the host
   NM          NM for the host
@@ -1636,6 +1677,7 @@ Some influential environment variables:
   WINDMC      WINDMC for the host
   OBJCOPY     OBJCOPY for the host
   OBJDUMP     OBJDUMP for the host
+  OTOOL       OTOOL for the host
   READELF     READELF for the host
   CC_FOR_TARGET
               CC for the target
@@ -1647,12 +1689,16 @@ Some influential environment variables:
               GFORTRAN for the target
   GOC_FOR_TARGET
               GOC for the target
+  GDC_FOR_TARGET
+              GDC for the target
   AR_FOR_TARGET
               AR for the target
   AS_FOR_TARGET
               AS for the target
   DLLTOOL_FOR_TARGET
               DLLTOOL for the target
+  DSYMUTIL_FOR_TARGET
+              DSYMUTIL for the target
   LD_FOR_TARGET
               LD for the target
   LIPO_FOR_TARGET
@@ -1663,6 +1709,8 @@ Some influential environment variables:
               OBJCOPY for the target
   OBJDUMP_FOR_TARGET
               OBJDUMP for the target
+  OTOOL_FOR_TARGET
+              OTOOL for the target
   RANLIB_FOR_TARGET
               RANLIB for the target
   READELF_FOR_TARGET
@@ -2773,7 +2821,7 @@ build_tools="build-texinfo build-flex build-bison build-m4 build-fixincludes"
 
 # these libraries are used by various programs built for the host environment
 #f
-host_libs="intl libiberty opcodes bfd readline tcl tk itcl libgui zlib libbacktrace libcpp libdecnumber gmp mpfr mpc isl libelf libiconv libctf"
+host_libs="intl libiberty opcodes bfd readline tcl tk itcl libgui zlib libbacktrace libcpp libcody libdecnumber gmp mpfr mpc isl libiconv libctf libsframe"
 
 # these tools are built for the host environment
 # Note, the powerpc-eabi build depends on sim occurring before gdb in order to
@@ -2781,7 +2829,7 @@ host_libs="intl libiberty opcodes bfd readline tcl tk itcl libgui zlib libbacktr
 # binutils, gas and ld appear in that order because it makes sense to run
 # "make check" in that particular order.
 # If --enable-gold is used, "gold" may replace "ld".
-host_tools="texinfo flex bison binutils gas ld fixincludes gcc cgen sid sim gdb gdbserver gprof etc expect dejagnu m4 utils guile fastjar gnattools libcc1 gotools"
+host_tools="texinfo flex bison binutils gas ld fixincludes gcc cgen sid sim gdb gdbserver gprof etc expect dejagnu m4 utils guile fastjar gnattools libcc1 gotools c++tools"
 
 # these libraries are built for the target environment, and are built after
 # the host libraries and the host tools (which may be a cross compiler)
@@ -2792,7 +2840,6 @@ target_libraries="target-libgcc \
 		target-newlib \
 		target-libgomp \
 		target-liboffloadmic \
-		target-libhsail-rt \
 		target-libatomic \
 		target-libitm \
 		target-libstdc++-v3 \
@@ -2804,7 +2851,9 @@ target_libraries="target-libgcc \
 		target-libffi \
 		target-libobjc \
 		target-libada \
-		target-libgo"
+		target-libgo \
+		target-libphobos \
+		target-zlib"
 
 # these tools are built using the target libraries, and are intended to
 # run only in the target environment
@@ -2917,6 +2966,13 @@ if test x$with_system_readline = xyes ; then
   noconfigdirs="$noconfigdirs readline"
 fi
 
+
+# Check whether --with-zstd was given.
+if test "${with_zstd+set}" = set; then :
+  withval=$with_zstd;
+fi
+
+
 # some tools are so dependent upon X11 that if we're not building with X,
 # it's not even worth trying to configure, much less build, that tool.
 
@@ -2971,6 +3027,14 @@ else
 fi
 
 
+# Check whether --enable-offload-defaulted was given.
+if test "${enable_offload_defaulted+set}" = set; then :
+  enableval=$enable_offload_defaulted; enable_offload_defaulted=$enableval
+else
+  enable_offload_defaulted=
+fi
+
+
 # Handle --enable-gold, --enable-ld.
 # --disable-gold [--enable-ld]
 #     Build only ld.  Default option.
@@ -3019,7 +3083,7 @@ case "${ENABLE_GOLD}" in
       # Check for target supported by gold.
       case "${target}" in
         i?86-*-* | x86_64-*-* | sparc*-*-* | powerpc*-*-* | arm*-*-* \
-        | aarch64*-*-* | tilegx*-*-* | mips*-*-* | s390*-*-*)
+        | aarch64*-*-* | tilegx*-*-* | mips*-*-* | s390*-*-* | loongarch*-*-*)
 	  configdirs="$configdirs gold"
 	  if test x${ENABLE_GOLD} = xdefault; then
 	    default_ld=gold
@@ -3064,6 +3128,22 @@ $as_echo "$as_me: WARNING: neither ld nor gold are enabled" >&2;}
     ;;
 esac
 
+# Check whether --enable-gprofng was given.
+if test "${enable_gprofng+set}" = set; then :
+  enableval=$enable_gprofng; enable_gprofng=$enableval
+else
+  enable_gprofng=yes
+fi
+
+if test "$enable_gprofng" = "yes"; then
+  case "${target}" in
+    x86_64-*-linux* | i?86-*-linux* | aarch64-*-linux*)
+    configdirs="$configdirs gprofng"
+    ;;
+  esac
+fi
+
+
 # PR gas/19109
 # Decide the default method for compressing debug sections.
 # Provide a configure time option to override our default.
@@ -3076,6 +3156,15 @@ if test "${enable_compressed_debug_sections+set}" = set; then :
 
 else
   enable_compressed_debug_sections=
+fi
+
+
+# Select default compression algorithm.
+# Check whether --enable-default_compressed_debug_sections_algorithm was given.
+if test "${enable_default_compressed_debug_sections_algorithm+set}" = set; then :
+  enableval=$enable_default_compressed_debug_sections_algorithm;
+else
+  default_compressed_debug_sections_algorithm=
 fi
 
 
@@ -3100,6 +3189,20 @@ case "${host}" in
     ;;
 esac
 
+# Default to --disable-year2038 until we can handle differences between
+# projects that use gnulib (which understands year 2038) and projects that
+# do not (like BFD).
+# Check whether --enable-year2038 was given.
+if test "${enable_year2038+set}" = set; then :
+  enableval=$enable_year2038; ENABLE_YEAR2038=$enableval
+else
+  ENABLE_YEAR2038=no
+fi
+
+enable_year2038=
+if test "${ENABLE_YEAR2038}" = "no" ; then
+  enable_year2038=no
+fi
 
 # Check whether --enable-libquadmath was given.
 if test "${enable_libquadmath+set}" = set; then :
@@ -3205,7 +3308,7 @@ if test x$enable_libgomp = x ; then
 	;;
     *-*-darwin* | *-*-aix*)
 	;;
-    nvptx*-*-*)
+    nvptx*-*-* | amdgcn*-*-*)
 	;;
     *)
 	noconfigdirs="$noconfigdirs target-libgomp"
@@ -3308,29 +3411,6 @@ $as_echo "yes" >&6; }
     fi
 fi
 
-
-# Disable libhsail-rt on unsupported systems.
-if test -d ${srcdir}/libhsail-rt; then
-    if test x$enable_libhsail_rt = x; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libhsail-rt support" >&5
-$as_echo_n "checking for libhsail-rt support... " >&6; }
-        if (srcdir=${srcdir}/libhsail-rt; \
-                . ${srcdir}/configure.tgt; \
-                test -n "$UNSUPPORTED")
-        then
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-            unsupported_languages="$unsupported_languages brig"
-            # This implicitly disables also target-libhsail-rt as it won't
-            # get added to the build without BRIG FE.
-        else
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-        fi
-    fi
-fi
-
-
 # Disable libquadmath for some systems.
 case "${target}" in
   avr-*-*)
@@ -3349,7 +3429,14 @@ case "${target}" in
     # No hosted I/O support.
     noconfigdirs="$noconfigdirs target-libssp"
     ;;
+  bpf-*-*)
+    noconfigdirs="$noconfigdirs target-libssp"
+    ;;
   powerpc-*-aix* | rs6000-*-aix*)
+    noconfigdirs="$noconfigdirs target-libssp"
+    ;;
+  pru-*-*)
+    # No hosted I/O support.
     noconfigdirs="$noconfigdirs target-libssp"
     ;;
   rl78-*-*)
@@ -3365,11 +3452,15 @@ case "${target}" in
 esac
 
 # Disable libstdc++-v3 for some systems.
-# Allow user to override this if they pass --enable-libstdc++-v3
+# Allow user to override this if they pass --enable-libstdcxx
 if test "${ENABLE_LIBSTDCXX}" = "default" ; then
   case "${target}" in
     *-*-vxworks*)
       # VxWorks uses the Dinkumware C++ library.
+      noconfigdirs="$noconfigdirs target-libstdc++-v3"
+      ;;
+    amdgcn*-*-*)
+      # Not ported/fails to build when using newlib.
       noconfigdirs="$noconfigdirs target-libstdc++-v3"
       ;;
     arm*-wince-pe*)
@@ -3379,16 +3470,84 @@ if test "${ENABLE_LIBSTDCXX}" = "default" ; then
     avr-*-*)
       noconfigdirs="$noconfigdirs target-libstdc++-v3"
       ;;
+    bpf-*-*)
+      noconfigdirs="$noconfigdirs target-libstdc++-v3"
+      ;;
     ft32-*-*)
       noconfigdirs="$noconfigdirs target-libstdc++-v3"
       ;;
   esac
 fi
 
+# Disable C++ on systems where it is known to not work.
+# For testing, you can override this with --enable-languages=c++.
+case ,${enable_languages}, in
+  *,c++,*)
+    ;;
+  *)
+      case "${target}" in
+        bpf-*-*)
+          unsupported_languages="$unsupported_languages c++"
+          ;;
+      esac
+      ;;
+esac
+
+# Disable Objc on systems where it is known to not work.
+# For testing, you can override this with --enable-languages=objc.
+case ,${enable_languages}, in
+  *,objc,*)
+    ;;
+  *)
+      case "${target}" in
+        bpf-*-*)
+          unsupported_languages="$unsupported_languages objc"
+          ;;
+      esac
+      ;;
+esac
+
+# Disable D on systems where it is known to not work.
+# For testing, you can override this with --enable-languages=d.
+case ,${enable_languages}, in
+  *,d,*)
+    ;;
+  *)
+    case "${target}" in
+      bpf-*-*)
+	unsupported_languages="$unsupported_languages d"
+	;;
+    esac
+    ;;
+esac
+
+# Disable libphobos on unsupported systems.
+# For testing, you can override this with --enable-libphobos.
+if test -d ${srcdir}/libphobos; then
+    if test x$enable_libphobos = x; then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libphobos support" >&5
+$as_echo_n "checking for libphobos support... " >&6; }
+	if (srcdir=${srcdir}/libphobos; \
+		. ${srcdir}/configure.tgt; \
+		test "$LIBPHOBOS_SUPPORTED" != "yes")
+	then
+	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	    noconfigdirs="$noconfigdirs target-libphobos"
+	else
+	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	fi
+    fi
+fi
+
 # Disable Fortran for some systems.
 case "${target}" in
   mmix-*-*)
     # See <http://gcc.gnu.org/ml/gcc-patches/2004-11/msg00572.html>.
+    unsupported_languages="$unsupported_languages fortran"
+    ;;
+  bpf-*-*)
     unsupported_languages="$unsupported_languages fortran"
     ;;
 esac
@@ -3437,6 +3596,9 @@ case "${target}" in
   arm*-*-symbianelf*)
     noconfigdirs="$noconfigdirs target-libffi"
     ;;
+  bpf-*-*)
+    noconfigdirs="$noconfigdirs target-libffi"
+    ;;
   cris-*-* | crisv32-*-*)
     case "${target}" in
       *-*-linux*)
@@ -3483,7 +3645,7 @@ esac
 # Disable the go frontend on systems where it is known to not work. Please keep
 # this in sync with contrib/config-list.mk.
 case "${target}" in
-*-*-darwin* | *-*-cygwin* | *-*-mingw*)
+*-*-darwin* | *-*-cygwin* | *-*-mingw* | bpf-* )
     unsupported_languages="$unsupported_languages go"
     ;;
 esac
@@ -3518,6 +3680,9 @@ if test x$enable_libgo = x; then
     *-*-cygwin* | *-*-mingw*)
 	noconfigdirs="$noconfigdirs target-libgo"
 	;;
+    bpf-*-*)
+        noconfigdirs="$noconfigdirs target-libgo"
+        ;;
     esac
 fi
 
@@ -3543,6 +3708,9 @@ case "${target}" in
   i[3456789]86-*-*)
     libgloss_dir=i386
     ;;
+  loongarch*-*-*)
+    libgloss_dir=loongarch
+    ;;
   m68hc11-*-*|m6811-*-*|m68hc12-*-*|m6812-*-*)
     libgloss_dir=m68hc11
     ;;
@@ -3554,6 +3722,9 @@ case "${target}" in
     ;;
   powerpc*-*-*)
     libgloss_dir=rs6000
+    ;;
+  pru-*-*)
+    libgloss_dir=pru
     ;;
   sparc*-*-*)
     libgloss_dir=sparc
@@ -3584,6 +3755,9 @@ case "${target}" in
     noconfigdirs="$noconfigdirs target-newlib target-libgloss"
     ;;
   sparc-*-sunos4*)
+    noconfigdirs="$noconfigdirs target-newlib target-libgloss"
+    ;;
+  bpf-*-*)
     noconfigdirs="$noconfigdirs target-newlib target-libgloss"
     ;;
   *-*-aix*)
@@ -3634,6 +3808,8 @@ case "${target}" in
     noconfigdirs="$noconfigdirs ld gas gdb gprof"
     noconfigdirs="$noconfigdirs sim target-rda"
     ;;
+  amdgcn*-*-*)
+    ;;
   arm-*-darwin*)
     noconfigdirs="$noconfigdirs ld gas gdb gprof"
     noconfigdirs="$noconfigdirs sim target-rda"
@@ -3657,7 +3833,8 @@ case "${target}" in
   *-*-dragonfly*)
     ;;
   *-*-freebsd*)
-    if test "x$with_gmp" = x && test "x$with_gmp_dir" = x \
+    if test "x$with_gmp" = x \
+	&& ! test -d ${srcdir}/gmp \
 	&& test -f /usr/local/include/gmp.h; then
       with_gmp=/usr/local
     fi
@@ -3696,6 +3873,9 @@ case "${target}" in
   alpha*-*-*)
     # newlib is not 64 bit ready
     noconfigdirs="$noconfigdirs target-newlib target-libgloss"
+    ;;
+  bpf-*-*)
+    noconfigdirs="$noconfigdirs target-libobjc target-libbacktrace"
     ;;
   sh*-*-pe|mips*-*-pe|*arm-wince-pe)
     noconfigdirs="$noconfigdirs tcl tk itcl libgui sim"
@@ -3915,6 +4095,11 @@ case "${target}" in
   wasm32-*-*)
     noconfigdirs="$noconfigdirs ld"
     ;;
+  loongarch*-*-linux*)
+    ;;
+  loongarch*-*-*)
+    noconfigdirs="$noconfigdirs gprof"
+    ;;
 esac
 
 # If we aren't building newlib, then don't build libgloss, since libgloss
@@ -3969,7 +4154,7 @@ fi
   hppa*-*)
     host_makefile_frag="config/mh-pa"
     ;;
-  *-*-darwin*)
+  i?86-*-darwin[89]* | i?86-*-darwin1[0-7]* | powerpc*-*-darwin*)
     host_makefile_frag="config/mh-darwin"
     ;;
   powerpc-*-aix*)
@@ -3985,9 +4170,12 @@ if test "${build}" != "${host}" ; then
   AR_FOR_BUILD=${AR_FOR_BUILD-ar}
   AS_FOR_BUILD=${AS_FOR_BUILD-as}
   CC_FOR_BUILD=${CC_FOR_BUILD-gcc}
+  CPP_FOR_BUILD="${CPP_FOR_BUILD-\$(CC_FOR_BUILD) -E}"
   CXX_FOR_BUILD=${CXX_FOR_BUILD-g++}
+  DSYMUTIL_FOR_BUILD=${DSYMUTIL_FOR_BUILD-dsymutil}
   GFORTRAN_FOR_BUILD=${GFORTRAN_FOR_BUILD-gfortran}
   GOC_FOR_BUILD=${GOC_FOR_BUILD-gccgo}
+  GDC_FOR_BUILD=${GDC_FOR_BUILD-gdc}
   DLLTOOL_FOR_BUILD=${DLLTOOL_FOR_BUILD-dlltool}
   LD_FOR_BUILD=${LD_FOR_BUILD-ld}
   NM_FOR_BUILD=${NM_FOR_BUILD-nm}
@@ -3999,8 +4187,10 @@ else
   AS_FOR_BUILD="\$(AS)"
   CC_FOR_BUILD="\$(CC)"
   CXX_FOR_BUILD="\$(CXX)"
+  DSYMUTIL_FOR_BUILD="\$(DSYMUTIL)"
   GFORTRAN_FOR_BUILD="\$(GFORTRAN)"
   GOC_FOR_BUILD="\$(GOC)"
+  GDC_FOR_BUILD="\$(GDC)"
   DLLTOOL_FOR_BUILD="\$(DLLTOOL)"
   LD_FOR_BUILD="\$(LD)"
   NM_FOR_BUILD="\$(NM)"
@@ -4798,6 +4988,183 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
+   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $CC option to accept ISO C99" >&5
+$as_echo_n "checking for $CC option to accept ISO C99... " >&6; }
+if ${ac_cv_prog_cc_c99+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_cv_prog_cc_c99=no
+ac_save_CC=$CC
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <wchar.h>
+#include <stdio.h>
+
+// Check varargs macros.  These examples are taken from C99 6.10.3.5.
+#define debug(...) fprintf (stderr, __VA_ARGS__)
+#define showlist(...) puts (#__VA_ARGS__)
+#define report(test,...) ((test) ? puts (#test) : printf (__VA_ARGS__))
+static void
+test_varargs_macros (void)
+{
+  int x = 1234;
+  int y = 5678;
+  debug ("Flag");
+  debug ("X = %d\n", x);
+  showlist (The first, second, and third items.);
+  report (x>y, "x is %d but y is %d", x, y);
+}
+
+// Check long long types.
+#define BIG64 18446744073709551615ull
+#define BIG32 4294967295ul
+#define BIG_OK (BIG64 / BIG32 == 4294967297ull && BIG64 % BIG32 == 0)
+#if !BIG_OK
+  your preprocessor is broken;
+#endif
+#if BIG_OK
+#else
+  your preprocessor is broken;
+#endif
+static long long int bignum = -9223372036854775807LL;
+static unsigned long long int ubignum = BIG64;
+
+struct incomplete_array
+{
+  int datasize;
+  double data[];
+};
+
+struct named_init {
+  int number;
+  const wchar_t *name;
+  double average;
+};
+
+typedef const char *ccp;
+
+static inline int
+test_restrict (ccp restrict text)
+{
+  // See if C++-style comments work.
+  // Iterate through items via the restricted pointer.
+  // Also check for declarations in for loops.
+  for (unsigned int i = 0; *(text+i) != '\0'; ++i)
+    continue;
+  return 0;
+}
+
+// Check varargs and va_copy.
+static void
+test_varargs (const char *format, ...)
+{
+  va_list args;
+  va_start (args, format);
+  va_list args_copy;
+  va_copy (args_copy, args);
+
+  const char *str;
+  int number;
+  float fnumber;
+
+  while (*format)
+    {
+      switch (*format++)
+	{
+	case 's': // string
+	  str = va_arg (args_copy, const char *);
+	  break;
+	case 'd': // int
+	  number = va_arg (args_copy, int);
+	  break;
+	case 'f': // float
+	  fnumber = va_arg (args_copy, double);
+	  break;
+	default:
+	  break;
+	}
+    }
+  va_end (args_copy);
+  va_end (args);
+}
+
+int
+main ()
+{
+
+  // Check bool.
+  _Bool success = false;
+
+  // Check restrict.
+  if (test_restrict ("String literal") == 0)
+    success = true;
+  char *restrict newvar = "Another string";
+
+  // Check varargs.
+  test_varargs ("s, d' f .", "string", 65, 34.234);
+  test_varargs_macros ();
+
+  // Check flexible array members.
+  struct incomplete_array *ia =
+    malloc (sizeof (struct incomplete_array) + (sizeof (double) * 10));
+  ia->datasize = 10;
+  for (int i = 0; i < ia->datasize; ++i)
+    ia->data[i] = i * 1.234;
+
+  // Check named initializers.
+  struct named_init ni = {
+    .number = 34,
+    .name = L"Test wide string",
+    .average = 543.34343,
+  };
+
+  ni.number = 58;
+
+  int dynamic_array[ni.number];
+  dynamic_array[ni.number - 1] = 543;
+
+  // work around unused variable warnings
+  return (!success || bignum == 0LL || ubignum == 0uLL || newvar[0] == 'x'
+	  || dynamic_array[ni.number - 1] != 543);
+
+  ;
+  return 0;
+}
+_ACEOF
+for ac_arg in '' -std=gnu99 -std=c99 -c99 -AC99 -D_STDC_C99= -qlanglvl=extc99
+do
+  CC="$ac_save_CC $ac_arg"
+  if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_prog_cc_c99=$ac_arg
+fi
+rm -f core conftest.err conftest.$ac_objext
+  test "x$ac_cv_prog_cc_c99" != "xno" && break
+done
+rm -f conftest.$ac_ext
+CC=$ac_save_CC
+
+fi
+# AC_CACHE_VAL
+case "x$ac_cv_prog_cc_c99" in
+  x)
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: none needed" >&5
+$as_echo "none needed" >&6; } ;;
+  xno)
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: unsupported" >&5
+$as_echo "unsupported" >&6; } ;;
+  *)
+    CC="$CC $ac_cv_prog_cc_c99"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_prog_cc_c99" >&5
+$as_echo "$ac_cv_prog_cc_c99" >&6; } ;;
+esac
+if test "x$ac_cv_prog_cc_c99" != xno; then :
+
+fi
+
+
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -5304,12 +5671,16 @@ else
   GNATMAKE="$ac_cv_prog_GNATMAKE"
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether compiler driver understands Ada" >&5
-$as_echo_n "checking whether compiler driver understands Ada... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether compiler driver understands Ada and is recent enough" >&5
+$as_echo_n "checking whether compiler driver understands Ada and is recent enough... " >&6; }
 if ${acx_cv_cc_gcc_supports_ada+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   cat >conftest.adb <<EOF
+pragma Warnings (Off);
+with System.CRTL;
+pragma Warnings (On);
+use type System.CRTL.int64;
 procedure conftest is begin null; end conftest;
 EOF
 acx_cv_cc_gcc_supports_ada=no
@@ -5334,6 +5705,125 @@ if test "x$GNATBIND" != xno && test "x$GNATMAKE" != xno && test x$acx_cv_cc_gcc_
   have_gnat=yes
 else
   have_gnat=no
+fi
+
+
+
+if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}gdc", so it can be a program name with args.
+set dummy ${ac_tool_prefix}gdc; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_GDC+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$GDC"; then
+  ac_cv_prog_GDC="$GDC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_GDC="${ac_tool_prefix}gdc"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+GDC=$ac_cv_prog_GDC
+if test -n "$GDC"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $GDC" >&5
+$as_echo "$GDC" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_prog_GDC"; then
+  ac_ct_GDC=$GDC
+  # Extract the first word of "gdc", so it can be a program name with args.
+set dummy gdc; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_ac_ct_GDC+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$ac_ct_GDC"; then
+  ac_cv_prog_ac_ct_GDC="$ac_ct_GDC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_GDC="gdc"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+ac_ct_GDC=$ac_cv_prog_ac_ct_GDC
+if test -n "$ac_ct_GDC"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_GDC" >&5
+$as_echo "$ac_ct_GDC" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_ct_GDC" = x; then
+    GDC="no"
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    GDC=$ac_ct_GDC
+  fi
+else
+  GDC="$ac_cv_prog_GDC"
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the D compiler works" >&5
+$as_echo_n "checking whether the D compiler works... " >&6; }
+if ${acx_cv_d_compiler_works+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat >conftest.d <<EOF
+module conftest; int main() { return 0; }
+EOF
+acx_cv_d_compiler_works=no
+if test "x$GDC" != xno; then
+  errors=`(${GDC} -c conftest.d) 2>&1 || echo failure`
+  if test x"$errors" = x && test -f conftest.$ac_objext; then
+    acx_cv_d_compiler_works=yes
+  fi
+  rm -f conftest.*
+fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $acx_cv_d_compiler_works" >&5
+$as_echo "$acx_cv_d_compiler_works" >&6; }
+if test "x$GDC" != xno && test x$acx_cv_d_compiler_works != xno; then
+  have_gdc=yes
+else
+  have_gdc=no
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking how to compare bootstrapped objects" >&5
@@ -5414,11 +5904,2095 @@ $as_echo "$as_me: WARNING: trying to bootstrap a cross compiler" >&2;}
     ;;
 esac
 
-# When bootstrapping with GCC, build stage 1 in C++98 mode to ensure that a
-# C++98 compiler can still start the bootstrap.
+# When bootstrapping with GCC, build stage 1 in C++11 mode to ensure that a
+# C++11 compiler can still start the bootstrap.  Otherwise, if building GCC,
+# require C++11 (or higher).
 if test "$enable_bootstrap:$GXX" = "yes:yes"; then
-  CXX="$CXX -std=gnu++98"
+  CXX="$CXX -std=c++11"
+elif test "$have_compiler" = yes; then
+    ax_cxx_compile_alternatives="11 0x"    ax_cxx_compile_cxx11_required=true
+  ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+  ac_success=no
+
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CXX supports C++11 features by default" >&5
+$as_echo_n "checking whether $CXX supports C++11 features by default... " >&6; }
+if ${ax_cv_cxx_compile_cxx11+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+// If the compiler admits that it is not ready for C++11, why torture it?
+// Hopefully, this will speed up the test.
+
+#ifndef __cplusplus
+
+#error "This is not a C++ compiler"
+
+#elif __cplusplus < 201103L
+
+#error "This is not a C++11 compiler"
+
+#else
+
+namespace cxx11
+{
+
+  namespace test_static_assert
+  {
+
+    template <typename T>
+    struct check
+    {
+      static_assert(sizeof(int) <= sizeof(T), "not big enough");
+    };
+
+  }
+
+  namespace test_final_override
+  {
+
+    struct Base
+    {
+      virtual ~Base() {}
+      virtual void f() {}
+    };
+
+    struct Derived : public Base
+    {
+      virtual ~Derived() override {}
+      virtual void f() override {}
+    };
+
+  }
+
+  namespace test_double_right_angle_brackets
+  {
+
+    template < typename T >
+    struct check {};
+
+    typedef check<void> single_type;
+    typedef check<check<void>> double_type;
+    typedef check<check<check<void>>> triple_type;
+    typedef check<check<check<check<void>>>> quadruple_type;
+
+  }
+
+  namespace test_decltype
+  {
+
+    int
+    f()
+    {
+      int a = 1;
+      decltype(a) b = 2;
+      return a + b;
+    }
+
+  }
+
+  namespace test_type_deduction
+  {
+
+    template < typename T1, typename T2 >
+    struct is_same
+    {
+      static const bool value = false;
+    };
+
+    template < typename T >
+    struct is_same<T, T>
+    {
+      static const bool value = true;
+    };
+
+    template < typename T1, typename T2 >
+    auto
+    add(T1 a1, T2 a2) -> decltype(a1 + a2)
+    {
+      return a1 + a2;
+    }
+
+    int
+    test(const int c, volatile int v)
+    {
+      static_assert(is_same<int, decltype(0)>::value == true, "");
+      static_assert(is_same<int, decltype(c)>::value == false, "");
+      static_assert(is_same<int, decltype(v)>::value == false, "");
+      auto ac = c;
+      auto av = v;
+      auto sumi = ac + av + 'x';
+      auto sumf = ac + av + 1.0;
+      static_assert(is_same<int, decltype(ac)>::value == true, "");
+      static_assert(is_same<int, decltype(av)>::value == true, "");
+      static_assert(is_same<int, decltype(sumi)>::value == true, "");
+      static_assert(is_same<int, decltype(sumf)>::value == false, "");
+      static_assert(is_same<int, decltype(add(c, v))>::value == true, "");
+      return (sumf > 0.0) ? sumi : add(c, v);
+    }
+
+  }
+
+  namespace test_noexcept
+  {
+
+    int f() { return 0; }
+    int g() noexcept { return 0; }
+
+    static_assert(noexcept(f()) == false, "");
+    static_assert(noexcept(g()) == true, "");
+
+  }
+
+  namespace test_constexpr
+  {
+
+    template < typename CharT >
+    unsigned long constexpr
+    strlen_c_r(const CharT *const s, const unsigned long acc) noexcept
+    {
+      return *s ? strlen_c_r(s + 1, acc + 1) : acc;
+    }
+
+    template < typename CharT >
+    unsigned long constexpr
+    strlen_c(const CharT *const s) noexcept
+    {
+      return strlen_c_r(s, 0UL);
+    }
+
+    static_assert(strlen_c("") == 0UL, "");
+    static_assert(strlen_c("1") == 1UL, "");
+    static_assert(strlen_c("example") == 7UL, "");
+    static_assert(strlen_c("another\0example") == 7UL, "");
+
+  }
+
+  namespace test_rvalue_references
+  {
+
+    template < int N >
+    struct answer
+    {
+      static constexpr int value = N;
+    };
+
+    answer<1> f(int&)       { return answer<1>(); }
+    answer<2> f(const int&) { return answer<2>(); }
+    answer<3> f(int&&)      { return answer<3>(); }
+
+    void
+    test()
+    {
+      int i = 0;
+      const int c = 0;
+      static_assert(decltype(f(i))::value == 1, "");
+      static_assert(decltype(f(c))::value == 2, "");
+      static_assert(decltype(f(0))::value == 3, "");
+    }
+
+  }
+
+  namespace test_uniform_initialization
+  {
+
+    struct test
+    {
+      static const int zero {};
+      static const int one {1};
+    };
+
+    static_assert(test::zero == 0, "");
+    static_assert(test::one == 1, "");
+
+  }
+
+  namespace test_lambdas
+  {
+
+    void
+    test1()
+    {
+      auto lambda1 = [](){};
+      auto lambda2 = lambda1;
+      lambda1();
+      lambda2();
+    }
+
+    int
+    test2()
+    {
+      auto a = [](int i, int j){ return i + j; }(1, 2);
+      auto b = []() -> int { return '0'; }();
+      auto c = [=](){ return a + b; }();
+      auto d = [&](){ return c; }();
+      auto e = [a, &b](int x) mutable {
+        const auto identity = [](int y){ return y; };
+        for (auto i = 0; i < a; ++i)
+          a += b--;
+        return x + identity(a + b);
+      }(0);
+      return a + b + c + d + e;
+    }
+
+    int
+    test3()
+    {
+      const auto nullary = [](){ return 0; };
+      const auto unary = [](int x){ return x; };
+      using nullary_t = decltype(nullary);
+      using unary_t = decltype(unary);
+      const auto higher1st = [](nullary_t f){ return f(); };
+      const auto higher2nd = [unary](nullary_t f1){
+        return [unary, f1](unary_t f2){ return f2(unary(f1())); };
+      };
+      return higher1st(nullary) + higher2nd(nullary)(unary);
+    }
+
+  }
+
+  namespace test_variadic_templates
+  {
+
+    template <int...>
+    struct sum;
+
+    template <int N0, int... N1toN>
+    struct sum<N0, N1toN...>
+    {
+      static constexpr auto value = N0 + sum<N1toN...>::value;
+    };
+
+    template <>
+    struct sum<>
+    {
+      static constexpr auto value = 0;
+    };
+
+    static_assert(sum<>::value == 0, "");
+    static_assert(sum<1>::value == 1, "");
+    static_assert(sum<23>::value == 23, "");
+    static_assert(sum<1, 2>::value == 3, "");
+    static_assert(sum<5, 5, 11>::value == 21, "");
+    static_assert(sum<2, 3, 5, 7, 11, 13>::value == 41, "");
+
+  }
+
+  // http://stackoverflow.com/questions/13728184/template-aliases-and-sfinae
+  // Clang 3.1 fails with headers of libstd++ 4.8.3 when using std::function
+  // because of this.
+  namespace test_template_alias_sfinae
+  {
+
+    struct foo {};
+
+    template<typename T>
+    using member = typename T::member_type;
+
+    template<typename T>
+    void func(...) {}
+
+    template<typename T>
+    void func(member<T>*) {}
+
+    void test();
+
+    void test() { func<foo>(0); }
+
+  }
+
+}  // namespace cxx11
+
+#endif  // __cplusplus >= 201103L
+
+
+
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ax_cv_cxx_compile_cxx11=yes
+else
+  ax_cv_cxx_compile_cxx11=no
 fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_cxx_compile_cxx11" >&5
+$as_echo "$ax_cv_cxx_compile_cxx11" >&6; }
+    if test x$ax_cv_cxx_compile_cxx11 = xyes; then
+      ac_success=yes
+    fi
+
+    if test x$ac_success = xno; then
+    for alternative in ${ax_cxx_compile_alternatives}; do
+      switch="-std=gnu++${alternative}"
+      cachevar=`$as_echo "ax_cv_cxx_compile_cxx11_$switch" | $as_tr_sh`
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CXX supports C++11 features with $switch" >&5
+$as_echo_n "checking whether $CXX supports C++11 features with $switch... " >&6; }
+if eval \${$cachevar+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_save_CXX="$CXX"
+         CXX="$CXX $switch"
+         cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+// If the compiler admits that it is not ready for C++11, why torture it?
+// Hopefully, this will speed up the test.
+
+#ifndef __cplusplus
+
+#error "This is not a C++ compiler"
+
+#elif __cplusplus < 201103L
+
+#error "This is not a C++11 compiler"
+
+#else
+
+namespace cxx11
+{
+
+  namespace test_static_assert
+  {
+
+    template <typename T>
+    struct check
+    {
+      static_assert(sizeof(int) <= sizeof(T), "not big enough");
+    };
+
+  }
+
+  namespace test_final_override
+  {
+
+    struct Base
+    {
+      virtual ~Base() {}
+      virtual void f() {}
+    };
+
+    struct Derived : public Base
+    {
+      virtual ~Derived() override {}
+      virtual void f() override {}
+    };
+
+  }
+
+  namespace test_double_right_angle_brackets
+  {
+
+    template < typename T >
+    struct check {};
+
+    typedef check<void> single_type;
+    typedef check<check<void>> double_type;
+    typedef check<check<check<void>>> triple_type;
+    typedef check<check<check<check<void>>>> quadruple_type;
+
+  }
+
+  namespace test_decltype
+  {
+
+    int
+    f()
+    {
+      int a = 1;
+      decltype(a) b = 2;
+      return a + b;
+    }
+
+  }
+
+  namespace test_type_deduction
+  {
+
+    template < typename T1, typename T2 >
+    struct is_same
+    {
+      static const bool value = false;
+    };
+
+    template < typename T >
+    struct is_same<T, T>
+    {
+      static const bool value = true;
+    };
+
+    template < typename T1, typename T2 >
+    auto
+    add(T1 a1, T2 a2) -> decltype(a1 + a2)
+    {
+      return a1 + a2;
+    }
+
+    int
+    test(const int c, volatile int v)
+    {
+      static_assert(is_same<int, decltype(0)>::value == true, "");
+      static_assert(is_same<int, decltype(c)>::value == false, "");
+      static_assert(is_same<int, decltype(v)>::value == false, "");
+      auto ac = c;
+      auto av = v;
+      auto sumi = ac + av + 'x';
+      auto sumf = ac + av + 1.0;
+      static_assert(is_same<int, decltype(ac)>::value == true, "");
+      static_assert(is_same<int, decltype(av)>::value == true, "");
+      static_assert(is_same<int, decltype(sumi)>::value == true, "");
+      static_assert(is_same<int, decltype(sumf)>::value == false, "");
+      static_assert(is_same<int, decltype(add(c, v))>::value == true, "");
+      return (sumf > 0.0) ? sumi : add(c, v);
+    }
+
+  }
+
+  namespace test_noexcept
+  {
+
+    int f() { return 0; }
+    int g() noexcept { return 0; }
+
+    static_assert(noexcept(f()) == false, "");
+    static_assert(noexcept(g()) == true, "");
+
+  }
+
+  namespace test_constexpr
+  {
+
+    template < typename CharT >
+    unsigned long constexpr
+    strlen_c_r(const CharT *const s, const unsigned long acc) noexcept
+    {
+      return *s ? strlen_c_r(s + 1, acc + 1) : acc;
+    }
+
+    template < typename CharT >
+    unsigned long constexpr
+    strlen_c(const CharT *const s) noexcept
+    {
+      return strlen_c_r(s, 0UL);
+    }
+
+    static_assert(strlen_c("") == 0UL, "");
+    static_assert(strlen_c("1") == 1UL, "");
+    static_assert(strlen_c("example") == 7UL, "");
+    static_assert(strlen_c("another\0example") == 7UL, "");
+
+  }
+
+  namespace test_rvalue_references
+  {
+
+    template < int N >
+    struct answer
+    {
+      static constexpr int value = N;
+    };
+
+    answer<1> f(int&)       { return answer<1>(); }
+    answer<2> f(const int&) { return answer<2>(); }
+    answer<3> f(int&&)      { return answer<3>(); }
+
+    void
+    test()
+    {
+      int i = 0;
+      const int c = 0;
+      static_assert(decltype(f(i))::value == 1, "");
+      static_assert(decltype(f(c))::value == 2, "");
+      static_assert(decltype(f(0))::value == 3, "");
+    }
+
+  }
+
+  namespace test_uniform_initialization
+  {
+
+    struct test
+    {
+      static const int zero {};
+      static const int one {1};
+    };
+
+    static_assert(test::zero == 0, "");
+    static_assert(test::one == 1, "");
+
+  }
+
+  namespace test_lambdas
+  {
+
+    void
+    test1()
+    {
+      auto lambda1 = [](){};
+      auto lambda2 = lambda1;
+      lambda1();
+      lambda2();
+    }
+
+    int
+    test2()
+    {
+      auto a = [](int i, int j){ return i + j; }(1, 2);
+      auto b = []() -> int { return '0'; }();
+      auto c = [=](){ return a + b; }();
+      auto d = [&](){ return c; }();
+      auto e = [a, &b](int x) mutable {
+        const auto identity = [](int y){ return y; };
+        for (auto i = 0; i < a; ++i)
+          a += b--;
+        return x + identity(a + b);
+      }(0);
+      return a + b + c + d + e;
+    }
+
+    int
+    test3()
+    {
+      const auto nullary = [](){ return 0; };
+      const auto unary = [](int x){ return x; };
+      using nullary_t = decltype(nullary);
+      using unary_t = decltype(unary);
+      const auto higher1st = [](nullary_t f){ return f(); };
+      const auto higher2nd = [unary](nullary_t f1){
+        return [unary, f1](unary_t f2){ return f2(unary(f1())); };
+      };
+      return higher1st(nullary) + higher2nd(nullary)(unary);
+    }
+
+  }
+
+  namespace test_variadic_templates
+  {
+
+    template <int...>
+    struct sum;
+
+    template <int N0, int... N1toN>
+    struct sum<N0, N1toN...>
+    {
+      static constexpr auto value = N0 + sum<N1toN...>::value;
+    };
+
+    template <>
+    struct sum<>
+    {
+      static constexpr auto value = 0;
+    };
+
+    static_assert(sum<>::value == 0, "");
+    static_assert(sum<1>::value == 1, "");
+    static_assert(sum<23>::value == 23, "");
+    static_assert(sum<1, 2>::value == 3, "");
+    static_assert(sum<5, 5, 11>::value == 21, "");
+    static_assert(sum<2, 3, 5, 7, 11, 13>::value == 41, "");
+
+  }
+
+  // http://stackoverflow.com/questions/13728184/template-aliases-and-sfinae
+  // Clang 3.1 fails with headers of libstd++ 4.8.3 when using std::function
+  // because of this.
+  namespace test_template_alias_sfinae
+  {
+
+    struct foo {};
+
+    template<typename T>
+    using member = typename T::member_type;
+
+    template<typename T>
+    void func(...) {}
+
+    template<typename T>
+    void func(member<T>*) {}
+
+    void test();
+
+    void test() { func<foo>(0); }
+
+  }
+
+}  // namespace cxx11
+
+#endif  // __cplusplus >= 201103L
+
+
+
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  eval $cachevar=yes
+else
+  eval $cachevar=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+         CXX="$ac_save_CXX"
+fi
+eval ac_res=\$$cachevar
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+      if eval test x\$$cachevar = xyes; then
+        CXX="$CXX $switch"
+        if test -n "$CXXCPP" ; then
+          CXXCPP="$CXXCPP $switch"
+        fi
+        ac_success=yes
+        break
+      fi
+    done
+  fi
+
+    if test x$ac_success = xno; then
+                for alternative in ${ax_cxx_compile_alternatives}; do
+      for switch in -std=c++${alternative} +std=c++${alternative} "-h std=c++${alternative}"; do
+        cachevar=`$as_echo "ax_cv_cxx_compile_cxx11_$switch" | $as_tr_sh`
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CXX supports C++11 features with $switch" >&5
+$as_echo_n "checking whether $CXX supports C++11 features with $switch... " >&6; }
+if eval \${$cachevar+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_save_CXX="$CXX"
+           CXX="$CXX $switch"
+           cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+// If the compiler admits that it is not ready for C++11, why torture it?
+// Hopefully, this will speed up the test.
+
+#ifndef __cplusplus
+
+#error "This is not a C++ compiler"
+
+#elif __cplusplus < 201103L
+
+#error "This is not a C++11 compiler"
+
+#else
+
+namespace cxx11
+{
+
+  namespace test_static_assert
+  {
+
+    template <typename T>
+    struct check
+    {
+      static_assert(sizeof(int) <= sizeof(T), "not big enough");
+    };
+
+  }
+
+  namespace test_final_override
+  {
+
+    struct Base
+    {
+      virtual ~Base() {}
+      virtual void f() {}
+    };
+
+    struct Derived : public Base
+    {
+      virtual ~Derived() override {}
+      virtual void f() override {}
+    };
+
+  }
+
+  namespace test_double_right_angle_brackets
+  {
+
+    template < typename T >
+    struct check {};
+
+    typedef check<void> single_type;
+    typedef check<check<void>> double_type;
+    typedef check<check<check<void>>> triple_type;
+    typedef check<check<check<check<void>>>> quadruple_type;
+
+  }
+
+  namespace test_decltype
+  {
+
+    int
+    f()
+    {
+      int a = 1;
+      decltype(a) b = 2;
+      return a + b;
+    }
+
+  }
+
+  namespace test_type_deduction
+  {
+
+    template < typename T1, typename T2 >
+    struct is_same
+    {
+      static const bool value = false;
+    };
+
+    template < typename T >
+    struct is_same<T, T>
+    {
+      static const bool value = true;
+    };
+
+    template < typename T1, typename T2 >
+    auto
+    add(T1 a1, T2 a2) -> decltype(a1 + a2)
+    {
+      return a1 + a2;
+    }
+
+    int
+    test(const int c, volatile int v)
+    {
+      static_assert(is_same<int, decltype(0)>::value == true, "");
+      static_assert(is_same<int, decltype(c)>::value == false, "");
+      static_assert(is_same<int, decltype(v)>::value == false, "");
+      auto ac = c;
+      auto av = v;
+      auto sumi = ac + av + 'x';
+      auto sumf = ac + av + 1.0;
+      static_assert(is_same<int, decltype(ac)>::value == true, "");
+      static_assert(is_same<int, decltype(av)>::value == true, "");
+      static_assert(is_same<int, decltype(sumi)>::value == true, "");
+      static_assert(is_same<int, decltype(sumf)>::value == false, "");
+      static_assert(is_same<int, decltype(add(c, v))>::value == true, "");
+      return (sumf > 0.0) ? sumi : add(c, v);
+    }
+
+  }
+
+  namespace test_noexcept
+  {
+
+    int f() { return 0; }
+    int g() noexcept { return 0; }
+
+    static_assert(noexcept(f()) == false, "");
+    static_assert(noexcept(g()) == true, "");
+
+  }
+
+  namespace test_constexpr
+  {
+
+    template < typename CharT >
+    unsigned long constexpr
+    strlen_c_r(const CharT *const s, const unsigned long acc) noexcept
+    {
+      return *s ? strlen_c_r(s + 1, acc + 1) : acc;
+    }
+
+    template < typename CharT >
+    unsigned long constexpr
+    strlen_c(const CharT *const s) noexcept
+    {
+      return strlen_c_r(s, 0UL);
+    }
+
+    static_assert(strlen_c("") == 0UL, "");
+    static_assert(strlen_c("1") == 1UL, "");
+    static_assert(strlen_c("example") == 7UL, "");
+    static_assert(strlen_c("another\0example") == 7UL, "");
+
+  }
+
+  namespace test_rvalue_references
+  {
+
+    template < int N >
+    struct answer
+    {
+      static constexpr int value = N;
+    };
+
+    answer<1> f(int&)       { return answer<1>(); }
+    answer<2> f(const int&) { return answer<2>(); }
+    answer<3> f(int&&)      { return answer<3>(); }
+
+    void
+    test()
+    {
+      int i = 0;
+      const int c = 0;
+      static_assert(decltype(f(i))::value == 1, "");
+      static_assert(decltype(f(c))::value == 2, "");
+      static_assert(decltype(f(0))::value == 3, "");
+    }
+
+  }
+
+  namespace test_uniform_initialization
+  {
+
+    struct test
+    {
+      static const int zero {};
+      static const int one {1};
+    };
+
+    static_assert(test::zero == 0, "");
+    static_assert(test::one == 1, "");
+
+  }
+
+  namespace test_lambdas
+  {
+
+    void
+    test1()
+    {
+      auto lambda1 = [](){};
+      auto lambda2 = lambda1;
+      lambda1();
+      lambda2();
+    }
+
+    int
+    test2()
+    {
+      auto a = [](int i, int j){ return i + j; }(1, 2);
+      auto b = []() -> int { return '0'; }();
+      auto c = [=](){ return a + b; }();
+      auto d = [&](){ return c; }();
+      auto e = [a, &b](int x) mutable {
+        const auto identity = [](int y){ return y; };
+        for (auto i = 0; i < a; ++i)
+          a += b--;
+        return x + identity(a + b);
+      }(0);
+      return a + b + c + d + e;
+    }
+
+    int
+    test3()
+    {
+      const auto nullary = [](){ return 0; };
+      const auto unary = [](int x){ return x; };
+      using nullary_t = decltype(nullary);
+      using unary_t = decltype(unary);
+      const auto higher1st = [](nullary_t f){ return f(); };
+      const auto higher2nd = [unary](nullary_t f1){
+        return [unary, f1](unary_t f2){ return f2(unary(f1())); };
+      };
+      return higher1st(nullary) + higher2nd(nullary)(unary);
+    }
+
+  }
+
+  namespace test_variadic_templates
+  {
+
+    template <int...>
+    struct sum;
+
+    template <int N0, int... N1toN>
+    struct sum<N0, N1toN...>
+    {
+      static constexpr auto value = N0 + sum<N1toN...>::value;
+    };
+
+    template <>
+    struct sum<>
+    {
+      static constexpr auto value = 0;
+    };
+
+    static_assert(sum<>::value == 0, "");
+    static_assert(sum<1>::value == 1, "");
+    static_assert(sum<23>::value == 23, "");
+    static_assert(sum<1, 2>::value == 3, "");
+    static_assert(sum<5, 5, 11>::value == 21, "");
+    static_assert(sum<2, 3, 5, 7, 11, 13>::value == 41, "");
+
+  }
+
+  // http://stackoverflow.com/questions/13728184/template-aliases-and-sfinae
+  // Clang 3.1 fails with headers of libstd++ 4.8.3 when using std::function
+  // because of this.
+  namespace test_template_alias_sfinae
+  {
+
+    struct foo {};
+
+    template<typename T>
+    using member = typename T::member_type;
+
+    template<typename T>
+    void func(...) {}
+
+    template<typename T>
+    void func(member<T>*) {}
+
+    void test();
+
+    void test() { func<foo>(0); }
+
+  }
+
+}  // namespace cxx11
+
+#endif  // __cplusplus >= 201103L
+
+
+
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  eval $cachevar=yes
+else
+  eval $cachevar=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+           CXX="$ac_save_CXX"
+fi
+eval ac_res=\$$cachevar
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+        if eval test x\$$cachevar = xyes; then
+          CXX="$CXX $switch"
+          if test -n "$CXXCPP" ; then
+            CXXCPP="$CXXCPP $switch"
+          fi
+          ac_success=yes
+          break
+        fi
+      done
+      if test x$ac_success = xyes; then
+        break
+      fi
+    done
+  fi
+
+  ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+  if test x$ax_cxx_compile_cxx11_required = xtrue; then
+    if test x$ac_success = xno; then
+      as_fn_error $? "*** A compiler with support for C++11 language features is required." "$LINENO" 5
+    fi
+  fi
+  if test x$ac_success = xno; then
+    HAVE_CXX11=0
+    { $as_echo "$as_me:${as_lineno-$LINENO}: No compiler with C++11 support was found" >&5
+$as_echo "$as_me: No compiler with C++11 support was found" >&6;}
+  else
+    HAVE_CXX11=1
+
+$as_echo "#define HAVE_CXX11 1" >>confdefs.h
+
+  fi
+
+
+
+  if test "${build}" != "${host}"; then
+      ax_cxx_compile_alternatives="11 0x"    ax_cxx_compile_cxx11_required=true
+  ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+  ac_success=no
+      ax_cv_cxx_compile_cxx11_orig_cxx="$CXX"
+    ax_cv_cxx_compile_cxx11_orig_cxxflags="$CXXFLAGS"
+    ax_cv_cxx_compile_cxx11_orig_cppflags="$CPPFLAGS"
+    CXX="$CXX_FOR_BUILD"
+    CXXFLAGS="$CXXFLAGS_FOR_BUILD"
+    CPPFLAGS="$CPPFLAGS_FOR_BUILD"
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CXX supports C++11 features by default" >&5
+$as_echo_n "checking whether $CXX supports C++11 features by default... " >&6; }
+if ${ax_cv_cxx_compile_cxx11_FOR_BUILD+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+// If the compiler admits that it is not ready for C++11, why torture it?
+// Hopefully, this will speed up the test.
+
+#ifndef __cplusplus
+
+#error "This is not a C++ compiler"
+
+#elif __cplusplus < 201103L
+
+#error "This is not a C++11 compiler"
+
+#else
+
+namespace cxx11
+{
+
+  namespace test_static_assert
+  {
+
+    template <typename T>
+    struct check
+    {
+      static_assert(sizeof(int) <= sizeof(T), "not big enough");
+    };
+
+  }
+
+  namespace test_final_override
+  {
+
+    struct Base
+    {
+      virtual ~Base() {}
+      virtual void f() {}
+    };
+
+    struct Derived : public Base
+    {
+      virtual ~Derived() override {}
+      virtual void f() override {}
+    };
+
+  }
+
+  namespace test_double_right_angle_brackets
+  {
+
+    template < typename T >
+    struct check {};
+
+    typedef check<void> single_type;
+    typedef check<check<void>> double_type;
+    typedef check<check<check<void>>> triple_type;
+    typedef check<check<check<check<void>>>> quadruple_type;
+
+  }
+
+  namespace test_decltype
+  {
+
+    int
+    f()
+    {
+      int a = 1;
+      decltype(a) b = 2;
+      return a + b;
+    }
+
+  }
+
+  namespace test_type_deduction
+  {
+
+    template < typename T1, typename T2 >
+    struct is_same
+    {
+      static const bool value = false;
+    };
+
+    template < typename T >
+    struct is_same<T, T>
+    {
+      static const bool value = true;
+    };
+
+    template < typename T1, typename T2 >
+    auto
+    add(T1 a1, T2 a2) -> decltype(a1 + a2)
+    {
+      return a1 + a2;
+    }
+
+    int
+    test(const int c, volatile int v)
+    {
+      static_assert(is_same<int, decltype(0)>::value == true, "");
+      static_assert(is_same<int, decltype(c)>::value == false, "");
+      static_assert(is_same<int, decltype(v)>::value == false, "");
+      auto ac = c;
+      auto av = v;
+      auto sumi = ac + av + 'x';
+      auto sumf = ac + av + 1.0;
+      static_assert(is_same<int, decltype(ac)>::value == true, "");
+      static_assert(is_same<int, decltype(av)>::value == true, "");
+      static_assert(is_same<int, decltype(sumi)>::value == true, "");
+      static_assert(is_same<int, decltype(sumf)>::value == false, "");
+      static_assert(is_same<int, decltype(add(c, v))>::value == true, "");
+      return (sumf > 0.0) ? sumi : add(c, v);
+    }
+
+  }
+
+  namespace test_noexcept
+  {
+
+    int f() { return 0; }
+    int g() noexcept { return 0; }
+
+    static_assert(noexcept(f()) == false, "");
+    static_assert(noexcept(g()) == true, "");
+
+  }
+
+  namespace test_constexpr
+  {
+
+    template < typename CharT >
+    unsigned long constexpr
+    strlen_c_r(const CharT *const s, const unsigned long acc) noexcept
+    {
+      return *s ? strlen_c_r(s + 1, acc + 1) : acc;
+    }
+
+    template < typename CharT >
+    unsigned long constexpr
+    strlen_c(const CharT *const s) noexcept
+    {
+      return strlen_c_r(s, 0UL);
+    }
+
+    static_assert(strlen_c("") == 0UL, "");
+    static_assert(strlen_c("1") == 1UL, "");
+    static_assert(strlen_c("example") == 7UL, "");
+    static_assert(strlen_c("another\0example") == 7UL, "");
+
+  }
+
+  namespace test_rvalue_references
+  {
+
+    template < int N >
+    struct answer
+    {
+      static constexpr int value = N;
+    };
+
+    answer<1> f(int&)       { return answer<1>(); }
+    answer<2> f(const int&) { return answer<2>(); }
+    answer<3> f(int&&)      { return answer<3>(); }
+
+    void
+    test()
+    {
+      int i = 0;
+      const int c = 0;
+      static_assert(decltype(f(i))::value == 1, "");
+      static_assert(decltype(f(c))::value == 2, "");
+      static_assert(decltype(f(0))::value == 3, "");
+    }
+
+  }
+
+  namespace test_uniform_initialization
+  {
+
+    struct test
+    {
+      static const int zero {};
+      static const int one {1};
+    };
+
+    static_assert(test::zero == 0, "");
+    static_assert(test::one == 1, "");
+
+  }
+
+  namespace test_lambdas
+  {
+
+    void
+    test1()
+    {
+      auto lambda1 = [](){};
+      auto lambda2 = lambda1;
+      lambda1();
+      lambda2();
+    }
+
+    int
+    test2()
+    {
+      auto a = [](int i, int j){ return i + j; }(1, 2);
+      auto b = []() -> int { return '0'; }();
+      auto c = [=](){ return a + b; }();
+      auto d = [&](){ return c; }();
+      auto e = [a, &b](int x) mutable {
+        const auto identity = [](int y){ return y; };
+        for (auto i = 0; i < a; ++i)
+          a += b--;
+        return x + identity(a + b);
+      }(0);
+      return a + b + c + d + e;
+    }
+
+    int
+    test3()
+    {
+      const auto nullary = [](){ return 0; };
+      const auto unary = [](int x){ return x; };
+      using nullary_t = decltype(nullary);
+      using unary_t = decltype(unary);
+      const auto higher1st = [](nullary_t f){ return f(); };
+      const auto higher2nd = [unary](nullary_t f1){
+        return [unary, f1](unary_t f2){ return f2(unary(f1())); };
+      };
+      return higher1st(nullary) + higher2nd(nullary)(unary);
+    }
+
+  }
+
+  namespace test_variadic_templates
+  {
+
+    template <int...>
+    struct sum;
+
+    template <int N0, int... N1toN>
+    struct sum<N0, N1toN...>
+    {
+      static constexpr auto value = N0 + sum<N1toN...>::value;
+    };
+
+    template <>
+    struct sum<>
+    {
+      static constexpr auto value = 0;
+    };
+
+    static_assert(sum<>::value == 0, "");
+    static_assert(sum<1>::value == 1, "");
+    static_assert(sum<23>::value == 23, "");
+    static_assert(sum<1, 2>::value == 3, "");
+    static_assert(sum<5, 5, 11>::value == 21, "");
+    static_assert(sum<2, 3, 5, 7, 11, 13>::value == 41, "");
+
+  }
+
+  // http://stackoverflow.com/questions/13728184/template-aliases-and-sfinae
+  // Clang 3.1 fails with headers of libstd++ 4.8.3 when using std::function
+  // because of this.
+  namespace test_template_alias_sfinae
+  {
+
+    struct foo {};
+
+    template<typename T>
+    using member = typename T::member_type;
+
+    template<typename T>
+    void func(...) {}
+
+    template<typename T>
+    void func(member<T>*) {}
+
+    void test();
+
+    void test() { func<foo>(0); }
+
+  }
+
+}  // namespace cxx11
+
+#endif  // __cplusplus >= 201103L
+
+
+
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ax_cv_cxx_compile_cxx11_FOR_BUILD=yes
+else
+  ax_cv_cxx_compile_cxx11_FOR_BUILD=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_cxx_compile_cxx11_FOR_BUILD" >&5
+$as_echo "$ax_cv_cxx_compile_cxx11_FOR_BUILD" >&6; }
+    if test x$ax_cv_cxx_compile_cxx11_FOR_BUILD = xyes; then
+      ac_success=yes
+    fi
+
+    if test x$ac_success = xno; then
+    for alternative in ${ax_cxx_compile_alternatives}; do
+      switch="-std=gnu++${alternative}"
+      cachevar=`$as_echo "ax_cv_cxx_compile_cxx11_FOR_BUILD_$switch" | $as_tr_sh`
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CXX supports C++11 features with $switch" >&5
+$as_echo_n "checking whether $CXX supports C++11 features with $switch... " >&6; }
+if eval \${$cachevar+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_save_CXX="$CXX"
+         CXX="$CXX $switch"
+         cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+// If the compiler admits that it is not ready for C++11, why torture it?
+// Hopefully, this will speed up the test.
+
+#ifndef __cplusplus
+
+#error "This is not a C++ compiler"
+
+#elif __cplusplus < 201103L
+
+#error "This is not a C++11 compiler"
+
+#else
+
+namespace cxx11
+{
+
+  namespace test_static_assert
+  {
+
+    template <typename T>
+    struct check
+    {
+      static_assert(sizeof(int) <= sizeof(T), "not big enough");
+    };
+
+  }
+
+  namespace test_final_override
+  {
+
+    struct Base
+    {
+      virtual ~Base() {}
+      virtual void f() {}
+    };
+
+    struct Derived : public Base
+    {
+      virtual ~Derived() override {}
+      virtual void f() override {}
+    };
+
+  }
+
+  namespace test_double_right_angle_brackets
+  {
+
+    template < typename T >
+    struct check {};
+
+    typedef check<void> single_type;
+    typedef check<check<void>> double_type;
+    typedef check<check<check<void>>> triple_type;
+    typedef check<check<check<check<void>>>> quadruple_type;
+
+  }
+
+  namespace test_decltype
+  {
+
+    int
+    f()
+    {
+      int a = 1;
+      decltype(a) b = 2;
+      return a + b;
+    }
+
+  }
+
+  namespace test_type_deduction
+  {
+
+    template < typename T1, typename T2 >
+    struct is_same
+    {
+      static const bool value = false;
+    };
+
+    template < typename T >
+    struct is_same<T, T>
+    {
+      static const bool value = true;
+    };
+
+    template < typename T1, typename T2 >
+    auto
+    add(T1 a1, T2 a2) -> decltype(a1 + a2)
+    {
+      return a1 + a2;
+    }
+
+    int
+    test(const int c, volatile int v)
+    {
+      static_assert(is_same<int, decltype(0)>::value == true, "");
+      static_assert(is_same<int, decltype(c)>::value == false, "");
+      static_assert(is_same<int, decltype(v)>::value == false, "");
+      auto ac = c;
+      auto av = v;
+      auto sumi = ac + av + 'x';
+      auto sumf = ac + av + 1.0;
+      static_assert(is_same<int, decltype(ac)>::value == true, "");
+      static_assert(is_same<int, decltype(av)>::value == true, "");
+      static_assert(is_same<int, decltype(sumi)>::value == true, "");
+      static_assert(is_same<int, decltype(sumf)>::value == false, "");
+      static_assert(is_same<int, decltype(add(c, v))>::value == true, "");
+      return (sumf > 0.0) ? sumi : add(c, v);
+    }
+
+  }
+
+  namespace test_noexcept
+  {
+
+    int f() { return 0; }
+    int g() noexcept { return 0; }
+
+    static_assert(noexcept(f()) == false, "");
+    static_assert(noexcept(g()) == true, "");
+
+  }
+
+  namespace test_constexpr
+  {
+
+    template < typename CharT >
+    unsigned long constexpr
+    strlen_c_r(const CharT *const s, const unsigned long acc) noexcept
+    {
+      return *s ? strlen_c_r(s + 1, acc + 1) : acc;
+    }
+
+    template < typename CharT >
+    unsigned long constexpr
+    strlen_c(const CharT *const s) noexcept
+    {
+      return strlen_c_r(s, 0UL);
+    }
+
+    static_assert(strlen_c("") == 0UL, "");
+    static_assert(strlen_c("1") == 1UL, "");
+    static_assert(strlen_c("example") == 7UL, "");
+    static_assert(strlen_c("another\0example") == 7UL, "");
+
+  }
+
+  namespace test_rvalue_references
+  {
+
+    template < int N >
+    struct answer
+    {
+      static constexpr int value = N;
+    };
+
+    answer<1> f(int&)       { return answer<1>(); }
+    answer<2> f(const int&) { return answer<2>(); }
+    answer<3> f(int&&)      { return answer<3>(); }
+
+    void
+    test()
+    {
+      int i = 0;
+      const int c = 0;
+      static_assert(decltype(f(i))::value == 1, "");
+      static_assert(decltype(f(c))::value == 2, "");
+      static_assert(decltype(f(0))::value == 3, "");
+    }
+
+  }
+
+  namespace test_uniform_initialization
+  {
+
+    struct test
+    {
+      static const int zero {};
+      static const int one {1};
+    };
+
+    static_assert(test::zero == 0, "");
+    static_assert(test::one == 1, "");
+
+  }
+
+  namespace test_lambdas
+  {
+
+    void
+    test1()
+    {
+      auto lambda1 = [](){};
+      auto lambda2 = lambda1;
+      lambda1();
+      lambda2();
+    }
+
+    int
+    test2()
+    {
+      auto a = [](int i, int j){ return i + j; }(1, 2);
+      auto b = []() -> int { return '0'; }();
+      auto c = [=](){ return a + b; }();
+      auto d = [&](){ return c; }();
+      auto e = [a, &b](int x) mutable {
+        const auto identity = [](int y){ return y; };
+        for (auto i = 0; i < a; ++i)
+          a += b--;
+        return x + identity(a + b);
+      }(0);
+      return a + b + c + d + e;
+    }
+
+    int
+    test3()
+    {
+      const auto nullary = [](){ return 0; };
+      const auto unary = [](int x){ return x; };
+      using nullary_t = decltype(nullary);
+      using unary_t = decltype(unary);
+      const auto higher1st = [](nullary_t f){ return f(); };
+      const auto higher2nd = [unary](nullary_t f1){
+        return [unary, f1](unary_t f2){ return f2(unary(f1())); };
+      };
+      return higher1st(nullary) + higher2nd(nullary)(unary);
+    }
+
+  }
+
+  namespace test_variadic_templates
+  {
+
+    template <int...>
+    struct sum;
+
+    template <int N0, int... N1toN>
+    struct sum<N0, N1toN...>
+    {
+      static constexpr auto value = N0 + sum<N1toN...>::value;
+    };
+
+    template <>
+    struct sum<>
+    {
+      static constexpr auto value = 0;
+    };
+
+    static_assert(sum<>::value == 0, "");
+    static_assert(sum<1>::value == 1, "");
+    static_assert(sum<23>::value == 23, "");
+    static_assert(sum<1, 2>::value == 3, "");
+    static_assert(sum<5, 5, 11>::value == 21, "");
+    static_assert(sum<2, 3, 5, 7, 11, 13>::value == 41, "");
+
+  }
+
+  // http://stackoverflow.com/questions/13728184/template-aliases-and-sfinae
+  // Clang 3.1 fails with headers of libstd++ 4.8.3 when using std::function
+  // because of this.
+  namespace test_template_alias_sfinae
+  {
+
+    struct foo {};
+
+    template<typename T>
+    using member = typename T::member_type;
+
+    template<typename T>
+    void func(...) {}
+
+    template<typename T>
+    void func(member<T>*) {}
+
+    void test();
+
+    void test() { func<foo>(0); }
+
+  }
+
+}  // namespace cxx11
+
+#endif  // __cplusplus >= 201103L
+
+
+
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  eval $cachevar=yes
+else
+  eval $cachevar=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+         CXX="$ac_save_CXX"
+fi
+eval ac_res=\$$cachevar
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+      if eval test x\$$cachevar = xyes; then
+        CXX="$CXX $switch"
+        if test -n "$CXXCPP" ; then
+          CXXCPP="$CXXCPP $switch"
+        fi
+        ac_success=yes
+        break
+      fi
+    done
+  fi
+
+    if test x$ac_success = xno; then
+                for alternative in ${ax_cxx_compile_alternatives}; do
+      for switch in -std=c++${alternative} +std=c++${alternative} "-h std=c++${alternative}"; do
+        cachevar=`$as_echo "ax_cv_cxx_compile_cxx11_FOR_BUILD_$switch" | $as_tr_sh`
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CXX supports C++11 features with $switch" >&5
+$as_echo_n "checking whether $CXX supports C++11 features with $switch... " >&6; }
+if eval \${$cachevar+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_save_CXX="$CXX"
+           CXX="$CXX $switch"
+           cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+// If the compiler admits that it is not ready for C++11, why torture it?
+// Hopefully, this will speed up the test.
+
+#ifndef __cplusplus
+
+#error "This is not a C++ compiler"
+
+#elif __cplusplus < 201103L
+
+#error "This is not a C++11 compiler"
+
+#else
+
+namespace cxx11
+{
+
+  namespace test_static_assert
+  {
+
+    template <typename T>
+    struct check
+    {
+      static_assert(sizeof(int) <= sizeof(T), "not big enough");
+    };
+
+  }
+
+  namespace test_final_override
+  {
+
+    struct Base
+    {
+      virtual ~Base() {}
+      virtual void f() {}
+    };
+
+    struct Derived : public Base
+    {
+      virtual ~Derived() override {}
+      virtual void f() override {}
+    };
+
+  }
+
+  namespace test_double_right_angle_brackets
+  {
+
+    template < typename T >
+    struct check {};
+
+    typedef check<void> single_type;
+    typedef check<check<void>> double_type;
+    typedef check<check<check<void>>> triple_type;
+    typedef check<check<check<check<void>>>> quadruple_type;
+
+  }
+
+  namespace test_decltype
+  {
+
+    int
+    f()
+    {
+      int a = 1;
+      decltype(a) b = 2;
+      return a + b;
+    }
+
+  }
+
+  namespace test_type_deduction
+  {
+
+    template < typename T1, typename T2 >
+    struct is_same
+    {
+      static const bool value = false;
+    };
+
+    template < typename T >
+    struct is_same<T, T>
+    {
+      static const bool value = true;
+    };
+
+    template < typename T1, typename T2 >
+    auto
+    add(T1 a1, T2 a2) -> decltype(a1 + a2)
+    {
+      return a1 + a2;
+    }
+
+    int
+    test(const int c, volatile int v)
+    {
+      static_assert(is_same<int, decltype(0)>::value == true, "");
+      static_assert(is_same<int, decltype(c)>::value == false, "");
+      static_assert(is_same<int, decltype(v)>::value == false, "");
+      auto ac = c;
+      auto av = v;
+      auto sumi = ac + av + 'x';
+      auto sumf = ac + av + 1.0;
+      static_assert(is_same<int, decltype(ac)>::value == true, "");
+      static_assert(is_same<int, decltype(av)>::value == true, "");
+      static_assert(is_same<int, decltype(sumi)>::value == true, "");
+      static_assert(is_same<int, decltype(sumf)>::value == false, "");
+      static_assert(is_same<int, decltype(add(c, v))>::value == true, "");
+      return (sumf > 0.0) ? sumi : add(c, v);
+    }
+
+  }
+
+  namespace test_noexcept
+  {
+
+    int f() { return 0; }
+    int g() noexcept { return 0; }
+
+    static_assert(noexcept(f()) == false, "");
+    static_assert(noexcept(g()) == true, "");
+
+  }
+
+  namespace test_constexpr
+  {
+
+    template < typename CharT >
+    unsigned long constexpr
+    strlen_c_r(const CharT *const s, const unsigned long acc) noexcept
+    {
+      return *s ? strlen_c_r(s + 1, acc + 1) : acc;
+    }
+
+    template < typename CharT >
+    unsigned long constexpr
+    strlen_c(const CharT *const s) noexcept
+    {
+      return strlen_c_r(s, 0UL);
+    }
+
+    static_assert(strlen_c("") == 0UL, "");
+    static_assert(strlen_c("1") == 1UL, "");
+    static_assert(strlen_c("example") == 7UL, "");
+    static_assert(strlen_c("another\0example") == 7UL, "");
+
+  }
+
+  namespace test_rvalue_references
+  {
+
+    template < int N >
+    struct answer
+    {
+      static constexpr int value = N;
+    };
+
+    answer<1> f(int&)       { return answer<1>(); }
+    answer<2> f(const int&) { return answer<2>(); }
+    answer<3> f(int&&)      { return answer<3>(); }
+
+    void
+    test()
+    {
+      int i = 0;
+      const int c = 0;
+      static_assert(decltype(f(i))::value == 1, "");
+      static_assert(decltype(f(c))::value == 2, "");
+      static_assert(decltype(f(0))::value == 3, "");
+    }
+
+  }
+
+  namespace test_uniform_initialization
+  {
+
+    struct test
+    {
+      static const int zero {};
+      static const int one {1};
+    };
+
+    static_assert(test::zero == 0, "");
+    static_assert(test::one == 1, "");
+
+  }
+
+  namespace test_lambdas
+  {
+
+    void
+    test1()
+    {
+      auto lambda1 = [](){};
+      auto lambda2 = lambda1;
+      lambda1();
+      lambda2();
+    }
+
+    int
+    test2()
+    {
+      auto a = [](int i, int j){ return i + j; }(1, 2);
+      auto b = []() -> int { return '0'; }();
+      auto c = [=](){ return a + b; }();
+      auto d = [&](){ return c; }();
+      auto e = [a, &b](int x) mutable {
+        const auto identity = [](int y){ return y; };
+        for (auto i = 0; i < a; ++i)
+          a += b--;
+        return x + identity(a + b);
+      }(0);
+      return a + b + c + d + e;
+    }
+
+    int
+    test3()
+    {
+      const auto nullary = [](){ return 0; };
+      const auto unary = [](int x){ return x; };
+      using nullary_t = decltype(nullary);
+      using unary_t = decltype(unary);
+      const auto higher1st = [](nullary_t f){ return f(); };
+      const auto higher2nd = [unary](nullary_t f1){
+        return [unary, f1](unary_t f2){ return f2(unary(f1())); };
+      };
+      return higher1st(nullary) + higher2nd(nullary)(unary);
+    }
+
+  }
+
+  namespace test_variadic_templates
+  {
+
+    template <int...>
+    struct sum;
+
+    template <int N0, int... N1toN>
+    struct sum<N0, N1toN...>
+    {
+      static constexpr auto value = N0 + sum<N1toN...>::value;
+    };
+
+    template <>
+    struct sum<>
+    {
+      static constexpr auto value = 0;
+    };
+
+    static_assert(sum<>::value == 0, "");
+    static_assert(sum<1>::value == 1, "");
+    static_assert(sum<23>::value == 23, "");
+    static_assert(sum<1, 2>::value == 3, "");
+    static_assert(sum<5, 5, 11>::value == 21, "");
+    static_assert(sum<2, 3, 5, 7, 11, 13>::value == 41, "");
+
+  }
+
+  // http://stackoverflow.com/questions/13728184/template-aliases-and-sfinae
+  // Clang 3.1 fails with headers of libstd++ 4.8.3 when using std::function
+  // because of this.
+  namespace test_template_alias_sfinae
+  {
+
+    struct foo {};
+
+    template<typename T>
+    using member = typename T::member_type;
+
+    template<typename T>
+    void func(...) {}
+
+    template<typename T>
+    void func(member<T>*) {}
+
+    void test();
+
+    void test() { func<foo>(0); }
+
+  }
+
+}  // namespace cxx11
+
+#endif  // __cplusplus >= 201103L
+
+
+
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  eval $cachevar=yes
+else
+  eval $cachevar=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+           CXX="$ac_save_CXX"
+fi
+eval ac_res=\$$cachevar
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+        if eval test x\$$cachevar = xyes; then
+          CXX="$CXX $switch"
+          if test -n "$CXXCPP" ; then
+            CXXCPP="$CXXCPP $switch"
+          fi
+          ac_success=yes
+          break
+        fi
+      done
+      if test x$ac_success = xyes; then
+        break
+      fi
+    done
+  fi
+      CXX_FOR_BUILD="$CXX"
+    CXXFLAGS_FOR_BUILD="$CXXFLAGS"
+    CPPFLAGS_FOR_BUILD="$CPPFLAGS"
+    CXX="$ax_cv_cxx_compile_cxx11_orig_cxx"
+    CXXFLAGS="$ax_cv_cxx_compile_cxx11_orig_cxxflags"
+    CPPFLAGS="$ax_cv_cxx_compile_cxx11_orig_cppflags"
+  ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+  if test x$ax_cxx_compile_cxx11_required = xtrue; then
+    if test x$ac_success = xno; then
+      as_fn_error $? "*** A compiler with support for C++11 language features is required." "$LINENO" 5
+    fi
+  fi
+  if test x$ac_success = xno; then
+    HAVE_CXX11_FOR_BUILD=0
+    { $as_echo "$as_me:${as_lineno-$LINENO}: No compiler with C++11 support was found" >&5
+$as_echo "$as_me: No compiler with C++11 support was found" >&6;}
+  else
+    HAVE_CXX11_FOR_BUILD=1
+
+$as_echo "#define HAVE_CXX11_FOR_BUILD 1" >>confdefs.h
+
+  fi
+
+
+  fi
+fi
+
+# Check whether --enable-pgo-build was given.
+if test "${enable_pgo_build+set}" = set; then :
+  enableval=$enable_pgo_build; enable_pgo_build=$enableval
+else
+  enable_pgo_build=no
+fi
+
+
+# Issue errors and warnings for invalid/strange PGO build combinations.
+case "$have_compiler:$host:$target:$enable_pgo_build" in
+  *:*:*:no) ;;
+
+  # Allow the PGO build only if we aren't building a compiler and
+  # we are in a native configuration.
+  no:$build:$build:yes | no:$build:$build:lto) ;;
+
+  # Disallow the PGO bootstrap if we are building a compiler.
+  yes:*:*:yes | yes:*:*:lto)
+    as_fn_error $? "cannot perform the PGO bootstrap when building a compiler" "$LINENO" 5 ;;
+
+  *)
+    as_fn_error $? "invalid option for --enable-pgo-build" "$LINENO" 5
+    ;;
+esac
+
+if test "$enable_pgo_build" != "no"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fprofile-generate" >&5
+$as_echo_n "checking whether the compiler supports -fprofile-generate... " >&6; }
+  old_CFLAGS="$CFLAGS"
+  PGO_BUILD_GEN_CFLAGS="-fprofile-generate"
+  CFLAGS="$CFLAGS $PGO_BUILD_CFLAGS"
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int foo;
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+else
+  PGO_BUILD_GEN_CFLAGS=
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS="$old_CFLAGS"
+  if test -n "$PGO_BUILD_GEN_CFLAGS"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+    PGO_BUILD_USE_CFLAGS="-fprofile-use"
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    as_fn_error $? "cannot perform the PGO build without -fprofile-generate" "$LINENO" 5
+  fi
+
+  if test "$enable_pgo_build" = "lto"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -flto=jobserver -ffat-lto-objects" >&5
+$as_echo_n "checking whether the compiler supports -flto=jobserver -ffat-lto-objects... " >&6; }
+    old_CFLAGS="$CFLAGS"
+    PGO_BUILD_LTO_CFLAGS="-flto=jobserver -ffat-lto-objects"
+    CFLAGS="$CFLAGS $PGO_BUILD_LTO_CFLAGS"
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int foo;
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+else
+  PGO_BUILD_LTO_CFLAGS=
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    CFLAGS="$old_CFLAGS"
+    if test -n "$PGO_BUILD_LTO_CFLAGS"; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: LTO is disabled for the PGO build" >&5
+$as_echo "$as_me: WARNING: LTO is disabled for the PGO build" >&2;}
+    fi
+  fi
+fi
+
+
+
 
 # Used for setting $lt_cv_objdir
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for objdir" >&5
@@ -5499,14 +8073,6 @@ fi
 # Specify a location for mpfr
 # check for this first so it ends up on the link line before gmp.
 
-# Check whether --with-mpfr-dir was given.
-if test "${with_mpfr_dir+set}" = set; then :
-  withval=$with_mpfr_dir; as_fn_error $? "The --with-mpfr-dir=PATH option has been removed.
-Use --with-mpfr=PATH or --with-mpfr-include=PATH plus --with-mpfr-lib=PATH" "$LINENO" 5
-fi
-
-
-
 # Check whether --with-mpfr was given.
 if test "${with_mpfr+set}" = set; then :
   withval=$with_mpfr;
@@ -5551,14 +8117,6 @@ if test "x$with_mpfr$with_mpfr_include$with_mpfr_lib" = x && test -d ${srcdir}/m
 fi
 
 # Specify a location for gmp
-
-# Check whether --with-gmp-dir was given.
-if test "${with_gmp_dir+set}" = set; then :
-  withval=$with_gmp_dir; as_fn_error $? "The --with-gmp-dir=PATH option has been removed.
-Use --with-gmp=PATH or --with-gmp-include=PATH plus --with-gmp-lib=PATH" "$LINENO" 5
-fi
-
-
 
 # Check whether --with-gmp was given.
 if test "${with_gmp+set}" = set; then :
@@ -5609,8 +8167,7 @@ if test -d ${srcdir}/gcc && test "x$have_gmp" = xno; then
   # Check for the recommended and required versions of GMP.
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for the correct version of gmp.h" >&5
 $as_echo_n "checking for the correct version of gmp.h... " >&6; }
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include "gmp.h"
 int
@@ -5672,7 +8229,7 @@ int
 main ()
 {
 
-    #if MPFR_VERSION < MPFR_VERSION_NUM(2,4,0)
+    #if MPFR_VERSION < MPFR_VERSION_NUM(3,1,0)
     choke me
     #endif
 
@@ -5689,7 +8246,7 @@ int
 main ()
 {
 
-    #if MPFR_VERSION < MPFR_VERSION_NUM(2,4,2)
+    #if MPFR_VERSION < MPFR_VERSION_NUM(3,1,6)
     choke me
     #endif
 
@@ -5782,9 +8339,9 @@ main ()
     int t;
     mpfr_init (n);
     mpfr_init (x);
-    mpfr_atan2 (n, n, x, GMP_RNDN);
-    mpfr_erfc (n, x, GMP_RNDN);
-    mpfr_subnormalize (x, t, GMP_RNDN);
+    mpfr_atan2 (n, n, x, MPFR_RNDN);
+    mpfr_erfc (n, x, MPFR_RNDN);
+    mpfr_subnormalize (x, t, MPFR_RNDN);
     mpfr_clear(n);
     mpfr_clear(x);
     mpc_init2 (c, 53);
@@ -5815,11 +8372,11 @@ rm -f core conftest.err conftest.$ac_objext \
 # The library versions listed in the error message below should match
 # the HARD-minimums enforced above.
   if test x$have_gmp != xyes; then
-    as_fn_error $? "Building GCC requires GMP 4.2+, MPFR 2.4.0+ and MPC 0.8.0+.
+    as_fn_error $? "Building GCC requires GMP 4.2+, MPFR 3.1.0+ and MPC 0.8.0+.
 Try the --with-gmp, --with-mpfr and/or --with-mpc options to specify
 their locations.  Source code for these libraries can be found at
 their respective hosting sites as well as at
-ftp://gcc.gnu.org/pub/gcc/infrastructure/.  See also
+https://gcc.gnu.org/pub/gcc/infrastructure/.  See also
 http://gcc.gnu.org/install/prerequisites.html for additional info.  If
 you obtained GMP, MPFR and/or MPC from a vendor distribution package,
 make sure that you have installed both the libraries and the header
@@ -6159,8 +8716,20 @@ fi
 # Check whether --enable-host-shared was given.
 if test "${enable_host_shared+set}" = set; then :
   enableval=$enable_host_shared; host_shared=$enableval
+ case $host in
+   x86_64-*-darwin* | aarch64-*-darwin*)
+     if test x$host_shared != xyes ; then
+       # PIC is the default, and actually cannot be switched off.
+       echo configure.ac: warning: PIC code is required for the configured target, host-shared setting ignored. 1>&2
+       host_shared=yes
+     fi ;;
+  *) ;;
+ esac
 else
-  host_shared=no
+  case $host in
+  x86_64-*-darwin* | aarch64-*-darwin*) host_shared=yes ;;
+  *) host_shared=no ;;
+ esac
 fi
 
 
@@ -6379,10 +8948,32 @@ $as_echo "$as_me: WARNING: GNAT is required to build $language" >&2;}
             ;;
         esac
 
+        # Disable D if no preexisting GDC is available.
+        case ${add_this_lang}:${language}:${have_gdc} in
+          yes:d:no)
+            # Specifically requested language; tell them.
+            as_fn_error $? "GDC is required to build $language" "$LINENO" 5
+           ;;
+          all:d:no)
+            { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: GDC is required to build $language" >&5
+$as_echo "$as_me: WARNING: GDC is required to build $language" >&2;}
+            add_this_lang=unsupported
+            ;;
+          *:d:no)
+            # Silently disable.
+            add_this_lang=unsupported
+            ;;
+        esac
+
         # Disable jit if -enable-host-shared not specified
-        case ${add_this_lang}:${language}:${host_shared} in
-          yes:jit:no)
-	    # PR jit/64780: explicitly specify --enable-host-shared
+        # but not if building for Mingw. All code in Windows
+        # is position independent code (PIC).
+        case $target in
+          *mingw*) ;;
+          *)
+          case ${add_this_lang}:${language}:${host_shared} in
+            yes:jit:no)
+	           # PR jit/64780: explicitly specify --enable-host-shared
 	    as_fn_error $? "
 Enabling language \"jit\" requires --enable-host-shared.
 
@@ -6393,17 +8984,19 @@ If you want to build both the jit and the regular compiler, it is often
 best to do this via two separate configure/builds, in separate
 directories, to avoid imposing the performance cost of
 --enable-host-shared on the regular compiler." "$LINENO" 5
-	    ;;
-          all:jit:no)
-	    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --enable-host-shared required to build $language" >&5
+	            ;;
+            all:jit:no)
+	      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --enable-host-shared required to build $language" >&5
 $as_echo "$as_me: WARNING: --enable-host-shared required to build $language" >&2;}
-            add_this_lang=unsupported
-            ;;
-          *:jit:no)
-            # Silently disable.
-            add_this_lang=unsupported
-            ;;
-	esac
+              add_this_lang=unsupported
+              ;;
+            *:jit:no)
+              # Silently disable.
+              add_this_lang=unsupported
+              ;;
+	        esac
+          ;;
+        esac
 
         # Disable a language that is unsupported by the target.
 	case "${add_this_lang}: $unsupported_languages " in
@@ -6441,7 +9034,7 @@ $as_echo "$as_me: WARNING: ${language} not supported for this target" >&2;}
 		  *) stage1_languages="${stage1_languages}${language}," ;;
 		esac
 		# We need to bootstrap any supporting libraries.
-		bootstrap_target_libs="${bootstrap_target_libs}${target_libs},"
+		bootstrap_target_libs=`echo "${bootstrap_target_libs}${target_libs}," | sed "s/ /,/g"`
 		;;
 	    esac
 	    ;;
@@ -6582,6 +9175,16 @@ case ,${enable_languages}, in
     ;;
 esac
 
+# If gcc/ is not in the source tree then we'll not be building a
+# target compiler, assume in that case we don't want to build any
+# target libraries or tools.
+#
+# This was added primarily for the benefit for binutils-gdb who reuse
+# this configure script, but don't always have target tools available.
+if test ! -d ${srcdir}/gcc; then
+   skipdirs="${skipdirs} ${target_configdirs}"
+fi
+
 # Remove the entries in $skipdirs and $noconfigdirs from $configdirs,
 # $build_configdirs and $target_configdirs.
 # If we have the source for $noconfigdirs entries, add them to $notsupp.
@@ -6667,13 +9270,18 @@ fi
 
 # Sometimes we have special requirements for the host libiberty.
 extra_host_libiberty_configure_flags=
-extra_host_zlib_configure_flags=
 case " $configdirs " in
-  *" lto-plugin "* | *" libcc1 "*)
+  *" lto-plugin "* | *" libcc1 "* | *" gdbserver "*)
     # When these are to be built as shared libraries, the same applies to
     # libiberty.
     extra_host_libiberty_configure_flags=--enable-shared
     ;;
+esac
+
+
+# Sometimes we have special requirements for the host zlib.
+extra_host_zlib_configure_flags=
+case " $configdirs " in
   *" bfd "*)
     # When bfd is to be built as a shared library, the same applies to
     # zlib.
@@ -6682,7 +9290,6 @@ case " $configdirs " in
     fi
     ;;
 esac
-
 
 
 # Produce a warning message for the subdirs we can't configure.
@@ -7187,7 +9794,7 @@ fi
 # or bootstrap-ubsan, bootstrap it.
 if echo " ${target_configdirs} " | grep " libsanitizer " > /dev/null 2>&1; then
   case "$BUILD_CONFIG" in
-    *bootstrap-asan* | *bootstrap-ubsan* )
+    *bootstrap-hwasan* | *bootstrap-asan* | *bootstrap-ubsan* )
       bootstrap_target_libs=${bootstrap_target_libs}target-libsanitizer,
       bootstrap_fixincludes=yes
       ;;
@@ -7198,6 +9805,16 @@ fi
 if echo " ${target_configdirs} " | grep " libvtv " > /dev/null 2>&1 &&
    test "$enable_vtable_verify" != no; then
   bootstrap_target_libs=${bootstrap_target_libs}target-libvtv,
+fi
+
+# If we are building libatomic and the list of enabled languages includes the
+# D frontend, bootstrap it.
+if echo " ${target_configdirs} " | grep " libatomic " > /dev/null 2>&1; then
+  case ,${enable_languages}, in
+    *,d,*)
+      bootstrap_target_libs=${bootstrap_target_libs}target-libatomic,
+      ;;
+  esac
 fi
 
 # Determine whether gdb needs tk/tcl or not.
@@ -7237,6 +9854,9 @@ case " ${configdirs} " in
     ;;
   *\ gdbserver\ *)
     configdirs="${configdirs} gnulib gdbsupport"
+    ;;
+  *\ sim\ *)
+    configdirs="${configdirs} gnulib"
     ;;
 esac
 
@@ -7328,6 +9948,12 @@ extrasub_target="$extrasub_target
 /^@if /,/^@endif /d
 /^@unless /d
 /^@endunless /d"
+
+if test "$enable_pgo_build" != "no"; then
+  extrasub_build="$extrasub_build
+/^@if pgo-build\$/d
+/^@endif pgo-build\$/d"
+fi
 
 # Create the serialization dependencies.  This uses a temporary file.
 
@@ -7528,8 +10154,14 @@ if test "$silent" = yes; then
   baseargs="$baseargs --silent"
   tbaseargs="$tbaseargs --silent"
 fi
+
 baseargs="$baseargs --disable-option-checking"
 tbaseargs="$tbaseargs --disable-option-checking"
+
+if test "$enable_year2038" = no; then
+  baseargs="$baseargs --disable-year2038"
+  tbaseargs="$tbaseargs --disable-year2038"
+fi
 
 # Record and document user additions to sub configure arguments.
 
@@ -7694,6 +10326,7 @@ esac
 # our build compiler if desired.
 if test x"${build}" = x"${host}" ; then
   CFLAGS_FOR_BUILD=${CFLAGS_FOR_BUILD-${CFLAGS}}
+  CPPFLAGS_FOR_BUILD=${CPPFLAGS_FOR_BUILD-${CPPFLAGS}}
   CXXFLAGS_FOR_BUILD=${CXXFLAGS_FOR_BUILD-${CXXFLAGS}}
   LDFLAGS_FOR_BUILD=${LDFLAGS_FOR_BUILD-${LDFLAGS}}
 fi
@@ -7717,6 +10350,17 @@ fi
 case "${target}" in
   mep*)
     FLAGS_FOR_TARGET="$FLAGS_FOR_TARGET -mlibrary"
+    ;;
+  # The VxWorks support for shared libraries is getting in
+  # incrementally.  Make sure it doesn't get activated implicitly:
+  *vxworks*)
+    if test "${enable_shared-unset}" = unset ; then
+      enable_shared=no
+      # So the build of libraries knows ...
+      target_configargs="${target_configargs} --disable-shared"
+      # So gcc knows ...
+      host_configargs="${host_configargs} --disable-shared"
+    fi
     ;;
 esac
 
@@ -7756,6 +10400,10 @@ done
 
 
 # Build tools.
+
+
+
+
 
 
 
@@ -8599,6 +11247,147 @@ if test -z "$ac_cv_prog_DLLTOOL" ; then
     DLLTOOL="$2"
   else
     DLLTOOL="${ncn_tool_prefix}$2"
+  fi
+fi
+
+
+
+if test -n "$DSYMUTIL"; then
+  ac_cv_prog_DSYMUTIL=$DSYMUTIL
+elif test -n "$ac_cv_prog_DSYMUTIL"; then
+  DSYMUTIL=$ac_cv_prog_DSYMUTIL
+fi
+
+if test -n "$ac_cv_prog_DSYMUTIL"; then
+  for ncn_progname in dsymutil; do
+    # Extract the first word of "${ncn_progname}", so it can be a program name with args.
+set dummy ${ncn_progname}; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_DSYMUTIL+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$DSYMUTIL"; then
+  ac_cv_prog_DSYMUTIL="$DSYMUTIL" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_DSYMUTIL="${ncn_progname}"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+DSYMUTIL=$ac_cv_prog_DSYMUTIL
+if test -n "$DSYMUTIL"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $DSYMUTIL" >&5
+$as_echo "$DSYMUTIL" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  done
+fi
+
+for ncn_progname in dsymutil; do
+  if test -n "$ncn_tool_prefix"; then
+    # Extract the first word of "${ncn_tool_prefix}${ncn_progname}", so it can be a program name with args.
+set dummy ${ncn_tool_prefix}${ncn_progname}; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_DSYMUTIL+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$DSYMUTIL"; then
+  ac_cv_prog_DSYMUTIL="$DSYMUTIL" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_DSYMUTIL="${ncn_tool_prefix}${ncn_progname}"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+DSYMUTIL=$ac_cv_prog_DSYMUTIL
+if test -n "$DSYMUTIL"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $DSYMUTIL" >&5
+$as_echo "$DSYMUTIL" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  fi
+  if test -z "$ac_cv_prog_DSYMUTIL" && test $build = $host ; then
+    # Extract the first word of "${ncn_progname}", so it can be a program name with args.
+set dummy ${ncn_progname}; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_DSYMUTIL+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$DSYMUTIL"; then
+  ac_cv_prog_DSYMUTIL="$DSYMUTIL" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_DSYMUTIL="${ncn_progname}"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+DSYMUTIL=$ac_cv_prog_DSYMUTIL
+if test -n "$DSYMUTIL"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $DSYMUTIL" >&5
+$as_echo "$DSYMUTIL" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  fi
+  test -n "$ac_cv_prog_DSYMUTIL" && break
+done
+
+if test -z "$ac_cv_prog_DSYMUTIL" ; then
+  set dummy dsymutil
+  if test $build = $host ; then
+    DSYMUTIL="$2"
+  else
+    DSYMUTIL="${ncn_tool_prefix}$2"
   fi
 fi
 
@@ -9863,6 +12652,147 @@ fi
 
 
 
+if test -n "$OTOOL"; then
+  ac_cv_prog_OTOOL=$OTOOL
+elif test -n "$ac_cv_prog_OTOOL"; then
+  OTOOL=$ac_cv_prog_OTOOL
+fi
+
+if test -n "$ac_cv_prog_OTOOL"; then
+  for ncn_progname in otool; do
+    # Extract the first word of "${ncn_progname}", so it can be a program name with args.
+set dummy ${ncn_progname}; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_OTOOL+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$OTOOL"; then
+  ac_cv_prog_OTOOL="$OTOOL" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_OTOOL="${ncn_progname}"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+OTOOL=$ac_cv_prog_OTOOL
+if test -n "$OTOOL"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OTOOL" >&5
+$as_echo "$OTOOL" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  done
+fi
+
+for ncn_progname in otool; do
+  if test -n "$ncn_tool_prefix"; then
+    # Extract the first word of "${ncn_tool_prefix}${ncn_progname}", so it can be a program name with args.
+set dummy ${ncn_tool_prefix}${ncn_progname}; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_OTOOL+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$OTOOL"; then
+  ac_cv_prog_OTOOL="$OTOOL" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_OTOOL="${ncn_tool_prefix}${ncn_progname}"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+OTOOL=$ac_cv_prog_OTOOL
+if test -n "$OTOOL"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OTOOL" >&5
+$as_echo "$OTOOL" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  fi
+  if test -z "$ac_cv_prog_OTOOL" && test $build = $host ; then
+    # Extract the first word of "${ncn_progname}", so it can be a program name with args.
+set dummy ${ncn_progname}; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_OTOOL+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$OTOOL"; then
+  ac_cv_prog_OTOOL="$OTOOL" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_OTOOL="${ncn_progname}"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+OTOOL=$ac_cv_prog_OTOOL
+if test -n "$OTOOL"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OTOOL" >&5
+$as_echo "$OTOOL" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  fi
+  test -n "$ac_cv_prog_OTOOL" && break
+done
+
+if test -z "$ac_cv_prog_OTOOL" ; then
+  set dummy otool
+  if test $build = $host ; then
+    OTOOL="$2"
+  else
+    OTOOL="${ncn_tool_prefix}$2"
+  fi
+fi
+
+
+
 if test -n "$READELF"; then
   ac_cv_prog_READELF=$READELF
 elif test -n "$ac_cv_prog_READELF"; then
@@ -10004,6 +12934,149 @@ fi
 
 
 
+
+
+
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for -plugin option" >&5
+$as_echo_n "checking for -plugin option... " >&6; }
+
+plugin_names="liblto_plugin.so liblto_plugin-0.dll cyglto_plugin-0.dll"
+plugin_option=
+for plugin in $plugin_names; do
+  plugin_so=`${CC} ${CFLAGS} --print-prog-name $plugin`
+  if test x$plugin_so = x$plugin; then
+    plugin_so=`${CC} ${CFLAGS} --print-file-name $plugin`
+  fi
+  if test x$plugin_so != x$plugin; then
+    plugin_option="--plugin $plugin_so"
+    break
+  fi
+done
+if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}ar", so it can be a program name with args.
+set dummy ${ac_tool_prefix}ar; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_AR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$AR"; then
+  ac_cv_prog_AR="$AR" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_AR="${ac_tool_prefix}ar"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+AR=$ac_cv_prog_AR
+if test -n "$AR"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $AR" >&5
+$as_echo "$AR" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_prog_AR"; then
+  ac_ct_AR=$AR
+  # Extract the first word of "ar", so it can be a program name with args.
+set dummy ar; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_ac_ct_AR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$ac_ct_AR"; then
+  ac_cv_prog_ac_ct_AR="$ac_ct_AR" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_AR="ar"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+ac_ct_AR=$ac_cv_prog_ac_ct_AR
+if test -n "$ac_ct_AR"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_AR" >&5
+$as_echo "$ac_ct_AR" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_ct_AR" = x; then
+    AR=""
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    AR=$ac_ct_AR
+  fi
+else
+  AR="$ac_cv_prog_AR"
+fi
+
+if test "${AR}" = "" ; then
+  as_fn_error $? "Required archive tool 'ar' not found on PATH." "$LINENO" 5
+fi
+touch conftest.c
+${AR} $plugin_option rc conftest.a conftest.c
+if test "$?" != 0; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Failed: $AR $plugin_option rc" >&5
+$as_echo "$as_me: WARNING: Failed: $AR $plugin_option rc" >&2;}
+  plugin_option=
+fi
+rm -f conftest.*
+if test -n "$plugin_option"; then
+  PLUGIN_OPTION="$plugin_option"
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $plugin_option" >&5
+$as_echo "$plugin_option" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+AR_PLUGIN_OPTION=
+RANLIB_PLUGIN_OPTION=
+if test -n "$PLUGIN_OPTION"; then
+  if $AR --help 2>&1 | grep -q "\--plugin"; then
+    AR_PLUGIN_OPTION="$PLUGIN_OPTION"
+  fi
+  if $RANLIB --help 2>&1 | grep -q "\--plugin"; then
+    RANLIB_PLUGIN_OPTION="$PLUGIN_OPTION"
+  fi
+fi
 
 
 
@@ -10826,6 +13899,167 @@ fi
 
 
 
+if test -n "$GDC_FOR_TARGET"; then
+  ac_cv_prog_GDC_FOR_TARGET=$GDC_FOR_TARGET
+elif test -n "$ac_cv_prog_GDC_FOR_TARGET"; then
+  GDC_FOR_TARGET=$ac_cv_prog_GDC_FOR_TARGET
+fi
+
+if test -n "$ac_cv_prog_GDC_FOR_TARGET"; then
+  for ncn_progname in gdc; do
+    # Extract the first word of "${ncn_progname}", so it can be a program name with args.
+set dummy ${ncn_progname}; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_GDC_FOR_TARGET+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$GDC_FOR_TARGET"; then
+  ac_cv_prog_GDC_FOR_TARGET="$GDC_FOR_TARGET" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_GDC_FOR_TARGET="${ncn_progname}"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+GDC_FOR_TARGET=$ac_cv_prog_GDC_FOR_TARGET
+if test -n "$GDC_FOR_TARGET"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $GDC_FOR_TARGET" >&5
+$as_echo "$GDC_FOR_TARGET" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  done
+fi
+
+if test -z "$ac_cv_prog_GDC_FOR_TARGET" && test -n "$with_build_time_tools"; then
+  for ncn_progname in gdc; do
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ${ncn_progname} in $with_build_time_tools" >&5
+$as_echo_n "checking for ${ncn_progname} in $with_build_time_tools... " >&6; }
+    if test -x $with_build_time_tools/${ncn_progname}; then
+      ac_cv_prog_GDC_FOR_TARGET=$with_build_time_tools/${ncn_progname}
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+      break
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    fi
+  done
+fi
+
+if test -z "$ac_cv_prog_GDC_FOR_TARGET"; then
+  for ncn_progname in gdc; do
+    if test -n "$ncn_target_tool_prefix"; then
+      # Extract the first word of "${ncn_target_tool_prefix}${ncn_progname}", so it can be a program name with args.
+set dummy ${ncn_target_tool_prefix}${ncn_progname}; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_GDC_FOR_TARGET+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$GDC_FOR_TARGET"; then
+  ac_cv_prog_GDC_FOR_TARGET="$GDC_FOR_TARGET" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_GDC_FOR_TARGET="${ncn_target_tool_prefix}${ncn_progname}"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+GDC_FOR_TARGET=$ac_cv_prog_GDC_FOR_TARGET
+if test -n "$GDC_FOR_TARGET"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $GDC_FOR_TARGET" >&5
+$as_echo "$GDC_FOR_TARGET" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+    fi
+    if test -z "$ac_cv_prog_GDC_FOR_TARGET" && test $build = $target ; then
+      # Extract the first word of "${ncn_progname}", so it can be a program name with args.
+set dummy ${ncn_progname}; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_GDC_FOR_TARGET+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$GDC_FOR_TARGET"; then
+  ac_cv_prog_GDC_FOR_TARGET="$GDC_FOR_TARGET" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_GDC_FOR_TARGET="${ncn_progname}"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+GDC_FOR_TARGET=$ac_cv_prog_GDC_FOR_TARGET
+if test -n "$GDC_FOR_TARGET"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $GDC_FOR_TARGET" >&5
+$as_echo "$GDC_FOR_TARGET" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+    fi
+    test -n "$ac_cv_prog_GDC_FOR_TARGET" && break
+  done
+fi
+
+if test -z "$ac_cv_prog_GDC_FOR_TARGET" ; then
+  set dummy gdc
+  if test $build = $target ; then
+    GDC_FOR_TARGET="$2"
+  else
+    GDC_FOR_TARGET="${ncn_target_tool_prefix}$2"
+  fi
+else
+  GDC_FOR_TARGET="$ac_cv_prog_GDC_FOR_TARGET"
+fi
+
+
+
 cat > conftest.c << \EOF
 #ifdef __GNUC__
   gcc_yay;
@@ -11527,6 +14761,236 @@ fi
 
 else
   DLLTOOL_FOR_TARGET=$ac_cv_path_DLLTOOL_FOR_TARGET
+fi
+
+
+
+
+if test -z "$ac_cv_path_DSYMUTIL_FOR_TARGET" ; then
+  if test -n "$with_build_time_tools"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for dsymutil in $with_build_time_tools" >&5
+$as_echo_n "checking for dsymutil in $with_build_time_tools... " >&6; }
+    if test -x $with_build_time_tools/dsymutil; then
+      DSYMUTIL_FOR_TARGET=`cd $with_build_time_tools && pwd`/dsymutil
+      ac_cv_path_DSYMUTIL_FOR_TARGET=$DSYMUTIL_FOR_TARGET
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_path_DSYMUTIL_FOR_TARGET" >&5
+$as_echo "$ac_cv_path_DSYMUTIL_FOR_TARGET" >&6; }
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    fi
+  elif test $build != $host && test $have_gcc_for_target = yes; then
+    DSYMUTIL_FOR_TARGET=`$GCC_FOR_TARGET --print-prog-name=dsymutil`
+    test $DSYMUTIL_FOR_TARGET = dsymutil && DSYMUTIL_FOR_TARGET=
+    test -n "$DSYMUTIL_FOR_TARGET" && ac_cv_path_DSYMUTIL_FOR_TARGET=$DSYMUTIL_FOR_TARGET
+  fi
+fi
+if test -z "$ac_cv_path_DSYMUTIL_FOR_TARGET" && test -n "$gcc_cv_tool_dirs"; then
+  # Extract the first word of "dsymutil", so it can be a program name with args.
+set dummy dsymutil; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_DSYMUTIL_FOR_TARGET+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $DSYMUTIL_FOR_TARGET in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_DSYMUTIL_FOR_TARGET="$DSYMUTIL_FOR_TARGET" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $gcc_cv_tool_dirs
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_DSYMUTIL_FOR_TARGET="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+DSYMUTIL_FOR_TARGET=$ac_cv_path_DSYMUTIL_FOR_TARGET
+if test -n "$DSYMUTIL_FOR_TARGET"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $DSYMUTIL_FOR_TARGET" >&5
+$as_echo "$DSYMUTIL_FOR_TARGET" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_path_DSYMUTIL_FOR_TARGET" ; then
+
+
+if test -n "$DSYMUTIL_FOR_TARGET"; then
+  ac_cv_prog_DSYMUTIL_FOR_TARGET=$DSYMUTIL_FOR_TARGET
+elif test -n "$ac_cv_prog_DSYMUTIL_FOR_TARGET"; then
+  DSYMUTIL_FOR_TARGET=$ac_cv_prog_DSYMUTIL_FOR_TARGET
+fi
+
+if test -n "$ac_cv_prog_DSYMUTIL_FOR_TARGET"; then
+  for ncn_progname in dsymutil; do
+    # Extract the first word of "${ncn_progname}", so it can be a program name with args.
+set dummy ${ncn_progname}; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_DSYMUTIL_FOR_TARGET+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$DSYMUTIL_FOR_TARGET"; then
+  ac_cv_prog_DSYMUTIL_FOR_TARGET="$DSYMUTIL_FOR_TARGET" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_DSYMUTIL_FOR_TARGET="${ncn_progname}"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+DSYMUTIL_FOR_TARGET=$ac_cv_prog_DSYMUTIL_FOR_TARGET
+if test -n "$DSYMUTIL_FOR_TARGET"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $DSYMUTIL_FOR_TARGET" >&5
+$as_echo "$DSYMUTIL_FOR_TARGET" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  done
+fi
+
+if test -z "$ac_cv_prog_DSYMUTIL_FOR_TARGET" && test -n "$with_build_time_tools"; then
+  for ncn_progname in dsymutil; do
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ${ncn_progname} in $with_build_time_tools" >&5
+$as_echo_n "checking for ${ncn_progname} in $with_build_time_tools... " >&6; }
+    if test -x $with_build_time_tools/${ncn_progname}; then
+      ac_cv_prog_DSYMUTIL_FOR_TARGET=$with_build_time_tools/${ncn_progname}
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+      break
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    fi
+  done
+fi
+
+if test -z "$ac_cv_prog_DSYMUTIL_FOR_TARGET"; then
+  for ncn_progname in dsymutil; do
+    if test -n "$ncn_target_tool_prefix"; then
+      # Extract the first word of "${ncn_target_tool_prefix}${ncn_progname}", so it can be a program name with args.
+set dummy ${ncn_target_tool_prefix}${ncn_progname}; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_DSYMUTIL_FOR_TARGET+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$DSYMUTIL_FOR_TARGET"; then
+  ac_cv_prog_DSYMUTIL_FOR_TARGET="$DSYMUTIL_FOR_TARGET" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_DSYMUTIL_FOR_TARGET="${ncn_target_tool_prefix}${ncn_progname}"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+DSYMUTIL_FOR_TARGET=$ac_cv_prog_DSYMUTIL_FOR_TARGET
+if test -n "$DSYMUTIL_FOR_TARGET"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $DSYMUTIL_FOR_TARGET" >&5
+$as_echo "$DSYMUTIL_FOR_TARGET" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+    fi
+    if test -z "$ac_cv_prog_DSYMUTIL_FOR_TARGET" && test $build = $target ; then
+      # Extract the first word of "${ncn_progname}", so it can be a program name with args.
+set dummy ${ncn_progname}; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_DSYMUTIL_FOR_TARGET+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$DSYMUTIL_FOR_TARGET"; then
+  ac_cv_prog_DSYMUTIL_FOR_TARGET="$DSYMUTIL_FOR_TARGET" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_DSYMUTIL_FOR_TARGET="${ncn_progname}"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+DSYMUTIL_FOR_TARGET=$ac_cv_prog_DSYMUTIL_FOR_TARGET
+if test -n "$DSYMUTIL_FOR_TARGET"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $DSYMUTIL_FOR_TARGET" >&5
+$as_echo "$DSYMUTIL_FOR_TARGET" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+    fi
+    test -n "$ac_cv_prog_DSYMUTIL_FOR_TARGET" && break
+  done
+fi
+
+if test -z "$ac_cv_prog_DSYMUTIL_FOR_TARGET" ; then
+  set dummy dsymutil
+  if test $build = $target ; then
+    DSYMUTIL_FOR_TARGET="$2"
+  else
+    DSYMUTIL_FOR_TARGET="${ncn_target_tool_prefix}$2"
+  fi
+else
+  DSYMUTIL_FOR_TARGET="$ac_cv_prog_DSYMUTIL_FOR_TARGET"
+fi
+
+else
+  DSYMUTIL_FOR_TARGET=$ac_cv_path_DSYMUTIL_FOR_TARGET
 fi
 
 
@@ -12677,6 +16141,236 @@ fi
 
 else
   OBJDUMP_FOR_TARGET=$ac_cv_path_OBJDUMP_FOR_TARGET
+fi
+
+
+
+
+if test -z "$ac_cv_path_OTOOL_FOR_TARGET" ; then
+  if test -n "$with_build_time_tools"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for otool in $with_build_time_tools" >&5
+$as_echo_n "checking for otool in $with_build_time_tools... " >&6; }
+    if test -x $with_build_time_tools/otool; then
+      OTOOL_FOR_TARGET=`cd $with_build_time_tools && pwd`/otool
+      ac_cv_path_OTOOL_FOR_TARGET=$OTOOL_FOR_TARGET
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_path_OTOOL_FOR_TARGET" >&5
+$as_echo "$ac_cv_path_OTOOL_FOR_TARGET" >&6; }
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    fi
+  elif test $build != $host && test $have_gcc_for_target = yes; then
+    OTOOL_FOR_TARGET=`$GCC_FOR_TARGET --print-prog-name=otool`
+    test $OTOOL_FOR_TARGET = otool && OTOOL_FOR_TARGET=
+    test -n "$OTOOL_FOR_TARGET" && ac_cv_path_OTOOL_FOR_TARGET=$OTOOL_FOR_TARGET
+  fi
+fi
+if test -z "$ac_cv_path_OTOOL_FOR_TARGET" && test -n "$gcc_cv_tool_dirs"; then
+  # Extract the first word of "otool", so it can be a program name with args.
+set dummy otool; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_OTOOL_FOR_TARGET+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $OTOOL_FOR_TARGET in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_OTOOL_FOR_TARGET="$OTOOL_FOR_TARGET" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $gcc_cv_tool_dirs
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_OTOOL_FOR_TARGET="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+OTOOL_FOR_TARGET=$ac_cv_path_OTOOL_FOR_TARGET
+if test -n "$OTOOL_FOR_TARGET"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OTOOL_FOR_TARGET" >&5
+$as_echo "$OTOOL_FOR_TARGET" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_path_OTOOL_FOR_TARGET" ; then
+
+
+if test -n "$OTOOL_FOR_TARGET"; then
+  ac_cv_prog_OTOOL_FOR_TARGET=$OTOOL_FOR_TARGET
+elif test -n "$ac_cv_prog_OTOOL_FOR_TARGET"; then
+  OTOOL_FOR_TARGET=$ac_cv_prog_OTOOL_FOR_TARGET
+fi
+
+if test -n "$ac_cv_prog_OTOOL_FOR_TARGET"; then
+  for ncn_progname in otool; do
+    # Extract the first word of "${ncn_progname}", so it can be a program name with args.
+set dummy ${ncn_progname}; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_OTOOL_FOR_TARGET+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$OTOOL_FOR_TARGET"; then
+  ac_cv_prog_OTOOL_FOR_TARGET="$OTOOL_FOR_TARGET" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_OTOOL_FOR_TARGET="${ncn_progname}"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+OTOOL_FOR_TARGET=$ac_cv_prog_OTOOL_FOR_TARGET
+if test -n "$OTOOL_FOR_TARGET"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OTOOL_FOR_TARGET" >&5
+$as_echo "$OTOOL_FOR_TARGET" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  done
+fi
+
+if test -z "$ac_cv_prog_OTOOL_FOR_TARGET" && test -n "$with_build_time_tools"; then
+  for ncn_progname in otool; do
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ${ncn_progname} in $with_build_time_tools" >&5
+$as_echo_n "checking for ${ncn_progname} in $with_build_time_tools... " >&6; }
+    if test -x $with_build_time_tools/${ncn_progname}; then
+      ac_cv_prog_OTOOL_FOR_TARGET=$with_build_time_tools/${ncn_progname}
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+      break
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    fi
+  done
+fi
+
+if test -z "$ac_cv_prog_OTOOL_FOR_TARGET"; then
+  for ncn_progname in otool; do
+    if test -n "$ncn_target_tool_prefix"; then
+      # Extract the first word of "${ncn_target_tool_prefix}${ncn_progname}", so it can be a program name with args.
+set dummy ${ncn_target_tool_prefix}${ncn_progname}; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_OTOOL_FOR_TARGET+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$OTOOL_FOR_TARGET"; then
+  ac_cv_prog_OTOOL_FOR_TARGET="$OTOOL_FOR_TARGET" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_OTOOL_FOR_TARGET="${ncn_target_tool_prefix}${ncn_progname}"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+OTOOL_FOR_TARGET=$ac_cv_prog_OTOOL_FOR_TARGET
+if test -n "$OTOOL_FOR_TARGET"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OTOOL_FOR_TARGET" >&5
+$as_echo "$OTOOL_FOR_TARGET" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+    fi
+    if test -z "$ac_cv_prog_OTOOL_FOR_TARGET" && test $build = $target ; then
+      # Extract the first word of "${ncn_progname}", so it can be a program name with args.
+set dummy ${ncn_progname}; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_OTOOL_FOR_TARGET+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$OTOOL_FOR_TARGET"; then
+  ac_cv_prog_OTOOL_FOR_TARGET="$OTOOL_FOR_TARGET" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_OTOOL_FOR_TARGET="${ncn_progname}"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+OTOOL_FOR_TARGET=$ac_cv_prog_OTOOL_FOR_TARGET
+if test -n "$OTOOL_FOR_TARGET"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OTOOL_FOR_TARGET" >&5
+$as_echo "$OTOOL_FOR_TARGET" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+    fi
+    test -n "$ac_cv_prog_OTOOL_FOR_TARGET" && break
+  done
+fi
+
+if test -z "$ac_cv_prog_OTOOL_FOR_TARGET" ; then
+  set dummy otool
+  if test $build = $target ; then
+    OTOOL_FOR_TARGET="$2"
+  else
+    OTOOL_FOR_TARGET="${ncn_target_tool_prefix}$2"
+  fi
+else
+  OTOOL_FOR_TARGET="$ac_cv_prog_OTOOL_FOR_TARGET"
+fi
+
+else
+  OTOOL_FOR_TARGET=$ac_cv_path_OTOOL_FOR_TARGET
 fi
 
 
@@ -14090,6 +17784,37 @@ $as_echo "pre-installed" >&6; }
   fi
 fi
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking where to find the target dsymutil" >&5
+$as_echo_n "checking where to find the target dsymutil... " >&6; }
+if test "x${build}" != "x${host}" ; then
+  if expr "x$DSYMUTIL_FOR_TARGET" : "x/" > /dev/null; then
+    # We already found the complete path
+    ac_dir=`dirname $DSYMUTIL_FOR_TARGET`
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: pre-installed in $ac_dir" >&5
+$as_echo "pre-installed in $ac_dir" >&6; }
+  else
+    # Canadian cross, just use what we found
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: pre-installed" >&5
+$as_echo "pre-installed" >&6; }
+  fi
+else
+  if expr "x$DSYMUTIL_FOR_TARGET" : "x/" > /dev/null; then
+    # We already found the complete path
+    ac_dir=`dirname $DSYMUTIL_FOR_TARGET`
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: pre-installed in $ac_dir" >&5
+$as_echo "pre-installed in $ac_dir" >&6; }
+  elif test "x$target" = "x$host"; then
+    # We can use an host tool
+    DSYMUTIL_FOR_TARGET='$(DSYMUTIL)'
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: host tool" >&5
+$as_echo "host tool" >&6; }
+  else
+    # We need a cross tool
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: pre-installed" >&5
+$as_echo "pre-installed" >&6; }
+  fi
+fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking where to find the target gcc" >&5
 $as_echo_n "checking where to find the target gcc... " >&6; }
 if test "x${build}" != "x${host}" ; then
@@ -14213,6 +17938,51 @@ $as_echo "pre-installed in $ac_dir" >&6; }
   elif test "x$target" = "x$host"; then
     # We can use an host tool
     GOC_FOR_TARGET='$(GOC)'
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: host tool" >&5
+$as_echo "host tool" >&6; }
+  else
+    # We need a cross tool
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: pre-installed" >&5
+$as_echo "pre-installed" >&6; }
+  fi
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking where to find the target gdc" >&5
+$as_echo_n "checking where to find the target gdc... " >&6; }
+if test "x${build}" != "x${host}" ; then
+  if expr "x$GDC_FOR_TARGET" : "x/" > /dev/null; then
+    # We already found the complete path
+    ac_dir=`dirname $GDC_FOR_TARGET`
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: pre-installed in $ac_dir" >&5
+$as_echo "pre-installed in $ac_dir" >&6; }
+  else
+    # Canadian cross, just use what we found
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: pre-installed" >&5
+$as_echo "pre-installed" >&6; }
+  fi
+else
+  ok=yes
+  case " ${configdirs} " in
+    *" gcc "*) ;;
+    *) ok=no ;;
+  esac
+  case ,${enable_languages}, in
+    *,d,*) ;;
+    *) ok=no ;;
+  esac
+  if test $ok = yes; then
+    # An in-tree tool is available and we can use it
+    GDC_FOR_TARGET='$$r/$(HOST_SUBDIR)/gcc/gdc -B$$r/$(HOST_SUBDIR)/gcc/'
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: just compiled" >&5
+$as_echo "just compiled" >&6; }
+  elif expr "x$GDC_FOR_TARGET" : "x/" > /dev/null; then
+    # We already found the complete path
+    ac_dir=`dirname $GDC_FOR_TARGET`
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: pre-installed in $ac_dir" >&5
+$as_echo "pre-installed in $ac_dir" >&6; }
+  elif test "x$target" = "x$host"; then
+    # We can use an host tool
+    GDC_FOR_TARGET='$(GDC)'
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: host tool" >&5
 $as_echo "host tool" >&6; }
   else
@@ -14412,6 +18182,37 @@ $as_echo "pre-installed in $ac_dir" >&6; }
   elif test "x$target" = "x$host"; then
     # We can use an host tool
     OBJDUMP_FOR_TARGET='$(OBJDUMP)'
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: host tool" >&5
+$as_echo "host tool" >&6; }
+  else
+    # We need a cross tool
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: pre-installed" >&5
+$as_echo "pre-installed" >&6; }
+  fi
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking where to find the target otool" >&5
+$as_echo_n "checking where to find the target otool... " >&6; }
+if test "x${build}" != "x${host}" ; then
+  if expr "x$OTOOL_FOR_TARGET" : "x/" > /dev/null; then
+    # We already found the complete path
+    ac_dir=`dirname $OTOOL_FOR_TARGET`
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: pre-installed in $ac_dir" >&5
+$as_echo "pre-installed in $ac_dir" >&6; }
+  else
+    # Canadian cross, just use what we found
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: pre-installed" >&5
+$as_echo "pre-installed" >&6; }
+  fi
+else
+  if expr "x$OTOOL_FOR_TARGET" : "x/" > /dev/null; then
+    # We already found the complete path
+    ac_dir=`dirname $OTOOL_FOR_TARGET`
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: pre-installed in $ac_dir" >&5
+$as_echo "pre-installed in $ac_dir" >&6; }
+  elif test "x$target" = "x$host"; then
+    # We can use an host tool
+    OTOOL_FOR_TARGET='$(OTOOL)'
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: host tool" >&5
 $as_echo "host tool" >&6; }
   else
@@ -14754,8 +18555,8 @@ fi
 compare_exclusions="gcc/cc*-checksum\$(objext) | gcc/ada/*tools/*"
 case "$target" in
   hppa*64*-*-hpux*) ;;
-  hppa*-*-hpux*) compare_exclusions="gcc/cc*-checksum\$(objext) | */libgcc/lib2funcs* | gcc/ada/*tools/* | gcc/function-tests.o" ;;
-  powerpc*-ibm-aix*) compare_exclusions="gcc/cc*-checksum\$(objext) | gcc/ada/*tools/* | *libgomp*\$(objext)" ;;
+  hppa*-*-hpux*) compare_exclusions="$compare_exclusions | */libgcc/lib2funcs* | gcc/function-tests.o" ;;
+  powerpc*-ibm-aix*) compare_exclusions="$compare_exclusions | *libgomp*\$(objext)" ;;
 esac
 
 

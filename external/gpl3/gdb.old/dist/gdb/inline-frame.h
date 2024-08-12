@@ -1,6 +1,6 @@
 /* Definitions for inline frame support.
 
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,9 +20,9 @@
 #if !defined (INLINE_FRAME_H)
 #define INLINE_FRAME_H 1
 
-struct frame_info;
+class frame_info_ptr;
 struct frame_unwind;
-struct bpstats;
+struct bpstat;
 struct process_stratum_target;
 
 /* The inline frame unwinder.  */
@@ -37,7 +37,7 @@ extern const struct frame_unwind inline_frame_unwind;
    user's perspective.  GDB will stop "in" the inlined frame instead of
    the caller.  */
 
-void skip_inline_frames (thread_info *thread, struct bpstats *stop_chain);
+void skip_inline_frames (thread_info *thread, struct bpstat *stop_chain);
 
 /* Forget about any hidden inlined functions in PTID, which is new or
    about to be resumed.  PTID may be minus_one_ptid (all processes of
@@ -68,6 +68,6 @@ struct symbol *inline_skipped_symbol (thread_info *thread);
    the callees may not have associated frames (see
    skip_inline_frames).  */
 
-int frame_inlined_callees (struct frame_info *this_frame);
+int frame_inlined_callees (frame_info_ptr this_frame);
 
 #endif /* !defined (INLINE_FRAME_H) */

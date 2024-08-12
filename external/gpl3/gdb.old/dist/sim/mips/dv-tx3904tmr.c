@@ -1,8 +1,8 @@
 /*  This file is part of the program GDB, the GNU debugger.
-    
-    Copyright (C) 1998-2020 Free Software Foundation, Inc.
+
+    Copyright (C) 1998-2023 Free Software Foundation, Inc.
     Contributed by Cygnus Solutions.
-    
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 3 of the License, or
@@ -15,9 +15,11 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    
+
     */
 
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include "sim-main.h"
 #include "hw-main.h"
@@ -25,20 +27,20 @@
 
 /* DEVICE
 
-   
+
    tx3904tmr - tx3904 timer
 
-   
+
    DESCRIPTION
 
-   
+
    Implements one tx3904 timer/counter described in the tx3904
    user guide.  Three instances are required for TMR0, TMR1, and
-   TMR3 within the tx3904, at different base addresses.  
+   TMR3 within the tx3904, at different base addresses.
 
    Both internal and system clocks are synthesized as divided versions
    of the simulator clock.
-   
+
    There is no support for:
     - edge sensitivity of external clock
     - different mode restrictions for TMR0..2
@@ -68,7 +70,7 @@
    Rate of timer clock signal.  This number is the number of simulator
    ticks per clock signal tick.  Default 1.
 
-   
+
    ext <ticks>
 
    Rate of "external input clock signal", the other clock input of the
@@ -106,7 +108,7 @@ static void deliver_tx3904tmr_tick (struct hw *me, void *data);
 
 
 /* register numbers; each is one word long */
-enum 
+enum
 {
   TCR_REG = 0,
   TISR_REG = 1,
@@ -131,7 +133,7 @@ enum
 };
 
 
-static const struct hw_port_descriptor tx3904tmr_ports[] = 
+static const struct hw_port_descriptor tx3904tmr_ports[] =
 {
   { "int", INT_PORT, 0, output_port, },
   { "ff", FF_PORT, 0, output_port, },
@@ -226,10 +228,10 @@ attach_tx3904tmr_regs (struct hw *me,
 		     attach_space, attach_address, attach_size,
 		     me);
 
-  if(hw_find_property(me, "clock") != NULL)
+  if (hw_find_property(me, "clock") != NULL)
     controller->clock_ticks = (unsigned_4) hw_find_integer_property(me, "clock");
 
-  if(hw_find_property(me, "ext") != NULL)
+  if (hw_find_property(me, "ext") != NULL)
     controller->ext_ticks = (unsigned_4) hw_find_integer_property(me, "ext");
 
   controller->base_address = attach_address;
@@ -256,12 +258,12 @@ tx3904tmr_finish (struct hw *me)
   attach_tx3904tmr_regs (me, controller);
 
   /* Initialize to reset state */
-  controller->tcr = 
+  controller->tcr =
     controller->itmr =
     controller->ccdr =
-    controller->pmgr = 
+    controller->pmgr =
     controller->wtmr =
-    controller->tisr = 
+    controller->tisr =
     controller->trr = 0;
   controller->cpra = controller->cprb = 0x00FFFFFF;
   controller->ff = 0;
@@ -291,16 +293,16 @@ tx3904tmr_port_event (struct hw *me,
 	/* preset flip-flop to FFI value */
 	controller->ff = GET_PMGR_FFI(controller);
 
-	controller->tcr = 
+	controller->tcr =
 	  controller->itmr =
 	  controller->ccdr =
-	  controller->pmgr = 
+	  controller->pmgr =
 	  controller->wtmr =
-	  controller->tisr = 
+	  controller->tisr =
 	  controller->trr = 0;
 	controller->cpra = controller->cprb = 0x00FFFFFF;
 	controller->last_ticks = controller->roundoff_ticks = 0;
-	if(controller->event != NULL)
+	if (controller->event != NULL)
 	  hw_event_queue_deschedule(me, controller->event);
 	controller->event = NULL;
 	break;
@@ -353,7 +355,7 @@ tx3904tmr_io_read_buffer (struct hw *me,
     }
 
   return nr_bytes;
-}     
+}
 
 
 
@@ -379,13 +381,13 @@ tx3904tmr_io_write_buffer (struct hw *me,
       switch (reg_number)
 	{
 	case TCR_REG:
-	  if(reg_offset == 0) /* first byte */
+	  if (reg_offset == 0) /* first byte */
 	    {
 	      /* update register, but mask out NOP bits */
 	      controller->tcr = (unsigned_4) (write_byte & 0xef);
 
 	      /* Reset counter value if timer suspended and CRE is set. */
-	      if(GET_TCR_TCE(controller) == 0 &&
+	      if (GET_TCR_TCE(controller) == 0 &&
 		 GET_TCR_CRE(controller) == 1)
 		controller->trr = 0;
 	    }
@@ -393,11 +395,11 @@ tx3904tmr_io_write_buffer (struct hw *me,
 	  break;
 
 	case ITMR_REG:
-	  if(reg_offset == 1) /* second byte */
+	  if (reg_offset == 1) /* second byte */
 	    {
 	      SET_ITMR_TIIE(controller, write_byte & 0x80);
 	    }
-	  else if(reg_offset == 0) /* first byte */
+	  else if (reg_offset == 0) /* first byte */
 	    {
 	      SET_ITMR_TZCE(controller, write_byte & 0x01);
 	    }
@@ -405,7 +407,7 @@ tx3904tmr_io_write_buffer (struct hw *me,
 	  break;
 
 	case CCDR_REG:
-	  if(reg_offset == 0) /* first byte */
+	  if (reg_offset == 0) /* first byte */
 	    {
 	      controller->ccdr = write_byte & 0x07;
 	    }
@@ -413,12 +415,12 @@ tx3904tmr_io_write_buffer (struct hw *me,
 	  break;
 
 	case PMGR_REG:
-	  if(reg_offset == 1) /* second byte */
+	  if (reg_offset == 1) /* second byte */
 	    {
 	      SET_PMGR_TPIBE(controller, write_byte & 0x80);
 	      SET_PMGR_TPIAE(controller, write_byte & 0x40);
 	    }
-	  else if(reg_offset == 0) /* first byte */
+	  else if (reg_offset == 0) /* first byte */
 	    {
 	      SET_PMGR_FFI(controller, write_byte & 0x01);
 	    }
@@ -426,11 +428,11 @@ tx3904tmr_io_write_buffer (struct hw *me,
 	  break;
 
 	case WTMR_REG:
-	  if(reg_offset == 1) /* second byte */
+	  if (reg_offset == 1) /* second byte */
 	    {
 	      SET_WTMR_TWIE(controller, write_byte & 0x80);
 	    }
-	  else if(reg_offset == 0) /* first byte */
+	  else if (reg_offset == 0) /* first byte */
 	    {
 	      SET_WTMR_WDIS(controller, write_byte & 0x80);
 	      SET_WTMR_TWC(controller, write_byte & 0x01);
@@ -439,17 +441,17 @@ tx3904tmr_io_write_buffer (struct hw *me,
 	  break;
 
 	case TISR_REG:
-	  if(reg_offset == 0) /* first byte */
+	  if (reg_offset == 0) /* first byte */
 	    {
 	      /* All bits must be zero in given byte, according to
                  spec. */
 
 	      /* Send an "interrupt off" event on the interrupt port */
-	      if(controller->tisr != 0) /* any interrupts active? */
+	      if (controller->tisr != 0) /* any interrupts active? */
 		{
-		  hw_port_event(me, INT_PORT, 0);		  
+		  hw_port_event (me, INT_PORT, 0);
 		}
-	      
+
 	      /* clear interrupt status register */
 	      controller->tisr = 0;
 	    }
@@ -457,7 +459,7 @@ tx3904tmr_io_write_buffer (struct hw *me,
 	  break;
 
 	case CPRA_REG:
-	  if(reg_offset < 3) /* first, second, or third byte */
+	  if (reg_offset < 3) /* first, second, or third byte */
 	    {
 	      MBLIT32(controller->cpra, (reg_offset*8)+7, (reg_offset*8), write_byte);
 	    }
@@ -465,14 +467,14 @@ tx3904tmr_io_write_buffer (struct hw *me,
 	  break;
 
 	case CPRB_REG:
-	  if(reg_offset < 3) /* first, second, or third byte */
+	  if (reg_offset < 3) /* first, second, or third byte */
 	    {
 	      MBLIT32(controller->cprb, (reg_offset*8)+7, (reg_offset*8), write_byte);
 	    }
 	  /* HW_TRACE ((me, "cprb: %08lx", (long) controller->cprb)); */
 	  break;
 
-	default: 
+	default:
 	  HW_TRACE ((me, "write to illegal register %d", reg_number));
 	}
     } /* loop over bytes */
@@ -482,7 +484,7 @@ tx3904tmr_io_write_buffer (struct hw *me,
   hw_event_queue_schedule(me, 1, deliver_tx3904tmr_tick, NULL);
 
   return nr_bytes;
-}     
+}
 
 
 
@@ -500,7 +502,7 @@ deliver_tx3904tmr_tick (struct hw *me,
   signed_8 quotient, remainder;
 
   /* compute simulation ticks between last tick and this tick */
-  if(controller->last_ticks != 0)
+  if (controller->last_ticks != 0)
     warp = this_ticks - controller->last_ticks + controller->roundoff_ticks;
   else
     {
@@ -508,31 +510,31 @@ deliver_tx3904tmr_tick (struct hw *me,
       warp = controller->roundoff_ticks;
     }
 
-  if(controller->event != NULL)
+  if (controller->event != NULL)
     hw_event_queue_deschedule(me, controller->event);
   controller->event = NULL;
 
   /* Check whether the timer ticking is enabled at this moment.  This
      largely a function of the TCE bit, but is also slightly
      mode-dependent. */
-  switch((int) GET_TCR_TMODE(controller))
+  switch ((int) GET_TCR_TMODE(controller))
     {
     case 0: /* interval */
       /* do not advance counter if TCE = 0 or if holding at count = CPRA */
-      if(GET_TCR_TCE(controller) == 0 ||
+      if (GET_TCR_TCE(controller) == 0 ||
 	 controller->trr == controller->cpra)
 	return;
       break;
 
     case 1: /* pulse generator */
       /* do not advance counter if TCE = 0 */
-      if(GET_TCR_TCE(controller) == 0)
+      if (GET_TCR_TCE(controller) == 0)
 	return;
       break;
 
     case 2: /* watchdog */
       /* do not advance counter if TCE = 0 and WDIS = 1 */
-      if(GET_TCR_TCE(controller) == 0 &&
+      if (GET_TCR_TCE(controller) == 0 &&
 	 GET_WTMR_WDIS(controller) == 1)
 	return;
       break;
@@ -548,11 +550,11 @@ deliver_tx3904tmr_tick (struct hw *me,
      reschedule dummy events here. */
 
 
-  /* find appropriate divisor etc. */ 
-  if(GET_TCR_CCS(controller) == 0) /* internal system clock */
+  /* find appropriate divisor etc. */
+  if (GET_TCR_CCS(controller) == 0) /* internal system clock */
     {
       /* apply internal clock divider */
-      if(GET_TCR_CCDE(controller)) /* divisor circuit enabled? */
+      if (GET_TCR_CCDE(controller)) /* divisor circuit enabled? */
 	divisor = controller->clock_ticks * (1 << (1 + GET_CCDR_CDR(controller)));
       else
 	divisor = controller->clock_ticks;
@@ -580,8 +582,8 @@ deliver_tx3904tmr_tick (struct hw *me,
       /* next 24-bit counter value */
       unsigned_4 next_trr = (controller->trr + 1) % (1 << 24);
       quotient --;
-      
-      switch((int) GET_TCR_TMODE(controller))
+
+      switch ((int) GET_TCR_TMODE(controller))
 	{
 	case 0: /* interval timer mode */
 	  {
@@ -589,11 +591,11 @@ deliver_tx3904tmr_tick (struct hw *me,
 	       first case covers counter holding at maximum before
 	       reset.  The second case covers normal counting
 	       behavior. */
-	    if(controller->trr == controller->cpra ||
+	    if (controller->trr == controller->cpra ||
 	       next_trr == controller->cpra)
 	      {
 		/* likely hold CPRA value */
-		if(controller->trr == controller->cpra)
+		if (controller->trr == controller->cpra)
 		  next_trr = controller->cpra;
 
 		SET_TISR_TIIS(controller);
@@ -601,14 +603,14 @@ deliver_tx3904tmr_tick (struct hw *me,
 		/* Signal an interrupt if it is enabled with TIIE,
 		   and if we just arrived at CPRA.  Don't repeatedly
 		   interrupt if holding due to TZCE=0 */
-		if(GET_ITMR_TIIE(controller) &&
+		if (GET_ITMR_TIIE(controller) &&
 		   next_trr != controller->trr)
 		  {
 		    hw_port_event(me, INT_PORT, 1);
 		  }
 
 		/* Reset counter? */
-		if(GET_ITMR_TZCE(controller))
+		if (GET_ITMR_TZCE(controller))
 		  {
 		    next_trr = 0;
 		  }
@@ -619,7 +621,7 @@ deliver_tx3904tmr_tick (struct hw *me,
 	case 1: /* pulse generator mode */
 	  {
 	    /* first trip point */
-	    if(next_trr == controller->cpra)
+	    if (next_trr == controller->cpra)
 	      {
 		/* flip flip-flop & report */
 		controller->ff ^= 1;
@@ -627,14 +629,14 @@ deliver_tx3904tmr_tick (struct hw *me,
 		SET_TISR_TPIAS(controller);
 
 		/* signal interrupt */
-		if(GET_PMGR_TPIAE(controller))
+		if (GET_PMGR_TPIAE(controller))
 		  {
 		    hw_port_event(me, INT_PORT, 1);
 		  }
 
 	      }
 	    /* second trip point */
-	    else if(next_trr == controller->cprb)
+	    else if (next_trr == controller->cprb)
 	      {
 		/* flip flip-flop & report */
 		controller->ff ^= 1;
@@ -642,7 +644,7 @@ deliver_tx3904tmr_tick (struct hw *me,
 		SET_TISR_TPIBS(controller);
 
 		/* signal interrupt */
-		if(GET_PMGR_TPIBE(controller))
+		if (GET_PMGR_TPIBE(controller))
 		  {
 		    hw_port_event(me, INT_PORT, 1);
 		  }
@@ -656,12 +658,12 @@ deliver_tx3904tmr_tick (struct hw *me,
 	case 2: /* watchdog timer mode */
 	  {
 	    /* watchdog timer expiry */
-	    if(next_trr == controller->cpra)
+	    if (next_trr == controller->cpra)
 	      {
 		SET_TISR_TWIS(controller);
 
 		/* signal interrupt */
-		if(GET_WTMR_TWIE(controller))
+		if (GET_WTMR_TWIE(controller))
 		  {
 		    hw_port_event(me, INT_PORT, 1);
 		  }

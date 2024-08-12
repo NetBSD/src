@@ -1,5 +1,5 @@
 /* frv cache model.
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2023 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
 This file is part of the GNU simulators.
@@ -17,6 +17,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #define WANT_CPU frvbf
 #define WANT_CPU_FRVBF
 
@@ -24,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "sim-main.h"
 #include "cache.h"
 #include "bfd.h"
+#include <stdlib.h>
 
 void
 frv_cache_init (SIM_CPU *cpu, FRV_CACHE *cache)
@@ -207,12 +211,12 @@ non_cache_access (FRV_CACHE *cache, USI address)
     case bfd_mach_fr400:
     case bfd_mach_fr450:
       if (address >= 0xff000000
-	  || address >= 0xfe000000 && address <= 0xfeffffff)
+	  || (address >= 0xfe000000 && address <= 0xfeffffff))
 	return 1; /* non-cache access */
       break;
     case bfd_mach_fr550:
       if (address >= 0xff000000
-	  || address >= 0xfeff0000 && address <= 0xfeffffff)
+	  || (address >= 0xfeff0000 && address <= 0xfeffffff))
 	return 1; /* non-cache access */
       if (cache == CPU_INSN_CACHE (current_cpu))
 	{
@@ -224,7 +228,7 @@ non_cache_access (FRV_CACHE *cache, USI address)
       break;
     default:
       if (address >= 0xff000000
-	  || address >= 0xfeff0000 && address <= 0xfeffffff)
+	  || (address >= 0xfeff0000 && address <= 0xfeffffff))
 	return 1; /* non-cache access */
       if (cache == CPU_INSN_CACHE (current_cpu))
 	{

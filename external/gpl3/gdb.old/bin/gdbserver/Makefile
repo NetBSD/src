@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2024/08/12 19:58:47 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2024/08/12 20:30:05 christos Exp $
 
 NOCTF=
 NOMAN=
