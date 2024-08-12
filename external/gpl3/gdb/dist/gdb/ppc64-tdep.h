@@ -1,6 +1,6 @@
 /* Common target-dependent code for ppc64.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +24,7 @@ struct gdbarch;
 class frame_info_ptr;
 struct target_ops;
 
-extern CORE_ADDR ppc64_skip_trampoline_code (frame_info_ptr frame,
+extern CORE_ADDR ppc64_skip_trampoline_code (const frame_info_ptr &frame,
 					     CORE_ADDR pc);
 
 extern CORE_ADDR ppc64_convert_from_func_ptr_addr (struct gdbarch *gdbarch,
