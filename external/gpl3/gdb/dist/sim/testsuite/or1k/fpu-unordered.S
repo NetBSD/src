@@ -1,6 +1,6 @@
 /* Tests some basic unordered fpu compare instructions.
 
-   Copyright (C) 2019-2023 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -57,7 +57,7 @@ start_tests:
 	 *  r13  e   as float
 	 *  r16  nan as float
 	 */
-	l.ori	r11, r0, ha(anchor)
+	l.movhi	r11, ha(anchor)
 	l.addi	r11, r11, lo(anchor)
 	l.lwz	r12, 0(r11)
 
