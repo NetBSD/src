@@ -1,5 +1,5 @@
 /* interrupts.c -- 68HC11 Interrupts Emulation
-   Copyright 1999-2023 Free Software Foundation, Inc.
+   Copyright 1999-2024 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@nerim.fr)
 
 This file is part of GDB, GAS, and the GNU binutils.
@@ -20,9 +20,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 /* This must come before any other includes.  */
 #include "defs.h"
 
+#include "bfd.h"
+
 #include "sim-main.h"
 #include "sim-options.h"
 #include "sim-signal.h"
+
+#include "m68hc11-sim.h"
 
 static const char *interrupt_names[] = {
   "R1",
@@ -128,7 +132,7 @@ static const OPTION interrupt_options[] =
 void
 interrupts_initialize (SIM_DESC sd, sim_cpu *cpu)
 {
-  struct interrupts *interrupts = &cpu->cpu_interrupts;
+  struct interrupts *interrupts = &M68HC11_SIM_CPU (cpu)->cpu_interrupts;
   
   interrupts->cpu          = cpu;
 
@@ -139,10 +143,12 @@ interrupts_initialize (SIM_DESC sd, sim_cpu *cpu)
 void
 interrupts_reset (struct interrupts *interrupts)
 {
+  sim_cpu *cpu = interrupts->cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu = M68HC11_SIM_CPU (cpu);
   int i;
   
   interrupts->pending_mask = 0;
-  if (interrupts->cpu->cpu_mode & M6811_SMOD)
+  if (m68hc11_cpu->cpu_mode & M6811_SMOD)
     interrupts->vectors_addr = 0xbfc0;
   else
     interrupts->vectors_addr = 0xffc0;
@@ -171,13 +177,13 @@ interrupts_reset (struct interrupts *interrupts)
 
   /* In bootstrap mode, initialize the vector table to point
      to the RAM location.  */
-  if (interrupts->cpu->cpu_mode == M6811_SMOD)
+  if (m68hc11_cpu->cpu_mode == M6811_SMOD)
     {
       bfd_vma addr = interrupts->vectors_addr;
       uint16_t vector = 0x0100 - 3 * (M6811_INT_NUMBER - 1);
       for (i = 0; i < M6811_INT_NUMBER; i++)
         {
-          memory_write16 (interrupts->cpu, addr, vector);
+          memory_write16 (cpu, addr, vector);
           addr += 2;
           vector += 3;
         }
@@ -209,7 +215,7 @@ interrupt_option_handler (SIM_DESC sd, sim_cpu *cpu,
   if (cpu == 0)
     cpu = STATE_CPU (sd, 0);
 
-  interrupts = &cpu->cpu_interrupts;
+  interrupts = &M68HC11_SIM_CPU (cpu)->cpu_interrupts;
   switch (opt)
     {
     case OPTION_INTERRUPT_INFO:
@@ -291,7 +297,7 @@ interrupts_update_pending (struct interrupts *interrupts)
 
   clear_mask = 0;
   set_mask = 0;
-  ioregs = &interrupts->cpu->ios[0];
+  ioregs = &M68HC11_SIM_CPU (interrupts->cpu)->ios[0];
   
   for (i = 0; i < ARRAY_SIZE (idefs); i++)
     {

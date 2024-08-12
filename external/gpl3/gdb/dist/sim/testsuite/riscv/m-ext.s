@@ -1,5 +1,5 @@
 # Check that the RV32M instructions run without any faults.
-# mach: riscv
+# mach: riscv32 riscv64
 
 .include "testutils.inc"
 
