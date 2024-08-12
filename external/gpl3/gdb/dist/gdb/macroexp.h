@@ -1,5 +1,5 @@
 /* Interface to C preprocessor macro expansion for GDB.
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GDB.
@@ -57,7 +57,7 @@ gdb::unique_xmalloc_ptr<char> macro_expand_once (const char *source,
    freeing it, using xfree.
 
    We need this expand-one-token-at-a-time interface in order to
-   accomodate GDB's C expression parser, which may not consume the
+   accommodate GDB's C expression parser, which may not consume the
    entire string.  When the user enters a command like
 
       (gdb) break *func+20 if x == 5

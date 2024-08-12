@@ -1,6 +1,6 @@
 /* Objective-C language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Apple Computer, Inc.
    Written by Michael Snyder.
@@ -20,7 +20,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "event-top.h"
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "expression.h"
@@ -35,7 +35,7 @@
 #include "objfiles.h"
 #include "target.h"
 #include "gdbcore.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "frame.h"
 #include "gdbsupport/gdb_regex.h"
 #include "regcache.h"
@@ -87,7 +87,7 @@ lookup_struct_typedef (const char *name, const struct block *block, int noerr)
 {
   struct symbol *sym;
 
-  sym = lookup_symbol (name, block, STRUCT_DOMAIN, 0).symbol;
+  sym = lookup_symbol (name, block, SEARCH_STRUCT_DOMAIN, 0).symbol;
 
   if (sym == NULL)
     {
@@ -212,7 +212,7 @@ value_nsstring (struct gdbarch *gdbarch, const char *ptr, int len)
   else
     type = lookup_pointer_type(sym->type ());
 
-  deprecated_set_value_type (nsstringValue, type);
+  nsstringValue->deprecated_set_type (type);
   return nsstringValue;
 }
 
@@ -282,7 +282,7 @@ public:
 
   /* See language.h.  */
 
-  CORE_ADDR skip_trampoline (frame_info_ptr frame,
+  CORE_ADDR skip_trampoline (const frame_info_ptr &frame,
 			     CORE_ADDR stop_pc) const override
   {
     struct gdbarch *gdbarch = get_frame_arch (frame);
@@ -1129,7 +1129,7 @@ find_imps (const char *method, std::vector<const char *> *symbol_names)
      add the selector itself as a symbol, if it exists.  */
   if (selector_case && !symbol_names->empty ())
     {
-      struct symbol *sym = lookup_symbol (selector, NULL, VAR_DOMAIN,
+      struct symbol *sym = lookup_symbol (selector, NULL, SEARCH_VFT,
 					  0).symbol;
 
       if (sym != NULL) 
@@ -1164,9 +1164,7 @@ print_object_command (const char *args, int from_tty)
   {
     expression_up expr = parse_expression (args);
 
-    object
-      = evaluate_expression (expr.get (),
-			     builtin_type (expr->gdbarch)->builtin_data_ptr);
+    object = expr->evaluate (builtin_type (expr->gdbarch)->builtin_data_ptr);
   }
 
   /* Validate the address for sanity.  */
@@ -1286,7 +1284,7 @@ find_objc_msgcall_submethod (int (*f) (CORE_ADDR, CORE_ADDR *),
       if (f (pc, new_pc) == 0)
 	return 1;
     }
-  catch (const gdb_exception &ex)
+  catch (const gdb_exception_error &ex)
     {
       exception_fprintf (gdb_stderr, ex,
 			 "Unable to determine target of "

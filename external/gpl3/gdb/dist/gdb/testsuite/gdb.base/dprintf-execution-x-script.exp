@@ -1,4 +1,4 @@
-# Copyright 2021-2023 Free Software Foundation, Inc.
+# Copyright 2021-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,9 +20,7 @@
 # part of this test.
 
 # Bail out if the target can't use the 'run' command.
-if ![target_can_use_run_cmd] {
-    return 0
-}
+require target_can_use_run_cmd
 
 standard_testfile
 
@@ -39,7 +37,6 @@ set x_file ${srcdir}/${subdir}/$testfile.gdb
 # outside of the save_vars block.)
 save_vars { GDBFLAGS } {
     # Set flags with which to start GDB.
-    append GDBFLAGS " -ex \"set height unlimited\""
     append GDBFLAGS " -x \"$x_file\""
     append GDBFLAGS " --args \"$binfile\""
 

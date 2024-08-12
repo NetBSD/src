@@ -1,6 +1,6 @@
 /* Simulator for Analog Devices Blackfin processors.
 
-   Copyright (C) 2005-2023 Free Software Foundation, Inc.
+   Copyright (C) 2005-2024 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc. and Mike Frysinger.
 
    This file is part of simulators.
@@ -24,11 +24,14 @@
 #include <stdlib.h>
 
 #include "sim-main.h"
-#include "gdb/sim-bfin.h"
+#include "sim/sim-bfin.h"
 #include "bfd.h"
 
 #include "sim-hw.h"
+#include "sim-options.h"
+
 #include "devices.h"
+#include "arch.h"
 #include "dv-bfin_cec.h"
 #include "dv-bfin_dmac.h"
 
@@ -494,12 +497,12 @@ static const struct bfin_port_layout bf52x_port[] =
   SIC (1, 21, "bfin_usb",          "int1"),
   SIC (1, 22, "bfin_usb",          "int2"),
 };
-#define bf522_port bf51x_port
-#define bf523_port bf51x_port
-#define bf524_port bf51x_port
-#define bf525_port bf51x_port
-#define bf526_port bf51x_port
-#define bf527_port bf51x_port
+#define bf522_port bf52x_port
+#define bf523_port bf52x_port
+#define bf524_port bf52x_port
+#define bf525_port bf52x_port
+#define bf526_port bf52x_port
+#define bf527_port bf52x_port
 
 #define bf531_chipid 0x27a5
 #define bf532_chipid bf531_chipid

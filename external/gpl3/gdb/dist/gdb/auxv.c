@@ -1,6 +1,6 @@
 /* Auxiliary vector support for GDB, the GNU debugger.
 
-   Copyright (C) 2004-2023 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "target.h"
 #include "gdbtypes.h"
 #include "command.h"
@@ -83,7 +83,8 @@ ld_so_xfer_auxv (gdb_byte *readbuf,
 {
   struct bound_minimal_symbol msym;
   CORE_ADDR data_address, pointer_address;
-  struct type *ptr_type = builtin_type (target_gdbarch ())->builtin_data_ptr;
+  gdbarch *arch = current_inferior ()->arch ();
+  type *ptr_type = builtin_type (arch)->builtin_data_ptr;
   size_t ptr_size = ptr_type->length ();
   size_t auxv_pair_size = 2 * ptr_size;
   gdb_byte *ptr_buf = (gdb_byte *) alloca (ptr_size);
@@ -284,7 +285,7 @@ int
 default_auxv_parse (struct target_ops *ops, const gdb_byte **readptr,
 		    const gdb_byte *endptr, CORE_ADDR *typep, CORE_ADDR *valp)
 {
-  struct gdbarch *gdbarch = target_gdbarch ();
+  gdbarch *gdbarch = current_inferior ()->arch ();
   struct type *ptr_type = builtin_type (gdbarch)->builtin_data_ptr;
   const int sizeof_auxv_type = ptr_type->length ();
 
@@ -330,7 +331,7 @@ parse_auxv (target_ops *ops, gdbarch *gdbarch, const gdb_byte **readptr,
     overhead of transfering data from a remote target to the local host.  */
 struct auxv_info
 {
-  gdb::optional<gdb::byte_vector> data;
+  std::optional<gdb::byte_vector> data;
 };
 
 /* Per-inferior data key for auxv.  */
@@ -344,17 +345,19 @@ invalidate_auxv_cache_inf (struct inferior *inf)
   auxv_inferior_data.clear (inf);
 }
 
-/* Invalidate current inferior's auxv cache.  */
+/* Invalidate the auxv cache for all inferiors using PSPACE.  */
 
 static void
-invalidate_auxv_cache (void)
+auxv_all_objfiles_removed (program_space *pspace)
 {
-  invalidate_auxv_cache_inf (current_inferior ());
+  for (inferior *inf : all_inferiors ())
+    if (inf->pspace == current_program_space)
+      invalidate_auxv_cache_inf (inf);
 }
 
 /* See auxv.h.  */
 
-gdb::optional<gdb::byte_vector>
+const std::optional<gdb::byte_vector> &
 target_read_auxv ()
 {
   inferior *inf = current_inferior ();
@@ -371,7 +374,7 @@ target_read_auxv ()
 
 /* See auxv.h.  */
 
-gdb::optional<gdb::byte_vector>
+std::optional<gdb::byte_vector>
 target_read_auxv_raw (target_ops *ops)
 {
   return target_read_alloc (ops, TARGET_OBJECT_AUXV, NULL);
@@ -410,13 +413,13 @@ target_auxv_search (const gdb::byte_vector &auxv, target_ops *ops,
 int
 target_auxv_search (CORE_ADDR match, CORE_ADDR *valp)
 {
-  gdb::optional<gdb::byte_vector> auxv = target_read_auxv ();
+  const std::optional<gdb::byte_vector> &auxv = target_read_auxv ();
 
   if (!auxv.has_value ())
     return -1;
 
   return target_auxv_search (*auxv, current_inferior ()->top_target (),
-			     current_inferior ()->gdbarch, match, valp);
+			     current_inferior ()->arch (), match, valp);
 }
 
 /* Print the description of a single AUXV entry on the specified file.  */
@@ -426,6 +429,7 @@ fprint_auxv_entry (struct ui_file *file, const char *name,
 		   const char *description, enum auxv_format format,
 		   CORE_ADDR type, CORE_ADDR val)
 {
+  gdbarch *arch = current_inferior ()->arch ();
   gdb_printf (file, ("%-4s %-20s %-30s "),
 	      plongest (type), name, description);
   switch (format)
@@ -434,7 +438,7 @@ fprint_auxv_entry (struct ui_file *file, const char *name,
       gdb_printf (file, ("%s\n"), plongest (val));
       break;
     case AUXV_FORMAT_HEX:
-      gdb_printf (file, ("%s\n"), paddress (target_gdbarch (), val));
+      gdb_printf (file, ("%s\n"), paddress (arch, val));
       break;
     case AUXV_FORMAT_STR:
       {
@@ -442,8 +446,8 @@ fprint_auxv_entry (struct ui_file *file, const char *name,
 
 	get_user_print_options (&opts);
 	if (opts.addressprint)
-	  gdb_printf (file, ("%s "), paddress (target_gdbarch (), val));
-	val_print_string (builtin_type (target_gdbarch ())->builtin_char,
+	  gdb_printf (file, ("%s "), paddress (arch, val));
+	val_print_string (builtin_type (arch)->builtin_char,
 			  NULL, val, -1, file, &opts);
 	gdb_printf (file, ("\n"));
       }
@@ -493,6 +497,10 @@ default_print_auxv_entry (struct gdbarch *gdbarch, struct ui_file *file,
 	   AUXV_FORMAT_STR);
       TAG (AT_RANDOM, _("Address of 16 random bytes"), AUXV_FORMAT_HEX);
       TAG (AT_HWCAP2, _("Extension of AT_HWCAP"), AUXV_FORMAT_HEX);
+      TAG (AT_RSEQ_FEATURE_SIZE, _("rseq supported feature size"),
+	   AUXV_FORMAT_DEC);
+      TAG (AT_RSEQ_ALIGN, _("rseq allocation alignment"),
+	   AUXV_FORMAT_DEC);
       TAG (AT_EXECFN, _("File name of executable"), AUXV_FORMAT_STR);
       TAG (AT_SECURE, _("Boolean, was exec setuid-like?"), AUXV_FORMAT_DEC);
       TAG (AT_SYSINFO, _("Special system info/entry points"), AUXV_FORMAT_HEX);
@@ -561,10 +569,10 @@ default_print_auxv_entry (struct gdbarch *gdbarch, struct ui_file *file,
 static int
 fprint_target_auxv (struct ui_file *file)
 {
-  struct gdbarch *gdbarch = target_gdbarch ();
+  gdbarch *gdbarch = current_inferior ()->arch ();
   CORE_ADDR type, val;
   int ents = 0;
-  gdb::optional<gdb::byte_vector> auxv = target_read_auxv ();
+  const std::optional<gdb::byte_vector> &auxv = target_read_auxv ();
 
   if (!auxv.has_value ())
     return -1;
@@ -573,9 +581,8 @@ fprint_target_auxv (struct ui_file *file)
   const gdb_byte *ptr = data;
   size_t len = auxv->size ();
 
-  while (parse_auxv (current_inferior ()->top_target (),
-		     current_inferior ()->gdbarch,
-		     &ptr, data + len, &type, &val) > 0)
+  while (parse_auxv (current_inferior ()->top_target (), gdbarch, &ptr,
+		     data + len, &type, &val) > 0)
     {
       gdbarch_print_auxv_entry (gdbarch, file, type, val);
       ++ents;
@@ -613,5 +620,6 @@ This is information provided by the operating system at program startup."));
   /* Observers used to invalidate the auxv cache when needed.  */
   gdb::observers::inferior_exit.attach (invalidate_auxv_cache_inf, "auxv");
   gdb::observers::inferior_appeared.attach (invalidate_auxv_cache_inf, "auxv");
-  gdb::observers::executable_changed.attach (invalidate_auxv_cache, "auxv");
+  gdb::observers::all_objfiles_removed.attach (auxv_all_objfiles_removed,
+					       "auxv");
 }

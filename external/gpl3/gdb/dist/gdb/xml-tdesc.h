@@ -1,6 +1,6 @@
 /* XML target description support for GDB.
 
-   Copyright (C) 2006-2023 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery.
 
@@ -22,7 +22,7 @@
 #ifndef XML_TDESC_H
 #define XML_TDESC_H
 
-#include "gdbsupport/gdb_optional.h"
+#include <optional>
 #include <string>
 
 struct target_ops;
@@ -42,7 +42,7 @@ const struct target_desc *target_read_description_xml (struct target_ops *);
    but not parsing it.  Used to dump whole tdesc as a single XML file.
    Returns the description on success, and a disengaged optional
    otherwise.  */
-gdb::optional<std::string> target_fetch_description_xml (target_ops *ops);
+std::optional<std::string> target_fetch_description_xml (target_ops *ops);
 
 /* Take an xml string, parse it, and return the parsed description.  Does not
    handle a string containing includes.  */

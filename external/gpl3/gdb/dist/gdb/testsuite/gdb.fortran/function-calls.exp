@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Free Software Foundation, Inc.
+# Copyright 2019-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 # Exercise passing and returning arguments in Fortran. This test case
 # is based on the GNU Fortran Argument passing conventions.
 
-if {[skip_fortran_tests]} { return -1 }
+require allow_fortran_tests
 
 standard_testfile ".f90"
 
@@ -44,7 +44,7 @@ if {![runto [gdb_get_line_number "post_init"]]} {
 }
 
 # Use inspired by gdb.base/callfuncs.exp.
-gdb_test_no_output "set unwindonsignal on"
+gdb_test_no_output "set unwind-on-signal on"
 
 # Baseline: function and subroutine call with no arguments.
 gdb_test "p no_arg()" " = .TRUE."
@@ -101,7 +101,9 @@ gdb_test "p sum_some(1,2)" " = 3"
 
 # Paragraph 10: optional value arguments. There is insufficient DWARF
 # information to reliably make this case work.
-setup_kfail "gdb/24305" *-*-*
+if { [test_compiler_info {gfortran-*} f90] } {
+    setup_kfail "gdb/24305" *-*-*
+}
 gdb_test "p one_arg_value(10)" " = 10"
 
 # DW_AT_artificial formal parameters must be passed manually. This

@@ -1,6 +1,6 @@
 /* Gdb/Python header for private use by Python module.
 
-   Copyright (C) 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -110,6 +110,7 @@
 typedef PY_LONG_LONG gdb_py_longest;
 typedef unsigned PY_LONG_LONG gdb_py_ulongest;
 #define gdb_py_long_as_ulongest PyLong_AsUnsignedLongLong
+#define gdb_py_long_as_long_and_overflow PyLong_AsLongLongAndOverflow
 
 #else /* HAVE_LONG_LONG */
 
@@ -118,6 +119,7 @@ typedef unsigned PY_LONG_LONG gdb_py_ulongest;
 typedef long gdb_py_longest;
 typedef unsigned long gdb_py_ulongest;
 #define gdb_py_long_as_ulongest PyLong_AsUnsignedLong
+#define gdb_py_long_as_long_and_overflow PyLong_AsLongAndOverflow
 
 #endif /* HAVE_LONG_LONG */
 
@@ -354,6 +356,10 @@ struct thread_object
 
   /* The Inferior object to which this thread belongs.  */
   PyObject *inf_obj;
+
+  /* Dictionary holding user-added attributes.  This is the __dict__
+     attribute of the object.  */
+  PyObject *dict;
 };
 
 struct inferior_object;
@@ -378,7 +384,7 @@ extern enum ext_lang_rc gdbpy_apply_val_pretty_printer
    const struct language_defn *language);
 extern enum ext_lang_bt_status gdbpy_apply_frame_filter
   (const struct extension_language_defn *,
-   frame_info_ptr frame, frame_filter_flags flags,
+   const frame_info_ptr &frame, frame_filter_flags flags,
    enum ext_lang_frame_args args_type,
    struct ui_out *out, int frame_low, int frame_high);
 extern void gdbpy_preserve_values (const struct extension_language_defn *,
@@ -437,9 +443,8 @@ PyObject *symbol_to_symbol_object (struct symbol *sym);
 PyObject *block_to_block_object (const struct block *block,
 				 struct objfile *objfile);
 PyObject *value_to_value_object (struct value *v);
-PyObject *value_to_value_object_no_release (struct value *v);
 PyObject *type_to_type_object (struct type *);
-PyObject *frame_info_to_frame_object (frame_info_ptr frame);
+PyObject *frame_info_to_frame_object (const frame_info_ptr &frame);
 PyObject *symtab_to_linetable_object (PyObject *symtab);
 gdbpy_ref<> pspace_to_pspace_object (struct program_space *);
 PyObject *pspy_get_printers (PyObject *, void *);
@@ -482,6 +487,27 @@ struct symtab_and_line *sal_object_to_symtab_and_line (PyObject *obj);
 frame_info_ptr frame_object_to_frame_info (PyObject *frame_obj);
 struct gdbarch *arch_object_to_gdbarch (PyObject *obj);
 
+extern PyObject *gdbpy_execute_mi_command (PyObject *self, PyObject *args,
+					   PyObject *kw);
+
+/* Serialize RESULTS and print it in MI format to the current_uiout.
+
+   This function handles the top-level results passed as a dictionary.
+   The caller is responsible for ensuring that.  The values within this
+   dictionary can be a wider range of types.  Handling the values of the top-level
+   dictionary is done by serialize_mi_result_1, see that function for more
+   details.
+
+   If anything goes wrong while parsing and printing the MI output then an
+   error is thrown.  */
+
+extern void serialize_mi_results (PyObject *results);
+
+/* Implementation of the gdb.notify_mi function.  */
+
+extern PyObject *gdbpy_notify_mi (PyObject *self, PyObject *args,
+				  PyObject *kw);
+
 /* Convert Python object OBJ to a program_space pointer.  OBJ must be a
    gdb.Progspace reference.  Return nullptr if the gdb.Progspace is not
    valid (see gdb.Progspace.is_valid), otherwise return the program_space
@@ -489,76 +515,120 @@ struct gdbarch *arch_object_to_gdbarch (PyObject *obj);
 
 extern struct program_space *progspace_object_to_program_space (PyObject *obj);
 
-void gdbpy_initialize_gdb_readline (void);
-int gdbpy_initialize_auto_load (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_values (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_frames (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_instruction (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_btrace (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_record (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_symtabs (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_commands (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_symbols (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_symtabs (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_blocks (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_types (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_functions (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_pspace (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_objfile (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_breakpoints (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_breakpoint_locations ()
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_finishbreakpoints (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_lazy_string (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_linetable (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_parameters (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_thread (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_inferior (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_eventregistry (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_event (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_arch (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_registers ()
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_xmethods (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_unwind (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_tui ()
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_membuf ()
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_connection ()
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_micommands (void)
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-void gdbpy_finalize_micommands ();
-int gdbpy_initialize_disasm ()
-  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
+/* A class for managing the initialization, and finalization functions
+   from all Python files (e.g. gdb/python/py-*.c).
+
+   Within any Python file, create an instance of this class, passing in
+   the initialization function, and, optionally, the finalization
+   function.
+
+   These functions are added to a single global list of functions, which
+   can then be called from do_start_initialization and finalize_python
+   (see python.c) to initialize all the Python files within GDB.  */
+
+class gdbpy_initialize_file
+{
+  /* The type of a function that can be called just after GDB has setup the
+     Python interpreter.  This function will setup any additional Python
+     state required by a particular subsystem.  Return 0 if the setup was
+     successful, or return -1 if setup failed, in which case a Python
+     exception should have been raised.  */
+
+  using gdbpy_initialize_file_ftype = int (*) (void);
+
+  /* The type of a function that can be called just before GDB shuts down
+     the Python interpreter.  This function can cleanup an Python state
+     that is cached within GDB, for example, if GDB is holding any
+     references to Python objects, these should be released before the
+     Python interpreter is shut down.
+
+     There is no error return in this case.  This function is only called
+     when GDB is already shutting down.  The function should make a best
+     effort to clean up, and then return.  */
+
+  using gdbpy_finalize_file_ftype = void (*) (void);
+
+  /* The type for an initialization and finalization function pair.  */
+
+  using callback_pair_t = std::pair<gdbpy_initialize_file_ftype,
+				    gdbpy_finalize_file_ftype>;
+
+  /* Return the vector of callbacks.  The vector is defined as a static
+     variable within this function so that it will be initialized the first
+     time this function is called.  This is important, as this function is
+     called as part of the global object initialization process; if the
+     vector was a static variable within this class then we could not
+     guarantee that it had been initialized before it was used.  */
+
+  static std::vector<callback_pair_t> &
+  callbacks ()
+  {
+    static std::vector<callback_pair_t> list;
+    return list;
+  }
+
+public:
+
+  /* Register the initialization (INIT) and finalization (FINI) functions
+     for a Python file.  See the comments on the function types above for
+     when these functions will be called.
+
+     Either of these functions can be nullptr, in which case no function
+     will be called.
+
+     The FINI argument is optional, and defaults to nullptr (no function to
+     call).  */
+
+  gdbpy_initialize_file (gdbpy_initialize_file_ftype init,
+			 gdbpy_finalize_file_ftype fini = nullptr)
+  {
+    callbacks ().emplace_back (init, fini);
+  }
+
+  /* Run all the Python file initialize functions and return true.  If any
+     of the initialize functions fails then this function returns false.
+     In the case of failure it is undefined how many of the initialize
+     functions will have been called.  */
+
+  static bool
+  initialize_all ()
+  {
+    /* The initialize_all function should only be called once.  The
+       following check reverses the global list, which will effect this
+       initialize_all call, as well as the later finalize_all call.
+
+       The environment variable checked here is the same as the one checked
+       in the generated init.c file.  */
+    if (getenv ("GDB_REVERSE_INIT_FUNCTIONS") != nullptr)
+      std::reverse (callbacks ().begin (), callbacks ().end ());
+
+    for (const auto &p : gdbpy_initialize_file::callbacks ())
+      {
+	if (p.first != nullptr && p.first () < 0)
+	  return false;
+      }
+    return true;
+  }
+
+  /* Run all the Python file finalize functions.  */
+
+  static void
+  finalize_all ()
+  {
+    for (const auto &p : gdbpy_initialize_file::callbacks ())
+      {
+	if (p.second != nullptr)
+	  p.second ();
+      }
+  }
+};
+
+/* Macro to simplify registering the initialization and finalization
+   functions for a Python file.  */
+
+#define GDBPY_INITIALIZE_FILE(INIT, ...)				\
+  static gdbpy_initialize_file						\
+    CONCAT(gdbpy_initialize_file_obj_, __LINE__) (INIT, ##__VA_ARGS__)
 
 PyMODINIT_FUNC gdbpy_events_mod_func ();
 
@@ -570,12 +640,18 @@ public:
 
   gdbpy_err_fetch ()
   {
+#if PY_VERSION_HEX < 0x030c0000
     PyObject *error_type, *error_value, *error_traceback;
 
     PyErr_Fetch (&error_type, &error_value, &error_traceback);
     m_error_type.reset (error_type);
     m_error_value.reset (error_value);
     m_error_traceback.reset (error_traceback);
+#else
+    /* PyErr_Fetch is deprecated in python 3.12, use PyErr_GetRaisedException
+       instead.  */
+    m_exc.reset (PyErr_GetRaisedException ());
+#endif
   }
 
   /* Call PyErr_Restore using the values stashed in this object.
@@ -584,9 +660,15 @@ public:
 
   void restore ()
   {
+#if PY_VERSION_HEX < 0x030c0000
     PyErr_Restore (m_error_type.release (),
 		   m_error_value.release (),
 		   m_error_traceback.release ());
+#else
+    /* PyErr_Restore is deprecated in python 3.12, use PyErr_SetRaisedException
+       instead.  */
+    PyErr_SetRaisedException (m_exc.release ());
+#endif
   }
 
   /* Return the string representation of the exception represented by
@@ -605,19 +687,54 @@ public:
 
   bool type_matches (PyObject *type) const
   {
-    return PyErr_GivenExceptionMatches (m_error_type.get (), type);
+    gdbpy_ref<> err_type = this->type ();
+    return PyErr_GivenExceptionMatches (err_type.get (), type);
   }
 
   /* Return a new reference to the exception value object.  */
 
-  gdbpy_ref<> value ()
+  gdbpy_ref<> value () const
   {
+#if PY_VERSION_HEX < 0x030c0000
+    if (!m_normalized)
+      {
+	PyObject *error_type, *error_value, *error_traceback;
+	error_type = m_error_type.release ();
+	error_value = m_error_value.release ();
+	error_traceback = m_error_traceback.release ();
+	PyErr_NormalizeException (&error_type, &error_value, &error_traceback);
+	m_error_type.reset (error_type);
+	m_error_value.reset (error_value);
+	m_error_traceback.reset (error_traceback);
+	m_normalized = true;
+      }
     return m_error_value;
+#else
+    return m_exc;
+#endif
+  }
+
+  /* Return a new reference to the exception type object.  */
+
+  gdbpy_ref<> type () const
+  {
+#if PY_VERSION_HEX < 0x030c0000
+    return m_error_type;
+#else
+    if (m_exc.get() == nullptr)
+      return nullptr;
+    return gdbpy_ref<>::new_reference ((PyObject *)Py_TYPE (m_exc.get ()));
+#endif
   }
 
 private:
 
-  gdbpy_ref<> m_error_type, m_error_value, m_error_traceback;
+#if PY_VERSION_HEX < 0x030c0000
+  mutable gdbpy_ref<> m_error_type, m_error_value, m_error_traceback;
+  mutable bool m_normalized = false;
+#else
+  gdbpy_ref<> m_exc;
+#endif
 };
 
 /* Called before entering the Python interpreter to install the
@@ -666,7 +783,7 @@ class gdbpy_enter
 
   /* An optional is used here because we don't want to call
      PyErr_Fetch too early.  */
-  gdb::optional<gdbpy_err_fetch> m_error;
+  std::optional<gdbpy_err_fetch> m_error;
 };
 
 /* Like gdbpy_enter, but takes a varobj.  This is a subclass just to
@@ -706,26 +823,44 @@ private:
   PyThreadState *m_save;
 };
 
-/* Use this after a TRY_EXCEPT to throw the appropriate Python
-   exception.  */
+/* A helper class to save and restore the GIL, but without touching
+   the other globals that are handled by gdbpy_enter.  */
+
+class gdbpy_gil
+{
+public:
+
+  gdbpy_gil ()
+    : m_state (PyGILState_Ensure ())
+  {
+  }
+
+  ~gdbpy_gil ()
+  {
+    PyGILState_Release (m_state);
+  }
+
+  DISABLE_COPY_AND_ASSIGN (gdbpy_gil);
+
+private:
+
+  PyGILState_STATE m_state;
+};
+
+/* Use this in a 'catch' block to convert the exception to a Python
+   exception and return nullptr.  */
 #define GDB_PY_HANDLE_EXCEPTION(Exception)	\
   do {						\
-    if (Exception.reason < 0)			\
-      {						\
-	gdbpy_convert_exception (Exception);	\
-	return NULL;				\
-      }						\
+    gdbpy_convert_exception (Exception);	\
+    return nullptr;				\
   } while (0)
 
-/* Use this after a TRY_EXCEPT to throw the appropriate Python
-   exception.  This macro is for use inside setter functions.  */
+/* Use this in a 'catch' block to convert the exception to a Python
+   exception and return -1.  */
 #define GDB_PY_SET_HANDLE_EXCEPTION(Exception)				\
     do {								\
-      if (Exception.reason < 0)						\
-	{								\
-	  gdbpy_convert_exception (Exception);				\
-	  return -1;							\
-	}								\
+      gdbpy_convert_exception (Exception);				\
+      return -1;							\
     } while (0)
 
 int gdbpy_print_python_errors_p (void);
@@ -777,6 +912,7 @@ extern const struct value_print_options *gdbpy_current_print_options;
 
 void bpfinishpy_pre_stop_hook (struct gdbpy_breakpoint_object *bp_obj);
 void bpfinishpy_post_stop_hook (struct gdbpy_breakpoint_object *bp_obj);
+void bpfinishpy_pre_delete_hook (struct gdbpy_breakpoint_object *bp_obj);
 
 extern PyObject *gdbpy_doc_cst;
 extern PyObject *gdbpy_children_cst;
@@ -805,6 +941,15 @@ PyObject *gdb_py_generic_dict (PyObject *self, void *closure);
 int gdb_pymodule_addobject (PyObject *module, const char *name,
 			    PyObject *object)
   CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
+
+
+/* Return a Python string (str) object that represents SELF.  SELF can be
+   any object type, but should be in an "invalid" state.  What "invalid"
+   means is up to the caller.  The returned string will take the form
+   "<TYPENAME (invalid)>", without the quotes, and with TYPENAME replaced
+   with the type of SELF.  */
+
+PyObject *gdb_py_invalid_object_repr (PyObject *self);
 
 struct varobj_iter;
 struct varobj;
@@ -886,7 +1031,7 @@ extern gdb::unique_xmalloc_ptr<char> gdbpy_fix_doc_string_indentation
 
    If no instruction can be disassembled then return an empty value.  */
 
-extern gdb::optional<int> gdbpy_print_insn (struct gdbarch *gdbarch,
+extern std::optional<int> gdbpy_print_insn (struct gdbarch *gdbarch,
 					    CORE_ADDR address,
 					    disassemble_info *info);
 

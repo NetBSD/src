@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2017-2023 Free Software Foundation, Inc.
+   Copyright 2017-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -64,100 +64,100 @@ rdrand (void)
     return;
 
   /* 16-bit random numbers.  */
-  __asm__ volatile ("rdrand %%ax;" : "=r" (number));
-  __asm__ volatile ("rdrand %%bx;" : "=r" (number));
-  __asm__ volatile ("rdrand %%cx;" : "=r" (number));
-  __asm__ volatile ("rdrand %%dx;" : "=r" (number));
+  __asm__ volatile ("rdrand %%ax;": : : "%ax");
+  __asm__ volatile ("rdrand %%bx;": : : "%bx");
+  __asm__ volatile ("rdrand %%cx;": : : "%cx");
+  __asm__ volatile ("rdrand %%dx;": : : "%dx");
 
-  __asm__ volatile ("mov %%di, %%ax;" : "=r" (number));
-  __asm__ volatile ("rdrand %%di;" : "=r" (number));
-  __asm__ volatile ("mov %%ax, %%di;" : "=r" (number));
+  __asm__ volatile ("mov %%di, %%ax;\n\
+		     rdrand %%di;\n\
+		     mov %%ax, %%di;" : : : "%ax");
 
-  __asm__ volatile ("mov %%si, %%ax;" : "=r" (number));
-  __asm__ volatile ("rdrand %%si;" : "=r" (number));
-  __asm__ volatile ("mov %%ax, %%si;" : "=r" (number));
+  __asm__ volatile ("mov %%si, %%ax;\n\
+		     rdrand %%si;\n\
+		     mov %%ax, %%si;" : : : "%ax");
 
-  __asm__ volatile ("mov %%bp, %%ax;" : "=r" (number));
-  __asm__ volatile ("rdrand %%bp;" : "=r" (number));
-  __asm__ volatile ("mov %%ax, %%bp;" : "=r" (number));
+  __asm__ volatile ("mov %%bp, %%ax;\n\
+		     rdrand %%bp;\n\
+		     mov %%ax, %%bp;" : : : "%ax");
 
-  __asm__ volatile ("mov %%sp, %%ax;" : "=r" (number));
-  __asm__ volatile ("rdrand %%sp;" : "=r" (number));
-  __asm__ volatile ("mov %%ax, %%sp;" : "=r" (number));
+  __asm__ volatile ("mov %%sp, %%ax;\n\
+		     rdrand %%sp;\n\
+		     mov %%ax, %%sp;" : : : "%ax");
 
 #ifdef __x86_64__
-  __asm__ volatile ("rdrand %%r8w;" : "=r" (number));
-  __asm__ volatile ("rdrand %%r9w;" : "=r" (number));
-  __asm__ volatile ("rdrand %%r10w;" : "=r" (number));
-  __asm__ volatile ("rdrand %%r11w;" : "=r" (number));
-  __asm__ volatile ("rdrand %%r12w;" : "=r" (number));
-  __asm__ volatile ("rdrand %%r13w;" : "=r" (number));
-  __asm__ volatile ("rdrand %%r14w;" : "=r" (number));
-  __asm__ volatile ("rdrand %%r15w;" : "=r" (number));
+  __asm__ volatile ("rdrand %%r8w;": : : "%r8");
+  __asm__ volatile ("rdrand %%r9w;": : : "%r9");
+  __asm__ volatile ("rdrand %%r10w;": : : "%r10");
+  __asm__ volatile ("rdrand %%r11w;": : : "%r11");
+  __asm__ volatile ("rdrand %%r12w;": : : "%r12");
+  __asm__ volatile ("rdrand %%r13w;": : : "%r13");
+  __asm__ volatile ("rdrand %%r14w;": : : "%r14");
+  __asm__ volatile ("rdrand %%r15w;": : : "%r15");
 #endif
 
   /* 32-bit random numbers.  */
-  __asm__ volatile ("rdrand %%eax;" : "=r" (number));
-  __asm__ volatile ("rdrand %%ebx;" : "=r" (number));
-  __asm__ volatile ("rdrand %%ecx;" : "=r" (number));
-  __asm__ volatile ("rdrand %%edx;" : "=r" (number));
+  __asm__ volatile ("rdrand %%eax;": : : "%eax");
+  __asm__ volatile ("rdrand %%ebx;": : : "%ebx");
+  __asm__ volatile ("rdrand %%ecx;": : : "%ecx");
+  __asm__ volatile ("rdrand %%edx;": : : "%edx");
 
 #ifdef __x86_64__
-  __asm__ volatile ("mov %%rdi, %%rax;" : "=r" (number));
-  __asm__ volatile ("rdrand %%edi;" : "=r" (number));
-  __asm__ volatile ("mov %%rax, %%rdi;" : "=r" (number));
+  __asm__ volatile ("mov %%rdi, %%rax;\n\
+		     rdrand %%edi;\n\
+		     mov %%rax, %%rdi;" : : : "%rax");
 
-  __asm__ volatile ("mov %%rsi, %%rax;" : "=r" (number));
-  __asm__ volatile ("rdrand %%esi;" : "=r" (number));
-  __asm__ volatile ("mov %%rax, %%rsi;" : "=r" (number));
+  __asm__ volatile ("mov %%rsi, %%rax;\n\
+		     rdrand %%esi;\n\
+		     mov %%rax, %%rsi;" : : : "%rax");
 
-  __asm__ volatile ("mov %%rbp, %%rax;" : "=r" (number));
-  __asm__ volatile ("rdrand %%ebp;" : "=r" (number));
-  __asm__ volatile ("mov %%rax, %%rbp;" : "=r" (number));
+  __asm__ volatile ("mov %%rbp, %%rax;\n\
+		     rdrand %%ebp;\n\
+		     mov %%rax, %%rbp;" : : : "%rax");
 
-  __asm__ volatile ("mov %%rsp, %%rax;" : "=r" (number));
-  __asm__ volatile ("rdrand %%esp;" : "=r" (number));
-  __asm__ volatile ("mov %%rax, %%rsp;" : "=r" (number));
+  __asm__ volatile ("mov %%rsp, %%rax;\n\
+		     rdrand %%esp;\n\
+		     mov %%rax, %%rsp;" : : : "%rax");
 
-  __asm__ volatile ("rdrand %%r8d;" : "=r" (number));
-  __asm__ volatile ("rdrand %%r9d;" : "=r" (number));
-  __asm__ volatile ("rdrand %%r10d;" : "=r" (number));
-  __asm__ volatile ("rdrand %%r11d;" : "=r" (number));
-  __asm__ volatile ("rdrand %%r12d;" : "=r" (number));
-  __asm__ volatile ("rdrand %%r13d;" : "=r" (number));
-  __asm__ volatile ("rdrand %%r14d;" : "=r" (number));
-  __asm__ volatile ("rdrand %%r15d;" : "=r" (number));
+  __asm__ volatile ("rdrand %%r8d;": : : "%r8");
+  __asm__ volatile ("rdrand %%r9d;": : : "%r9");
+  __asm__ volatile ("rdrand %%r10d;": : : "%r10");
+  __asm__ volatile ("rdrand %%r11d;": : : "%r11");
+  __asm__ volatile ("rdrand %%r12d;": : : "%r12");
+  __asm__ volatile ("rdrand %%r13d;": : : "%r13");
+  __asm__ volatile ("rdrand %%r14d;": : : "%r14");
+  __asm__ volatile ("rdrand %%r15d;": : : "%r15");
 
   /* 64-bit random numbers.  */
-  __asm__ volatile ("rdrand %%rax;" : "=r" (number));
-  __asm__ volatile ("rdrand %%rbx;" : "=r" (number));
-  __asm__ volatile ("rdrand %%rcx;" : "=r" (number));
-  __asm__ volatile ("rdrand %%rdx;" : "=r" (number));
+  __asm__ volatile ("rdrand %%rax;": : : "%rax");
+  __asm__ volatile ("rdrand %%rbx;": : : "%rbx");
+  __asm__ volatile ("rdrand %%rcx;": : : "%rcx");
+  __asm__ volatile ("rdrand %%rdx;": : : "%rdx");
 
-  __asm__ volatile ("mov %%rdi, %%rax;" : "=r" (number));
-  __asm__ volatile ("rdrand %%rdi;" : "=r" (number));
-  __asm__ volatile ("mov %%rax, %%rdi;" : "=r" (number));
+  __asm__ volatile ("mov %%rdi, %%rax;\n\
+		     rdrand %%rdi;\n\
+		     mov %%rax, %%rdi;" : : : "%rax");
 
-  __asm__ volatile ("mov %%rsi, %%rax;" : "=r" (number));
-  __asm__ volatile ("rdrand %%rsi;" : "=r" (number));
-  __asm__ volatile ("mov %%rax, %%rsi;" : "=r" (number));
+  __asm__ volatile ("mov %%rsi, %%rax;\n\
+		     rdrand %%rsi;\n\
+		     mov %%rax, %%rsi;" : : : "%rax");
 
-  __asm__ volatile ("mov %%rbp, %%rax;" : "=r" (number));
-  __asm__ volatile ("rdrand %%rbp;" : "=r" (number));
-  __asm__ volatile ("mov %%rax, %%rbp;" : "=r" (number));
+  __asm__ volatile ("mov %%rbp, %%rax;\n\
+		     rdrand %%rbp;\n\
+		     mov %%rax, %%rbp;" : : : "%rax");
 
-  __asm__ volatile ("mov %%rsp, %%rax;" : "=r" (number));
-  __asm__ volatile ("rdrand %%rsp;" : "=r" (number));
-  __asm__ volatile ("mov %%rax, %%rsp;" : "=r" (number));
+  __asm__ volatile ("mov %%rsp, %%rax;\n\
+		     rdrand %%rsp;\n\
+		     mov %%rax, %%rsp;" : : : "%rax");
 
-  __asm__ volatile ("rdrand %%r8;" : "=r" (number));
-  __asm__ volatile ("rdrand %%r9;" : "=r" (number));
-  __asm__ volatile ("rdrand %%r10;" : "=r" (number));
-  __asm__ volatile ("rdrand %%r11;" : "=r" (number));
-  __asm__ volatile ("rdrand %%r12;" : "=r" (number));
-  __asm__ volatile ("rdrand %%r13;" : "=r" (number));
-  __asm__ volatile ("rdrand %%r14;" : "=r" (number));
-  __asm__ volatile ("rdrand %%r15;" : "=r" (number));
+  __asm__ volatile ("rdrand %%r8;": : : "%r8");
+  __asm__ volatile ("rdrand %%r9;": : : "%r9");
+  __asm__ volatile ("rdrand %%r10;": : : "%r10");
+  __asm__ volatile ("rdrand %%r11;": : : "%r11");
+  __asm__ volatile ("rdrand %%r12;": : : "%r12");
+  __asm__ volatile ("rdrand %%r13;": : : "%r13");
+  __asm__ volatile ("rdrand %%r14;": : : "%r14");
+  __asm__ volatile ("rdrand %%r15;": : : "%r15");
 #endif
 }
 
@@ -173,100 +173,110 @@ rdseed (void)
     return;
 
   /* 16-bit random seeds.  */
-  __asm__ volatile ("rdseed %%ax;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%bx;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%cx;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%dx;" : "=r" (seed));
+  __asm__ volatile ("rdseed %%ax;": : : "%ax");
+  __asm__ volatile ("rdseed %%bx;": : : "%bx");
+  __asm__ volatile ("rdseed %%cx;": : : "%cx");
+  __asm__ volatile ("rdseed %%dx;": : : "%dx");
 
-  __asm__ volatile ("mov %%di, %%ax;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%di;" : "=r" (seed));
-  __asm__ volatile ("mov %%ax, %%di;" : "=r" (seed));
+  __asm__ volatile ("mov %%di, %%ax;\n\
+		     rdseed %%di;\n\
+		     mov %%ax, %%di;" : : : "%ax");
 
-  __asm__ volatile ("mov %%si, %%ax;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%si;" : "=r" (seed));
-  __asm__ volatile ("mov %%ax, %%si;" : "=r" (seed));
+  __asm__ volatile ("mov %%si, %%ax;\n\
+		     rdseed %%si;\n\
+		     mov %%ax, %%si;" : : : "%ax");
 
-  __asm__ volatile ("mov %%bp, %%ax;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%bp;" : "=r" (seed));
-  __asm__ volatile ("mov %%ax, %%bp;" : "=r" (seed));
+  __asm__ volatile ("mov %%bp, %%ax;\n\
+		     rdseed %%bp;\n\
+		     mov %%ax, %%bp;" : : : "%ax");
 
-  __asm__ volatile ("mov %%sp, %%ax;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%sp;" : "=r" (seed));
-  __asm__ volatile ("mov %%ax, %%sp;" : "=r" (seed));
+  __asm__ volatile ("mov %%sp, %%ax;\n\
+		     rdseed %%sp;\n\
+		     mov %%ax, %%sp;" : : : "%ax");
 
 #ifdef __x86_64__
-  __asm__ volatile ("rdseed %%r8w;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%r9w;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%r10w;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%r11w;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%r12w;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%r13w;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%r14w;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%r15w;" : "=r" (seed));
+  __asm__ volatile ("rdseed %%r8w;": : : "%r8");
+  __asm__ volatile ("rdseed %%r9w;": : : "%r9");
+  __asm__ volatile ("rdseed %%r10w;": : : "%r10");
+  __asm__ volatile ("rdseed %%r11w;": : : "%r11");
+  __asm__ volatile ("rdseed %%r12w;": : : "%r12");
+  __asm__ volatile ("rdseed %%r13w;": : : "%r13");
+  __asm__ volatile ("rdseed %%r14w;": : : "%r14");
+  __asm__ volatile ("rdseed %%r15w;": : : "%r15");
 #endif
 
   /* 32-bit random seeds.  */
-  __asm__ volatile ("rdseed %%eax;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%ebx;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%ecx;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%edx;" : "=r" (seed));
+  __asm__ volatile ("rdseed %%eax;": : : "%eax");
+  __asm__ volatile ("rdseed %%ebx;": : : "%ebx");
+  __asm__ volatile ("rdseed %%ecx;": : : "%ecx");
+  __asm__ volatile ("rdseed %%edx;": : : "%edx");
 
 #ifdef __x86_64__
-  __asm__ volatile ("mov %%rdi, %%rax;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%edi;" : "=r" (seed));
-  __asm__ volatile ("mov %%rax, %%rdi;" : "=r" (seed));
+  __asm__ volatile ("mov %%rdi, %%rax;\n\
+		     rdseed %%edi;\n\
+		     mov %%rax, %%rdi;" : : : "%rax");
 
-  __asm__ volatile ("mov %%rsi, %%rax;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%esi;" : "=r" (seed));
-  __asm__ volatile ("mov %%rax, %%rsi;" : "=r" (seed));
+  __asm__ volatile ("mov %%rsi, %%rax;\n\
+		     rdseed %%esi;\n\
+		     mov %%rax, %%rsi;" : : : "%rax");
 
-  __asm__ volatile ("mov %%rbp, %%rax;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%ebp;" : "=r" (seed));
-  __asm__ volatile ("mov %%rax, %%rbp;" : "=r" (seed));
+  __asm__ volatile ("mov %%rbp, %%rax;\n\
+		     rdseed %%ebp;\n\
+		     mov %%rax, %%rbp;" : : : "%rax");
 
-  __asm__ volatile ("mov %%rsp, %%rax;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%esp;" : "=r" (seed));
-  __asm__ volatile ("mov %%rax, %%rsp;" : "=r" (seed));
+  __asm__ volatile ("mov %%rsp, %%rax;\n\
+		     rdseed %%esp;\n\
+		     mov %%rax, %%rsp;" : : : "%rax");
 
-  __asm__ volatile ("rdseed %%r8d;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%r9d;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%r10d;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%r11d;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%r12d;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%r13d;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%r14d;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%r15d;" : "=r" (seed));
+  __asm__ volatile ("rdseed %%r8d;": : : "%r8");
+  __asm__ volatile ("rdseed %%r9d;": : : "%r9");
+  __asm__ volatile ("rdseed %%r10d;": : : "%r10");
+  __asm__ volatile ("rdseed %%r11d;": : : "%r11");
+  __asm__ volatile ("rdseed %%r12d;": : : "%r12");
+  __asm__ volatile ("rdseed %%r13d;": : : "%r13");
+  __asm__ volatile ("rdseed %%r14d;": : : "%r14");
+  __asm__ volatile ("rdseed %%r15d;": : : "%r15");
 
   /* 64-bit random seeds.  */
-  __asm__ volatile ("rdseed %%rax;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%rbx;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%rcx;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%rdx;" : "=r" (seed));
+  __asm__ volatile ("rdseed %%rax;": : : "%rax");
+  __asm__ volatile ("rdseed %%rbx;": : : "%rbx");
+  __asm__ volatile ("rdseed %%rcx;": : : "%rcx");
+  __asm__ volatile ("rdseed %%rdx;": : : "%rdx");
 
-  __asm__ volatile ("mov %%rdi, %%rax;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%rdi;" : "=r" (seed));
-  __asm__ volatile ("mov %%rax, %%rdi;" : "=r" (seed));
+  __asm__ volatile ("mov %%rdi, %%rax;\n\
+		     rdseed %%rdi;\n\
+		     mov %%rax, %%rdi;" : : : "%rax");
 
-  __asm__ volatile ("mov %%rsi, %%rax;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%rsi;" : "=r" (seed));
-  __asm__ volatile ("mov %%rax, %%rsi;" : "=r" (seed));
+  __asm__ volatile ("mov %%rsi, %%rax;\n\
+		     rdseed %%rsi;\n\
+		     mov %%rax, %%rsi;" : : : "%rax");
 
-  __asm__ volatile ("mov %%rbp, %%rax;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%rbp;" : "=r" (seed));
-  __asm__ volatile ("mov %%rax, %%rbp;" : "=r" (seed));
+  __asm__ volatile ("mov %%rbp, %%rax;\n\
+		     rdseed %%rbp;\n\
+		     mov %%rax, %%rbp;" : : : "%rax");
 
-  __asm__ volatile ("mov %%rsp, %%rax;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%rsp;" : "=r" (seed));
-  __asm__ volatile ("mov %%rax, %%rsp;" : "=r" (seed));
+  __asm__ volatile ("mov %%rsp, %%rax;\n\
+		     rdseed %%rsp;\n\
+		     mov %%rax, %%rsp;" : : : "%rax");
 
-  __asm__ volatile ("rdseed %%r8;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%r9;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%r10;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%r11;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%r12;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%r13;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%r14;" : "=r" (seed));
-  __asm__ volatile ("rdseed %%r15;" : "=r" (seed));
+  __asm__ volatile ("rdseed %%r8;": : : "%r8");
+  __asm__ volatile ("rdseed %%r9;": : : "%r9");
+  __asm__ volatile ("rdseed %%r10;": : : "%r10");
+  __asm__ volatile ("rdseed %%r11;": : : "%r11");
+  __asm__ volatile ("rdseed %%r12;": : : "%r12");
+  __asm__ volatile ("rdseed %%r13;": : : "%r13");
+  __asm__ volatile ("rdseed %%r14;": : : "%r14");
+  __asm__ volatile ("rdseed %%r15;": : : "%r15");
+#endif
+}
+
+/* Test rdtscp support.  */
+
+void
+rdtscp (void)
+{
+#ifdef __x86_64__
+  __asm__ volatile ("rdtscp");
 #endif
 }
 
@@ -283,5 +293,6 @@ initialize (void)
 static testcase_ftype testcases[] =
 {
   rdrand,
-  rdseed
+  rdseed,
+  rdtscp
 };

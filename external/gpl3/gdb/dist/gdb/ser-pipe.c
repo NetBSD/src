@@ -1,5 +1,5 @@
 /* Serial interface for a pipe to a separate program
-   Copyright (C) 1999-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions.
 
@@ -18,7 +18,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "serial.h"
 #include "ser-base.h"
 #include "ser-unix.h"
@@ -34,7 +33,6 @@
 
 #include <signal.h>
 
-static int pipe_open (struct serial *scb, const char *name);
 static void pipe_close (struct serial *scb);
 
 struct pipe_state
@@ -44,7 +42,7 @@ struct pipe_state
 
 /* Open up a raw pipe.  */
 
-static int
+static void
 pipe_open (struct serial *scb, const char *name)
 {
 #if !HAVE_SOCKETPAIR
@@ -69,12 +67,13 @@ pipe_open (struct serial *scb, const char *name)
     }
 
   if (gdb_socketpair_cloexec (AF_UNIX, SOCK_STREAM, 0, pdes) < 0)
-    return -1;
+    perror_with_name (_("could not open socket pair"));
   if (gdb_socketpair_cloexec (AF_UNIX, SOCK_STREAM, 0, err_pdes) < 0)
     {
+      int save = errno;
       close (pdes[0]);
       close (pdes[1]);
-      return -1;
+      perror_with_name (_("could not open socket pair"), save);
     }
 
   /* Create the child process to run the command in.  Note that the
@@ -86,11 +85,12 @@ pipe_open (struct serial *scb, const char *name)
   /* Error.  */
   if (pid == -1)
     {
+      int save = errno;
       close (pdes[0]);
       close (pdes[1]);
       close (err_pdes[0]);
       close (err_pdes[1]);
-      return -1;
+      perror_with_name (_("could not vfork"), save);
     }
 
   if (fcntl (err_pdes[0], F_SETFL, O_NONBLOCK) == -1)
@@ -148,7 +148,6 @@ pipe_open (struct serial *scb, const char *name)
 
   /* If we don't do this, GDB simply exits when the remote side dies.  */
   signal (SIGPIPE, SIG_IGN);
-  return 0;
 #endif
 }
 

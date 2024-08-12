@@ -1,6 +1,6 @@
 /* Target-dependent header for the LoongArch architecture, for GDB.
 
-   Copyright (C) 2022-2023 Free Software Foundation, Inc.
+   Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,6 +30,9 @@
 /* Register set definitions.  */
 extern const struct regset loongarch_gregset;
 extern const struct regset loongarch_fpregset;
+extern const struct regset loongarch_lsxregset;
+extern const struct regset loongarch_lasxregset;
+extern const struct regset loongarch_lbtregset;
 
 /* Target-dependent structure in gdbarch.  */
 struct loongarch_gdbarch_tdep : gdbarch_tdep_base
@@ -38,7 +41,7 @@ struct loongarch_gdbarch_tdep : gdbarch_tdep_base
   struct loongarch_gdbarch_features abi_features;
 
   /* Return the expected next PC if FRAME is stopped at a syscall instruction.  */
-  CORE_ADDR (*syscall_next_pc) (frame_info_ptr frame) = nullptr;
+  CORE_ADDR (*syscall_next_pc) (const frame_info_ptr &frame) = nullptr;
 };
 
 #endif /* LOONGARCH_TDEP_H  */

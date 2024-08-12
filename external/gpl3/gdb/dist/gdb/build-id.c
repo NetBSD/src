@@ -1,6 +1,6 @@
 /* build-id-related functions.
 
-   Copyright (C) 1991-2023 Free Software Foundation, Inc.
+   Copyright (C) 1991-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "bfd.h"
 #include "gdb_bfd.h"
 #include "build-id.h"
@@ -26,12 +25,19 @@
 #include "objfiles.h"
 #include "filenames.h"
 #include "gdbcore.h"
+#include "cli/cli-style.h"
 
 /* See build-id.h.  */
 
 const struct bfd_build_id *
 build_id_bfd_get (bfd *abfd)
 {
+  /* Dynamic objfiles such as ones created by JIT reader API
+     have no underlying bfd structure (that is, objfile->obfd
+     is NULL).  */
+  if (abfd == nullptr)
+    return nullptr;
+
   if (!bfd_check_format (abfd, bfd_object)
       && !bfd_check_format (abfd, bfd_core))
     return NULL;
@@ -54,12 +60,13 @@ build_id_verify (bfd *abfd, size_t check_len, const bfd_byte *check)
   found = build_id_bfd_get (abfd);
 
   if (found == NULL)
-    warning (_("File \"%s\" has no build-id, file skipped"),
-	     bfd_get_filename (abfd));
-  else if (found->size != check_len
-	   || memcmp (found->data, check, found->size) != 0)
-    warning (_("File \"%s\" has a different build-id, file skipped"),
-	     bfd_get_filename (abfd));
+    warning (_("File \"%ps\" has no build-id, file skipped"),
+	     styled_string (file_name_style.style (),
+			    bfd_get_filename (abfd)));
+  else if (!build_id_equal (found, check_len, check))
+    warning (_("File \"%ps\" has a different build-id, file skipped"),
+	     styled_string (file_name_style.style (),
+			    bfd_get_filename (abfd)));
   else
     retval = 1;
 
@@ -83,7 +90,7 @@ build_id_to_debug_bfd_1 (const std::string &link, size_t build_id_len,
   /* lrealpath() is expensive even for the usually non-existent files.  */
   gdb::unique_xmalloc_ptr<char> filename_holder;
   const char *filename = nullptr;
-  if (startswith (link, TARGET_SYSROOT_PREFIX))
+  if (is_target_filename (link))
     filename = link.c_str ();
   else if (access (link.c_str (), F_OK) == 0)
     {
@@ -202,7 +209,8 @@ build_id_to_exec_bfd (size_t build_id_len, const bfd_byte *build_id)
 /* See build-id.h.  */
 
 std::string
-find_separate_debug_file_by_buildid (struct objfile *objfile)
+find_separate_debug_file_by_buildid (struct objfile *objfile,
+				     deferred_warnings *warnings)
 {
   const struct bfd_build_id *build_id;
 
@@ -220,8 +228,15 @@ find_separate_debug_file_by_buildid (struct objfile *objfile)
       if (abfd != NULL
 	  && filename_cmp (bfd_get_filename (abfd.get ()),
 			   objfile_name (objfile)) == 0)
-	warning (_("\"%s\": separate debug info file has no debug info"),
-		 bfd_get_filename (abfd.get ()));
+	{
+	  if (separate_debug_file_debug)
+	    gdb_printf (gdb_stdlog, "\"%s\": separate debug info file has no "
+			"debug info", bfd_get_filename (abfd.get ()));
+	  warnings->warn (_("\"%ps\": separate debug info file has no "
+			    "debug info"),
+			  styled_string (file_name_style.style (),
+					 bfd_get_filename (abfd.get ())));
+	}
       else if (abfd != NULL)
 	return std::string (bfd_get_filename (abfd.get ()));
     }

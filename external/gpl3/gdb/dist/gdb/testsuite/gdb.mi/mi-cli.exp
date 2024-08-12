@@ -1,4 +1,4 @@
-# Copyright 2002-2023 Free Software Foundation, Inc.
+# Copyright 2002-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -255,4 +255,3 @@ mi_gdb_test "888-interpreter-exec console \"set \$pc=0x0\"" \
   "-interpreter-exec console \"\""
 
 mi_gdb_exit
-return 0

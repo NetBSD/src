@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2019-2023 Free Software Foundation, Inc.
+# Copyright 2019-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -47,7 +47,7 @@ if { ![readline_is_used] } {
     return -1
 }
 
-set tui_supported_p [expr ![skip_tui_tests]]
+set tui_supported_p [allow_tui_tests]
 
 # Check the completion result, as returned by the "maintenance show
 # test-options-completion-result" command.  TEST is used as test name.
@@ -98,19 +98,22 @@ proc make_cmd {variant} {
 # test-options xxx", with no flag/option set.  OPERAND is the expected
 # operand.
 proc expect_none {operand} {
-    return "-flag 0 -xx1 0 -xx2 0 -bool 0 -enum xxx -uint 0 -zuint-unl 0 -string '' -- $operand"
+    return "-flag 0 -xx1 0 -xx2 0 -bool 0 -enum xxx -uint-unl 0 -pint-unl 0\
+	    -string '' -- $operand"
 }
 
 # Return a string for the expected result of running "maint
 # test-options xxx", with -flag set.  OPERAND is the expected operand.
 proc expect_flag {operand} {
-    return "-flag 1 -xx1 0 -xx2 0 -bool 0 -enum xxx -uint 0 -zuint-unl 0 -string '' -- $operand"
+    return "-flag 1 -xx1 0 -xx2 0 -bool 0 -enum xxx -uint-unl 0 -pint-unl 0\
+	    -string '' -- $operand"
 }
 
 # Return a string for the expected result of running "maint
 # test-options xxx", with -bool set.  OPERAND is the expected operand.
 proc expect_bool {operand} {
-    return "-flag 0 -xx1 0 -xx2 0 -bool 1 -enum xxx -uint 0 -zuint-unl 0 -string '' -- $operand"
+    return "-flag 0 -xx1 0 -xx2 0 -bool 1 -enum xxx -uint-unl 0 -pint-unl 0\
+	    -string '' -- $operand"
 }
 
 # Return a string for the expected result of running "maint
@@ -118,10 +121,12 @@ proc expect_bool {operand} {
 # OPTION determines which option to expect set.  OPERAND is the
 # expected operand.
 proc expect_integer {option val operand} {
-    if {$option == "uinteger"} {
-	return "-flag 0 -xx1 0 -xx2 0 -bool 0 -enum xxx -uint $val -zuint-unl 0 -string '' -- $operand"
-    } elseif {$option == "zuinteger-unlimited"} {
-	return "-flag 0 -xx1 0 -xx2 0 -bool 0 -enum xxx -uint 0 -zuint-unl $val -string '' -- $operand"
+    if {$option == "uinteger-unlimited"} {
+	return "-flag 0 -xx1 0 -xx2 0 -bool 0 -enum xxx -uint-unl $val\
+		-pint-unl 0 -string '' -- $operand"
+    } elseif {$option == "pinteger-unlimited"} {
+	return "-flag 0 -xx1 0 -xx2 0 -bool 0 -enum xxx -uint-unl 0\
+		-pint-unl $val -string '' -- $operand"
     } else {
 	error "unsupported option: $option"
     }
@@ -138,18 +143,19 @@ proc expect_string {str operand} {
 	     && [string range $str end end] == "'")} {
 	set str [string range $str 1 end-1]
     }
-    return "-flag 0 -xx1 0 -xx2 0 -bool 0 -enum xxx -uint 0 -zuint-unl 0 -string '$str' -- $operand"
+    return "-flag 0 -xx1 0 -xx2 0 -bool 0 -enum xxx -uint-unl 0 -pint-unl 0\
+	    -string '$str' -- $operand"
 }
 
 set all_options {
     "-bool"
     "-enum"
     "-flag"
+    "-pinteger-unlimited"
     "-string"
-    "-uinteger"
+    "-uinteger-unlimited"
     "-xx1"
     "-xx2"
-    "-zuinteger-unlimited"
 }
 
 # Basic option-machinery + "print" command integration tests.
@@ -166,6 +172,7 @@ proc_with_prefix test-print {{prefix ""}} {
 	"-address"
 	"-array"
 	"-array-indexes"
+	"-characters"
 	"-elements"
 	"-max-depth"
 	"-memory-tag-violations"
@@ -604,7 +611,8 @@ proc_with_prefix test-flag {variant} {
 
     # Extract twice the same flag, separated by one space.
     gdb_test "$cmd -xx1     -xx2 -xx1  -xx2 -xx1    -- non flags args" \
-	"-flag 0 -xx1 1 -xx2 1 -bool 0 -enum xxx -uint 0 -zuint-unl 0 -string '' -- non flags args"
+	"-flag 0 -xx1 1 -xx2 1 -bool 0 -enum xxx -uint-unl 0 -pint-unl 0\
+	 -string '' -- non flags args"
 
     # Extract 2 known flags in front of unknown flags.
     gdb_test "$cmd -xx1 -xx2 -a -b -c -xx1 --" \
@@ -822,13 +830,13 @@ proc_with_prefix test-boolean {variant} {
 }
 
 # Uinteger option tests.  OPTION is which integer option we're
-# testing.  Can be "uinteger" or "zuinteger-unlimited".
+# testing.  Can be "uinteger-unlimited" or "pinteger-unlimited".
 proc_with_prefix test-uinteger {variant option} {
     global all_options
 
     set cmd "[make_cmd $variant] -$option"
 
-    # Test completing a uinteger option:
+    # Test completing an integer option:
     res_test_gdb_complete_multiple \
 	"1 [expect_none ""]" \
 	"$cmd " "" "" {
@@ -852,7 +860,7 @@ proc_with_prefix test-uinteger {variant option} {
     gdb_test "$cmd 1 -- 999" [expect_integer $option "1" "999"]
     gdb_test "$cmd unlimited -- 999" \
 	[expect_integer $option "unlimited" "999"]
-    if {$option == "zuinteger-unlimited"} {
+    if {$option == "pinteger-unlimited"} {
 	gdb_test "$cmd -1 --" [expect_integer $option "unlimited" ""]
 	gdb_test "$cmd 0 --" [expect_integer $option "0" ""]
     } else {
@@ -865,7 +873,7 @@ proc_with_prefix test-uinteger {variant option} {
 	"Expected integer at: unlimitedx --"
 
     # Don't offer completions until we're past the
-    # -uinteger/-zuinteger-unlimited argument.
+    # -uinteger-unlimited/-pinteger-unlimited argument.
     res_test_gdb_complete_none \
 	"1 [expect_none ""]" \
 	"$cmd 1"
@@ -878,15 +886,15 @@ proc_with_prefix test-uinteger {variant option} {
     }
 
     # Try "-1".
-    if {$option == "uinteger"} {
-	# -1 is invalid uinteger.
+    if {$option == "uinteger-unlimited"} {
+	# -1 is invalid uinteger-unlimited.
 	foreach value {"-1" "-1 "} {
 	    res_test_gdb_complete_none \
 		"1 [expect_none ""]" \
 		"$cmd $value"
 	}
     } else {
-	# -1 is valid for zuinteger-unlimited.
+	# -1 is valid for pinteger-unlimited.
 	res_test_gdb_complete_none \
 	    "1 [expect_none ""]" \
 	    "$cmd -1"
@@ -914,7 +922,7 @@ proc_with_prefix test-uinteger {variant option} {
 	res_test_gdb_complete_none "0 " "$cmd 1 "
     }
 
-    # Test completing non-option arguments after "-uinteger 1 ".
+    # Test completing non-option arguments after "-uinteger-unlimited 1 ".
     foreach operand {"x" "x " "1a" "1a " "1-" "1- "} {
 	if {$variant == "require-delimiter"} {
 	    res_test_gdb_complete_none \
@@ -1032,7 +1040,7 @@ foreach_with_prefix cmd {
     test-misc $cmd
     test-flag $cmd
     test-boolean $cmd
-    foreach subcmd {"uinteger" "zuinteger-unlimited" } {
+    foreach subcmd {"uinteger-unlimited" "pinteger-unlimited" } {
 	test-uinteger $cmd $subcmd
     }
     test-enum $cmd

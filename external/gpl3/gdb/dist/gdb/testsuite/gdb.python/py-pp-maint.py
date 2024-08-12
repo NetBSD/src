@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2023 Free Software Foundation, Inc.
+# Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,8 +17,9 @@
 # printers.
 
 import re
-import gdb.types
+
 import gdb.printing
+import gdb.types
 
 
 def lookup_function_lookup_test(val):

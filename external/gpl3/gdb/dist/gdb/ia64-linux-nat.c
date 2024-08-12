@@ -1,7 +1,7 @@
 /* Functions specific to running gdb native on IA-64 running
    GNU/Linux.
 
-   Copyright (C) 1999-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "inferior.h"
 #include "target.h"
 #include "gdbarch.h"
@@ -693,7 +692,7 @@ ia64_linux_nat_target::stopped_data_address (CORE_ADDR *addr_p)
 {
   CORE_ADDR psr;
   siginfo_t siginfo;
-  struct regcache *regcache = get_current_regcache ();
+  regcache *regcache = get_thread_regcache (inferior_thread ());
 
   if (!linux_nat_get_siginfo (inferior_ptid, &siginfo))
     return false;

@@ -1,6 +1,6 @@
 /* Functions and data responsible for forking the inferior process.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,6 +31,13 @@ struct process_stratum_target;
    implementations.  */
 #define START_INFERIOR_TRAPS_EXPECTED 1
 
+using traceme_ftype = gdb::function_view<void ()>;
+using init_trace_ftype = gdb::function_view<void (int /* pid */)>;
+using pre_trace_ftype = gdb::function_view<void ()>;
+using exec_ftype = gdb::function_view<void (const char * /* file */,
+					    char * const * /* argv */,
+					    char * const * /* env */)>;
+
 /* Start an inferior Unix child process and sets inferior_ptid to its
    pid.  EXEC_FILE is the file to run.  ALLARGS is a string containing
    the arguments to the program.  ENV is the environment vector to
@@ -42,13 +49,12 @@ struct process_stratum_target;
    made static to ensure that they survive the vfork call.  */
 extern pid_t fork_inferior (const char *exec_file_arg,
 			    const std::string &allargs,
-			    char **env, void (*traceme_fun) (),
-			    gdb::function_view<void (int)> init_trace_fun,
-			    void (*pre_trace_fun) (),
+			    char **env,
+			    traceme_ftype traceme_fun,
+			    init_trace_ftype init_trace_fun,
+			    pre_trace_ftype pre_trace_fun,
 			    const char *shell_file_arg,
-			    void (*exec_fun) (const char *file,
-					      char * const *argv,
-					      char * const *env));
+			    exec_ftype exec_fun);
 
 /* Accept NTRAPS traps from the inferior.
 

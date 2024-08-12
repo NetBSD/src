@@ -1,6 +1,6 @@
 /* Thread iterators and ranges for GDB, the GNU debugger.
 
-   Copyright (C) 2018-2023 Free Software Foundation, Inc.
+   Copyright (C) 2018-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "gdbthread.h"
 #include "inferior.h"
 
@@ -88,7 +87,7 @@ all_matching_threads_iterator::all_matching_threads_iterator
   if (filter_ptid == minus_one_ptid)
     {
       /* Iterate on all threads of all inferiors, possibly filtering on
-         FILTER_TARGET.  */
+	 FILTER_TARGET.  */
       m_mode = mode::ALL_THREADS;
 
       /* Seek the first thread of the first matching inferior.  */
@@ -122,7 +121,7 @@ all_matching_threads_iterator::all_matching_threads_iterator
 	  /* Iterate on a single thread.  */
 	  m_mode = mode::SINGLE_THREAD;
 
-	  m_thr = find_thread_ptid (filter_target, filter_ptid);
+	  m_thr = filter_target->find_thread (filter_ptid);
 	}
     }
 }

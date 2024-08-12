@@ -1,5 +1,5 @@
 /* BFD back-end for WebAssembly modules.
-   Copyright (C) 2017-2022 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    Based on srec.c, mmo.c, and binary.c
 
@@ -117,7 +117,7 @@ wasm_read_leb128 (bfd *abfd,
   unsigned char lost, mask;
   int status = 1;
 
-  while (bfd_bread (&byte, 1, abfd) == 1)
+  while (bfd_read (&byte, 1, abfd) == 1)
     {
       num_read++;
 
@@ -169,7 +169,7 @@ wasm_write_uleb128 (bfd *abfd, bfd_vma v)
       if (v)
 	c |= 0x80;
 
-      if (bfd_bwrite (&c, 1, abfd) != 1)
+      if (bfd_write (&c, 1, abfd) != 1)
 	return false;
     }
   while (v);
@@ -197,7 +197,7 @@ wasm_read_magic (bfd *abfd, bool *errorptr)
   bfd_byte magic_const[SIZEOF_WASM_MAGIC] = WASM_MAGIC;
   bfd_byte magic[SIZEOF_WASM_MAGIC];
 
-  if (bfd_bread (magic, sizeof (magic), abfd) == sizeof (magic)
+  if (bfd_read (magic, sizeof (magic), abfd) == sizeof (magic)
       && memcmp (magic, magic_const, sizeof (magic)) == 0)
     return true;
 
@@ -214,7 +214,7 @@ wasm_read_version (bfd *abfd, bool *errorptr)
   bfd_byte vers_const[SIZEOF_WASM_VERSION] = WASM_VERSION;
   bfd_byte vers[SIZEOF_WASM_VERSION];
 
-  if (bfd_bread (vers, sizeof (vers), abfd) == sizeof (vers)
+  if (bfd_read (vers, sizeof (vers), abfd) == sizeof (vers)
       /* Don't attempt to parse newer versions, which are likely to
 	 require code changes.  */
       && memcmp (vers, vers_const, sizeof (vers)) == 0)
@@ -371,7 +371,7 @@ wasm_read_byte (bfd *abfd, bool *errorptr)
 {
   bfd_byte byte;
 
-  if (bfd_bread (&byte, (bfd_size_type) 1, abfd) != 1)
+  if (bfd_read (&byte, 1, abfd) != 1)
     {
       if (bfd_get_error () != bfd_error_file_truncated)
 	*errorptr = true;
@@ -395,7 +395,7 @@ wasm_scan (bfd *abfd)
   unsigned int bytes_read;
   asection *bfdsec;
 
-  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0)
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0)
     goto error_return;
 
   if (!wasm_read_header (abfd, &error))
@@ -446,7 +446,7 @@ wasm_scan (bfd *abfd)
 	  if (!name)
 	    goto error_return;
 	  memcpy (name, prefix, prefixlen);
-	  if (bfd_bread (name + prefixlen, namelen, abfd) != namelen)
+	  if (bfd_read (name + prefixlen, namelen, abfd) != namelen)
 	    goto error_return;
 	  name[prefixlen + namelen] = 0;
 
@@ -548,11 +548,11 @@ wasm_compute_custom_section_file_position (bfd *abfd,
 	}
       while (nl);
 
-      bfd_seek (abfd, fs->pos, SEEK_SET);
-      if (! wasm_write_uleb128 (abfd, 0)
+      if (bfd_seek (abfd, fs->pos, SEEK_SET) != 0
+	  || ! wasm_write_uleb128 (abfd, 0)
 	  || ! wasm_write_uleb128 (abfd, payload_len)
 	  || ! wasm_write_uleb128 (abfd, name_len)
-	  || bfd_bwrite (name, name_len, abfd) != name_len)
+	  || bfd_write (name, name_len, abfd) != name_len)
 	goto error_return;
       fs->pos = asect->filepos = bfd_tell (abfd);
     }
@@ -586,10 +586,9 @@ wasm_compute_section_file_positions (bfd *abfd)
   struct compute_section_arg fs;
   unsigned int i;
 
-  bfd_seek (abfd, (bfd_vma) 0, SEEK_SET);
-
-  if (bfd_bwrite (magic, sizeof (magic), abfd) != (sizeof magic)
-      || bfd_bwrite (vers, sizeof (vers), abfd) != sizeof (vers))
+  if (bfd_seek (abfd, (bfd_vma) 0, SEEK_SET) != 0
+      || bfd_write (magic, sizeof (magic), abfd) != (sizeof magic)
+      || bfd_write (vers, sizeof (vers), abfd) != sizeof (vers))
     return false;
 
   for (i = 0; i < WASM_NUMBERED_SECTIONS; i++)
@@ -642,7 +641,7 @@ wasm_set_section_contents (bfd *abfd,
     return false;
 
   if (bfd_seek (abfd, section->filepos + offset, SEEK_SET) != 0
-      || bfd_bwrite (location, count, abfd) != count)
+      || bfd_write (location, count, abfd) != count)
     return false;
 
   return true;
@@ -657,8 +656,8 @@ wasm_write_object_contents (bfd* abfd)
   if (bfd_seek (abfd, 0, SEEK_SET) != 0)
     return false;
 
-  if (bfd_bwrite (magic, sizeof (magic), abfd) != sizeof (magic)
-      || bfd_bwrite (vers, sizeof (vers), abfd) != sizeof (vers))
+  if (bfd_write (magic, sizeof (magic), abfd) != sizeof (magic)
+      || bfd_write (vers, sizeof (vers), abfd) != sizeof (vers))
     return false;
 
   return true;
@@ -749,7 +748,7 @@ wasm_object_p (bfd *abfd)
   bool error;
   asection *s;
 
-  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0)
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0)
     return NULL;
 
   if (!wasm_read_header (abfd, &error))

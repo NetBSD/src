@@ -1,6 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 #
-# Copyright (C) 2013-2019 Free Software Foundation, Inc.
+# Copyright (C) 2013-2024 Free Software Foundation, Inc.
 #
 # This script is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,15 +23,15 @@
 # output has been vetted.  You can instead pass the names of individual
 # directories, including those that haven't been approved.  So:
 #
-#    update-copyright.pl --this-year
+#    update-copyright.py --this-year
 #
 # is the command that would be used at the beginning of a year to update
 # all copyright notices (and possibly at other times to check whether
 # new files have been added with old years).  On the other hand:
 #
-#    update-copyright.pl --this-year libjava
+#    update-copyright.py --this-year libiberty
 #
-# would run the script on just libjava/.
+# would run the script on just libiberty/.
 #
 # This script was copied from gcc's contrib/ and modified to suit
 # binutils.  In contrast to the gcc script, this one will update
@@ -60,7 +60,10 @@ class GenericFilter:
     def __init__ (self):
         self.skip_files = set()
         self.skip_dirs = set()
-        self.skip_extensions = set()
+        self.skip_extensions = set([
+                '.png',
+                '.pyc',
+                ])
         self.fossilised_files = set()
         self.own_files = set()
 
@@ -238,7 +241,7 @@ class Copyright:
     def add_external_author (self, holder):
         self.holders[holder] = None
 
-    class BadYear():
+    class BadYear (Exception):
         def __init__ (self, year):
             self.year = year
 
@@ -315,7 +318,7 @@ class Copyright:
             # If it looks like the copyright is incomplete, add the next line.
             while not self.is_complete (match):
                 try:
-                    next_line = file.next()
+                    next_line = file.readline()
                 except StopIteration:
                     break
 
@@ -394,6 +397,15 @@ class Copyright:
 
         return (line != orig_line, line, next_line)
 
+    def guess_encoding (self, pathname):
+        for encoding in ('utf8', 'iso8859'):
+            try:
+                open(pathname, 'r', encoding=encoding).read()
+                return encoding
+            except UnicodeDecodeError:
+                pass
+        return None
+
     def process_file (self, dir, filename, filter):
         pathname = os.path.join (dir, filename)
         if filename.endswith ('.tmp'):
@@ -407,8 +419,11 @@ class Copyright:
         lines = []
         changed = False
         line_filter = filter.get_line_filter (dir, filename)
-        with open (pathname, 'r') as file:
+        mode = None
+        encoding = self.guess_encoding(pathname)
+        with open (pathname, 'r', encoding=encoding) as file:
             prev = None
+            mode = os.fstat (file.fileno()).st_mode
             for line in file:
                 while line:
                     next_line = None
@@ -432,9 +447,10 @@ class Copyright:
         # If something changed, write the new file out.
         if changed and self.errors.ok():
             tmp_pathname = pathname + '.tmp'
-            with open (tmp_pathname, 'w') as file:
+            with open (tmp_pathname, 'w', encoding=encoding) as file:
                 for line in lines:
                     file.write (line)
+                os.fchmod (file.fileno(), mode)
             if self.use_quilt:
                 subprocess.call (['quilt', 'add', pathname])
             os.rename (tmp_pathname, pathname)
@@ -442,7 +458,7 @@ class Copyright:
     def process_tree (self, tree, filter):
         for (dir, subdirs, filenames) in os.walk (tree):
             # Don't recurse through directories that should be skipped.
-            for i in xrange (len (subdirs) - 1, -1, -1):
+            for i in range (len (subdirs) - 1, -1, -1):
                 if filter.skip_dir (dir, subdirs[i]):
                     del subdirs[i]
 
@@ -571,6 +587,7 @@ class BinutilsCopyright (Copyright):
 
         self.add_external_author ('Carnegie Mellon University')
         self.add_external_author ('John D. Polstra.')
+        self.add_external_author ('Innovative Computing Labs')
         self.add_external_author ('Linaro Ltd.')
         self.add_external_author ('MIPS Computer Systems, Inc.')
         self.add_external_author ('Red Hat Inc.')
@@ -579,6 +596,8 @@ class BinutilsCopyright (Copyright):
         self.add_external_author ('Third Eye Software, Inc.')
         self.add_external_author ('Ulrich Drepper')
         self.add_external_author ('Synopsys Inc.')
+        self.add_external_author ('Alan Woodland')
+        self.add_external_author ('Diego Elio Petteno')
 
 class BinutilsCmdLine (CmdLine):
     def __init__ (self):
@@ -593,12 +612,18 @@ class BinutilsCmdLine (CmdLine):
         self.add_dir ('etc')
         self.add_dir ('gas')
         self.add_dir ('gdb')
+        self.add_dir ('gdbserver')
+        self.add_dir ('gdbsupport')
         self.add_dir ('gold')
         self.add_dir ('gprof')
+        self.add_dir ('gprofng')
         self.add_dir ('include')
         self.add_dir ('ld', LdFilter())
+        self.add_dir ('libbacktrace')
+        self.add_dir ('libctf')
         self.add_dir ('libdecnumber')
         self.add_dir ('libiberty')
+        self.add_dir ('libsframe')
         self.add_dir ('opcodes')
         self.add_dir ('readline')
         self.add_dir ('sim')
@@ -611,9 +636,12 @@ class BinutilsCmdLine (CmdLine):
             'gas',
             'gold',
             'gprof',
+            'gprofng',
             'include',
             'ld',
+            'libctf',
             'libiberty',
+            'libsframe',
             'opcodes',
             ]
 

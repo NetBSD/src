@@ -1,6 +1,6 @@
 /* MI Command Set for GDB, the GNU debugger.
 
-   Copyright (C) 2019-2023 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,6 @@
 
 /* GDB/MI commands implemented in Python.  */
 
-#include "defs.h"
 #include "python-internal.h"
 #include "arch-utils.h"
 #include "charset.h"
@@ -173,163 +172,6 @@ extern PyTypeObject micmdpy_object_type
 
 static PyObject *invoke_cst;
 
-/* Convert KEY_OBJ into a string that can be used as a field name in MI
-   output.  KEY_OBJ must be a Python string object, and must only contain
-   characters suitable for use as an MI field name.
-
-   If KEY_OBJ is not a string, or if KEY_OBJ contains invalid characters,
-   then an error is thrown.  Otherwise, KEY_OBJ is converted to a string
-   and returned.  */
-
-static gdb::unique_xmalloc_ptr<char>
-py_object_to_mi_key (PyObject *key_obj)
-{
-  /* The key must be a string.  */
-  if (!PyUnicode_Check (key_obj))
-    {
-      gdbpy_ref<> key_repr (PyObject_Repr (key_obj));
-      gdb::unique_xmalloc_ptr<char> key_repr_string;
-      if (key_repr != nullptr)
-	key_repr_string = python_string_to_target_string (key_repr.get ());
-      if (key_repr_string == nullptr)
-	gdbpy_handle_exception ();
-
-      gdbpy_error (_("non-string object used as key: %s"),
-		   key_repr_string.get ());
-    }
-
-  gdb::unique_xmalloc_ptr<char> key_string
-    = python_string_to_target_string (key_obj);
-  if (key_string == nullptr)
-    gdbpy_handle_exception ();
-
-  /* Predicate function, returns true if NAME is a valid field name for use
-     in MI result output, otherwise, returns false.  */
-  auto is_valid_key_name = [] (const char *name) -> bool
-  {
-    gdb_assert (name != nullptr);
-
-    if (*name == '\0' || !isalpha (*name))
-      return false;
-
-    for (; *name != '\0'; ++name)
-      if (!isalnum (*name) && *name != '_' && *name != '-')
-	return false;
-
-    return true;
-  };
-
-  if (!is_valid_key_name (key_string.get ()))
-    {
-      if (*key_string.get () == '\0')
-	gdbpy_error (_("Invalid empty key in MI result"));
-      else
-	gdbpy_error (_("Invalid key in MI result: %s"), key_string.get ());
-    }
-
-  return key_string;
-}
-
-/* Serialize RESULT and print it in MI format to the current_uiout.
-   FIELD_NAME is used as the name of this result field.
-
-   RESULT can be a dictionary, a sequence, an iterator, or an object that
-   can be converted to a string, these are converted to the matching MI
-   output format (dictionaries as tuples, sequences and iterators as lists,
-   and strings as named fields).
-
-   If anything goes wrong while formatting the output then an error is
-   thrown.
-
-   This function is the recursive inner core of serialize_mi_result, and
-   should only be called from that function.  */
-
-static void
-serialize_mi_result_1 (PyObject *result, const char *field_name)
-{
-  struct ui_out *uiout = current_uiout;
-
-  if (PyDict_Check (result))
-    {
-      PyObject *key, *value;
-      Py_ssize_t pos = 0;
-      ui_out_emit_tuple tuple_emitter (uiout, field_name);
-      while (PyDict_Next (result, &pos, &key, &value))
-	{
-	  gdb::unique_xmalloc_ptr<char> key_string
-	    (py_object_to_mi_key (key));
-	  serialize_mi_result_1 (value, key_string.get ());
-	}
-    }
-  else if (PySequence_Check (result) && !PyUnicode_Check (result))
-    {
-      ui_out_emit_list list_emitter (uiout, field_name);
-      Py_ssize_t len = PySequence_Size (result);
-      if (len == -1)
-	gdbpy_handle_exception ();
-      for (Py_ssize_t i = 0; i < len; ++i)
-	{
-          gdbpy_ref<> item (PySequence_ITEM (result, i));
-	  if (item == nullptr)
-	    gdbpy_handle_exception ();
-	  serialize_mi_result_1 (item.get (), nullptr);
-	}
-    }
-  else if (PyIter_Check (result))
-    {
-      gdbpy_ref<> item;
-      ui_out_emit_list list_emitter (uiout, field_name);
-      while (true)
-	{
-	  item.reset (PyIter_Next (result));
-	  if (item == nullptr)
-	    {
-	      if (PyErr_Occurred () != nullptr)
-		gdbpy_handle_exception ();
-	      break;
-	    }
-	  serialize_mi_result_1 (item.get (), nullptr);
-	}
-    }
-  else
-    {
-      gdb::unique_xmalloc_ptr<char> string (gdbpy_obj_to_string (result));
-      if (string == nullptr)
-	gdbpy_handle_exception ();
-      uiout->field_string (field_name, string.get ());
-    }
-}
-
-/* Serialize RESULT and print it in MI format to the current_uiout.
-
-   This function handles the top-level result initially returned from the
-   invoke method of the Python command implementation.  At the top-level
-   the result must be a dictionary.  The values within this dictionary can
-   be a wider range of types.  Handling the values of the top-level
-   dictionary is done by serialize_mi_result_1, see that function for more
-   details.
-
-   If anything goes wrong while parsing and printing the MI output then an
-   error is thrown.  */
-
-static void
-serialize_mi_result (PyObject *result)
-{
-  /* At the top-level, the result must be a dictionary.  */
-
-  if (!PyDict_Check (result))
-    gdbpy_error (_("Result from invoke must be a dictionary"));
-
-  PyObject *key, *value;
-  Py_ssize_t pos = 0;
-  while (PyDict_Next (result, &pos, &key, &value))
-    {
-      gdb::unique_xmalloc_ptr<char> key_string
-	(py_object_to_mi_key (key));
-      serialize_mi_result_1 (value, key_string.get ());
-    }
-}
-
 /* Called when the MI command is invoked.  PARSE contains the parsed
    command line arguments from the user.  */
 
@@ -340,10 +182,11 @@ mi_command_py::invoke (struct mi_parse *parse) const
 
   pymicmd_debug_printf ("this = %p, name = %s", this, name ());
 
-  mi_parse_argv (parse->args, parse);
+  parse->parse_argv ();
 
   if (parse->argv == nullptr)
-    error (_("Problem parsing arguments: %s %s"), parse->command, parse->args);
+    error (_("Problem parsing arguments: %s %s"), parse->command.get (),
+	   parse->args ());
 
 
   gdbpy_enter enter_py;
@@ -365,14 +208,19 @@ mi_command_py::invoke (struct mi_parse *parse) const
 
   gdb_assert (this->m_pyobj != nullptr);
   gdb_assert (PyErr_Occurred () == nullptr);
-  gdbpy_ref<> result
+  gdbpy_ref<> results
     (PyObject_CallMethodObjArgs ((PyObject *) this->m_pyobj.get (), invoke_cst,
 				 argobj.get (), nullptr));
-  if (result == nullptr)
+  if (results == nullptr)
     gdbpy_handle_exception ();
 
-  if (result != Py_None)
-    serialize_mi_result (result.get ());
+  if (results != Py_None)
+    {
+      /* At the top-level, the results must be a dictionary.  */
+      if (!PyDict_Check (results.get ()))
+	gdbpy_error (_("Result from invoke must be a dictionary"));
+      serialize_mi_results (results.get ());
+    }
 }
 
 /* See declaration above.  */
@@ -452,7 +300,7 @@ micmdpy_install_command (micmdpy_object *obj)
   if (cmd != nullptr && cmd_py == nullptr)
     {
       /* There is already an MI command registered with that name, and it's not
-         a Python one.  Forbid replacing a non-Python MI command.  */
+	 a Python one.  Forbid replacing a non-Python MI command.  */
       PyErr_SetString (PyExc_RuntimeError,
 		       _("unable to add command, name is already in use"));
       return -1;
@@ -461,7 +309,7 @@ micmdpy_install_command (micmdpy_object *obj)
   if (cmd_py != nullptr)
     {
       /* There is already a Python MI command registered with that name, swap
-         in the new gdb.MICommand implementation.  */
+	 in the new gdb.MICommand implementation.  */
       cmd_py->swap_python_object (obj);
     }
   else
@@ -595,7 +443,7 @@ micmdpy_dealloc (PyObject *obj)
 
 /* Python initialization for the MI commands components.  */
 
-int
+static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_micommands ()
 {
   micmdpy_object_type.tp_new = PyType_GenericNew;
@@ -614,7 +462,9 @@ gdbpy_initialize_micommands ()
   return 0;
 }
 
-void
+/* Cleanup just before GDB shuts down the Python interpreter.  */
+
+static void
 gdbpy_finalize_micommands ()
 {
   /* mi_command_py objects hold references to micmdpy_object objects.  They must
@@ -737,3 +587,5 @@ _initialize_py_micmd ()
      show_pymicmd_debug,
      &setdebuglist, &showdebuglist);
 }
+
+GDBPY_INITIALIZE_FILE (gdbpy_initialize_micommands, gdbpy_finalize_micommands);

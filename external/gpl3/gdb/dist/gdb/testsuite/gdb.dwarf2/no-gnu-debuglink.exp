@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Free Software Foundation, Inc.
+# Copyright 2022-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,14 +18,10 @@
 load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2 and use gas.
-if {![dwarf2_support]} {
-    return 0
-}
+require dwarf2_support
 
 # No remote host testing either.
-if {[is_remote host]} {
-    return 0
-}
+require {!is_remote host}
 
 standard_testfile main.c no-gnu-debuglink.S
 
@@ -40,9 +36,10 @@ if { [build_executable $testfile.exp $testfile [list $srcfile $asm_file]] } {
 }
 
 clean_restart
+gdb_test_no_output "maint set dwarf synchronous on"
 
-set msg "\r\ncould not find '\.gnu_debugaltlink' file for \[^\r\n\]*"
+set msg "\r\nwarning: could not find '\.gnu_debugaltlink' file for \[^\r\n\]*"
 gdb_test "file $binfile" "$msg" "file command"
 
 set question "Load new symbol table from .*\? .y or n. "
-gdb_test "file $binfile" "$msg" "file command, again" $question "y"
+gdb_test "file $binfile" "" "file command, again" $question "y"

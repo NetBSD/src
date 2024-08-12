@@ -1,4 +1,4 @@
-# Copyright 2004-2023 Free Software Foundation, Inc.
+# Copyright 2004-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,6 +51,9 @@ proc target_compile_ada_from_dir {builddir source dest type options} {
 }
 
 # Compile some Ada code.  Return "" if the compile was successful.
+# OPTIONS are as for target_compile, but with this addition:
+# "no-force" - do not pass -f to gnatmake.  By default -f is
+# used, forcing a full recompilation.
 
 proc gdb_compile_ada_1 {source dest type options} {
 
@@ -66,7 +69,9 @@ proc gdb_compile_ada_1 {source dest type options} {
     # and it avoids using a stray objfile file from a long-past
     # run, for instance.
     append options " ada"
-    append options " additional_flags=-f"
+    if {[lsearch -exact $options no-force] == -1} {
+	append options " additional_flags=-f"
+    }
     append options " additional_flags=-I$srcdir"
 
     set result [target_compile_ada_from_dir \
@@ -146,7 +151,7 @@ proc find_ada_tool {tool} {
 # Return 1 if gnatmake is at least version $MAJOR.x.x
 
 proc gnatmake_version_at_least { major } {
-    set gnatmake [gdb_find_gnatmake]
+    set gnatmake [find_gnatmake]
     set gnatmake [lindex [split $gnatmake] 0]
     if {[catch {exec $gnatmake --version} output]} {
 	return 0
@@ -166,13 +171,28 @@ proc gnatmake_version_at_least { major } {
 
 # Return 1 if the GNAT runtime appears to have debug info.
 
-gdb_caching_proc gnat_runtime_has_debug_info {
+proc gnat_runtime_has_debug_info_1 { shared } {
+    if { ![allow_ada_tests] } {
+	return 0
+    }
+
     global srcdir
 
     set src "$srcdir/lib/gnat_debug_info_test.adb"
     set dst [standard_output_file "gnat_debug_info_test"]
 
-    if { [gdb_compile_ada_1 $src $dst executable {debug}] != "" } {
+    set opts {}
+    lappend opts debug
+    if { $shared } {
+	# Make sure we link against the shared GNAT run time.
+	set gnatbind_options [list -bargs -shared -margs]
+
+	foreach option $gnatbind_options {
+	    lappend opts [concat "additional_flags=" $option]
+	}
+    }
+
+    if { [gdb_compile_ada_1 $src $dst executable $opts] != "" } {
 	return 0
     }
 
@@ -195,5 +215,19 @@ gdb_caching_proc gnat_runtime_has_debug_info {
 	}
     }
 
+    gdb_exit
+
     return $has_debug_info
+}
+
+# Return 1 if the static GNAT runtime appears to have debug info.
+
+gdb_caching_proc gnat_runtime_has_debug_info {} {
+    return [gnat_runtime_has_debug_info_1 0]
+}
+
+# Return 1 if the shared GNAT runtime appears to have debug info.
+
+gdb_caching_proc shared_gnat_runtime_has_debug_info {} {
+    return [gnat_runtime_has_debug_info_1 1]
 }

@@ -1,4 +1,4 @@
-#   Copyright 2014-2023 Free Software Foundation, Inc.
+#   Copyright 2014-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,9 +21,7 @@
 load_lib gdbserver-support.exp
 
 # The test relies on "detach/attach".
-if {[use_gdb_stub]} {
-    return 0
-}
+require can_spawn_for_attach
 
 standard_testfile
 set escapedbinfile [string_to_regexp ${binfile}]

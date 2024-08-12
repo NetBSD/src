@@ -1,4 +1,4 @@
-# Copyright 2003-2023 Free Software Foundation, Inc.
+# Copyright 2003-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ gdb_test "until $bp_location1" \
 # Verify that a malformed "advance" is gracefully caught.
 #
 gdb_test "until 80 then stop" \
-    "malformed linespec error: unexpected string, \"then stop\"." \
+    "malformed linespec error: unexpected string, \"then stop\"" \
     "malformed until"
 
 # Rerun up to factorial, outer invocation

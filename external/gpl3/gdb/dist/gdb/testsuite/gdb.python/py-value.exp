@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2023 Free Software Foundation, Inc.
+# Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,6 +17,8 @@
 # exposing values to Python.
 
 load_lib gdb-python.exp
+
+require allow_python_tests
 
 standard_testfile
 
@@ -64,7 +66,8 @@ proc test_value_creation {} {
   gdb_test "python print ('result = %s' % i.address)" "= None" "test address attribute in non-addressable value"
 
   # Test creating / printing an optimized out value
-  gdb_test "python print(gdb.Value(gdb.Value(5).type.optimized_out()))"
+  gdb_test "python print(gdb.Value(gdb.Value(5).type.optimized_out()))" \
+      "<optimized out>"
 }
 
 # Check that we can call gdb.Value.__init__ to change a value.
@@ -156,7 +159,7 @@ proc test_value_numeric_ops {} {
   }
 
   gdb_test_multiple "python print ('result = ' + str(i+gdb.Value('foo')))" "catch throw of GDB error" {
-      -re "Traceback.*$gdb_prompt $"  {pass "catch throw of GDB error"}
+      -re "Error occurred in Python.*$gdb_prompt $"  {pass "catch throw of GDB error"}
       -re "result = .*$gdb_prompt $"  {fail "catch throw of GDB error"}
       -re "$gdb_prompt $"	      {fail "catch throw of GDB error"}
   }
@@ -267,7 +270,7 @@ proc test_value_in_inferior {} {
   if {$can_read_0} {
     untested $test
   } else {
-    gdb_test "python print (gdb.parse_and_eval('*(int*)0'))" "gdb.MemoryError: Cannot access memory at address 0x0.*" $test
+    gdb_test "python print (gdb.parse_and_eval('*(int*)0'))" "gdb.MemoryError.*: Cannot access memory at address 0x0.*" $test
   }
 
   # Test Python lazy value handling
@@ -278,10 +281,10 @@ proc test_value_in_inferior {} {
     gdb_test "python inval = gdb.parse_and_eval('*(int*)0')"
     gdb_test "python print (inval.is_lazy)" "True"
     gdb_test "python inval2 = inval+1" \
-	"gdb.MemoryError: Cannot access memory at address 0x0.*" \
+	"gdb.MemoryError.*: Cannot access memory at address 0x0.*" \
 	"$test, first test"
     gdb_test "python inval.fetch_lazy ()" \
-	"gdb.MemoryError: Cannot access memory at address 0x0.*" \
+	"gdb.MemoryError.*: Cannot access memory at address 0x0.*" \
 	"$test, second test"
   }
   set argc_value [get_integer_valueof "argc" 0]
@@ -335,7 +338,12 @@ proc test_value_in_inferior {} {
   # non-memory value.
   gdb_py_test_silent_cmd "python str = '\"str\"'" "set up str variable" 1
   gdb_test "python print (gdb.parse_and_eval (str).string (length = 10))" \
-      "gdb.error: Attempt to take address of value not located in memory.\r\nError while executing Python code."
+      "gdb.error.*: Attempt to take address of value not located in memory.\r\nError occurred in Python.*"
+
+  gdb_test "python print (gdb.parse_and_eval ('shadowed'))" \
+      97 "shadowed local value"
+  gdb_test "python print (gdb.parse_and_eval ('shadowed', global_context=True))" \
+      23 "shadowed global value"
 }
 
 proc test_inferior_function_call {} {
@@ -377,7 +385,7 @@ proc test_objfiles {} {
     gdb_test "python print (gdb.objfiles()\[0\].pretty_printers)" "\\\[\\\]"
 
     gdb_test "python gdb.objfiles()\[0\].pretty_printers = 0" \
-      "pretty_printers attribute must be a list.*Error while executing Python code."
+      "pretty_printers attribute must be a list.*Error occurred in Python.*"
 }
 
 proc test_value_after_death {} {
@@ -455,7 +463,7 @@ proc test_subscript_regression {exefile lang} {
 
  # Try to access an int with a subscript.  This should fail.
  gdb_test "python print (intv)" "1" "baseline print of an int Python value"
- gdb_test "python print (intv\[0\])" "gdb.error: Cannot subscript requested type.*" \
+ gdb_test "python print (intv\[0\])" "gdb.error.*: Cannot subscript requested type.*" \
      "Attempt to access an integer with a subscript"
 
  # Try to access a string with a subscript.  This should pass.
@@ -470,7 +478,7 @@ proc test_subscript_regression {exefile lang} {
 
  # Try to access a single dimension array with a subscript to the
  # result.  This should fail.
- gdb_test "python print (pointer\[intv\]\[0\])" "gdb.error: Cannot subscript requested type.*" \
+ gdb_test "python print (pointer\[intv\]\[0\])" "gdb.error.*: Cannot subscript requested type.*" \
      "Attempt to access a single dimension array with a two subscripts"
 
  # Lastly, test subscript access to an array with multiple
@@ -535,35 +543,54 @@ proc prepare_type_and_buffer {} {
 proc test_value_from_buffer {} {
   global gdb_prompt
 
+  # A Python helper function.  Create a bytes object from inferior
+  # memory LEN bytes starting at ADDR, and compare this to the bytes
+  # obtained from VAL.bytes.  Assert that the two bytes object match.
+  gdb_test_multiline "Create another function to check Value.bytes" \
+     "python" "" \
+     "def compare_value_bytes_to_mem(val, addr, len):" "" \
+     "   mem = gdb.selected_inferior().read_memory(addr, len)" "" \
+     "   mem_bytes = mem.tobytes()" "" \
+     "   val_bytes = val.bytes" "" \
+     "   assert mem_bytes == val_bytes" "" \
+     "end" ""
+
   prepare_type_and_buffer
   gdb_test "python v=gdb.Value(b,tp); print(v)" "1" \
             "construct value from buffer"
+  gdb_test_no_output { python compare_value_bytes_to_mem(v, addr, size_a0) }
   gdb_test "python v=gdb.Value(b\[size_a0:\],tp); print(v)" "2" \
             "convert 2nd elem of buffer to value"
+  gdb_test_no_output \
+      { python compare_value_bytes_to_mem(v, (int(addr) + size_a0), size_a0) }
   gdb_test "python v=gdb.Value(b\[2*size_a0:\],tp); print(v)" "3" \
            "convert 3rd elem of buffer to value"
+  gdb_test_no_output \
+      { python compare_value_bytes_to_mem(v, (int(addr) + (2 * size_a0)), size_a0) }
   gdb_test "python v=gdb.Value(b\[2*size_a0+1:\],tp); print(v)" \
-           "ValueError: Size of type is larger than that of buffer object\..*" \
+           "ValueError.*: Size of type is larger than that of buffer object\..*" \
 	   "attempt to convert smaller buffer than size of type"
   gdb_py_test_silent_cmd "python atp=tp.array(2) ; print(atp)" \
                          "make array type" 0
   gdb_py_test_silent_cmd "python va=gdb.Value(b,atp)" \
                          "construct array value from buffer" 0
+  gdb_test_no_output \
+      { python compare_value_bytes_to_mem(va, addr, size_a0 * 3) }
   gdb_test "python print(va)" "\\{1, 2, 3\\}" "print array value"
   gdb_test "python print(va\[0\])" "1" "print first array element"
   gdb_test "python print(va\[1\])" "2" "print second array element"
   gdb_test "python print(va\[2\])" "3" "print third array element"
-  gdb_test "python print(va\[3\])" "gdb\.error: no such vector element.*" \
+  gdb_test "python print(va\[3\])" "gdb\.error.*: no such vector element.*" \
            "print out of bounds array element"
   gdb_py_test_silent_cmd "python atpbig=tp.array(3)" "make bigger array type" 0
   gdb_test "python vabig=gdb.Value(b,atpbig)" \
-           "ValueError: Size of type is larger than that of buffer object\..*" \
+           "ValueError.*: Size of type is larger than that of buffer object\..*" \
 	   "attempt to construct large value with small buffer" 
   gdb_test "python v=gdb.Value(2048,tp)" \
-           "TypeError: Object must support the python buffer protocol\..*" \
+           "TypeError.*: Object must support the python buffer protocol\..*" \
            "attempt to construct value from buffer with non-buffer object"
   gdb_test "python v=gdb.Value(b,'int'); print(v)" \
-           "TypeError: type argument must be a gdb\.Type\..*" \
+           "TypeError.*: type argument must be a gdb\.Type\..*" \
 	   "attempt to construct value with string as type"
 }
 
@@ -589,7 +616,7 @@ proc test_add_to_history {} {
     # Try adding something that can't be converted to a gdb.Value,
     # this should give an error.
     gdb_test "python idx = gdb.add_history(gdb.GdbError(\"an error\"))" \
-	"TypeError: Could not convert Python object: .*"
+	"TypeError.*: Could not convert Python object: .*"
 }
 
 # Check we can create sub-classes of gdb.Value.
@@ -626,6 +653,105 @@ proc test_history_count {} {
     }
 }
 
+# Test the gdb.Value.bytes API.
+proc_with_prefix test_value_bytes { } {
+  # Test accessing the bytes of an optimised out value.
+  gdb_test "python print(gdb.Value(gdb.Value(5).type.optimized_out()).bytes)" \
+      [multi_line \
+	   "gdb\\.error.*: value has been optimized out" \
+	   "Error occurred in Python.*"]
+
+  # A Python helper function.  Fetch VAR_NAME from the inferior as a
+  # gdb.Value.  Read the bytes of the value based on its address, and
+  # the size of its type.  The compare these bytes to the value
+  # obtained from gdb.Value.bytes.  Assert that the two bytes objects
+  # match.
+  gdb_test_multiline "Create a function to check Value.bytes" \
+      "python" "" \
+      "def check_value_bytes(var_name):" "" \
+      "   val = gdb.parse_and_eval(var_name)" "" \
+      "   addr = val.address" "" \
+      "   len = val.type.sizeof" "" \
+      "   mem = gdb.selected_inferior().read_memory(addr, len)" "" \
+      "   mem_bytes = mem.tobytes()" "" \
+      "   val_bytes = val.bytes" "" \
+      "   assert mem_bytes == val_bytes" "" \
+      "end" ""
+
+  gdb_test_no_output { python check_value_bytes("a") }
+  gdb_test_no_output { python check_value_bytes("p") }
+  gdb_test_no_output { python check_value_bytes("i") }
+  gdb_test_no_output { python check_value_bytes("ptr_i") }
+  gdb_test_no_output { python check_value_bytes("embed") }
+  gdb_test_no_output { python check_value_bytes("fp1") }
+  gdb_test_no_output { python check_value_bytes("nullst") }
+  gdb_test_no_output { python check_value_bytes("st") }
+  gdb_test_no_output { python check_value_bytes("s") }
+  gdb_test_no_output { python check_value_bytes("u") }
+
+  # Check that gdb.Value.bytes changes after calling
+  # gdb.Value.assign().  The bytes value is cached within the Value
+  # object, so calling assign should clear the cache.
+  with_test_prefix "assign clears bytes cache" {
+      gdb_test_no_output "python v = gdb.parse_and_eval(\"i\")"
+      gdb_test_no_output "python bytes_before = v.bytes"
+      gdb_test_no_output "python v.assign(9)"
+      gdb_test_no_output "python bytes_after = v.bytes"
+      gdb_test_no_output "python assert(bytes_after != bytes_before)"
+  }
+
+  # Check that if we re-init a gdb.Value object the cached bytes for
+  # the Value are cleared.
+  with_test_prefix "re-init clears bytes cache" {
+      gdb_test_no_output "python w = gdb.Value(1)"
+      gdb_test_no_output "python bytes_before = w.bytes"
+      gdb_test_no_output "python w.__init__(3)"
+      gdb_test_no_output "python bytes_after = w.bytes"
+      gdb_test_no_output "python assert(bytes_after != bytes_before)"
+  }
+
+  # Check that we can assign to the Value.bytes field.
+  gdb_test_no_output "python i_value = gdb.parse_and_eval('i')" \
+      "evaluate i"
+  gdb_test_no_output "python i_bytes = i_value.bytes"
+  gdb_test_no_output "python i_bytes = bytes(\[b if b != 9 else 5 for b in i_bytes\])"
+  gdb_test_no_output "python i_value.bytes = i_bytes"
+  gdb_test "print i" " = 5"
+
+  # Check we get an exception if attempting to assign a buffer that is
+  # too big, or too small.
+  gdb_test_no_output "python bytes_as_int = \[x for x in i_bytes\]"
+  gdb_test_no_output "python bytes_as_int.append(0)"
+  gdb_test_no_output "python too_many_bytes = bytes(bytes_as_int)"
+  gdb_test "python i_value.bytes = too_many_bytes" \
+      "ValueError.*: Size of type is not equal to that of buffer object\\..*"
+  gdb_test_no_output "python bytes_as_int = bytes_as_int\[0:-2\]"
+  gdb_test_no_output "python too_few_bytes = bytes(bytes_as_int)"
+  gdb_test "python i_value.bytes = too_few_bytes" \
+      "ValueError.*: Size of type is not equal to that of buffer object\\..*"
+
+  # Check we get an exception writing to a not_lval.
+  gdb_test_no_output "python i_value = gdb.Value(9)" \
+      "reset i_value"
+  gdb_test_no_output "python i_bytes = i_value.bytes" \
+      "grab new value bytes"
+  gdb_test "python i_value.bytes = i_bytes" "not an lvalue.*" \
+      "cannot assign to not_lval value"
+}
+
+# Test Value.assign.
+proc test_assign {} {
+    gdb_test_no_output "python i_value = gdb.parse_and_eval('i')" \
+	"evaluate i"
+    gdb_test_no_output "python i_value.assign(27)" \
+	"set i to 27"
+    gdb_test "print i" " = 27"
+    gdb_test_no_output "python i_value = gdb.Value(27)" \
+	"reset i_value"
+    gdb_test "python i_value.assign(89)" "not an lvalue.*" \
+	"cannot assign to integer"
+}
+
 # Build C version of executable.  C++ is built later.
 if { [build_inferior "${binfile}" "c"] < 0 } {
     return -1
@@ -633,9 +759,6 @@ if { [build_inferior "${binfile}" "c"] < 0 } {
 
 # Start with a fresh gdb.
 clean_restart ${binfile}
-
-# Skip all tests if Python scripting is not enabled.
-if { [skip_python_tests] } { continue }
 
 test_history_count
 test_value_creation
@@ -659,13 +782,15 @@ test_value_in_inferior
 test_value_from_buffer
 test_value_sub_classes
 test_inferior_function_call
+test_assign
+test_value_bytes
 test_value_after_death
 
 # Test either C or C++ values. 
 
 test_subscript_regression "${binfile}" "c"
 
-if ![skip_cplus_tests] {
+if {[allow_cplus_tests]} {
     if { [build_inferior "${binfile}-cxx" "c++"] < 0 } {
 	return -1
     }

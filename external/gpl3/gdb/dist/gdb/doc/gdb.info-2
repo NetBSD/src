@@ -1,6 +1,6 @@
 This is gdb.info, produced by makeinfo version 6.8 from gdb.texinfo.
 
-Copyright (C) 1988-2023 Free Software Foundation, Inc.
+Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -21,9 +21,9 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 13.2.
+Source-Level Debugger' for GDB (GDB) Version 15.1.
 
-   Copyright (C) 1988-2023 Free Software Foundation, Inc.
+   Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -35,6 +35,89 @@ with the Back-Cover Texts as in (a) below.
    (a) The FSF's Back-Cover Text is: "You are free to copy and modify
 this GNU Manual.  Buying copies from GNU Press supports the FSF in
 developing GNU and promoting software freedom."
+
+
+File: gdb.info,  Node: Stack,  Next: Source,  Prev: Process Record and Replay,  Up: Top
+
+8 Examining the Stack
+*********************
+
+When your program has stopped, the first thing you need to know is where
+it stopped and how it got there.
+
+   Each time your program performs a function call, information about
+the call is generated.  That information includes the location of the
+call in your program, the arguments of the call, and the local variables
+of the function being called.  The information is saved in a block of
+data called a "stack frame".  The stack frames are allocated in a region
+of memory called the "call stack".
+
+   When your program stops, the GDB commands for examining the stack
+allow you to see all of this information.
+
+   One of the stack frames is "selected" by GDB and many GDB commands
+refer implicitly to the selected frame.  In particular, whenever you ask
+GDB for the value of a variable in your program, the value is found in
+the selected frame.  There are special GDB commands to select whichever
+frame you are interested in.  *Note Selecting a Frame: Selection.
+
+   When your program stops, GDB automatically selects the currently
+executing frame and describes it briefly, similar to the 'frame' command
+(*note Information about a Frame: Frame Info.).
+
+* Menu:
+
+* Frames::                      Stack frames
+* Backtrace::                   Backtraces
+* Selection::                   Selecting a frame
+* Frame Info::                  Information on a frame
+* Frame Apply::                 Applying a command to several frames
+* Frame Filter Management::     Managing frame filters
+
+
+File: gdb.info,  Node: Frames,  Next: Backtrace,  Up: Stack
+
+8.1 Stack Frames
+================
+
+The call stack is divided up into contiguous pieces called "stack
+frames", or "frames" for short; each frame is the data associated with
+one call to one function.  The frame contains the arguments given to the
+function, the function's local variables, and the address at which the
+function is executing.
+
+   When your program is started, the stack has only one frame, that of
+the function 'main'.  This is called the "initial" frame or the
+"outermost" frame.  Each time a function is called, a new frame is made.
+Each time a function returns, the frame for that function invocation is
+eliminated.  If a function is recursive, there can be many frames for
+the same function.  The frame for the function in which execution is
+actually occurring is called the "innermost" frame.  This is the most
+recently created of all the stack frames that still exist.
+
+   Inside your program, stack frames are identified by their addresses.
+A stack frame consists of many bytes, each of which has its own address;
+each kind of computer has a convention for choosing one byte whose
+address serves as the address of the frame.  Usually this address is
+kept in a register called the "frame pointer register" (*note $fp:
+Registers.) while execution is going on in that frame.
+
+   GDB labels each existing stack frame with a "level", a number that is
+zero for the innermost frame, one for the frame that called it, and so
+on upward.  These level numbers give you a way of designating stack
+frames in GDB commands.  The terms "frame number" and "frame level" can
+be used interchangeably to describe this number.
+
+   Some compilers provide a way to compile functions so that they
+operate without stack frames.  (For example, the GCC option
+     '-fomit-frame-pointer'
+   generates functions without a frame.)  This is occasionally done with
+heavily used library functions to save the frame setup time.  GDB has
+limited facilities for dealing with these function invocations.  If the
+innermost function invocation has no stack frame, GDB nevertheless
+regards it as though it had a separate frame, which is numbered zero as
+usual, allowing correct tracing of the function call chain.  However,
+GDB has no provision for frameless functions elsewhere in the stack.
 
 
 File: gdb.info,  Node: Backtrace,  Next: Selection,  Prev: Frames,  Up: Stack
@@ -741,7 +824,7 @@ Emacs.
 * Search::                      Searching source files
 * Source Path::                 Specifying source directories
 * Machine Code::                Source and machine code
-* Disable Reading Source::	Disable Reading Source Code
+* Disable Reading Source::      Disable Reading Source Code
 
 
 File: gdb.info,  Node: List,  Next: Location Specifications,  Up: Source
@@ -768,10 +851,20 @@ Specifications::, for the full list.
      'list' command, this prints lines following the last lines printed;
      however, if the last line printed was a solitary line printed as
      part of displaying a stack frame (*note Examining the Stack:
-     Stack.), this prints lines centered around that line.
+     Stack.), this prints lines centered around that line.  If no 'list'
+     command has been used and no solitary line was printed, it prints
+     the lines around the function 'main'.
+
+'list +'
+     Same as using with no arguments.
 
 'list -'
      Print lines just before the lines last printed.
+
+'list .'
+     Print the lines surrounding the point of execution within the
+     currently selected frame.  If the inferior is not running, print
+     lines around the start of the main function instead.
 
    By default, GDB prints ten source lines with any of these forms of
 the 'list' command.  You can change this using 'set listsize':
@@ -1488,13 +1581,20 @@ location will display information about the next source line.
      instructions.  It can also print mixed source+disassembly by
      specifying the '/m' or '/s' modifier and print the raw instructions
      in hex as well as in symbolic form by specifying the '/r' or '/b'
-     modifier.  The default memory range is the function surrounding the
-     program counter of the selected frame.  A single argument to this
-     command is a program counter value; GDB dumps the function
-     surrounding this value.  When two arguments are given, they should
-     be separated by a comma, possibly surrounded by whitespace.  The
-     arguments specify a range of addresses to dump, in one of two
-     forms:
+     modifier.
+
+     Only one of '/m' and '/s' can be used, attempting to use both flag
+     will give an error.
+
+     Only one of '/r' and '/b' can be used, attempting to use both flag
+     will give an error.
+
+     The default memory range is the function surrounding the program
+     counter of the selected frame.  A single argument to this command
+     is a program counter value; GDB dumps the function surrounding this
+     value.  When two arguments are given, they should be separated by a
+     comma, possibly surrounded by whitespace.  The arguments specify a
+     range of addresses to dump, in one of two forms:
 
      'START,END'
           the addresses from START (inclusive) to END (exclusive)
@@ -1788,10 +1888,18 @@ Pretty Printing::).
           Set printing of array indexes.  Related setting: *note set
           print array-indexes::.
 
-     '-elements NUMBER-OF-ELEMENTS|unlimited'
-          Set limit on string chars or array elements to print.  The
+     '-characters NUMBER-OF-CHARACTERS|elements|unlimited'
+          Set limit on string characters to print.  The value 'elements'
+          causes the limit on array elements to print to be used.  The
           value 'unlimited' causes there to be no limit.  Related
-          setting: *note set print elements::.
+          setting: *note set print characters::.
+
+     '-elements NUMBER-OF-ELEMENTS|unlimited'
+          Set limit on array elements and optionally string characters
+          to print.  See *note set print characters::, and the
+          '-characters' option above for when this option applies to
+          strings.  The value 'unlimited' causes there to be no limit.
+          *Note set print elements::, for a related CLI command.
 
      '-max-depth DEPTH|unlimited'
           Set the threshold after which nested structures are replaced
@@ -2990,15 +3098,44 @@ print symbol on':
 'show print nibbles'
      Show whether to print binary values in groups of four bits.
 
+'set print characters NUMBER-OF-CHARACTERS'
+'set print characters elements'
+'set print characters unlimited'
+     Set a limit on how many characters of a string GDB will print.  If
+     GDB is printing a large string, it stops printing after it has
+     printed the number of characters set by the 'set print characters'
+     command.  This equally applies to multi-byte and wide character
+     strings, that is for strings whose character type is 'wchar_t',
+     'char16_t', or 'char32_t' it is the number of actual characters
+     rather than underlying bytes the encoding uses that this setting
+     controls.  Setting NUMBER-OF-CHARACTERS to 'elements' means that
+     the limit on the number of characters to print follows one for
+     array elements; see *note set print elements::.  Setting
+     NUMBER-OF-CHARACTERS to 'unlimited' means that the number of
+     characters to print is unlimited.  When GDB starts, this limit is
+     set to 'elements'.
+
+'show print characters'
+     Display the number of characters of a large string that GDB will
+     print.
+
 'set print elements NUMBER-OF-ELEMENTS'
 'set print elements unlimited'
      Set a limit on how many elements of an array GDB will print.  If
      GDB is printing a large array, it stops printing after it has
      printed the number of elements set by the 'set print elements'
-     command.  This limit also applies to the display of strings.  When
-     GDB starts, this limit is set to 200.  Setting NUMBER-OF-ELEMENTS
-     to 'unlimited' or zero means that the number of elements to print
-     is unlimited.
+     command.  By default this limit also applies to the display of
+     strings; see *note set print characters::.  When GDB starts, this
+     limit is set to 200.  Setting NUMBER-OF-ELEMENTS to 'unlimited' or
+     zero means that the number of elements to print is unlimited.
+
+     When printing very large arrays, whose size is greater than
+     'max-value-size' (*note max-value-size: set max-value-size.), if
+     the 'print elements' is set such that the size of the elements
+     being printed is less than or equal to 'max-value-size', then GDB
+     will print the array (up to the 'print elements' limit), and only
+     'max-value-size' worth of data will be added into the value history
+     (*note Value History: Value History.).
 
 'show print elements'
      Display the number of elements of a large array that GDB will
@@ -4025,6 +4162,54 @@ support, which means that they are always available.
      Like the '$_gdb_setting' function, but works with 'maintenance set'
      variables.
 
+'$_shell (COMMAND-STRING)'
+
+     Invoke a shell to execute COMMAND-STRING.  COMMAND-STRING must be a
+     string.  The shell runs on the host machine, the machine GDB is
+     running on.  Returns the command's exit status.  On Unix systems, a
+     command which exits with a zero exit status has succeeded, and
+     non-zero exit status indicates failure.  When a command terminates
+     on a fatal signal whose number is N, GDB uses the value 128+N as
+     the exit status, as is standard in Unix shells.  Note that N is a
+     host signal number, not a target signal number.  If you're native
+     debugging, they will be the same, but if cross debugging, the host
+     vs target signal numbers may be completely unrelated.  Please
+     consult your host operating system's documentation for the mapping
+     between host signal numbers and signal names.  The shell to run is
+     determined in the same way as for the 'shell' command.  *Note Shell
+     Commands: Shell Commands.
+
+          (gdb) print $_shell("true")
+          $1 = 0
+          (gdb) print $_shell("false")
+          $2 = 1
+          (gdb) p $_shell("echo hello")
+          hello
+          $3 = 0
+          (gdb) p $_shell("foobar")
+          bash: line 1: foobar: command not found
+          $4 = 127
+
+     This may also be useful in breakpoint conditions.  For example:
+
+          (gdb) break function if $_shell("some command") == 0
+
+     In this scenario, you'll want to make sure that the shell command
+     you run in the breakpoint condition takes the least amount of time
+     possible.  For example, avoid running a command that may block
+     indefinitely, or that sleeps for a while before exiting.  Prefer a
+     command or script which analyzes some state and exits immediately.
+     This is important because the debugged program stops for the
+     breakpoint every time, and then GDB evaluates the breakpoint
+     condition.  If the condition is false, the program is re-resumed
+     transparently, without informing you of the stop.  A quick shell
+     command thus avoids significantly slowing down the debugged program
+     unnecessarily.
+
+     Note: unlike the 'shell' command, the '$_shell' convenience
+     function does not affect the '$_shell_exitcode' and
+     '$_shell_exitsignal' convenience variables.
+
    The following functions require GDB to be configured with 'Python'
 support.
 
@@ -4099,6 +4284,10 @@ support.
      checks the frame specified by NUMBER_OF_FRAMES.
 
 '$_as_string(VALUE)'
+     This convenience function is considered deprecated, and could be
+     removed from future versions of GDB.  Use the '%V' format specifier
+     instead (*note %V Format Specifier::).
+
      Return the string representation of VALUE.
 
      This function is useful to obtain the textual label (enumerator) of
@@ -4634,6 +4823,9 @@ special command for that.
      FILE specifies the file name where to put the core dump.  If not
      specified, the file name defaults to 'core.PID', where PID is the
      inferior process ID.
+
+     If supported by the filesystem where the core is written to, GDB
+     generates a sparse core dump file.
 
      Note that this command is implemented only for some systems (as of
      this writing, GNU/Linux, FreeBSD, Solaris, and S390).
@@ -5207,8 +5399,8 @@ ambiguous.  There is no execution history stored (possible *note Reverse
 Execution:: is never used for this purpose) and the last known caller
 could have reached the known callee by multiple different jump
 sequences.  In such case GDB still tries to show at least all the
-unambiguous top tail callers and all the unambiguous bottom tail calees,
-if any.
+unambiguous top tail callers and all the unambiguous bottom tail
+callees, if any.
 
 'set debug entry-values'
      When set to on, enables printing of analysis messages for both
@@ -6014,7 +6206,7 @@ File: gdb.info,  Node: Tracepoint Actions,  Next: Listing Tracepoints,  Prev: Tr
      requests that pointers to chars be handled as strings, in
      particular collecting the contents of the memory being pointed at,
      up to the first zero.  The upper bound is by default the value of
-     the 'print elements' variable; if 's' is followed by a decimal
+     the 'print characters' variable; if 's' is followed by a decimal
      number, that is the upper bound instead.  So for instance
      'collect/s25 mystr' collects as many as 25 characters at 'mystr'.
 
@@ -6943,317 +7135,4 @@ accurately keep track of which overlays are in program memory, and
 update any breakpoints that may be set in overlays.  This will allow
 breakpoints to work even if the overlays are kept in ROM or other
 non-writable memory while they are not being executed.
-
-
-File: gdb.info,  Node: Overlay Sample Program,  Prev: Automatic Overlay Debugging,  Up: Overlays
-
-14.4 Overlay Sample Program
-===========================
-
-When linking a program which uses overlays, you must place the overlays
-at their load addresses, while relocating them to run at their mapped
-addresses.  To do this, you must write a linker script (*note
-(ld.info)Overlay Description::).  Unfortunately, since linker scripts
-are specific to a particular host system, target architecture, and
-target memory layout, this manual cannot provide portable sample code
-demonstrating GDB's overlay support.
-
-   However, the GDB source distribution does contain an overlaid
-program, with linker scripts for a few systems, as part of its test
-suite.  The program consists of the following files from
-'gdb/testsuite/gdb.base':
-
-'overlays.c'
-     The main program file.
-'ovlymgr.c'
-     A simple overlay manager, used by 'overlays.c'.
-'foo.c'
-'bar.c'
-'baz.c'
-'grbx.c'
-     Overlay modules, loaded and used by 'overlays.c'.
-'d10v.ld'
-'m32r.ld'
-     Linker scripts for linking the test program on the 'd10v-elf' and
-     'm32r-elf' targets.
-
-   You can build the test program using the 'd10v-elf' GCC
-cross-compiler like this:
-
-     $ d10v-elf-gcc -g -c overlays.c
-     $ d10v-elf-gcc -g -c ovlymgr.c
-     $ d10v-elf-gcc -g -c foo.c
-     $ d10v-elf-gcc -g -c bar.c
-     $ d10v-elf-gcc -g -c baz.c
-     $ d10v-elf-gcc -g -c grbx.c
-     $ d10v-elf-gcc -g overlays.o ovlymgr.o foo.o bar.o \
-                       baz.o grbx.o -Wl,-Td10v.ld -o overlays
-
-   The build process is identical for any other architecture, except
-that you must substitute the appropriate compiler and linker script for
-the target system for 'd10v-elf-gcc' and 'd10v.ld'.
-
-
-File: gdb.info,  Node: Languages,  Next: Symbols,  Prev: Overlays,  Up: Top
-
-15 Using GDB with Different Languages
-*************************************
-
-Although programming languages generally have common aspects, they are
-rarely expressed in the same manner.  For instance, in ANSI C,
-dereferencing a pointer 'p' is accomplished by '*p', but in Modula-2, it
-is accomplished by 'p^'.  Values can also be represented (and displayed)
-differently.  Hex numbers in C appear as '0x1ae', while in Modula-2 they
-appear as '1AEH'.
-
-   Language-specific information is built into GDB for some languages,
-allowing you to express operations like the above in your program's
-native language, and allowing GDB to output values in a manner
-consistent with the syntax of your program's native language.  The
-language you use to build expressions is called the "working language".
-
-* Menu:
-
-* Setting::                     Switching between source languages
-* Show::                        Displaying the language
-* Checks::                      Type and range checks
-* Supported Languages::         Supported languages
-* Unsupported Languages::       Unsupported languages
-
-
-File: gdb.info,  Node: Setting,  Next: Show,  Up: Languages
-
-15.1 Switching Between Source Languages
-=======================================
-
-There are two ways to control the working language--either have GDB set
-it automatically, or select it manually yourself.  You can use the 'set
-language' command for either purpose.  On startup, GDB defaults to
-setting the language automatically.  The working language is used to
-determine how expressions you type are interpreted, how values are
-printed, etc.
-
-   In addition to the working language, every source file that GDB knows
-about has its own working language.  For some object file formats, the
-compiler might indicate which language a particular source file is in.
-However, most of the time GDB infers the language from the name of the
-file.  The language of a source file controls whether C++ names are
-demangled--this way 'backtrace' can show each frame appropriately for
-its own language.  There is no way to set the language of a source file
-from within GDB, but you can set the language associated with a filename
-extension.  *Note Displaying the Language: Show.
-
-   This is most commonly a problem when you use a program, such as
-'cfront' or 'f2c', that generates C but is written in another language.
-In that case, make the program use '#line' directives in its C output;
-that way GDB will know the correct language of the source code of the
-original program, and will display that source code, not the generated C
-code.
-
-* Menu:
-
-* Filenames::                   Filename extensions and languages.
-* Manually::                    Setting the working language manually
-* Automatically::               Having GDB infer the source language
-
-
-File: gdb.info,  Node: Filenames,  Next: Manually,  Up: Setting
-
-15.1.1 List of Filename Extensions and Languages
-------------------------------------------------
-
-If a source file name ends in one of the following extensions, then GDB
-infers that its language is the one indicated.
-
-'.ada'
-'.ads'
-'.adb'
-'.a'
-     Ada source file.
-
-'.c'
-     C source file
-
-'.C'
-'.cc'
-'.cp'
-'.cpp'
-'.cxx'
-'.c++'
-     C++ source file
-
-'.d'
-     D source file
-
-'.m'
-     Objective-C source file
-
-'.f'
-'.F'
-     Fortran source file
-
-'.mod'
-     Modula-2 source file
-
-'.s'
-'.S'
-     Assembler source file.  This actually behaves almost like C, but
-     GDB does not skip over function prologues when stepping.
-
-   In addition, you may set the language associated with a filename
-extension.  *Note Displaying the Language: Show.
-
-
-File: gdb.info,  Node: Manually,  Next: Automatically,  Prev: Filenames,  Up: Setting
-
-15.1.2 Setting the Working Language
------------------------------------
-
-If you allow GDB to set the language automatically, expressions are
-interpreted the same way in your debugging session and your program.
-
-   If you wish, you may set the language manually.  To do this, issue
-the command 'set language LANG', where LANG is the name of a language,
-such as 'c' or 'modula-2'.  For a list of the supported languages, type
-'set language'.
-
-   Setting the language manually prevents GDB from updating the working
-language automatically.  This can lead to confusion if you try to debug
-a program when the working language is not the same as the source
-language, when an expression is acceptable to both languages--but means
-different things.  For instance, if the current source file were written
-in C, and GDB was parsing Modula-2, a command such as:
-
-     print a = b + c
-
-might not have the effect you intended.  In C, this means to add 'b' and
-'c' and place the result in 'a'.  The result printed would be the value
-of 'a'.  In Modula-2, this means to compare 'a' to the result of 'b+c',
-yielding a 'BOOLEAN' value.
-
-
-File: gdb.info,  Node: Automatically,  Prev: Manually,  Up: Setting
-
-15.1.3 Having GDB Infer the Source Language
--------------------------------------------
-
-To have GDB set the working language automatically, use 'set language
-local' or 'set language auto'.  GDB then infers the working language.
-That is, when your program stops in a frame (usually by encountering a
-breakpoint), GDB sets the working language to the language recorded for
-the function in that frame.  If the language for a frame is unknown
-(that is, if the function or block corresponding to the frame was
-defined in a source file that does not have a recognized extension), the
-current working language is not changed, and GDB issues a warning.
-
-   This may not seem necessary for most programs, which are written
-entirely in one source language.  However, program modules and libraries
-written in one source language can be used by a main program written in
-a different source language.  Using 'set language auto' in this case
-frees you from having to set the working language manually.
-
-
-File: gdb.info,  Node: Show,  Next: Checks,  Prev: Setting,  Up: Languages
-
-15.2 Displaying the Language
-============================
-
-The following commands help you find out which language is the working
-language, and also what language source files were written in.
-
-'show language'
-     Display the current working language.  This is the language you can
-     use with commands such as 'print' to build and compute expressions
-     that may involve variables in your program.
-
-'info frame'
-     Display the source language for this frame.  This language becomes
-     the working language if you use an identifier from this frame.
-     *Note Information about a Frame: Frame Info, to identify the other
-     information listed here.
-
-'info source'
-     Display the source language of this source file.  *Note Examining
-     the Symbol Table: Symbols, to identify the other information listed
-     here.
-
-   In unusual circumstances, you may have source files with extensions
-not in the standard list.  You can then set the extension associated
-with a language explicitly:
-
-'set extension-language EXT LANGUAGE'
-     Tell GDB that source files with extension EXT are to be assumed as
-     written in the source language LANGUAGE.
-
-'info extensions'
-     List all the filename extensions and the associated languages.
-
-
-File: gdb.info,  Node: Checks,  Next: Supported Languages,  Prev: Show,  Up: Languages
-
-15.3 Type and Range Checking
-============================
-
-Some languages are designed to guard you against making seemingly common
-errors through a series of compile- and run-time checks.  These include
-checking the type of arguments to functions and operators and making
-sure mathematical overflows are caught at run time.  Checks such as
-these help to ensure a program's correctness once it has been compiled
-by eliminating type mismatches and providing active checks for range
-errors when your program is running.
-
-   By default GDB checks for these errors according to the rules of the
-current source language.  Although GDB does not check the statements in
-your program, it can check expressions entered directly into GDB for
-evaluation via the 'print' command, for example.
-
-* Menu:
-
-* Type Checking::               An overview of type checking
-* Range Checking::              An overview of range checking
-
-
-File: gdb.info,  Node: Type Checking,  Next: Range Checking,  Up: Checks
-
-15.3.1 An Overview of Type Checking
------------------------------------
-
-Some languages, such as C and C++, are strongly typed, meaning that the
-arguments to operators and functions have to be of the correct type,
-otherwise an error occurs.  These checks prevent type mismatch errors
-from ever causing any run-time problems.  For example,
-
-     int klass::my_method(char *b) { return  b ? 1 : 2; }
-
-     (gdb) print obj.my_method (0)
-     $1 = 2
-but
-     (gdb) print obj.my_method (0x1234)
-     Cannot resolve method klass::my_method to any overloaded instance
-
-   The second example fails because in C++ the integer constant '0x1234'
-is not type-compatible with the pointer parameter type.
-
-   For the expressions you use in GDB commands, you can tell GDB to not
-enforce strict type checking or to treat any mismatches as errors and
-abandon the expression; When type checking is disabled, GDB successfully
-evaluates expressions like the second example above.
-
-   Even if type checking is off, there may be other reasons related to
-type that prevent GDB from evaluating an expression.  For instance, GDB
-does not know how to add an 'int' and a 'struct foo'.  These particular
-type errors have nothing to do with the language in use and usually
-arise from expressions which make little sense to evaluate anyway.
-
-   GDB provides some additional commands for controlling type checking:
-
-'set check type on'
-'set check type off'
-     Set strict type checking on or off.  If any type mismatches occur
-     in evaluating an expression while type checking is on, GDB prints a
-     message and aborts evaluation of the expression.
-
-'show check type'
-     Show the current setting of type checking and whether GDB is
-     enforcing strict type checking rules.
 

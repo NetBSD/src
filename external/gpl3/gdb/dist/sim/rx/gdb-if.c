@@ -1,6 +1,6 @@
 /* gdb-if.c -- sim interface to GDB.
 
-Copyright (C) 2008-2023 Free Software Foundation, Inc.
+Copyright (C) 2008-2024 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -29,11 +29,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <stdlib.h>
 
 #include "ansidecl.h"
+#include "bfd.h"
 #include "libiberty.h"
 #include "sim/callback.h"
 #include "sim/sim.h"
 #include "gdb/signals.h"
-#include "gdb/sim-rx.h"
+#include "sim/sim-rx.h"
 
 #include "cpu.h"
 #include "mem.h"
@@ -225,24 +226,24 @@ sim_create_inferior (SIM_DESC sd, struct bfd *abfd,
   return SIM_RC_OK;
 }
 
-int
-sim_read (SIM_DESC sd, SIM_ADDR mem, void *buffer, int length)
+uint64_t
+sim_read (SIM_DESC sd, uint64_t addr, void *buffer, uint64_t length)
 {
   int i;
   unsigned char *data = buffer;
 
   check_desc (sd);
 
-  if (mem == 0)
+  if (addr == 0)
     return 0;
 
   execution_error_clear_last_error ();
 
   for (i = 0; i < length; i++)
     {
-      bfd_vma addr = mem + i;
-      int do_swap = addr_in_swap_list (addr);
-      data[i] = mem_get_qi (addr ^ (do_swap ? 3 : 0));
+      bfd_vma vma = addr + i;
+      int do_swap = addr_in_swap_list (vma);
+      data[i] = mem_get_qi (vma ^ (do_swap ? 3 : 0));
 
       if (execution_error_get_last_error () != SIM_ERR_NONE)
 	return i;
@@ -251,8 +252,8 @@ sim_read (SIM_DESC sd, SIM_ADDR mem, void *buffer, int length)
   return length;
 }
 
-int
-sim_write (SIM_DESC sd, SIM_ADDR mem, const void *buffer, int length)
+uint64_t
+sim_write (SIM_DESC sd, uint64_t addr, const void *buffer, uint64_t length)
 {
   int i;
   const unsigned char *data = buffer;
@@ -263,9 +264,9 @@ sim_write (SIM_DESC sd, SIM_ADDR mem, const void *buffer, int length)
 
   for (i = 0; i < length; i++)
     {
-      bfd_vma addr = mem + i;
-      int do_swap = addr_in_swap_list (addr);
-      mem_put_qi (addr ^ (do_swap ? 3 : 0), data[i]);
+      bfd_vma vma = addr + i;
+      int do_swap = addr_in_swap_list (vma);
+      mem_put_qi (vma ^ (do_swap ? 3 : 0), data[i]);
 
       if (execution_error_get_last_error () != SIM_ERR_NONE)
 	return i;
@@ -643,7 +644,7 @@ sim_store_register (SIM_DESC sd, int regno, const void *buf, int length)
 }
 
 void
-sim_info (SIM_DESC sd, int verbose)
+sim_info (SIM_DESC sd, bool verbose)
 {
   check_desc (sd);
 

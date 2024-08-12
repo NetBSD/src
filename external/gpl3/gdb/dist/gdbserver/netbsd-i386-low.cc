@@ -1,4 +1,4 @@
-/* Copyright (C) 2020-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2020-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,6 @@
 #include <sys/ptrace.h>
 #include <limits.h>
 
-#include "server.h"
 #include "netbsd-low.h"
 #include "gdbsupport/x86-xstate.h"
 #include "arch/i386.h"

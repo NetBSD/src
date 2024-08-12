@@ -1,5 +1,5 @@
 /* BFD support for the ARM processor
-   Copyright (C) 1994-2022 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -195,7 +195,6 @@ processors[] =
   { bfd_mach_arm_8,	  "xgene1"	    },
   { bfd_mach_arm_8,	  "xgene2"	    },
   { bfd_mach_arm_9,	  "cortex-a710"	    },
-  { bfd_mach_arm_ep9312,  "ep9312"	    },
   { bfd_mach_arm_iWMMXt,  "iwmmxt"	    },
   { bfd_mach_arm_iWMMXt2, "iwmmxt2"	    },
   { bfd_mach_arm_unknown, "arm_any"	    }
@@ -252,24 +251,23 @@ static const bfd_arch_info_type arch_info_struct[] =
   N (bfd_mach_arm_5T,        "armv5t",         false, & arch_info_struct[8]),
   N (bfd_mach_arm_5TE,       "armv5te",        false, & arch_info_struct[9]),
   N (bfd_mach_arm_XScale,    "xscale",         false, & arch_info_struct[10]),
-  N (bfd_mach_arm_ep9312,    "ep9312",         false, & arch_info_struct[11]),
-  N (bfd_mach_arm_iWMMXt,    "iwmmxt",         false, & arch_info_struct[12]),
-  N (bfd_mach_arm_iWMMXt2,   "iwmmxt2",        false, & arch_info_struct[13]),
-  N (bfd_mach_arm_5TEJ,      "armv5tej",       false, & arch_info_struct[14]),
-  N (bfd_mach_arm_6,         "armv6",          false, & arch_info_struct[15]),
-  N (bfd_mach_arm_6KZ,       "armv6kz",        false, & arch_info_struct[16]),
-  N (bfd_mach_arm_6T2,       "armv6t2",        false, & arch_info_struct[17]),
-  N (bfd_mach_arm_6K,        "armv6k",         false, & arch_info_struct[18]),
-  N (bfd_mach_arm_7,         "armv7",          false, & arch_info_struct[19]),
-  N (bfd_mach_arm_6M,        "armv6-m",        false, & arch_info_struct[20]),
-  N (bfd_mach_arm_6SM,       "armv6s-m",       false, & arch_info_struct[21]),
-  N (bfd_mach_arm_7EM,       "armv7e-m",       false, & arch_info_struct[22]),
-  N (bfd_mach_arm_8,         "armv8-a",        false, & arch_info_struct[23]),
-  N (bfd_mach_arm_8R,        "armv8-r",        false, & arch_info_struct[24]),
-  N (bfd_mach_arm_8M_BASE,   "armv8-m.base",   false, & arch_info_struct[25]),
-  N (bfd_mach_arm_8M_MAIN,   "armv8-m.main",   false, & arch_info_struct[26]),
-  N (bfd_mach_arm_8_1M_MAIN, "armv8.1-m.main", false, & arch_info_struct[27]),
-  N (bfd_mach_arm_9,         "armv9-a",        false, & arch_info_struct[28]),
+  N (bfd_mach_arm_iWMMXt,    "iwmmxt",         false, & arch_info_struct[11]),
+  N (bfd_mach_arm_iWMMXt2,   "iwmmxt2",        false, & arch_info_struct[12]),
+  N (bfd_mach_arm_5TEJ,      "armv5tej",       false, & arch_info_struct[13]),
+  N (bfd_mach_arm_6,         "armv6",          false, & arch_info_struct[14]),
+  N (bfd_mach_arm_6KZ,       "armv6kz",        false, & arch_info_struct[15]),
+  N (bfd_mach_arm_6T2,       "armv6t2",        false, & arch_info_struct[16]),
+  N (bfd_mach_arm_6K,        "armv6k",         false, & arch_info_struct[17]),
+  N (bfd_mach_arm_7,         "armv7",          false, & arch_info_struct[18]),
+  N (bfd_mach_arm_6M,        "armv6-m",        false, & arch_info_struct[19]),
+  N (bfd_mach_arm_6SM,       "armv6s-m",       false, & arch_info_struct[20]),
+  N (bfd_mach_arm_7EM,       "armv7e-m",       false, & arch_info_struct[21]),
+  N (bfd_mach_arm_8,         "armv8-a",        false, & arch_info_struct[22]),
+  N (bfd_mach_arm_8R,        "armv8-r",        false, & arch_info_struct[23]),
+  N (bfd_mach_arm_8M_BASE,   "armv8-m.base",   false, & arch_info_struct[24]),
+  N (bfd_mach_arm_8M_MAIN,   "armv8-m.main",   false, & arch_info_struct[25]),
+  N (bfd_mach_arm_8_1M_MAIN, "armv8.1-m.main", false, & arch_info_struct[26]),
+  N (bfd_mach_arm_9,         "armv9-a",        false, & arch_info_struct[27]),
   N (bfd_mach_arm_unknown,   "arm_any",        false, NULL)
 };
 
@@ -306,35 +304,7 @@ bfd_arm_merge_machines (bfd *ibfd, bfd *obfd)
 
   /* Otherwise the general principle that a earlier architecture can be
      linked with a later architecture to produce a binary that will execute
-     on the later architecture.
-
-     We fail however if we attempt to link a Cirrus EP9312 binary with an
-     Intel XScale binary, since these architecture have co-processors which
-     will not both be present on the same physical hardware.  */
-  else if (in == bfd_mach_arm_ep9312
-	   && (out == bfd_mach_arm_XScale
-	       || out == bfd_mach_arm_iWMMXt
-	       || out == bfd_mach_arm_iWMMXt2))
-    {
-      /* xgettext: c-format */
-      _bfd_error_handler (_("error: %pB is compiled for the EP9312, "
-			    "whereas %pB is compiled for XScale"),
-			  ibfd, obfd);
-      bfd_set_error (bfd_error_wrong_format);
-      return false;
-    }
-  else if (out == bfd_mach_arm_ep9312
-	   && (in == bfd_mach_arm_XScale
-	       || in == bfd_mach_arm_iWMMXt
-	       || in == bfd_mach_arm_iWMMXt2))
-    {
-      /* xgettext: c-format */
-      _bfd_error_handler (_("error: %pB is compiled for the EP9312, "
-			    "whereas %pB is compiled for XScale"),
-			  obfd, ibfd);
-      bfd_set_error (bfd_error_wrong_format);
-      return false;
-    }
+     on the later architecture.  */
   else if (in > out)
     bfd_set_arch_mach (obfd, bfd_arch_arm, in);
   /* else
@@ -418,7 +388,8 @@ bfd_arm_update_notes (bfd *abfd, const char *note_section)
      different.  */
   arm_arch_section = bfd_get_section_by_name (abfd, note_section);
 
-  if (arm_arch_section == NULL)
+  if (arm_arch_section == NULL
+      || (arm_arch_section->flags & SEC_HAS_CONTENTS) == 0)
     return true;
 
   buffer_size = arm_arch_section->size;
@@ -449,7 +420,6 @@ bfd_arm_update_notes (bfd *abfd, const char *note_section)
     case bfd_mach_arm_5T:      expected = "armv5t"; break;
     case bfd_mach_arm_5TE:     expected = "armv5te"; break;
     case bfd_mach_arm_XScale:  expected = "XScale"; break;
-    case bfd_mach_arm_ep9312:  expected = "ep9312"; break;
     case bfd_mach_arm_iWMMXt:  expected = "iWMMXt"; break;
     case bfd_mach_arm_iWMMXt2: expected = "iWMMXt2"; break;
     }
@@ -500,7 +470,8 @@ architectures[] =
   { "armv5t",  bfd_mach_arm_5T },
   { "armv5te", bfd_mach_arm_5TE },
   { "XScale",  bfd_mach_arm_XScale },
-  { "ep9312",  bfd_mach_arm_ep9312 },
+  /* Maverick extensions have been dropped, so treat this as Armv4T.  */
+  { "ep9312",  bfd_mach_arm_4T },
   { "iWMMXt",  bfd_mach_arm_iWMMXt },
   { "iWMMXt2", bfd_mach_arm_iWMMXt2 },
   { "arm_any", bfd_mach_arm_unknown }
@@ -521,7 +492,8 @@ bfd_arm_get_mach_from_notes (bfd *abfd, const char *note_section)
      different.  */
   arm_arch_section = bfd_get_section_by_name (abfd, note_section);
 
-  if (arm_arch_section == NULL)
+  if (arm_arch_section == NULL
+      || (arm_arch_section->flags & SEC_HAS_CONTENTS) == 0)
     return bfd_mach_arm_unknown;
 
   buffer_size = arm_arch_section->size;

@@ -1,6 +1,6 @@
 /* MI Command Set for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
 
@@ -23,7 +23,7 @@
 #define MI_MI_CMDS_H
 
 #include "gdbsupport/function-view.h"
-#include "gdbsupport/gdb_optional.h"
+#include <optional>
 #include "mi/mi-main.h"
 
 enum print_values {
@@ -32,7 +32,8 @@ enum print_values {
    PRINT_SIMPLE_VALUES
 };
 
-typedef void (mi_cmd_argv_ftype) (const char *command, char **argv, int argc);
+typedef void (mi_cmd_argv_ftype) (const char *command, const char *const *argv,
+				  int argc);
 
 /* Declarations of the functions implementing each command.  */
 
@@ -179,12 +180,12 @@ struct mi_command
 
   /* If this command was created with a suppress notifications pointer,
      then this function will set the suppress flag and return a
-     gdb::optional with its value set to an object that will restore the
+     std::optional with its value set to an object that will restore the
      previous value of the suppress notifications flag.
 
      If this command was created without a suppress notifications points,
-     then this function returns an empty gdb::optional.  */
-  gdb::optional<scoped_restore_tmpl<int>> do_suppress_notification () const;
+     then this function returns an empty std::optional.  */
+  std::optional<scoped_restore_tmpl<int>> do_suppress_notification () const;
 
 private:
 
@@ -206,6 +207,11 @@ extern mi_command *mi_cmd_lookup (const char *command);
 
 extern void mi_execute_command (const char *cmd, int from_tty);
 
+/* Execute an MI command given an already-constructed parse
+   object.  */
+
+extern void mi_execute_command (mi_parse *context);
+
 /* Insert COMMAND into the global mi_cmd_table.  Return false if
    COMMAND->name already exists in mi_cmd_table, in which case COMMAND will
    not have been added to mi_cmd_table.  Otherwise, return true, and
@@ -225,5 +231,10 @@ extern bool remove_mi_cmd_entry (const std::string &name);
 using remove_mi_cmd_entries_ftype
   = gdb::function_view<bool (mi_command *)>;
 extern void remove_mi_cmd_entries (remove_mi_cmd_entries_ftype callback);
+
+/* Return true if type is a simple type: that is, neither an array, structure,
+   or union, nor a reference to an array, structure, or union.  */
+
+extern bool mi_simple_type_p (struct type *type);
 
 #endif /* MI_MI_CMDS_H */

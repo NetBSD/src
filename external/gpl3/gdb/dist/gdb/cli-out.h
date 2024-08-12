@@ -1,5 +1,5 @@
 /* Output generating routines for GDB CLI.
-   Copyright (C) 1999-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
    This file is part of GDB.
@@ -34,6 +34,9 @@ public:
   ui_file *set_stream (ui_file *stream);
 
   bool can_emit_style_escape () const override;
+
+  ui_file *current_stream () const override
+  { return m_streams.back (); }
 
 protected:
 
@@ -104,7 +107,7 @@ private:
 
   /* Stack of progress info.  */
   std::vector<cli_progress_info> m_progress_info;
-  void clear_current_line ();
+  void clear_progress_notify ();
 };
 
 extern void cli_display_match_list (char **matches, int len, int max);

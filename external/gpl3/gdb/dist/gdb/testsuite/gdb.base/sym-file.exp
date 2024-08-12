@@ -1,4 +1,4 @@
-# Copyright 2013-2023 Free Software Foundation, Inc.
+# Copyright 2013-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,13 +29,9 @@
 # 13) Check that the execution can continue without error.
 # 14) Regression test for a stale breakpoints bug.
 
-if {![is_elf_target]} {
-    return 0
-}
+require is_elf_target
 
-if [skip_shlib_tests] {
-    return 0
-}
+require allow_shlib_tests
 
 set target_size TARGET_UNKNOWN
 if {[is_lp64_target]} {

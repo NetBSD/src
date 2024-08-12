@@ -1,4 +1,4 @@
-# Copyright 2012-2023 Free Software Foundation, Inc.
+# Copyright 2012-2024 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -15,42 +15,36 @@
 load_lib "trace-support.exp"
 
 standard_testfile
-set executable $testfile
-set expfile $testfile.exp
 
 # Some targets have leading underscores on assembly symbols.
 set additional_flags [gdb_target_symbol_prefix_flags]
 
-if ![gdb_trace_common_supports_arch] {
-    unsupported "no trace-common.h support for arch"
-    return -1
+require gdb_trace_common_supports_arch
+
+with_test_prefix "runtime trace support check" {
+    if { [prepare_for_testing "prepare for testing" ${binfile} $srcfile \
+	      [list debug pthreads $additional_flags]] } {
+	return
+    }
+
+    if ![runto_main] {
+	return -1
+    }
+
+    if ![gdb_target_supports_trace] {
+	unsupported "target does not support trace"
+	return -1
+    }
 }
 
-if { [gdb_compile_pthreads "$srcdir/$subdir/$srcfile" $binfile \
-	  executable [list debug $additional_flags] ] != "" } {
-    # gdb_compile_pthreads provides an appropriate unsupported message.
-    return -1
-}
-
-clean_restart ${testfile}
-
-if ![runto_main] {
-    return -1
-}
-
-if ![gdb_target_supports_trace] {
-    unsupported "target does not support trace"
-    return -1
-}
-
-proc step_over_tracepoint { trace_type } \
+proc step_over_tracepoint { binfile trace_type } \
 {with_test_prefix "step over $trace_type" \
 {
-    global executable
     global hex
 
     # Start with a fresh gdb.
-    clean_restart ${executable}
+    clean_restart $binfile
+
     # Make sure inferior is running in all-stop mode.
     gdb_test_no_output "set non-stop 0"
     if ![runto_main] {
@@ -69,14 +63,13 @@ proc step_over_tracepoint { trace_type } \
 
 # Set breakpoint and tracepoint at the same address.
 
-proc break_trace_same_addr { trace_type option } \
+proc break_trace_same_addr { binfile trace_type option } \
 {with_test_prefix "$trace_type $option" \
 {
-    global executable
     global hex
 
     # Start with a fresh gdb.
-    clean_restart ${executable}
+    clean_restart $binfile
     if ![runto_main] {
 	return -1
     }
@@ -103,37 +96,33 @@ proc break_trace_same_addr { trace_type option } \
 }}
 
 foreach break_always_inserted { "on" "off" } {
-    break_trace_same_addr "trace" ${break_always_inserted}
+    break_trace_same_addr $binfile "trace" ${break_always_inserted}
 }
 
-step_over_tracepoint "trace"
+step_over_tracepoint $binfile "trace"
 
-if {[skip_shlib_tests]} {
-    return 0
-}
+require allow_shlib_tests
 
 set libipa [get_in_proc_agent]
 set remote_libipa [gdb_load_shlib $libipa]
 
 # Compile test case again with IPA.
-if { [gdb_compile_pthreads "$srcdir/$subdir/$srcfile" $binfile \
-	  executable [list debug $additional_flags shlib=$libipa] ] != "" } {
-    untested "failed to compile with in-process agent library"
-    return -1
+set binfile_ipa ${binfile}-ipa
+if { [prepare_for_testing "prepare for testing" $binfile_ipa $srcfile \
+	  [list debug pthreads $additional_flags shlib=$libipa]] } {
+    return
 }
-clean_restart ${executable}
 
 if ![runto_main] {
     return 0
 }
 
-gdb_reinitialize_dir $srcdir/$subdir
 if { [gdb_test "info sharedlibrary" ".*${remote_libipa}.*" "IPA loaded"] != 0 } {
     untested "could not find IPA lib loaded"
 } else {
     foreach break_always_inserted { "on" "off" } {
-	break_trace_same_addr "ftrace" ${break_always_inserted}
+	break_trace_same_addr $binfile_ipa "ftrace" ${break_always_inserted}
     }
 
-    step_over_tracepoint "ftrace"
+    step_over_tracepoint $binfile_ipa "ftrace"
 }

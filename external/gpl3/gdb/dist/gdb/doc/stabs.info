@@ -1,6 +1,6 @@
 This is stabs.info, produced by makeinfo version 6.8 from stabs.texinfo.
 
-Copyright (C) 1992-2023 Free Software Foundation, Inc.  Contributed by
+Copyright (C) 1992-2024 Free Software Foundation, Inc.  Contributed by
 Cygnus Support.  Written by Julia Menapace, Jim Kingdon, and David
 MacKenzie.
 
@@ -17,7 +17,7 @@ END-INFO-DIR-ENTRY
 
    This document describes the stabs debugging symbol tables.
 
-   Copyright (C) 1992-2023 Free Software Foundation, Inc.  Contributed
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.  Contributed
 by Cygnus Support.  Written by Julia Menapace, Jim Kingdon, and David
 MacKenzie.
 
@@ -3747,7 +3747,7 @@ Appendix E Questions and Anomalies
      gcc/1063, gdb/1066.)
 
    * What ends the procedure scope?  Is it the proc block's 'N_RBRAC' or
-     the next 'N_FUN'?  (I believe its the first.)
+     the next 'N_FUN'?  (I believe it's the first.)
 
 
 File: stabs.info,  Node: Stab Sections,  Next: GNU Free Documentation License,  Prev: Questions,  Up: Top
@@ -4570,11 +4570,11 @@ Node: N_SCOPE139646
 Node: Gould139834
 Node: N_LENG140817
 Node: Questions141043
-Node: Stab Sections142684
-Node: Stab Section Basics143294
-Node: ELF Linker Relocation146636
-Node: GNU Free Documentation License150155
-Node: Symbol Types Index175315
+Node: Stab Sections142685
+Node: Stab Section Basics143295
+Node: ELF Linker Relocation146637
+Node: GNU Free Documentation License150156
+Node: Symbol Types Index175316
 
 End Tag Table
 

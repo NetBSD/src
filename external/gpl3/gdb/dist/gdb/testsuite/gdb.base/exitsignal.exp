@@ -1,4 +1,4 @@
-# Copyright 2013-2023 Free Software Foundation, Inc.
+# Copyright 2013-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,14 +17,11 @@
 # purpose of this checking is to ensure that the variables are
 # mutually exclusive, i.e., that when $_exitsignal is set, $_exitcode
 # is not, and vice-versa.  This mutual exclusion happens because if an
-# inferior exited (either successfuly or not), it certainly was not
+# inferior exited (either successfully or not), it certainly was not
 # killed by a signal.  However, if it was killed by an uncaught
 # signal, then there is no way for it to have exited.
 
-if { [target_info exists gdb,nosignals] } {
-    verbose "Skipping exitsignal.exp because of nosignals."
-    return
-}
+require {!target_info exists gdb,nosignals}
 
 standard_testfile segv.c
 

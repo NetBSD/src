@@ -1,4 +1,4 @@
-# Copyright 2008-2023 Free Software Foundation, Inc.
+# Copyright 2008-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -119,8 +119,39 @@ gdb_continue_to_breakpoint "marker10 stop"
 
 if { [test_compiler_info {gcc-[0-3]-*}] ||
      [test_compiler_info {gcc-4-[0-3]-*}]} {
-    setup_xfail *-*-*
+    return
 }
 
-# Assert that M::x is printed and not N::x
-gdb_test "print x" "= 911" "print x (from M::x)"
+# Xfail for incorrect decl_line on DW_TAG_imported_module,
+# gcc PR debug/108716.
+set have_gcc108716_xfail \
+    [expr [test_compiler_info gcc-*] && [gcc_major_version] < 13]
+
+gdb_test_multiple "print x" "print x, before using statement" {
+    -re -wrap "No symbol .x. in current context.*" {
+	pass $gdb_test_name
+    }
+    -re -wrap "Reference to .x. is ambiguous.*" {
+	if { $have_gcc108716_xfail } {
+	    # GCC doesn't properly set the decl_line for namespaces, so GDB
+	    # believes that the "using namespace M" line has already passed at
+	    # this point.
+	    setup_xfail *-*-* gcc/108716
+	}
+	fail $gdb_test_name
+    }
+}
+gdb_test "next" ".*" "using namespace M"
+gdb_test_multiple "print x" "print x, only using M" {
+    -re -wrap "= 911.*" {
+	pass $gdb_test_name
+    }
+    -re -wrap "Reference to .x. is ambiguous.*" {
+	if { $have_gcc108716_xfail } {
+	    setup_xfail *-*-* gcc/108716
+	}
+	fail $gdb_test_name
+    }
+}
+gdb_test "next" ".*" "using namespace N"
+gdb_test "print x"  "Reference to .x. is ambiguous.*" "print x, with M and N"

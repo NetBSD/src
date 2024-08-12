@@ -70,7 +70,6 @@
 #line 36 "c-exp.y"
 
 
-#include "defs.h"
 #include <ctype.h>
 #include "expression.h"
 #include "value.h"
@@ -78,9 +77,6 @@
 #include "language.h"
 #include "c-lang.h"
 #include "c-support.h"
-#include "bfd.h" /* Required by objfiles.h.  */
-#include "symfile.h" /* Required by objfiles.h.  */
-#include "objfiles.h" /* For have_full_symbols and have_partial_symbols */
 #include "charset.h"
 #include "block.h"
 #include "cp-support.h"
@@ -161,7 +157,7 @@ static int type_aggregate_p (struct type *);
 
 using namespace expr;
 
-#line 165 "c-exp.c.tmp"
+#line 161 "c-exp.c.tmp"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -350,10 +346,10 @@ extern int yydebug;
 #define DOTDOTDOT 326
 
 /* Value type.  */
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-union YYSTYPE
+#if ! defined c_exp_YYSTYPE && ! defined c_exp_YYSTYPE_IS_DECLARED
+union c_exp_YYSTYPE
 {
-#line 135 "c-exp.y"
+#line 131 "c-exp.y"
 
     LONGEST lval;
     struct {
@@ -381,16 +377,16 @@ union YYSTYPE
     struct objc_class_str theclass;
   
 
-#line 385 "c-exp.c.tmp"
+#line 381 "c-exp.c.tmp"
 
 };
-typedef union YYSTYPE YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
-# define YYSTYPE_IS_DECLARED 1
+typedef union c_exp_YYSTYPE c_exp_YYSTYPE;
+# define c_exp_YYSTYPE_IS_TRIVIAL 1
+# define c_exp_YYSTYPE_IS_DECLARED 1
 #endif
 
 
-extern YYSTYPE yylval;
+extern c_exp_YYSTYPE yylval;
 
 
 int yyparse (void);
@@ -398,7 +394,7 @@ int yyparse (void);
 
 
 /* Symbol kind.  */
-enum yysymbol_kind_t
+enum c_exp_yysymbol_kind_t
 {
   YYSYMBOL_YYEMPTY = -2,
   YYSYMBOL_YYEOF = 0,                      /* "end of file"  */
@@ -548,25 +544,25 @@ enum yysymbol_kind_t
   YYSYMBOL_name = 144,                     /* name  */
   YYSYMBOL_name_not_typename = 145         /* name_not_typename  */
 };
-typedef enum yysymbol_kind_t yysymbol_kind_t;
+typedef enum c_exp_yysymbol_kind_t c_exp_yysymbol_kind_t;
 
 
 /* Second part of user prologue.  */
-#line 162 "c-exp.y"
+#line 158 "c-exp.y"
 
-/* YYSTYPE gets defined by %union */
+/* c_exp_YYSTYPE gets defined by %union */
 static int parse_number (struct parser_state *par_state,
-			 const char *, int, int, YYSTYPE *);
+			 const char *, int, int, c_exp_YYSTYPE *);
 static struct stoken operator_stoken (const char *);
 static struct stoken typename_stoken (const char *);
 static void check_parameter_typelist (std::vector<struct type *> *);
 
 #if defined(YYBISON) && YYBISON < 30800
-static void c_print_token (FILE *file, int type, YYSTYPE value);
+static void c_print_token (FILE *file, int type, c_exp_YYSTYPE value);
 #define YYPRINT(FILE, TYPE, VALUE) c_print_token (FILE, TYPE, VALUE)
 #endif
 
-#line 570 "c-exp.c.tmp"
+#line 566 "c-exp.c.tmp"
 
 
 #ifdef short
@@ -828,22 +824,22 @@ void xfree (void *); /* INFRINGES ON USER NAME SPACE */
 
 #if (! defined yyoverflow \
      && (! defined __cplusplus \
-         || (defined YYSTYPE_IS_TRIVIAL && YYSTYPE_IS_TRIVIAL)))
+         || (defined c_exp_YYSTYPE_IS_TRIVIAL && c_exp_YYSTYPE_IS_TRIVIAL)))
 
 /* A type that is properly aligned for any stack member.  */
-union yyalloc
+union c_exp_yyalloc
 {
   yy_state_t yyss_alloc;
-  YYSTYPE yyvs_alloc;
+  c_exp_YYSTYPE yyvs_alloc;
 };
 
 /* The size of the maximum gap between one aligned stack and the next.  */
-# define YYSTACK_GAP_MAXIMUM (YYSIZEOF (union yyalloc) - 1)
+# define YYSTACK_GAP_MAXIMUM (YYSIZEOF (union c_exp_yyalloc) - 1)
 
 /* The size of an array large to enough to hold all stacks, each with
    N elements.  */
 # define YYSTACK_BYTES(N) \
-     ((N) * (YYSIZEOF (yy_state_t) + YYSIZEOF (YYSTYPE)) \
+     ((N) * (YYSIZEOF (yy_state_t) + YYSIZEOF (c_exp_YYSTYPE)) \
       + YYSTACK_GAP_MAXIMUM)
 
 # define YYCOPY_NEEDED 1
@@ -908,7 +904,7 @@ union yyalloc
    as returned by yylex, with out-of-bounds checking.  */
 #define YYTRANSLATE(YYX)                                \
   (0 <= (YYX) && (YYX) <= YYMAXUTOK                     \
-   ? YY_CAST (yysymbol_kind_t, yytranslate[YYX])        \
+   ? YY_CAST (c_exp_yysymbol_kind_t, yytranslate[YYX])        \
    : YYSYMBOL_YYUNDEF)
 
 /* YYTRANSLATE[TOKEN-NUM] -- Symbol number corresponding to TOKEN-NUM
@@ -954,45 +950,45 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   280,   280,   281,   284,   288,   292,   296,   303,   304,
-     309,   313,   317,   321,   325,   335,   339,   343,   347,   351,
-     355,   359,   363,   367,   371,   378,   388,   397,   404,   414,
-     422,   426,   438,   448,   457,   464,   474,   482,   486,   490,
-     500,   499,   519,   518,   530,   529,   535,   537,   540,   541,
-     544,   546,   548,   555,   552,   568,   577,   576,   595,   599,
-     602,   606,   610,   625,   635,   642,   643,   646,   653,   656,
-     665,   669,   679,   685,   689,   693,   697,   701,   705,   709,
-     713,   717,   727,   737,   747,   757,   767,   777,   781,   785,
-     789,   805,   821,   838,   848,   857,   864,   877,   886,   897,
-     906,   929,   932,   938,   945,   964,   968,   972,   976,   983,
-    1000,  1018,  1050,  1060,  1066,  1074,  1082,  1088,  1101,  1114,
-    1131,  1142,  1158,  1167,  1168,  1179,  1251,  1252,  1256,  1258,
-    1260,  1262,  1264,  1269,  1277,  1278,  1282,  1283,  1288,  1287,
-    1291,  1290,  1293,  1295,  1297,  1299,  1303,  1310,  1312,  1313,
-    1316,  1318,  1326,  1334,  1341,  1349,  1351,  1353,  1355,  1359,
-    1364,  1376,  1383,  1386,  1389,  1392,  1395,  1398,  1401,  1404,
-    1407,  1410,  1413,  1416,  1419,  1422,  1425,  1428,  1431,  1434,
-    1437,  1440,  1443,  1446,  1449,  1452,  1455,  1458,  1461,  1466,
-    1471,  1476,  1479,  1482,  1485,  1501,  1503,  1505,  1509,  1514,
-    1520,  1526,  1531,  1537,  1543,  1548,  1554,  1560,  1564,  1569,
-    1578,  1583,  1585,  1589,  1590,  1597,  1604,  1614,  1616,  1625,
-    1634,  1641,  1642,  1649,  1653,  1654,  1657,  1658,  1661,  1665,
-    1667,  1671,  1673,  1675,  1677,  1679,  1681,  1683,  1685,  1687,
-    1689,  1691,  1693,  1695,  1697,  1699,  1701,  1703,  1705,  1707,
-    1709,  1749,  1751,  1753,  1755,  1757,  1759,  1761,  1763,  1765,
-    1767,  1769,  1771,  1773,  1775,  1777,  1779,  1781,  1804,  1805,
-    1806,  1807,  1808,  1809,  1810,  1811,  1814,  1815,  1816,  1817,
-    1818,  1819,  1822,  1823,  1831,  1844
+       0,   276,   276,   277,   280,   284,   288,   292,   299,   300,
+     305,   309,   313,   317,   321,   331,   335,   339,   343,   347,
+     351,   355,   359,   363,   367,   374,   384,   393,   400,   410,
+     418,   422,   434,   444,   453,   460,   470,   478,   482,   486,
+     496,   495,   515,   514,   526,   525,   531,   533,   536,   537,
+     540,   542,   544,   551,   548,   564,   573,   572,   591,   595,
+     598,   602,   606,   621,   631,   638,   639,   642,   649,   652,
+     661,   665,   675,   681,   685,   689,   693,   697,   701,   705,
+     709,   713,   723,   733,   743,   753,   763,   773,   777,   781,
+     785,   801,   817,   834,   844,   853,   860,   873,   882,   893,
+     902,   925,   928,   934,   941,   960,   964,   968,   972,   979,
+     996,  1014,  1046,  1056,  1062,  1070,  1078,  1084,  1098,  1111,
+    1128,  1139,  1155,  1164,  1165,  1176,  1248,  1249,  1253,  1255,
+    1257,  1259,  1261,  1266,  1274,  1275,  1279,  1280,  1285,  1284,
+    1288,  1287,  1290,  1292,  1294,  1296,  1300,  1307,  1309,  1310,
+    1313,  1315,  1323,  1331,  1338,  1346,  1348,  1350,  1352,  1356,
+    1361,  1373,  1380,  1383,  1386,  1389,  1392,  1395,  1398,  1401,
+    1404,  1407,  1410,  1413,  1416,  1419,  1422,  1425,  1428,  1431,
+    1434,  1437,  1440,  1443,  1446,  1449,  1452,  1455,  1458,  1463,
+    1468,  1473,  1476,  1479,  1482,  1498,  1500,  1502,  1506,  1511,
+    1517,  1523,  1528,  1534,  1540,  1545,  1551,  1557,  1561,  1566,
+    1575,  1580,  1582,  1586,  1587,  1594,  1601,  1611,  1613,  1622,
+    1631,  1638,  1639,  1646,  1650,  1651,  1654,  1655,  1658,  1662,
+    1664,  1668,  1670,  1672,  1674,  1676,  1678,  1680,  1682,  1684,
+    1686,  1688,  1690,  1692,  1694,  1696,  1698,  1700,  1702,  1704,
+    1706,  1746,  1748,  1750,  1752,  1754,  1756,  1758,  1760,  1762,
+    1764,  1766,  1768,  1770,  1772,  1774,  1776,  1778,  1801,  1802,
+    1803,  1804,  1805,  1806,  1807,  1808,  1811,  1812,  1813,  1814,
+    1815,  1816,  1819,  1820,  1828,  1841
 };
 #endif
 
 /** Accessing symbol of state STATE.  */
-#define YY_ACCESSING_SYMBOL(State) YY_CAST (yysymbol_kind_t, yystos[State])
+#define YY_ACCESSING_SYMBOL(State) YY_CAST (c_exp_yysymbol_kind_t, yystos[State])
 
 #if YYDEBUG || 0
 /* The user-facing name of the symbol whose (internal) number is
    YYSYMBOL.  No bounds checking.  */
-static const char *yysymbol_name (yysymbol_kind_t yysymbol) YY_ATTRIBUTE_UNUSED;
+static const char *yysymbol_name (c_exp_yysymbol_kind_t yysymbol) YY_ATTRIBUTE_UNUSED;
 
 /* YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
@@ -1028,7 +1024,7 @@ static const char *const yytname[] =
 };
 
 static const char *
-yysymbol_name (yysymbol_kind_t yysymbol)
+yysymbol_name (c_exp_yysymbol_kind_t yysymbol)
 {
   return yytname[yysymbol];
 }
@@ -1718,7 +1714,7 @@ do {                                                                      \
 
 static void
 yy_symbol_value_print (FILE *yyo,
-                       yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep)
+                       c_exp_yysymbol_kind_t yykind, c_exp_YYSTYPE const * const yyvaluep)
 {
   FILE *yyoutput = yyo;
   YY_USE (yyoutput);
@@ -1736,7 +1732,7 @@ yy_symbol_value_print (FILE *yyo,
 
 static void
 yy_symbol_print (FILE *yyo,
-                 yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep)
+                 c_exp_yysymbol_kind_t yykind, c_exp_YYSTYPE const * const yyvaluep)
 {
   YYFPRINTF (yyo, "%s %s (",
              yykind < YYNTOKENS ? "token" : "nterm", yysymbol_name (yykind));
@@ -1774,7 +1770,7 @@ do {                                                            \
 `------------------------------------------------*/
 
 static void
-yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,
+yy_reduce_print (yy_state_t *yyssp, c_exp_YYSTYPE *yyvsp,
                  int yyrule)
 {
   int yylno = yyrline[yyrule];
@@ -1837,7 +1833,7 @@ int yydebug;
 
 static void
 yydestruct (const char *yymsg,
-            yysymbol_kind_t yykind, YYSTYPE *yyvaluep)
+            c_exp_yysymbol_kind_t yykind, c_exp_YYSTYPE *yyvaluep)
 {
   YY_USE (yyvaluep);
   if (!yymsg)
@@ -1854,7 +1850,7 @@ yydestruct (const char *yymsg,
 int yychar;
 
 /* The semantic value of the lookahead symbol.  */
-YYSTYPE yylval;
+c_exp_YYSTYPE yylval;
 /* Number of syntax errors so far.  */
 int yynerrs;
 
@@ -1884,18 +1880,18 @@ yyparse (void)
     yy_state_t *yyssp = yyss;
 
     /* The semantic value stack: array, bottom, top.  */
-    YYSTYPE yyvsa[YYINITDEPTH];
-    YYSTYPE *yyvs = yyvsa;
-    YYSTYPE *yyvsp = yyvs;
+    c_exp_YYSTYPE yyvsa[YYINITDEPTH];
+    c_exp_YYSTYPE *yyvs = yyvsa;
+    c_exp_YYSTYPE *yyvsp = yyvs;
 
   int yyn;
   /* The return value of yyparse.  */
   int yyresult;
   /* Lookahead symbol kind.  */
-  yysymbol_kind_t yytoken = YYSYMBOL_YYEMPTY;
+  c_exp_yysymbol_kind_t yytoken = YYSYMBOL_YYEMPTY;
   /* The variables used to return semantic value and location from the
      action routines.  */
-  YYSTYPE yyval;
+  c_exp_YYSTYPE yyval;
 
 
 
@@ -1946,7 +1942,7 @@ yysetstate:
            these so that the &'s don't force the real ones into
            memory.  */
         yy_state_t *yyss1 = yyss;
-        YYSTYPE *yyvs1 = yyvs;
+        c_exp_YYSTYPE *yyvs1 = yyvs;
 
         /* Each stack pointer address is followed by the size of the
            data in use in that stack, in bytes.  This used to be a
@@ -1969,8 +1965,8 @@ yysetstate:
 
       {
         yy_state_t *yyss1 = yyss;
-        union yyalloc *yyptr =
-          YY_CAST (union yyalloc *,
+        union c_exp_yyalloc *yyptr =
+          YY_CAST (union c_exp_yyalloc *,
                    YYSTACK_ALLOC (YY_CAST (YYSIZE_T, YYSTACK_BYTES (yystacksize))));
         if (! yyptr)
           YYNOMEM;
@@ -2108,69 +2104,69 @@ yyreduce:
   switch (yyn)
     {
   case 4: /* type_exp: type  */
-#line 285 "c-exp.y"
+#line 281 "c-exp.y"
                         {
 			  pstate->push_new<type_operation> ((yyvsp[0].tval));
 			}
-#line 2117 "c-exp.c.tmp"
+#line 2113 "c-exp.c.tmp"
     break;
 
   case 5: /* type_exp: TYPEOF '(' exp ')'  */
-#line 289 "c-exp.y"
+#line 285 "c-exp.y"
                         {
 			  pstate->wrap<typeof_operation> ();
 			}
-#line 2125 "c-exp.c.tmp"
+#line 2121 "c-exp.c.tmp"
     break;
 
   case 6: /* type_exp: TYPEOF '(' type ')'  */
-#line 293 "c-exp.y"
+#line 289 "c-exp.y"
                         {
 			  pstate->push_new<type_operation> ((yyvsp[-1].tval));
 			}
-#line 2133 "c-exp.c.tmp"
+#line 2129 "c-exp.c.tmp"
     break;
 
   case 7: /* type_exp: DECLTYPE '(' exp ')'  */
-#line 297 "c-exp.y"
+#line 293 "c-exp.y"
                         {
 			  pstate->wrap<decltype_operation> ();
 			}
-#line 2141 "c-exp.c.tmp"
+#line 2137 "c-exp.c.tmp"
     break;
 
   case 9: /* exp1: exp1 ',' exp  */
-#line 305 "c-exp.y"
+#line 301 "c-exp.y"
                         { pstate->wrap2<comma_operation> (); }
-#line 2147 "c-exp.c.tmp"
+#line 2143 "c-exp.c.tmp"
     break;
 
   case 10: /* exp: '*' exp  */
-#line 310 "c-exp.y"
+#line 306 "c-exp.y"
                         { pstate->wrap<unop_ind_operation> (); }
-#line 2153 "c-exp.c.tmp"
+#line 2149 "c-exp.c.tmp"
     break;
 
   case 11: /* exp: '&' exp  */
-#line 314 "c-exp.y"
+#line 310 "c-exp.y"
                         { pstate->wrap<unop_addr_operation> (); }
-#line 2159 "c-exp.c.tmp"
+#line 2155 "c-exp.c.tmp"
     break;
 
   case 12: /* exp: '-' exp  */
-#line 318 "c-exp.y"
+#line 314 "c-exp.y"
                         { pstate->wrap<unary_neg_operation> (); }
-#line 2165 "c-exp.c.tmp"
+#line 2161 "c-exp.c.tmp"
     break;
 
   case 13: /* exp: '+' exp  */
-#line 322 "c-exp.y"
+#line 318 "c-exp.y"
                         { pstate->wrap<unary_plus_operation> (); }
-#line 2171 "c-exp.c.tmp"
+#line 2167 "c-exp.c.tmp"
     break;
 
   case 14: /* exp: '!' exp  */
-#line 326 "c-exp.y"
+#line 322 "c-exp.y"
                         {
 			  if (pstate->language ()->la_language
 			      == language_opencl)
@@ -2178,74 +2174,74 @@ yyreduce:
 			  else
 			    pstate->wrap<unary_logical_not_operation> ();
 			}
-#line 2183 "c-exp.c.tmp"
+#line 2179 "c-exp.c.tmp"
     break;
 
   case 15: /* exp: '~' exp  */
-#line 336 "c-exp.y"
+#line 332 "c-exp.y"
                         { pstate->wrap<unary_complement_operation> (); }
-#line 2189 "c-exp.c.tmp"
+#line 2185 "c-exp.c.tmp"
     break;
 
   case 16: /* exp: INCREMENT exp  */
-#line 340 "c-exp.y"
+#line 336 "c-exp.y"
                         { pstate->wrap<preinc_operation> (); }
-#line 2195 "c-exp.c.tmp"
+#line 2191 "c-exp.c.tmp"
     break;
 
   case 17: /* exp: DECREMENT exp  */
-#line 344 "c-exp.y"
+#line 340 "c-exp.y"
                         { pstate->wrap<predec_operation> (); }
-#line 2201 "c-exp.c.tmp"
+#line 2197 "c-exp.c.tmp"
     break;
 
   case 18: /* exp: exp INCREMENT  */
-#line 348 "c-exp.y"
+#line 344 "c-exp.y"
                         { pstate->wrap<postinc_operation> (); }
-#line 2207 "c-exp.c.tmp"
+#line 2203 "c-exp.c.tmp"
     break;
 
   case 19: /* exp: exp DECREMENT  */
-#line 352 "c-exp.y"
+#line 348 "c-exp.y"
                         { pstate->wrap<postdec_operation> (); }
-#line 2213 "c-exp.c.tmp"
+#line 2209 "c-exp.c.tmp"
     break;
 
   case 20: /* exp: TYPEID '(' exp ')'  */
-#line 356 "c-exp.y"
+#line 352 "c-exp.y"
                         { pstate->wrap<typeid_operation> (); }
-#line 2219 "c-exp.c.tmp"
+#line 2215 "c-exp.c.tmp"
     break;
 
   case 21: /* exp: TYPEID '(' type_exp ')'  */
-#line 360 "c-exp.y"
+#line 356 "c-exp.y"
                         { pstate->wrap<typeid_operation> (); }
-#line 2225 "c-exp.c.tmp"
+#line 2221 "c-exp.c.tmp"
     break;
 
   case 22: /* exp: SIZEOF exp  */
-#line 364 "c-exp.y"
+#line 360 "c-exp.y"
                         { pstate->wrap<unop_sizeof_operation> (); }
-#line 2231 "c-exp.c.tmp"
+#line 2227 "c-exp.c.tmp"
     break;
 
   case 23: /* exp: ALIGNOF '(' type_exp ')'  */
-#line 368 "c-exp.y"
+#line 364 "c-exp.y"
                         { pstate->wrap<unop_alignof_operation> (); }
-#line 2237 "c-exp.c.tmp"
+#line 2233 "c-exp.c.tmp"
     break;
 
   case 24: /* exp: exp ARROW field_name  */
-#line 372 "c-exp.y"
+#line 368 "c-exp.y"
                         {
 			  pstate->push_new<structop_ptr_operation>
 			    (pstate->pop (), copy_name ((yyvsp[0].sval)));
 			}
-#line 2246 "c-exp.c.tmp"
+#line 2242 "c-exp.c.tmp"
     break;
 
   case 25: /* exp: exp ARROW field_name COMPLETE  */
-#line 379 "c-exp.y"
+#line 375 "c-exp.y"
                         {
 			  structop_base_operation *op
 			    = new structop_ptr_operation (pstate->pop (),
@@ -2253,31 +2249,31 @@ yyreduce:
 			  pstate->mark_struct_expression (op);
 			  pstate->push (operation_up (op));
 			}
-#line 2258 "c-exp.c.tmp"
+#line 2254 "c-exp.c.tmp"
     break;
 
   case 26: /* exp: exp ARROW COMPLETE  */
-#line 389 "c-exp.y"
+#line 385 "c-exp.y"
                         {
 			  structop_base_operation *op
 			    = new structop_ptr_operation (pstate->pop (), "");
 			  pstate->mark_struct_expression (op);
 			  pstate->push (operation_up (op));
 			}
-#line 2269 "c-exp.c.tmp"
+#line 2265 "c-exp.c.tmp"
     break;
 
   case 27: /* exp: exp ARROW '~' name  */
-#line 398 "c-exp.y"
+#line 394 "c-exp.y"
                         {
 			  pstate->push_new<structop_ptr_operation>
 			    (pstate->pop (), "~" + copy_name ((yyvsp[0].sval)));
 			}
-#line 2278 "c-exp.c.tmp"
+#line 2274 "c-exp.c.tmp"
     break;
 
   case 28: /* exp: exp ARROW '~' name COMPLETE  */
-#line 405 "c-exp.y"
+#line 401 "c-exp.y"
                         {
 			  structop_base_operation *op
 			    = new structop_ptr_operation (pstate->pop (),
@@ -2285,27 +2281,27 @@ yyreduce:
 			  pstate->mark_struct_expression (op);
 			  pstate->push (operation_up (op));
 			}
-#line 2290 "c-exp.c.tmp"
+#line 2286 "c-exp.c.tmp"
     break;
 
   case 29: /* exp: exp ARROW qualified_name  */
-#line 415 "c-exp.y"
+#line 411 "c-exp.y"
                         { /* exp->type::name becomes exp->*(&type::name) */
 			  /* Note: this doesn't work if name is a
 			     static member!  FIXME */
 			  pstate->wrap<unop_addr_operation> ();
 			  pstate->wrap2<structop_mptr_operation> (); }
-#line 2300 "c-exp.c.tmp"
+#line 2296 "c-exp.c.tmp"
     break;
 
   case 30: /* exp: exp ARROW_STAR exp  */
-#line 423 "c-exp.y"
+#line 419 "c-exp.y"
                         { pstate->wrap2<structop_mptr_operation> (); }
-#line 2306 "c-exp.c.tmp"
+#line 2302 "c-exp.c.tmp"
     break;
 
   case 31: /* exp: exp '.' field_name  */
-#line 427 "c-exp.y"
+#line 423 "c-exp.y"
                         {
 			  if (pstate->language ()->la_language
 			      == language_opencl)
@@ -2315,11 +2311,11 @@ yyreduce:
 			    pstate->push_new<structop_operation>
 			      (pstate->pop (), copy_name ((yyvsp[0].sval)));
 			}
-#line 2320 "c-exp.c.tmp"
+#line 2316 "c-exp.c.tmp"
     break;
 
   case 32: /* exp: exp '.' field_name COMPLETE  */
-#line 439 "c-exp.y"
+#line 435 "c-exp.y"
                         {
 			  structop_base_operation *op
 			    = new structop_operation (pstate->pop (),
@@ -2327,31 +2323,31 @@ yyreduce:
 			  pstate->mark_struct_expression (op);
 			  pstate->push (operation_up (op));
 			}
-#line 2332 "c-exp.c.tmp"
+#line 2328 "c-exp.c.tmp"
     break;
 
   case 33: /* exp: exp '.' COMPLETE  */
-#line 449 "c-exp.y"
+#line 445 "c-exp.y"
                         {
 			  structop_base_operation *op
 			    = new structop_operation (pstate->pop (), "");
 			  pstate->mark_struct_expression (op);
 			  pstate->push (operation_up (op));
 			}
-#line 2343 "c-exp.c.tmp"
+#line 2339 "c-exp.c.tmp"
     break;
 
   case 34: /* exp: exp '.' '~' name  */
-#line 458 "c-exp.y"
+#line 454 "c-exp.y"
                         {
 			  pstate->push_new<structop_operation>
 			    (pstate->pop (), "~" + copy_name ((yyvsp[0].sval)));
 			}
-#line 2352 "c-exp.c.tmp"
+#line 2348 "c-exp.c.tmp"
     break;
 
   case 35: /* exp: exp '.' '~' name COMPLETE  */
-#line 465 "c-exp.y"
+#line 461 "c-exp.y"
                         {
 			  structop_base_operation *op
 			    = new structop_operation (pstate->pop (),
@@ -2359,39 +2355,39 @@ yyreduce:
 			  pstate->mark_struct_expression (op);
 			  pstate->push (operation_up (op));
 			}
-#line 2364 "c-exp.c.tmp"
+#line 2360 "c-exp.c.tmp"
     break;
 
   case 36: /* exp: exp '.' qualified_name  */
-#line 475 "c-exp.y"
+#line 471 "c-exp.y"
                         { /* exp.type::name becomes exp.*(&type::name) */
 			  /* Note: this doesn't work if name is a
 			     static member!  FIXME */
 			  pstate->wrap<unop_addr_operation> ();
 			  pstate->wrap2<structop_member_operation> (); }
-#line 2374 "c-exp.c.tmp"
+#line 2370 "c-exp.c.tmp"
     break;
 
   case 37: /* exp: exp DOT_STAR exp  */
-#line 483 "c-exp.y"
+#line 479 "c-exp.y"
                         { pstate->wrap2<structop_member_operation> (); }
-#line 2380 "c-exp.c.tmp"
+#line 2376 "c-exp.c.tmp"
     break;
 
   case 38: /* exp: exp '[' exp1 ']'  */
-#line 487 "c-exp.y"
+#line 483 "c-exp.y"
                         { pstate->wrap2<subscript_operation> (); }
-#line 2386 "c-exp.c.tmp"
+#line 2382 "c-exp.c.tmp"
     break;
 
   case 39: /* exp: exp OBJC_LBRAC exp1 ']'  */
-#line 491 "c-exp.y"
+#line 487 "c-exp.y"
                         { pstate->wrap2<subscript_operation> (); }
-#line 2392 "c-exp.c.tmp"
+#line 2388 "c-exp.c.tmp"
     break;
 
   case 40: /* $@1: %empty  */
-#line 500 "c-exp.y"
+#line 496 "c-exp.y"
                         {
 			  CORE_ADDR theclass;
 
@@ -2406,96 +2402,96 @@ yyreduce:
 			     (LONGEST) theclass);
 			  start_msglist();
 			}
-#line 2411 "c-exp.c.tmp"
+#line 2407 "c-exp.c.tmp"
     break;
 
   case 41: /* exp: OBJC_LBRAC TYPENAME $@1 msglist ']'  */
-#line 515 "c-exp.y"
+#line 511 "c-exp.y"
                         { end_msglist (pstate); }
-#line 2417 "c-exp.c.tmp"
+#line 2413 "c-exp.c.tmp"
     break;
 
   case 42: /* $@2: %empty  */
-#line 519 "c-exp.y"
+#line 515 "c-exp.y"
                         {
 			  pstate->push_new<long_const_operation>
 			    (parse_type (pstate)->builtin_int,
 			     (LONGEST) (yyvsp[0].theclass).theclass);
 			  start_msglist();
 			}
-#line 2428 "c-exp.c.tmp"
+#line 2424 "c-exp.c.tmp"
     break;
 
   case 43: /* exp: OBJC_LBRAC CLASSNAME $@2 msglist ']'  */
-#line 526 "c-exp.y"
+#line 522 "c-exp.y"
                         { end_msglist (pstate); }
-#line 2434 "c-exp.c.tmp"
+#line 2430 "c-exp.c.tmp"
     break;
 
   case 44: /* $@3: %empty  */
-#line 530 "c-exp.y"
+#line 526 "c-exp.y"
                         { start_msglist(); }
-#line 2440 "c-exp.c.tmp"
+#line 2436 "c-exp.c.tmp"
     break;
 
   case 45: /* exp: OBJC_LBRAC exp $@3 msglist ']'  */
-#line 532 "c-exp.y"
+#line 528 "c-exp.y"
                         { end_msglist (pstate); }
-#line 2446 "c-exp.c.tmp"
+#line 2442 "c-exp.c.tmp"
     break;
 
   case 46: /* msglist: name  */
-#line 536 "c-exp.y"
+#line 532 "c-exp.y"
                         { add_msglist(&(yyvsp[0].sval), 0); }
-#line 2452 "c-exp.c.tmp"
+#line 2448 "c-exp.c.tmp"
     break;
 
   case 50: /* msgarg: name ':' exp  */
-#line 545 "c-exp.y"
+#line 541 "c-exp.y"
                         { add_msglist(&(yyvsp[-2].sval), 1); }
-#line 2458 "c-exp.c.tmp"
+#line 2454 "c-exp.c.tmp"
     break;
 
   case 51: /* msgarg: ':' exp  */
-#line 547 "c-exp.y"
+#line 543 "c-exp.y"
                         { add_msglist(0, 1);   }
-#line 2464 "c-exp.c.tmp"
+#line 2460 "c-exp.c.tmp"
     break;
 
   case 52: /* msgarg: ',' exp  */
-#line 549 "c-exp.y"
+#line 545 "c-exp.y"
                         { add_msglist(0, 0);   }
-#line 2470 "c-exp.c.tmp"
+#line 2466 "c-exp.c.tmp"
     break;
 
   case 53: /* $@4: %empty  */
-#line 555 "c-exp.y"
+#line 551 "c-exp.y"
                         { pstate->start_arglist (); }
-#line 2476 "c-exp.c.tmp"
+#line 2472 "c-exp.c.tmp"
     break;
 
   case 54: /* exp: exp '(' $@4 arglist ')'  */
-#line 557 "c-exp.y"
+#line 553 "c-exp.y"
                         {
 			  std::vector<operation_up> args
 			    = pstate->pop_vector (pstate->end_arglist ());
 			  pstate->push_new<funcall_operation>
 			    (pstate->pop (), std::move (args));
 			}
-#line 2487 "c-exp.c.tmp"
+#line 2483 "c-exp.c.tmp"
     break;
 
   case 55: /* exp: exp '(' ')'  */
-#line 569 "c-exp.y"
+#line 565 "c-exp.y"
                         {
 			  pstate->push_new<funcall_operation>
 			    (pstate->pop (), std::vector<operation_up> ());
 			}
-#line 2496 "c-exp.c.tmp"
+#line 2492 "c-exp.c.tmp"
     break;
 
   case 56: /* $@5: %empty  */
-#line 577 "c-exp.y"
+#line 573 "c-exp.y"
                         {
 			  /* This could potentially be a an argument defined
 			     lookup function (Koenig).  */
@@ -2503,11 +2499,11 @@ yyreduce:
 			     being accumulated by an outer function call.  */
 			  pstate->start_arglist ();
 			}
-#line 2508 "c-exp.c.tmp"
+#line 2504 "c-exp.c.tmp"
     break;
 
   case 57: /* exp: UNKNOWN_CPP_NAME '(' $@5 arglist ')'  */
-#line 585 "c-exp.y"
+#line 581 "c-exp.y"
                         {
 			  std::vector<operation_up> args
 			    = pstate->pop_vector (pstate->end_arglist ());
@@ -2516,29 +2512,29 @@ yyreduce:
 			     pstate->expression_context_block,
 			     std::move (args));
 			}
-#line 2521 "c-exp.c.tmp"
+#line 2517 "c-exp.c.tmp"
     break;
 
   case 58: /* lcurly: '{'  */
-#line 596 "c-exp.y"
+#line 592 "c-exp.y"
                         { pstate->start_arglist (); }
-#line 2527 "c-exp.c.tmp"
+#line 2523 "c-exp.c.tmp"
     break;
 
   case 60: /* arglist: exp  */
-#line 603 "c-exp.y"
+#line 599 "c-exp.y"
                         { pstate->arglist_len = 1; }
-#line 2533 "c-exp.c.tmp"
+#line 2529 "c-exp.c.tmp"
     break;
 
   case 61: /* arglist: arglist ',' exp  */
-#line 607 "c-exp.y"
+#line 603 "c-exp.y"
                         { pstate->arglist_len++; }
-#line 2539 "c-exp.c.tmp"
+#line 2535 "c-exp.c.tmp"
     break;
 
   case 62: /* function_method: exp '(' parameter_typelist ')' const_or_volatile  */
-#line 611 "c-exp.y"
+#line 607 "c-exp.y"
                         {
 			  std::vector<struct type *> *type_list = (yyvsp[-2].tvec);
 			  /* Save the const/volatile qualifiers as
@@ -2551,11 +2547,11 @@ yyreduce:
 			    (flags, std::move (*type_list),
 			     pstate->pop ());
 			}
-#line 2556 "c-exp.c.tmp"
+#line 2552 "c-exp.c.tmp"
     break;
 
   case 63: /* function_method_void: exp '(' ')' const_or_volatile  */
-#line 626 "c-exp.y"
+#line 622 "c-exp.y"
                        {
 			  type_instance_flags flags
 			    = (cpstate->type_stack
@@ -2563,43 +2559,43 @@ yyreduce:
 			  pstate->push_new<type_instance_operation>
 			    (flags, std::vector<type *> (), pstate->pop ());
 		       }
-#line 2568 "c-exp.c.tmp"
+#line 2564 "c-exp.c.tmp"
     break;
 
   case 67: /* exp: function_method_void_or_typelist COLONCOLON name  */
-#line 647 "c-exp.y"
+#line 643 "c-exp.y"
                         {
 			  pstate->push_new<func_static_var_operation>
 			    (pstate->pop (), copy_name ((yyvsp[0].sval)));
 			}
-#line 2577 "c-exp.c.tmp"
+#line 2573 "c-exp.c.tmp"
     break;
 
   case 68: /* rcurly: '}'  */
-#line 654 "c-exp.y"
+#line 650 "c-exp.y"
                         { (yyval.lval) = pstate->end_arglist () - 1; }
-#line 2583 "c-exp.c.tmp"
+#line 2579 "c-exp.c.tmp"
     break;
 
   case 69: /* exp: lcurly arglist rcurly  */
-#line 657 "c-exp.y"
+#line 653 "c-exp.y"
                         {
 			  std::vector<operation_up> args
 			    = pstate->pop_vector ((yyvsp[0].lval) + 1);
 			  pstate->push_new<array_operation> (0, (yyvsp[0].lval),
 							     std::move (args));
 			}
-#line 2594 "c-exp.c.tmp"
+#line 2590 "c-exp.c.tmp"
     break;
 
   case 70: /* exp: lcurly type_exp rcurly exp  */
-#line 666 "c-exp.y"
+#line 662 "c-exp.y"
                         { pstate->wrap2<unop_memval_type_operation> (); }
-#line 2600 "c-exp.c.tmp"
+#line 2596 "c-exp.c.tmp"
     break;
 
   case 71: /* exp: '(' type_exp ')' exp  */
-#line 670 "c-exp.y"
+#line 666 "c-exp.y"
                         {
 			  if (pstate->language ()->la_language
 			      == language_opencl)
@@ -2607,65 +2603,65 @@ yyreduce:
 			  else
 			    pstate->wrap2<unop_cast_type_operation> ();
 			}
-#line 2612 "c-exp.c.tmp"
+#line 2608 "c-exp.c.tmp"
     break;
 
   case 72: /* exp: '(' exp1 ')'  */
-#line 680 "c-exp.y"
+#line 676 "c-exp.y"
                         { }
-#line 2618 "c-exp.c.tmp"
+#line 2614 "c-exp.c.tmp"
     break;
 
   case 73: /* exp: exp '@' exp  */
-#line 686 "c-exp.y"
+#line 682 "c-exp.y"
                         { pstate->wrap2<repeat_operation> (); }
-#line 2624 "c-exp.c.tmp"
+#line 2620 "c-exp.c.tmp"
     break;
 
   case 74: /* exp: exp '*' exp  */
-#line 690 "c-exp.y"
+#line 686 "c-exp.y"
                         { pstate->wrap2<mul_operation> (); }
-#line 2630 "c-exp.c.tmp"
+#line 2626 "c-exp.c.tmp"
     break;
 
   case 75: /* exp: exp '/' exp  */
-#line 694 "c-exp.y"
+#line 690 "c-exp.y"
                         { pstate->wrap2<div_operation> (); }
-#line 2636 "c-exp.c.tmp"
+#line 2632 "c-exp.c.tmp"
     break;
 
   case 76: /* exp: exp '%' exp  */
-#line 698 "c-exp.y"
+#line 694 "c-exp.y"
                         { pstate->wrap2<rem_operation> (); }
-#line 2642 "c-exp.c.tmp"
+#line 2638 "c-exp.c.tmp"
     break;
 
   case 77: /* exp: exp '+' exp  */
-#line 702 "c-exp.y"
+#line 698 "c-exp.y"
                         { pstate->wrap2<add_operation> (); }
-#line 2648 "c-exp.c.tmp"
+#line 2644 "c-exp.c.tmp"
     break;
 
   case 78: /* exp: exp '-' exp  */
-#line 706 "c-exp.y"
+#line 702 "c-exp.y"
                         { pstate->wrap2<sub_operation> (); }
-#line 2654 "c-exp.c.tmp"
+#line 2650 "c-exp.c.tmp"
     break;
 
   case 79: /* exp: exp LSH exp  */
-#line 710 "c-exp.y"
+#line 706 "c-exp.y"
                         { pstate->wrap2<lsh_operation> (); }
-#line 2660 "c-exp.c.tmp"
+#line 2656 "c-exp.c.tmp"
     break;
 
   case 80: /* exp: exp RSH exp  */
-#line 714 "c-exp.y"
+#line 710 "c-exp.y"
                         { pstate->wrap2<rsh_operation> (); }
-#line 2666 "c-exp.c.tmp"
+#line 2662 "c-exp.c.tmp"
     break;
 
   case 81: /* exp: exp EQUAL exp  */
-#line 718 "c-exp.y"
+#line 714 "c-exp.y"
                         {
 			  if (pstate->language ()->la_language
 			      == language_opencl)
@@ -2673,11 +2669,11 @@ yyreduce:
 			  else
 			    pstate->wrap2<equal_operation> ();
 			}
-#line 2678 "c-exp.c.tmp"
+#line 2674 "c-exp.c.tmp"
     break;
 
   case 82: /* exp: exp NOTEQUAL exp  */
-#line 728 "c-exp.y"
+#line 724 "c-exp.y"
                         {
 			  if (pstate->language ()->la_language
 			      == language_opencl)
@@ -2685,11 +2681,11 @@ yyreduce:
 			  else
 			    pstate->wrap2<notequal_operation> ();
 			}
-#line 2690 "c-exp.c.tmp"
+#line 2686 "c-exp.c.tmp"
     break;
 
   case 83: /* exp: exp LEQ exp  */
-#line 738 "c-exp.y"
+#line 734 "c-exp.y"
                         {
 			  if (pstate->language ()->la_language
 			      == language_opencl)
@@ -2697,11 +2693,11 @@ yyreduce:
 			  else
 			    pstate->wrap2<leq_operation> ();
 			}
-#line 2702 "c-exp.c.tmp"
+#line 2698 "c-exp.c.tmp"
     break;
 
   case 84: /* exp: exp GEQ exp  */
-#line 748 "c-exp.y"
+#line 744 "c-exp.y"
                         {
 			  if (pstate->language ()->la_language
 			      == language_opencl)
@@ -2709,11 +2705,11 @@ yyreduce:
 			  else
 			    pstate->wrap2<geq_operation> ();
 			}
-#line 2714 "c-exp.c.tmp"
+#line 2710 "c-exp.c.tmp"
     break;
 
   case 85: /* exp: exp '<' exp  */
-#line 758 "c-exp.y"
+#line 754 "c-exp.y"
                         {
 			  if (pstate->language ()->la_language
 			      == language_opencl)
@@ -2721,11 +2717,11 @@ yyreduce:
 			  else
 			    pstate->wrap2<less_operation> ();
 			}
-#line 2726 "c-exp.c.tmp"
+#line 2722 "c-exp.c.tmp"
     break;
 
   case 86: /* exp: exp '>' exp  */
-#line 768 "c-exp.y"
+#line 764 "c-exp.y"
                         {
 			  if (pstate->language ()->la_language
 			      == language_opencl)
@@ -2733,29 +2729,29 @@ yyreduce:
 			  else
 			    pstate->wrap2<gtr_operation> ();
 			}
-#line 2738 "c-exp.c.tmp"
+#line 2734 "c-exp.c.tmp"
     break;
 
   case 87: /* exp: exp '&' exp  */
-#line 778 "c-exp.y"
+#line 774 "c-exp.y"
                         { pstate->wrap2<bitwise_and_operation> (); }
-#line 2744 "c-exp.c.tmp"
+#line 2740 "c-exp.c.tmp"
     break;
 
   case 88: /* exp: exp '^' exp  */
-#line 782 "c-exp.y"
+#line 778 "c-exp.y"
                         { pstate->wrap2<bitwise_xor_operation> (); }
-#line 2750 "c-exp.c.tmp"
+#line 2746 "c-exp.c.tmp"
     break;
 
   case 89: /* exp: exp '|' exp  */
-#line 786 "c-exp.y"
+#line 782 "c-exp.y"
                         { pstate->wrap2<bitwise_ior_operation> (); }
-#line 2756 "c-exp.c.tmp"
+#line 2752 "c-exp.c.tmp"
     break;
 
   case 90: /* exp: exp ANDAND exp  */
-#line 790 "c-exp.y"
+#line 786 "c-exp.y"
                         {
 			  if (pstate->language ()->la_language
 			      == language_opencl)
@@ -2769,11 +2765,11 @@ yyreduce:
 			  else
 			    pstate->wrap2<logical_and_operation> ();
 			}
-#line 2774 "c-exp.c.tmp"
+#line 2770 "c-exp.c.tmp"
     break;
 
   case 91: /* exp: exp OROR exp  */
-#line 806 "c-exp.y"
+#line 802 "c-exp.y"
                         {
 			  if (pstate->language ()->la_language
 			      == language_opencl)
@@ -2787,11 +2783,11 @@ yyreduce:
 			  else
 			    pstate->wrap2<logical_or_operation> ();
 			}
-#line 2792 "c-exp.c.tmp"
+#line 2788 "c-exp.c.tmp"
     break;
 
   case 92: /* exp: exp '?' exp ':' exp  */
-#line 822 "c-exp.y"
+#line 818 "c-exp.y"
                         {
 			  operation_up last = pstate->pop ();
 			  operation_up mid = pstate->pop ();
@@ -2806,11 +2802,11 @@ yyreduce:
 			      (std::move (first), std::move (mid),
 			       std::move (last));
 			}
-#line 2811 "c-exp.c.tmp"
+#line 2807 "c-exp.c.tmp"
     break;
 
   case 93: /* exp: exp '=' exp  */
-#line 839 "c-exp.y"
+#line 835 "c-exp.y"
                         {
 			  if (pstate->language ()->la_language
 			      == language_opencl)
@@ -2818,31 +2814,31 @@ yyreduce:
 			  else
 			    pstate->wrap2<assign_operation> ();
 			}
-#line 2823 "c-exp.c.tmp"
+#line 2819 "c-exp.c.tmp"
     break;
 
   case 94: /* exp: exp ASSIGN_MODIFY exp  */
-#line 849 "c-exp.y"
+#line 845 "c-exp.y"
                         {
 			  operation_up rhs = pstate->pop ();
 			  operation_up lhs = pstate->pop ();
 			  pstate->push_new<assign_modify_operation>
 			    ((yyvsp[-1].opcode), std::move (lhs), std::move (rhs));
 			}
-#line 2834 "c-exp.c.tmp"
+#line 2830 "c-exp.c.tmp"
     break;
 
   case 95: /* exp: INT  */
-#line 858 "c-exp.y"
+#line 854 "c-exp.y"
                         {
 			  pstate->push_new<long_const_operation>
 			    ((yyvsp[0].typed_val_int).type, (yyvsp[0].typed_val_int).val);
 			}
-#line 2843 "c-exp.c.tmp"
+#line 2839 "c-exp.c.tmp"
     break;
 
   case 96: /* exp: COMPLEX_INT  */
-#line 865 "c-exp.y"
+#line 861 "c-exp.y"
                         {
 			  operation_up real
 			    = (make_operation<long_const_operation>
@@ -2853,45 +2849,45 @@ yyreduce:
 			  pstate->push_new<complex_operation>
 			    (std::move (real), std::move (imag), (yyvsp[0].typed_val_int).type);
 			}
-#line 2858 "c-exp.c.tmp"
+#line 2854 "c-exp.c.tmp"
     break;
 
   case 97: /* exp: CHAR  */
-#line 878 "c-exp.y"
+#line 874 "c-exp.y"
                         {
 			  struct stoken_vector vec;
 			  vec.len = 1;
 			  vec.tokens = &(yyvsp[0].tsval);
 			  pstate->push_c_string ((yyvsp[0].tsval).type, &vec);
 			}
-#line 2869 "c-exp.c.tmp"
+#line 2865 "c-exp.c.tmp"
     break;
 
   case 98: /* exp: NAME_OR_INT  */
-#line 887 "c-exp.y"
-                        { YYSTYPE val;
+#line 883 "c-exp.y"
+                        { c_exp_YYSTYPE val;
 			  parse_number (pstate, (yyvsp[0].ssym).stoken.ptr,
 					(yyvsp[0].ssym).stoken.length, 0, &val);
 			  pstate->push_new<long_const_operation>
 			    (val.typed_val_int.type,
 			     val.typed_val_int.val);
 			}
-#line 2881 "c-exp.c.tmp"
+#line 2877 "c-exp.c.tmp"
     break;
 
   case 99: /* exp: FLOAT  */
-#line 898 "c-exp.y"
+#line 894 "c-exp.y"
                         {
 			  float_data data;
 			  std::copy (std::begin ((yyvsp[0].typed_val_float).val), std::end ((yyvsp[0].typed_val_float).val),
 				     std::begin (data));
 			  pstate->push_new<float_const_operation> ((yyvsp[0].typed_val_float).type, data);
 			}
-#line 2892 "c-exp.c.tmp"
+#line 2888 "c-exp.c.tmp"
     break;
 
   case 100: /* exp: COMPLEX_FLOAT  */
-#line 907 "c-exp.y"
+#line 903 "c-exp.y"
                         {
 			  struct type *underlying = (yyvsp[0].typed_val_float).type->target_type ();
 
@@ -2912,28 +2908,28 @@ yyreduce:
 			    (std::move (real), std::move (imag),
 			     (yyvsp[0].typed_val_float).type);
 			}
-#line 2917 "c-exp.c.tmp"
+#line 2913 "c-exp.c.tmp"
     break;
 
   case 102: /* exp: DOLLAR_VARIABLE  */
-#line 933 "c-exp.y"
+#line 929 "c-exp.y"
                         {
 			  pstate->push_dollar ((yyvsp[0].sval));
 			}
-#line 2925 "c-exp.c.tmp"
+#line 2921 "c-exp.c.tmp"
     break;
 
   case 103: /* exp: SELECTOR '(' name ')'  */
-#line 939 "c-exp.y"
+#line 935 "c-exp.y"
                         {
 			  pstate->push_new<objc_selector_operation>
 			    (copy_name ((yyvsp[-1].sval)));
 			}
-#line 2934 "c-exp.c.tmp"
+#line 2930 "c-exp.c.tmp"
     break;
 
   case 104: /* exp: SIZEOF '(' type ')'  */
-#line 946 "c-exp.y"
+#line 942 "c-exp.y"
                         { struct type *type = (yyvsp[-1].tval);
 			  struct type *int_type
 			    = lookup_signed_typename (pstate->language (),
@@ -2950,37 +2946,37 @@ yyreduce:
 			  pstate->push_new<long_const_operation>
 			    (int_type, type->length ());
 			}
-#line 2955 "c-exp.c.tmp"
+#line 2951 "c-exp.c.tmp"
     break;
 
   case 105: /* exp: REINTERPRET_CAST '<' type_exp '>' '(' exp ')'  */
-#line 965 "c-exp.y"
+#line 961 "c-exp.y"
                         { pstate->wrap2<reinterpret_cast_operation> (); }
-#line 2961 "c-exp.c.tmp"
+#line 2957 "c-exp.c.tmp"
     break;
 
   case 106: /* exp: STATIC_CAST '<' type_exp '>' '(' exp ')'  */
-#line 969 "c-exp.y"
+#line 965 "c-exp.y"
                         { pstate->wrap2<unop_cast_type_operation> (); }
-#line 2967 "c-exp.c.tmp"
+#line 2963 "c-exp.c.tmp"
     break;
 
   case 107: /* exp: DYNAMIC_CAST '<' type_exp '>' '(' exp ')'  */
-#line 973 "c-exp.y"
+#line 969 "c-exp.y"
                         { pstate->wrap2<dynamic_cast_operation> (); }
-#line 2973 "c-exp.c.tmp"
+#line 2969 "c-exp.c.tmp"
     break;
 
   case 108: /* exp: CONST_CAST '<' type_exp '>' '(' exp ')'  */
-#line 977 "c-exp.y"
+#line 973 "c-exp.y"
                         { /* We could do more error checking here, but
 			     it doesn't seem worthwhile.  */
 			  pstate->wrap2<unop_cast_type_operation> (); }
-#line 2981 "c-exp.c.tmp"
+#line 2977 "c-exp.c.tmp"
     break;
 
   case 109: /* string_exp: STRING  */
-#line 984 "c-exp.y"
+#line 980 "c-exp.y"
                         {
 			  /* We copy the string here, and not in the
 			     lexer, to guarantee that we do not leak a
@@ -2996,11 +2992,11 @@ yyreduce:
 			  vec->ptr = (char *) xmalloc ((yyvsp[0].tsval).length + 1);
 			  memcpy (vec->ptr, (yyvsp[0].tsval).ptr, (yyvsp[0].tsval).length + 1);
 			}
-#line 3001 "c-exp.c.tmp"
+#line 2997 "c-exp.c.tmp"
     break;
 
   case 110: /* string_exp: string_exp STRING  */
-#line 1001 "c-exp.y"
+#line 997 "c-exp.y"
                         {
 			  /* Note that we NUL-terminate here, but just
 			     for convenience.  */
@@ -3016,11 +3012,11 @@ yyreduce:
 			  (yyval.svec).tokens[(yyval.svec).len - 1].length = (yyvsp[0].tsval).length;
 			  (yyval.svec).tokens[(yyval.svec).len - 1].ptr = p;
 			}
-#line 3021 "c-exp.c.tmp"
+#line 3017 "c-exp.c.tmp"
     break;
 
   case 111: /* exp: string_exp  */
-#line 1019 "c-exp.y"
+#line 1015 "c-exp.y"
                         {
 			  int i;
 			  c_string_type type = C_STRING;
@@ -3050,36 +3046,36 @@ yyreduce:
 			    xfree ((yyvsp[0].svec).tokens[i].ptr);
 			  xfree ((yyvsp[0].svec).tokens);
 			}
-#line 3055 "c-exp.c.tmp"
+#line 3051 "c-exp.c.tmp"
     break;
 
   case 112: /* exp: NSSTRING  */
-#line 1053 "c-exp.y"
+#line 1049 "c-exp.y"
                         {
 			  pstate->push_new<objc_nsstring_operation>
 			    (copy_name ((yyvsp[0].sval)));
 			}
-#line 3064 "c-exp.c.tmp"
+#line 3060 "c-exp.c.tmp"
     break;
 
   case 113: /* exp: TRUEKEYWORD  */
-#line 1061 "c-exp.y"
+#line 1057 "c-exp.y"
                         { pstate->push_new<long_const_operation>
 			    (parse_type (pstate)->builtin_bool, 1);
 			}
-#line 3072 "c-exp.c.tmp"
+#line 3068 "c-exp.c.tmp"
     break;
 
   case 114: /* exp: FALSEKEYWORD  */
-#line 1067 "c-exp.y"
+#line 1063 "c-exp.y"
                         { pstate->push_new<long_const_operation>
 			    (parse_type (pstate)->builtin_bool, 0);
 			}
-#line 3080 "c-exp.c.tmp"
+#line 3076 "c-exp.c.tmp"
     break;
 
   case 115: /* block: BLOCKNAME  */
-#line 1075 "c-exp.y"
+#line 1071 "c-exp.y"
                         {
 			  if ((yyvsp[0].ssym).sym.symbol)
 			    (yyval.bval) = (yyvsp[0].ssym).sym.symbol->value_block ();
@@ -3087,34 +3083,35 @@ yyreduce:
 			    error (_("No file or function \"%s\"."),
 				   copy_name ((yyvsp[0].ssym).stoken).c_str ());
 			}
-#line 3092 "c-exp.c.tmp"
+#line 3088 "c-exp.c.tmp"
     break;
 
   case 116: /* block: FILENAME  */
-#line 1083 "c-exp.y"
+#line 1079 "c-exp.y"
                         {
 			  (yyval.bval) = (yyvsp[0].bval);
 			}
-#line 3100 "c-exp.c.tmp"
+#line 3096 "c-exp.c.tmp"
     break;
 
   case 117: /* block: block COLONCOLON name  */
-#line 1089 "c-exp.y"
+#line 1085 "c-exp.y"
                         {
 			  std::string copy = copy_name ((yyvsp[0].sval));
 			  struct symbol *tem
 			    = lookup_symbol (copy.c_str (), (yyvsp[-2].bval),
-					     VAR_DOMAIN, NULL).symbol;
+					     SEARCH_FUNCTION_DOMAIN,
+					     nullptr).symbol;
 
-			  if (!tem || tem->aclass () != LOC_BLOCK)
+			  if (tem == nullptr)
 			    error (_("No function \"%s\" in specified context."),
 				   copy.c_str ());
 			  (yyval.bval) = tem->value_block (); }
-#line 3115 "c-exp.c.tmp"
+#line 3112 "c-exp.c.tmp"
     break;
 
   case 118: /* variable: name_not_typename ENTRY  */
-#line 1102 "c-exp.y"
+#line 1099 "c-exp.y"
                         { struct symbol *sym = (yyvsp[-1].ssym).sym.symbol;
 
 			  if (sym == NULL || !sym->is_argument ()
@@ -3125,16 +3122,16 @@ yyreduce:
 
 			  pstate->push_new<var_entry_value_operation> (sym);
 			}
-#line 3130 "c-exp.c.tmp"
+#line 3127 "c-exp.c.tmp"
     break;
 
   case 119: /* variable: block COLONCOLON name  */
-#line 1115 "c-exp.y"
+#line 1112 "c-exp.y"
                         {
 			  std::string copy = copy_name ((yyvsp[0].sval));
 			  struct block_symbol sym
 			    = lookup_symbol (copy.c_str (), (yyvsp[-2].bval),
-					     VAR_DOMAIN, NULL);
+					     SEARCH_VFT, NULL);
 
 			  if (sym.symbol == 0)
 			    error (_("No symbol \"%s\" in specified context."),
@@ -3144,11 +3141,11 @@ yyreduce:
 
 			  pstate->push_new<var_value_operation> (sym);
 			}
-#line 3149 "c-exp.c.tmp"
+#line 3146 "c-exp.c.tmp"
     break;
 
   case 120: /* qualified_name: TYPENAME COLONCOLON name  */
-#line 1132 "c-exp.y"
+#line 1129 "c-exp.y"
                         {
 			  struct type *type = (yyvsp[-2].tsym).type;
 			  type = check_typedef (type);
@@ -3159,11 +3156,11 @@ yyreduce:
 			  pstate->push_new<scope_operation> (type,
 							     copy_name ((yyvsp[0].sval)));
 			}
-#line 3164 "c-exp.c.tmp"
+#line 3161 "c-exp.c.tmp"
     break;
 
   case 121: /* qualified_name: TYPENAME COLONCOLON '~' name  */
-#line 1143 "c-exp.y"
+#line 1140 "c-exp.y"
                         {
 			  struct type *type = (yyvsp[-3].tsym).type;
 
@@ -3179,35 +3176,35 @@ yyreduce:
 			  pstate->push_new<scope_operation> (type,
 							     std::move (name));
 			}
-#line 3184 "c-exp.c.tmp"
+#line 3181 "c-exp.c.tmp"
     break;
 
   case 122: /* qualified_name: TYPENAME COLONCOLON name COLONCOLON name  */
-#line 1159 "c-exp.y"
+#line 1156 "c-exp.y"
                         {
 			  std::string copy = copy_name ((yyvsp[-2].sval));
 			  error (_("No type \"%s\" within class "
 				   "or namespace \"%s\"."),
 				 copy.c_str (), TYPE_SAFE_NAME ((yyvsp[-4].tsym).type));
 			}
-#line 3195 "c-exp.c.tmp"
+#line 3192 "c-exp.c.tmp"
     break;
 
   case 124: /* variable: COLONCOLON name_not_typename  */
-#line 1169 "c-exp.y"
+#line 1166 "c-exp.y"
                         {
 			  std::string name = copy_name ((yyvsp[0].ssym).stoken);
 			  struct block_symbol sym
 			    = lookup_symbol (name.c_str (),
 					     (const struct block *) NULL,
-					     VAR_DOMAIN, NULL);
+					     SEARCH_VFT, NULL);
 			  pstate->push_symbol (name.c_str (), sym);
 			}
-#line 3208 "c-exp.c.tmp"
+#line 3205 "c-exp.c.tmp"
     break;
 
   case 125: /* variable: name_not_typename  */
-#line 1180 "c-exp.y"
+#line 1177 "c-exp.y"
                         { struct block_symbol sym = (yyvsp[0].ssym).sym;
 
 			  if (sym.symbol)
@@ -3277,110 +3274,110 @@ yyreduce:
 				  (msymbol);
 			    }
 			}
-#line 3282 "c-exp.c.tmp"
+#line 3279 "c-exp.c.tmp"
     break;
 
   case 128: /* single_qualifier: CONST_KEYWORD  */
-#line 1257 "c-exp.y"
+#line 1254 "c-exp.y"
                         { cpstate->type_stack.insert (tp_const); }
-#line 3288 "c-exp.c.tmp"
+#line 3285 "c-exp.c.tmp"
     break;
 
   case 129: /* single_qualifier: VOLATILE_KEYWORD  */
-#line 1259 "c-exp.y"
+#line 1256 "c-exp.y"
                         { cpstate->type_stack.insert (tp_volatile); }
-#line 3294 "c-exp.c.tmp"
+#line 3291 "c-exp.c.tmp"
     break;
 
   case 130: /* single_qualifier: ATOMIC  */
-#line 1261 "c-exp.y"
+#line 1258 "c-exp.y"
                         { cpstate->type_stack.insert (tp_atomic); }
-#line 3300 "c-exp.c.tmp"
+#line 3297 "c-exp.c.tmp"
     break;
 
   case 131: /* single_qualifier: RESTRICT  */
-#line 1263 "c-exp.y"
+#line 1260 "c-exp.y"
                         { cpstate->type_stack.insert (tp_restrict); }
-#line 3306 "c-exp.c.tmp"
+#line 3303 "c-exp.c.tmp"
     break;
 
   case 132: /* single_qualifier: '@' NAME  */
-#line 1265 "c-exp.y"
+#line 1262 "c-exp.y"
                 {
 		  cpstate->type_stack.insert (pstate,
 					      copy_name ((yyvsp[0].ssym).stoken).c_str ());
 		}
-#line 3315 "c-exp.c.tmp"
+#line 3312 "c-exp.c.tmp"
     break;
 
   case 133: /* single_qualifier: '@' UNKNOWN_CPP_NAME  */
-#line 1270 "c-exp.y"
+#line 1267 "c-exp.y"
                 {
 		  cpstate->type_stack.insert (pstate,
 					      copy_name ((yyvsp[0].ssym).stoken).c_str ());
 		}
-#line 3324 "c-exp.c.tmp"
+#line 3321 "c-exp.c.tmp"
     break;
 
   case 138: /* $@6: %empty  */
-#line 1288 "c-exp.y"
+#line 1285 "c-exp.y"
                         { cpstate->type_stack.insert (tp_pointer); }
-#line 3330 "c-exp.c.tmp"
+#line 3327 "c-exp.c.tmp"
     break;
 
   case 140: /* $@7: %empty  */
-#line 1291 "c-exp.y"
+#line 1288 "c-exp.y"
                         { cpstate->type_stack.insert (tp_pointer); }
-#line 3336 "c-exp.c.tmp"
+#line 3333 "c-exp.c.tmp"
     break;
 
   case 142: /* ptr_operator: '&'  */
-#line 1294 "c-exp.y"
+#line 1291 "c-exp.y"
                         { cpstate->type_stack.insert (tp_reference); }
-#line 3342 "c-exp.c.tmp"
+#line 3339 "c-exp.c.tmp"
     break;
 
   case 143: /* ptr_operator: '&' ptr_operator  */
-#line 1296 "c-exp.y"
+#line 1293 "c-exp.y"
                         { cpstate->type_stack.insert (tp_reference); }
-#line 3348 "c-exp.c.tmp"
+#line 3345 "c-exp.c.tmp"
     break;
 
   case 144: /* ptr_operator: ANDAND  */
-#line 1298 "c-exp.y"
+#line 1295 "c-exp.y"
                         { cpstate->type_stack.insert (tp_rvalue_reference); }
-#line 3354 "c-exp.c.tmp"
+#line 3351 "c-exp.c.tmp"
     break;
 
   case 145: /* ptr_operator: ANDAND ptr_operator  */
-#line 1300 "c-exp.y"
+#line 1297 "c-exp.y"
                         { cpstate->type_stack.insert (tp_rvalue_reference); }
-#line 3360 "c-exp.c.tmp"
+#line 3357 "c-exp.c.tmp"
     break;
 
   case 146: /* ptr_operator_ts: ptr_operator  */
-#line 1304 "c-exp.y"
+#line 1301 "c-exp.y"
                         {
 			  (yyval.type_stack) = cpstate->type_stack.create ();
 			  cpstate->type_stacks.emplace_back ((yyval.type_stack));
 			}
-#line 3369 "c-exp.c.tmp"
+#line 3366 "c-exp.c.tmp"
     break;
 
   case 147: /* abs_decl: ptr_operator_ts direct_abs_decl  */
-#line 1311 "c-exp.y"
+#line 1308 "c-exp.y"
                         { (yyval.type_stack) = (yyvsp[0].type_stack)->append ((yyvsp[-1].type_stack)); }
-#line 3375 "c-exp.c.tmp"
+#line 3372 "c-exp.c.tmp"
     break;
 
   case 150: /* direct_abs_decl: '(' abs_decl ')'  */
-#line 1317 "c-exp.y"
+#line 1314 "c-exp.y"
                         { (yyval.type_stack) = (yyvsp[-1].type_stack); }
-#line 3381 "c-exp.c.tmp"
+#line 3378 "c-exp.c.tmp"
     break;
 
   case 151: /* direct_abs_decl: direct_abs_decl array_mod  */
-#line 1319 "c-exp.y"
+#line 1316 "c-exp.y"
                         {
 			  cpstate->type_stack.push ((yyvsp[-1].type_stack));
 			  cpstate->type_stack.push ((yyvsp[0].lval));
@@ -3388,523 +3385,523 @@ yyreduce:
 			  (yyval.type_stack) = cpstate->type_stack.create ();
 			  cpstate->type_stacks.emplace_back ((yyval.type_stack));
 			}
-#line 3393 "c-exp.c.tmp"
+#line 3390 "c-exp.c.tmp"
     break;
 
   case 152: /* direct_abs_decl: array_mod  */
-#line 1327 "c-exp.y"
+#line 1324 "c-exp.y"
                         {
 			  cpstate->type_stack.push ((yyvsp[0].lval));
 			  cpstate->type_stack.push (tp_array);
 			  (yyval.type_stack) = cpstate->type_stack.create ();
 			  cpstate->type_stacks.emplace_back ((yyval.type_stack));
 			}
-#line 3404 "c-exp.c.tmp"
+#line 3401 "c-exp.c.tmp"
     break;
 
   case 153: /* direct_abs_decl: direct_abs_decl func_mod  */
-#line 1335 "c-exp.y"
+#line 1332 "c-exp.y"
                         {
 			  cpstate->type_stack.push ((yyvsp[-1].type_stack));
 			  cpstate->type_stack.push ((yyvsp[0].tvec));
 			  (yyval.type_stack) = cpstate->type_stack.create ();
 			  cpstate->type_stacks.emplace_back ((yyval.type_stack));
 			}
-#line 3415 "c-exp.c.tmp"
+#line 3412 "c-exp.c.tmp"
     break;
 
   case 154: /* direct_abs_decl: func_mod  */
-#line 1342 "c-exp.y"
+#line 1339 "c-exp.y"
                         {
 			  cpstate->type_stack.push ((yyvsp[0].tvec));
 			  (yyval.type_stack) = cpstate->type_stack.create ();
 			  cpstate->type_stacks.emplace_back ((yyval.type_stack));
 			}
-#line 3425 "c-exp.c.tmp"
+#line 3422 "c-exp.c.tmp"
     break;
 
   case 155: /* array_mod: '[' ']'  */
-#line 1350 "c-exp.y"
+#line 1347 "c-exp.y"
                         { (yyval.lval) = -1; }
-#line 3431 "c-exp.c.tmp"
+#line 3428 "c-exp.c.tmp"
     break;
 
   case 156: /* array_mod: OBJC_LBRAC ']'  */
-#line 1352 "c-exp.y"
+#line 1349 "c-exp.y"
                         { (yyval.lval) = -1; }
-#line 3437 "c-exp.c.tmp"
+#line 3434 "c-exp.c.tmp"
     break;
 
   case 157: /* array_mod: '[' INT ']'  */
-#line 1354 "c-exp.y"
+#line 1351 "c-exp.y"
                         { (yyval.lval) = (yyvsp[-1].typed_val_int).val; }
-#line 3443 "c-exp.c.tmp"
+#line 3440 "c-exp.c.tmp"
     break;
 
   case 158: /* array_mod: OBJC_LBRAC INT ']'  */
-#line 1356 "c-exp.y"
+#line 1353 "c-exp.y"
                         { (yyval.lval) = (yyvsp[-1].typed_val_int).val; }
-#line 3449 "c-exp.c.tmp"
+#line 3446 "c-exp.c.tmp"
     break;
 
   case 159: /* func_mod: '(' ')'  */
-#line 1360 "c-exp.y"
+#line 1357 "c-exp.y"
                         {
 			  (yyval.tvec) = new std::vector<struct type *>;
 			  cpstate->type_lists.emplace_back ((yyval.tvec));
 			}
-#line 3458 "c-exp.c.tmp"
+#line 3455 "c-exp.c.tmp"
     break;
 
   case 160: /* func_mod: '(' parameter_typelist ')'  */
-#line 1365 "c-exp.y"
+#line 1362 "c-exp.y"
                         { (yyval.tvec) = (yyvsp[-1].tvec); }
-#line 3464 "c-exp.c.tmp"
+#line 3461 "c-exp.c.tmp"
     break;
 
   case 162: /* scalar_type: INT_KEYWORD  */
-#line 1384 "c-exp.y"
+#line 1381 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "int"); }
-#line 3471 "c-exp.c.tmp"
+#line 3468 "c-exp.c.tmp"
     break;
 
   case 163: /* scalar_type: LONG  */
-#line 1387 "c-exp.y"
+#line 1384 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "long"); }
-#line 3478 "c-exp.c.tmp"
+#line 3475 "c-exp.c.tmp"
     break;
 
   case 164: /* scalar_type: SHORT  */
-#line 1390 "c-exp.y"
+#line 1387 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "short"); }
-#line 3485 "c-exp.c.tmp"
+#line 3482 "c-exp.c.tmp"
     break;
 
   case 165: /* scalar_type: LONG INT_KEYWORD  */
-#line 1393 "c-exp.y"
+#line 1390 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "long"); }
-#line 3492 "c-exp.c.tmp"
+#line 3489 "c-exp.c.tmp"
     break;
 
   case 166: /* scalar_type: LONG SIGNED_KEYWORD INT_KEYWORD  */
-#line 1396 "c-exp.y"
+#line 1393 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "long"); }
-#line 3499 "c-exp.c.tmp"
+#line 3496 "c-exp.c.tmp"
     break;
 
   case 167: /* scalar_type: LONG SIGNED_KEYWORD  */
-#line 1399 "c-exp.y"
+#line 1396 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "long"); }
-#line 3506 "c-exp.c.tmp"
+#line 3503 "c-exp.c.tmp"
     break;
 
   case 168: /* scalar_type: SIGNED_KEYWORD LONG INT_KEYWORD  */
-#line 1402 "c-exp.y"
+#line 1399 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "long"); }
-#line 3513 "c-exp.c.tmp"
+#line 3510 "c-exp.c.tmp"
     break;
 
   case 169: /* scalar_type: UNSIGNED LONG INT_KEYWORD  */
-#line 1405 "c-exp.y"
+#line 1402 "c-exp.y"
                         { (yyval.tval) = lookup_unsigned_typename (pstate->language (),
 							 "long"); }
-#line 3520 "c-exp.c.tmp"
+#line 3517 "c-exp.c.tmp"
     break;
 
   case 170: /* scalar_type: LONG UNSIGNED INT_KEYWORD  */
-#line 1408 "c-exp.y"
+#line 1405 "c-exp.y"
                         { (yyval.tval) = lookup_unsigned_typename (pstate->language (),
 							 "long"); }
-#line 3527 "c-exp.c.tmp"
+#line 3524 "c-exp.c.tmp"
     break;
 
   case 171: /* scalar_type: LONG UNSIGNED  */
-#line 1411 "c-exp.y"
+#line 1408 "c-exp.y"
                         { (yyval.tval) = lookup_unsigned_typename (pstate->language (),
 							 "long"); }
-#line 3534 "c-exp.c.tmp"
+#line 3531 "c-exp.c.tmp"
     break;
 
   case 172: /* scalar_type: LONG LONG  */
-#line 1414 "c-exp.y"
+#line 1411 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "long long"); }
-#line 3541 "c-exp.c.tmp"
+#line 3538 "c-exp.c.tmp"
     break;
 
   case 173: /* scalar_type: LONG LONG INT_KEYWORD  */
-#line 1417 "c-exp.y"
+#line 1414 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "long long"); }
-#line 3548 "c-exp.c.tmp"
+#line 3545 "c-exp.c.tmp"
     break;
 
   case 174: /* scalar_type: LONG LONG SIGNED_KEYWORD INT_KEYWORD  */
-#line 1420 "c-exp.y"
+#line 1417 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "long long"); }
-#line 3555 "c-exp.c.tmp"
+#line 3552 "c-exp.c.tmp"
     break;
 
   case 175: /* scalar_type: LONG LONG SIGNED_KEYWORD  */
-#line 1423 "c-exp.y"
+#line 1420 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "long long"); }
-#line 3562 "c-exp.c.tmp"
+#line 3559 "c-exp.c.tmp"
     break;
 
   case 176: /* scalar_type: SIGNED_KEYWORD LONG LONG  */
-#line 1426 "c-exp.y"
+#line 1423 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "long long"); }
-#line 3569 "c-exp.c.tmp"
+#line 3566 "c-exp.c.tmp"
     break;
 
   case 177: /* scalar_type: SIGNED_KEYWORD LONG LONG INT_KEYWORD  */
-#line 1429 "c-exp.y"
+#line 1426 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "long long"); }
-#line 3576 "c-exp.c.tmp"
+#line 3573 "c-exp.c.tmp"
     break;
 
   case 178: /* scalar_type: UNSIGNED LONG LONG  */
-#line 1432 "c-exp.y"
+#line 1429 "c-exp.y"
                         { (yyval.tval) = lookup_unsigned_typename (pstate->language (),
 							 "long long"); }
-#line 3583 "c-exp.c.tmp"
+#line 3580 "c-exp.c.tmp"
     break;
 
   case 179: /* scalar_type: UNSIGNED LONG LONG INT_KEYWORD  */
-#line 1435 "c-exp.y"
+#line 1432 "c-exp.y"
                         { (yyval.tval) = lookup_unsigned_typename (pstate->language (),
 							 "long long"); }
-#line 3590 "c-exp.c.tmp"
+#line 3587 "c-exp.c.tmp"
     break;
 
   case 180: /* scalar_type: LONG LONG UNSIGNED  */
-#line 1438 "c-exp.y"
+#line 1435 "c-exp.y"
                         { (yyval.tval) = lookup_unsigned_typename (pstate->language (),
 							 "long long"); }
-#line 3597 "c-exp.c.tmp"
+#line 3594 "c-exp.c.tmp"
     break;
 
   case 181: /* scalar_type: LONG LONG UNSIGNED INT_KEYWORD  */
-#line 1441 "c-exp.y"
+#line 1438 "c-exp.y"
                         { (yyval.tval) = lookup_unsigned_typename (pstate->language (),
 							 "long long"); }
-#line 3604 "c-exp.c.tmp"
+#line 3601 "c-exp.c.tmp"
     break;
 
   case 182: /* scalar_type: SHORT INT_KEYWORD  */
-#line 1444 "c-exp.y"
+#line 1441 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "short"); }
-#line 3611 "c-exp.c.tmp"
+#line 3608 "c-exp.c.tmp"
     break;
 
   case 183: /* scalar_type: SHORT SIGNED_KEYWORD INT_KEYWORD  */
-#line 1447 "c-exp.y"
+#line 1444 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "short"); }
-#line 3618 "c-exp.c.tmp"
+#line 3615 "c-exp.c.tmp"
     break;
 
   case 184: /* scalar_type: SHORT SIGNED_KEYWORD  */
-#line 1450 "c-exp.y"
+#line 1447 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "short"); }
-#line 3625 "c-exp.c.tmp"
+#line 3622 "c-exp.c.tmp"
     break;
 
   case 185: /* scalar_type: UNSIGNED SHORT INT_KEYWORD  */
-#line 1453 "c-exp.y"
+#line 1450 "c-exp.y"
                         { (yyval.tval) = lookup_unsigned_typename (pstate->language (),
 							 "short"); }
-#line 3632 "c-exp.c.tmp"
+#line 3629 "c-exp.c.tmp"
     break;
 
   case 186: /* scalar_type: SHORT UNSIGNED  */
-#line 1456 "c-exp.y"
+#line 1453 "c-exp.y"
                         { (yyval.tval) = lookup_unsigned_typename (pstate->language (),
 							 "short"); }
-#line 3639 "c-exp.c.tmp"
+#line 3636 "c-exp.c.tmp"
     break;
 
   case 187: /* scalar_type: SHORT UNSIGNED INT_KEYWORD  */
-#line 1459 "c-exp.y"
+#line 1456 "c-exp.y"
                         { (yyval.tval) = lookup_unsigned_typename (pstate->language (),
 							 "short"); }
-#line 3646 "c-exp.c.tmp"
+#line 3643 "c-exp.c.tmp"
     break;
 
   case 188: /* scalar_type: DOUBLE_KEYWORD  */
-#line 1462 "c-exp.y"
+#line 1459 "c-exp.y"
                         { (yyval.tval) = lookup_typename (pstate->language (),
 						"double",
 						NULL,
 						0); }
-#line 3655 "c-exp.c.tmp"
+#line 3652 "c-exp.c.tmp"
     break;
 
   case 189: /* scalar_type: FLOAT_KEYWORD  */
-#line 1467 "c-exp.y"
+#line 1464 "c-exp.y"
                         { (yyval.tval) = lookup_typename (pstate->language (),
 						"float",
 						NULL,
 						0); }
-#line 3664 "c-exp.c.tmp"
+#line 3661 "c-exp.c.tmp"
     break;
 
   case 190: /* scalar_type: LONG DOUBLE_KEYWORD  */
-#line 1472 "c-exp.y"
+#line 1469 "c-exp.y"
                         { (yyval.tval) = lookup_typename (pstate->language (),
 						"long double",
 						NULL,
 						0); }
-#line 3673 "c-exp.c.tmp"
+#line 3670 "c-exp.c.tmp"
     break;
 
   case 191: /* scalar_type: UNSIGNED type_name  */
-#line 1477 "c-exp.y"
+#line 1474 "c-exp.y"
                         { (yyval.tval) = lookup_unsigned_typename (pstate->language (),
 							 (yyvsp[0].tsym).type->name ()); }
-#line 3680 "c-exp.c.tmp"
+#line 3677 "c-exp.c.tmp"
     break;
 
   case 192: /* scalar_type: UNSIGNED  */
-#line 1480 "c-exp.y"
+#line 1477 "c-exp.y"
                         { (yyval.tval) = lookup_unsigned_typename (pstate->language (),
 							 "int"); }
-#line 3687 "c-exp.c.tmp"
+#line 3684 "c-exp.c.tmp"
     break;
 
   case 193: /* scalar_type: SIGNED_KEYWORD type_name  */
-#line 1483 "c-exp.y"
+#line 1480 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       (yyvsp[0].tsym).type->name ()); }
-#line 3694 "c-exp.c.tmp"
+#line 3691 "c-exp.c.tmp"
     break;
 
   case 194: /* scalar_type: SIGNED_KEYWORD  */
-#line 1486 "c-exp.y"
+#line 1483 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "int"); }
-#line 3701 "c-exp.c.tmp"
+#line 3698 "c-exp.c.tmp"
     break;
 
   case 195: /* typebase: TYPENAME  */
-#line 1502 "c-exp.y"
+#line 1499 "c-exp.y"
                         { (yyval.tval) = (yyvsp[0].tsym).type; }
-#line 3707 "c-exp.c.tmp"
+#line 3704 "c-exp.c.tmp"
     break;
 
   case 196: /* typebase: scalar_type  */
-#line 1504 "c-exp.y"
+#line 1501 "c-exp.y"
                         { (yyval.tval) = (yyvsp[0].tval); }
-#line 3713 "c-exp.c.tmp"
+#line 3710 "c-exp.c.tmp"
     break;
 
   case 197: /* typebase: COMPLEX scalar_type  */
-#line 1506 "c-exp.y"
+#line 1503 "c-exp.y"
                         {
 			  (yyval.tval) = init_complex_type (nullptr, (yyvsp[0].tval));
 			}
-#line 3721 "c-exp.c.tmp"
+#line 3718 "c-exp.c.tmp"
     break;
 
   case 198: /* typebase: STRUCT name  */
-#line 1510 "c-exp.y"
+#line 1507 "c-exp.y"
                         { (yyval.tval)
 			    = lookup_struct (copy_name ((yyvsp[0].sval)).c_str (),
 					     pstate->expression_context_block);
 			}
-#line 3730 "c-exp.c.tmp"
+#line 3727 "c-exp.c.tmp"
     break;
 
   case 199: /* typebase: STRUCT COMPLETE  */
-#line 1515 "c-exp.y"
+#line 1512 "c-exp.y"
                         {
 			  pstate->mark_completion_tag (TYPE_CODE_STRUCT,
 						       "", 0);
 			  (yyval.tval) = NULL;
 			}
-#line 3740 "c-exp.c.tmp"
+#line 3737 "c-exp.c.tmp"
     break;
 
   case 200: /* typebase: STRUCT name COMPLETE  */
-#line 1521 "c-exp.y"
+#line 1518 "c-exp.y"
                         {
 			  pstate->mark_completion_tag (TYPE_CODE_STRUCT,
 						       (yyvsp[-1].sval).ptr, (yyvsp[-1].sval).length);
 			  (yyval.tval) = NULL;
 			}
-#line 3750 "c-exp.c.tmp"
+#line 3747 "c-exp.c.tmp"
     break;
 
   case 201: /* typebase: CLASS name  */
-#line 1527 "c-exp.y"
+#line 1524 "c-exp.y"
                         { (yyval.tval) = lookup_struct
 			    (copy_name ((yyvsp[0].sval)).c_str (),
 			     pstate->expression_context_block);
 			}
-#line 3759 "c-exp.c.tmp"
+#line 3756 "c-exp.c.tmp"
     break;
 
   case 202: /* typebase: CLASS COMPLETE  */
-#line 1532 "c-exp.y"
+#line 1529 "c-exp.y"
                         {
 			  pstate->mark_completion_tag (TYPE_CODE_STRUCT,
 						       "", 0);
 			  (yyval.tval) = NULL;
 			}
-#line 3769 "c-exp.c.tmp"
+#line 3766 "c-exp.c.tmp"
     break;
 
   case 203: /* typebase: CLASS name COMPLETE  */
-#line 1538 "c-exp.y"
+#line 1535 "c-exp.y"
                         {
 			  pstate->mark_completion_tag (TYPE_CODE_STRUCT,
 						       (yyvsp[-1].sval).ptr, (yyvsp[-1].sval).length);
 			  (yyval.tval) = NULL;
 			}
-#line 3779 "c-exp.c.tmp"
+#line 3776 "c-exp.c.tmp"
     break;
 
   case 204: /* typebase: UNION name  */
-#line 1544 "c-exp.y"
+#line 1541 "c-exp.y"
                         { (yyval.tval)
 			    = lookup_union (copy_name ((yyvsp[0].sval)).c_str (),
 					    pstate->expression_context_block);
 			}
-#line 3788 "c-exp.c.tmp"
+#line 3785 "c-exp.c.tmp"
     break;
 
   case 205: /* typebase: UNION COMPLETE  */
-#line 1549 "c-exp.y"
+#line 1546 "c-exp.y"
                         {
 			  pstate->mark_completion_tag (TYPE_CODE_UNION,
 						       "", 0);
 			  (yyval.tval) = NULL;
 			}
-#line 3798 "c-exp.c.tmp"
+#line 3795 "c-exp.c.tmp"
     break;
 
   case 206: /* typebase: UNION name COMPLETE  */
-#line 1555 "c-exp.y"
+#line 1552 "c-exp.y"
                         {
 			  pstate->mark_completion_tag (TYPE_CODE_UNION,
 						       (yyvsp[-1].sval).ptr, (yyvsp[-1].sval).length);
 			  (yyval.tval) = NULL;
 			}
-#line 3808 "c-exp.c.tmp"
+#line 3805 "c-exp.c.tmp"
     break;
 
   case 207: /* typebase: ENUM name  */
-#line 1561 "c-exp.y"
+#line 1558 "c-exp.y"
                         { (yyval.tval) = lookup_enum (copy_name ((yyvsp[0].sval)).c_str (),
 					    pstate->expression_context_block);
 			}
-#line 3816 "c-exp.c.tmp"
+#line 3813 "c-exp.c.tmp"
     break;
 
   case 208: /* typebase: ENUM COMPLETE  */
-#line 1565 "c-exp.y"
+#line 1562 "c-exp.y"
                         {
 			  pstate->mark_completion_tag (TYPE_CODE_ENUM, "", 0);
 			  (yyval.tval) = NULL;
 			}
-#line 3825 "c-exp.c.tmp"
+#line 3822 "c-exp.c.tmp"
     break;
 
   case 209: /* typebase: ENUM name COMPLETE  */
-#line 1570 "c-exp.y"
+#line 1567 "c-exp.y"
                         {
 			  pstate->mark_completion_tag (TYPE_CODE_ENUM, (yyvsp[-1].sval).ptr,
 						       (yyvsp[-1].sval).length);
 			  (yyval.tval) = NULL;
 			}
-#line 3835 "c-exp.c.tmp"
+#line 3832 "c-exp.c.tmp"
     break;
 
   case 210: /* typebase: TEMPLATE name '<' type '>'  */
-#line 1579 "c-exp.y"
+#line 1576 "c-exp.y"
                         { (yyval.tval) = lookup_template_type
 			    (copy_name((yyvsp[-3].sval)).c_str (), (yyvsp[-1].tval),
 			     pstate->expression_context_block);
 			}
-#line 3844 "c-exp.c.tmp"
+#line 3841 "c-exp.c.tmp"
     break;
 
   case 211: /* typebase: qualifier_seq_noopt typebase  */
-#line 1584 "c-exp.y"
+#line 1581 "c-exp.y"
                         { (yyval.tval) = cpstate->type_stack.follow_types ((yyvsp[0].tval)); }
-#line 3850 "c-exp.c.tmp"
+#line 3847 "c-exp.c.tmp"
     break;
 
   case 212: /* typebase: typebase qualifier_seq_noopt  */
-#line 1586 "c-exp.y"
+#line 1583 "c-exp.y"
                         { (yyval.tval) = cpstate->type_stack.follow_types ((yyvsp[-1].tval)); }
-#line 3856 "c-exp.c.tmp"
+#line 3853 "c-exp.c.tmp"
     break;
 
   case 214: /* type_name: INT_KEYWORD  */
-#line 1591 "c-exp.y"
+#line 1588 "c-exp.y"
                 {
 		  (yyval.tsym).stoken.ptr = "int";
 		  (yyval.tsym).stoken.length = 3;
 		  (yyval.tsym).type = lookup_signed_typename (pstate->language (),
 						    "int");
 		}
-#line 3867 "c-exp.c.tmp"
+#line 3864 "c-exp.c.tmp"
     break;
 
   case 215: /* type_name: LONG  */
-#line 1598 "c-exp.y"
+#line 1595 "c-exp.y"
                 {
 		  (yyval.tsym).stoken.ptr = "long";
 		  (yyval.tsym).stoken.length = 4;
 		  (yyval.tsym).type = lookup_signed_typename (pstate->language (),
 						    "long");
 		}
-#line 3878 "c-exp.c.tmp"
+#line 3875 "c-exp.c.tmp"
     break;
 
   case 216: /* type_name: SHORT  */
-#line 1605 "c-exp.y"
+#line 1602 "c-exp.y"
                 {
 		  (yyval.tsym).stoken.ptr = "short";
 		  (yyval.tsym).stoken.length = 5;
 		  (yyval.tsym).type = lookup_signed_typename (pstate->language (),
 						    "short");
 		}
-#line 3889 "c-exp.c.tmp"
+#line 3886 "c-exp.c.tmp"
     break;
 
   case 217: /* parameter_typelist: nonempty_typelist  */
-#line 1615 "c-exp.y"
+#line 1612 "c-exp.y"
                         { check_parameter_typelist ((yyvsp[0].tvec)); }
-#line 3895 "c-exp.c.tmp"
+#line 3892 "c-exp.c.tmp"
     break;
 
   case 218: /* parameter_typelist: nonempty_typelist ',' DOTDOTDOT  */
-#line 1617 "c-exp.y"
+#line 1614 "c-exp.y"
                         {
 			  (yyvsp[-2].tvec)->push_back (NULL);
 			  check_parameter_typelist ((yyvsp[-2].tvec));
 			  (yyval.tvec) = (yyvsp[-2].tvec);
 			}
-#line 3905 "c-exp.c.tmp"
+#line 3902 "c-exp.c.tmp"
     break;
 
   case 219: /* nonempty_typelist: type  */
-#line 1626 "c-exp.y"
+#line 1623 "c-exp.y"
                 {
 		  std::vector<struct type *> *typelist
 		    = new std::vector<struct type *>;
@@ -3913,169 +3910,169 @@ yyreduce:
 		  typelist->push_back ((yyvsp[0].tval));
 		  (yyval.tvec) = typelist;
 		}
-#line 3918 "c-exp.c.tmp"
+#line 3915 "c-exp.c.tmp"
     break;
 
   case 220: /* nonempty_typelist: nonempty_typelist ',' type  */
-#line 1635 "c-exp.y"
+#line 1632 "c-exp.y"
                 {
 		  (yyvsp[-2].tvec)->push_back ((yyvsp[0].tval));
 		  (yyval.tvec) = (yyvsp[-2].tvec);
 		}
-#line 3927 "c-exp.c.tmp"
+#line 3924 "c-exp.c.tmp"
     break;
 
   case 222: /* ptype: ptype abs_decl  */
-#line 1643 "c-exp.y"
+#line 1640 "c-exp.y"
                 {
 		  cpstate->type_stack.push ((yyvsp[0].type_stack));
 		  (yyval.tval) = cpstate->type_stack.follow_types ((yyvsp[-1].tval));
 		}
-#line 3936 "c-exp.c.tmp"
+#line 3933 "c-exp.c.tmp"
     break;
 
   case 223: /* conversion_type_id: typebase conversion_declarator  */
-#line 1650 "c-exp.y"
+#line 1647 "c-exp.y"
                 { (yyval.tval) = cpstate->type_stack.follow_types ((yyvsp[-1].tval)); }
-#line 3942 "c-exp.c.tmp"
+#line 3939 "c-exp.c.tmp"
     break;
 
   case 228: /* const_or_volatile_noopt: const_and_volatile  */
-#line 1662 "c-exp.y"
+#line 1659 "c-exp.y"
                         { cpstate->type_stack.insert (tp_const);
 			  cpstate->type_stack.insert (tp_volatile);
 			}
-#line 3950 "c-exp.c.tmp"
+#line 3947 "c-exp.c.tmp"
     break;
 
   case 229: /* const_or_volatile_noopt: CONST_KEYWORD  */
-#line 1666 "c-exp.y"
+#line 1663 "c-exp.y"
                         { cpstate->type_stack.insert (tp_const); }
-#line 3956 "c-exp.c.tmp"
+#line 3953 "c-exp.c.tmp"
     break;
 
   case 230: /* const_or_volatile_noopt: VOLATILE_KEYWORD  */
-#line 1668 "c-exp.y"
+#line 1665 "c-exp.y"
                         { cpstate->type_stack.insert (tp_volatile); }
-#line 3962 "c-exp.c.tmp"
+#line 3959 "c-exp.c.tmp"
     break;
 
   case 231: /* oper: OPERATOR NEW  */
-#line 1672 "c-exp.y"
+#line 1669 "c-exp.y"
                         { (yyval.sval) = operator_stoken (" new"); }
-#line 3968 "c-exp.c.tmp"
+#line 3965 "c-exp.c.tmp"
     break;
 
   case 232: /* oper: OPERATOR DELETE  */
-#line 1674 "c-exp.y"
+#line 1671 "c-exp.y"
                         { (yyval.sval) = operator_stoken (" delete"); }
-#line 3974 "c-exp.c.tmp"
+#line 3971 "c-exp.c.tmp"
     break;
 
   case 233: /* oper: OPERATOR NEW '[' ']'  */
-#line 1676 "c-exp.y"
+#line 1673 "c-exp.y"
                         { (yyval.sval) = operator_stoken (" new[]"); }
-#line 3980 "c-exp.c.tmp"
+#line 3977 "c-exp.c.tmp"
     break;
 
   case 234: /* oper: OPERATOR DELETE '[' ']'  */
-#line 1678 "c-exp.y"
+#line 1675 "c-exp.y"
                         { (yyval.sval) = operator_stoken (" delete[]"); }
-#line 3986 "c-exp.c.tmp"
+#line 3983 "c-exp.c.tmp"
     break;
 
   case 235: /* oper: OPERATOR NEW OBJC_LBRAC ']'  */
-#line 1680 "c-exp.y"
+#line 1677 "c-exp.y"
                         { (yyval.sval) = operator_stoken (" new[]"); }
-#line 3992 "c-exp.c.tmp"
+#line 3989 "c-exp.c.tmp"
     break;
 
   case 236: /* oper: OPERATOR DELETE OBJC_LBRAC ']'  */
-#line 1682 "c-exp.y"
+#line 1679 "c-exp.y"
                         { (yyval.sval) = operator_stoken (" delete[]"); }
-#line 3998 "c-exp.c.tmp"
+#line 3995 "c-exp.c.tmp"
     break;
 
   case 237: /* oper: OPERATOR '+'  */
-#line 1684 "c-exp.y"
+#line 1681 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("+"); }
-#line 4004 "c-exp.c.tmp"
+#line 4001 "c-exp.c.tmp"
     break;
 
   case 238: /* oper: OPERATOR '-'  */
-#line 1686 "c-exp.y"
+#line 1683 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("-"); }
-#line 4010 "c-exp.c.tmp"
+#line 4007 "c-exp.c.tmp"
     break;
 
   case 239: /* oper: OPERATOR '*'  */
-#line 1688 "c-exp.y"
+#line 1685 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("*"); }
-#line 4016 "c-exp.c.tmp"
+#line 4013 "c-exp.c.tmp"
     break;
 
   case 240: /* oper: OPERATOR '/'  */
-#line 1690 "c-exp.y"
+#line 1687 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("/"); }
-#line 4022 "c-exp.c.tmp"
+#line 4019 "c-exp.c.tmp"
     break;
 
   case 241: /* oper: OPERATOR '%'  */
-#line 1692 "c-exp.y"
+#line 1689 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("%"); }
-#line 4028 "c-exp.c.tmp"
+#line 4025 "c-exp.c.tmp"
     break;
 
   case 242: /* oper: OPERATOR '^'  */
-#line 1694 "c-exp.y"
+#line 1691 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("^"); }
-#line 4034 "c-exp.c.tmp"
+#line 4031 "c-exp.c.tmp"
     break;
 
   case 243: /* oper: OPERATOR '&'  */
-#line 1696 "c-exp.y"
+#line 1693 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("&"); }
-#line 4040 "c-exp.c.tmp"
+#line 4037 "c-exp.c.tmp"
     break;
 
   case 244: /* oper: OPERATOR '|'  */
-#line 1698 "c-exp.y"
+#line 1695 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("|"); }
-#line 4046 "c-exp.c.tmp"
+#line 4043 "c-exp.c.tmp"
     break;
 
   case 245: /* oper: OPERATOR '~'  */
-#line 1700 "c-exp.y"
+#line 1697 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("~"); }
-#line 4052 "c-exp.c.tmp"
+#line 4049 "c-exp.c.tmp"
     break;
 
   case 246: /* oper: OPERATOR '!'  */
-#line 1702 "c-exp.y"
+#line 1699 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("!"); }
-#line 4058 "c-exp.c.tmp"
+#line 4055 "c-exp.c.tmp"
     break;
 
   case 247: /* oper: OPERATOR '='  */
-#line 1704 "c-exp.y"
+#line 1701 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("="); }
-#line 4064 "c-exp.c.tmp"
+#line 4061 "c-exp.c.tmp"
     break;
 
   case 248: /* oper: OPERATOR '<'  */
-#line 1706 "c-exp.y"
+#line 1703 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("<"); }
-#line 4070 "c-exp.c.tmp"
+#line 4067 "c-exp.c.tmp"
     break;
 
   case 249: /* oper: OPERATOR '>'  */
-#line 1708 "c-exp.y"
+#line 1705 "c-exp.y"
                         { (yyval.sval) = operator_stoken (">"); }
-#line 4076 "c-exp.c.tmp"
+#line 4073 "c-exp.c.tmp"
     break;
 
   case 250: /* oper: OPERATOR ASSIGN_MODIFY  */
-#line 1710 "c-exp.y"
+#line 1707 "c-exp.y"
                         { const char *op = " unknown";
 			  switch ((yyvsp[0].opcode))
 			    {
@@ -4115,107 +4112,107 @@ yyreduce:
 
 			  (yyval.sval) = operator_stoken (op);
 			}
-#line 4120 "c-exp.c.tmp"
+#line 4117 "c-exp.c.tmp"
     break;
 
   case 251: /* oper: OPERATOR LSH  */
-#line 1750 "c-exp.y"
+#line 1747 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("<<"); }
-#line 4126 "c-exp.c.tmp"
+#line 4123 "c-exp.c.tmp"
     break;
 
   case 252: /* oper: OPERATOR RSH  */
-#line 1752 "c-exp.y"
+#line 1749 "c-exp.y"
                         { (yyval.sval) = operator_stoken (">>"); }
-#line 4132 "c-exp.c.tmp"
+#line 4129 "c-exp.c.tmp"
     break;
 
   case 253: /* oper: OPERATOR EQUAL  */
-#line 1754 "c-exp.y"
+#line 1751 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("=="); }
-#line 4138 "c-exp.c.tmp"
+#line 4135 "c-exp.c.tmp"
     break;
 
   case 254: /* oper: OPERATOR NOTEQUAL  */
-#line 1756 "c-exp.y"
+#line 1753 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("!="); }
-#line 4144 "c-exp.c.tmp"
+#line 4141 "c-exp.c.tmp"
     break;
 
   case 255: /* oper: OPERATOR LEQ  */
-#line 1758 "c-exp.y"
+#line 1755 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("<="); }
-#line 4150 "c-exp.c.tmp"
+#line 4147 "c-exp.c.tmp"
     break;
 
   case 256: /* oper: OPERATOR GEQ  */
-#line 1760 "c-exp.y"
+#line 1757 "c-exp.y"
                         { (yyval.sval) = operator_stoken (">="); }
-#line 4156 "c-exp.c.tmp"
+#line 4153 "c-exp.c.tmp"
     break;
 
   case 257: /* oper: OPERATOR ANDAND  */
-#line 1762 "c-exp.y"
+#line 1759 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("&&"); }
-#line 4162 "c-exp.c.tmp"
+#line 4159 "c-exp.c.tmp"
     break;
 
   case 258: /* oper: OPERATOR OROR  */
-#line 1764 "c-exp.y"
+#line 1761 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("||"); }
-#line 4168 "c-exp.c.tmp"
+#line 4165 "c-exp.c.tmp"
     break;
 
   case 259: /* oper: OPERATOR INCREMENT  */
-#line 1766 "c-exp.y"
+#line 1763 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("++"); }
-#line 4174 "c-exp.c.tmp"
+#line 4171 "c-exp.c.tmp"
     break;
 
   case 260: /* oper: OPERATOR DECREMENT  */
-#line 1768 "c-exp.y"
+#line 1765 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("--"); }
-#line 4180 "c-exp.c.tmp"
+#line 4177 "c-exp.c.tmp"
     break;
 
   case 261: /* oper: OPERATOR ','  */
-#line 1770 "c-exp.y"
+#line 1767 "c-exp.y"
                         { (yyval.sval) = operator_stoken (","); }
-#line 4186 "c-exp.c.tmp"
+#line 4183 "c-exp.c.tmp"
     break;
 
   case 262: /* oper: OPERATOR ARROW_STAR  */
-#line 1772 "c-exp.y"
+#line 1769 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("->*"); }
-#line 4192 "c-exp.c.tmp"
+#line 4189 "c-exp.c.tmp"
     break;
 
   case 263: /* oper: OPERATOR ARROW  */
-#line 1774 "c-exp.y"
+#line 1771 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("->"); }
-#line 4198 "c-exp.c.tmp"
+#line 4195 "c-exp.c.tmp"
     break;
 
   case 264: /* oper: OPERATOR '(' ')'  */
-#line 1776 "c-exp.y"
+#line 1773 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("()"); }
-#line 4204 "c-exp.c.tmp"
+#line 4201 "c-exp.c.tmp"
     break;
 
   case 265: /* oper: OPERATOR '[' ']'  */
-#line 1778 "c-exp.y"
+#line 1775 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("[]"); }
-#line 4210 "c-exp.c.tmp"
+#line 4207 "c-exp.c.tmp"
     break;
 
   case 266: /* oper: OPERATOR OBJC_LBRAC ']'  */
-#line 1780 "c-exp.y"
+#line 1777 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("[]"); }
-#line 4216 "c-exp.c.tmp"
+#line 4213 "c-exp.c.tmp"
     break;
 
   case 267: /* oper: OPERATOR conversion_type_id  */
-#line 1782 "c-exp.y"
+#line 1779 "c-exp.y"
                         {
 			  string_file buf;
 			  c_print_type ((yyvsp[0].tval), NULL, &buf, -1, 0,
@@ -4230,89 +4227,89 @@ yyreduce:
 			    name = canon.get ();
 			  (yyval.sval) = operator_stoken ((" " + name).c_str ());
 			}
-#line 4235 "c-exp.c.tmp"
+#line 4232 "c-exp.c.tmp"
     break;
 
   case 269: /* field_name: DOUBLE_KEYWORD  */
-#line 1805 "c-exp.y"
+#line 1802 "c-exp.y"
                                { (yyval.sval) = typename_stoken ("double"); }
-#line 4241 "c-exp.c.tmp"
+#line 4238 "c-exp.c.tmp"
     break;
 
   case 270: /* field_name: FLOAT_KEYWORD  */
-#line 1806 "c-exp.y"
+#line 1803 "c-exp.y"
                               { (yyval.sval) = typename_stoken ("float"); }
-#line 4247 "c-exp.c.tmp"
+#line 4244 "c-exp.c.tmp"
     break;
 
   case 271: /* field_name: INT_KEYWORD  */
-#line 1807 "c-exp.y"
+#line 1804 "c-exp.y"
                             { (yyval.sval) = typename_stoken ("int"); }
-#line 4253 "c-exp.c.tmp"
+#line 4250 "c-exp.c.tmp"
     break;
 
   case 272: /* field_name: LONG  */
-#line 1808 "c-exp.y"
+#line 1805 "c-exp.y"
                      { (yyval.sval) = typename_stoken ("long"); }
-#line 4259 "c-exp.c.tmp"
+#line 4256 "c-exp.c.tmp"
     break;
 
   case 273: /* field_name: SHORT  */
-#line 1809 "c-exp.y"
+#line 1806 "c-exp.y"
                       { (yyval.sval) = typename_stoken ("short"); }
-#line 4265 "c-exp.c.tmp"
+#line 4262 "c-exp.c.tmp"
     break;
 
   case 274: /* field_name: SIGNED_KEYWORD  */
-#line 1810 "c-exp.y"
+#line 1807 "c-exp.y"
                                { (yyval.sval) = typename_stoken ("signed"); }
-#line 4271 "c-exp.c.tmp"
+#line 4268 "c-exp.c.tmp"
     break;
 
   case 275: /* field_name: UNSIGNED  */
-#line 1811 "c-exp.y"
+#line 1808 "c-exp.y"
                          { (yyval.sval) = typename_stoken ("unsigned"); }
-#line 4277 "c-exp.c.tmp"
+#line 4274 "c-exp.c.tmp"
     break;
 
   case 276: /* name: NAME  */
-#line 1814 "c-exp.y"
+#line 1811 "c-exp.y"
                      { (yyval.sval) = (yyvsp[0].ssym).stoken; }
-#line 4283 "c-exp.c.tmp"
+#line 4280 "c-exp.c.tmp"
     break;
 
   case 277: /* name: BLOCKNAME  */
-#line 1815 "c-exp.y"
+#line 1812 "c-exp.y"
                           { (yyval.sval) = (yyvsp[0].ssym).stoken; }
-#line 4289 "c-exp.c.tmp"
+#line 4286 "c-exp.c.tmp"
     break;
 
   case 278: /* name: TYPENAME  */
-#line 1816 "c-exp.y"
+#line 1813 "c-exp.y"
                          { (yyval.sval) = (yyvsp[0].tsym).stoken; }
-#line 4295 "c-exp.c.tmp"
+#line 4292 "c-exp.c.tmp"
     break;
 
   case 279: /* name: NAME_OR_INT  */
-#line 1817 "c-exp.y"
+#line 1814 "c-exp.y"
                              { (yyval.sval) = (yyvsp[0].ssym).stoken; }
-#line 4301 "c-exp.c.tmp"
+#line 4298 "c-exp.c.tmp"
     break;
 
   case 280: /* name: UNKNOWN_CPP_NAME  */
-#line 1818 "c-exp.y"
+#line 1815 "c-exp.y"
                                   { (yyval.sval) = (yyvsp[0].ssym).stoken; }
-#line 4307 "c-exp.c.tmp"
+#line 4304 "c-exp.c.tmp"
     break;
 
   case 281: /* name: oper  */
-#line 1819 "c-exp.y"
+#line 1816 "c-exp.y"
                      { (yyval.sval) = (yyvsp[0].sval); }
-#line 4313 "c-exp.c.tmp"
+#line 4310 "c-exp.c.tmp"
     break;
 
   case 284: /* name_not_typename: oper  */
-#line 1832 "c-exp.y"
+#line 1829 "c-exp.y"
                         {
 			  struct field_of_this_result is_a_field_of_this;
 
@@ -4320,16 +4317,16 @@ yyreduce:
 			  (yyval.ssym).sym
 			    = lookup_symbol ((yyvsp[0].sval).ptr,
 					     pstate->expression_context_block,
-					     VAR_DOMAIN,
+					     SEARCH_VFT,
 					     &is_a_field_of_this);
 			  (yyval.ssym).is_a_field_of_this
 			    = is_a_field_of_this.type != NULL;
 			}
-#line 4330 "c-exp.c.tmp"
+#line 4327 "c-exp.c.tmp"
     break;
 
 
-#line 4334 "c-exp.c.tmp"
+#line 4331 "c-exp.c.tmp"
 
       default: break;
     }
@@ -4344,7 +4341,7 @@ yyreduce:
      case of YYERROR or YYBACKUP, subsequent parser actions might lead
      to an incorrect destructor call or verbose syntax error message
      before the lookahead is translated.  */
-  YY_SYMBOL_PRINT ("-> $$ =", YY_CAST (yysymbol_kind_t, yyr1[yyn]), &yyval, &yyloc);
+  YY_SYMBOL_PRINT ("-> $$ =", YY_CAST (c_exp_yysymbol_kind_t, yyr1[yyn]), &yyval, &yyloc);
 
   YYPOPSTACK (yylen);
   yylen = 0;
@@ -4522,7 +4519,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 1847 "c-exp.y"
+#line 1844 "c-exp.y"
 
 
 /* Returns a stoken of the operator name given by OP (which does not
@@ -4603,7 +4600,7 @@ check_parameter_typelist (std::vector<struct type *> *params)
 
 static int
 parse_number (struct parser_state *par_state,
-	      const char *buf, int len, int parsed_float, YYSTYPE *putithere)
+	      const char *buf, int len, int parsed_float, c_exp_YYSTYPE *putithere)
 {
   ULONGEST n = 0;
   ULONGEST prevn = 0;
@@ -4622,46 +4619,41 @@ parse_number (struct parser_state *par_state,
   /* We have found a "L" or "U" (or "i") suffix.  */
   int found_suffix = 0;
 
-  char *p;
-
-  p = (char *) alloca (len);
-  memcpy (p, buf, len);
-
   if (parsed_float)
     {
-      if (len >= 1 && p[len - 1] == 'i')
+      if (len >= 1 && buf[len - 1] == 'i')
 	{
 	  imaginary_p = true;
 	  --len;
 	}
 
       /* Handle suffixes for decimal floating-point: "df", "dd" or "dl".  */
-      if (len >= 2 && p[len - 2] == 'd' && p[len - 1] == 'f')
+      if (len >= 2 && buf[len - 2] == 'd' && buf[len - 1] == 'f')
 	{
 	  putithere->typed_val_float.type
 	    = parse_type (par_state)->builtin_decfloat;
 	  len -= 2;
 	}
-      else if (len >= 2 && p[len - 2] == 'd' && p[len - 1] == 'd')
+      else if (len >= 2 && buf[len - 2] == 'd' && buf[len - 1] == 'd')
 	{
 	  putithere->typed_val_float.type
 	    = parse_type (par_state)->builtin_decdouble;
 	  len -= 2;
 	}
-      else if (len >= 2 && p[len - 2] == 'd' && p[len - 1] == 'l')
+      else if (len >= 2 && buf[len - 2] == 'd' && buf[len - 1] == 'l')
 	{
 	  putithere->typed_val_float.type
 	    = parse_type (par_state)->builtin_declong;
 	  len -= 2;
 	}
       /* Handle suffixes: 'f' for float, 'l' for long double.  */
-      else if (len >= 1 && TOLOWER (p[len - 1]) == 'f')
+      else if (len >= 1 && TOLOWER (buf[len - 1]) == 'f')
 	{
 	  putithere->typed_val_float.type
 	    = parse_type (par_state)->builtin_float;
 	  len -= 1;
 	}
-      else if (len >= 1 && TOLOWER (p[len - 1]) == 'l')
+      else if (len >= 1 && TOLOWER (buf[len - 1]) == 'l')
 	{
 	  putithere->typed_val_float.type
 	    = parse_type (par_state)->builtin_long_double;
@@ -4674,7 +4666,7 @@ parse_number (struct parser_state *par_state,
 	    = parse_type (par_state)->builtin_double;
 	}
 
-      if (!parse_float (p, len,
+      if (!parse_float (buf, len,
 			putithere->typed_val_float.type,
 			putithere->typed_val_float.val))
 	return ERROR;
@@ -4687,14 +4679,14 @@ parse_number (struct parser_state *par_state,
     }
 
   /* Handle base-switching prefixes 0x, 0t, 0d, 0 */
-  if (p[0] == '0' && len > 1)
-    switch (p[1])
+  if (buf[0] == '0' && len > 1)
+    switch (buf[1])
       {
       case 'x':
       case 'X':
 	if (len >= 3)
 	  {
-	    p += 2;
+	    buf += 2;
 	    base = 16;
 	    len -= 2;
 	  }
@@ -4704,7 +4696,7 @@ parse_number (struct parser_state *par_state,
       case 'B':
 	if (len >= 3)
 	  {
-	    p += 2;
+	    buf += 2;
 	    base = 2;
 	    len -= 2;
 	  }
@@ -4716,7 +4708,7 @@ parse_number (struct parser_state *par_state,
       case 'D':
 	if (len >= 3)
 	  {
-	    p += 2;
+	    buf += 2;
 	    base = 10;
 	    len -= 2;
 	  }
@@ -4729,7 +4721,7 @@ parse_number (struct parser_state *par_state,
 
   while (len-- > 0)
     {
-      c = *p++;
+      c = *buf++;
       if (c >= 'A' && c <= 'Z')
 	c += 'a' - 'A';
       if (c != 'l' && c != 'u' && c != 'i')
@@ -5129,7 +5121,7 @@ enum token_flag
 };
 DEF_ENUM_FLAGS_TYPE (enum token_flag, token_flags);
 
-struct token
+struct c_token
 {
   const char *oper;
   int token;
@@ -5137,7 +5129,7 @@ struct token
   token_flags flags;
 };
 
-static const struct token tokentab3[] =
+static const struct c_token tokentab3[] =
   {
     {">>=", ASSIGN_MODIFY, BINOP_RSH, 0},
     {"<<=", ASSIGN_MODIFY, BINOP_LSH, 0},
@@ -5145,7 +5137,7 @@ static const struct token tokentab3[] =
     {"...", DOTDOTDOT, OP_NULL, 0}
   };
 
-static const struct token tokentab2[] =
+static const struct c_token tokentab2[] =
   {
     {"+=", ASSIGN_MODIFY, BINOP_ADD, 0},
     {"-=", ASSIGN_MODIFY, BINOP_SUB, 0},
@@ -5176,7 +5168,7 @@ static const struct token tokentab2[] =
    multi-word type names (for example 'double' can appear in 'long
    double') need to be listed here.  type-specifiers that are only ever
    single word (like 'char') are handled by the classify_name function.  */
-static const struct token ident_tokens[] =
+static const struct c_token ident_tokens[] =
   {
     {"unsigned", UNSIGNED, OP_NULL, 0},
     {"template", TEMPLATE, OP_NULL, FLAG_CXX},
@@ -5413,7 +5405,7 @@ lex_one_token (struct parser_state *par_state, bool *is_quoted_name)
 	  last_was_structop = true;
 	  goto symbol;		/* Nope, must be a symbol. */
 	}
-      /* FALL THRU.  */
+      [[fallthrough]];
 
     case '0':
     case '1':
@@ -5442,6 +5434,10 @@ lex_one_token (struct parser_state *par_state, bool *is_quoted_name)
 	    hex = 0;
 	  }
 
+	/* If the token includes the C++14 digits separator, we make a
+	   copy so that we don't have to handle the separator in
+	   parse_number.  */
+	std::optional<std::string> no_tick;
 	for (;; ++p)
 	  {
 	    /* This test includes !hex because 'e' is a valid hex digit
@@ -5458,26 +5454,35 @@ lex_one_token (struct parser_state *par_state, bool *is_quoted_name)
 	    else if (((got_e && (p[-1] == 'e' || p[-1] == 'E'))
 		      || (got_p && (p[-1] == 'p' || p[-1] == 'P')))
 		     && (*p == '-' || *p == '+'))
-	      /* This is the sign of the exponent, not the end of the
-		 number.  */
-	      continue;
+	      {
+		/* This is the sign of the exponent, not the end of
+		   the number.  */
+	      }
+	    else if (*p == '\'')
+	      {
+		if (!no_tick.has_value ())
+		  no_tick.emplace (tokstart, p);
+		continue;
+	      }
 	    /* We will take any letters or digits.  parse_number will
 	       complain if past the radix, or if L or U are not final.  */
 	    else if ((*p < '0' || *p > '9')
 		     && ((*p < 'a' || *p > 'z')
 				  && (*p < 'A' || *p > 'Z')))
 	      break;
+	    if (no_tick.has_value ())
+	      no_tick->push_back (*p);
 	  }
-	toktype = parse_number (par_state, tokstart, p - tokstart,
-				got_dot | got_e | got_p, &yylval);
+	if (no_tick.has_value ())
+	  toktype = parse_number (par_state, no_tick->c_str (),
+				  no_tick->length (),
+				  got_dot | got_e | got_p, &yylval);
+	else
+	  toktype = parse_number (par_state, tokstart, p - tokstart,
+				  got_dot | got_e | got_p, &yylval);
 	if (toktype == ERROR)
-	  {
-	    char *err_copy = (char *) alloca (p - tokstart + 1);
-
-	    memcpy (err_copy, tokstart, p - tokstart);
-	    err_copy[p - tokstart] = 0;
-	    error (_("Invalid number \"%s\"."), err_copy);
-	  }
+	  error (_("Invalid number \"%.*s\"."), (int) (p - tokstart),
+		 tokstart);
 	pstate->lexptr = p;
 	return toktype;
       }
@@ -5510,7 +5515,7 @@ lex_one_token (struct parser_state *par_state, bool *is_quoted_name)
 	    return ENTRY;
 	  }
       }
-      /* FALLTHRU */
+      [[fallthrough]];
     case '+':
     case '-':
     case '*':
@@ -5537,7 +5542,7 @@ lex_one_token (struct parser_state *par_state, bool *is_quoted_name)
     case 'U':
       if (tokstart[1] != '"' && tokstart[1] != '\'')
 	break;
-      /* Fall through.  */
+      [[fallthrough]];
     case '\'':
     case '"':
 
@@ -5651,7 +5656,7 @@ lex_one_token (struct parser_state *par_state, bool *is_quoted_name)
 
 	    if (lookup_symbol (copy.c_str (),
 			       pstate->expression_context_block,
-			       VAR_DOMAIN,
+			       SEARCH_VFT,
 			       (par_state->language ()->la_language
 				== language_cplus ? &is_a_field_of_this
 				: NULL)).symbol
@@ -5682,15 +5687,15 @@ lex_one_token (struct parser_state *par_state, bool *is_quoted_name)
 }
 
 /* An object of this type is pushed on a FIFO by the "outer" lexer.  */
-struct token_and_value
+struct c_token_and_value
 {
   int token;
-  YYSTYPE value;
+  c_exp_YYSTYPE value;
 };
 
 /* A FIFO of tokens that have been read but not yet returned to the
    parser.  */
-static std::vector<token_and_value> token_fifo;
+static std::vector<c_token_and_value> token_fifo;
 
 /* Non-zero if the lexer should return tokens from the FIFO.  */
 static int popping;
@@ -5719,7 +5724,7 @@ classify_name (struct parser_state *par_state, const struct block *block,
      we can refer to it unconditionally below.  */
   memset (&is_a_field_of_this, 0, sizeof (is_a_field_of_this));
 
-  bsym = lookup_symbol (copy.c_str (), block, VAR_DOMAIN,
+  bsym = lookup_symbol (copy.c_str (), block, SEARCH_VFT,
 			par_state->language ()->name_of_this ()
 			? &is_a_field_of_this : NULL);
 
@@ -5742,7 +5747,7 @@ classify_name (struct parser_state *par_state, const struct block *block,
 	{
 	  struct field_of_this_result inner_is_a_field_of_this;
 
-	  bsym = lookup_symbol (copy.c_str (), block, STRUCT_DOMAIN,
+	  bsym = lookup_symbol (copy.c_str (), block, SEARCH_STRUCT_DOMAIN,
 				&inner_is_a_field_of_this);
 	  if (bsym.symbol != NULL)
 	    {
@@ -5804,7 +5809,7 @@ classify_name (struct parser_state *par_state, const struct block *block,
       && ((copy[0] >= 'a' && copy[0] < 'a' + input_radix - 10)
 	  || (copy[0] >= 'A' && copy[0] < 'A' + input_radix - 10)))
     {
-      YYSTYPE newlval;	/* Its value is ignored.  */
+      c_exp_YYSTYPE newlval;	/* Its value is ignored.  */
       int hextype = parse_number (par_state, copy.c_str (), yylval.sval.length,
 				  0, &newlval);
 
@@ -5849,7 +5854,7 @@ classify_inner_name (struct parser_state *par_state,
   std::string copy = copy_name (yylval.ssym.stoken);
   /* N.B. We assume the symbol can only be in VAR_DOMAIN.  */
   yylval.ssym.sym = cp_lookup_nested_symbol (type, copy.c_str (), block,
-					     VAR_DOMAIN);
+					     SEARCH_VFT);
 
   /* If no symbol was found, search for a matching base class named
      COPY.  This will allow users to enter qualified names of class members
@@ -5912,7 +5917,7 @@ classify_inner_name (struct parser_state *par_state,
 static int
 yylex (void)
 {
-  token_and_value current;
+  c_token_and_value current;
   int first_was_coloncolon, last_was_coloncolon;
   struct type *context_type = NULL;
   int last_to_examine, next_to_examine, checkpoint;
@@ -5988,7 +5993,7 @@ yylex (void)
 
   while (next_to_examine <= last_to_examine)
     {
-      token_and_value next;
+      c_token_and_value next;
 
       next = token_fifo[next_to_examine];
       ++next_to_examine;
@@ -6085,7 +6090,7 @@ c_parse (struct parser_state *par_state)
     = make_scoped_restore (&expression_macro_scope, macro_scope.get ());
 
   scoped_restore restore_yydebug = make_scoped_restore (&yydebug,
-							parser_debug);
+							par_state->debug);
 
   /* Initialize some state used by the lexer.  */
   last_was_structop = false;
@@ -6109,7 +6114,7 @@ c_parse (struct parser_state *par_state)
    enabled.  It prints a token's value.  */
 
 static void
-c_print_token (FILE *file, int type, YYSTYPE value)
+c_print_token (FILE *file, int type, c_exp_YYSTYPE value)
 {
   switch (type)
     {
@@ -6121,14 +6126,8 @@ c_print_token (FILE *file, int type, YYSTYPE value)
 
     case CHAR:
     case STRING:
-      {
-	char *copy = (char *) alloca (value.tsval.length + 1);
-
-	memcpy (copy, value.tsval.ptr, value.tsval.length);
-	copy[value.tsval.length] = '\0';
-
-	parser_fprintf (file, "tsval<type=%d, %s>", value.tsval.type, copy);
-      }
+      parser_fprintf (file, "tsval<type=%d, %.*s>", value.tsval.type,
+		      value.tsval.length, value.tsval.ptr);
       break;
 
     case NSSTRING:
@@ -6164,8 +6163,5 @@ c_print_token (FILE *file, int type, YYSTYPE value)
 static void
 yyerror (const char *msg)
 {
-  if (pstate->prev_lexptr)
-    pstate->lexptr = pstate->prev_lexptr;
-
-  error (_("A %s in expression, near `%s'."), msg, pstate->lexptr);
+  pstate->parse_error (msg);
 }

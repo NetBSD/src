@@ -1,0 +1,137 @@
+# This testcase is part of GDB, the GNU debugger.
+
+# Copyright 2023-2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This test verifies that you can set a watchpoint that watches global
+# memory, when the selected thread is running.
+
+set allow_hw_watchpoint_tests_p [allow_hw_watchpoint_tests]
+
+standard_testfile
+
+if [build_executable "failed to prepare" $testfile $srcfile {debug}] {
+    return -1
+}
+
+# STOP_MODE is either "all-stop" or "non-stop".  HW is true if we are
+# testing hardware watchpoints, and false if we're testing software
+# watchpoints.
+
+proc test {stop_mode hw} {
+
+    save_vars { ::GDBFLAGS } {
+	if { $stop_mode == "non-stop" } {
+	    append ::GDBFLAGS " -ex \"set non-stop on\""
+	} elseif {[target_info gdb_protocol] == "remote"
+		  || [target_info gdb_protocol]== "extended-remote"} {
+	    # Communicating with the target while the inferior is
+	    # running depends on target running in non-stop mode.
+	    # Force it on for remote targets, until this is the
+	    # default.
+	    append ::GDBFLAGS " -ex \"maint set target-non-stop on\""
+	}
+	clean_restart $::binfile
+    }
+
+    gdb_test_no_output "set can-use-hw-watchpoints $hw"
+
+    if {![runto_main]} {
+	return
+    }
+
+    delete_breakpoints
+
+    # Continue the program in the background.
+    set test "continue&"
+    gdb_test_multiple "continue&" $test {
+	-re "Continuing\\.\r\n$::gdb_prompt " {
+	    pass $test
+	}
+    }
+
+    set val1 ""
+    gdb_test_multiple "print global_var" "global_var once" {
+	-re -wrap " = ($::decimal)" {
+	    set val1 $expect_out(1,string)
+	    pass "$gdb_test_name"
+	}
+    }
+
+    # Sleep for a bit, so the variable is sure to be incremented, if
+    # indeed we managed to get the target running.
+    sleep 1
+
+    set val2 ""
+    gdb_test_multiple "print global_var" "global_var twice" {
+	-re -wrap " = ($::decimal)" {
+	    set val2 $expect_out(1,string)
+	    pass "$gdb_test_name"
+	}
+    }
+
+    # The variable should have incremented.  (Note we didn't give it
+    # sufficient time to ever wrap around.)
+    gdb_assert {$val1 != $val2} "values are different"
+
+    set wp_str [expr ($hw)?"Hardware watchpoint":"Watchpoint"]
+
+    # Now set a watchpoint, while the inferior is running.  Since
+    # we're watching a global, and we can read global memory while the
+    # target is running, this should be able to work.
+    gdb_test_multiple "watch global_var" "" {
+	-re "$wp_str $::decimal: global_var\r\n$::gdb_prompt " {
+	    pass $gdb_test_name
+	}
+    }
+
+    # Check that the watchpoint triggers.
+
+    save_vars ::timeout {
+	if {!$hw} {
+	    # This doesn't currently work with software watchpoints.
+	    # GDB should transparently temporarily pause the inferior,
+	    # to force it to single step, but it doesn't, so the
+	    # thread continues running free.
+	    setup_kfail gdb/111111 *-*-*
+
+	    # No point waiting too much for output we know isn't
+	    # coming.
+	    set ::timeout 1
+	}
+	set re [multi_line \
+		    "$wp_str $::decimal: global_var" \
+		    "" \
+		    "Old value = $::decimal" \
+		    "New value = $::decimal"]
+	gdb_test_multiple "" "watchpoint hit" {
+	    -re $re {
+		pass $gdb_test_name
+	    }
+	}
+    }
+}
+
+foreach hw {0 1} {
+    if {$hw && !$allow_hw_watchpoint_tests_p} {
+	continue
+    }
+    foreach stop_mode {all-stop non-stop} {
+	set wp_type [expr ($hw)?"hardware":"software"]
+	with_test_prefix "$stop_mode: $wp_type" {
+	    test $stop_mode $hw
+	}
+    }
+}

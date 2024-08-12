@@ -1,6 +1,6 @@
 /* Native-dependent code for FreeBSD/aarch64.
 
-   Copyright (C) 2017-2023 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "arch-utils.h"
 #include "inferior.h"
 #include "regcache.h"
@@ -120,6 +119,9 @@ aarch64_fbsd_nat_target::store_registers (struct regcache *regcache,
 const struct target_desc *
 aarch64_fbsd_nat_target::read_description ()
 {
+  if (inferior_ptid == null_ptid)
+    return this->beneath ()->read_description ();
+
   aarch64_features features;
   features.tls = have_regset (inferior_ptid, NT_ARM_TLS)? 1 : 0;
   return aarch64_read_description (features);
@@ -161,9 +163,7 @@ aarch64_fbsd_nat_target::stopped_data_address (CORE_ADDR *addr_p)
 bool
 aarch64_fbsd_nat_target::stopped_by_watchpoint ()
 {
-  CORE_ADDR addr;
-
-  return stopped_data_address (&addr);
+  return stopped_data_address (nullptr);
 }
 
 /* Implement the "stopped_by_hw_breakpoint" target_ops method.  */
@@ -215,6 +215,8 @@ aarch64_fbsd_nat_target::probe_debug_regs (int pid)
 	    case AARCH64_DEBUG_ARCH_V8_1:
 	    case AARCH64_DEBUG_ARCH_V8_2:
 	    case AARCH64_DEBUG_ARCH_V8_4:
+	    case AARCH64_DEBUG_ARCH_V8_8:
+	    case AARCH64_DEBUG_ARCH_V8_9:
 	      break;
 	    default:
 	      return;

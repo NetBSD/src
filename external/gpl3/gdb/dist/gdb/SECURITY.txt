@@ -1,0 +1,218 @@
+GNU Debugger Security Policy
+============================
+
+Introduction
+------------
+
+  The GNU Debugger (GDB) is a tool for diagnosing issues "inside"
+  another program.  This can be done by controlling the execution of
+  the program being debugged and allowing the user to inspect and
+  modify the state of the running program.  Or GDB can be used to
+  analyse the program or a core file generated from the program
+  without needing to execute the program.
+
+  The program being debugged may be local i.e. on the system on which
+  GDB runs or remote, on a different system.
+
+Policy Objectives
+-----------------
+
+  The objective of this policy is define what the GDB project
+  considers a security bug and what is a non-security bug, and how
+  bugs can be reported.
+
+  Additionally this policy discusses areas of GDB in which there are
+  known bugs, how these might lead to security issues, and how this
+  risk can be mitigated.
+
+Scope Of This Policy
+--------------------
+
+  This policy covers all currently supported versions of GDB as
+  released from the official GDB website and covers gdb, gdbserver, as
+  well as gcore and gdb-add-index, which are packaged with each GDB
+  release.  The official GDB website can be found here:
+
+    https://sourceware.org/gdb/
+
+  Remote debugging uses GDB to connect to a remote target.  GDB sends
+  commands to the remote target which then controls the process being
+  debugged.  The GDB project provides one remote target, gdbserver,
+  which is included with official GDB releases.  Bugs within gdbserver
+  are in scope for this policy.
+
+  Other projects also implement remote targets to which GDB can
+  connect.  Any bugs in these remote targets are out of scope for this
+  policy and should be reported to the relevant project.  However, any
+  bugs in GDB caused by a misbehaving remote target, even when that
+  target is not gdbserver, are in scope for this policy.
+
+What Is A Security Bug?
+-----------------------
+
+  Any bugs in GDB or gdbserver that result in an unexpected crossing
+  of a privilege boundary are considered security bugs.  Some examples
+  of crossing a privilege boundary include: being able to execute code
+  as an arbitrarily different user, or accessing resources
+  (e.g. files, sockets, etc) for which the original user would not
+  normally have access.
+
+  Any bugs in GDB that result in execution of the program being
+  debugged without the user issuing a GDB command triggering execution
+  (either from the GDB command line, a GDB configuration file, or from
+  the GDB prompt) are considered security bugs.
+
+  GDB will check for and load multiple configuration files.  When
+  initially started GDB can load user- and system-specific
+  configuration files, this is done unconditionally as it is assumed
+  these files are under control of the user and are always safe to
+  load.
+
+  GDB can also load per-project and per-program configuration files,
+  this is done when a program to debug is loaded into GDB.  These
+  configuration files will only be loaded if the user has given GDB
+  permission to load these files.  Any bug in GDB which allows
+  per-project or per-program configuration files to be loaded without
+  permission having been granted by the user is considered a security
+  bug.
+
+  When gdbserver is started, if it is passed a program on its command
+  line then that program will be started, but paused before executing
+  its first instruction.
+
+  Any bug in gdbserver which results in further execution of the
+  program being debugged without GDB first connecting to the target
+  and sending a command that is intended to trigger execution is a
+  security bug in gdbserver.
+
+  Any bug in GDB or gdbserver that can trigger arbitrary code
+  execution without the program being debugged having been executed by
+  a user command, is considered a security bug, e.g. if loading a
+  program into GDB could trigger arbitrary code execution, then this
+  is a security issue.
+
+  The additional tools gcore and gdb-add-index are scripts that wrap
+  around GDB.  Any issue in these tools that meet the above
+  definitions of a security bug, are considered a security bug.
+
+What Is Not A Security Bug
+--------------------------
+
+  In the context of local debugging, when GDB is used to execute a
+  program, the program runs with the same privileges as GDB itself.
+
+  Any issues that arise from running an untrusted program outside of a
+  secure environment are not security bugs in GDB.  Any issues that
+  arise from running an untrusted program through GDB inside a secure
+  environment are only security bugs if GDB is required in order to
+  trigger the issue.
+
+  It is possible for a program to detect when it is run under GDB and
+  to change its behavior so that unwanted behavior may only appear
+  when a program is run under GDB.  Any issues that arise due to an
+  untrusted program detecting GDB and changing its behaviour are not
+  security issues in GDB unless the issue also meet some other
+  definition of a security bug.
+
+  In the context of remote debugging, the program being debugged is
+  run with the same privileges as gdbserver.  As with GDB in the local
+  debugging case, any issues that arise from running an untrusted
+  program outside of a secure environment are not security bugs in
+  gdbserver.
+
+  The connection between GDB and a remote target is not protected by
+  either authentication or encryption.  Connecting to a remote target
+  allows for arbitrary code execution on the remote system with the
+  same privileges as the remote user, and any resource that the remote
+  user can access can be read by GDB, and downloaded to the local
+  machine on which GDB is running.  As such, users need to take
+  independent measures to secure the connection between GDB and the
+  remote target.
+
+  Any issues that arise due to a failure to protect the connection
+  between GDB and a remote target are not security bugs in either GDB
+  or gdbserver.
+
+Security Realities Of The GDB Project
+-------------------------------------
+
+  Within this section, references to GDB should be read as meaning
+  GDB, gdbserver, gcore, or gdb-add-index, unless specifically stated
+  otherwise.
+
+  The most common use case for GDB is a developer trying to resolve
+  issues within a program that they have either written themselves, or
+  within a program that they trust not to be malicious.  In this
+  situation we would say GDB is being used to debug trusted code.
+  There is no greater security risk from running the program to debug
+  through GDB than there is running the program directly.  Additional
+  process isolation for the GDB process is only needed if additional
+  isolation would have been applied anyway when running the program to
+  debug.
+
+  In some cases a developer may be given a program from an untrusted
+  source and be asked to debug an issue.  In this situation we would
+  say GDB is being used to debug untrusted code.  In this case the
+  user should take all the precautions when running GDB that they
+  would normally take when running an untrusted program outside of
+  GDB, e.g. running within a secure, sandboxed environment.
+
+  When using GDB to examine, but not execute, an untrusted program
+  (with gdbserver, the program will be started, but paused at the
+  first instruction and not run further), there should be no security
+  risks, however the GDB maintainers don't currently believe that GDB
+  or gdbserver is reliable enough to ensure that there are no security
+  risks.
+
+  There are known bugs in GDB related to loading malformed executables
+  and parsing the debug information, a consequence of these bugs is
+  that a malicious program could trigger undefined behaviour in GDB,
+  which could be used to trigger arbitrary code execution.
+
+  Given these risks, the advice of the GDB project is that, when using
+  GDB with an untrusted binary, always do so in a secure, sandboxed
+  environment.
+
+  As there are already known bugs in GDB relating to undefined
+  behaviour triggered from malformed programs, further bugs in this
+  area should still be reported, but are unlikely to be given high
+  priority.  Bugs in GDB that are triggered by well-formed programs
+  should also be reported, and are likely to be treated as higher
+  priority as these are more likely to impact normal use of GDB.
+
+  When using GDB and gdbserver to perform remote debug, the connection
+  between the two components is by design insecure.  It is up to the
+  user to protect this connection, for example, by only starting
+  gdbserver within a secure network.
+
+Reporting Non-Security Bugs
+---------------------------
+
+  NOTE: All bugs reported in the GDB Bugzilla are public.
+
+  Non-security bugs, as well as any security bugs that pose limited
+  risk to users should be reported in GDB's bugzilla system.  Bugs
+  reported in this way will be public.  The bugzilla system can be
+  found here:
+
+    https://sourceware.org/bugzilla/
+
+Reporting Security Bugs
+-----------------------
+
+  In order to report a private security bug that is not immediately
+  made public, please contact one of the downstream distributions with
+  security teams.  The following teams have volunteered to handle such
+  bugs:
+
+     Red Hat: secalert@redhat.com
+     SUSE:    security@suse.de
+
+  Please report the bug to just one of these teams.  It will be shared
+  with other teams as necessary.
+
+  The team contacted will take care of details such as vulnerability
+  rating and CVE assignment (http://cve.mitre.org/about/).  It is
+  likely that the team will ask to file a public bug because the issue
+  is sufficiently minor and does not warrant keeping details of the
+  bug private.

@@ -1,5 +1,5 @@
 /* UI_FILE - a generic STDIO like output stream.
-   Copyright (C) 1999-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,6 +29,8 @@ class ui_file
 public:
   ui_file ();
   virtual ~ui_file () = 0;
+
+  ui_file (ui_file &&other) = default;
 
   /* Public non-virtual API.  */
 
@@ -176,6 +178,8 @@ public:
      else collect 'raw' output like the previous constructor.  */
   explicit string_file (bool term_out) : m_term_out (term_out) {};
   ~string_file () override;
+
+  string_file (string_file &&other) = default;
 
   /* Override ui_file methods.  */
 

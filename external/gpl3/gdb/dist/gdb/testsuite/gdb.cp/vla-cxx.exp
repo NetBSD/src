@@ -1,4 +1,4 @@
-# Copyright 2014-2023 Free Software Foundation, Inc.
+# Copyright 2014-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,6 +23,18 @@ if ![runto_main] {
     return -1
 }
 
+gdb_breakpoint [gdb_get_line_number "Before pointer assignment"]
+gdb_continue_to_breakpoint "Before pointer assignment"
+
+gdb_test "ptype ptr" "= int \\(\\*\\)\\\[variable length\\\]" \
+    "ptype ptr, before pointer assignment"
+
+gdb_test "print ptr" "= \\(int \\(\\*\\)\\\[variable length\\\]\\) 0x0" \
+    "print ptr, before pointer assignment"
+
+gdb_test "print *ptr" "Cannot access memory at address 0x0" \
+    "print *ptr, before pointer assignment"
+
 gdb_breakpoint [gdb_get_line_number "vlas_filled"]
 gdb_continue_to_breakpoint "vlas_filled"
 
@@ -33,3 +45,6 @@ gdb_test "print vlaref" " = \\(int \\(&\\)\\\[3\\\]\\) @$hex: \\{5, 7, 9\\}"
 # bug being tested, it's better not to depend on the exact spelling.
 gdb_test "print vlaref2" " = \\(.*\\) @$hex: \\{5, 7, 9\\}"
 gdb_test "print c" " = \\{e = \\{c = @$hex\\}\\}"
+gdb_test "ptype ptr" "int \\(\\*\\)\\\[3\\\]"
+gdb_test "print ptr" "\\(int \\(\\*\\)\\\[3\\\]\\) $hex"
+gdb_test "print *ptr" " = \\{5, 7, 9\\}"

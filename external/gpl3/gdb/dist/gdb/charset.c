@@ -1,6 +1,6 @@
 /* Character set conversion support for GDB.
 
-   Copyright (C) 2001-2023 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,9 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "charset.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "gdbsupport/gdb_obstack.h"
 #include "gdbsupport/gdb_wait.h"
 #include "charset-list.h"
@@ -71,6 +70,8 @@
 
 
 #ifdef PHONY_ICONV
+
+#include "extract-store-integer.h"
 
 /* Provide a phony iconv that does as little as possible.  Also,
    arrange for there to be a single available character set.  */
@@ -939,7 +940,7 @@ default_auto_wide_charset (void)
 
 /* GDB cannot handle strings correctly if this size is different.  */
 
-gdb_static_assert (sizeof (gdb_wchar_t) == 2 || sizeof (gdb_wchar_t) == 4);
+static_assert (sizeof (gdb_wchar_t) == 2 || sizeof (gdb_wchar_t) == 4);
 
 /* intermediate_encoding returns the charset used internally by
    GDB to convert between target and host encodings. As the test above

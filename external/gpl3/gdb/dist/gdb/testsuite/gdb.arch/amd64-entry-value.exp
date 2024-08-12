@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2023 Free Software Foundation, Inc.
+# Copyright (C) 2011-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,9 +20,8 @@ if [info exists COMPILE] {
     # make check RUNTESTFLAGS="gdb.arch/amd64-entry-value.exp COMPILE=1"
     set srcfile ${testfile}.cc
     lappend opts debug optimize=-O2
-} elseif { ![istarget x86_64-*-* ] || ![is_lp64_target] } {
-    verbose "Skipping amd64-entry-value."
-    return
+} else {
+    require is_x86_64_m64_target
 }
 
 if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} $opts] } {
@@ -49,8 +48,11 @@ gdb_breakpoint "breakhere_reference"
 
 gdb_continue_to_breakpoint "entry: breakhere"
 
-gdb_test "bt" "^bt\r\n#0 +d *\\(i=31, i@entry=30, j=31\\.5, j@entry=30\\.5\\) \[^\r\n\]*\r\n#1 +0x\[0-9a-f\]+ in main .*" \
-	 "entry: bt"
+gdb_test "bt" \
+    [multi_line \
+	 "^#0 +d *\\(i=31, i@entry=30, j=31\\.5, j@entry=30\\.5\\) \[^\r\n\]*" \
+	 "#1 +0x\[0-9a-f\]+ in main .*"] \
+    "entry: bt"
 gdb_test "p i" " = 31" "entry: p i"
 gdb_test "p i@entry" " = 30" "entry: p i@entry"
 gdb_test "p j" { = 31\.5} "entry: p j"
@@ -62,21 +64,30 @@ gdb_test "p j@entry" { = 30\.5} "entry: p j@entry"
 gdb_continue_to_breakpoint "entry_locexpr: breakhere_locexpr"
 gdb_test "p i" " = 30" "entry_locexpr: p i"
 gdb_test_no_output "set variable i = 0" "entry_locexpr: set variable i = 0"
-gdb_test "bt" "^bt\r\n#0 +locexpr *\\(i=0, i@entry=30\\) \[^\r\n\]*\r\n#1 +0x\[0-9a-f\]+ in main .*" \
-	 "entry_locexpr: bt"
+gdb_test "bt" \
+    [multi_line \
+	 "^#0 +locexpr *\\(i=0, i@entry=30\\) \[^\r\n\]*" \
+	 "#1 +0x\[0-9a-f\]+ in main .*"] \
+    "entry_locexpr: bt"
 
 
 # Test @entry values for stack passed parameters.
 
 gdb_continue_to_breakpoint "entry_stack: stacktest"
 
-gdb_test "bt" "^bt\r\n#0 +stacktest *\\(r1=r1@entry=1, r2=r2@entry=2, \[^\r\n\]+, s1=s1@entry=11, s2=s2@entry=12, \[^\r\n\]+, d9=d9@entry=11\\.5, da=da@entry=12\\.5\\) \[^\r\n\]*\r\n#1 +0x\[0-9a-f\]+ in main .*" \
-	 "entry_stack: bt at entry"
+gdb_test "bt" \
+    [multi_line \
+	 "^#0 +stacktest *\\(r1=r1@entry=1, r2=r2@entry=2, \[^\r\n\]+, s1=3, s1@entry=11, s2=4, s2@entry=12, \[^\r\n\]+, d9=3\\.5, d9@entry=11\\.5, da=4\\.5, da@entry=12\\.5\\) \[^\r\n\]*" \
+	 "#1 +0x\[0-9a-f\]+ in main .*"] \
+    "entry_stack: bt at entry"
 
 gdb_continue_to_breakpoint "entry_stack: breakhere_stacktest"
 
-gdb_test "bt" "^bt\r\n#0 +stacktest *\\(r1=r1@entry=1, r2=r2@entry=2, \[^\r\n\]+, s1=3, s1@entry=11, s2=4, s2@entry=12, \[^\r\n\]+, d9=3\\.5, d9@entry=11\\.5, da=4\\.5, da@entry=12\\.5\\) \[^\r\n\]*\r\n#1 +0x\[0-9a-f\]+ in main .*" \
-	 "entry_stack: bt"
+gdb_test "bt" \
+    [multi_line \
+	 "^#0 +stacktest *\\(r1=r1@entry=1, r2=r2@entry=2, \[^\r\n\]+, s1=3, s1@entry=11, s2=4, s2@entry=12, \[^\r\n\]+, d9=3\\.5, d9@entry=11\\.5, da=4\\.5, da@entry=12\\.5\\) \[^\r\n\]*" \
+	 "#1 +0x\[0-9a-f\]+ in main .*"] \
+    "entry_stack: bt"
 
 gdb_test "p s1" " = 3" "entry_stack: p s1"
 gdb_test "p s1@entry" " = 11" "entry_stack: p s1@entry"
@@ -203,8 +214,13 @@ gdb_test "p nodataparam@entry" "Cannot resolve DW_AT_call_data_value" "entry_ref
 
 gdb_continue_to_breakpoint "tailcall: breakhere"
 
-gdb_test "bt" "^bt\r\n#0 +d *\\(i=71, i@entry=70, j=73\\.5, j@entry=72\\.5\\) \[^\r\n\]*\r\n#1 +0x\[0-9a-f\]+ in c \\(i=i@entry=7, j=j@entry=7\\.25\\) \[^\r\n\]*\r\n#2 +0x\[0-9a-f\]+ in b \\(i=i@entry=5, j=j@entry=5\\.25\\) \[^\r\n\]*\r\n#3 +0x\[0-9a-f\]+ in main \[^\r\n\]*" \
-	 "tailcall: bt"
+gdb_test "bt" \
+    [multi_line \
+	 "^#0 +d *\\(i=71, i@entry=70, j=73\\.5, j@entry=72\\.5\\) \[^\r\n\]*" \
+	 "#1 +0x\[0-9a-f\]+ in c \\(i=i@entry=7, j=j@entry=7\\.25\\) \[^\r\n\]*" \
+	 "#2 +0x\[0-9a-f\]+ in b \\(i=i@entry=5, j=j@entry=5\\.25\\) \[^\r\n\]*" \
+	 "#3 +0x\[0-9a-f\]+ in main \[^\r\n\]*"] \
+    "tailcall: bt"
 gdb_test "p i" " = 71" "tailcall: p i"
 gdb_test "p i@entry" " = 70" "tailcall: p i@entry"
 gdb_test "p j" " = 73\\.5" "tailcall: p j"
@@ -244,8 +260,16 @@ gdb_test_multiple $test $test {
 
 gdb_continue_to_breakpoint "ambiguous: breakhere"
 
-gdb_test "bt" "^bt\r\n#0 +d \\(i=<optimized out>, j=<optimized out>\\)\[^\r\n\]*\r\n#1 +0x\[0-9a-f\]+ in amb_z \\(i=<optimized out>\\)\[^\r\n\]*\r\n#2 +0x\[0-9a-f\]+ in amb_y \\(i=<optimized out>\\)\[^\r\n\]*\r\n#3 +0x\[0-9a-f\]+ in amb_x \\(i=<optimized out>\\)\[^\r\n\]*\r\n#4 +0x\[0-9a-f\]+ in amb_b \\(i=i@entry=101\\)\[^\r\n\]*\r\n#5 +0x\[0-9a-f\]+ in amb_a \\(i=i@entry=100\\)\[^\r\n\]*\r\n#6 +0x\[0-9a-f\]+ in main \\(\\)\[^\r\n\]*" \
-	 "ambiguous: bt"
+gdb_test "bt" \
+    [multi_line \
+	 "^#0 +d \\(i=<optimized out>, j=<optimized out>\\)\[^\r\n\]*" \
+	 "#1 +0x\[0-9a-f\]+ in amb_z \\(i=<optimized out>\\)\[^\r\n\]*" \
+	 "#2 +0x\[0-9a-f\]+ in amb_y \\(i=<optimized out>\\)\[^\r\n\]*" \
+	 "#3 +0x\[0-9a-f\]+ in amb_x \\(i=<optimized out>\\)\[^\r\n\]*" \
+	 "#4 +0x\[0-9a-f\]+ in amb_b \\(i=i@entry=101\\)\[^\r\n\]*" \
+	 "#5 +0x\[0-9a-f\]+ in amb_a \\(i=i@entry=100\\)\[^\r\n\]*" \
+	 "#6 +0x\[0-9a-f\]+ in main \\(\\)\[^\r\n\]*"] \
+    "ambiguous: bt"
 
 
 # Test self tail calls verification.
@@ -253,8 +277,14 @@ gdb_test "bt" "^bt\r\n#0 +d \\(i=<optimized out>, j=<optimized out>\\)\[^\r\n\]*
 
 gdb_continue_to_breakpoint "self: breakhere"
 
-gdb_test "bt" "^bt\r\n#0 +d \\(i=<optimized out>, j=<optimized out>\\)\[^\r\n\]*\r\n#1 +0x\[0-9a-f\]+ in self \\(i=<optimized out>\\)\[^\r\n\]*\r\n#2 +0x\[0-9a-f\]+ in self2 \\(i=<optimized out>\\)\[^\r\n\]*\r\n#3 +0x\[0-9a-f\]+ in self \\(i=<optimized out>\\)\[^\r\n\]*\r\n#4 +0x\[0-9a-f\]+ in main \\(\\)\[^\r\n\]*" \
-	 "self: bt"
+gdb_test "bt" \
+    [multi_line \
+	 "^#0 +d \\(i=<optimized out>, j=<optimized out>\\)\[^\r\n\]*" \
+	 "#1 +0x\[0-9a-f\]+ in self \\(i=<optimized out>\\)\[^\r\n\]*" \
+	 "#2 +0x\[0-9a-f\]+ in self2 \\(i=<optimized out>\\)\[^\r\n\]*" \
+	 "#3 +0x\[0-9a-f\]+ in self \\(i=<optimized out>\\)\[^\r\n\]*" \
+	 "#4 +0x\[0-9a-f\]+ in main \\(\\)\[^\r\n\]*"] \
+    "self: bt"
 
 gdb_test_no_output "set debug entry-values 1"
 gdb_test "bt" "DW_OP_entry_value resolving has found function \"self\\(int\\)\" at 0x\[0-9a-f\]+ can call itself via tail calls\r\n.*" \

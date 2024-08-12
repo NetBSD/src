@@ -1,7 +1,7 @@
 /* The remote-virtual-component simulator framework
    for GDB, the GNU Debugger.
 
-   Copyright 2006-2023 Free Software Foundation, Inc.
+   Copyright 2006-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,9 +29,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #include <stdlib.h>
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -445,11 +443,9 @@ hw_rv_send (struct hw *me,
 	    void *msg,
 	    unsigned int len_noheader)
 {
-  hw_rv_device *rv = (hw_rv_device *) hw_data (me);
   uint8_t buf[32+3];
   uint8_t *bufp;
   unsigned int len = len_noheader + 3;
-  int ret;
 
   buf[0] = len & 255;
   buf[1] = (len >> 8) & 255;
@@ -1050,7 +1046,6 @@ static void
 hw_rv_finish (struct hw *me)
 {
   hw_rv_device *rv = HW_ZALLOC (me, hw_rv_device);
-  int i;
   const struct hw_property *mem_prop;
   const struct hw_property *dummy_prop;
   const struct hw_property *mbox_prop;

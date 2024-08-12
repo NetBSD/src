@@ -1,5 +1,5 @@
 /* Target operations for the remote server for GDB.
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
 
@@ -21,7 +21,7 @@
 #ifndef GDBSERVER_TARGET_H
 #define GDBSERVER_TARGET_H
 
-#include <sys/types.h> /* for mode_t */
+#include <sys/types.h>
 #include "target/target.h"
 #include "target/resume.h"
 #include "target/wait.h"
@@ -33,7 +33,6 @@
 #include "gdbsupport/byte-vector.h"
 
 struct emit_ops;
-struct buffer;
 struct process_info;
 
 /* This structure describes how to resume a particular thread (or all
@@ -172,10 +171,10 @@ public:
   /* Return true if the read_auxv target op is supported.  */
   virtual bool supports_read_auxv ();
 
-  /* Read auxiliary vector data from the inferior process.
+  /* Read auxiliary vector data from the process with pid PID.
 
      Read LEN bytes at OFFSET into a buffer at MYADDR.  */
-  virtual int read_auxv (CORE_ADDR offset, unsigned char *myaddr,
+  virtual int read_auxv (int pid, CORE_ADDR offset, unsigned char *myaddr,
 			 unsigned int len);
 
   /* Returns true if GDB Z breakpoint type TYPE is supported, false
@@ -277,6 +276,9 @@ public:
   /* Returns true if vfork events are supported.  */
   virtual bool supports_vfork_events ();
 
+  /* Returns the set of supported thread options.  */
+  virtual gdb_thread_options supported_thread_options ();
+
   /* Returns true if exec events are supported.  */
   virtual bool supports_exec_events ();
 
@@ -316,6 +318,9 @@ public:
 
   /* Return true if THREAD is known to be stopped now.  */
   virtual bool thread_stopped (thread_info *thread);
+
+  /* Return true if any thread is known to be resumed.  */
+  virtual bool any_resumed ();
 
   /* Return true if the get_tib_address op is supported.  */
   virtual bool supports_get_tib_address ();
@@ -403,14 +408,14 @@ public:
   /* Read branch trace data into buffer.
      Return 0 on success; print an error message into BUFFER and return -1,
      otherwise.  */
-  virtual int read_btrace (btrace_target_info *tinfo, buffer *buf,
+  virtual int read_btrace (btrace_target_info *tinfo, std::string *buf,
 			   enum btrace_read_type type);
 
   /* Read the branch trace configuration into BUFFER.
      Return 0 on success; print an error message into BUFFER and return -1
      otherwise.  */
   virtual int read_btrace_conf (const btrace_target_info *tinfo,
-				buffer *buf);
+				std::string *buf);
 
   /* Return true if target supports range stepping.  */
   virtual bool supports_range_stepping ();
@@ -476,13 +481,15 @@ public:
   virtual bool thread_handle (ptid_t ptid, gdb_byte **handle,
 			      int *handle_len);
 
-  /* If THREAD is a fork child that was not reported to GDB, return its parent
-     else nullptr.  */
+  /* If THREAD is a fork/vfork/clone child that was not reported to
+     GDB, return its parent else nullptr.  */
   virtual thread_info *thread_pending_parent (thread_info *thread);
 
-  /* If THREAD is the parent of a fork child that was not reported to GDB,
-     return this child, else nullptr.  */
-  virtual thread_info *thread_pending_child (thread_info *thread);
+  /* If THREAD is the parent of a fork/vfork/clone child that was not
+     reported to GDB, return this child and fill in KIND with the
+     matching waitkind, otherwise nullptr.  */
+  virtual thread_info *thread_pending_child (thread_info *thread,
+					     target_waitkind *kind);
 
   /* Returns true if the target can software single step.  */
   virtual bool supports_software_single_step ();
@@ -531,6 +538,9 @@ int kill_inferior (process_info *proc);
 
 #define target_supports_vfork_events() \
   the_target->supports_vfork_events ()
+
+#define target_supported_thread_options(options) \
+  the_target->supported_thread_options (options)
 
 #define target_supports_exec_events() \
   the_target->supports_exec_events ()
@@ -636,7 +646,7 @@ target_disable_btrace (struct btrace_target_info *tinfo)
 
 static inline int
 target_read_btrace (struct btrace_target_info *tinfo,
-		    struct buffer *buffer,
+		    std::string *buffer,
 		    enum btrace_read_type type)
 {
   return the_target->read_btrace (tinfo, buffer, type);
@@ -644,7 +654,7 @@ target_read_btrace (struct btrace_target_info *tinfo,
 
 static inline int
 target_read_btrace_conf (struct btrace_target_info *tinfo,
-			 struct buffer *buffer)
+			 std::string *buffer)
 {
   return the_target->read_btrace_conf (tinfo, buffer);
 }
@@ -676,6 +686,9 @@ target_read_btrace_conf (struct btrace_target_info *tinfo,
 #define target_supports_software_single_step() \
   the_target->supports_software_single_step ()
 
+#define target_any_resumed() \
+  the_target->any_resumed ()
+
 ptid_t mywait (ptid_t ptid, struct target_waitstatus *ourstatus,
 	       target_wait_flags options, int connected_wait);
 
@@ -695,10 +708,13 @@ target_thread_pending_parent (thread_info *thread)
 }
 
 static inline thread_info *
-target_thread_pending_child (thread_info *thread)
+target_thread_pending_child (thread_info *thread, target_waitkind *kind)
 {
-  return the_target->thread_pending_child (thread);
+  return the_target->thread_pending_child (thread, kind);
 }
+
+/* Read LEN bytes from MEMADDR in the buffer MYADDR.  Return 0 if the read
+   is successful, otherwise, return a non-zero error code.  */
 
 int read_inferior_memory (CORE_ADDR memaddr, unsigned char *myaddr, int len);
 

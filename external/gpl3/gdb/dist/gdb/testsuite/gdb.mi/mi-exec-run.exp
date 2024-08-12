@@ -1,4 +1,4 @@
-# Copyright 2016-2023 Free Software Foundation, Inc.
+# Copyright 2016-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,10 +28,7 @@ set MIFLAGS "-i=mi"
 
 # The purpose of this testcase is to test the -exec-run command. If we
 # cannot use it, then there is no point in running this testcase.
-if [use_gdb_stub] {
-     untested "cannot use -exec-run command"
-     return -1
-}
+require !use_gdb_stub
 
 standard_testfile mi-start.c
 
@@ -65,7 +62,7 @@ proc test {inftty_mode mi_mode force_fail} {
     }
 
     if {$force_fail} {
-	# Disable the shell so that its the first exec that fails,
+	# Disable the shell so that it's the first exec that fails,
 	# instead of the shell starting and then failing with some
 	# unspecified output.
 	mi_gdb_test "-gdb-set startup-with-shell off" ".*"
@@ -75,7 +72,6 @@ proc test {inftty_mode mi_mode force_fail} {
     }
 
     mi_delete_breakpoints
-    mi_gdb_reinitialize_dir $srcdir/$subdir
     mi_gdb_reinitialize_dir $srcdir/$subdir
     mi_gdb_load ${bin}
 

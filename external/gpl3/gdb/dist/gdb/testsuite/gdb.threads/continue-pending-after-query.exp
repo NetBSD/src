@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2013-2023 Free Software Foundation, Inc.
+# Copyright 2013-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -67,7 +67,7 @@ proc test {} {
     set test "delete breakpoints, answer prompt"
     set saw_prompt 0
     gdb_test_multiple "delete breakpoints" $test {
-	-re "Delete all breakpoints.*y or n.*$" {
+	-re "Delete all breakpoints, watchpoints, tracepoints, and catchpoints.*y or n.*$" {
 	    set saw_prompt 1
 	    send_gdb "y\n"
 	    exp_continue

@@ -1,4 +1,4 @@
-# Copyright 2015-2023 Free Software Foundation, Inc.
+# Copyright 2015-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,10 +21,7 @@
 # #define EM_X86_64       62              /* AMD x86-64 architecture */
 # patch @0x12: 0x3E -> 0x03
 
-if {![istarget "i?86-*-*"] && ![istarget "x86_64-*-*"]} {
-    verbose "Skipping i386 biarch core test."
-    return
-}
+require {is_any_target "i?86-*-*" "x86_64-*-*"}
 
 standard_testfile
 
@@ -51,6 +48,8 @@ if {$corestat(size) != 102400} {
     untested "bzip2 produces invalid result"
     return -1
 }
+
+set corefile [gdb_remote_download host $corefile]
 
 # First check if this particular GDB supports i386, otherwise we should not
 # expect the i386 core file to be loaded successfully.

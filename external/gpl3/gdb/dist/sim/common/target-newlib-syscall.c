@@ -1,5 +1,5 @@
 /* Target syscall mappings for newlib/libgloss environment.
-   Copyright 1995-2023 Free Software Foundation, Inc.
+   Copyright 1995-2024 Free Software Foundation, Inc.
    Contributed by Mike Frysinger.
 
    This file is part of simulators.

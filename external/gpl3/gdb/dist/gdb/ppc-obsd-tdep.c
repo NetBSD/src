@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/powerpc.
 
-   Copyright (C) 2004-2023 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "arch-utils.h"
+#include "extract-store-integer.h"
 #include "frame.h"
 #include "frame-unwind.h"
 #include "gdbtypes.h"
@@ -117,7 +117,7 @@ static const int ppcobsd_sigreturn_offset[] = {
 
 static int
 ppcobsd_sigtramp_frame_sniffer (const struct frame_unwind *self,
-				frame_info_ptr this_frame,
+				const frame_info_ptr &this_frame,
 				void **this_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
@@ -158,7 +158,7 @@ ppcobsd_sigtramp_frame_sniffer (const struct frame_unwind *self,
 }
 
 static struct trad_frame_cache *
-ppcobsd_sigtramp_frame_cache (frame_info_ptr this_frame, void **this_cache)
+ppcobsd_sigtramp_frame_cache (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
@@ -212,7 +212,7 @@ ppcobsd_sigtramp_frame_cache (frame_info_ptr this_frame, void **this_cache)
 }
 
 static void
-ppcobsd_sigtramp_frame_this_id (frame_info_ptr this_frame,
+ppcobsd_sigtramp_frame_this_id (const frame_info_ptr &this_frame,
 				void **this_cache, struct frame_id *this_id)
 {
   struct trad_frame_cache *cache =
@@ -222,7 +222,7 @@ ppcobsd_sigtramp_frame_this_id (frame_info_ptr this_frame,
 }
 
 static struct value *
-ppcobsd_sigtramp_frame_prev_register (frame_info_ptr this_frame,
+ppcobsd_sigtramp_frame_prev_register (const frame_info_ptr &this_frame,
 				      void **this_cache, int regnum)
 {
   struct trad_frame_cache *cache =

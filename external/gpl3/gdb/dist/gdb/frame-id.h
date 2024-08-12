@@ -1,6 +1,6 @@
 /* Definitions for dealing with stack frames, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -99,6 +99,10 @@ struct frame_id
   unsigned int code_addr_p : 1;
   unsigned int special_addr_p : 1;
 
+  /* True if this frame was created from addresses given by the user (see
+     create_new_frame) rather than through unwinding.  */
+  unsigned int user_created_p : 1;
+
   /* It is non-zero for a frame made up by GDB without stack data
      representation in inferior, such as INLINE_FRAME or TAILCALL_FRAME.
      Caller of inlined function will have it zero, each more inner called frame
@@ -124,12 +128,16 @@ struct frame_id
 /* For convenience.  All fields are zero.  This means "there is no frame".  */
 extern const struct frame_id null_frame_id;
 
-/* Sentinel frame.  */
-extern const struct frame_id sentinel_frame_id;
-
 /* This means "there is no frame ID, but there is a frame".  It should be
    replaced by best-effort frame IDs for the outermost frame, somehow.
    The implementation is only special_addr_p set.  */
 extern const struct frame_id outer_frame_id;
+
+/* Return true if ID represents a sentinel frame.  */
+static inline bool
+is_sentinel_frame_id (frame_id id)
+{
+  return id.stack_status == FID_STACK_SENTINEL;
+}
 
 #endif /* ifdef GDB_FRAME_ID_H  */

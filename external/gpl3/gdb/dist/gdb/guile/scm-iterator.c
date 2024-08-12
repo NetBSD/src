@@ -1,6 +1,6 @@
 /* Simple iterators for GDB/Scheme.
 
-   Copyright (C) 2014-2023 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -50,7 +50,6 @@
    There is SRFI 41, Streams.  We might support that too eventually (not with
    this interface of course).  */
 
-#include "defs.h"
 #include "guile-internal.h"
 
 /* A smob for iterating over something.

@@ -1,5 +1,5 @@
 /* aarch64-opc.h -- Header file for aarch64-opc.c and aarch64-opc-2.c.
-   Copyright (C) 2012-2022 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of the GNU opcodes library.
@@ -25,78 +25,60 @@
 #include "opcode/aarch64.h"
 
 /* Instruction fields.
-   Keep synced with fields.  */
+   Keep this sorted alphanumerically and synced with the fields array
+   in aarch64-opc.c.  */
 enum aarch64_field_kind
 {
   FLD_NIL,
-  FLD_cond2,
-  FLD_nzcv,
-  FLD_defgh,
-  FLD_abc,
-  FLD_imm19,
-  FLD_immhi,
-  FLD_immlo,
-  FLD_size,
-  FLD_vldst_size,
-  FLD_op,
-  FLD_Q,
-  FLD_Rt,
-  FLD_Rd,
-  FLD_Rn,
-  FLD_Rt2,
-  FLD_Ra,
-  FLD_op2,
   FLD_CRm,
+  FLD_CRm_dsb_nxs,
   FLD_CRn,
-  FLD_op1,
-  FLD_op0,
-  FLD_imm3,
-  FLD_cond,
-  FLD_opcode,
-  FLD_cmode,
-  FLD_asisdlso_opcode,
-  FLD_len,
-  FLD_Rm,
-  FLD_Rs,
-  FLD_option,
-  FLD_S,
-  FLD_hw,
-  FLD_opc,
-  FLD_opc1,
-  FLD_shift,
-  FLD_type,
-  FLD_ldst_size,
-  FLD_imm6,
-  FLD_imm6_2,
-  FLD_imm4,
-  FLD_imm4_2,
-  FLD_imm4_3,
-  FLD_imm4_5,
-  FLD_imm5,
-  FLD_imm7,
-  FLD_imm8,
-  FLD_imm9,
-  FLD_imm12,
-  FLD_imm14,
-  FLD_imm16,
-  FLD_imm16_2,
-  FLD_imm26,
-  FLD_imms,
-  FLD_immr,
-  FLD_immb,
-  FLD_immh,
-  FLD_S_imm10,
-  FLD_N,
-  FLD_index,
-  FLD_index2,
-  FLD_sf,
-  FLD_lse_sz,
+  FLD_CSSC_imm8,
   FLD_H,
   FLD_L,
+  FLD_LSE128_Rt,
+  FLD_LSE128_Rt2,
   FLD_M,
-  FLD_b5,
-  FLD_b40,
-  FLD_scale,
+  FLD_N,
+  FLD_Q,
+  FLD_Ra,
+  FLD_Rd,
+  FLD_Rm,
+  FLD_Rn,
+  FLD_Rs,
+  FLD_Rt,
+  FLD_Rt2,
+  FLD_S,
+  FLD_SM3_imm2,
+  FLD_SME_Pdx2,
+  FLD_SME_Pm,
+  FLD_SME_PNd3,
+  FLD_SME_PNn3,
+  FLD_SME_Q,
+  FLD_SME_Rm,
+  FLD_SME_Rv,
+  FLD_SME_V,
+  FLD_SME_VL_10,
+  FLD_SME_VL_13,
+  FLD_SME_ZAda_2b,
+  FLD_SME_ZAda_3b,
+  FLD_SME_Zdn2,
+  FLD_SME_Zdn4,
+  FLD_SME_Zm,
+  FLD_SME_Zm2,
+  FLD_SME_Zm4,
+  FLD_SME_Zn2,
+  FLD_SME_Zn4,
+  FLD_SME_ZtT,
+  FLD_SME_Zt3,
+  FLD_SME_Zt2,
+  FLD_SME_i1,
+  FLD_SME_size_12,
+  FLD_SME_size_22,
+  FLD_SME_sz_23,
+  FLD_SME_tszh,
+  FLD_SME_tszl,
+  FLD_SME_zero_mask,
   FLD_SVE_M_4,
   FLD_SVE_M_14,
   FLD_SVE_M_16,
@@ -122,10 +104,10 @@ enum aarch64_field_kind
   FLD_SVE_Zn,
   FLD_SVE_Zt,
   FLD_SVE_i1,
-  FLD_SVE_i3h,
-  FLD_SVE_i3l,
-  FLD_SVE_i3h2,
   FLD_SVE_i2h,
+  FLD_SVE_i3h,
+  FLD_SVE_i3h2,
+  FLD_SVE_i3l,
   FLD_SVE_imm3,
   FLD_SVE_imm4,
   FLD_SVE_imm5,
@@ -142,8 +124,8 @@ enum aarch64_field_kind
   FLD_SVE_rot1,
   FLD_SVE_rot2,
   FLD_SVE_rot3,
-  FLD_SVE_sz,
   FLD_SVE_size,
+  FLD_SVE_sz,
   FLD_SVE_sz2,
   FLD_SVE_tsz,
   FLD_SVE_tszh,
@@ -151,25 +133,92 @@ enum aarch64_field_kind
   FLD_SVE_tszl_19,
   FLD_SVE_xs_14,
   FLD_SVE_xs_22,
-  FLD_SME_ZAda_2b,
-  FLD_SME_ZAda_3b,
-  FLD_SME_size_10,
-  FLD_SME_Q,
-  FLD_SME_V,
-  FLD_SME_Rv,
-  FLD_SME_Pm,
-  FLD_SME_zero_mask,
-  FLD_SME_Rm,
-  FLD_SME_i1,
-  FLD_SME_tszh,
-  FLD_SME_tszl,
+  FLD_S_imm10,
+  FLD_abc,
+  FLD_asisdlso_opcode,
+  FLD_b40,
+  FLD_b5,
+  FLD_cmode,
+  FLD_cond,
+  FLD_cond2,
+  FLD_defgh,
+  FLD_hw,
+  FLD_imm1_0,
+  FLD_imm1_2,
+  FLD_imm1_8,
+  FLD_imm1_10,
+  FLD_imm1_15,
+  FLD_imm1_16,
+  FLD_imm2_0,
+  FLD_imm2_1,
+  FLD_imm2_8,
+  FLD_imm2_10,
+  FLD_imm2_12,
+  FLD_imm2_15,
+  FLD_imm2_16,
+  FLD_imm2_19,
+  FLD_imm3_0,
+  FLD_imm3_5,
+  FLD_imm3_10,
+  FLD_imm3_12,
+  FLD_imm3_14,
+  FLD_imm3_15,
+  FLD_imm4_0,
+  FLD_imm4_5,
+  FLD_imm4_10,
+  FLD_imm4_11,
+  FLD_imm4_14,
+  FLD_imm5,
+  FLD_imm6_10,
+  FLD_imm6_15,
+  FLD_imm7,
+  FLD_imm8,
+  FLD_imm9,
+  FLD_imm12,
+  FLD_imm14,
+  FLD_imm16_0,
+  FLD_imm16_5,
+  FLD_imm19,
+  FLD_imm26,
+  FLD_immb,
+  FLD_immh,
+  FLD_immhi,
+  FLD_immlo,
+  FLD_immr,
+  FLD_imms,
+  FLD_index,
+  FLD_index2,
+  FLD_ldst_size,
+  FLD_len,
+  FLD_lse_sz,
+  FLD_nzcv,
+  FLD_op,
+  FLD_op0,
+  FLD_op1,
+  FLD_op2,
+  FLD_opc,
+  FLD_opc1,
+  FLD_opcode,
+  FLD_option,
   FLD_rotate1,
   FLD_rotate2,
   FLD_rotate3,
-  FLD_SM3_imm2,
+  FLD_scale,
+  FLD_sf,
+  FLD_shift,
+  FLD_size,
   FLD_sz,
-  FLD_CRm_dsb_nxs,
-  FLD_CSSC_imm8
+  FLD_type,
+  FLD_vldst_size,
+  FLD_off3,
+  FLD_off2,
+  FLD_ZAn_1,
+  FLD_ol,
+  FLD_ZAn_2,
+  FLD_ZAn_3,
+  FLD_ZAn,
+  FLD_opc2,
+  FLD_rcpc3_size,
 };
 
 /* Field description.  */
@@ -220,10 +269,13 @@ verify_constraints (const struct aarch64_inst *, const aarch64_insn, bfd_vma,
 						   value by 2 to get the value
 						   of an immediate operand.  */
 #define OPD_F_MAYBE_SP		0x00000010	/* May potentially be SP.  */
-#define OPD_F_OD_MASK		0x000000e0	/* Operand-dependent data.  */
+#define OPD_F_OD_MASK		0x000001e0	/* Operand-dependent data.  */
 #define OPD_F_OD_LSB		5
-#define OPD_F_NO_ZR		0x00000100	/* ZR index not allowed.  */
-#define OPD_F_SHIFT_BY_4	0x00000200	/* Need to left shift the field
+#define OPD_F_NO_ZR		0x00000200	/* ZR index not allowed.  */
+#define OPD_F_SHIFT_BY_3	0x00000400	/* Need to left shift the field
+						   value by 3 to get the value
+						   of an immediate operand.  */
+#define OPD_F_SHIFT_BY_4	0x00000800	/* Need to left shift the field
 						   value by 4 to get the value
 						   of an immediate operand.  */
 
@@ -250,6 +302,13 @@ verify_constraints (const struct aarch64_inst *, const aarch64_insn, bfd_vma,
 
 #undef F_REG_IN_CRM
 #define F_REG_IN_CRM	(1 << 5)  /* Register extra encoding in CRm.  */
+
+#undef F_REG_ALIAS
+#define F_REG_ALIAS	(1 << 6)  /* Register name aliases another.  */
+
+#undef F_REG_128
+#define F_REG_128	(1 << 7) /* System regsister implementable as 128-bit wide.  */
+
 
 /* PSTATE field name for the MSR instruction this is encoded in "op1:op2:CRm".
    Part of CRm can be used to encode <pstatefield>. E.g. CRm[3:1] for SME.
@@ -311,6 +370,12 @@ operand_need_shift_by_two (const aarch64_operand *operand)
 }
 
 static inline bool
+operand_need_shift_by_three (const aarch64_operand *operand)
+{
+  return (operand->flags & OPD_F_SHIFT_BY_3) != 0;
+}
+
+static inline bool
 operand_need_shift_by_four (const aarch64_operand *operand)
 {
   return (operand->flags & OPD_F_SHIFT_BY_4) != 0;
@@ -366,7 +431,7 @@ unsigned char aarch64_get_qualifier_nelem (aarch64_opnd_qualifier_t);
 aarch64_insn aarch64_get_qualifier_standard_value (aarch64_opnd_qualifier_t);
 int aarch64_find_best_match (const aarch64_inst *,
 			     const aarch64_opnd_qualifier_seq_t *,
-			     int, aarch64_opnd_qualifier_t *);
+			     int, aarch64_opnd_qualifier_t *, int *);
 
 static inline void
 reset_operand_qualifier (aarch64_inst *inst, int idx)

@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Free Software Foundation, Inc.
+# Copyright 2019-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -106,3 +106,11 @@ Term::check_contents "split layout contents" \
 
 Term::check_box "source box in split layout" 0 0 80 8
 Term::check_box "asm box in split layout" 0 7 80 8
+
+set re_noattr "\[^<\]"
+
+set status_window_line 15
+
+set status [Term::get_line_with_attrs $status_window_line]
+gdb_assert { [regexp "^<reverse:1>$re_noattr*<reverse:0>$" $status] == 1} \
+    "status window: reverse"

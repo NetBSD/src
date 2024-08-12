@@ -1,0 +1,49 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test that EOF is handled gracefully.
+
+require allow_dap_tests
+
+load_lib dap-support.exp
+
+# The test doesn't matter much.
+standard_testfile scopes.c
+
+if {[build_executable ${testfile}.exp $testfile $srcfile] == -1} {
+    return
+}
+
+if {[dap_initialize] == ""} {
+    return
+}
+
+catch "close -i $gdb_spawn_id"
+catch "wait -i $gdb_spawn_id"
+unset gdb_spawn_id
+
+dap_check_log_file
+
+# Check that first log message is present.
+dap_check_log_file_re [string_to_regexp "starting DAP server"]
+
+# There should be one "READ:" for the initialize request, and at least one
+# "WROTE:" for the initialize response.
+dap_check_log_file_re "READ:"
+dap_check_log_file_re "WROTE:"
+
+# Check that all thread termination messages are there.
+dap_check_log_file_re "JSON writer: terminating"
+dap_check_log_file_re "DAP: terminating"

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (C) 1996-2023 Free Software Foundation, Inc.
+# Copyright (C) 1996-2024 Free Software Foundation, Inc.
 #
 # This file is part of the GNU simulators.
 #
@@ -142,7 +142,11 @@ def gen_common(output_dir: Path, newlib: Path, cpp: str):
 
     No arch should override these.
     """
-    gentvals(output_dir, cpp, 'errno', newlib / 'newlib/libc/include',
+    # Enable Linux errno extensions since the newlib values are designed to
+    # not conflict with each other.
+    gentvals(output_dir,
+             cpp + ' -D__LINUX_ERRNO_EXTENSIONS__',
+             'errno', newlib / 'newlib/libc/include',
              ('errno.h', 'sys/errno.h'), 'E[A-Z0-9]*')
 
     gentvals(output_dir, cpp, 'signal', newlib / 'newlib/libc/include',

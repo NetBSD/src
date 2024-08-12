@@ -1,5 +1,5 @@
 dnl Autoconf configure snippets for common.
-dnl Copyright (C) 1995-2023 Free Software Foundation, Inc.
+dnl Copyright (C) 1995-2024 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
 dnl 
@@ -51,6 +51,8 @@ AC_DEFUN([GDB_AC_COMMON], [
 
   AC_FUNC_MMAP
   AC_FUNC_FORK
+  # Some systems (e.g. Solaris) have `socketpair' in libsocket.
+  AC_SEARCH_LIBS(socketpair, socket)
   AC_CHECK_FUNCS([fdwalk getrlimit pipe pipe2 poll socketpair sigaction \
 		  ptrace64 sbrk setns sigaltstack sigprocmask \
 		  setpgid setpgrp getrusage getauxval sigtimedwait])
@@ -87,10 +89,11 @@ AC_DEFUN([GDB_AC_COMMON], [
     no) want_threading=no ;;
     *) AC_MSG_ERROR([bad value $enableval for threading]) ;;
     esac],
-    [want_threading=yes])
+    [want_threading=auto])
 
   # Check for std::thread.  This does not work on some platforms, like
-  # mingw and DJGPP.
+  # mingw using the win32 threads model with gcc older than 13, and
+  # DJGPP.
   AC_LANG_PUSH([C++])
   AX_PTHREAD([threads=yes], [threads=no])
   save_LIBS="$LIBS"
@@ -112,6 +115,7 @@ AC_DEFUN([GDB_AC_COMMON], [
     # endif
     #endif	/* __MINGW32__ || __CYGWIN__ */
     #include <thread>
+    #include <mutex>
     void callback() { }]],
   [[std::thread t(callback);]])],
 				gdb_cv_cxx_std_thread=yes,
@@ -125,10 +129,16 @@ AC_DEFUN([GDB_AC_COMMON], [
   LIBS="$save_LIBS"
   CXXFLAGS="$save_CXXFLAGS"
 
-  if test "$want_threading" = "yes"; then
+  if test "$want_threading" != "no"; then
     if test "$gdb_cv_cxx_std_thread" = "yes"; then
       AC_DEFINE(CXX_STD_THREAD, 1,
 		[Define to 1 if std::thread works.])
+    else
+	if test "$want_threading" = "yes"; then
+	    AC_MSG_ERROR([std::thread does not work; disable threading])
+	else
+	    AC_MSG_WARN([std::thread does not work; disabling threading])
+	fi
     fi
   fi
   AC_LANG_POP
@@ -226,6 +236,30 @@ AC_DEFUN([GDB_AC_COMMON], [
     BFD_HAVE_SYS_PROCFS_TYPE(psaddr_t)
     BFD_HAVE_SYS_PROCFS_TYPE(elf_fpregset_t)
   fi
+
+  dnl xxhash support
+  # Check for xxhash
+  AC_ARG_WITH(xxhash,
+    AS_HELP_STRING([--with-xxhash], [use libxxhash for hashing (faster) (auto/yes/no)]),
+    [], [with_xxhash=auto])
+
+  if test "x$with_xxhash" != "xno"; then
+    AC_LIB_HAVE_LINKFLAGS([xxhash], [],
+			  [#include <xxhash.h>],
+			  [XXH32("foo", 3, 0);
+			  ])
+    if test "$HAVE_LIBXXHASH" != yes; then
+      if test "$with_xxhash" = yes; then
+	AC_MSG_ERROR([xxhash is missing or unusable])
+      fi
+    fi
+    if test "x$with_xxhash" = "xauto"; then
+      with_xxhash="$HAVE_LIBXXHASH"
+    fi
+  fi
+
+  AC_MSG_CHECKING([whether to use xxhash])
+  AC_MSG_RESULT([$with_xxhash])
 ])
 
 dnl Check that the provided value ($1) is either "yes" or "no".  If not,

@@ -90,6 +90,14 @@ extern enum bfd_endian current_target_byte_order;
 #define WITH_TARGET_WORD_BITSIZE        32 /* compiled only */
 #endif
 
+#ifndef WITH_TARGET_ADDRESS_BITSIZE
+#define WITH_TARGET_ADDRESS_BITSIZE	WITH_TARGET_WORD_BITSIZE
+#endif
+
+#ifndef WITH_TARGET_CELL_BITSIZE
+#define WITH_TARGET_CELL_BITSIZE	WITH_TARGET_WORD_BITSIZE
+#endif
+
 
 /* Program environment:
 

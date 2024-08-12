@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Free Software Foundation, Inc.
+# Copyright 2022-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,11 +13,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if {[skip_cplus_tests]} { continue }
+require allow_cplus_tests
 
 standard_testfile .cc
 
-if [prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}] {
+set opts {}
+lappend opts debug
+lappend opts c++
+lappend opts additional_flags=-std=c++11
+
+if [prepare_for_testing "failed to prepare" $testfile $srcfile $opts] {
     return -1
 }
 
@@ -34,6 +39,6 @@ with_complaints 5 {
     gdb_test $cmd $re "$cmd without complaints"
 }
 
-gdb_test "maint print symbols -source $srcfile" \
+gdb_test "maint print symbols" \
     "typedef void decltype\\(nullptr\\); \r\n.*" \
     "decltype(nullptr) symbol"

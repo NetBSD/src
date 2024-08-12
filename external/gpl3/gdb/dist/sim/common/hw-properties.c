@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2023 Free Software Foundation, Inc.
+   Copyright 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -171,7 +171,7 @@ clean_hw_properties (struct hw *me)
       struct hw_property_data *current = *delete_point;
       switch (current->property->disposition)
 	{
-	case permenant_object:
+	case permanent_object:
 	  /* zap the current value, will be initialized later */
 	  ASSERT (current->init_array != NULL);
 	  if (current->property->array != NULL)
@@ -208,7 +208,7 @@ hw_init_static_properties (SIM_DESC sd,
     {
       ASSERT (property->init_array != NULL);
       ASSERT (property->property->array == NULL);
-      ASSERT (property->property->disposition == permenant_object);
+      ASSERT (property->property->disposition == permanent_object);
       switch (property->property->type)
 	{
 	case array_property:
@@ -247,7 +247,7 @@ hw_init_runtime_properties (SIM_DESC sd,
     {
       switch (property->property->disposition)
 	{
-	case permenant_object:
+	case permanent_object:
 	  switch (property->property->type)
 	    {
 #if 0
@@ -336,7 +336,7 @@ hw_add_array_property (struct hw *me,
 {
   hw_add_property (me, property, array_property,
 		   array, sizeof_array, array, sizeof_array,
-		   NULL, permenant_object);
+		   NULL, permanent_object);
 }
 
 void
@@ -372,7 +372,7 @@ hw_add_boolean_property (struct hw *me,
   hw_add_property (me, property, boolean_property,
 		   &new_boolean, sizeof (new_boolean),
 		   &new_boolean, sizeof (new_boolean),
-		   NULL, permenant_object);
+		   NULL, permanent_object);
 }
 
 int
@@ -403,7 +403,7 @@ hw_add_ihandle_runtime_property (struct hw *me,
   hw_add_property (me, property, ihandle_property,
 		   ihandle->full_path, strlen (ihandle->full_path) + 1,
 		   NULL, 0,
-		   NULL, permenant_object);
+		   NULL, permanent_object);
 }
 #endif
 
@@ -417,7 +417,7 @@ hw_find_ihandle_runtime_property (struct hw *me,
   if (entry == NULL)
     hw_abort (me, "property \"%s\" not found", property);
   if (entry->property->type != ihandle_property
-      || entry->property->disposition != permenant_object)
+      || entry->property->disposition != permanent_object)
     hw_abort (me, "property \"%s\" of wrong type", property);
   ASSERT (entry->init_array != NULL);
   /* the full path */
@@ -476,7 +476,7 @@ hw_add_integer_property (struct hw *me,
   hw_add_property (me, property, integer_property,
 		   &integer, sizeof (integer),
 		   &integer, sizeof (integer),
-		   NULL, permenant_object);
+		   NULL, permanent_object);
 }
 
 signed_cell
@@ -601,7 +601,7 @@ hw_add_range_array_property (struct hw *me,
   hw_add_property (me, property, range_array_property,
 		   cells, sizeof_cells,
 		   cells, sizeof_cells,
-		   NULL, permenant_object);
+		   NULL, permanent_object);
 
   hw_free (me, cells);
 }
@@ -691,7 +691,7 @@ hw_add_reg_array_property (struct hw *me,
   hw_add_property (me, property, reg_array_property,
 		   cells, sizeof_cells,
 		   cells, sizeof_cells,
-		   NULL, permenant_object);
+		   NULL, permanent_object);
 
   hw_free (me, cells);
 }
@@ -746,7 +746,7 @@ hw_add_string_property (struct hw *me,
   hw_add_property (me, property, string_property,
 		   string, strlen (string) + 1,
 		   string, strlen (string) + 1,
-		   NULL, permenant_object);
+		   NULL, permanent_object);
 }
 
 const char *
@@ -799,7 +799,7 @@ hw_add_string_array_property (struct hw *me,
   hw_add_property (me, property, string_array_property,
 		   array, sizeof_array,
 		   array, sizeof_array,
-		   NULL, permenant_object);
+		   NULL, permanent_object);
 }
 
 int
@@ -829,7 +829,7 @@ hw_find_string_array_property (struct hw *me,
       if (node->sizeof_array == 0
 	  || ((char*)node->array)[node->sizeof_array - 1] != '\0')
 	hw_abort (me, "property \"%s\" invalid for string array", property);
-      /* FALL THROUGH */
+      ATTRIBUTE_FALLTHROUGH;
     case string_array_property:
       ASSERT (node->sizeof_array > 0);
       ASSERT (((char*)node->array)[node->sizeof_array - 1] == '\0');
@@ -873,8 +873,8 @@ hw_add_duplicate_property (struct hw *me,
 			   const struct hw_property *original)
 {
   struct hw_property_data *master;
-  if (original->disposition != permenant_object)
-    hw_abort (me, "Can only duplicate permenant objects");
+  if (original->disposition != permanent_object)
+    hw_abort (me, "Can only duplicate permanent objects");
   /* find the original's master */
   master = original->owner->properties_of_hw;
   while (master->property != original)
@@ -887,5 +887,5 @@ hw_add_duplicate_property (struct hw *me,
 		   original->type,
 		   master->init_array, master->sizeof_init_array,
 		   original->array, original->sizeof_array,
-		   original, permenant_object);
+		   original, permanent_object);
 }

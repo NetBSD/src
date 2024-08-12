@@ -1,5 +1,5 @@
 /* BFD back-end for National Semiconductor's CR16 ELF
-   Copyright (C) 2007-2022 Free Software Foundation, Inc.
+   Copyright (C) 2007-2024 Free Software Foundation, Inc.
    Written by M R Swami Reddy.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1718,8 +1718,9 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
      this section does not have relocs, or if this is not a
      code section.  */
   if (bfd_link_relocatable (link_info)
-      || (sec->flags & SEC_RELOC) == 0
       || sec->reloc_count == 0
+      || (sec->flags & SEC_RELOC) == 0
+      || (sec->flags & SEC_HAS_CONTENTS) == 0
       || (sec->flags & SEC_CODE) == 0)
     return true;
 
@@ -2390,15 +2391,16 @@ _bfd_cr16_elf_adjust_dynamic_symbol (struct bfd_link_info * info,
 /* Set the sizes of the dynamic sections.  */
 
 static bool
-_bfd_cr16_elf_size_dynamic_sections (bfd * output_bfd,
-				     struct bfd_link_info * info)
+_bfd_cr16_elf_late_size_sections (bfd * output_bfd,
+				  struct bfd_link_info * info)
 {
   bfd * dynobj;
   asection * s;
   bool relocs;
 
   dynobj = elf_hash_table (info)->dynobj;
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   if (elf_hash_table (info)->dynamic_sections_created)
     {
@@ -2835,8 +2837,8 @@ _bfd_cr16_elf_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSE
 				  _bfd_cr16_elf_create_dynamic_sections
 #define elf_backend_adjust_dynamic_symbol \
 				  _bfd_cr16_elf_adjust_dynamic_symbol
-#define elf_backend_size_dynamic_sections \
-				  _bfd_cr16_elf_size_dynamic_sections
+#define elf_backend_late_size_sections \
+				  _bfd_cr16_elf_late_size_sections
 #define elf_backend_omit_section_dynsym _bfd_elf_omit_section_dynsym_all
 #define elf_backend_finish_dynamic_symbol \
 				   _bfd_cr16_elf_finish_dynamic_symbol

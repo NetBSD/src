@@ -1,5 +1,5 @@
 /* Header file for GDB CLI command implementation library.
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
 #ifndef CLI_CLI_SCRIPT_H
 #define CLI_CLI_SCRIPT_H
 
+#include "compile/compile.h"
 #include "gdbsupport/function-view.h"
 
 struct ui_file;

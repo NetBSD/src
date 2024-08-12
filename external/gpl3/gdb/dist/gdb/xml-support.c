@@ -1,6 +1,6 @@
 /* Helper routines for parsing XML using Expat.
 
-   Copyright (C) 2006-2023 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,12 +17,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "xml-builtin.h"
 #include "xml-support.h"
 #include "gdbsupport/filestuff.h"
-#include "safe-ctype.h"
+#include "gdbsupport/gdb-safe-ctype.h"
 #include <vector>
 #include <string>
 
@@ -785,7 +784,7 @@ xinclude_start_include (struct gdb_xml_parser *parser,
     gdb_xml_error (parser, _("Maximum XInclude depth (%d) exceeded"),
 		   MAX_XINCLUDE_DEPTH);
 
-  gdb::optional<gdb::char_vector> text = data->fetcher (href);
+  std::optional<gdb::char_vector> text = data->fetcher (href);
   if (!text)
     gdb_xml_error (parser, _("Could not load XML document \"%s\""), href);
 
@@ -960,7 +959,7 @@ show_debug_xml (struct ui_file *file, int from_tty,
   gdb_printf (file, _("XML debugging is %s.\n"), value);
 }
 
-gdb::optional<gdb::char_vector>
+std::optional<gdb::char_vector>
 xml_fetch_content_from_file (const char *filename, const char *dirname)
 {
   gdb_file_up file;

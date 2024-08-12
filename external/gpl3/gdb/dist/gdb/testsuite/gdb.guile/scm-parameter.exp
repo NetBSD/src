@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2023 Free Software Foundation, Inc.
+# Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,13 +18,9 @@
 
 load_lib gdb-guile.exp
 
-# Start with a fresh gdb.
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
+require allow_guile_tests
 
-# Skip all tests if Guile scripting is not enabled.
-if { [skip_guile_tests] } { continue }
+clean_restart
 
 gdb_install_guile_utils
 gdb_install_guile_module
@@ -38,8 +34,15 @@ proc scm_param_test_maybe_no_output { command pattern args } {
 }
 
 # We use "." here instead of ":" so that this works on win32 too.
-set escaped_directory [string_to_regexp "$srcdir/$subdir"]
-gdb_test "guile (print (parameter-value \"directories\"))" "$escaped_directory.\\\$cdir.\\\$cwd"
+if { [is_remote host] } {
+    # Proc gdb_reinitialize_dir has no effect for remote host.
+    gdb_test "guile (print (parameter-value \"directories\"))" \
+	"\\\$cdir.\\\$cwd"
+} else {
+    set escaped_directory [string_to_regexp "$srcdir/$subdir"]
+    gdb_test "guile (print (parameter-value \"directories\"))" \
+	"$escaped_directory.\\\$cdir.\\\$cwd"
+}
 
 # Test a simple boolean parameter, and parameter? while we're at it.
 
@@ -105,6 +108,7 @@ foreach_with_prefix param {
     "listsize"
     "print elements"
     "max-completions"
+    "print characters"
 } {
     set param_range_error "integer -1 out of range"
     set param_type_error \
@@ -114,24 +118,19 @@ foreach_with_prefix param {
 	    \\(3\\) \\(3\\)\\)>"
     switch -- $param {
 	"listsize" {
-	    set param_get_one $param_type_error
-	    set param_get_zero $param_type_error
-	    set param_get_minus_one $param_type_error
-	    set param_get_unlimited $param_type_error
+	    set param_get_zero "#:unlimited"
+	    set param_get_minus_one -1
 	    set param_set_minus_one ""
 	}
-	"print elements" {
-	    set param_get_one 1
+	"print elements" -
+	"print characters" {
 	    set param_get_zero "#:unlimited"
 	    set param_get_minus_one "#:unlimited"
-	    set param_get_unlimited "#:unlimited"
 	    set param_set_minus_one $param_range_error
 	}
 	"max-completions" {
-	    set param_get_one 1
 	    set param_get_zero 0
 	    set param_get_minus_one "#:unlimited"
-	    set param_get_unlimited "#:unlimited"
 	    set param_set_minus_one ""
 	}
 	default {
@@ -142,7 +141,7 @@ foreach_with_prefix param {
     gdb_test_no_output "set $param 1" "test set to 1"
 
     gdb_test "guile (print (parameter-value \"$param\"))" \
-	$param_get_one "test value of 1"
+	1 "test value of 1"
 
     gdb_test_no_output "set $param 0" "test set to 0"
 
@@ -158,7 +157,14 @@ foreach_with_prefix param {
     gdb_test_no_output "set $param unlimited" "test set to 'unlimited'"
 
     gdb_test "guile (print (parameter-value \"$param\"))" \
-	$param_get_unlimited "test value of 'unlimited'"
+	"#:unlimited" "test value of 'unlimited'"
+
+    if {$param == "print characters"} {
+	gdb_test_no_output "set $param elements" "test set to 'elements'"
+
+	gdb_test "guile (print (parameter-value \"$param\"))" \
+	    "#:elements" "test value of 'elements'"
+    }
 }
 
 foreach_with_prefix kind {
@@ -190,8 +196,7 @@ foreach_with_prefix kind {
 	     #:unlimited" \
 	    "Error while executing Scheme code\\."]
     set param_minus_one_error "integer -1 out of range"
-    set param_minus_two_range "integer -2 out of range"
-    set param_minus_two_unlimited "only -1 is allowed to set as unlimited"
+    set param_minus_two_error "integer -2 out of range"
     switch -- $kind {
 	PARAM_UINTEGER {
 	    set param_get_zero "#:unlimited"
@@ -200,7 +205,7 @@ foreach_with_prefix kind {
 	    set param_str_unlimited unlimited
 	    set param_set_unlimited ""
 	    set param_set_minus_one $param_minus_one_error
-	    set param_set_minus_two $param_minus_two_range
+	    set param_set_minus_two $param_minus_two_error
 	}
 	PARAM_ZINTEGER {
 	    set param_get_zero 0
@@ -218,7 +223,7 @@ foreach_with_prefix kind {
 	    set param_str_unlimited 2
 	    set param_set_unlimited $param_integer_error
 	    set param_set_minus_one $param_minus_one_error
-	    set param_set_minus_two $param_minus_two_range
+	    set param_set_minus_two $param_minus_two_error
 	}
 	PARAM_ZUINTEGER_UNLIMITED {
 	    set param_get_zero 0
@@ -227,7 +232,7 @@ foreach_with_prefix kind {
 	    set param_str_unlimited unlimited
 	    set param_set_unlimited ""
 	    set param_set_minus_one ""
-	    set param_set_minus_two $param_minus_two_unlimited
+	    set param_set_minus_two $param_minus_two_error
 	}
 	default {
 	    error "invalid kind: $kind"

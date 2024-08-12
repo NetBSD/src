@@ -1,4 +1,4 @@
-# Copyright 2012-2023 Free Software Foundation, Inc.
+# Copyright 2012-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ proc do_test {lang} {
     set options {debug}
 
     if {$lang == "C++"} {
-	if {[skip_cplus_tests]} {
+	if {![allow_cplus_tests]} {
 	    return 0
 	}
 	# Build ".c" source file with g++.

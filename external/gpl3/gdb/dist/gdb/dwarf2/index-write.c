@@ -1,6 +1,6 @@
 /* DWARF index writing support for GDB.
 
-   Copyright (C) 1994-2023 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 
 #include "dwarf2/index-write.h"
 
@@ -30,18 +29,22 @@
 #include "gdbsupport/scoped_fd.h"
 #include "complaints.h"
 #include "dwarf2/index-common.h"
+#include "dwarf2/cooked-index.h"
 #include "dwarf2.h"
 #include "dwarf2/read.h"
 #include "dwarf2/dwz.h"
 #include "gdb/gdb-index.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "objfiles.h"
 #include "ada-lang.h"
 #include "dwarf2/tag.h"
+#include "gdbsupport/gdb_tilde_expand.h"
+#include "dwarf2/read-debug-names.h"
 
 #include <algorithm>
 #include <cmath>
 #include <forward_list>
+#include <map>
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
@@ -137,7 +140,7 @@ public:
   }
 
   /* Return the size of the buffer.  */
-  size_t size () const
+  virtual size_t size () const
   {
     return m_vec.size ();
   }
@@ -187,87 +190,211 @@ struct mapped_symtab
 {
   mapped_symtab ()
   {
-    data.resize (1024);
+    m_data.resize (1024);
   }
 
-  /* Minimize each entry in the symbol table, removing duplicates.  */
+  /* If there are no elements in the symbol table, then reduce the table
+     size to zero.  Otherwise call symtab_index_entry::minimize each entry
+     in the symbol table.  */
+
   void minimize ()
   {
-    for (symtab_index_entry &item : data)
+    if (m_element_count == 0)
+      m_data.resize (0);
+
+    for (symtab_index_entry &item : m_data)
       item.minimize ();
   }
 
-  offset_type n_elements = 0;
-  std::vector<symtab_index_entry> data;
+  /* Add an entry to SYMTAB.  NAME is the name of the symbol.  CU_INDEX is
+     the index of the CU in which the symbol appears.  IS_STATIC is one if
+     the symbol is static, otherwise zero (global).  */
+
+  void add_index_entry (const char *name, int is_static,
+			gdb_index_symbol_kind kind, offset_type cu_index);
+
+  /* When entries are originally added into the data hash the order will
+     vary based on the number of worker threads GDB is configured to use.
+     This function will rebuild the hash such that the final layout will be
+     deterministic regardless of the number of worker threads used.  */
+
+  void sort ();
+
+  /* Access the obstack.  */
+  struct obstack *obstack ()
+  { return &m_string_obstack; }
+
+private:
+
+  /* Find a slot in SYMTAB for the symbol NAME.  Returns a reference to
+     the slot.
+
+     Function is used only during write_hash_table so no index format
+     backward compatibility is needed.  */
+
+  symtab_index_entry &find_slot (const char *name);
+
+  /* Expand SYMTAB's hash table.  */
+
+  void hash_expand ();
+
+  /* Return true if the hash table in data needs to grow.  */
+
+  bool hash_needs_expanding () const
+  { return 4 * m_element_count / 3 >= m_data.size (); }
+
+  /* A vector that is used as a hash table.  */
+  std::vector<symtab_index_entry> m_data;
+
+  /* The number of elements stored in the m_data hash.  */
+  offset_type m_element_count = 0;
 
   /* Temporary storage for names.  */
   auto_obstack m_string_obstack;
+
+public:
+  using iterator = decltype (m_data)::iterator;
+  using const_iterator = decltype (m_data)::const_iterator;
+
+  iterator begin ()
+  { return m_data.begin (); }
+
+  iterator end ()
+  { return m_data.end (); }
+
+  const_iterator cbegin ()
+  { return m_data.cbegin (); }
+
+  const_iterator cend ()
+  { return m_data.cend (); }
 };
 
-/* Find a slot in SYMTAB for the symbol NAME.  Returns a reference to
-   the slot.
+/* See class definition.  */
 
-   Function is used only during write_hash_table so no index format backward
-   compatibility is needed.  */
-
-static symtab_index_entry &
-find_slot (struct mapped_symtab *symtab, const char *name)
+symtab_index_entry &
+mapped_symtab::find_slot (const char *name)
 {
   offset_type index, step, hash = mapped_index_string_hash (INT_MAX, name);
 
-  index = hash & (symtab->data.size () - 1);
-  step = ((hash * 17) & (symtab->data.size () - 1)) | 1;
+  index = hash & (m_data.size () - 1);
+  step = ((hash * 17) & (m_data.size () - 1)) | 1;
 
   for (;;)
     {
-      if (symtab->data[index].name == NULL
-	  || strcmp (name, symtab->data[index].name) == 0)
-	return symtab->data[index];
-      index = (index + step) & (symtab->data.size () - 1);
+      if (m_data[index].name == NULL
+	  || strcmp (name, m_data[index].name) == 0)
+	return m_data[index];
+      index = (index + step) & (m_data.size () - 1);
     }
 }
 
-/* Expand SYMTAB's hash table.  */
+/* See class definition.  */
 
-static void
-hash_expand (struct mapped_symtab *symtab)
+void
+mapped_symtab::hash_expand ()
 {
-  auto old_entries = std::move (symtab->data);
+  auto old_entries = std::move (m_data);
 
-  symtab->data.clear ();
-  symtab->data.resize (old_entries.size () * 2);
+  gdb_assert (m_data.size () == 0);
+  m_data.resize (old_entries.size () * 2);
 
   for (auto &it : old_entries)
     if (it.name != NULL)
       {
-	auto &ref = find_slot (symtab, it.name);
+	auto &ref = this->find_slot (it.name);
 	ref = std::move (it);
       }
 }
 
-/* Add an entry to SYMTAB.  NAME is the name of the symbol.
-   CU_INDEX is the index of the CU in which the symbol appears.
-   IS_STATIC is one if the symbol is static, otherwise zero (global).  */
+/* See mapped_symtab class declaration.  */
 
-static void
-add_index_entry (struct mapped_symtab *symtab, const char *name,
-		 int is_static, gdb_index_symbol_kind kind,
-		 offset_type cu_index)
+void mapped_symtab::sort ()
 {
-  offset_type cu_index_and_attrs;
+  /* Move contents out of this->data vector.  */
+  std::vector<symtab_index_entry> original_data = std::move (m_data);
 
-  ++symtab->n_elements;
-  if (4 * symtab->n_elements / 3 >= symtab->data.size ())
-    hash_expand (symtab);
+  /* Restore the size of m_data, this will avoid having to expand the hash
+     table (and rehash all elements) when we reinsert after sorting.
+     However, we do reset the element count, this allows for some sanity
+     checking asserts during the reinsert phase.  */
+  gdb_assert (m_data.size () == 0);
+  m_data.resize (original_data.size ());
+  m_element_count = 0;
 
-  symtab_index_entry &slot = find_slot (symtab, name);
-  if (slot.name == NULL)
+  /* Remove empty entries from ORIGINAL_DATA, this makes sorting quicker.  */
+  auto it = std::remove_if (original_data.begin (), original_data.end (),
+			    [] (const symtab_index_entry &entry) -> bool
+			    {
+			      return entry.name == nullptr;
+			    });
+  original_data.erase (it, original_data.end ());
+
+  /* Sort the existing contents.  */
+  std::sort (original_data.begin (), original_data.end (),
+	     [] (const symtab_index_entry &a,
+		 const symtab_index_entry &b) -> bool
+	     {
+	       /* Return true if A is before B.  */
+	       gdb_assert (a.name != nullptr);
+	       gdb_assert (b.name != nullptr);
+
+	       return strcmp (a.name, b.name) < 0;
+	     });
+
+  /* Re-insert each item from the sorted list.  */
+  for (auto &entry : original_data)
     {
-      slot.name = name;
+      /* We know that ORIGINAL_DATA contains no duplicates, this data was
+	 taken from a hash table that de-duplicated entries for us, so
+	 count this as a new item.
+
+	 As we retained the original size of m_data (see above) then we
+	 should never need to grow m_data_ during this re-insertion phase,
+	 assert that now.  */
+      ++m_element_count;
+      gdb_assert (!this->hash_needs_expanding ());
+
+      /* Lookup a slot.  */
+      symtab_index_entry &slot = this->find_slot (entry.name);
+
+      /* As discussed above, we should not find duplicates.  */
+      gdb_assert (slot.name == nullptr);
+
+      /* Move this item into the slot we found.  */
+      slot = std::move (entry);
+    }
+}
+
+/* See class definition.  */
+
+void
+mapped_symtab::add_index_entry (const char *name, int is_static,
+				gdb_index_symbol_kind kind,
+				offset_type cu_index)
+{
+  symtab_index_entry *slot = &this->find_slot (name);
+  if (slot->name == NULL)
+    {
+      /* This is a new element in the hash table.  */
+      ++this->m_element_count;
+
+      /* We might need to grow the hash table.  */
+      if (this->hash_needs_expanding ())
+	{
+	  this->hash_expand ();
+
+	  /* This element will have a different slot in the new table.  */
+	  slot = &this->find_slot (name);
+
+	  /* But it should still be a new element in the hash table.  */
+	  gdb_assert (slot->name == nullptr);
+	}
+
+      slot->name = name;
       /* index_offset is set later.  */
     }
 
-  cu_index_and_attrs = 0;
+  offset_type cu_index_and_attrs = 0;
   DW2_GDB_INDEX_CU_SET_VALUE (cu_index_and_attrs, cu_index);
   DW2_GDB_INDEX_SYMBOL_STATIC_SET_VALUE (cu_index_and_attrs, is_static);
   DW2_GDB_INDEX_SYMBOL_KIND_SET_VALUE (cu_index_and_attrs, kind);
@@ -279,7 +406,7 @@ add_index_entry (struct mapped_symtab *symtab, const char *name,
      the last entry pushed), but a symbol could have multiple kinds in one CU.
      To keep things simple we don't worry about the duplication here and
      sort and uniquify the list after we've processed all symbols.  */
-  slot.cu_indices.push_back (cu_index_and_attrs);
+  slot->cu_indices.push_back (cu_index_and_attrs);
 }
 
 /* See symtab_index_entry.  */
@@ -294,7 +421,7 @@ symtab_index_entry::minimize ()
   auto from = std::unique (cu_indices.begin (), cu_indices.end ());
   cu_indices.erase (from, cu_indices.end ());
 
-  /* We don't want to enter a variable or type more than once, so
+  /* We don't want to enter a type more than once, so
      remove any such duplicates from the list as well.  When doing
      this, we want to keep the entry from the first CU -- but this is
      implicit due to the sort.  This choice is done because it's
@@ -304,8 +431,7 @@ symtab_index_entry::minimize ()
 			 [&] (offset_type val)
     {
       gdb_index_symbol_kind kind = GDB_INDEX_SYMBOL_KIND_VALUE (val);
-      if (kind != GDB_INDEX_SYMBOL_KIND_TYPE
-	  && kind != GDB_INDEX_SYMBOL_KIND_VARIABLE)
+      if (kind != GDB_INDEX_SYMBOL_KIND_TYPE)
 	return false;
 
       val &= ~GDB_INDEX_CU_MASK;
@@ -327,6 +453,11 @@ public:
   bool operator== (const c_str_view &other) const
   {
     return strcmp (m_cstr, other.m_cstr) == 0;
+  }
+
+  bool operator< (const c_str_view &other) const
+  {
+    return strcmp (m_cstr, other.m_cstr) < 0;
   }
 
   /* Return the underlying C string.  Note, the returned string is
@@ -379,36 +510,29 @@ write_hash_table (mapped_symtab *symtab, data_buf &output, data_buf &cpool)
 
     /* We add all the index vectors to the constant pool first, to
        ensure alignment is ok.  */
-    for (symtab_index_entry &entry : symtab->data)
+    for (symtab_index_entry &entry : *symtab)
       {
 	if (entry.name == NULL)
 	  continue;
 	gdb_assert (entry.index_offset == 0);
 
-	/* Finding before inserting is faster than always trying to
-	   insert, because inserting always allocates a node, does the
-	   lookup, and then destroys the new node if another node
-	   already had the same key.  C++17 try_emplace will avoid
-	   this.  */
-	const auto found
-	  = symbol_hash_table.find (entry.cu_indices);
-	if (found != symbol_hash_table.end ())
+	auto [iter, inserted]
+	  = symbol_hash_table.try_emplace (entry.cu_indices,
+					   cpool.size ());
+	entry.index_offset = iter->second;
+	if (inserted)
 	  {
-	    entry.index_offset = found->second;
-	    continue;
+	    /* Newly inserted.  */
+	    cpool.append_offset (entry.cu_indices.size ());
+	    for (const auto index : entry.cu_indices)
+	      cpool.append_offset (index);
 	  }
-
-	symbol_hash_table.emplace (entry.cu_indices, cpool.size ());
-	entry.index_offset = cpool.size ();
-	cpool.append_offset (entry.cu_indices.size ());
-	for (const auto index : entry.cu_indices)
-	  cpool.append_offset (index);
       }
   }
 
   /* Now write out the hash table.  */
   std::unordered_map<c_str_view, offset_type, c_str_view_hasher> str_table;
-  for (const auto &entry : symtab->data)
+  for (const auto &entry : *symtab)
     {
       offset_type str_off, vec_off;
 
@@ -433,7 +557,8 @@ write_hash_table (mapped_symtab *symtab, data_buf &output, data_buf &cpool)
     }
 }
 
-typedef std::unordered_map<dwarf2_per_cu_data *, unsigned int> cu_index_map;
+using cu_index_map
+  = std::unordered_map<const dwarf2_per_cu_data *, unsigned int>;
 
 /* Helper struct for building the address table.  */
 struct addrmap_index_data
@@ -446,7 +571,7 @@ struct addrmap_index_data
   data_buf &addr_vec;
   cu_index_map &cu_index_htab;
 
-  int operator() (CORE_ADDR start_addr, void *obj);
+  int operator() (CORE_ADDR start_addr, const void *obj);
 
   /* True if the previous_* fields are valid.
      We can't write an entry until we see the next entry (since it is only then
@@ -472,9 +597,10 @@ add_address_entry (data_buf &addr_vec,
 /* Worker function for traversing an addrmap to build the address table.  */
 
 int
-addrmap_index_data::operator() (CORE_ADDR start_addr, void *obj)
+addrmap_index_data::operator() (CORE_ADDR start_addr, const void *obj)
 {
-  dwarf2_per_cu_data *per_cu = (dwarf2_per_cu_data *) obj;
+  const dwarf2_per_cu_data *per_cu
+    = static_cast<const dwarf2_per_cu_data *> (obj);
 
   if (previous_valid)
     add_address_entry (addr_vec,
@@ -500,7 +626,7 @@ addrmap_index_data::operator() (CORE_ADDR start_addr, void *obj)
    in the index file.  */
 
 static void
-write_address_map (struct addrmap *addrmap, data_buf &addr_vec,
+write_address_map (const addrmap *addrmap, data_buf &addr_vec,
 		   cu_index_map &cu_index_htab)
 {
   struct addrmap_index_data addrmap_index_data (addr_vec, cu_index_htab);
@@ -522,7 +648,7 @@ write_address_map (struct addrmap *addrmap, data_buf &addr_vec,
 class debug_names
 {
 public:
-  debug_names (dwarf2_per_objfile *per_objfile, bool is_dwarf64,
+  debug_names (dwarf2_per_bfd *per_bfd, bool is_dwarf64,
 	       bfd_endian dwarf5_byte_order)
     : m_dwarf5_byte_order (dwarf5_byte_order),
       m_dwarf32 (dwarf5_byte_order),
@@ -532,7 +658,7 @@ public:
 	       : static_cast<dwarf &> (m_dwarf32)),
       m_name_table_string_offs (m_dwarf.name_table_string_offs),
       m_name_table_entry_offs (m_dwarf.name_table_entry_offs),
-      m_debugstrlookup (per_objfile)
+      m_debugstrlookup (per_bfd)
   {}
 
   int dwarf5_offset_size () const
@@ -547,66 +673,15 @@ public:
   /* Insert one symbol.  */
   void insert (const cooked_index_entry *entry)
   {
-    const auto it = m_cu_index_htab.find (entry->per_cu);
-    gdb_assert (it != m_cu_index_htab.cend ());
-    const char *name = entry->full_name (&m_string_obstack);
-
-    /* This is incorrect but it mirrors gdb's historical behavior; and
-       because the current .debug_names generation is also incorrect,
-       it seems better to follow what was done before, rather than
-       introduce a mismatch between the newer and older gdb.  */
-    dwarf_tag tag = entry->tag;
-    if (tag != DW_TAG_typedef && tag_is_type (tag))
-      tag = DW_TAG_structure_type;
-    else if (tag == DW_TAG_enumerator || tag == DW_TAG_constant)
-      tag = DW_TAG_variable;
-
-    int cu_index = it->second;
-    bool is_static = (entry->flags & IS_STATIC) != 0;
-    unit_kind kind = (entry->per_cu->is_debug_types
-		      ? unit_kind::tu
-		      : unit_kind::cu);
-
-    if (entry->per_cu->lang () == language_ada)
-      {
-	/* We want to ensure that the Ada main function's name appears
-	   verbatim in the index.  However, this name will be of the
-	   form "_ada_mumble", and will be rewritten by ada_decode.
-	   So, recognize it specially here and add it to the index by
-	   hand.  */
-	if (strcmp (main_name (), name) == 0)
-	  {
-	    const auto insertpair
-	      = m_name_to_value_set.emplace (c_str_view (name),
-					     std::set<symbol_value> ());
-	    std::set<symbol_value> &value_set = insertpair.first->second;
-	    value_set.emplace (symbol_value (tag, cu_index, is_static, kind));
-	  }
-
-	/* In order for the index to work when read back into gdb, it
-	   has to supply a funny form of the name: it should be the
-	   encoded name, with any suffixes stripped.  Using the
-	   ordinary encoded name will not work properly with the
-	   searching logic in find_name_components_bounds; nor will
-	   using the decoded name.  Furthermore, an Ada "verbatim"
-	   name (of the form "<MumBle>") must be entered without the
-	   angle brackets.  Note that the current index is unusual,
-	   see PR symtab/24820 for details.  */
-	std::string decoded = ada_decode (name);
-	if (decoded[0] == '<')
-	  name = (char *) obstack_copy0 (&m_string_obstack,
-					 decoded.c_str () + 1,
-					 decoded.length () - 2);
-	else
-	  name = obstack_strdup (&m_string_obstack,
-				 ada_encode (decoded.c_str ()));
-      }
+    /* These entries are synthesized by the reader, and so should not
+       be written.  */
+    if (entry->lang == language_ada && entry->tag == DW_TAG_namespace)
+      return;
 
     const auto insertpair
-      = m_name_to_value_set.emplace (c_str_view (name),
-				     std::set<symbol_value> ());
-    std::set<symbol_value> &value_set = insertpair.first->second;
-    value_set.emplace (symbol_value (tag, cu_index, is_static, kind));
+      = m_name_to_value_set.try_emplace (c_str_view (entry->name));
+    entry_list &elist = insertpair.first->second;
+    elist.entries.push_back (entry);
   }
 
   /* Build all the tables.  All symbols must be already inserted.
@@ -617,106 +692,131 @@ public:
     /* Verify the build method has not be called twice.  */
     gdb_assert (m_abbrev_table.empty ());
     const size_t name_count = m_name_to_value_set.size ();
-    m_bucket_table.resize
-      (std::pow (2, std::ceil (std::log2 (name_count * 4 / 3))));
-    m_hash_table.reserve (name_count);
     m_name_table_string_offs.reserve (name_count);
     m_name_table_entry_offs.reserve (name_count);
 
-    /* Map each hash of symbol to its name and value.  */
-    struct hash_it_pair
-    {
-      uint32_t hash;
-      decltype (m_name_to_value_set)::const_iterator it;
-    };
-    std::vector<std::forward_list<hash_it_pair>> bucket_hash;
-    bucket_hash.resize (m_bucket_table.size ());
-    for (decltype (m_name_to_value_set)::const_iterator it
-	   = m_name_to_value_set.cbegin ();
-	 it != m_name_to_value_set.cend ();
-	 ++it)
-      {
-	const char *const name = it->first.c_str ();
-	const uint32_t hash = dwarf5_djb_hash (name);
-	hash_it_pair hashitpair;
-	hashitpair.hash = hash;
-	hashitpair.it = it;
-	auto &slot = bucket_hash[hash % bucket_hash.size()];
-	slot.push_front (std::move (hashitpair));
-      }
-    for (size_t bucket_ix = 0; bucket_ix < bucket_hash.size (); ++bucket_ix)
-      {
-	const std::forward_list<hash_it_pair> &hashitlist
-	  = bucket_hash[bucket_ix];
-	if (hashitlist.empty ())
-	  continue;
-	uint32_t &bucket_slot = m_bucket_table[bucket_ix];
-	/* The hashes array is indexed starting at 1.  */
-	store_unsigned_integer (reinterpret_cast<gdb_byte *> (&bucket_slot),
-				sizeof (bucket_slot), m_dwarf5_byte_order,
-				m_hash_table.size () + 1);
-	for (const hash_it_pair &hashitpair : hashitlist)
-	  {
-	    m_hash_table.push_back (0);
-	    store_unsigned_integer (reinterpret_cast<gdb_byte *>
-							(&m_hash_table.back ()),
-				    sizeof (m_hash_table.back ()),
-				    m_dwarf5_byte_order, hashitpair.hash);
-	    const c_str_view &name = hashitpair.it->first;
-	    const std::set<symbol_value> &value_set = hashitpair.it->second;
-	    m_name_table_string_offs.push_back_reorder
-	      (m_debugstrlookup.lookup (name.c_str ()));
-	    m_name_table_entry_offs.push_back_reorder (m_entry_pool.size ());
-	    gdb_assert (!value_set.empty ());
-	    for (const symbol_value &value : value_set)
-	      {
-		int &idx = m_indexkey_to_idx[index_key (value.dwarf_tag,
-							value.is_static,
-							value.kind)];
-		if (idx == 0)
-		  {
-		    idx = m_idx_next++;
-		    m_abbrev_table.append_unsigned_leb128 (idx);
-		    m_abbrev_table.append_unsigned_leb128 (value.dwarf_tag);
-		    m_abbrev_table.append_unsigned_leb128
-			      (value.kind == unit_kind::cu ? DW_IDX_compile_unit
-							   : DW_IDX_type_unit);
-		    m_abbrev_table.append_unsigned_leb128 (DW_FORM_udata);
-		    m_abbrev_table.append_unsigned_leb128 (value.is_static
-							   ? DW_IDX_GNU_internal
-							   : DW_IDX_GNU_external);
-		    m_abbrev_table.append_unsigned_leb128 (DW_FORM_flag_present);
+    /* The name table is indexed from 1.  The numbers are needed here
+       so that parent entries can be handled correctly.  */
+    int next_name = 1;
+    for (auto &item : m_name_to_value_set)
+      item.second.index = next_name++;
 
-		    /* Terminate attributes list.  */
-		    m_abbrev_table.append_unsigned_leb128 (0);
-		    m_abbrev_table.append_unsigned_leb128 (0);
+    /* The next available abbrev number.  */
+    int next_abbrev = 1;
+
+    for (auto &item : m_name_to_value_set)
+      {
+	const c_str_view &name = item.first;
+	entry_list &these_entries = item.second;
+
+	/* Sort the items within each bucket.  This ensures that the
+	   generated index files will be the same no matter the order in
+	   which symbols were added into the index.  */
+	std::sort (these_entries.entries.begin (),
+		   these_entries.entries.end (),
+		   [] (const cooked_index_entry *a,
+		       const cooked_index_entry *b)
+		   {
+		     /* Sort first by CU.  */
+		     if (a->per_cu->index != b->per_cu->index)
+		       return a->per_cu->index < b->per_cu->index;
+		     /* Then by DIE in the CU.  */
+		     if (a->die_offset != b->die_offset)
+		       return a->die_offset < b->die_offset;
+		     /* We might have two entries for a DIE because
+			the linkage name is entered separately.  So,
+			sort by flags.  */
+		     return a->flags < b->flags;
+		   });
+
+	m_name_table_string_offs.push_back_reorder
+	  (m_debugstrlookup.lookup (name.c_str ())); /* ??? */
+	m_name_table_entry_offs.push_back_reorder (m_entry_pool.size ());
+
+	for (const cooked_index_entry *entry : these_entries.entries)
+	  {
+	    unit_kind kind = (entry->per_cu->is_debug_types
+			      ? unit_kind::tu
+			      : unit_kind::cu);
+	    /* Currently Ada parentage is synthesized by the
+	       reader and so must be ignored here.  */
+	    const cooked_index_entry *parent = (entry->lang == language_ada
+						? nullptr
+						: entry->get_parent ());
+
+	    int &idx = m_indexkey_to_idx[index_key (entry->tag,
+						    kind,
+						    entry->flags,
+						    entry->lang,
+						    parent != nullptr)];
+	    if (idx == 0)
+	      {
+		idx = next_abbrev++;
+		m_abbrev_table.append_unsigned_leb128 (idx);
+		m_abbrev_table.append_unsigned_leb128 (entry->tag);
+		m_abbrev_table.append_unsigned_leb128
+		  (kind == unit_kind::cu
+		   ? DW_IDX_compile_unit
+		   : DW_IDX_type_unit);
+		m_abbrev_table.append_unsigned_leb128 (DW_FORM_udata);
+		m_abbrev_table.append_unsigned_leb128 (DW_IDX_die_offset);
+		m_abbrev_table.append_unsigned_leb128 (DW_FORM_ref_addr);
+		m_abbrev_table.append_unsigned_leb128 (DW_IDX_GNU_language);
+		m_abbrev_table.append_unsigned_leb128 (DW_FORM_udata);
+		if ((entry->flags & IS_STATIC) != 0)
+		  {
+		    m_abbrev_table.append_unsigned_leb128 (DW_IDX_GNU_internal);
+		    m_abbrev_table.append_unsigned_leb128 (DW_FORM_flag_present);
+		  }
+		if ((entry->flags & IS_MAIN) != 0)
+		  {
+		    m_abbrev_table.append_unsigned_leb128 (DW_IDX_GNU_main);
+		    m_abbrev_table.append_unsigned_leb128 (DW_FORM_flag_present);
+		  }
+		if ((entry->flags & IS_LINKAGE) != 0)
+		  {
+		    m_abbrev_table.append_unsigned_leb128 (DW_IDX_GNU_linkage_name);
+		    m_abbrev_table.append_unsigned_leb128 (DW_FORM_flag_present);
+		  }
+		if (parent != nullptr)
+		  {
+		    m_abbrev_table.append_unsigned_leb128 (DW_IDX_parent);
+		    m_abbrev_table.append_unsigned_leb128 (DW_FORM_udata);
 		  }
 
-		m_entry_pool.append_unsigned_leb128 (idx);
-		m_entry_pool.append_unsigned_leb128 (value.cu_index);
+		/* Terminate attributes list.  */
+		m_abbrev_table.append_unsigned_leb128 (0);
+		m_abbrev_table.append_unsigned_leb128 (0);
 	      }
 
-	    /* Terminate the list of CUs.  */
-	    m_entry_pool.append_unsigned_leb128 (0);
+	    m_entry_pool.append_unsigned_leb128 (idx);
+
+	    const auto it = m_cu_index_htab.find (entry->per_cu);
+	    gdb_assert (it != m_cu_index_htab.cend ());
+	    m_entry_pool.append_unsigned_leb128 (it->second);
+
+	    m_entry_pool.append_uint (dwarf5_offset_size (),
+				      m_dwarf5_byte_order,
+				      to_underlying (entry->die_offset));
+
+	    m_entry_pool.append_unsigned_leb128 (entry->per_cu->dw_lang ());
+
+	    if (parent != nullptr)
+	      {
+		c_str_view par_name (parent->name);
+		auto name_iter = m_name_to_value_set.find (par_name);
+		gdb_assert (name_iter != m_name_to_value_set.end ());
+		gdb_assert (name_iter->second.index != 0);
+		m_entry_pool.append_unsigned_leb128 (name_iter->second.index);
+	      }
 	  }
+
+	/* Terminate the list of entries.  */
+	m_entry_pool.append_unsigned_leb128 (0);
       }
-    gdb_assert (m_hash_table.size () == name_count);
 
     /* Terminate tags list.  */
     m_abbrev_table.append_unsigned_leb128 (0);
-  }
-
-  /* Return .debug_names bucket count.  This must be called only after
-     calling the build method.  */
-  uint32_t bucket_count () const
-  {
-    /* Verify the build method has been already called.  */
-    gdb_assert (!m_abbrev_table.empty ());
-    const uint32_t retval = m_bucket_table.size ();
-
-    /* Check for overflow.  */
-    gdb_assert (retval == m_bucket_table.size ());
-    return retval;
   }
 
   /* Return .debug_names names count.  This must be called only after
@@ -725,11 +825,7 @@ public:
   {
     /* Verify the build method has been already called.  */
     gdb_assert (!m_abbrev_table.empty ());
-    const uint32_t retval = m_hash_table.size ();
-
-    /* Check for overflow.  */
-    gdb_assert (retval == m_hash_table.size ());
-    return retval;
+    return m_name_to_value_set.size ();
   }
 
   /* Return number of bytes of .debug_names abbreviation table.  This
@@ -747,8 +843,6 @@ public:
     /* Verify the build method has been already called.  */
     gdb_assert (!m_abbrev_table.empty ());
     size_t expected_bytes = 0;
-    expected_bytes += m_bucket_table.size () * sizeof (m_bucket_table[0]);
-    expected_bytes += m_hash_table.size () * sizeof (m_hash_table[0]);
     expected_bytes += m_name_table_string_offs.bytes ();
     expected_bytes += m_name_table_entry_offs.bytes ();
     expected_bytes += m_abbrev_table.size ();
@@ -763,8 +857,6 @@ public:
   {
     /* Verify the build method has been already called.  */
     gdb_assert (!m_abbrev_table.empty ());
-    ::file_write (file_names, m_bucket_table);
-    ::file_write (file_names, m_hash_table);
     m_name_table_string_offs.file_write (file_names);
     m_name_table_entry_offs.file_write (file_names);
     m_abbrev_table.file_write (file_names);
@@ -785,29 +877,11 @@ private:
   {
   public:
 
-    /* Object constructor to be called for current DWARF2_PER_OBJFILE.
-       All .debug_str section strings are automatically stored.  */
-    debug_str_lookup (dwarf2_per_objfile *per_objfile)
-      : m_abfd (per_objfile->objfile->obfd.get ()),
-	m_per_objfile (per_objfile)
+    /* Object constructor to be called for current DWARF2_PER_BFD.  */
+    debug_str_lookup (dwarf2_per_bfd *per_bfd)
+      : m_abfd (per_bfd->obfd),
+	m_per_bfd (per_bfd)
     {
-      per_objfile->per_bfd->str.read (per_objfile->objfile);
-      if (per_objfile->per_bfd->str.buffer == NULL)
-	return;
-      for (const gdb_byte *data = per_objfile->per_bfd->str.buffer;
-	   data < (per_objfile->per_bfd->str.buffer
-		   + per_objfile->per_bfd->str.size);)
-	{
-	  const char *const s = reinterpret_cast<const char *> (data);
-	  const auto insertpair
-	    = m_str_table.emplace (c_str_view (s),
-				   data - per_objfile->per_bfd->str.buffer);
-	  if (!insertpair.second)
-	    complaint (_("Duplicate string \"%s\" in "
-			 ".debug_str section [in module %s]"),
-		       s, bfd_get_filename (m_abfd));
-	  data += strlen (s) + 1;
-	}
     }
 
     /* Return offset of symbol name S in the .debug_str section.  Add
@@ -815,10 +889,17 @@ private:
        yet.  */
     size_t lookup (const char *s)
     {
+      /* Most strings will have come from the string table
+	 already.  */
+      const gdb_byte *b = (const gdb_byte *) s;
+      if (b >= m_per_bfd->str.buffer
+	  && b < m_per_bfd->str.buffer + m_per_bfd->str.size)
+	return b - m_per_bfd->str.buffer;
+
       const auto it = m_str_table.find (c_str_view (s));
       if (it != m_str_table.end ())
 	return it->second;
-      const size_t offset = (m_per_objfile->per_bfd->str.size
+      const size_t offset = (m_per_bfd->str.size
 			     + m_str_add_buf.size ());
       m_str_table.emplace (c_str_view (s), offset);
       m_str_add_buf.append_cstr0 (s);
@@ -834,7 +915,7 @@ private:
   private:
     std::unordered_map<c_str_view, size_t, c_str_view_hasher> m_str_table;
     bfd *const m_abfd;
-    dwarf2_per_objfile *m_per_objfile;
+    dwarf2_per_bfd *m_per_bfd;
 
     /* Data to add at the end of .debug_str for new needed symbol names.  */
     data_buf m_str_add_buf;
@@ -845,66 +926,41 @@ private:
   class index_key
   {
   public:
-    index_key (int dwarf_tag_, bool is_static_, unit_kind kind_)
-      : dwarf_tag (dwarf_tag_), is_static (is_static_), kind (kind_)
+    index_key (dwarf_tag tag_, unit_kind kind_, cooked_index_flag flags_,
+	       enum language lang_, bool has_parent_)
+      : tag (tag_),
+	kind (kind_),
+	flags (flags_ & ~IS_TYPE_DECLARATION),
+	lang (lang_),
+	has_parent (has_parent_)
     {
     }
 
-    bool
-    operator== (const index_key &other) const
+    bool operator== (const index_key &other) const
     {
-      return (dwarf_tag == other.dwarf_tag && is_static == other.is_static
-	      && kind == other.kind);
+      return (tag == other.tag
+	      && kind == other.kind
+	      && flags == other.flags
+	      && lang == other.lang
+	      && has_parent == other.has_parent);
     }
 
-    const int dwarf_tag;
-    const bool is_static;
+    const dwarf_tag tag;
     const unit_kind kind;
+    const cooked_index_flag flags;
+    const enum language lang;
+    const bool has_parent;
   };
 
   /* Provide std::unordered_map::hasher for index_key.  */
   class index_key_hasher
   {
   public:
-    size_t
-    operator () (const index_key &key) const
+    size_t operator () (const index_key &key) const
     {
-      return (std::hash<int>() (key.dwarf_tag) << 1) | key.is_static;
-    }
-  };
-
-  /* Parameters of one symbol entry.  */
-  class symbol_value
-  {
-  public:
-    const int dwarf_tag, cu_index;
-    const bool is_static;
-    const unit_kind kind;
-
-    symbol_value (int dwarf_tag_, int cu_index_, bool is_static_,
-		  unit_kind kind_)
-      : dwarf_tag (dwarf_tag_), cu_index (cu_index_), is_static (is_static_),
-	kind (kind_)
-    {}
-
-    bool
-    operator< (const symbol_value &other) const
-    {
-#define X(n) \
-  do \
-    { \
-      if (n < other.n) \
-	return true; \
-      if (n > other.n) \
-	return false; \
-    } \
-  while (0)
-      X (dwarf_tag);
-      X (is_static);
-      X (kind);
-      X (cu_index);
-#undef X
-      return false;
+      return (std::hash<int>() (key.tag)
+	      ^ std::hash<int>() (key.flags)
+	      ^ std::hash<int>() (key.lang));
     }
   };
 
@@ -1006,14 +1062,15 @@ private:
     offset_vec_tmpl<OffsetSize> m_name_table_entry_offs;
   };
 
-  /* Store value of each symbol.  */
-  std::unordered_map<c_str_view, std::set<symbol_value>, c_str_view_hasher>
-    m_name_to_value_set;
+  struct entry_list
+  {
+    unsigned index = 0;
+    std::vector<const cooked_index_entry *> entries;
+  };
 
-  /* Tables of DWARF-5 .debug_names.  They are in object file byte
-     order.  */
-  std::vector<uint32_t> m_bucket_table;
-  std::vector<uint32_t> m_hash_table;
+  /* Store value of each symbol.  Note that we rely on the sorting
+     behavior of map to make the output stable.  */
+  std::map<c_str_view, entry_list> m_name_to_value_set;
 
   const bfd_endian m_dwarf5_byte_order;
   dwarf_tmpl<uint32_t> m_dwarf32;
@@ -1025,10 +1082,6 @@ private:
   /* Map each used .debug_names abbreviation tag parameter to its
      index value.  */
   std::unordered_map<index_key, int, index_key_hasher> m_indexkey_to_idx;
-
-  /* Next unused .debug_names abbreviation tag for
-     m_indexkey_to_idx.  */
-  int m_idx_next = 1;
 
   /* .debug_names abbreviation table.  */
   data_buf m_abbrev_table;
@@ -1046,9 +1099,9 @@ private:
    .debug_names section.  */
 
 static bool
-check_dwarf64_offsets (dwarf2_per_objfile *per_objfile)
+check_dwarf64_offsets (dwarf2_per_bfd *per_bfd)
 {
-  for (const auto &per_cu : per_objfile->per_bfd->all_units)
+  for (const auto &per_cu : per_bfd->all_units)
     {
       if (to_underlying (per_cu->sect_off)
 	  >= (static_cast<uint64_t> (1) << 32))
@@ -1078,14 +1131,15 @@ write_gdbindex_1 (FILE *out_file,
 		  const data_buf &types_cu_list,
 		  const data_buf &addr_vec,
 		  const data_buf &symtab_vec,
-		  const data_buf &constant_pool)
+		  const data_buf &constant_pool,
+		  const data_buf &shortcuts)
 {
   data_buf contents;
-  const offset_type size_of_header = 6 * sizeof (offset_type);
-  offset_type total_len = size_of_header;
+  const offset_type size_of_header = 7 * sizeof (offset_type);
+  uint64_t total_len = size_of_header;
 
   /* The version number.  */
-  contents.append_offset (8);
+  contents.append_offset (9);
 
   /* The offset of the CU list from the start of the file.  */
   contents.append_offset (total_len);
@@ -1103,17 +1157,32 @@ write_gdbindex_1 (FILE *out_file,
   contents.append_offset (total_len);
   total_len += symtab_vec.size ();
 
+  /* The offset of the shortcut table from the start of the file.  */
+  contents.append_offset (total_len);
+  total_len += shortcuts.size ();
+
   /* The offset of the constant pool from the start of the file.  */
   contents.append_offset (total_len);
   total_len += constant_pool.size ();
 
   gdb_assert (contents.size () == size_of_header);
 
+  /* The maximum size of an index file is limited by the maximum value
+     capable of being represented by 'offset_type'.  Throw an error if
+     that length has been exceeded.  */
+  size_t max_size = ~(offset_type) 0;
+  if (total_len > max_size)
+    error (_("gdb-index maximum file size of %zu exceeded"), max_size);
+
+  if (out_file == nullptr)
+    return;
+
   contents.file_write (out_file);
   cu_list.file_write (out_file);
   types_cu_list.file_write (out_file);
   addr_vec.file_write (out_file);
   symtab_vec.file_write (out_file);
+  shortcuts.file_write (out_file);
   constant_pool.file_write (out_file);
 
   assert_file_size (out_file, total_len);
@@ -1122,42 +1191,26 @@ write_gdbindex_1 (FILE *out_file,
 /* Write the contents of the internal "cooked" index.  */
 
 static void
-write_cooked_index (cooked_index_vector *table,
+write_cooked_index (cooked_index *table,
 		    const cu_index_map &cu_index_htab,
 		    struct mapped_symtab *symtab)
 {
-  const char *main_for_ada = main_name ();
-
   for (const cooked_index_entry *entry : table->all_entries ())
     {
       const auto it = cu_index_htab.find (entry->per_cu);
       gdb_assert (it != cu_index_htab.cend ());
 
-      const char *name = entry->full_name (&symtab->m_string_obstack);
+      const char *name = entry->full_name (symtab->obstack ());
 
-      if (entry->per_cu->lang () == language_ada)
+      if (entry->lang == language_ada)
 	{
-	  /* We want to ensure that the Ada main function's name
-	     appears verbatim in the index.  However, this name will
-	     be of the form "_ada_mumble", and will be rewritten by
-	     ada_decode.  So, recognize it specially here and add it
-	     to the index by hand.  */
-	  if (entry->tag == DW_TAG_subprogram
-	      && strcmp (main_for_ada, name) == 0)
-	    {
-	      /* Leave it alone.  */
-	    }
-	  else
-	    {
-	      /* In order for the index to work when read back into
-		 gdb, it has to use the encoded name, with any
-		 suffixes stripped.  */
-	      std::string encoded = ada_encode (name, false);
-	      name = obstack_strdup (&symtab->m_string_obstack,
-				     encoded.c_str ());
-	    }
+	  /* In order for the index to work when read back into
+	     gdb, it has to use the encoded name, with any
+	     suffixes stripped.  */
+	  std::string encoded = ada_encode (name, false);
+	  name = obstack_strdup (symtab->obstack (), encoded.c_str ());
 	}
-      else if (entry->per_cu->lang () == language_cplus
+      else if (entry->lang == language_cplus
 	       && (entry->flags & IS_LINKAGE) != 0)
 	{
 	  /* GDB never put C++ linkage names into .gdb_index.  The
@@ -1174,21 +1227,49 @@ write_cooked_index (cooked_index_vector *table,
 	}
 
       gdb_index_symbol_kind kind;
-      if (entry->tag == DW_TAG_subprogram)
+      if (entry->tag == DW_TAG_subprogram
+	  || entry->tag == DW_TAG_entry_point)
 	kind = GDB_INDEX_SYMBOL_KIND_FUNCTION;
       else if (entry->tag == DW_TAG_variable
 	       || entry->tag == DW_TAG_constant
 	       || entry->tag == DW_TAG_enumerator)
 	kind = GDB_INDEX_SYMBOL_KIND_VARIABLE;
-      else if (entry->tag == DW_TAG_module
-	       || entry->tag == DW_TAG_common_block)
-	kind = GDB_INDEX_SYMBOL_KIND_OTHER;
-      else
+      else if (tag_is_type (entry->tag))
 	kind = GDB_INDEX_SYMBOL_KIND_TYPE;
+      else
+	kind = GDB_INDEX_SYMBOL_KIND_OTHER;
 
-      add_index_entry (symtab, name, (entry->flags & IS_STATIC) != 0,
-		       kind, it->second);
+      symtab->add_index_entry (name, (entry->flags & IS_STATIC) != 0,
+			       kind, it->second);
     }
+}
+
+/* Write shortcut information.  */
+
+static void
+write_shortcuts_table (cooked_index *table, data_buf &shortcuts,
+		       data_buf &cpool)
+{
+  const auto main_info = table->get_main ();
+  size_t main_name_offset = 0;
+  dwarf_source_language dw_lang = (dwarf_source_language) 0;
+
+  if (main_info != nullptr)
+    {
+      dw_lang = main_info->per_cu->dw_lang ();
+
+      if (dw_lang != 0)
+	{
+	  auto_obstack obstack;
+	  const auto main_name = main_info->full_name (&obstack, true);
+
+	  main_name_offset = cpool.size ();
+	  cpool.append_cstr0 (main_name);
+	}
+    }
+
+  shortcuts.append_offset (dw_lang);
+  shortcuts.append_offset (main_name_offset);
 }
 
 /* Write contents of a .gdb_index section for OBJFILE into OUT_FILE.
@@ -1197,8 +1278,7 @@ write_cooked_index (cooked_index_vector *table,
    associated dwz file, DWZ_OUT_FILE must be NULL.  */
 
 static void
-write_gdbindex (dwarf2_per_objfile *per_objfile,
-		cooked_index_vector *table,
+write_gdbindex (dwarf2_per_bfd *per_bfd, cooked_index *table,
 		FILE *out_file, FILE *dwz_out_file)
 {
   mapped_symtab symtab;
@@ -1210,26 +1290,24 @@ write_gdbindex (dwarf2_per_objfile *per_objfile,
      in the index file).  This will later be needed to write the address
      table.  */
   cu_index_map cu_index_htab;
-  cu_index_htab.reserve (per_objfile->per_bfd->all_units.size ());
+  cu_index_htab.reserve (per_bfd->all_units.size ());
 
   /* Store out the .debug_type CUs, if any.  */
   data_buf types_cu_list;
 
   /* The CU list is already sorted, so we don't need to do additional
-     work here.  Also, the debug_types entries do not appear in
-     all_units, but only in their own hash table.  */
+     work here.  */
 
   int counter = 0;
-  int types_counter = 0;
-  for (int i = 0; i < per_objfile->per_bfd->all_units.size (); ++i)
+  for (int i = 0; i < per_bfd->all_units.size (); ++i)
     {
-      dwarf2_per_cu_data *per_cu
-	= per_objfile->per_bfd->all_units[i].get ();
+      dwarf2_per_cu_data *per_cu = per_bfd->all_units[i].get ();
 
-      int &this_counter = per_cu->is_debug_types ? types_counter : counter;
-
-      const auto insertpair = cu_index_htab.emplace (per_cu, this_counter);
+      const auto insertpair = cu_index_htab.emplace (per_cu, counter);
       gdb_assert (insertpair.second);
+
+      /* See enhancement PR symtab/30838.  */
+      gdb_assert (!(per_cu->is_dwz && per_cu->is_debug_types));
 
       /* The all_units list contains CUs read from the objfile as well as
 	 from the eventual dwz file.  We need to place the entry in the
@@ -1250,7 +1328,7 @@ write_gdbindex (dwarf2_per_objfile *per_objfile,
       else
 	cu_list.append_uint (8, BFD_ENDIAN_LITTLE, per_cu->length ());
 
-      ++this_counter;
+      ++counter;
     }
 
   write_cooked_index (table, cu_index_htab, &symtab);
@@ -1260,54 +1338,52 @@ write_gdbindex (dwarf2_per_objfile *per_objfile,
   for (auto map : table->get_addrmaps ())
     write_address_map (map, addr_vec, cu_index_htab);
 
+  /* Ensure symbol hash is built domestically.  */
+  symtab.sort ();
+
   /* Now that we've processed all symbols we can shrink their cu_indices
      lists.  */
   symtab.minimize ();
 
   data_buf symtab_vec, constant_pool;
-  if (symtab.n_elements == 0)
-    symtab.data.resize (0);
 
   write_hash_table (&symtab, symtab_vec, constant_pool);
 
-  write_gdbindex_1(out_file, objfile_cu_list, types_cu_list, addr_vec,
-		   symtab_vec, constant_pool);
+  data_buf shortcuts;
+  write_shortcuts_table (table, shortcuts, constant_pool);
+
+  write_gdbindex_1 (out_file, objfile_cu_list, types_cu_list, addr_vec,
+		    symtab_vec, constant_pool, shortcuts);
 
   if (dwz_out_file != NULL)
-    write_gdbindex_1 (dwz_out_file, dwz_cu_list, {}, {}, {}, {});
+    write_gdbindex_1 (dwz_out_file, dwz_cu_list, {}, {}, {}, {}, {});
   else
     gdb_assert (dwz_cu_list.empty ());
 }
-
-/* DWARF-5 augmentation string for GDB's DW_IDX_GNU_* extension.  */
-static const gdb_byte dwarf5_gdb_augmentation[] = { 'G', 'D', 'B', 0 };
 
 /* Write a new .debug_names section for OBJFILE into OUT_FILE, write
    needed addition to .debug_str section to OUT_FILE_STR.  Return how
    many bytes were expected to be written into OUT_FILE.  */
 
 static void
-write_debug_names (dwarf2_per_objfile *per_objfile,
-		   cooked_index_vector *table,
+write_debug_names (dwarf2_per_bfd *per_bfd, cooked_index *table,
 		   FILE *out_file, FILE *out_file_str)
 {
-  const bool dwarf5_is_dwarf64 = check_dwarf64_offsets (per_objfile);
-  struct objfile *objfile = per_objfile->objfile;
+  const bool dwarf5_is_dwarf64 = check_dwarf64_offsets (per_bfd);
   const enum bfd_endian dwarf5_byte_order
-    = gdbarch_byte_order (objfile->arch ());
+    = bfd_big_endian (per_bfd->obfd) ? BFD_ENDIAN_BIG : BFD_ENDIAN_LITTLE;
 
   /* The CU list is already sorted, so we don't need to do additional
      work here.  Also, the debug_types entries do not appear in
      all_units, but only in their own hash table.  */
   data_buf cu_list;
   data_buf types_cu_list;
-  debug_names nametable (per_objfile, dwarf5_is_dwarf64, dwarf5_byte_order);
+  debug_names nametable (per_bfd, dwarf5_is_dwarf64, dwarf5_byte_order);
   int counter = 0;
   int types_counter = 0;
-  for (int i = 0; i < per_objfile->per_bfd->all_units.size (); ++i)
+  for (int i = 0; i < per_bfd->all_units.size (); ++i)
     {
-      dwarf2_per_cu_data *per_cu
-	= per_objfile->per_bfd->all_units[i].get ();
+      dwarf2_per_cu_data *per_cu = per_bfd->all_units[i].get ();
 
       int &this_counter = per_cu->is_debug_types ? types_counter : counter;
       data_buf &this_list = per_cu->is_debug_types ? types_cu_list : cu_list;
@@ -1320,8 +1396,8 @@ write_debug_names (dwarf2_per_objfile *per_objfile,
     }
 
    /* Verify that all units are represented.  */
-  gdb_assert (counter == per_objfile->per_bfd->all_comp_units.size ());
-  gdb_assert (types_counter == per_objfile->per_bfd->all_type_units.size ());
+  gdb_assert (counter == per_bfd->all_comp_units.size ());
+  gdb_assert (types_counter == per_bfd->all_type_units.size ());
 
   for (const cooked_index_entry *entry : table->all_entries ())
     nametable.insert (entry);
@@ -1333,7 +1409,7 @@ write_debug_names (dwarf2_per_objfile *per_objfile,
   const offset_type bytes_of_header
     = ((dwarf5_is_dwarf64 ? 12 : 4)
        + 2 + 2 + 7 * 4
-       + sizeof (dwarf5_gdb_augmentation));
+       + sizeof (dwarf5_augmentation));
   size_t expected_bytes = 0;
   expected_bytes += bytes_of_header;
   expected_bytes += cu_list.size ();
@@ -1371,8 +1447,10 @@ write_debug_names (dwarf2_per_objfile *per_objfile,
   header.append_uint (4, dwarf5_byte_order, 0);
 
   /* bucket_count - The number of hash buckets in the hash lookup
-     table.  */
-  header.append_uint (4, dwarf5_byte_order, nametable.bucket_count ());
+     table.  GDB does not use the hash table, so there's also no need
+     to write it -- plus, the hash table is broken as defined due to
+     the lack of name canonicalization.  */
+  header.append_uint (4, dwarf5_byte_order, 0);
 
   /* name_count - The number of unique names in the index.  */
   header.append_uint (4, dwarf5_byte_order, nametable.name_count ());
@@ -1383,9 +1461,9 @@ write_debug_names (dwarf2_per_objfile *per_objfile,
 
   /* augmentation_string_size - The size in bytes of the augmentation
      string.  This value is rounded up to a multiple of 4.  */
-  static_assert (sizeof (dwarf5_gdb_augmentation) % 4 == 0, "");
-  header.append_uint (4, dwarf5_byte_order, sizeof (dwarf5_gdb_augmentation));
-  header.append_array (dwarf5_gdb_augmentation);
+  static_assert (sizeof (dwarf5_augmentation) % 4 == 0);
+  header.append_uint (4, dwarf5_byte_order, sizeof (dwarf5_augmentation));
+  header.append_array (dwarf5_augmentation);
 
   gdb_assert (header.size () == bytes_of_header);
 
@@ -1410,6 +1488,13 @@ struct index_wip_file
   index_wip_file (const char *dir, const char *basename,
 		  const char *suffix)
   {
+    /* Validate DIR is a valid directory.  */
+    struct stat buf;
+    if (stat (dir, &buf) == -1)
+      perror_with_name (string_printf (_("`%s'"), dir).c_str ());
+    if ((buf.st_mode & S_IFDIR) != S_IFDIR)
+      error (_("`%s': Is not a directory."), dir);
+
     filename = (std::string (dir) + SLASH_STRING + basename
 		+ suffix);
 
@@ -1418,7 +1503,8 @@ struct index_wip_file
     scoped_fd out_file_fd = gdb_mkostemp_cloexec (filename_temp.data (),
 						  O_BINARY);
     if (out_file_fd.get () == -1)
-      perror_with_name (("mkstemp"));
+      perror_with_name (string_printf (_("couldn't open `%s'"),
+				       filename_temp.data ()).c_str ());
 
     out_file = out_file_fd.to_file ("wb");
 
@@ -1446,7 +1532,7 @@ struct index_wip_file
      FILENAME_TEMP is unlinked, because on MS-Windows one cannot
      delete a file that is still open.  So, we wrap the unlinker in an
      optional and emplace it once we know the file name.  */
-  gdb::optional<gdb::unlinker> unlink_file;
+  std::optional<gdb::unlinker> unlink_file;
 
   gdb_file_up out_file;
 };
@@ -1454,28 +1540,24 @@ struct index_wip_file
 /* See dwarf-index-write.h.  */
 
 void
-write_dwarf_index (dwarf2_per_objfile *per_objfile, const char *dir,
+write_dwarf_index (dwarf2_per_bfd *per_bfd, const char *dir,
 		   const char *basename, const char *dwz_basename,
 		   dw_index_kind index_kind)
 {
-  struct objfile *objfile = per_objfile->objfile;
-
-  if (per_objfile->per_bfd->index_table == nullptr)
+  if (per_bfd->index_table == nullptr)
     error (_("No debugging symbols"));
-  cooked_index_vector *table
-    = per_objfile->per_bfd->index_table->index_for_writing ();
+  cooked_index *table = per_bfd->index_table->index_for_writing ();
+  if (table == nullptr)
+    error (_("Cannot use an index to create the index"));
 
-  if (per_objfile->per_bfd->types.size () > 1)
+  if (per_bfd->types.size () > 1)
     error (_("Cannot make an index when the file has multiple .debug_types sections"));
-
-
-  gdb_assert ((objfile->flags & OBJF_NOT_FILENAME) == 0);
 
   const char *index_suffix = (index_kind == dw_index_kind::DEBUG_NAMES
 			      ? INDEX5_SUFFIX : INDEX4_SUFFIX);
 
   index_wip_file objfile_index_wip (dir, basename, index_suffix);
-  gdb::optional<index_wip_file> dwz_index_wip;
+  std::optional<index_wip_file> dwz_index_wip;
 
   if (dwz_basename != NULL)
       dwz_index_wip.emplace (dir, dwz_basename, index_suffix);
@@ -1484,13 +1566,13 @@ write_dwarf_index (dwarf2_per_objfile *per_objfile, const char *dir,
     {
       index_wip_file str_wip_file (dir, basename, DEBUG_STR_SUFFIX);
 
-      write_debug_names (per_objfile, table, objfile_index_wip.out_file.get (),
+      write_debug_names (per_bfd, table, objfile_index_wip.out_file.get (),
 			 str_wip_file.out_file.get ());
 
       str_wip_file.finalize ();
     }
   else
-    write_gdbindex (per_objfile, table, objfile_index_wip.out_file.get (),
+    write_gdbindex (per_bfd, table, objfile_index_wip.out_file.get (),
 		    (dwz_index_wip.has_value ()
 		     ? dwz_index_wip->out_file.get () : NULL));
 
@@ -1500,6 +1582,48 @@ write_dwarf_index (dwarf2_per_objfile *per_objfile, const char *dir,
     dwz_index_wip->finalize ();
 }
 
+/* Options structure for the 'save gdb-index' command.  */
+
+struct save_gdb_index_options
+{
+  bool dwarf_5 = false;
+};
+
+/* The option_def list for the 'save gdb-index' command.  */
+
+static const gdb::option::option_def save_gdb_index_options_defs[] = {
+  gdb::option::boolean_option_def<save_gdb_index_options> {
+    "dwarf-5",
+    [] (save_gdb_index_options *opt) { return &opt->dwarf_5; },
+    nullptr, /* show_cmd_cb */
+    nullptr /* set_doc */
+  }
+};
+
+/* Create an options_def_group for the 'save gdb-index' command.  */
+
+static gdb::option::option_def_group
+make_gdb_save_index_options_def_group (save_gdb_index_options *opts)
+{
+  return {{save_gdb_index_options_defs}, opts};
+}
+
+/* Completer for the "save gdb-index" command.  */
+
+static void
+gdb_save_index_cmd_completer (struct cmd_list_element *ignore,
+			      completion_tracker &tracker,
+			      const char *text, const char *word)
+{
+  auto grp = make_gdb_save_index_options_def_group (nullptr);
+  if (gdb::option::complete_options
+      (tracker, &text, gdb::option::PROCESS_OPTIONS_UNKNOWN_IS_OPERAND, grp))
+    return;
+
+  word = advance_to_filename_complete_word_point (tracker, text);
+  filename_completer (ignore, tracker, text, word);
+}
+
 /* Implementation of the `save gdb-index' command.
 
    Note that the .gdb_index file format used by this command is
@@ -1507,24 +1631,19 @@ write_dwarf_index (dwarf2_per_objfile *per_objfile, const char *dir,
    there.  */
 
 static void
-save_gdb_index_command (const char *arg, int from_tty)
+save_gdb_index_command (const char *args, int from_tty)
 {
-  const char dwarf5space[] = "-dwarf-5 ";
-  dw_index_kind index_kind = dw_index_kind::GDB_INDEX;
+  save_gdb_index_options opts;
+  const auto group = make_gdb_save_index_options_def_group (&opts);
+  gdb::option::process_options
+    (&args, gdb::option::PROCESS_OPTIONS_UNKNOWN_IS_OPERAND, group);
 
-  if (!arg)
-    arg = "";
-
-  arg = skip_spaces (arg);
-  if (strncmp (arg, dwarf5space, strlen (dwarf5space)) == 0)
-    {
-      index_kind = dw_index_kind::DEBUG_NAMES;
-      arg += strlen (dwarf5space);
-      arg = skip_spaces (arg);
-    }
-
-  if (!*arg)
+  if (args == nullptr || *args == '\0')
     error (_("usage: save gdb-index [-dwarf-5] DIRECTORY"));
+
+  std::string directory (gdb_tilde_expand (args));
+  dw_index_kind index_kind
+    = (opts.dwarf_5 ? dw_index_kind::DEBUG_NAMES : dw_index_kind::GDB_INDEX);
 
   for (objfile *objfile : current_program_space->objfiles ())
     {
@@ -1545,8 +1664,8 @@ save_gdb_index_command (const char *arg, int from_tty)
 	      if (dwz != NULL)
 		dwz_basename = lbasename (dwz->filename ());
 
-	      write_dwarf_index (per_objfile, arg, basename, dwz_basename,
-				 index_kind);
+	      write_dwarf_index (per_objfile->per_bfd, directory.c_str (),
+				 basename, dwz_basename, index_kind);
 	    }
 	  catch (const gdb_exception_error &except)
 	    {
@@ -1554,15 +1673,93 @@ save_gdb_index_command (const char *arg, int from_tty)
 				 _("Error while writing index for `%s': "),
 				 objfile_name (objfile));
 	    }
-	    }
+	}
 
     }
 }
+
+#if GDB_SELF_TEST
+#include "gdbsupport/selftest.h"
+
+namespace selftests {
+
+class pretend_data_buf : public data_buf
+{
+public:
+  /* Set the pretend size.  */
+  void set_pretend_size (size_t s) {
+    m_pretend_size = s;
+  }
+
+  /* Override size method of data_buf, returning the pretend size instead.  */
+  size_t size () const override {
+    return m_pretend_size;
+  }
+
+private:
+  size_t m_pretend_size = 0;
+};
+
+static void
+gdb_index ()
+{
+  pretend_data_buf cu_list;
+  pretend_data_buf types_cu_list;
+  pretend_data_buf addr_vec;
+  pretend_data_buf symtab_vec;
+  pretend_data_buf constant_pool;
+  pretend_data_buf short_cuts;
+
+  const size_t size_of_header = 7 * sizeof (offset_type);
+
+  /* Test that an overly large index will throw an error.  */
+  symtab_vec.set_pretend_size (~(offset_type)0 - size_of_header);
+  constant_pool.set_pretend_size (1);
+
+  bool saw_exception = false;
+  try
+    {
+      write_gdbindex_1 (nullptr, cu_list, types_cu_list, addr_vec,
+			symtab_vec, constant_pool, short_cuts);
+    }
+  catch (const gdb_exception_error &e)
+    {
+      SELF_CHECK (e.reason == RETURN_ERROR);
+      SELF_CHECK (e.error == GENERIC_ERROR);
+      SELF_CHECK (e.message->find (_("gdb-index maximum file size of"))
+		  != std::string::npos);
+      SELF_CHECK (e.message->find (_("exceeded")) != std::string::npos);
+      saw_exception = true;
+    }
+  SELF_CHECK (saw_exception);
+
+  /* Test that the largest possible index will not throw an error.  */
+  constant_pool.set_pretend_size (0);
+
+  saw_exception = false;
+  try
+    {
+      write_gdbindex_1 (nullptr, cu_list, types_cu_list, addr_vec,
+			symtab_vec, constant_pool, short_cuts);
+    }
+  catch (const gdb_exception_error &e)
+    {
+      saw_exception = true;
+    }
+  SELF_CHECK (!saw_exception);
+}
+
+} /* selftests namespace.  */
+#endif
 
 void _initialize_dwarf_index_write ();
 void
 _initialize_dwarf_index_write ()
 {
+#if GDB_SELF_TEST
+  selftests::register_test ("gdb_index", selftests::gdb_index);
+#endif
+
   cmd_list_element *c = add_cmd ("gdb-index", class_files,
 				 save_gdb_index_command, _("\
 Save a gdb-index file.\n\
@@ -1572,5 +1769,5 @@ No options create one file with .gdb-index extension for pre-DWARF-5\n\
 compatible .gdb_index section.  With -dwarf-5 creates two files with\n\
 extension .debug_names and .debug_str for DWARF-5 .debug_names section."),
 	       &save_cmdlist);
-  set_cmd_completer (c, filename_completer);
+  set_cmd_completer_handle_brkchars (c, gdb_save_index_cmd_completer);
 }

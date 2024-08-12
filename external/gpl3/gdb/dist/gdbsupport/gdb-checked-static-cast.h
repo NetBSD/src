@@ -1,4 +1,4 @@
-/* Copyright (C) 2022-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_GDB_CHECKED_DYNAMIC_CAST_H
-#define COMMON_GDB_CHECKED_DYNAMIC_CAST_H
+#ifndef COMMON_GDB_CHECKED_STATIC_CAST_H
+#define COMMON_GDB_CHECKED_STATIC_CAST_H
 
 #include "gdbsupport/traits.h"
 
@@ -54,15 +54,30 @@ checked_static_cast (V *v)
 		 "types must be related");
 
 #ifdef DEVELOPMENT
-  T result = dynamic_cast<T> (v);
-  gdb_assert (result != nullptr);
-#else
-  T result = static_cast<T> (v);
+  gdb_assert (v == nullptr || dynamic_cast<T> (v) != nullptr);
 #endif
 
-  return result;
+  /* If a base class of V is virtual then the dynamic_cast above will
+     succeed, but this static_cast will fail.  */
+  return static_cast<T> (v);
+}
+
+/* Same as the above, but to cast from a reference type to another.  */
+
+template<typename T, typename V, typename = gdb::Requires<std::is_reference<T>>>
+T
+checked_static_cast (V &v)
+{
+  static_assert (std::is_reference<T>::value, "target must be a reference type");
+
+  using T_no_R = typename std::remove_reference<T>::type;
+  using T_P = typename std::add_pointer<T_no_R>::type;
+
+  using V_no_R = typename std::remove_reference<V>::type;
+
+  return *checked_static_cast<T_P, V_no_R> (&v);
 }
 
 }
 
-#endif /* COMMON_GDB_CHECKED_DYNAMIC_CAST_H */
+#endif /* COMMON_GDB_CHECKED_STATIC_CAST_H */

@@ -1,6 +1,6 @@
 /* Target-dependent code for the NEC V850 for GDB, the GNU debugger.
 
-   Copyright (C) 1996-2023 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "frame.h"
 #include "frame-base.h"
 #include "trad-frame.h"
@@ -312,7 +312,7 @@ v850_register_name (struct gdbarch *gdbarch, int regnum)
     "sr24", "sr25", "sr26", "sr27", "sr28", "sr29", "sr30", "sr31",
     "pc", "fp"
   };
-  gdb_static_assert (E_NUM_OF_V850_REGS == ARRAY_SIZE (v850_reg_names));
+  static_assert (E_NUM_OF_V850_REGS == ARRAY_SIZE (v850_reg_names));
   return v850_reg_names[regnum];
 }
 
@@ -331,7 +331,7 @@ v850e_register_name (struct gdbarch *gdbarch, int regnum)
     "sr24", "sr25", "sr26", "sr27", "sr28", "sr29", "sr30", "sr31",
     "pc", "fp"
   };
-  gdb_static_assert (E_NUM_OF_V850E_REGS == ARRAY_SIZE (v850e_reg_names));
+  static_assert (E_NUM_OF_V850E_REGS == ARRAY_SIZE (v850e_reg_names));
   return v850e_reg_names[regnum];
 }
 
@@ -477,7 +477,7 @@ v850e3v5_register_name (struct gdbarch *gdbarch, int regnum)
     "vr24", "vr25", "vr26", "vr27", "vr28", "vr29", "vr30", "vr31",
   };
 
-  gdb_static_assert (E_NUM_OF_V850E3V5_REGS
+  static_assert (E_NUM_OF_V850E3V5_REGS
 		     == ARRAY_SIZE (v850e3v5_reg_names));
   return v850e3v5_reg_names[regnum];
 }
@@ -1037,7 +1037,7 @@ v850_push_dummy_call (struct gdbarch *gdbarch,
 
   /* Now make space on the stack for the args.  */
   for (argnum = 0; argnum < nargs; argnum++)
-    arg_space += ((value_type (args[argnum])->length () + 3) & ~3);
+    arg_space += ((args[argnum]->type ()->length () + 3) & ~3);
   sp -= arg_space + stack_offset;
 
   argreg = E_ARG0_REGNUM;
@@ -1054,23 +1054,23 @@ v850_push_dummy_call (struct gdbarch *gdbarch,
       gdb_byte *val;
       gdb_byte valbuf[v850_reg_size];
 
-      if (!v850_type_is_scalar (value_type (*args))
+      if (!v850_type_is_scalar ((*args)->type ())
 	  && tdep->abi == V850_ABI_GCC
-	  && value_type (*args)->length () > E_MAX_RETTYPE_SIZE_IN_REGS)
+	  && (*args)->type ()->length () > E_MAX_RETTYPE_SIZE_IN_REGS)
 	{
 	  store_unsigned_integer (valbuf, 4, byte_order,
-				  value_address (*args));
+				  (*args)->address ());
 	  len = 4;
 	  val = valbuf;
 	}
       else
 	{
-	  len = value_type (*args)->length ();
-	  val = (gdb_byte *) value_contents (*args).data ();
+	  len = (*args)->type ()->length ();
+	  val = (gdb_byte *) (*args)->contents ().data ();
 	}
 
       if (tdep->eight_byte_align
-	  && v850_eight_byte_align_p (value_type (*args)))
+	  && v850_eight_byte_align_p ((*args)->type ()))
 	{
 	  if (argreg <= E_ARGLAST_REGNUM && (argreg & 1))
 	    argreg++;
@@ -1212,7 +1212,7 @@ v850_sw_breakpoint_from_kind (struct gdbarch *gdbarch, int kind, int *size)
 }
 
 static struct v850_frame_cache *
-v850_alloc_frame_cache (frame_info_ptr this_frame)
+v850_alloc_frame_cache (const frame_info_ptr &this_frame)
 {
   struct v850_frame_cache *cache;
 
@@ -1231,7 +1231,7 @@ v850_alloc_frame_cache (frame_info_ptr this_frame)
 }
 
 static struct v850_frame_cache *
-v850_frame_cache (frame_info_ptr this_frame, void **this_cache)
+v850_frame_cache (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   struct v850_frame_cache *cache;
@@ -1297,7 +1297,7 @@ v850_frame_cache (frame_info_ptr this_frame, void **this_cache)
 
 
 static struct value *
-v850_frame_prev_register (frame_info_ptr this_frame,
+v850_frame_prev_register (const frame_info_ptr &this_frame,
 			  void **this_cache, int regnum)
 {
   struct v850_frame_cache *cache = v850_frame_cache (this_frame, this_cache);
@@ -1308,7 +1308,7 @@ v850_frame_prev_register (frame_info_ptr this_frame,
 }
 
 static void
-v850_frame_this_id (frame_info_ptr this_frame, void **this_cache,
+v850_frame_this_id (const frame_info_ptr &this_frame, void **this_cache,
 		    struct frame_id *this_id)
 {
   struct v850_frame_cache *cache = v850_frame_cache (this_frame, this_cache);
@@ -1331,7 +1331,7 @@ static const struct frame_unwind v850_frame_unwind = {
 };
 
 static CORE_ADDR
-v850_frame_base_address (frame_info_ptr this_frame, void **this_cache)
+v850_frame_base_address (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct v850_frame_cache *cache = v850_frame_cache (this_frame, this_cache);
 
@@ -1348,7 +1348,6 @@ static const struct frame_base v850_frame_base = {
 static struct gdbarch *
 v850_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
-  struct gdbarch *gdbarch;
   int e_flags, e_machine;
 
   /* Extract the elf_flags if available.  */
@@ -1380,7 +1379,10 @@ v850_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       return arches->gdbarch;
     }
 
-  v850_gdbarch_tdep *tdep = new v850_gdbarch_tdep;
+  gdbarch *gdbarch
+    = gdbarch_alloc (&info, gdbarch_tdep_up (new v850_gdbarch_tdep));
+  v850_gdbarch_tdep *tdep = gdbarch_tdep<v850_gdbarch_tdep> (gdbarch);
+
   tdep->e_flags = e_flags;
   tdep->e_machine = e_machine;
 
@@ -1395,7 +1397,6 @@ v850_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     }
 
   tdep->eight_byte_align = (tdep->e_flags & EF_RH850_DATA_ALIGN8) ? 1 : 0;
-  gdbarch = gdbarch_alloc (&info, tdep);
 
   switch (info.bfd_arch_info->mach)
     {

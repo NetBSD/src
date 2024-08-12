@@ -1,6 +1,6 @@
 /* opc2c.c --- generate C simulator code from from .opc file
 
-Copyright (C) 2005-2023 Free Software Foundation, Inc.
+Copyright (C) 2005-2024 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -58,9 +58,9 @@ typedef struct
   VaryRef *vary;
 } opcode;
 
-int n_opcodes;
-opcode **opcodes;
-opcode *op;
+static int n_opcodes;
+static opcode **opcodes;
+static opcode *op;
 
 typedef struct
 {
@@ -71,17 +71,17 @@ typedef struct
   unsigned char *patterns;
 } Vary;
 
-Vary **vary = 0;
-int n_varies = 0;
+static Vary **vary = 0;
+static int n_varies = 0;
 
-unsigned char cur_bits[MAX_BYTES + 1];
+static unsigned char cur_bits[MAX_BYTES + 1];
 
-char *orig_filename;
+static char *orig_filename;
 
-FILE *sim_log = 0;
+static FILE *sim_log = 0;
 #define lprintf if (sim_log) fprintf
 
-opcode prefix_text, suffix_text;
+static opcode prefix_text, suffix_text;
 
 typedef enum
 {
@@ -101,7 +101,7 @@ typedef struct Indirect
   } u;
 } Indirect;
 
-Indirect indirect[256];
+static Indirect indirect[256];
 
 static int
 next_varybits (int bits, opcode * op, int byte)
@@ -136,10 +136,11 @@ valid_varybits (int bits, opcode * op, int byte)
 	  int found = 0;
 	  int i;
 	  int ob;
+	  Vary *v;
 
 	  if (byte != op->vary[vn].byte)
 	    continue;
-	  Vary *v = vary[op->vary[vn].varyno];
+	  v = vary[op->vary[vn].varyno];
 	  ob = (bits >> op->vary[vn].shift) & v->mask;
 	  lprintf (sim_log, "varybits: vary %s ob %x\n", v->name, ob);
 
@@ -157,16 +158,16 @@ valid_varybits (int bits, opcode * op, int byte)
   return 1;
 }
 
-char *
+static char *
 prmb (int mask, int bits)
 {
   static char buf[8][30];
   static int bn = 0;
   char *bp;
+  int i;
 
   bn = (bn + 1) % 8;
   bp = buf[bn];
-  int i;
   for (i = 0; i < 8; i++)
     {
       int bit = 0x80 >> i;
@@ -195,7 +196,7 @@ op_cmp (const void *va, const void *vb)
   return strcmp (a->id, b->id);
 }
 
-void
+static void
 dump_lines (opcode * op, int level, Indirect * ind)
 {
   char *varnames[40];
@@ -282,14 +283,14 @@ dump_lines (opcode * op, int level, Indirect * ind)
 		varnames[i], (i < vn - 1) ? "," : "\\n", varnames[i]);
       printf ("%*s    }\n", level, "");
     }
-  printf ("#line %d \"%s\"\n", op->lineno + 1, orig_filename);
+  printf ("#line %d \"%s\"\n", op->lineno, orig_filename);
   for (i = 0; i < op->nlines; i++)
     printf ("%*s%s", level, "", op->lines[i]);
   if (op->comment)
     printf ("%*s}\n", level, "");
 }
 
-void
+static void
 store_opcode_bits (opcode * op, int byte, Indirect * ind)
 {
   int bits = op->b[byte].decodable_bits;
@@ -335,7 +336,7 @@ store_opcode_bits (opcode * op, int byte, Indirect * ind)
   while ((bits = next_varybits (bits, op, byte)) != 0);
 }
 
-void
+static void
 emit_indirect (Indirect * ind, int byte)
 {
   int unsup = 0;

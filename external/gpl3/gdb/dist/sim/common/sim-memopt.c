@@ -1,5 +1,5 @@
 /* Simulator memory option handling.
-   Copyright (C) 1996-2023 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -26,15 +26,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
-#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
-#endif
 
 #include "sim-main.h"
 #include "sim-assert.h"
@@ -304,10 +300,10 @@ parse_size (char *chp,
       break;
     case 'g': case 'G': /* Gigabyte suffix.  */
       *nr_bytes <<= 10;
-      /* Fall through.  */
+      ATTRIBUTE_FALLTHROUGH;
     case 'm': case 'M': /* Megabyte suffix.  */
       *nr_bytes <<= 10;
-      /* Fall through.  */
+      ATTRIBUTE_FALLTHROUGH;
     case 'k': case 'K': /* Kilobyte suffix.  */
       *nr_bytes <<= 10;
       /* Check for a modulo specifier after the suffix.  */

@@ -1,7 +1,7 @@
 // -*- C -*-
 
 // Simulator definition for the MIPS DSP REV 2 ASE.
-// Copyright (C) 2007-2023 Free Software Foundation, Inc.
+// Copyright (C) 2007-2024 Free Software Foundation, Inc.
 // Contributed by MIPS Technologies, Inc.
 // Written by Chao-ying Fu (fu@mips.com).
 //
@@ -195,7 +195,7 @@
 // round: 0 = no rounding, 1 = rounding
 :function:::void:do_qb_shra:int rd, int rt, int shift, int round
 {
-  int i, j;
+  int i;
   int8_t q0;
   uint32_t v1 = GPR[rt];
   uint32_t result = 0;
@@ -216,7 +216,7 @@
 
 :function:::void:do_ph_shrl:int rd, int rt, int shift
 {
-  int i, j;
+  int i;
   uint16_t h0;
   uint32_t v1 = GPR[rt];
   uint32_t result = 0;
@@ -260,7 +260,6 @@
 // round: 0 = no rounding, 1 = rounding
 :function:::void:do_qh_w_op:int rd, int rs, int rt, int op, int round
 {
-  int i;
   int64_t v0;
   int32_t v1 = (int32_t)GPR[rs];
   int32_t v2 = (int32_t)GPR[rt];

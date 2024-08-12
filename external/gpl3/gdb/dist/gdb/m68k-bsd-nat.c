@@ -1,6 +1,6 @@
 /* Native-dependent code for Motorola 68000 BSD's.
 
-   Copyright (C) 2004-2023 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,6 @@
 
 /* We define this to get types like register_t.  */
 #define _KERNTYPES
-#include "defs.h"
 #include "gdbcore.h"
 #include "inferior.h"
 #include "regcache.h"

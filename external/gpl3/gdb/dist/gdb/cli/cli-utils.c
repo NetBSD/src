@@ -1,6 +1,6 @@
 /* CLI utilities.
 
-   Copyright (C) 2011-2023 Free Software Foundation, Inc.
+   Copyright (C) 2011-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "cli/cli-utils.h"
 #include "value.h"
 
@@ -37,7 +36,7 @@ get_ulongest (const char **pp, int trailer)
 
       if (val != NULL)	/* Value history reference */
 	{
-	  if (value_type (val)->code () == TYPE_CODE_INT)
+	  if (val->type ()->code () == TYPE_CODE_INT)
 	    retval = value_as_long (val);
 	  else
 	    error (_("History value must have integer type."));
@@ -96,7 +95,7 @@ get_number_trailer (const char **pp, int trailer)
 
       if (val)	/* Value history reference */
 	{
-	  if (value_type (val)->code () == TYPE_CODE_INT)
+	  if (val->type ()->code () == TYPE_CODE_INT)
 	    retval = value_as_long (val);
 	  else
 	    {

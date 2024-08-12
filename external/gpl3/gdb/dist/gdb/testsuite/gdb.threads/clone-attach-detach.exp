@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2016-2023 Free Software Foundation, Inc.
+# Copyright 2016-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,9 +23,7 @@ if ![istarget *-*-linux*] {
     return
 }
 
-if {![can_spawn_for_attach]} {
-    return 0
-}
+require can_spawn_for_attach
 
 standard_testfile
 
@@ -66,14 +64,9 @@ if {[target_info exists gdb_protocol]
     && ([target_info gdb_protocol] == "remote"
 	|| [target_info gdb_protocol] == "extended-remote")} {
 
-    set test "maint show target-non-stop"
-    gdb_test_multiple "maint show target-non-stop" $test {
-	-re "(is|currently) on.*$gdb_prompt $" {
-	}
-	-re "(is|currently) off.*$gdb_prompt $" {
-	    unsupported "bg attach: can't issue info threads while target is running"
-	    return 0
-	}
+    if {![is_target_non_stop]} {
+	unsupported "bg attach: can't issue info threads while target is running"
+	return 0
     }
 }
 

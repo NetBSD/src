@@ -5,15 +5,17 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #include <string.h>
+
+#include "bfd.h"
 
 #include "sim-main.h"
 #include "sim-signal.h"
 #include "simops.h"
 #include "target-newlib-syscall.h"
+
+#include "d10v-sim.h"
 
 #define EXCEPTION(sig) sim_engine_halt (sd, cpu, NULL, PC, sim_stopped, sig)
 

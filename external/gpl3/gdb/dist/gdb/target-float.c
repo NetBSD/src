@@ -1,6 +1,6 @@
 /* Floating point routines for GDB, the GNU debugger.
 
-   Copyright (C) 2017-2023 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "gdbtypes.h"
 #include "floatformat.h"
 #include "target-float.h"
@@ -1156,8 +1155,6 @@ host_float_ops<T>::compare (const gdb_byte *x, const struct type *type_x,
 /* Implementation of target_float_ops using the MPFR library
    mpfr_t as intermediate type.  */
 
-#ifdef HAVE_LIBMPFR
-
 #define MPFR_USE_INTMAX_T
 
 #include <mpfr.h>
@@ -1715,8 +1712,6 @@ mpfr_float_ops::compare (const gdb_byte *x, const struct type *type_x,
     return 1;
 }
 
-#endif
-
 
 /* Helper routines operating on decimal floating-point data.  */
 
@@ -2266,11 +2261,7 @@ get_target_float_ops (enum target_float_ops_kind kind)
 	 use the largest host floating-point type as intermediate format.  */
       case target_float_ops_kind::binary:
 	{
-#ifdef HAVE_LIBMPFR
 	  static mpfr_float_ops binary_float_ops;
-#else
-	  static host_float_ops<long double> binary_float_ops;
-#endif
 	  return &binary_float_ops;
 	}
 

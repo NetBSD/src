@@ -1,4 +1,4 @@
-/* Copyright 2011-2023 Free Software Foundation, Inc.
+/* Copyright 2011-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -85,4 +85,8 @@ types_start:
 	.byte	0x0
 	.byte	0x0
 	.byte	0x0
+#ifdef __arm__
+	.section	.note.GNU-stack,"",%progbits
+#else
 	.section	.note.GNU-stack,"",@progbits
+#endif

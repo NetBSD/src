@@ -1,5 +1,5 @@
 /* Common target-dependent definitions for NetBSD systems.
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
    This file is part of GDB.
@@ -19,9 +19,6 @@
 
 #ifndef NBSD_TDEP_H
 #define NBSD_TDEP_H
-
-struct link_map_offsets *nbsd_ilp32_solib_svr4_fetch_link_map_offsets (void);
-struct link_map_offsets *nbsd_lp64_solib_svr4_fetch_link_map_offsets (void);
 
 int nbsd_pc_in_sigtramp (CORE_ADDR, const char *);
 

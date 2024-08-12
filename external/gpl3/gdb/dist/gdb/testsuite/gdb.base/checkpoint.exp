@@ -1,4 +1,4 @@
-#   Copyright 2005-2023 Free Software Foundation, Inc.
+#   Copyright 2005-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,7 @@
 # Until "set follow-fork-mode" and "catch fork" are implemented on
 # other targets...
 #
-if {![istarget "*-*-linux*"]} {
-    return
-}
+require {istarget "*-*-linux*"}
 
 # Checkpoint support is currently implemented in the Linux native
 # target, so only works with "target native".
@@ -86,9 +84,11 @@ gdb_test "checkpoint" "" "checkpoint nine"
 gdb_test "continue 10" "breakpoint 1.*" "break1 ten"
 gdb_test "checkpoint" "" "checkpoint ten"
 
-gdb_test "info checkpoints" \
-    " 1 .* 2 .* 3 .* 4 .* 5 .* 6 .* 7 .* 8 .* 9 .* 10 .*" \
-    "info checkpoints one"
+set info_checkpoints_re ""
+for { set i 0 } { $i <= 10 } { incr i } {
+    append info_checkpoints_re " $i .* file .*"
+}
+gdb_test "info checkpoints" $info_checkpoints_re "info checkpoints one"
 
 delete_breakpoints
 gdb_breakpoint $break2_loc
@@ -290,10 +290,7 @@ gdb_test "restart 10" "Not found.*" "no more checkpoint 10"
 # Now let's try setting a large number of checkpoints (>600)
 #
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart $binfile
 
 runto_main
 gdb_breakpoint $break1_loc
@@ -339,3 +336,17 @@ verbose "Timeout now $timeout sec."
 #
 # Finished: cleanup
 #
+
+#
+# Now let's try to delete checkpoint 0.
+#
+
+with_test_prefix "delete checkpoint 0" {
+    clean_restart $binfile
+    runto_main
+
+    gdb_test "checkpoint" "checkpoint 1: fork returned pid $decimal\\."
+    gdb_test "restart 1" "Switching to .*"
+    gdb_test "delete checkpoint 0" "Killed process $decimal"
+    gdb_test "info checkpoints" [string_to_regexp "No checkpoints."]
+}

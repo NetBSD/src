@@ -1,6 +1,6 @@
 /* Python interface to instruction objects.
 
-   Copyright 2017-2023 Free Software Foundation, Inc.
+   Copyright 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "py-instruction.h"
 
 /* Python type object for the abstract gdb.Instruction class.  This class
@@ -81,10 +80,12 @@ py_insn_get_insn_type ()
 
 /* Sets up the gdb.Instruction type.  */
 
-int
+static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_instruction (void)
 {
   if (py_insn_get_insn_type () == nullptr)
     return -1;
   return 0;
 }
+
+GDBPY_INITIALIZE_FILE (gdbpy_initialize_instruction);

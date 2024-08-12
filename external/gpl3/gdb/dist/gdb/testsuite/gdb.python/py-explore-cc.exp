@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2023 Free Software Foundation, Inc.
+# Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,16 +16,13 @@
 # This file is part of the GDB testsuite.  It tests the mechanism
 # exposing values to Python.
 
-if { [skip_cplus_tests] } { continue }
+require allow_cplus_tests allow_python_tests
 
 standard_testfile py-explore.cc
 
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
     return -1
 }
-
-# Skip all tests if Python scripting is not enabled.
-if { [skip_python_tests] } { continue }
 
 set int_ptr_ref_desc "The value of 'int_ptr_ref' is of type 'int_ptr' which is a typedef of type 'int \\*'.*\'int_ptr_ref' is a pointer to a value of type 'int'.*"
 

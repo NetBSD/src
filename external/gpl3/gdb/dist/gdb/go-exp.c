@@ -70,7 +70,6 @@
 #line 52 "go-exp.y"
 
 
-#include "defs.h"
 #include <ctype.h>
 #include "expression.h"
 #include "value.h"
@@ -78,9 +77,6 @@
 #include "language.h"
 #include "c-lang.h"
 #include "go-lang.h"
-#include "bfd.h" /* Required by objfiles.h.  */
-#include "symfile.h" /* Required by objfiles.h.  */
-#include "objfiles.h" /* For have_full_symbols and have_partial_symbols */
 #include "charset.h"
 #include "block.h"
 #include "expop.h"
@@ -104,7 +100,7 @@ static int yylex (void);
 static void yyerror (const char *);
 
 
-#line 108 "go-exp.c.tmp"
+#line 104 "go-exp.c.tmp"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -239,10 +235,10 @@ extern int yydebug;
 #define LEFT_ARROW 299
 
 /* Value type.  */
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-union YYSTYPE
+#if ! defined go_exp_YYSTYPE && ! defined go_exp_YYSTYPE_IS_DECLARED
+union go_exp_YYSTYPE
 {
-#line 94 "go-exp.y"
+#line 90 "go-exp.y"
 
     LONGEST lval;
     struct {
@@ -264,16 +260,16 @@ union YYSTYPE
     struct stoken_vector svec;
   
 
-#line 268 "go-exp.c.tmp"
+#line 264 "go-exp.c.tmp"
 
 };
-typedef union YYSTYPE YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
-# define YYSTYPE_IS_DECLARED 1
+typedef union go_exp_YYSTYPE go_exp_YYSTYPE;
+# define go_exp_YYSTYPE_IS_TRIVIAL 1
+# define go_exp_YYSTYPE_IS_DECLARED 1
 #endif
 
 
-extern YYSTYPE yylval;
+extern go_exp_YYSTYPE yylval;
 
 
 int yyparse (void);
@@ -281,7 +277,7 @@ int yyparse (void);
 
 
 /* Symbol kind.  */
-enum yysymbol_kind_t
+enum go_exp_yysymbol_kind_t
 {
   YYSYMBOL_YYEMPTY = -2,
   YYSYMBOL_YYEOF = 0,                      /* "end of file"  */
@@ -366,19 +362,19 @@ enum yysymbol_kind_t
   YYSYMBOL_type = 79,                      /* type  */
   YYSYMBOL_name_not_typename = 80          /* name_not_typename  */
 };
-typedef enum yysymbol_kind_t yysymbol_kind_t;
+typedef enum go_exp_yysymbol_kind_t go_exp_yysymbol_kind_t;
 
 
 /* Second part of user prologue.  */
-#line 115 "go-exp.y"
+#line 111 "go-exp.y"
 
-/* YYSTYPE gets defined by %union.  */
+/* go_exp_YYSTYPE gets defined by %union.  */
 static int parse_number (struct parser_state *,
-			 const char *, int, int, YYSTYPE *);
+			 const char *, int, int, go_exp_YYSTYPE *);
 
 using namespace expr;
 
-#line 382 "go-exp.c.tmp"
+#line 378 "go-exp.c.tmp"
 
 
 #ifdef short
@@ -640,22 +636,22 @@ void xfree (void *); /* INFRINGES ON USER NAME SPACE */
 
 #if (! defined yyoverflow \
      && (! defined __cplusplus \
-         || (defined YYSTYPE_IS_TRIVIAL && YYSTYPE_IS_TRIVIAL)))
+         || (defined go_exp_YYSTYPE_IS_TRIVIAL && go_exp_YYSTYPE_IS_TRIVIAL)))
 
 /* A type that is properly aligned for any stack member.  */
-union yyalloc
+union go_exp_yyalloc
 {
   yy_state_t yyss_alloc;
-  YYSTYPE yyvs_alloc;
+  go_exp_YYSTYPE yyvs_alloc;
 };
 
 /* The size of the maximum gap between one aligned stack and the next.  */
-# define YYSTACK_GAP_MAXIMUM (YYSIZEOF (union yyalloc) - 1)
+# define YYSTACK_GAP_MAXIMUM (YYSIZEOF (union go_exp_yyalloc) - 1)
 
 /* The size of an array large to enough to hold all stacks, each with
    N elements.  */
 # define YYSTACK_BYTES(N) \
-     ((N) * (YYSIZEOF (yy_state_t) + YYSIZEOF (YYSTYPE)) \
+     ((N) * (YYSIZEOF (yy_state_t) + YYSIZEOF (go_exp_YYSTYPE)) \
       + YYSTACK_GAP_MAXIMUM)
 
 # define YYCOPY_NEEDED 1
@@ -720,7 +716,7 @@ union yyalloc
    as returned by yylex, with out-of-bounds checking.  */
 #define YYTRANSLATE(YYX)                                \
   (0 <= (YYX) && (YYX) <= YYMAXUTOK                     \
-   ? YY_CAST (yysymbol_kind_t, yytranslate[YYX])        \
+   ? YY_CAST (go_exp_yysymbol_kind_t, yytranslate[YYX])        \
    : YYSYMBOL_YYUNDEF)
 
 /* YYTRANSLATE[TOKEN-NUM] -- Symbol number corresponding to TOKEN-NUM
@@ -763,23 +759,23 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   194,   194,   195,   198,   203,   204,   209,   213,   217,
-     221,   225,   229,   233,   237,   243,   250,   260,   269,   276,
-     273,   286,   290,   293,   297,   301,   305,   312,   319,   325,
-     329,   333,   337,   341,   345,   349,   353,   357,   361,   365,
-     369,   373,   377,   381,   385,   389,   393,   397,   401,   412,
-     416,   425,   432,   441,   452,   461,   464,   470,   482,   489,
-     506,   524,   536,   540,   544,   558,   603,   605,   612,   625
+       0,   190,   190,   191,   194,   199,   200,   205,   209,   213,
+     217,   221,   225,   229,   233,   239,   246,   256,   265,   272,
+     269,   282,   286,   289,   293,   297,   301,   308,   315,   321,
+     325,   329,   333,   337,   341,   345,   349,   353,   357,   361,
+     365,   369,   373,   377,   381,   385,   389,   393,   397,   408,
+     412,   421,   428,   437,   448,   457,   460,   466,   478,   485,
+     502,   520,   532,   536,   540,   554,   599,   601,   608,   621
 };
 #endif
 
 /** Accessing symbol of state STATE.  */
-#define YY_ACCESSING_SYMBOL(State) YY_CAST (yysymbol_kind_t, yystos[State])
+#define YY_ACCESSING_SYMBOL(State) YY_CAST (go_exp_yysymbol_kind_t, yystos[State])
 
 #if YYDEBUG || 0
 /* The user-facing name of the symbol whose (internal) number is
    YYSYMBOL.  No bounds checking.  */
-static const char *yysymbol_name (yysymbol_kind_t yysymbol) YY_ATTRIBUTE_UNUSED;
+static const char *yysymbol_name (go_exp_yysymbol_kind_t yysymbol) YY_ATTRIBUTE_UNUSED;
 
 /* YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
@@ -802,7 +798,7 @@ static const char *const yytname[] =
 };
 
 static const char *
-yysymbol_name (yysymbol_kind_t yysymbol)
+yysymbol_name (go_exp_yysymbol_kind_t yysymbol)
 {
   return yytname[yysymbol];
 }
@@ -1088,7 +1084,7 @@ do {                                                                      \
 
 static void
 yy_symbol_value_print (FILE *yyo,
-                       yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep)
+                       go_exp_yysymbol_kind_t yykind, go_exp_YYSTYPE const * const yyvaluep)
 {
   FILE *yyoutput = yyo;
   YY_USE (yyoutput);
@@ -1106,7 +1102,7 @@ yy_symbol_value_print (FILE *yyo,
 
 static void
 yy_symbol_print (FILE *yyo,
-                 yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep)
+                 go_exp_yysymbol_kind_t yykind, go_exp_YYSTYPE const * const yyvaluep)
 {
   YYFPRINTF (yyo, "%s %s (",
              yykind < YYNTOKENS ? "token" : "nterm", yysymbol_name (yykind));
@@ -1144,7 +1140,7 @@ do {                                                            \
 `------------------------------------------------*/
 
 static void
-yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,
+yy_reduce_print (yy_state_t *yyssp, go_exp_YYSTYPE *yyvsp,
                  int yyrule)
 {
   int yylno = yyrline[yyrule];
@@ -1207,7 +1203,7 @@ int yydebug;
 
 static void
 yydestruct (const char *yymsg,
-            yysymbol_kind_t yykind, YYSTYPE *yyvaluep)
+            go_exp_yysymbol_kind_t yykind, go_exp_YYSTYPE *yyvaluep)
 {
   YY_USE (yyvaluep);
   if (!yymsg)
@@ -1224,7 +1220,7 @@ yydestruct (const char *yymsg,
 int yychar;
 
 /* The semantic value of the lookahead symbol.  */
-YYSTYPE yylval;
+go_exp_YYSTYPE yylval;
 /* Number of syntax errors so far.  */
 int yynerrs;
 
@@ -1254,18 +1250,18 @@ yyparse (void)
     yy_state_t *yyssp = yyss;
 
     /* The semantic value stack: array, bottom, top.  */
-    YYSTYPE yyvsa[YYINITDEPTH];
-    YYSTYPE *yyvs = yyvsa;
-    YYSTYPE *yyvsp = yyvs;
+    go_exp_YYSTYPE yyvsa[YYINITDEPTH];
+    go_exp_YYSTYPE *yyvs = yyvsa;
+    go_exp_YYSTYPE *yyvsp = yyvs;
 
   int yyn;
   /* The return value of yyparse.  */
   int yyresult;
   /* Lookahead symbol kind.  */
-  yysymbol_kind_t yytoken = YYSYMBOL_YYEMPTY;
+  go_exp_yysymbol_kind_t yytoken = YYSYMBOL_YYEMPTY;
   /* The variables used to return semantic value and location from the
      action routines.  */
-  YYSTYPE yyval;
+  go_exp_YYSTYPE yyval;
 
 
 
@@ -1316,7 +1312,7 @@ yysetstate:
            these so that the &'s don't force the real ones into
            memory.  */
         yy_state_t *yyss1 = yyss;
-        YYSTYPE *yyvs1 = yyvs;
+        go_exp_YYSTYPE *yyvs1 = yyvs;
 
         /* Each stack pointer address is followed by the size of the
            data in use in that stack, in bytes.  This used to be a
@@ -1339,8 +1335,8 @@ yysetstate:
 
       {
         yy_state_t *yyss1 = yyss;
-        union yyalloc *yyptr =
-          YY_CAST (union yyalloc *,
+        union go_exp_yyalloc *yyptr =
+          YY_CAST (union go_exp_yyalloc *,
                    YYSTACK_ALLOC (YY_CAST (YYSIZE_T, YYSTACK_BYTES (yystacksize))));
         if (! yyptr)
           YYNOMEM;
@@ -1478,76 +1474,76 @@ yyreduce:
   switch (yyn)
     {
   case 4: /* type_exp: type  */
-#line 199 "go-exp.y"
+#line 195 "go-exp.y"
                         { pstate->push_new<type_operation> ((yyvsp[0].tval)); }
-#line 1485 "go-exp.c.tmp"
+#line 1481 "go-exp.c.tmp"
     break;
 
   case 6: /* exp1: exp1 ',' exp  */
-#line 205 "go-exp.y"
+#line 201 "go-exp.y"
                         { pstate->wrap2<comma_operation> (); }
-#line 1491 "go-exp.c.tmp"
+#line 1487 "go-exp.c.tmp"
     break;
 
   case 7: /* exp: '*' exp  */
-#line 210 "go-exp.y"
+#line 206 "go-exp.y"
                         { pstate->wrap<unop_ind_operation> (); }
-#line 1497 "go-exp.c.tmp"
+#line 1493 "go-exp.c.tmp"
     break;
 
   case 8: /* exp: '&' exp  */
-#line 214 "go-exp.y"
+#line 210 "go-exp.y"
                         { pstate->wrap<unop_addr_operation> (); }
-#line 1503 "go-exp.c.tmp"
+#line 1499 "go-exp.c.tmp"
     break;
 
   case 9: /* exp: '-' exp  */
-#line 218 "go-exp.y"
+#line 214 "go-exp.y"
                         { pstate->wrap<unary_neg_operation> (); }
-#line 1509 "go-exp.c.tmp"
+#line 1505 "go-exp.c.tmp"
     break;
 
   case 10: /* exp: '+' exp  */
-#line 222 "go-exp.y"
+#line 218 "go-exp.y"
                         { pstate->wrap<unary_plus_operation> (); }
-#line 1515 "go-exp.c.tmp"
+#line 1511 "go-exp.c.tmp"
     break;
 
   case 11: /* exp: '!' exp  */
-#line 226 "go-exp.y"
+#line 222 "go-exp.y"
                         { pstate->wrap<unary_logical_not_operation> (); }
-#line 1521 "go-exp.c.tmp"
+#line 1517 "go-exp.c.tmp"
     break;
 
   case 12: /* exp: '^' exp  */
-#line 230 "go-exp.y"
+#line 226 "go-exp.y"
                         { pstate->wrap<unary_complement_operation> (); }
-#line 1527 "go-exp.c.tmp"
+#line 1523 "go-exp.c.tmp"
     break;
 
   case 13: /* exp: exp INCREMENT  */
-#line 234 "go-exp.y"
+#line 230 "go-exp.y"
                         { pstate->wrap<postinc_operation> (); }
-#line 1533 "go-exp.c.tmp"
+#line 1529 "go-exp.c.tmp"
     break;
 
   case 14: /* exp: exp DECREMENT  */
-#line 238 "go-exp.y"
+#line 234 "go-exp.y"
                         { pstate->wrap<postdec_operation> (); }
-#line 1539 "go-exp.c.tmp"
+#line 1535 "go-exp.c.tmp"
     break;
 
   case 15: /* exp: exp '.' name_not_typename  */
-#line 244 "go-exp.y"
+#line 240 "go-exp.y"
                         {
 			  pstate->push_new<structop_operation>
 			    (pstate->pop (), copy_name ((yyvsp[0].ssym).stoken));
 			}
-#line 1548 "go-exp.c.tmp"
+#line 1544 "go-exp.c.tmp"
     break;
 
   case 16: /* exp: exp '.' name_not_typename COMPLETE  */
-#line 251 "go-exp.y"
+#line 247 "go-exp.y"
                         {
 			  structop_base_operation *op
 			    = new structop_operation (pstate->pop (),
@@ -1555,207 +1551,207 @@ yyreduce:
 			  pstate->mark_struct_expression (op);
 			  pstate->push (operation_up (op));
 			}
-#line 1560 "go-exp.c.tmp"
+#line 1556 "go-exp.c.tmp"
     break;
 
   case 17: /* exp: exp '.' COMPLETE  */
-#line 261 "go-exp.y"
+#line 257 "go-exp.y"
                         {
 			  structop_base_operation *op
 			    = new structop_operation (pstate->pop (), "");
 			  pstate->mark_struct_expression (op);
 			  pstate->push (operation_up (op));
 			}
-#line 1571 "go-exp.c.tmp"
+#line 1567 "go-exp.c.tmp"
     break;
 
   case 18: /* exp: exp '[' exp1 ']'  */
-#line 270 "go-exp.y"
+#line 266 "go-exp.y"
                         { pstate->wrap2<subscript_operation> (); }
-#line 1577 "go-exp.c.tmp"
+#line 1573 "go-exp.c.tmp"
     break;
 
   case 19: /* $@1: %empty  */
-#line 276 "go-exp.y"
+#line 272 "go-exp.y"
                         { pstate->start_arglist (); }
-#line 1583 "go-exp.c.tmp"
+#line 1579 "go-exp.c.tmp"
     break;
 
   case 20: /* exp: exp '(' $@1 arglist ')'  */
-#line 278 "go-exp.y"
+#line 274 "go-exp.y"
                         {
 			  std::vector<operation_up> args
 			    = pstate->pop_vector (pstate->end_arglist ());
 			  pstate->push_new<funcall_operation>
 			    (pstate->pop (), std::move (args));
 			}
-#line 1594 "go-exp.c.tmp"
+#line 1590 "go-exp.c.tmp"
     break;
 
   case 21: /* lcurly: '{'  */
-#line 287 "go-exp.y"
+#line 283 "go-exp.y"
                         { pstate->start_arglist (); }
-#line 1600 "go-exp.c.tmp"
+#line 1596 "go-exp.c.tmp"
     break;
 
   case 23: /* arglist: exp  */
-#line 294 "go-exp.y"
+#line 290 "go-exp.y"
                         { pstate->arglist_len = 1; }
-#line 1606 "go-exp.c.tmp"
+#line 1602 "go-exp.c.tmp"
     break;
 
   case 24: /* arglist: arglist ',' exp  */
-#line 298 "go-exp.y"
+#line 294 "go-exp.y"
                         { pstate->arglist_len++; }
-#line 1612 "go-exp.c.tmp"
+#line 1608 "go-exp.c.tmp"
     break;
 
   case 25: /* rcurly: '}'  */
-#line 302 "go-exp.y"
+#line 298 "go-exp.y"
                         { (yyval.lval) = pstate->end_arglist () - 1; }
-#line 1618 "go-exp.c.tmp"
+#line 1614 "go-exp.c.tmp"
     break;
 
   case 26: /* exp: lcurly type rcurly exp  */
-#line 306 "go-exp.y"
+#line 302 "go-exp.y"
                         {
 			  pstate->push_new<unop_memval_operation>
 			    (pstate->pop (), (yyvsp[-2].tval));
 			}
-#line 1627 "go-exp.c.tmp"
+#line 1623 "go-exp.c.tmp"
     break;
 
   case 27: /* exp: type '(' exp ')'  */
-#line 313 "go-exp.y"
+#line 309 "go-exp.y"
                         {
 			  pstate->push_new<unop_cast_operation>
 			    (pstate->pop (), (yyvsp[-3].tval));
 			}
-#line 1636 "go-exp.c.tmp"
+#line 1632 "go-exp.c.tmp"
     break;
 
   case 28: /* exp: '(' exp1 ')'  */
-#line 320 "go-exp.y"
+#line 316 "go-exp.y"
                         { }
-#line 1642 "go-exp.c.tmp"
+#line 1638 "go-exp.c.tmp"
     break;
 
   case 29: /* exp: exp '@' exp  */
-#line 326 "go-exp.y"
+#line 322 "go-exp.y"
                         { pstate->wrap2<repeat_operation> (); }
-#line 1648 "go-exp.c.tmp"
+#line 1644 "go-exp.c.tmp"
     break;
 
   case 30: /* exp: exp '*' exp  */
-#line 330 "go-exp.y"
+#line 326 "go-exp.y"
                         { pstate->wrap2<mul_operation> (); }
-#line 1654 "go-exp.c.tmp"
+#line 1650 "go-exp.c.tmp"
     break;
 
   case 31: /* exp: exp '/' exp  */
-#line 334 "go-exp.y"
+#line 330 "go-exp.y"
                         { pstate->wrap2<div_operation> (); }
-#line 1660 "go-exp.c.tmp"
+#line 1656 "go-exp.c.tmp"
     break;
 
   case 32: /* exp: exp '%' exp  */
-#line 338 "go-exp.y"
+#line 334 "go-exp.y"
                         { pstate->wrap2<rem_operation> (); }
-#line 1666 "go-exp.c.tmp"
+#line 1662 "go-exp.c.tmp"
     break;
 
   case 33: /* exp: exp '+' exp  */
-#line 342 "go-exp.y"
+#line 338 "go-exp.y"
                         { pstate->wrap2<add_operation> (); }
-#line 1672 "go-exp.c.tmp"
+#line 1668 "go-exp.c.tmp"
     break;
 
   case 34: /* exp: exp '-' exp  */
-#line 346 "go-exp.y"
+#line 342 "go-exp.y"
                         { pstate->wrap2<sub_operation> (); }
-#line 1678 "go-exp.c.tmp"
+#line 1674 "go-exp.c.tmp"
     break;
 
   case 35: /* exp: exp LSH exp  */
-#line 350 "go-exp.y"
+#line 346 "go-exp.y"
                         { pstate->wrap2<lsh_operation> (); }
-#line 1684 "go-exp.c.tmp"
+#line 1680 "go-exp.c.tmp"
     break;
 
   case 36: /* exp: exp RSH exp  */
-#line 354 "go-exp.y"
+#line 350 "go-exp.y"
                         { pstate->wrap2<rsh_operation> (); }
-#line 1690 "go-exp.c.tmp"
+#line 1686 "go-exp.c.tmp"
     break;
 
   case 37: /* exp: exp EQUAL exp  */
-#line 358 "go-exp.y"
+#line 354 "go-exp.y"
                         { pstate->wrap2<equal_operation> (); }
-#line 1696 "go-exp.c.tmp"
+#line 1692 "go-exp.c.tmp"
     break;
 
   case 38: /* exp: exp NOTEQUAL exp  */
-#line 362 "go-exp.y"
+#line 358 "go-exp.y"
                         { pstate->wrap2<notequal_operation> (); }
-#line 1702 "go-exp.c.tmp"
+#line 1698 "go-exp.c.tmp"
     break;
 
   case 39: /* exp: exp LEQ exp  */
-#line 366 "go-exp.y"
+#line 362 "go-exp.y"
                         { pstate->wrap2<leq_operation> (); }
-#line 1708 "go-exp.c.tmp"
+#line 1704 "go-exp.c.tmp"
     break;
 
   case 40: /* exp: exp GEQ exp  */
-#line 370 "go-exp.y"
+#line 366 "go-exp.y"
                         { pstate->wrap2<geq_operation> (); }
-#line 1714 "go-exp.c.tmp"
+#line 1710 "go-exp.c.tmp"
     break;
 
   case 41: /* exp: exp '<' exp  */
-#line 374 "go-exp.y"
+#line 370 "go-exp.y"
                         { pstate->wrap2<less_operation> (); }
-#line 1720 "go-exp.c.tmp"
+#line 1716 "go-exp.c.tmp"
     break;
 
   case 42: /* exp: exp '>' exp  */
-#line 378 "go-exp.y"
+#line 374 "go-exp.y"
                         { pstate->wrap2<gtr_operation> (); }
-#line 1726 "go-exp.c.tmp"
+#line 1722 "go-exp.c.tmp"
     break;
 
   case 43: /* exp: exp '&' exp  */
-#line 382 "go-exp.y"
+#line 378 "go-exp.y"
                         { pstate->wrap2<bitwise_and_operation> (); }
-#line 1732 "go-exp.c.tmp"
+#line 1728 "go-exp.c.tmp"
     break;
 
   case 44: /* exp: exp '^' exp  */
-#line 386 "go-exp.y"
+#line 382 "go-exp.y"
                         { pstate->wrap2<bitwise_xor_operation> (); }
-#line 1738 "go-exp.c.tmp"
+#line 1734 "go-exp.c.tmp"
     break;
 
   case 45: /* exp: exp '|' exp  */
-#line 390 "go-exp.y"
+#line 386 "go-exp.y"
                         { pstate->wrap2<bitwise_ior_operation> (); }
-#line 1744 "go-exp.c.tmp"
+#line 1740 "go-exp.c.tmp"
     break;
 
   case 46: /* exp: exp ANDAND exp  */
-#line 394 "go-exp.y"
+#line 390 "go-exp.y"
                         { pstate->wrap2<logical_and_operation> (); }
-#line 1750 "go-exp.c.tmp"
+#line 1746 "go-exp.c.tmp"
     break;
 
   case 47: /* exp: exp OROR exp  */
-#line 398 "go-exp.y"
+#line 394 "go-exp.y"
                         { pstate->wrap2<logical_or_operation> (); }
-#line 1756 "go-exp.c.tmp"
+#line 1752 "go-exp.c.tmp"
     break;
 
   case 48: /* exp: exp '?' exp ':' exp  */
-#line 402 "go-exp.y"
+#line 398 "go-exp.y"
                         {
 			  operation_up last = pstate->pop ();
 			  operation_up mid = pstate->pop ();
@@ -1764,79 +1760,79 @@ yyreduce:
 			    (std::move (first), std::move (mid),
 			     std::move (last));
 			}
-#line 1769 "go-exp.c.tmp"
+#line 1765 "go-exp.c.tmp"
     break;
 
   case 49: /* exp: exp '=' exp  */
-#line 413 "go-exp.y"
+#line 409 "go-exp.y"
                         { pstate->wrap2<assign_operation> (); }
-#line 1775 "go-exp.c.tmp"
+#line 1771 "go-exp.c.tmp"
     break;
 
   case 50: /* exp: exp ASSIGN_MODIFY exp  */
-#line 417 "go-exp.y"
+#line 413 "go-exp.y"
                         {
 			  operation_up rhs = pstate->pop ();
 			  operation_up lhs = pstate->pop ();
 			  pstate->push_new<assign_modify_operation>
 			    ((yyvsp[-1].opcode), std::move (lhs), std::move (rhs));
 			}
-#line 1786 "go-exp.c.tmp"
+#line 1782 "go-exp.c.tmp"
     break;
 
   case 51: /* exp: INT  */
-#line 426 "go-exp.y"
+#line 422 "go-exp.y"
                         {
 			  pstate->push_new<long_const_operation>
 			    ((yyvsp[0].typed_val_int).type, (yyvsp[0].typed_val_int).val);
 			}
-#line 1795 "go-exp.c.tmp"
+#line 1791 "go-exp.c.tmp"
     break;
 
   case 52: /* exp: CHAR  */
-#line 433 "go-exp.y"
+#line 429 "go-exp.y"
                         {
 			  struct stoken_vector vec;
 			  vec.len = 1;
 			  vec.tokens = &(yyvsp[0].tsval);
 			  pstate->push_c_string ((yyvsp[0].tsval).type, &vec);
 			}
-#line 1806 "go-exp.c.tmp"
+#line 1802 "go-exp.c.tmp"
     break;
 
   case 53: /* exp: NAME_OR_INT  */
-#line 442 "go-exp.y"
-                        { YYSTYPE val;
+#line 438 "go-exp.y"
+                        { go_exp_YYSTYPE val;
 			  parse_number (pstate, (yyvsp[0].ssym).stoken.ptr,
 					(yyvsp[0].ssym).stoken.length, 0, &val);
 			  pstate->push_new<long_const_operation>
 			    (val.typed_val_int.type,
 			     val.typed_val_int.val);
 			}
-#line 1818 "go-exp.c.tmp"
+#line 1814 "go-exp.c.tmp"
     break;
 
   case 54: /* exp: FLOAT  */
-#line 453 "go-exp.y"
+#line 449 "go-exp.y"
                         {
 			  float_data data;
 			  std::copy (std::begin ((yyvsp[0].typed_val_float).val), std::end ((yyvsp[0].typed_val_float).val),
 				     std::begin (data));
 			  pstate->push_new<float_const_operation> ((yyvsp[0].typed_val_float).type, data);
 			}
-#line 1829 "go-exp.c.tmp"
+#line 1825 "go-exp.c.tmp"
     break;
 
   case 56: /* exp: DOLLAR_VARIABLE  */
-#line 465 "go-exp.y"
+#line 461 "go-exp.y"
                         {
 			  pstate->push_dollar ((yyvsp[0].sval));
 			}
-#line 1837 "go-exp.c.tmp"
+#line 1833 "go-exp.c.tmp"
     break;
 
   case 57: /* exp: SIZEOF_KEYWORD '(' type ')'  */
-#line 471 "go-exp.y"
+#line 467 "go-exp.y"
                         {
 			  /* TODO(dje): Go objects in structs.  */
 			  /* TODO(dje): What's the right type here?  */
@@ -1846,20 +1842,20 @@ yyreduce:
 			  pstate->push_new<long_const_operation>
 			    (size_type, (LONGEST) (yyvsp[-1].tval)->length ());
 			}
-#line 1851 "go-exp.c.tmp"
+#line 1847 "go-exp.c.tmp"
     break;
 
   case 58: /* exp: SIZEOF_KEYWORD '(' exp ')'  */
-#line 483 "go-exp.y"
+#line 479 "go-exp.y"
                         {
 			  /* TODO(dje): Go objects in structs.  */
 			  pstate->wrap<unop_sizeof_operation> ();
 			}
-#line 1860 "go-exp.c.tmp"
+#line 1856 "go-exp.c.tmp"
     break;
 
   case 59: /* string_exp: STRING  */
-#line 490 "go-exp.y"
+#line 486 "go-exp.y"
                         {
 			  /* We copy the string here, and not in the
 			     lexer, to guarantee that we do not leak a
@@ -1875,11 +1871,11 @@ yyreduce:
 			  vec->ptr = (char *) xmalloc ((yyvsp[0].tsval).length + 1);
 			  memcpy (vec->ptr, (yyvsp[0].tsval).ptr, (yyvsp[0].tsval).length + 1);
 			}
-#line 1880 "go-exp.c.tmp"
+#line 1876 "go-exp.c.tmp"
     break;
 
   case 60: /* string_exp: string_exp '+' STRING  */
-#line 507 "go-exp.y"
+#line 503 "go-exp.y"
                         {
 			  /* Note that we NUL-terminate here, but just
 			     for convenience.  */
@@ -1895,11 +1891,11 @@ yyreduce:
 			  (yyval.svec).tokens[(yyval.svec).len - 1].length = (yyvsp[0].tsval).length;
 			  (yyval.svec).tokens[(yyval.svec).len - 1].ptr = p;
 			}
-#line 1900 "go-exp.c.tmp"
+#line 1896 "go-exp.c.tmp"
     break;
 
   case 61: /* exp: string_exp  */
-#line 525 "go-exp.y"
+#line 521 "go-exp.y"
                         {
 			  int i;
 
@@ -1909,23 +1905,23 @@ yyreduce:
 			    xfree ((yyvsp[0].svec).tokens[i].ptr);
 			  xfree ((yyvsp[0].svec).tokens);
 			}
-#line 1914 "go-exp.c.tmp"
+#line 1910 "go-exp.c.tmp"
     break;
 
   case 62: /* exp: TRUE_KEYWORD  */
-#line 537 "go-exp.y"
+#line 533 "go-exp.y"
                         { pstate->push_new<bool_operation> ((yyvsp[0].lval)); }
-#line 1920 "go-exp.c.tmp"
+#line 1916 "go-exp.c.tmp"
     break;
 
   case 63: /* exp: FALSE_KEYWORD  */
-#line 541 "go-exp.y"
+#line 537 "go-exp.y"
                         { pstate->push_new<bool_operation> ((yyvsp[0].lval)); }
-#line 1926 "go-exp.c.tmp"
+#line 1922 "go-exp.c.tmp"
     break;
 
   case 64: /* variable: name_not_typename ENTRY  */
-#line 545 "go-exp.y"
+#line 541 "go-exp.y"
                         { struct symbol *sym = (yyvsp[-1].ssym).sym.symbol;
 
 			  if (sym == NULL
@@ -1937,11 +1933,11 @@ yyreduce:
 
 			  pstate->push_new<var_entry_value_operation> (sym);
 			}
-#line 1942 "go-exp.c.tmp"
+#line 1938 "go-exp.c.tmp"
     break;
 
   case 65: /* variable: name_not_typename  */
-#line 559 "go-exp.y"
+#line 555 "go-exp.y"
                         { struct block_symbol sym = (yyvsp[0].ssym).sym;
 
 			  if (sym.symbol)
@@ -1976,30 +1972,30 @@ yyreduce:
 				       arg.c_str ());
 			    }
 			}
-#line 1981 "go-exp.c.tmp"
+#line 1977 "go-exp.c.tmp"
     break;
 
   case 66: /* type: '*' type  */
-#line 604 "go-exp.y"
+#line 600 "go-exp.y"
                         { (yyval.tval) = lookup_pointer_type ((yyvsp[0].tval)); }
-#line 1987 "go-exp.c.tmp"
+#line 1983 "go-exp.c.tmp"
     break;
 
   case 67: /* type: TYPENAME  */
-#line 606 "go-exp.y"
+#line 602 "go-exp.y"
                         { (yyval.tval) = (yyvsp[0].tsym).type; }
-#line 1993 "go-exp.c.tmp"
+#line 1989 "go-exp.c.tmp"
     break;
 
   case 68: /* type: BYTE_KEYWORD  */
-#line 613 "go-exp.y"
+#line 609 "go-exp.y"
                         { (yyval.tval) = builtin_go_type (pstate->gdbarch ())
 			    ->builtin_uint8; }
-#line 2000 "go-exp.c.tmp"
+#line 1996 "go-exp.c.tmp"
     break;
 
 
-#line 2004 "go-exp.c.tmp"
+#line 2000 "go-exp.c.tmp"
 
       default: break;
     }
@@ -2014,7 +2010,7 @@ yyreduce:
      case of YYERROR or YYBACKUP, subsequent parser actions might lead
      to an incorrect destructor call or verbose syntax error message
      before the lookahead is translated.  */
-  YY_SYMBOL_PRINT ("-> $$ =", YY_CAST (yysymbol_kind_t, yyr1[yyn]), &yyval, &yyloc);
+  YY_SYMBOL_PRINT ("-> $$ =", YY_CAST (go_exp_yysymbol_kind_t, yyr1[yyn]), &yyval, &yyloc);
 
   YYPOPSTACK (yylen);
   yylen = 0;
@@ -2192,7 +2188,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 635 "go-exp.y"
+#line 631 "go-exp.y"
 
 
 /* Take care of parsing a number (anything that starts with a digit).
@@ -2202,11 +2198,11 @@ yyreturnlab:
 /* FIXME: Needs some error checking for the float case.  */
 /* FIXME(dje): IWBN to use c-exp.y's parse_number if we could.
    That will require moving the guts into a function that we both call
-   as our YYSTYPE is different than c-exp.y's  */
+   as our go_exp_YYSTYPE is different than c-exp.y's  */
 
 static int
 parse_number (struct parser_state *par_state,
-	      const char *p, int len, int parsed_float, YYSTYPE *putithere)
+	      const char *p, int len, int parsed_float, go_exp_YYSTYPE *putithere)
 {
   ULONGEST n = 0;
   ULONGEST prevn = 0;
@@ -2462,14 +2458,14 @@ parse_string_or_char (const char *tokptr, const char **outptr,
   return quote == '\'' ? CHAR : STRING;
 }
 
-struct token
+struct go_token
 {
   const char *oper;
   int token;
   enum exp_opcode opcode;
 };
 
-static const struct token tokentab3[] =
+static const struct go_token tokentab3[] =
   {
     {">>=", ASSIGN_MODIFY, BINOP_RSH},
     {"<<=", ASSIGN_MODIFY, BINOP_LSH},
@@ -2477,7 +2473,7 @@ static const struct token tokentab3[] =
     {"...", DOTDOTDOT, OP_NULL},
   };
 
-static const struct token tokentab2[] =
+static const struct go_token tokentab2[] =
   {
     {"+=", ASSIGN_MODIFY, BINOP_ADD},
     {"-=", ASSIGN_MODIFY, BINOP_SUB},
@@ -2503,7 +2499,7 @@ static const struct token tokentab2[] =
   };
 
 /* Identifier-like tokens.  */
-static const struct token ident_tokens[] =
+static const struct go_token ident_tokens[] =
   {
     {"true", TRUE_KEYWORD, OP_NULL},
     {"false", FALSE_KEYWORD, OP_NULL},
@@ -2618,7 +2614,7 @@ lex_one_token (struct parser_state *par_state)
 	    last_was_structop = 1;
 	  goto symbol;		/* Nope, must be a symbol. */
 	}
-      /* FALL THRU.  */
+      [[fallthrough]];
 
     case '0':
     case '1':
@@ -2668,13 +2664,8 @@ lex_one_token (struct parser_state *par_state)
 	toktype = parse_number (par_state, tokstart, p - tokstart,
 				got_dot|got_e, &yylval);
 	if (toktype == ERROR)
-	  {
-	    char *err_copy = (char *) alloca (p - tokstart + 1);
-
-	    memcpy (err_copy, tokstart, p - tokstart);
-	    err_copy[p - tokstart] = 0;
-	    error (_("Invalid number \"%s\"."), err_copy);
-	  }
+	  error (_("Invalid number \"%.*s\"."), (int) (p - tokstart),
+		 tokstart);
 	par_state->lexptr = p;
 	return toktype;
       }
@@ -2693,7 +2684,7 @@ lex_one_token (struct parser_state *par_state)
 	    return ENTRY;
 	  }
       }
-      /* FALLTHRU */
+      [[fallthrough]];
     case '+':
     case '-':
     case '*':
@@ -2809,15 +2800,15 @@ lex_one_token (struct parser_state *par_state)
 }
 
 /* An object of this type is pushed on a FIFO by the "outer" lexer.  */
-struct token_and_value
+struct go_token_and_value
 {
   int token;
-  YYSTYPE value;
+  go_exp_YYSTYPE value;
 };
 
 /* A FIFO of tokens that have been read but not yet returned to the
    parser.  */
-static std::vector<token_and_value> token_fifo;
+static std::vector<go_token_and_value> token_fifo;
 
 /* Non-zero if the lexer should return tokens from the FIFO.  */
 static int popping;
@@ -2857,7 +2848,8 @@ package_name_p (const char *name, const struct block *block)
   struct symbol *sym;
   struct field_of_this_result is_a_field_of_this;
 
-  sym = lookup_symbol (name, block, STRUCT_DOMAIN, &is_a_field_of_this).symbol;
+  sym = lookup_symbol (name, block, SEARCH_TYPE_DOMAIN,
+		       &is_a_field_of_this).symbol;
 
   if (sym
       && sym->aclass () == LOC_TYPEDEF
@@ -2899,7 +2891,7 @@ classify_packaged_name (const struct block *block)
 
   std::string copy = copy_name (yylval.sval);
 
-  sym = lookup_symbol (copy.c_str (), block, VAR_DOMAIN, &is_a_field_of_this);
+  sym = lookup_symbol (copy.c_str (), block, SEARCH_VFT, &is_a_field_of_this);
 
   if (sym.symbol)
     {
@@ -2942,7 +2934,7 @@ classify_name (struct parser_state *par_state, const struct block *block)
 
   /* TODO: What about other types?  */
 
-  sym = lookup_symbol (copy.c_str (), block, VAR_DOMAIN, &is_a_field_of_this);
+  sym = lookup_symbol (copy.c_str (), block, SEARCH_VFT, &is_a_field_of_this);
 
   if (sym.symbol)
     {
@@ -2957,17 +2949,17 @@ classify_name (struct parser_state *par_state, const struct block *block)
      current package.  */
 
   {
-    char *current_package_name = go_block_package_name (block);
+    gdb::unique_xmalloc_ptr<char> current_package_name
+      = go_block_package_name (block);
 
     if (current_package_name != NULL)
       {
 	struct stoken sval =
-	  build_packaged_name (current_package_name,
-			       strlen (current_package_name),
+	  build_packaged_name (current_package_name.get (),
+			       strlen (current_package_name.get ()),
 			       copy.c_str (), copy.size ());
 
-	xfree (current_package_name);
-	sym = lookup_symbol (sval.ptr, block, VAR_DOMAIN,
+	sym = lookup_symbol (sval.ptr, block, SEARCH_VFT,
 			     &is_a_field_of_this);
 	if (sym.symbol)
 	  {
@@ -2985,7 +2977,7 @@ classify_name (struct parser_state *par_state, const struct block *block)
   if ((copy[0] >= 'a' && copy[0] < 'a' + input_radix - 10)
       || (copy[0] >= 'A' && copy[0] < 'A' + input_radix - 10))
     {
-      YYSTYPE newlval;	/* Its value is ignored.  */
+      go_exp_YYSTYPE newlval;	/* Its value is ignored.  */
       int hextype = parse_number (par_state, copy.c_str (),
 				  yylval.sval.length, 0, &newlval);
       if (hextype == INT)
@@ -3009,11 +3001,11 @@ classify_name (struct parser_state *par_state, const struct block *block)
 static int
 yylex (void)
 {
-  token_and_value current, next;
+  go_token_and_value current, next;
 
   if (popping && !token_fifo.empty ())
     {
-      token_and_value tv = token_fifo[0];
+      go_token_and_value tv = token_fifo[0];
       token_fifo.erase (token_fifo.begin ());
       yylval = tv.value;
       /* There's no need to fall through to handle package.name
@@ -3038,7 +3030,7 @@ yylex (void)
 
   if (next.token == '.')
     {
-      token_and_value name2;
+      go_token_and_value name2;
 
       name2.token = lex_one_token (pstate);
       name2.value = yylval;
@@ -3089,7 +3081,7 @@ go_language::parser (struct parser_state *par_state) const
   pstate = par_state;
 
   scoped_restore restore_yydebug = make_scoped_restore (&yydebug,
-							parser_debug);
+							par_state->debug);
 
   /* Initialize some state used by the lexer.  */
   last_was_structop = 0;
@@ -3109,8 +3101,5 @@ go_language::parser (struct parser_state *par_state) const
 static void
 yyerror (const char *msg)
 {
-  if (pstate->prev_lexptr)
-    pstate->lexptr = pstate->prev_lexptr;
-
-  error (_("A %s in expression, near `%s'."), msg, pstate->lexptr);
+  pstate->parse_error (msg);
 }

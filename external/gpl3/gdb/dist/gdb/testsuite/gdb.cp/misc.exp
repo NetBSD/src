@@ -1,4 +1,4 @@
-# Copyright 1992-2023 Free Software Foundation, Inc.
+# Copyright 1992-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 # This file was written by Fred Fish. (fnf@cygnus.com)
 
-if { [skip_cplus_tests] } { continue }
+require allow_cplus_tests
 
 standard_testfile .cc
 
@@ -114,3 +114,7 @@ gdb_test "print *(number_ref + v_bool_array)" "\\$\[0-9\]* = false" \
     "integer reference addition with pointer"
 gdb_test "print *(v_bool_array - number_ref)" "\\$\[0-9\]* = false" \
     "pointer subtraction with integer reference"
+
+# C++14 digit separator.
+gdb_test "print 23'23" " = 2323"
+gdb_test "print 2'3.5" " = 23.5"

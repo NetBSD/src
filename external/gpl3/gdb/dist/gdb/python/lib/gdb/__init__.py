@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2023 Free Software Foundation, Inc.
+# Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,10 +13,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import traceback
 import os
+import signal
 import sys
-import _gdb
+import threading
+import traceback
 from contextlib import contextmanager
 
 # Python 3 moved "reload"
@@ -25,7 +26,12 @@ if sys.version_info >= (3, 4):
 else:
     from imp import reload
 
-from _gdb import *
+import _gdb
+
+# Note that two indicators are needed here to silence flake8.
+from _gdb import *  # noqa: F401,F403
+
+# isort: split
 
 # Historically, gdb.events was always available, so ensure it's
 # still available without an explicit import.
@@ -54,15 +60,14 @@ class _GdbFile(object):
             self.write(line)
 
     def flush(self):
-        flush(stream=self.stream)
+        _gdb.flush(stream=self.stream)
 
     def write(self, s):
-        write(s, stream=self.stream)
+        _gdb.write(s, stream=self.stream)
 
 
-sys.stdout = _GdbFile(STDOUT)
-
-sys.stderr = _GdbFile(STDERR)
+sys.stdout = _GdbFile(_gdb.STDOUT)
+sys.stderr = _GdbFile(_gdb.STDERR)
 
 # Default prompt hook does nothing.
 prompt_hook = None
@@ -82,6 +87,8 @@ xmethods = []
 frame_filters = {}
 # Initial frame unwinders.
 frame_unwinders = []
+# Initial missing debug handlers.
+missing_debug_handlers = []
 
 
 def _execute_unwinders(pending_frame):
@@ -123,33 +130,6 @@ def _execute_unwinders(pending_frame):
     return None
 
 
-def _execute_file(filepath):
-    """This function is used to replace Python 2's PyRun_SimpleFile.
-
-    Loads and executes the given file.
-
-    We could use the runpy module, but its documentation says:
-    "Furthermore, any functions and classes defined by the executed code are
-    not guaranteed to work correctly after a runpy function has returned."
-    """
-    globals = sys.modules["__main__"].__dict__
-    set_file = False
-    # Set file (if not set) so that the imported file can use it (e.g. to
-    # access file-relative paths). This matches what PyRun_SimpleFile does.
-    if not hasattr(globals, "__file__"):
-        globals["__file__"] = filepath
-        set_file = True
-    try:
-        with open(filepath, "rb") as file:
-            # We pass globals also as locals to match what Python does
-            # in PyRun_SimpleFile.
-            compiled = compile(file.read(), filepath, "exec")
-            exec(compiled, globals, globals)
-    finally:
-        if set_file:
-            del globals["__file__"]
-
-
 # Convenience variable to GDB's python directory
 PYTHONDIR = os.path.dirname(os.path.dirname(__file__))
 
@@ -181,7 +161,7 @@ def _auto_load_packages():
                         reload(__import__(modname))
                     else:
                         __import__(modname)
-                except:
+                except Exception:
                     sys.stderr.write(traceback.format_exc() + "\n")
 
 
@@ -208,7 +188,7 @@ def GdbSetPythonDirectory(dir):
 
 def current_progspace():
     "Return the current Progspace."
-    return selected_inferior().progspace
+    return _gdb.selected_inferior().progspace
 
 
 def objfiles():
@@ -245,17 +225,86 @@ def set_parameter(name, value):
             value = "on"
         else:
             value = "off"
-    execute("set " + name + " " + str(value), to_string=True)
+    _gdb.execute("set " + name + " " + str(value), to_string=True)
 
 
 @contextmanager
 def with_parameter(name, value):
     """Temporarily set the GDB parameter NAME to VALUE.
     Note that this is a context manager."""
-    old_value = parameter(name)
+    old_value = _gdb.parameter(name)
     set_parameter(name, value)
     try:
         # Nothing that useful to return.
         yield None
     finally:
         set_parameter(name, old_value)
+
+
+@contextmanager
+def blocked_signals():
+    """A helper function that blocks and unblocks signals."""
+    if not hasattr(signal, "pthread_sigmask"):
+        yield
+        return
+
+    to_block = {signal.SIGCHLD, signal.SIGINT, signal.SIGALRM, signal.SIGWINCH}
+    old_mask = signal.pthread_sigmask(signal.SIG_BLOCK, to_block)
+    try:
+        yield None
+    finally:
+        signal.pthread_sigmask(signal.SIG_SETMASK, old_mask)
+
+
+class Thread(threading.Thread):
+    """A GDB-specific wrapper around threading.Thread
+
+    This wrapper ensures that the new thread blocks any signals that
+    must be delivered on GDB's main thread."""
+
+    def start(self):
+        # GDB requires that these be delivered to the main thread.  We
+        # do this here to avoid any possible race with the creation of
+        # the new thread.  The thread mask is inherited by new
+        # threads.
+        with blocked_signals():
+            super().start()
+
+
+def _handle_missing_debuginfo(objfile):
+    """Internal function called from GDB to execute missing debug
+    handlers.
+
+    Run each of the currently registered, and enabled missing debug
+    handler objects for the current program space and then from the
+    global list.  Stop after the first handler that returns a result
+    other than None.
+
+    Arguments:
+        objfile: A gdb.Objfile for which GDB could not find any debug
+                 information.
+
+    Returns:
+        None: No debug information could be found for objfile.
+        False: A handler has done all it can with objfile, but no
+               debug information could be found.
+        True: Debug information might have been installed by a
+              handler, GDB should check again.
+        A string: This is the filename of a file containing the
+                  required debug information.
+    """
+    pspace = objfile.progspace
+
+    for handler in pspace.missing_debug_handlers:
+        if handler.enabled:
+            result = handler(objfile)
+            if result is not None:
+                return result
+
+    for handler in missing_debug_handlers:
+        if handler.enabled:
+            result = handler(objfile)
+            if result is not None:
+                return result
+
+    return None

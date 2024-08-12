@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2023 Free Software Foundation, Inc.
+# Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 
 load_lib "d-support.exp"
 
-if { [skip_d_tests] } { continue }
+require allow_d_tests
 
 proc test_builtin_d_types_accepted {} {
     # Test types are recognised.
@@ -49,10 +49,7 @@ proc test_builtin_d_types_accepted {} {
     gdb_test "ptype dchar" "type = dchar"
 }
 
-# Start with a fresh gdb.
-
-gdb_exit
-gdb_start
+clean_restart
 
 if [set_lang_d] {
     test_builtin_d_types_accepted

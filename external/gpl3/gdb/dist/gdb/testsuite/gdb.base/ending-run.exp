@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1997-2023 Free Software Foundation, Inc.
+# Copyright 1997-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,11 @@
 
 standard_testfile
 
-if { [prepare_for_testing "failed to prepare" $testfile] } {
+set flags {}
+lappend flags debug
+lappend_include_file flags $srcdir/lib/unbuffer_output.c
+
+if { [prepare_for_testing "failed to prepare" $testfile $srcfile $flags] } {
     return -1
 }
 remote_exec build "rm -f core"
@@ -202,8 +206,8 @@ gdb_test_multiple "next" "step out of main" {
 	# This is what happens on system using uClibc.
 	pass "step out of main"
     }
-    -re "0x.*\\?\\? \\(\\) from /lib/powerpc.*$gdb_prompt $" {
-	# This case occurs on Powerpc when gdb steps out of main and the
+    -re -wrap "$hex in \\?\\? \\(\\) from \[^\r\n\]+" {
+	# This case occurs when gdb steps out of main and the
 	# needed debug info files are not loaded on the system, preventing
 	# GDB to determine which function it reached (__libc_start_call_main).
 	# Ideally, the target system would have the necessary debugging
@@ -296,7 +300,7 @@ if {!$use_gdb_stub
 set timeout $old_timeout
 
 #remote_exec build "rm -f ${binfile}"
-return 0
+
 
 
 

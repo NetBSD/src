@@ -1,6 +1,6 @@
 This is gdb.info, produced by makeinfo version 6.8 from gdb.texinfo.
 
-Copyright (C) 1988-2023 Free Software Foundation, Inc.
+Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -21,9 +21,9 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 13.2.
+Source-Level Debugger' for GDB (GDB) Version 15.1.
 
-   Copyright (C) 1988-2023 Free Software Foundation, Inc.
+   Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -35,6 +35,319 @@ with the Back-Cover Texts as in (a) below.
    (a) The FSF's Back-Cover Text is: "You are free to copy and modify
 this GNU Manual.  Buying copies from GNU Press supports the FSF in
 developing GNU and promoting software freedom."
+
+
+File: gdb.info,  Node: Overlay Sample Program,  Prev: Automatic Overlay Debugging,  Up: Overlays
+
+14.4 Overlay Sample Program
+===========================
+
+When linking a program which uses overlays, you must place the overlays
+at their load addresses, while relocating them to run at their mapped
+addresses.  To do this, you must write a linker script (*note
+(ld.info)Overlay Description::).  Unfortunately, since linker scripts
+are specific to a particular host system, target architecture, and
+target memory layout, this manual cannot provide portable sample code
+demonstrating GDB's overlay support.
+
+   However, the GDB source distribution does contain an overlaid
+program, with linker scripts for a few systems, as part of its test
+suite.  The program consists of the following files from
+'gdb/testsuite/gdb.base':
+
+'overlays.c'
+     The main program file.
+'ovlymgr.c'
+     A simple overlay manager, used by 'overlays.c'.
+'foo.c'
+'bar.c'
+'baz.c'
+'grbx.c'
+     Overlay modules, loaded and used by 'overlays.c'.
+'d10v.ld'
+'m32r.ld'
+     Linker scripts for linking the test program on the 'd10v-elf' and
+     'm32r-elf' targets.
+
+   You can build the test program using the 'd10v-elf' GCC
+cross-compiler like this:
+
+     $ d10v-elf-gcc -g -c overlays.c
+     $ d10v-elf-gcc -g -c ovlymgr.c
+     $ d10v-elf-gcc -g -c foo.c
+     $ d10v-elf-gcc -g -c bar.c
+     $ d10v-elf-gcc -g -c baz.c
+     $ d10v-elf-gcc -g -c grbx.c
+     $ d10v-elf-gcc -g overlays.o ovlymgr.o foo.o bar.o \
+                       baz.o grbx.o -Wl,-Td10v.ld -o overlays
+
+   The build process is identical for any other architecture, except
+that you must substitute the appropriate compiler and linker script for
+the target system for 'd10v-elf-gcc' and 'd10v.ld'.
+
+
+File: gdb.info,  Node: Languages,  Next: Symbols,  Prev: Overlays,  Up: Top
+
+15 Using GDB with Different Languages
+*************************************
+
+Although programming languages generally have common aspects, they are
+rarely expressed in the same manner.  For instance, in ANSI C,
+dereferencing a pointer 'p' is accomplished by '*p', but in Modula-2, it
+is accomplished by 'p^'.  Values can also be represented (and displayed)
+differently.  Hex numbers in C appear as '0x1ae', while in Modula-2 they
+appear as '1AEH'.
+
+   Language-specific information is built into GDB for some languages,
+allowing you to express operations like the above in your program's
+native language, and allowing GDB to output values in a manner
+consistent with the syntax of your program's native language.  The
+language you use to build expressions is called the "working language".
+
+* Menu:
+
+* Setting::                     Switching between source languages
+* Show::                        Displaying the language
+* Checks::                      Type and range checks
+* Supported Languages::         Supported languages
+* Unsupported Languages::       Unsupported languages
+
+
+File: gdb.info,  Node: Setting,  Next: Show,  Up: Languages
+
+15.1 Switching Between Source Languages
+=======================================
+
+There are two ways to control the working language--either have GDB set
+it automatically, or select it manually yourself.  You can use the 'set
+language' command for either purpose.  On startup, GDB defaults to
+setting the language automatically.  The working language is used to
+determine how expressions you type are interpreted, how values are
+printed, etc.
+
+   In addition to the working language, every source file that GDB knows
+about has its own working language.  For some object file formats, the
+compiler might indicate which language a particular source file is in.
+However, most of the time GDB infers the language from the name of the
+file.  The language of a source file controls whether C++ names are
+demangled--this way 'backtrace' can show each frame appropriately for
+its own language.  There is no way to set the language of a source file
+from within GDB, but you can set the language associated with a filename
+extension.  *Note Displaying the Language: Show.
+
+   This is most commonly a problem when you use a program, such as
+'cfront' or 'f2c', that generates C but is written in another language.
+In that case, make the program use '#line' directives in its C output;
+that way GDB will know the correct language of the source code of the
+original program, and will display that source code, not the generated C
+code.
+
+* Menu:
+
+* Filenames::                   Filename extensions and languages.
+* Manually::                    Setting the working language manually
+* Automatically::               Having GDB infer the source language
+
+
+File: gdb.info,  Node: Filenames,  Next: Manually,  Up: Setting
+
+15.1.1 List of Filename Extensions and Languages
+------------------------------------------------
+
+If a source file name ends in one of the following extensions, then GDB
+infers that its language is the one indicated.
+
+'.ada'
+'.ads'
+'.adb'
+'.a'
+     Ada source file.
+
+'.c'
+     C source file
+
+'.C'
+'.cc'
+'.cp'
+'.cpp'
+'.cxx'
+'.c++'
+     C++ source file
+
+'.d'
+     D source file
+
+'.m'
+     Objective-C source file
+
+'.f'
+'.F'
+     Fortran source file
+
+'.mod'
+     Modula-2 source file
+
+'.s'
+'.S'
+     Assembler source file.  This actually behaves almost like C, but
+     GDB does not skip over function prologues when stepping.
+
+   In addition, you may set the language associated with a filename
+extension.  *Note Displaying the Language: Show.
+
+
+File: gdb.info,  Node: Manually,  Next: Automatically,  Prev: Filenames,  Up: Setting
+
+15.1.2 Setting the Working Language
+-----------------------------------
+
+If you allow GDB to set the language automatically, expressions are
+interpreted the same way in your debugging session and your program.
+
+   If you wish, you may set the language manually.  To do this, issue
+the command 'set language LANG', where LANG is the name of a language,
+such as 'c' or 'modula-2'.  For a list of the supported languages, type
+'set language'.
+
+   Setting the language manually prevents GDB from updating the working
+language automatically.  This can lead to confusion if you try to debug
+a program when the working language is not the same as the source
+language, when an expression is acceptable to both languages--but means
+different things.  For instance, if the current source file were written
+in C, and GDB was parsing Modula-2, a command such as:
+
+     print a = b + c
+
+might not have the effect you intended.  In C, this means to add 'b' and
+'c' and place the result in 'a'.  The result printed would be the value
+of 'a'.  In Modula-2, this means to compare 'a' to the result of 'b+c',
+yielding a 'BOOLEAN' value.
+
+
+File: gdb.info,  Node: Automatically,  Prev: Manually,  Up: Setting
+
+15.1.3 Having GDB Infer the Source Language
+-------------------------------------------
+
+To have GDB set the working language automatically, use 'set language
+local' or 'set language auto'.  GDB then infers the working language.
+That is, when your program stops in a frame (usually by encountering a
+breakpoint), GDB sets the working language to the language recorded for
+the function in that frame.  If the language for a frame is unknown
+(that is, if the function or block corresponding to the frame was
+defined in a source file that does not have a recognized extension), the
+current working language is not changed, and GDB issues a warning.
+
+   This may not seem necessary for most programs, which are written
+entirely in one source language.  However, program modules and libraries
+written in one source language can be used by a main program written in
+a different source language.  Using 'set language auto' in this case
+frees you from having to set the working language manually.
+
+
+File: gdb.info,  Node: Show,  Next: Checks,  Prev: Setting,  Up: Languages
+
+15.2 Displaying the Language
+============================
+
+The following commands help you find out which language is the working
+language, and also what language source files were written in.
+
+'show language'
+     Display the current working language.  This is the language you can
+     use with commands such as 'print' to build and compute expressions
+     that may involve variables in your program.
+
+'info frame'
+     Display the source language for this frame.  This language becomes
+     the working language if you use an identifier from this frame.
+     *Note Information about a Frame: Frame Info, to identify the other
+     information listed here.
+
+'info source'
+     Display the source language of this source file.  *Note Examining
+     the Symbol Table: Symbols, to identify the other information listed
+     here.
+
+   In unusual circumstances, you may have source files with extensions
+not in the standard list.  You can then set the extension associated
+with a language explicitly:
+
+'set extension-language EXT LANGUAGE'
+     Tell GDB that source files with extension EXT are to be assumed as
+     written in the source language LANGUAGE.
+
+'info extensions'
+     List all the filename extensions and the associated languages.
+
+
+File: gdb.info,  Node: Checks,  Next: Supported Languages,  Prev: Show,  Up: Languages
+
+15.3 Type and Range Checking
+============================
+
+Some languages are designed to guard you against making seemingly common
+errors through a series of compile- and run-time checks.  These include
+checking the type of arguments to functions and operators and making
+sure mathematical overflows are caught at run time.  Checks such as
+these help to ensure a program's correctness once it has been compiled
+by eliminating type mismatches and providing active checks for range
+errors when your program is running.
+
+   By default GDB checks for these errors according to the rules of the
+current source language.  Although GDB does not check the statements in
+your program, it can check expressions entered directly into GDB for
+evaluation via the 'print' command, for example.
+
+* Menu:
+
+* Type Checking::               An overview of type checking
+* Range Checking::              An overview of range checking
+
+
+File: gdb.info,  Node: Type Checking,  Next: Range Checking,  Up: Checks
+
+15.3.1 An Overview of Type Checking
+-----------------------------------
+
+Some languages, such as C and C++, are strongly typed, meaning that the
+arguments to operators and functions have to be of the correct type,
+otherwise an error occurs.  These checks prevent type mismatch errors
+from ever causing any run-time problems.  For example,
+
+     int klass::my_method(char *b) { return  b ? 1 : 2; }
+
+     (gdb) print obj.my_method (0)
+     $1 = 2
+but
+     (gdb) print obj.my_method (0x1234)
+     Cannot resolve method klass::my_method to any overloaded instance
+
+   The second example fails because in C++ the integer constant '0x1234'
+is not type-compatible with the pointer parameter type.
+
+   For the expressions you use in GDB commands, you can tell GDB to not
+enforce strict type checking or to treat any mismatches as errors and
+abandon the expression; When type checking is disabled, GDB successfully
+evaluates expressions like the second example above.
+
+   Even if type checking is off, there may be other reasons related to
+type that prevent GDB from evaluating an expression.  For instance, GDB
+does not know how to add an 'int' and a 'struct foo'.  These particular
+type errors have nothing to do with the language in use and usually
+arise from expressions which make little sense to evaluate anyway.
+
+   GDB provides some additional commands for controlling type checking:
+
+'set check type on'
+'set check type off'
+     Set strict type checking on or off.  If any type mismatches occur
+     in evaluating an expression while type checking is on, GDB prints a
+     message and aborts evaluation of the expression.
+
+'show check type'
+     Show the current setting of type checking and whether GDB is
+     enforcing strict type checking rules.
 
 
 File: gdb.info,  Node: Range Checking,  Prev: Type Checking,  Up: Checks
@@ -2099,7 +2412,7 @@ Threads::).  GDB provides the following task-related commands:
           Name of the task in the program.
 
 'info task TASKNO'
-     This command shows detailed informations on the specified task, as
+     This command shows detailed information on the specified task, as
      in the following example:
           (gdb) info tasks
             ID       TID P-ID Pri State                  Name
@@ -3005,6 +3318,11 @@ looks up the value of 'x' in the scope of the file 'foo.c'.
      header information and messages explaining why no functions or
      variables have been printed.
 
+'info main'
+     Print the name of the starting function of the program.  This
+     serves primarily Fortran programs, which have a user-supplied name
+     for the main subroutine.
+
 'info classes'
 'info classes REGEXP'
      Display all Objective-C classes in your program, or (with the
@@ -3138,24 +3456,33 @@ looks up the value of 'x' in the scope of the file 'foo.c'.
           compunit_symtab: simple.cpp ((struct compunit_symtab *) 0x6210000ff450)
           symtab: /home/gnu/src/simple.cpp ((struct symtab *) 0x6210000ff4d0)
           linetable: ((struct linetable *) 0x62100012b760):
-          INDEX  LINE   ADDRESS            IS-STMT PROLOGUE-END
+          INDEX  LINE   ADDRESS            IS-STMT PROLOGUE-END EPILOGUE-BEGIN
           0      3      0x0000000000401110 Y
-          1      4      0x0000000000401114 Y       Y
+          1      4      0x0000000000401114 Y       Y            Y
           2      9      0x0000000000401120 Y
           3      10     0x0000000000401124 Y       Y
-          4      10     0x0000000000401129
+          4      10     0x0000000000401129 Y                    Y
           5      15     0x0000000000401130 Y
           6      16     0x0000000000401134 Y       Y
           7      16     0x0000000000401139
-          8      21     0x0000000000401140 Y
+          8      21     0x0000000000401140 Y                    Y
           9      22     0x000000000040114f Y       Y
-          10     22     0x0000000000401154
+          10     22     0x0000000000401154                      Y
           11     END    0x000000000040115a Y
      The 'IS-STMT' column indicates if the address is a recommended
      breakpoint location to represent a line or a statement.  The
      'PROLOGUE-END' column indicates that a given address is an adequate
      place to set a breakpoint at the first instruction following a
-     function prologue.
+     function prologue.  The 'EPILOGUE-BEGIN' column indicates that a
+     given address marks the point where a block's frame is destroyed,
+     making local variables hard or impossible to find.
+
+'set always-read-ctf [on|off]'
+'show always-read-ctf'
+
+     When off, CTF debug info is only read if DWARF debug info is not
+     present.  When on, CTF debug info is read regardless of whether
+     DWARF debug info is present.  The default value is off.
 
 'maint set symbol-cache-size SIZE'
      Set the size of the symbol cache to SIZE.  The default size is
@@ -3316,10 +3643,13 @@ address of your own choosing, with the following commands:
      Resume execution at the address of the code location that results
      from resolving LOCSPEC.  *Note Location Specifications::, for a
      description of the different forms of LOCSPEC.  If LOCSPEC resolves
-     to more than one address, the command aborts before jumping.
-     Execution stops again immediately if there is a breakpoint there.
-     It is common practice to use the 'tbreak' command in conjunction
-     with 'jump'.  *Note Setting Breakpoints: Set Breaks.
+     to more than one address, those outside the current compilation
+     unit are ignored.  If considering just the addresses in the current
+     compilation unit still doesn't yield a unique address, the command
+     aborts before jumping.  Execution stops again immediately if there
+     is a breakpoint there.  It is common practice to use the 'tbreak'
+     command in conjunction with 'jump'.  *Note Setting Breakpoints: Set
+     Breaks.
 
      The 'jump' command does not change the current stack frame, or the
      stack pointer, or the contents of any memory location or any
@@ -3342,6 +3672,13 @@ address of where it _will_ run when you continue.  For example,
 makes the next 'continue' command or stepping command execute at address
 '0x485', rather than at the address where your program stopped.  *Note
 Continuing and Stepping: Continuing and Stepping.
+
+   However, writing directly to '$pc' will only change the value of the
+program-counter register, while using 'jump' will ensure that any
+additional auxiliary state is also updated.  For example, on SPARC,
+'jump' will update both '$pc' and '$npc' registers prior to resuming
+execution.  When using the approach of writing directly to '$pc' it is
+your job to also update the '$npc' register.
 
    The most common occasion to use the 'jump' command is to back
 up--perhaps with more breakpoints set--over a portion of a program that
@@ -3503,7 +3840,7 @@ File: gdb.info,  Node: Calling,  Next: Patching,  Prev: Returning,  Up: Altering
    It is possible for the function you call via the 'print' or 'call'
 command to generate a signal (e.g., if there's a bug in the function, or
 if you passed it incorrect arguments).  What happens in that case is
-controlled by the 'set unwindonsignal' command.
+controlled by the 'set unwind-on-signal' command.
 
    Similarly, with a C++ program it is possible for the function you
 call via the 'print' or 'call' command to generate an exception that is
@@ -3514,16 +3851,22 @@ inferior function call, and the unwinder cannot seek for exception
 handlers outside of this dummy-frame.  What happens in that case is
 controlled by the 'set unwind-on-terminating-exception' command.
 
-'set unwindonsignal'
+'set unwind-on-signal'
      Set unwinding of the stack if a signal is received while in a
      function that GDB called in the program being debugged.  If set to
      on, GDB unwinds the stack it created for the call and restores the
      context to what it was before the call.  If set to off (the
      default), GDB stops in the frame where the signal was received.
 
-'show unwindonsignal'
+     The command 'set unwindonsignal' is an alias for this command, and
+     is maintained for backward compatibility.
+
+'show unwind-on-signal'
      Show the current setting of stack unwinding in the functions called
      by GDB.
+
+     The command 'show unwindonsignal' is an alias for this command, and
+     is maintained for backward compatibility.
 
 'set unwind-on-terminating-exception'
      Set unwinding of the stack if a C++ exception is raised, but left
@@ -3536,6 +3879,17 @@ controlled by the 'set unwind-on-terminating-exception' command.
 'show unwind-on-terminating-exception'
      Show the current setting of stack unwinding in the functions called
      by GDB.
+
+'set unwind-on-timeout'
+     Set unwinding of the stack if a function called from GDB times out.
+     If set to 'off' (the default), GDB stops in the frame where the
+     timeout occurred.  If set to 'on', GDB unwinds the stack it created
+     for the call and restores the context to what it was before the
+     call.
+
+'show unwind-on-timeout'
+     Show whether GDB will unwind the stack if a function called from
+     GDB times out.
 
 'set may-call-functions'
      Set permission to call functions in the program.  This controls
@@ -3553,6 +3907,92 @@ controlled by the 'set unwind-on-terminating-exception' command.
 
 'show may-call-functions'
      Show permission to call functions in the program.
+
+   When calling a function within a program, it is possible that the
+program could enter a state from which the called function may never
+return.  If this happens then it is possible to interrupt the function
+call by typing the interrupt character (often 'Ctrl-c').
+
+   If a called function is interrupted for any reason, including hitting
+a breakpoint, or triggering a watchpoint, and the stack is not unwound
+due to 'set unwind-on-terminating-exception on', 'set unwind-on-timeout
+on', or 'set unwind-on-signal on' (*note stack unwind settings::), then
+the dummy-frame, created by GDB to facilitate the call to the program
+function, will be visible in the backtrace, for example frame '#3' in
+the following backtrace:
+
+     (gdb) backtrace
+     #0  0x00007ffff7b3d1e7 in nanosleep () from /lib64/libc.so.6
+     #1  0x00007ffff7b3d11e in sleep () from /lib64/libc.so.6
+     #2  0x000000000040113f in deadlock () at test.cc:13
+     #3  <function called from gdb>
+     #4  breakpt () at test.cc:20
+     #5  0x0000000000401151 in main () at test.cc:25
+
+   At this point it is possible to examine the state of the inferior
+just like any other stop.
+
+   Depending on why the function was interrupted then it may be possible
+to resume the inferior (using commands like 'continue', 'step', etc).
+In this case, when the inferior finally returns to the dummy-frame, GDB
+will once again halt the inferior.
+
+   On targets that support asynchronous execution (*note Background
+Execution::) GDB can place a timeout on any functions called from GDB.
+If the timeout expires and the function call is still ongoing, then GDB
+will interrupt the program.
+
+   If a function called from GDB is interrupted by a timeout, then by
+default the inferior is left in the frame where the timeout occurred,
+this behaviour can be adjusted with 'set unwind-on-timeout' (*note set
+unwind-on-timeout::).
+
+   For targets that don't support asynchronous execution (*note
+Background Execution::) then timeouts for functions called from GDB are
+not supported, the timeout settings described below will be treated as
+'unlimited', meaning GDB will wait indefinitely for function call to
+complete, unless interrupted by the user using 'Ctrl-C'.
+
+'set direct-call-timeout SECONDS'
+     Set the timeout used when calling functions in the program to
+     SECONDS, which should be an integer greater than zero, or the
+     special value 'unlimited', which indicates no timeout should be
+     used.  The default for this setting is 'unlimited'.
+
+     This setting is used when the user calls a function directly from
+     the command prompt, for example with a 'call' or 'print' command.
+
+     This setting only works for targets that support asynchronous
+     execution (*note Background Execution::), for any other target the
+     setting is treated as 'unlimited'.
+
+'show direct-call-timeout'
+     Show the timeout used when calling functions in the program with a
+     'call' or 'print' command.
+
+   It is also possible to call functions within the program from the
+condition of a conditional breakpoint (*note Break Conditions:
+Conditions.).  A different setting controls the timeout used for
+function calls made from a breakpoint condition.
+
+'set indirect-call-timeout SECONDS'
+     Set the timeout used when calling functions in the program from a
+     breakpoint or watchpoint condition to SECONDS, which should be an
+     integer greater than zero, or the special value 'unlimited', which
+     indicates no timeout should be used.  The default for this setting
+     is '30' seconds.
+
+     This setting only works for targets that support asynchronous
+     execution (*note Background Execution::), for any other target the
+     setting is treated as 'unlimited'.
+
+     If a function called from a breakpoint or watchpoint condition
+     times out, then GDB will stop at the point where the timeout
+     occurred.  The breakpoint condition evaluation will be abandoned.
+
+'show indirect-call-timeout'
+     Show the timeout used when calling functions in the program from a
+     breakpoint or watchpoint condition.
 
 17.5.1 Calling functions with no debug info
 -------------------------------------------
@@ -3916,7 +4356,7 @@ GDB needs to find GCC for the inferior being debugged which may not be
 obvious for remote targets of different architecture than where GDB is
 running.  Environment variable 'PATH' on GDB host is searched for GCC
 binary matching the target architecture and operating system.  This
-search can be overriden by 'set compile-gcc' GDB command below.  'PATH'
+search can be overridden by 'set compile-gcc' GDB command below.  'PATH'
 is taken from shell that executed GDB, it is not the value set by GDB
 command 'set environment').  *Note Environment::.
 
@@ -3964,6 +4404,7 @@ the core dump file.
 * Separate Debug Files::        Debugging information in separate files
 * MiniDebugInfo::               Debugging information in a special section
 * Index Files::                 Index files speed up GDB
+* Debug Names::                 Extensions to .debug_names
 * Symbol Errors::               Errors reading symbol files
 * Data Files::                  GDB data files
 
@@ -3993,6 +4434,9 @@ files are useful.
      program to run.  You can change the value of this variable, for
      both GDB and your program, using the 'path' command.
 
+     The FILENAME argument supports escaping and quoting, see *note
+     Filenames As Command Arguments: Filename Arguments.
+
      You can load unlinked object '.o' files into GDB using the 'file'
      command.  You will not be able to "run" an object file, but you can
      disassemble functions and inspect variables.  Also, if the
@@ -4011,6 +4455,9 @@ files are useful.
      found in FILENAME.  GDB searches the environment variable 'PATH' if
      necessary to locate your program.  Omitting FILENAME means to
      discard information on the executable file.
+
+     The FILENAME argument supports escaping and quoting, see *note
+     Filenames As Command Arguments: Filename Arguments.
 
 'symbol-file [ FILENAME [ -o OFFSET ]]'
      Read symbol table information from file FILENAME.  'PATH' is
@@ -4033,6 +4480,9 @@ files are useful.
 
      'symbol-file' does not repeat if you press <RET> again after
      executing it once.
+
+     The FILENAME argument supports escaping and quoting, see *note
+     Filenames As Command Arguments: Filename Arguments.
 
      When GDB is configured for a particular environment, it understands
      debugging information in whatever format is the standard generated
@@ -4111,6 +4561,9 @@ files are useful.
      'add-symbol-file' command any number of times; the new symbol data
      thus read is kept in addition to the old.
 
+     The FILENAME argument supports escaping and quoting, see *note
+     Filenames As Command Arguments: Filename Arguments.
+
      Changes can be reverted using the command 'remove-symbol-file'.
 
      Although FILENAME is typically a shared library file, an executable
@@ -4159,6 +4612,9 @@ files are useful.
 
      'remove-symbol-file' does not repeat if you press <RET> after using
      it.
+
+     The FILENAME argument supports escaping and quoting, see *note
+     Filenames As Command Arguments: Filename Arguments.
 
 'add-symbol-file-from-memory ADDRESS'
      Load symbols from the given ADDRESS in a dynamically loaded object
@@ -4625,9 +5081,10 @@ Debuginfod::) is enabled, GDB will attempt to download the file from
 'debuginfod' servers.
 
    Global debugging info directories default to what is set by GDB
-configure option '--with-separate-debug-dir'.  During GDB run you can
-also set the global debugging info directories, and view the list GDB is
-currently using.
+configure option '--with-separate-debug-dir' and augmented by the
+colon-separated list of directories provided via GDB configure option
+'--additional-debug-dirs'.  During GDB run you can also set the global
+debugging info directories, and view the list GDB is currently using.
 
 'set debug-file-directory DIRECTORIES'
      Set the directories which GDB searches for separate debugging
@@ -4849,7 +5306,7 @@ utilities:
      objcopy --add-section .gnu_debugdata=mini_debuginfo.xz BINARY
 
 
-File: gdb.info,  Node: Index Files,  Next: Symbol Errors,  Prev: MiniDebugInfo,  Up: GDB Files
+File: gdb.info,  Node: Index Files,  Next: Debug Names,  Prev: MiniDebugInfo,  Up: GDB Files
 
 18.5 Index Files Speed Up GDB
 =============================
@@ -4950,9 +5407,43 @@ index cache.
      Print the number of cache hits and misses since the launch of GDB.
 
 
-File: gdb.info,  Node: Symbol Errors,  Next: Data Files,  Prev: Index Files,  Up: GDB Files
+File: gdb.info,  Node: Debug Names,  Next: Symbol Errors,  Prev: Index Files,  Up: GDB Files
 
-18.6 Errors Reading Symbol Files
+18.6 Extensions to '.debug_names'
+=================================
+
+The DWARF specification documents an optional index section called
+'.debug_names'.  GDB can both read and create this section.  However, in
+order to work with GDB, some extensions were necessary.
+
+   GDB uses the augmentation string 'GDB2'.  Earlier versions used the
+string 'GDB', but these versions of the index are no longer supported.
+
+   GDB does not use the specified hash table.  Therefore, because this
+hash table is optional, GDB also does not write it.
+
+   GDB also generates and uses some extra index attributes:
+'DW_IDX_GNU_internal'
+     This has the value '0x2000'.  It is a flag that, when set,
+     indicates that the associated entry has 'static' linkage.
+
+'DW_IDX_GNU_main'
+     This has the value '0x2002'.  It is a flag that, when set,
+     indicates that the associated entry is the program's 'main'.
+
+'DW_IDX_GNU_language'
+     This has the value '0x2003'.  It is 'DW_LANG_' constant, indicating
+     the language of the associated entry.
+
+'DW_IDX_GNU_linkage_name'
+     This has the value '0x2004'.  It is a flag that, when set,
+     indicates that the associated entry is a linkage name, and not a
+     source name.
+
+
+File: gdb.info,  Node: Symbol Errors,  Next: Data Files,  Prev: Debug Names,  Up: GDB Files
+
+18.7 Errors Reading Symbol Files
 ================================
 
 While reading a symbol file, GDB occasionally encounters problems, such
@@ -5039,7 +5530,7 @@ Optional Warnings and Messages: Messages/Warnings.).
 
 File: gdb.info,  Node: Data Files,  Prev: Symbol Errors,  Up: GDB Files
 
-18.7 GDB Data Files
+18.8 GDB Data Files
 ===================
 
 GDB will sometimes read an auxiliary data file.  These files are kept in
@@ -5333,7 +5824,7 @@ use 'help target' to list them.
 
 * Connecting::                  Connecting to a remote target
 * File Transfer::               Sending files to a remote system
-* Server::	                Using the gdbserver program
+* Server::                      Using the gdbserver program
 * Remote Configuration::        Remote configuration
 * Remote Stub::                 Implementing a remote stub
 
@@ -5795,11 +6286,36 @@ a program to debug or a process to attach to.  Then you can attach in
 'target extended-remote' mode and run or attach to a program.  For more
 information, *note --multi Option in Types of Remote Connnections::.
 
-   The '--debug' option tells 'gdbserver' to display extra status
-information about the debugging process.  The '--remote-debug' option
-tells 'gdbserver' to display remote protocol debug output.  The
-'--debug-file=FILENAME' option tells 'gdbserver' to write any debug
-output to the given FILENAME.  These options are intended for
+   The '--debug[=option1,option2,...]' option tells 'gdbserver' to
+display extra diagnostic information about the debugging process.  The
+options (OPTION1, OPTION2, etc) control for which areas of 'gdbserver'
+additional information will be displayed, possible values are:
+
+'all'
+     This enables all available diagnostic output.
+'threads'
+     This enables diagnostic output related to threading.  Currently
+     other general diagnostic output is included in this category, but
+     this could change in future releases of 'gdbserver'.
+'event-loop'
+     This enables event-loop specific diagnostic output.
+'remote'
+     This enables diagnostic output related to the transfer of remote
+     protocol packets too and from the debugger.
+
+If no options are passed to '--debug' then this is treated as equivalent
+to '--debug=threads'.  This could change in future releases of
+'gdbserver'.  The options passed to '--debug' are processed left to
+right, and individual options can be prefixed with the '-' (minus)
+character to disable diagnostic output from this area, so it is possible
+to use:
+
+       target> gdbserver --debug=all,-event-loop
+
+In order to enable all diagnostic output except that for the event-loop.
+
+   The '--debug-file=FILENAME' option tells 'gdbserver' to write any
+debug output to the given FILENAME.  These options are intended for
 'gdbserver' development and for bug reports to the developers.
 
    The '--debug-format=option1[,option2,...]' option tells 'gdbserver'
@@ -5874,14 +6390,30 @@ commands.
 'monitor help'
      List the available monitor commands.
 
-'monitor set debug 0'
-'monitor set debug 1'
-     Disable or enable general debugging messages.
+'monitor set debug off'
+     Disable all internal logging from gdbserver.
 
-'monitor set remote-debug 0'
-'monitor set remote-debug 1'
-     Disable or enable specific debugging messages associated with the
+'monitor set debug on'
+     Enable some general logging from within gdbserver.  Currently this
+     is equivalent to 'monitor set debug threads on', but this might
+     change in future releases of gdbserver.
+
+'monitor set debug threads off'
+'monitor set debug threads on'
+     Disable or enable specific logging messages associated with thread
+     handling in gdbserver.  Currently this category also includes
+     additional output not specifically related to thread handling, this
+     could change in future releases of gdbserver.
+
+'monitor set debug remote off'
+'monitor set debug remote on'
+     Disable or enable specific logging messages associated with the
      remote protocol (*note Remote Protocol::).
+
+'monitor set debug event-loop off'
+'monitor set debug event-loop on'
+     Disable or enable specific logging messages associated with
+     gdbserver's event-loop.
 
 'monitor set debug-file filename'
 'monitor set debug-file'
@@ -6169,7 +6701,15 @@ If you do, that may be a bug in your remote debugging stub, or a bug in
 GDB.  You may want to report the problem to the GDB developers.
 
    For each packet NAME, the command to enable or disable the packet is
-'set remote NAME-packet'.  The available settings are:
+'set remote NAME-packet'.  If you configure a packet, the configuration
+will apply for all future remote targets if no target is selected.  In
+case there is a target selected, only the configuration of the current
+target is changed.  All other existing remote targets' features are not
+affected.  The command to print the current configuration of a packet is
+'show remote NAME-packet'.  It displays the current remote target's
+configuration.  If no remote target is selected, the default
+configuration for future connections is shown.  The available settings
+are:
 
 Command Name         Remote Packet           Related Features
                                              
@@ -6328,9 +6868,28 @@ storage-address'                             '__thread'
 'thread-events'      'QThreadEvents'         Tracking thread
                                              lifetime.
                                              
+'thread-options'     'QThreadOptions'        Set thread event
+                                             reporting
+                                             options.
+                                             
 'no-resumed-stop-reply''no resumed thread    Tracking thread
                      left stop reply'        lifetime.
                                              
+
+   The number of bytes per memory-read or memory-write packet for a
+remote target can be configured using the commands
+'set remote memory-read-packet-size' and
+'set remote memory-write-packet-size'.  If set to '0' (zero) the default
+packet size will be used.  The actual limit is further reduced depending
+on the target.  Specify 'fixed' to disable the target-dependent
+restriction and 'limit' to enable it.  Similar to the enabling and
+disabling of remote packets, the command applies to the currently
+selected target (if available).  If no remote target is selected, it
+applies to all future remote connections.  The configuration of the
+selected target can be displayed using the commands
+'show remote memory-read-packet-size' and
+'show remote memory-write-packet-size'.  If no remote target is
+selected, the default configuration for future connections is shown.
 
 
 File: gdb.info,  Node: Remote Stub,  Prev: Remote Configuration,  Up: Remote Debugging
@@ -6587,575 +7146,4 @@ steps.
 
   7. Start GDB on the host, and connect to the target (*note Connecting
      to a Remote Target: Connecting.).
-
-
-File: gdb.info,  Node: Configurations,  Next: Controlling GDB,  Prev: Remote Debugging,  Up: Top
-
-21 Configuration-Specific Information
-*************************************
-
-While nearly all GDB commands are available for all native and cross
-versions of the debugger, there are some exceptions.  This chapter
-describes things that are only available in certain configurations.
-
-   There are three major categories of configurations: native
-configurations, where the host and target are the same, embedded
-operating system configurations, which are usually the same for several
-different processor architectures, and bare embedded processors, which
-are quite different from each other.
-
-* Menu:
-
-* Native::
-* Embedded OS::
-* Embedded Processors::
-* Architectures::
-
-
-File: gdb.info,  Node: Native,  Next: Embedded OS,  Up: Configurations
-
-21.1 Native
-===========
-
-This section describes details specific to particular native
-configurations.
-
-* Menu:
-
-* BSD libkvm Interface::	Debugging BSD kernel memory images
-* Process Information::         Process information
-* DJGPP Native::                Features specific to the DJGPP port
-* Cygwin Native::		Features specific to the Cygwin port
-* Hurd Native::                 Features specific to GNU Hurd
-* Darwin::			Features specific to Darwin
-* FreeBSD::			Features specific to FreeBSD
-
-
-File: gdb.info,  Node: BSD libkvm Interface,  Next: Process Information,  Up: Native
-
-21.1.1 BSD libkvm Interface
----------------------------
-
-BSD-derived systems (FreeBSD/NetBSD/OpenBSD) have a kernel memory
-interface that provides a uniform interface for accessing kernel virtual
-memory images, including live systems and crash dumps.  GDB uses this
-interface to allow you to debug live kernels and kernel crash dumps on
-many native BSD configurations.  This is implemented as a special 'kvm'
-debugging target.  For debugging a live system, load the currently
-running kernel into GDB and connect to the 'kvm' target:
-
-     (gdb) target kvm
-
-   For debugging crash dumps, provide the file name of the crash dump as
-an argument:
-
-     (gdb) target kvm /var/crash/bsd.0
-
-   Once connected to the 'kvm' target, the following commands are
-available:
-
-'kvm pcb'
-     Set current context from the "Process Control Block" (PCB) address.
-
-'kvm proc'
-     Set current context from proc address.  This command isn't
-     available on modern FreeBSD systems.
-
-
-File: gdb.info,  Node: Process Information,  Next: DJGPP Native,  Prev: BSD libkvm Interface,  Up: Native
-
-21.1.2 Process Information
---------------------------
-
-Some operating systems provide interfaces to fetch additional
-information about running processes beyond memory and per-thread
-register state.  If GDB is configured for an operating system with a
-supported interface, the command 'info proc' is available to report
-information about the process running your program, or about any process
-running on your system.
-
-   One supported interface is a facility called '/proc' that can be used
-to examine the image of a running process using file-system subroutines.
-This facility is supported on GNU/Linux and Solaris systems.
-
-   On FreeBSD and NetBSD systems, system control nodes are used to query
-process information.
-
-   In addition, some systems may provide additional process information
-in core files.  Note that a core file may include a subset of the
-information available from a live process.  Process information is
-currently available from cores created on GNU/Linux and FreeBSD systems.
-
-'info proc'
-'info proc PROCESS-ID'
-     Summarize available information about a process.  If a process ID
-     is specified by PROCESS-ID, display information about that process;
-     otherwise display information about the program being debugged.
-     The summary includes the debugged process ID, the command line used
-     to invoke it, its current working directory, and its executable
-     file's absolute file name.
-
-     On some systems, PROCESS-ID can be of the form '[PID]/TID' which
-     specifies a certain thread ID within a process.  If the optional
-     PID part is missing, it means a thread from the process being
-     debugged (the leading '/' still needs to be present, or else GDB
-     will interpret the number as a process ID rather than a thread ID).
-
-'info proc cmdline'
-     Show the original command line of the process.  This command is
-     supported on GNU/Linux, FreeBSD and NetBSD.
-
-'info proc cwd'
-     Show the current working directory of the process.  This command is
-     supported on GNU/Linux, FreeBSD and NetBSD.
-
-'info proc exe'
-     Show the name of executable of the process.  This command is
-     supported on GNU/Linux, FreeBSD and NetBSD.
-
-'info proc files'
-     Show the file descriptors open by the process.  For each open file
-     descriptor, GDB shows its number, type (file, directory, character
-     device, socket), file pointer offset, and the name of the resource
-     open on the descriptor.  The resource name can be a file name (for
-     files, directories, and devices) or a protocol followed by socket
-     address (for network connections).  This command is supported on
-     FreeBSD.
-
-     This example shows the open file descriptors for a process using a
-     tty for standard input and output as well as two network sockets:
-
-          (gdb) info proc files 22136
-          process 22136
-          Open files:
-
-                FD   Type     Offset   Flags   Name
-              text   file          - r-------- /usr/bin/ssh
-              ctty    chr          - rw------- /dev/pts/20
-               cwd    dir          - r-------- /usr/home/john
-              root    dir          - r-------- /
-                 0    chr  0x32933a4 rw------- /dev/pts/20
-                 1    chr  0x32933a4 rw------- /dev/pts/20
-                 2    chr  0x32933a4 rw------- /dev/pts/20
-                 3 socket        0x0 rw----n-- tcp4 10.0.1.2:53014 -> 10.0.1.10:22
-                 4 socket        0x0 rw------- unix stream:/tmp/ssh-FIt89oAzOn5f/agent.2456
-
-'info proc mappings'
-     Report the memory address space ranges accessible in a process.  On
-     Solaris, FreeBSD and NetBSD systems, each memory range includes
-     information on whether the process has read, write, or execute
-     access rights to each range.  On GNU/Linux, FreeBSD and NetBSD
-     systems, each memory range includes the object file which is mapped
-     to that range.
-
-'info proc stat'
-'info proc status'
-     Show additional process-related information, including the user ID
-     and group ID; virtual memory usage; the signals that are pending,
-     blocked, and ignored; its TTY; its consumption of system and user
-     time; its stack size; its 'nice' value; etc.  These commands are
-     supported on GNU/Linux, FreeBSD and NetBSD.
-
-     For GNU/Linux systems, see the 'proc' man page for more information
-     (type 'man 5 proc' from your shell prompt).
-
-     For FreeBSD and NetBSD systems, 'info proc stat' is an alias for
-     'info proc status'.
-
-'info proc all'
-     Show all the information about the process described under all of
-     the above 'info proc' subcommands.
-
-'set procfs-trace'
-     This command enables and disables tracing of 'procfs' API calls.
-
-'show procfs-trace'
-     Show the current state of 'procfs' API call tracing.
-
-'set procfs-file FILE'
-     Tell GDB to write 'procfs' API trace to the named FILE.  GDB
-     appends the trace info to the previous contents of the file.  The
-     default is to display the trace on the standard output.
-
-'show procfs-file'
-     Show the file to which 'procfs' API trace is written.
-
-'proc-trace-entry'
-'proc-trace-exit'
-'proc-untrace-entry'
-'proc-untrace-exit'
-     These commands enable and disable tracing of entries into and exits
-     from the 'syscall' interface.
-
-'info pidlist'
-     For QNX Neutrino only, this command displays the list of all the
-     processes and all the threads within each process.
-
-'info meminfo'
-     For QNX Neutrino only, this command displays the list of all
-     mapinfos.
-
-
-File: gdb.info,  Node: DJGPP Native,  Next: Cygwin Native,  Prev: Process Information,  Up: Native
-
-21.1.3 Features for Debugging DJGPP Programs
---------------------------------------------
-
-DJGPP is a port of the GNU development tools to MS-DOS and MS-Windows.
-DJGPP programs are 32-bit protected-mode programs that use the "DPMI"
-(DOS Protected-Mode Interface) API to run on top of real-mode DOS
-systems and their emulations.
-
-   GDB supports native debugging of DJGPP programs, and defines a few
-commands specific to the DJGPP port.  This subsection describes those
-commands.
-
-'info dos'
-     This is a prefix of DJGPP-specific commands which print information
-     about the target system and important OS structures.
-
-'info dos sysinfo'
-     This command displays assorted information about the underlying
-     platform: the CPU type and features, the OS version and flavor, the
-     DPMI version, and the available conventional and DPMI memory.
-
-'info dos gdt'
-'info dos ldt'
-'info dos idt'
-     These 3 commands display entries from, respectively, Global, Local,
-     and Interrupt Descriptor Tables (GDT, LDT, and IDT). The descriptor
-     tables are data structures which store a descriptor for each
-     segment that is currently in use.  The segment's selector is an
-     index into a descriptor table; the table entry for that index holds
-     the descriptor's base address and limit, and its attributes and
-     access rights.
-
-     A typical DJGPP program uses 3 segments: a code segment, a data
-     segment (used for both data and the stack), and a DOS segment
-     (which allows access to DOS/BIOS data structures and absolute
-     addresses in conventional memory).  However, the DPMI host will
-     usually define additional segments in order to support the DPMI
-     environment.
-
-     These commands allow to display entries from the descriptor tables.
-     Without an argument, all entries from the specified table are
-     displayed.  An argument, which should be an integer expression,
-     means display a single entry whose index is given by the argument.
-     For example, here's a convenient way to display information about
-     the debugged program's data segment:
-
-     (gdb) info dos ldt $ds
-     0x13f: base=0x11970000 limit=0x0009ffff 32-Bit Data (Read/Write, Exp-up)
-
-     This comes in handy when you want to see whether a pointer is
-     outside the data segment's limit (i.e. "garbled").
-
-'info dos pde'
-'info dos pte'
-     These two commands display entries from, respectively, the Page
-     Directory and the Page Tables.  Page Directories and Page Tables
-     are data structures which control how virtual memory addresses are
-     mapped into physical addresses.  A Page Table includes an entry for
-     every page of memory that is mapped into the program's address
-     space; there may be several Page Tables, each one holding up to
-     4096 entries.  A Page Directory has up to 4096 entries, one each
-     for every Page Table that is currently in use.
-
-     Without an argument, 'info dos pde' displays the entire Page
-     Directory, and 'info dos pte' displays all the entries in all of
-     the Page Tables.  An argument, an integer expression, given to the
-     'info dos pde' command means display only that entry from the Page
-     Directory table.  An argument given to the 'info dos pte' command
-     means display entries from a single Page Table, the one pointed to
-     by the specified entry in the Page Directory.
-
-     These commands are useful when your program uses "DMA" (Direct
-     Memory Access), which needs physical addresses to program the DMA
-     controller.
-
-     These commands are supported only with some DPMI servers.
-
-'info dos address-pte ADDR'
-     This command displays the Page Table entry for a specified linear
-     address.  The argument ADDR is a linear address which should
-     already have the appropriate segment's base address added to it,
-     because this command accepts addresses which may belong to _any_
-     segment.  For example, here's how to display the Page Table entry
-     for the page where a variable 'i' is stored:
-
-     (gdb) info dos address-pte __djgpp_base_address + (char *)&i
-     Page Table entry for address 0x11a00d30:
-     Base=0x02698000 Dirty Acc. Not-Cached Write-Back Usr Read-Write +0xd30
-
-     This says that 'i' is stored at offset '0xd30' from the page whose
-     physical base address is '0x02698000', and shows all the attributes
-     of that page.
-
-     Note that you must cast the addresses of variables to a 'char *',
-     since otherwise the value of '__djgpp_base_address', the base
-     address of all variables and functions in a DJGPP program, will be
-     added using the rules of C pointer arithmetics: if 'i' is declared
-     an 'int', GDB will add 4 times the value of '__djgpp_base_address'
-     to the address of 'i'.
-
-     Here's another example, it displays the Page Table entry for the
-     transfer buffer:
-
-     (gdb) info dos address-pte *((unsigned *)&_go32_info_block + 3)
-     Page Table entry for address 0x29110:
-     Base=0x00029000 Dirty Acc. Not-Cached Write-Back Usr Read-Write +0x110
-
-     (The '+ 3' offset is because the transfer buffer's address is the
-     3rd member of the '_go32_info_block' structure.)  The output
-     clearly shows that this DPMI server maps the addresses in
-     conventional memory 1:1, i.e. the physical ('0x00029000' + '0x110')
-     and linear ('0x29110') addresses are identical.
-
-     This command is supported only with some DPMI servers.
-
-   In addition to native debugging, the DJGPP port supports remote
-debugging via a serial data link.  The following commands are specific
-to remote serial debugging in the DJGPP port of GDB.
-
-'set com1base ADDR'
-     This command sets the base I/O port address of the 'COM1' serial
-     port.
-
-'set com1irq IRQ'
-     This command sets the "Interrupt Request" ('IRQ') line to use for
-     the 'COM1' serial port.
-
-     There are similar commands 'set com2base', 'set com3irq', etc. for
-     setting the port address and the 'IRQ' lines for the other 3 COM
-     ports.
-
-     The related commands 'show com1base', 'show com1irq' etc. display
-     the current settings of the base address and the 'IRQ' lines used
-     by the COM ports.
-
-'info serial'
-     This command prints the status of the 4 DOS serial ports.  For each
-     port, it prints whether it's active or not, its I/O base address
-     and IRQ number, whether it uses a 16550-style FIFO, its baudrate,
-     and the counts of various errors encountered so far.
-
-
-File: gdb.info,  Node: Cygwin Native,  Next: Hurd Native,  Prev: DJGPP Native,  Up: Native
-
-21.1.4 Features for Debugging MS Windows PE Executables
--------------------------------------------------------
-
-GDB supports native debugging of MS Windows programs, including DLLs
-with and without symbolic debugging information.
-
-   MS-Windows programs that call 'SetConsoleMode' to switch off the
-special meaning of the 'Ctrl-C' keystroke cannot be interrupted by
-typing 'C-c'.  For this reason, GDB on MS-Windows supports 'C-<BREAK>'
-as an alternative interrupt key sequence, which can be used to interrupt
-the debuggee even if it ignores 'C-c'.
-
-   There are various additional Cygwin-specific commands, described in
-this section.  Working with DLLs that have no debugging symbols is
-described in *note Non-debug DLL Symbols::.
-
-'info w32'
-     This is a prefix of MS Windows-specific commands which print
-     information about the target system and important OS structures.
-
-'info w32 selector'
-     This command displays information returned by the Win32 API
-     'GetThreadSelectorEntry' function.  It takes an optional argument
-     that is evaluated to a long value to give the information about
-     this given selector.  Without argument, this command displays
-     information about the six segment registers.
-
-'info w32 thread-information-block'
-     This command displays thread specific information stored in the
-     Thread Information Block (readable on the X86 CPU family using
-     '$fs' selector for 32-bit programs and '$gs' for 64-bit programs).
-
-'signal-event ID'
-     This command signals an event with user-provided ID.  Used to
-     resume crashing process when attached to it using MS-Windows JIT
-     debugging (AeDebug).
-
-     To use it, create or edit the following keys in
-     'HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebug' and/or
-     'HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows
-     NT\CurrentVersion\AeDebug' (for x86_64 versions):
-
-        - 'Debugger' (REG_SZ) -- a command to launch the debugger.
-          Suggested command is: 'FULLY-QUALIFIED-PATH-TO-GDB.EXE -ex
-          "attach %ld" -ex "signal-event %ld" -ex "continue"'.
-
-          The first '%ld' will be replaced by the process ID of the
-          crashing process, the second '%ld' will be replaced by the ID
-          of the event that blocks the crashing process, waiting for GDB
-          to attach.
-
-        - 'Auto' (REG_SZ) -- either '1' or '0'.  '1' will make the
-          system run debugger specified by the Debugger key
-          automatically, '0' will cause a dialog box with "OK" and
-          "Cancel" buttons to appear, which allows the user to either
-          terminate the crashing process (OK) or debug it (Cancel).
-
-'set cygwin-exceptions MODE'
-     If MODE is 'on', GDB will break on exceptions that happen inside
-     the Cygwin DLL. If MODE is 'off', GDB will delay recognition of
-     exceptions, and may ignore some exceptions which seem to be caused
-     by internal Cygwin DLL "bookkeeping".  This option is meant
-     primarily for debugging the Cygwin DLL itself; the default value is
-     'off' to avoid annoying GDB users with false 'SIGSEGV' signals.
-
-'show cygwin-exceptions'
-     Displays whether GDB will break on exceptions that happen inside
-     the Cygwin DLL itself.
-
-'set new-console MODE'
-     If MODE is 'on' the debuggee will be started in a new console on
-     next start.  If MODE is 'off', the debuggee will be started in the
-     same console as the debugger.
-
-'show new-console'
-     Displays whether a new console is used when the debuggee is
-     started.
-
-'set new-group MODE'
-     This boolean value controls whether the debuggee should start a new
-     group or stay in the same group as the debugger.  This affects the
-     way the Windows OS handles 'Ctrl-C'.
-
-'show new-group'
-     Displays current value of new-group boolean.
-
-'set debugevents'
-     This boolean value adds debug output concerning kernel events
-     related to the debuggee seen by the debugger.  This includes events
-     that signal thread and process creation and exit, DLL loading and
-     unloading, console interrupts, and debugging messages produced by
-     the Windows 'OutputDebugString' API call.
-
-'set debugexec'
-     This boolean value adds debug output concerning execute events
-     (such as resume thread) seen by the debugger.
-
-'set debugexceptions'
-     This boolean value adds debug output concerning exceptions in the
-     debuggee seen by the debugger.
-
-'set debugmemory'
-     This boolean value adds debug output concerning debuggee memory
-     reads and writes by the debugger.
-
-'set shell'
-     This boolean values specifies whether the debuggee is called via a
-     shell or directly (default value is on).
-
-'show shell'
-     Displays if the debuggee will be started with a shell.
-
-* Menu:
-
-* Non-debug DLL Symbols::  Support for DLLs without debugging symbols
-
-
-File: gdb.info,  Node: Non-debug DLL Symbols,  Up: Cygwin Native
-
-21.1.4.1 Support for DLLs without Debugging Symbols
-...................................................
-
-Very often on windows, some of the DLLs that your program relies on do
-not include symbolic debugging information (for example,
-'kernel32.dll').  When GDB doesn't recognize any debugging symbols in a
-DLL, it relies on the minimal amount of symbolic information contained
-in the DLL's export table.  This section describes working with such
-symbols, known internally to GDB as "minimal symbols".
-
-   Note that before the debugged program has started execution, no DLLs
-will have been loaded.  The easiest way around this problem is simply to
-start the program -- either by setting a breakpoint or letting the
-program run once to completion.
-
-21.1.4.2 DLL Name Prefixes
-..........................
-
-In keeping with the naming conventions used by the Microsoft debugging
-tools, DLL export symbols are made available with a prefix based on the
-DLL name, for instance 'KERNEL32!CreateFileA'.  The plain name is also
-entered into the symbol table, so 'CreateFileA' is often sufficient.  In
-some cases there will be name clashes within a program (particularly if
-the executable itself includes full debugging symbols) necessitating the
-use of the fully qualified name when referring to the contents of the
-DLL. Use single-quotes around the name to avoid the exclamation mark
-("!")  being interpreted as a language operator.
-
-   Note that the internal name of the DLL may be all upper-case, even
-though the file name of the DLL is lower-case, or vice-versa.  Since
-symbols within GDB are _case-sensitive_ this may cause some confusion.
-If in doubt, try the 'info functions' and 'info variables' commands or
-even 'maint print msymbols' (*note Symbols::).  Here's an example:
-
-     (gdb) info function CreateFileA
-     All functions matching regular expression "CreateFileA":
-
-     Non-debugging symbols:
-     0x77e885f4  CreateFileA
-     0x77e885f4  KERNEL32!CreateFileA
-
-     (gdb) info function !
-     All functions matching regular expression "!":
-
-     Non-debugging symbols:
-     0x6100114c  cygwin1!__assert
-     0x61004034  cygwin1!_dll_crt0@0
-     0x61004240  cygwin1!dll_crt0(per_process *)
-     [etc...]
-
-21.1.4.3 Working with Minimal Symbols
-.....................................
-
-Symbols extracted from a DLL's export table do not contain very much
-type information.  All that GDB can do is guess whether a symbol refers
-to a function or variable depending on the linker section that contains
-the symbol.  Also note that the actual contents of the memory contained
-in a DLL are not available unless the program is running.  This means
-that you cannot examine the contents of a variable or disassemble a
-function within a DLL without a running program.
-
-   Variables are generally treated as pointers and dereferenced
-automatically.  For this reason, it is often necessary to prefix a
-variable name with the address-of operator ("&") and provide explicit
-type information in the command.  Here's an example of the type of
-problem:
-
-     (gdb) print 'cygwin1!__argv'
-     'cygwin1!__argv' has unknown type; cast it to its declared type
-
-     (gdb) x 'cygwin1!__argv'
-     'cygwin1!__argv' has unknown type; cast it to its declared type
-
-   And two possible solutions:
-
-     (gdb) print ((char **)'cygwin1!__argv')[0]
-     $2 = 0x22fd98 "/cygdrive/c/mydirectory/myprogram"
-
-     (gdb) x/2x &'cygwin1!__argv'
-     0x610c0aa8 <cygwin1!__argv>:    0x10021608      0x00000000
-     (gdb) x/x 0x10021608
-     0x10021608:     0x0022fd98
-     (gdb) x/s 0x0022fd98
-     0x22fd98:        "/cygdrive/c/mydirectory/myprogram"
-
-   Setting a break point within a DLL is possible even before the
-program starts execution.  However, under these circumstances, GDB can't
-examine the initial instructions of the function in order to skip the
-function's frame set-up code.  You can work around this by using "*&" to
-set the breakpoint at a raw memory address:
-
-     (gdb) break *&'python22!PyOS_Readline'
-     Breakpoint 1 at 0x1e04eff0
-
-   The author of these extensions is not entirely convinced that setting
-a break point within a shared DLL like 'kernel32.dll' is completely
-safe.
 

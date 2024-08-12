@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2004-2023 Free Software Foundation, Inc.
+   Copyright 2004-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -222,7 +222,7 @@ main ()
      the file for unmodified pages - while others handle this poorly -
      writing out all pages including those that weren't modified.  */
 
-  print_string ("Alocating the entire heap ...\n");
+  print_string ("Allocating the entire heap ...\n");
   {
     size_t chunk_size;
     unsigned long chunks_allocated = 0;

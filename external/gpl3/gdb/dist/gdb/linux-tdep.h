@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux, architecture independent.
 
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -72,7 +72,7 @@ extern displaced_step_prepare_status linux_displaced_step_prepare
 /* Implementation of gdbarch_displaced_step_finish.  */
 
 extern displaced_step_finish_status linux_displaced_step_finish
-  (gdbarch *arch, thread_info *thread, gdb_signal sig);
+  (gdbarch *arch, thread_info *thread, const target_waitstatus &status);
 
 /* Implementation of gdbarch_displaced_step_copy_insn_closure_by_addr.  */
 
@@ -94,7 +94,7 @@ extern int linux_is_uclinux (void);
    parse auxv entries.
 
    On error, 0 is returned.  */
-extern CORE_ADDR linux_get_hwcap (const gdb::optional<gdb::byte_vector> &auxv,
+extern CORE_ADDR linux_get_hwcap (const std::optional<gdb::byte_vector> &auxv,
 				  struct target_ops *target, gdbarch *gdbarch);
 
 /* Same as the above, but obtain all the inputs from the current inferior.  */
@@ -105,7 +105,7 @@ extern CORE_ADDR linux_get_hwcap ();
    parse auxv entries.
 
    On error, 0 is returned.  */
-extern CORE_ADDR linux_get_hwcap2 (const gdb::optional<gdb::byte_vector> &auxv,
+extern CORE_ADDR linux_get_hwcap2 (const std::optional<gdb::byte_vector> &auxv,
 				   struct target_ops *target, gdbarch *gdbarch);
 
 /* Same as the above, but obtain all the inputs from the current inferior.  */

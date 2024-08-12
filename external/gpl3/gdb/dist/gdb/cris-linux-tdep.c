@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on CRIS processors, for GDB.
 
-   Copyright (C) 2001-2023 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
    Contributed by Axis Communications AB.
    Written by Hendrik Ruijter, Stefan Andersson, Orjan Friberg,
@@ -21,7 +21,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "osabi.h"
 #include "linux-tdep.h"
 #include "solib-svr4.h"

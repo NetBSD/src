@@ -1,6 +1,6 @@
 /* Support for GDB maintenance commands.
 
-   Copyright (C) 1992-2023 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
    Written by Fred Fish at Cygnus Support.
 
@@ -20,19 +20,17 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
-#include "defs.h"
 #include "arch-utils.h"
 #include <ctype.h>
 #include <cmath>
 #include <signal.h>
 #include "command.h"
-#include "gdbcmd.h"
 #include "symtab.h"
 #include "block.h"
 #include "gdbtypes.h"
 #include "demangle.h"
 #include "gdbcore.h"
-#include "expression.h"		/* For language.h */
+#include "expression.h"
 #include "language.h"
 #include "symfile.h"
 #include "objfiles.h"
@@ -331,11 +329,11 @@ maint_obj_section_from_bfd_section (bfd *abfd,
 				    asection *asection,
 				    objfile *ofile)
 {
-  if (ofile->sections == nullptr)
+  if (ofile->sections_start == nullptr)
     return nullptr;
 
   obj_section *osect
-    = &ofile->sections[gdb_bfd_section_index (abfd, asection)];
+    = &ofile->sections_start[gdb_bfd_section_index (abfd, asection)];
 
   if (osect >= ofile->sections_end)
     return nullptr;
@@ -375,7 +373,7 @@ maint_print_all_sections (const char *header, bfd *abfd, objfile *objfile,
 
       if (objfile != nullptr)
 	{
-	  gdb_assert (objfile->sections != nullptr);
+	  gdb_assert (objfile->sections_start != nullptr);
 	  osect
 	    = maint_obj_section_from_bfd_section (abfd, sect, objfile);
 	  if (osect->the_bfd_section == nullptr)
@@ -459,8 +457,9 @@ maintenance_info_sections (const char *arg, int from_tty)
 				  ofile, arg);
     }
 
-  if (core_bfd)
-    maint_print_all_sections (_("Core file: "), core_bfd, nullptr, arg);
+  if (current_program_space->core_bfd () != nullptr)
+    maint_print_all_sections (_("Core file: "),
+			      current_program_space->core_bfd (), nullptr, arg);
 }
 
 /* Implement the "maintenance info target-sections" command.  */
@@ -470,7 +469,7 @@ maintenance_info_target_sections (const char *arg, int from_tty)
 {
   bfd *abfd = nullptr;
   int digits = 0;
-  const target_section_table *table
+  const std::vector<target_section> *table
     = target_get_section_table (current_inferior ()->top_target ());
   if (table == nullptr)
     return;
@@ -509,7 +508,7 @@ maintenance_info_target_sections (const char *arg, int from_tty)
 		  (8 + digits), "",
 		  hex_string_custom (sec.addr, addr_size),
 		  hex_string_custom (sec.endaddr, addr_size),
-		  sec.owner);
+		  sec.owner.v ());
     }
 }
 
@@ -566,9 +565,9 @@ maintenance_translate_address (const char *arg, int from_tty)
       p = skip_spaces (p + 1);
 
       for (objfile *objfile : current_program_space->objfiles ())
-	ALL_OBJFILE_OSECTIONS (objfile, sect)
+	for (obj_section *iter : objfile->sections ())
 	  {
-	    if (strncmp (sect->the_bfd_section->name, arg, arg_len) == 0)
+	    if (strncmp (iter->the_bfd_section->name, arg, arg_len) == 0)
 	      goto found;
 	  }
 
@@ -791,7 +790,7 @@ extern char etext;
 
 static int profiling_state;
 
-EXTERN_C void _mcleanup (void);
+extern "C" void _mcleanup (void);
 
 static void
 mcleanup_wrapper (void)
@@ -800,7 +799,7 @@ mcleanup_wrapper (void)
     _mcleanup ();
 }
 
-EXTERN_C void monstartup (unsigned long, unsigned long);
+extern "C" void monstartup (unsigned long, unsigned long);
 extern int main (int, char **);
 
 static void
@@ -844,15 +843,24 @@ maintenance_set_profile_cmd (const char *args, int from_tty,
 
 static int n_worker_threads = -1;
 
-/* Update the thread pool for the desired number of threads.  */
-static void
+/* See maint.h.  */
+
+void
 update_thread_pool_size ()
 {
 #if CXX_STD_THREAD
   int n_threads = n_worker_threads;
 
   if (n_threads < 0)
-    n_threads = std::thread::hardware_concurrency ();
+    {
+      const int hardware_threads = std::thread::hardware_concurrency ();
+      /* Testing in PR gdb/29959 indicates that parallel efficiency drops
+	 between n_threads=5 to 8.  Therefore, use no more than 8 threads
+	 to avoid an excessive number of threads in the pool on many-core
+	 systems.  */
+      const int max_thread_count = 8;
+      n_threads = std::min (hardware_threads, max_thread_count);
+    }
 
   gdb::thread_pool::g_thread_pool->set_thread_count (n_threads);
 #endif
@@ -874,7 +882,7 @@ maintenance_show_worker_threads (struct ui_file *file, int from_tty,
   if (n_worker_threads == -1)
     {
       gdb_printf (file, _("The number of worker threads GDB "
-			  "can use is unlimited (currently %zu).\n"),
+			  "can use is the default (currently %zu).\n"),
 		  gdb::thread_pool::g_thread_pool->thread_count ());
       return;
     }
@@ -1042,11 +1050,11 @@ scoped_command_stats::scoped_command_stats (bool msg_type)
 #ifdef HAVE_USEFUL_SBRK
       char *lim = (char *) sbrk (0);
       m_start_space = lim - lim_at_start;
-      m_space_enabled = 1;
+      m_space_enabled = true;
 #endif
     }
   else
-    m_space_enabled = 0;
+    m_space_enabled = false;
 
   if (msg_type == 0 || per_command_time)
     {
@@ -1054,13 +1062,13 @@ scoped_command_stats::scoped_command_stats (bool msg_type)
 
       m_start_cpu_time = run_time_clock::now ();
       m_start_wall_time = steady_clock::now ();
-      m_time_enabled = 1;
+      m_time_enabled = true;
 
       if (per_command_time)
 	print_time (_("command started"));
     }
   else
-    m_time_enabled = 0;
+    m_time_enabled = false;
 
   if (msg_type == 0 || per_command_symtab)
     {
@@ -1070,10 +1078,10 @@ scoped_command_stats::scoped_command_stats (bool msg_type)
       m_start_nr_symtabs = nr_symtabs;
       m_start_nr_compunit_symtabs = nr_compunit_symtabs;
       m_start_nr_blocks = nr_blocks;
-      m_symtab_enabled = 1;
+      m_symtab_enabled = true;
     }
   else
-    m_symtab_enabled = 0;
+    m_symtab_enabled = false;
 
   /* Initialize timer to keep track of how long we waited for the user.  */
   reset_prompt_for_continue_wait_time ();
@@ -1239,7 +1247,7 @@ Usage: maintenance info sections [-all-objects] [FILTERS]\n\
 FILTERS is a list of words, each word is either:\n\
   + A section name - any section with this name will be printed, or\n\
   + A section flag - any section with this flag will be printed.  The\n\
-        known flags are:\n\
+	known flags are:\n\
 	  ALLOC LOAD RELOC READONLY CODE DATA ROM CONSTRUCTOR\n\
 	  HAS_CONTENTS NEVER_LOAD COFF_SHARED_LIBRARY IS_COMMON\n\
 \n\
@@ -1259,7 +1267,7 @@ List GDB's internal section table.\n\
 \n\
 Print the current targets section list.  This is a sub-set of all\n\
 sections, from all objects currently loaded.  Usually the ALLOC\n\
-sectoins."),
+sections."),
 	   &maintenanceinfolist);
 
   add_basic_prefix_cmd ("print", class_maintenance,
@@ -1474,6 +1482,4 @@ such as demangling symbol names."),
 					     maintenance_selftest_option_defs,
 					     &set_selftest_cmdlist,
 					     &show_selftest_cmdlist);
-
-  update_thread_pool_size ();
 }

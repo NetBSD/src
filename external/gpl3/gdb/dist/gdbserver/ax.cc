@@ -1,5 +1,5 @@
 /* Agent expression code for remote server.
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,7 +16,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "server.h"
 #include "ax.h"
 #include "gdbsupport/format.h"
 #include "tracepoint.h"
@@ -985,7 +984,7 @@ gdb_eval_agent_expr (struct eval_agent_expr_context *ctx,
     }
 
   /* Cache the stack top in its own variable. Much of the time we can
-     operate on this variable, rather than dinking with the stack. It
+     operate on this variable, rather than syncing with the stack. It
      needs to be copied to the stack when sp changes.  */
   top = 0;
 
@@ -1112,22 +1111,26 @@ gdb_eval_agent_expr (struct eval_agent_expr_context *ctx,
 	  break;
 
 	case gdb_agent_op_ref8:
-	  agent_mem_read (ctx, cnv.u8.bytes, (CORE_ADDR) top, 1);
+	  if (agent_mem_read (ctx, cnv.u8.bytes, (CORE_ADDR) top, 1) != 0)
+	    return expr_eval_invalid_memory_access;
 	  top = cnv.u8.val;
 	  break;
 
 	case gdb_agent_op_ref16:
-	  agent_mem_read (ctx, cnv.u16.bytes, (CORE_ADDR) top, 2);
+	  if (agent_mem_read (ctx, cnv.u16.bytes, (CORE_ADDR) top, 2) != 0)
+	    return expr_eval_invalid_memory_access;
 	  top = cnv.u16.val;
 	  break;
 
 	case gdb_agent_op_ref32:
-	  agent_mem_read (ctx, cnv.u32.bytes, (CORE_ADDR) top, 4);
+	  if (agent_mem_read (ctx, cnv.u32.bytes, (CORE_ADDR) top, 4) != 0)
+	    return expr_eval_invalid_memory_access;
 	  top = cnv.u32.val;
 	  break;
 
 	case gdb_agent_op_ref64:
-	  agent_mem_read (ctx, cnv.u64.bytes, (CORE_ADDR) top, 8);
+	  if (agent_mem_read (ctx, cnv.u64.bytes, (CORE_ADDR) top, 8) != 0)
+	    return expr_eval_invalid_memory_access;
 	  top = cnv.u64.val;
 	  break;
 

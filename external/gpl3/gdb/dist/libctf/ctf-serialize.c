@@ -1,5 +1,5 @@
 /* CTF dict creation.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -202,17 +202,15 @@ symtypetab_density (ctf_dict_t *fp, ctf_dict_t *symfp, ctf_dynhash_t *symhash,
 	    }
 
 	  ctf_dynhash_remove (linker_known, name);
-	}
-      *unpadsize += sizeof (uint32_t);
-      (*count)++;
 
-      if (!(flags & CTF_SYMTYPETAB_FORCE_INDEXED))
-	{
 	  if (*max < sym->st_symidx)
 	    *max = sym->st_symidx;
 	}
       else
 	(*max)++;
+
+      *unpadsize += sizeof (uint32_t);
+      (*count)++;
     }
   if (err != ECTF_NEXT_END)
     {
@@ -472,9 +470,9 @@ ctf_symtypetab_sect_sizes (ctf_dict_t *fp, emit_symtypetab_state_t *s,
      filter out reported symbols from the variable section, and filter out all
      other symbols from the symtypetab sections.  (If we are not linking, the
      symbols are sorted; if we are linking, don't bother sorting if we are not
-     filtering out reported symbols: this is almost certaily an ld -r and only
+     filtering out reported symbols: this is almost certainly an ld -r and only
      the linker is likely to consume these symtypetabs again.  The linker
-     doesn't care what order the symtypetab entries is in, since it only
+     doesn't care what order the symtypetab entries are in, since it only
      iterates over symbols and does not use the ctf_lookup_by_symbol* API.)  */
 
   s->sort_syms = 1;
@@ -720,8 +718,8 @@ symerr:
 
 /* Type section.  */
 
-/* Iterate through the dynamic type definition list and compute the
-   size of the CTF type section.  */
+/* Iterate through the static types and the dynamic type definition list and
+   compute the size of the CTF type section.  */
 
 static size_t
 ctf_type_sect_size (ctf_dict_t *fp)
@@ -780,7 +778,7 @@ ctf_type_sect_size (ctf_dict_t *fp)
 	}
     }
 
-  return type_size;
+  return type_size + fp->ctf_header->cth_stroff - fp->ctf_header->cth_typeoff;
 }
 
 /* Take a final lap through the dynamic type definition list and copy the
@@ -824,10 +822,7 @@ ctf_emit_type_sect (ctf_dict_t *fp, unsigned char **tptr)
       copied = (ctf_stype_t *) t;  /* name is at the start: constant offset.  */
       if (copied->ctt_name
 	  && (name = ctf_strraw (fp, copied->ctt_name)) != NULL)
-	{
-	  ctf_str_add_ref (fp, name, &copied->ctt_name);
-	  ctf_str_add_ref (fp, name, &dtd->dtd_data.ctt_name);
-	}
+        ctf_str_add_ref (fp, name, &copied->ctt_name);
       copied->ctt_size = type_ctt_size;
       t += len;
 
@@ -938,26 +933,23 @@ ctf_sort_var (const void *one_, const void *two_, void *arg_)
 
 /* Overall serialization.  */
 
-/* If the specified CTF dict is writable and has been modified, reload this dict
-   with the updated type definitions, ready for serialization.  In order to make
-   this code and the rest of libctf as simple as possible, we perform updates by
-   taking the dynamic type definitions and creating an in-memory CTF dict
-   containing the definitions, and then call ctf_simple_open_internal() on it.
-   We perform one extra trick here for the benefit of callers and to keep our
-   code simple: ctf_simple_open_internal() will return a new ctf_dict_t, but we
-   want to keep the fp constant for the caller, so after
-   ctf_simple_open_internal() returns, we use memcpy to swap the interior of the
-   old and new ctf_dict_t's, and then free the old.  */
-int
-ctf_serialize (ctf_dict_t *fp)
+/* Emit a new CTF dict which is a serialized copy of this one: also reify
+   the string table and update all offsets in the current dict suitably.
+   (This simplifies ctf-string.c a little, at the cost of storing a second
+   copy of the strtab if this dict was originally read in via ctf_open.)
+
+   Other aspects of the existing dict are unchanged, although some
+   static entries may be duplicated in the dynamic state (which should
+   have no effect on visible operation).  */
+
+static unsigned char *
+ctf_serialize (ctf_dict_t *fp, size_t *bufsiz)
 {
-  ctf_dict_t ofp, *nfp;
   ctf_header_t hdr, *hdrp;
   ctf_dvdef_t *dvd;
   ctf_varent_t *dvarents;
-  ctf_strs_writable_t strtab;
-  int err;
-  int num_missed_str_refs;
+  const ctf_strs_writable_t *strtab;
+  int sym_functions = 0;
 
   unsigned char *t;
   unsigned long i;
@@ -968,23 +960,6 @@ ctf_serialize (ctf_dict_t *fp)
 
   emit_symtypetab_state_t symstate;
   memset (&symstate, 0, sizeof (emit_symtypetab_state_t));
-
-  if (!(fp->ctf_flags & LCTF_RDWR))
-    return (ctf_set_errno (fp, ECTF_RDONLY));
-
-  /* Update required?  */
-  if (!(fp->ctf_flags & LCTF_DIRTY))
-    return 0;
-
-  /* The strtab refs table must be empty at this stage.  Any refs already added
-     will be corrupted by any modifications, including reserialization, after
-     strtab finalization is complete.  Only this function, and functions it
-     calls, may add refs, and all memory locations (including in the dtds)
-     containing strtab offsets must be traversed as part of serialization, and
-     refs added.  */
-
-  if (!ctf_assert (fp, fp->ctf_str_num_refs == 0))
-    return -1;					/* errno is set for us.  */
 
   /* Fill in an initial CTF header.  We will leave the label, object,
      and function sections empty and only output a header, type section,
@@ -1001,9 +976,43 @@ ctf_serialize (ctf_dict_t *fp)
      of the dynsym and dynstr these days.  */
   hdr.cth_flags = (CTF_F_NEWFUNCINFO | CTF_F_DYNSTR);
 
+  /* Propagate all symbols in the symtypetabs into the dynamic state, so that
+     we can put them back in the right order.  Symbols already in the dynamic
+     state, likely due to repeated serialization, are left unchanged.  */
+  do
+    {
+      ctf_next_t *it = NULL;
+      const char *sym_name;
+      ctf_id_t sym;
+
+      while ((sym = ctf_symbol_next_static (fp, &it, &sym_name,
+					    sym_functions)) != CTF_ERR)
+	if ((ctf_add_funcobjt_sym_forced (fp, sym_functions, sym_name, sym)) < 0)
+	  if (ctf_errno (fp) != ECTF_DUPLICATE)
+	    return NULL;			/* errno is set for us.  */
+
+      if (ctf_errno (fp) != ECTF_NEXT_END)
+	return NULL;				/* errno is set for us.  */
+    } while (sym_functions++ < 1);
+
+  /* Figure out how big the symtypetabs are now.  */
+
   if (ctf_symtypetab_sect_sizes (fp, &symstate, &hdr, &objt_size, &func_size,
 				 &objtidx_size, &funcidx_size) < 0)
-    return -1;					/* errno is set for us.  */
+    return NULL;				/* errno is set for us.  */
+
+  /* Propagate all vars into the dynamic state, so we can put them back later.
+     Variables already in the dynamic state, likely due to repeated
+     serialization, are left unchanged.  */
+
+  for (i = 0; i < fp->ctf_nvars; i++)
+    {
+      const char *name = ctf_strptr (fp, fp->ctf_vars[i].ctv_name);
+
+      if (name != NULL && !ctf_dvd_lookup (fp, name))
+	if (ctf_add_variable_forced (fp, name, fp->ctf_vars[i].ctv_type) < 0)
+	  return NULL;				/* errno is set for us.  */
+    }
 
   for (nvars = 0, dvd = ctf_list_next (&fp->ctf_dvdefs);
        dvd != NULL; dvd = ctf_list_next (dvd), nvars++);
@@ -1026,7 +1035,10 @@ ctf_serialize (ctf_dict_t *fp)
   buf_size = sizeof (ctf_header_t) + hdr.cth_stroff + hdr.cth_strlen;
 
   if ((buf = malloc (buf_size)) == NULL)
-    return (ctf_set_errno (fp, EAGAIN));
+    {
+      ctf_set_errno (fp, EAGAIN);
+      return NULL;
+    }
 
   memcpy (buf, &hdr, sizeof (ctf_header_t));
   t = (unsigned char *) buf + sizeof (ctf_header_t) + hdr.cth_objtoff;
@@ -1061,170 +1073,46 @@ ctf_serialize (ctf_dict_t *fp)
 
   assert (t == (unsigned char *) buf + sizeof (ctf_header_t) + hdr.cth_typeoff);
 
+  /* Copy in existing static types, then emit new dynamic types.  */
+
+  memcpy (t, fp->ctf_buf + fp->ctf_header->cth_typeoff,
+	  fp->ctf_header->cth_stroff - fp->ctf_header->cth_typeoff);
+  t += fp->ctf_header->cth_stroff - fp->ctf_header->cth_typeoff;
   ctf_emit_type_sect (fp, &t);
 
   assert (t == (unsigned char *) buf + sizeof (ctf_header_t) + hdr.cth_stroff);
 
-  /* Every string added outside serialization by ctf_str_add_pending should
-     now have been added by ctf_add_ref.  */
-  num_missed_str_refs = ctf_dynset_elements (fp->ctf_str_pending_ref);
-  if (!ctf_assert (fp, num_missed_str_refs == 0))
-    goto err;					/* errno is set for us.  */
-
   /* Construct the final string table and fill out all the string refs with the
-     final offsets.  Then purge the refs list, because we're about to move this
-     strtab onto the end of the buf, invalidating all the offsets.  */
-  strtab = ctf_str_write_strtab (fp);
-  ctf_str_purge_refs (fp);
+     final offsets.  */
 
-  if (strtab.cts_strs == NULL)
+  strtab = ctf_str_write_strtab (fp);
+
+  if (strtab == NULL)
     goto oom;
 
   /* Now the string table is constructed, we can sort the buffer of
      ctf_varent_t's.  */
-  ctf_sort_var_arg_cb_t sort_var_arg = { fp, (ctf_strs_t *) &strtab };
+  ctf_sort_var_arg_cb_t sort_var_arg = { fp, (ctf_strs_t *) strtab };
   ctf_qsort_r (dvarents, nvars, sizeof (ctf_varent_t), ctf_sort_var,
 	       &sort_var_arg);
 
-  if ((newbuf = ctf_realloc (fp, buf, buf_size + strtab.cts_len)) == NULL)
-    {
-      free (strtab.cts_strs);
-      goto oom;
-    }
+  if ((newbuf = realloc (buf, buf_size + strtab->cts_len)) == NULL)
+    goto oom;
+
   buf = newbuf;
-  memcpy (buf + buf_size, strtab.cts_strs, strtab.cts_len);
+  memcpy (buf + buf_size, strtab->cts_strs, strtab->cts_len);
   hdrp = (ctf_header_t *) buf;
-  hdrp->cth_strlen = strtab.cts_len;
+  hdrp->cth_strlen = strtab->cts_len;
   buf_size += hdrp->cth_strlen;
-  free (strtab.cts_strs);
+  *bufsiz = buf_size;
 
-  /* Finally, we are ready to ctf_simple_open() the new dict.  If this is
-     successful, we then switch nfp and fp and free the old dict.  */
-
-  if ((nfp = ctf_simple_open_internal ((char *) buf, buf_size, NULL, 0,
-				       0, NULL, 0, fp->ctf_syn_ext_strtab,
-				       1, &err)) == NULL)
-    {
-      free (buf);
-      return (ctf_set_errno (fp, err));
-    }
-
-  (void) ctf_setmodel (nfp, ctf_getmodel (fp));
-
-  nfp->ctf_parent = fp->ctf_parent;
-  nfp->ctf_parent_unreffed = fp->ctf_parent_unreffed;
-  nfp->ctf_refcnt = fp->ctf_refcnt;
-  nfp->ctf_flags |= fp->ctf_flags & ~LCTF_DIRTY;
-  if (nfp->ctf_dynbase == NULL)
-    nfp->ctf_dynbase = buf;		/* Make sure buf is freed on close.  */
-  nfp->ctf_dthash = fp->ctf_dthash;
-  nfp->ctf_dtdefs = fp->ctf_dtdefs;
-  nfp->ctf_dvhash = fp->ctf_dvhash;
-  nfp->ctf_dvdefs = fp->ctf_dvdefs;
-  nfp->ctf_dtoldid = fp->ctf_dtoldid;
-  nfp->ctf_add_processing = fp->ctf_add_processing;
-  nfp->ctf_snapshots = fp->ctf_snapshots + 1;
-  nfp->ctf_specific = fp->ctf_specific;
-  nfp->ctf_nfuncidx = fp->ctf_nfuncidx;
-  nfp->ctf_nobjtidx = fp->ctf_nobjtidx;
-  nfp->ctf_objthash = fp->ctf_objthash;
-  nfp->ctf_funchash = fp->ctf_funchash;
-  nfp->ctf_dynsyms = fp->ctf_dynsyms;
-  nfp->ctf_ptrtab = fp->ctf_ptrtab;
-  nfp->ctf_pptrtab = fp->ctf_pptrtab;
-  nfp->ctf_typemax = fp->ctf_typemax;
-  nfp->ctf_dynsymidx = fp->ctf_dynsymidx;
-  nfp->ctf_dynsymmax = fp->ctf_dynsymmax;
-  nfp->ctf_ptrtab_len = fp->ctf_ptrtab_len;
-  nfp->ctf_pptrtab_len = fp->ctf_pptrtab_len;
-  nfp->ctf_link_inputs = fp->ctf_link_inputs;
-  nfp->ctf_link_outputs = fp->ctf_link_outputs;
-  nfp->ctf_errs_warnings = fp->ctf_errs_warnings;
-  nfp->ctf_funcidx_names = fp->ctf_funcidx_names;
-  nfp->ctf_objtidx_names = fp->ctf_objtidx_names;
-  nfp->ctf_funcidx_sxlate = fp->ctf_funcidx_sxlate;
-  nfp->ctf_objtidx_sxlate = fp->ctf_objtidx_sxlate;
-  nfp->ctf_str_prov_offset = fp->ctf_str_prov_offset;
-  nfp->ctf_syn_ext_strtab = fp->ctf_syn_ext_strtab;
-  nfp->ctf_pptrtab_typemax = fp->ctf_pptrtab_typemax;
-  nfp->ctf_in_flight_dynsyms = fp->ctf_in_flight_dynsyms;
-  nfp->ctf_link_in_cu_mapping = fp->ctf_link_in_cu_mapping;
-  nfp->ctf_link_out_cu_mapping = fp->ctf_link_out_cu_mapping;
-  nfp->ctf_link_type_mapping = fp->ctf_link_type_mapping;
-  nfp->ctf_link_memb_name_changer = fp->ctf_link_memb_name_changer;
-  nfp->ctf_link_memb_name_changer_arg = fp->ctf_link_memb_name_changer_arg;
-  nfp->ctf_link_variable_filter = fp->ctf_link_variable_filter;
-  nfp->ctf_link_variable_filter_arg = fp->ctf_link_variable_filter_arg;
-  nfp->ctf_symsect_little_endian = fp->ctf_symsect_little_endian;
-  nfp->ctf_link_flags = fp->ctf_link_flags;
-  nfp->ctf_dedup_atoms = fp->ctf_dedup_atoms;
-  nfp->ctf_dedup_atoms_alloc = fp->ctf_dedup_atoms_alloc;
-  memcpy (&nfp->ctf_dedup, &fp->ctf_dedup, sizeof (fp->ctf_dedup));
-
-  nfp->ctf_snapshot_lu = fp->ctf_snapshots;
-
-  memcpy (&nfp->ctf_lookups, fp->ctf_lookups, sizeof (fp->ctf_lookups));
-  nfp->ctf_structs = fp->ctf_structs;
-  nfp->ctf_unions = fp->ctf_unions;
-  nfp->ctf_enums = fp->ctf_enums;
-  nfp->ctf_names = fp->ctf_names;
-
-  fp->ctf_dthash = NULL;
-  ctf_str_free_atoms (nfp);
-  nfp->ctf_str_atoms = fp->ctf_str_atoms;
-  nfp->ctf_prov_strtab = fp->ctf_prov_strtab;
-  nfp->ctf_str_pending_ref = fp->ctf_str_pending_ref;
-  fp->ctf_str_atoms = NULL;
-  fp->ctf_prov_strtab = NULL;
-  fp->ctf_str_pending_ref = NULL;
-  memset (&fp->ctf_dtdefs, 0, sizeof (ctf_list_t));
-  memset (&fp->ctf_errs_warnings, 0, sizeof (ctf_list_t));
-  fp->ctf_add_processing = NULL;
-  fp->ctf_ptrtab = NULL;
-  fp->ctf_pptrtab = NULL;
-  fp->ctf_funcidx_names = NULL;
-  fp->ctf_objtidx_names = NULL;
-  fp->ctf_funcidx_sxlate = NULL;
-  fp->ctf_objtidx_sxlate = NULL;
-  fp->ctf_objthash = NULL;
-  fp->ctf_funchash = NULL;
-  fp->ctf_dynsyms = NULL;
-  fp->ctf_dynsymidx = NULL;
-  fp->ctf_link_inputs = NULL;
-  fp->ctf_link_outputs = NULL;
-  fp->ctf_syn_ext_strtab = NULL;
-  fp->ctf_link_in_cu_mapping = NULL;
-  fp->ctf_link_out_cu_mapping = NULL;
-  fp->ctf_link_type_mapping = NULL;
-  fp->ctf_dedup_atoms = NULL;
-  fp->ctf_dedup_atoms_alloc = NULL;
-  fp->ctf_parent_unreffed = 1;
-
-  fp->ctf_dvhash = NULL;
-  memset (&fp->ctf_dvdefs, 0, sizeof (ctf_list_t));
-  memset (fp->ctf_lookups, 0, sizeof (fp->ctf_lookups));
-  memset (&fp->ctf_in_flight_dynsyms, 0, sizeof (fp->ctf_in_flight_dynsyms));
-  memset (&fp->ctf_dedup, 0, sizeof (fp->ctf_dedup));
-  fp->ctf_structs.ctn_writable = NULL;
-  fp->ctf_unions.ctn_writable = NULL;
-  fp->ctf_enums.ctn_writable = NULL;
-  fp->ctf_names.ctn_writable = NULL;
-
-  memcpy (&ofp, fp, sizeof (ctf_dict_t));
-  memcpy (fp, nfp, sizeof (ctf_dict_t));
-  memcpy (nfp, &ofp, sizeof (ctf_dict_t));
-
-  nfp->ctf_refcnt = 1;				/* Force nfp to be freed.  */
-  ctf_dict_close (nfp);
-
-  return 0;
+  return buf;
 
 oom:
-  free (buf);
-  return (ctf_set_errno (fp, EAGAIN));
+  ctf_set_errno (fp, EAGAIN);
 err:
   free (buf);
-  return -1;					/* errno is set for us.  */
+  return NULL;					/* errno is set for us.  */
 }
 
 /* File writing.  */
@@ -1239,30 +1127,27 @@ err:
 int
 ctf_gzwrite (ctf_dict_t *fp, gzFile fd)
 {
-  const unsigned char *buf;
-  ssize_t resid;
-  ssize_t len;
+  unsigned char *buf;
+  unsigned char *p;
+  size_t bufsiz;
+  size_t len, written = 0;
 
-  resid = sizeof (ctf_header_t);
-  buf = (unsigned char *) fp->ctf_header;
-  while (resid != 0)
+  if ((buf = ctf_serialize (fp, &bufsiz)) == NULL)
+    return -1;					/* errno is set for us.  */
+
+  p = buf;
+  while (written < bufsiz)
     {
-      if ((len = gzwrite (fd, buf, resid)) <= 0)
-	return (ctf_set_errno (fp, errno));
-      resid -= len;
-      buf += len;
+      if ((len = gzwrite (fd, p, bufsiz - written)) <= 0)
+	{
+	  free (buf);
+	  return (ctf_set_errno (fp, errno));
+	}
+      written += len;
+      p += len;
     }
 
-  resid = fp->ctf_size;
-  buf = fp->ctf_buf;
-  while (resid != 0)
-    {
-      if ((len = gzwrite (fd, buf, resid)) <= 0)
-	return (ctf_set_errno (fp, errno));
-      resid -= len;
-      buf += len;
-    }
-
+  free (buf);
   return 0;
 }
 
@@ -1272,88 +1157,95 @@ ctf_gzwrite (ctf_dict_t *fp, gzFile fd)
 unsigned char *
 ctf_write_mem (ctf_dict_t *fp, size_t *size, size_t threshold)
 {
-  unsigned char *buf;
+  unsigned char *rawbuf;
+  unsigned char *buf = NULL;
   unsigned char *bp;
-  ctf_header_t *hp;
-  unsigned char *flipped, *src;
-  ssize_t header_len = sizeof (ctf_header_t);
-  ssize_t compress_len;
+  ctf_header_t *rawhp, *hp;
+  unsigned char *src;
+  size_t rawbufsiz;
+  size_t alloc_len = 0;
+  int uncompressed = 0;
   int flip_endian;
-  int uncompressed;
   int rc;
 
   flip_endian = getenv ("LIBCTF_WRITE_FOREIGN_ENDIAN") != NULL;
-  uncompressed = (fp->ctf_size < threshold);
 
-  if (ctf_serialize (fp) < 0)
+  if ((rawbuf = ctf_serialize (fp, &rawbufsiz)) == NULL)
     return NULL;				/* errno is set for us.  */
 
-  compress_len = compressBound (fp->ctf_size);
-  if (fp->ctf_size < threshold)
-    compress_len = fp->ctf_size;
-  if ((buf = malloc (compress_len
-		     + sizeof (struct ctf_header))) == NULL)
+  if (!ctf_assert (fp, rawbufsiz >= sizeof (ctf_header_t)))
+    goto err;
+
+  if (rawbufsiz >= threshold)
+    alloc_len = compressBound (rawbufsiz - sizeof (ctf_header_t))
+      + sizeof (ctf_header_t);
+
+  /* Trivial operation if the buffer is incompressible or too small to bother
+     compressing, and we're not doing a forced write-time flip.  */
+
+  if (rawbufsiz < threshold || rawbufsiz < alloc_len)
+    {
+      alloc_len = rawbufsiz;
+      uncompressed = 1;
+    }
+
+  if (!flip_endian && uncompressed)
+    {
+      *size = rawbufsiz;
+      return rawbuf;
+    }
+
+  if ((buf = malloc (alloc_len)) == NULL)
     {
       ctf_set_errno (fp, ENOMEM);
       ctf_err_warn (fp, 0, 0, _("ctf_write_mem: cannot allocate %li bytes"),
-		    (unsigned long) (compress_len + sizeof (struct ctf_header)));
-      return NULL;
+		    (unsigned long) (alloc_len));
+      goto err;
     }
 
+  rawhp = (ctf_header_t *) rawbuf;
   hp = (ctf_header_t *) buf;
-  memcpy (hp, fp->ctf_header, header_len);
-  bp = buf + sizeof (struct ctf_header);
-  *size = sizeof (struct ctf_header);
+  memcpy (hp, rawbuf, sizeof (ctf_header_t));
+  bp = buf + sizeof (ctf_header_t);
+  *size = sizeof (ctf_header_t);
 
-  if (uncompressed)
-    hp->cth_flags &= ~CTF_F_COMPRESS;
-  else
+  if (!uncompressed)
     hp->cth_flags |= CTF_F_COMPRESS;
 
-  src = fp->ctf_buf;
-  flipped = NULL;
+  src = rawbuf + sizeof (ctf_header_t);
 
   if (flip_endian)
     {
-      if ((flipped = malloc (fp->ctf_size)) == NULL)
-	{
-	  ctf_set_errno (fp, ENOMEM);
-	  ctf_err_warn (fp, 0, 0, _("ctf_write_mem: cannot allocate %li bytes"),
-			(unsigned long) (fp->ctf_size + sizeof (struct ctf_header)));
-	  return NULL;
-	}
       ctf_flip_header (hp);
-      memcpy (flipped, fp->ctf_buf, fp->ctf_size);
-      if (ctf_flip (fp, fp->ctf_header, flipped, 1) < 0)
-	{
-	  free (buf);
-	  free (flipped);
-	  return NULL;				/* errno is set for us.  */
-	}
-      src = flipped;
+      if (ctf_flip (fp, rawhp, src, 1) < 0)
+	goto err;				/* errno is set for us.  */
     }
 
-  if (uncompressed)
+  if (!uncompressed)
     {
-      memcpy (bp, src, fp->ctf_size);
-      *size += fp->ctf_size;
-    }
-  else
-    {
+      size_t compress_len = alloc_len - sizeof (ctf_header_t);
+
       if ((rc = compress (bp, (uLongf *) &compress_len,
-			  src, fp->ctf_size)) != Z_OK)
+			  src, rawbufsiz - sizeof (ctf_header_t))) != Z_OK)
 	{
 	  ctf_set_errno (fp, ECTF_COMPRESS);
 	  ctf_err_warn (fp, 0, 0, _("zlib deflate err: %s"), zError (rc));
-	  free (buf);
-	  return NULL;
+	  goto err;
 	}
       *size += compress_len;
     }
+  else
+    {
+      memcpy (bp, src, rawbufsiz - sizeof (ctf_header_t));
+      *size += rawbufsiz - sizeof (ctf_header_t);
+    }
 
-  free (flipped);
-
+  free (rawbuf);
   return buf;
+err:
+  free (buf);
+  free (rawbuf);
+  return NULL;
 }
 
 /* Compress the specified CTF data stream and write it to the specified file

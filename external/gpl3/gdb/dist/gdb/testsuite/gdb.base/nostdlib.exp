@@ -1,4 +1,4 @@
-# Copyright 2010-2023 Free Software Foundation, Inc.
+# Copyright 2010-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,10 +18,7 @@ standard_testfile .c
 # If we're using a stub, breakpoints at the entry point will not trigger.
 # See also the comment in break-entry.exp.
 
-if [use_gdb_stub] {
-    untested "skipping tests due to use_gdb_stub"
-    return
-}
+require !use_gdb_stub
 
 # default_target_compile would otherwise add "-lm" making the testcase
 # dependent on whether the system libraries are already prelinked.

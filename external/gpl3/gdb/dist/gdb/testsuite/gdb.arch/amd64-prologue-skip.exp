@@ -1,4 +1,4 @@
-# Copyright 2010-2023 Free Software Foundation, Inc.
+# Copyright 2010-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,10 +16,7 @@
 standard_testfile .S
 set binfile ${binfile}.o
 
-if { ![istarget x86_64-*-* ] || ![is_lp64_target] } {
-    verbose "Skipping ${testfile}."
-    return
-}
+require is_x86_64_m64_target
 
 if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" object {debug}] != "" } {
     untested "failed to compile"

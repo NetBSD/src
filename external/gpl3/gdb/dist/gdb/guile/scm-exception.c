@@ -1,6 +1,6 @@
 /* GDB/Scheme exception support.
 
-   Copyright (C) 2014-2023 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,7 +28,6 @@
    The non-static functions in this file have prefix gdbscm_ and
    not exscm_ on purpose.  */
 
-#include "defs.h"
 #include <signal.h>
 #include "guile-internal.h"
 

@@ -7,7 +7,7 @@ void bar (int x)
    -
    - */
 {
-    printf ("%d\n", x);
+    x++;
 
     long_line ();
 }

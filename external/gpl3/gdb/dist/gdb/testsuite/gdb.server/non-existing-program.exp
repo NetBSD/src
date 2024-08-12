@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2015-2023 Free Software Foundation, Inc.
+# Copyright 2015-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,9 +22,7 @@ load_lib gdbserver-support.exp
 
 standard_testfile
 
-if { [skip_gdbserver_tests] } {
-    return 0
-}
+require allow_gdbserver_tests
 
 set gdbserver [find_gdbserver]
 if { $gdbserver == "" } {
@@ -42,18 +40,18 @@ expect {
     # This is what we get on ptrace-based targets with
     # startup-with-shell disabled (e.g., when the SHELL variable is
     # unset).
-    -re "stdin/stdout redirected.*gdbserver: Cannot exec non-existing-program\r\ngdbserver: Error: No such file or directory\r\n\r\nDuring startup program exited with code 127\.\r\nExiting\r\n$" {
+    -re "stdin/stdout redirected.*gdbserver: Cannot exec non-existing-program\r\ngdbserver: Error: No such file or directory\r\n\r\nDuring startup program exited with code 127\.\r\nExiting\r\n" {
 	set saw_exiting 1
 	exp_continue
     }
     # Likewise, but with startup-with-shell enabled, which is the
     # default behaviour.
-    -re "stdin/stdout redirected.*exec: non-existing-program: not found\r\nDuring startup program exited with code 127\.\r\nExiting\r\n$" {
+    -re "stdin/stdout redirected.*exec: non-existing-program: not found\r\nDuring startup program exited with code 127\.\r\nExiting\r\n" {
 	set saw_exiting 1
 	exp_continue
     }
     # This is what we get on Windows.
-    -re "Error creating process\r\n\r\nExiting\r\n$" {
+    -re "Error creating process\r\n\r\nExiting\r\n" {
 	set saw_exiting 1
 	exp_continue
     }

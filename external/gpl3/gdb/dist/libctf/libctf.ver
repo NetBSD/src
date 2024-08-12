@@ -1,4 +1,4 @@
-/* Copyright (C) 2019-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -80,9 +80,6 @@ LIBCTF_1.0 {
 	ctf_enum_name;
 	ctf_enum_value;
 
-	ctf_label_set;
-	ctf_label_get;
-
 	ctf_label_topmost;
 	ctf_label_info;
 
@@ -139,7 +136,6 @@ LIBCTF_1.0 {
 
 	ctf_arc_write;
 	ctf_arc_write_fd;
-	ctf_arc_open;
 	ctf_arc_bufopen;
 	ctf_arc_close;
 	ctf_arc_open_by_name;
@@ -167,6 +163,7 @@ LIBCTF_1.0 {
 
 	ctf_fdopen;                             /* libctf only.  */
 	ctf_open;                               /* libctf only.  */
+	ctf_arc_open;                           /* libctf only.  */
 	ctf_bfdopen;                            /* libctf only.  */
 	ctf_bfdopen_ctfsect;                    /* libctf only.  */
     local:

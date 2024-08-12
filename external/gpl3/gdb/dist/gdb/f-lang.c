@@ -1,6 +1,6 @@
 /* Fortran language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 1993-2023 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
 
    Contributed by Motorola.  Adapted from the C parser by Farooq Butt
    (fmbutt@engage.sps.mot.com).
@@ -20,7 +20,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "expression.h"
@@ -36,7 +35,7 @@
 #include "c-lang.h"
 #include "target-float.h"
 #include "gdbarch.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "f-array-walker.h"
 #include "f-exp.h"
 
@@ -101,6 +100,16 @@ f_language::get_encoding (struct type *type)
   return encoding;
 }
 
+/* See language.h.  */
+
+struct value *
+f_language::value_string (struct gdbarch *gdbarch,
+			  const char *ptr, ssize_t len) const
+{
+  struct type *type = language_string_char_type (this, gdbarch);
+  return ::value_string (ptr, len, type);
+}
+
 /* A helper function for the "bound" intrinsics that checks that TYPE
    is an array.  LBOUND_P is true for lower bound; this is used for
    the error message, if any.  */
@@ -127,17 +136,18 @@ fortran_bounds_all_dims (bool lbound_p,
 			 struct gdbarch *gdbarch,
 			 struct value *array)
 {
-  type *array_type = check_typedef (value_type (array));
+  type *array_type = check_typedef (array->type ());
   int ndimensions = calc_f77_array_dims (array_type);
 
   /* Allocate a result value of the correct type.  */
+  type_allocator alloc (gdbarch);
   struct type *range
-    = create_static_range_type (nullptr,
+    = create_static_range_type (alloc,
 				builtin_f_type (gdbarch)->builtin_integer,
 				1, ndimensions);
   struct type *elm_type = builtin_f_type (gdbarch)->builtin_integer;
-  struct type *result_type = create_array_type (nullptr, elm_type, range);
-  struct value *result = allocate_value (result_type);
+  struct type *result_type = create_array_type (alloc, elm_type, range);
+  struct value *result = value::allocate (result_type);
 
   /* Walk the array dimensions backwards due to the way the array will be
      laid out in memory, the first dimension will be the most inner.  */
@@ -156,10 +166,10 @@ fortran_bounds_all_dims (bool lbound_p,
 
       /* And copy the value into the result value.  */
       struct value *v = value_from_longest (elm_type, b);
-      gdb_assert (dst_offset + value_type (v)->length ()
-		  <= value_type (result)->length ());
-      gdb_assert (value_type (v)->length () == elm_len);
-      value_contents_copy (result, dst_offset, v, 0, elm_len);
+      gdb_assert (dst_offset + v->type ()->length ()
+		  <= result->type ()->length ());
+      gdb_assert (v->type ()->length () == elm_len);
+      v->contents_copy (result, dst_offset, 0, elm_len);
 
       /* Peel another dimension of the array.  */
       array_type = array_type->target_type ();
@@ -178,7 +188,7 @@ fortran_bounds_for_dimension (bool lbound_p, value *array, value *dim_val,
 			      type* result_type)
 {
   /* Check the requested dimension is valid for this array.  */
-  type *array_type = check_typedef (value_type (array));
+  type *array_type = check_typedef (array->type ());
   int ndimensions = calc_f77_array_dims (array_type);
   long dim = value_as_long (dim_val);
   if (dim < 1 || dim > ndimensions)
@@ -260,8 +270,8 @@ public:
   {
     if (inner_p)
       {
-	gdb_assert (m_mark == nullptr);
-	m_mark = value_mark ();
+	gdb_assert (!m_mark.has_value ());
+	m_mark.emplace ();
       }
   }
 
@@ -271,9 +281,8 @@ public:
   {
     if (inner_p)
       {
-	gdb_assert (m_mark != nullptr);
-	value_free_to_mark (m_mark);
-	m_mark = nullptr;
+	gdb_assert (m_mark.has_value ());
+	m_mark.reset ();
       }
   }
 
@@ -282,9 +291,9 @@ protected:
      available offset.  */
   void copy_element_to_dest (struct value *elt)
   {
-    value_contents_copy (m_dest, m_dest_offset, elt, 0,
-			 value_type (elt)->length ());
-    m_dest_offset += value_type (elt)->length ();
+    elt->contents_copy (m_dest, m_dest_offset, 0,
+			elt->type ()->length ());
+    m_dest_offset += elt->type ()->length ();
   }
 
   /* The value being written to.  */
@@ -294,9 +303,9 @@ protected:
      written.  */
   LONGEST m_dest_offset;
 
-  /* Set with a call to VALUE_MARK, and then reset after calling
-     VALUE_FREE_TO_MARK.  */
-  struct value *m_mark = nullptr;
+  /* Set and reset to handle removing intermediate values from the
+     value chain.  */
+  std::optional<scoped_value_mark> m_mark;
 };
 
 /* A class used by FORTRAN_VALUE_SUBARRAY when repacking Fortran array
@@ -356,7 +365,7 @@ public:
       m_base_offset (base_offset),
       m_val (val)
   {
-    gdb_assert (!value_lazy (val));
+    gdb_assert (!val->lazy ());
   }
 
   /* Extract an element of ELT_TYPE at offset (M_BASE_OFFSET + ELT_OFF)
@@ -394,7 +403,7 @@ fortran_associated (struct gdbarch *gdbarch, const language_defn *lang,
 
   /* All Fortran pointers should have the associated property, this is
      how we know the pointer is pointing at something or not.  */
-  struct type *pointer_type = check_typedef (value_type (pointer));
+  struct type *pointer_type = check_typedef (pointer->type ());
   if (TYPE_ASSOCIATED_PROP (pointer_type) == nullptr
       && pointer_type->code () != TYPE_CODE_PTR)
     error (_("ASSOCIATED can only be applied to pointers"));
@@ -408,7 +417,7 @@ fortran_associated (struct gdbarch *gdbarch, const language_defn *lang,
   if (pointer_type->code () == TYPE_CODE_PTR)
     pointer_addr = value_as_address (pointer);
   else
-    pointer_addr = value_address (pointer);
+    pointer_addr = pointer->address ();
 
   /* The single argument case, is POINTER associated with anything?  */
   if (target == nullptr)
@@ -431,7 +440,7 @@ fortran_associated (struct gdbarch *gdbarch, const language_defn *lang,
 
   /* The two argument case, is POINTER associated with TARGET?  */
 
-  struct type *target_type = check_typedef (value_type (target));
+  struct type *target_type = check_typedef (target->type ());
 
   struct type *pointer_target_type;
   if (pointer_type->code () == TYPE_CODE_PTR)
@@ -458,7 +467,7 @@ fortran_associated (struct gdbarch *gdbarch, const language_defn *lang,
      looking the value of the pointer itself.  We make the assumption that
      a non-associated pointer will be set to 0.  This is probably true for
      most targets, but might not be true for everyone.  */
-  if (value_lval_const (target) != lval_memory
+  if (target->lval () != lval_memory
       || type_not_associated (pointer_type)
       || (TYPE_ASSOCIATED_PROP (pointer_type) == nullptr
 	  && pointer_type->code () == TYPE_CODE_PTR
@@ -470,7 +479,7 @@ fortran_associated (struct gdbarch *gdbarch, const language_defn *lang,
   if (target_type->code () == TYPE_CODE_PTR)
     target_addr = value_as_address (target);
   else
-    target_addr = value_address (target);
+    target_addr = target->address ();
 
   /* Wrap the following checks inside a do { ... } while (false) loop so
      that we can use `break' to jump out of the loop.  */
@@ -588,7 +597,7 @@ static value *
 fortran_array_size (value *array, value *dim_val, type *result_type)
 {
   /* Check that ARRAY is the correct type.  */
-  struct type *array_type = check_typedef (value_type (array));
+  struct type *array_type = check_typedef (array->type ());
   if (array_type->code () != TYPE_CODE_ARRAY)
     error (_("SIZE can only be applied to arrays"));
   if (type_not_allocated (array_type) || type_not_associated (array_type))
@@ -600,7 +609,7 @@ fortran_array_size (value *array, value *dim_val, type *result_type)
 
   if (dim_val != nullptr)
     {
-      if (check_typedef (value_type (dim_val))->code () != TYPE_CODE_INT)
+      if (check_typedef (dim_val->type ())->code () != TYPE_CODE_INT)
 	error (_("DIM argument to SIZE must be an integer"));
       dim = (int) value_as_long (dim_val);
 
@@ -696,7 +705,7 @@ static struct value *
 fortran_array_shape (struct gdbarch *gdbarch, const language_defn *lang,
 		     struct value *val)
 {
-  struct type *val_type = check_typedef (value_type (val));
+  struct type *val_type = check_typedef (val->type ());
 
   /* If we are passed an array that is either not allocated, or not
      associated, then this is explicitly not allowed according to the
@@ -714,13 +723,14 @@ fortran_array_shape (struct gdbarch *gdbarch, const language_defn *lang,
     ndimensions = calc_f77_array_dims (val_type);
 
   /* Allocate a result value of the correct type.  */
+  type_allocator alloc (gdbarch);
   struct type *range
-    = create_static_range_type (nullptr,
+    = create_static_range_type (alloc,
 				builtin_type (gdbarch)->builtin_int,
 				1, ndimensions);
   struct type *elm_type = builtin_f_type (gdbarch)->builtin_integer;
-  struct type *result_type = create_array_type (nullptr, elm_type, range);
-  struct value *result = allocate_value (result_type);
+  struct type *result_type = create_array_type (alloc, elm_type, range);
+  struct value *result = value::allocate (result_type);
   LONGEST elm_len = elm_type->length ();
 
   /* Walk the array dimensions backwards due to the way the array will be
@@ -741,10 +751,10 @@ fortran_array_shape (struct gdbarch *gdbarch, const language_defn *lang,
 
       /* And copy the value into the result value.  */
       struct value *v = value_from_longest (elm_type, dim_size);
-      gdb_assert (dst_offset + value_type (v)->length ()
-		  <= value_type (result)->length ());
-      gdb_assert (value_type (v)->length () == elm_len);
-      value_contents_copy (result, dst_offset, v, 0, elm_len);
+      gdb_assert (dst_offset + v->type ()->length ()
+		  <= result->type ()->length ());
+      gdb_assert (v->type ()->length () == elm_len);
+      v->contents_copy (result, dst_offset, 0, elm_len);
 
       /* Peel another dimension of the array.  */
       val_type = val_type->target_type ();
@@ -772,14 +782,14 @@ eval_op_f_abs (struct type *expect_type, struct expression *exp,
 	       enum exp_opcode opcode,
 	       struct value *arg1)
 {
-  struct type *type = value_type (arg1);
+  struct type *type = arg1->type ();
   switch (type->code ())
     {
     case TYPE_CODE_FLT:
       {
 	double d
-	  = fabs (target_float_to_host_double (value_contents (arg1).data (),
-					       value_type (arg1)));
+	  = fabs (target_float_to_host_double (arg1->contents ().data (),
+					       arg1->type ()));
 	return value_from_host_double (type, d);
       }
     case TYPE_CODE_INT:
@@ -800,19 +810,19 @@ eval_op_f_mod (struct type *expect_type, struct expression *exp,
 	       enum exp_opcode opcode,
 	       struct value *arg1, struct value *arg2)
 {
-  struct type *type = value_type (arg1);
-  if (type->code () != value_type (arg2)->code ())
+  struct type *type = arg1->type ();
+  if (type->code () != arg2->type ()->code ())
     error (_("non-matching types for parameters to MOD ()"));
   switch (type->code ())
     {
     case TYPE_CODE_FLT:
       {
 	double d1
-	  = target_float_to_host_double (value_contents (arg1).data (),
-					 value_type (arg1));
+	  = target_float_to_host_double (arg1->contents ().data (),
+					 arg1->type ());
 	double d2
-	  = target_float_to_host_double (value_contents (arg2).data (),
-					 value_type (arg2));
+	  = target_float_to_host_double (arg2->contents ().data (),
+					 arg2->type ());
 	double d3 = fmod (d1, d2);
 	return value_from_host_double (type, d3);
       }
@@ -823,7 +833,7 @@ eval_op_f_mod (struct type *expect_type, struct expression *exp,
 	if (v2 == 0)
 	  error (_("calling MOD (N, 0) is undefined"));
 	LONGEST v3 = v1 - (v1 / v2) * v2;
-	return value_from_longest (value_type (arg1), v3);
+	return value_from_longest (arg1->type (), v3);
       }
     }
   error (_("MOD of type %s not supported"), TYPE_SAFE_NAME (type));
@@ -836,10 +846,10 @@ eval_op_f_mod (struct type *expect_type, struct expression *exp,
 static value *
 fortran_ceil_operation (value *arg1, type *result_type)
 {
-  if (value_type (arg1)->code () != TYPE_CODE_FLT)
+  if (arg1->type ()->code () != TYPE_CODE_FLT)
     error (_("argument to CEILING must be of type float"));
-  double val = target_float_to_host_double (value_contents (arg1).data (),
-					    value_type (arg1));
+  double val = target_float_to_host_double (arg1->contents ().data (),
+					    arg1->type ());
   val = ceil (val);
   return value_from_longest (result_type, val);
 }
@@ -875,10 +885,10 @@ eval_op_f_ceil (type *expect_type, expression *exp, noside noside,
 static value *
 fortran_floor_operation (value *arg1, type *result_type)
 {
-  if (value_type (arg1)->code () != TYPE_CODE_FLT)
+  if (arg1->type ()->code () != TYPE_CODE_FLT)
     error (_("argument to FLOOR must be of type float"));
-  double val = target_float_to_host_double (value_contents (arg1).data (),
-					    value_type (arg1));
+  double val = target_float_to_host_double (arg1->contents ().data (),
+					    arg1->type ());
   val = floor (val);
   return value_from_longest (result_type, val);
 }
@@ -915,8 +925,8 @@ eval_op_f_modulo (struct type *expect_type, struct expression *exp,
 		  enum exp_opcode opcode,
 		  struct value *arg1, struct value *arg2)
 {
-  struct type *type = value_type (arg1);
-  if (type->code () != value_type (arg2)->code ())
+  struct type *type = arg1->type ();
+  if (type->code () != arg2->type ()->code ())
     error (_("non-matching types for parameters to MODULO ()"));
   /* MODULO(A, P) = A - FLOOR (A / P) * P */
   switch (type->code ())
@@ -928,16 +938,16 @@ eval_op_f_modulo (struct type *expect_type, struct expression *exp,
 	LONGEST result = a - (a / p) * p;
 	if (result != 0 && (a < 0) != (p < 0))
 	  result += p;
-	return value_from_longest (value_type (arg1), result);
+	return value_from_longest (arg1->type (), result);
       }
     case TYPE_CODE_FLT:
       {
 	double a
-	  = target_float_to_host_double (value_contents (arg1).data (),
-					 value_type (arg1));
+	  = target_float_to_host_double (arg1->contents ().data (),
+					 arg1->type ());
 	double p
-	  = target_float_to_host_double (value_contents (arg2).data (),
-					 value_type (arg2));
+	  = target_float_to_host_double (arg2->contents ().data (),
+					 arg2->type ());
 	double result = fmod (a, p);
 	if (result != 0 && (a < 0.0) != (p < 0.0))
 	  result += p;
@@ -957,11 +967,11 @@ eval_op_f_cmplx (type *expect_type, expression *exp, noside noside,
 
   type *result_type = builtin_f_type (exp->gdbarch)->builtin_complex;
 
-  if (value_type (arg1)->code () == TYPE_CODE_COMPLEX)
+  if (arg1->type ()->code () == TYPE_CODE_COMPLEX)
     return value_cast (result_type, arg1);
   else
     return value_literal_complex (arg1,
-				  value_zero (value_type (arg1), not_lval),
+				  value::zero (arg1->type (), not_lval),
 				  result_type);
 }
 
@@ -973,8 +983,8 @@ eval_op_f_cmplx (struct type *expect_type, struct expression *exp,
 		 enum exp_opcode opcode,
 		 struct value *arg1, struct value *arg2)
 {
-  if (value_type (arg1)->code () == TYPE_CODE_COMPLEX
-      || value_type (arg2)->code () == TYPE_CODE_COMPLEX)
+  if (arg1->type ()->code () == TYPE_CODE_COMPLEX
+      || arg2->type ()->code () == TYPE_CODE_COMPLEX)
     error (_("Types of arguments for CMPLX called with more then one argument "
 	     "must be REAL or INTEGER"));
 
@@ -989,8 +999,8 @@ eval_op_f_cmplx (type *expect_type, expression *exp, noside noside,
 		 exp_opcode opcode, value *arg1, value *arg2, type *kind_arg)
 {
   gdb_assert (kind_arg->code () == TYPE_CODE_COMPLEX);
-  if (value_type (arg1)->code () == TYPE_CODE_COMPLEX
-      || value_type (arg2)->code () == TYPE_CODE_COMPLEX)
+  if (arg1->type ()->code () == TYPE_CODE_COMPLEX
+      || arg2->type ()->code () == TYPE_CODE_COMPLEX)
     error (_("Types of arguments for CMPLX called with more then one argument "
 	     "must be REAL or INTEGER"));
 
@@ -1005,7 +1015,7 @@ eval_op_f_kind (struct type *expect_type, struct expression *exp,
 		enum exp_opcode opcode,
 		struct value *arg1)
 {
-  struct type *type = value_type (arg1);
+  struct type *type = arg1->type ();
 
   switch (type->code ())
     {
@@ -1030,7 +1040,7 @@ eval_op_f_allocated (struct type *expect_type, struct expression *exp,
 		     enum noside noside, enum exp_opcode op,
 		     struct value *arg1)
 {
-  struct type *type = check_typedef (value_type (arg1));
+  struct type *type = check_typedef (arg1->type ());
   if (type->code () != TYPE_CODE_ARRAY)
     error (_("ALLOCATED can only be applied to arrays"));
   struct type *result_type
@@ -1052,7 +1062,7 @@ eval_op_f_rank (struct type *expect_type,
 
   struct type *result_type
     = builtin_f_type (exp->gdbarch)->builtin_integer;
-  struct type *type = check_typedef (value_type (arg1));
+  struct type *type = check_typedef (arg1->type ());
   if (type->code () != TYPE_CODE_ARRAY)
     return value_from_longest (result_type, 0);
   LONGEST ndim = calc_f77_array_dims (type);
@@ -1074,7 +1084,7 @@ eval_op_f_loc (struct type *expect_type, struct expression *exp,
   else
     result_type = builtin_f_type (exp->gdbarch)->builtin_integer_s8;
 
-  LONGEST result_value = value_address (arg1);
+  LONGEST result_value = arg1->address ();
   return value_from_longest (result_type, result_value);
 }
 
@@ -1092,7 +1102,7 @@ fortran_undetermined::value_subarray (value *array,
 				      struct expression *exp,
 				      enum noside noside)
 {
-  type *original_array_type = check_typedef (value_type (array));
+  type *original_array_type = check_typedef (array->type ());
   bool is_string_p = original_array_type->code () == TYPE_CODE_STRING;
   const std::vector<operation_up> &ops = std::get<1> (m_storage);
   int nargs = ops.size ();
@@ -1361,9 +1371,9 @@ fortran_undetermined::value_subarray (value *array,
 	     have a known upper bound, so don't error check in that
 	     situation.  */
 	  if (index < lb
-	      || (dim_type->index_type ()->bounds ()->high.kind () != PROP_UNDEFINED
+	      || (dim_type->index_type ()->bounds ()->high.is_available ()
 		  && index > ub)
-	      || (VALUE_LVAL (array) != lval_memory
+	      || (array->lval () != lval_memory
 		  && dim_type->index_type ()->bounds ()->high.kind () == PROP_UNDEFINED))
 	    {
 	      if (type_not_associated (dim_type))
@@ -1393,13 +1403,14 @@ fortran_undetermined::value_subarray (value *array,
       p_high.set_const_val (d.high);
       p_stride.set_const_val (d.stride);
 
+      type_allocator alloc (d.index->target_type ());
       struct type *new_range
-	= create_range_type_with_stride ((struct type *) NULL,
+	= create_range_type_with_stride (alloc,
 					 d.index->target_type (),
 					 &p_low, &p_high, 0, &p_stride,
 					 true);
       array_slice_type
-	= create_array_type (nullptr, array_slice_type, new_range);
+	= create_array_type (alloc, array_slice_type, new_range);
     }
 
   if (fortran_array_slicing_debug)
@@ -1410,7 +1421,7 @@ fortran_undetermined::value_subarray (value *array,
       debug_printf ("    |-> Total offset: %s\n",
 		    plongest (total_offset));
       debug_printf ("    |-> Base address: %s\n",
-		    core_addr_to_string (value_address (array)));
+		    core_addr_to_string (array->address ()));
       debug_printf ("    '-> Contiguous = %s\n",
 		    (is_all_contiguous ? "Yes" : "No"));
     }
@@ -1429,30 +1440,31 @@ fortran_undetermined::value_subarray (value *array,
 	  p_high.set_const_val (d.high);
 	  p_stride.set_const_val (repacked_array_type->length ());
 
+	  type_allocator alloc (d.index->target_type ());
 	  struct type *new_range
-	    = create_range_type_with_stride ((struct type *) NULL,
+	    = create_range_type_with_stride (alloc,
 					     d.index->target_type (),
 					     &p_low, &p_high, 0, &p_stride,
 					     true);
 	  repacked_array_type
-	    = create_array_type (nullptr, repacked_array_type, new_range);
+	    = create_array_type (alloc, repacked_array_type, new_range);
 	}
 
       /* Now copy the elements from the original ARRAY into the packed
 	 array value DEST.  */
-      struct value *dest = allocate_value (repacked_array_type);
-      if (value_lazy (array)
+      struct value *dest = value::allocate (repacked_array_type);
+      if (array->lazy ()
 	  || (total_offset + array_slice_type->length ()
-	      > check_typedef (value_type (array))->length ()))
+	      > check_typedef (array->type ())->length ()))
 	{
 	  fortran_array_walker<fortran_lazy_array_repacker_impl> p
-	    (array_slice_type, value_address (array) + total_offset, dest);
+	    (array_slice_type, array->address () + total_offset, dest);
 	  p.walk ();
 	}
       else
 	{
 	  fortran_array_walker<fortran_array_repacker_impl> p
-	    (array_slice_type, value_address (array) + total_offset,
+	    (array_slice_type, array->address () + total_offset,
 	     total_offset, array, dest);
 	  p.walk ();
 	}
@@ -1460,23 +1472,23 @@ fortran_undetermined::value_subarray (value *array,
     }
   else
     {
-      if (VALUE_LVAL (array) == lval_memory)
+      if (array->lval () == lval_memory)
 	{
 	  /* If the value we're taking a slice from is not yet loaded, or
 	     the requested slice is outside the values content range then
 	     just create a new lazy value pointing at the memory where the
 	     contents we're looking for exist.  */
-	  if (value_lazy (array)
+	  if (array->lazy ()
 	      || (total_offset + array_slice_type->length ()
-		  > check_typedef (value_type (array))->length ()))
+		  > check_typedef (array->type ())->length ()))
 	    array = value_at_lazy (array_slice_type,
-				   value_address (array) + total_offset);
+				   array->address () + total_offset);
 	  else
 	    array = value_from_contents_and_address
-	      (array_slice_type, value_contents (array).data () + total_offset,
-	       value_address (array) + total_offset);
+	      (array_slice_type, array->contents ().data () + total_offset,
+	       array->address () + total_offset);
 	}
-      else if (!value_lazy (array))
+      else if (!array->lazy ())
 	array = value_from_component (array, array_slice_type, total_offset);
       else
 	error (_("cannot subscript arrays that are not in memory"));
@@ -1492,9 +1504,9 @@ fortran_undetermined::evaluate (struct type *expect_type,
 {
   value *callee = std::get<0> (m_storage)->evaluate (nullptr, exp, noside);
   if (noside == EVAL_AVOID_SIDE_EFFECTS
-      && is_dynamic_type (value_type (callee)))
+      && is_dynamic_type (callee->type ()))
     callee = std::get<0> (m_storage)->evaluate (nullptr, exp, EVAL_NORMAL);
-  struct type *type = check_typedef (value_type (callee));
+  struct type *type = check_typedef (callee->type ());
   enum type_code code = type->code ();
 
   if (code == TYPE_CODE_PTR)
@@ -1510,7 +1522,7 @@ fortran_undetermined::evaluate (struct type *expect_type,
 	  || target_type->code () == TYPE_CODE_FUNC)
 	{
 	  callee = value_ind (callee);
-	  type = check_typedef (value_type (callee));
+	  type = check_typedef (callee->type ());
 	  code = type->code ();
 	}
     }
@@ -1534,7 +1546,7 @@ fortran_undetermined::evaluate (struct type *expect_type,
 	for (int tem = 0; tem < argvec.size (); tem++)
 	  argvec[tem] = fortran_prepare_argument (exp, actual[tem].get (),
 						  tem, is_internal_func,
-						  value_type (callee),
+						  callee->type (),
 						  noside);
 	return evaluate_subexp_do_call (exp, noside, callee, argvec,
 					nullptr, expect_type);
@@ -1552,7 +1564,7 @@ fortran_bound_1arg::evaluate (struct type *expect_type,
 {
   bool lbound_p = std::get<0> (m_storage) == FORTRAN_LBOUND;
   value *arg1 = std::get<1> (m_storage)->evaluate (nullptr, exp, noside);
-  fortran_require_array (value_type (arg1), lbound_p);
+  fortran_require_array (arg1->type (), lbound_p);
   return fortran_bounds_all_dims (lbound_p, exp->gdbarch, arg1);
 }
 
@@ -1563,11 +1575,11 @@ fortran_bound_2arg::evaluate (struct type *expect_type,
 {
   bool lbound_p = std::get<0> (m_storage) == FORTRAN_LBOUND;
   value *arg1 = std::get<1> (m_storage)->evaluate (nullptr, exp, noside);
-  fortran_require_array (value_type (arg1), lbound_p);
+  fortran_require_array (arg1->type (), lbound_p);
 
   /* User asked for the bounds of a specific dimension of the array.  */
   value *arg2 = std::get<2> (m_storage)->evaluate (nullptr, exp, noside);
-  type *type_arg2 = check_typedef (value_type (arg2));
+  type *type_arg2 = check_typedef (arg2->type ());
   if (type_arg2->code () != TYPE_CODE_INT)
     {
       if (lbound_p)
@@ -1587,11 +1599,11 @@ fortran_bound_3arg::evaluate (type *expect_type,
 {
   const bool lbound_p = std::get<0> (m_storage) == FORTRAN_LBOUND;
   value *arg1 = std::get<1> (m_storage)->evaluate (nullptr, exp, noside);
-  fortran_require_array (value_type (arg1), lbound_p);
+  fortran_require_array (arg1->type (), lbound_p);
 
   /* User asked for the bounds of a specific dimension of the array.  */
   value *arg2 = std::get<2> (m_storage)->evaluate (nullptr, exp, noside);
-  type *type_arg2 = check_typedef (value_type (arg2));
+  type *type_arg2 = check_typedef (arg2->type ());
   if (type_arg2->code () != TYPE_CODE_INT)
     {
       if (lbound_p)
@@ -1618,7 +1630,7 @@ fortran_structop_operation::evaluate (struct type *expect_type,
   const char *str = std::get<1> (m_storage).c_str ();
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
     {
-      struct type *type = lookup_struct_elt_type (value_type (arg1), str, 1);
+      struct type *type = lookup_struct_elt_type (arg1->type (), str, 1);
 
       if (type != nullptr && is_dynamic_type (type))
 	arg1 = std::get<0> (m_storage)->evaluate (nullptr, exp, EVAL_NORMAL);
@@ -1628,16 +1640,16 @@ fortran_structop_operation::evaluate (struct type *expect_type,
 
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
     {
-      struct type *elt_type = value_type (elt);
+      struct type *elt_type = elt->type ();
       if (is_dynamic_type (elt_type))
 	{
-	  const gdb_byte *valaddr = value_contents_for_printing (elt).data ();
-	  CORE_ADDR address = value_address (elt);
+	  const gdb_byte *valaddr = elt->contents_for_printing ().data ();
+	  CORE_ADDR address = elt->address ();
 	  gdb::array_view<const gdb_byte> view
 	    = gdb::make_array_view (valaddr, elt_type->length ());
 	  elt_type = resolve_dynamic_type (elt_type, view, address);
 	}
-      elt = value_zero (elt_type, VALUE_LVAL (elt));
+      elt = value::zero (elt_type, elt->lval ());
     }
 
   return elt;
@@ -1702,7 +1714,7 @@ f_language::search_name_hash (const char *name) const
 struct block_symbol
 f_language::lookup_symbol_nonlocal (const char *name,
 				    const struct block *block,
-				    const domain_enum domain) const
+				    const domain_search_flags domain) const
 {
   return cp_lookup_symbol_nonlocal (this, name, block, domain);
 }
@@ -1725,57 +1737,58 @@ build_fortran_types (struct gdbarch *gdbarch)
 {
   struct builtin_f_type *builtin_f_type = new struct builtin_f_type;
 
-  builtin_f_type->builtin_void
-    = arch_type (gdbarch, TYPE_CODE_VOID, TARGET_CHAR_BIT, "void");
+  builtin_f_type->builtin_void = builtin_type (gdbarch)->builtin_void;
+
+  type_allocator alloc (gdbarch);
 
   builtin_f_type->builtin_character
-    = arch_type (gdbarch, TYPE_CODE_CHAR, TARGET_CHAR_BIT, "character");
+    = alloc.new_type (TYPE_CODE_CHAR, TARGET_CHAR_BIT, "character");
 
   builtin_f_type->builtin_logical_s1
-    = arch_boolean_type (gdbarch, TARGET_CHAR_BIT, 1, "logical*1");
+    = init_boolean_type (alloc, TARGET_CHAR_BIT, 1, "logical*1");
 
   builtin_f_type->builtin_logical_s2
-    = arch_boolean_type (gdbarch, gdbarch_short_bit (gdbarch), 1, "logical*2");
+    = init_boolean_type (alloc, gdbarch_short_bit (gdbarch), 1, "logical*2");
 
   builtin_f_type->builtin_logical
-    = arch_boolean_type (gdbarch, gdbarch_int_bit (gdbarch), 1, "logical*4");
+    = init_boolean_type (alloc, gdbarch_int_bit (gdbarch), 1, "logical*4");
 
   builtin_f_type->builtin_logical_s8
-    = arch_boolean_type (gdbarch, gdbarch_long_long_bit (gdbarch), 1,
+    = init_boolean_type (alloc, gdbarch_long_long_bit (gdbarch), 1,
 			 "logical*8");
 
   builtin_f_type->builtin_integer_s1
-    = arch_integer_type (gdbarch, TARGET_CHAR_BIT, 0, "integer*1");
+    = init_integer_type (alloc, TARGET_CHAR_BIT, 0, "integer*1");
 
   builtin_f_type->builtin_integer_s2
-    = arch_integer_type (gdbarch, gdbarch_short_bit (gdbarch), 0, "integer*2");
+    = init_integer_type (alloc, gdbarch_short_bit (gdbarch), 0, "integer*2");
 
   builtin_f_type->builtin_integer
-    = arch_integer_type (gdbarch, gdbarch_int_bit (gdbarch), 0, "integer*4");
+    = init_integer_type (alloc, gdbarch_int_bit (gdbarch), 0, "integer*4");
 
   builtin_f_type->builtin_integer_s8
-    = arch_integer_type (gdbarch, gdbarch_long_long_bit (gdbarch), 0,
+    = init_integer_type (alloc, gdbarch_long_long_bit (gdbarch), 0,
 			 "integer*8");
 
   builtin_f_type->builtin_real
-    = arch_float_type (gdbarch, gdbarch_float_bit (gdbarch),
+    = init_float_type (alloc, gdbarch_float_bit (gdbarch),
 		       "real*4", gdbarch_float_format (gdbarch));
 
   builtin_f_type->builtin_real_s8
-    = arch_float_type (gdbarch, gdbarch_double_bit (gdbarch),
+    = init_float_type (alloc, gdbarch_double_bit (gdbarch),
 		       "real*8", gdbarch_double_format (gdbarch));
 
   auto fmt = gdbarch_floatformat_for_type (gdbarch, "real(kind=16)", 128);
   if (fmt != nullptr)
     builtin_f_type->builtin_real_s16
-      = arch_float_type (gdbarch, 128, "real*16", fmt);
+      = init_float_type (alloc, 128, "real*16", fmt);
   else if (gdbarch_long_double_bit (gdbarch) == 128)
     builtin_f_type->builtin_real_s16
-      = arch_float_type (gdbarch, gdbarch_long_double_bit (gdbarch),
+      = init_float_type (alloc, gdbarch_long_double_bit (gdbarch),
 			 "real*16", gdbarch_long_double_format (gdbarch));
   else
     builtin_f_type->builtin_real_s16
-      = arch_type (gdbarch, TYPE_CODE_ERROR, 128, "real*16");
+      = alloc.new_type (TYPE_CODE_ERROR, 128, "real*16");
 
   builtin_f_type->builtin_complex
     = init_complex_type ("complex*4", builtin_f_type->builtin_real);
@@ -1785,7 +1798,7 @@ build_fortran_types (struct gdbarch *gdbarch)
 
   if (builtin_f_type->builtin_real_s16->code () == TYPE_CODE_ERROR)
     builtin_f_type->builtin_complex_s16
-      = arch_type (gdbarch, TYPE_CODE_ERROR, 256, "complex*16");
+      = alloc.new_type (TYPE_CODE_ERROR, 256, "complex*16");
   else
     builtin_f_type->builtin_complex_s16
       = init_complex_type ("complex*16", builtin_f_type->builtin_real_s16);
@@ -1872,15 +1885,15 @@ fortran_argument_convert (struct value *value, bool is_artificial)
     {
       /* If the value is not in the inferior e.g. registers values,
 	 convenience variables and user input.  */
-      if (VALUE_LVAL (value) != lval_memory)
+      if (value->lval () != lval_memory)
 	{
-	  struct type *type = value_type (value);
+	  struct type *type = value->type ();
 	  const int length = type->length ();
 	  const CORE_ADDR addr
 	    = value_as_long (value_allocate_space_in_inferior (length));
-	  write_memory (addr, value_contents (value).data (), length);
+	  write_memory (addr, value->contents ().data (), length);
 	  struct value *val = value_from_contents_and_address
-	    (type, value_contents (value).data (), addr);
+	    (type, value->contents ().data (), addr);
 	  return value_addr (val);
 	}
       else
@@ -1918,7 +1931,7 @@ fortran_prepare_argument (struct expression *exp,
 
   bool is_artificial = ((arg_num >= func_type->num_fields ())
 			? true
-			: TYPE_FIELD_ARTIFICIAL (func_type, arg_num));
+			: func_type->field (arg_num).is_artificial ());
 
   /* If this is an artificial argument, then either, this is an argument
      beyond the end of the known arguments, or possibly, there are no known
@@ -1953,8 +1966,8 @@ fortran_prepare_argument (struct expression *exp,
 struct type *
 fortran_preserve_arg_pointer (struct value *arg, struct type *type)
 {
-  if (value_type (arg)->code () == TYPE_CODE_PTR)
-    return value_type (arg);
+  if (arg->type ()->code () == TYPE_CODE_PTR)
+    return arg->type ();
   return type;
 }
 

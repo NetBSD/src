@@ -1,5 +1,5 @@
 /* frv cache model.
-   Copyright (C) 1999-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
 This file is part of the GNU simulators.
@@ -136,7 +136,7 @@ frv_cache_reconfigure (SIM_CPU *current_cpu, FRV_CACHE *cache)
 	      break;
 	    }
 	}
-      /* fall through */
+      ATTRIBUTE_FALLTHROUGH;
     default:
       /* Set the cache to its original settings.  */
       cache->sets = cache->configured_sets;
@@ -362,7 +362,6 @@ read_data_from_memory (SIM_CPU *current_cpu, SI address, char *buffer,
 static void
 fill_line_from_memory (FRV_CACHE *cache, FRV_CACHE_TAG *tag, SI address)
 {
-  PCADDR pc;
   int line_alignment;
   SI read_address;
   SIM_CPU *current_cpu = cache->cpu;
@@ -382,7 +381,6 @@ fill_line_from_memory (FRV_CACHE *cache, FRV_CACHE_TAG *tag, SI address)
       tag->line = cache->data_storage + (line_index * cache->line_size);
     }
 
-  pc = CPU_PC_GET (current_cpu);
   line_alignment = cache->line_size - 1;
   read_address = address & ~line_alignment;
   read_data_from_memory (current_cpu, read_address, tag->line,
@@ -519,7 +517,6 @@ frv_cache_write (FRV_CACHE *cache, SI address, char *data, unsigned length)
 
   /* See if this data is already in the cache.  */
   SIM_CPU *current_cpu = cache->cpu;
-  USI hsr0 = GET_HSR0 ();
   FRV_CACHE_TAG *tag;
   int found;
 
@@ -853,7 +850,7 @@ pipeline_requeue_request (FRV_CACHE_PIPELINE *p)
 static int
 next_priority (FRV_CACHE *cache, FRV_CACHE_PIPELINE *pipeline)
 {
-  int i, j;
+  int i;
   int pipe;
   int lowest = 0;
   FRV_CACHE_REQUEST *req;
@@ -1157,7 +1154,6 @@ address_interference (FRV_CACHE *cache, SI address, FRV_CACHE_REQUEST *req,
 static void
 wait_for_WAR (FRV_CACHE* cache, int pipe, FRV_CACHE_REQUEST *req)
 {
-  FRV_CACHE_WAR war;
   FRV_CACHE_PIPELINE *pipeline = & cache->pipeline[pipe];
 
   if (! cache->BARS.valid)
@@ -1288,7 +1284,6 @@ static void
 handle_req_preload (FRV_CACHE *cache, int pipe, FRV_CACHE_REQUEST *req)
 {
   int found;
-  FRV_CACHE_WAR war;
   FRV_CACHE_TAG *tag;
   int length;
   int lock;
@@ -1464,7 +1459,6 @@ handle_req_unlock (FRV_CACHE *cache, int pipe, FRV_CACHE_REQUEST *req)
 static void
 handle_req_WAR (FRV_CACHE *cache, int pipe, FRV_CACHE_REQUEST *req)
 {
-  char *buffer;
   FRV_CACHE_TAG *tag;
   SI address = req->address;
 

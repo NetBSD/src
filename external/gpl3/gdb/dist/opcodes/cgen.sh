@@ -1,7 +1,7 @@
 #! /bin/sh
 # CGEN generic assembler support code.
 #
-#   Copyright (C) 2000-2022 Free Software Foundation, Inc.
+#   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 #
 #   This file is part of the GNU opcodes library.
 #
@@ -99,7 +99,6 @@ opcodes)
 
 	# Run CGEN.
 	${cgen} ${cgendir}/cgen-opc.scm \
-		-s ${cgendir} \
 		${cgenflags} \
 		-f "${options}" \
 		-m all \
@@ -182,7 +181,6 @@ desc)
 	rm -f ${tmp}-opc.h1 ${tmp}-opc.h
 
 	${cgen} ${cgendir}/cgen-opc.scm \
-		-s ${cgendir} \
 		${cgenflags} \
 		-OPC ${opcfile} \
 		-f "${archflags}" \

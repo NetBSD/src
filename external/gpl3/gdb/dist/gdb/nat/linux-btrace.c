@@ -1,6 +1,6 @@
 /* Linux-dependent part of branch trace support for GDB, and GDBserver.
 
-   Copyright (C) 2013-2023 Free Software Foundation, Inc.
+   Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>
 
@@ -19,7 +19,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "gdbsupport/common-defs.h"
 #include "linux-btrace.h"
 #include "gdbsupport/common-regcache.h"
 #include "gdbsupport/gdb_wait.h"
@@ -277,20 +276,19 @@ perf_event_sample_ok (const struct perf_event_sample *sample)
    part at the end and its upper part at the beginning of the buffer.  */
 
 static std::vector<btrace_block> *
-perf_event_read_bts (struct btrace_target_info* tinfo, const uint8_t *begin,
+perf_event_read_bts (btrace_target_info *tinfo, const uint8_t *begin,
 		     const uint8_t *end, const uint8_t *start, size_t size)
 {
   std::vector<btrace_block> *btrace = new std::vector<btrace_block>;
   struct perf_event_sample sample;
   size_t read = 0;
   struct btrace_block block = { 0, 0 };
-  struct regcache *regcache;
 
   gdb_assert (begin <= start);
   gdb_assert (start <= end);
 
   /* The first block ends at the current pc.  */
-  regcache = get_thread_regcache_for_ptid (tinfo->ptid);
+  reg_buffer_common *regcache = get_thread_regcache_for_ptid (tinfo->ptid);
   block.end = regcache_read_pc (regcache);
 
   /* The buffer may contain a partial record as its last entry (i.e. when the
@@ -423,7 +421,8 @@ cpu_supports_bts (void)
 static void
 diagnose_perf_event_open_fail ()
 {
-  switch (errno)
+  int orig_errno = errno;
+  switch (orig_errno)
     {
     case EPERM:
     case EACCES:
@@ -444,7 +443,15 @@ diagnose_perf_event_open_fail ()
       break;
     }
 
-  error (_("Failed to start recording: %s"), safe_strerror (errno));
+  error (_("Failed to start recording: %s"), safe_strerror (orig_errno));
+}
+
+/* Get the linux version of a btrace_target_info.  */
+
+static linux_btrace_target_info *
+get_linux_btrace_target_info (btrace_target_info *gtinfo)
+{
+  return gdb::checked_static_cast<linux_btrace_target_info *> (gtinfo);
 }
 
 /* Enable branch tracing in BTS format.  */
@@ -452,7 +459,6 @@ diagnose_perf_event_open_fail ()
 static struct btrace_target_info *
 linux_enable_bts (ptid_t ptid, const struct btrace_config_bts *conf)
 {
-  struct btrace_tinfo_bts *bts;
   size_t size, pages;
   __u64 data_offset;
   int pid, pg;
@@ -460,31 +466,29 @@ linux_enable_bts (ptid_t ptid, const struct btrace_config_bts *conf)
   if (!cpu_supports_bts ())
     error (_("BTS support has been disabled for the target cpu."));
 
-  gdb::unique_xmalloc_ptr<btrace_target_info> tinfo
-    (XCNEW (btrace_target_info));
-  tinfo->ptid = ptid;
+  std::unique_ptr<linux_btrace_target_info> tinfo
+    { std::make_unique<linux_btrace_target_info> (ptid) };
 
   tinfo->conf.format = BTRACE_FORMAT_BTS;
-  bts = &tinfo->variant.bts;
 
-  bts->attr.size = sizeof (bts->attr);
-  bts->attr.type = PERF_TYPE_HARDWARE;
-  bts->attr.config = PERF_COUNT_HW_BRANCH_INSTRUCTIONS;
-  bts->attr.sample_period = 1;
+  tinfo->attr.size = sizeof (tinfo->attr);
+  tinfo->attr.type = PERF_TYPE_HARDWARE;
+  tinfo->attr.config = PERF_COUNT_HW_BRANCH_INSTRUCTIONS;
+  tinfo->attr.sample_period = 1;
 
   /* We sample from and to address.  */
-  bts->attr.sample_type = PERF_SAMPLE_IP | PERF_SAMPLE_ADDR;
+  tinfo->attr.sample_type = PERF_SAMPLE_IP | PERF_SAMPLE_ADDR;
 
-  bts->attr.exclude_kernel = 1;
-  bts->attr.exclude_hv = 1;
-  bts->attr.exclude_idle = 1;
+  tinfo->attr.exclude_kernel = 1;
+  tinfo->attr.exclude_hv = 1;
+  tinfo->attr.exclude_idle = 1;
 
   pid = ptid.lwp ();
   if (pid == 0)
     pid = ptid.pid ();
 
   errno = 0;
-  scoped_fd fd (syscall (SYS_perf_event_open, &bts->attr, pid, -1, -1, 0));
+  scoped_fd fd (syscall (SYS_perf_event_open, &tinfo->attr, pid, -1, -1, 0));
   if (fd.get () < 0)
     diagnose_perf_event_open_fail ();
 
@@ -552,12 +556,12 @@ linux_enable_bts (ptid_t ptid, const struct btrace_config_bts *conf)
     }
 #endif /* defined (PERF_ATTR_SIZE_VER5) */
 
-  bts->bts.size = size;
-  bts->bts.data_head = &header->data_head;
-  bts->bts.mem = (const uint8_t *) data.release () + data_offset;
-  bts->bts.last_head = 0ull;
-  bts->header = header;
-  bts->file = fd.release ();
+  tinfo->pev.size = size;
+  tinfo->pev.data_head = &header->data_head;
+  tinfo->pev.mem = (const uint8_t *) data.release () + data_offset;
+  tinfo->pev.last_head = 0ull;
+  tinfo->header = header;
+  tinfo->file = fd.release ();
 
   tinfo->conf.bts.size = (unsigned int) size;
   return tinfo.release ();
@@ -604,7 +608,6 @@ perf_event_pt_event_type ()
 static struct btrace_target_info *
 linux_enable_pt (ptid_t ptid, const struct btrace_config_pt *conf)
 {
-  struct btrace_tinfo_pt *pt;
   size_t pages;
   int pid, pg;
 
@@ -612,22 +615,20 @@ linux_enable_pt (ptid_t ptid, const struct btrace_config_pt *conf)
   if (pid == 0)
     pid = ptid.pid ();
 
-  gdb::unique_xmalloc_ptr<btrace_target_info> tinfo
-    (XCNEW (btrace_target_info));
-  tinfo->ptid = ptid;
+  std::unique_ptr<linux_btrace_target_info> tinfo
+    { std::make_unique<linux_btrace_target_info> (ptid) };
 
   tinfo->conf.format = BTRACE_FORMAT_PT;
-  pt = &tinfo->variant.pt;
 
-  pt->attr.size = sizeof (pt->attr);
-  pt->attr.type = perf_event_pt_event_type ();
+  tinfo->attr.size = sizeof (tinfo->attr);
+  tinfo->attr.type = perf_event_pt_event_type ();
 
-  pt->attr.exclude_kernel = 1;
-  pt->attr.exclude_hv = 1;
-  pt->attr.exclude_idle = 1;
+  tinfo->attr.exclude_kernel = 1;
+  tinfo->attr.exclude_hv = 1;
+  tinfo->attr.exclude_idle = 1;
 
   errno = 0;
-  scoped_fd fd (syscall (SYS_perf_event_open, &pt->attr, pid, -1, -1, 0));
+  scoped_fd fd (syscall (SYS_perf_event_open, &tinfo->attr, pid, -1, -1, 0));
   if (fd.get () < 0)
     diagnose_perf_event_open_fail ();
 
@@ -687,14 +688,14 @@ linux_enable_pt (ptid_t ptid, const struct btrace_config_pt *conf)
   if (pages == 0)
     error (_("Failed to map trace buffer: %s."), safe_strerror (errno));
 
-  pt->pt.size = aux.size ();
-  pt->pt.mem = (const uint8_t *) aux.release ();
-  pt->pt.data_head = &header->aux_head;
-  pt->header = (struct perf_event_mmap_page *) data.release ();
-  gdb_assert (pt->header == header);
-  pt->file = fd.release ();
+  tinfo->pev.size = aux.size ();
+  tinfo->pev.mem = (const uint8_t *) aux.release ();
+  tinfo->pev.data_head = &header->aux_head;
+  tinfo->header = (struct perf_event_mmap_page *) data.release ();
+  gdb_assert (tinfo->header == header);
+  tinfo->file = fd.release ();
 
-  tinfo->conf.pt.size = (unsigned int) pt->pt.size;
+  tinfo->conf.pt.size = (unsigned int) tinfo->pev.size;
   return tinfo.release ();
 }
 
@@ -731,83 +732,74 @@ linux_enable_btrace (ptid_t ptid, const struct btrace_config *conf)
 
 /* Disable BTS tracing.  */
 
-static enum btrace_error
-linux_disable_bts (struct btrace_tinfo_bts *tinfo)
+static void
+linux_disable_bts (struct linux_btrace_target_info *tinfo)
 {
-  munmap((void *) tinfo->header, tinfo->bts.size + PAGE_SIZE);
+  munmap ((void *) tinfo->header, tinfo->pev.size + PAGE_SIZE);
   close (tinfo->file);
-
-  return BTRACE_ERR_NONE;
 }
 
 /* Disable Intel Processor Trace tracing.  */
 
-static enum btrace_error
-linux_disable_pt (struct btrace_tinfo_pt *tinfo)
+static void
+linux_disable_pt (struct linux_btrace_target_info *tinfo)
 {
-  munmap((void *) tinfo->pt.mem, tinfo->pt.size);
-  munmap((void *) tinfo->header, PAGE_SIZE);
+  munmap ((void *) tinfo->pev.mem, tinfo->pev.size);
+  munmap ((void *) tinfo->header, PAGE_SIZE);
   close (tinfo->file);
-
-  return BTRACE_ERR_NONE;
 }
 
 /* See linux-btrace.h.  */
 
 enum btrace_error
-linux_disable_btrace (struct btrace_target_info *tinfo)
+linux_disable_btrace (struct btrace_target_info *gtinfo)
 {
-  enum btrace_error errcode;
+  linux_btrace_target_info *tinfo
+    = get_linux_btrace_target_info (gtinfo);
 
-  errcode = BTRACE_ERR_NOT_SUPPORTED;
   switch (tinfo->conf.format)
     {
     case BTRACE_FORMAT_NONE:
-      break;
+      return BTRACE_ERR_NOT_SUPPORTED;
 
     case BTRACE_FORMAT_BTS:
-      errcode = linux_disable_bts (&tinfo->variant.bts);
-      break;
+      linux_disable_bts (tinfo);
+      delete tinfo;
+      return BTRACE_ERR_NONE;
 
     case BTRACE_FORMAT_PT:
-      errcode = linux_disable_pt (&tinfo->variant.pt);
-      break;
+      linux_disable_pt (tinfo);
+      delete tinfo;
+      return BTRACE_ERR_NONE;
     }
 
-  if (errcode == BTRACE_ERR_NONE)
-    xfree (tinfo);
-
-  return errcode;
+  return BTRACE_ERR_NOT_SUPPORTED;
 }
 
 /* Read branch trace data in BTS format for the thread given by TINFO into
    BTRACE using the TYPE reading method.  */
 
 static enum btrace_error
-linux_read_bts (struct btrace_data_bts *btrace,
-		struct btrace_target_info *tinfo,
+linux_read_bts (btrace_data_bts *btrace, linux_btrace_target_info *tinfo,
 		enum btrace_read_type type)
 {
-  struct perf_event_buffer *pevent;
   const uint8_t *begin, *end, *start;
   size_t buffer_size, size;
   __u64 data_head = 0, data_tail;
   unsigned int retries = 5;
 
-  pevent = &tinfo->variant.bts.bts;
-
   /* For delta reads, we return at least the partial last block containing
      the current PC.  */
-  if (type == BTRACE_READ_NEW && !perf_event_new_data (pevent))
+  if (type == BTRACE_READ_NEW && !perf_event_new_data (&tinfo->pev))
     return BTRACE_ERR_NONE;
 
-  buffer_size = pevent->size;
-  data_tail = pevent->last_head;
+  buffer_size = tinfo->pev.size;
+  data_tail = tinfo->pev.last_head;
 
   /* We may need to retry reading the trace.  See below.  */
   while (retries--)
     {
-      data_head = *pevent->data_head;
+      data_head = *tinfo->pev.data_head;
 
       /* Delete any leftover trace from the previous iteration.  */
       delete btrace->blocks;
@@ -845,13 +837,13 @@ linux_read_bts (struct btrace_data_bts *btrace,
 	}
 
       /* Data_head keeps growing; the buffer itself is circular.  */
-      begin = pevent->mem;
+      begin = tinfo->pev.mem;
       start = begin + data_head % buffer_size;
 
       if (data_head <= buffer_size)
 	end = start;
       else
-	end = begin + pevent->size;
+	end = begin + tinfo->pev.size;
 
       btrace->blocks = perf_event_read_bts (tinfo, begin, end, start, size);
 
@@ -860,11 +852,11 @@ linux_read_bts (struct btrace_data_bts *btrace,
 	 kernel might be writing the last branch trace records.
 
 	 Let's check whether the data head moved while we read the trace.  */
-      if (data_head == *pevent->data_head)
+      if (data_head == *tinfo->pev.data_head)
 	break;
     }
 
-  pevent->last_head = data_head;
+  tinfo->pev.last_head = data_head;
 
   /* Prune the incomplete last block (i.e. the first one of inferior execution)
      if we're not doing a delta read.  There is no way of filling in its zeroed
@@ -887,14 +879,9 @@ linux_fill_btrace_pt_config (struct btrace_data_pt_config *conf)
    given by TINFO into BTRACE using the TYPE reading method.  */
 
 static enum btrace_error
-linux_read_pt (struct btrace_data_pt *btrace,
-	       struct btrace_target_info *tinfo,
+linux_read_pt (btrace_data_pt *btrace, linux_btrace_target_info *tinfo,
 	       enum btrace_read_type type)
 {
-  struct perf_event_buffer *pt;
-
-  pt = &tinfo->variant.pt.pt;
-
   linux_fill_btrace_pt_config (&btrace->config);
 
   switch (type)
@@ -905,12 +892,11 @@ linux_read_pt (struct btrace_data_pt *btrace,
       return BTRACE_ERR_NOT_SUPPORTED;
 
     case BTRACE_READ_NEW:
-      if (!perf_event_new_data (pt))
+      if (!perf_event_new_data (&tinfo->pev))
 	return BTRACE_ERR_NONE;
-
-      /* Fall through.  */
+      [[fallthrough]];
     case BTRACE_READ_ALL:
-      perf_event_read_all (pt, &btrace->data, &btrace->size);
+      perf_event_read_all (&tinfo->pev, &btrace->data, &btrace->size);
       return BTRACE_ERR_NONE;
     }
 
@@ -921,9 +907,12 @@ linux_read_pt (struct btrace_data_pt *btrace,
 
 enum btrace_error
 linux_read_btrace (struct btrace_data *btrace,
-		   struct btrace_target_info *tinfo,
+		   struct btrace_target_info *gtinfo,
 		   enum btrace_read_type type)
 {
+  linux_btrace_target_info *tinfo
+    = get_linux_btrace_target_info (gtinfo);
+
   switch (tinfo->conf.format)
     {
     case BTRACE_FORMAT_NONE:

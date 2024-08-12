@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Free Software Foundation, Inc.
+# Copyright 2020-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,10 +25,7 @@
 # To catch the bug, this test verifies that we can hit a breakpoint after a
 # vfork call, while a second inferior runs in the background.
 
-if [use_gdb_stub] {
-    unsupported "test uses multiple inferiors"
-    return
-}
+require !use_gdb_stub
 
 standard_testfile .c -sleep.c
 

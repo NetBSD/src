@@ -1,5 +1,5 @@
 /* 32-bit ELF support for TI C6X
-   Copyright (C) 2010-2022 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
    Contributed by Joseph Myers <joseph@codesourcery.com>
 		  Bernd Schmidt  <bernds@codesourcery.com>
 
@@ -3160,7 +3160,7 @@ elf32_tic6x_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 /* Set the sizes of the dynamic sections.  */
 
 static bool
-elf32_tic6x_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
+elf32_tic6x_late_size_sections (bfd *output_bfd, struct bfd_link_info *info)
 {
   struct elf32_tic6x_link_hash_table *htab;
   bfd *dynobj;
@@ -3171,7 +3171,7 @@ elf32_tic6x_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
   htab = elf32_tic6x_hash_table (info);
   dynobj = htab->elf.dynobj;
   if (dynobj == NULL)
-    abort ();
+    return true;
 
   if (htab->elf.dynamic_sections_created)
     {
@@ -3358,7 +3358,7 @@ elf32_tic6x_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
    and the input sections have been assigned to output sections.  */
 
 static bool
-elf32_tic6x_always_size_sections (bfd *output_bfd, struct bfd_link_info *info)
+elf32_tic6x_early_size_sections (bfd *output_bfd, struct bfd_link_info *info)
 {
   if (elf32_tic6x_using_dsbt (output_bfd) && !bfd_link_relocatable (info)
       && !bfd_elf_stack_segment_size (output_bfd, info,
@@ -4261,10 +4261,10 @@ elf32_tic6x_write_section (bfd *output_bfd,
 #define elf_backend_relocs_compatible	_bfd_elf_relocs_compatible
 #define elf_backend_finish_dynamic_symbol \
   elf32_tic6x_finish_dynamic_symbol
-#define elf_backend_always_size_sections \
-  elf32_tic6x_always_size_sections
-#define elf_backend_size_dynamic_sections \
-  elf32_tic6x_size_dynamic_sections
+#define elf_backend_early_size_sections \
+  elf32_tic6x_early_size_sections
+#define elf_backend_late_size_sections \
+  elf32_tic6x_late_size_sections
 #define elf_backend_finish_dynamic_sections \
   elf32_tic6x_finish_dynamic_sections
 #define bfd_elf32_bfd_final_link \

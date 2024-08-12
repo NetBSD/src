@@ -1,6 +1,6 @@
 /* Everything about signal catchpoints, for GDB.
 
-   Copyright (C) 2011-2023 Free Software Foundation, Inc.
+   Copyright (C) 2011-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,11 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "arch-utils.h"
 #include <ctype.h>
 #include "breakpoint.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "inferior.h"
 #include "infrun.h"
 #include "annotate.h"
@@ -57,7 +56,7 @@ struct signal_catchpoint : public catchpoint
 		      CORE_ADDR bp_addr,
 		      const target_waitstatus &ws) override;
   enum print_stop_action print_it (const bpstat *bs) const override;
-  bool print_one (bp_location **) const override;
+  bool print_one (const bp_location **) const override;
   void print_mention () const override;
   void print_recreate (struct ui_file *fp) const override;
   bool explains_signal (enum gdb_signal) override;
@@ -103,7 +102,8 @@ signal_to_name_or_int (enum gdb_signal sig)
 int
 signal_catchpoint::insert_location (struct bp_location *bl)
 {
-  struct signal_catchpoint *c = (struct signal_catchpoint *) bl->owner;
+  signal_catchpoint *c
+    = gdb::checked_static_cast<signal_catchpoint *> (bl->owner);
 
   if (!c->signals_to_be_caught.empty ())
     {
@@ -130,7 +130,8 @@ int
 signal_catchpoint::remove_location (struct bp_location *bl,
 				    enum remove_bp_reason reason)
 {
-  struct signal_catchpoint *c = (struct signal_catchpoint *) bl->owner;
+  signal_catchpoint *c
+    = gdb::checked_static_cast<signal_catchpoint *> (bl->owner);
 
   if (!c->signals_to_be_caught.empty ())
     {
@@ -165,8 +166,8 @@ signal_catchpoint::breakpoint_hit (const struct bp_location *bl,
 				   CORE_ADDR bp_addr,
 				   const target_waitstatus &ws)
 {
-  const struct signal_catchpoint *c
-    = (const struct signal_catchpoint *) bl->owner;
+  const signal_catchpoint *c
+    = gdb::checked_static_cast<const signal_catchpoint *> (bl->owner);
   gdb_signal signal_number;
 
   if (ws.kind () != TARGET_WAITKIND_STOPPED)
@@ -213,7 +214,7 @@ signal_catchpoint::print_it (const bpstat *bs) const
 /* Implement the "print_one" method for signal catchpoints.  */
 
 bool
-signal_catchpoint::print_one (bp_location **last_loc) const
+signal_catchpoint::print_one (const bp_location **last_loc) const
 {
   struct value_print_options opts;
   struct ui_out *uiout = current_uiout;

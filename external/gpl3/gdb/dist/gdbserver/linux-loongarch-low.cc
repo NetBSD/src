@@ -1,6 +1,6 @@
 /* GNU/Linux/LoongArch specific low level interface, for the remote server
    for GDB.
-   Copyright (C) 2022-2023 Free Software Foundation, Inc.
+   Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "server.h"
 #include "linux-low.h"
 #include "tdesc.h"
 #include "elf/common.h"
@@ -84,8 +83,11 @@ loongarch_target::low_arch_setup ()
   features.xlen = sizeof (elf_greg_t);
   tdesc = loongarch_create_target_description (features);
 
-  if (!tdesc->expedite_regs)
-    init_target_desc (tdesc.get (), expedite_regs);
+  if (tdesc->expedite_regs.empty ())
+    {
+      init_target_desc (tdesc.get (), expedite_regs);
+      gdb_assert (!tdesc->expedite_regs.empty ());
+    }
   current_process ()->tdesc = tdesc.release ();
 }
 
@@ -174,12 +176,107 @@ loongarch_store_fpregset (struct regcache *regcache, const void *buf)
   supply_register (regcache, LOONGARCH_FCSR_REGNUM, regbuf);
 }
 
+/* Collect lsx regs from REGCACHE into BUF.  */
+
+static void
+loongarch_fill_lsxregset (struct regcache *regcache, void *buf)
+{
+  elf_lsxregset_t *regset = (elf_lsxregset_t *) buf;
+  int i;
+
+  for (i = 0; i < LOONGARCH_LINUX_NUM_LSXREGSET; i++)
+    collect_register (regcache, LOONGARCH_FIRST_LSX_REGNUM + i, *regset + i);
+}
+
+/* Supply lsx regs from BUF into REGCACHE.  */
+
+static void
+loongarch_store_lsxregset (struct regcache *regcache, const void *buf)
+{
+  const elf_lsxregset_t *regset = (const elf_lsxregset_t *) buf;
+  int i;
+
+  for (i = 0; i < LOONGARCH_LINUX_NUM_LSXREGSET; i++)
+    supply_register (regcache, LOONGARCH_FIRST_LSX_REGNUM + i, *regset + i);
+}
+
+/* Collect lasx regs from REGCACHE into BUF.  */
+
+static void
+loongarch_fill_lasxregset (struct regcache *regcache, void *buf)
+{
+  elf_lasxregset_t *regset = (elf_lasxregset_t *) buf;
+  int i;
+
+  for (i = 0; i < LOONGARCH_LINUX_NUM_LASXREGSET; i++)
+    collect_register (regcache, LOONGARCH_FIRST_LASX_REGNUM + i, *regset + i);
+}
+
+/* Supply lasx regs from BUF into REGCACHE.  */
+
+static void
+loongarch_store_lasxregset (struct regcache *regcache, const void *buf)
+{
+  const elf_lasxregset_t *regset = (const elf_lasxregset_t *) buf;
+  int i;
+
+  for (i = 0; i < LOONGARCH_LINUX_NUM_LASXREGSET; i++)
+    supply_register (regcache, LOONGARCH_FIRST_LASX_REGNUM + i, *regset + i);
+}
+
+/* Collect lbt regs from REGCACHE into BUF.  */
+
+static void
+loongarch_fill_lbtregset (struct regcache *regcache, void *buf)
+{
+  gdb_byte *regbuf = (gdb_byte*)buf;
+  int scrsize = register_size (regcache->tdesc, LOONGARCH_FIRST_SCR_REGNUM);
+  int eflagssize = register_size (regcache->tdesc, LOONGARCH_EFLAGS_REGNUM);
+  int i;
+
+  for (i = 0; i < LOONGARCH_LINUX_NUM_SCR; i++)
+    collect_register (regcache, LOONGARCH_FIRST_SCR_REGNUM + i, regbuf + scrsize * i);
+
+  collect_register (regcache, LOONGARCH_EFLAGS_REGNUM,
+		    regbuf + LOONGARCH_LINUX_NUM_SCR * scrsize);
+  collect_register (regcache, LOONGARCH_FTOP_REGNUM,
+		    regbuf + LOONGARCH_LINUX_NUM_SCR * scrsize + eflagssize);
+
+}
+
+/* Supply lbt regs from BUF into REGCACHE.  */
+
+static void
+loongarch_store_lbtregset (struct regcache *regcache, const void *buf)
+{
+
+  gdb_byte *regbuf = (gdb_byte*)buf;
+  int scrsize = register_size (regcache->tdesc, LOONGARCH_FIRST_SCR_REGNUM);
+  int eflagssize = register_size (regcache->tdesc, LOONGARCH_EFLAGS_REGNUM);
+  int i;
+
+  for (i = 0; i < LOONGARCH_LINUX_NUM_SCR; i++)
+    supply_register (regcache, LOONGARCH_FIRST_SCR_REGNUM + i, regbuf + scrsize * i);
+
+  supply_register (regcache, LOONGARCH_EFLAGS_REGNUM,
+		    regbuf + LOONGARCH_LINUX_NUM_SCR * scrsize);
+  supply_register (regcache, LOONGARCH_FTOP_REGNUM,
+		    regbuf + LOONGARCH_LINUX_NUM_SCR * scrsize + eflagssize);
+
+}
+
 /* LoongArch/Linux regsets.  */
 static struct regset_info loongarch_regsets[] = {
   { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_PRSTATUS, sizeof (elf_gregset_t),
     GENERAL_REGS, loongarch_fill_gregset, loongarch_store_gregset },
   { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_FPREGSET, sizeof (elf_fpregset_t),
     FP_REGS, loongarch_fill_fpregset, loongarch_store_fpregset },
+  { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_LARCH_LSX, sizeof (elf_lsxregset_t),
+    OPTIONAL_REGS, loongarch_fill_lsxregset, loongarch_store_lsxregset },
+  { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_LARCH_LASX, sizeof (elf_lasxregset_t),
+    OPTIONAL_REGS, loongarch_fill_lasxregset, loongarch_store_lasxregset },
+  { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_LARCH_LBT, LOONGARCH_LBT_REGS_SIZE,
+    OPTIONAL_REGS, loongarch_fill_lbtregset, loongarch_store_lbtregset },
   NULL_REGSET
 };
 

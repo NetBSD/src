@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2020-2023 Free Software Foundation, Inc.
+# Copyright 2020-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,13 +22,9 @@ load_lib gdbserver-support.exp
 
 standard_testfile
 
-if { [skip_gdbserver_tests] } {
-    return 0
-}
+require allow_gdbserver_tests
 
-if {![can_spawn_for_attach]} {
-    return
-}
+require can_spawn_for_attach
 
 if {[build_executable "build" $testfile $srcfile {debug}] == -1} {
     return -1

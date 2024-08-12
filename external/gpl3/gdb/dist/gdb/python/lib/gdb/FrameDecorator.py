@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2023 Free Software Foundation, Inc.
+# Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,34 +16,8 @@
 import gdb
 
 
-class FrameDecorator(object):
-    """Basic implementation of a Frame Decorator"""
-
-    """ This base frame decorator decorates a frame or another frame
-    decorator, and provides convenience methods.  If this object is
-    wrapping a frame decorator, defer to that wrapped object's method
-    if it has one.  This allows for frame decorators that have
-    sub-classed FrameDecorator object, but also wrap other frame
-    decorators on the same frame to correctly execute.
-
-    E.g
-
-    If the result of frame filters running means we have one gdb.Frame
-    wrapped by multiple frame decorators, all sub-classed from
-    FrameDecorator, the resulting hierarchy will be:
-
-    Decorator1
-      -- (wraps) Decorator2
-        -- (wraps) FrameDecorator
-          -- (wraps) gdb.Frame
-
-    In this case we have two frame decorators, both of which are
-    sub-classed from FrameDecorator.  If Decorator1 just overrides the
-    'function' method, then all of the other methods are carried out
-    by the super-class FrameDecorator.  But Decorator2 may have
-    overriden other methods, so FrameDecorator will look at the
-    'base' parameter and defer to that class's methods.  And so on,
-    down the chain."""
+class _FrameDecoratorBase(object):
+    """Base class of frame decorators."""
 
     # 'base' can refer to a gdb.Frame or another frame decorator.  In
     # the latter case, the child class will have called the super
@@ -53,7 +27,7 @@ class FrameDecorator(object):
         self._base = base
 
     @staticmethod
-    def _is_limited_frame(frame):
+    def __is_limited_frame(frame):
         """Internal utility to determine if the frame is special or
         limited."""
         sal = frame.find_sal()
@@ -64,7 +38,6 @@ class FrameDecorator(object):
             or frame.type() == gdb.DUMMY_FRAME
             or frame.type() == gdb.SIGTRAMP_FRAME
         ):
-
             return True
 
         return False
@@ -102,17 +75,10 @@ class FrameDecorator(object):
         elif frame.type() == gdb.SIGTRAMP_FRAME:
             return "<signal handler called>"
 
-        func = frame.function()
-
-        # If we cannot determine the function name, return the
-        # address.  If GDB detects an integer value from this function
-        # it will attempt to find the function name from minimal
-        # symbols via its own internal functions.
-        if func is None:
-            pc = frame.pc()
-            return pc
-
-        return str(func)
+        func = frame.name()
+        if not isinstance(func, str):
+            func = "???"
+        return func
 
     def address(self):
         """Return the address of the frame's pc"""
@@ -122,22 +88,6 @@ class FrameDecorator(object):
 
         frame = self.inferior_frame()
         return frame.pc()
-
-    def filename(self):
-        """Return the filename associated with this frame, detecting
-        and returning the appropriate library name is this is a shared
-        library."""
-
-        if hasattr(self._base, "filename"):
-            return self._base.filename()
-
-        frame = self.inferior_frame()
-        sal = frame.find_sal()
-        if not sal.symtab or not sal.symtab.filename:
-            pc = frame.pc()
-            return gdb.solib_name(pc)
-        else:
-            return sal.symtab.filename
 
     def frame_args(self):
         """Return an iterable of frame arguments for this frame, if
@@ -149,7 +99,7 @@ class FrameDecorator(object):
             return self._base.frame_args()
 
         frame = self.inferior_frame()
-        if self._is_limited_frame(frame):
+        if self.__is_limited_frame(frame):
             return None
 
         args = FrameVars(frame)
@@ -165,7 +115,7 @@ class FrameDecorator(object):
             return self._base.frame_locals()
 
         frame = self.inferior_frame()
-        if self._is_limited_frame(frame):
+        if self.__is_limited_frame(frame):
             return None
 
         args = FrameVars(frame)
@@ -180,7 +130,7 @@ class FrameDecorator(object):
             return self._base.line()
 
         frame = self.inferior_frame()
-        if self._is_limited_frame(frame):
+        if self.__is_limited_frame(frame):
             return None
 
         sal = frame.find_sal()
@@ -199,17 +149,100 @@ class FrameDecorator(object):
         return self._base
 
 
+class FrameDecorator(_FrameDecoratorBase):
+    """Basic implementation of a Frame Decorator
+
+    This base frame decorator decorates a frame or another frame
+    decorator, and provides convenience methods.  If this object is
+    wrapping a frame decorator, defer to that wrapped object's method
+    if it has one.  This allows for frame decorators that have
+    sub-classed FrameDecorator object, but also wrap other frame
+    decorators on the same frame to correctly execute.
+
+    E.g
+
+    If the result of frame filters running means we have one gdb.Frame
+    wrapped by multiple frame decorators, all sub-classed from
+    FrameDecorator, the resulting hierarchy will be:
+
+    Decorator1
+      -- (wraps) Decorator2
+        -- (wraps) FrameDecorator
+          -- (wraps) gdb.Frame
+
+    In this case we have two frame decorators, both of which are
+    sub-classed from FrameDecorator.  If Decorator1 just overrides the
+    'function' method, then all of the other methods are carried out
+    by the super-class FrameDecorator.  But Decorator2 may have
+    overriden other methods, so FrameDecorator will look at the
+    'base' parameter and defer to that class's methods.  And so on,
+    down the chain."""
+
+    def filename(self):
+        """Return the filename associated with this frame, detecting
+        and returning the appropriate library name is this is a shared
+        library."""
+
+        if hasattr(self._base, "filename"):
+            return self._base.filename()
+
+        frame = self.inferior_frame()
+        sal = frame.find_sal()
+        if not sal.symtab or not sal.symtab.filename:
+            pc = frame.pc()
+            return gdb.solib_name(pc)
+        else:
+            return sal.symtab.filename
+
+
+class DAPFrameDecorator(_FrameDecoratorBase):
+    """Like FrameDecorator, but has slightly different results
+    for the "filename" method."""
+
+    def filename(self):
+        """Return the filename associated with this frame, detecting
+        and returning the appropriate library name is this is a shared
+        library."""
+
+        if hasattr(self._base, "filename"):
+            return self._base.filename()
+
+        frame = self.inferior_frame()
+        sal = frame.find_sal()
+        if sal.symtab is not None:
+            return sal.symtab.fullname()
+        return None
+
+    def frame_locals(self):
+        """Return an iterable of local variables for this frame, if
+        any.  The iterable object contains objects conforming with the
+        Symbol/Value interface.  If there are no frame locals, or if
+        this frame is deemed to be a special case, return None."""
+
+        if hasattr(self._base, "frame_locals"):
+            return self._base.frame_locals()
+
+        frame = self.inferior_frame()
+        args = FrameVars(frame)
+        return args.fetch_frame_locals(True)
+
+
 class SymValueWrapper(object):
     """A container class conforming to the Symbol/Value interface
     which holds frame locals or frame arguments."""
 
-    def __init__(self, symbol, value):
+    # The FRAME argument is needed here because gdb.Symbol doesn't
+    # carry the block with it, and so read_var can't find symbols from
+    # outer (static link) frames.
+    def __init__(self, frame, symbol):
+        self.frame = frame
         self.sym = symbol
-        self.val = value
 
     def value(self):
         """Return the value associated with this symbol, or None"""
-        return self.val
+        if self.frame is None:
+            return None
+        return self.frame.read_var(self.sym)
 
     def symbol(self):
         """Return the symbol, or Python text, associated with this
@@ -218,59 +251,56 @@ class SymValueWrapper(object):
 
 
 class FrameVars(object):
-
     """Utility class to fetch and store frame local variables, or
     frame arguments."""
 
     def __init__(self, frame):
         self.frame = frame
-        self.symbol_class = {
-            gdb.SYMBOL_LOC_STATIC: True,
-            gdb.SYMBOL_LOC_REGISTER: True,
-            gdb.SYMBOL_LOC_ARG: True,
-            gdb.SYMBOL_LOC_REF_ARG: True,
-            gdb.SYMBOL_LOC_LOCAL: True,
-            gdb.SYMBOL_LOC_REGPARM_ADDR: True,
-            gdb.SYMBOL_LOC_COMPUTED: True,
-        }
 
-    def fetch_b(self, sym):
-        """Local utility method to determine if according to Symbol
-        type whether it should be included in the iterator.  Not all
-        symbols are fetched, and only symbols that return
-        True from this method should be fetched."""
-
-        # SYM may be a string instead of a symbol in the case of
-        # synthetic local arguments or locals.  If that is the case,
-        # always fetch.
-        if isinstance(sym, str):
-            return True
-
-        sym_type = sym.addr_class
-
-        return self.symbol_class.get(sym_type, False)
-
-    def fetch_frame_locals(self):
+    def fetch_frame_locals(self, follow_link=False):
         """Public utility method to fetch frame local variables for
         the stored frame.  Frame arguments are not fetched.  If there
         are no frame local variables, return an empty list."""
         lvars = []
 
+        frame = self.frame
         try:
-            block = self.frame.block()
+            block = frame.block()
         except RuntimeError:
             block = None
 
+        traversed_link = False
         while block is not None:
             if block.is_global or block.is_static:
                 break
             for sym in block:
+                # Exclude arguments from the innermost function, but
+                # if we found and traversed a static link, just treat
+                # all such variables as "local".
                 if sym.is_argument:
+                    if not traversed_link:
+                        continue
+                elif not sym.is_variable:
+                    # We use an 'elif' here because is_variable
+                    # returns False for arguments as well.  Anyway,
+                    # don't include non-variables here.
                     continue
-                if self.fetch_b(sym):
-                    lvars.append(SymValueWrapper(sym, None))
+                lvars.append(SymValueWrapper(frame, sym))
 
-            block = block.superblock
+            if block.function is not None:
+                if not follow_link:
+                    break
+                # If the frame has a static link, follow it here.
+                traversed_link = True
+                frame = frame.static_link()
+                if frame is None:
+                    break
+                try:
+                    block = frame.block()
+                except RuntimeError:
+                    block = None
+            else:
+                block = block.superblock
 
         return lvars
 
@@ -287,14 +317,20 @@ class FrameVars(object):
             block = None
 
         while block is not None:
-            if block.function is not None:
+            if block.is_global or block.is_static:
                 break
-            block = block.superblock
-
-        if block is not None:
             for sym in block:
                 if not sym.is_argument:
                     continue
-                args.append(SymValueWrapper(sym, None))
+                args.append(SymValueWrapper(None, sym))
+
+            # Stop when the function itself is seen, to avoid showing
+            # variables from outer functions in a nested function.
+            # Note that we don't traverse the static link for
+            # arguments, only for locals.
+            if block.function is not None:
+                break
+
+            block = block.superblock
 
         return args

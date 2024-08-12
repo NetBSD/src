@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2023 Free Software Foundation, Inc.
+   Copyright 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -526,7 +526,6 @@ do_hw_attach_regs (struct hw *hw)
     NULL
   };
   const char **reg_property_name;
-  int nr_valid_reg_properties = 0;
   for (reg_property_name = reg_property_names;
        *reg_property_name != NULL;
        reg_property_name++)
@@ -557,7 +556,6 @@ do_hw_attach_regs (struct hw *hw)
 				 0,
 				 attach_space, attach_address, attach_size,
 				 hw);
-	      nr_valid_reg_properties++;
 	    }
 	  /* if first option matches don't try for any others */
 	  if (reg_property_name == reg_property_names)

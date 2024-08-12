@@ -1,7 +1,7 @@
 // -*- C -*-
 
 // Simulator definition for the Broadcom SiByte SB-1 CPU extensions.
-// Copyright (C) 2002-2023 Free Software Foundation, Inc.
+// Copyright (C) 2002-2024 Free Software Foundation, Inc.
 // Contributed by Ed Satterthwaite and Chris Demetriou, of Broadcom
 // Corporation (SiByte).
 //
@@ -172,7 +172,7 @@
 
 
 011110,5.FMTSEL,5.VT,5.VS,00000,110101:MDMX:64::PABSDIFC.fmt
-"pabsdifc.%<FMTSEL> v<VS>,v<VT>"
+"pabsdifc.%s<FMTSEL> v<VS>,v<VT>"
 *sb1:
 {
   check_mdmx (SD_, instruction_0);

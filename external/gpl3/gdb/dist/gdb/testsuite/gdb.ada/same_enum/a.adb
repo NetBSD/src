@@ -1,4 +1,4 @@
---  Copyright 2011-2023 Free Software Foundation, Inc.
+--  Copyright 2011-2024 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@ with Pck; use Pck;
 
 procedure A is
    FC : Color := Red;
-   SC : Color := Green;
+   SC : RGB_Color := Green;
 begin
    Do_Nothing (FC'Address);
    Do_Nothing (SC'Address);

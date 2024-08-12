@@ -1,6 +1,6 @@
 /* Output generating routines for GDB.
 
-   Copyright (C) 1999-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions.
    Written by Fernando Nasser for Cygnus.
@@ -163,6 +163,8 @@ class ui_out
   explicit ui_out (ui_out_flags flags = 0);
   virtual ~ui_out ();
 
+  DISABLE_COPY_AND_ASSIGN (ui_out);
+
   void push_level (ui_out_type type);
   void pop_level (ui_out_type type);
 
@@ -203,8 +205,8 @@ class ui_out
 		  const char *format, ...)
     ATTRIBUTE_PRINTF (4, 5);
 
-  void spaces (int numspaces);
-  void text (const char *string);
+  void spaces (int numspaces) { do_spaces (numspaces); }
+  void text (const char *string) { do_text (string); }
   void text (const std::string &string) { text (string.c_str ()); }
 
   /* Output a printf-style formatted string.  In addition to the usual
@@ -255,21 +257,22 @@ class ui_out
   void vmessage (const ui_file_style &in_style,
 		 const char *format, va_list args) ATTRIBUTE_PRINTF (3, 0);
 
-  void wrap_hint (int indent);
+  void wrap_hint (int indent) { do_wrap_hint (indent); }
 
-  void flush ();
+  void flush () { do_flush (); }
 
   /* Redirect the output of a ui_out object temporarily.  */
-  void redirect (ui_file *outstream);
+  void redirect (ui_file *outstream) { do_redirect (outstream); }
 
-  ui_out_flags test_flags (ui_out_flags mask);
+  ui_out_flags test_flags (ui_out_flags mask)
+  { return m_flags & mask; }
 
   /* HACK: Code in GDB is currently checking to see the type of ui_out
      builder when determining which output to produce.  This function is
      a hack to encapsulate that test.  Once GDB manages to separate the
      CLI/MI from the core of GDB the problem should just go away ....  */
 
-  bool is_mi_like_p () const;
+  bool is_mi_like_p () const { return do_is_mi_like_p (); }
 
   bool query_table_field (int colno, int *width, int *alignment,
 			  const char **col_name);
@@ -277,6 +280,9 @@ class ui_out
   /* Return true if this stream is prepared to handle style
      escapes.  */
   virtual bool can_emit_style_escape () const = 0;
+
+  /* Return the ui_file currently used for output.  */
+  virtual ui_file *current_stream () const = 0;
 
   /* An object that starts and finishes displaying progress updates.  */
   class progress_update
@@ -302,7 +308,7 @@ class ui_out
 
     ~progress_update ()
     {
-
+      m_uiout->do_progress_end ();
     }
 
     progress_update (const progress_update &) = delete;
@@ -321,14 +327,13 @@ class ui_out
     {
       m_uiout->do_progress_notify (msg, "", -1, -1);
     }
+
   private:
 
     struct ui_out *m_uiout;
   };
 
-  virtual void do_progress_end () = 0;
-
- protected:
+protected:
 
   virtual void do_table_begin (int nbrofcols, int nr_rows, const char *tblid)
     = 0;
@@ -365,6 +370,7 @@ class ui_out
   virtual void do_progress_start () = 0;
   virtual void do_progress_notify (const std::string &, const char *,
 				   double, double) = 0;
+  virtual void do_progress_end () = 0;
 
   /* Set as not MI-like by default.  It is overridden in subclasses if
      necessary.  */
@@ -409,7 +415,7 @@ public:
     m_uiout->end (Type);
   }
 
-  DISABLE_COPY_AND_ASSIGN (ui_out_emit_type<Type>);
+  DISABLE_COPY_AND_ASSIGN (ui_out_emit_type);
 
 private:
 
@@ -468,6 +474,186 @@ public:
 
 private:
   struct ui_out *m_uiout;
+};
+
+struct buffered_streams;
+
+/* Organizes writes to a collection of buffered output streams
+   so that when flushed, output is written to all streams in
+   chronological order.  */
+
+struct buffer_group
+{
+  buffer_group (ui_out *uiout);
+
+  /* Flush all buffered writes to the underlying output streams.  */
+  void flush () const;
+
+  /* Record contents of BUF and associate it with STREAM.  */
+  void write (const char *buf, long length_buf, ui_file *stream);
+
+  /* Record a wrap_here and associate it with STREAM.  */
+  void wrap_here (int indent, ui_file *stream);
+
+  /* Record a call to flush and associate it with STREAM.  */
+  void flush_here (ui_file *stream);
+
+private:
+
+  struct output_unit
+  {
+    output_unit (std::string msg, int wrap_hint = -1, bool flush = false)
+      : m_msg (msg), m_wrap_hint (wrap_hint), m_flush (flush)
+    {}
+
+    /* Write contents of this output_unit to the underlying stream.  */
+    void flush () const;
+
+    /* Underlying stream for which this output unit will be written to.  */
+    ui_file *m_stream;
+
+    /* String to be written to underlying buffer.  */
+    std::string m_msg;
+
+    /* Argument to wrap_here.  -1 indicates no wrap.  Used to call wrap_here
+       during buffer flush.  */
+    int m_wrap_hint;
+
+    /* Indicate that the underlying output stream's flush should be called.  */
+    bool m_flush;
+  };
+
+  /* Output_units to be written to buffered output streams.  */
+  std::vector<output_unit> m_buffered_output;
+
+  /* Buffered output streams.  */
+  std::unique_ptr<buffered_streams> m_buffered_streams;
+};
+
+/* If FILE is a buffering_file, return it's underlying stream.  */
+
+extern ui_file *get_unbuffered (ui_file *file);
+
+/* Buffer output to gdb_stdout and gdb_stderr for the duration of FUNC.  */
+
+template<typename F, typename... Arg>
+void
+do_with_buffered_output (F func, ui_out *uiout, Arg... args)
+{
+  buffer_group g (uiout);
+
+  try
+    {
+      func (uiout, std::forward<Arg> (args)...);
+    }
+  catch (gdb_exception &ex)
+    {
+      /* Ideally flush would be called in the destructor of buffer_group,
+	 however flushing might cause an exception to be thrown.  Catch it
+	 and ensure the first exception propagates.  */
+      try
+	{
+	  g.flush ();
+	}
+      catch (const gdb_exception &)
+	{
+	}
+
+      throw_exception (std::move (ex));
+    }
+
+  /* Try was successful.  Let any further exceptions propagate.  */
+  g.flush ();
+}
+
+/* Accumulate writes to an underlying ui_file.  Output to the
+   underlying file is deferred until required.  */
+
+struct buffering_file : public ui_file
+{
+  buffering_file (buffer_group *group, ui_file *stream)
+    : m_group (group),
+      m_stream (stream)
+  { /* Nothing.  */ }
+
+  /* Return the underlying output stream.  */
+  ui_file *stream () const
+  {
+    return m_stream;
+  }
+
+  /* Record the contents of BUF.  */
+  void write (const char *buf, long length_buf) override
+  {
+    m_group->write (buf, length_buf, m_stream);
+  }
+
+  /* Record a wrap_here call with argument INDENT.  */
+  void wrap_here (int indent) override
+  {
+    m_group->wrap_here (indent, m_stream);
+  }
+
+  /* Return true if the underlying stream is a tty.  */
+  bool isatty () override
+  {
+    return m_stream->isatty ();
+  }
+
+  /* Return true if ANSI escapes can be used on the underlying stream.  */
+  bool can_emit_style_escape () override
+  {
+    return m_stream->can_emit_style_escape ();
+  }
+
+  /* Flush the underlying output stream.  */
+  void flush () override
+  {
+    return m_group->flush_here (m_stream);
+  }
+
+private:
+
+  /* Coordinates buffering across multiple buffering_files.  */
+  buffer_group *m_group;
+
+  /* The underlying output stream.  */
+  ui_file *m_stream;
+};
+
+/* Attaches and detaches buffers for each of the gdb_std* streams.  */
+
+struct buffered_streams
+{
+  buffered_streams (buffer_group *group, ui_out *uiout);
+
+  ~buffered_streams ()
+  {
+    this->remove_buffers ();
+  }
+
+  /* Remove buffering_files from all underlying streams.  */
+  void remove_buffers ();
+
+private:
+
+  /* True if buffers are still attached to each underlying output stream.  */
+  bool m_buffers_in_place;
+
+  /* Buffers for each gdb_std* output stream.  */
+  buffering_file m_buffered_stdout;
+  buffering_file m_buffered_stderr;
+  buffering_file m_buffered_stdlog;
+  buffering_file m_buffered_stdtarg;
+
+  /* Buffer for current_uiout's output stream.  */
+  std::optional<buffering_file> m_buffered_current_uiout;
+
+  /* Additional ui_out being buffered.  */
+  ui_out *m_uiout;
+
+  /* Buffer for m_uiout's output stream.  */
+  std::optional<buffering_file> m_buffered_uiout;
 };
 
 #endif /* UI_OUT_H */

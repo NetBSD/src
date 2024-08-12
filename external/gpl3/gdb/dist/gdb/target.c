@@ -1,6 +1,6 @@
 /* Select target systems and architectures at runtime for GDB.
 
-   Copyright (C) 1990-2023 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -19,10 +19,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "target.h"
+#include "extract-store-integer.h"
 #include "target-dcache.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "symtab.h"
 #include "inferior.h"
 #include "infrun.h"
@@ -44,7 +44,7 @@
 #include "gdbsupport/agent.h"
 #include "auxv.h"
 #include "target-debug.h"
-#include "top.h"
+#include "ui.h"
 #include "event-top.h"
 #include <algorithm>
 #include "gdbsupport/byte-vector.h"
@@ -57,47 +57,13 @@
 
 static void generic_tls_error (void) ATTRIBUTE_NORETURN;
 
-static void default_terminal_info (struct target_ops *, const char *, int);
-
-static int default_watchpoint_addr_within_range (struct target_ops *,
-						 CORE_ADDR, CORE_ADDR, int);
-
-static int default_region_ok_for_hw_watchpoint (struct target_ops *,
-						CORE_ADDR, int);
-
 static void default_rcmd (struct target_ops *, const char *, struct ui_file *);
-
-static ptid_t default_get_ada_task_ptid (struct target_ops *self,
-					 long lwp, ULONGEST tid);
-
-static void default_mourn_inferior (struct target_ops *self);
-
-static int default_search_memory (struct target_ops *ops,
-				  CORE_ADDR start_addr,
-				  ULONGEST search_space_len,
-				  const gdb_byte *pattern,
-				  ULONGEST pattern_len,
-				  CORE_ADDR *found_addrp);
 
 static int default_verify_memory (struct target_ops *self,
 				  const gdb_byte *data,
 				  CORE_ADDR memaddr, ULONGEST size);
 
 static void tcomplain (void) ATTRIBUTE_NORETURN;
-
-static struct target_ops *find_default_run_target (const char *);
-
-static int dummy_find_memory_regions (struct target_ops *self,
-				      find_memory_region_ftype ignore1,
-				      void *ignore2);
-
-static gdb::unique_xmalloc_ptr<char> dummy_make_corefile_notes
-  (struct target_ops *self, bfd *ignore1, int *ignore2);
-
-static std::string default_pid_to_str (struct target_ops *ops, ptid_t ptid);
-
-static enum exec_direction_kind default_execution_direction
-    (struct target_ops *self);
 
 /* Mapping between target_info objects (which have address identity)
    and corresponding open/factory function/callback.  Each add_target
@@ -116,10 +82,9 @@ static struct target_ops *the_debug_target;
 
 static struct cmd_list_element *targetlist = NULL;
 
-/* True if we should trust readonly sections from the
-   executable when reading memory.  */
+/* See target.h.  */
 
-static bool trust_readonly = false;
+bool trust_readonly = false;
 
 /* Nonzero if we should show true memory content including
    memory breakpoint inserted by gdb.  */
@@ -145,6 +110,16 @@ bool may_stop = true;
 /* Non-zero if we want to see trace of target level stuff.  */
 
 static unsigned int targetdebug = 0;
+
+/* Print a "target" debug statement with the function name prefix.  */
+
+#define target_debug_printf(fmt, ...) \
+  debug_prefixed_printf_cond (targetdebug > 0, "target", fmt, ##__VA_ARGS__)
+
+/* Print a "target" debug statement without the function name prefix.  */
+
+#define target_debug_printf_nofunc(fmt, ...) \
+  debug_prefixed_printf_cond_nofunc (targetdebug > 0, "target", fmt, ##__VA_ARGS__)
 
 static void
 set_targetdebug  (const char *args, int from_tty, struct cmd_list_element *c)
@@ -668,7 +643,7 @@ target_get_trace_status (trace_status *ts)
 }
 
 void
-target_get_tracepoint_status (breakpoint *tp, uploaded_tp *utp)
+target_get_tracepoint_status (tracepoint *tp, uploaded_tp *utp)
 {
   return current_inferior ()->top_target ()->get_tracepoint_status (tp, utp);
 }
@@ -832,6 +807,18 @@ target_store_memtags (CORE_ADDR address, size_t len,
   return current_inferior ()->top_target ()->store_memtags (address, len, tags, type);
 }
 
+bool
+target_is_address_tagged (gdbarch *gdbarch, CORE_ADDR address)
+{
+  return current_inferior ()->top_target ()->is_address_tagged (gdbarch, address);
+}
+
+x86_xsave_layout
+target_fetch_x86_xsave_layout ()
+{
+  return current_inferior ()->top_target ()->fetch_x86_xsave_layout ();
+}
+
 void
 target_log_command (const char *p)
 {
@@ -846,15 +833,9 @@ open_target (const char *args, int from_tty, struct cmd_list_element *command)
   auto *ti = static_cast<target_info *> (command->context ());
   target_open_ftype *func = target_factories[ti];
 
-  if (targetdebug)
-    gdb_printf (gdb_stdlog, "-> %s->open (...)\n",
-		ti->shortname);
-
+  target_debug_printf_nofunc ("-> %s->open (...)", ti->shortname);
   func (args, from_tty);
-
-  if (targetdebug)
-    gdb_printf (gdb_stdlog, "<- %s->open (%s, %d)\n",
-		ti->shortname, args, from_tty);
+  target_debug_printf_nofunc ("<- %s->open (%s, %d)", ti->shortname, args, from_tty);
 }
 
 /* See target.h.  */
@@ -922,7 +903,7 @@ target_kill (void)
 void
 target_load (const char *arg, int from_tty)
 {
-  target_dcache_invalidate ();
+  target_dcache_invalidate (current_program_space->aspace);
   current_inferior ()->top_target ()->load (arg, from_tty);
 }
 
@@ -1173,7 +1154,15 @@ target_ops_ref_policy::decref (target_ops *t)
     {
       if (t->stratum () == process_stratum)
 	connection_list_remove (as_process_stratum_target (t));
-      target_close (t);
+
+      for (inferior *inf : all_inferiors ())
+	gdb_assert (!inf->target_is_pushed (t));
+
+      fileio_handles_invalidate_target (t);
+
+      t->close ();
+
+      target_debug_printf_nofunc ("closing target");
     }
 }
 
@@ -1267,7 +1256,7 @@ target_translate_tls_address (struct objfile *objfile, CORE_ADDR offset)
 {
   volatile CORE_ADDR addr = 0;
   struct target_ops *target = current_inferior ()->top_target ();
-  struct gdbarch *gdbarch = target_gdbarch ();
+  gdbarch *gdbarch = current_inferior ()->arch ();
 
   /* If OBJFILE is a separate debug object file, look for the
      original object file.  */
@@ -1367,7 +1356,7 @@ target_xfer_status_to_string (enum target_xfer_status status)
 };
 
 
-const target_section_table *
+const std::vector<target_section> *
 target_get_section_table (struct target_ops *target)
 {
   return target->get_section_table ();
@@ -1378,7 +1367,7 @@ target_get_section_table (struct target_ops *target)
 const struct target_section *
 target_section_by_addr (struct target_ops *target, CORE_ADDR addr)
 {
-  const target_section_table *table = target_get_section_table (target);
+  const std::vector<target_section> *table = target_get_section_table (target);
 
   if (table == NULL)
     return NULL;
@@ -1393,7 +1382,7 @@ target_section_by_addr (struct target_ops *target, CORE_ADDR addr)
 
 /* See target.h.  */
 
-const target_section_table *
+const std::vector<target_section> *
 default_get_section_table ()
 {
   return &current_program_space->target_sections ();
@@ -1493,10 +1482,10 @@ raw_memory_xfer_partial (struct target_ops *ops, gdb_byte *readbuf,
      that never made it to the target.  */
   if (writebuf != NULL
       && inferior_ptid != null_ptid
-      && target_dcache_init_p ()
+      && target_dcache_init_p (current_program_space->aspace)
       && (stack_cache_enabled_p () || code_cache_enabled_p ()))
     {
-      DCACHE *dcache = target_dcache_get ();
+      DCACHE *dcache = target_dcache_get (current_program_space->aspace);
 
       /* Note that writing to an area of memory which wasn't present
 	 in the cache doesn't cause it to be loaded in.  */
@@ -1527,7 +1516,7 @@ memory_xfer_partial_1 (struct target_ops *ops, enum target_object object,
 
       if (pc_in_unmapped_range (memaddr, section))
 	{
-	  const target_section_table *table = target_get_section_table (ops);
+	  const std::vector<target_section> *table = target_get_section_table (ops);
 	  const char *section_name = section->the_bfd_section->name;
 
 	  memaddr = overlay_mapped_address (memaddr, section);
@@ -1551,7 +1540,7 @@ memory_xfer_partial_1 (struct target_ops *ops, enum target_object object,
       if (secp != NULL
 	  && (bfd_section_flags (secp->the_bfd_section) & SEC_READONLY))
 	{
-	  const target_section_table *table = target_get_section_table (ops);
+	  const std::vector<target_section> *table = target_get_section_table (ops);
 	  return section_table_xfer_memory_partial (readbuf, writebuf,
 						    memaddr, len, xfered_len,
 						    *table);
@@ -1579,7 +1568,8 @@ memory_xfer_partial_1 (struct target_ops *ops, enum target_object object,
 	  || (stack_cache_enabled_p () && object == TARGET_OBJECT_STACK_MEMORY)
 	  || (code_cache_enabled_p () && object == TARGET_OBJECT_CODE_MEMORY)))
     {
-      DCACHE *dcache = target_dcache_get_or_init ();
+      DCACHE *dcache
+	= target_dcache_get_or_init (current_program_space->aspace);
 
       return dcache_read_memory_partial (ops, dcache, memaddr, readbuf,
 					 reg_len, xfered_len);
@@ -1617,7 +1607,8 @@ memory_xfer_partial (struct target_ops *ops, enum target_object object,
   if (len == 0)
     return TARGET_XFER_EOF;
 
-  memaddr = gdbarch_remove_non_address_bits (target_gdbarch (), memaddr);
+  memaddr = gdbarch_remove_non_address_bits (current_inferior ()->arch (),
+					     memaddr);
 
   /* Fill in READBUF with breakpoint shadows, or WRITEBUF with
      breakpoint insns, thus hiding out from higher layers whether
@@ -1706,18 +1697,15 @@ target_xfer_partial (struct target_ops *ops,
   if (targetdebug)
     {
       const unsigned char *myaddr = NULL;
-
-      gdb_printf (gdb_stdlog,
-		  "%s:target_xfer_partial "
-		  "(%d, %s, %s, %s, %s, %s) = %d, %s",
-		  ops->shortname (),
-		  (int) object,
-		  (annex ? annex : "(null)"),
-		  host_address_to_string (readbuf),
-		  host_address_to_string (writebuf),
-		  core_addr_to_string_nz (offset),
-		  pulongest (len), retval,
-		  pulongest (*xfered_len));
+      std::string s
+	= string_printf ("%s:target_xfer_partial "
+			 "(%d, %s, %s, %s, %s, %s) = %d, %s",
+			 ops->shortname (), (int) object,
+			 (annex ? annex : "(null)"),
+			 host_address_to_string (readbuf),
+			 host_address_to_string (writebuf),
+			 core_addr_to_string_nz (offset), pulongest (len),
+			 retval, pulongest (*xfered_len));
 
       if (readbuf)
 	myaddr = readbuf;
@@ -1727,24 +1715,26 @@ target_xfer_partial (struct target_ops *ops,
 	{
 	  int i;
 
-	  gdb_puts (", bytes =", gdb_stdlog);
+	  string_appendf (s, ", bytes =");
 	  for (i = 0; i < *xfered_len; i++)
 	    {
 	      if ((((intptr_t) &(myaddr[i])) & 0xf) == 0)
 		{
 		  if (targetdebug < 2 && i > 0)
 		    {
-		      gdb_printf (gdb_stdlog, " ...");
+		      string_appendf (s, " ...");
 		      break;
 		    }
-		  gdb_printf (gdb_stdlog, "\n");
+
+		  target_debug_printf_nofunc ("%s", s.c_str ());
+		  s.clear();
 		}
 
-	      gdb_printf (gdb_stdlog, " %02x", myaddr[i] & 0xff);
+	      string_appendf (s, " %02x", myaddr[i] & 0xff);
 	    }
 	}
 
-      gdb_putc ('\n', gdb_stdlog);
+      target_debug_printf_nofunc ("%s", s.c_str ());
     }
 
   /* Check implementations of to_xfer_partial update *XFERED_LEN
@@ -1789,8 +1779,9 @@ target_read_uint32 (CORE_ADDR memaddr, uint32_t *result)
   r = target_read_memory (memaddr, buf, sizeof buf);
   if (r != 0)
     return r;
-  *result = extract_unsigned_integer (buf, sizeof buf,
-				      gdbarch_byte_order (target_gdbarch ()));
+  *result = extract_unsigned_integer
+	      (buf, sizeof buf,
+	       gdbarch_byte_order (current_inferior ()->arch ()));
   return 0;
 }
 
@@ -1967,7 +1958,8 @@ target_read (struct target_ops *ops,
       || object == TARGET_OBJECT_STACK_MEMORY
       || object == TARGET_OBJECT_CODE_MEMORY
       || object == TARGET_OBJECT_RAW_MEMORY)
-    unit_size = gdbarch_addressable_memory_unit_size (target_gdbarch ());
+    unit_size = gdbarch_addressable_memory_unit_size
+		  (current_inferior ()->arch ());
 
   while (xfered_total < len)
     {
@@ -2126,7 +2118,8 @@ read_memory_robust (struct target_ops *ops,
 		    const ULONGEST offset, const LONGEST len)
 {
   std::vector<memory_read_result> result;
-  int unit_size = gdbarch_addressable_memory_unit_size (target_gdbarch ());
+  int unit_size
+    = gdbarch_addressable_memory_unit_size (current_inferior ()->arch ());
 
   LONGEST xfered_total = 0;
   while (xfered_total < len)
@@ -2201,7 +2194,8 @@ target_write_with_progress (struct target_ops *ops,
       || object == TARGET_OBJECT_STACK_MEMORY
       || object == TARGET_OBJECT_CODE_MEMORY
       || object == TARGET_OBJECT_RAW_MEMORY)
-    unit_size = gdbarch_addressable_memory_unit_size (target_gdbarch ());
+    unit_size = gdbarch_addressable_memory_unit_size
+		  (current_inferior ()->arch ());
 
   /* Give the progress callback a chance to set up.  */
   if (progress)
@@ -2245,7 +2239,7 @@ target_write (struct target_ops *ops,
    for details.  */
 
 template <typename T>
-gdb::optional<gdb::def_vector<T>>
+std::optional<gdb::def_vector<T>>
 target_read_alloc_1 (struct target_ops *ops, enum target_object object,
 		     const char *annex)
 {
@@ -2294,7 +2288,7 @@ target_read_alloc_1 (struct target_ops *ops, enum target_object object,
 
 /* See target.h  */
 
-gdb::optional<gdb::byte_vector>
+std::optional<gdb::byte_vector>
 target_read_alloc (struct target_ops *ops, enum target_object object,
 		   const char *annex)
 {
@@ -2303,11 +2297,11 @@ target_read_alloc (struct target_ops *ops, enum target_object object,
 
 /* See target.h.  */
 
-gdb::optional<gdb::char_vector>
+std::optional<gdb::char_vector>
 target_read_stralloc (struct target_ops *ops, enum target_object object,
 		      const char *annex)
 {
-  gdb::optional<gdb::char_vector> buf
+  std::optional<gdb::char_vector> buf
     = target_read_alloc_1<char> (ops, object, annex);
 
   if (!buf)
@@ -2454,7 +2448,7 @@ target_pre_inferior (int from_tty)
   /* In some OSs, the shared library list is the same/global/shared
      across inferiors.  If code is shared between processes, so are
      memory regions and features.  */
-  if (!gdbarch_has_global_solist (target_gdbarch ()))
+  if (!gdbarch_has_global_solist (current_inferior ()->arch ()))
     {
       no_shared_libraries (NULL, from_tty);
 
@@ -2468,6 +2462,8 @@ target_pre_inferior (int from_tty)
   current_inferior ()->attach_flag = false;
 
   current_inferior ()->highest_thread_num = 0;
+
+  update_previous_thread ();
 
   agent_capability_invalidate ();
 }
@@ -2497,6 +2493,9 @@ target_preopen (int from_tty)
 	error (_("Program not killed."));
     }
 
+  /* Release reference to old previous thread.  */
+  update_previous_thread ();
+
   /* Calling target_kill may remove the target from the stack.  But if
      it doesn't (which seems like a win for UDI), remove it now.  */
   /* Leave the exec target, though.  The user may be switching from a
@@ -2520,13 +2519,14 @@ target_detach (inferior *inf, int from_tty)
   ptid_t save_pid_ptid = ptid_t (inf->pid);
 
   /* As long as some to_detach implementations rely on the current_inferior
-     (either directly, or indirectly, like through target_gdbarch or by
-     reading memory), INF needs to be the current inferior.  When that
-     requirement will become no longer true, then we can remove this
-     assertion.  */
+     (either directly, or indirectly, like through reading memory), INF needs
+     to be the current inferior.  When that requirement will become no longer
+     true, then we can remove this assertion.  */
   gdb_assert (inf == current_inferior ());
 
   prepare_for_detach ();
+
+  gdb::observers::inferior_pre_detach.notify (inf);
 
   /* Hold a strong reference because detaching may unpush the
      target.  */
@@ -2624,7 +2624,7 @@ target_thread_handle_to_thread_info (const gdb_byte *thread_handle,
 
 /* See target.h.  */
 
-gdb::byte_vector
+gdb::array_view<const gdb_byte>
 target_thread_info_to_thread_handle (struct thread_info *tip)
 {
   target_ops *target = current_inferior ()->top_target ();
@@ -2641,7 +2641,7 @@ target_resume (ptid_t scope_ptid, int step, enum gdb_signal signal)
   gdb_assert (inferior_ptid != null_ptid);
   gdb_assert (inferior_ptid.matches (scope_ptid));
 
-  target_dcache_invalidate ();
+  target_dcache_invalidate (current_program_space->aspace);
 
   current_inferior ()->top_target ()->resume (scope_ptid, step, signal);
 
@@ -2694,6 +2694,13 @@ default_follow_fork (struct target_ops *self, inferior *child_inf,
   internal_error (_("could not find a target to follow fork"));
 }
 
+static void
+default_follow_clone (struct target_ops *self, ptid_t child_ptid)
+{
+  /* Some target returned a clone event, but did not know how to follow it.  */
+  internal_error (_("could not find a target to follow clone"));
+}
+
 /* See target.h.  */
 
 void
@@ -2738,11 +2745,6 @@ target_mourn_inferior (ptid_t ptid)
 {
   gdb_assert (ptid.pid () == inferior_ptid.pid ());
   current_inferior ()->top_target ()->mourn_inferior ();
-
-  /* We no longer need to keep handles on any of the object files.
-     Make sure to release them to avoid unnecessarily locking any
-     of them while we're not actually debugging.  */
-  bfd_cache_close_all ();
 }
 
 /* Look for a target which can describe architectural features, starting
@@ -2945,10 +2947,7 @@ target_info_proc (const char *args, enum info_proc_what what)
     {
       if (t->info_proc (args, what))
 	{
-	  if (targetdebug)
-	    gdb_printf (gdb_stdlog,
-			"target_info_proc (\"%s\", %d)\n", args, what);
-
+	  target_debug_printf_nofunc ("target_info_proc (\"%s\", %d)", args, what);
 	  return 1;
 	}
     }
@@ -2983,7 +2982,7 @@ target_supports_multi_process (void)
 
 /* See target.h.  */
 
-gdb::optional<gdb::char_vector>
+std::optional<gdb::char_vector>
 target_get_osdata (const char *type)
 {
   struct target_ops *t;
@@ -2999,19 +2998,6 @@ target_get_osdata (const char *type)
     return {};
 
   return target_read_stralloc (t, TARGET_OBJECT_OSDATA, type);
-}
-
-/* Determine the current address space of thread PTID.  */
-
-struct address_space *
-target_thread_address_space (ptid_t ptid)
-{
-  struct address_space *aspace;
-
-  aspace = current_inferior ()->top_target ()->thread_address_space (ptid);
-  gdb_assert (aspace != NULL);
-
-  return aspace;
 }
 
 /* See target.h.  */
@@ -3225,7 +3211,7 @@ target_ops::fileio_unlink (struct inferior *inf, const char *filename,
   return -1;
 }
 
-gdb::optional<std::string>
+std::optional<std::string>
 target_ops::fileio_readlink (struct inferior *inf, const char *filename,
 			     fileio_error *target_errno)
 {
@@ -3252,14 +3238,9 @@ target_fileio_open (struct inferior *inf, const char *filename,
       else
 	fd = acquire_fileio_fd (t, fd);
 
-      if (targetdebug)
-	gdb_printf (gdb_stdlog,
-		    "target_fileio_open (%d,%s,0x%x,0%o,%d)"
-		    " = %d (%d)\n",
-		    inf == NULL ? 0 : inf->num,
-		    filename, flags, mode,
-		    warn_if_slow, fd,
-		    fd != -1 ? 0 : *target_errno);
+      target_debug_printf_nofunc ("target_fileio_open (%d,%s,0x%x,0%o,%d) = %d (%d)",
+			   inf == NULL ? 0 : inf->num, filename, flags, mode,
+			   warn_if_slow, fd, fd != -1 ? 0 : *target_errno);
       return fd;
     }
 
@@ -3284,12 +3265,9 @@ target_fileio_pwrite (int fd, const gdb_byte *write_buf, int len,
     ret = fh->target->fileio_pwrite (fh->target_fd, write_buf,
 				     len, offset, target_errno);
 
-  if (targetdebug)
-    gdb_printf (gdb_stdlog,
-		"target_fileio_pwrite (%d,...,%d,%s) "
-		"= %d (%d)\n",
-		fd, len, pulongest (offset),
-		ret, ret != -1 ? 0 : *target_errno);
+  target_debug_printf_nofunc ("target_fileio_pwrite (%d,...,%d,%s) = %d (%d)", fd,
+		       len, pulongest (offset), ret,
+		       ret != -1 ? 0 : *target_errno);
   return ret;
 }
 
@@ -3310,12 +3288,8 @@ target_fileio_pread (int fd, gdb_byte *read_buf, int len,
     ret = fh->target->fileio_pread (fh->target_fd, read_buf,
 				    len, offset, target_errno);
 
-  if (targetdebug)
-    gdb_printf (gdb_stdlog,
-		"target_fileio_pread (%d,...,%d,%s) "
-		"= %d (%d)\n",
-		fd, len, pulongest (offset),
-		ret, ret != -1 ? 0 : *target_errno);
+  target_debug_printf_nofunc ("target_fileio_pread (%d,...,%d,%s) = %d (%d)", fd, len,
+		       pulongest (offset), ret, ret != -1 ? 0 : *target_errno);
   return ret;
 }
 
@@ -3334,10 +3308,8 @@ target_fileio_fstat (int fd, struct stat *sb, fileio_error *target_errno)
   else
     ret = fh->target->fileio_fstat (fh->target_fd, sb, target_errno);
 
-  if (targetdebug)
-    gdb_printf (gdb_stdlog,
-		"target_fileio_fstat (%d) = %d (%d)\n",
-		fd, ret, ret != -1 ? 0 : *target_errno);
+  target_debug_printf_nofunc ("target_fileio_fstat (%d) = %d (%d)", fd, ret,
+		       ret != -1 ? 0 : *target_errno);
   return ret;
 }
 
@@ -3361,10 +3333,8 @@ target_fileio_close (int fd, fileio_error *target_errno)
       release_fileio_fd (fd, fh);
     }
 
-  if (targetdebug)
-    gdb_printf (gdb_stdlog,
-		"target_fileio_close (%d) = %d (%d)\n",
-		fd, ret, ret != -1 ? 0 : *target_errno);
+  target_debug_printf_nofunc ("target_fileio_close (%d) = %d (%d)", fd, ret,
+		       ret != -1 ? 0 : *target_errno);
   return ret;
 }
 
@@ -3381,12 +3351,9 @@ target_fileio_unlink (struct inferior *inf, const char *filename,
       if (ret == -1 && *target_errno == FILEIO_ENOSYS)
 	continue;
 
-      if (targetdebug)
-	gdb_printf (gdb_stdlog,
-		    "target_fileio_unlink (%d,%s)"
-		    " = %d (%d)\n",
-		    inf == NULL ? 0 : inf->num, filename,
-		    ret, ret != -1 ? 0 : *target_errno);
+      target_debug_printf_nofunc ("target_fileio_unlink (%d,%s) = %d (%d)",
+			   inf == NULL ? 0 : inf->num, filename, ret,
+			   ret != -1 ? 0 : *target_errno);
       return ret;
     }
 
@@ -3396,25 +3363,22 @@ target_fileio_unlink (struct inferior *inf, const char *filename,
 
 /* See target.h.  */
 
-gdb::optional<std::string>
+std::optional<std::string>
 target_fileio_readlink (struct inferior *inf, const char *filename,
 			fileio_error *target_errno)
 {
   for (target_ops *t = default_fileio_target (); t != NULL; t = t->beneath ())
     {
-      gdb::optional<std::string> ret
+      std::optional<std::string> ret
 	= t->fileio_readlink (inf, filename, target_errno);
 
       if (!ret.has_value () && *target_errno == FILEIO_ENOSYS)
 	continue;
 
-      if (targetdebug)
-	gdb_printf (gdb_stdlog,
-		    "target_fileio_readlink (%d,%s)"
-		    " = %s (%d)\n",
-		    inf == NULL ? 0 : inf->num,
-		    filename, ret ? ret->c_str () : "(nil)",
-		    ret ? 0 : *target_errno);
+      target_debug_printf_nofunc ("target_fileio_readlink (%d,%s) = %s (%d)",
+			   inf == NULL ? 0 : inf->num, filename,
+			   ret ? ret->c_str () : "(nil)",
+			   ret ? 0 : *target_errno);
       return ret;
     }
 
@@ -3561,7 +3525,8 @@ static int
 default_region_ok_for_hw_watchpoint (struct target_ops *self,
 				     CORE_ADDR addr, int len)
 {
-  return (len <= gdbarch_ptr_bit (target_gdbarch ()) / TARGET_CHAR_BIT);
+  gdbarch *arch = current_inferior ()->arch ();
+  return (len <= gdbarch_ptr_bit (arch) / TARGET_CHAR_BIT);
 }
 
 static int
@@ -3646,7 +3611,7 @@ generic_mourn_inferior (void)
   /* Mark breakpoints uninserted in case something tries to delete a
      breakpoint while we delete the inferior's threads (which would
      fail, since the inferior is long gone).  */
-  mark_breakpoints_out ();
+  mark_breakpoints_out (inf->pspace);
 
   if (inf->pid != 0)
     exit_inferior (inf);
@@ -3654,7 +3619,7 @@ generic_mourn_inferior (void)
   /* Note this wipes step-resume breakpoints, so needs to be done
      after exit_inferior, which ends up referencing the step-resume
      breakpoints through clear_thread_inferior_resources.  */
-  breakpoint_init_inferior (inf_exited);
+  breakpoint_init_inferior (inf, inf_exited);
 
   registers_changed ();
 
@@ -3744,20 +3709,6 @@ debug_target::info () const
 }
 
 
-
-void
-target_close (struct target_ops *targ)
-{
-  for (inferior *inf : all_inferiors ())
-    gdb_assert (!inf->target_is_pushed (targ));
-
-  fileio_handles_invalidate_target (targ);
-
-  targ->close ();
-
-  if (targetdebug)
-    gdb_printf (gdb_stdlog, "target_close ()\n");
-}
 
 int
 target_thread_alive (ptid_t ptid)
@@ -3921,8 +3872,7 @@ void
 target_fetch_registers (struct regcache *regcache, int regno)
 {
   current_inferior ()->top_target ()->fetch_registers (regcache, regno);
-  if (targetdebug)
-    regcache->debug_print_register ("target_fetch_registers", regno);
+  target_debug_printf ("%s", regcache->register_debug_string (regno).c_str ());
 }
 
 void
@@ -3932,10 +3882,7 @@ target_store_registers (struct regcache *regcache, int regno)
     error (_("Writing to registers is not allowed (regno %d)"), regno);
 
   current_inferior ()->top_target ()->store_registers (regcache, regno);
-  if (targetdebug)
-    {
-      regcache->debug_print_register ("target_store_registers", regno);
-    }
+  target_debug_printf ("%s", regcache->register_debug_string (regno).c_str ());
 }
 
 int
@@ -4277,7 +4224,7 @@ flash_erase_command (const char *cmd, int from_tty)
 {
   /* Used to communicate termination of flash operations to the target.  */
   bool found_flash_region = false;
-  struct gdbarch *gdbarch = target_gdbarch ();
+  gdbarch *gdbarch = current_inferior ()->arch ();
 
   std::vector<mem_region> mem_regions = target_memory_map ();
 
@@ -4342,6 +4289,15 @@ void
 target_thread_events (int enable)
 {
   current_inferior ()->top_target ()->thread_events (enable);
+}
+
+/* See target.h.  */
+
+bool
+target_supports_set_thread_options (gdb_thread_options options)
+{
+  inferior *inf = current_inferior ();
+  return inf->top_target ()->supports_set_thread_options (options);
 }
 
 /* Controls if targets can report that they can/are async.  This is
@@ -4487,7 +4443,6 @@ set_target_permissions (const char *args, int from_tty,
     }
 
   /* Make the real values match the user-changed values.  */
-  may_write_registers = may_write_registers_1;
   may_insert_breakpoints = may_insert_breakpoints_1;
   may_insert_tracepoints = may_insert_tracepoints_1;
   may_insert_fast_tracepoints = may_insert_fast_tracepoints_1;
@@ -4495,14 +4450,15 @@ set_target_permissions (const char *args, int from_tty,
   update_observer_mode ();
 }
 
-/* Set memory write permission independently of observer mode.  */
+/* Set some permissions independently of observer mode.  */
 
 static void
-set_write_memory_permission (const char *args, int from_tty,
-			struct cmd_list_element *c)
+set_write_memory_registers_permission (const char *args, int from_tty,
+				       struct cmd_list_element *c)
 {
   /* Make the real values match the user-changed values.  */
   may_write_memory = may_write_memory_1;
+  may_write_registers = may_write_registers_1;
   update_observer_mode ();
 }
 
@@ -4571,7 +4527,7 @@ Set permission to write into registers."), _("\
 Show permission to write into registers."), _("\
 When this permission is on, GDB may write into the target's registers.\n\
 Otherwise, any sort of write attempt will result in an error."),
-			   set_target_permissions, NULL,
+			   set_write_memory_registers_permission, NULL,
 			   &setlist, &showlist);
 
   add_setshow_boolean_cmd ("may-write-memory", class_support,
@@ -4580,7 +4536,7 @@ Set permission to write into target memory."), _("\
 Show permission to write into target memory."), _("\
 When this permission is on, GDB may write into the target's memory.\n\
 Otherwise, any sort of write attempt will result in an error."),
-			   set_write_memory_permission, NULL,
+			   set_write_memory_registers_permission, NULL,
 			   &setlist, &showlist);
 
   add_setshow_boolean_cmd ("may-insert-breakpoints", class_support,

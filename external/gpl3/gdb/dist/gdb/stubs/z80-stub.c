@@ -1,6 +1,6 @@
 /* Debug stub for Z80.
 
-   Copyright (C) 2021-2023 Free Software Foundation, Inc.
+   Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -121,7 +121,7 @@
 #define DBG_NMI_EX EX_HWBREAK
 #define DBG_INT_EX EX_SIGINT
 
-/* Define following macro to statement, which will be exectuted after entering to
+/* Define following macro to statement, which will be executed after entering to
    stub_main function. Statement should include semicolon. */
 //#define DBG_ENTER debug_enter();
 
@@ -912,7 +912,7 @@ process_v (char *buffer) FASTCALL
       if (buffer[5] == '?')
 	{
 	  /* result response will be "vCont;c;C"; C action must be
-	     supported too, because GDB reguires at lease both of them */
+	     supported too, because GDB requires at lease both of them */
 	  memcpy (&buffer[5], ";c;C", 5);
 	  return 0;
 	}

@@ -1,4 +1,4 @@
-# Copyright 2004-2023 Free Software Foundation, Inc.
+# Copyright 2004-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ switch -glob -- [istarget] {
 	set testfile "pa64-nullify"
     }
     "*" {
-        verbose "Skipping hppa nullification tests."
+        unsupported "Skipping hppa nullification tests."
         return
     }
 }
@@ -40,10 +40,7 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {}] !
     return -1
 }
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart $binfile
 
 # In the first test, we do a "step" on a function whose last instruction 
 # contains a branch-with-nullify.  The instruction in the delay slot belongs

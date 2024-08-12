@@ -1,6 +1,6 @@
 /* Low level interface to i386 running the GNU Hurd.
 
-   Copyright (C) 1992-2023 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,7 +29,6 @@ extern "C"
 #include <mach/exception.h>
 }
 
-#include "defs.h"
 #include "x86-nat.h"
 #include "inferior.h"
 #include "floatformat.h"

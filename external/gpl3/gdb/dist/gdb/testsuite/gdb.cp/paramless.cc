@@ -1,6 +1,6 @@
 /* Test case for template breakpoint test.
 
-   Copyright 2022-2023 Free Software Foundation, Inc.
+   Copyright 2022-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Free Software Foundation, Inc.
+# Copyright 1999-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,11 +18,6 @@
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-gdb_exit
-if [mi_gdb_start] {
-    return
-}
-
 standard_testfile basics.c
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
@@ -30,8 +25,9 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
      return -1
 }
 
-mi_delete_breakpoints
-mi_gdb_reinitialize_dir $srcdir/$subdir
+if {[mi_clean_restart]} {
+    return
+}
 mi_gdb_file_cmd ${binfile}
 
 proc test_file_list_exec_source_file {} {
@@ -76,4 +72,3 @@ test_file_list_exec_source_file
 test_file_list_exec_source_files
 
 mi_gdb_exit
-return 0

@@ -1,6 +1,6 @@
 /* Target description support for GDB.
 
-   Copyright (C) 2006-2023 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery.
 
@@ -26,9 +26,6 @@
 
 struct tdesc_arch_data;
 struct target_ops;
-/* An inferior's target description info is stored in this opaque
-   object.  There's one such object per inferior.  */
-struct target_desc_info;
 struct inferior;
 
 /* Fetch the current inferior's description, and switch its current
@@ -47,22 +44,6 @@ void target_clear_description (void);
    through an existing gdbarch.  */
 
 const struct target_desc *target_current_description (void);
-
-/* Copy inferior target description data.  Used for example when
-   handling (v)forks, where child's description is the same as the
-   parent's, since the child really is a copy of the parent.  */
-
-void copy_inferior_target_desc_info (struct inferior *destinf,
-				     struct inferior *srcinf);
-
-/* Free a target_desc_info object.  */
-
-void target_desc_info_free (struct target_desc_info *tdesc_info);
-
-/* Returns true if INFO indicates the target description had been
-   supplied by the user.  */
-
-int target_desc_info_from_user_p (struct target_desc_info *info);
 
 /* Record architecture-specific functions to call for pseudo-register
    support.  If tdesc_use_registers is called and gdbarch_num_pseudo_regs

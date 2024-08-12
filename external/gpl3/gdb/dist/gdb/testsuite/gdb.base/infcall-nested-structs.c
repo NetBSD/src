@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2018-2023 Free Software Foundation, Inc.
+   Copyright 2018-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@
    in the structs.exp test script.  */
 
 #include <string.h>
-#include "../lib/attributes.h"
+#include "attributes.h"
 
 /* Useful abreviations.  */
 typedef char tc;

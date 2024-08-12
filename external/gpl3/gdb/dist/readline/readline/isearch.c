@@ -882,6 +882,9 @@ _rl_isearch_callback (_rl_search_cxt *cxt)
   int c, r;
 
   c = _rl_search_getchar (cxt);
+  if (!RL_ISSTATE (RL_STATE_ISEARCH))
+    return 1;
+
   /* We might want to handle EOF here */
   r = _rl_isearch_dispatch (cxt, cxt->lastc);
 

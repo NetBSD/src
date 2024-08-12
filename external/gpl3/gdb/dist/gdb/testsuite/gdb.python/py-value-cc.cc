@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2012-2023 Free Software Foundation, Inc.
+   Copyright 2012-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -37,7 +37,32 @@ union U {
 class B : public A {
  public:
   char a;
+
+  static int static_func ();
+  int arg0_func ();
+  int arg1_func (int arg1);
+  int arg2_func (int arg1, int arg2);
 };
+
+int B::static_func ()
+{
+  return 1111;
+}
+
+int B::arg0_func ()
+{
+  return A::a + a;
+}
+
+int B::arg1_func (int arg1)
+{
+  return a * arg1;
+}
+
+int B::arg2_func (int arg1, int arg2)
+{
+  return a * arg1 + arg2;
+}
 
 struct X
 {
@@ -77,7 +102,7 @@ func (const A &a)
   Btd &b_td = b1;
 
   U u;
-  u.a = 99;
+  u.a = 0x63636363;
 
   X x;
   x.x = 101;

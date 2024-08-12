@@ -1,6 +1,6 @@
 /* TUI display source/assembly window.
 
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -58,7 +58,7 @@ DEF_ENUM_FLAGS_TYPE (enum tui_bp_flag, tui_bp_flags);
 #define TUI_BP_HIT_POS      0
 #define TUI_BP_BREAK_POS    1
 #define TUI_EXEC_POS        2
-#define TUI_EXECINFO_SIZE   4
+#define TUI_EXECINFO_SIZE   3
 
 /* Elements in the Source/Disassembly Window.  */
 struct tui_source_element
@@ -124,8 +124,7 @@ protected:
   /* Redraw the complete line of a source or disassembly window.  */
   void show_source_line (int lineno);
 
-  /* Used for horizontal scroll.  */
-  int m_horizontal_offset = 0;
+  /* Where to start generating content from.  */
   struct tui_line_or_address m_start_line_or_addr;
 
   /* Architecture associated with code at this location.  */
@@ -149,11 +148,18 @@ public:
 
   virtual bool location_matches_p (struct bp_location *loc, int line_no) = 0;
 
-  void update_exec_info ();
+  /* Fill in the left margin of the current window with execution indicator
+     information, e.g. breakpoint indicators, and line numbers.  When
+     REFRESH_P is true this function will call refresh_window to ensure
+     updates are written to the screen, otherwise the refresh is skipped,
+     which will leave the on screen contents out of date.  When passing
+     false for REFRESH_P you should be planning to call refresh_window
+     yourself.  */
+  void update_exec_info (bool refresh_p = true);
 
   /* Update the window to display the given location.  Does nothing if
      the location is already displayed.  */
-  virtual void maybe_update (frame_info_ptr fi, symtab_and_line sal) = 0;
+  virtual void maybe_update (const frame_info_ptr &fi, symtab_and_line sal) = 0;
 
   void update_source_window_as_is  (struct gdbarch *gdbarch,
 				    const struct symtab_and_line &sal);
@@ -177,9 +183,57 @@ public:
   virtual void display_start_addr (struct gdbarch **gdbarch_p,
 				   CORE_ADDR *addr_p) = 0;
 
+  /* Function to ensure that the source or disassembly window
+     reflects the input address.  Single window variant of
+     update_source_windows_with_addr.  */
+  void update_source_window_with_addr (struct gdbarch *, CORE_ADDR);
+
 private:
 
+  /* Used for horizontal scroll.  */
+  int m_horizontal_offset = 0;
+
+  /* Check that the current values of M_HORIZONTAL_OFFSET and M_PAD_OFFSET
+     make sense given the current M_MAX_LENGTH (content width), WIDTH
+     (window size), and window margins.  After calling this function
+     M_HORIZONTAL_OFFSET and M_PAD_OFFSET might have been adjusted to
+     reduce unnecessary whitespace on the right side of the window.
+
+     If M_PAD_OFFSET is adjusted then this function returns true
+     indicating that the pad contents need to be reloaded by calling
+     show_source_content.  If M_PAD_OFFSET is not adjusted then this
+     function returns false, the window contents might still need
+     redrawing if M_HORIZONTAL_OFFSET was adjusted, but right now, this
+     function is only called in contexts where the window is going to be
+     redrawn anyway.  */
+  bool validate_scroll_offsets ();
+
+  /* Return the size of the left margin space, this is the space used to
+     display things like breakpoint markers.  */
+  int left_margin () const
+  { return TUI_EXECINFO_SIZE + extra_margin (); }
+
+  /* Return the width of the area that is available for window content.
+     This is the window width minus the borders and the left margin, which
+     is used for displaying things like breakpoint markers.  */
+  int view_width () const
+  { return width - left_margin () - box_size (); }
+
   void show_source_content ();
+
+  /* Write STRING to the window M_PAD, but skip the first SKIP printable
+     characters.  Any escape sequences within the first SKIP characters are
+     still processed though.  This means if we have this string:
+
+     "\033[31mABCDEFGHIJKLM\033[0m"
+
+     and call this function with a skip value of 3, then we effectively
+     write this string to M_PAD:
+
+     "\033[31mDEFGHIJKLM\033[0m"
+
+     the initial escape that sets the color will still be applied.  */
+  void puts_to_pad_with_skip (const char *string, int skip);
 
   /* Called when the user "set style enabled" setting is changed.  */
   void style_changed ();
@@ -187,8 +241,20 @@ private:
   /* A token used to register and unregister an observer.  */
   gdb::observers::token m_observable;
 
-  /* Pad used to display fixme mumble  */
+  /* Pad to hold some, or all, of the window contents.  Content is then
+     copied from this pad to the screen as the user scrolls horizontally,
+     this avoids the need to recalculate the screen contents each time the
+     user does a horizontal scroll.  */
   std::unique_ptr<WINDOW, curses_deleter> m_pad;
+
+  /* When M_PAD was allocated, this holds the width that was initially
+     asked for.  If we ask for a very large pad then the allocation may
+     fail, and we might instead allocate a narrower pad.  */
+  int m_pad_requested_width = 0;
+
+  /* If M_PAD is not as wide as the content (so less than M_MAX_LENGTH)
+     then this value indicates the offset at which the pad contents begin.  */
+  int m_pad_offset = 0;
 };
 
 
@@ -255,7 +321,7 @@ private:
 
 struct tui_source_windows
 {
-  /* Work around Wmaybe-uninitalized warning with g++ 11.0.0, see also
+  /* Work around Wmaybe-uninitialized warning with g++ 11.0.0, see also
      PR gcc/96295.  Note that "tui_source_windows () = default" doesn't work
      around the warning.  */
   tui_source_windows () {}

@@ -1,5 +1,5 @@
 /* Motorola 68HC11/HC12-specific support for 32-bit ELF
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
    Contributed by Stephane Carrez (stcarrez@nerim.fr)
 
    This file is part of BFD, the Binary File Descriptor library.

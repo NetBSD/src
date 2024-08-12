@@ -1,4 +1,4 @@
-# Copyright 2014-2023 Free Software Foundation, Inc.
+# Copyright 2014-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,13 +22,13 @@
 # operation.  (Note that we don't have any of these watchpoints
 # trigger.)
 
-# The skip_hw_watchpoint_tests checks if watchpoints are supported by the
+# The allow_hw_watchpoint_tests checks if watchpoints are supported by the
 # processor.  On PowerPC, the check runs a small test program under gdb
 # to determine if the Power processor supports HW watchpoints.  The check
 # must be done before starting the test so as to not disrupt the execution
 # of the actual test.
 
-set skip_hw_watchpoint_tests_p [skip_hw_watchpoint_tests]
+set allow_hw_watchpoint_tests_p [allow_hw_watchpoint_tests]
 
 # starting the test.
 
@@ -295,7 +295,7 @@ proc setup_and_run_watchpoints_tests { hw_wp_p } {
 
 # Run tests with hardware watchpoints disabled, then again with them
 # enabled (if this target supports hardware watchpoints).
-if { !$skip_hw_watchpoint_tests_p } {
+if { $allow_hw_watchpoint_tests_p } {
     # Run test with H/W enabled.
     setup_and_run_watchpoints_tests 1
 }

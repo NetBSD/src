@@ -1,5 +1,5 @@
 /* BFD back-end for PDP-11 a.out binaries.
-   Copyright (C) 2001-2022 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -280,9 +280,9 @@ static bool separate_i_d = false;
 reloc_howto_type howto_table_pdp11[] =
 {
   /* type	       rs size bsz  pcrel bitpos ovrf			  sf name     part_inpl readmask  setmask    pcdone */
-HOWTO( 0,	       0,  2,  16,  false, 0, complain_overflow_signed,0,"16",	true, 0x0000ffff,0x0000ffff, false),
-HOWTO( 1,	       0,  2,  16,  true,  0, complain_overflow_signed,0,"DISP16",	true, 0x0000ffff,0x0000ffff, false),
-HOWTO( 2,	       0,  4,  32,  false, 0, complain_overflow_signed,0,"32",	true, 0x0000ffff,0x0000ffff, false),
+HOWTO( 0,	       0,  2,  16,  false, 0, complain_overflow_dont,0,"16",	true, 0x0000ffff,0x0000ffff, false),
+HOWTO( 1,	       0,  2,  16,  true,  0, complain_overflow_dont,0,"DISP16",	true, 0x0000ffff,0x0000ffff, false),
+HOWTO( 2,	       0,  4,  32,  false, 0, complain_overflow_dont,0,"32",	true, 0x0000ffff,0x0000ffff, false),
 };
 
 #define TABLE_SIZE(TABLE)	(sizeof(TABLE)/sizeof(TABLE[0]))
@@ -365,20 +365,20 @@ pdp11_aout_write_headers (bfd *abfd, struct internal_exec *execp)
       execp->a_drsize = 0;
     }
 
-  NAME (aout, swap_exec_header_out) (abfd, execp, & exec_bytes);
-
-  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0)
+  if (!NAME (aout, swap_exec_header_out) (abfd, execp, & exec_bytes))
     return false;
 
-  if (bfd_bwrite ((void *) &exec_bytes, (bfd_size_type) EXEC_BYTES_SIZE, abfd)
-      != EXEC_BYTES_SIZE)
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0)
+    return false;
+
+  if (bfd_write (&exec_bytes, EXEC_BYTES_SIZE, abfd) != EXEC_BYTES_SIZE)
     return false;
 
   /* Now write out reloc info, followed by syms and strings.  */
   if (bfd_get_outsymbols (abfd) != NULL
       && bfd_get_symcount (abfd) != 0)
     {
-      if (bfd_seek (abfd, (file_ptr) (N_SYMOFF (execp)), SEEK_SET) != 0)
+      if (bfd_seek (abfd, N_SYMOFF (execp), SEEK_SET) != 0)
 	return false;
 
       if (! NAME (aout, write_syms) (abfd))
@@ -388,9 +388,9 @@ pdp11_aout_write_headers (bfd *abfd, struct internal_exec *execp)
   if (obj_textsec (abfd)->reloc_count > 0
       || obj_datasec (abfd)->reloc_count > 0)
     {
-      if (bfd_seek (abfd, (file_ptr) (N_TRELOFF (execp)), SEEK_SET) != 0
+      if (bfd_seek (abfd, N_TRELOFF (execp), SEEK_SET) != 0
 	  || !NAME (aout, squirt_out_relocs) (abfd, obj_textsec (abfd))
-	  || bfd_seek (abfd, (file_ptr) (N_DRELOFF (execp)), SEEK_SET) != 0
+	  || bfd_seek (abfd, N_DRELOFF (execp), SEEK_SET) != 0
 	  || !NAME (aout, squirt_out_relocs) (abfd, obj_datasec (abfd)))
 	return false;
     }
@@ -457,11 +457,33 @@ NAME (aout, swap_exec_header_in) (bfd *abfd,
 
 /*  Swap the information in an internal exec header structure
     "execp" into the buffer "bytes" ready for writing to disk.  */
-void
+bool
 NAME (aout, swap_exec_header_out) (bfd *abfd,
 				   struct internal_exec *execp,
 				   struct external_exec *bytes)
 {
+  const char *err = NULL;
+  uint64_t val;
+#define MAXVAL(x) ((UINT64_C (1) << (8 * sizeof (x) - 1) << 1) - 1)
+  if ((val = execp->a_text) > MAXVAL (bytes->e_text))
+    err = "e_text";
+  else if ((val = execp->a_data) > MAXVAL (bytes->e_data))
+    err = "e_data";
+  else if ((val = execp->a_bss) > MAXVAL (bytes->e_bss))
+    err = "e_bss";
+  else if ((val = execp->a_syms) > MAXVAL (bytes->e_syms))
+    err = "e_syms";
+  else if ((val = execp->a_entry) > MAXVAL (bytes->e_entry))
+    err = "e_entry";
+#undef MAXVAL
+  if (err)
+    {
+      _bfd_error_handler (_("%pB: %#" PRIx64 " overflows header %s field"),
+			  abfd, val, err);
+      bfd_set_error (bfd_error_file_too_big);
+      return false;
+    }
+
   /* Now fill in fields in the raw data, from the fields in the exec struct.  */
   PUT_MAGIC (abfd, execp->a_info,		bytes->e_info);
   PUT_WORD (abfd, execp->a_text,		bytes->e_text);
@@ -483,6 +505,7 @@ NAME (aout, swap_exec_header_out) (bfd *abfd,
       fprintf (stderr, "BFD:%s:%d: internal error\n", __FILE__, __LINE__);
       PUT_WORD (abfd, 0,			bytes->e_flag);
     }
+  return true;
 }
 
 /* Make all the section for an a.out file.  */
@@ -511,12 +534,12 @@ NAME (aout, some_aout_object_p) (bfd *abfd,
 				 bfd_cleanup (*callback_to_real_object_p) (bfd *))
 {
   struct aout_data_struct *rawptr, *oldrawptr;
-  bfd_cleanup cleanup;
-  size_t amt = sizeof (struct aout_data_struct);
+  bfd_cleanup result;
+  size_t amt = sizeof (*rawptr);
 
   rawptr = bfd_zalloc (abfd, amt);
   if (rawptr == NULL)
-    return 0;
+    return NULL;
 
   oldrawptr = abfd->tdata.aout_data;
   abfd->tdata.aout_data = rawptr;
@@ -526,7 +549,8 @@ NAME (aout, some_aout_object_p) (bfd *abfd,
     *abfd->tdata.aout_data = *oldrawptr;
 
   abfd->tdata.aout_data->a.hdr = &rawptr->e;
-  *(abfd->tdata.aout_data->a.hdr) = *execp;	/* Copy in the internal_exec struct.  */
+  /* Copy in the internal_exec struct.  */
+  *(abfd->tdata.aout_data->a.hdr) = *execp;
   execp = abfd->tdata.aout_data->a.hdr;
 
   /* Set the file flags.  */
@@ -562,7 +586,6 @@ NAME (aout, some_aout_object_p) (bfd *abfd,
 
   abfd->start_address = execp->a_entry;
 
-  obj_aout_symbols (abfd) = NULL;
   abfd->symcount = execp->a_syms / sizeof (struct external_nlist);
 
   /* The default relocation entry size is that of traditional V7 Unix.  */
@@ -571,17 +594,8 @@ NAME (aout, some_aout_object_p) (bfd *abfd,
   /* The default symbol entry size is that of traditional Unix.  */
   obj_symbol_entry_size (abfd) = EXTERNAL_NLIST_SIZE;
 
-#ifdef USE_MMAP
-  bfd_init_window (&obj_aout_sym_window (abfd));
-  bfd_init_window (&obj_aout_string_window (abfd));
-#endif
-
-  obj_aout_external_syms (abfd) = NULL;
-  obj_aout_external_strings (abfd) = NULL;
-  obj_aout_sym_hashes (abfd) = NULL;
-
   if (! NAME (aout, make_sections) (abfd))
-    return NULL;
+    goto error_ret;
 
   obj_datasec (abfd)->size = execp->a_data;
   obj_bsssec (abfd)->size = execp->a_bss;
@@ -631,9 +645,9 @@ NAME (aout, some_aout_object_p) (bfd *abfd,
   /* Determine the architecture and machine type of the object file.  */
   abfd->obj_arch = bfd_arch_obscure;
 
-  adata(abfd)->page_size = TARGET_PAGE_SIZE;
-  adata(abfd)->segment_size = SEGMENT_SIZE;
-  adata(abfd)->exec_bytes_size = EXEC_BYTES_SIZE;
+  adata (abfd)->page_size = TARGET_PAGE_SIZE;
+  adata (abfd)->segment_size = SEGMENT_SIZE;
+  adata (abfd)->exec_bytes_size = EXEC_BYTES_SIZE;
 
   return _bfd_no_cleanup;
 
@@ -647,7 +661,7 @@ NAME (aout, some_aout_object_p) (bfd *abfd,
      header, should cope with them in this callback as well.  */
 #endif	/* DOCUMENTATION */
 
-  cleanup = (*callback_to_real_object_p)(abfd);
+  result = (*callback_to_real_object_p) (abfd);
 
   /* Now that the segment addresses have been worked out, take a better
      guess at whether the file is executable.  If the entry point
@@ -662,7 +676,7 @@ NAME (aout, some_aout_object_p) (bfd *abfd,
 
      To fix this, we now accept any non-zero entry point as an indication of
      executability.  This will work most of the time, since only the linker
-     sets the entry point, and that is likely to be non-zero for most systems. */
+     sets the entry point, and that is likely to be non-zero for most systems.  */
 
   if (execp->a_entry != 0
       || (execp->a_entry >= obj_textsec (abfd)->vma
@@ -685,18 +699,19 @@ NAME (aout, some_aout_object_p) (bfd *abfd,
 	issue.  Many kernels are loaded at non standard addresses.  */
       if (abfd->iostream != NULL
 	  && (abfd->flags & BFD_IN_MEMORY) == 0
-	  && (fstat(fileno((FILE *) (abfd->iostream)), &stat_buf) == 0)
+	  && (fstat (fileno ((FILE *) (abfd->iostream)), &stat_buf) == 0)
 	  && ((stat_buf.st_mode & 0111) != 0))
 	abfd->flags |= EXEC_P;
     }
 #endif /* STAT_FOR_EXEC */
 
-  if (!cleanup)
-    {
-      free (rawptr);
-      abfd->tdata.aout_data = oldrawptr;
-    }
-  return cleanup;
+  if (result)
+    return result;
+
+ error_ret:
+  bfd_release (abfd, rawptr);
+  abfd->tdata.aout_data = oldrawptr;
+  return NULL;
 }
 
 /* Initialize ABFD for use with a.out files.  */
@@ -1244,7 +1259,7 @@ NAME (aout, set_section_contents) (bfd *abfd,
   if (count != 0)
     {
       if (bfd_seek (abfd, section->filepos + offset, SEEK_SET) != 0
-	  || bfd_bwrite (location, count, abfd) != count)
+	  || bfd_write (location, count, abfd) != count)
 	return false;
     }
 
@@ -1259,36 +1274,23 @@ aout_get_external_symbols (bfd *abfd)
   if (obj_aout_external_syms (abfd) == NULL)
     {
       bfd_size_type count;
-      struct external_nlist *syms;
+      struct external_nlist *syms = NULL;
+      bfd_size_type amt = exec_hdr (abfd)->a_syms;
 
-      count = exec_hdr (abfd)->a_syms / EXTERNAL_NLIST_SIZE;
+      count = amt / EXTERNAL_NLIST_SIZE;
 
       /* PR 17512: file: 011f5a08.  */
       if (count == 0)
-	{
-	  obj_aout_external_syms (abfd) = NULL;
-	  obj_aout_external_sym_count (abfd) = count;
-	  return true;
-	}
+	return true;
 
-#ifdef USE_MMAP
-      if (! bfd_get_file_window (abfd, obj_sym_filepos (abfd),
-				 exec_hdr (abfd)->a_syms,
-				 &obj_aout_sym_window (abfd), true))
-	return false;
-      syms = (struct external_nlist *) obj_aout_sym_window (abfd).data;
-#else
       /* We allocate using malloc to make the values easy to free
 	 later on.  If we put them on the objalloc it might not be
 	 possible to free them.  */
       if (bfd_seek (abfd, obj_sym_filepos (abfd), SEEK_SET) != 0)
 	return false;
-      syms = (struct external_nlist *)
-	_bfd_malloc_and_read (abfd, count * EXTERNAL_NLIST_SIZE,
-			      count * EXTERNAL_NLIST_SIZE);
+      syms = _bfd_malloc_and_read (abfd, amt, amt);
       if (syms == NULL)
 	return false;
-#endif
 
       obj_aout_external_syms (abfd) = syms;
       obj_aout_external_sym_count (abfd) = count;
@@ -1304,43 +1306,32 @@ aout_get_external_symbols (bfd *abfd)
 
       /* Get the size of the strings.  */
       if (bfd_seek (abfd, obj_str_filepos (abfd), SEEK_SET) != 0
-	  || bfd_bread ((void *) string_chars, amt, abfd) != amt)
+	  || bfd_read (string_chars, amt, abfd) != amt)
 	return false;
       stringsize = H_GET_32 (abfd, string_chars);
       if (stringsize == 0)
 	stringsize = 1;
-      else if (stringsize < BYTES_IN_LONG
+      else if (stringsize + 1 < BYTES_IN_LONG + 1
 	       || (size_t) stringsize != stringsize)
 	{
 	  bfd_set_error (bfd_error_bad_value);
 	  return false;
 	}
 
-#ifdef USE_MMAP
+      strings = (char *) bfd_malloc (stringsize + 1);
+      if (strings == NULL)
+	return false;
+
       if (stringsize >= BYTES_IN_LONG)
 	{
-	  if (! bfd_get_file_window (abfd, obj_str_filepos (abfd), stringsize + 1,
-				     &obj_aout_string_window (abfd), true))
-	    return false;
-	  strings = (char *) obj_aout_string_window (abfd).data;
-	}
-      else
-#endif
-	{
-	  strings = (char *) bfd_malloc (stringsize + 1);
-	  if (strings == NULL)
-	    return false;
-
-	  if (stringsize >= BYTES_IN_LONG)
+	  amt = stringsize - BYTES_IN_LONG;
+	  if (bfd_read (strings + BYTES_IN_LONG, amt, abfd) != amt)
 	    {
-	      amt = stringsize - BYTES_IN_LONG;
-	      if (bfd_bread (strings + BYTES_IN_LONG, amt, abfd) != amt)
-		{
-		  free (strings);
-		  return false;
-		}
+	      free (strings);
+	      return false;
 	    }
 	}
+
       /* Ensure that a zero index yields an empty string.  */
       if (stringsize >= BYTES_IN_WORD)
 	memset (strings, 0, BYTES_IN_LONG);
@@ -1659,11 +1650,7 @@ NAME (aout, slurp_symbol_table) (bfd *abfd)
   if (old_external_syms == NULL
       && obj_aout_external_syms (abfd) != NULL)
     {
-#ifdef USE_MMAP
-      bfd_free_window (&obj_aout_sym_window (abfd));
-#else
       free (obj_aout_external_syms (abfd));
-#endif
       obj_aout_external_syms (abfd) = NULL;
     }
 
@@ -1721,8 +1708,7 @@ emit_stringtab (bfd *abfd, struct bfd_strtab_hash *tab)
 
   /* The string table starts with the size.  */
   H_PUT_32 (abfd, _bfd_stringtab_size (tab) + BYTES_IN_LONG, buffer);
-  if (bfd_bwrite ((void *) buffer, (bfd_size_type) BYTES_IN_LONG, abfd)
-      != BYTES_IN_LONG)
+  if (bfd_write (buffer, BYTES_IN_LONG, abfd) != BYTES_IN_LONG)
     return false;
 
   return _bfd_stringtab_emit (abfd, tab);
@@ -1766,8 +1752,7 @@ NAME (aout, write_syms) (bfd *abfd)
       if (! translate_to_native_sym_flags (abfd, g, &nsp))
 	goto error_return;
 
-      if (bfd_bwrite ((void *)&nsp, (bfd_size_type) EXTERNAL_NLIST_SIZE, abfd)
-	  != EXTERNAL_NLIST_SIZE)
+      if (bfd_write (&nsp, EXTERNAL_NLIST_SIZE, abfd) != EXTERNAL_NLIST_SIZE)
 	goto error_return;
 
       /* NB: `KEEPIT' currently overlays `udata.p', so set this only
@@ -2071,7 +2056,7 @@ NAME (aout, squirt_out_relocs) (bfd *abfd, asection *section)
 	}
     }
 
-  if (bfd_bwrite ((void *) native, natsize, abfd) != natsize)
+  if (bfd_write (native, natsize, abfd) != natsize)
     {
       bfd_release (abfd, native);
       return false;
@@ -2531,34 +2516,26 @@ NAME (aout, sizeof_headers) (bfd *abfd,
   return adata (abfd).exec_bytes_size;
 }
 
-/* Free all information we have cached for this BFD.  We can always
-   read it again later if we need it.  */
+/* Throw away most malloc'd and alloc'd information for this BFD.  */
 
 bool
 NAME (aout, bfd_free_cached_info) (bfd *abfd)
 {
-  asection *o;
-
-  if (bfd_get_format (abfd) != bfd_object)
-    return true;
-
+  if ((bfd_get_format (abfd) == bfd_object
+       || bfd_get_format (abfd) == bfd_core)
+      && abfd->tdata.aout_data != NULL)
+    {
 #define BFCI_FREE(x) do { free (x); x = NULL; } while (0)
-  BFCI_FREE (obj_aout_symbols (abfd));
-
-#ifdef USE_MMAP
-  obj_aout_external_syms (abfd) = 0;
-  bfd_free_window (&obj_aout_sym_window (abfd));
-  bfd_free_window (&obj_aout_string_window (abfd));
-  obj_aout_external_strings (abfd) = 0;
-#else
-  BFCI_FREE (obj_aout_external_syms (abfd));
-  BFCI_FREE (obj_aout_external_strings (abfd));
-#endif
-  for (o = abfd->sections; o != NULL; o = o->next)
-    BFCI_FREE (o->relocation);
+      BFCI_FREE (adata (abfd).line_buf);
+      BFCI_FREE (obj_aout_symbols (abfd));
+      BFCI_FREE (obj_aout_external_syms (abfd));
+      BFCI_FREE (obj_aout_external_strings (abfd));
+      for (asection *o = abfd->sections; o != NULL; o = o->next)
+	BFCI_FREE (o->relocation);
 #undef BFCI_FREE
+    }
 
-  return true;
+  return _bfd_generic_bfd_free_cached_info (abfd);
 }
 
 /* Routine to create an entry in an a.out link hash table.  */
@@ -2631,21 +2608,13 @@ aout_link_free_symbols (bfd *abfd)
 {
   if (obj_aout_external_syms (abfd) != NULL)
     {
-#ifdef USE_MMAP
-      bfd_free_window (&obj_aout_sym_window (abfd));
-#else
       free ((void *) obj_aout_external_syms (abfd));
-#endif
       obj_aout_external_syms (abfd) = NULL;
     }
 
   if (obj_aout_external_strings (abfd) != NULL)
     {
-#ifdef USE_MMAP
-      bfd_free_window (&obj_aout_string_window (abfd));
-#else
       free ((void *) obj_aout_external_strings (abfd));
-#endif
       obj_aout_external_strings (abfd) = NULL;
     }
   return true;
@@ -3164,7 +3133,7 @@ aout_link_write_other_symbol (struct bfd_hash_entry *bh, void *data)
 
   amt = EXTERNAL_NLIST_SIZE;
   if (bfd_seek (output_bfd, flaginfo->symoff, SEEK_SET) != 0
-      || bfd_bwrite ((void *) &outsym, amt, output_bfd) != amt)
+      || bfd_write (&outsym, amt, output_bfd) != amt)
     /* FIXME: No way to handle errors.  */
     abort ();
 
@@ -3346,7 +3315,7 @@ aout_link_reloc_link_order (struct aout_final_link_info *flaginfo,
 
   rel_size = obj_reloc_entry_size (flaginfo->output_bfd);
   if (bfd_seek (flaginfo->output_bfd, *reloff_ptr, SEEK_SET) != 0
-      || bfd_bwrite (rel_ptr, rel_size, flaginfo->output_bfd) != rel_size)
+      || bfd_write (rel_ptr, rel_size, flaginfo->output_bfd) != rel_size)
     return false;
 
   *reloff_ptr += rel_size;
@@ -3703,7 +3672,7 @@ aout_link_input_section (struct aout_final_link_info *flaginfo,
       if (rel_size > 0)
 	{
 	  if (bfd_seek (input_bfd, input_section->rel_filepos, SEEK_SET) != 0
-	      || bfd_bread (relocs, rel_size, input_bfd) != rel_size)
+	      || bfd_read (relocs, rel_size, input_bfd) != rel_size)
 	    return false;
 	}
     }
@@ -3728,7 +3697,7 @@ aout_link_input_section (struct aout_final_link_info *flaginfo,
     {
       if (bfd_seek (flaginfo->output_bfd, *reloff_ptr, SEEK_SET) != 0)
 	return false;
-      if (bfd_bwrite (relocs, rel_size, flaginfo->output_bfd) != rel_size)
+      if (bfd_write (relocs, rel_size, flaginfo->output_bfd) != rel_size)
 	return false;
       *reloff_ptr += rel_size;
 
@@ -4118,7 +4087,7 @@ NAME (aout, final_link) (bfd *abfd,
 	  bfd_byte b = 0;
 
 	  if (bfd_seek (abfd, pos - 1, SEEK_SET) != 0
-	      || bfd_bwrite (&b, (bfd_size_type) 1, abfd) != 1)
+	      || bfd_write (&b, 1, abfd) != 1)
 	    goto error_return;
 	}
     }
@@ -4631,7 +4600,7 @@ aout_link_write_symbols (struct aout_final_link_info *flaginfo, bfd *input_bfd)
 	return false;
       size = outsym - flaginfo->output_syms;
       size *= EXTERNAL_NLIST_SIZE;
-      if (bfd_bwrite ((void *) flaginfo->output_syms, size, output_bfd) != size)
+      if (bfd_write (flaginfo->output_syms, size, output_bfd) != size)
 	return false;
       flaginfo->symoff += size;
     }

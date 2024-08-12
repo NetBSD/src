@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1997-2023 Free Software Foundation, Inc.
+# Copyright 1997-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -140,7 +140,7 @@ gdb_test "continue" \
     "continue to auto-deleted break marker3"
 
 gdb_test "info break $bp" \
-    ".*No breakpoint or watchpoint matching.*" \
+    ".*No breakpoint, watchpoint, tracepoint, or catchpoint matching.*" \
     "info auto-deleted break marker3"
 
 # Verify that we can set a breakpoint and manually disable it (we've
@@ -461,4 +461,3 @@ test_ena_dis_br "disable"
 test_ena_dis_br "enable"
 
 gdb_exit
-return 0
