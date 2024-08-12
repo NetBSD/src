@@ -1,5 +1,5 @@
-/* LoongArch64 COFF support for BFD.
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+/* RISC-V 64-bit COFF support for BFD.
+   Copyright (C) 2023-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -17,22 +17,20 @@
    along with this program; if not, write to the Free Software Foundation,
    Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  */
 
-#ifndef COFF_LOONGARCH64_H
-#define COFF_LOONGARCH64_H
+#ifndef COFF_RISCV64_H
+#define COFF_RISCV64_H
 
-#define COFFLOONGARCH64 1
+#define COFFRISCV64 1
 
 #define L_LNNO_SIZE 2
 #define INCLUDE_COMDAT_FIELDS_IN_AUXENT
 #include "coff/external.h"
 
-#define F_LOONGARCH64_ARCHITECTURE_MASK	(0x4000)
-
-#define	LOONGARCH64MAGIC	0x6264  /* From Microsoft specification. */
+#define	RISCV64MAGIC	0x5064  /* From Microsoft specification. */
 
 #undef  BADMAG
-#define BADMAG(x) ((x).f_magic != LOONGARCH64MAGIC)
-#define LOONGARCH64         1                 /* Customize coffcode.h.  */
+#define BADMAG(x) ((x).f_magic != RISCV64MAGIC)
+#define RISCV64         1                 /* Customize coffcode.h.  */
 
 #define IMAGE_NT_OPTIONAL_HDR64_MAGIC      0x20b
 
@@ -62,5 +60,7 @@ struct external_reloc
 
 #define RELOC struct external_reloc
 #define RELSZ 14
+#define SWAP_IN_RELOC_OFFSET	H_GET_32
+#define SWAP_OUT_RELOC_OFFSET	H_PUT_32
 
-#endif /* COFF_LOONGARCH64_H */
+#endif /* COFF_RISCV64_H */

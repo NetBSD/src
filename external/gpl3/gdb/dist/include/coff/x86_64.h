@@ -1,5 +1,5 @@
 /* COFF information for AMD 64.
-   Copyright (C) 2006-2022 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -19,6 +19,9 @@
    MA 02110-1301, USA.
    
    Written by Kai Tietz, OneVision Software GmbH&CoKg.  */
+
+#ifndef COFF_X86_64_H
+#define COFF_X86_64_H
 
 #define L_LNNO_SIZE 2
 #define INCLUDE_COMDAT_FIELDS_IN_AUXENT
@@ -105,3 +108,5 @@ struct external_reloc
 #define R_PCRBYTE	18
 #define R_PCRWORD	19
 #define R_PCRLONG	20
+
+#endif /* COFF_X86_64_H */
