@@ -1,4 +1,4 @@
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,9 +20,7 @@
 
 # Can't pass environment variables to the inferior if when we connect,
 # the inferior is already running.
-if [use_gdb_stub] {
-    return
-}
+require !use_gdb_stub
 
 standard_testfile .c
 

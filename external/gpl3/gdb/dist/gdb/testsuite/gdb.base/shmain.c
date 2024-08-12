@@ -3,7 +3,7 @@
 #include "ss.h"
 #include <stdio.h>
 
-#include "../lib/unbuffer_output.c"
+#include "unbuffer_output.c"
 
 extern int structarg(struct s);
 extern int pstructarg(struct s*);

@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2017-2023 Free Software Foundation, Inc.
+# Copyright 2017-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,17 +16,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # This test doesn't make sense on native-gdbserver.
-if { [use_gdb_stub] } {
-    untested "not supported"
-    return
-}
+require !use_gdb_stub
 
 # There's no easy way to set environment variables on remote targets
 # (via dejagnu) yet.
-if { [is_remote target] } {
-    untested "remote board"
-    return
-}
+require {!is_remote target}
 
 standard_testfile
 
@@ -65,12 +59,14 @@ proc initial_setup_simple { startup_with_shell run_args } {
 
 with_test_prefix "startup_with_shell = on; run_args = *.unique-extension" {
     initial_setup_simple "on" "$unique_file_dir/*.unique-extension"
+    gdb_test_no_output "set print characters unlimited"
     gdb_test "print argv\[1\]" "\\\$$decimal = $hex \"$unique_file\"" \
 	"first argument expanded"
 }
 
 with_test_prefix "startup_with_shell = off; run_args = *.unique-extension" {
     initial_setup_simple "off" "$unique_file_dir/*.unique-extension"
+    gdb_test_no_output "set print characters unlimited"
     gdb_test "print argv\[1\]" "\\\$$decimal = $hex \"$unique_file_dir/\\\*\.unique-extension\"" \
 	"first argument not expanded"
 }

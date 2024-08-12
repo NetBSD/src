@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2022-2023 Free Software Foundation, Inc.
+# Copyright 2022-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,9 +23,7 @@ standard_testfile
 # If the host is remote, source files are uploaded to the host and compiled
 # there, but without the directory structure we expect, making the test
 # pointless.  Skip the test in that case.
-if { [is_remote host] } {
-    return
-}
+require {!is_remote host}
 
 # Copy the source file at these locations in the output directory ($out):
 #

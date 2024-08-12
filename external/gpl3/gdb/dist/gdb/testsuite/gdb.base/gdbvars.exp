@@ -1,4 +1,4 @@
-# Copyright (C) 1992-2023 Free Software Foundation, Inc.
+# Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -66,6 +66,14 @@ proc test_convenience_variables {} {
     gdb_test "print \$arr = {0, 1, 2, 3}" \
 	" = \\{0, 1, 2, 3\\}" \
 	"Set convenience variable to different array value"
+
+    gdb_test "print \$ptr = (void *) 7" \
+	" = \\(void \\*\\) 0x7" \
+	"set convenience variable to pointer value"
+    # This used to "succeed".
+    gdb_test "print \$ptr + 23 = 97" \
+	"Left operand of assignment is not an lvalue." \
+	"reject invalid assignment"
 }
 
 proc test_convenience_functions {} {
@@ -150,6 +158,11 @@ proc test_with_program {} {
 	"Set a new convenience variable to a program variable"
     gdb_test "print /x \$prog_var" " = $hex" \
 	"Print contents of new convenience variable of program variable"
+
+    # Test $_thread/$_inferior convenience variables in various commands.
+    gdb_test "info threads \$_thread" "\\* 1 .* main.*"
+    gdb_test "info inferiors \$_inferior" "\\* 1 .* process.*"
+    gdb_test "break foo_int thread \$_thread" "Breakpoint \[0-9\]*.*"
 }
 
 gdb_test_no_output "set print sevenbit-strings"

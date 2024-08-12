@@ -1,4 +1,4 @@
-# Copyright 2003-2023 Free Software Foundation, Inc.
+# Copyright 2003-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,5 +33,3 @@ if {[runto f4]} {
     gdb_test "p *y" "\\\$\[0-9\]* = \{c = 42 '\\*', f = 1 \\+ 0i\}" \
 	    "print complex value in C"
 }
-
-return 0

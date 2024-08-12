@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1997-2023 Free Software Foundation, Inc.
+# Copyright 1997-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,9 +18,7 @@
 # long_long.exp   Test printing of 64-bit things in 32-bit gdb.
 #                 Also test differnet kinds of formats.
 #
-if [target_info exists no_long_long] {
-    return 0
-}
+require {!target_info exists no_long_long}
 
 standard_testfile .c
 
@@ -176,7 +174,7 @@ gdb_test_short "p/u *(short *)s" "" "291" ""
 gdb_test_short "p/o *(short *)s" "" "0443" ""
 gdb_test_short "p/t *(short *)s" "" "100100011" ""
 gdb_test_short "p/a *(short *)s" "" "0x123( <.*>)?" ""
-gdb_test_short "p/f *(short *)s" "" "291" ""
+gdb_test_short "p/f *(short *)s" "" "1.7345e-0?5" ""
 gdb_test_short "p/c *(short *)s" "" "35 '.'" ""
 
 gdb_test_int "p/x *(int *)i" "" "0x123" "0x1234567" ""
@@ -256,7 +254,7 @@ gdb_test "x/2ho h" "0443.*0123456"
 gdb_test "x/2ht h" "0000000100100011.*1010011100101110"
 gdb_test_ptr "x/2ha h" "" ""  "0x123.*0xffffa72e" "0x123.*0xffffffffffffa72e"
 gdb_test "x/2hc h" "35 '.'.*46 '.'"
-gdb_test "x/2hf h" "291.*-22738"
+gdb_test "x/2hf h" "1.7345e-0?5.*-0.028046"
 
 gdb_test "x/2wx w" "0x01234567.*0xa72ee539"
 gdb_test "x/2wd w" "19088743.*-1490098887"
@@ -282,4 +280,3 @@ send_gdb "\n"
 gdb_test "" "0x00.*0x00" "repeat x command"
 
 gdb_exit
-return 0
