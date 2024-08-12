@@ -1,6 +1,6 @@
 /* C language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2023 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,7 +25,9 @@ struct ui_file;
 struct language_arch_info;
 struct type_print_options;
 struct parser_state;
+struct compile_instance;
 
+#include "compile/compile.h"
 #include "value.h"
 #include "macroexp.h"
 #include "gdbsupport/enum-flags.h"

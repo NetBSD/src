@@ -1,6 +1,6 @@
 /* Frame unwinder for ia64 frames using the libunwind library.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    Written by Jeff Johnston, contributed by Red Hat Inc.
 
@@ -19,7 +19,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 
 #include "inferior.h"
 #include "frame.h"
@@ -153,7 +152,7 @@ libunwind_frame_set_descr (struct gdbarch *gdbarch,
 }
 
 static struct libunwind_frame_cache *
-libunwind_frame_cache (frame_info_ptr this_frame, void **this_cache)
+libunwind_frame_cache (const frame_info_ptr &this_frame, void **this_cache)
 {
   unw_accessors_t *acc;
   unw_addr_space_t as;
@@ -247,7 +246,7 @@ libunwind_find_dyn_list (unw_addr_space_t as, unw_dyn_info_t *di, void *arg)
    libunwind frame unwinding.  */
 int
 libunwind_frame_sniffer (const struct frame_unwind *self,
-			 frame_info_ptr this_frame, void **this_cache)
+			 const frame_info_ptr &this_frame, void **this_cache)
 {
   unw_cursor_t cursor;
   unw_accessors_t *acc;
@@ -292,7 +291,7 @@ libunwind_frame_sniffer (const struct frame_unwind *self,
 }
 
 void
-libunwind_frame_this_id (frame_info_ptr this_frame, void **this_cache,
+libunwind_frame_this_id (const frame_info_ptr &this_frame, void **this_cache,
 			 struct frame_id *this_id)
 {
   struct libunwind_frame_cache *cache =
@@ -303,7 +302,7 @@ libunwind_frame_this_id (frame_info_ptr this_frame, void **this_cache,
 }
 
 struct value *
-libunwind_frame_prev_register (frame_info_ptr this_frame,
+libunwind_frame_prev_register (const frame_info_ptr &this_frame,
 			       void **this_cache, int regnum)
 {
   struct libunwind_frame_cache *cache =
@@ -387,7 +386,7 @@ libunwind_search_unwind_table (void *as, long ip, void *di,
 /* Verify if we are in a sigtramp frame and we can use libunwind to unwind.  */
 int
 libunwind_sigtramp_frame_sniffer (const struct frame_unwind *self,
-				  frame_info_ptr this_frame,
+				  const frame_info_ptr &this_frame,
 				  void **this_cache)
 {
   unw_cursor_t cursor;
