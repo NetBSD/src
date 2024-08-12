@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2023 Free Software Foundation, Inc.
+# Copyright (C) 2016-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 # Rust compiler.  This serves as a smoke test.
 
 load_lib "rust-support.exp"
-if {[skip_rust_tests]} { return }
+require allow_rust_tests
 
 gdb_start
 
@@ -113,6 +113,7 @@ gdb_test "ptype \[1,2,3,4\]" "type = \\\[i32; 4\\\]"
 gdb_test "print \[mut 1,2,3,4\]" " = \\\[1, 2, 3, 4\\\]"
 gdb_test "print \[1,2 3" "',' or ']' expected"
 gdb_test "print \[1 2" "',', ';', or ']' expected"
+gdb_test "print \[23\]" " = \\\[23\\\]"
 
 gdb_test "print b\"hi rust\"" " = b\"hi rust\""
 # This isn't rusty syntax yet, but that's another bug -- this is just
@@ -147,3 +148,29 @@ gdb_test "print r#" "No symbol 'r' in current context"
 gdb_test "printf \"%d %d\\n\", 23+1, 23-1" "24 22"
 
 gdb_test "print 5," "Syntax error near ','"
+
+# Check expression debug works for strings.
+gdb_test "with debug expression 1 -- print \"foo\"" \
+    [multi_line \
+	 "Operation: OP_AGGREGATE" \
+	 " Type: &str" \
+	 " nullptr" \
+	 " Vector:" \
+	 "  String: data_ptr" \
+	 "  Operation: UNOP_ADDR" \
+	 "   Operation: OP_STRING" \
+	 "    String: foo" \
+	 "  String: length" \
+	 "  Operation: OP_LONG" \
+	 "   Type: usize" \
+	 "   Constant: 3" \
+	 "Operation: OP_LONG" \
+	 " Type: i32" \
+	 " Constant: 0" \
+	 "evaluation of this expression requires the target program to be active"] \
+    "print a string with expression debug turned on"
+
+# PR rust/31082 - truncating to a pointer would fail.  Depending on
+# the default host architecture, this may or may not print a warning.
+gdb_test "print (0xffffffd00000009a as *mut u64)" \
+    "(warning: value truncated\[\r\n\]+)?.* = \\(\\*mut u64\\) $hex"

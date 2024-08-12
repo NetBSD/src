@@ -1,0 +1,59 @@
+# Copyright (C) 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test the handling of unsized types.
+
+load_lib rust-support.exp
+require allow_rust_tests
+require {can_compile rust}
+require {rust_at_least 1.61}
+
+standard_testfile .rs
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug rust}]} {
+    return -1
+}
+
+set line [gdb_get_line_number "set breakpoint here"]
+if {![runto ${srcfile}:$line]} {
+    untested "could not run to breakpoint"
+    return -1
+}
+
+set base_value \
+    [string cat \
+	 "MaybeUnsizedStruct<.*?>" \
+	 [string_to_regexp " {regular: 23, rest: \[5, 6, 7\]}"]]
+
+gdb_test "print *sized_struct" \
+    " = .*$base_value"
+gdb_test "print *nested_sized_struct" \
+    " = .*MaybeUnsizedStruct<.*?> {regular: 91, rest: .*$base_value}"
+
+gdb_test "print unsized_struct" \
+    " = .*$base_value"
+gdb_test "print *reference" \
+    " = .*$base_value"
+
+gdb_test "print nested_unsized_struct" \
+    " = .*MaybeUnsizedStruct<.*?> {regular: 91, rest: .*$base_value}"
+
+gdb_test "print alpha" \
+    " = .*MaybeUnsizedStruct2<.*?> {value: \\\[97, 98, 99, 0\\\]}"
+gdb_test "print beta" \
+    " = .*MaybeUnsizedStruct2<.*?> {value: \\\[97, 98, 99, 0\\\]}"
+
+gdb_test "print sized_struct.regular" " = 23"
+gdb_test "print nested_unsized_struct.regular" " = 91"
+gdb_test "print unsized_struct.rest\[1\]" " = 6"

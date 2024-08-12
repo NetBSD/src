@@ -1,4 +1,4 @@
-# Copyright (C) 2002-2023 Free Software Foundation, Inc.
+# Copyright (C) 2002-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,10 +21,7 @@
 # This file uses altivec-abi.c for input.
 #
 
-if {![istarget "powerpc*"] || [skip_altivec_tests]} {
-    verbose "Skipping altivec abi tests."
-    return
-}
+require allow_altivec_tests
 
 standard_testfile
 
@@ -50,10 +47,7 @@ proc altivec_abi_tests { extra_flags force_abi } {
 	}
     }
 
-    gdb_exit
-    gdb_start
-    gdb_reinitialize_dir $srcdir/$subdir
-    gdb_load ${binfile}
+    clean_restart $binfile
 
     # Run to `main' where we begin our tests.
     if {![runto_main]} {

@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2023 Free Software Foundation, Inc.
+# Copyright (C) 2012-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,9 +20,8 @@ if [info exists COMPILE] {
     # make check RUNTESTFLAGS="gdb.arch/amd64-tailcall-noret.exp COMPILE=1"
     standard_testfile
     lappend opts debug optimize=-O2
-} elseif { ![istarget x86_64-*-* ] || ![is_lp64_target] } {
-    verbose "Skipping ${testfile}."
-    return
+} else {
+    require is_x86_64_m64_target
 }
 
 lappend opts nopie

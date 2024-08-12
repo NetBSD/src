@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Free Software Foundation, Inc.
+# Copyright 2020-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,14 +15,11 @@
 
 # Test "set debug expr 1" on Fortran expressions.
 
-if { [skip_fortran_tests] } { return -1 }
+require allow_fortran_tests
 
 # Test relies on checking gdb debug output. Do not run if gdb debug is
 # enabled as any debug will be redirected to the log.
-if [gdb_debug_enabled] {
-    untested "debug is enabled"
-    return 0
-}
+require !gdb_debug_enabled
 
 standard_testfile .f90
 load_lib fortran.exp

@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2023 Free Software Foundation, Inc.
+# Copyright (C) 2012-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,11 +18,15 @@ set opts {}
 
 if [info exists COMPILE] {
     # make check RUNTESTFLAGS="gdb.arch/amd64-entry-value-param.exp COMPILE=1"
-    set srcfile ${srcfile2}
+    standard_testfile .c .c
     lappend opts debug optimize=-O2
-} elseif { ![istarget x86_64-*-* ] || ![is_lp64_target] } {
-    verbose "Skipping amd64-entry-value-param."
-    return
+} else {
+    require is_x86_64_m64_target
+}
+
+# Make .c available on the host.
+if [is_remote host] {
+    remote_download host $srcdir/$subdir/$srcfile2
 }
 
 if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} $opts] } {
@@ -33,8 +37,7 @@ if ![runto_main] {
     return -1
 }
 
-set srcfile $srcfile2
-gdb_breakpoint [gdb_get_line_number "break-here"]
+gdb_breakpoint [gdb_get_line_number "break-here" $srcfile2]
 
 with_test_prefix "call 1" {
     gdb_continue_to_breakpoint "break-here" ".* break-here .*"

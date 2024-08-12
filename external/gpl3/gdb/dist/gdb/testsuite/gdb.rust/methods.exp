@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2023 Free Software Foundation, Inc.
+# Copyright (C) 2016-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,8 @@
 # Test method calls.
 
 load_lib rust-support.exp
-if {[skip_rust_tests]} {
-    return
-}
+require allow_rust_tests
+require {can_compile rust}
 
 standard_testfile .rs
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug rust}]} {
@@ -61,3 +60,6 @@ gdb_test "print *self" " = 23"
 gdb_test "info functions HasMethods::new" \
     "fn methods::HasMethods::new\\(\\) -> methods::HasMethods;"
 
+# Regression test for PR rust/20367 and PR rust/30211.  This used to
+# crash.
+gdb_test_no_output "complete break what"

@@ -1,5 +1,5 @@
 # Test Framework Driver for GDB driving a builtin simulator
-#   Copyright 1994-2023 Free Software Foundation, Inc.
+#   Copyright 1994-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,6 +13,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# If we left this empty, the core of the testsuite would think we were
+# connecting to the native target.
+set_board_info gdb_protocol "sim"
 
 #
 # gdb_target_sim

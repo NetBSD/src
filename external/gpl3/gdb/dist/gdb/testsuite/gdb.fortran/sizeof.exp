@@ -1,0 +1,115 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/> .
+
+# Testing GDB's implementation of SIZE keyword.
+
+require allow_fortran_tests
+
+standard_testfile ".f90"
+load_lib fortran.exp
+
+if {[prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} \
+    {debug f90}]} {
+    return -1
+}
+
+if ![fortran_runto_main] {
+    return -1
+}
+
+gdb_breakpoint [gdb_get_line_number "Test breakpoint"]
+gdb_breakpoint [gdb_get_line_number "Past unassigned pointers"]
+gdb_breakpoint [gdb_get_line_number "Final breakpoint"]
+
+set done_unassigned 0
+set found_final_breakpoint 0
+set test_count 0
+
+# We are running tests defined in the executable here.  So, in the .exp file
+# we do not know when the 'Final breakpoint' will be hit exactly.  We place a
+# limit on the number of tests that can be run, just in case something goes
+# wrong, and GDB gets stuck in an loop here.
+while { $test_count < 200 } {
+    with_test_prefix "test $test_count" {
+	incr test_count
+
+	gdb_test_multiple "continue" "continue" {
+	    -re -wrap "! Test breakpoint" {
+		# We can run a test from here.
+	    }
+	    -re -wrap "! Past unassigned pointers" {
+		# Done with testing unassigned pointers.
+		set done_unassigned 1
+		continue
+	    }
+	    -re -wrap "! Final breakpoint" {
+		# We're done with the tests.
+		set found_final_breakpoint 1
+	    }
+	}
+
+	if ($found_final_breakpoint) {
+	    break
+	}
+
+	# First grab the expected answer.
+	set answer [get_valueof "" "answer" "**unknown**"]
+
+	# Now move up a frame and figure out a command for us to run
+	# as a test.
+	set command ""
+	gdb_test_multiple "up" "up" {
+	    -re -wrap "\r\n\[0-9\]+\[ \t\]+call test_sizeof \\((\[^\r\n\]+)\\)" {
+		set command $expect_out(1,string)
+	    }
+	}
+
+	gdb_assert { ![string equal $command ""] } "found a command to run"
+
+	set is_pointer_to_array [string match "sizeof (*a_p)*" $command]
+
+	if {$done_unassigned || !$is_pointer_to_array} {
+	    gdb_test "p $command" " = $answer"
+	} else {
+	    # Gfortran and ifx have slightly different behavior for unassigned
+	    # pointers to arrays.  While ifx will print 0 as the sizeof result,
+	    # gfortran will print the size of the base type of the pointer or
+	    # array.  Since the default behavior in GDB was to print 0 we keep
+	    # this and make an exception for gfortran here.
+	    gdb_test_multiple "p $command" "p $command" {
+		-re -wrap " = $answer" {
+		    pass $gdb_test_name
+		}
+		-re -wrap " = 0" {
+		    pass $gdb_test_name
+		}
+	    }
+	}
+    }
+}
+
+gdb_assert {$found_final_breakpoint} "ran all compiled in tests"
+
+# Here some more GDB specific tests that might fail with compilers.
+# GDB will print sizeof(1.4) = 8 while gfortran will probably print 4 but
+# GDB says ptype 1.4 is real*8 so the output is expected.
+
+gdb_test "ptype 1" "type = int"
+gdb_test "p sizeof(1)" "= 4"
+
+gdb_test "ptype 1.3" "type = real\\*8"
+gdb_test "p sizeof(1.3)" "= 8"
+
+gdb_test  "p sizeof ('asdsasd')" "= 7"
