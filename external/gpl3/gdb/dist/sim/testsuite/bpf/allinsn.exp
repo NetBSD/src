@@ -6,10 +6,7 @@ sim_init
 set all_machs "bpf"
 
 global SIMFLAGS_FOR_TARGET
-set SIMFLAGS_FOR_TARGET "--memory-size=4Mb"
-
-global LDFLAGS_FOR_TARGET
-set LDFLAGS_FOR_TARGET "-Ttext=0x0"
+set SIMFLAGS_FOR_TARGET "--memory-size=10Mb"
 
 foreach src [lsort [glob -nocomplain $srcdir/$subdir/*.s]] {
     # If we're only testing specific files and this isn't one of them, skip it.

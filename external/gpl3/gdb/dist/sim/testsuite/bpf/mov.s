@@ -1,7 +1,7 @@
 # mach: bpf
 # output: pass\nexit 0 (0x0)\n
-;; mov.s
-;; Tests for mov and mov32 instructions
+/* mov.s
+   Tests for mov and mov32 instructions  */
 
     .include "testutils.inc"
 
@@ -9,7 +9,7 @@
     .global main
     .type main, @function
 main:
-    ;; some basic sanity checks
+    /* some basic sanity checks  */
     mov32       %r1, 5
     fail_ne     %r1, 5
 
@@ -22,21 +22,21 @@ main:
     mov         %r1, -666
     fail_ne     %r1, -666
 
-    ;; should NOT sign extend
+    /* should NOT sign extend  */
     mov32       %r1, -1
     fail_ne     %r1, 0x00000000ffffffff
 
-    ;; should sign extend
+    /* should sign extend  */
     mov         %r2, -1
     fail_ne     %r2, 0xffffffffffffffff
 
-    mov         %r3, 0x80000000
+    mov         %r3, -2147483648 /* 0x80000000 */
 
-    ;; should NOT sign extend
+    /* should NOT sign extend */
     mov32       %r4, %r3
     fail_ne     %r4, 0x0000000080000000
 
-    ;; should sign extend
+    /* should sign extend  */
     mov         %r5, %r3
     fail_ne     %r5, 0xffffffff80000000
 
@@ -44,7 +44,7 @@ main:
     mov32       %r1, %r1
     fail_ne32   %r1, -2147483648
 
-    ;; casting shenanigans
+    /* casting shenanigans  */
     mov         %r1, %r1
     fail_ne     %r1, +2147483648
     mov32       %r2, -1
