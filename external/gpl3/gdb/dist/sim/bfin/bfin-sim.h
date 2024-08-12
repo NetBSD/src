@@ -1,6 +1,6 @@
 /* Simulator for Analog Devices Blackfin processors.
 
-   Copyright (C) 2005-2023 Free Software Foundation, Inc.
+   Copyright (C) 2005-2024 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -34,6 +34,8 @@ typedef int16_t bs16;
 typedef int32_t bs32;
 typedef int64_t bs40;
 typedef int64_t bs64;
+
+#include "machs.h"
 
 /* For dealing with parallel instructions, we must avoid changing our register
    file until all parallel insns have been simulated.  This queue of stores
@@ -358,5 +360,32 @@ extern bu32 hwloop_get_next_pc (SIM_CPU *, bu32, bu32);
 #define BFIN_L1_SRAM_SCRATCH_END  (BFIN_L1_SRAM_SCRATCH + BFIN_L1_SRAM_SCRATCH_SIZE)
 
 #define BFIN_L1_CACHE_BYTES       32
+
+#define BFIN_CPU_STATE (*(struct bfin_cpu_state *) CPU_ARCH_DATA (cpu))
+#define STATE_BOARD_DATA(sd) ((struct bfin_board_data *) STATE_ARCH_DATA (sd))
+
+#include "dv-bfin_trace.h"
+
+#undef CLAMP
+#define CLAMP(a, b, c) min (max (a, b), c)
+
+/* TODO: Move all this trace logic to the common code.  */
+#define BFIN_TRACE_CORE(cpu, addr, size, map, val) \
+  do { \
+    TRACE_CORE (cpu, "%cBUS %s %i bytes @ 0x%08x: 0x%0*x", \
+		map == exec_map ? 'I' : 'D', \
+		map == write_map ? "STORE" : "FETCH", \
+		size, addr, size * 2, val); \
+    PROFILE_COUNT_CORE (cpu, addr, size, map); \
+  } while (0)
+#define BFIN_TRACE_BRANCH(cpu, oldpc, newpc, hwloop, fmt, ...) \
+  do { \
+    TRACE_BRANCH (cpu, fmt " to %#x", ## __VA_ARGS__, newpc); \
+    if (STATE_ENVIRONMENT (CPU_STATE (cpu)) == OPERATING_ENVIRONMENT) \
+      bfin_trace_queue (cpu, oldpc, newpc, hwloop); \
+  } while (0)
+
+/* Default memory size.  */
+#define BFIN_DEFAULT_MEM_SIZE (128 * 1024 * 1024)
 
 #endif
