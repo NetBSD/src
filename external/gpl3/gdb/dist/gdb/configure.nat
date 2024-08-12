@@ -1,5 +1,5 @@
 # ; -*- mode: sh ; -*-
-# Copyright (C) 2013-2023 Free Software Foundation, Inc.
+# Copyright (C) 2013-2024 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -168,7 +168,8 @@ case ${gdb_host} in
 	    i386)
 		# Host: FreeBSD/i386
 		NATDEPFILES="${NATDEPFILES} x86-nat.o nat/x86-dregs.o \
-		x86-bsd-nat.o x86-fbsd-nat.o i386-fbsd-nat.o bsd-kvm.o"
+		nat/x86-xstate.o x86-bsd-nat.o x86-fbsd-nat.o i386-fbsd-nat.o \
+		bsd-kvm.o"
 		;;
 	    mips)
 		# Host: FreeBSD/mips
@@ -197,7 +198,7 @@ case ${gdb_host} in
 		# Host: FreeBSD/amd64
 		NATDEPFILES="${NATDEPFILES} amd64-nat.o \
 		amd64-fbsd-nat.o bsd-kvm.o x86-nat.o nat/x86-dregs.o \
-		x86-bsd-nat.o x86-fbsd-nat.o"
+		nat/x86-xstate.o x86-bsd-nat.o x86-fbsd-nat.o"
 		;;
 	esac
 	;;
@@ -240,7 +241,7 @@ case ${gdb_host} in
 		aarch32-linux-nat.o nat/aarch64-hw-point.o \
 		nat/aarch64-linux-hw-point.o \
 		nat/aarch64-linux.o \
-		nat/aarch64-sve-linux-ptrace.o \
+		nat/aarch64-scalable-linux-ptrace.o \
 		nat/aarch64-mte-linux-ptrace.o"
 		;;
 	    arc)
@@ -255,6 +256,7 @@ case ${gdb_host} in
 	    i386)
 		# Host: Intel 386 running GNU/Linux.
 		NATDEPFILES="${NATDEPFILES} x86-nat.o nat/x86-dregs.o \
+		nat/x86-xstate.o \
 		i386-linux-nat.o x86-linux-nat.o nat/linux-btrace.o \
 		nat/x86-linux.o nat/x86-linux-dregs.o"
 		;;
@@ -320,7 +322,7 @@ case ${gdb_host} in
 	    i386)
 		# Host: GNU/Linux x86-64
 		NATDEPFILES="${NATDEPFILES} x86-nat.o nat/x86-dregs.o \
-		amd64-nat.o amd64-linux-nat.o x86-linux-nat.o \
+		nat/x86-xstate.o amd64-nat.o amd64-linux-nat.o x86-linux-nat.o \
 		nat/linux-btrace.o \
 		nat/x86-linux.o nat/x86-linux-dregs.o \
 		nat/amd64-linux-siginfo.o"

@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/i386.
 
-   Copyright (C) 1988-2023 Free Software Foundation, Inc.
+   Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "arch-utils.h"
 #include "frame.h"
 #include "gdbcore.h"
@@ -98,7 +97,7 @@ static int i386nbsd_mc_reg_offset[] =
 };
 
 static void i386nbsd_sigtramp_cache_init (const struct tramp_frame *,
-					  frame_info_ptr,
+					  const frame_info_ptr &,
 					  struct trad_frame_cache *,
 					  CORE_ADDR);
 
@@ -330,7 +329,7 @@ static const struct tramp_frame i386nbsd_sigtramp_si4 =
 
 static void
 i386nbsd_sigtramp_cache_init (const struct tramp_frame *self,
-			      frame_info_ptr this_frame,
+			      const frame_info_ptr &this_frame,
 			      struct trad_frame_cache *this_cache,
 			      CORE_ADDR func)
 {

@@ -1,6 +1,6 @@
 /* TUI display source/assembly window.
 
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -19,7 +19,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include <ctype.h>
 #include "symtab.h"
 #include "frame.h"
@@ -28,12 +27,12 @@
 #include "source.h"
 #include "objfiles.h"
 #include "filenames.h"
-#include "safe-ctype.h"
+#include "gdbsupport/gdb-safe-ctype.h"
 
 #include "tui/tui.h"
 #include "tui/tui-data.h"
 #include "tui/tui-io.h"
-#include "tui/tui-stack.h"
+#include "tui/tui-status.h"
 #include "tui/tui-win.h"
 #include "tui/tui-wingeneral.h"
 #include "tui/tui-winsource.h"
@@ -170,14 +169,27 @@ tui_source_window_base::update_source_window_as_is
     erase_source_content ();
   else
     {
+      validate_scroll_offsets ();
       update_breakpoint_info (nullptr, false);
+      update_exec_info (false);
       show_source_content ();
-      update_exec_info ();
     }
 }
 
 
-/* Function to ensure that the source and/or disassemly windows
+/* See tui-winsource.h.  */
+void
+tui_source_window_base::update_source_window_with_addr (struct gdbarch *gdbarch,
+							CORE_ADDR addr)
+{
+  struct symtab_and_line sal {};
+  if (addr != 0)
+    sal = find_pc_line (addr, 0);
+
+  update_source_window (gdbarch, sal);
+}
+
+/* Function to ensure that the source and/or disassembly windows
    reflect the input address.  */
 void
 tui_update_source_windows_with_addr (struct gdbarch *gdbarch, CORE_ADDR addr)
@@ -209,28 +221,72 @@ tui_update_source_windows_with_line (struct symtab_and_line sal)
 void
 tui_source_window_base::do_erase_source_content (const char *str)
 {
-  int x_pos;
-  int half_width = (width - 2) / 2;
-
   m_content.clear ();
-  if (handle != NULL)
-    {
-      werase (handle.get ());
-      check_and_display_highlight_if_needed ();
-
-      if (strlen (str) >= half_width)
-	x_pos = 1;
-      else
-	x_pos = half_width - strlen (str);
-      mvwaddstr (handle.get (),
-		 (height / 2),
-		 x_pos,
-		 (char *) str);
-
-      refresh_window ();
-    }
+  if (handle != nullptr)
+    center_string (str);
 }
 
+/* See tui-winsource.h.  */
+
+void
+tui_source_window_base::puts_to_pad_with_skip (const char *string, int skip)
+{
+  gdb_assert (m_pad.get () != nullptr);
+  WINDOW *w = m_pad.get ();
+
+  while (skip > 0)
+    {
+      const char *next = strpbrk (string, "\033");
+
+      /* Print the plain text prefix.  */
+      size_t n_chars = next == nullptr ? strlen (string) : next - string;
+      if (n_chars > 0)
+	{
+	  if (skip > 0)
+	    {
+	      if (skip < n_chars)
+		{
+		  string += skip;
+		  n_chars -= skip;
+		  skip = 0;
+		}
+	      else
+		{
+		  skip -= n_chars;
+		  string += n_chars;
+		  n_chars = 0;
+		}
+	    }
+
+	  if (n_chars > 0)
+	    {
+	      std::string copy (string, n_chars);
+	      tui_puts (copy.c_str (), w);
+	    }
+	}
+
+      /* We finished.  */
+      if (next == nullptr)
+	break;
+
+      gdb_assert (*next == '\033');
+
+      int n_read;
+      if (skip_ansi_escape (next, &n_read))
+	{
+	  std::string copy (next, n_read);
+	  tui_puts (copy.c_str (), w);
+	  next += n_read;
+	}
+      else
+	gdb_assert_not_reached ("unhandled escape");
+
+      string = next;
+    }
+
+  if (*string != '\0')
+    tui_puts (string, w);
+}
 
 /* Redraw the complete line of a source or disassembly window.  */
 void
@@ -243,7 +299,8 @@ tui_source_window_base::show_source_line (int lineno)
     tui_set_reverse_mode (m_pad.get (), true);
 
   wmove (m_pad.get (), lineno, 0);
-  tui_puts (line->line.c_str (), m_pad.get ());
+  puts_to_pad_with_skip (line->line.c_str (), m_pad_offset);
+
   if (line->is_exec_point)
     tui_set_reverse_mode (m_pad.get (), false);
 }
@@ -253,38 +310,111 @@ tui_source_window_base::show_source_line (int lineno)
 void
 tui_source_window_base::refresh_window ()
 {
+  TUI_SCOPED_DEBUG_START_END ("window `%s`", name ());
+
   /* tui_win_info::refresh_window would draw the empty background window to
      the screen, potentially creating a flicker.  */
   wnoutrefresh (handle.get ());
 
-  int pad_width = std::max (m_max_length, width);
-  int left_margin = 1 + TUI_EXECINFO_SIZE + extra_margin ();
-  int view_width = width - left_margin - 1;
-  int pad_x = std::min (pad_width - view_width, m_horizontal_offset);
-  /* Ensure that an equal number of scrolls will work if the user
-     scrolled beyond where we clip.  */
-  m_horizontal_offset = pad_x;
-  prefresh (m_pad.get (), 0, pad_x, y + 1, x + left_margin,
-	    y + m_content.size (), x + left_margin + view_width - 1);
+  int pad_width = getmaxx (m_pad.get ());
+  int left_margin = this->left_margin ();
+  int view_width = this->view_width ();
+  int content_width = m_max_length;
+  int pad_x = m_horizontal_offset - m_pad_offset;
+
+  tui_debug_printf ("pad_width = %d, left_margin = %d, view_width = %d",
+		    pad_width, left_margin, view_width);
+  tui_debug_printf ("content_width = %d, pad_x = %d, m_horizontal_offset = %d",
+		    content_width, pad_x, m_horizontal_offset);
+  tui_debug_printf ("m_pad_offset = %d", m_pad_offset);
+
+  gdb_assert (m_pad_offset >= 0);
+  gdb_assert (m_horizontal_offset + view_width
+	      <= std::max (content_width, view_width));
+  gdb_assert (pad_x >= 0);
+  gdb_assert (m_horizontal_offset >= 0);
+
+  /* This function can be called before the pad has been allocated, this
+     should only occur during the initial startup.  In this case the first
+     condition in the following asserts will not be true, but the nullptr
+     check will.  */
+  gdb_assert (pad_width > 0 || m_pad.get () == nullptr);
+  gdb_assert (pad_x + view_width <= pad_width || m_pad.get () == nullptr);
+
+  int sminrow = y + box_width ();
+  int smincol = x + box_width () + left_margin;
+  int smaxrow = sminrow + m_content.size () - 1;
+  int smaxcol = smincol + view_width - 1;
+  prefresh (m_pad.get (), 0, pad_x, sminrow, smincol, smaxrow, smaxcol);
 }
 
 void
 tui_source_window_base::show_source_content ()
 {
+  TUI_SCOPED_DEBUG_START_END ("window `%s`", name ());
+
   gdb_assert (!m_content.empty ());
 
-  check_and_display_highlight_if_needed ();
+  /* The pad should be at least as wide as the window, but ideally, as wide
+     as the content, however, for some very wide content this might not be
+     possible.  */
+  int required_pad_width = std::max (m_max_length, width);
+  int required_pad_height = m_content.size ();
 
-  int pad_width = std::max (m_max_length, width);
-  if (m_pad == nullptr || pad_width > getmaxx (m_pad.get ())
-      || m_content.size () > getmaxy (m_pad.get ()))
-    m_pad.reset (newpad (m_content.size (), pad_width));
+  /* If the required pad width is wider than the previously requested pad
+     width, then we might want to grow the pad.  */
+  if (required_pad_width > m_pad_requested_width
+      || required_pad_height > getmaxy (m_pad.get ()))
+    {
+      /* The current pad width.  */
+      int pad_width = m_pad == nullptr ? 0 : getmaxx (m_pad.get ());
 
+      gdb_assert (pad_width <= m_pad_requested_width);
+
+      /* If the current pad width is smaller than the previously requested
+	 pad width, then this means we previously failed to allocate a
+	 bigger pad.  There's no point asking again, so we'll just make so
+	 with the pad we currently have.  */
+      if (pad_width == m_pad_requested_width
+	  || required_pad_height > getmaxy (m_pad.get ()))
+	{
+	  pad_width = required_pad_width;
+
+	  do
+	    {
+	      /* Try to allocate a new pad.  */
+	      m_pad.reset (newpad (required_pad_height, pad_width));
+
+	      if (m_pad == nullptr)
+		{
+		  int reduced_width = std::max (pad_width / 2, width);
+		  if (reduced_width == pad_width)
+		    error (_("failed to setup source window"));
+		  pad_width = reduced_width;
+		}
+	    }
+	  while (m_pad == nullptr);
+	}
+
+      m_pad_requested_width = required_pad_width;
+      tui_debug_printf ("requested width %d, allocated width %d",
+			required_pad_width, getmaxx (m_pad.get ()));
+    }
+
+  gdb_assert (m_pad != nullptr);
   werase (m_pad.get ());
   for (int lineno = 0; lineno < m_content.size (); lineno++)
     show_source_line (lineno);
 
-  refresh_window ();
+  if (can_box ())
+    {
+      /* Calling check_and_display_highlight_if_needed will call refresh_window
+	 (so long as the current window can be boxed), which will ensure that
+	 the newly loaded window content is copied to the screen.  */
+      check_and_display_highlight_if_needed ();
+    }
+  else
+    refresh_window ();
 }
 
 tui_source_window_base::tui_source_window_base ()
@@ -314,6 +444,8 @@ tui_source_window_base::update_tab_width ()
 void
 tui_source_window_base::rerender ()
 {
+  TUI_SCOPED_DEBUG_START_END ("window `%s`", name ());
+
   if (!m_content.empty ())
     {
       struct symtab_and_line cursal
@@ -335,10 +467,28 @@ tui_source_window_base::rerender ()
       struct symtab *s = find_pc_line_symtab (get_frame_pc (frame));
       if (this != TUI_SRC_WIN)
 	find_line_pc (s, cursal.line, &cursal.pc);
+
+      /* This centering code is copied from tui_source_window::maybe_update.
+	 It would be nice to do centering more often, and do it in just one
+	 location.  But since this is a regression fix, handle this
+	 conservatively for now.  */
+      int start_line = (cursal.line - ((height - box_size ()) / 2)) + 1;
+      if (start_line <= 0)
+	start_line = 1;
+      cursal.line = start_line;
+
       update_source_window (gdbarch, cursal);
     }
   else
-    erase_source_content ();
+    {
+      CORE_ADDR addr;
+      struct gdbarch *gdbarch;
+      tui_get_begin_asm_address (&gdbarch, &addr);
+      if (addr == 0)
+	erase_source_content ();
+      else
+	update_source_window_with_addr (gdbarch, addr);
+    }
 }
 
 /* See tui-data.h.  */
@@ -370,6 +520,42 @@ tui_source_window_base::refill ()
   update_source_window_as_is (m_gdbarch, sal);
 }
 
+/* See tui-winsource.h.  */
+
+bool
+tui_source_window_base::validate_scroll_offsets ()
+{
+  TUI_SCOPED_DEBUG_START_END ("window `%s`", name ());
+
+  int original_pad_offset = m_pad_offset;
+
+  if (m_horizontal_offset < 0)
+    m_horizontal_offset = 0;
+
+  int content_width = m_max_length;
+  int pad_width = getmaxx (m_pad.get ());
+  int view_width = this->view_width ();
+
+  tui_debug_printf ("pad_width = %d, view_width = %d, content_width = %d",
+		    pad_width, view_width, content_width);
+  tui_debug_printf ("original_pad_offset = %d, m_horizontal_offset = %d",
+		    original_pad_offset, m_horizontal_offset);
+
+  if (m_horizontal_offset + view_width > content_width)
+    m_horizontal_offset = std::max (content_width - view_width, 0);
+
+  if ((m_horizontal_offset + view_width) > (m_pad_offset + pad_width))
+    {
+      m_pad_offset = std::min (m_horizontal_offset, content_width - pad_width);
+      m_pad_offset = std::max (m_pad_offset, 0);
+    }
+  else if (m_horizontal_offset < m_pad_offset)
+    m_pad_offset = std::max (m_horizontal_offset + view_width - pad_width, 0);
+
+  gdb_assert (m_pad_offset >= 0);
+  return (original_pad_offset != m_pad_offset);
+}
+
 /* Scroll the source forward or backward horizontally.  */
 
 void
@@ -377,10 +563,11 @@ tui_source_window_base::do_scroll_horizontal (int num_to_scroll)
 {
   if (!m_content.empty ())
     {
-      int offset = m_horizontal_offset + num_to_scroll;
-      if (offset < 0)
-	offset = 0;
-      m_horizontal_offset = offset;
+      m_horizontal_offset += num_to_scroll;
+
+      if (validate_scroll_offsets ())
+	show_source_content ();
+
       refresh_window ();
     }
 }
@@ -457,24 +644,24 @@ tui_source_window_base::update_breakpoint_info
 	 do with it.  Identify enable/disabled breakpoints as well as
 	 those that we already hit.  */
       tui_bp_flags mode = 0;
-      for (breakpoint *bp : all_breakpoints ())
+      for (breakpoint &bp : all_breakpoints ())
 	{
-	  if (bp == being_deleted)
+	  if (&bp == being_deleted)
 	    continue;
 
-	  for (bp_location *loc : bp->locations ())
+	  for (bp_location &loc : bp.locations ())
 	    {
-	      if (location_matches_p (loc, i))
+	      if (location_matches_p (&loc, i))
 		{
-		  if (bp->enable_state == bp_disabled)
+		  if (bp.enable_state == bp_disabled)
 		    mode |= TUI_BP_DISABLED;
 		  else
 		    mode |= TUI_BP_ENABLED;
-		  if (bp->hit_count)
+		  if (bp.hit_count)
 		    mode |= TUI_BP_HIT;
-		  if (bp->loc->cond)
+		  if (bp.first_loc ().cond)
 		    mode |= TUI_BP_CONDITIONAL;
-		  if (bp->type == bp_hardware_breakpoint)
+		  if (bp.type == bp_hardware_breakpoint)
 		    mode |= TUI_BP_HARDWARE;
 		}
 	    }
@@ -489,17 +676,22 @@ tui_source_window_base::update_breakpoint_info
   return need_refresh;
 }
 
-/* Function to initialize the content of the execution info window,
-   based upon the input window which is either the source or
-   disassembly window.  */
+/* See tui-winsource.h.  */
+
 void
-tui_source_window_base::update_exec_info ()
+tui_source_window_base::update_exec_info (bool refresh_p)
 {
   update_breakpoint_info (nullptr, true);
   for (int i = 0; i < m_content.size (); i++)
     {
       struct tui_source_element *src_element = &m_content[i];
-      char element[TUI_EXECINFO_SIZE] = "   ";
+      /* Add 1 for '\0'.  */
+      char element[TUI_EXECINFO_SIZE + 1];
+      /* Initialize all but last element.  */
+      char space = tui_left_margin_verbose ? '_' : ' ';
+      memset (element, space, TUI_EXECINFO_SIZE);
+      /* Initialize last element.  */
+      element[TUI_EXECINFO_SIZE] = '\0';
 
       /* Now update the exec info content based upon the state
 	 of each line as indicated by the source content.  */
@@ -517,9 +709,10 @@ tui_source_window_base::update_exec_info ()
       if (src_element->is_exec_point)
 	element[TUI_EXEC_POS] = '>';
 
-      mvwaddstr (handle.get (), i + 1, 1, element);
+      mvwaddstr (handle.get (), i + box_width (), box_width (), element);
 
       show_line_number (i);
     }
-  refresh_window ();
+  if (refresh_p)
+    refresh_window ();
 }

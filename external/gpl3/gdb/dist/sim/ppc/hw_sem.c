@@ -84,6 +84,8 @@
 
    */
 
+#ifdef HAVE_SYSV_SEM
+
 typedef struct _hw_sem_device {
   unsigned_word physical_address;
   key_t key;
@@ -109,7 +111,7 @@ hw_sem_init_data(device *me)
   hw_sem_device *sem = (hw_sem_device*)device_data(me);
   const device_unit *d;
   int status;
-  union semun help;
+  union semun help = {};
 
   /* initialize the properties of the sem */
 
@@ -188,7 +190,7 @@ hw_sem_io_read_buffer(device *me,
   struct sembuf sb;
   int status;
   uint32_t u32;
-  union semun help;
+  union semun help = {};
 
   /* do we need to worry about out of range addresses? */
 
@@ -277,5 +279,13 @@ const device_descriptor hw_sem_device_descriptor[] = {
   { "sem", hw_sem_create, &hw_sem_callbacks },
   { NULL },
 };
+
+#else
+
+const device_descriptor hw_sem_device_descriptor[] = {
+  { NULL },
+};
+
+#endif /* HAVE_SYSV_SEM */
 
 #endif /* _HW_SEM_C_ */

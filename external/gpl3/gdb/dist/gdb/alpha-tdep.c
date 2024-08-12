@@ -1,6 +1,6 @@
 /* Target-dependent code for the ALPHA architecture, for GDB, the GNU Debugger.
 
-   Copyright (C) 1993-2023 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "frame.h"
 #include "frame-unwind.h"
 #include "frame-base.h"
@@ -25,7 +25,7 @@
 #include "inferior.h"
 #include "symtab.h"
 #include "value.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "gdbcore.h"
 #include "dis-asm.h"
 #include "symfile.h"
@@ -35,7 +35,6 @@
 #include "reggroups.h"
 #include "arch-utils.h"
 #include "osabi.h"
-#include "block.h"
 #include "infcall.h"
 #include "trad-frame.h"
 
@@ -99,7 +98,7 @@ alpha_register_name (struct gdbarch *gdbarch, int regno)
     "pc",   "",     "unique"
   };
 
-  gdb_static_assert (ALPHA_NUM_REGS == ARRAY_SIZE (register_names));
+  static_assert (ALPHA_NUM_REGS == ARRAY_SIZE (register_names));
   return register_names[regno];
 }
 
@@ -234,7 +233,7 @@ alpha_convert_register_p (struct gdbarch *gdbarch, int regno,
 }
 
 static int
-alpha_register_to_value (frame_info_ptr frame, int regnum,
+alpha_register_to_value (const frame_info_ptr &frame, int regnum,
 			 struct type *valtype, gdb_byte *out,
 			int *optimizedp, int *unavailablep)
 {
@@ -242,8 +241,8 @@ alpha_register_to_value (frame_info_ptr frame, int regnum,
   struct value *value = get_frame_register_value (frame, regnum);
 
   gdb_assert (value != NULL);
-  *optimizedp = value_optimized_out (value);
-  *unavailablep = !value_entirely_available (value);
+  *optimizedp = value->optimized_out ();
+  *unavailablep = !value->entirely_available ();
 
   if (*optimizedp || *unavailablep)
     {
@@ -254,24 +253,25 @@ alpha_register_to_value (frame_info_ptr frame, int regnum,
   /* Convert to VALTYPE.  */
 
   gdb_assert (valtype->length () == 4);
-  alpha_sts (gdbarch, out, value_contents_all (value).data ());
+  alpha_sts (gdbarch, out, value->contents_all ().data ());
 
   release_value (value);
   return 1;
 }
 
 static void
-alpha_value_to_register (frame_info_ptr frame, int regnum,
+alpha_value_to_register (const frame_info_ptr &frame, int regnum,
 			 struct type *valtype, const gdb_byte *in)
 {
-  gdb_byte out[ALPHA_REGISTER_SIZE];
-
+  int reg_size = register_size (get_frame_arch (frame), regnum);
   gdb_assert (valtype->length () == 4);
-  gdb_assert (register_size (get_frame_arch (frame), regnum)
-	      <= ALPHA_REGISTER_SIZE);
+  gdb_assert (reg_size <= ALPHA_REGISTER_SIZE);
+
+  gdb_byte out[ALPHA_REGISTER_SIZE];
   alpha_lds (get_frame_arch (frame), out, in);
 
-  put_frame_register (frame, regnum, out);
+  auto out_view = gdb::make_array_view (out, reg_size);
+  put_frame_register (get_next_frame_sentinel_okay (frame), regnum, out_view);
 }
 
 
@@ -320,7 +320,7 @@ alpha_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   for (i = 0, m_arg = alpha_args; i < nargs; i++, m_arg++)
     {
       struct value *arg = args[i];
-      struct type *arg_type = check_typedef (value_type (arg));
+      struct type *arg_type = check_typedef (arg->type ());
 
       /* Cast argument to long if necessary as the compiler does it too.  */
       switch (arg_type->code ())
@@ -361,7 +361,7 @@ alpha_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	      sp = (sp & -16) - 16;
 
 	      /* Write the real data into the stack.  */
-	      write_memory (sp, value_contents (arg).data (), 16);
+	      write_memory (sp, arg->contents ().data (), 16);
 
 	      /* Construct the indirection.  */
 	      arg_type = lookup_pointer_type (arg_type);
@@ -382,7 +382,7 @@ alpha_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	      sp = (sp & -16) - 16;
 
 	      /* Write the real data into the stack.  */
-	      write_memory (sp, value_contents (arg).data (), 32);
+	      write_memory (sp, arg->contents ().data (), 32);
 
 	      /* Construct the indirection.  */
 	      arg_type = lookup_pointer_type (arg_type);
@@ -396,7 +396,7 @@ alpha_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       m_arg->len = arg_type->length ();
       m_arg->offset = accumulate_size;
       accumulate_size = (accumulate_size + m_arg->len + 7) & ~7;
-      m_arg->contents = value_contents (arg).data ();
+      m_arg->contents = arg->contents ().data ();
     }
 
   /* Determine required argument register loads, loading an argument register
@@ -865,7 +865,7 @@ alpha_deal_with_atomic_sequence (struct gdbarch *gdbarch, CORE_ADDR pc)
    into the "pc".  This routine returns true on success.  */
 
 static int
-alpha_get_longjmp_target (frame_info_ptr frame, CORE_ADDR *pc)
+alpha_get_longjmp_target (const frame_info_ptr &frame, CORE_ADDR *pc)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
   alpha_gdbarch_tdep *tdep = gdbarch_tdep<alpha_gdbarch_tdep> (gdbarch);
@@ -896,7 +896,7 @@ struct alpha_sigtramp_unwind_cache
 };
 
 static struct alpha_sigtramp_unwind_cache *
-alpha_sigtramp_frame_unwind_cache (frame_info_ptr this_frame,
+alpha_sigtramp_frame_unwind_cache (const frame_info_ptr &this_frame,
 				   void **this_prologue_cache)
 {
   struct alpha_sigtramp_unwind_cache *info;
@@ -937,7 +937,7 @@ alpha_sigtramp_register_address (struct gdbarch *gdbarch,
    frame.  This will be used to create a new GDB frame struct.  */
 
 static void
-alpha_sigtramp_frame_this_id (frame_info_ptr this_frame,
+alpha_sigtramp_frame_this_id (const frame_info_ptr &this_frame,
 			      void **this_prologue_cache,
 			      struct frame_id *this_id)
 {
@@ -979,7 +979,7 @@ alpha_sigtramp_frame_this_id (frame_info_ptr this_frame,
 /* Retrieve the value of REGNUM in FRAME.  Don't give up!  */
 
 static struct value *
-alpha_sigtramp_frame_prev_register (frame_info_ptr this_frame,
+alpha_sigtramp_frame_prev_register (const frame_info_ptr &this_frame,
 				    void **this_prologue_cache, int regnum)
 {
   struct alpha_sigtramp_unwind_cache *info
@@ -1004,7 +1004,7 @@ alpha_sigtramp_frame_prev_register (frame_info_ptr this_frame,
 
 static int
 alpha_sigtramp_frame_sniffer (const struct frame_unwind *self,
-			      frame_info_ptr this_frame,
+			      const frame_info_ptr &this_frame,
 			      void **this_prologue_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
@@ -1246,7 +1246,7 @@ alpha_heuristic_analyze_probing_loop (struct gdbarch *gdbarch, CORE_ADDR *pc,
 }
 
 static struct alpha_heuristic_unwind_cache *
-alpha_heuristic_frame_unwind_cache (frame_info_ptr this_frame,
+alpha_heuristic_frame_unwind_cache (const frame_info_ptr &this_frame,
 				    void **this_prologue_cache,
 				    CORE_ADDR start_pc)
 {
@@ -1423,7 +1423,7 @@ alpha_heuristic_frame_unwind_cache (frame_info_ptr this_frame,
    frame.  This will be used to create a new GDB frame struct.  */
 
 static void
-alpha_heuristic_frame_this_id (frame_info_ptr this_frame,
+alpha_heuristic_frame_this_id (const frame_info_ptr &this_frame,
 			       void **this_prologue_cache,
 			       struct frame_id *this_id)
 {
@@ -1436,7 +1436,7 @@ alpha_heuristic_frame_this_id (frame_info_ptr this_frame,
 /* Retrieve the value of REGNUM in FRAME.  Don't give up!  */
 
 static struct value *
-alpha_heuristic_frame_prev_register (frame_info_ptr this_frame,
+alpha_heuristic_frame_prev_register (const frame_info_ptr &this_frame,
 				     void **this_prologue_cache, int regnum)
 {
   struct alpha_heuristic_unwind_cache *info
@@ -1463,7 +1463,7 @@ static const struct frame_unwind alpha_heuristic_frame_unwind =
 };
 
 static CORE_ADDR
-alpha_heuristic_frame_base_address (frame_info_ptr this_frame,
+alpha_heuristic_frame_base_address (const frame_info_ptr &this_frame,
 				    void **this_prologue_cache)
 {
   struct alpha_heuristic_unwind_cache *info
@@ -1744,15 +1744,14 @@ alpha_software_single_step (struct regcache *regcache)
 static struct gdbarch *
 alpha_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
-  struct gdbarch *gdbarch;
-
   /* Find a candidate among extant architectures.  */
   arches = gdbarch_list_lookup_by_info (arches, &info);
   if (arches != NULL)
     return arches->gdbarch;
 
-  alpha_gdbarch_tdep *tdep = new alpha_gdbarch_tdep;
-  gdbarch = gdbarch_alloc (&info, tdep);
+  gdbarch *gdbarch
+    = gdbarch_alloc (&info, gdbarch_tdep_up (new alpha_gdbarch_tdep));
+  alpha_gdbarch_tdep *tdep = gdbarch_tdep<alpha_gdbarch_tdep> (gdbarch);
 
   /* Lowest text address.  This is used by heuristic_proc_start()
      to decide when to stop looking.  */

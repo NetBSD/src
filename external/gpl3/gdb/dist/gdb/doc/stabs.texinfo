@@ -17,7 +17,7 @@
 @end direntry
 
 @copying
-Copyright @copyright{} 1992--2023 Free Software Foundation, Inc.
+Copyright @copyright{} 1992--2024 Free Software Foundation, Inc.
 Contributed by Cygnus Support.  Written by Julia Menapace, Jim Kingdon,
 and David MacKenzie.
 
@@ -42,7 +42,7 @@ This document describes the stabs debugging symbol tables.
 @page
 @tex
 \def\$#1${{#1}}  % Kludge: collect RCS revision info without $...$
-\xdef\manvers{\$Revision: 1.3 $}  % For use in headers, footers too
+\xdef\manvers{\$Revision: 1.4 $}  % For use in headers, footers too
 {\parskip=0pt
 \hfill Cygnus Support\par
 \hfill \manvers\par
@@ -3971,7 +3971,7 @@ symbols of file scope.  This is true for default, @samp{-ansi} and
 
 @item
 What ends the procedure scope?  Is it the proc block's @code{N_RBRAC} or the
-next @code{N_FUN}?  (I believe its the first.)
+next @code{N_FUN}?  (I believe it's the first.)
 @end itemize
 
 @node Stab Sections

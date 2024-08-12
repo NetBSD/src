@@ -1,6 +1,6 @@
 /* Low-level child interface to ptrace.
 
-   Copyright (C) 1988-2023 Free Software Foundation, Inc.
+   Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "command.h"
 #include "inferior.h"
 #include "terminal.h"
@@ -268,7 +267,7 @@ inf_ptrace_target::resume (ptid_t ptid, int step, enum gdb_signal signal)
        single-threaded processes, so simply resume the inferior.  */
     ptid = ptid_t (inferior_ptid.pid ());
 
-  if (catch_syscall_enabled () > 0)
+  if (catch_syscall_enabled ())
     request = PT_SYSCALL;
   else
     request = PT_CONTINUE;
@@ -528,7 +527,7 @@ inf_ptrace_target::files_info ()
 
   gdb_printf (_("\tUsing the running image of %s %s.\n"),
 	      inf->attach_flag ? "attached" : "child",
-	      target_pid_to_str (inferior_ptid).c_str ());
+	      target_pid_to_str (ptid_t (inf->pid)).c_str ());
 }
 
 std::string

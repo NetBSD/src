@@ -1,6 +1,6 @@
 /* Target-dependent code for SPARC.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -85,7 +85,7 @@ struct sparc_gdbarch_tdep : gdbarch_tdep_base
   size_t plt_entry_size = 0;
 
   /* Alternative location for trap return.  Used for single-stepping.  */
-  CORE_ADDR (*step_trap) (frame_info_ptr frame, unsigned long insn)
+  CORE_ADDR (*step_trap) (const frame_info_ptr &frame, unsigned long insn)
     = nullptr;
 
   /* ISA-specific data types.  */
@@ -207,10 +207,10 @@ extern CORE_ADDR sparc_analyze_prologue (struct gdbarch *gdbarch,
 					 struct sparc_frame_cache *cache);
 
 extern struct sparc_frame_cache *
-  sparc_frame_cache (frame_info_ptr this_frame, void **this_cache);
+  sparc_frame_cache (const frame_info_ptr &this_frame, void **this_cache);
 
 extern struct sparc_frame_cache *
-  sparc32_frame_cache (frame_info_ptr this_frame, void **this_cache);
+  sparc32_frame_cache (const frame_info_ptr &this_frame, void **this_cache);
 
 extern int
   sparc_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR pc);
@@ -255,10 +255,10 @@ extern const struct sparc_gregmap sparc32nbsd_gregmap;
 
 /* Return the address of a system call's alternative return
    address.  */
-extern CORE_ADDR sparcnbsd_step_trap (frame_info_ptr frame,
+extern CORE_ADDR sparcnbsd_step_trap (const frame_info_ptr &frame,
 				      unsigned long insn);
 
 extern struct trad_frame_saved_reg *
-  sparc32nbsd_sigcontext_saved_regs (frame_info_ptr next_frame);
+  sparc32nbsd_sigcontext_saved_regs (const frame_info_ptr &next_frame);
 
 #endif /* sparc-tdep.h */

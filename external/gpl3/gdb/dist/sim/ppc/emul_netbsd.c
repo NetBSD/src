@@ -41,15 +41,8 @@
 #include "emul_generic.h"
 #include "emul_netbsd.h"
 
-#ifdef HAVE_GETRUSAGE
-#ifndef HAVE_SYS_RESOURCE_H
-#undef HAVE_GETRUSAGE
-#endif
-#endif
-
-#ifdef HAVE_GETRUSAGE
+#ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
-int getrusage();
 #endif
 
 #if HAVE_SYS_IOCTL_H
@@ -73,10 +66,8 @@ int getrusage();
 # endif
 #endif
 
-#ifdef HAVE_UNISTD_H
 #undef MAXPATHLEN		/* sys/param.h might define this also */
 #include <unistd.h>
-#endif
 
 #include <stdlib.h>
 
