@@ -1,5 +1,5 @@
 /* Configurable Xtensa ISA support.
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -23,9 +23,10 @@
 #include "libbfd.h"
 #include "xtensa-isa.h"
 #include "xtensa-isa-internal.h"
+#include "xtensa-dynconfig.h"
 
-xtensa_isa_status xtisa_errno;
-char xtisa_error_msg[1024];
+static xtensa_isa_status xtisa_errno;
+static char xtisa_error_msg[1024];
 
 
 xtensa_isa_status
@@ -227,16 +228,26 @@ xtensa_insnbuf_from_chars (xtensa_isa isa,
     }
 }
 
-
 
 /* ISA information.  */
 
 extern xtensa_isa_internal xtensa_modules;
 
+static xtensa_isa_internal *xtensa_get_modules (void)
+{
+  static xtensa_isa_internal *modules;
+
+  if (!modules)
+    modules = (xtensa_isa_internal *) xtensa_load_config ("xtensa_modules",
+							  &xtensa_modules,
+							  NULL);
+  return modules;
+}
+
 xtensa_isa
 xtensa_isa_init (xtensa_isa_status *errno_p, char **error_msg_p)
 {
-  xtensa_isa_internal *isa = &xtensa_modules;
+  xtensa_isa_internal *isa = xtensa_get_modules ();
   int n, is_user;
 
   /* Set up the opcode name lookup table.  */

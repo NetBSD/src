@@ -1,4 +1,4 @@
-# Copyright 2003-2020 Free Software Foundation, Inc.
+# Copyright 2003-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -273,6 +273,12 @@ gdb_expect_list "set up display" "$gdb_prompt$" {
     "1: value = 7\r\n"
 }
 
+# Get the core into the output directory.
+if {![is_remote host]} {
+    gdb_test -prompt "$gdb_prompt$" \
+	"set cwd [file dirname $binfile]" "" \
+	"set inferior cwd to test directory"
+}
 
 # should ask query. Test annotate-query.
 # we don't care about anything else here, only the query.
@@ -379,17 +385,7 @@ if [target_info exists gdb,nosignals] {
 
 
 # Check for production of a core file and remove it!
-
-set test "cleanup core file"
-if { [remote_file host exists core] } {
-    remote_file host delete core
-    pass "$test (removed)"
-} elseif { $pid != -1 && [remote_file host exists core.$pid] } {
-    remote_file host delete core.$pid
-    pass "$test (removed)"
-} else {
-    pass "$test (not dumped)"
-}
+remove_core $pid
 
 # restore the original prompt for the rest of the testsuite
 

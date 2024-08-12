@@ -3076,7 +3076,7 @@
 
 	PR binutils/17512
 	* coffgen.c (coff_get_normalized_symtab): Fix test for out of
-	range auxillary sections.
+	range auxiliary sections.
 
 2015-03-24  Marcus Shawcroft  <marcus.shawcroft@arm.com>
 

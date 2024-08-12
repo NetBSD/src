@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 #
-#   Copyright (C) 2020 Free Software Foundation, Inc.
+#   Copyright (C) 2020-2022 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -123,8 +123,8 @@ am__aclocal_m4_deps = $(top_srcdir)/../config/codeset.m4 \
 	$(top_srcdir)/../config/ax_pthread.m4 \
 	$(top_srcdir)/../gdb/ax_cxx_compile_stdcxx.m4 \
 	$(top_srcdir)/../gdb/libiberty.m4 $(top_srcdir)/selftest.m4 \
-	$(top_srcdir)/../gdb/ptrace.m4 $(top_srcdir)/warning.m4 \
-	$(top_srcdir)/configure.ac
+	$(top_srcdir)/ptrace.m4 $(top_srcdir)/compiler-type.m4 \
+	$(top_srcdir)/warning.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
@@ -144,21 +144,24 @@ am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
 libgdbsupport_a_AR = $(AR) $(ARFLAGS)
 libgdbsupport_a_LIBADD =
-@SELFTEST_TRUE@am__objects_1 = selftest.$(OBJEXT)
+@HAVE_PIPE_OR_PIPE2_TRUE@am__objects_1 = event-pipe.$(OBJEXT)
+@SELFTEST_TRUE@am__objects_2 = selftest.$(OBJEXT)
 am_libgdbsupport_a_OBJECTS = agent.$(OBJEXT) btrace-common.$(OBJEXT) \
 	buffer.$(OBJEXT) cleanups.$(OBJEXT) common-debug.$(OBJEXT) \
 	common-exceptions.$(OBJEXT) common-inferior.$(OBJEXT) \
 	common-regcache.$(OBJEXT) common-utils.$(OBJEXT) \
 	environ.$(OBJEXT) errors.$(OBJEXT) event-loop.$(OBJEXT) \
 	fileio.$(OBJEXT) filestuff.$(OBJEXT) format.$(OBJEXT) \
-	gdb-dlfcn.$(OBJEXT) gdb_tilde_expand.$(OBJEXT) \
-	gdb_wait.$(OBJEXT) gdb_vecs.$(OBJEXT) job-control.$(OBJEXT) \
-	netstuff.$(OBJEXT) new-op.$(OBJEXT) pathstuff.$(OBJEXT) \
-	print-utils.$(OBJEXT) ptid.$(OBJEXT) rsp-low.$(OBJEXT) \
-	run-time-clock.$(OBJEXT) safe-strerror.$(OBJEXT) \
-	scoped_mmap.$(OBJEXT) signals.$(OBJEXT) \
-	signals-state-save-restore.$(OBJEXT) tdesc.$(OBJEXT) \
-	thread-pool.$(OBJEXT) xml-utils.$(OBJEXT) $(am__objects_1)
+	gdb-dlfcn.$(OBJEXT) gdb-hashtab.$(OBJEXT) \
+	gdb_obstack.$(OBJEXT) gdb_regex.$(OBJEXT) \
+	gdb_tilde_expand.$(OBJEXT) gdb_wait.$(OBJEXT) \
+	gdb_vecs.$(OBJEXT) job-control.$(OBJEXT) netstuff.$(OBJEXT) \
+	new-op.$(OBJEXT) pathstuff.$(OBJEXT) print-utils.$(OBJEXT) \
+	ptid.$(OBJEXT) rsp-low.$(OBJEXT) run-time-clock.$(OBJEXT) \
+	safe-strerror.$(OBJEXT) scoped_mmap.$(OBJEXT) search.$(OBJEXT) \
+	signals.$(OBJEXT) signals-state-save-restore.$(OBJEXT) \
+	tdesc.$(OBJEXT) thread-pool.$(OBJEXT) xml-utils.$(OBJEXT) \
+	$(am__objects_1) $(am__objects_2)
 libgdbsupport_a_OBJECTS = $(am_libgdbsupport_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -230,6 +233,7 @@ CATOBJEXT = @CATOBJEXT@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
+CONFIG_STATUS_DEPENDENCIES = @CONFIG_STATUS_DEPENDENCIES@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CXX = @CXX@
@@ -358,6 +362,7 @@ AM_CPPFLAGS = -I$(srcdir)/../include -I$(srcdir)/../gdb \
 AM_CXXFLAGS = $(WARN_CFLAGS) $(WERROR_CFLAGS)
 noinst_LIBRARIES = libgdbsupport.a
 @SELFTEST_TRUE@selftest = selftest.cc
+@HAVE_PIPE_OR_PIPE2_TRUE@eventpipe = event-pipe.cc
 libgdbsupport_a_SOURCES = \
     agent.cc \
     btrace-common.cc \
@@ -375,6 +380,9 @@ libgdbsupport_a_SOURCES = \
     filestuff.cc \
     format.cc \
     gdb-dlfcn.cc \
+    gdb-hashtab.cc \
+    gdb_obstack.cc \
+    gdb_regex.cc \
     gdb_tilde_expand.cc \
     gdb_wait.cc \
     gdb_vecs.cc \
@@ -388,11 +396,13 @@ libgdbsupport_a_SOURCES = \
     run-time-clock.cc \
     safe-strerror.cc \
     scoped_mmap.cc \
+    search.cc \
     signals.cc \
     signals-state-save-restore.cc \
     tdesc.cc \
     thread-pool.cc \
     xml-utils.cc \
+    ${eventpipe} \
     $(selftest)
 
 all: config.h
@@ -475,10 +485,14 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/environ.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/errors.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/event-loop.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/event-pipe.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fileio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filestuff.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/format.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gdb-dlfcn.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gdb-hashtab.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gdb_obstack.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gdb_regex.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gdb_tilde_expand.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gdb_vecs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gdb_wait.Po@am__quote@
@@ -492,6 +506,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/run-time-clock.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/safe-strerror.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scoped_mmap.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/search.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/selftest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/signals-state-save-restore.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/signals.Po@am__quote@

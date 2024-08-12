@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2020 Free Software Foundation, Inc.
+# Copyright (C) 2015-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,14 +17,16 @@ if ![supports_reverse] {
     return
 }
 
+# Check if start command is supported.
+require use_gdb_stub 0
+
 standard_testfile
 
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile \
 	 [list debug]]} {
     return -1
 }
-if { ![runto main] } then {
-    fail "run to main"
+if {![runto_main]} {
     return
 }
 
@@ -50,11 +52,14 @@ proc read_testcase { n } {
 # the contents of registers are saved, and test compares them.  If
 # there is any differences, a FAIL is emitted.
 
-proc test { func } {
+proc test { func testcase_nr } {
     global hex decimal
     global gdb_prompt
 
     with_test_prefix "$func" {
+	gdb_start_cmd $testcase_nr
+	gdb_test "" "" "wait for prompt"
+
 	gdb_breakpoint $func
 	gdb_test "continue"
 
@@ -74,27 +79,38 @@ proc test { func } {
 
 	# Registers contents before each forward single step.
 	set count 0
+	set insn_addr ""
 	for {} {$count < 500} {incr count} {
+	    set prev_insn_addr $insn_addr
+	    set insn_addr ""
 	    gdb_test_multiple "x/i \$pc" "" {
 		-re ".* ($hex) <.*>:\[ \t\]*(.*)\r\n$gdb_prompt $" {
 		    set insn_addr $expect_out(1,string)
-
-		    if [expr {$last_insn == $insn_addr}] {
-			break
-		    }
-
 		    set insn_array($count) $expect_out(2,string)
 		}
 	    }
 
+	    if { $insn_addr == "" } {
+		break
+	    }
+
+	    if { $last_insn == $insn_addr } {
+		break
+	    }
+
+	    if { $prev_insn_addr == $insn_addr } {
+		# Failed to make progress, might have run into SIGILL.
+		unsupported "no progress at: $expect_out(2,string)"
+		break
+	    }
+
 	    set pre_regs($count) [capture_command_output "info all-registers" ""]
-	    gdb_test "si" "" ""
+	    gdb_test -nopass "si"
 	}
 
-	incr count -1
 	# Registers contents after each backward single step.
-	for {set i $count} {$i >= 0} {incr i -1} {
-	    gdb_test "reverse-stepi" "" ""
+	for {set i [expr $count - 1]} {$i >= 0} {incr i -1} {
+	    gdb_test -nopass "reverse-stepi"
 	    set post_regs($i) [capture_command_output "info all-registers" ""]
 	}
 
@@ -125,5 +141,5 @@ if { ${n_testcases} == 0 } {
 for { set i 0 } { ${i} < ${n_testcases} } { incr i } {
     set testcase [read_testcase $i]
 
-    test $testcase
+    test $testcase $i
 }

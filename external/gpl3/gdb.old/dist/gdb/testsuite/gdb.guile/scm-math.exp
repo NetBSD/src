@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2020 Free Software Foundation, Inc.
+# Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -137,6 +137,15 @@ proc test_value_numeric_ops {} {
     gdb_test "gu (print (value-sub b a))" \
 	"= 3" "subtract two pointer values"
 
+    # Test pointer creation.
+
+    gdb_test_no_output "gu (define void-pointer-type (type-pointer (arch-void-type (current-arch))))"
+    gdb_scm_test_silent_cmd "gu (define null-pointer (make-value 0 #:type void-pointer-type))" \
+	"test make-value with pointer type"
+    gdb_test "gu (print null-pointer)" "= 0x0"
+    gdb_test "gu (print (equal? (value-type null-pointer) void-pointer-type))" \
+	"= #t"
+
     # Test some invalid operations.
 
     gdb_test_multiple "gu (print (value-add i '()))" "catch error in guile type conversion" {
@@ -237,6 +246,36 @@ proc test_value_numeric_ranges {} {
     }
 }
 
+# Helper routine for test_pointer_numeric_range.
+
+proc test_make_pointer_value { size } {
+    set max [get_max_uint $size]
+    set max_hex [string repeat "f" [expr "$size / 4"]]
+
+    gdb_test "gu (print (make-value $max #:type void-pointer-type))" \
+	"= 0x$max_hex" "test make-value void* max"
+    gdb_test "gu (print (make-value 0 #:type void-pointer-type))" \
+	"= 0x0" "test make-value void* 0"
+
+    gdb_test "gu (print (make-value (+ $max 1) #:type void-pointer-type))" \
+	"ERROR.*Out of range.*" "test make-value void* max+1"
+    gdb_test "gu (print (make-value -1 #:type void-pointer-type))" \
+	"ERROR.*Out of range.*" "test make-value void* -1"
+}
+
+proc test_pointer_numeric_range {} {
+    # We can't assume anything about sizeof (void*) on the target.
+    # Keep it simple for now, this will cover everything important for
+    # the major targets.
+    set pointer_size [get_sizeof "void*" 0]
+    if { $pointer_size == 4 } {
+	test_make_pointer_value 32
+    }
+    if { $pointer_size == 8 } {
+	test_make_pointer_value 64
+    }
+}
+
 proc test_value_boolean {} {
     # Note: Boolean values print as 0,1 because they are printed in the
     # current language (in this case C).
@@ -305,5 +344,6 @@ if ![gdb_guile_runto_main] {
 
 test_value_numeric_ops
 test_value_numeric_ranges
+test_pointer_numeric_range
 test_value_boolean
 test_value_compare

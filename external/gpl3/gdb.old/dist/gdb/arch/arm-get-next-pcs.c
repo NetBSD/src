@@ -1,6 +1,6 @@
 /* Common code for ARM software single stepping support.
 
-   Copyright (C) 1988-2020 Free Software Foundation, Inc.
+   Copyright (C) 1988-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -77,7 +77,7 @@ thumb_deal_with_atomic_sequence_raw (struct arm_get_next_pcs *self)
 
   loc += 2;
   if (!((insn1 & 0xfff0) == 0xe850
-        || ((insn1 & 0xfff0) == 0xe8d0 && (insn2 & 0x00c0) == 0x0040)))
+	|| ((insn1 & 0xfff0) == 0xe8d0 && (insn2 & 0x00c0) == 0x0040)))
     return {};
 
   /* Assume that no atomic sequence is longer than "atomic_sequence_length"
@@ -215,20 +215,20 @@ arm_deal_with_atomic_sequence_raw (struct arm_get_next_pcs *self)
       loc += 4;
 
       /* Assume that there is at most one conditional branch in the atomic
-         sequence.  If a conditional branch is found, put a breakpoint in
-         its destination address.  */
+	 sequence.  If a conditional branch is found, put a breakpoint in
+	 its destination address.  */
       if (bits (insn, 24, 27) == 0xa)
 	{
-          if (last_breakpoint > 0)
-            return {}; /* More than one conditional branch found, fallback
+	  if (last_breakpoint > 0)
+	    return {}; /* More than one conditional branch found, fallback
 			  to the standard single-step code.  */
 
 	  breaks[1] = BranchDest (loc - 4, insn);
 	  last_breakpoint++;
-        }
+	}
 
       /* We do not support atomic sequences that use any *other* instructions
-         but conditional branches to change the PC.  Fall back to standard
+	 but conditional branches to change the PC.  Fall back to standard
 	 code to avoid losing control of execution.  */
       else if (arm_instruction_changes_pc (insn))
 	return {};
@@ -408,7 +408,7 @@ thumb_get_next_pcs_raw (struct arm_get_next_pcs *self)
       CORE_ADDR sp;
 
       /* Fetch the saved PC from the stack.  It's stored above
-         all of the other registers.  */
+	 all of the other registers.  */
       unsigned long offset
 	= count_one_bits (bits (inst1, 0, 7)) * ARM_INT_REGISTER_SIZE;
       sp = regcache_raw_get_unsigned (regcache, ARM_SP_REGNUM);
@@ -679,7 +679,7 @@ arm_get_next_pcs_raw (struct arm_get_next_pcs *self)
       case 0xd:
       case 0xe:
 	/* Coprocessor register transfer.  */
-        if (bits (this_instr, 12, 15) == 15)
+	if (bits (this_instr, 12, 15) == 15)
 	  error (_("Invalid update to pc in instruction"));
 	break;
       }

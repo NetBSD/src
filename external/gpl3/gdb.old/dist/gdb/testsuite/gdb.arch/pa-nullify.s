@@ -56,3 +56,4 @@ main:
 	bv,n %r0(%r2)
 	.EXIT
 	.PROCEND
+	.section	.note.GNU-stack,"",@progbits

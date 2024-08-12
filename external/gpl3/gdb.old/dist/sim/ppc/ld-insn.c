@@ -77,9 +77,9 @@ insn_table_depth(insn_table *table)
 
 static insn_fields *
 parse_insn_format(table_entry *entry,
-		  char *format)
+		  const char *format)
 {
-  char *chp;
+  const char *chp;
   insn_fields *fields = ZALLOC(insn_fields);
 
   /* create a leading sentinal */
@@ -102,8 +102,8 @@ parse_insn_format(table_entry *entry,
   chp = format;
 
   while (*chp != '\0') {
-    char *start_pos;
-    char *start_val;
+    const char *start_pos;
+    const char *start_val;
     int strlen_val;
     int strlen_pos;
     insn_field *new_field;
@@ -208,7 +208,7 @@ parse_insn_format(table_entry *entry,
 }
 
 
-void
+static void
 parse_include_entry (table *file,
                      table_entry *file_entry,
 		     filter *filters,
@@ -304,7 +304,7 @@ insn_table_insert_insn(insn_table *table,
   /* Check out any model information returned to make sure the model
      is correct.  */
   for(insn_model_ptr = file_entry->model_first; insn_model_ptr; insn_model_ptr = insn_model_ptr->next) {
-    char *name = insn_model_ptr->fields[insn_model_name];
+    const char *name = insn_model_ptr->fields[insn_model_name];
     int len = strlen (insn_model_ptr->fields[insn_model_fields]);
 
     while (len > 0 && isspace(*insn_model_ptr->fields[insn_model_fields])) {
@@ -544,10 +544,10 @@ insn_field_is_constant(insn_field *field,
     return field_constant_slash;
   /* field, though variable is on the list */
   if (field->is_string && rule->force_expansion != NULL) {
-    char *forced_fields = rule->force_expansion;
+    const char *forced_fields = rule->force_expansion;
     while (*forced_fields != '\0') {
       int field_len;
-      char *end = strchr(forced_fields, ',');
+      const char *end = strchr(forced_fields, ',');
       if (end == NULL)
 	field_len = strlen(forced_fields);
       else
@@ -827,29 +827,18 @@ static void
 dump_insn_field(insn_field *field,
 		int indent)
 {
-
-  printf("(insn_field*)0x%x\n", (unsigned)field);
-
-  dumpf(indent, "(first %d)\n", field->first);
-
-  dumpf(indent, "(last %d)\n", field->last);
-
-  dumpf(indent, "(width %d)\n", field->width);
-
+  printf ("(insn_field*)%p\n", field);
+  dumpf (indent, "(first %d)\n", field->first);
+  dumpf (indent, "(last %d)\n", field->last);
+  dumpf (indent, "(width %d)\n", field->width);
   if (field->is_int)
-    dumpf(indent, "(is_int %d)\n", field->val_int);
-
+    dumpf (indent, "(is_int %d)\n", field->val_int);
   if (field->is_slash)
-    dumpf(indent, "(is_slash)\n");
-
+    dumpf (indent, "(is_slash)\n");
   if (field->is_string)
-    dumpf(indent, "(is_string `%s')\n", field->val_string);
-  
-  dumpf(indent, "(next 0x%x)\n", field->next);
-  
-  dumpf(indent, "(prev 0x%x)\n", field->prev);
-  
-
+    dumpf (indent, "(is_string `%s')\n", field->val_string);
+  dumpf (indent, "(next %p)\n", field->next);
+  dumpf (indent, "(prev %p)\n", field->prev);
 }
 
 static void
@@ -860,13 +849,13 @@ dump_insn_fields(insn_fields *fields,
 
   printf("(insn_fields*)%p\n", fields);
 
-  dumpf(indent, "(first 0x%x)\n", fields->first);
-  dumpf(indent, "(last 0x%x)\n", fields->last);
+  dumpf(indent, "(first %p)\n", fields->first);
+  dumpf(indent, "(last %p)\n", fields->last);
 
   dumpf(indent, "(value 0x%x)\n", fields->value);
 
   for (i = 0; i < insn_bit_size; i++) {
-    dumpf(indent, "(bits[%d] ", i, fields->bits[i]);
+    dumpf(indent, "(bits[%d]", i);
     dump_insn_field(fields->bits[i], indent+1);
     dumpf(indent, " )\n");
   }
@@ -961,16 +950,16 @@ dump_insn_table(insn_table *table,
     dump_opcode_field(table->opcode, indent+1, 1);
     dumpf(indent, " )\n");
 
-    dumpf(indent, "(nr_entries %d)\n", table->entries);
+    dumpf(indent, "(nr_entries %d)\n", table->nr_entries);
     dumpf(indent, "(entries ");
     dump_insn_table(table->entries, indent+1, table->nr_entries);
     dumpf(indent, " )\n");
 
-    dumpf(indent, "(sibling ", table->sibling);
+    dumpf(indent, "(sibling ");
     dump_insn_table(table->sibling, indent+1, levels-1);
     dumpf(indent, " )\n");
 
-    dumpf(indent, "(parent ", table->parent);
+    dumpf(indent, "(parent ");
     dump_insn_table(table->parent, indent+1, 0);
     dumpf(indent, " )\n");
 

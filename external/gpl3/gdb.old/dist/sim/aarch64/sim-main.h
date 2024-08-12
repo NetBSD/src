@@ -1,6 +1,6 @@
 /* sim-main.h -- Interface with sim/common.
 
-   Copyright (C) 2015-2020 Free Software Foundation, Inc.
+   Copyright (C) 2015-2023 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -59,12 +59,5 @@ typedef enum
   AARCH64_FPSR_REGNO = 66,
   AARCH64_MAX_REGNO  = 67
 } aarch64_regno;
-
-/* The simulator state structure used to hold all global variables.  */
-struct sim_state
-{
-  sim_cpu *       cpu[MAX_NR_PROCESSORS];
-  sim_state_base  base;
-};
 
 #endif /* _SIM_MAIN_H */

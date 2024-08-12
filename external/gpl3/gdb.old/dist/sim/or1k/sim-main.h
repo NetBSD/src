@@ -1,5 +1,5 @@
 /* OpenRISC simulator main header
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB, the GNU debugger.
 
@@ -23,13 +23,13 @@
 
 #include "ansidecl.h"
 #include "or1k-desc.h"
+#include "or1k-opc.h"
 #include "sim-basics.h"
 #include "cgen-types.h"
 #include "arch.h"
 #include "sim-base.h"
 #include "sim-fpu.h"
 
-#include "or1k-opc.h"
 #include "cgen-sim.h"
 #include "or1k-sim.h"
 
@@ -64,18 +64,6 @@ struct _sim_cpu
 #ifdef WANT_CPU_OR1K32BF
   OR1K32BF_CPU_DATA cpu_data;
 #endif
-};
-
-
-
-/* The sim_state struct.  */
-struct sim_state
-{
-  sim_cpu *cpu[MAX_NR_PROCESSORS];
-
-  CGEN_STATE cgen_state;
-
-  sim_state_base base;
 };
 
 #endif /* SIM_MAIN_H */

@@ -54,7 +54,7 @@ set_watchpoint (pid_t pid, volatile void *addr, unsigned len_mask)
   errno = 0;
   l = ptrace (PTRACE_GETREGSET, pid, NT_ARM_HW_WATCH, &iov);
   assert (l == 0);
-  assert (AARCH64_DEBUG_ARCH (dreg_state.dbg_info) == AARCH64_DEBUG_ARCH_V8);
+  assert (AARCH64_DEBUG_ARCH (dreg_state.dbg_info) >= AARCH64_DEBUG_ARCH_V8);
   assert (AARCH64_DEBUG_NUM_SLOTS (dreg_state.dbg_info) >= 1);
 
   assert (!DR_CONTROL_ENABLED (dreg_state.dbg_regs[0].ctrl));

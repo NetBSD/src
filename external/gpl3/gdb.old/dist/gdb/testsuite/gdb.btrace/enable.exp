@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <christian.himpel@intel.com>
 #
@@ -27,15 +27,15 @@ gdb_exit
 gdb_start
 
 # record cannot be stopped, if it was never active
-gdb_test "record stop" "No record target is currently active\\..*" "record stop without target"
+gdb_test "record stop" "No recording is currently active\\..*" "record stop without target"
 
 # btrace cannot be enabled without a running inferior
 gdb_test "record btrace" "The program is not being run\\." "record btrace without running program"
 
 # no function and no instruction history without btrace enabled
-gdb_test "record function-call-history" "No record target is currently active\\..*" "record function-call-history without target"
-gdb_test "record instruction-history" "No record target is currently active\\..*" "record instruction-history without target"
-gdb_test "info record" "No record target is currently active\\." "info record without target"
+gdb_test "record function-call-history" "No recording is currently active\\..*" "record function-call-history without target"
+gdb_test "record instruction-history" "No recording is currently active\\..*" "record instruction-history without target"
+gdb_test "info record" "No recording is currently active\\." "info record without target"
 
 standard_testfile
 if [prepare_for_testing "failed to prepare" $testfile {} {debug}] {
@@ -43,7 +43,6 @@ if [prepare_for_testing "failed to prepare" $testfile {} {debug}] {
 }
 
 if ![runto_main] {
-    untested "failed to run to main"
     return -1
 }
 
@@ -65,7 +64,7 @@ Recorded 0 instructions in 0 functions \\\(0 gaps\\\) for thread 1.*\\." "info r
 
 # stop btrace record
 gdb_test "record stop" "Process record is stopped and all execution logs are deleted\\."
-gdb_test "record stop" "No record target is currently active\\..*" "record stop the second time"
+gdb_test "record stop" "No recording is currently active\\..*" "record stop the second time"
 
 # enable btrace again
 gdb_test_no_output "record btrace" "record btrace re-enable"
@@ -86,23 +85,19 @@ if [skip_gdbserver_tests] {
 }
 clean_restart $testfile
 if ![runto_main] {
-    untested "failed to run to main"
     return -1
 }
 if ![runto_main] {
-    untested "failed to run to main"
     return -1
 }
 
 # make sure record-btrace can be enabled after re-run
 clean_restart $testfile
 if ![runto_main] {
-    untested "failed to run to main"
     return -1
 }
-gdb_test_no_output "record btrace"
+gdb_test_no_output "record btrace" "enable after restart"
 if ![runto_main] {
-    untested "failed to run to main"
     return -1
 }
 gdb_test_no_output "record btrace" "enable after re-run"

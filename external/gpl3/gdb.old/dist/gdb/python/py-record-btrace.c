@@ -1,6 +1,6 @@
 /* Python interface to btrace instruction history.
 
-   Copyright 2016-2020 Free Software Foundation, Inc.
+   Copyright 2016-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,19 +28,9 @@
 #include "disasm.h"
 #include "gdbarch.h"
 
-#if defined (IS_PY3K)
-
-#define BTPY_PYSLICE(x) (x)
-
-#else
-
-#define BTPY_PYSLICE(x) ((PySliceObject *) x)
-
-#endif
-
 /* Python object for btrace record lists.  */
 
-typedef struct {
+struct btpy_list_object {
   PyObject_HEAD
 
   /* The thread this list belongs to.  */
@@ -57,7 +47,7 @@ typedef struct {
 
   /* Either &BTPY_CALL_TYPE or &RECPY_INSN_TYPE.  */
   PyTypeObject* element_type;
-} btpy_list_object;
+};
 
 /* Python type for btrace lists.  */
 
@@ -232,7 +222,7 @@ recpy_bt_insn_pc (PyObject *self, void *closure)
   if (insn == NULL)
     return NULL;
 
-  return gdb_py_long_from_ulongest (insn->pc);
+  return gdb_py_object_from_ulongest (insn->pc).release ();
 }
 
 /* Implementation of RecordInstruction.size [int] for btrace.
@@ -246,7 +236,7 @@ recpy_bt_insn_size (PyObject *self, void *closure)
   if (insn == NULL)
     return NULL;
 
-  return PyInt_FromLong (insn->size);
+  return gdb_py_object_from_longest (insn->size).release ();
 }
 
 /* Implementation of RecordInstruction.is_speculative [bool] for btrace.
@@ -295,12 +285,7 @@ recpy_bt_insn_data (PyObject *self, void *closure)
   if (object == NULL)
     return NULL;
 
-#ifdef IS_PY3K
   return PyMemoryView_FromObject (object);
-#else
-  return PyBuffer_FromObject (object, 0, Py_END_OF_BUFFER);
-#endif
-
 }
 
 /* Implementation of RecordInstruction.decoded [str] for btrace.
@@ -342,7 +327,8 @@ recpy_bt_func_level (PyObject *self, void *closure)
     return NULL;
 
   tinfo = ((recpy_element_object *) self)->thread;
-  return PyInt_FromLong (tinfo->btrace.level + func->level);
+  return gdb_py_object_from_longest (tinfo->btrace.level
+				     + func->level).release ();
 }
 
 /* Implementation of RecordFunctionSegment.symbol [gdb.Symbol] for btrace.
@@ -485,9 +471,9 @@ btpy_list_slice (PyObject *self, PyObject *value)
   const Py_ssize_t length = btpy_list_length (self);
   Py_ssize_t start, stop, step, slicelength;
 
-  if (PyInt_Check (value))
+  if (PyLong_Check (value))
     {
-      Py_ssize_t index = PyInt_AsSsize_t (value);
+      Py_ssize_t index = PyLong_AsSsize_t (value);
 
       /* Emulate Python behavior for negative indices.  */
       if (index < 0)
@@ -499,7 +485,7 @@ btpy_list_slice (PyObject *self, PyObject *value)
   if (!PySlice_Check (value))
     return PyErr_Format (PyExc_TypeError, _("Index must be int or slice."));
 
-  if (0 != PySlice_GetIndicesEx (BTPY_PYSLICE (value), length, &start, &stop,
+  if (0 != PySlice_GetIndicesEx (value, length, &start, &stop,
 				 &step, &slicelength))
     return NULL;
 
@@ -556,7 +542,7 @@ btpy_list_index (PyObject *self, PyObject *value)
   if (index < 0)
     return PyErr_Format (PyExc_ValueError, _("Not in list."));
 
-  return gdb_py_long_from_longest (index);
+  return gdb_py_object_from_longest (index).release ();
 }
 
 /* Implementation of BtraceList.count (self, value) -> int.  */
@@ -566,7 +552,8 @@ btpy_list_count (PyObject *self, PyObject *value)
 {
   /* We know that if an element is in the list, it is so exactly one time,
      enabling us to reuse the "is element of" check.  */
-  return PyInt_FromLong (btpy_list_contains (self, value));
+  return gdb_py_object_from_longest (btpy_list_contains (self,
+							 value)).release ();
 }
 
 /* Python rich compare function to allow for equality and inequality checks
@@ -620,7 +607,7 @@ btpy_list_richcompare (PyObject *self, PyObject *other, int op)
 PyObject *
 recpy_bt_method (PyObject *self, void *closure)
 {
-  return PyString_FromString ("btrace");
+  return PyUnicode_FromString ("btrace");
 }
 
 /* Implementation of
@@ -641,7 +628,7 @@ recpy_bt_format (PyObject *self, void *closure)
   if (config == NULL)
     Py_RETURN_NONE;
 
-  return PyString_FromString (btrace_format_short_string (config->format));
+  return PyUnicode_FromString (btrace_format_short_string (config->format));
 }
 
 /* Implementation of
@@ -806,7 +793,7 @@ recpy_bt_goto (PyObject *self, PyObject *args)
 
 /* BtraceList methods.  */
 
-struct PyMethodDef btpy_list_methods[] =
+static PyMethodDef btpy_list_methods[] =
 {
   { "count", btpy_list_count, METH_O, "count number of occurrences"},
   { "index", btpy_list_index, METH_O, "index of entry"},

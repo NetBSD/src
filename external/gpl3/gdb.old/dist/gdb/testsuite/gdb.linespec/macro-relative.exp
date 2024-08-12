@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,24 +26,18 @@ if [is_remote host] {
     return 0
 }
 
-set opts {debug additional_flags=-I.}
-
-get_compiler_info
-if [test_compiler_info gcc*] {
-    lappend opts additional_flags=-g3
-}
+set opts {debug additional_flags=-I. macros}
 
 if { [file pathtype $objdir] == "relative" } {
     untested "objdir $objdir should be absolute"
     return
 }
-set saved_pwd [pwd]
-cd $srcdir/${subdir}/base/two
-set err [gdb_compile "../../${srcfile}" "${binfile}" executable $opts]
-cd $saved_pwd
-if { $err != "" } {
-    untested "compilation failed"
-    return -1
+
+with_cwd $srcdir/${subdir}/base/two {
+    if { [gdb_compile "../../${srcfile}" "${binfile}" executable $opts] != "" } {
+	untested "compilation failed"
+	return
+    }
 }
 
 clean_restart ${testfile}

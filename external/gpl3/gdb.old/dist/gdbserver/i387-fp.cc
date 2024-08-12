@@ -1,5 +1,5 @@
 /* i387-specific utility functions, for the remote server for GDB.
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,10 +23,6 @@
 static const int num_mpx_bnd_registers = 4;
 static const int num_mpx_cfg_registers = 2;
 static const int num_avx512_k_registers = 8;
-static const int num_avx512_zmmh_low_registers = 16;
-static const int num_avx512_zmmh_high_registers = 16;
-static const int num_avx512_ymmh_registers = 16;
-static const int num_avx512_xmm_registers = 16;
 static const int num_pkeys_registers = 1;
 
 /* Note: These functions preserve the reserved bits in control registers.
@@ -256,14 +252,22 @@ void
 i387_cache_to_xsave (struct regcache *regcache, void *buf)
 {
   struct i387_xsave *fp = (struct i387_xsave *) buf;
+  bool amd64 = register_size (regcache->tdesc, 0) == 8;
   int i;
   unsigned long val, val2;
   unsigned long long xstate_bv = 0;
   unsigned long long clear_bv = 0;
   char raw[64];
   char *p;
+
   /* Amd64 has 16 xmm regs; I386 has 8 xmm regs.  */
-  int num_xmm_registers = register_size (regcache->tdesc, 0) == 8 ? 16 : 8;
+  int num_xmm_registers = amd64 ? 16 : 8;
+  /* AVX512 extends the existing xmm/ymm registers to a wider mode: zmm.  */
+  int num_avx512_zmmh_low_registers = num_xmm_registers;
+  /* AVX512 adds 16 extra regs in Amd64 mode, but none in I386 mode.*/
+  int num_avx512_zmmh_high_registers = amd64 ? 16 : 0;
+  int num_avx512_ymmh_registers = amd64 ? 16 : 0;
+  int num_avx512_xmm_registers = amd64 ? 16 : 0;
 
   /* The supported bits in `xstat_bv' are 8 bytes.  Clear part in
      vector registers if its bit in xstat_bv is zero.  */
@@ -452,7 +456,9 @@ i387_cache_to_xsave (struct regcache *regcache, void *buf)
   /* Check if any of ZMM16H-ZMM31H registers are changed.  */
   if ((x86_xcr0 & X86_XSTATE_ZMM))
     {
-      int zmm16h_regnum = find_regno (regcache->tdesc, "zmm16h");
+      int zmm16h_regnum = (num_avx512_zmmh_high_registers == 0
+			   ? -1
+			   : find_regno (regcache->tdesc, "zmm16h"));
 
       for (i = 0; i < num_avx512_zmmh_high_registers; i++)
 	{
@@ -469,7 +475,9 @@ i387_cache_to_xsave (struct regcache *regcache, void *buf)
   /* Check if any XMM_AVX512 registers are changed.  */
   if ((x86_xcr0 & X86_XSTATE_ZMM))
     {
-      int xmm_avx512_regnum = find_regno (regcache->tdesc, "xmm16");
+      int xmm_avx512_regnum = (num_avx512_xmm_registers == 0
+			       ? -1
+			       : find_regno (regcache->tdesc, "xmm16"));
 
       for (i = 0; i < num_avx512_xmm_registers; i++)
 	{
@@ -486,7 +494,9 @@ i387_cache_to_xsave (struct regcache *regcache, void *buf)
   /* Check if any YMMH_AVX512 registers are changed.  */
   if ((x86_xcr0 & X86_XSTATE_ZMM))
     {
-      int ymmh_avx512_regnum = find_regno (regcache->tdesc, "ymm16h");
+      int ymmh_avx512_regnum = (num_avx512_ymmh_registers == 0
+				? -1
+				: find_regno (regcache->tdesc, "ymm16h"));
 
       for (i = 0; i < num_avx512_ymmh_registers; i++)
 	{
@@ -710,12 +720,20 @@ i387_xsave_to_cache (struct regcache *regcache, const void *buf)
 {
   struct i387_xsave *fp = (struct i387_xsave *) buf;
   struct i387_fxsave *fxp = (struct i387_fxsave *) buf;
+  bool amd64 = register_size (regcache->tdesc, 0) == 8;
   int i, top;
   unsigned long val;
   unsigned long long clear_bv;
   gdb_byte *p;
-  /* Amd64 has 16 xmm regs; I386 has 8 xmm regs.  */
-  int num_xmm_registers = register_size (regcache->tdesc, 0) == 8 ? 16 : 8;
+
+   /* Amd64 has 16 xmm regs; I386 has 8 xmm regs.  */
+  int num_xmm_registers = amd64 ? 16 : 8;
+  /* AVX512 extends the existing xmm/ymm registers to a wider mode: zmm.  */
+  int num_avx512_zmmh_low_registers = num_xmm_registers;
+  /* AVX512 adds 16 extra regs in Amd64 mode, but none in I386 mode.*/
+  int num_avx512_zmmh_high_registers = amd64 ? 16 : 0;
+  int num_avx512_ymmh_registers = amd64 ? 16 : 0;
+  int num_avx512_xmm_registers = amd64 ? 16 : 0;
 
   /* The supported bits in `xstat_bv' are 8 bytes.  Clear part in
      vector registers if its bit in xstat_bv is zero.  */
@@ -845,9 +863,15 @@ i387_xsave_to_cache (struct regcache *regcache, const void *buf)
 
   if ((x86_xcr0 & X86_XSTATE_ZMM) != 0)
     {
-      int zmm16h_regnum = find_regno (regcache->tdesc, "zmm16h");
-      int ymm16h_regnum = find_regno (regcache->tdesc, "ymm16h");
-      int xmm16_regnum = find_regno (regcache->tdesc, "xmm16");
+      int zmm16h_regnum = (num_avx512_zmmh_high_registers == 0
+			   ? -1
+			   : find_regno (regcache->tdesc, "zmm16h"));
+      int ymm16h_regnum = (num_avx512_ymmh_registers == 0
+			   ? -1
+			   : find_regno (regcache->tdesc, "ymm16h"));
+      int xmm16_regnum = (num_avx512_xmm_registers == 0
+			  ? -1
+			  : find_regno (regcache->tdesc, "xmm16"));
 
       if ((clear_bv & X86_XSTATE_ZMM) != 0)
 	{

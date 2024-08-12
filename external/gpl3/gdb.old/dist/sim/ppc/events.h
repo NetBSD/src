@@ -40,14 +40,14 @@ INLINE_EVENTS\
 INLINE_EVENTS\
 (event_entry_tag) event_queue_schedule
 (event_queue *queue,
- signed64 delta_time,
+ int64_t delta_time,
  event_handler *handler,
  void *data);
 
 INLINE_EVENTS\
 (event_entry_tag) event_queue_schedule_after_signal
 (event_queue *queue,
- signed64 delta_time,
+ int64_t delta_time,
  event_handler *handler,
  void *data);
 
@@ -72,7 +72,7 @@ INLINE_EVENTS\
 /* local concept of time */
 
 INLINE_EVENTS\
-(signed64) event_queue_time
+(int64_t) event_queue_time
 (event_queue *queue);
 
 #endif /* _EVENTS_H_ */

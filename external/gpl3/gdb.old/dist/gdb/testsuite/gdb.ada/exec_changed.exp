@@ -1,4 +1,4 @@
-# Copyright 2005-2020 Free Software Foundation, Inc.
+# Copyright 2005-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,12 +48,13 @@ gdb_reinitialize_dir $srcdir/$subdir
 
 # Load the first executable.
 
-gdb_test "shell mv ${binfile} ${common_binfile}" ".*" ""
+gdb_test "shell mv ${binfile} ${common_binfile}" "" \
+    "shell mv \${binfile} \${common_binfile}"
 gdb_load ${common_binfile}
 
 # Start the program, we should land in the program main procedure
 if { [gdb_start_cmd] < 0 } {
-    untested start
+    fail start
     return -1
 }
 
@@ -65,10 +66,13 @@ gdb_test "" \
 # second executable into its place.  Ensure that the new
 # executable is at least a second newer than the old.
 
-gdb_test "shell mv ${common_binfile} ${binfile}" ".*" ""
-gdb_test "shell mv ${binfile2} ${common_binfile}" ".*" ""
-gdb_test "shell sleep 1" ".*" ""
-gdb_test "shell touch ${common_binfile}" ".*" ""
+gdb_test "shell mv ${common_binfile} ${binfile}" "" \
+    "shell mv \${common_binfile} \${binfile}"
+gdb_test "shell mv ${binfile2} ${common_binfile}" "" \
+    "shell mv \${binfile2} \${common_binfile}"
+gdb_test "shell sleep 1" "" "shell sleep 1, once"
+gdb_test "shell touch ${common_binfile}" "" \
+    "shell touch \${common_binfile}"
 
 # Start the program a second time, GDB should land in procedure Second
 # this time.
@@ -92,8 +96,9 @@ gdb_test_no_output "mt set symbol-cache-size 0"
 # starting after having re-read symbols.  PR 17855.
 gdb_breakpoint break_me
 
-gdb_test "shell touch ${binfile}$EXEEXT" ".*" ""
-gdb_test "shell sleep 1" ".*" ""
+gdb_test "shell touch ${binfile}$EXEEXT" "" \
+    "shell touch \${binfile}\$EXEEXT"
+gdb_test "shell sleep 1" "" "shell sleep 1, twice"
 
 if { [gdb_start_cmd] < 0 } {
     # PR 17855: At this point gdb may have crashed or gotten an internal

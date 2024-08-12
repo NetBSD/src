@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2009-2020 Free Software Foundation, Inc.
+   Copyright 2009-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,6 +14,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+#include <stdlib.h>
 
 struct s
 {
@@ -53,6 +55,12 @@ enum E
 struct s vec_data_1 = {1, 1};
 struct s vec_data_2 = {1, 2};
 
+struct flex_member
+{
+  int n;
+  int items[];
+};
+
 int
 main ()
 {
@@ -72,6 +80,10 @@ main ()
   st.b = 5;
 
   e = v2;
+
+  struct flex_member *f = (struct flex_member *) malloc (100);
+  f->items[0] = 111;
+  f->items[1] = 222;
   
   return 0;      /* break to inspect struct and array.  */
 }

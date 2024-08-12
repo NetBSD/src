@@ -1,4 +1,4 @@
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ if {[prepare_for_testing $testfile.exp $testfile $srcfile {f90 debug}]} {
 
 if {![fortran_runto_main]} {
     perror "Could not run to main."
-    continue
+    return
 }
 
 gdb_test "until 21" {21.*print.*}

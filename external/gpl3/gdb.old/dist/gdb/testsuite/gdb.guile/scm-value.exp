@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2020 Free Software Foundation, Inc.
+# Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -132,21 +132,26 @@ proc test_value_in_inferior {} {
 	gdb_test "gu (print (value-lazy? inval))" \
 	    "#t"
 	gdb_test "gu (define inval2 (value-add inval 1))" \
-	    "ERROR: Cannot access memory at address 0x0.*" $test
+	    "ERROR: Cannot access memory at address 0x0.*" \
+	    "$test, using value in value-add"
 	gdb_test "gu (value-fetch-lazy! inval))" \
-	    "ERROR: Cannot access memory at address 0x0.*" $test
+	    "ERROR: Cannot access memory at address 0x0.*" \
+	    "$test, using value in value-fetch-lazy!"
     }
     gdb_test_no_output "gu (define argc-lazy (parse-and-eval \"argc\"))"
     gdb_test_no_output "gu (define argc-notlazy (parse-and-eval \"argc\"))"
     gdb_test_no_output "gu (value-fetch-lazy! argc-notlazy)"
-    gdb_test "gu (print (value-lazy? argc-lazy))" "= #t"
+    gdb_test "gu (print (value-lazy? argc-lazy))" "= #t" \
+	"argc-lazy is initially lazy"
     gdb_test "gu (print (value-lazy? argc-notlazy))" "= #f"
     gdb_test "print argc" "= 1" "sanity check argc"
-    gdb_test "gu (print (value-lazy? argc-lazy))" "= #t"
+    gdb_test "gu (print (value-lazy? argc-lazy))" "= #t" \
+	"argc-lazy is still lazy after argc is printed"
     gdb_test_no_output "set argc=2"
     gdb_test "gu (print argc-notlazy)" "= 1"
     gdb_test "gu (print argc-lazy)" "= 2"
-    gdb_test "gu (print (value-lazy? argc-lazy))" "= #f"
+    gdb_test "gu (print (value-lazy? argc-lazy))" "= #f" \
+	"argc-lazy is no longer lazy"
 
     # Test string fetches, both partial and whole.
     gdb_test "print st" "\"divide et impera\""
@@ -173,6 +178,19 @@ proc test_value_in_inferior {} {
 	"get string beyond null"
     gdb_test "gu (print nullst)" \
 	"= divide\\\\000et"
+
+    gdb_scm_test_silent_cmd "gu (define argv-ref (value-reference-value argv))" \
+	"test value-reference-value"
+    gdb_test "gu (equal? argv (value-referenced-value argv-ref))" "#t"
+    gdb_test "gu (eqv? (type-code (value-type argv-ref)) TYPE_CODE_REF)" "#t"
+
+    gdb_scm_test_silent_cmd "gu (define argv-rref (value-rvalue-reference-value argv))" \
+	"test value-rvalue-reference-value"
+    gdb_test "gu (equal? argv (value-referenced-value argv-rref))" "#t"
+    gdb_test "gu (eqv? (type-code (value-type argv-rref)) TYPE_CODE_RVALUE_REF)" "#t"
+
+    gdb_test "gu (equal? (value-type (value-const-value argv)) (type-const (value-type argv)))" \
+	"#t"
 }
 
 proc test_strings {} {
@@ -226,7 +244,8 @@ proc test_inferior_function_call {} {
 	"= void"
 
     # Correct inferior call with arguments.
-    gdb_test "p/x fp2" "= $hex.*"
+    gdb_test "p/x fp2" "= $hex.*" \
+	"place fp2 into value history, the first time"
     gdb_scm_test_silent_cmd "gu (define fp2 (history-ref 0))" \
 	"get fp2 value from history"
     gdb_scm_test_silent_cmd "gu (set! fp2 (value-dereference fp2))" \
@@ -242,7 +261,8 @@ proc test_inferior_function_call {} {
 	"ERROR: .*: Wrong type argument in position 1 \\(expecting function \\(value of TYPE_CODE_FUNC\\)\\): .*"
 
     # Incorrect number of arguments.
-    gdb_test "p/x fp2" "= $hex.*"
+    gdb_test "p/x fp2" "= $hex.*" \
+	"place fp2 into value history, the second time"
     gdb_scm_test_silent_cmd "gu (define fp3 (history-ref 0))" \
 	"get fp3 value from history"
     gdb_scm_test_silent_cmd "gu (set! fp3 (value-dereference fp3))" \
@@ -290,7 +310,6 @@ proc test_subscript_regression {exefile lang} {
     clean_restart ${exefile}
 
     if ![gdb_guile_runto_main ] {
-	fail "can't run to main"
 	return
     }
 
@@ -321,7 +340,7 @@ proc test_subscript_regression {exefile lang} {
     }
 
     gdb_breakpoint [gdb_get_line_number "break to inspect struct and union"]
-    gdb_continue_to_breakpoint "break to inspect struct and union"
+    gdb_continue_to_breakpoint "break to inspect struct and union in $lang"
 
     gdb_scm_test_silent_cmd "gu (define intv (make-value 1))" \
 	"Create int value for subscript test"
@@ -420,7 +439,6 @@ test_value_hash
 # The following tests require execution.
 
 if ![gdb_guile_runto_main] {
-    fail "can't run to main"
     return
 }
 

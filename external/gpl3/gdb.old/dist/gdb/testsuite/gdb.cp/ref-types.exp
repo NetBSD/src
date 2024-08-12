@@ -1,5 +1,5 @@
 # Tests for reference types with short type variables in GDB.
-# Copyright 1998-2020 Free Software Foundation, Inc.
+# Copyright 1998-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 # test running programs
 #
 
-if { [skip_cplus_tests] } { continue }
+if { [skip_cplus_tests] } { return }
 
 standard_testfile .cc
 
@@ -31,14 +31,12 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
 #
 # set it up at a breakpoint so we can play with the variable values
 #
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
-    continue
+if {![runto_main]} {
+    return
 }
 
-if ![runto 'marker1'] then {
-    perror "couldn't run to marker1"
-    continue
+if {![runto 'marker1']} {
+    return
 }
 
 gdb_test "up" ".*main.*" "up from marker1 1"
@@ -57,14 +55,12 @@ proc gdb_start_again {} {
     #
     # set it up at a breakpoint so we can play with the variable values
     #
-    if ![runto_main] then {
-	perror "couldn't run to breakpoint"
-	continue
+    if {![runto_main]} {
+	return
     }
 
-    if ![runto 'marker1'] then {
-	perror "couldn't run to marker1"
-	continue
+    if {![runto 'marker1']} {
+	return
     }
 
     gdb_test "up" ".*main.*" "up from marker1 2"
@@ -128,9 +124,8 @@ gdb_test "print ras\[2\]" ".\[0-9\]* = 2" "print value of ras\[2\]"
 gdb_test "print ras\[3\]" ".\[0-9\]* = 3" "print value of ras\[3\]"
 
 
-if ![runto 'f'] then {
-    perror "couldn't run to f"
-    continue
+if {![runto 'f']} {
+    return
 }
 
 gdb_test "up" ".main2.*" "up from f"
@@ -242,7 +237,7 @@ gdb_test "print rI" ".\[0-9\]* = \\(int &\\) @$hex: 102" \
 
 gdb_test "print rUI" \
     ".\[0-9\]* = \\(unsigned int &\\) @$hex: 1002" \
-        "print value of UI"
+        "print value of rUI"
 
 gdb_test_multiple "print rL" "print value of rL" {
     -re ".\[0-9\]* = \\(long &\\) @$hex: -234.*$gdb_prompt $" {

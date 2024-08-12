@@ -1,4 +1,4 @@
-# Copyright 2004-2020 Free Software Foundation, Inc.
+# Copyright 2004-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -246,18 +246,6 @@ proc gdb_default_target_compile_1 {source destfile type options} {
 	    }
 	}
 
-	if { $i == "f77" } {
-	    set compiler_type "f77"
-	    if {[board_info $dest exists f77flags]} {
-		append add_flags " [target_info f77flags]"
-	    }
-	    if {[board_info $dest exists f77compiler]} {
-		set compiler [target_info f77compiler]
-	    } else {
-		set compiler [find_g77]
-	    }
-	}
-
 	if { $i == "f90" } {
 	    set compiler_type "f90"
 	    if {[board_info $dest exists f90flags]} {
@@ -359,7 +347,6 @@ proc gdb_default_target_compile_1 {source destfile type options} {
     global CC_FOR_TARGET
     global CXX_FOR_TARGET
     global D_FOR_TARGET
-    global F77_FOR_TARGET
     global F90_FOR_TARGET
     global GNATMAKE_FOR_TARGET
     global GO_FOR_TARGET
@@ -390,12 +377,6 @@ proc gdb_default_target_compile_1 {source destfile type options} {
 	}
     }
 
-    if {[info exists F77_FOR_TARGET]} {
-	if { $compiler_type == "f77" } {
-	    set compiler $F77_FOR_TARGET
-	}
-    }
-
     if {[info exists F90_FOR_TARGET]} {
 	if { $compiler_type == "f90" } {
 	    set compiler $F90_FOR_TARGET
@@ -422,7 +403,11 @@ proc gdb_default_target_compile_1 {source destfile type options} {
     }
 
     if { $compiler == "" } {
-	set compiler [board_info $dest compiler]
+	if { [board_info $dest exists compiler] } {
+	    set compiler [board_info $dest compiler]
+	} elseif { $compiler_type eq "c" } {
+	    set compiler [find_gcc]
+	}
 	if { $compiler == "" } {
 	    return "default_target_compile: No compiler to compile with"
 	}
@@ -646,7 +631,7 @@ proc gdb_default_target_compile {source destfile type options} {
 	    set need_local_lang 0
 	}
 
-	if { $i == "f77" || $i == "f90" } {
+	if { $i == "f90" } {
 	    set need_local_lang [info exists use_gdb_compile(fortran)]
 	}
 

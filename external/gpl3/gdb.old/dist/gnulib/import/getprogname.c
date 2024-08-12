@@ -1,17 +1,17 @@
 /* Program name management.
-   Copyright (C) 2016-2020 Free Software Foundation, Inc.
+   Copyright (C) 2016-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   it under the terms of the GNU Lesser General Public License as published by
+   the Free Software Foundation; either version 2.1 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   GNU Lesser General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
+   You should have received a copy of the GNU Lesser General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
@@ -43,7 +43,7 @@
 # include <string.h>
 #endif
 
-#ifdef __sgi
+#if defined __sgi || defined __osf__
 # include <string.h>
 # include <unistd.h>
 # include <stdio.h>
@@ -51,7 +51,13 @@
 # include <sys/procfs.h>
 #endif
 
-#include "dirname.h"
+#if defined __SCO_VERSION__ || defined __sysv5__
+# include <fcntl.h>
+# include <stdlib.h>
+# include <string.h>
+#endif
+
+#include "basename-lgpl.h"
 
 #ifndef HAVE_GETPROGNAME             /* not Mac OS X, FreeBSD, NetBSD, OpenBSD >= 5.4, Cygwin */
 char const *
@@ -218,11 +224,15 @@ getprogname (void)
       free (buf.ps_pathptr);
     }
   return p;
-# elif defined __sgi                                        /* IRIX */
+# elif defined __sgi || defined __osf__                     /* IRIX or Tru64 */
   char filename[50];
   int fd;
 
-  sprintf (filename, "/proc/pinfo/%d", (int) getpid ());
+  # if defined __sgi
+    sprintf (filename, "/proc/pinfo/%d", (int) getpid ());
+  # else
+    sprintf (filename, "/proc/%d", (int) getpid ());
+  # endif
   fd = open (filename, O_RDONLY | O_CLOEXEC);
   if (0 <= fd)
     {
@@ -245,6 +255,38 @@ getprogname (void)
         }
     }
   return NULL;
+# elif defined __SCO_VERSION__ || defined __sysv5__                /* SCO OpenServer6/UnixWare */
+  char buf[80];
+  int fd;
+  sprintf (buf, "/proc/%d/cmdline", getpid());
+  fd = open (buf, O_RDONLY);
+  if (0 <= fd)
+    {
+      size_t n = read (fd, buf, 79);
+      if (n > 0)
+        {
+          buf[n] = '\0'; /* Guarantee null-termination */
+          char *progname;
+          progname = strrchr (buf, '/');
+          if (progname)
+            {
+              progname = progname + 1; /* Skip the '/' */
+            }
+          else
+            {
+              progname = buf;
+            }
+          char *ret;
+          ret = malloc (strlen (progname) + 1);
+          if (ret)
+            {
+              strcpy (ret, progname);
+              return ret;
+            }
+        }
+      close (fd);
+    }
+  return "?";
 # else
 #  error "getprogname module not ported to this OS"
 # endif

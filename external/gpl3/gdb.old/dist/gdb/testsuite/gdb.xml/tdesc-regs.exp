@@ -1,4 +1,4 @@
-# Copyright 2007-2020 Free Software Foundation, Inc.
+# Copyright 2007-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,7 +32,8 @@ switch -glob -- [istarget] {
     }
     "arc*-*-*" {
 	set architecture "arc:ARCv2"
-	set core-regs {arc-v2.xml}
+	set regdir "arc/"
+	set core-regs {v2-core.xml v2-aux.xml}
     }
     "arm*-*-*" {
 	set regdir "arm/"

@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- Copyright (C) 2009-2020 Free Software Foundation, Inc.
+<!-- Copyright (C) 2009-2023 Free Software Foundation, Inc.
      Contributed by ARM Ltd.
 
      Copying and distribution of this file, with or without modification,
@@ -60,6 +60,9 @@
     <field name="A" start="8" end="8"/>
     <!-- Debug exception mask.  -->
     <field name="D" start="9" end="9"/>
+
+    <!-- ARMv8.5-A: Branch Target Identification BTYPE.  -->
+    <field name="BTYPE" start="10" end="11"/>
 
     <!-- ARMv8.0-A: Speculative Store Bypass.  -->
     <field name="SSBS" start="12" end="12"/>

@@ -1,4 +1,4 @@
-#   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+#   Copyright (C) 2001-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,8 +30,6 @@ proc do_test {dir options} {
 	      [list $srcfile] $options] } {
 	return 0
     }
-
-    clean_restart ${binfile}
 
     gdb_test_no_output "set print sevenbit-strings"
     gdb_test_no_output "set print address off"
@@ -493,10 +491,14 @@ proc do_test {dir options} {
     #
 }
 
+set ctf_opts {}
+lappend ctf_opts additional_flags=-gctf
+lappend ctf_opts ldflags=-Wl,--strip-debug
+
 # Build up the set of debug formats for which we will run this test.
 set specs { {dwarf {debug}} }
 if ![skip_ctf_tests] {
-    lappend specs {ctf {"additional_flags=-gt"}}
+    lappend specs [list ctf $ctf_opts]
 }
 
 # Setup and run the test for each debug format.
@@ -511,12 +513,20 @@ foreach testspec $specs {
 }
 
 # These tests don't rely on the debug format.
-gdb_test "ptype _Atomic int" "type = _Atomic int"
-gdb_test "ptype int * restrict" "type = int \\* restrict"
+with_test_prefix nodebug {
+    if { [prepare_for_testing "failed to prepare" $binfile $srcfile {nodebug}] } {
+	return 0
+    }
 
-# C++ does not have "restrict".
-gdb_test_no_output "set lang c++"
-gdb_test "ptype int * restrict" "A syntax error in expression.*"
+    gdb_test "ptype _Atomic int" "type = _Atomic int"
+    gdb_test "ptype int * restrict" "type = int \\* restrict"
 
-# There is a GCC extension for __restrict__, though.
-gdb_test "ptype int * __restrict__" "type = int \\* __restrict__"
+    # C++ does not have "restrict".
+    gdb_test_no_output "set lang c++"
+    with_test_prefix c++ {
+	gdb_test "ptype int * restrict" "A syntax error in expression.*"
+
+	# There is a GCC extension for __restrict__, though.
+	gdb_test "ptype int * __restrict__" "type = int \\* __restrict__"
+    }
+}

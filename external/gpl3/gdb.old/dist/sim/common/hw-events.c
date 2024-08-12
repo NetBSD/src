@@ -1,5 +1,5 @@
 /* Hardware event manager.
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -17,15 +17,16 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
+
+#include <stdarg.h>
+#include <string.h>
 
 #include "hw-main.h"
 #include "hw-base.h"
 
 #include "sim-events.h"
-
-#if HAVE_STRING_H
-#include <string.h>
-#endif
 
 /* The hw-events object is implemented using sim-events */
 
@@ -86,21 +87,16 @@ bounce_hw_event (SIM_DESC sd,
 
 struct hw_event *
 hw_event_queue_schedule (struct hw *me,
-			 signed64 delta_time,
+			 int64_t delta_time,
 			 hw_event_callback *callback,
 			 void *data)
 {
-  struct hw_event *event;
-  va_list dummy;
-  memset (&dummy, 0, sizeof dummy);
-  event = hw_event_queue_schedule_vtracef (me, delta_time, callback, data,
-					   NULL, dummy);
-  return event;
+  return hw_event_queue_schedule_tracef (me, delta_time, callback, data, NULL);
 }
 
 struct hw_event *
 hw_event_queue_schedule_tracef (struct hw *me,
-				signed64 delta_time,
+				int64_t delta_time,
 				hw_event_callback *callback,
 				void *data,
 				const char *fmt,
@@ -116,7 +112,7 @@ hw_event_queue_schedule_tracef (struct hw *me,
 
 struct hw_event *
 hw_event_queue_schedule_vtracef (struct hw *me,
-				 signed64 delta_time,
+				 int64_t delta_time,
 				 hw_event_callback *callback,
 				 void *data,
 				 const char *fmt,
@@ -164,17 +160,17 @@ hw_event_queue_deschedule (struct hw *me,
 }
 
 
-signed64
+int64_t
 hw_event_queue_time (struct hw *me)
 {
   return sim_events_time (hw_system (me));
 }
 
 /* Returns the time that remains before the event is raised. */
-signed64
+int64_t
 hw_event_remain_time (struct hw *me, struct hw_event *event)
 {
-  signed64 t;
+  int64_t t;
 
   t = sim_events_remain_time (hw_system (me), event->real);
   return t;
@@ -184,9 +180,11 @@ hw_event_remain_time (struct hw *me, struct hw_event *event)
    Build with `make test-hw-events' in sim/<cpu> directory*/
 
 #if defined (MAIN)
-#include "sim-main.h"
-#include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "sim-main.h"
 
 static void
 test_handler (struct hw *me,

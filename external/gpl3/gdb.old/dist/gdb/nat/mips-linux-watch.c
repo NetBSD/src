@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,8 +32,7 @@ mips_linux_watch_get_irw_mask (struct pt_watch_regs *regs, int n)
     case pt_watch_style_mips64:
       return regs->mips64.watch_masks[n] & IRW_MASK;
     default:
-      internal_error (__FILE__, __LINE__,
-		      _("Unrecognized watch register style"));
+      internal_error (_("Unrecognized watch register style"));
     }
 }
 
@@ -50,8 +49,7 @@ get_reg_mask (struct pt_watch_regs *regs, int n)
     case pt_watch_style_mips64:
       return regs->mips64.watch_masks[n] & ~IRW_MASK;
     default:
-      internal_error (__FILE__, __LINE__,
-		      _("Unrecognized watch register style"));
+      internal_error (_("Unrecognized watch register style"));
     }
 }
 
@@ -67,8 +65,7 @@ mips_linux_watch_get_num_valid (struct pt_watch_regs *regs)
     case pt_watch_style_mips64:
       return regs->mips64.num_valid;
     default:
-      internal_error (__FILE__, __LINE__,
-		      _("Unrecognized watch register style"));
+      internal_error (_("Unrecognized watch register style"));
     }
 }
 
@@ -85,8 +82,7 @@ mips_linux_watch_get_watchlo (struct pt_watch_regs *regs, int n)
     case pt_watch_style_mips64:
       return regs->mips64.watchlo[n];
     default:
-      internal_error (__FILE__, __LINE__,
-		      _("Unrecognized watch register style"));
+      internal_error (_("Unrecognized watch register style"));
     }
 }
 
@@ -108,8 +104,7 @@ mips_linux_watch_set_watchlo (struct pt_watch_regs *regs, int n,
       regs->mips64.watchlo[n] = value;
       break;
     default:
-      internal_error (__FILE__, __LINE__,
-		      _("Unrecognized watch register style"));
+      internal_error (_("Unrecognized watch register style"));
     }
 }
 
@@ -126,8 +121,7 @@ mips_linux_watch_get_watchhi (struct pt_watch_regs *regs, int n)
     case pt_watch_style_mips64:
       return regs->mips64.watchhi[n];
     default:
-      internal_error (__FILE__, __LINE__,
-		      _("Unrecognized watch register style"));
+      internal_error (_("Unrecognized watch register style"));
     }
 }
 
@@ -147,8 +141,7 @@ mips_linux_watch_set_watchhi (struct pt_watch_regs *regs, int n,
       regs->mips64.watchhi[n] = value;
       break;
     default:
-      internal_error (__FILE__, __LINE__,
-		      _("Unrecognized watch register style"));
+      internal_error (_("Unrecognized watch register style"));
     }
 }
 

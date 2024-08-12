@@ -1,4 +1,4 @@
-# Copyright 2007-2020 Free Software Foundation, Inc.
+# Copyright 2007-2023 Free Software Foundation, Inc.
 
 # This file is part of the GDB testsuite.
 
@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if { ![istarget "i?86-*-*"] && ![istarget "x86_64-*-*"] } then {
+if {![istarget "i?86-*-*"] && ![istarget "x86_64-*-*"]} {
     verbose "Skipping i386 unwinder tests."
     return
 }

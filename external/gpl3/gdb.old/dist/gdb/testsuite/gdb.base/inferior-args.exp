@@ -1,4 +1,4 @@
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,14 +16,15 @@
 # Test running an inferior with arguments.
 
 # This does not work on boards that don't support inferior arguments.
-if [target_info exists noargs] then {
+if {[target_info exists noargs]} {
     verbose "skipping gdb.base/inferior-args.exp because of noargs"
     return
 }
 
 standard_testfile .c
 
-if {[build_executable "failed to prepare" $testfile $srcfile debug] == -1} {
+if {[build_executable "failed to prepare" $testfile $srcfile \
+	 {debug additional_flags=-std=c99}] == -1} {
     return
 }
 
@@ -103,7 +104,6 @@ proc do_test { method } {
 	gdb_test_no_output "set args $inferior_args"
 
 	if { ![runto_main] } {
-	    fail "could not run to main"
 	    return -1
 	}
 

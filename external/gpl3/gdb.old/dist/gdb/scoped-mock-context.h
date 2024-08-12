@@ -1,6 +1,6 @@
 /* RAII type to create a temporary mock context.
 
-   Copyright (C) 2020 Free Software Foundation, Inc.
+   Copyright (C) 2020-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -38,22 +38,20 @@ struct scoped_mock_context
 
   Target mock_target;
   ptid_t mock_ptid {1, 1};
-  program_space mock_pspace {new_address_space ()};
+  program_space mock_pspace {new address_space ()};
   inferior mock_inferior {mock_ptid.pid ()};
   thread_info mock_thread {&mock_inferior, mock_ptid};
 
   scoped_restore_current_pspace_and_thread restore_pspace_thread;
 
-  scoped_restore_tmpl<thread_info *> restore_thread_list
-    {&mock_inferior.thread_list, &mock_thread};
-
-  /* Add the mock inferior to the inferior list so that look ups by
-     target+ptid can find it.  */
-  scoped_restore_tmpl<inferior *> restore_inferior_list
-    {&inferior_list, &mock_inferior};
-
   explicit scoped_mock_context (gdbarch *gdbarch)
   {
+    /* Add the mock inferior to the inferior list so that look ups by
+       target+ptid can find it.  */
+    inferior_list.push_back (mock_inferior);
+
+    mock_inferior.thread_list.push_back (mock_thread);
+    mock_inferior.ptid_thread_map[mock_ptid] = &mock_thread;
     mock_inferior.gdbarch = gdbarch;
     mock_inferior.aspace = mock_pspace.aspace;
     mock_inferior.pspace = &mock_pspace;
@@ -64,7 +62,7 @@ struct scoped_mock_context
     /* Push the process_stratum target so we can mock accessing
        registers.  */
     gdb_assert (mock_target.stratum () == process_stratum);
-    push_target (&mock_target);
+    mock_inferior.push_target (&mock_target);
 
     /* Switch to the mock thread.  */
     switch_to_thread (&mock_thread);
@@ -72,7 +70,8 @@ struct scoped_mock_context
 
   ~scoped_mock_context ()
   {
-    pop_all_targets_at_and_above (process_stratum);
+    inferior_list.erase (inferior_list.iterator_to (mock_inferior));
+    mock_inferior.pop_all_targets_at_and_above (process_stratum);
   }
 };
 

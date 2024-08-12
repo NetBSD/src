@@ -1,6 +1,6 @@
 /* gdb-if.c -- sim interface to GDB.
 
-Copyright (C) 2011-2020 Free Software Foundation, Inc.
+Copyright (C) 2011-2023 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -18,7 +18,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include <stdio.h>
 #include <assert.h>
 #include <signal.h>
@@ -27,8 +29,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <stdlib.h>
 
 #include "ansidecl.h"
-#include "gdb/callback.h"
-#include "gdb/remote-sim.h"
+#include "libiberty.h"
+#include "sim/callback.h"
+#include "sim/sim.h"
 #include "gdb/signals.h"
 #include "gdb/sim-rl78.h"
 
@@ -53,7 +56,7 @@ static struct sim_state the_minisim = {
   "This is the sole rl78 minisim instance."
 };
 
-static int open;
+static int is_open;
 
 static struct host_callback_struct *host_callbacks;
 
@@ -66,7 +69,7 @@ sim_open (SIM_OPEN_KIND kind,
 	  struct host_callback_struct *callback,
 	  struct bfd *abfd, char * const *argv)
 {
-  if (open)
+  if (is_open)
     fprintf (stderr, "rl78 minisim: re-opened sim\n");
 
   /* The 'run' interface doesn't use this function, so we don't care
@@ -85,7 +88,7 @@ sim_open (SIM_OPEN_KIND kind,
   trace = 0;
 
   sim_disasm_init (abfd);
-  open = 1;
+  is_open = 1;
 
   while (argv != NULL && *argv != NULL)
     {
@@ -142,7 +145,7 @@ sim_close (SIM_DESC sd, int quitting)
   /* Not much to do.  At least free up our memory.  */
   init_mem ();
 
-  open = 0;
+  is_open = 0;
 }
 
 /* Open the program to run; print a message if the program cannot
@@ -202,7 +205,7 @@ sim_create_inferior (SIM_DESC sd, struct bfd *abfd,
 /* Read memory.  */
 
 int
-sim_read (SIM_DESC sd, SIM_ADDR mem, unsigned char *buf, int length)
+sim_read (SIM_DESC sd, SIM_ADDR mem, void *buf, int length)
 {
   check_desc (sd);
 
@@ -218,7 +221,7 @@ sim_read (SIM_DESC sd, SIM_ADDR mem, unsigned char *buf, int length)
 /* Write memory.  */
 
 int
-sim_write (SIM_DESC sd, SIM_ADDR mem, const unsigned char *buf, int length)
+sim_write (SIM_DESC sd, SIM_ADDR mem, const void *buf, int length)
 {
   check_desc (sd);
 
@@ -234,7 +237,7 @@ sim_write (SIM_DESC sd, SIM_ADDR mem, const unsigned char *buf, int length)
 /* Read the LENGTH bytes at BUF as an little-endian value.  */
 
 static SI
-get_le (unsigned char *buf, int length)
+get_le (const unsigned char *buf, int length)
 {
   SI acc = 0;
 
@@ -324,7 +327,7 @@ reg_addr (enum sim_rl78_regnum regno)
    notion of the register's size.  */
 
 int
-sim_fetch_register (SIM_DESC sd, int regno, unsigned char *buf, int length)
+sim_fetch_register (SIM_DESC sd, int regno, void *buf, int length)
 {
   size_t size;
   SI val;
@@ -353,7 +356,7 @@ sim_fetch_register (SIM_DESC sd, int regno, unsigned char *buf, int length)
    LENGTH must match the sim's internal notion of the register size.  */
 
 int
-sim_store_register (SIM_DESC sd, int regno, unsigned char *buf, int length)
+sim_store_register (SIM_DESC sd, int regno, const void *buf, int length)
 {
   size_t size;
   SI val;
@@ -403,7 +406,7 @@ int siggnal;
 /* Given a signal number used by the rl78 bsp (that is, newlib),
    return the corresponding signal numbers.  */
 
-int
+static int
 rl78_signal_to_target (int sig)
 {
   switch (sig)
@@ -442,7 +445,7 @@ rl78_signal_to_target (int sig)
 /* Take a step return code RC and set up the variables consulted by
    sim_stop_reason appropriately.  */
 
-void
+static void
 handle_step (int rc)
 {
   if (RL78_STEPPED (rc) || RL78_HIT_BREAK (rc))
@@ -533,45 +536,25 @@ sim_stop_reason (SIM_DESC sd, enum sim_stop *reason_p, int *sigrc_p)
 void
 sim_do_command (SIM_DESC sd, const char *cmd)
 {
-  const char *args;
-  char *p = strdup (cmd);
+  const char *arg;
+  char **argv = buildargv (cmd);
 
   check_desc (sd);
 
-  if (cmd == NULL)
+  cmd = arg = "";
+  if (argv != NULL)
     {
-      cmd = "";
-      args = "";
-    }
-  else
-    {
-      /* Skip leading whitespace.  */
-      while (isspace (*p))
-	p++;
-
-      /* Find the extent of the command word.  */
-      for (p = cmd; *p; p++)
-	if (isspace (*p))
-	  break;
-
-      /* Null-terminate the command word, and record the start of any
-	 further arguments.  */
-      if (*p)
-	{
-	  *p = '\0';
-	  args = p + 1;
-	  while (isspace (*args))
-	    args++;
-	}
-      else
-	args = p;
+      if (argv[0] != NULL)
+	cmd = argv[0];
+      if (argv[1] != NULL)
+	arg = argv[1];
     }
 
   if (strcmp (cmd, "trace") == 0)
     {
-      if (strcmp (args, "on") == 0)
+      if (strcmp (arg, "on") == 0)
 	trace = 1;
-      else if (strcmp (args, "off") == 0)
+      else if (strcmp (arg, "off") == 0)
 	trace = 0;
       else
 	printf ("The 'sim trace' command expects 'on' or 'off' "
@@ -579,11 +562,11 @@ sim_do_command (SIM_DESC sd, const char *cmd)
     }
   else if (strcmp (cmd, "verbose") == 0)
     {
-      if (strcmp (args, "on") == 0)
+      if (strcmp (arg, "on") == 0)
 	verbose = 1;
-      else if (strcmp (args, "noisy") == 0)
+      else if (strcmp (arg, "noisy") == 0)
 	verbose = 2;
-      else if (strcmp (args, "off") == 0)
+      else if (strcmp (arg, "off") == 0)
 	verbose = 0;
       else
 	printf ("The 'sim verbose' command expects 'on', 'noisy', or 'off'"
@@ -593,7 +576,7 @@ sim_do_command (SIM_DESC sd, const char *cmd)
     printf ("The 'sim' command expects either 'trace' or 'verbose'"
 	    " as a subcommand.\n");
 
-  free (p);
+  freeargv (argv);
 }
 
 /* Stub for command completion.  */
@@ -602,4 +585,10 @@ char **
 sim_complete_command (SIM_DESC sd, const char *text, const char *word)
 {
     return NULL;
+}
+
+char *
+sim_memory_map (SIM_DESC sd)
+{
+  return NULL;
 }

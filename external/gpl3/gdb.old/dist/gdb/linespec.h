@@ -1,5 +1,5 @@
 /* Header for GDB line completion.
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -70,9 +70,9 @@ struct linespec_result
      object.  */
   bool pre_expanded = false;
 
-  /* If PRE_EXPANDED is non-zero, this is set to the location entered
-     by the user.  */
-  event_location_up location;
+  /* If PRE_EXPANDED is true, this is set to the location spec
+     entered by the user.  */
+  location_spec_up locspec;
 
   /* The sals.  The vector will be freed by the destructor.  */
   std::vector<linespec_sals> lsals;
@@ -81,11 +81,11 @@ struct linespec_result
 /* Decode a linespec using the provided default symtab and line.  */
 
 extern std::vector<symtab_and_line>
-	decode_line_1 (const struct event_location *location, int flags,
+	decode_line_1 (const location_spec *locspec, int flags,
 		       struct program_space *search_pspace,
 		       struct symtab *default_symtab, int default_line);
 
-/* Parse LOCATION and return results.  This is the "full"
+/* Parse LOCSPEC and return results.  This is the "full"
    interface to this module, which handles multiple results
    properly.
 
@@ -124,7 +124,7 @@ extern std::vector<symtab_and_line>
    strcmp sense) to FILTER will be returned; all others will be
    filtered out.  */
 
-extern void decode_line_full (struct event_location *location, int flags,
+extern void decode_line_full (struct location_spec *locspec, int flags,
 			      struct program_space *search_pspace,
 			      struct symtab *default_symtab, int default_line,
 			      struct linespec_result *canonical,
@@ -161,13 +161,6 @@ extern const char *get_gdb_linespec_parser_quote_characters (void);
    of the decoded operator name.  If not, return 0.  */
 
 extern int is_ada_operator (const char *string);
-
-/* Find an instance of the character C in the string S that is outside
-   of all parenthesis pairs, single-quoted strings, and double-quoted
-   strings.  Also, ignore the char within a template name, like a ','
-   within foo<int, int>.  */
-
-extern const char *find_toplevel_char (const char *s, char c);
 
 /* Find the end of the (first) linespec pointed to by *STRINGP.
    STRINGP will be advanced to this point.  */

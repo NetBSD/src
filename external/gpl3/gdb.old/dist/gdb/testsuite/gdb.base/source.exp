@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2005-2020 Free Software Foundation, Inc.
+# Copyright 2005-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -73,3 +73,9 @@ gdb_test "source ${srcdir}/${subdir}/source-error.gdb" \
 		"source-error-1.gdb:21: Error in sourced command file:" \
 		"Cannot access memory at address 0x0" ] \
     "script contains error"
+
+# There was a case where sourcing a script containing "interpreter-exec"
+# commands would corrupt the interpreter mechanism and crash gdb.
+gdb_test "source ${srcdir}/${subdir}/interpreter-exec.gdb" \
+    "\\^done,value=\"off\"" \
+    "source interpreter-exec"

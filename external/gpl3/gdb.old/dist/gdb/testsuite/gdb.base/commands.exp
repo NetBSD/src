@@ -1,4 +1,4 @@
-#   Copyright 1988-2020 Free Software Foundation, Inc.
+#   Copyright 1988-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,6 +17,14 @@
 # test special commands (if, while, etc)
 #
 
+# The skip_hw_watchpoint_tests checks if watchpoints are supported by the
+# processor.  On PowerPC, the check runs a small test program under gdb
+# to determine if the Power processor supports HW watchpoints.  The check
+# must be done before starting the test so as to not disrupt the execution
+# of the actual test.
+
+set skip_hw_watchpoint_tests_p [skip_hw_watchpoint_tests]
+
 standard_testfile
 
 if { [prepare_for_testing "failed to prepare" commands run.c {debug additional_flags=-DFAKEARGV}] } {
@@ -28,7 +36,6 @@ if { [prepare_for_testing "failed to prepare" commands run.c {debug additional_f
 
 proc runto_or_return {function} {
     if { ![runto factorial] } {
-	fail "cannot run to $function"
 	return -code return
     }
 }
@@ -289,7 +296,7 @@ proc_with_prefix breakpoint_clear_command_test {} {
     delete_breakpoints
     gdb_test "break factorial" "Breakpoint.*at.*"
     gdb_test_no_output "set \$bpnumfactorial = \$bpnum"
-    gdb_test "break main" "Breakpoint.*at.*"
+    gdb_test "break -q main" "Breakpoint.*at.*"
     gdb_test_no_output "set \$bpnummain = \$bpnum"
 
     gdb_test \
@@ -543,9 +550,10 @@ proc_with_prefix user_defined_command_manyargs_test {} {
 
 proc_with_prefix watchpoint_command_test {} {
     global gdb_prompt
+    global skip_hw_watchpoint_tests_p
 
     # Disable hardware watchpoints if necessary.
-    if [target_info exists gdb,no_hardware_watchpoints] {
+    if {$skip_hw_watchpoint_tests_p} {
 	gdb_test_no_output "set can-use-hw-watchpoints 0" ""
     }
 
@@ -663,7 +671,7 @@ proc_with_prefix deprecated_command_test {} {
 
     gdb_test_no_output "maintenance deprecate p \"new_p\"" "maintenance deprecate p \"new_p\" /1/"
     gdb_test "p 5" \
-	    "Warning: 'p', an alias for the command 'print' is deprecated.*Use 'new_p'.*" \
+	    "Warning: 'p', an alias for the command 'print', is deprecated.*Use 'new_p'.*" \
 	    "p deprecated warning, with replacement"
     gdb_test "p 5" ".\[0-9\]* = 5.*" "deprecated warning goes away /1/"
 
@@ -689,6 +697,44 @@ proc_with_prefix deprecated_command_test {} {
     gdb_test "maintenance deprecate" \
 	    "\"maintenance deprecate\".*" \
 	    "deprecate with no arguments"
+
+    # Test that an alias with a prefix still gives a warning.
+    set file1 [standard_output_file xxx_yyy_cmd]
+    set fd [open "$file1" w]
+    puts $fd \
+"define set xxx_yyy
+echo in command xxx_yyy\\n
+end
+
+alias set qqq_aaa=set xxx_yyy
+maintenance deprecate set qqq_aaa"
+    close $fd
+    gdb_test_no_output "source $file1" \
+	"source file containing xxx_yyy command and its alias"
+    gdb_test "set qqq_aaa" \
+	"Warning: 'set qqq_aaa', an alias for the command 'set xxx_yyy', is deprecated\\.\r\n.*No alternative known\\..*" \
+	"deprecated alias with prefix give a warning"
+}
+
+# Test that the help for a command does not show deprecated aliases.
+
+proc_with_prefix deprecated_command_alias_help_test {} {
+    gdb_test_multiline "define real_command" \
+	"define real_command" "End with a line saying just \"end\".." \
+	"print 1" "" \
+	"end" ""
+
+    gdb_test_no_output "alias alias_command = real_command"
+    gdb_test_no_output "alias alias_with_args_command = real_command 123"
+
+    gdb_test "help real_command" \
+	"real_command, alias_with_args_command, alias_command\r\n  alias alias_with_args_command = real_command 123\r\nUser-defined." \
+	"help real_command, before"
+    gdb_test_no_output "maintenance deprecate alias_command"
+    gdb_test_no_output "maintenance deprecate alias_with_args_command"
+    gdb_test "help real_command" \
+	"User-defined." \
+	"help real_command, after"
 }
 
 proc_with_prefix bp_deleted_in_command_test {} {
@@ -800,7 +846,7 @@ proc_with_prefix stray_arg0_test { } {
 
 # Test that GDB is able to source a file with an indented comment.
 proc_with_prefix source_file_with_indented_comment {} {
-    set file1 [standard_output_file file1]
+    set file1 [standard_output_file source_file_with_indented_comment]
 
     set fd [open "$file1" w]
     puts $fd \
@@ -816,9 +862,9 @@ echo Done!\n}
 # Test that GDB can handle arguments when sourcing files recursively.
 # If the arguments are overwritten with ####### then the test has failed.
 proc_with_prefix recursive_source_test {} {
-    set file1 [standard_output_file file1]
-    set file2 [standard_output_file file2]
-    set file3 [standard_output_file file3]
+    set file1 [standard_output_file recursive_source_1]
+    set file2 [standard_output_file recursive_source_2]
+    set file3 [standard_output_file recursive_source_3]
 
     set fd [open "$file1" w]
     puts $fd \
@@ -844,10 +890,6 @@ end"
     gdb_test "source $file1" \
 	"1: <<<qwerty>>>\[\r\n]+in file3\[\r\n]+2: <<<qwerty>>>" \
 	"source file"
-
-    file delete $file1
-    file delete $file2
-    file delete $file3
 }
 
 proc gdb_test_no_prompt { command result msg } {
@@ -873,7 +915,7 @@ proc_with_prefix if_commands_test {} {
 
     set test "if_commands_test 1"
     gdb_test_no_prompt "if \$tem == 2" { >} $test
-    gdb_test_no_prompt "break main" { >} $test
+    gdb_test_no_prompt "break -q main" { >} $test
     gdb_test_no_prompt "else" { >} $test
     gdb_test_no_prompt "break factorial" { >} $test
     gdb_test_no_prompt "commands" {  >} $test
@@ -899,7 +941,7 @@ proc_with_prefix if_commands_test {} {
 
     set test "if_commands_test 2"
     gdb_test_no_prompt "if \$tem == 1" { >} $test
-    gdb_test_no_prompt "break main" { >} $test
+    gdb_test_no_prompt "break -q main" { >} $test
     gdb_test_no_prompt "else" { >} $test
     gdb_test_no_prompt "break factorial" { >} $test
     gdb_test_no_prompt "commands" {  >} $test
@@ -1185,6 +1227,7 @@ user_defined_command_manyargs_test
 watchpoint_command_test
 test_command_prompt_position
 deprecated_command_test
+deprecated_command_alias_help_test
 bp_deleted_in_command_test
 temporary_breakpoint_commands
 stray_arg0_test

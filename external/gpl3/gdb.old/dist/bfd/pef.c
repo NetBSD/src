@@ -1,5 +1,5 @@
 /* PEF support for BFD.
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -41,6 +41,7 @@
 #define bfd_pef_bfd_is_target_special_symbol        _bfd_bool_bfd_asymbol_false
 #define bfd_pef_get_lineno			    _bfd_nosymbols_get_lineno
 #define bfd_pef_find_nearest_line		    _bfd_nosymbols_find_nearest_line
+#define bfd_pef_find_nearest_line_with_alt	    _bfd_nosymbols_find_nearest_line_with_alt
 #define bfd_pef_find_line			    _bfd_nosymbols_find_line
 #define bfd_pef_find_inliner_info		    _bfd_nosymbols_find_inliner_info
 #define bfd_pef_get_symbol_version_string	    _bfd_nosymbols_get_symbol_version_string
@@ -180,7 +181,7 @@ bfd_pef_parse_traceback_table (bfd *abfd,
 
       /* Strip leading period inserted by compiler.  */
       if (namebuf[0] == '.')
-	memmove (namebuf, namebuf + 1, name.name_len + 1);
+	memmove (namebuf, namebuf + 1, name.name_len);
 
       sym->name = namebuf;
 
@@ -219,7 +220,7 @@ bfd_pef_print_symbol (bfd *abfd,
     default:
       bfd_print_symbol_vandf (abfd, (void *) file, symbol);
       fprintf (file, " %-5s %s", symbol->section->name, symbol->name);
-      if (CONST_STRNEQ (symbol->name, "__traceback_"))
+      if (startswith (symbol->name, "__traceback_"))
 	{
 	  unsigned char *buf;
 	  size_t offset = symbol->value + 4;
@@ -254,10 +255,10 @@ bfd_pef_convert_architecture (unsigned long architecture,
     *type = bfd_arch_m68k;
 }
 
-static bfd_boolean
+static bool
 bfd_pef_mkobject (bfd *abfd ATTRIBUTE_UNUSED)
 {
-  return TRUE;
+  return true;
 }
 
 static const char *bfd_pef_section_name (bfd_pef_section *section)
@@ -750,6 +751,13 @@ bfd_pef_parse_function_stubs (bfd *abfd,
   if (ret < 0)
     goto error;
 
+  if ((loaderlen - 56) / 24 < header.imported_library_count)
+    goto error;
+
+  if ((loaderlen - 56 - header.imported_library_count * 24) / 4
+      < header.total_imported_symbol_count)
+    goto error;
+
   libraries = bfd_malloc
     (header.imported_library_count * sizeof (bfd_pef_imported_library));
   imports = bfd_malloc
@@ -757,8 +765,6 @@ bfd_pef_parse_function_stubs (bfd *abfd,
   if (libraries == NULL || imports == NULL)
     goto error;
 
-  if (loaderlen < (56 + (header.imported_library_count * 24)))
-    goto error;
   for (i = 0; i < header.imported_library_count; i++)
     {
       ret = bfd_pef_parse_imported_library
@@ -767,9 +773,6 @@ bfd_pef_parse_function_stubs (bfd *abfd,
 	goto error;
     }
 
-  if (loaderlen < (56 + (header.imported_library_count * 24)
-		   + (header.total_imported_symbol_count * 4)))
-    goto error;
   for (i = 0; i < header.total_imported_symbol_count; i++)
     {
       ret = (bfd_pef_parse_imported_symbol
@@ -1015,6 +1018,7 @@ const bfd_target pef_vec =
   ' ',				/* AR_pad_char.  */
   16,				/* AR_max_namelen.  */
   0,				/* match priority.  */
+  TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* Data.  */
@@ -1159,6 +1163,7 @@ const bfd_target pef_xlib_vec =
   ' ',				/* AR_pad_char.  */
   16,				/* AR_max_namelen.  */
   0,				/* match priority.  */
+  TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* Data.  */

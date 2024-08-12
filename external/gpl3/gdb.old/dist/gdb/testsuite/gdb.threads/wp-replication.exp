@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2009-2020 Free Software Foundation, Inc.
+# Copyright 2009-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,8 +42,7 @@ clean_restart ${binfile}
 gdb_test_no_output "set can-use-hw-watchpoints 1" ""
 
 # Run to `main' where we begin our tests.
-if ![runto_main] then {
-    fail "failed to run to main"
+if {![runto_main]} {
     return 0
 }
 

@@ -27,22 +27,14 @@
 
 #undef printf_filtered /* blow away the mapping */
 
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
-
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
 
+#include "ansidecl.h"
 #include "libiberty.h"
 #include "bfd.h"
-#include "gdb/callback.h"
-#include "gdb/remote-sim.h"
+#include "sim/callback.h"
+#include "sim/sim.h"
 #include "gdb/signals.h"
 
 /* Define the rate at which the simulator should poll the host
@@ -133,24 +125,24 @@ sim_load (SIM_DESC sd, const char *prog, bfd *abfd, int from_tty)
 
 
 int
-sim_read (SIM_DESC sd, SIM_ADDR mem, unsigned char *buf, int length)
+sim_read (SIM_DESC sd, SIM_ADDR mem, void *buf, int length)
 {
   int result = psim_read_memory(simulator, MAX_NR_PROCESSORS,
 				buf, mem, length);
-  TRACE(trace_gdb, ("sim_read(mem=0x%lx, buf=0x%lx, length=%d) = %d\n",
-		    (long)mem, (long)buf, length, result));
+  TRACE(trace_gdb, ("sim_read(mem=0x%lx, buf=%p, length=%d) = %d\n",
+		    (long)mem, buf, length, result));
   return result;
 }
 
 
 int
-sim_write (SIM_DESC sd, SIM_ADDR mem, const unsigned char *buf, int length)
+sim_write (SIM_DESC sd, SIM_ADDR mem, const void *buf, int length)
 {
   int result = psim_write_memory(simulator, MAX_NR_PROCESSORS,
 				 buf, mem, length,
 				 1/*violate_ro*/);
-  TRACE(trace_gdb, ("sim_write(mem=0x%lx, buf=0x%lx, length=%d) = %d\n",
-		    (long)mem, (long)buf, length, result));
+  TRACE(trace_gdb, ("sim_write(mem=0x%lx, buf=%p, length=%d) = %d\n",
+		    (long)mem, buf, length, result));
   return result;
 }
 
@@ -169,8 +161,6 @@ sim_create_inferior (SIM_DESC sd,
 		     char * const *envp)
 {
   unsigned_word entry_point;
-  TRACE(trace_gdb, ("sim_create_inferior(start_address=0x%x, ...)\n",
-		    entry_point));
 
   if (simulator == NULL)
     error ("No program loaded");
@@ -179,6 +169,9 @@ sim_create_inferior (SIM_DESC sd,
     entry_point = bfd_get_start_address (abfd);
   else
     entry_point = 0xfff00000; /* ??? */
+
+  TRACE(trace_gdb, ("sim_create_inferior(start_address=0x%x, ...)\n",
+		    entry_point));
 
   psim_init(simulator);
   psim_stack(simulator, argv, envp);
@@ -216,8 +209,8 @@ sim_stop_reason (SIM_DESC sd, enum sim_stop *reason, int *sigrc)
     break;
   }
 
-  TRACE(trace_gdb, ("sim_stop_reason(reason=0x%lx(%ld), sigrc=0x%lx(%ld))\n",
-		    (long)reason, (long)*reason, (long)sigrc, (long)*sigrc));
+  TRACE(trace_gdb, ("sim_stop_reason(reason=%p(%ld), sigrc=%p(%ld))\n",
+		    reason, (long)*reason, sigrc, (long)*sigrc));
 }
 
 
@@ -261,6 +254,12 @@ sim_do_command (SIM_DESC sd, const char *cmd)
 
 char **
 sim_complete_command (SIM_DESC sd, const char *text, const char *word)
+{
+  return NULL;
+}
+
+char *
+sim_memory_map (SIM_DESC sd)
 {
   return NULL;
 }
@@ -374,6 +373,8 @@ sim_io_flush_stdoutput(void)
   }
 }
 
+/* Glue to use sim-fpu module.  */
+
 void
 sim_io_error (SIM_DESC sd, const char *fmt, ...)
 {
@@ -381,19 +382,23 @@ sim_io_error (SIM_DESC sd, const char *fmt, ...)
   va_start(ap, fmt);
   callbacks->evprintf_filtered (callbacks, fmt, ap);
   va_end(ap);
-  callbacks->error (callbacks, "");
+  /* Printing a space here avoids empty printf compiler warnings.  Not ideal,
+     but we want error's side-effect where it halts processing.  */
+  callbacks->error (callbacks, " ");
 }
 
 /****/
 
-void NORETURN
+void
 error (const char *msg, ...)
 {
   va_list ap;
   va_start(ap, msg);
   callbacks->evprintf_filtered (callbacks, msg, ap);
   va_end(ap);
-  callbacks->error (callbacks, "");
+  /* Printing a space here avoids empty printf compiler warnings.  Not ideal,
+     but we want error's side-effect where it halts processing.  */
+  callbacks->error (callbacks, " ");
 }
 
 void *

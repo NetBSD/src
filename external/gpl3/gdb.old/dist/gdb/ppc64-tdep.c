@@ -1,6 +1,6 @@
 /* Common target-dependent code for ppc64 GDB, the GNU debugger.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -49,15 +49,47 @@
    | (((unsigned (spr)) & 0x3e0) << 6)                     \
    | (((unsigned (xo)) & 0x3ff) << 1))
 
+#define prefix(a, b, R, do)				   \
+  (((0x1) << 26)					   \
+   | (((unsigned (a)) & 0x3) << 24)			   \
+   | (((unsigned (b)) & 0x1) << 23)			   \
+   | (((unsigned (R)) & 0x1) << 20)			   \
+   | ((unsigned (do)) & 0x3ffff))
+
+#define insn_md(opcd, ra, rs, sh, me, rc)	       	   \
+  ((((unsigned (opcd)) & 0x3f) << 26)			   \
+   | (((unsigned (rs)) & 0x1f) << 21)			   \
+   | (((unsigned (ra)) & 0x1f) << 16)			   \
+   | (((unsigned (sh)) & 0x3e) << 11)			   \
+   | (((unsigned (me)) & 0x3f) << 25)			   \
+   | (((unsigned (sh)) & 0x1)  << 1)			   \
+   | ((unsigned (rc)) & 0x1))
+
+#define insn_x(opcd, rt, ra, rb, opc2)			   \
+  ((((unsigned (opcd)) & 0x3f) << 26)			   \
+   | (((unsigned (rt)) & 0x1f) << 21)			   \
+   | (((unsigned (ra)) & 0x1f) << 16)			   \
+   | (((unsigned (rb)) & 0x3e) << 11)			   \
+   | (((unsigned (opc2)) & 0x3FF) << 1))
+
+#define insn_xo(opcd, rt, ra, rb, oe, rc, opc2)		   \
+  ((((unsigned (opcd)) & 0x3f) << 26)			   \
+   | (((unsigned (rt)) & 0x1f) << 21)			   \
+   | (((unsigned (ra)) & 0x1f) << 16)			   \
+   | (((unsigned (rb)) & 0x3e) << 11)			   \
+   | (((unsigned (oe)) & 0x1) << 10)			   \
+   | (((unsigned (opc2)) & 0x1FF) << 1)			   \
+   | (((unsigned (rc)))))
+
 /* PLT_OFF is the TOC-relative offset of a 64-bit PowerPC PLT entry.
    Return the function's entry point.  */
 
 static CORE_ADDR
-ppc64_plt_entry_point (struct frame_info *frame, CORE_ADDR plt_off)
+ppc64_plt_entry_point (frame_info_ptr frame, CORE_ADDR plt_off)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
   CORE_ADDR tocp;
 
   if (execution_direction == EXEC_REVERSE)
@@ -73,6 +105,18 @@ ppc64_plt_entry_point (struct frame_info *frame, CORE_ADDR plt_off)
 
   /* The first word of the PLT entry is the function entry point.  */
   return read_memory_unsigned_integer (tocp + plt_off, 8, byte_order);
+}
+
+static CORE_ADDR
+ppc64_plt_pcrel_entry_point (frame_info_ptr frame, CORE_ADDR plt_off,
+			     CORE_ADDR pc)
+{
+  struct gdbarch *gdbarch = get_frame_arch (frame);
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+
+  /* Execution direction doesn't matter, entry is pc + plt_off either way.
+     The first word of the PLT entry is the function entry point.  */
+  return read_memory_unsigned_integer (pc + plt_off, 8, byte_order);
 }
 
 /* Patterns for the standard linkage functions.  These are built by
@@ -342,6 +386,110 @@ static const struct ppc_insn_pattern ppc64_standard_linkage8[] =
     { 0, 0, 0 }
   };
 
+/* Power 10 ELFv2 PLT call stubs */
+static const struct ppc_insn_pattern ppc64_standard_linkage9[] =
+  {
+    /* std   %r2,0+40(%r1)   <optional> */
+    { insn_ds (-1, -1, -1, 0, 1), insn_ds (62, 2, 1, 40, 0), 1 },
+
+    /* pld r12, <any> */
+    { prefix (-1, -1, 1, 0), prefix (0, 0, 1, 0), 0 },
+    { insn_d (-1, -1, -1, 0), insn_d (57, 12, 0, 0), 0 },
+
+    /* mtctr r12  */
+    { insn_xfx (-1, -1, -1, -1), insn_xfx (31, 12, 9, 467), 0 },
+
+    /* bctr   */
+    { (unsigned) -1, 0x4e800420, 0 },
+
+    { 0, 0, 0 }
+  };
+
+static const struct ppc_insn_pattern ppc64_standard_linkage10[] =
+  {
+    /* std   %r2,0+40(%r1)    <optional> */
+    { insn_ds (-1, -1, -1, 0, 1), insn_ds (62, 2, 1, 40, 0), 1 },
+
+    /* paddi r12,<any> */
+    { prefix (-1, -1, 1, 0), prefix (2, 0, 1, 0), 0 },
+    { insn_d (-1, -1, -1, 0), insn_d (14, 12, 0, 0), 0 },
+
+    /* mtctr r12  <optional> */
+    { insn_xfx (-1, -1, -1, -1), insn_xfx (31, 12, 9, 467), 0 },
+
+    /* bctr   */
+    { (unsigned) -1, 0x4e800420, 0 },
+
+    { 0, 0, 0 }
+  };
+
+static const struct ppc_insn_pattern ppc64_standard_linkage11[] =
+  {
+    /* std   %r2,0+40(%r1)   <optional> */
+    { insn_ds (-1, -1, -1, 0, 1), insn_ds (62, 2, 1, 40, 0), 1 },
+
+    /* li %r11,0     <optional> */
+    { insn_d (-1, -1, -1, 0), insn_d (14, 11, 0, 0), 1 },
+
+    /* sldi  %r11,%r11,34   <eq to rldicr rx,ry,n, 63-n> <optional>  */
+    { insn_md (-1, -1, -1, 0, 0, 1), insn_md (30, 11, 11, 34, 63-34, 0), 1 },
+
+    /* paddi r12, <any> */
+    { prefix (-1, -1, 1, 0), prefix (2, 0, 1, 0), 0 },
+    { insn_d (-1, -1, -1, 0), insn_d (14, 12, 0, 0), 0 },
+
+    /* ldx   %r12,%r11,%r12  <optional> */
+    { (unsigned) -1, insn_x (31, 12, 11, 12, 21), 1 },
+
+    /* add   %r12,%r11,%r12  <optional> */
+    { (unsigned) -1, insn_xo (31, 12, 11, 12, 0, 0, 40), 1 },
+
+    /* mtctr r12   */
+    { insn_xfx (-1, -1, -1, -1), insn_xfx (31, 12, 9, 467), 0 },
+
+    /* bctr   */ // 13, 14, 15, 16
+    { (unsigned) -1, 0x4e800420, 0 },
+
+    { 0, 0, 0 }
+  };
+
+static const struct ppc_insn_pattern ppc64_standard_linkage12[] =
+  {
+    /* std   %r2,0+40(%r1)    <optional>  */
+    { insn_ds (-1, -1, -1, 0, 1), insn_ds (62, 2, 1, 40, 0), 1 },
+
+    /* lis %r11,xxx@ha <equivalent addis rx, 0, val> */
+    /* addis r12, r2, <any> */
+    { insn_d (-1, -1, -1, 0), insn_d (15, 12, 2, 0), 0 },
+
+    /* ori   %r11,%r11,xxx@l */
+    { insn_d (-1, -1, -1, 0), insn_d (24, 11, 11, 0), 0 },
+
+    /* sldi  %r11,%r11,34 <optional> */
+    { (unsigned) -1, insn_md (30, 11, 11, 34, 63-34, 0), 1 },
+
+    /*paddi r12,<any> */
+    { prefix (-1, -1, 1, 0), prefix (2, 0, 1, 0), 0 },
+    { insn_d (-1, -1, -1, 0), insn_d (14, 12, 0, 0), 0 },
+
+    /* sldi  %r11,%r11,34 <optional> */
+    { (unsigned) -1, insn_md (30, 11, 11, 34, 63-34, 0), 1 },
+
+    /* ldx   %r12,%r11,%r12 <optional> */
+    { (unsigned) -1, insn_x (31, 12, 11, 12, 21), 1 },
+
+    /* add   %r12,%r11,%r12 <optional> */
+    { (unsigned) -1, insn_xo (31, 12, 11, 12, 0, 0, 40), 1 },
+
+    /* mtctr r12  */
+    { insn_xfx (-1, -1, -1, -1), insn_xfx (31, 12, 9, 467), 0 },
+
+    /* bctr  */ // 17, 18, 19, 20
+    { (unsigned) -1, 0x4e800420, 0 },
+
+    { 0, 0, 0 }
+  };
+
 /* When the dynamic linker is doing lazy symbol resolution, the first
    call to a function in another object will go like this:
 
@@ -398,7 +546,7 @@ static const struct ppc_insn_pattern ppc64_standard_linkage8[] =
    dynamic linker lazy symbol resolution stubs.)  */
 
 static CORE_ADDR
-ppc64_standard_linkage1_target (struct frame_info *frame, unsigned int *insn)
+ppc64_standard_linkage1_target (frame_info_ptr frame, unsigned int *insn)
 {
   CORE_ADDR plt_off = ((ppc_insn_d_field (insn[0]) << 16)
 		       + ppc_insn_ds_field (insn[2]));
@@ -407,7 +555,7 @@ ppc64_standard_linkage1_target (struct frame_info *frame, unsigned int *insn)
 }
 
 static CORE_ADDR
-ppc64_standard_linkage2_target (struct frame_info *frame, unsigned int *insn)
+ppc64_standard_linkage2_target (frame_info_ptr frame, unsigned int *insn)
 {
   CORE_ADDR plt_off = ((ppc_insn_d_field (insn[1]) << 16)
 		       + ppc_insn_ds_field (insn[3]));
@@ -416,7 +564,7 @@ ppc64_standard_linkage2_target (struct frame_info *frame, unsigned int *insn)
 }
 
 static CORE_ADDR
-ppc64_standard_linkage3_target (struct frame_info *frame, unsigned int *insn)
+ppc64_standard_linkage3_target (frame_info_ptr frame, unsigned int *insn)
 {
   CORE_ADDR plt_off = ppc_insn_ds_field (insn[1]);
 
@@ -424,12 +572,35 @@ ppc64_standard_linkage3_target (struct frame_info *frame, unsigned int *insn)
 }
 
 static CORE_ADDR
-ppc64_standard_linkage4_target (struct frame_info *frame, unsigned int *insn)
+ppc64_standard_linkage4_target (frame_info_ptr frame, unsigned int *insn)
 {
   CORE_ADDR plt_off = ((ppc_insn_d_field (insn[1]) << 16)
 		       + ppc_insn_ds_field (insn[2]));
 
   return ppc64_plt_entry_point (frame, plt_off);
+}
+
+static CORE_ADDR
+ppc64_pcrel_linkage1_target (frame_info_ptr frame, unsigned int *insn,
+			     CORE_ADDR pc)
+{
+  /* insn[0] is for the std instruction.  */
+  CORE_ADDR plt_off = ppc_insn_prefix_dform (insn[1], insn[2]);
+
+  return ppc64_plt_pcrel_entry_point (frame, plt_off, pc);
+}
+
+static CORE_ADDR
+ppc64_pcrel_linkage2_target (frame_info_ptr frame, unsigned int *insn,
+			     CORE_ADDR pc)
+{
+  CORE_ADDR plt_off;
+
+  /* insn[0] is for the std instruction.
+     insn[1] is for the  li r11 instruction  */
+  plt_off = ppc_insn_prefix_dform (insn[2], insn[3]);
+
+  return ppc64_plt_pcrel_entry_point (frame, plt_off, pc);
 }
 
 
@@ -440,17 +611,22 @@ ppc64_standard_linkage4_target (struct frame_info *frame, unsigned int *insn)
    check whether we are in the middle of a PLT stub.  */
 
 static CORE_ADDR
-ppc64_skip_trampoline_code_1 (struct frame_info *frame, CORE_ADDR pc)
+ppc64_skip_trampoline_code_1 (frame_info_ptr frame, CORE_ADDR pc)
 {
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
   unsigned int insns[MAX (MAX (MAX (ARRAY_SIZE (ppc64_standard_linkage1),
 				    ARRAY_SIZE (ppc64_standard_linkage2)),
 			       MAX (ARRAY_SIZE (ppc64_standard_linkage3),
 				    ARRAY_SIZE (ppc64_standard_linkage4))),
-			  MAX (MAX (ARRAY_SIZE (ppc64_standard_linkage5),
+		      MAX(MAX (MAX (ARRAY_SIZE (ppc64_standard_linkage5),
 				    ARRAY_SIZE (ppc64_standard_linkage6)),
 			       MAX (ARRAY_SIZE (ppc64_standard_linkage7),
-				    ARRAY_SIZE (ppc64_standard_linkage8))))
+				    ARRAY_SIZE (ppc64_standard_linkage8))),
+		          MAX (MAX (ARRAY_SIZE (ppc64_standard_linkage9),
+				    ARRAY_SIZE (ppc64_standard_linkage10)),
+		               MAX (ARRAY_SIZE (ppc64_standard_linkage11),
+				    ARRAY_SIZE (ppc64_standard_linkage12)))))
+
 		     - 1];
   CORE_ADDR target;
   int scan_limit, i;
@@ -463,7 +639,19 @@ ppc64_skip_trampoline_code_1 (struct frame_info *frame, CORE_ADDR pc)
 
   for (i = 0; i < scan_limit; i++)
     {
-      if (i < ARRAY_SIZE (ppc64_standard_linkage8) - 1
+      if (i < ARRAY_SIZE (ppc64_standard_linkage12) - 1
+	  && ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage12, insns))
+	pc = ppc64_pcrel_linkage1_target (frame, insns, pc);
+      else if (i < ARRAY_SIZE (ppc64_standard_linkage11) - 1
+	  && ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage11, insns))
+	pc = ppc64_pcrel_linkage2_target (frame, insns, pc);
+      else if (i < ARRAY_SIZE (ppc64_standard_linkage10) - 1
+	  && ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage10, insns))
+	pc = ppc64_pcrel_linkage1_target (frame, insns, pc);
+      else if (i < ARRAY_SIZE (ppc64_standard_linkage9) - 1
+	  && ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage9, insns))
+	pc = ppc64_pcrel_linkage1_target (frame, insns, pc);
+      else if (i < ARRAY_SIZE (ppc64_standard_linkage8) - 1
 	  && ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage8, insns))
 	pc = ppc64_standard_linkage4_target (frame, insns);
       else if (i < ARRAY_SIZE (ppc64_standard_linkage7) - 1
@@ -506,8 +694,8 @@ ppc64_skip_trampoline_code_1 (struct frame_info *frame, CORE_ADDR pc)
 	}
 
       /* The PLT descriptor will either point to the already resolved target
-         address, or else to a glink stub.  As the latter carry synthetic @plt
-         symbols, find_solib_trampoline_target should be able to resolve them.  */
+	 address, or else to a glink stub.  As the latter carry synthetic @plt
+	 symbols, find_solib_trampoline_target should be able to resolve them.  */
       target = find_solib_trampoline_target (frame, pc);
       return target ? target : pc;
   }
@@ -519,7 +707,7 @@ ppc64_skip_trampoline_code_1 (struct frame_info *frame, CORE_ADDR pc)
    ppc_elfv2_skip_entrypoint.  */
 
 CORE_ADDR
-ppc64_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
+ppc64_skip_trampoline_code (frame_info_ptr frame, CORE_ADDR pc)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
 
@@ -561,7 +749,7 @@ ppc64_convert_from_func_ptr_addr (struct gdbarch *gdbarch,
 					struct target_ops *targ)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  struct target_section *s = target_section_by_addr (targ, addr);
+  const struct target_section *s = target_section_by_addr (targ, addr);
 
   /* Check if ADDR points to a function descriptor.  */
   if (s && strcmp (s->the_bfd_section->name, ".opd") == 0)
@@ -610,6 +798,6 @@ ppc64_elf_make_msymbol_special (asymbol *sym, struct minimal_symbol *msym)
   if ((sym->flags & BSF_SYNTHETIC) != 0 && sym->udata.p != NULL)
     {
       elf_symbol_type *elf_sym = (elf_symbol_type *) sym->udata.p;
-      SET_MSYMBOL_SIZE (msym, elf_sym->internal_elf_sym.st_size);
+      msym->set_size (elf_sym->internal_elf_sym.st_size);
     }
 }

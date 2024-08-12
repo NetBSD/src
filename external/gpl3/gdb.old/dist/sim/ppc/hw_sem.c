@@ -23,14 +23,7 @@
 
 #include "device_table.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
-
 #include <sys/ipc.h>
 #include <sys/sem.h>
 
@@ -127,7 +120,7 @@ hw_sem_init_data(device *me)
     error("sem_init_data() required value property is missing\n");
 
   sem->key = (key_t) device_find_integer_property(me, "key");
-  DTRACE(sem, ("semaphore key (%d)\n", sem->key) );
+  DTRACE(sem, ("semaphore key (%jd)\n", (intmax_t)sem->key) );
 
   sem->initial = (int) device_find_integer_property(me, "value");
   DTRACE(sem, ("semaphore initial value (%d)\n", sem->initial) );
@@ -194,7 +187,7 @@ hw_sem_io_read_buffer(device *me,
   hw_sem_device *sem = (hw_sem_device*)device_data(me);
   struct sembuf sb;
   int status;
-  unsigned32 u32;
+  uint32_t u32;
   union semun help;
 
   /* do we need to worry about out of range addresses? */

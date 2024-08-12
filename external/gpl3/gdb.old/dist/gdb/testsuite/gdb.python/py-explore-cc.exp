@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2020 Free Software Foundation, Inc.
+# Copyright (C) 2012-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -66,7 +66,7 @@ gdb_test_multiple "explore b" "" {
         pass "explore b"
         gdb_test_multiple "0" "explore_base_class_A" {
             -re "The value of 'b\.A' is a struct/class of type 'A' with no fields\." {
-                pass "explore_base_class_A"
+                pass "explore_base_class_A, exploring b"
                 gdb_test_multiple "\0" "return_to_b_from_A" {
                     -re ".*$b_desc.*Enter the field number of choice:.*" {
                         pass "return_to_b_from_A"
@@ -85,7 +85,7 @@ gdb_test_multiple "explore b" "" {
                                 pass "explore_field_c_of_b"
                                 gdb_test_multiple "\0" "return_to_b_from_c" {
                                     -re "$b_desc.*Enter the field number of choice:.*" {
-                                        pass "return_to_b_from_i"
+                                        pass "return_to_b_from_c"
                                     }
                                 }
                             }
@@ -107,7 +107,7 @@ gdb_test_multiple "explore B" "" {
         pass "explore B"
         gdb_test_multiple "0" "explore_base_class_A" {
             -re "base class 'A' of 'B' is a struct/class of type 'A' with no fields\." {
-                pass "explore_base_class_A"
+                pass "explore_base_class_A, exploring B"
                 gdb_test_multiple "\0" "return_to_B" {
                     -re "$B_desc.*Enter the field number of choice:.*" {
                         pass "return_to_B"
@@ -116,7 +116,7 @@ gdb_test_multiple "explore B" "" {
                                 pass "explore_field_i_of_B"
                                 gdb_test_multiple "\0" "return_to_B_from_i" {
                                     -re "$B_desc.*Enter the field number of choice:.*" {
-                                        pass "return_to_B_from_i"
+                                        pass "return_to_B_from_i, exploring B"
                                     }
                                 }
                             }

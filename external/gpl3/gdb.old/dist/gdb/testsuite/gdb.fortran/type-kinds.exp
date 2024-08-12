@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -56,6 +56,7 @@ proc test_basic_parsing_of_type_kinds {} {
     test_cast_1_to_type_kind "logical" "8" "\\.TRUE\\." "8"
 
     test_cast_1_to_type_kind "integer" "" "1" "4"
+    test_cast_1_to_type_kind "integer" "1" "1" "1"
     test_cast_1_to_type_kind "integer" "2" "1" "2"
     test_cast_1_to_type_kind "integer" "4" "1" "4"
     test_cast_1_to_type_kind "integer" "8" "1" "8"
@@ -92,6 +93,7 @@ proc test_old_star_type_sizes {} {
     gdb_test "p ((logical*4) 1)" " = \\.TRUE\\."
     gdb_test "p ((logical*8) 1)" " = \\.TRUE\\."
 
+    gdb_test "p ((integer*1) 1)" " = 1"
     gdb_test "p ((integer*2) 1)" " = 1"
     gdb_test "p ((integer*4) 1)" " = 1"
     gdb_test "p ((integer*8) 1)" " = 1"
@@ -99,7 +101,7 @@ proc test_old_star_type_sizes {} {
 
 clean_restart
 
-if [set_lang_fortran] then {
+if {[set_lang_fortran]} {
     test_basic_parsing_of_type_kinds
     test_parsing_invalid_type_kinds
     test_old_star_type_sizes

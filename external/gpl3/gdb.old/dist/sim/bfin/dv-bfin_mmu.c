@@ -1,6 +1,6 @@
 /* Blackfin Memory Management Unit (MMU) model.
 
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2023 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -18,7 +18,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include "sim-main.h"
 #include "sim-options.h"
@@ -108,7 +109,7 @@ bfin_mmu_io_write_buffer (struct hw *me, const void *source,
   value = dv_load_4 (source);
 
   mmr_off = addr - mmu->base;
-  valuep = (void *)((unsigned long)mmu + mmr_base() + mmr_off);
+  valuep = (void *)((uintptr_t)mmu + mmr_base() + mmr_off);
 
   HW_TRACE_WRITE ();
 
@@ -156,9 +157,9 @@ bfin_mmu_io_write_buffer (struct hw *me, const void *source,
 	    hw_abort (me, "DTEST_COMMAND bits undefined");
 
 	  if (value & TEST_WRITE)
-	    sim_write (hw_system (me), addr, (void *)mmu->dtest_data, 8);
+	    sim_write (hw_system (me), addr, mmu->dtest_data, 8);
 	  else
-	    sim_read (hw_system (me), addr, (void *)mmu->dtest_data, 8);
+	    sim_read (hw_system (me), addr, mmu->dtest_data, 8);
 	}
       break;
     default:
@@ -182,7 +183,7 @@ bfin_mmu_io_read_buffer (struct hw *me, void *dest,
     return 0;
 
   mmr_off = addr - mmu->base;
-  valuep = (void *)((unsigned long)mmu + mmr_base() + mmr_off);
+  valuep = (void *)((uintptr_t)mmu + mmr_base() + mmr_off);
 
   HW_TRACE_READ ();
 
@@ -277,7 +278,7 @@ enum {
   OPTION_MMU_SKIP_TABLES = OPTION_START,
 };
 
-const OPTION bfin_mmu_options[] =
+static const OPTION bfin_mmu_options[] =
 {
   { {"mmu-skip-cplbs", no_argument, NULL, OPTION_MMU_SKIP_TABLES },
       '\0', NULL, "Skip parsing of CPLB tables (big speed increase)",
@@ -300,6 +301,16 @@ bfin_mmu_option_handler (SIM_DESC sd, sim_cpu *current_cpu, int opt,
       sim_io_eprintf (sd, "Unknown Blackfin MMU option %d\n", opt);
       return SIM_RC_FAIL;
     }
+}
+
+/* Provide a prototype to silence -Wmissing-prototypes.  */
+extern MODULE_INIT_FN sim_install_bfin_mmu;
+
+SIM_RC
+sim_install_bfin_mmu (SIM_DESC sd)
+{
+  SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
+  return sim_add_option_table (sd, NULL, bfin_mmu_options);
 }
 
 #define MMU_STATE(cpu) DV_STATE_CACHED (cpu, mmu)

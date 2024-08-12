@@ -1,5 +1,5 @@
 # Test Framework Driver for GDB driving a builtin simulator
-#   Copyright 1994-2020 Free Software Foundation, Inc.
+#   Copyright 1994-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,26 +48,26 @@ proc gdb_load { arg } {
     global gdb_prompt
 
     if { $arg != "" } {
-	if [gdb_file_cmd $arg] then { return -1 }
+	if {[gdb_file_cmd $arg]} { return -1 }
     }
 
-    if [gdb_target_sim] then { return -1 }
+    if {[gdb_target_sim]} { return -1 }
 
     send_gdb "load\n"
     gdb_expect 2400 {
 	-re ".*$gdb_prompt $" {
-	    if $verbose>1 then {
+	    if {$verbose > 1} {
 		send_user "Loaded $arg into $GDB\n"
 	    }
 	    return 0
 	}
 	-re "$gdb_prompt $"     {
-	    if $verbose>1 then {
+	    if {$verbose > 1} {
 		perror "GDB couldn't load."
 	    }
 	}
 	timeout {
-	    if $verbose>1 then {
+	    if {$verbose > 1} {
 		perror "Timed out trying to load $arg."
 	    }
 	}

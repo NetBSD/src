@@ -1,6 +1,6 @@
 /* Branch trace support for GDB, the GNU debugger.
 
-   Copyright (C) 2013-2020 Free Software Foundation, Inc.
+   Copyright (C) 2013-2023 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>
 
@@ -62,8 +62,8 @@ static void btrace_add_pc (struct thread_info *tp);
   do									\
     {									\
       if (record_debug != 0)						\
-        fprintf_unfiltered (gdb_stdlog,					\
-			    "[btrace] " msg "\n", ##args);		\
+	gdb_printf (gdb_stdlog,						\
+		    "[btrace] " msg "\n", ##args);			\
     }									\
   while (0)
 
@@ -102,7 +102,7 @@ ftrace_print_filename (const struct btrace_function *bfun)
   sym = bfun->sym;
 
   if (sym != NULL)
-    filename = symtab_to_filename_for_display (symbol_symtab (sym));
+    filename = symtab_to_filename_for_display (sym->symtab ());
   else
     filename = "<unknown>";
 
@@ -210,8 +210,8 @@ ftrace_function_switched (const struct btrace_function *bfun,
 	return 1;
 
       /* Check the location of those functions, as well.  */
-      bfname = symtab_to_fullname (symbol_symtab (sym));
-      fname = symtab_to_fullname (symbol_symtab (fun));
+      bfname = symtab_to_fullname (sym->symtab ());
+      fname = symtab_to_fullname (fun->symtab ());
       if (filename_cmp (fname, bfname) != 0)
 	return 1;
     }
@@ -265,7 +265,7 @@ ftrace_new_function (struct btrace_thread_info *btinfo,
 static void
 ftrace_update_caller (struct btrace_function *bfun,
 		      struct btrace_function *caller,
-		      enum btrace_function_flag flags)
+		      btrace_function_flags flags)
 {
   if (bfun->up != 0)
     ftrace_debug (bfun, "updating caller");
@@ -283,7 +283,7 @@ static void
 ftrace_fixup_caller (struct btrace_thread_info *btinfo,
 		     struct btrace_function *bfun,
 		     struct btrace_function *caller,
-		     enum btrace_function_flag flags)
+		     btrace_function_flags flags)
 {
   unsigned int prev, next;
 
@@ -1052,6 +1052,12 @@ btrace_compute_ftrace_bts (struct thread_info *tp,
 			   const struct btrace_data_bts *btrace,
 			   std::vector<unsigned int> &gaps)
 {
+ /* We may end up doing target calls that require the current thread to be TP,
+    for example reading memory through gdb_insn_length.  Make sure TP is the
+    current thread.  */
+  scoped_restore_current_thread restore_thread;
+  switch_to_thread (tp);
+
   struct btrace_thread_info *btinfo;
   struct gdbarch *gdbarch;
   unsigned int blk;
@@ -1222,6 +1228,9 @@ handle_pt_insn_events (struct btrace_thread_info *btinfo,
 	  break;
 
 	case ptev_enabled:
+	  if (event.status_update != 0)
+	    break;
+
 	  if (event.variant.enabled.resumed == 0 && !btinfo->functions.empty ())
 	    {
 	      bfun = ftrace_new_gap (btinfo, BDE_PT_DISABLED, gaps);
@@ -1424,6 +1433,12 @@ btrace_compute_ftrace_pt (struct thread_info *tp,
 			  const struct btrace_data_pt *btrace,
 			  std::vector<unsigned int> &gaps)
 {
+ /* We may end up doing target calls that require the current thread to be TP,
+    for example reading memory through btrace_pt_readmem_callback.  Make sure
+    TP is the current thread.  */
+  scoped_restore_current_thread restore_thread;
+  switch_to_thread (tp);
+
   struct btrace_thread_info *btinfo;
   struct pt_insn_decoder *decoder;
   struct pt_config config;
@@ -1497,7 +1512,7 @@ btrace_compute_ftrace_pt (struct thread_info *tp,
 			  const struct btrace_data_pt *btrace,
 			  std::vector<unsigned int> &gaps)
 {
-  internal_error (__FILE__, __LINE__, _("Unexpected branch trace format."));
+  internal_error (_("Unexpected branch trace format."));
 }
 
 #endif /* defined (HAVE_LIBIPT)  */
@@ -1533,7 +1548,7 @@ btrace_compute_ftrace_1 (struct thread_info *tp,
       return;
     }
 
-  internal_error (__FILE__, __LINE__, _("Unknown branch trace format."));
+  internal_error (_("Unknown branch trace format."));
 }
 
 static void
@@ -1601,9 +1616,9 @@ btrace_enable (struct thread_info *tp, const struct btrace_config *conf)
 #endif /* !defined (HAVE_LIBIPT) */
 
   DEBUG ("enable thread %s (%s)", print_thread_id (tp),
-	 target_pid_to_str (tp->ptid).c_str ());
+	 tp->ptid.to_string ().c_str ());
 
-  tp->btrace.target = target_enable_btrace (tp->ptid, conf);
+  tp->btrace.target = target_enable_btrace (tp, conf);
 
   if (tp->btrace.target == NULL)
     error (_("Failed to enable recording on thread %s (%s)."),
@@ -1656,7 +1671,7 @@ btrace_disable (struct thread_info *tp)
 	   print_thread_id (tp), target_pid_to_str (tp->ptid).c_str ());
 
   DEBUG ("disable thread %s (%s)", print_thread_id (tp),
-	 target_pid_to_str (tp->ptid).c_str ());
+	 tp->ptid.to_string ().c_str ());
 
   target_disable_btrace (btp->target);
   btp->target = NULL;
@@ -1675,7 +1690,7 @@ btrace_teardown (struct thread_info *tp)
     return;
 
   DEBUG ("teardown thread %s (%s)", print_thread_id (tp),
-	 target_pid_to_str (tp->ptid).c_str ());
+	 tp->ptid.to_string ().c_str ());
 
   target_teardown_btrace (btp->target);
   btp->target = NULL;
@@ -1793,7 +1808,7 @@ btrace_stitch_trace (struct btrace_data *btrace, struct thread_info *tp)
       return -1;
     }
 
-  internal_error (__FILE__, __LINE__, _("Unknown branch trace format."));
+  internal_error (_("Unknown branch trace format."));
 }
 
 /* Clear the branch trace histories in BTINFO.  */
@@ -1897,7 +1912,7 @@ btrace_fetch (struct thread_info *tp, const struct btrace_cpu *cpu)
   int errcode;
 
   DEBUG ("fetch thread %s (%s)", print_thread_id (tp),
-	 target_pid_to_str (tp->ptid).c_str ());
+	 tp->ptid.to_string ().c_str ());
 
   btinfo = &tp->btrace;
   tinfo = btinfo->target;
@@ -1974,7 +1989,7 @@ btrace_clear (struct thread_info *tp)
   struct btrace_thread_info *btinfo;
 
   DEBUG ("clear thread %s (%s)", print_thread_id (tp),
-	 target_pid_to_str (tp->ptid).c_str ());
+	 tp->ptid.to_string ().c_str ());
 
   /* Make sure btrace frames that may hold a pointer into the branch
      trace data are destroyed.  */
@@ -2837,122 +2852,122 @@ pt_print_packet (const struct pt_packet *packet)
   switch (packet->type)
     {
     default:
-      printf_unfiltered (("[??: %x]"), packet->type);
+      gdb_printf (("[??: %x]"), packet->type);
       break;
 
     case ppt_psb:
-      printf_unfiltered (("psb"));
+      gdb_printf (("psb"));
       break;
 
     case ppt_psbend:
-      printf_unfiltered (("psbend"));
+      gdb_printf (("psbend"));
       break;
 
     case ppt_pad:
-      printf_unfiltered (("pad"));
+      gdb_printf (("pad"));
       break;
 
     case ppt_tip:
-      printf_unfiltered (("tip %u: 0x%" PRIx64 ""),
-			 packet->payload.ip.ipc,
-			 packet->payload.ip.ip);
+      gdb_printf (("tip %u: 0x%" PRIx64 ""),
+		  packet->payload.ip.ipc,
+		  packet->payload.ip.ip);
       break;
 
     case ppt_tip_pge:
-      printf_unfiltered (("tip.pge %u: 0x%" PRIx64 ""),
-			 packet->payload.ip.ipc,
-			 packet->payload.ip.ip);
+      gdb_printf (("tip.pge %u: 0x%" PRIx64 ""),
+		  packet->payload.ip.ipc,
+		  packet->payload.ip.ip);
       break;
 
     case ppt_tip_pgd:
-      printf_unfiltered (("tip.pgd %u: 0x%" PRIx64 ""),
-			 packet->payload.ip.ipc,
-			 packet->payload.ip.ip);
+      gdb_printf (("tip.pgd %u: 0x%" PRIx64 ""),
+		  packet->payload.ip.ipc,
+		  packet->payload.ip.ip);
       break;
 
     case ppt_fup:
-      printf_unfiltered (("fup %u: 0x%" PRIx64 ""),
-			 packet->payload.ip.ipc,
-			 packet->payload.ip.ip);
+      gdb_printf (("fup %u: 0x%" PRIx64 ""),
+		  packet->payload.ip.ipc,
+		  packet->payload.ip.ip);
       break;
 
     case ppt_tnt_8:
-      printf_unfiltered (("tnt-8 %u: 0x%" PRIx64 ""),
-			 packet->payload.tnt.bit_size,
-			 packet->payload.tnt.payload);
+      gdb_printf (("tnt-8 %u: 0x%" PRIx64 ""),
+		  packet->payload.tnt.bit_size,
+		  packet->payload.tnt.payload);
       break;
 
     case ppt_tnt_64:
-      printf_unfiltered (("tnt-64 %u: 0x%" PRIx64 ""),
-			 packet->payload.tnt.bit_size,
-			 packet->payload.tnt.payload);
+      gdb_printf (("tnt-64 %u: 0x%" PRIx64 ""),
+		  packet->payload.tnt.bit_size,
+		  packet->payload.tnt.payload);
       break;
 
     case ppt_pip:
-      printf_unfiltered (("pip %" PRIx64 "%s"), packet->payload.pip.cr3,
-			 packet->payload.pip.nr ? (" nr") : (""));
+      gdb_printf (("pip %" PRIx64 "%s"), packet->payload.pip.cr3,
+		  packet->payload.pip.nr ? (" nr") : (""));
       break;
 
     case ppt_tsc:
-      printf_unfiltered (("tsc %" PRIx64 ""), packet->payload.tsc.tsc);
+      gdb_printf (("tsc %" PRIx64 ""), packet->payload.tsc.tsc);
       break;
 
     case ppt_cbr:
-      printf_unfiltered (("cbr %u"), packet->payload.cbr.ratio);
+      gdb_printf (("cbr %u"), packet->payload.cbr.ratio);
       break;
 
     case ppt_mode:
       switch (packet->payload.mode.leaf)
 	{
 	default:
-	  printf_unfiltered (("mode %u"), packet->payload.mode.leaf);
+	  gdb_printf (("mode %u"), packet->payload.mode.leaf);
 	  break;
 
 	case pt_mol_exec:
-	  printf_unfiltered (("mode.exec%s%s"),
-			     packet->payload.mode.bits.exec.csl
-			     ? (" cs.l") : (""),
-			     packet->payload.mode.bits.exec.csd
-			     ? (" cs.d") : (""));
+	  gdb_printf (("mode.exec%s%s"),
+		      packet->payload.mode.bits.exec.csl
+		      ? (" cs.l") : (""),
+		      packet->payload.mode.bits.exec.csd
+		      ? (" cs.d") : (""));
 	  break;
 
 	case pt_mol_tsx:
-	  printf_unfiltered (("mode.tsx%s%s"),
-			     packet->payload.mode.bits.tsx.intx
-			     ? (" intx") : (""),
-			     packet->payload.mode.bits.tsx.abrt
-			     ? (" abrt") : (""));
+	  gdb_printf (("mode.tsx%s%s"),
+		      packet->payload.mode.bits.tsx.intx
+		      ? (" intx") : (""),
+		      packet->payload.mode.bits.tsx.abrt
+		      ? (" abrt") : (""));
 	  break;
 	}
       break;
 
     case ppt_ovf:
-      printf_unfiltered (("ovf"));
+      gdb_printf (("ovf"));
       break;
 
     case ppt_stop:
-      printf_unfiltered (("stop"));
+      gdb_printf (("stop"));
       break;
 
     case ppt_vmcs:
-      printf_unfiltered (("vmcs %" PRIx64 ""), packet->payload.vmcs.base);
+      gdb_printf (("vmcs %" PRIx64 ""), packet->payload.vmcs.base);
       break;
 
     case ppt_tma:
-      printf_unfiltered (("tma %x %x"), packet->payload.tma.ctc,
-			 packet->payload.tma.fc);
+      gdb_printf (("tma %x %x"), packet->payload.tma.ctc,
+		  packet->payload.tma.fc);
       break;
 
     case ppt_mtc:
-      printf_unfiltered (("mtc %x"), packet->payload.mtc.ctc);
+      gdb_printf (("mtc %x"), packet->payload.mtc.ctc);
       break;
 
     case ppt_cyc:
-      printf_unfiltered (("cyc %" PRIx64 ""), packet->payload.cyc.value);
+      gdb_printf (("cyc %" PRIx64 ""), packet->payload.cyc.value);
       break;
 
     case ppt_mnt:
-      printf_unfiltered (("mnt %" PRIx64 ""), packet->payload.mnt.payload);
+      gdb_printf (("mnt %" PRIx64 ""), packet->payload.mnt.payload);
       break;
     }
 }
@@ -3134,9 +3149,9 @@ btrace_maint_print_packets (struct btrace_thread_info *btinfo,
 	  {
 	    const btrace_block &block = blocks.at (blk);
 
-	    printf_unfiltered ("%u\tbegin: %s, end: %s\n", blk,
-			       core_addr_to_string_nz (block.begin),
-			       core_addr_to_string_nz (block.end));
+	    gdb_printf ("%u\tbegin: %s, end: %s\n", blk,
+			core_addr_to_string_nz (block.begin),
+			core_addr_to_string_nz (block.end));
 	  }
 
 	btinfo->maint.variant.bts.packet_history.begin = begin;
@@ -3155,15 +3170,15 @@ btrace_maint_print_packets (struct btrace_thread_info *btinfo,
 	  {
 	    const struct btrace_pt_packet &packet = packets.at (pkt);
 
-	    printf_unfiltered ("%u\t", pkt);
-	    printf_unfiltered ("0x%" PRIx64 "\t", packet.offset);
+	    gdb_printf ("%u\t", pkt);
+	    gdb_printf ("0x%" PRIx64 "\t", packet.offset);
 
 	    if (packet.errcode == pte_ok)
 	      pt_print_packet (&packet.packet);
 	    else
-	      printf_unfiltered ("[error: %s]", pt_errstr (packet.errcode));
+	      gdb_printf ("[error: %s]", pt_errstr (packet.errcode));
 
-	    printf_unfiltered ("\n");
+	    gdb_printf ("\n");
 	  }
 
 	btinfo->maint.variant.pt.packet_history.begin = begin;
@@ -3241,7 +3256,7 @@ maint_btrace_packet_history_cmd (const char *arg, int from_tty)
   btrace_maint_update_packets (btinfo, &begin, &end, &from, &to);
   if (begin == end)
     {
-      printf_unfiltered (_("No trace.\n"));
+      gdb_printf (_("No trace.\n"));
       return;
     }
 
@@ -3383,8 +3398,8 @@ maint_info_btrace_cmd (const char *args, int from_tty)
   if (conf == NULL)
     error (_("No btrace configuration."));
 
-  printf_unfiltered (_("Format: %s.\n"),
-		     btrace_format_string (conf->format));
+  gdb_printf (_("Format: %s.\n"),
+	      btrace_format_string (conf->format));
 
   switch (conf->format)
     {
@@ -3392,8 +3407,8 @@ maint_info_btrace_cmd (const char *args, int from_tty)
       break;
 
     case BTRACE_FORMAT_BTS:
-      printf_unfiltered (_("Number of packets: %zu.\n"),
-			 btinfo->data.variant.bts.blocks->size ());
+      gdb_printf (_("Number of packets: %zu.\n"),
+		  btinfo->data.variant.bts.blocks->size ());
       break;
 
 #if defined (HAVE_LIBIPT)
@@ -3402,14 +3417,14 @@ maint_info_btrace_cmd (const char *args, int from_tty)
 	struct pt_version version;
 
 	version = pt_library_version ();
-	printf_unfiltered (_("Version: %u.%u.%u%s.\n"), version.major,
-			   version.minor, version.build,
-			   version.ext != NULL ? version.ext : "");
+	gdb_printf (_("Version: %u.%u.%u%s.\n"), version.major,
+		    version.minor, version.build,
+		    version.ext != NULL ? version.ext : "");
 
 	btrace_maint_update_pt_packets (btinfo);
-	printf_unfiltered (_("Number of packets: %zu.\n"),
-			   ((btinfo->maint.variant.pt.packets == nullptr)
-			    ? 0 : btinfo->maint.variant.pt.packets->size ()));
+	gdb_printf (_("Number of packets: %zu.\n"),
+		    ((btinfo->maint.variant.pt.packets == nullptr)
+		     ? 0 : btinfo->maint.variant.pt.packets->size ()));
       }
       break;
 #endif /* defined (HAVE_LIBIPT)  */
@@ -3423,7 +3438,7 @@ show_maint_btrace_pt_skip_pad  (struct ui_file *file, int from_tty,
 				  struct cmd_list_element *c,
 				  const char *value)
 {
-  fprintf_filtered (file, _("Skip PAD packets is %s.\n"), value);
+  gdb_printf (file, _("Skip PAD packets is %s.\n"), value);
 }
 
 
@@ -3438,30 +3453,23 @@ _initialize_btrace ()
 
   add_basic_prefix_cmd ("btrace", class_maintenance,
 			_("Branch tracing maintenance commands."),
-			&maint_btrace_cmdlist, "maintenance btrace ",
-			0, &maintenancelist);
+			&maint_btrace_cmdlist, 0, &maintenancelist);
 
-  add_basic_prefix_cmd ("btrace", class_maintenance, _("\
-Set branch tracing specific variables."),
-			&maint_btrace_set_cmdlist, "maintenance set btrace ",
-			0, &maintenance_set_cmdlist);
+  add_setshow_prefix_cmd ("btrace", class_maintenance,
+			  _("Set branch tracing specific variables."),
+			  _("Show branch tracing specific variables."),
+			  &maint_btrace_set_cmdlist,
+			  &maint_btrace_show_cmdlist,
+			  &maintenance_set_cmdlist,
+			  &maintenance_show_cmdlist);
 
-  add_basic_prefix_cmd ("pt", class_maintenance, _("\
-Set Intel Processor Trace specific variables."),
-			&maint_btrace_pt_set_cmdlist,
-			"maintenance set btrace pt ",
-			0, &maint_btrace_set_cmdlist);
-
-  add_show_prefix_cmd ("btrace", class_maintenance, _("\
-Show branch tracing specific variables."),
-		       &maint_btrace_show_cmdlist, "maintenance show btrace ",
-		       0, &maintenance_show_cmdlist);
-
-  add_show_prefix_cmd ("pt", class_maintenance, _("\
-Show Intel Processor Trace specific variables."),
-		       &maint_btrace_pt_show_cmdlist,
-		       "maintenance show btrace pt ",
-		       0, &maint_btrace_show_cmdlist);
+  add_setshow_prefix_cmd ("pt", class_maintenance,
+			  _("Set Intel Processor Trace specific variables."),
+			  _("Show Intel Processor Trace specific variables."),
+			  &maint_btrace_pt_set_cmdlist,
+			  &maint_btrace_pt_show_cmdlist,
+			  &maint_btrace_set_cmdlist,
+			  &maint_btrace_show_cmdlist);
 
   add_setshow_boolean_cmd ("skip-pad", class_maintenance,
 			   &maint_btrace_pt_skip_pad, _("\

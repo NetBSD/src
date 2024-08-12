@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2020 Free Software Foundation, Inc.
+   Copyright 2014-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -139,3 +139,4 @@ func:
 	.long  0xfe766688    /* xscvdpqp v19,v12           */
 	.long  0xfdb92688    /* xscvqpsdz v13,v4           */
 	.long  0xfcf83ec8    /* xsiexpqp v7,v24,v7         */
+	.section	.note.GNU-stack,"",@progbits

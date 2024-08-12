@@ -6,13 +6,30 @@
 # [Presumubly because the target has been "popped" by then.  Odd though.]
 set sim_path "unknown-run"
 
+# Find the simulator arch.
+
+proc sim_arch {} {
+    global subdir
+    set arch "$subdir"
+    while { [file dirname $arch] != "." } {
+	set arch [file dirname $arch]
+    }
+    return "$arch"
+}
+
 # Initialize the testrun.
-# Required by dejagnu.
+#
+# Normally dejagnu will execute ${tool}_init automatically, but since we set
+# --tool '' (for a simpler testsuite/ layout), we have each test call this
+# itself.
 
 proc sim_init { args } {
+    global builddir
+    global subdir
     global sim_path
-    set sim_path [board_info target sim]
-    # Need to return an empty string (copied from GAS).
+
+    # Find the path to the simulator for executing.
+    set sim_path "$builddir/[sim_arch]/run"
 
     # As gross as it is, we unset the linker script specified by the target
     # board.  The simulator board file mips-sim.exp, sets ldscript to the
@@ -23,7 +40,112 @@ proc sim_init { args } {
     # all simulators.
     unset_currtarget_info ldscript
 
+    sim_init_toolchain
+
+    # Need to return an empty string.  This tells dejagnu to *not* re-run us
+    # with the exact test that we're about to run.
     return ""
+}
+
+# Initialize the toolchain settings for this port.
+# Needs to be called once per-port.
+
+proc sim_init_toolchain {} {
+    global objdir
+    global srcdir
+    global cpu_option
+    global cpu_option_sep
+    global ASFLAGS_FOR_TARGET
+    global CFLAGS_FOR_TARGET
+    global LDFLAGS_FOR_TARGET
+    global SIMFLAGS_FOR_TARGET
+    global global_as_works
+    global global_cpp_works
+    global global_cc_works
+    global global_cc_os
+    global CFLAGS_FOR_TARGET_init
+
+    # Reset all the toolchain settings.  This provides a clean slate when
+    # starting the next set of tests.
+    set ASFLAGS_FOR_TARGET ""
+    set CFLAGS_FOR_TARGET ""
+    set LDFLAGS_FOR_TARGET ""
+    set SIMFLAGS_FOR_TARGET ""
+    unset -nocomplain cpu_option cpu_option_sep
+
+    # The configure script created XXX_FOR_TARGET_$ARCH for us, so merge those
+    # into plain XXX_FOR_TARGET for this particular arch run.
+    global SIM_PRIMARY_TARGET
+    set arch [sim_arch]
+    set ARCH [string map {- _} [string toupper $arch]]
+    foreach var {AS LD CC} {
+	set var_for_target "${var}_FOR_TARGET"
+	global $var_for_target
+	set var_for_target_arch "${var_for_target}_${ARCH}"
+	global $var_for_target_arch
+
+	if [info exists $var_for_target_arch] {
+	    set $var_for_target [set $var_for_target_arch]
+	} else {
+	    set $var_for_target ""
+	}
+
+	if { [set $var_for_target] == "" } {
+	    # If building for the primary target, use the default settings.
+	    if { $arch == $SIM_PRIMARY_TARGET } {
+		unset -nocomplain $var_for_target
+	    } {
+		set $var_for_target false
+	    }
+	}
+    }
+
+    # See if an assembler is available.
+    if { $arch != $SIM_PRIMARY_TARGET && $AS_FOR_TARGET == "false" } {
+	verbose -log "Can't find a compatible assembler"
+	set global_as_works 0
+    } {
+	verbose -log "Found a compatible assembler"
+	set global_as_works 1
+    }
+
+    # Merge per-test settings if available.
+    if ![info exists CFLAGS_FOR_TARGET_init] {
+	set CFLAGS_FOR_TARGET_init ""
+    }
+    set cc_options [list "additional_flags=$CFLAGS_FOR_TARGET_init"]
+
+    # See if we have a preprocessor available.
+    set result [target_compile $srcdir/lib/compilercheck.c \
+		$objdir/compilercheck.x "preprocess" $cc_options]
+    set global_cpp_works [string equal "" "$result"]
+
+    # See if we have a compiler available, and which environment it's targeting.
+    set global_cc_os ""
+    set global_cc_works 0
+    if { $arch != $SIM_PRIMARY_TARGET && $CC_FOR_TARGET == "false" } {
+	verbose -log "Can't find a compatible C compiler"
+    } elseif { [target_compile $srcdir/lib/newlibcheck.c \
+		$objdir/compilercheck.x "executable" $cc_options] == "" } {
+	verbose -log "Found newlib C compiler"
+	set global_cc_works 1
+	set global_cc_os "newlib"
+    } elseif { [target_compile $srcdir/lib/linuxcheck.c \
+		$objdir/compilercheck.x "executable" $cc_options] == "" } {
+	verbose -log "Found Linux C compiler"
+	set global_cc_works 1
+	set global_cc_os "linux"
+    } elseif { [target_compile $srcdir/lib/compilercheck.c \
+		$objdir/compilercheck.x "executable" $cc_options] == "" } {
+	verbose -log "Found C compiler, but unknown OS"
+	set global_cc_works 1
+    } {
+	verbose -log "Can't execute C compiler"
+    }
+
+    file delete $objdir/compilercheck.x
+
+    unset CFLAGS_FOR_TARGET_init
 }
 
 # Print the version of the simulator being tested.
@@ -33,19 +155,6 @@ proc sim_version {} {
     global sim_path
     set version 0.5
     clone_output "$sim_path $version\n"
-}
-
-# Cover function to target_compile.
-# Copied from gdb_compile.
-
-proc sim_compile { source dest type options } {
-    set result [target_compile $source $dest $type $options]
-    regsub "\[\r\n\]*$" "$result" "" result
-    regsub "^\[\r\n\]*" "$result" "" result
-    if { $result != "" } {
-	clone_output "sim compile output: $result"
-    }
-    return $result
 }
 
 # Run a program on the simulator.
@@ -62,7 +171,7 @@ proc sim_compile { source dest type options } {
 #	timeout=val	- set the timeout to val for this run
 #
 # The result is a list of two elements.
-# The first is one of pass/fail/etc.
+# The first is the program's exit status (0/1/etc...).
 # The second is the program's output.
 #
 # This is different than the sim_load routine provided by
@@ -70,7 +179,7 @@ proc sim_compile { source dest type options } {
 # simulator (not the simulated program, the simulator) with sim_load.
 
 proc sim_run { prog sim_opts prog_opts redir options } {
-    global SIMFLAGS
+    global sim_path
 
     # Set the default value of the timeout.
     # FIXME: The timeout value we actually want is a function of
@@ -98,16 +207,7 @@ proc sim_run { prog sim_opts prog_opts redir options } {
 	
     verbose "testcase timeout is set to $testcase_timeout" 1
 
-    set sim [board_info target sim]
-    if [string equal "" $sim] {
-	# Special case the simulator.  These tests are designed to
-	# be run inside of the simulator, not on the native host.
-	# So if the sim target isn't set, default to the target run.
-	# These global variables come from generated site.exp.
-	global objdir
-	global arch
-	set sim "$objdir/../$arch/run"
-    }
+    set sim $sim_path
 
     if [is_remote host] {
 	set prog [remote_download host $prog]
@@ -136,12 +236,12 @@ proc sim_run { prog sim_opts prog_opts redir options } {
 	set cmd "$prog"
     }
 
-    send_log "$sim $always_opts $SIMFLAGS $sim_opts $cmd $prog_opts\n"
+    send_log "$sim $always_opts $sim_opts $cmd $prog_opts\n"
 
     if { "$redir" == "" } {
-	remote_spawn host "$sim $always_opts $SIMFLAGS $sim_opts $cmd $prog_opts"
+	remote_spawn host "$sim $always_opts $sim_opts $cmd $prog_opts"
     } else {
-	remote_spawn host "$sim $always_opts $SIMFLAGS $sim_opts $cmd $prog_opts $redir" writeonly
+	remote_spawn host "$sim $always_opts $sim_opts $cmd $prog_opts $redir" writeonly
     }
     set result [remote_wait host $testcase_timeout]
 
@@ -156,15 +256,42 @@ proc sim_run { prog sim_opts prog_opts redir options } {
 	remote_file host delete $prog
     }
 
-    # ??? Not sure the test for pass/fail is right.
-    # We just care that the simulator ran correctly, not whether the simulated
-    # program return 0 or non-zero from `main'.
-    set status fail
-    if { $return_code == 0 } {
-	set status pass
+    return [list $return_code $output]
+}
+
+# Support function for "#requires: simoption <xx>":
+# Looks in "run --help" output for <xx>, returns 1 iff <xx> is mentioned
+# there and looks like an option name, otherwise 0.
+
+proc sim_check_requires_simoption { optname } {
+    global sim_path
+    set testrun "$sim_path --help"
+    verbose -log "Checking for simoption `$optname'" 3
+    remote_spawn host $testrun
+    set result [remote_wait host 240]
+
+    set return_code [lindex $result 0]
+    if { $return_code != 0 } {
+	perror "Can't execute `$testrun' to check for `$optname'"
+	return 0
     }
 
-    return [list $status $output]
+    set output [lindex $result 1]
+    # Remove \r as for regular runs.
+    regsub -all -- "\r" $output "" output
+
+    # The option output format for --help for each line where an
+    # option name is mentioned, is assumed to be two space followed
+    # by the option name followed by a space or left square bracket,
+    # like in (optname=--foo): "  --foo " or "  --foo[this|that]".
+    # Beware not to match "  --foo-bar" nor "  --foobar".
+    if [string match "*\n  $optname\[\[ \]*" $output] {
+	verbose -log "Found `$optname'" 3
+	return 1
+    }
+    verbose -log "Did not find `$optname'" 3
+
+    return 0
 }
 
 # Run testcase NAME.
@@ -183,6 +310,8 @@ proc sim_run { prog sim_opts prog_opts redir options } {
 # cc[(mach-list)]: <compiler options>
 # sim[(mach-list)]: <simulator options>
 # progopts: <arguments to the program being simulated>
+# progos: OS required for the test
+# status: program exit status to treat as "pass"
 # output: program output pattern to match with string-match
 # xerror: program is expected to return with a "failure" exit code
 # xfail: <PRMS-opt> <target-triplets-where-test-fails>
@@ -196,14 +325,21 @@ proc sim_run { prog sim_opts prog_opts redir options } {
 # optional for xfail.
 
 proc run_sim_test { name requested_machs } {
-    global subdir srcdir
-    global SIMFLAGS
+    global subdir srcdir objdir
+    global sim_path
     global opts
     global cpu_option
-    global global_as_options
-    global global_ld_options
-    global global_cc_options
-    global global_sim_options
+    global cpu_option_sep
+    global SIMFLAGS_FOR_TARGET
+    global global_as_works
+    global global_cpp_works
+    global global_cc_works
+    global global_cc_os
+
+    if ![file exists $sim_path] {
+	unsupported "$name: missing simulator $sim_path"
+	return
+    }
 
     if [string match "*/*" $name] {
 	set file $name
@@ -222,7 +358,10 @@ proc run_sim_test { name requested_machs } {
     set opts(ld) ""
     set opts(cc) ""
     set opts(progopts) ""
+    set opts(progos) ""
+    set opts(requires) {}
     set opts(sim) ""
+    set opts(status) "0"
     set opts(output) ""
     set opts(mach) ""
     set opts(timeout) ""
@@ -231,17 +370,8 @@ proc run_sim_test { name requested_machs } {
     set opts(kfail) ""
     set seen_output 0
 
-    if ![info exists global_as_options] {
-        set global_as_options ""
-    }
-    if ![info exists global_ld_options] {
-        set global_ld_options ""
-    }
-    if ![info exists global_cc_options] {
-        set global_cc_options ""
-    }
-    if ![info exists global_sim_options] {
-        set global_sim_options ""
+    if ![info exists SIMFLAGS_FOR_TARGET] {
+	set SIMFLAGS_FOR_TARGET ""
     }
 
     # Clear any machine specific options specified in a previous test case
@@ -279,12 +409,25 @@ proc run_sim_test { name requested_machs } {
 	    set opt_val "$opts($opt_name) $opt_val"
 	}
 
+	# Similar for "requires", except we append a pair to a list, and
+	# that doesn't match the processing in the rest of the loop, so we
+	# "continue" early.
+	if { $opt_name == "requires" } {
+	    lappend opts($opt_name) [split $opt_val " "]
+	    continue
+	}
+
 	foreach m $opt_machs {
 	    set opts($opt_name,$m) $opt_val
 	}
 	if { "$opt_machs" == "" } {
 	    set opts($opt_name) $opt_val
 	}
+    }
+
+    if { $opts(progos) != "" && $opts(progos) != $global_cc_os } {
+	untested $subdir/$name
+	return
     }
 
     set testname $name
@@ -330,30 +473,69 @@ proc run_sim_test { name requested_machs } {
 
 	set as_options "$opts(as,$mach) -I$srcdir/$subdir"
 	if [info exists cpu_option] {
-	    set as_options "$as_options $cpu_option=$mach"
+	    if ![info exists cpu_option_sep] {
+		set sep "="
+	    } {
+		set sep $cpu_option_sep
+	    }
+	    set as_options "$as_options $cpu_option$sep$mach"
 	}
-	regsub {(^ *| +)([^ ]+)} "$as_options $global_as_options" { -Wa,\2} c_as_options
+	regsub {(^ *| +)([^ ]+)} "$as_options" { -Wa,\2} c_as_options
 
 	if ![info exists opts(ld,$mach)] {
 	    set opts(ld,$mach) $opts(ld)
 	}
-	regsub {(^ *| +)([^ ]+)} "$opts(ld,$mach) $global_ld_options" { -Wl,\2} c_ld_options
+	regsub {(^ *| +)([^ ]+)} "$opts(ld,$mach)" { -Wl,\2} c_ld_options
 
 	if ![info exists opts(cc,$mach)] {
 	    set opts(cc,$mach) $opts(cc)
 	}
 
+	foreach req $opts(requires) {
+	    set what [lindex $req 0]
+	    set what_opt [lindex $req 1]
+	    verbose -log "requires: <$what> <$what_opt>"
+	    if { [info procs sim_check_requires_${what}] != [list] } {
+		if ![sim_check_requires_${what} $what_opt] {
+		    untested $subdir/$name
+		    return
+		}
+	    } {
+		perror "unknown requirement `requires: $what' in file $file"
+		unresolved $subdir/$name
+		return
+	    }
+	}
+
 	if [string match "*.c" $sourcefile] {
-	    set comp_output [target_compile $sourcefile ${name}.x "executable" \
-		[list "incdir=$srcdir/$subdir" "additional_flags=$c_as_options $c_ld_options $opts(cc,$mach) $global_cc_options"]]
+	    # If we don't have a compiler available, skip tests :(.
+	    if { $global_cc_works == 0 } {
+		untested $subdir/$name
+		return
+	    }
+
+	    set comp_output [target_compile $sourcefile $objdir/${name}.x "executable" \
+		[list "incdir=$srcdir/$subdir" "additional_flags=$c_as_options $c_ld_options $opts(cc,$mach)"]]
 	    set method "compiling/linking"
 	} else {
+	    # If we don't have an assembler available, skip tests :(.
+	    if { $global_as_works == 0 } {
+		untested $subdir/$name
+		return
+	    }
+
 	    if [string match "*.S" $sourcefile] {
-		set comp_output [target_compile $sourcefile ${name}.o "object" \
+		# If we don't have a preprocessor available, skip tests :(.
+		if { $global_cpp_works == 0 } {
+		    untested $subdir/$name
+		    return
+		}
+
+		set comp_output [target_compile $sourcefile $objdir/${name}.o "object" \
 		    [list "incdir=$srcdir/$subdir" "additional_flags=$c_as_options"]]
 		set method "compiling"
 	    } else {
-		set comp_output [target_assemble $sourcefile ${name}.o "$as_options $global_as_options"]
+		set comp_output [target_assemble $sourcefile $objdir/${name}.o "$as_options"]
 		set method "assembling"
 	    }
 
@@ -363,7 +545,7 @@ proc run_sim_test { name requested_machs } {
 		continue
 	    }
 
-	    set comp_output [target_link ${name}.o ${name}.x "$opts(ld,$mach) $global_ld_options"]
+	    set comp_output [target_link $objdir/${name}.o $objdir/${name}.x "$opts(ld,$mach)"]
 	    set method "linking"
 	}
 
@@ -384,16 +566,24 @@ proc run_sim_test { name requested_machs } {
 	    set options "$options timeout=$opts(timeout)"
 	}
 
-	set result [sim_run ${name}.x "$opts(sim,$mach) $global_sim_options" "$opts(progopts)" "" "$options"]
-	set status [lindex $result 0]
+	set result [sim_run $objdir/${name}.x "$opts(sim,$mach) $SIMFLAGS_FOR_TARGET" "$opts(progopts)" "" "$options"]
+	set return_code [lindex $result 0]
 	set output [lindex $result 1]
+
+	set status fail
+	if { $return_code == 77 } {
+	    set status unsupported
+	} elseif { $return_code == $opts(status) } {
+	    set status pass
+	}
 
 	if { "$status" == "pass" } {
 	    if { "$opts(xerror)" == "no" } {
 		if [string match $opts(output) $output] {
 		    pass "$mach $testname"
-		    file delete ${name}.o ${name}.x
+		    file delete $objdir/${name}.o $objdir/${name}.x
 		} else {
+		    verbose -log "status:  $return_code" 3
 		    verbose -log "output:  $output" 3
 		    verbose -log "pattern: $opts(output)" 3
 		    fail "$mach $testname (execution)"
@@ -408,8 +598,9 @@ proc run_sim_test { name requested_machs } {
 	    } else {
 		if [string match $opts(output) $output] {
 		    pass "$mach $testname"
-		    file delete ${name}.o ${name}.x
+		    file delete $objdir/${name}.o $objdir/${name}.x
 		} else {
+		    verbose -log "status:  $return_code" 3
 		    verbose -log "output:  $output" 3
 		    verbose -log "pattern: $opts(output)" 3
 		    fail "$mach $testname (execution)"
@@ -445,6 +636,7 @@ proc slurp_options { file } {
 	if [regexp $pat $line xxx opt_name opt_machs opt_val] {
 	    # match!
 	    set opt_val [string map [list \
+		{$pwd} [pwd] \
 		{$srcdir} "$srcdir" \
 		{$subdir} "$subdir" \
 	    ] "$opt_val"]

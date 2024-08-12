@@ -1,6 +1,6 @@
 /* Exception (throw catch) mechanism, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,7 +31,4 @@ extern void exception_fprintf (struct ui_file *file,
 			       const char *prefix,
 			       ...) ATTRIBUTE_PRINTF (3, 4);
 
-/* Compare two exception objects for print equality.  */
-extern int exception_print_same (const struct gdb_exception &e1,
-				 const struct gdb_exception &e2);
 #endif

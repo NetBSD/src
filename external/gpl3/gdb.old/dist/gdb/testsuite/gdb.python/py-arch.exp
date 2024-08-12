@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ gdb_py_test_silent_cmd "python insn_list2 = arch.disassemble(pc, pc)" \
   "disassemble no count" 0
 gdb_py_test_silent_cmd "python insn_list3 = arch.disassemble(pc, count=1)" \
   "disassemble no end" 0
-gdb_py_test_silent_cmd "python insn_list4 = arch.disassemble(pc)" \
+gdb_py_test_silent_cmd "python insn_list4 = arch.disassemble(gdb.Value(pc))" \
   "disassemble no end no count" 0
 
 gdb_test "python print (len(insn_list1))" "1" "test number of instructions 1"
@@ -62,3 +62,81 @@ if { ![is_address_zero_readable] } {
     gdb_test "python arch.disassemble(0, 0)" ".*gdb\.MemoryError.*" \
 	"test bad memory access"
 }
+
+foreach size {0 1 2 3 4 8 16} {
+    foreach sign_data {{"" True} \
+			   {", True" True} \
+			   {", False" False} \
+			   {", None" False} \
+			   {", \"blah\"" True}} {
+	set sign [lindex $sign_data 0]
+	# GDB's 0 bit type is always signed.
+	if { $size == 0 } {
+	    set sign_result True
+	} else {
+	    set sign_result [lindex $sign_data 1]
+	}
+	set fullsize [expr 8 * $size]
+	gdb_test_no_output "python t = arch.integer_type($fullsize$sign)" \
+	    "get integer type for $size$sign"
+	gdb_test "python print(t.sizeof)" "$size" \
+	    "print size of integer type for $size$sign"
+	gdb_test "python print(t.is_signed == ${sign_result})" "True" \
+	    "check signedness of type for $size$sign"
+    }
+}
+
+gdb_test "python arch.integer_type(95)" \
+    ".*ValueError: no integer type of that size is available.*" \
+    "call integer_type with invalid size"
+
+# Test for gdb.architecture_names().  First we're going to grab the
+# complete list of architecture names using the 'complete' command.
+set arch_names []
+gdb_test_no_output "set max-completions unlimited"
+gdb_test_multiple "complete set architecture " "" {
+    -re "complete set architecture\[^\r\n\]+\r\n" {
+	exp_continue
+    }
+    -re "^set architecture \(\[^\r\n\]+\)\r\n" {
+	set arch $expect_out(1,string)
+	if { "$arch" != "auto" } {
+	    set arch_names [lappend arch_names $arch]
+	}
+	exp_continue
+    }
+    -re "^$gdb_prompt $" {
+	gdb_assert { [llength $arch_names] > 0 }
+    }
+}
+
+# Now find all of the architecture names using Python.
+set py_arch_names []
+gdb_test_no_output "python all_arch = gdb.architecture_names()"
+gdb_test_no_output "python all_arch.sort()"
+gdb_test_multiple "python print(\"\\n\".join((\"Arch: %s\" % a) for a in all_arch))" "" {
+    -re "python \[^\r\n\]+\r\n" {
+	exp_continue
+    }
+    -re "^Arch: \(\[^\r\n\]+\)\r\n" {
+	set arch $expect_out(1,string)
+	set py_arch_names [lappend py_arch_names $arch]
+	exp_continue
+    }
+    -re "$gdb_prompt $" {
+	gdb_assert { [llength $py_arch_names] > 0 }
+    }
+}
+
+# Check the two lists of architecture names are the same length, and
+# that the list contents all match.
+gdb_assert { [llength $arch_names] == [llength $py_arch_names] }
+set lists_match true
+foreach a $arch_names b $py_arch_names {
+    if { $a != $b } {
+	set lists_match false
+	verbose -log "Mismatch is architecture list '$a' != '$b'"
+	break
+    }
+}
+gdb_assert { $lists_match }

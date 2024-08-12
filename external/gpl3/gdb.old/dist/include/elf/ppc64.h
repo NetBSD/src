@@ -1,5 +1,5 @@
 /* PPC64 ELF support for BFD.
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -162,6 +162,7 @@ START_RELOC_NUMBERS (elf_ppc64_reloc_type)
   RELOC_NUMBER (R_PPC64_PLTSEQ_NOTOC,	   121)
   RELOC_NUMBER (R_PPC64_PLTCALL_NOTOC,	   122)
   RELOC_NUMBER (R_PPC64_PCREL_OPT,	   123)
+  RELOC_NUMBER (R_PPC64_REL24_P9NOTOC,	   124)
 
   RELOC_NUMBER (R_PPC64_D34,		   128)
   RELOC_NUMBER (R_PPC64_D34_LO,		   129)

@@ -1,5 +1,5 @@
 /* Simulator for Atmel's AVR core.
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2023 Free Software Foundation, Inc.
    Written by Tristan Gingold, AdaCore.
 
    This file is part of GDB, the GNU debugger.
@@ -17,18 +17,19 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
+
 #include "bfd.h"
 #include "libiberty.h"
-#include "gdb/remote-sim.h"
+#include "sim/sim.h"
 
 #include "sim-main.h"
 #include "sim-base.h"
 #include "sim-options.h"
+#include "sim-signal.h"
 
 /* As AVR is a 8/16 bits processor, define handy types.  */
 typedef unsigned short int word;
@@ -727,13 +728,13 @@ decode (unsigned int pc)
 static void
 do_call (SIM_CPU *cpu, unsigned int npc)
 {
-  SIM_DESC sd = CPU_STATE (cpu);
+  const struct avr_sim_state *state = AVR_SIM_STATE (CPU_STATE (cpu));
   unsigned int sp = read_word (REG_SP);
 
   /* Big endian!  */
   sram[sp--] = cpu->pc;
   sram[sp--] = cpu->pc >> 8;
-  if (sd->avr_pc22)
+  if (state->avr_pc22)
     {
       sram[sp--] = cpu->pc >> 16;
       cpu->cycles++;
@@ -893,9 +894,9 @@ step_once (SIM_CPU *cpu)
 	/* Fall through */
       case OP_ret:
 	{
-	  SIM_DESC sd = CPU_STATE (cpu);
+	  const struct avr_sim_state *state = AVR_SIM_STATE (CPU_STATE (cpu));
 	  unsigned int sp = read_word (REG_SP);
-	  if (sd->avr_pc22)
+	  if (state->avr_pc22)
 	    {
 	      cpu->pc = sram[++sp] << 16;
 	      cpu->cycles++;
@@ -1525,25 +1526,26 @@ sim_engine_run (SIM_DESC sd,
 }
 
 int
-sim_write (SIM_DESC sd, SIM_ADDR addr, const unsigned char *buffer, int size)
+sim_write (SIM_DESC sd, SIM_ADDR addr, const void *buffer, int size)
 {
   int osize = size;
 
   if (addr >= 0 && addr < SRAM_VADDR)
     {
+      const unsigned char *data = buffer;
       while (size > 0 && addr < (MAX_AVR_FLASH << 1))
 	{
           word val = flash[addr >> 1].op;
 
           if (addr & 1)
-            val = (val & 0xff) | (buffer[0] << 8);
+            val = (val & 0xff) | (data[0] << 8);
           else
-            val = (val & 0xff00) | buffer[0];
+            val = (val & 0xff00) | data[0];
 
 	  flash[addr >> 1].op = val;
 	  flash[addr >> 1].code = OP_unknown;
 	  addr++;
-	  buffer++;
+	  data++;
 	  size--;
 	}
       return osize - size;
@@ -1561,12 +1563,13 @@ sim_write (SIM_DESC sd, SIM_ADDR addr, const unsigned char *buffer, int size)
 }
 
 int
-sim_read (SIM_DESC sd, SIM_ADDR addr, unsigned char *buffer, int size)
+sim_read (SIM_DESC sd, SIM_ADDR addr, void *buffer, int size)
 {
   int osize = size;
 
   if (addr >= 0 && addr < SRAM_VADDR)
     {
+      unsigned char *data = buffer;
       while (size > 0 && addr < (MAX_AVR_FLASH << 1))
 	{
           word val = flash[addr >> 1].op;
@@ -1574,7 +1577,7 @@ sim_read (SIM_DESC sd, SIM_ADDR addr, unsigned char *buffer, int size)
           if (addr & 1)
             val >>= 8;
 
-          *buffer++ = val;
+          *data++ = val;
 	  addr++;
 	  size--;
 	}
@@ -1597,8 +1600,10 @@ sim_read (SIM_DESC sd, SIM_ADDR addr, unsigned char *buffer, int size)
 }
 
 static int
-avr_reg_store (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
+avr_reg_store (SIM_CPU *cpu, int rn, const void *buf, int length)
 {
+  const unsigned char *memory = buf;
+
   if (rn < 32 && length == 1)
     {
       sram[rn] = *memory;
@@ -1626,8 +1631,10 @@ avr_reg_store (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
 }
 
 static int
-avr_reg_fetch (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
+avr_reg_fetch (SIM_CPU *cpu, int rn, void *buf, int length)
 {
+  unsigned char *memory = buf;
+
   if (rn < 32 && length == 1)
     {
       *memory = sram[rn];
@@ -1681,22 +1688,19 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb,
 	  struct bfd *abfd, char * const *argv)
 {
   int i;
-  SIM_DESC sd = sim_state_alloc (kind, cb);
+  SIM_DESC sd = sim_state_alloc_extra (kind, cb, sizeof (struct avr_sim_state));
   SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
 
+  /* Set default options before parsing user options.  */
+  current_alignment = STRICT_ALIGNMENT;
+  current_target_byte_order = BFD_ENDIAN_LITTLE;
+
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1, /*cgen_cpu_max_extra_bytes ()*/0) != SIM_RC_OK)
+  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
     {
       free_state (sd);
       return 0;
     }
-
-  {
-    /* XXX: Only first core gets profiled ?  */
-    SIM_CPU *cpu = STATE_CPU (sd, 0);
-    STATE_WATCHPOINTS (sd)->pc = &cpu->pc;
-    STATE_WATCHPOINTS (sd)->sizeof_pc = sizeof (cpu->pc);
-  }
 
   if (sim_pre_argv_init (sd, argv[0]) != SIM_RC_OK)
     {
@@ -1712,10 +1716,7 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb,
     }
 
   /* Check for/establish the a reference program image.  */
-  if (sim_analyze_program (sd,
-			   (STATE_PROG_ARGV (sd) != NULL
-			    ? *STATE_PROG_ARGV (sd)
-			    : NULL), abfd) != SIM_RC_OK)
+  if (sim_analyze_program (sd, STATE_PROG_FILE (sd), abfd) != SIM_RC_OK)
     {
       free_state (sd);
       return 0;
@@ -1759,6 +1760,7 @@ SIM_RC
 sim_create_inferior (SIM_DESC sd, struct bfd *abfd,
 		     char * const *argv, char * const *env)
 {
+  struct avr_sim_state *state = AVR_SIM_STATE (sd);
   SIM_CPU *cpu = STATE_CPU (sd, 0);
   SIM_ADDR addr;
 
@@ -1770,7 +1772,7 @@ sim_create_inferior (SIM_DESC sd, struct bfd *abfd,
   sim_pc_set (cpu, addr);
 
   if (abfd != NULL)
-    sd->avr_pc22 = (bfd_get_mach (abfd) >= bfd_mach_avr6);
+    state->avr_pc22 = (bfd_get_mach (abfd) >= bfd_mach_avr6);
 
   return SIM_RC_OK;
 }

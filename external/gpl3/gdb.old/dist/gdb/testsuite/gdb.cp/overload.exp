@@ -1,4 +1,4 @@
-# Copyright 1998-2020 Free Software Foundation, Inc.
+# Copyright 1998-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,8 +34,7 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
 
 # Set it up at a breakpoint so we can play with the variable values.
 
-if ![runto 'marker1'] then {
-    perror "couldn't run to marker1"
+if {![runto 'marker1']} {
     continue
 }
 
@@ -259,6 +258,9 @@ gdb_test "print bar(b)" "= 22"
 gdb_test "print bar(c)" "= 22"
 gdb_test "print bar(d)" "= 22"
 
+# PR c++/28901 - gdb thought this was ambiguous.
+gdb_test "print bar2(e, b)" " = 33"
+
 # ---
 
 # List overloaded functions.
@@ -356,8 +358,7 @@ with_test_prefix "list all overloads" {
     gdb_test "list bar" "${h1_re}${lines1}\r\n${h2_re}${lines2}"
 }
 
-if ![runto 'XXX::marker2'] then {
-    perror "couldn't run to XXX::marker2"
+if {![runto 'XXX::marker2']} {
     continue
 }
 

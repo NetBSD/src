@@ -1,4 +1,4 @@
-#   Copyright 1988-2020 Free Software Foundation, Inc.
+#   Copyright 1988-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -62,7 +62,7 @@ remote_exec build "rm -rf [file dirname $new_name]"
 remote_exec build "mkdir [file dirname $new_name]"
 remote_exec build "ln -s ${binfile}${EXEEXT} $new_name"
 clean_restart ${testfile}${EXEEXT}
-if { $gdb_file_cmd_debug_info != "debug" } then {
+if {$gdb_file_cmd_debug_info != "debug"} {
     fail "no debug information found."
 }
 
@@ -70,7 +70,7 @@ if { $gdb_file_cmd_debug_info != "debug" } then {
 set subdir ${old_subdir}
 
 clean_restart ${testfile}${EXEEXT}
-if { $gdb_file_cmd_debug_info != "debug" } then {
+if {$gdb_file_cmd_debug_info != "debug"} {
     fail "no debug information found."
 }
 
@@ -81,14 +81,14 @@ if { $gdb_file_cmd_debug_info != "debug" } then {
 #
 # test break at function
 #
-gdb_test "break main" \
+gdb_test "break -q main" \
     "Breakpoint.*at.* file .*$srcfile, line.*" \
     "breakpoint function"
 
 #
 # test break at quoted function
 #
-gdb_test "break \"marker2\"" \
+gdb_test "break -q \"marker2\"" \
     "Breakpoint.*at.* file .*$srcfile, line.*" \
     "breakpoint quoted function"
 
@@ -110,7 +110,7 @@ set bp_location1 [gdb_get_line_number "set breakpoint 1 here"]
 # it's wherever the processor was stopped when we connected to the
 # board.  So, to be sure, we do a list command.
 #
-gdb_test "list main" \
+gdb_test "list -q main" \
     ".*main \\(int argc, char \\*\\*argv, char \\*\\*envp\\).*" \
     "use `list' to establish default source file"
 gdb_test "break $bp_location1" \
@@ -227,7 +227,7 @@ delete_breakpoints
 # test temporary breakpoint at function
 #
 
-gdb_test "tbreak main" "Temporary breakpoint.*at.* file .*$srcfile, line.*" "temporary breakpoint function"
+gdb_test "tbreak -q main" "Temporary breakpoint.*at.* file .*$srcfile, line.*" "temporary breakpoint function"
 
 #
 # test break at function in file
@@ -278,7 +278,9 @@ gdb_test "info break" "Num     Type.*Disp Enb Address.*What.*\[\r\n\]
 # inappropriately.  (There are no calls to those system functions
 # in this test program.)
 #
-if ![runto_main] then { fail "sepdebug tests suppressed" }
+if {![runto_main]} {
+    return
+}
 
 gdb_test "catch fork" "Catchpoint \[0-9\]+ \\(fork\\)" \
     "set catch fork, never expected to trigger"
@@ -327,7 +329,9 @@ gdb_test "break" \
 # Verify that a "silent" breakpoint can be set, and that GDB is indeed
 # "silent" about its triggering.
 #
-if ![runto_main] then { fail "sepdebug tests suppressed" }
+if {![runto_main]} {
+    return
+}
 
 gdb_test_multiple "break $bp_location1" \
     "set to-be-silent break bp_location1" {
@@ -447,7 +451,9 @@ gdb_test_multiple "finish" "finish from called function" {
 # Verify that GDB responds gracefully to a "finish" command with
 # arguments.
 #
-if ![runto_main] then { fail "sepdebug tests suppressed" }
+if {![runto_main]} {
+    return
+}
 
 gdb_test "finish 123" \
     "The \"finish\" command does not take any arguments.*" \
@@ -489,22 +495,22 @@ proc test_next_with_recursion {} {
 
     # Continue until we call factorial recursively with 5.
 
-    if [gdb_test "continue" \
+    gdb_test "continue" \
 	"Continuing.*Break.* factorial .value=5. .*" \
-	"continue to factorial(5)"] then { gdb_suppress_tests }
+	"continue to factorial(5)"
 
     # Do a backtrace just to confirm how many levels deep we are.
 
-    if [gdb_test "backtrace" \
+    gdb_test "backtrace" \
 	"#0\[ \t\]+ factorial .value=5..*" \
-	"backtrace from factorial(5)"] then { gdb_suppress_tests }
+	"backtrace from factorial(5)"
 
     # Now a "next" should position us at the recursive call, which
     # we will be performing with 4.
 
-    if [gdb_test "next" \
+    gdb_test "next" \
 	".* factorial .value - 1.;.*" \
-	"next to recursive call"] then { gdb_suppress_tests }
+	"next to recursive call"
 
     # Disable the breakpoint at the entry to factorial by deleting them all.
     # The "next" should run until we return to the next line from this
@@ -536,14 +542,13 @@ proc test_next_with_recursion {} {
     # OK, we should be back in the same stack frame we started from.
     # Do a backtrace just to confirm.
 
-    set result [gdb_test "backtrace" \
+    gdb_test "backtrace" \
 	    "#0\[ \t\]+ factorial .value=120.*\r\n#1\[ \t\]+ \[0-9a-fx\]+ in factorial .value=6..*" \
-	    "backtrace from factorial(5.1)"]
-    if { $result != 0 } { gdb_suppress_tests }
+	    "backtrace from factorial(5.1)"
 
-    if [target_info exists gdb,noresults] { gdb_suppress_tests }
-  gdb_continue_to_end "recursive next test"
-   gdb_stop_suppressing_tests
+    if { ![target_info exists gdb,noresults] } {
+	gdb_continue_to_end "recursive next test"
+    }
 }
 
 test_next_with_recursion
@@ -569,7 +574,7 @@ proc test_different_dir {type test_different_dir xfail} {
 	if {$xfail} {
 	    setup_xfail "*-*-*"
 	}
-	gdb_test "break main" \
+	gdb_test "break -q main" \
 	    "Breakpoint.*at.* file .*$srcfile, line.*" \
 	    "breakpoint function, optimized file"
 
@@ -664,7 +669,7 @@ if {[build_executable sepdebug.exp sepdebug2 sepdebug2.c debug] != -1
 # NT_GNU_BUILD_ID / .note.gnu.build-id test:
 
 set build_id_debug_filename [build_id_debug_filename_get $binfile$EXEEXT]
-if ![string compare $build_id_debug_filename ""] then {
+if {![string compare $build_id_debug_filename ""]} {
     unsupported "build-id is not supported by the compiler"
 
     # Spare debug files may confuse testsuite runs in the future.
@@ -673,10 +678,10 @@ if ![string compare $build_id_debug_filename ""] then {
     set build_id_debugself_filename [build_id_debug_filename_get $debugfile]
     set test "build-id support by binutils"
     set xfail 0
-    if ![string compare $build_id_debugself_filename ""] then {
+    if {![string compare $build_id_debugself_filename ""]} {
 	unsupported $test
 	set xfail 1
-    } elseif {[string compare $build_id_debugself_filename $build_id_debug_filename] != 0} then {
+    } elseif {[string compare $build_id_debugself_filename $build_id_debug_filename] != 0} {
 	fail $test
     } else {
 	pass $test

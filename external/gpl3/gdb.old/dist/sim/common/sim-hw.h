@@ -1,5 +1,5 @@
 /* Device definitions.
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -20,19 +20,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef SIM_HW_H
 #define SIM_HW_H
 
+#include <stdarg.h>
 
-/* Establish this object */
-
-SIM_RC sim_hw_install
-(struct sim_state *sd);
-
+#include "ansidecl.h"
 
 /* Parse a hardware definition */
 
 struct hw *sim_hw_parse
 (struct sim_state *sd,
  const char *fmt,
- ...) __attribute__ ((format (printf, 2, 3)));
+ ...) ATTRIBUTE_PRINTF (2, 3);
 
 
 /* Print the hardware tree */
@@ -48,7 +45,7 @@ void sim_hw_abort
 (SIM_DESC sd,
  struct hw *hw,
  const char *fmt,
- ...) __attribute__ ((format (printf, 3, 4), noreturn));
+ ...) ATTRIBUTE_PRINTF (3, 4) ATTRIBUTE_NORETURN;
 
 
 

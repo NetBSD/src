@@ -1,5 +1,5 @@
 /* <proc_service.h> replacement for systems that don't have it.
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -174,7 +174,7 @@ EXTERN_C_POP
    -fvisibility=hidden.  */
 
 #define PS_EXPORT(SYM)						\
-  __attribute__((visibility ("default"))) typeof (SYM) SYM
+  __attribute__((visibility ("default"))) decltype (SYM) SYM
 
 PS_EXPORT (ps_get_thread_area);
 PS_EXPORT (ps_getpid);

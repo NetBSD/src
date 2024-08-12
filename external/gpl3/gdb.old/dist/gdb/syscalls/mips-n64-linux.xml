@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <!DOCTYPE syscalls_info SYSTEM "gdb-syscalls.dtd">
-<!-- Copyright (C) 2011-2020 Free Software Foundation, Inc.
+<!-- Copyright (C) 2011-2023 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
      notice and this notice are preserved.  -->
 <!-- This file was generated using the following file:
-     
-     /usr/src/linux/arch/mips/include/asm/unistd.h
+
+     arch/mips/kernel/syscalls/syscall_n64.tbl
 
      The file mentioned above belongs to the Linux Kernel.  -->
 <syscalls_info>
@@ -306,4 +306,60 @@
   <syscall name="fanotify_init" number="5295" groups="descriptor"/>
   <syscall name="fanotify_mark" number="5296" groups="descriptor,file"/>
   <syscall name="prlimit64" number="5297"/>
+  <syscall name="name_to_handle_at" number="5298" groups="descriptor,file"/>
+  <syscall name="open_by_handle_at" number="5299" groups="descriptor"/>
+  <syscall name="clock_adjtime" number="5300"/>
+  <syscall name="syncfs" number="5301" groups="descriptor"/>
+  <syscall name="sendmmsg" number="5302" groups="network"/>
+  <syscall name="setns" number="5303" groups="descriptor"/>
+  <syscall name="process_vm_readv" number="5304"/>
+  <syscall name="process_vm_writev" number="5305"/>
+  <syscall name="kcmp" number="5306"/>
+  <syscall name="finit_module" number="5307" groups="descriptor"/>
+  <syscall name="getdents64" number="5308" groups="descriptor"/>
+  <syscall name="sched_setattr" number="5309"/>
+  <syscall name="sched_getattr" number="5310"/>
+  <syscall name="renameat2" number="5311"/>
+  <syscall name="seccomp" number="5312"/>
+  <syscall name="getrandom" number="5313"/>
+  <syscall name="memfd_create" number="5314"/>
+  <syscall name="bpf" number="5315"/>
+  <syscall name="execveat" number="5316"/>
+  <syscall name="userfaultfd" number="5317"/>
+  <syscall name="membarrier" number="5318"/>
+  <syscall name="mlock2" number="5319"/>
+  <syscall name="copy_file_range" number="5320"/>
+  <syscall name="preadv2" number="5321"/>
+  <syscall name="pwritev2" number="5322"/>
+  <syscall name="pkey_mprotect" number="5323"/>
+  <syscall name="pkey_alloc" number="5324"/>
+  <syscall name="pkey_free" number="5325"/>
+  <syscall name="statx" number="5326"/>
+  <syscall name="rseq" number="5327"/>
+  <syscall name="io_pgetevents" number="5328"/>
+  <syscall name="pidfd_send_signal" number="5424"/>
+  <syscall name="io_uring_setup" number="5425"/>
+  <syscall name="io_uring_enter" number="5426"/>
+  <syscall name="io_uring_register" number="5427"/>
+  <syscall name="open_tree" number="5428"/>
+  <syscall name="move_mount" number="5429"/>
+  <syscall name="fsopen" number="5430"/>
+  <syscall name="fsconfig" number="5431"/>
+  <syscall name="fsmount" number="5432"/>
+  <syscall name="fspick" number="5433"/>
+  <syscall name="pidfd_open" number="5434"/>
+  <syscall name="clone3" number="5435"/>
+  <syscall name="close_range" number="5436"/>
+  <syscall name="openat2" number="5437"/>
+  <syscall name="pidfd_getfd" number="5438"/>
+  <syscall name="faccessat2" number="5439"/>
+  <syscall name="process_madvise" number="5440"/>
+  <syscall name="epoll_pwait2" number="5441"/>
+  <syscall name="mount_setattr" number="5442"/>
+  <syscall name="quotactl_fd" number="5443"/>
+  <syscall name="landlock_create_ruleset" number="5444"/>
+  <syscall name="landlock_add_rule" number="5445"/>
+  <syscall name="landlock_restrict_self" number="5446"/>
+  <syscall name="process_mrelease" number="5448"/>
+  <syscall name="futex_waitv" number="5449"/>
 </syscalls_info>

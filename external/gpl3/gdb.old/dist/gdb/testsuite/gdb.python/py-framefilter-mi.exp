@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2020 Free Software Foundation, Inc.
+# Copyright (C) 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ set MIFLAGS "-i=mi2"
 
 gdb_exit
 if [mi_gdb_start] {
-    continue
+    return
 }
 
 standard_testfile py-framefilter-mi.c
@@ -42,7 +42,7 @@ if {[lsearch -exact [mi_get_features] python] < 0} {
     return -1
 }
 
-mi_runto main
+mi_runto_main
 
 set remote_python_file [gdb_remote_download host ${srcdir}/${subdir}/${pyfile}]
 
@@ -50,7 +50,7 @@ mi_gdb_test "source ${remote_python_file}" ".*\\^done." "load python file"
 
 # Multiple blocks test
 mi_continue_to_line [gdb_get_line_number {Inner test breakpoint} ${srcfile}] \
-  "step to breakpoint"
+  "step to first breakpoint"
 
 mi_gdb_test "-stack-list-locals --all-values" \
     "\\^done,locals=\\\[{name=\"h\",value=\"9\"},{name=\"f\",value=\"42\"},{name=\"g\",value=\"19\"},{name=\"bar\",value=\"$hex \\\\\"Inside block x2\\\\\"\"},{name=\"d\",value=\"15\"},{name=\"e\",value=\"14\"},{name=\"foo\",value=\"$hex \\\\\"Inside block\\\\\"\"},{name=\"str\",value=\"$hex \\\\\"The End\\\\\"\"},{name=\"st2\",value=\"$hex \\\\\"Is Near\\\\\"\"},{name=\"b\",value=\"12\"},{name=\"c\",value=\"5\"}\\\]" \
@@ -62,7 +62,7 @@ mi_gdb_test "-stack-list-locals --all-values" \
     "stack-list-locals --all-values frame filters enabled"
 
 mi_continue_to_line [gdb_get_line_number {Backtrace end breakpoint} ${srcfile}] \
-  "step to breakpoint"
+  "step to second breakpoint"
 
 set any "\[^\"\]+"
 

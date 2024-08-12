@@ -975,3 +975,4 @@ _start:
     sub.l @0x12345678:32,@0x9abcdef0:32                    ;01046b2c1234567848309abcdef0
 
 	.end
+	.section	.note.GNU-stack,"",@progbits

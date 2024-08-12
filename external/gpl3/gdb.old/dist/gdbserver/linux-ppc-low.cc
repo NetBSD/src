@@ -1,6 +1,6 @@
 /* GNU/Linux/PowerPC specific low level interface, for the remote server for
    GDB.
-   Copyright (C) 1995-2020 Free Software Foundation, Inc.
+   Copyright (C) 1995-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -249,8 +249,8 @@ ppc_target::low_collect_ptrace_register (regcache *regcache, int regno,
   else if (__BYTE_ORDER == __BIG_ENDIAN)
     {
       /* Big-endian values sit at the right end of the buffer.  In case of
-         registers whose sizes are smaller than sizeof (long), we must use a
-         padding to access them correctly.  */
+	 registers whose sizes are smaller than sizeof (long), we must use a
+	 padding to access them correctly.  */
       int size = register_size (regcache->tdesc, regno);
 
       if (size < sizeof (long))
@@ -274,8 +274,8 @@ ppc_target::low_supply_ptrace_register (regcache *regcache, int regno,
   else if (__BYTE_ORDER == __BIG_ENDIAN)
     {
       /* Big-endian values sit at the right end of the buffer.  In case of
-         registers whose sizes are smaller than sizeof (long), we must use a
-         padding to access them correctly.  */
+	 registers whose sizes are smaller than sizeof (long), we must use a
+	 padding to access them correctly.  */
       int size = register_size (regcache->tdesc, regno);
 
       if (size < sizeof (long))
@@ -1367,12 +1367,12 @@ gen_limm (uint32_t *buf, int reg, uint64_t imm, int is_64)
 	 ori    reg, reg, <imm[15:0]> */
       p += GEN_LIS (p, reg, ((imm >> 48) & 0xffff));
       if (((imm >> 32) & 0xffff) != 0)
-        p += GEN_ORI (p, reg, reg, ((imm >> 32) & 0xffff));
+	p += GEN_ORI (p, reg, reg, ((imm >> 32) & 0xffff));
       p += GEN_RLDICR (p, reg, reg, 32, 31);
       if (((imm >> 16) & 0xffff) != 0)
-        p += GEN_ORIS (p, reg, reg, ((imm >> 16) & 0xffff));
+	p += GEN_ORIS (p, reg, reg, ((imm >> 16) & 0xffff));
       if ((imm & 0xffff) != 0)
-        p += GEN_ORI (p, reg, reg, (imm & 0xffff));
+	p += GEN_ORI (p, reg, reg, (imm & 0xffff));
     }
 
   return p - buf;
@@ -1844,8 +1844,8 @@ emit_insns (uint32_t *buf, int n)
 	|  Expand stack as needed.
 	|
 	+-
-        |  Some padding for minimum stack frame and 16-byte alignment.
-        |  16 bytes.
+	|  Some padding for minimum stack frame and 16-byte alignment.
+	|  16 bytes.
  SP     +- Back-chain (SP')
 
   initial frame size
@@ -2660,8 +2660,8 @@ static struct emit_ops ppc_emit_ops_impl =
 	|  Expand stack as needed.
 	|
 	+-
-        |  Some padding for minimum stack frame.
-        |  112 for ELFv1.
+	|  Some padding for minimum stack frame.
+	|  112 for ELFv1.
  SP     +- Back-chain (SP')
 
   initial frame size
@@ -2753,7 +2753,7 @@ ppc64_emit_epilogue (void)
 	    /* Restore registers.  */
 	    "ld    31, -8(1)	\n"
 	    "ld    30, -16(1)	\n"
-            /* Restore LR.  */
+	    /* Restore LR.  */
 	    "ld    0, 16(1)	\n"
 	    /* Return 0 for no-error.  */
 	    "li    3, 0		\n"
@@ -3386,9 +3386,9 @@ ppc_target::emit_ops ()
   if (register_size (regcache->tdesc, 0) == 8)
     {
       if (is_elfv2_inferior ())
-        return &ppc64v2_emit_ops_impl;
+	return &ppc64v2_emit_ops_impl;
       else
-        return &ppc64v1_emit_ops_impl;
+	return &ppc64v1_emit_ops_impl;
     }
 #endif
   return &ppc_emit_ops_impl;

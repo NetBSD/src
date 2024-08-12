@@ -1,4 +1,4 @@
-# Copyright 2011-2020 Free Software Foundation, Inc.
+# Copyright 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,13 +27,8 @@ if { [skip_cplus_tests] } { continue }
 
 standard_testfile .cc
 
-if [get_compiler_info "c++"] {
-    return -1
-}
-
-set additional_flags {-ffunction-sections -Wl,--gc-sections}
 if {[build_executable_from_specs $testfile.exp $testfile \
-       {c++ additional_flags=-Wl,--gc-sections} \
+       {c++ ldflags=-Wl,--gc-sections} \
        $srcfile {debug c++ additional_flags=-ffunction-sections}]} {
     untested "failed to compile"
     return -1

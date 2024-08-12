@@ -27,9 +27,8 @@
 
 /* TYPES:
 
-     natural*	sign determined by host
-     signed*    signed type of the given size
-     unsigned*  The corresponding insigned type
+     intNN_t    Signed type of the given bit size
+     uintNN_t   The corresponding unsigned type
 
    SIZES
 
@@ -43,51 +42,21 @@
 */
 
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+/* This must come before any other includes.  */
+#include "defs.h"
 
-/* bit based */
-typedef char natural8;
-typedef short natural16;
-typedef int natural32;
-
-typedef signed char signed8;
-typedef signed short signed16;
-typedef signed int signed32;
-
-typedef unsigned char unsigned8;
-typedef unsigned short unsigned16;
-typedef unsigned int unsigned32;
-
-#ifdef __GNUC__
-typedef long long natural64;
-typedef signed long long signed64;
-typedef unsigned long long unsigned64;
-#endif
-
-#ifdef _MSC_VER
-typedef __int64 natural64;
-typedef signed __int64 signed64;
-typedef unsigned __int64 unsigned64;
-#endif 
-
+#include <stdint.h>
 
 /* byte based */
-typedef natural8 natural_1;
-typedef natural16 natural_2;
-typedef natural32 natural_4;
-typedef natural64 natural_8;
+typedef int8_t signed_1;
+typedef int16_t signed_2;
+typedef int32_t signed_4;
+typedef int64_t signed_8;
 
-typedef signed8 signed_1;
-typedef signed16 signed_2;
-typedef signed32 signed_4;
-typedef signed64 signed_8;
-
-typedef unsigned8 unsigned_1;
-typedef unsigned16 unsigned_2;
-typedef unsigned32 unsigned_4;
-typedef unsigned64 unsigned_8;
+typedef uint8_t unsigned_1;
+typedef uint16_t unsigned_2;
+typedef uint32_t unsigned_4;
+typedef uint64_t unsigned_8;
 
 
 /* for general work, the following are defined */
@@ -98,22 +67,19 @@ typedef unsigned64 unsigned_8;
 
 /* target architecture based */
 #if (WITH_TARGET_WORD_BITSIZE == 64)
-typedef natural64 natural_word;
-typedef unsigned64 unsigned_word;
-typedef signed64 signed_word;
+typedef uint64_t unsigned_word;
+typedef int64_t signed_word;
 #else
-typedef natural32 natural_word;
-typedef unsigned32 unsigned_word;
-typedef signed32 signed_word;
+typedef uint32_t unsigned_word;
+typedef int32_t signed_word;
 #endif
 
 
 /* Other instructions */
-typedef unsigned32 instruction_word;
+typedef uint32_t instruction_word;
 
 /* IEEE 1275 cell size - only support 32bit mode at present */
-typedef natural32 natural_cell;
-typedef unsigned32 unsigned_cell;
-typedef signed32 signed_cell;
+typedef uint32_t unsigned_cell;
+typedef int32_t signed_cell;
 
 #endif /* _WORDS_H_ */

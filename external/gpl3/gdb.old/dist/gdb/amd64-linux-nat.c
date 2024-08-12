@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux x86-64.
 
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2023 Free Software Foundation, Inc.
    Contributed by Jiri Smid, SuSE Labs.
 
    This file is part of GDB.
@@ -99,7 +99,7 @@ static int amd64_linux_gregset32_reg_offset[] =
 
 static void
 amd64_linux_collect_native_gregset (const struct regcache *regcache,
-			            void *gregs, int regnum)
+				    void *gregs, int regnum)
 {
   amd64_collect_native_gregset (regcache, gregs, regnum);
 
@@ -333,7 +333,7 @@ amd64_linux_nat_target::store_registers (struct regcache *regcache, int regnum)
 
 ps_err_e
 ps_get_thread_area (struct ps_prochandle *ph,
-                    lwpid_t lwpid, int idx, void **base)
+		    lwpid_t lwpid, int idx, void **base)
 {
   if (gdbarch_bfd_arch_info (ph->thread->inf->gdbarch)->bits_per_word == 32)
     {

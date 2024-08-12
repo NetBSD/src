@@ -1,12 +1,12 @@
 // -*- C -*-
 
 // Simulator definition for the MIPS16e instructions.
-// Copyright (C) 2005-2020 Free Software Foundation, Inc.
-// Contributed by Nigel Stephens (nigel@mips.com) and 
+// Copyright (C) 2005-2023 Free Software Foundation, Inc.
+// Contributed by Nigel Stephens (nigel@mips.com) and
 //                David Ung (davidu@mips.com) of MIPS Technologies.
 //
 // This file is part of GDB, the GNU debugger.
-// 
+//
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
@@ -55,7 +55,7 @@
 *mips16e:
 {
   TRACE_ALU_INPUT1 (GPR[TRX]);
-  GPR[TRX] =  (unsigned_word)(unsigned8)(GPR[TRX]);
+  GPR[TRX] =  (unsigned_word)(uint8_t)(GPR[TRX]);
   TRACE_ALU_RESULT (GPR[TRX]);
 }
 
@@ -64,7 +64,7 @@
 *mips16e:
 {
   TRACE_ALU_INPUT1 (GPR[TRX]);
-  GPR[TRX] = (unsigned_word)(unsigned16)(GPR[TRX]);
+  GPR[TRX] = (unsigned_word)(uint16_t)(GPR[TRX]);
   TRACE_ALU_RESULT (GPR[TRX]);
 }
 
@@ -74,7 +74,7 @@
 {
   check_u64 (SD_, instruction_0);
   TRACE_ALU_INPUT1 (GPR[TRX]);
-  GPR[TRX] = (unsigned_word)(unsigned32)(GPR[TRX]);
+  GPR[TRX] = (unsigned_word)(uint32_t)(GPR[TRX]);
   TRACE_ALU_RESULT (GPR[TRX]);
 }
 
@@ -168,7 +168,7 @@
 
 :function:::void:do_save:int xsregs, int aregs, int ras0s1, int framesize
 {
-  unsigned_word temp;    
+  unsigned_word temp;
   int args, astatic;
 
   temp = GPR[29];
@@ -194,11 +194,11 @@
     sim_engine_abort (SD, CPU, CIA, "save: aregs=%d causes unpredictable results\n", aregs);
   }
   if (args > 0) {
-    do_store (SD_, AccessLength_WORD, temp, 0, GPR[4]); 
+    do_store (SD_, AccessLength_WORD, temp, 0, GPR[4]);
     if (args > 1) {
-      do_store (SD_,AccessLength_WORD, temp, 4 , GPR[5]); 
+      do_store (SD_,AccessLength_WORD, temp, 4 , GPR[5]);
       if (args > 2) {
-	do_store (SD_,AccessLength_WORD, temp, 8 , GPR[6]); 
+	do_store (SD_,AccessLength_WORD, temp, 8 , GPR[6]);
 	if (args > 3) {
 	  do_store (SD_,AccessLength_WORD, temp, 12, GPR[7]);
 	}
@@ -207,29 +207,29 @@
   }
 
   if (ras0s1 & 4)
-    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[31]); 
+    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[31]);
 
   switch (xsregs) {
   case 7:
-    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[30]); 
+    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[30]);
   case 6:
-    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[23]); 
+    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[23]);
   case 5:
-    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[22]); 
+    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[22]);
   case 4:
-    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[21]); 
+    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[21]);
   case 3:
-    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[20]); 
+    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[20]);
   case 2:
-    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[19]); 
+    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[19]);
   case 1:
-    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[18]); 
+    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[18]);
   }
 
   if (ras0s1 & 1)
-    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[17]); 
+    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[17]);
   if (ras0s1 & 2)
-    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[16]); 
+    do_store (SD_,AccessLength_WORD, temp -= 4, 0, GPR[16]);
 
   switch (aregs) {
   case 0: case 4: case 8: case 12: case 14:
@@ -285,7 +285,7 @@
 :function:::void:do_restore:int xsregs, int aregs, int ras0s1, int framesize
 *mips16e
 {
-  unsigned_word temp, temp2;    
+  unsigned_word temp, temp2;
   int astatic;
 
   temp = GPR[29] + framesize;
@@ -298,25 +298,25 @@
 
   switch (xsregs) {
   case 7:
-    GPR[30] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0)); 
+    GPR[30] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0));
   case 6:
-    GPR[23] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0)); 
+    GPR[23] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0));
   case 5:
-    GPR[22] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0)); 
+    GPR[22] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0));
   case 4:
-    GPR[21] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0)); 
+    GPR[21] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0));
   case 3:
-    GPR[20] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0)); 
+    GPR[20] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0));
   case 2:
-    GPR[19] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0)); 
+    GPR[19] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0));
   case 1:
-    GPR[18] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0)); 
+    GPR[18] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0));
   }
 
   if (ras0s1 & 1)
-    GPR[17] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0)); 
+    GPR[17] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0));
   if (ras0s1 & 2)
-    GPR[16] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0)); 
+    GPR[16] = EXTEND32 (do_load (SD_,AccessLength_WORD, temp -= 4, 0));
 
   switch (aregs) {
   case 0: case 4: case 8: case 12: case 14:
@@ -356,7 +356,7 @@
 01100,100,0,3.RAS,4.FS:I8:16::RESTORE
 "restore %s<RAS>,<SFRAME>"
 *mips16e
-{ 
+{
   do_restore (SD_,0,0,RAS,SFRAME);
 }
 

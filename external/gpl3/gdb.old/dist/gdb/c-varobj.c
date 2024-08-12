@@ -1,6 +1,6 @@
 /* varobj support for C and C++.
 
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -120,10 +120,10 @@ adjust_value_for_child_access (struct value **value,
 
       enclosing_type = value_actual_type (*value, 1, &real_type_found);
       if (real_type_found)
-        {
-          *type = enclosing_type;
-          *value = value_cast (enclosing_type, *value);
-        }
+	{
+	  *type = enclosing_type;
+	  *value = value_cast (enclosing_type, *value);
+	}
     }
 }
 
@@ -165,7 +165,7 @@ c_is_path_expr_parent (const struct varobj *var)
 	      const char *field_name;
 
 	      gdb_assert (var->index < parent_type->num_fields ());
-	      field_name = TYPE_FIELD_NAME (parent_type, var->index);
+	      field_name = parent_type->field (var->index).name ();
 	      return !(field_name == NULL || *field_name == '\0');
 	    }
 	}
@@ -191,9 +191,9 @@ c_number_of_children (const struct varobj *var)
   switch (type->code ())
     {
     case TYPE_CODE_ARRAY:
-      if (TYPE_LENGTH (type) > 0 && TYPE_LENGTH (target) > 0
+      if (type->length () > 0 && target->length () > 0
 	  && (type->bounds ()->high.kind () != PROP_UNDEFINED))
-	children = TYPE_LENGTH (type) / TYPE_LENGTH (target);
+	children = type->length () / target->length ();
       else
 	/* If we don't know how many elements there are, don't display
 	   any.  */
@@ -210,10 +210,10 @@ c_number_of_children (const struct varobj *var)
 	 have one child, except for function ptrs, which have no children,
 	 and except for void*, as we don't know what to show.
 
-         We can show char* so we allow it to be dereferenced.  If you decide
-         to test for it, please mind that a little magic is necessary to
-         properly identify it: char* has TYPE_CODE == TYPE_CODE_INT and 
-         TYPE_NAME == "char".  */
+	 We can show char* so we allow it to be dereferenced.  If you decide
+	 to test for it, please mind that a little magic is necessary to
+	 properly identify it: char* has TYPE_CODE == TYPE_CODE_INT and 
+	 TYPE_NAME == "char".  */
       if (target->code () == TYPE_CODE_FUNC
 	  || target->code () == TYPE_CODE_VOID)
 	children = 0;
@@ -341,7 +341,7 @@ c_describe_child (const struct varobj *parent, int index,
 
 	/* If the type is anonymous and the field has no name,
 	   set an appropriate name.  */
-	field_name = TYPE_FIELD_NAME (type, index);
+	field_name = type->field (index).name ();
 	if (field_name == NULL || *field_name == '\0')
 	  {
 	    if (cname)
@@ -403,7 +403,7 @@ c_describe_child (const struct varobj *parent, int index,
 	 check_typedef and here, we want to show the true
 	 declared type of the variable.  */
       if (ctype)
-	*ctype = TYPE_TARGET_TYPE (type);
+	*ctype = type->target_type ();
 
       if (cfull_expression)
 	*cfull_expression = string_printf ("*(%s)", parent_expression.c_str ());
@@ -482,7 +482,7 @@ c_value_of_variable (const struct varobj *var,
 
   /* Strip top-level references.  */
   while (TYPE_IS_REFERENCE (type))
-    type = check_typedef (TYPE_TARGET_TYPE (type));
+    type = check_typedef (type->target_type ());
 
   switch (type->code ())
     {
@@ -572,11 +572,10 @@ cplus_number_of_children (const struct varobj *var)
 
       /* It is necessary to access a real type (via RTTI).  */
       if (opts.objectprint)
-        {
-          value = var->value.get ();
-          lookup_actual_type = (TYPE_IS_REFERENCE (var->type)
-				|| var->type->code () == TYPE_CODE_PTR);
-        }
+	{
+	  value = var->value.get ();
+	  lookup_actual_type = var->type->is_pointer_or_reference ();
+	}
       adjust_value_for_child_access (&value, &type, NULL, lookup_actual_type);
 
       if (((type->code ()) == TYPE_CODE_STRUCT)
@@ -607,13 +606,12 @@ cplus_number_of_children (const struct varobj *var)
 
       /* It is necessary to access a real type (via RTTI).  */
       if (opts.objectprint)
-        {
+	{
 	  const struct varobj *parent = var->parent;
 
 	  value = parent->value.get ();
-	  lookup_actual_type = (TYPE_IS_REFERENCE (parent->type)
-				|| parent->type->code () == TYPE_CODE_PTR);
-        }
+	  lookup_actual_type = parent->type->is_pointer_or_reference ();
+	}
       adjust_value_for_child_access (&value, &type, NULL, lookup_actual_type);
 
       cplus_class_num_children (type, kids);
@@ -716,8 +714,7 @@ cplus_describe_child (const struct varobj *parent, int index,
 
   var = (CPLUS_FAKE_CHILD (parent)) ? parent->parent : parent;
   if (opts.objectprint)
-    lookup_actual_type = (TYPE_IS_REFERENCE (var->type)
-			  || var->type->code () == TYPE_CODE_PTR);
+    lookup_actual_type = var->type->is_pointer_or_reference ();
   value = var->value.get ();
   type = varobj_get_value_type (var);
   if (cfull_expression)
@@ -764,7 +761,7 @@ cplus_describe_child (const struct varobj *parent, int index,
 
 	  /* If the type is anonymous and the field has no name,
 	     set an appropriate name.  */
-	  field_name = TYPE_FIELD_NAME (type, type_index);
+	  field_name = type->field (type_index).name ();
 	  if (field_name == NULL || *field_name == '\0')
 	    {
 	      if (cname)
@@ -783,7 +780,7 @@ cplus_describe_child (const struct varobj *parent, int index,
 	  else
 	    {
 	      if (cname)
-		*cname = TYPE_FIELD_NAME (type, type_index);
+		*cname = type->field (type_index).name ();
 
 	      if (cfull_expression)
 		*cfull_expression
@@ -801,7 +798,7 @@ cplus_describe_child (const struct varobj *parent, int index,
 	{
 	  /* This is a baseclass.  */
 	  if (cname)
-	    *cname = TYPE_FIELD_NAME (type, index);
+	    *cname = type->field (index).name ();
 
 	  if (cvalue && value)
 	    *cvalue = value_cast (type->field (index).type (), value);
@@ -817,10 +814,10 @@ cplus_describe_child (const struct varobj *parent, int index,
 
 	      /* Cast the parent to the base' type.  Note that in gdb,
 		 expression like 
-		         (Base1)d
+			 (Base1)d
 		 will create an lvalue, for all appearences, so we don't
 		 need to use more fancy:
-		         *(Base1*)(&d)
+			 *(Base1*)(&d)
 		 construct.
 
 		 When we are in the scope of the base class or of one
@@ -830,7 +827,7 @@ cplus_describe_child (const struct varobj *parent, int index,
 		 'class' keyword.  See PR mi/11912  */
 	      *cfull_expression = string_printf ("(%s(class %s%s) %s)",
 						 ptr,
-						 TYPE_FIELD_NAME (type, index),
+						 type->field (index).name (),
 						 ptr,
 						 parent_expression);
 	    }

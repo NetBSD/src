@@ -1,4 +1,4 @@
-# Copyright 2002-2020 Free Software Foundation, Inc.
+# Copyright 2002-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 
 if [target_info exists gdb,nosignals] {
     verbose "Skipping mi-syn-frame.exp because of nosignals."
-    continue
+    return
 }
 
 load_lib mi-support.exp
@@ -32,9 +32,9 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
      return -1
 }
 
-mi_gdb_exit
-mi_gdb_start
-mi_run_to_main
+mi_clean_restart $binfile
+
+mi_runto_main
 
 mi_create_breakpoint "foo" \
     "insert breakpoint foo" \
@@ -55,11 +55,12 @@ mi_gdb_test "402-stack-list-frames" "402\\^done,stack=\\\[frame=\{level=\"0\",ad
 #
 mi_send_resuming_command "exec-continue" "testing exec continue"
 
-mi_expect_stop "really-no-reason" "" "" "" "" "" "finished exec continue"
+mi_expect_stop "really-no-reason" "" "" "" "" "" \
+    "finished exec continue after calling foo"
 
 mi_gdb_test "404-stack-list-frames 0 0" \
   "404\\^done,stack=\\\[frame=\{level=\"0\",addr=\"$hex\",func=\"main\",file=\".*mi-syn-frame.c\",fullname=\"${fullname_syntax}${srcfile}\",line=\"$decimal\",arch=\"$any\"\}.*\\\]" \
-  "list stack frames"
+  "list stack frames, back in main after calling foo"
 
 
 #
@@ -79,16 +80,17 @@ mi_gdb_test "406-data-evaluate-expression have_a_very_merry_interrupt()" \
 
 mi_gdb_test "407-stack-list-frames" \
   "407\\^done,stack=\\\[frame=\{level=\"0\",addr=\"$hex\",func=\"subroutine\",file=\".*mi-syn-frame.c\",fullname=\"${fullname_syntax}${srcfile}\",line=\"$decimal\",arch=\"$any\"\},frame=\{level=\"1\",addr=\"$hex\",func=\"handler\",file=\".*mi-syn-frame.c\",fullname=\"${fullname_syntax}${srcfile}\",line=\"$decimal\",arch=\"$any\"\},frame=\{level=\"2\",addr=\"$hex\",func=\"<signal handler called>\"\},.*frame=\{level=\"$decimal\",addr=\"$hex\",func=\"have_a_very_merry_interrupt\",file=\".*mi-syn-frame.c\",fullname=\"${fullname_syntax}${srcfile}\",line=\"$decimal\",arch=\"$any\"\},frame=\{level=\"$decimal\",addr=\"$hex\",func=\"<function called from gdb>\"\},frame=\{level=\"$decimal\",addr=\"$hex\",func=\"main\",file=\".*mi-syn-frame.c\",fullname=\"${fullname_syntax}${srcfile}\",line=\"$decimal\",arch=\"$any\"\}.*\\\]" \
-  "list stack frames"
+  "list stack frames, with signal handler and dummy frame"
 
 
 mi_send_resuming_command "exec-continue" "testing exec continue"
 
-mi_expect_stop "really-no-reason" "" "" "" "" "" "finished exec continue"
+mi_expect_stop "really-no-reason" "" "" "" "" "" \
+    "finished exec continue after calling have_a_very_merry_interrupt"
 
 mi_gdb_test "409-stack-list-frames 0 0" \
   "409\\^done,stack=\\\[frame=\{level=\"0\",addr=\"$hex\",func=\"main\",file=\".*mi-syn-frame.c\",fullname=\"${fullname_syntax}${srcfile}\",line=\"$decimal\",arch=\"$any\"\}.*\\\]" \
-  "list stack frames"
+  "list stack frames, back in main after calling have_a_very_merry_interrupt"
 
 #
 # Call bar() by hand, which should get an exception while running.

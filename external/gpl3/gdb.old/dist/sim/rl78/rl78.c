@@ -1,6 +1,6 @@
 /* rl78.c --- opcode semantics for stand-alone RL78 simulator.
 
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2023 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of the GNU simulators.
@@ -19,7 +19,9 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -249,6 +251,7 @@ static void
 op_flags (int before, int after, int mask, RL78_Size size)
 {
   int vmask, cmask, amask, avmask;
+  int psw;
 
   if (size == RL78_Word)
     {
@@ -265,7 +268,7 @@ op_flags (int before, int after, int mask, RL78_Size size)
       avmask = 0x0f;
     }
 
-  int psw = get_reg (RL78_Reg_PSW);
+  psw = get_reg (RL78_Reg_PSW);
   psw &= ~mask;
 
   if (mask & RL78_PSW_CY)

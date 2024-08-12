@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux m32r.
 
-   Copyright (C) 2004-2020 Free Software Foundation, Inc.
+   Copyright (C) 2004-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -85,7 +85,7 @@ static const gdb_byte linux_sigtramp_code[] = {
    the routine.  Otherwise, return 0.  */
 
 static CORE_ADDR
-m32r_linux_sigtramp_start (CORE_ADDR pc, struct frame_info *this_frame)
+m32r_linux_sigtramp_start (CORE_ADDR pc, frame_info_ptr this_frame)
 {
   gdb_byte buf[4];
 
@@ -99,7 +99,7 @@ m32r_linux_sigtramp_start (CORE_ADDR pc, struct frame_info *this_frame)
 
   if (pc % 2 != 0)
     {
-      if (!safe_frame_unwind_memory (this_frame, pc, buf, 2))
+      if (!safe_frame_unwind_memory (this_frame, pc, {buf, 2}))
 	return 0;
 
       if (memcmp (buf, linux_sigtramp_code, 2) == 0)
@@ -108,7 +108,7 @@ m32r_linux_sigtramp_start (CORE_ADDR pc, struct frame_info *this_frame)
 	return 0;
     }
 
-  if (!safe_frame_unwind_memory (this_frame, pc, buf, 4))
+  if (!safe_frame_unwind_memory (this_frame, pc, {buf, 4}))
     return 0;
 
   if (memcmp (buf, linux_sigtramp_code, 4) != 0)
@@ -133,7 +133,7 @@ static const gdb_byte linux_rt_sigtramp_code[] = {
    of the routine.  Otherwise, return 0.  */
 
 static CORE_ADDR
-m32r_linux_rt_sigtramp_start (CORE_ADDR pc, struct frame_info *this_frame)
+m32r_linux_rt_sigtramp_start (CORE_ADDR pc, frame_info_ptr this_frame)
 {
   gdb_byte buf[4];
 
@@ -148,12 +148,12 @@ m32r_linux_rt_sigtramp_start (CORE_ADDR pc, struct frame_info *this_frame)
   if (pc % 2 != 0)
     return 0;
 
-  if (!safe_frame_unwind_memory (this_frame, pc, buf, 4))
+  if (!safe_frame_unwind_memory (this_frame, pc, {buf, 4}))
     return 0;
 
   if (memcmp (buf, linux_rt_sigtramp_code, 4) == 0)
     {
-      if (!safe_frame_unwind_memory (this_frame, pc + 4, buf, 4))
+      if (!safe_frame_unwind_memory (this_frame, pc + 4, {buf, 4}))
 	return 0;
 
       if (memcmp (buf, linux_rt_sigtramp_code + 4, 4) == 0)
@@ -161,7 +161,7 @@ m32r_linux_rt_sigtramp_start (CORE_ADDR pc, struct frame_info *this_frame)
     }
   else if (memcmp (buf, linux_rt_sigtramp_code + 4, 4) == 0)
     {
-      if (!safe_frame_unwind_memory (this_frame, pc - 4, buf, 4))
+      if (!safe_frame_unwind_memory (this_frame, pc - 4, {buf, 4}))
 	return 0;
 
       if (memcmp (buf, linux_rt_sigtramp_code, 4) == 0)
@@ -173,7 +173,7 @@ m32r_linux_rt_sigtramp_start (CORE_ADDR pc, struct frame_info *this_frame)
 
 static int
 m32r_linux_pc_in_sigtramp (CORE_ADDR pc, const char *name,
-			   struct frame_info *this_frame)
+			   frame_info_ptr this_frame)
 {
   /* If we have NAME, we can optimize the search.  The trampolines are
      named __restore and __restore_rt.  However, they aren't dynamically
@@ -219,11 +219,11 @@ static int m32r_linux_sc_reg_offset[] = {
 struct m32r_frame_cache
 {
   CORE_ADDR base, pc;
-  struct trad_frame_saved_reg *saved_regs;
+  trad_frame_saved_reg *saved_regs;
 };
 
 static struct m32r_frame_cache *
-m32r_linux_sigtramp_frame_cache (struct frame_info *this_frame,
+m32r_linux_sigtramp_frame_cache (frame_info_ptr this_frame,
 				 void **this_cache)
 {
   struct m32r_frame_cache *cache;
@@ -244,7 +244,7 @@ m32r_linux_sigtramp_frame_cache (struct frame_info *this_frame,
   if (addr == 0)
     {
       /* If this is a RT signal trampoline, adjust SIGCONTEXT_ADDR
-         accordingly.  */
+	 accordingly.  */
       addr = m32r_linux_rt_sigtramp_start (cache->pc, this_frame);
       if (addr)
 	sigcontext_addr += 128;
@@ -258,15 +258,15 @@ m32r_linux_sigtramp_frame_cache (struct frame_info *this_frame,
   for (regnum = 0; regnum < sizeof (m32r_linux_sc_reg_offset) / 4; regnum++)
     {
       if (m32r_linux_sc_reg_offset[regnum] >= 0)
-	cache->saved_regs[regnum].addr =
-	  sigcontext_addr + m32r_linux_sc_reg_offset[regnum];
+	cache->saved_regs[regnum].set_addr (sigcontext_addr
+					    + m32r_linux_sc_reg_offset[regnum]);
     }
 
   return cache;
 }
 
 static void
-m32r_linux_sigtramp_frame_this_id (struct frame_info *this_frame,
+m32r_linux_sigtramp_frame_this_id (frame_info_ptr this_frame,
 				   void **this_cache,
 				   struct frame_id *this_id)
 {
@@ -277,7 +277,7 @@ m32r_linux_sigtramp_frame_this_id (struct frame_info *this_frame,
 }
 
 static struct value *
-m32r_linux_sigtramp_frame_prev_register (struct frame_info *this_frame,
+m32r_linux_sigtramp_frame_prev_register (frame_info_ptr this_frame,
 					 void **this_cache, int regnum)
 {
   struct m32r_frame_cache *cache =
@@ -288,7 +288,7 @@ m32r_linux_sigtramp_frame_prev_register (struct frame_info *this_frame,
 
 static int
 m32r_linux_sigtramp_frame_sniffer (const struct frame_unwind *self,
-				   struct frame_info *this_frame,
+				   frame_info_ptr this_frame,
 				   void **this_cache)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
@@ -302,6 +302,7 @@ m32r_linux_sigtramp_frame_sniffer (const struct frame_unwind *self,
 }
 
 static const struct frame_unwind m32r_linux_sigtramp_frame_unwind = {
+  "m32r linux sigtramp",
   SIGTRAMP_FRAME,
   default_frame_unwind_stop_reason,
   m32r_linux_sigtramp_frame_this_id,
@@ -449,7 +450,7 @@ static void
 m32r_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
 
-  linux_init_abi (info, gdbarch);
+  linux_init_abi (info, gdbarch, 0);
 
   /* Since EVB register is not available for native debug, we reduce
      the number of registers.  */
@@ -460,7 +461,7 @@ m32r_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* GNU/Linux uses SVR4-style shared libraries.  */
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
   set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+    (gdbarch, linux_ilp32_fetch_link_map_offsets);
 
   /* Core file support.  */
   set_gdbarch_iterate_over_regset_sections
@@ -468,7 +469,7 @@ m32r_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
-                                             svr4_fetch_objfile_link_map);
+					     svr4_fetch_objfile_link_map);
 }
 
 void _initialize_m32r_linux_tdep ();

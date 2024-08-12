@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2023/03/21 16:37:18 christos Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 2024/08/12 19:58:47 christos Exp $
 
 .include "../Makefile.inc"
 
-SUBDIR=		libbfd libiberty libopcodes libgdb libgdbsupport libdecnumber
-SUBDIR+=	libgnulib libctf
+SUBDIR+=	libbacktrace libbfd libiberty libopcodes libgdb libgdbsupport
+SUBDIR+=	libdecnumber libgnulib libctf libsframe
 .if ${USE_LIBEDIT} == no || ${USE_TUI} == yes
 SUBDIR+=	libreadline
 .endif

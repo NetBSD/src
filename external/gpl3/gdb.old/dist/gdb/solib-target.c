@@ -1,6 +1,6 @@
 /* Definitions for targets which report shared library events.
 
-   Copyright (C) 2007-2020 Free Software Foundation, Inc.
+   Copyright (C) 2007-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,6 +25,7 @@
 #include "target.h"
 #include "solib-target.h"
 #include <vector>
+#include "inferior.h"
 
 /* Private data for each loaded library.  */
 struct lm_info_target : public lm_info_base
@@ -233,8 +234,8 @@ solib_target_current_sos (void)
 
   /* Fetch the list of shared libraries.  */
   gdb::optional<gdb::char_vector> library_document
-    = target_read_stralloc (current_top_target (), TARGET_OBJECT_LIBRARIES,
-			    NULL);
+    = target_read_stralloc (current_inferior ()->top_target (),
+			    TARGET_OBJECT_LIBRARIES, NULL);
   if (!library_document)
     return NULL;
 
@@ -434,27 +435,15 @@ solib_target_in_dynsym_resolve_code (CORE_ADDR pc)
   return in_plt_section (pc);
 }
 
-struct target_so_ops solib_target_so_ops;
-
-void _initialize_solib_target ();
-void
-_initialize_solib_target ()
+const struct target_so_ops solib_target_so_ops =
 {
-  solib_target_so_ops.relocate_section_addresses
-    = solib_target_relocate_section_addresses;
-  solib_target_so_ops.free_so = solib_target_free_so;
-  solib_target_so_ops.clear_solib = solib_target_clear_solib;
-  solib_target_so_ops.solib_create_inferior_hook
-    = solib_target_solib_create_inferior_hook;
-  solib_target_so_ops.current_sos = solib_target_current_sos;
-  solib_target_so_ops.open_symbol_file_object
-    = solib_target_open_symbol_file_object;
-  solib_target_so_ops.in_dynsym_resolve_code
-    = solib_target_in_dynsym_resolve_code;
-  solib_target_so_ops.bfd_open = solib_bfd_open;
-
-  /* Set current_target_so_ops to solib_target_so_ops if not already
-     set.  */
-  if (current_target_so_ops == 0)
-    current_target_so_ops = &solib_target_so_ops;
-}
+  solib_target_relocate_section_addresses,
+  solib_target_free_so,
+  nullptr,
+  solib_target_clear_solib,
+  solib_target_solib_create_inferior_hook,
+  solib_target_current_sos,
+  solib_target_open_symbol_file_object,
+  solib_target_in_dynsym_resolve_code,
+  solib_bfd_open,
+};

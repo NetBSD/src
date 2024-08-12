@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2013-2020 Free Software Foundation, Inc.
+   Copyright 2013-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -461,7 +461,7 @@ main:
 .LASF1:
 	.string	"/tmp/19999/obj64/gdb/testsuite"
 .LASF0:
-	.string	"fission-loclists-pie.dwo"
+	.string	DWO
 	.section	.debug_str_offsets.dwo,"e",@progbits
 	.long	0	# indexed string 0x0: argv
 	.long	0x5	# indexed string 0x1: argc

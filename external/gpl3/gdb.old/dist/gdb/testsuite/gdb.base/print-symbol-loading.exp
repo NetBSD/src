@@ -1,4 +1,4 @@
-# Copyright 2012-2020 Free Software Foundation, Inc.
+# Copyright 2012-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -96,6 +96,7 @@ test_load_core full
 
 proc test_load_shlib { print_symbol_loading } {
     global binfile
+    global gdb_prompt
     with_test_prefix "shlib ${print_symbol_loading}" {
 	clean_restart ${binfile}
 	gdb_test_no_output "set auto-solib-add off"
@@ -106,12 +107,20 @@ proc test_load_shlib { print_symbol_loading } {
 	set test_name "load shared-lib"
 	switch ${print_symbol_loading} {
 	    "off" {
-		gdb_test_no_output "sharedlibrary .*" \
-		    ${test_name}
+		set cmd "sharedlibrary .*"
+		set cmd_regex [string_to_regexp $cmd]
+		gdb_test_multiple $cmd $test_name {
+		    -re "^$cmd_regex\r\n$gdb_prompt $" {
+			pass $test_name
+		    }
+		    -re "^$cmd_regex\r\nSymbols already loaded for\[^\r\n\]*\\/libc\\.\[^\r\n\]*\r\n$gdb_prompt $" {
+			pass $test_name
+		    }
+		}
 	    }
 	    "brief" {
 		gdb_test "sharedlibrary .*" \
-		    "Loading symbols for shared libraries: \\.\\*" \
+		    "Loading symbols for shared libraries: \\.\\*.*?(?:Symbols already loaded for .*?libc)?" \
 		    ${test_name}
 	    }
 	    "full" {

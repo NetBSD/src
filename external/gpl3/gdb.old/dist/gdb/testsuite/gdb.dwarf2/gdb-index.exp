@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,8 +31,9 @@ if { [prepare_for_testing "failed to prepare" "${testfile}" \
 # PROGRAM is assumed to be the output of standard_output_file.
 # Returns the path of the program or "" if there is a failure.
 # If there is a failure it will have already been logged.
+# Use local prefix to prevent overriding add_gdb_index from lib/gdb.exp.
 
-proc add_gdb_index { program } {
+proc local_add_gdb_index { program } {
     set index_file ${program}.gdb-index
     set dir [file dirname ${program}]
     set filename [file tail ${program}]
@@ -89,11 +90,14 @@ gdb_test_multiple "mt print objfiles ${testfile}" $test {
     -re "debug_names.*${gdb_prompt} $" {
 	set binfile_with_index $binfile
     }
-    -re "Psymtabs.*${gdb_prompt} $" {
-	set binfile_with_index [add_gdb_index $binfile]
+    -re "(Psymtabs|Cooked).*${gdb_prompt} $" {
+	set binfile_with_index [local_add_gdb_index $binfile]
 	if { ${binfile_with_index} == "" } {
 	    return -1
 	}
+    }
+    -re ".*${gdb_prompt} $" {
+	fail "unrecognized symbol reader"
     }
 }
 

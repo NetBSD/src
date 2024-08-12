@@ -24,8 +24,8 @@
 #include "basics.h"
 
 INLINE_BITS\
-(unsigned64)
-LSMASKED64 (unsigned64 word,
+(uint64_t)
+LSMASKED64 (uint64_t word,
 	    int start,
 	    int stop)
 {
@@ -34,8 +34,8 @@ LSMASKED64 (unsigned64 word,
 }
 
 INLINE_BITS\
-(unsigned64)
-LSEXTRACTED64 (unsigned64 val,
+(uint64_t)
+LSEXTRACTED64 (uint64_t val,
 	       int start,
 	       int stop)
 {
@@ -45,8 +45,8 @@ LSEXTRACTED64 (unsigned64 val,
 }
  
 INLINE_BITS\
-(unsigned32)
-MASKED32(unsigned32 word,
+(uint32_t)
+MASKED32(uint32_t word,
 	 unsigned start,
 	 unsigned stop)
 {
@@ -54,8 +54,8 @@ MASKED32(unsigned32 word,
 }
 
 INLINE_BITS\
-(unsigned64)
-MASKED64(unsigned64 word,
+(uint64_t)
+MASKED64(uint64_t word,
 	 unsigned start,
 	 unsigned stop)
 {
@@ -112,8 +112,8 @@ INSERTED(unsigned_word word,
 
 
 INLINE_BITS\
-(unsigned32)
-ROTL32(unsigned32 val,
+(uint32_t)
+ROTL32(uint32_t val,
        long shift)
 {
   ASSERT(shift >= 0 && shift <= 32);
@@ -122,8 +122,8 @@ ROTL32(unsigned32 val,
 
 
 INLINE_BITS\
-(unsigned64)
-ROTL64(unsigned64 val,
+(uint64_t)
+ROTL64(uint64_t val,
        long shift)
 {
   ASSERT(shift >= 0 && shift <= 64);

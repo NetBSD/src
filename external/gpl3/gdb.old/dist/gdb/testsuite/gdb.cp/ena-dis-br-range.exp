@@ -1,4 +1,4 @@
-# Copyright 2017-2020 Free Software Foundation, Inc.
+# Copyright 2017-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,8 +29,7 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
     return -1
 }
 
-if ![runto 'marker'] then {
-    fail "run to marker"
+if {![runto 'marker']} {
     return -1
 }
 
@@ -45,10 +44,10 @@ proc make_info_breakpoint_reply_re {b1 b2 b21 b22 b23 b24} {
 		"1${ws}breakpoint     keep ${b1}${ws}.* in marker\\(\\) at .*" \
 		"${ws}breakpoint already hit 1 time.*" \
 		"2${ws}breakpoint${ws}keep${ws}${b2}${ws}<MULTIPLE>.*" \
-		"2.1${ws}${b21}.*" \
-		"2.2${ws}${b22}.*" \
-		"2.3${ws}${b23}.*" \
-		"2.4${ws}${b24}.*" \
+		"2.1${ws}${b21}${ws}.*" \
+		"2.2${ws}${b22}${ws}.*" \
+		"2.3${ws}${b23}${ws}.*" \
+		"2.4${ws}${b24}${ws}.*" \
 	       ]
 }
 
@@ -75,18 +74,18 @@ proc test_enable_disable {cmd b1 b2 b21 b22 b23 b24} {
 test_enable_disable "disable 1" n y y y y y
 test_enable_disable "enable  1" y y y y y y
 
-# Check that we can disable/disable a breakpoint with multiple
+# Check that we can disable/enable a breakpoint with multiple
 # locations.
-test_enable_disable "disable 2" y n y y y y
-test_enable_disable "enable  2" y y y y y y
+test_enable_disable "disable 2" y n y- y- y- y-
+test_enable_disable "enable  2" y y y  y  y  y
 
-# Check that we can disable/disable a range of breakpoints.
-test_enable_disable "disable 1-2" n n y y y y
-test_enable_disable "enable 1-2"  y y y y y y
+# Check that we can disable/enable a range of breakpoints.
+test_enable_disable "disable 1-2" n n y- y- y- y-
+test_enable_disable "enable 1-2"  y y y  y  y  y
 
-# Check that we can disable/disable a list of breakpoints.
-test_enable_disable "disable 1 2" n n y y y y
-test_enable_disable "enable 1 2"  y y y y y y
+# Check that we can disable/enable a list of breakpoints.
+test_enable_disable "disable 1 2" n n y- y- y- y-
+test_enable_disable "enable 1 2"  y y y  y  y  y
 
 # Check that we can disable/enable a single location breakpoint.
 test_enable_disable "disable 2.2" y y y n y y
@@ -101,7 +100,7 @@ test_enable_disable "enable  2.2-3" y y y y y y
 test_enable_disable "disable 2.2-2" y y y n y y
 test_enable_disable "enable  2.2-2" y y y y y y
 
-# Check that we can disable/disable a list of breakpoints that
+# Check that we can disable/enable a list of breakpoints that
 # includes some elements with location ranges and others without.
 test_enable_disable "disable 1 2.1 2.3-4" n y n y n n
 test_enable_disable "enable  1 2.1 2.3-4" y y y y y y

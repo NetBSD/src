@@ -21,18 +21,15 @@
 #ifndef _CPU_C_
 #define _CPU_C_
 
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include <setjmp.h>
 
 #include "cpu.h"
 #include "idecode.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
 
 struct _cpu {
 
@@ -71,8 +68,8 @@ struct _cpu {
   memory_reservation reservation;
 
   /* offset from event time to this cpu's idea of the local time */
-  signed64 time_base_local_time;
-  signed64 decrementer_local_time;
+  int64_t time_base_local_time;
+  int64_t decrementer_local_time;
   event_entry_tag decrementer_event;
 
 };
@@ -232,7 +229,7 @@ cpu_error(cpu *processor,
 /* The processors local concept of time */
 
 INLINE_CPU\
-(signed64)
+(int64_t)
 cpu_get_time_base(cpu *processor)
 {
   return (event_queue_time(processor->events)
@@ -242,14 +239,14 @@ cpu_get_time_base(cpu *processor)
 INLINE_CPU\
 (void)
 cpu_set_time_base(cpu *processor,
-		  signed64 time_base)
+		  int64_t time_base)
 {
   processor->time_base_local_time = (event_queue_time(processor->events)
 				     - time_base);
 }
 
 INLINE_CPU\
-(signed32)
+(int32_t)
 cpu_get_decrementer(cpu *processor)
 {
   return (processor->decrementer_local_time
@@ -268,9 +265,9 @@ cpu_decrement_event(void *data)
 INLINE_CPU\
 (void)
 cpu_set_decrementer(cpu *processor,
-		    signed32 decrementer)
+		    int32_t decrementer)
 {
-  signed64 old_decrementer = cpu_get_decrementer(processor);
+  int64_t old_decrementer = cpu_get_decrementer(processor);
   event_queue_deschedule(processor->events, processor->decrementer_event);
   processor->decrementer_event = NULL;
   processor->decrementer_local_time = (event_queue_time(processor->events)
