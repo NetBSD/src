@@ -1,6 +1,6 @@
 /* Common target dependent code for GDB on ARM systems.
 
-   Copyright (C) 1988-2023 Free Software Foundation, Inc.
+   Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "gdbsupport/common-defs.h"
 #include "gdbsupport/common-regcache.h"
 #include "arm.h"
 
@@ -153,7 +152,7 @@ arm_instruction_changes_pc (uint32_t this_instr)
 	    return 0;
 	  }
 	/* Data processing instruction.  */
-	/* Fall through.  */
+	[[fallthrough]];
 
       case 0x1:
 	if (bits (this_instr, 12, 15) == 15)
@@ -322,7 +321,7 @@ thumb2_instruction_changes_pc (unsigned short inst1, unsigned short inst2)
 /* See arm.h.  */
 
 unsigned long
-shifted_reg_val (struct regcache *regcache, unsigned long inst,
+shifted_reg_val (reg_buffer_common *regcache, unsigned long inst,
 		 int carry, unsigned long pc_val, unsigned long status_reg)
 {
   unsigned long res, shift;

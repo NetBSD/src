@@ -1,6 +1,6 @@
 /* Common code for ARM software single stepping support.
 
-   Copyright (C) 1988-2023 Free Software Foundation, Inc.
+   Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,6 +24,7 @@
 
 /* Forward declaration.  */
 struct arm_get_next_pcs;
+struct reg_buffer_common;
 
 /* get_next_pcs operations.  */
 struct arm_get_next_pcs_ops
@@ -50,7 +51,7 @@ struct arm_get_next_pcs
      not.  */
   int has_thumb2_breakpoint;
   /* Registry cache.  */
-  struct regcache *regcache;
+  reg_buffer_common *regcache;
 };
 
 /* Initialize arm_get_next_pcs.  */
@@ -59,7 +60,7 @@ void arm_get_next_pcs_ctor (struct arm_get_next_pcs *self,
 			    int byte_order,
 			    int byte_order_for_code,
 			    int has_thumb2_breakpoint,
-			    struct regcache *regcache);
+			    reg_buffer_common *regcache);
 
 /* Find the next possible PCs after the current instruction executes.  */
 std::vector<CORE_ADDR> arm_get_next_pcs (struct arm_get_next_pcs *self);
