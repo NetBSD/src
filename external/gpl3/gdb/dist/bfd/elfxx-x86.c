@@ -1,5 +1,5 @@
 /* x86 specific support for ELF
-   Copyright (C) 2017-2022 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1013,7 +1013,7 @@ elf_x86_relative_reloc_record_add
    struct elf_x86_relative_reloc_data *relative_reloc,
    Elf_Internal_Rela *rel, asection *sec,
    asection *sym_sec, struct elf_link_hash_entry *h,
-   Elf_Internal_Sym *sym, bfd_vma offset)
+   Elf_Internal_Sym *sym, bfd_vma offset, bool *keep_symbuf_p)
 {
   bfd_size_type newidx;
 
@@ -1057,6 +1057,8 @@ elf_x86_relative_reloc_record_add
     {
       relative_reloc->data[newidx].sym = sym;
       relative_reloc->data[newidx].u.sym_sec = sym_sec;
+      /* We must keep the symbol buffer since SYM will be used later.  */
+      *keep_symbuf_p = true;
     }
   relative_reloc->data[newidx].offset = offset;
   relative_reloc->data[newidx].address = 0;
@@ -1086,6 +1088,8 @@ _bfd_x86_elf_link_relax_section (bfd *abfd ATTRIBUTE_UNUSED,
   bfd_vma *local_got_offsets;
   bool is_x86_64;
   bool unaligned_section;
+  bool return_status = false;
+  bool keep_symbuf = false;
 
   if (bfd_link_relocatable (info))
     return true;
@@ -1120,9 +1124,9 @@ _bfd_x86_elf_link_relax_section (bfd *abfd ATTRIBUTE_UNUSED,
 
   /* Load the relocations for this section.  */
   internal_relocs =
-    _bfd_elf_link_read_relocs (abfd, input_section, NULL,
-			       (Elf_Internal_Rela *) NULL,
-			       info->keep_memory);
+    _bfd_elf_link_info_read_relocs (abfd, info, input_section, NULL,
+				    (Elf_Internal_Rela *) NULL,
+				    info->keep_memory);
   if (internal_relocs == NULL)
     return false;
 
@@ -1163,11 +1167,13 @@ _bfd_x86_elf_link_relax_section (bfd *abfd ATTRIBUTE_UNUSED,
 	    {
 	      isymbuf = (Elf_Internal_Sym *) symtab_hdr->contents;
 	      if (isymbuf == NULL)
-		isymbuf = bfd_elf_get_elf_syms (abfd, symtab_hdr,
-						symtab_hdr->sh_info, 0,
-						NULL, NULL, NULL);
-	      if (isymbuf == NULL)
-		goto error_return;
+		{
+		  isymbuf = bfd_elf_get_elf_syms (abfd, symtab_hdr,
+						  symtab_hdr->sh_info,
+						  0, NULL, NULL, NULL);
+		  if (isymbuf == NULL)
+		    goto error_return;
+		}
 	    }
 
 	  isym = isymbuf + r_symndx;
@@ -1267,7 +1273,8 @@ _bfd_x86_elf_link_relax_section (bfd *abfd ATTRIBUTE_UNUSED,
 	  if (!elf_x86_relative_reloc_record_add (info,
 						  &htab->relative_reloc,
 						  irel, htab->elf.sgot,
-						  sec, h, isym, offset))
+						  sec, h, isym, offset,
+						  &keep_symbuf))
 	    goto error_return;
 
 	  continue;
@@ -1336,21 +1343,28 @@ _bfd_x86_elf_link_relax_section (bfd *abfd ATTRIBUTE_UNUSED,
 		 ((unaligned_section || unaligned_offset)
 		  ? &htab->unaligned_relative_reloc
 		  : &htab->relative_reloc),
-		 irel, input_section, sec, h, isym, offset))
+		 irel, input_section, sec, h, isym, offset,
+		 &keep_symbuf))
 	    goto error_return;
 	}
     }
 
   input_section->relative_reloc_packed = 1;
 
-  return true;
+  return_status = true;
 
 error_return:
   if ((unsigned char *) isymbuf != symtab_hdr->contents)
-    free (isymbuf);
+    {
+      /* Cache the symbol buffer if it must be kept.  */
+      if (keep_symbuf)
+	symtab_hdr->contents = (unsigned char *) isymbuf;
+      else
+	free (isymbuf);
+    }
   if (elf_section_data (input_section)->relocs != internal_relocs)
     free (internal_relocs);
-  return false;
+  return return_status;
 }
 
 /* Add an entry to the 64-bit DT_RELR bitmap.  */
@@ -1541,12 +1555,33 @@ elf_x86_size_or_finish_relative_reloc
 		    }
 		  else
 		    {
+		      bfd_byte *contents;
+
 		      if (rel.r_offset >= sec->size)
 			abort ();
+
+		      if (elf_section_data (sec)->this_hdr.contents
+			  != NULL)
+			contents
+			  = elf_section_data (sec)->this_hdr.contents;
+		      else
+			{
+			  if (!_bfd_elf_mmap_section_contents (sec->owner,
+							       sec,
+							       &contents))
+			    info->callbacks->einfo
+			      /* xgettext:c-format */
+			      (_("%F%P: %pB: failed to allocate memory for section `%pA'\n"),
+			       info->output_bfd, sec);
+
+			  /* Cache the section contents for
+			     elf_link_input_bfd.  */
+			  elf_section_data (sec)->this_hdr.contents
+			    = contents;
+			}
 		      htab->elf_write_addend
 			(info->output_bfd, outrel->r_addend,
-			 (elf_section_data (sec)->this_hdr.contents
-			  + rel.r_offset));
+			 contents + rel.r_offset);
 		    }
 		}
 	    }
@@ -1783,7 +1818,7 @@ enum dynobj_sframe_plt_type
   SFRAME_PLT_SEC = 2
 };
 
-/* Create SFrame unwind info for the plt entries in the .plt section
+/* Create SFrame stack trace info for the plt entries in the .plt section
    of type PLT_SEC_TYPE.  */
 
 static bool
@@ -1797,8 +1832,8 @@ _bfd_x86_elf_create_sframe_plt (bfd *output_bfd,
   bool plt0_generated_p;
   unsigned int plt0_entry_size;
   unsigned char func_info;
-  unsigned int fre_type;
-  /* The dynamic plt section for which .sframe unwind information is being
+  uint32_t fre_type;
+  /* The dynamic plt section for which .sframe stack trace information is being
      created.  */
   asection *dpltsec;
 
@@ -1811,7 +1846,7 @@ _bfd_x86_elf_create_sframe_plt (bfd *output_bfd,
 
   bed = get_elf_backend_data (output_bfd);
   htab = elf_x86_hash_table (info, bed->target_id);
-  /* Whether SFrame unwind info for plt0 is to be generated.  */
+  /* Whether SFrame stack trace info for plt0 is to be generated.  */
   plt0_generated_p = htab->plt.has_plt0;
   plt0_entry_size
     = (plt0_generated_p) ? htab->sframe_plt->plt0_entry_size : 0;
@@ -1826,7 +1861,7 @@ _bfd_x86_elf_create_sframe_plt (bfd *output_bfd,
 	  plt_entry_size = htab->plt.plt_entry_size;
 	  num_pltn_fres = htab->sframe_plt->pltn_num_fres;
 	  num_pltn_entries
-	    = (htab->elf.splt->size - plt0_entry_size) / plt_entry_size;
+	    = (dpltsec->size - plt0_entry_size) / plt_entry_size;
 
 	  break;
 	}
@@ -1838,8 +1873,7 @@ _bfd_x86_elf_create_sframe_plt (bfd *output_bfd,
 
 	  plt_entry_size = htab->sframe_plt->sec_pltn_entry_size;
 	  num_pltn_fres = htab->sframe_plt->sec_pltn_num_fres;
-	  num_pltn_entries
-		= htab->plt_second_eh_frame->size / plt_entry_size;
+	  num_pltn_entries = dpltsec->size / plt_entry_size;
 	  break;
 	}
     default:
@@ -1848,7 +1882,7 @@ _bfd_x86_elf_create_sframe_plt (bfd *output_bfd,
       break;
     }
 
-  *ectx = sframe_encode (SFRAME_VERSION_1,
+  *ectx = sframe_encode (SFRAME_VERSION_2,
 			 0,
 			 SFRAME_ABI_AMD64_ENDIAN_LITTLE,
 			 SFRAME_CFA_FIXED_FP_INVALID,
@@ -1865,11 +1899,12 @@ _bfd_x86_elf_create_sframe_plt (bfd *output_bfd,
     {
       /* Add SFrame FDE for plt0, the function start address is updated later
 	 at _bfd_elf_merge_section_sframe time.  */
-      sframe_encoder_add_funcdesc (*ectx,
-				   0, /* func start addr.  */
-				   plt0_entry_size,
-				   func_info,
-				   0 /* Num FREs.  */);
+      sframe_encoder_add_funcdesc_v2 (*ectx,
+				      0, /* func start addr.  */
+				      plt0_entry_size,
+				      func_info,
+				      16,
+				      0 /* Num FREs.  */);
       sframe_frame_row_entry plt0_fre;
       unsigned int num_plt0_fres = htab->sframe_plt->plt0_num_fres;
       for (unsigned int j = 0; j < num_plt0_fres; j++)
@@ -1885,7 +1920,7 @@ _bfd_x86_elf_create_sframe_plt (bfd *output_bfd,
       /* pltn entries use an SFrame FDE of type
 	 SFRAME_FDE_TYPE_PCMASK to exploit the repetitive
 	 pattern of the instructions in these entries.  Using this SFrame FDE
-	 type helps in keeping the unwind information for pltn entries
+	 type helps in keeping the SFrame stack trace info for pltn entries
 	 compact.  */
       func_info	= sframe_fde_create_func_info (fre_type,
 					       SFRAME_FDE_TYPE_PCMASK);
@@ -1893,11 +1928,12 @@ _bfd_x86_elf_create_sframe_plt (bfd *output_bfd,
 	 function start address = plt0_entry_size.  As usual, this will be
 	 updated later at _bfd_elf_merge_section_sframe, by when the
 	 sections are relocated.  */
-      sframe_encoder_add_funcdesc (*ectx,
-				   plt0_entry_size, /* func start addr.  */
-				   dpltsec->size - plt0_entry_size,
-				   func_info,
-				   0 /* Num FREs.  */);
+      sframe_encoder_add_funcdesc_v2 (*ectx,
+				      plt0_entry_size, /* func start addr.  */
+				      dpltsec->size - plt0_entry_size,
+				      func_info,
+				      16,
+				      0 /* Num FREs.  */);
 
       sframe_frame_row_entry pltn_fre;
       /* Now add the FREs for pltn.  Simply adding the two FREs suffices due
@@ -2204,7 +2240,7 @@ _bfd_elf_x86_valid_reloc_p (asection *input_section,
 /* Set the sizes of the dynamic sections.  */
 
 bool
-_bfd_x86_elf_size_dynamic_sections (bfd *output_bfd,
+_bfd_x86_elf_late_size_sections (bfd *output_bfd,
 				    struct bfd_link_info *info)
 {
   struct elf_x86_link_hash_table *htab;
@@ -2220,7 +2256,7 @@ _bfd_x86_elf_size_dynamic_sections (bfd *output_bfd,
     return false;
   dynobj = htab->elf.dynobj;
   if (dynobj == NULL)
-    abort ();
+    return true;
 
   /* Set up .got offsets for local syms, and space for local dynamic
      relocs.  */
@@ -2470,22 +2506,34 @@ _bfd_x86_elf_size_dynamic_sections (bfd *output_bfd,
 	  htab->plt_sframe->size = sizeof (sframe_header) + 1;
 	}
 
-      /* FIXME - generate for .got.plt ?  */
+      /* FIXME - generate for .plt.got ?  */
 
-      /* Unwind info for the second PLT.  */
       if (htab->plt_second_sframe != NULL
 	  && htab->plt_second != NULL
 	  && htab->plt_second->size != 0
 	  && !bfd_is_abs_section (htab->plt_second->output_section))
 	{
-	  _bfd_x86_elf_create_sframe_plt (output_bfd, info,
-					  SFRAME_PLT_SEC);
+	  /* SFrame stack trace info for the second PLT.  */
+	  _bfd_x86_elf_create_sframe_plt (output_bfd, info, SFRAME_PLT_SEC);
 	  /* FIXME - Dirty Hack.  Set the size to something non-zero for now,
 	     so that the section does not get stripped out below.  The precise
 	     size of this section is known only when the contents are
 	     serialized in _bfd_x86_elf_write_sframe_plt.  */
 	  htab->plt_second_sframe->size = sizeof (sframe_header) + 1;
 	}
+    }
+
+  asection *resolved_plt = NULL;
+
+  if (htab->params->mark_plt && htab->elf.dynamic_sections_created)
+    {
+      if (htab->plt_second != NULL)
+	resolved_plt = htab->plt_second;
+      else
+	resolved_plt = htab->elf.splt;
+
+      if (resolved_plt != NULL && resolved_plt->size == 0)
+	resolved_plt = NULL;
     }
 
   /* We now have determined the sizes of the various dynamic sections.
@@ -2636,6 +2684,12 @@ _bfd_x86_elf_size_dynamic_sections (bfd *output_bfd,
 	_bfd_x86_elf_write_sframe_plt (output_bfd, info, SFRAME_PLT_SEC);
     }
 
+  if (resolved_plt != NULL
+      && (!_bfd_elf_add_dynamic_entry (info, DT_X86_64_PLT, 0)
+	  || !_bfd_elf_add_dynamic_entry (info, DT_X86_64_PLTSZ, 0)
+	  || !_bfd_elf_add_dynamic_entry (info, DT_X86_64_PLTENT, 0)))
+    return false;
+
   return _bfd_elf_maybe_vxworks_add_dynamic_tags (output_bfd, info,
 						  relocs);
 }
@@ -2659,7 +2713,7 @@ _bfd_x86_elf_finish_dynamic_sections (bfd *output_bfd,
     return htab;
 
   dynobj = htab->elf.dynobj;
-  sdyn = bfd_get_linker_section (dynobj, ".dynamic");
+  sdyn = htab->elf.dynamic;
 
   /* GOT is always created in setup_gnu_properties.  But it may not be
      needed.  .got.plt section may be needed for static IFUNC.  */
@@ -2710,6 +2764,12 @@ _bfd_x86_elf_finish_dynamic_sections (bfd *output_bfd,
   if (sdyn == NULL || htab->elf.sgot == NULL)
     abort ();
 
+  asection *resolved_plt;
+  if (htab->plt_second != NULL)
+    resolved_plt = htab->plt_second;
+  else
+    resolved_plt = htab->elf.splt;
+
   sizeof_dyn = bed->s->sizeof_dyn;
   dyncon = sdyn->contents;
   dynconend = sdyn->contents + sdyn->size;
@@ -2734,11 +2794,12 @@ _bfd_x86_elf_finish_dynamic_sections (bfd *output_bfd,
 	  break;
 
 	case DT_JMPREL:
-	  dyn.d_un.d_ptr = htab->elf.srelplt->output_section->vma;
+	  s = htab->elf.srelplt;
+	  dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
 	  break;
 
 	case DT_PLTRELSZ:
-	  s = htab->elf.srelplt->output_section;
+	  s = htab->elf.srelplt;
 	  dyn.d_un.d_val = s->size;
 	  break;
 
@@ -2752,6 +2813,19 @@ _bfd_x86_elf_finish_dynamic_sections (bfd *output_bfd,
 	  s = htab->elf.sgot;
 	  dyn.d_un.d_ptr = s->output_section->vma + s->output_offset
 	    + htab->elf.tlsdesc_got;
+	  break;
+
+	case DT_X86_64_PLT:
+	  s = resolved_plt->output_section;
+	  dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
+	  break;
+
+	case DT_X86_64_PLTSZ:
+	  dyn.d_un.d_val = resolved_plt->size;
+	  break;
+
+	case DT_X86_64_PLTENT:
+	  dyn.d_un.d_ptr = htab->plt.plt_entry_size;
 	  break;
 	}
 
@@ -2927,8 +3001,8 @@ _bfd_x86_elf_finish_dynamic_sections (bfd *output_bfd,
 
 
 bool
-_bfd_x86_elf_always_size_sections (bfd *output_bfd,
-				   struct bfd_link_info *info)
+_bfd_x86_elf_early_size_sections (bfd *output_bfd,
+				  struct bfd_link_info *info)
 {
   asection *tls_sec = elf_hash_table (info)->tls_sec;
 
@@ -3523,6 +3597,7 @@ _bfd_x86_elf_get_synthetic_symtab (bfd *abfd,
   bfd_vma (*get_plt_got_vma) (struct elf_x86_plt *, bfd_vma, bfd_vma,
 			      bfd_vma);
   bool (*valid_plt_reloc_p) (unsigned int);
+  unsigned int jump_slot_reloc;
 
   dynrelbuf = NULL;
   if (count == 0)
@@ -3563,11 +3638,13 @@ _bfd_x86_elf_get_synthetic_symtab (bfd *abfd,
     {
       get_plt_got_vma = elf_x86_64_get_plt_got_vma;
       valid_plt_reloc_p = elf_x86_64_valid_plt_reloc_p;
+      jump_slot_reloc = R_X86_64_JUMP_SLOT;
     }
   else
     {
       get_plt_got_vma = elf_i386_get_plt_got_vma;
       valid_plt_reloc_p = elf_i386_valid_plt_reloc_p;
+      jump_slot_reloc = R_386_JUMP_SLOT;
       if (got_addr)
 	{
 	  /* Check .got.plt and then .got to get the _GLOBAL_OFFSET_TABLE_
@@ -3672,7 +3749,9 @@ _bfd_x86_elf_get_synthetic_symtab (bfd *abfd,
 		len = strlen ((*p->sym_ptr_ptr)->name);
 		memcpy (names, (*p->sym_ptr_ptr)->name, len);
 		names += len;
-		if (p->addend != 0)
+		/* There may be JUMP_SLOT and IRELATIVE relocations.
+		   JUMP_SLOT r_addend should be ignored.  */
+		if (p->addend != 0 && p->howto->type != jump_slot_reloc)
 		  {
 		    char buf[30], *a;
 
@@ -3708,7 +3787,7 @@ _bfd_x86_elf_get_synthetic_symtab (bfd *abfd,
     count = n;
 
   for (j = 0; plts[j].name != NULL; j++)
-    free (plts[j].contents);
+    _bfd_elf_munmap_section_contents (plts[j].sec, plts[j].contents);
 
   free (dynrelbuf);
 
@@ -4237,6 +4316,7 @@ _bfd_x86_elf_link_setup_gnu_properties
      still be used with LD_AUDIT or LD_PROFILE if PLT entry is used for
      canonical function address.  */
   htab->plt.has_plt0 = 1;
+  htab->plt.plt_indirect_branch_offset = 0;
   normal_target = htab->elf.target_os == is_normal;
 
   if (normal_target)
@@ -4245,6 +4325,7 @@ _bfd_x86_elf_link_setup_gnu_properties
 	{
 	  htab->lazy_plt = init_table->lazy_ibt_plt;
 	  htab->non_lazy_plt = init_table->non_lazy_ibt_plt;
+	  htab->plt.plt_indirect_branch_offset = 4;
 	}
       else
 	{
