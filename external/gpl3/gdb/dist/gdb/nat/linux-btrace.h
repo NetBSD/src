@@ -1,6 +1,6 @@
 /* Linux-dependent part of branch trace support for GDB, and GDBserver.
 
-   Copyright (C) 2013-2023 Free Software Foundation, Inc.
+   Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>
 
@@ -23,6 +23,7 @@
 #define NAT_LINUX_BTRACE_H
 
 #include "gdbsupport/btrace-common.h"
+#include "gdbsupport/gdb-checked-static-cast.h"
 #if HAVE_LINUX_PERF_EVENT_H
 #  include <linux/perf_event.h>
 #endif
@@ -45,60 +46,27 @@ struct perf_event_buffer
   /* The data_head value from the last read.  */
   __u64 last_head;
 };
-
-/* Branch trace target information for BTS tracing.  */
-struct btrace_tinfo_bts
-{
-  /* The Linux perf_event configuration for collecting the branch trace.  */
-  struct perf_event_attr attr;
-
-  /* The perf event file.  */
-  int file;
-
-  /* The perf event configuration page. */
-  volatile struct perf_event_mmap_page *header;
-
-  /* The BTS perf event buffer.  */
-  struct perf_event_buffer bts;
-};
-
-/* Branch trace target information for Intel Processor Trace
-   tracing.  */
-struct btrace_tinfo_pt
-{
-  /* The Linux perf_event configuration for collecting the branch trace.  */
-  struct perf_event_attr attr;
-
-  /* The perf event file.  */
-  int file;
-
-  /* The perf event configuration page. */
-  volatile struct perf_event_mmap_page *header;
-
-  /* The trace perf event buffer.  */
-  struct perf_event_buffer pt;
-};
 #endif /* HAVE_LINUX_PERF_EVENT_H */
 
 /* Branch trace target information per thread.  */
-struct btrace_target_info
+struct linux_btrace_target_info final : public btrace_target_info
 {
-  /* The ptid of this thread.  */
-  ptid_t ptid;
-
-  /* The obtained branch trace configuration.  */
-  struct btrace_config conf;
+  linux_btrace_target_info (ptid_t ptid)
+    : btrace_target_info (ptid)
+    {}
 
 #if HAVE_LINUX_PERF_EVENT_H
-  /* The branch tracing format specific information.  */
-  union
-  {
-    /* CONF.FORMAT == BTRACE_FORMAT_BTS.  */
-    struct btrace_tinfo_bts bts;
+  /* The Linux perf_event configuration for collecting the branch trace.  */
+  struct perf_event_attr attr {};
 
-    /* CONF.FORMAT == BTRACE_FORMAT_PT.  */
-    struct btrace_tinfo_pt pt;
-  } variant;
+  /* The perf event file.  */
+  int file = -1;
+
+  /* The perf event configuration page.  */
+  volatile struct perf_event_mmap_page *header = nullptr;
+
+  /* The perf event buffer containing the trace data.  */
+  struct perf_event_buffer pev {};
 #endif /* HAVE_LINUX_PERF_EVENT_H */
 };
 

@@ -1,4 +1,4 @@
-/*Copyright (C) 2015-2023 Free Software Foundation, Inc.
+/*Copyright (C) 2015-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,7 +15,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "gdbsupport/common-defs.h"
 #include "ppc-linux.h"
 #include "nat/gdb_ptrace.h"
 #include <elf.h>
@@ -78,6 +77,8 @@ ppc64_64bit_inferior_p (long msr)
 int
 ppc_linux_target_wordsize (int tid)
 {
+  gdb_assert (tid != 0);
+
   int wordsize = 4;
 
   /* Check for 64-bit inferior process.  This is the case when the host is

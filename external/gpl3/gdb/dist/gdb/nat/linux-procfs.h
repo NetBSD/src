@@ -1,5 +1,5 @@
 /* Linux-specific PROCFS manipulation routines.
-   Copyright (C) 2011-2023 Free Software Foundation, Inc.
+   Copyright (C) 2011-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -53,6 +53,17 @@ extern int linux_proc_pid_is_zombie_nowarn (pid_t pid);
    file is assumed to indicate the thread is gone.  */
 
 extern int linux_proc_pid_is_gone (pid_t pid);
+
+/* Index of fields of interest in /proc/PID/stat, from procfs(5) man page.  */
+#define LINUX_PROC_STAT_STATE 3
+#define LINUX_PROC_STAT_STARTTIME 22
+#define LINUX_PROC_STAT_PROCESSOR 39
+
+/* Returns FIELD (as numbered in procfs(5) man page) of
+   /proc/PID/task/LWP/stat file.  */
+
+extern std::optional<std::string> linux_proc_get_stat_field (ptid_t ptid,
+							     int field);
 
 /* Return a string giving the thread's name or NULL if the
    information is unavailable.  The returned value points to a statically
