@@ -1,5 +1,5 @@
 /* BFD back-end for TMS320C54X coff binaries.
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
    Contributed by Timothy Wall (twall@cygnus.com)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -107,23 +107,6 @@ bfd_ticoff_get_section_load_page (asection *sect)
     page = FLAG_TO_PG (sect->lma);
 
   return page;
-}
-
-/* Set the architecture appropriately.  Allow unkown architectures
-   (e.g. binary).  */
-
-static bool
-tic54x_set_arch_mach (bfd *abfd,
-		      enum bfd_architecture arch,
-		      unsigned long machine)
-{
-  if (arch == bfd_arch_unknown)
-    arch = bfd_arch_tic54x;
-
-  else if (arch != bfd_arch_tic54x)
-    return false;
-
-  return bfd_default_set_arch_mach (abfd, arch, machine);
 }
 
 static bfd_reloc_status_type
@@ -335,17 +318,6 @@ ticoff_bfd_is_local_label_name (bfd *abfd ATTRIBUTE_UNUSED,
 
 #include "coffcode.h"
 
-static bool
-tic54x_set_section_contents (bfd *abfd,
-			     sec_ptr section,
-			     const void * location,
-			     file_ptr offset,
-			     bfd_size_type bytes_to_do)
-{
-  return coff_set_section_contents (abfd, section, location,
-				    offset, bytes_to_do);
-}
-
 static void
 tic54x_reloc_processing (arelent *relent,
 			 struct internal_reloc *reloc,
@@ -448,7 +420,7 @@ const bfd_target tic54x_coff0_vec =
     BFD_JUMP_TABLE_ARCHIVE (_bfd_archive_coff),
     BFD_JUMP_TABLE_SYMBOLS (coff),
     BFD_JUMP_TABLE_RELOCS (coff),
-    BFD_JUMP_TABLE_WRITE (tic54x),
+    BFD_JUMP_TABLE_WRITE (coff),
     BFD_JUMP_TABLE_LINK (coff),
     BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
     NULL,
@@ -510,7 +482,7 @@ const bfd_target tic54x_coff0_beh_vec =
     BFD_JUMP_TABLE_ARCHIVE (_bfd_archive_coff),
     BFD_JUMP_TABLE_SYMBOLS (coff),
     BFD_JUMP_TABLE_RELOCS (coff),
-    BFD_JUMP_TABLE_WRITE (tic54x),
+    BFD_JUMP_TABLE_WRITE (coff),
     BFD_JUMP_TABLE_LINK (coff),
     BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
@@ -573,7 +545,7 @@ const bfd_target tic54x_coff1_vec =
     BFD_JUMP_TABLE_ARCHIVE (_bfd_archive_coff),
     BFD_JUMP_TABLE_SYMBOLS (coff),
     BFD_JUMP_TABLE_RELOCS (coff),
-    BFD_JUMP_TABLE_WRITE (tic54x),
+    BFD_JUMP_TABLE_WRITE (coff),
     BFD_JUMP_TABLE_LINK (coff),
     BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
@@ -636,7 +608,7 @@ const bfd_target tic54x_coff1_beh_vec =
     BFD_JUMP_TABLE_ARCHIVE (_bfd_archive_coff),
     BFD_JUMP_TABLE_SYMBOLS (coff),
     BFD_JUMP_TABLE_RELOCS (coff),
-    BFD_JUMP_TABLE_WRITE (tic54x),
+    BFD_JUMP_TABLE_WRITE (coff),
     BFD_JUMP_TABLE_LINK (coff),
     BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
@@ -699,7 +671,7 @@ const bfd_target tic54x_coff2_vec =
     BFD_JUMP_TABLE_ARCHIVE (_bfd_archive_coff),
     BFD_JUMP_TABLE_SYMBOLS (coff),
     BFD_JUMP_TABLE_RELOCS (coff),
-    BFD_JUMP_TABLE_WRITE (tic54x),
+    BFD_JUMP_TABLE_WRITE (coff),
     BFD_JUMP_TABLE_LINK (coff),
     BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
@@ -762,7 +734,7 @@ const bfd_target tic54x_coff2_beh_vec =
     BFD_JUMP_TABLE_ARCHIVE (_bfd_archive_coff),
     BFD_JUMP_TABLE_SYMBOLS (coff),
     BFD_JUMP_TABLE_RELOCS (coff),
-    BFD_JUMP_TABLE_WRITE (tic54x),
+    BFD_JUMP_TABLE_WRITE (coff),
     BFD_JUMP_TABLE_LINK (coff),
     BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 

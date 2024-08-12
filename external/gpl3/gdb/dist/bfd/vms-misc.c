@@ -1,6 +1,6 @@
 /* vms-misc.c -- BFD back-end for VMS/VAX (openVMS/VAX) and
    EVAX (openVMS/Alpha) files.
-   Copyright (C) 1996-2022 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
 
    Miscellaneous functions.
 
@@ -269,7 +269,7 @@ _bfd_vms_output_end_subrec (struct vms_rec_wr *recwr)
 
 /* Ends current record (and write it).  */
 
-void
+bool
 _bfd_vms_output_end (bfd *abfd, struct vms_rec_wr *recwr)
 {
   vms_debug2 ((6, "_bfd_vms_output_end (size %u)\n", recwr->size));
@@ -278,7 +278,7 @@ _bfd_vms_output_end (bfd *abfd, struct vms_rec_wr *recwr)
   BFD_ASSERT (recwr->subrec_offset == 0);
 
   if (recwr->size == 0)
-    return;
+    return true;
 
   _bfd_vms_output_align (recwr, recwr->size);
 
@@ -289,16 +289,20 @@ _bfd_vms_output_end (bfd *abfd, struct vms_rec_wr *recwr)
      converted to variable length (VAR) format.  VAR format has a length
      word first which must be explicitly output in UDF format.  */
   /* So, first the length word.  */
-  bfd_bwrite (recwr->buf + 2, 2, abfd);
+  if (bfd_write (recwr->buf + 2, 2, abfd) != 2)
+    return false;
 
   /* Align.  */
   if (recwr->size & 1)
     recwr->buf[recwr->size++] = 0;
 
   /* Then the record.  */
-  bfd_bwrite (recwr->buf, (size_t) recwr->size, abfd);
+  if (bfd_write (recwr->buf, (size_t) recwr->size, abfd)
+      != (size_t) recwr->size)
+    return false;
 
   recwr->size = 0;
+  return true;
 }
 
 /* Check remaining buffer size.  Return what's left.  */
