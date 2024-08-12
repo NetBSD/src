@@ -1,6 +1,6 @@
 /* rx.c --- opcode semantics for stand-alone RX simulator.
 
-Copyright (C) 2008-2023 Free Software Foundation, Inc.
+Copyright (C) 2008-2024 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -36,7 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "misc.h"
 
 #ifdef WITH_PROFILE
-static const char * id_names[] = {
+static const char * const id_names[] = {
   "RXO_unknown",
   "RXO_mov",	/* d = s (signed) */
   "RXO_movbi",	/* d = [s,s2] (signed) */
@@ -142,7 +142,7 @@ static const char * id_names[] = {
   "RXO_sccnd",	/* d = cond(s) ? 1 : 0 */
 };
 
-static const char * optype_names[] = {
+static const char * const optype_names[] = {
   " -  ",
   "#Imm",	/* #addend */
   " Rn ",	/* Rn */
@@ -332,7 +332,7 @@ div_cycles(long num, long den)
 
 #endif /* else CYCLE_ACCURATE */
 
-static int size2bytes[] = {
+static const int size2bytes[] = {
   4, 1, 1, 1, 2, 2, 2, 3, 4
 };
 
@@ -341,7 +341,7 @@ typedef struct {
 } RX_Data;
 
 #define rx_abort() _rx_abort(__FILE__, __LINE__)
-static void
+static void ATTRIBUTE_NORETURN
 _rx_abort (const char *file, int line)
 {
   if (strrchr (file, '/'))
@@ -411,7 +411,7 @@ get_op (const RX_Opcode_Decoded *rd, int i)
 
     case RX_Operand_Predec:	/* [-Rn] */
       put_reg (o->reg, get_reg (o->reg) - size2bytes[o->size]);
-      /* fall through */
+      ATTRIBUTE_FALLTHROUGH;
     case RX_Operand_Postinc:	/* [Rn+] */
     case RX_Operand_Zero_Indirect:	/* [Rn + 0] */
     case RX_Operand_Indirect:	/* [Rn + addend] */
@@ -583,7 +583,7 @@ put_op (const RX_Opcode_Decoded *rd, int i, int v)
 
     case RX_Operand_Predec:	/* [-Rn] */
       put_reg (o->reg, get_reg (o->reg) - size2bytes[o->size]);
-      /* fall through */
+      ATTRIBUTE_FALLTHROUGH;
     case RX_Operand_Postinc:	/* [Rn+] */
     case RX_Operand_Zero_Indirect:	/* [Rn + 0] */
     case RX_Operand_Indirect:	/* [Rn + addend] */
@@ -754,6 +754,7 @@ typedef union {
   float f;
 } FloatInt;
 
+ATTRIBUTE_UNUSED
 static inline int
 float2int (float f)
 {

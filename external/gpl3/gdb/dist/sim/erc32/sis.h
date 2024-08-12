@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2023 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@
 #define I_ACC_EXC 1
 
 /* Maximum events in event queue */
-#define EVENT_MAX	256
+#define MAX_EVENTS	256
 
 /* Maximum # of floating point queue */
 #define FPUQN	1
