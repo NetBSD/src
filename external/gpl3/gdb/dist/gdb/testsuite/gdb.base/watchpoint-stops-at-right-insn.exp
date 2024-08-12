@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2014-2023 Free Software Foundation, Inc.
+# Copyright 2014-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -71,9 +71,7 @@
 standard_testfile
 
 # No use testing this if we can't use hardware watchpoints.
-if {[skip_hw_watchpoint_tests]} {
-    return -1
-}
+require allow_hw_watchpoint_tests
 
 if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
     return -1

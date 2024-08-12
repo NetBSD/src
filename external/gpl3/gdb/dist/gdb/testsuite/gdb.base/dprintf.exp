@@ -1,4 +1,4 @@
-#   Copyright (C) 2012-2023 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,11 @@
 
 standard_testfile
 
-if { [prepare_for_testing "failed to prepare" $testfile $srcfile] } {
+set flags {}
+lappend flags debug
+lappend_include_file flags $srcdir/lib/unbuffer_output.c
+
+if { [prepare_for_testing "failed to prepare" $testfile $srcfile $flags] } {
     return -1
 }
 
@@ -213,8 +217,11 @@ gdb_test "set dprintf-style foobar" "Undefined item: \"foobar\"." \
 # Test that force-disabling the BreakpointCommands RSP feature works
 # as expected.  dprintf relies on support for target-side breakpoint
 # commands --- use it as proxy.
-if [gdb_is_target_remote] {
-    gdb_test_no_output "set remote breakpoint-commands-packet off"
+if [gdb_protocol_is_remote] {
+    gdb_test \
+	"set remote breakpoint-commands-packet off" \
+	"Support for the 'BreakpointCommands' packet on the current remote target is set to \"off\"."
+
     gdb_test "set dprintf-style agent" \
 	"warning: Target cannot run dprintf commands.*" \
 	"set dprintf-style agent, with feature disabled"

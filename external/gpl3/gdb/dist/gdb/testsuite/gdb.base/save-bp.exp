@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2023 Free Software Foundation, Inc.
+# Copyright (C) 2011-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,8 +22,8 @@ if { [prepare_for_testing "failed to prepare" ${testfile} $srcfile] } {
 if ![runto_main] {
     return -1
 }
-# Delete all breakpoints so that the "runto_main" breakpoint above
-# does not interfere with our testing.
+# Delete all breakpoints, watchpoints, tracepoints, and catchpoints so that
+# the "runto_main" breakpoint above does not interfere with our testing.
 delete_breakpoints
 
 # Insert a bunch of breakpoints... The goal is to create breakpoints
@@ -64,8 +64,8 @@ clean_restart $testfile
 if ![runto_main] {
     return -1
 }
-# Delete all breakpoints so that the "runto_main" breakpoint above
-# does not interfere with our testing.
+# Delete all breakpoints, watchpoints, tracepoints, and catchpoints so that
+# the "runto_main" breakpoint above does not interfere with our testing.
 delete_breakpoints
 
 # ... and restore the breakpoints.
@@ -79,7 +79,7 @@ gdb_test_sequence "info break" "info break" [list				\
   "\[\r\n\]+Num +Type +Disp +Enb +Address +What"				\
   "\[\r\n\]+$bp_row_start break_me at \[^\r\n\]*$srcfile:\[0-9\]+"		\
   "\[\r\n\]+$bp_row_start main at \[^\r\n\]*$srcfile:$loc_bp2"			\
-  "\[\r\n\]+$bp_row_start main at \[^\r\n\]*$srcfile:$loc_bp3 +thread 1"	\
+  "\[\r\n\]+$bp_row_start main at \[^\r\n\]*$srcfile:$loc_bp3"			\
   "\[\r\n\]+\[ \t]+stop only in thread 1"					\
   "\[\r\n\]+$bp_row_start main at \[^\r\n\]*$srcfile:$loc_bp4"			\
   "\[\r\n\]+\[ \t\]+stop only if i == 1( \\((host|target) evals\\))?"		\
@@ -89,3 +89,19 @@ gdb_test_sequence "info break" "info break" [list				\
   "\[\r\n\]+\[ \t\]+printf"							\
   "\[\r\n\]+$disabled_row_start main at \[^\r\n\]*$srcfile:$loc_bp8"		\
 ]
+
+# Copy the saved breakpoints file to the local machine (if necessary),
+# and then check its contents.
+if {[is_remote host]} {
+    set bps [remote_upload host bps [standard_output_file bps]]
+}
+set fh [open $bps]
+set lines [split [read $fh] "\n"]
+close $fh
+
+with_test_prefix "in bps file" {
+    gdb_assert {[lsearch -regexp $lines "break ${srcfile}:${loc_bp2}$"] != -1} \
+	"check for general breakpoint"
+    gdb_assert {[lsearch -regexp $lines "break ${srcfile}:${loc_bp3} thread 1\\.1"] != -1} \
+	"check for thread-specific breakpoint"
+}

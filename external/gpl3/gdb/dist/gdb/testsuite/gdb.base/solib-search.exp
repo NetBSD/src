@@ -1,4 +1,4 @@
-# Copyright 2013-2023 Free Software Foundation, Inc.
+# Copyright 2013-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,10 +16,8 @@
 # Test solib-search-path, and in the case of solib-svr4.c whether l_addr_p
 # is properly reset when the path is changed.
 
-if {[is_remote target] || [skip_shlib_tests]} {
-    untested "skipping remote target and shared library tests"
-    return -1
-}
+require allow_shlib_tests
+require {!is_remote target}
 
 # Build "wrong" and "right" versions of the libraries in separate directories.
 set wrong_lib_subdir "solib-search-wrong"

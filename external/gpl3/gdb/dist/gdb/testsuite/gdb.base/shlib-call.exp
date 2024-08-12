@@ -1,4 +1,4 @@
-#   Copyright 1997-2023 Free Software Foundation, Inc.
+#   Copyright 1997-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,9 +29,7 @@
 #prop lib shr2.sl
 
 
-if {[skip_shlib_tests]} {
-    return 0
-}
+require allow_shlib_tests
 
 if { [is_remote host] } {
     gdb_remote_download host $srcdir/$subdir/ss.h
@@ -45,7 +43,12 @@ set lib1     [standard_output_file shr1.sl]
 set lib2     [standard_output_file shr2.sl]
 
 set lib_opts "debug"
-set exec_opts [list debug shlib=${lib1} shlib=${lib2}]
+
+set exec_opts {}
+lappend exec_opts debug
+lappend exec_opts shlib=$lib1
+lappend exec_opts shlib=$lib2
+lappend_include_file exec_opts $srcdir/lib/unbuffer_output.c
 
 if { [gdb_compile_shlib ${lib1src} ${lib1} $lib_opts] != ""
      || [gdb_compile_shlib ${lib2src} ${lib2} $lib_opts] != ""

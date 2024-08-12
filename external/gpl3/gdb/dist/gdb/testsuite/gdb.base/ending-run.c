@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../lib/unbuffer_output.c"
+#include "unbuffer_output.c"
 
 int callee (int x)
 {
