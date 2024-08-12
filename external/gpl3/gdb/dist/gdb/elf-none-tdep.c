@@ -1,7 +1,7 @@
 /* Common code for targets with the none ABI (bare-metal), but where the
    BFD library is build with ELF support.
 
-   Copyright (C) 2020-2023 Free Software Foundation, Inc.
+   Copyright (C) 2020-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,10 +18,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "elf-none-tdep.h"
 #include "regset.h"
-#include "elf-bfd.h"            /* for elfcore_write_* */
+#include "elf-bfd.h"
 #include "inferior.h"
 #include "regcache.h"
 #include "gdbarch.h"
@@ -110,8 +109,12 @@ elf_none_make_corefile_notes (struct gdbarch *gdbarch, bfd *obfd,
     }
 
 
-  /* Target description.  */
-  gcore_elf_make_tdesc_note (obfd, &note_data, note_size);
+  /* Include the target description when possible.  Some architectures
+     allow for per-thread gdbarch so we should really be emitting a tdesc
+     per-thread, however, we don't currently support reading in a
+     per-thread tdesc, so just emit the tdesc for the signalled thread.  */
+  gdbarch = target_thread_architecture (signalled_thr->ptid);
+  gcore_elf_make_tdesc_note (gdbarch, obfd, &note_data, note_size);
 
   return note_data;
 }

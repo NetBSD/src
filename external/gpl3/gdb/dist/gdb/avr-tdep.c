@@ -1,6 +1,6 @@
 /* Target-dependent code for Atmel AVR, for GDB.
 
-   Copyright (C) 1996-2023 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,12 +22,12 @@
 /* Portions of this file were taken from the original gdb-4.18 patch developed
    by Denis Chertykov, denisc@overta.ru */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "frame.h"
 #include "frame-unwind.h"
 #include "frame-base.h"
 #include "trad-frame.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "gdbcore.h"
 #include "gdbtypes.h"
 #include "inferior.h"
@@ -112,7 +112,7 @@ enum
   AVR_LAST_PUSHED_REGNUM = 17,
 
   AVR_ARG1_REGNUM = 24,         /* Single byte argument */
-  AVR_ARGN_REGNUM = 25,         /* Multi byte argments */
+  AVR_ARGN_REGNUM = 25,         /* Multi byte arguments */
   AVR_LAST_ARG_REGNUM = 8,      /* Last argument register */
 
   AVR_RET1_REGNUM = 24,         /* Single byte return value */
@@ -216,7 +216,7 @@ avr_register_name (struct gdbarch *gdbarch, int regnum)
     "SREG", "SP", "PC2",
     "pc"
   };
-  gdb_static_assert (ARRAY_SIZE (register_names)
+  static_assert (ARRAY_SIZE (register_names)
 		     == (AVR_NUM_REGS + AVR_NUM_PSEUDO_REGS));
   return register_names[regnum];
 }
@@ -240,7 +240,7 @@ avr_register_type (struct gdbarch *gdbarch, int reg_nr)
   return builtin_type (gdbarch)->builtin_uint8;
 }
 
-/* Instruction address checks and convertions.  */
+/* Instruction address checks and conversions.  */
 
 static CORE_ADDR
 avr_make_iaddr (CORE_ADDR x)
@@ -259,7 +259,7 @@ avr_convert_iaddr_to_raw (CORE_ADDR x)
   return ((x) & 0xffffffff);
 }
 
-/* SRAM address checks and convertions.  */
+/* SRAM address checks and conversions.  */
 
 static CORE_ADDR
 avr_make_saddr (CORE_ADDR x)
@@ -277,7 +277,7 @@ avr_convert_saddr_to_raw (CORE_ADDR x)
   return ((x) & 0xffffffff);
 }
 
-/* EEPROM address checks and convertions.  I don't know if these will ever
+/* EEPROM address checks and conversions.  I don't know if these will ever
    actually be used, but I've added them just the same.  TRoth */
 
 /* TRoth/2002-04-08: Commented out for now to allow fix for problem with large
@@ -979,7 +979,7 @@ avr_return_value (struct gdbarch *gdbarch, struct value *function,
    for it IS the sp for the next frame.  */
 
 static struct avr_unwind_cache *
-avr_frame_unwind_cache (frame_info_ptr this_frame,
+avr_frame_unwind_cache (const frame_info_ptr &this_frame,
 			void **this_prologue_cache)
 {
   CORE_ADDR start_pc, current_pc;
@@ -1059,7 +1059,7 @@ avr_frame_unwind_cache (frame_info_ptr this_frame,
 }
 
 static CORE_ADDR
-avr_unwind_pc (struct gdbarch *gdbarch, frame_info_ptr next_frame)
+avr_unwind_pc (struct gdbarch *gdbarch, const frame_info_ptr &next_frame)
 {
   ULONGEST pc;
 
@@ -1069,7 +1069,7 @@ avr_unwind_pc (struct gdbarch *gdbarch, frame_info_ptr next_frame)
 }
 
 static CORE_ADDR
-avr_unwind_sp (struct gdbarch *gdbarch, frame_info_ptr next_frame)
+avr_unwind_sp (struct gdbarch *gdbarch, const frame_info_ptr &next_frame)
 {
   ULONGEST sp;
 
@@ -1082,7 +1082,7 @@ avr_unwind_sp (struct gdbarch *gdbarch, frame_info_ptr next_frame)
    frame.  This will be used to create a new GDB frame struct.  */
 
 static void
-avr_frame_this_id (frame_info_ptr this_frame,
+avr_frame_this_id (const frame_info_ptr &this_frame,
 		   void **this_prologue_cache,
 		   struct frame_id *this_id)
 {
@@ -1107,7 +1107,7 @@ avr_frame_this_id (frame_info_ptr this_frame,
 }
 
 static struct value *
-avr_frame_prev_register (frame_info_ptr this_frame,
+avr_frame_prev_register (const frame_info_ptr &this_frame,
 			 void **this_prologue_cache, int regnum)
 {
   struct avr_unwind_cache *info
@@ -1166,7 +1166,7 @@ static const struct frame_unwind avr_frame_unwind = {
 };
 
 static CORE_ADDR
-avr_frame_base_address (frame_info_ptr this_frame, void **this_cache)
+avr_frame_base_address (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct avr_unwind_cache *info
     = avr_frame_unwind_cache (this_frame, this_cache);
@@ -1186,7 +1186,7 @@ static const struct frame_base avr_frame_base = {
    save_dummy_frame_tos(), and the PC match the dummy frame's breakpoint.  */
 
 static struct frame_id
-avr_dummy_id (struct gdbarch *gdbarch, frame_info_ptr this_frame)
+avr_dummy_id (struct gdbarch *gdbarch, const frame_info_ptr &this_frame)
 {
   ULONGEST base;
 
@@ -1298,8 +1298,8 @@ avr_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       int last_regnum;
       int j;
       struct value *arg = args[i];
-      struct type *type = check_typedef (value_type (arg));
-      const bfd_byte *contents = value_contents (arg).data ();
+      struct type *type = check_typedef (arg->type ());
+      const bfd_byte *contents = arg->contents ().data ();
       int len = type->length ();
 
       /* Calculate the potential last register needed.
@@ -1426,7 +1426,6 @@ avr_address_class_name_to_type_flags (struct gdbarch *gdbarch,
 static struct gdbarch *
 avr_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
-  struct gdbarch *gdbarch;
   struct gdbarch_list *best_arch;
   int call_length;
 
@@ -1466,17 +1465,18 @@ avr_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     }
 
   /* None found, create a new architecture from the information provided.  */
-  avr_gdbarch_tdep *tdep = new avr_gdbarch_tdep;
-  gdbarch = gdbarch_alloc (&info, tdep);
+  gdbarch *gdbarch
+    = gdbarch_alloc (&info, gdbarch_tdep_up (new avr_gdbarch_tdep));
+  avr_gdbarch_tdep *tdep = gdbarch_tdep<avr_gdbarch_tdep> (gdbarch);
   
   tdep->call_length = call_length;
 
   /* Create a type for PC.  We can't use builtin types here, as they may not
      be defined.  */
-  tdep->void_type = arch_type (gdbarch, TYPE_CODE_VOID, TARGET_CHAR_BIT,
-			       "void");
+  type_allocator alloc (gdbarch);
+  tdep->void_type = alloc.new_type (TYPE_CODE_VOID, TARGET_CHAR_BIT, "void");
   tdep->func_void_type = make_function_type (tdep->void_type, NULL);
-  tdep->pc_type = arch_pointer_type (gdbarch, 4 * TARGET_CHAR_BIT, NULL,
+  tdep->pc_type = init_pointer_type (alloc, 4 * TARGET_CHAR_BIT, NULL,
 				     tdep->func_void_type);
 
   set_gdbarch_short_bit (gdbarch, 2 * TARGET_CHAR_BIT);
@@ -1510,7 +1510,8 @@ avr_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_num_pseudo_regs (gdbarch, AVR_NUM_PSEUDO_REGS);
   set_gdbarch_pseudo_register_read (gdbarch, avr_pseudo_register_read);
-  set_gdbarch_pseudo_register_write (gdbarch, avr_pseudo_register_write);
+  set_gdbarch_deprecated_pseudo_register_write (gdbarch,
+						avr_pseudo_register_write);
 
   set_gdbarch_return_value (gdbarch, avr_return_value);
 
@@ -1566,7 +1567,7 @@ avr_io_reg_read_command (const char *args, int from_tty)
   unsigned int val;
 
   /* Find out how many io registers the target has.  */
-  gdb::optional<gdb::byte_vector> buf
+  std::optional<gdb::byte_vector> buf
     = target_read_alloc (current_inferior ()->top_target (),
 			 TARGET_OBJECT_AVR, "avr.io_reg");
 
