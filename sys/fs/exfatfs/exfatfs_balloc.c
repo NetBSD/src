@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_balloc.c,v 1.1.2.4 2024/08/02 00:16:55 perseant Exp $	*/
+/*	$NetBSD: exfatfs_balloc.c,v 1.1.2.5 2024/08/12 22:28:04 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_balloc.c,v 1.1.2.4 2024/08/02 00:16:55 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_balloc.c,v 1.1.2.5 2024/08/12 22:28:04 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/buf.h>
@@ -68,8 +68,6 @@ typedef struct uvnode uvnode_t;
 /*
  * Routines to create and manage a compressed cluster bitmap.
  */
-
-extern struct pool exfatfs_bitmap_pool;
 
 /*
  * Convert a cluster ID into a disk address
