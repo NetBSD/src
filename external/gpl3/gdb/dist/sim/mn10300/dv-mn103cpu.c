@@ -1,6 +1,6 @@
 /*  This file is part of the program GDB, the GNU debugger.
     
-    Copyright (C) 1998-2023 Free Software Foundation, Inc.
+    Copyright (C) 1998-2024 Free Software Foundation, Inc.
     Contributed by Cygnus Solutions.
     
     This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,11 @@
 #include "defs.h"
 
 #include "sim-main.h"
+#include "sim-fpu.h"
+#include "sim-signal.h"
 #include "hw-main.h"
+
+#include "mn10300-sim.h"
 
 /* DEVICE
 

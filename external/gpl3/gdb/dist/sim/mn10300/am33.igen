@@ -256,8 +256,8 @@
       usp += 4;
     }
 
-  if (STATE_ARCHITECTURE (sd)->mach == bfd_mach_am33
-      || STATE_ARCHITECTURE (sd)->mach == bfd_mach_am33_2
+  if (STATE_ARCHITECTURE (SD)->mach == bfd_mach_am33
+      || STATE_ARCHITECTURE (SD)->mach == bfd_mach_am33_2
       )
     {
       if (mask & 0x1)
@@ -307,8 +307,8 @@
   PC = cia;
   mask = REGS;
 
-  if (STATE_ARCHITECTURE (sd)->mach == bfd_mach_am33
-      || STATE_ARCHITECTURE (sd)->mach == bfd_mach_am33_2
+  if (STATE_ARCHITECTURE (SD)->mach == bfd_mach_am33
+      || STATE_ARCHITECTURE (SD)->mach == bfd_mach_am33_2
       )
     {
       if (mask & 0x4)
@@ -2706,7 +2706,7 @@
   n = (State.regs[dstreg] & 0x80000000);
 
   PSW &= ~(PSW_Z | PSW_N | PSW_C);
-  PSW |= ((z ? PSW_Z : 0) | ( n ? PSW_N : 0));
+  PSW |= ((z ? PSW_Z : 0) | (n ? PSW_N : 0) | (c ? PSW_C : 0));
 }
 
 // 1111 1011 0101 1101 Rm Rn Rd; lsr Rm,Rn,Rd
@@ -2730,7 +2730,7 @@
   n = (State.regs[dstreg] & 0x80000000);
 
   PSW &= ~(PSW_Z | PSW_N | PSW_C);
-  PSW |= ((z ? PSW_Z : 0) | ( n ? PSW_N : 0));
+  PSW |= ((z ? PSW_Z : 0) | (n ? PSW_N : 0) | (c ? PSW_C : 0));
 }
 
 // 1111 1011 0110 1101 Rm Rn Rd; asl Rm,Rn,Rd
@@ -3252,10 +3252,10 @@
   dstreg2 = translate_rreg (SD_, RD2);
 
   temp = ((int32_t)(State.regs[srcreg1] & 0xffff)
-          * (int32_t)(State.regs[srcreg1] & 0xffff));
+          * (int32_t)(State.regs[srcreg2] & 0xffff));
   State.regs[dstreg2] = temp;
   temp = ((int32_t)((State.regs[srcreg1] >> 16) & 0xffff)
-          * (int32_t)((State.regs[srcreg1] >>16) & 0xffff));
+          * (int32_t)((State.regs[srcreg2] >> 16) & 0xffff));
   State.regs[dstreg1] = temp;
 }
 
@@ -3275,10 +3275,10 @@
   dstreg2 = translate_rreg (SD_, RD2);
 
   temp = ((uint32_t)(State.regs[srcreg1] & 0xffff)
-          * (uint32_t)(State.regs[srcreg1] & 0xffff));
+          * (uint32_t)(State.regs[srcreg2] & 0xffff));
   State.regs[dstreg2] = temp;
   temp = ((uint32_t)((State.regs[srcreg1] >> 16) & 0xffff)
-          * (uint32_t)((State.regs[srcreg1] >>16) & 0xffff));
+          * (uint32_t)((State.regs[srcreg2] >> 16) & 0xffff));
   State.regs[dstreg1] = temp;
 }
 
@@ -8646,7 +8646,7 @@
   dstreg1 = translate_rreg (SD_, RN1);
   dstreg2 = translate_rreg (SD_, RN2);
 
-  genericCmp (State.regs[dstreg2], State.regs[dstreg1]);
+  genericCmp (State.regs[srcreg2], State.regs[dstreg2]);
   if (State.regs[srcreg1] >= 0x7fff)
     State.regs[dstreg1] = 0x7fff;
   else if (State.regs[srcreg1] <= 0xffff8000)
