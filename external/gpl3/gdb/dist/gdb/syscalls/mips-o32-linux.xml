@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE syscalls_info SYSTEM "gdb-syscalls.dtd">
-<!-- Copyright (C) 2011-2023 Free Software Foundation, Inc.
+<!-- Copyright (C) 2011-2024 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
@@ -46,7 +46,7 @@
   <syscall name="nice" number="4034"/>
   <syscall name="ftime" number="4035"/>
   <syscall name="sync" number="4036"/>
-  <syscall name="kill" number="4037" groups="signal"/>
+  <syscall name="kill" number="4037" groups="signal,process"/>
   <syscall name="rename" number="4038" groups="file"/>
   <syscall name="mkdir" number="4039" groups="file"/>
   <syscall name="rmdir" number="4040" groups="file"/>
@@ -152,7 +152,7 @@
   <syscall name="msync" number="4144" groups="memory"/>
   <syscall name="readv" number="4145" groups="descriptor"/>
   <syscall name="writev" number="4146" groups="descriptor"/>
-  <syscall name="cacheflush" number="4147"/>
+  <syscall name="cacheflush" number="4147" groups="memory"/>
   <syscall name="cachectl" number="4148"/>
   <syscall name="sysmips" number="4149"/>
   <syscall name="getsid" number="4151"/>
@@ -202,7 +202,7 @@
   <syscall name="rt_sigprocmask" number="4195" groups="signal"/>
   <syscall name="rt_sigpending" number="4196" groups="signal"/>
   <syscall name="rt_sigtimedwait" number="4197" groups="signal"/>
-  <syscall name="rt_sigqueueinfo" number="4198" groups="signal"/>
+  <syscall name="rt_sigqueueinfo" number="4198" groups="signal,process"/>
   <syscall name="rt_sigsuspend" number="4199" groups="signal"/>
   <syscall name="pread64" number="4200" groups="descriptor"/>
   <syscall name="pwrite64" number="4201" groups="descriptor"/>
@@ -212,8 +212,8 @@
   <syscall name="capset" number="4205"/>
   <syscall name="sigaltstack" number="4206" groups="signal"/>
   <syscall name="sendfile" number="4207" groups="descriptor,network"/>
-  <syscall name="getpmsg" number="4208"/>
-  <syscall name="putpmsg" number="4209"/>
+  <syscall name="getpmsg" number="4208" groups="network"/>
+  <syscall name="putpmsg" number="4209" groups="network"/>
   <syscall name="mmap2" number="4210" groups="descriptor,memory"/>
   <syscall name="truncate64" number="4211" groups="file"/>
   <syscall name="ftruncate64" number="4212" groups="descriptor"/>
@@ -239,13 +239,13 @@
   <syscall name="removexattr" number="4233" groups="file"/>
   <syscall name="lremovexattr" number="4234" groups="file"/>
   <syscall name="fremovexattr" number="4235" groups="descriptor"/>
-  <syscall name="tkill" number="4236" groups="signal"/>
+  <syscall name="tkill" number="4236" groups="signal,process"/>
   <syscall name="sendfile64" number="4237" groups="descriptor,network"/>
   <syscall name="futex" number="4238"/>
   <syscall name="sched_setaffinity" number="4239"/>
   <syscall name="sched_getaffinity" number="4240"/>
-  <syscall name="io_setup" number="4241"/>
-  <syscall name="io_destroy" number="4242"/>
+  <syscall name="io_setup" number="4241" groups="memory"/>
+  <syscall name="io_destroy" number="4242" groups="memory"/>
   <syscall name="io_getevents" number="4243"/>
   <syscall name="io_submit" number="4244"/>
   <syscall name="io_cancel" number="4245"/>
@@ -269,17 +269,17 @@
   <syscall name="clock_gettime" number="4263"/>
   <syscall name="clock_getres" number="4264"/>
   <syscall name="clock_nanosleep" number="4265"/>
-  <syscall name="tgkill" number="4266" groups="signal"/>
+  <syscall name="tgkill" number="4266" groups="signal,process"/>
   <syscall name="utimes" number="4267" groups="file"/>
   <syscall name="mbind" number="4268" groups="memory"/>
   <syscall name="get_mempolicy" number="4269" groups="memory"/>
   <syscall name="set_mempolicy" number="4270" groups="memory"/>
-  <syscall name="mq_open" number="4271"/>
+  <syscall name="mq_open" number="4271" groups="descriptor"/>
   <syscall name="mq_unlink" number="4272"/>
-  <syscall name="mq_timedsend" number="4273"/>
-  <syscall name="mq_timedreceive" number="4274"/>
-  <syscall name="mq_notify" number="4275"/>
-  <syscall name="mq_getsetattr" number="4276"/>
+  <syscall name="mq_timedsend" number="4273" groups="descriptor"/>
+  <syscall name="mq_timedreceive" number="4274" groups="descriptor"/>
+  <syscall name="mq_notify" number="4275" groups="descriptor"/>
+  <syscall name="mq_getsetattr" number="4276" groups="descriptor"/>
   <syscall name="vserver" number="4277"/>
   <syscall name="waitid" number="4278" groups="process"/>
   <syscall name="add_key" number="4280"/>
@@ -287,7 +287,7 @@
   <syscall name="keyctl" number="4282"/>
   <syscall name="set_thread_area" number="4283"/>
   <syscall name="inotify_init" number="4284" groups="descriptor"/>
-  <syscall name="inotify_add_watch" number="4285" groups="descriptor"/>
+  <syscall name="inotify_add_watch" number="4285" groups="descriptor,file"/>
   <syscall name="inotify_rm_watch" number="4286" groups="descriptor"/>
   <syscall name="migrate_pages" number="4287" groups="memory"/>
   <syscall name="openat" number="4288" groups="descriptor,file"/>
@@ -305,7 +305,7 @@
   <syscall name="faccessat" number="4300" groups="descriptor,file"/>
   <syscall name="pselect6" number="4301" groups="descriptor"/>
   <syscall name="ppoll" number="4302" groups="descriptor"/>
-  <syscall name="unshare" number="4303" groups="process"/>
+  <syscall name="unshare" number="4303"/>
   <syscall name="splice" number="4304" groups="descriptor"/>
   <syscall name="sync_file_range" number="4305" groups="descriptor"/>
   <syscall name="tee" number="4306" groups="descriptor"/>
@@ -353,22 +353,22 @@
   <syscall name="finit_module" number="4348" groups="descriptor"/>
   <syscall name="sched_setattr" number="4349"/>
   <syscall name="sched_getattr" number="4350"/>
-  <syscall name="renameat2" number="4351"/>
+  <syscall name="renameat2" number="4351" groups="descriptor,file"/>
   <syscall name="seccomp" number="4352"/>
   <syscall name="getrandom" number="4353"/>
-  <syscall name="memfd_create" number="4354"/>
-  <syscall name="bpf" number="4355"/>
-  <syscall name="execveat" number="4356"/>
-  <syscall name="userfaultfd" number="4357"/>
+  <syscall name="memfd_create" number="4354" groups="descriptor"/>
+  <syscall name="bpf" number="4355" groups="descriptor"/>
+  <syscall name="execveat" number="4356" groups="descriptor,file,process"/>
+  <syscall name="userfaultfd" number="4357" groups="descriptor"/>
   <syscall name="membarrier" number="4358"/>
-  <syscall name="mlock2" number="4359"/>
-  <syscall name="copy_file_range" number="4360"/>
-  <syscall name="preadv2" number="4361"/>
-  <syscall name="pwritev2" number="4362"/>
-  <syscall name="pkey_mprotect" number="4363"/>
+  <syscall name="mlock2" number="4359" groups="memory"/>
+  <syscall name="copy_file_range" number="4360" groups="descriptor"/>
+  <syscall name="preadv2" number="4361" groups="descriptor"/>
+  <syscall name="pwritev2" number="4362" groups="descriptor"/>
+  <syscall name="pkey_mprotect" number="4363" groups="memory"/>
   <syscall name="pkey_alloc" number="4364"/>
   <syscall name="pkey_free" number="4365"/>
-  <syscall name="statx" number="4366"/>
+  <syscall name="statx" number="4366" groups="descriptor,file"/>
   <syscall name="rseq" number="4367"/>
   <syscall name="io_pgetevents" number="4368"/>
   <syscall name="semget" number="4393" groups="ipc"/>
@@ -388,43 +388,54 @@
   <syscall name="clock_nanosleep_time64" number="4407"/>
   <syscall name="timer_gettime64" number="4408"/>
   <syscall name="timer_settime64" number="4409"/>
-  <syscall name="timerfd_gettime64" number="4410"/>
-  <syscall name="timerfd_settime64" number="4411"/>
-  <syscall name="utimensat_time64" number="4412"/>
-  <syscall name="pselect6_time64" number="4413"/>
-  <syscall name="ppoll_time64" number="4414"/>
+  <syscall name="timerfd_gettime64" number="4410" groups="descriptor"/>
+  <syscall name="timerfd_settime64" number="4411" groups="descriptor"/>
+  <syscall name="utimensat_time64" number="4412" groups="descriptor,file"/>
+  <syscall name="pselect6_time64" number="4413" groups="descriptor"/>
+  <syscall name="ppoll_time64" number="4414" groups="descriptor"/>
   <syscall name="io_pgetevents_time64" number="4416"/>
-  <syscall name="recvmmsg_time64" number="4417"/>
-  <syscall name="mq_timedsend_time64" number="4418"/>
-  <syscall name="mq_timedreceive_time64" number="4419"/>
-  <syscall name="semtimedop_time64" number="4420"/>
-  <syscall name="rt_sigtimedwait_time64" number="4421"/>
+  <syscall name="recvmmsg_time64" number="4417" groups="network"/>
+  <syscall name="mq_timedsend_time64" number="4418" groups="descriptor"/>
+  <syscall name="mq_timedreceive_time64" number="4419" groups="descriptor"/>
+  <syscall name="semtimedop_time64" number="4420" groups="ipc"/>
+  <syscall name="rt_sigtimedwait_time64" number="4421" groups="signal"/>
   <syscall name="futex_time64" number="4422"/>
   <syscall name="sched_rr_get_interval_time64" number="4423"/>
-  <syscall name="pidfd_send_signal" number="4424"/>
-  <syscall name="io_uring_setup" number="4425"/>
-  <syscall name="io_uring_enter" number="4426"/>
-  <syscall name="io_uring_register" number="4427"/>
-  <syscall name="open_tree" number="4428"/>
-  <syscall name="move_mount" number="4429"/>
-  <syscall name="fsopen" number="4430"/>
-  <syscall name="fsconfig" number="4431"/>
-  <syscall name="fsmount" number="4432"/>
-  <syscall name="fspick" number="4433"/>
-  <syscall name="pidfd_open" number="4434"/>
-  <syscall name="clone3" number="4435"/>
+  <syscall name="pidfd_send_signal" number="4424" groups="descriptor,signal,process"/>
+  <syscall name="io_uring_setup" number="4425" groups="descriptor"/>
+  <syscall name="io_uring_enter" number="4426" groups="descriptor,signal"/>
+  <syscall name="io_uring_register" number="4427" groups="descriptor,memory"/>
+  <syscall name="open_tree" number="4428" groups="descriptor,file"/>
+  <syscall name="move_mount" number="4429" groups="descriptor,file"/>
+  <syscall name="fsopen" number="4430" groups="descriptor"/>
+  <syscall name="fsconfig" number="4431" groups="descriptor,file"/>
+  <syscall name="fsmount" number="4432" groups="descriptor"/>
+  <syscall name="fspick" number="4433" groups="descriptor,file"/>
+  <syscall name="pidfd_open" number="4434" groups="descriptor"/>
+  <syscall name="clone3" number="4435" groups="process"/>
   <syscall name="close_range" number="4436"/>
-  <syscall name="openat2" number="4437"/>
-  <syscall name="pidfd_getfd" number="4438"/>
-  <syscall name="faccessat2" number="4439"/>
-  <syscall name="process_madvise" number="4440"/>
-  <syscall name="epoll_pwait2" number="4441"/>
-  <syscall name="mount_setattr" number="4442"/>
-  <syscall name="quotactl_fd" number="4443"/>
-  <syscall name="landlock_create_ruleset" number="4444"/>
-  <syscall name="landlock_add_rule" number="4445"/>
-  <syscall name="landlock_restrict_self" number="4446"/>
-  <syscall name="process_mrelease" number="4448"/>
+  <syscall name="openat2" number="4437" groups="descriptor,file"/>
+  <syscall name="pidfd_getfd" number="4438" groups="descriptor"/>
+  <syscall name="faccessat2" number="4439" groups="descriptor,file"/>
+  <syscall name="process_madvise" number="4440" groups="descriptor"/>
+  <syscall name="epoll_pwait2" number="4441" groups="descriptor"/>
+  <syscall name="mount_setattr" number="4442" groups="descriptor,file"/>
+  <syscall name="quotactl_fd" number="4443" groups="descriptor"/>
+  <syscall name="landlock_create_ruleset" number="4444" groups="descriptor"/>
+  <syscall name="landlock_add_rule" number="4445" groups="descriptor"/>
+  <syscall name="landlock_restrict_self" number="4446" groups="descriptor"/>
+  <syscall name="process_mrelease" number="4448" groups="descriptor"/>
   <syscall name="futex_waitv" number="4449"/>
-  <syscall name="set_mempolicy_home_node" number="4450"/>
+  <syscall name="set_mempolicy_home_node" number="4450" groups="memory"/>
+  <syscall name="cachestat" number="4451" groups="descriptor"/>
+  <syscall name="fchmodat2" number="4452" groups="descriptor,file"/>
+  <syscall name="map_shadow_stack" number="4453" groups="memory"/>
+  <syscall name="futex_wake" number="4454"/>
+  <syscall name="futex_wait" number="4455"/>
+  <syscall name="futex_requeue" number="4456"/>
+  <syscall name="statmount" number="4457"/>
+  <syscall name="listmount" number="4458"/>
+  <syscall name="lsm_get_self_attr" number="4459"/>
+  <syscall name="lsm_set_self_attr" number="4460"/>
+  <syscall name="lsm_list_modules" number="4461"/>
 </syscalls_info>

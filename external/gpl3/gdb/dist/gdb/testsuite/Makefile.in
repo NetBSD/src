@@ -1,5 +1,5 @@
 # Makefile for regression testing the GNU debugger.
-# Copyright 1992-2023 Free Software Foundation, Inc.
+# Copyright 1992-2024 Free Software Foundation, Inc.
 
 # This file is part of GDB.
 
@@ -105,6 +105,7 @@ INFODIRS=doc
 info:
 install-info:
 dvi:
+install-dvi:
 pdf:
 install-pdf:
 html:
@@ -367,6 +368,25 @@ GDB_PERFTEST_MODE = both
 check-perf: all $(abs_builddir)/site.exp
 	@if test ! -d gdb.perf; then mkdir gdb.perf; fi
 	$(DO_RUNTEST) --directory=gdb.perf --outdir gdb.perf GDB_PERFTEST_MODE=$(GDB_PERFTEST_MODE) $(RUNTESTFLAGS) $(TIMESTAMP)
+
+
+check-all-boards: all $(abs_builddir)/site.exp
+	@if [ -z "$(GDB_TARGET_USERNAME)" ]; then \
+		echo "Must define GDB_TARGET_USERNAME"; \
+		false; \
+	fi
+	@if [ -z "$(GDB_HOST_USERNAME)" ]; then \
+		echo "Must define GDB_HOST_USERNAME"; \
+		false; \
+	fi
+	@if [ -z "$(TESTS)" ]; then \
+		echo "Must define TESTS"; \
+		false; \
+	fi
+	${abs_srcdir}/make-check-all.sh --keep-results \
+		--host-user "$(GDB_HOST_USERNAME)" \
+		--target-user "$(GDB_TARGET_USERNAME)" \
+		"$(TESTS)"
 
 force:;
 
