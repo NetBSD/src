@@ -1,4 +1,4 @@
-#   Copyright (C) 2001-2023 Free Software Foundation, Inc.
+#   Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,10 +26,14 @@ proc do_test {dir options} {
     global srcfile testfile
 
     set binfile [standard_output_file ${dir}/${testfile}]
-    if { [prepare_for_testing "failed to prepare" ${binfile} \
+    if { [build_executable "failed to prepare" ${binfile} \
 	      [list $srcfile] $options] } {
 	return 0
     }
+
+    clean_restart
+    gdb_test_no_output "set always-read-ctf on"
+    gdb_load $binfile
 
     gdb_test_no_output "set print sevenbit-strings"
     gdb_test_no_output "set print address off"
@@ -493,11 +497,10 @@ proc do_test {dir options} {
 
 set ctf_opts {}
 lappend ctf_opts additional_flags=-gctf
-lappend ctf_opts ldflags=-Wl,--strip-debug
 
 # Build up the set of debug formats for which we will run this test.
 set specs { {dwarf {debug}} }
-if ![skip_ctf_tests] {
+if {[allow_ctf_tests]} {
     lappend specs [list ctf $ctf_opts]
 }
 

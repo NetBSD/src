@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2023 Free Software Foundation, Inc.
+# Copyright (C) 2015-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,7 @@
 # Check that forking a process after a previous process was attached to unsets
 # attach_flag.  This is done indirectly by inspecting GDB's quit prompt.
 
-if ![can_spawn_for_attach] {
-    return 0
-}
+require can_spawn_for_attach
 
 standard_testfile
 set executable $testfile

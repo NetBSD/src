@@ -1,4 +1,4 @@
-# Copyright 2021-2023 Free Software Foundation, Inc.
+# Copyright 2021-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,10 +17,7 @@
 # without readline, and, it receives a SIGWINCH.  Regression test for
 # PR gdb/26056.
 
-if [target_info exists gdb,nosignals] {
-    verbose "Skipping $subdir/$gdb_test_file_name.exp because of nosignals."
-    return
-}
+require {!target_info exists gdb,nosignals}
 
 # The testfile relies on "run" from the command line, so only works
 # with "target native".
@@ -49,7 +46,7 @@ after 1000 {
     # Note, GDB is started under a shell, so PID is actually the
     # shell's pid, not GDB's.  Use "-PID" to send the signal to the
     # whole process group and reach GDB, instead of just to the shell.
-    remote_exec host "kill -SIGWINCH -${gdb_pid}"
+    remote_exec host "kill -WINCH -${gdb_pid}"
 }
 
 # If GDB mishandles the SIGWINCH and crashes, that happens before we

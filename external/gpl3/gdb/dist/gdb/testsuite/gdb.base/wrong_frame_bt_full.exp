@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2023 Free Software Foundation, Inc.
+# Copyright (C) 2015-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,6 +51,4 @@ if ![runto opaque_routine] {
 # correctly when frame #0 (the frame which does not have any debugging
 # info) is the selected frame.
 
-gdb_test "bt full" \
-         ".*\[\r\n\]+ *my_table = \\{0, 1, 2\\}\[\r\n\]+.*"
-
+gdb_test "bt full" ".*\[\r\n\]+ *my_table = \\{0, 1, 2\\}"

@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1992-2023 Free Software Foundation, Inc.
+# Copyright 1992-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -449,13 +449,14 @@ proc test_print_all_chars {} {
 }
 
 # Test interaction of the number of print elements to print and the
-# repeat count, set to the default of 10.
+# repeat count, set to the default of 10.  SETTING is the print
+# setting to verify, either "elements" or "characters".
 
-proc test_print_repeats_10 {} {
+proc test_print_repeats_10_one { setting } {
     global gdb_prompt decimal
 
     for { set x 1 } { $x <= 16 } { incr x } {
-	gdb_test_no_output "set print elements $x" "elements $x repeats"
+	gdb_test_no_output "set print $setting $x" "$setting $x repeats"
 	for { set e 1 } { $e <= 16 } {incr e } {
 	    set v [expr $e - 1]
 	    set command "p &ctable2\[${v}*16\]"
@@ -495,9 +496,16 @@ proc test_print_repeats_10 {} {
 		set xstr "${xstr}\[.\]\[.\]\[.\]"
 	    }
 	    set string " = \[(\]unsigned char \[*\]\[)\] <ctable2(\\+$decimal)?> ${a}${xstr}"
-	    gdb_test "$command" "$string" "$command with print elements set to $x"
+	    gdb_test "$command" "$string" "$command with print $setting set to $x"
 	}
     }
+}
+
+proc test_print_repeats_10 {} {
+    foreach_with_prefix setting { "elements" "characters" } {
+	test_print_repeats_10_one $setting
+    }
+    gdb_test_no_output "set print characters elements"
 }
 
 # This tests whether GDB uses the correct element content offsets
@@ -512,7 +520,7 @@ proc test_print_repeats_embedded_array {} {
 	"correct element repeats in array embedded at offset > 0"
 }
 
-proc test_print_strings {} {
+proc test_print_strings_one { setting } {
     global gdb_prompt decimal
 
     # We accept "(unsigned char *) " before the string.  char vs. unsigned char
@@ -520,35 +528,35 @@ proc test_print_strings {} {
 
     # Test that setting print elements unlimited doesn't completely suppress
     # printing; this was a bug in older gdb's.
-    gdb_test_no_output "set print elements 0"
+    gdb_test_no_output "set print $setting 0"
     gdb_test "p teststring" \
-	" = (.unsigned char .. )?\"teststring contents\"" "p teststring with elements set to 0"
-    gdb_test_no_output "set print elements 1"
+	" = (.unsigned char .. )?\"teststring contents\"" "p teststring with $setting set to 0"
+    gdb_test_no_output "set print $setting 1"
     gdb_test "p teststring" \
-	" = (.unsigned char .. )?\"t\"\\.\\.\\." "p teststring with elements set to 1"
-    gdb_test_no_output "set print elements 5"
+	" = (.unsigned char .. )?\"t\"\\.\\.\\." "p teststring with $setting set to 1"
+    gdb_test_no_output "set print $setting 5"
     gdb_test "p teststring" \
-	" = (.unsigned char .. )?\"tests\"\\.\\.\\." "p teststring with elements set to 5"
-    gdb_test_no_output "set print elements 19"
+	" = (.unsigned char .. )?\"tests\"\\.\\.\\." "p teststring with $setting set to 5"
+    gdb_test_no_output "set print $setting 19"
     gdb_test "p teststring" \
-	" = (.unsigned char .. )?\"teststring contents\"" "p teststring with elements set to 19"
-    gdb_test_no_output "set print elements 20"
+	" = (.unsigned char .. )?\"teststring contents\"" "p teststring with $setting set to 19"
+    gdb_test_no_output "set print $setting 20"
     gdb_test "p teststring" \
-	" = (.unsigned char .. )?\"teststring contents\"" "p teststring with elements set to 20"
+	" = (.unsigned char .. )?\"teststring contents\"" "p teststring with $setting set to 20"
 
-    gdb_test "p -elements 1 -- teststring" \
+    gdb_test "p -$setting 1 -- teststring" \
 	" = (.unsigned char .. )?\"t\"\\.\\.\\."
-    gdb_test "p -elements 5 -- teststring" \
+    gdb_test "p -$setting 5 -- teststring" \
 	" = (.unsigned char .. )?\"tests\"\\.\\.\\."
-    gdb_test "p -elements 19 -- teststring" \
+    gdb_test "p -$setting 19 -- teststring" \
 	" = (.unsigned char .. )?\"teststring contents\""
-    gdb_test "p -elements 20 -- teststring" \
+    gdb_test "p -$setting 20 -- teststring" \
 	" = (.unsigned char .. )?\"teststring contents\""
 
     gdb_test "print teststring2" \
 	" = \\(charptr\\) \"more contents\""
 
-    gdb_test_no_output "set print elements 8"
+    gdb_test_no_output "set print $setting 8"
 
     # Set the target-charset to ASCII, because the output varies from
     # different charset.
@@ -619,6 +627,26 @@ proc test_print_strings {} {
 	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\360\\\\361\\\\362\\\\363\\\\364\\\\365\\\\366\\\\367\"..."
 	gdb_test "p &ctable1\[31*8\]" \
 	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\370\\\\371\\\\372\\\\373\\\\374\\\\375\\\\376\\\\377\"..."
+    }
+
+    gdb_test_no_output "set print $setting unlimited"
+}
+
+proc test_print_strings {} {
+
+    foreach_with_prefix setting { "elements" "characters" } {
+	test_print_strings_one $setting
+    }
+
+    gdb_test "p -elements 8 -- teststring" \
+	" = (.unsigned char .. )?\"teststring contents\""
+    gdb_test "p -characters 8 -- teststring" \
+	" = (.unsigned char .. )?\"teststri\"\\.\\.\\."
+    gdb_test "p -elements 8 -characters elements -- teststring" \
+	" = (.unsigned char .. )?\"teststri\"\\.\\.\\."
+
+    with_test_prefix strings {
+	gdb_test_no_output "set print characters elements"
     }
 }
 
@@ -873,6 +901,11 @@ proc test_printf {} {
 
     # PR cli/14977.
     gdb_test "printf \"%s\\n\", 0" "\\(null\\)"
+
+    with_max_value_size 20 {
+	gdb_test {printf "%s", teststring3} \
+	    "^printed string requires 45 bytes, which is more than max-value-size"
+    }
 }
 
 #Test printing DFP values with printf
@@ -929,6 +962,56 @@ proc test_printf_with_dfp {} {
     gdb_test "printf \"%Hf %Hf\\n\",1.2df,1.3df" "1.2 1.3"
 }
 
+# Test printf with strings.
+proc test_printf_with_strings {} {
+    global gdb_prompt
+
+    gdb_test {printf "I ate a %s yesterday; it was very %s!\n", "clock", "time-consuming"} \
+	"I ate a clock yesterday; it was very time-consuming!"
+    gdb_test_no_output "set var \$hello = \"Hello\""
+
+    gdb_test {printf "%s, %s%c\n", $hello, "world", '!'} "Hello, world!"
+
+    set listsize_value -1
+    gdb_test_multiple "show listsize" "get listsize value" {
+	-re "Number of source lines gdb will list by default is (\[0-9\]+)\.\r\n$gdb_prompt $" {
+	    set listsize_value $expect_out(1,string)
+	}
+    }
+
+    if {$listsize_value > -1} {
+	gdb_test {printf "%s\n", $_gdb_setting_str("listsize")} $listsize_value
+    } else {
+	send_log "warning: could not get listsize\n"
+    }
+}
+
+# Test the printf '%V' format.
+proc test_printf_V_format {} {
+    # Enums.
+    gdb_test {printf "%V\n", one} "FE_ONE"
+    gdb_test {printf "%V\n", three} "\\(FE_ONE \\| FE_TWO\\)"
+    gdb_test {printf "%V\n", flag_enum_without_zero} "0"
+    gdb_test {printf "%V\n", three_not_flag} "3"
+
+    # Arrays.
+    gdb_test {printf "%V\n", a1} "\\{2, 4, 6, 8, 10, 12, 14, 16, 18, 20\\}"
+    gdb_test {printf "%V[]\n", a1} "\\{2, 4, 6, 8, 10, 12, 14, 16, 18, 20\\}"
+    gdb_test {printf "%V[][]\n", a1} \
+	"\\{2, 4, 6, 8, 10, 12, 14, 16, 18, 20\\}\\\[\\\]"
+    gdb_test {printf "%V[-elements 3]\n", a1} "\\{2, 4, 6\\.\\.\\.\\}"
+    gdb_test {printf "%V[-elements 3][]\n", a1} \
+	"\\{2, 4, 6\\.\\.\\.\\}\\\[\\\]"
+    gdb_test {printf "%V[-elements 3 -array-indexes on]\n", a1} \
+	"\\{\\\[0\\\] = 2, \\\[1\\\] = 4, \\\[2\\\] = 6\\.\\.\\.\\}"
+
+    # Structures.
+    gdb_test {printf "%V\n", a_small_struct} \
+	"\\{a = 1, b = 2, c = 3\\}"
+    gdb_test {printf "%V[-pretty on]\n", a_small_struct} \
+	"\\{\r\n  a = 1,\r\n  b = 2,\r\n  c = 3\r\n\\}"
+}
+
 proc test_print_symbol {} {
     gdb_test_no_output "set print symbol on"
 
@@ -974,6 +1057,9 @@ proc test_repeat_bytes {} {
     set fmt(RR) "%s, %s"
     set fmt(SR) "\"%s\", %s"
     set fmt(SS) "\"%s%s\""
+
+    # We have up to 60 elements to print.
+    gdb_test_no_output "set print elements 100"
 
     # Set the target-charset to ASCII, because the output varies from
     # different charset.
@@ -1022,6 +1108,20 @@ proc test_repeat_bytes {} {
     }
 }
 
+# Test that 'set elements' correctly limits the number of characters
+# printed from a string when a string ends with repeated characters.
+# This is gdb/24331
+
+proc test_repeat_bytes_limit {} {
+   gdb_test "print -elem 3 -- \"AAAAA\"" "= \"AAA\"..."
+   gdb_test "print -char 3 -elem 10 -- \"AAAAA\"" "= \"AAA\"..."
+   gdb_test "print -elem 3 -- \"ABBBB\"" "= \"ABB\"..."
+   gdb_test "print -char 3 -elem 10 -- \"ABBBB\"" "= \"ABB\"..."
+
+   gdb_test "print -elem 3 -repeats 2 -- \"AAABBB\"" "= 'A' <repeats 3 times>..."
+   gdb_test "print -elem 4 -repeats 2 -- \"AAABBB\"" "= 'A' <repeats 3 times>, 'B' <repeats 3 times>"
+}
+
 # Test printf of convenience variables.
 # These tests can be done with or without a running inferior.
 # PREFIX ensures uniqueness of test names.
@@ -1058,12 +1158,7 @@ proc test_printf_convenience_var {prefix} {
     }
 }
 
-
-# Start with a fresh gdb.
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
+clean_restart
 
 gdb_test "print \$pc" "No registers\\."
 
@@ -1147,6 +1242,9 @@ test_print_array_constants
 test_print_enums
 test_printf
 test_printf_with_dfp
+test_printf_with_strings
+test_printf_V_format
 test_print_symbol
 test_repeat_bytes
 test_radices
+test_repeat_bytes_limit

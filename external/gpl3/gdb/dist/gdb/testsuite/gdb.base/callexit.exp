@@ -1,4 +1,4 @@
-# Copyright 2008-2023 Free Software Foundation, Inc.
+# Copyright 2008-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,10 +23,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
 
 # Some targets can't do function calls, so don't even bother with this
 # test.
-if [target_info exists gdb,cannot_call_functions] {
-    unsupported "this target can not call functions"
-    return
-}
+require {!target_info exists gdb,cannot_call_functions}
 
 # Start with a fresh gdb.
 
@@ -48,5 +45,3 @@ gdb_test_no_output "set may-call-functions on"
 gdb_test "call callexit()" \
 	"The program being debugged exited.*" \
 	"inferior function call terminated program"
-
-return 0
