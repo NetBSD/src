@@ -1,6 +1,6 @@
 <?xml version="1.0"?> <!-- THIS FILE IS GENERATED -*- buffer-read-only: t -*-  -->
 <!-- vi:set ro: -->
-<!-- Copyright (C) 2020-2023 Free Software Foundation, Inc.
+<!-- Copyright (C) 2020-2024 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
@@ -182,6 +182,9 @@
   <syscall name="pwrite" number="174"/>
   <syscall name="compat_30_ntp_gettime" number="175"/>
   <syscall name="ntp_adjtime" number="176"/>
+  <syscall name="timerfd_create" number="177"/>
+  <syscall name="timerfd_settime" number="178"/>
+  <syscall name="timerfd_gettime" number="179"/>
   <syscall name="setgid" number="181"/>
   <syscall name="setegid" number="182"/>
   <syscall name="seteuid" number="183"/>
@@ -258,6 +261,7 @@
   <syscall name="mq_receive" number="264"/>
   <syscall name="compat_50_mq_timedsend" number="265"/>
   <syscall name="compat_50_mq_timedreceive" number="266"/>
+  <syscall name="eventfd" number="267"/>
   <syscall name="__posix_rename" number="270"/>
   <syscall name="swapctl" number="271"/>
   <syscall name="compat_30_getdents" number="272"/>
@@ -410,7 +414,7 @@
   <syscall name="__mq_timedsend50" number="432"/>
   <syscall name="__mq_timedreceive50" number="433"/>
   <syscall name="compat_60__lwp_park" number="434"/>
-  <syscall name="__kevent50" number="435"/>
+  <syscall name="compat_100___kevent50" number="435"/>
   <syscall name="__pselect50" number="436"/>
   <syscall name="__pollts50" number="437"/>
   <syscall name="__aio_suspend50" number="438"/>
@@ -474,4 +478,9 @@
   <syscall name="__acl_aclcheck_file" number="497"/>
   <syscall name="__acl_aclcheck_fd" number="498"/>
   <syscall name="lpathconf" number="499"/>
+  <syscall name="memfd_create" number="500"/>
+  <syscall name="__kevent100" number="501"/>
+  <syscall name="epoll_create1" number="502"/>
+  <syscall name="epoll_ctl" number="503"/>
+  <syscall name="epoll_pwait2" number="504"/>
 </syscalls_info>

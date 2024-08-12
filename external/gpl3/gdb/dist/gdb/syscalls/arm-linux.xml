@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE syscalls_info SYSTEM "gdb-syscalls.dtd">
-<!-- Copyright (C) 2009-2023 Free Software Foundation, Inc.
+<!-- Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
@@ -50,7 +50,7 @@
   <syscall name="nice" number="34"/>
   <syscall name="ftime" number="35"/> <!-- removed -->
   <syscall name="sync" number="36"/>
-  <syscall name="kill" number="37" groups="signal"/>
+  <syscall name="kill" number="37" groups="signal,process"/>
   <syscall name="rename" number="38" groups="file"/>
   <syscall name="mkdir" number="39" groups="file"/>
   <syscall name="rmdir" number="40" groups="file"/>
@@ -191,7 +191,7 @@
   <syscall name="rt_sigprocmask" number="175" groups="signal"/>
   <syscall name="rt_sigpending" number="176" groups="signal"/>
   <syscall name="rt_sigtimedwait" number="177" groups="signal"/>
-  <syscall name="rt_sigqueueinfo" number="178" groups="signal"/>
+  <syscall name="rt_sigqueueinfo" number="178" groups="signal,process"/>
   <syscall name="rt_sigsuspend" number="179" groups="signal"/>
   <syscall name="pread64" number="180" groups="descriptor"/>
   <syscall name="pwrite64" number="181" groups="descriptor"/>
@@ -247,13 +247,13 @@
   <syscall name="removexattr" number="235" groups="file"/>
   <syscall name="lremovexattr" number="236" groups="file"/>
   <syscall name="fremovexattr" number="237" groups="descriptor"/>
-  <syscall name="tkill" number="238" groups="signal"/>
+  <syscall name="tkill" number="238" groups="signal,process"/>
   <syscall name="sendfile64" number="239" groups="descriptor,network"/>
   <syscall name="futex" number="240"/>
   <syscall name="sched_setaffinity" number="241"/>
   <syscall name="sched_getaffinity" number="242"/>
-  <syscall name="io_setup" number="243"/>
-  <syscall name="io_destroy" number="244"/>
+  <syscall name="io_setup" number="243" groups="memory"/>
+  <syscall name="io_destroy" number="244" groups="memory"/>
   <syscall name="io_getevents" number="245"/>
   <syscall name="io_submit" number="246"/>
   <syscall name="io_cancel" number="247"/>
@@ -275,18 +275,18 @@
   <syscall name="clock_nanosleep" number="265"/>
   <syscall name="statfs64" number="266" groups="file"/>
   <syscall name="fstatfs64" number="267" groups="descriptor"/>
-  <syscall name="tgkill" number="268" groups="signal"/>
+  <syscall name="tgkill" number="268" groups="signal,process"/>
   <syscall name="utimes" number="269" groups="file"/>
   <syscall name="arm_fadvise64_64" number="270"/>
   <syscall name="pciconfig_iobase" number="271"/>
   <syscall name="pciconfig_read" number="272"/>
   <syscall name="pciconfig_write" number="273"/>
-  <syscall name="mq_open" number="274"/>
+  <syscall name="mq_open" number="274" groups="descriptor"/>
   <syscall name="mq_unlink" number="275"/>
-  <syscall name="mq_timedsend" number="276"/>
-  <syscall name="mq_timedreceive" number="277"/>
-  <syscall name="mq_notify" number="278"/>
-  <syscall name="mq_getsetattr" number="279"/>
+  <syscall name="mq_timedsend" number="276" groups="descriptor"/>
+  <syscall name="mq_timedreceive" number="277" groups="descriptor"/>
+  <syscall name="mq_notify" number="278" groups="descriptor"/>
+  <syscall name="mq_getsetattr" number="279" groups="descriptor"/>
   <syscall name="waitid" number="280" groups="process"/>
   <syscall name="socket" number="281" groups="network"/>
   <syscall name="bind" number="282" groups="network"/>
@@ -324,7 +324,7 @@
   <syscall name="ioprio_set" number="314"/>
   <syscall name="ioprio_get" number="315"/>
   <syscall name="inotify_init" number="316" groups="descriptor"/>
-  <syscall name="inotify_add_watch" number="317" groups="descriptor"/>
+  <syscall name="inotify_add_watch" number="317" groups="descriptor,file"/>
   <syscall name="inotify_rm_watch" number="318" groups="descriptor"/>
   <syscall name="mbind" number="319" groups="memory"/>
   <syscall name="get_mempolicy" number="320" groups="memory"/>
@@ -344,7 +344,7 @@
   <syscall name="faccessat" number="334" groups="descriptor,file"/>
   <syscall name="pselect6" number="335" groups="descriptor"/>
   <syscall name="ppoll" number="336" groups="descriptor"/>
-  <syscall name="unshare" number="337" groups="process"/>
+  <syscall name="unshare" number="337"/>
   <syscall name="set_robust_list" number="338"/>
   <syscall name="get_robust_list" number="339"/>
   <syscall name="splice" number="340" groups="descriptor"/>
