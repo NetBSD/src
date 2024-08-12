@@ -21,8 +21,9 @@
 	# Trigger OS trap.
 	ecall;
 	exit 0;
-	.data
+	.pushsection .data
 	1: .asciz "pass\n"
+	.popsection
 	.endm
 
 # MACRO: fail
@@ -33,14 +34,15 @@
 	# Use stdout.
 	li a0, 1;
 	# Point to the string.
-	lla a1, 1f;
+	la a1, 1f;
 	# Number of bytes to write.
 	li a2, 5;
 	# Trigger OS trap.
 	ecall;
 	exit 0;
-	.data
+	.pushsection .data
 	1: .asciz "fail\n"
+	.popsection
 	.endm
 
 # MACRO: start
@@ -49,4 +51,8 @@
 	.text
 .global _start
 _start:
+	.option push
+	.option norelax
+	lla gp, __global_pointer$
+	.option pop
 	.endm

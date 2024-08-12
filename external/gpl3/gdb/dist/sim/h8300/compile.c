@@ -26,21 +26,28 @@
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
+#include <sys/stat.h>
 
 #include "bfd.h"
 #include "sim-main.h"
-#include "gdb/sim-h8300.h"
-#include "sys/stat.h"
+#include "sim/sim-h8300.h"
 #include "sys/types.h"
 #include "sim-options.h"
 #include "sim-signal.h"
 #include "sim/callback.h"
+
+#include "h8300-sim.h"
 
 #ifndef SIGTRAP
 # define SIGTRAP 5
 #endif
 
 int debug;
+
+/* Each entry in this array is an index into the main opcode
+   array for the first instruction starting with the given
+   4 bit nibble.  */
+static int nib_indices[16];
 
 static int memory_size;
 
@@ -57,13 +64,13 @@ static int memory_size;
 static unsigned int
 h8_get_reg (sim_cpu *cpu, int regnum)
 {
-  return cpu->regs[regnum];
+  return H8300_SIM_CPU (cpu)->regs[regnum];
 }
 
 static void
 h8_set_reg (sim_cpu *cpu, int regnum, int val)
 {
-  cpu->regs[regnum] = val;
+  H8300_SIM_CPU (cpu)->regs[regnum] = val;
 }
 
 #define h8_get_ccr(cpu)		h8_get_reg (cpu, CCR_REGNUM)
@@ -88,25 +95,25 @@ h8_set_reg (sim_cpu *cpu, int regnum, int val)
 static int
 h8_get_mask (sim_cpu *cpu)
 {
-  return cpu->mask;
+  return H8300_SIM_CPU (cpu)->mask;
 }
 
 static void
 h8_set_mask (sim_cpu *cpu, int val)
 {
-  cpu->mask = val;
+  H8300_SIM_CPU (cpu)->mask = val;
 }
 #if 0
 static int
 h8_get_exception (sim_cpu *cpu)
 {
-  return cpu->exception;
+  return H8300_SIM_CPU (cpu)->exception;
 }
 
 static void
 h8_set_exception (sim_cpu *cpu, int val)
 {
-  cpu->exception = val;
+  H8300_SIM_CPU (cpu)->exception = val;
 }
 
 static enum h8300_sim_state
@@ -125,7 +132,7 @@ h8_set_state (SIM_DESC sd, enum h8300_sim_state val)
 static unsigned int *
 h8_get_reg_buf (sim_cpu *cpu)
 {
-  return &cpu->regs[0];
+  return &H8300_SIM_CPU (cpu)->regs[0];
 }
 
 #ifdef ADEBUG
@@ -145,77 +152,77 @@ h8_increment_stats (SIM_DESC sd, int idx)
 static unsigned char *
 h8_get_memory_buf (sim_cpu *cpu)
 {
-  return cpu->memory;
+  return H8300_SIM_CPU (cpu)->memory;
 }
 
 static void
 h8_set_memory_buf (sim_cpu *cpu, unsigned char *ptr)
 {
-  cpu->memory = ptr;
+  H8300_SIM_CPU (cpu)->memory = ptr;
 }
 
 static unsigned char
 h8_get_memory (sim_cpu *cpu, int idx)
 {
   ASSERT (idx < memory_size);
-  return cpu->memory[idx];
+  return H8300_SIM_CPU (cpu)->memory[idx];
 }
 
 static void
 h8_set_memory (sim_cpu *cpu, int idx, unsigned int val)
 {
   ASSERT (idx < memory_size);
-  cpu->memory[idx] = (unsigned char) val;
+  H8300_SIM_CPU (cpu)->memory[idx] = (unsigned char) val;
 }
 
 static unsigned int
 h8_get_delayed_branch (sim_cpu *cpu)
 {
-  return cpu->delayed_branch;
+  return H8300_SIM_CPU (cpu)->delayed_branch;
 }
 
 static void
 h8_set_delayed_branch (sim_cpu *cpu, unsigned int dest)
 {
-  cpu->delayed_branch = dest;
+  H8300_SIM_CPU (cpu)->delayed_branch = dest;
 }
 
 static char **
 h8_get_command_line (sim_cpu *cpu)
 {
-  return cpu->command_line;
+  return H8300_SIM_CPU (cpu)->command_line;
 }
 
 static void
 h8_set_command_line (sim_cpu *cpu, char ** val)
 {
-  cpu->command_line = val;
+  H8300_SIM_CPU (cpu)->command_line = val;
 }
 
 static char *
 h8_get_cmdline_arg (sim_cpu *cpu, int index)
 {
-  return cpu->command_line[index];
+  return H8300_SIM_CPU (cpu)->command_line[index];
 }
 
 static void
 h8_set_cmdline_arg (sim_cpu *cpu, int index, char * val)
 {
-  cpu->command_line[index] = val;
+  H8300_SIM_CPU (cpu)->command_line[index] = val;
 }
 
 /* MAC Saturation Mode */
 static int
 h8_get_macS (sim_cpu *cpu)
 {
-  return cpu->macS;
+  return H8300_SIM_CPU (cpu)->macS;
 }
 
 #if 0
 static void
 h8_set_macS (sim_cpu *cpu, int val)
 {
-  cpu->macS = (val != 0);
+  H8300_SIM_CPU (cpu)->macS = (val != 0);
 }
 #endif
 
@@ -223,39 +230,39 @@ h8_set_macS (sim_cpu *cpu, int val)
 static int
 h8_get_macZ (sim_cpu *cpu)
 {
-  return cpu->macZ;
+  return H8300_SIM_CPU (cpu)->macZ;
 }
 
 static void
 h8_set_macZ (sim_cpu *cpu, int val)
 {
-  cpu->macZ = (val != 0);
+  H8300_SIM_CPU (cpu)->macZ = (val != 0);
 }
 
 /* MAC Negative Flag */
 static int
 h8_get_macN (sim_cpu *cpu)
 {
-  return cpu->macN;
+  return H8300_SIM_CPU (cpu)->macN;
 }
 
 static void
 h8_set_macN (sim_cpu *cpu, int val)
 {
-  cpu->macN = (val != 0);
+  H8300_SIM_CPU (cpu)->macN = (val != 0);
 }
 
 /* MAC Overflow Flag */
 static int
 h8_get_macV (sim_cpu *cpu)
 {
-  return cpu->macV;
+  return H8300_SIM_CPU (cpu)->macV;
 }
 
 static void
 h8_set_macV (sim_cpu *cpu, int val)
 {
-  cpu->macV = (val != 0);
+  H8300_SIM_CPU (cpu)->macV = (val != 0);
 }
 
 /* End CPU data object.  */
@@ -386,14 +393,21 @@ decode (SIM_DESC sd, sim_cpu *cpu, int addr, unsigned char *data, decoded_inst *
   int reg[3]   = {0, 0, 0};
   int rdisp[3] = {0, 0, 0};
   int opnum;
+  int index;
   const struct h8_opcode *q;
 
   dst->dst.type = -1;
   dst->src.type = -1;
   dst->op3.type = -1;
 
-  /* Find the exact opcode/arg combo.  */
-  for (q = h8_opcodes; q->name; q++)
+  /* We speed up instruction decoding by caching an index into
+     the main opcode array for the first instruction with the
+     given 4 bit nibble.  */
+  index = nib_indices[(data[0] & 0xf0) >> 4];
+
+  /* Find the exact opcode/arg combo, starting with the precomputed
+     index.  Note this loop is performance sensitive.  */
+  for (q = &h8_opcodes[index]; q->name; q++)
     {
       const op_type *nib = q->data.nib;
       unsigned int len = 0;
@@ -721,7 +735,6 @@ decode (SIM_DESC sd, sim_cpu *cpu, int addr, unsigned char *data, decoded_inst *
 		  /* Fill in the args.  */
 		  {
 		    const op_type *args = q->args.nib;
-		    int hadone = 0;
 		    int nargs;
 
 		    for (nargs = 0; 
@@ -1555,6 +1568,84 @@ store2 (SIM_DESC sd, ea_type *arg, int n)
   return store_1 (sd, arg, n, 1);
 }
 
+/* Callback for qsort.  We sort first based on availablity
+   (available instructions sort lower).  When availability state
+   is the same, then we use the first 4 bit nibble as a secondary
+   sort key.
+
+   We don't really care about 100% stability here, just that the
+   available instructions come first and all instrutions with
+   the same starting nibble are consecutive.
+
+   We could do even better by recording frequency information into the
+   main table and using that to sort within a nibble's group with the
+   highest frequency instructions appearing first.  */
+
+static int
+instruction_comparator (const void *p1_, const void *p2_)
+{
+  struct h8_opcode *p1 = (struct h8_opcode *)p1_;
+  struct h8_opcode *p2 = (struct h8_opcode *)p2_;
+
+  /* The 1st sort key is based on whether or not the
+     instruction is even available.  This reduces the
+     number of entries we have to look at in the common
+     case.  */
+  bool p1_available = !((p1->available == AV_H8SX && !h8300sxmode)
+			|| (p1->available == AV_H8S  && !h8300smode)
+			|| (p1->available == AV_H8H  && !h8300hmode));
+
+  bool p2_available = !((p2->available == AV_H8SX && !h8300sxmode)
+			|| (p2->available == AV_H8S  && !h8300smode)
+			|| (p2->available == AV_H8H  && !h8300hmode));
+
+  /* Sort so that available instructions come before unavailable
+     instructions.  */
+  if (p1_available != p2_available)
+    return p2_available - p1_available;
+
+  /* Secondarily sort based on the first opcode nibble.  */
+  return p1->data.nib[0] - p2->data.nib[0];
+}
+
+
+/* OPS is the opcode array, which is initially sorted by mnenomic.
+
+   Sort the array so that the instructions for the sub-architecture
+   are at the start and unavailable instructions are at the end.
+
+   Within the set of available instructions, further sort them based
+   on the first 4 bit nibble.
+
+   Then find the first index into OPS for each of the 16 possible
+   nibbles and record that into NIB_INDICES to speed up decoding.  */
+
+static void
+sort_opcodes_and_setup_nibble_indices (struct h8_opcode *ops)
+{
+  const struct h8_opcode *q;
+  int i;
+
+  /* First sort the OPS array.  */
+  for (i = 0, q = ops; q->name; q++, i++)
+    ;
+  qsort (ops, i, sizeof (struct h8_opcode), instruction_comparator);
+
+  /* Now walk the array caching the index of the first
+     occurrence of each 4 bit nibble.  */
+  memset (nib_indices, -1, sizeof (nib_indices));
+  for (i = 0, q = ops; q->name; q++, i++)
+    {
+      int nib = q->data.nib[0];
+
+      /* Record the location of the first entry with the right
+	 nibble count.  */
+      if (nib_indices[nib] == -1)
+	nib_indices[nib] = i;
+    }
+}
+
+
 /* Flag to be set whenever a new SIM_DESC object is created.  */
 static int init_pointers_needed = 1;
 
@@ -1593,7 +1684,7 @@ init_pointers (SIM_DESC sd)
 
       h8_set_mask (cpu, memory_size - 1);
 
-      memset (h8_get_reg_buf (cpu), 0, sizeof (cpu->regs));
+      memset (h8_get_reg_buf (cpu), 0, sizeof (H8300_SIM_CPU (cpu)->regs));
 
       for (i = 0; i < 8; i++)
 	{
@@ -1637,6 +1728,9 @@ init_pointers (SIM_DESC sd)
 	  h8_set_reg (cpu, i, 0);
 	}
 
+      /* Sort the opcode table and create indices to speed up decode.  */
+      sort_opcodes_and_setup_nibble_indices (ops);
+
       init_pointers_needed = 0;
     }
 }
@@ -1644,7 +1738,7 @@ init_pointers (SIM_DESC sd)
 #define OBITOP(name, f, s, op) 			\
 case O (name, SB):				\
 {						\
-  int m, tmp;					\
+  int m;					\
 	 					\
   if (f)					\
     if (fetch (sd, &code->dst, &ea))		\
@@ -1675,7 +1769,6 @@ step_once (SIM_DESC sd, SIM_CPU *cpu)
   int trace = 0;
   int intMask = 0;
   int oldmask;
-  const struct h8300_sim_state *state = H8300_SIM_STATE (sd);
   host_callback *sim_callback = STATE_CALLBACK (sd);
 
   init_pointers (sd);
@@ -2477,8 +2570,6 @@ step_once (SIM_DESC sd, SIM_CPU *cpu)
 	    int no_of_args = 0;	/* The no. or cmdline args.  */
 	    int current_location = 0;	/* Location of string.  */
 	    int old_sp = 0;	/* The Initial Stack Pointer.  */
-	    int no_of_slots = 0;	/* No. of slots required on the stack
-					   for storing cmdline args.  */
 	    int sp_move = 0;	/* No. of locations by which the stack needs
 				   to grow.  */
 	    int new_sp = 0;	/* The final stack pointer location passed
@@ -2790,7 +2881,6 @@ step_once (SIM_DESC sd, SIM_CPU *cpu)
 	    struct stat stat_rec;	/* Stat record */
 	    int fstat_return;	/* Return value from callback to stat.  */
 	    int stat_ptr;	/* Pointer to stat record.  */
-	    char *temp_stat_ptr;	/* Temporary stat_rec pointer.  */
 
 	    fd = (h8300hmode && !h8300_normal_mode) ? GET_L_REG (0) : GET_W_REG (0);
 
@@ -2800,9 +2890,6 @@ step_once (SIM_DESC sd, SIM_CPU *cpu)
 	    /* Callback stat and return.  */
 	    fstat_return = sim_callback->to_fstat (sim_callback, fd,
 						   &stat_rec);
-
-	    /* Have stat_ptr point to starting of stat_rec.  */
-	    temp_stat_ptr = (char *) (&stat_rec);
 
 	    /* Setting up the stat structure returned.  */
 	    SET_MEMORY_W (stat_ptr, stat_rec.st_dev);
@@ -2841,7 +2928,6 @@ step_once (SIM_DESC sd, SIM_CPU *cpu)
 	    struct stat stat_rec;	/* Stat record */
 	    int stat_return;	/* Return value from callback to stat */
 	    int stat_ptr;	/* Pointer to stat record.  */
-	    char *temp_stat_ptr;	/* Temporary stat_rec pointer.  */
 	    int i = 0;		/* Loop Counter */
 
 	    /* Setting filename_ptr to first argument of open.  */
@@ -2875,9 +2961,6 @@ step_once (SIM_DESC sd, SIM_CPU *cpu)
 	    stat_return =
 	      sim_callback->to_stat (sim_callback, filename, &stat_rec);
 
-	    /* Have stat_ptr point to starting of stat_rec.  */
-	    temp_stat_ptr = (char *) (&stat_rec);
- 
 	    /* Freeing memory used for filename.  */
 	    free (filename);
  
@@ -4340,8 +4423,8 @@ sim_engine_run (SIM_DESC sd,
     }
 }
 
-int
-sim_write (SIM_DESC sd, SIM_ADDR addr, const void *buffer, int size)
+uint64_t
+sim_write (SIM_DESC sd, uint64_t addr, const void *buffer, uint64_t size)
 {
   sim_cpu *cpu = STATE_CPU (sd, 0);
   int i;
@@ -4362,8 +4445,8 @@ sim_write (SIM_DESC sd, SIM_ADDR addr, const void *buffer, int size)
   return i;
 }
 
-int
-sim_read (SIM_DESC sd, SIM_ADDR addr, void *buffer, int size)
+uint64_t
+sim_read (SIM_DESC sd, uint64_t addr, void *buffer, uint64_t size)
 {
   sim_cpu *cpu = STATE_CPU (sd, 0);
 
@@ -4487,10 +4570,9 @@ h8300_reg_fetch (SIM_CPU *cpu, int rn, void *buf, int length)
 }
 
 void
-sim_info (SIM_DESC sd, int verbose)
+sim_info (SIM_DESC sd, bool verbose)
 {
   sim_cpu *cpu = STATE_CPU (sd, 0);
-  const struct h8300_sim_state *state = H8300_SIM_STATE (sd);
   double timetaken = (double) h8_get_ticks (cpu) / (double) now_persec ();
   double virttime = h8_get_cycles (cpu) / 10.0e6;
 
@@ -4592,13 +4674,13 @@ static const OPTION h8300_options[] =
 static sim_cia
 h8300_pc_get (sim_cpu *cpu)
 {
-  return cpu->pc;
+  return H8300_SIM_CPU (cpu)->pc;
 }
 
 static void
 h8300_pc_set (sim_cpu *cpu, sim_cia pc)
 {
-  cpu->pc = pc;
+  H8300_SIM_CPU (cpu)->pc = pc;
 }
 
 /* Cover function of sim_state_free to free the cpu buffers as well.  */
@@ -4629,7 +4711,8 @@ sim_open (SIM_OPEN_KIND kind,
   current_target_byte_order = BFD_ENDIAN_BIG;
 
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
+  if (sim_cpu_alloc_all_extra (sd, 0, sizeof (struct h8300_sim_cpu))
+      != SIM_RC_OK)
     {
       free_state (sd);
       return 0;
@@ -4687,7 +4770,7 @@ sim_open (SIM_OPEN_KIND kind,
   /* CPU specific initialization.  */
   for (i = 0; i < MAX_NR_PROCESSORS; ++i)
     {
-      SIM_CPU *cpu = STATE_CPU (sd, i);
+      cpu = STATE_CPU (sd, i);
 
       CPU_REG_FETCH (cpu) = h8300_reg_fetch;
       CPU_REG_STORE (cpu) = h8300_reg_store;
@@ -4791,7 +4874,6 @@ sim_create_inferior (SIM_DESC sd, struct bfd *abfd,
 {
   SIM_CPU *cpu = STATE_CPU (sd, 0);
   int i = 0;
-  int len_arg = 0;
   int no_of_args = 0;
 
   if (abfd != NULL)

@@ -1,5 +1,5 @@
 /*  dv-nvram.c -- Generic driver for a non volatile ram (battery saved)
-    Copyright (C) 1999-2023 Free Software Foundation, Inc.
+    Copyright (C) 1999-2024 Free Software Foundation, Inc.
     Written by Stephane Carrez (stcarrez@worldnet.fr)
     (From a driver model Contributed by Cygnus Solutions.)
     
@@ -29,6 +29,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#include "m68hc11-sim.h"
 
 /* DEVICE
 

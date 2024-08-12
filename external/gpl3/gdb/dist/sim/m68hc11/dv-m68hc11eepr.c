@@ -1,5 +1,5 @@
 /*  dv-m68hc11eepr.c -- Simulation of the 68HC11 Internal EEPROM.
-    Copyright (C) 1999-2023 Free Software Foundation, Inc.
+    Copyright (C) 1999-2024 Free Software Foundation, Inc.
     Written by Stephane Carrez (stcarrez@nerim.fr)
     (From a driver model Contributed by Cygnus Solutions.)
     
@@ -31,7 +31,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
-
+#include "m68hc11-sim.h"
 
 /* DEVICE
 
@@ -241,10 +241,12 @@ m68hc11eepr_port_event (struct hw *me,
   SIM_DESC sd;
   struct m68hc11eepr *controller;
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   
   controller = hw_data (me);
   sd         = hw_system (me);
   cpu        = STATE_CPU (sd, 0);
+  m68hc11_cpu  = M68HC11_SIM_CPU (cpu);
   switch (my_port)
     {
     case RESET_PORT:
@@ -258,11 +260,11 @@ m68hc11eepr_port_event (struct hw *me,
 
         /* Reset the state of EEPROM programmer.  The CONFIG register
            is also initialized from the EEPROM/file content.  */
-        cpu->ios[M6811_PPROG]    = 0;
-        if (cpu->cpu_use_local_config)
-          cpu->ios[M6811_CONFIG] = cpu->cpu_config;
+        m68hc11_cpu->ios[M6811_PPROG]    = 0;
+        if (m68hc11_cpu->cpu_use_local_config)
+          m68hc11_cpu->ios[M6811_CONFIG] = m68hc11_cpu->cpu_config;
         else
-          cpu->ios[M6811_CONFIG]   = controller->eeprom[controller->size-1];
+          m68hc11_cpu->ios[M6811_CONFIG]   = controller->eeprom[controller->size-1];
         controller->eeprom_wmode = 0;
         controller->eeprom_waddr = 0;
         controller->eeprom_wbyte = 0;
@@ -271,7 +273,7 @@ m68hc11eepr_port_event (struct hw *me,
            The EEPROM CONFIG register is still enabled and can be programmed
            for a next configuration (taken into account only after a reset,
            see Motorola spec).  */
-        if (!(cpu->ios[M6811_CONFIG] & M6811_EEON))
+        if (!(m68hc11_cpu->ios[M6811_CONFIG] & M6811_EEON))
           {
             if (controller->mapped)
               hw_detach_address (hw_parent (me), M6811_EEPROM_LEVEL,
@@ -341,21 +343,23 @@ m68hc11eepr_info (struct hw *me)
   SIM_DESC sd;
   uint16_t base = 0;
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   struct m68hc11eepr *controller;
   uint8_t val;
   
   sd         = hw_system (me);
   cpu        = STATE_CPU (sd, 0);
+  m68hc11_cpu  = M68HC11_SIM_CPU (cpu);
   controller = hw_data (me);
   base       = cpu_get_io_base (cpu);
   
   sim_io_printf (sd, "M68HC11 EEprom:\n");
 
-  val = cpu->ios[M6811_PPROG];
+  val = m68hc11_cpu->ios[M6811_PPROG];
   print_io_byte (sd, "PPROG  ", pprog_desc, val, base + M6811_PPROG);
   sim_io_printf (sd, "\n");
 
-  val = cpu->ios[M6811_CONFIG];
+  val = m68hc11_cpu->ios[M6811_CONFIG];
   print_io_byte (sd, "CONFIG ", config_desc, val, base + M6811_CONFIG);
   sim_io_printf (sd, "\n");
 
@@ -401,12 +405,14 @@ m68hc11eepr_io_read_buffer (struct hw *me,
   SIM_DESC sd;
   struct m68hc11eepr *controller;
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   
   HW_TRACE ((me, "read 0x%08lx %d", (long) base, (int) nr_bytes));
 
   sd         = hw_system (me);
   controller = hw_data (me);
   cpu        = STATE_CPU (sd, 0);
+  m68hc11_cpu  = M68HC11_SIM_CPU (cpu);
 
   if (space == io_map)
     {
@@ -418,7 +424,7 @@ m68hc11eepr_io_read_buffer (struct hw *me,
             {
             case M6811_PPROG:
             case M6811_CONFIG:
-              *((uint8_t*) dest) = cpu->ios[base];
+              *((uint8_t*) dest) = m68hc11_cpu->ios[base];
               break;
 
             default:
@@ -433,7 +439,7 @@ m68hc11eepr_io_read_buffer (struct hw *me,
     }
 
   /* In theory, we can't read the EEPROM when it's being programmed.  */
-  if ((cpu->ios[M6811_PPROG] & M6811_EELAT) != 0
+  if ((m68hc11_cpu->ios[M6811_PPROG] & M6811_EELAT) != 0
       && cpu_is_running (cpu))
     {
       sim_memory_error (cpu, SIM_SIGBUS, base,
@@ -456,6 +462,7 @@ m68hc11eepr_io_write_buffer (struct hw *me,
   SIM_DESC sd;
   struct m68hc11eepr *controller;
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   uint8_t val;
 
   HW_TRACE ((me, "write 0x%08lx %d", (long) base, (int) nr_bytes));
@@ -463,6 +470,7 @@ m68hc11eepr_io_write_buffer (struct hw *me,
   sd         = hw_system (me);
   controller = hw_data (me);
   cpu        = STATE_CPU (sd, 0);
+  m68hc11_cpu  = M68HC11_SIM_CPU (cpu);
 
   /* Programming several bytes at a time is not possible.  */
   if (space != io_map && nr_bytes != 1)
@@ -487,7 +495,7 @@ m68hc11eepr_io_write_buffer (struct hw *me,
 
       /* Setting EELAT and EEPGM at the same time is an error.
          Clearing them both is ok.  */
-      wrong_bits = (cpu->ios[M6811_PPROG] ^ val) & val;
+      wrong_bits = (m68hc11_cpu->ios[M6811_PPROG] ^ val) & val;
       wrong_bits &= (M6811_EELAT | M6811_EEPGM);
 
       if (wrong_bits == (M6811_EEPGM|M6811_EELAT))
@@ -501,7 +509,7 @@ m68hc11eepr_io_write_buffer (struct hw *me,
 	{
 	  val = 0;
 	}
-      if ((val & M6811_EEPGM) && !(cpu->ios[M6811_PPROG] & M6811_EELAT))
+      if ((val & M6811_EEPGM) && !(m68hc11_cpu->ios[M6811_PPROG] & M6811_EELAT))
 	{
 	  sim_memory_error (cpu, SIM_SIGBUS, addr,
 			    "EEProm high voltage applied after EELAT");
@@ -515,7 +523,7 @@ m68hc11eepr_io_write_buffer (struct hw *me,
 	{
 	  controller->eeprom_wcycle = cpu_current_cycle (cpu);
 	}
-      else if (cpu->ios[M6811_PPROG] & M6811_PPROG)
+      else if (m68hc11_cpu->ios[M6811_PPROG] & M6811_PPROG)
 	{
 	  int i;
 	  unsigned long t = cpu_current_cycle (cpu);
@@ -529,7 +537,7 @@ m68hc11eepr_io_write_buffer (struct hw *me,
 	    }
 
 	  /* Program the byte by clearing some bits.  */
-	  if (!(cpu->ios[M6811_PPROG] & M6811_ERASE))
+	  if (!(m68hc11_cpu->ios[M6811_PPROG] & M6811_ERASE))
 	    {
 	      controller->eeprom[controller->eeprom_waddr]
 		&= controller->eeprom_wbyte;
@@ -538,12 +546,12 @@ m68hc11eepr_io_write_buffer (struct hw *me,
 	  /* Erase a byte, row or the complete eeprom.  Erased value is 0xFF.
              Ignore row or complete eeprom erase when we are programming the
              CONFIG register (last EEPROM byte).  */
-	  else if ((cpu->ios[M6811_PPROG] & M6811_BYTE)
+	  else if ((m68hc11_cpu->ios[M6811_PPROG] & M6811_BYTE)
                    || controller->eeprom_waddr == controller->size - 1)
 	    {
 	      controller->eeprom[controller->eeprom_waddr] = 0xff;
 	    }
-	  else if (cpu->ios[M6811_BYTE] & M6811_ROW)
+	  else if (m68hc11_cpu->ios[M6811_BYTE] & M6811_ROW)
 	    {
               size_t max_size;
 
@@ -578,7 +586,7 @@ m68hc11eepr_io_write_buffer (struct hw *me,
 	    }
 	  controller->eeprom_wmode = 0;
 	}
-      cpu->ios[M6811_PPROG] = val;
+      m68hc11_cpu->ios[M6811_PPROG] = val;
       return 1;
     }
 
@@ -597,7 +605,7 @@ m68hc11eepr_io_write_buffer (struct hw *me,
      (cpu not running).  */
   if (cpu_is_running (cpu))
     {
-      if ((cpu->ios[M6811_PPROG] & M6811_EELAT) == 0)
+      if ((m68hc11_cpu->ios[M6811_PPROG] & M6811_EELAT) == 0)
 	{
 	  sim_memory_error (cpu, SIM_SIGSEGV, base,
 			    "EEprom not configured for writing");

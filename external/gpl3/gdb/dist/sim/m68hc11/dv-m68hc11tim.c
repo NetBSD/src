@@ -1,5 +1,5 @@
 /*  dv-m68hc11tim.c -- Simulation of the 68HC11 timer devices.
-    Copyright (C) 1999-2023 Free Software Foundation, Inc.
+    Copyright (C) 1999-2024 Free Software Foundation, Inc.
     Written by Stephane Carrez (stcarrez@nerim.fr)
     (From a driver model Contributed by Cygnus Solutions.)
 
@@ -27,6 +27,8 @@
 #include "hw-main.h"
 #include "sim-assert.h"
 #include <limits.h>
+
+#include "m68hc11-sim.h"
 
 /* DEVICE
 
@@ -158,12 +160,14 @@ m68hc11tim_port_event (struct hw *me,
   SIM_DESC sd;
   struct m68hc11tim *controller;
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   uint8_t val;
   uint16_t tcnt;
 
   controller = hw_data (me);
   sd         = hw_system (me);
   cpu        = STATE_CPU (sd, 0);
+  m68hc11_cpu  = M68HC11_SIM_CPU (cpu);
   switch (my_port)
     {
     case RESET_PORT:
@@ -198,7 +202,7 @@ m68hc11tim_port_event (struct hw *me,
            the timer events (overflow and RTI clock).  The pending
            flags (TFLG2) must be cleared explicitly here.  */
         val = 0;
-        cpu->ios[M6811_TFLG2] = 0;
+        m68hc11_cpu->ios[M6811_TFLG2] = 0;
         m68hc11tim_io_write_buffer (me, &val, io_map,
                                     (unsigned_word) M6811_TMSK2, 1);
         m68hc11tim_io_write_buffer (me, &val, io_map,
@@ -207,15 +211,15 @@ m68hc11tim_port_event (struct hw *me,
       }
 
     case CAPTURE:
-      tcnt = (uint16_t) ((cpu->cpu_absolute_cycle - controller->tcnt_adjust)
+      tcnt = (uint16_t) ((m68hc11_cpu->cpu_absolute_cycle - controller->tcnt_adjust)
                        / controller->clock_prescaler);
       switch (level)
         {
         case M6811_TIC1:
         case M6811_TIC2:
         case M6811_TIC3:
-          cpu->ios[level] = tcnt >> 8;
-          cpu->ios[level + 1] = tcnt;
+          m68hc11_cpu->ios[level] = tcnt >> 8;
+          m68hc11_cpu->ios[level + 1] = tcnt;
           break;
 
         default:
@@ -244,6 +248,7 @@ m68hc11tim_timer_event (struct hw *me, void *data)
   SIM_DESC sd;
   struct m68hc11tim *controller;
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   enum event_type type;
   unsigned long delay;
   struct hw_event **eventp;
@@ -260,6 +265,7 @@ m68hc11tim_timer_event (struct hw *me, void *data)
   controller = hw_data (me);
   sd         = hw_system (me);
   cpu        = STATE_CPU (sd, 0);
+  m68hc11_cpu  = M68HC11_SIM_CPU (cpu);
   type       = (enum event_type) ((uintptr_t) data) & 0x0FF;
   events     = STATE_EVENTS (sd);
 
@@ -271,7 +277,7 @@ m68hc11tim_timer_event (struct hw *me, void *data)
       delay  = controller->cop_delay;
       delay  = controller->cop_prev_interrupt + controller->cop_delay;
       controller->cop_prev_interrupt = delay;
-      delay  = delay - cpu->cpu_absolute_cycle;
+      delay  = delay - m68hc11_cpu->cpu_absolute_cycle;
       check_interrupt = 1;
       delay += events->nr_ticks_to_process;
       break;
@@ -282,18 +288,18 @@ m68hc11tim_timer_event (struct hw *me, void *data)
       
       if (((uintptr_t) data & 0x0100) == 0)
         {
-          cpu->ios[M6811_TFLG2] |= M6811_RTIF;
+          m68hc11_cpu->ios[M6811_TFLG2] |= M6811_RTIF;
           check_interrupt = 1;
           controller->rti_prev_interrupt = delay;
           delay += controller->rti_delay;
         }
-      delay = delay - cpu->cpu_absolute_cycle;
+      delay = delay - m68hc11_cpu->cpu_absolute_cycle;
       delay += events->nr_ticks_to_process;
       break;
 
     case OVERFLOW_EVENT:
       /* Compute the 68HC11 internal free running counter.  */
-      tcnt_internal = (cpu->cpu_absolute_cycle - controller->tcnt_adjust);
+      tcnt_internal = (m68hc11_cpu->cpu_absolute_cycle - controller->tcnt_adjust);
 
       /* We must take into account the prescaler that comes
          before the counter (it's a power of 2).  */
@@ -310,7 +316,7 @@ m68hc11tim_timer_event (struct hw *me, void *data)
       eventp = &controller->tof_timer_event;
       if (((uintptr_t) data & 0x100) == 0)
         {
-          cpu->ios[M6811_TFLG2] |= M6811_TOF;
+          m68hc11_cpu->ios[M6811_TFLG2] |= M6811_TOF;
           check_interrupt = 1;
         }
       break;
@@ -318,8 +324,8 @@ m68hc11tim_timer_event (struct hw *me, void *data)
     case COMPARE_EVENT:
       /* Compute value of TCNT register (64-bit precision) at beginning
          and end of instruction.  */
-      tcnt_insn_end = (cpu->cpu_absolute_cycle - controller->tcnt_adjust);
-      tcnt_insn_start = (tcnt_insn_end - cpu->cpu_current_cycle);
+      tcnt_insn_end = (m68hc11_cpu->cpu_absolute_cycle - controller->tcnt_adjust);
+      tcnt_insn_start = (tcnt_insn_end - m68hc11_cpu->cpu_current_cycle);
 
       /* TCNT value at beginning of current instruction.  */
       tcnt_prev = (tcnt_insn_start / controller->clock_prescaler) & 0x0ffff;
@@ -332,7 +338,7 @@ m68hc11tim_timer_event (struct hw *me, void *data)
       tcnt_internal = tcnt_insn_end;
       tcnt_internal &= 0x0ffff * controller->clock_prescaler;
 
-      flags = cpu->ios[M6811_TMSK1];
+      flags = m68hc11_cpu->ios[M6811_TMSK1];
       mask  = 0x80;
       delay = 65536 * controller->clock_prescaler;
 
@@ -343,7 +349,7 @@ m68hc11tim_timer_event (struct hw *me, void *data)
         {
           unsigned long compare;
 
-          compare = (cpu->ios[i] << 8) + cpu->ios[i + 1];
+          compare = (m68hc11_cpu->ios[i] << 8) + m68hc11_cpu->ios[i + 1];
 
           /* See if compare is reached; handle wrap arround.  */
           if ((compare >= tcnt_prev && compare <= tcnt && tcnt_prev < tcnt)
@@ -357,13 +363,13 @@ m68hc11tim_timer_event (struct hw *me, void *data)
               else
                 dt = tcnt - compare;
 
-              cpu->ios[M6811_TFLG1] |= mask;
+              m68hc11_cpu->ios[M6811_TFLG1] |= mask;
 
               /* Raise interrupt now at the correct CPU cycle so that
                  we can find the interrupt latency.  */
-              cpu->cpu_absolute_cycle -= dt;
-              interrupts_update_pending (&cpu->cpu_interrupts);
-              cpu->cpu_absolute_cycle += dt;
+              m68hc11_cpu->cpu_absolute_cycle -= dt;
+              interrupts_update_pending (&m68hc11_cpu->cpu_interrupts);
+              m68hc11_cpu->cpu_absolute_cycle += dt;
             }
 
           /* Compute how many times for the next match.
@@ -408,7 +414,7 @@ m68hc11tim_timer_event (struct hw *me, void *data)
     }
 
   if (check_interrupt)
-    interrupts_update_pending (&cpu->cpu_interrupts);
+    interrupts_update_pending (&m68hc11_cpu->cpu_interrupts);
 }
 
 
@@ -473,7 +479,7 @@ io_reg_desc pactl_desc[] = {
 static double
 to_realtime (sim_cpu *cpu, int64_t t)
 {
-  return (double) (t) / (double) (cpu->cpu_frequency / 4);
+  return (double) (t) / (double) (M68HC11_SIM_CPU (cpu)->cpu_frequency / 4);
 }
 
 const char*
@@ -537,12 +543,14 @@ m68hc11tim_info (struct hw *me)
   SIM_DESC sd;
   uint16_t base = 0;
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   struct m68hc11tim *controller;
   uint8_t val;
   uint16_t val16;
   
   sd = hw_system (me);
   cpu = STATE_CPU (sd, 0);
+  m68hc11_cpu = M68HC11_SIM_CPU (cpu);
   controller = hw_data (me);
   
   sim_io_printf (sd, "M68HC11 Timer:\n");
@@ -550,68 +558,68 @@ m68hc11tim_info (struct hw *me)
   base = cpu_get_io_base (cpu);
 
   /* Info for TIC1 */
-  val16  = (cpu->ios[M6811_TIC1_H] << 8) + cpu->ios[M6811_TIC1_L];
+  val16  = (m68hc11_cpu->ios[M6811_TIC1_H] << 8) + m68hc11_cpu->ios[M6811_TIC1_L];
   print_io_word (sd, "TIC1 ", 0, val16, base + M6811_TIC1);
   sim_io_printf (sd, "\n");
 
   /* Info for TIC2 */
-  val16  = (cpu->ios[M6811_TIC2_H] << 8) + cpu->ios[M6811_TIC2_L];
+  val16  = (m68hc11_cpu->ios[M6811_TIC2_H] << 8) + m68hc11_cpu->ios[M6811_TIC2_L];
   print_io_word (sd, "TIC2 ", 0, val16, base + M6811_TIC2);
   sim_io_printf (sd, "\n");
 
   /* Info for TIC3 */
-  val16  = (cpu->ios[M6811_TIC3_H] << 8) + cpu->ios[M6811_TIC3_L];
+  val16  = (m68hc11_cpu->ios[M6811_TIC3_H] << 8) + m68hc11_cpu->ios[M6811_TIC3_L];
   print_io_word (sd, "TIC3 ", 0, val16, base + M6811_TIC3);
   sim_io_printf (sd, "\n");
 
   /* Info for TOC1 */
-  val16  = (cpu->ios[M6811_TOC1_H] << 8) + cpu->ios[M6811_TOC1_L];
+  val16  = (m68hc11_cpu->ios[M6811_TOC1_H] << 8) + m68hc11_cpu->ios[M6811_TOC1_L];
   print_io_word (sd, "TOC1 ", 0, val16, base + M6811_TOC1);
   sim_io_printf (sd, "\n");
 
   /* Info for TOC2 */
-  val16  = (cpu->ios[M6811_TOC2_H] << 8) + cpu->ios[M6811_TOC2_L];
+  val16  = (m68hc11_cpu->ios[M6811_TOC2_H] << 8) + m68hc11_cpu->ios[M6811_TOC2_L];
   print_io_word (sd, "TOC2 ", 0, val16, base + M6811_TOC2);
   sim_io_printf (sd, "\n");
 
   /* Info for TOC3 */
-  val16  = (cpu->ios[M6811_TOC3_H] << 8) + cpu->ios[M6811_TOC3_L];
+  val16  = (m68hc11_cpu->ios[M6811_TOC3_H] << 8) + m68hc11_cpu->ios[M6811_TOC3_L];
   print_io_word (sd, "TOC3 ", 0, val16, base + M6811_TOC3);
   sim_io_printf (sd, "\n");
 
   /* Info for TOC4 */
-  val16  = (cpu->ios[M6811_TOC4_H] << 8) + cpu->ios[M6811_TOC4_L];
+  val16  = (m68hc11_cpu->ios[M6811_TOC4_H] << 8) + m68hc11_cpu->ios[M6811_TOC4_L];
   print_io_word (sd, "TOC4 ", 0, val16, base + M6811_TOC4);
   sim_io_printf (sd, "\n");
 
   /* Info for TOC5 */
-  val16  = (cpu->ios[M6811_TOC5_H] << 8) + cpu->ios[M6811_TOC5_L];
+  val16  = (m68hc11_cpu->ios[M6811_TOC5_H] << 8) + m68hc11_cpu->ios[M6811_TOC5_L];
   print_io_word (sd, "TOC5 ", 0, val16, base + M6811_TOC5);
   sim_io_printf (sd, "\n");
 
   /* Info for TMSK1 */
-  val  = cpu->ios[M6811_TMSK1];
+  val  = m68hc11_cpu->ios[M6811_TMSK1];
   print_io_byte (sd, "TMSK1 ", tmsk1_desc, val, base + M6811_TMSK1);
   sim_io_printf (sd, "\n");
 
   /* Info for TFLG1 */
-  val = cpu->ios[M6811_TFLG1];
+  val = m68hc11_cpu->ios[M6811_TFLG1];
   print_io_byte (sd, "TFLG1", tflg1_desc, val, base + M6811_TFLG1);
   sim_io_printf (sd, "\n");
 
-  val  = cpu->ios[M6811_TMSK2];
+  val  = m68hc11_cpu->ios[M6811_TMSK2];
   print_io_byte (sd, "TMSK2 ", tmsk2_desc, val, base + M6811_TMSK2);
   sim_io_printf (sd, "\n");
 
-  val = cpu->ios[M6811_TFLG2];
+  val = m68hc11_cpu->ios[M6811_TFLG2];
   print_io_byte (sd, "TFLG2", tflg2_desc, val, base + M6811_TFLG2);
   sim_io_printf (sd, "\n");
 
-  val = cpu->ios[M6811_PACTL];
+  val = m68hc11_cpu->ios[M6811_PACTL];
   print_io_byte (sd, "PACTL", pactl_desc, val, base + M6811_PACTL);
   sim_io_printf (sd, "\n");
 
-  val = cpu->ios[M6811_PACNT];
+  val = m68hc11_cpu->ios[M6811_PACNT];
   print_io_byte (sd, "PACNT", 0, val, base + M6811_PACNT);
   sim_io_printf (sd, "\n");
 
@@ -643,6 +651,7 @@ m68hc11tim_io_read_buffer (struct hw *me,
   SIM_DESC sd;
   struct m68hc11tim *controller;
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   uint8_t val;
   unsigned cnt = 0;
   
@@ -650,6 +659,7 @@ m68hc11tim_io_read_buffer (struct hw *me,
 
   sd  = hw_system (me);
   cpu = STATE_CPU (sd, 0);
+  m68hc11_cpu = M68HC11_SIM_CPU (cpu);
   controller = hw_data (me);
 
   while (nr_bytes)
@@ -660,17 +670,17 @@ m68hc11tim_io_read_buffer (struct hw *me,
              Reading in a 16-bit register will be split in two accesses
              but this will be atomic within the simulator.  */
         case M6811_TCTN_H:
-          val = (uint8_t) ((cpu->cpu_absolute_cycle - controller->tcnt_adjust)
-                         / (controller->clock_prescaler * 256));
+          val = (uint8_t) ((m68hc11_cpu->cpu_absolute_cycle - controller->tcnt_adjust)
+                           / (controller->clock_prescaler * 256));
           break;
 
         case M6811_TCTN_L:
-          val = (uint8_t) ((cpu->cpu_absolute_cycle - controller->tcnt_adjust)
-                         / controller->clock_prescaler);
+          val = (uint8_t) ((m68hc11_cpu->cpu_absolute_cycle - controller->tcnt_adjust)
+                           / controller->clock_prescaler);
           break;
 
         default:
-          val = cpu->ios[base];
+          val = m68hc11_cpu->ios[base];
           break;
         }
       *((uint8_t*) dest) = val;
@@ -692,6 +702,7 @@ m68hc11tim_io_write_buffer (struct hw *me,
   SIM_DESC sd;
   struct m68hc11tim *controller;
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   uint8_t val, n;
   int64_t adj;
   int reset_compare = 0;
@@ -702,6 +713,7 @@ m68hc11tim_io_write_buffer (struct hw *me,
 
   sd  = hw_system (me);
   cpu = STATE_CPU (sd, 0);
+  m68hc11_cpu = M68HC11_SIM_CPU (cpu);
   controller = hw_data (me);
 
   while (nr_bytes)
@@ -714,9 +726,9 @@ m68hc11tim_io_write_buffer (struct hw *me,
              to obtain the timer current value.  Computation must be made
              in 64-bit to avoid overflow problems.  */
         case M6811_TCTN_L:
-          adj = ((cpu->cpu_absolute_cycle - controller->tcnt_adjust)
+          adj = ((m68hc11_cpu->cpu_absolute_cycle - controller->tcnt_adjust)
                  / (controller->clock_prescaler * (int64_t) 256)) & 0x0FF;
-          adj = cpu->cpu_absolute_cycle
+          adj = m68hc11_cpu->cpu_absolute_cycle
             - (adj * controller->clock_prescaler * (int64_t) 256)
             - ((int64_t) adj * controller->clock_prescaler);
           controller->tcnt_adjust = adj;
@@ -725,9 +737,9 @@ m68hc11tim_io_write_buffer (struct hw *me,
           break;
 
         case M6811_TCTN_H:
-          adj = ((cpu->cpu_absolute_cycle - controller->tcnt_adjust)
+          adj = ((m68hc11_cpu->cpu_absolute_cycle - controller->tcnt_adjust)
                  / controller->clock_prescaler) & 0x0ff;
-          adj = cpu->cpu_absolute_cycle
+          adj = m68hc11_cpu->cpu_absolute_cycle
             - ((int64_t) val * controller->clock_prescaler * (int64_t) 256)
             - (adj * controller->clock_prescaler);
           controller->tcnt_adjust = adj;
@@ -738,10 +750,10 @@ m68hc11tim_io_write_buffer (struct hw *me,
         case M6811_TMSK2:
 
           /* Timer prescaler cannot be changed after 64 bus cycles.  */
-          if (cpu->cpu_absolute_cycle >= 64)
+          if (m68hc11_cpu->cpu_absolute_cycle >= 64)
             {
               val &= ~(M6811_PR1 | M6811_PR0);
-              val |= cpu->ios[M6811_TMSK2] & (M6811_PR1 | M6811_PR0);
+              val |= m68hc11_cpu->ios[M6811_TMSK2] & (M6811_PR1 | M6811_PR0);
             }
           switch (val & (M6811_PR1 | M6811_PR0))
             {
@@ -759,39 +771,39 @@ m68hc11tim_io_write_buffer (struct hw *me,
               n = 16;
               break;
             }
-          if (cpu->cpu_absolute_cycle < 64)
+          if (m68hc11_cpu->cpu_absolute_cycle < 64)
             {
               reset_overflow = 1;
               controller->clock_prescaler = n;
             }
-          cpu->ios[base] = val;
-          interrupts_update_pending (&cpu->cpu_interrupts);
+          m68hc11_cpu->ios[base] = val;
+          interrupts_update_pending (&m68hc11_cpu->cpu_interrupts);
           break;
 
         case M6811_PACTL:
           n = (1 << ((val & (M6811_RTR1 | M6811_RTR0))));
-          cpu->ios[base] = val;
+          m68hc11_cpu->ios[base] = val;
 
           controller->rti_delay = (long) (n) * 8192;
           m68hc11tim_timer_event (me, (void*) (RTI_EVENT| 0x100));
           break;
       
         case M6811_TFLG2:
-          val &= cpu->ios[M6811_TFLG2];
-          cpu->ios[M6811_TFLG2] &= ~val;
-          interrupts_update_pending (&cpu->cpu_interrupts);
+          val &= m68hc11_cpu->ios[M6811_TFLG2];
+          m68hc11_cpu->ios[M6811_TFLG2] &= ~val;
+          interrupts_update_pending (&m68hc11_cpu->cpu_interrupts);
           break;
 
         case M6811_TMSK1:
-          cpu->ios[M6811_TMSK1] = val;
-          interrupts_update_pending (&cpu->cpu_interrupts);
+          m68hc11_cpu->ios[M6811_TMSK1] = val;
+          interrupts_update_pending (&m68hc11_cpu->cpu_interrupts);
           reset_compare = 1;
           break;
 
         case M6811_TFLG1:
-          val &= cpu->ios[M6811_TFLG1];
-          cpu->ios[M6811_TFLG1] &= ~val;
-          interrupts_update_pending (&cpu->cpu_interrupts);          
+          val &= m68hc11_cpu->ios[M6811_TFLG1];
+          m68hc11_cpu->ios[M6811_TFLG1] &= ~val;
+          interrupts_update_pending (&m68hc11_cpu->cpu_interrupts);
           break;
 
         case M6811_TOC1:
@@ -799,17 +811,17 @@ m68hc11tim_io_write_buffer (struct hw *me,
         case M6811_TOC3:
         case M6811_TOC4:
         case M6811_TOC5:
-          cpu->ios[base] = val;
+          m68hc11_cpu->ios[base] = val;
           reset_compare = 1;
           break;
 
         case M6811_TCTL1:
         case M6811_TCTL2:
-          cpu->ios[base] = val;
+          m68hc11_cpu->ios[base] = val;
           break;
 
         default:
-          cpu->ios[base] = val;
+          m68hc11_cpu->ios[base] = val;
           break;
         }
 
