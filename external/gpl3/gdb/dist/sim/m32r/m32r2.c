@@ -1,5 +1,5 @@
 /* m32r2 simulator support code
-   Copyright (C) 1997-2023 Free Software Foundation, Inc.
+   Copyright (C) 1997-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
    This file is part of GDB, the GNU debugger.
@@ -26,6 +26,8 @@
 #include "sim-main.h"
 #include "cgen-mem.h"
 #include "cgen-ops.h"
+
+#include "m32r-sim.h"
 
 /* The contents of BUF are in target byte order.  */
 

@@ -1,6 +1,6 @@
 # Simulator main loop for m32r. -*- C -*-
 #
-# Copyright (C) 1996-2023 Free Software Foundation, Inc.
+# Copyright (C) 1996-2024 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Simulators.
 #
@@ -42,6 +42,7 @@ case "x$1" in
 xsupport)
 
 cat <<EOF
+#line $LINENO "$0"
 #include <stdlib.h>
 
 static INLINE const IDESC *
@@ -157,6 +158,7 @@ xinit)
 xextract-simple | xextract-scache)
 
 cat <<EOF
+#line $LINENO "$0"
 {
   if ((pc & 3) != 0)
     {
@@ -199,6 +201,7 @@ xextract-pbb)
 # SET_INSN_COUNT(n) must be called to record number of real insns.
 
 cat <<EOF
+#line $LINENO "$0"
 {
   const IDESC *idesc;
   int icount = 0;
@@ -302,6 +305,7 @@ xfull-exec-* | xfast-exec-*)
 # vpc is the virtual program counter.
 
 cat <<EOF
+#line $LINENO "$0"
 #if (! FAST_P && WITH_SEM_SWITCH_FULL) || (FAST_P && WITH_SEM_SWITCH_FAST)
 #define DEFINE_SWITCH
 #include "sem-switch.c"

@@ -1,5 +1,5 @@
 /* m32r simulator support code
-   Copyright (C) 1996-2023 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
    This file is part of GDB, the GNU debugger.
@@ -27,6 +27,8 @@
 #include "cgen-mem.h"
 #include "cgen-ops.h"
 #include <stdlib.h>
+
+#include "m32r-sim.h"
 
 /* Return the size of REGNO in bytes.  */
 
