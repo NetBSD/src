@@ -1,3 +1,27 @@
+- Documentation extraction program for chew.
+-  Copyright (C) 1990-2024 Free Software Foundation, Inc.
+-  This file is part of BFD, the Binary File Descriptor library.
+
+-  This program is free software; you can redistribute it and/or modify
+-  it under the terms of the GNU General Public License as published by
+-  the Free Software Foundation; either version 3 of the License, or
+-  (at your option) any later version.
+
+-  This program is distributed in the hope that it will be useful,
+-  but WITHOUT ANY WARRANTY; without even the implied warranty of
+-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-  GNU General Public License for more details.
+
+-  You should have received a copy of the GNU General Public License
+-  along with this program; if not, write to the Free Software
+-  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.
+
+- chew.c keywords defined here put output into doc/*.texi files
+- from comments in the source.  See also proto.str.
+
+-  True if SYNOPSIS was seen.
+variable synopsis_seen
+
 : DOCDD
 	skip_past_newline
 	get_stuff_in_command kill_bogus_lines catstr
@@ -11,7 +35,6 @@
 	skip_past_newline	
 	get_stuff_in_command kill_bogus_lines do_fancy_stuff translatecomments 
 	courierize catstr
-
 	;
 
 : INODE 
@@ -30,29 +53,17 @@
 
 : SYNOPSIS
 	skip_past_newline
-	"@strong{Synopsis}\n" catstr
-	"@example\n" catstr
+	1 synopsis_seen !
+	"@deftypefn {Function} " catstr
 	get_stuff_in_command  
 	kill_bogus_lines
+	collapse_whitespace
 	indent
 	catstr
-	"@end example\n" catstr
-
+	"\n" catstr
 	;
 
 : func
-	"@findex "	- a
-	skip_past_newline
-	copy_past_newline
-	dup		- a x x 
-	"@subsubsection @code{" - a x x b 
-	swap
-	remchar
-	"}\n" - a x b x c
-	catstr 	catstr 	catstr 	catstr 	catstr 
-	;
-
-: FUNCTION
 	"@findex "	- a
 	skip_past_newline
 	copy_past_newline
@@ -96,28 +107,29 @@
 	bodytext
 	;
 
-
-
-	
 : DESCRIPTION 
-	"@strong{Description}@*\n" catstr subhead ;
+	subhead
+	"@end deftypefn\n" synopsis_seen @ catstrif
+	0 synopsis_seen !
+	;
 
-: RETURNS
-	"@strong{Returns}@*\n" catstr subhead ;
+: FUNCTION
+	func ;
 
 : INTERNAL_FUNCTION
 	func ;
 
-
-: INTERNAL_DEFINITION 
+: DEFINITION
 	func ;
 
+: INTERNAL_DEFINITION
+	func ;
+
+: EXTERNAL
+	COMMENT ;
 
 : INTERNAL
-	func ;
-
-: TYPEDEF
-	FUNCTION ;
+	COMMENT ;
 
 : SENUM
 	skip_past_newline
