@@ -1,6 +1,6 @@
 /* Simulator pseudo baseclass.
 
-   Copyright 1997-2023 Free Software Foundation, Inc.
+   Copyright 1997-2024 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -72,6 +72,8 @@ typedef address_word sim_cia;
 /* TODO: Probably should just delete SIM_CPU.  */
 typedef struct _sim_cpu SIM_CPU;
 typedef struct _sim_cpu sim_cpu;
+
+#include "bfd.h"
 
 #include "sim-module.h"
 

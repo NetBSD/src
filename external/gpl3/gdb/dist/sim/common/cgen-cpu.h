@@ -1,5 +1,5 @@
 /* Simulator header for cgen cpus.
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -19,6 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #ifndef CGEN_CPU_H
 #define CGEN_CPU_H
+
+#include "cgen-defs.h"
+#include "cgen-fpu.h"
+#include "cgen-par.h"
+#include "cgen-scache.h"
 
 /* Type of function that is ultimately called by sim_resume.  */
 typedef void (ENGINE_FN) (SIM_CPU *);
