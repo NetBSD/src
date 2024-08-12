@@ -1,0 +1,95 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test detaching while the inferior is running.  Basically:
+#
+#  (gdb) attach PID
+#  (gdb) c&
+#  (gdb) detach
+
+require can_spawn_for_attach
+
+standard_testfile
+
+if {[build_executable "failed to prepare" $testfile $srcfile {debug}] == -1} {
+    return
+}
+
+# The test proper.  See description above.
+
+proc test {} {
+    global binfile gdb_prompt
+
+    # This test requires executing commands while the target is
+    # running, which, when testing with the remote target, requires
+    # non-stop remote protocol.  Until that variant of the RSP is the
+    # default, force target non-stop mode on.
+    set is_remote \
+	[expr {[target_info exists gdb_protocol] \
+		   && ([target_info gdb_protocol] == "remote" \
+			   || [target_info gdb_protocol] == "extended-remote")}]
+
+    save_vars { ::GDBFLAGS } {
+	if {$is_remote} {
+	    append ::GDBFLAGS " -ex \"maint set target-non-stop on\""
+	}
+	clean_restart ${binfile}
+    }
+
+    set test_spawn_id [spawn_wait_for_attach $binfile]
+    set testpid [spawn_id_get_pid $test_spawn_id]
+
+    set any "\[^\r\n\]*"
+
+    # Iterate more than once so that we test re-attaching after
+    # detaching, in case GDB incorrectly detaches and the process
+    # crashes after the detach.
+    set n_iters 2
+    for {set iter 1} {$iter <= $n_iters} {incr iter} {
+	with_test_prefix "iter=$iter" {
+	    set attached 0
+
+	    gdb_test_multiple "attach $testpid" "attach" {
+		-re "Attaching to program:${any}process $testpid\r\n.*$gdb_prompt " {
+		    pass $gdb_test_name
+		    set attached 1
+		}
+	    }
+
+	    if {!$attached} {
+		break
+	    }
+
+	    gdb_test_multiple "continue &" "" {
+		-re "Continuing\.\r\n$::gdb_prompt " {
+		    pass $gdb_test_name
+		}
+	    }
+
+	    gdb_test "detach" "Detaching from.*"
+
+	    # Sleep a bit before reattaching to let the detached
+	    # process crash and exit if e.g., GDB managed to leave
+	    # breakpoint traps behind.
+	    if {$iter != $n_iters} {
+		sleep 1
+	    }
+	}
+    }
+
+    kill_wait_spawned_process $test_spawn_id
+}
+
+test

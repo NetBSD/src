@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2001-2023 Free Software Foundation, Inc.
+# Copyright 2001-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -496,8 +496,8 @@ gdb_test_no_output "set target-charset UTF-8"
 gdb_test "print \"\\242\"" " = \"\\\\242\"" \
   "non-representable target character"
 
-gdb_test "print '\\x'" "\\\\x escape without a following hex digit."
-gdb_test "print '\\u'" "\\\\u escape without a following hex digit."
+gdb_test "print '\\x'" "\\\\x escape without a following hex digit"
+gdb_test "print '\\u'" "\\\\u escape without a following hex digit"
 gdb_test "print '\\9'" " = \[0-9\]+ '9'"
 
 # An octal escape can only be 3 digits.

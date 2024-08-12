@@ -1,4 +1,4 @@
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,10 +16,7 @@
 # The same tests as in jit.exp, but loading JITer itself from a shared
 # library.
 
-if {[skip_shlib_tests]} {
-    untested "skipping shared library tests"
-    return -1
-}
+require allow_shlib_tests
 
 load_lib jit-elf-helpers.exp
 

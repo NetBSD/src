@@ -1,4 +1,4 @@
-#   Copyright 1988-2023 Free Software Foundation, Inc.
+#   Copyright 1988-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -49,17 +49,17 @@ proc_with_prefix test_break {} {
     # for general use elsewhere.
     send_gdb "delete breakpoints\n"
     gdb_expect {
-	 -re "Delete all breakpoints.*$" {
+	 -re "Delete all breakpoints, watchpoints, tracepoints, and catchpoints.*$" {
 		send_gdb "y\n"
 		gdb_expect {
 		    -re "$::gdb_prompt $" {
-			fail "delete all breakpoints when none (unexpected prompt)"
+			fail "delete all breakpoints, watchpoints, tracepoints, and catchpoints when none (unexpected prompt)"
 		    }
-		    timeout	{ fail "delete all breakpoints when none (timeout after unexpected prompt)" }
+		    timeout	{ fail "delete all breakpoints, watchpoints, tracepoints, and catchpoints when none (timeout after unexpected prompt)" }
 		}
 	    }
-	 -re ".*$::gdb_prompt $"       { pass "delete all breakpoints when none" }
-	timeout	            { fail "delete all breakpoints when none (timeout)" }
+	 -re ".*$::gdb_prompt $"       { pass "delete all breakpoints, watchpoints, tracepoints, and catchpoints when none" }
+	timeout	            { fail "delete all breakpoints, watchpoints, tracepoints, and catchpoints when none (timeout)" }
     }
 
     # test break at function

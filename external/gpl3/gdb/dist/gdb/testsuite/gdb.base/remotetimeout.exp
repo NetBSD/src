@@ -1,4 +1,4 @@
-# Copyright 2004-2023 Free Software Foundation, Inc.
+# Copyright 2004-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,18 +19,16 @@
 # This is a test for the gdb invocation option -l.
 
 
-global GDBFLAGS
+gdb_exit
 
 #
 # Test that -l is processed correctly.
 #
-set old_gdbflags $GDBFLAGS
-set GDBFLAGS "$GDBFLAGS -l 42"
-gdb_exit
-gdb_start
+save_vars { GDBFLAGS } {
+    set GDBFLAGS "$GDBFLAGS -l 42"
+    gdb_start
+}
+
 gdb_test "show remotetimeout" \
 	"Timeout limit to wait for target to respond is 42\." \
 	"correct remotetimeout printed"
-
-set GDBFLAGS $old_gdbflags
-
