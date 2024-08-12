@@ -1,5 +1,5 @@
 /* GNU/Linux/MIPS specific low level interface, for the remote server for GDB.
-   Copyright (C) 2022-2023 Free Software Foundation, Inc.
+   Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,7 +16,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "server.h"
 #include "tdesc.h"
 #include "linux-low.h"
 #include <sys/ptrace.h>
@@ -132,8 +131,11 @@ csky_target::low_arch_setup ()
   static const char *expedite_regs[] = { "r14", "pc", NULL };
   target_desc_up tdesc = csky_create_target_description ();
 
-  if (!tdesc->expedite_regs)
-    init_target_desc (tdesc.get (), expedite_regs);
+  if (tdesc->expedite_regs.empty ())
+    {
+      init_target_desc (tdesc.get (), expedite_regs);
+      gdb_assert (!tdesc->expedite_regs.empty ());
+    }
 
   current_process ()->tdesc = tdesc.release ();
 
@@ -278,7 +280,7 @@ static struct regsets_info csky_regsets_info =
 static struct regs_info csky_regs_info =
 {
   NULL, /* FIXME: what's this  */
-  NULL, /* PEEKUSER/PORKUSR isn't supported by kernel > 4.x */
+  NULL, /* PEEKUSER/POKEUSR isn't supported by kernel > 4.x */
   &csky_regsets_info
 };
 
