@@ -1,6 +1,6 @@
 /* Multiple source language support for GDB.
 
-   Copyright (C) 1991-2023 Free Software Foundation, Inc.
+   Copyright (C) 1991-2024 Free Software Foundation, Inc.
 
    Contributed by the Department of Computer Science at the State University
    of New York at Buffalo.
@@ -28,12 +28,11 @@
    return data out of a "language-specific" struct pointer that is set
    whenever the working language changes.  That would be a lot faster.  */
 
-#include "defs.h"
 #include <ctype.h>
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "value.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "expression.h"
 #include "language.h"
 #include "varobj.h"
@@ -46,7 +45,6 @@
 #include "c-lang.h"
 #include <algorithm>
 #include "gdbarch.h"
-#include "compile/compile-internal.h"
 
 static void set_range_case (void);
 
@@ -80,8 +78,49 @@ enum case_sensitivity case_sensitivity = case_sensitive_on;
 
 /* The current language and language_mode (see language.h).  */
 
-const struct language_defn *current_language = nullptr;
+static const struct language_defn *global_current_language;
+static lazily_set_language_ftype *lazy_language_setter;
 enum language_mode language_mode = language_mode_auto;
+
+/* See language.h.  */
+
+const struct language_defn *
+get_current_language ()
+{
+  if (lazy_language_setter != nullptr)
+    {
+      /* Avoid recursive calls -- set_language refers to
+	 current_language.  */
+      lazily_set_language_ftype *call = lazy_language_setter;
+      lazy_language_setter = nullptr;
+      call ();
+    }
+  return global_current_language;
+}
+
+void
+lazily_set_language (lazily_set_language_ftype *fun)
+{
+  lazy_language_setter = fun;
+}
+
+scoped_restore_current_language::scoped_restore_current_language ()
+  : m_lang (global_current_language),
+    m_fun (lazy_language_setter)
+{
+}
+
+scoped_restore_current_language::~scoped_restore_current_language ()
+{
+  /* If both are NULL, then that means dont_restore was called.  */
+  if (m_lang != nullptr || m_fun != nullptr)
+    {
+      global_current_language = m_lang;
+      lazy_language_setter = m_fun;
+      if (lazy_language_setter == nullptr)
+	set_range_case ();
+    }
+}
 
 /* The language that the user expects to be typing in (the language
    of main(), or the last language we notified them about, or C).  */
@@ -94,7 +133,6 @@ const struct language_defn *language_defn::languages[nr_languages];
 
 /* The current values of the "set language/range/case-sensitive" enum
    commands.  */
-static const char *language;
 static const char *range;
 static const char *case_sensitive;
 
@@ -136,61 +174,69 @@ show_language_command (struct ui_file *file, int from_tty,
     }
 }
 
-/* Set command.  Change the current working language.  */
+/* Set callback for the "set/show language" setting.  */
+
 static void
-set_language_command (const char *ignore,
-		      int from_tty, struct cmd_list_element *c)
+set_language (const char *language)
 {
   enum language flang = language_unknown;
 
   /* "local" is a synonym of "auto".  */
-  if (strcmp (language, "local") == 0)
-    language = "auto";
+  if (strcmp (language, "auto") == 0
+      || strcmp (language, "local") == 0)
+    {
+      /* Enter auto mode.  Set to the current frame's language, if
+	 known, or fallback to the initial language.  */
+      language_mode = language_mode_auto;
+      try
+	{
+	  frame_info_ptr frame;
+
+	  frame = get_selected_frame (NULL);
+	  flang = get_frame_language (frame);
+	}
+      catch (const gdb_exception_error &ex)
+	{
+	  flang = language_unknown;
+	}
+
+      if (flang != language_unknown)
+	set_language (flang);
+      else
+	set_initial_language ();
+
+      expected_language = current_language;
+      return;
+    }
 
   /* Search the list of languages for a match.  */
   for (const auto &lang : language_defn::languages)
     {
-      if (strcmp (lang->name (), language) == 0)
-	{
-	  /* Found it!  Go into manual mode, and use this language.  */
-	  if (lang->la_language == language_auto)
-	    {
-	      /* Enter auto mode.  Set to the current frame's language, if
-		 known, or fallback to the initial language.  */
-	      language_mode = language_mode_auto;
-	      try
-		{
-		  frame_info_ptr frame;
+      if (strcmp (lang->name (), language) != 0)
+	continue;
 
-		  frame = get_selected_frame (NULL);
-		  flang = get_frame_language (frame);
-		}
-	      catch (const gdb_exception_error &ex)
-		{
-		  flang = language_unknown;
-		}
-
-	      if (flang != language_unknown)
-		set_language (flang);
-	      else
-		set_initial_language ();
-	      expected_language = current_language;
-	      return;
-	    }
-	  else
-	    {
-	      /* Enter manual mode.  Set the specified language.  */
-	      language_mode = language_mode_manual;
-	      current_language = lang;
-	      set_range_case ();
-	      expected_language = current_language;
-	      return;
-	    }
-	}
+      /* Found it!  Go into manual mode, and use this language.  */
+      language_mode = language_mode_manual;
+      lazy_language_setter = nullptr;
+      global_current_language = lang;
+      set_range_case ();
+      expected_language = lang;
+      return;
     }
 
   internal_error ("Couldn't find language `%s' in known languages list.",
 		  language);
+}
+
+/* Get callback for the "set/show language" setting.  */
+
+static const char *
+get_language ()
+{
+  if (language_mode == language_mode_auto)
+    return "auto";
+
+  return current_language->name ();
 }
 
 /* Show command.  Display a warning if the range setting does
@@ -230,7 +276,7 @@ show_range_command (struct ui_file *file, int from_tty,
       || ((range_check == range_check_on)
 	  != current_language->range_checking_on_by_default ()))
     warning (_("the current range check setting "
-	       "does not match the language.\n"));
+	       "does not match the language."));
 }
 
 /* Set command.  Change the setting for range checking.  */
@@ -267,7 +313,7 @@ set_range_command (const char *ignore,
       || ((range_check == range_check_on)
 	  != current_language->range_checking_on_by_default ()))
     warning (_("the current range check setting "
-	       "does not match the language.\n"));
+	       "does not match the language."));
 }
 
 /* Show command.  Display a warning if the case sensitivity setting does
@@ -304,7 +350,7 @@ show_case_command (struct ui_file *file, int from_tty,
 
   if (case_sensitivity != current_language->case_sensitivity ())
     warning (_("the current case sensitivity setting does not match "
-	       "the language.\n"));
+	       "the language."));
 }
 
 /* Set command.  Change the setting for case sensitivity.  */
@@ -336,7 +382,7 @@ set_case_command (const char *ignore, int from_tty, struct cmd_list_element *c)
 
    if (case_sensitivity != current_language->case_sensitivity ())
      warning (_("the current case sensitivity setting does not match "
-		"the language.\n"));
+		"the language."));
 }
 
 /* Set the status of range and type checking and case sensitivity based on
@@ -354,18 +400,14 @@ set_range_case (void)
     case_sensitivity = current_language->case_sensitivity ();
 }
 
-/* Set current language to (enum language) LANG.  Returns previous
-   language.  */
+/* See language.h.  */
 
-enum language
+void
 set_language (enum language lang)
 {
-  enum language prev_language;
-
-  prev_language = current_language->la_language;
-  current_language = language_def (lang);
+  lazy_language_setter = nullptr;
+  global_current_language = language_def (lang);
   set_range_case ();
-  return prev_language;
 }
 
 
@@ -378,7 +420,7 @@ language_info ()
     return;
 
   expected_language = current_language;
-  gdb_printf (_("Current language:  %s\n"), language);
+  gdb_printf (_("Current language:  %s\n"), get_language ());
   show_language_command (gdb_stdout, 1, NULL, NULL);
 }
 
@@ -430,9 +472,6 @@ language_enum (const char *str)
     if (strcmp (lang->name (), str) == 0)
       return lang->la_language;
 
-  if (strcmp (str, "local") == 0)
-    return language_auto;
-
   return language_unknown;
 }
 
@@ -464,23 +503,21 @@ add_set_language_command ()
   static const char **language_names;
 
   /* Build the language names array, to be used as enumeration in the
-     "set language" enum command.  +1 for "local" and +1 for NULL
+     "set language" enum command.  +3 for "auto", "local" and NULL
      termination.  */
-  language_names = new const char *[ARRAY_SIZE (language_defn::languages) + 2];
+  language_names = new const char *[ARRAY_SIZE (language_defn::languages) + 3];
 
   /* Display "auto", "local" and "unknown" first, and then the rest,
      alpha sorted.  */
   const char **language_names_p = language_names;
-  language = language_def (language_auto)->name ();
-  *language_names_p++ = language;
+  *language_names_p++ = "auto";
   *language_names_p++ = "local";
   *language_names_p++ = language_def (language_unknown)->name ();
   const char **sort_begin = language_names_p;
   for (const auto &lang : language_defn::languages)
     {
       /* Already handled above.  */
-      if (lang->la_language == language_auto
-	  || lang->la_language == language_unknown)
+      if (lang->la_language == language_unknown)
 	continue;
       *language_names_p++ = lang->name ();
     }
@@ -502,8 +539,7 @@ add_set_language_command ()
   for (const auto &lang : language_defn::languages)
     {
       /* Already dealt with these above.  */
-      if (lang->la_language == language_unknown
-	  || lang->la_language == language_auto)
+      if (lang->la_language == language_unknown)
 	continue;
 
       /* Note that we add the newline at the front, so we don't wind
@@ -515,10 +551,11 @@ add_set_language_command ()
 
   add_setshow_enum_cmd ("language", class_support,
 			language_names,
-			&language,
 			doc.c_str (),
 			_("Show the current source language."),
-			NULL, set_language_command,
+			NULL,
+			set_language,
+			get_language,
 			show_language_command,
 			&setlist, &showlist);
 }
@@ -528,7 +565,7 @@ add_set_language_command ()
    Return the result from the first that returns non-zero, or 0 if all
    `fail'.  */
 CORE_ADDR 
-skip_language_trampoline (frame_info_ptr frame, CORE_ADDR pc)
+skip_language_trampoline (const frame_info_ptr &frame, CORE_ADDR pc)
 {
   for (const auto &lang : language_defn::languages)
     {
@@ -539,21 +576,6 @@ skip_language_trampoline (frame_info_ptr frame, CORE_ADDR pc)
     }
 
   return 0;
-}
-
-/* Return demangled language symbol, or NULL.
-   FIXME: Options are only useful for certain languages and ignored
-   by others, so it would be better to remove them here and have a
-   more flexible demangler for the languages that need it.
-   FIXME: Sometimes the demangler is invoked when we don't know the
-   language, so we can't use this everywhere.  */
-gdb::unique_xmalloc_ptr<char>
-language_demangle (const struct language_defn *current_language, 
-				const char *mangled, int options)
-{
-  if (current_language != NULL)
-    return current_language->demangle_symbol (mangled, options);
-  return NULL;
 }
 
 /* Return information about whether TYPE should be passed
@@ -661,7 +683,7 @@ default_symbol_name_matcher (const char *symbol_search_name,
 			     const lookup_name_info &lookup_name,
 			     completion_match_result *comp_match_res)
 {
-  gdb::string_view name = lookup_name.name ();
+  std::string_view name = lookup_name.name ();
   completion_match_for_lcd *match_for_lcd
     = (comp_match_res != NULL ? &comp_match_res->match_for_lcd : NULL);
   strncmp_iw_mode mode = (lookup_name.completion_mode ()
@@ -714,15 +736,12 @@ language_defn::varobj_ops () const
   return &c_varobj_ops;
 }
 
-/* Parent class for both the "auto" and "unknown" languages.  These two
-   pseudo-languages are very similar so merging their implementations like
-   this makes sense.  */
+/* Class representing the "unknown" language.  */
 
-class auto_or_unknown_language : public language_defn
+class unknown_language : public language_defn
 {
 public:
-  auto_or_unknown_language (enum language lang)
-    : language_defn (lang)
+  unknown_language () : language_defn (language_unknown)
   { /* Nothing.  */ }
 
   /* See language.h.  */
@@ -834,40 +853,6 @@ public:
 
   const char *name_of_this () const override
   { return "this"; }
-};
-
-/* Class representing the fake "auto" language.  */
-
-class auto_language : public auto_or_unknown_language
-{
-public:
-  auto_language ()
-    : auto_or_unknown_language (language_auto)
-  { /* Nothing.  */ }
-
-  /* See language.h.  */
-
-  const char *name () const override
-  { return "auto"; }
-
-  /* See language.h.  */
-
-  const char *natural_name () const override
-  { return "Auto"; }
-};
-
-/* Single instance of the fake "auto" language.  */
-
-static auto_language auto_language_defn;
-
-/* Class representing the unknown language.  */
-
-class unknown_language : public auto_or_unknown_language
-{
-public:
-  unknown_language ()
-    : auto_or_unknown_language (language_unknown)
-  { /* Nothing.  */ }
 
   /* See language.h.  */
 
@@ -931,6 +916,16 @@ language_string_char_type (const struct language_defn *la,
 
 /* See language.h.  */
 
+struct value *
+language_defn::value_string (struct gdbarch *gdbarch,
+			     const char *ptr, ssize_t len) const
+{
+  struct type *type = language_string_char_type (this, gdbarch);
+  return value_cstring (ptr, len, type);
+}
+
+/* See language.h.  */
+
 struct type *
 language_bool_type (const struct language_defn *la,
 		    struct gdbarch *gdbarch)
@@ -948,7 +943,8 @@ language_arch_info::bool_type () const
     {
       struct symbol *sym;
 
-      sym = lookup_symbol (m_bool_type_name, NULL, VAR_DOMAIN, NULL).symbol;
+      sym = lookup_symbol (m_bool_type_name, nullptr, SEARCH_TYPE_DOMAIN,
+			   nullptr).symbol;
       if (sym != nullptr)
 	{
 	  struct type *type = sym->type ();
@@ -977,7 +973,7 @@ language_arch_info::type_and_symbol::alloc_type_symbol
   symbol->set_is_objfile_owned (0);
   symbol->set_section_index (0);
   symbol->set_type (type);
-  symbol->set_domain (VAR_DOMAIN);
+  symbol->set_domain (TYPE_DOMAIN);
   symbol->set_aclass_index (LOC_TYPEDEF);
   return symbol;
 }
@@ -1141,13 +1137,5 @@ For Fortran the default is off; for other languages the default is on."),
 			show_case_command,
 			&setlist, &showlist);
 
-  /* In order to call SET_LANGUAGE (below) we need to make sure that
-     CURRENT_LANGUAGE is not NULL.  So first set the language to unknown,
-     then we can change the language to 'auto'.  */
-  current_language = language_def (language_unknown);
-
   add_set_language_command ();
-
-  /* Have the above take effect.  */
-  set_language (language_auto);
 }

@@ -1,6 +1,6 @@
 /* Native-dependent code for AArch64.
 
-   Copyright (C) 2011-2023 Free Software Foundation, Inc.
+   Copyright (C) 2011-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "gdbarch.h"
 #include "inferior.h"
 #include "cli/cli-cmds.h"
@@ -223,54 +222,6 @@ aarch64_remove_watchpoint (CORE_ADDR addr, int len, enum target_hw_bp_type type,
     }
 
   return ret;
-}
-
-/* See aarch64-nat.h.  */
-
-bool
-aarch64_stopped_data_address (const struct aarch64_debug_reg_state *state,
-			      CORE_ADDR addr_trap, CORE_ADDR *addr_p)
-{
-  int i;
-
-  for (i = aarch64_num_wp_regs - 1; i >= 0; --i)
-    {
-      const unsigned int offset
-	= aarch64_watchpoint_offset (state->dr_ctrl_wp[i]);
-      const unsigned int len = aarch64_watchpoint_length (state->dr_ctrl_wp[i]);
-      const CORE_ADDR addr_watch = state->dr_addr_wp[i] + offset;
-      const CORE_ADDR addr_watch_aligned = align_down (state->dr_addr_wp[i], 8);
-      const CORE_ADDR addr_orig = state->dr_addr_orig_wp[i];
-
-      if (state->dr_ref_count_wp[i]
-	  && DR_CONTROL_ENABLED (state->dr_ctrl_wp[i])
-	  && addr_trap >= addr_watch_aligned
-	  && addr_trap < addr_watch + len)
-	{
-	  /* ADDR_TRAP reports the first address of the memory range
-	     accessed by the CPU, regardless of what was the memory
-	     range watched.  Thus, a large CPU access that straddles
-	     the ADDR_WATCH..ADDR_WATCH+LEN range may result in an
-	     ADDR_TRAP that is lower than the
-	     ADDR_WATCH..ADDR_WATCH+LEN range.  E.g.:
-
-	     addr: |   4   |   5   |   6   |   7   |   8   |
-				   |---- range watched ----|
-		   |----------- range accessed ------------|
-
-	     In this case, ADDR_TRAP will be 4.
-
-	     To match a watchpoint known to GDB core, we must never
-	     report *ADDR_P outside of any ADDR_WATCH..ADDR_WATCH+LEN
-	     range.  ADDR_WATCH <= ADDR_TRAP < ADDR_ORIG is a false
-	     positive on kernels older than 4.10.  See PR
-	     external/20207.  */
-	  *addr_p = addr_orig;
-	  return true;
-	}
-    }
-
-  return false;
 }
 
 /* Define AArch64 maintenance commands.  */

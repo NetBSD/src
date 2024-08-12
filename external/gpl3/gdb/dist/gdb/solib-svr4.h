@@ -1,6 +1,6 @@
 /* Handle shared libraries for GDB, the GNU Debugger.
 
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,13 +23,13 @@
 #include "solist.h"
 
 struct objfile;
-struct target_so_ops;
+struct solib_ops;
 
-extern const struct target_so_ops svr4_so_ops;
+extern const solib_ops svr4_so_ops;
 
 /* Link map info to include in an allocated so_list entry.  */
 
-struct lm_info_svr4 : public lm_info_base
+struct lm_info_svr4 final : public lm_info
 {
   /* Amount by which addresses in the binary should be relocated to
      match the inferior.  The direct inferior value is L_ADDR_INFERIOR.
@@ -47,6 +47,8 @@ struct lm_info_svr4 : public lm_info_base
   /* Values read in from inferior's fields of the same name.  */
   CORE_ADDR l_ld = 0, l_next = 0, l_prev = 0, l_name = 0;
 };
+
+using lm_info_svr4_up = std::unique_ptr<lm_info_svr4>;
 
 /* Critical offsets and sizes which describe struct r_debug and
    struct link_map on SVR4-like targets.  All offsets and sizes are

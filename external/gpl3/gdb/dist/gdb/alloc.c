@@ -1,6 +1,6 @@
 /* Shared allocation functions for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,14 +27,9 @@
    file can't live there.
 
    So, it lives in gdb and is built separately by gdb and gdbserver.
-   Please be aware of this when modifying it.
+   Please be aware of this when modifying it.  */
 
-   This also explains why this file includes common-defs.h and not
-   defs.h or server.h -- we'd prefer to avoid depending on the
-   GDBSERVER define when possible, and for this file it seemed
-   simple to do so.  */
 
-#include "gdbsupport/common-defs.h"
 #include "libiberty.h"
 #include "gdbsupport/errors.h"
 

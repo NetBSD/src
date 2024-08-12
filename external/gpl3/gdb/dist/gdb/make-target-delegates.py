@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (C) 2013-2023 Free Software Foundation, Inc.
+# Copyright (C) 2013-2024 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -21,8 +21,9 @@
 #    make-target-delegates.py
 
 import re
-import gdbcopyright
+from typing import Dict, List, TextIO
 
+import gdbcopyright
 
 # The line we search for in target.h that marks where we should start
 # looking for methods.
@@ -33,13 +34,13 @@ ENDER = re.compile(r"^\s*};$")
 # Match a C symbol.
 SYMBOL = "[a-zA-Z_][a-zA-Z0-9_]*"
 # Match the name part of a method in struct target_ops.
-NAME_PART = r"(?P<name>" + SYMBOL + ")\s"
+NAME_PART = r"(?P<name>" + SYMBOL + r")\s"
 # Match the arguments to a method.
 ARGS_PART = r"(?P<args>\(.*\))"
 # We strip the indentation so here we only need the caret.
 INTRO_PART = r"^"
 
-POINTER_PART = r"\s*(\*)?\s*"
+POINTER_PART = r"\s*(\*|\&)?\s*"
 
 # Match a C++ symbol, including scope operators and template
 # parameters.  E.g., 'std::vector<something>'.
@@ -72,17 +73,18 @@ METHOD = re.compile(
     + METHOD_TRAILER
 )
 
+# Space-separated symbols.
+CP_SYMBOLS = CP_SYMBOL + r"(\s+" + CP_SYMBOL + r")*"
+
 # Regular expression used to dissect argument types.
 ARGTYPES = re.compile(
     "^("
     + r"(?P<E>enum\s+"
     + SYMBOL
-    + r"\s*)("
-    + SYMBOL
-    + ")?"
-    + r"|(?P<T>.*(enum\s+)?"
-    + SYMBOL
-    + r".*(\s|\*|&))"
+    + r")"
+    + r"|(?P<T>"
+    + CP_SYMBOLS
+    + r"(\s|\*|&)+)"
     + SYMBOL
     + ")$"
 )
@@ -90,6 +92,16 @@ ARGTYPES = re.compile(
 # Match TARGET_DEBUG_PRINTER in an argument type.
 # This must match the whole "sub-expression" including the parens.
 TARGET_DEBUG_PRINTER = r"\s*TARGET_DEBUG_PRINTER\s*\((?P<arg>[^)]*)\)\s*"
+
+
+class Entry:
+    def __init__(
+        self, argtypes: List[str], return_type: str, style: str, default_arg: str
+    ):
+        self.argtypes = argtypes
+        self.return_type = return_type
+        self.style = style
+        self.default_arg = default_arg
 
 
 def scan_target_h():
@@ -111,7 +123,7 @@ def scan_target_h():
                 line = re.split("//", line)[0]
                 all_the_text = all_the_text + " " + line
     if not found_trigger:
-        raise "Could not find trigger line"
+        raise RuntimeError("Could not find trigger line")
     # Now strip out the C comments.
     all_the_text = re.sub(r"/\*(.*?)\*/", "", all_the_text)
     # Replace sequences whitespace with a single space character.
@@ -132,13 +144,14 @@ def scan_target_h():
 
 
 # Parse arguments into a list.
-def parse_argtypes(typestr):
+def parse_argtypes(typestr: str):
     # Remove the outer parens.
     typestr = re.sub(r"^\((.*)\)$", r"\1", typestr)
-    result = []
+    result: list[str] = []
     for item in re.split(r",\s*", typestr):
-        if item == "void" or item == "":
+        if item == "":
             continue
+
         m = ARGTYPES.match(item)
         if m:
             if m.group("E"):
@@ -153,7 +166,9 @@ def parse_argtypes(typestr):
 
 # Write function header given name, return type, and argtypes.
 # Returns a list of actual argument names.
-def write_function_header(f, decl, name, return_type, argtypes):
+def write_function_header(
+    f: TextIO, decl: bool, name: str, return_type: str, argtypes: List[str]
+):
     print(return_type, file=f, end="")
     if decl:
         if not return_type.endswith("*"):
@@ -161,8 +176,8 @@ def write_function_header(f, decl, name, return_type, argtypes):
     else:
         print("", file=f)
     print(name + " (", file=f, end="")
-    argdecls = []
-    actuals = []
+    argdecls: list[str] = []
+    actuals: list[str] = []
     for i in range(len(argtypes)):
         val = re.sub(TARGET_DEBUG_PRINTER, "", argtypes[i])
         if not val.endswith("*") and not val.endswith("&"):
@@ -180,12 +195,13 @@ def write_function_header(f, decl, name, return_type, argtypes):
 
 
 # Write out a declaration.
-def write_declaration(f, name, return_type, argtypes):
+def write_declaration(f: TextIO, name: str, return_type: str, argtypes: List[str]):
     write_function_header(f, True, name, return_type, argtypes)
 
 
 # Write out a delegation function.
-def write_delegator(f, name, return_type, argtypes):
+def write_delegator(f: TextIO, name: str, return_type: str, argtypes: List[str]):
+    print("", file=f)
     names = write_function_header(
         f, False, "target_ops::" + name, return_type, argtypes
     )
@@ -195,11 +211,19 @@ def write_delegator(f, name, return_type, argtypes):
     print("this->beneath ()->" + name + " (", file=f, end="")
     print(", ".join(names), file=f, end="")
     print(");", file=f)
-    print("}\n", file=f)
+    print("}", file=f)
 
 
 # Write out a default function.
-def write_tdefault(f, content, style, name, return_type, argtypes):
+def write_tdefault(
+    f: TextIO,
+    content: str,
+    style: str,
+    name: str,
+    return_type: str,
+    argtypes: List[str],
+):
+    print("", file=f)
     name = "dummy_target::" + name
     names = write_function_header(f, False, name, return_type, argtypes)
     if style == "FUNC":
@@ -217,19 +241,22 @@ def write_tdefault(f, content, style, name, return_type, argtypes):
         # Nothing.
         pass
     else:
-        raise "unrecognized style: " + style
-    print("}\n", file=f)
+        raise RuntimeError("unrecognized style: " + style)
+    print("}", file=f)
 
 
-def munge_type(typename):
+def munge_type(typename: str):
     m = re.search(TARGET_DEBUG_PRINTER, typename)
     if m:
         return m.group("arg")
     typename = typename.rstrip()
+    # There's no reason to have these keywords in the name, and their
+    # presence makes it harder to change styles.
+    typename = re.sub("\\b(struct|enum|class|union) ", "", typename)
     typename = re.sub("[ ()<>:]", "_", typename)
     typename = re.sub("[*]", "p", typename)
     typename = re.sub("&", "r", typename)
-    # Identifers with double underscores are reserved to the C++
+    # Identifiers with double underscores are reserved to the C++
     # implementation.
     typename = re.sub("_+", "_", typename)
     # Avoid ending the function name with underscore, for
@@ -240,53 +267,66 @@ def munge_type(typename):
 
 
 # Write out a debug method.
-def write_debugmethod(f, content, name, return_type, argtypes):
+def write_debugmethod(
+    f: TextIO, content: str, name: str, return_type: str, argtypes: List[str]
+):
+    print("", file=f)
     debugname = "debug_target::" + name
     names = write_function_header(f, False, debugname, return_type, argtypes)
-    if return_type != "void":
-        print("  " + return_type + " result;", file=f)
     print(
-        '  gdb_printf (gdb_stdlog, "-> %s->'
-        + name
-        + ' (...)\\n", this->beneath ()->shortname ());',
+        f'  target_debug_printf_nofunc ("-> %s->{name} (...)", this->beneath ()->shortname ());',
         file=f,
     )
 
     # Delegate to the beneath target.
-    print("  ", file=f, end="")
     if return_type != "void":
-        print("result = ", file=f, end="")
+        print("  " + return_type + " result", file=f)
+        print("    = ", file=f, end="")
+    else:
+        print("  ", file=f, end="")
     print("this->beneath ()->" + name + " (", file=f, end="")
     print(", ".join(names), file=f, end="")
     print(");", file=f)
 
-    # Now print the arguments.
+    # Generate the debug printf call.
+    args_fmt = ", ".join(["%s"] * len(argtypes))
+    args = "".join(
+        [
+            (",\n\t      {printer} (arg{i}).c_str ()").format(
+                printer=munge_type(t), i=i
+            )
+            for i, t in enumerate(argtypes)
+        ]
+    )
+
+    if return_type != "void":
+        ret_fmt = " = %s"
+        ret = ",\n\t      {printer} (result).c_str ()".format(
+            printer=munge_type(return_type)
+        )
+    else:
+        ret_fmt = ""
+        ret = ""
+
     print(
-        '  gdb_printf (gdb_stdlog, "<- %s->'
-        + name
-        + ' (", this->beneath ()->shortname ());',
+        f'  target_debug_printf_nofunc ("<- %s->{name} ({args_fmt}){ret_fmt}",\n'
+        f"\t      this->beneath ()->shortname (){args}{ret});",
         file=f,
     )
-    for i in range(len(argtypes)):
-        if i > 0:
-            print('  gdb_puts (", ", gdb_stdlog);', file=f)
-        printer = munge_type(argtypes[i])
-        print("  " + printer + " (" + names[i] + ");", file=f)
-    if return_type != "void":
-        print('  gdb_puts (") = ", gdb_stdlog);', file=f)
-        printer = munge_type(return_type)
-        print("  " + printer + " (result);", file=f)
-        print('  gdb_puts ("\\n", gdb_stdlog);', file=f)
-    else:
-        print('  gdb_puts (")\\n", gdb_stdlog);', file=f)
 
     if return_type != "void":
         print("  return result;", file=f)
 
-    print("}\n", file=f)
+    print("}", file=f)
 
 
-def print_class(f, class_name, delegators, entries):
+def print_class(
+    f: TextIO,
+    class_name: str,
+    delegators: List[str],
+    entries: Dict[str, Entry],
+):
+    print("", file=f)
     print("struct " + class_name + " : public target_ops", file=f)
     print("{", file=f)
     print("  const target_info &info () const override;", file=f)
@@ -295,16 +335,16 @@ def print_class(f, class_name, delegators, entries):
     print("", file=f)
 
     for name in delegators:
-        return_type = entries[name]["return_type"]
-        argtypes = entries[name]["argtypes"]
         print("  ", file=f, end="")
-        write_declaration(f, name, return_type, argtypes)
+        entry = entries[name]
+        write_declaration(f, name, entry.return_type, entry.argtypes)
 
-    print("};\n", file=f)
+    print("};", file=f)
 
 
-delegators = []
-entries = {}
+delegators: List[str] = []
+entries: Dict[str, Entry] = {}
+
 for current_line in scan_target_h():
     # See comments in scan_target_h.  Here we strip away the leading
     # and trailing whitespace.
@@ -313,11 +353,14 @@ for current_line in scan_target_h():
     if not m:
         continue
     data = m.groupdict()
-    data["argtypes"] = parse_argtypes(data["args"])
-    data["return_type"] = data["return_type"].strip()
-    entries[data["name"]] = data
+    name = data["name"]
+    argtypes = parse_argtypes(data["args"])
+    return_type = data["return_type"].strip()
+    style = data["style"]
+    default_arg = data["default_arg"]
+    entries[name] = Entry(argtypes, return_type, style, default_arg)
 
-    delegators.append(data["name"])
+    delegators.append(name)
 
 with open("target-delegates.c", "w") as f:
     print(
@@ -330,11 +373,21 @@ with open("target-delegates.c", "w") as f:
     print_class(f, "debug_target", delegators, entries)
 
     for name in delegators:
-        tdefault = entries[name]["default_arg"]
-        return_type = entries[name]["return_type"]
-        style = entries[name]["style"]
-        argtypes = entries[name]["argtypes"]
+        entry = entries[name]
 
-        write_delegator(f, name, return_type, argtypes)
-        write_tdefault(f, tdefault, style, name, return_type, argtypes)
-        write_debugmethod(f, tdefault, name, return_type, argtypes)
+        write_delegator(f, name, entry.return_type, entry.argtypes)
+        write_tdefault(
+            f,
+            entry.default_arg,
+            entry.style,
+            name,
+            entry.return_type,
+            entry.argtypes,
+        )
+        write_debugmethod(
+            f,
+            entry.default_arg,
+            name,
+            entry.return_type,
+            entry.argtypes,
+        )
