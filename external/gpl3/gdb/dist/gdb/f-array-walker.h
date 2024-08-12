@@ -1,4 +1,4 @@
-/* Copyright (C) 2020-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2020-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,6 @@
 #ifndef F_ARRAY_WALKER_H
 #define F_ARRAY_WALKER_H
 
-#include "defs.h"
 #include "gdbtypes.h"
 #include "f-lang.h"
 
@@ -160,16 +159,16 @@ struct fortran_array_walker_base_impl
 
      start_dimension (INDEX_TYPE, 3, false);
        start_dimension (INDEX_TYPE, 2, true);
-         process_element (TYPE, OFFSET, false);
-         process_element (TYPE, OFFSET, true);
+	 process_element (TYPE, OFFSET, false);
+	 process_element (TYPE, OFFSET, true);
        finish_dimension (true, false);
        start_dimension (INDEX_TYPE, 2, true);
-         process_element (TYPE, OFFSET, false);
-         process_element (TYPE, OFFSET, true);
+	 process_element (TYPE, OFFSET, false);
+	 process_element (TYPE, OFFSET, true);
        finish_dimension (true, true);
        start_dimension (INDEX_TYPE, 2, true);
-         process_element (TYPE, OFFSET, false);
-         process_element (TYPE, OFFSET, true);
+	 process_element (TYPE, OFFSET, false);
+	 process_element (TYPE, OFFSET, true);
        finish_dimension (true, true);
      finish_dimension (false, true);  */
   void process_element (struct type *elt_type, LONGEST elt_off,
@@ -187,7 +186,7 @@ class fortran_array_walker
   /* Ensure that Impl is derived from the required base class.  This just
      ensures that all of the required API methods are available and have a
      sensible default implementation.  */
-  gdb_static_assert ((std::is_base_of<fortran_array_walker_base_impl,Impl>::value));
+  static_assert ((std::is_base_of<fortran_array_walker_base_impl,Impl>::value));
 
 public:
   /* Create a new array walker.  TYPE is the type of the array being walked

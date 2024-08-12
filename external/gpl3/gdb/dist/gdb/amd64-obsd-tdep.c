@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/amd64.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "frame.h"
 #include "frame-unwind.h"
 #include "gdbcore.h"
@@ -45,7 +45,7 @@ static const int amd64obsd_page_size = 4096;
    routine.  */
 
 static int
-amd64obsd_sigtramp_p (frame_info_ptr this_frame)
+amd64obsd_sigtramp_p (const frame_info_ptr &this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
   CORE_ADDR start_pc = (pc & ~(amd64obsd_page_size - 1));
@@ -98,7 +98,7 @@ amd64obsd_sigtramp_p (frame_info_ptr this_frame)
    address of the associated sigcontext structure.  */
 
 static CORE_ADDR
-amd64obsd_sigcontext_addr (frame_info_ptr this_frame)
+amd64obsd_sigcontext_addr (const frame_info_ptr &this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
   ULONGEST offset = (pc & (amd64obsd_page_size - 1));
@@ -315,7 +315,7 @@ amd64obsd_collect_uthread (const struct regcache *regcache,
 #define amd64obsd_tf_reg_offset amd64obsd_sc_reg_offset
 
 static struct trad_frame_cache *
-amd64obsd_trapframe_cache (frame_info_ptr this_frame, void **this_cache)
+amd64obsd_trapframe_cache (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -362,7 +362,7 @@ amd64obsd_trapframe_cache (frame_info_ptr this_frame, void **this_cache)
 }
 
 static void
-amd64obsd_trapframe_this_id (frame_info_ptr this_frame,
+amd64obsd_trapframe_this_id (const frame_info_ptr &this_frame,
 			     void **this_cache, struct frame_id *this_id)
 {
   struct trad_frame_cache *cache =
@@ -372,7 +372,7 @@ amd64obsd_trapframe_this_id (frame_info_ptr this_frame,
 }
 
 static struct value *
-amd64obsd_trapframe_prev_register (frame_info_ptr this_frame,
+amd64obsd_trapframe_prev_register (const frame_info_ptr &this_frame,
 				   void **this_cache, int regnum)
 {
   struct trad_frame_cache *cache =
@@ -383,7 +383,7 @@ amd64obsd_trapframe_prev_register (frame_info_ptr this_frame,
 
 static int
 amd64obsd_trapframe_sniffer (const struct frame_unwind *self,
-			     frame_info_ptr this_frame,
+			     const frame_info_ptr &this_frame,
 			     void **this_prologue_cache)
 {
   ULONGEST cs;
