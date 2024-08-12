@@ -1,6 +1,6 @@
 /* Branch trace support for GDB, the GNU debugger.
 
-   Copyright (C) 2013-2023 Free Software Foundation, Inc.
+   Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>
 
@@ -19,7 +19,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "btrace.h"
 #include "gdbthread.h"
 #include "inferior.h"
@@ -29,10 +28,9 @@
 #include "disasm.h"
 #include "source.h"
 #include "filenames.h"
-#include "xml-support.h"
 #include "regcache.h"
 #include "gdbsupport/rsp-low.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "cli/cli-utils.h"
 #include "gdbarch.h"
 
@@ -256,8 +254,8 @@ ftrace_new_function (struct btrace_thread_info *btinfo,
       insn_offset = prev->insn_offset + ftrace_call_num_insn (prev);
     }
 
-  btinfo->functions.emplace_back (mfun, fun, number, insn_offset, level);
-  return &btinfo->functions.back ();
+  return &btinfo->functions.emplace_back (mfun, fun, number, insn_offset,
+					  level);
 }
 
 /* Update the UP field of a function segment.  */
@@ -1059,11 +1057,10 @@ btrace_compute_ftrace_bts (struct thread_info *tp,
   switch_to_thread (tp);
 
   struct btrace_thread_info *btinfo;
-  struct gdbarch *gdbarch;
   unsigned int blk;
   int level;
 
-  gdbarch = target_gdbarch ();
+  gdbarch *gdbarch = current_inferior ()->arch ();
   btinfo = &tp->btrace;
   blk = btrace->blocks->size ();
 
@@ -2017,323 +2014,6 @@ btrace_free_objfile (struct objfile *objfile)
     btrace_clear (tp);
 }
 
-#if defined (HAVE_LIBEXPAT)
-
-/* Check the btrace document version.  */
-
-static void
-check_xml_btrace_version (struct gdb_xml_parser *parser,
-			  const struct gdb_xml_element *element,
-			  void *user_data,
-			  std::vector<gdb_xml_value> &attributes)
-{
-  const char *version
-    = (const char *) xml_find_attribute (attributes, "version")->value.get ();
-
-  if (strcmp (version, "1.0") != 0)
-    gdb_xml_error (parser, _("Unsupported btrace version: \"%s\""), version);
-}
-
-/* Parse a btrace "block" xml record.  */
-
-static void
-parse_xml_btrace_block (struct gdb_xml_parser *parser,
-			const struct gdb_xml_element *element,
-			void *user_data,
-			std::vector<gdb_xml_value> &attributes)
-{
-  struct btrace_data *btrace;
-  ULONGEST *begin, *end;
-
-  btrace = (struct btrace_data *) user_data;
-
-  switch (btrace->format)
-    {
-    case BTRACE_FORMAT_BTS:
-      break;
-
-    case BTRACE_FORMAT_NONE:
-      btrace->format = BTRACE_FORMAT_BTS;
-      btrace->variant.bts.blocks = new std::vector<btrace_block>;
-      break;
-
-    default:
-      gdb_xml_error (parser, _("Btrace format error."));
-    }
-
-  begin = (ULONGEST *) xml_find_attribute (attributes, "begin")->value.get ();
-  end = (ULONGEST *) xml_find_attribute (attributes, "end")->value.get ();
-  btrace->variant.bts.blocks->emplace_back (*begin, *end);
-}
-
-/* Parse a "raw" xml record.  */
-
-static void
-parse_xml_raw (struct gdb_xml_parser *parser, const char *body_text,
-	       gdb_byte **pdata, size_t *psize)
-{
-  gdb_byte *bin;
-  size_t len, size;
-
-  len = strlen (body_text);
-  if (len % 2 != 0)
-    gdb_xml_error (parser, _("Bad raw data size."));
-
-  size = len / 2;
-
-  gdb::unique_xmalloc_ptr<gdb_byte> data ((gdb_byte *) xmalloc (size));
-  bin = data.get ();
-
-  /* We use hex encoding - see gdbsupport/rsp-low.h.  */
-  while (len > 0)
-    {
-      char hi, lo;
-
-      hi = *body_text++;
-      lo = *body_text++;
-
-      if (hi == 0 || lo == 0)
-	gdb_xml_error (parser, _("Bad hex encoding."));
-
-      *bin++ = fromhex (hi) * 16 + fromhex (lo);
-      len -= 2;
-    }
-
-  *pdata = data.release ();
-  *psize = size;
-}
-
-/* Parse a btrace pt-config "cpu" xml record.  */
-
-static void
-parse_xml_btrace_pt_config_cpu (struct gdb_xml_parser *parser,
-				const struct gdb_xml_element *element,
-				void *user_data,
-				std::vector<gdb_xml_value> &attributes)
-{
-  struct btrace_data *btrace;
-  const char *vendor;
-  ULONGEST *family, *model, *stepping;
-
-  vendor =
-    (const char *) xml_find_attribute (attributes, "vendor")->value.get ();
-  family
-    = (ULONGEST *) xml_find_attribute (attributes, "family")->value.get ();
-  model
-    = (ULONGEST *) xml_find_attribute (attributes, "model")->value.get ();
-  stepping
-    = (ULONGEST *) xml_find_attribute (attributes, "stepping")->value.get ();
-
-  btrace = (struct btrace_data *) user_data;
-
-  if (strcmp (vendor, "GenuineIntel") == 0)
-    btrace->variant.pt.config.cpu.vendor = CV_INTEL;
-
-  btrace->variant.pt.config.cpu.family = *family;
-  btrace->variant.pt.config.cpu.model = *model;
-  btrace->variant.pt.config.cpu.stepping = *stepping;
-}
-
-/* Parse a btrace pt "raw" xml record.  */
-
-static void
-parse_xml_btrace_pt_raw (struct gdb_xml_parser *parser,
-			 const struct gdb_xml_element *element,
-			 void *user_data, const char *body_text)
-{
-  struct btrace_data *btrace;
-
-  btrace = (struct btrace_data *) user_data;
-  parse_xml_raw (parser, body_text, &btrace->variant.pt.data,
-		 &btrace->variant.pt.size);
-}
-
-/* Parse a btrace "pt" xml record.  */
-
-static void
-parse_xml_btrace_pt (struct gdb_xml_parser *parser,
-		     const struct gdb_xml_element *element,
-		     void *user_data,
-		     std::vector<gdb_xml_value> &attributes)
-{
-  struct btrace_data *btrace;
-
-  btrace = (struct btrace_data *) user_data;
-  btrace->format = BTRACE_FORMAT_PT;
-  btrace->variant.pt.config.cpu.vendor = CV_UNKNOWN;
-  btrace->variant.pt.data = NULL;
-  btrace->variant.pt.size = 0;
-}
-
-static const struct gdb_xml_attribute block_attributes[] = {
-  { "begin", GDB_XML_AF_NONE, gdb_xml_parse_attr_ulongest, NULL },
-  { "end", GDB_XML_AF_NONE, gdb_xml_parse_attr_ulongest, NULL },
-  { NULL, GDB_XML_AF_NONE, NULL, NULL }
-};
-
-static const struct gdb_xml_attribute btrace_pt_config_cpu_attributes[] = {
-  { "vendor", GDB_XML_AF_NONE, NULL, NULL },
-  { "family", GDB_XML_AF_NONE, gdb_xml_parse_attr_ulongest, NULL },
-  { "model", GDB_XML_AF_NONE, gdb_xml_parse_attr_ulongest, NULL },
-  { "stepping", GDB_XML_AF_NONE, gdb_xml_parse_attr_ulongest, NULL },
-  { NULL, GDB_XML_AF_NONE, NULL, NULL }
-};
-
-static const struct gdb_xml_element btrace_pt_config_children[] = {
-  { "cpu", btrace_pt_config_cpu_attributes, NULL, GDB_XML_EF_OPTIONAL,
-    parse_xml_btrace_pt_config_cpu, NULL },
-  { NULL, NULL, NULL, GDB_XML_EF_NONE, NULL, NULL }
-};
-
-static const struct gdb_xml_element btrace_pt_children[] = {
-  { "pt-config", NULL, btrace_pt_config_children, GDB_XML_EF_OPTIONAL, NULL,
-    NULL },
-  { "raw", NULL, NULL, GDB_XML_EF_OPTIONAL, NULL, parse_xml_btrace_pt_raw },
-  { NULL, NULL, NULL, GDB_XML_EF_NONE, NULL, NULL }
-};
-
-static const struct gdb_xml_attribute btrace_attributes[] = {
-  { "version", GDB_XML_AF_NONE, NULL, NULL },
-  { NULL, GDB_XML_AF_NONE, NULL, NULL }
-};
-
-static const struct gdb_xml_element btrace_children[] = {
-  { "block", block_attributes, NULL,
-    GDB_XML_EF_REPEATABLE | GDB_XML_EF_OPTIONAL, parse_xml_btrace_block, NULL },
-  { "pt", NULL, btrace_pt_children, GDB_XML_EF_OPTIONAL, parse_xml_btrace_pt,
-    NULL },
-  { NULL, NULL, NULL, GDB_XML_EF_NONE, NULL, NULL }
-};
-
-static const struct gdb_xml_element btrace_elements[] = {
-  { "btrace", btrace_attributes, btrace_children, GDB_XML_EF_NONE,
-    check_xml_btrace_version, NULL },
-  { NULL, NULL, NULL, GDB_XML_EF_NONE, NULL, NULL }
-};
-
-#endif /* defined (HAVE_LIBEXPAT) */
-
-/* See btrace.h.  */
-
-void
-parse_xml_btrace (struct btrace_data *btrace, const char *buffer)
-{
-#if defined (HAVE_LIBEXPAT)
-
-  int errcode;
-  btrace_data result;
-  result.format = BTRACE_FORMAT_NONE;
-
-  errcode = gdb_xml_parse_quick (_("btrace"), "btrace.dtd", btrace_elements,
-				 buffer, &result);
-  if (errcode != 0)
-    error (_("Error parsing branch trace."));
-
-  /* Keep parse results.  */
-  *btrace = std::move (result);
-
-#else  /* !defined (HAVE_LIBEXPAT) */
-
-  error (_("Cannot process branch trace.  XML support was disabled at "
-	   "compile time."));
-
-#endif  /* !defined (HAVE_LIBEXPAT) */
-}
-
-#if defined (HAVE_LIBEXPAT)
-
-/* Parse a btrace-conf "bts" xml record.  */
-
-static void
-parse_xml_btrace_conf_bts (struct gdb_xml_parser *parser,
-			  const struct gdb_xml_element *element,
-			  void *user_data,
-			  std::vector<gdb_xml_value> &attributes)
-{
-  struct btrace_config *conf;
-  struct gdb_xml_value *size;
-
-  conf = (struct btrace_config *) user_data;
-  conf->format = BTRACE_FORMAT_BTS;
-  conf->bts.size = 0;
-
-  size = xml_find_attribute (attributes, "size");
-  if (size != NULL)
-    conf->bts.size = (unsigned int) *(ULONGEST *) size->value.get ();
-}
-
-/* Parse a btrace-conf "pt" xml record.  */
-
-static void
-parse_xml_btrace_conf_pt (struct gdb_xml_parser *parser,
-			  const struct gdb_xml_element *element,
-			  void *user_data,
-			  std::vector<gdb_xml_value> &attributes)
-{
-  struct btrace_config *conf;
-  struct gdb_xml_value *size;
-
-  conf = (struct btrace_config *) user_data;
-  conf->format = BTRACE_FORMAT_PT;
-  conf->pt.size = 0;
-
-  size = xml_find_attribute (attributes, "size");
-  if (size != NULL)
-    conf->pt.size = (unsigned int) *(ULONGEST *) size->value.get ();
-}
-
-static const struct gdb_xml_attribute btrace_conf_pt_attributes[] = {
-  { "size", GDB_XML_AF_OPTIONAL, gdb_xml_parse_attr_ulongest, NULL },
-  { NULL, GDB_XML_AF_NONE, NULL, NULL }
-};
-
-static const struct gdb_xml_attribute btrace_conf_bts_attributes[] = {
-  { "size", GDB_XML_AF_OPTIONAL, gdb_xml_parse_attr_ulongest, NULL },
-  { NULL, GDB_XML_AF_NONE, NULL, NULL }
-};
-
-static const struct gdb_xml_element btrace_conf_children[] = {
-  { "bts", btrace_conf_bts_attributes, NULL, GDB_XML_EF_OPTIONAL,
-    parse_xml_btrace_conf_bts, NULL },
-  { "pt", btrace_conf_pt_attributes, NULL, GDB_XML_EF_OPTIONAL,
-    parse_xml_btrace_conf_pt, NULL },
-  { NULL, NULL, NULL, GDB_XML_EF_NONE, NULL, NULL }
-};
-
-static const struct gdb_xml_attribute btrace_conf_attributes[] = {
-  { "version", GDB_XML_AF_NONE, NULL, NULL },
-  { NULL, GDB_XML_AF_NONE, NULL, NULL }
-};
-
-static const struct gdb_xml_element btrace_conf_elements[] = {
-  { "btrace-conf", btrace_conf_attributes, btrace_conf_children,
-    GDB_XML_EF_NONE, NULL, NULL },
-  { NULL, NULL, NULL, GDB_XML_EF_NONE, NULL, NULL }
-};
-
-#endif /* defined (HAVE_LIBEXPAT) */
-
-/* See btrace.h.  */
-
-void
-parse_xml_btrace_conf (struct btrace_config *conf, const char *xml)
-{
-#if defined (HAVE_LIBEXPAT)
-
-  int errcode;
-  errcode = gdb_xml_parse_quick (_("btrace-conf"), "btrace-conf.dtd",
-				 btrace_conf_elements, xml, conf);
-  if (errcode != 0)
-    error (_("Error parsing branch trace configuration."));
-
-#else  /* !defined (HAVE_LIBEXPAT) */
-
-  error (_("Cannot process the branch trace configuration.  XML support "
-	   "was disabled at compile time."));
-
-#endif  /* !defined (HAVE_LIBEXPAT) */
-}
-
 /* See btrace.h.  */
 
 const struct btrace_insn *
@@ -3246,7 +2926,7 @@ maint_btrace_packet_history_cmd (const char *arg, int from_tty)
   struct btrace_thread_info *btinfo;
   unsigned int size, begin, end, from, to;
 
-  thread_info *tp = find_thread_ptid (current_inferior (), inferior_ptid);
+  thread_info *tp = current_inferior ()->find_thread (inferior_ptid);
   if (tp == NULL)
     error (_("No thread."));
 

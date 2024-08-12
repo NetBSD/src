@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux x86.
 
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,8 @@
 #ifndef I386_LINUX_TDEP_H
 #define I386_LINUX_TDEP_H
 
+#include "gdbsupport/x86-xstate.h"
+
 /* The Linux kernel pretends there is an additional "orig_eax"
    register.  Since GDB needs access to that register to be able to
    properly restart system calls when necessary (see
@@ -34,8 +36,18 @@
 /* Total number of registers for GNU/Linux.  */
 #define I386_LINUX_NUM_REGS (I386_LINUX_ORIG_EAX_REGNUM + 1)
 
-/* Get XSAVE extended state xcr0 from core dump.  */
-extern uint64_t i386_linux_core_read_xcr0 (bfd *abfd);
+/* Read the XSAVE extended state xcr0 value from the ABFD core file.
+   If it appears to be valid, return it and fill LAYOUT with values
+   inferred from that value.
+
+   Otherwise, return 0 to indicate no state was found and leave LAYOUT
+   untouched.  */
+extern uint64_t i386_linux_core_read_xsave_info (bfd *abfd,
+						 x86_xsave_layout &layout);
+
+/* Implement the core_read_x86_xsave_layout gdbarch method.  */
+extern bool i386_linux_core_read_x86_xsave_layout (struct gdbarch *gdbarch,
+						   x86_xsave_layout &layout);
 
 /* Handle and display information related to the MPX bound violation
    to the user.  */
@@ -52,14 +64,7 @@ extern const struct target_desc *i386_linux_read_description (uint64_t xcr0);
 	  fxsave_bytes[0..463]
 	  sw_usable_bytes[464..511]
 	  xstate_hdr_bytes[512..575]
-	  avx_bytes[576..831]
-	  mpx_bytes [960..1032]
-	  avx512_k_regs[1088..1152]
-	  avx512_zmmh_regs0-7[1153..1407]
-	  avx512_zmmh_regs8-15[1408..1663]
-	  avx512_zmm_regs16-31[1664..2687]
-	  pkru[2688..2752]
-	  future_state etc
+	  extended state regions (AVX, MPX, AVX512, PKRU, etc.)
 	};
 
   Same memory layout will be used for the coredump NT_X86_XSTATE
