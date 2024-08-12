@@ -1,5 +1,5 @@
 /* RISC-V ELF support for BFD.
-   Copyright (C) 2011-2022 Free Software Foundation, Inc.
+   Copyright (C) 2011-2024 Free Software Foundation, Inc.
 
    Contributed by Andrew Waterman (andrew@sifive.com).
    Based on MIPS ELF support for BFD, by Ian Lance Taylor.
@@ -44,6 +44,7 @@ START_RELOC_NUMBERS (elf_riscv_reloc_type)
   RELOC_NUMBER (R_RISCV_TLS_DTPREL64, 9)
   RELOC_NUMBER (R_RISCV_TLS_TPREL32, 10)
   RELOC_NUMBER (R_RISCV_TLS_TPREL64, 11)
+  RELOC_NUMBER (R_RISCV_TLSDESC, 12)
 
   /* Relocation types not used by the dynamic linker.  */
   RELOC_NUMBER (R_RISCV_BRANCH, 16)
@@ -87,7 +88,22 @@ START_RELOC_NUMBERS (elf_riscv_reloc_type)
   RELOC_NUMBER (R_RISCV_SET32, 56)
   RELOC_NUMBER (R_RISCV_32_PCREL, 57)
   RELOC_NUMBER (R_RISCV_IRELATIVE, 58)
+  /* Reserved 59 for R_RISCV_PLT32.  */
+  RELOC_NUMBER (R_RISCV_SET_ULEB128, 60)
+  RELOC_NUMBER (R_RISCV_SUB_ULEB128, 61)
+  RELOC_NUMBER (R_RISCV_TLSDESC_HI20, 62)
+  RELOC_NUMBER (R_RISCV_TLSDESC_LOAD_LO12, 63)
+  RELOC_NUMBER (R_RISCV_TLSDESC_ADD_LO12, 64)
+  RELOC_NUMBER (R_RISCV_TLSDESC_CALL, 65)
 END_RELOC_NUMBERS (R_RISCV_max)
+
+/* Internal relocations used exclusively by the relaxation pass.  */
+#define R_RISCV_DELETE  (R_RISCV_max)
+#define R_RISCV_RVC_LUI (R_RISCV_max + 1)
+#define R_RISCV_GPREL_I (R_RISCV_max + 2)
+#define R_RISCV_GPREL_S (R_RISCV_max + 3)
+#define R_RISCV_TPREL_I (R_RISCV_max + 4)
+#define R_RISCV_TPREL_S (R_RISCV_max + 5)
 
 /* Processor specific flags for the ELF header e_flags field.  */
 
