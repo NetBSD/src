@@ -1,4 +1,4 @@
-# Copyright 2015-2020 Free Software Foundation, Inc.
+# Copyright 2015-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,13 +27,9 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" object {}] != "
     return -1
 }
 
-set saved_gdbflags $GDBFLAGS
-set GDBFLAGS "$GDBFLAGS -readnow"
-
 clean_restart $executable
+gdb_test_no_output "maint expand-symtab"
 
 # Something simple to verify gdb didn't crash, and has read in whatever symbol
 # info is there.
 gdb_test "info fun main" "main_end"
-
-set GDBFLAGS $saved_gdbflags

@@ -1,6 +1,6 @@
 /* Simulator for Analog Devices Blackfin processors.
 
-   Copyright (C) 2005-2020 Free Software Foundation, Inc.
+   Copyright (C) 2005-2023 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -22,7 +22,6 @@
 #define _BFIN_MAIN_SIM_H_
 
 #include "sim-basics.h"
-#include "sim-signal.h"
 #include "arch.h"
 #include "sim-base.h"
 
@@ -37,14 +36,7 @@ struct _sim_cpu {
 };
 #define BFIN_CPU_STATE ((cpu)->state)
 
-struct sim_state {
-  sim_cpu *cpu[MAX_NR_PROCESSORS];
-
-  /* ... simulator specific members ... */
-  struct bfin_board_data board;
-#define STATE_BOARD_DATA(sd) (&(sd)->board)
-  sim_state_base base;
-};
+#define STATE_BOARD_DATA(sd) ((struct bfin_board_data *) STATE_ARCH_DATA (sd))
 
 #include "sim-config.h"
 #include "sim-types.h"
@@ -53,9 +45,7 @@ struct sim_state {
 #include "dv-bfin_trace.h"
 
 #undef CLAMP
-#undef ALIGN
 #define CLAMP(a, b, c) min (max (a, b), c)
-#define ALIGN(addr, size) (((addr) + ((size)-1)) & ~((size)-1))
 
 /* TODO: Move all this trace logic to the common code.  */
 #define BFIN_TRACE_CORE(cpu, addr, size, map, val) \

@@ -5,18 +5,18 @@
 #include "osabi.h"
 #include "target-descriptions.h"
 
-struct target_desc *tdesc_sparc64_solaris;
+const struct target_desc *tdesc_sparc64_solaris;
 static void
 initialize_tdesc_sparc64_solaris (void)
 {
-  struct target_desc *result = allocate_target_description ();
+  target_desc_up result = allocate_target_description ();
+  set_tdesc_architecture (result.get (), bfd_scan_arch ("sparc:v9"));
+
+  set_tdesc_osabi (result.get (), osabi_from_tdesc_string ("Solaris"));
+
   struct tdesc_feature *feature;
 
-  set_tdesc_architecture (result, bfd_scan_arch ("sparc"));
-
-  set_tdesc_osabi (result, osabi_from_tdesc_string ("Solaris"));
-
-  feature = tdesc_create_feature (result, "org.gnu.gdb.sparc.cpu");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.sparc.cpu");
   tdesc_create_reg (feature, "g0", 0, 1, NULL, 64, "uint64");
   tdesc_create_reg (feature, "g1", 1, 1, NULL, 64, "uint64");
   tdesc_create_reg (feature, "g2", 2, 1, NULL, 64, "uint64");
@@ -47,18 +47,18 @@ initialize_tdesc_sparc64_solaris (void)
   tdesc_create_reg (feature, "i3", 27, 1, NULL, 64, "uint64");
   tdesc_create_reg (feature, "i4", 28, 1, NULL, 64, "uint64");
   tdesc_create_reg (feature, "i5", 29, 1, NULL, 64, "uint64");
-  tdesc_create_reg (feature, "fp", 30, 1, NULL, 32, "uint64");
+  tdesc_create_reg (feature, "fp", 30, 1, NULL, 64, "uint64");
   tdesc_create_reg (feature, "i7", 31, 1, NULL, 64, "uint64");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.sparc.cp0");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.sparc.cp0");
   tdesc_create_reg (feature, "pc", 80, 1, NULL, 64, "code_ptr");
   tdesc_create_reg (feature, "npc", 81, 1, NULL, 64, "code_ptr");
   tdesc_create_reg (feature, "state", 82, 1, NULL, 64, "uint64");
-  tdesc_create_reg (feature, "fsr", 83, 1, NULL, 32, "ieee_single");
-  tdesc_create_reg (feature, "fprs", 84, 1, NULL, 32, "ieee_single");
+  tdesc_create_reg (feature, "fsr", 83, 1, NULL, 64, "uint64");
+  tdesc_create_reg (feature, "fprs", 84, 1, NULL, 64, "uint64");
   tdesc_create_reg (feature, "y", 85, 1, NULL, 64, "uint64");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.sparc.fpu");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.sparc.fpu");
   tdesc_create_reg (feature, "f0", 32, 1, NULL, 32, "ieee_single");
   tdesc_create_reg (feature, "f1", 33, 1, NULL, 32, "ieee_single");
   tdesc_create_reg (feature, "f2", 34, 1, NULL, 32, "ieee_single");
@@ -108,5 +108,5 @@ initialize_tdesc_sparc64_solaris (void)
   tdesc_create_reg (feature, "f60", 78, 1, NULL, 64, "ieee_double");
   tdesc_create_reg (feature, "f62", 79, 1, NULL, 64, "ieee_double");
 
-  tdesc_sparc64_solaris = result;
+  tdesc_sparc64_solaris = result.release ();
 }

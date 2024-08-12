@@ -1,4 +1,4 @@
-# Copyright 2008-2020 Free Software Foundation, Inc.
+# Copyright 2008-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@ if {[prepare_for_testing "failed to prepare" $testfile \
 
 runto_main
 
-get_compiler_info
 get_debug_format
 if { [skip_inline_frame_tests] } {
     untested "skipping inline frame tests"
@@ -61,7 +60,7 @@ gdb_test "info frame" ".*inlined into frame.*" "func2 inlined (3)"
 # function.
 gdb_test_no_output "set backtrace limit 2"
 # Force flushing the frame cache.
-gdb_test "flushregs" "Register cache flushed."
+gdb_test "maint flush register-cache" "Register cache flushed."
 gdb_test "up" "#1  .*func1.*" "up from bar (4)"
 gdb_test "info frame" ".*in func1.*" "info frame still works"
 # Verify the user visible limit works as expected.

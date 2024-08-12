@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -63,7 +63,7 @@ print_engine_issue_postfix_hook (lf *file)
 
 
 static void
-print_run_body (lf *file, gen_entry *table)
+print_run_body (lf *file, const gen_entry *table)
 {
   /* Output the function to execute real code:
 
@@ -335,7 +335,7 @@ after all the other CPU's and the event queue have been processed */\n\
 
 void
 print_engine_run_function_header (lf *file,
-				  char *processor,
+				  const char *processor,
 				  function_decl_type decl_type)
 {
   int indent;
@@ -390,7 +390,9 @@ print_engine_run_function_header (lf *file,
 
 void
 gen_engine_h (lf *file,
-	      gen_table *gen, insn_table *isa, cache_entry *cache_rules)
+	      const gen_table *gen,
+	      const insn_table *isa,
+	      cache_entry *cache_rules)
 {
   gen_list *entry;
   for (entry = gen->tables; entry != NULL; entry = entry->next)
@@ -405,9 +407,11 @@ gen_engine_h (lf *file,
 
 void
 gen_engine_c (lf *file,
-	      gen_table *gen, insn_table *isa, cache_entry *cache_rules)
+	      const gen_table *gen,
+	      const insn_table *isa,
+	      cache_entry *cache_rules)
 {
-  gen_list *entry;
+  const gen_list *entry;
   /* the intro */
   print_includes (file);
   print_include_inline (file, options.module.semantics);

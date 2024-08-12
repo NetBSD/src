@@ -1,4 +1,4 @@
-# Copyright 2017-2020 Free Software Foundation, Inc.
+# Copyright 2017-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 # This test only works for native processes on GNU/Linux.
 if {[target_info gdb_protocol] != "" || ![istarget *-linux*]} {
-    continue
+    return
 }
 
 # Test relies on checking gdb debug output. Do not run if gdb debug is
@@ -31,6 +31,13 @@ if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
 	 executable debug] != "" } {
     return -1
 }
+
+# Case 1: libthread_db fakes a single thread with th_unique == NULL.
+set thread_re1 "0 => $decimal => 0"
+# Case 2: libthread_db already initialized.
+set thread_re2 "$hex => $decimal => ${hex}(; errno = 0)?"
+# Match either of the two cases.
+set initial_thread_re "($thread_re1|$thread_re2)"
 
 with_test_prefix "user-initiated check" {
 
@@ -49,18 +56,18 @@ with_test_prefix "user-initiated check" {
 	"No libthread_db loaded" \
 	"no libpthread.so loaded"
 
-
-    # User-initiated check with NPTL uninitialized.
-    # libthread_db should fake a single thread with th_unique == NULL.
+    # User-initiated check with NPTL possibly uninitialized.
     gdb_test "continue" \
-	".*Stopped due to shared library event.*Inferior loaded .*libpthread.*"
+	[multi_line \
+	     "Stopped due to shared library event:" \
+	     "  Inferior loaded .*(libpthread|libc).*"]
 
     gdb_test_sequence "maint check libthread-db" \
-	"libpthread.so not initialized" {
-	    "\[\r\n\]+Running libthread_db integrity checks:"
-	    "\[\r\n\]+\[ \]+Got thread 0x0 => \[0-9\]+ => 0x0 ... OK"
-	    "\[\r\n\]+libthread_db integrity checks passed."
-	}
+	"libpthread.so possibly not initialized" \
+	[list \
+	     "\[\r\n\]+Running libthread_db integrity checks:" \
+	     "\[\r\n\]+\[ \]+Got thread $initial_thread_re ... OK" \
+	     "\[\r\n\]+libthread_db integrity checks passed."]
 
     # User-initiated check with NPTL fully operational.
     gdb_test_no_output "set stop-on-solib-events 0"
@@ -78,8 +85,8 @@ with_test_prefix "user-initiated check" {
 
 with_test_prefix "automated load-time check" {
 
-    # Automated load-time check with NPTL uninitialized.
-    with_test_prefix "libpthread.so not initialized" {
+    # Automated load-time check with NPTL possibly uninitialized.
+    with_test_prefix "libpthread.so possibly not initialized" {
 	clean_restart ${binfile}
 
 	gdb_test_no_output "maint set check-libthread-db 1"
@@ -88,12 +95,12 @@ with_test_prefix "automated load-time check" {
 	gdb_run_cmd
 
 	gdb_test_sequence "" \
-	    "check debug libthread-db output" {
-		"\[\r\n\]+Running libthread_db integrity checks:"
-		"\[\r\n\]+\[ \]+Got thread 0x0 => \[0-9\]+ => 0x0 ... OK"
-		"\[\r\n\]+libthread_db integrity checks passed."
-		"\[\r\n\]+[Thread debugging using libthread_db enabled]"
-	    }
+	    "check debug libthread-db output" \
+	    [list \
+		 "\[\r\n\]+Running libthread_db integrity checks:" \
+		 "\[\r\n\]+\[ \]+Got thread $initial_thread_re ... OK" \
+		 "\[\r\n\]+libthread_db integrity checks passed." \
+		 "\[\r\n\]+\\\[Thread debugging using libthread_db enabled\\\]"]
     }
 
     # Automated load-time check with NPTL fully operational.

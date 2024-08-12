@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2012-2020 Free Software Foundation, Inc.
+   Copyright 2012-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -63,28 +63,13 @@ FUNC (compdir_absolute_ldir_absolute_file_relative_different)	\
 FUNC (compdir_absolute_ldir_absolute_file_absolute_same)	\
 FUNC (compdir_absolute_ldir_absolute_file_absolute_different)
 
-#ifdef __mips__
-#define START_INSNS asm (".insn\n");
-#else
-#define START_INSNS
-#endif
-
-/* Notes: (1) The '*_start' label below is needed because 'name' may
-   point to a function descriptor instead of to the actual code.  (2)
-   The '.balign' should specify the highest possible function
-   alignment across all supported architectures, such that the label
-   never points into the alignment gap.  */
-
 #define FUNC(name)					\
-  asm (".balign 8");					\
-  asm (#name "_start: .globl " #name "_start\n");	\
-  START_INSNS						\
   static void						\
   name (void)						\
   {							\
+    asm (#name "_label: .globl " #name "_label\n");	\
     v++;						\
-  }							\
-  asm (#name "_end: .globl " #name "_end\n");
+  }
 FUNCBLOCK
 #undef FUNC
 

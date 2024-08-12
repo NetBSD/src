@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2020 Free Software Foundation, Inc.
+# Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,8 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# A collection of tests related to running execution commands directly
-# from the command line, with "-ex".
+# Test that an inferior exit event does not trigger pagination.
 
 standard_testfile
 
@@ -32,44 +31,16 @@ proc test_paginate_inferior_exited {} {
     with_test_prefix "paginate" {
 	clean_restart $binfile
 
-	if ![runto_main] then {
-	    fail "can't run to main"
+	if {![runto_main]} {
 	    return 0
 	}
 
 	# Force pagination.
 	gdb_test_no_output "set height 2"
 
-	set test "continue to pagination"
-
-	# Wait for the "Starting program" line, indicating the program
-	# is running.
-	set saw_starting 0
-	gdb_test_multiple "continue" $test {
-	    -re "$pagination_prompt" {
-		if {$saw_starting} {
-		    pass $test
-		} else {
-		    send_gdb "\n"
-		    exp_continue
-		}
-	    }
-	    -re "Continuing" {
-		set saw_starting 1
-		exp_continue
-	    }
-	}
-
-	# We're now stopped in a pagination output while handling a
-	# target event, trying to print about the program exiting.
-	set test "inferior exits normally"
-
-	send_gdb "\n"
-	gdb_test_multiple "" $test {
-	    -re "$inferior_exited_re normally.*$gdb_prompt $" {
-		pass $test
-	    }
-	}
+	# The program continues until termination, without pagination
+	# being triggered.
+	gdb_continue_to_end
 
 	gdb_test "p 1" " = 1" "GDB accepts further input"
 

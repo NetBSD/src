@@ -1,5 +1,5 @@
 /* MI Command Set - breakpoint and watchpoint commands.
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2023 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -30,7 +30,7 @@
 #include "language.h"
 #include "location.h"
 #include "linespec.h"
-#include "gdb_obstack.h"
+#include "gdbsupport/gdb_obstack.h"
 #include <ctype.h>
 #include "tracepoint.h"
 
@@ -84,7 +84,8 @@ setup_breakpoint_reporting (void)
 {
   if (! mi_breakpoint_observers_installed)
     {
-      gdb::observers::breakpoint_created.attach (breakpoint_notify);
+      gdb::observers::breakpoint_created.attach (breakpoint_notify,
+						 "mi-cmd-break");
       mi_breakpoint_observers_installed = 1;
     }
 
@@ -178,17 +179,20 @@ mi_cmd_break_insert_1 (int dprintf, const char *command, char **argv, int argc)
   int tracepoint = 0;
   symbol_name_match_type match_type = symbol_name_match_type::WILD;
   enum bptype type_wanted;
-  event_location_up location;
-  struct breakpoint_ops *ops;
+  location_spec_up locspec;
+  const struct breakpoint_ops *ops;
   int is_explicit = 0;
-  struct explicit_location explicit_loc;
+  std::unique_ptr<explicit_location_spec> explicit_loc
+    (new explicit_location_spec ());
   std::string extra_string;
+  bool force_condition = false;
 
   enum opt
     {
       HARDWARE_OPT, TEMP_OPT, CONDITION_OPT,
       IGNORE_COUNT_OPT, THREAD_OPT, PENDING_OPT, DISABLE_OPT,
       TRACEPOINT_OPT,
+      FORCE_CONDITION_OPT,
       QUALIFIED_OPT,
       EXPLICIT_SOURCE_OPT, EXPLICIT_FUNC_OPT,
       EXPLICIT_LABEL_OPT, EXPLICIT_LINE_OPT
@@ -203,6 +207,7 @@ mi_cmd_break_insert_1 (int dprintf, const char *command, char **argv, int argc)
     {"f", PENDING_OPT, 0},
     {"d", DISABLE_OPT, 0},
     {"a", TRACEPOINT_OPT, 0},
+    {"-force-condition", FORCE_CONDITION_OPT, 0},
     {"-qualified", QUALIFIED_OPT, 0},
     {"-source" , EXPLICIT_SOURCE_OPT, 1},
     {"-function", EXPLICIT_FUNC_OPT, 1},
@@ -215,8 +220,6 @@ mi_cmd_break_insert_1 (int dprintf, const char *command, char **argv, int argc)
      to denote the end of the option list. */
   int oind = 0;
   char *oarg;
-
-  initialize_explicit_location (&explicit_loc);
 
   while (1)
     {
@@ -255,19 +258,22 @@ mi_cmd_break_insert_1 (int dprintf, const char *command, char **argv, int argc)
 	  break;
 	case EXPLICIT_SOURCE_OPT:
 	  is_explicit = 1;
-	  explicit_loc.source_filename = oarg;
+	  explicit_loc->source_filename = xstrdup (oarg);
 	  break;
 	case EXPLICIT_FUNC_OPT:
 	  is_explicit = 1;
-	  explicit_loc.function_name = oarg;
+	  explicit_loc->function_name = xstrdup (oarg);
 	  break;
 	case EXPLICIT_LABEL_OPT:
 	  is_explicit = 1;
-	  explicit_loc.label_name = oarg;
+	  explicit_loc->label_name = xstrdup (oarg);
 	  break;
 	case EXPLICIT_LINE_OPT:
 	  is_explicit = 1;
-	  explicit_loc.line_offset = linespec_parse_line_offset (oarg);
+	  explicit_loc->line_offset = linespec_parse_line_offset (oarg);
+	  break;
+	case FORCE_CONDITION_OPT:
+	  force_condition = true;
 	  break;
 	}
     }
@@ -315,44 +321,45 @@ mi_cmd_break_insert_1 (int dprintf, const char *command, char **argv, int argc)
 	 A simulator or an emulator could conceivably implement fast
 	 regular non-jump based tracepoints.  */
       type_wanted = hardware ? bp_fast_tracepoint : bp_tracepoint;
-      ops = &tracepoint_breakpoint_ops;
+      ops = breakpoint_ops_for_location_spec (nullptr, true);
     }
   else if (dprintf)
     {
       type_wanted = bp_dprintf;
-      ops = &dprintf_breakpoint_ops;
+      ops = &code_breakpoint_ops;
     }
   else
     {
       type_wanted = hardware ? bp_hardware_breakpoint : bp_breakpoint;
-      ops = &bkpt_breakpoint_ops;
+      ops = &code_breakpoint_ops;
     }
 
   if (is_explicit)
     {
       /* Error check -- we must have one of the other
 	 parameters specified.  */
-      if (explicit_loc.source_filename != NULL
-	  && explicit_loc.function_name == NULL
-	  && explicit_loc.label_name == NULL
-	  && explicit_loc.line_offset.sign == LINE_OFFSET_UNKNOWN)
+      if (explicit_loc->source_filename != NULL
+	  && explicit_loc->function_name == NULL
+	  && explicit_loc->label_name == NULL
+	  && explicit_loc->line_offset.sign == LINE_OFFSET_UNKNOWN)
 	error (_("-%s-insert: --source option requires --function, --label,"
 		 " or --line"), dprintf ? "dprintf" : "break");
 
-      explicit_loc.func_name_match_type = match_type;
+      explicit_loc->func_name_match_type = match_type;
 
-      location = new_explicit_location (&explicit_loc);
+      locspec = std::move (explicit_loc);
     }
   else
     {
-      location = string_to_event_location_basic (&address, current_language,
-						 match_type);
+      locspec = string_to_location_spec_basic (&address, current_language,
+					       match_type);
       if (*address)
 	error (_("Garbage '%s' at end of location"), address);
     }
 
-  create_breakpoint (get_current_arch (), location.get (), condition, thread,
+  create_breakpoint (get_current_arch (), locspec.get (), condition, thread,
 		     extra_string.c_str (),
+		     force_condition,
 		     0 /* condition and thread are valid.  */,
 		     temp_p, type_wanted,
 		     ignore_count,
@@ -376,6 +383,62 @@ void
 mi_cmd_dprintf_insert (const char *command, char **argv, int argc)
 {
   mi_cmd_break_insert_1 (1, command, argv, argc);
+}
+
+/* Implements the -break-condition command.
+   See the MI manual for the list of options.  */
+
+void
+mi_cmd_break_condition (const char *command, char **argv, int argc)
+{
+  enum option
+    {
+      FORCE_CONDITION_OPT,
+    };
+
+  static const struct mi_opt opts[] =
+  {
+    {"-force", FORCE_CONDITION_OPT, 0},
+    { 0, 0, 0 }
+  };
+
+  /* Parse arguments.  */
+  int oind = 0;
+  char *oarg;
+  bool force_condition = false;
+
+  while (true)
+    {
+      int opt = mi_getopt ("-break-condition", argc, argv,
+			   opts, &oind, &oarg);
+      if (opt < 0)
+	break;
+
+      switch (opt)
+	{
+	case FORCE_CONDITION_OPT:
+	  force_condition = true;
+	  break;
+	}
+    }
+
+  /* There must be at least one more arg: a bpnum.  */
+  if (oind >= argc)
+    error (_("-break-condition: Missing the <number> argument"));
+
+  int bpnum = atoi (argv[oind]);
+
+  /* The rest form the condition expr.  */
+  std::string expr = "";
+  for (int i = oind + 1; i < argc; ++i)
+    {
+      expr += argv[i];
+      if (i + 1 < argc)
+	expr += " ";
+    }
+
+  set_breakpoint_condition (bpnum, expr.c_str (), 0 /* from_tty */,
+			    force_condition);
 }
 
 enum wp_type
@@ -463,13 +526,13 @@ mi_cmd_break_watch (const char *command, char **argv, int argc)
   switch (type)
     {
     case REG_WP:
-      watch_command_wrapper (expr, FROM_TTY, 0);
+      watch_command_wrapper (expr, FROM_TTY, false);
       break;
     case READ_WP:
-      rwatch_command_wrapper (expr, FROM_TTY, 0);
+      rwatch_command_wrapper (expr, FROM_TTY, false);
       break;
     case ACCESS_WP:
-      awatch_command_wrapper (expr, FROM_TTY, 0);
+      awatch_command_wrapper (expr, FROM_TTY, false);
       break;
     default:
       error (_("-break-watch: Unknown watchpoint type."));
@@ -501,7 +564,7 @@ mi_cmd_break_commands (const char *command, char **argv, int argc)
 
   int count = 1;
   auto reader
-    = [&] ()
+    = [&] (std::string &buffer)
       {
 	const char *result = nullptr;
 	if (count < argc)

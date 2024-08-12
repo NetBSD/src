@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2020 Free Software Foundation, Inc.
+# Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,8 +48,7 @@ if { [skip_python_tests] } { continue }
 
 # The following tests require execution.
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 
@@ -58,14 +57,14 @@ runto [gdb_get_line_number "Break to end."]
 # Test gdb.solib_name
 gdb_test "p &func1" "" "func1 address"
 gdb_py_test_silent_cmd "python func1 = gdb.history(0)" "Aquire func1 address" 1
-if { $gdb_py_is_py3k == 1 } {
-  gdb_py_test_silent_cmd "python long = int" "" 0
-}
-gdb_test "python print (gdb.solib_name(long(func1)))" "py-shared-sl.sl" "test func1 solib location"
+gdb_test "python print (gdb.solib_name(int(func1)))" "py-shared-sl.sl" \
+    "test func1 solib location"
+gdb_test "python print (gdb.solib_name(func1))" "py-shared-sl.sl" \
+    "test func1 solib location using Value"
 
 gdb_test "p &main" "" "main address"
 gdb_py_test_silent_cmd "python main = gdb.history(0)" "Aquire main address" 1
-gdb_test "python print (gdb.solib_name(long(main)))" "None" "test main solib location"
+gdb_test "python print (gdb.solib_name(int(main)))" "None" "test main solib location"
 
 if {[is_lp64_target]} {
     gdb_test "python print (len(\[gdb.solib_name(0xffffffffffffffff)\]))" "1"

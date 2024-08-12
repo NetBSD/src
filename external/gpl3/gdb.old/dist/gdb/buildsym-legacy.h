@@ -1,5 +1,5 @@
 /* Build symbol tables in GDB's internal format - legacy APIs
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,20 +30,20 @@
    The basic way this module is used is as follows:
 
    scoped_free_pendings free_pending;
-   cust = start_symtab (...);
+   cust = start_compunit_symtab (...);
    ... read debug info ...
-   cust = end_symtab (...);
+   cust = end_compunit_symtab (...);
 
-   The compunit symtab pointer ("cust") is returned from both start_symtab
-   and end_symtab to simplify the debug info readers.
+   The compunit symtab pointer ("cust") is returned from both
+   start_compunit_symtab and end_compunit_symtab to simplify the debug info readers.
 
    dbxread.c and xcoffread.c use another variation:
 
    scoped_free_pendings free_pending;
-   cust = start_symtab (...);
+   cust = start_compunit_symtab (...);
    ... read debug info ...
-   cust = end_symtab (...);
-   ... start_symtab + read + end_symtab repeated ...
+   cust = end_compunit_symtab (...);
+   ... start_compunit_symtab + read + end_compunit_symtab repeated ...
 */
 
 class scoped_free_pendings
@@ -62,9 +62,6 @@ extern struct block *finish_block (struct symbol *symbol,
 				   CORE_ADDR start,
 				   CORE_ADDR end);
 
-extern void record_block_range (struct block *,
-                                CORE_ADDR start, CORE_ADDR end_inclusive);
-
 extern void start_subfile (const char *name);
 
 extern void patch_subfile_names (struct subfile *subfile, const char *name);
@@ -73,7 +70,8 @@ extern void push_subfile ();
 
 extern const char *pop_subfile ();
 
-extern struct compunit_symtab *end_symtab (CORE_ADDR end_addr, int section);
+extern struct compunit_symtab *end_compunit_symtab (CORE_ADDR end_addr,
+						    int section);
 
 extern struct context_stack *push_context (int desc, CORE_ADDR valu);
 
@@ -81,14 +79,11 @@ extern struct context_stack pop_context ();
 
 extern void record_line (struct subfile *subfile, int line, CORE_ADDR pc);
 
-extern struct compunit_symtab *start_symtab (struct objfile *objfile,
-					     const char *name,
-					     const char *comp_dir,
-					     CORE_ADDR start_addr,
-					     enum language language);
-
-extern void restart_symtab (struct compunit_symtab *cust,
-			    const char *name, CORE_ADDR start_addr);
+extern struct compunit_symtab *start_compunit_symtab (struct objfile *objfile,
+						      const char *name,
+						      const char *comp_dir,
+						      CORE_ADDR start_addr,
+						      enum language language);
 
 /* Record the name of the debug format in the current pending symbol
    table.  FORMAT must be a string with a lifetime at least as long as
@@ -111,49 +106,19 @@ extern void set_last_source_file (const char *name);
 
 extern const char *get_last_source_file (void);
 
-/* Return the compunit symtab object.
-   It is only valid to call this between calls to start_symtab and the
-   end_symtab* functions.  */
-
-extern struct compunit_symtab *buildsym_compunit_symtab (void);
-
-/* Return the macro table.
-   Initialize it if this is the first use.
-   It is only valid to call this between calls to start_symtab and the
-   end_symtab* functions.  */
-
-extern struct macro_table *get_macro_table (void);
-
 /* Set the last source start address.  Can only be used between
-   start_symtab and end_symtab* calls.  */
+   start_compunit_symtab and end_compunit_symtab* calls.  */
 
 extern void set_last_source_start_addr (CORE_ADDR addr);
 
 /* Get the last source start address.  Can only be used between
-   start_symtab and end_symtab* calls.  */
+   start_compunit_symtab and end_compunit_symtab* calls.  */
 
 extern CORE_ADDR get_last_source_start_addr ();
-
-/* Return the local using directives.  */
-
-extern struct using_direct **get_local_using_directives ();
-
-/* Set the list of local using directives.  */
-
-extern void set_local_using_directives (struct using_direct *new_local);
-
-/* Return the global using directives.  */
-
-extern struct using_direct **get_global_using_directives ();
 
 /* True if the context stack is empty.  */
 
 extern bool outermost_context_p ();
-
-/* Return the top of the context stack, or nullptr if there is an
-   entry.  */
-
-extern struct context_stack *get_current_context_stack ();
 
 /* Return the context stack depth.  */
 

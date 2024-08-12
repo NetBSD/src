@@ -1,6 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-# Copyright (C) 2016-2020 Free Software Foundation, Inc.
+# Copyright (C) 2016-2023 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -45,35 +45,36 @@ import re
 #                                   }
 #                   }
 
-files_and_tests = dict ()
+files_and_tests = dict()
 
 # The relatioships between various states of the same tests that
 # should be ignored.  For example, if the same test PASSes on a
 # testcase run but KFAILs on another, this test should be considered
 # racy because a known-failure is...  known.
 
-ignore_relations = { 'PASS' : 'KFAIL' }
+ignore_relations = {"PASS": "KFAIL"}
 
 # We are interested in lines that start with '.?(PASS|FAIL)'.  In
 # other words, we don't process errors (maybe we should).
 
-sum_matcher = re.compile('^(.?(PASS|FAIL)): (.*)$')
+sum_matcher = re.compile("^(.?(PASS|FAIL)): (.*)$")
 
-def parse_sum_line (line, dic):
+
+def parse_sum_line(line, dic):
     """Parse a single LINE from a sumfile, and store the results in the
-dictionary referenced by DIC."""
+    dictionary referenced by DIC."""
     global sum_matcher
 
-    line = line.rstrip ()
-    m = re.match (sum_matcher, line)
+    line = line.rstrip()
+    m = re.match(sum_matcher, line)
     if m:
-        result = m.group (1)
-        test_name = m.group (3)
+        result = m.group(1)
+        test_name = m.group(3)
         # Remove tail parentheses.  These are likely to be '(timeout)'
         # and other extra information that will only confuse us.
-        test_name = re.sub ('(\s+)?\(.*$', '', test_name)
-        if result not in dic.keys ():
-            dic[result] = set ()
+        test_name = re.sub("(\s+)?\(.*$", "", test_name)
+        if result not in dic.keys():
+            dic[result] = set()
         if test_name in dic[result]:
             # If the line is already present in the dictionary, then
             # we include a unique identifier in the end of it, in the
@@ -84,35 +85,37 @@ dictionary referenced by DIC."""
             # in order to identify the racy test.
             i = 2
             while True:
-                nname = test_name + ' <<' + str (i) + '>>'
+                nname = test_name + " <<" + str(i) + ">>"
                 if nname not in dic[result]:
                     break
                 i += 1
             test_name = nname
-        dic[result].add (test_name)
+        dic[result].add(test_name)
 
-def read_sum_files (files):
+
+def read_sum_files(files):
     """Read the sumfiles (passed as a list in the FILES variable), and
-process each one, filling the FILES_AND_TESTS global dictionary with
-information about them. """
+    process each one, filling the FILES_AND_TESTS global dictionary with
+    information about them."""
     global files_and_tests
 
     for x in files:
-        with open (x, 'r') as f:
-            files_and_tests[x] = dict ()
-            for line in f.readlines ():
-                parse_sum_line (line, files_and_tests[x])
+        with open(x, "r") as f:
+            files_and_tests[x] = dict()
+            for line in f.readlines():
+                parse_sum_line(line, files_and_tests[x])
 
-def identify_racy_tests ():
+
+def identify_racy_tests():
     """Identify and print the racy tests.  This function basically works
-on sets, and the idea behind it is simple.  It takes all the sets that
-refer to the same result (for example, all the sets that contain PASS
-tests), and compare them.  If a test is present in all PASS sets, then
-it is not racy.  Otherwise, it is.
+    on sets, and the idea behind it is simple.  It takes all the sets that
+    refer to the same result (for example, all the sets that contain PASS
+    tests), and compare them.  If a test is present in all PASS sets, then
+    it is not racy.  Otherwise, it is.
 
-This function does that for all sets (PASS, FAIL, KPASS, KFAIL, etc.),
-and then print a sorted list (without duplicates) of all the tests
-that were found to be racy."""
+    This function does that for all sets (PASS, FAIL, KPASS, KFAIL, etc.),
+    and then print a sorted list (without duplicates) of all the tests
+    that were found to be racy."""
     global files_and_tests
 
     # First, construct two dictionaries that will hold one set of
@@ -124,31 +127,31 @@ that were found to be racy."""
     #
     # Each set in ALL_TESTS will contain all tests, racy or not, for
     # that state.
-    nonracy_tests = dict ()
-    all_tests = dict ()
+    nonracy_tests = dict()
+    all_tests = dict()
     for f in files_and_tests:
         for state in files_and_tests[f]:
             try:
-                nonracy_tests[state] &= files_and_tests[f][state].copy ()
+                nonracy_tests[state] &= files_and_tests[f][state].copy()
             except KeyError:
-                nonracy_tests[state] = files_and_tests[f][state].copy ()
+                nonracy_tests[state] = files_and_tests[f][state].copy()
 
             try:
-                all_tests[state] |= files_and_tests[f][state].copy ()
+                all_tests[state] |= files_and_tests[f][state].copy()
             except KeyError:
-                all_tests[state] = files_and_tests[f][state].copy ()
+                all_tests[state] = files_and_tests[f][state].copy()
 
     # Now, we eliminate the tests that are present in states that need
     # to be ignored.  For example, tests both in the PASS and KFAIL
     # states should not be considered racy.
-    ignored_tests = set ()
-    for s1, s2 in ignore_relations.iteritems ():
+    ignored_tests = set()
+    for s1, s2 in ignore_relations.items():
         try:
-            ignored_tests |= (all_tests[s1] & all_tests[s2])
+            ignored_tests |= all_tests[s1] & all_tests[s2]
         except:
             continue
 
-    racy_tests = set ()
+    racy_tests = set()
     for f in files_and_tests:
         for state in files_and_tests[f]:
             racy_tests |= files_and_tests[f][state] - nonracy_tests[state]
@@ -156,22 +159,23 @@ that were found to be racy."""
     racy_tests = racy_tests - ignored_tests
 
     # Print the header.
-    print "\t\t=== gdb racy tests ===\n"
+    print("\t\t=== gdb racy tests ===\n")
 
     # Print each test.
-    for line in sorted (racy_tests):
-        print line
+    for line in sorted(racy_tests):
+        print(line)
 
     # Print the summary.
-    print "\n"
-    print "\t\t=== gdb Summary ===\n"
-    print "# of racy tests:\t\t%d" % len (racy_tests)
+    print("\n")
+    print("\t\t=== gdb Summary ===\n")
+    print("# of racy tests:\t\t%d" % len(racy_tests))
 
-if __name__ == '__main__':
-    if len (sys.argv) < 3:
+
+if __name__ == "__main__":
+    if len(sys.argv) < 3:
         # It only makes sense to invoke this program if you pass two
         # or more files to be analyzed.
-        sys.exit ("Usage: %s [FILE] [FILE] ..." % sys.argv[0])
-    read_sum_files (sys.argv[1:])
-    identify_racy_tests ()
-    exit (0)
+        sys.exit("Usage: %s [FILE] [FILE] ..." % sys.argv[0])
+    read_sum_files(sys.argv[1:])
+    identify_racy_tests()
+    exit(0)

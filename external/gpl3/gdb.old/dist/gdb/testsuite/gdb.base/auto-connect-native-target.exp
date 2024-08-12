@@ -1,4 +1,4 @@
-# Copyright 2014-2020 Free Software Foundation, Inc.
+# Copyright 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -68,8 +68,7 @@ if { $topmost != "exec" } {
 
 # Check which target this board connects to.  If testing with a native
 # target board, this should cause the native target to auto connect.
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 

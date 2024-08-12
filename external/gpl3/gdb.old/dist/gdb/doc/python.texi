@@ -1,4 +1,4 @@
-@c Copyright (C) 2008--2020 Free Software Foundation, Inc.
+@c Copyright (C) 2008--2023 Free Software Foundation, Inc.
 @c Permission is granted to copy, distribute and/or modify this document
 @c under the terms of the GNU Free Documentation License, Version 1.3 or
 @c any later version published by the Free Software Foundation; with the
@@ -18,8 +18,6 @@
 You can extend @value{GDBN} using the @uref{http://www.python.org/,
 Python programming language}.  This feature is available only if
 @value{GDBN} was configured using @option{--with-python}.
-@value{GDBN} can be built against either Python 2 or Python 3; which
-one you have depends on this configure-time option.
 
 @cindex python directory
 Python scripts used by @value{GDBN} should be installed in
@@ -95,6 +93,7 @@ containing @code{end}.  For example:
 23
 @end smallexample
 
+@anchor{set_python_print_stack}
 @kindex set python print-stack
 @item set python print-stack
 By default, @value{GDBN} will print only the message component of a
@@ -103,6 +102,49 @@ controlled using @code{set python print-stack}: if @code{full}, then
 full Python stack printing is enabled; if @code{none}, then Python stack
 and message printing is disabled; if @code{message}, the default, only
 the message component of the error is printed.
+
+@kindex set python ignore-environment
+@item set python ignore-environment @r{[}on@r{|}off@r{]}
+By default this option is @samp{off}, and, when @value{GDBN}
+initializes its internal Python interpreter, the Python interpreter
+will check the environment for variables that will effect how it
+behaves, for example @env{PYTHONHOME}, and
+@env{PYTHONPATH}@footnote{See the ENVIRONMENT VARIABLES section of
+@command{man 1 python} for a comprehensive list.}.
+
+If this option is set to @samp{on} before Python is initialized then
+Python will ignore all such environment variables.  As Python is
+initialized early during @value{GDBN}'s startup process, then this
+option must be placed into the early initialization file
+(@pxref{Initialization Files}) to have the desired effect.
+
+This option is equivalent to passing @option{-E} to the real
+@command{python} executable.
+
+@kindex set python dont-write-bytecode
+@item set python dont-write-bytecode @r{[}auto@r{|}on@r{|}off@r{]}
+When this option is @samp{off}, then, once @value{GDBN} has
+initialized the Python interpreter, the interpreter will byte-compile
+any Python modules that it imports and write the byte code to disk in
+@file{.pyc} files.
+
+If this option is set to @samp{on} before Python is initialized then
+Python will no longer write the byte code to disk.  As Python is
+initialized early during @value{GDBN}'s startup process, then this
+option must be placed into the early initialization file
+(@pxref{Initialization Files}) to have the desired effect.
+
+By default this option is set to @samp{auto}.  In this mode, provided
+the @code{python ignore-environment} setting is @samp{off}, the
+environment variable @env{PYTHONDONTWRITEBYTECODE} is examined to see
+if it should write out byte-code or not.
+@env{PYTHONDONTWRITEBYTECODE} is considered to be off/disabled either
+when set to the empty string or when the environment variable doesn't
+exist.  All other settings, including those which don't seem to make
+sense, indicate that it's on/enabled.
+
+This option is equivalent to passing @option{-B} to the real
+@command{python} executable.
 @end table
 
 It is also possible to execute a Python script from the @value{GDBN}
@@ -113,6 +155,24 @@ interpreter:
 The script name must end with @samp{.py} and @value{GDBN} must be configured
 to recognize the script language based on filename extension using
 the @code{script-extension} setting.  @xref{Extending GDB, ,Extending GDB}.
+@end table
+
+The following commands are intended to help debug @value{GDBN} itself:
+
+@table @code
+@kindex set debug py-breakpoint
+@kindex show debug py-breakpoint
+@item set debug py-breakpoint on@r{|}off
+@itemx show debug py-breakpoint
+When @samp{on}, @value{GDBN} prints debug messages related to the
+Python breakpoint API.  This is @samp{off} by default.
+
+@kindex set debug py-unwind
+@kindex show debug py-unwind
+@item set debug py-unwind on@r{|}off
+@itemx show debug py-unwind
+When @samp{on}, @value{GDBN} prints debug messages related to the
+Python unwinder API.  This is @samp{off} by default.
 @end table
 
 @node Python API
@@ -148,7 +208,8 @@ optional arguments while skipping others.  Example:
 * Events In Python::            Listening for events from @value{GDBN}.
 * Threads In Python::           Accessing inferior threads from Python.
 * Recordings In Python::        Accessing recordings from Python.
-* Commands In Python::          Implementing new commands in Python.
+* CLI Commands In Python::      Implementing new CLI commands in Python.
+* GDB/MI Commands In Python::   Implementing new @sc{GDB/MI} commands in Python.
 * Parameters In Python::        Adding new @value{GDBN} parameters.
 * Functions In Python::         Writing new convenience functions.
 * Progspaces In Python::        Program spaces.
@@ -164,7 +225,9 @@ optional arguments while skipping others.  Example:
 * Lazy Strings In Python::      Python representation of lazy strings.
 * Architectures In Python::     Python representation of architectures.
 * Registers In Python::         Python representation of registers.
+* Connections In Python::	Python representation of connections.
 * TUI Windows In Python::       Implementing new TUI windows.
+* Disassembly In Python::       Instruction Disassembly In Python
 @end menu
 
 @node Basic Python
@@ -275,6 +338,32 @@ parameter's value is converted to a Python value of the appropriate
 type, and returned.
 @end defun
 
+@findex gdb.set_parameter
+@defun gdb.set_parameter (name, value)
+Sets the gdb parameter @var{name} to @var{value}.  As with
+@code{gdb.parameter}, the parameter name string may contain spaces if
+the parameter has a multi-part name.
+@end defun
+
+@findex gdb.with_parameter
+@defun gdb.with_parameter (name, value)
+Create a Python context manager (for use with the Python
+@command{with} statement) that temporarily sets the gdb parameter
+@var{name} to @var{value}.  On exit from the context, the previous
+value will be restored.
+
+This uses @code{gdb.parameter} in its implementation, so it can throw
+the same exceptions as that function.
+
+For example, it's sometimes useful to evaluate some Python code with a
+particular gdb language:
+
+@smallexample
+with gdb.with_parameter('language', 'pascal'):
+  ... language-specific operations
+@end smallexample
+@end defun
+
 @findex gdb.history
 @defun gdb.history (number)
 Return a value from @value{GDBN}'s value history (@pxref{Value
@@ -288,6 +377,25 @@ raised.
 
 If no exception is raised, the return value is always an instance of
 @code{gdb.Value} (@pxref{Values From Inferior}).
+@end defun
+
+@defun gdb.add_history (value)
+Takes @var{value}, an instance of @code{gdb.Value} (@pxref{Values From
+Inferior}), and appends the value this object represents to
+@value{GDBN}'s value history (@pxref{Value History}), and return an
+integer, its history number.  If @var{value} is not a
+@code{gdb.Value}, it is is converted using the @code{gdb.Value}
+constructor.  If @var{value} can't be converted to a @code{gdb.Value}
+then a @code{TypeError} is raised.
+
+When a command implemented in Python prints a single @code{gdb.Value}
+as its result, then placing the value into the history will allow the
+user convenient access to those values via CLI history facilities.
+@end defun
+
+@defun gdb.history_count ()
+Return an integer indicating the number of values in @value{GDBN}'s
+value history (@pxref{Value History}).
 @end defun
 
 @findex gdb.convenience_variable
@@ -317,7 +425,8 @@ the current language, evaluate it, and return the result as a
 @code{gdb.Value}.
 
 This function can be useful when implementing a new command
-(@pxref{Commands In Python}), as it provides a way to parse the
+(@pxref{CLI Commands In Python}, @pxref{GDB/MI Commands In Python}),
+as it provides a way to parse the
 command's argument as an expression.  It is also useful simply to
 compute values.
 @end defun
@@ -373,7 +482,7 @@ this.  For example:
 @end defun
 
 @findex gdb.write 
-@defun gdb.write (string @r{[}, stream{]})
+@defun gdb.write (string @r{[}, stream@r{]})
 Print a string to @value{GDBN}'s paginated output stream.  The
 optional @var{stream} determines the stream to print to.  The default
 stream is @value{GDBN}'s standard output stream.  Possible stream
@@ -402,7 +511,7 @@ relevant stream.
 @end defun
 
 @findex gdb.flush
-@defun gdb.flush ()
+@defun gdb.flush (@r{[}, stream@r{]})
 Flush the buffer of a @value{GDBN} paginated stream so that the
 contents are displayed immediately.  @value{GDBN} will flush the
 contents of a stream automatically when it encounters a newline in the
@@ -447,6 +556,14 @@ Return the name of the current target wide character set
 never returned.
 @end defun
 
+@findex gdb.host_charset
+@defun gdb.host_charset ()
+Return a string, the name of the current host character set
+(@pxref{Character Sets}).  This differs from
+@code{gdb.parameter('host-charset')} in that @samp{auto} is never
+returned.
+@end defun
+
 @findex gdb.solib_name
 @defun gdb.solib_name (address)
 Return the name of the shared library holding the given @var{address}
@@ -466,7 +583,8 @@ either @code{None} or another tuple that contains all the locations
 that match the expression represented as @code{gdb.Symtab_and_line}
 objects (@pxref{Symbol Tables In Python}).  If @var{expression} is
 provided, it is decoded the way that @value{GDBN}'s inbuilt
-@code{break} or @code{edit} commands do (@pxref{Specify Location}).
+@code{break} or @code{edit} commands do (@pxref{Location
+Specifications}).
 @end defun
 
 @defun gdb.prompt_hook (current_prompt)
@@ -485,6 +603,84 @@ the current prompt.
 Some prompts cannot be substituted in @value{GDBN}.  Secondary prompts
 such as those used by readline for command input, and annotation
 related prompts are prohibited from being changed.
+@end defun
+
+@anchor{gdb_architecture_names}
+@defun gdb.architecture_names ()
+Return a list containing all of the architecture names that the
+current build of @value{GDBN} supports.  Each architecture name is a
+string.  The names returned in this list are the same names as are
+returned from @code{gdb.Architecture.name}
+(@pxref{gdbpy_architecture_name,,Architecture.name}).
+@end defun
+
+@anchor{gdbpy_connections}
+@defun gdb.connections
+Return a list of @code{gdb.TargetConnection} objects, one for each
+currently active connection (@pxref{Connections In Python}).  The
+connection objects are in no particular order in the returned list.
+@end defun
+
+@defun gdb.format_address (@var{address} @r{[}, @var{progspace}, @var{architecture}@r{]})
+Return a string in the format @samp{@var{addr}
+<@var{symbol}+@var{offset}>}, where @var{addr} is @var{address}
+formatted in hexadecimal, @var{symbol} is the symbol whose address is
+the nearest to @var{address} and below it in memory, and @var{offset}
+is the offset from @var{symbol} to @var{address} in decimal.
+
+If no suitable @var{symbol} was found, then the
+<@var{symbol}+@var{offset}> part is not included in the returned
+string, instead the returned string will just contain the
+@var{address} formatted as hexadecimal.  How far @value{GDBN} looks
+back for a suitable symbol can be controlled with @kbd{set print
+max-symbolic-offset} (@pxref{Print Settings}).
+
+Additionally, the returned string can include file name and line
+number information when @kbd{set print symbol-filename on}
+(@pxref{Print Settings}), in this case the format of the returned
+string is @samp{@var{addr} <@var{symbol}+@var{offset}> at
+@var{filename}:@var{line-number}}.
+
+
+The @var{progspace} is the gdb.Progspace in which @var{symbol} is
+looked up, and @var{architecture} is used when formatting @var{addr},
+e.g.@: in order to determine the size of an address in bytes.
+
+If neither @var{progspace} or @var{architecture} are passed, then by
+default @value{GDBN} will use the program space and architecture of
+the currently selected inferior, thus, the following two calls are
+equivalent:
+
+@smallexample
+gdb.format_address(address)
+gdb.format_address(address,
+                   gdb.selected_inferior().progspace,
+                   gdb.selected_inferior().architecture())
+@end smallexample
+
+It is not valid to only pass one of @var{progspace} or
+@var{architecture}, either they must both be provided, or neither must
+be provided (and the defaults will be used).
+
+This method uses the same mechanism for formatting address, symbol,
+and offset information as core @value{GDBN} does in commands such as
+@kbd{disassemble}.
+
+Here are some examples of the possible string formats:
+
+@smallexample
+0x00001042
+0x00001042 <symbol+16>
+0x00001042 <symbol+16 at file.c:123>
+@end smallexample
+@end defun
+
+@defun gdb.current_language ()
+Return the name of the current language as a string.  Unlike
+@code{gdb.parameter('language')}, this function will never return
+@samp{auto}.  If a @code{gdb.Frame} object is available (@pxref{Frames
+In Python}), the @code{language} method might be preferable in some
+cases, as that is not affected by the user's language setting.
 @end defun
 
 @node Exception Handling
@@ -559,7 +755,7 @@ rather recognizes it when thrown from user Python code.  Example:
 >    argv = gdb.string_to_argv (args)
 >    if len (argv) != 0:
 >      raise gdb.GdbError ("hello-world takes no arguments")
->    print "Hello, World!"
+>    print ("Hello, World!")
 >HelloWorld ()
 >end
 (gdb) hello-world 42
@@ -741,6 +937,9 @@ This second form of the @code{gdb.Value} constructor returns a
 from the Python buffer object specified by @var{val}.  The number of
 bytes in the Python buffer object must be greater than or equal to the
 size of @var{type}.
+
+If @var{type} is @code{None} then this version of @code{__init__}
+behaves as though @var{type} was not passed at all.
 @end defun
 
 @defun Value.cast (type)
@@ -906,6 +1105,16 @@ corresponding symbol name (if one exists), @code{False} if it shouldn't
 should be expanded, @code{False} if they shouldn't (see @code{set print
 union} in @ref{Print Settings}).
 
+@item address
+@code{True} if the string representation of a pointer should include the
+address, @code{False} if it shouldn't (see @code{set print address} in
+@ref{Print Settings}).
+
+@item nibbles
+@code{True} if binary values should be displayed in groups of four bits,
+known as nibbles.  @code{False} if it shouldn't (@pxref{Print Settings,
+set print nibbles}).
+
 @item deref_refs
 @code{True} if C@t{++} references should be resolved to the value they
 refer to, @code{False} (the default) if they shouldn't.  Note that, unlike
@@ -921,7 +1130,7 @@ identify the @emph{actual} (derived) type of the object rather than the
 the @emph{declared} type should be used.  (See @code{set print object} in
 @ref{Print Settings}).
 
-@item static_fields
+@item static_members
 @code{True} if static members should be included in the string
 representation of a C@t{++} object, @code{False} if they shouldn't (see
 @code{set print static-members} in @ref{Print Settings}).
@@ -946,6 +1155,22 @@ A string containing a single character representing the format to use for
 the returned string.  For instance, @code{'x'} is equivalent to using the
 @value{GDBN} command @code{print} with the @code{/x} option and formats
 the value as a hexadecimal number.
+
+@item styling
+@code{True} if @value{GDBN} should apply styling to the returned
+string.  When styling is applied, the returned string might contain
+ANSI terminal escape sequences.  Escape sequences will only be
+included if styling is turned on, see @ref{Output Styling}.
+Additionally, @value{GDBN} only styles some value contents, so not
+every output string will contain escape sequences.
+
+When @code{False}, which is the default, no output styling is applied.
+
+@item summary
+@code{True} when just a summary should be printed.  In this mode,
+scalar values are printed in their entirety, but aggregates such as
+structures or unions are omitted.  This mode is used by @code{set
+print frame-arguments scalars} (@pxref{Print Settings}).
 @end table
 @end defun
 
@@ -1042,6 +1267,9 @@ Ordinarily, this function will return an instance of @code{gdb.Type}.
 If the named type cannot be found, it will throw an exception.
 @end defun
 
+Integer types can be found without looking them up by name.
+@xref{Architectures In Python}, for the @code{integer_type} method.
+
 If the type is a structure or class type, or an enum type, the fields
 of that type can be accessed using the Python @dfn{dictionary syntax}.
 For example, if @code{some_type} is a @code{gdb.Type} instance holding
@@ -1117,15 +1345,51 @@ The @code{gdb.Objfile} that this type was defined in, or @code{None} if
 there is no associated objfile.
 @end defvar
 
+@defvar Type.is_scalar
+This property is @code{True} if the type is a scalar type, otherwise,
+this property is @code{False}.  Examples of non-scalar types include
+structures, unions, and classes.
+@end defvar
+
+@defvar Type.is_signed
+For scalar types (those for which @code{Type.is_scalar} is
+@code{True}), this property is @code{True} if the type is signed,
+otherwise this property is @code{False}.
+
+Attempting to read this property for a non-scalar type (a type for
+which @code{Type.is_scalar} is @code{False}), will raise a
+@code{ValueError}.
+@end defvar
+
 The following methods are provided:
 
 @defun Type.fields ()
-For structure and union types, this method returns the fields.  Range
-types have two fields, the minimum and maximum values.  Enum types
-have one field per enum constant.  Function and method types have one
-field per parameter.  The base types of C@t{++} classes are also
-represented as fields.  If the type has no fields, or does not fit
-into one of these categories, an empty sequence will be returned.
+
+Return the fields of this type.  The behavior depends on the type code:
+
+@itemize @bullet
+
+@item
+For structure and union types, this method returns the fields.
+
+@item
+Range types have two fields, the minimum and maximum values.
+
+@item
+Enum types have one field per enum constant.
+
+@item
+Function and method types have one field per parameter.  The base types of
+C@t{++} classes are also represented as fields.
+
+@item
+Array types have one field representing the array's range.
+
+@item
+If the type does not fit into one of these categories, a @code{TypeError}
+is raised.
+
+@end itemize
 
 Each field is a @code{gdb.Field} object, with some pre-defined attributes:
 @table @code
@@ -1378,6 +1642,19 @@ A decimal floating point type.
 @item gdb.TYPE_CODE_INTERNAL_FUNCTION
 A function internal to @value{GDBN}.  This is the type used to represent
 convenience functions.
+
+@vindex TYPE_CODE_XMETHOD
+@item gdb.TYPE_CODE_XMETHOD
+A method internal to @value{GDBN}.  This is the type used to represent
+xmethods (@pxref{Writing an Xmethod}).
+
+@vindex TYPE_CODE_FIXED_POINT
+@item gdb.TYPE_CODE_FIXED_POINT
+A fixed-point number.
+
+@vindex TYPE_CODE_NAMESPACE
+@item gdb.TYPE_CODE_NAMESPACE
+A Fortran namelist.
 @end vtable
 
 Further support for types is provided in the @code{gdb.types}
@@ -1489,6 +1766,24 @@ pretty-printer for this value exists, then it is returned.  If no such
 printer exists, then this returns @code{None}.
 @end defun
 
+Normally, a pretty-printer can respect the user's print settings
+(including temporarily applied settings, such as @samp{/x}) simply by
+calling @code{Value.format_string} (@pxref{Values From Inferior}).
+However, these settings can also be queried directly:
+
+@findex gdb.print_options
+@defun gdb.print_options ()
+Return a dictionary whose keys are the valid keywords that can be
+given to @code{Value.format_string}, and whose values are the user's
+settings.  During a @code{print} or other operation, the values will
+reflect any flags that are temporarily in effect.
+
+@smallexample
+(gdb) python print (gdb.print_options ()['max_elements'])
+200
+@end smallexample
+@end defun
+
 @node Selecting Pretty-Printers
 @subsubsection Selecting Pretty-Printers
 @cindex selecting python pretty-printers
@@ -1580,7 +1875,7 @@ example above might be written.
 @smallexample
 def str_lookup_function(val):
     lookup_tag = val.type.tag
-    if lookup_tag == None:
+    if lookup_tag is None:
         return None
     regex = re.compile("^std::basic_string<char,.*>$")
     if regex.match(lookup_tag):
@@ -1980,7 +2275,7 @@ must contain the frames that are being elided wrapped in a suitable
 frame decorator.  If no frames are being elided this function may
 return an empty iterable, or @code{None}.  Elided frames are indented
 from normal frames in a @code{CLI} backtrace, or in the case of
-@code{GDB/MI}, are placed in the @code{children} field of the eliding
+@sc{GDB/MI}, are placed in the @code{children} field of the eliding
 frame.
 
 It is the frame filter's task to also filter out the elided frames from
@@ -2040,7 +2335,7 @@ empty iterable, or @code{None} means frame arguments will not be
 printed for this frame.  This iterable must contain objects that
 implement two methods, described here.
 
-This object must implement a @code{argument} method which takes a
+This object must implement a @code{symbol} method which takes a
 single @code{self} parameter and must return a @code{gdb.Symbol}
 (@pxref{Symbols In Python}), or a Python string.  The object must also
 implement a @code{value} method which takes a single @code{self}
@@ -2286,7 +2581,7 @@ class InlinedFrameDecorator(FrameDecorator):
         super(InlinedFrameDecorator, self).__init__(fobj)
 
     def function(self):
-        frame = fobj.inferior_frame()
+        frame = self.inferior_frame()
         name = str(frame.name())
 
         if frame.type() == gdb.INLINE_FRAME:
@@ -2524,6 +2819,11 @@ for this @code{gdb.PendingFrame}.  This represents the architecture of
 the particular frame being unwound.
 @end defun
 
+@defun PendingFrame.level ()
+Return an integer, the stack frame level for this frame.
+@xref{Frames, ,Stack Frames}.
+@end defun
+
 @subheading Unwinder Output: UnwindInfo
 
 Use @code{PendingFrame.create_unwind_info} method described above to
@@ -2574,21 +2874,21 @@ class MyUnwinder(Unwinder):
 
 @end smallexample
 
-@subheading Registering a Unwinder
+@subheading Registering an Unwinder
 
-An object file, a program space, and the @value{GDBN} proper can have
-unwinders registered with it.
+Object files and program spaces can have unwinders registered with
+them.  In addition, you can also register unwinders globally.
 
-The @code{gdb.unwinders} module provides the function to register a
+The @code{gdb.unwinders} module provides the function to register an
 unwinder:
 
 @defun gdb.unwinder.register_unwinder (locus, unwinder, replace=False)
-@var{locus} is specifies an object file or a program space to which
-@var{unwinder} is added.  Passing @code{None} or @code{gdb} adds
-@var{unwinder} to the @value{GDBN}'s global unwinder list.  The newly
-added @var{unwinder} will be called before any other unwinder from the
+@var{locus} specifies to which unwinder list to prepend the
+@var{unwinder}.  It can be either an object file, a program space, or
+@code{None}, in which case the unwinder is registered globally.  The
+newly added @var{unwinder} will be called before any other unwinder from the
 same locus.  Two unwinders in the same locus cannot have the same
-name.  An attempt to add a unwinder with already existing name raises
+name.  An attempt to add an unwinder with an already existing name raises
 an exception unless @var{replace} is @code{True}, in which case the
 old unwinder is deleted.
 @end defun
@@ -2984,6 +3284,20 @@ A @code{gdb.Inferior} object has the following attributes:
 ID of inferior, as assigned by GDB.
 @end defvar
 
+@anchor{gdbpy_inferior_connection}
+@defvar Inferior.connection
+The @code{gdb.TargetConnection} for this inferior (@pxref{Connections
+In Python}), or @code{None} if this inferior has no connection.
+@end defvar
+
+@defvar Inferior.connection_num
+ID of inferior's connection as assigned by @value{GDBN}, or None if
+the inferior is not connected to a target.  @xref{Inferiors Connections
+and Programs}.  This is equivalent to
+@code{gdb.Inferior.connection.num} in the case where
+@code{gdb.Inferior.connection} is not @code{None}.
+@end defvar
+
 @defvar Inferior.pid
 Process ID of the inferior, as assigned by the underlying operating
 system.
@@ -3022,6 +3336,7 @@ single address space, so this may not match the architecture of a
 particular frame (@pxref{Frames In Python}).
 @end defun
 
+@anchor{gdbpy_inferior_read_memory}
 @findex Inferior.read_memory
 @defun Inferior.read_memory (address, length)
 Read @var{length} addressable memory units from the inferior, starting at
@@ -3095,8 +3410,11 @@ Here is an example:
 
 @smallexample
 def exit_handler (event):
-    print "event type: exit"
-    print "exit code: %d" % (event.exit_code)
+    print ("event type: exit")
+    if hasattr (event, 'exit_code'):
+        print ("exit code: %d" % (event.exit_code))
+    else:
+        print ("exit code not available")
 
 gdb.events.exited.connect (exit_handler)
 @end smallexample
@@ -3108,56 +3426,58 @@ of type @code{gdb.ExitedEvent}.  As you can see in the example the
 @code{ExitedEvent} object has an attribute which indicates the exit code of
 the inferior.
 
-The following is a listing of the event registries that are available and
-details of the events they emit:
-
-@table @code
-
-@item events.cont
-Emits @code{gdb.ThreadEvent}.
-
-Some events can be thread specific when @value{GDBN} is running in non-stop
-mode.  When represented in Python, these events all extend
-@code{gdb.ThreadEvent}.  Note, this event is not emitted directly; instead,
-events which are emitted by this or other modules might extend this event.
-Examples of these events are @code{gdb.BreakpointEvent} and
-@code{gdb.ContinueEvent}.
+Some events can be thread specific when @value{GDBN} is running in
+non-stop mode.  When represented in Python, these events all extend
+@code{gdb.ThreadEvent}.  This event is a base class and is never
+emitted directly; instead, events which are emitted by this or other
+modules might extend this event.  Examples of these events are
+@code{gdb.BreakpointEvent} and @code{gdb.ContinueEvent}.
+@code{gdb.ThreadEvent} holds the following attributes:
 
 @defvar ThreadEvent.inferior_thread
 In non-stop mode this attribute will be set to the specific thread which was
 involved in the emitted event. Otherwise, it will be set to @code{None}.
 @end defvar
 
-Emits @code{gdb.ContinueEvent} which extends @code{gdb.ThreadEvent}.
+The following is a listing of the event registries that are available and
+details of the events they emit:
 
-This event indicates that the inferior has been continued after a stop. For
-inherited attribute refer to @code{gdb.ThreadEvent} above.
+@table @code
+
+@item events.cont
+Emits @code{gdb.ContinueEvent}, which extends @code{gdb.ThreadEvent}.
+This event indicates that the inferior has been continued after a
+stop. For inherited attribute refer to @code{gdb.ThreadEvent} above.
 
 @item events.exited
-Emits @code{events.ExitedEvent} which indicates that the inferior has exited.
-@code{events.ExitedEvent} has two attributes:
+Emits @code{events.ExitedEvent}, which indicates that the inferior has
+exited.  @code{events.ExitedEvent} has two attributes:
+
 @defvar ExitedEvent.exit_code
 An integer representing the exit code, if available, which the inferior 
 has returned.  (The exit code could be unavailable if, for example,
 @value{GDBN} detaches from the inferior.) If the exit code is unavailable,
 the attribute does not exist.
 @end defvar
+
 @defvar ExitedEvent.inferior
 A reference to the inferior which triggered the @code{exited} event.
 @end defvar
 
 @item events.stop
-Emits @code{gdb.StopEvent} which extends @code{gdb.ThreadEvent}.
+Emits @code{gdb.StopEvent}, which extends @code{gdb.ThreadEvent}.
 
-Indicates that the inferior has stopped.  All events emitted by this registry
-extend StopEvent.  As a child of @code{gdb.ThreadEvent}, @code{gdb.StopEvent}
-will indicate the stopped thread when @value{GDBN} is running in non-stop
-mode.  Refer to @code{gdb.ThreadEvent} above for more details.
+Indicates that the inferior has stopped.  All events emitted by this
+registry extend @code{gdb.StopEvent}.  As a child of
+@code{gdb.ThreadEvent}, @code{gdb.StopEvent} will indicate the stopped
+thread when @value{GDBN} is running in non-stop mode.  Refer to
+@code{gdb.ThreadEvent} above for more details.
 
-Emits @code{gdb.SignalEvent} which extends @code{gdb.StopEvent}.
+Emits @code{gdb.SignalEvent}, which extends @code{gdb.StopEvent}.
 
-This event indicates that the inferior or one of its threads has received as
-signal.  @code{gdb.SignalEvent} has the following attributes:
+This event indicates that the inferior or one of its threads has
+received a signal.  @code{gdb.SignalEvent} has the following
+attributes:
 
 @defvar SignalEvent.stop_signal
 A string representing the signal received by the inferior.  A list of possible
@@ -3165,7 +3485,8 @@ signal values can be obtained by running the command @code{info signals} in
 the @value{GDBN} command prompt.
 @end defvar
 
-Also emits  @code{gdb.BreakpointEvent} which extends @code{gdb.StopEvent}.
+Also emits @code{gdb.BreakpointEvent}, which extends
+@code{gdb.StopEvent}.
 
 @code{gdb.BreakpointEvent} event indicates that one or more breakpoints have
 been hit, and has the following attributes:
@@ -3175,10 +3496,11 @@ A sequence containing references to all the breakpoints (type
 @code{gdb.Breakpoint}) that were hit.
 @xref{Breakpoints In Python}, for details of the @code{gdb.Breakpoint} object.
 @end defvar
+
 @defvar BreakpointEvent.breakpoint
-A reference to the first breakpoint that was hit.
-This function is maintained for backward compatibility and is now deprecated 
-in favor of the @code{gdb.BreakpointEvent.breakpoints} attribute.
+A reference to the first breakpoint that was hit.  This attribute is
+maintained for backward compatibility and is now deprecated in favor
+of the @code{gdb.BreakpointEvent.breakpoints} attribute.
 @end defvar
 
 @item events.new_objfile
@@ -3187,6 +3509,17 @@ been loaded by @value{GDBN}.  @code{gdb.NewObjFileEvent} has one attribute:
 
 @defvar NewObjFileEvent.new_objfile
 A reference to the object file (@code{gdb.Objfile}) which has been loaded.
+@xref{Objfiles In Python}, for details of the @code{gdb.Objfile} object.
+@end defvar
+
+@item events.free_objfile
+Emits @code{gdb.FreeObjFileEvent} which indicates that an object file
+is about to be removed from @value{GDBN}.  One reason this can happen
+is when the inferior calls @code{dlclose}.
+@code{gdb.FreeObjFileEvent} has one attribute:
+
+@defvar NewObjFileEvent.objfile
+A reference to the object file (@code{gdb.Objfile}) which will be unloaded.
 @xref{Objfiles In Python}, for details of the @code{gdb.Objfile} object.
 @end defvar
 
@@ -3296,7 +3629,7 @@ is removed, say via @code{remove-inferiors}.
 The event is of type @code{gdb.InferiorDeletedEvent}.  This has a single
 attribute:
 
-@defvar NewInferiorEvent.inferior
+@defvar InferiorDeletedEvent.inferior
 The inferior that is being removed, a @code{gdb.Inferior} object.
 @end defvar
 
@@ -3307,6 +3640,25 @@ This has a single attribute:
 
 @defvar NewThreadEvent.inferior_thread
 The new thread.
+@end defvar
+
+@item events.gdb_exiting
+This is emitted when @value{GDBN} exits.  This event is not emitted if
+@value{GDBN} exits as a result of an internal error, or after an
+unexpected signal.  The event is of type @code{gdb.GdbExitingEvent},
+which has a single attribute:
+
+@defvar GdbExitingEvent.exit_code
+An integer, the value of the exit code @value{GDBN} will return.
+@end defvar
+
+@item events.connection_removed
+This is emitted when @value{GDBN} removes a connection
+(@pxref{Connections In Python}).  The event is of type
+@code{gdb.ConnectionEvent}.  This has a single read-only attribute:
+
+@defvar ConnectionEvent.connection
+The @code{gdb.TargetConnection} that is being removed.
 @end defvar
 
 @end table
@@ -3365,6 +3717,23 @@ does not  use that identifier.
 @defvar InferiorThread.inferior
 The inferior this thread belongs to.  This attribute is represented as
 a @code{gdb.Inferior} object.  This attribute is not writable.
+@end defvar
+
+@defvar InferiorThread.details
+A string containing target specific thread state information.  The
+format of this string varies by target.  If there is no additional
+state information for this thread, then this attribute contains
+@code{None}.
+
+For example, on a @sc{gnu}/Linux system, a thread that is in the
+process of exiting will return the string @samp{Exiting}.  For remote
+targets the @code{details} string will be obtained with the
+@samp{qThreadExtraInfo} remote packet, if the target supports it
+(@pxref{qThreadExtraInfo,,@samp{qThreadExtraInfo}}).
+
+@value{GDBN} displays the @code{details} string as part of the
+@samp{Target Id} column, in the @code{info threads} output
+(@pxref{info_threads,,@samp{info threads}}).
 @end defvar
 
 A @code{gdb.InferiorThread} object has the following methods:
@@ -3643,11 +4012,12 @@ def countrange (filename, linerange):
     return count
 @end smallexample
 
-@node Commands In Python
-@subsubsection Commands In Python
+@node CLI Commands In Python
+@subsubsection CLI Commands In Python
 
-@cindex commands in python
-@cindex python commands
+@cindex CLI commands in python
+@cindex commands in python, CLI
+@cindex python commands, CLI
 You can implement new @value{GDBN} CLI commands in Python.  A CLI
 command is implemented using an instance of the @code{gdb.Command}
 class, most commonly using a subclass.
@@ -3689,8 +4059,10 @@ not documented.'' is used.
 @defun Command.dont_repeat ()
 By default, a @value{GDBN} command is repeated when the user enters a
 blank line at the command prompt.  A command can suppress this
-behavior by invoking the @code{dont_repeat} method.  This is similar
-to the user command @code{dont-repeat}, see @ref{Define, dont-repeat}.
+behavior by invoking the @code{dont_repeat} method at some point in
+its @code{invoke} method (normally this is done early in case of
+exception).  This is similar to the user command @code{dont-repeat},
+see @ref{Define, dont-repeat}.
 @end defun
 
 @defun Command.invoke (argument, from_tty)
@@ -3886,7 +4258,7 @@ This constant means that filename completion should be performed.
 @vindex COMPLETE_LOCATION
 @item gdb.COMPLETE_LOCATION
 This constant means that location completion should be done.
-@xref{Specify Location}.
+@xref{Location Specifications}.
 
 @vindex COMPLETE_COMMAND
 @item gdb.COMPLETE_COMMAND
@@ -3916,7 +4288,7 @@ class HelloWorld (gdb.Command):
     super (HelloWorld, self).__init__ ("hello-world", gdb.COMMAND_USER)
 
   def invoke (self, arg, from_tty):
-    print "Hello, World!"
+    print ("Hello, World!")
 
 HelloWorld ()
 @end smallexample
@@ -3925,6 +4297,154 @@ The last line instantiates the class, and is necessary to trigger the
 registration of the command with @value{GDBN}.  Depending on how the
 Python code is read into @value{GDBN}, you may need to import the
 @code{gdb} module explicitly.
+
+@node GDB/MI Commands In Python
+@subsubsection @sc{GDB/MI} Commands In Python
+
+@cindex MI commands in python
+@cindex commands in python, GDB/MI
+@cindex python commands, GDB/MI
+It is possible to add @sc{GDB/MI} (@pxref{GDB/MI}) commands
+implemented in Python.  A @sc{GDB/MI} command is implemented using an
+instance of the @code{gdb.MICommand} class, most commonly using a
+subclass.
+
+@defun MICommand.__init__ (name)
+The object initializer for @code{MICommand} registers the new command
+with @value{GDBN}.  This initializer is normally invoked from the
+subclass' own @code{__init__} method.
+
+@var{name} is the name of the command.  It must be a valid name of a
+@sc{GDB/MI} command, and in particular must start with a hyphen
+(@code{-}).  Reusing the name of a built-in @sc{GDB/MI} is not
+allowed, and a @code{RuntimeError} will be raised.  Using the name
+of an @sc{GDB/MI} command previously defined in Python is allowed, the
+previous command will be replaced with the new command.
+@end defun
+
+@defun MICommand.invoke (arguments)
+This method is called by @value{GDBN} when the new MI command is
+invoked.
+
+@var{arguments} is a list of strings.  Note, that @code{--thread}
+and @code{--frame} arguments are handled by @value{GDBN} itself therefore
+they do not show up in @code{arguments}.
+
+If this method raises an exception, then it is turned into a
+@sc{GDB/MI} @code{^error} response.  Only @code{gdb.GdbError}
+exceptions (or its sub-classes) should be used for reporting errors to
+users, any other exception type is treated as a failure of the
+@code{invoke} method, and the exception will be printed to the error
+stream according to the @kbd{set python print-stack} setting
+(@pxref{set_python_print_stack,,@kbd{set python print-stack}}).
+
+If this method returns @code{None}, then the @sc{GDB/MI} command will
+return a @code{^done} response with no additional values.
+
+Otherwise, the return value must be a dictionary, which is converted
+to a @sc{GDB/MI} @var{result-record} (@pxref{GDB/MI Output Syntax}).
+The keys of this dictionary must be strings, and are used as
+@var{variable} names in the @var{result-record}, these strings must
+comply with the naming rules detailed below.  The values of this
+dictionary are recursively handled as follows:
+
+@itemize
+@item
+If the value is Python sequence or iterator, it is converted to
+@sc{GDB/MI} @var{list} with elements converted recursively.
+
+@item
+If the value is Python dictionary, it is converted to
+@sc{GDB/MI} @var{tuple}.  Keys in that dictionary must be strings,
+which comply with the @var{variable} naming rules detailed below.
+Values are converted recursively.
+
+@item
+Otherwise, value is first converted to a Python string using
+@code{str ()} and then converted to @sc{GDB/MI} @var{const}.
+@end itemize
+
+The strings used for @var{variable} names in the @sc{GDB/MI} output
+must follow the following rules; the string must be at least one
+character long, the first character must be in the set
+@code{[a-zA-Z]}, while every subsequent character must be in the set
+@code{[-_a-zA-Z0-9]}.
+@end defun
+
+An instance of @code{MICommand} has the following attributes:
+
+@defvar MICommand.name
+A string, the name of this @sc{GDB/MI} command, as was passed to the
+@code{__init__} method.  This attribute is read-only.
+@end defvar
+
+@defvar MICommand.installed
+A boolean value indicating if this command is installed ready for a
+user to call from the command line.  Commands are automatically
+installed when they are instantiated, after which this attribute will
+be @code{True}.
+
+If later, a new command is created with the same name, then the
+original command will become uninstalled, and this attribute will be
+@code{False}.
+
+This attribute is read-write, setting this attribute to @code{False}
+will uninstall the command, removing it from the set of available
+commands.  Setting this attribute to @code{True} will install the
+command for use.  If there is already a Python command with this name
+installed, the currently installed command will be uninstalled, and
+this command installed in its place.
+@end defvar
+
+The following code snippet shows how a two trivial MI command can be
+implemented in Python:
+
+@smallexample
+class MIEcho(gdb.MICommand):
+    """Echo arguments passed to the command."""
+
+    def __init__(self, name, mode):
+        self._mode = mode
+        super(MIEcho, self).__init__(name)
+
+    def invoke(self, argv):
+        if self._mode == 'dict':
+            return @{ 'dict': @{ 'argv' : argv @} @}
+        elif self._mode == 'list':
+            return @{ 'list': argv @}
+        else:
+            return @{ 'string': ", ".join(argv) @}
+
+
+MIEcho("-echo-dict", "dict")
+MIEcho("-echo-list", "list")
+MIEcho("-echo-string", "string")
+@end smallexample
+
+The last three lines instantiate the class three times, creating three
+new @sc{GDB/MI} commands @code{-echo-dict}, @code{-echo-list}, and
+@code{-echo-string}.  Each time a subclass of @code{gdb.MICommand} is
+instantiated, the new command is automatically registered with
+@value{GDBN}.
+
+Depending on how the Python code is read into @value{GDBN}, you may
+need to import the @code{gdb} module explicitly.
+
+The following example shows a @value{GDBN} session in which the above
+commands have been added:
+
+@smallexample
+(@value{GDBP})
+-echo-dict abc def ghi
+^done,dict=@{argv=["abc","def","ghi"]@}
+(@value{GDBP})
+-echo-list abc def ghi
+^done,list=["abc","def","ghi"]
+(@value{GDBP})
+-echo-string abc def ghi
+^done,string="abc, def, ghi"
+(@value{GDBP})
+@end smallexample
 
 @node Parameters In Python
 @subsubsection Parameters In Python
@@ -3963,7 +4483,7 @@ If @var{name} consists of multiple words, and no prefix parameter group
 can be found, an exception is raised.
 
 @var{command-class} should be one of the @samp{COMMAND_} constants
-(@pxref{Commands In Python}).  This argument tells @value{GDBN} how to
+(@pxref{CLI Commands In Python}).  This argument tells @value{GDBN} how to
 categorize the new parameter in the help system.
 
 @var{parameter-class} should be one of the @samp{PARAM_} constants
@@ -3978,23 +4498,46 @@ represent the possible values for the parameter.
 If @var{parameter-class} is not @code{PARAM_ENUM}, then the presence
 of a fourth argument will cause an exception to be thrown.
 
-The help text for the new parameter is taken from the Python
-documentation string for the parameter's class, if there is one.  If
-there is no documentation string, a default value is used.
+The help text for the new parameter includes the Python documentation
+string from the parameter's class, if there is one.  If there is no
+documentation string, a default value is used.  The documentation
+string is included in the output of the parameters @code{help set} and
+@code{help show} commands, and should be written taking this into
+account.
 @end defun
 
 @defvar Parameter.set_doc
 If this attribute exists, and is a string, then its value is used as
-the help text for this parameter's @code{set} command.  The value is
-examined when @code{Parameter.__init__} is invoked; subsequent changes
-have no effect.
+the first part of the help text for this parameter's @code{set}
+command.  The second part of the help text is taken from the
+documentation string for the parameter's class, if there is one.
+
+The value of @code{set_doc} should give a brief summary specific to
+the set action, this text is only displayed when the user runs the
+@code{help set} command for this parameter.  The class documentation
+should be used to give a fuller description of what the parameter
+does, this text is displayed for both the @code{help set} and
+@code{help show} commands.
+
+The @code{set_doc} value is examined when @code{Parameter.__init__} is
+invoked; subsequent changes have no effect.
 @end defvar
 
 @defvar Parameter.show_doc
 If this attribute exists, and is a string, then its value is used as
-the help text for this parameter's @code{show} command.  The value is
-examined when @code{Parameter.__init__} is invoked; subsequent changes
-have no effect.
+the first part of the help text for this parameter's @code{show}
+command.  The second part of the help text is taken from the
+documentation string for the parameter's class, if there is one.
+
+The value of @code{show_doc} should give a brief summary specific to
+the show action, this text is only displayed when the user runs the
+@code{help show} command for this parameter.  The class documentation
+should be used to give a fuller description of what the parameter
+does, this text is displayed for both the @code{help set} and
+@code{help show} commands.
+
+The @code{show_doc} value is examined when @code{Parameter.__init__}
+is invoked; subsequent changes have no effect.
 @end defvar
 
 @defvar Parameter.value
@@ -4036,6 +4579,7 @@ class ExampleParam (gdb.Parameter):
         self.value = self.saved_value
         raise gdb.GdbError('Failed to validate')
       self.saved_value = self.value
+      return ""
 @end smallexample
 @end defun
 
@@ -4304,7 +4848,7 @@ def clear_objfiles_handler(event):
     event.progspace.expensive_computation = None
 def expensive(symbol):
     """A mock routine to perform an "expensive" computation on symbol."""
-    print "Computing the answer to the ultimate question ..."
+    print ("Computing the answer to the ultimate question ...")
     return 42
 def new_objfile_handler(event):
     objfile = event.new_objfile
@@ -4363,7 +4907,7 @@ historical compatibility.
 @end defun
 
 @findex gdb.lookup_objfile
-@defun gdb.lookup_objfile (name @r{[}, by_build_id{]})
+@defun gdb.lookup_objfile (name @r{[}, by_build_id@r{]})
 Look up @var{name}, a file name or build ID, in the list of objfiles
 for the current program space (@pxref{Progspaces In Python}).
 If the objfile is not found throw the Python @code{ValueError} exception.
@@ -4398,6 +4942,13 @@ The file name of the objfile as specified by the user as a string.
 
 The value is @code{None} if the objfile is no longer valid.
 See the @code{gdb.Objfile.is_valid} method, described below.
+@end defvar
+
+@defvar Objfile.is_file
+An objfile often comes from an ordinary file, but in some cases it may
+be constructed from the contents of memory.  This attribute is
+@code{True} for file-backed objfiles, and @code{False} for other
+kinds.
 @end defvar
 
 @defvar Objfile.owner
@@ -4649,7 +5200,7 @@ versions.  Using it, you could write:
 reason = gdb.selected_frame().unwind_stop_reason ()
 reason_str =  gdb.frame_stop_reason_string (reason)
 if reason >=  gdb.FRAME_UNWIND_FIRST_ERROR:
-    print "An error occured: %s" % reason_str
+    print ("An error occured: %s" % reason_str)
 @end smallexample
 @end table
 
@@ -4723,6 +5274,14 @@ argument must be a string or a @code{gdb.Symbol} object; @var{block} must be a
 @defun Frame.select ()
 Set this frame to be the selected frame.  @xref{Stack, ,Examining the
 Stack}.
+@end defun
+
+@defun Frame.level ()
+Return an integer, the stack frame level for this frame.  @xref{Frames, ,Stack Frames}.
+@end defun
+
+@defun Frame.language ()
+Return a string, the source language for this frame.
 @end defun
 
 @node Blocks In Python
@@ -5126,6 +5685,10 @@ Value is a local variable.
 Value not used.  Symbols in the domain @code{SYMBOL_STRUCT_DOMAIN} all
 have this class.
 
+@vindex SYMBOL_LOC_LABEL
+@item gdb.SYMBOL_LOC_LABEL
+Value is a label.
+
 @vindex SYMBOL_LOC_BLOCK
 @item gdb.SYMBOL_LOC_BLOCK
 Value is a block.
@@ -5148,8 +5711,8 @@ The value does not actually exist in the program.
 @item gdb.SYMBOL_LOC_COMPUTED
 The value's address is a computed location.
 
-@vindex SYMBOL_LOC_COMPUTED
-@item gdb.SYMBOL_LOC_COMPUTED
+@vindex SYMBOL_LOC_COMMON_BLOCK
+@item gdb.SYMBOL_LOC_COMMON_BLOCK
 The value's address is a symbol.  This is only used for Fortran common
 blocks.
 @end vtable
@@ -5290,7 +5853,7 @@ example illustrating iterating over a line table.
 symtab = gdb.selected_frame().find_sal().symtab
 linetable = symtab.linetable()
 for line in linetable:
-   print "Line: "+str(line.line)+" Address: "+hex(line.pc)
+   print ("Line: "+str(line.line)+" Address: "+hex(line.pc))
 @end smallexample
 
 This will have the following output:
@@ -5397,6 +5960,10 @@ module:
 @item gdb.BP_BREAKPOINT
 Normal code breakpoint.
 
+@vindex BP_HARDWARE_BREAKPOINT
+@item gdb.BP_HARDWARE_BREAKPOINT
+Hardware assisted code breakpoint.
+
 @vindex BP_WATCHPOINT
 @item gdb.BP_WATCHPOINT
 Watchpoint breakpoint.
@@ -5412,9 +5979,16 @@ Hardware assisted read watchpoint.
 @vindex BP_ACCESS_WATCHPOINT
 @item gdb.BP_ACCESS_WATCHPOINT
 Hardware assisted access watchpoint.
+
+@vindex BP_CATCHPOINT
+@item gdb.BP_CATCHPOINT
+Catchpoint.  Currently, this type can't be used when creating
+@code{gdb.Breakpoint} objects, but will be present in
+@code{gdb.Breakpoint} objects reported from
+@code{gdb.BreakpointEvent}s (@pxref{Events In Python}).
 @end vtable
 
-The available watchpoint types represented by constants are defined in the
+The available watchpoint types are represented by constants defined in the
 @code{gdb} module:
 
 @vtable @code
@@ -5559,6 +6133,15 @@ the user.  It is a string.  If the breakpoint does not have a location
 attribute is not writable.
 @end defvar
 
+@defvar Breakpoint.locations
+Get the most current list of breakpoint locations that are inserted for this
+breakpoint, with elements of type @code{gdb.BreakpointLocation}
+(described below).  This functionality matches that of the
+@code{info breakpoint} command (@pxref{Set Breaks}), in that it only retrieves
+the most current list of locations, thus the list itself when returned is
+not updated behind the scenes.  This attribute is not writable.
+@end defvar
+
 @defvar Breakpoint.expression
 This attribute holds a breakpoint expression, as specified by
 the user.  It is a string.  If the breakpoint does not have an
@@ -5577,6 +6160,68 @@ This attribute holds the commands attached to the breakpoint.  If
 there are commands, this attribute's value is a string holding all the
 commands, separated by newlines.  If there are no commands, this
 attribute is @code{None}.  This attribute is writable.
+@end defvar
+
+@subheading Breakpoint Locations
+
+A breakpoint location is one of the actual places where a breakpoint has been
+set, represented in the Python API by the @code{gdb.BreakpointLocation}
+type.  This type is never instantiated by the user directly, but is retrieved
+from @code{Breakpoint.locations} which returns a list of breakpoint
+locations where it is currently set.  Breakpoint locations can become
+invalid if new symbol files are loaded or dynamically loaded libraries are
+closed.  Accessing the attributes of an invalidated breakpoint location will
+throw a @code{RuntimeError} exception.  Access the @code{Breakpoint.locations}
+attribute again to retrieve the new and valid breakpoints location list.
+
+@defvar BreakpointLocation.source
+This attribute returns the source file path and line number where this location
+was set. The type of the attribute is a tuple of @var{string} and
+@var{long}.  If the breakpoint location doesn't have a source location,
+it returns None, which is the case for watchpoints and catchpoints.
+This will throw a @code{RuntimeError} exception if the location
+has been invalidated. This attribute is not writable.
+@end defvar
+
+@defvar BreakpointLocation.address
+This attribute returns the address where this location was set.
+This attribute is of type long.  This will throw a @code{RuntimeError}
+exception if the location has been invalidated.  This attribute is
+not writable.
+@end defvar
+
+@defvar BreakpointLocation.enabled
+This attribute holds the value for whether or not this location is enabled.
+This attribute is writable (boolean).  This will throw a @code{RuntimeError}
+exception if the location has been invalidated.
+@end defvar
+
+@defvar BreakpointLocation.owner
+This attribute holds a reference to the @code{gdb.Breakpoint} owner object,
+from which this @code{gdb.BreakpointLocation} was retrieved from.
+This will throw a @code{RuntimeError} exception if the location has been
+invalidated.  This attribute is not writable.
+@end defvar
+
+@defvar BreakpointLocation.function
+This attribute gets the name of the function where this location was set.
+If no function could be found this attribute returns @code{None}.
+This will throw a @code{RuntimeError} exception if the location has
+been invalidated.  This attribute is not writable.
+@end defvar
+
+@defvar BreakpointLocation.fullname
+This attribute gets the full name of where this location was set.  If no
+full name could be found, this attribute returns @code{None}.
+This will throw a @code{RuntimeError} exception if the location has
+been invalidated.  This attribute is not writable.
+@end defvar
+
+@defvar BreakpointLocation.thread_groups
+This attribute gets the thread groups it was set in.  It returns a @code{List}
+of the thread group ID's.  This will throw a @code{RuntimeError}
+exception if the location has been invalidated.  This attribute
+is not writable.
 @end defvar
 
 @node Finish Breakpoints in Python
@@ -5613,11 +6258,11 @@ method:
 @smallexample
 class MyFinishBreakpoint (gdb.FinishBreakpoint)
     def stop (self):
-        print "normal finish"
+        print ("normal finish")
         return True
     
     def out_of_scope ():
-        print "abnormal finish"
+        print ("abnormal finish")
 @end smallexample 
 @end defun
 
@@ -5695,6 +6340,7 @@ by an instance of the @code{gdb.Architecture} class.
 
 A @code{gdb.Architecture} class has the following methods:
 
+@anchor{gdbpy_architecture_name}
 @defun Architecture.name ()
 Return the name (string value) of the architecture.
 @end defun
@@ -5733,6 +6379,21 @@ The value corresponding to this key is the length (integer value) of the
 instruction in bytes.
 
 @end table
+@end defun
+
+@findex Architecture.integer_type
+@defun Architecture.integer_type (size @r{[}, signed@r{]})
+This function looks up an integer type by its @var{size}, and
+optionally whether or not it is signed.
+
+@var{size} is the size, in bits, of the desired integer type.  Only
+certain sizes are currently supported: 0, 8, 16, 24, 32, 64, and 128.
+
+If @var{signed} is not specified, it defaults to @code{True}.  If
+@var{signed} is @code{False}, the returned type will be unsigned.
+
+If the indicated type cannot be found, this function will throw a
+@code{ValueError} exception.
 @end defun
 
 @anchor{gdbpy_architecture_registers}
@@ -5807,6 +6468,134 @@ properties:
 A string that is the name of this register group.
 @end defvar
 
+@node Connections In Python
+@subsubsection Connections In Python
+@cindex connections in python
+@value{GDBN} lets you run and debug multiple programs in a single
+session.  Each program being debugged has a connection, the connection
+describes how @value{GDBN} controls the program being debugged.
+Examples of different connection types are @samp{native} and
+@samp{remote}.  @xref{Inferiors Connections and Programs}.
+
+Connections in @value{GDBN} are represented as instances of
+@code{gdb.TargetConnection}, or as one of its sub-classes.  To get a
+list of all connections use @code{gdb.connections}
+(@pxref{gdbpy_connections,,gdb.connections}).
+
+To get the connection for a single @code{gdb.Inferior} read its
+@code{gdb.Inferior.connection} attribute
+(@pxref{gdbpy_inferior_connection,,gdb.Inferior.connection}).
+
+Currently there is only a single sub-class of
+@code{gdb.TargetConnection}, @code{gdb.RemoteTargetConnection},
+however, additional sub-classes may be added in future releases of
+@value{GDBN}.  As a result you should avoid writing code like:
+
+@smallexample
+conn = gdb.selected_inferior().connection
+if type(conn) is gdb.RemoteTargetConnection:
+  print("This is a remote target connection")
+@end smallexample
+
+@noindent
+as this may fail when more connection types are added.  Instead, you
+should write:
+
+@smallexample
+conn = gdb.selected_inferior().connection
+if isinstance(conn, gdb.RemoteTargetConnection):
+  print("This is a remote target connection")
+@end smallexample
+
+A @code{gdb.TargetConnection} has the following method:
+
+@defun TargetConnection.is_valid ()
+Return @code{True} if the @code{gdb.TargetConnection} object is valid,
+@code{False} if not.  A @code{gdb.TargetConnection} will become
+invalid if the connection no longer exists within @value{GDBN}, this
+might happen when no inferiors are using the connection, but could be
+delayed until the user replaces the current target.
+
+Reading any of the @code{gdb.TargetConnection} properties will throw
+an exception if the connection is invalid.
+@end defun
+
+A @code{gdb.TargetConnection} has the following read-only properties:
+
+@defvar TargetConnection.num
+An integer assigned by @value{GDBN} to uniquely identify this
+connection.  This is the same value as displayed in the @samp{Num}
+column of the @code{info connections} command output (@pxref{Inferiors
+Connections and Programs,,info connections}).
+@end defvar
+
+@defvar TargetConnection.type
+A string that describes what type of connection this is.  This string
+will be one of the valid names that can be passed to the @code{target}
+command (@pxref{Target Commands,,target command}).
+@end defvar
+
+@defvar TargetConnection.description
+A string that gives a short description of this target type.  This is
+the same string that is displayed in the @samp{Description} column of
+the @code{info connection} command output (@pxref{Inferiors
+Connections and Programs,,info connections}).
+@end defvar
+
+@defvar TargetConnection.details
+An optional string that gives additional information about this
+connection.  This attribute can be @code{None} if there are no
+additional details for this connection.
+
+An example of a connection type that might have additional details is
+the @samp{remote} connection, in this case the details string can
+contain the @samp{@var{hostname}:@var{port}} that was used to connect
+to the remote target.
+@end defvar
+
+The @code{gdb.RemoteTargetConnection} class is a sub-class of
+@code{gdb.TargetConnection}, and is used to represent @samp{remote}
+and @samp{extended-remote} connections.  In addition to the attributes
+and methods available from the @code{gdb.TargetConnection} base class,
+a @code{gdb.RemoteTargetConnection} has the following method:
+
+@kindex maint packet
+@defun RemoteTargetConnection.send_packet (@var{packet})
+This method sends @var{packet} to the remote target and returns the
+response.  The @var{packet} should either be a @code{bytes} object, or
+a @code{Unicode} string.
+
+If @var{packet} is a @code{Unicode} string, then the string is encoded
+to a @code{bytes} object using the @sc{ascii} codec.  If the string
+can't be encoded then an @code{UnicodeError} is raised.
+
+If @var{packet} is not a @code{bytes} object, or a @code{Unicode}
+string, then a @code{TypeError} is raised.  If @var{packet} is empty
+then a @code{ValueError} is raised.
+
+The response is returned as a @code{bytes} object.  For Python 3 if it
+is known that the response can be represented as a string then this
+can be decoded from the buffer.  For example, if it is known that the
+response is an @sc{ascii} string:
+
+@smallexample
+remote_connection.send_packet("some_packet").decode("ascii")
+@end smallexample
+
+In Python 2 @code{bytes} and @code{str} are aliases, so the result is
+already a string, if the response includes non-printable characters,
+or null characters, then these will be present in the result, care
+should be taken when processing the result to handle this case.
+
+The prefix, suffix, and checksum (as required by the remote serial
+protocol) are automatically added to the outgoing packet, and removed
+from the incoming packet before the contents of the reply are
+returned.
+
+This is equivalent to the @code{maintenance packet} command
+(@pxref{maint packet}).
+@end defun
+
 @node TUI Windows In Python
 @subsubsection Implementing new TUI windows
 @cindex Python TUI Windows
@@ -5821,7 +6610,9 @@ factory function with @value{GDBN}.
 
 @var{name} is the name of the new window.  It's an error to try to
 replace one of the built-in windows, but other window types can be
-replaced.
+replaced.  The @var{name} should match the regular expression
+@code{[a-zA-Z][-_.a-zA-Z0-9]*}, it is an error to try and create a
+window with an invalid name.
 
 @var{function} is a factory function that is called to create the TUI
 window.  This is called with a single argument of type
@@ -5829,7 +6620,7 @@ window.  This is called with a single argument of type
 that implements the TUI window protocol, also described below.
 @end defun
 
-As mentioned above, when a factory function is called, it is passed a
+As mentioned above, when a factory function is called, it is passed
 an object of type @code{gdb.TuiWindow}.  This object has these
 methods and attributes:
 
@@ -5839,6 +6630,11 @@ user changes the TUI layout, windows no longer visible in the new
 layout will be destroyed.  At this point, the @code{gdb.TuiWindow}
 will no longer be valid, and methods (and attributes) other than
 @code{is_valid} will throw an exception.
+
+When the TUI is disabled using @code{tui disable} (@pxref{TUI
+Commands,,tui disable}) the window is hidden rather than destroyed,
+but @code{is_valid} will still return @code{False} and other methods
+(and attributes) will still throw an exception.
 @end defun
 
 @defvar TuiWindow.width
@@ -5858,10 +6654,14 @@ displayed above the window.  This attribute can be modified.
 Remove all the contents of the window.
 @end defun
 
-@defun TuiWindow.write (@var{string})
+@defun TuiWindow.write (@var{string} @r{[}, @var{full_window}@r{]})
 Write @var{string} to the window.  @var{string} can contain ANSI
 terminal escape styling sequences; @value{GDBN} will translate these
 as appropriate for the terminal.
+
+If the @var{full_window} parameter is @code{True}, then @var{string}
+contains the full contents of the window.  This is similar to calling
+@code{erase} before @code{write}, but avoids the flickering.
 @end defun
 
 The factory function that you supply should return an object
@@ -5910,6 +6710,338 @@ backward.  In the TUI model, it is the viewport that moves, not the
 contents.  A positive argument should cause the viewport to move down,
 and so the content should appear to move up.
 @end defun
+
+@defun Window.click (@var{x}, @var{y}, @var{button})
+This is called on a mouse click in this window.  @var{x} and @var{y} are
+the mouse coordinates inside the window (0-based, from the top left
+corner), and @var{button} specifies which mouse button was used, whose
+values can be 1 (left), 2 (middle), or 3 (right).
+@end defun
+
+@node Disassembly In Python
+@subsubsection Instruction Disassembly In Python
+@cindex python instruction disassembly
+
+@value{GDBN}'s builtin disassembler can be extended, or even replaced,
+using the Python API.  The disassembler related features are contained
+within the @code{gdb.disassembler} module:
+
+@deftp {class} gdb.disassembler.DisassembleInfo
+Disassembly is driven by instances of this class.  Each time
+@value{GDBN} needs to disassemble an instruction, an instance of this
+class is created and passed to a registered disassembler.  The
+disassembler is then responsible for disassembling an instruction and
+returning a result.
+
+Instances of this type are usually created within @value{GDBN},
+however, it is possible to create a copy of an instance of this type,
+see the description of @code{__init__} for more details.
+
+This class has the following properties and methods:
+
+@defvar DisassembleInfo.address
+A read-only integer containing the address at which @value{GDBN}
+wishes to disassemble a single instruction.
+@end defvar
+
+@defvar DisassembleInfo.architecture
+The @code{gdb.Architecture} (@pxref{Architectures In Python}) for
+which @value{GDBN} is currently disassembling, this property is
+read-only.
+@end defvar
+
+@defvar DisassembleInfo.progspace
+The @code{gdb.Progspace} (@pxref{Progspaces In Python,,Program Spaces
+In Python}) for which @value{GDBN} is currently disassembling, this
+property is read-only.
+@end defvar
+
+@defun DisassembleInfo.is_valid ()
+Returns @code{True} if the @code{DisassembleInfo} object is valid,
+@code{False} if not.  A @code{DisassembleInfo} object will become
+invalid once the disassembly call for which the @code{DisassembleInfo}
+was created, has returned.  Calling other @code{DisassembleInfo}
+methods, or accessing @code{DisassembleInfo} properties, will raise a
+@code{RuntimeError} exception if it is invalid.
+@end defun
+
+@defun DisassembleInfo.__init__ (info)
+This can be used to create a new @code{DisassembleInfo} object that is
+a copy of @var{info}.  The copy will have the same @code{address},
+@code{architecture}, and @code{progspace} values as @var{info}, and
+will become invalid at the same time as @var{info}.
+
+This method exists so that sub-classes of @code{DisassembleInfo} can
+be created, these sub-classes must be initialized as copies of an
+existing @code{DisassembleInfo} object, but sub-classes might choose
+to override the @code{read_memory} method, and so control what
+@value{GDBN} sees when reading from memory
+(@pxref{builtin_disassemble}).
+@end defun
+
+@defun DisassembleInfo.read_memory (length, offset)
+This method allows the disassembler to read the bytes of the
+instruction to be disassembled.  The method reads @var{length} bytes,
+starting at @var{offset} from
+@code{DisassembleInfo.address}.
+
+It is important that the disassembler read the instruction bytes using
+this method, rather than reading inferior memory directly, as in some
+cases @value{GDBN} disassembles from an internal buffer rather than
+directly from inferior memory, calling this method handles this
+detail.
+
+Returns a buffer object, which behaves much like an array or a string,
+just as @code{Inferior.read_memory} does
+(@pxref{gdbpy_inferior_read_memory,,Inferior.read_memory}).  The
+length of the returned buffer will always be exactly @var{length}.
+
+If @value{GDBN} is unable to read the required memory then a
+@code{gdb.MemoryError} exception is raised (@pxref{Exception
+Handling}).
+
+This method can be overridden by a sub-class in order to control what
+@value{GDBN} sees when reading from memory
+(@pxref{builtin_disassemble}).  When overriding this method it is
+important to understand how @code{builtin_disassemble} makes use of
+this method.
+
+While disassembling a single instruction there could be multiple calls
+to this method, and the same bytes might be read multiple times.  Any
+single call might only read a subset of the total instruction bytes.
+
+If an implementation of @code{read_memory} is unable to read the
+requested memory contents, for example, if there's a request to read
+from an invalid memory address, then a @code{gdb.MemoryError} should
+be raised.
+
+Raising a @code{MemoryError} inside @code{read_memory} does not
+automatically mean a @code{MemoryError} will be raised by
+@code{builtin_disassemble}.  It is possible the @value{GDBN}'s builtin
+disassembler is probing to see how many bytes are available.  When
+@code{read_memory} raises the @code{MemoryError} the builtin
+disassembler might be able to perform a complete disassembly with the
+bytes it has available, in this case @code{builtin_disassemble} will
+not itself raise a @code{MemoryError}.
+
+Any other exception type raised in @code{read_memory} will propagate
+back and be re-raised by @code{builtin_disassemble}.
+@end defun
+@end deftp
+
+@deftp {class} Disassembler
+This is a base class from which all user implemented disassemblers
+must inherit.
+
+@defun Disassembler.__init__ (name)
+The constructor takes @var{name}, a string, which should be a short
+name for this disassembler.
+@end defun
+
+@defun Disassembler.__call__ (info)
+The @code{__call__} method must be overridden by sub-classes to
+perform disassembly.  Calling @code{__call__} on this base class will
+raise a @code{NotImplementedError} exception.
+
+The @var{info} argument is an instance of @code{DisassembleInfo}, and
+describes the instruction that @value{GDBN} wants disassembling.
+
+If this function returns @code{None}, this indicates to @value{GDBN}
+that this sub-class doesn't wish to disassemble the requested
+instruction.  @value{GDBN} will then use its builtin disassembler to
+perform the disassembly.
+
+Alternatively, this function can return a @code{DisassemblerResult}
+that represents the disassembled instruction, this type is described
+in more detail below.
+
+The @code{__call__} method can raise a @code{gdb.MemoryError}
+exception (@pxref{Exception Handling}) to indicate to @value{GDBN}
+that there was a problem accessing the required memory, this will then
+be displayed by @value{GDBN} within the disassembler output.
+
+Ideally, the only three outcomes from invoking @code{__call__} would
+be a return of @code{None}, a successful disassembly returned in a
+@code{DisassemblerResult}, or a @code{MemoryError} indicating that
+there was a problem reading memory.
+
+However, as an implementation of @code{__call__} could fail due to
+other reasons, e.g.@: some external resource required to perform
+disassembly is temporarily unavailable, then, if @code{__call__}
+raises a @code{GdbError}, the exception will be converted to a string
+and printed at the end of the disassembly output, the disassembly
+request will then stop.
+
+Any other exception type raised by the @code{__call__} method is
+considered an error in the user code, the exception will be printed to
+the error stream according to the @kbd{set python print-stack} setting
+(@pxref{set_python_print_stack,,@kbd{set python print-stack}}).
+@end defun
+@end deftp
+
+@deftp {class} DisassemblerResult
+This class is used to hold the result of calling
+@w{@code{Disassembler.__call__}}, and represents a single disassembled
+instruction.  This class has the following properties and methods:
+
+@defun DisassemblerResult.__init__ (@var{length}, @var{string})
+Initialize an instance of this class, @var{length} is the length of
+the disassembled instruction in bytes, which must be greater than
+zero, and @var{string} is a non-empty string that represents the
+disassembled instruction.
+@end defun
+
+@defvar DisassemblerResult.length
+A read-only property containing the length of the disassembled
+instruction in bytes, this will always be greater than zero.
+@end defvar
+
+@defvar DisassemblerResult.string
+A read-only property containing a non-empty string representing the
+disassembled instruction.
+@end defvar
+@end deftp
+
+The following functions are also contained in the
+@code{gdb.disassembler} module:
+
+@defun register_disassembler (disassembler, architecture)
+The @var{disassembler} must be a sub-class of
+@code{gdb.disassembler.Disassembler} or @code{None}.
+
+The optional @var{architecture} is either a string, or the value
+@code{None}.  If it is a string, then it should be the name of an
+architecture known to @value{GDBN}, as returned either from
+@code{gdb.Architecture.name}
+(@pxref{gdbpy_architecture_name,,gdb.Architecture.name}), or from
+@code{gdb.architecture_names}
+(@pxref{gdb_architecture_names,,gdb.architecture_names}).
+
+The @var{disassembler} will be installed for the architecture named by
+@var{architecture}, or if @var{architecture} is @code{None}, then
+@var{disassembler} will be installed as a global disassembler for use
+by all architectures.
+
+@cindex disassembler in Python, global vs.@: specific
+@cindex search order for disassembler in Python
+@cindex look up of disassembler in Python
+@value{GDBN} only records a single disassembler for each architecture,
+and a single global disassembler.  Calling
+@code{register_disassembler} for an architecture, or for the global
+disassembler, will replace any existing disassembler registered for
+that @var{architecture} value.  The previous disassembler is returned.
+
+If @var{disassembler} is @code{None} then any disassembler currently
+registered for @var{architecture} is deregistered and returned.
+
+When @value{GDBN} is looking for a disassembler to use, @value{GDBN}
+first looks for an architecture specific disassembler.  If none has
+been registered then @value{GDBN} looks for a global disassembler (one
+registered with @var{architecture} set to @code{None}).  Only one
+disassembler is called to perform disassembly, so, if there is both an
+architecture specific disassembler, and a global disassembler
+registered, it is the architecture specific disassembler that will be
+used.
+
+@value{GDBN} tracks the architecture specific, and global
+disassemblers separately, so it doesn't matter in which order
+disassemblers are created or registered; an architecture specific
+disassembler, if present, will always be used in preference to a
+global disassembler.
+
+You can use the @kbd{maint info python-disassemblers} command
+(@pxref{maint info python-disassemblers}) to see which disassemblers
+have been registered.
+@end defun
+
+@anchor{builtin_disassemble}
+@defun builtin_disassemble (info)
+This function calls back into @value{GDBN}'s builtin disassembler to
+disassemble the instruction identified by @var{info}, an instance, or
+sub-class, of @code{DisassembleInfo}.
+
+When the builtin disassembler needs to read memory the
+@code{read_memory} method on @var{info} will be called.  By
+sub-classing @code{DisassembleInfo} and overriding the
+@code{read_memory} method, it is possible to intercept calls to
+@code{read_memory} from the builtin disassembler, and to modify the
+values returned.
+
+It is important to understand that, even when
+@code{DisassembleInfo.read_memory} raises a @code{gdb.MemoryError}, it
+is the internal disassembler itself that reports the memory error to
+@value{GDBN}.  The reason for this is that the disassembler might
+probe memory to see if a byte is readable or not; if the byte can't be
+read then the disassembler may choose not to report an error, but
+instead to disassemble the bytes that it does have available.
+
+If the builtin disassembler is successful then an instance of
+@code{DisassemblerResult} is returned from @code{builtin_disassemble},
+alternatively, if something goes wrong, an exception will be raised.
+
+A @code{MemoryError} will be raised if @code{builtin_disassemble} is
+unable to read some memory that is required in order to perform
+disassembly correctly.
+
+Any exception that is not a @code{MemoryError}, that is raised in a
+call to @code{read_memory}, will pass through
+@code{builtin_disassemble}, and be visible to the caller.
+
+Finally, there are a few cases where @value{GDBN}'s builtin
+disassembler can fail for reasons that are not covered by
+@code{MemoryError}.  In these cases, a @code{GdbError} will be raised.
+The contents of the exception will be a string describing the problem
+the disassembler encountered.
+@end defun
+
+Here is an example that registers a global disassembler.  The new
+disassembler invokes the builtin disassembler, and then adds a
+comment, @code{## Comment}, to each line of disassembly output:
+
+@smallexample
+class ExampleDisassembler(gdb.disassembler.Disassembler):
+    def __init__(self):
+        super().__init__("ExampleDisassembler")
+
+    def __call__(self, info):
+        result = gdb.disassembler.builtin_disassemble(info)
+        length = result.length
+        text = result.string + "\t## Comment"
+        return gdb.disassembler.DisassemblerResult(length, text)
+
+gdb.disassembler.register_disassembler(ExampleDisassembler())
+@end smallexample
+
+The following example creates a sub-class of @code{DisassembleInfo} in
+order to intercept the @code{read_memory} calls, within
+@code{read_memory} any bytes read from memory have the two 4-bit
+nibbles swapped around.  This isn't a very useful adjustment, but
+serves as an example.
+
+@smallexample
+class MyInfo(gdb.disassembler.DisassembleInfo):
+    def __init__(self, info):
+        super().__init__(info)
+
+    def read_memory(self, length, offset):
+        buffer = super().read_memory(length, offset)
+        result = bytearray()
+        for b in buffer:
+            v = int.from_bytes(b, 'little')
+            v = (v << 4) & 0xf0 | (v >> 4)
+            result.append(v)
+        return memoryview(result)
+
+class NibbleSwapDisassembler(gdb.disassembler.Disassembler):
+    def __init__(self):
+        super().__init__("NibbleSwapDisassembler")
+
+    def __call__(self, info):
+        info = MyInfo(info)
+        return gdb.disassembler.builtin_disassemble(info)
+
+gdb.disassembler.register_disassembler(NibbleSwapDisassembler())
+@end smallexample
 
 @node Python Auto-loading
 @subsection Python Auto-loading

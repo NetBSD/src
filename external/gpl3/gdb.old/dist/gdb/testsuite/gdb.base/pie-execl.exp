@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Free Software Foundation, Inc.
+# Copyright 2010-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,14 +20,14 @@ global inferior_spawn_id
 global gdb_spawn_id
 
 if ![istarget *-linux*] {
-    continue
+    return
 }
 
 # In remote mode we cannot use the 'set args' command, and this
 # test requires it.
-if { [target_info exists gdb_protocol] } then {
-    if { [target_info gdb_protocol] == "remote" } then {
-	continue
+if {[target_info exists gdb_protocol]} {
+    if {[target_info gdb_protocol] == "remote"} {
+	return
     }
 }
 
@@ -41,7 +41,7 @@ set binfile2_test_msg OBJDIR/${subdir}/${executable2}
 # Use conditional compilation according to `BIN' as GDB remembers the source
 # file name of the breakpoint.
 
-set opts [list debug additional_flags=-fPIE ldflags=-pie]
+set opts [list debug pie]
 if {[build_executable ${testfile}.exp $executable1 $srcfile [concat $opts {additional_flags=-DBIN=1}]] == -1
     || [build_executable ${testfile}.exp $executable2 $srcfile [concat $opts {additional_flags=-DBIN=2}]] == -1} {
     return -1
@@ -59,7 +59,7 @@ if ![runto_main] {
 delete_breakpoints
 
 gdb_breakpoint "pie_execl_marker"
-gdb_test "info breakpoints" ".*" ""
+gdb_test "info breakpoints" "" "info breakpoints first"
 
 set addr1 ""
 set test "pie_execl_marker address first"
@@ -101,7 +101,7 @@ gdb_test_multiple $test $test {
     }
 }
 
-gdb_test "info breakpoints" ".*" ""
+gdb_test "info breakpoints" "" "info breakpoints second"
 
 set addr2 ""
 set test "pie_execl_marker address second"

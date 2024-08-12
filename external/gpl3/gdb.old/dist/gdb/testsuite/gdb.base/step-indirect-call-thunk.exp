@@ -1,4 +1,4 @@
-# Copyright 2018-2020 Free Software Foundation, Inc.
+# Copyright 2018-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,14 +15,21 @@
 
 standard_testfile
 
+if { ![istarget "x86*"] } {
+    return
+}
+
 set cflags "-mindirect-branch=thunk -mfunction-return=thunk"
+
+if { [gcc_major_version] >= 8 } {
+    append cflags " -fcf-protection=none"
+}
 if { [prepare_for_testing "failed to prepare" $testfile $srcfile \
         [list debug "additional_flags=$cflags"]] } {
     return -1
 }
 
 if { ![runto_main] } {
-    untested "failed to run to main"
     return -1
 }
 
@@ -65,9 +72,12 @@ gdb_test "step" "inc\.2.*" "step through call thunk into inc"
 gdb_test "step" "inc\.3.*" "step inside inc"
 gdb_test "step" "thrice\.4.*" "step through return thunk back into thrice"
 
+set alphanum_re "\[a-zA-Z0-9\]"
+set pic_thunk_re  "__$alphanum_re*\\.get_pc_thunk\\.$alphanum_re* \\(\\)"
+
 # We can use instruction stepping to step into thunks.
 stepi_until "thrice" "indirect_thunk" "stepi into call thunk"
 stepi_until "indirect_thunk" "inc." "stepi out of call thunk into inc"
-stepi_until "inc" "return_thunk" "stepi into return thunk"
+stepi_until "(inc|$pic_thunk_re)" "return_thunk" "stepi into return thunk"
 stepi_until "return_thunk" "thrice" \
     "stepi out of return thunk back into thrice"

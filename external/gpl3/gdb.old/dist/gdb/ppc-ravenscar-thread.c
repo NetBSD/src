@@ -1,6 +1,6 @@
 /* Ravenscar PowerPC target support.
 
-   Copyright (C) 2011-2020 Free Software Foundation, Inc.
+   Copyright (C) 2011-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -100,129 +100,10 @@ static const int e500_context_offsets[] =
   NO_OFFSET, 176
 };
 
-/* The register layout info.  */
-
-struct ravenscar_reg_info
-{
-  /* A table providing the offset relative to the context structure
-     where each register is saved.  */
-  const int *context_offsets;
-
-  /* The number of elements in the context_offsets table above.  */
-  int context_offsets_size;
-};
-
-/* supply register REGNUM, which has been saved on REGISTER_ADDR, to the
-   regcache.  */
-
-static void
-supply_register_at_address (struct regcache *regcache, int regnum,
-                            CORE_ADDR register_addr)
-{
-  struct gdbarch *gdbarch = regcache->arch ();
-  int buf_size = register_size (gdbarch, regnum);
-  gdb_byte *buf;
-
-  buf = (gdb_byte *) alloca (buf_size);
-  read_memory (register_addr, buf, buf_size);
-  regcache->raw_supply (regnum, buf);
-}
-
-/* Return true if, for a non-running thread, REGNUM has been saved on the
-   Thread_Descriptor.  */
-
-static int
-register_in_thread_descriptor_p (const struct ravenscar_reg_info *reg_info,
-				 int regnum)
-{
-  return (regnum < reg_info->context_offsets_size
-	  && reg_info->context_offsets[regnum] != NO_OFFSET);
-}
-
-/* to_fetch_registers when inferior_ptid is different from the running
-   thread.  */
-
-static void
-ppc_ravenscar_generic_fetch_registers
-  (const struct ravenscar_reg_info *reg_info,
-   struct regcache *regcache, int regnum)
-{
-  struct gdbarch *gdbarch = regcache->arch ();
-  const int num_regs = gdbarch_num_regs (gdbarch);
-  int current_regnum;
-  CORE_ADDR current_address;
-  CORE_ADDR thread_descriptor_address;
-
-  /* The tid is the thread_id field, which is a pointer to the thread.  */
-  thread_descriptor_address = (CORE_ADDR) inferior_ptid.tid ();
-
-  /* Read registers.  */
-  for (current_regnum = 0; current_regnum < num_regs; current_regnum++)
-    {
-      if (register_in_thread_descriptor_p (reg_info, current_regnum))
-        {
-          current_address = thread_descriptor_address
-            + reg_info->context_offsets[current_regnum];
-          supply_register_at_address (regcache, current_regnum,
-                                      current_address);
-        }
-    }
-}
-
-/* to_store_registers when inferior_ptid is different from the running
-   thread.  */
-
-static void
-ppc_ravenscar_generic_store_registers
-  (const struct ravenscar_reg_info *reg_info,
-   struct regcache *regcache, int regnum)
-{
-  struct gdbarch *gdbarch = regcache->arch ();
-  int buf_size = register_size (gdbarch, regnum);
-  gdb_byte buf[buf_size];
-  ULONGEST register_address;
-
-  if (register_in_thread_descriptor_p (reg_info, regnum))
-    register_address
-      = inferior_ptid.tid () + reg_info->context_offsets [regnum];
-  else
-    return;
-
-  regcache->raw_collect (regnum, buf);
-  write_memory (register_address,
-                buf,
-                buf_size);
-}
-
-/* The ravenscar_reg_info for most PowerPC targets.  */
-
-static const struct ravenscar_reg_info ppc_reg_info =
-{
-  powerpc_context_offsets,
-  ARRAY_SIZE (powerpc_context_offsets),
-};
-
-struct ppc_ravenscar_powerpc_ops : public ravenscar_arch_ops
-{
-  void fetch_registers (struct regcache *, int) override;
-  void store_registers (struct regcache *, int) override;
-};
-
-void
-ppc_ravenscar_powerpc_ops::fetch_registers (struct regcache *regcache, int regnum)
-{
-  ppc_ravenscar_generic_fetch_registers (&ppc_reg_info, regcache, regnum);
-}
-
-void
-ppc_ravenscar_powerpc_ops::store_registers (struct regcache *regcache, int regnum)
-{
-  ppc_ravenscar_generic_store_registers (&ppc_reg_info, regcache, regnum);
-}
-
 /* The ravenscar_arch_ops vector for most PowerPC targets.  */
 
-static struct ppc_ravenscar_powerpc_ops ppc_ravenscar_powerpc_ops;
+static struct ravenscar_arch_ops ppc_ravenscar_powerpc_ops
+     (powerpc_context_offsets);
 
 /* Register ppc_ravenscar_powerpc_ops in GDBARCH.  */
 
@@ -232,38 +113,9 @@ register_ppc_ravenscar_ops (struct gdbarch *gdbarch)
   set_gdbarch_ravenscar_ops (gdbarch, &ppc_ravenscar_powerpc_ops);
 }
 
-/* The ravenscar_reg_info for E500 targets.  */
-
-static const struct ravenscar_reg_info e500_reg_info =
-{
-  e500_context_offsets,
-  ARRAY_SIZE (e500_context_offsets),
-};
-
-struct ppc_ravenscar_e500_ops : public ravenscar_arch_ops
-{
-  void fetch_registers (struct regcache *, int) override;
-  void store_registers (struct regcache *, int) override;
-};
-
-void
-ppc_ravenscar_e500_ops::fetch_registers (struct regcache *regcache, int regnum)
-{
-  ppc_ravenscar_generic_fetch_registers (&e500_reg_info, regcache, regnum);
-}
-
-/* Implement the to_store_registers ravenscar_arch_ops method
-   for E500 targets.  */
-
-void
-ppc_ravenscar_e500_ops::store_registers (struct regcache *regcache, int regnum)
-{
-  ppc_ravenscar_generic_store_registers (&e500_reg_info, regcache, regnum);
-}
-
 /* The ravenscar_arch_ops vector for E500 targets.  */
 
-static struct ppc_ravenscar_e500_ops ppc_ravenscar_e500_ops;
+static struct ravenscar_arch_ops ppc_ravenscar_e500_ops (e500_context_offsets);
 
 /* Register ppc_ravenscar_e500_ops in GDBARCH.  */
 

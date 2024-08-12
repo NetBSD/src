@@ -1,5 +1,5 @@
 /* Header for GDB line completion.
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
 #if !defined (COMPLETER_H)
 #define COMPLETER_H 1
 
+#include "gdbsupport/gdb-hashtab.h"
 #include "gdbsupport/gdb_vecs.h"
 #include "command.h"
 
@@ -393,7 +394,7 @@ public:
 
   /* True if we have any completion match recorded.  */
   bool have_completions () const
-  { return htab_elements (m_entries_hash) > 0; }
+  { return htab_elements (m_entries_hash.get ()) > 0; }
 
   /* Discard the current completion match list and the current
      LCD.  */
@@ -440,7 +441,7 @@ private:
      will remove duplicates, and if removal of duplicates there brings
      the total under max_completions the user may think gdb quit
      searching too early.  */
-  htab_t m_entries_hash = NULL;
+  htab_up m_entries_hash;
 
   /* If non-zero, then this is the quote char that needs to be
      appended after completion (iff we have a unique completion).  We

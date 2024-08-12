@@ -1,6 +1,6 @@
 /* This file is part of GDB, the GNU debugger.
 
-   Copyright 2017-2020 Free Software Foundation, Inc.
+   Copyright 2017-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -98,3 +98,4 @@ test_atomic_sequences:
 #else
 	.size .test_atomic_sequences,.-.test_atomic_sequences
 #endif
+	.section	.note.GNU-stack,"",@progbits

@@ -1,6 +1,6 @@
 /* Native-dependent code for FreeBSD.
 
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,9 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
+#include "gdbsupport/block-signals.h"
 #include "gdbsupport/byte-vector.h"
+#include "gdbsupport/event-loop.h"
 #include "gdbcore.h"
 #include "inferior.h"
 #include "regcache.h"
@@ -26,20 +28,20 @@
 #include "gdbarch.h"
 #include "gdbcmd.h"
 #include "gdbthread.h"
+#include "gdbsupport/buildargv.h"
 #include "gdbsupport/gdb_wait.h"
+#include "inf-loop.h"
 #include "inf-ptrace.h"
 #include <sys/types.h>
+#ifdef HAVE_SYS_PROCCTL_H
+#include <sys/procctl.h>
+#endif
 #include <sys/procfs.h>
 #include <sys/ptrace.h>
 #include <sys/signal.h>
 #include <sys/sysctl.h>
 #include <sys/user.h>
-#if defined(HAVE_KINFO_GETFILE) || defined(HAVE_KINFO_GETVMMAP)
 #include <libutil.h>
-#endif
-#if !defined(HAVE_KINFO_GETVMMAP)
-#include "gdbsupport/filestuff.h"
-#endif
 
 #include "elf-bfd.h"
 #include "fbsd-nat.h"
@@ -47,17 +49,18 @@
 
 #include <list>
 
+#ifndef PT_GETREGSET
+#define	PT_GETREGSET	42	/* Get a target register set */
+#define	PT_SETREGSET	43	/* Set a target register set */
+#endif
+
 /* Return the name of a file that can be opened to get the symbols for
    the child process identified by PID.  */
 
-char *
+const char *
 fbsd_nat_target::pid_to_exec_file (int pid)
 {
-  ssize_t len;
   static char buf[PATH_MAX];
-  char name[PATH_MAX];
-
-#ifdef KERN_PROC_PATHNAME
   size_t buflen;
   int mib[4];
 
@@ -71,20 +74,10 @@ fbsd_nat_target::pid_to_exec_file (int pid)
        for processes without an associated executable such as kernel
        processes.  */
     return buflen == 0 ? NULL : buf;
-#endif
-
-  xsnprintf (name, PATH_MAX, "/proc/%d/exe", pid);
-  len = readlink (name, buf, PATH_MAX - 1);
-  if (len != -1)
-    {
-      buf[len] = '\0';
-      return buf;
-    }
 
   return NULL;
 }
 
-#ifdef HAVE_KINFO_GETVMMAP
 /* Iterate over all the memory regions in the current inferior,
    calling FUNC for each memory region.  DATA is passed as the last
    argument to FUNC.  */
@@ -101,7 +94,7 @@ fbsd_nat_target::find_memory_regions (find_memory_region_ftype func,
   gdb::unique_xmalloc_ptr<struct kinfo_vmentry>
     vmentl (kinfo_getvmmap (pid, &nitems));
   if (vmentl == NULL)
-    perror_with_name (_("Couldn't fetch VM map entries."));
+    perror_with_name (_("Couldn't fetch VM map entries"));
 
   for (i = 0, kve = vmentl.get (); i < nitems; i++, kve++)
     {
@@ -120,94 +113,22 @@ fbsd_nat_target::find_memory_regions (find_memory_region_ftype func,
       size = kve->kve_end - kve->kve_start;
       if (info_verbose)
 	{
-	  fprintf_filtered (gdb_stdout, 
-			    "Save segment, %ld bytes at %s (%c%c%c)\n",
-			    (long) size,
-			    paddress (target_gdbarch (), kve->kve_start),
-			    kve->kve_protection & KVME_PROT_READ ? 'r' : '-',
-			    kve->kve_protection & KVME_PROT_WRITE ? 'w' : '-',
-			    kve->kve_protection & KVME_PROT_EXEC ? 'x' : '-');
+	  gdb_printf ("Save segment, %ld bytes at %s (%c%c%c)\n",
+		      (long) size,
+		      paddress (target_gdbarch (), kve->kve_start),
+		      kve->kve_protection & KVME_PROT_READ ? 'r' : '-',
+		      kve->kve_protection & KVME_PROT_WRITE ? 'w' : '-',
+		      kve->kve_protection & KVME_PROT_EXEC ? 'x' : '-');
 	}
 
       /* Invoke the callback function to create the corefile segment.
 	 Pass MODIFIED as true, we do not know the real modification state.  */
       func (kve->kve_start, size, kve->kve_protection & KVME_PROT_READ,
 	    kve->kve_protection & KVME_PROT_WRITE,
-	    kve->kve_protection & KVME_PROT_EXEC, 1, data);
+	    kve->kve_protection & KVME_PROT_EXEC, 1, false, data);
     }
   return 0;
 }
-#else
-static int
-fbsd_read_mapping (FILE *mapfile, unsigned long *start, unsigned long *end,
-		   char *protection)
-{
-  /* FreeBSD 5.1-RELEASE uses a 256-byte buffer.  */
-  char buf[256];
-  int resident, privateresident;
-  unsigned long obj;
-  int ret = EOF;
-
-  /* As of FreeBSD 5.0-RELEASE, the layout is described in
-     /usr/src/sys/fs/procfs/procfs_map.c.  Somewhere in 5.1-CURRENT a
-     new column was added to the procfs map.  Therefore we can't use
-     fscanf since we need to support older releases too.  */
-  if (fgets (buf, sizeof buf, mapfile) != NULL)
-    ret = sscanf (buf, "%lx %lx %d %d %lx %s", start, end,
-		  &resident, &privateresident, &obj, protection);
-
-  return (ret != 0 && ret != EOF);
-}
-
-/* Iterate over all the memory regions in the current inferior,
-   calling FUNC for each memory region.  DATA is passed as the last
-   argument to FUNC.  */
-
-int
-fbsd_nat_target::find_memory_regions (find_memory_region_ftype func,
-				      void *data)
-{
-  pid_t pid = inferior_ptid.pid ();
-  unsigned long start, end, size;
-  char protection[4];
-  int read, write, exec;
-
-  std::string mapfilename = string_printf ("/proc/%ld/map", (long) pid);
-  gdb_file_up mapfile (fopen (mapfilename.c_str (), "r"));
-  if (mapfile == NULL)
-    error (_("Couldn't open %s."), mapfilename.c_str ());
-
-  if (info_verbose)
-    fprintf_filtered (gdb_stdout, 
-		      "Reading memory regions from %s\n", mapfilename.c_str ());
-
-  /* Now iterate until end-of-file.  */
-  while (fbsd_read_mapping (mapfile.get (), &start, &end, &protection[0]))
-    {
-      size = end - start;
-
-      read = (strchr (protection, 'r') != 0);
-      write = (strchr (protection, 'w') != 0);
-      exec = (strchr (protection, 'x') != 0);
-
-      if (info_verbose)
-	{
-	  fprintf_filtered (gdb_stdout, 
-			    "Save segment, %ld bytes at %s (%c%c%c)\n",
-			    size, paddress (target_gdbarch (), start),
-			    read ? 'r' : '-',
-			    write ? 'w' : '-',
-			    exec ? 'x' : '-');
-	}
-
-      /* Invoke the callback function to create the corefile segment.
-	 Pass MODIFIED as true, we do not know the real modification state.  */
-      func (start, size, read, write, exec, 1, data);
-    }
-
-  return 0;
-}
-#endif
 
 /* Fetch the command line for a running process.  */
 
@@ -264,21 +185,15 @@ fbsd_fetch_kinfo_proc (pid_t pid, struct kinfo_proc *kp)
 bool
 fbsd_nat_target::info_proc (const char *args, enum info_proc_what what)
 {
-#ifdef HAVE_KINFO_GETFILE
   gdb::unique_xmalloc_ptr<struct kinfo_file> fdtbl;
   int nfd = 0;
-#endif
   struct kinfo_proc kp;
   pid_t pid;
   bool do_cmdline = false;
   bool do_cwd = false;
   bool do_exe = false;
-#ifdef HAVE_KINFO_GETFILE
   bool do_files = false;
-#endif
-#ifdef HAVE_KINFO_GETVMMAP
   bool do_mappings = false;
-#endif
   bool do_status = false;
 
   switch (what)
@@ -288,11 +203,9 @@ fbsd_nat_target::info_proc (const char *args, enum info_proc_what what)
       do_cwd = true;
       do_exe = true;
       break;
-#ifdef HAVE_KINFO_GETVMMAP
     case IP_MAPPINGS:
       do_mappings = true;
       break;
-#endif
     case IP_STATUS:
     case IP_STAT:
       do_status = true;
@@ -306,21 +219,15 @@ fbsd_nat_target::info_proc (const char *args, enum info_proc_what what)
     case IP_CWD:
       do_cwd = true;
       break;
-#ifdef HAVE_KINFO_GETFILE
     case IP_FILES:
       do_files = true;
       break;
-#endif
     case IP_ALL:
       do_cmdline = true;
       do_cwd = true;
       do_exe = true;
-#ifdef HAVE_KINFO_GETFILE
       do_files = true;
-#endif
-#ifdef HAVE_KINFO_GETVMMAP
       do_mappings = true;
-#endif
       do_status = true;
       break;
     default:
@@ -339,24 +246,21 @@ fbsd_nat_target::info_proc (const char *args, enum info_proc_what what)
   else
     error (_("Invalid arguments."));
 
-  printf_filtered (_("process %d\n"), pid);
-#ifdef HAVE_KINFO_GETFILE
+  gdb_printf (_("process %d\n"), pid);
   if (do_cwd || do_exe || do_files)
     fdtbl.reset (kinfo_getfile (pid, &nfd));
-#endif
 
   if (do_cmdline)
     {
       gdb::unique_xmalloc_ptr<char> cmdline = fbsd_fetch_cmdline (pid);
       if (cmdline != nullptr)
-	printf_filtered ("cmdline = '%s'\n", cmdline.get ());
+	gdb_printf ("cmdline = '%s'\n", cmdline.get ());
       else
 	warning (_("unable to fetch command line"));
     }
   if (do_cwd)
     {
       const char *cwd = NULL;
-#ifdef HAVE_KINFO_GETFILE
       struct kinfo_file *kf = fdtbl.get ();
       for (int i = 0; i < nfd; i++, kf++)
 	{
@@ -366,16 +270,14 @@ fbsd_nat_target::info_proc (const char *args, enum info_proc_what what)
 	      break;
 	    }
 	}
-#endif
       if (cwd != NULL)
-	printf_filtered ("cwd = '%s'\n", cwd);
+	gdb_printf ("cwd = '%s'\n", cwd);
       else
 	warning (_("unable to fetch current working directory"));
     }
   if (do_exe)
     {
       const char *exe = NULL;
-#ifdef HAVE_KINFO_GETFILE
       struct kinfo_file *kf = fdtbl.get ();
       for (int i = 0; i < nfd; i++, kf++)
 	{
@@ -385,15 +287,13 @@ fbsd_nat_target::info_proc (const char *args, enum info_proc_what what)
 	      break;
 	    }
 	}
-#endif
       if (exe == NULL)
 	exe = pid_to_exec_file (pid);
       if (exe != NULL)
-	printf_filtered ("exe = '%s'\n", exe);
+	gdb_printf ("exe = '%s'\n", exe);
       else
 	warning (_("unable to fetch executable path name"));
     }
-#ifdef HAVE_KINFO_GETFILE
   if (do_files)
     {
       struct kinfo_file *kf = fdtbl.get ();
@@ -411,8 +311,6 @@ fbsd_nat_target::info_proc (const char *args, enum info_proc_what what)
       else
 	warning (_("unable to fetch list of open files"));
     }
-#endif
-#ifdef HAVE_KINFO_GETVMMAP
   if (do_mappings)
     {
       int nvment;
@@ -434,7 +332,6 @@ fbsd_nat_target::info_proc (const char *args, enum info_proc_what what)
       else
 	warning (_("unable to fetch virtual memory map"));
     }
-#endif
   if (do_status)
     {
       if (!fbsd_fetch_kinfo_proc (pid, &kp))
@@ -444,7 +341,7 @@ fbsd_nat_target::info_proc (const char *args, enum info_proc_what what)
 	  const char *state;
 	  int pgtok;
 
-	  printf_filtered ("Name: %s\n", kp.ki_comm);
+	  gdb_printf ("Name: %s\n", kp.ki_comm);
 	  switch (kp.ki_stat)
 	    {
 	    case SIDL:
@@ -472,85 +369,75 @@ fbsd_nat_target::info_proc (const char *args, enum info_proc_what what)
 	      state = "? (unknown)";
 	      break;
 	    }
-	  printf_filtered ("State: %s\n", state);
-	  printf_filtered ("Parent process: %d\n", kp.ki_ppid);
-	  printf_filtered ("Process group: %d\n", kp.ki_pgid);
-	  printf_filtered ("Session id: %d\n", kp.ki_sid);
-	  printf_filtered ("TTY: %ju\n", (uintmax_t) kp.ki_tdev);
-	  printf_filtered ("TTY owner process group: %d\n", kp.ki_tpgid);
-	  printf_filtered ("User IDs (real, effective, saved): %d %d %d\n",
-			   kp.ki_ruid, kp.ki_uid, kp.ki_svuid);
-	  printf_filtered ("Group IDs (real, effective, saved): %d %d %d\n",
-			   kp.ki_rgid, kp.ki_groups[0], kp.ki_svgid);
-	  printf_filtered ("Groups: ");
+	  gdb_printf ("State: %s\n", state);
+	  gdb_printf ("Parent process: %d\n", kp.ki_ppid);
+	  gdb_printf ("Process group: %d\n", kp.ki_pgid);
+	  gdb_printf ("Session id: %d\n", kp.ki_sid);
+	  gdb_printf ("TTY: %s\n", pulongest (kp.ki_tdev));
+	  gdb_printf ("TTY owner process group: %d\n", kp.ki_tpgid);
+	  gdb_printf ("User IDs (real, effective, saved): %d %d %d\n",
+		      kp.ki_ruid, kp.ki_uid, kp.ki_svuid);
+	  gdb_printf ("Group IDs (real, effective, saved): %d %d %d\n",
+		      kp.ki_rgid, kp.ki_groups[0], kp.ki_svgid);
+	  gdb_printf ("Groups: ");
 	  for (int i = 0; i < kp.ki_ngroups; i++)
-	    printf_filtered ("%d ", kp.ki_groups[i]);
-	  printf_filtered ("\n");
-	  printf_filtered ("Minor faults (no memory page): %ld\n",
-			   kp.ki_rusage.ru_minflt);
-	  printf_filtered ("Minor faults, children: %ld\n",
-			   kp.ki_rusage_ch.ru_minflt);
-	  printf_filtered ("Major faults (memory page faults): %ld\n",
-			   kp.ki_rusage.ru_majflt);
-	  printf_filtered ("Major faults, children: %ld\n",
-			   kp.ki_rusage_ch.ru_majflt);
-	  printf_filtered ("utime: %jd.%06ld\n",
-			   (intmax_t) kp.ki_rusage.ru_utime.tv_sec,
-			   kp.ki_rusage.ru_utime.tv_usec);
-	  printf_filtered ("stime: %jd.%06ld\n",
-			   (intmax_t) kp.ki_rusage.ru_stime.tv_sec,
-			   kp.ki_rusage.ru_stime.tv_usec);
-	  printf_filtered ("utime, children: %jd.%06ld\n",
-			   (intmax_t) kp.ki_rusage_ch.ru_utime.tv_sec,
-			   kp.ki_rusage_ch.ru_utime.tv_usec);
-	  printf_filtered ("stime, children: %jd.%06ld\n",
-			   (intmax_t) kp.ki_rusage_ch.ru_stime.tv_sec,
-			   kp.ki_rusage_ch.ru_stime.tv_usec);
-	  printf_filtered ("'nice' value: %d\n", kp.ki_nice);
-	  printf_filtered ("Start time: %jd.%06ld\n", kp.ki_start.tv_sec,
-			   kp.ki_start.tv_usec);
+	    gdb_printf ("%d ", kp.ki_groups[i]);
+	  gdb_printf ("\n");
+	  gdb_printf ("Minor faults (no memory page): %ld\n",
+		      kp.ki_rusage.ru_minflt);
+	  gdb_printf ("Minor faults, children: %ld\n",
+		      kp.ki_rusage_ch.ru_minflt);
+	  gdb_printf ("Major faults (memory page faults): %ld\n",
+		      kp.ki_rusage.ru_majflt);
+	  gdb_printf ("Major faults, children: %ld\n",
+		      kp.ki_rusage_ch.ru_majflt);
+	  gdb_printf ("utime: %s.%06ld\n",
+		      plongest (kp.ki_rusage.ru_utime.tv_sec),
+		      kp.ki_rusage.ru_utime.tv_usec);
+	  gdb_printf ("stime: %s.%06ld\n",
+		      plongest (kp.ki_rusage.ru_stime.tv_sec),
+		      kp.ki_rusage.ru_stime.tv_usec);
+	  gdb_printf ("utime, children: %s.%06ld\n",
+		      plongest (kp.ki_rusage_ch.ru_utime.tv_sec),
+		      kp.ki_rusage_ch.ru_utime.tv_usec);
+	  gdb_printf ("stime, children: %s.%06ld\n",
+		      plongest (kp.ki_rusage_ch.ru_stime.tv_sec),
+		      kp.ki_rusage_ch.ru_stime.tv_usec);
+	  gdb_printf ("'nice' value: %d\n", kp.ki_nice);
+	  gdb_printf ("Start time: %s.%06ld\n",
+		      plongest (kp.ki_start.tv_sec),
+		      kp.ki_start.tv_usec);
 	  pgtok = getpagesize () / 1024;
-	  printf_filtered ("Virtual memory size: %ju kB\n",
-			   (uintmax_t) kp.ki_size / 1024);
-	  printf_filtered ("Data size: %ju kB\n",
-			   (uintmax_t) kp.ki_dsize * pgtok);
-	  printf_filtered ("Stack size: %ju kB\n",
-			   (uintmax_t) kp.ki_ssize * pgtok);
-	  printf_filtered ("Text size: %ju kB\n",
-			   (uintmax_t) kp.ki_tsize * pgtok);
-	  printf_filtered ("Resident set size: %ju kB\n",
-			   (uintmax_t) kp.ki_rssize * pgtok);
-	  printf_filtered ("Maximum RSS: %ju kB\n",
-			   (uintmax_t) kp.ki_rusage.ru_maxrss);
-	  printf_filtered ("Pending Signals: ");
+	  gdb_printf ("Virtual memory size: %s kB\n",
+		      pulongest (kp.ki_size / 1024));
+	  gdb_printf ("Data size: %s kB\n",
+		      pulongest (kp.ki_dsize * pgtok));
+	  gdb_printf ("Stack size: %s kB\n",
+		      pulongest (kp.ki_ssize * pgtok));
+	  gdb_printf ("Text size: %s kB\n",
+		      pulongest (kp.ki_tsize * pgtok));
+	  gdb_printf ("Resident set size: %s kB\n",
+		      pulongest (kp.ki_rssize * pgtok));
+	  gdb_printf ("Maximum RSS: %s kB\n",
+		      pulongest (kp.ki_rusage.ru_maxrss));
+	  gdb_printf ("Pending Signals: ");
 	  for (int i = 0; i < _SIG_WORDS; i++)
-	    printf_filtered ("%08x ", kp.ki_siglist.__bits[i]);
-	  printf_filtered ("\n");
-	  printf_filtered ("Ignored Signals: ");
+	    gdb_printf ("%08x ", kp.ki_siglist.__bits[i]);
+	  gdb_printf ("\n");
+	  gdb_printf ("Ignored Signals: ");
 	  for (int i = 0; i < _SIG_WORDS; i++)
-	    printf_filtered ("%08x ", kp.ki_sigignore.__bits[i]);
-	  printf_filtered ("\n");
-	  printf_filtered ("Caught Signals: ");
+	    gdb_printf ("%08x ", kp.ki_sigignore.__bits[i]);
+	  gdb_printf ("\n");
+	  gdb_printf ("Caught Signals: ");
 	  for (int i = 0; i < _SIG_WORDS; i++)
-	    printf_filtered ("%08x ", kp.ki_sigcatch.__bits[i]);
-	  printf_filtered ("\n");
+	    gdb_printf ("%08x ", kp.ki_sigcatch.__bits[i]);
+	  gdb_printf ("\n");
 	}
     }
 
   return true;
 }
 
-/*
- * The current layout of siginfo_t on FreeBSD was adopted in SVN
- * revision 153154 which shipped in FreeBSD versions 7.0 and later.
- * Don't bother supporting the older layout on older kernels.  The
- * older format was also never used in core dump notes.
- */
-#if __FreeBSD_version >= 700009
-#define USE_SIGINFO
-#endif
-
-#ifdef USE_SIGINFO
 /* Return the size of siginfo for the current inferior.  */
 
 #ifdef __LP64__
@@ -677,7 +564,6 @@ fbsd_convert_siginfo (siginfo_t *si)
   memcpy(si, &si32, sizeof (si32));
 #endif
 }
-#endif
 
 /* Implement the "xfer_partial" target_ops method.  */
 
@@ -692,7 +578,6 @@ fbsd_nat_target::xfer_partial (enum target_object object,
 
   switch (object)
     {
-#ifdef USE_SIGINFO
     case TARGET_OBJECT_SIGNAL_INFO:
       {
 	struct ptrace_lwpinfo pl;
@@ -723,7 +608,6 @@ fbsd_nat_target::xfer_partial (enum target_object object,
 	*xfered_len = len;
 	return TARGET_XFER_OK;
       }
-#endif
 #ifdef KERN_PROC_AUXV
     case TARGET_OBJECT_AUXV:
       {
@@ -831,7 +715,6 @@ fbsd_nat_target::xfer_partial (enum target_object object,
     }
 }
 
-#ifdef PT_LWPINFO
 static bool debug_fbsd_lwp;
 static bool debug_fbsd_nat;
 
@@ -839,16 +722,23 @@ static void
 show_fbsd_lwp_debug (struct ui_file *file, int from_tty,
 		     struct cmd_list_element *c, const char *value)
 {
-  fprintf_filtered (file, _("Debugging of FreeBSD lwp module is %s.\n"), value);
+  gdb_printf (file, _("Debugging of FreeBSD lwp module is %s.\n"), value);
 }
 
 static void
 show_fbsd_nat_debug (struct ui_file *file, int from_tty,
 		     struct cmd_list_element *c, const char *value)
 {
-  fprintf_filtered (file, _("Debugging of FreeBSD native target is %s.\n"),
-		    value);
+  gdb_printf (file, _("Debugging of FreeBSD native target is %s.\n"),
+	      value);
 }
+
+#define fbsd_lwp_debug_printf(fmt, ...) \
+  debug_prefixed_printf_cond (debug_fbsd_lwp, "fbsd-lwp", fmt, ##__VA_ARGS__)
+
+#define fbsd_nat_debug_printf(fmt, ...) \
+  debug_prefixed_printf_cond (debug_fbsd_nat, "fbsd-nat", fmt, ##__VA_ARGS__)
+
 
 /*
   FreeBSD's first thread support was via a "reentrant" version of libc
@@ -933,9 +823,9 @@ fbsd_nat_target::thread_name (struct thread_info *thr)
      if a name has not been set explicitly.  Return a NULL name in
      that case.  */
   if (!fbsd_fetch_kinfo_proc (pid, &kp))
-    perror_with_name (_("Failed to fetch process information"));
+    return nullptr;
   if (ptrace (PT_LWPINFO, lwp, (caddr_t) &pl, sizeof pl) == -1)
-    perror_with_name (("ptrace"));
+    return nullptr;
   if (strcmp (kp.ki_comm, pl.pl_tdname) == 0)
     return NULL;
   xsnprintf (buf, sizeof buf, "%s", pl.pl_tdname);
@@ -964,22 +854,22 @@ fbsd_enable_proc_events (pid_t pid)
 
   if (ptrace (PT_GET_EVENT_MASK, pid, (PTRACE_TYPE_ARG3)&events,
 	      sizeof (events)) == -1)
-    perror_with_name (("ptrace"));
+    perror_with_name (("ptrace (PT_GET_EVENT_MASK)"));
   events |= PTRACE_FORK | PTRACE_LWP;
 #ifdef PTRACE_VFORK
   events |= PTRACE_VFORK;
 #endif
   if (ptrace (PT_SET_EVENT_MASK, pid, (PTRACE_TYPE_ARG3)&events,
 	      sizeof (events)) == -1)
-    perror_with_name (("ptrace"));
+    perror_with_name (("ptrace (PT_SET_EVENT_MASK)"));
 #else
 #ifdef TDP_RFPPWAIT
   if (ptrace (PT_FOLLOW_FORK, pid, (PTRACE_TYPE_ARG3)0, 1) == -1)
-    perror_with_name (("ptrace"));
+    perror_with_name (("ptrace (PT_FOLLOW_FORK)"));
 #endif
 #ifdef PT_LWP_EVENTS
   if (ptrace (PT_LWP_EVENTS, pid, (PTRACE_TYPE_ARG3)0, 1) == -1)
-    perror_with_name (("ptrace"));
+    perror_with_name (("ptrace (PT_LWP_EVENTS)"));
 #endif
 #endif
 }
@@ -998,17 +888,17 @@ fbsd_add_threads (fbsd_nat_target *target, pid_t pid)
   gdb_assert (!in_thread_list (target, ptid_t (pid)));
   nlwps = ptrace (PT_GETNUMLWPS, pid, NULL, 0);
   if (nlwps == -1)
-    perror_with_name (("ptrace"));
+    perror_with_name (("ptrace (PT_GETNUMLWPS)"));
 
   gdb::unique_xmalloc_ptr<lwpid_t[]> lwps (XCNEWVEC (lwpid_t, nlwps));
 
   nlwps = ptrace (PT_GETLWPLIST, pid, (caddr_t) lwps.get (), nlwps);
   if (nlwps == -1)
-    perror_with_name (("ptrace"));
+    perror_with_name (("ptrace (PT_GETLWPLIST)"));
 
   for (i = 0; i < nlwps; i++)
     {
-      ptid_t ptid = ptid_t (pid, lwps[i], 0);
+      ptid_t ptid = ptid_t (pid, lwps[i]);
 
       if (!in_thread_list (target, ptid))
 	{
@@ -1018,14 +908,11 @@ fbsd_add_threads (fbsd_nat_target *target, pid_t pid)
 	  /* Don't add exited threads.  Note that this is only called
 	     when attaching to a multi-threaded process.  */
 	  if (ptrace (PT_LWPINFO, lwps[i], (caddr_t) &pl, sizeof pl) == -1)
-	    perror_with_name (("ptrace"));
+	    perror_with_name (("ptrace (PT_LWPINFO)"));
 	  if (pl.pl_flags & PL_FLAG_EXITED)
 	    continue;
 #endif
-	  if (debug_fbsd_lwp)
-	    fprintf_unfiltered (gdb_stdlog,
-				"FLWP: adding thread for LWP %u\n",
-				lwps[i]);
+	  fbsd_lwp_debug_printf ("adding thread for LWP %u", lwps[i]);
 	  add_thread (target, ptid);
 	}
     }
@@ -1045,6 +932,70 @@ fbsd_nat_target::update_thread_list ()
 
   fbsd_add_threads (this, inferior_ptid.pid ());
 #endif
+}
+
+/* Async mode support.  */
+
+/* Implement the "can_async_p" target method.  */
+
+bool
+fbsd_nat_target::can_async_p ()
+{
+  /* This flag should be checked in the common target.c code.  */
+  gdb_assert (target_async_permitted);
+
+  /* Otherwise, this targets is always able to support async mode.  */
+  return true;
+}
+
+/* SIGCHLD handler notifies the event-loop in async mode.  */
+
+static void
+sigchld_handler (int signo)
+{
+  int old_errno = errno;
+
+  fbsd_nat_target::async_file_mark_if_open ();
+
+  errno = old_errno;
+}
+
+/* Callback registered with the target events file descriptor.  */
+
+static void
+handle_target_event (int error, gdb_client_data client_data)
+{
+  inferior_event_handler (INF_REG_EVENT);
+}
+
+/* Implement the "async" target method.  */
+
+void
+fbsd_nat_target::async (bool enable)
+{
+  if (enable == is_async_p ())
+    return;
+
+  /* Block SIGCHILD while we create/destroy the pipe, as the handler
+     writes to it.  */
+  gdb::block_signals blocker;
+
+  if (enable)
+    {
+      if (!async_file_open ())
+	internal_error ("failed to create event pipe.");
+
+      add_file_handler (async_wait_fd (), handle_target_event, NULL, "fbsd-nat");
+
+      /* Trigger a poll in case there are pending events to
+	 handle.  */
+      async_file_mark ();
+    }
+  else
+    {
+      delete_file_handler (async_wait_fd ());
+      async_file_close ();
+    }
 }
 
 #ifdef TDP_RFPPWAIT
@@ -1118,6 +1069,11 @@ static void
 fbsd_add_vfork_done (ptid_t pid)
 {
   fbsd_pending_vfork_done.push_front (pid);
+
+  /* If we're in async mode, need to tell the event loop there's
+     something here to process.  */
+  if (target_is_async_p ())
+    async_file_mark ();
 }
 
 /* Check for a pending vfork done event for a specific PID.  */
@@ -1166,18 +1122,16 @@ fbsd_nat_target::resume (ptid_t ptid, int step, enum gdb_signal signo)
     return;
 #endif
 
-  if (debug_fbsd_lwp)
-    fprintf_unfiltered (gdb_stdlog,
-			"FLWP: fbsd_resume for ptid (%d, %ld, %ld)\n",
-			ptid.pid (), ptid.lwp (),
-			ptid.tid ());
+  fbsd_nat_debug_printf ("[%s], step %d, signo %d (%s)",
+			 target_pid_to_str (ptid).c_str (), step, signo,
+			 gdb_signal_to_name (signo));
   if (ptid.lwp_p ())
     {
       /* If ptid is a specific LWP, suspend all other LWPs in the process.  */
       inferior *inf = find_inferior_ptid (this, ptid);
 
       for (thread_info *tp : inf->non_exited_threads ())
-        {
+	{
 	  int request;
 
 	  if (tp->ptid.lwp () == ptid.lwp ())
@@ -1186,7 +1140,11 @@ fbsd_nat_target::resume (ptid_t ptid, int step, enum gdb_signal signo)
 	    request = PT_SUSPEND;
 
 	  if (ptrace (request, tp->ptid.lwp (), NULL, 0) == -1)
-	    perror_with_name (("ptrace"));
+	    perror_with_name (request == PT_RESUME ?
+			      ("ptrace (PT_RESUME)") :
+			      ("ptrace (PT_SUSPEND)"));
+	  if (request == PT_RESUME)
+	    low_prepare_to_resume (tp);
 	}
     }
   else
@@ -1194,8 +1152,11 @@ fbsd_nat_target::resume (ptid_t ptid, int step, enum gdb_signal signo)
       /* If ptid is a wildcard, resume all matching threads (they won't run
 	 until the process is continued however).  */
       for (thread_info *tp : all_non_exited_threads (this, ptid))
-	if (ptrace (PT_RESUME, tp->ptid.lwp (), NULL, 0) == -1)
-	  perror_with_name (("ptrace"));
+	{
+	  if (ptrace (PT_RESUME, tp->ptid.lwp (), NULL, 0) == -1)
+	    perror_with_name (("ptrace (PT_RESUME)"));
+	  low_prepare_to_resume (tp);
+	}
       ptid = inferior_ptid;
     }
 
@@ -1225,7 +1186,7 @@ fbsd_nat_target::resume (ptid_t ptid, int step, enum gdb_signal signo)
   if (step)
     {
       if (ptrace (PT_SETSTEP, get_ptrace_pid (ptid), NULL, 0) == -1)
-	perror_with_name (("ptrace"));
+	perror_with_name (("ptrace (PT_SETSTEP)"));
       step = 0;
     }
   ptid = ptid_t (ptid.pid ());
@@ -1258,9 +1219,7 @@ fbsd_handle_debug_trap (fbsd_nat_target *target, ptid_t ptid,
      breakpoint.  */
   if (pl.pl_siginfo.si_code == TRAP_TRACE)
     {
-      if (debug_fbsd_nat)
-	fprintf_unfiltered (gdb_stdlog,
-			    "FNAT: trace trap for LWP %ld\n", ptid.lwp ());
+      fbsd_nat_debug_printf ("trace trap for LWP %ld", ptid.lwp ());
       return true;
     }
 
@@ -1271,10 +1230,7 @@ fbsd_handle_debug_trap (fbsd_nat_target *target, ptid_t ptid,
       struct gdbarch *gdbarch = regcache->arch ();
       int decr_pc = gdbarch_decr_pc_after_break (gdbarch);
 
-      if (debug_fbsd_nat)
-	fprintf_unfiltered (gdb_stdlog,
-			    "FNAT: sw breakpoint trap for LWP %ld\n",
-			    ptid.lwp ());
+      fbsd_nat_debug_printf ("sw breakpoint trap for LWP %ld", ptid.lwp ());
       if (decr_pc != 0)
 	{
 	  CORE_ADDR pc;
@@ -1294,8 +1250,8 @@ fbsd_handle_debug_trap (fbsd_nat_target *target, ptid_t ptid,
    the status in *OURSTATUS.  */
 
 ptid_t
-fbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
-		       int target_options)
+fbsd_nat_target::wait_1 (ptid_t ptid, struct target_waitstatus *ourstatus,
+			 target_wait_flags target_options)
 {
   ptid_t wptid;
 
@@ -1310,7 +1266,7 @@ fbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 	}
 #endif
       wptid = inf_ptrace_target::wait (ptid, ourstatus, target_options);
-      if (ourstatus->kind == TARGET_WAITKIND_STOPPED)
+      if (ourstatus->kind () == TARGET_WAITKIND_STOPPED)
 	{
 	  struct ptrace_lwpinfo pl;
 	  pid_t pid;
@@ -1318,20 +1274,18 @@ fbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 
 	  pid = wptid.pid ();
 	  if (ptrace (PT_LWPINFO, pid, (caddr_t) &pl, sizeof pl) == -1)
-	    perror_with_name (("ptrace"));
+	    perror_with_name (("ptrace (PT_LWPINFO)"));
 
-	  wptid = ptid_t (pid, pl.pl_lwpid, 0);
+	  wptid = ptid_t (pid, pl.pl_lwpid);
 
 	  if (debug_fbsd_nat)
 	    {
-	      fprintf_unfiltered (gdb_stdlog,
-				  "FNAT: stop for LWP %u event %d flags %#x\n",
-				  pl.pl_lwpid, pl.pl_event, pl.pl_flags);
+	      fbsd_nat_debug_printf ("stop for LWP %u event %d flags %#x",
+				     pl.pl_lwpid, pl.pl_event, pl.pl_flags);
 	      if (pl.pl_flags & PL_FLAG_SI)
-		fprintf_unfiltered (gdb_stdlog,
-				    "FNAT: si_signo %u si_code %u\n",
-				    pl.pl_siginfo.si_signo,
-				    pl.pl_siginfo.si_code);
+		fbsd_nat_debug_printf ("si_signo %u si_code %u",
+				       pl.pl_siginfo.si_signo,
+				       pl.pl_siginfo.si_code);
 	    }
 
 #ifdef PT_LWP_EVENTS
@@ -1344,17 +1298,16 @@ fbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 	      thread_info *thr = find_thread_ptid (this, wptid);
 	      if (thr != nullptr)
 		{
-		  if (debug_fbsd_lwp)
-		    fprintf_unfiltered (gdb_stdlog,
-					"FLWP: deleting thread for LWP %u\n",
-					pl.pl_lwpid);
+		  fbsd_lwp_debug_printf ("deleting thread for LWP %u",
+					 pl.pl_lwpid);
 		  if (print_thread_events)
-		    printf_unfiltered (_("[%s exited]\n"),
-				       target_pid_to_str (wptid).c_str ());
+		    gdb_printf (_("[%s exited]\n"),
+				target_pid_to_str (wptid).c_str ());
+		  low_delete_thread (thr);
 		  delete_thread (thr);
 		}
 	      if (ptrace (PT_CONTINUE, pid, (caddr_t) 1, 0) == -1)
-		perror_with_name (("ptrace"));
+		perror_with_name (("ptrace (PT_CONTINUE)"));
 	      continue;
 	    }
 #endif
@@ -1367,10 +1320,8 @@ fbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 	     event.  */
 	  if (in_thread_list (this, ptid_t (pid)))
 	    {
-	      if (debug_fbsd_lwp)
-		fprintf_unfiltered (gdb_stdlog,
-				    "FLWP: using LWP %u for first thread\n",
-				    pl.pl_lwpid);
+	      fbsd_lwp_debug_printf ("using LWP %u for first thread",
+				     pl.pl_lwpid);
 	      thread_change_ptid (this, ptid_t (pid), wptid);
 	    }
 
@@ -1383,13 +1334,11 @@ fbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 		 BORN events for an already-known LWP.  */
 	      if (!in_thread_list (this, wptid))
 		{
-		  if (debug_fbsd_lwp)
-		    fprintf_unfiltered (gdb_stdlog,
-					"FLWP: adding thread for LWP %u\n",
-					pl.pl_lwpid);
+		  fbsd_lwp_debug_printf ("adding thread for LWP %u",
+					 pl.pl_lwpid);
 		  add_thread (this, wptid);
 		}
-	      ourstatus->kind = TARGET_WAITKIND_SPURIOUS;
+	      ourstatus->set_spurious ();
 	      return wptid;
 	    }
 #endif
@@ -1400,14 +1349,14 @@ fbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 #ifndef PTRACE_VFORK
 	      struct kinfo_proc kp;
 #endif
+	      bool is_vfork = false;
 	      ptid_t child_ptid;
 	      pid_t child;
 
 	      child = pl.pl_child_pid;
-	      ourstatus->kind = TARGET_WAITKIND_FORKED;
 #ifdef PTRACE_VFORK
 	      if (pl.pl_flags & PL_FLAG_VFORKED)
-		ourstatus->kind = TARGET_WAITKIND_VFORKED;
+		is_vfork = true;
 #endif
 
 	      /* Make sure the other end of the fork is stopped too.  */
@@ -1421,10 +1370,10 @@ fbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 		  gdb_assert (pid == child);
 
 		  if (ptrace (PT_LWPINFO, child, (caddr_t)&pl, sizeof pl) == -1)
-		    perror_with_name (("ptrace"));
+		    perror_with_name (("ptrace (PT_LWPINFO)"));
 
 		  gdb_assert (pl.pl_flags & PL_FLAG_CHILD);
-		  child_ptid = ptid_t (child, pl.pl_lwpid, 0);
+		  child_ptid = ptid_t (child, pl.pl_lwpid);
 		}
 
 	      /* Enable additional events on the child process.  */
@@ -1436,12 +1385,18 @@ fbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 	      if (fbsd_fetch_kinfo_proc (child, &kp))
 		{
 		  if (kp.ki_flag & P_PPWAIT)
-		    ourstatus->kind = TARGET_WAITKIND_VFORKED;
+		    is_vfork = true;
 		}
 	      else
 		warning (_("Failed to fetch process information"));
 #endif
-	      ourstatus->value.related_pid = child_ptid;
+
+	      low_new_fork (wptid, child);
+
+	      if (is_vfork)
+		ourstatus->set_vforked (child_ptid);
+	      else
+		ourstatus->set_forked (child_ptid);
 
 	      return wptid;
 	    }
@@ -1458,21 +1413,18 @@ fbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 #ifdef PTRACE_VFORK
 	  if (pl.pl_flags & PL_FLAG_VFORK_DONE)
 	    {
-	      ourstatus->kind = TARGET_WAITKIND_VFORK_DONE;
+	      ourstatus->set_vfork_done ();
 	      return wptid;
 	    }
 #endif
 #endif
 
-#ifdef PL_FLAG_EXEC
 	  if (pl.pl_flags & PL_FLAG_EXEC)
 	    {
-	      ourstatus->kind = TARGET_WAITKIND_EXECD;
-	      ourstatus->value.execd_pathname
-		= xstrdup (pid_to_exec_file (pid));
+	      ourstatus->set_execd
+		(make_unique_xstrdup (pid_to_exec_file (pid)));
 	      return wptid;
 	    }
-#endif
 
 #ifdef USE_SIGTRAP_SIGINFO
 	  if (fbsd_handle_debug_trap (this, wptid, pl))
@@ -1487,7 +1439,7 @@ fbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 	     SIGTRAP, so only treat SIGTRAP events as system call
 	     entry/exit events.  */
 	  if (pl.pl_flags & (PL_FLAG_SCE | PL_FLAG_SCX)
-	      && ourstatus->value.sig == SIGTRAP)
+	      && ourstatus->sig () == SIGTRAP)
 	    {
 #ifdef HAVE_STRUCT_PTRACE_LWPINFO_PL_SYSCALL_CODE
 	      if (catch_syscall_enabled ())
@@ -1495,10 +1447,10 @@ fbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 		  if (catching_syscall_number (pl.pl_syscall_code))
 		    {
 		      if (pl.pl_flags & PL_FLAG_SCE)
-			ourstatus->kind = TARGET_WAITKIND_SYSCALL_ENTRY;
+			ourstatus->set_syscall_entry (pl.pl_syscall_code);
 		      else
-			ourstatus->kind = TARGET_WAITKIND_SYSCALL_RETURN;
-		      ourstatus->value.syscall_number = pl.pl_syscall_code;
+			ourstatus->set_syscall_return (pl.pl_syscall_code);
+
 		      return wptid;
 		    }
 		}
@@ -1509,12 +1461,42 @@ fbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 		 and once system call stops are enabled on a process
 		 it stops for all system call entries and exits.  */
 	      if (ptrace (PT_CONTINUE, pid, (caddr_t) 1, 0) == -1)
-		perror_with_name (("ptrace"));
+		perror_with_name (("ptrace (PT_CONTINUE)"));
 	      continue;
 	    }
 	}
       return wptid;
     }
+}
+
+ptid_t
+fbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
+		       target_wait_flags target_options)
+{
+  ptid_t wptid;
+
+  fbsd_nat_debug_printf ("[%s], [%s]", target_pid_to_str (ptid).c_str (),
+			 target_options_to_string (target_options).c_str ());
+
+  /* Ensure any subsequent events trigger a new event in the loop.  */
+  if (is_async_p ())
+    async_file_flush ();
+
+  wptid = wait_1 (ptid, ourstatus, target_options);
+
+  /* If we are in async mode and found an event, there may still be
+     another event pending.  Trigger the event pipe so that that the
+     event loop keeps polling until no event is returned.  */
+  if (is_async_p ()
+      && ((ourstatus->kind () != TARGET_WAITKIND_IGNORE
+	  && ourstatus->kind() != TARGET_WAITKIND_NO_RESUMED)
+	  || ptid != minus_one_ptid))
+    async_file_mark ();
+
+  fbsd_nat_debug_printf ("returning [%s], [%s]",
+			 target_pid_to_str (wptid).c_str (),
+			 ourstatus->to_string ().c_str ());
+  return wptid;
 }
 
 #ifdef USE_SIGTRAP_SIGINFO
@@ -1544,26 +1526,92 @@ fbsd_nat_target::supports_stopped_by_sw_breakpoint ()
 }
 #endif
 
+#ifdef PROC_ASLR_CTL
+class maybe_disable_address_space_randomization
+{
+public:
+  explicit maybe_disable_address_space_randomization (bool disable_randomization)
+  {
+    if (disable_randomization)
+      {
+	if (procctl (P_PID, getpid (), PROC_ASLR_STATUS, &m_aslr_ctl) == -1)
+	  {
+	    warning (_("Failed to fetch current address space randomization "
+		       "status: %s"), safe_strerror (errno));
+	    return;
+	  }
+
+	m_aslr_ctl &= ~PROC_ASLR_ACTIVE;
+	if (m_aslr_ctl == PROC_ASLR_FORCE_DISABLE)
+	  return;
+
+	int ctl = PROC_ASLR_FORCE_DISABLE;
+	if (procctl (P_PID, getpid (), PROC_ASLR_CTL, &ctl) == -1)
+	  {
+	    warning (_("Error disabling address space randomization: %s"),
+		     safe_strerror (errno));
+	    return;
+	  }
+
+	m_aslr_ctl_set = true;
+      }
+  }
+
+  ~maybe_disable_address_space_randomization ()
+  {
+    if (m_aslr_ctl_set)
+      {
+	if (procctl (P_PID, getpid (), PROC_ASLR_CTL, &m_aslr_ctl) == -1)
+	  warning (_("Error restoring address space randomization: %s"),
+		   safe_strerror (errno));
+      }
+  }
+
+  DISABLE_COPY_AND_ASSIGN (maybe_disable_address_space_randomization);
+
+private:
+  bool m_aslr_ctl_set = false;
+  int m_aslr_ctl = 0;
+};
+#endif
+
+void
+fbsd_nat_target::create_inferior (const char *exec_file,
+				  const std::string &allargs,
+				  char **env, int from_tty)
+{
+#ifdef PROC_ASLR_CTL
+  maybe_disable_address_space_randomization restore_aslr_ctl
+    (disable_randomization);
+#endif
+
+  inf_ptrace_target::create_inferior (exec_file, allargs, env, from_tty);
+}
+
 #ifdef TDP_RFPPWAIT
 /* Target hook for follow_fork.  On entry and at return inferior_ptid is
    the ptid of the followed inferior.  */
 
-bool
-fbsd_nat_target::follow_fork (bool follow_child, bool detach_fork)
+void
+fbsd_nat_target::follow_fork (inferior *child_inf, ptid_t child_ptid,
+			      target_waitkind fork_kind, bool follow_child,
+			      bool detach_fork)
 {
+  inf_ptrace_target::follow_fork (child_inf, child_ptid, fork_kind,
+				  follow_child, detach_fork);
+
   if (!follow_child && detach_fork)
     {
-      struct thread_info *tp = inferior_thread ();
-      pid_t child_pid = tp->pending_follow.value.related_pid.pid ();
+      pid_t child_pid = child_ptid.pid ();
 
       /* Breakpoints have already been detached from the child by
 	 infrun.c.  */
 
       if (ptrace (PT_DETACH, child_pid, (PTRACE_TYPE_ARG3)1, 0) == -1)
-	perror_with_name (("ptrace"));
+	perror_with_name (("ptrace (PT_DETACH)"));
 
 #ifndef PTRACE_VFORK
-      if (tp->pending_follow.kind == TARGET_WAITKIND_VFORKED)
+      if (fork_kind () == TARGET_WAITKIND_VFORKED)
 	{
 	  /* We can't insert breakpoints until the child process has
 	     finished with the shared memory region.  The parent
@@ -1591,8 +1639,6 @@ fbsd_nat_target::follow_fork (bool follow_child, bool detach_fork)
 	}
 #endif
     }
-
-  return false;
 }
 
 int
@@ -1620,7 +1666,7 @@ fbsd_nat_target::remove_vfork_catchpoint (int pid)
 }
 #endif
 
-/* Implement the "post_startup_inferior" target_ops method.  */
+/* Implement the virtual inf_ptrace_target::post_startup_inferior method.  */
 
 void
 fbsd_nat_target::post_startup_inferior (ptid_t pid)
@@ -1637,9 +1683,7 @@ fbsd_nat_target::post_attach (int pid)
   fbsd_add_threads (this, pid);
 }
 
-#ifdef PL_FLAG_EXEC
-/* If the FreeBSD kernel supports PL_FLAG_EXEC, then traced processes
-   will always stop after exec.  */
+/* Traced processes always stop after exec.  */
 
 int
 fbsd_nat_target::insert_exec_catchpoint (int pid)
@@ -1652,7 +1696,6 @@ fbsd_nat_target::remove_exec_catchpoint (int pid)
 {
   return 0;
 }
-#endif
 
 #ifdef HAVE_STRUCT_PTRACE_LWPINFO_PL_SYSCALL_CODE
 int
@@ -1667,7 +1710,6 @@ fbsd_nat_target::set_syscall_catchpoint (int pid, bool needed,
   return 0;
 }
 #endif
-#endif
 
 bool
 fbsd_nat_target::supports_multi_process ()
@@ -1675,11 +1717,160 @@ fbsd_nat_target::supports_multi_process ()
   return true;
 }
 
+bool
+fbsd_nat_target::supports_disable_randomization ()
+{
+#ifdef PROC_ASLR_CTL
+  return true;
+#else
+  return false;
+#endif
+}
+
+/* See fbsd-nat.h.  */
+
+bool
+fbsd_nat_target::fetch_register_set (struct regcache *regcache, int regnum,
+				     int fetch_op, const struct regset *regset,
+				     int regbase, void *regs, size_t size)
+{
+  const struct regcache_map_entry *map
+    = (const struct regcache_map_entry *) regset->regmap;
+  pid_t pid = get_ptrace_pid (regcache->ptid ());
+
+  if (regnum == -1
+      || (regnum >= regbase && regcache_map_supplies (map, regnum - regbase,
+						      regcache->arch(), size)))
+    {
+      if (ptrace (fetch_op, pid, (PTRACE_TYPE_ARG3) regs, 0) == -1)
+	perror_with_name (_("Couldn't get registers"));
+
+      regset->supply_regset (regset, regcache, regnum, regs, size);
+      return true;
+    }
+  return false;
+}
+
+/* See fbsd-nat.h.  */
+
+bool
+fbsd_nat_target::store_register_set (struct regcache *regcache, int regnum,
+				     int fetch_op, int store_op,
+				     const struct regset *regset, int regbase,
+				     void *regs, size_t size)
+{
+  const struct regcache_map_entry *map
+    = (const struct regcache_map_entry *) regset->regmap;
+  pid_t pid = get_ptrace_pid (regcache->ptid ());
+
+  if (regnum == -1
+      || (regnum >= regbase && regcache_map_supplies (map, regnum - regbase,
+						      regcache->arch(), size)))
+    {
+      if (ptrace (fetch_op, pid, (PTRACE_TYPE_ARG3) regs, 0) == -1)
+	perror_with_name (_("Couldn't get registers"));
+
+      regset->collect_regset (regset, regcache, regnum, regs, size);
+
+      if (ptrace (store_op, pid, (PTRACE_TYPE_ARG3) regs, 0) == -1)
+	perror_with_name (_("Couldn't write registers"));
+      return true;
+    }
+  return false;
+}
+
+/* See fbsd-nat.h.  */
+
+size_t
+fbsd_nat_target::have_regset (ptid_t ptid, int note)
+{
+  pid_t pid = get_ptrace_pid (ptid);
+  struct iovec iov;
+
+  iov.iov_base = nullptr;
+  iov.iov_len = 0;
+  if (ptrace (PT_GETREGSET, pid, (PTRACE_TYPE_ARG3) &iov, note) == -1)
+    return 0;
+  return iov.iov_len;
+}
+
+/* See fbsd-nat.h.  */
+
+bool
+fbsd_nat_target::fetch_regset (struct regcache *regcache, int regnum, int note,
+			       const struct regset *regset, int regbase,
+			       void *regs, size_t size)
+{
+  const struct regcache_map_entry *map
+    = (const struct regcache_map_entry *) regset->regmap;
+  pid_t pid = get_ptrace_pid (regcache->ptid ());
+
+  if (regnum == -1
+      || (regnum >= regbase && regcache_map_supplies (map, regnum - regbase,
+						      regcache->arch(), size)))
+    {
+      struct iovec iov;
+
+      iov.iov_base = regs;
+      iov.iov_len = size;
+      if (ptrace (PT_GETREGSET, pid, (PTRACE_TYPE_ARG3) &iov, note) == -1)
+	perror_with_name (_("Couldn't get registers"));
+
+      regset->supply_regset (regset, regcache, regnum, regs, size);
+      return true;
+    }
+  return false;
+}
+
+bool
+fbsd_nat_target::store_regset (struct regcache *regcache, int regnum, int note,
+			       const struct regset *regset, int regbase,
+			       void *regs, size_t size)
+{
+  const struct regcache_map_entry *map
+    = (const struct regcache_map_entry *) regset->regmap;
+  pid_t pid = get_ptrace_pid (regcache->ptid ());
+
+  if (regnum == -1
+      || (regnum >= regbase && regcache_map_supplies (map, regnum - regbase,
+						      regcache->arch(), size)))
+    {
+      struct iovec iov;
+
+      iov.iov_base = regs;
+      iov.iov_len = size;
+      if (ptrace (PT_GETREGSET, pid, (PTRACE_TYPE_ARG3) &iov, note) == -1)
+	perror_with_name (_("Couldn't get registers"));
+
+      regset->collect_regset (regset, regcache, regnum, regs, size);
+
+      if (ptrace (PT_SETREGSET, pid, (PTRACE_TYPE_ARG3) &iov, note) == -1)
+	perror_with_name (_("Couldn't write registers"));
+      return true;
+    }
+  return false;
+}
+
+/* See fbsd-nat.h.  */
+
+bool
+fbsd_nat_get_siginfo (ptid_t ptid, siginfo_t *siginfo)
+{
+  struct ptrace_lwpinfo pl;
+  pid_t pid = get_ptrace_pid (ptid);
+
+  if (ptrace (PT_LWPINFO, pid, (caddr_t) &pl, sizeof pl) == -1)
+    return false;
+  if (!(pl.pl_flags & PL_FLAG_SI))
+    return false;;
+  *siginfo = pl.pl_siginfo;
+  return (true);
+}
+
 void _initialize_fbsd_nat ();
 void
 _initialize_fbsd_nat ()
 {
-#ifdef PT_LWPINFO
   add_setshow_boolean_cmd ("fbsd-lwp", class_maintenance,
 			   &debug_fbsd_lwp, _("\
 Set debugging of FreeBSD lwp module."), _("\
@@ -1696,5 +1887,7 @@ Enables printf debugging output."),
 			   NULL,
 			   &show_fbsd_nat_debug,
 			   &setdebuglist, &showdebuglist);
-#endif
+
+  /* Install a SIGCHLD handler.  */
+  signal (SIGCHLD, sigchld_handler);
 }

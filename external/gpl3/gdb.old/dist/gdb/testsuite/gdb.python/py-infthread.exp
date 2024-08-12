@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2020 Free Software Foundation, Inc.
+# Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,9 +24,6 @@ if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
     return -1
 }
 
-# Start with a fresh gdb.
-clean_restart ${testfile}
-
 # Skip all tests if Python scripting is not enabled.
 if { [skip_python_tests] } { continue }
 
@@ -34,7 +31,8 @@ gdb_test_multiline "install new_thread event handler" \
     "python" "" \
     "seen_a_thread = False" "" \
     "def thread_handler(evt):" "" \
-    "  if evt.inferior_thread is not None:" "" \
+    "  if (evt.inferior_thread is not None" "" \
+    "      and isinstance (evt.inferior_thread, gdb.InferiorThread)):" "" \
     "    global seen_a_thread" "" \
     "    seen_a_thread = True" "" \
     "gdb.events.new_thread.connect(thread_handler)" "" \
@@ -42,8 +40,7 @@ gdb_test_multiline "install new_thread event handler" \
 
 # The following tests require execution.
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 
@@ -80,6 +77,11 @@ gdb_py_test_silent_cmd "python gdb.selected_thread().name = None" \
 gdb_test "python print (gdb.selected_thread().name == name)" "True" \
     "check name of current thread again"
 
+gdb_test_no_output "python details = gdb.selected_thread().details" \
+    "record the thread details string"
+gdb_test "python print(details is None or isinstance(details, str))" "True" \
+    "check that the details has an acceptable type"
+
 gdb_test "python print ('result = %s' % t0.is_stopped ())" " = True" "test InferiorThread.is_stopped"
 gdb_test "python print ('result = %s' % t0.is_running ())" " = False" "test InferiorThread.is_running"
 gdb_test "python print ('result = %s' % t0.is_exited ())" " = False" "test InferiorThread.is_exited"
@@ -89,4 +91,5 @@ gdb_test "python print ('result = %s' % t0.is_exited ())" " = False" "test Infer
 
 gdb_test "python print ('result = %s' % t0.is_valid ())" " = True" "test InferiorThread.is_valid"
 gdb_test_no_output "kill inferior 1" "kill inferior 1"
-gdb_test "python print ('result = %s' % t0.is_valid ())" " = False" "test InferiorThread.is_valid"
+gdb_test "python print ('result = %s' % t0.is_valid ())" " = False" \
+    "test InferiorThread.is_valid after thread has been killed"

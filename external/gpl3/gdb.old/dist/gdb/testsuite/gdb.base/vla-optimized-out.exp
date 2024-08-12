@@ -1,4 +1,4 @@
-# Copyright 2018-2020 Free Software Foundation, Inc.
+# Copyright 2018-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,7 +33,6 @@ proc vla_optimized_out {exe_suffix options} {
     }
 
     if ![runto f1] {
-	fail "can't run to f1"
 	return
     }
 
@@ -42,7 +41,7 @@ proc vla_optimized_out {exe_suffix options} {
 	"printed optimized out vla"
 
     gdb_test "p sizeof (a)" \
-	" = $sizeof_result" \
+	" = ($sizeof_result)" \
 	"printed size of optimized out vla"
 
     # At lower optimisation levels, the upper bound of the array is
@@ -68,12 +67,23 @@ proc vla_optimized_out {exe_suffix options} {
 	"print out of range element of vla (0xffffffff)"
 }
 
-foreach {test_prefix options} \
-    { "o1" {{debug optimize=-O1 additional_flags=-DNOCLONE} "6"} \
-      "o3" {{debug optimize=-O3} "<optimized out>|6"} \
-      "o3_strict" {{debug optimize=-O3 \
-			additional_flags=-gstrict-dwarf} \
-		       "<optimized out>|6"}} {
+set o1_sizeof_result "6"
+if { [istarget powerpc*-*-*] && [gcc_major_version] != -1 } {
+    set o1_sizeof_result "<optimized out>|6"
+}
+
+set test_matrix {}
+lappend test_matrix \
+    "o1" \
+    [list {debug optimize=-O1 additional_flags=-DNOCLONE} $o1_sizeof_result]
+lappend test_matrix \
+    "o3" \
+    {{debug optimize=-O3} "<optimized out>|6"}
+lappend test_matrix \
+    "o3_strict" \
+    {{debug optimize=-O3 additional_flags=-gstrict-dwarf} "<optimized out>|6"}
+
+foreach {test_prefix options} $test_matrix {
     with_test_prefix $test_prefix {
 	vla_optimized_out $test_prefix $options
     }

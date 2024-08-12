@@ -19,3 +19,4 @@
 	comment "mark: foo2 leave"
 	gdbasm_leave
 	gdbasm_end foo2
+	.section	.note.GNU-stack,"",@progbits

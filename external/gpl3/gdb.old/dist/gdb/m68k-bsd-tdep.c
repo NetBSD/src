@@ -1,6 +1,6 @@
 /* Target-dependent code for Motorola 68000 BSD's.
 
-   Copyright (C) 2004-2020 Free Software Foundation, Inc.
+   Copyright (C) 2004-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,6 +28,7 @@
 #include "gdbtypes.h"
 
 #include "m68k-tdep.h"
+#include "netbsd-tdep.h"
 #include "solib-svr4.h"
 
 /* Core file support.  */
@@ -41,7 +42,7 @@
 int
 m68kbsd_fpreg_offset (struct gdbarch *gdbarch, int regnum)
 {
-  int fp_len = TYPE_LENGTH (gdbarch_register_type (gdbarch, regnum));
+  int fp_len = gdbarch_register_type (gdbarch, regnum)->length ();
   
   if (regnum >= M68K_FPC_REGNUM)
     return 8 * fp_len + (regnum - M68K_FPC_REGNUM) * 4;
@@ -133,7 +134,9 @@ m68kbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
 static void
 m68kbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  m68k_gdbarch_tdep *tdep = gdbarch_tdep<m68k_gdbarch_tdep> (gdbarch);
+
+  nbsd_init_abi (info, gdbarch);
 
   tdep->jb_pc = 5;
   tdep->jb_elt_size = 4;

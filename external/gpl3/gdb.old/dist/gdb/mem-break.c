@@ -1,6 +1,6 @@
 /* Simulate breakpoints by patching locations in the target system, for GDB.
 
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2023 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.  Written by John Gilmore.
 

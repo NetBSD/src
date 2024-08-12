@@ -1,6 +1,6 @@
 /* Miscellaneous simulator utilities.
 
-   Copyright (C) 2005-2020 Free Software Foundation, Inc.
+   Copyright (C) 2005-2023 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc. and Stephane Carrez.
 
    This file is part of simulators.
@@ -18,9 +18,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include "sim-main.h"
 #include "sim-module.h"
-#include "gdb/remote-sim.h"
+#include "sim/sim.h"
 
 /* Generic implementation of sim_close that works with simulators that use
    sim-module for all custom runtime options.  */

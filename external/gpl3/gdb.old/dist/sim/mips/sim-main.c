@@ -19,9 +19,13 @@
 #ifndef SIM_MAIN_C
 #define SIM_MAIN_C
 
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include "sim-main.h"
 #include "sim-assert.h"
 
+#include <stdlib.h>
 
 /*---------------------------------------------------------------------------*/
 /*-- simulator engine -------------------------------------------------------*/
@@ -78,7 +82,7 @@ load_memory (SIM_DESC SD,
     }
 
   dotrace (SD, CPU, tracefh,((IorD == isDATA) ? 0 : 2),(unsigned int)(pAddr&0xFFFFFFFF),(AccessLength + 1),"load%s",((IorD == isDATA) ? "" : " instruction"));
-  
+
   /* Read the specified number of bytes from memory.  Adjust for
      host/target byte ordering/ Align the least significant byte
      read. */
@@ -119,12 +123,12 @@ load_memory (SIM_DESC SD,
     default:
       abort ();
     }
-  
+
 #ifdef DEBUG
   printf("DBG: LoadMemory() : (offset %d) : value = 0x%s%s\n",
 	 (int)(pAddr & LOADDRMASK),pr_uword64(value1),pr_uword64(value));
 #endif /* DEBUG */
-  
+
   /* See also store_memory. Position data in correct byte lanes. */
   if (AccessLength <= LOADDRMASK)
     {
@@ -137,12 +141,12 @@ load_memory (SIM_DESC SD,
 	   is already in the correct postition. */
 	value <<= ((pAddr & LOADDRMASK) * 8);
     }
-  
+
 #ifdef DEBUG
   printf("DBG: LoadMemory() : shifted value = 0x%s%s\n",
 	 pr_uword64(value1),pr_uword64(value));
 #endif /* DEBUG */
-  
+
   *memvalp = value;
   if (memval1p) *memval1p = value1;
 }
@@ -175,24 +179,24 @@ store_memory (SIM_DESC SD,
 #ifdef DEBUG
   sim_io_printf(sd,"DBG: StoreMemory(%d,%d,0x%s,0x%s,0x%s,0x%s)\n",CCA,AccessLength,pr_uword64(MemElem),pr_uword64(MemElem1),pr_addr(pAddr),pr_addr(vAddr));
 #endif /* DEBUG */
-  
+
 #if defined(WARN_MEM)
   if (CCA != uncached)
     sim_io_eprintf(sd,"StoreMemory CCA (%d) is not uncached (currently all accesses treated as cached)\n",CCA);
 #endif /* WARN_MEM */
-  
+
   if (((pAddr & LOADDRMASK) + AccessLength) > LOADDRMASK)
     sim_io_error (SD, "STORE AccessLength of %d would extend over %d bit aligned boundary for physical address 0x%s\n",
 		  AccessLength,
 		  (LOADDRMASK + 1) << 3,
 		  pr_addr(pAddr));
-  
+
   dotrace (SD, CPU, tracefh,1,(unsigned int)(pAddr&0xFFFFFFFF),(AccessLength + 1),"store");
-  
+
 #ifdef DEBUG
   printf("DBG: StoreMemory: offset = %d MemElem = 0x%s%s\n",(unsigned int)(pAddr & LOADDRMASK),pr_uword64(MemElem1),pr_uword64(MemElem));
 #endif /* DEBUG */
-  
+
   /* See also load_memory. Position data in correct byte lanes. */
   if (AccessLength <= LOADDRMASK)
     {
@@ -205,11 +209,11 @@ store_memory (SIM_DESC SD,
 	   is already in the correct postition. */
 	MemElem >>= ((pAddr & LOADDRMASK) * 8);
     }
-  
+
 #ifdef DEBUG
   printf("DBG: StoreMemory: shift = %d MemElem = 0x%s%s\n",shift,pr_uword64(MemElem1),pr_uword64(MemElem));
 #endif /* DEBUG */
-  
+
   switch (AccessLength)
     {
     case AccessLength_QUADWORD:
@@ -244,13 +248,13 @@ store_memory (SIM_DESC SD,
       break;
     default:
       abort ();
-    }	
-  
+    }
+
   return;
 }
 
 
-INLINE_SIM_MAIN (unsigned32)
+INLINE_SIM_MAIN (uint32_t)
 ifetch32 (SIM_DESC SD,
 	  sim_cpu *CPU,
 	  address_word cia,
@@ -263,7 +267,7 @@ ifetch32 (SIM_DESC SD,
   address_word bigendiancpu = (BigEndianCPU ? (mask ^ access) : 0);
   unsigned int byte;
   address_word paddr = vaddr;
-  unsigned64 memval;
+  uint64_t memval;
 
   if ((vaddr & access) != 0)
     SignalExceptionInstructionFetch ();
@@ -274,7 +278,7 @@ ifetch32 (SIM_DESC SD,
 }
 
 
-INLINE_SIM_MAIN (unsigned16)
+INLINE_SIM_MAIN (uint16_t)
 ifetch16 (SIM_DESC SD,
 	  sim_cpu *CPU,
 	  address_word cia,
@@ -287,7 +291,7 @@ ifetch16 (SIM_DESC SD,
   address_word bigendiancpu = (BigEndianCPU ? (mask ^ access) : 0);
   unsigned int byte;
   address_word paddr = vaddr;
-  unsigned64 memval;
+  uint64_t memval;
 
   if ((vaddr & access) != 0)
     SignalExceptionInstructionFetch ();
@@ -371,7 +375,7 @@ cache_op (SIM_DESC SD,
         case 3: /* Create Dirty */
         case 4: /* Hit Invalidate */
         case 5: /* Hit Writeback Invalidate */
-        case 6: /* Hit Writeback */ 
+        case 6: /* Hit Writeback */
           if (!dcache_warning)
             {
               sim_io_eprintf(SD,"Data CACHE operation %d to be coded\n",(op >> 2));
@@ -399,81 +403,81 @@ pending_tick (SIM_DESC SD,
 	      sim_cpu *CPU,
 	      address_word cia)
 {
-  if (PENDING_TRACE)							
-    sim_io_eprintf (SD, "PENDING_DRAIN - 0x%lx - pending_in = %d, pending_out = %d, pending_total = %d\n", (unsigned long) cia, PENDING_IN, PENDING_OUT, PENDING_TOTAL); 
-  if (PENDING_OUT != PENDING_IN)					
-    {									
-      int loop;							
-      int index = PENDING_OUT;					
-      int total = PENDING_TOTAL;					
-      if (PENDING_TOTAL == 0)						
-	sim_engine_abort (SD, CPU, cia, "PENDING_DRAIN - Mis-match on pending update pointers\n"); 
+  if (PENDING_TRACE)
+    sim_io_eprintf (SD, "PENDING_DRAIN - 0x%lx - pending_in = %d, pending_out = %d, pending_total = %d\n", (unsigned long) cia, PENDING_IN, PENDING_OUT, PENDING_TOTAL);
+  if (PENDING_OUT != PENDING_IN)
+    {
+      int loop;
+      int index = PENDING_OUT;
+      int total = PENDING_TOTAL;
+      if (PENDING_TOTAL == 0)
+	sim_engine_abort (SD, CPU, cia, "PENDING_DRAIN - Mis-match on pending update pointers\n");
       for (loop = 0, index = PENDING_OUT;
 	   (loop < total);
 	   loop++, index = (index + 1) % PSLOTS)
-	{								
-	  if (PENDING_SLOT_DEST[index] != NULL)			
-	    {								
-	      PENDING_SLOT_DELAY[index] -= 1;				
-	      if (PENDING_SLOT_DELAY[index] == 0)			
-		{							
+	{
+	  if (PENDING_SLOT_DEST[index] != NULL)
+	    {
+	      PENDING_SLOT_DELAY[index] -= 1;
+	      if (PENDING_SLOT_DELAY[index] == 0)
+		{
 		  if (PENDING_TRACE)
-		    sim_io_eprintf (SD, "PENDING_DRAIN - drained - index %d, dest 0x%lx, bit %d, val 0x%lx, size %d\n",
+		    sim_io_eprintf (SD, "PENDING_DRAIN - drained - index %d, dest %p, bit %d, val %" PRIx64 ", size %d\n",
 				    index,
-				    (unsigned long) PENDING_SLOT_DEST[index],
+				    PENDING_SLOT_DEST[index],
 				    PENDING_SLOT_BIT[index],
-				    (unsigned long) PENDING_SLOT_VALUE[index],
+				    PENDING_SLOT_VALUE[index],
 				    PENDING_SLOT_SIZE[index]);
-		  if (PENDING_SLOT_BIT[index] >= 0)			
-		    switch (PENDING_SLOT_SIZE[index])                 
-		      {						
+		  if (PENDING_SLOT_BIT[index] >= 0)
+		    switch (PENDING_SLOT_SIZE[index])
+		      {
 		      case 4:
-			if (PENDING_SLOT_VALUE[index])		
-			  *(unsigned32*)PENDING_SLOT_DEST[index] |= 	
-			    BIT32 (PENDING_SLOT_BIT[index]);		
-			else						
-			  *(unsigned32*)PENDING_SLOT_DEST[index] &= 	
-			    BIT32 (PENDING_SLOT_BIT[index]);		
-			break;					
-		      case 8:					
-			if (PENDING_SLOT_VALUE[index])		
-			  *(unsigned64*)PENDING_SLOT_DEST[index] |= 	
-			    BIT64 (PENDING_SLOT_BIT[index]);		
-			else						
-			  *(unsigned64*)PENDING_SLOT_DEST[index] &= 	
-			    BIT64 (PENDING_SLOT_BIT[index]);		
-			break;					
+			if (PENDING_SLOT_VALUE[index])
+			  *(uint32_t*)PENDING_SLOT_DEST[index] |=
+			    BIT32 (PENDING_SLOT_BIT[index]);
+			else
+			  *(uint32_t*)PENDING_SLOT_DEST[index] &=
+			    BIT32 (PENDING_SLOT_BIT[index]);
+			break;
+		      case 8:
+			if (PENDING_SLOT_VALUE[index])
+			  *(uint64_t*)PENDING_SLOT_DEST[index] |=
+			    BIT64 (PENDING_SLOT_BIT[index]);
+			else
+			  *(uint64_t*)PENDING_SLOT_DEST[index] &=
+			    BIT64 (PENDING_SLOT_BIT[index]);
+			break;
 		      }
 		  else
-		    switch (PENDING_SLOT_SIZE[index])                 
-		      {						
-		      case 4:					
-			*(unsigned32*)PENDING_SLOT_DEST[index] = 	
-			  PENDING_SLOT_VALUE[index];			
-			break;					
-		      case 8:					
-			*(unsigned64*)PENDING_SLOT_DEST[index] = 	
-			  PENDING_SLOT_VALUE[index];			
-			break;					
-		      }							
+		    switch (PENDING_SLOT_SIZE[index])
+		      {
+		      case 4:
+			*(uint32_t*)PENDING_SLOT_DEST[index] =
+			  PENDING_SLOT_VALUE[index];
+			break;
+		      case 8:
+			*(uint64_t*)PENDING_SLOT_DEST[index] =
+			  PENDING_SLOT_VALUE[index];
+			break;
+		      }
 		  if (PENDING_OUT == index)
 		    {
 		      PENDING_SLOT_DEST[index] = NULL;
 		      PENDING_OUT = (PENDING_OUT + 1) % PSLOTS;
 		      PENDING_TOTAL--;
 		    }
-		}							
+		}
 	      else if (PENDING_TRACE && PENDING_SLOT_DELAY[index] > 0)
-		sim_io_eprintf (SD, "PENDING_DRAIN - queued - index %d, delay %d, dest 0x%lx, bit %d, val 0x%lx, size %d\n",
+		sim_io_eprintf (SD, "PENDING_DRAIN - queued - index %d, delay %d, dest %p, bit %d, val %" PRIx64 ", size %d\n",
 				index, PENDING_SLOT_DELAY[index],
-				(unsigned long) PENDING_SLOT_DEST[index],
+				PENDING_SLOT_DEST[index],
 				PENDING_SLOT_BIT[index],
-				(unsigned long) PENDING_SLOT_VALUE[index],
+				PENDING_SLOT_VALUE[index],
 				PENDING_SLOT_SIZE[index]);
 
-	    }								
-	}								
-    }									
+	    }
+	}
+    }
 }
 
 

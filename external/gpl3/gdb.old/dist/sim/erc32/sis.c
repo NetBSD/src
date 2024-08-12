@@ -1,6 +1,6 @@
 /* This file is part of SIS (SPARC instruction simulator)
 
-   Copyright (C) 1995-2020 Free Software Foundation, Inc.
+   Copyright (C) 1995-2023 Free Software Foundation, Inc.
    Contributed by Jiri Gaisler, European Space Agency
 
    This program is free software; you can redistribute it and/or modify
@@ -16,12 +16,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include <signal.h>
 #include <string.h>
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
 #include <stdio.h>
 #include <sys/fcntl.h>
 #include "sis.h"
@@ -60,17 +60,14 @@ extern int      sparclite;
 extern int      dumbio;
 extern char     uart_dev1[];
 extern char     uart_dev2[];
-extern uint32   last_load_addr;
+extern uint32_t   last_load_addr;
 
 #ifdef ERA
 extern int era;
 #endif
 
 int
-run_sim(sregs, icount, dis)
-    struct pstate  *sregs;
-    uint64          icount;
-    int             dis;
+run_sim(struct pstate *sregs, uint64_t icount, int dis)
 {
     int             irq, mexc, deb;
 
@@ -141,10 +138,23 @@ run_sim(sregs, icount, dis)
     return TIME_OUT;
 }
 
+static int ATTRIBUTE_PRINTF (3, 4)
+fprintf_styled (void *stream, enum disassembler_style style,
+		const char *fmt, ...)
+{
+  int ret;
+  FILE *out = (FILE *) stream;
+  va_list args;
+
+  va_start (args, fmt);
+  ret = vfprintf (out, fmt, args);
+  va_end (args);
+
+  return ret;
+}
+
 int
-main(argc, argv)
-    int             argc;
-    char          **argv;
+main(int argc, char **argv)
 {
 
     int             cont = 1;
@@ -217,14 +227,17 @@ main(argc, argv)
 #endif
     sregs.freq = freq;
 
-    INIT_DISASSEMBLE_INFO(dinfo, stdout, (fprintf_ftype) fprintf);
+    INIT_DISASSEMBLE_INFO(dinfo, stdout, (fprintf_ftype) fprintf,
+			  (fprintf_styled_ftype) fprintf_styled);
 #ifdef HOST_LITTLE_ENDIAN
     dinfo.endian = BFD_ENDIAN_LITTLE;
 #else
     dinfo.endian = BFD_ENDIAN_BIG;
 #endif
 
+#ifdef F_GETFL
     termsave = fcntl(0, F_GETFL, 0);
+#endif
     using_history();
     init_signals();
     ebase.simtime = 0;

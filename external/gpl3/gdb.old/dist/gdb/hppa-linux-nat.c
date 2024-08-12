@@ -1,6 +1,6 @@
 /* Functions specific to running GDB native on HPPA running GNU/Linux.
 
-   Copyright (C) 2004-2020 Free Software Foundation, Inc.
+   Copyright (C) 2004-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -281,7 +281,7 @@ hppa_linux_nat_target::fetch_registers (struct regcache *regcache, int regno)
       for (regno = 0;
 	   regno < gdbarch_num_regs (regcache->arch ());
 	   regno++)
-        fetch_register (regcache, regno);
+	fetch_register (regcache, regno);
     }
   else 
     {

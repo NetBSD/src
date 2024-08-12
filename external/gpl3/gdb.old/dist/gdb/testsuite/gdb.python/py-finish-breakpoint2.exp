@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2020 Free Software Foundation, Inc.
+# Copyright (C) 2011-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,8 +27,7 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
 # Skip all tests if Python scripting is not enabled.
 if { [skip_python_tests] } { continue }
 
-if ![runto_main] then {
-    fail "cannot run to main."
+if {![runto_main]} {
     return 0
 }
 
@@ -48,10 +47,12 @@ gdb_breakpoint "throw_exception_1"
 gdb_test "continue" "Breakpoint .*throw_exception_1.*" "run to exception 1"
 
 gdb_test "python print (len(gdb.breakpoints()))" "3" "check BP count"
-gdb_test "python ExceptionFinishBreakpoint(gdb.newest_frame())" "init ExceptionFinishBreakpoint" "set FinishBP after the exception"
+gdb_test "python ExceptionFinishBreakpoint(gdb.newest_frame())" \
+    "init ExceptionFinishBreakpoint" "set FinishBP after the exception"
 gdb_test "continue" ".*stopped at ExceptionFinishBreakpoint.*" "check FinishBreakpoint in catch()"
 gdb_test "python print (len(gdb.breakpoints()))" "3" "check finish BP removal"
 
 gdb_test "continue" ".*Breakpoint.* throw_exception_1.*" "continue to second exception"
-gdb_test "python ExceptionFinishBreakpoint(gdb.newest_frame())" "init ExceptionFinishBreakpoint" "set FinishBP after the exception"
+gdb_test "python ExceptionFinishBreakpoint(gdb.newest_frame())" \
+    "init ExceptionFinishBreakpoint" "set FinishBP after the exception again"
 gdb_test "continue" ".*exception did not finish.*" "FinishBreakpoint with exception thrown not caught"

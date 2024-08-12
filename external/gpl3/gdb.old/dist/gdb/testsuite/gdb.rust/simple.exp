@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2020 Free Software Foundation, Inc.
+# Copyright (C) 2016-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 
 load_lib rust-support.exp
 if {[skip_rust_tests]} {
-    continue
+    return
 }
 
 standard_testfile .rs
@@ -64,6 +64,7 @@ gdb_test "print j2" " = simple::Unit"
 gdb_test "ptype j2" " = struct simple::Unit"
 gdb_test "print simple::Unit" " = simple::Unit"
 gdb_test "print simple::Unit{}" " = simple::Unit"
+gdb_test "print simple::Unit{23}" "'}', '\.\.', or identifier expected"
 
 gdb_test "print f" " = \"hi bob\""
 gdb_test "print fslice" " = \"bob\""
@@ -88,7 +89,9 @@ gdb_test "print w\[2\] @ 2" " = \\\[3, 4\\\]"
 gdb_test "print w_ptr\[2\]" " = 3"
 gdb_test "print fromslice" " = 3"
 gdb_test "print slice\[0\]" " = 3"
-gdb_test "print slice as &\[i32\]\[0\]" " = 3"
+gdb_test "print (slice as &\[i32\])\[0\]" " = 3"
+
+gdb_test "print slice as \[i32; 73.9\]" "integer expected"
 
 gdb_test_sequence "ptype slice" "" {
     " = struct &\\\[i32\\\] \\{"
@@ -131,6 +134,11 @@ gdb_test_sequence "ptype z" "" {
 }
 gdb_test "print z.1" " = 8"
 
+# Some error checks.
+gdb_test "print z.1_0" \
+    "'_' not allowed in integers in anonymous field references"
+gdb_test "print z.mut" "field name expected"
+
 gdb_test "print univariant" " = simple::Univariant::Foo{a: 1}"
 gdb_test "print univariant.a" " = 1"
 gdb_test "print univariant_anon" " = simple::UnivariantAnon::Foo\\(1\\)"
@@ -165,7 +173,7 @@ gdb_test "print simple::HiBob(0xff, 5)" \
     "Type simple::HiBob is not a tuple struct"
 gdb_test "print sizeof(simple::HiBob)" " = \[0-9\]+"
 gdb_test "print simple::HiBob + 5" \
-    "Found type 'simple::HiBob', which can't be evaluated in this context"
+    "Attempt to use a type name as an expression"
 gdb_test "print nosuchsymbol" \
     "No symbol 'nosuchsymbol' in current context"
 
@@ -187,6 +195,9 @@ gdb_test_sequence "ptype e" "" {
     "  Four\\{this: bool, is: u8, a: char, struct_: u64, variant: u32\\},"
     "\\}"
 }
+
+# Test a parser error.
+gdb_test "print sizeof e" "'\\(' expected"
 
 gdb_test "print e.0" " = 73"
 gdb_test "print e.1" \
@@ -221,6 +232,10 @@ gdb_test "ptype diff2" "fn \\(i32, i32\\) -> i32"
 gdb_test "ptype empty" "fn \\(\\)"
 
 gdb_test "print (diff2 as fn(i32, i32) -> i32)(19, -2)" " = 21"
+
+gdb_test "print diff2(73, 74 75" "',' or '\\\)' expected"
+gdb_test "print (diff2 as fn i32, i32) -> i32)(19, -2)" "'\\\(' expected"
+gdb_test "print (diff2 as fn (i32, i32) i32)(19, -2)" "'->' expected"
 
 gdb_test "print \"hello rust\"" " = \"hello rust.*\""
 gdb_test "print \"hello" "Unexpected EOF in string"
@@ -262,8 +277,14 @@ gdb_test_multiple "print str_none" "" {
 
 gdb_test "print int_some" " = core::option::Option<u8>::Some\\(1\\)"
 gdb_test "print int_none" " = core::option::Option<u8>::None"
-gdb_test "print box_some" " = core::option::Option<\[a-z:\]*Box<u8>>::Some\\(.*\\)"
-gdb_test "print box_none" " = core::option::Option<\[a-z:\]*Box<u8>>::None"
+# The result expressions are a bit lax here, to handle the fact that
+# the output varies between Rust versions.  Mostly we just want to
+# check for the presence "Option", "Box", "u8", and either "Some" or
+# "None".
+gdb_test "print box_some" \
+    " = core::option::Option<\[a-z:\]*Box<u8.*>>::Some\\(.*\\)"
+gdb_test "print box_none" \
+    " = core::option::Option<\[a-z:\]*Box<u8.*>>::None"
 
 set pass_pattern \
     " = simple::NonZeroOptimized::Value\\(\[a-z\]+::string::String .*"
@@ -293,7 +314,8 @@ proc test_one_slice {svar length base range} {
     with_test_prefix $range {
 	global hex
 
-	set result " = &\\\[.*\\\] \\{data_ptr: $hex, length: $length\\}"
+	# Just accept any array here.
+	set result " = &\\\[.*\\\] \\\[.*\\\]"
 
 	gdb_test "print $svar" $result
 	gdb_test "print &${base}\[${range}\]" $result
@@ -329,22 +351,26 @@ gdb_test "print (1,2,3)" "Tuple expressions not supported yet"
 gdb_test "print (1,)" "Tuple expressions not supported yet"
 gdb_test "print (1)" " = 1"
 
+# Test a syntax error in tuple expressions.
+gdb_test "print (1,2,," "unexpected token"
+gdb_test "print (1,2 8" "',' or '\\\)' expected"
+
 gdb_test "print 23..97.0" "Range expression with different types"
 
 gdb_test "print (*parametrized.next.val)" \
-    " = simple::ParametrizedStruct<i32> {next: simple::ParametrizedEnum<\[a-z:\]*Box<simple::ParametrizedStruct<i32>>>::Empty, value: 1}"
+    " = simple::ParametrizedStruct<i32> {next: simple::ParametrizedEnum<\[a-z:\]*Box<simple::ParametrizedStruct<i32>.*>>::Empty, value: 1}"
 gdb_test "print parametrized.next.val" \
     " = \\(\\*mut simple::ParametrizedStruct<i32>\\) $hex"
 gdb_test "print parametrized" \
-    " = simple::ParametrizedStruct<i32> \\{next: simple::ParametrizedEnum<\[a-z:\]*Box<simple::ParametrizedStruct<i32>>>::Val\\{val: $hex\\}, value: 0\\}"
+    " = simple::ParametrizedStruct<i32> \\{next: simple::ParametrizedEnum<\[a-z:\]*Box<simple::ParametrizedStruct<i32>.*>>::Val\\{val: $hex\\}, value: 0\\}"
 
 gdb_test_sequence "ptype/o SimpleLayout" "" {
-    "/\\* offset    |  size \\*/  type = struct simple::SimpleLayout {"
-    "/\\*    0      |     2 \\*/    f1: u16,"
-    "/\\*    2      |     2 \\*/    f2: u16,"
+    "/\\* offset      |    size \\*/  type = struct simple::SimpleLayout {"
+    "/\\*      0      |       2 \\*/    f1: u16,"
+    "/\\*      2      |       2 \\*/    f2: u16,"
     ""
-    "                           /\\* total size \\(bytes\\):    4 \\*/"
-    "                         }"
+    "                               /\\* total size \\(bytes\\):    4 \\*/"
+    "                             }"
 }
 
 gdb_test "print nonzero_offset" " = simple::EnumWithNonzeroOffset {a: core::option::Option<u8>::Some\\(1\\), b: core::option::Option<u8>::None}"
@@ -363,7 +389,7 @@ gdb_test "print empty_enum_value.something" ""
 
 load_lib gdb-python.exp
 if {[skip_python_tests]} {
-    continue
+    return
 }
 
 gdb_test "python print(gdb.lookup_type('simple::HiBob'))" "simple::HiBob"
@@ -375,5 +401,21 @@ gdb_test "python print(e.type.fields()\[0\].artificial)" "True"
 gdb_test "python print(e.type.fields()\[1\].name)" "Two"
 
 gdb_test "python print(e.type.dynamic)" "False"
-gdb_test "python print(gdb.lookup_type('simple::MoreComplicated').dynamic)" \
-    "True"
+
+# Before LLVM 8, the rust compiler would emit two types named
+# "simple::MoreComplicated" -- the C-like "underlying" enum type and
+# the Rust enum.  lookup_type seems to get the former, which isn't
+# very useful.  With later versions of LLVM, this test works
+# correctly.
+set v [split [rust_llvm_version] .]
+if {[lindex $v 0] >= 8} {
+    gdb_test "python print(gdb.lookup_type('simple::MoreComplicated').dynamic)" \
+	"True"
+}
+
+# The new parser introduced an operator precedence bug.
+gdb_test "print 5 * 7 / 5" " = 7"
+gdb_test "print 4 - 3 - 1" " = 0"
+
+# Another operator precedence bug.
+gdb_test "print \$one = \$two = 75" " = \\\(\\\)"

@@ -1,5 +1,5 @@
 /* collection of junk waiting time to sort out
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2023 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
    This file is part of GDB, the GNU debugger.
@@ -61,10 +61,19 @@ extern void m32rbf_h_psw_set_handler (SIM_CPU *, UQI);
   XCONCAT2 (WANT_CPU,_h_psw_set_handler) (current_cpu, (val))
 #endif
 
-#ifndef  GET_H_ACCUM
+/* FIXME: These prototypes are necessary because the cgen generated
+   cpu.h, cpux.h and cpu2.h headers do not provide them, and functions
+   which take or return parameters that are larger than an int must be
+   prototyed in order for them to work correctly.
+
+   The correct solution is to fix the code in cgen/sim.scm to generate
+   prototypes for each of the functions it generates.  */
 extern DI   m32rbf_h_accum_get_handler (SIM_CPU *);
 extern void m32rbf_h_accum_set_handler (SIM_CPU *, DI);
+extern DI   m32r2f_h_accums_get_handler (SIM_CPU *, UINT);
+extern void m32r2f_h_accums_set_handler (SIM_CPU *, UINT, DI);
 
+#ifndef  GET_H_ACCUM
 #define GET_H_ACCUM() \
   XCONCAT2 (WANT_CPU,_h_accum_get_handler) (current_cpu)
 #define SET_H_ACCUM(val) \

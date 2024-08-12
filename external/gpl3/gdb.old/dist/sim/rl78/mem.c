@@ -1,6 +1,6 @@
 /* mem.c --- memory for RL78 simulator.
 
-   Copyright (C) 2011-2020 Free Software Foundation, Inc.
+   Copyright (C) 2011-2023 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of the GNU simulators.
@@ -19,7 +19,9 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -63,9 +65,9 @@ mem_rom_size (int rom_bytes)
   rom_limit = rom_bytes;
 }
 
-int mirror_rom_base = 0x01000;
-int mirror_ram_base = 0xf1000;
-int mirror_length = 0x7000;
+static int mirror_rom_base = 0x01000;
+static int mirror_ram_base = 0xf1000;
+static int mirror_length = 0x7000;
 
 void
 mem_set_mirror (int rom_base, int ram_base, int length)

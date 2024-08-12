@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2023 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -81,9 +81,9 @@ aarch64_linux_new_thread (struct lwp_info *lwp)
   /* If there are hardware breakpoints/watchpoints in the process then mark that
      all the hardware breakpoint/watchpoint register pairs for this thread need
      to be initialized (with data from aarch_process_info.debug_reg_state).  */
-  if (aarch64_linux_any_set_debug_regs_state (state, false))
+  if (aarch64_any_set_debug_regs_state (state, false))
     DR_MARK_ALL_CHANGED (info->dr_changed_bp, aarch64_num_bp_regs);
-  if (aarch64_linux_any_set_debug_regs_state (state, true))
+  if (aarch64_any_set_debug_regs_state (state, true))
     DR_MARK_ALL_CHANGED (info->dr_changed_wp, aarch64_num_wp_regs);
 
   lwp_set_arch_private_info (lwp, info);
@@ -249,4 +249,25 @@ aarch64_ps_get_thread_area (struct ps_prochandle *ph,
     *base = (void *) (uintptr_t) (reg32 - idx);
 
   return PS_OK;
+}
+
+/* See nat/aarch64-linux.h.  */
+
+int
+aarch64_tls_register_count (int tid)
+{
+  uint64_t tls_regs[2];
+  struct iovec iovec;
+  iovec.iov_base = tls_regs;
+  iovec.iov_len = sizeof (tls_regs);
+
+  /* Attempt to read both TPIDR and TPIDR2.  If the request fails, it means
+     the Linux Kernel does not support TPIDR2.
+
+     Otherwise the Linux Kernel supports both TPIDR and TPIDR2.  */
+  if (ptrace (PTRACE_GETREGSET, tid, NT_ARM_TLS, &iovec) != 0)
+    return 1;
+
+  /* TPIDR2 is available as well.  */
+  return 2;
 }

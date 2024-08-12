@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2020 Free Software Foundation, Inc.
+# Copyright (C) 2010-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,11 +15,15 @@
 
 import gdb
 
+
 class ClassName(gdb.Command):
-    'a'
+    "a"
+
     def __init__(self):
-        gdb.Command.__init__ (self, "ClassName", gdb.COMMAND_DATA, prefix=True)
+        gdb.Command.__init__(self, "ClassName", gdb.COMMAND_DATA, prefix=True)
+
     def invoke(self, args, from_tty):
         print
+
 
 ClassName()

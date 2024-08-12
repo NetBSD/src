@@ -1,4 +1,4 @@
-# Copyright 2017-2020 Free Software Foundation, Inc.
+# Copyright 2017-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,8 +48,7 @@ proc prepare {lang} {
 	return 0
     }
 
-    if ![runto_main] then {
-	fail "can't run to main"
+    if {![runto_main]} {
 	return 0
     }
 
@@ -302,7 +301,7 @@ proc run_tests {lang} {
 }
 
 foreach_with_prefix lang {"c" "c++"} {
-    if { [prepare $lang] } then {
+    if {[prepare $lang]} {
 	run_tests $lang
     }
 }

@@ -1,5 +1,5 @@
 /* Disassembly routines for TMS320C54X architecture
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2022 Free Software Foundation, Inc.
    Contributed by Timothy Wall (twall@cygnus.com)
 
    This file is part of the GNU opcodes library.
@@ -529,7 +529,7 @@ sprint_mmr (disassemble_info *info ATTRIBUTE_UNUSED,
 	    char buf[],
 	    int mmr)
 {
-  tic54x_symbol *reg = (tic54x_symbol *) mmregs;
+  const tic54x_symbol *reg = tic54x_mmregs;
   while (reg->name != NULL)
     {
       if (mmr == reg->value)

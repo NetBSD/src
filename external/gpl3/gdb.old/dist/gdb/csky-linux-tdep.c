@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on CSKY.
 
-   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+   Copyright (C) 2012-2023 Free Software Foundation, Inc.
 
    Contributed by C-SKY Microsystems and Mentor Graphics.
 
@@ -36,6 +36,8 @@
 #define SIZEOF_CSKY_GREGSET 34*4
 /* Float regset fesr fsr fr0-fr31 for CK810.  */
 #define SIZEOF_CSKY_FREGSET 34*4
+/* Float regset vr0~vr15 fr15~fr31, reserved for CK810 when kernel 4.x.  */
+#define SIZEOF_CSKY_FREGSET_K4X  400
 
 /* Offset mapping table from core_section to regcache of general
    registers for ck810.  */
@@ -118,15 +120,79 @@ csky_supply_fregset (const struct regset *regset,
   int fregset_num = ARRAY_SIZE (csky_fregset_offset);
 
   gdb_assert (len >= SIZEOF_CSKY_FREGSET);
-  for (i = 0; i < fregset_num; i++)
+  if (len == SIZEOF_CSKY_FREGSET)
     {
-      if ((regnum == csky_fregset_offset[i] || regnum == -1)
-	  && csky_fregset_offset[i] != -1)
+      for (i = 0; i < fregset_num; i++)
 	{
-	  int num = csky_fregset_offset[i];
-	  offset += register_size (gdbarch, num);
-	  regcache->raw_supply (csky_fregset_offset[i], fregs + offset);
+	  if ((regnum == csky_fregset_offset[i] || regnum == -1)
+	      && csky_fregset_offset[i] != -1)
+	    {
+	      int num = csky_fregset_offset[i];
+	      offset += register_size (gdbarch, num);
+	      regcache->raw_supply (csky_fregset_offset[i], fregs + offset);
+	    }
 	}
+    }
+  else if (len == SIZEOF_CSKY_FREGSET_K4X)
+    {
+      /* When kernel version >= 4.x, .reg2 size will be 400.
+	 Contents is {
+	  unsigned long vr[96];
+	  unsigned long fcr;
+	  unsigned long fesr;
+	  unsigned long fid;
+	  unsigned long reserved;
+	 }
+	 VR[96] means: (vr0~vr15) + (fr16~fr31), each Vector register is
+	 128-bits, each Float register is 64 bits, the total size is
+	 (4*96).
+
+	 In addition, for fr0~fr15, each FRx is the lower 64 bits of the
+	 corresponding VRx. So fr0~fr15 and vr0~vr15 regisetrs use the same
+	 offset.  */
+      int fcr_regno[] = {122, 123, 121}; /* fcr, fesr, fid.  */
+
+      /* Supply vr0~vr15.  */
+      for (i = 0; i < 16; i ++)
+	{
+	  if (*gdbarch_register_name (gdbarch, (CSKY_VR0_REGNUM + i)) != '\0')
+	    {
+	      offset = 16 * i;
+	      regcache->raw_supply (CSKY_VR0_REGNUM + i, fregs + offset);
+	    }
+	}
+      /* Supply fr0~fr15.  */
+      for (i = 0; i < 16; i ++)
+	{
+	  if (*gdbarch_register_name (gdbarch, (CSKY_FR0_REGNUM + i)) != '\0')
+	    {
+	      offset = 16 * i;
+	      regcache->raw_supply (CSKY_FR0_REGNUM + i, fregs + offset);
+	    }
+	}
+      /* Supply fr16~fr31.  */
+      for (i = 0; i < 16; i ++)
+	{
+	  if (*gdbarch_register_name (gdbarch, (CSKY_FR16_REGNUM + i)) != '\0')
+	    {
+	      offset = (16 * 16) + (8 * i);
+	      regcache->raw_supply (CSKY_FR16_REGNUM + i, fregs + offset);
+	    }
+	}
+     /* Supply fcr, fesr, fid.  */
+      for (i = 0; i < 3; i ++)
+	{
+	  if (*gdbarch_register_name (gdbarch, fcr_regno[i]) != '\0')
+	    {
+	      offset = (16 * 16) + (16 * 8) + (4 * i);
+	      regcache->raw_supply (fcr_regno[i], fregs + offset);
+	    }
+	}
+    }
+  else
+    {
+      warning (_("Unknow size %s of section .reg2, can not get value"
+		 " of float registers."), pulongest (len));
     }
 }
 
@@ -144,14 +210,70 @@ csky_collect_fregset (const struct regset *regset,
   int offset = 0;
 
   gdb_assert (len >= SIZEOF_CSKY_FREGSET);
-  for (regno = 0; regno < fregset_num; regno++)
+  if (len == SIZEOF_CSKY_FREGSET)
     {
-      if ((regnum == csky_fregset_offset[regno] || regnum == -1)
-	  && csky_fregset_offset[regno] != -1)
+      for (regno = 0; regno < fregset_num; regno++)
 	{
-	  offset += register_size (gdbarch, csky_fregset_offset[regno]);
-	  regcache->raw_collect (regno, fregs + offset);
+	  if ((regnum == csky_fregset_offset[regno] || regnum == -1)
+	       && csky_fregset_offset[regno] != -1)
+	    {
+	      offset += register_size (gdbarch, csky_fregset_offset[regno]);
+	      regcache->raw_collect (regno, fregs + offset);
+	    }
 	}
+    }
+  else if (len == SIZEOF_CSKY_FREGSET_K4X)
+    {
+      /* When kernel version >= 4.x, .reg2 size will be 400.
+	 Contents is {
+	   unsigned long vr[96];
+	   unsigned long fcr;
+	   unsigned long fesr;
+	   unsigned long fid;
+	   unsigned long reserved;
+	 }
+	 VR[96] means: (vr0~vr15) + (fr16~fr31), each Vector register is$
+	 128-bits, each Float register is 64 bits, the total size is$
+	 (4*96).$
+
+	 In addition, for fr0~fr15, each FRx is the lower 64 bits of the$
+	 corresponding VRx. So fr0~fr15 and vr0~vr15 regisetrs use the same$
+	 offset.  */
+      int i = 0;
+      int fcr_regno[] = {122, 123, 121}; /* fcr, fesr, fid.  */
+
+      /* Supply vr0~vr15.  */
+      for (i = 0; i < 16; i ++)
+	{
+	  if (*gdbarch_register_name (gdbarch, (CSKY_VR0_REGNUM + i)) != '\0')
+	    {
+	      offset = 16 * i;
+	      regcache ->raw_collect (CSKY_VR0_REGNUM + i, fregs + offset);
+	    }
+	}
+      /* Supply fr16~fr31.  */
+      for (i = 0; i < 16; i ++)
+	{
+	  if (*gdbarch_register_name (gdbarch, (CSKY_FR16_REGNUM + i)) != '\0')
+	    {
+	      offset = (16 * 16) + (8 * i);
+	      regcache ->raw_collect (CSKY_FR16_REGNUM + i, fregs + offset);
+	    }
+	}
+      /* Supply fcr, fesr, fid.  */
+      for (i = 0; i < 3; i ++)
+	{
+	  if (*gdbarch_register_name (gdbarch, fcr_regno[i]) != '\0')
+	    {
+	      offset = (16 * 16) + (16 * 8) + (4 * i);
+	      regcache ->raw_collect (fcr_regno[i], fregs + offset);
+	    }
+	}
+    }
+  else
+    {
+      warning (_("Unknow size %s of section .reg2, will not set value"
+		 " of float registers."), pulongest (len));
     }
 }
 
@@ -166,7 +288,10 @@ static const struct regset csky_regset_float =
 {
   NULL,
   csky_supply_fregset,
-  csky_collect_fregset
+  csky_collect_fregset,
+  /* Allow .reg2 to have a different size, and the size of .reg2 should
+     always be bigger than SIZEOF_CSKY_FREGSET.  */
+  1
 };
 
 /* Iterate over core file register note sections.  */
@@ -185,7 +310,7 @@ csky_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
 
 static void
 csky_linux_rt_sigreturn_init (const struct tramp_frame *self,
-			      struct frame_info *this_frame,
+			      frame_info_ptr this_frame,
 			      struct trad_frame_cache *this_cache,
 			      CORE_ADDR func)
 {
@@ -228,18 +353,63 @@ csky_linux_rt_sigreturn_tramp_frame = {
   csky_linux_rt_sigreturn_init
 };
 
+static void
+csky_linux_rt_sigreturn_init_pt_regs (const struct tramp_frame *self,
+				      frame_info_ptr this_frame,
+				      struct trad_frame_cache *this_cache,
+				      CORE_ADDR func)
+{
+  int i;
+  CORE_ADDR sp = get_frame_register_unsigned (this_frame, CSKY_SP_REGNUM);
+
+  CORE_ADDR base = sp + CSKY_SIGINFO_OFFSET + CSKY_SIGINFO_SIZE
+		   + CSKY_UCONTEXT_SIGCONTEXT
+		   + CSKY_SIGCONTEXT_PT_REGS_TLS;
+
+  /* LR */
+  trad_frame_set_reg_addr (this_cache, CSKY_R15_REGNUM, base);
+
+  /* PC */
+  trad_frame_set_reg_addr (this_cache, CSKY_PC_REGNUM, base + 4);
+
+  /* PSR */
+  trad_frame_set_reg_addr (this_cache, CSKY_CR0_REGNUM, base + 8);
+
+  /* SP */
+  trad_frame_set_reg_addr (this_cache, CSKY_SP_REGNUM, base + 12);
+
+  /* Set addrs of R0 ~ R13.  */
+  for (i = 0; i < 14; i++)
+    trad_frame_set_reg_addr (this_cache, i, base + i * 4 + 20);
+
+  trad_frame_set_id (this_cache, frame_id_build (sp, func));
+}
+
+
+static struct tramp_frame
+csky_linux_rt_sigreturn_tramp_frame_kernel_4x = {
+  SIGTRAMP_FRAME,
+  4,
+  {
+    { CSKY_MOVI_R7_139, ULONGEST_MAX },
+    { CSKY_TRAP_0, ULONGEST_MAX },
+    { TRAMP_SENTINEL_INSN }
+  },
+  csky_linux_rt_sigreturn_init_pt_regs
+};
+
 /* Hook function for gdbarch_register_osabi.  */
 
 static void
 csky_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  linux_init_abi (info, gdbarch);
+  linux_init_abi (info, gdbarch, 0);
 
   /* Shared library handling.  */
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
   set_gdbarch_skip_solib_resolver (gdbarch, glibc_skip_solib_resolver);
   set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					 svr4_ilp32_fetch_link_map_offsets);
+					 linux_ilp32_fetch_link_map_offsets);
 
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
@@ -253,6 +423,8 @@ csky_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   tramp_frame_prepend_unwinder (gdbarch,
 				&csky_linux_rt_sigreturn_tramp_frame);
+  tramp_frame_prepend_unwinder (gdbarch,
+				&csky_linux_rt_sigreturn_tramp_frame_kernel_4x);
 }
 
 void _initialize_csky_linux_tdep ();

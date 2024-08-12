@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Free Software Foundation, Inc.
+// Copyright (C) 2017-2023 Free Software Foundation, Inc.
 
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -28,6 +28,8 @@ fn ignore<T>(x: T) { }
 fn main() {
     let v: Box<V<[u8; 3]>> = Box::new(V { data: [1, 2, 3] });
     let us: Box<Unsized> = v;
+    let v2 : Box<[u8; 3]> = Box::new([1, 2, 3]);
+    let us2 : Box<[u8]> = v2;
 
     ignore(us);     // set breakpoint here
 }

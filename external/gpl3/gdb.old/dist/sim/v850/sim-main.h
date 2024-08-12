@@ -5,7 +5,6 @@
 
 #define WITH_TARGET_WORD_MSB 31
 
-#include "config.h"
 #include "sim-basics.h"
 #include "sim-signal.h"
 #include "sim-fpu.h"
@@ -15,14 +14,8 @@
 #include "bfd.h"
 
 
-typedef signed8 int8;
-typedef unsigned8 uint8;
-typedef signed16 int16;
-typedef unsigned16 uint16;
-typedef signed32 int32;
-typedef unsigned32 uint32;
-typedef unsigned32 reg_t;
-typedef unsigned64 reg64_t;
+typedef uint32_t reg_t;
+typedef uint64_t reg64_t;
 
 
 /* The current state of the processor; registers, memory, etc.  */
@@ -49,18 +42,6 @@ struct _sim_cpu
   sim_cpu_base base;
 };
 
-struct sim_state {
-  sim_cpu *cpu[MAX_NR_PROCESSORS];
-#if 0
-  SIM_ADDR rom_size;
-  SIM_ADDR low_end;
-  SIM_ADDR high_start;
-  SIM_ADDR high_base;
-  void *mem;
-#endif
-  sim_state_base base;
-};
-
 /* For compatibility, until all functions converted to passing
    SIM_DESC as an argument */
 extern SIM_DESC simulator;
@@ -75,7 +56,7 @@ extern SIM_DESC simulator;
    macro's that store the instruction where the old simops expects
    it. */
 
-extern uint32 OP[4];
+extern uint32_t OP[4];
 #if 0
 OP[0] = inst & 0x1f;           /* RRRRR -> reg1 */
 OP[1] = (inst >> 11) & 0x1f;   /* rrrrr -> reg2 */
@@ -454,14 +435,14 @@ enum op_types
   OP_PUSHPOP3,
 };
 
-#ifdef DEBUG
+#if WITH_TRACE_ANY_P
 void trace_input (char *name, enum op_types type, int size);
 void trace_output (enum op_types result);
-void trace_result (int has_result, unsigned32 result);
+void trace_result (int has_result, uint32_t result);
 
 extern int trace_num_values;
-extern unsigned32 trace_values[];
-extern unsigned32 trace_pc;
+extern uint32_t trace_values[];
+extern uint32_t trace_pc;
 extern const char *trace_name;
 extern int trace_module;
 
@@ -555,7 +536,7 @@ do { \
 do { \
   if (TRACE_FPU_P (CPU)) \
     { \
-      unsigned64 f0; \
+      uint64_t f0; \
       sim_fpu_to64 (&f0, (V0)); \
       trace_input_fp1 (SD, CPU, TRACE_FPU_IDX, f0); \
     } \
@@ -565,7 +546,7 @@ do { \
 do { \
   if (TRACE_FPU_P (CPU)) \
     { \
-      unsigned64 f0, f1; \
+      uint64_t f0, f1; \
       sim_fpu_to64 (&f0, (V0)); \
       sim_fpu_to64 (&f1, (V1)); \
       trace_input_fp2 (SD, CPU, TRACE_FPU_IDX, f0, f1);	\
@@ -576,7 +557,7 @@ do { \
 do { \
   if (TRACE_FPU_P (CPU)) \
     { \
-      unsigned64 f0, f1, f2; \
+      uint64_t f0, f1, f2; \
       sim_fpu_to64 (&f0, (V0)); \
       sim_fpu_to64 (&f1, (V1)); \
       sim_fpu_to64 (&f2, (V2)); \
@@ -589,7 +570,7 @@ do { \
   if (TRACE_FPU_P (CPU)) \
     { \
       int d0 = (V0); \
-      unsigned64 f1, f2; \
+      uint64_t f1, f2; \
       TRACE_DATA *data = CPU_TRACE_DATA (CPU); \
       TRACE_IDX (data) = TRACE_FPU_IDX;	\
       sim_fpu_to64 (&f1, (V1)); \
@@ -610,7 +591,7 @@ do { \
 do { \
   if (TRACE_FPU_P (CPU)) \
     { \
-      unsigned64 f0; \
+      uint64_t f0; \
       sim_fpu_to64 (&f0, (R0));	\
       trace_result_fp1 (SD, CPU, TRACE_FPU_IDX, f0); \
     } \
@@ -652,15 +633,15 @@ do { \
 extern void divun ( unsigned int       N,
 		    unsigned long int  als,
 		    unsigned long int  sfi,
-		    unsigned32 /*unsigned long int*/ *  quotient_ptr,
-		    unsigned32 /*unsigned long int*/ *  remainder_ptr,
+		    uint32_t /*unsigned long int*/ *  quotient_ptr,
+		    uint32_t /*unsigned long int*/ *  remainder_ptr,
 		    int *overflow_ptr
 		    );
 extern void divn ( unsigned int       N,
 		   unsigned long int  als,
 		   unsigned long int  sfi,
-		   signed32 /*signed long int*/ *  quotient_ptr,
-		   signed32 /*signed long int*/ *  remainder_ptr,
+		   int32_t /*signed long int*/ *  quotient_ptr,
+		   int32_t /*signed long int*/ *  remainder_ptr,
 		   int *overflow_ptr
 		   );
 extern int type1_regs[];
@@ -680,7 +661,7 @@ extern int type3_regs[];
 #define SAT16(X)			\
   do					\
     {					\
-      signed64 z = (X);			\
+      int64_t z = (X);			\
       if (z > 0x7fff)			\
 	{				\
 	  SESR |= SESR_OV | SESR_SOV;	\
@@ -698,7 +679,7 @@ extern int type3_regs[];
 #define SAT32(X)			\
   do					\
     {					\
-      signed64 z = (X);			\
+      int64_t z = (X);			\
       if (z > 0x7fffffff)		\
 	{				\
 	  SESR |= SESR_OV | SESR_SOV;	\
@@ -716,7 +697,7 @@ extern int type3_regs[];
 #define ABS16(X)			\
   do					\
     {					\
-      signed64 z = (X) & 0xffff;	\
+      int64_t z = (X) & 0xffff;	\
       if (z == 0x8000)			\
 	{				\
 	  SESR |= SESR_OV | SESR_SOV;	\
@@ -733,7 +714,7 @@ extern int type3_regs[];
 #define ABS32(X)			\
   do					\
     {					\
-      signed64 z = (X) & 0xffffffff;	\
+      int64_t z = (X) & 0xffffffff;	\
       if (z == 0x80000000)		\
 	{				\
 	  SESR |= SESR_OV | SESR_SOV;	\

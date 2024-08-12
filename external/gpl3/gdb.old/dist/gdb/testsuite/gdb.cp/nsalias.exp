@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ if {![dwarf2_support]} {
 }
 
 if {[skip_cplus_tests]} {
-    continue
+    return
 }
 
 standard_testfile .cc nsalias-dw.S
@@ -314,9 +314,21 @@ if {[gdb_compile [list ${binfile}1.o ${binfile}3.o] \
     return -1
 }
 
-clean_restart ${testfile}-r
+clean_restart
 
+# Set complaints before loading the file.  Otherwise the complaint won't
+# trigger for -readnow.
 gdb_test_no_output "set complaints 1"
-gdb_test "print N100::x" \
-    ".* has too many recursively imported declarations.*" \
-    "compaint for too many recursively imported declarations"
+
+gdb_load [standard_output_file ${testfile}-r]
+
+set readnow_p [readnow]
+
+set test "complaint for too many recursively imported declarations"
+set re ".* has too many recursively imported declarations.*"
+if { $readnow_p } {
+    global gdb_file_cmd_msg
+    gdb_assert {[regexp $re $gdb_file_cmd_msg]} $test
+} else {
+    gdb_test "print N100::x" $re $test
+}

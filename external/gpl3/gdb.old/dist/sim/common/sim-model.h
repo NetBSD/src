@@ -1,5 +1,5 @@
 /* Architecture, machine, and model support.
-   Copyright (C) 1997-2020 Free Software Foundation, Inc.
+   Copyright (C) 1997-2023 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -47,15 +47,6 @@ typedef struct {
 #define MAX_UNITS 1
 #endif
 
-#ifndef WITH_DEFAULT_MODEL
-/* Just a stub for ports that do not define models.  */
-enum mach_attr { _MACH_NONE };
-# define WITH_DEFAULT_MODEL NULL
-# define WITH_MODEL_P 0
-#else
-# define WITH_MODEL_P 1
-#endif
-
 typedef int (MODEL_FN) (sim_cpu *, void *);
 
 typedef struct {
@@ -92,7 +83,7 @@ typedef struct {
   /* This is the argument to bfd_scan_arch.  */
   const char *bfd_name;
 #define MACH_BFD_NAME(m) ((m)->bfd_name)
-  enum mach_attr num;
+  int num;
 #define MACH_NUM(m) ((m)->num)
 
   int word_bitsize;
@@ -136,19 +127,13 @@ typedef struct model {
 #define MODEL_INIT(m) ((m)->init)
 } SIM_MODEL;
 
-/* Tables of supported machines.  */
-/* ??? In a simulator of multiple architectures, will need multiple copies of
-   this.  Have an `archs' array that contains a pointer to the machs array
-   for each (which in turn has a pointer to the models array for each).  */
-extern const SIM_MACH *sim_machs[];
-
 /* Model module handlers.  */
 extern MODULE_INSTALL_FN sim_model_install;
 
 /* Support routines.  */
 extern void sim_model_set (SIM_DESC sd_, sim_cpu *cpu_, const SIM_MODEL *model_);
-extern const SIM_MODEL *sim_model_lookup (const char *name_);
-extern const SIM_MACH *sim_mach_lookup (const char *name_);
-extern const SIM_MACH *sim_mach_lookup_bfd_name (const char *bfd_name_);
+extern const SIM_MODEL *sim_model_lookup (SIM_DESC, const char *name_);
+extern const SIM_MACH *sim_mach_lookup (SIM_DESC, const char *name_);
+extern const SIM_MACH *sim_mach_lookup_bfd_name (SIM_DESC, const char *bfd_name_);
 
 #endif /* SIM_MODEL_H */

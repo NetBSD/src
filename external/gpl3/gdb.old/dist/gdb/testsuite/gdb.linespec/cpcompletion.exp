@@ -1,4 +1,4 @@
-# Copyright 2017-2020 Free Software Foundation, Inc.
+# Copyright 2017-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
 # This file is part of the gdb testsuite.
 
 load_lib completion-support.exp
+load_lib data-structures.exp
 
 standard_testfile cpls.cc cpls2.cc cpls-hyphen.cc
 
@@ -31,6 +32,217 @@ if { ![readline_is_used] } {
     untested "no tab completion support without readline"
     return -1
 }
+
+#
+# Some convenience procedures for testing template parameter list
+# completion.
+#
+
+# For the variable named ARGLISTVAR, which should be the name of an
+# argument list in the calling frame, "consume" the top-most token.
+# [See comments for makefoo for description of arglist format.]
+
+proc consume {arglistvar} {
+  upvar $arglistvar arglist
+
+  # ARGLIST is a string -- simply strip off the first character.
+  set arglist [string range $arglist 1 end]
+}
+
+# Create a function template named NAME, using the given stack ID to grab
+# NUM template parameters.  The result is pushed back onto the
+# stack.  NUM may be "all," in which case we use the entire stack
+# to create the function template, including function arguments.
+# The resulting template function's arguments are taken from the test
+# source code for the function "foo" and is not generalized.
+
+proc maket {sid name {num 1}} {
+
+  # Set up a temporary stack of parameters.  This will reverse
+  # the order in SID so that when they are popped again below,
+  # we get them in the correct order.  This also takes into account
+  # how many levels of the result stack we want to consider.
+
+  set paramstack [::Stack::new]
+  if {[string equal $num "all"]} {
+    while {![stack empty $sid]} {
+      stack push $paramstack [stack pop $sid]
+    }
+  } else {
+    for {set i 0} {$i < $num} {incr i} {
+      stack push $paramstack [stack pop $sid]
+    }
+  }
+
+  # Construct the function template and push it back to the
+  # top of the stack given by SID.
+  set result ""
+  set first true
+  while {![stack empty $paramstack]} {
+    set top [stack pop $paramstack]
+    if {$first} {
+      set first false
+    } else {
+      append result ", "
+    }
+    append result $top
+  }
+
+  # Save argument list.
+  set args $result
+
+  # GDB outputs "> >" instead of ">>".
+  if {[string index $top end] == ">"} {
+      append result " "
+  }
+  set result "$name<$result>"
+  if {[string equal $num "all"]} {
+    append result "($args)"
+  }
+  stack push $sid $result
+  stack delete $paramstack
+}
+
+# Given the stack SID and the name of a variable of the desired template
+# parameters, construct the actual template parameter and push it to the
+# top of the stack.
+
+proc makearg {sid arglistvar} {
+    upvar $arglistvar arglist
+
+  set c [string index $arglist 0]
+  consume arglist
+  switch $c {
+    A -
+    B {
+      makearg $sid arglist
+      makearg $sid arglist
+      maket $sid $c 2
+    }
+
+    a -
+    b -
+    c -
+    d {
+      makearg $sid arglist
+      maket $sid $c
+    }
+
+    i {
+      stack push $sid "int"
+    }
+
+    n {
+      # These are not templates.
+      set c [string index $arglist 0]
+      stack push $sid "n::n$c"
+      consume arglist
+    }
+
+    N {
+      set c [string index $arglist 0]
+      makearg $sid arglist
+      set top [stack pop $sid]
+      stack push $sid "n::N$top"
+    }
+
+    default { error "unhandled arglist identifier: '$c'" }
+  }
+}
+
+# Given ARGLIST, construct a class template for the type and return
+# it as a string.
+
+proc maketype {arglist} {
+    set s [Stack::new]
+    makearg $s arglist
+    set result [stack pop $s]
+    stack delete $s
+    return $result
+}
+
+# Returns a function template declaration for the function "foo" in the
+# corresponding test source code.  ARGLIST specifies the exact instantiation
+# that is desired.
+#
+# Generically, this procedure returns a string of the form,
+# "foo<parameter-list> (arg-list)", where ARGLIST describes the parameter(s).
+#
+# Valid specifiers for ARGLIST (must be kept in sync with source code):
+#
+# i: Creates an "int" type.
+# a, b, c, d: Creates the struct template of the same name, taking a single
+#    template parameter.
+# A, B: Creates the struct template of the same name, taking two template
+#    parameters.
+# na, nb: Creates the non-template structs n::na and n::nb, respectively.
+# NA, NB: Creates the struct templates n::NA and n::NB, respectively, which
+#    take two template parameters.
+#
+# Examples:
+# makefoo i
+# --> foo<int> (int)
+# makefoo ii
+# --> foo<int, int> (int, int)
+# makefoo Aiabi
+# --> foo<A<int, a<b<int> > > > (A<int, a<b<int> > >)
+# makefoo NANAiaiNBbiabi
+# --> foo<n::NA<n::NA<int, a<int> >, n::NB<b<int>, a<b<int> > > > >
+#          (n::NA<n::NA<int, a<int> >, n::NB<b<int>, a<b<int> > > >)
+
+proc makefoo {arglist} {
+    set s [::Stack::new]
+    while {[string length $arglist] > 0} {
+	makearg $s arglist
+    }
+
+  maket $s "foo" all
+  set result [stack pop $s]
+  stack delete $s
+  return $result
+}
+
+# Test wrapper for a single "makefoo" unit test.
+
+proc test_makefoo_1 {arglist expected} {
+  set exp "foo<$expected"
+  if {[string index $exp end] == ">"} {
+    append exp " "
+  }
+  append exp ">"
+  append exp "($expected)"
+
+  set calc [makefoo $arglist]
+  send_log "makefoo $arglist = $calc\n"
+  send_log "expecting: $exp\n"
+  if {[string equal $exp $calc]} {
+    pass "makefoo unit test: $arglist"
+  } else {
+      fail "makefoo unit test: $arglist"
+  }
+}
+
+# Test whether the procedure "makefoo" is functioning as expected.
+
+proc test_makefoo {} {
+  test_makefoo_1 "i" "int"
+  test_makefoo_1 "ai" "a<int>"
+  test_makefoo_1 "aai" "a<a<int> >"
+  test_makefoo_1 "ii" "int, int"
+  test_makefoo_1 "aaibi" "a<a<int> >, b<int>"
+    test_makefoo_1 \
+      "ababiibababai" "a<b<a<b<int> > > >, int, b<a<b<a<b<a<int> > > > > >"
+  test_makefoo_1 "Aii" "A<int, int>"
+  test_makefoo_1 "ABaibibi" "A<B<a<int>, b<int> >, b<int> >"
+  test_makefoo_1 "na" "n::na"
+  test_makefoo_1 "nana" "n::na, n::na"
+  test_makefoo_1 "NAii" "n::NA<int, int>"
+  test_makefoo_1 "NANAiiNAii" "n::NA<n::NA<int, int>, n::NA<int, int> >"
+}
+
+#
+# Tests start here.
+#
 
 # Disable the completion limit for the whole testcase.
 gdb_test_no_output "set max-completions unlimited"
@@ -385,12 +597,11 @@ proc_with_prefix template-ret-type {} {
 	    test_complete_prefix_range $complete_line $start
 	}
 
-	# Setting a breakpoint without the template params doesn't work.
-	check_setting_bp_fails "$cmd_prefix template2_fn"
-	# However, setting a breakpoint with template params and without
-	# the method params does work, just like with non-template
-	# functions.  It also works with or without return type.
+	# Setting a breakpoint with or without template params and without
+	# the method params works, just like with non-template functions.
+	#  It also works with or without return type.
 	foreach linespec [list \
+			      "template2_fn" \
 			      "${method_name}" \
 			      "${method_name}${param_list}" \
 			      "${struct_type}::${method_name}" \
@@ -402,6 +613,218 @@ proc_with_prefix template-ret-type {} {
 		[list "${struct_type}::${method_name}${param_list}"]
 	}
     }
+}
+
+# Test completion of function template foo.
+
+proc_with_prefix template-function-foo {} {
+
+    foreach cmd_prefix {"b" "b -function"} {
+	# "foo" is ambiguous, this will set many different breakpoints.
+	set completion_list \
+	    [list \
+		 [makefoo Aabiaai] \
+		 [makefoo Aabiabi] \
+		 [makefoo Aabicdi] \
+		 [makefoo AabicdiAabiaai] \
+		 [makefoo AabicdiAabiabi] \
+		 [makefoo AabicdiBabicdi] \
+		 [makefoo Babicdi] \
+		 [makefoo aai] \
+		 [makefoo aaiabi] \
+		 [makefoo aaicci] \
+		 [makefoo aaicdi] \
+		 [makefoo abi] \
+		 [makefoo anabnb] \
+		 [makefoo cci] \
+		 [makefoo cdi] \
+		 [makefoo NAnanbNBnanb] \
+		 [makefoo nanb]]
+	test_gdb_complete_multiple "$cmd_prefix " "foo" "<" $completion_list
+	check_bp_locations_match_list "$cmd_prefix foo" $completion_list
+
+	# "foo<" should give the same result, but it should not set any
+	# breakpoints.
+	test_gdb_complete_multiple "$cmd_prefix " "foo<" "" $completion_list
+	check_setting_bp_fails "$cmd_prefix foo<"
+
+	# "foo<A" should only give completions in COMPLETION_LIST that
+	# start with "A" but should set no breakpoints.
+	set completion_list \
+	    [list \
+		 [makefoo Aabiaai] \
+		 [makefoo Aabiabi] \
+		 [makefoo Aabicdi] \
+		 [makefoo AabicdiAabiaai] \
+		 [makefoo AabicdiAabiabi] \
+		 [makefoo AabicdiBabicdi]]
+	test_gdb_complete_multiple "$cmd_prefix " "foo<A" "<a<b<int> >, " \
+	    $completion_list
+	check_setting_bp_fails "$cmd_prefix foo<A"
+
+	# "foo<A>" should give any function with one parameter of any type
+	# of A.  While the parameter list in the template should be ignored,
+	# the function's argument list should not be ignored.
+	set completion_list \
+	    [list \
+		 [makefoo Aabiaai] \
+		 [makefoo Aabiabi] \
+		 [makefoo Aabicdi]]
+	test_gdb_complete_multiple "$cmd_prefix " "foo<A>" \
+	    "(A<a<b<int> >, " $completion_list
+	check_bp_locations_match_list "$cmd_prefix foo<A>" $completion_list
+
+	# "foo<A," should complete to any function with more than one
+	# parameter where the first parameter is any type of A.  Insufficient
+	# location to set breakpoints.
+	set completion_list \
+	    [list \
+		 [makefoo AabicdiAabiaai] \
+		 [makefoo AabicdiAabiabi] \
+		 [makefoo AabicdiBabicdi]]
+	test_gdb_complete_multiple "$cmd_prefix " "foo<A," " " \
+	    $completion_list
+	check_setting_bp_fails "$cmd_prefix foo<A,"
+
+	# "foo<A<a<b<int>, a" should give all completions starting with
+	# "Aabia" but it is insufficient to set breakpoints.
+	set completion_list \
+	    [list \
+		 [makefoo Aabiaai] \
+		 [makefoo Aabiabi]]
+	test_gdb_complete_multiple "$cmd_prefix " "foo<A<a<b<int> >, a" \
+	    "<" $completion_list
+	check_setting_bp_fails "$cmd_prefix foo<A<a<b<int> >, a"
+
+	# "foo<A<a<b<int>, a<" should yield the same results as above.
+	test_gdb_complete_multiple "$cmd_prefix " "foo<A<a<b<int> >, a<" \
+	    "" $completion_list
+	check_setting_bp_fails "$cmd_prefix foo<A<a<b<int> >, a<"
+
+	# "foo<A<a<b<int>, a<a" is unique but insufficient to set a
+	# breakpoint.  This has an ignored template parameter list, so
+	# the completion will contain an ignored list ("a<a>")
+	test_gdb_complete_unique "$cmd_prefix foo<A<a<b<int> >, a<a" \
+	    "$cmd_prefix [makefoo Aabiaai]"
+	check_setting_bp_fails "$cmd_prefix foo<A<b<int> >, a<a"
+
+	# "foo<A<a<b<int>, a<b" is also unique.  Same parameter ignoring
+	# happens here, too (except "a<b>").
+	test_gdb_complete_unique "$cmd_prefix foo<A<a<b<int> >, a<b" \
+	    "$cmd_prefix [makefoo Aabiabi]"
+	check_setting_bp_fails "$cmd_prefix foo<A<a<b<int> >, a<b"
+
+	# "foo<B" is unique but insufficient to set a breakpoint.
+	test_gdb_complete_unique "$cmd_prefix foo<B" \
+	    "$cmd_prefix [makefoo Babicdi]"
+	check_setting_bp_fails "$cmd_prefix foo<B"
+
+	# "foo<B>" yields the same unique result and sets a breakpoint.
+	# Since the input skips the parameter list, so does the completion.
+	test_gdb_complete_unique "$cmd_prefix foo<B>" \
+	    "$cmd_prefix foo<B>(B<a<b<int> >, c<d<int> > >)"
+	check_bp_locations_match_list "$cmd_prefix foo<B>" \
+	    [list [makefoo Babicdi]]
+
+	# "foo<B," should return no completions and no breakpoints.
+	test_gdb_complete_none "$cmd_prefix foo<B,"
+	check_setting_bp_fails "$cmd_prefix foo<B,"
+
+	# "foo<n::" should yield only the functions starting with
+	# "n" and "N" and no breakpoints.
+	set completion_list \
+	    [list \
+		 [makefoo NAnanbNBnanb] \
+		 [makefoo nanb]]
+	test_gdb_complete_multiple "$cmd_prefix " "foo<n::" "" \
+	    $completion_list
+	check_setting_bp_fails "$cmd_prefix foo<n::"
+
+	# "foo<A<a, c> >" is unique and sets a breakpoint.
+	# Multiple template parameter lists are skipped, so GDB will ignore
+	# them in the completion.
+	test_gdb_complete_unique "$cmd_prefix foo<A<a, c> >" \
+	    "$cmd_prefix foo<A<a, c> >(A<a<b<int> >, c<d<int> > >)"
+	check_bp_locations_match_list "$cmd_prefix foo<A<a, c> >" \
+	    [list [makefoo Aabicdi]]
+    }
+}
+
+# Helper for template-class-with-method to build completion lists.
+
+proc makem {arglist_list} {
+    set completion_list {}
+    foreach arglist $arglist_list {
+	lappend completion_list "[maketype $arglist]::method()"
+    }
+    return $completion_list
+}
+
+# Returns a list of elements that look like
+#   void TYPE::method()
+# where TYPE is derived from each arglist in ARGLIST_LIST.
+
+proc test_makem_1 {arglist_list expected_list} {
+    set result [makem $arglist_list]
+    send_log "makem $arglist = $result\n"
+    send_log "expecting $expected_list\n"
+
+    # Do list equality via canonical strings.
+    if {[expr {[list {*}$expected_list] eq [list {*}$result]}]} {
+	pass "makem unit test: $arglist"
+    } else {
+	fail "makem unit test: $arglist"
+    }
+}
+
+# Unit tests for makem.
+
+proc test_makem {} {
+    test_makem_1 ai {"a<int>::method()"}
+    test_makem_1 bi {"b<int>::method()"}
+    test_makem_1 {ai bi} {"a<int>::method()" "b<int>::method()"}
+    test_makem_1 {Aaiaai Bbibbi abi cdi} {
+	"A<a<int>, a<a<int> > >::method()"
+	"B<b<int>, b<b<int> > >::method()"
+	"a<b<int> >::method()"
+	"c<d<int> >::method()"
+    }
+}
+
+# Test class template containing a (non-templated) method called "method."
+
+proc_with_prefix template-class-with-method {} {
+
+    foreach {type type_list} \
+	[list \
+	     "" {aai abi cci cdi Aabicdi Aabiaai Aabiabi Babicdi} \
+	     "a" {aai abi} \
+	     "b" {} \
+	     "c" {cci cdi} \
+	     "A" {Aabicdi Aabiaai Aabiabi} \
+	     "B" {Babicdi} \
+	     "A<a, a>" {Aabiaai Aabiabi} \
+	     "A<a<b>, c>" {Aabicdi}\
+	     "A<a, d>" {} \
+	     "B<a, a>" {} \
+	     "B<a, b>" {} \
+	     "B<a, c>" {Babicdi}] \
+	{
+	    foreach cmd_prefix {"b" "b -function"} {
+		set c "$cmd_prefix "
+		if {$type != ""} {
+		    append c "${type}::"
+		}
+		append c "method"
+
+		if {[llength $type_list] > 0} {
+		    test_gdb_complete_unique $c "${c}()"
+		    check_bp_locations_match_list $c [makem $type_list]
+		} else {
+		    test_gdb_complete_none $c
+		}
+	    }
+	}
 }
 
 # Test completion of a const-overloaded funtion (const-overload).
@@ -836,12 +1259,14 @@ proc_with_prefix function-labels {} {
 }
 
 # Test that completion after a function name offers keyword
-# (if/task/thread) matches in linespec mode, and also the explicit
-# location options in explicit locations mode.
+# (if/task/thread/-force-condition) matches in linespec mode, and also
+# the explicit location options in explicit locations mode.
 
 proc_with_prefix keywords-after-function {} {
     set explicit_list \
-	[concat $completion::explicit_opts_list $completion::keyword_list]
+	[lsort [concat \
+		    $completion::explicit_opts_list \
+		    $completion::keyword_list]]
 
     # Test without a source file, with a known source file, and with
     # and unknown source file.
@@ -865,7 +1290,9 @@ proc_with_prefix keywords-after-function {} {
 
 proc_with_prefix keywords-after-label {} {
     set explicit_list \
-	[concat $completion::explicit_opts_list $completion::keyword_list]
+	[lsort [concat \
+		    $completion::explicit_opts_list \
+		    $completion::keyword_list]]
 
     foreach_location_labels \
 	{ "" "cpls.cc" } \
@@ -943,6 +1370,10 @@ proc test_driver {} {
     overload-3
     template-overload
     template-ret-type
+    #test_makefoo
+    template-function-foo
+    #test_makem
+    template-class-with-method
     const-overload
     const-overload-quoted
     append-end-quote-char-when-unambiguous

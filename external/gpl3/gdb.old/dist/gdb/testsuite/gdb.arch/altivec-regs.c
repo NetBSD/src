@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 vector unsigned int
-vector_fun (vector unsigned int a, vector unsigned int b)
+vector_fun (volatile vector unsigned int a, volatile vector unsigned int b)
 {
   vector unsigned int c;
   a = ((vector unsigned int) vec_splat_u8(2));

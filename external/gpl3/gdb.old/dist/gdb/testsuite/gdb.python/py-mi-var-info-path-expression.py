@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2020 Free Software Foundation, Inc.
+# Copyright (C) 2018-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,41 +17,37 @@ import sys
 import gdb
 import gdb.types
 
-# Following is for Python 3 compatibility...
-if sys.version_info[0] > 2:
-    long = int
-
 
 class cons_pp(object):
-  def __init__(self, val):
-    self._val = val
+    def __init__(self, val):
+        self._val = val
 
-  def to_string(self):
-    if long(self._val) == 0:
-      return "nil"
-    elif long(self._val['type']) == 0:
-      return "( . )"
-    else:
-      return "%d" % self._val['atom']['ival']
+    def to_string(self):
+        if int(self._val) == 0:
+            return "nil"
+        elif int(self._val["type"]) == 0:
+            return "( . )"
+        else:
+            return "%d" % self._val["atom"]["ival"]
 
-  def children(self):
-    if long(self._val) == 0:
-      return []
-    elif long(self._val['type']) == 0:
-      return [
-        ('atom', self._val['atom'])
-      ]
-    else:
-      return [
-        ('car' ,  self._val["slots"][0]),
-        ('cdr' ,  self._val["slots"][1]),
-      ]
+    def children(self):
+        if int(self._val) == 0:
+            return []
+        elif int(self._val["type"]) == 0:
+            return [("atom", self._val["atom"])]
+        else:
+            return [
+                ("car", self._val["slots"][0]),
+                ("cdr", self._val["slots"][1]),
+            ]
+
 
 def cons_pp_lookup(val):
-  if str(val.type) == 'struct cons *':
-    return cons_pp(val)
-  else:
-    return None
+    if str(val.type) == "struct cons *":
+        return cons_pp(val)
+    else:
+        return None
+
 
 del gdb.pretty_printers[1:]
 gdb.pretty_printers.append(cons_pp_lookup)

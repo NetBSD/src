@@ -1,5 +1,5 @@
 /* MI Command Set - MI output generating routines for GDB.
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2023 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -76,12 +76,18 @@ protected:
   virtual void do_message (const ui_file_style &style,
 			   const char *format, va_list args) override
     ATTRIBUTE_PRINTF (3,0);
-  virtual void do_wrap_hint (const char *identstring) override;
+  virtual void do_wrap_hint (int indent) override;
   virtual void do_flush () override;
   virtual void do_redirect (struct ui_file *outstream) override;
 
   virtual bool do_is_mi_like_p () const override
   { return true; }
+
+  virtual void do_progress_start () override;
+  virtual void do_progress_notify (const std::string &, const char *,
+				   double, double) override;
+
+  virtual void do_progress_end () override;
 
 private:
 
@@ -89,10 +95,43 @@ private:
   void open (const char *name, ui_out_type type);
   void close (ui_out_type type);
 
+  /* The state of a recent progress_update.  */
+  struct mi_progress_info
+  {
+    /* The current state.  */
+    progress_update::state state;
+
+    mi_progress_info ()
+      : state (progress_update::START)
+    {}
+  };
+
+  /* Stack of progress info.  */
+  std::vector<mi_progress_info> m_progress_info;
+
   /* Convenience method that returns the MI out's string stream cast
      to its appropriate type.  Assumes/asserts that output was not
      redirected.  */
   string_file *main_stream ();
+
+  /* Helper for the constructor, deduce ui_out_flags for the given
+     MI_VERSION.  */
+  static ui_out_flags make_flags (int mi_version)
+  {
+    ui_out_flags flags = 0;
+
+    /* In MI version 2 and below, multi-location breakpoints had a wrong
+       syntax.  It is fixed in version 3.  */
+    if (mi_version >= 3)
+      flags |= fix_multi_location_breakpoint_output;
+
+    /* In MI version 3 and below, the "script" field in breakpoint output
+       had a wrong syntax.  It is fixed in version 4.  */
+    if (mi_version >= 4)
+      flags |= fix_breakpoint_script_output;
+
+    return flags;
+  }
 
   bool m_suppress_field_separator;
   bool m_suppress_output;

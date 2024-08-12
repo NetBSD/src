@@ -1,6 +1,6 @@
 /* Target-dependent code for the Motorola 68000 series.
 
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,9 @@
 #ifndef M68K_TDEP_H
 #define M68K_TDEP_H
 
-struct frame_info;
+#include "gdbarch.h"
+
+class frame_info_ptr;
 
 /* Register numbers of various important registers.  */
 
@@ -67,34 +69,38 @@ enum m68k_flavour
 
 /* Target-dependent structure in gdbarch.  */
 
-struct gdbarch_tdep
+struct m68k_gdbarch_tdep : gdbarch_tdep_base
 {
   /* Offset to PC value in the jump buffer.  If this is negative,
      longjmp support will be disabled.  */
-  int jb_pc;
+  int jb_pc = 0;
   /* The size of each entry in the jump buffer.  */
-  size_t jb_elt_size;
+  size_t jb_elt_size = 0;
 
   /* Register in which the address to store a structure value is
      passed to a function.  */
-  int struct_value_regnum;
+  int struct_value_regnum = 0;
+
+  /* Register in which a pointer value is returned.  In the SVR4 ABI,
+     this is %a0, but in GCC's "embedded" ABI, this is %d0.  */
+  int pointer_result_regnum = 0;
 
   /* Convention for returning structures.  */
-  enum struct_return struct_return;
+  enum struct_return struct_return {};
 
   /* Convention for returning floats.  zero in int regs, non-zero in float.  */
-  int float_return;
+  int float_return = 0;
 
   /* The particular flavour of m68k.  */
-  enum m68k_flavour flavour;
+  enum m68k_flavour flavour {};
 
   /* Flag set if the floating point registers are present, or assumed
      to be present.  */
-  int fpregs_present;
+  int fpregs_present = 0;
 
    /* ISA-specific data types.  */
-  struct type *m68k_ps_type;
-  struct type *m68881_ext_type;
+  struct type *m68k_ps_type = nullptr;
+  struct type *m68881_ext_type = nullptr;
 };
 
 /* Initialize a SVR4 architecture variant.  */

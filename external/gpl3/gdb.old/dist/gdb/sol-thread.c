@@ -1,6 +1,6 @@
 /* Solaris threads debugging interface.
 
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -84,11 +84,11 @@ public:
   strata stratum () const override { return thread_stratum; }
 
   void detach (inferior *, int) override;
-  ptid_t wait (ptid_t, struct target_waitstatus *, int) override;
+  ptid_t wait (ptid_t, struct target_waitstatus *, target_wait_flags) override;
   void resume (ptid_t, int, enum gdb_signal) override;
   void mourn_inferior () override;
   std::string pid_to_str (ptid_t) override;
-  ptid_t get_ada_task_ptid (long lwp, long thread) override;
+  ptid_t get_ada_task_ptid (long lwp, ULONGEST thread) override;
 
   void fetch_registers (struct regcache *, int) override;
   void store_registers (struct regcache *, int) override;
@@ -387,7 +387,7 @@ sol_thread_target::detach (inferior *inf, int from_tty)
 
   sol_thread_active = 0;
   inferior_ptid = ptid_t (main_ph.ptid.pid ());
-  unpush_target (this);
+  inf->unpush_target (this);
   beneath->detach (inf, from_tty);
 }
 
@@ -413,8 +413,8 @@ sol_thread_target::resume (ptid_t ptid, int step, enum gdb_signal signo)
       if (ptid.pid () == -2)		/* Inactive thread.  */
 	error (_("This version of Solaris can't start inactive threads."));
       if (info_verbose && ptid.pid () == -1)
-	warning (_("Specified thread %ld seems to have terminated"),
-		 save_ptid.tid ());
+	warning (_("Specified thread %s seems to have terminated"),
+		 pulongest (save_ptid.tid ()));
     }
 
   beneath ()->resume (ptid, step, signo);
@@ -425,7 +425,7 @@ sol_thread_target::resume (ptid_t ptid, int step, enum gdb_signal signo)
 
 ptid_t
 sol_thread_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
-			 int options)
+			 target_wait_flags options)
 {
   if (ptid.pid () != -1)
     {
@@ -435,13 +435,13 @@ sol_thread_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
       if (ptid.pid () == -2)		/* Inactive thread.  */
 	error (_("This version of Solaris can't start inactive threads."));
       if (info_verbose && ptid.pid () == -1)
-	warning (_("Specified thread %ld seems to have terminated"),
-		 ptid_for_warning.tid ());
+	warning (_("Specified thread %s seems to have terminated"),
+		 pulongest (ptid_for_warning.tid ()));
     }
 
   ptid_t rtnval = beneath ()->wait (ptid, ourstatus, options);
 
-  if (ourstatus->kind != TARGET_WAITKIND_EXITED)
+  if (ourstatus->kind () != TARGET_WAITKIND_EXITED)
     {
       /* Map the LWP of interest back to the appropriate thread ID.  */
       ptid_t thr_ptid = lwp_to_thread (rtnval);
@@ -588,7 +588,7 @@ sol_thread_target::xfer_partial (enum target_object object,
   if (inferior_ptid.tid_p () || !target_thread_alive (inferior_ptid))
     {
       /* It's either a thread or an LWP that isn't alive.  Any live
-         LWP will do so use the first available.
+	 LWP will do so use the first available.
 
 	 NOTE: We don't need to call switch_to_thread; we're just
 	 reading memory.  */
@@ -638,10 +638,10 @@ check_for_thread_db (void)
       break;
 
     case TD_OK:
-      printf_unfiltered (_("[Thread debugging using libthread_db enabled]\n"));
+      gdb_printf (_("[Thread debugging using libthread_db enabled]\n"));
 
       /* The thread library was detected.  Activate the sol_thread target.  */
-      push_target (&sol_thread_ops);
+      current_inferior ()->push_target (&sol_thread_ops);
       sol_thread_active = 1;
 
       main_ph.ptid = inferior_ptid; /* Save for xfer_memory.  */
@@ -681,7 +681,7 @@ sol_thread_target::mourn_inferior ()
 
   sol_thread_active = 0;
 
-  unpush_target (this);
+  current_inferior ()->unpush_target (this);
 
   beneath->mourn_inferior ();
 }
@@ -767,7 +767,7 @@ ps_pglobal_lookup (struct ps_prochandle *ph, const char *ld_object_name,
   if (!ms.minsym)
     return PS_NOSYM;
 
-  *ld_symbol_addr = BMSYMBOL_VALUE_ADDRESS (ms);
+  *ld_symbol_addr = ms.value_address ();
   return PS_OK;
 }
 
@@ -784,7 +784,7 @@ rw_common (int dowrite, const struct ps_prochandle *ph, psaddr_t addr,
   if (inferior_ptid.tid_p () || !target_thread_alive (inferior_ptid))
     {
       /* It's either a thread or an LWP that isn't alive.  Any live
-         LWP will do so use the first available.
+	 LWP will do so use the first available.
 
 	 NOTE: We don't need to call switch_to_thread; we're just
 	 reading memory.  */
@@ -794,7 +794,7 @@ rw_common (int dowrite, const struct ps_prochandle *ph, psaddr_t addr,
 #if defined (__sparcv9)
   /* For Sparc64 cross Sparc32, make sure the address has not been
      accidentally sign-extended (or whatever) to beyond 32 bits.  */
-  if (bfd_get_arch_size (exec_bfd) == 32)
+  if (bfd_get_arch_size (current_program_space->exec_bfd ()) == 32)
     addr &= 0xffffffff;
 #endif
 
@@ -882,7 +882,7 @@ ps_plog (const char *fmt, ...)
 
   va_start (args, fmt);
 
-  vfprintf_filtered (gdb_stderr, fmt, args);
+  gdb_vprintf (gdb_stderr, fmt, args);
 }
 
 /* Get size of extra register set.  Currently a noop.  */
@@ -950,9 +950,9 @@ ps_lsetfpregs (struct ps_prochandle *ph, lwpid_t lwpid,
 ps_err_e
 ps_pdmodel (struct ps_prochandle *ph, int *data_model)
 {
-  if (exec_bfd == 0)
+  if (current_program_space->exec_bfd () == 0)
     *data_model = PR_MODEL_UNKNOWN;
-  else if (bfd_get_arch_size (exec_bfd) == 32)
+  else if (bfd_get_arch_size (current_program_space->exec_bfd ()) == 32)
     *data_model = PR_MODEL_ILP32;
   else
     *data_model = PR_MODEL_LP64;
@@ -973,14 +973,14 @@ sol_thread_target::pid_to_str (ptid_t ptid)
       lwp = thread_to_lwp (ptid, -2);
 
       if (lwp.pid () == -1)
-	return string_printf ("Thread %ld (defunct)",
-			      ptid.tid ());
+	return string_printf ("Thread %s (defunct)",
+			      pulongest (ptid.tid ()));
       else if (lwp.pid () != -2)
-	return string_printf ("Thread %ld (LWP %ld)",
-			      ptid.tid (), lwp.lwp ());
+	return string_printf ("Thread %s (LWP %ld)",
+			      pulongest (ptid.tid ()), lwp.lwp ());
       else
-	return string_printf ("Thread %ld        ",
-			      ptid.tid ());
+	return string_printf ("Thread %s          ",
+			      pulongest (ptid.tid ()));
     }
   else if (ptid.lwp () != 0)
     return string_printf ("LWP    %ld        ", ptid.lwp ());
@@ -1043,32 +1043,32 @@ info_cb (const td_thrhandle_t *th, void *s)
   ret = p_td_thr_get_info (th, &ti);
   if (ret == TD_OK)
     {
-      printf_filtered ("%s thread #%d, lwp %d, ",
-		       ti.ti_type == TD_THR_SYSTEM ? "system" : "user  ",
-		       ti.ti_tid, ti.ti_lid);
+      gdb_printf ("%s thread #%d, lwp %d, ",
+		  ti.ti_type == TD_THR_SYSTEM ? "system" : "user  ",
+		  ti.ti_tid, ti.ti_lid);
       switch (ti.ti_state)
 	{
 	default:
 	case TD_THR_UNKNOWN:
-	  printf_filtered ("<unknown state>");
+	  gdb_printf ("<unknown state>");
 	  break;
 	case TD_THR_STOPPED:
-	  printf_filtered ("(stopped)");
+	  gdb_printf ("(stopped)");
 	  break;
 	case TD_THR_RUN:
-	  printf_filtered ("(run)    ");
+	  gdb_printf ("(run)    ");
 	  break;
 	case TD_THR_ACTIVE:
-	  printf_filtered ("(active) ");
+	  gdb_printf ("(active) ");
 	  break;
 	case TD_THR_ZOMBIE:
-	  printf_filtered ("(zombie) ");
+	  gdb_printf ("(zombie) ");
 	  break;
 	case TD_THR_SLEEP:
-	  printf_filtered ("(asleep) ");
+	  gdb_printf ("(asleep) ");
 	  break;
 	case TD_THR_STOPPED_ASLEEP:
-	  printf_filtered ("(stopped asleep)");
+	  gdb_printf ("(stopped asleep)");
 	  break;
 	}
       /* Print thr_create start function.  */
@@ -1077,10 +1077,10 @@ info_cb (const td_thrhandle_t *th, void *s)
 	  const struct bound_minimal_symbol msym
 	    = lookup_minimal_symbol_by_pc (ti.ti_startfunc);
 
-	  printf_filtered ("   startfunc=%s",
-			   msym.minsym
-			   ? msym.minsym->print_name ()
-			   : paddress (target_gdbarch (), ti.ti_startfunc));
+	  gdb_printf ("   startfunc=%s",
+		      msym.minsym
+		      ? msym.minsym->print_name ()
+		      : paddress (target_gdbarch (), ti.ti_startfunc));
 	}
 
       /* If thread is asleep, print function that went to sleep.  */
@@ -1089,13 +1089,13 @@ info_cb (const td_thrhandle_t *th, void *s)
 	  const struct bound_minimal_symbol msym
 	    = lookup_minimal_symbol_by_pc (ti.ti_pc);
 
-	  printf_filtered ("   sleepfunc=%s",
-			   msym.minsym
-			   ? msym.minsym->print_name ()
-			   : paddress (target_gdbarch (), ti.ti_pc));
+	  gdb_printf ("   sleepfunc=%s",
+		      msym.minsym
+		      ? msym.minsym->print_name ()
+		      : paddress (target_gdbarch (), ti.ti_pc));
 	}
 
-      printf_filtered ("\n");
+      gdb_printf ("\n");
     }
   else
     warning (_("info sol-thread: failed to get info for thread."));
@@ -1120,7 +1120,7 @@ info_solthreads (const char *args, int from_tty)
 static int
 thread_db_find_thread_from_tid (struct thread_info *thread, void *data)
 {
-  long *tid = (long *) data;
+  ULONGEST *tid = (ULONGEST *) data;
 
   if (thread->ptid.tid () == *tid)
     return 1;
@@ -1129,7 +1129,7 @@ thread_db_find_thread_from_tid (struct thread_info *thread, void *data)
 }
 
 ptid_t
-sol_thread_target::get_ada_task_ptid (long lwp, long thread)
+sol_thread_target::get_ada_task_ptid (long lwp, ULONGEST thread)
 {
   struct thread_info *thread_info =
     iterate_over_threads (thread_db_find_thread_from_tid, &thread);
@@ -1137,10 +1137,10 @@ sol_thread_target::get_ada_task_ptid (long lwp, long thread)
   if (thread_info == NULL)
     {
       /* The list of threads is probably not up to date.  Find any
-         thread that is missing from the list, and try again.  */
+	 thread that is missing from the list, and try again.  */
       update_thread_list ();
       thread_info = iterate_over_threads (thread_db_find_thread_from_tid,
-                                          &thread);
+					  &thread);
     }
 
   gdb_assert (thread_info != NULL);
@@ -1190,11 +1190,11 @@ _initialize_sol_thread ()
 	   _("Show info on Solaris user threads."), &maintenanceinfolist);
 
   /* Hook into new_objfile notification.  */
-  gdb::observers::new_objfile.attach (sol_thread_new_objfile);
+  gdb::observers::new_objfile.attach (sol_thread_new_objfile, "sol-thread");
   return;
 
  die:
-  fprintf_unfiltered (gdb_stderr, "\
+  gdb_printf (gdb_stderr, "\
 [GDB will not be able to debug user-mode threads: %s]\n", dlerror ());
 
   if (dlhandle)

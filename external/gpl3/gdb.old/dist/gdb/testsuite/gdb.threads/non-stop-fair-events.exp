@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2020 Free Software Foundation, Inc.
+# Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -69,7 +69,7 @@ set displaced_stepping_enabled 0
 set msg "check displaced-stepping"
 gdb_test_no_output "set debug displaced 1"
 gdb_test_multiple "next" $msg {
-    -re "displaced pc to.*$gdb_prompt $" {
+    -re "prepared successfully .*$gdb_prompt $" {
 	set displaced_stepping_enabled 1
     }
     -re ".*$gdb_prompt $" {
