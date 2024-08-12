@@ -1,4 +1,4 @@
-# Copyright 2014-2023 Free Software Foundation, Inc.
+# Copyright 2014-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,9 +15,7 @@
 load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2 and use gas.
-if {![dwarf2_support]} {
-    return 0
-}
+require dwarf2_support
 
 standard_testfile .c -dw.S
 
@@ -135,219 +133,219 @@ gdb_test_no_output "set language ada"
 # foo.three_ptr.all
 
 gdb_test "print foo.three_ptr.all" \
-         " = \\(1, 2, 3\\)"
+    " = \\(1, 2, 3\\)"
 
 gdb_test "print foo.three_ptr.all(1)" \
-         " = 1"
+    " = 1"
 
 gdb_test "print foo.three_ptr.all(2)" \
-         " = 2"
+    " = 2"
 
 gdb_test "print foo.three_ptr.all(3)" \
-         " = 3"
+    " = 3"
 
 gdb_test "print foo.three_ptr.all'first" \
-         " = 1"
+    " = 1"
 
 gdb_test "print foo.three_ptr.all'last" \
-         " = 3"
+    " = 3"
 
 gdb_test "print foo.three_ptr.all'length" \
-         " = 3"
+    " = 3"
 
 gdb_test "ptype foo.three_ptr.all" \
-         " = array \\(<>\\) of integer"
+    " = array \\(1 \\.\\. 3\\) of integer"
 
 # foo.three_ptr
 
 gdb_test "print foo.three_ptr(1)" \
-         " = 1"
+    " = 1"
 
 gdb_test "print foo.three_ptr(2)" \
-         " = 2"
+    " = 2"
 
 gdb_test "print foo.three_ptr(3)" \
-         " = 3"
+    " = 3"
 
 gdb_test "print foo.three_ptr'first" \
-         " = 1"
+    " = 1"
 
 gdb_test "print foo.three_ptr'last" \
-         " = 3"
+    " = 3"
 
 gdb_test "print foo.three_ptr'length" \
-         " = 3"
+    " = 3"
 
 gdb_test "ptype foo.three_ptr" \
-         " = access array \\(<>\\) of integer"
+    " = access array \\(1 \\.\\. 3\\) of integer"
 
 # foo.three_ptr_tdef.all
 
 gdb_test "print foo.three_ptr_tdef.all" \
-         " = \\(1, 2, 3\\)"
+    " = \\(1, 2, 3\\)"
 
 gdb_test "print foo.three_ptr_tdef.all(1)" \
-         " = 1"
+    " = 1"
 
 gdb_test "print foo.three_ptr_tdef.all(2)" \
-         " = 2"
+    " = 2"
 
 gdb_test "print foo.three_ptr_tdef.all(3)" \
-         " = 3"
+    " = 3"
 
 gdb_test "print foo.three_ptr_tdef.all'first" \
-         " = 1"
+    " = 1"
 
 gdb_test "print foo.three_ptr_tdef.all'last" \
-         " = 3"
+    " = 3"
 
 gdb_test "print foo.three_ptr_tdef.all'length" \
-         " = 3"
+    " = 3"
 
 gdb_test "ptype foo.three_ptr_tdef.all" \
-         " = array \\(<>\\) of integer"
+    " = array \\(1 \\.\\. 3\\) of integer"
 
 # foo.three_ptr_tdef
 
 gdb_test "print foo.three_ptr_tdef(1)" \
-         " = 1"
+    " = 1"
 
 gdb_test "print foo.three_ptr_tdef(2)" \
-         " = 2"
+    " = 2"
 
 gdb_test "print foo.three_ptr_tdef(3)" \
-         " = 3"
+    " = 3"
 
 gdb_test "print foo.three_ptr_tdef'first" \
-         " = 1"
+    " = 1"
 
 gdb_test "print foo.three_ptr_tdef'last" \
-         " = 3"
+    " = 3"
 
 gdb_test "print foo.three_ptr_tdef'length" \
-         " = 3"
+    " = 3"
 
 gdb_test "ptype foo.three_ptr_tdef" \
-         " = access array \\(<>\\) of integer"
+    " = access array \\(1 \\.\\. 3\\) of integer"
 
 # foo.five_ptr.all
 
 gdb_test "print foo.five_ptr.all" \
-         " = \\(2 => 5, 8, 13, 21, 34\\)"
+    " = \\(2 => 5, 8, 13, 21, 34\\)"
 
 gdb_test "print foo.five_ptr.all(2)" \
-         " = 5"
+    " = 5"
 
 gdb_test "print foo.five_ptr.all(3)" \
-         " = 8"
+    " = 8"
 
 gdb_test "print foo.five_ptr.all(4)" \
-         " = 13"
+    " = 13"
 
 gdb_test "print foo.five_ptr.all(5)" \
-         " = 21"
+    " = 21"
 
 gdb_test "print foo.five_ptr.all(6)" \
-         " = 34"
+    " = 34"
 
 gdb_test "print foo.five_ptr.all'first" \
-         " = 2"
+    " = 2"
 
 gdb_test "print foo.five_ptr.all'last" \
-         " = 6"
+    " = 6"
 
 gdb_test "print foo.five_ptr.all'length" \
-         " = 5"
+    " = 5"
 
 gdb_test "ptype foo.five_ptr.all" \
-         " = array \\(<>\\) of integer"
+    " = array \\(2 \\.\\. 6\\) of integer"
 
 # foo.five_ptr
 
 gdb_test "print foo.five_ptr(2)" \
-         " = 5"
+    " = 5"
 
 gdb_test "print foo.five_ptr(3)" \
-         " = 8"
+    " = 8"
 
 gdb_test "print foo.five_ptr(4)" \
-         " = 13"
+    " = 13"
 
 gdb_test "print foo.five_ptr(5)" \
-         " = 21"
+    " = 21"
 
 gdb_test "print foo.five_ptr(6)" \
-         " = 34"
+    " = 34"
 
 gdb_test "print foo.five_ptr'first" \
-         " = 2"
+    " = 2"
 
 gdb_test "print foo.five_ptr'last" \
-         " = 6"
+    " = 6"
 
 gdb_test "print foo.five_ptr'length" \
-         " = 5"
+    " = 5"
 
 gdb_test "ptype foo.five_ptr" \
-         " = access array \\(<>\\) of integer"
+    " = access array \\(2 \\.\\. 6\\) of integer"
 
 # foo.five_ptr_tdef.all
 
 gdb_test "print foo.five_ptr_tdef.all" \
-         " = \\(2 => 5, 8, 13, 21, 34\\)"
+    " = \\(2 => 5, 8, 13, 21, 34\\)"
 
 gdb_test "print foo.five_ptr_tdef.all(2)" \
-         " = 5"
+    " = 5"
 
 gdb_test "print foo.five_ptr_tdef.all(3)" \
-         " = 8"
+    " = 8"
 
 gdb_test "print foo.five_ptr_tdef.all(4)" \
-         " = 13"
+    " = 13"
 
 gdb_test "print foo.five_ptr_tdef.all(5)" \
-         " = 21"
+    " = 21"
 
 gdb_test "print foo.five_ptr_tdef.all(6)" \
-         " = 34"
+    " = 34"
 
 gdb_test "print foo.five_ptr_tdef.all'first" \
-         " = 2"
+    " = 2"
 
 gdb_test "print foo.five_ptr_tdef.all'last" \
-         " = 6"
+    " = 6"
 
 gdb_test "print foo.five_ptr_tdef.all'length" \
-         " = 5"
+    " = 5"
 
 gdb_test "ptype foo.five_ptr_tdef.all" \
-         " = array \\(<>\\) of integer"
+    " = array \\(2 \\.\\. 6\\) of integer"
 
 # foo.five_ptr_tdef
 
 gdb_test "print foo.five_ptr_tdef(2)" \
-         " = 5"
+    " = 5"
 
 gdb_test "print foo.five_ptr_tdef(3)" \
-         " = 8"
+    " = 8"
 
 gdb_test "print foo.five_ptr_tdef(4)" \
-         " = 13"
+    " = 13"
 
 gdb_test "print foo.five_ptr_tdef(5)" \
-         " = 21"
+    " = 21"
 
 gdb_test "print foo.five_ptr_tdef(6)" \
-         " = 34"
+    " = 34"
 
 gdb_test "print foo.five_ptr_tdef'first" \
-         " = 2"
+    " = 2"
 
 gdb_test "print foo.five_ptr_tdef'last" \
-         " = 6"
+    " = 6"
 
 gdb_test "print foo.five_ptr_tdef'length" \
-         " = 5"
+    " = 5"
 
 gdb_test "ptype foo.five_ptr_tdef" \
-         " = access array \\(<>\\) of integer"
+    " = access array \\(2 \\.\\. 6\\) of integer"
