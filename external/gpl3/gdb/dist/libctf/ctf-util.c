@@ -1,5 +1,5 @@
 /* Miscellaneous utilities.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -231,19 +231,6 @@ ctf_str_append_noerr (char *s, const char *append)
   return new_s;
 }
 
-/* A realloc() that fails noisily if called with any ctf_str_num_users.  */
-void *
-ctf_realloc (ctf_dict_t *fp, void *ptr, size_t size)
-{
-  if (fp->ctf_str_num_refs > 0)
-    {
-      ctf_dprintf ("%p: attempt to realloc() string table with %lu active refs\n",
-		   (void *) fp, (unsigned long) fp->ctf_str_num_refs);
-      return NULL;
-    }
-  return realloc (ptr, size);
-}
-
 /* Store the specified error code into errp if it is non-NULL, and then
    return NULL for the benefit of the caller.  */
 
@@ -253,16 +240,6 @@ ctf_set_open_errno (int *errp, int error)
   if (errp != NULL)
     *errp = error;
   return NULL;
-}
-
-/* Store the specified error code into the CTF dict, and then return CTF_ERR /
-   -1 for the benefit of the caller. */
-
-unsigned long
-ctf_set_errno (ctf_dict_t *fp, int err)
-{
-  fp->ctf_errno = err;
-  return CTF_ERR;
 }
 
 /* Create a ctf_next_t.  */
