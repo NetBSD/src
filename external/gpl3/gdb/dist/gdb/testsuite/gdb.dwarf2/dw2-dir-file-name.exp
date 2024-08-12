@@ -1,4 +1,4 @@
-# Copyright 2012-2023 Free Software Foundation, Inc.
+# Copyright 2012-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,16 +15,12 @@
 load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2 and use gas.
-if {![dwarf2_support]} {
-    return 0  
-}
+require dwarf2_support
 
 # This test has hard-wired assumptions that host and build filenames are
 # the same, and assumes POSIX pathname syntax.
-if { [is_remote host] || [ishost *-*-mingw*] } {
-    unsupported "can only run on local host"
-    return 0
-}
+require {!is_remote host}
+require {!ishost *-*-mingw*}
 
 # Find length of addresses in bytes.
 if {[is_64_target]} {

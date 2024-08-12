@@ -1,4 +1,4 @@
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,13 +45,27 @@ set_board_info rcp_prog /usr/bin/scp
 # Some remote machines don't have writable home directories.
 if [info exists REMOTE_TMPDIR] {
     set_board_info remotedir $REMOTE_TMPDIR
+} else {
+    # Set remotedir by default, to force remote_download target to give an
+    # absolute file name.
+    save_vars {rsh_cmd res} {
+	set rsh_cmd \
+	    [join \
+		 [list \
+		      [board_info $board rsh_prog] \
+		      -l [board_info $board username] \
+		      [board_info $board hostname]]]
+	set res [remote_exec build $rsh_cmd pwd]
+	if { [lindex $res 0] != 0 } {
+	    error "Couldn't set remotedir using pwd"
+	}
+	set_board_info remotedir [string trim [lindex $res 1]]
+    }
 }
 
-unset_board_info gdb_server_prog
 if [info exists GDBSERVER] {
+    unset_board_info gdb_server_prog
     set_board_info gdb_server_prog $GDBSERVER
-} else {
-    set_board_info gdb_server_prog /usr/bin/gdbserver
 }
 
 proc get_remote_login { } {
@@ -70,13 +84,6 @@ proc get_target_remote_pipe_cmd { } {
     set rsh_cmd "[board_info [target_info name] rsh_prog] [get_remote_login]"
     set gdbserver "[board_info [target_info name] gdb_server_prog]"
     return "$rsh_cmd $gdbserver --once stdio $target_exec"
-}
-
-proc ${board}_file { dest op args } {
-    if { $op == "delete" } {
-	return [remote_exec target "rm -f $args"]
-    }
-    return [eval [list standard_file $dest $op] $args]
 }
 
 proc ${board}_spawn { board cmd } {

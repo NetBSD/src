@@ -1,4 +1,4 @@
-# Copyright 2023 Free Software Foundation, Inc.
+# Copyright 2023-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,9 +19,7 @@
 load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2 and use gas.
-if {![dwarf2_support]} {
-    return 0
-}
+require dwarf2_support
 
 standard_testfile main.c -debug.S
 
@@ -76,7 +74,7 @@ if {[prepare_for_testing "failed to prepare" ${testfile} \
 
 set in_v 0
 gdb_test_multiple "maint print objfiles" "v has a parent" {
-    -re "^ *\\\[\[0-9\]\\\] *..cooked_index_entry\[^\r\n\]*" {
+    -re "^ *\\\[\[0-9\]\\\] *\\(\\(cooked_index_entry\[^\r\n\]*" {
 	set in_v 0
 	exp_continue
     }
@@ -84,7 +82,7 @@ gdb_test_multiple "maint print objfiles" "v has a parent" {
 	set in_v 1
 	exp_continue
     }
-    -re "^ *parent: *..cooked_index_entry .. (0|$hex)." {
+    -re "^ *parent: *\\(\\(cooked_index_entry \\*\\) (0|$hex)\\)" {
 	if {$in_v} {
 	    if {$expect_out(1,string) == "0"} {
 		fail $gdb_test_name

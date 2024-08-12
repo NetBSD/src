@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2011-2023 Free Software Foundation, Inc.
+   Copyright 2011-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -130,4 +130,8 @@ aa551234:	.byte	0xaa, 0x55, 0x12, 0x34
 
 	.byte		0x0			/* Terminator */
 	.byte		0x0			/* Terminator */
+#ifdef __arm__
+	.section	.note.GNU-stack,"",%progbits
+#else
 	.section	.note.GNU-stack,"",@progbits
+#endif

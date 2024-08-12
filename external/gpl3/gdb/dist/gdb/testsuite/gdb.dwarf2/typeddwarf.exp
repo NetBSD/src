@@ -1,4 +1,4 @@
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,20 +18,22 @@ load_lib dwarf.exp
 set test "typeddwarf"
 
 # This test can only be run on targets which support DWARF-2 and use gas.
-if ![dwarf2_support] {
-    return 0  
-}
+require dwarf2_support
 
 # This test can only be run on x86 and amd64 targets (and not x32).
 if { [is_x86_like_target] } {
     set sfile ${test}.S
-} elseif {[istarget "x86_64-*-*"] && [is_lp64_target]} {
+} elseif { [is_x86_64_m64_target] } {
     set sfile ${test}-amd64.S
 } else {
     return 0
 }
 
-if { [prepare_for_testing "failed to prepare" "${test}" ${sfile} {nodebug additional_flags=-nostdlib}] } {
+set opts {}
+lappend opts nodebug
+lappend opts nopie
+
+if { [prepare_for_testing "failed to prepare" "${test}" ${sfile} $opts] } {
     return -1
 }
 
