@@ -1,5 +1,5 @@
 /* x86_64 ELF support for BFD.
-   Copyright (C) 2000-2022 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
    Contributed by Jan Hubicka <jh@suse.cz>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -77,11 +77,41 @@ START_RELOC_NUMBERS (elf_x86_64_reloc_type)
      RELOC_NUMBER (R_X86_64_PLT32_BND, 40)    /* 32 bit PLT address with
 						 BND prefix */
      /* Load from 32 bit signed pc relative offset to GOT entry without
-	REX prefix, relaxable.  */
+	REX nor REX2 prefixes, relaxable.  */
      RELOC_NUMBER (R_X86_64_GOTPCRELX, 41)
      /* Load from 32 bit signed pc relative offset to GOT entry with
 	REX prefix, relaxable.  */
      RELOC_NUMBER (R_X86_64_REX_GOTPCRELX, 42)
+     /* Load from 32 bit signed pc relative offset to GOT entry if the
+	instruction starts at 4 bytes before the relocation offset,
+	relaxable.  */
+     RELOC_NUMBER (R_X86_64_CODE_4_GOTPCRELX, 43)
+     /* PC relative offset to IE GOT entry if the instruction starts at
+	4 bytes before the relocation offset.  */
+     RELOC_NUMBER (R_X86_64_CODE_4_GOTTPOFF, 44)
+     /* 32 bit signed pc relative offset to TLS descriptor in the GOT if
+	instruction starts at 4 bytes before the relocation offset.  */
+     RELOC_NUMBER (R_X86_64_CODE_4_GOTPC32_TLSDESC, 45)
+     /* Load from 32 bit signed pc relative offset to GOT entry if the
+	instruction starts at 5 bytes before the relocation offset,
+	relaxable.  */
+     RELOC_NUMBER (R_X86_64_CODE_5_GOTPCRELX, 46)
+     /* 32 bit signed pc relative offset to TLS descriptor in the GOT if
+	instruction starts at 5 bytes before the relocation offset.  */
+     RELOC_NUMBER (R_X86_64_CODE_5_GOTPC32_TLSDESC, 47)
+    /* PC relative offset to IE GOT entry if the instruction starts at
+       5 bytes before the relocation offset.  */
+     RELOC_NUMBER (R_X86_64_CODE_5_GOTTPOFF, 48)
+     /* Load from 32 bit signed pc relative offset to GOT entry if the
+	instruction starts at 6 bytes before the relocation offset,
+	relaxable.  */
+     RELOC_NUMBER (R_X86_64_CODE_6_GOTPCRELX, 49)
+    /* PC relative offset to IE GOT entry if the instruction starts at
+       6 bytes before the relocation offset.  */
+     RELOC_NUMBER (R_X86_64_CODE_6_GOTTPOFF, 50)
+     /* 32 bit signed pc relative offset to TLS descriptor in the GOT if
+	instruction starts at 6 bytes before the relocation offset.  */
+     RELOC_NUMBER (R_X86_64_CODE_6_GOTPC32_TLSDESC, 51)
      RELOC_NUMBER (R_X86_64_GNU_VTINHERIT, 250)       /* GNU C++ hack  */
      RELOC_NUMBER (R_X86_64_GNU_VTENTRY, 251)         /* GNU C++ hack  */
 END_RELOC_NUMBERS (R_X86_64_max)
@@ -95,4 +125,9 @@ END_RELOC_NUMBERS (R_X86_64_max)
 #define SHN_X86_64_LCOMMON 	(SHN_LORESERVE + 2)
 
 #define SHF_X86_64_LARGE	0x10000000
+
+#define DT_X86_64_PLT		(DT_LOPROC + 0)
+#define DT_X86_64_PLTSZ		(DT_LOPROC + 1)
+#define DT_X86_64_PLTENT	(DT_LOPROC + 3)
+
 #endif
