@@ -1,6 +1,6 @@
 /* Fork a Unix child process, and set up to debug it, for GDB.
 
-   Copyright (C) 1990-2023 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -19,12 +19,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "inferior.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "terminal.h"
 #include "gdbthread.h"
-#include "top.h"
+#include "ui.h"
 #include "gdbsupport/job-control.h"
 #include "gdbsupport/filestuff.h"
 #include "nat/fork-inferior.h"

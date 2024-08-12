@@ -1,5 +1,5 @@
 /* S390 native-dependent code for GDB, the GNU debugger.
-   Copyright (C) 2001-2023 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
    Contributed by D.J. Barrow (djbarrow@de.ibm.com,barrow_dj@yahoo.com)
    for IBM Deutschland Entwicklung GmbH, IBM Corporation.
@@ -19,7 +19,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "regcache.h"
 #include "inferior.h"
 #include "target.h"
@@ -28,7 +28,7 @@
 #include "gregset.h"
 #include "regset.h"
 #include "nat/linux-ptrace.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "gdbarch.h"
 
 #include "s390-tdep.h"
@@ -949,10 +949,12 @@ s390_target_wordsize (void)
   /* Check for 64-bit inferior process.  This is the case when the host is
      64-bit, and in addition bit 32 of the PSW mask is set.  */
 #ifdef __s390x__
+  int tid = s390_inferior_tid ();
+  gdb_assert (tid != 0);
   long pswm;
 
   errno = 0;
-  pswm = (long) ptrace (PTRACE_PEEKUSER, s390_inferior_tid (), PT_PSWMASK, 0);
+  pswm = (long) ptrace (PTRACE_PEEKUSER, tid, PT_PSWMASK, 0);
   if (errno == 0 && (pswm & 0x100000000ul) != 0)
     wordsize = 8;
 #endif
@@ -965,8 +967,9 @@ s390_linux_nat_target::auxv_parse (const gdb_byte **readptr,
 				   const gdb_byte *endptr, CORE_ADDR *typep,
 				   CORE_ADDR *valp)
 {
+  gdb_assert (inferior_ptid != null_ptid);
   int sizeof_auxv_field = s390_target_wordsize ();
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
+  bfd_endian byte_order = gdbarch_byte_order (current_inferior ()->arch ());
   const gdb_byte *ptr = *readptr;
 
   if (endptr == ptr)
@@ -987,6 +990,9 @@ s390_linux_nat_target::auxv_parse (const gdb_byte **readptr,
 const struct target_desc *
 s390_linux_nat_target::read_description ()
 {
+  if (inferior_ptid == null_ptid)
+    return this->beneath ()->read_description ();
+
   int tid = inferior_ptid.pid ();
 
   have_regset_last_break

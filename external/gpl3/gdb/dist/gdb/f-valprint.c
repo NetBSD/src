@@ -1,6 +1,6 @@
 /* Support for printing Fortran values for GDB, the GNU debugger.
 
-   Copyright (C) 1993-2023 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
 
    Contributed by Motorola.  Adapted from the C definitions by Farooq Butt
    (fmbutt@engage.sps.mot.com), additionally worked over by Stan Shebs.
@@ -20,7 +20,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "annotate.h"
 #include "symtab.h"
 #include "gdbtypes.h"
@@ -43,7 +42,7 @@ static void f77_get_dynamic_length_of_aggregate (struct type *);
 LONGEST
 f77_get_lowerbound (struct type *type)
 {
-  if (type->bounds ()->low.kind () != PROP_CONST)
+  if (!type->bounds ()->low.is_constant ())
     error (_("Lower bound may not be '*' in F77"));
 
   return type->bounds ()->low.const_val ();
@@ -52,7 +51,7 @@ f77_get_lowerbound (struct type *type)
 LONGEST
 f77_get_upperbound (struct type *type)
 {
-  if (type->bounds ()->high.kind () != PROP_CONST)
+  if (!type->bounds ()->high.is_constant ())
     {
       /* We have an assumed size array on our hands.  Assume that
 	 upper_bound == lower_bound so that we show at least 1 element.
@@ -261,10 +260,24 @@ public:
     size_t dim_indx = m_dimension - 1;
     struct type *elt_type_prev = m_elt_type_prev;
     LONGEST elt_off_prev = m_elt_off_prev;
-    bool repeated = (m_options->repeat_count_threshold < UINT_MAX
-		     && elt_type_prev != nullptr
-		     && value_contents_eq (m_val, elt_off_prev, m_val, elt_off,
-					   elt_type->length ()));
+    bool repeated = false;
+
+    if (m_options->repeat_count_threshold < UINT_MAX
+	&& elt_type_prev != nullptr)
+      {
+	/* When printing large arrays this spot is called frequently, so clean
+	   up temporary values asap to prevent allocating a large amount of
+	   them.  */
+	scoped_value_mark free_values;
+	struct value *e_val = value_from_component (m_val, elt_type, elt_off);
+	struct value *e_prev = value_from_component (m_val, elt_type,
+						     elt_off_prev);
+	repeated = ((e_prev->entirely_available ()
+		     && e_val->entirely_available ()
+		     && e_prev->contents_eq (e_val))
+		    || (e_prev->entirely_unavailable ()
+			&& e_val->entirely_unavailable ()));
+      }
 
     if (repeated)
       m_nrepeats++;
@@ -333,7 +346,7 @@ private:
      have been sliced and we do not want to compare any memory contents
      present between the slices requested.  */
   bool
-  dimension_contents_eq (const struct value *val, struct type *type,
+  dimension_contents_eq (struct value *val, struct type *type,
 			 LONGEST offset1, LONGEST offset2)
   {
     if (type->code () == TYPE_CODE_ARRAY
@@ -362,8 +375,16 @@ private:
 	return true;
       }
     else
-      return value_contents_eq (val, offset1, val, offset2,
-				type->length ());
+      {
+	struct value *e_val1 = value_from_component (val, type, offset1);
+	struct value *e_val2 = value_from_component (val, type, offset2);
+
+	return ((e_val1->entirely_available ()
+		 && e_val2->entirely_available ()
+		 && e_val1->contents_eq (e_val2))
+		|| (e_val1->entirely_unavailable ()
+		    && e_val2->entirely_unavailable ()));
+      }
   }
 
   /* The number of elements printed so far.  */
@@ -432,14 +453,14 @@ f_language::value_print_inner (struct value *val, struct ui_file *stream,
 			       int recurse,
 			       const struct value_print_options *options) const
 {
-  struct type *type = check_typedef (value_type (val));
+  struct type *type = check_typedef (val->type ());
   struct gdbarch *gdbarch = type->arch ();
   int printed_field = 0; /* Number of fields printed.  */
   struct type *elttype;
   CORE_ADDR addr;
   int index;
-  const gdb_byte *valaddr = value_contents_for_printing (val).data ();
-  const CORE_ADDR address = value_address (val);
+  const gdb_byte *valaddr = val->contents_for_printing ().data ();
+  const CORE_ADDR address = val->address ();
 
   switch (type->code ())
     {
@@ -530,7 +551,7 @@ f_language::value_print_inner (struct value *val, struct ui_file *stream,
 		     value field before printing its value.  */
 		  struct block_symbol sym
 		    = lookup_symbol (field_name, get_selected_block (nullptr),
-				     VAR_DOMAIN, nullptr);
+				     SEARCH_VFT, nullptr);
 		  if (sym.symbol == nullptr)
 		    error (_("failed to find symbol for name list component %s"),
 			   field_name);
@@ -600,13 +621,11 @@ static void
 info_common_command_for_block (const struct block *block, const char *comname,
 			       int *any_printed)
 {
-  struct block_iterator iter;
-  struct symbol *sym;
   struct value_print_options opts;
 
   get_user_print_options (&opts);
 
-  ALL_BLOCK_SYMBOLS (block, iter, sym)
+  for (struct symbol *sym : block_iterator_range (block))
     if (sym->domain () == COMMON_BLOCK_DOMAIN)
       {
 	const struct common_block *common = sym->value_common_block ();

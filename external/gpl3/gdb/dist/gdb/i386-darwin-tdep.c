@@ -1,5 +1,5 @@
 /* Darwin support for GDB, the GNU debugger.
-   Copyright (C) 1997-2023 Free Software Foundation, Inc.
+   Copyright (C) 1997-2024 Free Software Foundation, Inc.
 
    Contributed by Apple Computer, Inc.
 
@@ -18,7 +18,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "frame.h"
 #include "inferior.h"
 #include "gdbcore.h"
@@ -66,7 +66,7 @@ const int i386_darwin_thread_state_num_regs =
    address of the associated sigcontext structure.  */
 
 static CORE_ADDR
-i386_darwin_sigcontext_addr (frame_info_ptr this_frame)
+i386_darwin_sigcontext_addr (const frame_info_ptr &this_frame)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -99,7 +99,7 @@ i386_darwin_sigcontext_addr (frame_info_ptr this_frame)
 
 int
 darwin_dwarf_signal_frame_p (struct gdbarch *gdbarch,
-			     frame_info_ptr this_frame)
+			     const frame_info_ptr &this_frame)
 {
   return i386_sigtramp_p (this_frame);
 }
@@ -183,13 +183,13 @@ i386_darwin_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
       for (i = 0; i < nargs; i++)
 	{
-	  struct type *arg_type = value_enclosing_type (args[i]);
+	  struct type *arg_type = args[i]->enclosing_type ();
 
 	  if (i386_m128_p (arg_type) && num_m128 < 4)
 	    {
 	      if (write_pass)
 		{
-		  const gdb_byte *val = value_contents_all (args[i]).data ();
+		  const gdb_byte *val = args[i]->contents_all ().data ();
 		  regcache->raw_write (I387_MM0_REGNUM(tdep) + num_m128, val);
 		}
 	      num_m128++;
@@ -200,7 +200,7 @@ i386_darwin_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 				     i386_darwin_arg_type_alignment (arg_type));
 	      if (write_pass)
 		write_memory (sp + args_space,
-			      value_contents_all (args[i]).data (),
+			      args[i]->contents_all ().data (),
 			      arg_type->length ());
 
 	      /* The System V ABI says that:
