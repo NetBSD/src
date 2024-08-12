@@ -4,7 +4,7 @@
 # xerror:
 # output: core: 4 byte read to unmapped address 0x0 at *\n
 
-# Copyright (C) 2016-2023 Free Software Foundation, Inc.
+# Copyright (C) 2016-2024 Free Software Foundation, Inc.
 # Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
 #
 # This file is part of the GNU simulators.
