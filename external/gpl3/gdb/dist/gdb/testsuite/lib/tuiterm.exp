@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Free Software Foundation, Inc.
+# Copyright 2019-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -99,10 +99,25 @@ namespace eval Term {
 	_log_cur "Line feed" {
 	    variable _cur_row
 	    variable _rows
+	    variable _cols
+	    variable _chars
 
 	    incr _cur_row 1
-	    if {$_cur_row >= $_rows} {
-		error "FIXME scroll"
+	    while {$_cur_row >= $_rows} {
+		# Scroll the display contents.  We scroll one line at
+		# a time here; as _cur_row was only increased by one,
+		# a single line scroll should be enough to put the
+		# cursor back on the screen.  But we wrap the
+		# scrolling inside a while loop just to be on the safe
+		# side.
+		for {set y 0} {$y < [expr $_rows - 1]} {incr y} {
+		    set next_y [expr $y + 1]
+		    for {set x 0} {$x < $_cols} {incr x} {
+			set _chars($x,$y) $_chars($x,$next_y)
+		    }
+		}
+
+		incr _cur_row -1
 	    }
 	}
     }
@@ -533,57 +548,110 @@ namespace eval Term {
 	}
     }
 
+    # Reset the attributes in attributes array UPVAR_NAME to the default values.
+    proc _reset_attrs { upvar_name } {
+	upvar $upvar_name var
+	array set var {
+	    intensity normal
+	    fg default
+	    bg default
+	    underline 0
+	    reverse 0
+	    invisible 0
+	    blinking 0
+	}
+    }
+
+    # Translate the color numbers as used in proc _csi_m to a name.
+    proc _color_attr { n } {
+	switch -exact -- $n {
+	    0 {
+		return black
+	    }
+	    1 {
+		return red
+	    }
+	    2 {
+		return green
+	    }
+	    3 {
+		return yellow
+	    }
+	    4 {
+		return blue
+	    }
+	    5 {
+		return magenta
+	    }
+	    6 {
+		return cyan
+	    }
+	    7 {
+		return white
+	    }
+	    default { error "unsupported color number: $n" }
+	}
+    }
+
     # Select Graphic Rendition.
     #
     # https://vt100.net/docs/vt510-rm/SGR.html
     proc _csi_m {args} {
 	_log_cur "Select Graphic Rendition ([join $args {, }])" {
-	  variable _attrs
+	    variable _attrs
 
-	  foreach item $args {
-	      switch -exact -- $item {
-		  "" - 0 {
-		      set _attrs(intensity) normal
-		      set _attrs(fg) default
-		      set _attrs(bg) default
-		      set _attrs(underline) 0
-		      set _attrs(reverse) 0
-		  }
-		  1 {
-		      set _attrs(intensity) bold
-		  }
-		  2 {
-		      set _attrs(intensity) dim
-		  }
-		  4 {
-		      set _attrs(underline) 1
-		  }
-		  7 {
-		      set _attrs(reverse) 1
-		  }
-		  22 {
-		      set _attrs(intensity) normal
-		  }
-		  24 {
-		      set _attrs(underline) 0
-		  }
-		  27 {
-		      set _attrs(reverse) 1
-		  }
-		  30 - 31 - 32 - 33 - 34 - 35 - 36 - 37 {
-		      set _attrs(fg) $item
-		  }
-		  39 {
-		      set _attrs(fg) default
-		  }
-		  40 - 41 - 42 - 43 - 44 - 45 - 46 - 47 {
-		      set _attrs(bg) $item
-		  }
-		  49 {
-		      set _attrs(bg) default
-		  }
-	      }
-	  }
+	    foreach item $args {
+		switch -exact -- $item {
+		    "" - 0 {
+			_reset_attrs _attrs
+		    }
+		    1 {
+			set _attrs(intensity) bold
+		    }
+		    2 {
+			set _attrs(intensity) dim
+		    }
+		    4 {
+			set _attrs(underline) 1
+		    }
+		    5 {
+			set _attrs(blinking) 1
+		    }
+		    7 {
+			set _attrs(reverse) 1
+		    }
+		    8 {
+			set _attrs(invisible) 1
+		    }
+		    22 {
+			set _attrs(intensity) normal
+		    }
+		    24 {
+			set _attrs(underline) 0
+		    }
+		    25 {
+			set _attrs(blinking) 0
+		    }
+		    27 {
+			set _attrs(reverse) 0
+		    }
+		    28 {
+			set _attrs(invisible) 0
+		    }
+		    30 - 31 - 32 - 33 - 34 - 35 - 36 - 37 {
+			set _attrs(fg) [_color_attr [expr $item - 30]]
+		    }
+		    39 {
+			set _attrs(fg) default
+		    }
+		    40 - 41 - 42 - 43 - 44 - 45 - 46 - 47 {
+			set _attrs(bg) [_color_attr [expr $item - 40]]
+		    }
+		    49 {
+			set _attrs(bg) default
+		    }
+		}
+	    }
 	}
     }
 
@@ -600,7 +668,7 @@ namespace eval Term {
 	    variable _chars
 	    set lattr [array get _attrs]
 	    foreach char [split $str {}] {
-		  _log_cur "  Inserted char '$char'" {
+		_log_cur "  Inserted char '$char'" {
 		    set _chars($_cur_col,$_cur_row) [list $char $lattr]
 		    incr _cur_col
 		    if {$_cur_col >= $_cols} {
@@ -652,13 +720,7 @@ namespace eval Term {
 	set _cur_col 0
 	set _cur_row 0
 	set _resize_count 0
-	array set _attrs {
-	    intensity normal
-	    fg default
-	    bg default
-	    underline 0
-	    reverse 0
-	}
+	_reset_attrs _attrs
 
 	_clear_lines 0 $_rows
     }
@@ -693,11 +755,27 @@ namespace eval Term {
 	    timeout {
 		# Assume a timeout means we somehow missed the
 		# expected result, and carry on.
+		warning "timeout in accept_gdb_output"
+		dump_screen
 		return 0
 	    }
 	}
 
 	return 1
+    }
+
+    # Print arg using "verbose -log" if DEBUG_TUI_MATCHING == 1.
+    proc debug_tui_matching { arg } {
+	set debug 0
+	if { [info exists ::DEBUG_TUI_MATCHING] } {
+	    set debug $::DEBUG_TUI_MATCHING
+	}
+
+	if { ! $debug } {
+	    return
+	}
+
+	verbose -log "$arg"
     }
 
     # Accept some output from gdb and update the screen.  WAIT_FOR is
@@ -708,7 +786,14 @@ namespace eval Term {
 	variable _cur_col
 	variable _cur_row
 
-	set prompt_wait_for "$gdb_prompt \$"
+	set fn "wait_for"
+
+	set prompt_wait_for "(^|\\|)$gdb_prompt \$"
+	if { $wait_for == "" } {
+	    set wait_for $prompt_wait_for
+	}
+
+	debug_tui_matching "$fn: regexp: '$wait_for'"
 
 	while 1 {
 	    if { [accept_gdb_output] == 0 } {
@@ -724,10 +809,14 @@ namespace eval Term {
 		set prev [get_line $_cur_row]
 	    }
 	    if {[regexp -- $wait_for $prev]} {
+		debug_tui_matching "$fn: match: '$prev'"
 		if {$wait_for == "$prompt_wait_for"} {
 		    break
 		}
 		set wait_for $prompt_wait_for
+		debug_tui_matching "$fn: regexp prompt: '$wait_for'"
+	    } else {
+		debug_tui_matching "$fn: mismatch: '$prev'"
 	    }
 	}
 
@@ -751,34 +840,69 @@ namespace eval Term {
 	return 1
     }
 
+    # Setup the terminal with dimensions ROWSxCOLS, TERM=ansi, and execute
+    # BODY.
+    proc with_tuiterm {rows cols body} {
+	global env stty_init
+	save_vars {env(TERM) env(NO_COLOR) stty_init} {
+	    setenv TERM ansi
+	    setenv NO_COLOR ""
+	    _setup $rows $cols
+
+	    uplevel $body
+	}
+    }
+
     # Like ::clean_restart, but ensures that gdb starts in an
     # environment where the TUI can work.  ROWS and COLS are the size
     # of the terminal.  EXECUTABLE, if given, is passed to
     # clean_restart.
     proc clean_restart {rows cols {executable {}}} {
-	global env stty_init
-	save_vars {env(TERM) stty_init ::GDBFLAGS} {
-	    setenv TERM ansi
-	    _setup $rows $cols
+	with_tuiterm $rows $cols {
+	    save_vars { ::GDBFLAGS } {
+		# Make GDB not print the directory names.  Use this setting to
+		# remove the differences in test runs due to varying directory
+		# names.
+		append ::GDBFLAGS " -ex \"set filename-display basename\""
 
-	    # Make GDB not print the directory names.  Use this setting to
-	    # remove the differences in test runs due to varying directory
-	    # names.
-	    append ::GDBFLAGS " -ex \"set filename-display basename\""
-
-	    if {$executable == ""} {
-		::clean_restart
-	    } else {
-		::clean_restart $executable
+		if {$executable == ""} {
+		    ::clean_restart
+		} else {
+		    ::clean_restart $executable
+		}
 	    }
+
 	    ::gdb_test_no_output "set pagination off"
 	}
+    }
+
+    # Generate prompt on TUIterm.
+    proc gen_prompt {} {
+	# Generate a prompt.
+	send_gdb "echo\n"
+
+	# Drain the output before the prompt.
+	gdb_expect {
+	    -re "echo\r\n" {
+	    }
+	}
+
+	# Interpret prompt using TUIterm.
+	wait_for ""
     }
 
     # Setup ready for starting the tui, but don't actually start it.
     # Returns 1 on success, 0 if TUI tests should be skipped.
     proc prepare_for_tui {} {
-	if {[skip_tui_tests]} {
+	if { [is_remote host] } {
+	    # In clean_restart, we're using "setenv TERM ansi", which has
+	    # effect on build.  If we have [is_remote host] == 0, so
+	    # build == host, then it also has effect on host.  But for
+	    # [is_remote host] == 1, it has no effect on host.
+	    return 0
+	}
+
+	if {![allow_tui_tests]} {
 	    return 0
 	}
 
@@ -805,22 +929,36 @@ namespace eval Term {
 	global gdb_prompt
 	send_gdb "$cmd\n"
 	set str [string_to_regexp $cmd]
-	set str "^$gdb_prompt $str"
+	set str "(^|\\|)$gdb_prompt $str"
 	wait_for $str
     }
 
-    # As proc command, but don't wait for a initial prompt.  This is used for
-    # inital terminal commands, where there's no prompt yet.
+    # As proc command, but don't wait for an initial prompt.  This is used for
+    # initial terminal commands, where there's no prompt yet.
     proc command_no_prompt_prefix {cmd} {
-	send_gdb "$cmd\n"
-	set str [string_to_regexp $cmd]
-	wait_for "^$str"
+	gen_prompt
+	command $cmd
     }
 
-    # Return the text of screen line N, without attributes.  Lines are
-    # 0-based.  If C is given, stop before column C.  Columns are also
-    # zero-based.
-    proc get_line {n {c ""}} {
+    # Apply the attribute list in ATTRS to attributes array UPVAR_NAME.
+    # Return a string annotating the changed attributes.
+    proc apply_attrs { upvar_name attrs } {
+	set res ""
+	upvar $upvar_name var
+	foreach { attr val } $attrs {
+	    if { $var($attr) != $val } {
+		append res "<$attr:$val>"
+		set var($attr) $val
+	    }
+	}
+
+	return $res
+    }
+
+    # Return the text of screen line N.  Lines are 0-based.  If C is given,
+    # stop before column C.  Columns are also zero-based.  If ATTRS, annotate
+    # with attributes.
+    proc get_line_1 {n c attrs} {
 	variable _rows
 	# This can happen during resizing, if the cursor seems to
 	# temporarily be off-screen.
@@ -833,11 +971,35 @@ namespace eval Term {
 	variable _chars
 	set c [_default $c $_cols]
 	set x 0
+	if { $attrs } {
+	    _reset_attrs line_attrs
+	}
 	while {$x < $c} {
+	    if { $attrs } {
+		set char_attrs [lindex $_chars($x,$n) 1]
+		append result [apply_attrs line_attrs $char_attrs]
+	    }
 	    append result [lindex $_chars($x,$n) 0]
 	    incr x
 	}
+	if { $attrs } {
+	    _reset_attrs zero_attrs
+	    set char_attrs [array get zero_attrs]
+	    append result [apply_attrs line_attrs $char_attrs]
+	}
 	return $result
+    }
+
+    # Return the text of screen line N, without attributes.  Lines are
+    # 0-based.  If C is given, stop before column C.  Columns are also
+    # zero-based.
+    proc get_line {n {c ""} } {
+	return [get_line_1 $n $c 0]
+    }
+
+    # As get_line, but annotate with attributes.
+    proc get_line_with_attrs {n {c ""}} {
+	return [get_line_1 $n $c 1]
     }
 
     # Get just the character at (X, Y).
@@ -940,12 +1102,35 @@ namespace eval Term {
 	}
     }
 
+    # Wait until a box appears at the given coordinates.
+    proc wait_for_box {test_name x y width height} {
+	while 1 {
+	    if { [accept_gdb_output] == 0 } {
+		return 0
+	    }
+
+	    set why [_check_box $x $y $width $height]
+	    if {$why == ""} {
+		pass $test_name
+		break
+	    }
+	}
+    }
+
     # Check whether the text contents of the terminal match the
     # regular expression.  Note that text styling is not considered.
     proc check_contents {test_name regexp} {
 	dump_screen
 	set contents [get_all_lines]
 	gdb_assert {[regexp -- $regexp $contents]} $test_name
+    }
+
+    # As check_contents, but check that the text contents of the terminal does
+    # not match the regular expression.
+    proc check_contents_not {test_name regexp} {
+	dump_screen
+	set contents [get_all_lines]
+	gdb_assert {![regexp -- $regexp $contents]} $test_name
     }
 
     # Get the region of the screen described by X, Y, WIDTH,
@@ -1013,8 +1198,8 @@ namespace eval Term {
     }
 
     # A debugging function to dump the current screen, with line
-    # numbers.
-    proc dump_screen {} {
+    # numbers.  If ATTRS, annotate with attributes.
+    proc dump_screen { {attrs 0} } {
 	variable _rows
 	variable _cols
 	variable _cur_row
@@ -1024,8 +1209,13 @@ namespace eval Term {
 
 	for {set y 0} {$y < $_rows} {incr y} {
 	    set fmt [format %5d $y]
-	    verbose -log "$fmt [get_line $y]"
+	    verbose -log "$fmt [get_line_1 $y "" $attrs]"
 	}
+    }
+
+    # As dump_screen, but with attributes annotation.
+    proc dump_screen_with_attrs {} {
+	return [dump_screen 1]
     }
 
     # A debugging function to dump a box from the current screen, with line
@@ -1066,7 +1256,7 @@ namespace eval Term {
 	}
     }
 
-    proc resize {rows cols} {
+    proc resize {rows cols {wait_for_msg 1}} {
 	variable _rows
 	variable _cols
 	variable _resize_count
@@ -1077,17 +1267,15 @@ namespace eval Term {
 	# explicit here.  This also simplifies waiting for the redraw.
 	_do_resize $rows $_cols
 	stty rows $_rows < $::gdb_tty_name
-	# Due to the strange column resizing behavior, and because we
-	# don't care about this intermediate resize, we don't check
-	# the size here.
-	wait_for "@@ resize done $_resize_count"
+	if { $wait_for_msg } {
+	    wait_for "@@ resize done $_resize_count, size = ${_cols}x${rows}"
+	}
 	incr _resize_count
-	# Somehow the number of columns transmitted to gdb is one less
-	# than what we request from expect.  We hide this weird
-	# details from the caller.
 	_do_resize $_rows $cols
-	stty columns [expr {$_cols + 1}] < $::gdb_tty_name
-	wait_for "@@ resize done $_resize_count, size = ${_cols}x${rows}"
+	stty columns $_cols < $::gdb_tty_name
+	if { $wait_for_msg } {
+	    wait_for "@@ resize done $_resize_count, size = ${_cols}x${rows}"
+	}
 	incr _resize_count
     }
 }

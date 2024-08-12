@@ -201,7 +201,7 @@ a .gdbinit.  For example:
 	HOME=`pwd` runtest \
 	  GDB=/usr/bin/gdb \
 	  GDBSERVER=/usr/bin/gdbserver \
-	  INTERNAL_GDBFLAGS="-nw -iex 'set height 0' -iex 'set width 0'"
+	  INTERNAL_GDBFLAGS="-nw -q -iex 'set height 0' -iex 'set width 0'"
 
 Note that we do not need to specify '-data-directory' here
 as we are testing an installed GDB.
@@ -327,6 +327,48 @@ Alternatively, it can be set to "all" to turn on all the above
 For example, to turn on gdbserver debugging, you can do:
 
 	make check GDBSERVER_DEBUG="debug,replay"
+
+GDB_TARGET_USERNAME
+GDB_HOST_USERNAME
+
+These settings are only used with the check-all-boards target, and
+should be the usernames of two separate users on the local machine,
+both of which the current user can ssh to without a password.
+
+These users will be used by board files that simulate remote targets
+by switching to a different user on the same machine.  These users
+will have random files copied into their $HOME directories, so it is a
+good idea to setup new users just for this purpose.
+
+Testing All Simple Boards
+*************************
+
+There are a number of boards that ship with GDB that simulate common
+debug scenarios.  For example by sshing to a different user on the
+local machine and running gdbserver as this alternative user we aim to
+simulate a true remote debug experience.
+
+There is a script binutils-gdb/gdb/testssuite/make-check-all.sh which
+can be used to run a defined set of tests using all of the available
+simple board files.  Support for using this script is also included in
+GDB's makefile, and can be used as:
+
+  make check-all-boards GDB_TARGET_USERNAME=remote-target \
+			GDB_HOST_USERNAME=remote-host \
+			TESTS="gdb.base/break.exp"
+
+The 'remote-target' and 'remote-host' can be replaced with any user
+names on the local machine, the only requirements are that the current
+user must be able to ssh to these users without a password, and these
+users must be happy to have arbitrary files copied into their $HOME
+directory.  Ideally, these users would be setup just for GDB testing.
+
+The check-all-boards target requires that TESTS be defined, though it
+is fine to include multiple tests.
+
+The results are preserved, and can be found in the directory
+gdb/testsuite/check-all/.  The results are split by the board file
+used.
 
 Architecture-specific Parameters
 ******************************
