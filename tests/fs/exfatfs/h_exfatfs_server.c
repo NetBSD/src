@@ -1,4 +1,4 @@
-/*	$NetBSD: h_exfatfs_server.c,v 1.1.2.2 2024/08/02 00:24:52 perseant Exp $	*/
+/*	$NetBSD: h_exfatfs_server.c,v 1.1.2.3 2024/08/12 22:24:31 perseant Exp $	*/
 
 /*
  * rump server for advanced quota tests
@@ -91,7 +91,7 @@ main(int argc, char **argv)
 	uargs.fspec = __UNCONST("/diskdev");
 	if (rump_sys_mount(MOUNT_EXFATFS, FSTEST_MNTNAME, 0,
 	    &uargs, sizeof(uargs)) == -1)
-		die("mount ffs", errno);
+		die("mount exfatfs", errno);
 
 	error = rump_init_server(serverurl);
 	if (error)
