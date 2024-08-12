@@ -1,5 +1,5 @@
 /* Serial port emulation using sockets.
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
 This program is free software; you can redistribute it and/or modify
@@ -29,9 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/select.h>

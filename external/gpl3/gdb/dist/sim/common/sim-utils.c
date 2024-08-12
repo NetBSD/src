@@ -1,5 +1,5 @@
 /* Miscellaneous simulator utilities.
-   Copyright (C) 1997-2023 Free Software Foundation, Inc.
+   Copyright (C) 1997-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -123,14 +123,17 @@ sim_cpu_lookup (SIM_DESC sd, const char *cpu_name)
 const char *
 sim_cpu_msg_prefix (sim_cpu *cpu)
 {
-#if MAX_NR_PROCESSORS == 1
-  return "";
-#else
   static char *prefix;
+
+  if (MAX_NR_PROCESSORS == 1)
+    return "";
 
   if (prefix == NULL)
     {
+      SIM_DESC sd = CPU_STATE (cpu);
       int maxlen = 0;
+      int i;
+
       for (i = 0; i < MAX_NR_PROCESSORS; ++i)
 	{
 	  int len = strlen (CPU_NAME (STATE_CPU (sd, i)));
@@ -140,8 +143,8 @@ sim_cpu_msg_prefix (sim_cpu *cpu)
       prefix = (char *) xmalloc (maxlen + 5);
     }
   sprintf (prefix, "%s: ", CPU_NAME (cpu));
+
   return prefix;
-#endif
 }
 
 /* Cover fn to sim_io_eprintf.  */

@@ -1,6 +1,6 @@
 /* Miscellaneous simulator utilities.
 
-   Copyright (C) 2005-2023 Free Software Foundation, Inc.
+   Copyright (C) 2005-2024 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc. and Stephane Carrez.
 
    This file is part of simulators.
@@ -20,6 +20,8 @@
 
 /* This must come before any other includes.  */
 #include "defs.h"
+
+#include "symcat.h"
 
 #include "sim-main.h"
 #include "sim-module.h"

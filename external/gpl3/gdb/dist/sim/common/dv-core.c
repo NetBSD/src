@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2023 Free Software Foundation, Inc.
+   Copyright 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -72,6 +72,23 @@ dv_core_attach_address_callback (struct hw *me,
 }
 
 
+static void
+dv_core_detach_address_callback (struct hw *me,
+				 int level,
+				 int space,
+				 address_word addr,
+				 address_word nr_bytes,
+				 struct hw *client)
+{
+  HW_TRACE ((me, "detach - level=%d, space=%d, addr=0x%lx, nr_bytes=%ld, client=%s",
+	     level, space, (unsigned long) addr, (unsigned long) nr_bytes, hw_path (client)));
+  /* NOTE: At preset the space is assumed to be zero.  Perhaphs the
+     space should be mapped onto something for instance: space0 -
+     unified memory; space1 - IO memory; ... */
+  sim_core_detach (hw_system (me), NULL, /*cpu*/ level, space, addr);
+}
+
+
 static unsigned
 dv_core_dma_read_buffer_callback (struct hw *me,
 				  void *dest,
@@ -109,6 +126,7 @@ static void
 dv_core_finish (struct hw *me)
 {
   set_hw_attach_address (me, dv_core_attach_address_callback);
+  set_hw_detach_address (me, dv_core_detach_address_callback);
   set_hw_dma_write_buffer (me, dv_core_dma_write_buffer_callback);
   set_hw_dma_read_buffer (me, dv_core_dma_read_buffer_callback);
 }

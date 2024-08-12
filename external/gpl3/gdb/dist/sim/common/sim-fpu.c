@@ -2,7 +2,7 @@
    of the floating point routines in libgcc1.c for targets without
    hardware floating point.  */
 
-/* Copyright 1994-2023 Free Software Foundation, Inc.
+/* Copyright 1994-2024 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -413,9 +413,9 @@ unpack_fpu (sim_fpu *dst, uint64_t packed, int is_double)
       }
     else
       {
-	uint32_t val = pack_fpu (dst, 0);
+	uint32_t fval = pack_fpu (dst, 0);
 	uint32_t org = packed;
-	ASSERT (val == org);
+	ASSERT (fval == org);
       }
   }
 }

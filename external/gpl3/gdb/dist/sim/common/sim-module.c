@@ -1,6 +1,6 @@
 /* Module support.
 
-   Copyright 1996-2023 Free Software Foundation, Inc.
+   Copyright 1996-2024 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -133,8 +133,6 @@ sim_module_install_list (SIM_DESC sd, MODULE_INSTALL_FN * const *modules,
 SIM_RC
 sim_module_install (SIM_DESC sd)
 {
-  MODULE_INSTALL_FN * const *modp;
-
   SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
   SIM_ASSERT (STATE_MODULES (sd) == NULL);
 
@@ -272,7 +270,7 @@ sim_module_uninstall (SIM_DESC sd)
 /* Called when ever simulator info is needed */
 
 void
-sim_module_info (SIM_DESC sd, int verbose)
+sim_module_info (SIM_DESC sd, bool verbose)
 {
   struct module_list *modules = STATE_MODULES (sd);
   MODULE_INFO_LIST *modp;
