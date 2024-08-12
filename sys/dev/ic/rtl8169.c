@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.177 2024/07/05 04:31:51 rin Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.178 2024/08/12 18:55:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.177 2024/07/05 04:31:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.178 2024/08/12 18:55:01 christos Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -669,6 +669,8 @@ re_attach(struct rtk_softc *sc)
 			break;
 		case RTK_HWREV_8168E_VL:
 		case RTK_HWREV_8168F:
+			sc->sc_quirk |= RTKQ_EARLYOFF;
+			/*FALLTHROUGH*/
 		case RTK_HWREV_8411:
 			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
 			    RTKQ_MACSTAT | RTKQ_CMDSTOP | RTKQ_NOJUMBO;
@@ -1969,6 +1971,10 @@ re_init(struct ifnet *ifp)
 	/* Set the individual bit to receive frames for this host only. */
 	rxcfg = CSR_READ_4(sc, RTK_RXCFG);
 	rxcfg |= RTK_RXCFG_RX_INDIV;
+	if (sc->sc_quirk & RTKQ_EARLYOFF)
+		rxcfg |= RTK_RXCFG_EARLYOFF;
+	else if (sc->sc_quirk & RTKQ_RXDV_GATED)
+		rxcfg |= RTK_RXCFG_EARLYOFFV2;
 
 	/* If we want promiscuous mode, set the allframes bit. */
 	if (ifp->if_flags & IFF_PROMISC)
@@ -2172,6 +2178,21 @@ re_stop(struct ifnet *ifp, int disable)
 	callout_stop(&sc->rtk_tick_ch);
 
 	mii_down(&sc->mii);
+
+        /*      
+         * Disable accepting frames to put RX MAC into idle state.
+         * Otherwise it's possible to get frames while stop command
+         * execution is in progress and controller can DMA the frame
+         * to already freed RX buffer during that period.
+         */     
+        CSR_WRITE_4(sc, RTK_RXCFG, CSR_READ_4(sc, RTK_RXCFG) &
+            ~(RTK_RXCFG_RX_ALLPHYS | RTK_RXCFG_RX_INDIV | RTK_RXCFG_RX_MULTI |
+            RTK_RXCFG_RX_BROAD));
+
+	if (sc->sc_quirk & RTKQ_RXDV_GATED) {
+		CSR_WRITE_4(sc, RTK_MISC,
+		    CSR_READ_4(sc, RTK_MISC) | RTK_MISC_RXDV_GATED_EN);
+	}
 
 	if ((sc->sc_quirk & RTKQ_CMDSTOP) != 0)
 		CSR_WRITE_1(sc, RTK_COMMAND, RTK_CMD_STOPREQ | RTK_CMD_TX_ENB |
