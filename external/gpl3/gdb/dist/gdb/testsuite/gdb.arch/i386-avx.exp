@@ -1,4 +1,4 @@
-# Copyright 2010-2023 Free Software Foundation, Inc.
+# Copyright 2010-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,15 +19,9 @@
 # This file is part of the gdb testsuite.
 
 
-if { ![istarget i?86-*-*] && ![istarget x86_64-*-* ] } {
-    verbose "Skipping x86 AVX tests."
-    return
-}
+require {is_any_target i?86-*-* x86_64-*-*}
 
-if { ![have_avx] } {
-    verbose "Skipping x86 AVX tests."
-    return
-}
+require have_avx
 
 standard_testfile .c
 
@@ -35,6 +29,8 @@ set flags { debug }
 
 # C11 for _Alignas, gnu for asm.
 lappend flags additional_flags=-std=gnu11
+
+lappend_include_file flags $srcdir/lib/precise-aligned-alloc.c
 
 if { [test_compiler_info gcc*] || [test_compiler_info clang*] } {
     lappend flags "additional_flags=-mavx -I${srcdir}/.."

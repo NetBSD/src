@@ -1,4 +1,4 @@
-# Copyright 2015-2023 Free Software Foundation, Inc.
+# Copyright 2015-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,6 +40,10 @@ proc _do_check_compile {expr} {
 	    # confused by some other debuginfo.
 	    # See PR compile/29541.
 	    set result "confused by glibc debuginfo"
+	}
+	-re "$::decimal symbols were missing, cannot continue" {
+	    # This appears to be a bug in the compiler plugin.
+	    set result "apparent compiler plugin bug"
 	}
 	-re "\r\n$gdb_prompt $" {
 	}
@@ -189,17 +193,55 @@ namespace eval ::CompileExpression {
 	    set value $l
 	}
 
+	set ok 1
 	if {!$nocode} {
-	    do_test_ code $exp $result $explicit $name \
-		[list $compile $value $print]
+	    if {![do_test_ code $exp $result $explicit $name \
+		      [list $compile $value $print]]} {
+		set ok 0
+	    }
 	}
-	if {!$noprint} {
-	    do_test_ print $exp $result $explicit $name \
-		[list $compile $value $print]
+	if {$ok && !$noprint} {
+	    if {![do_test_ print $exp $result $explicit $name \
+		      [list $compile $value $print]]} {
+		set ok 0
+	    }
+	}
+	if {!$ok} {
+	    return -code return 0
 	}
     }
 
+    # Invoke a 'compile' command of some form.  COMMAND is the
+    # command, RESULT is the expected output, and NAME is the test
+    # name.  Issues a pass or fail.  Returns 1 on success, 0 if there
+    # is a failure that should result in the entire remaining .exp
+    # being stopped; in this case an 'unsupported' is issued.
+
+    proc compile_command_ {command result name} {
+	global gdb_prompt
+	set this_result 1
+	gdb_test_multiple $command $name {
+	    -re "WARNING .* there are active plugins, do not report this" {
+		# Note that the regexp above does not check for the
+		# prompt.  This avoids a gratuitous timeout.
+		unsupported "GCC compiler plugin crashed"
+		set this_result 0
+	    }
+	    -re "$::decimal symbols were missing, cannot continue" {
+		# This appears to be a bug in the compiler plugin.
+		unsupported "GCC compiler plugin bug"
+		set this_result 0
+	    }
+	    -re -wrap "$result" {
+		pass $name
+	    }
+	}
+	return $this_result
+    }
+
     # Run a compile test for CMD ("print" or "code").
+    # Return 1 on success, 0 if there is some kind of catastrophic
+    # error.
 
     proc do_test_ {cmd exp result is_explicit tst fail_list} {
 	variable varName_
@@ -221,7 +263,7 @@ namespace eval ::CompileExpression {
 	if {[string match $cmd "print"]} {
 	    if {!$is_explicit} {
 		eval setup_failures_ $fail_print
-		gdb_test "compile print $exp" $result $tst
+		return [compile_command_ "compile print $exp" $result $tst]
 	    }
 	} else {
 	    if {$is_explicit} {
@@ -230,10 +272,13 @@ namespace eval ::CompileExpression {
 		set command "compile code $varName_ = $exp"
 	    }
 	    eval setup_failures_ $fail_compile
-	    gdb_test_no_output $command $tst
+	    if {![compile_command_ $command "" $tst]} {
+		return 0
+	    }
 	    eval setup_failures_ $fail_value
 	    gdb_test "p $varName_" "= $result" "result of $tst"
 	}
+	return 1
     }
 
     # A convenience proc used to set up xfail and kfail tests.

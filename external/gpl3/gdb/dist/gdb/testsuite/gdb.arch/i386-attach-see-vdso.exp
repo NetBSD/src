@@ -1,0 +1,55 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Ensure that when we attach to an i386 process, which is stopped in
+# the vDSO, we are able to get symbols for the vDSO region.
+
+require {is_any_target "i?86-*-linux*" "x86_64-*-linux*"}
+require can_spawn_for_attach
+
+standard_testfile
+
+set options {debug}
+if {![istarget "i386-*-*"]} {
+    lappend options "additional_flags=-m32"
+}
+
+# The kernel VDSO is used for the syscalls returns only on i386 (not x86_64).
+if { [build_executable "failed to prepare" $testfile $srcfile $options] } {
+    return -1
+}
+
+# Don't tell GDB which executable we're debugging.
+clean_restart
+
+# Start the test program ready for GDB to attach to it.
+set test_spawn_id [spawn_wait_for_attach $binfile]
+set testpid [spawn_id_get_pid $test_spawn_id]
+
+# Attach GDB to the process.
+gdb_test_multiple "attach $testpid" "attach to test process" {
+    -re -wrap "Attaching to process $testpid.*" {
+	pass $gdb_test_name
+    }
+}
+
+# The inferior will be stopped within the vDSO, check we get symbols
+# for this address.
+gdb_test "bt" "#0 *0x\[0-9a-f\]* in \[^?\]+\r\n#1\\s+.*" \
+    "backtrace decodes VDSO"
+
+# Exit GDB and the spawned process.
+gdb_exit
+kill_wait_spawned_process $test_spawn_id

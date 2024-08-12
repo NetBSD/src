@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Free Software Foundation, Inc.
+# Copyright 2019-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/> .
 
 # Print a 2 dimensional assumed shape array.  We pass different slices
-# of the array to a subroutine and print the array as recieved within
+# of the array to a subroutine and print the array as received within
 # the subroutine.  This should exercise GDB's ability to handle
 # different strides for the different dimensions.
 
@@ -33,12 +33,10 @@
 # debug information) matches the size of the slice manually extracted
 # by GDB.
 
-if {[skip_fortran_tests]} { return -1 }
+require allow_fortran_tests
 
 # This test relies on output from the inferior.
-if [target_info exists gdb,noinferiorio] {
-    return -1
-}
+require {!target_info exists gdb,noinferiorio}
 
 standard_testfile ".f90"
 load_lib fortran.exp

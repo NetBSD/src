@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Free Software Foundation, Inc.
+# Copyright 2020-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,14 +23,14 @@
 # each case to ensure that trying to print objects or types from one
 # language, while GDB's language is set to another, doesn't crash GDB.
 
-if {[skip_fortran_tests]} { return -1 }
+require allow_fortran_tests
 
 standard_testfile mixed-lang-stack.c mixed-lang-stack.cpp mixed-lang-stack.f90
 
 if {[prepare_for_testing_full "failed to prepare" \
 	 [list ${binfile} {debug f90 additional_flags=-lstdc++} \
 	      $srcfile {debug} \
-	      $srcfile2 {debug c++} \
+	      $srcfile2 {debug c++ additional_flags=-std=c++11} \
 	      $srcfile3 {debug f90}]]} {
     return -1
 }
@@ -91,6 +91,18 @@ proc run_tests { lang } {
 		fail $gdb_test_name
 	    }
 	}
+
+	# Check backtrace arguments in MI mode.
+	set mi_a "\{name=\"a\",value=\"1\"\}"
+	set mi_b "\{name=\"b\",value=\"2\"\}"
+	set mi_c "\{name=\"c\",value=\"3\"\}"
+	set mi_d "\{name=\"d\",value=\"\\(4,5\\)\"\}"
+	set mi_e "\{name=\"e\",value=\"$e_arg\"\}"
+	set mi_g "\{name=\"g\",value=\"\\( a = 1.5, b = 2.5 \\)\"\}"
+	# Hidden argument name changes depending on compiler.
+	set mi_hidden "\{name=\"\[^\r\n\]+\",value=\"6\"\}"
+	gdb_test "interpreter-exec mi '-stack-list-arguments --no-frame-filters --all-values 7 7'" \
+		 "\\^done,stack-args=\\\[frame=\{level=\"7\",args=\\\[$mi_a,$mi_b,$mi_c,$mi_d,$mi_e,$mi_g,$mi_hidden\\\]\}\\\]"
 
 	# Check the language for frame #0.
 	gdb_test "info frame" "source language fortran\..*" \
@@ -169,6 +181,13 @@ proc run_tests { lang } {
 	    set g_val_pattern "\\( a = 1.5, b = 2.5 \\)"
 	}
 
+	# The last argument here in info args is compiler generated.  It
+	# contains length of the passed array e (we are in mixed_func_1b here).
+	# For gfortran and ifx the compilers conveniently named this '_e',
+	# ifort however prints .tmp.E.len_V$4a.  As is seems unreasonable to
+	# test for an artificially created name and as at the same time all
+	# 3 tested compilers emit this argument, we only check for its
+	# existence and its value (6).
 	set args_pattern [multi_line \
 			      "a = 1" \
 			      "b = 2" \
@@ -176,7 +195,7 @@ proc run_tests { lang } {
 			      "d = ${d_pattern}" \
 			      "e = ${e_pattern}" \
 			      "g = ${g_val_pattern}" \
-			      "_e = 6" ]
+			      ".* = 6" ]
 
 	gdb_test "info args" $args_pattern \
 	    "info args in frame #7"

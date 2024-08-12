@@ -1,4 +1,4 @@
-# Copyright 2008-2023 Free Software Foundation, Inc.
+# Copyright 2008-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,9 +15,7 @@
 
 # This file was written by Jan Kratochvil <jan.kratochvil@redhat.com>.
 
-if {[skip_fortran_tests]} {
-    return 0
-}
+require allow_fortran_tests
 
 standard_testfile .f90
 load_lib "fortran.exp"

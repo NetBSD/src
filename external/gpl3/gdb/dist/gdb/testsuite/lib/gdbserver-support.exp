@@ -1,4 +1,4 @@
-# Copyright 2000-2023 Free Software Foundation, Inc.
+# Copyright 2000-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -129,8 +129,60 @@ proc gdb_target_cmd { args } {
     return [expr $res == 0 ? 0 : 1]
 }
 
-global portnum
-set portnum "2345"
+# Return a usable port number.
+
+proc get_portnum {} {
+    if { [target_info exists gdb,socketport] } {
+	# Hard-coded in target board.
+	return [target_info gdb,socketport]
+    }
+
+    # Not hard-coded in target board.  Return increasing port numbers,
+    # starting at $initial_portnum, to avoid conflicts with hung ports.
+    set initial_portnum 2345
+
+    if { ![info exists ::GDB_PARALLEL] } {
+	# Sequential case.
+
+	# Currently available port number.
+	gdb_persistent_global portnum
+
+	# Initialize, if necessary.
+	if { ![info exists portnum] } {
+	    set portnum $initial_portnum
+	}
+
+	# Return currently available port number, and update it.
+	set res $portnum
+	incr portnum
+	return $res
+    }
+
+    # Parallel case.
+    with_lock portnum.lock {
+	# Keep portnum file alongside the lock that guards it.
+	set portnum_file [lock_dir]/portnum
+
+	if { [file exists $portnum_file] } {
+	    set fd [open $portnum_file r]
+	    set portnum [read $fd]
+	    close $fd
+
+	    set portnum [string trim $portnum]
+	} else {
+	    # Initialize.
+	    set portnum $initial_portnum
+	}
+
+	set next_portnum [expr $portnum + 1]
+
+	set fd [open $portnum_file w]
+	puts $fd $next_portnum
+	close $fd
+    }
+
+    return $portnum
+}
 
 # Locate the gdbserver binary.  Returns "" if gdbserver could not be found.
 
@@ -160,18 +212,18 @@ proc find_gdbserver { } {
   return ""
 }
 
-# Return non-zero if we should skip gdbserver-specific tests.
+# Return non-zero if we should run gdbserver-specific tests.
 
-proc skip_gdbserver_tests { } {
-  if { [find_gdbserver] == "" } {
-    return 1
-  }
+proc allow_gdbserver_tests { } {
+    if { [find_gdbserver] == "" } {
+	return 0
+    }
 
     # If GDB is lack of XML support, and targets, like arm, have
     # multiple target descriptions, GDB doesn't know which target
     # description GDBserver uses, and may fail to parse 'g' packet
     # after connection.
-    if { [gdb_skip_xml_test]
+    if { ![allow_xml_test]
 	 && ([istarget "arm*-*-linux*"]
 	     || [istarget "aarch64*-*-linux*"]
 	     || [istarget "mips*-*-linux*"]
@@ -179,10 +231,10 @@ proc skip_gdbserver_tests { } {
 	     || [istarget "s390*-*-linux*"]
 	     || [istarget "x86_64-*-linux*"]
 	     || [istarget "i\[34567\]86-*-linux*"]) } {
-	return 1
+	return 0
     }
 
-  return 0
+    return 1
 }
 
 # Download the currently loaded program to the target if necessary.
@@ -247,16 +299,10 @@ proc gdbserver_default_get_comm_port { port } {
 # Returns the target protocol and socket to connect to.
 
 proc gdbserver_start { options arguments } {
-    global portnum
     global GDB_TEST_SOCKETHOST
 
     # Port id -- either specified in baseboard file, or managed here.
-    if [target_info exists gdb,socketport] {
-	set portnum [target_info gdb,socketport]
-    } else {
-	# Bump the port number to avoid conflicts with hung ports.
-	incr portnum
-    }
+    set portnum [get_portnum]
 
     # Extract the local and remote host ids from the target board struct.
     if { [info exists GDB_TEST_SOCKETHOST] } {
@@ -372,15 +418,19 @@ proc gdbserver_start { options arguments } {
 	    -re "Listening on" { }
 	    -re "Can't (bind address|listen on socket): Address already in use\\.\r\n" {
 		verbose -log "Port $portnum is already in use."
-		if ![target_info exists gdb,socketport] {
+		set other_portnum [get_portnum]
+		if { $other_portnum != $portnum } {
 		    # Bump the port number to avoid the conflict.
 		    wait -i $expect_out(spawn_id)
-		    incr portnum
+		    set portnum $other_portnum
 		    continue
 		}
 	    }
 	    -re ".*: cannot resolve name: .*\r\n" {
 		error "gdbserver cannot resolve name."
+	    }
+	    -re "Can't open socket: Address family not supported by protocol." {
+		return {}
 	    }
 	    timeout {
 		error "Timeout waiting for gdbserver response."
@@ -433,6 +483,7 @@ proc close_gdbserver {} {
     # -nowait makes expect tell Tcl to wait for the process in the
     # background.
     catch "wait -nowait -i $server_spawn_id"
+    clean_up_spawn_id target $server_spawn_id
     unset server_spawn_id
 }
 

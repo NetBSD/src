@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2023 Free Software Foundation, Inc.
+# Copyright (C) 2016-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,8 @@
 # Test expression parsing and evaluation that requires Rust compiler.
 
 load_lib rust-support.exp
-if {[skip_rust_tests]} {
-    return
-}
+require allow_rust_tests
+require {can_compile rust}
 
 standard_testfile .rs
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug rust}]} {
@@ -69,6 +68,9 @@ gdb_test "print simple::Unit{23}" "'}', '\.\.', or identifier expected"
 gdb_test "print f" " = \"hi bob\""
 gdb_test "print fslice" " = \"bob\""
 gdb_test "print &f\[3..\]" " = \"bob\""
+gdb_test "whatis f" "type = &str"
+gdb_test "print *(&f as *mut &str)" " = \"hi bob\"" \
+    "print via cast to &str"
 
 gdb_test "print g" " = \\(\\*mut \\\[u8; 6\\\]\\) $hex b\"hi bob\""
 gdb_test "ptype g" " = \\*mut \\\[u8; 6\\\]"
@@ -388,7 +390,7 @@ gdb_test "print empty_enum_value.0" ""
 gdb_test "print empty_enum_value.something" ""
 
 load_lib gdb-python.exp
-if {[skip_python_tests]} {
+if {![allow_python_tests]} {
     return
 }
 

@@ -1,4 +1,4 @@
-# Copyright 2018-2023 Free Software Foundation, Inc.
+# Copyright 2018-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,9 +18,7 @@
 # Test initial values of x87 control registers, before any x87
 # instructions have been executed in the inferior.
 
-if {![is_amd64_regs_target]} {
-    return
-}
+require is_amd64_regs_target
 
 standard_testfile .S
 
@@ -101,7 +99,7 @@ proc_with_prefix check_x87_regs_around_init {} {
 				     "fstat" "0x3800" \
 				     "ftag" "0x3fff" \
 				     "fiseg" "0x0" \
-				     "fioff" $addr \
+				     "fioff" "($addr|0x0)" \
 				     "foseg" "0x0" \
 				     "fooff" "0x0" \
 				     "fop" "0x0" \
