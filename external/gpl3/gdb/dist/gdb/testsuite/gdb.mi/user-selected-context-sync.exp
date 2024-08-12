@@ -1,4 +1,4 @@
-# Copyright 2016-2023 Free Software Foundation, Inc.
+# Copyright 2016-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,10 +30,7 @@
 #   are using all-stop, or running, if we are using non-stop.
 
 # Do not run if gdb debug is enabled as it doesn't work for separate-mi-tty.
-if [gdb_debug_enabled] {
-    untested "debug is enabled"
-    return 0
-}
+require !gdb_debug_enabled
 
 load_lib mi-support.exp
 
@@ -41,10 +38,7 @@ standard_testfile
 
 # Multiple inferiors are needed, therefore only native gdb and extended
 # gdbserver modes are supported.
-if [use_gdb_stub] {
-    untested "using gdb stub"
-    return
-}
+require !use_gdb_stub
 
 set compile_options "debug pthreads"
 if {[build_executable $testfile.exp $testfile ${srcfile} ${compile_options}] == -1} {
@@ -402,21 +396,15 @@ proc_with_prefix test_setup { mode } {
 
     set any "\[^\r\n\]*"
 
-    mi_gdb_exit
-
     save_vars { GDBFLAGS } {
 	if { $mode == "non-stop" } {
 	    set GDBFLAGS [concat $GDBFLAGS " -ex \"set non-stop 1\""]
 	}
 
-	if { [mi_gdb_start "separate-mi-tty"] != 0 } {
+	if { [mi_clean_restart $binfile "separate-mi-tty"] != 0 } {
 	    return -1
 	}
     }
-
-    mi_delete_breakpoints
-    mi_gdb_reinitialize_dir $srcdir/$subdir
-    mi_gdb_load $binfile
 
     if { [mi_runto_main] < 0 } {
 	return -1
@@ -512,7 +500,7 @@ proc ensure_no_output { test } {
     if { $gdb_spawn_id == $gdb_main_spawn_id } {
 	# CLI
 	gdb_test "print 666" \
-		 "^print 666\r\n\\\$$decimal = 666" \
+		 "^\\\$$decimal = 666" \
 		 "$test, ensure no output CLI"
     } elseif { $gdb_spawn_id == $mi_spawn_id } {
 	# MI

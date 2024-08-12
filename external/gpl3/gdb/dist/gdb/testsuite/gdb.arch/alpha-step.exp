@@ -1,4 +1,4 @@
-# Copyright 2005-2023 Free Software Foundation, Inc.
+# Copyright 2005-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,10 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-if {![istarget "alpha*-*-*"]} {
-    verbose "Skipping alpha step tests."
-    return
-}
+require {istarget "alpha*-*-*"}
 
 set testfile "alpha-step"
 set srcfile ${testfile}.c
@@ -28,10 +25,7 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {}] !
     return -1
 }
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart $binfile
 
 proc test_stepi {function } {
     # Restart the program from scratch. If GDB got confused during one

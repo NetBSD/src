@@ -1,4 +1,4 @@
-# Copyright 2003-2023 Free Software Foundation, Inc.
+# Copyright 2003-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,11 +21,7 @@
 # This file uses e500-abi.c for input.
 #
 
-
-if {![istarget "powerpc-*eabispe"]} {
-    verbose "Skipping e500 abi tests."
-    return
-}
+require {istarget "powerpc-*eabispe"}
 
 set testfile "e500-abi"
 set binfile ${objdir}/${subdir}/${testfile}

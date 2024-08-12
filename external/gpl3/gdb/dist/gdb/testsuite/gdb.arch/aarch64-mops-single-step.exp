@@ -1,0 +1,98 @@
+# Copyright 2024 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# This file is part of the GDB testsuite.
+
+# Test single stepping through MOPS (memory operations) instruction sequences.
+
+require allow_aarch64_mops_tests
+
+standard_testfile
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
+	  [list debug additional_flags=-march=armv9.3-a]] } {
+    return -1
+}
+
+# If the inferior is rescheduled to another CPU while a main or epilogue
+# instruction is executed, the OS resets the inferior back to the prologue
+# instruction, so we need to allow for that possibility.
+proc step_through_sequence { prefix } {
+    set count 0
+
+    while { [is_at_instruction ${prefix}p] == 1 && $count < 50 } {
+	incr count
+
+	# The stepi output isn't useful to detect whether we stepped over
+	# the instruction.
+	gdb_test "stepi" "\[^\r\n\]+" "step over ${prefix}p"
+	if { [is_at_instruction ${prefix}m] == 1 } {
+	    pass "stepped over ${prefix}p"
+	} else {
+	    fail "stepped over ${prefix}e"
+	    return 0
+	}
+
+	gdb_test "stepi" "\[^\r\n\]+" "step over ${prefix}m"
+	if { [is_at_instruction ${prefix}e] == 1 } {
+	    pass "stepped over ${prefix}m"
+	} elseif { [is_at_instruction ${prefix}p] == 1 } {
+	    # The inferior was rescheduled to another CPU.
+	    pass "${prefix}m: reset back to prologue"
+	    continue
+	} else {
+	    fail "stepped over ${prefix}m"
+	    return 0
+	}
+
+	gdb_test "stepi" "\[^\r\n\]+" "step over ${prefix}e"
+	if { [is_at_instruction prfm] == 1 } {
+	    pass "stepped over ${prefix}e"
+	    return 1
+	} elseif { [is_at_instruction ${prefix}p] == 1 } {
+	    # The inferior was rescheduled to another CPU.
+	    pass "${prefix}e: reset back to prologue"
+	    continue
+	}
+    }
+
+    fail "step through $prefix sequence"
+    return 0
+}
+
+if ![runto_main] {
+    return -1
+}
+
+gdb_breakpoint ${srcfile}:[gdb_get_line_number "Break memset"]
+gdb_breakpoint ${srcfile}:[gdb_get_line_number "Break memcpy"]
+gdb_breakpoint ${srcfile}:[gdb_get_line_number "Break memmove"]
+
+gdb_continue_to_breakpoint "memset breakpoint"
+
+if { [arrive_at_instruction setp] } {
+    step_through_sequence set
+}
+
+gdb_continue_to_breakpoint "memcpy breakpoint"
+
+if { [arrive_at_instruction cpyfp] } {
+    step_through_sequence cpyf
+}
+
+gdb_continue_to_breakpoint "memmove breakpoint"
+
+if { [arrive_at_instruction cpyp] } {
+    step_through_sequence cpy
+}

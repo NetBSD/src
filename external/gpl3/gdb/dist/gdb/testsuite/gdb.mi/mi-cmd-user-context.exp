@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Free Software Foundation, Inc.
+# Copyright 2022-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -84,9 +84,9 @@ mi_gdb_test "frame" \
 
 # Ask about a different frame in the current thread, the current frame
 # should not change.
-mi_gdb_test "-stack-info-frame --thread 2 --frame 1" \
-    "\\^done,frame=\{level=\"1\".*" \
-    "-stack-info-frame 1"
+mi_info_frame "-stack-info-frame 1" \
+    -thread 2 -frame 1 \
+    -level 1
 
 mi_gdb_test "thread" \
     ".*Current thread is 2.*" \
@@ -99,9 +99,9 @@ mi_gdb_test "frame" \
 
 # Ask about a different frame in a different thread.  After this the
 # current thread and frame should not have changed.
-mi_gdb_test "-stack-info-frame --thread 3 --frame 1" \
-    "\\^done,frame=\{level=\"1\".*" \
-    "-stack-info-frame 2"
+mi_info_frame "-stack-info-frame 2" \
+    -thread 3 -frame 1 \
+    -level 1
 
 mi_gdb_test "thread" \
     ".*Current thread is 2.*" \
