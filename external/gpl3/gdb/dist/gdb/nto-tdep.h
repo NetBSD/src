@@ -1,6 +1,6 @@
 /* nto-tdep.h - QNX Neutrino target header.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    Contributed by QNX Software Systems Ltd.
 
@@ -166,8 +166,7 @@ void nto_init_solib_absolute_prefix (void);
 char **nto_parse_redirection (char *start_argv[], const char **in,
 			      const char **out, const char **err);
 
-void nto_relocate_section_addresses (struct so_list *,
-				     struct target_section *);
+void nto_relocate_section_addresses (solib &, target_section *);
 
 int nto_map_arch_to_cputype (const char *);
 
@@ -186,7 +185,7 @@ int nto_in_dynsym_resolve_code (CORE_ADDR pc);
 
 const char *nto_extra_thread_info (struct target_ops *self, struct thread_info *);
 
-LONGEST nto_read_auxv_from_initial_stack (CORE_ADDR inital_stack,
+LONGEST nto_read_auxv_from_initial_stack (CORE_ADDR initial_stack,
 					  gdb_byte *readbuf,
 					  LONGEST len, size_t sizeof_auxv_t);
 

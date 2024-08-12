@@ -1,5 +1,5 @@
 /* Remote target communications for serial-line targets in custom GDB protocol
-   Copyright (C) 1999-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -78,7 +78,7 @@ extern int remote_register_number_and_offset (struct gdbarch *gdbarch,
 					      int *poffset);
 
 extern void remote_notif_get_pending_events (remote_target *remote,
-					     struct notif_client *np);
+					     const notif_client *np);
 extern bool remote_target_is_non_stop_p (remote_target *t);
 
 /* An abstract class that represents the set of callbacks that are made

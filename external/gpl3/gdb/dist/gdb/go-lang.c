@@ -1,6 +1,6 @@
 /* Go language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 2012-2023 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,7 +31,6 @@
    - 6g mangling isn't supported yet
 */
 
-#include "defs.h"
 #include "gdbsupport/gdb_obstack.h"
 #include "block.h"
 #include "symtab.h"
@@ -163,11 +162,8 @@ unpack_package_and_object (char *buf,
 
    Space for the resulting strings is malloc'd in one buffer.
    PACKAGEP,OBJECTP,METHOD_TYPE* will (typically) point into this buffer.
-   [There are a few exceptions, but the caller is still responsible for
-   freeing the resulting pointer.]
    A pointer to this buffer is returned, or NULL if symbol isn't a
    mangled Go symbol.
-   The caller is responsible for freeing the result.
 
    *METHOD_TYPE_IS_POINTERP is set to a boolean indicating if
    the method type is a pointer.
@@ -180,7 +176,7 @@ unpack_package_and_object (char *buf,
    If we ever need to unpack the method type, this routine should work
    for that too.  */
 
-static char *
+static gdb::unique_xmalloc_ptr<char>
 unpack_mangled_go_symbol (const char *mangled_name,
 			  const char **packagep,
 			  const char **objectp,
@@ -209,9 +205,10 @@ unpack_mangled_go_symbol (const char *mangled_name,
   /* main.init is mangled specially.  */
   if (strcmp (mangled_name, "__go_init_main") == 0)
     {
-      char *package = xstrdup ("main");
+      gdb::unique_xmalloc_ptr<char> package
+	= make_unique_xstrdup ("main");
 
-      *packagep = package;
+      *packagep = package.get ();
       *objectp = "init";
       return package;
     }
@@ -219,9 +216,10 @@ unpack_mangled_go_symbol (const char *mangled_name,
   /* main.main is mangled specially (missing prefix).  */
   if (strcmp (mangled_name, "main.main") == 0)
     {
-      char *package = xstrdup ("main");
+      gdb::unique_xmalloc_ptr<char> package
+	= make_unique_xstrdup ("main");
 
-      *packagep = package;
+      *packagep = package.get ();
       *objectp = "main";
       return package;
     }
@@ -234,16 +232,28 @@ unpack_mangled_go_symbol (const char *mangled_name,
      libgo_.*: used by gccgo's runtime
 
      Thus we don't support -fgo-prefix (except as used by the runtime).  */
-  if (!startswith (mangled_name, "go.")
-      && !startswith (mangled_name, "libgo_"))
+  bool v3;
+  if (startswith (mangled_name, "go_0"))
+    /* V3 mangling detected, see
+       https://go-review.googlesource.com/c/gofrontend/+/271726 .  */
+    v3 = true;
+  else if (startswith (mangled_name, "go.")
+	   || startswith (mangled_name, "libgo_"))
+    v3 = false;
+  else
     return NULL;
 
   /* Quick check for whether a search may be fruitful.  */
   /* Ignore anything with @plt, etc. in it.  */
   if (strchr (mangled_name, '@') != NULL)
     return NULL;
+
   /* It must have at least two dots.  */
-  first_dot = strchr (mangled_name, '.');
+  if (v3)
+    first_dot = strchr (mangled_name, '0');
+  else
+    first_dot = strchr (mangled_name, '.');
+
   if (first_dot == NULL)
     return NULL;
   /* Treat "foo.bar" as unmangled.  It can collide with lots of other
@@ -261,7 +271,20 @@ unpack_mangled_go_symbol (const char *mangled_name,
 
   /* At this point we've decided we have a mangled Go symbol.  */
 
-  buf = xstrdup (mangled_name);
+  gdb::unique_xmalloc_ptr<char> result = make_unique_xstrdup (mangled_name);
+  buf = result.get ();
+
+  if (v3)
+    {
+      /* Replace "go_0" with "\0go.".  */
+      buf[0] = '\0';
+      buf[1] = 'g';
+      buf[2] = 'o';
+      buf[3] = '.';
+
+      /* Skip the '\0'.  */
+      buf++;
+    }
 
   /* Search backwards looking for "N<digit(s)>".  */
   p = buf + len;
@@ -317,7 +340,7 @@ unpack_mangled_go_symbol (const char *mangled_name,
     }
 
   unpack_package_and_object (buf, packagep, objectp);
-  return buf;
+  return result;
 }
 
 /* Implements the la_demangle language_defn routine for language Go.
@@ -381,10 +404,9 @@ go_language::demangle_symbol (const char *mangled_name, int options) const
   return make_unique_xstrdup ((const char *) obstack_finish (&tempbuf));
 }
 
-/* Given a Go symbol, return its package or NULL if unknown.
-   Space for the result is malloc'd, caller must free.  */
+/* See go-lang.h.  */
 
-char *
+gdb::unique_xmalloc_ptr<char>
 go_symbol_package_name (const struct symbol *sym)
 {
   const char *mangled_name = sym->linkage_name ();
@@ -393,10 +415,10 @@ go_symbol_package_name (const struct symbol *sym)
   const char *method_type_package_name;
   const char *method_type_object_name;
   int method_type_is_pointer;
-  char *name_buf;
-  char *result;
+  gdb::unique_xmalloc_ptr<char> name_buf;
 
-  gdb_assert (sym->language () == language_go);
+  if (sym->language () != language_go)
+    return nullptr;
   name_buf = unpack_mangled_go_symbol (mangled_name,
 				       &package_name, &object_name,
 				       &method_type_package_name,
@@ -405,15 +427,12 @@ go_symbol_package_name (const struct symbol *sym)
   /* Some Go symbols don't have mangled form we interpret (yet).  */
   if (name_buf == NULL)
     return NULL;
-  result = xstrdup (package_name);
-  xfree (name_buf);
-  return result;
+  return make_unique_xstrdup (package_name);
 }
 
-/* Return the package that BLOCK is in, or NULL if there isn't one.
-   Space for the result is malloc'd, caller must free.  */
+/* See go-lang.h.  */
 
-char *
+gdb::unique_xmalloc_ptr<char>
 go_block_package_name (const struct block *block)
 {
   while (block != NULL)
@@ -422,7 +441,8 @@ go_block_package_name (const struct block *block)
 
       if (function != NULL)
 	{
-	  char *package_name = go_symbol_package_name (function);
+	  gdb::unique_xmalloc_ptr<char> package_name
+	    = go_symbol_package_name (function);
 
 	  if (package_name != NULL)
 	    return package_name;
@@ -486,38 +506,38 @@ build_go_types (struct gdbarch *gdbarch)
 {
   struct builtin_go_type *builtin_go_type = new struct builtin_go_type;
 
-  builtin_go_type->builtin_void
-    = arch_type (gdbarch, TYPE_CODE_VOID, TARGET_CHAR_BIT, "void");
+  type_allocator alloc (gdbarch);
+  builtin_go_type->builtin_void = builtin_type (gdbarch)->builtin_void;
   builtin_go_type->builtin_char
-    = arch_character_type (gdbarch, 8, 1, "char");
+    = init_character_type (alloc, 8, 1, "char");
   builtin_go_type->builtin_bool
-    = arch_boolean_type (gdbarch, 8, 0, "bool");
+    = init_boolean_type (alloc, 8, 0, "bool");
   builtin_go_type->builtin_int
-    = arch_integer_type (gdbarch, gdbarch_int_bit (gdbarch), 0, "int");
+    = init_integer_type (alloc, gdbarch_int_bit (gdbarch), 0, "int");
   builtin_go_type->builtin_uint
-    = arch_integer_type (gdbarch, gdbarch_int_bit (gdbarch), 1, "uint");
+    = init_integer_type (alloc, gdbarch_int_bit (gdbarch), 1, "uint");
   builtin_go_type->builtin_uintptr
-    = arch_integer_type (gdbarch, gdbarch_ptr_bit (gdbarch), 1, "uintptr");
+    = init_integer_type (alloc, gdbarch_ptr_bit (gdbarch), 1, "uintptr");
   builtin_go_type->builtin_int8
-    = arch_integer_type (gdbarch, 8, 0, "int8");
+    = init_integer_type (alloc, 8, 0, "int8");
   builtin_go_type->builtin_int16
-    = arch_integer_type (gdbarch, 16, 0, "int16");
+    = init_integer_type (alloc, 16, 0, "int16");
   builtin_go_type->builtin_int32
-    = arch_integer_type (gdbarch, 32, 0, "int32");
+    = init_integer_type (alloc, 32, 0, "int32");
   builtin_go_type->builtin_int64
-    = arch_integer_type (gdbarch, 64, 0, "int64");
+    = init_integer_type (alloc, 64, 0, "int64");
   builtin_go_type->builtin_uint8
-    = arch_integer_type (gdbarch, 8, 1, "uint8");
+    = init_integer_type (alloc, 8, 1, "uint8");
   builtin_go_type->builtin_uint16
-    = arch_integer_type (gdbarch, 16, 1, "uint16");
+    = init_integer_type (alloc, 16, 1, "uint16");
   builtin_go_type->builtin_uint32
-    = arch_integer_type (gdbarch, 32, 1, "uint32");
+    = init_integer_type (alloc, 32, 1, "uint32");
   builtin_go_type->builtin_uint64
-    = arch_integer_type (gdbarch, 64, 1, "uint64");
+    = init_integer_type (alloc, 64, 1, "uint64");
   builtin_go_type->builtin_float32
-    = arch_float_type (gdbarch, 32, "float32", floatformats_ieee_single);
+    = init_float_type (alloc, 32, "float32", floatformats_ieee_single);
   builtin_go_type->builtin_float64
-    = arch_float_type (gdbarch, 64, "float64", floatformats_ieee_double);
+    = init_float_type (alloc, 64, "float64", floatformats_ieee_double);
   builtin_go_type->builtin_complex64
     = init_complex_type ("complex64", builtin_go_type->builtin_float32);
   builtin_go_type->builtin_complex128

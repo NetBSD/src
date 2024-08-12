@@ -1,6 +1,6 @@
 /* Definition of objfile flags.
 
-   Copyright (C) 1992-2023 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,22 +27,14 @@
 
 enum objfile_flag : unsigned
   {
-    /* When an object file has its functions reordered (currently
-       Irix-5.2 shared libraries exhibit this behaviour), we will need
-       an expensive algorithm to locate a partial symtab or symtab via
-       an address.  To avoid this penalty for normal object files, we
-       use this flag, whose setting is determined upon symbol table
-       read in.  */
-    OBJF_REORDERED = 1 << 0,	/* Functions are reordered */
-
     /* Distinguish between an objfile for a shared library and a
        "vanilla" objfile.  This may come from a target's
        implementation of the solib interface, from add-symbol-file, or
        any other mechanism that loads dynamic objects.  */
-    OBJF_SHARED = 1 << 1,	/* From a shared library */
+    OBJF_SHARED = 1 << 0,	/* From a shared library */
 
     /* User requested that this objfile be read in it's entirety.  */
-    OBJF_READNOW = 1 << 2,	/* Immediate full read */
+    OBJF_READNOW = 1 << 1,	/* Immediate full read */
 
     /* This objfile was created because the user explicitly caused it
        (e.g., used the add-symbol-file command).  This bit offers a
@@ -50,24 +42,20 @@ enum objfile_flag : unsigned
        longer valid (i.e., are associated with an old inferior), but
        to preserve ones that the user explicitly loaded via the
        add-symbol-file command.  */
-    OBJF_USERLOADED = 1 << 3,	/* User loaded */
-
-    /* Set if we have tried to read partial symtabs for this objfile.
-       This is used to allow lazy reading of partial symtabs.  */
-    OBJF_PSYMTABS_READ = 1 << 4,
+    OBJF_USERLOADED = 1 << 2,	/* User loaded */
 
     /* Set if this is the main symbol file (as opposed to symbol file
        for dynamically loaded code).  */
-    OBJF_MAINLINE = 1 << 5,
+    OBJF_MAINLINE = 1 << 4,
 
     /* ORIGINAL_NAME and OBFD->FILENAME correspond to text description
        unrelated to filesystem names.  It can be for example
        "<image in memory>".  */
-    OBJF_NOT_FILENAME = 1 << 6,
+    OBJF_NOT_FILENAME = 1 << 5,
 
     /* User requested that we do not read this objfile's symbolic
        information.  */
-    OBJF_READNEVER = 1 << 7,
+    OBJF_READNEVER = 1 << 6,
   };
 
 DEF_ENUM_FLAGS_TYPE (enum objfile_flag, objfile_flags);
