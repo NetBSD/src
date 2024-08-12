@@ -1,4 +1,4 @@
-# Copyright 2010-2023 Free Software Foundation, Inc.
+# Copyright 2010-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,9 +20,7 @@
 load_lib gdbserver-support.exp
 load_lib prelink-support.exp
 
-if {[skip_gdbserver_tests]} {
-    return
-}
+require allow_gdbserver_tests
 
 standard_testfile
 set executable ${testfile}

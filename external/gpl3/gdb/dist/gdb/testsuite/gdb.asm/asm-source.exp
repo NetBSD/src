@@ -1,4 +1,4 @@
-# Copyright 1998-2023 Free Software Foundation, Inc.
+# Copyright 1998-2024 Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ set asm-flags ""
 set link-flags "-e _start"
 set debug-flags ""
 
-set obj_include -I[standard_output_file {}]
+set obj_include -I[host_standard_output_file {}]
 
 switch -glob -- [istarget] {
     "alpha*-*-*" {
@@ -199,16 +199,20 @@ set arch_inc [standard_output_file arch.inc]
 set note_inc [standard_output_file note.inc]
 
 remote_exec build "rm -f $arch_inc"
-remote_download host ${srcdir}/${subdir}/${asm-arch}.inc $arch_inc
+remote_download build ${srcdir}/${subdir}/${asm-arch}.inc $arch_inc
 remote_exec build "rm -f $note_inc"
-remote_download host ${srcdir}/${subdir}/${asm-note}.inc $note_inc
+remote_download build ${srcdir}/${subdir}/${asm-note}.inc $note_inc
+
+gdb_remote_download host $arch_inc
+gdb_remote_download host $note_inc
+gdb_remote_download host ${srcdir}/${subdir}/common.inc
 
 if { [string equal ${asm-flags} ""] } {
-    set asm-flags "-I${srcdir}/${subdir} $obj_include"
+    set asm-flags "$obj_include"
 }
 
 if { [string equal ${debug-flags} ""] } {
-    set debug-flags "-gstabs"
+    set debug-flags "-g"
 }
 
 # Allow the target board to override the debug flags.

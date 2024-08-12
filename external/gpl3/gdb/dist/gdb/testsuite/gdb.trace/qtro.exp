@@ -1,4 +1,4 @@
-#   Copyright 1998-2023 Free Software Foundation, Inc.
+#   Copyright 1998-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,6 +20,10 @@
 
 load_lib trace-support.exp
 
+# Check whether we're testing with the remote or extended-remote
+# targets.
+require gdb_protocol_is_remote
+
 standard_testfile
 
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug nopie}]} {
@@ -30,12 +34,7 @@ if ![runto_main] {
     return -1
 }
 
-# Check whether we're testing with the remote or extended-remote
-# targets, and whether the target supports tracepoints.
-
-if ![gdb_is_target_remote] {
-    return -1
-}
+# Check whether the target supports tracepoints.
 
 if ![gdb_target_supports_trace] {
     unsupported "current target does not support trace"
@@ -79,7 +78,7 @@ prepare_for_trace_disassembly
 set traceframe_info_supported -1
 set test "probe for traceframe-info support"
 gdb_test_multiple "show remote traceframe-info-packet" $test {
-    -re ".*Support for .* is auto-detected, currently (\[a-z\]*).*$gdb_prompt $" {
+    -re ".*Support for .* is \"auto\", currently (\[a-z\]*).*$gdb_prompt $" {
 	set status $expect_out(1,string)
 
 	if { $status == "enabled" } {
@@ -110,7 +109,9 @@ foreach tfinfo { auto off } {
 
 	clean_restart $testfile
 	runto_main
-	gdb_test_no_output "set remote traceframe-info-packet $tfinfo"
+	gdb_test \
+	    "set remote traceframe-info-packet $tfinfo" \
+	    "Support for the 'qXfer:traceframe-info:read' packet on the current remote target is set to *.*$tfinfo*.*"
 
 	prepare_for_trace_disassembly
 

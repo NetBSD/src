@@ -1,5 +1,5 @@
 # tls.exp -- Expect script to test thread-local storage
-# Copyright (C) 1992-2023 Free Software Foundation, Inc.
+# Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -72,7 +72,7 @@ proc check_thread_local {number} {
 	    "= $expected_value" \
 	    "${number} thread local storage"
 
-    if {!$::has_python_support} {
+    if {[allow_python_tests]} {
 	gdb_test_no_output \
 	    "python sym = gdb.lookup_symbol('a_thread_local')\[0\]" \
 	    "${number} look up a_thread_local symbol"
@@ -132,7 +132,7 @@ proc check_thread_stack {number spin_threads spin_threads_level} {
     }
     send_gdb "where\n"
     gdb_expect {
-	-re ".*(\[0-9\]+)\[ \t\]+$hex in spin \\(vp=(0x\[0-9a-f\]+).*\r\n$gdb_prompt $" {
+	-re ".*(\[0-9\]+)\[ \t\]+$hex (\\\[PAC\\\] )?in spin \\(vp=(0x\[0-9a-f\]+).*\r\n$gdb_prompt $" {
 	    if {[info exists tarr($number)]} {
 		fail "backtrace of thread number $number in spin"
 	    } else {
@@ -154,9 +154,6 @@ proc check_thread_stack {number spin_threads spin_threads_level} {
 }
 
 clean_restart ${binfile}
-
-# Set this to avoid calling skip_python_tests repeatedly.
-set has_python_support [skip_python_tests]
 
 gdb_test_multiple "print a_thread_local" "" {
     -re -wrap "Cannot find thread-local variables on this target" {
@@ -210,19 +207,19 @@ gdb_expect {
     timeout { fail "continue to first thread (timeout)" }
 }
 
-gdb_test "info thread" ".*Thread.*spin.*" \
+gdb_test "info thread" ".*${tdlabel_re}.*spin.*" \
 	"at least one th in spin while stopped at first th"
 
 check_thread_local "first"
 
 gdb_test "continue" ".*Breakpoint 2.*tls value.*" "continue to second thread"
-gdb_test "info thread" "Thread.*spin.*" \
+gdb_test "info thread" "${tdlabel_re}.*spin.*" \
 	"at least one th in spin while stopped at second th"
 
 check_thread_local "second"
 
 gdb_test "continue" ".*Breakpoint 2.*tls value.*" "continue to third thread"
-gdb_test "info thread" ".*Thread.*spin.*" \
+gdb_test "info thread" ".*${tdlabel_re}.*spin.*" \
 	"at least one th in spin while stopped at third th"
 
 check_thread_local "third"
@@ -232,7 +229,7 @@ gdb_test "continue" ".*Breakpoint 3.*still alive.*" "continue to synch point"
 set no_of_threads 0
 send_gdb "info thread\n"
 gdb_expect {
-    -re "^info thread\[ \t\r\n\]+ *Id .*Frame\[ \t\r\n\]+.*(\[0-9\]+) *Thread\[^\r\n\]+\r\n$gdb_prompt $" {
+    -re "^info thread\[ \t\r\n\]+ *Id .*Frame\[ \t\r\n\]+.*(\[0-9\]+) *${tdlabel_re}\[^\r\n\]+\r\n$gdb_prompt $" {
 	   set no_of_threads $expect_out(1,string)
 	   pass "get number of threads"
         }
@@ -283,10 +280,10 @@ gdb_test "continue" ".*Breakpoint 4.*before exit.*" "threads exited"
 
 send_gdb "info thread\n" 
 gdb_expect {
-    -re ".* 1 *Thread.*2 *Thread.*$gdb_prompt $" {
+    -re ".* 1 *${tdlabel_re}.*2 *${tdlabel_re}.*$gdb_prompt $" {
         fail "too many threads left at end"
     }
-    -re ".*\\\* 1 *Thread.*main.*$gdb_prompt $" {
+    -re ".*\\\* 1 *${tdlabel_re}.*main.*$gdb_prompt $" {
         pass "expect only base thread at end"
     }
     -re ".*No stack.*$gdb_prompt $" {
@@ -324,5 +321,3 @@ gdb_test "info address a_thread_local" "Symbol \"a_thread_local\" is a thread-lo
 # Done!
 #
 gdb_exit
-
-return 0

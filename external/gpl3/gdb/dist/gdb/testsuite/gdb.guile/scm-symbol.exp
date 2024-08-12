@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2023 Free Software Foundation, Inc.
+# Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,14 +18,13 @@
 
 load_lib gdb-guile.exp
 
+require allow_guile_tests
+
 standard_testfile
 
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
     return -1
 }
-
-# Skip all tests if Guile scripting is not enabled.
-if { [skip_guile_tests] } { continue }
 
 # These tests are done before we call gdb_guile_runto_main so we have to
 # import the gdb module ourselves.
@@ -133,7 +132,7 @@ gdb_test "guile (print (= (symbol-addr-class t) SYMBOL_LOC_CONST))" "= #t"
 gdb_test "guile (print (symbol-type t))" "= enum tag"
 
 # Test symtab attribute.
-gdb_test "guile (print (symbol-symtab t))" "= #<gdb:symtab .*gdb.guile/scm-symbol.c>"
+gdb_test "guile (print (symbol-symtab t))" "= #<gdb:symtab (.*/)?scm-symbol.c>"
 
 # C++ tests
 # Recompile binary.
@@ -142,11 +141,7 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}-cxx" executable "
     return -1
 }
 
-# Start with a fresh gdb.
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}-cxx
+clean_restart ${binfile}-cxx
 
 if ![gdb_guile_runto_main] {
     return

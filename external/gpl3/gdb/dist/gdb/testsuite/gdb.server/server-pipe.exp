@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2022-2023 Free Software Foundation, Inc.
+# Copyright 2022-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,17 +24,13 @@
 # This test relies on starting gdbserver using the pipe syntax.  Not
 # sure how well this will run if part of this test is being run
 # elsewhere.
-if { [is_remote target] || [is_remote host] } {
-    return 0
-}
+require {!is_remote target} {!is_remote host}
 
 load_lib gdbserver-support.exp
 
 standard_testfile
 
-if { [skip_gdbserver_tests] } {
-    return 0
-}
+require allow_gdbserver_tests
 
 set gdbserver [find_gdbserver]
 if { $gdbserver == "" } {
@@ -68,7 +64,7 @@ proc do_test { target } {
 
     gdb_test "info connections" "${target} \| ${::gdbserver} - ${::binfile} \[^\r\n\]+"
 
-    if { ![skip_python_tests] } {
+    if { [allow_python_tests] } {
 	gdb_test_no_output "python conn = gdb.selected_inferior().connection"
 	gdb_test "python print(conn.details)" "\| ${::gdbserver} - ${::binfile}"
     }

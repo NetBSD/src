@@ -1,4 +1,4 @@
-# Copyright 2002-2023 Free Software Foundation, Inc.
+# Copyright 2002-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ clean_restart ${testfile}
 set horiz "\[^\n\r\]*"
 
 # regexp for newline
-set nl "\[\r\n\]+"
+set nl "\r\n"
 
 set timeout 30
 
@@ -138,7 +138,7 @@ proc load_core { filename } {
 
     # The thread2 thread should be marked as the current thread.
 
-    gdb_test "info threads" "\\* ${horiz} thread2 .*${nl}" \
+    gdb_test "info threads" "\\* ${horiz} thread2 .*" \
 	    "thread2 is current thread in corefile"
 }
 

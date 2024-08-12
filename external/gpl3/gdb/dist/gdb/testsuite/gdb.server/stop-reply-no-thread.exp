@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2018-2023 Free Software Foundation, Inc.
+# Copyright 2018-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,15 +22,14 @@
 
 load_lib gdbserver-support.exp
 
-if { [skip_gdbserver_tests] } {
-    verbose "skipping gdbserver tests"
-    return -1
-}
+require allow_gdbserver_tests
 
 standard_testfile
 if { [build_executable "failed to prepare" $testfile $srcfile] == -1 } {
     return -1
 }
+
+set target_binfile [gdb_remote_download target $binfile]
 
 # Run the tests with different features of GDBserver disabled.
 proc run_test { disable_feature target_nonstop } {
@@ -54,13 +53,18 @@ proc run_test { disable_feature target_nonstop } {
     if { $disable_feature != "" } {
 	set packet_arg "--disable-packet=${disable_feature}"
     }
-    set res [gdbserver_start $packet_arg $binfile]
+    set res [gdbserver_start $packet_arg $::target_binfile]
     set gdbserver_protocol [lindex $res 0]
     set gdbserver_gdbport [lindex $res 1]
 
     # Disable XML-based thread listing, and multi-process extensions.
-    gdb_test_no_output "set remote threads-packet off"
-    gdb_test_no_output "set remote multiprocess-feature-packet off"
+    gdb_test \
+	"set remote threads-packet off" \
+	"Support for the 'qXfer:threads:read' packet on future remote targets is set to \"off\"."
+
+    gdb_test \
+	"set remote multiprocess-feature-packet off" \
+	"Support for the 'multiprocess-feature' packet on future remote targets is set to \"off\"."
 
     # Set target-nonstop mode.
     gdb_test_no_output "maint set target-non-stop ${target_nonstop}"

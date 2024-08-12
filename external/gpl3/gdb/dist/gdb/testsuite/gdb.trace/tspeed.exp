@@ -1,4 +1,4 @@
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,9 +15,7 @@
 
 load_lib "trace-support.exp"
 
-if {[skip_shlib_tests]} {
-    return 0
-}
+require allow_shlib_tests
 
 # Do not run if gdbsever debug is enabled - the output file is many Gb.
 if [gdbserver_debug_enabled] {

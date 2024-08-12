@@ -1,4 +1,4 @@
-# Copyright 2014-2023 Free Software Foundation, Inc.
+# Copyright 2014-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,6 +17,8 @@ load_lib compile-support.exp
 
 standard_testfile .c compile-shlib.c compile-constvar.S compile-nodebug.c
 
+require is_c_compiler_gcc
+
 set options {}
 if { [test_compiler_info gcc*] || [test_compiler_info clang*] } {
     lappend options additional_flags=-g3
@@ -24,7 +26,7 @@ if { [test_compiler_info gcc*] || [test_compiler_info clang*] } {
     lappend options c++
 }
 
-if { ![istarget x86_64-*-* ] || ![is_lp64_target] } {
+if { ![is_x86_64_m64_target] } {
     verbose "Skipping x86_64 LOC_CONST test."
     set srcfile3 ""
 }
@@ -113,7 +115,7 @@ gdb_test "compile code *(volatile int *) 0 = 0;" \
     "The program being debugged was signaled while in a function called from GDB\\.\r\nGDB remains in the frame where the signal was received\\.\r\n.*" \
     "compile code segfault first"
 gdb_test "bt" \
-    "\r\n#0  \[^\r\n\]* in _gdb_expr \[^\r\n\]*\r\n#1  <function called from gdb>\r\n.*"
+    "\r\n#0  \[^\r\n\]*_gdb_expr \[^\r\n\]*\r\n#1  <function called from gdb>.*"
 
 set test "p/x \$pc"
 set infcall_pc 0
@@ -129,9 +131,14 @@ gdb_test "return" "\r\n#0  main .*" "return" \
 	 "Make _gdb_expr\\(__gdb_regs\\*\\) return now\\? \\(y or n\\) " "y"
 gdb_test "info sym $infcall_pc" "\r\nNo symbol matches .*" "info sym not found"
 
-gdb_test_no_output "set unwindonsignal on"
+gdb_test_no_output "set unwind-on-signal on"
 gdb_test "compile code *(volatile int *) 0 = 0;" \
-    "The program being debugged was signaled while in a function called from GDB\\.\r\nGDB has restored the context to what it was before the call\\.\r\n.*" \
+    [multi_line \
+	 "The program being debugged received signal SIGSEGV, Segmentation fault" \
+	 "while in a function called from GDB\\.  GDB has restored the context" \
+	 "to what it was before the call\\.  To change this behavior use" \
+	 "\"set unwind-on-signal off\"\\.  Evaluation of the expression containing" \
+	 "the function \\(_gdb_expr\\(__gdb_regs\\*\\)\\) will be abandoned\\."] \
     "compile code segfault second"
 
 # C++ Specific tests.
@@ -242,7 +249,9 @@ gdb_test "print globalvar" " = 20" "print unresolved value"
 
 gdb_test_no_output "compile code globalshadow += 1;"
 gdb_test "print globalshadow" " = 101"
+setup_kfail {no bug filed} *-*-*
 gdb_test_no_output "compile code extern int globalshadow; globalshadow += 5;"
+setup_kfail {fails due to previous test} *-*-*
 gdb_test "print 'compile-cplus.c'::globalshadow" " = 15"
 gdb_test "print globalshadow" " = 101" "print globalshadow second time"
 gdb_test_no_output "compile code staticshadow += 2;"
@@ -300,7 +309,12 @@ gdb_test "p globalvar" " = -76" "expect -76"
 
 gdb_test_no_output "set debug compile on"
 gdb_test "compile code static const int readonly = 1; *(int *) &readonly = 2;" \
-    "The program being debugged was signaled while in a function called from GDB\\.\r\nGDB has restored the context to what it was before the call\\.\r\n.*"
+    [multi_line \
+	 "The program being debugged received signal SIGSEGV, Segmentation fault" \
+	 "while in a function called from GDB\\.  GDB has restored the context" \
+	 "to what it was before the call\\.  To change this behavior use" \
+	 "\"set unwind-on-signal off\"\\.  Evaluation of the expression containing" \
+	 "the function \\(_gdb_expr\\(__gdb_regs\\*\\)\\) will be abandoned\\."]
 gdb_test_no_output "set debug compile off"
 
 
