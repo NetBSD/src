@@ -1,5 +1,5 @@
 /* s390-mkopc.c -- Generates opcode table out of s390-opc.txt
-   Copyright (C) 2000-2022 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of the GNU opcodes library.
@@ -21,17 +21,49 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include "opcode/s390.h"
 
+#define STRINGIFY(x) _STRINGIFY(x)
+#define _STRINGIFY(x) #x
+
+/* Length of strings without terminating '\0' character.  */
+#define MAX_OPCODE_LEN 15
+#define MAX_MNEMONIC_LEN 15
+#define MAX_FORMAT_LEN 15
+#define MAX_DESCRIPTION_LEN 127
+
+#define MAX_CPU_LEN 15
+#define MAX_MODES_LEN 15
+#define MAX_FLAGS_LEN 79
+
+/* Return code.  */
+int return_code = EXIT_SUCCESS;
+
+/* Helper to print an error message and set the return code.  */
+static void __attribute__ ((format (printf, 1, 2)))
+print_error (const char *fmt, ...)
+{
+  va_list ap;
+
+  va_start(ap, fmt);
+  fprintf(stderr, "Error: ");
+  vfprintf(stderr, fmt, ap);
+  va_end(ap);
+
+  return_code = EXIT_FAILURE;
+}
+
 struct op_struct
   {
-    char  opcode[16];
-    char  mnemonic[16];
-    char  format[16];
+    char  opcode[MAX_OPCODE_LEN + 1];
+    char  mnemonic[MAX_MNEMONIC_LEN + 1];
+    char  format[MAX_FORMAT_LEN + 1];
     int   mode_bits;
     int   min_cpu;
     int   flags;
+    char  description[MAX_DESCRIPTION_LEN + 1];
 
     unsigned long long sort_value;
     int   no_nibbles;
@@ -53,7 +85,7 @@ createTable (void)
 
 static void
 insertOpcode (char *opcode, char *mnemonic, char *format,
-	      int min_cpu, int mode_bits, int flags)
+	      int min_cpu, int mode_bits, int flags, char* description)
 {
   char *str;
   unsigned long long sort_value;
@@ -90,14 +122,19 @@ insertOpcode (char *opcode, char *mnemonic, char *format,
       break;
   for (k = no_ops; k > ix; k--)
     op_array[k] = op_array[k-1];
-  strcpy(op_array[ix].opcode, opcode);
-  strcpy(op_array[ix].mnemonic, mnemonic);
-  strcpy(op_array[ix].format, format);
+  strncpy (op_array[ix].opcode, opcode, MAX_OPCODE_LEN);
+  op_array[ix].opcode[MAX_OPCODE_LEN] = '\0';
+  strncpy (op_array[ix].mnemonic, mnemonic, MAX_MNEMONIC_LEN);
+  op_array[ix].mnemonic[MAX_MNEMONIC_LEN] = '\0';
+  strncpy (op_array[ix].format, format, MAX_FORMAT_LEN);
+  op_array[ix].format[MAX_FORMAT_LEN] = '\0';
   op_array[ix].sort_value = sort_value;
   op_array[ix].no_nibbles = no_nibbles;
   op_array[ix].min_cpu = min_cpu;
   op_array[ix].mode_bits = mode_bits;
   op_array[ix].flags = flags;
+  strncpy (op_array[ix].description, description, MAX_DESCRIPTION_LEN);
+  op_array[ix].description[MAX_DESCRIPTION_LEN] = '\0';
   no_ops++;
 }
 
@@ -105,50 +142,52 @@ struct s390_cond_ext_format
 {
   char nibble;
   char extension[4];
+  char *description_suffix;
+
 };
 
 /* The mnemonic extensions for conditional jumps used to replace
    the '*' tag.  */
 #define NUM_COND_EXTENSIONS 20
 const struct s390_cond_ext_format s390_cond_extensions[NUM_COND_EXTENSIONS] =
-{ { '1', "o" },    /* jump on overflow / if ones */
-  { '2', "h" },    /* jump on A high */
-  { '2', "p" },    /* jump on plus */
-  { '3', "nle" },  /* jump on not low or equal */
-  { '4', "l" },    /* jump on A low */
-  { '4', "m" },    /* jump on minus / if mixed */
-  { '5', "nhe" },  /* jump on not high or equal */
-  { '6', "lh" },   /* jump on low or high */
-  { '7', "ne" },   /* jump on A not equal B */
-  { '7', "nz" },   /* jump on not zero / if not zeros */
-  { '8', "e" },    /* jump on A equal B */
-  { '8', "z" },    /* jump on zero / if zeros */
-  { '9', "nlh" },  /* jump on not low or high */
-  { 'a', "he" },   /* jump on high or equal */
-  { 'b', "nl" },   /* jump on A not low */
-  { 'b', "nm" },   /* jump on not minus / if not mixed */
-  { 'c', "le" },   /* jump on low or equal */
-  { 'd', "nh" },   /* jump on A not high */
-  { 'd', "np" },   /* jump on not plus */
-  { 'e', "no" },   /* jump on not overflow / if not ones */
+{ { '1', "o", "on overflow / if ones" },	/* jump on overflow / if ones */
+  { '2', "h", "on A high" },			/* jump on A high */
+  { '2', "p", "on plus" },			/* jump on plus */
+  { '3', "nle", "on not low or equal" },	/* jump on not low or equal */
+  { '4', "l", "on A low" },			/* jump on A low */
+  { '4', "m", "on minus / if mixed" },		/* jump on minus / if mixed */
+  { '5', "nhe", "on not high or equal" },	/* jump on not high or equal */
+  { '6', "lh", "on low or high" },		/* jump on low or high */
+  { '7', "ne", "on A not equal B" },		/* jump on A not equal B */
+  { '7', "nz", "on not zero / if not zeros" },	/* jump on not zero / if not zeros */
+  { '8', "e", "on A equal B" },			/* jump on A equal B */
+  { '8', "z", "on zero / if zeros" },		/* jump on zero / if zeros */
+  { '9', "nlh", "on not low or high" },		/* jump on not low or high */
+  { 'a', "he", "on high or equal" },		/* jump on high or equal */
+  { 'b', "nl", "on A not low" },		/* jump on A not low */
+  { 'b', "nm", "on not minus / if not mixed" },	/* jump on not minus / if not mixed */
+  { 'c', "le", "on low or equal" },		/* jump on low or equal */
+  { 'd', "nh", "on A not high" },		/* jump on A not high */
+  { 'd', "np", "on not plus" },			/* jump on not plus */
+  { 'e', "no", "on not overflow / if not ones" },/* jump on not overflow / if not ones */
 };
 
 /* The mnemonic extensions for conditional branches used to replace
    the '$' tag.  */
 #define NUM_CRB_EXTENSIONS 12
 const struct s390_cond_ext_format s390_crb_extensions[NUM_CRB_EXTENSIONS] =
-{ { '2', "h" },    /* jump on A high */
-  { '2', "nle" },  /* jump on not low or equal */
-  { '4', "l" },    /* jump on A low */
-  { '4', "nhe" },  /* jump on not high or equal */
-  { '6', "ne" },   /* jump on A not equal B */
-  { '6', "lh" },   /* jump on low or high */
-  { '8', "e" },    /* jump on A equal B */
-  { '8', "nlh" },  /* jump on not low or high */
-  { 'a', "nl" },   /* jump on A not low */
-  { 'a', "he" },   /* jump on high or equal */
-  { 'c', "nh" },   /* jump on A not high */
-  { 'c', "le" },   /* jump on low or equal */
+{ { '2', "h", "on A high" },			/* jump on A high */
+  { '2', "nle", "on not low or equal" },	/* jump on not low or equal */
+  { '4', "l", "on A low" },			/* jump on A low */
+  { '4', "nhe", "on not high or equal" },	/* jump on not high or equal */
+  { '6', "ne", "on A not equal B" },		/* jump on A not equal B */
+  { '6', "lh", "on low or high" },		/* jump on low or high */
+  { '8', "e", "on A equal B" },			/* jump on A equal B */
+  { '8', "nlh", "on not low or high" },		/* jump on not low or high */
+  { 'a', "nl", "on A not low" },		/* jump on A not low */
+  { 'a', "he", "on high or equal" },		/* jump on high or equal */
+  { 'c', "nh", "on A not high" },		/* jump on A not high */
+  { 'c', "le", "on low or equal" },		/* jump on low or equal */
 };
 
 /* As with insertOpcode instructions are added to the sorted opcode
@@ -159,12 +198,12 @@ const struct s390_cond_ext_format s390_crb_extensions[NUM_CRB_EXTENSIONS] =
 
 static void
 insertExpandedMnemonic (char *opcode, char *mnemonic, char *format,
-			int min_cpu, int mode_bits, int flags)
+			int min_cpu, int mode_bits, int flags, char *description)
 {
   char *tag;
-  char prefix[15];
-  char suffix[15];
-  char number[15];
+  char prefix[MAX_MNEMONIC_LEN + 1];
+  char suffix[MAX_MNEMONIC_LEN + 1];
+  char number[MAX_MNEMONIC_LEN + 1];
   int mask_start, i = 0, tag_found = 0, reading_number = 0;
   int number_p = 0, suffix_p = 0, prefix_p = 0;
   const struct s390_cond_ext_format *ext_table;
@@ -172,7 +211,7 @@ insertExpandedMnemonic (char *opcode, char *mnemonic, char *format,
 
   if (!(tag = strpbrk (mnemonic, "*$")))
     {
-      insertOpcode (opcode, mnemonic, format, min_cpu, mode_bits, flags);
+      insertOpcode (opcode, mnemonic, format, min_cpu, mode_bits, flags, description);
       return;
     }
 
@@ -223,8 +262,7 @@ insertExpandedMnemonic (char *opcode, char *mnemonic, char *format,
 
   if (mask_start & 3)
     {
-      fprintf (stderr, "Conditional mask not at nibble boundary in: %s\n",
-	       mnemonic);
+      print_error ("Mnemonic \"%s\": Conditional mask not at nibble boundary\n", mnemonic);
       return;
     }
 
@@ -246,18 +284,31 @@ insertExpandedMnemonic (char *opcode, char *mnemonic, char *format,
 
   for (i = 0; i < ext_table_length; i++)
     {
-      char new_mnemonic[15];
+      char new_mnemonic[MAX_MNEMONIC_LEN + 1];
+      char new_description[MAX_DESCRIPTION_LEN + 1];
 
-      strcpy (new_mnemonic, prefix);
       opcode[mask_start] = ext_table[i].nibble;
-      strcat (new_mnemonic, ext_table[i].extension);
-      strcat (new_mnemonic, suffix);
-      insertOpcode (opcode, new_mnemonic, format, min_cpu, mode_bits, flags);
+
+      if (snprintf (new_mnemonic, sizeof (new_mnemonic), "%s%s%s", prefix,
+		    ext_table[i].extension, suffix) >= sizeof (new_mnemonic))
+	{
+	  print_error ("Mnemonic: \"%s\": Concatenated mnemonic exceeds max. length\n", mnemonic);
+	  return;
+	}
+
+      if (snprintf (new_description, sizeof (new_description), "%s %s", description,
+		    ext_table[i].description_suffix) >= sizeof (new_description))
+	{
+	  print_error ("Mnemonic \"%s\": Concatenated description exceeds max. length\n", mnemonic);
+	  return;
+	}
+
+      insertOpcode (opcode, new_mnemonic, format, min_cpu, mode_bits, flags, new_description);
     }
   return;
 
  malformed_mnemonic:
-  fprintf (stderr, "Malformed mnemonic: %s\n", mnemonic);
+  print_error ("Malformed mnemonic: %s\n", mnemonic);
 }
 
 static const char file_header[] =
@@ -273,7 +324,8 @@ static const char file_header[] =
   "   instruction which matches.\n"
   "   MODE_BITS - zarch or esa\n"
   "   MIN_CPU - number of the min cpu level required\n"
-  "   FLAGS - instruction flags.  */\n\n"
+  "   FLAGS - instruction flags.\n"
+  "   DESCRIPTION - description of the instruction.  */\n\n"
   "const struct s390_opcode s390_opcodes[] =\n  {\n";
 
 /* `dumpTable': write opcode table.  */
@@ -299,7 +351,8 @@ dumpTable (void)
 	      op_array[ix].format, op_array[ix].format);
       printf ("%i, ", op_array[ix].mode_bits);
       printf ("%i, ", op_array[ix].min_cpu);
-      printf ("%i}", op_array[ix].flags);
+      printf ("%i, ", op_array[ix].flags);
+      printf ("\"%s\" }", op_array[ix].description);
       if (ix < no_ops-1)
 	printf (",\n");
       else
@@ -321,13 +374,13 @@ main (void)
       make an entry into the opcode table.  */
   while (fgets (currentLine, sizeof (currentLine), stdin) != NULL)
     {
-      char  opcode[16];
-      char  mnemonic[16];
-      char  format[16];
-      char  description[80];
-      char  cpu_string[16];
-      char  modes_string[16];
-      char  flags_string[80];
+      char  opcode[MAX_OPCODE_LEN + 1];
+      char  mnemonic[MAX_MNEMONIC_LEN + 1];
+      char  format[MAX_FORMAT_LEN + 1];
+      char  description[MAX_DESCRIPTION_LEN + 1];
+      char  cpu_string[MAX_CPU_LEN + 1];
+      char  modes_string[MAX_MODES_LEN + 1];
+      char  flags_string[MAX_FLAGS_LEN + 1];
       int   min_cpu;
       int   mode_bits;
       int   flag_bits;
@@ -336,15 +389,21 @@ main (void)
 
       if (currentLine[0] == '#' || currentLine[0] == '\n')
 	continue;
-      memset (opcode, 0, 8);
-      num_matched =
-	sscanf (currentLine, "%15s %15s %15s \"%79[^\"]\" %15s %15s %79[^\n]",
-		opcode, mnemonic, format, description,
-		cpu_string, modes_string, flags_string);
+      memset (opcode, '\0', sizeof(opcode));
+      num_matched = sscanf (currentLine,
+			    "%" STRINGIFY (MAX_OPCODE_LEN) "s "
+			    "%" STRINGIFY (MAX_MNEMONIC_LEN) "s "
+			    "%" STRINGIFY (MAX_FORMAT_LEN) "s "
+			    "\"%" STRINGIFY (MAX_DESCRIPTION_LEN) "[^\"]\" "
+			    "%" STRINGIFY (MAX_CPU_LEN) "s "
+			    "%" STRINGIFY (MAX_MODES_LEN) "s "
+			    "%" STRINGIFY (MAX_FLAGS_LEN) "[^\n]",
+			    opcode, mnemonic, format, description,
+			    cpu_string, modes_string, flags_string);
       if (num_matched != 6 && num_matched != 7)
 	{
-	  fprintf (stderr, "Couldn't scan line %s\n", currentLine);
-	  exit (1);
+	  print_error ("Couldn't scan line %s\n", currentLine);
+	  exit (EXIT_FAILURE);
 	}
 
       if (strcmp (cpu_string, "g5") == 0
@@ -385,8 +444,9 @@ main (void)
 	       || strcmp (cpu_string, "arch14") == 0)
 	min_cpu = S390_OPCODE_ARCH14;
       else {
-	fprintf (stderr, "Couldn't parse cpu string %s\n", cpu_string);
-	exit (1);
+	print_error ("Mnemonic \"%s\": Couldn't parse CPU string: %s\n",
+		     mnemonic, cpu_string);
+	goto continue_loop;
       }
 
       str = modes_string;
@@ -401,9 +461,9 @@ main (void)
 	  mode_bits |= 1 << S390_OPCODE_ZARCH;
 	  str += 5;
 	} else {
-	  fprintf (stderr, "Couldn't parse modes string %s\n",
-		   modes_string);
-	  exit (1);
+	  print_error ("Mnemonic \"%s\": Couldn't parse modes string: %s\n",
+		       mnemonic, modes_string);
+	  goto continue_loop;
 	}
 	if (*str == ',')
 	  str++;
@@ -431,18 +491,33 @@ main (void)
 		       && (str[2] == 0 || str[2] == ',')) {
 	      flag_bits |= S390_INSTR_FLAG_VX;
 	      str += 2;
+	    } else if (strncmp (str, "jump", 4) == 0
+		&& (str[4] == 0 || str[4] == ',')) {
+	      flag_bits |= S390_INSTR_FLAGS_CLASS_JUMP;
+	      str += 4;
+	    } else if (strncmp (str, "condjump", 8) == 0
+		&& (str[8] == 0 || str[8] == ',')) {
+	      flag_bits |= S390_INSTR_FLAGS_CLASS_CONDJUMP;
+	      str += 8;
+	    } else if (strncmp (str, "jumpsr", 6) == 0
+		&& (str[6] == 0 || str[6] == ',')) {
+	      flag_bits |= S390_INSTR_FLAGS_CLASS_JUMPSR;
+	      str += 6;
 	    } else {
-	      fprintf (stderr, "Couldn't parse flags string %s\n",
-		       flags_string);
-	      exit (1);
+	      print_error ("Mnemonic \"%s\": Couldn't parse flags string: %s\n",
+			   mnemonic, flags_string);
+	      goto continue_loop;
 	    }
 	    if (*str == ',')
 	      str++;
 	  } while (*str != 0);
 	}
-      insertExpandedMnemonic (opcode, mnemonic, format, min_cpu, mode_bits, flag_bits);
+      insertExpandedMnemonic (opcode, mnemonic, format, min_cpu, mode_bits, flag_bits, description);
+
+ continue_loop:
+      ;
     }
 
   dumpTable ();
-  return 0;
+  return return_code;
 }
