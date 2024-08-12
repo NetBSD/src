@@ -1,6 +1,6 @@
 /* YACC parser for C++ names, for GDB.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    Parts of the lexer are based on c-exp.y from GDB.
 
@@ -37,28 +37,17 @@
 
 %{
 
-#include "defs.h"
 
 #include <unistd.h>
-#include "safe-ctype.h"
+#include "gdbsupport/gdb-safe-ctype.h"
 #include "demangle.h"
 #include "cp-support.h"
 #include "c-support.h"
 #include "parser-defs.h"
+#include "gdbsupport/selftest.h"
 
 #define GDB_YY_REMAP_PREFIX cpname
 #include "yy-remap.h"
-
-/* The components built by the parser are allocated ahead of time,
-   and cached in this structure.  */
-
-#define ALLOC_CHUNK 100
-
-struct demangle_info {
-  int used;
-  struct demangle_info *next;
-  struct demangle_component comps[ALLOC_CHUNK];
-};
 
 %}
 
@@ -93,7 +82,7 @@ struct cpname_state
 
   const char *lexptr, *prev_lexptr, *error_lexptr, *global_errmsg;
 
-  struct demangle_info *demangle_info;
+  demangle_parse_info *demangle_info;
 
   /* The parse tree created by the parser is stored here after a
      successful parse.  */
@@ -137,23 +126,7 @@ struct cpname_state
 struct demangle_component *
 cpname_state::d_grab ()
 {
-  struct demangle_info *more;
-
-  if (demangle_info->used >= ALLOC_CHUNK)
-    {
-      if (demangle_info->next == NULL)
-	{
-	  more = XNEW (struct demangle_info);
-	  more->next = NULL;
-	  demangle_info->next = more;
-	}
-      else
-	more = demangle_info->next;
-
-      more->used = 0;
-      demangle_info = more;
-    }
-  return &demangle_info->comps[demangle_info->used++];
+  return obstack_new<demangle_component> (&demangle_info->obstack);
 }
 
 /* Flags passed to d_qualify.  */
@@ -171,11 +144,6 @@ cpname_state::d_grab ()
 
 #define INT_SIGNED	(1 << 4)
 #define INT_UNSIGNED	(1 << 5)
-
-/* Enable yydebug for the stand-alone parser.  */
-#ifdef TEST_CPNAMES
-# define YYDEBUG	1
-#endif
 
 /* Helper functions.  These wrap the demangler tree interface, handle
    allocation from our global store, and return the allocated component.  */
@@ -329,7 +297,7 @@ static void yyerror (cpname_state *, const char *);
 %left '^'
 %left '&'
 %left EQUAL NOTEQUAL
-%left '<' '>' LEQ GEQ
+%left '<' '>' LEQ GEQ SPACESHIP
 %left LSH RSH
 %left '@'
 %left '+' '-'
@@ -483,6 +451,8 @@ oper	:	OPERATOR NEW
 			{ $$ = state->make_operator ("<=", 2); }
 		|	OPERATOR GEQ
 			{ $$ = state->make_operator (">=", 2); }
+		|	OPERATOR SPACESHIP
+			{ $$ = state->make_operator ("<=>", 2); }
 		|	OPERATOR ANDAND
 			{ $$ = state->make_operator ("&&", 2); }
 		|	OPERATOR OROR
@@ -628,6 +598,7 @@ template_arg	:	typespec_2
 		|	'&' '(' start ')'
 			{ $$ = state->fill_comp (DEMANGLE_COMPONENT_UNARY, state->make_operator ("&", 1), $3); }
 		|	exp
+		|	function
 		;
 
 function_args	:	typespec_2
@@ -1108,6 +1079,10 @@ exp	:	exp GEQ exp
 		{ $$ = state->d_binary (">=", $1, $3); }
 	;
 
+exp	:	exp SPACESHIP exp
+		{ $$ = state->d_binary ("<=>", $1, $3); }
+	;
+
 exp	:	exp '<' exp
 		{ $$ = state->d_binary ("<", $1, $3); }
 	;
@@ -1322,8 +1297,6 @@ cpname_state::parse_number (const char *p, int len, int parsed_float,
   /* Number of "L" suffixes encountered.  */
   int long_p = 0;
 
-  struct demangle_component *signed_type;
-  struct demangle_component *unsigned_type;
   struct demangle_component *type, *name;
   enum demangle_component_type literal_type;
 
@@ -1370,8 +1343,35 @@ cpname_state::parse_number (const char *p, int len, int parsed_float,
       return FLOAT;
     }
 
-  /* This treats 0x1 and 1 as different literals.  We also do not
-     automatically generate unsigned types.  */
+  /* Note that we do not automatically generate unsigned types.  This
+     can't be done because we don't have access to the gdbarch
+     here.  */
+
+  int base = 10;
+  if (len > 1 && p[0] == '0')
+    {
+      if (p[1] == 'x' || p[1] == 'X')
+	{
+	  base = 16;
+	  p += 2;
+	  len -= 2;
+	}
+      else if (p[1] == 'b' || p[1] == 'B')
+	{
+	  base = 2;
+	  p += 2;
+	  len -= 2;
+	}
+      else if (p[1] == 'd' || p[1] == 'D' || p[1] == 't' || p[1] == 'T')
+	{
+	  /* Apparently gdb extensions.  */
+	  base = 10;
+	  p += 2;
+	  len -= 2;
+	}
+      else
+	base = 8;
+    }
 
   long_p = 0;
   unsigned_p = 0;
@@ -1392,31 +1392,50 @@ cpname_state::parse_number (const char *p, int len, int parsed_float,
       break;
     }
 
+  /* Use gdb_mpz here in case a 128-bit value appears.  */
+  gdb_mpz value (0);
+  for (int off = 0; off < len; ++off)
+    {
+      int dig;
+      if (ISDIGIT (p[off]))
+	dig = p[off] - '0';
+      else
+	dig = TOLOWER (p[off]) - 'a' + 10;
+      if (dig >= base)
+	return ERROR;
+      value *= base;
+      value += dig;
+    }
+
+  std::string printed = value.str ();
+  const char *copy = obstack_strdup (&demangle_info->obstack, printed);
+
   if (long_p == 0)
     {
-      unsigned_type = make_builtin_type ("unsigned int");
-      signed_type = make_builtin_type ("int");
+      if (unsigned_p)
+	type = make_builtin_type ("unsigned int");
+      else
+	type = make_builtin_type ("int");
     }
   else if (long_p == 1)
     {
-      unsigned_type = make_builtin_type ("unsigned long");
-      signed_type = make_builtin_type ("long");
+      if (unsigned_p)
+	type = make_builtin_type ("unsigned long");
+      else
+	type = make_builtin_type ("long");
     }
   else
     {
-      unsigned_type = make_builtin_type ("unsigned long long");
-      signed_type = make_builtin_type ("long long");
+      if (unsigned_p)
+	type = make_builtin_type ("unsigned long long");
+      else
+	type = make_builtin_type ("long long");
     }
 
-   if (unsigned_p)
-     type = unsigned_type;
-   else
-     type = signed_type;
+  name = make_name (copy, strlen (copy));
+  lvalp->comp = fill_comp (literal_type, type, name);
 
-   name = make_name (p, len);
-   lvalp->comp = fill_comp (literal_type, type, name);
-
-   return INT;
+  return INT;
 }
 
 static const char backslashable[] = "abefnrtv";
@@ -1547,6 +1566,7 @@ yylex (YYSTYPE *lvalp, cpname_state *state)
   int c;
   int namelen;
   const char *tokstart;
+  char *copy;
 
  retry:
   state->prev_lexptr = state->lexptr;
@@ -1577,6 +1597,10 @@ yylex (YYSTYPE *lvalp, cpname_state *state)
 	  return ERROR;
 	}
 
+      /* We over-allocate here, but it doesn't really matter . */
+      copy = (char *) obstack_alloc (&state->demangle_info->obstack, 30);
+      xsnprintf (copy, 30, "%d", c);
+
       c = *state->lexptr++;
       if (c != '\'')
 	{
@@ -1584,15 +1608,10 @@ yylex (YYSTYPE *lvalp, cpname_state *state)
 	  return ERROR;
 	}
 
-      /* FIXME: We should refer to a canonical form of the character,
-	 presumably the same one that appears in manglings - the decimal
-	 representation.  But if that isn't in our input then we have to
-	 allocate memory for it somewhere.  */
       lvalp->comp
 	= state->fill_comp (DEMANGLE_COMPONENT_LITERAL,
 			    state->make_builtin_type ("char"),
-			    state->make_name (tokstart,
-					      state->lexptr - tokstart));
+			    state->make_name (copy, strlen (copy)));
 
       return INT;
 
@@ -1604,7 +1623,7 @@ yylex (YYSTYPE *lvalp, cpname_state *state)
 					  sizeof "(anonymous namespace)" - 1);
 	  return NAME;
 	}
-	/* FALL THROUGH */
+	[[fallthrough]];
 
     case ')':
     case ',':
@@ -1641,9 +1660,9 @@ yylex (YYSTYPE *lvalp, cpname_state *state)
 	  state->lexptr++;
 	  return '-';
 	}
-      /* FALL THRU.  */
 
     try_number:
+      [[fallthrough]];
     case '0':
     case '1':
     case '2':
@@ -1674,6 +1693,10 @@ yylex (YYSTYPE *lvalp, cpname_state *state)
 	    hex = 0;
 	  }
 
+	/* If the token includes the C++14 digits separator, we make a
+	   copy so that we don't have to handle the separator in
+	   parse_number.  */
+	std::optional<std::string> no_tick;
 	for (;; ++p)
 	  {
 	    /* This test includes !hex because 'e' is a valid hex digit
@@ -1691,22 +1714,33 @@ yylex (YYSTYPE *lvalp, cpname_state *state)
 	      got_dot = 1;
 	    else if (got_e && (p[-1] == 'e' || p[-1] == 'E')
 		     && (*p == '-' || *p == '+'))
-	      /* This is the sign of the exponent, not the end of the
-		 number.  */
-	      continue;
+	      {
+		/* This is the sign of the exponent, not the end of
+		   the number.  */
+	      }
+	    /* C++14 allows a separator.  */
+	    else if (*p == '\'')
+	      {
+		if (!no_tick.has_value ())
+		  no_tick.emplace (tokstart, p);
+		continue;
+	      }
 	    /* We will take any letters or digits.  parse_number will
 	       complain if past the radix, or if L or U are not final.  */
 	    else if (! ISALNUM (*p))
 	      break;
+	    if (no_tick.has_value ())
+	      no_tick->push_back (*p);
 	  }
-	toktype = state->parse_number (tokstart, p - tokstart, got_dot|got_e,
-				       lvalp);
+	if (no_tick.has_value ())
+	  toktype = state->parse_number (no_tick->c_str (),
+					 no_tick->length (),
+					 got_dot|got_e, lvalp);
+	else
+	  toktype = state->parse_number (tokstart, p - tokstart,
+					 got_dot|got_e, lvalp);
 	if (toktype == ERROR)
 	  {
-	    char *err_copy = (char *) alloca (p - tokstart + 1);
-
-	    memcpy (err_copy, tokstart, p - tokstart);
-	    err_copy[p - tokstart] = 0;
 	    yyerror (state, _("invalid number"));
 	    return ERROR;
 	  }
@@ -1751,6 +1785,7 @@ yylex (YYSTYPE *lvalp, cpname_state *state)
       return c;
     case '<':
       HANDLE_TOKEN3 ("<<=", ASSIGN_MODIFY);
+      HANDLE_TOKEN3 ("<=>", SPACESHIP);
       HANDLE_TOKEN2 ("<=", LEQ);
       HANDLE_TOKEN2 ("<<", LSH);
       state->lexptr++;
@@ -1939,20 +1974,6 @@ yyerror (cpname_state *state, const char *msg)
   state->global_errmsg = msg ? msg : "parse error";
 }
 
-/* Allocate a chunk of the components we'll need to build a tree.  We
-   generally allocate too many components, but the extra memory usage
-   doesn't hurt because the trees are temporary and the storage is
-   reused.  More may be allocated later, by d_grab.  */
-static struct demangle_info *
-allocate_info (void)
-{
-  struct demangle_info *info = XNEW (struct demangle_info);
-
-  info->next = NULL;
-  info->used = 0;
-  return info;
-}
-
 /* See cp-support.h.  */
 
 gdb::unique_xmalloc_ptr<char>
@@ -1963,32 +1984,6 @@ cp_comp_to_string (struct demangle_component *result, int estimated_len)
   char *res = gdb_cplus_demangle_print (DMGL_PARAMS | DMGL_ANSI,
 					result, estimated_len, &err);
   return gdb::unique_xmalloc_ptr<char> (res);
-}
-
-/* Constructor for demangle_parse_info.  */
-
-demangle_parse_info::demangle_parse_info ()
-: info (NULL),
-  tree (NULL)
-{
-  obstack_init (&obstack);
-}
-
-/* Destructor for demangle_parse_info.  */
-
-demangle_parse_info::~demangle_parse_info ()
-{
-  /* Free any allocated chunks of memory for the parse.  */
-  while (info != NULL)
-    {
-      struct demangle_info *next = info->next;
-
-      free (info);
-      info = next;
-    }
-
-  /* Free any memory allocated during typedef replacement.  */
-  obstack_free (&obstack, NULL);
 }
 
 /* Merge the two parse trees given by DEST and SRC.  The parse tree
@@ -2004,21 +1999,14 @@ demangle_parse_info::~demangle_parse_info ()
 void
 cp_merge_demangle_parse_infos (struct demangle_parse_info *dest,
 			       struct demangle_component *target,
-			       struct demangle_parse_info *src)
+			       std::unique_ptr<demangle_parse_info> src)
 
 {
-  struct demangle_info *di;
-
   /* Copy the SRC's parse data into DEST.  */
   *target = *src->tree;
-  di = dest->info;
-  while (di->next != NULL)
-    di = di->next;
-  di->next = src->info;
 
-  /* Clear the (pointer to) SRC's parse data so that it is not freed when
-     cp_demangled_parse_info_free is called.  */
-  src->info = NULL;
+  /* Make sure SRC is owned by DEST.  */
+  dest->infos.push_back (std::move (src));
 }
 
 /* Convert a demangled name to a demangle_component tree.  On success,
@@ -2036,10 +2024,8 @@ cp_demangled_name_to_comp (const char *demangled_name,
   state.error_lexptr = NULL;
   state.global_errmsg = NULL;
 
-  state.demangle_info = allocate_info ();
-
-  std::unique_ptr<demangle_parse_info> result (new demangle_parse_info);
-  result->info = state.demangle_info;
+  auto result = std::make_unique<demangle_parse_info> ();
+  state.demangle_info = result.get ();
 
   if (yyparse (&state))
     {
@@ -2053,132 +2039,59 @@ cp_demangled_name_to_comp (const char *demangled_name,
   return result;
 }
 
-#ifdef TEST_CPNAMES
+#if GDB_SELF_TEST
 
 static void
-cp_print (struct demangle_component *result)
+should_be_the_same (const char *one, const char *two)
 {
-  char *str;
-  size_t err = 0;
+  gdb::unique_xmalloc_ptr<char> cpone = cp_canonicalize_string (one);
+  gdb::unique_xmalloc_ptr<char> cptwo = cp_canonicalize_string (two);
 
-  str = gdb_cplus_demangle_print (DMGL_PARAMS | DMGL_ANSI, result, 64, &err);
-  if (str == NULL)
-    return;
+  if (cpone != nullptr)
+    one = cpone.get ();
+  if (cptwo != nullptr)
+    two = cptwo.get ();
 
-  fputs (str, stdout);
-
-  free (str);
+  SELF_CHECK (strcmp (one, two) == 0);
 }
 
-static char
-trim_chars (char *lexptr, char **extra_chars)
+static void
+should_parse (const char *name)
 {
-  char *p = (char *) symbol_end (lexptr);
-  char c = 0;
-
-  if (*p)
-    {
-      c = *p;
-      *p = 0;
-      *extra_chars = p + 1;
-    }
-
-  return c;
+  std::string err;
+  auto parsed = cp_demangled_name_to_comp (name, &err);
+  SELF_CHECK (parsed != nullptr);
 }
 
-/* When this file is built as a standalone program, xmalloc comes from
-   libiberty --- in which case we have to provide xfree ourselves.  */
-
-void
-xfree (void *ptr)
+static void
+canonicalize_tests ()
 {
-  if (ptr != NULL)
-    {
-      /* Literal `free' would get translated back to xfree again.  */
-      CONCAT2 (fr,ee) (ptr);
-    }
-}
+  should_be_the_same ("short int", "short");
+  should_be_the_same ("int short", "short");
 
-/* GDB normally defines internal_error itself, but when this file is built
-   as a standalone program, we must also provide an implementation.  */
+  should_be_the_same ("C<(char) 1>::m()", "C<(char) '\\001'>::m()");
+  should_be_the_same ("x::y::z<1>", "x::y::z<0x01>");
+  should_be_the_same ("x::y::z<1>", "x::y::z<01>");
+  should_be_the_same ("x::y::z<(unsigned long long) 1>", "x::y::z<01ull>");
+  should_be_the_same ("x::y::z<0b111>", "x::y::z<7>");
+  should_be_the_same ("x::y::z<0b111>", "x::y::z<0t7>");
+  should_be_the_same ("x::y::z<0b111>", "x::y::z<0D7>");
 
-void
-internal_error (const char *file, int line, const char *fmt, ...)
-{
-  va_list ap;
+  should_be_the_same ("x::y::z<0xff'ff>", "x::y::z<65535>");
 
-  va_start (ap, fmt);
-  fprintf (stderr, "%s:%d: internal error: ", file, line);
-  vfprintf (stderr, fmt, ap);
-  exit (1);
-}
+  should_be_the_same ("something<void ()>", "something<  void()  >");
+  should_be_the_same ("something<void ()>", "something<void (void)>");
 
-int
-main (int argc, char **argv)
-{
-  char *str2, *extra_chars, c;
-  char buf[65536];
-  int arg;
-
-  arg = 1;
-  if (argv[arg] && strcmp (argv[arg], "--debug") == 0)
-    {
-      yydebug = 1;
-      arg++;
-    }
-
-  if (argv[arg] == NULL)
-    while (fgets (buf, 65536, stdin) != NULL)
-      {
-	buf[strlen (buf) - 1] = 0;
-	/* Use DMGL_VERBOSE to get expanded standard substitutions.  */
-	c = trim_chars (buf, &extra_chars);
-	str2 = cplus_demangle (buf, DMGL_PARAMS | DMGL_ANSI | DMGL_VERBOSE);
-	if (str2 == NULL)
-	  {
-	    printf ("Demangling error\n");
-	    if (c)
-	      printf ("%s%c%s\n", buf, c, extra_chars);
-	    else
-	      printf ("%s\n", buf);
-	    continue;
-	  }
-
-	std::string errmsg;
-	std::unique_ptr<demangle_parse_info> result
-	  = cp_demangled_name_to_comp (str2, &errmsg);
-	if (result == NULL)
-	  {
-	    fputs (errmsg.c_str (), stderr);
-	    fputc ('\n', stderr);
-	    continue;
-	  }
-
-	cp_print (result->tree);
-
-	free (str2);
-	if (c)
-	  {
-	    putchar (c);
-	    fputs (extra_chars, stdout);
-	  }
-	putchar ('\n');
-      }
-  else
-    {
-      std::string errmsg;
-      std::unique_ptr<demangle_parse_info> result
-	= cp_demangled_name_to_comp (argv[arg], &errmsg);
-      if (result == NULL)
-	{
-	  fputs (errmsg.c_str (), stderr);
-	  fputc ('\n', stderr);
-	  return 0;
-	}
-      cp_print (result->tree);
-      putchar ('\n');
-    }
-  return 0;
+  should_parse ("void whatever::operator<=><int, int>");
 }
 
 #endif
+
+void _initialize_cp_name_parser ();
+void
+_initialize_cp_name_parser ()
+{
+#if GDB_SELF_TEST
+  selftests::register_test ("canonicalize", canonicalize_tests);
+#endif
+}

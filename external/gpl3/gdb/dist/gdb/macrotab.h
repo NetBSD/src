@@ -1,5 +1,5 @@
 /* Interface to C preprocessor macro tables for GDB.
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GDB.
@@ -95,7 +95,7 @@ struct macro_definition;
    line info, but not in macro info.  This means that GDB's symtabs
    (built from the former, among other things) may mention filenames
    that the #inclusion tree (built from the latter) doesn't have any
-   record of.  See macroscope.c:sal_macro_scope for how to accomodate
+   record of.  See macroscope.c:sal_macro_scope for how to accommodate
    this.
 
    It's worth noting that libcpp has a simpler way of representing all
