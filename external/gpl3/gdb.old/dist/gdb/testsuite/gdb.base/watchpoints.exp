@@ -1,4 +1,4 @@
-# Copyright 2009-2020 Free Software Foundation, Inc.
+# Copyright 2009-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,14 +15,18 @@
 
 # This file was written by Pierre Muller. (muller@ics.u-strasbg.fr)
 
+# The skip_hw_watchpoint_tests checks if watchpoints are supported by the
+# processor.  On PowerPC, the check runs a small test program under gdb
+# to determine if the Power processor supports HW watchpoints.  The check
+# must be done before starting the test so as to not disrupt the execution
+# of the actual test.
+
+set skip_hw_watchpoint_tests_p [skip_hw_watchpoint_tests]
+
 
 standard_testfile
 
 set wp_set 1
-
-if [get_compiler_info] {
-    return -1
-}
 
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
     return -1
@@ -52,7 +56,7 @@ with_test_prefix "before inferior start" {
     clean_restart ${binfile}
 
     # Disable hardware watchpoints if necessary.
-    if [target_info exists gdb,no_hardware_watchpoints] {
+    if {$skip_hw_watchpoint_tests_p} {
         gdb_test_no_output "set can-use-hw-watchpoints 0" ""
     }
 
@@ -63,9 +67,9 @@ with_test_prefix "before inferior start" {
     set prev_timeout $timeout
     set timeout 600
 
-    gdb_test "cont" "Continuing.*\[Ww\]atchpoint.*ival1.*Old value = -1.*New value = 0.*ival1 = count; ival2 = count;.*" "watchpoint hit, first time"
+    gdb_test "cont" "Continuing.*\[Ww\]atchpoint.*ival1.*Old value = -1.*New value = 0.*ival1 = count; ival2 = count;.*" "watchpoint ival1 hit, first time"
 
-    gdb_test "cont" "Continuing.*\[Ww\]atchpoint.*ival3.*Old value = -1.*New value = 0.*ival3 = count; ival4 = count;.*" "watchpoint hit, first time"
+    gdb_test "cont" "Continuing.*\[Ww\]atchpoint.*ival3.*Old value = -1.*New value = 0.*ival3 = count; ival4 = count;.*" "watchpoint ival3 hit, first time"
 
     # Check that the ival3 hit count is reported correctly
     gdb_test "info break" ".*watchpoint\[ \t\]+keep\[ \t\]+y\[ \t\]+ival3\r\n\[ \t]+breakpoint already hit 1 time.*" "watchpoint hit count is 1"

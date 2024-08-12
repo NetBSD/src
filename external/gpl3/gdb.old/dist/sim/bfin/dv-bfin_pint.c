@@ -1,6 +1,6 @@
 /* Blackfin Pin Interrupt (PINT) model
 
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2023 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc. and Mike Frysinger.
 
    This file is part of simulators.
@@ -18,7 +18,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include "sim-main.h"
 #include "devices.h"
@@ -73,7 +74,7 @@ bfin_pint_io_write_buffer (struct hw *me, const void *source, int space,
   else
     value = dv_load_2 (source);
   mmr_off = addr - pint->base;
-  valuep = (void *)((unsigned long)pint + mmr_base() + mmr_off);
+  valuep = (void *)((uintptr_t)pint + mmr_base() + mmr_off);
 
   HW_TRACE_WRITE ();
 
@@ -142,7 +143,7 @@ bfin_pint_io_read_buffer (struct hw *me, void *dest, int space,
     return 0;
 
   mmr_off = addr - pint->base;
-  valuep = (void *)((unsigned long)pint + mmr_base() + mmr_off);
+  valuep = (void *)((uintptr_t)pint + mmr_base() + mmr_off);
 
   HW_TRACE_READ ();
 

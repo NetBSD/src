@@ -26,18 +26,8 @@
 #include "basics.h"
 #include "registers.h"
 
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
-
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
-
 
 INLINE_REGISTERS\
 (void)
@@ -165,7 +155,7 @@ register_description(const char reg[])
   else if (reg[0] == 'e' && reg[1] == 'v' && are_digits(reg + 2)) {
     description.type = reg_evr;
     description.index = atoi(reg+2);
-    description.size = sizeof(unsigned64);
+    description.size = sizeof(uint64_t);
   }
   else if (reg[0] == 'r' && reg[1] == 'h' && are_digits(reg + 2)) {
     description.type = reg_gprh;
@@ -175,7 +165,7 @@ register_description(const char reg[])
   else if (!strcmp(reg, "acc")) {
     description.type = reg_acc;
     description.index = 0;
-    description.size = sizeof(unsigned64);
+    description.size = sizeof(uint64_t);
   }
 #endif
   else {

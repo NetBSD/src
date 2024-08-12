@@ -5,18 +5,18 @@
 #include "osabi.h"
 #include "target-descriptions.h"
 
-struct target_desc *tdesc_mips_linux;
+const struct target_desc *tdesc_mips_linux;
 static void
 initialize_tdesc_mips_linux (void)
 {
-  struct target_desc *result = allocate_target_description ();
-  set_tdesc_architecture (result, bfd_scan_arch ("mips"));
+  target_desc_up result = allocate_target_description ();
+  set_tdesc_architecture (result.get (), bfd_scan_arch ("mips"));
 
-  set_tdesc_osabi (result, osabi_from_tdesc_string ("GNU/Linux"));
+  set_tdesc_osabi (result.get (), osabi_from_tdesc_string ("GNU/Linux"));
 
   struct tdesc_feature *feature;
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.mips.cpu");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.mips.cpu");
   tdesc_create_reg (feature, "r0", 0, 1, NULL, 32, "int");
   tdesc_create_reg (feature, "r1", 1, 1, NULL, 32, "int");
   tdesc_create_reg (feature, "r2", 2, 1, NULL, 32, "int");
@@ -53,12 +53,12 @@ initialize_tdesc_mips_linux (void)
   tdesc_create_reg (feature, "hi", 34, 1, NULL, 32, "int");
   tdesc_create_reg (feature, "pc", 37, 1, NULL, 32, "int");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.mips.cp0");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.mips.cp0");
   tdesc_create_reg (feature, "status", 32, 1, NULL, 32, "int");
   tdesc_create_reg (feature, "badvaddr", 35, 1, NULL, 32, "int");
   tdesc_create_reg (feature, "cause", 36, 1, NULL, 32, "int");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.mips.fpu");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.mips.fpu");
   tdesc_create_reg (feature, "f0", 38, 1, NULL, 32, "ieee_single");
   tdesc_create_reg (feature, "f1", 39, 1, NULL, 32, "ieee_single");
   tdesc_create_reg (feature, "f2", 40, 1, NULL, 32, "ieee_single");
@@ -94,8 +94,8 @@ initialize_tdesc_mips_linux (void)
   tdesc_create_reg (feature, "fcsr", 70, 1, "float", 32, "int");
   tdesc_create_reg (feature, "fir", 71, 1, "float", 32, "int");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.mips.linux");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.mips.linux");
   tdesc_create_reg (feature, "restart", 72, 1, "system", 32, "int");
 
-  tdesc_mips_linux = result;
+  tdesc_mips_linux = result.release ();
 }

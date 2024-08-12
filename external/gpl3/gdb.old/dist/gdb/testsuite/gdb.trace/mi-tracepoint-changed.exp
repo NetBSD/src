@@ -1,4 +1,4 @@
-# Copyright 2012-2020 Free Software Foundation, Inc.
+# Copyright 2012-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -69,8 +69,7 @@ proc test_reconnect { } {
 	clean_restart $executable
 	gdb_load_shlib $lib_sl1
 	gdb_load_shlib $lib_sl2
-	if ![runto_main] then {
-	    fail "can't run to main"
+	if {![runto_main]} {
 	    return 0
 	}
 	# Create tracepoints on marker and main, and leave them in the
@@ -176,7 +175,7 @@ proc test_pending_resolved { } {
 
 	gdb_exit
 	if [mi_gdb_start] {
-	    continue
+	    return
 	}
 
 	mi_gdb_reinitialize_dir $srcdir/$subdir
@@ -251,7 +250,6 @@ gdb_load_shlib $lib_sl1
 gdb_load_shlib $lib_sl2
 
 if ![runto_main] {
-    fail "can't run to main to check for trace support"
     return -1
 }
 

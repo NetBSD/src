@@ -1,6 +1,6 @@
 /* Native-dependent code for Solaris x86.
 
-   Copyright (C) 1988-2020 Free Software Foundation, Inc.
+   Copyright (C) 1988-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -149,21 +149,21 @@ fill_fpregset (const struct regcache *regcache,
    and the floating-point set by:
 
    typedef struct fpregset   {
-           union {
-                   struct fpchip_state            // fp extension state //
-                   {
-                           int     state[27];     // 287/387 saved state //
-                           int     status;        // status word saved at //
-                                                  // exception //
-                   } fpchip_state;
-                   struct fp_emul_space           // for emulators //
-                   {
-                           char    fp_emul[246];
-                           char    fp_epad[2];
-                   } fp_emul_space;
-                   int     f_fpregs[62];          // union of the above //
-           } fp_reg_set;
-           long            f_wregs[33];           // saved weitek state //
+	   union {
+		   struct fpchip_state            // fp extension state //
+		   {
+			   int     state[27];     // 287/387 saved state //
+			   int     status;        // status word saved at //
+						  // exception //
+		   } fpchip_state;
+		   struct fp_emul_space           // for emulators //
+		   {
+			   char    fp_emul[246];
+			   char    fp_epad[2];
+		   } fp_emul_space;
+		   int     f_fpregs[62];          // union of the above //
+	   } fp_reg_set;
+	   long            f_wregs[33];           // saved weitek state //
    } fpregset_t;
 
    Incidentally fpchip_state contains the FPU state in the same format

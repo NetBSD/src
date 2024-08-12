@@ -1,6 +1,6 @@
 /* AArch64 ELF support for BFD.
 
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GNU Binutils.
@@ -26,6 +26,9 @@
 
 /* Processor specific program header types.  */
 #define PT_AARCH64_ARCHEXT	(PT_LOPROC + 0)
+
+/* MTE memory tag segment type.  */
+#define PT_AARCH64_MEMTAG_MTE     (PT_LOPROC + 0x2)
 
 /* Additional section types.  */
 #define SHT_AARCH64_ATTRIBUTES	0x70000003  /* Section holds attributes.  */

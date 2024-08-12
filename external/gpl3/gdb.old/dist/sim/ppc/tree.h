@@ -48,7 +48,7 @@ EXTERN_TREE\
 (device *) tree_parse
 (device *root,
  const char *fmt,
- ...) __attribute__ ((format (printf, 2, 3)));
+ ...) ATTRIBUTE_PRINTF_2;
 
 
 INLINE_TREE\

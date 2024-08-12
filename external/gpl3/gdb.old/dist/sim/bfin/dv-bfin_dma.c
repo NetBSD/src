@@ -1,6 +1,6 @@
 /* Blackfin Direct Memory Access (DMA) Channel model.
 
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2023 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -18,7 +18,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
+
+#include <stdlib.h>
 
 #include "sim-main.h"
 #include "devices.h"
@@ -135,17 +138,17 @@ bfin_dma_process_desc (struct hw *me, struct bfin_dma *dma)
     case DMAFLOW_ARRAY:
       if (ndsize == 0 || ndsize > 7)
 	hw_abort (me, "DMA config error: DMAFLOW_ARRAY requires NDSIZE 1...7");
-      sim_read (hw_system (me), dma->curr_desc_ptr, (void *)flows, ndsize * 2);
+      sim_read (hw_system (me), dma->curr_desc_ptr, flows, ndsize * 2);
       break;
     case DMAFLOW_SMALL:
       if (ndsize == 0 || ndsize > 8)
 	hw_abort (me, "DMA config error: DMAFLOW_SMALL requires NDSIZE 1...8");
-      sim_read (hw_system (me), dma->next_desc_ptr, (void *)flows, ndsize * 2);
+      sim_read (hw_system (me), dma->next_desc_ptr, flows, ndsize * 2);
       break;
     case DMAFLOW_LARGE:
       if (ndsize == 0 || ndsize > 9)
 	hw_abort (me, "DMA config error: DMAFLOW_LARGE requires NDSIZE 1...9");
-      sim_read (hw_system (me), dma->next_desc_ptr, (void *)flows, ndsize * 2);
+      sim_read (hw_system (me), dma->next_desc_ptr, flows, ndsize * 2);
       break;
     default:
       hw_abort (me, "DMA config error: invalid DMAFLOW %#x", dma->config);
@@ -328,7 +331,7 @@ bfin_dma_io_write_buffer (struct hw *me, const void *source, int space,
     value = dv_load_2 (source);
 
   mmr_off = addr % dma->base;
-  valuep = (void *)((unsigned long)dma + mmr_base() + mmr_off);
+  valuep = (void *)((uintptr_t)dma + mmr_base() + mmr_off);
   value16p = valuep;
   value32p = valuep;
 
@@ -426,7 +429,7 @@ bfin_dma_io_read_buffer (struct hw *me, void *dest, int space,
     return 0;
 
   mmr_off = addr % dma->base;
-  valuep = (void *)((unsigned long)dma + mmr_base() + mmr_off);
+  valuep = (void *)((uintptr_t)dma + mmr_base() + mmr_off);
   value16p = valuep;
   value32p = valuep;
 

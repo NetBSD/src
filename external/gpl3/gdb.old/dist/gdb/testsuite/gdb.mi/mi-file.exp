@@ -1,4 +1,4 @@
-# Copyright 1999-2020 Free Software Foundation, Inc.
+# Copyright 1999-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ set MIFLAGS "-i=mi"
 
 gdb_exit
 if [mi_gdb_start] {
-    continue
+    return
 }
 
 standard_testfile basics.c
@@ -68,7 +68,7 @@ proc test_file_list_exec_source_files {} {
 
     # get the path and absolute path to the current executable
     mi_gdb_test "222-file-list-exec-source-files" \
-	    "222\\\^done,files=\\\[\{file=\".*${srcfile}\",fullname=\"$fullname_syntax${srcfile}\"\}.*]" \
+	    "222\\\^done,files=\\\[\{file=\".*${srcfile}\",fullname=\"$fullname_syntax${srcfile}\",debug-fully-read=\"\[^\"\]+\"\}.*]" \
               "Getting a list of source files."
 }
 

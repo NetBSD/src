@@ -1,6 +1,6 @@
 /* Simulator for FTDI FT32 processor.
 
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2023 Free Software Foundation, Inc.
    Contributed by FTDI <support@ftdichip.com>
 
    This file is part of simulators.
@@ -34,13 +34,6 @@ struct _sim_cpu {
   struct ft32_cpu_state state;
 
   sim_cpu_base base;
-};
-
-struct sim_state {
-
-  sim_cpu *cpu[MAX_NR_PROCESSORS];
-
-  sim_state_base base;
 };
 
 #endif

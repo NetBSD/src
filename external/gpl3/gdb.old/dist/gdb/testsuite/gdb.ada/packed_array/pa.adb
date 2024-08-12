@@ -1,4 +1,4 @@
---  Copyright 2005-2020 Free Software Foundation, Inc.
+--  Copyright 2005-2023 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -26,6 +26,20 @@ procedure PA is
    type Unconstrained_Packed_Array is array (Integer range <>) of Boolean;
 
    U_Var : Unconstrained_Packed_Array (1 .. Ident (6));
+
+   -- Note that this array is not packed.
+   type Outer_Array is array (1 .. 4) of Packed_Array;
+   O_Var : Outer_Array := ((true, false, true, false, true),
+                           (true, false, true, false, true),
+                           (true, false, true, false, true),
+                           (true, false, true, false, true));
+
+   type Outer_Array2 is array (1 .. 4) of Packed_Array;
+   pragma pack (Outer_Array2);
+   O2_Var : Outer_Array2 := ((true, false, true, false, true),
+                           (true, false, true, false, true),
+                           (true, false, true, false, true),
+                           (true, false, true, false, true));
 
 begin
 

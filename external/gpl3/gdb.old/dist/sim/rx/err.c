@@ -1,6 +1,6 @@
 /* err.c --- handle errors for RX simulator.
 
-Copyright (C) 2008-2020 Free Software Foundation, Inc.
+Copyright (C) 2008-2023 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -18,6 +18,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -28,7 +31,7 @@ static unsigned char ee_actions[SIM_ERR_NUM_ERRORS];
 static enum execution_error last_error;
 
 static void
-ee_overrides ()
+ee_overrides (void)
 {
   /* GCC may initialize a bitfield by reading the uninitialized byte,
      masking in the bitfield, and writing the byte back out.  */
@@ -58,15 +61,6 @@ execution_error_init_debugger (void)
     ee_actions[i] = SIM_ERRACTION_DEBUG;
 
   ee_overrides ();
-}
-
-void
-execution_error_exit_all (void)
-{
-  int i;
-
-  for (i = 0; i < SIM_ERR_NUM_ERRORS; i++)
-    ee_actions[i] = SIM_ERRACTION_EXIT;
 }
 
 void

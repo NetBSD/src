@@ -1,5 +1,5 @@
 # Test for prologue skipping in minimal symbols with line info.
-# Copyright 2007-2020 Free Software Foundation, Inc.
+# Copyright 2007-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if { [skip_cplus_tests] } { continue }
+if { [skip_cplus_tests] } {  return }
 
 standard_testfile .c
 
@@ -25,9 +25,8 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
 
 clean_restart ${binfile}
 
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
-    continue
+if {![runto_main]} {
+    return
 }
 
 proc find_breakpoint_pc { sym } {
@@ -59,4 +58,4 @@ set pc1 [find_breakpoint_pc "marker"]
 
 set pc2 [find_breakpoint_pc "other"]
 
-gdb_test "print $pc1 == $pc2" "\\\$$decimal = 1" "same pc from minimal symbol"
+gdb_test "print /d $pc1 == $pc2" "\\\$$decimal = 1" "same pc from minimal symbol"

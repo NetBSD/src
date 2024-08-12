@@ -1,5 +1,5 @@
 /* MI Command Set - information commands.
-   Copyright (C) 2011-2020 Free Software Foundation, Inc.
+   Copyright (C) 2011-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -67,7 +67,7 @@ void
 mi_cmd_info_gdb_mi_command (const char *command, char **argv, int argc)
 {
   const char *cmd_name;
-  struct mi_cmd *cmd;
+  mi_command *cmd;
   struct ui_out *uiout = current_uiout;
 
   /* This command takes exactly one argument.  */
@@ -82,7 +82,7 @@ mi_cmd_info_gdb_mi_command (const char *command, char **argv, int argc)
   if (cmd_name[0] == '-')
     cmd_name++;
 
-  cmd = mi_lookup (cmd_name);
+  cmd = mi_cmd_lookup (cmd_name);
 
   ui_out_emit_tuple tuple_emitter (uiout, "command");
   uiout->field_string ("exists", cmd != NULL ? "true" : "false");

@@ -1,5 +1,5 @@
 /* MI Command Set - catch commands.
-   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+   Copyright (C) 2012-2023 Free Software Foundation, Inc.
 
    Contributed by Intel Corporation.
 
@@ -57,10 +57,10 @@ mi_cmd_catch_assert (const char *cmd, char *argv[], int argc)
 			   &oind, &oarg);
 
       if (opt < 0)
-        break;
+	break;
 
       switch ((enum opt) opt)
-        {
+	{
 	case OPT_CONDITION:
 	  condition.assign (oarg);
 	  break;
@@ -70,7 +70,7 @@ mi_cmd_catch_assert (const char *cmd, char *argv[], int argc)
 	case OPT_TEMP:
 	  temp = 1;
 	  break;
-        }
+	}
     }
 
   /* This command does not accept any argument.  Make sure the user
@@ -119,10 +119,10 @@ mi_cmd_catch_exception (const char *cmd, char *argv[], int argc)
 			   &oind, &oarg);
 
       if (opt < 0)
-        break;
+	break;
 
       switch ((enum opt) opt)
-        {
+	{
 	case OPT_CONDITION:
 	  condition.assign (oarg);
 	  break;
@@ -138,7 +138,7 @@ mi_cmd_catch_exception (const char *cmd, char *argv[], int argc)
 	case OPT_UNHANDLED:
 	  ex_kind = ada_catch_exception_unhandled;
 	  break;
-        }
+	}
     }
 
   /* This command does not accept any argument.  Make sure the user
@@ -190,10 +190,10 @@ mi_cmd_catch_handlers (const char *cmd, char *argv[], int argc)
 			   &oind, &oarg);
 
       if (opt < 0)
-        break;
+	break;
 
       switch ((enum opt) opt)
-        {
+	{
 	case OPT_CONDITION:
 	  condition.assign (oarg);
 	  break;
@@ -206,7 +206,7 @@ mi_cmd_catch_handlers (const char *cmd, char *argv[], int argc)
 	case OPT_TEMP:
 	  temp = 1;
 	  break;
-        }
+	}
     }
 
   /* This command does not accept any argument.  Make sure the user
@@ -246,20 +246,20 @@ mi_catch_load_unload (int load, char *argv[], int argc)
   for (;;)
     {
       int opt = mi_getopt (actual_cmd, argc, argv, opts,
-                           &oind, &oarg);
+			   &oind, &oarg);
 
       if (opt < 0)
-        break;
+	break;
 
       switch ((enum opt) opt)
-        {
-        case OPT_TEMP:
-          temp = 1;
-          break;
-        case OPT_DISABLED:
-          enabled = 0;
-          break;
-        }
+	{
+	case OPT_TEMP:
+	  temp = 1;
+	  break;
+	case OPT_DISABLED:
+	  enabled = 0;
+	  break;
+	}
     }
 
   if (oind >= argc)
@@ -315,20 +315,20 @@ mi_cmd_catch_exception_event (enum exception_event_kind kind,
   for (;;)
     {
       int opt = mi_getopt (cmd, argc, argv, opts,
-                           &oind, &oarg);
+			   &oind, &oarg);
 
       if (opt < 0)
-        break;
+	break;
 
       switch ((enum opt) opt)
-        {
-        case OPT_TEMP:
-          temp = true;
-          break;
-        case OPT_REGEX:
+	{
+	case OPT_TEMP:
+	  temp = true;
+	  break;
+	case OPT_REGEX:
 	  regex = oarg;
-          break;
-        }
+	  break;
+	}
     }
 
   scoped_restore restore_breakpoint_reporting = setup_breakpoint_reporting ();

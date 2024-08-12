@@ -1,4 +1,4 @@
---  Copyright 2007-2020 Free Software Foundation, Inc.
+--  Copyright 2007-2023 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -31,6 +31,20 @@ procedure Hello is
    end Third;
 
 begin
-   Third;
+   declare
+      procedure Fourth is
+      begin
+         Third;
+         declare
+            procedure Fifth is
+            begin
+               Second;
+            end Fifth;
+         begin
+            Fifth;
+         end;
+      end Fourth;
+   begin
+      Fourth;
+   end;
 end Hello;
-

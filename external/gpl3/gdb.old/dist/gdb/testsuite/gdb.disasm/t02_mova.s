@@ -236,3 +236,4 @@ _start:
     mova/l.l @(0x12345678:32,@0x9ABCDEF0:32.w),er1         ;015F48D99ABCDEF012345678
 
 	.end
+	.section	.note.GNU-stack,"",@progbits

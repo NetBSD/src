@@ -1,5 +1,5 @@
 /* Simulator signal support
-   Copyright (C) 1997-2020 Free Software Foundation, Inc.
+   Copyright (C) 1997-2023 Free Software Foundation, Inc.
    Contributed by Cygnus Support
 
 This file is part of the GNU Simulators.
@@ -17,8 +17,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include <signal.h>
+
 #include "sim-main.h"
+#include "sim-signal.h"
 
 /* Convert SIM_SIGFOO to SIGFOO.
    What to do when the host doesn't have SIGFOO is handled on a case by case

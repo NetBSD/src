@@ -1,5 +1,5 @@
 /* CPU support.
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
 This file is part of GDB, the GNU debugger.
@@ -17,23 +17,26 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include <stdlib.h>
 
-#include "sim-main.h"
 #include "bfd.h"
 
+#include "sim-main.h"
+
 /* Allocate space for all cpus in the simulator.
-   Space for the cpu must currently exist prior to parsing ARGV.
-   EXTRA_BYTES is additional space to allocate for the sim_cpu struct.  */
+   Space for the cpu must currently exist prior to parsing ARGV.  */
 /* ??? wip.  better solution must wait.  */
 
 SIM_RC
-sim_cpu_alloc_all (SIM_DESC sd, int ncpus, int extra_bytes)
+sim_cpu_alloc_all (SIM_DESC sd, int ncpus)
 {
   int c;
 
   for (c = 0; c < ncpus; ++c)
-    STATE_CPU (sd, c) = sim_cpu_alloc (sd, extra_bytes);
+    STATE_CPU (sd, c) = sim_cpu_alloc (sd);
   return SIM_RC_OK;
 }
 
@@ -41,8 +44,14 @@ sim_cpu_alloc_all (SIM_DESC sd, int ncpus, int extra_bytes)
    EXTRA_BYTES is additional space to allocate for the sim_cpu struct.  */
 
 sim_cpu *
-sim_cpu_alloc (SIM_DESC sd, int extra_bytes)
+sim_cpu_alloc (SIM_DESC sd)
 {
+  int extra_bytes = 0;
+
+#ifdef CGEN_ARCH
+  extra_bytes += cgen_cpu_max_extra_bytes (sd);
+#endif
+
   return zalloc (sizeof (sim_cpu) + extra_bytes);
 }
 

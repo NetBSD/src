@@ -1,5 +1,5 @@
 /* BFD backend for CRIS a.out binaries.
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2022 Free Software Foundation, Inc.
    Contributed by Axis Communications AB.
    Written by Hans-Peter Nilsson.
 
@@ -69,7 +69,7 @@
 #define MY_exec_hdr_flags 1
 
 #define MY_write_object_contents MY (write_object_contents)
-static bfd_boolean MY (write_object_contents) (bfd *);
+static bool MY (write_object_contents) (bfd *);
 
 /* Forward this, so we can use a pointer to it in PARAMS.  */
 struct reloc_ext_external;
@@ -82,7 +82,7 @@ static void MY (swap_ext_reloc_in) (bfd *, struct reloc_ext_external *,
 				    arelent *, asymbol **, bfd_size_type);
 
 #define MY_set_sizes MY (set_sizes)
-static bfd_boolean MY (set_sizes) (bfd *);
+static bool MY (set_sizes) (bfd *);
 
 /* To set back reloc_size to ext, we make MY (set_sizes) be called
    through this construct.  Note that MY_set_arch_mach is only called
@@ -110,7 +110,7 @@ static bfd_boolean MY (set_sizes) (bfd *);
 
 /* We need our own version to set header flags.  */
 
-static bfd_boolean
+static bool
 MY (write_object_contents) (bfd *abfd)
 {
   struct external_exec exec_bytes;
@@ -131,7 +131,7 @@ MY (write_object_contents) (bfd *abfd)
 
   WRITE_HEADERS (abfd, execp);
 
-  return TRUE;
+  return true;
 }
 
 /* We need our own for these reasons:
@@ -269,7 +269,7 @@ MY (swap_ext_reloc_in) (bfd *abfd,
    "obj_reloc_entry_size (abfd) = RELOC_EXT_SIZE;", to avoid changing
    NAME (aout, set_arch_mach) in aoutx.  */
 
-static bfd_boolean
+static bool
 MY (set_sizes) (bfd *abfd)
 {
   /* Just as the default in aout-target.h (with some #ifdefs folded)...  */
@@ -286,5 +286,5 @@ MY (set_sizes) (bfd *abfd)
 
   obj_reloc_entry_size (abfd) = RELOC_EXT_SIZE;
 
-  return TRUE;
+  return true;
 }

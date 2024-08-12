@@ -1,5 +1,5 @@
 /* Simulator tracing/debugging support.
-   Copyright (C) 1997-2020 Free Software Foundation, Inc.
+   Copyright (C) 1997-2023 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -22,6 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef SIM_TRACE_H
 #define SIM_TRACE_H
 
+#include <stdarg.h>
+
+#include "ansidecl.h"
 #include "dis-asm.h"
 
 /* Standard traceable entities.  */
@@ -122,10 +125,10 @@ enum {
 #define TRACE_debug    (1 << TRACE_DEBUG_IDX)
 
 /* Return non-zero if tracing of idx is enabled (compiled in).  */
-#define WITH_TRACE_P(idx)	(WITH_TRACE & (1 << idx))
+#define WITH_TRACE_P(idx)	((WITH_TRACE & (1 << idx)) != 0)
 
 /* Preprocessor macros to simplify tests of WITH_TRACE.  */
-#define WITH_TRACE_ANY_P	(WITH_TRACE)
+#define WITH_TRACE_ANY_P	(WITH_TRACE != 0)
 #define WITH_TRACE_INSN_P	WITH_TRACE_P (TRACE_INSN_IDX)
 #define WITH_TRACE_DISASM_P	WITH_TRACE_P (TRACE_DISASM_IDX)
 #define WITH_TRACE_DECODE_P	WITH_TRACE_P (TRACE_DECODE_IDX)
@@ -142,9 +145,6 @@ enum {
 #define WITH_TRACE_SYSCALL_P	WITH_TRACE_P (TRACE_SYSCALL_IDX)
 #define WITH_TRACE_REGISTER_P	WITH_TRACE_P (TRACE_REGISTER_IDX)
 #define WITH_TRACE_DEBUG_P	WITH_TRACE_P (TRACE_DEBUG_IDX)
-
-/* Tracing install handler.  */
-MODULE_INSTALL_FN trace_install;
 
 /* Struct containing all system and cpu trace data.
 
@@ -179,13 +179,13 @@ typedef struct _trace_data {
   /* Buffer to save the inputs for the current instruction.  Use a
      union to force the buffer into correct alignment */
   union {
-    unsigned8 i8;
-    unsigned16 i16;
-    unsigned32 i32;
-    unsigned64 i64;
+    uint8_t i8;
+    uint16_t i16;
+    uint32_t i32;
+    uint64_t i64;
   } trace_input_data[16];
-  unsigned8 trace_input_fmt[16];
-  unsigned8 trace_input_size[16];
+  uint8_t trace_input_fmt[16];
+  uint8_t trace_input_size[16];
   int trace_input_idx;
 #define TRACE_INPUT_DATA(t) ((t)->trace_input_data)
 #define TRACE_INPUT_FMT(t) ((t)->trace_input_fmt)
@@ -333,8 +333,7 @@ extern void trace_prefix (SIM_DESC sd,
 			  const char *file_name,
 			  int line_nr,
 			  const char *fmt,
-			  ...)
-       __attribute__((format (printf, 8, 9)));
+			  ...) ATTRIBUTE_PRINTF (8, 9);
 
 /* Generic trace print, assumes trace_prefix() has been called */
 
@@ -342,8 +341,7 @@ extern void trace_generic (SIM_DESC sd,
 			   sim_cpu *cpu,
 			   int trace_idx,
 			   const char *fmt,
-			   ...)
-     __attribute__((format (printf, 4, 5)));
+			   ...) ATTRIBUTE_PRINTF (4, 5);
 
 /* Disassemble the specified address.  */
 
@@ -655,9 +653,10 @@ do { \
 
 
 extern void trace_printf (SIM_DESC, sim_cpu *, const char *, ...)
-     __attribute__((format (printf, 3, 4)));
+    ATTRIBUTE_PRINTF (3, 4);
 
-extern void trace_vprintf (SIM_DESC, sim_cpu *, const char *, va_list);
+extern void trace_vprintf (SIM_DESC, sim_cpu *, const char *, va_list)
+    ATTRIBUTE_PRINTF (3, 0);
 
 /* Debug support.
    This is included here because there isn't enough of it to justify
@@ -676,6 +675,6 @@ int trace_load_symbols (SIM_DESC);
 bfd_vma trace_sym_value (SIM_DESC, const char *name);
 
 extern void sim_debug_printf (sim_cpu *, const char *, ...)
-     __attribute__((format (printf, 2, 3)));
+    ATTRIBUTE_PRINTF (2, 3);
 
 #endif /* SIM_TRACE_H */

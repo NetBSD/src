@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2020 Free Software Foundation, Inc.
+# Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,14 +16,15 @@
 # Check that GDB doesn't forget to pass SIGTRAP to the program when
 # the user explicitly passes it with the signal command.
 
+standard_testfile
+
 if [target_info exists gdb,nosignals] {
     verbose "Skipping ${testfile}.exp because of nosignals."
     return -1
 }
 
-standard_testfile
-
-if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug pthreads}]} {
+if {[build_executable "failed to prepare" $testfile $srcfile \
+	 {debug pthreads}]} {
     return -1
 }
 
@@ -36,8 +37,7 @@ proc test { sigtrap_thread } {
     with_test_prefix "sigtrap thread $sigtrap_thread" {
 	clean_restart ${binfile}
 
-	if ![runto "thread_function"] then {
-	    fail "can't run to thread_function"
+	if {![runto "thread_function"]} {
 	    return 0
 	}
 

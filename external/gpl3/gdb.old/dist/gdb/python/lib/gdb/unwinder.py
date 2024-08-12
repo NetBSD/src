@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2020 Free Software Foundation, Inc.
+# Copyright (C) 2015-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -77,8 +77,9 @@ def register_unwinder(locus, unwinder, replace=False):
         locus = gdb
     elif isinstance(locus, gdb.Objfile) or isinstance(locus, gdb.Progspace):
         if gdb.parameter("verbose"):
-            gdb.write("Registering %s unwinder for %s ...\n" %
-                      (unwinder.name, locus.filename))
+            gdb.write(
+                "Registering %s unwinder for %s ...\n" % (unwinder.name, locus.filename)
+            )
     else:
         raise TypeError("locus should be gdb.Objfile or gdb.Progspace or None")
 
@@ -88,8 +89,7 @@ def register_unwinder(locus, unwinder, replace=False):
             if replace:
                 del locus.frame_unwinders[i]
             else:
-                raise RuntimeError("Unwinder %s already exists." %
-                                   unwinder.name)
+                raise RuntimeError("Unwinder %s already exists." % unwinder.name)
         i += 1
     locus.frame_unwinders.insert(0, unwinder)
     gdb.invalidate_cached_frames()

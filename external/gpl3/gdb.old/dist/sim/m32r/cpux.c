@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2020 Free Software Foundation, Inc.
+Copyright 1996-2023 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -185,12 +185,4 @@ void
 m32rxf_h_lock_set (SIM_CPU *current_cpu, BI newval)
 {
   CPU (h_lock) = newval;
-}
-
-/* Record trace results for INSN.  */
-
-void
-m32rxf_record_trace_results (SIM_CPU *current_cpu, CGEN_INSN *insn,
-			    int *indices, TRACE_RECORD *tr)
-{
 }

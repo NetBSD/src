@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -13,12 +13,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "config.h"
 #include "ansidecl.h"
-#include "gdb/callback.h"
-#include "gdb/remote-sim.h"
+#include "sim/callback.h"
+#include "sim/sim.h"
 #include <sim-config.h>
 #include <stdint.h>
+#include "dis-asm.h"
 
 #if HOST_BYTE_ORDER == BIG_ENDIAN
 #define HOST_BIG_ENDIAN
@@ -46,15 +46,8 @@ struct histype {
 
 /* type definitions */
 
-typedef short int int16;	/* 16-bit signed int */
-typedef unsigned short int uint16;	/* 16-bit unsigned int */
-typedef int     int32;		/* 32-bit signed int */
-typedef unsigned int uint32;	/* 32-bit unsigned int */
 typedef float   float32;	/* 32-bit float */
 typedef double  float64;	/* 64-bit float */
-
-typedef uint64_t uint64; /* 64-bit unsigned int */
-typedef int64_t int64;	   /* 64-bit signed int */
 
 struct pstate {
 
@@ -65,87 +58,87 @@ struct pstate {
 #else
     float32        *fs;
 #endif
-    int32          *fsi;
-    uint32          fsr;
-    int32           fpstate;
-    uint32          fpq[FPUQN * 2];
-    uint32          fpqn;
-    uint32          ftime;
-    uint32          flrd;
-    uint32          frd;
-    uint32          frs1;
-    uint32          frs2;
-    uint32          fpu_pres;	/* FPU present (0 = No, 1 = Yes) */
+    int32_t          *fsi;
+    uint32_t          fsr;
+    int32_t           fpstate;
+    uint32_t          fpq[FPUQN * 2];
+    uint32_t          fpqn;
+    uint32_t          ftime;
+    uint32_t          flrd;
+    uint32_t          frd;
+    uint32_t          frs1;
+    uint32_t          frs2;
+    uint32_t          fpu_pres;	/* FPU present (0 = No, 1 = Yes) */
 
-    uint32          psr;	/* IU registers */
-    uint32          tbr;
-    uint32          wim;
-    uint32          g[8];
-    uint32          r[128];
-    uint32          y;
-    uint32          asr17;      /* Single vector trapping */
-    uint32          pc, npc;
+    uint32_t          psr;	/* IU registers */
+    uint32_t          tbr;
+    uint32_t          wim;
+    uint32_t          g[8];
+    uint32_t          r[128];
+    uint32_t          y;
+    uint32_t          asr17;      /* Single vector trapping */
+    uint32_t          pc, npc;
 
 
-    uint32          trap;	/* Current trap type */
-    uint32          annul;	/* Instruction annul */
-    uint32          data;	/* Loaded data	     */
-    uint32          inst;	/* Current instruction */
-    uint32          asi;	/* Current ASI */
-    uint32          err_mode;	/* IU error mode */
-    uint32          breakpoint;
-    uint32          bptnum;
-    uint32          bphit;
-    uint32          bpts[BPT_MAX];	/* Breakpoints */
+    uint32_t          trap;	/* Current trap type */
+    uint32_t          annul;	/* Instruction annul */
+    uint32_t          data;	/* Loaded data	     */
+    uint32_t          inst;	/* Current instruction */
+    uint32_t          asi;	/* Current ASI */
+    uint32_t          err_mode;	/* IU error mode */
+    uint32_t          breakpoint;
+    uint32_t          bptnum;
+    uint32_t          bphit;
+    uint32_t          bpts[BPT_MAX];	/* Breakpoints */
 
-    uint32          ltime;	/* Load interlock time */
-    uint32          hold;	/* IU hold cycles in current inst */
-    uint32          fhold;	/* FPU hold cycles in current inst */
-    uint32          icnt;	/* Instruction cycles in curr inst */
+    uint32_t          ltime;	/* Load interlock time */
+    uint32_t          hold;	/* IU hold cycles in current inst */
+    uint32_t          fhold;	/* FPU hold cycles in current inst */
+    uint32_t          icnt;	/* Instruction cycles in curr inst */
 
-    uint32          histlen;	/* Trace history management */
-    uint32          histind;
+    uint32_t          histlen;	/* Trace history management */
+    uint32_t          histind;
     struct histype *histbuf;
     float32         freq;	/* Simulated processor frequency */
 
 
     double          tottime;
-    uint64          ninst;
-    uint64          fholdt;
-    uint64          holdt;
-    uint64          icntt;
-    uint64          finst;
-    uint64          simstart;
+    uint64_t          ninst;
+    uint64_t          fholdt;
+    uint64_t          holdt;
+    uint64_t          icntt;
+    uint64_t          finst;
+    uint64_t          simstart;
     double          starttime;
-    uint64          tlimit;	/* Simulation time limit */
-    uint64          pwdtime;	/* Cycles in power-down mode */
-    uint64          nstore;	/* Number of load instructions */
-    uint64          nload;	/* Number of store instructions */
-    uint64          nannul;	/* Number of annuled instructions */
-    uint64          nbranch;	/* Number of branch instructions */
-    uint32          ildreg;	/* Destination of last load instruction */
-    uint64          ildtime;	/* Last time point for load dependency */
+    uint64_t          tlimit;	/* Simulation time limit */
+    uint64_t          pwdtime;	/* Cycles in power-down mode */
+    uint64_t          nstore;	/* Number of load instructions */
+    uint64_t          nload;	/* Number of store instructions */
+    uint64_t          nannul;	/* Number of annuled instructions */
+    uint64_t          nbranch;	/* Number of branch instructions */
+    uint32_t          ildreg;	/* Destination of last load instruction */
+    uint64_t          ildtime;	/* Last time point for load dependency */
 
     int             rett_err;	/* IU in jmpl/restore error state (Rev.0) */
     int             jmpltime;
 };
 
 struct evcell {
-    void            (*cfunc) ();
-    int32           arg;
-    uint64          time;
+    void            (*cfunc) (int32_t);
+    int32_t           arg;
+    uint64_t          time;
     struct evcell  *nxt;
 };
 
 struct estate {
     struct evcell   eq;
     struct evcell  *freeq;
-    uint64          simtime;
+    uint64_t          simtime;
 };
 
 struct irqcell {
-    void            (*callback) ();
-    int32           arg;
+    void            (*callback) (int32_t);
+    int32_t           arg;
 };
 
 
@@ -160,26 +153,27 @@ struct irqcell {
 /* erc32.c */
 extern void	init_sim (void);
 extern void	reset (void);
-extern void	error_mode (uint32 pc);
+extern void	error_mode (uint32_t pc);
 extern void	sim_halt (void);
 extern void	exit_sim (void);
 extern void	init_stdio (void);
 extern void	restore_stdio (void);
-extern int	memory_iread (uint32 addr, uint32 *data, int32 *ws);
-extern int	memory_read (int32 asi, uint32 addr, uint32 *data,
-			     int32 sz, int32 *ws);
-extern int	memory_write (int32 asi, uint32 addr, uint32 *data,
-			      int32 sz, int32 *ws);
-extern int	sis_memory_write (uint32 addr,
-				  const unsigned char *data, uint32 length);
-extern int	sis_memory_read (uint32 addr, char *data,
-				 uint32 length);
+extern int	memory_iread (uint32_t addr, uint32_t *data, uint32_t *ws);
+extern int	memory_read (int32_t asi, uint32_t addr, void *data,
+			     int32_t sz, int32_t *ws);
+extern int	memory_write (int32_t asi, uint32_t addr, uint32_t *data,
+			      int32_t sz, int32_t *ws);
+extern int	sis_memory_write (uint32_t addr,
+				  const void *data, uint32_t length);
+extern int	sis_memory_read (uint32_t addr, void *data,
+				 uint32_t length);
+extern void	boot_init (void);
 
 /* func.c */
 extern struct pstate  sregs;
-extern void	set_regi (struct pstate *sregs, int32 reg,
-			  uint32 rval);
-extern void	get_regi (struct pstate *sregs, int32 reg, char *buf);
+extern void	set_regi (struct pstate *sregs, int32_t reg,
+			  uint32_t rval);
+extern void	get_regi (struct pstate *sregs, int32_t reg, unsigned char *buf);
 extern int	exec_cmd (struct pstate *sregs, const char *cmd);
 extern void	reset_stat (struct pstate  *sregs);
 extern void	show_stat (struct pstate  *sregs);
@@ -187,12 +181,12 @@ extern void	init_bpt (struct pstate  *sregs);
 extern void	init_signals (void);
 
 struct disassemble_info;
-extern void	dis_mem (uint32 addr, uint32 len,
+extern void	dis_mem (uint32_t addr, uint32_t len,
 			 struct disassemble_info *info);
-extern void	event (void (*cfunc) (), int32 arg, uint64 delta);
-extern void	set_int (int32 level, void (*callback) (), int32 arg);
+extern void	event (void (*cfunc) (int32_t), int32_t arg, uint64_t delta);
+extern void	set_int (int32_t level, void (*callback) (int32_t), int32_t arg);
 extern void	advance_time (struct pstate  *sregs);
-extern uint32	now (void);
+extern uint32_t	now (void);
 extern int	wait_for_irq (void);
 extern int	check_bpt (struct pstate *sregs);
 extern void	reset_all (void);
@@ -209,12 +203,12 @@ extern void	init_regs (struct pstate *sregs);
 
 /* interf.c */
 extern int	run_sim (struct pstate *sregs,
-			 uint64 icount, int dis);
+			 uint64_t icount, int dis);
 
 /* float.c */
 extern int	get_accex (void);
 extern void	clear_accex (void);
-extern void	set_fsr (uint32 fsr);
+extern void	set_fsr (uint32_t fsr);
 
 /* help.c */
 extern void	usage (void);

@@ -1,5 +1,5 @@
 #    Makefile template for Configure for the mn10300 sim library.
-#    Copyright (C) 1996-2020 Free Software Foundation, Inc.
+#    Copyright (C) 1996-2023 Free Software Foundation, Inc.
 #    Written by Cygnus Support.
 # 
 # This program is free software; you can redistribute it and/or modify
@@ -25,93 +25,11 @@ MN10300_OBJS = \
 
 SIM_OBJS = $(MN10300_OBJS) interp.o
 
-SIM_EXTRA_CLEAN = clean-igen
-# Extra dependencies for "sim-main.h"
-SIM_EXTRA_DEPS = mn10300_sim.h itable.h idecode.h
-
-# Select mn10300 support in nltvals.def.
-NL_TARGET = -DNL_TARGET_mn10300
-
-INCLUDE = mn10300_sim.h $(srcdir)/../../include/gdb/callback.h
+SIM_EXTRA_HW_DEVICES = mn103cpu mn103int mn103tim mn103ser mn103iop
 
 # List of extra flags to always pass to $(CC).
-SIM_EXTRA_CFLAGS = -DPOLL_QUIT_INTERVAL=0x20
+SIM_EXTRA_CFLAGS = \
+	-DPOLL_QUIT_INTERVAL=0x20 \
+	-DWITH_TARGET_WORD_BITSIZE=32 -DWITH_TARGET_WORD_MSB=31
 
 ## COMMON_POST_CONFIG_FRAG
-
-idecode.o op_utils.o semantics.o: targ-vals.h
-
-BUILT_SRC_FROM_IGEN = \
-	icache.h \
-	icache.c \
-	idecode.h \
-	idecode.c \
-	semantics.h \
-	semantics.c \
-	model.h \
-	model.c \
-	support.h \
-	support.c \
-	itable.h \
-	itable.c \
-	engine.h \
-	engine.c \
-	irun.c
-$(BUILT_SRC_FROM_IGEN): tmp-igen
-
-
-.PHONY: clean-igen
-clean-igen:
-	rm -f $(BUILT_SRC_FROM_IGEN)
-	rm -f tmp-igen tmp-insns
-
-../igen/igen:
-	cd ../igen && $(MAKE)
-
-IGEN_TRACE= # -G omit-line-numbers # -G trace-rule-selection -G trace-rule-rejection -G trace-entries
-IGEN_INSN=$(srcdir)/mn10300.igen $(srcdir)/am33.igen $(srcdir)/am33-2.igen
-IGEN_DC=$(srcdir)/mn10300.dc
-tmp-igen: $(IGEN_INSN) $(IGEN_DC) ../igen/igen
-#	cd ../igen && $(MAKE)
-	../igen/igen \
-		$(IGEN_TRACE) \
-		-G gen-direct-access \
-                -M mn10300,am33 -G gen-multi-sim=am33 \
-		-M am33_2 \
-		-I $(srcdir) \
-		-i $(IGEN_INSN) \
-		-o $(IGEN_DC) \
-		-x \
-		-n icache.h    -hc tmp-icache.h \
-		-n icache.c    -c  tmp-icache.c \
-		-n semantics.h -hs tmp-semantics.h \
-		-n semantics.c -s  tmp-semantics.c \
-		-n idecode.h   -hd tmp-idecode.h \
-		-n idecode.c   -d  tmp-idecode.c \
-		-n model.h     -hm tmp-model.h \
-		-n model.c     -m  tmp-model.c \
-		-n support.h   -hf tmp-support.h \
-		-n support.c   -f  tmp-support.c \
-		-n itable.h    -ht tmp-itable.h \
-		-n itable.c    -t  tmp-itable.c \
-		-n engine.h    -he tmp-engine.h \
-		-n engine.c    -e  tmp-engine.c \
-		-n irun.c      -r  tmp-irun.c
-	$(SHELL) $(srcdir)/../../move-if-change tmp-icache.h icache.h
-	$(SHELL) $(srcdir)/../../move-if-change tmp-icache.c icache.c
-	$(SHELL) $(srcdir)/../../move-if-change tmp-idecode.h idecode.h
-	$(SHELL) $(srcdir)/../../move-if-change tmp-idecode.c idecode.c
-	$(SHELL) $(srcdir)/../../move-if-change tmp-semantics.h semantics.h
-	$(SHELL) $(srcdir)/../../move-if-change tmp-semantics.c semantics.c
-	$(SHELL) $(srcdir)/../../move-if-change tmp-model.h model.h
-	$(SHELL) $(srcdir)/../../move-if-change tmp-model.c model.c
-	$(SHELL) $(srcdir)/../../move-if-change tmp-support.h support.h
-	$(SHELL) $(srcdir)/../../move-if-change tmp-support.c support.c
-	$(SHELL) $(srcdir)/../../move-if-change tmp-itable.h itable.h
-	$(SHELL) $(srcdir)/../../move-if-change tmp-itable.c itable.c
-	$(SHELL) $(srcdir)/../../move-if-change tmp-engine.h engine.h
-	$(SHELL) $(srcdir)/../../move-if-change tmp-engine.c engine.c
-	$(SHELL) $(srcdir)/../../move-if-change tmp-irun.c irun.c
-	touch tmp-igen
-
-interp.o: interp.c $(INCLUDE)

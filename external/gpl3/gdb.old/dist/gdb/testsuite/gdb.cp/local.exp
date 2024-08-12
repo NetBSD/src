@@ -1,4 +1,4 @@
-# Copyright 1998-2020 Free Software Foundation, Inc.
+# Copyright 1998-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,13 +27,9 @@ set nl "\[\r\n\]+"
 # test running programs
 #
 
-if { [skip_cplus_tests] } { continue }
+if { [skip_cplus_tests] } { return }
 
 standard_testfile .cc
-
-if [get_compiler_info "c++"] {
-  return -1
-}
 
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
     return -1
@@ -42,14 +38,12 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
 #
 # set it up at a breakpoint so we can play with the variable values
 #
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
-    continue
+if {![runto_main]} {
+    return
 }
 
-if ![runto 'marker1'] then {
-    perror "couldn't run to marker1"
-    continue
+if {![runto 'marker1']} {
+    return
 }
 
 gdb_test "up" ".*foobar.*" "up from marker1"

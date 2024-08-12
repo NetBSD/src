@@ -1,7 +1,7 @@
 /* DO NOT EDIT!  -*- buffer-read-only: t -*- vi:set ro:  */
 #line 1 "rx-decode.opc"
 /* -*- c -*- */
-/* Copyright (C) 2012-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2022 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Written by DJ Delorie.
 
@@ -12476,22 +12476,22 @@ rx_decode_opcode (unsigned long pc AU,
                   break;
                 case 0x30:
                     {
-                      /** 1111 1101 0001 0111 a011 rdst	mvtacgu	%0, %1 */
+                      /** 1111 1101 0001 0111 a011 rsrc	mvtacgu	%1, %0 */
 #line 1110 "rx-decode.opc"
                       int a AU = (op[2] >> 7) & 0x01;
 #line 1110 "rx-decode.opc"
-                      int rdst AU = op[2] & 0x0f;
+                      int rsrc AU = op[2] & 0x0f;
                       if (trace)
                         {
                           printf ("\033[33m%s\033[0m  %02x %02x %02x\n",
-                                 "/** 1111 1101 0001 0111 a011 rdst	mvtacgu	%0, %1 */",
+                                 "/** 1111 1101 0001 0111 a011 rsrc	mvtacgu	%1, %0 */",
                                  op[0], op[1], op[2]);
                           printf ("  a = 0x%x,", a);
-                          printf ("  rdst = 0x%x\n", rdst);
+                          printf ("  rsrc = 0x%x\n", rsrc);
                         }
-                      SYNTAX("mvtacgu	%0, %1");
+                      SYNTAX("mvtacgu	%1, %0");
 #line 1110 "rx-decode.opc"
-                      ID(mvtacgu); DR(a+32); SR(rdst); F_____;
+                      ID(mvtacgu); SR(rsrc); DR(a+32); F_____;
 
                     }
                   break;

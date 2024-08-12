@@ -1,5 +1,5 @@
 /* GNU/Linux on  TI C6x target support.
-   Copyright (C) 2011-2020 Free Software Foundation, Inc.
+   Copyright (C) 2011-2023 Free Software Foundation, Inc.
    Contributed by Yao Qi <yao@codesourcery.com>
 
    This file is part of GDB.
@@ -27,6 +27,7 @@
 #include "elf-bfd.h"
 #include "elf/tic6x.h"
 #include "gdbarch.h"
+#include "solib-dsbt.h"
 
 /* The offset from rt_sigframe pointer to SP register.  */
 #define TIC6X_SP_RT_SIGFRAME 8
@@ -45,7 +46,7 @@ static const gdb_byte tic6x_bkpt_bnop_le[] = { 0x22, 0xa1, 0x00, 0x00 };
 static unsigned int
 tic6x_register_sigcontext_offset (unsigned int regnum, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  tic6x_gdbarch_tdep *tdep = gdbarch_tdep<tic6x_gdbarch_tdep> (gdbarch);
 
   if (regnum == TIC6X_A4_REGNUM || regnum == TIC6X_A4_REGNUM + 2
       || regnum == TIC6X_A4_REGNUM + 4)
@@ -78,7 +79,7 @@ tic6x_register_sigcontext_offset (unsigned int regnum, struct gdbarch *gdbarch)
 
 static void
 tic6x_linux_rt_sigreturn_init (const struct tramp_frame *self,
-			       struct frame_info *this_frame,
+			       frame_info_ptr this_frame,
 			       struct trad_frame_cache *this_cache,
 			       CORE_ADDR func)
 {
@@ -92,7 +93,7 @@ tic6x_linux_rt_sigreturn_init (const struct tramp_frame *self,
 		    + TIC6X_SIGINFO_SIZE
 		    + 4 + 4 /* uc_flags and *uc_link in struct ucontext.  */
 		    + TIC6X_STACK_T_SIZE);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  tic6x_gdbarch_tdep *tdep = gdbarch_tdep<tic6x_gdbarch_tdep> (gdbarch);
   unsigned int reg_offset;
   unsigned int i;
 
@@ -148,7 +149,7 @@ static struct tramp_frame tic6x_linux_rt_sigreturn_tramp_frame =
    instruction to be executed.  */
 
 static CORE_ADDR
-tic6x_linux_syscall_next_pc (struct frame_info *frame)
+tic6x_linux_syscall_next_pc (frame_info_ptr frame)
 {
   ULONGEST syscall_number = get_frame_register_unsigned (frame,
 							 TIC6X_B0_REGNUM);
@@ -161,16 +162,15 @@ tic6x_linux_syscall_next_pc (struct frame_info *frame)
 }
 
 
-extern struct target_so_ops dsbt_so_ops;
 static void
 tic6x_uclinux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  tic6x_gdbarch_tdep *tdep = gdbarch_tdep<tic6x_gdbarch_tdep> (gdbarch);
 
-  linux_init_abi (info, gdbarch);
+  linux_init_abi (info, gdbarch, 0);
 
   /* Shared library handling.  */
-  set_solib_ops (gdbarch, &dsbt_so_ops);
+  set_gdbarch_so_ops (gdbarch, &dsbt_so_ops);
 
   tdep->syscall_next_pc = tic6x_linux_syscall_next_pc;
 

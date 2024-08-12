@@ -1,5 +1,5 @@
 /* Main simulator loop for CGEN-based simulators.
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
 This file is part of GDB, the GNU debugger.
@@ -33,8 +33,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
    When the framework is more modular, this can be.
 */
 
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include "sim-main.h"
 #include "sim-assert.h"
+#include "sim-signal.h"
 
 #ifndef SIM_ENGINE_PREFIX_HOOK
 #define SIM_ENGINE_PREFIX_HOOK(sd)
@@ -48,6 +52,24 @@ static void prime_cpu (SIM_CPU *, int);
 static void engine_run_1 (SIM_DESC, int, int);
 static void engine_run_n (SIM_DESC, int, int, int, int);
 
+/* If no profiling or tracing has been enabled, run in fast mode.  */
+static int
+cgen_get_fast_p (SIM_DESC sd)
+{
+  int i, c;
+  int run_fast_p = 1;
+
+  for (c = 0; c < MAX_NR_PROCESSORS; ++c)
+    {
+      SIM_CPU *cpu = STATE_CPU (sd, c);
+
+      if (PROFILE_ANY_P (cpu) || TRACE_ANY_P (cpu))
+	return 0;
+    }
+
+  return 1;
+}
+
 /* sim_resume for cgen */
 
 void
@@ -56,8 +78,12 @@ sim_resume (SIM_DESC sd, int step, int siggnal)
   sim_engine *engine = STATE_ENGINE (sd);
   jmp_buf buf;
   int jmpval;
+  static int fast_p = -1;
 
   ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
+
+  if (fast_p == -1)
+    fast_p = cgen_get_fast_p (sd);
 
   /* we only want to be single stepping the simulator once */
   if (engine->stepper != NULL)
@@ -99,7 +125,6 @@ sim_resume (SIM_DESC sd, int step, int siggnal)
 			  && STATE_OPEN_KIND (sd) == SIM_OPEN_STANDALONE)
 		       ? 0
 		       : 8); /*FIXME: magic number*/
-      int fast_p = STATE_RUN_FAST_P (sd);
 
       sim_events_preprocess (sd, last_cpu_nr >= nr_cpus, next_cpu_nr >= nr_cpus);
       if (next_cpu_nr >= nr_cpus)
@@ -204,7 +229,12 @@ static void
 engine_run_n (SIM_DESC sd, int next_cpu_nr, int nr_cpus, int max_insns, int fast_p)
 {
   int i;
-  ENGINE_FN *engine_fns[MAX_NR_PROCESSORS];
+  /* Ensure that engine_fns is fully initialized, this silences a compiler
+     warning when engine_fns is used below.  */
+  ENGINE_FN *engine_fns[MAX_NR_PROCESSORS] = {};
+
+  SIM_ASSERT (nr_cpus <= MAX_NR_PROCESSORS);
+  SIM_ASSERT (next_cpu_nr >= 0 && next_cpu_nr < nr_cpus);
 
   for (i = 0; i < nr_cpus; ++i)
     {
@@ -219,7 +249,7 @@ engine_run_n (SIM_DESC sd, int next_cpu_nr, int nr_cpus, int max_insns, int fast
       SIM_ENGINE_PREFIX_HOOK (sd);
 
       /* FIXME: proper cycling of all of them, blah blah blah.  */
-      while (next_cpu_nr != nr_cpus)
+      while (next_cpu_nr < nr_cpus)
 	{
 	  SIM_CPU *cpu = STATE_CPU (sd, next_cpu_nr);
 

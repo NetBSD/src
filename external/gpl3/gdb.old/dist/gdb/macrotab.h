@@ -1,5 +1,5 @@
 /* Interface to C preprocessor macro tables for GDB.
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2023 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GDB.
@@ -50,20 +50,20 @@ struct bcache;
    number."  This is analogous to the way GCC reports errors in
    #include files:
 
-        $ gcc -c base.c
-        In file included from header2.h:8,
-                         from header1.h:3,
-                         from base.c:5:
-        header3.h:1: parse error before ')' token
-        $
+	$ gcc -c base.c
+	In file included from header2.h:8,
+			 from header1.h:3,
+			 from base.c:5:
+	header3.h:1: parse error before ')' token
+	$
 
    GCC tells you exactly what path of #inclusions led you to the
    problem.  It gives you complete information, in a way that the
    following would not:
 
-        $ gcc -c base.c
-        header3.h:1: parse error before ')' token
-        $
+	$ gcc -c base.c
+	header3.h:1: parse error before ')' token
+	$
 
    Converting all of GDB to use this is a big task, and I'm not really
    suggesting it should be a priority.  But this module's whole
@@ -173,7 +173,7 @@ struct macro_source_file
    the same source location (although 'gcc -DFOO -UFOO -DFOO=2' does
    do that in GCC 4.1.2.).  */
 struct macro_table *new_macro_table (struct obstack *obstack,
-                                     gdb::bcache *bcache,
+				     gdb::bcache *bcache,
 				     struct compunit_symtab *cust);
 
 
@@ -195,7 +195,7 @@ void free_macro_table (struct macro_table *table);
    The macro table makes its own copy of FILENAME; the caller is
    responsible for freeing FILENAME when it is no longer needed.  */
 struct macro_source_file *macro_set_main (struct macro_table *table,
-                                          const char *filename);
+					  const char *filename);
 
 
 /* Return the main source file of the macro table TABLE.  */
@@ -219,8 +219,8 @@ void macro_allow_redefinitions (struct macro_table *table);
    The macro table makes its own copy of INCLUDED; the caller is
    responsible for freeing INCLUDED when it is no longer needed.  */
 struct macro_source_file *macro_include (struct macro_source_file *source,
-                                         int line,
-                                         const char *included);
+					 int line,
+					 const char *included);
 
 /* Define any special macros, like __FILE__ or __LINE__.  This should
    be called once, on the main source file.  */
@@ -234,8 +234,8 @@ void macro_define_special (struct macro_table *table);
    appears more than once in the inclusion tree, return the
    least-nested inclusion --- the one closest to the main source file.  */
 struct macro_source_file *macro_lookup_inclusion
-                          (struct macro_source_file *source,
-                           const char *name);
+			  (struct macro_source_file *source,
+			   const char *name);
 
 
 /* Record an object-like #definition (i.e., one with no parameter list).
@@ -244,7 +244,7 @@ struct macro_source_file *macro_lookup_inclusion
    string is REPLACEMENT.  This function makes copies of NAME and
    REPLACEMENT; the caller is responsible for freeing them.  */
 void macro_define_object (struct macro_source_file *source, int line,
-                          const char *name, const char *replacement);
+			  const char *name, const char *replacement);
 
 
 /* Record an function-like #definition (i.e., one with a parameter list).
@@ -258,15 +258,15 @@ void macro_define_object (struct macro_source_file *source, int line,
    NAME, ARGV, and REPLACEMENT; the caller is responsible for freeing
    them.  */
 void macro_define_function (struct macro_source_file *source, int line,
-                            const char *name, int argc, const char **argv,
-                            const char *replacement);
+			    const char *name, int argc, const char **argv,
+			    const char *replacement);
 
 
 /* Record an #undefinition.
    Record in SOURCE's macro table that, at line number LINE in SOURCE,
    we removed the definition for the preprocessor symbol named NAME.  */
 void macro_undef (struct macro_source_file *source, int line,
-                  const char *name);
+		  const char *name);
 
 /* Different kinds of macro definitions.  */
 enum macro_kind
@@ -319,8 +319,8 @@ struct macro_definition
    the caller need not free it.  Return zero if NAME is not #defined
    at that point.  */
 struct macro_definition *macro_lookup_definition
-                         (struct macro_source_file *source,
-                          int line, const char *name);
+			 (struct macro_source_file *source,
+			  int line, const char *name);
 
 
 /* Return the source location of the definition for NAME in scope at
@@ -329,10 +329,10 @@ struct macro_definition *macro_lookup_definition
    the file.  Return zero if NAME has no definition in scope at that
    point, and leave *DEFINITION_LINE unchanged.  */
 struct macro_source_file *macro_definition_location
-                          (struct macro_source_file *source,
-                           int line,
-                           const char *name,
-                           int *definition_line);
+			  (struct macro_source_file *source,
+			   int line,
+			   const char *name,
+			   int *definition_line);
 
 /* Prototype for a callback callable when walking a macro table.  NAME
    is the name of the macro, and DEFINITION is the definition.  SOURCE

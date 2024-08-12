@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2020 Free Software Foundation, Inc.
+# Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ proc test {always_inserted sw_watchpoint} {
 
     clean_restart $binfile
 
-    if ![runto_main] then {
+    if {![runto_main]} {
 	return -1
     }
 
@@ -259,6 +259,34 @@ proc test {always_inserted sw_watchpoint} {
 		gdb_test_multiple "stepi" $test {
 		    -re "Program received signal SIGTRAP.*$gdb_prompt $" {
 			fail $test
+		    }
+		    -re "signal handler called.*$gdb_prompt $" {
+			# After PowerPC Linux kernel commit:
+			#
+			#   commit: 0138ba5783ae0dcc799ad401a1e8ac8333790df9
+			#   powerpc/64/signal: Balance return predictor
+			#   stack in signal trampoline.
+			#
+			# The kernel places an additional brctl instruction
+			# in the vdso to call the user handler.
+			#
+			# And then this commit:
+			#
+			#   commit 24321ac668e452a4942598533d267805f291fdc9
+			#   powerpc/64/signal: Fix regression in
+			#   __kernel_sigtramp_rt64() semantics
+			#
+			# updates the semantics of __kernel_sigtramp_rt64().
+			# It added a new symbol to serve as a jump target from
+			# the kernel to the trampoline.
+			#
+			# The net result of these changes is that gdb stops
+			# at  __kernel_start_sigtramp_rt64.  Need to do one
+			# more stepi to reach the expected location in the user
+			# signal handler.
+			gdb_test "p \$pc" "__kernel_start_sigtramp_rt64.*" \
+			    "in kernel code"
+			gdb_test "stepi" "handler .*" $test
 		    }
 		    -re "handler .*$gdb_prompt $" {
 			pass $test

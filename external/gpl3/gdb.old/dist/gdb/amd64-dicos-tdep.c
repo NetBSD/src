@@ -1,6 +1,6 @@
 /* Target-dependent code for DICOS running on x86-64's, for GDB.
 
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

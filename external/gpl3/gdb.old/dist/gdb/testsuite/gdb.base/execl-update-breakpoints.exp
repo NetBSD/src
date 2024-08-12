@@ -1,4 +1,4 @@
-# Copyright 2014-2020 Free Software Foundation, Inc.
+# Copyright 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,20 +32,8 @@ if { [gdb_compile [file join $srcdir $subdir $srcfile] $objfile \
     return -1
 }
 
-set opts1_ld [list debug ldflags=-Wl,-Ttext-segment=0x1000000]
-set opts1_gold [list debug ldflags=-Wl,-Ttext=0x1000000]
-set opts2_ld [list debug ldflags=-Wl,-Ttext-segment=0x2000000]
-set opts2_gold [list debug ldflags=-Wl,-Ttext=0x2000000]
-
-if { [gdb_compile $objfile $exec1 executable $opts1_ld] != "" } {
-    # Old gold linker versions don't support -Ttext-segment.  Fall
-    # back to -Ttext.
-    if { [gdb_compile $objfile $exec1 executable $opts1_gold] != ""
-	 || [gdb_compile $objfile $exec2 executable $opts2_gold] != ""} {
-	untested "link failed"
-	return -1
-    }
-} elseif { [gdb_compile $objfile $exec2 executable $opts2_ld] != "" } {
+if { [gdb_compile $objfile $exec1 executable {debug text_segment=0x1000000}] != ""
+     || [gdb_compile $objfile $exec2 executable {debug text_segment=0x2000000}] != ""} {
     untested "link failed"
     return -1
 }
@@ -54,8 +42,7 @@ if { [gdb_compile $objfile $exec1 executable $opts1_ld] != "" } {
 # exec2.  If it is, then skip the test as unsupported.
 
 clean_restart ${exec1}
-if ![runto_main] then {
-    fail "couldn't run to main"
+if {![runto_main]} {
     return -1
 }
 
@@ -69,8 +56,7 @@ gdb_test_multiple "p/x &main" $test {
 }
 
 clean_restart ${exec2}
-if ![runto_main] then {
-    fail "couldn't run to main"
+if {![runto_main]} {
     return -1
 }
 
@@ -102,8 +88,7 @@ proc test { always_inserted } {
 
     gdb_test_no_output "set breakpoint always-inserted $always_inserted"
 
-    if ![runto_main] then {
-	fail "couldn't run to main"
+    if {![runto_main]} {
 	return -1
     }
 
@@ -132,6 +117,7 @@ proc test { always_inserted } {
 	"Continuing\\.\r\n" \
 	"${not_nl} is executing new program: ${not_nl}\r\n" \
 	"(Reading ${not_nl} from remote target\\.\\.\\.\r\n)*" \
+	"(?:.Thread debugging using .*? enabled.\r\nUsing .*? library .*?\\.\r\n)?" \
 	"\r\n" \
 	"Breakpoint 1, main.*$gdb_prompt $"
     set message "continue across exec"

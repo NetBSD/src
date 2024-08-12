@@ -1,6 +1,6 @@
 /* Handle shared libraries for GDB, the GNU Debugger.
 
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,6 @@
 struct objfile;
 struct target_so_ops;
 
-extern struct target_so_ops darwin_so_ops;
+extern const struct target_so_ops darwin_so_ops;
 
 #endif /* solib-darwin.h */
