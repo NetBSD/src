@@ -1,7 +1,6 @@
-/* load.h --- interface to loading object files into the M32C simulator.
-
-Copyright (C) 2005-2024 Free Software Foundation, Inc.
-Contributed by Red Hat, Inc.
+/* Moxie Simulator definition.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Contributed by Anthony Green <green@moxielogic.com>
 
 This file is part of the GNU simulators.
 
@@ -18,10 +17,18 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifndef MOXIE_SIM_H
+#define MOXIE_SIM_H
 
-#include "bfd.h"
+#define PCIDX 17
 
-extern int default_machine;
+struct moxie_sim_cpu {
+  /* To keep this default simulator simple, and fast, we use a direct
+     vector of registers. The internal simulator engine then uses
+     manifests to access the correct slot. */
+  unsigned_word registers[19];
+};
 
-void m32c_set_mach (unsigned long mach);
-void m32c_load (bfd *);
+#define MOXIE_SIM_CPU(cpu) ((struct moxie_sim_cpu *) CPU_ARCH_DATA (cpu))
+
+#endif

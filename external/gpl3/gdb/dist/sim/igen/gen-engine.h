@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2023 Free Software Foundation, Inc.
+   Copyright 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -19,6 +19,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifndef IGEN_GEN_ENGINE_H
+#define IGEN_GEN_ENGINE_H
+
 extern void gen_engine_h
   (lf *file, const gen_table *gen, const insn_table *isa,
    cache_entry *cache_rules);
@@ -29,3 +32,5 @@ extern void gen_engine_c
 
 extern void print_engine_run_function_header
   (lf *file, const char *processor, function_decl_type decl_type);
+
+#endif /* IGEN_GEN_ENGINE_H */

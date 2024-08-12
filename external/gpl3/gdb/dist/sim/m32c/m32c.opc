@@ -1,6 +1,6 @@
 /* m32c.opc --- semantics for m32c opcodes.		        -*- mode: c -*-
 
-Copyright (C) 2005-2023 Free Software Foundation, Inc.
+Copyright (C) 2005-2024 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -728,11 +728,11 @@ next_opcode:
   b = get_bit2 (sc, bit);
   set_zc (!b, b);
 
-  /** 00bb 101b				BTST:S src */
+  /** 00bb 101bit			BTST:S src */
 
   sc = decode_src23 (3, 3, 1); /* bit,base:19 */
-  b = get_bit2 (sc, bb*2 + b);
-  set_zc (!b, b);
+  bit = get_bit2 (sc, bb*2 + bit);
+  set_zc (!bit, bit);
 
   /** 1101 ddd0 dd10 0bit		BTSTC dest */
 
@@ -1170,9 +1170,9 @@ next_opcode:
 
   NOTYET();
 
-  /** 1101 0101 1110 1imm		LDIPL #IMM */
+  /** 1101 0101 1110 1flg		LDIPL #IMM */
 
-  set_flags (0x7000, imm*0x1000);
+  set_flags (0x7000, flg*0x1000);
 
   /** 0000 0001 1000 ddd w dd11 1111	MAX.size #IMM,dest */
 
@@ -1589,8 +1589,6 @@ next_opcode:
 
   /** 1010 111w				PUSH.size #IMM */
 
-  {
-  int a;
   prefix (0, 0, 0);
   imm = IMM(w+1);
   tprintf("push%s: %x\n", w ? "hi" : "qi", imm);
@@ -1600,7 +1598,6 @@ next_opcode:
   else
     mem_put_qi (a, imm);
   put_reg (sp, a);
-  }
 
   /** 1100 sss w ss00 1110		PUSH.size src */
 

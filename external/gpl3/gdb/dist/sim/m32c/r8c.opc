@@ -1,6 +1,6 @@
 /* r8c.opc --- semantics for r8c opcodes.		        -*- mode: c -*-
 
-Copyright (C) 2005-2023 Free Software Foundation, Inc.
+Copyright (C) 2005-2024 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -880,9 +880,9 @@ decode_r8c (void)
     v = mem_get_qi (imm);
   put_dest (dc, v);
 
-  /** 0111 1101 1010 0imm  LDIPL #IMM */
+  /** 0111 1101 1010 0flg  LDIPL #IMM */
 
-  set_flags (0x700, imm*0x100);
+  set_flags (0x700, flg*0x100);
 
   /** 0111 010w 1100 dest  MOV.size:G #IMM,dest */
 
@@ -1380,13 +1380,13 @@ decode_r8c (void)
   a = sign_ext (get_reg (r1h), 8);
   shift_op (dc, 0, a);
 
-  /** 0111 110w 1110 100b  SMOVB.size */
+  /** 0111 110w 1110 100z  SMOVB.size */
 
   {
   int count = get_reg (r3);
   int s1 = get_reg (a0) + (get_reg (r1h) << 16);
   int s2 = get_reg (a1);
-  int inc = (w ? 2 : 1) * (b ? -1 : 1);
+  int inc = (w ? 2 : 1) * (z ? -1 : 1);
 
   while (count)
     {

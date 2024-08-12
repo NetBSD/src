@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2023 Free Software Foundation, Inc.
+   Copyright 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -215,8 +215,8 @@ name2i (const char *names, const name_map * map)
   while (*name != '\0')
     {
       /* find our name */
-      char *end = strchr (name, ',');
-      char *next;
+      const char *end = strchr (name, ',');
+      const char *next;
       unsigned len;
       if (end == NULL)
 	{
