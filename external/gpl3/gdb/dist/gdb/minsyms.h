@@ -1,6 +1,6 @@
 /* Minimal symbol table definitions for GDB.
 
-   Copyright (C) 2011-2023 Free Software Foundation, Inc.
+   Copyright (C) 2011-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -118,9 +118,9 @@ class minimal_symbol_reader
      SECTION - the symbol's section
   */
 
-  struct minimal_symbol *record_full (gdb::string_view name,
+  struct minimal_symbol *record_full (std::string_view name,
 				      bool copy_name,
-				      CORE_ADDR address,
+				      unrelocated_addr address,
 				      enum minimal_symbol_type ms_type,
 				      int section);
 
@@ -131,7 +131,7 @@ class minimal_symbol_reader
 
      This variant does not return the new symbol.  */
 
-  void record (const char *name, CORE_ADDR address,
+  void record (const char *name, unrelocated_addr address,
 	       enum minimal_symbol_type ms_type);
 
   /* Like record_full, but:
@@ -140,7 +140,7 @@ class minimal_symbol_reader
 
      This variant does not return the new symbol.  */
 
-  void record_with_info (const char *name, CORE_ADDR address,
+  void record_with_info (const char *name, unrelocated_addr address,
 			 enum minimal_symbol_type ms_type,
 			 int section)
   {
@@ -235,6 +235,14 @@ struct bound_minimal_symbol lookup_minimal_symbol_text (const char *,
 extern struct bound_minimal_symbol lookup_minimal_symbol_linkage
   (const char *name, struct objfile *objf)
   ATTRIBUTE_NONNULL (1) ATTRIBUTE_NONNULL (2);
+
+/* A variant of lookup_minimal_symbol_linkage that iterates over all
+   objfiles.  If ONLY_MAIN is true, then only an objfile with
+   OBJF_MAINLINE will be considered.  */
+
+extern struct bound_minimal_symbol lookup_minimal_symbol_linkage
+  (const char *name, bool only_main)
+  ATTRIBUTE_NONNULL (1);
 
 /* Look through all the current minimal symbol tables and find the
    first minimal symbol that matches NAME and PC.  If OBJF is non-NULL,

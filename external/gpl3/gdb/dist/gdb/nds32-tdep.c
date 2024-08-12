@@ -1,6 +1,6 @@
 /* Target-dependent code for the NDS32 architecture, for GDB.
 
-   Copyright (C) 2013-2023 Free Software Foundation, Inc.
+   Copyright (C) 2013-2024 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of GDB.
@@ -18,7 +18,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "frame.h"
 #include "frame-unwind.h"
 #include "frame-base.h"
@@ -265,11 +265,12 @@ static const struct
    register.  */
 
 static struct value *
-value_of_nds32_reg (frame_info_ptr frame, const void *baton)
+value_of_nds32_reg (const frame_info_ptr &frame, const void *baton)
 {
-  return value_of_register ((int) (intptr_t) baton, frame);
+  return value_of_register ((int) (intptr_t) baton,
+			    get_next_frame_sentinel_okay (frame));
 }
-
+
 /* Implement the "frame_align" gdbarch method.  */
 
 static CORE_ADDR
@@ -403,8 +404,11 @@ nds32_pseudo_register_type (struct gdbarch *gdbarch, int regnum)
 
   /* Currently, only FSRs could be defined as pseudo registers.  */
   if (regnum < gdbarch_num_pseudo_regs (gdbarch))
-    return arch_float_type (gdbarch, -1, "builtin_type_ieee_single",
-			    floatformats_ieee_single);
+    {
+      type_allocator alloc (gdbarch);
+      return init_float_type (alloc, -1, "builtin_type_ieee_single",
+			      floatformats_ieee_single);
+    }
 
   warning (_("Unknown nds32 pseudo register %d."), regnum);
   return NULL;
@@ -898,7 +902,7 @@ nds32_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
    a pointer to the current nds32_frame_cache in *THIS_CACHE.  */
 
 static struct nds32_frame_cache *
-nds32_frame_cache (frame_info_ptr this_frame, void **this_cache)
+nds32_frame_cache (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   struct nds32_frame_cache *cache;
@@ -949,7 +953,7 @@ nds32_frame_cache (frame_info_ptr this_frame, void **this_cache)
    PC and the caller's SP when we were called.  */
 
 static void
-nds32_frame_this_id (frame_info_ptr this_frame,
+nds32_frame_this_id (const frame_info_ptr &this_frame,
 		     void **this_cache, struct frame_id *this_id)
 {
   struct nds32_frame_cache *cache = nds32_frame_cache (this_frame, this_cache);
@@ -964,7 +968,7 @@ nds32_frame_this_id (frame_info_ptr this_frame,
 /* Implement the "prev_register" frame_unwind method.  */
 
 static struct value *
-nds32_frame_prev_register (frame_info_ptr this_frame, void **this_cache,
+nds32_frame_prev_register (const frame_info_ptr &this_frame, void **this_cache,
 			   int regnum)
 {
   struct nds32_frame_cache *cache = nds32_frame_cache (this_frame, this_cache);
@@ -998,7 +1002,7 @@ static const struct frame_unwind nds32_frame_unwind =
 /* Return the frame base address of *THIS_FRAME.  */
 
 static CORE_ADDR
-nds32_frame_base_address (frame_info_ptr this_frame, void **this_cache)
+nds32_frame_base_address (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct nds32_frame_cache *cache = nds32_frame_cache (this_frame, this_cache);
 
@@ -1284,7 +1288,7 @@ nds32_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR addr)
 
 static int
 nds32_epilogue_frame_sniffer (const struct frame_unwind *self,
-			      frame_info_ptr this_frame, void **this_cache)
+			      const frame_info_ptr &this_frame, void **this_cache)
 {
   if (frame_relative_level (this_frame) == 0)
     return nds32_stack_frame_destroyed_p (get_frame_arch (this_frame),
@@ -1299,7 +1303,7 @@ nds32_epilogue_frame_sniffer (const struct frame_unwind *self,
    *THIS_CACHE.  */
 
 static struct nds32_frame_cache *
-nds32_epilogue_frame_cache (frame_info_ptr this_frame, void **this_cache)
+nds32_epilogue_frame_cache (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   struct nds32_frame_cache *cache;
@@ -1331,7 +1335,7 @@ nds32_epilogue_frame_cache (frame_info_ptr this_frame, void **this_cache)
 /* Implement the "this_id" frame_unwind method.  */
 
 static void
-nds32_epilogue_frame_this_id (frame_info_ptr this_frame,
+nds32_epilogue_frame_this_id (const frame_info_ptr &this_frame,
 			      void **this_cache, struct frame_id *this_id)
 {
   struct nds32_frame_cache *cache
@@ -1347,7 +1351,7 @@ nds32_epilogue_frame_this_id (frame_info_ptr this_frame,
 /* Implement the "prev_register" frame_unwind method.  */
 
 static struct value *
-nds32_epilogue_frame_prev_register (frame_info_ptr this_frame,
+nds32_epilogue_frame_prev_register (const frame_info_ptr &this_frame,
 				    void **this_cache, int regnum)
 {
   struct nds32_frame_cache *cache
@@ -1422,7 +1426,7 @@ nds32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   ULONGEST regval;
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   nds32_gdbarch_tdep *tdep = gdbarch_tdep<nds32_gdbarch_tdep> (gdbarch);
-  struct type *func_type = value_type (function);
+  struct type *func_type = function->type ();
   int abi_use_fpr = nds32_abi_use_fpr (tdep->elf_abi);
   int abi_split = nds32_abi_split (tdep->elf_abi);
 
@@ -1442,7 +1446,7 @@ nds32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   /* Now make sure there's space on the stack */
   for (i = 0; i < nargs; i++)
     {
-      struct type *type = value_type (args[i]);
+      struct type *type = args[i]->type ();
       int align = type_align (type);
 
       /* If align is zero, it may be an empty struct.
@@ -1466,11 +1470,11 @@ nds32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       int calling_use_fpr;
       int use_fpr = 0;
 
-      type = value_type (args[i]);
+      type = args[i]->type ();
       calling_use_fpr = nds32_check_calling_use_fpr (type);
       len = type->length ();
       align = type_align (type);
-      val = value_contents (args[i]).data ();
+      val = args[i]->contents ().data ();
 
       /* The size of a composite type larger than 4 bytes will be rounded
 	 up to the nearest multiple of 4.  */
@@ -1821,7 +1825,7 @@ nds32_return_value (struct gdbarch *gdbarch, struct value *func_type,
 /* Implement the "get_longjmp_target" gdbarch method.  */
 
 static int
-nds32_get_longjmp_target (frame_info_ptr frame, CORE_ADDR *pc)
+nds32_get_longjmp_target (const frame_info_ptr &frame, CORE_ADDR *pc)
 {
   gdb_byte buf[4];
   CORE_ADDR jb_addr;
@@ -1940,7 +1944,6 @@ nds32_validate_tdesc_p (const struct target_desc *tdesc,
 static struct gdbarch *
 nds32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
-  struct gdbarch *gdbarch;
   struct gdbarch_list *best_arch;
   tdesc_arch_data_up tdesc_data;
   const struct target_desc *tdesc = info.target_desc;
@@ -1981,13 +1984,14 @@ nds32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     return NULL;
 
   /* Allocate space for the new architecture.  */
-  nds32_gdbarch_tdep *tdep = new nds32_gdbarch_tdep;
+  gdbarch *gdbarch
+    = gdbarch_alloc (&info, gdbarch_tdep_up (new nds32_gdbarch_tdep));
+  nds32_gdbarch_tdep *tdep = gdbarch_tdep<nds32_gdbarch_tdep> (gdbarch);
+
   tdep->fpu_freg = fpu_freg;
   tdep->use_pseudo_fsrs = use_pseudo_fsrs;
   tdep->fs0_regnum = -1;
   tdep->elf_abi = elf_abi;
-
-  gdbarch = gdbarch_alloc (&info, tdep);
 
   set_gdbarch_wchar_bit (gdbarch, 16);
   set_gdbarch_wchar_signed (gdbarch, 0);
@@ -1997,7 +2001,8 @@ nds32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   else if (use_pseudo_fsrs == 1)
     {
       set_gdbarch_pseudo_register_read (gdbarch, nds32_pseudo_register_read);
-      set_gdbarch_pseudo_register_write (gdbarch, nds32_pseudo_register_write);
+      set_gdbarch_deprecated_pseudo_register_write
+	(gdbarch, nds32_pseudo_register_write);
       set_tdesc_pseudo_register_name (gdbarch, nds32_pseudo_register_name);
       set_tdesc_pseudo_register_type (gdbarch, nds32_pseudo_register_type);
       set_gdbarch_num_pseudo_regs (gdbarch, num_fsr_map[fpu_freg]);
