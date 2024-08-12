@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2023 Free Software Foundation, Inc.
+# Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,7 +33,6 @@ class BackTrace(perftest.TestCaseWithBasicMeasurements):
             gdb.execute(do_test_command, False, True)
 
     def execute_test(self):
-
         line_size = 2
         for _ in range(1, 12):
             # Keep the total size of dcache unchanged, and increase the

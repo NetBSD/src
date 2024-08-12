@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2023 Free Software Foundation, Inc.
+# Copyright (C) 2015-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,9 +25,7 @@
 # is that here we do not pre-expand the symtab: we don't want include
 # GDB's slowness in searching expanded symtabs first to color these results.
 
-from perftest import perftest
-from perftest import measure
-from perftest import utils
+from perftest import measure, perftest, utils
 
 
 class PrintCerr(perftest.TestCaseWithBasicMeasurements):

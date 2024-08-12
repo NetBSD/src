@@ -1,4 +1,4 @@
-# Copyright 2012-2023 Free Software Foundation, Inc.
+# Copyright 2012-2024 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -14,9 +14,7 @@
 #
 load_lib mi-support.exp
 
-if {[skip_shlib_tests]} {
-    return -1
-}
+require allow_shlib_tests
 
 standard_testfile mi-catch-load.c
 
@@ -34,9 +32,12 @@ if { [gdb_compile_shlib "${srcdir}/${subdir}/${srcfile2}" ${binfile2} {debug}] !
     return -1
 }
 
+gdb_download_shlib $binfile2
+
 # test -catch-load
 with_test_prefix "catch-load" {
     mi_clean_restart $binfile
+    mi_locate_shlib $binfile2
     mi_runto_main
 
     mi_gdb_test "111-gdb-set auto-solib-add on" "111\\^done" \
@@ -63,6 +64,7 @@ with_test_prefix "catch-load" {
 # test -catch-unload
 with_test_prefix "catch-unload" {
     mi_clean_restart $binfile
+    mi_locate_shlib $binfile2
     mi_runto_main
 
     mi_gdb_test "111-gdb-set auto-solib-add on" "111\\^done" "auto-solib-add on"

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2008-2023 Free Software Foundation, Inc.
+   Copyright 2008-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -26,9 +26,13 @@
 #include <string.h>
 #include <stdlib.h>
 
+static pthread_barrier_t threads_started_barrier;
+
 void *
 thread_function (void *arg)
 {
+  pthread_barrier_wait (&threads_started_barrier);
+
   while (1)
     sleep (100);
   return NULL;
@@ -41,8 +45,12 @@ main (int argc, char* argv[])
   pthread_t thread2;
   char *new_image;
 
+  pthread_barrier_init (&threads_started_barrier, NULL, 3);
+
   pthread_create (&thread1, NULL, thread_function, NULL);
   pthread_create (&thread2, NULL, thread_function, NULL);
+
+  pthread_barrier_wait (&threads_started_barrier);
 
   new_image = malloc (strlen (argv[0]) + 2);
   strcpy (new_image, argv[0]);

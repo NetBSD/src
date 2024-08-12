@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Free Software Foundation, Inc.
+# Copyright 2022-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,9 +25,7 @@
 
 standard_testfile .c -other.c
 
-if { [use_gdb_stub] } {
-    return
-}
+require !use_gdb_stub
 
 set srcfile_other ${srcfile2}
 set binfile_other ${binfile}-other

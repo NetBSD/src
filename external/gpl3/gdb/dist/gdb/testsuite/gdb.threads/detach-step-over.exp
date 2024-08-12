@@ -1,4 +1,4 @@
-# Copyright 2021-2023 Free Software Foundation, Inc.
+# Copyright 2021-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,9 +48,7 @@
 # a breakpoint, which has helped with exposing further corner case
 # bugs.
 
-if {![can_spawn_for_attach]} {
-    return 0
-}
+require can_spawn_for_attach
 
 standard_testfile
 
@@ -287,7 +285,7 @@ proc_with_prefix test_detach_command {condition_eval target_non_stop non_stop di
 		# over, then threads of other inferiors should be
 		# re-resumed.  Test for that by sending a signal to
 		# inferior 2.
-		remote_exec target "kill -SIGUSR1 ${pid_inf2}"
+		remote_exec target "kill -USR1 ${pid_inf2}"
 
 		gdb_test_multiple "" "stop with SIGUSR1" {
 		    -re "received signal SIGUSR1" {
@@ -316,12 +314,8 @@ proc_with_prefix test_detach_quit {condition_eval target_non_stop \
 	start_gdb_for_test $condition_eval $target_non_stop \
 	    $non_stop $displaced
 
-	gdb_test_multiple "maint show target-non-stop" "" {
-	    -wrap -re "(is|currently) on.*" {
-	    }
-	    -wrap -re "(is|currently) off.*" {
-		return
-	    }
+	if {![is_target_non_stop]} {
+	    return
 	}
     }
 

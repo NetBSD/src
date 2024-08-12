@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Free Software Foundation, Inc.
+# Copyright 1999-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,11 +46,6 @@ proc semihosted_string { string } {
   return [join $semihosted_list ""]
 }
 
-gdb_exit
-if [mi_gdb_start separate-inferior-tty] {
-    return
-}
-
 standard_testfile
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
@@ -58,8 +53,10 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
      return -1
 }
 
-mi_gdb_reinitialize_dir $srcdir/$subdir
-mi_gdb_load ${binfile}
+if {[mi_clean_restart $binfile]} {
+    return
+}
+
 mi_runto_main
 
 # The output we get from the target depends on how it is hosted.  If
@@ -96,4 +93,3 @@ mi_expect_stop "end-stepping-range" "main" "" ".*mi-console.c" $line "" \
     "finished step over hello"
     
 mi_gdb_exit
-return 0

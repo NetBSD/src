@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2009-2023 Free Software Foundation, Inc.
+# Copyright 2009-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,9 +25,8 @@
 # could be assigned during continuation of a thread with pending SIGTRAP to the
 # different/new watchpoint, just based on the watchpoint/debug register number.
 
-if {[skip_hw_watchpoint_access_tests]
-    || [skip_hw_watchpoint_multi_tests]
-    || ![istarget *-*-linux*]} {
+require allow_hw_watchpoint_access_tests allow_hw_watchpoint_multi_tests
+if {![istarget *-*-linux*]} {
     return 0
 }
 

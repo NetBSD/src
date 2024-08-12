@@ -1,5 +1,5 @@
 # manythreads.exp -- Expect script to test stopping many threads
-# Copyright (C) 2004-2023 Free Software Foundation, Inc.
+# Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,10 +17,7 @@
 # This file was written by Jeff Johnston. (jjohnstn@redhat.com)
 
 # This test requires sending ^C to interrupt the running target.
-if [target_info exists gdb,nointerrupts] {
-    verbose "Skipping manythreads.exp because of nointerrupts."
-    return
-}
+require {!target_info exists gdb,nointerrupts}
 
 standard_testfile
 
@@ -115,7 +112,7 @@ interrupt_and_wait "stop threads 1"
 set cmd "info threads"
 set ok 0
 gdb_test_multiple $cmd $cmd {
-    -re " 1 *Thread " {
+    -re " 1 *${tdlabel_re} " {
 	set ok 1
 	exp_continue
     }

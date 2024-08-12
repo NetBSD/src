@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2023 Free Software Foundation, Inc.
+# Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,10 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import time
-import os
 import gc
+import os
 import sys
+import time
 
 # time.perf_counter() and time.process_time() were added in Python
 # 3.3, time.clock() was removed in Python 3.8.

@@ -1,4 +1,4 @@
-# Copyright 2016-2023 Free Software Foundation, Inc.
+# Copyright 2016-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,10 +21,7 @@
 # stops again.  See PR gdb/20418.
 
 # Do not run if gdb debug is enabled as it doesn't work for separate-mi-tty.
-if [gdb_debug_enabled] {
-    untested "debug is enabled"
-    return 0
-}
+require !gdb_debug_enabled
 
 load_lib mi-support.exp
 
@@ -43,16 +40,10 @@ proc do_test {sync_command} {
     global gdb_spawn_id gdb_main_spawn_id mi_spawn_id inferior_spawn_id
     global gdb_prompt mi_gdb_prompt
 
-    mi_gdb_exit
-
-    if {[mi_gdb_start "separate-mi-tty"] != 0} {
+    if {[mi_clean_restart $binfile "separate-mi-tty"] != 0} {
 	fail "could not start gdb"
 	return
     }
-
-    mi_delete_breakpoints
-    mi_gdb_reinitialize_dir $srcdir/$subdir
-    mi_gdb_load $binfile
 
     # Start a synchronous run/continue on the MI UI.
     set test "send synchronous execution command"

@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Free Software Foundation, Inc.
+# Copyright 2020-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ if {![multi_target_prepare]} {
 }
 
 proc test_thread_find {} {
-    global decimal gdb_prompt
+    global decimal gdb_prompt tdlabel_re
 
     set NUM_INFS 6
 
@@ -50,7 +50,7 @@ proc test_thread_find {} {
     }
     set any "\[^\r\n\]*"
     gdb_test_multiple "info threads" "collect thread id" {
-	-re ". ($decimal).$decimal  (Thread ${any}) \"threadname_\[0-9\]+\" $any" {
+	-re ". ($decimal).$decimal  (${tdlabel_re} ${any}) \"threadname_\[0-9\]+\" $any" {
 	    set thr_num $expect_out(1,string)
 	    set target_id($thr_num) $expect_out(2,string)
 	    exp_continue

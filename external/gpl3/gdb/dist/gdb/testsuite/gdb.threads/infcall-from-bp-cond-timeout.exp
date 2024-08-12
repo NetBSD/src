@@ -1,0 +1,191 @@
+# Copyright 2022-2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Tests inferior calls executed from a breakpoint condition in
+# a multi-threaded program.
+#
+# This test has the inferior function call timeout, and checks how GDB
+# handles this situation.
+
+standard_testfile
+
+if { [build_executable "failed to prepare" ${binfile} "${srcfile}" \
+	  {debug pthreads}] } {
+    return
+}
+
+set cond_bp_line [gdb_get_line_number "Conditional breakpoint here"]
+set final_bp_line [gdb_get_line_number "Stop marker"]
+set segfault_line [gdb_get_line_number "Segfault here"]
+
+# Setup GDB based on TARGET_ASYNC, TARGET_NON_STOP, and NON_STOP.
+# Setup some breakpoints in the inferior, one of which has an inferior
+# call within its condition.
+#
+# Continue GDB, the breakpoint with inferior call will be hit, but the
+# inferior call will never return.  We expect GDB to timeout.
+#
+# The reason that the inferior call never completes is that a second
+# thread, on which the inferior call relies, either hits a breakpoint
+# (when OTHER_THREAD_BP is true), or crashes (when OTHER_THREAD_BP is
+# false).
+#
+# When UNWIND is "on" GDB will unwind the thread which performed the
+# inferior function call back to the state where the inferior call was
+# made (when the inferior call times out).  Otherwise, when UNWIND is
+# "off", the inferior is left in the frame where the timeout occurred.
+proc run_test { target_async target_non_stop non_stop other_thread_bp unwind } {
+    save_vars { ::GDBFLAGS } {
+	append ::GDBFLAGS " -ex \"maint set target-non-stop $target_non_stop\""
+	append ::GDBFLAGS " -ex \"maint non-stop $non_stop\""
+	append ::GDBFLAGS " -ex \"maintenance set target-async ${target_async}\""
+
+	clean_restart ${::binfile}
+    }
+
+    if {![runto_main]} {
+	return
+    }
+
+    # The default timeout for indirect inferior calls (e.g. inferior
+    # calls for conditional breakpoint expressions) is pretty high.
+    # We don't want the test to take too long, so reduce this.
+    #
+    # However, the test relies on a second thread hitting some event
+    # (either a breakpoint or signal) before this timeout expires.
+    #
+    # There is a chance that on a really slow system this might not
+    # happen, in which case the test might fail.
+    #
+    # However, we still allocate 5 seconds, which feels like it should
+    # be enough time in most cases, but maybe we need to do something
+    # smarter here?  Possibly we could have some initial run where the
+    # inferior doesn't timeout, but does perform the same interaction
+    # between threads, we could time that, and use that as the basis
+    # for this timeout.  For now though, we just hope 5 seconds is
+    # enough.
+    gdb_test_no_output "set indirect-call-timeout 5"
+    gdb_test_no_output "set unwind-on-timeout $unwind"
+
+    gdb_breakpoint \
+	"${::srcfile}:${::cond_bp_line} if (condition_func ())"
+    set bp_num [get_integer_valueof "\$bpnum" "*UNKNOWN*" \
+		    "get number for conditional breakpoint"]
+
+    gdb_breakpoint "${::srcfile}:${::final_bp_line}"
+    set final_bp_num [get_integer_valueof "\$bpnum" "*UNKNOWN*" \
+			  "get number for final breakpoint"]
+
+    # The thread performing an inferior call relies on a second
+    # thread.  The second thread will segfault unless it hits a
+    # breakpoint first.  In either case the initial thread will not
+    # complete its inferior call.
+    if { $other_thread_bp } {
+	gdb_breakpoint "${::srcfile}:${::segfault_line}"
+	set segfault_bp_num [get_integer_valueof "\$bpnum" "*UNKNOWN*" \
+				 "get number for segfault breakpoint"]
+    }
+
+    if { $unwind } {
+	gdb_test "continue" \
+	    [multi_line \
+		 "Error in testing condition for breakpoint ${bp_num}:" \
+		 "The program being debugged timed out while in a function called from GDB\\." \
+		 "GDB has restored the context to what it was before the call\\." \
+		 "To change this behavior use \"set unwind-on-timeout off\"\\." \
+		 "Evaluation of the expression containing the function" \
+		 "\\(condition_func\\) will be abandoned\\." \
+		 "" \
+		 "Thread ${::decimal}\[^\r\n\]*hit Breakpoint ${bp_num}, \[^\r\n\]+" \
+		 "\[^\r\n\]+ Conditional breakpoint here\\. \[^\r\n\]+"] \
+	    "expected timeout waiting for inferior call to complete"
+    } else {
+	# When non-stop mode is off we get slightly different output from GDB.
+	if { ([target_info gdb_protocol] == "remote"
+	      || [target_info gdb_protocol] == "extended-remote")
+	     && !$target_non_stop} {
+	    set stopped_line_pattern \
+		"Thread ${::decimal} \"\[^\r\n\"\]+\" received signal SIGINT, Interrupt\\."
+	} else {
+	    set stopped_line_pattern "Thread ${::decimal} \"\[^\r\n\"\]+\" stopped\\."
+	}
+
+	gdb_test "continue" \
+	    [multi_line \
+		 "$stopped_line_pattern" \
+		 ".*" \
+		 "Error in testing condition for breakpoint ${bp_num}:" \
+		 "The program being debugged timed out while in a function called from GDB\\." \
+		 "GDB remains in the frame where the timeout occurred\\." \
+		 "To change this behavior use \"set unwind-on-timeout on\"\\." \
+		 "Evaluation of the expression containing the function" \
+		 "\\(condition_func\\) will be abandoned\\." \
+		 "When the function is done executing, GDB will silently stop\\."] \
+	    "expected timeout waiting for inferior call to complete"
+    }
+
+    # Remember that other thread that either crashed (with a segfault)
+    # or hit a breakpoint?  Now that the inferior call has timed out,
+    # if we try to resume then we should see the pending event from
+    # that other thread.
+    if { $other_thread_bp } {
+	gdb_test "continue" \
+	    [multi_line \
+		 "Continuing\\." \
+		 ".*" \
+		 "" \
+		 "Thread ${::decimal} \"\[^\"\r\n\]+\" hit Breakpoint ${segfault_bp_num}, do_segfault \[^\r\n\]+:${::segfault_line}" \
+		 "${::decimal}\\s+\[^\r\n\]+Segfault here\[^\r\n\]+"] \
+	    "hit the segfault breakpoint"
+    } else {
+	gdb_test "continue" \
+	    [multi_line \
+		 "Continuing\\." \
+		 ".*" \
+		 "Thread ${::decimal} \"infcall-from-bp\" received signal SIGSEGV, Segmentation fault\\." \
+		 "\\\[Switching to Thread \[^\r\n\]+\\\]" \
+		 "${::hex} in do_segfault \\(\\) at \[^\r\n\]+:${::segfault_line}" \
+		 "${::decimal}\\s+\[^\r\n\]+Segfault here\[^\r\n\]+"] \
+	    "hit the segfault"
+    }
+}
+
+foreach_with_prefix target_async {"on" "off" } {
+
+    if { !$target_async } {
+	# GDB can't timeout while waiting for a thread if the target
+	# runs with async-mode turned off; once the target is running
+	# GDB is effectively blocked until the target stops for some
+	# reason.
+	continue
+    }
+
+    foreach_with_prefix target_non_stop {"off" "on"} {
+	foreach_with_prefix non_stop {"off" "on"} {
+	    if { $non_stop && !$target_non_stop } {
+		# It doesn't make sense to operate GDB in non-stop
+		# mode when the target has (in theory) non-stop mode
+		# disabled.
+		continue
+	    }
+	    foreach_with_prefix unwind {"off" "on"} {
+		foreach_with_prefix other_thread_bp { true false } {
+		    run_test $target_async $target_non_stop $non_stop \
+			$other_thread_bp $unwind
+		}
+	    }
+	}
+    }
+}

@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2023 Free Software Foundation, Inc.
+# Copyright (C) 2016-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -74,6 +74,7 @@ proc test_one_iteration {} {
     global gdb_prompt
     global NUM_THREADS
     global decimal
+    global tdlabel_re
 
     set saw_continuing 0
     set test "continue -a &"
@@ -145,7 +146,7 @@ proc test_one_iteration {} {
     set running_count 0
     set test "all threads are stopped"
     return_if_nonzero [gdb_test_multiple "info threads" $test {
-	-re "Thread \[^\r\n\]* \\(running\\)" {
+	-re "${tdlabel_re} \[^\r\n\]* \\(running\\)" {
 	    incr running_count
 	    exp_continue
 	}
