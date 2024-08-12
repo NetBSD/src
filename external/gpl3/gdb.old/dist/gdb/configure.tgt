@@ -14,6 +14,7 @@
 case $targ in
  *-*-irix* | \
  *-*-solaris2.[01] | *-*-solaris2.[2-9]* | *-*-solaris2.10* | \
+ *-*-netbsdpe* | \
  alpha*-*-osf* | \
  alpha*-*-freebsd* | \
  alpha*-*-kfreebsd*-gnu | \
@@ -25,6 +26,7 @@ case $targ in
  m68*-*-os68k* | \
  mips*-*-pe | \
  rs6000-*-lynxos* | \
+ score-*-* | \
  sh*-*-pe | \
  hppa*-*-hpux* | \
  ia64-*-hpux* | \
@@ -39,7 +41,8 @@ esac
 
 x86_tobjs="x86-tdep.o"
 i386_tobjs="i386-tdep.o arch/i386.o i387-tdep.o ${x86_tobjs}"
-amd64_tobjs="amd64-tdep.o arch/amd64.o ${x86_tobjs}"
+amd64_tobjs="ravenscar-thread.o amd64-ravenscar-thread.o \
+    amd64-tdep.o arch/amd64.o ${x86_tobjs}"
 
 # Here are three sections to get a list of target specific object
 # files according to target triplet $TARG.
@@ -64,7 +67,8 @@ arc*-*-*)
 
 arm*-*-*)
 	cpu_obs="aarch32-tdep.o arch/aarch32.o arch/arm.o \
-		 arch/arm-get-next-pcs.o arm-tdep.o";;
+		 arch/arm-get-next-pcs.o arm-tdep.o arm-none-tdep.o"
+	;;
 
 hppa*-*-*)
 	# Target: HP PA-RISC
@@ -78,13 +82,23 @@ i[34567]86-*-*)
 	fi
 	;;
 
+ia16*-*-*)
+	# Target: Intel IA-16
+	cpu_obs="${i386_tobjs}"
+	;;
+
 ia64*-*-*)
 	# Target: Intel IA-64
 	cpu_obs="ia64-tdep.o"
 	;;
 
+loongarch*-*-*)
+	# Target: LoongArch baremetal
+	cpu_obs="loongarch-tdep.o arch/loongarch.o"
+	;;
+
 riscv*-*-*)
-	cpu_obs="riscv-tdep.o arch/riscv.o \
+	cpu_obs="riscv-tdep.o riscv-none-tdep.o arch/riscv.o \
 	         ravenscar-thread.o riscv-ravenscar-thread.o";;
 
 x86_64-*-*)
@@ -103,7 +117,7 @@ case "${targ}" in
 *-*-freebsd* | *-*-kfreebsd*-gnu)
 	os_obs="fbsd-tdep.o solib-svr4.o";;
 *-*-netbsd* | *-*-knetbsd*-gnu)
-	os_obs="nbsd-tdep.o solib-svr4.o";;
+	os_obs="netbsd-tdep.o solib-svr4.o";;
 *-*-openbsd*)
 	os_obs="obsd-tdep.o solib-svr4.o";;
 esac
@@ -124,6 +138,7 @@ aarch64*-*-freebsd*)
 aarch64*-*-linux*)
 	# Target: AArch64 linux
 	gdb_target_obs="aarch64-linux-tdep.o arch/aarch64.o\
+			arch/aarch64-mte-linux.o \
 			arch/arm.o arch/arm-linux.o arch/arm-get-next-pcs.o \
 			arm-tdep.o arm-linux-tdep.o \
 			glibc-tdep.o linux-tdep.o solib-svr4.o \
@@ -132,14 +147,10 @@ aarch64*-*-linux*)
 
 aarch64*-*-netbsd*)
 	# Target: AArch64 NetBSD
-	gdb_target_obs="aarch64-tdep.o aarch64-nbsd-tdep.o \
+	gdb_target_obs="aarch64-tdep.o aarch64-netbsd-tdep.o \
 			arch/aarch64-insn.o"
 	;;
 
-alpha*-*-osf*)
-	# Target: Little-endian Alpha running OSF/1
-	gdb_target_obs="alpha-tdep.o alpha-osf1-tdep.o alpha-mdebug-tdep.o"
-	;;
 alpha*-*-linux*)
 	# Target: Little-endian Alpha running Linux
 	gdb_target_obs="alpha-mdebug-tdep.o alpha-linux-tdep.o \
@@ -148,12 +159,12 @@ alpha*-*-linux*)
 alpha*-*-netbsd* | alpha*-*-knetbsd*-gnu)
 	# Target: NetBSD/alpha
 	gdb_target_obs="alpha-mdebug-tdep.o alpha-bsd-tdep.o \
-			alpha-nbsd-tdep.o"
+			alpha-netbsd-tdep.o"
 	;;
 alpha*-*-openbsd*)
 	# Target: OpenBSD/alpha
 	gdb_target_obs="alpha-mdebug-tdep.o alpha-bsd-tdep.o \
-			alpha-nbsd-tdep.o alpha-obsd-tdep.o nbsd-tdep.o"
+			alpha-netbsd-tdep.o alpha-obsd-tdep.o netbsd-tdep.o"
 	;;
 
 am33_2.0*-*-linux*)
@@ -187,43 +198,34 @@ arm*-*-freebsd*)
 	;;
 arm*-*-netbsd* | arm*-*-knetbsd*-gnu)
 	# Target: NetBSD/arm
-	gdb_target_obs="arm-bsd-tdep.o arm-nbsd-tdep.o"
+	gdb_target_obs="arm-netbsd-tdep.o"
 	;;
 arm*-*-openbsd*)
 	# Target: OpenBSD/arm
 	gdb_target_obs="arm-bsd-tdep.o arm-obsd-tdep.o"
 	;;
-arm*-*-symbianelf*)
-	# Target: SymbianOS/arm
-	gdb_target_obs="arm-symbian-tdep.o"
-	;;
 arm*-*-*)
 	# Target: ARM embedded system
 	gdb_target_obs="arm-pikeos-tdep.o"
-	gdb_sim=../sim/arm/libsim.a
 	;;
 
 avr-*-*)
 	# Target: AVR
 	gdb_target_obs="avr-tdep.o"
-	gdb_sim=../sim/avr/libsim.a
 	;;
 
 bfin-*-*linux*)
 	# Target: Blackfin Linux
 	gdb_target_obs="bfin-tdep.o bfin-linux-tdep.o linux-tdep.o"
-	gdb_sim=../sim/bfin/libsim.a
 	;;
 bfin-*-*)
 	# Target: Blackfin processor
 	gdb_target_obs="bfin-tdep.o"
-	gdb_sim=../sim/bfin/libsim.a
 	;;
 
 bpf-*-*)
 	# Target: eBPF
 	gdb_target_obs="bpf-tdep.o"
-	gdb_sim=../sim/bpf/libsim.a
 	;;
 
 cris*)
@@ -245,18 +247,15 @@ csky*-*-*)
 frv-*-*)
 	# Target: Fujitsu FRV processor
 	gdb_target_obs="frv-tdep.o frv-linux-tdep.o linux-tdep.o solib-frv.o"
-	gdb_sim=../sim/frv/libsim.a
 	;;
 
 moxie-*-elf | moxie-*-moxiebox | moxie-*-rtems*)
 	gdb_target_obs="moxie-tdep.o"
-	gdb_sim=../sim/moxie/libsim.a
 	;;
 
 h8300-*-*)
 	# Target: H8300 processor
 	gdb_target_obs="h8300-tdep.o"
-	gdb_sim=../sim/h8300/libsim.a
 	;;
 
 hppa*-*-linux*)
@@ -266,11 +265,11 @@ hppa*-*-linux*)
 	;;
 hppa*-*-netbsd*)
 	# Target: NetBSD/hppa
-	gdb_target_obs="hppa-bsd-tdep.o hppa-nbsd-tdep.o"
+	gdb_target_obs="hppa-bsd-tdep.o hppa-netbsd-tdep.o"
 	;;
 hppa*-*-openbsd*)
 	# Target: OpenBSD/hppa
-	gdb_target_obs="hppa-bsd-tdep.o hppa-obsd-tdep.o"
+	gdb_target_obs="hppa-bsd-tdep.o hppa-obsd-tdep.o solib-svr4.o"
 	;;
 
 i[34567]86-*-darwin*)
@@ -291,7 +290,7 @@ i[34567]86-*-freebsd* | i[34567]86-*-kfreebsd*-gnu)
 	;;
 i[34567]86-*-netbsd* | i[34567]86-*-knetbsd*-gnu)
 	# Target: NetBSD/i386
-	gdb_target_obs="i386-bsd-tdep.o i386-nbsd-tdep.o "
+	gdb_target_obs="i386-bsd-tdep.o i386-netbsd-tdep.o "
 	;;
 i[34567]86-*-openbsd*)
 	# Target: OpenBSD/i386
@@ -346,22 +345,28 @@ ia64-*-*vms*)
 	gdb_target_obs="ia64-vms-tdep.o"
 	;;
 
+ia64-*-netbsd*)
+	# Target: Intel IA-64 running netbsd
+	gdb_target_obs="ia64-netbsd-tdep.o"
+	;;
+
 iq2000-*-*)
 	gdb_target_obs="iq2000-tdep.o"
-	gdb_sim=../sim/iq2000/libsim.a
 	;;
 
 lm32-*-*)		
 	gdb_target_obs="lm32-tdep.o" 
-	gdb_sim=../sim/lm32/libsim.a
+	;;
+
+loongarch*-*-linux*)
+	# Target: LoongArch running Linux
+	gdb_target_obs="loongarch-linux-tdep.o glibc-tdep.o \
+			linux-tdep.o solib-svr4.o"
 	;;
 
 m32c-*-*)
 	# Target: Renesas M32C family
 	gdb_target_obs="m32c-tdep.o"
-	# There may also be a SID / CGEN simulator for this,
-	# but we do have DJ Delorie's mini-sim.
-	gdb_sim=../sim/m32c/libsim.a
 	;;
 
 m32r*-*-linux*)
@@ -369,18 +374,15 @@ m32r*-*-linux*)
 	gdb_target_obs="m32r-tdep.o m32r-linux-tdep.o \
 			glibc-tdep.o solib-svr4.o symfile-mem.o \
 			linux-tdep.o"
-	gdb_sim=../sim/m32r/libsim.a
 	;;
 m32r*-*-*)
 	# Target: Renesas m32r processor
 	gdb_target_obs="m32r-tdep.o"
-	gdb_sim=../sim/m32r/libsim.a
 	;;
 
 m68hc11*-*-*|m6811*-*-*)
 	# Target: Motorola 68HC11 processor
 	gdb_target_obs="m68hc11-tdep.o"
-	gdb_sim=../sim/m68hc11/libsim.a
 	;;
 
 m68*-*-aout* | m68*-*-coff* | m68*-*-elf* | m68*-*-rtems* | m68*-*-uclinux* | \
@@ -393,7 +395,7 @@ m68*-*-linux*)
 	gdb_target_obs="m68k-tdep.o m68k-linux-tdep.o solib-svr4.o \
 			linux-tdep.o glibc-tdep.o symfile-mem.o"
 	;;
-m68*-*-netbsd* | m68*-*-knetbsd*-gnu | m5407-*-netbsdelf*)
+m68*-*-netbsd* | m68*-*-knetbsd*-gnu | m5407-*-netbsd*)
 	# Target: NetBSD/m68k
 	gdb_target_obs="m68k-tdep.o m68k-bsd-tdep.o"
 	;;
@@ -412,29 +414,24 @@ microblaze*-linux-*|microblaze*-*-linux*)
 	# Target: Xilinx MicroBlaze running Linux
 	gdb_target_obs="microblaze-tdep.o microblaze-linux-tdep.o solib-svr4.o \
 			symfile-mem.o linux-tdep.o"
-	gdb_sim=../sim/microblaze/libsim.a
 	;;
 microblaze*-*-*)
 	# Target: Xilinx MicroBlaze running standalone
 	gdb_target_obs="microblaze-tdep.o"
-	gdb_sim=../sim/microblaze/libsim.a
 	;;
 
 mips*-*-linux*)
 	# Target: Linux/MIPS
 	gdb_target_obs="mips-tdep.o mips-linux-tdep.o glibc-tdep.o \
 			solib-svr4.o symfile-mem.o linux-tdep.o"
-	gdb_sim=../sim/mips/libsim.a
 	;;
 mips*-*-netbsd* | mips*-*-knetbsd*-gnu)
 	# Target: MIPS running NetBSD
-	gdb_target_obs="mips-tdep.o mips-nbsd-tdep.o"
-	gdb_sim=../sim/mips/libsim.a
+	gdb_target_obs="mips-tdep.o mips-netbsd-tdep.o"
 	;;
 mips*-*-freebsd*)
 	# Target: MIPS running FreeBSD
 	gdb_target_obs="mips-tdep.o mips-fbsd-tdep.o"
-	gdb_sim=../sim/mips/libsim.a
 	;;
 mips64*-*-openbsd*)
 	# Target: OpenBSD/mips64
@@ -443,28 +440,23 @@ mips64*-*-openbsd*)
 mips*-sde*-elf*)
 	# Target: MIPS SDE
 	gdb_target_obs="mips-tdep.o mips-sde-tdep.o"
-	gdb_sim=../sim/mips/libsim.a
 	;;
 mips*-*-elf)
 	# Target: MIPS ELF
 	gdb_target_obs="mips-tdep.o"
-	gdb_sim=../sim/mips/libsim.a
 	;;
 mips*-*-*)
 	# Target: MIPS
 	gdb_target_obs="mips-tdep.o"
-	gdb_sim=../sim/mips/libsim.a
 	;;
 
 mn10300-*-*)
 	# Target: Matsushita mn10300
 	gdb_target_obs="mn10300-tdep.o"
-	gdb_sim=../sim/mn10300/libsim.a
 	;;
 
 msp430-*-elf*)
 	gdb_target_obs="msp430-tdep.o"
-	gdb_sim=../sim/msp430/libsim.a
 	;;
 
 nds32*-*-elf)
@@ -487,13 +479,11 @@ or1k*-*-linux*)
 	# Target: OpenCores OpenRISC 1000 32-bit running Linux
 	gdb_target_obs="or1k-tdep.o or1k-linux-tdep.o solib-svr4.o \
 			symfile-mem.o glibc-tdep.o linux-tdep.o"
-	gdb_sim=../sim/or1k/libsim.a
 	;;
 
 or1k-*-* | or1knd-*-*)
 	# Target: OpenCores OpenRISC 1000 32-bit implementation bare metal
 	gdb_target_obs="or1k-tdep.o"
-	gdb_sim=../sim/or1k/libsim.a
 	;;
 
 powerpc*-*-freebsd*)
@@ -505,9 +495,8 @@ powerpc*-*-freebsd*)
 
 powerpc-*-netbsd* | powerpc-*-knetbsd*-gnu | powerpc64-*-netbsd*)
 	# Target: NetBSD/powerpc
-	gdb_target_obs="rs6000-tdep.o ppc-sysv-tdep.o ppc-nbsd-tdep.o \
+	gdb_target_obs="rs6000-tdep.o ppc-sysv-tdep.o ppc-netbsd-tdep.o \
 			ravenscar-thread.o ppc-ravenscar-thread.o"
-	gdb_sim=../sim/ppc/libsim.a
 	;;
 powerpc-*-openbsd*)
 	# Target: OpenBSD/powerpc
@@ -528,7 +517,6 @@ powerpc*-*-linux*)
 			ravenscar-thread.o ppc-ravenscar-thread.o \
 			linux-record.o \
 			arch/ppc-linux-common.o"
-	gdb_sim=../sim/ppc/libsim.a
 	;;
 powerpc-*-lynx*178)
 	# Target: PowerPC running Lynx178.
@@ -540,7 +528,6 @@ powerpc*-*-*)
 	# Target: PowerPC running eabi
 	gdb_target_obs="rs6000-tdep.o ppc-sysv-tdep.o solib-svr4.o \
 			ravenscar-thread.o ppc-ravenscar-thread.o"
-	gdb_sim=../sim/ppc/libsim.a
 	;;
 
 s390*-*-linux*)
@@ -560,10 +547,10 @@ riscv*-*-linux*)
  			linux-tdep.o solib-svr4.o symfile-mem.o linux-record.o"
 	;;
 
-riscv*-*-netbsd*)
-	# Target: FreeBSD/riscv
-	gdb_target_obs="riscv-nbsd-tdep.o"
-	;;
+riscv*-*-netbsd*) 
+        # Target: NetBSD/riscv
+	gdb_target_obs="riscv-netbsd-tdep.o"
+	;;           
 
 riscv*-*-*)
 	# Target: RISC-V architecture
@@ -573,18 +560,11 @@ riscv*-*-*)
 rl78-*-elf)
 	# Target: Renesas rl78
 	gdb_target_obs="rl78-tdep.o"
-	gdb_sim=../sim/rl78/libsim.a
 	;;
 
-rx-*-elf)
+rx-*-*)
 	# Target: Renesas RX
 	gdb_target_obs="rx-tdep.o"
-	gdb_sim=../sim/rx/libsim.a
-	;;
-
-score-*-*)
-	# Target: S+core embedded system
-	gdb_target_obs="score-tdep.o"
 	;;
 
 sh*-*-linux*)
@@ -592,21 +572,18 @@ sh*-*-linux*)
 	gdb_target_obs="sh-tdep.o sh-linux-tdep.o \
 			solib-svr4.o symfile-mem.o \
 			glibc-tdep.o linux-tdep.o"
-	gdb_sim=../sim/sh/libsim.a
 	;;
-sh*-*-netbsdelf* | sh*-*-knetbsd*-gnu)
+sh*-*-netbsd* | sh*-*-knetbsd*-gnu)
 	# Target: NetBSD/sh
-	gdb_target_obs="sh-tdep.o sh-nbsd-tdep.o"
-	gdb_sim=../sim/sh/libsim.a
+	gdb_target_obs="sh-tdep.o sh-netbsd-tdep.o"
 	;;
 sh*-*-openbsd*)
 	# Target: OpenBSD/sh
-	gdb_target_obs="sh-tdep.o sh-nbsd-tdep.o"
+	gdb_target_obs="sh-tdep.o sh-netbsd-tdep.o"
 	;;
 sh*)
 	# Target: Embedded Renesas Super-H processor
 	gdb_target_obs="sh-tdep.o"
-	gdb_sim=../sim/sh/libsim.a
 	;;
 
 sparc-*-linux*)
@@ -635,26 +612,26 @@ sparc*-*-freebsd* | sparc*-*-kfreebsd*-gnu)
 	;;
 sparc-*-netbsd* | sparc-*-knetbsd*-gnu)
 	# Target: NetBSD/sparc
-	gdb_target_obs="sparc-tdep.o sparc-nbsd-tdep.o \
+	gdb_target_obs="sparc-tdep.o sparc-netbsd-tdep.o \
 			ravenscar-thread.o sparc-ravenscar-thread.o"
 	;;
 sparc64-*-netbsd* | sparc64-*-knetbsd*-gnu)
 	# Target: NetBSD/sparc64
-	gdb_target_obs="sparc64-tdep.o sparc64-nbsd-tdep.o sparc-tdep.o \
-			sparc-nbsd-tdep.o \
+	gdb_target_obs="sparc64-tdep.o sparc64-netbsd-tdep.o sparc-tdep.o \
+			sparc-netbsd-tdep.o \
 			ravenscar-thread.o sparc-ravenscar-thread.o"
 	;;
 sparc-*-openbsd*)
 	# Target: OpenBSD/sparc
-	gdb_target_obs="sparc-tdep.o sparc-nbsd-tdep.o sparc-obsd-tdep.o \
-			nbsd-tdep.o bsd-uthread.o \
+	gdb_target_obs="sparc-tdep.o sparc-netbsd-tdep.o sparc-obsd-tdep.o \
+			netbsd-tdep.o bsd-uthread.o \
 			ravenscar-thread.o sparc-ravenscar-thread.o"
 	;;
 sparc64-*-openbsd*)
 	# Target: OpenBSD/sparc64
-	gdb_target_obs="sparc64-tdep.o sparc64-nbsd-tdep.o sparc64-obsd-tdep.o \
-			sparc-tdep.o sparc-nbsd-tdep.o sparc-obsd-tdep.o \
-			nbsd-tdep.o bsd-uthread.o \
+	gdb_target_obs="sparc64-tdep.o sparc64-netbsd-tdep.o sparc64-obsd-tdep.o \
+			sparc-tdep.o sparc-netbsd-tdep.o sparc-obsd-tdep.o \
+			netbsd-tdep.o bsd-uthread.o \
 			ravenscar-thread.o sparc-ravenscar-thread.o"
 	;;
 sparc-*-solaris2* | sparcv9-*-solaris2* | sparc64-*-solaris2*)
@@ -667,7 +644,6 @@ sparc-*-*)
 	# Target: SPARC
 	gdb_target_obs="sparc-tdep.o \
 			ravenscar-thread.o sparc-ravenscar-thread.o"
-	gdb_sim=../sim/erc32/libsim.a
 	;;
 sparc64-*-*)
 	# Target: UltraSPARC
@@ -705,18 +681,16 @@ xstormy16-*-*)
 
 ft32-*-elf)
 	gdb_target_obs="ft32-tdep.o"
-	gdb_sim=../sim/ft32/libsim.a
 	;;
 
 v850*-*-elf | v850*-*-rtems*)
 	# Target: NEC V850 processor
 	gdb_target_obs="v850-tdep.o"
-	gdb_sim=../sim/v850/libsim.a
 	;;
 
 vax-*-netbsd* | vax-*-knetbsd*-gnu)
 	# Target: NetBSD/vax
-	gdb_target_obs="vax-tdep.o"
+	gdb_target_obs="vax-tdep.o vax-netbsd-tdep.o"
 	;;
 vax-*-openbsd*)
 	# Target: OpenBSD/vax
@@ -761,8 +735,8 @@ x86_64-*-mingw* | x86_64-*-cygwin*)
         ;;
 x86_64-*-netbsd* | x86_64-*-knetbsd*-gnu)
 	# Target: NetBSD/amd64
-	gdb_target_obs="amd64-nbsd-tdep.o ${i386_tobjs} \
-			i386-bsd-tdep.o i386-nbsd-tdep.o"
+	gdb_target_obs="amd64-netbsd-tdep.o ${i386_tobjs}
+			i386-bsd-tdep.o i386-netbsd-tdep.o"
 	;;
 x86_64-*-openbsd*)
 	# Target: OpenBSD/amd64
@@ -777,12 +751,53 @@ xtensa*-*-*linux*)
 	# Target: GNU/Linux Xtensa
 	gdb_target_obs="xtensa-linux-tdep.o symfile-mem.o linux-tdep.o"
 	;;
+z80*)
+	# Target: Z80
+	gdb_target_obs="z80-tdep.o"
+	;;
 
 esac
 
 # Put them together.
 
 gdb_target_obs="${cpu_obs} ${os_obs} ${gdb_target_obs}"
+
+# Get the sim settings.
+# NB: Target matching is aligned with sim/configure.ac.  Changes must be kept
+# in sync with that file.
+
+case "${targ}" in
+aarch64*-*-*)		gdb_sim=aarch64 ;;
+arm*-*-*)		gdb_sim=arm ;;
+avr*-*-*)		gdb_sim=avr ;;
+bfin-*-*)		gdb_sim=bfin ;;
+bpf-*-*)		gdb_sim=bpf ;;
+cris-*-*|cris32-*-*)	gdb_sim=cris ;;
+frv-*-*)		gdb_sim=frv ;;
+ft32-*-*)		gdb_sim=ft32 ;;
+h8300*-*-*)		gdb_sim=h8300 ;;
+iq2000-*-*)		gdb_sim=iq2000 ;;
+lm32-*-*)		gdb_sim=lm32 ;;
+m32c-*-*)		gdb_sim=m32c ;;
+m32r-*-*)		gdb_sim=m32r ;;
+m68hc11-*-*|m6811-*-*)	gdb_sim=m68hc11 ;;
+microblaze*-*-*)	gdb_sim=microblaze ;;
+mips*-*-*)		gdb_sim=mips ;;
+mn10300*-*-*)		gdb_sim=mn10300 ;;
+moxie-*-*)		gdb_sim=moxie ;;
+msp430*-*-*)		gdb_sim=msp430 ;;
+or1k*-*-*)		gdb_sim=or1k ;;
+powerpc*-*-*)		gdb_sim=ppc ;;
+riscv*-*-*)		gdb_sim=riscv ;;
+rl78-*-*)		gdb_sim=rl78 ;;
+rx-*-*)			gdb_sim=rx ;;
+sh*-*-*)		gdb_sim=sh ;;
+sparc-*-*)		gdb_sim=erc32 ;;
+v850*-*-*)		gdb_sim=v850 ;;
+esac
+if test "x$gdb_sim" != "x"; then
+  gdb_sim="../sim/${gdb_sim}/libsim.a"
+fi
 
 # map target onto default OS ABI
 
@@ -802,8 +817,6 @@ m68*-*-openbsd* | m88*-*-openbsd* | vax-*-openbsd*) ;;
 *-*-mingw*)	gdb_osabi=GDB_OSABI_WINDOWS ;;
 *-*-cygwin*)	gdb_osabi=GDB_OSABI_CYGWIN ;;
 *-*-dicos*)	gdb_osabi=GDB_OSABI_DICOS ;;
-*-*-symbianelf*)
-		gdb_osabi=GDB_OSABI_SYMBIAN ;;
 powerpc-*-aix* | rs6000-*-* | powerpc64-*-aix*)
                 gdb_osabi=GDB_OSABI_AIX ;;
 esac

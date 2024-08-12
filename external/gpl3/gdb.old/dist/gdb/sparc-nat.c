@@ -1,6 +1,6 @@
 /* Native-dependent code for SPARC.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -147,7 +147,8 @@ sparc32_fpregset_supplies_p (struct gdbarch *gdbarch, int regnum)
    for all registers (including the floating-point registers).  */
 
 void
-sparc_fetch_inferior_registers (struct regcache *regcache, int regnum)
+sparc_fetch_inferior_registers (process_stratum_target *proc_target,
+				regcache *regcache, int regnum)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   ptid_t ptid = regcache->ptid ();
@@ -167,6 +168,11 @@ sparc_fetch_inferior_registers (struct regcache *regcache, int regnum)
       if (gdb_ptrace (PTRACE_GETREGS, ptid, (PTRACE_TYPE_ARG3) &regs) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
+      /* Deep down, sparc_supply_rwindow reads memory, so needs the global
+	 thread context to be set.  */
+      scoped_restore restore_inferior_ptid
+	= make_scoped_restore (&inferior_ptid, ptid);
+
       sparc_supply_gregset (sparc_gregmap, regcache, -1, &regs);
       if (regnum != -1)
 	return;
@@ -184,7 +190,8 @@ sparc_fetch_inferior_registers (struct regcache *regcache, int regnum)
 }
 
 void
-sparc_store_inferior_registers (struct regcache *regcache, int regnum)
+sparc_store_inferior_registers (process_stratum_target *proc_target,
+				regcache *regcache, int regnum)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   ptid_t ptid = regcache->ptid ();
@@ -208,6 +215,12 @@ sparc_store_inferior_registers (struct regcache *regcache, int regnum)
 	  ULONGEST sp;
 
 	  regcache_cooked_read_unsigned (regcache, SPARC_SP_REGNUM, &sp);
+
+	  /* Deep down, sparc_collect_rwindow writes memory, so needs the global
+	     thread context to be set.  */
+	  scoped_restore restore_inferior_ptid
+	    = make_scoped_restore (&inferior_ptid, ptid);
+
 	  sparc_collect_rwindow (regcache, sp, regnum);
 	}
 

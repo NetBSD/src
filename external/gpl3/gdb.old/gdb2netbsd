@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: gdb2netbsd,v 1.9 2023/03/21 16:54:43 christos Exp $
+#	$NetBSD: gdb2netbsd,v 1.10 2024/08/12 20:30:04 christos Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.

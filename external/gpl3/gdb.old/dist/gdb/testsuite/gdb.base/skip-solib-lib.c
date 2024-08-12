@@ -7,5 +7,6 @@ int multiply(int a, int b)
 
 int square(int num)
 {
-  return multiply(num, num);
+  int res = multiply(num, num);
+  return res;
 }

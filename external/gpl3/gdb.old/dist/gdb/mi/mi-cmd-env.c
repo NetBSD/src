@@ -1,5 +1,5 @@
 /* MI Command Set - environment commands.
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2023 Free Software Foundation, Inc.
 
    Contributed by Red Hat Inc.
 
@@ -48,7 +48,7 @@ env_execute_cli_command (const char *cmd, const char *args)
       gdb::unique_xmalloc_ptr<char> run;
 
       if (args != NULL)
-	run.reset (xstrprintf ("%s %s", cmd, args));
+	run = xstrprintf ("%s %s", cmd, args);
       else
 	run.reset (xstrdup (cmd));
       execute_command ( /*ui */ run.get (), 0 /*from_tty */ );
@@ -64,7 +64,7 @@ mi_cmd_env_pwd (const char *command, char **argv, int argc)
 
   if (argc > 0)
     error (_("-environment-pwd: No arguments allowed"));
-          
+	  
   if (mi_version (uiout) < 2)
     {
       env_execute_cli_command ("pwd", NULL);
@@ -76,7 +76,7 @@ mi_cmd_env_pwd (const char *command, char **argv, int argc)
   gdb::unique_xmalloc_ptr<char> cwd (getcwd (NULL, 0));
   if (cwd == NULL)
     error (_("-environment-pwd: error finding name of working directory: %s"),
-           safe_strerror (errno));
+	   safe_strerror (errno));
 
   uiout->field_string ("cwd", cwd.get ());
 }
@@ -88,12 +88,12 @@ mi_cmd_env_cd (const char *command, char **argv, int argc)
 {
   if (argc == 0 || argc > 1)
     error (_("-environment-cd: Usage DIRECTORY"));
-          
+	  
   env_execute_cli_command ("cd", argv[0]);
 }
 
 static void
-env_mod_path (const char *dirname, char **which_path)
+env_mod_path (const char *dirname, std::string &which_path)
 {
   if (dirname == 0 || dirname[0] == '\0')
     return;
@@ -109,7 +109,6 @@ void
 mi_cmd_env_path (const char *command, char **argv, int argc)
 {
   struct ui_out *uiout = current_uiout;
-  char *exec_path;
   const char *env;
   int reset = 0;
   int oind = 0;
@@ -138,25 +137,25 @@ mi_cmd_env_path (const char *command, char **argv, int argc)
   while (1)
     {
       int opt = mi_getopt ("-environment-path", argc, argv, opts,
-                           &oind, &oarg);
+			   &oind, &oarg);
 
       if (opt < 0)
-        break;
+	break;
       switch ((enum opt) opt)
-        {
-        case RESET_OPT:
-          reset = 1;
-          break;
-        }
+	{
+	case RESET_OPT:
+	  reset = 1;
+	  break;
+	}
     }
   argv += oind;
   argc -= oind;
 
-
+  std::string exec_path;
   if (reset)
     {
       /* Reset implies resetting to original path first.  */
-      exec_path = xstrdup (orig_path);
+      exec_path = orig_path;
     }
   else
     {
@@ -165,15 +164,15 @@ mi_cmd_env_path (const char *command, char **argv, int argc)
 
       /* Can be null if path is not set.  */
       if (!env)
-        env = "";
-      exec_path = xstrdup (env);
+	env = "";
+
+      exec_path = env;
     }
 
   for (i = argc - 1; i >= 0; --i)
-    env_mod_path (argv[i], &exec_path);
+    env_mod_path (argv[i], exec_path);
 
-  current_inferior ()->environment.set (path_var_name, exec_path);
-  xfree (exec_path);
+  current_inferior ()->environment.set (path_var_name, exec_path.c_str ());
   env = current_inferior ()->environment.get (path_var_name);
   uiout->field_string ("path", env);
 }
@@ -211,16 +210,16 @@ mi_cmd_env_dir (const char *command, char **argv, int argc)
   while (1)
     {
       int opt = mi_getopt ("-environment-directory", argc, argv, opts,
-                           &oind, &oarg);
+			   &oind, &oarg);
 
       if (opt < 0)
-        break;
+	break;
       switch ((enum opt) opt)
-        {
-        case RESET_OPT:
-          reset = 1;
-          break;
-        }
+	{
+	case RESET_OPT:
+	  reset = 1;
+	  break;
+	}
     }
   argv += oind;
   argc -= oind;
@@ -228,12 +227,11 @@ mi_cmd_env_dir (const char *command, char **argv, int argc)
   if (reset)
     {
       /* Reset means setting to default path first.  */
-      xfree (source_path);
       init_source_path ();
     }
 
   for (i = argc - 1; i >= 0; --i)
-    env_mod_path (argv[i], &source_path);
+    env_mod_path (argv[i], source_path);
 
   uiout->field_string ("source-path", source_path);
   forget_cached_source_info ();
@@ -244,7 +242,10 @@ mi_cmd_env_dir (const char *command, char **argv, int argc)
 void
 mi_cmd_inferior_tty_set (const char *command, char **argv, int argc)
 {
-  current_inferior ()->set_tty (argv[0]);
+  if (argc > 0)
+    current_inferior ()->set_tty (argv[0]);
+  else
+    current_inferior ()->set_tty ("");
 }
 
 /* Print the inferior terminal device name.  */
@@ -255,8 +256,8 @@ mi_cmd_inferior_tty_show (const char *command, char **argv, int argc)
   if ( !mi_valid_noargs ("-inferior-tty-show", argc, argv))
     error (_("-inferior-tty-show: Usage: No args"));
 
-  const char *inferior_tty = current_inferior ()->tty ();
-  if (inferior_tty != NULL)
+  const std::string &inferior_tty = current_inferior ()->tty ();
+  if (!inferior_tty.empty ())
     current_uiout->field_string ("inferior_tty_terminal", inferior_tty);
 }
 

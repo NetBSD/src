@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -431,12 +431,12 @@
    overflow method 2 are used. */
 
 #define ALU8_BEGIN(VAL) \
-unsigned alu8_cr = (unsigned8) (VAL); \
-signed alu8_vr = (signed8) (alu8_cr)
+unsigned alu8_cr = (uint8_t) (VAL); \
+signed alu8_vr = (int8_t) (alu8_cr)
 
 #define ALU8_SET(VAL) \
-alu8_cr = (unsigned8) (VAL); \
-alu8_vr = (signed8) (alu8_cr)
+alu8_cr = (uint8_t) (VAL); \
+alu8_vr = (int8_t) (alu8_cr)
 
 #define ALU8_SET_CARRY_BORROW(CARRY)					\
 do {									\
@@ -449,9 +449,9 @@ do {									\
 #define ALU8_HAD_CARRY_BORROW (alu8_cr & LSBIT32(8))
 #define ALU8_HAD_OVERFLOW (((alu8_vr >> 8) ^ alu8_vr) & LSBIT32 (8-1))
 
-#define ALU8_RESULT ((unsigned8) alu8_cr)
-#define ALU8_CARRY_BORROW_RESULT ((unsigned8) alu8_cr)
-#define ALU8_OVERFLOW_RESULT ((unsigned8) alu8_vr)
+#define ALU8_RESULT ((uint8_t) alu8_cr)
+#define ALU8_CARRY_BORROW_RESULT ((uint8_t) alu8_cr)
+#define ALU8_OVERFLOW_RESULT ((uint8_t) alu8_vr)
 
 /* #define ALU8_END ????? - target dependant */
 
@@ -463,12 +463,12 @@ do {									\
    overflow method 2 are used. */
 
 #define ALU16_BEGIN(VAL) \
-signed alu16_cr = (unsigned16) (VAL); \
-unsigned alu16_vr = (signed16) (alu16_cr)
+signed alu16_cr = (uint16_t) (VAL); \
+unsigned alu16_vr = (int16_t) (alu16_cr)
 
 #define ALU16_SET(VAL) \
-alu16_cr = (unsigned16) (VAL); \
-alu16_vr = (signed16) (alu16_cr)
+alu16_cr = (uint16_t) (VAL); \
+alu16_vr = (int16_t) (alu16_cr)
 
 #define ALU16_SET_CARRY_BORROW(CARRY)					\
 do {									\
@@ -481,9 +481,9 @@ do {									\
 #define ALU16_HAD_CARRY_BORROW (alu16_cr & LSBIT32(16))
 #define ALU16_HAD_OVERFLOW (((alu16_vr >> 16) ^ alu16_vr) & LSBIT32 (16-1))
 
-#define ALU16_RESULT ((unsigned16) alu16_cr)
-#define ALU16_CARRY_BORROW_RESULT ((unsigned16) alu16_cr)
-#define ALU16_OVERFLOW_RESULT ((unsigned16) alu16_vr)
+#define ALU16_RESULT ((uint16_t) alu16_cr)
+#define ALU16_CARRY_BORROW_RESULT ((uint16_t) alu16_cr)
+#define ALU16_OVERFLOW_RESULT ((uint16_t) alu16_vr)
 
 /* #define ALU16_END ????? - target dependant */
 
@@ -495,7 +495,7 @@ do {									\
    method 4 and overflow method 4 are used. */
 
 #define ALU32_BEGIN(VAL) \
-unsigned32 alu32_r = (VAL); \
+uint32_t alu32_r = (VAL); \
 int alu32_c = 0; \
 int alu32_v = 0
 
@@ -521,7 +521,7 @@ alu32_v = 0
    arithmetic, it is still used. */
 
 #define ALU64_BEGIN(VAL) \
-unsigned64 alu64_r = (VAL); \
+uint64_t alu64_r = (VAL); \
 int alu64_c = 0; \
 int alu64_v = 0
 
@@ -560,25 +560,25 @@ alu64_v = 0
 
 #define ALU8_ADD(VAL)							\
 do {									\
-  unsigned8 alu8add_val = (VAL);					\
+  uint8_t alu8add_val = (VAL);					\
   ALU8_ADDC (alu8add_val);						\
 } while (0)
 
 #define ALU16_ADD(VAL)							\
 do {									\
-  unsigned16 alu16add_val = (VAL);					\
+  uint16_t alu16add_val = (VAL);					\
   ALU16_ADDC (alu8add_val);						\
 } while (0)
 
 #define ALU32_ADD(VAL)							\
 do {									\
-  unsigned32 alu32add_val = (VAL);					\
+  uint32_t alu32add_val = (VAL);					\
   ALU32_ADDC (alu32add_val);						\
 } while (0)
 
 #define ALU64_ADD(VAL)							\
 do {									\
-  unsigned64 alu64add_val = (unsigned64) (VAL);				\
+  uint64_t alu64add_val = (uint64_t) (VAL);				\
   ALU64_ADDC (alu64add_val);						\
 } while (0)
 
@@ -590,34 +590,34 @@ do {									\
 
 #define ALU8_ADDC(VAL)							\
 do {									\
-  unsigned8 alu8addc_val = (VAL);					\
-  alu8_cr += (unsigned8)(alu8addc_val);					\
-  alu8_vr += (signed8)(alu8addc_val);					\
+  uint8_t alu8addc_val = (VAL);					\
+  alu8_cr += (uint8_t)(alu8addc_val);					\
+  alu8_vr += (int8_t)(alu8addc_val);					\
 } while (0)
 
 #define ALU16_ADDC(VAL)							\
 do {									\
-  unsigned16 alu16addc_val = (VAL);					\
-  alu16_cr += (unsigned16)(alu16addc_val);				\
-  alu16_vr += (signed16)(alu16addc_val);				\
+  uint16_t alu16addc_val = (VAL);					\
+  alu16_cr += (uint16_t)(alu16addc_val);				\
+  alu16_vr += (int16_t)(alu16addc_val);				\
 } while (0)
 
 #define ALU32_ADDC(VAL)							\
 do {									\
-  unsigned32 alu32addc_val = (VAL);					\
-  unsigned32 alu32addc_sign = alu32addc_val ^ alu32_r;			\
+  uint32_t alu32addc_val = (VAL);					\
+  uint32_t alu32addc_sign = alu32addc_val ^ alu32_r;			\
   alu32_r += (alu32addc_val);						\
   alu32_c = (alu32_r < alu32addc_val);					\
-  alu32_v = ((alu32addc_sign ^ - (unsigned32)alu32_c) ^ alu32_r) >> 31;	\
+  alu32_v = ((alu32addc_sign ^ - (uint32_t)alu32_c) ^ alu32_r) >> 31;	\
 } while (0)
 
 #define ALU64_ADDC(VAL)							\
 do {									\
-  unsigned64 alu64addc_val = (unsigned64) (VAL);			\
-  unsigned64 alu64addc_sign = alu64addc_val ^ alu64_r;			\
+  uint64_t alu64addc_val = (uint64_t) (VAL);			\
+  uint64_t alu64addc_sign = alu64addc_val ^ alu64_r;			\
   alu64_r += (alu64addc_val);						\
   alu64_c = (alu64_r < alu64addc_val);					\
-  alu64_v = ((alu64addc_sign ^ - (unsigned64)alu64_c) ^ alu64_r) >> 63;	\
+  alu64_v = ((alu64addc_sign ^ - (uint64_t)alu64_c) ^ alu64_r) >> 63;	\
 } while (0)
 
 #define ALU_ADDC XCONCAT3(ALU,WITH_TARGET_WORD_BITSIZE,_ADDC)
@@ -628,40 +628,40 @@ do {									\
 
 #define ALU8_ADDC_C(VAL,C)						\
 do {									\
-  unsigned8 alu8addcc_val = (VAL);					\
-  unsigned8 alu8addcc_c = (C);						\
-  alu8_cr += (unsigned)(unsigned8)alu8addcc_val + alu8addcc_c;		\
-  alu8_vr += (signed)(signed8)(alu8addcc_val) + alu8addcc_c;		\
+  uint8_t alu8addcc_val = (VAL);					\
+  uint8_t alu8addcc_c = (C);						\
+  alu8_cr += (unsigned)(uint8_t)alu8addcc_val + alu8addcc_c;		\
+  alu8_vr += (signed)(int8_t)(alu8addcc_val) + alu8addcc_c;		\
 } while (0)
 
 #define ALU16_ADDC_C(VAL,C)						\
 do {									\
-  unsigned16 alu16addcc_val = (VAL);					\
-  unsigned16 alu16addcc_c = (C);					\
-  alu16_cr += (unsigned)(unsigned16)alu16addcc_val + alu16addcc_c;	\
-  alu16_vr += (signed)(signed16)(alu16addcc_val) + alu16addcc_c;	\
+  uint16_t alu16addcc_val = (VAL);					\
+  uint16_t alu16addcc_c = (C);					\
+  alu16_cr += (unsigned)(uint16_t)alu16addcc_val + alu16addcc_c;	\
+  alu16_vr += (signed)(int16_t)(alu16addcc_val) + alu16addcc_c;	\
 } while (0)
 
 #define ALU32_ADDC_C(VAL,C)						\
 do {									\
-  unsigned32 alu32addcc_val = (VAL);					\
-  unsigned32 alu32addcc_c = (C);					\
-  unsigned32 alu32addcc_sign = (alu32addcc_val ^ alu32_r);		\
+  uint32_t alu32addcc_val = (VAL);					\
+  uint32_t alu32addcc_c = (C);					\
+  uint32_t alu32addcc_sign = (alu32addcc_val ^ alu32_r);		\
   alu32_r += (alu32addcc_val + alu32addcc_c);				\
   alu32_c = ((alu32_r < alu32addcc_val)					\
              || (alu32addcc_c && alu32_r == alu32addcc_val));		\
-  alu32_v = ((alu32addcc_sign ^ - (unsigned32)alu32_c) ^ alu32_r) >> 31;\
+  alu32_v = ((alu32addcc_sign ^ - (uint32_t)alu32_c) ^ alu32_r) >> 31;\
 } while (0)
 
 #define ALU64_ADDC_C(VAL,C)						\
 do {									\
-  unsigned64 alu64addcc_val = (VAL);					\
-  unsigned64 alu64addcc_c = (C);					\
-  unsigned64 alu64addcc_sign = (alu64addcc_val ^ alu64_r);		\
+  uint64_t alu64addcc_val = (VAL);					\
+  uint64_t alu64addcc_c = (C);					\
+  uint64_t alu64addcc_sign = (alu64addcc_val ^ alu64_r);		\
   alu64_r += (alu64addcc_val + alu64addcc_c);				\
   alu64_c = ((alu64_r < alu64addcc_val)					\
              || (alu64addcc_c && alu64_r == alu64addcc_val));		\
-  alu64_v = ((alu64addcc_sign ^ - (unsigned64)alu64_c) ^ alu64_r) >> 63;\
+  alu64_v = ((alu64addcc_sign ^ - (uint64_t)alu64_c) ^ alu64_r) >> 63;\
 } while (0)
 
 #define ALU_ADDC_C XCONCAT3(ALU,WITH_TARGET_WORD_BITSIZE,_ADDC_C)
@@ -672,25 +672,25 @@ do {									\
 
 #define ALU8_SUB(VAL)							\
 do {									\
-  unsigned8 alu8sub_val = (VAL);					\
+  uint8_t alu8sub_val = (VAL);					\
   ALU8_ADDC_C (~alu8sub_val, 1);					\
 } while (0)
 
 #define ALU16_SUB(VAL)							\
 do {									\
-  unsigned16 alu16sub_val = (VAL);					\
+  uint16_t alu16sub_val = (VAL);					\
   ALU16_ADDC_C (~alu16sub_val, 1);					\
 } while (0)
 
 #define ALU32_SUB(VAL)							\
 do {									\
-  unsigned32 alu32sub_val = (VAL);					\
+  uint32_t alu32sub_val = (VAL);					\
   ALU32_ADDC_C (~alu32sub_val, 1);					\
 } while (0)
 
 #define ALU64_SUB(VAL)							\
 do {									\
-  unsigned64 alu64sub_val = (VAL);					\
+  uint64_t alu64sub_val = (VAL);					\
   ALU64_ADDC_C (~alu64sub_val, 1);					\
 } while (0)
 
@@ -702,25 +702,25 @@ do {									\
 
 #define ALU8_SUBC(VAL)							\
 do {									\
-  unsigned8 alu8subc_val = (VAL);					\
+  uint8_t alu8subc_val = (VAL);					\
   ALU8_ADDC_C (~alu8subc_val, 1);					\
 } while (0)
 
 #define ALU16_SUBC(VAL)							\
 do {									\
-  unsigned16 alu16subc_val = (VAL);					\
+  uint16_t alu16subc_val = (VAL);					\
   ALU16_ADDC_C (~alu16subc_val, 1);					\
 } while (0)
 
 #define ALU32_SUBC(VAL)							\
 do {									\
-  unsigned32 alu32subc_val = (VAL);					\
+  uint32_t alu32subc_val = (VAL);					\
   ALU32_ADDC_C (~alu32subc_val, 1);					\
 } while (0)
 
 #define ALU64_SUBC(VAL)							\
 do {									\
-  unsigned64 alu64subc_val = (VAL);					\
+  uint64_t alu64subc_val = (VAL);					\
   ALU64_ADDC_C (~alu64subc_val, 1);					\
 } while (0)
 
@@ -732,29 +732,29 @@ do {									\
 
 #define ALU8_SUBC_X(VAL,C)						\
 do {									\
-  unsigned8 alu8subcx_val = (VAL);					\
-  unsigned8 alu8subcx_c = (C);						\
+  uint8_t alu8subcx_val = (VAL);					\
+  uint8_t alu8subcx_c = (C);						\
   ALU8_ADDC_C (~alu8subcx_val, alu8subcx_c);				\
 } while (0)
 
 #define ALU16_SUBC_X(VAL,C)						\
 do {									\
-  unsigned16 alu16subcx_val = (VAL);					\
-  unsigned16 alu16subcx_c = (C);					\
+  uint16_t alu16subcx_val = (VAL);					\
+  uint16_t alu16subcx_c = (C);					\
   ALU16_ADDC_C (~alu16subcx_val, alu16subcx_c);				\
 } while (0)
 
 #define ALU32_SUBC_X(VAL,C)						\
 do {									\
-  unsigned32 alu32subcx_val = (VAL);					\
-  unsigned32 alu32subcx_c = (C);					\
+  uint32_t alu32subcx_val = (VAL);					\
+  uint32_t alu32subcx_c = (C);					\
   ALU32_ADDC_C (~alu32subcx_val, alu32subcx_c);				\
 } while (0)
 
 #define ALU64_SUBC_X(VAL,C)						\
 do {									\
-  unsigned64 alu64subcx_val = (VAL);					\
-  unsigned64 alu64subcx_c = (C);					\
+  uint64_t alu64subcx_val = (VAL);					\
+  uint64_t alu64subcx_c = (C);					\
   ALU64_ADDC_C (~alu64subcx_val, alu64subcx_c);				\
 } while (0)
 
@@ -766,34 +766,34 @@ do {									\
 
 #define ALU8_SUBB(VAL)							\
 do {									\
-  unsigned8 alu8subb_val = (VAL);					\
-  alu8_cr -= (unsigned)(unsigned8)alu8subb_val;				\
-  alu8_vr -= (signed)(signed8)alu8subb_val;				\
+  uint8_t alu8subb_val = (VAL);					\
+  alu8_cr -= (unsigned)(uint8_t)alu8subb_val;				\
+  alu8_vr -= (signed)(int8_t)alu8subb_val;				\
 } while (0)
 
 #define ALU16_SUBB(VAL)							\
 do {									\
-  unsigned16 alu16subb_val = (VAL);					\
-  alu16_cr -= (unsigned)(unsigned16)alu16subb_val;			\
-  alu16_vr -= (signed)(signed16)alu16subb_val;				\
+  uint16_t alu16subb_val = (VAL);					\
+  alu16_cr -= (unsigned)(uint16_t)alu16subb_val;			\
+  alu16_vr -= (signed)(int16_t)alu16subb_val;				\
 } while (0)
 
 #define ALU32_SUBB(VAL)							\
 do {									\
-  unsigned32 alu32subb_val = (VAL);					\
-  unsigned32 alu32subb_sign = alu32subb_val ^ alu32_r;			\
+  uint32_t alu32subb_val = (VAL);					\
+  uint32_t alu32subb_sign = alu32subb_val ^ alu32_r;			\
   alu32_c = (alu32_r < alu32subb_val);					\
   alu32_r -= (alu32subb_val);						\
-  alu32_v = ((alu32subb_sign ^ - (unsigned32)alu32_c) ^ alu32_r) >> 31;	\
+  alu32_v = ((alu32subb_sign ^ - (uint32_t)alu32_c) ^ alu32_r) >> 31;	\
 } while (0)
 
 #define ALU64_SUBB(VAL)							\
 do {									\
-  unsigned64 alu64subb_val = (VAL);					\
-  unsigned64 alu64subb_sign = alu64subb_val ^ alu64_r;			\
+  uint64_t alu64subb_val = (VAL);					\
+  uint64_t alu64subb_sign = alu64subb_val ^ alu64_r;			\
   alu64_c = (alu64_r < alu64subb_val);					\
   alu64_r -= (alu64subb_val);						\
-  alu64_v = ((alu64subb_sign ^ - (unsigned64)alu64_c) ^ alu64_r) >> 31;	\
+  alu64_v = ((alu64subb_sign ^ - (uint64_t)alu64_c) ^ alu64_r) >> 31;	\
 } while (0)
 
 #define ALU_SUBB XCONCAT3(ALU,WITH_TARGET_WORD_BITSIZE,_SUBB)
@@ -804,34 +804,34 @@ do {									\
 
 #define ALU8_SUBB_B(VAL,B)						\
 do {									\
-  unsigned8 alu8subbb_val = (VAL);					\
-  unsigned8 alu8subbb_b = (B);						\
-  alu8_cr -= (unsigned)(unsigned8)alu8subbb_val;			\
-  alu8_cr -= (unsigned)(unsigned8)alu8subbb_b;				\
-  alu8_vr -= (signed)(signed8)alu8subbb_val + alu8subbb_b;		\
+  uint8_t alu8subbb_val = (VAL);					\
+  uint8_t alu8subbb_b = (B);						\
+  alu8_cr -= (unsigned)(uint8_t)alu8subbb_val;			\
+  alu8_cr -= (unsigned)(uint8_t)alu8subbb_b;				\
+  alu8_vr -= (signed)(int8_t)alu8subbb_val + alu8subbb_b;		\
 } while (0)
 
 #define ALU16_SUBB_B(VAL,B)						\
 do {									\
-  unsigned16 alu16subbb_val = (VAL);					\
-  unsigned16 alu16subbb_b = (B);					\
-  alu16_cr -= (unsigned)(unsigned16)alu16subbb_val;			\
-  alu16_cr -= (unsigned)(unsigned16)alu16subbb_b;			\
-  alu16_vr -= (signed)(signed16)alu16subbb_val + alu16subbb_b;		\
+  uint16_t alu16subbb_val = (VAL);					\
+  uint16_t alu16subbb_b = (B);					\
+  alu16_cr -= (unsigned)(uint16_t)alu16subbb_val;			\
+  alu16_cr -= (unsigned)(uint16_t)alu16subbb_b;			\
+  alu16_vr -= (signed)(int16_t)alu16subbb_val + alu16subbb_b;		\
 } while (0)
 
 #define ALU32_SUBB_B(VAL,B)						\
 do {									\
-  unsigned32 alu32subbb_val = (VAL);					\
-  unsigned32 alu32subbb_b = (B);					\
+  uint32_t alu32subbb_val = (VAL);					\
+  uint32_t alu32subbb_b = (B);					\
   ALU32_ADDC_C (~alu32subbb_val, !alu32subbb_b);			\
   alu32_c = !alu32_c;							\
 } while (0)
 
 #define ALU64_SUBB_B(VAL,B)						\
 do {									\
-  unsigned64 alu64subbb_val = (VAL);					\
-  unsigned64 alu64subbb_b = (B);					\
+  uint64_t alu64subbb_val = (VAL);					\
+  uint64_t alu64subbb_b = (B);					\
   ALU64_ADDC_C (~alu64subbb_val, !alu64subbb_b);			\
   alu64_c = !alu64_c;							\
 } while (0)
@@ -858,14 +858,14 @@ do {									\
 
 #define ALU32_NEG()							\
 do {									\
-  unsigned32 alu32neg_val = (ALU32_RESULT);				\
+  uint32_t alu32neg_val = (ALU32_RESULT);				\
   ALU32_SET (1);							\
   ALU32_ADDC (~alu32neg_val);						\
 } while(0)
 
 #define ALU64_NEG()							\
 do {									\
-  unsigned64 alu64neg_val = (ALU64_RESULT);				\
+  uint64_t alu64neg_val = (ALU64_RESULT);				\
   ALU64_SET (1);							\
   ALU64_ADDC (~alu64neg_val);						\
 } while (0)
@@ -893,14 +893,14 @@ do {									\
 
 #define ALU32_NEGC()							\
 do {									\
-  unsigned32 alu32negc_val = (ALU32_RESULT);				\
+  uint32_t alu32negc_val = (ALU32_RESULT);				\
   ALU32_SET (1);							\
   ALU32_ADDC (~alu32negc_val);						\
 } while(0)
 
 #define ALU64_NEGC()							\
 do {									\
-  unsigned64 alu64negc_val = (ALU64_RESULT);				\
+  uint64_t alu64negc_val = (ALU64_RESULT);				\
   ALU64_SET (1);							\
   ALU64_ADDC (~alu64negc_val);						\
 } while (0)
@@ -928,14 +928,14 @@ do {									\
 
 #define ALU32_NEGB()							\
 do {									\
-  unsigned32 alu32negb_val = (ALU32_RESULT);				\
+  uint32_t alu32negb_val = (ALU32_RESULT);				\
   ALU32_SET (0);							\
   ALU32_SUBB (alu32negb_val);						\
 } while(0)
 
 #define ALU64_NEGB()							\
 do {									\
-  unsigned64 alu64negb_val = (ALU64_RESULT);				\
+  uint64_t alu64negb_val = (ALU64_RESULT);				\
   ALU64_SET (0);							\
   ALU64_SUBB (alu64negb_val);						\
 } while (0)

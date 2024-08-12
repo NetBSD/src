@@ -1,4 +1,4 @@
-# Copyright 1999-2020 Free Software Foundation, Inc.
+# Copyright 1999-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ set MIFLAGS "-i=mi"
 
 gdb_exit
 if [mi_gdb_start separate-inferior-tty] {
-    continue
+    return
 }
 
 standard_testfile basics.c

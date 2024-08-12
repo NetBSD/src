@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux AMD64.
 
-   Copyright (C) 2006-2020 Free Software Foundation, Inc.
+   Copyright (C) 2006-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -320,6 +320,8 @@ enum amd64_syscall {
   amd64_sys_sync_file_range = 277,
   amd64_sys_vmsplice = 278,
   amd64_sys_move_pages = 279,
+  amd64_sys_pipe2 = 293,
+  amd64_sys_getrandom = 318
 };
 
 /* Enum that defines the syscall identifiers for x32 linux.

@@ -1,6 +1,6 @@
 /* Machine independent support for Solaris /proc (process file system) for GDB.
 
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2023 Free Software Foundation, Inc.
 
    Written by Michael Snyder at Cygnus Solutions.
    Based on work by Fred Fish, Stu Grossman, Geoff Noer, and others.
@@ -50,14 +50,14 @@ struct trans {
 
 static bool  procfs_trace   = false;
 static FILE *procfs_file     = NULL;
-static char *procfs_filename;
+static std::string procfs_filename = "procfs_trace";
 
 static void
 prepare_to_trace (void)
 {
   if (procfs_trace)			/* if procfs tracing turned on */
     if (procfs_file == NULL)		/* if output file not yet open */
-      procfs_file = fopen (procfs_filename, "a");	/* open output file */
+      procfs_file = fopen (procfs_filename.c_str (), "a");	/* open output file */
 }
 
 static void
@@ -187,7 +187,7 @@ write_with_trace (int fd, void *varg, size_t len, char *file, int line)
 		 "write (PCSSIG) ");
 	proc_prettyfprint_signal (procfs_file ? procfs_file : stdout,
 				  arg[1] ? ((siginfo_t *) &arg[1])->si_signo 
-				         : 0, 
+					 : 0, 
 				  0);
 	fprintf (procfs_file ? procfs_file : stdout, "\n");
 	break;
@@ -425,7 +425,6 @@ Show tracing for /proc api calls."), NULL,
 			   NULL, /* FIXME: i18n: */
 			   &setlist, &showlist);
 
-  procfs_filename = xstrdup ("procfs_trace");
   add_setshow_filename_cmd ("procfs-file", no_class, &procfs_filename, _("\
 Set filename for /proc tracefile."), _("\
 Show filename for /proc tracefile."), NULL,

@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <markus.t.metzger@intel.com>
 #
@@ -22,13 +22,15 @@ if { [skip_btrace_tests] } {
     return -1
 }
 
+# We expect a specific function call history.  This gets messed up with
+# PIE on 32-bit.
 standard_testfile exception.cc
-if [prepare_for_testing "failed to prepare" $testfile $srcfile {c++ debug}] {
+if [prepare_for_testing "failed to prepare" $testfile $srcfile \
+	{nopie c++ debug}] {
     return -1
 }
 
 if ![runto_main] {
-    untested "failed to run to main"
     return -1
 }
 
@@ -57,19 +59,25 @@ gdb_expect_list "flat" "\r\n$gdb_prompt $" [list \
     "3\tfoo\\(\\)" \
     "4\tbar\\(\\)" \
     "5\tbad\\(\\)\r" \
-  ] \
-  "" \
-  "\[0-9\]*\ttest\\(\\)"]
+  ] "" \
+  [multi_line \
+    "\[0-9\]*\ttest\\(\\)" \
+    "\[0-9\]*\tmain\\(\\)" \
+  ] "" \
+  ]
 
 # show the branch trace with calls indented
 send_gdb "record function-call-history /c 1\n"
 gdb_expect_list "indented" "\r\n$gdb_prompt $" [list \
   [multi_line \
     "1\tmain\\(\\)" \
-  "2\t  test\\(\\)" \
-  "3\t    foo\\(\\)" \
-  "4\t      bar\\(\\)" \
-  "5\t        bad\\(\\)\r" \
-  ] \
-  "" \
-  "\[0-9\]*\t  test\\(\\)"]
+    "2\t  test\\(\\)" \
+    "3\t    foo\\(\\)" \
+    "4\t      bar\\(\\)" \
+    "5\t        bad\\(\\)\r" \
+  ] "" \
+  [multi_line \
+    "\[0-9\]*\t  test\\(\\)" \
+    "\[0-9\]*\tmain\\(\\)" \
+  ] "" \
+  ]

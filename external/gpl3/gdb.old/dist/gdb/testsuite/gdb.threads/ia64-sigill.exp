@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2010-2020 Free Software Foundation, Inc.
+# Copyright 2010-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -55,19 +55,23 @@ gdb_breakpoint [gdb_get_line_number "break-at-exit"]
 
 gdb_test_no_output "set debug infrun 1"
 
-# The ia64 SIGILL signal is visible only in the lin-lwp debug.
+# The ia64 SIGILL signal is visible only in the linux-nat debug output.
 
-gdb_test "continue" "Breakpoint \[0-9\]+,( .* in)? thread_func .*"
+set prompt "$gdb_prompt \\\[infrun\\\] fetch_inferior_event: exit\r\n$"
+gdb_test_multiple "continue" "continue" -prompt $prompt {
+    -re "Breakpoint \[0-9\]+,( .* in)? thread_func .*$prompt$" {
+	pass $gdb_test_name
+    }
+}
 
 gdb_test_no_output {delete $sigill_bpnum}
 
-set test "continue for the pending signal"
-gdb_test_multiple "continue" $test {
-    -re "Breakpoint \[0-9\]+, .*break-at-exit.*\r\n$gdb_prompt $" {
+gdb_test_multiple "continue" "continue for the pending signal" -prompt $prompt {
+    -re "Breakpoint \[0-9\]+, .*break-at-exit.*\r\n$prompt$" {
 	# Breakpoint has been skipped in the other thread.
-	pass $test
+	pass $gdb_test_name
     }
     -re " received signal .*\r\n$gdb_prompt $" {
-	fail $test
+	fail $gdb_test_name
     }
 }

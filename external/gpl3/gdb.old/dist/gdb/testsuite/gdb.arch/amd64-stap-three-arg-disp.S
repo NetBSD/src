@@ -15,6 +15,7 @@ main:
 	movl	%edi, -20(%rbp)
 	movq	%rsi, -32(%rbp)
 	movl	$10, -4(%rbp)
+	movl	$0, %eax
 #APP
 # 8 "amd64-stap-three-arg-disp.c" 1
 	990: nop
@@ -28,7 +29,7 @@ main:
 .8byte 0
 .asciz "test"
 .asciz "three_arg"
-.asciz "-4@-4(%rbp,%ebx,0)"
+.asciz "-4@-4(%rbp,%eax,0)"
 994: .balign 4
 .popsection
 
@@ -45,8 +46,6 @@ _.stapsdt.base: .space 1
 
 # 0 "" 2
 #NO_APP
-	movl	$0, %eax
-	movl	$0, %ebx
 	popq	%rbp
 	.cfi_def_cfa 7, 8
 # SUCC: EXIT [100.0%] 

@@ -1,5 +1,5 @@
 /* YACC grammar for Modula-2 expressions, for GDB.
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
    Generated from expread.y (now c-exp.y) and contributed by the Department
    of Computer Science at the State University of New York at Buffalo, 1991.
 
@@ -47,6 +47,7 @@
 #include "symfile.h" /* Required by objfiles.h.  */
 #include "objfiles.h" /* For have_full_symbols and have_partial_symbols */
 #include "block.h"
+#include "m2-exp.h"
 
 #define parse_type(ps) builtin_type (ps->gdbarch ())
 #define parse_m2_type(ps) builtin_m2_type (ps->gdbarch ())
@@ -72,6 +73,7 @@ static int parse_number (int);
 /* The sign of the number being parsed.  */
 static int number_sign = 1;
 
+using namespace expr;
 %}
 
 /* Although the yacc "value" of an expression is not used,
@@ -125,7 +127,7 @@ static int number_sign = 1;
 /* The GDB scope operator */
 %token COLONCOLON
 
-%token <voidval> DOLLAR_VARIABLE
+%token <sval> DOLLAR_VARIABLE
 
 /* M2 tokens */
 %left ','
@@ -153,31 +155,28 @@ start   :	exp
 	;
 
 type_exp:	type
-		{ write_exp_elt_opcode (pstate, OP_TYPE);
-		  write_exp_elt_type (pstate, $1);
-		  write_exp_elt_opcode (pstate, OP_TYPE);
-		}
+		{ pstate->push_new<type_operation> ($1); }
 	;
 
 /* Expressions */
 
 exp     :       exp '^'   %prec UNARY
-                        { write_exp_elt_opcode (pstate, UNOP_IND); }
+			{ pstate->wrap<unop_ind_operation> (); }
 	;
 
 exp	:	'-'
 			{ number_sign = -1; }
 		exp    %prec UNARY
 			{ number_sign = 1;
-			  write_exp_elt_opcode (pstate, UNOP_NEG); }
+			  pstate->wrap<unary_neg_operation> (); }
 	;
 
 exp	:	'+' exp    %prec UNARY
-		{ write_exp_elt_opcode (pstate, UNOP_PLUS); }
+		{ pstate->wrap<unary_plus_operation> (); }
 	;
 
 exp	:	not_exp exp %prec UNARY
-			{ write_exp_elt_opcode (pstate, UNOP_LOGICAL_NOT); }
+			{ pstate->wrap<unary_logical_not_operation> (); }
 	;
 
 not_exp	:	NOT
@@ -185,91 +184,90 @@ not_exp	:	NOT
 	;
 
 exp	:	CAP '(' exp ')'
-			{ write_exp_elt_opcode (pstate, UNOP_CAP); }
+			{ error (_("CAP function is not implemented")); }
 	;
 
 exp	:	ORD '(' exp ')'
-			{ write_exp_elt_opcode (pstate, UNOP_ORD); }
+			{ error (_("ORD function is not implemented")); }
 	;
 
 exp	:	ABS '(' exp ')'
-			{ write_exp_elt_opcode (pstate, UNOP_ABS); }
+			{ error (_("ABS function is not implemented")); }
 	;
 
 exp	: 	HIGH '(' exp ')'
-			{ write_exp_elt_opcode (pstate, UNOP_HIGH); }
+			{ pstate->wrap<m2_unop_high_operation> (); }
 	;
 
 exp 	:	MIN_FUNC '(' type ')'
-			{ write_exp_elt_opcode (pstate, UNOP_MIN);
-			  write_exp_elt_type (pstate, $3);
-			  write_exp_elt_opcode (pstate, UNOP_MIN); }
+			{ error (_("MIN function is not implemented")); }
 	;
 
 exp	: 	MAX_FUNC '(' type ')'
-			{ write_exp_elt_opcode (pstate, UNOP_MAX);
-			  write_exp_elt_type (pstate, $3);
-			  write_exp_elt_opcode (pstate, UNOP_MAX); }
+			{ error (_("MAX function is not implemented")); }
 	;
 
 exp	:	FLOAT_FUNC '(' exp ')'
-			{ write_exp_elt_opcode (pstate, UNOP_FLOAT); }
+			{ error (_("FLOAT function is not implemented")); }
 	;
 
 exp	:	VAL '(' type ',' exp ')'
-			{ write_exp_elt_opcode (pstate, BINOP_VAL);
-			  write_exp_elt_type (pstate, $3);
-			  write_exp_elt_opcode (pstate, BINOP_VAL); }
+			{ error (_("VAL function is not implemented")); }
 	;
 
 exp	:	CHR '(' exp ')'
-			{ write_exp_elt_opcode (pstate, UNOP_CHR); }
+			{ error (_("CHR function is not implemented")); }
 	;
 
 exp	:	ODD '(' exp ')'
-			{ write_exp_elt_opcode (pstate, UNOP_ODD); }
+			{ error (_("ODD function is not implemented")); }
 	;
 
 exp	:	TRUNC '(' exp ')'
-			{ write_exp_elt_opcode (pstate, UNOP_TRUNC); }
+			{ error (_("TRUNC function is not implemented")); }
 	;
 
 exp	:	TSIZE '(' exp ')'
-			{ write_exp_elt_opcode (pstate, UNOP_SIZEOF); }
+			{ pstate->wrap<unop_sizeof_operation> (); }
 	;
 
 exp	:	SIZE exp       %prec UNARY
-			{ write_exp_elt_opcode (pstate, UNOP_SIZEOF); }
+			{ pstate->wrap<unop_sizeof_operation> (); }
 	;
 
 
 exp	:	INC '(' exp ')'
-			{ write_exp_elt_opcode (pstate, UNOP_PREINCREMENT); }
+			{ pstate->wrap<preinc_operation> (); }
 	;
 
 exp	:	INC '(' exp ',' exp ')'
-			{ write_exp_elt_opcode (pstate, BINOP_ASSIGN_MODIFY);
-			  write_exp_elt_opcode (pstate, BINOP_ADD);
-			  write_exp_elt_opcode (pstate,
-						BINOP_ASSIGN_MODIFY); }
+			{
+			  operation_up rhs = pstate->pop ();
+			  operation_up lhs = pstate->pop ();
+			  pstate->push_new<assign_modify_operation>
+			    (BINOP_ADD, std::move (lhs), std::move (rhs));
+			}
 	;
 
 exp	:	DEC '(' exp ')'
-			{ write_exp_elt_opcode (pstate, UNOP_PREDECREMENT);}
+			{ pstate->wrap<predec_operation> (); }
 	;
 
 exp	:	DEC '(' exp ',' exp ')'
-			{ write_exp_elt_opcode (pstate, BINOP_ASSIGN_MODIFY);
-			  write_exp_elt_opcode (pstate, BINOP_SUB);
-			  write_exp_elt_opcode (pstate,
-						BINOP_ASSIGN_MODIFY); }
+			{
+			  operation_up rhs = pstate->pop ();
+			  operation_up lhs = pstate->pop ();
+			  pstate->push_new<assign_modify_operation>
+			    (BINOP_SUB, std::move (lhs), std::move (rhs));
+			}
 	;
 
 exp	:	exp DOT NAME
-			{ write_exp_elt_opcode (pstate, STRUCTOP_STRUCT);
-			  write_exp_string (pstate, $3);
-			  write_exp_elt_opcode (pstate, STRUCTOP_STRUCT); }
-	;
+			{
+			  pstate->push_new<structop_operation>
+			    (pstate->pop (), copy_name ($3));
+			}
+;
 
 exp	:	set
 	;
@@ -295,17 +293,17 @@ set	:	'{' arglist '}'
 
 /* Modula-2 array subscript notation [a,b,c...].  */
 exp     :       exp '['
-                        /* This function just saves the number of arguments
+			/* This function just saves the number of arguments
 			   that follow in the list.  It is *not* specific to
 			   function types */
-                        { pstate->start_arglist(); }
-                non_empty_arglist ']'  %prec DOT
+			{ pstate->start_arglist(); }
+		non_empty_arglist ']'  %prec DOT
 			{
 			  gdb_assert (pstate->arglist_len > 0);
-			  write_exp_elt_opcode (pstate, MULTI_SUBSCRIPT);
-			  write_exp_elt_longcst (pstate,
-						 pstate->end_arglist());
-			  write_exp_elt_opcode (pstate, MULTI_SUBSCRIPT);
+			  std::vector<operation_up> args
+			    = pstate->pop_vector (pstate->end_arglist ());
+			  pstate->push_new<multi_subscript_operation>
+			    (pstate->pop (), std::move (args));
 			}
 	;
 
@@ -314,10 +312,12 @@ exp	:	exp '('
 			   being accumulated by an outer function call.  */
 			{ pstate->start_arglist (); }
 		arglist ')'	%prec DOT
-			{ write_exp_elt_opcode (pstate, OP_FUNCALL);
-			  write_exp_elt_longcst (pstate,
-						 pstate->end_arglist ());
-			  write_exp_elt_opcode (pstate, OP_FUNCALL); }
+			{
+			  std::vector<operation_up> args
+			    = pstate->pop_vector (pstate->end_arglist ());
+			  pstate->push_new<funcall_operation>
+			    (pstate->pop (), std::move (args));
+			}
 	;
 
 arglist	:
@@ -332,26 +332,28 @@ arglist	:	arglist ',' exp   %prec ABOVE_COMMA
 	;
 
 non_empty_arglist
-        :       exp
-                        { pstate->arglist_len = 1; }
+	:       exp
+			{ pstate->arglist_len = 1; }
 	;
 
 non_empty_arglist
-        :       non_empty_arglist ',' exp %prec ABOVE_COMMA
+	:       non_empty_arglist ',' exp %prec ABOVE_COMMA
      	       	    	{ pstate->arglist_len++; }
      	;
 
 /* GDB construct */
 exp	:	'{' type '}' exp  %prec UNARY
-			{ write_exp_elt_opcode (pstate, UNOP_MEMVAL);
-			  write_exp_elt_type (pstate, $2);
-			  write_exp_elt_opcode (pstate, UNOP_MEMVAL); }
+			{
+			  pstate->push_new<unop_memval_operation>
+			    (pstate->pop (), $2);
+			}
 	;
 
 exp     :       type '(' exp ')' %prec UNARY
-                        { write_exp_elt_opcode (pstate, UNOP_CAST);
-			  write_exp_elt_type (pstate, $1);
-			  write_exp_elt_opcode (pstate, UNOP_CAST); }
+			{
+			  pstate->push_new<unop_cast_operation>
+			    (pstate->pop (), $1);
+			}
 	;
 
 exp	:	'(' exp ')'
@@ -363,145 +365,132 @@ exp	:	'(' exp ')'
 
 /* GDB construct */
 exp	:	exp '@' exp
-			{ write_exp_elt_opcode (pstate, BINOP_REPEAT); }
+			{ pstate->wrap2<repeat_operation> (); }
 	;
 
 exp	:	exp '*' exp
-			{ write_exp_elt_opcode (pstate, BINOP_MUL); }
+			{ pstate->wrap2<mul_operation> (); }
 	;
 
 exp	:	exp '/' exp
-			{ write_exp_elt_opcode (pstate, BINOP_DIV); }
+			{ pstate->wrap2<div_operation> (); }
 	;
 
 exp     :       exp DIV exp
-                        { write_exp_elt_opcode (pstate, BINOP_INTDIV); }
-        ;
+			{ pstate->wrap2<intdiv_operation> (); }
+	;
 
 exp	:	exp MOD exp
-			{ write_exp_elt_opcode (pstate, BINOP_REM); }
+			{ pstate->wrap2<rem_operation> (); }
 	;
 
 exp	:	exp '+' exp
-			{ write_exp_elt_opcode (pstate, BINOP_ADD); }
+			{ pstate->wrap2<add_operation> (); }
 	;
 
 exp	:	exp '-' exp
-			{ write_exp_elt_opcode (pstate, BINOP_SUB); }
+			{ pstate->wrap2<sub_operation> (); }
 	;
 
 exp	:	exp '=' exp
-			{ write_exp_elt_opcode (pstate, BINOP_EQUAL); }
+			{ pstate->wrap2<equal_operation> (); }
 	;
 
 exp	:	exp NOTEQUAL exp
-			{ write_exp_elt_opcode (pstate, BINOP_NOTEQUAL); }
-        |       exp '#' exp
-                        { write_exp_elt_opcode (pstate, BINOP_NOTEQUAL); }
+			{ pstate->wrap2<notequal_operation> (); }
+	|       exp '#' exp
+			{ pstate->wrap2<notequal_operation> (); }
 	;
 
 exp	:	exp LEQ exp
-			{ write_exp_elt_opcode (pstate, BINOP_LEQ); }
+			{ pstate->wrap2<leq_operation> (); }
 	;
 
 exp	:	exp GEQ exp
-			{ write_exp_elt_opcode (pstate, BINOP_GEQ); }
+			{ pstate->wrap2<geq_operation> (); }
 	;
 
 exp	:	exp '<' exp
-			{ write_exp_elt_opcode (pstate, BINOP_LESS); }
+			{ pstate->wrap2<less_operation> (); }
 	;
 
 exp	:	exp '>' exp
-			{ write_exp_elt_opcode (pstate, BINOP_GTR); }
+			{ pstate->wrap2<gtr_operation> (); }
 	;
 
 exp	:	exp LOGICAL_AND exp
-			{ write_exp_elt_opcode (pstate, BINOP_LOGICAL_AND); }
+			{ pstate->wrap2<logical_and_operation> (); }
 	;
 
 exp	:	exp OROR exp
-			{ write_exp_elt_opcode (pstate, BINOP_LOGICAL_OR); }
+			{ pstate->wrap2<logical_or_operation> (); }
 	;
 
 exp	:	exp ASSIGN exp
-			{ write_exp_elt_opcode (pstate, BINOP_ASSIGN); }
+			{ pstate->wrap2<assign_operation> (); }
 	;
 
 
 /* Constants */
 
 exp	:	M2_TRUE
-			{ write_exp_elt_opcode (pstate, OP_BOOL);
-			  write_exp_elt_longcst (pstate, (LONGEST) $1);
-			  write_exp_elt_opcode (pstate, OP_BOOL); }
+			{ pstate->push_new<bool_operation> ($1); }
 	;
 
 exp	:	M2_FALSE
-			{ write_exp_elt_opcode (pstate, OP_BOOL);
-			  write_exp_elt_longcst (pstate, (LONGEST) $1);
-			  write_exp_elt_opcode (pstate, OP_BOOL); }
+			{ pstate->push_new<bool_operation> ($1); }
 	;
 
 exp	:	INT
-			{ write_exp_elt_opcode (pstate, OP_LONG);
-			  write_exp_elt_type (pstate,
-					parse_m2_type (pstate)->builtin_int);
-			  write_exp_elt_longcst (pstate, (LONGEST) $1);
-			  write_exp_elt_opcode (pstate, OP_LONG); }
+			{
+			  pstate->push_new<long_const_operation>
+			    (parse_m2_type (pstate)->builtin_int, $1);
+			}
 	;
 
 exp	:	UINT
 			{
-			  write_exp_elt_opcode (pstate, OP_LONG);
-			  write_exp_elt_type (pstate,
-					      parse_m2_type (pstate)
-					      ->builtin_card);
-			  write_exp_elt_longcst (pstate, (LONGEST) $1);
-			  write_exp_elt_opcode (pstate, OP_LONG);
+			  pstate->push_new<long_const_operation>
+			    (parse_m2_type (pstate)->builtin_card, $1);
 			}
 	;
 
 exp	:	CHAR
-			{ write_exp_elt_opcode (pstate, OP_LONG);
-			  write_exp_elt_type (pstate,
-					      parse_m2_type (pstate)
-					      ->builtin_char);
-			  write_exp_elt_longcst (pstate, (LONGEST) $1);
-			  write_exp_elt_opcode (pstate, OP_LONG); }
+			{
+			  pstate->push_new<long_const_operation>
+			    (parse_m2_type (pstate)->builtin_char, $1);
+			}
 	;
 
 
 exp	:	FLOAT
-			{ write_exp_elt_opcode (pstate, OP_FLOAT);
-			  write_exp_elt_type (pstate,
-					      parse_m2_type (pstate)
-					      ->builtin_real);
-			  write_exp_elt_floatcst (pstate, $1);
-			  write_exp_elt_opcode (pstate, OP_FLOAT); }
+			{
+			  float_data data;
+			  std::copy (std::begin ($1), std::end ($1),
+				     std::begin (data));
+			  pstate->push_new<float_const_operation>
+			    (parse_m2_type (pstate)->builtin_real, data);
+			}
 	;
 
 exp	:	variable
 	;
 
 exp	:	SIZE '(' type ')'	%prec UNARY
-			{ write_exp_elt_opcode (pstate, OP_LONG);
-			  write_exp_elt_type (pstate,
-					    parse_type (pstate)->builtin_int);
-			  write_exp_elt_longcst (pstate,
-						 (LONGEST) TYPE_LENGTH ($3));
-			  write_exp_elt_opcode (pstate, OP_LONG); }
+			{
+			  pstate->push_new<long_const_operation>
+			    (parse_m2_type (pstate)->builtin_int,
+			     $3->length ());
+			}
 	;
 
 exp	:	STRING
-			{ write_exp_elt_opcode (pstate, OP_M2_STRING);
-			  write_exp_string (pstate, $1);
-			  write_exp_elt_opcode (pstate, OP_M2_STRING); }
+			{ error (_("strings are not implemented")); }
 	;
 
 /* This will be used for extensions later.  Like adding modules.  */
 block	:	fblock	
-			{ $$ = SYMBOL_BLOCK_VALUE($1); }
+			{ $$ = $1->value_block (); }
 	;
 
 fblock	:	BLOCKNAME
@@ -518,7 +507,7 @@ fblock	:	block COLONCOLON BLOCKNAME
 			{ struct symbol *tem
 			    = lookup_symbol (copy_name ($3).c_str (), $1,
 					     VAR_DOMAIN, 0).symbol;
-			  if (!tem || SYMBOL_CLASS (tem) != LOC_BLOCK)
+			  if (!tem || tem->aclass () != LOC_BLOCK)
 			    error (_("No function \"%s\" in specified context."),
 				   copy_name ($3).c_str ());
 			  $$ = tem;
@@ -527,14 +516,15 @@ fblock	:	block COLONCOLON BLOCKNAME
 
 /* Useful for assigning to PROCEDURE variables */
 variable:	fblock
-			{ write_exp_elt_opcode (pstate, OP_VAR_VALUE);
-			  write_exp_elt_block (pstate, NULL);
-			  write_exp_elt_sym (pstate, $1);
-			  write_exp_elt_opcode (pstate, OP_VAR_VALUE); }
+			{
+			  block_symbol sym { $1, nullptr };
+			  pstate->push_new<var_value_operation> (sym);
+			}
 	;
 
 /* GDB internal ($foo) variable */
 variable:	DOLLAR_VARIABLE
+			{ pstate->push_dollar ($1); }
 	;
 
 /* GDB scope operator */
@@ -549,10 +539,8 @@ variable:	block COLONCOLON NAME
 			  if (symbol_read_needs_frame (sym.symbol))
 			    pstate->block_tracker->update (sym);
 
-			  write_exp_elt_opcode (pstate, OP_VAR_VALUE);
-			  write_exp_elt_block (pstate, sym.block);
-			  write_exp_elt_sym (pstate, sym.symbol);
-			  write_exp_elt_opcode (pstate, OP_VAR_VALUE); }
+			  pstate->push_new<var_value_operation> (sym);
+			}
 	;
 
 /* Base case for variables.  */
@@ -560,37 +548,14 @@ variable:	NAME
 			{ struct block_symbol sym;
 			  struct field_of_this_result is_a_field_of_this;
 
+			  std::string name = copy_name ($1);
 			  sym
-			    = lookup_symbol (copy_name ($1).c_str (),
+			    = lookup_symbol (name.c_str (),
 					     pstate->expression_context_block,
 					     VAR_DOMAIN,
 					     &is_a_field_of_this);
 
-			  if (sym.symbol)
-			    {
-			      if (symbol_read_needs_frame (sym.symbol))
-				pstate->block_tracker->update (sym);
-
-			      write_exp_elt_opcode (pstate, OP_VAR_VALUE);
-			      write_exp_elt_block (pstate, sym.block);
-			      write_exp_elt_sym (pstate, sym.symbol);
-			      write_exp_elt_opcode (pstate, OP_VAR_VALUE);
-			    }
-			  else
-			    {
-			      struct bound_minimal_symbol msymbol;
-			      std::string arg = copy_name ($1);
-
-			      msymbol =
-				lookup_bound_minimal_symbol (arg.c_str ());
-			      if (msymbol.minsym != NULL)
-				write_exp_msymbol (pstate, msymbol);
-			      else if (!have_full_symbols () && !have_partial_symbols ())
-				error (_("No symbol table is loaded.  Use the \"symbol-file\" command."));
-			      else
-				error (_("No symbol \"%s\" in current context."),
-				       arg.c_str ());
-			    }
+			  pstate->push_symbol (name.c_str (), sym);
 			}
 	;
 
@@ -617,12 +582,11 @@ static int
 parse_number (int olen)
 {
   const char *p = pstate->lexptr;
-  LONGEST n = 0;
-  LONGEST prevn = 0;
+  ULONGEST n = 0;
+  ULONGEST prevn = 0;
   int c,i,ischar=0;
   int base = input_radix;
   int len = olen;
-  int unsigned_p = number_sign == 1 ? 1 : 0;
 
   if(p[len-1] == 'H')
   {
@@ -674,16 +638,11 @@ parse_number (int olen)
       n+=i;
       if(i >= base)
 	 return ERROR;
-      if(!unsigned_p && number_sign == 1 && (prevn >= n))
-	 unsigned_p=1;		/* Try something unsigned */
-      /* Don't do the range check if n==i and i==0, since that special
-	 case will give an overflow error.  */
-      if(RANGE_CHECK && n!=i && i)
-      {
-	 if((unsigned_p && (unsigned)prevn >= (unsigned)n) ||
-	    ((!unsigned_p && number_sign==-1) && -prevn <= -n))
-	    range_error (_("Overflow on numeric constant."));
-      }
+      if (n == 0 && prevn == 0)
+	;
+      else if (RANGE_CHECK && prevn >= n)
+	range_error (_("Overflow on numeric constant."));
+
 	 prevn=n;
     }
 
@@ -696,17 +655,22 @@ parse_number (int olen)
      yylval.ulval = n;
      return CHAR;
   }
-  else if ( unsigned_p && number_sign == 1)
-  {
-     yylval.ulval = n;
-     return UINT;
-  }
-  else if((unsigned_p && (n<0))) {
-     range_error (_("Overflow on numeric constant -- number too large."));
-     /* But, this can return if range_check == range_warn.  */
-  }
-  yylval.lval = n;
-  return INT;
+
+  int int_bits = gdbarch_int_bit (pstate->gdbarch ());
+  bool have_signed = number_sign == -1;
+  bool have_unsigned = number_sign == 1;
+  if (have_signed && fits_in_type (number_sign, n, int_bits, true))
+    {
+      yylval.lval = n;
+      return INT;
+    }
+  else if (have_unsigned && fits_in_type (number_sign, n, int_bits, false))
+    {
+      yylval.ulval = n;
+      return UINT;
+    }
+  else
+    error (_("Overflow on numeric constant."));
 }
 
 
@@ -908,7 +872,7 @@ yylex (void)
 	    break;
 	}
 	toktype = parse_number (p - tokstart);
-        if (toktype == ERROR)
+	if (toktype == ERROR)
 	  {
 	    char *err_copy = (char *) alloca (p - tokstart + 1);
 
@@ -952,10 +916,7 @@ yylex (void)
   yylval.sval.length = namelen;
 
   if (*tokstart == '$')
-    {
-      write_dollar_variable (pstate, yylval.sval);
-      return DOLLAR_VARIABLE;
-    }
+    return DOLLAR_VARIABLE;
 
   /* Use token-type BLOCKNAME for symbols that happen to be defined as
      functions.  If this is not so, then ...
@@ -970,7 +931,7 @@ yylex (void)
       return BLOCKNAME;
     sym = lookup_symbol (tmp.c_str (), pstate->expression_context_block,
 			 VAR_DOMAIN, 0).symbol;
-    if (sym && SYMBOL_CLASS (sym) == LOC_BLOCK)
+    if (sym && sym->aclass () == LOC_BLOCK)
       return BLOCKNAME;
     if (lookup_typename (pstate->language (),
 			 tmp.c_str (), pstate->expression_context_block, 1))
@@ -978,7 +939,7 @@ yylex (void)
 
     if(sym)
     {
-      switch(SYMBOL_CLASS (sym))
+      switch(sym->aclass ())
        {
        case LOC_STATIC:
        case LOC_REGISTER:
@@ -1013,12 +974,12 @@ yylex (void)
     else
     {
        /* Built-in BOOLEAN type.  This is sort of a hack.  */
-       if (strncmp (tokstart, "TRUE", 4) == 0)
+       if (startswith (tokstart, "TRUE"))
        {
 	  yylval.ulval = 1;
 	  return M2_TRUE;
        }
-       else if (strncmp (tokstart, "FALSE", 5) == 0)
+       else if (startswith (tokstart, "FALSE"))
        {
 	  yylval.ulval = 0;
 	  return M2_FALSE;
@@ -1031,7 +992,7 @@ yylex (void)
 }
 
 int
-m2_parse (struct parser_state *par_state)
+m2_language::parser (struct parser_state *par_state) const
 {
   /* Setting up the parser state.  */
   scoped_restore pstate_restore = make_scoped_restore (&pstate);
@@ -1039,7 +1000,10 @@ m2_parse (struct parser_state *par_state)
   pstate = par_state;
   paren_depth = 0;
 
-  return yyparse ();
+  int result = yyparse ();
+  if (!result)
+    pstate->set_operation (pstate->pop ());
+  return result;
 }
 
 static void

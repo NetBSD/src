@@ -1,5 +1,5 @@
 # This testcase is part of GDB, the GNU debugger.
-# Copyright 2007-2020 Free Software Foundation, Inc.
+# Copyright 2007-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,9 +37,13 @@ gdbserver_run ""
 proc test_file_transfer { filename description } {
     set up_server up-server
     set down_server down-server
-    if {![is_remote host] && ![is_remote target]} {
-	set up_server [standard_output_file $up_server]
+
+    if {![is_remote target]} {
 	set down_server [standard_output_file $down_server]
+    }
+
+    if {![is_remote host]} {
+	set up_server [standard_output_file $up_server]
     }
 
     gdb_test "remote put \"$filename\" $down_server" \

@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -60,10 +60,6 @@ set lib_dlopen [shlib_target_file ${lib_basename}.so]
 set exec_opts [list debug "additional_flags= -I$srcdir/../../include/ -D$target_size\
  -DSHLIB_NAME\\=\"$lib_dlopen\""]
 
-if [get_compiler_info] {
-    return -1
-}
-
 if {[gdb_compile_shlib $libsrc $lib_so {debug}] != ""} {
     untested "failed to compile shared library"
     return
@@ -75,8 +71,7 @@ if {[prepare_for_testing "failed to prepare"  $binfile "$srcfile $srcfile2" $exe
 
 gdb_load_shlib ${lib_so}
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return
 }
 
@@ -87,7 +82,7 @@ gdb_continue_to_breakpoint gdb_add_symbol_file
 
 # 2) Set a pending breakpoint at bar in $srcfile3.
 set result [gdb_breakpoint bar allow-pending]
-if {!$result} then {
+if {!$result} {
    return
 }
 
@@ -98,7 +93,7 @@ set result [gdb_test "add-symbol-file ${lib_syms} addr" \
 		     "add symbol table from file \".*${lib_basename}\\.so\"\
  at.*\\(y or n\\) " \
 		     "y"]
-if {$result != 0} then {
+if {$result != 0} {
    return
 }
 
@@ -114,7 +109,7 @@ gdb_continue_to_breakpoint bar ".*${lib_basename}\\.c:$lnum_bar.*"
 
 # 6) Set a breakpoint at foo in $srcfile3.
 set result [gdb_breakpoint foo]
-if {!$result} then {
+if {!$result} {
     return
 }
 
@@ -126,7 +121,7 @@ gdb_continue_to_breakpoint foo ".*${lib_basename}\\.c:$lnum_foo.*"
 # 8) Set a breakpoint at gdb_remove_symbol_file in $srcfile for
 #    removing the library's symbols.
 set result [gdb_breakpoint gdb_remove_symbol_file]
-if {!$result} then {
+if {!$result} {
     return
 }
 
@@ -140,7 +135,7 @@ set result [gdb_test "remove-symbol-file -a addr" \
 		     "Remove symbol table from file \".*${lib_basename}\\.so\"\\?\
 .*\\(y or n\\) " \
 		     "y"]
-if {$result != 0} then {
+if {$result != 0} {
     return
 }
 

@@ -1,4 +1,4 @@
-# Copyright 2006-2020 Free Software Foundation, Inc.
+# Copyright 2006-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,10 +23,10 @@ if { [skip_fortran_tests] } { return -1 }
 
 gdb_exit
 if [mi_gdb_start] {
-    continue
+    return
 }
 
-standard_testfile array.f
+standard_testfile array.f90
 
 if {[gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
 	 executable {debug f90}] != ""} {
@@ -36,7 +36,13 @@ if {[gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
 mi_gdb_reinitialize_dir $srcdir/$subdir
 mi_gdb_load ${binfile}
 
-mi_runto [fortran_main]
+# Avoid shared lib symbols.
+mi_gdb_test "-gdb-set auto-solib-add off" "\\^done"
+
+mi_runto prog_array
+
+# Avoid libc symbols, in particular the 'array' type.
+mi_gdb_test "nosharedlibrary" ".*\\^done"
 
 mi_create_varobj "array" "array" "create local variable array"
 

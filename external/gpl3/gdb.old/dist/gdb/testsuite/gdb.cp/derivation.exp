@@ -1,4 +1,4 @@
-# Copyright 1998-2020 Free Software Foundation, Inc.
+# Copyright 1998-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ set nl "\[\r\n\]+"
 # Start program.
 
 
-if { [skip_cplus_tests] } { continue }
+if { [skip_cplus_tests] } { return }
 
 load_lib "cp-support.exp"
 
@@ -55,9 +55,8 @@ with_test_prefix "before run" {
 
 # Set it up at a breakpoint so we can play with the variable values.
 
-if ![runto 'marker1'] then {
-    perror "couldn't run to marker1"
-    continue
+if {![runto 'marker1']} {
+    return
 }
 
 # Check inheritance of typedefs again, but this time with an active block.
@@ -77,6 +76,10 @@ gdb_test "up" ".*main.*" "up from marker1"
 
 gdb_test "print a_instance" "\\$\[0-9\]+ = \{a = 1, aa = 2\}" "print value of a_instance"
 
+# Clang does not add accessibility information for typedefs inside classes.
+if {[test_compiler_info {clang*} c++]} {
+    setup_xfail "clang 57608" *-*-*
+}
 cp_test_ptype_class \
     "a_instance" "" "class" "A" \
     {
@@ -262,8 +265,7 @@ gdb_test "ptype N::Derived::value_type" "type = int"
 
 # Now run to N::Derived::doit and get the type of "value_type"
 if {![runto "N::Derived::doit"]} {
-    perror "couldn't run to N::Derived::doit"
-    continue
+    return
 }
 
 gdb_test "ptype value_type" "type = int"

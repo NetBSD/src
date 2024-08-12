@@ -36,7 +36,7 @@ int main ()
     return 0;
 }
 
-static void
+static void __attribute__ ((used))
 unused ()
 {
     /* Not used for anything */

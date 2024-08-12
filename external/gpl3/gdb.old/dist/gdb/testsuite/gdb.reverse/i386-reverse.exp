@@ -1,4 +1,4 @@
-# Copyright 2009-2020 Free Software Foundation, Inc.
+# Copyright 2009-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ if ![supports_reverse] {
 }
 
 
-if ![istarget "i?86-*linux*"] then {
+if {![is_x86_like_target]} {
     verbose "Skipping i386 reverse tests."
     return
 }
@@ -42,7 +42,7 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile \
 set end_of_main          [gdb_get_line_number " end of main "]
 set end_of_inc_dec_tests [gdb_get_line_number " end inc_dec_tests "]
 
-runto main
+runto_main
 
 if [supports_process_record] {
     # Activate process record/replay

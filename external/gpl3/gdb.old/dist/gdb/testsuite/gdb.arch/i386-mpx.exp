@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <walfred.tedeschi@intel.com>
 #
@@ -31,6 +31,11 @@ if { ![supports_mpx_check_pointer_bounds] } {
     return -1
 }
 
+if { ![have_mpx] } {
+    unsupported "processor does not support MPX"
+    return -1
+}
+
 set comp_flags "-mmpx -fcheck-pointer-bounds -I${srcdir}/../nat/"
 
 if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
@@ -39,25 +44,7 @@ if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
 }
 
 if ![runto_main] {
-    untested "could not run to main"
     return -1
-}
-
-set supports_mpx 0
-set test "probe MPX support"
-gdb_test_multiple "print have_mpx()" $test {
-    -re ".. = 1\r\n$gdb_prompt $" {
-        pass $test
-        set supports_mpx 1
-    }
-    -re ".. = 0\r\n$gdb_prompt $" {
-        pass $test
-    }
-}
-
-if { !$supports_mpx } {
-    unsupported "processor does not support MPX"
-    return
 }
 
 # Test bndcfg register and bndstatus at startup
@@ -145,7 +132,5 @@ after a failure on allocating an entry"
 # Going to test the python extension for lenght.
 if { [skip_python_tests] } { continue }
 # Verify if size is right
-set test_string ".*\\\: size 17.*"
+set test_string ".*\\\: size 0x11.*"
 gdb_test "print /x \$bnd0 = {0x10, 0x20}" "$test_string" "verify size for bnd0"
-
-send_gdb "quit\n"

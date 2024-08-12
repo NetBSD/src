@@ -1,5 +1,5 @@
 /* IBM RS/6000 "XCOFF" file definitions for BFD.
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2022 Free Software Foundation, Inc.
    Written by Mimi Phuong-Thao Vo of IBM
    and John Gilmore of Cygnus Support.
 
@@ -48,28 +48,34 @@ struct external_filehdr {
 
 typedef struct
 {
-  unsigned char	magic[2];	/* type of file			*/
-  unsigned char	vstamp[2];	/* version stamp		*/
-  unsigned char	tsize[4];	/* text size in bytes, padded to FW bdry */
-  unsigned char	dsize[4];	/* initialized data "  "	*/
-  unsigned char	bsize[4];	/* uninitialized data "   "	*/
-  unsigned char	entry[4];	/* entry pt.			*/
-  unsigned char	text_start[4];	/* base of text used for this file */
-  unsigned char	data_start[4];	/* base of data used for this file */
-  unsigned char	o_toc[4];	/* address of TOC */
-  unsigned char	o_snentry[2];	/* section number of entry point */
-  unsigned char	o_sntext[2];	/* section number of .text section */
-  unsigned char	o_sndata[2];	/* section number of .data section */
-  unsigned char	o_sntoc[2];	/* section number of TOC */
-  unsigned char	o_snloader[2];	/* section number of .loader section */
-  unsigned char	o_snbss[2];	/* section number of .bss section */
-  unsigned char	o_algntext[2];	/* .text alignment */
-  unsigned char	o_algndata[2];	/* .data alignment */
-  unsigned char	o_modtype[2];	/* module type (??) */
-  unsigned char o_cputype[2];	/* cpu type */
-  unsigned char	o_maxstack[4];	/* max stack size (??) */
-  unsigned char o_maxdata[4];	/* max data size (??) */
-  unsigned char	o_resv2[12];	/* reserved */
+  unsigned char magic[2];		/* type of file			*/
+  unsigned char vstamp[2];		/* version stamp		*/
+  unsigned char tsize[4];		/* text size in bytes, padded to FW bdry */
+  unsigned char dsize[4];		/* initialized data "	 "	*/
+  unsigned char bsize[4];		/* uninitialized data "	  "	*/
+  unsigned char entry[4];		/* entry pt.			*/
+  unsigned char text_start[4];		/* base of text used for this file */
+  unsigned char data_start[4];		/* base of data used for this file */
+  unsigned char o_toc[4];		/* address of TOC */
+  unsigned char o_snentry[2];		/* section number of entry point */
+  unsigned char o_sntext[2];		/* section number of .text section */
+  unsigned char o_sndata[2];		/* section number of .data section */
+  unsigned char o_sntoc[2];		/* section number of TOC */
+  unsigned char o_snloader[2];		/* section number of .loader section */
+  unsigned char o_snbss[2];		/* section number of .bss section */
+  unsigned char o_algntext[2];		/* .text alignment */
+  unsigned char o_algndata[2];		/* .data alignment */
+  unsigned char o_modtype[2];		/* module type (??) */
+  unsigned char o_cputype[2];		/* cpu type */
+  unsigned char o_maxstack[4];		/* max stack size (??) */
+  unsigned char o_maxdata[4];		/* max data size (??) */
+  unsigned char o_debugger[4];		/* reserved */
+  unsigned char o_textpsize[1]; 	/* text page size */
+  unsigned char o_datapsize[1]; 	/* data page size */
+  unsigned char o_stackpsize[1];	/* stack page size */
+  unsigned char o_flags[1];		/* Flags and TLS alignment */
+  unsigned char o_sntdata[2];		/* section number of .tdata section */
+  unsigned char o_sntbss[2];		/* section number of .tbss section */
 }
 AOUTHDR;
 
@@ -147,59 +153,55 @@ struct external_syment
   
 
 union external_auxent {
-	struct {
-		char x_tagndx[4];	/* str, un, or enum tag indx */
-		union {
-			struct {
-			    char  x_lnno[2]; /* declaration line number */
-			    char  x_size[2]; /* str/union/array size */
-			} x_lnsz;
-			char x_fsize[4];	/* size of function */
-		} x_misc;
-		union {
-			struct {		/* if ISFCN, tag, or .bb */
-			    char x_lnnoptr[4];	/* ptr to fcn line # */
-			    char x_endndx[4];	/* entry ndx past block end */
-			} x_fcn;
-			struct {		/* if ISARY, up to 4 dimen. */
-			    char x_dimen[E_DIMNUM][2];
-			} x_ary;
-		} x_fcnary;
-		char x_tvndx[2];		/* tv index */
-	} x_sym;
+  struct {
+    char x_pad1[2];
+    char x_lnno[4]; 	/* Source line number */
+    char x_pad[12];
+  } x_sym;
 
-        struct {
-                union {
-                        char x_fname[E_FILNMLEN];
-                        struct {
-                                char x_zeroes[4];
-                                char x_offset[4];
-                        } x_n;
-                } x_n;
-                char x_ftype[1];
-        } x_file;
+  struct {
+    char x_exptr[4];
+    char x_fsize[4];
+    char x_lnnoptr[4];
+    char x_endndx[4];
+    char x_pad[1];
+  } x_fcn;
 
-	struct {
-		char x_scnlen[4];			/* section length */
-		char x_nreloc[2];	/* # relocation entries */
-		char x_nlinno[2];	/* # line numbers */
-	} x_scn;
+  struct {
+    union {
+      char x_fname[E_FILNMLEN];
+      struct {
+	char x_zeroes[4];
+	char x_offset[4];
+      } x_n;
+    } x_n;
+    char x_ftype[1];
+    char x_resv[3];
+  } x_file;
 
-        struct {
-		char x_tvfill[4];	/* tv fill value */
-		char x_tvlen[2];	/* length of .tv */
-		char x_tvran[2][2];	/* tv range */
-	} x_tv;		/* info about .tv section (in auxent of symbol .tv)) */
+  struct {
+    char x_scnlen[4];	/* section length */
+    char x_nreloc[2];	/* # relocation entries */
+    char x_nlinno[2];	/* # line numbers */
+    char x_pad[10];
+  } x_scn;
 
-	struct {
-		unsigned char x_scnlen[4];
-		unsigned char x_parmhash[4];
-		unsigned char x_snhash[2];
-		unsigned char x_smtyp[1];
-		unsigned char x_smclas[1];
-		unsigned char x_stab[4];
-		unsigned char x_snstab[2];
-	} x_csect;
+  struct {
+    char x_scnlen[4];
+    char x_parmhash[4];
+    char x_snhash[2];
+    char x_smtyp[1];
+    char x_smclas[1];
+    char x_stab[4];
+    char x_snstab[2];
+  } x_csect;
+
+  struct {
+    char x_scnlen[4];
+    char x_pad1[4];
+    char x_nreloc[4];
+    char x_pad2[6];
+  } x_sect;
 
 };
 

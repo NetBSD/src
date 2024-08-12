@@ -1,4 +1,4 @@
-# Copyright 2005-2020 Free Software Foundation, Inc.
+# Copyright 2005-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,15 +26,18 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debu
 
 clean_restart ${binfile}
 
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
-    continue
+if {![runto_main]} {
+    return
 }
 
 # First, print the array without the indexes
 
 gdb_test_no_output "set print array-indexes off" \
          "set print array-indexes to off"
+
+gdb_test "show print array-indexes" \
+         "Printing of array indexes is off\\." \
+         "show print array-indexes is off"
 
 gdb_test "print array" \
          "\\{1, 2, 3, 4\\}" \
@@ -44,6 +47,10 @@ gdb_test "print array" \
 
 gdb_test_no_output "set print array-indexes on" \
          "set print array-indexes to on"
+
+gdb_test "show print array-indexes" \
+         "Printing of array indexes is on\\." \
+         "show print array-indexes is on"
 
 gdb_test "print array" \
          "\\{\\\[0\\\] = 1, \\\[1\\\] = 2, \\\[2\\\] = 3, \\\[3\\\] = 4\\}" \

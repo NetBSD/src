@@ -1,4 +1,4 @@
-# Copyright 2014-2020 Free Software Foundation, Inc.
+# Copyright 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,18 +22,33 @@ if { ![dwarf2_support] } {
     return 0
 }
 
-standard_testfile main.c count.S
+standard_testfile main.c .S
 
 set asm_file [standard_output_file $srcfile2]
 Dwarf::assemble $asm_file {
     cu {} {
 	compile_unit {{language @DW_LANG_C99}} {
-	    declare_labels char_label array_label array_label2 static_array_label
+	    declare_labels char_label \
+		array_size_type_label long_unsigned_int_label \
+		array_label array_label2 static_array_label \
+		vla_length_label vla_array_label
 
 	    char_label: base_type {
 		{name char}
 		{encoding @DW_ATE_signed}
 		{byte_size 1 DW_FORM_sdata}
+	    }
+
+	    array_size_type_label: base_type {
+		{byte_size 8 DW_FORM_sdata}
+		{encoding @DW_ATE_unsigned}
+		{name __ARRAY_SIZE_TYPE__}
+	    }
+
+	    long_unsigned_int_label: base_type {
+		{byte_size 8 DW_FORM_sdata}
+		{encoding @DW_ATE_unsigned}
+		{name "long unsigned int"}
 	    }
 
 	    array_label: array_type {
@@ -63,6 +78,27 @@ Dwarf::assemble $asm_file {
 		}
 	    }
 
+	    vla_length_label:
+	    DW_TAG_variable {
+		{location
+		    {
+			lit6
+			stack_value
+		    } SPECIAL_expr}
+		{name "__vla_array_length"}
+		{type :$long_unsigned_int_label}
+		{artificial 1 DW_FORM_flag_present}
+	    }
+
+	    vla_array_label: array_type {
+		{type :$char_label}
+	    } {
+		subrange_type {
+		    {type :$array_size_type_label}
+		    {count :$vla_length_label}
+		}
+	    }
+
 	    DW_TAG_variable {
 		{name array2}
 		{type :$array_label2}
@@ -79,6 +115,12 @@ Dwarf::assemble $asm_file {
 		{name static_array}
 		{type :$static_array_label}
 		{const_value world DW_FORM_block1}
+	    }
+
+	    DW_TAG_variable {
+		{name vla_array}
+		{type :$vla_array_label}
+		{const_value saluton DW_FORM_block1}
 	    }
 	}
     }
@@ -105,7 +147,6 @@ clean_restart ${testfile}
 set GDBFLAGS $saved_gdbflags
 
 if ![runto_main] {
-    perror "couldn't run to main"
     return -1
 }
 
@@ -123,3 +164,8 @@ gdb_test "ptype static_array" "type = char \\\[5\\\]"
 gdb_test "whatis static_array" "type = char \\\[5\\\]"
 gdb_test "print static_array" " = \"world\""
 gdb_test "print sizeof static_array" " = 5"
+
+gdb_test "ptype vla_array" "type = char \\\[6\\\]"
+gdb_test "whatis vla_array" "type = char \\\[6\\\]"
+gdb_test "print vla_array" " = \"saluto\""
+gdb_test "print sizeof vla_array" " = 6"

@@ -3,7 +3,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2020 Free Software Foundation, Inc.
+Copyright (C) 1996-2022 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -42,117 +42,117 @@ This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 /* Returns TRUE if {MAJOR,MACH} is a major branch of the FRV
    development tree.  */
 
-bfd_boolean
+bool
 frv_is_branch_major (CGEN_ATTR_VALUE_ENUM_TYPE major, unsigned long mach)
 {
   switch (mach)
     {
     case bfd_mach_fr400:
       if (major >= FR400_MAJOR_B_1 && major <= FR400_MAJOR_B_6)
-	return TRUE;
+	return true;
       break;
     case bfd_mach_fr450:
       if (major >= FR450_MAJOR_B_1 && major <= FR450_MAJOR_B_6)
-	return TRUE;
+	return true;
       break;
     default:
       if (major >= FR500_MAJOR_B_1 && major <= FR500_MAJOR_B_6)
-	return TRUE;
+	return true;
       break;
     }
 
-  return FALSE;
+  return false;
 }
 
 /* Returns TRUE if {MAJOR,MACH} supports floating point insns.  */
 
-bfd_boolean
+bool
 frv_is_float_major (CGEN_ATTR_VALUE_ENUM_TYPE major, unsigned long mach)
 {
   switch (mach)
     {
     case bfd_mach_fr400:
     case bfd_mach_fr450:
-      return FALSE;
+      return false;
     default:
       if (major >= FR500_MAJOR_F_1 && major <= FR500_MAJOR_F_8)
-	return TRUE;
+	return true;
       break;
     }
 
-  return FALSE;
+  return false;
 }
 
 /* Returns TRUE if {MAJOR,MACH} supports media insns.  */
 
-bfd_boolean
+bool
 frv_is_media_major (CGEN_ATTR_VALUE_ENUM_TYPE major, unsigned long mach)
 {
   switch (mach)
     {
     case bfd_mach_fr400:
       if (major >= FR400_MAJOR_M_1 && major <= FR400_MAJOR_M_2)
-	return TRUE;
+	return true;
       break;
     case bfd_mach_fr450:
       if (major >= FR450_MAJOR_M_1 && major <= FR450_MAJOR_M_6)
-	return TRUE;
+	return true;
       break;
     default:
       if (major >= FR500_MAJOR_M_1 && major <= FR500_MAJOR_M_8)
-	return TRUE;
+	return true;
       break;
     }
 
-  return FALSE;
+  return false;
 }
 
-bfd_boolean
+bool
 frv_is_branch_insn (const CGEN_INSN *insn)
 {
   if (frv_is_branch_major (CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_FR400_MAJOR),
 			   bfd_mach_fr400))
-    return TRUE;
+    return true;
   if (frv_is_branch_major (CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_FR450_MAJOR),
 			   bfd_mach_fr450))
-    return TRUE;
+    return true;
   if (frv_is_branch_major (CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_FR500_MAJOR),
 			   bfd_mach_fr500))
-    return TRUE;
+    return true;
 
-  return FALSE;
+  return false;
 }
 
-bfd_boolean
+bool
 frv_is_float_insn (const CGEN_INSN *insn)
 {
   if (frv_is_float_major (CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_FR400_MAJOR),
 			  bfd_mach_fr400))
-    return TRUE;
+    return true;
   if (frv_is_float_major (CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_FR450_MAJOR),
 			  bfd_mach_fr450))
-    return TRUE;
+    return true;
   if (frv_is_float_major (CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_FR500_MAJOR),
 			  bfd_mach_fr500))
-    return TRUE;
+    return true;
 
-  return FALSE;
+  return false;
 }
 
-bfd_boolean
+bool
 frv_is_media_insn (const CGEN_INSN *insn)
 {
   if (frv_is_media_major (CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_FR400_MAJOR),
 			  bfd_mach_fr400))
-    return TRUE;
+    return true;
   if (frv_is_media_major (CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_FR450_MAJOR),
 			  bfd_mach_fr450))
-    return TRUE;
+    return true;
   if (frv_is_media_major (CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_FR500_MAJOR),
 			  bfd_mach_fr500))
-    return TRUE;
+    return true;
 
-  return FALSE;
+  return false;
 }
 
 /* This table represents the allowable packing for vliw insns for the fr400.
@@ -393,7 +393,7 @@ frv_vliw_reset (FRV_VLIW *vliw, unsigned long mach, unsigned long elf_flags)
 /* Return TRUE if unit1 is a match for unit2.
    Unit1 comes from the insn's UNIT attribute. unit2 comes from one of the
    *_allowed_vliw tables above.  */
-static bfd_boolean
+static bool
 match_unit (FRV_VLIW *vliw,
 	    CGEN_ATTR_VALUE_ENUM_TYPE unit1, CGEN_ATTR_VALUE_ENUM_TYPE unit2)
 {
@@ -401,9 +401,9 @@ match_unit (FRV_VLIW *vliw,
   unit1 = vliw->unit_mapping[unit1];
 
   if (unit1 == unit2)
-    return TRUE;
+    return true;
   if (unit1 < unit2)
-    return FALSE;
+    return false;
 
   switch (unit1)
     {
@@ -413,34 +413,34 @@ match_unit (FRV_VLIW *vliw,
       /* The 01 versions of these units are within 2 enums of the 0 or 1
 	 versions.  */
       if (unit1 - unit2 <= 2)
-	return TRUE;
+	return true;
       break;
     case UNIT_IALL:
     case UNIT_FMALL:
       /* The ALL versions of these units are within 5 enums of the 0, 1, 2 or 3
 	 versions.  */
       if (unit1 - unit2 <= 5)
-	return TRUE;
+	return true;
       break;
     default:
       break;
     }
 
-  return FALSE;
+  return false;
 }
 
 /* Return TRUE if the vliws match, FALSE otherwise.  */
 
-static bfd_boolean
+static bool
 match_vliw (VLIW_COMBO *vliw1, VLIW_COMBO *vliw2, int vliw_size)
 {
   int i;
 
   for (i = 0; i < vliw_size; ++i)
     if ((*vliw1)[i] != (*vliw2)[i])
-      return FALSE;
+      return false;
 
-  return TRUE;
+  return true;
 }
 
 /* Find the next vliw vliw in the table that can accomodate the new insn.
@@ -477,22 +477,22 @@ add_next_to_vliw (FRV_VLIW *vliw, CGEN_ATTR_VALUE_ENUM_TYPE unit)
 /* Look for the given major insn type in the given vliw.
    Returns TRUE if found, FALSE otherwise.  */
 
-static bfd_boolean
+static bool
 find_major_in_vliw (FRV_VLIW *vliw, CGEN_ATTR_VALUE_ENUM_TYPE major)
 {
   int i;
 
   for (i = 0; i < vliw->next_slot; ++i)
     if (vliw->major[i] == major)
-      return TRUE;
+      return true;
 
-  return FALSE;
+  return false;
 }
 
 /* Check for constraints between the insns in the vliw due to major insn
    types.  */
 
-static bfd_boolean
+static bool
 fr400_check_insn_major_constraints (FRV_VLIW *vliw, CGEN_ATTR_VALUE_ENUM_TYPE major)
 {
   /* In the cpu file, all media insns are represented as being allowed in
@@ -509,10 +509,10 @@ fr400_check_insn_major_constraints (FRV_VLIW *vliw, CGEN_ATTR_VALUE_ENUM_TYPE ma
     default:
       break;
     }
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
+static bool
 fr450_check_insn_major_constraints (FRV_VLIW *vliw, CGEN_ATTR_VALUE_ENUM_TYPE major)
 {
   CGEN_ATTR_VALUE_ENUM_TYPE other_major;
@@ -523,7 +523,7 @@ fr450_check_insn_major_constraints (FRV_VLIW *vliw, CGEN_ATTR_VALUE_ENUM_TYPE ma
   /* (M4, M5) and (M4, M6) are allowed.  */
   if (other_major == FR450_MAJOR_M_4)
     if (major == FR450_MAJOR_M_5 || major == FR450_MAJOR_M_6)
-      return TRUE;
+      return true;
 
   /* Otherwise, instructions in even-numbered media categories cannot be
      executed in parallel with other media instructions.  */
@@ -543,23 +543,23 @@ fr450_check_insn_major_constraints (FRV_VLIW *vliw, CGEN_ATTR_VALUE_ENUM_TYPE ma
 	       || other_major == FR450_MAJOR_M_6);
 
     default:
-      return TRUE;
+      return true;
     }
 }
 
-static bfd_boolean
+static bool
 find_unit_in_vliw (FRV_VLIW *vliw, CGEN_ATTR_VALUE_ENUM_TYPE unit)
 {
   int i;
 
   for (i = 0; i < vliw->next_slot; ++i)
     if (CGEN_INSN_ATTR_VALUE (vliw->insn[i], CGEN_INSN_UNIT) == unit)
-      return TRUE;
+      return true;
 
-  return FALSE; /* Not found.  */
+  return false; /* Not found.  */
 }
 
-static bfd_boolean
+static bool
 find_major_in_slot (FRV_VLIW *vliw,
 		    CGEN_ATTR_VALUE_ENUM_TYPE major,
 		    CGEN_ATTR_VALUE_ENUM_TYPE slot)
@@ -568,12 +568,12 @@ find_major_in_slot (FRV_VLIW *vliw,
 
   for (i = 0; i < vliw->next_slot; ++i)
     if (vliw->major[i] == major && (*vliw->current_vliw)[i] == slot)
-      return TRUE;
+      return true;
 
-  return FALSE;
+  return false;
 }
 
-static bfd_boolean
+static bool
 fr550_find_media_in_vliw (FRV_VLIW *vliw)
 {
   int i;
@@ -589,13 +589,13 @@ fr550_find_media_in_vliw (FRV_VLIW *vliw)
 	  || CGEN_INSN_NUM (vliw->insn[i]) == FRV_INSN_MCLRACC_1)
 	continue;
 
-      return TRUE; /* Found one.  */
+      return true; /* Found one.  */
     }
 
-  return FALSE;
+  return false;
 }
 
-static bfd_boolean
+static bool
 fr550_find_float_in_vliw (FRV_VLIW *vliw)
 {
   int i;
@@ -609,13 +609,13 @@ fr550_find_float_in_vliw (FRV_VLIW *vliw)
       if (CGEN_INSN_NUM (vliw->insn[i]) == FRV_INSN_FNOP)
 	continue;
 
-      return TRUE; /* Found one.  */
+      return true; /* Found one.  */
     }
 
-  return FALSE;
+  return false;
 }
 
-static bfd_boolean
+static bool
 fr550_check_insn_major_constraints (FRV_VLIW *vliw,
 				    CGEN_ATTR_VALUE_ENUM_TYPE major,
 				    const CGEN_INSN *insn)
@@ -663,10 +663,10 @@ fr550_check_insn_major_constraints (FRV_VLIW *vliw,
     default:
       break;
     }
-  return TRUE; /* All OK.  */
+  return true; /* All OK.  */
 }
 
-static bfd_boolean
+static bool
 fr500_check_insn_major_constraints (FRV_VLIW *vliw, CGEN_ATTR_VALUE_ENUM_TYPE major)
 {
   /* TODO: A table might be faster for some of the more complex instances
@@ -686,7 +686,7 @@ fr500_check_insn_major_constraints (FRV_VLIW *vliw, CGEN_ATTR_VALUE_ENUM_TYPE ma
     case FR500_MAJOR_F_4:
     case FR500_MAJOR_F_8:
     case FR500_MAJOR_M_8:
-      return TRUE; /* OK */
+      return true; /* OK */
     case FR500_MAJOR_I_2:
       /* Cannot coexist with I-3 insn.  */
       return ! find_major_in_vliw (vliw, FR500_MAJOR_I_3);
@@ -770,10 +770,10 @@ fr500_check_insn_major_constraints (FRV_VLIW *vliw, CGEN_ATTR_VALUE_ENUM_TYPE ma
       abort ();
       break;
     }
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
+static bool
 check_insn_major_constraints (FRV_VLIW *vliw,
 			      CGEN_ATTR_VALUE_ENUM_TYPE major,
 			      const CGEN_INSN *insn)
@@ -873,12 +873,12 @@ frv_vliw_add_insn (FRV_VLIW *vliw, const CGEN_INSN *insn)
   return 1;
 }
 
-bfd_boolean
+bool
 spr_valid (long regno)
 {
-  if (regno < 0)     return FALSE;
-  if (regno <= 4095) return TRUE;
-  return FALSE;
+  if (regno < 0)     return false;
+  if (regno <= 4095) return true;
+  return false;
 }
 /* -- */
 /* The hash functions are recorded here to help keep assembler code out of

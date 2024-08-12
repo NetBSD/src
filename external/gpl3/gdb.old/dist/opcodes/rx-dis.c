@@ -1,5 +1,5 @@
 /* Disassembler code for Renesas RX.
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2022 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Written by DJ Delorie.
 
@@ -85,7 +85,7 @@ static char const * register_names[] =
   "psw", "pc", "usp", "fpsw", NULL, NULL, NULL, NULL,
   "bpsw", "bpc", "isp", "fintv", "intb", "extb", NULL, NULL,
   "a0", "a1", NULL, NULL, NULL, NULL, NULL, NULL,
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
 static char const * condition_names[] =
@@ -99,36 +99,36 @@ static const char * flag_names[] =
 {
   "c", "z", "s", "o", "", "", "", "",
   "", "", "", "", "", "", "", "",
-  "i", "u", "", "", "", "", "", ""
-  "", "", "", "", "", "", "", "",
+  "i", "u", "", "", "", "", "", "",
+  "", "", "", "", "", "", "", ""
 };
 
 static const char * double_register_names[] =
 {
   "dr0", "dr1", "dr2", "dr3", "dr4", "dr5", "dr6", "dr7",
-  "dr8", "dr9", "dr10", "dr11", "dr12", "dr13", "dr14", "dr15",
+  "dr8", "dr9", "dr10", "dr11", "dr12", "dr13", "dr14", "dr15"
 };
 
 static const char * double_register_high_names[] =
 {
   "drh0", "drh1", "drh2", "drh3", "drh4", "drh5", "drh6", "drh7",
-  "drh8", "drh9", "drh10", "drh11", "drh12", "drh13", "drh14", "drh15",
+  "drh8", "drh9", "drh10", "drh11", "drh12", "drh13", "drh14", "drh15"
 };
 
 static const char * double_register_low_names[] =
 {
   "drl0", "drl1", "drl2", "drl3", "drl4", "drl5", "drl6", "drl7",
-  "drl8", "drl9", "drl10", "drl11", "drl12", "drl13", "drl14", "drl15",
+  "drl8", "drl9", "drl10", "drl11", "drl12", "drl13", "drl14", "drl15"
 };
 
 static const char * double_control_register_names[] =
 {
-  "dpsw", "dcmr", "decnt", "depc",
+  "dpsw", "dcmr", "decnt", "depc"
 };
 
 static const char * double_condition_names[] =
 {
-  "", "un", "eq", "", "lt", "", "le",
+  "", "un", "eq", "", "lt", "", "le"
 };
 
 static inline const char *
@@ -221,7 +221,7 @@ print_insn_rx (bfd_vma addr, disassemble_info * dis)
   const char * s;
   struct private priv;
 
-  dis->private_data = (PTR) &priv;
+  dis->private_data = &priv;
   rx_data.pc = addr;
   rx_data.dis = dis;
 

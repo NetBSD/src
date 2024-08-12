@@ -8,15 +8,15 @@
 "madd r<RD>, r<RS>, r<RT>"
 *r3900
 {
-  signed64 prod = (U8_4 (VL4_8 (HI), VL4_8 (LO))
-		   + ((signed64) EXTEND32 (GPR[RT])
-		      * (signed64) EXTEND32 (GPR[RS])));
+  int64_t prod = (U8_4 (VL4_8 (HI), VL4_8 (LO))
+		   + ((int64_t) EXTEND32 (GPR[RT])
+		      * (int64_t) EXTEND32 (GPR[RS])));
   check_mult_hilo (SD_, HIHISTORY, LOHISTORY);
   TRACE_ALU_INPUT2 (GPR[RS], GPR[RT]);
   LO = EXTEND32 (prod);
   HI = EXTEND32 (VH4_8 (prod));
   TRACE_ALU_RESULT2 (HI, LO);
-  if(RD != 0 )
+  if (RD != 0)
     GPR[RD] = LO;
 }
 
@@ -26,15 +26,15 @@
 "maddu r<RD>, r<RS>, r<RT>"
 *r3900
 {
-  unsigned64 prod = (U8_4 (VL4_8 (HI), VL4_8 (LO))
-		     + ((unsigned64) VL4_8 (GPR[RS])
-			* (unsigned64) VL4_8 (GPR[RT])));
+  uint64_t prod = (U8_4 (VL4_8 (HI), VL4_8 (LO))
+		     + ((uint64_t) VL4_8 (GPR[RS])
+			* (uint64_t) VL4_8 (GPR[RT])));
   check_mult_hilo (SD_, HIHISTORY, LOHISTORY);
   TRACE_ALU_INPUT2 (GPR[RS], GPR[RT]);
   LO = EXTEND32 (prod);
   HI = EXTEND32 (VH4_8 (prod));
   TRACE_ALU_RESULT2 (HI, LO);
-  if(RD != 0)
+  if (RD != 0)
     GPR[RD] = LO;
 }
 

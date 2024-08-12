@@ -1,6 +1,6 @@
 /* Header file for Compile and inject module.
 
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -64,7 +64,7 @@ extern void compile_dwarf_expr_to_c (string_file *stream,
 				     struct symbol *sym,
 				     CORE_ADDR pc,
 				     struct gdbarch *arch,
-				     unsigned char *registers_used,
+				     std::vector<bool> &registers_used,
 				     unsigned int addr_size,
 				     const gdb_byte *op_ptr,
 				     const gdb_byte *op_end,
@@ -103,7 +103,7 @@ extern void compile_dwarf_bounds_to_c (string_file *stream,
 				       const struct dynamic_prop *prop,
 				       struct symbol *sym, CORE_ADDR pc,
 				       struct gdbarch *arch,
-				       unsigned char *registers_used,
+				       std::vector<bool> &registers_used,
 				       unsigned int addr_size,
 				       const gdb_byte *op_ptr,
 				       const gdb_byte *op_end,

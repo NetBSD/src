@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2020 Free Software Foundation, Inc.
+   Copyright 2014-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -102,7 +102,6 @@ die4e:
 	.uleb128 1f - 2f	# DW_AT_location
 2:
 	.byte	0x13	# DW_OP_drop
-	.quad 0
 1:
 #endif
 die5c:

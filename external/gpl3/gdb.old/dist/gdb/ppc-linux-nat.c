@@ -1,6 +1,6 @@
 /* PPC GNU/Linux native support.
 
-   Copyright (C) 1988-2020 Free Software Foundation, Inc.
+   Copyright (C) 1988-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -54,6 +54,7 @@
 #include "arch/ppc-linux-tdesc.h"
 #include "nat/ppc-linux.h"
 #include "linux-tdep.h"
+#include "expop.h"
 
 /* Similarly for the hardware watchpoint support.  These requests are used
    when the PowerPC HWDEBUG ptrace interface is not available.  */
@@ -82,13 +83,13 @@
 
 struct ppc_debug_info
 {
-        uint32_t version;               /* Only version 1 exists to date.  */
-        uint32_t num_instruction_bps;
-        uint32_t num_data_bps;
-        uint32_t num_condition_regs;
-        uint32_t data_bp_alignment;
-        uint32_t sizeof_condition;      /* size of the DVC register.  */
-        uint64_t features;
+	uint32_t version;               /* Only version 1 exists to date.  */
+	uint32_t num_instruction_bps;
+	uint32_t num_data_bps;
+	uint32_t num_condition_regs;
+	uint32_t data_bp_alignment;
+	uint32_t sizeof_condition;      /* size of the DVC register.  */
+	uint64_t features;
 };
 
 /* Features will have bits indicating whether there is support for:  */
@@ -99,13 +100,13 @@ struct ppc_debug_info
 
 struct ppc_hw_breakpoint
 {
-        uint32_t version;               /* currently, version must be 1 */
-        uint32_t trigger_type;          /* only some combinations allowed */
-        uint32_t addr_mode;             /* address match mode */
-        uint32_t condition_mode;        /* break/watchpoint condition flags */
-        uint64_t addr;                  /* break/watchpoint address */
-        uint64_t addr2;                 /* range end or mask */
-        uint64_t condition_value;       /* contents of the DVC register */
+	uint32_t version;               /* currently, version must be 1 */
+	uint32_t trigger_type;          /* only some combinations allowed */
+	uint32_t addr_mode;             /* address match mode */
+	uint32_t condition_mode;        /* break/watchpoint condition flags */
+	uint64_t addr;                  /* break/watchpoint address */
+	uint64_t addr2;                 /* range end or mask */
+	uint64_t condition_value;       /* contents of the DVC register */
 };
 
 /* Trigger type.  */
@@ -129,7 +130,7 @@ struct ppc_hw_breakpoint
 #define PPC_BREAKPOINT_CONDITION_BE_ALL 0x00ff0000
 #define PPC_BREAKPOINT_CONDITION_BE_SHIFT       16
 #define PPC_BREAKPOINT_CONDITION_BE(n)  \
-        (1<<((n)+PPC_BREAKPOINT_CONDITION_BE_SHIFT))
+	(1<<((n)+PPC_BREAKPOINT_CONDITION_BE_SHIFT))
 #endif /* PPC_PTRACE_GETHWDBGINFO */
 
 /* Feature defined on Linux kernel v3.9: DAWR interface, that enables wider
@@ -137,6 +138,11 @@ struct ppc_hw_breakpoint
 #ifndef PPC_DEBUG_FEATURE_DATA_BP_DAWR
 #define PPC_DEBUG_FEATURE_DATA_BP_DAWR	0x10
 #endif /* PPC_DEBUG_FEATURE_DATA_BP_DAWR */
+
+/* Feature defined on Linux kernel v5.1: Second watchpoint support.  */
+#ifndef PPC_DEBUG_FEATURE_DATA_BP_ARCH_31
+#define PPC_DEBUG_FEATURE_DATA_BP_ARCH_31 0x20
+#endif /* PPC_DEBUG_FEATURE_DATA_BP_ARCH_31 */
 
 /* The version of the PowerPC HWDEBUG kernel interface that we will use, if
    available.  */
@@ -190,30 +196,30 @@ typedef char gdb_vrregset_t[PPC_LINUX_SIZEOF_VRREGSET];
 /* This is the layout of the POWER7 VSX registers and the way they overlap
    with the existing FPR and VMX registers.
 
-                    VSR doubleword 0               VSR doubleword 1
-           ----------------------------------------------------------------
+		    VSR doubleword 0               VSR doubleword 1
+	   ----------------------------------------------------------------
    VSR[0]  |             FPR[0]            |                              |
-           ----------------------------------------------------------------
+	   ----------------------------------------------------------------
    VSR[1]  |             FPR[1]            |                              |
-           ----------------------------------------------------------------
-           |              ...              |                              |
-           |              ...              |                              |
-           ----------------------------------------------------------------
+	   ----------------------------------------------------------------
+	   |              ...              |                              |
+	   |              ...              |                              |
+	   ----------------------------------------------------------------
    VSR[30] |             FPR[30]           |                              |
-           ----------------------------------------------------------------
+	   ----------------------------------------------------------------
    VSR[31] |             FPR[31]           |                              |
-           ----------------------------------------------------------------
+	   ----------------------------------------------------------------
    VSR[32] |                             VR[0]                            |
-           ----------------------------------------------------------------
+	   ----------------------------------------------------------------
    VSR[33] |                             VR[1]                            |
-           ----------------------------------------------------------------
-           |                              ...                             |
-           |                              ...                             |
-           ----------------------------------------------------------------
+	   ----------------------------------------------------------------
+	   |                              ...                             |
+	   |                              ...                             |
+	   ----------------------------------------------------------------
    VSR[62] |                             VR[30]                           |
-           ----------------------------------------------------------------
+	   ----------------------------------------------------------------
    VSR[63] |                             VR[31]                           |
-          ----------------------------------------------------------------
+	  ----------------------------------------------------------------
 
    VSX has 64 128bit registers.  The first 32 registers overlap with
    the FP registers (doubleword 0) and hence extend them with additional
@@ -524,8 +530,8 @@ struct ppc_linux_nat_target final : public linux_nat_target
 
   const struct target_desc *read_description ()  override;
 
-  int auxv_parse (gdb_byte **readptr,
-		  gdb_byte *endptr, CORE_ADDR *typep, CORE_ADDR *valp)
+  int auxv_parse (const gdb_byte **readptr,
+		  const gdb_byte *endptr, CORE_ADDR *typep, CORE_ADDR *valp)
     override;
 
   /* Override linux_nat_target low methods.  */
@@ -643,7 +649,7 @@ static int
 ppc_register_u_addr (struct gdbarch *gdbarch, int regno)
 {
   int u_addr = -1;
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
   /* NOTE: cagney/2003-11-25: This is the word size used by the ptrace
      interface, and not the wordsize of the program's ABI.  */
   int wordsize = sizeof (long);
@@ -747,10 +753,10 @@ fetch_altivec_registers (struct regcache *regcache, int tid,
   if (ret < 0)
     {
       if (errno == EIO)
-        {
-          have_ptrace_getvrregs = 0;
-          return;
-        }
+	{
+	  have_ptrace_getvrregs = 0;
+	  return;
+	}
       perror_with_name (_("Unable to fetch AltiVec registers"));
     }
 
@@ -772,17 +778,17 @@ get_spe_registers (int tid, struct gdb_evrregset_t *evrregset)
   if (have_ptrace_getsetevrregs)
     {
       if (ptrace (PTRACE_GETEVRREGS, tid, 0, evrregset) >= 0)
-        return;
+	return;
       else
-        {
-          /* EIO means that the PTRACE_GETEVRREGS request isn't supported;
-             we just return zeros.  */
-          if (errno == EIO)
-            have_ptrace_getsetevrregs = 0;
-          else
-            /* Anything else needs to be reported.  */
-            perror_with_name (_("Unable to fetch SPE registers"));
-        }
+	{
+	  /* EIO means that the PTRACE_GETEVRREGS request isn't supported;
+	     we just return zeros.  */
+	  if (errno == EIO)
+	    have_ptrace_getsetevrregs = 0;
+	  else
+	    /* Anything else needs to be reported.  */
+	    perror_with_name (_("Unable to fetch SPE registers"));
+	}
     }
 
   memset (evrregset, 0, sizeof (*evrregset));
@@ -796,15 +802,15 @@ static void
 fetch_spe_register (struct regcache *regcache, int tid, int regno)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
   struct gdb_evrregset_t evrregs;
 
   gdb_assert (sizeof (evrregs.evr[0])
-              == register_size (gdbarch, tdep->ppc_ev0_upper_regnum));
+	      == register_size (gdbarch, tdep->ppc_ev0_upper_regnum));
   gdb_assert (sizeof (evrregs.acc)
-              == register_size (gdbarch, tdep->ppc_acc_regnum));
+	      == register_size (gdbarch, tdep->ppc_acc_regnum));
   gdb_assert (sizeof (evrregs.spefscr)
-              == register_size (gdbarch, tdep->ppc_spefscr_regnum));
+	      == register_size (gdbarch, tdep->ppc_spefscr_regnum));
 
   get_spe_registers (tid, &evrregs);
 
@@ -813,10 +819,10 @@ fetch_spe_register (struct regcache *regcache, int tid, int regno)
       int i;
 
       for (i = 0; i < ppc_num_gprs; i++)
-        regcache->raw_supply (tdep->ppc_ev0_upper_regnum + i, &evrregs.evr[i]);
+	regcache->raw_supply (tdep->ppc_ev0_upper_regnum + i, &evrregs.evr[i]);
     }
   else if (tdep->ppc_ev0_upper_regnum <= regno
-           && regno < tdep->ppc_ev0_upper_regnum + ppc_num_gprs)
+	   && regno < tdep->ppc_ev0_upper_regnum + ppc_num_gprs)
     regcache->raw_supply (regno,
 			  &evrregs.evr[regno - tdep->ppc_ev0_upper_regnum]);
 
@@ -905,7 +911,7 @@ static void
 fetch_register (struct regcache *regcache, int tid, int regno)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
   /* This isn't really an address.  But ptrace thinks of it as one.  */
   CORE_ADDR regaddr = ppc_register_u_addr (gdbarch, regno);
   int bytes_transferred;
@@ -914,17 +920,17 @@ fetch_register (struct regcache *regcache, int tid, int regno)
   if (altivec_register_p (gdbarch, regno))
     {
       /* If this is the first time through, or if it is not the first
-         time through, and we have confirmed that there is kernel
-         support for such a ptrace request, then go and fetch the
-         register.  */
+	 time through, and we have confirmed that there is kernel
+	 support for such a ptrace request, then go and fetch the
+	 register.  */
       if (have_ptrace_getvrregs)
        {
-         fetch_altivec_registers (regcache, tid, regno);
-         return;
+	 fetch_altivec_registers (regcache, tid, regno);
+	 return;
        }
      /* If we have discovered that there is no ptrace support for
-        AltiVec registers, fall through and return zeroes, because
-        regaddr will be -1 in this case.  */
+	AltiVec registers, fall through and return zeroes, because
+	regaddr will be -1 in this case.  */
     }
   else if (vsx_register_p (gdbarch, regno))
     {
@@ -1082,7 +1088,7 @@ fetch_register (struct regcache *regcache, int tid, int regno)
       regaddr += sizeof (long);
       if (errno != 0)
 	{
-          char message[128];
+	  char message[128];
 	  xsnprintf (message, sizeof (message), "reading register %s (#%d)",
 		     gdbarch_register_name (gdbarch, regno), regno);
 	  perror_with_name (message);
@@ -1096,20 +1102,19 @@ fetch_register (struct regcache *regcache, int tid, int regno)
   if (gdbarch_byte_order (gdbarch) == BFD_ENDIAN_LITTLE)
     {
       /* Little-endian values are always found at the left end of the
-         bytes transferred.  */
+	 bytes transferred.  */
       regcache->raw_supply (regno, buf);
     }
   else if (gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG)
     {
       /* Big-endian values are found at the right end of the bytes
-         transferred.  */
+	 transferred.  */
       size_t padding = (bytes_transferred - register_size (gdbarch, regno));
       regcache->raw_supply (regno, buf + padding);
     }
   else 
-    internal_error (__FILE__, __LINE__,
-                    _("fetch_register: unexpected byte order: %d"),
-                    gdbarch_byte_order (gdbarch));
+    internal_error (_("fetch_register: unexpected byte order: %d"),
+		    gdbarch_byte_order (gdbarch));
 }
 
 /* This function actually issues the request to ptrace, telling
@@ -1128,11 +1133,11 @@ fetch_all_gp_regs (struct regcache *regcache, int tid)
   if (ptrace (PTRACE_GETREGS, tid, 0, (void *) &gregset) < 0)
     {
       if (errno == EIO)
-        {
-          have_ptrace_getsetregs = 0;
-          return 0;
-        }
-      perror_with_name (_("Couldn't get general-purpose registers."));
+	{
+	  have_ptrace_getsetregs = 0;
+	  return 0;
+	}
+      perror_with_name (_("Couldn't get general-purpose registers"));
     }
 
   supply_gregset (regcache, (const gdb_gregset_t *) &gregset);
@@ -1150,7 +1155,7 @@ static void
 fetch_gp_regs (struct regcache *regcache, int tid)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
   int i;
 
   if (have_ptrace_getsetregs)
@@ -1180,11 +1185,11 @@ fetch_all_fp_regs (struct regcache *regcache, int tid)
   if (ptrace (PTRACE_GETFPREGS, tid, 0, (void *) &fpregs) < 0)
     {
       if (errno == EIO)
-        {
-          have_ptrace_getsetfpregs = 0;
-          return 0;
-        }
-      perror_with_name (_("Couldn't get floating-point registers."));
+	{
+	  have_ptrace_getsetfpregs = 0;
+	  return 0;
+	}
+      perror_with_name (_("Couldn't get floating-point registers"));
     }
 
   supply_fpregset (regcache, (const gdb_fpregset_t *) &fpregs);
@@ -1202,7 +1207,7 @@ static void
 fetch_fp_regs (struct regcache *regcache, int tid)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
   int i;
 
   if (have_ptrace_getsetfpregs)
@@ -1220,7 +1225,7 @@ static void
 fetch_ppc_registers (struct regcache *regcache, int tid)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
 
   fetch_gp_regs (regcache, tid);
   if (tdep->ppc_fp0_regnum >= 0)
@@ -1368,10 +1373,10 @@ store_altivec_registers (const struct regcache *regcache, int tid,
   if (ret < 0)
     {
       if (errno == EIO)
-        {
-          have_ptrace_getvrregs = 0;
-          return;
-        }
+	{
+	  have_ptrace_getvrregs = 0;
+	  return;
+	}
       perror_with_name (_("Unable to fetch AltiVec registers"));
     }
 
@@ -1397,18 +1402,18 @@ set_spe_registers (int tid, struct gdb_evrregset_t *evrregset)
   if (have_ptrace_getsetevrregs)
     {
       if (ptrace (PTRACE_SETEVRREGS, tid, 0, evrregset) >= 0)
-        return;
+	return;
       else
-        {
-          /* EIO means that the PTRACE_SETEVRREGS request isn't
-             supported; we fail silently, and don't try the call
-             again.  */
-          if (errno == EIO)
-            have_ptrace_getsetevrregs = 0;
-          else
-            /* Anything else needs to be reported.  */
-            perror_with_name (_("Unable to set SPE registers"));
-        }
+	{
+	  /* EIO means that the PTRACE_SETEVRREGS request isn't
+	     supported; we fail silently, and don't try the call
+	     again.  */
+	  if (errno == EIO)
+	    have_ptrace_getsetevrregs = 0;
+	  else
+	    /* Anything else needs to be reported.  */
+	    perror_with_name (_("Unable to set SPE registers"));
+	}
     }
 }
 
@@ -1419,15 +1424,15 @@ static void
 store_spe_register (const struct regcache *regcache, int tid, int regno)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
   struct gdb_evrregset_t evrregs;
 
   gdb_assert (sizeof (evrregs.evr[0])
-              == register_size (gdbarch, tdep->ppc_ev0_upper_regnum));
+	      == register_size (gdbarch, tdep->ppc_ev0_upper_regnum));
   gdb_assert (sizeof (evrregs.acc)
-              == register_size (gdbarch, tdep->ppc_acc_regnum));
+	      == register_size (gdbarch, tdep->ppc_acc_regnum));
   gdb_assert (sizeof (evrregs.spefscr)
-              == register_size (gdbarch, tdep->ppc_spefscr_regnum));
+	      == register_size (gdbarch, tdep->ppc_spefscr_regnum));
 
   if (regno == -1)
     /* Since we're going to write out every register, the code below
@@ -1449,7 +1454,7 @@ store_spe_register (const struct regcache *regcache, int tid, int regno)
 			       &evrregs.evr[i]);
     }
   else if (tdep->ppc_ev0_upper_regnum <= regno
-           && regno < tdep->ppc_ev0_upper_regnum + ppc_num_gprs)
+	   && regno < tdep->ppc_ev0_upper_regnum + ppc_num_gprs)
     regcache->raw_collect (regno,
 			   &evrregs.evr[regno - tdep->ppc_ev0_upper_regnum]);
 
@@ -1471,7 +1476,7 @@ static void
 store_register (const struct regcache *regcache, int tid, int regno)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
   /* This isn't really an address.  But ptrace thinks of it as one.  */
   CORE_ADDR regaddr = ppc_register_u_addr (gdbarch, regno);
   int i;
@@ -1645,7 +1650,7 @@ store_register (const struct regcache *regcache, int tid, int regno)
       regaddr += sizeof (long);
 
       if (errno == EIO 
-          && (regno == tdep->ppc_fpscr_regnum
+	  && (regno == tdep->ppc_fpscr_regnum
 	      || regno == PPC_ORIG_R3_REGNUM
 	      || regno == PPC_TRAP_REGNUM))
 	{
@@ -1656,7 +1661,7 @@ store_register (const struct regcache *regcache, int tid, int regno)
 
       if (errno != 0)
 	{
-          char message[128];
+	  char message[128];
 	  xsnprintf (message, sizeof (message), "writing register %s (#%d)",
 		     gdbarch_register_name (gdbarch, regno), regno);
 	  perror_with_name (message);
@@ -1680,11 +1685,11 @@ store_all_gp_regs (const struct regcache *regcache, int tid, int regno)
   if (ptrace (PTRACE_GETREGS, tid, 0, (void *) &gregset) < 0)
     {
       if (errno == EIO)
-        {
-          have_ptrace_getsetregs = 0;
-          return 0;
-        }
-      perror_with_name (_("Couldn't get general-purpose registers."));
+	{
+	  have_ptrace_getsetregs = 0;
+	  return 0;
+	}
+      perror_with_name (_("Couldn't get general-purpose registers"));
     }
 
   fill_gregset (regcache, &gregset, regno);
@@ -1692,11 +1697,11 @@ store_all_gp_regs (const struct regcache *regcache, int tid, int regno)
   if (ptrace (PTRACE_SETREGS, tid, 0, (void *) &gregset) < 0)
     {
       if (errno == EIO)
-        {
-          have_ptrace_getsetregs = 0;
-          return 0;
-        }
-      perror_with_name (_("Couldn't set general-purpose registers."));
+	{
+	  have_ptrace_getsetregs = 0;
+	  return 0;
+	}
+      perror_with_name (_("Couldn't set general-purpose registers"));
     }
 
   return 1;
@@ -1712,7 +1717,7 @@ static void
 store_gp_regs (const struct regcache *regcache, int tid, int regno)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
   int i;
 
   if (have_ptrace_getsetregs)
@@ -1742,11 +1747,11 @@ store_all_fp_regs (const struct regcache *regcache, int tid, int regno)
   if (ptrace (PTRACE_GETFPREGS, tid, 0, (void *) &fpregs) < 0)
     {
       if (errno == EIO)
-        {
-          have_ptrace_getsetfpregs = 0;
-          return 0;
-        }
-      perror_with_name (_("Couldn't get floating-point registers."));
+	{
+	  have_ptrace_getsetfpregs = 0;
+	  return 0;
+	}
+      perror_with_name (_("Couldn't get floating-point registers"));
     }
 
   fill_fpregset (regcache, &fpregs, regno);
@@ -1754,11 +1759,11 @@ store_all_fp_regs (const struct regcache *regcache, int tid, int regno)
   if (ptrace (PTRACE_SETFPREGS, tid, 0, (void *) &fpregs) < 0)
     {
       if (errno == EIO)
-        {
-          have_ptrace_getsetfpregs = 0;
-          return 0;
-        }
-      perror_with_name (_("Couldn't set floating-point registers."));
+	{
+	  have_ptrace_getsetfpregs = 0;
+	  return 0;
+	}
+      perror_with_name (_("Couldn't set floating-point registers"));
     }
 
   return 1;
@@ -1774,7 +1779,7 @@ static void
 store_fp_regs (const struct regcache *regcache, int tid, int regno)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
   int i;
 
   if (have_ptrace_getsetfpregs)
@@ -1792,7 +1797,7 @@ static void
 store_ppc_registers (const struct regcache *regcache, int tid)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
  
   store_gp_regs (regcache, tid, -1);
   if (tdep->ppc_fp0_regnum >= 0)
@@ -1909,8 +1914,8 @@ fill_fpregset (const struct regcache *regcache,
 }
 
 int
-ppc_linux_nat_target::auxv_parse (gdb_byte **readptr,
-				  gdb_byte *endptr, CORE_ADDR *typep,
+ppc_linux_nat_target::auxv_parse (const gdb_byte **readptr,
+				  const gdb_byte *endptr, CORE_ADDR *typep,
 				  CORE_ADDR *valp)
 {
   int tid = inferior_ptid.lwp ();
@@ -1920,7 +1925,7 @@ ppc_linux_nat_target::auxv_parse (gdb_byte **readptr,
   int sizeof_auxv_field = ppc_linux_target_wordsize (tid);
 
   enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
-  gdb_byte *ptr = *readptr;
+  const gdb_byte *ptr = *readptr;
 
   if (endptr == ptr)
     return 0;
@@ -1940,16 +1945,14 @@ ppc_linux_nat_target::auxv_parse (gdb_byte **readptr,
 const struct target_desc *
 ppc_linux_nat_target::read_description ()
 {
-  int tid = inferior_ptid.lwp ();
-  if (tid == 0)
-    tid = inferior_ptid.pid ();
+  int tid = inferior_ptid.pid ();
 
   if (have_ptrace_getsetevrregs)
     {
       struct gdb_evrregset_t evrregset;
 
       if (ptrace (PTRACE_GETEVRREGS, tid, 0, &evrregset) >= 0)
-        return tdesc_powerpc_e500l;
+	return tdesc_powerpc_e500l;
 
       /* EIO means that the PTRACE_GETEVRREGS request isn't supported.
 	 Anything else needs to be reported.  */
@@ -1961,8 +1964,8 @@ ppc_linux_nat_target::read_description ()
 
   features.wordsize = ppc_linux_target_wordsize (tid);
 
-  CORE_ADDR hwcap = linux_get_hwcap (current_top_target ());
-  CORE_ADDR hwcap2 = linux_get_hwcap2 (current_top_target ());
+  CORE_ADDR hwcap = linux_get_hwcap ();
+  CORE_ADDR hwcap2 = linux_get_hwcap2 ();
 
   if (have_ptrace_getsetvsxregs
       && (hwcap & PPC_FEATURE_HAS_VSX))
@@ -1984,7 +1987,7 @@ ppc_linux_nat_target::read_description ()
       gdb_vrregset_t vrregset;
 
       if (ptrace (PTRACE_GETVRREGS, tid, 0, &vrregset) >= 0)
-        features.altivec = true;
+	features.altivec = true;
 
       /* EIO means that the PTRACE_GETVRREGS request isn't supported.
 	 Anything else needs to be reported.  */
@@ -2108,29 +2111,34 @@ ppc_linux_nat_target::region_ok_for_hw_watchpoint (CORE_ADDR addr, int len)
      watchpoints.  */
   if (m_dreg_interface.hwdebug_p ())
     {
-      int region_size;
       const struct ppc_debug_info &hwdebug_info = (m_dreg_interface
 						   .hwdebug_info ());
+      int region_size = hwdebug_info.data_bp_alignment;
+      int region_align = region_size;
 
       /* Embedded DAC-based processors, like the PowerPC 440 have ranged
 	 watchpoints and can watch any access within an arbitrary memory
 	 region. This is useful to watch arrays and structs, for instance.  It
-         takes two hardware watchpoints though.  */
+	 takes two hardware watchpoints though.  */
       if (len > 1
 	  && hwdebug_info.features & PPC_DEBUG_FEATURE_DATA_BP_RANGE
-	  && linux_get_hwcap (current_top_target ()) & PPC_FEATURE_BOOKE)
+	  && (linux_get_hwcap () & PPC_FEATURE_BOOKE))
 	return 2;
       /* Check if the processor provides DAWR interface.  */
       if (hwdebug_info.features & PPC_DEBUG_FEATURE_DATA_BP_DAWR)
-	/* DAWR interface allows to watch up to 512 byte wide ranges which
-	   can't cross a 512 byte boundary.  */
-	region_size = 512;
-      else
-	region_size = hwdebug_info.data_bp_alignment;
+	{
+	  /* DAWR interface allows to watch up to 512 byte wide ranges.  */
+	  region_size = 512;
+	  /* DAWR interface allows to watch up to 512 byte wide ranges which
+	     can't cross a 512 byte bondary on machines that doesn't have a
+	     second DAWR (P9 or less).  */
+	  if (!(hwdebug_info.features & PPC_DEBUG_FEATURE_DATA_BP_ARCH_31))
+	    region_align = 512;
+	}
       /* Server processors provide one hardware watchpoint and addr+len should
-         fall in the watchable region provided by the ptrace interface.  */
-      if (region_size
-	  && (addr + len > (addr & ~(region_size - 1)) + region_size))
+	 fall in the watchable region provided by the ptrace interface.  */
+      if (region_align
+	  && (addr + len > (addr & ~(region_align - 1)) + region_size))
 	return 0;
     }
   /* addr+len must fall in the 8 byte watchable region for DABR-based
@@ -2142,7 +2150,7 @@ ppc_linux_nat_target::region_ok_for_hw_watchpoint (CORE_ADDR addr, int len)
     {
       gdb_assert (m_dreg_interface.debugreg_p ());
 
-      if (((linux_get_hwcap (current_top_target ()) & PPC_FEATURE_BOOKE)
+      if (((linux_get_hwcap () & PPC_FEATURE_BOOKE)
 	   && (addr + len) > (addr & ~3) + 4)
 	  || (addr + len) > (addr & ~7) + 8)
 	return 0;
@@ -2477,20 +2485,24 @@ ppc_linux_nat_target::check_condition (CORE_ADDR watch_addr,
 				       struct expression *cond,
 				       CORE_ADDR *data_value, int *len)
 {
-  int pc = 1, num_accesses_left, num_accesses_right;
+  int num_accesses_left, num_accesses_right;
   struct value *left_val, *right_val;
   std::vector<value_ref_ptr> left_chain, right_chain;
 
-  if (cond->elts[0].opcode != BINOP_EQUAL)
+  expr::equal_operation *eqop
+    = dynamic_cast<expr::equal_operation *> (cond->op.get ());
+  if (eqop == nullptr)
     return 0;
+  expr::operation *lhs = eqop->get_lhs ();
+  expr::operation *rhs = eqop->get_rhs ();
 
-  fetch_subexp_value (cond, &pc, &left_val, NULL, &left_chain, 0);
+  fetch_subexp_value (cond, lhs, &left_val, NULL, &left_chain, false);
   num_accesses_left = num_memory_accesses (left_chain);
 
   if (left_val == NULL || num_accesses_left < 0)
     return 0;
 
-  fetch_subexp_value (cond, &pc, &right_val, NULL, &right_chain, 0);
+  fetch_subexp_value (cond, rhs, &right_val, NULL, &right_chain, false);
   num_accesses_right = num_memory_accesses (right_chain);
 
   if (right_val == NULL || num_accesses_right < 0)
@@ -2504,7 +2516,7 @@ ppc_linux_nat_target::check_condition (CORE_ADDR watch_addr,
 
       /* DATA_VALUE is the constant in RIGHT_VAL, but actually has
 	 the same type as the memory region referenced by LEFT_VAL.  */
-      *len = TYPE_LENGTH (check_typedef (value_type (left_val)));
+      *len = check_typedef (value_type (left_val))->length ();
     }
   else if (num_accesses_left == 0 && num_accesses_right == 1
 	   && VALUE_LVAL (right_val) == lval_memory
@@ -2514,7 +2526,7 @@ ppc_linux_nat_target::check_condition (CORE_ADDR watch_addr,
 
       /* DATA_VALUE is the constant in LEFT_VAL, but actually has
 	 the same type as the memory region referenced by RIGHT_VAL.  */
-      *len = TYPE_LENGTH (check_typedef (value_type (right_val)));
+      *len = check_typedef (value_type (right_val))->length ();
     }
   else
     return 0;
@@ -2625,7 +2637,7 @@ ppc_linux_nat_target::insert_watchpoint (CORE_ADDR addr, int len,
       long wp_value;
       long read_mode, write_mode;
 
-      if (linux_get_hwcap (current_top_target ()) & PPC_FEATURE_BOOKE)
+      if (linux_get_hwcap () & PPC_FEATURE_BOOKE)
 	{
 	  /* PowerPC 440 requires only the read/write flags to be passed
 	     to the kernel.  */
@@ -2998,9 +3010,9 @@ ppc_linux_nat_target::watchpoint_addr_within_range (CORE_ADDR addr,
   int mask;
 
   if (m_dreg_interface.hwdebug_p ()
-      && linux_get_hwcap (current_top_target ()) & PPC_FEATURE_BOOKE)
+      && (linux_get_hwcap () & PPC_FEATURE_BOOKE))
     return start <= addr && start + length >= addr;
-  else if (linux_get_hwcap (current_top_target ()) & PPC_FEATURE_BOOKE)
+  else if (linux_get_hwcap () & PPC_FEATURE_BOOKE)
     mask = 3;
   else
     mask = 7;

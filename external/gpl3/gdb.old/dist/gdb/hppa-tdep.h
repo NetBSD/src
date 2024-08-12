@@ -1,6 +1,6 @@
 /* Target-dependent code for the HP PA-RISC architecture.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,8 @@
 
 #ifndef HPPA_TDEP_H
 #define HPPA_TDEP_H
+
+#include "gdbarch.h"
 
 struct trad_frame_saved_reg;
 struct objfile;
@@ -82,39 +84,40 @@ enum hppa_regnum
 #define HPPA_INSN_SIZE 4
 
 /* Target-dependent structure in gdbarch.  */
-struct gdbarch_tdep
+struct hppa_gdbarch_tdep : gdbarch_tdep_base
 {
   /* The number of bytes in an address.  For now, this field is designed
      to allow us to differentiate hppa32 from hppa64 targets.  */
-  int bytes_per_address;
+  int bytes_per_address = 0;
 
   /* Is this an ELF target? This can be 64-bit HP-UX, or a 32/64-bit GNU/Linux
      system.  */
-  int is_elf;
+  int is_elf = 0;
 
   /* Given a function address, try to find the global pointer for the 
      corresponding shared object.  */
-  CORE_ADDR (*find_global_pointer) (struct gdbarch *, struct value *);
+  CORE_ADDR (*find_global_pointer) (struct gdbarch *, struct value *) = nullptr;
 
   /* For shared libraries, each call goes through a small piece of
      trampoline code in the ".plt" section.  IN_SOLIB_CALL_TRAMPOLINE
      evaluates to nonzero if we are currently stopped in one of these.  */
-  int (*in_solib_call_trampoline) (struct gdbarch *gdbarch, CORE_ADDR pc);
+  int (*in_solib_call_trampoline) (struct gdbarch *gdbarch,
+				   CORE_ADDR pc) = nullptr;
 
   /* For targets that support multiple spaces, we may have additional stubs
      in the return path.  These stubs are internal to the ABI, and users are
      not interested in them.  If we detect that we are returning to a stub,
      adjust the pc to the real caller.  This improves the behavior of commands
      that traverse frames such as "up" and "finish".  */
-  void (*unwind_adjust_stub) (struct frame_info *this_frame, CORE_ADDR base,
-  			      struct trad_frame_saved_reg *saved_regs);
+  void (*unwind_adjust_stub) (frame_info_ptr this_frame, CORE_ADDR base,
+			      trad_frame_saved_reg *saved_regs) = nullptr;
 
   /* These are solib-dependent methods.  They are really HPUX only, but
      we don't have a HPUX-specific tdep vector at the moment.  */
-  CORE_ADDR (*solib_thread_start_addr) (struct so_list *so);
-  CORE_ADDR (*solib_get_got_by_pc) (CORE_ADDR addr);
-  CORE_ADDR (*solib_get_solib_by_pc) (CORE_ADDR addr);
-  CORE_ADDR (*solib_get_text_base) (struct objfile *objfile);
+  CORE_ADDR (*solib_thread_start_addr) (struct so_list *so) = nullptr;
+  CORE_ADDR (*solib_get_got_by_pc) (CORE_ADDR addr) = nullptr;
+  CORE_ADDR (*solib_get_solib_by_pc) (CORE_ADDR addr) = nullptr;
+  CORE_ADDR (*solib_get_text_base) (struct objfile *objfile) = nullptr;
 };
 
 /*
@@ -198,23 +201,17 @@ int hppa_extract_14 (unsigned);
 CORE_ADDR hppa_symbol_address(const char *sym);
 
 extern struct value *
-  hppa_frame_prev_register_helper (struct frame_info *this_frame,
-				   struct trad_frame_saved_reg *saved_regs,
+  hppa_frame_prev_register_helper (frame_info_ptr this_frame,
+				   trad_frame_saved_reg *saved_regs,
 				   int regnum);
 
 extern CORE_ADDR hppa_read_pc (struct regcache *regcache);
 extern void hppa_write_pc (struct regcache *regcache, CORE_ADDR pc);
 extern CORE_ADDR hppa_unwind_pc (struct gdbarch *gdbarch,
-				 struct frame_info *next_frame);
-
-extern struct bound_minimal_symbol
-  hppa_lookup_stub_minimal_symbol (const char *name,
-                                   enum unwind_stub_types stub_type);
+				 frame_info_ptr next_frame);
 
 extern int hppa_in_solib_call_trampoline (struct gdbarch *gdbarch,
 					  CORE_ADDR pc);
-extern CORE_ADDR hppa_skip_trampoline_code (struct frame_info *, CORE_ADDR pc);
-
-void _initialize_hppabsd_tdep (void);
+extern CORE_ADDR hppa_skip_trampoline_code (frame_info_ptr, CORE_ADDR pc);
 
 #endif  /* hppa-tdep.h */

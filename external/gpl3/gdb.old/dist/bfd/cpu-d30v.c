@@ -1,5 +1,5 @@
 /* BFD support for the Mitsubishi D30V processor
-   Copyright (C) 1997-2020 Free Software Foundation, Inc.
+   Copyright (C) 1997-2022 Free Software Foundation, Inc.
    Contributed by Martin Hunt (hunt@cygnus.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -33,7 +33,7 @@ const bfd_arch_info_type bfd_d30v_arch =
   "d30v",
   "d30v",
   4, /* Section alignment power.  */
-  TRUE,
+  true,
   bfd_default_compatible,
   bfd_default_scan,
   bfd_arch_default_fill,

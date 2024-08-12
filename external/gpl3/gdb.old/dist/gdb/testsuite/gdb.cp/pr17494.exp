@@ -1,4 +1,4 @@
-# Copyright 2014-2020 Free Software Foundation, Inc.
+# Copyright 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ gdb_breakpoint [gdb_get_line_number "Break here"]
 gdb_continue_to_breakpoint "Break here"
 
 gdb_test "p a.geta()" ".* = 12345" "a.geta()"
-gdb_test "p a_ptr->geta()" ".* = 12345" "a.geta()"
+gdb_test "p a_ptr->geta()" ".* = 12345" "a_ptr->geta()"
 
 gdb_test "p false ? a.geta() : 123" ".* = 123" "ternop 1"
 gdb_test "p false ? a_ptr->geta() : 123" ".* = 123" "ternop 2"

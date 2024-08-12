@@ -1,5 +1,5 @@
 # Pretty-printer commands.
-# Copyright (C) 2010-2020 Free Software Foundation, Inc.
+# Copyright (C) 2010-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ def parse_printer_regexps(arg):
         SyntaxError: an error processing ARG
     """
 
-    argv = gdb.string_to_argv(arg);
+    argv = gdb.string_to_argv(arg)
     argc = len(argv)
     object_regexp = ""  # match everything
     name_regexp = ""  # match everything
@@ -60,7 +60,7 @@ def parse_printer_regexps(arg):
     except SyntaxError:
         raise SyntaxError("invalid object regexp: %s" % object_regexp)
     try:
-        name_re = re.compile (name_regexp)
+        name_re = re.compile(name_regexp)
     except SyntaxError:
         raise SyntaxError("invalid name regexp: %s" % name_regexp)
     if subname_regexp is not None:
@@ -70,7 +70,7 @@ def parse_printer_regexps(arg):
             raise SyntaxError("invalid subname regexp: %s" % subname_regexp)
     else:
         subname_re = None
-    return(object_re, name_re, subname_re)
+    return (object_re, name_re, subname_re)
 
 
 def printer_enabled_p(printer):
@@ -84,19 +84,18 @@ def printer_enabled_p(printer):
 class InfoPrettyPrinter(gdb.Command):
     """GDB command to list all registered pretty-printers.
 
-Usage: info pretty-printer [OBJECT-REGEXP [NAME-REGEXP]]
+    Usage: info pretty-printer [OBJECT-REGEXP [NAME-REGEXP]]
 
-OBJECT-REGEXP is a regular expression matching the objects to list.
-Objects are "global", the program space's file, and the objfiles within
-that program space.
+    OBJECT-REGEXP is a regular expression matching the objects to list.
+    Objects are "global", the program space's file, and the objfiles within
+    that program space.
 
-NAME-REGEXP matches the name of the pretty-printer.
-Individual printers in a collection are named as
-printer-name;subprinter-name."""
+    NAME-REGEXP matches the name of the pretty-printer.
+    Individual printers in a collection are named as
+    printer-name;subprinter-name."""
 
-    def __init__ (self):
-        super(InfoPrettyPrinter, self).__init__("info pretty-printer",
-                                                 gdb.COMMAND_DATA)
+    def __init__(self):
+        super(InfoPrettyPrinter, self).__init__("info pretty-printer", gdb.COMMAND_DATA)
 
     @staticmethod
     def enabled_string(printer):
@@ -123,44 +122,62 @@ printer-name;subprinter-name."""
         """Print a list of pretty-printers."""
         # A potential enhancement is to provide an option to list printers in
         # "lookup order" (i.e. unsorted).
-        sorted_pretty_printers = sorted (copy.copy(pretty_printers),
-                                         key = self.printer_name)
+        sorted_pretty_printers = sorted(
+            copy.copy(pretty_printers), key=self.printer_name
+        )
         for printer in sorted_pretty_printers:
             name = self.printer_name(printer)
             enabled = self.enabled_string(printer)
             if name_re.match(name):
-                print ("  %s%s" % (name, enabled))
-                if (hasattr(printer, "subprinters") and
-                    printer.subprinters is not None):
-                    sorted_subprinters = sorted (copy.copy(printer.subprinters),
-                                                 key = self.printer_name)
+                print("  %s%s" % (name, enabled))
+                if hasattr(printer, "subprinters") and printer.subprinters is not None:
+                    sorted_subprinters = sorted(
+                        copy.copy(printer.subprinters), key=self.printer_name
+                    )
                     for subprinter in sorted_subprinters:
-                        if (not subname_re or
-                            subname_re.match(subprinter.name)):
-                            print ("    %s%s" %
-                                   (subprinter.name,
-                                    self.enabled_string(subprinter)))
+                        if not subname_re or subname_re.match(subprinter.name):
+                            print(
+                                "    %s%s"
+                                % (subprinter.name, self.enabled_string(subprinter))
+                            )
 
-    def invoke1(self, title, printer_list,
-                obj_name_to_match, object_re, name_re, subname_re):
+    def invoke1(
+        self, title, printer_list, obj_name_to_match, object_re, name_re, subname_re
+    ):
         """Subroutine of invoke to simplify it."""
         if printer_list and object_re.match(obj_name_to_match):
-            print (title)
+            print(title)
             self.list_pretty_printers(printer_list, name_re, subname_re)
 
     def invoke(self, arg, from_tty):
         """GDB calls this to perform the command."""
         (object_re, name_re, subname_re) = parse_printer_regexps(arg)
-        self.invoke1("global pretty-printers:", gdb.pretty_printers,
-                     "global", object_re, name_re, subname_re)
+        self.invoke1(
+            "global pretty-printers:",
+            gdb.pretty_printers,
+            "global",
+            object_re,
+            name_re,
+            subname_re,
+        )
         cp = gdb.current_progspace()
-        self.invoke1("progspace %s pretty-printers:" % cp.filename,
-                     cp.pretty_printers, "progspace",
-                     object_re, name_re, subname_re)
+        self.invoke1(
+            "progspace %s pretty-printers:" % cp.filename,
+            cp.pretty_printers,
+            "progspace",
+            object_re,
+            name_re,
+            subname_re,
+        )
         for objfile in gdb.objfiles():
-            self.invoke1("objfile %s pretty-printers:" % objfile.filename,
-                         objfile.pretty_printers, objfile.filename,
-                         object_re, name_re, subname_re)
+            self.invoke1(
+                "objfile %s pretty-printers:" % objfile.filename,
+                objfile.pretty_printers,
+                objfile.filename,
+                object_re,
+                name_re,
+                subname_re,
+            )
 
 
 def count_enabled_printers(pretty_printers):
@@ -168,8 +185,7 @@ def count_enabled_printers(pretty_printers):
     enabled = 0
     total = 0
     for printer in pretty_printers:
-        if (hasattr(printer, "subprinters")
-            and printer.subprinters is not None):
+        if hasattr(printer, "subprinters") and printer.subprinters is not None:
             if printer_enabled_p(printer):
                 for subprinter in printer.subprinters:
                     if printer_enabled_p(subprinter):
@@ -191,7 +207,9 @@ def count_all_enabled_printers():
     (t_enabled, t_total) = count_enabled_printers(gdb.pretty_printers)
     enabled_count += t_enabled
     total_count += t_total
-    (t_enabled, t_total) = count_enabled_printers(gdb.current_progspace().pretty_printers)
+    (t_enabled, t_total) = count_enabled_printers(
+        gdb.current_progspace().pretty_printers
+    )
     enabled_count += t_enabled
     total_count += t_total
     for objfile in gdb.objfiles():
@@ -214,10 +232,10 @@ def show_pretty_printer_enabled_summary():
     We count subprinters individually.
     """
     (enabled_count, total_count) = count_all_enabled_printers()
-    print ("%d of %d printers enabled" % (enabled_count, total_count))
+    print("%d of %d printers enabled" % (enabled_count, total_count))
 
 
-def do_enable_pretty_printer_1 (pretty_printers, name_re, subname_re, flag):
+def do_enable_pretty_printer_1(pretty_printers, name_re, subname_re, flag):
     """Worker for enabling/disabling pretty-printers.
 
     Arguments:
@@ -233,10 +251,13 @@ def do_enable_pretty_printer_1 (pretty_printers, name_re, subname_re, flag):
     """
     total = 0
     for printer in pretty_printers:
-        if (hasattr(printer, "name") and name_re.match(printer.name) or
-            hasattr(printer, "__name__") and name_re.match(printer.__name__)):
-            if (hasattr(printer, "subprinters") and
-                printer.subprinters is not None):
+        if (
+            hasattr(printer, "name")
+            and name_re.match(printer.name)
+            or hasattr(printer, "__name__")
+            and name_re.match(printer.__name__)
+        ):
+            if hasattr(printer, "subprinters") and printer.subprinters is not None:
                 if not subname_re:
                     # Only record printers that change state.
                     if printer_enabled_p(printer) != flag:
@@ -252,10 +273,12 @@ def do_enable_pretty_printer_1 (pretty_printers, name_re, subname_re, flag):
                     for subprinter in printer.subprinters:
                         if subname_re.match(subprinter.name):
                             # Only record printers that change state.
-                           if (printer_enabled_p(printer) and
-                               printer_enabled_p(subprinter) != flag):
-                               total += 1
-                           subprinter.enabled = flag
+                            if (
+                                printer_enabled_p(printer)
+                                and printer_enabled_p(subprinter) != flag
+                            ):
+                                total += 1
+                            subprinter.enabled = flag
             else:
                 # This printer has no subprinters.
                 # If the user does "disable pretty-printer .* .* foo"
@@ -275,28 +298,31 @@ def do_enable_pretty_printer_1 (pretty_printers, name_re, subname_re, flag):
     return total
 
 
-def do_enable_pretty_printer (arg, flag):
+def do_enable_pretty_printer(arg, flag):
     """Internal worker for enabling/disabling pretty-printers."""
     (object_re, name_re, subname_re) = parse_printer_regexps(arg)
 
     total = 0
     if object_re.match("global"):
-        total += do_enable_pretty_printer_1(gdb.pretty_printers,
-                                            name_re, subname_re, flag)
+        total += do_enable_pretty_printer_1(
+            gdb.pretty_printers, name_re, subname_re, flag
+        )
     cp = gdb.current_progspace()
     if object_re.match("progspace"):
-        total += do_enable_pretty_printer_1(cp.pretty_printers,
-                                            name_re, subname_re, flag)
+        total += do_enable_pretty_printer_1(
+            cp.pretty_printers, name_re, subname_re, flag
+        )
     for objfile in gdb.objfiles():
         if object_re.match(objfile.filename):
-            total += do_enable_pretty_printer_1(objfile.pretty_printers,
-                                                name_re, subname_re, flag)
+            total += do_enable_pretty_printer_1(
+                objfile.pretty_printers, name_re, subname_re, flag
+            )
 
     if flag:
         state = "enabled"
     else:
         state = "disabled"
-    print ("%d %s %s" % (total, pluralize("printer", total), state))
+    print("%d %s %s" % (total, pluralize("printer", total), state))
 
     # Print the total list of printers currently enabled/disabled.
     # This is to further assist the user in determining whether the result
@@ -312,44 +338,47 @@ def do_enable_pretty_printer (arg, flag):
 #
 # A useful addition would be -v (verbose) to show each printer affected.
 
-class EnablePrettyPrinter (gdb.Command):
+
+class EnablePrettyPrinter(gdb.Command):
     """GDB command to enable the specified pretty-printer.
 
-Usage: enable pretty-printer [OBJECT-REGEXP [NAME-REGEXP]]
+    Usage: enable pretty-printer [OBJECT-REGEXP [NAME-REGEXP]]
 
-OBJECT-REGEXP is a regular expression matching the objects to examine.
-Objects are "global", the program space's file, and the objfiles within
-that program space.
+    OBJECT-REGEXP is a regular expression matching the objects to examine.
+    Objects are "global", the program space's file, and the objfiles within
+    that program space.
 
-NAME-REGEXP matches the name of the pretty-printer.
-Individual printers in a collection are named as
-printer-name;subprinter-name."""
+    NAME-REGEXP matches the name of the pretty-printer.
+    Individual printers in a collection are named as
+    printer-name;subprinter-name."""
 
     def __init__(self):
-        super(EnablePrettyPrinter, self).__init__("enable pretty-printer",
-                                                   gdb.COMMAND_DATA)
+        super(EnablePrettyPrinter, self).__init__(
+            "enable pretty-printer", gdb.COMMAND_DATA
+        )
 
     def invoke(self, arg, from_tty):
         """GDB calls this to perform the command."""
         do_enable_pretty_printer(arg, True)
 
 
-class DisablePrettyPrinter (gdb.Command):
+class DisablePrettyPrinter(gdb.Command):
     """GDB command to disable the specified pretty-printer.
 
-Usage: disable pretty-printer [OBJECT-REGEXP [NAME-REGEXP]]
+    Usage: disable pretty-printer [OBJECT-REGEXP [NAME-REGEXP]]
 
-OBJECT-REGEXP is a regular expression matching the objects to examine.
-Objects are "global", the program space's file, and the objfiles within
-that program space.
+    OBJECT-REGEXP is a regular expression matching the objects to examine.
+    Objects are "global", the program space's file, and the objfiles within
+    that program space.
 
-NAME-REGEXP matches the name of the pretty-printer.
-Individual printers in a collection are named as
-printer-name;subprinter-name."""
+    NAME-REGEXP matches the name of the pretty-printer.
+    Individual printers in a collection are named as
+    printer-name;subprinter-name."""
 
     def __init__(self):
-        super(DisablePrettyPrinter, self).__init__("disable pretty-printer",
-                                                   gdb.COMMAND_DATA)
+        super(DisablePrettyPrinter, self).__init__(
+            "disable pretty-printer", gdb.COMMAND_DATA
+        )
 
     def invoke(self, arg, from_tty):
         """GDB calls this to perform the command."""
@@ -361,5 +390,6 @@ def register_pretty_printer_commands():
     InfoPrettyPrinter()
     EnablePrettyPrinter()
     DisablePrettyPrinter()
+
 
 register_pretty_printer_commands()
