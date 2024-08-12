@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,7 +15,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "server.h"
 #include "tdesc.h"
 #include "regdef.h"
 
@@ -32,14 +31,13 @@ bool target_desc::operator== (const target_desc &other) const
   if (reg_defs != other.reg_defs)
     return false;
 
-  /* Compare expedite_regs.  */
-  int i = 0;
-  for (; expedite_regs[i] != NULL; i++)
-    {
-      if (strcmp (expedite_regs[i], other.expedite_regs[i]) != 0)
-	return false;
-    }
-  if (other.expedite_regs[i] != NULL)
+  /* Compare the two vectors of expedited registers.  They will only match
+     if the following conditions are met:
+
+     - Both vectors have the same number of elements.
+     - Both vectors contain the same elements.
+     - The elements of both vectors appear in the same order.  */
+  if (expedite_regs != other.expedite_regs)
     return false;
 
   return true;
@@ -89,7 +87,13 @@ init_target_desc (struct target_desc *tdesc,
   gdb_assert (2 * tdesc->registers_size + 32 <= PBUFSIZ);
 
 #ifndef IN_PROCESS_AGENT
-  tdesc->expedite_regs = expedite_regs;
+  /* Drop the contents of the previous vector, if any.  */
+  tdesc->expedite_regs.clear ();
+
+  /* Initialize the vector with new expedite registers contents.  */
+  int expedite_count = 0;
+  while (expedite_regs[expedite_count] != nullptr)
+    tdesc->expedite_regs.push_back (expedite_regs[expedite_count++]);
 #endif
 }
 
