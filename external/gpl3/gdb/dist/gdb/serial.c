@@ -1,6 +1,6 @@
 /* Generic serial interface routines
 
-   Copyright (C) 1992-2023 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,10 +17,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include <ctype.h>
 #include "serial.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "cli/cli-utils.h"
 
 /* Is serial being debugged?  */
@@ -173,12 +172,10 @@ serial_for_fd (int fd)
 
 /* Create a new serial for OPS.  */
 
-static struct serial *
+static gdb::unique_xmalloc_ptr<struct serial>
 new_serial (const struct serial_ops *ops)
 {
-  struct serial *scb;
-
-  scb = XCNEW (struct serial);
+  gdb::unique_xmalloc_ptr<struct serial> scb (XCNEW (struct serial));
 
   scb->ops = ops;
 
@@ -221,7 +218,7 @@ serial_open (const char *name)
     }
 
   if (!ops)
-    return NULL;
+    error (_("could not find serial handler for '%s'"), name);
 
   return serial_open_ops_1 (ops, open_name);
 }
@@ -231,20 +228,14 @@ serial_open (const char *name)
 static struct serial *
 serial_open_ops_1 (const struct serial_ops *ops, const char *open_name)
 {
-  struct serial *scb;
-
-  scb = new_serial (ops);
+  gdb::unique_xmalloc_ptr<struct serial> scb = new_serial (ops);
 
   /* `...->open (...)' would get expanded by the open(2) syscall macro.  */
-  if ((*scb->ops->open) (scb, open_name))
-    {
-      xfree (scb);
-      return NULL;
-    }
+  (*scb->ops->open) (scb.get (), open_name);
 
   scb->name = open_name != NULL ? xstrdup (open_name) : NULL;
   scb->next = scb_base;
-  scb_base = scb;
+  scb_base = scb.get ();
 
   if (!serial_logfile.empty ())
     {
@@ -256,7 +247,7 @@ serial_open_ops_1 (const struct serial_ops *ops, const char *open_name)
       serial_logfp = file.release ();
     }
 
-  return scb;
+  return scb.release ();
 }
 
 /* See serial.h.  */
@@ -273,8 +264,6 @@ serial_open_ops (const struct serial_ops *ops)
 static struct serial *
 serial_fdopen_ops (const int fd, const struct serial_ops *ops)
 {
-  struct serial *scb;
-
   if (!ops)
     {
       ops = serial_interface_lookup ("terminal");
@@ -285,18 +274,18 @@ serial_fdopen_ops (const int fd, const struct serial_ops *ops)
   if (!ops)
     return NULL;
 
-  scb = new_serial (ops);
+  gdb::unique_xmalloc_ptr<struct serial> scb = new_serial (ops);
 
   scb->name = NULL;
   scb->next = scb_base;
-  scb_base = scb;
+  scb_base = scb.get ();
 
   if ((ops->fdopen) != NULL)
-    (*ops->fdopen) (scb, fd);
+    (*ops->fdopen) (scb.get (), fd);
   else
     scb->fd = fd;
 
-  return scb;
+  return scb.release ();
 }
 
 struct serial *
@@ -409,7 +398,7 @@ serial_readchar (struct serial *scb, int timeout)
   return (ch);
 }
 
-int
+void
 serial_write (struct serial *scb, const void *buf, size_t count)
 {
   if (serial_logfp != NULL)
@@ -438,7 +427,7 @@ serial_write (struct serial *scb, const void *buf, size_t count)
       gdb_flush (gdb_stdlog);
     }
 
-  return (scb->ops->write (scb, buf, count));
+  scb->ops->write (scb, buf, count);
 }
 
 void
@@ -471,13 +460,13 @@ serial_flush_input (struct serial *scb)
   return scb->ops->flush_input (scb);
 }
 
-int
+void
 serial_send_break (struct serial *scb)
 {
   if (serial_logfp != NULL)
     serial_logchar (serial_logfp, 'w', SERIAL_BREAK, 0);
 
-  return (scb->ops->send_break (scb));
+  scb->ops->send_break (scb);
 }
 
 void
@@ -512,10 +501,10 @@ serial_print_tty_state (struct serial *scb,
   scb->ops->print_tty_state (scb, ttystate, stream);
 }
 
-int
+void
 serial_setbaudrate (struct serial *scb, int rate)
 {
-  return scb->ops->setbaudrate (scb, rate);
+  scb->ops->setbaudrate (scb, rate);
 }
 
 int
