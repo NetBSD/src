@@ -1,5 +1,5 @@
 /* Target errno mappings for newlib/libgloss environment.
-   Copyright 1995-2023 Free Software Foundation, Inc.
+   Copyright 1995-2024 Free Software Foundation, Inc.
    Contributed by Mike Frysinger.
 
    This file is part of simulators.
@@ -41,6 +41,9 @@ CB_TARGET_DEFS_MAP cb_init_errno_map[] = {
 #ifdef EADDRNOTAVAIL
   { "EADDRNOTAVAIL", EADDRNOTAVAIL, 125 },
 #endif
+#ifdef EADV
+  { "EADV", EADV, 68 },
+#endif
 #ifdef EAFNOSUPPORT
   { "EAFNOSUPPORT", EAFNOSUPPORT, 106 },
 #endif
@@ -50,11 +53,29 @@ CB_TARGET_DEFS_MAP cb_init_errno_map[] = {
 #ifdef EALREADY
   { "EALREADY", EALREADY, 120 },
 #endif
+#ifdef EBADE
+  { "EBADE", EBADE, 50 },
+#endif
 #ifdef EBADF
   { "EBADF", EBADF, 9 },
 #endif
+#ifdef EBADFD
+  { "EBADFD", EBADFD, 81 },
+#endif
 #ifdef EBADMSG
   { "EBADMSG", EBADMSG, 77 },
+#endif
+#ifdef EBADR
+  { "EBADR", EBADR, 51 },
+#endif
+#ifdef EBADRQC
+  { "EBADRQC", EBADRQC, 54 },
+#endif
+#ifdef EBADSLT
+  { "EBADSLT", EBADSLT, 55 },
+#endif
+#ifdef EBFONT
+  { "EBFONT", EBFONT, 57 },
 #endif
 #ifdef EBUSY
   { "EBUSY", EBUSY, 16 },
@@ -64,6 +85,12 @@ CB_TARGET_DEFS_MAP cb_init_errno_map[] = {
 #endif
 #ifdef ECHILD
   { "ECHILD", ECHILD, 10 },
+#endif
+#ifdef ECHRNG
+  { "ECHRNG", ECHRNG, 37 },
+#endif
+#ifdef ECOMM
+  { "ECOMM", ECOMM, 70 },
 #endif
 #ifdef ECONNABORTED
   { "ECONNABORTED", ECONNABORTED, 113 },
@@ -77,11 +104,17 @@ CB_TARGET_DEFS_MAP cb_init_errno_map[] = {
 #ifdef EDEADLK
   { "EDEADLK", EDEADLK, 45 },
 #endif
+#ifdef EDEADLOCK
+  { "EDEADLOCK", EDEADLOCK, 56 },
+#endif
 #ifdef EDESTADDRREQ
   { "EDESTADDRREQ", EDESTADDRREQ, 121 },
 #endif
 #ifdef EDOM
   { "EDOM", EDOM, 33 },
+#endif
+#ifdef EDOTDOT
+  { "EDOTDOT", EDOTDOT, 76 },
 #endif
 #ifdef EDQUOT
   { "EDQUOT", EDQUOT, 132 },
@@ -128,6 +161,39 @@ CB_TARGET_DEFS_MAP cb_init_errno_map[] = {
 #ifdef EISDIR
   { "EISDIR", EISDIR, 21 },
 #endif
+#ifdef EL2HLT
+  { "EL2HLT", EL2HLT, 44 },
+#endif
+#ifdef EL2NSYNC
+  { "EL2NSYNC", EL2NSYNC, 38 },
+#endif
+#ifdef EL3HLT
+  { "EL3HLT", EL3HLT, 39 },
+#endif
+#ifdef EL3RST
+  { "EL3RST", EL3RST, 40 },
+#endif
+#ifdef ELBIN
+  { "ELBIN", ELBIN, 75 },
+#endif
+#ifdef ELIBACC
+  { "ELIBACC", ELIBACC, 83 },
+#endif
+#ifdef ELIBBAD
+  { "ELIBBAD", ELIBBAD, 84 },
+#endif
+#ifdef ELIBEXEC
+  { "ELIBEXEC", ELIBEXEC, 87 },
+#endif
+#ifdef ELIBMAX
+  { "ELIBMAX", ELIBMAX, 86 },
+#endif
+#ifdef ELIBSCN
+  { "ELIBSCN", ELIBSCN, 85 },
+#endif
+#ifdef ELNRNG
+  { "ELNRNG", ELNRNG, 41 },
+#endif
 #ifdef ELOOP
   { "ELOOP", ELOOP, 92 },
 #endif
@@ -158,8 +224,14 @@ CB_TARGET_DEFS_MAP cb_init_errno_map[] = {
 #ifdef ENFILE
   { "ENFILE", ENFILE, 23 },
 #endif
+#ifdef ENOANO
+  { "ENOANO", ENOANO, 53 },
+#endif
 #ifdef ENOBUFS
   { "ENOBUFS", ENOBUFS, 105 },
+#endif
+#ifdef ENOCSI
+  { "ENOCSI", ENOCSI, 43 },
 #endif
 #ifdef ENODATA
   { "ENODATA", ENODATA, 61 },
@@ -179,11 +251,20 @@ CB_TARGET_DEFS_MAP cb_init_errno_map[] = {
 #ifdef ENOLINK
   { "ENOLINK", ENOLINK, 67 },
 #endif
+#ifdef ENOMEDIUM
+  { "ENOMEDIUM", ENOMEDIUM, 135 },
+#endif
 #ifdef ENOMEM
   { "ENOMEM", ENOMEM, 12 },
 #endif
 #ifdef ENOMSG
   { "ENOMSG", ENOMSG, 35 },
+#endif
+#ifdef ENONET
+  { "ENONET", ENONET, 64 },
+#endif
+#ifdef ENOPKG
+  { "ENOPKG", ENOPKG, 65 },
 #endif
 #ifdef ENOPROTOOPT
   { "ENOPROTOOPT", ENOPROTOOPT, 109 },
@@ -199,6 +280,9 @@ CB_TARGET_DEFS_MAP cb_init_errno_map[] = {
 #endif
 #ifdef ENOSYS
   { "ENOSYS", ENOSYS, 88 },
+#endif
+#ifdef ENOTBLK
+  { "ENOTBLK", ENOTBLK, 15 },
 #endif
 #ifdef ENOTCONN
   { "ENOTCONN", ENOTCONN, 128 },
@@ -221,6 +305,9 @@ CB_TARGET_DEFS_MAP cb_init_errno_map[] = {
 #ifdef ENOTTY
   { "ENOTTY", ENOTTY, 25 },
 #endif
+#ifdef ENOTUNIQ
+  { "ENOTUNIQ", ENOTUNIQ, 80 },
+#endif
 #ifdef ENXIO
   { "ENXIO", ENXIO, 6 },
 #endif
@@ -242,6 +329,9 @@ CB_TARGET_DEFS_MAP cb_init_errno_map[] = {
 #ifdef EPIPE
   { "EPIPE", EPIPE, 32 },
 #endif
+#ifdef EPROCLIM
+  { "EPROCLIM", EPROCLIM, 130 },
+#endif
 #ifdef EPROTO
   { "EPROTO", EPROTO, 71 },
 #endif
@@ -254,8 +344,20 @@ CB_TARGET_DEFS_MAP cb_init_errno_map[] = {
 #ifdef ERANGE
   { "ERANGE", ERANGE, 34 },
 #endif
+#ifdef EREMCHG
+  { "EREMCHG", EREMCHG, 82 },
+#endif
+#ifdef EREMOTE
+  { "EREMOTE", EREMOTE, 66 },
+#endif
 #ifdef EROFS
   { "EROFS", EROFS, 30 },
+#endif
+#ifdef ESHUTDOWN
+  { "ESHUTDOWN", ESHUTDOWN, 110 },
+#endif
+#ifdef ESOCKTNOSUPPORT
+  { "ESOCKTNOSUPPORT", ESOCKTNOSUPPORT, 124 },
 #endif
 #ifdef ESPIPE
   { "ESPIPE", ESPIPE, 29 },
@@ -263,8 +365,14 @@ CB_TARGET_DEFS_MAP cb_init_errno_map[] = {
 #ifdef ESRCH
   { "ESRCH", ESRCH, 3 },
 #endif
+#ifdef ESRMNT
+  { "ESRMNT", ESRMNT, 69 },
+#endif
 #ifdef ESTALE
   { "ESTALE", ESTALE, 133 },
+#endif
+#ifdef ESTRPIPE
+  { "ESTRPIPE", ESTRPIPE, 143 },
 #endif
 #ifdef ETIME
   { "ETIME", ETIME, 62 },
@@ -278,11 +386,20 @@ CB_TARGET_DEFS_MAP cb_init_errno_map[] = {
 #ifdef ETXTBSY
   { "ETXTBSY", ETXTBSY, 26 },
 #endif
+#ifdef EUNATCH
+  { "EUNATCH", EUNATCH, 42 },
+#endif
+#ifdef EUSERS
+  { "EUSERS", EUSERS, 131 },
+#endif
 #ifdef EWOULDBLOCK
   { "EWOULDBLOCK", EWOULDBLOCK, 11 },
 #endif
 #ifdef EXDEV
   { "EXDEV", EXDEV, 18 },
+#endif
+#ifdef EXFULL
+  { "EXFULL", EXFULL, 52 },
 #endif
   /* gennltvals: END */
   { NULL, -1, -1 },

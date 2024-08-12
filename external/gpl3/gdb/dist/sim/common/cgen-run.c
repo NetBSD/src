@@ -1,5 +1,5 @@
 /* Main simulator loop for CGEN-based simulators.
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
 This file is part of GDB, the GNU debugger.
@@ -56,8 +56,7 @@ static void engine_run_n (SIM_DESC, int, int, int, int);
 static int
 cgen_get_fast_p (SIM_DESC sd)
 {
-  int i, c;
-  int run_fast_p = 1;
+  int c;
 
   for (c = 0; c < MAX_NR_PROCESSORS; ++c)
     {
