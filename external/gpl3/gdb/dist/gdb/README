@@ -82,8 +82,8 @@ list of options, invoke the subdirectory `configure', like:
    (Take note of how this differs from the invocation used to actually
 configure the build tree.)
 
-   GDB requires a C++11 compiler.  If you do not have a
-C++11 compiler for your system, you may be able to download and install
+   GDB requires a C++17 compiler.  If you do not have a
+C++17 compiler for your system, you may be able to download and install
 the GNU CC compiler.  It is available via anonymous FTP from the
 directory `ftp://ftp.gnu.org/pub/gnu/gcc'.  GDB also requires an ISO
 C standard library.  The GDB remote server, GDBserver, builds with some
@@ -451,7 +451,7 @@ more obscure GDB `configure' options are not listed here.
      library supplied as part of GDB.  Readline 7 or newer is required;
      this is enforced by the build system.
 
-`--with-system-zlib
+`--with-system-zlib'
      Use the zlib library installed on the host, rather than the
      library supplied as part of GDB.
 
@@ -484,21 +484,31 @@ more obscure GDB `configure' options are not listed here.
      not have liblzma installed, you can get the latest version from
      `https://tukaani.org/xz/'.
 
-`--with-libgmp-prefix=DIR'
+`--with-gmp=DIR'
+`--with-gmp-lib=LIBDIR'
+`--with-gmp-include=INCDIR'
      Build GDB using the GMP library installed at the directory DIR.
      If your host does not have GMP installed, you can get the latest
      version at `https://gmplib.org/'.
+     The `--with-gmp=gmpinstalldir` option is shorthand for
+     `--with-gmp-lib=gmpinstalldir/lib` and
+     `--with-gmp-include=gmpinstalldir/include`.
 
-`--with-mpfr'
-     Build GDB with GNU MPFR, a library for multiple-precision
-     floating-point computation with correct rounding.  (Done by
-     default if GNU MPFR is installed and found at configure time.)
+`--with-mpfr=DIR'
+`--with-mpfr-lib=LIBDIR'
+`--with-mpfr-include=INCDIR'
+     Build GDB using GNU MPFR installed at the directory DIR,
+     a library for multiple-precision floating-point computation
+     with correct rounding.
      This library is used to emulate target floating-point arithmetic
      during expression evaluation when the target uses different
-     floating-point formats than the host.  If GNU MPFR is not
-     available, GDB will fall back to using host floating-point
-     arithmetic.  If your host does not have GNU MPFR installed, you
+     floating-point formats than the host.
+     If your host does not have GNU MPFR installed, you
      can get the latest version from `https://www.mpfr.org/'.
+
+     The `--with-mpfr=mpfrinstalldir` option is shorthand for
+     `--with-mpfr-lib=mpfrinstalldir/lib` and
+     `--with-mpfr-include=mpfrinstalldir/include`.
 
 `--with-python[=PYTHON]'
      Build GDB with Python scripting support.  (Done by default if
@@ -530,6 +540,21 @@ more obscure GDB `configure' options are not listed here.
      Use libxxhash for hashing.  This has no user-visible effect but
      speeds up various GDB operations such as symbol loading.  Enabled
      by default if libxxhash is found.
+
+`--with-amd-dbgapi=[auto,yes,no]'
+     Whether to use the amd-dbgapi library to support local debugging of
+     AMD GCN architecture GPUs.
+
+     When explicitly requesting support for an AMD GCN architecture through
+     `--enable-targets' or `--target', there is no need to use
+     `--with-amd-dbgapi': `configure' will automatically look for the
+     amd-dbgapi library and fail if not found.
+
+     When using --enable-targets=all, support for the AMD GCN architecture will
+     only be included if the amd-dbgapi is found.  `--with-amd-dbgapi=yes' can
+     be used to make it a failure if the amd-dbgapi library is not found.
+     `--with-amd-dbgapi=no' can be used to prevent looking for the amd-dbgapi
+     library altogether.
 
 `--without-included-regex'
      Don't use the regex library included with GDB (as part of the
@@ -610,7 +635,7 @@ architecture than the host machine running GDB).
 Reporting Bugs in GDB
 =====================
 
-   There are several ways of reporting bugs in GDB.  The prefered
+   There are several ways of reporting bugs in GDB.  The preferred
 method is to use the World Wide Web:
 
       http://www.gnu.org/software/gdb/bugs/
