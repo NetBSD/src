@@ -1,5 +1,5 @@
 /* SPARC-specific support for 32-bit ELF
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -248,8 +248,7 @@ elf32_sparc_reloc_type_class (const struct bfd_link_info *info,
 #define elf_backend_adjust_dynamic_symbol \
 					_bfd_sparc_elf_adjust_dynamic_symbol
 #define elf_backend_omit_section_dynsym	_bfd_sparc_elf_omit_section_dynsym
-#define elf_backend_size_dynamic_sections \
-					_bfd_sparc_elf_size_dynamic_sections
+#define elf_backend_late_size_sections	_bfd_sparc_elf_late_size_sections
 #define elf_backend_relocate_section	_bfd_sparc_elf_relocate_section
 #define elf_backend_finish_dynamic_symbol \
 					_bfd_sparc_elf_finish_dynamic_symbol
