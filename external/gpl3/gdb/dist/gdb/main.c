@@ -1,6 +1,6 @@
 /* Top level stuff for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "annotate.h"
 #include "top.h"
+#include "ui.h"
 #include "target.h"
 #include "inferior.h"
 #include "symfile.h"
@@ -55,6 +56,7 @@
 #include "gdbsupport/alt-stack.h"
 #include "observable.h"
 #include "serial.h"
+#include "cli-out.h"
 
 /* The selected interpreter.  */
 std::string interpreter_p;
@@ -77,7 +79,6 @@ std::string python_libdir;
 /* Target IO streams.  */
 struct ui_file *gdb_stdtargin;
 struct ui_file *gdb_stdtarg;
-struct ui_file *gdb_stdtargerr;
 
 /* True if --batch or --batch-silent was seen.  */
 int batch_flag = 0;
@@ -95,13 +96,6 @@ int return_child_result_value = -1;
 /* GDB as it has been invoked from the command line (i.e. argv[0]).  */
 static char *gdb_program_name;
 
-/* Return read only pointer to GDB_PROGRAM_NAME.  */
-const char *
-get_gdb_program_name (void)
-{
-  return gdb_program_name;
-}
-
 static void print_gdb_help (struct ui_file *);
 
 /* Set the data-directory parameter to NEW_DATADIR.
@@ -114,12 +108,7 @@ set_gdb_data_directory (const char *new_datadir)
   struct stat st;
 
   if (stat (new_datadir, &st) < 0)
-    {
-      int save_errno = errno;
-
-      gdb_printf (gdb_stderr, "Warning: ");
-      print_sys_errmsg (new_datadir, save_errno);
-    }
+    warning_filename_and_errno (new_datadir, errno);
   else if (!S_ISDIR (st.st_mode))
     warning (_("%ps is not a directory."),
 	     styled_string (file_name_style.style (), new_datadir));
@@ -365,7 +354,7 @@ get_init_files (std::vector<std::string> *system_gdbinit,
 {
   /* Cache the file lookup object so we only actually search for the files
      once.  */
-  static gdb::optional<gdb_initfile_finder> init_files;
+  static std::optional<gdb_initfile_finder> init_files;
   if (!init_files.has_value ())
     init_files.emplace (GDBINIT, SYSTEM_GDBINIT, SYSTEM_GDBINIT_RELOCATABLE,
 			SYSTEM_GDBINIT_DIR, SYSTEM_GDBINIT_DIR_RELOCATABLE,
@@ -385,7 +374,7 @@ get_earlyinit_files (std::string *home_gdbearlyinit)
 {
   /* Cache the file lookup object so we only actually search for the files
      once.  */
-  static gdb::optional<gdb_initfile_finder> init_files;
+  static std::optional<gdb_initfile_finder> init_files;
   if (!init_files.has_value ())
     init_files.emplace (GDBEARLYINIT, nullptr, false, nullptr, false, false);
 
@@ -410,6 +399,10 @@ start_event_loop ()
 	{
 	  result = gdb_do_one_event ();
 	}
+      catch (const gdb_exception_forced_quit &ex)
+	{
+	  throw;
+	}
       catch (const gdb_exception &ex)
 	{
 	  exception_print (gdb_stderr, ex);
@@ -425,7 +418,7 @@ start_event_loop ()
 	     get around to resetting the prompt, which leaves readline
 	     in a messed-up state.  Reset it here.  */
 	  current_ui->prompt_state = PROMPT_NEEDED;
-	  gdb::observers::command_error.notify ();
+	  top_level_interpreter ()->on_command_error ();
 	  /* This call looks bizarre, but it is required.  If the user
 	     entered a command that caused an error,
 	     after_char_processing_hook won't be called from
@@ -465,7 +458,7 @@ captured_command_loop ()
 
   /* Give the interpreter a chance to print a prompt, if necessary  */
   if (ui->prompt_state != PROMPT_BLOCKED)
-    interp_pre_command_loop (top_level_interpreter ());
+    top_level_interpreter ()->pre_command_loop ();
 
   /* Now it's time to start the event loop.  */
   start_event_loop ();
@@ -517,6 +510,10 @@ catch_command_errors (catch_command_errors_const_ftype command,
       /* Do any commands attached to breakpoint we stopped at.  */
       if (do_bp_actions)
 	bpstat_do_actions ();
+    }
+  catch (const gdb_exception_forced_quit &e)
+    {
+      quit_force (NULL, 0);
     }
   catch (const gdb_exception &e)
     {
@@ -645,6 +642,10 @@ captured_main_1 (struct captured_main_args *context)
   int save_auto_load;
   int ret = 1;
 
+  const char *no_color = getenv ("NO_COLOR");
+  if (no_color != nullptr && *no_color != '\0')
+    cli_styling = false;
+
 #ifdef HAVE_USEFUL_SBRK
   /* Set this before constructing scoped_command_stats.  */
   lim_at_start = (char *) sbrk (0);
@@ -677,11 +678,19 @@ captured_main_1 (struct captured_main_args *context)
   current_ui = main_ui;
 
   gdb_stdtarg = gdb_stderr;
-  gdb_stdtargerr = gdb_stderr;
   gdb_stdtargin = gdb_stdin;
 
-  if (bfd_init () != BFD_INIT_MAGIC)
-    error (_("fatal error: libbfd ABI mismatch"));
+  /* Put a CLI based uiout in place early.  If the early initialization
+     files trigger any I/O then it isn't hard to reach parts of GDB that
+     assume current_uiout is not nullptr.  Maybe we should just install the
+     CLI interpreter initially, then switch to the application requested
+     interpreter later?  But that would (potentially) result in an
+     interpreter being instantiated "just in case".  For now this feels
+     like the least effort way to protect GDB from crashing.  */
+  auto temp_uiout = std::make_unique<cli_ui_out> (gdb_stdout);
+  current_uiout = temp_uiout.get ();
+
+  gdb_bfd_init ();
 
 #ifdef __MINGW32__
   /* On Windows, argv[0] is not necessarily set to absolute form when
@@ -709,6 +718,11 @@ captured_main_1 (struct captured_main_args *context)
 
   debug_file_directory
     = relocate_gdb_directory (DEBUGDIR, DEBUGDIR_RELOCATABLE);
+
+#ifdef ADDITIONAL_DEBUG_DIRS
+  debug_file_directory = (debug_file_directory + DIRNAME_SEPARATOR
+			  + ADDITIONAL_DEBUG_DIRS);
+#endif
 
   gdb_datadir = relocate_gdb_directory (GDB_DATADIR,
 					GDB_DATADIR_RELOCATABLE);
@@ -1034,6 +1048,10 @@ captured_main_1 (struct captured_main_args *context)
   execute_cmdargs (&cmdarg_vec, CMDARG_EARLYINIT_FILE,
 		   CMDARG_EARLYINIT_COMMAND, &ret);
 
+  /* Set the thread pool size here, so the size can be influenced by the
+     early initialization commands.  */
+  update_thread_pool_size ();
+
   /* Initialize the extension languages.  */
   ext_lang_initialization ();
 
@@ -1056,7 +1074,8 @@ captured_main_1 (struct captured_main_args *context)
       symarg = argv[optind];
       execarg = argv[optind];
       ++optind;
-      set_inferior_args_vector (argc - optind, &argv[optind]);
+      current_inferior ()->set_args
+	(gdb::array_view<char * const> (&argv[optind], argc - optind));
     }
   else
     {
@@ -1124,31 +1143,15 @@ captured_main_1 (struct captured_main_args *context)
       exit (0);
     }
 
-  /* FIXME: cagney/2003-02-03: The big hack (part 1 of 2) that lets
-     GDB retain the old MI1 interpreter startup behavior.  Output the
-     copyright message before the interpreter is installed.  That way
-     it isn't encapsulated in MI output.  */
-  if (!quiet && interpreter_p == INTERP_MI1)
-    {
-      /* Print all the junk at the top, with trailing "..." if we are
-	 about to read a symbol file (possibly slowly).  */
-      print_gdb_version (gdb_stdout, true);
-      if (symarg)
-	gdb_printf ("..");
-      gdb_printf ("\n");
-      gdb_flush (gdb_stdout);	/* Force to screen during slow
-				   operations.  */
-    }
-
   /* Install the default UI.  All the interpreters should have had a
      look at things by now.  Initialize the default interpreter.  */
-  set_top_level_interpreter (interpreter_p.c_str ());
+  set_top_level_interpreter (interpreter_p.c_str (), false);
 
-  /* FIXME: cagney/2003-02-03: The big hack (part 2 of 2) that lets
-     GDB retain the old MI1 interpreter startup behavior.  Output the
-     copyright message after the interpreter is installed when it is
-     any sane interpreter.  */
-  if (!quiet && !current_interp_named_p (INTERP_MI1))
+  /* The interpreter should have installed the real uiout by now.  */
+  gdb_assert (current_uiout != temp_uiout.get ());
+  temp_uiout = nullptr;
+
+  if (!quiet)
     {
       /* Print all the junk at the top, with trailing "..." if we are
 	 about to read a symbol file (possibly slowly).  */
@@ -1298,10 +1301,6 @@ captured_main_1 (struct captured_main_args *context)
   /* Process '-x' and '-ex' options.  */
   execute_cmdargs (&cmdarg_vec, CMDARG_FILE, CMDARG_COMMAND, &ret);
 
-  /* Read in the old history after all the command files have been
-     read.  */
-  init_history ();
-
   if (batch_flag)
     {
       int error_status = EXIT_FAILURE;
@@ -1310,6 +1309,14 @@ captured_main_1 (struct captured_main_args *context)
       /* We have hit the end of the batch file.  */
       quit_force (exit_arg, 0);
     }
+
+  /* We are starting an interactive session.  */
+
+  /* Read in the history.  This is after all the command files have been read,
+     so that the user can change the history file via a .gdbinit file.  This
+     is also after the batch_flag check, because we don't need the history in
+     batch mode.  */
+  init_history ();
 }
 
 static void
@@ -1328,6 +1335,10 @@ captured_main (void *data)
       try
 	{
 	  captured_command_loop ();
+	}
+      catch (const gdb_exception_forced_quit &ex)
+	{
+	  quit_force (NULL, 0);
 	}
       catch (const gdb_exception &ex)
 	{
@@ -1490,5 +1501,5 @@ Report bugs to %ps.\n\
   if (stream == gdb_stdout)
     gdb_printf (stream, _("\n\
 You can ask GDB-related questions on the GDB users mailing list\n\
-(gdb@sourceware.org) or on GDB's IRC channel (#gdb on Freenode).\n"));
+(gdb@sourceware.org) or on GDB's IRC channel (#gdb on Libera.Chat).\n"));
 }

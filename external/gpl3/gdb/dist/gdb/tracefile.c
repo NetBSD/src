@@ -1,6 +1,6 @@
 /* Trace file support in GDB.
 
-   Copyright (C) 1997-2023 Free Software Foundation, Inc.
+   Copyright (C) 1997-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,14 +17,15 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "tracefile.h"
+#include "extract-store-integer.h"
 #include "tracectf.h"
 #include "exec.h"
 #include "regcache.h"
 #include "gdbsupport/byte-vector.h"
 #include "gdbarch.h"
 #include "gdbsupport/buildargv.h"
+#include "inferior.h"
 
 /* Helper macros.  */
 
@@ -71,7 +72,7 @@ trace_save (const char *filename, struct trace_file_writer *writer,
   ULONGEST offset = 0;
 #define MAX_TRACE_UPLOAD 2000
   gdb::byte_vector buf (std::max (MAX_TRACE_UPLOAD, trace_regblock_size));
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
+  bfd_endian byte_order = gdbarch_byte_order (current_inferior ()->arch ());
 
   /* If the target is to save the data to a file on its own, then just
      send the command and be done with it.  */
@@ -390,11 +391,11 @@ tracefile_fetch_registers (struct regcache *regcache, int regno)
 
   /* We can often usefully guess that the PC is going to be the same
      as the address of the tracepoint.  */
-  if (tp == NULL || tp->loc == NULL)
+  if (tp == nullptr || !tp->has_locations ())
     return;
 
   /* But don't try to guess if tracepoint is multi-location...  */
-  if (tp->loc->next)
+  if (tp->has_multiple_locations ())
     {
       warning (_("Tracepoint %d has multiple "
 		 "locations, cannot infer $pc"),
@@ -412,7 +413,7 @@ tracefile_fetch_registers (struct regcache *regcache, int regno)
 
   /* Guess what we can from the tracepoint location.  */
   gdbarch_guess_tracepoint_registers (gdbarch, regcache,
-				      tp->loc->address);
+				      tp->first_loc ().address);
 }
 
 /* This is the implementation of target_ops method to_has_all_memory.  */

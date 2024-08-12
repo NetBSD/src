@@ -1,6 +1,6 @@
 /* XML target description support for GDB.
 
-   Copyright (C) 2006-2023 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery.
 
@@ -19,7 +19,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "target.h"
 #include "target-descriptions.h"
 #include "xml-support.h"
@@ -638,7 +637,7 @@ tdesc_parse_xml (const char *document, xml_fetch_another fetcher)
     return it->second.get ();
 
   memset (&data, 0, sizeof (struct tdesc_parsing_data));
-  target_desc_up description (allocate_target_description ());
+  target_desc_up description = allocate_target_description ();
   data.tdesc = description.get ();
 
   if (gdb_xml_parse_quick (_("target description"), "gdb-target.dtd",
@@ -663,7 +662,7 @@ tdesc_parse_xml (const char *document, xml_fetch_another fetcher)
 const struct target_desc *
 file_read_description_xml (const char *filename)
 {
-  gdb::optional<gdb::char_vector> tdesc_str
+  std::optional<gdb::char_vector> tdesc_str
     = xml_fetch_content_from_file (filename, NULL);
   if (!tdesc_str)
     {
@@ -687,7 +686,7 @@ file_read_description_xml (const char *filename)
    is "target.xml".  Other calls may be performed for the DTD or
    for <xi:include>.  */
 
-static gdb::optional<gdb::char_vector>
+static std::optional<gdb::char_vector>
 fetch_available_features_from_target (const char *name, target_ops *ops)
 {
   /* Read this object as a string.  This ensures that a NUL
@@ -704,7 +703,7 @@ fetch_available_features_from_target (const char *name, target_ops *ops)
 const struct target_desc *
 target_read_description_xml (struct target_ops *ops)
 {
-  gdb::optional<gdb::char_vector> tdesc_str
+  std::optional<gdb::char_vector> tdesc_str
     = fetch_available_features_from_target ("target.xml", ops);
   if (!tdesc_str)
     return NULL;
@@ -721,7 +720,7 @@ target_read_description_xml (struct target_ops *ops)
    includes, but not parsing it.  Used to dump whole tdesc
    as a single XML file.  */
 
-gdb::optional<std::string>
+std::optional<std::string>
 target_fetch_description_xml (struct target_ops *ops)
 {
 #if !defined(HAVE_LIBEXPAT)
@@ -736,7 +735,7 @@ target_fetch_description_xml (struct target_ops *ops)
 
   return {};
 #else
-  gdb::optional<gdb::char_vector>
+  std::optional<gdb::char_vector>
     tdesc_str = fetch_available_features_from_target ("target.xml", ops);
   if (!tdesc_str)
     return {};
@@ -765,6 +764,6 @@ string_read_description_xml (const char *xml)
   return tdesc_parse_xml (xml, [] (const char *href)
     {
       error (_("xincludes are unsupported with this method"));
-      return gdb::optional<gdb::char_vector> ();
+      return std::optional<gdb::char_vector> ();
     });
 }
