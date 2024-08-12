@@ -1,6 +1,6 @@
 /* frecnt-1.c -- Test for decoder in libsframe.
 
-   Copyright (C) 2022 Free Software Foundation, Inc.
+   Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -88,6 +88,9 @@ main (void)
   err = sframe_decoder_get_funcdesc (dctx, 0, &nfres, &fsize, &fstart, &finfo);
   TEST ("frecnt-1: Decoder get FDE", err == 0);
   TEST ("frecnt-1: Decoder FRE count", nfres == 4);
+
+  free (sf_buf);
+  sf_buf = NULL;
 
   sframe_decoder_free (&dctx);
   return 0;
