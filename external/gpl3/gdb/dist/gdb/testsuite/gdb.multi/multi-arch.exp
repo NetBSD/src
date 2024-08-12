@@ -1,4 +1,4 @@
-# Copyright 2009-2023 Free Software Foundation, Inc.
+# Copyright 2009-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,9 +19,7 @@
 set testfile "multi-arch"
 
 # The plain remote target can't do multiple inferiors.
-if [use_gdb_stub] {
-    return
-}
+require !use_gdb_stub
 
 # The 64-bit compile may succeed for i386-linux, but gdb won't be able
 # to load the file.
@@ -50,6 +48,14 @@ if [istarget "s390*-*-*"] {
 } else {
     set march1 "-m64"
     set march2 "-m32"
+}
+
+if { $march1 != "" } {
+    require "have_compile_and_link_flag $march1"
+}
+
+if { $march2 != "" } {
+    require "have_compile_and_link_flag $march2"
 }
 
 if { [build_executable "failed to prepare" ${exec1} "${srcfile1}" \

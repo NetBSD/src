@@ -1,4 +1,4 @@
-# Copyright 2018-2023 Free Software Foundation, Inc.
+# Copyright 2018-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,10 +37,10 @@
 # during the attach phase.
 
 # This test only works on Linux
-if { ![isnative] || [is_remote host] || [use_gdb_stub]
-     || ![istarget *-linux*] } {
-    return
-}
+require can_spawn_for_attach
+require isnative
+require {!is_remote host}
+require {istarget *-linux*}
 
 standard_testfile
 
