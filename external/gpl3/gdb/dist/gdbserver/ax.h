@@ -1,5 +1,5 @@
 /* Data structures and functions associated with agent expressions in GDB.
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -33,15 +33,9 @@ struct traceframe;
 
 enum eval_result_type
   {
-    expr_eval_no_error,
-    expr_eval_empty_expression,
-    expr_eval_empty_stack,
-    expr_eval_stack_overflow,
-    expr_eval_stack_underflow,
-    expr_eval_unhandled_opcode,
-    expr_eval_unrecognized_opcode,
-    expr_eval_divide_by_zero,
-    expr_eval_invalid_goto
+#define AX_RESULT_TYPE(ENUM,STR) ENUM,
+#include "ax-result-types.def"
+#undef AX_RESULT_TYPE
   };
 
 struct agent_expr

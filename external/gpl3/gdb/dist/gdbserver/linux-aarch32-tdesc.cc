@@ -1,4 +1,4 @@
-/* Copyright (C) 2019-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,7 +15,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "server.h"
 
 #include "linux-aarch32-tdesc.h"
 
@@ -32,7 +31,7 @@ aarch32_linux_read_description ()
 {
   if (tdesc_aarch32 == nullptr)
     {
-      tdesc_aarch32 = aarch32_create_target_description ();
+      tdesc_aarch32 = aarch32_create_target_description (false);
 
       static const char *expedite_regs[] = { "r11", "sp", "pc", 0 };
       init_target_desc (tdesc_aarch32, expedite_regs);
