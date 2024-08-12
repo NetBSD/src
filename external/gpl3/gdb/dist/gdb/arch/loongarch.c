@@ -1,4 +1,4 @@
-/* Copyright (C) 2022-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,7 +15,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "gdbsupport/common-defs.h"
 #include "loongarch.h"
 #include <stdlib.h>
 #include <unordered_map>
@@ -25,6 +24,9 @@
 #include "../features/loongarch/base32.c"
 #include "../features/loongarch/base64.c"
 #include "../features/loongarch/fpu.c"
+#include "../features/loongarch/lsx.c"
+#include "../features/loongarch/lasx.c"
+#include "../features/loongarch/lbt.c"
 
 #ifndef GDBSERVER
 #define STATIC_IN_GDB static
@@ -62,6 +64,13 @@ loongarch_create_target_description (const struct loongarch_gdbarch_features fea
 
   /* For now we only support creating single float and double float.  */
   regnum = create_feature_loongarch_fpu (tdesc.get (), regnum);
+
+  /* For now we only support creating lsx and lasx.  */
+  regnum = create_feature_loongarch_lsx (tdesc.get (), regnum);
+  regnum = create_feature_loongarch_lasx (tdesc.get (), regnum);
+
+  /* For now we only support creating scr registers, eflags and ftop.  */
+  regnum = create_feature_loongarch_lbt (tdesc.get (), regnum);
 
   return tdesc;
 }

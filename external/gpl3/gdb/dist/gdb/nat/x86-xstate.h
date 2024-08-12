@@ -1,4 +1,6 @@
-/* Copyright (C) 2017-2024 Free Software Foundation, Inc.
+/* x86 XSAVE extended state functions.
+
+   Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,13 +17,19 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ARCH_AMD64_H
-#define ARCH_AMD64_H
+#ifndef NAT_X86_XSTATE_H
+#define NAT_X86_XSTATE_H
 
-#include "gdbsupport/tdesc.h"
-#include <stdint.h>
+#include "gdbsupport/x86-xstate.h"
 
-target_desc *amd64_create_target_description (uint64_t xcr0, bool is_x32,
-					      bool is_linux, bool segments);
+/* Return the size of the XSAVE extended state fetched via CPUID.  */
 
-#endif /* ARCH_AMD64_H */
+int x86_xsave_length ();
+
+/* Return the layout (size and offsets) of the XSAVE extended regions
+   for the running host.  Offsets of each of the enabled regions in
+   XCR0 are fetched via CPUID.  */
+
+x86_xsave_layout x86_fetch_xsave_layout (uint64_t xcr0, int len);
+
+#endif /* NAT_X86_XSTATE_H */
