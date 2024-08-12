@@ -1,7 +1,5 @@
-/* *INDENT-OFF* */ /* ATTRIBUTE_PRINTF confuses indent, avoid running it
-		      for now.  */
 /* I/O, string, cleanup, and other random utilities for GDB.
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,12 +21,9 @@
 
 #include "exceptions.h"
 #include "gdbsupport/array-view.h"
+#include "gdbsupport/function-view.h"
 #include "gdbsupport/scoped_restore.h"
 #include <chrono>
-
-#ifdef HAVE_LIBXXHASH
-#include <xxhash.h>
-#endif
 
 struct completion_match_for_lcd;
 class compiled_regex;
@@ -199,7 +194,6 @@ extern void gdb_flush (struct ui_file *stream);
 
 /* Target output that should bypass the pager, if one is in use.  */
 extern struct ui_file *gdb_stdtarg;
-extern struct ui_file *gdb_stdtargerr;
 extern struct ui_file *gdb_stdtargin;
 
 /* Set the screen dimensions to WIDTH and HEIGHT.  */
@@ -209,6 +203,8 @@ extern void set_screen_width_and_height (int width, int height);
 /* Generic stdio-like operations.  */
 
 extern void gdb_puts (const char *, struct ui_file *);
+
+extern void gdb_puts (const std::string &s, ui_file *stream);
 
 extern void gdb_putc (int c, struct ui_file *);
 
@@ -281,7 +277,13 @@ extern void fprintf_symbol (struct ui_file *, const char *,
 
 extern void perror_warning_with_name (const char *string);
 
-extern void print_sys_errmsg (const char *, int);
+/* Issue a warning formatted as '<filename>: <explanation>', where
+   <filename> is FILENAME with filename styling applied.  As such, don't
+   pass anything more than a filename in this string.  The <explanation>
+   is a string returned from calling safe_strerror(SAVED_ERRNO).  */
+
+extern void warning_filename_and_errno (const char *filename,
+					int saved_errno);
 
 /* Warnings and error messages.  */
 
@@ -290,8 +292,6 @@ extern void (*deprecated_error_begin_hook) (void);
 /* Message to be printed before the warning message, when a warning occurs.  */
 
 extern const char *warning_pre_print;
-
-extern void error_stream (const string_file &) ATTRIBUTE_NORETURN;
 
 extern void demangler_vwarning (const char *file, int line,
 			       const char *, va_list ap)
@@ -308,13 +308,6 @@ extern pid_t wait_to_die_with_timeout (pid_t pid, int *status, int timeout);
 #endif
 
 extern int myread (int, char *, int);
-
-/* Integer exponentiation: Return V1**V2, where both arguments
-   are integers.
-
-   Requires V1 != 0 if V2 < 0.
-   Returns 1 for 0 ** 0.  */
-extern ULONGEST uinteger_pow (ULONGEST v1, LONGEST v2);
 
 /* Resource limits used by getrlimit and setrlimit.  */
 
@@ -348,19 +341,139 @@ extern void copy_bitwise (gdb_byte *dest, ULONGEST dest_offset,
 			  const gdb_byte *source, ULONGEST source_offset,
 			  ULONGEST nbits, int bits_big_endian);
 
-/* A fast hashing function.  This can be used to hash data in a fast way
-   when the length is known.  If no fast hashing library is available, falls
-   back to iterative_hash from libiberty.  START_VALUE can be set to
-   continue hashing from a previous value.  */
+/* When readline decides that the terminal cannot auto-wrap lines, it reduces
+   the width of the reported screen width by 1.  This variable indicates
+   whether that's the case or not, allowing us to add it back where
+   necessary.  See _rl_term_autowrap in readline/terminal.c.  */
 
-static inline unsigned int
-fast_hash (const void *ptr, size_t len, unsigned int start_value = 0)
+extern int readline_hidden_cols;
+
+/* Assign VAL to LVAL, and set CHANGED to true if the assignment changed
+   LVAL.  */
+
+template<typename T>
+void
+assign_set_if_changed (T &lval, const T &val, bool &changed)
 {
-#ifdef HAVE_LIBXXHASH
-  return XXH64 (ptr, len, start_value);
-#else
-  return iterative_hash (ptr, len, start_value);
-#endif
+  if (lval == val)
+    return;
+
+  lval = val;
+  changed = true;
 }
+
+/* Assign VAL to LVAL, and return true if the assignment changed LVAL.  */
+
+template<typename T>
+bool
+assign_return_if_changed (T &lval, const T &val)
+{
+  if (lval == val)
+    return false;
+
+  lval = val;
+  return true;
+}
+
+/* A class that can be used to intercept warnings.  A class is used
+   here, rather than a gdb::function_view because it proved difficult
+   to use a function view in conjunction with ATTRIBUTE_PRINTF in a
+   way that would satisfy all compilers on all systems.  And, even
+   though gdb only ever uses deferred_warnings here, a virtual
+   function is used to help Insight.  */
+struct warning_hook_handler_type
+{
+  virtual void warn (const char *format, va_list args) ATTRIBUTE_PRINTF (2, 0)
+    = 0;
+};
+
+typedef warning_hook_handler_type *warning_hook_handler;
+
+/* Set the thread-local warning hook, and restore the old value when
+   finished.  */
+class scoped_restore_warning_hook
+{
+public:
+  explicit scoped_restore_warning_hook (warning_hook_handler new_handler);
+
+  ~scoped_restore_warning_hook ();
+
+private:
+  scoped_restore_warning_hook (const scoped_restore_warning_hook &other)
+    = delete;
+  scoped_restore_warning_hook &operator= (const scoped_restore_warning_hook &)
+    = delete;
+
+  warning_hook_handler m_save;
+};
+
+/* Return the current warning handler.  */
+extern warning_hook_handler get_warning_hook_handler ();
+
+/* In some cases GDB needs to try several different solutions to a problem,
+   if any of the solutions work then as far as the user is concerned the
+   problem is solved, and GDB should continue without warnings.  However,
+   if none of the solutions work then GDB should emit any warnings that
+   occurred while trying each possible solution.
+
+   One example of this is locating separate debug info.  There are several
+   different approaches for this; following the .gnu_debuglink, a build-id
+   based lookup, or using debuginfod.  If any works, and debug info is
+   located, then the user doesn't want to see warnings from the earlier
+   approaches that were tried and failed.
+
+   However, GDB should emit all the warnings using separate calls to
+   warning -- this ensures that each warning is formatted on its own line,
+   and that any styling is emitted correctly.
+
+   This class helps with deferring warnings.  Warnings can be added to an
+   instance of this class with the 'warn' function, and all warnings can be
+   emitted with a single call to 'emit'.  */
+
+struct deferred_warnings final : public warning_hook_handler_type
+{
+  deferred_warnings ()
+    : m_can_style (gdb_stderr->can_emit_style_escape ())
+  {
+  }
+
+  /* Add a warning to the list of deferred warnings.  */
+  void warn (const char *format, ...) ATTRIBUTE_PRINTF (2, 3)
+  {
+    va_list args;
+    va_start (args, format);
+    this->warn (format, args);
+    va_end (args);
+  }
+
+  /* A variant of 'warn' so that this object can be used as a warning
+     hook; see scoped_restore_warning_hook.  Note that no locking is
+     done, so users have to be careful to only install this into a
+     single thread at a time.  */
+  void warn (const char *format, va_list args) override
+    ATTRIBUTE_PRINTF (2, 0)
+  {
+    string_file msg (m_can_style);
+    msg.vprintf (format, args);
+    m_warnings.emplace_back (std::move (msg));
+  }
+
+  /* Emit all warnings.  */
+  void emit () const
+  {
+    for (const auto &w : m_warnings)
+      warning ("%s", w.c_str ());
+  }
+
+private:
+
+  /* True if gdb_stderr supports styling at the moment this object is
+     constructed.  This is done just once so that objects of this type
+     can be used off the main thread.  */
+  bool m_can_style;
+
+  /* The list of all deferred warnings.  */
+  std::vector<string_file> m_warnings;
+};
 
 #endif /* UTILS_H */

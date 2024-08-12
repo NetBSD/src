@@ -1,6 +1,6 @@
 /* Serial interface for raw TCP connections on Un*x like systems.
 
-   Copyright (C) 2006-2023 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,10 +22,10 @@
 
 struct serial;
 
-extern int net_open (struct serial *scb, const char *name);
+extern void net_open (struct serial *scb, const char *name);
 extern void net_close (struct serial *scb);
 extern int net_read_prim (struct serial *scb, size_t count);
 extern int net_write_prim (struct serial *scb, const void *buf, size_t count);
-extern int ser_tcp_send_break (struct serial *scb);
+extern void ser_tcp_send_break (struct serial *scb);
 
 #endif
