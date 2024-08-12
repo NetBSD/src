@@ -1,6 +1,6 @@
 /* Platform independent shared object routines for GDB.
 
-   Copyright (C) 2011-2020 Free Software Foundation, Inc.
+   Copyright (C) 2011-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -79,10 +79,10 @@ gdb_dlopen (const char *filename)
     dw = GetLastError();
 
     FormatMessage (FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
-                   FORMAT_MESSAGE_IGNORE_INSERTS,
-                   NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                   (LPTSTR) &buffer,
-                   0, NULL);
+		   FORMAT_MESSAGE_IGNORE_INSERTS,
+		   NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		   (LPTSTR) &buffer,
+		   0, NULL);
 
     error (_("Could not load %s: %s"), filename, (char *) buffer);
   }

@@ -1,4 +1,4 @@
-# Copyright 2011-2020 Free Software Foundation, Inc.
+# Copyright 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,4 +24,4 @@ set baseboard [lindex [split $board "/"] 0]
 set board_info($baseboard,isremote) 0
 
 # Set sysroot to avoid sending files via the remote protocol.
-set GDBFLAGS "${GDBFLAGS} -ex \"set sysroot\""
+set GDBFLAGS "${GDBFLAGS} -iex \"set sysroot\""

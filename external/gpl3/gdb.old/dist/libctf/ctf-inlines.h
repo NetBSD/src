@@ -1,5 +1,5 @@
 /* Inline functions.
-   Copyright (C) 2020 Free Software Foundation, Inc.
+   Copyright (C) 2020-2022 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -32,12 +32,12 @@ extern "C"
 #endif
 
 static inline ssize_t
-ctf_get_ctt_size (const ctf_file_t *fp,
+ctf_get_ctt_size (const ctf_dict_t *fp,
 		  const ctf_type_t *tp,
 		  ssize_t *sizep,
 		  ssize_t *incrementp)
 {
-  return (fp->ctf_fileops->ctfo_get_ctt_size (fp, tp, sizep, incrementp));
+  return (fp->ctf_dictops->ctfo_get_ctt_size (fp, tp, sizep, incrementp));
 }
 
 static inline int
@@ -81,7 +81,7 @@ ctf_dynset_cinsert (ctf_dynset_t *h, const void *k)
 }
 
 static inline int
-ctf_assert_internal (ctf_file_t *fp, const char *file, size_t line,
+ctf_assert_internal (ctf_dict_t *fp, const char *file, size_t line,
 		     const char *exprstr, int expr)
 {
   if (_libctf_unlikely_ (!expr))

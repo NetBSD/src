@@ -1,4 +1,4 @@
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,6 +24,9 @@
 # 6. After a little bit of playing, we enter f2() and now the source
 #    layout must show the contents of f2.c.
 # 7. Going back to main() shall result in no contents again.
+
+# Check if start command is supported.
+require use_gdb_stub 0
 
 tuiterm_env
 

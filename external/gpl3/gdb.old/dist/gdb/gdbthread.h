@@ -1,5 +1,5 @@
 /* Multi-process/thread control defs for GDB, the GNU debugger.
-   Copyright (C) 1987-2020 Free Software Foundation, Inc.
+   Copyright (C) 1987-2023 Free Software Foundation, Inc.
    Contributed by Lynx Real-Time Systems, Inc.  Los Gatos, CA.
    
 
@@ -32,9 +32,22 @@ struct symtab;
 #include "gdbsupport/refcounted-object.h"
 #include "gdbsupport/common-gdbthread.h"
 #include "gdbsupport/forward-scope-exit.h"
+#include "displaced-stepping.h"
+#include "gdbsupport/intrusive_list.h"
+#include "thread-fsm.h"
 
 struct inferior;
 struct process_stratum_target;
+
+/* When true, print debug messages related to GDB thread creation and
+   deletion.  */
+
+extern bool debug_threads;
+
+/* Print a "threads" debug statement.  */
+
+#define threads_debug_printf(fmt, ...) \
+  debug_prefixed_printf_cond (debug_threads, "threads", fmt, ##__VA_ARGS__)
 
 /* Frontend view of the thread state.  Possible extensions: stepping,
    finishing, until(ling),...
@@ -152,7 +165,7 @@ struct thread_control_state
 
   /* Chain containing status of breakpoint(s) the thread stopped
      at.  */
-  bpstat stop_bpstat = nullptr;
+  bpstat *stop_bpstat = nullptr;
 
   /* Whether the command that started the thread was a stepping
      command.  This is used to decide whether "set scheduler-locking
@@ -178,7 +191,7 @@ struct thread_suspend_state
   enum target_stop_reason stop_reason = TARGET_STOPPED_BY_NO_REASON;
 
   /* The waitstatus for this thread's last event.  */
-  struct target_waitstatus waitstatus {};
+  struct target_waitstatus waitstatus;
   /* If true WAITSTATUS hasn't been handled yet.  */
   int waitstatus_pending_p = 0;
 
@@ -195,9 +208,12 @@ struct thread_suspend_state
        stop_reason: if the thread's PC has changed since the thread
        last stopped, a pending breakpoint waitstatus is discarded.
 
-     - If the thread is running, this is set to -1, to avoid leaving
-       it with a stale value, to make it easier to catch bugs.  */
-  CORE_ADDR stop_pc = 0;
+     - If the thread is running, then this field has its value removed by
+       calling stop_pc.reset() (see thread_info::set_executing()).
+       Attempting to read a gdb::optional with no value is undefined
+       behaviour and will trigger an assertion error when _GLIBCXX_DEBUG is
+       defined, which should make error easier to track down.  */
+  gdb::optional<CORE_ADDR> stop_pc;
 };
 
 /* Base class for target-specific thread data.  */
@@ -221,9 +237,12 @@ struct private_thread_info
    delete_thread).  All other thread references are considered weak
    references.  Placing a thread in the thread list is an implicit
    strong reference, and is thus not accounted for in the thread's
-   refcount.  */
+   refcount.
 
-class thread_info : public refcounted_object
+   The intrusive_list_node base links threads in a per-inferior list.  */
+
+class thread_info : public refcounted_object,
+		    public intrusive_list_node<thread_info>
 {
 public:
   explicit thread_info (inferior *inf, ptid_t ptid);
@@ -234,7 +253,6 @@ public:
   /* Mark this thread as running and notify observers.  */
   void set_running (bool running);
 
-  struct thread_info *next = NULL;
   ptid_t ptid;			/* "Actual process id";
 				    In fact, this may be overloaded with 
 				    kernel thread id, etc.  */
@@ -243,14 +261,14 @@ public:
 
      a) The thread ID (Id).  This consists of the pair of:
 
-        - the number of the thread's inferior and,
+	- the number of the thread's inferior and,
 
-        - the thread's thread number in its inferior, aka, the
-          per-inferior thread number.  This number is unique in the
-          inferior but not unique between inferiors.
+	- the thread's thread number in its inferior, aka, the
+	  per-inferior thread number.  This number is unique in the
+	  inferior but not unique between inferiors.
 
      b) The global ID (GId).  This is a a single integer unique
-        between all inferiors.
+	between all inferiors.
 
      E.g.:
 
@@ -279,24 +297,36 @@ public:
   /* The inferior this thread belongs to.  */
   struct inferior *inf;
 
-  /* The name of the thread, as specified by the user.  This is NULL
-     if the thread does not have a user-given name.  */
-  char *name = NULL;
+  /* The user-given name of the thread.
 
-  /* True means the thread is executing.  Note: this is different
-     from saying that there is an active target and we are stopped at
-     a breakpoint, for instance.  This is a real indicator whether the
-     thread is off and running.  */
-  bool executing = false;
+     Returns nullptr if the thread does not have a user-given name.  */
+  const char *name () const
+  {
+    return m_name.get ();
+  }
 
-  /* True if this thread is resumed from infrun's perspective.
-     Note that a thread can be marked both as not-executing and
-     resumed at the same time.  This happens if we try to resume a
-     thread that has a wait status pending.  We shouldn't let the
-     thread really run until that wait status has been processed, but
-     we should not process that wait status if we didn't try to let
-     the thread run.  */
-  bool resumed = false;
+  /* Set the user-given name of the thread.
+
+     Pass nullptr to clear the name.  */
+  void set_name (gdb::unique_xmalloc_ptr<char> name)
+  {
+    m_name = std::move (name);
+  }
+
+  bool executing () const
+  { return m_executing; }
+
+  /* Set the thread's 'm_executing' field from EXECUTING, and if EXECUTING
+     is true also clears the thread's stop_pc.  */
+  void set_executing (bool executing);
+
+  bool resumed () const
+  { return m_resumed; }
+
+  /* Set the thread's 'm_resumed' field from RESUMED.  The thread may also
+     be added to (when RESUMED is true), or removed from (when RESUMED is
+     false), the list of threads with a pending wait status.  */
+  void set_resumed (bool resumed);
 
   /* Frontend view of the thread state.  Note that the THREAD_RUNNING/
      THREAD_STOPPED states are different from EXECUTING.  When the
@@ -309,9 +339,136 @@ public:
      See `struct thread_control_state'.  */
   thread_control_state control;
 
-  /* State of inferior thread to restore after GDB is done with an inferior
-     call.  See `struct thread_suspend_state'.  */
-  thread_suspend_state suspend;
+  /* Save M_SUSPEND to SUSPEND.  */
+
+  void save_suspend_to (thread_suspend_state &suspend) const
+  {
+    suspend = m_suspend;
+  }
+
+  /* Restore M_SUSPEND from SUSPEND.  */
+
+  void restore_suspend_from (const thread_suspend_state &suspend)
+  {
+    m_suspend = suspend;
+  }
+
+  /* Return this thread's stop PC.  This should only be called when it is
+     known that stop_pc has a value.  If this function is being used in a
+     situation where a thread may not have had a stop_pc assigned, then
+     stop_pc_p() can be used to check if the stop_pc is defined.  */
+
+  CORE_ADDR stop_pc () const
+  {
+    gdb_assert (m_suspend.stop_pc.has_value ());
+    return *m_suspend.stop_pc;
+  }
+
+  /* Set this thread's stop PC.  */
+
+  void set_stop_pc (CORE_ADDR stop_pc)
+  {
+    m_suspend.stop_pc = stop_pc;
+  }
+
+  /* Remove the stop_pc stored on this thread.  */
+
+  void clear_stop_pc ()
+  {
+    m_suspend.stop_pc.reset ();
+  }
+
+  /* Return true if this thread has a cached stop pc value, otherwise
+     return false.  */
+
+  bool stop_pc_p () const
+  {
+    return m_suspend.stop_pc.has_value ();
+  }
+
+  /* Return true if this thread has a pending wait status.  */
+
+  bool has_pending_waitstatus () const
+  {
+    return m_suspend.waitstatus_pending_p;
+  }
+
+  /* Get this thread's pending wait status.
+
+     May only be called if has_pending_waitstatus returns true.  */
+
+  const target_waitstatus &pending_waitstatus () const
+  {
+    gdb_assert (this->has_pending_waitstatus ());
+
+    return m_suspend.waitstatus;
+  }
+
+  /* Set this thread's pending wait status.
+
+     May only be called if has_pending_waitstatus returns false.  */
+
+  void set_pending_waitstatus (const target_waitstatus &ws);
+
+  /* Clear this thread's pending wait status.
+
+     May only be called if has_pending_waitstatus returns true.  */
+
+  void clear_pending_waitstatus ();
+
+  /* Return this thread's stop signal.  */
+
+  gdb_signal stop_signal () const
+  {
+    return m_suspend.stop_signal;
+  }
+
+  /* Set this thread's stop signal.  */
+
+  void set_stop_signal (gdb_signal sig)
+  {
+    m_suspend.stop_signal = sig;
+  }
+
+  /* Return this thread's stop reason.  */
+
+  target_stop_reason stop_reason () const
+  {
+    return m_suspend.stop_reason;
+  }
+
+  /* Set this thread's stop reason.  */
+
+  void set_stop_reason (target_stop_reason reason)
+  {
+    m_suspend.stop_reason = reason;
+  }
+
+  /* Get the FSM associated with the thread.  */
+
+  struct thread_fsm *thread_fsm () const
+  {
+    return m_thread_fsm.get ();
+  }
+
+  /* Get the owning reference to the FSM associated with the thread.
+
+     After a call to this method, "thread_fsm () == nullptr".  */
+
+  std::unique_ptr<struct thread_fsm> release_thread_fsm ()
+  {
+    return std::move (m_thread_fsm);
+  }
+
+  /* Set the FSM associated with the current thread.
+
+     It is invalid to set the FSM if another FSM is already installed.  */
+
+  void set_thread_fsm (std::unique_ptr<struct thread_fsm> fsm)
+  {
+    gdb_assert (m_thread_fsm == nullptr);
+    m_thread_fsm = std::move (fsm);
+  }
 
   int current_line = 0;
   struct symtab *current_symtab = NULL;
@@ -350,11 +507,6 @@ public:
      when GDB gets back SIGTRAP from step_resume_breakpoint.  */
   int step_after_step_resume_breakpoint = 0;
 
-  /* Pointer to the state machine manager object that handles what is
-     left to do for the thread's execution command after the target
-     stops.  Several execution commands use it.  */
-  struct thread_fsm *thread_fsm = NULL;
-
   /* This is used to remember when a fork or vfork event was caught by
      a catchpoint, and thus the event is to be followed at the next
      resume of the thread, and not immediately.  */
@@ -383,12 +535,56 @@ public:
      expressions.  */
   std::vector<struct value *> stack_temporaries;
 
-  /* Step-over chain.  A thread is in the step-over queue if these are
-     non-NULL.  If only a single thread is in the chain, then these
-     fields point to self.  */
-  struct thread_info *step_over_prev = NULL;
-  struct thread_info *step_over_next = NULL;
+  /* Step-over chain.  A thread is in the step-over queue if this node is
+     linked.  */
+  intrusive_list_node<thread_info> step_over_list_node;
+
+  /* Node for list of threads that are resumed and have a pending wait status.
+
+     The list head for this is in process_stratum_target, hence all threads in
+     this list belong to that process target.  */
+  intrusive_list_node<thread_info> resumed_with_pending_wait_status_node;
+
+  /* Displaced-step state for this thread.  */
+  displaced_step_thread_state displaced_step_state;
+
+private:
+  /* True if this thread is resumed from infrun's perspective.
+     Note that a thread can be marked both as not-executing and
+     resumed at the same time.  This happens if we try to resume a
+     thread that has a wait status pending.  We shouldn't let the
+     thread really run until that wait status has been processed, but
+     we should not process that wait status if we didn't try to let
+     the thread run.  */
+  bool m_resumed = false;
+
+  /* True means the thread is executing.  Note: this is different
+     from saying that there is an active target and we are stopped at
+     a breakpoint, for instance.  This is a real indicator whether the
+     thread is off and running.  */
+  bool m_executing = false;
+
+  /* State of inferior thread to restore after GDB is done with an inferior
+     call.  See `struct thread_suspend_state'.  */
+  thread_suspend_state m_suspend;
+
+  /* The user-given name of the thread.
+
+     Nullptr if the thread does not have a user-given name.  */
+  gdb::unique_xmalloc_ptr<char> m_name;
+
+  /* Pointer to the state machine manager object that handles what is
+     left to do for the thread's execution command after the target
+     stops.  Several execution commands use it.  */
+  std::unique_ptr<struct thread_fsm> m_thread_fsm;
 };
+
+using thread_info_resumed_with_pending_wait_status_node
+  = intrusive_member_node<thread_info,
+			  &thread_info::resumed_with_pending_wait_status_node>;
+using thread_info_resumed_with_pending_wait_status_list
+  = intrusive_list<thread_info,
+		   thread_info_resumed_with_pending_wait_status_node>;
 
 /* A gdb::ref_ptr pointer to a thread_info.  */
 
@@ -430,6 +626,10 @@ extern void delete_thread (struct thread_info *thread);
 /* Like delete_thread, but be quiet about it.  Used when the process
    this thread belonged to has already exited, for example.  */
 extern void delete_thread_silent (struct thread_info *thread);
+
+/* Mark the thread exited, but don't delete it or remove it from the
+   inferior thread list.  */
+extern void set_thread_exited (thread_info *tp, bool silent);
 
 /* Delete a step_resume_breakpoint from the thread database.  */
 extern void delete_step_resume_breakpoint (struct thread_info *);
@@ -474,10 +674,6 @@ extern thread_info *find_thread_ptid (inferior *inf, ptid_t ptid);
 /* Search function to lookup a (non-exited) thread by 'ptid'.  */
 extern struct thread_info *find_thread_ptid (process_stratum_target *targ,
 					     ptid_t ptid);
-
-/* Search function to lookup a (non-exited) thread by 'ptid'.  Only
-   searches in threads of INF.  */
-extern struct thread_info *find_thread_ptid (inferior *inf, ptid_t ptid);
 
 /* Find thread by GDB global thread ID.  */
 struct thread_info *find_thread_global_id (int global_id);
@@ -563,7 +759,7 @@ all_non_exited_threads (process_stratum_target *proc_target = nullptr,
 inline all_threads_safe_range
 all_threads_safe ()
 {
-  return {};
+  return all_threads_safe_range (all_threads_iterator::begin_t {});
 }
 
 extern int thread_count (process_stratum_target *proc_target);
@@ -673,6 +869,10 @@ private:
   frame_id m_selected_frame_id;
   int m_selected_frame_level;
   bool m_was_stopped;
+  /* Save/restore the language as well, because selecting a frame
+     changes the current language to the frame's language if "set
+     language auto".  */
+  enum language m_lang;
 };
 
 /* Returns a pointer into the thread_info corresponding to
@@ -703,12 +903,8 @@ class enable_thread_stack_temporaries
 public:
 
   explicit enable_thread_stack_temporaries (struct thread_info *thr)
-    : m_thr (thr)
+    : m_thr (thread_info_ref::new_reference (thr))
   {
-    gdb_assert (m_thr != NULL);
-
-    m_thr->incref ();
-
     m_thr->stack_temporaries_enabled = true;
     m_thr->stack_temporaries.clear ();
   }
@@ -717,15 +913,13 @@ public:
   {
     m_thr->stack_temporaries_enabled = false;
     m_thr->stack_temporaries.clear ();
-
-    m_thr->decref ();
   }
 
   DISABLE_COPY_AND_ASSIGN (enable_thread_stack_temporaries);
 
 private:
 
-  struct thread_info *m_thr;
+  thread_info_ref m_thr;
 };
 
 extern bool thread_stack_temporaries_enabled_p (struct thread_info *tp);
@@ -737,22 +931,53 @@ extern value *get_last_thread_stack_temporary (struct thread_info *tp);
 extern bool value_in_thread_stack_temporaries (struct value *,
 					       struct thread_info *thr);
 
-/* Add TP to the end of its inferior's pending step-over chain.  */
+/* Thread step-over list type.  */
+using thread_step_over_list_node
+  = intrusive_member_node<thread_info, &thread_info::step_over_list_node>;
+using thread_step_over_list
+  = intrusive_list<thread_info, thread_step_over_list_node>;
+using thread_step_over_list_iterator
+  = reference_to_pointer_iterator<thread_step_over_list::iterator>;
+using thread_step_over_list_safe_iterator
+  = basic_safe_iterator<thread_step_over_list_iterator>;
+using thread_step_over_list_safe_range
+  = iterator_range<thread_step_over_list_safe_iterator>;
 
-extern void thread_step_over_chain_enqueue (struct thread_info *tp);
+static inline thread_step_over_list_safe_range
+make_thread_step_over_list_safe_range (thread_step_over_list &list)
+{
+  return thread_step_over_list_safe_range
+    (thread_step_over_list_safe_iterator (list.begin (),
+					  list.end ()),
+     thread_step_over_list_safe_iterator (list.end (),
+					  list.end ()));
+}
 
-/* Remove TP from its inferior's pending step-over chain.  */
+/* Add TP to the end of the global pending step-over chain.  */
 
-extern void thread_step_over_chain_remove (struct thread_info *tp);
+extern void global_thread_step_over_chain_enqueue (thread_info *tp);
 
-/* Return the next thread in the step-over chain starting at TP.  NULL
-   if TP is the last entry in the chain.  */
+/* Append the thread step over list LIST to the global thread step over
+   chain. */
 
-extern struct thread_info *thread_step_over_chain_next (struct thread_info *tp);
+extern void global_thread_step_over_chain_enqueue_chain
+  (thread_step_over_list &&list);
 
-/* Return true if TP is in the step-over chain.  */
+/* Remove TP from the global pending step-over chain.  */
+
+extern void global_thread_step_over_chain_remove (thread_info *tp);
+
+/* Return true if TP is in any step-over chain.  */
 
 extern int thread_is_in_step_over_chain (struct thread_info *tp);
+
+/* Return the length of the the step over chain TP is in.
+
+   If TP is non-nullptr, the thread must be in a step over chain.
+   TP may be nullptr, in which case it denotes an empty list, so a length of
+   0.  */
+
+extern int thread_step_over_chain_length (const thread_step_over_list &l);
 
 /* Cancel any ongoing execution command.  */
 
@@ -781,5 +1006,32 @@ extern void print_selected_thread_frame (struct ui_out *uiout,
    was parsed from.  This is used in the error message if THR is not
    alive anymore.  */
 extern void thread_select (const char *tidstr, class thread_info *thr);
+
+/* Return THREAD's name.
+
+   If THREAD has a user-given name, return it.  Otherwise, query the thread's
+   target to get the name.  May return nullptr.  */
+extern const char *thread_name (thread_info *thread);
+
+/* Switch to thread TP if it is alive.  Returns true if successfully
+   switched, false otherwise.  */
+
+extern bool switch_to_thread_if_alive (thread_info *thr);
+
+/* Assuming that THR is the current thread, execute CMD.
+   If ADA_TASK is not empty, it is the Ada task ID, and will
+   be printed instead of the thread information.
+   FLAGS.QUIET controls the printing of the thread information.
+   FLAGS.CONT and FLAGS.SILENT control how to handle errors.  Can throw an
+   exception if !FLAGS.SILENT and !FLAGS.CONT and CMD fails.  */
+
+extern void thread_try_catch_cmd (thread_info *thr,
+				  gdb::optional<int> ada_task,
+				  const char *cmd, int from_tty,
+				  const qcs_flags &flags);
+
+/* Return a string representation of STATE.  */
+
+extern const char *thread_state_string (enum thread_state state);
 
 #endif /* GDBTHREAD_H */

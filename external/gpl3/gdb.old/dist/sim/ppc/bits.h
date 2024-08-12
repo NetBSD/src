@@ -89,7 +89,7 @@
 
 
 /* MakeBit */
-#define _BITn(WIDTH, pos) (((natural##WIDTH)(1)) \
+#define _BITn(WIDTH, pos) (((uint##WIDTH##_t)(1)) \
 			   << _MAKE_SHIFT(WIDTH, pos))
 
 #define BIT4(POS)  (1 << _MAKE_SHIFT(4, POS))
@@ -108,7 +108,7 @@
 
 /* multi bit mask */
 #define _MASKn(WIDTH, START, STOP) \
-(((((unsigned##WIDTH)0) - 1) \
+(((((uint##WIDTH##_t)0) - 1) \
   >> (WIDTH - ((STOP) - (START) + 1))) \
  << (WIDTH - 1 - (STOP)))
 
@@ -151,14 +151,14 @@
 /* mask the required bits, leaving them in place */
 
 INLINE_BITS\
-(unsigned32) MASKED32
-(unsigned32 word,
+(uint32_t) MASKED32
+(uint32_t word,
  unsigned start,
  unsigned stop);
 
 INLINE_BITS\
-(unsigned64) MASKED64
-(unsigned64 word,
+(uint64_t) MASKED64
+(uint64_t word,
  unsigned start,
  unsigned stop);
 
@@ -169,15 +169,15 @@ INLINE_BITS\
  unsigned stop);
 
 INLINE_BITS\
-(unsigned64) LSMASKED64
-(unsigned64 word,
+(uint64_t) LSMASKED64
+(uint64_t word,
  int first,
   int last);
 
 
 /* extract the required bits aligning them with the lsb */
 #define _EXTRACTEDn(WIDTH, WORD, START, STOP) \
-((((natural##WIDTH)(WORD)) >> (WIDTH - (STOP) - 1)) \
+((((uint##WIDTH##_t)(WORD)) >> (WIDTH - (STOP) - 1)) \
  & _MASKn(WIDTH, WIDTH-1+(START)-(STOP), WIDTH-1))
 
 /* #define EXTRACTED10(WORD, START, STOP) _EXTRACTEDn(10, WORD, START, STOP) */
@@ -191,8 +191,8 @@ INLINE_BITS\
  unsigned stop);
 
 INLINE_BITS\
-(unsigned64) LSEXTRACTED64
-(unsigned64 val,
+(uint64_t) LSEXTRACTED64
+(uint64_t val,
  int start,
  int stop);
 
@@ -200,10 +200,10 @@ INLINE_BITS\
 /* NB: the wierdness (N>O?N-O:0) is to stop a warning from GCC */
 #define _SHUFFLEDn(N, WORD, OLD, NEW) \
 ((OLD) < (NEW) \
- ? (((unsigned##N)(WORD) \
+ ? (((uint##N##_t)(WORD) \
      >> (((NEW) > (OLD)) ? ((NEW) - (OLD)) : 0)) \
     & MASK32((NEW), (NEW))) \
- : (((unsigned##N)(WORD) \
+ : (((uint##N##_t)(WORD) \
      << (((OLD) > (NEW)) ? ((OLD) - (NEW)) : 0)) \
     & MASK32((NEW), (NEW))))
 
@@ -215,7 +215,7 @@ INLINE_BITS\
 
 /* move a group of bits around */
 #define _INSERTEDn(N, WORD, START, STOP) \
-(((natural##N)(WORD) << _MAKE_SHIFT(N, STOP)) & _MASKn(N, START, STOP))
+(((uint##N##_t)(WORD) << _MAKE_SHIFT(N, STOP)) & _MASKn(N, START, STOP))
 
 #define INSERTED32(WORD, START, STOP) _INSERTEDn(32, WORD, START, STOP)
 #define INSERTED64(WORD, START, STOP) _INSERTEDn(64, WORD, START, STOP)
@@ -229,7 +229,7 @@ INLINE_BITS\
 
 /* depending on MODE return a 64bit or 32bit (sign extended) value */
 #if (WITH_TARGET_WORD_BITSIZE == 64)
-#define EXTENDED(X)     ((signed64)(signed32)(X))
+#define EXTENDED(X)     ((int64_t)(int32_t)(X))
 #else
 #define EXTENDED(X)     (X)
 #endif
@@ -270,13 +270,13 @@ do { \
 (((VAL) << (SHIFT)) | ((VAL) >> ((N)-(SHIFT))))
 
 INLINE_BITS\
-(unsigned32) ROTL32
-(unsigned32 val,
+(uint32_t) ROTL32
+(uint32_t val,
  long shift);
 
 INLINE_BITS\
-(unsigned64) ROTL64
-(unsigned64 val,
+(uint64_t) ROTL64
+(uint64_t val,
  long shift);
 
 

@@ -1,5 +1,5 @@
 /* mmix-dis.c -- Disassemble MMIX instructions.
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2022 Free Software Foundation, Inc.
    Written by Hans-Peter Nilsson (hp@bitrange.com)
 
    This file is part of the GNU opcodes library.
@@ -69,14 +69,14 @@ struct mmix_dis_info
 
 /* Initialize a target-specific array in INFO.  */
 
-static bfd_boolean
+static bool
 initialize_mmix_dis_info (struct disassemble_info *info)
 {
   struct mmix_dis_info *minfop = malloc (sizeof (struct mmix_dis_info));
   long i;
 
   if (minfop == NULL)
-    return FALSE;
+    return false;
 
   memset (minfop, 0, sizeof (*minfop));
 
@@ -103,7 +103,7 @@ initialize_mmix_dis_info (struct disassemble_info *info)
 	    {
 	      FATAL_DEBUG;
 	      free (minfop);
-	      return FALSE;
+	      return false;
 	    }
 	  nsyms = bfd_canonicalize_symtab (abfd, syms);
 
@@ -133,7 +133,7 @@ initialize_mmix_dis_info (struct disassemble_info *info)
     minfop->spec_reg_name[mmix_spec_regs[i].number] = mmix_spec_regs[i].name;
 
   info->private_data = (void *) minfop;
-  return TRUE;
+  return true;
 }
 
 /* A table indexed by the first byte is constructed as we disassemble each

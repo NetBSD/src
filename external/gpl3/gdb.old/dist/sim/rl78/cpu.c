@@ -1,6 +1,6 @@
 /* cpu.c --- CPU for RL78 simulator.
 
-   Copyright (C) 2011-2020 Free Software Foundation, Inc.
+   Copyright (C) 2011-2023 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of the GNU simulators.
@@ -19,7 +19,9 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -36,6 +38,8 @@ int rl78_g10_mode = 0;
 int g13_multiply = 0;
 int g14_multiply = 0;
 
+SI pc;
+
 #define REGISTER_ADDRESS 0xffee0
 
 typedef struct {
@@ -49,7 +53,7 @@ typedef struct {
   unsigned char h;
 } RegBank;
 
-static void trace_register_init ();
+static void trace_register_init (void);
 
 /* This maps PSW to a pointer into memory[] */
 static RegBank *regbase_table[256];

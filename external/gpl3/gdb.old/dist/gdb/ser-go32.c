@@ -1,5 +1,5 @@
 /* Remote serial interface for local (hardwired) serial ports for GO32.
-   Copyright (C) 1992-2020 Free Software Foundation, Inc.
+   Copyright (C) 1992-2023 Free Software Foundation, Inc.
 
    Contributed by Nigel Stephens, Algorithmics Ltd. (nigel@algor.co.uk).
 
@@ -584,11 +584,11 @@ dos_close (struct serial *scb)
   /* Check for overflow errors.  */
   if (port->oflo)
     {
-      fprintf_unfiltered (gdb_stderr,
-			  "Serial input overruns occurred.\n");
-      fprintf_unfiltered (gdb_stderr, "This system %s handle %d baud.\n",
-			  port->fifo ? "cannot" : "needs a 16550 to",
-			  port->baudrate);
+      gdb_printf (gdb_stderr,
+		  "Serial input overruns occurred.\n");
+      gdb_printf (gdb_stderr, "This system %s handle %d baud.\n",
+		  port->fifo ? "cannot" : "needs a 16550 to",
+		  port->baudrate);
     }
 }
 
@@ -745,7 +745,7 @@ dos_setbaudrate (struct serial *scb, int rate)
       x = dos_baudconv (rate);
       if (x <= 0)
 	{
-	  fprintf_unfiltered (gdb_stderr, "%d: impossible baudrate\n", rate);
+	  gdb_printf (gdb_stderr, "%d: impossible baudrate\n", rate);
 	  errno = EINVAL;
 	  return -1;
 	}
@@ -898,20 +898,20 @@ info_serial_command (const char *arg, int from_tty)
     {
       if (port->baudrate == 0)
 	continue;
-      printf_filtered ("Port:\tCOM%ld (%sactive)\n", (long)(port - ports) + 1,
-		       port->intrupt ? "" : "not ");
-      printf_filtered ("Addr:\t0x%03x (irq %d)\n", port->base, port->irq);
-      printf_filtered ("16550:\t%s\n", port->fifo ? "yes" : "no");
-      printf_filtered ("Speed:\t%d baud\n", port->baudrate);
-      printf_filtered ("Errs:\tframing %d parity %d overflow %d\n\n",
-		       port->ferr, port->perr, port->oflo);
+      gdb_printf ("Port:\tCOM%ld (%sactive)\n", (long)(port - ports) + 1,
+		  port->intrupt ? "" : "not ");
+      gdb_printf ("Addr:\t0x%03x (irq %d)\n", port->base, port->irq);
+      gdb_printf ("16550:\t%s\n", port->fifo ? "yes" : "no");
+      gdb_printf ("Speed:\t%d baud\n", port->baudrate);
+      gdb_printf ("Errs:\tframing %d parity %d overflow %d\n\n",
+		  port->ferr, port->perr, port->oflo);
     }
 
 #ifdef DOS_STATS
-  printf_filtered ("\nTotal interrupts: %d\n", intrcnt);
+  gdb_printf ("\nTotal interrupts: %d\n", intrcnt);
   for (i = 0; i < NCNT; i++)
     if (cnts[i])
-      printf_filtered ("%s:\t%lu\n", cntnames[i], (unsigned long) cnts[i]);
+      gdb_printf ("%s:\t%lu\n", cntnames[i], (unsigned long) cnts[i]);
 #endif
 }
 

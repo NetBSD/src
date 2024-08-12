@@ -1,6 +1,6 @@
 /* Fork a Unix child process, and set up to debug it, for GDB.
 
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2023 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -33,14 +33,14 @@
 /* The exec-wrapper, if any, that will be used when starting the
    inferior.  */
 
-static char *exec_wrapper = NULL;
+static std::string exec_wrapper;
 
 /* See gdbsupport/common-inferior.h.  */
 
 const char *
 get_exec_wrapper ()
 {
-  return exec_wrapper;
+  return !exec_wrapper.empty () ? exec_wrapper.c_str () : nullptr;
 }
 
 /* See nat/fork-inferior.h.  */
@@ -98,7 +98,7 @@ postfork_child_hook ()
   static int debug_setpgrp = 657473;
 
   /* Make sure we switch to main_ui here in order to be able to
-     use the fprintf_unfiltered/warning/error functions.  */
+     use the gdb_printf/warning/error functions.  */
   current_ui = main_ui;
 
   /* Create a new session for the inferior process, if necessary.
@@ -126,6 +126,9 @@ gdb_startup_inferior (pid_t pid, int num_traps)
   inferior *inf = current_inferior ();
   process_stratum_target *proc_target = inf->process_target ();
 
+  scoped_restore save_starting_up
+    = make_scoped_restore (&inf->starting_up, true);
+
   ptid_t ptid = startup_inferior (proc_target, pid, num_traps, NULL, NULL);
 
   /* Mark all threads non-executing.  */
@@ -139,17 +142,16 @@ gdb_startup_inferior (pid_t pid, int num_traps)
 static void
 unset_exec_wrapper_command (const char *args, int from_tty)
 {
-  xfree (exec_wrapper);
-  exec_wrapper = NULL;
+  exec_wrapper.clear ();
 }
 
 static void
 show_startup_with_shell (struct ui_file *file, int from_tty,
 			 struct cmd_list_element *c, const char *value)
 {
-  fprintf_filtered (file,
-		    _("Use of shell to start subprocesses is %s.\n"),
-		    value);
+  gdb_printf (file,
+	      _("Use of shell to start subprocesses is %s.\n"),
+	      value);
 }
 
 void _initialize_fork_child ();
@@ -165,8 +167,8 @@ Show the wrapper for running programs."), NULL,
 			    &setlist, &showlist);
 
   add_cmd ("exec-wrapper", class_run, unset_exec_wrapper_command,
-           _("Disable use of an execution wrapper."),
-           &unsetlist);
+	   _("Disable use of an execution wrapper."),
+	   &unsetlist);
 
   add_setshow_boolean_cmd ("startup-with-shell", class_support,
 			   &startup_with_shell, _("\

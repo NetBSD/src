@@ -1,6 +1,6 @@
 /* Exception (throw catch) mechanism, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -74,7 +74,7 @@ exceptions_state_mc (enum catcher_action action)
 	  catchers.front ().state = CATCHER_RUNNING;
 	  return 1;
 	default:
-	  internal_error (__FILE__, __LINE__, _("bad state"));
+	  internal_error (_("bad state"));
 	}
     case CATCHER_RUNNING:
       switch (action)
@@ -90,7 +90,7 @@ exceptions_state_mc (enum catcher_action action)
 	  /* See also throw_exception.  */
 	  return 1;
 	default:
-	  internal_error (__FILE__, __LINE__, _("bad switch"));
+	  internal_error (_("bad switch"));
 	}
     case CATCHER_RUNNING_1:
       switch (action)
@@ -106,7 +106,7 @@ exceptions_state_mc (enum catcher_action action)
 	  /* See also throw_exception.  */
 	  return 1;
 	default:
-	  internal_error (__FILE__, __LINE__, _("bad switch"));
+	  internal_error (_("bad switch"));
 	}
     case CATCHER_ABORTING:
       switch (action)
@@ -119,10 +119,10 @@ exceptions_state_mc (enum catcher_action action)
 	    return 0;
 	  }
 	default:
-	  internal_error (__FILE__, __LINE__, _("bad state"));
+	  internal_error (_("bad state"));
 	}
     default:
-      internal_error (__FILE__, __LINE__, _("bad switch"));
+      internal_error (_("bad switch"));
     }
 }
 

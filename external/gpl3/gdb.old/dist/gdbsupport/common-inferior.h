@@ -1,7 +1,7 @@
 /* Functions to deal with the inferior being executed on GDB or
    GDBserver.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,13 +32,10 @@ extern const char *get_exec_wrapper ();
    otherwise return 0 in that case.  */
 extern const char *get_exec_file (int err);
 
-/* Return the inferior's current working directory.  If nothing has
-   been set, then return NULL.  */
-extern const char *get_inferior_cwd ();
+/* Return the inferior's current working directory.
 
-/* Set the inferior current working directory.  If CWD is NULL, unset
-   the directory.  */
-extern void set_inferior_cwd (const char *cwd);
+   If it is not set, the string is empty.  */
+extern const std::string &get_inferior_cwd ();
 
 /* Whether to start up the debuggee under a shell.
 

@@ -1,5 +1,5 @@
 /* BFD support for the Adapteva EPIPHANY processor.
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
    Contributed by Embecosm on behalf of Adapteva, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -42,8 +42,7 @@
   }
 
 const bfd_arch_info_type bfd_epiphany16_arch =
-  N (bfd_mach_epiphany16, "epiphany16", 1, FALSE, NULL);
+  N (bfd_mach_epiphany16, "epiphany16", 1, false, NULL);
 
 const bfd_arch_info_type bfd_epiphany_arch =
-  N (bfd_mach_epiphany32, "epiphany32", 2, TRUE, & bfd_epiphany16_arch);
-
+  N (bfd_mach_epiphany32, "epiphany32", 2, true, &bfd_epiphany16_arch);

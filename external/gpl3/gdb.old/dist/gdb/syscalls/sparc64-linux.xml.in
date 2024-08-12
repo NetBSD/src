@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- Copyright (C) 2010-2020 Free Software Foundation, Inc.
+<!-- Copyright (C) 2010-2023 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
@@ -8,10 +8,11 @@
 <!DOCTYPE feature SYSTEM "gdb-syscalls.dtd">
 
 <!-- This file was generated using the following file:
-     
-     /usr/src/linux/arch/sparc/include/asm/unistd.h
+
+     arch/sparc/kernel/syscalls/syscall.tbl
 
      The file mentioned above belongs to the Linux Kernel.  -->
+
 
 <syscalls_info>
   <syscall name="restart_syscall" number="0"/>
@@ -27,7 +28,7 @@
   <syscall name="unlink" number="10"/>
   <syscall name="execv" number="11"/>
   <syscall name="chdir" number="12"/>
-  <syscall name="chown"	number="13"/>
+  <syscall name="chown" number="13"/>
   <syscall name="mknod" number="14"/>
   <syscall name="chmod" number="15"/>
   <syscall name="lchown" number="16"/>
@@ -323,4 +324,77 @@
   <syscall name="rt_tgsigqueueinfo" number="326"/>
   <syscall name="perf_event_open" number="327"/>
   <syscall name="recvmmsg" number="328"/>
+  <syscall name="fanotify_init" number="329"/>
+  <syscall name="fanotify_mark" number="330"/>
+  <syscall name="prlimit64" number="331"/>
+  <syscall name="name_to_handle_at" number="332"/>
+  <syscall name="open_by_handle_at" number="333"/>
+  <syscall name="clock_adjtime" number="334"/>
+  <syscall name="syncfs" number="335"/>
+  <syscall name="sendmmsg" number="336"/>
+  <syscall name="setns" number="337"/>
+  <syscall name="process_vm_readv" number="338"/>
+  <syscall name="process_vm_writev" number="339"/>
+  <syscall name="kern_features" number="340"/>
+  <syscall name="kcmp" number="341"/>
+  <syscall name="finit_module" number="342"/>
+  <syscall name="sched_setattr" number="343"/>
+  <syscall name="sched_getattr" number="344"/>
+  <syscall name="renameat2" number="345"/>
+  <syscall name="seccomp" number="346"/>
+  <syscall name="getrandom" number="347"/>
+  <syscall name="memfd_create" number="348"/>
+  <syscall name="bpf" number="349"/>
+  <syscall name="execveat" number="350"/>
+  <syscall name="membarrier" number="351"/>
+  <syscall name="userfaultfd" number="352"/>
+  <syscall name="bind" number="353"/>
+  <syscall name="listen" number="354"/>
+  <syscall name="setsockopt" number="355"/>
+  <syscall name="mlock2" number="356"/>
+  <syscall name="copy_file_range" number="357"/>
+  <syscall name="preadv2" number="358"/>
+  <syscall name="pwritev2" number="359"/>
+  <syscall name="statx" number="360"/>
+  <syscall name="io_pgetevents" number="361"/>
+  <syscall name="pkey_mprotect" number="362"/>
+  <syscall name="pkey_alloc" number="363"/>
+  <syscall name="pkey_free" number="364"/>
+  <syscall name="rseq" number="365"/>
+  <syscall name="semtimedop" number="392"/>
+  <syscall name="semget" number="393"/>
+  <syscall name="semctl" number="394"/>
+  <syscall name="shmget" number="395"/>
+  <syscall name="shmctl" number="396"/>
+  <syscall name="shmat" number="397"/>
+  <syscall name="shmdt" number="398"/>
+  <syscall name="msgget" number="399"/>
+  <syscall name="msgsnd" number="400"/>
+  <syscall name="msgrcv" number="401"/>
+  <syscall name="msgctl" number="402"/>
+  <syscall name="pidfd_send_signal" number="424"/>
+  <syscall name="io_uring_setup" number="425"/>
+  <syscall name="io_uring_enter" number="426"/>
+  <syscall name="io_uring_register" number="427"/>
+  <syscall name="open_tree" number="428"/>
+  <syscall name="move_mount" number="429"/>
+  <syscall name="fsopen" number="430"/>
+  <syscall name="fsconfig" number="431"/>
+  <syscall name="fsmount" number="432"/>
+  <syscall name="fspick" number="433"/>
+  <syscall name="pidfd_open" number="434"/>
+  <syscall name="close_range" number="436"/>
+  <syscall name="openat2" number="437"/>
+  <syscall name="pidfd_getfd" number="438"/>
+  <syscall name="faccessat2" number="439"/>
+  <syscall name="process_madvise" number="440"/>
+  <syscall name="epoll_pwait2" number="441"/>
+  <syscall name="mount_setattr" number="442"/>
+  <syscall name="quotactl_fd" number="443"/>
+  <syscall name="landlock_create_ruleset" number="444"/>
+  <syscall name="landlock_add_rule" number="445"/>
+  <syscall name="landlock_restrict_self" number="446"/>
+  <syscall name="process_mrelease" number="448"/>
+  <syscall name="futex_waitv" number="449"/>
+  <syscall name="set_mempolicy_home_node" number="450"/>
 </syscalls_info>

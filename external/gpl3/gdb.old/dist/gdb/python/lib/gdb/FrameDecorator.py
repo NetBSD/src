@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2020 Free Software Foundation, Inc.
+# Copyright (C) 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,14 +15,6 @@
 
 import gdb
 
-# This small code snippet deals with problem of strings in Python 2.x
-# and Python 3.x.  Python 2.x has str and unicode classes which are
-# sub-classes of basestring.  In Python 3.x all strings are encoded
-# and basestring has been removed.
-try:
-    basestring
-except NameError:
-    basestring = str
 
 class FrameDecorator(object):
     """Basic implementation of a Frame Decorator"""
@@ -66,9 +58,12 @@ class FrameDecorator(object):
         limited."""
         sal = frame.find_sal()
 
-        if (not sal.symtab or not sal.symtab.filename
+        if (
+            not sal.symtab
+            or not sal.symtab.filename
             or frame.type() == gdb.DUMMY_FRAME
-            or frame.type() == gdb.SIGTRAMP_FRAME):
+            or frame.type() == gdb.SIGTRAMP_FRAME
+        ):
 
             return True
 
@@ -83,7 +78,7 @@ class FrameDecorator(object):
         return None
 
     def function(self):
-        """ Return the name of the frame's function or an address of
+        """Return the name of the frame's function or an address of
         the function of the frame.  First determine if this is a
         special frame.  If not, try to determine filename from GDB's
         frame internal function API.  Finally, if a name cannot be
@@ -113,14 +108,14 @@ class FrameDecorator(object):
         # address.  If GDB detects an integer value from this function
         # it will attempt to find the function name from minimal
         # symbols via its own internal functions.
-        if func == None:
+        if func is None:
             pc = frame.pc()
             return pc
 
         return str(func)
 
     def address(self):
-        """ Return the address of the frame's pc"""
+        """Return the address of the frame's pc"""
 
         if hasattr(self._base, "address"):
             return self._base.address()
@@ -129,7 +124,7 @@ class FrameDecorator(object):
         return frame.pc()
 
     def filename(self):
-        """ Return the filename associated with this frame, detecting
+        """Return the filename associated with this frame, detecting
         and returning the appropriate library name is this is a shared
         library."""
 
@@ -145,7 +140,7 @@ class FrameDecorator(object):
             return sal.symtab.filename
 
     def frame_args(self):
-        """ Return an iterable of frame arguments for this frame, if
+        """Return an iterable of frame arguments for this frame, if
         any.  The iterable object contains objects conforming with the
         Symbol/Value interface.  If there are no frame arguments, or
         if this frame is deemed to be a special case, return None."""
@@ -161,7 +156,7 @@ class FrameDecorator(object):
         return args.fetch_frame_args()
 
     def frame_locals(self):
-        """ Return an iterable of local variables for this frame, if
+        """Return an iterable of local variables for this frame, if
         any.  The iterable object contains objects conforming with the
         Symbol/Value interface.  If there are no frame locals, or if
         this frame is deemed to be a special case, return None."""
@@ -177,7 +172,7 @@ class FrameDecorator(object):
         return args.fetch_frame_locals()
 
     def line(self):
-        """ Return line number information associated with the frame's
+        """Return line number information associated with the frame's
         pc.  If symbol table/line information does not exist, or if
         this frame is deemed to be a special case, return None"""
 
@@ -189,13 +184,13 @@ class FrameDecorator(object):
             return None
 
         sal = frame.find_sal()
-        if (sal):
+        if sal:
             return sal.line
         else:
             return None
 
     def inferior_frame(self):
-        """ Return the gdb.Frame underpinning this frame decorator."""
+        """Return the gdb.Frame underpinning this frame decorator."""
 
         # If 'base' is a frame decorator, we want to call its inferior
         # frame method.  If '_base' is a gdb.Frame, just return that.
@@ -203,21 +198,24 @@ class FrameDecorator(object):
             return self._base.inferior_frame()
         return self._base
 
+
 class SymValueWrapper(object):
     """A container class conforming to the Symbol/Value interface
     which holds frame locals or frame arguments."""
+
     def __init__(self, symbol, value):
         self.sym = symbol
         self.val = value
 
     def value(self):
-        """ Return the value associated with this symbol, or None"""
+        """Return the value associated with this symbol, or None"""
         return self.val
 
     def symbol(self):
-        """ Return the symbol, or Python text, associated with this
+        """Return the symbol, or Python text, associated with this
         symbol, or None"""
         return self.sym
+
 
 class FrameVars(object):
 
@@ -232,12 +230,12 @@ class FrameVars(object):
             gdb.SYMBOL_LOC_ARG: True,
             gdb.SYMBOL_LOC_REF_ARG: True,
             gdb.SYMBOL_LOC_LOCAL: True,
-	    gdb.SYMBOL_LOC_REGPARM_ADDR: True,
-	    gdb.SYMBOL_LOC_COMPUTED: True
-            }
+            gdb.SYMBOL_LOC_REGPARM_ADDR: True,
+            gdb.SYMBOL_LOC_COMPUTED: True,
+        }
 
     def fetch_b(self, sym):
-        """ Local utility method to determine if according to Symbol
+        """Local utility method to determine if according to Symbol
         type whether it should be included in the iterator.  Not all
         symbols are fetched, and only symbols that return
         True from this method should be fetched."""
@@ -245,7 +243,7 @@ class FrameVars(object):
         # SYM may be a string instead of a symbol in the case of
         # synthetic local arguments or locals.  If that is the case,
         # always fetch.
-        if isinstance(sym, basestring):
+        if isinstance(sym, str):
             return True
 
         sym_type = sym.addr_class
@@ -263,12 +261,12 @@ class FrameVars(object):
         except RuntimeError:
             block = None
 
-        while block != None:
+        while block is not None:
             if block.is_global or block.is_static:
                 break
             for sym in block:
                 if sym.is_argument:
-                    continue;
+                    continue
                 if self.fetch_b(sym):
                     lvars.append(SymValueWrapper(sym, None))
 
@@ -288,15 +286,15 @@ class FrameVars(object):
         except RuntimeError:
             block = None
 
-        while block != None:
-            if block.function != None:
+        while block is not None:
+            if block.function is not None:
                 break
             block = block.superblock
 
-        if block != None:
+        if block is not None:
             for sym in block:
                 if not sym.is_argument:
-                    continue;
+                    continue
                 args.append(SymValueWrapper(sym, None))
 
         return args

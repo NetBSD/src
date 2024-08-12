@@ -1,5 +1,5 @@
 /* m32r simulator support code
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2023 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
    This file is part of GDB, the GNU debugger.
@@ -17,12 +17,24 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #define WANT_CPU m32rbf
 #define WANT_CPU_M32RBF
 
 #include "sim-main.h"
 #include "cgen-mem.h"
 #include "cgen-ops.h"
+#include <stdlib.h>
+
+/* Return the size of REGNO in bytes.  */
+
+static int
+m32rbf_register_size (int regno)
+{
+  return 4;
+}
 
 /* Decode gdb ctrl register number.  */
 
@@ -46,8 +58,12 @@ m32r_decode_gdb_ctrl_regnum (int gdb_regnum)
 /* The contents of BUF are in target byte order.  */
 
 int
-m32rbf_fetch_register (SIM_CPU *current_cpu, int rn, unsigned char *buf, int len)
+m32rbf_fetch_register (SIM_CPU *current_cpu, int rn, void *buf, int len)
 {
+  int size = m32rbf_register_size (rn);
+  if (len != size)
+    return -1;
+
   if (rn < 16)
     SETTWI (buf, m32rbf_h_gr_get (current_cpu, rn));
   else
@@ -76,14 +92,18 @@ m32rbf_fetch_register (SIM_CPU *current_cpu, int rn, unsigned char *buf, int len
 	return 0;
       }
 
-  return -1; /*FIXME*/
+  return size;
 }
 
 /* The contents of BUF are in target byte order.  */
 
 int
-m32rbf_store_register (SIM_CPU *current_cpu, int rn, unsigned char *buf, int len)
+m32rbf_store_register (SIM_CPU *current_cpu, int rn, const void *buf, int len)
 {
+  int size = m32rbf_register_size (rn);
+  if (len != size)
+    return -1;
+
   if (rn < 16)
     m32rbf_h_gr_set (current_cpu, rn, GETTWI (buf));
   else
@@ -121,7 +141,7 @@ m32rbf_store_register (SIM_CPU *current_cpu, int rn, unsigned char *buf, int len
 	return 0;
       }
 
-  return -1; /*FIXME*/
+  return size;
 }
 
 USI

@@ -1,4 +1,4 @@
-# Copyright 2018-2020 Free Software Foundation, Inc.
+# Copyright 2018-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,6 @@ if { [prepare_for_testing "failed to prepare" $testfile $srcfile \
 }
 
 if { ![runto_main] } {
-    untested "failed to run to main"
     return -1
 }
 
@@ -86,7 +85,9 @@ gdb_test "reverse-next" "apply\.2.*" \
 step_until "stepi" "apply\.2" "indirect_thunk" "stepi into call thunk"
 step_until "stepi" "indirect_thunk" "inc" \
     "stepi out of call thunk into inc"
-step_until "stepi" "inc" "return_thunk" "stepi into return thunk"
+set alphanum_re "\[a-zA-Z0-9\]"
+set pic_thunk_re  "__$alphanum_re*\\.get_pc_thunk\\.$alphanum_re* \\(\\)"
+step_until "stepi" "(inc|$pic_thunk_re)" "return_thunk" "stepi into return thunk"
 step_until "stepi" "return_thunk" "apply" \
     "stepi out of return thunk back into apply"
 
@@ -94,7 +95,7 @@ step_until "reverse-stepi" "apply" "return_thunk" \
     "reverse-stepi into return thunk"
 step_until "reverse-stepi" "return_thunk" "inc" \
     "reverse-stepi out of return thunk into inc"
-step_until "reverse-stepi" "inc" "indirect_thunk" \
+step_until "reverse-stepi" "(inc|$pic_thunk_re)" "indirect_thunk" \
     "reverse-stepi into call thunk"
 step_until "reverse-stepi" "indirect_thunk" "apply" \
     "reverse-stepi out of call thunk into apply"

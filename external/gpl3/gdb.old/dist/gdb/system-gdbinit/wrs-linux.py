@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2020 Free Software Foundation, Inc.
+# Copyright (C) 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,9 +17,9 @@
 
 import os
 
-if 'ENV_PREFIX' in os.environ:
-    gdb.execute('set sysroot %s' % os.environ['ENV_PREFIX'])
+if "ENV_PREFIX" in os.environ:
+    gdb.execute("set sysroot %s" % os.environ["ENV_PREFIX"])
 
 else:
-    print "warning: ENV_PREFIX environment variable missing."
-    print "The debugger will probably be unable to find the correct system libraries"
+    print("warning: ENV_PREFIX environment variable missing.")
+    print("The debugger will probably be unable to find the correct system libraries")

@@ -1,4 +1,4 @@
-#   Copyright 2009-2020 Free Software Foundation, Inc.
+#   Copyright 2009-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -47,7 +47,7 @@ proc test_one_sig {nextsig} {
 
     set need_another_continue 1
     set missed_handler 0
-    if $this_sig_supported then {
+    if {$this_sig_supported} {
 	if { $thissig == "IO" } {
 	    setup_xfail "i*86-pc-linuxoldld-gnu" "i*86-pc-linuxaout-gnu"
 	}
@@ -66,7 +66,7 @@ proc test_one_sig {nextsig} {
 	}
     }
 
-    if $need_another_continue then {
+    if {$need_another_continue} {
 	if { $thissig == "URG" } {
 	    setup_xfail "i*86-pc-linuxoldld-gnu" "i*86-pc-linuxaout-gnu"
 	}
@@ -86,7 +86,7 @@ proc test_one_sig {nextsig} {
 	}
     }
 
-    if { $missed_handler == "0" } then {
+    if {$missed_handler == "0"} {
 	set testmsg "advance to $nextsig"
         gdb_test_multiple "signal 0" $testmsg {
 	    -re "Breakpoint.*gen_$nextsig.*kill.*$gdb_prompt $" {
@@ -132,14 +132,14 @@ proc test_one_sig_reverse {prevsig} {
 	    exp_continue
 	}
 	-re "Breakpoint.*kill.*$gdb_prompt " {
-	    if { $saw_signal } then {
+	    if {$saw_signal} {
 		pass "$testmsg (handled)"
 	    } else {
 		xfail "$testmsg (handled)"
 	    }
 	}
 	-re "No more reverse-execution history.*kill.*$gdb_prompt " {
-	    if { $saw_signal } then {
+	    if {$saw_signal} {
 		pass "$testmsg (handled)"
 	    } else {
 		xfail "$testmsg (handled)"

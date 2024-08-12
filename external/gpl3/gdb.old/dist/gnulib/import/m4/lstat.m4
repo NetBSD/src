@@ -1,6 +1,6 @@
 # serial 33
 
-# Copyright (C) 1997-2001, 2003-2020 Free Software Foundation, Inc.
+# Copyright (C) 1997-2001, 2003-2022 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -58,9 +58,6 @@ AC_DEFUN([gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK],
             gl_cv_func_lstat_dereferences_slashed_symlink="guessing yes" ;;
           *-gnu* | gnu*)
             # Guess yes on glibc systems.
-            gl_cv_func_lstat_dereferences_slashed_symlink="guessing yes" ;;
-          *bsd*)
-            # Guess yes on bsd systems.
             gl_cv_func_lstat_dereferences_slashed_symlink="guessing yes" ;;
           mingw*)
             # Guess no on native Windows.

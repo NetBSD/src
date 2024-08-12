@@ -1,4 +1,4 @@
---  Copyright 2004-2020 Free Software Foundation, Inc.
+--  Copyright 2004-2023 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -14,6 +14,7 @@
 --  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 with System;
+with Pck; use Pck;
 
 procedure Fixed_Points is
 
@@ -25,8 +26,7 @@ procedure Fixed_Points is
 
    type Base_Fixed_Point_Type is
      delta 1.0 / 16.0
-       range (System.Min_Int / 2) * 1.0 / 16.0 ..
-       (System.Max_Int / 2) * 1.0 / 16.0;
+     range -2147483648 * 1.0 / 16.0 ..  2147483647 * 1.0 / 16.0;
 
    subtype Fixed_Point_Subtype is
      Base_Fixed_Point_Type range -50.0 .. 50.0;
@@ -55,9 +55,16 @@ procedure Fixed_Points is
    Overprecise_Object : Overprecise_Fixed_Point :=
      Overprecise_Fixed_Point'Small;
 
+   FP5_Var : FP5_Type := 3 * Delta5;
+
 begin
    Base_Object := 1.0/16.0;   -- Set breakpoint here
    Subtype_Object := 1.0/16.0;
    New_Type_Object := 1.0/16.0;
    Overprecise_Object := Overprecise_Fixed_Point'Small * 2;
+   Do_Nothing (FP1_Var'Address);
+   Do_Nothing (FP2_Var'Address);
+   Do_Nothing (FP3_Var'Address);
+   Do_Nothing (FP4_Var'Address);
+   Do_Nothing (FP5_Var'Address);
 end Fixed_Points;

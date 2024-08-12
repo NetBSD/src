@@ -1,5 +1,5 @@
 /* ia64-dis.c -- Disassemble ia64 instructions
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2022 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of the GNU opcodes library.
@@ -73,7 +73,7 @@ print_insn_ia64 (bfd_vma memaddr, struct disassemble_info *info)
   const struct ia64_operand *odesc;
   const struct ia64_opcode *idesc;
   const char *err, *str, *tname;
-  BFD_HOST_U_64_BIT value;
+  uint64_t value;
   bfd_byte bundle[16];
   enum ia64_unit unit;
   char regname[16];

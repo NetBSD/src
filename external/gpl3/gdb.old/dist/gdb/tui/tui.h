@@ -1,6 +1,6 @@
 /* External/Public TUI Header File.
 
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -22,6 +22,20 @@
 #ifndef TUI_TUI_H
 #define TUI_TUI_H
 
+/* Flag to control tui debugging.  */
+
+extern bool debug_tui;
+
+/* Print a "tui" debug statement.  */
+
+#define tui_debug_printf(fmt, ...) \
+  debug_prefixed_printf_cond (debug_tui, "tui", fmt, ##__VA_ARGS__)
+
+/* Print "tui" enter/exit debug statements.  */
+
+#define TUI_SCOPED_DEBUG_ENTER_EXIT \
+  scoped_debug_enter_exit (debug_tui, "tui")
+
 struct ui_file;
 
 /* Types of error returns.  */
@@ -38,6 +52,7 @@ enum tui_win_type
   DISASSEM_WIN,
   DATA_WIN,
   CMD_WIN,
+  STATUS_WIN,
   /* This must ALWAYS be AFTER the major windows last.  */
   MAX_MAJOR_WINDOWS,
 };

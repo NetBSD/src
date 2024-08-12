@@ -1,6 +1,6 @@
 /* Reading symbol files from memory.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -53,6 +53,7 @@
 #include "auxv.h"
 #include "elf/common.h"
 #include "gdb_bfd.h"
+#include "inferior.h"
 
 /* Verify parameters of target_read_memory_bfd and target_read_memory are
    compatible.  */
@@ -87,7 +88,7 @@ symbol_file_add_from_memory (struct bfd *templ, CORE_ADDR addr,
   struct bfd *nbfd;
   struct bfd_section *sec;
   bfd_vma loadbase;
-  symfile_add_flags add_flags = 0;
+  symfile_add_flags add_flags = SYMFILE_NOT_FILENAME;
 
   if (bfd_get_flavour (templ) != bfd_target_elf_flavour)
     error (_("add-symbol-file-from-memory not supported for this target"));
@@ -118,10 +119,10 @@ symbol_file_add_from_memory (struct bfd *templ, CORE_ADDR addr,
   if (from_tty)
     add_flags |= SYMFILE_VERBOSE;
 
-  objf = symbol_file_add_from_bfd (nbfd, bfd_get_filename (nbfd),
+  objf = symbol_file_add_from_bfd (nbfd_holder, bfd_get_filename (nbfd),
 				   add_flags, &sai, OBJF_SHARED, NULL);
 
-  add_target_sections_of_objfile (objf);
+  current_program_space->add_target_sections (objf);
 
   /* This might change our ideas about frames already looked at.  */
   reinit_frame_cache ();
@@ -142,10 +143,10 @@ add_symbol_file_from_memory_command (const char *args, int from_tty)
   addr = parse_and_eval_address (args);
 
   /* We need some representative bfd to know the target we are looking at.  */
-  if (symfile_objfile != NULL)
-    templ = symfile_objfile->obfd;
+  if (current_program_space->symfile_object_file != NULL)
+    templ = current_program_space->symfile_object_file->obfd.get ();
   else
-    templ = exec_bfd;
+    templ = current_program_space->exec_bfd ();
   if (templ == NULL)
     error (_("Must use symbol-file or exec-file "
 	     "before add-symbol-file-from-memory."));
@@ -157,18 +158,18 @@ add_symbol_file_from_memory_command (const char *args, int from_tty)
    This function is called via the inferior_created observer.  */
 
 static void
-add_vsyscall_page (struct target_ops *target, int from_tty)
+add_vsyscall_page (inferior *inf)
 {
   struct mem_range vsyscall_range;
 
-  if (gdbarch_vsyscall_range (target_gdbarch (), &vsyscall_range))
+  if (gdbarch_vsyscall_range (inf->gdbarch, &vsyscall_range))
     {
       struct bfd *bfd;
 
       if (core_bfd != NULL)
 	bfd = core_bfd;
-      else if (exec_bfd != NULL)
-	bfd = exec_bfd;
+      else if (current_program_space->exec_bfd () != NULL)
+	bfd = current_program_space->exec_bfd ();
       else
        /* FIXME: cagney/2004-05-06: Should not require an existing
 	  BFD when trying to create a run-time BFD of the VSYSCALL
@@ -208,14 +209,14 @@ void
 _initialize_symfile_mem ()
 {
   add_cmd ("add-symbol-file-from-memory", class_files,
-           add_symbol_file_from_memory_command,
+	   add_symbol_file_from_memory_command,
 	   _("Load the symbols out of memory from a "
 	     "dynamically loaded object file.\n"
 	     "Give an expression for the address "
 	     "of the file's shared object file header."),
-           &cmdlist);
+	   &cmdlist);
 
   /* Want to know of each new inferior so that its vsyscall info can
      be extracted.  */
-  gdb::observers::inferior_created.attach (add_vsyscall_page);
+  gdb::observers::inferior_created.attach (add_vsyscall_page, "symfile-mem");
 }

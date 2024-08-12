@@ -1,4 +1,4 @@
-# Copyright 2015-2020 Free Software Foundation, Inc.
+# Copyright 2015-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,9 +31,17 @@ if {[build_executable "failed to prepare" $testfile $srcfile debug]} {
 # Test spawning gdbserver with a program, connect to it and run to
 # main, with both multiprocess extensions on and off.
 proc do_test {multiprocess} {
-    global binfile
+    global binfile GDBFLAGS
 
-    clean_restart $binfile
+    save_vars { GDBFLAGS } {
+	# If GDB and GDBserver are both running locally, set the sysroot to avoid
+	# reading files via the remote protocol.
+	if { ![is_remote host] && ![is_remote target] } {
+	    set GDBFLAGS "$GDBFLAGS -ex \"set sysroot\""
+	}
+
+	clean_restart $binfile
+    }
 
     # Make sure we're disconnected, in case we're testing with an
     # extended-remote board, therefore already connected.
@@ -45,7 +53,7 @@ proc do_test {multiprocess} {
     set gdbserver_protocol [lindex $res 0]
     set gdbserver_gdbport [lindex $res 1]
 
-    gdb_test "break main" "Breakpoint .*"
+    gdb_test "break -q main" "Breakpoint .*"
 
     gdb_test "target $gdbserver_protocol $gdbserver_gdbport" \
 	"Remote debugging using .*" \

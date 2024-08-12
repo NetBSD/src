@@ -1,6 +1,6 @@
 /* Declarations for value printing routines for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -44,6 +44,9 @@ struct value_print_options
   /* Controls printing of addresses.  */
   bool addressprint;
 
+  /* Controls printing of nibbles.  */
+  bool nibblesprint;
+
   /* Controls looking up an object's derived type using what we find
      in its vtables.  */
   bool objectprint;
@@ -64,6 +67,9 @@ struct value_print_options
   /* The current format letter.  This is set locally for a given call,
      e.g. when the user passes a format to "print".  */
   int format;
+
+  /* Print memory tag violations for pointers.  */
+  bool memory_tag_violations;
 
   /* Stop printing at null character?  */
   bool stop_print_at_null;
@@ -97,9 +103,6 @@ struct value_print_options
 
   /* Maximum print depth when printing nested aggregates.  */
   int max_depth;
-
-  /* Whether "finish" should print the value.  */
-  bool finish_print;
 };
 
 /* Create an option_def_group for the value_print options, with OPTS
@@ -125,7 +128,7 @@ extern void get_formatted_print_options (struct value_print_options *opts,
 					 char format);
 
 extern void maybe_print_array_index (struct type *index_type, LONGEST index,
-                                     struct ui_file *stream,
+				     struct ui_file *stream,
 				     const struct value_print_options *);
 
 
@@ -146,7 +149,8 @@ extern void value_print_scalar_formatted
    int size, struct ui_file *stream);
 
 extern void print_binary_chars (struct ui_file *, const gdb_byte *,
-				unsigned int, enum bfd_endian, bool);
+				unsigned int, enum bfd_endian, bool,
+				const struct value_print_options *options);
 
 extern void print_octal_chars (struct ui_file *, const gdb_byte *,
 			       unsigned int, enum bfd_endian);
@@ -157,26 +161,17 @@ extern void print_decimal_chars (struct ui_file *, const gdb_byte *,
 extern void print_hex_chars (struct ui_file *, const gdb_byte *,
 			     unsigned int, enum bfd_endian, bool);
 
-extern void print_char_chars (struct ui_file *, struct type *,
-			      const gdb_byte *, unsigned int, enum bfd_endian);
-
 extern void print_function_pointer_address (const struct value_print_options *options,
 					    struct gdbarch *gdbarch,
 					    CORE_ADDR address,
 					    struct ui_file *stream);
-
-extern int read_string (CORE_ADDR addr, int len, int width,
-			unsigned int fetchlimit,
-			enum bfd_endian byte_order,
-			gdb::unique_xmalloc_ptr<gdb_byte> *buffer,
-			int *bytes_read);
 
 /* Helper function to check the validity of some bits of a value.
 
    If TYPE represents some aggregate type (e.g., a structure), return 1.
 
    Otherwise, any of the bytes starting at OFFSET and extending for
-   TYPE_LENGTH(TYPE) bytes are invalid, print a message to STREAM and
+   TYPE->length () bytes are invalid, print a message to STREAM and
    return 0.  The checking is done using FUNCS.
 
    Otherwise, return 1.  */
@@ -255,6 +250,7 @@ struct format_data
     int count;
     char format;
     char size;
+    bool print_tags;
 
     /* True if the value should be printed raw -- that is, bypassing
        python-based formatters.  */

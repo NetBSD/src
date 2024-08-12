@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,11 @@
 
 tuiterm_env
 
-standard_testfile tui-layout.c
+# Use main-one-line.c to get the line info at a predictable location without
+# resorting to a dwarf assembly test-case.
+standard_testfile main-one-line.c
+
+set main_line [gdb_get_line_number "int main"]
 
 if {[build_executable "failed to prepare" ${testfile} ${srcfile}] == -1} {
     return -1
@@ -33,8 +37,9 @@ set text [Term::get_all_lines]
 gdb_assert {![string match "No Source Available" $text]} \
     "initial source listing"
 
-Term::command "list main"
-Term::check_contents "list main" "21 *return 0"
+Term::command "list -q main"
+set main_re "int main \\(\\) { return 0; }"
+Term::check_contents "list -q main" "$main_line *$main_re"
 
 # Get the first source line.
 set line [Term::get_line 1]
@@ -49,16 +54,28 @@ if {[Term::wait_for [string_to_regexp $line]] \
     fail "scroll up"
 }
 
-# Check the horizontal scrolling.  First confirm that 'main ()' is
-# where we expect it to be.  This relies on the current way we
-# position source code on the screen, which might change in the
-# future.  The important part of this test is detecting the left/right
-# scrolling, not which line main is actually on.
-set line_num 6
-set line [Term::get_line $line_num]
-gdb_assert {[regexp -- "19\[\\t \]+main \\(\\)" $line]} \
+# Get the actual screen line that main is on.
+set main_screen_line -1
+for { set i 1 } { $i <= $Term::_cols } { incr i } {
+    set line [Term::get_line $i]
+    if { [regexp -- "$main_line\[\\t \]+$main_re" $line] } {
+	set main_screen_line $i
+	break
+    }
+}
+
+# Confirm that 'main ()' is where we expect it to be.  This relies on the
+# current way we position source code on the screen, which might change in
+# the future.
+gdb_assert { $main_screen_line == 7 } \
     "check main is where we expect on the screen"
-set regexp "19\[\\t \]+ain \\(\\)"
+if { $main_screen_line == -1 } {
+    return 0
+}
+
+# Check the horizontal scrolling.
+set shifted_main_re [string range $main_re 1 end]
+set regexp "$main_line\[\\t \]+$shifted_main_re"
 # Send a right arrow.
 send_gdb "\033\[C"
 if {[Term::wait_for $regexp]} {
@@ -66,11 +83,11 @@ if {[Term::wait_for $regexp]} {
 } else {
     fail "scroll right"
 }
-set line [Term::get_line $line_num]
+set line [Term::get_line $main_screen_line]
 # Send a down arrow.
 send_gdb "\033\[B"
 if {[Term::wait_for $regexp] \
-	&& [Term::get_line [expr {$line_num - 1}]] == $line} {
+	&& [Term::get_line [expr {$main_screen_line - 1}]] == $line} {
     pass "scroll down"
 } else {
     fail "scroll down"
@@ -84,7 +101,8 @@ Term::check_contents "asm window shows main" "$hex <main>"
 Term::check_box "asm box" 0 0 80 15
 
 Term::command "layout split"
-Term::check_contents "split layout contents" "21 *return 0.*$hex <main>"
+Term::check_contents "split layout contents" \
+    "$main_line *$main_re.*$hex <main>"
 
-Term::check_box "source box in split layout" 0 0 80 7
-Term::check_box "asm box in split layout" 0 6 80 9
+Term::check_box "source box in split layout" 0 0 80 8
+Term::check_box "asm box in split layout" 0 7 80 8

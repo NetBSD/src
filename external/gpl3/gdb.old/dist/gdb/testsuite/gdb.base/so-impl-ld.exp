@@ -1,4 +1,4 @@
-# Copyright 1997-2020 Free Software Foundation, Inc.
+# Copyright 1997-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,10 +26,6 @@ set lib_sl  [standard_output_file $libfile.sl]
 set lib_opts  debug
 set exec_opts [list debug shlib=$lib_sl]
 
-if [get_compiler_info] {
-    return -1
-}
-
 if { [gdb_compile_shlib $libsrc $lib_sl $lib_opts] != ""
      || [gdb_compile $srcdir/$subdir/$srcfile $binfile \
 	     executable $exec_opts] != ""} {
@@ -44,7 +40,9 @@ gdb_load_shlib $lib_sl
 
 # This program implicitly loads SOM shared libraries.
 #
-if ![runto_main] then { fail "implicit solibs tests suppressed" }
+if {![runto_main]} {
+    return
+}
 
 # Verify that we can step over the first shlib call.
 #
@@ -58,21 +56,12 @@ gdb_test "step" "solib_main .arg=10000. at.*${libfile}.c:${decimal}.* HERE .*" \
 
 # Verify that we can step within the shlib call.
 #
-gdb_test "next" "${decimal}\[ \t\]*\}.* STEP .*" "step in solib call"
+gdb_test "next" "${decimal}\[ \t\]*return ans;.* STEP .*" "step in solib call"
 
 # Verify that we can step out of the shlib call, and back out into
 # the caller.
 #
-gdb_test_multiple "next" "step out of solib call" {
-    -re "0x\[0-9a-f\]*\[ \t\]*9\[ \t\]*.*$gdb_prompt $" {
-	gdb_test "next" \
-	    "main .. at.*so-impl-ld.c:22.*" \
-	    "step out of solib call"
-    }
-    -re "main .. at.*so-impl-ld.c:22.*$gdb_prompt $" {
-	pass "step out of solib call"
-    }
-}
+gdb_step_until ".*main .. at.*return 0;.*" "step out of solib call"
 
 gdb_exit
 return 0

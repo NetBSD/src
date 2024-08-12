@@ -1,3 +1,7 @@
+2021-01-23  Tom Tromey  <tom@tromey.com>
+
+	* input.c [_WIN32]: Use code from upstream readline.
+
 2019-10-23  Andrew Burgess  <andrew.burgess@embecosm.com>
 
 	PR cli/24980

@@ -1,4 +1,4 @@
-# Copyright 1992-2020 Free Software Foundation, Inc.
+# Copyright 1992-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 # Are we on a target board?  As of 2004-02-12, GDB didn't have a
 # mechanism that would let it efficiently access a remote corefile.
 
-if ![isnative] then {
+if {![isnative]} {
     untested "remote system"
     return
 }
@@ -53,13 +53,9 @@ gdb_test_no_output "set print sevenbit-strings"
 gdb_test_no_output "set width 0"
 
 # Get the core into the output directory.
-if {![is_remote host]} {
-    gdb_test "cd [file dirname $corefile]" "Working directory .*" \
-	"cd to test directory"
-}
+set_inferior_cwd_to_output_dir
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 set print_core_line [gdb_get_line_number "Dump core"]
@@ -117,17 +113,7 @@ gdb_test_no_output "set \$bytes_allocated = bytes_allocated" "save heap size"
 # May 2003) create cores named "core.PID".
 
 # Save the process ID.  Some systems dump the core into core.PID.
-set test "grab pid"
-gdb_test_multiple "info program" $test {
-    -re "child process (\[0-9\]+).*$gdb_prompt $" {
-	set inferior_pid $expect_out(1,string)
-	pass $test
-    }
-    -re "$gdb_prompt $" {
-	set inferior_pid unknown
-	pass $test
-    }
-}
+set inferior_pid [get_inferior_pid]
 
 # Dump core using SIGABRT
 set oldtimeout $timeout
@@ -135,18 +121,11 @@ set timeout 600
 gdb_test "signal SIGABRT" "Program terminated with signal SIGABRT, .*"
 set timeout $oldtimeout
 
-# Find the corefile
-set file ""
-foreach pat [list core.${inferior_pid} ${testfile}.core core] {
-    set names [glob -nocomplain [standard_output_file $pat]]
-    if {[llength $names] == 1} {
-	set file [lindex $names 0]
-	remote_exec build "mv $file $corefile"
-	break
-    }
-}
-
-if { $file == "" } {
+# Find the corefile.
+set file [find_core_file $inferior_pid]
+if { $file != "" } {
+    remote_exec build "mv $file $corefile"
+} else {
     untested "can't generate a core file"
     return 0
 }
@@ -187,9 +166,7 @@ if {! $core_ok} {
 # Now load up that core file
 
 set test "load corefile"
-# We use [file tail] because gdb is still "cd"d to the
-# output directory.
-gdb_test_multiple "core [file tail $corefile]" "$test" {
+gdb_test_multiple "core $corefile" "$test" {
     -re "A program is being debugged already.  Kill it. .y or n. " {
 	send_gdb "y\n"
 	exp_continue

@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2020 Free Software Foundation, Inc.
+# Copyright (C) 2016-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,8 +19,7 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
     return -1
 }
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 
@@ -47,7 +46,7 @@ proc get_max_value_size {} {
 proc do_value_printing { max_value_size test_prefix } {
     with_test_prefix ${test_prefix} {
 	gdb_test "p/d one" " = 0"
-	if { $max_value_size != "unlimited" && $max_value_size < 100 } then {
+	if {$max_value_size != "unlimited" && $max_value_size < 100} {
 	    gdb_test "p/d one_hundred" \
 		"value requires 100 bytes, which is more than max-value-size"
 	} else {
@@ -60,7 +59,7 @@ proc do_value_printing { max_value_size test_prefix } {
 # Install SET_VALUE as the value for max-value-size, then print the
 # test values.
 proc set_and_check_max_value_size { set_value } {
-    if { $set_value == "unlimited" } then {
+    if {$set_value == "unlimited"} {
 	set check_pattern "unlimited"
     } else {
 	set check_pattern "${set_value} bytes"

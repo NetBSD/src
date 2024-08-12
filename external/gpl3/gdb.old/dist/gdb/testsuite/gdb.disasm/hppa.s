@@ -1736,3 +1736,4 @@ fmemLRbug_tests_4
 	bv,n 0(%r2)
 	.EXIT
 	.PROCEND
+	.section	.note.GNU-stack,"",@progbits

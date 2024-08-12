@@ -1,6 +1,6 @@
 /* This test is part of GDB, the GNU debugger.
 
-   Copyright 2007-2020 Free Software Foundation, Inc.
+   Copyright 2007-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,6 +19,12 @@ int leaf (void)
 {
   return 1;
 }
+
+#ifdef __cplusplus
+/* So that the alias attribute below work without having to figure out
+   this function's mangled name.  */
+int marker (int val) asm ("marker");
+#endif
 
 int marker (int val)
 {

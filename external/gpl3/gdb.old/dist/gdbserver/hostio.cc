@@ -1,5 +1,5 @@
 /* Host file transfer support for gdbserver.
-   Copyright (C) 2007-2020 Free Software Foundation, Inc.
+   Copyright (C) 2007-2023 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery.
 
@@ -19,7 +19,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "server.h"
-#include "gdb/fileio.h"
+#include "gdbsupport/fileio.h"
 #include "hostio.h"
 
 #include <fcntl.h>
@@ -191,12 +191,14 @@ require_valid_fd (int fd)
   return -1;
 }
 
-/* Fill in own_buf with the last hostio error packet, however it
-   suitable for the target.  */
+/* Fill BUF with an hostio error packet representing the last hostio
+   error, from errno.  */
+
 static void
 hostio_error (char *own_buf)
 {
-  the_target->hostio_last_error (own_buf);
+  int fileio_error = host_to_fileio_error (errno);
+  sprintf (own_buf, "F-1,%x", fileio_error);
 }
 
 static void

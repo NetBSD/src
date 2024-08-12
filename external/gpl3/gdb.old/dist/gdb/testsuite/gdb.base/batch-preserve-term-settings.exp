@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2020 Free Software Foundation, Inc.
+# Copyright (C) 2015-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,12 +28,13 @@ if [is_remote host] {
 }
 
 # The shell's prompt.
-set shell_prompt_re "\[$#\] "
+set shell_prompt_ps1 "gdb-subshell$ "
+set shell_prompt_re [string_to_regexp $shell_prompt_ps1]
 
 # Spawn shell.  Returns true on success, false otherwise.
 
 proc spawn_shell {} {
-    global shell_prompt_re
+    global shell_prompt_ps1 shell_prompt_re
 
     set res [remote_spawn host "/bin/sh"]
     if { $res < 0 || $res == "" } {
@@ -41,9 +42,21 @@ proc spawn_shell {} {
 	return 0
     }
 
+    send_gdb "PS1=\"$shell_prompt_ps1\"\n"
+
+    # Try to match:
+    #   PS1="gdb-subshell$ "^M
+    #   $ gdb-subshell$ 
+    # or:
+    #   PS1="gdb-subshell$ "^M
+    #   sh-4.4$ PS1="gdb-subshell$ "^M
+    #   gdb-subshell$ 
     set gotit 0
     set test "spawn shell"
     gdb_expect {
+	-re "PS1=\"$shell_prompt_re" {
+	    exp_continue
+	}
 	-re "$shell_prompt_re$" {
 	    pass $test
 	    set gotit 1

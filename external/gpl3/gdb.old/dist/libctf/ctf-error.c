@@ -1,5 +1,5 @@
 /* Error table.
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -24,10 +24,13 @@
 /* This construct is due to Bruno Haible: much thanks.  */
 
 /* Give each structure member a unique name.  The name does not matter, so we
-   use the line number in ctf-error.h to uniquify them.  */
+   use the enum constant to uniquify them.  */
 
-#define ERRSTRFIELD(line) ERRSTRFIELD1 (line)
-#define ERRSTRFIELD1(line) ctf_errstr##line
+#define ERRSTRFIELD(N) ctf_errstr##N
+
+/* In this file, we want to treat the first item of the ctf error
+   macro like subsequent items.  */
+#define _CTF_FIRST(NAME, VALUE) _CTF_ITEM(NAME, VALUE)
 
 /* The error message strings, each in a unique structure member precisely big
    enough for that error, plus a str member to access them all as a string
@@ -37,17 +40,17 @@ static const union _ctf_errlist_t
 {
   __extension__ struct
   {
-#define _CTF_STR(n, s) char ERRSTRFIELD (__LINE__) [sizeof (s)];
-#include "ctf-error.h"
-#undef _CTF_STR
+#define _CTF_ITEM(n, s) char ERRSTRFIELD (n) [sizeof (s)];
+_CTF_ERRORS
+#undef _CTF_ITEM
   };
   char str[1];
 } _ctf_errlist =
   {
    {
-#define _CTF_STR(n, s) N_(s),
-#include "ctf-error.h"
-#undef _CTF_STR
+#define _CTF_ITEM(n, s) N_(s),
+_CTF_ERRORS
+#undef _CTF_ITEM
    }
   };
 
@@ -55,9 +58,9 @@ static const union _ctf_errlist_t
 
 static const unsigned int _ctf_erridx[] =
   {
-#define _CTF_STR(n, s) [n - ECTF_BASE] = offsetof (union _ctf_errlist_t, ERRSTRFIELD (__LINE__)),
-#include "ctf-error.h"
-#undef _CTF_STR
+#define _CTF_ITEM(n, s) [n - ECTF_BASE] = offsetof (union _ctf_errlist_t, ERRSTRFIELD (n)),
+_CTF_ERRORS
+#undef _CTF_ITEM
   };
 
 const char *
@@ -74,7 +77,7 @@ ctf_errmsg (int error)
 }
 
 int
-ctf_errno (ctf_file_t * fp)
+ctf_errno (ctf_dict_t * fp)
 {
   return fp->ctf_errno;
 }

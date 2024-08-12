@@ -1,6 +1,6 @@
 /* Low-level I/O routines for BFDs.
 
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2022 Free Software Foundation, Inc.
 
    Written by Cygnus Support.
 
@@ -28,6 +28,7 @@
 #include "aout/ar.h"
 #if defined (_WIN32)
 #include <windows.h>
+#include <locale.h>
 #endif
 
 #ifndef S_IXUSR
@@ -116,36 +117,64 @@ _bfd_real_fopen (const char *filename, const char *modes)
     }
 
 #elif defined (_WIN32)
-  size_t filelen = strlen (filename) + 1;
+  /* PR 25713: Handle extra long path names possibly containing '..' and '.'.  */
+   wchar_t **     lpFilePart = {NULL};
+   const wchar_t  prefix[] = L"\\\\?\\";
+   const size_t   partPathLen = strlen (filename) + 1;
+#ifdef __MINGW32__
+#if !HAVE_DECL____LC_CODEPAGE_FUNC
+/* This prototype was added to locale.h in version 9.0 of MinGW-w64.  */
+   _CRTIMP unsigned int __cdecl ___lc_codepage_func (void);
+#endif
+   const unsigned int cp = ___lc_codepage_func ();
+#else
+   const unsigned int cp = CP_UTF8;
+#endif
 
-  if (filelen > MAX_PATH - 1)
-    {
-      FILE * file;
-      char * fullpath = (char *) malloc (filelen + 8);
-      int    i;
+   /* Converting the partial path from ascii to unicode.
+      1) Get the length: Calling with lpWideCharStr set to null returns the length.
+      2) Convert the string: Calling with cbMultiByte set to -1 includes the terminating null.  */
+   size_t         partPathWSize = MultiByteToWideChar (cp, 0, filename, -1, NULL, 0);
+   wchar_t *      partPath = calloc (partPathWSize, sizeof(wchar_t));
+   size_t         ix;
 
-      /* Add a Microsoft recommended prefix that
-	 will allow the extra-long path to work.  */
-      strcpy (fullpath, "\\\\?\\");
-      strcat (fullpath, filename);
+   MultiByteToWideChar (cp, 0, filename, -1, partPath, partPathWSize);
 
-      /* Convert any UNIX style path separators into the DOS form.  */
-      for (i = 0; fullpath[i]; i++)
-        {
-          if (IS_UNIX_DIR_SEPARATOR (fullpath[i]))
-	    fullpath[i] = '\\';
-        }
+   /* Convert any UNIX style path separators into the DOS i.e. backslash separator.  */
+   for (ix = 0; ix < partPathLen; ix++)
+     if (IS_UNIX_DIR_SEPARATOR(filename[ix]))
+       partPath[ix] = '\\';
 
-      file = close_on_exec (fopen (fullpath, modes));
-      free (fullpath);
-      return file;
-    }
+   /* Getting the full path from the provided partial path.
+      1) Get the length.
+      2) Resolve the path.  */
+   long       fullPathWSize = GetFullPathNameW (partPath, 0, NULL, lpFilePart);
+   wchar_t *  fullPath = calloc (fullPathWSize + sizeof(prefix) + 1, sizeof(wchar_t));
+
+   wcscpy (fullPath, prefix);
+
+   int        prefixLen = sizeof(prefix) / sizeof(wchar_t);
+   wchar_t *  fullPathOffset = fullPath + prefixLen - 1;
+
+   GetFullPathNameW (partPath, fullPathWSize, fullPathOffset, lpFilePart);
+   free (partPath);
+
+   /* It is non-standard for modes to exceed 16 characters.  */
+   wchar_t    modesW[16];
+
+   MultiByteToWideChar (cp, 0, modes, -1, modesW, sizeof(modesW));
+
+   FILE *     file = _wfopen (fullPath, modesW);
+   free (fullPath);
+
+   return close_on_exec (file);
 
 #elif defined (HAVE_FOPEN64)
   return close_on_exec (fopen64 (filename, modes));
-#endif
 
+#else
   return close_on_exec (fopen (filename, modes));
+#endif
 }
 
 /*
@@ -212,9 +241,11 @@ bfd_bread (void *ptr, bfd_size_type size, bfd *abfd)
     }
   offset += abfd->origin;
 
-  /* If this is an archive element, don't read past the end of
+  /* If this is a non-thin archive element, don't read past the end of
      this element.  */
-  if (element_bfd->arelt_data != NULL)
+  if (element_bfd->arelt_data != NULL
+      && element_bfd->my_archive != NULL
+      && !bfd_is_thin_archive (element_bfd->my_archive))
     {
       bfd_size_type maxbytes = arelt_size (element_bfd);
 

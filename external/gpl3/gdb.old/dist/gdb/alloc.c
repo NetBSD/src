@@ -1,6 +1,6 @@
 /* Shared allocation functions for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -44,10 +44,7 @@
    consistent semantics and guard against typical memory management
    problems.  */
 
-/* NOTE: These are declared using PTR to ensure consistency with
-   "libiberty.h".  xfree() is GDB local.  */
-
-PTR                            /* ARI: PTR */
+void *
 xmalloc (size_t size)
 {
   void *val;
@@ -64,8 +61,8 @@ xmalloc (size_t size)
   return val;
 }
 
-PTR                              /* ARI: PTR */
-xrealloc (PTR ptr, size_t size)          /* ARI: PTR */
+void *
+xrealloc (void *ptr, size_t size)
 {
   void *val;
 
@@ -84,7 +81,7 @@ xrealloc (PTR ptr, size_t size)          /* ARI: PTR */
   return val;
 }
 
-PTR                            /* ARI: PTR */
+void *
 xcalloc (size_t number, size_t size)
 {
   void *mem;

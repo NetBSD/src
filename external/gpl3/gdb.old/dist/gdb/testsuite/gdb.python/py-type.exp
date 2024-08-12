@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2020 Free Software Foundation, Inc.
+# Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,10 +19,6 @@
 load_lib gdb-python.exp
 
 standard_testfile
-
-if [get_compiler_info c++] {
-    return -1
-}
 
 # Build inferior to language specification.
 proc build_inferior {exefile lang} {
@@ -45,8 +41,7 @@ proc restart_gdb {exefile} {
   gdb_reinitialize_dir $srcdir/$subdir
   gdb_load ${exefile}
 
-  if ![runto_main ] then {
-      perror "couldn't run to breakpoint"
+  if {![runto_main]} {
       return
   }
 }
@@ -83,15 +78,18 @@ proc test_fields {lang} {
       gdb_test "python print (gdb.parse_and_eval ('C::a_method').type.fields ()\[0\].type)" "C \\* const"
       gdb_test "python print (gdb.parse_and_eval ('C::a_method').type.fields ()\[1\].type)" "int"
       gdb_test "python print (gdb.parse_and_eval ('C::a_method').type.fields ()\[2\].type)" "char"
+      gdb_test "python print (gdb.parse_and_eval ('c')\['a_method'\].type.fields ()\[0\].type)" "C \\* const"
 
       gdb_test "python print (len (gdb.parse_and_eval ('C::a_const_method').type.fields ()))" "3"
       gdb_test "python print (gdb.parse_and_eval ('C::a_const_method').type.fields ()\[0\].type)" "const C \\* const"
       gdb_test "python print (gdb.parse_and_eval ('C::a_const_method').type.fields ()\[1\].type)" "int"
       gdb_test "python print (gdb.parse_and_eval ('C::a_const_method').type.fields ()\[2\].type)" "char"
+      gdb_test "python print (gdb.parse_and_eval ('c')\['a_const_method'\].type.fields ()\[0\].type)" "const C \\* const"
 
       gdb_test "python print (len (gdb.parse_and_eval ('C::a_static_method').type.fields ()))" "2"
       gdb_test "python print (gdb.parse_and_eval ('C::a_static_method').type.fields ()\[0\].type)" "int"
       gdb_test "python print (gdb.parse_and_eval ('C::a_static_method').type.fields ()\[1\].type)" "char"
+      gdb_test "python print (gdb.parse_and_eval ('c')\['a_static_method'\].type.fields ()\[0\].type)" "int"
     }
 
     # Test normal fields usage in structs.
@@ -172,6 +170,9 @@ proc test_fields {lang} {
     gdb_test "python print (len (gdb.parse_and_eval ('a_function').type.fields ()))" "2"
     gdb_test "python print (gdb.parse_and_eval ('a_function').type.fields ()\[0\].type)" "int"
     gdb_test "python print (gdb.parse_and_eval ('a_function').type.fields ()\[1\].type)" "char"
+
+    # Test calling `fields` on a non-aggregate type.
+    gdb_test "python gdb.lookup_type('int').fields()" "TypeError: Type is not a structure, union, enum, or function type.*"
   }
 }
 
@@ -264,6 +265,87 @@ proc test_template {} {
     gdb_test "python print (ttype.template_argument(2))" "&C::c"
 }
 
+# Check the is_signed property of some types.
+proc test_is_signed {lang} {
+    if {$lang == "c++"} {
+	gdb_test "python print(gdb.parse_and_eval ('c').type.is_signed)"  \
+	"ValueError: Type must be a scalar type.*"
+	gdb_test "python print(gdb.parse_and_eval ('&c').type.is_signed == False)" "True"
+    }
+
+    gdb_test "python print(gdb.parse_and_eval('global_unsigned_char').type.is_signed == False)" "True"
+    gdb_test "python print(gdb.parse_and_eval('global_char').type.is_signed)" "True|False"
+    gdb_test "python print(gdb.parse_and_eval('global_signed_char').type.is_signed == True)" "True"
+
+    gdb_test "python print(gdb.parse_and_eval ('ss.x').type.is_signed == True)" "True"
+    gdb_test "python print(gdb.parse_and_eval ('ss').type.is_signed)" \
+	"ValueError: Type must be a scalar type.*"
+    gdb_test "python print(gdb.parse_and_eval ('uu').type.is_signed)"  \
+	"ValueError: Type must be a scalar type.*"
+    gdb_test "python print(gdb.parse_and_eval ('uu.i').type.is_signed == True)" "True"
+    gdb_test "python print(gdb.parse_and_eval ('uu.f').type.is_signed == True)" "True"
+    gdb_test "python print(gdb.parse_and_eval ('uu.a').type.is_signed)"  \
+	"ValueError: Type must be a scalar type.*"
+
+    gdb_test "python print(gdb.parse_and_eval ('&ss.x').type.is_signed == False)" "True"
+    gdb_test "python print(gdb.parse_and_eval ('&uu').type.is_signed == False)" "True"
+}
+
+# Compare the types of different symbols from the inferior, we're
+# checking that the types of different sybols of the same declared
+# type, are equal (in Python).
+proc test_type_equality {} {
+
+    foreach_with_prefix type { char int } {
+	gdb_test_no_output "python v1 = gdb.parse_and_eval('global_unsigned_${type}')"
+	gdb_test_no_output "python v2 = gdb.parse_and_eval('global_${type}')"
+	gdb_test_no_output "python v3 = gdb.parse_and_eval('global_signed_${type}')"
+
+	gdb_test_no_output "python t1 = v1.type"
+	gdb_test_no_output "python t2 = v2.type"
+	gdb_test_no_output "python t3 = v3.type"
+
+	if { $type == "char" } {
+	    # In C/C++ there's an interesting property of 'char' based types;
+	    # 'signed char', 'unsigned char', and 'char' are all distinct
+	    # types.  Weird, right?  Here we check that this property is
+	    # visible to Python code.
+	    gdb_test "python print(t1 != t2)" "True"
+	    gdb_test "python print(t1 != t3)" "True"
+	    gdb_test "python print(t2 != t3)" "True"
+	} else {
+	    # For 'int' type, when neither signed or unsigned is given
+	    # we expect the type to be signed by default.
+	    gdb_test "python print(t1 != t2)" "True"
+	    gdb_test "python print(t1 != t3)" "True"
+	    gdb_test "python print(t2 == t3)" "True"
+	}
+    }
+}
+
+# Test the gdb.Type.is_scalar property.
+proc test_is_scalar { lang } {
+    if {$lang == "c++"} {
+	gdb_test "python print(gdb.parse_and_eval ('c').type.is_scalar)" "False"
+	gdb_test "python print(gdb.parse_and_eval ('&c').type.is_scalar)" "True"
+    }
+
+    foreach type { char int } {
+	gdb_test "python print(gdb.parse_and_eval('global_unsigned_${type}').type.is_scalar)" "True"
+	gdb_test "python print(gdb.parse_and_eval('global_${type}').type.is_scalar)" "True"
+	gdb_test "python print(gdb.parse_and_eval('global_signed_${type}').type.is_scalar)" "True"
+    }
+
+    gdb_test "python print(gdb.parse_and_eval ('ss.x').type.is_scalar)" "True"
+    gdb_test "python print(gdb.parse_and_eval ('ss').type.is_scalar)" "False"
+    gdb_test "python print(gdb.parse_and_eval ('uu').type.is_scalar)" "False"
+
+    gdb_test "python print(gdb.parse_and_eval ('uu.i').type.is_scalar)" "True"
+    gdb_test "python print(gdb.parse_and_eval ('uu.f').type.is_scalar)" "True"
+    gdb_test "python print(gdb.parse_and_eval ('uu.a').type.is_scalar)"  "False"
+    gdb_test "python print(gdb.parse_and_eval ('&ss.x').type.is_scalar)" "True"
+}
+
 # Perform C Tests.
 if { [build_inferior "${binfile}" "c"] == 0 } {
   restart_gdb "${binfile}"
@@ -290,9 +372,11 @@ if { [build_inferior "${binfile}" "c"] == 0 } {
       runto_bp "break to inspect struct and array."
       test_fields "c"
       test_enums
+      test_is_scalar "c"
+      test_is_signed "c"
+      test_type_equality
   }
 }
-
 
 # Perform C++ Tests.
 if { [build_inferior "${binfile}-cxx" "c++"] == 0 } {
@@ -304,5 +388,8 @@ if { [build_inferior "${binfile}-cxx" "c++"] == 0 } {
       test_range
       test_template
       test_enums
+      test_is_scalar "c++"
+      test_is_signed "c++"
+      test_type_equality
   }
 }

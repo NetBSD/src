@@ -1,6 +1,6 @@
 /* Python interface to instruction objects.
 
-   Copyright 2017-2020 Free Software Foundation, Inc.
+   Copyright 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,9 @@
 #include "defs.h"
 #include "py-instruction.h"
 
-/* See py-instruction.h.  */
+/* Python type object for the abstract gdb.Instruction class.  This class
+   contains getters for four elements: "pc" (int), "data" (buffer), "decode"
+   (str) and "size" (int) that must be overridden by sub classes.  */
 
 PyTypeObject py_insn_type = {
   PyVarObject_HEAD_INIT (NULL, 0)
@@ -28,9 +30,9 @@ PyTypeObject py_insn_type = {
 
 /* Python instruction object.  */
 
-typedef struct {
+struct py_insn_obj {
   PyObject_HEAD
-} py_insn_obj;
+};
 
 /* Getter function for gdb.Instruction attributes.  */
 
@@ -51,17 +53,38 @@ static gdb_PyGetSetDef py_insn_getset[] =
   {NULL}
 };
 
+/* See py-instruction.h.  */
+
+PyTypeObject *
+py_insn_get_insn_type ()
+{
+  if (py_insn_type.tp_new == nullptr)
+    {
+      py_insn_type.tp_new = PyType_GenericNew;
+      py_insn_type.tp_flags = Py_TPFLAGS_DEFAULT;
+      py_insn_type.tp_basicsize = sizeof (py_insn_obj);
+      py_insn_type.tp_name = "gdb.Instruction";
+      py_insn_type.tp_doc = "GDB instruction object";
+      py_insn_type.tp_getset = py_insn_getset;
+
+      if (PyType_Ready (&py_insn_type) < 0)
+	{
+	  /* Reset the tp_new field so any subsequent calls to this
+	     function will retry to make the type ready.  */
+	  py_insn_type.tp_new = nullptr;
+	  return nullptr;
+	}
+    }
+
+  return &py_insn_type;
+}
+
 /* Sets up the gdb.Instruction type.  */
 
 int
 gdbpy_initialize_instruction (void)
 {
-  py_insn_type.tp_new = PyType_GenericNew;
-  py_insn_type.tp_flags = Py_TPFLAGS_DEFAULT;
-  py_insn_type.tp_basicsize = sizeof (py_insn_obj);
-  py_insn_type.tp_name = "gdb.Instruction";
-  py_insn_type.tp_doc = "GDB instruction object";
-  py_insn_type.tp_getset = py_insn_getset;
-
-  return PyType_Ready (&py_insn_type);
+  if (py_insn_get_insn_type () == nullptr)
+    return -1;
+  return 0;
 }

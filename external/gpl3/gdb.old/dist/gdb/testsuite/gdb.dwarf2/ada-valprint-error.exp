@@ -1,4 +1,4 @@
-# Copyright 2017-2020 Free Software Foundation, Inc.
+# Copyright 2017-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@ if {![dwarf2_support]} {
     return 0
 }
 
-standard_testfile ada-valprint-error.c ada-valprint-error-dw.S
+standard_testfile .c -dw.S
 
 # We need to know the size of integer and address types in order
 # to write some of the debugging info we'd like to generate.
@@ -29,7 +29,7 @@ standard_testfile ada-valprint-error.c ada-valprint-error-dw.S
 # specifically for this testcase, might as well use that.
 
 if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile}] } {
-    untested ${testfile}.exp
+    untested "failed to compile"
     return -1
 }
 

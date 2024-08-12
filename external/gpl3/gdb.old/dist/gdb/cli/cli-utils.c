@@ -1,6 +1,6 @@
 /* CLI utilities.
 
-   Copyright (C) 2011-2020 Free Software Foundation, Inc.
+   Copyright (C) 2011-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -100,7 +100,7 @@ get_number_trailer (const char **pp, int trailer)
 	    retval = value_as_long (val);
 	  else
 	    {
-	      printf_filtered (_("History value must have integer type.\n"));
+	      gdb_printf (_("History value must have integer type.\n"));
 	      retval = 0;
 	    }
 	}
@@ -122,8 +122,8 @@ get_number_trailer (const char **pp, int trailer)
 	    retval = (int) longest_val;
 	  else
 	    {
-	      printf_filtered (_("Convenience variable must "
-				 "have integer value.\n"));
+	      gdb_printf (_("Convenience variable must "
+			    "have integer value.\n"));
 	      retval = 0;
 	    }
 	}
@@ -209,7 +209,7 @@ The flag -q disables the production of these headers and messages.%s"),
 		     prefix, entity_kind, entity_kind, entity_kind,
 		     (document_n_flag ? _("\n\
 By default, the command will include non-debug symbols in the output;\n\
-these can be excluded using the -n flag.") : ""));
+these can be excluded using the -n flag.") : "")).release ();
 }
 
 /* See documentation in cli-utils.h.  */

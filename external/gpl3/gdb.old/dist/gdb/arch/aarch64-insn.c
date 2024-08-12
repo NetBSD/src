@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2023 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -21,25 +21,6 @@
 
 /* Toggle this file's internal debugging dump.  */
 bool aarch64_debug = false;
-
-/* Extract a signed value from a bit field within an instruction
-   encoding.
-
-   INSN is the instruction opcode.
-
-   WIDTH specifies the width of the bit field to extract (in bits).
-
-   OFFSET specifies the least significant bit of the field where bits
-   are numbered zero counting from least to most significant.  */
-
-static int32_t
-extract_signed_bitfield (uint32_t insn, unsigned width, unsigned offset)
-{
-  unsigned shift_l = sizeof (int32_t) * 8 - (offset + width);
-  unsigned shift_r = sizeof (int32_t) * 8 - width;
-
-  return ((int32_t) insn << shift_l) >> shift_r;
-}
 
 /* Determine if specified bits within an instruction opcode matches a
    specific pattern.
@@ -74,7 +55,7 @@ aarch64_decode_adr (CORE_ADDR addr, uint32_t insn, int *is_adrp,
   if (decode_masked_match (insn, 0x1f000000, 0x10000000))
     {
       uint32_t immlo = (insn >> 29) & 0x3;
-      int32_t immhi = extract_signed_bitfield (insn, 19, 5) << 2;
+      int32_t immhi = sbits (insn, 5, 23) * 4;
 
       *is_adrp = (insn >> 31) & 0x1;
       *rd = (insn >> 0) & 0x1f;
@@ -88,12 +69,9 @@ aarch64_decode_adr (CORE_ADDR addr, uint32_t insn, int *is_adrp,
       else
 	*offset = (immhi | immlo);
 
-      if (aarch64_debug)
-	{
-	  debug_printf ("decode: 0x%s 0x%x %s x%u, #?\n",
-			core_addr_to_string_nz (addr), insn,
-			*is_adrp ?  "adrp" : "adr", *rd);
-	}
+      aarch64_debug_printf ("decode: 0x%s 0x%x %s x%u, #?",
+			    core_addr_to_string_nz (addr), insn,
+			    *is_adrp ?  "adrp" : "adr", *rd);
       return 1;
     }
   return 0;
@@ -118,7 +96,7 @@ aarch64_decode_b (CORE_ADDR addr, uint32_t insn, int *is_bl,
   if (decode_masked_match (insn, 0x7c000000, 0x14000000))
     {
       *is_bl = (insn >> 31) & 0x1;
-      *offset = extract_signed_bitfield (insn, 26, 0) << 2;
+      *offset = sbits (insn, 0, 25) * 4;
 
       if (aarch64_debug)
 	{
@@ -151,7 +129,7 @@ aarch64_decode_bcond (CORE_ADDR addr, uint32_t insn, unsigned *cond,
   if (decode_masked_match (insn, 0xff000010, 0x54000000))
     {
       *cond = (insn >> 0) & 0xf;
-      *offset = extract_signed_bitfield (insn, 19, 5) << 2;
+      *offset = sbits (insn, 5, 23) * 4;
 
       if (aarch64_debug)
 	{
@@ -186,7 +164,7 @@ aarch64_decode_cb (CORE_ADDR addr, uint32_t insn, int *is64, int *is_cbnz,
       *rn = (insn >> 0) & 0x1f;
       *is64 = (insn >> 31) & 0x1;
       *is_cbnz = (insn >> 24) & 0x1;
-      *offset = extract_signed_bitfield (insn, 19, 5) << 2;
+      *offset = sbits (insn, 5, 23) * 4;
 
       if (aarch64_debug)
 	{
@@ -222,7 +200,7 @@ aarch64_decode_tb (CORE_ADDR addr, uint32_t insn, int *is_tbnz,
       *rt = (insn >> 0) & 0x1f;
       *is_tbnz = (insn >> 24) & 0x1;
       *bit = ((insn >> (31 - 4)) & 0x20) | ((insn >> 19) & 0x1f);
-      *imm = extract_signed_bitfield (insn, 14, 5) << 2;
+      *imm = sbits (insn, 5, 18) * 4;
 
       if (aarch64_debug)
 	{
@@ -267,7 +245,7 @@ aarch64_decode_ldr_literal (CORE_ADDR addr, uint32_t insn, int *is_w,
 	*is64 = (insn >> 30) & 0x1;
 
       *rt = (insn >> 0) & 0x1f;
-      *offset = extract_signed_bitfield (insn, 19, 5) << 2;
+      *offset = sbits (insn, 5, 23) * 4;
 
       if (aarch64_debug)
 	debug_printf ("decode: %s 0x%x %s %s%u, #?\n",

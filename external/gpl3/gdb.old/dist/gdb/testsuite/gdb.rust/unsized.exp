@@ -1,4 +1,4 @@
-# Copyright (C) 2017-2020 Free Software Foundation, Inc.
+# Copyright (C) 2017-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 
 load_lib rust-support.exp
 if {[skip_rust_tests]} {
-    continue
+    return
 }
 
 standard_testfile .rs
@@ -31,5 +31,12 @@ if {![runto ${srcfile}:$line]} {
     return -1
 }
 
-gdb_test "ptype *us" \
-    " = struct \[a-z:\]*V<\\\[u8\\\]> {.* data: \\\[u8\\\],.*}"
+gdb_test "ptype us" " = .*V<\\\[u8\\\]>.*"
+
+set v [split [rust_compiler_version] .]
+# The necessary debuginfo generation landed in 1.60, but had a bug
+# that was fixed in 1.61.
+if {[lindex $v 0] > 1 || [lindex $v 1] >= 61} {
+    gdb_test "print us2" " = .*Box<.*> \\\[1, 2, 3\\\]"
+    gdb_test "ptype us2" "type = .*"
+}

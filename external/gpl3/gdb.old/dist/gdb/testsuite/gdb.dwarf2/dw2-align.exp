@@ -1,4 +1,4 @@
-# Copyright 2018-2020 Free Software Foundation, Inc.
+# Copyright 2018-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@ if {![dwarf2_support]} {
     return 0
 }
 
-standard_testfile main.c align-dw.S
+standard_testfile main.c -dw.S
 
 # Make some DWARF for the test.
 
@@ -30,7 +30,7 @@ Dwarf::assemble $asm_file {
     cu {} {
 	DW_TAG_compile_unit {
                 {DW_AT_language @DW_LANG_C_plus_plus}
-                {DW_AT_name     dw2-align.c}
+                {DW_AT_name     $srcfile}
                 {DW_AT_comp_dir /tmp}
         } {
 	    declare_labels itype ptype

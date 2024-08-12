@@ -1,6 +1,6 @@
 /* Target description support for GDB.
 
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -351,10 +351,14 @@ void print_xml_feature::visit (const tdesc_type_with_fields *t)
       break;
 
     case TDESC_TYPE_ENUM:
+      if (t->size > 0)
+	string_appendf (tmp, " size=\"%d\"", t->size);
       string_appendf (tmp, ">");
       add_line (tmp);
+      /* The 'start' of the field is reused as the enum value.  The 'end'
+	 of the field is always set to -1 for enum values.  */
       for (const tdesc_type_field &f : t->fields)
-	add_line ("  <field name=\"%s\" start=\"%d\"/>",
+	add_line ("  <evalue name=\"%s\" value=\"%d\"/>",
 		  f.name.c_str (), f.start);
       break;
 

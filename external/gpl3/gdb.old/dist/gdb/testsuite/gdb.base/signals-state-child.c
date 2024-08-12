@@ -1,4 +1,4 @@
-/* Copyright 2016-2020 Free Software Foundation, Inc.
+/* Copyright 2016-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

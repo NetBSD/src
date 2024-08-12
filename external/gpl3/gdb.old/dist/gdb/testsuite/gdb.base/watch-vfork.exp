@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2009-2020 Free Software Foundation, Inc.
+# Copyright 2009-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,8 +27,7 @@ proc test_watchpoint_across_vfork { hw teststr } {
 
     clean_restart ${testfile}
 
-    if { ![runto main] } then {
-	fail "run to main ($teststr)"
+    if {![runto_main]} {
 	return
     }
 
@@ -45,7 +44,7 @@ proc test_watchpoint_across_vfork { hw teststr } {
 	"Watchpoint triggers after vfork ($teststr)"
 }
 
-if { ![target_info exists gdb,no_hardware_watchpoints] } {
+if { ![skip_hw_watchpoint_tests] } {
     test_watchpoint_across_vfork 1 "hw"
 }
 

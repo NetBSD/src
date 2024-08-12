@@ -1,4 +1,4 @@
-# Copyright 2012-2020 Free Software Foundation, Inc.
+# Copyright 2012-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -49,10 +49,7 @@ proc test_tfind_tfile { } {
 	global decimal
 	global tfile_basic
 
-	if [mi_gdb_start] {
-	    return
-	}
-	mi_gdb_load ${binfile}
+	mi_clean_restart $binfile
 
 	mi_gdb_test "-target-select tfile ${tfile_basic}" \
 	    ".*=breakpoint-created,bkpt=\{number=\"${decimal}\",type=\"tracepoint\",disp=\"keep\",enabled=\"y\",.*,func=\"write_basic_trace_file\".*\\^connected" \
@@ -110,7 +107,6 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
 clean_restart $executable
 
 if ![runto_main] {
-    fail "can't run to main to check for trace support"
     return -1
 }
 
@@ -124,11 +120,10 @@ gdb_exit
 proc test_tfind_remote { } {
     with_test_prefix "remote" {
 	global decimal
+	global binfile
 
-	if [mi_gdb_start] {
-	    return
-	}
-	mi_run_to_main
+	mi_clean_restart $binfile
+	mi_runto_main
 
 	mi_gdb_test "-break-insert end" "\\^done.*" "break end"
 	mi_gdb_test "-break-insert -a func2" "\\^done.*" "break func2"

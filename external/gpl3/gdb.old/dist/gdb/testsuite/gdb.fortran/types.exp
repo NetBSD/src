@@ -1,4 +1,4 @@
-# Copyright 1994-2020 Free Software Foundation, Inc.
+# Copyright 1994-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,10 +48,10 @@ proc test_logical_literal_types_accepted {} {
     # Test the only possible values for a logical, TRUE and FALSE (and
     # also true and false).
 
-    gdb_test "pt .TRUE." "type = logical\\*2"
-    gdb_test "pt .FALSE." "type = logical\\*2"
-    gdb_test "pt .true." "type = logical\\*2"
-    gdb_test "pt .false." "type = logical\\*2"
+    gdb_test "pt .TRUE." "type = logical\\*4"
+    gdb_test "pt .FALSE." "type = logical\\*4"
+    gdb_test "pt .true." "type = logical\\*4"
+    gdb_test "pt .false." "type = logical\\*4"
 }
 
 proc test_float_literal_types_accepted {} {
@@ -71,6 +71,33 @@ proc test_float_literal_types_accepted {} {
     gdb_test "pt 10e20" "type = real\\*\[0-9\]+"
 }
 
+# Test the default primitive Fortran types.
+proc test_default_types {} {
+    gdb_test "ptype integer" "type = integer\\*4"
+    gdb_test "ptype logical" "type = logical\\*4"
+    gdb_test "ptype real" "type = real\\*4"
+    gdb_test "ptype complex" "type = complex\\*4"
+}
+
+# Test the the primitive Fortran types, those that GDB should always
+# know, even if the program does not define them, are in fact, known.
+proc test_primitive_types_known {} {
+    foreach type {void character \
+		     integer*1 integer*2 integer*4 integer*8 \
+		     integer_1 integer_2 integer_4 integer_8 \
+		     logical*1 logical*2 logical*4 logical*8 \
+		     logical_1 logical_2 logical_4 logical_8 \
+		     real*4 real*8 real*16 real_4 real_8 real_16 \
+		     complex*4 complex*8 complex*16 \
+		     complex_4 complex_8 complex_16} {
+
+	# While TYPE_KIND is allowed as input, GDB will always return the
+	# Fortran notation TYPE*KIND
+	regsub -all "_" $type "\*" type_res
+	gdb_test "ptype $type" [string_to_regexp "type = $type_res"]
+    }
+}
+
 # Start with a fresh gdb.
 
 gdb_exit
@@ -79,7 +106,9 @@ gdb_reinitialize_dir $srcdir/$subdir
 
 gdb_test "set print sevenbit-strings" ""
 
-if [set_lang_fortran] then {
+if {[set_lang_fortran]} {
+    test_primitive_types_known
+    test_default_types
     test_integer_literal_types_accepted
     test_integer_literal_types_rejected
     test_logical_literal_types_accepted

@@ -1,6 +1,6 @@
 /* Blackfin One-Time Programmable Memory (OTP) model
 
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2023 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -18,7 +18,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include "sim-main.h"
 #include "devices.h"
@@ -90,7 +91,8 @@ bfin_otp_write_page_val2 (struct bfin_otp *otp, bu16 page, bu64 lo, bu64 hi)
 static void
 bfin_otp_write_page (struct bfin_otp *otp, bu16 page)
 {
-  bfin_otp_write_page_val (otp, page, (void *)&otp->data0);
+  bfin_otp_write_page_val2 (otp, page, ((bu64)otp->data1 << 32) | otp->data0,
+			    ((bu64)otp->data3 << 32) | otp->data2);
 }
 
 static unsigned
@@ -114,7 +116,7 @@ bfin_otp_io_write_buffer (struct hw *me, const void *source, int space,
     value = dv_load_2 (source);
 
   mmr_off = addr - otp->base;
-  valuep = (void *)((unsigned long)otp + mmr_base() + mmr_off);
+  valuep = (void *)((uintptr_t)otp + mmr_base() + mmr_off);
   value16p = valuep;
   value32p = valuep;
 
@@ -190,7 +192,7 @@ bfin_otp_io_read_buffer (struct hw *me, void *dest, int space,
     return 0;
 
   mmr_off = addr - otp->base;
-  valuep = (void *)((unsigned long)otp + mmr_base() + mmr_off);
+  valuep = (void *)((uintptr_t)otp + mmr_base() + mmr_off);
   value16p = valuep;
   value32p = valuep;
 
@@ -278,7 +280,7 @@ bfin_otp_finish (struct hw *me)
   otp->timing  = 0x00001485;
 
   /* Semi-random value for unique chip id.  */
-  bfin_otp_write_page_val2 (otp, FPS00, (unsigned long)otp, ~(unsigned long)otp);
+  bfin_otp_write_page_val2 (otp, FPS00, (uintptr_t)otp, ~(uintptr_t)otp);
 
   memset (part_str, 0, sizeof (part_str));
   sprintf (part_str, "ADSP-BF%iX", type);

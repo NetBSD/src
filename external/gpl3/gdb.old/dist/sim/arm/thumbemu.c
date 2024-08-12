@@ -18,6 +18,9 @@
 instruction into its corresponding ARM instruction, and using the
 existing ARM simulator.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #ifndef MODET			/* required for the Thumb instruction support */
 #if 1
 #error "MODET needs to be defined for the Thumb world to work"
@@ -1759,26 +1762,60 @@ handle_T2_insn (ARMul_State * state,
 	break;
       }
 
-    case 0xDC: // SMULL
-      tASSERT (tBIT (4) == 0);
-      tASSERT (ntBITS (4, 7) == 0);
-      * ainstr = 0xE0C00090;
-      * ainstr |= (ntBITS (8, 11) << 16); // RdHi
-      * ainstr |= (ntBITS (12, 15) << 12); // RdLo
-      * ainstr |= (ntBITS (0, 3) << 8); // Rm
-      * ainstr |= tBITS (0, 3); // Rn
-      * pvalid = t_decoded;
+    case 0xDC:
+      if (tBIT (4) == 0 && ntBITS (4, 7) == 0)
+	{
+	  // SMULL
+	  * ainstr = 0xE0C00090;
+	  * ainstr |= (ntBITS (8, 11) << 16); // RdHi
+	  * ainstr |= (ntBITS (12, 15) << 12); // RdLo
+	  * ainstr |= (ntBITS (0, 3) << 8); // Rm
+	  * ainstr |= tBITS (0, 3); // Rn
+	  * pvalid = t_decoded;
+	}
+      else if (tBIT (4) == 1 && ntBITS (4, 7) == 0xF)
+	{
+	  // SDIV
+	  * ainstr = 0xE710F010;
+	  * ainstr |= (ntBITS (8, 11) << 16); // Rd
+	  * ainstr |= (ntBITS (0, 3) << 8);   // Rm
+	  * ainstr |= tBITS (0, 3); // Rn
+	  * pvalid = t_decoded;
+	}
+      else
+	{
+	  fprintf (stderr, "(op = %x) ", tBITS (5,12));
+	  tASSERT (0);
+	  return;
+	}
       break;
 
-    case 0xDD: // UMULL
-      tASSERT (tBIT (4) == 0);
-      tASSERT (ntBITS (4, 7) == 0);
-      * ainstr = 0xE0800090;
-      * ainstr |= (ntBITS (8, 11) << 16); // RdHi
-      * ainstr |= (ntBITS (12, 15) << 12); // RdLo
-      * ainstr |= (ntBITS (0, 3) << 8); // Rm
-      * ainstr |= tBITS (0, 3); // Rn
-      * pvalid = t_decoded;
+    case 0xDD:
+      if (tBIT (4) == 0 && ntBITS (4, 7) == 0)
+	{
+	  // UMULL
+	  * ainstr = 0xE0800090;
+	  * ainstr |= (ntBITS (8, 11) << 16); // RdHi
+	  * ainstr |= (ntBITS (12, 15) << 12); // RdLo
+	  * ainstr |= (ntBITS (0, 3) << 8); // Rm
+	  * ainstr |= tBITS (0, 3); // Rn
+	  * pvalid = t_decoded;
+	}
+      else if (tBIT (4) == 1 && ntBITS (4, 7) == 0xF)
+	{
+	  // UDIV
+	  * ainstr = 0xE730F010;
+	  * ainstr |= (ntBITS (8, 11) << 16); // Rd
+	  * ainstr |= (ntBITS (0, 3) << 8);   // Rm
+	  * ainstr |= tBITS (0, 3); // Rn
+	  * pvalid = t_decoded;
+	}
+      else
+	{
+	  fprintf (stderr, "(op = %x) ", tBITS (5,12));
+	  tASSERT (0);
+	  return;
+	}
       break;
 
     case 0xDF: // UMLAL
@@ -1896,6 +1933,7 @@ handle_v6_thumb_insn (ARMul_State * state,
     case 0xEB80: // SUB
     case 0xEBC0: // RSB
     case 0xFA80: // UADD, SEL
+    case 0xFBC0: // UMULL, SMULL, SDIV, UDIV
       handle_T2_insn (state, tinstr, next_instr, pc, ainstr, pvalid);
       return;
 

@@ -1,6 +1,6 @@
 /* MI Command Set for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2023 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
 
@@ -22,6 +22,10 @@
 #ifndef MI_MI_CMDS_H
 #define MI_MI_CMDS_H
 
+#include "gdbsupport/function-view.h"
+#include "gdbsupport/gdb_optional.h"
+#include "mi/mi-main.h"
+
 enum print_values {
    PRINT_NO_VALUES,
    PRINT_ALL_VALUES,
@@ -36,6 +40,7 @@ extern mi_cmd_argv_ftype mi_cmd_ada_task_info;
 extern mi_cmd_argv_ftype mi_cmd_add_inferior;
 extern mi_cmd_argv_ftype mi_cmd_break_insert;
 extern mi_cmd_argv_ftype mi_cmd_dprintf_insert;
+extern mi_cmd_argv_ftype mi_cmd_break_condition;
 extern mi_cmd_argv_ftype mi_cmd_break_commands;
 extern mi_cmd_argv_ftype mi_cmd_break_passcount;
 extern mi_cmd_argv_ftype mi_cmd_break_watch;
@@ -136,40 +141,89 @@ extern mi_cmd_argv_ftype mi_cmd_enable_frame_filters;
 extern mi_cmd_argv_ftype mi_cmd_var_set_update_range;
 extern mi_cmd_argv_ftype mi_cmd_complete;
 
-/* Description of a single command.  */
+/* The abstract base class for all MI command types.  */
 
-struct mi_cli
+struct mi_command
 {
-  /* Corresponding CLI command.  If ARGS_P is non-zero, the MI
-     command's argument list is appended to the CLI command.  */
-  const char *cmd;
-  int args_p;
+  /* Constructor.  NAME is the name of this MI command, excluding any
+     leading dash, that is the initial string the user will enter to run
+     this command.  The SUPPRESS_NOTIFICATION pointer is a flag which will
+     be set to 1 when this command is invoked, and reset to its previous
+     value once the command invocation has completed.  */
+  mi_command (const char *name, int *suppress_notification);
+
+  /* Destructor.  */
+  virtual ~mi_command () = default;
+
+  /* Return the name of this command.  This is the command that the user
+     will actually type in, without any arguments, and without the leading
+     dash.  */
+  const char *name () const
+  { return m_name; }
+
+  /* Execute the MI command.  this needs to be overridden in each
+     base class.  PARSE is the parsed command line from the user.
+     Can throw an exception if something goes wrong.  */
+  virtual void invoke (struct mi_parse *parse) const = 0;
+
+  /* Return whether this command preserves user selected context (thread
+     and frame).  */
+  bool preserve_user_selected_context () const
+  {
+    /* Here we exploit the fact that if MI command is supposed to change
+       user context, then it should not emit change notifications.  Therefore if
+       command does not suppress user context change notifications, then it should
+       preserve the context.  */
+    return m_suppress_notification != &mi_suppress_notification.user_selected_context;
+  }
+
+  /* If this command was created with a suppress notifications pointer,
+     then this function will set the suppress flag and return a
+     gdb::optional with its value set to an object that will restore the
+     previous value of the suppress notifications flag.
+
+     If this command was created without a suppress notifications points,
+     then this function returns an empty gdb::optional.  */
+  gdb::optional<scoped_restore_tmpl<int>> do_suppress_notification () const;
+
+private:
+
+  /* The name of the command.  */
+  const char *m_name;
+
+  /* Pointer to integer to set during command's invocation.  */
+  int *m_suppress_notification;
 };
 
-struct mi_cmd
-{
-  /* Official name of the command.  */
-  const char *name;
-  /* The corresponding CLI command that can be used to implement this
-     MI command (if cli.lhs is non NULL).  */
-  struct mi_cli cli;
-  /* If non-null, the function implementing the MI command.  */
-  mi_cmd_argv_ftype *argv_func;
-  /* If non-null, the pointer to a field in
-     'struct mi_suppress_notification', which will be set to true by MI
-     command processor (mi-main.c:mi_cmd_execute) when this command is
-     being executed.  It will be set back to false when command has been
-     executed.  */
-  int *suppress_notification;
-};
+/* A command held in the global mi_cmd_table.  */
 
-/* Lookup a command in the MI command table.  */
+using mi_command_up = std::unique_ptr<struct mi_command>;
 
-extern struct mi_cmd *mi_lookup (const char *command);
+/* Lookup a command in the MI command table, returns nullptr if COMMAND is
+   not found.  */
 
-/* Debug flag */
-extern int mi_debug_p;
+extern mi_command *mi_cmd_lookup (const char *command);
 
 extern void mi_execute_command (const char *cmd, int from_tty);
+
+/* Insert COMMAND into the global mi_cmd_table.  Return false if
+   COMMAND->name already exists in mi_cmd_table, in which case COMMAND will
+   not have been added to mi_cmd_table.  Otherwise, return true, and
+   COMMAND was added to mi_cmd_table.  */
+
+extern bool insert_mi_cmd_entry (mi_command_up command);
+
+/* Remove the command called NAME from the global mi_cmd_table.  Return
+   true if the removal was a success, otherwise return false, which
+   indicates no command called NAME was found in the mi_cmd_table. */
+
+extern bool remove_mi_cmd_entry (const std::string &name);
+
+/* Call CALLBACK for each registered MI command.  Remove commands for which
+   CALLBACK returns true.  */
+
+using remove_mi_cmd_entries_ftype
+  = gdb::function_view<bool (mi_command *)>;
+extern void remove_mi_cmd_entries (remove_mi_cmd_entries_ftype callback);
 
 #endif /* MI_MI_CMDS_H */

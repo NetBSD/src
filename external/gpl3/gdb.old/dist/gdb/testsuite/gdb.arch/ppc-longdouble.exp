@@ -1,4 +1,4 @@
-# Copyright 2016-2020 Free Software Foundation, Inc.
+# Copyright 2016-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if ![istarget "powerpc*"] then {
+if {![istarget "powerpc*"]} {
     verbose "Skipping powerpc long-double floating point tests."
     return
 }
@@ -27,19 +27,19 @@ proc do_test { name {opts {}} } {
     set lines [gdb_compile "${srcdir}/${subdir}/${srcfile}" "$binfile.$name" executable $ccopts]
     # We get this warning even with the nowarnings option ...
     regsub -all "(^|\n)\[^\n\]*using \[^\n\]* extended precision long double" $lines "" lines
-    if { $lines != "" } then {
+    if {$lines != ""} {
         return
     }
 
     clean_restart ${binfile}.${name}
 
-    if ![runto_main] then {
+    if {![runto_main]} {
         return
     }
 
     # Run to the breakpoint at return.
     gdb_breakpoint [gdb_get_line_number "return"]
-    gdb_continue_to_breakpoint "return"
+    gdb_continue_to_breakpoint "return test: $name"
 
     # Print the value of ld
     gdb_test "print ld" ".* = 1\\.375.*" "the value of ld is 1.375 ($name)"

@@ -1,7 +1,7 @@
 /* posixstat.h -- Posix stat(2) definitions for systems that
    don't have them. */
 
-/* Copyright (C) 1987,1991 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2019 Free Software Foundation, Inc.
 
    This file is part of GNU Bash, the Bourne Again SHell.
 
@@ -132,9 +132,9 @@
 #  define S_IRWXU	(S_IRUSR | S_IWUSR | S_IXUSR)
 #  define S_IRWXG	(S_IRGRP | S_IWGRP | S_IXGRP)
 #  define S_IRWXO	(S_IROTH | S_IWOTH | S_IXOTH)
-#else  /* !S_IRWXU */
-   /* S_IRWXU is defined, but "group" and "other" bits might not be
-      (happens in certain versions of MinGW).  */
+#else /* !S_IRWXU */
+  /* S_IRWXU is defined, but "group" and "other" bits might not be
+     (happens in certain versions of MinGW).  */
 #  if !defined (S_IRGRP)
 #    define S_IRGRP	(S_IREAD  >> 3)		/* read, group */
 #    define S_IWGRP	(S_IWRITE >> 3)		/* write, group */

@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1997-2020 Free Software Foundation, Inc.
+# Copyright 1997-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -189,10 +189,6 @@ gdb_test_multiple "next" "step out of main" {
 	# another `next' is necessary.
 	gdb_test "next" ".*in start_l ().*" "step out of main"
     }
-    -re "E32Main (.*).*$gdb_prompt $" {
-	# On SymbianOS there's a different function which calls main.
-	pass "step out of main"
-    }
     -re ".*in.*currently asm.*$gdb_prompt $" { 
         pass "step out of main"
     }
@@ -205,6 +201,22 @@ gdb_test_multiple "next" "step out of main" {
     -re ".*in.*__uClibc_main.*$gdb_prompt $" {
 	# This is what happens on system using uClibc.
 	pass "step out of main"
+    }
+    -re "0x.*\\?\\? \\(\\) from /lib/powerpc.*$gdb_prompt $" {
+	# This case occurs on Powerpc when gdb steps out of main and the
+	# needed debug info files are not loaded on the system, preventing
+	# GDB to determine which function it reached (__libc_start_call_main).
+	# Ideally, the target system would have the necessary debugging
+	# information, but in its absence, GDB's behavior is as expected.
+	#
+	# Another consequence of this missing information is that GDB
+	# can no longer continue to perform "next" operations, as doing
+	# so requires GDB to know the bounds of the current function.
+	# Not know what the current function it, it cannot determine
+	# its bounds. So we also set program_exited to 1 to indicate
+	# that we need to stop this testcase at this stage of the testing.
+	pass "step out of main"
+	set program_exited 1
     }
 }
 

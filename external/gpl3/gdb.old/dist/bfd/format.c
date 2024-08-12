@@ -1,5 +1,5 @@
 /* Generic BFD support for file formats.
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2022 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -55,7 +55,7 @@ FUNCTION
 	bfd_check_format
 
 SYNOPSIS
-	bfd_boolean bfd_check_format (bfd *abfd, bfd_format format);
+	bool bfd_check_format (bfd *abfd, bfd_format format);
 
 DESCRIPTION
 	Verify if the file attached to the BFD @var{abfd} is compatible
@@ -88,7 +88,7 @@ DESCRIPTION
 	more than one backend recognised the file format.
 */
 
-bfd_boolean
+bool
 bfd_check_format (bfd *abfd, bfd_format format)
 {
   return bfd_check_format_matches (abfd, format, NULL);
@@ -118,7 +118,7 @@ struct bfd_preserve
    subset of the bfd state works in practice.  This function stores
    the subset.  */
 
-static bfd_boolean
+static bool
 bfd_preserve_save (bfd *abfd, struct bfd_preserve *preserve,
 		   bfd_cleanup cleanup)
 {
@@ -134,7 +134,7 @@ bfd_preserve_save (bfd *abfd, struct bfd_preserve *preserve,
   preserve->build_id = abfd->build_id;
   preserve->cleanup = cleanup;
   if (preserve->marker == NULL)
-    return FALSE;
+    return false;
 
   return bfd_hash_table_init (&abfd->section_htab, bfd_section_hash_newfunc,
 			      sizeof (struct section_hash_entry));
@@ -151,6 +151,7 @@ bfd_reinit (bfd *abfd, unsigned int section_id, bfd_cleanup cleanup)
   abfd->tdata.any = NULL;
   abfd->arch_info = &bfd_default_arch_struct;
   abfd->flags &= BFD_FLAGS_SAVED;
+  abfd->build_id = NULL;
   bfd_section_list_clear (abfd);
 }
 
@@ -201,12 +202,45 @@ bfd_preserve_finish (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_preserve *preserve)
   preserve->marker = NULL;
 }
 
+static void
+print_warnmsg (struct per_xvec_message **list)
+{
+  fflush (stdout);
+  fprintf (stderr, "%s: ", _bfd_get_error_program_name ());
+
+  for (struct per_xvec_message *warn = *list; warn; warn = warn->next)
+    {
+      fputs (warn->message, stderr);
+      fputc ('\n', stderr);
+    }
+  fflush (stderr);
+}
+
+static void
+clear_warnmsg (struct per_xvec_message **list)
+{
+  struct per_xvec_message *warn = *list;
+  while (warn)
+    {
+      struct per_xvec_message *next = warn->next;
+      free (warn);
+      warn = next;
+    }
+  *list = NULL;
+}
+
+static void
+null_error_handler (const char *fmt ATTRIBUTE_UNUSED,
+		    va_list ap ATTRIBUTE_UNUSED)
+{
+}
+
 /*
 FUNCTION
 	bfd_check_format_matches
 
 SYNOPSIS
-	bfd_boolean bfd_check_format_matches
+	bool bfd_check_format_matches
 	  (bfd *abfd, bfd_format format, char ***matching);
 
 DESCRIPTION
@@ -221,7 +255,7 @@ DESCRIPTION
 	should free it.
 */
 
-bfd_boolean
+bool
 bfd_check_format_matches (bfd *abfd, bfd_format format, char ***matching)
 {
   extern const bfd_target binary_vec;
@@ -236,6 +270,8 @@ bfd_check_format_matches (bfd *abfd, bfd_format format, char ***matching)
   unsigned int initial_section_id = _bfd_section_id;
   struct bfd_preserve preserve, preserve_match;
   bfd_cleanup cleanup = NULL;
+  bfd_error_handler_type orig_error_handler;
+  static int in_check_format;
 
   if (matching != NULL)
     *matching = NULL;
@@ -244,7 +280,7 @@ bfd_check_format_matches (bfd *abfd, bfd_format format, char ***matching)
       || (unsigned int) abfd->format >= (unsigned int) bfd_type_end)
     {
       bfd_set_error (bfd_error_invalid_operation);
-      return FALSE;
+      return false;
     }
 
   if (abfd->format != bfd_unknown)
@@ -257,12 +293,20 @@ bfd_check_format_matches (bfd *abfd, bfd_format format, char ***matching)
       amt = sizeof (*matching_vector) * 2 * _bfd_target_vector_entries;
       matching_vector = (const bfd_target **) bfd_malloc (amt);
       if (!matching_vector)
-	return FALSE;
+	return false;
     }
 
   /* Presume the answer is yes.  */
   abfd->format = format;
   save_targ = abfd->xvec;
+
+  /* Don't report errors on recursive calls checking the first element
+     of an archive.  */
+  if (in_check_format)
+    orig_error_handler = bfd_set_error_handler (null_error_handler);
+  else
+    orig_error_handler = _bfd_set_error_handler_caching (abfd);
+  ++in_check_format;
 
   preserve_match.marker = NULL;
   if (!bfd_preserve_save (abfd, &preserve, NULL))
@@ -498,15 +542,24 @@ bfd_check_format_matches (bfd *abfd, bfd_format format, char ***matching)
 	 We can not set this flag until after checking the format,
 	 because it will interfere with creation of BFD sections.  */
       if (abfd->direction == both_direction)
-	abfd->output_has_begun = TRUE;
+	abfd->output_has_begun = true;
 
       free (matching_vector);
       if (preserve_match.marker != NULL)
 	bfd_preserve_finish (abfd, &preserve_match);
       bfd_preserve_finish (abfd, &preserve);
+      bfd_set_error_handler (orig_error_handler);
+
+      struct per_xvec_message **list = _bfd_per_xvec_warn (abfd->xvec, 0);
+      if (*list)
+	print_warnmsg (list);
+      list = _bfd_per_xvec_warn (NULL, 0);
+      for (size_t i = 0; i < _bfd_target_vector_entries + 1; i++)
+	clear_warnmsg (list++);
+      --in_check_format;
 
       /* File position has moved, BTW.  */
-      return TRUE;
+      return true;
     }
 
   if (match_count == 0)
@@ -519,10 +572,7 @@ bfd_check_format_matches (bfd *abfd, bfd_format format, char ***matching)
       abfd->xvec = save_targ;
       abfd->format = bfd_unknown;
       free (matching_vector);
-      if (preserve_match.marker != NULL)
-	bfd_preserve_finish (abfd, &preserve_match);
-      bfd_preserve_restore (abfd, &preserve);
-      return FALSE;
+      goto out;
     }
 
   /* Restore original target type and format.  */
@@ -546,10 +596,32 @@ bfd_check_format_matches (bfd *abfd, bfd_format format, char ***matching)
     free (matching_vector);
   if (cleanup)
     cleanup (abfd);
+ out:
   if (preserve_match.marker != NULL)
     bfd_preserve_finish (abfd, &preserve_match);
   bfd_preserve_restore (abfd, &preserve);
-  return FALSE;
+  bfd_set_error_handler (orig_error_handler);
+  struct per_xvec_message **list = _bfd_per_xvec_warn (NULL, 0);
+  struct per_xvec_message **one = NULL;
+  for (size_t i = 0; i < _bfd_target_vector_entries + 1; i++)
+    {
+      if (list[i])
+	{
+	  if (!one)
+	    one = list + i;
+	  else
+	    {
+	      one = NULL;
+	      break;
+	    }
+	}
+    }
+  if (one)
+    print_warnmsg (one);
+  for (size_t i = 0; i < _bfd_target_vector_entries + 1; i++)
+    clear_warnmsg (list++);
+  --in_check_format;
+  return false;
 }
 
 /*
@@ -557,7 +629,7 @@ FUNCTION
 	bfd_set_format
 
 SYNOPSIS
-	bfd_boolean bfd_set_format (bfd *abfd, bfd_format format);
+	bool bfd_set_format (bfd *abfd, bfd_format format);
 
 DESCRIPTION
 	This function sets the file format of the BFD @var{abfd} to the
@@ -566,14 +638,14 @@ DESCRIPTION
 	is not open for writing, then an error occurs.
 */
 
-bfd_boolean
+bool
 bfd_set_format (bfd *abfd, bfd_format format)
 {
   if (bfd_read_p (abfd)
       || (unsigned int) abfd->format >= (unsigned int) bfd_type_end)
     {
       bfd_set_error (bfd_error_invalid_operation);
-      return FALSE;
+      return false;
     }
 
   if (abfd->format != bfd_unknown)
@@ -585,10 +657,10 @@ bfd_set_format (bfd *abfd, bfd_format format)
   if (!BFD_SEND_FMT (abfd, _bfd_set_format, (abfd)))
     {
       abfd->format = bfd_unknown;
-      return FALSE;
+      return false;
     }
 
-  return TRUE;
+  return true;
 }
 
 /*

@@ -3,7 +3,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2020 Free Software Foundation, Inc.
+Copyright (C) 1996-2022 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -424,6 +424,54 @@ static const CGEN_OPCODE bpf_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
     & ifmt_addrle, { 0xcc }
   },
+/* sdiv $dstle,$imm32 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
+    & ifmt_addile, { 0xe7 }
+  },
+/* sdiv $dstle,$srcle */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
+    & ifmt_addrle, { 0xef }
+  },
+/* sdiv32 $dstle,$imm32 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
+    & ifmt_addile, { 0xe4 }
+  },
+/* sdiv32 $dstle,$srcle */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
+    & ifmt_addrle, { 0xec }
+  },
+/* smod $dstle,$imm32 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
+    & ifmt_addile, { 0xf7 }
+  },
+/* smod $dstle,$srcle */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
+    & ifmt_addrle, { 0xff }
+  },
+/* smod32 $dstle,$imm32 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
+    & ifmt_addile, { 0xf4 }
+  },
+/* smod32 $dstle,$srcle */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
+    & ifmt_addrle, { 0xfc }
+  },
 /* neg $dstle */
   {
     { 0, 0, 0, 0 },
@@ -723,6 +771,54 @@ static const CGEN_OPCODE bpf_cgen_insn_opcode_table[MAX_INSNS] =
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
     & ifmt_addrbe, { 0xcc }
+  },
+/* sdiv $dstbe,$imm32 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
+    & ifmt_addibe, { 0xe7 }
+  },
+/* sdiv $dstbe,$srcbe */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
+    & ifmt_addrbe, { 0xef }
+  },
+/* sdiv32 $dstbe,$imm32 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
+    & ifmt_addibe, { 0xe4 }
+  },
+/* sdiv32 $dstbe,$srcbe */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
+    & ifmt_addrbe, { 0xec }
+  },
+/* smod $dstbe,$imm32 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
+    & ifmt_addibe, { 0xf7 }
+  },
+/* smod $dstbe,$srcbe */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
+    & ifmt_addrbe, { 0xff }
+  },
+/* smod32 $dstbe,$imm32 */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
+    & ifmt_addibe, { 0xf4 }
+  },
+/* smod32 $dstbe,$srcbe */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
+    & ifmt_addrbe, { 0xfc }
   },
 /* neg $dstbe */
   {

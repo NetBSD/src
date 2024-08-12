@@ -1,5 +1,5 @@
 /* Simulator watchpoint support.
-   Copyright (C) 1997-2020 Free Software Foundation, Inc.
+   Copyright (C) 1997-2023 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -49,8 +49,6 @@ typedef struct _sim_watchpoints {
      address/size of the program-counter */
   /* FIXME: In the future this shall be generalized so that any of the
      N processors M registers can be watched */
-  void *pc;
-  int sizeof_pc;
 
   /* Pointer to the handler for interrupt watchpoints */
   /* FIXME: can this be done better? */

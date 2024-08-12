@@ -1,6 +1,6 @@
 /* Compile-time valid expression checker for GDB, the GNU debugger.
 
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -58,26 +58,14 @@
 #define CHECK_VALID_EXPR_INT(TYPENAMES, TYPES, VALID, EXPR_TYPE, EXPR)	\
   namespace CONCAT (check_valid_expr, __LINE__) {			\
 									\
-  template<typename, typename, typename = void>				\
-  struct is_valid_expression						\
-    : std::false_type {};						\
+  template <TYPENAMES, typename = decltype (EXPR)>			\
+  struct archetype							\
+  {									\
+  };									\
 									\
-  template <TYPENAMES>							\
-    struct is_valid_expression<TYPES, gdb::void_t<decltype (EXPR)>>	\
-    : std::true_type {};						\
-									\
-  static_assert (is_valid_expression<TYPES>::value == VALID,		\
+  static_assert (gdb::is_detected_exact<archetype<TYPES, EXPR_TYPE>,	\
+		 archetype, TYPES>::value == VALID,			\
 		 "");							\
-									\
-  template<TYPENAMES, typename = void>					\
-  struct is_same_type							\
-    : std::is_same<EXPR_TYPE, void> {};					\
-									\
-  template <TYPENAMES>							\
-    struct is_same_type<TYPES, gdb::void_t<decltype (EXPR)>>		\
-    : std::is_same<EXPR_TYPE, decltype (EXPR)> {};			\
-									\
-  static_assert (is_same_type<TYPES>::value, "");			\
   } /* namespace */
 
 /* A few convenience macros that support expressions involving a
@@ -103,6 +91,21 @@
   CHECK_VALID_EXPR_INT (ESC_PARENS (typename T1, typename T2,		\
 				    typename T3, typename T4),		\
 			ESC_PARENS (T1, T2, T3, T4),			\
+			VALID, EXPR_TYPE, EXPR)
+
+#define CHECK_VALID_EXPR_5(T1, T2, T3, T4, T5, VALID, EXPR_TYPE, EXPR)	\
+  CHECK_VALID_EXPR_INT (ESC_PARENS (typename T1, typename T2,		\
+				    typename T3, typename T4,		\
+				    typename T5),			\
+			ESC_PARENS (T1, T2, T3, T4, T5),		\
+			VALID, EXPR_TYPE, EXPR)
+
+#define CHECK_VALID_EXPR_6(T1, T2, T3, T4, T5, T6,			\
+			   VALID, EXPR_TYPE, EXPR)			\
+  CHECK_VALID_EXPR_INT (ESC_PARENS (typename T1, typename T2,		\
+				    typename T3, typename T4,		\
+				    typename T5, typename T6),		\
+			ESC_PARENS (T1, T2, T3, T4, T5, T6),		\
 			VALID, EXPR_TYPE, EXPR)
 
 #endif /* COMMON_VALID_EXPR_H */

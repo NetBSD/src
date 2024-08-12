@@ -1,5 +1,5 @@
 /* Common definitions for remote server for GDB.
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -189,6 +189,9 @@ struct client_state
      GDB.  A value of -1 means to get data from the live program.  */
 
   int current_traceframe = -1;
+
+  /* If true, memory tagging features are supported.  */
+  bool memory_tagging_feature = false;
 
 };
 

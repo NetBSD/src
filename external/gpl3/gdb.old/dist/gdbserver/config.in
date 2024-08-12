@@ -131,7 +131,7 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Define to 1 if your system has the kinfo_getfile function. */
+/* Define to 1 if you have the `kinfo_getfile' function. */
 #undef HAVE_KINFO_GETFILE
 
 /* Define if you have <langinfo.h> and nl_langinfo(CODESET). */
@@ -181,9 +181,6 @@
 
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
 #undef HAVE_NETINET_TCP_H
-
-/* Define if you support the personality syscall. */
-#undef HAVE_PERSONALITY
 
 /* Define to 1 if you have the `pipe' function. */
 #undef HAVE_PIPE
@@ -272,6 +269,9 @@
 
 /* Define if sigsetjmp is available. */
 #undef HAVE_SIGSETJMP
+
+/* Define to 1 if you have the `sigtimedwait' function. */
+#undef HAVE_SIGTIMEDWAIT
 
 /* Define to 1 if you have the `socketpair' function. */
 #undef HAVE_SOCKETPAIR
@@ -401,6 +401,9 @@
 
 /* Additional package description */
 #undef PKGVERSION
+
+/* Define to 1 if the "%ll" format works to print long longs. */
+#undef PRINTF_HAS_LONG_LONG
 
 /* Define to necessary symbol if this constant uses a non-standard name on
    your system. */

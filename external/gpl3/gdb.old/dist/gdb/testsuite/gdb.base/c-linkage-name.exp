@@ -1,4 +1,4 @@
-# Copyright 2018-2020 Free Software Foundation, Inc.
+# Copyright 2018-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -64,7 +64,7 @@ gdb_test "maint info symtabs" "\{ symtab \[^\r\n\]*c-linkage-name-2.c.*"
 
 # Flush the symbol cache to prevent the lookup to return the same as before.
 
-gdb_test "maint flush-symbol-cache"
+gdb_test "maint flush symbol-cache"
 
 # Try to print MUNDANE using its linkage name again, after partial
 # symtab expansion.

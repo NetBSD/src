@@ -1,4 +1,4 @@
-#   Copyright 2003-2020 Free Software Foundation, Inc.
+#   Copyright 2003-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,10 +31,6 @@ set lib_sl  [standard_output_file $libfile.sl]
 set lib_opts  debug
 set exec_opts [list debug shlib=$lib_sl]
 
-if [get_compiler_info] {
-    return -1
-}
-
 if { [gdb_compile_shlib $libsrc $lib_sl $lib_opts] != ""
      || [gdb_compile $srcdir/$subdir/$srcfile $binfile executable $exec_opts] != ""} {
     untested "failed to compile"
@@ -61,8 +57,10 @@ gdb_test "info break" \
 \[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*pendfunc1.*" \
 "single pending breakpoint info (without symbols)"
 
-gdb_load ${binfile}
-gdb_load_shlib $lib_sl
+with_test_prefix "first load" {
+    gdb_load ${binfile}
+    gdb_load_shlib $lib_sl
+}
 
 set pendfunc1_loc [gdb_get_line_number "y = x + 4" ${libfile}.c]
 
@@ -78,8 +76,10 @@ gdb_exit
 gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
 
-gdb_load ${binfile}
-gdb_load_shlib $lib_sl
+with_test_prefix "second load" {
+    gdb_load ${binfile}
+    gdb_load_shlib $lib_sl
+}
 
 #
 # Test setting, querying, and modifying pending breakpoints
@@ -102,7 +102,7 @@ gdb_test "info break" \
 
 set mainline [gdb_get_line_number "break main here"]
 
-gdb_test "break main" \
+gdb_test "break -q main" \
     "Breakpoint.*at.* file .*$srcfile, line $mainline.*" \
     "breakpoint function"
 
@@ -244,8 +244,8 @@ gdb_test "continue" \
 # be 3 then.
 #
 
-gdb_test "disable 7" "" "disable other breakpoints"
-gdb_test "disable 5" "" "disable other breakpoints"
+gdb_test "disable 7" "" "disable breakpoint 7"
+gdb_test "disable 5" "" "disable breakpoint 5"
 
 gdb_test "continue" \
 	 ".*Breakpoint.*pendfunc1.*\\\(x=3\\\) at.*pendshr.c:$bp3_loc.*printf.*;" \

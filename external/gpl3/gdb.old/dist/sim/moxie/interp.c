@@ -1,5 +1,5 @@
 /* Simulator for the moxie processor
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2023 Free Software Foundation, Inc.
    Contributed by Anthony Green
 
 This file is part of GDB, the GNU debugger.
@@ -17,22 +17,25 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include <fcntl.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/times.h>
 #include <sys/param.h>
 #include <unistd.h>
 #include "bfd.h"
 #include "libiberty.h"
-#include "gdb/remote-sim.h"
+#include "sim/sim.h"
 
 #include "sim-main.h"
 #include "sim-base.h"
 #include "sim-options.h"
 #include "sim-io.h"
+#include "sim-signal.h"
+#include "target-newlib-syscall.h"
 
 typedef int word;
 typedef unsigned int uword;
@@ -54,7 +57,7 @@ typedef unsigned int uword;
      + (sim_core_read_aligned_1 (scpu, cia, read_map, addr+1))) << 16) >> 16)
 
 static unsigned long
-moxie_extract_unsigned_integer (unsigned char *addr, int len)
+moxie_extract_unsigned_integer (const unsigned char *addr, int len)
 {
   unsigned long retval;
   unsigned char * p;
@@ -932,13 +935,13 @@ sim_engine_run (SIM_DESC sd,
 	        cpu.asregs.sregs[3] = inum;
 		switch (inum)
 		  {
-		  case 0x1: /* SYS_exit */
+		  case TARGET_NEWLIB_SYS_exit:
 		    {
 		      sim_engine_halt (sd, scpu, NULL, pc, sim_exited,
 				       cpu.asregs.regs[2]);
 		      break;
 		    }
-		  case 0x2: /* SYS_open */
+		  case TARGET_NEWLIB_SYS_open:
 		    {
 		      char fname[1024];
 		      int mode = (int) convert_target_flags ((unsigned) cpu.asregs.regs[3]);
@@ -951,7 +954,7 @@ sim_engine_run (SIM_DESC sd,
 		      cpu.asregs.regs[2] = fd;
 		      break;
 		    }
-		  case 0x4: /* SYS_read */
+		  case TARGET_NEWLIB_SYS_read:
 		    {
 		      int fd = cpu.asregs.regs[2];
 		      unsigned len = (unsigned) cpu.asregs.regs[4];
@@ -962,7 +965,7 @@ sim_engine_run (SIM_DESC sd,
 		      free (buf);
 		      break;
 		    }
-		  case 0x5: /* SYS_write */
+		  case TARGET_NEWLIB_SYS_write:
 		    {
 		      char *str;
 		      /* String length is at 0x12($fp) */
@@ -975,7 +978,7 @@ sim_engine_run (SIM_DESC sd,
 		      cpu.asregs.regs[2] = count;
 		      break;
 		    }
-		  case 0x7: /* SYS_unlink */
+		  case TARGET_NEWLIB_SYS_unlink:
 		    {
 		      char fname[1024];
 		      int fd;
@@ -1129,7 +1132,7 @@ sim_engine_run (SIM_DESC sd,
 }
 
 static int
-moxie_reg_store (SIM_CPU *scpu, int rn, unsigned char *memory, int length)
+moxie_reg_store (SIM_CPU *scpu, int rn, const void *memory, int length)
 {
   if (rn < NUM_MOXIE_REGS && rn >= 0)
     {
@@ -1149,7 +1152,7 @@ moxie_reg_store (SIM_CPU *scpu, int rn, unsigned char *memory, int length)
 }
 
 static int
-moxie_reg_fetch (SIM_CPU *scpu, int rn, unsigned char *memory, int length)
+moxie_reg_fetch (SIM_CPU *scpu, int rn, void *memory, int length)
 {
   if (rn < NUM_MOXIE_REGS && rn >= 0)
     {
@@ -1196,15 +1199,15 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb,
   SIM_DESC sd = sim_state_alloc (kind, cb);
   SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
 
+  /* Set default options before parsing user options.  */
+  current_target_byte_order = BFD_ENDIAN_BIG;
+
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1, /*cgen_cpu_max_extra_bytes ()*/0) != SIM_RC_OK)
+  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
     {
       free_state (sd);
       return 0;
     }
-
-  STATE_WATCHPOINTS (sd)->pc = &cpu.asregs.regs[PC_REGNO];
-  STATE_WATCHPOINTS (sd)->sizeof_pc = sizeof (word);
 
   if (sim_pre_argv_init (sd, argv[0]) != SIM_RC_OK)
     {
@@ -1223,10 +1226,7 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb,
   sim_do_command(sd," memory region 0xE0000000,0x10000") ; 
 
   /* Check for/establish the a reference program image.  */
-  if (sim_analyze_program (sd,
-			   (STATE_PROG_ARGV (sd) != NULL
-			    ? *STATE_PROG_ARGV (sd)
-			    : NULL), abfd) != SIM_RC_OK)
+  if (sim_analyze_program (sd, STATE_PROG_FILE (sd), abfd) != SIM_RC_OK)
     {
       free_state (sd);
       return 0;
@@ -1296,7 +1296,7 @@ SIM_RC
 sim_create_inferior (SIM_DESC sd, struct bfd *prog_bfd,
 		     char * const *argv, char * const *env)
 {
-  char ** avp;
+  char * const *avp;
   int l, argc, i, tp;
   sim_cpu *scpu = STATE_CPU (sd, 0); /* FIXME */
 

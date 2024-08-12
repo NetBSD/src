@@ -1,5 +1,5 @@
 /* Header file for GDB CLI command implementation library.
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -45,6 +45,7 @@ enum command_control_type
   guile_control,
   while_stepping_control,
   define_control,
+  document_control,
   invalid_control
 };
 
@@ -64,6 +65,9 @@ struct command_lines_deleter
 
 /* A reference-counted struct command_line.  */
 typedef std::shared_ptr<command_line> counted_command_line;
+
+/* A unique_ptr specialization for command_line.  */
+typedef std::unique_ptr<command_line, command_lines_deleter> command_line_up;
 
 /* * Structure for saved commands lines (for breakpoints, defined
    commands, etc).  */
@@ -108,11 +112,18 @@ private:
   }
 };
 
+/* Prototype for a function to call to get one more input line.
+
+   If the function needs to return a dynamically allocated string, it can place
+   in the passed-in buffer, and return a pointer to it.  Otherwise, it can
+   simply ignore it.  */
+
+using read_next_line_ftype = gdb::function_view<const char * (std::string &)>;
+
 extern counted_command_line read_command_lines
     (const char *, int, int, gdb::function_view<void (const char *)>);
 extern counted_command_line read_command_lines_1
-    (gdb::function_view<const char * ()>, int,
-     gdb::function_view<void (const char *)>);
+    (read_next_line_ftype, int, gdb::function_view<void (const char *)>);
 
 
 /* Exported to cli/cli-cmds.c */

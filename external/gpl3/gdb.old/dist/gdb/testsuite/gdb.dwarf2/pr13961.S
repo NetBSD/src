@@ -1,4 +1,4 @@
-/* Copyright 2012-2020 Free Software Foundation, Inc.
+/* Copyright 2012-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -89,7 +89,7 @@ SYMBOL(main):
 	.byte	0x22
 	.byte	0x90
 	.4byte	.Ltu_class_type - .Ldebug_types0 /* Offset to Type DIE */
-	.uleb128 0x1	/* (DIE (0x17) DW_TAG_type_unit) */
+	.uleb128 0x1	/* DW_TAG_type_unit */
 	.byte	0x4	/* DW_AT_language */
 	.byte	0x73	/* DW_AT_GNU_odr_signature */
 	.byte	0xea
@@ -108,25 +108,28 @@ SYMBOL(main):
 	/* End of manual insertion */
 
 .Ltu_class_type:
-	.uleb128 0x2	/* (DIE (0x25) DW_TAG_class_type) */
+	.uleb128 0x2	/* (DW_TAG_class_type) */
 	.ascii "foo\0"	/* DW_AT_name */
 	.byte	0x4	/* DW_AT_byte_size */
 	.byte	0x1	/* DW_AT_decl_file (pr13961.cc) */
 	.byte	0x1	/* DW_AT_decl_line */
-	.4byte	0x3f	/* DW_AT_sibling */
-	.uleb128 0x3	/* (DIE (0x31) DW_TAG_member) */
-	.ascii "bar\0"	/* DW_AT_name */
-	.byte	0x1	/* DW_AT_decl_file (pr13961.cc) */
-	.byte	0x4	/* DW_AT_decl_line */
-	.4byte	0x3f	/* DW_AT_type */
-	.byte	0	/* DW_AT_data_member_location */
-	.byte	0x1	/* DW_AT_accessibility */
-	.byte	0	/* end of children of DIE 0x25 */
-	.uleb128 0x4	/* (DIE (0x3f) DW_TAG_base_type) */
+	.4byte	.Ltu_base_type - .Ldebug_types0	/* DW_AT_sibling */
+
+		.uleb128 0x3	/* (DW_TAG_member) */
+		.ascii "bar\0"	/* DW_AT_name */
+		.byte	0x1	/* DW_AT_decl_file (pr13961.cc) */
+		.byte	0x4	/* DW_AT_decl_line */
+		.4byte	.Ltu_base_type - .Ldebug_types0	/* DW_AT_type */
+		.byte	0	/* DW_AT_data_member_location */
+		.byte	0x1	/* DW_AT_accessibility */
+		.byte	0	/* end of children */
+
+.Ltu_base_type:
+	.uleb128 0x4	/* DW_TAG_base_type */
 	.byte	0x4	/* DW_AT_byte_size */
 	.byte	0x5	/* DW_AT_encoding */
 	.ascii "int\0"	/* DW_AT_name */
-	.byte	0	/* end of children of DIE 0x17 */
+	.byte	0	/* end of children */
 
 .Ltu_end:
 
@@ -137,7 +140,8 @@ SYMBOL(main):
 	.2byte	0x4	/* DWARF version number */
 	.4byte	.Ldebug_abbrev0	/* Offset Into Abbrev. Section */
 	.byte	0x4	/* Pointer Size (in bytes) */
-	.uleb128 0x5	/* (DIE (0xb) DW_TAG_compile_unit) */
+
+	.uleb128 0x5	/* (DW_TAG_compile_unit) */
 	.4byte	.LASF0	/* DW_AT_producer: "GNU C++ 4.6.3 20120306" */
 	.byte	0x4	/* DW_AT_language */
 	.4byte	.LASF1	/* DW_AT_name: "pr13961.cc" */
@@ -145,72 +149,78 @@ SYMBOL(main):
 	.4byte	.Ltext0	/* DW_AT_low_pc */
 	.4byte	.Letext0	/* DW_AT_high_pc */
 	.4byte	.Ldebug_line0	/* DW_AT_stmt_list */
-.Lint_base_type:
-	.uleb128 0x4	/* (DIE (0x25) DW_TAG_base_type) */
-	.byte	0x4	/* DW_AT_byte_size */
-	.byte	0x5	/* DW_AT_encoding */
-	.ascii "int\0"	/* DW_AT_name */
-	.uleb128 0x6	/* (DIE (0x2c) DW_TAG_subprogram) */
-			/* DW_AT_external */
-	.4byte	.LASF3	/* DW_AT_name: "main" */
-	.byte	0x1	/* DW_AT_decl_file (pr13961.cc) */
-	.byte	0xa	/* DW_AT_decl_line */
-	.4byte	0x25	/* DW_AT_type */
-	.4byte	.LFB0	/* DW_AT_low_pc */
-	.4byte	.LFE0	/* DW_AT_high_pc */
-	.uleb128 0x1	/* DW_AT_frame_base */
-	.byte	0x9c	/* DW_OP_call_frame_cfa */
-			/* DW_AT_GNU_all_call_sites */
-	.uleb128 0x7	/* (DIE (0x41) DW_TAG_variable) */
-	.ascii "baz\0"	/* DW_AT_name */
-	.byte	0x1	/* DW_AT_decl_file (pr13961.cc) */
-	.byte	0x7	/* DW_AT_decl_line */
-	.byte	0x19	/* DW_AT_type */
-	.byte	0x8b
-	.byte	0x7e
-	.byte	0xac
-	.byte	0xce
-	.byte	0xf1
-	.byte	0x22
-	.byte	0x90
-			/* DW_AT_external */
-	.uleb128 0x5	/* DW_AT_location */
-	.byte	0x3	/* DW_OP_addr */
-	.4byte	baz
 
-	/* Manually inserted to have a DW_AT_specification refering to
-	   something and appearing ahead of it.  */
-	.uleb128 0x8	/* DW_TAG_class_type */
-	.4byte .Lcu_class_type - .Ldebug_info0 /* DW_AT_specification */
+.Lint_base_type:
+		.uleb128 0x4	/* DW_TAG_base_type */
+		.byte	0x4	/* DW_AT_byte_size */
+		.byte	0x5	/* DW_AT_encoding */
+		.ascii "int\0"	/* DW_AT_name */
+
+		.uleb128 0x6	/* DW_TAG_subprogram */
+				/* DW_AT_external */
+		.4byte	.LASF3	/* DW_AT_name: "main" */
+		.byte	0x1	/* DW_AT_decl_file (pr13961.cc) */
+		.byte	0xa	/* DW_AT_decl_line */
+		.4byte	.Lint_base_type - .Ldebug_info0	/* DW_AT_type */
+		.4byte	.LFB0	/* DW_AT_low_pc */
+		.4byte	.LFE0	/* DW_AT_high_pc */
+		.uleb128 0x1	/* DW_AT_frame_base */
+		.byte	0x9c	/* DW_OP_call_frame_cfa */
+				/* DW_AT_GNU_all_call_sites */
+
+		.uleb128 0x7	/* DW_TAG_variable */
+		.ascii "baz\0"	/* DW_AT_name */
+		.byte	0x1	/* DW_AT_decl_file (pr13961.cc) */
+		.byte	0x7	/* DW_AT_decl_line */
+		.byte	0x19	/* DW_AT_type */
+		.byte	0x8b
+		.byte	0x7e
+		.byte	0xac
+		.byte	0xce
+		.byte	0xf1
+		.byte	0x22
+		.byte	0x90
+				/* DW_AT_external */
+		.uleb128 0x5	/* DW_AT_location */
+		.byte	0x3	/* DW_OP_addr */
+		.4byte	baz
+
+		/* Manually inserted to have a DW_AT_specification refering to
+		   something and appearing ahead of it.  */
+		.uleb128 0x8	/* DW_TAG_class_type */
+		.4byte .Lcu_class_type - .Ldebug_info0 /* DW_AT_specification */
 
 .Lcu_int_type:
-	.uleb128 0x4	/* (DIE (0x3f) DW_TAG_base_type) */
-	.byte	0x4	/* DW_AT_byte_size */
-	.byte	0x5	/* DW_AT_encoding */
-	.ascii "int\0"	/* DW_AT_name */
-.Lcu_class_type:
-	.uleb128 0x2	/* (DIE (0x25) DW_TAG_class_type) */
-	.ascii "foo2\0"	/* DW_AT_name */
-	.byte	0x4	/* DW_AT_byte_size */
-	.byte	0x1	/* DW_AT_decl_file (pr13961.cc) */
-	.byte	0x1	/* DW_AT_decl_line */
-	.4byte	0x3f	/* DW_AT_sibling */
-	.uleb128 0x3	/* (DIE (0x31) DW_TAG_member) */
-	.ascii "bar\0"	/* DW_AT_name */
-	.byte	0x1	/* DW_AT_decl_file (pr13961.cc) */
-	.byte	0x4	/* DW_AT_decl_line */
-	.4byte	.Lcu_int_type - .Ldebug_info0 /* DW_AT_type */
-	.byte	0	/* DW_AT_data_member_location */
-	.byte	0x1	/* DW_AT_accessibility */
-	.byte	0	/* end of children of DIE 0x25 */
-	.uleb128 0x4	/* (DIE (0x3f) DW_TAG_base_type) */
-	.byte	0x4	/* DW_AT_byte_size */
-	.byte	0x5	/* DW_AT_encoding */
-	.ascii "int\0"	/* DW_AT_name */
-	.byte	0	/* end of children of DIE 0x17 */
-	/* End of manual insertion */
+		.uleb128 0x4	/* DW_TAG_base_type */
+		.byte	0x4	/* DW_AT_byte_size */
+		.byte	0x5	/* DW_AT_encoding */
+		.ascii "int\0"	/* DW_AT_name */
 
-	.byte	0	/* end of children of DIE 0xb */
+.Lcu_class_type:
+		.uleb128 0x2	/* DW_TAG_class_type */
+		.ascii "foo2\0"	/* DW_AT_name */
+		.byte	0x4	/* DW_AT_byte_size */
+		.byte	0x1	/* DW_AT_decl_file (pr13961.cc) */
+		.byte	0x1	/* DW_AT_decl_line */
+		.4byte	.Lcu_second_int_type - .Ldebug_info0	/* DW_AT_sibling */
+
+			.uleb128 0x3	/* DW_TAG_member */
+			.ascii "bar\0"	/* DW_AT_name */
+			.byte	0x1	/* DW_AT_decl_file (pr13961.cc) */
+			.byte	0x4	/* DW_AT_decl_line */
+			.4byte	.Lcu_second_int_type - .Ldebug_info0 /* DW_AT_type */
+			.byte	0	/* DW_AT_data_member_location */
+			.byte	0x1	/* DW_AT_accessibility */
+			.byte	0	/* end of children */
+
+.Lcu_second_int_type:
+		.uleb128 0x4	/* DW_TAG_base_type */
+		.byte	0x4	/* DW_AT_byte_size */
+		.byte	0x5	/* DW_AT_encoding */
+		.ascii "int\0"	/* DW_AT_name */
+		/* End of manual insertion */
+
+		.byte	0	/* end of children */
 
 .Lcu_end:
 
@@ -368,3 +378,4 @@ SYMBOL(main):
 .LASF3:
 	.string	"main"
 
+	.section	.note.GNU-stack,"",@progbits

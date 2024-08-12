@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2020 Free Software Foundation, Inc.
+# Copyright (C) 2010-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,8 +27,7 @@ def lookup_function_lookup_test(val):
             self.val = val
 
         def to_string(self):
-            return ("x=<" + str(self.val["x"]) +
-                    "> y=<" + str(self.val["y"]) + ">")
+            return "x=<" + str(self.val["x"]) + "> y=<" + str(self.val["y"]) + ">"
 
     typename = gdb.types.get_basic_type(val.type).tag
     # Note: typename could be None.
@@ -37,7 +36,7 @@ def lookup_function_lookup_test(val):
     return None
 
 
-class pp_s1 (object):
+class pp_s1(object):
     def __init__(self, val):
         self.val = val
 
@@ -47,7 +46,7 @@ class pp_s1 (object):
         return "s1 a=<" + str(self.val["a"]) + "> b=<" + str(self.val["b"]) + ">"
 
 
-class pp_s2 (object):
+class pp_s2(object):
     def __init__(self, val):
         self.val = val
 
@@ -60,8 +59,8 @@ class pp_s2 (object):
 def build_pretty_printer1():
     pp = gdb.printing.RegexpCollectionPrettyPrinter("pp-test")
 
-    pp.add_printer('struct s', '^struct s$', pp_s1)
-    pp.add_printer('s', '^s$', pp_s1)
+    pp.add_printer("struct s", "^struct s$", pp_s1)
+    pp.add_printer("s", "^s$", pp_s1)
 
     return pp
 
@@ -72,9 +71,10 @@ def build_pretty_printer2():
     # register_pretty_printer.
     pp = gdb.printing.RegexpCollectionPrettyPrinter("pp-test")
 
-    pp.add_printer('struct s', '^struct s$', pp_s2)
-    pp.add_printer('s', '^s$', pp_s2)
+    pp.add_printer("struct s", "^struct s$", pp_s2)
+    pp.add_printer("s", "^s$", pp_s2)
 
     return pp
+
 
 # Note: Registering the printers is done in the .exp file.

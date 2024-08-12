@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2020 Free Software Foundation, Inc.
+# Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,12 +16,12 @@
 # Test that "signal FOO" behaves correctly when we have multiple
 # threads that have stopped for a signal.
 
+standard_testfile
+
 if [target_info exists gdb,nosignals] {
     verbose "Skipping ${testfile}.exp because of nosignals."
     return -1
 }
-
-standard_testfile
 
 if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
 	 executable { debug }] != "" } {
@@ -37,8 +37,7 @@ proc test { schedlock } {
     with_test_prefix "schedlock $schedlock" {
 	clean_restart ${binfile}
 
-	if ![runto_main] then {
-	    fail "can't run to main"
+	if {![runto_main]} {
 	    return 0
 	}
 
@@ -53,14 +52,16 @@ proc test { schedlock } {
 	gdb_test "continue" "thread_function.*" "thread 2 created"
 	gdb_test "continue" "thread_function.*" "thread 3 created"
 
-	gdb_test "continue" "all_threads_started.*"
+	gdb_test "continue" "all_threads_started.*" \
+	    "continue to all_threads_started"
 
 	# Using schedlock, let the main thread queue a signal for each
 	# non-main thread.
 	gdb_test_no_output "set scheduler-locking on"
 
 	gdb_test "break all_threads_signalled" "Breakpoint .* at .*$srcfile.*"
-	gdb_test "continue" "all_threads_signalled.*"
+	gdb_test "continue" "all_threads_signalled.*" \
+	    "continue to all_threads signalled"
 
 	gdb_test "info threads" "\\\* 1\[ \t\]+Thread.*" "thread 1 selected"
 

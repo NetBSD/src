@@ -1,4 +1,4 @@
-# Copyright 2006-2020 Free Software Foundation, Inc.
+# Copyright 2006-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ if {[skip_cplus_tests]} { continue }
 
 standard_testfile .cc
 
-if {[prepare_for_testing $testfile.exp $testfile $srcfile \
+if {[build_executable $testfile.exp $testfile $srcfile \
     {debug c++ additional_flags="-std=gnu++11"}] == -1} {
     return -1
 }
@@ -39,6 +39,15 @@ proc gdb_start_again {text prefix} {
 set t "print value of f1 on (Child&&) in main"
 gdb_start_again "marker1 here" $t
 gdb_test "print f1(static_cast<Child&&>(Q))" ".* = 40.*" $t
+
+gdb_test "print f3(static_cast<int&&> (global_int))" " = 8"
+gdb_test "print f4(static_cast<float&&> (global_float))" " = 3"
+
+gdb_test "print static_cast<int&> (global_int)" " = \\(int &\\) @$hex: 7"
+gdb_test "print static_cast<int&&> (global_int)" " = \\(int &&\\) @$hex: 7"
+
+gdb_test "print static_cast<float&> (global_float)" " = \\(float &\\) @$hex: 3\\.$decimal"
+gdb_test "print static_cast<float&&> (global_float)" " = \\(float &&\\) @$hex: 3\\.$decimal"
 
 set t "print value of f2 on (Child&&) in main" 
 gdb_start_again "marker1 here" $t

@@ -1,6 +1,6 @@
 /* main.c --- main function for stand-alone M32C simulator.
 
-Copyright (C) 2005-2020 Free Software Foundation, Inc.
+Copyright (C) 2005-2023 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -18,8 +18,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
 
-#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -28,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <setjmp.h>
 #include <signal.h>
 #include <sys/types.h>
+#include <getopt.h>
 
 #ifdef HAVE_SYS_SOCKET_H
 #ifdef HAVE_NETINET_IN_H
@@ -134,12 +136,14 @@ main (int argc, char **argv)
 #ifdef HAVE_networking
   char *console_port_s = 0;
 #endif
+  static const struct option longopts[] = { { 0 } };
 
   setbuf (stdout, 0);
 
   in_gdb = 0;
 
-  while ((o = getopt (argc, argv, "tc:vdm:C")) != -1)
+  while ((o = getopt_long (argc, argv, "tc:vdm:C", longopts, NULL))
+	 != -1)
     switch (o)
       {
       case 't':

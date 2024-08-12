@@ -1,6 +1,6 @@
 /* Target-dependent code for Solaris SPARC.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -100,7 +100,7 @@ static const struct regset sparc32_sol2_fpregset =
 
 
 static struct sparc_frame_cache *
-sparc32_sol2_sigtramp_frame_cache (struct frame_info *this_frame,
+sparc32_sol2_sigtramp_frame_cache (frame_info_ptr this_frame,
 				   void **this_cache)
 {
   struct sparc_frame_cache *cache;
@@ -122,36 +122,36 @@ sparc32_sol2_sigtramp_frame_cache (struct frame_info *this_frame,
     (cache->copied_regs_mask & 0x04) ? SPARC_I2_REGNUM : SPARC_O2_REGNUM;
   mcontext_addr = get_frame_register_unsigned (this_frame, regnum) + 40;
 
-  cache->saved_regs[SPARC32_PSR_REGNUM].addr = mcontext_addr + 0 * 4;
-  cache->saved_regs[SPARC32_PC_REGNUM].addr = mcontext_addr + 1 * 4;
-  cache->saved_regs[SPARC32_NPC_REGNUM].addr = mcontext_addr + 2 * 4;
-  cache->saved_regs[SPARC32_Y_REGNUM].addr = mcontext_addr + 3 * 4;
+  cache->saved_regs[SPARC32_PSR_REGNUM].set_addr (mcontext_addr + 0 * 4);
+  cache->saved_regs[SPARC32_PC_REGNUM].set_addr (mcontext_addr + 1 * 4);
+  cache->saved_regs[SPARC32_NPC_REGNUM].set_addr (mcontext_addr + 2 * 4);
+  cache->saved_regs[SPARC32_Y_REGNUM].set_addr (mcontext_addr + 3 * 4);
 
   /* Since %g0 is always zero, keep the identity encoding.  */
   for (regnum = SPARC_G1_REGNUM, addr = mcontext_addr + 4 * 4;
        regnum <= SPARC_O7_REGNUM; regnum++, addr += 4)
-    cache->saved_regs[regnum].addr = addr;
+    cache->saved_regs[regnum].set_addr (addr);
 
   if (get_frame_memory_unsigned (this_frame, mcontext_addr + 19 * 4, 4))
     {
       /* The register windows haven't been flushed.  */
       for (regnum = SPARC_L0_REGNUM; regnum <= SPARC_I7_REGNUM; regnum++)
-	trad_frame_set_unknown (cache->saved_regs, regnum);
+	cache->saved_regs[regnum].set_unknown ();
     }
   else
     {
-      addr = cache->saved_regs[SPARC_SP_REGNUM].addr;
+      addr = cache->saved_regs[SPARC_SP_REGNUM].addr ();
       addr = get_frame_memory_unsigned (this_frame, addr, 4);
       for (regnum = SPARC_L0_REGNUM;
 	   regnum <= SPARC_I7_REGNUM; regnum++, addr += 4)
-	cache->saved_regs[regnum].addr = addr;
+	cache->saved_regs[regnum].set_addr (addr);
     }
 
   return cache;
 }
 
 static void
-sparc32_sol2_sigtramp_frame_this_id (struct frame_info *this_frame,
+sparc32_sol2_sigtramp_frame_this_id (frame_info_ptr this_frame,
 				     void **this_cache,
 				     struct frame_id *this_id)
 {
@@ -162,7 +162,7 @@ sparc32_sol2_sigtramp_frame_this_id (struct frame_info *this_frame,
 }
 
 static struct value *
-sparc32_sol2_sigtramp_frame_prev_register (struct frame_info *this_frame,
+sparc32_sol2_sigtramp_frame_prev_register (frame_info_ptr this_frame,
 					   void **this_cache,
 					   int regnum)
 {
@@ -174,7 +174,7 @@ sparc32_sol2_sigtramp_frame_prev_register (struct frame_info *this_frame,
 
 static int
 sparc32_sol2_sigtramp_frame_sniffer (const struct frame_unwind *self,
-				     struct frame_info *this_frame,
+				     frame_info_ptr this_frame,
 				     void **this_cache)
 {
   return sol2_sigtramp_p (this_frame);
@@ -182,6 +182,7 @@ sparc32_sol2_sigtramp_frame_sniffer (const struct frame_unwind *self,
 
 static const struct frame_unwind sparc32_sol2_sigtramp_frame_unwind =
 {
+  "sparc32 solaris sigtramp",
   SIGTRAMP_FRAME,
   default_frame_unwind_stop_reason,
   sparc32_sol2_sigtramp_frame_this_id,
@@ -195,7 +196,7 @@ static const struct frame_unwind sparc32_sol2_sigtramp_frame_unwind =
 static void
 sparc32_sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  sparc_gdbarch_tdep *tdep = gdbarch_tdep<sparc_gdbarch_tdep> (gdbarch);
 
   tdep->gregset = &sparc32_sol2_gregset;
   tdep->sizeof_gregset = 152;

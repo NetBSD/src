@@ -1,4 +1,4 @@
-# Copyright 2011-2020 Free Software Foundation, Inc.
+# Copyright 2011-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ set MIFLAGS "-i=mi"
 
 gdb_exit
 if [mi_gdb_start] {
-    continue
+    return
 }
 
 mi_delete_breakpoints
@@ -39,8 +39,7 @@ mi_gdb_load ${binfile}
 # 1. Try catching all exceptions.  #
 ####################################
 
-if ![mi_runto "task_switch.break_me"] then {
-   fail "cannot run to main, testcase aborted"
+if {![mi_runto "task_switch.break_me"]} {
    return 0
 }
 

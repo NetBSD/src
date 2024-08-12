@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2015-2020 Free Software Foundation, Inc.
+   Copyright 2015-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -512,6 +512,84 @@ can_relocate_bl (void)
        : : : "x30"); /* Test that LR is updated correctly.  */
 }
 
+/* Make sure we can relocate a BR instruction.
+
+     ... Set x0 to target
+   set_point12:
+     BR x0 ; jump to target (tracepoint here).
+     fail()
+     return
+   target:
+     pass()
+   end
+
+   */
+
+static void
+can_relocate_br (void)
+{
+  int ok = 0;
+
+  asm goto ("  adr x0, %l0\n"
+            "set_point12:\n"
+            "  br x0\n"
+            :
+            :
+            : "x0"
+            : madejump);
+
+  fail ();
+  return;
+madejump:
+  pass ();
+}
+
+/* Make sure we can relocate a BLR instruction.
+
+   We use two different functions since the test runner expects one breakpoint
+   per function and we want to test two different things.
+   For BLR we want to test that the BLR actually jumps to the relevant
+   function, *and* that it sets the LR register correctly.
+
+   Hence we create one testcase that jumps to `pass` using BLR, and one
+   testcase that jumps to `pass` if BLR has set the LR correctly.
+
+  -- can_relocate_blr_jumps
+     ... Set x0 to pass
+   set_point13:
+     BLR x0        ; jump to pass (tracepoint here).
+
+  -- can_relocate_blr_sets_lr
+     ... Set x0 to foo
+   set_point14:
+     BLR x0        ; jumps somewhere else (tracepoint here).
+     BL pass       ; ensures the LR was set correctly by the BLR.
+
+   */
+
+static void
+can_relocate_blr_jumps (void)
+{
+  int ok = 0;
+
+  /* Test BLR indeed jumps to the target.  */
+  asm ("set_point13:\n"
+       "  blr %[address]\n"
+       : : [address] "r" (&pass) : "x30");
+}
+
+static void
+can_relocate_blr_sets_lr (void)
+{
+  int ok = 0;
+
+  /* Test BLR sets the LR correctly.  */
+  asm ("set_point14:\n"
+       "  blr %[address]\n"
+       "  bl pass\n"
+       : : [address] "r" (&foo) : "x30");
+}
+
 #endif
 
 /* Functions testing relocations need to be placed here.  GDB will read
@@ -536,6 +614,9 @@ static testcase_ftype testcases[] = {
   can_relocate_ldr,
   can_relocate_bcond_false,
   can_relocate_bl,
+  can_relocate_br,
+  can_relocate_blr_jumps,
+  can_relocate_blr_sets_lr,
 #endif
 };
 

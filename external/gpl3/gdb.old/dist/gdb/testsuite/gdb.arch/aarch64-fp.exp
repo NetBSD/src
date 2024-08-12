@@ -1,4 +1,4 @@
-# Copyright 2008-2020 Free Software Foundation, Inc.
+# Copyright 2008-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +29,6 @@ if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
 }
 
 if ![runto_main] {
-    untested "could not run to main"
     return -1
 }
 
@@ -75,3 +74,28 @@ gdb_test "p/x \$fpcr" \
     "fpcr.*0x\[0-9a-fA-F\].*" \
     "check register fpcr value"
 
+with_test_prefix "bfloat16" {
+    gdb_test "set \$h0.bf = 1.185e-38" \
+    ".*" \
+    "set h0.bf to 129"
+
+    gdb_test "p \$h0" \
+    "h0.*{bf = 1.185e-38, f = 7.689e-06, u = 129, s = 129}" \
+    "h0 fields are valid"
+
+    gdb_test "set \$v0.h.bf\[0\] = 0" \
+    "v0.* = 0" \
+    "set v0.h.bf\[0\] to 0"
+
+    gdb_test "p \$v0.h.s\[0\]" \
+    "v0.* = 0" \
+    "v0.h.s\[0\] is 0"
+
+    gdb_test "set \$v0.h.bf\[0\] = 1.185e-38" \
+    "v0.* = 1.185e-38" \
+    "set v0.h.bf\[0\] to 129"
+
+    gdb_test "p \$v0.h.s\[0\]" \
+    "v0.* = 129" \
+    "v0.h.s\[0\] is 129"
+}

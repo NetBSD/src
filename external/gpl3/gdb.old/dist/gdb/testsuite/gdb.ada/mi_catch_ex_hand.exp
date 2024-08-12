@@ -1,4 +1,4 @@
-# Copyright 2011-2020 Free Software Foundation, Inc.
+# Copyright 2011-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,8 +33,7 @@ set eol "\[\r\n\]+"
 
 clean_restart ${testfile}
 
-if ![runto_main] then {
-   fail "cannot run to main, testcase aborted"
+if {![runto_main]} {
    return 0
 }
 
@@ -57,18 +56,14 @@ gdb_test_multiple "catch handlers" $msg {
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-gdb_exit
-if [mi_gdb_start] {
-    continue
-}
+mi_clean_restart $binfile
 
 #############################################
 # 1. Try catching all exceptions handlers.  #
 #############################################
 
 with_test_prefix "scenario 1" {
-    if ![mi_run_to_main] then {
-	fail "cannot run to main, testcase aborted"
+    if {[mi_runto_main] < 0} {
 	return 0
     }
 }
@@ -119,8 +114,8 @@ continue_to_exception_handler \
 #    but exit instead.
 
 with_test_prefix "scenario 2" {
-    if ![mi_run_to_main] then {
-	fail "cannot run to main, testcase aborted"
+    mi_delete_breakpoints
+    if {[mi_runto_main] < 0} {
 	return 0
     }
 }

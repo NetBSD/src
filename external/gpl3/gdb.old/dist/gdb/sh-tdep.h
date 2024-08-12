@@ -1,5 +1,5 @@
 /* Target-specific definition for a Renesas Super-H.
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,8 @@
 
 #ifndef SH_TDEP_H
 #define SH_TDEP_H
+
+#include "gdbarch.h"
 
 /* Contributed by Steve Chamberlain sac@cygnus.com.  */
 
@@ -89,20 +91,20 @@ struct sh_corefile_regmap
   unsigned int offset;
 };
 
-struct gdbarch_tdep
+struct sh_gdbarch_tdep : gdbarch_tdep_base
 {
   /* Non-NULL when debugging from a core file.  Provides the offset
      where each general-purpose register is stored inside the associated
      core file section.  */
-  struct sh_corefile_regmap *core_gregmap;
-  int sizeof_gregset;
+  struct sh_corefile_regmap *core_gregmap = nullptr;
+  int sizeof_gregset = 0;
   /* Non-NULL when debugging from a core file and when FP registers are
      available.  Provides the offset where each FP register is stored
      inside the associated core file section.  */
-  struct sh_corefile_regmap *core_fpregmap;
-  int sizeof_fpregset;
+  struct sh_corefile_regmap *core_fpregmap = nullptr;
+  int sizeof_fpregset = 0;
   /* ISA-specific data types.  */
-  struct type *sh_littlebyte_bigword_type;
+  struct type *sh_littlebyte_bigword_type = nullptr;
 };
 
 extern const struct regset sh_corefile_gregset;

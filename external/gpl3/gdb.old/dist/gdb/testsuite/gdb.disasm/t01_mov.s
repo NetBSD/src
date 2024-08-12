@@ -1105,3 +1105,4 @@ label:
 
 	.end
 
+	.section	.note.GNU-stack,"",@progbits

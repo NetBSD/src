@@ -1,6 +1,6 @@
 /* callback.c -- functions to use readline as an X `callback' mechanism. */
 
-/* Copyright (C) 1987-2017 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.
@@ -136,6 +136,8 @@ rl_callback_read_char (void)
       abort ();
     }
 
+  eof = 0;
+
   memcpy ((void *)olevel, (void *)_rl_top_level, sizeof (procenv_t));
 #if defined (HAVE_POSIX_SIGSETJMP)
   jcode = sigsetjmp (_rl_top_level, 0);
@@ -266,6 +268,13 @@ rl_callback_read_char (void)
 	{
 	  (*rl_redisplay_function) ();
 	  _rl_want_redisplay = 0;
+	}
+
+      /* Make sure application hooks can see whether we saw EOF. */
+      if (eof > 0)
+	{
+	  rl_eof_found = eof;
+	  RL_SETSTATE(RL_STATE_EOF);
 	}
 
       if (rl_done)

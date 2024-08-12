@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 1997-2020 Free Software Foundation, Inc.
+   Copyright 1997-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -29,12 +29,12 @@ main ()
   pid = vfork (); /* VFORK */
   if (pid == 0)
     {
-      printf ("I'm the child!\n");
+      const char *volatile s = "I'm the child!";
       _exit (0);
     }
   else
     {
-      printf ("I'm the proud parent of child #%d!\n", pid);
+      const char *volatile s = "I'm the proud parent of child";
     }
 
   return 0;

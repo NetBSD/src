@@ -2,7 +2,7 @@
    customized in a target-specific file, and then this file included (see
    tic54x.h for an example).
    
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2022 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -88,9 +88,10 @@ struct external_filehdr
 #define COFF_ALIGN_IN_SECTION_HEADER 1
 #define COFF_ALIGN_IN_S_FLAGS 1
 /* requires a power-of-two argument */
-#define COFF_ENCODE_ALIGNMENT(S,X) ((S).s_flags |= (((unsigned)(X)&0xF)<<8))
+#define COFF_ENCODE_ALIGNMENT(B,S,X) \
+  ((S).s_flags |= (((unsigned) (X) & 0xF) << 8), true)
 /* result is a power of two */
-#define COFF_DECODE_ALIGNMENT(X) (((X)>>8)&0xF)
+#define COFF_DECODE_ALIGNMENT(X) (((X) >> 8) & 0xF)
 
 #define COFF0_P(ABFD) (bfd_coff_filhsz(ABFD) == FILHSZ_V0)
 #define COFF2_P(ABFD) (bfd_coff_scnhsz(ABFD) != SCNHSZ_V01)
@@ -549,12 +550,20 @@ struct external_reloc
   do memset (dst->r_reserved, 0, sizeof (dst->r_reserved)); while (0)
 
 /* various relocation types.  */
-#define R_ABS     0x0000            /* no relocation */
-#define R_REL13   0x002A            /* 13-bit direct reference (???) */
-#define R_PARTLS7 0x0028            /* 7 LSBs of an address */
-#define R_PARTMS9 0x0029            /* 9MSBs of an address */
-#define R_EXTWORD 0x002B            /* 23-bit direct reference */
-#define R_EXTWORD16 0x002C          /* 16-bit direct reference to 23-bit addr*/
-#define R_EXTWORDMS7 0x002D         /* upper 7 bits of 23-bit address */
+#define R_REL24		 5
+#define R_RELWORD	16
+#define R_RELLONG	17
+#define R_PCRWORD	19
+#define R_PCR24		21
+#define R_PARTLS16	32
+#define R_PARTMS8	33
+
+#define R_ABS		 0	/* no relocation */
+#define R_REL13       0x2A	/* 13-bit direct reference (???) */
+#define R_PARTLS7     0x28	/* 7 LSBs of an address */
+#define R_PARTMS9     0x29	/* 9MSBs of an address */
+#define R_EXTWORD     0x2B	/* 23-bit direct reference */
+#define R_EXTWORD16   0x2C	/* 16-bit direct reference to 23-bit addr*/
+#define R_EXTWORDMS7  0x2D	/* upper 7 bits of 23-bit address */
 
 #endif /* COFF_TI_H */

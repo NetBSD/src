@@ -68,3 +68,4 @@ main:
 	bve,n (%r2)
 	.EXIT
 	.PROCEND
+	.section	.note.GNU-stack,"",@progbits

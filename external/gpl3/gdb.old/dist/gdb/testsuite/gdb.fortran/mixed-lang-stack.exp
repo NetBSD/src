@@ -1,4 +1,4 @@
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,16 +35,17 @@ if {[prepare_for_testing_full "failed to prepare" \
     return -1
 }
 
+set have_index [exec_has_index_section $binfile]
+
 # Runs the test program and examins the stack.  LANG is a string, the
 # value to pass to GDB's 'set language ...' command.
 proc run_tests { lang } {
     with_test_prefix "lang=${lang}" {
-	global binfile hex
+	global binfile hex have_index
 
 	clean_restart ${binfile}
 
 	if ![runto_main] {
-	    untested "could not run to main"
 	    return -1
 	}
 
@@ -73,9 +74,23 @@ proc run_tests { lang } {
 		 "#6\\s+$hex in mixed_func_1c \\(\[^\r\n\]+\\) at \[^\r\n\]+" \
 		 "#7\\s+$hex in mixed_func_1b \\($1b_args\\) at \[^\r\n\]+" \
 		 "#8\\s+$hex in mixed_func_1a \\(\\) at \[^\r\n\]+" \
-		 "#9\\s+$hex in mixed_stack_main \\(\\) at \[^\r\n\]+" \
-		 "#10\\s+$hex in main \\(\[^\r\n\]+\\) at .*" ]
-	gdb_test "bt -frame-arguments all" $bt_stack
+		 "#9\\s+$hex in mixed_stack_main \\(\\) at \[^\r\n\]+" ]
+	set main_args "argc=1, argv=${hex}( \[^\r\n\]+)?"
+	set bt_stack_kfail \
+	    [multi_line \
+		 $bt_stack \
+		 "#10\\s+$hex in main \\($main_args\\) at \[^\r\n\]+"]
+	gdb_test_multiple "bt -frame-arguments all" "" {
+	    -re -wrap $bt_stack {
+		pass $gdb_test_name
+	    }
+	    -re -wrap $bt_stack_kfail {
+		if { $have_index } {
+		    setup_kfail "gdb/24549" *-*-*
+		}
+		fail $gdb_test_name
+	    }
+	}
 
 	# Check the language for frame #0.
 	gdb_test "info frame" "source language fortran\..*" \
@@ -114,22 +129,29 @@ proc run_tests { lang } {
 	    set f_pattern "$hex \"abcdef\""
 	}
 
+	# When value-printing pointers in GDB, GDB will try and look for any
+	# associated symbol and print it after the pointer as "<SYMBOL>". For
+	# this test Intel and LLVM compilers move g to the .bss section, thus
+	# creating a symbol, while the GNU compiler stack keeps g purely on the
+	# stack.
+	set g_pattern "$hex\( <\[^\r\n\]+>\)?"
+
 	set args_pattern [multi_line \
 			      "a = 1" \
 			      "b = 2" \
 			      "c = 3" \
 			      "d = ${d_pattern}" \
 			      "f = ${f_pattern}" \
-			      "g = $hex" ]
+			      "g = ${g_pattern}" ]
 
 	gdb_test "info args" $args_pattern \
 	    "info args in frame #6"
 	if { $lang == "fortran" } {
-	    set g_pattern " = \\( a = 1\\.5, b = 2\\.5 \\)"
+	    set g_val_pattern " = \\( a = 1\\.5, b = 2\\.5 \\)"
 	} else {
-	    set g_pattern " = \\{a = 1\\.5, b = 2\\.5\\}"
+	    set g_val_pattern " = \\{a = 1\\.5, b = 2\\.5\\}"
 	}
-	gdb_test "print *g" "${g_pattern}" \
+	gdb_test "print *g" "${g_val_pattern}" \
 	    "print object pointed to by g"
 
 	gdb_test "up" "#7\\s+$hex in mixed_func_1b .*" \
@@ -140,11 +162,11 @@ proc run_tests { lang } {
 	if { $lang == "c" || $lang == "c++" } {
 	    set d_pattern "4 \\+ 5i"
 	    set e_pattern "\"abcdef\""
-	    set g_pattern "\{a = 1.5, b = 2.5\}"
+	    set g_val_pattern "\{a = 1.5, b = 2.5\}"
 	} else {
 	    set d_pattern "\\(4,5\\)"
 	    set e_pattern "'abcdef'"
-	    set g_pattern "\\( a = 1.5, b = 2.5 \\)"
+	    set g_val_pattern "\\( a = 1.5, b = 2.5 \\)"
 	}
 
 	set args_pattern [multi_line \
@@ -153,7 +175,7 @@ proc run_tests { lang } {
 			      "c = 3" \
 			      "d = ${d_pattern}" \
 			      "e = ${e_pattern}" \
-			      "g = ${g_pattern}" \
+			      "g = ${g_val_pattern}" \
 			      "_e = 6" ]
 
 	gdb_test "info args" $args_pattern \

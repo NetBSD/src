@@ -1,6 +1,6 @@
 /* Target-dependent definitions for AMD64.
 
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2023 Free Software Foundation, Inc.
    Contributed by Jiri Smid, SuSE Labs.
 
    This file is part of GDB.
@@ -22,7 +22,7 @@
 #define AMD64_TDEP_H
 
 struct gdbarch;
-struct frame_info;
+class frame_info_ptr;
 struct regcache;
 
 #include "i386-tdep.h"
@@ -88,13 +88,12 @@ enum amd64_regnum
 
 #define AMD64_NUM_REGS		(AMD64_GSBASE_REGNUM + 1)
 
-extern displaced_step_closure_up amd64_displaced_step_copy_insn
+extern displaced_step_copy_insn_closure_up amd64_displaced_step_copy_insn
   (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to,
    struct regcache *regs);
-extern void amd64_displaced_step_fixup (struct gdbarch *gdbarch,
-					struct displaced_step_closure *closure,
-					CORE_ADDR from, CORE_ADDR to,
-					struct regcache *regs);
+extern void amd64_displaced_step_fixup
+  (struct gdbarch *gdbarch, displaced_step_copy_insn_closure *closure,
+   CORE_ADDR from, CORE_ADDR to, struct regcache *regs);
 
 /* Initialize the ABI for amd64.  Uses DEFAULT_TDESC as fallback
    tdesc, if INFO does not specify one.  */
@@ -139,15 +138,10 @@ extern const struct regset amd64_fpregset;
 /* Variables exported from amd64-linux-tdep.c.  */
 extern int amd64_linux_gregset_reg_offset[];
 
-/* Variables exported from amd64-nbsd-tdep.c.  */
+/* Variables exported from amd64-netbsd-tdep.c.  */
 extern int amd64nbsd_r_reg_offset[];
 
 /* Variables exported from amd64-obsd-tdep.c.  */
 extern int amd64obsd_r_reg_offset[];
-
-/* Variables exported from amd64-fbsd-tdep.c.  */
-extern CORE_ADDR amd64fbsd_sigtramp_start_addr;
-extern CORE_ADDR amd64fbsd_sigtramp_end_addr;
-extern int amd64fbsd_sc_reg_offset[];
 
 #endif /* amd64-tdep.h */

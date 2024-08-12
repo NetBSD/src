@@ -1,6 +1,6 @@
 /* Test program for fs_base and gs_base.
 
-   Copyright 2017-2020 Free Software Foundation, Inc.
+   Copyright 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

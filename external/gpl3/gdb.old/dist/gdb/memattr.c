@@ -1,6 +1,6 @@
 /* Memory attributes support, for GDB.
 
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -60,11 +60,11 @@ show_inaccessible_by_default (struct ui_file *file, int from_tty,
 			      const char *value)
 {
   if (inaccessible_by_default)
-    fprintf_filtered (file, _("Unknown memory addresses will "
-			      "be treated as inaccessible.\n"));
+    gdb_printf (file, _("Unknown memory addresses will "
+			"be treated as inaccessible.\n"));
   else
-    fprintf_filtered (file, _("Unknown memory addresses "
-			      "will be treated as RAM.\n"));          
+    gdb_printf (file, _("Unknown memory addresses "
+			"will be treated as RAM.\n"));          
 }
 
 /* This function should be called before any command which would
@@ -121,7 +121,7 @@ create_user_mem_region (CORE_ADDR lo, CORE_ADDR hi,
   /* lo == hi is a useless empty region.  */
   if (lo >= hi && hi != 0)
     {
-      printf_unfiltered (_("invalid memory region: low >= high\n"));
+      gdb_printf (_("invalid memory region: low >= high\n"));
       return;
     }
 
@@ -148,7 +148,7 @@ create_user_mem_region (CORE_ADDR lo, CORE_ADDR hi,
 	  || (hi > n.lo && (hi <= n.hi || n.hi == 0))
 	  || (lo <= n.lo && ((hi >= n.hi && n.hi != 0) || hi == 0)))
 	{
-	  printf_unfiltered (_("overlapping memory region\n"));
+	  gdb_printf (_("overlapping memory region\n"));
 	  return;
 	}
     }
@@ -339,42 +339,42 @@ static void
 info_mem_command (const char *args, int from_tty)
 {
   if (mem_use_target ())
-    printf_filtered (_("Using memory regions provided by the target.\n"));
+    gdb_printf (_("Using memory regions provided by the target.\n"));
   else
-    printf_filtered (_("Using user-defined memory regions.\n"));
+    gdb_printf (_("Using user-defined memory regions.\n"));
 
   require_target_regions ();
 
   if (mem_region_list->empty ())
     {
-      printf_unfiltered (_("There are no memory regions defined.\n"));
+      gdb_printf (_("There are no memory regions defined.\n"));
       return;
     }
 
-  printf_filtered ("Num ");
-  printf_filtered ("Enb ");
-  printf_filtered ("Low Addr   ");
+  gdb_printf ("Num ");
+  gdb_printf ("Enb ");
+  gdb_printf ("Low Addr   ");
   if (gdbarch_addr_bit (target_gdbarch ()) > 32)
-    printf_filtered ("        ");
-  printf_filtered ("High Addr  ");
+    gdb_printf ("        ");
+  gdb_printf ("High Addr  ");
   if (gdbarch_addr_bit (target_gdbarch ()) > 32)
-    printf_filtered ("        ");
-  printf_filtered ("Attrs ");
-  printf_filtered ("\n");
+    gdb_printf ("        ");
+  gdb_printf ("Attrs ");
+  gdb_printf ("\n");
 
   for (const mem_region &m : *mem_region_list)
     {
       const char *tmp;
 
-      printf_filtered ("%-3d %-3c\t",
-		       m.number,
-		       m.enabled_p ? 'y' : 'n');
+      gdb_printf ("%-3d %-3c\t",
+		  m.number,
+		  m.enabled_p ? 'y' : 'n');
       if (gdbarch_addr_bit (target_gdbarch ()) <= 32)
 	tmp = hex_string_custom (m.lo, 8);
       else
 	tmp = hex_string_custom (m.lo, 16);
       
-      printf_filtered ("%s ", tmp);
+      gdb_printf ("%s ", tmp);
 
       if (gdbarch_addr_bit (target_gdbarch ()) <= 32)
 	{
@@ -391,7 +391,7 @@ info_mem_command (const char *args, int from_tty)
 	    tmp = hex_string_custom (m.hi, 16);
 	}
 
-      printf_filtered ("%s ", tmp);
+      gdb_printf ("%s ", tmp);
 
       /* Print a token for each attribute.
 
@@ -408,32 +408,32 @@ info_mem_command (const char *args, int from_tty)
       switch (m.attrib.mode)
 	{
 	case MEM_RW:
-	  printf_filtered ("rw ");
+	  gdb_printf ("rw ");
 	  break;
 	case MEM_RO:
-	  printf_filtered ("ro ");
+	  gdb_printf ("ro ");
 	  break;
 	case MEM_WO:
-	  printf_filtered ("wo ");
+	  gdb_printf ("wo ");
 	  break;
 	case MEM_FLASH:
-	  printf_filtered ("flash blocksize 0x%x ", m.attrib.blocksize);
+	  gdb_printf ("flash blocksize 0x%x ", m.attrib.blocksize);
 	  break;
 	}
 
       switch (m.attrib.width)
 	{
 	case MEM_WIDTH_8:
-	  printf_filtered ("8 ");
+	  gdb_printf ("8 ");
 	  break;
 	case MEM_WIDTH_16:
-	  printf_filtered ("16 ");
+	  gdb_printf ("16 ");
 	  break;
 	case MEM_WIDTH_32:
-	  printf_filtered ("32 ");
+	  gdb_printf ("32 ");
 	  break;
 	case MEM_WIDTH_64:
-	  printf_filtered ("64 ");
+	  gdb_printf ("64 ");
 	  break;
 	case MEM_WIDTH_UNSPECIFIED:
 	  break;
@@ -441,24 +441,24 @@ info_mem_command (const char *args, int from_tty)
 
 #if 0
       if (attrib->hwbreak)
-	printf_filtered ("hwbreak");
+	gdb_printf ("hwbreak");
       else
-	printf_filtered ("swbreak");
+	gdb_printf ("swbreak");
 #endif
 
       if (m.attrib.cache)
-	printf_filtered ("cache ");
+	gdb_printf ("cache ");
       else
-	printf_filtered ("nocache ");
+	gdb_printf ("nocache ");
 
 #if 0
       if (attrib->verify)
-	printf_filtered ("verify ");
+	gdb_printf ("verify ");
       else
-	printf_filtered ("noverify ");
+	gdb_printf ("noverify ");
 #endif
 
-      printf_filtered ("\n");
+      gdb_printf ("\n");
     }
 }
 
@@ -474,7 +474,7 @@ mem_enable (int num)
 	m.enabled_p = 1;
 	return;
       }
-  printf_unfiltered (_("No memory region number %d.\n"), num);
+  gdb_printf (_("No memory region number %d.\n"), num);
 }
 
 static void
@@ -512,7 +512,7 @@ mem_disable (int num)
 	m.enabled_p = 0;
 	return;
       }
-  printf_unfiltered (_("No memory region number %d.\n"), num);
+  gdb_printf (_("No memory region number %d.\n"), num);
 }
 
 static void
@@ -545,7 +545,7 @@ mem_delete (int num)
 {
   if (!mem_region_list)
     {
-      printf_unfiltered (_("No memory region number %d.\n"), num);
+      gdb_printf (_("No memory region number %d.\n"), num);
       return;
     }
 
@@ -558,7 +558,7 @@ mem_delete (int num)
   if (it != mem_region_list->end ())
     mem_region_list->erase (it);
   else
-    printf_unfiltered (_("No memory region number %d.\n"), num);
+    gdb_printf (_("No memory region number %d.\n"), num);
 }
 
 static void
@@ -623,14 +623,11 @@ Do \"info mem\" to see current list of IDs."), &deletelist);
   add_info ("mem", info_mem_command,
 	    _("Memory region attributes."));
 
-  add_basic_prefix_cmd ("mem", class_vars, _("\
-Memory regions settings."),
-			&mem_set_cmdlist, "set mem ",
-			0/* allow-unknown */, &setlist);
-  add_show_prefix_cmd ("mem", class_vars, _("\
-Memory regions settings."),
-		       &mem_show_cmdlist, "show mem  ",
-		       0/* allow-unknown */, &showlist);
+  add_setshow_prefix_cmd ("mem", class_vars,
+			  _("Memory regions settings."),
+			  _("Memory regions settings."),
+			  &mem_set_cmdlist, &mem_show_cmdlist,
+			  &setlist, &showlist);
 
   add_setshow_boolean_cmd ("inaccessible-by-default", no_class,
 				  &inaccessible_by_default, _("\
