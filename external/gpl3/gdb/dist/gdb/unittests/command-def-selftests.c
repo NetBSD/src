@@ -1,6 +1,6 @@
 /* Self tests for GDB command definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2019-2023 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "cli/cli-cmds.h"
 #include "cli/cli-decode.h"
 #include "gdbsupport/selftest.h"
@@ -74,10 +73,25 @@ check_doc (struct cmd_list_element *commandlist, const char *prefix)
 	   "first line is not terminated with a '.' character");
 
       /* Checks the doc is not terminated with a new line.  */
-      if (c->doc[strlen (c->doc) - 1] == '\n')
+      if (isspace (c->doc[strlen (c->doc) - 1]))
 	broken_doc_invariant
 	  (prefix, c->name,
-	   "has a superfluous trailing end of line");
+	   "has superfluous trailing whitespace");
+
+      for (const char *nl = strchr (c->doc, '\n');
+	   nl != nullptr;
+	   nl = strchr (nl + 1, '\n'))
+	{
+	  if (nl == c->doc)
+	    broken_doc_invariant (prefix, c->name, "has a leading newline");
+	  else
+	    {
+	      /* \n\n is ok, so we check that explicitly here.  */
+	      if (isspace (nl[-1]) && nl[-1] != '\n')
+		broken_doc_invariant (prefix, c->name,
+				      "has whitespace before a newline");
+	    }
+	}
 
       /* Check if this command has subcommands and is not an
 	 abbreviation.  We skip checking subcommands of abbreviations

@@ -1,6 +1,6 @@
 /* MI Command Set - MI parser.
 
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
 
@@ -19,7 +19,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "mi-cmds.h"
 #include "mi-parse.h"
 #include "charset.h"
@@ -107,9 +106,14 @@ mi_parse_escape (const char **string_ptr)
 }
 
 void
-mi_parse_argv (const char *args, struct mi_parse *parse)
+mi_parse::parse_argv ()
 {
-  const char *chp = args;
+  /* If arguments were already computed (or were supplied at
+     construction), then there's no need to re-compute them.  */
+  if (argv != nullptr)
+    return;
+
+  const char *chp = m_args.c_str ();
   int argc = 0;
   char **argv = XNEWVEC (char *, argc + 1);
 
@@ -124,8 +128,8 @@ mi_parse_argv (const char *args, struct mi_parse *parse)
       switch (*chp)
 	{
 	case '\0':
-	  parse->argv = argv;
-	  parse->argc = argc;
+	  this->argv = argv;
+	  this->argc = argc;
 	  return;
 	case '"':
 	  {
@@ -208,37 +212,85 @@ mi_parse_argv (const char *args, struct mi_parse *parse)
     }
 }
 
-mi_parse::mi_parse ()
-  : op (MI_COMMAND),
-    command (NULL),
-    token (NULL),
-    cmd (NULL),
-    cmd_start (NULL),
-    args (NULL),
-    argv (NULL),
-    argc (0),
-    all (0),
-    thread_group (-1),
-    thread (-1),
-    frame (-1),
-    language (language_unknown)
-{
-}
-
 mi_parse::~mi_parse ()
 {
-  xfree (command);
-  xfree (token);
-  xfree (args);
   freeargv (argv);
 }
 
-std::unique_ptr<struct mi_parse>
-mi_parse (const char *cmd, char **token)
+/* See mi-parse.h.  */
+
+const char *
+mi_parse::args ()
+{
+  /* If args were already computed, or if there is no pre-computed
+     argv, just return the args.  */
+  if (!m_args.empty () || argv == nullptr)
+    return  m_args.c_str ();
+
+  /* Compute args from argv.  */
+  for (int i = 0; i < argc; ++i)
+    {
+      if (!m_args.empty ())
+	m_args += " ";
+      m_args += argv[i];
+    }
+
+  return m_args.c_str ();
+}
+
+/* See mi-parse.h.  */
+
+void
+mi_parse::set_thread_group (const char *arg, char **endp)
+{
+  if (thread_group != -1)
+    error (_("Duplicate '--thread-group' option"));
+  if (*arg != 'i')
+    error (_("Invalid thread group id"));
+  arg += 1;
+  thread_group = strtol (arg, endp, 10);
+}
+
+/* See mi-parse.h.  */
+
+void
+mi_parse::set_thread (const char *arg, char **endp)
+{
+  if (thread != -1)
+    error (_("Duplicate '--thread' option"));
+  thread = strtol (arg, endp, 10);
+}
+
+/* See mi-parse.h.  */
+
+void
+mi_parse::set_frame (const char *arg, char **endp)
+{
+  if (frame != -1)
+    error (_("Duplicate '--frame' option"));
+  frame = strtol (arg, endp, 10);
+}
+
+/* See mi-parse.h.  */
+
+void
+mi_parse::set_language (const char *arg, const char **endp)
+{
+  std::string lang_name = extract_arg (&arg);
+
+  language = language_enum (lang_name.c_str ());
+  if (language == language_unknown)
+    error (_("Invalid --language argument: %s"), lang_name.c_str ());
+
+  if (endp != nullptr)
+    *endp = arg;
+}
+
+/* See mi-parse.h.  */
+
+mi_parse::mi_parse (const char *cmd, std::string *token)
 {
   const char *chp;
-
-  std::unique_ptr<struct mi_parse> parse (new struct mi_parse);
 
   /* Before starting, skip leading white space.  */
   cmd = skip_spaces (cmd);
@@ -246,18 +298,16 @@ mi_parse (const char *cmd, char **token)
   /* Find/skip any token and then extract it.  */
   for (chp = cmd; *chp >= '0' && *chp <= '9'; chp++)
     ;
-  *token = (char *) xmalloc (chp - cmd + 1);
-  memcpy (*token, cmd, (chp - cmd));
-  (*token)[chp - cmd] = '\0';
+  *token = std::string (cmd, chp - cmd);
 
   /* This wasn't a real MI command.  Return it as a CLI_COMMAND.  */
   if (*chp != '-')
     {
       chp = skip_spaces (chp);
-      parse->command = xstrdup (chp);
-      parse->op = CLI_COMMAND;
+      this->command = make_unique_xstrdup (chp);
+      this->op = CLI_COMMAND;
 
-      return parse;
+      return;
     }
 
   /* Extract the command.  */
@@ -266,16 +316,14 @@ mi_parse (const char *cmd, char **token)
 
     for (; *chp && !isspace (*chp); chp++)
       ;
-    parse->command = (char *) xmalloc (chp - tmp + 1);
-    memcpy (parse->command, tmp, chp - tmp);
-    parse->command[chp - tmp] = '\0';
+    this->command = make_unique_xstrndup (tmp, chp - tmp);
   }
 
   /* Find the command in the MI table.  */
-  parse->cmd = mi_cmd_lookup (parse->command);
-  if (parse->cmd == NULL)
+  this->cmd = mi_cmd_lookup (this->command.get ());
+  if (this->cmd == NULL)
     throw_error (UNDEFINED_COMMAND_ERROR,
-		 _("Undefined MI command: %s"), parse->command);
+		 _("Undefined MI command: %s"), this->command.get ());
 
   /* Skip white space following the command.  */
   chp = skip_spaces (chp);
@@ -299,13 +347,13 @@ mi_parse (const char *cmd, char **token)
 
       if (strncmp (chp, "--all ", as) == 0)
 	{
-	  parse->all = 1;
+	  this->all = 1;
 	  chp += as;
 	}
       /* See if --all is the last token in the input.  */
       if (strcmp (chp, "--all") == 0)
 	{
-	  parse->all = 1;
+	  this->all = 1;
 	  chp += strlen (chp);
 	}
       if (strncmp (chp, "--thread-group ", tgs) == 0)
@@ -313,13 +361,8 @@ mi_parse (const char *cmd, char **token)
 	  char *endp;
 
 	  option = "--thread-group";
-	  if (parse->thread_group != -1)
-	    error (_("Duplicate '--thread-group' option"));
 	  chp += tgs;
-	  if (*chp != 'i')
-	    error (_("Invalid thread group id"));
-	  chp += 1;
-	  parse->thread_group = strtol (chp, &endp, 10);
+	  this->set_thread_group (chp, &endp);
 	  chp = endp;
 	}
       else if (strncmp (chp, "--thread ", ts) == 0)
@@ -327,10 +370,8 @@ mi_parse (const char *cmd, char **token)
 	  char *endp;
 
 	  option = "--thread";
-	  if (parse->thread != -1)
-	    error (_("Duplicate '--thread' option"));
 	  chp += ts;
-	  parse->thread = strtol (chp, &endp, 10);
+	  this->set_thread (chp, &endp);
 	  chp = endp;
 	}
       else if (strncmp (chp, "--frame ", fs) == 0)
@@ -338,22 +379,15 @@ mi_parse (const char *cmd, char **token)
 	  char *endp;
 
 	  option = "--frame";
-	  if (parse->frame != -1)
-	    error (_("Duplicate '--frame' option"));
 	  chp += fs;
-	  parse->frame = strtol (chp, &endp, 10);
+	  this->set_frame (chp, &endp);
 	  chp = endp;
 	}
       else if (strncmp (chp, "--language ", ls) == 0)
 	{
 	  option = "--language";
 	  chp += ls;
-	  std::string lang_name = extract_arg (&chp);
-
-	  parse->language = language_enum (lang_name.c_str ());
-	  if (parse->language == language_unknown
-	      || parse->language == language_auto)
-	    error (_("Invalid --language argument: %s"), lang_name.c_str ());
+	  this->set_language (chp, &chp);
 	}
       else
 	break;
@@ -364,11 +398,77 @@ mi_parse (const char *cmd, char **token)
     }
 
   /* Save the rest of the arguments for the command.  */
-  parse->args = xstrdup (chp);
+  this->m_args = chp;
 
   /* Fully parsed, flag as an MI command.  */
-  parse->op = MI_COMMAND;
-  return parse;
+  this->op = MI_COMMAND;
+}
+
+/* See mi-parse.h.  */
+
+mi_parse::mi_parse (gdb::unique_xmalloc_ptr<char> command,
+		    std::vector<gdb::unique_xmalloc_ptr<char>> args)
+{
+  this->command = std::move (command);
+  this->token = "";
+
+  if (this->command.get ()[0] != '-')
+    throw_error (UNDEFINED_COMMAND_ERROR,
+		 _("MI command '%s' does not start with '-'"),
+		 this->command.get ());
+
+  /* Find the command in the MI table.  */
+  this->cmd = mi_cmd_lookup (this->command.get () + 1);
+  if (this->cmd == NULL)
+    throw_error (UNDEFINED_COMMAND_ERROR,
+		 _("Undefined MI command: %s"), this->command.get ());
+
+  /* This over-allocates slightly, but it seems unimportant.  */
+  this->argv = XCNEWVEC (char *, args.size () + 1);
+
+  for (size_t i = 0; i < args.size (); ++i)
+    {
+      const char *chp = args[i].get ();
+
+      /* See if --all is the last token in the input.  */
+      if (strcmp (chp, "--all") == 0)
+	{
+	  this->all = 1;
+	}
+      else if (strcmp (chp, "--thread-group") == 0)
+	{
+	  ++i;
+	  if (i == args.size ())
+	    error ("No argument to '--thread-group'");
+	  this->set_thread_group (args[i].get (), nullptr);
+	}
+      else if (strcmp (chp, "--thread") == 0)
+	{
+	  ++i;
+	  if (i == args.size ())
+	    error ("No argument to '--thread'");
+	  this->set_thread (args[i].get (), nullptr);
+	}
+      else if (strcmp (chp, "--frame") == 0)
+	{
+	  ++i;
+	  if (i == args.size ())
+	    error ("No argument to '--frame'");
+	  this->set_frame (args[i].get (), nullptr);
+	}
+      else if (strcmp (chp, "--language") == 0)
+	{
+	  ++i;
+	  if (i == args.size ())
+	    error ("No argument to '--language'");
+	  this->set_language (args[i].get (), nullptr);
+	}
+      else
+	this->argv[this->argc++] = args[i].release ();
+    }
+
+  /* Fully parsed, flag as an MI command.  */
+  this->op = MI_COMMAND;
 }
 
 enum print_values

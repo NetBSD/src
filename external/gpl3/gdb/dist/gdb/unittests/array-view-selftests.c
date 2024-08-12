@@ -1,6 +1,6 @@
 /* Self tests for array_view for GDB, the GNU debugger.
 
-   Copyright (C) 2017-2023 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "gdbsupport/selftest.h"
 #include "gdbsupport/array-view.h"
 #include <array>
@@ -30,14 +29,10 @@ namespace array_view_tests {
 #define CHECK_TRAIT(TRAIT)			\
   static_assert (std::TRAIT<gdb::array_view<gdb_byte>>::value, "")
 
-#if HAVE_IS_TRIVIALLY_COPYABLE
-
 CHECK_TRAIT (is_trivially_copyable);
 CHECK_TRAIT (is_trivially_move_assignable);
 CHECK_TRAIT (is_trivially_move_constructible);
 CHECK_TRAIT (is_trivially_destructible);
-
-#endif
 
 #undef CHECK_TRAIT
 
