@@ -17,6 +17,10 @@
 	compatible = "sipeed,maix-dock-m1", "sipeed,maix-dock-m1w",
 		     "canaan,kendryte-k210";
 
+	aliases {
+		serial0 = &uarths0;
+	};
+
 	chosen {
 		bootargs = "earlycon console=ttySIF0";
 		stdout-path = "serial0:115200n8";
@@ -52,7 +56,7 @@
 	gpio-keys {
 		compatible = "gpio-keys";
 
-		boot {
+		key-boot {
 			label = "BOOT";
 			linux,code = <BTN_0>;
 			gpios = <&gpio0 0 GPIO_ACTIVE_LOW>;
@@ -63,7 +67,6 @@
 &fpioa {
 	pinctrl-0 = <&jtag_pinctrl>;
 	pinctrl-names = "default";
-	status = "okay";
 
 	jtag_pinctrl: jtag-pinmux {
 		pinmux = <K210_FPIOA(0, K210_PCF_JTAG_TCLK)>,
@@ -159,6 +162,7 @@
 	#sound-dai-cells = <1>;
 	pinctrl-0 = <&i2s0_pinctrl>;
 	pinctrl-names = "default";
+	status = "okay";
 };
 
 &i2c1 {
@@ -173,6 +177,7 @@
 	pinctrl-names = "default";
 	num-cs = <1>;
 	cs-gpios = <&gpio0 20 GPIO_ACTIVE_HIGH>;
+	status = "okay";
 
 	panel@0 {
 		compatible = "sitronix,st7789v";
@@ -191,7 +196,7 @@
 	cs-gpios = <&gpio0 13 GPIO_ACTIVE_LOW>;
 	status = "okay";
 
-	slot@0 {
+	mmc@0 {
 		compatible = "mmc-spi-slot";
 		reg = <0>;
 		voltage-ranges = <3300 3300>;
@@ -201,10 +206,12 @@
 };
 
 &spi3 {
-	spi-flash@0 {
+	flash@0 {
 		compatible = "jedec,spi-nor";
 		reg = <0>;
 		spi-max-frequency = <50000000>;
+		spi-tx-bus-width = <4>;
+		spi-rx-bus-width = <4>;
 		m25p,fast-read;
 		broken-flash-reset;
 	};

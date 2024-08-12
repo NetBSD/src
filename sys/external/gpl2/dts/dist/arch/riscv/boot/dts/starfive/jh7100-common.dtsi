@@ -15,7 +15,6 @@
 		mmc0 = &sdio0;
 		mmc1 = &sdio1;
 		serial0 = &uart3;
-		serial1 = &uart0;
 	};
 
 	chosen {
@@ -48,38 +47,8 @@
 		#size-cells = <2>;
 		ranges;
 
-		linux,cma {
-			compatible = "shared-dma-pool";
-			alloc-ranges = <0x0 0xa0000000 0x0 0x28000000>;
-			size = <0x0 0x28000000>;
-			alignment = <0x0 0x1000>;
-			reusable;
-			linux,cma-default;
-		};
-
-		jpu_reserved: framebuffer@c9000000 {
-			reg = <0x0 0xc9000000 0x0 0x4000000>;
-		};
-
-		nvdla_reserved: framebuffer@d0000000 {
-			reg = <0x0 0xd0000000 0x0 0x28000000>;
-			no-map;
-		};
-
-		vin_reserved: framebuffer@f9000000 {
-			compatible = "shared-dma-pool";
-			reg = <0x0 0xf9000000 0x0 0x1000000>;
-			no-map;
-		};
-
 		dma-reserved@fa000000 {
 			reg = <0x0 0xfa000000 0x0 0x1000000>;
-			no-map;
-		};
-
-		sffb_reserved: framebuffer@fb000000 {
-			compatible = "shared-dma-pool";
-			reg = <0x0 0xfb000000 0x0 0x2000000>;
 			no-map;
 		};
 
@@ -100,44 +69,6 @@
 	wifi_pwrseq: wifi-pwrseq {
 		compatible = "mmc-pwrseq-simple";
 		reset-gpios = <&gpio 37 GPIO_ACTIVE_LOW>;
-	};
-};
-
-&display {
-	memory-region = <&sffb_reserved>;
-	status = "okay";
-};
-
-&crtc {
-	ddr-format = <4>; //<WIN_FMT_RGB565>;
-	status = "okay";
-
-	port: port@0 {
-		reg = <0>;
-
-		crtc_0_out: endpoint {
-			remote-endpoint = <&hdmi_input0>;
-		};
-	};
-};
-
-&encoder {
-	encoder-type = <2>; // 2-TMDS, 3-LVDS, 6-DSI, 8-DPI
-	status = "okay";
-
-	ports {
-		port@0 {
-			hdmi_out: endpoint {
-				remote-endpoint = <&tda998x_0_input>;
-			};
-		};
-
-		port@1 {
-			hdmi_input0: endpoint {
-				remote-endpoint = <&crtc_0_out>;
-			};
-		};
-
 	};
 };
 
@@ -268,20 +199,6 @@
 		};
 	};
 
-	pwmdac_pins: pwmdac-0 {
-		pwmdac-pins {
-			pinmux = <GPIOMUX(23, GPO_PWMDAC_LEFT_OUT,
-				  GPO_ENABLE, GPI_NONE)>,
-				 <GPIOMUX(24, GPO_PWMDAC_RIGHT_OUT,
-				  GPO_ENABLE, GPI_NONE)>;
-			bias-disable;
-			drive-strength = <35>;
-			input-disable;
-			input-schmitt-disable;
-			slew-rate = <0>;
-		};
-	};
-
 	pwm_pins: pwm-0 {
 		pwm-pins {
 			pinmux = <GPIOMUX(7,
@@ -372,62 +289,6 @@
 		};
 	};
 
-	spi2_pins: spi2-0 {
-		mosi-pins {
-			pinmux = <GPIOMUX(18, GPO_SPI2_PAD_TXD,
-				  GPO_ENABLE, GPI_NONE)>;
-			bias-disable;
-			input-disable;
-			input-schmitt-disable;
-		};
-		miso-pins {
-			pinmux = <GPIOMUX(16, GPO_LOW, GPO_DISABLE,
-				  GPI_SPI2_PAD_RXD)>;
-			bias-pull-up;
-			input-enable;
-			input-schmitt-enable;
-		};
-		sck-pins {
-			pinmux = <GPIOMUX(12, GPO_SPI2_PAD_SCK_OUT,
-				  GPO_ENABLE, GPI_NONE)>;
-			bias-disable;
-			input-disable;
-			input-schmitt-disable;
-		};
-		ss-pins {
-			pinmux = <GPIOMUX(15, GPO_SPI2_PAD_SS_0_N,
-				  GPO_ENABLE, GPI_NONE)>,
-				 <GPIOMUX(11, GPO_SPI2_PAD_SS_1_N,
-				  GPO_ENABLE, GPI_NONE)>;
-			bias-disable;
-			input-disable;
-			input-schmitt-disable;
-		};
-	};
-
-	uart0_pins: uart0-0 {
-		rx-pins {
-			pinmux = <GPIOMUX(40, GPO_LOW, GPO_DISABLE,
-				  GPI_UART0_PAD_SIN)>,
-				 <GPIOMUX(39, GPO_LOW, GPO_DISABLE,
-				  GPI_UART0_PAD_CTSN)>;
-			bias-pull-up;
-			drive-strength = <14>;
-			input-enable;
-			input-schmitt-enable;
-		};
-		tx-pins {
-			pinmux = <GPIOMUX(41, GPO_UART0_PAD_SOUT,
-				  GPO_ENABLE, GPI_NONE)>,
-				 <GPIOMUX(42, GPO_UART0_PAD_RTSN,
-				  GPO_ENABLE, GPI_NONE)>;
-			bias-disable;
-			drive-strength = <35>;
-			input-disable;
-			input-schmitt-disable;
-		};
-	};
-
 	uart3_pins: uart3-0 {
 		rx-pins {
 			pinmux = <GPIOMUX(13, GPO_LOW, GPO_DISABLE,
@@ -468,17 +329,6 @@
 		regulators {
 		};
 	};
-
-	tda998x@70 {
-		compatible = "nxp,tda998x";
-		reg = <0x70>;
-
-		port {
-			tda998x_0_input: endpoint {
-				remote-endpoint = <&hdmi_out>;
-			};
-		};
-	};
 };
 
 &i2c1 {
@@ -515,44 +365,6 @@
 	status = "okay";
 };
 
-&pwmdac {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pwmdac_pins>;
-	status = "okay";
-};
-
-&qspi {
-	nor_flash: nor-flash@0 {
-		compatible = "spi-flash";
-		reg = <0>;
-		spi-max-frequency = <31250000>;
-		page-size = <256>;
-		block-size = <16>;
-		cdns,read-delay = <4>;
-		cdns,tshsl-ns = <1>;
-		cdns,tsd2d-ns = <1>;
-		cdns,tchsh-ns = <1>;
-		cdns,tslch-ns = <1>;
-		spi-tx-bus-width = <1>;
-		spi-rx-bus-width = <1>;
-	};
-
-	nand_flash: nand-flash@1 {
-		compatible = "spi-flash-nand";
-		reg = <1>;
-		spi-max-frequency = <31250000>;
-		page-size = <2048>;
-		block-size = <17>;
-		cdns,read-delay = <4>;
-		cdns,tshsl-ns = <1>;
-		cdns,tsd2d-ns = <1>;
-		cdns,tchsh-ns = <1>;
-		cdns,tslch-ns = <1>;
-		spi-tx-bus-width = <1>;
-		spi-rx-bus-width = <1>;
-	};
-};
-
 &sdio0 {
 	broken-cd;
 	bus-width = <4>;
@@ -581,34 +393,8 @@
 	};
 };
 
-&spi2 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&spi2_pins>;
-	status = "okay";
-
-	spi_dev0: spi@0 {
-		compatible = "rohm,dh2228fv";
-		spi-max-frequency = <10000000>;
-		reg = <0>;
-	};
-};
-
-&uart0 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&uart0_pins>;
-	status = "okay";
-};
-
 &uart3 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&uart3_pins>;
 	status = "okay";
-};
-
-&usb3 {
-	status = "okay";
-};
-
-&usb_cdns3 {
-	dr_mode = "host";
 };
