@@ -1,7 +1,7 @@
 // -*- C -*-
 
 // Simulator definition for the MIPS DSP ASE.
-// Copyright (C) 2005-2023 Free Software Foundation, Inc.
+// Copyright (C) 2005-2024 Free Software Foundation, Inc.
 // Contributed by MIPS Technologies, Inc.  Written by Chao-ying Fu.
 //
 // This file is part of the MIPS sim
@@ -66,7 +66,6 @@
   int32_t h1, h2;
   uint32_t v1 = GPR[rs];
   uint32_t v2 = GPR[rt];
-  uint32_t result = 0;
   h1 = (int32_t)v1;
   h2 = (int32_t)v2;
   if (op == 0) // ADD
@@ -1888,7 +1887,6 @@
 
 :function:::void:do_h_extr:int rt, int ac, int shift
 {
-  int i;
   uint32_t lo = DSPLO(ac);
   uint32_t hi = DSPHI(ac);
   uint64_t prod = (((uint64_t)hi) << 32) + (uint64_t)lo;

@@ -1,5 +1,5 @@
 /* If we're being compiled as a .c file, rather than being included in
-   d10v_sim.h, then ENDIAN_INLINE won't be defined yet.  */
+   d10v-sim.h, then ENDIAN_INLINE won't be defined yet.  */
 
 /* This must come before any other includes.  */
 #include "defs.h"
@@ -9,6 +9,8 @@
 #include "sim-main.h"
 #define ENDIAN_INLINE
 #endif
+
+#include "d10v-sim.h"
 
 ENDIAN_INLINE uint16_t
 get_word (const uint8_t *x)

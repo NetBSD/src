@@ -58,10 +58,6 @@ sim_engine_run (SIM_DESC sd,
 	  nia = m32_idecode_issue (sd, instruction_0, cia);
 	}
 
-#if defined (ENGINE_ISSUE_POSTFIX_HOOK)
-      ENGINE_ISSUE_POSTFIX_HOOK ();
-#endif
-
       /* Update the instruction address */
       cia = nia;
 
