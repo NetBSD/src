@@ -1,6 +1,6 @@
 /* DWARF 2 abbreviations
 
-   Copyright (C) 1994-2023 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
 
    Adapted by Gary Funck (gary@intrepid.com), Intrepid Technology,
    Inc.  with support from Florida State University (under contract
@@ -24,7 +24,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "dwarf2/read.h"
 #include "dwarf2/abbrev.h"
 #include "dwarf2/leb.h"
@@ -88,6 +87,7 @@ tag_interesting_for_index (dwarf_tag tag)
     case DW_TAG_base_type:
     case DW_TAG_class_type:
     case DW_TAG_constant:
+    case DW_TAG_entry_point:
     case DW_TAG_enumeration_type:
     case DW_TAG_enumerator:
     case DW_TAG_imported_declaration:
@@ -162,7 +162,6 @@ abbrev_table::read (struct dwarf2_section_info *section,
       bool has_specification_or_origin = false;
       bool has_name = false;
       bool has_linkage_name = false;
-      bool has_location = false;
       bool has_external = false;
 
       /* Now read in declarations.  */
@@ -215,11 +214,6 @@ abbrev_table::read (struct dwarf2_section_info *section,
 	    case DW_AT_MIPS_linkage_name:
 	    case DW_AT_linkage_name:
 	      has_linkage_name = true;
-	      break;
-
-	    case DW_AT_const_value:
-	    case DW_AT_location:
-	      has_location = true;
 	      break;
 
 	    case DW_AT_sibling:
@@ -295,9 +289,6 @@ abbrev_table::read (struct dwarf2_section_info *section,
 	       && (cur_abbrev->tag != DW_TAG_variable || !has_external))
 	cur_abbrev->interesting = false;
       else if (!tag_interesting_for_index (cur_abbrev->tag))
-	cur_abbrev->interesting = false;
-      else if (!has_location && !has_specification_or_origin && !has_external
-	       && cur_abbrev->tag == DW_TAG_variable)
 	cur_abbrev->interesting = false;
       else
 	cur_abbrev->interesting = true;

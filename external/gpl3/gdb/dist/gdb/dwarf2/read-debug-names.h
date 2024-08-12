@@ -1,6 +1,6 @@
-/* Definitions for virtual tail call frames unwinder for GDB.
+/* Reading code for .debug_names
 
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright (C) 2023-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,23 +17,16 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DWARF2_FRAME_TAILCALL_H
-#define DWARF2_FRAME_TAILCALL_H 1
+#ifndef DWARF2_READ_DEBUG_NAMES_H
+#define DWARF2_READ_DEBUG_NAMES_H
 
-class frame_info_ptr;
-struct frame_unwind;
+struct dwarf2_per_objfile;
 
-/* The tail call frame unwinder.  */
+extern const gdb_byte dwarf5_augmentation[8];
 
-extern void
-  dwarf2_tailcall_sniffer_first (const frame_info_ptr &this_frame,
-				 void **tailcall_cachep,
-				 const LONGEST *entry_cfa_sp_offsetp);
+/* Read .debug_names.  If everything went ok, initialize the "quick"
+   elements of all the CUs and return true.  Otherwise, return false.  */
 
-extern struct value *
-  dwarf2_tailcall_prev_register_first (const frame_info_ptr &this_frame,
-				       void **tailcall_cachep, int regnum);
+bool dwarf2_read_debug_names (dwarf2_per_objfile *per_objfile);
 
-extern const struct frame_unwind dwarf2_tailcall_frame_unwind;
-
-#endif /* !DWARF2_FRAME_TAILCALL_H */
+#endif /* DWARF2_READ_DEBUG_NAMES_H */

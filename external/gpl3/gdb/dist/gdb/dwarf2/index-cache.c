@@ -1,6 +1,6 @@
 /* Caching of GDB/DWARF index files.
 
-   Copyright (C) 1994-2023 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "dwarf2/index-cache.h"
 
 #include "build-id.h"
@@ -33,6 +32,7 @@
 #include "gdbsupport/selftest.h"
 #include <string>
 #include <stdlib.h>
+#include "run-on-main-thread.h"
 
 /* When set to true, show debug messages about the index cache.  */
 static bool debug_index_cache = false;
@@ -86,35 +86,33 @@ index_cache::disable ()
   m_enabled = false;
 }
 
-/* See dwarf-index-cache.h.  */
+ /* See index-cache.h.  */
 
-void
-index_cache::store (dwarf2_per_objfile *per_objfile)
+index_cache_store_context::index_cache_store_context (const index_cache &ic,
+						      dwarf2_per_bfd *per_bfd)
+  :  m_enabled (ic.enabled ()),
+     m_dir (ic.m_dir),
+     m_per_bfd (per_bfd)
 {
-  objfile *obj = per_objfile->objfile;
+  /* Capturing globals may only be done on the main thread.  */
+  gdb_assert (is_main_thread ());
 
-  if (!enabled ())
-    return;
-
-  /* If the objfile does not correspond to an actual file, skip it.  */
-  if ((obj->flags & OBJF_NOT_FILENAME) != 0)
+  if (!m_enabled)
     return;
 
   /* Get build id of objfile.  */
-  const bfd_build_id *build_id = build_id_bfd_get (obj->obfd.get ());
+  const bfd_build_id *build_id = build_id_bfd_get (per_bfd->obfd);
   if (build_id == nullptr)
     {
       index_cache_debug ("objfile %s has no build id",
-			 objfile_name (obj));
+			 bfd_get_filename (per_bfd->obfd));
+      m_enabled = false;
       return;
     }
-
-  std::string build_id_str = build_id_to_string (build_id);
+  m_build_id_str = build_id_to_string (build_id);
 
   /* Get build id of dwz file, if present.  */
-  gdb::optional<std::string> dwz_build_id_str;
-  const dwz_file *dwz = dwarf2_get_dwz_file (per_objfile->per_bfd);
-  const char *dwz_build_id_ptr = NULL;
+  const dwz_file *dwz = dwarf2_get_dwz_file (per_bfd);
 
   if (dwz != nullptr)
     {
@@ -124,16 +122,17 @@ index_cache::store (dwarf2_per_objfile *per_objfile)
 	{
 	  index_cache_debug ("dwz objfile %s has no build id",
 			     dwz->filename ());
+	  m_enabled = false;
 	  return;
 	}
 
-      dwz_build_id_str = build_id_to_string (dwz_build_id);
-      dwz_build_id_ptr = dwz_build_id_str->c_str ();
+      m_dwz_build_id_str = build_id_to_string (dwz_build_id);
     }
 
   if (m_dir.empty ())
     {
       warning (_("The index cache directory name is empty, skipping store."));
+      m_enabled = false;
       return;
     }
 
@@ -144,22 +143,45 @@ index_cache::store (dwarf2_per_objfile *per_objfile)
 	{
 	  warning (_("index cache: could not make cache directory: %s"),
 		   safe_strerror (errno));
+	  m_enabled = false;
 	  return;
 	}
+    }
+  catch (const gdb_exception_error &except)
+    {
+      index_cache_debug ("couldn't store index cache for objfile %s: %s",
+			 bfd_get_filename (per_bfd->obfd), except.what ());
+      m_enabled = false;
+    }
+}
 
+/* See dwarf-index-cache.h.  */
+
+void
+index_cache_store_context::store () const
+{
+  if (!m_enabled)
+    return;
+
+  const char *dwz_build_id_ptr = (m_dwz_build_id_str.has_value ()
+				  ? m_dwz_build_id_str->c_str ()
+				  : nullptr);
+
+  try
+    {
       index_cache_debug ("writing index cache for objfile %s",
-			 objfile_name (obj));
+			 bfd_get_filename (m_per_bfd->obfd));
 
       /* Write the index itself to the directory, using the build id as the
 	 filename.  */
-      write_dwarf_index (per_objfile, m_dir.c_str (),
-			 build_id_str.c_str (), dwz_build_id_ptr,
+      write_dwarf_index (m_per_bfd, m_dir.c_str (),
+			 m_build_id_str.c_str (), dwz_build_id_ptr,
 			 dw_index_kind::GDB_INDEX);
     }
   catch (const gdb_exception_error &except)
     {
       index_cache_debug ("couldn't store index cache for objfile %s: %s",
-			 objfile_name (obj), except.what ());
+			 bfd_get_filename (m_per_bfd->obfd), except.what ());
     }
 }
 

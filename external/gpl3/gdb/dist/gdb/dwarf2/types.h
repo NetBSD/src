@@ -1,6 +1,6 @@
-/* Definitions for virtual tail call frames unwinder for GDB.
+/* Common internal types for the DWARF reader
 
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,23 +17,24 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DWARF2_FRAME_TAILCALL_H
-#define DWARF2_FRAME_TAILCALL_H 1
+#ifndef DWARF2_TYPES_H
+#define DWARF2_TYPES_H
 
-class frame_info_ptr;
-struct frame_unwind;
+#include "gdbsupport/offset-type.h"
+#include "gdbsupport/underlying.h"
 
-/* The tail call frame unwinder.  */
+/* Offset relative to the start of its containing CU (compilation
+   unit).  */
+DEFINE_OFFSET_TYPE (cu_offset, unsigned int);
 
-extern void
-  dwarf2_tailcall_sniffer_first (const frame_info_ptr &this_frame,
-				 void **tailcall_cachep,
-				 const LONGEST *entry_cfa_sp_offsetp);
+/* Offset relative to the start of its .debug_info or .debug_types
+   section.  */
+DEFINE_OFFSET_TYPE (sect_offset, uint64_t);
 
-extern struct value *
-  dwarf2_tailcall_prev_register_first (const frame_info_ptr &this_frame,
-				       void **tailcall_cachep, int regnum);
+static inline const char *
+sect_offset_str (sect_offset offset)
+{
+  return hex_string (to_underlying (offset));
+}
 
-extern const struct frame_unwind dwarf2_tailcall_frame_unwind;
-
-#endif /* !DWARF2_FRAME_TAILCALL_H */
+#endif /* DWARF2_TYPES_H */

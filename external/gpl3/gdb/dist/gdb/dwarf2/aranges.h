@@ -1,6 +1,6 @@
-/* Definitions for virtual tail call frames unwinder for GDB.
+/* DWARF aranges handling
 
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,23 +17,20 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DWARF2_FRAME_TAILCALL_H
-#define DWARF2_FRAME_TAILCALL_H 1
+#ifndef GDB_DWARF2_ARANGES_H
+#define GDB_DWARF2_ARANGES_H
 
-class frame_info_ptr;
-struct frame_unwind;
+class dwarf2_per_objfile;
+class dwarf2_section_info;
+class addrmap_mutable;
 
-/* The tail call frame unwinder.  */
+/* Read the address map data from DWARF-5 .debug_aranges, and use it
+   to populate given addrmap.  Returns true on success, false on
+   failure.  */
 
-extern void
-  dwarf2_tailcall_sniffer_first (const frame_info_ptr &this_frame,
-				 void **tailcall_cachep,
-				 const LONGEST *entry_cfa_sp_offsetp);
+extern bool read_addrmap_from_aranges (dwarf2_per_objfile *per_objfile,
+				       dwarf2_section_info *section,
+				       addrmap_mutable *mutable_map,
+				       deferred_warnings *warn);
 
-extern struct value *
-  dwarf2_tailcall_prev_register_first (const frame_info_ptr &this_frame,
-				       void **tailcall_cachep, int regnum);
-
-extern const struct frame_unwind dwarf2_tailcall_frame_unwind;
-
-#endif /* !DWARF2_FRAME_TAILCALL_H */
+#endif /* GDB_DWARF2_ARANGES_H */
