@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/sparc64.
 
-   Copyright (C) 2004-2023 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "frame.h"
 #include "frame-unwind.h"
 #include "gdbcore.h"
@@ -150,7 +150,7 @@ sparc64obsd_pc_in_sigtramp (CORE_ADDR pc, const char *name)
 }
 
 static struct sparc_frame_cache *
-sparc64obsd_frame_cache (frame_info_ptr this_frame, void **this_cache)
+sparc64obsd_frame_cache (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct sparc_frame_cache *cache;
   CORE_ADDR addr;
@@ -186,7 +186,7 @@ sparc64obsd_frame_cache (frame_info_ptr this_frame, void **this_cache)
 }
 
 static void
-sparc64obsd_frame_this_id (frame_info_ptr this_frame, void **this_cache,
+sparc64obsd_frame_this_id (const frame_info_ptr &this_frame, void **this_cache,
 			   struct frame_id *this_id)
 {
   struct sparc_frame_cache *cache =
@@ -196,7 +196,7 @@ sparc64obsd_frame_this_id (frame_info_ptr this_frame, void **this_cache,
 }
 
 static struct value *
-sparc64obsd_frame_prev_register (frame_info_ptr this_frame,
+sparc64obsd_frame_prev_register (const frame_info_ptr &this_frame,
 				 void **this_cache, int regnum)
 {
   struct sparc_frame_cache *cache =
@@ -207,7 +207,7 @@ sparc64obsd_frame_prev_register (frame_info_ptr this_frame,
 
 static int
 sparc64obsd_sigtramp_frame_sniffer (const struct frame_unwind *self,
-				    frame_info_ptr this_frame,
+				    const frame_info_ptr &this_frame,
 				    void **this_cache)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
@@ -234,7 +234,7 @@ static const struct frame_unwind sparc64obsd_frame_unwind =
 /* Kernel debugging support.  */
 
 static struct sparc_frame_cache *
-sparc64obsd_trapframe_cache (frame_info_ptr this_frame, void **this_cache)
+sparc64obsd_trapframe_cache (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct sparc_frame_cache *cache;
   CORE_ADDR sp, trapframe_addr;
@@ -263,7 +263,7 @@ sparc64obsd_trapframe_cache (frame_info_ptr this_frame, void **this_cache)
 }
 
 static void
-sparc64obsd_trapframe_this_id (frame_info_ptr this_frame,
+sparc64obsd_trapframe_this_id (const frame_info_ptr &this_frame,
 			       void **this_cache, struct frame_id *this_id)
 {
   struct sparc_frame_cache *cache =
@@ -273,7 +273,7 @@ sparc64obsd_trapframe_this_id (frame_info_ptr this_frame,
 }
 
 static struct value *
-sparc64obsd_trapframe_prev_register (frame_info_ptr this_frame,
+sparc64obsd_trapframe_prev_register (const frame_info_ptr &this_frame,
 				     void **this_cache, int regnum)
 {
   struct sparc_frame_cache *cache =
@@ -284,7 +284,7 @@ sparc64obsd_trapframe_prev_register (frame_info_ptr this_frame,
 
 static int
 sparc64obsd_trapframe_sniffer (const struct frame_unwind *self,
-			       frame_info_ptr this_frame,
+			       const frame_info_ptr &this_frame,
 			       void **this_cache)
 {
   CORE_ADDR pc;

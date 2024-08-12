@@ -48,7 +48,7 @@ m4_include([../config/zstd.m4])
 m4_include([../gdbsupport/common.m4])
 
 dnl For libiberty_INIT.
-m4_include(libiberty.m4)
+m4_include(../gdbsupport/libiberty.m4)
 
 dnl For GDB_AC_PTRACE.
 m4_include(../gdbsupport/ptrace.m4)
@@ -234,8 +234,9 @@ AC_DEFUN([GDB_AC_CHECK_BFD], [
   # points somewhere with bfd, with -I/foo/lib and -L/foo/lib.  We
   # always want our bfd.
   CFLAGS="-I${srcdir}/../include -I../bfd -I${srcdir}/../bfd $CFLAGS"
-  LDFLAGS="-L../bfd -L../libiberty"
-  intl=`echo $LIBINTL | sed 's,${top_builddir}/,,g'`
+  LDFLAGS="-L../bfd -L../libiberty $LDFLAGS"
+  # LTLIBINTL because we use libtool as CC below.
+  intl="$(echo "$LTLIBINTL" | sed 's,\$[[{(]top_builddir[)}]]/,,')"
   LIBS="-lbfd -liberty $intl $LIBS"
   CC="./libtool --quiet --mode=link $CC"
   AC_CACHE_CHECK(

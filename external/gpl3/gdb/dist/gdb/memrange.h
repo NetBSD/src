@@ -1,6 +1,6 @@
 /* The memory range data structure, and associated utilities.
 
-   Copyright (C) 2010-2023 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -41,6 +41,9 @@ struct mem_range
 	    && this->length == other.length);
   }
 
+  /* Returns true if ADDR is in this mem_range.  */
+  bool contains (CORE_ADDR addr) const;
+
   /* Lowest address in the range.  */
   CORE_ADDR start;
 
@@ -53,11 +56,6 @@ struct mem_range
 
 extern int mem_ranges_overlap (CORE_ADDR start1, int len1,
 			       CORE_ADDR start2, int len2);
-
-/* Returns true if ADDR is in RANGE.  */
-
-extern int address_in_mem_range (CORE_ADDR addr,
-				 const struct mem_range *range);
 
 /* Sort ranges by start address, then coalesce contiguous or
    overlapping ranges.  */

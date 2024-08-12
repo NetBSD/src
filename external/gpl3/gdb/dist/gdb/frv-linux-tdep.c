@@ -1,7 +1,7 @@
 /* Target-dependent code for GNU/Linux running on the Fujitsu FR-V,
    for GDB.
 
-   Copyright (C) 2004-2023 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "gdbcore.h"
 #include "target.h"
 #include "frame.h"
@@ -168,7 +168,7 @@ frv_linux_pc_in_sigtramp (struct gdbarch *gdbarch, CORE_ADDR pc,
       } __attribute__((aligned(8)));  */
 
 static LONGEST
-frv_linux_sigcontext_reg_addr (frame_info_ptr this_frame, int regno,
+frv_linux_sigcontext_reg_addr (const frame_info_ptr &this_frame, int regno,
 			       CORE_ADDR *sc_addr_cache_ptr)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
@@ -258,7 +258,7 @@ frv_linux_sigcontext_reg_addr (frame_info_ptr this_frame, int regno,
 /* Signal trampolines.  */
 
 static struct trad_frame_cache *
-frv_linux_sigtramp_frame_cache (frame_info_ptr this_frame,
+frv_linux_sigtramp_frame_cache (const frame_info_ptr &this_frame,
 				void **this_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
@@ -297,7 +297,7 @@ frv_linux_sigtramp_frame_cache (frame_info_ptr this_frame,
 }
 
 static void
-frv_linux_sigtramp_frame_this_id (frame_info_ptr this_frame,
+frv_linux_sigtramp_frame_this_id (const frame_info_ptr &this_frame,
 				  void **this_cache,
 				  struct frame_id *this_id)
 {
@@ -307,7 +307,7 @@ frv_linux_sigtramp_frame_this_id (frame_info_ptr this_frame,
 }
 
 static struct value *
-frv_linux_sigtramp_frame_prev_register (frame_info_ptr this_frame,
+frv_linux_sigtramp_frame_prev_register (const frame_info_ptr &this_frame,
 					void **this_cache, int regnum)
 {
   /* Make sure we've initialized the cache.  */
@@ -318,7 +318,7 @@ frv_linux_sigtramp_frame_prev_register (frame_info_ptr this_frame,
 
 static int
 frv_linux_sigtramp_frame_sniffer (const struct frame_unwind *self,
-				  frame_info_ptr this_frame,
+				  const frame_info_ptr &this_frame,
 				  void **this_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);

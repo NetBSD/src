@@ -1,6 +1,6 @@
 /* Work with executable files, for GDB. 
 
-   Copyright (C) 1988-2023 Free Software Foundation, Inc.
+   Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,11 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "frame.h"
 #include "inferior.h"
 #include "target.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "language.h"
 #include "filenames.h"
 #include "symfile.h"
@@ -254,10 +253,8 @@ validate_exec_file (int from_tty)
 
 	  if (target_exec_file_build_id != nullptr)
 	    {
-	      if (exec_file_build_id->size == target_exec_file_build_id->size
-		  && memcmp (exec_file_build_id->data,
-			     target_exec_file_build_id->data,
-			     exec_file_build_id->size) == 0)
+	      if (build_id_equal (exec_file_build_id,
+				  target_exec_file_build_id))
 		{
 		  /* Match.  */
 		  return;
@@ -479,8 +476,8 @@ exec_file_attach (const char *filename, int from_tty)
 		 gdb_bfd_errmsg (bfd_get_error (), matching).c_str ());
 	}
 
-	  target_section_table sections
-	  = build_section_table (current_program_space->exec_bfd ());
+      std::vector<target_section> sections
+	= build_section_table (current_program_space->exec_bfd ());
 
       current_program_space->ebfd_mtime
 	= bfd_get_mtime (current_program_space->exec_bfd ());
@@ -492,16 +489,19 @@ exec_file_attach (const char *filename, int from_tty)
       /* Add the executable's sections to the current address spaces'
 	 list of sections.  This possibly pushes the exec_ops
 	 target.  */
-      current_program_space->add_target_sections (&current_program_space->ebfd,
-						  sections);
-
-      /* Tell display code (if any) about the changed file name.  */
-      if (deprecated_exec_file_display_hook)
-	(*deprecated_exec_file_display_hook) (filename);
+      current_program_space->add_target_sections
+	(current_program_space->ebfd.get (), sections);
     }
 
-  bfd_cache_close_all ();
-  gdb::observers::executable_changed.notify ();
+  /* Are are loading the same executable?  */
+  bfd *prev_bfd = exec_bfd_holder.get ();
+  bfd *curr_bfd = current_program_space->exec_bfd ();
+  bool reload_p = (((prev_bfd != nullptr) == (curr_bfd != nullptr))
+		   && (prev_bfd == nullptr
+		       || (strcmp (bfd_get_filename (prev_bfd),
+				   bfd_get_filename (curr_bfd)) == 0)));
+
+  gdb::observers::executable_changed.notify (current_program_space, reload_p);
 }
 
 /*  Process the first arg in ARGS as the new exec file.
@@ -559,10 +559,10 @@ file_command (const char *arg, int from_tty)
 
 /* Builds a section table, given args BFD, TABLE.  */
 
-target_section_table
+std::vector<target_section>
 build_section_table (struct bfd *some_bfd)
 {
-  target_section_table table;
+  std::vector<target_section> table;
 
   for (asection *asect : gdb_bfd_sections (some_bfd))
     {
@@ -590,8 +590,8 @@ build_section_table (struct bfd *some_bfd)
    current set of target sections.  */
 
 void
-program_space::add_target_sections (void *owner,
-				    const target_section_table &sections)
+program_space::add_target_sections
+  (target_section_owner owner, const std::vector<target_section> &sections)
 {
   if (!sections.empty ())
     {
@@ -625,18 +625,16 @@ program_space::add_target_sections (void *owner,
 void
 program_space::add_target_sections (struct objfile *objfile)
 {
-  struct obj_section *osect;
-
   gdb_assert (objfile != nullptr);
 
   /* Compute the number of sections to add.  */
-  ALL_OBJFILE_OSECTIONS (objfile, osect)
+  for (obj_section *osect : objfile->sections ())
     {
       if (bfd_section_size (osect->the_bfd_section) == 0)
 	continue;
 
       m_target_sections.emplace_back (osect->addr (), osect->endaddr (),
-				      osect->the_bfd_section, (void *) objfile);
+				      osect->the_bfd_section, objfile);
     }
 }
 
@@ -644,15 +642,15 @@ program_space::add_target_sections (struct objfile *objfile)
    OWNER must be the same value passed to add_target_sections.  */
 
 void
-program_space::remove_target_sections (void *owner)
+program_space::remove_target_sections (target_section_owner owner)
 {
-  gdb_assert (owner != NULL);
+  gdb_assert (owner.v () != nullptr);
 
   auto it = std::remove_if (m_target_sections.begin (),
 			    m_target_sections.end (),
 			    [&] (target_section &sect)
 			    {
-			      return sect.owner == owner;
+			      return sect.owner.v () == owner.v ();
 			    });
   m_target_sections.erase (it, m_target_sections.end ());
 
@@ -738,7 +736,7 @@ exec_read_partial_read_only (gdb_byte *readbuf, ULONGEST offset,
 
 static std::vector<mem_range>
 section_table_available_memory (CORE_ADDR memaddr, ULONGEST len,
-				const target_section_table &sections)
+				const std::vector<target_section> &sections)
 {
   std::vector<mem_range> memory;
 
@@ -772,7 +770,7 @@ enum target_xfer_status
 section_table_read_available_memory (gdb_byte *readbuf, ULONGEST offset,
 				     ULONGEST len, ULONGEST *xfered_len)
 {
-  const target_section_table *table
+  const std::vector<target_section> *table
     = target_get_section_table (current_inferior ()->top_target ());
   std::vector<mem_range> available_memory
     = section_table_available_memory (offset, len, *table);
@@ -812,7 +810,7 @@ enum target_xfer_status
 section_table_xfer_memory_partial (gdb_byte *readbuf, const gdb_byte *writebuf,
 				   ULONGEST offset, ULONGEST len,
 				   ULONGEST *xfered_len,
-				   const target_section_table &sections,
+				   const std::vector<target_section> &sections,
 				   gdb::function_view<bool
 				     (const struct target_section *)> match_cb)
 {
@@ -888,7 +886,7 @@ exec_target::xfer_partial (enum target_object object,
 			   const gdb_byte *writebuf,
 			   ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
-  const target_section_table *table = target_get_section_table (this);
+  const std::vector<target_section> *table = target_get_section_table (this);
 
   if (object == TARGET_OBJECT_MEMORY)
     return section_table_xfer_memory_partial (readbuf, writebuf,
@@ -900,7 +898,7 @@ exec_target::xfer_partial (enum target_object object,
 
 
 void
-print_section_info (const target_section_table *t, bfd *abfd)
+print_section_info (const std::vector<target_section> *t, bfd *abfd)
 {
   struct gdbarch *gdbarch = gdbarch_from_bfd (abfd);
   /* FIXME: 16 is not wide enough when gdbarch_addr_bit > 64.  */
