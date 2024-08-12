@@ -1,5 +1,5 @@
 /* Target-dependent code for the S12Z, for the GDB.
-   Copyright (C) 2018-2023 Free Software Foundation, Inc.
+   Copyright (C) 2018-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,14 +18,13 @@
 
 /* Much of this file is shamelessly copied from or1k-tdep.c and others.  */
 
-#include "defs.h"
 
 #include "arch-utils.h"
 #include "dwarf2/frame.h"
 #include "gdbsupport/errors.h"
 #include "frame-unwind.h"
 #include "gdbcore.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "inferior.h"
 #include "opcode/s12z.h"
 #include "trad-frame.h"
@@ -241,7 +240,7 @@ push_pull_get_stack_adjustment (int n_operands,
 /* Initialize a prologue cache.  */
 
 static struct trad_frame_cache *
-s12z_frame_cache (frame_info_ptr this_frame, void **prologue_cache)
+s12z_frame_cache (const frame_info_ptr &this_frame, void **prologue_cache)
 {
   struct trad_frame_cache *info;
 
@@ -420,7 +419,7 @@ s12z_frame_cache (frame_info_ptr this_frame, void **prologue_cache)
 
 /* Implement the this_id function for the stub unwinder.  */
 static void
-s12z_frame_this_id (frame_info_ptr this_frame,
+s12z_frame_this_id (const frame_info_ptr &this_frame,
 		    void **prologue_cache, struct frame_id *this_id)
 {
   struct trad_frame_cache *info = s12z_frame_cache (this_frame,
@@ -432,7 +431,7 @@ s12z_frame_this_id (frame_info_ptr this_frame,
 
 /* Implement the prev_register function for the stub unwinder.  */
 static struct value *
-s12z_frame_prev_register (frame_info_ptr this_frame,
+s12z_frame_prev_register (const frame_info_ptr &this_frame,
 			  void **prologue_cache, int regnum)
 {
   struct trad_frame_cache *info = s12z_frame_cache (this_frame,
@@ -491,10 +490,10 @@ static const char ccw_bits[] =
 static void
 s12z_print_ccw_info (struct gdbarch *gdbarch,
 		     struct ui_file *file,
-		     frame_info_ptr frame,
+		     const frame_info_ptr &frame,
 		     int reg)
 {
-  struct value *v = value_of_register (reg, frame);
+  value *v = value_of_register (reg, get_next_frame_sentinel_okay (frame));
   const char *name = gdbarch_register_name (gdbarch, reg);
   uint32_t ccw = value_as_long (v);
   gdb_puts (name, file);
@@ -524,7 +523,7 @@ s12z_print_ccw_info (struct gdbarch *gdbarch,
 static void
 s12z_print_registers_info (struct gdbarch *gdbarch,
 			    struct ui_file *file,
-			    frame_info_ptr frame,
+			    const frame_info_ptr &frame,
 			    int regnum, int print_all)
 {
   const int numregs = (gdbarch_num_regs (gdbarch)
@@ -616,8 +615,8 @@ show_bdccsr_command (const char *args, int from_tty)
 static struct gdbarch *
 s12z_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
-  s12z_gdbarch_tdep *tdep = new s12z_gdbarch_tdep;
-  struct gdbarch *gdbarch = gdbarch_alloc (&info, tdep);
+  gdbarch *gdbarch
+    = gdbarch_alloc (&info, gdbarch_tdep_up (new s12z_gdbarch_tdep));
 
   add_cmd ("bdccsr", class_support, show_bdccsr_command,
 	   _("Show the current value of the microcontroller's BDCCSR."),
