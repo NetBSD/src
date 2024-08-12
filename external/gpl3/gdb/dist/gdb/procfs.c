@@ -1,6 +1,6 @@
 /* Machine independent support for Solaris /proc (process file system) for GDB.
 
-   Copyright (C) 1999-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    Written by Michael Snyder at Cygnus Solutions.
    Based on work by Fred Fish, Stu Grossman, Geoff Noer, and others.
@@ -20,13 +20,13 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "inferior.h"
 #include "infrun.h"
 #include "target.h"
 #include "gdbcore.h"
-#include "elf-bfd.h"		/* for elfcore_write_* */
-#include "gdbcmd.h"
+#include "elf-bfd.h"
+#include "cli/cli-cmds.h"
 #include "gdbthread.h"
 #include "regcache.h"
 #include "inf-child.h"
@@ -46,6 +46,7 @@
 #include "gdbsupport/scoped_fd.h"
 #include "gdbsupport/pathstuff.h"
 #include "gdbsupport/buildargv.h"
+#include "cli/cli-style.h"
 
 /* This module provides the interface between GDB and the
    /proc file system, which is used on many versions of Unix
@@ -66,11 +67,11 @@
    interface.  */
 
 #include <sys/types.h>
-#include <dirent.h>	/* opendir/readdir, for listing the LWP's */
+#include <dirent.h>
 
-#include <fcntl.h>	/* for O_RDONLY */
-#include <unistd.h>	/* for "X_OK" */
-#include <sys/stat.h>	/* for struct stat */
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
 /* Note: procfs-utils.h must be included after the above system header
    files, because it redefines various system calls using macros.
@@ -173,7 +174,7 @@ procfs_target::auxv_parse (const gdb_byte **readptr,
 			   const gdb_byte *endptr, CORE_ADDR *typep,
 			   CORE_ADDR *valp)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
+  bfd_endian byte_order = gdbarch_byte_order (current_inferior ()->arch ());
   const gdb_byte *ptr = *readptr;
 
   if (endptr == ptr)
@@ -254,8 +255,6 @@ typedef struct procinfo {
   int fpregs_valid : 1;
   int threads_valid: 1;
 } procinfo;
-
-static char errmsg[128];	/* shared error msg buffer */
 
 /* Function prototypes for procinfo module: */
 
@@ -560,7 +559,7 @@ enum { NOKILL, KILL };
 static void
 dead_procinfo (procinfo *pi, const char *msg, int kill_p)
 {
-  print_sys_errmsg (pi->pathname, errno);
+  warning_filename_and_errno (pi->pathname, errno);
   if (kill_p == KILL)
     kill (pi->pid, SIGKILL);
 
@@ -589,21 +588,25 @@ static int proc_iterate_over_threads
   (procinfo *pi,
    int (*func) (procinfo *, procinfo *, void *),
    void *ptr);
+static void proc_resume (procinfo *pi, ptid_t scope_ptid,
+			 int step, enum gdb_signal signo);
 
 static void
 proc_warn (procinfo *pi, const char *func, int line)
 {
-  xsnprintf (errmsg, sizeof (errmsg), "procfs: %s line %d, %s",
-	     func, line, pi->pathname);
-  print_sys_errmsg (errmsg, errno);
+  int saved_errno = errno;
+  warning ("procfs: %s line %d, %ps: %s",
+	   func, line, styled_string (file_name_style.style (),
+				      pi->pathname),
+	   safe_strerror (saved_errno));
 }
 
 static void
 proc_error (procinfo *pi, const char *func, int line)
 {
-  xsnprintf (errmsg, sizeof (errmsg), "procfs: %s line %d, %s",
-	     func, line, pi->pathname);
-  perror_with_name (errmsg);
+  int saved_errno = errno;
+  error ("procfs: %s line %d, %s: %s",
+	 func, line, pi->pathname, safe_strerror (saved_errno));
 }
 
 /* Updates the status struct in the procinfo.  There is a 'valid'
@@ -706,9 +709,10 @@ proc_watchpoint_address (procinfo *pi, CORE_ADDR *addr)
     if (!proc_get_status (pi))
       return 0;
 
-  *addr = (CORE_ADDR) gdbarch_pointer_to_address (target_gdbarch (),
-	    builtin_type (target_gdbarch ())->builtin_data_ptr,
-	    (gdb_byte *) &pi->prstatus.pr_lwp.pr_info.si_addr);
+  gdbarch *arch = current_inferior ()->arch ();
+  *addr = gdbarch_pointer_to_address
+	    (arch, builtin_type (arch)->builtin_data_ptr,
+	     (gdb_byte *) &pi->prstatus.pr_lwp.pr_info.si_addr);
   return 1;
 }
 
@@ -1512,12 +1516,12 @@ proc_parent_pid (procinfo *pi)
 static void *
 procfs_address_to_host_pointer (CORE_ADDR addr)
 {
-  struct type *ptr_type = builtin_type (target_gdbarch ())->builtin_data_ptr;
+  gdbarch *arch = current_inferior ()->arch ();
+  type *ptr_type = builtin_type (arch)->builtin_data_ptr;
   void *ptr;
 
   gdb_assert (sizeof (ptr) == ptr_type->length ());
-  gdbarch_address_to_pointer (target_gdbarch (), ptr_type,
-			      (gdb_byte *) &ptr, addr);
+  gdbarch_address_to_pointer (arch, ptr_type, (gdb_byte *) &ptr, addr);
   return ptr;
 }
 
@@ -1803,11 +1807,12 @@ do_attach (ptid_t ptid)
 
   if (!open_procinfo_files (pi, FD_CTL))
     {
-      gdb_printf (gdb_stderr, "procfs:%d -- ", __LINE__);
-      xsnprintf (errmsg, sizeof (errmsg),
-		 "do_attach: couldn't open /proc file for process %d",
-		 ptid.pid ());
-      dead_procinfo (pi, errmsg, NOKILL);
+      int saved_errno = errno;
+      std::string errmsg
+	= string_printf ("procfs:%d -- do_attach: couldn't open /proc "
+			 "file for process %d", __LINE__, ptid.pid ());
+      errno = saved_errno;
+      dead_procinfo (pi, errmsg.c_str (), NOKILL);
     }
 
   /* Stop the process (if it isn't already stopped).  */
@@ -2115,11 +2120,8 @@ wait_again:
 	      case PR_SYSENTRY:
 		if (what == SYS_lwp_exit)
 		  {
-		    if (print_thread_events)
-		      gdb_printf (_("[%s exited]\n"),
-				  target_pid_to_str (retval).c_str ());
-		    delete_thread (find_thread_ptid (this, retval));
-		    target_continue_no_signal (ptid);
+		    delete_thread (this->find_thread (retval));
+		    proc_resume (pi, ptid, 0, GDB_SIGNAL_0);
 		    goto wait_again;
 		  }
 		else if (what == SYS_exit)
@@ -2183,8 +2185,7 @@ wait_again:
 				      i, sysargs[i]);
 		      }
 
-		    /* How to keep going without returning to wfi: */
-		    target_continue_no_signal (ptid);
+		    proc_resume (pi, ptid, 0, GDB_SIGNAL_0);
 		    goto wait_again;
 		  }
 		break;
@@ -2217,15 +2218,12 @@ wait_again:
 		    if (!in_thread_list (this, temp_ptid))
 		      add_thread (this, temp_ptid);
 
-		    target_continue_no_signal (ptid);
+		    proc_resume (pi, ptid, 0, GDB_SIGNAL_0);
 		    goto wait_again;
 		  }
 		else if (what == SYS_lwp_exit)
 		  {
-		    if (print_thread_events)
-		      gdb_printf (_("[%s exited]\n"),
-				  target_pid_to_str (retval).c_str ());
-		    delete_thread (find_thread_ptid (this, retval));
+		    delete_thread (this->find_thread (retval));
 		    status->set_spurious ();
 		    return retval;
 		  }
@@ -2249,7 +2247,7 @@ wait_again:
 				      i, sysargs[i]);
 		      }
 
-		    target_continue_no_signal (ptid);
+		    proc_resume (pi, ptid, 0, GDB_SIGNAL_0);
 		    goto wait_again;
 		  }
 		break;
@@ -2428,20 +2426,16 @@ invalidate_cache (procinfo *parent, procinfo *pi, void *ptr)
   return 0;
 }
 
-/* Make the child process runnable.  Normally we will then call
-   procfs_wait and wait for it to stop again (unless gdb is async).
+/* Make child process PI runnable.
 
    If STEP is true, then arrange for the child to stop again after
-   executing a single instruction.  If SIGNO is zero, then cancel any
-   pending signal; if non-zero, then arrange for the indicated signal
-   to be delivered to the child when it runs.  If PID is -1, then
-   allow any child thread to run; if non-zero, then allow only the
-   indicated thread to run.  (not implemented yet).  */
+   executing a single instruction.  SCOPE_PTID, STEP and SIGNO are
+   like in the target_resume interface.  */
 
-void
-procfs_target::resume (ptid_t ptid, int step, enum gdb_signal signo)
+static void
+proc_resume (procinfo *pi, ptid_t scope_ptid, int step, enum gdb_signal signo)
 {
-  procinfo *pi, *thread;
+  procinfo *thread;
   int native_signo;
 
   /* FIXME: Check/reword.  */
@@ -2453,10 +2447,6 @@ procfs_target::resume (ptid_t ptid, int step, enum gdb_signal signo)
      So basically PR_STEP is the sole argument that must be passed
      to proc_run_process.  */
 
-  /* Find procinfo for main process.  */
-  pi = find_procinfo_or_die (inferior_ptid.pid (), 0);
-
-  /* First cut: ignore pid argument.  */
   errno = 0;
 
   /* Convert signal to host numbering.  */
@@ -2473,11 +2463,11 @@ procfs_target::resume (ptid_t ptid, int step, enum gdb_signal signo)
   /* Void the process procinfo's caches.  */
   invalidate_cache (NULL, pi, NULL);
 
-  if (ptid.pid () != -1)
+  if (scope_ptid.pid () != -1)
     {
       /* Resume a specific thread, presumably suppressing the
 	 others.  */
-      thread = find_procinfo (ptid.pid (), ptid.lwp ());
+      thread = find_procinfo (scope_ptid.pid (), scope_ptid.lwp ());
       if (thread != NULL)
 	{
 	  if (thread->tid != 0)
@@ -2500,6 +2490,17 @@ procfs_target::resume (ptid_t ptid, int step, enum gdb_signal signo)
       else
 	proc_error (pi, "target_resume", __LINE__);
     }
+}
+
+/* Implementation of target_ops::resume.  */
+
+void
+procfs_target::resume (ptid_t scope_ptid, int step, enum gdb_signal signo)
+{
+  /* Find procinfo for main process.  */
+  procinfo *pi = find_procinfo_or_die (inferior_ptid.pid (), 0);
+
+  proc_resume (pi, scope_ptid, step, signo);
 }
 
 /* Set up to trace signals in the child process.  */
@@ -2533,7 +2534,7 @@ procfs_target::files_info ()
 
   gdb_printf (_("\tUsing the running image of %s %s via /proc.\n"),
 	      inf->attach_flag? "attached": "child",
-	      target_pid_to_str (inferior_ptid).c_str ());
+	      target_pid_to_str (ptid_t (inf->pid)).c_str ());
 }
 
 /* Make it die.  Wait for it to die.  Clean up after it.  Note: this
@@ -2854,7 +2855,7 @@ procfs_notice_thread (procinfo *pi, procinfo *thread, void *ptr)
 {
   ptid_t gdb_threadid = ptid_t (pi->pid, thread->tid, 0);
 
-  thread_info *thr = find_thread_ptid (&the_procfs_target, gdb_threadid);
+  thread_info *thr = the_procfs_target.find_thread (gdb_threadid);
   if (thr == NULL || thr->state == THREAD_EXITED)
     add_thread (&the_procfs_target, gdb_threadid);
 
@@ -3011,7 +3012,8 @@ procfs_target::can_use_hw_breakpoint (enum bptype type, int cnt, int othertype)
      procfs_address_to_host_pointer will reveal that an internal error
      will be generated when the host and target pointer sizes are
      different.  */
-  struct type *ptr_type = builtin_type (target_gdbarch ())->builtin_data_ptr;
+  struct type *ptr_type
+    = builtin_type (current_inferior ()->arch ())->builtin_data_ptr;
 
   if (sizeof (void *) != ptr_type->length ())
     return 0;
@@ -3059,7 +3061,7 @@ procfs_target::insert_watchpoint (CORE_ADDR addr, int len,
 				  struct expression *cond)
 {
   if (!target_have_steppable_watchpoint ()
-      && !gdbarch_have_nonsteppable_watchpoint (target_gdbarch ()))
+      && !gdbarch_have_nonsteppable_watchpoint (current_inferior ()->arch ()))
     /* When a hardware watchpoint fires off the PC will be left at
        the instruction following the one which caused the
        watchpoint.  It will *NOT* be necessary for GDB to step over
@@ -3222,7 +3224,7 @@ info_mappings_callback (struct prmap *map, find_memory_region_ftype ignore,
 
   pr_off = (unsigned int) map->pr_offset;
 
-  if (gdbarch_addr_bit (target_gdbarch ()) == 32)
+  if (gdbarch_addr_bit (current_inferior ()->arch ()) == 32)
     gdb_printf ("\t%#10lx %#10lx %#10lx %#10x %7s\n",
 		(unsigned long) map->pr_vaddr,
 		(unsigned long) map->pr_vaddr + map->pr_size - 1,
@@ -3249,7 +3251,7 @@ info_proc_mappings (procinfo *pi, int summary)
     return;	/* No output for summary mode.  */
 
   gdb_printf (_("Mapped address spaces:\n\n"));
-  if (gdbarch_ptr_bit (target_gdbarch ()) == 32)
+  if (gdbarch_ptr_bit (current_inferior ()->arch ()) == 32)
     gdb_printf ("\t%10s %10s %10s %10s %7s\n",
 		"Start Addr",
 		"  End Addr",
@@ -3601,7 +3603,7 @@ procfs_target::make_corefile_notes (bfd *obfd, int *note_size)
 
   stop_signal = find_stop_signal ();
 
-  fill_gregset (get_current_regcache (), &gregs, -1);
+  fill_gregset (get_thread_regcache (inferior_thread ()), &gregs, -1);
   note_data.reset (elfcore_write_pstatus (obfd, note_data.release (), note_size,
 					  inferior_ptid.pid (),
 					  stop_signal, &gregs));
@@ -3611,7 +3613,7 @@ procfs_target::make_corefile_notes (bfd *obfd, int *note_size)
   proc_iterate_over_threads (pi, procfs_corefile_thread_callback,
 			     &thread_args);
 
-  gdb::optional<gdb::byte_vector> auxv =
+  std::optional<gdb::byte_vector> auxv =
     target_read_alloc (current_inferior ()->top_target (),
 		       TARGET_OBJECT_AUXV, NULL);
   if (auxv && !auxv->empty ())
