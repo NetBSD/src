@@ -1,5 +1,5 @@
 /* ELF attributes support (based on ARM EABI attributes).
-   Copyright (C) 2005-2022 Free Software Foundation, Inc.
+   Copyright (C) 2005-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -247,6 +247,8 @@ elf_new_obj_attr (bfd *abfd, int vendor, unsigned int tag)
       /* Create a new tag.  */
       list = (obj_attribute_list *)
 	bfd_alloc (abfd, sizeof (obj_attribute_list));
+      if (list == NULL)
+	return NULL;
       memset (list, 0, sizeof (obj_attribute_list));
       list->tag = tag;
       /* Keep the tag list in order.  */
@@ -292,14 +294,18 @@ bfd_elf_get_obj_attr_int (bfd *abfd, int vendor, unsigned int tag)
 }
 
 /* Add an integer object attribute.  */
-void
+obj_attribute *
 bfd_elf_add_obj_attr_int (bfd *abfd, int vendor, unsigned int tag, unsigned int i)
 {
   obj_attribute *attr;
 
   attr = elf_new_obj_attr (abfd, vendor, tag);
-  attr->type = _bfd_elf_obj_attrs_arg_type (abfd, vendor, tag);
-  attr->i = i;
+  if (attr != NULL)
+    {
+      attr->type = _bfd_elf_obj_attrs_arg_type (abfd, vendor, tag);
+      attr->i = i;
+    }
+  return attr;
 }
 
 /* Duplicate an object attribute string value.  */
@@ -330,42 +336,54 @@ _bfd_elf_attr_strdup (bfd *abfd, const char *s)
 }
 
 /* Add a string object attribute.  */
-static void
+static obj_attribute *
 elf_add_obj_attr_string (bfd *abfd, int vendor, unsigned int tag,
 			 const char *s, const char *end)
 {
   obj_attribute *attr;
 
   attr = elf_new_obj_attr (abfd, vendor, tag);
-  attr->type = _bfd_elf_obj_attrs_arg_type (abfd, vendor, tag);
-  attr->s = elf_attr_strdup (abfd, s, end);
+  if (attr != NULL)
+    {
+      attr->type = _bfd_elf_obj_attrs_arg_type (abfd, vendor, tag);
+      attr->s = elf_attr_strdup (abfd, s, end);
+      if (attr->s == NULL)
+	return NULL;
+    }
+  return attr;
 }
 
-void
+obj_attribute *
 bfd_elf_add_obj_attr_string (bfd *abfd, int vendor, unsigned int tag,
 			     const char *s)
 {
-  elf_add_obj_attr_string (abfd, vendor, tag, s, NULL);
+  return elf_add_obj_attr_string (abfd, vendor, tag, s, NULL);
 }
 
 /* Add a int+string object attribute.  */
-static void
+static obj_attribute *
 elf_add_obj_attr_int_string (bfd *abfd, int vendor, unsigned int tag,
 			     unsigned int i, const char *s, const char *end)
 {
   obj_attribute *attr;
 
   attr = elf_new_obj_attr (abfd, vendor, tag);
-  attr->type = _bfd_elf_obj_attrs_arg_type (abfd, vendor, tag);
-  attr->i = i;
-  attr->s = elf_attr_strdup (abfd, s, end);
+  if (attr != NULL)
+    {
+      attr->type = _bfd_elf_obj_attrs_arg_type (abfd, vendor, tag);
+      attr->i = i;
+      attr->s = elf_attr_strdup (abfd, s, end);
+      if (attr->s == NULL)
+	return NULL;
+    }
+  return attr;
 }
 
-void
+obj_attribute *
 bfd_elf_add_obj_attr_int_string (bfd *abfd, int vendor, unsigned int tag,
 				 unsigned int i, const char *s)
 {
-  elf_add_obj_attr_int_string (abfd, vendor, tag, i, s, NULL);
+  return elf_add_obj_attr_int_string (abfd, vendor, tag, i, s, NULL);
 }
 
 /* Copy the object attributes from IBFD to OBFD.  */
@@ -393,7 +411,11 @@ _bfd_elf_copy_obj_attributes (bfd *ibfd, bfd *obfd)
 	  out_attr->type = in_attr->type;
 	  out_attr->i = in_attr->i;
 	  if (in_attr->s && *in_attr->s)
-	    out_attr->s = _bfd_elf_attr_strdup (obfd, in_attr->s);
+	    {
+	      out_attr->s = _bfd_elf_attr_strdup (obfd, in_attr->s);
+	      if (out_attr->s == NULL)
+		bfd_perror (_("error adding attribute"));
+	    }
 	  in_attr++;
 	  out_attr++;
 	}
@@ -402,23 +424,27 @@ _bfd_elf_copy_obj_attributes (bfd *ibfd, bfd *obfd)
 	   list;
 	   list = list->next)
 	{
+	  bool ok = false;
 	  in_attr = &list->attr;
 	  switch (in_attr->type & (ATTR_TYPE_FLAG_INT_VAL | ATTR_TYPE_FLAG_STR_VAL))
 	    {
 	    case ATTR_TYPE_FLAG_INT_VAL:
-	      bfd_elf_add_obj_attr_int (obfd, vendor, list->tag, in_attr->i);
+	      ok = bfd_elf_add_obj_attr_int (obfd, vendor,
+					     list->tag, in_attr->i);
 	      break;
 	    case ATTR_TYPE_FLAG_STR_VAL:
-	      bfd_elf_add_obj_attr_string (obfd, vendor, list->tag,
-					   in_attr->s);
+	      ok = bfd_elf_add_obj_attr_string (obfd, vendor, list->tag,
+						in_attr->s);
 	      break;
 	    case ATTR_TYPE_FLAG_INT_VAL | ATTR_TYPE_FLAG_STR_VAL:
-	      bfd_elf_add_obj_attr_int_string (obfd, vendor, list->tag,
-					       in_attr->i, in_attr->s);
+	      ok = bfd_elf_add_obj_attr_int_string (obfd, vendor, list->tag,
+						    in_attr->i, in_attr->s);
 	      break;
 	    default:
 	      abort ();
 	    }
+	  if (!ok)
+	    bfd_perror (_("error adding attribute"));
 	}
     }
 }
@@ -563,6 +589,7 @@ _bfd_elf_parse_attributes (bfd *abfd, Elf_Internal_Shdr * hdr)
 		  while (p < end)
 		    {
 		      int type;
+		      bool ok = false;
 
 		      tag = _bfd_safe_read_leb128 (abfd, &p, false, end);
 		      type = _bfd_elf_obj_attrs_arg_type (abfd, vendor, tag);
@@ -570,28 +597,30 @@ _bfd_elf_parse_attributes (bfd *abfd, Elf_Internal_Shdr * hdr)
 			{
 			case ATTR_TYPE_FLAG_INT_VAL | ATTR_TYPE_FLAG_STR_VAL:
 			  val = _bfd_safe_read_leb128 (abfd, &p, false, end);
-			  elf_add_obj_attr_int_string (abfd, vendor, tag, val,
-						       (char *) p,
-						       (char *) end);
+			  ok = elf_add_obj_attr_int_string (abfd, vendor, tag,
+							    val, (char *) p,
+							    (char *) end);
 			  p += strnlen ((char *) p, end - p);
 			  if (p < end)
 			    p++;
 			  break;
 			case ATTR_TYPE_FLAG_STR_VAL:
-			  elf_add_obj_attr_string (abfd, vendor, tag,
-						   (char *) p,
-						   (char *) end);
+			  ok = elf_add_obj_attr_string (abfd, vendor, tag,
+							(char *) p,
+							(char *) end);
 			  p += strnlen ((char *) p, end - p);
 			  if (p < end)
 			    p++;
 			  break;
 			case ATTR_TYPE_FLAG_INT_VAL:
 			  val = _bfd_safe_read_leb128 (abfd, &p, false, end);
-			  bfd_elf_add_obj_attr_int (abfd, vendor, tag, val);
+			  ok = bfd_elf_add_obj_attr_int (abfd, vendor, tag, val);
 			  break;
 			default:
 			  abort ();
 			}
+		      if (!ok)
+			bfd_perror (_("error adding attribute"));
 		    }
 		  break;
 		case Tag_Section:

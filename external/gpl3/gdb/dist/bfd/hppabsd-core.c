@@ -1,5 +1,5 @@
 /* BFD back-end for HPPA BSD core files.
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -100,7 +100,7 @@ hppabsd_core_core_file_p (bfd *abfd)
 
   /* Try to read in the u-area.  We will need information from this
      to know how to grok the rest of the core structures.  */
-  val = bfd_bread ((void *) &u, (bfd_size_type) sizeof u, abfd);
+  val = bfd_read (&u, sizeof u, abfd);
   if (val != sizeof u)
     {
       if (bfd_get_error () != bfd_error_system_call)

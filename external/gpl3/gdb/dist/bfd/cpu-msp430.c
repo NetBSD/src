@@ -1,5 +1,5 @@
 /* BFD library support routines for the MSP architecture.
-   Copyright (C) 2002-2022 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
    Contributed by Dmitry Diky <diwil@mail.ru>
 
    This file is part of BFD, the Binary File Descriptor library.

@@ -1,6 +1,6 @@
 /* Xilinx MicroBlaze-specific support for 32-bit ELF
 
-   Copyright (C) 2009-2022 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -173,6 +173,21 @@ static reloc_howto_type microblaze_elf_howto_raw[] =
 	  0,			/* Source Mask.  */
 	  0x0000ffff,		/* Dest Mask.  */
 	  false),		/* PC relative offset?  */
+
+   /* This reloc does nothing.	Used for relaxation.  */
+   HOWTO (R_MICROBLAZE_32_NONE,	/* Type.  */
+	0,			/* Rightshift.  */
+	2,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	32,			/* Bitsize.  */
+	true,			/* PC_relative.  */
+	0,			/* Bitpos.  */
+	complain_overflow_bitfield, /* Complain on overflow.  */
+	NULL,			/* Special Function.  */
+	"R_MICROBLAZE_32_NONE", /* Name.  */
+	false,			/* Partial Inplace.  */
+	0,			/* Source Mask.  */
+	0,			/* Dest Mask.  */
+	false),		/* PC relative offset?  */
 
    /* This reloc does nothing.	Used for relaxation.  */
    HOWTO (R_MICROBLAZE_64_NONE,	/* Type.  */
@@ -559,6 +574,9 @@ microblaze_elf_reloc_type_lookup (bfd * abfd ATTRIBUTE_UNUSED,
     {
     case BFD_RELOC_NONE:
       microblaze_reloc = R_MICROBLAZE_NONE;
+      break;
+    case BFD_RELOC_MICROBLAZE_32_NONE:
+      microblaze_reloc = R_MICROBLAZE_32_NONE;
       break;
     case BFD_RELOC_MICROBLAZE_64_NONE:
       microblaze_reloc = R_MICROBLAZE_64_NONE;
@@ -1323,9 +1341,9 @@ microblaze_elf_relocate_section (bfd *output_bfd,
 		/* Need to generate relocs ? */
 		if ((bfd_link_pic (info) || indx != 0)
 		    && (h == NULL
-		    || (ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
-			&& !resolved_to_zero)
-		    || h->root.type != bfd_link_hash_undefweak))
+			|| (ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
+			    && !resolved_to_zero)
+			|| h->root.type != bfd_link_hash_undefweak))
 		  need_relocs = true;
 
 		/* 2. Compute/Emit Static value of r-expression */
@@ -1467,9 +1485,9 @@ microblaze_elf_relocate_section (bfd *output_bfd,
 	      relocation += addend;
 	      relocation -= dtprel_base(info);
 	      bfd_put_16 (input_bfd, (relocation >> 16) & 0xffff,
-			  contents + offset + 2);
+			  contents + offset + endian);
 	      bfd_put_16 (input_bfd, relocation & 0xffff,
-			  contents + offset + 2 + INST_WORD_SIZE);
+			  contents + offset + endian + INST_WORD_SIZE);
 	      break;
 	    case (int) R_MICROBLAZE_TEXTREL_64:
 	    case (int) R_MICROBLAZE_TEXTREL_32_LO:
@@ -1954,6 +1972,7 @@ microblaze_elf_relax_section (bfd *abfd,
 		}
 	      break;
 	    case R_MICROBLAZE_NONE:
+	    case R_MICROBLAZE_32_NONE:
 	      {
 		/* This was a PC-relative instruction that was
 		   completely resolved.  */
@@ -2009,7 +2028,8 @@ microblaze_elf_relax_section (bfd *abfd,
 	  irelscanend = irelocs + o->reloc_count;
 	  for (irelscan = irelocs; irelscan < irelscanend; irelscan++)
 	    {
-	      if (ELF32_R_TYPE (irelscan->r_info) == (int) R_MICROBLAZE_32)
+	      if ((ELF32_R_TYPE (irelscan->r_info) == (int) R_MICROBLAZE_32)
+		  || (ELF32_R_TYPE (irelscan->r_info) == (int) R_MICROBLAZE_32_NONE))
 		{
 		  isym = isymbuf + ELF32_R_SYM (irelscan->r_info);
 
@@ -2068,7 +2088,7 @@ microblaze_elf_relax_section (bfd *abfd,
 			      elf_section_data (o)->this_hdr.contents = ocontents;
 			    }
 			}
-		      irelscan->r_addend -= calc_fixup (irel->r_addend
+		      irelscan->r_addend -= calc_fixup (irelscan->r_addend
 							+ isym->st_value,
 							0,
 							sec);
@@ -2076,9 +2096,9 @@ microblaze_elf_relax_section (bfd *abfd,
 		}
 	      else if ((ELF32_R_TYPE (irelscan->r_info) == (int) R_MICROBLAZE_32_PCREL_LO)
 		       || (ELF32_R_TYPE (irelscan->r_info)
-				   == (int) R_MICROBLAZE_32_LO)
+			   == (int) R_MICROBLAZE_32_LO)
 		       || (ELF32_R_TYPE (irelscan->r_info)
-				   == (int) R_MICROBLAZE_TEXTREL_32_LO))
+			   == (int) R_MICROBLAZE_TEXTREL_32_LO))
 		{
 		  isym = isymbuf + ELF32_R_SYM (irelscan->r_info);
 
@@ -2946,8 +2966,8 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * dat)
 /* Set the sizes of the dynamic sections.  */
 
 static bool
-microblaze_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-				      struct bfd_link_info *info)
+microblaze_elf_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+				   struct bfd_link_info *info)
 {
   struct elf32_mb_link_hash_table *htab;
   bfd *dynobj;
@@ -2959,7 +2979,8 @@ microblaze_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
     return false;
 
   dynobj = htab->elf.dynobj;
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   /* Set up .got offsets for local syms, and space for local dynamic
      relocs.  */
@@ -3148,8 +3169,6 @@ microblaze_elf_finish_dynamic_symbol (bfd *output_bfd,
   struct elf32_mb_link_hash_entry *eh = elf32_mb_hash_entry(h);
 
   htab = elf32_mb_hash_table (info);
-  if (htab == NULL)
-    return false;
 
   if (h->plt.offset != (bfd_vma) -1)
     {
@@ -3218,9 +3237,9 @@ microblaze_elf_finish_dynamic_symbol (bfd *output_bfd,
     }
 
   /* h->got.refcount to be checked ? */
-  if (h->got.offset != (bfd_vma) -1 &&
-      ! ((h->got.offset & 1) ||
-	  IS_TLS_LD(eh->tls_mask) || IS_TLS_GD(eh->tls_mask)))
+  if ((h->got.offset != (bfd_vma) -1)
+      && ! ((h->got.offset & 1)
+	    || IS_TLS_LD(eh->tls_mask) || IS_TLS_GD(eh->tls_mask)))
     {
       asection *sgot;
       asection *srela;
@@ -3477,7 +3496,7 @@ microblaze_elf_add_symbol_hook (bfd *abfd,
 #define elf_backend_create_dynamic_sections	_bfd_elf_create_dynamic_sections
 #define elf_backend_finish_dynamic_sections	microblaze_elf_finish_dynamic_sections
 #define elf_backend_finish_dynamic_symbol	microblaze_elf_finish_dynamic_symbol
-#define elf_backend_size_dynamic_sections	microblaze_elf_size_dynamic_sections
+#define elf_backend_late_size_sections		microblaze_elf_late_size_sections
 #define elf_backend_add_symbol_hook		microblaze_elf_add_symbol_hook
 
 #include "elf32-target.h"
