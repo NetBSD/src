@@ -1,6 +1,6 @@
 /* Target dependent code for the remote server for GNU/Linux ARC.
 
-   Copyright 2020-2023 Free Software Foundation, Inc.
+   Copyright 2020-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "server.h"
 #include "regdef.h"
 #include "linux-low.h"
 #include "tdesc.h"
@@ -221,7 +220,7 @@ arc_fill_gregset (struct regcache *regcache, void *buf)
   /* Currently ARC Linux ptrace doesn't allow writes to status32 because
      some of its bits are kernel mode-only and shoudn't be writable from
      user-space.  Writing status32 from debugger could be useful, though,
-     so ability to write non-priviliged bits will be added to kernel
+     so ability to write non-privileged bits will be added to kernel
      sooner or later.  */
 
   /* BTA.  */
