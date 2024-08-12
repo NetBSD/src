@@ -21,8 +21,10 @@
 
 #include "misc.h"
 #include "lf.h"
+#include "lf-ppc.h"
 #include "table.h"
 #include "filter.h"
+#include "filter-ppc.h"
 
 #include "ld-decode.h"
 #include "ld-cache.h"
@@ -43,7 +45,7 @@ print_semantic_function_header(lf *file,
 {
   int indent;
   lf_printf(file, "\n");
-  lf_print_function_type(file, SEMANTIC_FUNCTION_TYPE, "PSIM_EXTERN_SEMANTICS",
+  lf_print__function_type(file, SEMANTIC_FUNCTION_TYPE, "PSIM_EXTERN_SEMANTICS",
 			 (is_function_definition ? "\n" : " "));
   indent = print_function_name(file,
 			       basename,
@@ -138,17 +140,17 @@ print_semantic_body(lf *file,
     lf_print__c_code(file, instruction->file_entry->annex);
     lf_indent(file, -2);
     lf_printf(file, "}\n");
-    lf_print__internal_reference(file);
+    lf_print__internal_ref(file);
   }
   else if (it_is("nop", instruction->file_entry->fields[insn_flags])) {
-    lf_print__internal_reference(file);
+    lf_print__internal_ref(file);
   }
   else {
     /* abort so it is implemented now */
     table_entry_print_cpp_line_nr(file, instruction->file_entry);
     lf_putstr(file, "error(\"%s:%d:0x%08lx:%s unimplemented\\n\",\n");
     lf_printf(file, "      itable[MY_INDEX].file, itable[MY_INDEX].line_nr, (long)cia, itable[MY_INDEX].name);\n");
-    lf_print__internal_reference(file);
+    lf_print__internal_ref(file);
   }
 }
 

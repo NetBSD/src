@@ -303,6 +303,7 @@ hw_phb_attach_address(device *me,
 {
   hw_phb_device *phb = device_data(me);
   phb_space *pci_space;
+  hw_phb_decode phb_type = (hw_phb_decode)type;
   /* sanity checks */
   if (space < 0 || space >= nr_hw_phb_spaces)
     device_error(me, "attach space (%d) specified by %s invalid",
@@ -312,14 +313,13 @@ hw_phb_attach_address(device *me,
       || addr < pci_space->my_base)
     device_error(me, "attach addr (0x%lx) specified by %s outside of bus address range",
 		 (unsigned long)addr, device_path(client));
-  if ((hw_phb_decode)type != hw_phb_normal_decode
-      && (hw_phb_decode)type != hw_phb_subtractive_decode)
+  if (phb_type != hw_phb_normal_decode && phb_type != hw_phb_subtractive_decode)
     device_error(me, "attach type (%d) specified by %s invalid",
 		 type, device_path(client));
   /* attach it to the relevent bus */
   DTRACE(phb, ("attach %s - %s %s:0x%lx (0x%lx bytes)\n",
 	       device_path(client),
-	       hw_phb_decode_name(type),
+	       hw_phb_decode_name(phb_type),
 	       pci_space->name,
 	       (unsigned long)addr,
 	       (unsigned long)nr_bytes));
@@ -652,6 +652,7 @@ hw_phb_unit_decode(device *me,
 	     && val != 0x10 && val != 0x18 && val != 0x20)
       device_error(me, "Register number (0x%lx) invalid in 64bit PCI address %s",
 		   val, unit);
+    break;
   case ss_config_code:
     device_error(me, "internal error");
   }

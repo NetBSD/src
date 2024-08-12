@@ -1,6 +1,6 @@
 /* gdb.c --- sim interface to GDB.
 
-Copyright (C) 2005-2023 Free Software Foundation, Inc.
+Copyright (C) 2005-2024 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -33,7 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "sim/callback.h"
 #include "sim/sim.h"
 #include "gdb/signals.h"
-#include "gdb/sim-m32c.h"
+#include "sim/sim-m32c.h"
 
 #include "cpu.h"
 #include "mem.h"
@@ -158,25 +158,25 @@ sim_create_inferior (SIM_DESC sd, struct bfd * abfd,
   return SIM_RC_OK;
 }
 
-int
-sim_read (SIM_DESC sd, SIM_ADDR mem, void *buf, int length)
+uint64_t
+sim_read (SIM_DESC sd, uint64_t addr, void *buf, uint64_t length)
 {
   check_desc (sd);
 
-  if (mem == 0)
+  if (addr == 0)
     return 0;
 
-  mem_get_blk ((int) mem, buf, length);
+  mem_get_blk ((int) addr, buf, length);
 
   return length;
 }
 
-int
-sim_write (SIM_DESC sd, SIM_ADDR mem, const void *buf, int length)
+uint64_t
+sim_write (SIM_DESC sd, uint64_t addr, const void *buf, uint64_t length)
 {
   check_desc (sd);
 
-  mem_put_blk ((int) mem, buf, length);
+  mem_put_blk ((int) addr, buf, length);
 
   return length;
 }
@@ -705,7 +705,7 @@ sim_memory_map (SIM_DESC sd)
 }
 
 void
-sim_info (SIM_DESC sd, int verbose)
+sim_info (SIM_DESC sd, bool verbose)
 {
   printf ("The m32c minisim doesn't collect any statistics.\n");
 }

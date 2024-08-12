@@ -1,7 +1,7 @@
 /* Lattice Mico32 simulator support code
    Contributed by Jon Beniston <jon@beniston.com>
 
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,27 +25,16 @@
 
 #define WITH_SCACHE_PBB 1
 
-#include "symcat.h"
 #include "sim-basics.h"
-#include "cgen-types.h"
-#include "lm32-desc.h"
-#include "lm32-opc.h"
+#include "opcodes/lm32-desc.h"
+#include "opcodes/lm32-opc.h"
 #include "arch.h"
 #include "sim-base.h"
 #include "cgen-sim.h"
 #include "lm32-sim.h"
-#include "opcode/cgen.h"
 
-/* The _sim_cpu struct.  */
-
-struct _sim_cpu
+struct lm32_sim_cpu
 {
-  /* sim/common cpu base.  */
-  sim_cpu_base base;
-
-  /* Static parts of cgen.  */
-  CGEN_CPU cgen_cpu;
-
   /* CPU specific parts go here.
      Note that in files that don't need to access these pieces WANT_CPU_FOO
      won't be defined and thus these parts won't appear.  This is ok in the
@@ -56,15 +45,26 @@ struct _sim_cpu
 #if defined (WANT_CPU_LM32BF)
   LM32BF_CPU_DATA cpu_data;
 #endif
-
 };
+#define LM32_SIM_CPU(cpu) ((struct lm32_sim_cpu *) CPU_ARCH_DATA (cpu))
 
 /* Misc.  */
 
 /* Catch address exceptions.  */
-extern SIM_CORE_SIGNAL_FN lm32_core_signal;
+extern SIM_CORE_SIGNAL_FN lm32_core_signal ATTRIBUTE_NORETURN;
 #define SIM_CORE_SIGNAL(SD,CPU,CIA,MAP,NR_BYTES,ADDR,TRANSFER,ERROR) \
 lm32_core_signal ((SD), (CPU), (CIA), (MAP), (NR_BYTES), (ADDR), \
 		  (TRANSFER), (ERROR))
+
+/* From traps.c.  */
+extern USI lm32bf_b_insn (SIM_CPU * current_cpu, USI r0, USI f_r0);
+extern USI lm32bf_divu_insn (SIM_CPU * current_cpu, IADDR pc, USI r0, USI r1, USI r2);
+extern USI lm32bf_modu_insn (SIM_CPU * current_cpu, IADDR pc, USI r0, USI r1, USI r2);
+extern void lm32bf_wcsr_insn (SIM_CPU * current_cpu, USI f_csr, USI r1);
+extern USI lm32bf_break_insn (SIM_CPU * current_cpu, IADDR pc);
+extern USI lm32bf_scall_insn (SIM_CPU * current_cpu, IADDR pc);
+
+/* From user.c.  */
+extern UINT lm32bf_user_insn (SIM_CPU * current_cpu, INT r0, INT r1, UINT imm);
 
 #endif /* SIM_MAIN_H */
