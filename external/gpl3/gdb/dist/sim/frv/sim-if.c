@@ -1,5 +1,5 @@
 /* Main simulator entry points specific to the FRV.
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
 This file is part of the GNU simulators.
@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "sim-options.h"
 #include "libiberty.h"
 #include "bfd.h"
-#include "elf-bfd.h"
+#include "bfd/elf-bfd.h"
 
 static void free_state (SIM_DESC);
 
@@ -65,7 +65,7 @@ sim_open (SIM_OPEN_KIND kind, host_callback *callback, bfd *abfd,
   current_target_byte_order = BFD_ENDIAN_BIG;
 
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
+  if (sim_cpu_alloc_all_extra (sd, 0, sizeof (struct frv_sim_cpu)) != SIM_RC_OK)
     {
       free_state (sd);
       return 0;
@@ -182,7 +182,7 @@ sim_create_inferior (SIM_DESC sd, bfd *abfd, char * const *argv,
 {
   SIM_CPU *current_cpu = STATE_CPU (sd, 0);
   host_callback *cb = STATE_CALLBACK (sd);
-  SIM_ADDR addr;
+  bfd_vma addr;
 
   if (abfd != NULL)
     addr = bfd_get_start_address (abfd);

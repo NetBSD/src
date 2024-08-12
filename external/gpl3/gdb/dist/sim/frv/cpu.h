@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2023 Free Software Foundation, Inc.
+Copyright (C) 1996-2023 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -17,7 +17,8 @@ This file is part of the GNU simulators.
    License for more details.
 
    You should have received a copy of the GNU General Public License along
-   with this program; if not, see <http://www.gnu.org/licenses/>.
+   with this program; if not, write to the Free Software Foundation, Inc.,
+   51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.
 
 */
 
@@ -158,7 +159,7 @@ frvbf_h_spr_set_handler (current_cpu, (index), (x));\
 #define GET_H_CCCR(a1) CPU (h_cccr)[a1]
 #define SET_H_CCCR(a1, x) (CPU (h_cccr)[a1] = (x))
   } hardware;
-#define CPU_CGEN_HW(cpu) (& (cpu)->cpu_data.hardware)
+#define CPU_CGEN_HW(cpu) (& FRV_SIM_CPU (cpu)->cpu_data.hardware)
 } FRVBF_CPU_DATA;
 
 /* Virtual regs.  */
@@ -350,8 +351,8 @@ USI frvbf_h_accg_get (SIM_CPU *, UINT);
 void frvbf_h_accg_set (SIM_CPU *, UINT, USI);
 DI frvbf_h_acc40S_get (SIM_CPU *, UINT);
 void frvbf_h_acc40S_set (SIM_CPU *, UINT, DI);
-UDI frvbf_h_acc40U_get (SIM_CPU *, UINT);
-void frvbf_h_acc40U_set (SIM_CPU *, UINT, UDI);
+DI frvbf_h_acc40U_get (SIM_CPU *, UINT);
+void frvbf_h_acc40U_set (SIM_CPU *, UINT, DI);
 DI frvbf_h_iacc0_get (SIM_CPU *, UINT);
 void frvbf_h_iacc0_set (SIM_CPU *, UINT, DI);
 UQI frvbf_h_iccr_get (SIM_CPU *, UINT);
@@ -1329,13 +1330,13 @@ union sem_fields {
     unsigned char in_CCi;
     unsigned char in_FRinti;
     unsigned char in_FRintj;
-    unsigned char in_h_acc40U_UDI_add__INT_index_of__INT_ACC40Uk_1;
+    unsigned char in_h_acc40U_DI_add__INT_index_of__INT_ACC40Uk_1;
     unsigned char in_h_fr_hi_UHI_add__INT_index_of__INT_FRinti_0;
     unsigned char in_h_fr_hi_UHI_add__INT_index_of__INT_FRintj_0;
     unsigned char in_h_fr_lo_UHI_add__INT_index_of__INT_FRinti_0;
     unsigned char in_h_fr_lo_UHI_add__INT_index_of__INT_FRintj_0;
     unsigned char out_ACC40Uk;
-    unsigned char out_h_acc40U_UDI_add__INT_index_of__INT_ACC40Uk_1;
+    unsigned char out_h_acc40U_DI_add__INT_index_of__INT_ACC40Uk_1;
   } sfmt_cmmachu;
   struct { /*  */
     UINT f_ACC40Sk;
@@ -1489,9 +1490,9 @@ union sem_fields {
     unsigned char in_CCi;
     unsigned char in_FRintieven;
     unsigned char in_FRintjeven;
-    unsigned char in_h_acc40U_UDI_add__INT_index_of__INT_ACC40Uk_1;
-    unsigned char in_h_acc40U_UDI_add__INT_index_of__INT_ACC40Uk_2;
-    unsigned char in_h_acc40U_UDI_add__INT_index_of__INT_ACC40Uk_3;
+    unsigned char in_h_acc40U_DI_add__INT_index_of__INT_ACC40Uk_1;
+    unsigned char in_h_acc40U_DI_add__INT_index_of__INT_ACC40Uk_2;
+    unsigned char in_h_acc40U_DI_add__INT_index_of__INT_ACC40Uk_3;
     unsigned char in_h_fr_hi_UHI_add__INT_index_of__INT_FRintieven_0;
     unsigned char in_h_fr_hi_UHI_add__INT_index_of__INT_FRintieven_1;
     unsigned char in_h_fr_hi_UHI_add__INT_index_of__INT_FRintjeven_0;
@@ -1501,9 +1502,9 @@ union sem_fields {
     unsigned char in_h_fr_lo_UHI_add__INT_index_of__INT_FRintjeven_0;
     unsigned char in_h_fr_lo_UHI_add__INT_index_of__INT_FRintjeven_1;
     unsigned char out_ACC40Uk;
-    unsigned char out_h_acc40U_UDI_add__INT_index_of__INT_ACC40Uk_1;
-    unsigned char out_h_acc40U_UDI_add__INT_index_of__INT_ACC40Uk_2;
-    unsigned char out_h_acc40U_UDI_add__INT_index_of__INT_ACC40Uk_3;
+    unsigned char out_h_acc40U_DI_add__INT_index_of__INT_ACC40Uk_1;
+    unsigned char out_h_acc40U_DI_add__INT_index_of__INT_ACC40Uk_2;
+    unsigned char out_h_acc40U_DI_add__INT_index_of__INT_ACC40Uk_3;
   } sfmt_cmqmachu;
   struct { /*  */
     UINT f_ACC40Sk;
@@ -2191,7 +2192,7 @@ struct scache {
   f_ICCi_2_null = EXTRACT_LSB0_UINT (insn, 32, 26, 2); \
   f_op = EXTRACT_LSB0_UINT (insn, 32, 24, 7); \
   f_hint = EXTRACT_LSB0_UINT (insn, 32, 17, 2); \
-  f_label16 = ((((EXTRACT_LSB0_SINT (insn, 32, 15, 16)) << (2))) + (pc)); \
+  f_label16 = ((((EXTRACT_LSB0_SINT (insn, 32, 15, 16)) * (4))) + (pc)); \
 
 #define EXTRACT_IFMT_BNO_VARS \
   UINT f_pack; \
@@ -2225,7 +2226,7 @@ struct scache {
   f_ICCi_2 = EXTRACT_LSB0_UINT (insn, 32, 26, 2); \
   f_op = EXTRACT_LSB0_UINT (insn, 32, 24, 7); \
   f_hint = EXTRACT_LSB0_UINT (insn, 32, 17, 2); \
-  f_label16 = ((((EXTRACT_LSB0_SINT (insn, 32, 15, 16)) << (2))) + (pc)); \
+  f_label16 = ((((EXTRACT_LSB0_SINT (insn, 32, 15, 16)) * (4))) + (pc)); \
 
 #define EXTRACT_IFMT_FBRA_VARS \
   UINT f_pack; \
@@ -2242,7 +2243,7 @@ struct scache {
   f_FCCi_2_null = EXTRACT_LSB0_UINT (insn, 32, 26, 2); \
   f_op = EXTRACT_LSB0_UINT (insn, 32, 24, 7); \
   f_hint = EXTRACT_LSB0_UINT (insn, 32, 17, 2); \
-  f_label16 = ((((EXTRACT_LSB0_SINT (insn, 32, 15, 16)) << (2))) + (pc)); \
+  f_label16 = ((((EXTRACT_LSB0_SINT (insn, 32, 15, 16)) * (4))) + (pc)); \
 
 #define EXTRACT_IFMT_FBNO_VARS \
   UINT f_pack; \
@@ -2276,7 +2277,7 @@ struct scache {
   f_FCCi_2 = EXTRACT_LSB0_UINT (insn, 32, 26, 2); \
   f_op = EXTRACT_LSB0_UINT (insn, 32, 24, 7); \
   f_hint = EXTRACT_LSB0_UINT (insn, 32, 17, 2); \
-  f_label16 = ((((EXTRACT_LSB0_SINT (insn, 32, 15, 16)) << (2))) + (pc)); \
+  f_label16 = ((((EXTRACT_LSB0_SINT (insn, 32, 15, 16)) * (4))) + (pc)); \
 
 #define EXTRACT_IFMT_BCTRLR_VARS \
   UINT f_pack; \
@@ -2595,7 +2596,7 @@ struct scache {
   f_labelH6 = EXTRACT_LSB0_SINT (insn, 32, 30, 6); \
   f_labelL18 = EXTRACT_LSB0_UINT (insn, 32, 17, 18); \
 {\
-  f_label24 = ((((((((f_labelH6) << (18))) | (f_labelL18))) << (2))) + (pc));\
+  f_label24 = ((((((((f_labelH6) * (((1) << (18))))) | (f_labelL18))) * (4))) + (pc));\
 }\
 
 #define EXTRACT_IFMT_RETT_VARS \
@@ -3584,7 +3585,7 @@ struct scache {
   f_u12_h = EXTRACT_LSB0_SINT (insn, 32, 17, 6); \
   f_u12_l = EXTRACT_LSB0_UINT (insn, 32, 5, 6); \
 {\
-  f_u12 = ((((f_u12_h) << (6))) | (f_u12_l));\
+  f_u12 = ((((f_u12_h) * (64))) | (f_u12_l));\
 }\
 
 #define EXTRACT_IFMT_MHSETHIS_VARS \
@@ -3605,7 +3606,7 @@ struct scache {
   f_u12_h = EXTRACT_LSB0_SINT (insn, 32, 17, 6); \
   f_u12_l = EXTRACT_LSB0_UINT (insn, 32, 5, 6); \
 {\
-  f_u12 = ((((f_u12_h) << (6))) | (f_u12_l));\
+  f_u12 = ((((f_u12_h) * (64))) | (f_u12_l));\
 }\
 
 #define EXTRACT_IFMT_MHDSETS_VARS \
@@ -3626,7 +3627,7 @@ struct scache {
   f_u12_h = EXTRACT_LSB0_SINT (insn, 32, 17, 6); \
   f_u12_l = EXTRACT_LSB0_UINT (insn, 32, 5, 6); \
 {\
-  f_u12 = ((((f_u12_h) << (6))) | (f_u12_l));\
+  f_u12 = ((((f_u12_h) * (64))) | (f_u12_l));\
 }\
 
 #define EXTRACT_IFMT_MHSETLOH_VARS \
