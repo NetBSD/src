@@ -1,6 +1,6 @@
 /* Print instructions for the Texas TMS320C[34]X, for GDB and GNU Binutils.
 
-   Copyright (C) 2002-2022 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Michael P. Hayes (m.hayes@elec.canterbury.ac.nz)
 
@@ -707,9 +707,9 @@ tic4x_disassemble (unsigned long pc,
 
   if (optab == NULL)
     {
-      optab = xcalloc (sizeof (tic4x_inst_t *), (1 << TIC4X_HASH_SIZE));
+      optab = xcalloc ((1 << TIC4X_HASH_SIZE), sizeof (tic4x_inst_t *));
 
-      optab_special = xcalloc (sizeof (tic4x_inst_t *), TIC4X_SPESOP_SIZE);
+      optab_special = xcalloc (TIC4X_SPESOP_SIZE, sizeof (tic4x_inst_t *));
 
       /* Install opcodes in reverse order so that preferred
 	 forms overwrite synonyms.  */
