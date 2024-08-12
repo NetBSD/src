@@ -1,5 +1,5 @@
 /* 32-bit ELF support for S+core.
-   Copyright (C) 2006-2022 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
    Contributed by
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
@@ -1089,7 +1089,7 @@ score_elf_got_info (bfd *abfd, asection **sgotp)
    appear towards the end.  This reduces the amount of GOT space
    required.  MAX_LOCAL is used to set the number of local symbols
    known to be in the dynamic symbol table.  During
-   s3_bfd_score_elf_size_dynamic_sections, this value is 1.  Afterward, the
+   s3_bfd_score_elf_late_size_sections, this value is 1.  Afterward, the
    section symbols are added and the count is higher.  */
 static bool
 score_elf_sort_hash_table (struct bfd_link_info *info,
@@ -3160,8 +3160,8 @@ s3_bfd_score_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
 /* This function is called after all the input files have been read,
    and the input sections have been assigned to output sections.  */
 static bool
-s3_bfd_score_elf_always_size_sections (bfd *output_bfd,
-				       struct bfd_link_info *info)
+s3_bfd_score_elf_early_size_sections (bfd *output_bfd,
+				      struct bfd_link_info *info)
 {
   bfd *dynobj;
   asection *s;
@@ -3237,14 +3237,15 @@ s3_bfd_score_elf_always_size_sections (bfd *output_bfd,
 
 /* Set the sizes of the dynamic sections.  */
 static bool
-s3_bfd_score_elf_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
+s3_bfd_score_elf_late_size_sections (bfd *output_bfd, struct bfd_link_info *info)
 {
   bfd *dynobj;
   asection *s;
   bool reltext;
 
   dynobj = elf_hash_table (info)->dynobj;
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   if (elf_hash_table (info)->dynamic_sections_created)
     {
@@ -3313,7 +3314,7 @@ s3_bfd_score_elf_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *i
 	}
       else if (startswith (name, ".got"))
 	{
-	  /* s3_bfd_score_elf_always_size_sections() has already done
+	  /* s3_bfd_score_elf_early_size_sections() has already done
 	     most of the work, but some symbols may have been mapped
 	     to versions that we must now resolve in the got_entries
 	     hash tables.  */
@@ -3485,7 +3486,13 @@ s3_bfd_score_elf_finish_dynamic_symbol (bfd *output_bfd,
 
       /* FIXME: Can h->dynindex be more than 64K?  */
       if (h->dynindx & 0xffff0000)
-	return false;
+	{
+	  _bfd_error_handler
+	    (_("%pB: cannot handle more than %d dynamic symbols"),
+	     output_bfd, 0xffff);
+	  bfd_set_error (bfd_error_bad_value);
+	  return false;
+	}
 
       /* Fill the stub.  */
       score_bfd_put_32 (output_bfd, STUB_LW, stub);
@@ -4177,22 +4184,22 @@ _bfd_score_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
 }
 
 static bool
-_bfd_score_elf_always_size_sections (bfd *output_bfd,
-				     struct bfd_link_info *info)
+_bfd_score_elf_early_size_sections (bfd *output_bfd,
+				    struct bfd_link_info *info)
 {
   if (bfd_get_mach (output_bfd) == bfd_mach_score3)
-    return s3_bfd_score_elf_always_size_sections (output_bfd, info);
+    return s3_bfd_score_elf_early_size_sections (output_bfd, info);
   else
-    return s7_bfd_score_elf_always_size_sections (output_bfd, info);
+    return s7_bfd_score_elf_early_size_sections (output_bfd, info);
 }
 
 static bool
-_bfd_score_elf_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
+_bfd_score_elf_late_size_sections (bfd *output_bfd, struct bfd_link_info *info)
 {
   if (bfd_get_mach (output_bfd) == bfd_mach_score3)
-    return s3_bfd_score_elf_size_dynamic_sections (output_bfd, info);
+    return s3_bfd_score_elf_late_size_sections (output_bfd, info);
   else
-    return s7_bfd_score_elf_size_dynamic_sections (output_bfd, info);
+    return s7_bfd_score_elf_late_size_sections (output_bfd, info);
 }
 
 static bool
@@ -4455,10 +4462,10 @@ _bfd_score_elf_common_definition (Elf_Internal_Sym *sym)
   _bfd_score_elf_section_from_bfd_section
 #define elf_backend_adjust_dynamic_symbol \
   _bfd_score_elf_adjust_dynamic_symbol
-#define elf_backend_always_size_sections \
-  _bfd_score_elf_always_size_sections
-#define elf_backend_size_dynamic_sections \
-  _bfd_score_elf_size_dynamic_sections
+#define elf_backend_early_size_sections \
+  _bfd_score_elf_early_size_sections
+#define elf_backend_late_size_sections \
+  _bfd_score_elf_late_size_sections
 #define elf_backend_omit_section_dynsym   _bfd_elf_omit_section_dynsym_all
 #define elf_backend_create_dynamic_sections \
   _bfd_score_elf_create_dynamic_sections
