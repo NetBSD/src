@@ -363,7 +363,7 @@ _rl_get_char_len (char *src, mbstate_t *ps)
 
   /* Look at no more than MB_CUR_MAX characters */
   l = (size_t)strlen (src);
-  if (_rl_utf8locale && l > 0 && UTF8_SINGLEBYTE(*src))
+  if (_rl_utf8locale && l >= 0 && UTF8_SINGLEBYTE(*src))
     tmp = (*src != 0) ? 1 : 0;
   else
     {
