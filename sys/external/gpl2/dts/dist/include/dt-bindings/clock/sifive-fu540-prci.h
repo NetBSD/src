@@ -1,4 +1,4 @@
-/*	$NetBSD: sifive-fu540-prci.h,v 1.1.1.2 2020/01/03 14:33:05 skrll Exp $	*/
+/*	$NetBSD: sifive-fu540-prci.h,v 1.2 2024/08/12 10:55:56 skrll Exp $	*/
 
 /* SPDX-License-Identifier: (GPL-2.0 OR MIT) */
 /*
@@ -12,9 +12,9 @@
 
 /* Clock indexes for use by Device Tree data and the PRCI driver */
 
-#define PRCI_CLK_COREPLL	       0
-#define PRCI_CLK_DDRPLL		       1
-#define PRCI_CLK_GEMGXLPLL	       2
-#define PRCI_CLK_TLCLK		       3
+#define FU540_PRCI_CLK_COREPLL		0
+#define FU540_PRCI_CLK_DDRPLL		1
+#define FU540_PRCI_CLK_GEMGXLPLL	2
+#define FU540_PRCI_CLK_TLCLK		3
 
 #endif

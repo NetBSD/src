@@ -15,6 +15,10 @@
 	model = "Kendryte KD233";
 	compatible = "canaan,kendryte-kd233", "canaan,kendryte-k210";
 
+	aliases {
+		serial0 = &uarths0;
+	};
+
 	chosen {
 		bootargs = "earlycon console=ttySIF0";
 		stdout-path = "serial0:115200n8";
@@ -35,7 +39,7 @@
 	gpio-keys {
 		compatible = "gpio-keys";
 
-		key0 {
+		key {
 			label = "KEY0";
 			linux,code = <BTN_0>;
 			gpios = <&gpio0 10 GPIO_ACTIVE_LOW>;
@@ -46,7 +50,6 @@
 &fpioa {
 	pinctrl-0 = <&jtag_pinctrl>;
 	pinctrl-names = "default";
-	status = "okay";
 
 	jtag_pinctrl: jtag-pinmux {
 		pinmux = <K210_FPIOA(0, K210_PCF_JTAG_TCLK)>,
@@ -118,6 +121,7 @@
 	#sound-dai-cells = <1>;
 	pinctrl-0 = <&i2s0_pinctrl>;
 	pinctrl-names = "default";
+	status = "okay";
 };
 
 &spi0 {
@@ -125,12 +129,13 @@
 	pinctrl-names = "default";
 	num-cs = <1>;
 	cs-gpios = <&gpio0 20 GPIO_ACTIVE_HIGH>;
+	status = "okay";
 
 	panel@0 {
-		compatible = "ilitek,ili9341";
+		compatible = "canaan,kd233-tft", "ilitek,ili9341";
 		reg = <0>;
 		dc-gpios = <&gpio0 21 GPIO_ACTIVE_HIGH>;
-		spi-max-frequency = <15000000>;
+		spi-max-frequency = <10000000>;
 		status = "disabled";
 	};
 };
@@ -142,7 +147,7 @@
 	cs-gpios = <&gpio0 16 GPIO_ACTIVE_LOW>;
 	status = "okay";
 
-	slot@0 {
+	mmc@0 {
 		compatible = "mmc-spi-slot";
 		reg = <0>;
 		voltage-ranges = <3300 3300>;
