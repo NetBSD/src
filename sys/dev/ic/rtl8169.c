@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.178 2024/08/12 18:55:01 christos Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.179 2024/08/12 21:27:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.178 2024/08/12 18:55:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.179 2024/08/12 21:27:34 christos Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -2179,15 +2179,15 @@ re_stop(struct ifnet *ifp, int disable)
 
 	mii_down(&sc->mii);
 
-        /*      
-         * Disable accepting frames to put RX MAC into idle state.
-         * Otherwise it's possible to get frames while stop command
-         * execution is in progress and controller can DMA the frame
-         * to already freed RX buffer during that period.
-         */     
-        CSR_WRITE_4(sc, RTK_RXCFG, CSR_READ_4(sc, RTK_RXCFG) &
-            ~(RTK_RXCFG_RX_ALLPHYS | RTK_RXCFG_RX_INDIV | RTK_RXCFG_RX_MULTI |
-            RTK_RXCFG_RX_BROAD));
+	/*
+	 * Disable accepting frames to put RX MAC into idle state.
+	 * Otherwise it's possible to get frames while stop command
+	 * execution is in progress and controller can DMA the frame
+	 * to already freed RX buffer during that period.
+	 */
+	CSR_WRITE_4(sc, RTK_RXCFG, CSR_READ_4(sc, RTK_RXCFG) &
+	    ~(RTK_RXCFG_RX_ALLPHYS | RTK_RXCFG_RX_INDIV | RTK_RXCFG_RX_MULTI |
+	    RTK_RXCFG_RX_BROAD));
 
 	if (sc->sc_quirk & RTKQ_RXDV_GATED) {
 		CSR_WRITE_4(sc, RTK_MISC,
