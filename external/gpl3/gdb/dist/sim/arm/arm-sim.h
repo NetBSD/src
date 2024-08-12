@@ -1,7 +1,7 @@
 /* Simulation code for the ARM processor.
    Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
-   This file is part of simulators.
+   This file is part of the GNU simulators.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,10 +16,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SIM_MAIN_H
-#define SIM_MAIN_H
+#ifndef ARM_SIM_H
+#define ARM_SIM_H
 
-#include "sim-basics.h"
-#include "sim-base.h"
+#include "armdefs.h"
+
+extern struct ARMul_State *state;
 
 #endif
