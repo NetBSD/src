@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2023 Free Software Foundation, Inc.
+# Copyright (C) 2018-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,21 +27,27 @@ if {[build_executable $testfile.exp $testfile \
     return -1
 }
 
-set old_gdbflags $GDBFLAGS
+save_vars { GDBFLAGS } {
+    set GDBFLAGS "$GDBFLAGS $binfile"
+    clean_restart
+}
 
 # Expect a failure before --write has been added to the command line
-set GDBFLAGS "$old_gdbflags $binfile"
-clean_restart
 test_print_reject "set {int}main = 0x4242" "Cannot access memory at address"
 
+save_vars { GDBFLAGS } {
+    set GDBFLAGS "$GDBFLAGS --write $binfile"
+    clean_restart
+}
+
 # Setting memory should now work correctly after adding --write
-set GDBFLAGS "$old_gdbflags --write $binfile"
-clean_restart
 gdb_test_no_output "set {int}main = 0x4242"
 
-# Check that memory write persists after quitting GDB
 gdb_exit
-gdb_start
-gdb_test "x /x main" "<main>:.*4242"
+save_vars { GDBFLAGS } {
+    set GDBFLAGS "$GDBFLAGS --write $binfile"
+    gdb_start
+}
 
-set GDBFLAGS $old_gdbflags
+# Check that memory write persists after quitting GDB
+gdb_test "x /x main" "<main>:.*4242"

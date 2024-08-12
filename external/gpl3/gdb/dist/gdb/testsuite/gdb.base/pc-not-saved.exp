@@ -1,0 +1,114 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test how GDB handles a frame in which the previous-pc value is not
+# available.  Specifically, check that the backtrace correctly reports
+# why the backtrace is truncated, and ensure that 'display' directives
+# still work when 'stepi'-ing through the frame.
+#
+# We do this by registering a Python unwinder which doesn't provide
+# any previous register values.
+
+require allow_python_tests
+
+standard_testfile
+
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
+    return
+}
+
+set remote_python_file \
+    [gdb_remote_download host "${srcdir}/${subdir}/${testfile}.py"]
+
+if { ![runto "break_bt_here"] } {
+    return
+}
+
+# Figuring out the correct frame-id from a Python unwinder is hard.
+# We need to know the function's start address (not too hard), and the
+# stack address on entry to the function, which is much harder to
+# figure out in a cross-target way.
+#
+# So instead we run without any Python unwinder in place and use
+# 'maint print frame-id' to record the frame-id.  We then restart GDB,
+# load the Python unwinder, and tell it to use the frame-id we
+# recorded here.
+set pc unknown
+set cfa unknown
+gdb_test_multiple "maintenance print frame-id" "store break_bt_here frame-id" {
+    -re -wrap "frame-id for frame #0: \\{stack=($hex),code=($hex),\[^\}\]+\\}" {
+	set cfa $expect_out(1,string)
+	set pc $expect_out(1,string)
+    }
+}
+gdb_assert { ![string equal $cfa unknown] } \
+    "check we read the frame's CFA"
+
+gdb_assert { ![string equal $pc unknown] } \
+    "check we read the frame's PC"
+
+# Restart and load the Python unwinder script.
+clean_restart $binfile
+gdb_test_no_output "source ${remote_python_file}" "load python file"
+
+# Tell the Python unwinder to use the frame-id we cached above.
+gdb_test_no_output "python set_break_bt_here_frame_id($pc, $cfa)" \
+    "call set_break_bt_here_frame_id to set the frame-id"
+
+# Run up to the function which the unwinder will claim.
+if { ![runto "break_bt_here"] } {
+    return
+}
+
+# Print the backtrace.  Check that the reason for stopping the
+# backtrace is that the previous $pc is not available.
+gdb_test "bt" \
+    [multi_line \
+	 "^#0  break_bt_here \\(\\) at \[^\r\n\]+" \
+	 "Backtrace stopped: frame did not save the PC"] \
+    "backtrace from break_bt_here function"
+
+# Ensure we can stepi.
+gdb_test "stepi" \
+    "(:?$hex\\s+)?$decimal\\s+\[^\r\n\]+" \
+    "stepi without a display in place"
+
+# Setup a 'display' directive.
+gdb_test "display/i \$pc" \
+    [multi_line \
+	 "^1: x/i \\\$pc" \
+	 "=> $hex <break_bt_here(:?\\+$decimal)?>:\\s+\[^\r\n\]+"]
+
+# Step again, check the 'display' directive is shown.
+gdb_test "stepi" \
+    [multi_line \
+	 "(:?$hex\\s+)?$decimal\\s+\[^\r\n\]+" \
+	 "1: x/i \\\$pc" \
+	 "=> $hex <break_bt_here(:?\\+$decimal)?>:\\s+\[^\r\n\]+"] \
+    "stepi with a display in place"
+
+# Continue to a function that is called from within break_bt_here.
+# The Python unwinder will then be claiming frame #1.
+gdb_breakpoint other_func
+gdb_continue_to_breakpoint "continue to other_func"
+
+# Print the backtrace and check that the reason for stopping the
+# backtrace is that the previous $pc is not available.
+gdb_test "bt" \
+    [multi_line \
+	 "#0  other_func \\(\\) at \[^\r\n\]+" \
+	 "#1  (:?$hex in )?break_bt_here \\(\\) at \[^\r\n\]+" \
+	 "Backtrace stopped: frame did not save the PC"] \
+    "backtrace from other_func function"

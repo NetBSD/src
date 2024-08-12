@@ -1,4 +1,4 @@
-# Copyright 2018-2023 Free Software Foundation, Inc.
+# Copyright 2018-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@
 #
 #  Command aborted.
 #  delete breakpoints
-#  Delete all breakpoints? (y or n) y
+#  Delete all breakpoints, watchpoints, tracepoints, and catchpoints? (y or n) y
 #  (gdb) b function
 #  Breakpoint 3 at 0x40048b: file test.c, line 33.
 #  continue

@@ -1,4 +1,4 @@
-# Copyright 2016-2023 Free Software Foundation, Inc.
+# Copyright 2016-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ proc ensure_no_output {message} {
 
     # Run a command and use an anchor to make sure no output appears
     # before the command's expected output.
-    gdb_test "print 999" "^print 999\r\n\\\$$decimal = 999" $message
+    gdb_test "print 999" "^\\\$$decimal = 999" $message
 }
 
 # Run a few execution-related commands on CON1, and ensure the proper
@@ -121,26 +121,26 @@ proc_with_prefix do_test {} {
     # Ensure non-execution commands in one console don't cause output
     # in the other consoles.
     with_spawn_id $gdb_main_spawn_id {
-	gdb_test "print 1" "^print 1\r\n\\\$1 = 1" "print on main console"
+	gdb_test "print 1" "^\\\$1 = 1" "print on main console"
     }
     with_spawn_id $extra_spawn_id {
-	gdb_test "print 2" "^print 2\r\n\\\$2 = 2" "print on extra console"
+	gdb_test "print 2" "^\\\$2 = 2" "print on extra console"
     }
 
     # Verify that we get proper queries on the main UI, but that they are
     # auto-answered on secondary UIs.
     with_spawn_id $gdb_main_spawn_id {
-	gdb_test "delete" "" "delete all breakpoint on main console" \
-		 "Delete all breakpoints. .y or n. $" "n"
+	gdb_test "delete" "" "delete all breakpoints, watchpoints, tracepoints, and catchpoints on main console" \
+		 "Delete all breakpoints, watchpoints, tracepoints, and catchpoints. .y or n. $" "n"
     }
     with_spawn_id $extra_spawn_id {
 	# Check output in two stages in order to override
 	# gdb_test_multiple's internal "got interactive prompt" fail
 	# that would otherwise match if the expect buffer happens to
 	# fill with partial output that ends in "(y or n) ".
-	set test "delete all breakpoints on extra console"
+	set test "delete all breakpoints, watchpoints, tracepoints, and catchpoints on extra console"
 	gdb_test_multiple "delete" $test {
-	    -re "Delete all breakpoints. .y or n. " {
+	    -re "Delete all breakpoints, watchpoints, tracepoints, and catchpoints. .y or n. " {
 		gdb_test "" \
 		    ".answered Y; input not from terminal." \
 		    $test
@@ -182,6 +182,11 @@ proc_with_prefix do_test_invalid_args {} {
     gdb_test "new-ui bloop $extra_tty_name" \
 	     "Interpreter `bloop' unrecognized" \
 	     "new-ui with bad interpreter name"
+
+    # Test that the TUI cannot be used for a new UI.
+    gdb_test "new-ui tui $extra_tty_name" \
+	"interpreter 'tui' cannot be used with a new UI" \
+	"new-ui with tui"
 
     # Test that we can continue working normally.
     if ![runto_main] {
