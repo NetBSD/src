@@ -1,4 +1,4 @@
-/*	$NetBSD: t_link.c,v 1.5 2022/03/30 16:35:28 christos Exp $	*/
+/*	$NetBSD: t_link.c,v 1.5.4.1 2024/08/12 22:38:30 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #include "h_macros.h"
 
 #define USES_OWNER							\
-	if (FSTYPE_MSDOS(tc))						\
+	if (FSTYPE_MSDOS(tc) || FSTYPE_EXFATFS(tc))			\
 	    atf_tc_skip("owner not supported by file system")
 #define USES_USERLEVEL							\
 	if (FSTYPE_PUFFS(tc) || FSTYPE_P2K_FFS(tc))			\

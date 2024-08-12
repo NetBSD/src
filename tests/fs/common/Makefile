@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2023/06/03 09:09:15 lukem Exp $
+#	$NetBSD: Makefile,v 1.17.2.1 2024/08/12 22:38:30 perseant Exp $
 #
 
 .include <bsd.own.mk>
@@ -11,6 +11,10 @@ SRCS=	fstest_ext2fs.c fstest_ffs.c fstest_lfs.c fstest_msdosfs.c	\
 .if (${MKZFS} != "no")
 SRCS+=	fstest_zfs.c
 CPPFLAGS+=-DWANT_ZFS_TESTS
+.endif
+.if (${MKEXFATFS} != "no")
+SRCS+=	fstest_exfatfs.c
+CPPFLAGS+=-DWANT_EXFATFS_TESTS
 .endif
 
 WARNS=	3

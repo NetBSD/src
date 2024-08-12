@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unpriv.c,v 1.16 2018/11/28 10:01:28 hannken Exp $	*/
+/*	$NetBSD: t_unpriv.c,v 1.16.12.1 2024/08/12 22:38:30 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include "h_macros.h"
 
 #define USES_OWNER							 \
-	if (FSTYPE_MSDOS(tc))						 \
+	if (FSTYPE_MSDOS(tc) || FSTYPE_EXFATFS(tc))			 \
 	    atf_tc_skip("owner not supported by file system")
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.63 2023/05/08 19:23:45 andvar Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.63.2.1 2024/08/12 22:38:30 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -428,7 +428,7 @@ rename_reg_nodir(const atf_tc_t *tc, const char *mp)
 	if (rump_sys_chdir(mp) == -1)
 		atf_tc_fail_errno("chdir mountpoint");
 
-	if (FSTYPE_MSDOS(tc) || FSTYPE_SYSVBFS(tc))
+	if (FSTYPE_MSDOS(tc) || FSTYPE_SYSVBFS(tc) || FSTYPE_EXFATFS(tc))
 		haslinks = false;
 	else
 		haslinks = true;
@@ -746,7 +746,7 @@ attrs(const atf_tc_t *tc, const char *mp)
 	RL(fd = rump_sys_open(TESTFILE, O_RDWR | O_CREAT, 0755));
 	RL(rump_sys_close(fd));
 	RL(rump_sys_stat(TESTFILE, &sb));
-	if (!(FSTYPE_MSDOS(tc) || FSTYPE_SYSVBFS(tc))) {
+	if (!(FSTYPE_MSDOS(tc) || FSTYPE_SYSVBFS(tc) || FSTYPE_EXFATFS(tc))) {
 		RL(rump_sys_chown(TESTFILE, 1, 2));
 		sb.st_uid = 1;
 		sb.st_gid = 2;
@@ -767,18 +767,19 @@ attrs(const atf_tc_t *tc, const char *mp)
 
 	RL(rump_sys_stat(TESTFILE, &sb2));
 #define CHECK(a) ATF_REQUIRE_EQ(sb.a, sb2.a)
-	if (!(FSTYPE_MSDOS(tc) || FSTYPE_SYSVBFS(tc))) {
+	if (!(FSTYPE_MSDOS(tc) || FSTYPE_SYSVBFS(tc) || FSTYPE_EXFATFS(tc))) {
 		CHECK(st_uid);
 		CHECK(st_gid);
 		CHECK(st_mode);
 	}
-	if (!FSTYPE_MSDOS(tc)) {
+	if (!(FSTYPE_MSDOS(tc) || FSTYPE_EXFATFS(tc))) {
 		/* msdosfs has only access date, not time */
 		CHECK(st_atimespec.tv_sec);
 	}
 	CHECK(st_mtimespec.tv_sec);
 	if (!(FSTYPE_EXT2FS(tc) || FSTYPE_MSDOS(tc) ||
-	      FSTYPE_SYSVBFS(tc) || FSTYPE_V7FS(tc))) {
+	      FSTYPE_SYSVBFS(tc) || FSTYPE_V7FS(tc) ||
+	      FSTYPE_EXFATFS(tc))) {
 		CHECK(st_atimespec.tv_nsec);
 		CHECK(st_mtimespec.tv_nsec);
 	}
@@ -1003,7 +1004,7 @@ access_simple(const atf_tc_t *tc, const char *mp)
 	RL(rump_sys_close(fd));
 
 #define ALLACC (F_OK | X_OK | W_OK | R_OK)
-	if (FSTYPE_SYSVBFS(tc) || FSTYPE_MSDOS(tc))
+	if (FSTYPE_SYSVBFS(tc) || FSTYPE_MSDOS(tc) || FSTYPE_EXFATFS(tc))
 		tmode = F_OK;
 	else
 		tmode = ALLACC;

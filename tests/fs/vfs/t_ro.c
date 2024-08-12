@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ro.c,v 1.8 2019/09/21 14:25:42 kre Exp $	*/
+/*	$NetBSD: t_ro.c,v 1.8.10.1 2024/08/12 22:38:30 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -129,13 +129,13 @@ attrs(const atf_tc_t *tc, const char *mp)
 	RL(rump_sys_stat(AFILE, &sb));
 
 	ATF_REQUIRE_ERRNO(EROFS, rump_sys_chmod(AFILE, 0775) == -1);
-	if (!FSTYPE_MSDOS(tc))
+	if (!(FSTYPE_MSDOS(tc) || FSTYPE_EXFATFS(tc)))
 		ATF_REQUIRE_ERRNO(EROFS, rump_sys_chown(AFILE, 1, 1) == -1);
 	ATF_REQUIRE_ERRNO(EROFS, rump_sys_utimes(AFILE, sometvs) == -1);
 
 	RL(fd = rump_sys_open(AFILE, O_RDONLY));
 	ATF_REQUIRE_ERRNO(EROFS, rump_sys_fchmod(fd, 0775) == -1);
-	if (!FSTYPE_MSDOS(tc))
+	if (!(FSTYPE_MSDOS(tc)|| FSTYPE_EXFATFS(tc)))
 		ATF_REQUIRE_ERRNO(EROFS, rump_sys_fchown(fd, 1, 1) == -1);
 	ATF_REQUIRE_ERRNO(EROFS, rump_sys_futimes(fd, sometvs) == -1);
 	RL(rump_sys_close(fd));
