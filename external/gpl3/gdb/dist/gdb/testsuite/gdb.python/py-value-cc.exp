@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2023 Free Software Foundation, Inc.
+# Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,16 +16,13 @@
 # This file is part of the GDB testsuite.  It tests the mechanism
 # exposing values to Python.
 
-if { [skip_cplus_tests] } { continue }
+require allow_cplus_tests allow_python_tests
 
 standard_testfile .cc
 
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
     return -1
 }
-
-# Skip all tests if Python scripting is not enabled.
-if { [skip_python_tests] } { continue }
 
 if ![runto_main] {
    return -1
@@ -83,7 +80,8 @@ gdb_test "python print(b_td\[b_fields\[0\]\].type.target())" "A" \
 gdb_test "python print(b_td\[b_fields\[0\]\]\['a'\])" "100" \
   "b_td.A::a via field"
 
-gdb_test "python print(u\[u_fields\[0\]\])" "99.*" "u's first field via field"
+gdb_test "python print(hex(u\[u_fields\[0\]\]))" "0x63636363.*" \
+    "u's first field via field"
 gdb_test "python print(u\[u_fields\[1\]\])" "99.*" "u's second field via field"
 
 gdb_test "python print(len(x_fields))" "2" "number for fields in u"
@@ -101,3 +99,15 @@ gdb_test "python print(uu\[uu_fields\[1\]\]\['a'\])" "1000" "uu.a via field"
 # Test overloaded operators.
 gdb_test_no_output "python a = gdb.parse_and_eval('a')" "init a"
 gdb_test "python print(a + 5)" "10" "a + 5"
+
+# Test inferior function calls of methods.
+gdb_test "py print(b_obj\['static_func'\]())" "1111"
+gdb_test "py print(b_obj\['arg0_func'\]())" ".*Too few arguments in function call.*"
+gdb_test "py print(b_obj\['arg0_func'\](b_obj))" "198"
+gdb_test "py print(b_obj\['arg1_func'\]())" ".*Too few arguments in function call.*"
+gdb_test "py print(b_obj\['arg1_func'\](b_obj))" ".*Too few arguments in function call.*"
+gdb_test "py print(b_obj\['arg1_func'\](b_obj, 3))" "294"
+gdb_test "py print(b_obj\['arg2_func'\]())" ".*Too few arguments in function call.*"
+gdb_test "py print(b_obj\['arg2_func'\](b_obj))" ".*Too few arguments in function call.*"
+gdb_test "py print(b_obj\['arg2_func'\](b_obj, 4))" ".*Too few arguments in function call.*"
+gdb_test "py print(b_obj\['arg2_func'\](b_obj, 5, 6))" "496"

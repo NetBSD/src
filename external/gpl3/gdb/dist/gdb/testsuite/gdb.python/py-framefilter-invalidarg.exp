@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2023 Free Software Foundation, Inc.
+# Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,12 +15,11 @@
 
 load_lib gdb-python.exp
 
+require allow_python_tests
+
 standard_testfile amd64-py-framefilter-invalidarg.S
 
-if { ![istarget x86_64-*-* ] || ![is_lp64_target] } {
-    verbose "Skipping py-framefilter-invalidarg."
-    return
-}
+require is_x86_64_m64_target
 
 # We cannot use prepare_for_testing as we have to set the safe-patch
 # to check objfile and progspace printers.
@@ -31,9 +30,6 @@ if {[build_executable $testfile.exp $testfile $srcfile {}] == -1} {
 # Start with a fresh gdb.
 gdb_exit
 gdb_start
-
-# Skip all tests if Python scripting is not enabled.
-if { [skip_python_tests] } { continue }
 
 # Make the -gdb.py script available to gdb, it is automagically loaded by gdb.
 # Care is taken to put it in the same directory as the binary so that

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2010-2023 Free Software Foundation, Inc.
+   Copyright 2010-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,9 +30,40 @@ int block_func (void)
   }
 }
 
+/* A function with no locals.  Used for testing gdb.Block.__repr__().  */
+int no_locals_func (void)
+{
+  return block_func ();
+}
+
+/* A function with 5 locals.  Used for testing gdb.Block.__repr__().  */
+int few_locals_func (void)
+{
+  int i = 0;
+  int j = 0;
+  int k = 0;
+  int x = 0;
+  int y = 0;
+  return block_func ();
+}
+
+/* A function with 6 locals.  Used for testing gdb.Block.__repr__().  */
+int many_locals_func (void)
+{
+  int i = 0;
+  int j = 0;
+  int k = 0;
+  int x = 0;
+  int y = 0;
+  int z = 0;
+  return block_func ();
+}
 
 int main (int argc, char *argv[])
 {
   block_func ();
+  no_locals_func ();
+  few_locals_func ();
+  many_locals_func ();
   return 0; /* Break at end. */
 }

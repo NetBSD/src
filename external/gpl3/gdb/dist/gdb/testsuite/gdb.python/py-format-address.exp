@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Free Software Foundation, Inc.
+# Copyright 2022-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,6 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 load_lib gdb-python.exp
+require allow_python_tests
 standard_testfile
 
 foreach func_name { foo bar } {
@@ -30,9 +31,6 @@ set binary_foo [standard_output_file "${testfile}-foo"]
 set binary_bar [standard_output_file "${testfile}-bar"]
 
 clean_restart $binary_foo
-
-# Skip all tests if Python scripting is not enabled.
-if { [skip_python_tests] } { continue }
 
 if ![runto_main] {
    return -1
@@ -86,27 +84,27 @@ gdb_test "python print(\"Got: \" + gdb.format_address($main_addr, None, None))" 
 # Now forget the architecture, this should fail.
 gdb_test "python print(\"Got: \" + gdb.format_address($main_addr, inf.progspace))" \
     [multi_line \
-	 "ValueError: The architecture and progspace arguments must both be supplied" \
-	 "Error while executing Python code\\."] \
+	 "ValueError.*: The architecture and progspace arguments must both be supplied" \
+	 "Error occurred in Python.*"] \
     "gdb.format_address passing program space only"
 
 gdb_test "python print(\"Got: \" + gdb.format_address($main_addr, inf.progspace, None))" \
     [multi_line \
-	 "ValueError: The architecture and progspace arguments must both be supplied" \
-	 "Error while executing Python code\\."] \
+	 "ValueError.*: The architecture and progspace arguments must both be supplied" \
+	 "Error occurred in Python.*"] \
     "gdb.format_address passing real program space, but architecture is None"
 
 # Now skip the program space argument.
 gdb_test "python print(\"Got: \" + gdb.format_address($main_addr, architecture=inf.architecture()))" \
     [multi_line \
-	 "ValueError: The architecture and progspace arguments must both be supplied" \
-	 "Error while executing Python code\\."] \
+	 "ValueError.*: The architecture and progspace arguments must both be supplied" \
+	 "Error occurred in Python.*"] \
     "gdb.format_address passing architecture only"
 
 gdb_test "python print(\"Got: \" + gdb.format_address($main_addr, None, inf.architecture()))" \
     [multi_line \
-	 "ValueError: The architecture and progspace arguments must both be supplied" \
-	 "Error while executing Python code\\."] \
+	 "ValueError.*: The architecture and progspace arguments must both be supplied" \
+	 "Error occurred in Python.*"] \
     "gdb.format_address passing real architecture, but progspace is None"
 
 # Now, before we add a second inferior, lets just check we can format
@@ -157,14 +155,14 @@ gdb_test "python print(\"Got: \" + gdb.format_address($bar_addr, inf2.progspace,
 # Try pasing incorrect object types for program space and architecture.
 gdb_test "python print(\"Got: \" + gdb.format_address($bar_addr, inf2.progspace, inf2.progspace))" \
     [multi_line \
-	 "TypeError: The architecture argument is not a gdb.Architecture object" \
-	 "Error while executing Python code\\."] \
+	 "TypeError.*: The architecture argument is not a gdb.Architecture object" \
+	 "Error occurred in Python.*"] \
     "gdb.format_address pass wrong object type for architecture"
 
 gdb_test "python print(\"Got: \" + gdb.format_address($bar_addr, inf2.architecture(), inf2.architecture()))" \
     [multi_line \
-	 "TypeError: The progspace argument is not a gdb.Progspace object" \
-	 "Error while executing Python code\\."] \
+	 "TypeError.*: The progspace argument is not a gdb.Progspace object" \
+	 "Error occurred in Python.*"] \
     "gdb.format_address pass wrong object type for progspace"
 
 # Now invalidate inferior 2's program space, and try using that.
@@ -173,6 +171,6 @@ gdb_test "python arch = inf2.architecture()"
 gdb_test "remove-inferior 2"
 gdb_test "python print(\"Got: \" + gdb.format_address($bar_addr, pspace, arch))" \
     [multi_line \
-	 "ValueError: The progspace argument is not valid" \
-	 "Error while executing Python code\\."] \
+	 "ValueError.*: The progspace argument is not valid" \
+	 "Error occurred in Python.*"] \
     "gdb.format_address called with an invalid program space"
