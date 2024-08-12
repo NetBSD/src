@@ -1,4 +1,4 @@
-# Copyright 2013-2023 Free Software Foundation, Inc.
+# Copyright 2013-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 load_lib "ada.exp"
 
-if { [skip_ada_tests] } { return -1 }
+require allow_ada_tests
 
 standard_ada_testfile foo
 
@@ -39,8 +39,15 @@ foreach_with_prefix scenario {all minimal} {
 
     runto "increment"
 
+    # If sal.is_stmt is false for the frame, function frame_show_address will
+    # return true and function print_frame in gdb/stack.c will print the
+    # address.  In this case, the output will look something like:
+    # #0  0x0000000010010a88 in callee.increment (val=val@entry=99.0, msg=...)
+    # This situation currently occurs on PowerPC but not on X86-64.
+    # The re string needs to account for the possibility that the address
+    # will be printed.
     set re \
-	"#0\\s+callee\\.increment \\(val(=val@entry)?=99\\.0, msg=\\.\\.\\.\\).*"
+	"#0.*callee\\.increment \\(val(=val@entry)?=99\\.0, msg=\\.\\.\\.\\).*"
     set re_different_entry_val \
        "#0\\s+callee\\.increment \\(val=99.0, val@entry=.*, msg=\\.\\.\\.\\).*"
     gdb_test_multiple "frame" "" {

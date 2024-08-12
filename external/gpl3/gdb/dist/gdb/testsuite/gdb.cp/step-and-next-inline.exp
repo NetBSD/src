@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Free Software Foundation, Inc.
+# Copyright 2019-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -60,7 +60,16 @@ proc do_test { use_header } {
     }
 
     gdb_test "bt" "\\s*\\#0\\s+main.*" "in main"
-    gdb_test "step" ".*" "step into get_alias_set"
+    set line1 {\t\{}
+    set line2 {\t  if \(t != NULL}
+    gdb_test_multiple "step" "step into get_alias_set" {
+	-re -wrap $line1 {
+	    gdb_test "next" $line2 $gdb_test_name
+	}
+	-re -wrap $line2 {
+	    pass $gdb_test_name
+	}
+    }
     gdb_test "bt" "\\s*\\#0\\s+get_alias_set\[^\r\]*${srcfile}:.*" \
 	"not in inline 1"
 

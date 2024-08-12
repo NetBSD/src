@@ -1,4 +1,4 @@
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,43 +15,13 @@
 
 load_lib "ada.exp"
 
-if { [skip_ada_tests] } { return -1 }
+require allow_ada_tests gnat_runtime_has_debug_info
 
 standard_ada_testfile foo
 
 if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug additional_flags=-gnata ]] != "" } {
   return -1
 }
-
-# A global variable used to simplify the maintenance of some of
-# the regular expressions below.
-set eol "\[\r\n\]+"
-
-# Before going any further, verify that we can insert exception
-# handlers catchpoints...  That way, we won't have to do this while
-# doing the actual GDB/MI testing.
-
-clean_restart ${testfile}
-
-if {![runto_main]} {
-   return 0
-}
-
-set msg "insert catchpoint on all Ada exceptions handlers"
-gdb_test_multiple "catch handlers" $msg {
-    -re "Catchpoint $decimal: all Ada exceptions handlers$eol$gdb_prompt $" {
-	pass $msg
-    }
-    -re "Your Ada runtime appears to be missing some debugging information.*\[\r\n\]+$gdb_prompt $" {
-	# If the runtime was not built with enough debug information,
-	# or if it was stripped, we can not test exception
-	# catchpoints.
-	unsupported $msg
-	return -1
-    }
-}
-
-# Now, we can start the GDB/MI testing itself...
 
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
@@ -82,7 +52,7 @@ proc continue_to_exception_handler { test line } {
 
     # Now MI stream output.
     mi_expect_stop \
-	"breakpoint-hit\",disp=\"keep\",bkptno=\"$decimal\",exception-name=\"exception\"?" \
+	"\"breakpoint-hit\",disp=\"keep\",bkptno=\"$decimal\",exception-name=\"exception\"" \
 	"foo" "" ".*" "$line" \
 	".*" \
         $test
@@ -125,7 +95,7 @@ mi_gdb_test "-catch-handlers -e Constraint_Error" \
             "catch Constraint_Error"
 
 mi_execute_to "exec-continue" \
-              "breakpoint-hit\",disp=\"keep\",bkptno=\"$decimal\",exception-name=\"exception\"?" \
+              "\"breakpoint-hit\",disp=\"keep\",bkptno=\"$decimal\",exception-name=\"exception\"" \
               "foo" "" ".*" "$bp_ce_location" \
               ".*" \
               "continue to exception catchpoint hit"
@@ -135,4 +105,3 @@ mi_send_resuming_command "exec-continue" "continuing to inferior exit"
 mi_expect_stop "exited-normally" "" "" "" "" "" "exit normally"
 
 mi_gdb_exit
-return 0

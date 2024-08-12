@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Free Software Foundation, Inc.
+# Copyright 2019-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 
 load_lib "ada.exp"
 
-if { [skip_ada_tests] } { return -1 }
+require allow_ada_tests
 
 standard_ada_testfile storage
 
@@ -33,5 +33,10 @@ if {![runto "storage.adb:$bp_location"]} {
   return
 }
 
-gdb_test "print V_LE" "= \\(value => 126, another_value => 12\\)"
-gdb_test "print V_BE" "= \\(value => 126, another_value => 12\\)"
+gdb_test "print V_LE" "= \\(value => 126, another_value => 12, color => green\\)"
+
+# This requires a compiler fix that is in GCC 14.
+if {[gcc_major_version] < 14} {
+    setup_kfail "DW_AT_endianity on enum types" *-*-*
+}
+gdb_test "print V_BE" "= \\(value => 126, another_value => 12, color => green\\)"

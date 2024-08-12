@@ -1,4 +1,4 @@
-# Copyright 2008-2023 Free Software Foundation, Inc.
+# Copyright 2008-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,8 +15,13 @@
 
 standard_testfile .cc
 
-if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
-      {debug c++ additional_flags=-Wno-unused-comparison}] } {
+set opts {}
+lappend opts debug
+lappend opts c++
+lappend opts additional_flags=-Wno-unused-comparison
+lappend opts additional_flags=-std=c++11
+
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} $opts] } {
      return -1
 }
 

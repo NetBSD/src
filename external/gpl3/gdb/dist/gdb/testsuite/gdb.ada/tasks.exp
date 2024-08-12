@@ -1,4 +1,4 @@
-# Copyright 2009-2023 Free Software Foundation, Inc.
+# Copyright 2009-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,8 +14,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 load_lib "ada.exp"
+load_lib "gdb-guile.exp"
+load_lib "gdb-python.exp"
 
-if { [skip_ada_tests] } { return -1 }
+require allow_ada_tests
 
 standard_ada_testfile foo
 
@@ -39,6 +41,30 @@ gdb_test "info tasks" \
                "\r\n"] \
          "info tasks before inserting breakpoint"
 
+# Confirm that the "info threads" output lines up with the tasks list.
+gdb_test "info threads" \
+    [multi_line \
+	 "\\*\\s+1\\s+\[^\r\n\]+\\s\"foo\"\\s\[^\r\n\]+" \
+	 "\\s+2\\s+\[^\r\n\]+\\s\"task_list\\(1\\)\"\\s\[^\r\n\]+" \
+	 "\\s+3\\s+\[^\r\n\]+\\s\"task_list\\(2\\)\"\\s\[^\r\n\]+" \
+	 "\\s+4\\s+\[^\r\n\]+\\s\"task_list\\(3\\)\"\\s\[^\r\n\]+"]
+
+# Check that multiple uses of the 'task' keyword will give an error.
+gdb_test "break break_me task 1 task 3" "You can specify only one task\\."
+gdb_test "watch j task 1 task 3" "You can specify only one task\\."
+
+# Check that attempting to combine 'task' and 'thread' gives an error.
+gdb_test "break break_me task 1 thread 1" \
+    "You can specify only one of thread or task\\."
+gdb_test "break break_me thread 1 task 1" \
+    "You can specify only one of thread or task\\."
+gdb_test "break break_me inferior 1 task 1" \
+    "You can specify only one of inferior or task\\."
+gdb_test "watch j task 1 thread 1" \
+    "You can specify only one of thread or task\\."
+gdb_test "watch j thread 1 task 1" \
+    "You can specify only one of thread or task\\."
+
 # Insert a breakpoint that should stop only if task 1 stops.  Since
 # task 1 never calls break_me, this shouldn't actually ever trigger.
 # The fact that this breakpoint is created _before_ the next one
@@ -46,20 +72,86 @@ gdb_test "info tasks" \
 # breakpoint in the list that matched the triggered-breakpoint's
 # address, no matter which task it was specific to.
 gdb_test "break break_me task 1" "Breakpoint .* at .*"
+set bp_number [get_integer_valueof "\$bpnum" "INVALID" \
+		   "get number of breakpoint for task 1"]
+gdb_test "info breakpoints" "foo.adb:${decimal}\r\n\\s+stop only in task 1" \
+    "check info breakpoints for task 1 breakpoint"
 
 # Now, insert a breakpoint that should stop only if task 3 stops, and
-# extract its number.
-set bp_number -1
-set test "break break_me task 3"
-gdb_test_multiple $test $test {
-    -re "Breakpoint (.*) at .*$gdb_prompt $" {
-	set bp_number $expect_out(1,string)
-	pass $test
-    }
+# extract its number.  Use gdb_test here so that we can validate that
+# the 'Breakpoint ... also set at' line correctly includes the task
+# number of the previous breakpoint.
+gdb_test "break break_me task 3" \
+    [multi_line \
+	 "Note: breakpoint $bp_number \\(task 1\\) also set at pc $hex\\." \
+	 "Breakpoint $decimal at $hex: \[^\r\n\]+"]
+set bp_number [get_integer_valueof "\$bpnum" "INVALID" \
+		   "get number of breakpoint for task 3"]
+gdb_test "info breakpoints" "foo.adb:${decimal}\r\n\\s+stop only in task 3" \
+    "check info breakpoints for task 3 breakpoint"
+
+# Test the Python API for the breakpoint task attribute.
+if {[allow_python_tests]} {
+    gdb_test_no_output "python bp = gdb.breakpoints()\[$bp_number - 1\]" \
+	"get gdb.Breakpoint from list"
+    gdb_test "python print(bp.task)" "3"
+    gdb_test "python print(bp.thread)" "None"
+    gdb_test "python bp.thread = 1" \
+	[multi_line \
+	     "RuntimeError.*: Cannot set both task and thread attributes\\." \
+	     "Error occurred in Python.*"] \
+	"try setting the thread, but expect an error"
+    gdb_test_no_output "python bp.task = None"
+    gdb_test_no_output "python bp.thread = 1"
+    gdb_test "python bp.task = 3" \
+	[multi_line \
+	     "RuntimeError.*: Cannot set both task and thread attributes\\." \
+	     "Error occurred in Python.*"] \
+	"try setting the task, but expect an error"
+
+    # Reset the breakpoint to the state required for the rest of this
+    # test.
+    gdb_test_no_output "python bp.thread = None"
+    gdb_test_no_output "python bp.task = 3"
 }
 
-if {$bp_number < 0} {
-    return
+# Test the Guile API for the breakpoint task attribute.
+if {[allow_guile_tests]} {
+    gdb_install_guile_utils
+    gdb_install_guile_module
+
+    gdb_scm_test_silent_cmd "guile (define blist (breakpoints))" \
+	"get breakpoint list"
+    gdb_scm_test_silent_cmd "guile (define bp (list-ref blist (- $bp_number 1)))" \
+	"get <gdb:breakpoint> from list"
+    gdb_test "guile (print (breakpoint-task bp))" "= 3"
+    gdb_test "guile (print (breakpoint-thread bp))" "= #f"
+    gdb_test "guile (set-breakpoint-thread! bp 1)" \
+	[multi_line \
+	     "ERROR: In procedure set-breakpoint-thread!:" \
+	     "(ERROR: )?In procedure gdbscm_set_breakpoint_thread_x:\
+	      cannot set both task and thread attributes" \
+	     "Error while executing Scheme code."] \
+	"attempt to set thread, but expect an error"
+
+    gdb_scm_test_silent_cmd "guile (set-breakpoint-task! bp #f)" \
+	"clear breakpoint task attribute"
+    gdb_scm_test_silent_cmd "guile (set-breakpoint-thread! bp 1)" \
+	"set breakpoint thread now task is unset"
+    gdb_test "guile (set-breakpoint-task! bp 1)" \
+	[multi_line \
+	     "ERROR: In procedure set-breakpoint-task!:" \
+	     "(ERROR: )?In procedure gdbscm_set_breakpoint_task_x:\
+	      cannot set both task and thread attributes" \
+	     "Error while executing Scheme code."] \
+	"attempt to set task, but expect an error"
+
+    # Reset the breakpoint to the state required for the rest of this
+    # test.
+    gdb_scm_test_silent_cmd "guile (set-breakpoint-thread! bp #f)" \
+	"clear breakpoint thread attribute"
+    gdb_scm_test_silent_cmd "guile (set-breakpoint-task! bp 3)" \
+	"restore breakpoint task attribute"
 }
 
 # Continue to that breakpoint.  Task 2 should hit it first, and GDB

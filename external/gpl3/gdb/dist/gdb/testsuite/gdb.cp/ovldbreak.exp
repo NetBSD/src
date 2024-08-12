@@ -1,4 +1,4 @@
-# Copyright (C) 1998-2023 Free Software Foundation, Inc.
+# Copyright (C) 1998-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ set timeout 15
 # test running programs
 #
 
-if { [skip_cplus_tests] } { return }
+require allow_cplus_tests
 
 standard_testfile .cc
 
@@ -241,11 +241,11 @@ for {set idx 0} {$idx < [llength $overloads]} {incr idx} {
 }
 
 # Verify the breakpoints.
-set bptable "Num\[\t \]+Type\[\t \]+Disp Enb Address\[\t \]+What.*\[\r\n]+"
-append bptable "\[0-9\]+\[\t \]+breakpoint\[\t \]+keep\[\t \]y\[\t \]+$hex\[\t \]+in main(\\((|void)\\))? at.*$srcfile:49\[\r\n\]+"
-append bptable "\[\t \]+breakpoint already hit 1 time\[\r\n\]+."
+set bptable "Num\[\t \]+Type\[\t \]+Disp Enb Address\[\t \]+What\\s*\r\n"
+append bptable "\[0-9\]+\[\t \]+breakpoint\[\t \]+keep\[\t \]y\[\t \]+$hex\[\t \]+in main(\\((|void)\\))? at.*$srcfile:49\r\n"
+append bptable "\[\t \]+breakpoint already hit 1 time"
 foreach ovld $overloads {
-    append bptable [format "\[0-9\]+\[\t \]+breakpoint\[\t \]+keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(%s\\) at.*$srcfile:%d\[\r\n\]+" $ovld \
+    append bptable [format "\r\n\[0-9\]+\[\t \]+breakpoint\[\t \]+keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(%s\\) at.*$srcfile:%d" $ovld \
 			$line($type_map("$ovld"))]
 }
 gdb_test "info break" $bptable "breakpoint info (after setting one-by-one)"
@@ -309,23 +309,23 @@ with_test_prefix "multiple breakpoints" {
 
 send_gdb "delete breakpoints\n"
 gdb_expect {
-    -re "Delete all breakpoints.* $" {
+    -re "Delete all breakpoints, watchpoints, tracepoints, and catchpoints.* $" {
         send_gdb "y\n"
         gdb_expect {
             -re ".*$gdb_prompt $" {
-                pass "delete all breakpoints"
+		pass "delete all breakpoints, watchpoints, tracepoints, and catchpoints"
             }
             timeout {
-                fail "delete all breakpoints (timeout)"
+		fail "delete all breakpoints, watchpoints, tracepoints, and catchpoints (timeout)"
             }
         }
     }
     timeout {
-        fail "delete all breakpoints (timeout)"
+	fail "delete all breakpoints, watchpoints, tracepoints, and catchpoints (timeout)"
     }
 }
 
-gdb_test "info breakpoints" "No breakpoints or watchpoints." "breakpoint info (after delete)"
+gdb_test "info breakpoints" "No breakpoints, watchpoints, tracepoints, or catchpoints." "breakpoint info (after delete)"
 
 
 
@@ -366,12 +366,12 @@ gdb_expect {
 }
 
 # Create the breakpoint table for "info breakpoint".
-set bptable "Num\[\t \]+Type\[\t \]+Disp Enb Address\[\t \]+What.*\[\r\n]+"
-append bptable "\[0-9\]+\[\t \]+breakpoint\[\t \]+keep\[\t \]y\[\t \]+<MULTIPLE>.*\[\r\n\]+"
+set bptable "Num\[\t \]+Type\[\t \]+Disp Enb Address\[\t \]+What\\s*\r\n"
+append bptable "\[0-9\]+\[\t \]+breakpoint\[\t \]+keep\[\t \]y\[\t \]+<MULTIPLE>\\s*"
 foreach ovld {void char signed_char unsigned_char short_int \
 		  unsigned_short_int int unsigned_int long_int \
 		  unsigned_long_int float double} {
-  append bptable [format "\[0-9\]+.\[0-9\]+\[\t \]+y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(%s\\) at.*$srcfile:%d\[\r\n\]+" \
+  append bptable [format "\r\n\[0-9\]+.\[0-9\]+\[\t \]+y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(%s\\) at.*$srcfile:%d" \
 		      $types($ovld) $line($ovld)]
 }
 

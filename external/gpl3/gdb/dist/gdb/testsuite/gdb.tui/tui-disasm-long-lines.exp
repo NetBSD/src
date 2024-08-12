@@ -1,4 +1,4 @@
-# Copyright 2010-2023 Free Software Foundation, Inc.
+# Copyright 2010-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,6 +16,10 @@
 # Test that the logic for displaying the TUI disassembly window
 # handles very long lines.
 
+require allow_tui_tests
+
+tuiterm_env
+
 standard_testfile
 
 set ccopts {debug quiet}
@@ -31,13 +35,12 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "$binfile" \
     }
 }
 
-clean_restart "$binfile"
-
-if {[skip_tui_tests]} {
-    # TUI support is disabled.  Check for error message.
-    gdb_test "layout asm" "Undefined command: \"layout\".  Try \"help\"."
+Term::clean_restart 24 80 $binfile
+if {![Term::prepare_for_tui]} {
+    unsupported "TUI not supported"
     return
 }
 
-# Just check the command does not cause gdb to crash.
-gdb_test "layout asm"
+Term::command_no_prompt_prefix "layout asm"
+Term::check_box "asm box" 0 0 80 15
+Term::check_box_contents "check asm box contents" 0 0 80 15 "<main>"
