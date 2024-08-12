@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.58 2020/09/21 06:57:00 msaitoh Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.59 2024/08/12 18:55:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -196,6 +196,7 @@ struct rtk_softc {
 #define RTKQ_RXDV_GATED		0x00000800
 #define RTKQ_IM_HW		0x00001000	/* HW interrupt mitigation */
 #define RTKQ_TXRXEN_LATER	0x00002000	/* TX/RX enable timing */
+#define RTKQ_EARLYOFF		0x00004000	/* Enable early receive? */
 
 	bus_dma_tag_t		sc_dmat;
 
