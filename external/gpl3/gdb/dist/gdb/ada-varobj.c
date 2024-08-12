@@ -1,6 +1,6 @@
 /* varobj support for Ada.
 
-   Copyright (C) 2012-2023 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "ada-lang.h"
 #include "varobj.h"
 #include "language.h"
@@ -66,7 +65,7 @@ ada_varobj_decode_var (struct value **value_ptr, struct type **type_ptr)
     *value_ptr = ada_get_decoded_value (*value_ptr);
 
   if (*value_ptr != nullptr)
-    *type_ptr = ada_check_typedef (value_type (*value_ptr));
+    *type_ptr = ada_check_typedef ((*value_ptr)->type ());
   else
     *type_ptr = ada_get_decoded_type (*type_ptr);
 }
@@ -102,7 +101,7 @@ ada_varobj_struct_elt (struct value *parent_value,
   if (parent_value)
     {
       value = value_field (parent_value, fieldno);
-      type = value_type (value);
+      type = value->type ();
     }
   else
     type = parent_type->field (fieldno).type ();
@@ -150,7 +149,7 @@ ada_varobj_ind (struct value *parent_value,
   if (parent_value)
     {
       value = ada_value_ind (parent_value);
-      type = value_type (value);
+      type = value->type ();
     }
   else
     type = parent_type->target_type ();
@@ -181,7 +180,7 @@ ada_varobj_simple_array_elt (struct value *parent_value,
 	value_from_longest (parent_type->index_type (), elt_index);
 
       value = ada_value_subscript (parent_value, 1, &index_value);
-      type = value_type (value);
+      type = value->type ();
     }
   else
     type = parent_type->target_type ();
@@ -221,7 +220,7 @@ ada_varobj_adjust_for_child_access (struct value **value,
   if (*value != NULL && ada_is_tagged_type (*type, 1))
     {
       *value = ada_tag_value_at_base_address (*value);
-      *type = value_type (*value);
+      *type = (*value)->type ();
     }
 }
 
@@ -943,7 +942,7 @@ static bool
 ada_value_is_changeable_p (const struct varobj *var)
 {
   struct type *type = (var->value != nullptr
-		       ? value_type (var->value.get ()) : var->type);
+		       ? var->value->type () : var->type);
 
   if (type->code () == TYPE_CODE_REF)
     type = type->target_type ();
