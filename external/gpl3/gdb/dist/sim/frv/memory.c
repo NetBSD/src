@@ -1,5 +1,5 @@
 /* frv memory model.
-   Copyright (C) 1999-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
    Contributed by Red Hat
 
 This file is part of the GNU simulators.
@@ -670,7 +670,7 @@ frvbf_read_imem_USI (SIM_CPU *current_cpu, PCADDR vpc)
   if (GET_HSR0_ICE (hsr0))
     {
       FRV_CACHE *cache;
-      USI value;
+      SI value;
 
       /* We don't want this to show up in the cache statistics.  That read
 	 is done in frvbf_simulate_insn_prefetch.  So read the cache or memory
