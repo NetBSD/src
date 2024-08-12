@@ -1,5 +1,5 @@
 /* Support for GDB maintenance commands.
-   Copyright (C) 2013-2023 Free Software Foundation, Inc.
+   Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,6 +26,10 @@ extern void set_per_command_time (int);
 
 extern void set_per_command_space (int);
 
+/* Update the thread pool for the desired number of threads.  */
+
+extern void update_thread_pool_size ();
+
 /* Records a run time and space usage to be used as a base for
    reporting elapsed time or change in space.  */
 
@@ -49,9 +53,9 @@ class scoped_command_stats
   /* Track whether the stat was enabled at the start of the command
      so that we can avoid printing anything if it gets turned on by
      the current command.  */
-  int m_time_enabled : 1;
-  int m_space_enabled : 1;
-  int m_symtab_enabled : 1;
+  bool m_time_enabled : 1;
+  bool m_space_enabled : 1;
+  bool m_symtab_enabled : 1;
   run_time_clock::time_point m_start_cpu_time;
   std::chrono::steady_clock::time_point m_start_wall_time;
   long m_start_space;

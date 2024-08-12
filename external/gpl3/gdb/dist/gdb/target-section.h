@@ -1,6 +1,6 @@
 /* Target sections.
 
-   Copyright (C) 2020-2023 Free Software Foundation, Inc.
+   Copyright (C) 2020-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,38 @@
 #ifndef GDB_TARGET_SECTION_H
 #define GDB_TARGET_SECTION_H
 
+struct bfd;
+struct objfile;
+struct solib;
+
+/* A union representing the possible owner types of a target_section.  */
+
+union target_section_owner
+{
+  target_section_owner () : m_v (nullptr) {}
+  target_section_owner (const bfd *bfd) : bfd (bfd) {}
+  target_section_owner (const objfile *objfile) : objfile (objfile) {}
+  target_section_owner (const solib *solib) : solib (solib) {}
+
+  /* Use this to access the type-erased version of the owner, for
+     comparisons, printing, etc.  We don't access the M_V member
+     directly, because pedantically it is not valid to access a
+     non-active union member.  */
+  const void *v () const
+  {
+    void *tmp;
+    memcpy (&tmp, this, sizeof (*this));
+    return tmp;
+  }
+
+  const struct bfd *bfd;
+  const struct objfile *objfile;
+  const struct solib *solib;
+
+private:
+  const void *m_v;
+};
+
 /* Struct target_section maps address ranges to file sections.  It is
    mostly used with BFD files, but can be used without (e.g. for handling
    raw disks, or files not in formats handled by BFD).  */
@@ -27,7 +59,7 @@
 struct target_section
 {
   target_section (CORE_ADDR addr_, CORE_ADDR end_, struct bfd_section *sect_,
-		  void *owner_ = nullptr)
+		  target_section_owner owner_ = {})
     : addr (addr_),
       endaddr (end_),
       the_bfd_section (sect_),
@@ -44,15 +76,11 @@ struct target_section
   struct bfd_section *the_bfd_section;
 
   /* The "owner" of the section.
-     It can be any unique value.  It is set by add_target_sections
-     and used by remove_target_sections.
+
+     It is set by add_target_sections and used by remove_target_sections.
      For example, for executables it is a pointer to exec_bfd and
-     for shlibs it is the so_list pointer.  */
-  void *owner;
+     for shlibs it is the solib pointer.  */
+  target_section_owner owner;
 };
-
-/* Holds an array of target sections.  */
-
-using target_section_table = std::vector<target_section>;
 
 #endif /* GDB_TARGET_SECTION_H */
