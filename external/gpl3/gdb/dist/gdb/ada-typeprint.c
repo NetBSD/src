@@ -1,5 +1,5 @@
 /* Support for printing Ada types for GDB, the GNU debugger.
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
-#include "bfd.h"		/* Binary File Description */
+#include "bfd.h"
+#include "event-top.h"
 #include "gdbtypes.h"
 #include "value.h"
 #include "c-lang.h"
@@ -122,14 +122,14 @@ type_is_full_subrange_of_target_type (struct type *type)
   return 1;
 }
 
-/* Print TYPE on STREAM, preferably as a range if BOUNDS_PREFERED_P
+/* Print TYPE on STREAM, preferably as a range if BOUNDS_PREFERRED_P
    is nonzero.  */
 
 static void
 print_range (struct type *type, struct ui_file *stream,
-	     int bounds_prefered_p)
+	     int bounds_preferred_p)
 {
-  if (!bounds_prefered_p)
+  if (!bounds_preferred_p)
     {
       /* Try stripping all TYPE_CODE_RANGE layers whose bounds
 	 are identical to the bounds of their subtype.  When
@@ -253,14 +253,14 @@ print_dynamic_range_bound (struct type *type, const char *name, int name_len,
 /* Print RAW_TYPE as a range type, using any bound information
    following the GNAT encoding (if available).
 
-   If BOUNDS_PREFERED_P is nonzero, force the printing of the range
+   If BOUNDS_PREFERRED_P is nonzero, force the printing of the range
    using its bounds.  Otherwise, try printing the range without
    printing the value of the bounds, if possible (this is only
    considered a hint, not a guaranty).  */
 
 static void
 print_range_type (struct type *raw_type, struct ui_file *stream,
-		  int bounds_prefered_p)
+		  int bounds_preferred_p)
 {
   const char *name;
   struct type *base_type;
@@ -277,7 +277,7 @@ print_range_type (struct type *raw_type, struct ui_file *stream,
 
   subtype_info = strstr (name, "___XD");
   if (subtype_info == NULL)
-    print_range (raw_type, stream, bounds_prefered_p);
+    print_range (raw_type, stream, bounds_preferred_p);
   else
     {
       int prefix_len = subtype_info - name;
@@ -382,9 +382,9 @@ print_array_type (struct type *type, struct ui_file *stream, int show,
 	      if (arr_type != type)
 		gdb_printf (stream, ", ");
 	      print_range (arr_type->index_type (), stream,
-			   0 /* bounds_prefered_p */);
-	      if (TYPE_FIELD_BITSIZE (arr_type, 0) > 0)
-		bitsize = TYPE_FIELD_BITSIZE (arr_type, 0);
+			   0 /* bounds_preferred_p */);
+	      if (arr_type->field (0).bitsize () > 0)
+		bitsize = arr_type->field (0).bitsize ();
 	      /* A multi-dimensional array is represented using a
 		 sequence of array types.  If one of these types has a
 		 name, then it is not another dimension of the outer
@@ -407,9 +407,9 @@ print_array_type (struct type *type, struct ui_file *stream, int show,
 	      if (k > 0)
 		gdb_printf (stream, ", ");
 	      print_range_type (range_desc_type->field (k).type (),
-				stream, 0 /* bounds_prefered_p */);
-	      if (TYPE_FIELD_BITSIZE (arr_type, 0) > 0)
-		bitsize = TYPE_FIELD_BITSIZE (arr_type, 0);
+				stream, 0 /* bounds_preferred_p */);
+	      if (arr_type->field (0).bitsize () > 0)
+		bitsize = arr_type->field (0).bitsize ();
 	    }
 	}
     }
@@ -941,6 +941,13 @@ ada_print_type (struct type *type0, const char *varstring,
 		struct ui_file *stream, int show, int level,
 		const struct type_print_options *flags)
 {
+  if (type0->code () == TYPE_CODE_INTERNAL_FUNCTION)
+    {
+      c_print_type (type0, "", stream, show, level,
+		    language_ada, flags);
+      return;
+    }
+
   struct type *type = ada_check_typedef (ada_get_base_type (type0));
   /* If we can decode the original type name, use it.  However, there
      are cases where the original type is an internally-generated type
@@ -1024,7 +1031,7 @@ ada_print_type (struct type *type0, const char *varstring,
 	  else
 	    {
 	      gdb_printf (stream, "range ");
-	      print_range_type (type, stream, 1 /* bounds_prefered_p */);
+	      print_range_type (type, stream, 1 /* bounds_preferred_p */);
 	    }
 	}
 	break;
@@ -1041,7 +1048,7 @@ ada_print_type (struct type *type0, const char *varstring,
 	else
 	  {
 	    gdb_printf (stream, "range ");
-	    print_range (type, stream, 1 /* bounds_prefered_p */);
+	    print_range (type, stream, 1 /* bounds_preferred_p */);
 	  }
 	break;
       case TYPE_CODE_FLT:
@@ -1058,9 +1065,6 @@ ada_print_type (struct type *type0, const char *varstring,
       case TYPE_CODE_STRUCT:
 	if (ada_is_array_descriptor_type (type))
 	  print_array_type (type, stream, show, level, flags);
-	else if (ada_is_bogus_array_descriptor (type))
-	  gdb_printf (stream,
-		      _("array (?) of ? (<mal-formed descriptor>)"));
 	else
 	  print_record_type (type, stream, show, level, flags);
 	break;

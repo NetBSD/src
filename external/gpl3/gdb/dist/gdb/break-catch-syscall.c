@@ -1,6 +1,6 @@
 /* Everything about syscall catchpoints, for GDB.
 
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,10 +17,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include <ctype.h>
 #include "breakpoint.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "inferior.h"
 #include "cli/cli-utils.h"
 #include "annotate.h"
@@ -52,7 +51,7 @@ struct syscall_catchpoint : public catchpoint
 		      CORE_ADDR bp_addr,
 		      const target_waitstatus &ws) override;
   enum print_stop_action print_it (const bpstat *bs) const override;
-  bool print_one (bp_location **) const override;
+  bool print_one (const bp_location **) const override;
   void print_mention () const override;
   void print_recreate (struct ui_file *fp) const override;
 
@@ -190,23 +189,21 @@ enum print_stop_action
 syscall_catchpoint::print_it (const bpstat *bs) const
 {
   struct ui_out *uiout = current_uiout;
-  struct breakpoint *b = bs->breakpoint_at;
   /* These are needed because we want to know in which state a
      syscall is.  It can be in the TARGET_WAITKIND_SYSCALL_ENTRY
      or TARGET_WAITKIND_SYSCALL_RETURN, and depending on it we
      must print "called syscall" or "returned from syscall".  */
   struct target_waitstatus last;
   struct syscall s;
-  struct gdbarch *gdbarch = b->gdbarch;
 
   get_last_target_status (nullptr, nullptr, &last);
 
   get_syscall_by_number (gdbarch, last.syscall_number (), &s);
 
-  annotate_catchpoint (b->number);
+  annotate_catchpoint (this->number);
   maybe_print_thread_hit_breakpoint (uiout);
 
-  if (b->disposition == disp_del)
+  if (this->disposition == disp_del)
     uiout->text ("Temporary catchpoint ");
   else
     uiout->text ("Catchpoint ");
@@ -216,7 +213,7 @@ syscall_catchpoint::print_it (const bpstat *bs) const
 			   async_reason_lookup (last.kind () == TARGET_WAITKIND_SYSCALL_ENTRY
 						? EXEC_ASYNC_SYSCALL_ENTRY
 						: EXEC_ASYNC_SYSCALL_RETURN));
-      uiout->field_string ("disp", bpdisp_text (b->disposition));
+      uiout->field_string ("disp", bpdisp_text (this->disposition));
     }
   print_num_locno (bs, uiout);
 
@@ -238,11 +235,10 @@ syscall_catchpoint::print_it (const bpstat *bs) const
 /* Implement the "print_one" method for syscall catchpoints.  */
 
 bool
-syscall_catchpoint::print_one (bp_location **last_loc) const
+syscall_catchpoint::print_one (const bp_location **last_loc) const
 {
   struct value_print_options opts;
   struct ui_out *uiout = current_uiout;
-  struct gdbarch *gdbarch = loc->owner->gdbarch;
 
   get_user_print_options (&opts);
   /* Field 4, the address, is omitted (which makes the columns not
@@ -293,8 +289,6 @@ syscall_catchpoint::print_one (bp_location **last_loc) const
 void
 syscall_catchpoint::print_mention () const
 {
-  struct gdbarch *gdbarch = loc->owner->gdbarch;
-
   if (!syscalls_to_be_caught.empty ())
     {
       if (syscalls_to_be_caught.size () > 1)
@@ -323,8 +317,6 @@ syscall_catchpoint::print_mention () const
 void
 syscall_catchpoint::print_recreate (struct ui_file *fp) const
 {
-  struct gdbarch *gdbarch = loc->gdbarch;
-
   gdb_printf (fp, "catch syscall");
 
   for (int iter : syscalls_to_be_caught)
@@ -366,7 +358,7 @@ static std::vector<int>
 catch_syscall_split_args (const char *arg)
 {
   std::vector<int> result;
-  struct gdbarch *gdbarch = target_gdbarch ();
+  gdbarch *gdbarch = current_inferior ()->arch ();
 
   while (*arg != '\0')
     {
@@ -472,8 +464,10 @@ is_syscall_catchpoint_enabled (struct breakpoint *bp)
     return 0;
 }
 
-int
-catch_syscall_enabled (void)
+/* See breakpoint.h.  */
+
+bool
+catch_syscall_enabled ()
 {
   struct catch_syscall_inferior_data *inf_data
     = get_catch_syscall_inferior_data (current_inferior ());
@@ -487,10 +481,10 @@ catch_syscall_enabled (void)
 static bool
 catching_syscall_number_1 (struct breakpoint *b, int syscall_number)
 {
-
   if (is_syscall_catchpoint_enabled (b))
     {
-      struct syscall_catchpoint *c = (struct syscall_catchpoint *) b;
+      syscall_catchpoint *c
+	= gdb::checked_static_cast<syscall_catchpoint *> (b);
 
       if (!c->syscalls_to_be_caught.empty ())
 	{
@@ -508,8 +502,8 @@ catching_syscall_number_1 (struct breakpoint *b, int syscall_number)
 bool
 catching_syscall_number (int syscall_number)
 {
-  for (breakpoint *b : all_breakpoints ())
-    if (catching_syscall_number_1 (b, syscall_number))
+  for (breakpoint &b : all_breakpoints ())
+    if (catching_syscall_number_1 (&b, syscall_number))
       return true;
 
   return false;
