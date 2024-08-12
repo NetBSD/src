@@ -1,5 +1,5 @@
 /* BFD back-end for archive files (libraries).
-   Copyright (C) 1990-2022 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
    Written by Cygnus Support.  Mostly Gumby Henkel-Wallace's fault.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -146,6 +146,37 @@ SUBSECTION
 extern int errno;
 #endif
 
+/*
+EXTERNAL
+.{* A canonical archive symbol.  *}
+.{* This is a type pun with struct symdef/struct ranlib on purpose!  *}
+.typedef struct carsym
+.{
+.  const char *name;
+.  file_ptr file_offset;	{* Look here to find the file.  *}
+.}
+.carsym;
+.
+.{* A count of carsyms (canonical archive symbols).  *}
+. typedef unsigned long symindex;
+.#define BFD_NO_MORE_SYMBOLS ((symindex) ~0)
+.
+
+INTERNAL
+.{* Used in generating armaps (archive tables of contents).  *}
+.struct orl		{* Output ranlib.  *}
+.{
+.  char **name;		{* Symbol name.  *}
+.  union
+.  {
+.    file_ptr pos;
+.    bfd *abfd;
+.  } u;			{* bfd* or file position.  *}
+.  int namidx;		{* Index into string table.  *}
+.};
+.
+*/
+
 /* We keep a cache of archive filepointers to archive elements to
    speed up searching the archive by filepos.  We only add an entry to
    the cache when we actually read one.  We also don't sort the cache;
@@ -215,18 +246,7 @@ _bfd_generic_mkarchive (bfd *abfd)
   size_t amt = sizeof (struct artdata);
 
   abfd->tdata.aout_ar_data = (struct artdata *) bfd_zalloc (abfd, amt);
-  if (bfd_ardata (abfd) == NULL)
-    return false;
-
-  /* Already cleared by bfd_zalloc above.
-     bfd_ardata (abfd)->cache = NULL;
-     bfd_ardata (abfd)->archive_head = NULL;
-     bfd_ardata (abfd)->symdefs = NULL;
-     bfd_ardata (abfd)->extended_names = NULL;
-     bfd_ardata (abfd)->extended_names_size = 0;
-     bfd_ardata (abfd)->tdata = NULL;  */
-
-  return true;
+  return bfd_ardata (abfd) != NULL;
 }
 
 /*
@@ -497,7 +517,7 @@ _bfd_generic_read_ar_hdr_mag (bfd *abfd, const char *mag)
   char fmag_save;
   int scan;
 
-  if (bfd_bread (hdrp, sizeof (struct ar_hdr), abfd) != sizeof (struct ar_hdr))
+  if (bfd_read (hdrp, sizeof (struct ar_hdr), abfd) != sizeof (struct ar_hdr))
     {
       if (bfd_get_error () != bfd_error_system_call)
 	bfd_set_error (bfd_error_no_more_archived_files);
@@ -557,7 +577,7 @@ _bfd_generic_read_ar_hdr_mag (bfd *abfd, const char *mag)
       filename = (allocptr
 		  + sizeof (struct areltdata)
 		  + sizeof (struct ar_hdr));
-      if (bfd_bread (filename, namelen, abfd) != namelen)
+      if (bfd_read (filename, namelen, abfd) != namelen)
 	{
 	  free (allocptr);
 	  if (bfd_get_error () != bfd_error_system_call)
@@ -878,7 +898,7 @@ bfd_generic_archive_p (bfd *abfd)
   char armag[SARMAG + 1];
   size_t amt;
 
-  if (bfd_bread (armag, SARMAG, abfd) != SARMAG)
+  if (bfd_read (armag, SARMAG, abfd) != SARMAG)
     {
       if (bfd_get_error () != bfd_error_system_call)
 	bfd_set_error (bfd_error_wrong_format);
@@ -905,13 +925,6 @@ bfd_generic_archive_p (bfd *abfd)
     }
 
   bfd_ardata (abfd)->first_file_filepos = SARMAG;
-  /* Cleared by bfd_zalloc above.
-     bfd_ardata (abfd)->cache = NULL;
-     bfd_ardata (abfd)->archive_head = NULL;
-     bfd_ardata (abfd)->symdefs = NULL;
-     bfd_ardata (abfd)->extended_names = NULL;
-     bfd_ardata (abfd)->extended_names_size = 0;
-     bfd_ardata (abfd)->tdata = NULL;  */
 
   if (!BFD_SEND (abfd, _bfd_slurp_armap, (abfd))
       || !BFD_SEND (abfd, _bfd_slurp_extended_name_table, (abfd)))
@@ -1085,7 +1098,7 @@ do_slurp_coff_armap (bfd *abfd)
   parsed_size = mapdata->parsed_size;
   free (mapdata);
 
-  if (bfd_bread (int_buf, 4, abfd) != 4)
+  if (bfd_read (int_buf, 4, abfd) != 4)
     return false;
 
   /* It seems that all numeric information in a coff archive is always
@@ -1132,7 +1145,7 @@ do_slurp_coff_armap (bfd *abfd)
   carsyms = ardata->symdefs;
   stringbase = ((char *) ardata->symdefs) + carsym_size;
 
-  if (bfd_bread (stringbase, stringsize, abfd) != stringsize)
+  if (bfd_read (stringbase, stringsize, abfd) != stringsize)
     goto release_symdefs;
 
   /* OK, build the carsyms.  */
@@ -1186,14 +1199,14 @@ bool
 bfd_slurp_armap (bfd *abfd)
 {
   char nextname[17];
-  int i = bfd_bread (nextname, 16, abfd);
+  int i = bfd_read (nextname, 16, abfd);
 
   if (i == 0)
     return true;
   if (i != 16)
     return false;
 
-  if (bfd_seek (abfd, (file_ptr) -16, SEEK_CUR) != 0)
+  if (bfd_seek (abfd, -16, SEEK_CUR) != 0)
     return false;
 
   if (startswith (nextname, "__.SYMDEF       ")
@@ -1219,10 +1232,10 @@ bfd_slurp_armap (bfd *abfd)
       struct ar_hdr hdr;
       char extname[21];
 
-      if (bfd_bread (&hdr, sizeof (hdr), abfd) != sizeof (hdr))
+      if (bfd_read (&hdr, sizeof (hdr), abfd) != sizeof (hdr))
 	return false;
       /* Read the extended name.  We know its length.  */
-      if (bfd_bread (extname, 20, abfd) != 20)
+      if (bfd_read (extname, 20, abfd) != 20)
 	return false;
       if (bfd_seek (abfd, -(file_ptr) (sizeof (hdr) + 20), SEEK_CUR) != 0)
 	return false;
@@ -1258,13 +1271,13 @@ _bfd_slurp_extended_name_table (bfd *abfd)
   if (bfd_seek (abfd, bfd_ardata (abfd)->first_file_filepos, SEEK_SET) != 0)
     return false;
 
-  if (bfd_bread (nextname, 16, abfd) == 16)
+  if (bfd_read (nextname, 16, abfd) == 16)
     {
       struct areltdata *namedata;
       bfd_size_type amt;
       ufile_ptr filesize;
 
-      if (bfd_seek (abfd, (file_ptr) -16, SEEK_CUR) != 0)
+      if (bfd_seek (abfd, -16, SEEK_CUR) != 0)
 	return false;
 
       if (! startswith (nextname, "ARFILENAMES/    ")
@@ -1298,7 +1311,7 @@ _bfd_slurp_extended_name_table (bfd *abfd)
 	  return false;
 	}
 
-      if (bfd_bread (bfd_ardata (abfd)->extended_names, amt, abfd) != amt)
+      if (bfd_read (bfd_ardata (abfd)->extended_names, amt, abfd) != amt)
 	{
 	  if (bfd_get_error () != bfd_error_system_call)
 	    bfd_set_error (bfd_error_malformed_archive);
@@ -1791,7 +1804,7 @@ _bfd_generic_write_ar_hdr (bfd *archive, bfd *abfd)
 {
   struct ar_hdr *hdr = arch_hdr (abfd);
 
-  if (bfd_bwrite (hdr, sizeof (*hdr), archive) != sizeof (*hdr))
+  if (bfd_write (hdr, sizeof (*hdr), archive) != sizeof (*hdr))
     return false;
   return true;
 }
@@ -1816,10 +1829,10 @@ _bfd_bsd44_write_ar_hdr (bfd *archive, bfd *abfd)
 			    arch_eltdata (abfd)->parsed_size + padded_len))
 	return false;
 
-      if (bfd_bwrite (hdr, sizeof (*hdr), archive) != sizeof (*hdr))
+      if (bfd_write (hdr, sizeof (*hdr), archive) != sizeof (*hdr))
 	return false;
 
-      if (bfd_bwrite (fullname, len, archive) != len)
+      if (bfd_write (fullname, len, archive) != len)
 	return false;
 
       if (len & 3)
@@ -1827,13 +1840,13 @@ _bfd_bsd44_write_ar_hdr (bfd *archive, bfd *abfd)
 	  static const char pad[3] = { 0, 0, 0 };
 
 	  len = 4 - (len & 3);
-	  if (bfd_bwrite (pad, len, archive) != len)
+	  if (bfd_write (pad, len, archive) != len)
 	    return false;
 	}
     }
   else
     {
-      if (bfd_bwrite (hdr, sizeof (*hdr), archive) != sizeof (*hdr))
+      if (bfd_write (hdr, sizeof (*hdr), archive) != sizeof (*hdr))
 	return false;
     }
   return true;
@@ -1880,7 +1893,7 @@ bfd_ar_hdr_from_filesystem (bfd *abfd, const char *filename, bfd *member)
     {
       /* Assume we just "made" the member, and fake it.  */
       struct bfd_in_memory *bim = (struct bfd_in_memory *) member->iostream;
-      time (&status.st_mtime);
+      status.st_mtime = bfd_get_current_time (0);
       status.st_uid = getuid ();
       status.st_gid = getgid ();
       status.st_mode = 0644;
@@ -1890,6 +1903,15 @@ bfd_ar_hdr_from_filesystem (bfd *abfd, const char *filename, bfd *member)
     {
       bfd_set_error (bfd_error_system_call);
       return NULL;
+    }
+  else
+    {
+      /* The call to stat() above has filled in the st_mtime field
+	 with the real time that the object was modified.  But if
+	 we are trying to generate deterministic archives based upon
+	 the SOURCE_DATE_EPOCH environment variable then we want to
+	 override that.  */
+      status.st_mtime = bfd_get_current_time (status.st_mtime);
     }
 
   /* If the caller requested that the BFD generate deterministic output,
@@ -2129,6 +2151,7 @@ _bfd_write_archive_contents (bfd *arch)
   bfd_size_type wrote;
   int tries;
   char *armag;
+  char *buffer = NULL;
 
   /* Verify the viability of all entries; if any of them live in the
      filesystem (as opposed to living in an archive open for input)
@@ -2172,12 +2195,12 @@ _bfd_write_archive_contents (bfd *arch)
 		 (arch, &etable, &elength, &ename)))
     return false;
 
-  if (bfd_seek (arch, (file_ptr) 0, SEEK_SET) != 0)
+  if (bfd_seek (arch, 0, SEEK_SET) != 0)
     return false;
   armag = ARMAG;
   if (bfd_is_thin_archive (arch))
     armag = ARMAGT;
-  wrote = bfd_bwrite (armag, SARMAG, arch);
+  wrote = bfd_write (armag, SARMAG, arch);
   if (wrote != SARMAG)
     return false;
 
@@ -2198,52 +2221,61 @@ _bfd_write_archive_contents (bfd *arch)
 			    (elength + 1) & ~(bfd_size_type) 1))
 	return false;
       memcpy (hdr.ar_fmag, ARFMAG, 2);
-      if ((bfd_bwrite (&hdr, sizeof (struct ar_hdr), arch)
+      if ((bfd_write (&hdr, sizeof (struct ar_hdr), arch)
 	   != sizeof (struct ar_hdr))
-	  || bfd_bwrite (etable, elength, arch) != elength)
+	  || bfd_write (etable, elength, arch) != elength)
 	return false;
       if ((elength % 2) == 1)
 	{
-	  if (bfd_bwrite (&ARFMAG[1], 1, arch) != 1)
+	  if (bfd_write (&ARFMAG[1], 1, arch) != 1)
 	    return false;
 	}
     }
+
+#define AR_WRITE_BUFFERSIZE (8 * 1024 * 1024)
+
+  /* FIXME: Find a way to test link_info.reduce_memory_overheads
+     and change the buffer size.  */
+  buffer = bfd_malloc (AR_WRITE_BUFFERSIZE);
+  if (buffer == NULL)
+    goto input_err;
 
   for (current = arch->archive_head;
        current != NULL;
        current = current->archive_next)
     {
-      char buffer[DEFAULT_BUFFERSIZE];
       bfd_size_type remaining = arelt_size (current);
 
       /* Write ar header.  */
       if (!_bfd_write_ar_hdr (arch, current))
-	return false;
+	goto input_err;
       if (bfd_is_thin_archive (arch))
 	continue;
-      if (bfd_seek (current, (file_ptr) 0, SEEK_SET) != 0)
+      if (bfd_seek (current, 0, SEEK_SET) != 0)
 	goto input_err;
 
       while (remaining)
 	{
-	  size_t amt = DEFAULT_BUFFERSIZE;
+	  size_t amt = AR_WRITE_BUFFERSIZE;
 
 	  if (amt > remaining)
 	    amt = remaining;
 	  errno = 0;
-	  if (bfd_bread (buffer, amt, current) != amt)
+	  if (bfd_read (buffer, amt, current) != amt)
 	    goto input_err;
-	  if (bfd_bwrite (buffer, amt, arch) != amt)
-	    return false;
+	  if (bfd_write (buffer, amt, arch) != amt)
+	    goto input_err;
 	  remaining -= amt;
 	}
 
       if ((arelt_size (current) % 2) == 1)
 	{
-	  if (bfd_bwrite (&ARFMAG[1], 1, arch) != 1)
-	    return false;
+	  if (bfd_write (&ARFMAG[1], 1, arch) != 1)
+	    goto input_err;
 	}
     }
+
+  free (buffer);
 
   if (makemap && hasobjects)
     {
@@ -2268,6 +2300,7 @@ _bfd_write_archive_contents (bfd *arch)
 
  input_err:
   bfd_set_input_error (current, bfd_get_error ());
+  free (buffer);
   return false;
 }
 
@@ -2322,7 +2355,8 @@ _bfd_compute_and_write_armap (bfd *arch, unsigned int elength)
 	  long symcount;
 	  long src_count;
 
-	  if (current->lto_slim_object && report_plugin_err)
+	  if (bfd_get_lto_type (current) == lto_slim_ir_object
+	      && report_plugin_err)
 	    {
 	      report_plugin_err = false;
 	      _bfd_error_handler
@@ -2505,8 +2539,13 @@ _bfd_bsd_write_armap (bfd *arch,
       struct stat statbuf;
 
       if (stat (bfd_get_filename (arch), &statbuf) == 0)
-	bfd_ardata (arch)->armap_timestamp = (statbuf.st_mtime
-					      + ARMAP_TIME_OFFSET);
+	{
+	  /* If asked, replace the time with a deterministic value. */
+	  statbuf.st_mtime = bfd_get_current_time (statbuf.st_mtime);
+
+	  bfd_ardata (arch)->armap_timestamp = (statbuf.st_mtime
+						+ ARMAP_TIME_OFFSET);
+	}
       uid = getuid();
       gid = getgid();
     }
@@ -2522,11 +2561,11 @@ _bfd_bsd_write_armap (bfd *arch,
   if (!_bfd_ar_sizepad (hdr.ar_size, sizeof (hdr.ar_size), mapsize))
     return false;
   memcpy (hdr.ar_fmag, ARFMAG, 2);
-  if (bfd_bwrite (&hdr, sizeof (struct ar_hdr), arch)
+  if (bfd_write (&hdr, sizeof (struct ar_hdr), arch)
       != sizeof (struct ar_hdr))
     return false;
   H_PUT_32 (arch, ranlibsize, temp);
-  if (bfd_bwrite (temp, sizeof (temp), arch) != sizeof (temp))
+  if (bfd_write (temp, sizeof (temp), arch) != sizeof (temp))
     return false;
 
   firstreal = first;
@@ -2564,20 +2603,20 @@ _bfd_bsd_write_armap (bfd *arch,
       last_elt = current;
       H_PUT_32 (arch, map[count].namidx, buf);
       H_PUT_32 (arch, firstreal, buf + BSD_SYMDEF_OFFSET_SIZE);
-      if (bfd_bwrite (buf, BSD_SYMDEF_SIZE, arch)
+      if (bfd_write (buf, BSD_SYMDEF_SIZE, arch)
 	  != BSD_SYMDEF_SIZE)
 	return false;
     }
 
   /* Now write the strings themselves.  */
   H_PUT_32 (arch, stringsize, temp);
-  if (bfd_bwrite (temp, sizeof (temp), arch) != sizeof (temp))
+  if (bfd_write (temp, sizeof (temp), arch) != sizeof (temp))
     return false;
   for (count = 0; count < orl_count; count++)
     {
       size_t len = strlen (*map[count].name) + 1;
 
-      if (bfd_bwrite (*map[count].name, len, arch) != len)
+      if (bfd_write (*map[count].name, len, arch) != len)
 	return false;
     }
 
@@ -2585,7 +2624,7 @@ _bfd_bsd_write_armap (bfd *arch,
      bug-compatible for sun's ar we use a null.  */
   if (padit)
     {
-      if (bfd_bwrite ("", 1, arch) != 1)
+      if (bfd_write ("", 1, arch) != 1)
 	return false;
     }
 
@@ -2593,7 +2632,8 @@ _bfd_bsd_write_armap (bfd *arch,
 }
 
 /* At the end of archive file handling, update the timestamp in the
-   file, so the linker will accept it.
+   file, so older linkers will accept it.  (This does not apply to
+   ld.bfd or ld.gold).
 
    Return TRUE if the timestamp was OK, or an unusual problem happened.
    Return FALSE if we updated the timestamp.  */
@@ -2618,10 +2658,17 @@ _bfd_archive_bsd_update_armap_timestamp (bfd *arch)
       /* Can't read mod time for some reason.  */
       return true;
     }
+
   if (((long) archstat.st_mtime) <= bfd_ardata (arch)->armap_timestamp)
     /* OK by the linker's rules.  */
     return true;
 
+  if (getenv ("SOURCE_DATE_EPOCH") != NULL
+      && bfd_ardata (arch)->armap_timestamp == bfd_get_current_time (0) + ARMAP_TIME_OFFSET)
+    /* If the archive's timestamp has been set to SOURCE_DATE_EPOCH
+       then leave it as-is.  */
+    return true;
+  
   /* Update the timestamp.  */
   bfd_ardata (arch)->armap_timestamp = archstat.st_mtime + ARMAP_TIME_OFFSET;
 
@@ -2634,7 +2681,7 @@ _bfd_archive_bsd_update_armap_timestamp (bfd *arch)
   bfd_ardata (arch)->armap_datepos = (SARMAG
 				      + offsetof (struct ar_hdr, ar_date[0]));
   if (bfd_seek (arch, bfd_ardata (arch)->armap_datepos, SEEK_SET) != 0
-      || (bfd_bwrite (hdr.ar_date, sizeof (hdr.ar_date), arch)
+      || (bfd_write (hdr.ar_date, sizeof (hdr.ar_date), arch)
 	  != sizeof (hdr.ar_date)))
     {
       bfd_perror (_("Writing updated armap timestamp"));
@@ -2734,7 +2781,7 @@ _bfd_coff_write_armap (bfd *arch,
   memcpy (hdr.ar_fmag, ARFMAG, 2);
 
   /* Write the ar header for this item and the number of symbols.  */
-  if (bfd_bwrite (&hdr, sizeof (struct ar_hdr), arch)
+  if (bfd_write (&hdr, sizeof (struct ar_hdr), arch)
       != sizeof (struct ar_hdr))
     return false;
 
@@ -2785,7 +2832,7 @@ _bfd_coff_write_armap (bfd *arch,
     {
       size_t len = strlen (*map[count].name) + 1;
 
-      if (bfd_bwrite (*map[count].name, len, arch) != len)
+      if (bfd_write (*map[count].name, len, arch) != len)
 	return false;
     }
 
@@ -2793,7 +2840,7 @@ _bfd_coff_write_armap (bfd *arch,
      bug-compatible for arc960 we use a null.  */
   if (padit)
     {
-      if (bfd_bwrite ("", 1, arch) != 1)
+      if (bfd_write ("", 1, arch) != 1)
 	return false;
     }
 

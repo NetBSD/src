@@ -1,5 +1,5 @@
 /* Lattice Mico32-specific support for 32-bit ELF
-   Copyright (C) 2008-2022 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
    Contributed by Jon Beniston <jon@beniston.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1427,8 +1427,6 @@ lm32_elf_finish_dynamic_symbol (bfd *output_bfd,
   bfd_byte *loc;
 
   htab = lm32_elf_hash_table (info);
-  if (htab == NULL)
-    return false;
 
   if (h->plt.offset != (bfd_vma) -1)
     {
@@ -1906,8 +1904,8 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
 /* Set the sizes of the dynamic sections.  */
 
 static bool
-lm32_elf_size_dynamic_sections (bfd *output_bfd,
-				struct bfd_link_info *info)
+lm32_elf_late_size_sections (bfd *output_bfd,
+			     struct bfd_link_info *info)
 {
   struct elf_lm32_link_hash_table *htab;
   bfd *dynobj;
@@ -1920,7 +1918,8 @@ lm32_elf_size_dynamic_sections (bfd *output_bfd,
     return false;
 
   dynobj = htab->root.dynobj;
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   if (htab->root.dynamic_sections_created)
     {
@@ -2309,7 +2308,7 @@ lm32_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 }
 
 static bool
-lm32_elf_always_size_sections (bfd *output_bfd, struct bfd_link_info *info)
+lm32_elf_early_size_sections (bfd *output_bfd, struct bfd_link_info *info)
 {
   if (!bfd_link_relocatable (info))
     {
@@ -2395,7 +2394,7 @@ lm32_elf_fdpic_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
 #define bfd_elf32_bfd_link_hash_table_create	lm32_elf_link_hash_table_create
 #define elf_backend_check_relocs		lm32_elf_check_relocs
 #define elf_backend_reloc_type_class		lm32_elf_reloc_type_class
-#define elf_backend_size_dynamic_sections	lm32_elf_size_dynamic_sections
+#define elf_backend_late_size_sections		lm32_elf_late_size_sections
 #define elf_backend_omit_section_dynsym		_bfd_elf_omit_section_dynsym_all
 #define elf_backend_create_dynamic_sections	lm32_elf_create_dynamic_sections
 #define elf_backend_finish_dynamic_sections	lm32_elf_finish_dynamic_sections
@@ -2416,8 +2415,8 @@ lm32_elf_fdpic_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
 #undef	elf32_bed
 #define	elf32_bed		elf32_lm32fdpic_bed
 
-#undef	elf_backend_always_size_sections
-#define elf_backend_always_size_sections	lm32_elf_always_size_sections
+#undef	elf_backend_early_size_sections
+#define elf_backend_early_size_sections		lm32_elf_early_size_sections
 #undef	bfd_elf32_bfd_copy_private_bfd_data
 #define bfd_elf32_bfd_copy_private_bfd_data	lm32_elf_fdpic_copy_private_bfd_data
 
