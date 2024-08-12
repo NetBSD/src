@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_exfatfs.h,v 1.1.2.1 2024/06/29 19:43:25 perseant Exp $	*/
+/*	$NetBSD: mount_exfatfs.h,v 1.1.2.2 2024/08/12 22:32:11 perseant Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation.  All Rights Reserved.
@@ -28,8 +28,7 @@
 #ifndef _SBIN_MOUNT_EXFATFS_MOUNT_EXFATFS_H_
 #define _SBIN_MOUNT_EXFATFS_MOUNT_EXFATFS_H_
 
-#include <fs/exfatfs/exfatfs.h>
-/*#include <fs/exfatfs/exfatfs_mount.h>*/
+#include <fs/exfatfs/exfatfs_mount.h>
 
 int	mount_exfatfs(int, char **);
 void	mount_exfatfs_parseargs(int, char **, struct exfatfs_args *, int *,
