@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2023 Free Software Foundation, Inc.
+# Copyright (C) 2011-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,10 +16,7 @@
 # This file is part of the GDB testsuite.  It tests the mechanism
 # exposing values to Python.
 
-if {[skip_shlib_tests]} {
-	untested "skipping shared library tests"
-    return 0
-}
+require allow_shlib_tests allow_python_tests
 
 load_lib gdb-python.exp
 
@@ -39,8 +36,6 @@ if { [gdb_compile_shlib $libsrc $lib_sl $lib_opts] != ""
 
 # Start with a fresh gdb.
 clean_restart ${testfile}
-
-if { [skip_python_tests] } { continue }
 
 #
 # Test FinishBreakpoint in normal conditions
@@ -78,7 +73,8 @@ with_test_prefix "normal conditions" {
 	"check MyFinishBreakpoint hit"
     gdb_test "python print (finishbp.return_value)" "-5.*" "check return_value"
 
-    gdb_test "python print (finishbp_default.hit_count)" "1.*" "check finishBP on default frame has been hit"
+    gdb_test "python print (finishbp_default.is_valid())" "False" \
+	"check finishBP on default frame has been hit"
     gdb_test "python print (finishbp.is_valid())" "False.*"\
 	"ensure that finish bp is invalid afer normal hit"
 
@@ -86,8 +82,33 @@ with_test_prefix "normal conditions" {
 
     gdb_test "finish" "main.*" "return to main()"
     gdb_test "python MyFinishBreakpoint (None, gdb.selected_frame ())" \
-	"ValueError: \"FinishBreakpoint\" not meaningful in the outermost frame..*" \
+	"ValueError.*: \"FinishBreakpoint\" not meaningful in the outermost frame..*" \
 	"check FinishBP not allowed in main"
+}
+
+#
+# Test FinishBreakpoint returning to an inlined function
+#
+
+with_test_prefix "return to inlined function" {
+    clean_restart ${testfile}
+    gdb_load_shlib ${lib_sl}
+
+    gdb_test "source $python_file" "Python script imported.*" \
+	"import python scripts"
+
+    if {![runto_main]} {
+	return 0
+    }
+
+    gdb_breakpoint "increase_2"
+    gdb_test "continue" "Breakpoint .*at.*" "continue to the function to finish"
+
+    gdb_test "python finishbp_inline = MyFinishBreakpoint (gdb.parse_and_eval ('a'), gdb.newest_frame ())" \
+	"Temporary breakpoint.*" "set FinishBreakpoint returning to inlined frame"
+    gdb_test "continue" "MyFinishBreakpoint stop with.*return_value is: -8.*#0.*increase_inlined.*" \
+	"check MyFinishBreakpoint hit"
+    gdb_test "python print (finishbp_inline.return_value)" "-8.*" "check return_value"
 }
 
 #
@@ -193,7 +214,7 @@ with_test_prefix "finish in normal frame" {
     gdb_test "python TestBreakpoint()" "TestBreakpoint init" "set BP in condition"
 
     gdb_test "continue" \
-	"test don't stop: 1.*test don't stop: 2.*test stop.*Error in testing breakpoint condition.*The program being debugged stopped while in a function called from GDB.*" \
+	"test don't stop: 1.*test don't stop: 2.*test stop.*Error in testing condition for breakpoint ${::decimal}.*The program being debugged stopped while in a function called from GDB.*" \
 	"stop in condition function"
 
     gdb_test "continue" "Continuing.*" "finish condition evaluation"

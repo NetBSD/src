@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2014-2023 Free Software Foundation, Inc.
+# Copyright 2014-2024 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <markus.t.metzger@intel.com>
 #
@@ -20,10 +20,7 @@
 #
 # Test that we can access the vdso memory during replay for stepping.
 
-if { [skip_btrace_tests] } {
-    unsupported "target does not support record-btrace"
-    return -1
-}
+require allow_btrace_tests
 
 standard_testfile
 if [prepare_for_testing "failed to prepare" $testfile $srcfile] {
