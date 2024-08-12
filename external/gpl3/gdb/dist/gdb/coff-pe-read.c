@@ -2,7 +2,7 @@
    convert to internal format, for GDB. Used as a last resort if no
    debugging symbols recognized.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,6 @@
 
    Contributed by Raoul M. Gough (RaoulGough@yahoo.co.uk).  */
 
-#include "defs.h"
 
 #include "coff-pe-read.h"
 
@@ -29,7 +28,7 @@
 #include "gdbtypes.h"
 
 #include "command.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "symtab.h"
 #include "symfile.h"
 #include "objfiles.h"
@@ -127,7 +126,8 @@ add_pe_exported_sym (minimal_symbol_reader &reader,
 		     const char *dll_name, struct objfile *objfile)
 {
   /* Add the stored offset to get the loaded address of the symbol.  */
-  CORE_ADDR vma = func_rva + section_data->vma_offset;
+  unrelocated_addr vma = unrelocated_addr (func_rva
+					   + section_data->vma_offset);
 
   /* Generate a (hopefully unique) qualified name using the first part
      of the dll name, e.g. KERNEL32!AddAtomA.  This matches the style
@@ -162,7 +162,7 @@ add_pe_exported_sym (minimal_symbol_reader &reader,
 /* Create a minimal symbol entry for an exported forward symbol.
    Return 1 if the forwarded function was found 0 otherwise.
    SYM_NAME contains the exported name or NULL if exported by ordinal,
-   FORWARD_DLL_NAME is the name of the DLL in which the target symobl resides,
+   FORWARD_DLL_NAME is the name of the DLL in which the target symbol resides,
    FORWARD_FUNC_NAME is the name of the target symbol in that DLL,
    ORDINAL is the ordinal index value of the symbol,
    DLL_NAME is the internal name of the DLL file,
@@ -174,7 +174,6 @@ add_pe_forwarded_sym (minimal_symbol_reader &reader,
 		      const char *forward_func_name, int ordinal,
 		      const char *dll_name, struct objfile *objfile)
 {
-  CORE_ADDR vma, baseaddr;
   struct bound_minimal_symbol msymbol;
   enum minimal_symbol_type msymtype;
   int forward_dll_name_len = strlen (forward_dll_name);
@@ -210,7 +209,10 @@ add_pe_forwarded_sym (minimal_symbol_reader &reader,
 			      " \"%s\" in dll \"%s\", pointing to \"%s\"\n"),
 		sym_name, dll_name, forward_qualified_name.c_str ());
 
-  vma = msymbol.value_address ();
+  /* Calculate VMA as if it were relative to DLL_NAME/OBJFILE, even though
+     it actually points inside another dll (FORWARD_DLL_NAME).  */
+  unrelocated_addr vma = unrelocated_addr (msymbol.value_address ()
+					   - objfile->text_section_offset ());
   msymtype = msymbol.minsym->type ();
   section = msymbol.minsym->section_index ();
 
@@ -232,14 +234,11 @@ add_pe_forwarded_sym (minimal_symbol_reader &reader,
      really be relocated properly, but nevertheless we make a stab at
      it, choosing an approach consistent with the history of this
      code.  */
-  baseaddr = objfile->text_section_offset ();
 
-  reader.record_with_info (qualified_name.c_str (), vma - baseaddr, msymtype,
-			   section);
+  reader.record_with_info (qualified_name.c_str (), vma, msymtype, section);
 
   /* Enter the plain name as well, which might not be unique.  */
-  reader.record_with_info (bare_name.c_str(), vma - baseaddr, msymtype,
-			   section);
+  reader.record_with_info (bare_name.c_str(), vma, msymtype, section);
 
   return 1;
 }
@@ -257,23 +256,31 @@ read_pe_truncate_name (char *dll_name)
 
 /* Low-level support functions, direct from the ld module pe-dll.c.  */
 static unsigned int
-pe_get16 (bfd *abfd, int where)
+pe_get16 (bfd *abfd, int where, bool *fail)
 {
   unsigned char b[2];
 
-  bfd_seek (abfd, (file_ptr) where, SEEK_SET);
-  bfd_bread (b, (bfd_size_type) 2, abfd);
+  if (bfd_seek (abfd, where, SEEK_SET) != 0
+      || bfd_read (b, 2, abfd) != 2)
+    {
+      *fail = true;
+      return 0;
+    }
   return b[0] + (b[1] << 8);
 }
 
 static unsigned int
-pe_get32 (bfd *abfd, int where)
+pe_get32 (bfd *abfd, int where, bool *fail)
 {
   unsigned char b[4];
 
-  bfd_seek (abfd, (file_ptr) where, SEEK_SET);
-  bfd_bread (b, (bfd_size_type) 4, abfd);
-  return b[0] + (b[1] << 8) + (b[2] << 16) + (b[3] << 24);
+  if (bfd_seek (abfd, where, SEEK_SET) != 0
+      || bfd_read (b, 4, abfd) != 4)
+    {
+      *fail = true;
+      return 0;
+    }
+  return b[0] + (b[1] << 8) + (b[2] << 16) + ((unsigned) b[3] << 24);
 }
 
 static unsigned int
@@ -289,7 +296,7 @@ pe_as32 (void *ptr)
 {
   unsigned char *b = (unsigned char *) ptr;
 
-  return b[0] + (b[1] << 8) + (b[2] << 16) + (b[3] << 24);
+  return b[0] + (b[1] << 8) + (b[2] << 16) + ((unsigned) b[3] << 24);
 }
 
 /* Read the (non-debug) export symbol table from a portable
@@ -338,37 +345,50 @@ read_pe_exported_syms (minimal_symbol_reader &reader,
 	     || strcmp (target, "pei-i386") == 0
 	     || strcmp (target, "pe-arm-wince-little") == 0
 	     || strcmp (target, "pei-arm-wince-little") == 0);
+
+  /* Possibly print a debug message about DLL not having a valid format.  */
+  auto maybe_print_debug_msg = [&] () -> void {
+    if (debug_coff_pe_read)
+      gdb_printf (gdb_stdlog, _("%s doesn't appear to be a DLL\n"),
+		  bfd_get_filename (dll));
+  };
+
   if (!is_pe32 && !is_pe64)
-    {
-      /* This is not a recognized PE format file.  Abort now, because
-	 the code is untested on anything else.  *FIXME* test on
-	 further architectures and loosen or remove this test.  */
-      return;
-    }
+    return maybe_print_debug_msg ();
 
   /* Get pe_header, optional header and numbers of export entries.  */
-  pe_header_offset = pe_get32 (dll, 0x3c);
+  bool fail = false;
+  pe_header_offset = pe_get32 (dll, 0x3c, &fail);
+  if (fail)
+    return maybe_print_debug_msg ();
   opthdr_ofs = pe_header_offset + 4 + 20;
   if (is_pe64)
-    num_entries = pe_get32 (dll, opthdr_ofs + 108);
+    num_entries = pe_get32 (dll, opthdr_ofs + 108, &fail);
   else
-    num_entries = pe_get32 (dll, opthdr_ofs + 92);
+    num_entries = pe_get32 (dll, opthdr_ofs + 92, &fail);
+  if (fail)
+    return maybe_print_debug_msg ();
 
   if (num_entries < 1)		/* No exports.  */
     return;
   if (is_pe64)
     {
-      export_opthdrrva = pe_get32 (dll, opthdr_ofs + 112);
-      export_opthdrsize = pe_get32 (dll, opthdr_ofs + 116);
+      export_opthdrrva = pe_get32 (dll, opthdr_ofs + 112, &fail);
+      export_opthdrsize = pe_get32 (dll, opthdr_ofs + 116, &fail);
     }
   else
     {
-      export_opthdrrva = pe_get32 (dll, opthdr_ofs + 96);
-      export_opthdrsize = pe_get32 (dll, opthdr_ofs + 100);
+      export_opthdrrva = pe_get32 (dll, opthdr_ofs + 96, &fail);
+      export_opthdrsize = pe_get32 (dll, opthdr_ofs + 100, &fail);
     }
-  nsections = pe_get16 (dll, pe_header_offset + 4 + 2);
+  if (fail)
+    return maybe_print_debug_msg ();
+
+  nsections = pe_get16 (dll, pe_header_offset + 4 + 2, &fail);
   secptr = (pe_header_offset + 4 + 20 +
-	    pe_get16 (dll, pe_header_offset + 4 + 16));
+	    pe_get16 (dll, pe_header_offset + 4 + 16, &fail));
+  if (fail)
+    return maybe_print_debug_msg ();
   expptr = 0;
   export_size = 0;
 
@@ -377,12 +397,14 @@ read_pe_exported_syms (minimal_symbol_reader &reader,
     {
       char sname[8];
       unsigned long secptr1 = secptr + 40 * i;
-      unsigned long vaddr = pe_get32 (dll, secptr1 + 12);
-      unsigned long vsize = pe_get32 (dll, secptr1 + 16);
-      unsigned long fptr = pe_get32 (dll, secptr1 + 20);
+      unsigned long vaddr = pe_get32 (dll, secptr1 + 12, &fail);
+      unsigned long vsize = pe_get32 (dll, secptr1 + 16, &fail);
+      unsigned long fptr = pe_get32 (dll, secptr1 + 20, &fail);
 
-      bfd_seek (dll, (file_ptr) secptr1, SEEK_SET);
-      bfd_bread (sname, (bfd_size_type) sizeof (sname), dll);
+      if (fail
+	  || bfd_seek (dll, secptr1, SEEK_SET) != 0
+	  || bfd_read (sname, sizeof (sname), dll) != sizeof (sname))
+	return maybe_print_debug_msg ();
 
       if ((strcmp (sname, ".edata") == 0)
 	  || (vaddr <= export_opthdrrva && export_opthdrrva < vaddr + vsize))
@@ -423,16 +445,18 @@ read_pe_exported_syms (minimal_symbol_reader &reader,
   for (i = 0; i < nsections; i++)
     {
       unsigned long secptr1 = secptr + 40 * i;
-      unsigned long vsize = pe_get32 (dll, secptr1 + 8);
-      unsigned long vaddr = pe_get32 (dll, secptr1 + 12);
-      unsigned long characteristics = pe_get32 (dll, secptr1 + 36);
+      unsigned long vsize = pe_get32 (dll, secptr1 + 8, &fail);
+      unsigned long vaddr = pe_get32 (dll, secptr1 + 12, &fail);
+      unsigned long characteristics = pe_get32 (dll, secptr1 + 36, &fail);
       char sec_name[SCNNMLEN + 1];
       int sectix;
       unsigned int bfd_section_index;
       asection *section;
 
-      bfd_seek (dll, (file_ptr) secptr1 + 0, SEEK_SET);
-      bfd_bread (sec_name, (bfd_size_type) SCNNMLEN, dll);
+      if (fail
+	  || bfd_seek (dll, secptr1 + 0, SEEK_SET) != 0
+	  || bfd_read (sec_name, SCNNMLEN, dll) != SCNNMLEN)
+	return maybe_print_debug_msg ();
       sec_name[SCNNMLEN] = '\0';
 
       sectix = read_pe_section_index (sec_name);
@@ -471,8 +495,9 @@ read_pe_exported_syms (minimal_symbol_reader &reader,
   gdb::def_vector<unsigned char> expdata_storage (export_size);
   expdata = expdata_storage.data ();
 
-  bfd_seek (dll, (file_ptr) expptr, SEEK_SET);
-  bfd_bread (expdata, (bfd_size_type) export_size, dll);
+  if (bfd_seek (dll, expptr, SEEK_SET) != 0
+      || bfd_read (expdata, export_size, dll) != export_size)
+    return maybe_print_debug_msg ();
   erva = expdata - export_rva;
 
   nexp = pe_as32 (expdata + 24);
@@ -629,20 +654,27 @@ pe_text_section_offset (struct bfd *abfd)
     }
 
   /* Get pe_header, optional header and numbers of sections.  */
-  pe_header_offset = pe_get32 (abfd, 0x3c);
-  nsections = pe_get16 (abfd, pe_header_offset + 4 + 2);
+  bool fail = false;
+  pe_header_offset = pe_get32 (abfd, 0x3c, &fail);
+  if (fail)
+    return DEFAULT_COFF_PE_TEXT_SECTION_OFFSET;
+  nsections = pe_get16 (abfd, pe_header_offset + 4 + 2, &fail);
   secptr = (pe_header_offset + 4 + 20 +
-	    pe_get16 (abfd, pe_header_offset + 4 + 16));
+	    pe_get16 (abfd, pe_header_offset + 4 + 16, &fail));
+  if (fail)
+    return DEFAULT_COFF_PE_TEXT_SECTION_OFFSET;
 
   /* Get the rva and size of the export section.  */
   for (i = 0; i < nsections; i++)
     {
       char sname[SCNNMLEN + 1];
       unsigned long secptr1 = secptr + 40 * i;
-      unsigned long vaddr = pe_get32 (abfd, secptr1 + 12);
+      unsigned long vaddr = pe_get32 (abfd, secptr1 + 12, &fail);
 
-      bfd_seek (abfd, (file_ptr) secptr1, SEEK_SET);
-      bfd_bread (sname, (bfd_size_type) SCNNMLEN, abfd);
+      if (fail
+	  || bfd_seek (abfd, secptr1, SEEK_SET) != 0
+	  || bfd_read (sname, SCNNMLEN, abfd) != SCNNMLEN)
+	return DEFAULT_COFF_PE_TEXT_SECTION_OFFSET;
       sname[SCNNMLEN] = '\0';
       if (strcmp (sname, ".text") == 0)
 	return vaddr;

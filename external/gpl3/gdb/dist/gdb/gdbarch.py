@@ -2,7 +2,7 @@
 
 # Architecture commands for GDB, the GNU debugger.
 #
-# Copyright (C) 1998-2023 Free Software Foundation, Inc.
+# Copyright (C) 1998-2024 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -20,179 +20,37 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import textwrap
+
+# gdbarch_components is imported only for its side-effect of filling
+# `gdbarch_types.components`.
+import gdbarch_components  # noqa: F401 # type: ignore
 import gdbcopyright
-
-# All the components created in gdbarch-components.py.
-components = []
+from gdbarch_types import Component, Function, Info, Value, components
 
 
-def indentation(n_columns):
+def indentation(n_columns: int):
     """Return string with tabs and spaces to indent line to N_COLUMNS."""
     return "\t" * (n_columns // 8) + " " * (n_columns % 8)
 
-
-def join_type_and_name(t, n):
-    "Combine the type T and the name N into a C declaration."
-    if t.endswith("*") or t.endswith("&"):
-        return t + n
-    else:
-        return t + " " + n
-
-
-def join_params(params):
-    """Given a sequence of (TYPE, NAME) pairs, generate a comma-separated
-    list of declarations."""
-    params = [join_type_and_name(p[0], p[1]) for p in params]
-    return ", ".join(params)
-
-
-class _Component:
-    "Base class for all components."
-
-    def __init__(self, **kwargs):
-        for key in kwargs:
-            setattr(self, key, kwargs[key])
-        components.append(self)
-
-        # It doesn't make sense to have a check of the result value
-        # for a function or method with void return type.
-        if self.type == "void" and self.result_checks:
-            raise Exception("can't have result checks with a void return type")
-
-    def get_predicate(self):
-        "Return the expression used for validity checking."
-        assert self.predicate and not isinstance(self.invalid, str)
-        if self.predefault:
-            predicate = f"gdbarch->{self.name} != {self.predefault}"
-        elif isinstance(c, Value):
-            predicate = f"gdbarch->{self.name} != 0"
-        else:
-            predicate = f"gdbarch->{self.name} != NULL"
-        return predicate
-
-
-class Info(_Component):
-    "An Info component is copied from the gdbarch_info."
-
-    def __init__(self, *, name, type, printer=None):
-        super().__init__(name=name, type=type, printer=printer)
-        # This little hack makes the generator a bit simpler.
-        self.predicate = None
-
-
-class Value(_Component):
-    "A Value component is just a data member."
-
-    def __init__(
-        self,
-        *,
-        name,
-        type,
-        comment=None,
-        predicate=None,
-        predefault=None,
-        postdefault=None,
-        invalid=None,
-        printer=None,
-    ):
-        super().__init__(
-            comment=comment,
-            name=name,
-            type=type,
-            predicate=predicate,
-            predefault=predefault,
-            postdefault=postdefault,
-            invalid=invalid,
-            printer=printer,
-        )
-
-
-class Function(_Component):
-    "A Function component is a function pointer member."
-
-    def __init__(
-        self,
-        *,
-        name,
-        type,
-        params,
-        comment=None,
-        predicate=None,
-        predefault=None,
-        postdefault=None,
-        invalid=None,
-        printer=None,
-        param_checks=None,
-        result_checks=None,
-    ):
-        super().__init__(
-            comment=comment,
-            name=name,
-            type=type,
-            predicate=predicate,
-            predefault=predefault,
-            postdefault=postdefault,
-            invalid=invalid,
-            printer=printer,
-            params=params,
-            param_checks=param_checks,
-            result_checks=result_checks,
-        )
-
-    def ftype(self):
-        "Return the name of the function typedef to use."
-        return f"gdbarch_{self.name}_ftype"
-
-    def param_list(self):
-        "Return the formal parameter list as a string."
-        return join_params(self.params)
-
-    def set_list(self):
-        """Return the formal parameter list of the caller function,
-        as a string.  This list includes the gdbarch."""
-        arch_arg = ("struct gdbarch *", "gdbarch")
-        arch_tuple = [arch_arg]
-        return join_params(arch_tuple + list(self.params))
-
-    def actuals(self):
-        "Return the actual parameters to forward, as a string."
-        return ", ".join([p[1] for p in self.params])
-
-
-class Method(Function):
-    "A Method is like a Function but passes the gdbarch through."
-
-    def param_list(self):
-        "See superclass."
-        return self.set_list()
-
-    def actuals(self):
-        "See superclass."
-        result = ["gdbarch"] + [p[1] for p in self.params]
-        return ", ".join(result)
-
-
-# Read the components.
-with open("gdbarch-components.py") as fd:
-    exec(fd.read())
 
 copyright = gdbcopyright.copyright(
     "gdbarch.py", "Dynamic architecture support for GDB, the GNU debugger."
 )
 
 
-def info(c):
+def info(c: Component):
     "Filter function to only allow Info components."
     return type(c) is Info
 
 
-def not_info(c):
+def not_info(c: Component):
     "Filter function to omit Info components."
     return type(c) is not Info
 
 
 with open("gdbarch-gen.h", "w") as f:
     print(copyright, file=f)
+    print(file=f)
     print(file=f)
     print(file=f)
     print("/* The following are pre-initialized by GDBARCH.  */", file=f)
@@ -251,10 +109,11 @@ with open("gdbarch-gen.h", "w") as f:
                 f"typedef {c.type} ({c.ftype()}) ({c.param_list()});",
                 file=f,
             )
-            print(
-                f"extern {c.type} gdbarch_{c.name} ({c.set_list()});",
-                file=f,
-            )
+            if c.implement:
+                print(
+                    f"extern {c.type} gdbarch_{c.name} ({c.set_list()});",
+                    file=f,
+                )
             print(
                 f"extern void set_gdbarch_{c.name} (struct gdbarch *gdbarch, {c.ftype()} *{c.name});",
                 file=f,
@@ -262,6 +121,7 @@ with open("gdbarch-gen.h", "w") as f:
 
 with open("gdbarch.c", "w") as f:
     print(copyright, file=f)
+    print(file=f)
     print(file=f)
     print("/* Maintain the struct gdbarch object.  */", file=f)
     print(file=f)
@@ -283,12 +143,8 @@ with open("gdbarch.c", "w") as f:
         print(f"  {c.type} {c.name};", file=f)
     print(file=f)
     print("  /* target specific vector.  */", file=f)
-    print("  struct gdbarch_tdep_base *tdep = nullptr;", file=f)
+    print("  gdbarch_tdep_up tdep;", file=f)
     print("  gdbarch_dump_tdep_ftype *dump_tdep = nullptr;", file=f)
-    print(file=f)
-    print("  /* per-architecture data-pointers.  */", file=f)
-    print("  unsigned nr_data = 0;", file=f)
-    print("  void **data = nullptr;", file=f)
     print(file=f)
     for c in filter(not_info, components):
         if isinstance(c, Function):
@@ -313,13 +169,13 @@ with open("gdbarch.c", "w") as f:
     print(file=f)
     print("struct gdbarch *", file=f)
     print("gdbarch_alloc (const struct gdbarch_info *info,", file=f)
-    print("	       struct gdbarch_tdep_base *tdep)", file=f)
+    print("	       gdbarch_tdep_up tdep)", file=f)
     print("{", file=f)
     print("  struct gdbarch *gdbarch;", file=f)
     print("", file=f)
     print("  gdbarch = new struct gdbarch;", file=f)
     print(file=f)
-    print("  gdbarch->tdep = tdep;", file=f)
+    print("  gdbarch->tdep = std::move (tdep);", file=f)
     print(file=f)
     for c in filter(info, components):
         print(f"  gdbarch->{c.name} = info->{c.name};", file=f)
@@ -349,35 +205,35 @@ with open("gdbarch.c", "w") as f:
         file=f,
     )
     for c in filter(not_info, components):
-        if c.invalid is False:
-            print(f"  /* Skip verify of {c.name}, invalid_p == 0 */", file=f)
+        # An opportunity to write in the 'postdefault' value.  We
+        # change field's value to the postdefault if its current value
+        # is not different to the initial value of the field.
+        if c.postdefault is not None:
+            init_value = c.predefault or "0"
+            print(f"  if (gdbarch->{c.name} == {init_value})", file=f)
+            print(f"    gdbarch->{c.name} = {c.postdefault};", file=f)
+
+        # Now validate the value.
+        if isinstance(c.invalid, str):
+            print(f"  if ({c.invalid})", file=f)
+            print(f"""    log.puts ("\\n\\t{c.name}");""", file=f)
         elif c.predicate:
             print(f"  /* Skip verify of {c.name}, has predicate.  */", file=f)
-        elif isinstance(c.invalid, str) and c.postdefault is not None:
-            print(f"  if ({c.invalid})", file=f)
-            print(f"    gdbarch->{c.name} = {c.postdefault};", file=f)
-        elif c.predefault is not None and c.postdefault is not None:
-            print(f"  if (gdbarch->{c.name} == {c.predefault})", file=f)
-            print(f"    gdbarch->{c.name} = {c.postdefault};", file=f)
-        elif c.postdefault is not None:
-            print(f"  if (gdbarch->{c.name} == 0)", file=f)
-            print(f"    gdbarch->{c.name} = {c.postdefault};", file=f)
-        elif isinstance(c.invalid, str):
-            print(f"  if ({c.invalid})", file=f)
-            print(f"""    log.puts ("\\n\\t{c.name}");""", file=f)
-        elif c.predefault is not None:
-            print(f"  if (gdbarch->{c.name} == {c.predefault})", file=f)
-            print(f"""    log.puts ("\\n\\t{c.name}");""", file=f)
-        elif c.invalid is True:
-            print(f"  if (gdbarch->{c.name} == 0)", file=f)
-            print(f"""    log.puts ("\\n\\t{c.name}");""", file=f)
+        elif c.invalid:
+            if c.postdefault is not None:
+                # This component has its 'invalid' field set to True, but
+                # also has a postdefault.  This makes no sense, the
+                # postdefault will have been applied above, so this field
+                # will not have a zero value.
+                raise Exception(
+                    f"component {c.name} has postdefault and invalid set to True"
+                )
+            else:
+                init_value = c.predefault or "0"
+                print(f"  if (gdbarch->{c.name} == {init_value})", file=f)
+                print(f"""    log.puts ("\\n\\t{c.name}");""", file=f)
         else:
-            # We should not allow ourselves to simply do nothing here
-            # because no other case applies.  If we end up here then
-            # either the input data needs adjusting so one of the
-            # above cases matches, or we need additional cases adding
-            # here.
-            raise Exception("unhandled case when generating gdbarch validation")
+            print(f"  /* Skip verify of {c.name}, invalid_p == 0 */", file=f)
     print("  if (!log.empty ())", file=f)
     print(
         """    internal_error (_("verify_gdbarch: the following are invalid ...%s"),""",
@@ -445,38 +301,39 @@ with open("gdbarch.c", "w") as f:
             print(f"  return {c.get_predicate()};", file=f)
             print("}", file=f)
         if isinstance(c, Function):
-            print(file=f)
-            print(f"{c.type}", file=f)
-            print(f"gdbarch_{c.name} ({c.set_list()})", file=f)
-            print("{", file=f)
-            print("  gdb_assert (gdbarch != NULL);", file=f)
-            print(f"  gdb_assert (gdbarch->{c.name} != NULL);", file=f)
-            if c.predicate and c.predefault:
-                # Allow a call to a function with a predicate.
+            if c.implement:
+                print(file=f)
+                print(f"{c.type}", file=f)
+                print(f"gdbarch_{c.name} ({c.set_list()})", file=f)
+                print("{", file=f)
+                print("  gdb_assert (gdbarch != NULL);", file=f)
+                print(f"  gdb_assert (gdbarch->{c.name} != NULL);", file=f)
+                if c.predicate and c.predefault:
+                    # Allow a call to a function with a predicate.
+                    print(
+                        f"  /* Do not check predicate: {c.get_predicate()}, allow call.  */",
+                        file=f,
+                    )
+                if c.param_checks:
+                    for rule in c.param_checks:
+                        print(f"  gdb_assert ({rule});", file=f)
+                print("  if (gdbarch_debug >= 2)", file=f)
                 print(
-                    f"  /* Do not check predicate: {c.get_predicate()}, allow call.  */",
+                    f"""    gdb_printf (gdb_stdlog, "gdbarch_{c.name} called\\n");""",
                     file=f,
                 )
-            if c.param_checks:
-                for rule in c.param_checks:
-                    print(f"  gdb_assert ({rule});", file=f)
-            print("  if (gdbarch_debug >= 2)", file=f)
-            print(
-                f"""    gdb_printf (gdb_stdlog, "gdbarch_{c.name} called\\n");""",
-                file=f,
-            )
-            print("  ", file=f, end="")
-            if c.type != "void":
-                if c.result_checks:
-                    print("auto result = ", file=f, end="")
-                else:
-                    print("return ", file=f, end="")
-            print(f"gdbarch->{c.name} ({c.actuals()});", file=f)
-            if c.type != "void" and c.result_checks:
-                for rule in c.result_checks:
-                    print(f"  gdb_assert ({rule});", file=f)
-                print("  return result;", file=f)
-            print("}", file=f)
+                print("  ", file=f, end="")
+                if c.type != "void":
+                    if c.result_checks:
+                        print("auto result = ", file=f, end="")
+                    else:
+                        print("return ", file=f, end="")
+                print(f"gdbarch->{c.name} ({c.actuals()});", file=f)
+                if c.type != "void" and c.result_checks:
+                    for rule in c.result_checks:
+                        print(f"  gdb_assert ({rule});", file=f)
+                    print("  return result;", file=f)
+                print("}", file=f)
             print(file=f)
             print("void", file=f)
             setter_name = f"set_gdbarch_{c.name}"
@@ -493,14 +350,18 @@ with open("gdbarch.c", "w") as f:
             print(f"gdbarch_{c.name} (struct gdbarch *gdbarch)", file=f)
             print("{", file=f)
             print("  gdb_assert (gdbarch != NULL);", file=f)
-            if c.invalid is False:
-                print(f"  /* Skip verify of {c.name}, invalid_p == 0 */", file=f)
-            elif isinstance(c.invalid, str):
+            if isinstance(c.invalid, str):
                 print("  /* Check variable is valid.  */", file=f)
                 print(f"  gdb_assert (!({c.invalid}));", file=f)
-            elif c.predefault:
-                print("  /* Check variable changed from pre-default.  */", file=f)
-                print(f"  gdb_assert (gdbarch->{c.name} != {c.predefault});", file=f)
+            elif c.predicate:
+                print("  /* Check predicate was used.  */", file=f)
+                print(f"  gdb_assert (gdbarch_{c.name}_p (gdbarch));", file=f)
+            elif c.invalid or c.postdefault is not None:
+                init_value = c.predefault or "0"
+                print("  /* Check variable changed from its initial value.  */", file=f)
+                print(f"  gdb_assert (gdbarch->{c.name} != {init_value});", file=f)
+            else:
+                print(f"  /* Skip verify of {c.name}, invalid_p == 0 */", file=f)
             print("  if (gdbarch_debug >= 2)", file=f)
             print(
                 f"""    gdb_printf (gdb_stdlog, "gdbarch_{c.name} called\\n");""",
