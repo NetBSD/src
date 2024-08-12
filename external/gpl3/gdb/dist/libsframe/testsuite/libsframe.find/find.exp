@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2024 Free Software Foundation, Inc.
+# Copyright (C) 2023-2024 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -23,28 +23,20 @@ load_lib dejagnu.exp
 # Run the tests only if compatible dejagnu gcc pair is found
 if [string equal $COMPAT_DEJAGNU "no"] {
     verbose -log "SFrame testsuite needs perhaps a more recent DejaGnu"
-    unsupported be-flipping
-    unsupported frecnt-1
-    unsupported frecnt-2
+    unsupported findfre-1
+    unsupported findfunc-1
+    unsupported plt-findfre-1
     return;
 }
 
-catch "exec ln -s $srcdir/libsframe.decode/DATA1 ." status
-catch "exec ln -s $srcdir/libsframe.decode/DATA2 ." status
-catch "exec ln -s $srcdir/libsframe.decode/DATA-BE ." status
-
-if { [host_execute "testsuite/libsframe.decode/be-flipping"] ne "" } {
-    fail "be-flipping"
+if { [host_execute "testsuite/libsframe.find/findfre-1"] ne "" } {
+    fail "findfre-1"
 }
 
-if { [host_execute "testsuite/libsframe.decode/frecnt-1"] ne "" } {
-    fail "frecnt-1"
+if { [host_execute "testsuite/libsframe.find/findfunc-1"] ne "" } {
+    fail "findfunc-1"
 }
 
-if { [host_execute "testsuite/libsframe.decode/frecnt-2"] ne "" } {
-    fail "frecnt-2"
+if { [host_execute "testsuite/libsframe.find/plt-findfre-1"] ne "" } {
+    fail "plt-findfre-1"
 }
-
-catch "exec rm DATA1" status
-catch "exec rm DATA2" status
-catch "exec rm DATA-BE" status
