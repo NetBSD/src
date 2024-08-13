@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.354 2024/07/01 09:44:48 martin Exp $
+$NetBSD: UPDATING,v 1.355 2024/08/13 09:49:05 martin Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -19,6 +19,11 @@ See also: BUILDING, build.sh, Makefile.
 Recent changes:
 ^^^^^^^^^^^^^^^
 
+20240812:
+	Update builds will require removing the tools objdir for gdb
+	if building with MKCROSSGDB=yes. All architectures use gdb.old
+	now.
+	
 20240630:
 	Update builds will require removing the tools objdir for binutils
 	(as most architectures should use binutils.old now).
