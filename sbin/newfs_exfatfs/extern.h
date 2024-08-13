@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.1.2.3 2024/08/02 00:23:21 perseant Exp $	*/
+/*	$NetBSD: extern.h,v 1.1.2.4 2024/08/13 05:37:23 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,8 +37,9 @@ void	fatal(const char *fmt, ...)
      __attribute__((__format__(__printf__,1,2)));
 int	make_exfatfs(struct uvnode *, struct exfatfs *,
 		     uint16_t *, int, uint16_t *, size_t,
+		     char *,
 		     uint32_t, uint32_t);
 
 extern char	*progname;
-extern char	*special;
+extern const char *special;
 
