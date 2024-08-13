@@ -1,4 +1,4 @@
-.\" $NetBSD: config.5,v 1.48 2024/01/18 04:41:37 thorpej Exp $
+.\" $NetBSD: config.5,v 1.49 2024/08/13 15:01:52 uwe Exp $
 .\"
 .\"  Copyright (c) 2006, 2007 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -739,6 +739,16 @@ the
 and each of the
 .Ar subarch .
 .\"
+.It Ic ioconf Ar name
+Used instead of
+.Ic machine
+in config file snippets for kernel modules to generate just the
+.Pa ioconf.c
+definions.
+The generated file contains subtrees that start with attachments
+declared with
+.Ic pseudo-root .
+.\"
 .It Ic package Ar path
 Simpler version of:
 .Bd -literal -offset indent
@@ -843,6 +853,24 @@ statement must appear in the configuration file.
 Removes
 .Ar name
 from the list of kernel binaries to compile from the configuration file.
+.\"
+.It Ic pseudo-root Ar instance
+Used in conjunction with
+.Ic ioconf
+in kernel modules.
+Declares an instance of a device that serves as the root for a subtree
+described in the module config.
+The declared
+.Ar instance
+can then be used as an
+.Ar attachment
+for devices in the kernel module.
+Multiple such attachment points may be declared in the config file.
+.Ar instance
+may name a device
+.Pq e.g. Ql pci*
+an interface attribute
+.Pq e.g. Ql audiobus*
 .\"
 .It Ar instance Ic at Ar attachment Op Ar locator-specifications ...
 Configures an instance of a device attaching at a specific location in the
