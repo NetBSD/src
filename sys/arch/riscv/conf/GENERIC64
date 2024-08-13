@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.9 2024/02/09 08:51:49 skrll Exp $
+# $NetBSD: GENERIC64,v 1.10 2024/08/13 07:20:23 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -49,11 +49,23 @@ options 	DEBUG		# expensive debugging checks/support
 # Cache controller
 ccache* 	at fdt?			# SiFive FU[57]40 L2 Cache
 
-# Clock controller
+# Fixed Voltage/Current Regulators
+fregulator*	at fdt? pass 4
+
+# Clock and reset controller
 jh7100clkc* 	at fdt?	pass 2		# StarFive JH7100 clock controller
+sun20id1ccu* 	at fdt? pass 2		# Allwinner D1/D1s CCU
+
+# Security ID EFUSE
+sunxisid*	at fdt? pass 4		# Allwinner SID
+
+# DMA
+sun6idma* 	at fdt? pass 4		# Allwinner DMA controller (sun6i)
 
 # Pin control
 jh7100pinctrl* 	at fdt? pass 2		# StarFive JH7100 pinctrl driver
+sunxigpio* 	at fdt? pass 3		# Allwinner GPIO
+gpio* 		at gpiobus?
 
 # SDMMC
 dwcmmc* 	at fdt?			# DesignWare SD/MMC
@@ -64,6 +76,9 @@ ld2 		at sdmmc2
 ld3 		at sdmmc3
 ld* 		at sdmmc?
 bwfm* 		at sdmmc?		# Broadcom BCM43xxx WiFi Interface
+
+# USB PHY
+sunxiusbphy* 	at fdt?			# Allwinner USB PHY
 
 # USB
 jh71x0usb* 	at fdt?			# StarFive JH71x0 usb

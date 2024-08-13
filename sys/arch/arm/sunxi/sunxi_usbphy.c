@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_usbphy.c,v 1.17 2022/06/28 05:19:03 skrll Exp $ */
+/* $NetBSD: sunxi_usbphy.c,v 1.18 2024/08/13 07:20:23 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.17 2022/06/28 05:19:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.18 2024/08/13 07:20:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -80,6 +80,7 @@ enum sunxi_usbphy_type {
 	USBPHY_A31,
 	USBPHY_A64,
 	USBPHY_A83T,
+	USBPHY_D1,
 	USBPHY_H3,
 	USBPHY_H6,
 };
@@ -92,6 +93,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun8i-a83t-usb-phy",	.value = USBPHY_A83T },
 	{ .compat = "allwinner,sun8i-h3-usb-phy",	.value = USBPHY_H3 },
 	{ .compat = "allwinner,sun8i-v3s-usb-phy",	.value = USBPHY_H3 },
+	{ .compat = "allwinner,sun20i-d1-usb-phy",	.value = USBPHY_D1 },
 	{ .compat = "allwinner,sun50i-a64-usb-phy",	.value = USBPHY_A64 },
 	{ .compat = "allwinner,sun50i-h6-usb-phy",	.value = USBPHY_H6 },
 	DEVICE_COMPAT_EOL
@@ -150,6 +152,7 @@ sunxi_usbphy_write(struct sunxi_usbphy_softc *sc,
 	case USBPHY_A31:
 		reg = PHYCTL_A10;
 		break;
+	case USBPHY_D1:
 	case USBPHY_H3:
 	case USBPHY_H6:
 	case USBPHY_A64:
@@ -233,6 +236,7 @@ sunxi_usbphy_enable(device_t dev, void *priv, bool enable)
 		phy0_reroute = false;
 		break;
 	case USBPHY_A64:
+	case USBPHY_D1:
 	case USBPHY_H3:
 	case USBPHY_H6:
 		disc_thresh = 0x3;

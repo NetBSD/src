@@ -1,5 +1,5 @@
 #
-# $NetBSD: std.riscv64,v 1.3 2023/05/07 12:41:48 skrll Exp $
+# $NetBSD: std.riscv64,v 1.4 2024/08/13 07:20:23 skrll Exp $
 #
 machine		riscv
 
@@ -7,6 +7,8 @@ include		"conf/std"
 
 options		EXEC_SCRIPT
 options		EXEC_ELF64
+
+options 	SOC_SUN20I_D1
 
 makeoptions	LP64="yes"
 
