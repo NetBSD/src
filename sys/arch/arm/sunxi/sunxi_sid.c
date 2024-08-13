@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_sid.c,v 1.7 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: sunxi_sid.c,v 1.8 2024/08/13 07:20:23 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_sid.c,v 1.7 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_sid.c,v 1.8 2024/08/13 07:20:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -59,6 +59,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun7i-a20-sid",	.data = &sun4i_a10_sid_config },
 	{ .compat = "allwinner,sun8i-h3-sid",	.data = &sun8i_h3_sid_config },
 	{ .compat = "allwinner,sun8i-a83t-sid",	.data = &sun8i_h3_sid_config },
+	{ .compat = "allwinner,sun20i-d1-sid",	.data = &sun8i_h3_sid_config },
 	{ .compat = "allwinner,sun50i-a64-sid",	.data = &sun8i_h3_sid_config },
 	DEVICE_COMPAT_EOL
 };

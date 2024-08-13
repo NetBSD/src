@@ -1,5 +1,5 @@
 #
-# $NetBSD: std.riscv,v 1.1 2015/03/28 16:13:56 matt Exp $
+# $NetBSD: std.riscv,v 1.2 2024/08/13 07:20:23 skrll Exp $
 #
 machine		riscv
 
@@ -7,6 +7,8 @@ include 	"conf/std"
 
 options  	EXEC_ELF32
 options  	EXEC_SCRIPT
+
+options 	SOC_SUN20I_D1
 
 #no defflag COMPAT_09
 #no defflag COMPAT_10
