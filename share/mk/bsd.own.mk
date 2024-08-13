@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1394 2024/08/12 21:30:20 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1395 2024/08/13 03:08:31 rin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -127,10 +127,12 @@ NOGCCISL=	# defined
 #
 .if \
     ${MACHINE_CPU} == "aarch64" || \
+    ${MACHINE_ARCH} == "alpha" || \
     ${MACHINE_CPU} == "arm" || \
     ${MACHINE_CPU} == "hppa" || \
     ${MACHINE_CPU} == "mips" || \
     ${MACHINE_CPU} == "riscv" || \
+    ${MACHINE_CPU} == "sh3" || \
     ${MACHINE_ARCH} == "x86_64"
 HAVE_BINUTILS?= 242
 .else
