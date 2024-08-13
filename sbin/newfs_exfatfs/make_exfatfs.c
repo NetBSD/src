@@ -1,4 +1,4 @@
-/*	$NetBSD: make_exfatfs.c,v 1.1.2.6 2024/08/02 00:23:21 perseant Exp $	*/
+/*	$NetBSD: make_exfatfs.c,v 1.1.2.7 2024/08/13 05:37:24 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_exfatfs.c,v 1.1.2.6 2024/08/02 00:23:21 perseant Exp $");
+__RCSID("$NetBSD: make_exfatfs.c,v 1.1.2.7 2024/08/13 05:37:24 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,14 +107,16 @@ extern int Qflag; /* Quiet */
 extern int Vflag; /* Verbose */
 
 void pwarn(const char *, ...);
+static void check_asserts(struct exfatfs *);
 
 int
 make_exfatfs(struct uvnode *devvp, struct exfatfs *fs,
 	     uint16_t *uclabel, int uclabellen,
 	     uint16_t *uctable, size_t uctablesize,
+	     char *xbootcode,
 	     uint32_t fatalign, uint32_t heapalign)
 {
-	uint32_t clust, nclust;
+	uint32_t clust, nclust, nnclust;
 	struct exfatfs_dirent_allocation_bitmap dirent_bitmap[2];
 	struct exfatfs_dirent_upcase_table dirent_upcase;
 	struct exfatfs_dirent_volume_label dirent_label;
@@ -128,7 +130,8 @@ make_exfatfs(struct uvnode *devvp, struct exfatfs *fs,
 	uint32_t secsize = (1 << fs->xf_BytesPerSectorShift);
 
 	if (Vflag) {
-		printf("VolumeLength: %lu\n",
+		printf("VolumeLength: %lu (0x%lx)\n",
+			(unsigned long)fs->xf_VolumeLength,
 			(unsigned long)fs->xf_VolumeLength);
 		printf("Serial Number: 0x%lx (%lu)\n",
 			(unsigned long)fs->xf_VolumeSerialNumber,
@@ -167,28 +170,44 @@ make_exfatfs(struct uvnode *devvp, struct exfatfs *fs,
 	else if (nclust > fs->xf_FatLength * secsize / sizeof(uint32_t) - 2)
 		nclust = fs->xf_FatLength * secsize / sizeof(uint32_t) - 2;
 	fs->xf_ClusterHeapOffset = fs->xf_FatOffset + fs->xf_NumberOfFats * fs->xf_FatLength;
-	if (heapalign) {
-		uint32_t halignoff = fs->xf_PartitionOffset % heapalign;
-		fs->xf_ClusterHeapOffset = roundup(fs->xf_ClusterHeapOffset
-						   + halignoff, heapalign);
-	}
 	if (Vflag) {
 		printf("FatLength: %lx\n",
 			(unsigned long)fs->xf_FatLength);
-		printf("ClusterHeapOffset: 0x%lx (byte 0x%llx)\n",
-		       (unsigned long)fs->xf_ClusterHeapOffset,
-		       (unsigned long long)fs->xf_ClusterHeapOffset << fs->xf_BytesPerSectorShift);
 	}
 
 	/* Recalculate to take FATs into account */
 	nclust = (fs->xf_VolumeLength - fs->xf_ClusterHeapOffset) >> fs->xf_SectorsPerClusterShift;
 	/* Make sure it fits in our given FAT */
-	if (nclust > fs->xf_FatLength * secsize / sizeof(uint32_t) - 2)
-		nclust = fs->xf_FatLength * secsize / sizeof(uint32_t) - 2;
+	nnclust = fs->xf_FatLength * secsize / sizeof(uint32_t) - 2;
+	if (nclust > nnclust) {
+		fs->xf_ClusterHeapOffset += (nclust - nnclust)
+			<< fs->xf_SectorsPerClusterShift;
+		nclust = nnclust;
+	}
+	if (heapalign) {
+		uint32_t halignoff = fs->xf_PartitionOffset % heapalign;
+		uint32_t nho = roundup(fs->xf_ClusterHeapOffset
+					 + halignoff, heapalign);
+		if ((fs->xf_VolumeLength - nho) >> fs->xf_SectorsPerClusterShift <= 0) {
+			if (Vflag)
+				printf("Volume is too small to align cluster heap to %lu sectors\n",
+					(unsigned long)heapalign);
+		} else {
+			fs->xf_ClusterHeapOffset = nho;
+			nclust = (fs->xf_VolumeLength - fs->xf_ClusterHeapOffset) >> fs->xf_SectorsPerClusterShift;
+		}
+	}
 	fs->xf_ClusterCount = nclust;
-	if (Vflag)
+	if (Vflag) {
 		printf("File system contains %d clusters\n",
 		       (int)fs->xf_ClusterCount);
+		printf("ClusterHeapOffset: 0x%lx (byte 0x%llx)\n",
+		       (unsigned long)fs->xf_ClusterHeapOffset,
+		       (unsigned long long)fs->xf_ClusterHeapOffset << fs->xf_BytesPerSectorShift);
+	}
+
+	assert(fs->xf_ClusterHeapOffset >= fs->xf_FatOffset
+            + fs->xf_FatLength * fs->xf_NumberOfFats);
 	
 	/*
 	 * Prepare root directory entries.
@@ -447,10 +466,27 @@ make_exfatfs(struct uvnode *devvp, struct exfatfs *fs,
 
 	fs->xf_PercentInUse = 100 * (fs->xf_FirstClusterOfRootDirectory - 1)
 		/ (fs->xf_ClusterCount);
+
+	/*
+	 * If given extended boot code,
+	 * write the boot code sectors.
+	 */
+	if (xbootcode != NULL) {
+		for (i = 0; i < 8; i++) {
+			bp = getblk(devvp, i + 1, BSSIZE(fs));
+			memcpy(bp->b_data, xbootcode + i * BSSIZE(fs),
+			       BSSIZE(fs));
+			bwrite(bp);
+		}
+	}
+
+	check_asserts(fs);
 	
 	/*
 	 * Finally, write the boot sector.
 	 */
+	if (Vflag)
+		printf("Write boot sector\n");
 	if (!Nflag)
 		exfatfs_write_sb(fs, 1);
 
@@ -513,4 +549,27 @@ int
 exfatfs_bitmap_init(struct exfatfs *unused)
 {
 	return 0;
+}
+
+static void
+check_asserts(struct exfatfs *fs) {
+	assert(fs->xf_FatOffset >= 24);
+	assert(fs->xf_FatOffset <= fs->xf_ClusterHeapOffset
+	    - (fs->xf_FatLength * fs->xf_NumberOfFats));
+	assert(fs->xf_FatLength >= ((fs->xf_ClusterCount + 2) * 4)
+	    >> fs->xf_BytesPerSectorShift);
+	assert(fs->xf_FatLength <= (fs->xf_ClusterHeapOffset - fs->xf_FatOffset)
+	    / fs->xf_NumberOfFats);
+	assert(fs->xf_ClusterHeapOffset >= fs->xf_FatOffset
+	    + fs->xf_FatLength * fs->xf_NumberOfFats);
+	assert(fs->xf_ClusterHeapOffset <= ~(u_int32_t)0);
+	assert(fs->xf_ClusterHeapOffset <= fs->xf_VolumeLength
+					- (fs->xf_ClusterCount
+	    << fs->xf_SectorsPerClusterShift));
+	assert(fs->xf_ClusterCount >= (fs->xf_VolumeLength
+					- fs->xf_ClusterHeapOffset)
+	    >> fs->xf_SectorsPerClusterShift);
+	assert(fs->xf_ClusterCount <= ~(u_int32_t)0 - 10);
+	assert(fs->xf_FirstClusterOfRootDirectory >= 2);
+	assert(fs->xf_FirstClusterOfRootDirectory <= fs->xf_ClusterCount + 1);
 }

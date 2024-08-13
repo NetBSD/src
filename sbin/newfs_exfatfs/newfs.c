@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.1.2.4 2024/08/02 00:23:21 perseant Exp $	*/
+/*	$NetBSD: newfs.c,v 1.1.2.5 2024/08/13 05:37:24 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.1.2.4 2024/08/02 00:23:21 perseant Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.1.2.5 2024/08/13 05:37:24 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,8 @@ uint32_t serial = 0;
 uint32_t partition_offset = 0;
 
 char	device[MAXPATHLEN];
-char	*progname, *special, *disktype = NULL;
+char	*progname, *disktype = NULL;
+const char *special;
 
 extern long	dev_bsize;		/* device block size */
 
@@ -119,13 +120,14 @@ main(int argc, char **argv)
 	struct stat st;
 	struct uvnode *devvp;
 	struct exfatfs *fs;
-	int debug, force, fsi, fso, maxpartitions, nfats = 0;
+	int debug, Fflag, fsi = -1, fso = -1, maxpartitions, nfats = 0;
 	uint secsize = 0, secshift = 0;
 	int byte_sized = 0;
 	const char *label = "NONE GIVEN";
 	uint16_t uclabel[11];
 	uint16_t uclabellen;
 	char *bootcodefile = NULL;
+	char *xbootcodefile = NULL, *xbootcode = NULL;
 	char *uctablefile = NULL;
 	uint16_t *uctable = NULL;
 	size_t uctablesize = 0;
@@ -140,15 +142,17 @@ main(int argc, char **argv)
 	if (maxpartitions > 26)
 		fatal("insane maxpartitions value %d", maxpartitions);
 
-	debug = force = 0;
+	debug = Fflag = 0;
 	memset(&dkw, 0, sizeof(dkw));
-	while ((ch = getopt(argc, argv, "a:b:c:Dh:FL:l:Nn:o:qS:s:T:u:vw#:")) != -1)
+	while ((ch = getopt(argc, argv, "a:b:c:Dh:FL:l:Nn:o:qS:s:T:u:vwx:#:")) != -1)
 		switch(ch) {
 		case 'D': /* debug */
 			debug = 1;
+			/* Set Fflag too since we will create a regular file */
+			Fflag = 1;
 			break;
-		case 'F': /* force create filesystem even on non disk */
-			force = 1;
+		case 'F': /* Fflag create filesystem even on non disk */
+			Fflag = 1;
 			break;
 		case 'L': /* specify label */
 			label = optarg;
@@ -167,8 +171,8 @@ main(int argc, char **argv)
 			disktype = optarg;
 			break;
 		case 'a': /* FAT alignment */
-		  	fatalign = strsuftoi64("alignment", optarg,
-						MINBLOCKSIZE, INT64_MAX, NULL);
+		  	fatalign = strsuftoi64("FAT alignment", optarg,
+						0, INT64_MAX, NULL);
 			break;
 		case 'b': /* take bootcode from file */
 			bootcodefile = optarg;
@@ -179,7 +183,7 @@ main(int argc, char **argv)
 			break;
 		case 'h': /* cluster heap alignment */
 		  	heapalign = strsuftoi64("heap alignment", optarg,
-						MINBLOCKSIZE, INT64_MAX, NULL);
+						0, INT64_MAX, NULL);
 			break;
 		case 'n': /* number of FATs */
 			nfats = strtol(optarg, NULL, 10);
@@ -203,6 +207,9 @@ main(int argc, char **argv)
 		case 'v': /* verbose */
 			Vflag++;
 			break;
+		case 'x': /* take xbootcode from file */
+			xbootcodefile = optarg;
+			break;
 		case '#': /* specify serial number */
 			serial = strtoul(optarg, NULL, 0);
 			break;
@@ -216,23 +223,33 @@ main(int argc, char **argv)
 	if (argc != 2 && argc != 1)
 		usage();
 
-	/*
-	 * If the -N flag isn't specified, open the output file.  If no path
-	 * prefix, try /dev/r%s and then /dev/%s.
-	 */
 	special = argv[0];
-	if (strchr(special, '/') == NULL) {
-		(void)snprintf(device, sizeof(device), "%sr%s", _PATH_DEV,
-		    special);
-		if (stat(device, &st) == -1)
-			(void)snprintf(device, sizeof(device), "%s%s",
-			    _PATH_DEV, special);
+
+	/*
+	 * Open the input file.
+	 */
+	if (!Fflag) {
+		char specname[MAXPATHLEN];
+		char rawname[MAXPATHLEN];
+		const char *raw;
+
+		/* Translate wedge name to device name, if necessary */
+		raw = getfsspecname(specname, sizeof(specname), special);
+		if (raw == NULL)
+			err(1, "%s: %s", special, specname);
+		special = getdiskrawname(rawname, sizeof(rawname), raw);
+		if (special == NULL)
+			special = raw;
+		
+		fsi = opendisk(special, O_RDONLY, device, sizeof(device), 0);
 		special = device;
-	}
-	if (!Nflag) {
-		fso = open(special, O_RDWR, DEFFILEMODE);
-		if (debug && fso < 0) {
-			/* Create a file of the requested size. */
+		if (fsi < 0)
+			err(1, "%s: open for read", special);
+	} else { /* Fflag: just open the named file */
+		fsi = open(special, O_RDONLY);
+
+		/* If debugging, create the file */
+		if (debug && !Nflag && fsi < 0) {
 			fso = open(special, O_CREAT | O_RDWR, DEFFILEMODE);
 			if (fso >= 0) {
 				char buf[512];
@@ -241,19 +258,27 @@ main(int argc, char **argv)
 					write(fso, buf, sizeof(buf));
 				lseek(fso, 0, SEEK_SET);
 			}
+			/* Now try again */
+			fsi = open(special, O_RDONLY);
 		}
-		if (fso < 0)
-			fatal("%s: %s", special, strerror(errno));
-	} else
-		fso = -1;
-
-	/* Open the input file. */
-	fsi = open(special, O_RDONLY);
-	if (fsi < 0)
-		fatal("%s: %s", special, strerror(errno));
+		if (fsi < 0)
+			err(1, "%s", special);
+	}
 	if (fstat(fsi, &st) < 0)
-		fatal("%s: %s", special, strerror(errno));
+		err(1, "%s", special);
 
+	/*
+	 * If the -N flag isn't specified, open the output file.
+	 */
+	if (!Nflag) {
+		if (fso < 0)
+			fso = open(special, O_RDWR, DEFFILEMODE);
+		if (fso < 0)
+			err(1, "%s", special);
+	}
+
+	if (Vflag)
+		printf("making exFAT file system on %s\n", special);
 
 	if (!S_ISCHR(st.st_mode)) {
 		if (!S_ISREG(st.st_mode)) {
@@ -262,7 +287,7 @@ main(int argc, char **argv)
 		}
 		(void)strcpy(dkw.dkw_ptype, DKW_PTYPE_EXFAT); 
 		if (secsize == 0)
-			secsize = 512;
+			secsize = DEV_BSIZE;
 		dkw.dkw_size = st.st_size / secsize;
 	} else {
 		if (getdiskinfo(special, fsi, disktype, &geo, &dkw) == -1)
@@ -270,7 +295,7 @@ main(int argc, char **argv)
 
 		if (dkw.dkw_size == 0)
 			fatal("%s: is zero sized", argv[0]);
-		if (!force && strcmp(dkw.dkw_ptype, DKW_PTYPE_EXFAT) != 0)
+		if (!Fflag && strcmp(dkw.dkw_ptype, DKW_PTYPE_EXFAT) != 0)
 			fatal("%s: is not `%s', but `%s'", argv[0],
 			    DKW_PTYPE_EXFAT, dkw.dkw_ptype);
 	}
@@ -284,16 +309,15 @@ main(int argc, char **argv)
 	dev_bsize = secsize;
 
 	/* From here on out fssize is in sectors */
-	if (byte_sized) {
+	if (byte_sized)
 		fssize /= secsize;
-	}
 
 	/* If not specified, use partition offset from wedge */
 	if (partition_offset <= 0)
 		partition_offset = dkw.dkw_offset;
 
-	/* If force, make the partition look like EXFAT */
-	if (force) {
+	/* If Fflag, make the partition look like EXFAT */
+	if (Fflag) {
 		(void)strcpy(dkw.dkw_ptype, DKW_PTYPE_EXFAT); 
 		if (fssize)
 			dkw.dkw_size = fssize;
@@ -333,8 +357,8 @@ main(int argc, char **argv)
 	/* If there is none, or we were asked to ignore it, start with default values */
 	if (fs == NULL) {
 		fs = default_exfat_sb(&dkw);
-		fatalign = default_fatalign(fs->xf_VolumeLength);
-		heapalign = default_heapalign(fs->xf_VolumeLength);
+		fatalign = default_fatalign(fs->xf_VolumeLength) >> (secshift ? secshift : DEV_BSHIFT);
+		heapalign = default_heapalign(fs->xf_VolumeLength) >> (secshift ? secshift : DEV_BSHIFT);
 	}
 	fs->xf_devvp = devvp;
 
@@ -387,6 +411,17 @@ main(int argc, char **argv)
 		fclose(fp);
 	}
 
+	/* Load extended bootcode from file if requested */
+	if (xbootcodefile != NULL) {
+		FILE *fp = fopen(xbootcodefile, "rb");
+		xbootcode = malloc(8 * BSSIZE(fs));
+		if (fp == NULL || fread(xbootcode, BSSIZE(fs), 8, fp) != 8) {
+			perror(xbootcodefile);
+			exit(1);
+		}
+		fclose(fp);
+	}
+
 	/* Load upcase table from file if requested */
 	if (uctablefile != NULL) {
 		FILE *fp;
@@ -413,7 +448,7 @@ main(int argc, char **argv)
 	
 	/* Make the filesystem */
 	r = make_exfatfs(devvp, fs, uclabel, uclabellen,
-			 uctable, uctablesize,
+			 uctable, uctablesize, xbootcode,
 			 fatalign, heapalign);
 
 	if (debug)
@@ -515,7 +550,7 @@ usage(void)
 	fprintf(stderr, "where fsoptions are:\n");
 	fprintf(stderr, "\t-# serial number\n");
 	fprintf(stderr, "\t-D (debug)\n");
-	fprintf(stderr, "\t-F (force)\n");
+	fprintf(stderr, "\t-F (create on regular file)\n");
 	fprintf(stderr, "\t-L label\n");
 	fprintf(stderr, "\t-N (do not create file system)\n");
 	fprintf(stderr, "\t-S sector size\n");
