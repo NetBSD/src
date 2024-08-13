@@ -1,4 +1,4 @@
-/* $NetBSD: pi1ppcvar.h,v 1.7 2021/12/03 13:27:38 andvar Exp $ */
+/* $NetBSD: pi1ppcvar.h,v 1.8 2024/08/13 16:23:48 andvar Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -197,8 +197,8 @@ struct pi1ppc_softc {
 	uint8_t sc_fifo;	/* FIFO size */
 
 	/* Indicates number of PWords in FIFO queues that generate interrupt */
-	uint8_t sc_wthr;	/* writeIntrThresold */
-	uint8_t sc_rthr;	/* readIntrThresold */
+	uint8_t sc_wthr;	/* writeIntrThreshold */
+	uint8_t sc_rthr;	/* readIntrThreshold */
 };
 
 #ifdef _KERNEL

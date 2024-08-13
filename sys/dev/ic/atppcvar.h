@@ -1,4 +1,4 @@
-/* $NetBSD: atppcvar.h,v 1.12 2011/05/26 02:29:23 jakllsch Exp $ */
+/* $NetBSD: atppcvar.h,v 1.13 2024/08/13 16:23:48 andvar Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -217,8 +217,8 @@ struct atppc_softc {
 	u_int8_t sc_fifo;	/* FIFO size */
 
 	/* Indicates number of PWords in FIFO queues that generate interrupt */
-	u_int8_t sc_wthr;	/* writeIntrThresold */
-	u_int8_t sc_rthr;	/* readIntrThresold */
+	u_int8_t sc_wthr;	/* writeIntrThreshold */
+	u_int8_t sc_rthr;	/* readIntrThreshold */
 };
 
 
