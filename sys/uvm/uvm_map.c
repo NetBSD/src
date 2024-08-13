@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.415 2024/08/13 17:54:59 riastradh Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.416 2024/08/13 20:23:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.415 2024/08/13 17:54:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.416 2024/08/13 20:23:23 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -303,23 +303,11 @@ int _uvm_map_sanity(struct vm_map *);
 int _uvm_tree_sanity(struct vm_map *);
 static vsize_t uvm_rb_maxgap(const struct vm_map_entry *);
 
-/*
- * Tree iteration.  We violate the rbtree(9) abstraction for various
- * things here.  Entries are ascending left to right, so, provided the
- * child entry in question exists:
- *
- *	LEFT_ENTRY(entry)->end <= entry->start
- *	entry->end <= RIGHT_ENTRY(entry)->start
- */
-__CTASSERT(offsetof(struct vm_map_entry, rb_node) == 0);
-#define	ROOT_ENTRY(map)							      \
-	((struct vm_map_entry *)(map)->rb_tree.rbt_root)
-#define	LEFT_ENTRY(entry)						      \
-	((struct vm_map_entry *)(entry)->rb_node.rb_left)
-#define	RIGHT_ENTRY(entry)						      \
-	((struct vm_map_entry *)(entry)->rb_node.rb_right)
-#define	PARENT_ENTRY(map, entry)					      \
-	(ROOT_ENTRY(map) == (entry)					      \
+#define	ROOT_ENTRY(map)		((struct vm_map_entry *)(map)->rb_tree.rbt_root)
+#define	LEFT_ENTRY(entry)	((struct vm_map_entry *)(entry)->rb_node.rb_left)
+#define	RIGHT_ENTRY(entry)	((struct vm_map_entry *)(entry)->rb_node.rb_right)
+#define	PARENT_ENTRY(map, entry) \
+	(ROOT_ENTRY(map) == (entry) \
 	    ? NULL : (struct vm_map_entry *)RB_FATHER(&(entry)->rb_node))
 
 /*
@@ -1631,18 +1619,6 @@ done:
 
 /*
  * uvm_map_lookup_entry_bytree: lookup an entry in tree
- *
- * => map must at least be read-locked by caller.
- *
- * => If address lies in an entry, set *entry to it and return true;
- *    then (*entry)->start <= address < (*entry)->end.
-
- * => If address is below all entries in map, return false and set
- *    *entry to &map->header.
- *
- * => Otherwise, return false and set *entry to the highest entry below
- *    address, so (*entry)->end <= address, and if (*entry)->next is
- *    not &map->header, address < (*entry)->next->start.
  */
 
 static inline bool
@@ -1652,10 +1628,7 @@ uvm_map_lookup_entry_bytree(struct vm_map *map, vaddr_t address,
 	struct vm_map_entry *prev = &map->header;
 	struct vm_map_entry *cur = ROOT_ENTRY(map);
 
-	KASSERT(rw_lock_held(&map->lock));
-
 	while (cur) {
-		KASSERT(prev == &map->header || prev->end <= address);
 		UVMMAP_EVCNT_INCR(mlk_treeloop);
 		if (address >= cur->start) {
 			if (address < cur->end) {
@@ -1663,14 +1636,10 @@ uvm_map_lookup_entry_bytree(struct vm_map *map, vaddr_t address,
 				return true;
 			}
 			prev = cur;
-			KASSERT(prev->end <= address);
 			cur = RIGHT_ENTRY(cur);
-			KASSERT(prev->end <= cur->start);
 		} else
 			cur = LEFT_ENTRY(cur);
 	}
-	KASSERT(prev == &map->header || prev->end <= address);
-	KASSERT(prev->next == &map->header || address < prev->next->start);
 	*entry = prev;
 	return false;
 }
@@ -1678,17 +1647,9 @@ uvm_map_lookup_entry_bytree(struct vm_map *map, vaddr_t address,
 /*
  * uvm_map_lookup_entry: find map entry at or before an address
  *
- * => map must at least be read-locked by caller.
- *
- * => If address lies in an entry, set *entry to it and return true;
- *    then (*entry)->start <= address < (*entry)->end.
-
- * => If address is below all entries in map, return false and set
- *    *entry to &map->header.
- *
- * => Otherwise, return false and set *entry to the highest entry below
- *    address, so (*entry)->end <= address, and if (*entry)->next is
- *    not &map->header, address < (*entry)->next->start.
+ * => map must at least be read-locked by caller
+ * => entry is returned in "entry"
+ * => return value is true if address is in the returned entry
  */
 
 bool
@@ -1699,8 +1660,6 @@ uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(maphist,"(map=%#jx,addr=%#jx,ent=%#jx)",
 	    (uintptr_t)map, address, (uintptr_t)entry, 0);
-
-	KDASSERT(rw_lock_held(&map->lock));
 
 	/*
 	 * make a quick check to see if we are already looking at
@@ -2001,23 +1960,18 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 		 * optimization or find a better way to do it.
 		 */
 		entry = map->first_free;
-	} else if (uvm_map_lookup_entry(map, hint, &entry)) {
-		KASSERT(entry->start <= hint);
-		KASSERT(hint < entry->end);
-		/* "hint" address already in use ... */
-		if (flags & UVM_FLAG_FIXED) {
-			UVMHIST_LOG(maphist, "<- fixed & VA in use",
-			    0, 0, 0, 0);
-			return (NULL);
-		}
-		if (topdown)
-			/* Start from lower gap. */
-			entry = entry->prev;
 	} else {
-		KASSERT(entry == &map->header || entry->end <= hint);
-		KASSERT(entry->next == &map->header ||
-		    hint < entry->next->start);
-		if (flags & UVM_FLAG_FIXED) {
+		if (uvm_map_lookup_entry(map, hint, &entry)) {
+			/* "hint" address already in use ... */
+			if (flags & UVM_FLAG_FIXED) {
+				UVMHIST_LOG(maphist, "<- fixed & VA in use",
+				    0, 0, 0, 0);
+				return (NULL);
+			}
+			if (topdown)
+				/* Start from lower gap. */
+				entry = entry->prev;
+		} else if (flags & UVM_FLAG_FIXED) {
 			if (entry->next->start >= hint + length &&
 			    hint + length > hint)
 				goto found;
