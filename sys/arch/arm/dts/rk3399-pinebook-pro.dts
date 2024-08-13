@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399-pinebook-pro.dts,v 1.7 2023/09/14 12:27:55 rjs Exp $ */
+/* $NetBSD: rk3399-pinebook-pro.dts,v 1.8 2024/08/13 04:24:07 mrg Exp $ */
 
 /*-
  * Copyright (c) 2023 Robert Swindells <rjs@fdy2.co.uk>
@@ -28,3 +28,9 @@
 
 #include "../../../external/gpl2/dts/dist/arch/arm64/boot/dts/rockchip/rk3399-pinebook-pro.dts"
 #include "rk3399-crypto.dtsi"
+
+/ {
+	backlight: edp-backlight {
+		pwms = <&pwm0 0 125000 0>;
+	};
+};
