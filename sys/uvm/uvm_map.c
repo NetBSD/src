@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.414 2024/08/13 17:54:44 riastradh Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.415 2024/08/13 17:54:59 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.414 2024/08/13 17:54:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.415 2024/08/13 17:54:59 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -1755,7 +1755,23 @@ static int
 uvm_map_space_avail(vaddr_t *start, vsize_t length, voff_t uoffset,
     vsize_t align, int flags, int topdown, struct vm_map_entry *entry)
 {
+	vaddr_t orig_start = *start;
 	vaddr_t end;
+
+#define	INVARIANTS()							      \
+	KASSERTMSG((topdown						      \
+		? *start <= orig_start					      \
+		: *start >= orig_start),				      \
+	    "[%s] *start=%"PRIxVADDR" orig_start=%"PRIxVADDR		      \
+	    " length=%"PRIxVSIZE" uoffset=%#llx align=%"PRIxVSIZE	      \
+	    " flags=%x entry@%p=[%"PRIxVADDR",%"PRIxVADDR")"		      \
+	    " ncolors=%d colormask=%x",					      \
+	    topdown ? "topdown" : "bottomup", *start, orig_start,	      \
+	    length, (unsigned long long)uoffset, align,			      \
+	    flags, entry, entry->start, entry->end,			      \
+	    uvmexp.ncolors, uvmexp.colormask)
+
+	INVARIANTS();
 
 #ifdef PMAP_PREFER
 	/*
@@ -1763,8 +1779,10 @@ uvm_map_space_avail(vaddr_t *start, vsize_t length, voff_t uoffset,
 	 * we only do this if a valid offset is specified.
 	 */
 
-	if (uoffset != UVM_UNKNOWN_OFFSET)
+	if (uoffset != UVM_UNKNOWN_OFFSET) {
 		PMAP_PREFER(uoffset, start, length, topdown);
+		INVARIANTS();
+	}
 #endif
 	if ((flags & UVM_FLAG_COLORMATCH) != 0) {
 		KASSERT(align < uvmexp.ncolors);
@@ -1784,11 +1802,13 @@ uvm_map_space_avail(vaddr_t *start, vsize_t length, voff_t uoffset,
 						hint += colorsize;
 				}
 				*start = ptoa(hint + align); /* adjust to color */
+				INVARIANTS();
 			}
 		}
 	} else {
 		KASSERT(powerof2(align));
 		uvm_map_align_va(start, align, topdown);
+		INVARIANTS();
 		/*
 		 * XXX Should we PMAP_PREFER() here again?
 		 * eh...i think we're okay
@@ -1809,6 +1829,8 @@ uvm_map_space_avail(vaddr_t *start, vsize_t length, voff_t uoffset,
 		return (1);
 
 	return (0);
+
+#undef INVARIANTS
 }
 
 static void
