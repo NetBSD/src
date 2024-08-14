@@ -214,7 +214,7 @@ amd64nbsd_trapframe_cache(frame_info_ptr this_frame, void **this_cache)
 }
 
 static void
-amd64nbsd_trapframe_this_id (frame_info_ptr this_frame,
+amd64nbsd_trapframe_this_id (const frame_info_ptr& this_frame,
 			     void **this_cache,
 			     struct frame_id *this_id)
 {
@@ -225,7 +225,7 @@ amd64nbsd_trapframe_this_id (frame_info_ptr this_frame,
 }
 
 static struct value *
-amd64nbsd_trapframe_prev_register (frame_info_ptr this_frame,
+amd64nbsd_trapframe_prev_register (const frame_info_ptr& this_frame,
 				   void **this_cache, int regnum) 
 {
   struct trad_frame_cache *cache =
@@ -236,7 +236,7 @@ amd64nbsd_trapframe_prev_register (frame_info_ptr this_frame,
 
 static int
 amd64nbsd_trapframe_sniffer (const struct frame_unwind *self,
-			     frame_info_ptr this_frame,
+			     const frame_info_ptr& this_frame,
 			     void **this_prologue_cache)
 {
   ULONGEST cs = 0;

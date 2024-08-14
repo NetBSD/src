@@ -29,6 +29,7 @@
 #include "value.h"
 #include "gdbcore.h"
 #include "inferior.h"
+#include "symfile.h"
 #include "gdbthread.h"
 #include "gdbsupport/pathstuff.h"
 #include "gdbsupport/gdb_tilde_expand.h"
@@ -139,7 +140,7 @@ bsd_kvm_target_open (const char *arg, int from_tty)
   inf->aspace = maybe_new_address_space ();
   inf->pspace = new program_space (inf->aspace);
 
-  inf->gdbarch = get_current_arch ();
+  inf->set_arch(get_current_arch ());
 
   thread_info *thr = add_thread_silent (&bsd_kvm_ops, bsd_kvm_ptid);
   switch_to_thread (thr);

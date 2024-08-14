@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2023/08/13 12:16:14 christos Exp $
+#	$NetBSD: Makefile,v 1.27 2024/08/14 23:54:49 christos Exp $
 
 NOCTF=
 .include <bsd.own.mk>
@@ -28,24 +28,25 @@ CPPFLAGS+=	-I${.CURDIR} \
 		-I${GDBLIBDIR}/libgnulib/arch/${GDB_MACHINE_ARCH}/gnulib/import \
 		-I${DIST}/bfd \
 		-I${DIST}/include \
+		-include ${DIST}/gdb/defs.h \
 		${GCPPFLAGS:M-D*}
 
 
-TEXINFO=	gdb.texinfo stabs.texinfo
-INFOFLAGS=	-I${DIST}/gdb/doc -I${DIST}/gdb/mi \
-		-I${DIST}/readline/readline/doc -I${.CURDIR}/.. -DGDBN=${GDBN}
+#TEXINFO=	gdb.texinfo stabs.texinfo
+#INFOFLAGS=	-I${DIST}/gdb/doc -I${DIST}/gdb/mi \
+#		-I${DIST}/readline/readline/doc -I${.CURDIR}/.. -DGDBN=${GDBN}
 
-gdb-cfg.texi: ${DIST}/gdb/doc/all-cfg.texi
-	${TOOL_CAT} ${.ALLSRC} > ${.TARGET}
+#gdb-cfg.texi: ${DIST}/gdb/doc/all-cfg.texi
+#	${TOOL_CAT} ${.ALLSRC} > ${.TARGET}
 
 CLEANFILES+= gdb-cfg.texi
-stabs.info gdb.info: gdb-cfg.texi GDBvn.texi
+#stabs.info gdb.info: gdb-cfg.texi GDBvn.texi
 
 FILES=		netbsd.xml
 FILESDIR=	/usr/share/gdb/syscalls
 
 .include "../../Makefile.inc"
-.include <bsd.info.mk>
+#.include <bsd.info.mk>
 
 PROGDPLIBS+= gdb ${GDBLIBDIR}/libgdb
 # XXX: modula2 won't load otherwise, since nothing brings the m2-objs in.
@@ -68,7 +69,8 @@ PROGDPLIBS+= opcodes ${GDBLIBDIR}/libopcodes \
     sframe ${GDBLIBDIR}/libsframe \
     ctf ${GDBLIBDIR}/libctf \
     gnulib ${GDBLIBDIR}/libgnulib \
-    iberty ${GDBLIBDIR}/libiberty
+    iberty ${GDBLIBDIR}/libiberty \
+    mpfr ${MPFRDIR}/lib/libmpfr
 
 .if ${USE_LIBEDIT} == yes
 LDADD+= -ledit
@@ -92,7 +94,7 @@ CWARNFLAGS.clang+=	-Wno-deprecated
 HOST_CC:=		${HOST_CXX}
 HOST_CFLAGS+=		${HOST_CXXFLAGS}
 CC:=			${CXX}
-CFLAGS:=		${CXXFLAGS} -std=gnu++11 -Wno-error=stack-protector
+CFLAGS:=		${CXXFLAGS} -std=gnu++17 -Wno-error=stack-protector
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/mi ${DIST}/gdb/cli ${DIST}/gdb/tui \
     ${DIST}/gdb/signals ${DIST}/gdb/syscalls ${DIST}/gdb/doc \

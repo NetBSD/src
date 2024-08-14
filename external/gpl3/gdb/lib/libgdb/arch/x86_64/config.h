@@ -8,6 +8,9 @@
 /* Define if building universal (internal helper macro) */
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
+/* Additional directories to look for separate debug info. */
+/* #undef ADDITIONAL_DEBUG_DIRS */
+
 /* Directories from which to load auto-loaded scripts. */
 #define AUTO_LOAD_DIR "$debugdir:$datadir/auto-load"
 
@@ -46,7 +49,7 @@
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
-#define ENABLE_NLS 1
+/* #undef ENABLE_NLS */
 
 /* The .gdbearlyinit filename. */
 #define GDBEARLYINIT ".gdbearlyinit"
@@ -89,8 +92,19 @@
    */
 /* #undef HAVE_ALLOCA_H */
 
+/* Define if amd-dbgapi is being linked in. */
+/* #undef HAVE_AMD_DBGAPI */
+
 /* Define to 1 if you have the `btowc' function. */
 #define HAVE_BTOWC 1
+
+/* Define to 1 if you have the Mac OS X function
+   CFLocaleCopyPreferredLanguages in the CoreFoundation framework. */
+/* #undef HAVE_CFLOCALECOPYPREFERREDLANGUAGES */
+
+/* Define to 1 if you have the Mac OS X function CFPreferencesCopyAppValue in
+   the CoreFoundation framework. */
+/* #undef HAVE_CFPREFERENCESCOPYAPPVALUE */
 
 /* Define to 1 if you have the <cursesX.h> header file. */
 /* #undef HAVE_CURSESX_H */
@@ -98,8 +112,12 @@
 /* Define to 1 if you have the <curses.h> header file. */
 #define HAVE_CURSES_H 1
 
-/* define if the compiler supports basic C++11 syntax */
-#define HAVE_CXX11 1
+/* define if the compiler supports basic C++17 syntax */
+#define HAVE_CXX17 1
+
+/* Define if the GNU dcgettext() function is already present or preinstalled.
+   */
+/* #undef HAVE_DCGETTEXT */
 
 /* Define to 1 if you have the declaration of `ADDR_NO_RANDOMIZE', and to 0 if
    you don't. */
@@ -204,6 +222,9 @@
 /* Define to 1 if you have the `getrusage' function. */
 #define HAVE_GETRUSAGE 1
 
+/* Define if the GNU gettext() function is already present or preinstalled. */
+/* #undef HAVE_GETTEXT */
+
 /* Define to 1 if you have the `getuid' function. */
 #define HAVE_GETUID 1
 
@@ -216,7 +237,7 @@
 /* Define if Guile supports manual finalization. */
 /* #undef HAVE_GUILE_MANUAL_FINALIZATION */
 
-/* Define if you have the iconv() function. */
+/* Define if you have the iconv() function and it works. */
 #define HAVE_ICONV 1
 
 /* Define to 1 if you have the `iconvlist' function. */
@@ -240,14 +261,17 @@
 /* Define if libbacktrace is being used. */
 #define HAVE_LIBBACKTRACE 1
 
+/* Define to 1 if curses is enabled. */
+#define HAVE_LIBCURSES 1
+
 /* Define to 1 if debuginfod is enabled. */
 /* #undef HAVE_LIBDEBUGINFOD */
 
+/* Define to 1 if debuginfod section downloading is supported. */
+/* #undef HAVE_LIBDEBUGINFOD_FIND_SECTION */
+
 /* Define if you have the expat library. */
 #define HAVE_LIBEXPAT 1
-
-/* Define if you have the gmp library. */
-#define HAVE_LIBGMP 1
 
 /* Define to 1 if you have the `libiconvlist' function. */
 /* #undef HAVE_LIBICONVLIST */
@@ -260,9 +284,6 @@
 
 /* Define to 1 if you have the `m' library (-lm). */
 #define HAVE_LIBM 1
-
-/* Define if you have the mpfr library. */
-/* #undef HAVE_LIBMPFR */
 
 /* Define to 1 if you have the <libunwind-ia64.h> header file. */
 /* #undef HAVE_LIBUNWIND_IA64_H */
@@ -572,9 +593,6 @@
 
 /* Define to 1 if you have the <wait.h> header file. */
 /* #undef HAVE_WAIT_H */
-
-/* Define to 1 if you have the `wborder' function. */
-#define HAVE_WBORDER 1
 
 /* Define to 1 if you have the <windows.h> header file. */
 /* #undef HAVE_WINDOWS_H */
