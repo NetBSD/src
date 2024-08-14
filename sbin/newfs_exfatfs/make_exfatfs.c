@@ -1,4 +1,4 @@
-/*	$NetBSD: make_exfatfs.c,v 1.1.2.7 2024/08/13 05:37:24 perseant Exp $	*/
+/*	$NetBSD: make_exfatfs.c,v 1.1.2.8 2024/08/14 15:28:44 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_exfatfs.c,v 1.1.2.7 2024/08/13 05:37:24 perseant Exp $");
+__RCSID("$NetBSD: make_exfatfs.c,v 1.1.2.8 2024/08/14 15:28:44 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -322,7 +322,7 @@ make_exfatfs(struct uvnode *devvp, struct exfatfs *fs,
 			/* Now write blank pages for the rest of the bitmap */
 			progress = oprogress = 0;
 			start = daddr + EXFATFS_L2D(fs, 1);
-			if (bi == 0 && fs->xf_NumberOfFats > 0)
+			if (bi == 0 && fs->xf_NumberOfFats > 1)
 				end = EXFATFS_LC2D(fs, dirent_bitmap[1].xd_firstCluster);
 			else
 				end = EXFATFS_LC2D(fs, dirent_upcase.xd_firstCluster);
