@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_exfatfs.c,v 1.1.2.1 2024/08/13 05:38:08 perseant Exp $	*/
+/*	$NetBSD: fstest_exfatfs.c,v 1.1.2.2 2024/08/14 15:31:27 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2024 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ exfatfs_fstest_newfs(const atf_tc_t *tc, void **buf, const char *image,
 	struct exfatfstestargs *args;
 
 	size /= 512;
-	snprintf(cmd, 1024, "newfs_exfat -D -w -s %"PRId64"s %s >/dev/null",
+	snprintf(cmd, 1024, "newfs_exfatfs -D -w -s %"PRId64"s %s >/dev/null",
 	    size, image);
 	res = system(cmd);
 	if (res != 0)
