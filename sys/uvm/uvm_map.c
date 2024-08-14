@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.418 2024/08/14 00:41:30 riastradh Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.419 2024/08/14 00:41:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.418 2024/08/14 00:41:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.419 2024/08/14 00:41:46 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -1820,11 +1820,13 @@ uvm_map_space_avail(vaddr_t *start, vsize_t length, voff_t uoffset,
 	 * Find the end of the proposed new region.  Be sure we didn't
 	 * wrap around the address; if so, we lose.  Otherwise, if the
 	 * proposed new region fits before the next entry, we win.
+	 *
+	 * XXX Should this use vm_map_max(map) as the max?
 	 */
 
-	end = *start + length;
-	if (end < *start)
+	if (length > __type_max(vaddr_t) - *start)
 		return (-1);
+	end = *start + length;
 
 	if (entry->next->start >= end && *start >= entry->end)
 		return (1);
@@ -2019,8 +2021,8 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 		KASSERT(entry->next == &map->header ||
 		    hint < entry->next->start);
 		if (flags & UVM_FLAG_FIXED) {
-			if (entry->next->start >= hint + length &&
-			    hint + length > hint)
+			if (entry->next->start >= hint &&
+			    length <= entry->next->start - hint)
 				goto found;
 
 			/* "hint" address is gap but too small */
@@ -2286,7 +2288,8 @@ nextgap:
 	UVMHIST_LOG(maphist,"<- got it!  (result=%#jx)", hint, 0,0,0);
 	INVARIANTS();
 	KASSERT(entry->end <= hint);
-	KASSERT(hint + length <= entry->next->start);
+	KASSERT(hint <= entry->next->start);
+	KASSERT(length <= entry->next->start - hint);
 	return (entry);
 
  wraparound:
