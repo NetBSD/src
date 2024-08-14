@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.63.2.1 2024/08/12 22:38:30 perseant Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.63.2.2 2024/08/14 15:32:02 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -380,7 +380,7 @@ rename_dir(const atf_tc_t *tc, const char *mp)
 	RL(rump_sys_rename(pb2, pb3));
 
 	RL(rump_sys_stat(pb1, &sb));
-	if (! FSTYPE_MSDOS(tc))
+	if (! (FSTYPE_MSDOS(tc) || FSTYPE_EXFATFS(tc)))
 		ATF_CHECK_EQ(sb.st_nlink, 3);
 	RL(rump_sys_rmdir(pb3));
 	RL(rump_sys_rmdir(pb1));
