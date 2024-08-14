@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_vnops.c,v 1.1.2.9 2024/08/02 00:16:55 perseant Exp $	*/
+/*	$NetBSD: exfatfs_vnops.c,v 1.1.2.10 2024/08/14 15:37:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_vnops.c,v 1.1.2.9 2024/08/02 00:16:55 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_vnops.c,v 1.1.2.10 2024/08/14 15:37:49 perseant Exp $");
 
 #include <sys/buf.h>
 #include <sys/dirent.h>
@@ -1018,6 +1018,10 @@ exfatfs_alloc(struct vnode *dvp, struct vnode **vpp,
 	if (exfatfs_check_filename_ucs2(fs, ucs2filename, ucs2len) != 0)
 		return EINVAL;
 
+	/* Require at least one character after conversion */
+	if (ucs2len <= 0)
+		return EINVAL;
+
 	/* Create a new inode */
 	xip = exfatfs_newxfinode(fs, 0, 0);
 	
@@ -1143,7 +1147,7 @@ exfatfs_alloc(struct vnode *dvp, struct vnode **vpp,
 	return (0);
 
 errout:
-	exfatfs_freexfinode(xip);
+	exfatfs_freexfinode(xip, 1);
 	return error;
 }
 
@@ -1485,14 +1489,14 @@ exfatfs_lookup(void *v)
 				   &fx.xip->xi_key,
 				   sizeof(fx.xip->xi_key), &nvp);
 		if (error) {
-			exfatfs_freexfinode(fx.xip);
+			exfatfs_freexfinode(fx.xip, 1);
 			return error;
 		}
 		KASSERT(VTOXI(nvp) != NULL);
 		if (VTOXI(nvp) != fx.xip) {
 			/* In vnode cache, though not in name cache */
 			LIST_REMOVE(fx.xip, xi_newxip);
-			exfatfs_freexfinode(fx.xip);
+			exfatfs_freexfinode(fx.xip, 1);
 		}
 		GETPARENT(VTOXI(nvp), dvp);
 		*vpp = nvp;
@@ -2052,7 +2056,7 @@ exfatfs_reclaim(void *v)
         mutex_enter(vp->v_interlock);
         vp->v_data = NULL;
         mutex_exit(vp->v_interlock);
-	exfatfs_freexfinode(xip);
+	exfatfs_freexfinode(xip, 1);
 
         return (0);
 }

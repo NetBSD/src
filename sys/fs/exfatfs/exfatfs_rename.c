@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_rename.c,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $	*/
+/*	$NetBSD: exfatfs_rename.c,v 1.1.2.3 2024/08/14 15:37:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2022 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_rename.c,v 1.1.2.2 2024/07/01 22:15:21 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_rename.c,v 1.1.2.3 2024/08/14 15:37:49 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -470,7 +470,7 @@ exfatfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 		/* Re-key to match its new on-disk location */
 		exfatfs_rekey(fvp, &new_key);
 	}
-	exfatfs_freexfinode(ofxip);
+	exfatfs_freexfinode(ofxip, 0);
 
 	if (tvp != NULL)
 		*tvp_nlinkp = 0;
@@ -499,7 +499,7 @@ reactivateoldname:
 
 restoretvp:
 	if (ofxip != NULL)
-		exfatfs_freexfinode(ofxip);
+		exfatfs_freexfinode(ofxip, 0);
 	
 	if (tvp != NULL) {
 		exfatfs_activate(txip, true);

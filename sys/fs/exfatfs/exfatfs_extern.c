@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_extern.c,v 1.1.2.8 2024/08/12 22:43:36 perseant Exp $	*/
+/*	$NetBSD: exfatfs_extern.c,v 1.1.2.9 2024/08/14 15:37:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -725,7 +725,7 @@ exfatfs_newxfinode(struct exfatfs *fs, uint32_t dirclust, uint32_t diroffset)
 	return xip;
 }
 
-void exfatfs_freexfinode(struct xfinode *xip)
+void exfatfs_freexfinode(struct xfinode *xip, int destroy_lock)
 {
 	int i;
 
@@ -743,7 +743,8 @@ void exfatfs_freexfinode(struct xfinode *xip)
 	//printf("free xfniode serial %lu from %p\n", xip->xi_serial, xip);
 	xip->xi_serial = -1;
 #ifdef _KERNEL
-	rw_destroy(&xip->xi_rwlock);
+	if (destroy_lock)
+		rw_destroy(&xip->xi_rwlock);
 	memset(xip, 0xFF, sizeof(*xip));
 	pool_put(&exfatfs_xfinode_pool, xip);
 #else /* ! _KERNEL */
@@ -1055,7 +1056,7 @@ exfatfs_scandir(struct vnode *dvp,
 
 out:
 	if (xip != NULL)
-		exfatfs_freexfinode(xip);
+		exfatfs_freexfinode(xip, 1);
 	assert(dxip->xi_serial == dserial);
 	if (bp != NULL)
 		brelse(bp, 0);
