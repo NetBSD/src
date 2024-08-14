@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_conv.c,v 1.1.2.3 2024/07/31 03:43:16 perseant Exp $	*/
+/*	$NetBSD: exfatfs_conv.c,v 1.1.2.4 2024/08/14 15:29:59 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_conv.c,v 1.1.2.3 2024/07/31 03:43:16 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_conv.c,v 1.1.2.4 2024/08/14 15:29:59 perseant Exp $");
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
@@ -282,7 +282,7 @@ exfatfs_unix2dostime(const struct timespec *tsp, int gmtoff, uint32_t *dtp,
 	if (dhp)
 		*dhp = (tsp->tv_sec & 1) * 100 + tsp->tv_nsec / 10000000;
 	if (dtp)
-	return;
+		return;
 
 invalid_dos_date:
 	*dtp = 0;
@@ -308,7 +308,7 @@ exfatfs_dos2unixtime(uint32_t dt, uint8_t dh, int gmtoff, struct timespec *tsp)
 	tm.tm_gmtoff = 0;
 
 	seconds = mktime_z(NULL, &tm);
-	tsp->tv_sec = seconds;
+	tsp->tv_sec = seconds + (dh / 100);
 	tsp->tv_sec -= gmtoff;	/* time zone correction */
 	tsp->tv_nsec = (dh % 100) * 10000000;
 
