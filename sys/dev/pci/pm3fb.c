@@ -1,4 +1,4 @@
-/* $NetBSD: pm3fb.c,v 1.9 2022/09/25 17:52:25 thorpej Exp $ */
+/* $NetBSD: pm3fb.c,v 1.10 2024/08/14 12:11:48 macallan Exp $ */
 
 /*
  * Copyright (c) 2015 Naruaki Etomi
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm3fb.c,v 1.9 2022/09/25 17:52:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm3fb.c,v 1.10 2024/08/14 12:11:48 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,30 +306,25 @@ pm3fb_attach(device_t parent, device_t self, void *aux)
 
 	ri = &sc->sc_console_screen.scr_ri;
 
-	if (is_console) {
-		vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
-		    &defattr);
-		sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
+	vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1, &defattr);
+	sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
-		pm3fb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
-		    ri->ri_devcmap[(defattr >> 16) & 0xff]);
-		sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
-		sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
-		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
-		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
+	pm3fb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
+	    ri->ri_devcmap[(defattr >> 16) & 0xff]);
+	pm3fb_init_palette(sc);
+
+	sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
+	sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
+	sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
+	sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
+
+	if (is_console) {
 
 		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
 		    defattr);
 		vcons_replay_msgbuf(&sc->sc_console_screen);
-	} else {
-		if (sc->sc_console_screen.scr_ri.ri_rows == 0) {
-			/* do some minimal setup to avoid weirdnesses later */
-			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
-			   &defattr);
-		}
 	}
 
-	pm3fb_init_palette(sc);
 
 	aa.console = is_console;
 	aa.scrdata = &sc->sc_screenlist;
