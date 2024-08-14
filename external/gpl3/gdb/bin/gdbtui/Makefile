@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2023/08/11 17:46:00 christos Exp $
+#	$NetBSD: Makefile,v 1.20 2024/08/14 23:54:49 christos Exp $
 
 NOCTF=
 NOMAN=
@@ -29,6 +29,7 @@ CPPFLAGS+=	-I${.CURDIR} \
 		-I${GDBLIBDIR}/libgnulib/arch/${GDB_MACHINE_ARCH}/gnulib/import \
 		-I${DIST}/bfd \
 		-I${DIST}/include \
+		-include ${DIST}/gdb/defs.h \
 		${GCPPFLAGS:M-D*}
 
 .include "../../Makefile.inc"
@@ -57,7 +58,8 @@ PROGDPLIBS+= opcodes ${GDBLIBDIR}/libopcodes \
     sframe ${GDBLIBDIR}/libsframe \
     ctf ${GDBLIBDIR}/libctf \
     gnulib ${GDBLIBDIR}/libgnulib \
-    iberty ${GDBLIBDIR}/libiberty
+    iberty ${GDBLIBDIR}/libiberty \
+    mpfr ${MPFRDIR}/lib/libmpfr
 
 .if ${USE_LIBEDIT} == yes
 LDADD+= -ledit
@@ -81,7 +83,7 @@ CWARNFLAGS.clang+=	-Wno-deprecated
 HOST_CC:=		${HOST_CXX}
 HOST_CFLAGS+=		${HOST_CXXFLAGS}
 CC:=			${CXX}
-CFLAGS:=		${CXXFLAGS} -std=gnu++11 -Wno-error=stack-protector
+CFLAGS:=		${CXXFLAGS} -std=gnu++17 -Wno-error=stack-protector
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/mi ${DIST}/gdb/cli ${DIST}/gdb/tui \
     ${DIST}/gdb/signals ${DIST}/gdb/syscalls ${DIST}/gdb/doc \

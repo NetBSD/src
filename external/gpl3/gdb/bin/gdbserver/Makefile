@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.7 2023/08/09 14:56:41 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2024/08/14 23:54:49 christos Exp $
 
 NOCTF=
 NOMAN=
 .include <bsd.own.mk>
 .include "../Makefile.inc"
+GDBLIBDIR=${.CURDIR}/../../lib
+
 
 PROG=		gdbserver
 
@@ -17,7 +19,8 @@ ARCH_SRCS=		netbsd-${MACHINE}-low.cc ${MACHINE}.c
 SRCS=		${SERVER_SRCS} ${NETBSD_SRCS} ${ARCH_SRCS}
 CPPFLAGS+=	-I${.CURDIR} \
 		-I${.CURDIR}/arch/${GDB_MACHINE_ARCH} \
-		-I${.CURDIR}/../../lib/libgnulib/arch/${GDB_MACHINE_ARCH}/gnulib \
+		-I${GDBLIBDIR}/libbfd/arch/${GDB_MACHINE_ARCH} \
+		-I${GDBLIBDIR}/libgnulib/arch/${GDB_MACHINE_ARCH}/gnulib \
 		-I${DIST}/gdb \
 		-I${DIST}/gdbserver \
 		-I${DIST}/gdbsupport \
@@ -25,10 +28,13 @@ CPPFLAGS+=	-I${.CURDIR} \
 		-I${DIST}/gdb/config \
 		-I${DIST}/gnulib/import \
 		-I${DIST} \
-		-I${.CURDIR}/../../lib/libgdbsupport/arch/${GDB_MACHINE_ARCH} \
-		-I${.CURDIR}/../../lib/libgnulib/arch/${GDB_MACHINE_ARCH} \
-		-I${.CURDIR}/../../lib/libgnulib/arch/${GDB_MACHINE_ARCH}/gnulib/import \
+		-I${GDBLIBDIR}/libgdbsupport/arch/${GDB_MACHINE_ARCH} \
+		-I${GDBLIBDIR}/libgnulib/arch/${GDB_MACHINE_ARCH} \
+		-I${GDBLIBDIR}/libgnulib/arch/${GDB_MACHINE_ARCH}/gnulib/import \
 		-I${DIST}/include \
+		-include ${DIST}/gdbserver/server.h \
+		-D_GLIBCXX_USE_CXX11_ABI=1 \
+		-DPROG='"gdbserver"' \
 		${GCPPFLAGS:M-D*}
 
 # /usr/src/current/external/gpl3/gdb/bin/gdbserver/../../dist/gdb/nat/fork-inferior.c:497:15: error: 6 enumeration values not handled in switch: 'TARGET_WAITKIND_VFORK_DONE', 'TARGET_WAITKIND_IGNORE', 'TARGET_WAITKIND_NO_HISTORY'... [-Werror,-Wswitch]
@@ -59,7 +65,7 @@ CWARNFLAGS.clang+=	-Wno-deprecated
 HOST_CC:=		${HOST_CXX}
 HOST_CFLAGS+=		${HOST_CXXFLAGS}
 CC:=			${CXX}
-CFLAGS:=		${CXXFLAGS} -std=gnu++11 -Wno-error=stack-protector -pthread
+CFLAGS:=		${CXXFLAGS} -std=gnu++17 -Wno-error=stack-protector -pthread
 
 .PATH: ${DIST}/gdbserver ${DIST}/gdb/nat ${DIST}/gdb/arch  \
 	${.CURDIR}/arch/${GDB_MACHINE_ARCH} ${DIST}/gdb/target \
