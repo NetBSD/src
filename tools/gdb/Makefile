@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 2023/08/20 02:30:58 rin Exp $
+#	$NetBSD: Makefile,v 1.50 2024/08/14 23:56:19 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -10,7 +10,10 @@ FIND_ARGS=	\! \( -type d -name sim -prune \)
 
 CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
-		--without-mpfr --with-libgmp-prefix=${TOOLDIR}
+		--with-zstd=no \
+		--with-mpfr=${TOOLDIR} \
+		--with-mpc=${TOOLDIR} \
+		--with-gmp=${TOOLDIR}
 
 .if ${MACHINE} == "ia64"
 CONFIGURE_ARGS+=--enable-obsolete
@@ -125,6 +128,10 @@ native-gdb: .native/.configure_done
 			${MKNATIVE_ENV} ${HOST_SH} ${GNUHOSTDIST}/configure \
 			--prefix=/usr \
 			--with-separate-debug-dir=/usr/libdata/debug \
+			--with-zstd=no \
+			--with-mpfr=${TOOLDIR} \
+			--with-mpc=${TOOLDIR} \
+			--with-gmp=${TOOLDIR} \
 			${CONFIGURE_ARGS_SIM} \
 			${CONFIGURE_ARGS_GDBSERVER} \
 			--build=`${GNUHOSTDIST}/config.guess` \
