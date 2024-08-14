@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.420 2024/08/14 00:42:02 riastradh Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.421 2024/08/14 01:26:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.420 2024/08/14 00:42:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.421 2024/08/14 01:26:25 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -1701,7 +1701,7 @@ uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
 	UVMHIST_CALLARGS(maphist,"(map=%#jx,addr=%#jx,ent=%#jx)",
 	    (uintptr_t)map, address, (uintptr_t)entry, 0);
 
-	KDASSERT(rw_lock_held(&map->lock));
+	KASSERT(rw_lock_held(&map->lock));
 
 	/*
 	 * make a quick check to see if we are already looking at
@@ -2329,6 +2329,8 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 	UVMHIST_CALLARGS(maphist,"(map=%#jx, start=%#jx, end=%#jx)",
 	    (uintptr_t)map, start, end, 0);
 	VM_MAP_RANGE_CHECK(map, start, end);
+
+	KASSERT(vm_map_locked_p(map));
 
 	uvm_map_check(map, "unmap_remove entry");
 
@@ -4426,8 +4428,10 @@ uvmspace_free(struct vmspace *vm)
 		(*uvm_shmexit)(vm);
 
 	if (map->nentries) {
+		vm_map_lock(map);
 		uvm_unmap_remove(map, vm_map_min(map), vm_map_max(map),
 		    &dead_entries, flags);
+		vm_map_unlock(map);
 		if (dead_entries != NULL)
 			uvm_unmap_detach(dead_entries, 0);
 	}
