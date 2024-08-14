@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.417 2024/08/13 20:52:52 riastradh Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.418 2024/08/14 00:41:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.417 2024/08/13 20:52:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.418 2024/08/14 00:41:30 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -1656,6 +1656,7 @@ uvm_map_lookup_entry_bytree(struct vm_map *map, vaddr_t address,
 
 	while (cur) {
 		KASSERT(prev == &map->header || prev->end <= address);
+		KASSERT(prev == &map->header || prev->end <= cur->start);
 		UVMMAP_EVCNT_INCR(mlk_treeloop);
 		if (address >= cur->start) {
 			if (address < cur->end) {
