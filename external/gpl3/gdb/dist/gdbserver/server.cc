@@ -949,12 +949,17 @@ handle_general_set (char *own_buf)
 
 	  if ((options & ~supported_options) != 0)
 	    {
+#if 0
+	      // XXX: see undefined
 	      /* GDB asked for an unknown or unsupported option, so
 		 error out.  */
 	      std::string err
 		= string_printf ("E.Unknown thread options requested: %s\n",
 				 to_string (options).c_str ());
 	      strcpy (own_buf, err.c_str ());
+#else
+	      strcpy (own_buf, "unsuppported option");
+#endif
 	      return;
 	    }
 
@@ -1004,9 +1009,13 @@ handle_general_set (char *own_buf)
 
 	  if (thread->thread_options != options)
 	    {
+#if 0
+	      // XXX: undefined reference to
+	      // `to_string[abi:cxx11](enum_flags<gdb_thread_option>)'
 	      threads_debug_printf ("[options for %s are now %s]\n",
 				    target_pid_to_str (ptid_of (thread)).c_str (),
 				    to_string (options).c_str ());
+#endif
 
 	      thread->thread_options = options;
 	    }
