@@ -88,7 +88,8 @@ SET_TEXINPUTS = \
    TEXINPUTS=${TEXIDIR}:.:$(srcdir):$(READLINE_DIR):$(GDBMI_DIR):$$TEXINPUTS
 
 # Files which should be generated via 'info' and installed by 'install-info'
-INFO_DEPS = gdb.info stabs.info annotate.info
+# XXX: our texinfo can't handle them and texinfo-7.1 is in perl
+#INFO_DEPS = gdb.info stabs.info annotate.info
 
 # Files which should be generated via 'dvi' and installed by 'install-dvi'
 DVIFILES = gdb.dvi stabs.dvi refcard.dvi annotate.dvi
@@ -521,6 +522,8 @@ gdb.pdf: ${GDB_DOC_FILES}
 
 # GDB MANUAL: info file
 gdb.info: ${GDB_DOC_FILES}
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_gdb.info:
 	$(ECHO_MAKEINFO) $(MAKEINFO_CMD) $(READLINE_TEXI_INCFLAG) -I ${GDBMI_DIR} -I $(srcdir) \
 		-o gdb.info $(srcdir)/gdb.texinfo
 
@@ -603,6 +606,9 @@ gdb/index.html: ${GDB_DOC_FILES}
 		$(srcdir)/gdb.texinfo
 
 stabs.info: $(STABS_DOC_FILES)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_stabs.info:
+	$(ECHO_MAKEINFO) $(MAKEINFO_CMD) -I $(srcdir) -o stabs.info $(srcdir)/stabs.texinfo
 	$(ECHO_MAKEINFO) $(MAKEINFO_CMD) -I $(srcdir) -o stabs.info $(srcdir)/stabs.texinfo
 
 # STABS DOCUMENTATION: HTML file
@@ -654,6 +660,8 @@ annotate.pdf: $(ANNOTATE_DOC_FILES)
 		$(srcdir)/annotate.texinfo
 
 annotate.info: $(ANNOTATE_DOC_FILES)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_annotate.info:
 	$(ECHO_MAKEINFO) $(MAKEINFO_CMD) -I $(srcdir) -o annotate.info $(srcdir)/annotate.texinfo
 
 annotate/index.html: $(ANNOTATE_DOC_FILES)
@@ -676,12 +684,16 @@ annotate/index.html: $(ANNOTATE_DOC_FILES)
 # trigger an attempt to rebuild these files while building and
 # installing a release of GDB, which is something we don't want.
 $(MAN1S) : %.1 : $(GDB_DOC_FILES)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_MAN1S:
 	$(ECHO_TEXI2POD) $(TEXI2POD) $(MANCONF) -D$* < $(srcdir)/gdb.texinfo > $*.pod
 	$(ECHO_TEXI2MAN) ($(POD2MAN1) $*.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	$(SILENCE) rm -f $*.pod
 
 $(MAN5S) : %.5 : $(GDB_DOC_FILES)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_MAN5S:
 	$(ECHO_TEXI2POD) $(TEXI2POD) $(MANCONF) -D$* < $(srcdir)/gdb.texinfo > $*.pod
 	$(ECHO_TEXI2MAN) ($(POD2MAN5) $*.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
