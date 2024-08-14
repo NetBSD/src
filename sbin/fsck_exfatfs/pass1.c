@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.1.2.4 2024/08/02 00:19:00 perseant Exp $	*/
+/*	$NetBSD: pass1.c,v 1.1.2.5 2024/08/14 15:37:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -208,7 +208,7 @@ validfunc(void *arg, struct xfinode *xip, off_t unused)
 	if (VTOXI(vp) != xip) { /* Already in cache */
 		fprintf(stderr, "** freeing serial %lu in favor of %lu\n",
 			xip->xi_serial, VTOXI(vp)->xi_serial);
-		exfatfs_freexfinode(xip);
+		exfatfs_freexfinode(xip, 0);
 		xip = VTOXI(vp);
 		dserial = xip->xi_serial;
 		assert(dserial > 0);

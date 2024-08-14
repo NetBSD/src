@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_extern.h,v 1.1.2.4 2024/08/02 00:16:55 perseant Exp $	*/
+/*	$NetBSD: exfatfs_extern.h,v 1.1.2.5 2024/08/14 15:37:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@ struct xfinode *exfatfs_newxfinode(struct exfatfs *, uint32_t, uint32_t);
 struct exfatfs_dirent *exfatfs_newdirent(void);
 int exfatfs_get_file_name(struct xfinode *, uint16_t *, int *, int);
 int exfatfs_set_file_name(struct xfinode *, uint16_t *, int);
-void exfatfs_freexfinode(struct xfinode *);
+void exfatfs_freexfinode(struct xfinode *, int);
 void exfatfs_freedirent(struct exfatfs_dirent *);
 int exfatfs_scandir(struct vnode *, off_t, off_t *,
 		    unsigned (*)(void *, off_t, off_t),

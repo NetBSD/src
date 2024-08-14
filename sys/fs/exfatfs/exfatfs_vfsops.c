@@ -1,4 +1,4 @@
-/* $NetBSD: exfatfs_vfsops.c,v 1.1.2.7 2024/08/12 22:28:04 perseant Exp $ */
+/* $NetBSD: exfatfs_vfsops.c,v 1.1.2.8 2024/08/14 15:37:49 perseant Exp $ */
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_vfsops.c,v 1.1.2.7 2024/08/12 22:28:04 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_vfsops.c,v 1.1.2.8 2024/08/14 15:37:49 perseant Exp $");
 
 struct vm_page;
 
@@ -746,7 +746,7 @@ exfatfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 	mutex_exit(&fs->xf_lock);
 
 	if (error)
-		exfatfs_freexfinode(xip);
+		exfatfs_freexfinode(xip, 1);
 	
 	return error;
 }

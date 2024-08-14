@@ -146,7 +146,7 @@ exfatfs_vop_bmap(struct uvnode * vp, daddr_t lbn, daddr_t * daddrp)
 int
 exfatfs_freevnode(struct uvnode *vp)
 {
-	exfatfs_freexfinode(VTOXI(vp));
+	exfatfs_freexfinode(VTOXI(vp), 0);
 	return 1; /* Already free */
 }
 
