@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.419 2024/08/14 00:41:46 riastradh Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.420 2024/08/14 00:42:02 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.419 2024/08/14 00:41:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.420 2024/08/14 00:42:02 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -1861,11 +1861,13 @@ uvm_findspace_invariants(struct vm_map *map, vaddr_t orig_hint, vaddr_t length,
 	UVM_FINDSPACE_KASSERTMSG(hint_location_ok,
 	    "%s map=%p hint=%#" PRIxVADDR " %s orig_hint=%#" PRIxVADDR
 	    " length=%#" PRIxVSIZE " uobj=%p uoffset=%#llx align=%" PRIxVSIZE
-	    " flags=%#x entry=%p (uvm_map_findspace line %d)",
+	    " flags=%#x entry@%p=[%" PRIxVADDR ",%" PRIxVADDR ")"
+	    " (uvm_map_findspace line %d)",
 	    topdown ? "topdown" : "bottomup",
 	    map, hint, topdown ? ">" : "<", orig_hint,
 	    length, uobj, (unsigned long long)uoffset, align,
-	    flags, entry, line);
+	    flags, entry, entry ? entry->start : 0, entry ? entry->end : 0,
+	    line);
 }
 
 /*
