@@ -1,8 +1,8 @@
 #!/bin/sh
-#	$NetBSD: mknative-gdb.old,v 1.2 2020/10/09 23:48:42 rin Exp $
+#	$NetBSD: mknative-gdb.old,v 1.3 2024/08/14 23:56:20 christos Exp $
 #
 # Shell script for generating all the constants needed for a native
-# platform build of src/external/gpl3/gdb.old
+# platform build of src/external/gpl3/gdb
 #
 
 # initialise
@@ -12,7 +12,7 @@ _TOP=$3
 _PLATFORM=$4
 _MACHINE_SUBDIR=$5
 _VPATH=`grep VPATH ${_TMPDIR}/Makefile | sed 's,^.*=[ 	]*,,'`
-_GDB=external/gpl3/gdb.old
+_GDB=external/gpl3/gdb
 
 . $_TOP/tools/gcc/mknative.common
 
@@ -28,7 +28,7 @@ get_gdb_libbfd () {
 			INCLUDES TDEFAULTS
 	} | write_mk $_BFD/arch/$_MACHINE_SUBDIR/defs.mk
 
-	for i in bfd-in3.h bfd_stdint.h config.h bfd.h bfdver.h targmatch.h 
+	for i in bfd-in3.h config.h bfd.h bfdver.h targmatch.h 
 	do
 	    write_c $_BFD/arch/$_MACHINE_SUBDIR/$i <$_TMPDIR/bfd/$i
 	done
@@ -71,12 +71,12 @@ get_gdb_libreadline () {
 	mkdir -p $_TOP/$_READLINE/arch/$_MACHINE_SUBDIR
 
 	{
-		getvars readline/Makefile \
+		getvars readline/readline/Makefile \
 			CCFLAGS OBJECTS
 	} | write_mk $_READLINE/arch/$_MACHINE_SUBDIR/defs.mk
 
 	write_c $_READLINE/arch/$_MACHINE_SUBDIR/config.h \
-		<$_TMPDIR/readline/config.h
+		<$_TMPDIR/readline/readline/config.h
 }
 
 ##### gdb/lib/libdecnumber #####
@@ -85,23 +85,108 @@ get_gdb_libdecnumber () {
 	local _DECNUMBER=$_GDB/lib/libdecnumber
 	mkdir -p $_TOP/$_DECNUMBER/arch/$_MACHINE_SUBDIR
 
-	getvars libdecnumber/Makefile \
-		libdecnumber_a_OBJS |
-	sed -e s/libdecnumber_a_// |
+	getvars libdecnumber/Makefile libdecnumber_a_OBJS |
+	sed -e s/libdecnumber_a_//g |
 	write_mk $_DECNUMBER/arch/$_MACHINE_SUBDIR/defs.mk
 
 	write_c $_DECNUMBER/arch/$_MACHINE_SUBDIR/config.h \
-		<$_TMPDIR/readline/config.h
+		<$_TMPDIR/readline/readline/config.h
 
 	write_c $_DECNUMBER/arch/$_MACHINE_SUBDIR/gstdint.h \
 		< $_TMPDIR/libdecnumber/gstdint.h
+}
+
+##### gdb/lib/libgdbsupport #####
+
+get_gdb_libgdbsupport () {
+	local _GDBSUPPORT=$_GDB/lib/libgdbsupport
+	mkdir -p $_TOP/$_GDBSUPPORT/arch/$_MACHINE_SUBDIR/gdbsupport
+
+	getvars gdbsupport/Makefile libgdbsupport_a_OBJECTS |
+	sed -e s/libgdbsupport_a_//g |
+	write_mk $_GDBSUPPORT/arch/$_MACHINE_SUBDIR/defs.mk
+
+	write_c $_GDBSUPPORT/arch/$_MACHINE_SUBDIR/gdbsupport/config.h \
+		<$_TMPDIR/gdbsupport/config.h
+}
+
+##### gdb/lib/libctf #####
+
+get_gdb_libctf () {
+	local _CTF=$_GDB/lib/libctf
+	mkdir -p $_TOP/$_CTF/arch/$_MACHINE_SUBDIR
+
+	getvars libctf/Makefile libctf_la_OBJECTS |
+	sed -e s/libctf_la_//g -e 's/\.lo/.o/g' -e s/libctf_la-//g |
+	write_mk $_CTF/arch/$_MACHINE_SUBDIR/defs.mk
+
+	write_c $_CTF/arch/$_MACHINE_SUBDIR/config.h \
+		<$_TMPDIR/libctf/config.h
+}
+
+##### gdb/lib/libbacktrace #####
+
+get_gdb_libbacktrace () {
+	local _BACKTRACE=$_GDB/lib/libbacktrace
+	mkdir -p $_TOP/$_BACKTRACE/arch/$_MACHINE_SUBDIR
+
+	getvars libbacktrace/Makefile libbacktrace_la_OBJECTS \
+	    libbacktrace_la_LIBADD |
+	sed -e s/libbacktrace_la_//g -e 's/\.lo/.o/g' -e s/libbacktrace_la-//g |
+	write_mk $_BACKTRACE/arch/$_MACHINE_SUBDIR/defs.mk
+
+	write_c $_BACKTRACE/arch/$_MACHINE_SUBDIR/config.h \
+		<$_TMPDIR/libbacktrace/config.h
+	write_c $_BACKTRACE/arch/$_MACHINE_SUBDIR/backtrace-supported.h \
+		<$_TMPDIR/libbacktrace/backtrace-supported.h
+}
+
+##### gdb/lib/libsframe #####
+
+get_gdb_libsframe () {
+	local _SFRAME=$_GDB/lib/libsframe
+	mkdir -p $_TOP/$_SFRAME/arch/$_MACHINE_SUBDIR
+
+	getvars libsframe/Makefile libsframe_la_OBJECTS |
+	sed -e s/libsframe_la_//g -e 's/\.lo/.o/g' -e s/libsframe_la-//g |
+	write_mk $_SFRAME/arch/$_MACHINE_SUBDIR/defs.mk
+}
+
+##### gdb/lib/libgnulib #####
+
+get_gdb_libgnulib () {
+	local _GNULIB=$_GDB/lib/libgnulib
+	mkdir -p $_TOP/$_GNULIB/arch/$_MACHINE_SUBDIR/gnulib/import/malloc
+
+	(getvars gnulib/Makefile gl_LIBOBJS |
+	sed -e s/gl_LIB//g &&
+	getvars gnulib/import/Makefile libgnu_a_OBJECTS |
+	sed -e s/libgnu_a-//g -e s@glthread/@@g -e s@malloc/@@g) |
+	write_mk $_GNULIB/arch/$_MACHINE_SUBDIR/defs.mk
+
+	for i in config.h \
+	    import/alloca.h import/ctype.h \
+	    import/dirent.h import/fcntl.h \
+	    import/fnmatch.h import/glob.h \
+	    import/glob-libc.gl.h \
+	    import/inttypes.h import/limits.h \
+	    import/locale.h import/math.h \
+	    import/malloc/scratch_buffer.gl.h \
+	    import/signal.h import/stdint.h \
+	    import/stdio.h import/stdlib.h \
+	    import/string.h import/time.h \
+	    import/unistd.h import/wchar.h \
+	    import/wctype.h
+	do
+	    write_c $_GNULIB/arch/$_MACHINE_SUBDIR/gnulib/$i \
+		< $_TMPDIR/gnulib/$i
+	done
 }
 
 ##### gdb/lib/libgdb #####
 
 get_gdb_libgdb () {
 	local _GDBP=$_GDB/lib/libgdb
-	mkdir -p $_TOP/$_GDBP/arch/$_MACHINE_SUBDIR/build-gnulib
 
 	{
 		getvars gdb/Makefile \
@@ -109,6 +194,7 @@ get_gdb_libgdb () {
 	} | sed -e s@arch/@@g -e s@cli/@@g -e s@common/agent@common-agent@ \
 		-e s@common/@@g -e s@compile/@@g -e s@guile/@@g -e s@mi/@@g \
 		-e s@nat/@@g -e s@python/@@g -e s@target/@@g \
+		-e s@dwarf2/@@g -e s@unittests/@@g \
 		-e s@tui/@@g | write_mk $_GDBP/arch/$_MACHINE_SUBDIR/defs.mk
 
 #	getvars gdb/gdbserver/Makefile \
@@ -116,17 +202,20 @@ get_gdb_libgdb () {
 #		| write_mk $_GDB/bin/gdb/arch/$_MACHINE_SUBDIR/gdbserver.mk
 
 	for i in config.h version.c init.c \
-	    xml-builtin.c build-gnulib/config.h jit-reader.h
+	    xml-builtin.c jit-reader.h
 	do
 	    write_c $_GDBP/arch/$_MACHINE_SUBDIR/$i \
 		< $_TMPDIR/gdb/$i
 	done
+	
 
 	for f in nm tm xm; do
-		if [ -f $_TMPDIR/gdb/$f.h ]; then 
-			ls -l $_TMPDIR/gdb/$f.h | sed 's,^.*->.*/gdb/,,;s,^,#include <,;s,$,>,' \
-				| write_c $_GDBP/arch/$_MACHINE_SUBDIR/$f.h
+		if [ ! -f $_TMPDIR/gdb/$f.h ]; then 
+			continue
 		fi
+		ls -l $_TMPDIR/gdb/$f.h | \
+			sed 's,^.*->.*/gdb/,,;s,^,#include <,;s,$,>,' | \
+			write_c $_GDBP/arch/$_MACHINE_SUBDIR/$f.h
 	done
 
 	local _LIBSIM=$_GDB/lib/libsim
@@ -157,16 +246,38 @@ get_gdb_libgdb () {
 	esac
 }
 
+# gdb/bin/gdbserver`
+
+get_gdb_bingdbserver () {
+	local _CTF=$_GDB/bin/gdbserver
+
+	if [ ! -f $_CTF/arch/$_MACHINE_SUBDIR/config.h ]; then
+		return
+	fi
+	mkdir -p $_TOP/$_CTF/arch/$_MACHINE_SUBDIR
+
+	write_c $_CTF/arch/$_MACHINE_SUBDIR/config.h \
+		<$_TMPDIR/gdbserver/config.h
+	write_c $_CTF/arch/$_MACHINE_SUBDIR/version.cc \
+		<$_TMPDIR/gdbserver/version-generated.cc
+}
+
 ##### main #####
 
 case $1 in
 all|gdb)	# everything (uses "canadian cross" temp environment)
 	get_gdb_libgdb
+	get_gdb_libgdbsupport
+	get_gdb_libctf
+	get_gdb_libbacktrace
+	get_gdb_libsframe
+	get_gdb_libgnulib
 	get_gdb_libbfd
 	get_gdb_libopcodes
 	get_gdb_libiberty
 	get_gdb_libreadline
 	get_gdb_libdecnumber
+	get_gdb_bingdbserver
 	exit 0
 	;;
 
