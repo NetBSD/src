@@ -1,4 +1,4 @@
-/*	$NetBSD: c32rtomb.c,v 1.1 2024/08/15 14:16:33 riastradh Exp $	*/
+/*	$NetBSD: c32rtomb.c,v 1.2 2024/08/15 22:22:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -49,7 +49,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: c32rtomb.c,v 1.1 2024/08/15 14:16:33 riastradh Exp $");
+__RCSID("$NetBSD: c32rtomb.c,v 1.2 2024/08/15 22:22:35 riastradh Exp $");
+
+#include "namespace.h"
 
 #include <sys/types.h>		/* broken citrus_*.h */
 #include <sys/queue.h>		/* broken citrus_*.h */
@@ -68,6 +70,10 @@ __RCSID("$NetBSD: c32rtomb.c,v 1.1 2024/08/15 14:16:33 riastradh Exp $");
 #include "citrus_module.h"	/* broken citrus_iconv.h */
 #include "citrus_hash.h"	/* broken citrus_iconv.h */
 #include "citrus_iconv.h"
+
+#ifdef __weak_alias
+__weak_alias(c32rtomb,_c32rtomb)
+#endif
 
 size_t
 c32rtomb(char *restrict s, char32_t c32, mbstate_t *restrict ps)
