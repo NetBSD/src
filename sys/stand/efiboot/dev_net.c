@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.2 2018/11/15 23:52:33 jmcneill Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.3 2024/08/15 05:58:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -91,7 +91,7 @@ fail:
 	printf("net_open failed: %d\n", error);
 	netif_close(net_socket);
 	net_socket = -1;
-	return error;	
+	return error;
 }
 
 int
