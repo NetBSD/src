@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.21 2024/08/15 05:59:49 skrll Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.22 2024/08/15 06:01:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -88,12 +88,6 @@ int utf8_to_ucs2(const char *, CHAR16 **, size_t *);
 int efi_device_path_depth(EFI_DEVICE_PATH *, int);
 int efi_device_path_count(EFI_DEVICE_PATH *);
 int efi_device_path_ncmp(EFI_DEVICE_PATH *, EFI_DEVICE_PATH *, int);
-
-/* efifdt.c */
-int efi_fdt_prepare_boot(const char *, const char *, u_long *);
-void efi_fdt_cleanup_boot(void);
-size_t efi_fdt_alloc_size(void);
-void efi_fdt_set_virtual_address_map(EFI_MEMORY_DESCRIPTOR *, UINTN, UINTN, UINTN, UINT32);
 
 /* efinet.c */
 struct efi_net_if {
