@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.424 2024/08/14 22:24:09 rin Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.425 2024/08/15 11:33:21 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.424 2024/08/14 22:24:09 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.425 2024/08/15 11:33:21 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -2256,7 +2256,8 @@ nextgap:
 	INVARIANTS();
 	for (;;) {
 		/* Update hint for current gap. */
-		hint = topdown ? entry->next->start - length : entry->end;
+		hint = topdown ? MIN(orig_hint, entry->next->start - length)
+		    : entry->end;
 		INVARIANTS();
 
 		/* See if it fits. */
