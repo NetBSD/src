@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrtoc16.c,v 1.1 2024/08/15 14:16:33 riastradh Exp $	*/
+/*	$NetBSD: mbrtoc16.c,v 1.2 2024/08/15 15:46:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -73,10 +73,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mbrtoc16.c,v 1.1 2024/08/15 14:16:33 riastradh Exp $");
+__RCSID("$NetBSD: mbrtoc16.c,v 1.2 2024/08/15 15:46:40 riastradh Exp $");
 
 #include <assert.h>
 #include <errno.h>
+#include <stdalign.h>
 #include <stddef.h>
 #include <uchar.h>
 
@@ -89,7 +90,7 @@ struct mbrtoc16state {
 __CTASSERT(offsetof(struct mbrtoc16state, mbs) <= sizeof(mbstate_t));
 __CTASSERT(sizeof(struct mbrtoc32state) <= sizeof(mbstate_t) -
     offsetof(struct mbrtoc16state, mbs));
-__CTASSERT(_Alignof(struct mbrtoc16state) <= _Alignof(mbstate_t));
+__CTASSERT(alignof(struct mbrtoc16state) <= alignof(mbstate_t));
 
 size_t
 mbrtoc16(char16_t *restrict pc16, const char *restrict s, size_t n,
