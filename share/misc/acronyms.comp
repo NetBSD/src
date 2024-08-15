@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.390 2024/05/19 15:47:38 gutteridge Exp $
+$NetBSD: acronyms.comp,v 1.391 2024/08/15 18:26:36 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1849,6 +1849,7 @@ VFO	variable-frequency oscillator
 VFS	virtual file system
 VG	volume group
 VGA	Video Graphics Array
+VHD	virtual hard disk
 VHDCI	very high density cable interconnect
 VID	{VLAN,voltage level} identifier
 VIM	Vi IMproved
