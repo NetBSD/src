@@ -1,4 +1,4 @@
-.\"	$NetBSD: c32rtomb.3,v 1.1 2024/08/15 14:16:33 riastradh Exp $
+.\"	$NetBSD: c32rtomb.3,v 1.2 2024/08/15 14:58:00 riastradh Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -96,11 +96,11 @@ for (i = 0; i < __arraycount(c32); i++) {
 	len = c32rtomb(s, c32[i], &mbs);
 	if (len == (size_t)-1)
 		err(1, "c32rtomb");
-	assert(len <= sizeof(buf) - (s - buf));
+	assert(len < sizeof(buf) - (s - buf));
 	s += len;
 }
 *s = '\e0';		/* NUL-terminate */
-printf("%s\n", buf);
+printf("%s\en", buf);
 .Ed
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh ERRORS
