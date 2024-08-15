@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 2/18/91
-#	$NetBSD: Makefile.inc,v 1.66 2024/08/15 14:16:33 riastradh Exp $
+#	$NetBSD: Makefile.inc,v 1.67 2024/08/15 21:19:45 riastradh Exp $
 
 # locale sources
 .PATH: ${ARCHDIR}/locale ${.CURDIR}/locale
@@ -13,8 +13,10 @@ SRCS+=	setlocale.c __mb_cur_max.c \
 
 SRCS+=	c16rtomb.c
 SRCS+=	c32rtomb.c
+SRCS+=	c8rtomb.c
 SRCS+=	mbrtoc16.c
 SRCS+=	mbrtoc32.c
+SRCS+=	mbrtoc8.c
 CPPFLAGS.c32rtomb.c+=		-I${LIBCDIR}/citrus
 CPPFLAGS.mbrtoc32.c+=		-I${LIBCDIR}/citrus
 
@@ -38,8 +40,10 @@ MAN+=	btowc.3 mbrtowc.3 mbsrtowcs.3 \
 
 MAN+=	c16rtomb.3
 MAN+=	c32rtomb.3
+MAN+=	c8rtomb.3
 MAN+=	mbrtoc16.3
 MAN+=	mbrtoc32.3
+MAN+=	mbrtoc8.3
 
 MAN+=	iswalnum.3 wctype.3 iswctype.3 \
 	towlower.3 wctrans.3 towctrans.3 \

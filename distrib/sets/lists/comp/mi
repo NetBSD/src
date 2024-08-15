@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2469 2024/08/15 14:16:32 riastradh Exp $
+#	$NetBSD: mi,v 1.2470 2024/08/15 21:19:44 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -6844,6 +6844,7 @@
 ./usr/share/man/cat3/bzero.0			comp-c-catman		.cat
 ./usr/share/man/cat3/c16rtomb.0			comp-c-catman		.cat
 ./usr/share/man/cat3/c32rtomb.0			comp-c-catman		.cat
+./usr/share/man/cat3/c8rtomb.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cabs.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cabsf.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cabsl.0			comp-c-catman		complex,.cat
@@ -9208,6 +9209,7 @@
 ./usr/share/man/cat3/mbrlen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mbrtoc16.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mbrtoc32.0			comp-c-catman		.cat
+./usr/share/man/cat3/mbrtoc8.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mbrtowc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mbsinit.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mbsrtowcs.0		comp-c-catman		.cat
@@ -15409,6 +15411,7 @@
 ./usr/share/man/html3/bzero.html		comp-c-htmlman		html
 ./usr/share/man/html3/c16rtomb.html		comp-c-htmlman		html
 ./usr/share/man/html3/c32rtomb.html		comp-c-htmlman		html
+./usr/share/man/html3/c8rtomb.html		comp-c-htmlman		html
 ./usr/share/man/html3/cabs.html			comp-c-htmlman		complex,html
 ./usr/share/man/html3/cabsf.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/cabsl.html		comp-c-htmlman		complex,html
@@ -17705,6 +17708,7 @@
 ./usr/share/man/html3/mbrlen.html		comp-c-htmlman		html
 ./usr/share/man/html3/mbrtoc16.html		comp-c-htmlman		html
 ./usr/share/man/html3/mbrtoc32.html		comp-c-htmlman		html
+./usr/share/man/html3/mbrtoc8.html		comp-c-htmlman		html
 ./usr/share/man/html3/mbrtowc.html		comp-c-htmlman		html
 ./usr/share/man/html3/mbsinit.html		comp-c-htmlman		html
 ./usr/share/man/html3/mbsrtowcs.html		comp-c-htmlman		html
@@ -23833,6 +23837,7 @@
 ./usr/share/man/man3/bzero.3			comp-c-man		.man
 ./usr/share/man/man3/c16rtomb.3			comp-c-man		.man
 ./usr/share/man/man3/c32rtomb.3			comp-c-man		.man
+./usr/share/man/man3/c8rtomb.3			comp-c-man		.man
 ./usr/share/man/man3/cabs.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cabsf.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cabsl.3			comp-c-man		complex,.man
@@ -26209,6 +26214,7 @@
 ./usr/share/man/man3/mbrlen.3			comp-c-man		.man
 ./usr/share/man/man3/mbrtoc16.3			comp-c-man		.man
 ./usr/share/man/man3/mbrtoc32.3			comp-c-man		.man
+./usr/share/man/man3/mbrtoc8.3			comp-c-man		.man
 ./usr/share/man/man3/mbrtowc.3			comp-c-man		.man
 ./usr/share/man/man3/mbsinit.3			comp-c-man		.man
 ./usr/share/man/man3/mbsrtowcs.3		comp-c-man		.man
