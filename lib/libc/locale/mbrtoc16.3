@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbrtoc16.3,v 1.1 2024/08/15 14:16:33 riastradh Exp $
+.\"	$NetBSD: mbrtoc16.3,v 1.2 2024/08/15 14:42:20 riastradh Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -244,16 +244,16 @@ while (n) {
 		assert(c16 == L'\e0');
 		goto out;
 	default:	/* scalar value or high surrogate */
-		printf("U+%04"PRIx16"\n", (uint16_t)c16);
+		printf("U+%04"PRIx16"\en", (uint16_t)c16);
 		break;
 	case (size_t)-3: /* low surrogate */
-		printf("continue U+%04"PRIx16"\n", (uint16_t)c16);
+		printf("continue U+%04"PRIx16"\en", (uint16_t)c16);
 		break;
 	case (size_t)-2: /* incomplete */
 		printf("incomplete\en");
 		goto readmore;
 	case (size_t)-1: /* error */
-		printf("error: %d\n", errno);
+		printf("error: %d\en", errno);
 		goto out;
 	}
 	s += len;

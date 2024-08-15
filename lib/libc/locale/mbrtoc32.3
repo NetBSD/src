@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbrtoc32.3,v 1.1 2024/08/15 14:16:33 riastradh Exp $
+.\"	$NetBSD: mbrtoc32.3,v 1.2 2024/08/15 14:42:20 riastradh Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -185,13 +185,13 @@ while (n) {
 		assert(c32 == L'\e0');
 		goto out;
 	default:		/* scalar value */
-		printf("U+%04"PRIx32"\n", (uint32_t)c32);
+		printf("U+%04"PRIx32"\en", (uint32_t)c32);
 		break;
 	case (size_t)-2:	/* incomplete */
 		printf("incomplete\en");
 		goto readmore;
 	case (size_t)-1:	/* error */
-		printf("error: %d\n", errno);
+		printf("error: %d\en", errno);
 		goto out;
 	}
 	s += len;
