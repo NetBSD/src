@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.h,v 1.13 2024/08/15 06:01:40 skrll Exp $ */
+/* $NetBSD: efifdt.h,v 1.14 2024/08/15 15:57:36 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -52,4 +52,5 @@ void efi_fdt_system_table(void);
 int efi_fdt_prepare_boot(const char *, const char *, u_long *);
 void efi_fdt_cleanup_boot(void);
 size_t efi_fdt_alloc_size(void);
-void efi_fdt_set_virtual_address_map(EFI_MEMORY_DESCRIPTOR *, UINTN, UINTN, UINTN, UINT32);
+void efi_fdt_set_virtual_address_map(EFI_MEMORY_DESCRIPTOR *, UINTN, UINTN,
+    UINTN, UINT32);
