@@ -1,4 +1,4 @@
-.\"	$NetBSD: getentropy.3,v 1.6 2023/06/30 22:15:14 uwe Exp $ $
+.\"	$NetBSD: getentropy.3,v 1.7 2024/08/15 23:44:49 riastradh Exp $ $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -71,7 +71,7 @@ must be at most 256.
 .Sh RETURN VALUES
 .Rv -std getentropy
 .Sh ERRORS
-.Fn getentropy
+.Nm
 will succeed unless:
 .Bl -tag -width Er
 .It Bq Er EFAULT
@@ -105,12 +105,12 @@ secret seed material from such hardware on another machine.
 .Xr entropy 7
 .Sh STANDARDS
 The
-.Fn getentropy
-function is nonstandard.
-However, it is likely to be included in the next revision of POSIX.
+.Nm
+function conforms to
+.St -p1003.1-2024 .
 .Sh HISTORY
 The
-.Fn getentropy
+.Nm
 function first appeared in
 .Ox 5.6 ,
 then in

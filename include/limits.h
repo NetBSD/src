@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.43 2022/05/31 13:42:59 riastradh Exp $	*/
+/*	$NetBSD: limits.h,v 1.44 2024/08/15 23:44:49 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -140,13 +140,17 @@
 #endif
 #endif /* _POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE || _NETBSD_SOURCE */
 
+/*
+ * IEEE Std 1003.1-2024 (POSIX.1-2024)
+ */
+#if (_POSIX_C_SOURCE - 0) >= 202405L || (_XOPEN_SOURCE - 0) >= 800 || \
+    defined(_NETBSD_SOURCE)
+#define	GETENTROPY_MAX		256
+#endif
+
 #endif /* _POSIX_C_SOURCE || _XOPEN_SOURCE || _NETBSD_SOURCE */
 
 #define MB_LEN_MAX		32	/* Allow ISO/IEC 2022 */
-
-#ifdef _NETBSD_SOURCE
-#define	GETENTROPY_MAX		256
-#endif
 
 #include <machine/limits.h>
 
