@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.253 2024/08/15 02:22:46 rin Exp $	*/
+/*	$NetBSD: bpf.c,v 1.254 2024/08/15 11:23:29 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.253 2024/08/15 02:22:46 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.254 2024/08/15 11:23:29 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -48,52 +48,48 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.253 2024/08/15 02:22:46 rin Exp $");
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/mbuf.h>
-#include <sys/buf.h>
-#include <sys/time.h>
-#include <sys/proc.h>
-#include <sys/ioctl.h>
-#include <sys/conf.h>
-#include <sys/vnode.h>
-#include <sys/queue.h>
-#include <sys/stat.h>
-#include <sys/module.h>
-#include <sys/atomic.h>
-#include <sys/cpu.h>
 
+#include <sys/atomic.h>
+#include <sys/buf.h>
+#include <sys/conf.h>
+#include <sys/cpu.h>
+#include <sys/errno.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/ioctl.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/lwp.h>
+#include <sys/mbuf.h>
+#include <sys/module.h>
+#include <sys/percpu.h>
+#include <sys/poll.h>
+#include <sys/proc.h>
+#include <sys/protosw.h>
+#include <sys/pserialize.h>
+#include <sys/queue.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/sysctl.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
+#include <sys/time.h>
 #include <sys/tty.h>
 #include <sys/uio.h>
-
-#include <sys/protosw.h>
-#include <sys/socket.h>
-#include <sys/errno.h>
-#include <sys/kernel.h>
-#include <sys/poll.h>
-#include <sys/sysctl.h>
-#include <sys/kauth.h>
-#include <sys/syslog.h>
-#include <sys/percpu.h>
-#include <sys/pserialize.h>
-#include <sys/lwp.h>
+#include <sys/vnode.h>
 #include <sys/xcall.h>
-
-#include <net/if.h>
-#include <net/slip.h>
 
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
 #include <net/bpfjit.h>
-
+#include <net/if.h>
 #include <net/if_arc.h>
 #include <net/if_ether.h>
 #include <net/if_types.h>
+#include <net/slip.h>
 
-#include <netinet/in.h>
 #include <netinet/if_inarp.h>
-
+#include <netinet/in.h>
 
 #include <compat/sys/sockio.h>
 
