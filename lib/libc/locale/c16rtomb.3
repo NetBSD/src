@@ -1,0 +1,199 @@
+.\"	$NetBSD: c16rtomb.3,v 1.1 2024/08/15 14:16:33 riastradh Exp $
+.\"
+.\" Copyright (c) 2024 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 14, 2024
+.Dt C16RTOMB 3
+.Os
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh NAME
+.Nm c16rtomb
+.Nd Restartable UTF-16 code unit to multibyte conversion
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh LIBRARY
+.Lb libc
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SYNOPSIS
+.In uchar.h
+.Ft size_t
+.Fn c16rtomb "char * restrict s" \
+"char16_t c16" \
+"mbstate_t * restrict ps"
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh DESCRIPTION
+The
+.Nm
+function attempts to encode Unicode input as a multibyte character
+sequence output at
+.Fa s
+in the current locale, writing anywhere between zero and
+.Dv MB_CUR_MAX
+bytes, inclusive, to
+.Fa s ,
+depending on the inputs and conversion state
+.Fa ps .
+.Pp
+The input
+.Fa c16
+is a UTF-16 code unit, which can be either:
+.Bl -bullet
+.It
+a Unicode scalar value in the Basic Multilingual Plane (BMP), that is,
+a 16-bit code unit outside the interval [0xd800,0xdfff]; or,
+.It
+over the course of two consecutive calls to
+.Nm ,
+the high and low surrogate code points of a Unicode scalar value
+outside the BMP.
+.El
+.Pp
+If a low surrogate code point, that is, a value of
+.Fa c16
+in [0xdc00,0xdfff], is passed to
+.Nm
+without the preceding call to it with the same
+.Fa ps
+having been passed a high surrogate code point, that is, a value of
+.Fa c16
+in [0xd800,0xdbff], or if a high surrogate was passed in the previous
+call and anything other than a low surrogate is passed, then
+.Nm
+will return
+.Li (size_t)-1
+to denote failure with
+.Xr errno 2
+set to
+.Er EILSEQ .
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh RETURN VALUES
+The
+.Nm
+function returns the number of bytes written to
+.Fa s
+on success, or sets
+.Xr errno 2
+and returns
+.Li "(size_t)-1"
+on failure.
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh EXAMPLES
+Convert a UTF-16 code unit sequence to a multibyte string,
+NUL-terminate it, and print it:
+.Bd -literal -offset indent
+char16_t c16[] = { 0xd83d, 0xdca9 };
+char buf[__arraycount(c16)*MB_CUR_MAX + 1], *s = buf;
+size_t i;
+mbstate_t mbs = {0};	/* initial conversion state */
+
+for (i = 0; i < __arraycount(c16); i++) {
+	size_t len;
+
+	len = c16rtomb(s, c16[i], &mbs);
+	if (len == (size_t)-1)
+		err(1, "c16rtomb");
+	assert(len <= sizeof(buf) - (s - buf));
+	s += len;
+}
+*s = '\e0';		/* NUL-terminate */
+printf("%s\n", buf);
+.Ed
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh ERRORS
+.Bl -tag -width ".Bq Er EILSEQ"
+.It Bq Er EILSEQ
+A surrogate code point was passed as
+.Fa c16
+when it is inappropriate.
+.It Bq Er EILSEQ
+The Unicode scalar value requested cannot be encoded as a multibyte
+sequence in the current locale.
+.It Bq Er EIO
+An error occurred in loading the locale's character conversions.
+.El
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SEE ALSO
+.Xr c32rtomb 3 ,
+.Xr mbrtoc16 3 ,
+.Xr mbrtoc32 3 ,
+.Xr uchar 3
+.Rs
+.%B The Unicode Standard
+.%O Version 15.0 \(em Core Specification
+.%Q The Unicode Consortium
+.%D September 2022
+.%U https://www.unicode.org/versions/Unicode15.0.0/UnicodeStandard-15.0.pdf
+.Re
+.Rs
+.%A P. Hoffman
+.%A F. Yergeau
+.%T UTF-16, an encoding of ISO 10646
+.%R RFC 2781
+.%D February 2000
+.%I Internet Engineering Task Force
+.%U https://datatracker.ietf.org/doc/html/rfc2781
+.Re
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh STANDARDS
+The
+.Nm
+function conforms to
+.St -isoC-2011 .
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh HISTORY
+The
+.Nm
+function first appeared in
+.Nx 11.0 .
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh BUGS
+It is not clear from the standard how
+.Nm
+is supposed to behave when given a high surrogate code point followed
+by a NUL:
+.Bd -literal -offset indent
+c16rtomb(s, 0xd800, ps);
+c16rtomb(s, L'\e0', ps);
+.Ed
+.Pp
+Currently this fails with
+.Er EILSEQ
+which matches other implementations, but this is at odds with language
+in the standard which suggests that passing
+.Li L'\e0'
+should unconditionally store a null byte and reset
+.Fa ps
+to the initial conversion state:
+.Bd -offset indent
+If
+.Fa c16
+is a null wide character, a null byte is stored, preceded by any shift
+sequence needed to restore the initial shift state; the resulting state
+described is the initial conversion state.
+.Ed
+.Pp
+However, it is unclear what else this should store besides a null
+byte.
+Should it discard the pending high surrogate, or convert it to
+something else and store that?

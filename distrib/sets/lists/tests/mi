@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1330 2024/08/15 13:14:44 riastradh Exp $
+# $NetBSD: mi,v 1.1331 2024/08/15 14:16:33 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3073,11 +3073,15 @@
 ./usr/tests/lib/libc/locale/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
 ./usr/tests/lib/libc/locale/t_btowc			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/locale/t_c16rtomb			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/locale/t_c32rtomb			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_ctype1			tests-obsolete		obsolete
 ./usr/tests/lib/libc/locale/t_ctype2			tests-obsolete		obsolete
 ./usr/tests/lib/libc/locale/t_digittoint		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_ducet			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_io			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/locale/t_mbrtoc16			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/locale/t_mbrtoc32			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_mbrtowc			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_mbsnrtowcs		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_mbstowcs			tests-lib-tests		compattestfile,atf

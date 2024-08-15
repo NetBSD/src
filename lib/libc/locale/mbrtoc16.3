@@ -1,0 +1,304 @@
+.\"	$NetBSD: mbrtoc16.3,v 1.1 2024/08/15 14:16:33 riastradh Exp $
+.\"
+.\" Copyright (c) 2024 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 14, 2024
+.Dt MBRTOC16 3
+.Os
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh NAME
+.Nm mbrtoc16
+.Nd Restartable multibyte to UTF-16 code unit conversion
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh LIBRARY
+.Lb libc
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SYNOPSIS
+.In uchar.h
+.Ft size_t
+.Fn mbrtoc16 "char16_t * restrict pc16" \
+"const char * restrict s" \
+"size_t n" \
+"mbstate_t * restrict ps"
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh DESCRIPTION
+The
+.Nm
+function attempts to decode a multibyte character sequence at
+.Fa s
+of up to
+.Fa n
+bytes in the current locale, and yield the content as UTF-16 code
+units via the output parameter
+.Fa pc16 .
+.Fa pc16
+may be null, in which case no output is stored.
+.Bl -bullet
+.It
+If the multibyte sequence at
+.Fa s
+is invalid or an error occurs in decoding,
+.Nm
+returns
+.Li (size_t)-1
+and sets
+.Xr errno 2
+to indicate the error.
+.It
+If the multibyte sequence at
+.Fa s
+is still incomplete after
+.Fa n
+bytes, including any previously processed input saved in
+.Fa ps ,
+.Nm
+saves its state in
+.Fa ps
+after all the input so far and returns
+.Li "(size_t)-2".
+.It
+If
+.Nm
+finds the null scalar value at
+.Fa s ,
+then it stores zero at
+.Li * Ns Fa pc16
+and returns zero.
+.It
+If
+.Nm
+finds a nonnull scalar value in the Basic Multilingual Plane, i.e., a
+16-bit scalar value, then it stores the scalar value at
+.Li * Ns Fa pc16 ,
+and returns the number of bytes it read from the input.
+.It
+If
+.Nm
+finds a scalar value outside the Basic Multilingual Plane (BMP), then
+it:
+.Bl -dash -compact
+.It
+stores the scalar value's high surrogate code point at
+.Li * Ns Fa pc16 ;
+.It
+stores conversion state in
+.Fa ps
+to remember the rest of the pending scalar value; and
+.It
+returns the number of bytes it read from the input.
+.El
+.It
+If
+.Nm
+had previously found a scalar value outside the BMP, then, instead of
+any of the above options, it:
+.Bl -dash -compact
+.It
+stores the scalar value's low surrogate code point at
+.Li * Ns Fa pc16 ;
+.It
+consumes rest of the pending scalar value from the conversion state
+.Fa ps ;
+and
+.It
+returns
+.Li (size_t)-3
+to indicate that no bytes were consumed but a code unit was yielded
+nevertheless.
+.El
+.El
+.Pp
+If
+.Fa s
+is a null pointer, the
+.Nm
+call is equivalent to:
+.Bd -ragged -offset indent
+.Fo mbrtoc16
+.Li NULL ,
+.Li \*q\*q ,
+.Li 1 ,
+.Fa ps
+.Fc
+.Ed
+.Pp
+This always returns zero, and has the effect of resetting
+.Fa ps
+to the initial conversion state, without writing to
+.Fa pc16 ,
+even if it is nonnull.
+.Pp
+If
+.Fa ps
+is a null pointer,
+.Nm
+uses an internal
+.Vt mbstate_t
+object with static storage duration, distinct from all other
+.Vt mbstate_t
+objects (including those used by
+.Xr mbrtoc32 3 ,
+.Xr c16rtomb 3 ,
+and
+.Xr c32rtomb 3 ) ,
+which is initialized at program startup to the initial conversion
+state.
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh RETURN VALUES
+The
+.Nm
+function returns:
+.Bl -tag -width ".Li (size_t)-3" -offset indent
+.It Li 0
+[null]
+if within the next
+.Fa n
+bytes at
+.Fa s
+the first multibyte character is null.
+.It Fa i
+[code unit]
+where
+.Li 0
+\*(Le
+.Fa i
+\*(Le
+.Fa n ,
+if either
+.Fa ps
+is in the initial conversion state or the previous call to
+.Nm
+with
+.Fa ps
+had not yielded a surrogate code point, and within the first
+.Fa i
+bytes at
+.Fa s
+a Unicode scalar value was decoded.
+.It Li (size_t)-3
+[continuation]
+if the previous call to
+.Nm
+with
+.Fa ps
+had yielded a high surrogate code point for a Unicode scalar value
+outside the Basic Multilingual Plane; no additional input is consumed
+in this case.
+.It Li (size_t)-2
+[incomplete]
+if either
+.Fa ps
+is in the initial conversion state or the previous call to
+.Nm
+with
+.Fa ps
+had not yielded a surrogate code point, and within the first
+.Fa n
+bytes at
+.Fa s ,
+including any previously buffered input, no complete Unicode scalar
+value could be decoded.
+.It Li (size_t)-1
+[error]
+if any encoding error was detected;
+.Xr errno 2
+is set to reflect the error.
+.El
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh EXAMPLES
+Print the UTF-16 code units of a multibyte string in hexadecimal text:
+.Bd -literal -offset indent
+char *s = ...;
+size_t n = ...;
+mbstate_t mbs = {0};	/* initial conversion state */
+
+while (n) {
+	char16_t c16;
+	size_t len;
+
+	len = mbrtoc16(&c16, s, n, &mbs);
+	switch (len) {
+	case 0:		/* null terminator */
+		assert(c16 == L'\e0');
+		goto out;
+	default:	/* scalar value or high surrogate */
+		printf("U+%04"PRIx16"\n", (uint16_t)c16);
+		break;
+	case (size_t)-3: /* low surrogate */
+		printf("continue U+%04"PRIx16"\n", (uint16_t)c16);
+		break;
+	case (size_t)-2: /* incomplete */
+		printf("incomplete\en");
+		goto readmore;
+	case (size_t)-1: /* error */
+		printf("error: %d\n", errno);
+		goto out;
+	}
+	s += len;
+	n -= len;
+}
+.Ed
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh ERRORS
+.Bl -tag -width ".Bq Er EILSEQ"
+.It Bq Er EILSEQ
+The multibyte sequence cannot be decoded as a Unicode scalar value.
+.It Bq Er EIO
+An error occurred in loading the locale's character conversions.
+.El
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SEE ALSO
+.Xr c16rtomb 3 ,
+.Xr c32rtomb 3 ,
+.Xr mbrtoc32 3 ,
+.Xr uchar 3
+.Rs
+.%B The Unicode Standard
+.%O Version 15.0 \(em Core Specification
+.%Q The Unicode Consortium
+.%D September 2022
+.%U https://www.unicode.org/versions/Unicode15.0.0/UnicodeStandard-15.0.pdf
+.Re
+.Rs
+.%A P. Hoffman
+.%A F. Yergeau
+.%T UTF-16, an encoding of ISO 10646
+.%R RFC 2781
+.%D February 2000
+.%I Internet Engineering Task Force
+.%U https://datatracker.ietf.org/doc/html/rfc2781
+.Re
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh STANDARDS
+The
+.Nm
+function conforms to
+.St -isoC-2011 .
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh HISTORY
+The
+.Nm
+function first appeared in
+.Nx 11.0 .

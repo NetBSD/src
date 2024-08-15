@@ -1,13 +1,17 @@
-# $NetBSD: Makefile,v 1.16 2024/08/15 13:14:44 riastradh Exp $
+# $NetBSD: Makefile,v 1.17 2024/08/15 14:16:34 riastradh Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/lib/libc/locale
 
 TESTS_C+=	t_btowc
+TESTS_C+=	t_c16rtomb
+TESTS_C+=	t_c32rtomb
 TESTS_C+=	t_digittoint
 TESTS_C+=	t_ducet
 TESTS_C+=	t_io
+TESTS_C+=	t_mbrtoc16
+TESTS_C+=	t_mbrtoc32
 TESTS_C+=	t_mbrtowc
 TESTS_C+=	t_mbsnrtowcs
 TESTS_C+=	t_mbstowcs
