@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.24 2023/06/14 10:26:45 rin Exp $ */
+/* $NetBSD: exec.c,v 1.25 2024/08/15 05:59:49 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -186,7 +186,7 @@ exec_netbsd(const char *fname, const char *args)
 	}
 	close(fd);
 	marks[MARK_END] = (((u_long) marks[MARK_END] + sizeof(int) - 1)) & -sizeof(int);
-	alloc_size = marks[MARK_END] - marks[MARK_START] + arch_alloc_size() + EFIBOOT_ALIGN;
+	alloc_size = marks[MARK_END] - marks[MARK_START] + efi_fdt_alloc_size() + EFIBOOT_ALIGN;
 
 #ifdef EFIBOOT_ALLOCATE_MAX_ADDRESS
 	addr = EFIBOOT_ALLOCATE_MAX_ADDRESS;
@@ -213,7 +213,7 @@ exec_netbsd(const char *fname, const char *args)
 	close(fd);
 	load_offset = 0;
 
-	if (arch_prepare_boot(fname, args, marks) != 0) {
+	if (efi_fdt_prepare_boot(fname, args, marks) != 0) {
 		goto cleanup;
 	}
 
@@ -224,7 +224,7 @@ exec_netbsd(const char *fname, const char *args)
 
 cleanup:
 	uefi_call_wrapper(BS->FreePages, 2, addr, EFI_SIZE_TO_PAGES(alloc_size));
-	arch_cleanup_boot();
+	efi_fdt_cleanup_boot();
 
 	return EIO;
 }

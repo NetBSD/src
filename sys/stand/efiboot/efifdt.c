@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.35 2022/08/14 11:26:41 jmcneill Exp $ */
+/* $NetBSD: efifdt.c,v 1.36 2024/08/15 05:59:49 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -596,7 +596,7 @@ load_modules(const char *kernel_name)
  * Prepare kernel arguments and shutdown boot services.
  */
 int
-arch_prepare_boot(const char *fname, const char *args, u_long *marks)
+efi_fdt_prepare_boot(const char *fname, const char *args, u_long *marks)
 {
 	load_file(get_initrd_path(), 0, false, &initrd_addr, &initrd_size);
 	load_file(get_dtb_path(), 0, false, &dtb_addr, &dtb_size);
@@ -650,7 +650,7 @@ arch_prepare_boot(const char *fname, const char *args, u_long *marks)
  * Free memory after a failed boot.
  */
 void
-arch_cleanup_boot(void)
+efi_fdt_cleanup_boot(void)
 {
 	if (rndseed_addr) {
 		uefi_call_wrapper(BS->FreePages, 2, rndseed_addr, EFI_SIZE_TO_PAGES(rndseed_size));
@@ -670,7 +670,7 @@ arch_cleanup_boot(void)
 }
 
 size_t
-arch_alloc_size(void)
+efi_fdt_alloc_size(void)
 {
 	return FDT_SPACE;
 }
@@ -735,7 +735,7 @@ efi_fdt_runtime_alloc_va(uint64_t npages)
 }
 
 void
-arch_set_virtual_address_map(EFI_MEMORY_DESCRIPTOR *memmap, UINTN nentries,
+efi_fdt_set_virtual_address_map(EFI_MEMORY_DESCRIPTOR *memmap, UINTN nentries,
     UINTN mapkey, UINTN descsize, UINT32 descver)
 {
 	EFI_MEMORY_DESCRIPTOR *md, *vmd, *vmemmap;
