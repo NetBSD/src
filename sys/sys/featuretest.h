@@ -1,4 +1,4 @@
-/*	$NetBSD: featuretest.h,v 1.11 2024/08/15 20:25:47 riastradh Exp $	*/
+/*	$NetBSD: featuretest.h,v 1.12 2024/08/15 20:42:59 riastradh Exp $	*/
 
 /*
  * Written by Klaus Klein <kleink@NetBSD.org>, February 2, 1998.
@@ -31,6 +31,13 @@
  * _POSIX_C_SOURCE == 200809L   IEEE Std 1003.1-2008
  * _POSIX_C_SOURCE == 202405L   IEEE Std 1003.1-2024
  *
+ * Reference:
+ *
+ *	The Open Group Base Specifications Issue 8, IEEE Std
+ *	1003.1-2024, IEEE and The Open Group, 2024, Sec. 2.2.1.1 `The
+ *	_POSIX_C_SOURCE Feature Test Macro'.
+ *	https://pubs.opengroup.org/onlinepubs/9799919799.2024edition/functions/V2_chap02.html#tag_16_02_01_01
+ *
  * X/Open macros:
  * _XOPEN_SOURCE		System Interfaces and Headers, Issue 4, Ver 2
  * _XOPEN_SOURCE_EXTENDED == 1	XSH4.2 UNIX extensions
@@ -39,6 +46,13 @@
  * _XOPEN_SOURCE == 600		IEEE Std 1003.1-2001, XSI option
  * _XOPEN_SOURCE == 700		IEEE Std 1003.1-2008, XSI option
  * _XOPEN_SOURCE == 800		IEEE Std 1003.1-2024, XSI option
+ *
+ * Reference:
+ *
+ *	The Open Group Base Specifications Issue 8, IEEE Std
+ *	1003.1-2024, IEEE and The Open Group, 2024, Sec. 2.2.1.2 `The
+ *	_XOPEN_SOURCE Feature Test Macro'.
+ *	https://pubs.opengroup.org/onlinepubs/9799919799.2024edition/functions/V2_chap02.html#tag_16_02_01_02
  *
  * NetBSD macros:
  * _NETBSD_SOURCE == 1		Make all NetBSD features available.
