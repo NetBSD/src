@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrtoc32.c,v 1.1 2024/08/15 14:16:33 riastradh Exp $	*/
+/*	$NetBSD: mbrtoc32.c,v 1.2 2024/08/15 15:46:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mbrtoc32.c,v 1.1 2024/08/15 14:16:33 riastradh Exp $");
+__RCSID("$NetBSD: mbrtoc32.c,v 1.2 2024/08/15 15:46:40 riastradh Exp $");
 
 #include <sys/param.h>		/* MIN */
 #include <sys/types.h>		/* broken citrus_*.h */
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: mbrtoc32.c,v 1.1 2024/08/15 14:16:33 riastradh Exp $");
 #include <langinfo.h>
 #include <limits.h>
 #include <paths.h>
+#include <stdalign.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -77,7 +78,7 @@ __RCSID("$NetBSD: mbrtoc32.c,v 1.1 2024/08/15 14:16:33 riastradh Exp $");
 #include "mbrtoc32.h"
 
 __CTASSERT(sizeof(struct mbrtoc32state) <= sizeof(mbstate_t));
-__CTASSERT(_Alignof(struct mbrtoc32state) <= _Alignof(mbstate_t));
+__CTASSERT(alignof(struct mbrtoc32state) <= alignof(mbstate_t));
 
 size_t
 mbrtoc32(char32_t *restrict pc32, const char *restrict s, size_t n,

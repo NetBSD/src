@@ -1,4 +1,4 @@
-/*	$NetBSD: c16rtomb.c,v 1.1 2024/08/15 14:16:33 riastradh Exp $	*/
+/*	$NetBSD: c16rtomb.c,v 1.2 2024/08/15 15:46:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -66,11 +66,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: c16rtomb.c,v 1.1 2024/08/15 14:16:33 riastradh Exp $");
+__RCSID("$NetBSD: c16rtomb.c,v 1.2 2024/08/15 15:46:40 riastradh Exp $");
 
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
+#include <stdalign.h>
 #include <stddef.h>
 #include <uchar.h>
 
@@ -83,7 +84,7 @@ struct c16rtombstate {
 __CTASSERT(offsetof(struct c16rtombstate, mbs) <= sizeof(mbstate_t));
 __CTASSERT(sizeof(struct c32rtombstate) <= sizeof(mbstate_t) -
     offsetof(struct c16rtombstate, mbs));
-__CTASSERT(_Alignof(struct c16rtombstate) <= _Alignof(mbstate_t));
+__CTASSERT(alignof(struct c16rtombstate) <= alignof(mbstate_t));
 
 size_t
 c16rtomb(char *restrict s, char16_t c16, mbstate_t *restrict ps)
