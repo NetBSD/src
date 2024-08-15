@@ -1,4 +1,4 @@
-/* $NetBSD: efibootriscv64.c,v 1.1 2021/05/02 15:22:27 jmcneill Exp $ */
+/* $NetBSD: efibootriscv64.c,v 1.2 2024/08/15 06:15:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -75,4 +75,10 @@ efi_md_show(void)
 void
 efi_dcache_flush(u_long start, u_long size)
 {
+}
+
+int
+efi_md_prepare_boot(const char *fname, const char *args, u_long *marks)
+{
+	return 0;
 }

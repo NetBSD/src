@@ -1,4 +1,4 @@
-/*	$NetBSD: efibootaa64.c,v 1.6 2022/08/14 11:26:41 jmcneill Exp $	*/
+/*	$NetBSD: efibootaa64.c,v 1.7 2024/08/15 06:15:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -29,6 +29,7 @@
 #include "../efiboot.h"
 #include "../efifdt.h"
 
+#include <sys/cdefs.h>
 #include <sys/bootblock.h>
 
 #include <loadfile.h>
@@ -76,8 +77,29 @@ efi_aarch64_current_el(void)
 	return (el >> 2) & 0x3;
 }
 
+static bool
+efi_aarch64_BigEnd(void)
+{
+	uint64_t id_aa64mmfr0_el1;
+	__asm __volatile ("mrs %[mmfr0], id_aa64mmfr0_el1"
+            : [mmfr0] "=r" (id_aa64mmfr0_el1) :: "memory");
+	return __SHIFTOUT(id_aa64mmfr0_el1, __BITS(11, 8)) == 1;
+}
+
 void
 efi_md_show(void)
 {
 	command_printtab("CurrentEL", "EL%u\n", efi_aarch64_current_el());
+}
+
+int
+efi_md_prepare_boot(const char *fname, const char *args, u_long *marks)
+{
+	if (netbsd_elf_data == ELFDATA2MSB) {
+		if (!efi_aarch64_BigEnd()) {
+			printf("Processor does not support big endian at EL1\n");
+			return ENOTSUP;
+		}
+	}
+	return 0;
 }
