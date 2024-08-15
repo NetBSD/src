@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2467 2024/08/05 13:06:38 christos Exp $
+#	$NetBSD: mi,v 1.2468 2024/08/15 13:14:43 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3679,6 +3679,7 @@
 ./usr/include/tss/tss_typedef.h			comp-c-include		tpm
 ./usr/include/ttyent.h				comp-c-include
 ./usr/include/tzfile.h				comp-c-include
+./usr/include/uchar.h				comp-c-include
 ./usr/include/ucontext.h			comp-c-include
 ./usr/include/ufs/ext2fs/ext2fs.h		comp-c-include
 ./usr/include/ufs/ext2fs/ext2fs_dinode.h	comp-c-include
