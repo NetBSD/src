@@ -1,4 +1,4 @@
-/*	$NetBSD: c16rtomb.c,v 1.2 2024/08/15 15:46:40 riastradh Exp $	*/
+/*	$NetBSD: c16rtomb.c,v 1.3 2024/08/15 22:22:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -66,7 +66,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: c16rtomb.c,v 1.2 2024/08/15 15:46:40 riastradh Exp $");
+__RCSID("$NetBSD: c16rtomb.c,v 1.3 2024/08/15 22:22:35 riastradh Exp $");
+
+#include "namespace.h"
 
 #include <assert.h>
 #include <errno.h>
