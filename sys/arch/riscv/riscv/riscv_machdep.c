@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.37 2024/03/05 14:15:34 thorpej Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.38 2024/08/15 07:03:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.37 2024/03/05 14:15:34 thorpej Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.38 2024/08/15 07:03:57 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -206,6 +206,9 @@ md_child_return(struct lwp *l)
 	userret(l);
 }
 
+/*
+ * Process the tail end of a posix_spawn() for the child.
+ */
 void
 cpu_spawn_return(struct lwp *l)
 {
