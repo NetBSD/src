@@ -1,4 +1,4 @@
-/* $NetBSD: efiboot.c,v 1.23 2024/03/28 18:24:57 riastradh Exp $ */
+/* $NetBSD: efiboot.c,v 1.24 2024/08/15 05:59:49 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -132,7 +132,7 @@ efi_cleanup(void)
 	}
 
 #ifdef EFIBOOT_RUNTIME_ADDRESS
-	arch_set_virtual_address_map(memmap, nentries, mapkey, descsize, descver);
+	efi_fdt_set_virtual_address_map(memmap, nentries, mapkey, descsize, descver);
 #endif
 }
 
