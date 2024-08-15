@@ -1,4 +1,4 @@
-/*	$NetBSD: uchar.h,v 1.1 2024/08/15 13:14:44 riastradh Exp $	*/
+/*	$NetBSD: uchar.h,v 1.2 2024/08/15 21:19:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -28,9 +28,8 @@
 
 /*
  * C11, 7.28: Unicode utilities <uchar.h>
- *
- *	`1. The header <uchar.h> declares types and functions for
- *	    manipulating Unicode characters.'
+ * C17, 7.28: Unicode utilities <uchar.h> (unchanged from C11)
+ * C23, 7.30: Unicode utilities <uchar.h>
  */
 
 #ifndef	_UCHAR_H
@@ -39,7 +38,20 @@
 #include <sys/ansi.h>
 
 /*
- *	`2. The types declared are mbstate_t (described in 7.30.1) and
+ * C23	`2. The macro
+ *
+ *		__STDC_VERSION_UCHAR_H__
+ *
+ *	    is an integer constant expression with a value equivalent
+ *	    to 202311L.'
+ */
+#if defined(_NETBSD_SOURCE) || defined(_ISOC23_SOURCE) || \
+    __STDC_VERSION__ - 0 >= 202311L
+#define	__STDC_VERSION_UCHAR_H__	202311L
+#endif
+
+/*
+ * C11	`2. The types declared are mbstate_t (described in 7.30.1) and
  *	    size_t (described in 7.19);
  *
  *	    	char16_t
@@ -65,6 +77,17 @@ typedef _BSD_SIZE_T_	size_t;
 #undef _BSD_SIZE_T_
 #endif
 
+/*
+ * C23	`char8_t...is an unsigned integer type used for 8-bit
+ *	 characters and is the same type as unsigned char'
+ */
+#if defined(_NETBSD_SOURCE) || defined(_ISOC23_SOURCE) || \
+    __STDC_VERSION__ - 0 >= 202311L
+#if !defined(__cpp_char8_t) || __cpp_char8_t < 201811L
+typedef unsigned char		char8_t;
+#endif
+#endif
+
 #if !defined(__cplusplus) || __cplusplus < 201103L
 typedef __UINT_LEAST16_TYPE__	char16_t;
 typedef __UINT_LEAST32_TYPE__	char32_t;
@@ -72,6 +95,12 @@ typedef __UINT_LEAST32_TYPE__	char32_t;
 
 __BEGIN_DECLS
 
+#if defined(_NETBSD_SOURCE) || defined(_ISOC23_SOURCE) || \
+    __STDC_VERSION__ - 0 >= 202311L
+size_t	mbrtoc8(char8_t *__restrict, const char *__restrict, size_t,
+	    mbstate_t *__restrict);
+size_t	c8rtomb(char *__restrict, char8_t, mbstate_t *__restrict);
+#endif
 size_t	mbrtoc16(char16_t *__restrict, const char *__restrict, size_t,
 	    mbstate_t *__restrict);
 size_t	c16rtomb(char *__restrict, char16_t, mbstate_t *__restrict);
