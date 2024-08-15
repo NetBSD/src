@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrtoc16.c,v 1.2 2024/08/15 15:46:40 riastradh Exp $	*/
+/*	$NetBSD: mbrtoc16.c,v 1.3 2024/08/15 20:23:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mbrtoc16.c,v 1.2 2024/08/15 15:46:40 riastradh Exp $");
+__RCSID("$NetBSD: mbrtoc16.c,v 1.3 2024/08/15 20:23:26 riastradh Exp $");
 
 #include <assert.h>
 #include <errno.h>
@@ -134,11 +134,13 @@ mbrtoc16(char16_t *restrict pc16, const char *restrict s, size_t n,
 	S = (struct mbrtoc16state *)ps;
 
 	/*
-	 * If there is a pending surrogate, stash it and consume no
+	 * If there is a pending surrogate, yield it and consume no
 	 * bytes of the input, returning (size_t)-3 to indicate that no
 	 * bytes of input were consumed.
 	 */
-	if (S->surrogate >= 0xdc00 && S->surrogate <= 0xdfff) {
+	if (S->surrogate != 0) {
+		_DIAGASSERT(S->surrogate >= 0xdc00);
+		_DIAGASSERT(S->surrogate <= 0xdfff);
 		if (pc16)
 			*pc16 = S->surrogate;
 		S->surrogate = 0;
@@ -184,6 +186,8 @@ mbrtoc16(char16_t *restrict pc16, const char *restrict s, size_t n,
 			*pc16 = w1;
 		S->surrogate = w2;
 		_DIAGASSERT(S->surrogate != 0);
+		_DIAGASSERT(S->surrogate >= 0xdc00);
+		_DIAGASSERT(S->surrogate <= 0xdfff);
 	}
 
 	/*
