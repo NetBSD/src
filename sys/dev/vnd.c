@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.289 2023/05/19 15:42:43 mlelstv Exp $	*/
+/*	$NetBSD: vnd.c,v 1.290 2024/08/15 21:08:20 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008, 2020 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.289 2023/05/19 15:42:43 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.290 2024/08/15 21:08:20 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -875,6 +875,9 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 	bn = obp->b_rawblkno * vnd->sc_dkdev.dk_label->d_secsize;
 
 	bsize = vnd->sc_vp->v_mount->mnt_stat.f_iosize;
+	/* use default if the filesystem didn't specify a block size */
+	if (bsize <= 0)
+		bsize = BLKDEV_IOSIZE;
 	skipped = 0;
 
 	/*
