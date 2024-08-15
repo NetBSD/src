@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 2/18/91
-#	$NetBSD: Makefile.inc,v 1.65 2021/02/15 14:35:04 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.66 2024/08/15 14:16:33 riastradh Exp $
 
 # locale sources
 .PATH: ${ARCHDIR}/locale ${.CURDIR}/locale
@@ -10,6 +10,13 @@ SRCS+=	setlocale.c __mb_cur_max.c \
 	generic_lc_all.c dummy_lc_collate.c \
 	wcstol.c wcstoll.c wcstoimax.c wcstoul.c wcstoull.c wcstoumax.c \
 	wcstod.c wcstof.c wcstold.c wcscoll.c wcsxfrm.c wcsftime.c
+
+SRCS+=	c16rtomb.c
+SRCS+=	c32rtomb.c
+SRCS+=	mbrtoc16.c
+SRCS+=	mbrtoc32.c
+CPPFLAGS.c32rtomb.c+=		-I${LIBCDIR}/citrus
+CPPFLAGS.mbrtoc32.c+=		-I${LIBCDIR}/citrus
 
 # citrus multibyte locale support
 # we have quirk for libc.a - see the last part of lib/libc/Makefile
@@ -28,6 +35,11 @@ MAN+=	mbtowc.3 mbstowcs.3 wctomb.3 wcstombs.3 mblen.3 \
 MAN+=	btowc.3 mbrtowc.3 mbsrtowcs.3 \
 	wctob.3 wcrtomb.3 wcsrtombs.3 \
 	mbrlen.3 mbsinit.3
+
+MAN+=	c16rtomb.3
+MAN+=	c32rtomb.3
+MAN+=	mbrtoc16.3
+MAN+=	mbrtoc32.3
 
 MAN+=	iswalnum.3 wctype.3 iswctype.3 \
 	towlower.3 wctrans.3 towctrans.3 \

@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.296 2024/02/02 21:52:22 andvar Exp $
+#	$NetBSD: shlib_version,v 1.297 2024/08/15 14:16:33 riastradh Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -55,4 +55,4 @@
 # - remove tzsetwall(3), upstream has removed it
 # - move *rand48* to libcompat
 major=12
-minor=221
+minor=222

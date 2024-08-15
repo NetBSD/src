@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.92 2024/03/07 22:14:20 christos Exp $
+#	$NetBSD: Makefile,v 1.93 2024/08/15 14:16:34 riastradh Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	_DIAGASSERT.3 __CONCAT.3 __FPTRCAST.3 __UNCONST.3 __USE.3 CMSG_DATA.3 \
@@ -13,6 +13,7 @@ MAN=	_DIAGASSERT.3 __CONCAT.3 __FPTRCAST.3 __UNCONST.3 __USE.3 CMSG_DATA.3 \
 	makedev.3 offsetof.3 param.3 paths.3 queue.3 rbtree.3 sigevent.3 \
 	stdarg.3 stdbool.3 stddef.3 stdint.3 stdlib.3 sysexits.3 \
 	tgmath.3 timeradd.3 timeval.3 tm.3 tree.3 typeof.3 types.3 \
+	uchar.3 \
 	unistd.3
 
 USETBL=	# used by queue.3
