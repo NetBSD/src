@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2024/08/14 23:32:31 riastradh Exp $
+# $NetBSD: Makefile,v 1.16 2024/08/15 13:14:44 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,7 @@ TESTS_C+=	t_mbtowc
 TESTS_C+=	t_sprintf
 TESTS_C+=	t_strfmon
 TESTS_C+=	t_toupper
+TESTS_C+=	t_uchar
 TESTS_C+=	t_wcscoll
 TESTS_C+=	t_wcscspn
 TESTS_C+=	t_wcspbrk
