@@ -1,4 +1,4 @@
-/* $NetBSD: efiboot_machdep.h,v 1.4 2023/08/01 07:04:16 mrg Exp $ */
+/* $NetBSD: efiboot_machdep.h,v 1.5 2024/08/15 06:15:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -33,3 +33,4 @@
 void efi_dcache_flush(u_long, u_long);
 void efi_boot_kernel(u_long[MARK_MAX]);
 void efi_md_show(void);
+int efi_md_prepare_boot(const char *, const char *, u_long *);

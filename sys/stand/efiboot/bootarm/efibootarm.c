@@ -1,4 +1,4 @@
-/* $NetBSD: efibootarm.c,v 1.3 2020/11/28 14:02:09 jmcneill Exp $ */
+/* $NetBSD: efibootarm.c,v 1.4 2024/08/15 06:15:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -62,4 +62,10 @@ efi_boot_kernel(u_long marks[MARK_MAX])
 void
 efi_md_show(void)
 {
+}
+
+int
+efi_md_prepare_boot(const char *fname, const char *args, u_long *marks)
+{
+        return 0;
 }

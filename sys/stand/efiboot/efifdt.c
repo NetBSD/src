@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.36 2024/08/15 05:59:49 skrll Exp $ */
+/* $NetBSD: efifdt.c,v 1.37 2024/08/15 06:15:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -598,13 +598,19 @@ load_modules(const char *kernel_name)
 int
 efi_fdt_prepare_boot(const char *fname, const char *args, u_long *marks)
 {
+	int error;
+
 	load_file(get_initrd_path(), 0, false, &initrd_addr, &initrd_size);
 	load_file(get_dtb_path(), 0, false, &dtb_addr, &dtb_size);
 
+	error = efi_md_prepare_boot(fname, args, marks);
+	if (error) {
+		return error;
+	}
 #ifdef EFIBOOT_ACPI
 	/* ACPI support only works for little endian kernels */
 	if (efi_acpi_available() && netbsd_elf_data == ELFDATA2LSB) {
-		int error = efi_fdt_create_acpifdt();
+		error = efi_fdt_create_acpifdt();
 		if (error != 0) {
 			return error;
 		}
