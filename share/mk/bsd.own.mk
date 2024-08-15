@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1395 2024/08/13 03:08:31 rin Exp $
+#	$NetBSD: bsd.own.mk,v 1.1396 2024/08/15 06:48:00 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1376,7 +1376,7 @@ HAVE_XORG_SERVER_VER?=120
 # Newer Mesa does not build with old X server
 # VAX build triggers a gcc internal error
 .if ${HAVE_XORG_SERVER_VER} != "120" || ${MACHINE} == "vax"
-HAVE_MESA_VER=19
+HAVE_MESA_VER?=19
 .endif
 
 HAVE_MESA_VER?=	21
