@@ -1,4 +1,4 @@
-.\"	$NetBSD: c8rtomb.3,v 1.1 2024/08/15 21:19:45 riastradh Exp $
+.\"	$NetBSD: c8rtomb.3,v 1.2 2024/08/16 18:35:19 uwe Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,11 +36,15 @@
 .Lb libc
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh SYNOPSIS
+.
 .In uchar.h
+.
 .Ft size_t
-.Fn c8rtomb "char * restrict s" \
-"char8_t c8" \
-"mbstate_t * restrict ps"
+.Fo c8rtomb
+.Fa "char * restrict s"
+.Fa "char8_t c8"
+.Fa "mbstate_t * restrict ps"
+.Fc
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh DESCRIPTION
 The
@@ -93,23 +97,23 @@ NUL-terminate it, and print it:
 char8_t c8[] = { 0xf0, 0x9f, 0x92, 0xa9 };
 char buf[__arraycount(c8)*MB_CUR_MAX + 1], *s = buf;
 size_t i;
-mbstate_t mbs = {0};	/* initial conversion state */
+mbstate_t mbs = {0};    /* initial conversion state */
 
 for (i = 0; i < __arraycount(c8); i++) {
-	size_t len;
+        size_t len;
 
-	len = c8rtomb(s, c8[i], &mbs);
-	if (len == (size_t)-1)
-		err(1, "c8rtomb");
-	assert(len < sizeof(buf) - (s - buf));
-	s += len;
+        len = c8rtomb(s, c8[i], &mbs);
+        if (len == (size_t)-1)
+                err(1, "c8rtomb");
+        assert(len < sizeof(buf) - (s - buf));
+        s += len;
 }
-*s = '\e0';		/* NUL-terminate */
+*s = '\e0';             /* NUL-terminate */
 printf("%s\en", buf);
 .Ed
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh ERRORS
-.Bl -tag -width ".Bq Er EILSEQ"
+.Bl -tag -width Bq
 .It Bq Er EILSEQ
 A surrogate code point was passed as
 .Fa c8
@@ -177,7 +181,7 @@ in the standard which suggests that passing
 should unconditionally store a null byte and reset
 .Fa ps
 to the initial conversion state:
-.Bd -offset indent
+.Bd -filled -offset indent
 If
 .Fa c8
 is a null character, a null byte is stored, preceded by any shift
