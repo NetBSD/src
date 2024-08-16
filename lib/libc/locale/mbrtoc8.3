@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbrtoc8.3,v 1.4 2024/08/16 23:12:17 riastradh Exp $
+.\"	$NetBSD: mbrtoc8.3,v 1.5 2024/08/16 23:25:18 riastradh Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,8 +50,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-decodes multibyte characters in the current locale and converts them to
-UTF-8, keeping state so it can restart after incremental progress.
+function decodes multibyte characters in the current locale and
+converts them to UTF-8, keeping state so it can restart after
+incremental progress.
 .Pp
 Each call to
 .Nm :
