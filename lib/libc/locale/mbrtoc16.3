@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbrtoc16.3,v 1.2 2024/08/15 14:42:20 riastradh Exp $
+.\"	$NetBSD: mbrtoc16.3,v 1.3 2024/08/16 12:41:21 uwe Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,12 +36,16 @@
 .Lb libc
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh SYNOPSIS
+.
 .In uchar.h
+.
 .Ft size_t
-.Fn mbrtoc16 "char16_t * restrict pc16" \
-"const char * restrict s" \
-"size_t n" \
-"mbstate_t * restrict ps"
+.Fo mbrtoc16
+.Fa "char16_t * restrict pc16"
+.Fa "const char * restrict s"
+.Fa "size_t n"
+.Fa "mbstate_t * restrict ps"
+.Fc
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh DESCRIPTION
 The
@@ -158,11 +162,14 @@ uses an internal
 .Vt mbstate_t
 object with static storage duration, distinct from all other
 .Vt mbstate_t
-objects (including those used by
+objects
+.Po
+including those used by
 .Xr mbrtoc32 3 ,
 .Xr c16rtomb 3 ,
 and
-.Xr c32rtomb 3 ) ,
+.Xr c32rtomb 3
+.Pc ,
 which is initialized at program startup to the initial conversion
 state.
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -170,20 +177,20 @@ state.
 The
 .Nm
 function returns:
-.Bl -tag -width ".Li (size_t)-3" -offset indent
+.Bl -tag -width Li
 .It Li 0
-[null]
+.Bq null
 if within the next
 .Fa n
 bytes at
 .Fa s
 the first multibyte character is null.
-.It Fa i
-[code unit]
+.It Ar i
+.Bq code unit
 where
 .Li 0
 \*(Le
-.Fa i
+.Ar i
 \*(Le
 .Fa n ,
 if either
@@ -198,7 +205,7 @@ bytes at
 .Fa s
 a Unicode scalar value was decoded.
 .It Li (size_t)-3
-[continuation]
+.Bq continuation
 if the previous call to
 .Nm
 with
@@ -207,7 +214,7 @@ had yielded a high surrogate code point for a Unicode scalar value
 outside the Basic Multilingual Plane; no additional input is consumed
 in this case.
 .It Li (size_t)-2
-[incomplete]
+.Bq incomplete
 if either
 .Fa ps
 is in the initial conversion state or the previous call to
@@ -221,7 +228,7 @@ bytes at
 including any previously buffered input, no complete Unicode scalar
 value could be decoded.
 .It Li (size_t)-1
-[error]
+.Bq error
 if any encoding error was detected;
 .Xr errno 2
 is set to reflect the error.
@@ -232,37 +239,37 @@ Print the UTF-16 code units of a multibyte string in hexadecimal text:
 .Bd -literal -offset indent
 char *s = ...;
 size_t n = ...;
-mbstate_t mbs = {0};	/* initial conversion state */
+mbstate_t mbs = {0};    /* initial conversion state */
 
 while (n) {
-	char16_t c16;
-	size_t len;
+        char16_t c16;
+        size_t len;
 
-	len = mbrtoc16(&c16, s, n, &mbs);
-	switch (len) {
-	case 0:		/* null terminator */
-		assert(c16 == L'\e0');
-		goto out;
-	default:	/* scalar value or high surrogate */
-		printf("U+%04"PRIx16"\en", (uint16_t)c16);
-		break;
-	case (size_t)-3: /* low surrogate */
-		printf("continue U+%04"PRIx16"\en", (uint16_t)c16);
-		break;
-	case (size_t)-2: /* incomplete */
-		printf("incomplete\en");
-		goto readmore;
-	case (size_t)-1: /* error */
-		printf("error: %d\en", errno);
-		goto out;
-	}
-	s += len;
-	n -= len;
+        len = mbrtoc16(&c16, s, n, &mbs);
+        switch (len) {
+        case 0:         /* null terminator */
+                assert(c16 == L'\e0');
+                goto out;
+        default:        /* scalar value or high surrogate */
+                printf("U+%04"PRIx16"\en", (uint16_t)c16);
+                break;
+        case (size_t)-3: /* low surrogate */
+                printf("continue U+%04"PRIx16"\en", (uint16_t)c16);
+                break;
+        case (size_t)-2: /* incomplete */
+                printf("incomplete\en");
+                goto readmore;
+        case (size_t)-1: /* error */
+                printf("error: %d\en", errno);
+                goto out;
+        }
+        s += len;
+        n -= len;
 }
 .Ed
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh ERRORS
-.Bl -tag -width ".Bq Er EILSEQ"
+.Bl -tag -width Bq
 .It Bq Er EILSEQ
 The multibyte sequence cannot be decoded as a Unicode scalar value.
 .It Bq Er EIO
