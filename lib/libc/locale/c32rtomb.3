@@ -1,4 +1,4 @@
-.\"	$NetBSD: c32rtomb.3,v 1.2 2024/08/15 14:58:00 riastradh Exp $
+.\"	$NetBSD: c32rtomb.3,v 1.3 2024/08/16 12:54:07 uwe Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,11 +36,15 @@
 .Lb libc
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh SYNOPSIS
+.
 .In uchar.h
+.
 .Ft size_t
-.Fn c32rtomb "char * restrict s" \
-"char32_t c32" \
-"mbstate_t * restrict ps"
+.Fo c32rtomb
+.Fa "char * restrict s"
+.Fa "char32_t c32"
+.Fa "mbstate_t * restrict ps"
+.Fc
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh DESCRIPTION
 The
@@ -63,7 +67,7 @@ of surrogate code points.
 .Pp
 If a surrogate code point is passed,
 .Nm
- will return
+will return
 .Li (size_t)-1
 to denote failure with
 .Xr errno 2
@@ -88,23 +92,23 @@ NUL-terminate it, and print it:
 char32_t c32[] = { 0x1f4a9, 0x20ac, 0x21 };
 char buf[__arraycountb(c32)*MB_CUR_MAX + 1], *s = buf;
 size_t i;
-mbstate_t mbs = {0};	/* initial conversion state */
+mbstate_t mbs = {0};    /* initial conversion state */
 
 for (i = 0; i < __arraycount(c32); i++) {
-	size_t len;
+        size_t len;
 
-	len = c32rtomb(s, c32[i], &mbs);
-	if (len == (size_t)-1)
-		err(1, "c32rtomb");
-	assert(len < sizeof(buf) - (s - buf));
-	s += len;
+        len = c32rtomb(s, c32[i], &mbs);
+        if (len == (size_t)-1)
+                err(1, "c32rtomb");
+        assert(len < sizeof(buf) - (s - buf));
+        s += len;
 }
-*s = '\e0';		/* NUL-terminate */
+*s = '\e0';             /* NUL-terminate */
 printf("%s\en", buf);
 .Ed
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh ERRORS
-.Bl -tag -width ".Bq Er EILSEQ"
+.Bl -tag -width Bq
 .It Bq Er EILSEQ
 A surrogate code point was passed as
 .Fa c32 .
