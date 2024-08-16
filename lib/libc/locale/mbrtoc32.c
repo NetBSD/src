@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrtoc32.c,v 1.3 2024/08/15 22:22:35 riastradh Exp $	*/
+/*	$NetBSD: mbrtoc32.c,v 1.4 2024/08/16 14:00:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mbrtoc32.c,v 1.3 2024/08/15 22:22:35 riastradh Exp $");
+__RCSID("$NetBSD: mbrtoc32.c,v 1.4 2024/08/16 14:00:48 riastradh Exp $");
 
 #include "namespace.h"
 
@@ -180,7 +180,7 @@ mbrtoc32(char32_t *restrict pc32, const char *restrict s, size_t n,
 		    _CITRUS_ICONV_F_HIDE_INVALID, &inval);
 		if (error != EINVAL) {
 			if (error == 0)
-				goto ok;
+				break;
 			errno = error;
 			len = (size_t)-1;
 			goto out;
@@ -188,14 +188,15 @@ mbrtoc32(char32_t *restrict pc32, const char *restrict s, size_t n,
 	}
 
 	/*
-	 * Incomplete.  Return (size_t)-2 and let the caller try again.
-	 * We have consumed all n bytes at this point without finding a
-	 * complete code point.
+	 * If it is still incomplete after trying the whole input
+	 * buffer, return (size_t)-2 and let the caller try again.
 	 */
-	len = (size_t)-2;
-	goto out;
+	if (error) {
+		len = (size_t)-2;
+		goto out;
+	}
 
-ok:	/*
+	/*
 	 * Successfully converted a minimal byte sequence, which should
 	 * produce exactly one UTF-32 code unit, encoded in
 	 * little-endian, representing a code point.  Get the code
