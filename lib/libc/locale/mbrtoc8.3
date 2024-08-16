@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbrtoc8.3,v 1.3 2024/08/16 19:31:48 riastradh Exp $
+.\"	$NetBSD: mbrtoc8.3,v 1.4 2024/08/16 23:12:17 riastradh Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh NAME
 .Nm mbrtoc8
-.Nd Restartable multibyte to UTF-8 code unit conversion
+.Nd Restartable multibyte to UTF-8 conversion
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh LIBRARY
 .Lb libc
@@ -50,20 +50,37 @@
 .Sh DESCRIPTION
 The
 .Nm
-function attempts to decode a multibyte character sequence at
-.Fa s
-of up to
+decodes multibyte characters in the current locale and converts them to
+UTF-8, keeping state so it can restart after incremental progress.
+.Pp
+Each call to
+.Nm :
+.Bl -enum -compact
+.It
+examines up to
 .Fa n
-bytes in the current locale, and yield the content as UTF-8 code
-units via the output parameter
-.Fa pc8 .
-.Fa pc8
-may be null, in which case no output is stored.
+bytes starting at
+.Fa s ,
+.It
+yields a UTF-8 code unit if available by storing it at
+.Li * Ns Fa pc8 ,
+.It
+saves state at
+.Fa ps ,
+and
+.It
+returns either the number of bytes consumed if any or a special return
+value.
+.El
+.Pp
+Specifically:
 .Bl -bullet
 .It
 If the multibyte sequence at
 .Fa s
-is invalid or an error occurs in decoding,
+is invalid after any previous input saved at
+.Fa ps ,
+or if an error occurs in decoding,
 .Nm
 returns
 .Li (size_t)-1
@@ -75,7 +92,7 @@ If the multibyte sequence at
 .Fa s
 is still incomplete after
 .Fa n
-bytes, including any previously processed input saved in
+bytes, including any previous input saved in
 .Fa ps ,
 .Nm
 saves its state in
@@ -85,53 +102,33 @@ after all the input so far and returns
 .It
 If
 .Nm
-finds the null scalar value at
-.Fa s ,
-then it stores zero at
+had previously decoded a multibyte character but has not yet yielded
+all the code units of its UTF-8 encoding, it stores the next UTF-8 code
+unit at
+.Li * Ns Fa pc8
+and returns
+.Li "(size_t)-3" .
+.It
+If
+.Nm
+decodes the null multibyte character, then it stores zero at
 .Li * Ns Fa pc8
 and returns zero.
 .It
-If
+Otherwise,
 .Nm
-finds a nonnull scalar value in the US-ASCII range, i.e., a 7-bit
-scalar value, then it stores the scalar value at
+decodes a single multibyte character, stores the first (and possibly
+only) code unit in its UTF-8 encoding at
 .Li * Ns Fa pc8 ,
-and returns the number of bytes it read from the input.
-.It
+and returns the number of bytes consumed to decode the first multibyte
+character.
+.El
+.Pp
 If
-.Nm
-finds a scalar value outside the US-ASCII range, it:
-.Bl -dash -compact
-.It
-stores the leading byte in the scalar value's UTF-8 encoding at
-.Li * Ns Fa pc8 ;
-.It
-stores conversion state in
+.Fa pc8
+is a null pointer, nothing is stored, but the effects on
 .Fa ps
-to remember the rest of the pending scalar value; and
-.It
-returns the number of bytes it read from the input.
-.El
-.It
-If
-.Nm
-had previously found a scalar value outside the US-ASCII range, then,
-instead of any of the above options, it:
-.Bl -dash -compact
-.It
-stores the next byte in the scalar value's UTF-8 encoding at
-.Li * Ns Fa pc8 ;
-.It
-updates the conversion state in
-.Fa ps
-to consume this byte; and
-.It
-returns
-.Li (size_t)-3
-to indicate that no bytes were consumed but a code unit was yielded
-nevertheless.
-.El
-.El
+and the return value are unchanged.
 .Pp
 If
 .Fa s
@@ -174,6 +171,14 @@ and
 which is initialized at program startup to the initial conversion
 state.
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh IMPLEMENTATION NOTES
+On well-formed input, the
+.Nm
+function yields either a Unicode scalar value in US-ASCII range, i.e.,
+a 7-bit Unicode code point, or, over two to four successive calls, the
+leading and trailing code units in order of the UTF-8 encoding of a
+Unicode scalar value outside the US-ASCII range.
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh RETURN VALUES
 The
 .Nm
@@ -197,26 +202,21 @@ if
 consumed
 .Ar i
 bytes of input to decode the next multibyte character, yielding a
-(nonnull) UTF-8 code unit, either a Unicode scalar value in the
-US-ASCII range or a leading byte in the UTF-8 encoding of a scalar
-value.
+UTF-8 code unit.
 .It Li (size_t)-3
 .Bq continuation
 if
 .Nm
-consumed no bytes of input but yielded a (nonnull) UTF-8 code unit, the
-next trailing byte in the UTF-8 encoding of a Unicode scalar value
-previously decoded by
-.Nm
-with
-.Fa ps .
+consumed no new bytes of input but yielded a UTF-8 code unit that was
+pending from previous input.
 .It Li (size_t)-2
 .Bq incomplete
 if
 .Nm
-found an incomplete multibyte character after all
+found only an incomplete multibyte sequence after all
 .Fa n
-bytes of input, and saved its state to restart in the next call with
+bytes of input and any previous input, and saved its state to restart
+in the next call with
 .Fa ps .
 .It Li (size_t)-1
 .Bq error
@@ -262,7 +262,8 @@ while (n) {
 .Sh ERRORS
 .Bl -tag -width Bq
 .It Bq Er EILSEQ
-The multibyte sequence cannot be decoded as a Unicode scalar value.
+The multibyte sequence cannot be decoded in the current locale as a
+Unicode scalar value.
 .It Bq Er EIO
 An error occurred in loading the locale's character conversions.
 .El
