@@ -1,4 +1,4 @@
-.\"	$NetBSD: c8rtomb.3,v 1.3 2024/08/16 19:39:09 riastradh Exp $
+.\"	$NetBSD: c8rtomb.3,v 1.4 2024/08/16 23:34:25 riastradh Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -136,12 +136,12 @@ printf("%s\en", buf);
 .Sh ERRORS
 .Bl -tag -width Bq
 .It Bq Er EILSEQ
-A surrogate code point was passed as
+The
 .Fa c8
-when it is inappropriate.
+input sequence does not encode a Unicode scalar value in UTF-8.
 .It Bq Er EILSEQ
-The Unicode scalar value requested cannot be encoded as a multibyte
-sequence in the current locale.
+The Unicode scalar value cannot be encoded as a multibyte sequence in
+the current locale.
 .It Bq Er EIO
 An error occurred in loading the locale's character conversions.
 .El
