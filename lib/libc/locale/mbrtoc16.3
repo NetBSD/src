@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbrtoc16.3,v 1.3 2024/08/16 12:41:21 uwe Exp $
+.\"	$NetBSD: mbrtoc16.3,v 1.4 2024/08/16 13:33:35 riastradh Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -93,15 +93,14 @@ and returns zero.
 .It
 If
 .Nm
-finds a nonnull scalar value in the Basic Multilingual Plane, i.e., a
-16-bit scalar value, then it stores the scalar value at
+finds a nonnull scalar value in the Basic Multilingual Plane (BMP),
+i.e., a 16-bit scalar value, then it stores the scalar value at
 .Li * Ns Fa pc16 ,
 and returns the number of bytes it read from the input.
 .It
 If
 .Nm
-finds a scalar value outside the Basic Multilingual Plane (BMP), then
-it:
+finds a scalar value outside the BMP, then it:
 .Bl -dash -compact
 .It
 stores the scalar value's high surrogate code point at
@@ -180,11 +179,9 @@ function returns:
 .Bl -tag -width Li
 .It Li 0
 .Bq null
-if within the next
-.Fa n
-bytes at
-.Fa s
-the first multibyte character is null.
+if
+.Nm
+decoded a null multibyte character.
 .It Ar i
 .Bq code unit
 where
@@ -193,40 +190,32 @@ where
 .Ar i
 \*(Le
 .Fa n ,
-if either
-.Fa ps
-is in the initial conversion state or the previous call to
+if
 .Nm
-with
-.Fa ps
-had not yielded a surrogate code point, and within the first
-.Fa i
-bytes at
-.Fa s
-a Unicode scalar value was decoded.
+consumed
+.Ar i
+bytes of input to decode the next multibyte character, yielding a
+(nonnull) UTF-16 code unit, either a Unicode scalar value in the BMP or
+a high surrogate code point.
 .It Li (size_t)-3
 .Bq continuation
-if the previous call to
+if
+.Nm
+consumed no bytes of input but yielded a (nonnull) UTF-16 code unit, a
+low surrogate code point, because the previous call to
 .Nm
 with
 .Fa ps
 had yielded a high surrogate code point for a Unicode scalar value
-outside the Basic Multilingual Plane; no additional input is consumed
-in this case.
+outside the BMP.
 .It Li (size_t)-2
 .Bq incomplete
-if either
-.Fa ps
-is in the initial conversion state or the previous call to
+if
 .Nm
-with
-.Fa ps
-had not yielded a surrogate code point, and within the first
+found an incomplete multibyte character after all
 .Fa n
-bytes at
-.Fa s ,
-including any previously buffered input, no complete Unicode scalar
-value could be decoded.
+bytes of input, and saved its state to restart in the next call with
+.Fa ps .
 .It Li (size_t)-1
 .Bq error
 if any encoding error was detected;
