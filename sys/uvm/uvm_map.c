@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.425 2024/08/15 11:33:21 riastradh Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.426 2024/08/16 11:28:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.425 2024/08/15 11:33:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.426 2024/08/16 11:28:01 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -1846,19 +1846,7 @@ uvm_findspace_invariants(struct vm_map *map, vaddr_t orig_hint, vaddr_t length,
 		topdown ? hint <= orig_hint
 			: hint >= orig_hint;
 
-#if !(defined(__sh3__) && defined(DIAGNOSTIC)) /* XXXRO: kern/51254 */
-#define UVM_FINDSPACE_KASSERTMSG KASSERTMSG
-
-#else  /* sh3 && DIAGNOSTIC */
-/* like KASSERTMSG but make it not fatal */
-#define UVM_FINDSPACE_KASSERTMSG(e, msg, ...)			\
-		(__predict_true((e)) ? (void)0 :		\
-		    printf(__KASSERTSTR msg "\n",		\
-			"weak diagnostic ", #e,			\
-			__FILE__, __LINE__, ## __VA_ARGS__))
-#endif
-
-	UVM_FINDSPACE_KASSERTMSG(hint_location_ok,
+	KASSERTMSG(hint_location_ok,
 	    "%s map=%p hint=%#" PRIxVADDR " %s orig_hint=%#" PRIxVADDR
 	    " length=%#" PRIxVSIZE " uobj=%p uoffset=%#llx align=%" PRIxVSIZE
 	    " flags=%#x entry@%p=[%" PRIxVADDR ",%" PRIxVADDR ")"
