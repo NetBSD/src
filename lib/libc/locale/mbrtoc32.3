@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbrtoc32.3,v 1.2 2024/08/15 14:42:20 riastradh Exp $
+.\"	$NetBSD: mbrtoc32.3,v 1.3 2024/08/16 12:41:21 uwe Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,12 +36,16 @@
 .Lb libc
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh SYNOPSIS
+.
 .In uchar.h
+.
 .Ft size_t
-.Fn mbrtoc32 "char32_t * restrict pc32" \
-"const char * restrict s" \
-"size_t n" \
-"mbstate_t * restrict ps"
+.Fo mbrtoc32
+.Fa "char32_t * restrict pc32"
+.Fa "const char * restrict s"
+.Fa "size_t n"
+.Fa "mbstate_t * restrict ps"
+.Fc
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh DESCRIPTION
 The
@@ -122,11 +126,14 @@ uses an internal
 .Vt mbstate_t
 object with static storage duration, distinct from all other
 .Vt mbstate_t
-objects (including those used by
+objects
+.Po
+including those used by
 .Xr mbrtoc16 3 ,
 .Xr c16rtomb 3 ,
 and
-.Xr c32rtomb 3 ) ,
+.Xr c32rtomb 3
+.Pc ,
 which is initialized at program startup to the initial conversion
 state.
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -134,20 +141,20 @@ state.
 The
 .Nm
 function returns:
-.Bl -tag -width ".Li (size_t)-3" -offset indent
+.Bl -tag -width Li
 .It Li 0
-[null]
+.Bq null
 if within the next
 .Fa n
 bytes at
 .Fa s
 the first multibyte character is null.
-.It Fa i
-[scalar value]
+.It Ar i
+.Bq scalar value
 where
 .Li 0
 \*(Le
-.Fa i
+.Ar i
 \*(Le
 .Fa n ,
 if within the first
@@ -156,51 +163,51 @@ bytes at
 .Fa s
 a Unicode scalar value was decoded.
 .It Li (size_t)-2
-[incomplete]
+.Bq incomplete
 if within the first
 .Fa n
 bytes at
 .Fa s
 no complete Unicode scalar value could be decoded.
 .It Li (size_t)-1
-[error]
+.Bq error
 if any encoding error was detected;
 .Xr errno 2
 is set to reflect the error.
 .El
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh EXAMPLES
-.Bd -literal
+.Bd -literal -offset indent
 char *s = ...;
 size_t n = ...;
-mbstate_t mbs = {0};	/* initial conversion state */
+mbstate_t mbs = {0};    /* initial conversion state */
 
 while (n) {
-	char32_t c32;
-	size_t len;
+        char32_t c32;
+        size_t len;
 
-	len = mbrtoc32(&c32, s, n, &mbs);
-	switch (len) {
-	case 0:			/* null terminator */
-		assert(c32 == L'\e0');
-		goto out;
-	default:		/* scalar value */
-		printf("U+%04"PRIx32"\en", (uint32_t)c32);
-		break;
-	case (size_t)-2:	/* incomplete */
-		printf("incomplete\en");
-		goto readmore;
-	case (size_t)-1:	/* error */
-		printf("error: %d\en", errno);
-		goto out;
-	}
-	s += len;
-	n -= len;
+        len = mbrtoc32(&c32, s, n, &mbs);
+        switch (len) {
+        case 0:                 /* null terminator */
+                assert(c32 == L'\e0');
+                goto out;
+        default:                /* scalar value */
+                printf("U+%04"PRIx32"\en", (uint32_t)c32);
+                break;
+        case (size_t)-2:        /* incomplete */
+                printf("incomplete\en");
+                goto readmore;
+        case (size_t)-1:        /* error */
+                printf("error: %d\en", errno);
+                goto out;
+        }
+        s += len;
+        n -= len;
 }
 .Ed
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh ERRORS
-.Bl -tag -width ".Bq Er EILSEQ"
+.Bl -tag -width Bq
 .It Bq Er EILSEQ
 A surrogate code point was passed.
 .It Bq Er EILSEQ
