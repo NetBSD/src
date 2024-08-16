@@ -1,4 +1,4 @@
-.\"	$NetBSD: c8rtomb.3,v 1.2 2024/08/16 18:35:19 uwe Exp $
+.\"	$NetBSD: c8rtomb.3,v 1.3 2024/08/16 19:39:09 riastradh Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,6 +78,27 @@ to denote failure with
 .Xr errno 2
 set to
 .Er EILSEQ .
+.Pp
+If
+.Fa ps
+is a null pointer,
+.Nm
+uses an internal
+.Vt mbstate_t
+object with static storage duration, distinct from all other
+.Vt mbstate_t
+objects
+.Po
+including those used by
+.Xr mbrtoc8 3 ,
+.Xr mbrtoc16 3 ,
+.Xr mbrtoc32 3 ,
+.Xr c16rtomb 3 ,
+and
+.Xr c32rtomb 3
+.Pc ,
+which is initialized at program startup to the initial conversion
+state.
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh RETURN VALUES
 The
