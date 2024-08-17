@@ -34,23 +34,19 @@ extern	void	startreg(void);
 extern	int	input(void);
 extern	void	unput(int);
 extern	void	unputstr(const char *);
-extern	int	yylook(void);
-extern	int	yyback(int *, int);
-extern	int	yyinput(void);
 
 extern	fa	*makedfa(const char *, bool);
 extern	fa	*mkdfa(const char *, bool);
 extern	int	makeinit(fa *, bool);
 extern	void	penter(Node *);
 extern	void	freetr(Node *);
-extern	int	hexstr(const uschar **);
 extern	int	quoted(const uschar **);
-extern	char	*cclenter(const char *);
-extern	void	overflo(const char *) __attribute__((__noreturn__));
+extern	int	*cclenter(const char *);
+extern	noreturn void	overflo(const char *);
 extern	void	cfoll(fa *, Node *);
 extern	int	first(Node *);
 extern	void	follow(Node *);
-extern	int	member(int, const char *);
+extern	int	member(int, int *);
 extern	int	match(fa *, const char *);
 extern	int	pmatch(fa *, const char *);
 extern	int	nematch(fa *, const char *);
@@ -68,7 +64,7 @@ extern	void	freefa(fa *);
 extern	int	pgetc(void);
 extern	char	*cursource(void);
 
-extern	Node	*nodealloc(int);
+extern	Node	*nodealloc(size_t);
 extern	Node	*exptostat(Node *);
 extern	Node	*node1(int, Node *);
 extern	Node	*node2(int, Node *, Node *);
@@ -124,7 +120,7 @@ extern	void	growfldtab(int n);
 extern	void	savefs(void);
 extern	int	getrec(char **, int *, bool);
 extern	void	nextfile(void);
-extern	int	readrec(char **buf, int *bufsize, FILE *inf);
+extern	int	readrec(char **buf, int *bufsize, FILE *inf, bool isnew);
 extern	char	*getargv(int);
 extern	void	setclvar(char *);
 extern	void	fldbld(void);
@@ -139,8 +135,8 @@ extern	void	bracecheck(void);
 extern	void	bcheck2(int, int, int);
 extern	void	SYNTAX(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
-extern	void	FATAL(const char *, ...)
-    __attribute__((__format__(__printf__, 1, 2), __noreturn__));
+extern	noreturn void	FATAL(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2)));
 extern	void	WARNING(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
 extern	void	error(void);
@@ -148,7 +144,9 @@ extern	void	eprint(void);
 extern	void	bclass(int);
 extern	double	errcheck(double, const char *);
 extern	int	isclvar(const char *);
-extern	int	is_number(const char *);
+extern	bool	is_valid_number(const char *s, bool trailing_stuff_ok,
+				bool *no_trailing, double *result);
+#define is_number(s, val)	is_valid_number(s, false, NULL, val)
 
 extern	int	adjbuf(char **pb, int *sz, int min, int q, char **pbp, const char *what);
 extern	void	run(Node *);
@@ -168,7 +166,6 @@ extern	Cell	*boolop(Node **, int);
 extern	Cell	*relop(Node **, int);
 extern	void	tfree(Cell *);
 extern	Cell	*gettemp(void);
-extern	Cell	*field(Node **, int);
 extern	Cell	*indirect(Node **, int);
 extern	Cell	*substr(Node **, int);
 extern	Cell	*sindex(Node **, int);
@@ -193,12 +190,11 @@ extern	Cell	*bltin(Node **, int);
 extern	Cell	*printstat(Node **, int);
 extern	Cell	*nullproc(Node **, int);
 extern	FILE	*redirect(int, Node *);
-extern	FILE	*openfile(int, const char *);
+extern	FILE	*openfile(int, const char *, bool *);
 extern	const char	*filename(FILE *);
 extern	Cell	*closefile(Node **, int);
 extern	void	closeall(void);
-extern	Cell	*sub(Node **, int);
-extern	Cell	*gsub(Node **, int);
+extern	Cell	*dosub(Node **, int);
 extern	Cell	*gensub(Node **, int);
 
 extern	FILE	*popen(const char *, const char *);

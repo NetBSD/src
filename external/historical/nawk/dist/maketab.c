@@ -25,14 +25,14 @@ THIS SOFTWARE.
 /*
  * this program makes the table to link function names
  * and type indices that is used by execute() in run.c.
- * it finds the indices in ytab.h, produced by yacc.
+ * it finds the indices in awkgram.tab.h, produced by bison.
  */
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include "awk.h"
-#include "ytab.h"
+#include "awkgram.tab.h"
 
 struct xx
 {	int token;
@@ -52,8 +52,8 @@ struct xx
 	{ ARRAY, "array", NULL },
 	{ INDIRECT, "indirect", "$(" },
 	{ SUBSTR, "substr", "substr" },
-	{ SUB, "sub", "sub" },
-	{ GSUB, "gsub", "gsub" },
+	{ SUB, "dosub", "sub" },
+	{ GSUB, "dosub", "gsub" },
 	{ INDEX, "sindex", "sindex" },
 	{ SPRINTF, "awksprintf", "sprintf " },
 	{ ADD, "arith", " + " },
@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
 
 	printf("#include <stdio.h>\n");
 	printf("#include \"awk.h\"\n");
-	printf("#include \"ytab.h\"\n\n");
+	printf("#include \"awkgram.tab.h\"\n\n");
 
 	if (argc != 2) {
 		fprintf(stderr, "usage: maketab YTAB_H\n");
