@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2024/08/17 22:22:29 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2024/08/17 23:21:55 mrg Exp $
 
 WARNS?= 4
 CWARNFLAGS.clang+=	-Wno-self-assign
@@ -10,7 +10,7 @@ MAKETABDIR != cd ${.CURDIR}/../maketab && ${PRINTOBJDIR}
 MAKETAB = ${MAKETABDIR}/maketab
 .else
 MAKETABDIR != cd ${NETBSDSRCDIR}/tools/maketab && ${PRINTOBJDIR}
-MAKETAB = ${MAKETABDIR}/${_TOOLPREFIX}maketab
+MAKETAB = ${MAKETABDIR}/${_TOOL_PREFIX}maketab
 .endif
 
 
