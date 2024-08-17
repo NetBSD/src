@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2023/07/27 21:58:51 christos Exp $
+#	$NetBSD: Makefile,v 1.26 2024/08/17 12:36:43 rin Exp $
 
 USE_FORT?=	yes # data-driven bugs?
 
@@ -113,6 +113,10 @@ CPPFLAGS+=     -I${X11SRCDIR.brotli}/c/include
 PKGCONFIG=	freetype2
 PKGDIST.freetype2=	${.CURDIR}
 PKGCONFIG_VERSION.freetype2=	23:0:17
+
+.if ${MACHINE_ARCH} == "m68k" && ${HAVE_GCC:U0} == 12
+COPTS.ftlzw.c+=	-fno-stack-protector
+.endif
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
