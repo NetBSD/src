@@ -1,4 +1,4 @@
-.\"	$NetBSD: c32rtomb.3,v 1.5 2024/08/16 19:39:51 riastradh Exp $
+.\"	$NetBSD: c32rtomb.3,v 1.6 2024/08/17 00:29:21 riastradh Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh NAME
 .Nm c32rtomb
-.Nd Restartable UTF-32 code unit to multibyte conversion
+.Nd Restartable UTF-32 to multibyte conversion
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh LIBRARY
 .Lb libc
@@ -49,30 +49,37 @@
 .Sh DESCRIPTION
 The
 .Nm
-function attempts to encode Unicode input as a multibyte character
-sequence output at
-.Fa s
-in the current locale, writing anywhere between zero and
+function converts Unicode scalar values to multibyte characters in the
+current locale, keeping state so it can restart after incremental
+progress.
+.Pp
+Each call to
+.Nm
+updates the conversion state
+.Fa ps
+with a UTF-32 code unit
+.Fa c32 ,
+writes up to
 .Dv MB_CUR_MAX
-bytes, inclusive, to
+bytes to
 .Fa s ,
-depending on the inputs and conversion state
-.Fa ps .
+and returns either the number of bytes written to
+.Fa s
+or
+.Li (size_t)-1
+to denote error.
 .Pp
 The input
 .Fa c32
-is a UTF-32 code unit, which represents a single Unicode scalar value,
-i.e., a Unicode code point that is not in the interval [0xd800,0xdfff]
-of surrogate code points.
+is a UTF-32 code unit, representing represents a Unicode scalar value,
+i.e., a Unicode code point that is not a surrogate code point \(em in
+other words, an integer either in [0,0xd7ff] or in [0xe000,0x10ffff].
 .Pp
-If a surrogate code point is passed,
-.Nm
-will return
-.Li (size_t)-1
-to denote failure with
-.Xr errno 2
-set to
-.Er EILSEQ .
+If
+.Fa s
+is a null pointer, no output is stored, but the effects on
+.Fa ps
+and the return value are unchanged.
 .Pp
 If
 .Fa ps
@@ -131,8 +138,10 @@ printf("%s\en", buf);
 .Sh ERRORS
 .Bl -tag -width Bq
 .It Bq Er EILSEQ
-A surrogate code point was passed as
-.Fa c32 .
+.Fa c32
+is not a Unicode scalar value, i.e., it is a surrogate code point in
+the interval [0xd800,0xdfff] or it lies outside the Unicode codespace
+[0,0x10ffff] altogether.
 .It Bq Er EILSEQ
 The Unicode scalar value requested cannot be encoded as a multibyte
 sequence in the current locale.
