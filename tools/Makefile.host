@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.host,v 1.36 2023/06/04 16:53:59 lukem Exp $
+#	$NetBSD: Makefile.host,v 1.37 2024/08/17 22:23:46 christos Exp $
 
 NOINFO=         # defined
 NOLINT=         # defined
@@ -55,6 +55,7 @@ SRCS+=		${HOST_SRCS}
 .PATH:		${.PROGDIR}
 
 # Install rule.
+.if !target(realinstall)
 realinstall: install.host install.files
 install.host: ${HOST_INSTALLPROG}
 ${HOST_INSTALLPROG}:: ${HOSTPROG}
@@ -81,5 +82,6 @@ ${HOST_FILESDIR}/${F}: ${F}
 .PHONY:		${HOST_FILESDIR}/${F}
 .endif
 .endfor
+.endif
 
 .include <bsd.hostprog.mk>
