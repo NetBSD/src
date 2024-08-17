@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrtoc16.c,v 1.4 2024/08/15 22:22:35 riastradh Exp $	*/
+/*	$NetBSD: mbrtoc16.c,v 1.5 2024/08/17 20:08:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mbrtoc16.c,v 1.4 2024/08/15 22:22:35 riastradh Exp $");
+__RCSID("$NetBSD: mbrtoc16.c,v 1.5 2024/08/17 20:08:13 christos Exp $");
 
 #include "namespace.h"
 
@@ -133,7 +133,7 @@ mbrtoc16(char16_t *restrict pc16, const char *restrict s, size_t n,
 	/*
 	 * Get the private conversion state.
 	 */
-	S = (struct mbrtoc16state *)ps;
+	S = (struct mbrtoc16state *)(void *)ps;
 
 	/*
 	 * If there is a pending surrogate, yield it and consume no
@@ -182,8 +182,10 @@ mbrtoc16(char16_t *restrict pc16, const char *restrict s, size_t n,
 		_DIAGASSERT(S->surrogate == 0);
 	} else {
 		c32 -= 0x10000;
-		const char16_t w1 = 0xd800 | __SHIFTOUT(c32, __BITS(19,10));
-		const char16_t w2 = 0xdc00 | __SHIFTOUT(c32, __BITS(9,0));
+		const char16_t w1 = (char16_t)(
+		    0xd800 | __SHIFTOUT(c32, __BITS(19,10)));
+		const char16_t w2 = (char16_t)(
+		    0xdc00 | __SHIFTOUT(c32, __BITS(9,0)));
 		if (pc16)
 			*pc16 = w1;
 		S->surrogate = w2;

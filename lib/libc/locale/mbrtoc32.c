@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrtoc32.c,v 1.4 2024/08/16 14:00:48 riastradh Exp $	*/
+/*	$NetBSD: mbrtoc32.c,v 1.5 2024/08/17 20:08:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mbrtoc32.c,v 1.4 2024/08/16 14:00:48 riastradh Exp $");
+__RCSID("$NetBSD: mbrtoc32.c,v 1.5 2024/08/17 20:08:13 christos Exp $");
 
 #include "namespace.h"
 
@@ -132,7 +132,7 @@ mbrtoc32(char32_t *restrict pc32, const char *restrict s, size_t n,
 	/*
 	 * Get the private conversion state.
 	 */
-	S = (struct mbrtoc32state *)ps;
+	S = (struct mbrtoc32state *)(void *)ps;
 
 	/*
 	 * If input length is zero, the result is always incomplete by
