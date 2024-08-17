@@ -1,4 +1,4 @@
-/*	$NetBSD: shlock.c,v 1.15 2021/04/17 00:02:19 christos Exp $	*/
+/*	$NetBSD: shlock.c,v 1.16 2024/08/17 14:26:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: shlock.c,v 1.15 2021/04/17 00:02:19 christos Exp $");
+__RCSID("$NetBSD: shlock.c,v 1.16 2024/08/17 14:26:53 riastradh Exp $");
 #endif
 
 #include <sys/types.h>
@@ -315,7 +315,7 @@ mklock(const char *file, pid_t pid, int uucpstyle)
 				    Pname, stlock2.st_nlink);
 				goto out2;
 			}
-				
+
 			dprintf("%s: lock is invalid, removing\n", Pname);
 			if (unlink(file) == -1) {
 				warn(E_unlk, file);
