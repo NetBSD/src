@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2028 2024/08/02 16:27:14 gutteridge Exp $
+#	$NetBSD: 3RDPARTY,v 1.2029 2024/08/17 22:25:43 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -971,20 +971,17 @@ Notes:
 Delete the otherOS directory before importing.
 
 Package:	nawk
-Version:	2020-02-18
-Current Vers:	2020-06-12
+Version:	2024-08-17
+Current Vers:	2020-08-17
 Maintainer:	Brian Kernighan <bwk@princeton.edu>
 Archive Site:	https://github.com/onetrueawk/awk
 Home Page:	http://www.cs.princeton.edu/~bwk/btl.mirror/
-Date:		2020-06-13
+Date:		2020-06-14
 Mailing List:
 Responsible:	jdolecek
 License:	BSD-like
 Location:	external/historical/nawk/dist
 Notes:
-Build maketab from nawk sources and generate proctab.c.
-Remove buildwin.bat, missing95.c, ytab.[ch], ytab?.bak, vcvars.bat makefile.win
-then import to src/external/historical/nawk/dist.
 
 Package:	ndbootd
 Version:	0.5
