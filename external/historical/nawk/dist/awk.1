@@ -7,6 +7,10 @@
 .fi
 .ft 1
 ..
+.de TF
+.IP "" "\w'\fB\\$1\ \ \fP'u"
+.PD 0
+..
 .TH AWK 1
 .CT 1 files prog_other
 .SH NAME
@@ -16,6 +20,8 @@ awk \- pattern-directed scanning and processing language
 [
 .BI \-F
 .I fs
+|
+.B \-\^\-csv
 ]
 [
 .BI \-v
@@ -72,6 +78,12 @@ The
 .I fs
 option defines the input field separator to be the regular expression
 .IR fs .
+The
+.B \-\^\-csv
+option causes
+.I awk
+to process records using (more or less) standard comma-separated values
+(CSV) format.
 .PP
 An input line is normally made up of fields separated by white space,
 or by the regular expression
@@ -198,9 +210,9 @@ and
 .B sqrt
 are built in.
 Other built-in functions:
-.TF length
+.TF "\fBlength(\fR[\fIv\^\fR]\fB)\fR"
 .TP
-.B length
+\fBlength(\fR[\fIv\^\fR]\fB)\fR
 the length of its argument
 taken as a string,
 number of elements in an array for an array argument,
@@ -208,15 +220,15 @@ or length of
 .B $0
 if no argument.
 .TP
-.B rand
+.B rand()
 random number on [0,1).
 .TP
-.B srand
+\fBsrand(\fR[\fIs\^\fR]\fB)\fR
 sets seed for
 .B rand
 and returns the previous seed.
 .TP
-.B int
+.BI int( x\^ )
 truncates to an integer value.
 .TP
 \fBsubstr(\fIs\fB, \fIm\fR [\fB, \fIn\^\fR]\fB)\fR
@@ -437,7 +449,7 @@ in a pattern.
 A pattern may consist of two patterns separated by a comma;
 in this case, the action is performed for all lines
 from an occurrence of the first pattern
-though an occurrence of the second.
+through an occurrence of the second, inclusive.
 .PP
 A relational expression is one of the following:
 .IP
@@ -447,7 +459,7 @@ A relational expression is one of the following:
 .br
 .IB expression " in " array-name
 .br
-.BI ( expr , expr,... ") in " array-name
+.BI ( expr ,\| expr ,\| ... ") in " array-name
 .PP
 where a
 .I relop
@@ -547,7 +559,7 @@ separates multiple subscripts (default 034).
 Functions may be defined (at the position of a pattern-action statement) thus:
 .IP
 .B
-function foo(a, b, c) { ...; return x }
+function foo(a, b, c) { ... }
 .PP
 Parameters are passed by value if scalar and by reference if array name;
 functions may be called recursively.
@@ -613,15 +625,72 @@ BEGIN	{	# Simulate echo(1)
 .IR sed (1)
 .br
 A. V. Aho, B. W. Kernighan, P. J. Weinberger,
-.IR "The AWK Programming Language" ,
-Addison-Wesley, 1988.  ISBN 0-201-07981-X.
+.IR "The AWK Programming Language, Second Edition" ,
+Addison-Wesley, 2024.  ISBN 978-0-13-826972-2, 0-13-826972-6.
 .SH BUGS
 There are no explicit conversions between numbers and strings.
 To force an expression to be treated as a number add 0 to it;
 to force it to be treated as a string concatenate
 \&\f(CW""\fP to it.
-.br
+.PP
 The scope rules for variables in functions are a botch;
 the syntax is worse.
-.br
-Only eight-bit characters sets are handled correctly.
+.PP
+Input is expected to be UTF-8 encoded. Other multibyte
+character sets are not handled.
+However, in eight-bit locales,
+.I awk
+treats each input byte as a separate character.
+.SH UNUSUAL FLOATING-POINT VALUES
+.I Awk
+was designed before IEEE 754 arithmetic defined Not-A-Number (NaN)
+and Infinity values, which are supported by all modern floating-point
+hardware.
+.PP
+Because
+.I awk
+uses
+.IR strtod (3)
+and
+.IR atof (3)
+to convert string values to double-precision floating-point values,
+modern C libraries also convert strings starting with
+.B inf
+and
+.B nan
+into infinity and NaN values respectively.  This led to strange results,
+with something like this:
+.PP
+.EX
+.nf
+echo nancy | awk '{ print $1 + 0 }'
+.fi
+.EE
+.PP
+printing
+.B nan
+instead of zero.
+.PP
+.I Awk
+now follows GNU AWK, and prefilters string values before attempting
+to convert them to numbers, as follows:
+.TP
+.I "Hexadecimal values"
+Hexadecimal values (allowed since C99) convert to zero, as they did
+prior to C99.
+.TP
+.I "NaN values"
+The two strings
+.B +nan
+and
+.B \-nan
+(case independent) convert to NaN. No others do.
+(NaNs can have signs.)
+.TP
+.I "Infinity values"
+The two strings
+.B +inf
+and
+.B \-inf
+(case independent) convert to positive and negative infinity, respectively.
+No others do.

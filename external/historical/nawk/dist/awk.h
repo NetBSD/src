@@ -25,6 +25,11 @@ THIS SOFTWARE.
 #include <assert.h>
 #include <stdint.h>
 #include <stdbool.h>
+#if __STDC_VERSION__ <= 199901L
+#define noreturn __dead
+#else
+#include <stdnoreturn.h>
+#endif
 
 typedef double	Awkfloat;
 
@@ -32,21 +37,20 @@ typedef double	Awkfloat;
 
 typedef	unsigned char uschar;
 
-#define	xfree(a)	{ if ((a) != NULL) { free((void *)(intptr_t)(a)); (a) = NULL; } }
+#define	xfree(a)	{ free((void *)(intptr_t)(a)); (a) = NULL; }
 /*
  * We sometimes cheat writing read-only pointers to NUL-terminate them
  * and then put back the original value
  */
 #define setptr(ptr, a)	(*(char *)(intptr_t)(ptr)) = (a)
 
-#define	NN(p)	((p) ? (p) : "(null)")	/* guaranteed non-null for dprintf
+#define	NN(p)	((p) ? (p) : "(null)")	/* guaranteed non-null for DPRINTF
 */
 #define	DEBUG
 #ifdef	DEBUG
-			/* uses have to be doubly parenthesized */
-#	define	dprintf(x)	if (dbg) printf x
+#	define	DPRINTF(...)	if (dbg) printf(__VA_ARGS__)
 #else
-#	define	dprintf(x)
+#	define	DPRINTF(...)
 #endif
 
 extern enum compile_states {
@@ -59,6 +63,8 @@ extern bool	safe;		/* false => unsafe, true => safe */
 
 #define	RECSIZE	(8 * 1024)	/* sets limit on records, fields, etc., etc. */
 extern int	recsize;	/* size of current record, orig RECSIZE */
+
+extern size_t	awk_mb_cur_max;	/* max size of a multi-byte character */
 
 extern char	EMPTY[];	/* this avoid -Wwritable-strings issues */
 extern char	**FS;
@@ -73,6 +79,8 @@ extern char	**FILENAME;
 extern char	**SUBSEP;
 extern Awkfloat *RSTART;
 extern Awkfloat *RLENGTH;
+
+extern bool	CSV;		/* true for csv input */
 
 extern char	*record;	/* points to $0 */
 extern int	lineno;		/* line number in awk program */
@@ -154,6 +162,7 @@ extern Cell	*symtabloc;	/* SYMTAB */
 #define FRSHIFT	20
 #define FSYSTIME	21
 #define FSTRFTIME	22
+#define FMKTIME	23
 
 /* Node:  parse tree is made of nodes, with Cell's at bottom */
 
@@ -168,7 +177,6 @@ typedef struct Node {
 #define	NIL	((Node *) 0)
 
 extern Node	*winner;
-extern Node	*nullstat;
 extern Node	*nullnode;
 
 /* ctypes */
@@ -229,7 +237,8 @@ extern	int	pairstack[], paircnt;
 
 /* structures used by regular expression matching machinery, mostly b.c: */
 
-#define NCHARS	(256+3)		/* 256 handles 8-bit chars; 128 does 7-bit */
+#define NCHARS	(1256+3)		/* 256 handles 8-bit chars; 128 does 7-bit */
+				/* BUG: some overflows (caught) if we use 256 */
 				/* watch out in match(), etc. */
 #define	HAT	(NCHARS+2)	/* matches ^ in regular expr */
 #define NSTATES	32
@@ -240,12 +249,24 @@ typedef struct rrow {
 		int i;
 		Node *np;
 		uschar *up;
+		int *rp; /* rune representation of char class */
 	} lval;		/* because Al stores a pointer in it! */
 	int	*lfollow;
 } rrow;
 
+typedef struct gtte { /* gototab entry */
+	unsigned int ch;
+	unsigned int state;
+} gtte;
+
+typedef struct gtt {	/* gototab */
+	size_t	allocated;
+	size_t	inuse;
+	gtte	*entries;
+} gtt;
+
 typedef struct fa {
-	unsigned int	**gototab;
+	gtt	*gototab;
 	uschar	*out;
 	uschar	*restr;
 	int	**posns;
