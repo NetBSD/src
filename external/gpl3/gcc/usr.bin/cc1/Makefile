@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2024/06/30 16:15:03 christos Exp $
+#	$NetBSD: Makefile,v 1.23 2024/08/17 11:27:03 rin Exp $
 
 PROG=		cc1
 SRCS=		${G_C_OBJS:S,c-family/,,:S,c/,,:S,known-headers.o,known-headers.cc,:S,c-spellcheck.o,c-spellcheck.cc,:Nlibcpp.a:.o=.cc}
@@ -26,20 +26,20 @@ CHECKSUM_OBJS=	${BACKENDOBJ}/libbackend.a \
 # XXX check this out, probably need it for plugins?
 # LDFLAGS+=	-rdynamic
 
-COPTS.c-ada-spec.cc=	-Wno-error=stack-protector
-COPTS.c-attribs.cc=	-Wno-error=stack-protector
-COPTS.c-aux-info.cc=	-Wno-error=stack-protector
-COPTS.c-common.cc=	-Wno-error=stack-protector
-COPTS.c-cppbuiltin.cc=	-Wno-error=stack-protector
-COPTS.c-decl.cc=	-Wno-error=stack-protector
-COPTS.c-format.cc=	-Wno-error=stack-protector
-COPTS.c-lex.cc=		-Wno-error=stack-protector
-COPTS.c-omp.cc=	-Wno-error=stack-protector
-COPTS.c-opts.cc=	-Wno-error=stack-protector
-COPTS.c-ppoutput.cc=	-Wno-error=stack-protector
-COPTS.c-pragma.cc=	-Wno-error=stack-protector
-COPTS.c-pretty-print.cc=	-Wno-error=stack-protector
-COPTS.c-typeck.cc=	-Wno-error=stack-protector
+COPTS.c-ada-spec.cc+=		-Wno-error=stack-protector
+COPTS.c-attribs.cc+=		-Wno-error=stack-protector
+COPTS.c-aux-info.cc+=		-Wno-error=stack-protector
+COPTS.c-common.cc+=		-Wno-error=stack-protector
+COPTS.c-cppbuiltin.cc+=		-Wno-error=stack-protector
+COPTS.c-decl.cc+=		-Wno-error=stack-protector
+COPTS.c-format.cc+=		-Wno-error=stack-protector
+COPTS.c-lex.cc+=		-Wno-error=stack-protector
+COPTS.c-omp.cc+=		-Wno-error=stack-protector
+COPTS.c-opts.cc+=		-Wno-error=stack-protector
+COPTS.c-ppoutput.cc+=		-Wno-error=stack-protector
+COPTS.c-pragma.cc+=		-Wno-error=stack-protector
+COPTS.c-pretty-print.cc+=	-Wno-error=stack-protector
+COPTS.c-typeck.cc+=		-Wno-error=stack-protector
 
 CPPFLAGS.default-c.cc+=	-I${BACKENDOBJ}
 
