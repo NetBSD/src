@@ -1,4 +1,4 @@
-.\"	$NetBSD: c16rtomb.3,v 1.5 2024/08/16 19:39:51 riastradh Exp $
+.\"	$NetBSD: c16rtomb.3,v 1.6 2024/08/17 00:29:21 riastradh Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh NAME
 .Nm c16rtomb
-.Nd Restartable UTF-16 code unit to multibyte conversion
+.Nd Restartable UTF-16 to multibyte conversion
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh LIBRARY
 .Lb libc
@@ -49,47 +49,50 @@
 .Sh DESCRIPTION
 The
 .Nm
-function attempts to encode Unicode input as a multibyte character
-sequence output at
-.Fa s
-in the current locale, writing anywhere between zero and
-.Dv MB_CUR_MAX
-bytes, inclusive, to
-.Fa s ,
-depending on the inputs and conversion state
-.Fa ps .
+function decodes UTF-16 and converts it to multibyte characters in the
+current locale, keeping state so it can restart after incremental
+progress.
 .Pp
-The input
-.Fa c16
-is a UTF-16 code unit, which can be either:
-.Bl -bullet
-.It
-a Unicode scalar value in the Basic Multilingual Plane (BMP), that is,
-a 16-bit code unit outside the interval [0xd800,0xdfff]; or,
-.It
-over the course of two consecutive calls to
-.Nm ,
-the high and low surrogate code points of a Unicode scalar value
-outside the BMP.
-.El
-.Pp
-If a low surrogate code point, that is, a value of
-.Fa c16
-in [0xdc00,0xdfff], is passed to
+Each call to
 .Nm
-without the preceding call to it with the same
+updates the conversion state
 .Fa ps
-having been passed a high surrogate code point, that is, a value of
-.Fa c16
-in [0xd800,0xdbff], or if a high surrogate was passed in the previous
-call and anything other than a low surrogate is passed, then
-.Nm
-will return
+with a UTF-16 code unit
+.Fa c16 ,
+writes up to
+.Dv MB_CUR_MAX
+bytes to
+.Fa s
+(possibly none), and returns either the number of bytes written to
+.Fa s
+or
 .Li (size_t)-1
-to denote failure with
+to denote error.
+.Pp
+Over successive calls to
+.Nm
+with the same state
+.Fa ps ,
+the sequence of
+.Fa c16
+values must be a well-formed UTF-16 code unit sequence.
+If
+.Fa c16 ,
+when appended to the sequence of code units passed in previous calls,
+does not form a well-formed UTF-16 code unit sequence, then
+.Nm
+returns
+.Li (size_t)-1
+with
 .Xr errno 2
 set to
 .Er EILSEQ .
+.Pp
+If
+.Fa s
+is a null pointer, no output is stored, but the effects on
+.Fa ps
+and the return value are unchanged.
 .Pp
 If
 .Fa ps
@@ -148,9 +151,9 @@ printf("%s\en", buf);
 .Sh ERRORS
 .Bl -tag -width Bq
 .It Bq Er EILSEQ
-A surrogate code point was passed as
+The
 .Fa c16
-when it is inappropriate.
+input sequence does not encode a Unicode scalar value in UTF-16.
 .It Bq Er EILSEQ
 The Unicode scalar value requested cannot be encoded as a multibyte
 sequence in the current locale.
