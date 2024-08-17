@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.53 2021/07/15 01:29:23 thorpej Exp $ */
+/* $NetBSD: sio_pic.c,v 1.54 2024/08/17 15:05:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2020 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.53 2021/07/15 01:29:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.54 2024/08/17 15:05:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,6 +229,9 @@ cy82c693_setup_elcr(void)
 #endif
 
 		sio_cy82c693_handle = cy82c693_init(sio_iot);
+		if (sio_cy82c693_handle == NULL) {
+			panic("%s: cy82c693_init() failed.", __func__);
+		}
 		sio_read_elcr = cy82c693_read_elcr;
 		sio_write_elcr = cy82c693_write_elcr;
 
