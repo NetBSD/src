@@ -1,0 +1,2 @@
+# $NetBSD: Makefile.maketab,v 1.1 2024/08/17 22:22:29 christos Exp $
+MAKETAB	=	${TOOL_MAKETAB}
