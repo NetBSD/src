@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.55 2024/05/01 21:34:48 christos Exp $
+# $NetBSD: Makefile,v 1.56 2024/08/17 11:34:46 rin Exp $
 
 # Link the gallium mega driver.
 
@@ -1440,6 +1440,10 @@ COPTS+=	${${ACTIVE_CC} == "clang":? -Wa,-Av8plus  :}
 .endif
 
 COPTS.u_atomic.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-builtin-declaration-mismatch :}
+
+.if ${MACHINE_CPU} == "m68k" && ${HAVE_GCC:U0} == 12
+COPTS.vl_bicubic_filter.c+=	-O1
+.endif
 
 .include <bsd.lib.mk>
 # Don't regenerate c files
