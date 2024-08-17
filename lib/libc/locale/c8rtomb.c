@@ -1,4 +1,4 @@
-/*	$NetBSD: c8rtomb.c,v 1.3 2024/08/17 20:08:13 christos Exp $	*/
+/*	$NetBSD: c8rtomb.c,v 1.4 2024/08/17 21:24:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -55,19 +55,21 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: c8rtomb.c,v 1.3 2024/08/17 20:08:13 christos Exp $");
+__RCSID("$NetBSD: c8rtomb.c,v 1.4 2024/08/17 21:24:53 riastradh Exp $");
 
 #include "namespace.h"
 
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
+#include <locale.h>
 #include <stdalign.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <uchar.h>
 
 #include "c32rtomb.h"
+#include "setlocale_local.h"
 
 struct c8rtombstate {
 	char32_t	state_c32; /* 8-bit state and 24-bit buffer */
@@ -121,8 +123,19 @@ utf8_decode_step(utf8_state_t state, char8_t c8, char32_t *pc32)
 	return utf8_statetab[state + class];
 }
 
+#ifdef __weak_alias
+__weak_alias(c8rtomb_l,_c8rtomb_l)
+#endif
+
 size_t
 c8rtomb(char *restrict s, char8_t c8, mbstate_t *restrict ps)
+{
+
+	return c8rtomb_l(s, c8, ps, _current_locale());
+}
+
+size_t
+c8rtomb_l(char *restrict s, char8_t c8, mbstate_t *restrict ps, locale_t loc)
 {
 	static mbstate_t psbuf;
 	char buf[MB_LEN_MAX];
@@ -214,6 +227,6 @@ c8rtomb(char *restrict s, char8_t c8, mbstate_t *restrict ps)
 		__CTASSERT(UTF8_ACCEPT == 0);
 #endif
 		S->state_c32 = 0;
-		return c32rtomb(s, c32, &S->mbs);
+		return c32rtomb_l(s, c32, &S->mbs, loc);
 	}
 }

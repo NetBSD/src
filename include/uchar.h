@@ -1,4 +1,4 @@
-/*	$NetBSD: uchar.h,v 1.2 2024/08/15 21:19:45 riastradh Exp $	*/
+/*	$NetBSD: uchar.h,v 1.3 2024/08/17 21:24:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -107,6 +107,22 @@ size_t	c16rtomb(char *__restrict, char16_t, mbstate_t *__restrict);
 size_t	mbrtoc32(char32_t *__restrict, const char *__restrict, size_t,
 	    mbstate_t *__restrict);
 size_t	c32rtomb(char *__restrict, char32_t, mbstate_t *__restrict);
+
+#ifdef _NETBSD_SOURCE
+struct _locale;
+size_t	mbrtoc8_l(char8_t *__restrict, const char *__restrict, size_t,
+	    mbstate_t *__restrict, struct _locale *__restrict);
+size_t	c8rtomb_l(char *__restrict, char8_t, mbstate_t *__restrict,
+	    struct _locale *__restrict);
+size_t	mbrtoc16_l(char16_t *__restrict, const char *__restrict, size_t,
+	    mbstate_t *__restrict, struct _locale *__restrict);
+size_t	c16rtomb_l(char *__restrict, char16_t, mbstate_t *__restrict,
+	    struct _locale *__restrict);
+size_t	mbrtoc32_l(char32_t *__restrict, const char *__restrict, size_t,
+	    mbstate_t *__restrict, struct _locale *__restrict);
+size_t	c32rtomb_l(char *__restrict, char32_t, mbstate_t *__restrict,
+	    struct _locale *__restrict);
+#endif
 
 __END_DECLS
 
