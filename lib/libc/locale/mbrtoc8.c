@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrtoc8.c,v 1.3 2024/08/17 20:08:13 christos Exp $	*/
+/*	$NetBSD: mbrtoc8.c,v 1.4 2024/08/17 21:24:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -72,17 +72,19 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mbrtoc8.c,v 1.3 2024/08/17 20:08:13 christos Exp $");
+__RCSID("$NetBSD: mbrtoc8.c,v 1.4 2024/08/17 21:24:54 riastradh Exp $");
 
 #include "namespace.h"
 
 #include <assert.h>
 #include <errno.h>
+#include <locale.h>
 #include <stdalign.h>
 #include <stddef.h>
 #include <uchar.h>
 
 #include "mbrtoc32.h"
+#include "setlocale_local.h"
 
 struct mbrtoc8state {
 	char8_t		nleft;
@@ -94,9 +96,21 @@ __CTASSERT(sizeof(struct mbrtoc32state) <= sizeof(mbstate_t) -
     offsetof(struct mbrtoc8state, mbs));
 __CTASSERT(alignof(struct mbrtoc8state) <= alignof(mbstate_t));
 
+#ifdef __weak_alias
+__weak_alias(mbrtoc8_l,_mbrtoc8_l)
+#endif
+
 size_t
 mbrtoc8(char8_t *restrict pc8, const char *restrict s, size_t n,
     mbstate_t *restrict ps)
+{
+
+	return mbrtoc8_l(pc8, s, n, ps, _current_locale());
+}
+
+size_t
+mbrtoc8_l(char8_t *restrict pc8, const char *restrict s, size_t n,
+    mbstate_t *restrict ps, locale_t restrict loc)
 {
 	static mbstate_t psbuf;
 	struct mbrtoc8state *S;
@@ -151,7 +165,7 @@ mbrtoc8(char8_t *restrict pc8, const char *restrict s, size_t n,
 	 * Consume the next scalar value.  If no full scalar value can
 	 * be obtained, stop here.
 	 */
-	len = mbrtoc32(&c32, s, n, &S->mbs);
+	len = mbrtoc32_l(&c32, s, n, &S->mbs, loc);
 	switch (len) {
 	case 0:			/* NUL */
 		if (pc8)

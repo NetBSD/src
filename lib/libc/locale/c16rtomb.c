@@ -1,4 +1,4 @@
-/*	$NetBSD: c16rtomb.c,v 1.4 2024/08/17 20:08:13 christos Exp $	*/
+/*	$NetBSD: c16rtomb.c,v 1.5 2024/08/17 21:24:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -66,18 +66,20 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: c16rtomb.c,v 1.4 2024/08/17 20:08:13 christos Exp $");
+__RCSID("$NetBSD: c16rtomb.c,v 1.5 2024/08/17 21:24:53 riastradh Exp $");
 
 #include "namespace.h"
 
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
+#include <locale.h>
 #include <stdalign.h>
 #include <stddef.h>
 #include <uchar.h>
 
 #include "c32rtomb.h"
+#include "setlocale_local.h"
 
 struct c16rtombstate {
 	char16_t	surrogate;
@@ -88,8 +90,20 @@ __CTASSERT(sizeof(struct c32rtombstate) <= sizeof(mbstate_t) -
     offsetof(struct c16rtombstate, mbs));
 __CTASSERT(alignof(struct c16rtombstate) <= alignof(mbstate_t));
 
+#ifdef __weak_alias
+__weak_alias(c16rtomb_l,_c16rtomb_l)
+#endif
+
 size_t
 c16rtomb(char *restrict s, char16_t c16, mbstate_t *restrict ps)
+{
+
+	return c16rtomb_l(s, c16, ps, _current_locale());
+}
+
+size_t
+c16rtomb_l(char *restrict s, char16_t c16, mbstate_t *restrict ps,
+    locale_t loc)
 {
 	static mbstate_t psbuf;
 	char buf[MB_LEN_MAX];
@@ -181,5 +195,5 @@ c16rtomb(char *restrict s, char16_t c16, mbstate_t *restrict ps)
 	/*
 	 * We have a scalar value.  Output it.
 	 */
-	return c32rtomb(s, c32, &S->mbs);
+	return c32rtomb_l(s, c32, &S->mbs, loc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: c32rtomb.c,v 1.2 2024/08/15 22:22:35 riastradh Exp $	*/
+/*	$NetBSD: c32rtomb.c,v 1.3 2024/08/17 21:24:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: c32rtomb.c,v 1.2 2024/08/15 22:22:35 riastradh Exp $");
+__RCSID("$NetBSD: c32rtomb.c,v 1.3 2024/08/17 21:24:53 riastradh Exp $");
 
 #include "namespace.h"
 
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: c32rtomb.c,v 1.2 2024/08/15 22:22:35 riastradh Exp $");
 #include <errno.h>
 #include <langinfo.h>
 #include <limits.h>
+#include <locale.h>
 #include <paths.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -70,13 +71,23 @@ __RCSID("$NetBSD: c32rtomb.c,v 1.2 2024/08/15 22:22:35 riastradh Exp $");
 #include "citrus_module.h"	/* broken citrus_iconv.h */
 #include "citrus_hash.h"	/* broken citrus_iconv.h */
 #include "citrus_iconv.h"
+#include "setlocale_local.h"
 
 #ifdef __weak_alias
 __weak_alias(c32rtomb,_c32rtomb)
+__weak_alias(c32rtomb_l,_c32rtomb_l)
 #endif
 
 size_t
 c32rtomb(char *restrict s, char32_t c32, mbstate_t *restrict ps)
+{
+
+	return c32rtomb_l(s, c32, ps, _current_locale());
+}
+
+size_t
+c32rtomb_l(char *restrict s, char32_t c32, mbstate_t *restrict ps,
+    locale_t loc)
 {
 	char buf[MB_LEN_MAX];
 	struct _citrus_iconv *iconv = NULL;
@@ -118,7 +129,7 @@ c32rtomb(char *restrict s, char32_t c32, mbstate_t *restrict ps)
 	 * multibyte output.
 	 */
 	if ((error = _citrus_iconv_open(&iconv, _PATH_ICONV, "utf-32le",
-		    nl_langinfo(CODESET))) != 0) {
+		    nl_langinfo_l(CODESET, loc))) != 0) {
 		errno = EIO; /* XXX? */
 		len = (size_t)-1;
 		goto out;
