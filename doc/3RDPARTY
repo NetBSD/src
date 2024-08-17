@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2029 2024/08/17 22:25:43 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2030 2024/08/17 22:39:07 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -972,11 +972,11 @@ Delete the otherOS directory before importing.
 
 Package:	nawk
 Version:	2024-08-17
-Current Vers:	2020-08-17
+Current Vers:	2024-08-17
 Maintainer:	Brian Kernighan <bwk@princeton.edu>
 Archive Site:	https://github.com/onetrueawk/awk
 Home Page:	http://www.cs.princeton.edu/~bwk/btl.mirror/
-Date:		2020-06-14
+Date:		2024-08-17
 Mailing List:
 Responsible:	jdolecek
 License:	BSD-like
