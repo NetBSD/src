@@ -1,4 +1,4 @@
-/*	$NetBSD: c8rtomb.c,v 1.2 2024/08/15 22:23:17 riastradh Exp $	*/
+/*	$NetBSD: c8rtomb.c,v 1.3 2024/08/17 20:08:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: c8rtomb.c,v 1.2 2024/08/15 22:23:17 riastradh Exp $");
+__RCSID("$NetBSD: c8rtomb.c,v 1.3 2024/08/17 20:08:13 christos Exp $");
 
 #include "namespace.h"
 
@@ -158,7 +158,7 @@ c8rtomb(char *restrict s, char8_t c8, mbstate_t *restrict ps)
 	/*
 	 * Open the private UTF-8 decoding state.
 	 */
-	S = (struct c8rtombstate *)ps;
+	S = (struct c8rtombstate *)(void *)ps;
 
 #if 0
 	/*
@@ -181,8 +181,8 @@ c8rtomb(char *restrict s, char8_t c8, mbstate_t *restrict ps)
 	 * Get the current state and buffer.
 	 */
 	__CTASSERT(UTF8_ACCEPT == 0); /* initial conversion state */
-	state = __SHIFTOUT(S->state_c32, __BITS(31,24));
-	c32 = __SHIFTOUT(S->state_c32, __BITS(23,0));
+	state = (utf8_state_t)__SHIFTOUT(S->state_c32, __BITS(31,24));
+	c32 = (char32_t)__SHIFTOUT(S->state_c32, __BITS(23,0));
 
 	/*
 	 * Feed the byte into the state machine to update the state.
@@ -200,15 +200,19 @@ c8rtomb(char *restrict s, char8_t c8, mbstate_t *restrict ps)
 		 * Valid UTF-8 so far but incomplete.  Update state and
 		 * output nothing.
 		 */
-		S->state_c32 = __SHIFTIN(state, __BITS(31,24)) |
-		    __SHIFTIN(c32, __BITS(23,0));
+		S->state_c32 = (char32_t)(
+		    __SHIFTIN(state, __BITS(31,24)) |
+		    __SHIFTIN(c32, __BITS(23,0)));
 		return 0;
 	case UTF8_ACCEPT:
 		/*
 		 * We have a scalar value.  Clear the state and output
 		 * the scalar value.
 		 */
+#ifndef __lint__
+		// XXX: lint does not grok struct decl after case label!
 		__CTASSERT(UTF8_ACCEPT == 0);
+#endif
 		S->state_c32 = 0;
 		return c32rtomb(s, c32, &S->mbs);
 	}

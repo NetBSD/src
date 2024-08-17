@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrtoc8.c,v 1.2 2024/08/15 22:23:17 riastradh Exp $	*/
+/*	$NetBSD: mbrtoc8.c,v 1.3 2024/08/17 20:08:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mbrtoc8.c,v 1.2 2024/08/15 22:23:17 riastradh Exp $");
+__RCSID("$NetBSD: mbrtoc8.c,v 1.3 2024/08/17 20:08:13 christos Exp $");
 
 #include "namespace.h"
 
@@ -133,7 +133,7 @@ mbrtoc8(char8_t *restrict pc8, const char *restrict s, size_t n,
 	/*
 	 * Get the private conversion state.
 	 */
-	S = (struct mbrtoc8state *)ps;
+	S = (struct mbrtoc8state *)(void *)ps;
 
 	/*
 	 * If there are pending trailing bytes, yield them and return
@@ -181,23 +181,32 @@ mbrtoc8(char8_t *restrict pc8, const char *restrict s, size_t n,
 		break;
 	case 0x0080 ... 0x07ff:
 		if (pc8)
-			*pc8 = 0xc0 | __SHIFTOUT(c32, __BITS(10,6));
-		S->buf[2] = 0x80 | __SHIFTOUT(c32, __BITS(5,0));
+			*pc8 = (char8_t)(
+			    0xc0 | __SHIFTOUT(c32, __BITS(10,6)));
+		S->buf[2] = (char8_t)(
+		    0x80 | __SHIFTOUT(c32, __BITS(5,0)));
 		S->nleft = 1;
 		break;
 	case 0x0800 ... 0xffff:
 		if (pc8)
-			*pc8 = 0xe0 | __SHIFTOUT(c32, __BITS(15,12));
-		S->buf[1] = 0x80 | __SHIFTOUT(c32, __BITS(11,6));
-		S->buf[2] = 0x80 | __SHIFTOUT(c32, __BITS(5,0));
+			*pc8 = (char8_t)(
+			    0xe0 | __SHIFTOUT(c32, __BITS(15,12)));
+		S->buf[1] = (char8_t)(
+		    0x80 | __SHIFTOUT(c32, __BITS(11,6)));
+		S->buf[2] = (char8_t)(
+		    0x80 | __SHIFTOUT(c32, __BITS(5,0)));
 		S->nleft = 2;
 		break;
 	case 0x10000 ... 0x10ffff:
 		if (pc8)
-			*pc8 = 0xf0 | __SHIFTOUT(c32, __BITS(20,18));
-		S->buf[0] = 0x80 | __SHIFTOUT(c32, __BITS(17,12));
-		S->buf[1] = 0x80 | __SHIFTOUT(c32, __BITS(11,6));
-		S->buf[2] = 0x80 | __SHIFTOUT(c32, __BITS(5,0));
+			*pc8 = (char8_t)(
+			    0xf0 | __SHIFTOUT(c32, __BITS(20,18)));
+		S->buf[0] = (char8_t)(
+		    0x80 | __SHIFTOUT(c32, __BITS(17,12)));
+		S->buf[1] = (char8_t)(
+		    0x80 | __SHIFTOUT(c32, __BITS(11,6)));
+		S->buf[2] = (char8_t)(
+		    0x80 | __SHIFTOUT(c32, __BITS(5,0)));
 		S->nleft = 3;
 		break;
 	default:
