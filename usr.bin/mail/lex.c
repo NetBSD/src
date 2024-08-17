@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.46 2023/08/11 07:01:01 mrg Exp $	*/
+/*	$NetBSD: lex.c,v 1.47 2024/08/17 19:18:10 andvar Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.46 2023/08/11 07:01:01 mrg Exp $");
+__RCSID("$NetBSD: lex.c,v 1.47 2024/08/17 19:18:10 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -199,7 +199,7 @@ setmsize(int sz)
  * Set up editing on the given file name.
  * If the first character of name is %, we are considered to be
  * editing the file, otherwise we are reading our mail which has
- * signficance for mbox and so forth.
+ * significance for mbox and so forth.
  */
 PUBLIC int
 setfile(const char *name)
