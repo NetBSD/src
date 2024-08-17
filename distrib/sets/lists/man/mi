@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1780 2024/08/16 09:51:21 riastradh Exp $
+# $NetBSD: mi,v 1.1781 2024/08/17 13:34:40 gutteridge Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -35,7 +35,7 @@
 ./usr/share/info/ldint.info			man-computil-info	binutils=242,info
 ./usr/share/info/send-pr.info			man-gnats-info		info
 ./usr/share/info/stabs.info			man-debug-info		gdb=1320,info
-./usr/share/info/stabs.info			man-obsolete		gdb=1510,info
+./usr/share/info/stabs.info			man-obsolete		gdb=1510,obsolete
 ./usr/share/info/tar.info			man-obsolete		obsolete
 ./usr/share/info/texinfo.info			man-texinfo-info	info
 ./usr/share/info/uucp.info			man-obsolete		obsolete
