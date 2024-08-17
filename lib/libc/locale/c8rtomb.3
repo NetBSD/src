@@ -1,4 +1,4 @@
-.\"	$NetBSD: c8rtomb.3,v 1.4 2024/08/16 23:34:25 riastradh Exp $
+.\"	$NetBSD: c8rtomb.3,v 1.5 2024/08/17 00:32:19 riastradh Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh NAME
 .Nm c8rtomb
-.Nd Restartable UTF-8 code unit to multibyte conversion
+.Nd Restartable UTF-8 to multibyte conversion
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh LIBRARY
 .Lb libc
@@ -49,35 +49,50 @@
 .Sh DESCRIPTION
 The
 .Nm
-function attempts to encode Unicode input as a multibyte character
-sequence output at
-.Fa s
-in the current locale, writing anywhere between zero and
-.Dv MB_CUR_MAX
-bytes, inclusive, to
-.Fa s ,
-depending on the inputs and conversion state
-.Fa ps .
+function decodes UTF-8 and converts it to multibyte characters in the
+current locale, keeping state so it can restart after incremental
+progress.
 .Pp
-The input
-.Fa c8
-is a UTF-8 code unit.
-Successive calls to
+Each call to
 .Nm
-must provide well-formed UTF-8 code unit sequences.
-If
+updates the conversion state
+.Fa ps
+with a UTF-8 code unit
 .Fa c8 ,
-when appended to the sequence of code units passed in previous calls
+writes up to
+.Dv MB_CUR_MAX
+bytes to
+.Fa s
+(possibly none), and returns either the number of bytes written to
+.Fa s
+or
+.Li (size_t)-1
+to denote error.
+.Pp
+Over successive calls to
+.Nm
 with the same state
 .Fa ps ,
+the sequence of
+.Fa c8
+values must be a well-formed UTF-8 code unit sequence.
+If
+.Fa c8 ,
+when appended to the sequence of code units passed in previous calls,
 does not form a well-formed UTF-8 code unit sequence, then
 .Nm
-will return
+returns
 .Li (size_t)-1
-to denote failure with
+with
 .Xr errno 2
 set to
 .Er EILSEQ .
+.Pp
+If
+.Fa s
+is a null pointer, no output is stored, but the effects on
+.Fa ps
+and the return value are unchanged.
 .Pp
 If
 .Fa ps
@@ -191,14 +206,14 @@ followed by a NUL:
 c8rtomb(s, 0xf0, ps);
 c8rtomb(s, 0x9f, ps);
 c8rtomb(s, 0x92, ps);
-c8rtomb(s, L'\e0', ps);
+c8rtomb(s, '\e0', ps);
 .Ed
 .Pp
 Currently this fails with
 .Er EILSEQ
 which matches other implementations, but this is at odds with language
 in the standard which suggests that passing
-.Li L'\e0'
+.Li '\e0'
 should unconditionally store a null byte and reset
 .Fa ps
 to the initial conversion state:
