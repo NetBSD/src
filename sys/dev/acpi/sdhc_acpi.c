@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_acpi.c,v 1.21 2024/05/09 01:33:12 dyoung Exp $	*/
+/*	$NetBSD: sdhc_acpi.c,v 1.22 2024/08/17 07:00:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.21 2024/05/09 01:33:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.22 2024/08/17 07:00:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -178,7 +178,7 @@ sdhc_acpi_attach(device_t parent, device_t self, void *opaque)
 	if (slot->type == SLOT_TYPE_EMMC)
 		sc->sc.sc_vendor_hw_reset = sdhc_acpi_intel_emmc_hw_reset;
 
-	rv = acpi_dsm_query(sc->sc_handle, sdhc_acpi_rockchip_dsm_uuid, 
+	rv = acpi_dsm_query(sc->sc_handle, sdhc_acpi_rockchip_dsm_uuid,
 	    ROCKCHIP_DSM_REV, &funcs);
 	if (ACPI_SUCCESS(rv) &&
 	    ISSET(funcs, __BIT(ROCKCHIP_DSM_FUNC_SET_CARD_CLOCK))) {
