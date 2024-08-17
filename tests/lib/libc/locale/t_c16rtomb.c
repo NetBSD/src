@@ -1,4 +1,4 @@
-/*	$NetBSD: t_c16rtomb.c,v 1.1 2024/08/15 14:16:34 riastradh Exp $	*/
+/*	$NetBSD: t_c16rtomb.c,v 1.2 2024/08/17 21:31:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002 Tim J. Robbins
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_c16rtomb.c,v 1.1 2024/08/15 14:16:34 riastradh Exp $");
+__RCSID("$NetBSD: t_c16rtomb.c,v 1.2 2024/08/17 21:31:22 riastradh Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -103,6 +103,17 @@ ATF_TC_BODY(c16rtomb_c_locale_test, tc)
 	    "n=%zu", n);
 	ATF_CHECK_EQ_MSG(errno, EILSEQ, "errno=%d", errno);
 	ATF_CHECK_EQ_MSG((unsigned char)buf[0], 0xcc, "buf=[%02x]", buf[0]);
+
+	/* Incomplete Unicode character 'Pile of poo', interrupted by NUL. */
+	memset(&s, 0, sizeof(s));
+	memset(buf, 0xcc, sizeof(buf));
+	ATF_CHECK_EQ_MSG((n = c16rtomb(buf, 0xd83d, &s)), 0, "n=%zu", n);
+	atf_tc_expect_fail("PR lib/58615:"
+	    " incomplete c8rtomb, c16rtomb handles NUL termination wrong");
+	ATF_CHECK_EQ_MSG((n = c16rtomb(buf, L'\0', &s)), 1, "n=%zu", n);
+	ATF_CHECK_MSG(((unsigned char)buf[0] == '\0' &&
+		(unsigned char)buf[1] == 0xcc),
+	    "buf=[%02x %02x]", buf[0], buf[1]);
 }
 
 ATF_TC_WITHOUT_HEAD(c16rtomb_iso_8859_1_test);
@@ -173,6 +184,18 @@ ATF_TC_BODY(c16rtomb_utf_8_test, tc)
 	    "n=%zu", n);
 	ATF_CHECK_EQ_MSG(errno, EILSEQ, "errno=%d", errno);
 	ATF_CHECK_EQ_MSG((unsigned char)buf[0], 0xcc, "buf=[%02x]", buf[0]);
+
+	/* Incomplete Unicode character 'Pile of poo', interrupted by NUL. */
+	memset(&s, 0, sizeof(s));
+	memset(buf, 0xcc, sizeof(buf));
+	ATF_CHECK_EQ_MSG((n = c16rtomb(buf, 0xd83d, &s)), 0, "n=%zu", n);
+	atf_tc_expect_fail("PR lib/58615:"
+	    " incomplete c8rtomb, c16rtomb handles NUL termination wrong");
+	ATF_CHECK_EQ_MSG((n = c16rtomb(buf, L'\0', &s)), 1,
+	    "n=%zu", n);
+	ATF_CHECK_MSG(((unsigned char)buf[0] == '\0' &&
+		(unsigned char)buf[1] == 0xcc),
+	    "buf=[%02x %02x]", buf[0], buf[1]);
 }
 
 ATF_TP_ADD_TCS(tp)
