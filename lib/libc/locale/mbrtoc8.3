@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbrtoc8.3,v 1.5 2024/08/16 23:25:18 riastradh Exp $
+.\"	$NetBSD: mbrtoc8.3,v 1.6 2024/08/17 12:37:29 riastradh Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -100,6 +100,9 @@ saves its state in
 .Fa ps
 after all the input so far and returns
 .Li "(size_t)-2".
+.Sy All
+.Fa n
+bytes of input are consumed in this case.
 .It
 If
 .Nm
@@ -109,6 +112,8 @@ unit at
 .Li * Ns Fa pc8
 and returns
 .Li "(size_t)-3" .
+.Sy \&No
+input is consumed in this case.
 .It
 If
 .Nm
@@ -193,7 +198,7 @@ decoded a null multibyte character.
 .It Ar i
 .Bq code unit
 where
-.Li 0
+.Li 1
 \*(Le
 .Ar i
 \*(Le
