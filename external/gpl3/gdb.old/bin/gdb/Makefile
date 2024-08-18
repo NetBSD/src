@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2024/08/18 03:57:07 rin Exp $
+#	$NetBSD: Makefile,v 1.13 2024/08/18 04:08:28 rin Exp $
 
 NOCTF=
 .include <bsd.own.mk>
@@ -9,6 +9,7 @@ GDBARCHDIR=${GDBLIBDIR}/libgdb/arch/${GDB_MACHINE_ARCH}
 .include "${GDBARCHDIR}/defs.mk"
 
 PROG=		gdb
+MAN=		gdb.1 gdbinit.5
 
 SRCS=		gdb.c 
 CPPFLAGS+=	-I${.CURDIR} \
