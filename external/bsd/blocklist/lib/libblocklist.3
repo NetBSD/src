@@ -1,4 +1,4 @@
-.\" $NetBSD: libblocklist.3,v 1.5 2024/08/18 16:13:29 christos Exp $
+.\" $NetBSD: libblocklist.3,v 1.6 2024/08/18 16:24:40 christos Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -105,17 +105,17 @@ argument.
 The
 .Ar action
 parameter can take these values:
-.Bl -tag -width ".Va BLOCKLIST_ABUSIVE_BEHAVIOR"
-.It Va BLOCKLIST_AUTH_FAIL
+.Bl -tag -width ".Dv BLOCKLIST_ABUSIVE_BEHAVIOR"
+.It Dv BLOCKLIST_AUTH_FAIL
 There was an unsuccessful authentication attempt.
-.It Va BLOCKLIST_AUTH_OK
+.It Dv BLOCKLIST_AUTH_OK
 A user successfully authenticated.
-.It Va BLOCKLIST_ABUSIVE_BEHAVIOR
+.It Dv BLOCKLIST_ABUSIVE_BEHAVIOR
 The sending daemon has detected abusive behavior
 from the remote system.
 The remote address should
 be blocked as soon as possible.
-.It Va BLOCKLIST_BAD_USER
+.It Dv BLOCKLIST_BAD_USER
 The sending daemon has determined the username
 presented for authentication is invalid.
 The
@@ -124,7 +124,7 @@ daemon compares the username to a configured list of forbidden
 usernames and
 blocks the address immediately if a forbidden username matches.
 (The
-.Ar BLOCKLIST_BAD_USER
+.Dv BLOCKLIST_BAD_USER
 support is not currently available.)
 .El
 .Pp
