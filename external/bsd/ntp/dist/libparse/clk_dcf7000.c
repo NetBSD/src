@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_dcf7000.c,v 1.6 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: clk_dcf7000.c,v 1.7 2024/08/18 20:47:17 christos Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/libparse/clk_dcf7000.c,v 4.10 2005/04/16 17:32:10 kardel RELEASE_20050508_A
@@ -178,7 +178,7 @@ inp_dcf7000(
 }
 
 #else /* not (REFCLOCK && CLOCK_PARSE && CLOCK_DCF7000) */
-int clk_dcf7000_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* not (REFCLOCK && CLOCK_PARSE && CLOCK_DCF7000) */
 
 /*

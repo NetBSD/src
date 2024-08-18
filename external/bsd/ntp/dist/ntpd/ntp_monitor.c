@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_monitor.c,v 1.6 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: ntp_monitor.c,v 1.7 2024/08/18 20:47:17 christos Exp $	*/
 
 /*
  * ntp_monitor - monitor ntpd statistics
@@ -84,8 +84,10 @@ static	u_int mon_mem_increments;	/* times called malloc() */
  * headway is less than the minimum, as well as if the average headway
  * is less than eight times the increment.
  */
-int	ntp_minpkt = NTP_MINPKT;	/* minimum (log 2 s) */
-u_char	ntp_minpoll = NTP_MINPOLL;	/* increment (log 2 s) */
+int	ntp_minpkt = NTP_MINPKT;	/* minimum seconds between */
+					/* requests from a client */
+u_char	ntp_minpoll = NTP_MINPOLL;	/* minimum average log2 seconds */
+					/* between client requests */
 
 /*
  * Initialization state.  We may be monitoring, we may not.  If
@@ -329,9 +331,9 @@ ntp_monitor(
 
 	REQUIRE(rbufp != NULL);
 
-	if (mon_enabled == MON_OFF)
+	if (mon_enabled == MON_OFF) {
 		return ~(RES_LIMITED | RES_KOD) & flags;
-
+	}
 	pkt = &rbufp->recv_pkt;
 	hash = MON_HASH(&rbufp->recv_srcadr);
 	mode = PKT_MODE(pkt->li_vn_mode);
@@ -343,10 +345,11 @@ ntp_monitor(
 	 * otherwise cron'ed ntpdate or similar evades RES_LIMITED.
 	 */
 
-	for (; mon != NULL; mon = mon->hash_next)
-		if (SOCK_EQ(&mon->rmtadr, &rbufp->recv_srcadr))
+	for (; mon != NULL; mon = mon->hash_next) {
+		if (SOCK_EQ(&mon->rmtadr, &rbufp->recv_srcadr)) {
 			break;
-
+		}
+	}
 	if (mon != NULL) {
 		interval_fp = rbufp->recv_time;
 		L_SUB(&interval_fp, &mon->last);
@@ -388,17 +391,17 @@ ntp_monitor(
 		 * the average threshold plus the increment and leave
 		 * the RES_LIMITED and RES_KOD bits lit. Otherwise,
 		 * leave the counter alone and douse the RES_KOD bit.
-		 * This rate-limits the KoDs to no less than the average
-		 * headway.
+		 * This rate-limits the KoDs to no more often than the
+		 * average headway.
 		 */
 		if (interval + 1 >= ntp_minpkt && leak < limit) {
 			mon->leak = leak - 2;
 			restrict_mask &= ~(RES_LIMITED | RES_KOD);
-		} else if (mon->leak < limit)
+		} else if (mon->leak < limit) {
 			mon->leak = limit + head;
-		else
+		} else {
 			restrict_mask &= ~RES_KOD;
-
+		}
 		mon->flags = restrict_mask;
 
 		return mon->flags;
@@ -461,7 +464,7 @@ ntp_monitor(
 				mon_getmoremem();
 			UNLINK_HEAD_SLIST(mon, mon_free, hash_next);
 		/* Preempt from the MRU list if old enough. */
-		} else if (ntp_random() / (2. * FRAC) >
+		} else if (ntp_uurandom() >
 			   (double)oldest_age / mon_age) {
 			return ~(RES_LIMITED | RES_KOD) & flags;
 		} else {

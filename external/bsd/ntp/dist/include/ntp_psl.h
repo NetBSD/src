@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_psl.h,v 1.2 2020/05/25 20:47:19 christos Exp $	*/
+/*	$NetBSD: ntp_psl.h,v 1.3 2024/08/18 20:46:50 christos Exp $	*/
 
 #ifndef NTP_PSL_H
 #define NTP_PSL_H
@@ -6,12 +6,15 @@
 
 /*
  * Poll Skew List Item
+ * u_in32 is large enough for sub and qty so long as NTP_MAXPOLL < 31
  */
-
+#if NTP_MAXPOLL >= 31
+#include "psl_item structure needs larger type"
+#endif
 typedef struct psl_item_tag {
-	int		sub;	/* int or short?  unsigned is OK, but why? */
-	int		qty;	/* int or short?  unsigned is OK, but why? */
-	int		msk;	/* int or short?  unsigned is OK */
+	u_int32	sub;
+	u_int32	qty;
+	u_int32	msk;
 } psl_item;
 
 int get_pollskew(int, psl_item *);

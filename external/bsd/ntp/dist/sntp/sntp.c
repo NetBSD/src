@@ -1,8 +1,10 @@
-/*	$NetBSD: sntp.c,v 1.5 2020/05/25 20:47:32 christos Exp $	*/
+/*	$NetBSD: sntp.c,v 1.6 2024/08/18 20:47:20 christos Exp $	*/
 
 #include <config.h>
 
 #include "main.h"
+
+const char * progname;
 
 int 
 main (

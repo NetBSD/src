@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_acts.c,v 1.12 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: refclock_acts.c,v 1.13 2024/08/18 20:47:18 christos Exp $	*/
 
 /*
  * refclock_acts - clock driver for the NIST/USNO/PTB/NPL Computer Time
@@ -22,12 +22,6 @@
 #ifdef HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
 #endif /* HAVE_SYS_IOCTL_H */
-
-#ifdef SYS_WINNT
-#undef write	/* ports/winnt/include/config.h: #define write _write */
-extern int async_write(int, const void *, unsigned int);
-#define write(fd, data, octets)	async_write(fd, data, octets)
-#endif
 
 /*
  * This driver supports the US (NIST, USNO) and European (PTB, NPL,
@@ -349,8 +343,7 @@ acts_receive(
 			*up->bufptr++ = *tptr;
 			if (*tptr == '*' || *tptr == '#') {
 				up->tstamp = pp->lastrec;
-				if (write(pp->io.fd, tptr, 1) < 0)
-					msyslog(LOG_ERR, "acts: write echo fails %m");
+				refclock_write(peer, tptr, 1, "data");
 			}
 		}
 	}
@@ -410,10 +403,10 @@ acts_message(
 			      up->retry, sys_phone[up->retry]);
 		if (ioctl(pp->io.fd, TIOCMBIS, &dtr) < 0)
 			msyslog(LOG_ERR, "acts: ioctl(TIOCMBIS) failed: %m");
-		if (write(pp->io.fd, sys_phone[up->retry],
-		    strlen(sys_phone[up->retry])) < 0)
-			msyslog(LOG_ERR, "acts: write DIAL fails %m");
-		write(pp->io.fd, "\r", 1);
+		refclock_write(peer, sys_phone[up->retry],
+			       strlen(sys_phone[up->retry]),
+			       "DIAL");
+		refclock_write(peer, "\r", 1, "CR");
 		up->retry++;
 		up->state = S_CONNECT;
 		up->timer = ANSWER;
@@ -469,7 +462,6 @@ acts_timeout(
 	struct actsunit *up;
 	struct refclockproc *pp;
 	int	fd;
-	int	rc;
 	char	device[20];
 	char	lockfile[128], pidbuf[8];
 
@@ -515,7 +507,7 @@ acts_timeout(
 		 */
 		snprintf(device, sizeof(device), DEVICE,
 		    up->unit);
-		fd = refclock_open(device, SPEED232, LDISC_ACTS |
+		fd = refclock_open(&peer->srcadr, device, SPEED232, LDISC_ACTS |
 		    LDISC_RAW | LDISC_REMOTE);
 		if (fd < 0) {
 			msyslog(LOG_ERR, "acts: open fails %m");
@@ -536,8 +528,7 @@ acts_timeout(
 		 * the modem business and send 'T' for Spectrabum.
 		 */
 		if (sys_phone[up->retry] == NULL) {
-			if (write(pp->io.fd, "T", 1) < 0)
-				msyslog(LOG_ERR, "acts: write T fails %m");
+			refclock_write(peer, "T", 1, "T");
 			up->state = S_MSG;
 			up->timer = TIMECODE;
 			return;
@@ -549,10 +540,9 @@ acts_timeout(
 		 */
 		mprintf_event(PEVNT_CLOCK, peer, "SETUP %s",
 			      modem_setup);
-		rc = write(pp->io.fd, modem_setup, strlen(modem_setup));
-		if (rc < 0)
-			msyslog(LOG_ERR, "acts: write SETUP fails %m");
-		write(pp->io.fd, "\r", 1);
+		refclock_write(peer, modem_setup, strlen(modem_setup),
+			       "SETUP");
+		refclock_write(peer, "\r", 1, "CR");
 		up->state = S_SETUP;
 		up->timer = SETUP;
 		return;
@@ -909,5 +899,5 @@ acts_timecode(
 	pp->lastref = pp->lastrec;
 }
 #else
-int refclock_acts_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* REFCLOCK */

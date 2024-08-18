@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_trimtaip.c,v 1.6 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: clk_trimtaip.c,v 1.7 2024/08/18 20:47:17 christos Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/libparse/clk_trimtaip.c,v 4.11 2005/04/16 17:32:10 kardel RELEASE_20050508_A
@@ -183,7 +183,7 @@ inp_trimtaip(
 }
 
 #else /* not (REFCLOCK && CLOCK_PARSE && CLOCK_TRIMTAIP) */
-int clk_trimtaip_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* not (REFCLOCK && CLOCK_PARSE && CLOCK_TRIMTAIP) */
 
 /*

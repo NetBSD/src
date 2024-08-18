@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_hopfser.c,v 1.5 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: refclock_hopfser.c,v 1.6 2024/08/18 20:47:18 christos Exp $	*/
 
 /*
  *
@@ -46,12 +46,6 @@
 
 #ifdef HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
-#endif
-
-#ifdef SYS_WINNT
-extern int async_write(int, const void *, unsigned int);
-#undef write
-#define write(fd, data, octets)	async_write(fd, data, octets)
 #endif
 
 /*
@@ -134,7 +128,7 @@ hopfserial_start (
 	/* LDISC_STD, LDISC_RAW
 	 * Open serial port. Use CLK line discipline, if available.
 	 */
-	fd = refclock_open(gpsdev, SPEED232, LDISC_CLK);
+	fd = refclock_open(&peer->srcadr, gpsdev, SPEED232, LDISC_CLK);
 	if (fd <= 0) {
 #ifdef DEBUG
 		printf("hopfSerialClock(%d) start: open %s failed\n", unit, gpsdev);
@@ -370,5 +364,5 @@ hopfserial_poll (
 }
 
 #else
-int refclock_hopfser_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* REFCLOCK */

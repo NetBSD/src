@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_dumbclock.c,v 1.5 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: refclock_dumbclock.c,v 1.6 2024/08/18 20:47:18 christos Exp $	*/
 
 /*
  * refclock_dumbclock - clock driver for a unknown time distribution system
@@ -24,12 +24,6 @@
 
 #include <stdio.h>
 #include <ctype.h>
-
-#ifdef SYS_WINNT
-extern int async_write(int, const void *, unsigned int);
-#undef write
-#define write(fd, data, octets)	async_write(fd, data, octets)
-#endif
 
 /*
  * This driver supports a generic dumb clock that only outputs hh:mm:ss,
@@ -122,7 +116,7 @@ dumbclock_start(
 	if (debug)
 		printf ("starting Dumbclock with device %s\n",device);
 #endif
-	fd = refclock_open(device, SPEED232, 0);
+	fd = refclock_open(&peer->srcadr, device, SPEED232, 0);
 	if (fd <= 0)
 		return (0);
 
@@ -372,7 +366,7 @@ dumbclock_poll(
 		pollchar = 'R';
 	else
 		pollchar = 'T';
-	if (write(pp->io.fd, &pollchar, 1) != 1)
+	if (refclock_fdwrite(peer, pp->io.fd, &pollchar, 1) != 1)
 		refclock_report(peer, CEVNT_FAULT);
 	else
 		pp->polls++;
@@ -381,5 +375,5 @@ dumbclock_poll(
 #endif
 
 #else
-int refclock_dumbclock_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif	/* defined(REFCLOCK) && defined(CLOCK_DUMBCLOCK) */

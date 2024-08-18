@@ -1,4 +1,4 @@
-/*	$NetBSD: mm-internal.h,v 1.5 2020/05/25 20:47:33 christos Exp $	*/
+/*	$NetBSD: mm-internal.h,v 1.6 2024/08/18 20:47:21 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -45,6 +45,7 @@ extern "C" {
  *     On failure, set errno to ENOMEM and return NULL.
  *     If the argument sz is 0, simply return NULL.
  */
+EVENT2_EXPORT_SYMBOL
 void *event_mm_malloc_(size_t sz);
 
 /** Allocate memory initialized to zero.
@@ -55,6 +56,7 @@ void *event_mm_malloc_(size_t sz);
  *     set errno to ENOMEM and return NULL.
  *     If either arguments are 0, simply return NULL.
  */
+EVENT2_EXPORT_SYMBOL
 void *event_mm_calloc_(size_t count, size_t size);
 
 /** Duplicate a string.
@@ -65,9 +67,12 @@ void *event_mm_calloc_(size_t count, size_t size);
  *     occurs (or would occur) in the process.
  *     If the argument str is NULL, set errno to EINVAL and return NULL.
  */
+EVENT2_EXPORT_SYMBOL
 char *event_mm_strdup_(const char *str);
 
+EVENT2_EXPORT_SYMBOL
 void *event_mm_realloc_(void *p, size_t sz);
+EVENT2_EXPORT_SYMBOL
 void event_mm_free_(void *p);
 #define mm_malloc(sz) event_mm_malloc_(sz)
 #define mm_calloc(count, size) event_mm_calloc_((count), (size))

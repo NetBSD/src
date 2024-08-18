@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_tty.h,v 1.5 2020/05/25 20:47:20 christos Exp $	*/
+/*	$NetBSD: ntp_tty.h,v 1.6 2024/08/18 20:46:50 christos Exp $	*/
 
 /*
  * ntp_tty.h - header file for serial lines handling
@@ -100,6 +100,11 @@
 extern	int	ntp_tty_setup(int, u_int, u_int);
 extern	int	ntp_tty_ioctl(int, u_int);
 # endif
+#endif
+
+extern	int	symBaud2numBaud(int symBaud);
+# if 0
+extern	int	numBaud2symBaud(int numBaud);
 #endif
 
 #endif /* NTP_TTY_H */

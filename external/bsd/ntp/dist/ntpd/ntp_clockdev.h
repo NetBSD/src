@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_clockdev.h,v 1.1.1.1 2024/08/18 20:37:33 christos Exp $	*/
+/*	$NetBSD: ntp_clockdev.h,v 1.2 2024/08/18 20:47:17 christos Exp $	*/
 
 /* ntp_clockdev.h - map clock instances to devices
  *

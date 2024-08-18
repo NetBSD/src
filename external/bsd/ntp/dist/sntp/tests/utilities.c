@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.2 2020/05/25 20:47:35 christos Exp $	*/
+/*	$NetBSD: utilities.c,v 1.3 2024/08/18 20:47:26 christos Exp $	*/
 
 #include "config.h"
 
@@ -22,9 +22,6 @@ void test_SetLiVnMode2(void);
 void test_PktOutput(void);
 void test_LfpOutputBinaryFormat(void);
 void test_LfpOutputDecimalFormat(void);
-
-
-const char * Version = "stub unit test Version string";
 
 
 sockaddr_u

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq-subs.c,v 1.18 2020/05/25 20:47:26 christos Exp $	*/
+/*	$NetBSD: ntpq-subs.c,v 1.19 2024/08/18 20:47:19 christos Exp $	*/
 
 /*
  * ntpq-subs.c - subroutines which are called to perform ntpq commands.
@@ -1188,6 +1188,7 @@ printassoc(
 	const char *condition = "";
 	const char *last_event;
 	char buf[128];
+	char numev[32];
 
 	if (numassoc == 0) {
 		(void) xprintf(fp, "No association ID's in list\n");
@@ -1337,8 +1338,25 @@ printassoc(
 			last_event = "clock_alarm";
 			break;
 
+		case PEVNT_AUTH:
+			last_event = "bad_auth";
+			break;
+
+		case PEVNT_POPCORN:
+			last_event = "popcorn";
+			break;
+
+		case PEVNT_XLEAVE:
+			last_event = "interleave";
+			break;
+
+		case PEVNT_XERR:
+			last_event = "xleave_err";
+			break;
+
 		default:
-			last_event = "";
+			snprintf(numev, sizeof(numev), "<?%x?>", event);
+			last_event = numev;
 			break;
 		}
 		snprintf(buf, sizeof(buf),
@@ -1479,7 +1497,7 @@ radiostatus(
 #endif	/* UNUSED */
 
 /*
- * when - print how long its been since his last packet arrived
+ * when - return how long its been since his last packet arrived
  */
 static long
 when(
@@ -1675,6 +1693,7 @@ doprintpeers(
 	u_int32 u32;
 	const char *dstadr_refid = "0.0.0.0";
 	const char *serverlocal;
+	char *drbuf = NULL;
 	size_t drlen;
 	u_long stratum = 0;
 	long ppoll = 0;
@@ -1756,12 +1775,13 @@ doprintpeers(
 				} else if (decodenetnum(value, &refidadr)) {
 					if (SOCK_UNSPEC(&refidadr))
 						dstadr_refid = "0.0.0.0";
-					else if (ISREFCLOCKADR(&refidadr))
+					else if (ISREFCLOCKADR(&refidadr)) {
 						dstadr_refid =
 						    refnumtoa(&refidadr);
-					else
+					} else {
 						dstadr_refid =
 						    stoa(&refidadr);
+					}
 				} else {
 					have_da_rid = FALSE;
 				}
@@ -1780,19 +1800,25 @@ doprintpeers(
 				} else if (decodenetnum(value, &refidadr)) {
 					if (SOCK_UNSPEC(&refidadr))
 						dstadr_refid = "0.0.0.0";
-					else if (ISREFCLOCKADR(&refidadr))
+					else if (ISREFCLOCKADR(&refidadr)) {
 						dstadr_refid =
-						    refnumtoa(&refidadr);
-					else {
-						char *buf = emalloc(10);
-						int i = ntohl(refidadr.sa4.sin_addr.s_addr);
-
-						snprintf(buf, 10,
-							"%0x", i);
-						dstadr_refid = buf;
-					//xprintf(stderr, "apeervarlist refid: value=<%x>\n", i);
+							refnumtoa(&refidadr);
+						if (pvl == apeervarlist) {
+							/*
+							 * restrict refid to
+							 * 8 chars [Bug 3850]
+							 */
+							dstadr_refid =
+								trunc_right(
+									dstadr_refid,
+									8);
+						}
+					} else {
+						drbuf = emalloc(10);
+						snprintf(drbuf, 10, "%0x",
+							 SRCADR(&refidadr));
+						dstadr_refid = drbuf;
 					}
-					//xprintf(stderr, "apeervarlist refid: value=<%s>\n", value);
 				} else {
 					have_da_rid = FALSE;
 				}
@@ -1827,7 +1853,7 @@ doprintpeers(
 			if (!decodets(value, &reftime))
 				L_CLR(&reftime);
 		} else if (!strcmp("flash", name)) {
-		    decodeuint(value, &flash);
+			decodeuint(value, &flash);
 		} else {
 			// xprintf(stderr, "UNRECOGNIZED name=%s ", name);
 		}
@@ -1915,6 +1941,7 @@ doprintpeers(
 			drlen = strlen(dstadr_refid);
 			makeascii(drlen, dstadr_refid, fp);
 		}
+		free(drbuf);
 		if (pvl == apeervarlist) {
 			while (drlen++ < 9)
 				xputc(' ', fp);
@@ -2006,16 +2033,17 @@ dopeers(
 	if (!dogetassoc(fp))
 		return;
 
-	for (u = 0; u < numhosts; u++) {
-		if (getnetnum(chosts[u].name, &netnum, fullname, af)) {
-			name_or_num = nntohost(&netnum);
-			sl = strlen(name_or_num);
-			maxhostlen = max(maxhostlen, sl);
+	if (numhosts > 1) {
+		for (u = 0; u < numhosts; u++) {
+			if (getnetnum(chosts[u].name, &netnum, fullname, af)) {
+				name_or_num = nntohost(&netnum);
+				sl = strlen(name_or_num);
+				maxhostlen = max(maxhostlen, sl);
+			}
 		}
-	}
-	if (numhosts > 1)
 		xprintf(fp, "%-*.*s ", (int)maxhostlen, (int)maxhostlen,
 			"server (local)");
+	}
 	xprintf(fp,
 		"     remote           refid      st t when poll reach   delay   offset  jitter\n");
 	if (numhosts > 1)
@@ -2060,16 +2088,17 @@ doapeers(
 	if (!dogetassoc(fp))
 		return;
 
-	for (u = 0; u < numhosts; u++) {
-		if (getnetnum(chosts[u].name, &netnum, fullname, af)) {
-			name_or_num = nntohost(&netnum);
-			sl = strlen(name_or_num);
-			maxhostlen = max(maxhostlen, sl);
+	if (numhosts > 1) {
+		for (u = 0; u < numhosts; u++) {
+			if (getnetnum(chosts[u].name, &netnum, fullname, af)) {
+				name_or_num = nntohost(&netnum);
+				sl = strlen(name_or_num);
+				maxhostlen = max(maxhostlen, sl);
+			}
 		}
-	}
-	if (numhosts > 1)
 		xprintf(fp, "%-*.*s ", (int)maxhostlen, (int)maxhostlen,
 			"server (local)");
+	}
 	xprintf(fp,
 		"     remote       refid   assid  st t when poll reach   delay   offset  jitter\n");
 	if (numhosts > 1)
@@ -2182,14 +2211,15 @@ doopeers(
 	if (!dogetassoc(fp))
 		return;
 
-	for (i = 0; i < numhosts; ++i) {
-		if (getnetnum(chosts[i].name, &netnum, fullname, af))
-			if (strlen(fullname) > maxhostlen)
-				maxhostlen = strlen(fullname);
+	if (numhosts > 1) {
+		for (i = 0; i < numhosts; ++i) {
+			if (getnetnum(chosts[i].name, &netnum, fullname, af)) {
+				maxhostlen = max(maxhostlen, strlen(fullname));
+			}
+			xprintf(fp, "%-*.*s ", (int)maxhostlen, (int)maxhostlen,
+				"server");
+		}
 	}
-	if (numhosts > 1)
-		xprintf(fp, "%-*.*s ", (int)maxhostlen, (int)maxhostlen,
-			"server");
 	xprintf(fp,
 	    "     remote           local      st t when poll reach   delay   offset    disp\n");
 	if (numhosts > 1)
@@ -2433,7 +2463,7 @@ fetch_nonce(
 		return FALSE;
 	}
 
-	if ((size_t)rsize <= sizeof(nonce_eq) - 1 ||
+	if (rsize <= sizeof(nonce_eq) - 1 ||
 	    strncmp(rdata, nonce_eq, sizeof(nonce_eq) - 1)) {
 		xprintf(stderr, "unexpected nonce response format: %.*s\n",
 			(int)rsize, rdata); /* cast is wobbly */

@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_trimtsip.c,v 1.7 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: clk_trimtsip.c,v 1.8 2024/08/18 20:47:17 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/libparse/clk_trimtsip.c,v 4.19 2009/11/01 10:47:49 kardel RELEASE_20091101_A
@@ -390,7 +390,7 @@ cvt_trimtsip(
 }
 
 #else /* not (REFCLOCK && CLOCK_PARSE && CLOCK_TRIMTSIP && !PARSESTREAM) */
-int clk_trimtsip_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* not (REFCLOCK && CLOCK_PARSE && CLOCK_TRIMTSIP && !PARSESTREAM) */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_meinberg.c,v 1.7 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: clk_meinberg.c,v 1.8 2024/08/18 20:47:17 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/libparse/clk_meinberg.c,v 4.12.2.1 2005/09/25 10:22:35 kardel RELEASE_20050925_A
@@ -735,7 +735,7 @@ gps_input(
 }
 
 #else /* not (REFCLOCK && CLOCK_PARSE && CLOCK_MEINBERG) */
-int clk_meinberg_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* not (REFCLOCK && CLOCK_PARSE && CLOCK_MEINBERG) */
 
 /*

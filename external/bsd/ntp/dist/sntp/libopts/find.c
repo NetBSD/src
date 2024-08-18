@@ -1,4 +1,4 @@
-/*	$NetBSD: find.c,v 1.8 2020/05/25 20:47:34 christos Exp $	*/
+/*	$NetBSD: find.c,v 1.9 2024/08/18 20:47:24 christos Exp $	*/
 
 /**
  * @file check.c
@@ -14,7 +14,7 @@
 /*
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2018 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -32,36 +32,6 @@
  *  4379e7444a0e2ce2b12dd6f5a52a27a4d02d39d247901d3285c88cf0d37f477b  COPYING.lgplv3
  *  13aa749a5b0a454917a944ed8fffc530b784f5ead522b1aacaf4ec8aa55a6239  COPYING.mbsd
  */
-
-/* = = = START-STATIC-FORWARD = = = */
-static int
-parse_opt(char const ** nm_pp, char ** arg_pp, char * buf, size_t bufsz);
-
-static void
-opt_ambiguities(tOptions * opts, char const * name, int nm_len);
-
-static int
-opt_match_ct(tOptions * opts, char const * name, int nm_len,
-             int * ixp, bool * disable);
-
-static tSuccess
-opt_set(tOptions * opts, char * arg, int idx, bool disable, tOptState * st);
-
-static tSuccess
-opt_unknown(tOptions * opts, char const * name, char * arg, tOptState * st);
-
-static tSuccess
-opt_ambiguous(tOptions * opts, char const * name, int match_ct);
-
-static tSuccess
-get_opt_arg_must(tOptions * opts, tOptState * o_st);
-
-static tSuccess
-get_opt_arg_may(tOptions * pOpts, tOptState * o_st);
-
-static tSuccess
-get_opt_arg_none(tOptions * pOpts, tOptState * o_st);
-/* = = = END-STATIC-FORWARD = = = */
 
 /**
  * find the name and name length we are looking for
@@ -82,7 +52,7 @@ parse_opt(char const ** nm_pp, char ** arg_pp, char * buf, size_t bufsz)
 
             buf[res] = NUL;
             *nm_pp   = buf;
-            *arg_pp  = VOIDP(p);
+            *arg_pp  = __UNCONST(p);
             return res;
 
         default:
@@ -369,7 +339,7 @@ optionVendorOption(tOptions * pOpts, tOptDesc * pOD)
  *
  * @return success status
  */
-LOCAL tSuccess
+static tSuccess
 opt_find_long(tOptions * opts, char const * opt_name, tOptState * state)
 {
     char    name_buf[128];
@@ -410,7 +380,7 @@ opt_find_long(tOptions * opts, char const * opt_name, tOptState * state)
  * @param optValue   option flag character
  * @param pOptState  state about current option
  */
-LOCAL tSuccess
+static tSuccess
 opt_find_short(tOptions * pOpts, uint_t optValue, tOptState * pOptState)
 {
     tOptDesc * pRes = pOpts->pOptDesc;
@@ -640,6 +610,7 @@ get_opt_arg_none(tOptions * pOpts, tOptState * o_st)
      */
     else
         pOpts->pzCurOpt = NULL;
+
     return SUCCESS;
 }
 
@@ -650,7 +621,7 @@ get_opt_arg_none(tOptions * pOpts, tOptState * o_st)
  *  @param[in,out] o_st  the option processing state
  *  @returns SUCCESS or FAILURE
  */
-LOCAL tSuccess
+static tSuccess
 get_opt_arg(tOptions * opts, tOptState * o_st)
 {
     o_st->flags |= (o_st->pOD->fOptState & OPTST_PERSISTENT_MASK);
@@ -660,10 +631,24 @@ get_opt_arg(tOptions * opts, tOptState * o_st)
      * are handled with the "none" procedure.  Otherwise, check the
      * optional flag and call either the "may" or "must" function.
      */
-    if (  ((o_st->flags & OPTST_DISABLED) != 0)
-       || (OPTST_GET_ARGTYPE(o_st->flags) == OPARG_TYPE_NONE))
+    if ((o_st->flags & OPTST_DISABLED) != 0)
         return get_opt_arg_none(opts, o_st);
-    
+
+    switch (OPTST_GET_ARGTYPE(o_st->flags)) {
+    case OPARG_TYPE_STATIC:
+    {
+        /*
+         * Propagate the static arg
+         */
+        tSuccess res = get_opt_arg_none(opts, o_st);
+        o_st->pzOptArg = o_st->pOD->optArg.argString;
+        return res;
+    }
+
+    case OPARG_TYPE_NONE:
+        return get_opt_arg_none(opts, o_st);
+    }
+
     if (o_st->flags & OPTST_ARG_OPTIONAL)
         return get_opt_arg_may( opts, o_st);
     
@@ -677,7 +662,7 @@ get_opt_arg(tOptions * opts, tOptState * o_st)
  *  @param[in,out] o_st  the option processing state
  *  @returns SUCCESS or FAILURE
  */
-LOCAL tSuccess
+static tSuccess
 find_opt(tOptions * opts, tOptState * o_st)
 {
     /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_util.c,v 1.10 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: ntp_util.c,v 1.11 2024/08/18 20:47:18 christos Exp $	*/
 
 /*
  * ntp_util.c - stuff I didn't have any other place for
@@ -15,7 +15,6 @@
 #include "ntp_assert.h"
 #include "ntp_calendar.h"
 #include "ntp_leapsec.h"
-#include "lib_strbuf.h"
 
 #include <stdio.h>
 #include <ctype.h>
@@ -184,7 +183,7 @@ init_util(void)
 void
 write_stats(void)
 {
-	FILE	*fp;
+	FILE	*fp = NULL;
 #ifdef DOSYNCTODR
 	struct timeval tv;
 #if !defined(VMS)
@@ -268,12 +267,10 @@ write_stats(void)
 		 * the frequncy file. This minimizes the file writes to
 		 * nonvolaile storage.
 		 */
-#ifdef DEBUG
-		if (debug)
-			printf("write_stats: frequency %.6lf thresh %.6lf, freq %.6lf\n",
+		DPRINTF(1, ("write_stats: frequency %.6f thresh %.6f, freq %.6f\n",
 			    (prev_drift_comp - drift_comp) * 1e6, wander_resid *
-			    1e6, drift_comp * 1e6);
-#endif
+			    1e6, drift_comp * 1e6));
+
 		if (fabs(prev_drift_comp - drift_comp) < wander_resid) {
 			wander_resid *= 0.5;
 			return;
@@ -285,7 +282,7 @@ write_stats(void)
 			    stats_temp_file);
 			return;
 		}
-		fprintf(fp, "%.3f\n", drift_comp * 1e6);
+		fprintf(fp, "%.6f\n", drift_comp * 1e6);
 		(void)fclose(fp);
 		/* atomic */
 #ifdef SYS_WINNT
@@ -327,6 +324,36 @@ write_stats(void)
 
 
 /*
+ * If an option was given on the command line make sure it takes
+ * precedence over the configuration file, as command-line options
+ * are processed first.  Similarly, if an option is given in the
+ * configuration file, do not allow it to be overridden with runtime
+ * configuration.  Done by simply remembering an option was already
+ * seen.
+ */
+static int
+allow_config(
+	u_int		option,
+	int/*BOOL*/	cmdopt
+	)
+{
+	static u_int	seen = 0;	/* stat options previously set */
+	u_int		mask;
+	int		retv;
+
+	if (cmdopt) {
+		DEBUG_REQUIRE(option < sizeof(mask) * 8);
+		mask = 1u << option;
+		retv = !(seen & mask);
+		seen |= mask;
+	} else {
+		retv = FALSE;
+	}
+	return retv;
+}
+
+
+/*
  * stats_config - configure the stats operation
  */
 void
@@ -336,16 +363,17 @@ stats_config(
 	int optflag
 	)
 {
-	FILE	*fp;
+	FILE	*fp = NULL;
 	const char *value;
 	size_t	len;
 	double	old_drift;
 	l_fp	now;
 	time_t  ttnow;
+	char	dirsep_or_nul;
 #ifndef VMS
-	const char temp_ext[] = ".TEMP";
+	static const char temp_ext[] = ".TEMP";
 #else
-	const char temp_ext[] = "-TEMP";
+	static const char temp_ext[] = "-TEMP";
 #endif
 
 	/*
@@ -395,116 +423,131 @@ stats_config(
 
 	switch (item) {
 
-	/*
-	 * Open and read frequency file.
-	 */
+		/*
+		 * Open and read frequency file.
+		 */
 	case STATS_FREQ_FILE:
-		if (!value || (len = strlen(value)) == 0)
+		if (!allow_config(STATS_FREQ_FILE, optflag)) {
 			break;
-
-		stats_drift_file = erealloc(stats_drift_file, len + 1);
-		stats_temp_file = erealloc(stats_temp_file,
-		    len + sizeof(".TEMP"));
-		memcpy(stats_drift_file, value, (size_t)(len+1));
-		memcpy(stats_temp_file, value, (size_t)len);
-		memcpy(stats_temp_file + len, temp_ext, sizeof(temp_ext));
+		}
+		if (!value || 0 == (len = strlen(value))) {
+			free(stats_drift_file);
+			free(stats_temp_file);
+			stats_drift_file = stats_temp_file = NULL;
+		} else {
+			stats_drift_file = erealloc(stats_drift_file,
+						    1 + len);
+			stats_temp_file = erealloc(stats_temp_file,
+						   len + sizeof(temp_ext));
+			memcpy(stats_drift_file, value, 1 + len);
+			memcpy(stats_temp_file, value, len);
+			memcpy(stats_temp_file + len, temp_ext, 
+			       sizeof(temp_ext));
+		}
 
 		/*
 		 * Open drift file and read frequency. If the file is
 		 * missing or contains errors, tell the loop to reset.
 		 */
-		if ((fp = fopen(stats_drift_file, "r")) == NULL)
-			break;
-
-		if (fscanf(fp, "%lf", &old_drift) != 1) {
+		if (NULL == stats_drift_file) {
+			goto nofreq;
+		} else if ((fp = fopen(stats_drift_file, "r")) == NULL) {
+			if (errno != ENOENT) {
+				msyslog(LOG_WARNING,
+					"cannot read frequency file %s: %m",
+					stats_drift_file);
+			}
+			goto nofreq;
+		} else if (fscanf(fp, "%lf", &old_drift) != 1) {
 			msyslog(LOG_ERR,
 				"format error frequency file %s",
 				stats_drift_file);
-			fclose(fp);
-			break;
-
-		}
-		fclose(fp);
-		loop_config(LOOP_FREQ, old_drift);
-		prev_drift_comp = drift_comp;
-		break;
-
-	/*
-	 * Specify statistics directory.
-	 */
-	case STATS_STATSDIR:
-
-		/* - 1 since value may be missing the DIR_SEP. */
-		if (strlen(value) >= sizeof(statsdir) - 1) {
-			msyslog(LOG_ERR,
-			    "statsdir too long (>%d, sigh)",
-			    (int)sizeof(statsdir) - 2);
+	nofreq:
+			prev_drift_comp = 0.0;
+			loop_config(LOOP_NOFREQ, prev_drift_comp);
 		} else {
-			int add_dir_sep;
-			size_t value_l;
-
-			/* Add a DIR_SEP unless we already have one. */
-			value_l = strlen(value);
-			if (0 == value_l)
-				add_dir_sep = FALSE;
-			else
-				add_dir_sep = (DIR_SEP !=
-				    value[value_l - 1]);
-
-			if (add_dir_sep)
-				snprintf(statsdir, sizeof(statsdir),
-				    "%s%c", value, DIR_SEP);
-			else
-				snprintf(statsdir, sizeof(statsdir),
-				    "%s", value);
-			filegen_statsdir();
+			loop_config(LOOP_FREQ, old_drift);
+			prev_drift_comp = drift_comp;
+			msyslog(LOG_INFO,
+				"initial drift restored to %.6f",
+				old_drift);
+		}
+		if (NULL != fp) {
+			fclose(fp);
 		}
 		break;
 
-	/*
-	 * Open pid file.
-	 */
-	case STATS_PID_FILE:
-		if ((fp = fopen(value, "w")) == NULL) {
-			msyslog(LOG_ERR, "pid file %s: %m",
-			    value);
+		/*
+		 * Specify statistics directory.
+		 */
+	case STATS_STATSDIR:
+		if (!allow_config(STATS_STATSDIR, optflag)) {
 			break;
 		}
-		fprintf(fp, "%d", (int)getpid());
+		/* - 2 since value may be missing the DIR_SEP. */
+		len = strlen(value);
+		if (len > sizeof(statsdir) - 2) {
+			msyslog(LOG_ERR,
+				"statsdir %s too long (>%u)", value,
+				(u_int)sizeof(statsdir) - 2);
+			break;
+		}
+		/* Add a DIR_SEP unless we already have one. */
+		if (0 == len || DIR_SEP == value[len - 1]) {
+			dirsep_or_nul = '\0';
+		} else {
+			dirsep_or_nul = DIR_SEP;
+		}
+		snprintf(statsdir, sizeof(statsdir), "%s%c",
+			 value, dirsep_or_nul);
+		filegen_statsdir();
+		break;
+
+		/*
+		 * Write pid file.
+		 */
+	case STATS_PID_FILE:
+		if (!allow_config(STATS_PID_FILE, optflag)) {
+			break;
+		}
+		if ((fp = fopen(value, "w")) == NULL) {
+			msyslog(LOG_ERR, "pid file %s: %m", value);
+			break;
+		}
+		fprintf(fp, "%ld", (long)getpid());
 		fclose(fp);
 		break;
 
 	/*
 	 * Read leapseconds file.
 	 *
-	 * Note: Currently a leap file without SHA1 signature is
-	 * accepted, but if there is a signature line, the signature
-	 * must be valid or the file is rejected.
+	 * By default a leap file without SHA1 signature is accepted,
+	 * but if there is a signature line, the signature must be
+	 * valid or the leapfile line in ntp.conf must have ignorehash.
 	 */
 	case STATS_LEAP_FILE:
-		if (!value || (len = strlen(value)) == 0)
+		if (NULL == value || 0 == (len = strlen(value))) {
 			break;
-
+		}
 		leapfile_name = erealloc(leapfile_name, len + 1);
 		memcpy(leapfile_name, value, len + 1);
 		chck_leaphash = optflag;
 
 		if (leapsec_load_file(
 			    leapfile_name, &leapfile_stat,
-			    TRUE, TRUE, chck_leaphash))
-		{
+			    TRUE, TRUE, chck_leaphash)) {
 			leap_signature_t lsig;
 
 			get_systime(&now);
 			time(&ttnow);
 			leapsec_getsig(&lsig);
 			mprintf_event(EVNT_TAI, NULL,
-				      "%d leap %s %s %s",
+				      "%d leap %s expire%s %s",
 				      lsig.taiof,
 				      fstostr(lsig.ttime),
 				      leapsec_expired(now.l_ui, NULL)
-					  ? "expired"
-					  : "expires",
+					  ? "d"
+					  : "s",
 				      fstostr(lsig.etime));
 
 			have_leapfile = TRUE;
@@ -538,31 +581,32 @@ stats_config(
 */
 void
 record_peer_stats(
-	sockaddr_u *addr,
-	int	status,
-	double	offset,		/* offset */
-	double	delay,		/* delay */
-	double	dispersion,	/* dispersion */
-	double	jitter		/* jitter */
+	sockaddr_u *	addr,
+	int		status,
+	double		offset,
+	double		delay,
+	double		dispersion,
+	double		jitter
 	)
 {
-	l_fp	now;
-	u_long	day;
+	l_fp		now;
+	u_long		day;
 
-	if (!stats_control)
+	if (!stats_control) {
 		return;
-
+	}
 	get_systime(&now);
 	filegen_setup(&peerstats, now.l_ui);
+	if (NULL == peerstats.fp) {
+		return;
+	}
 	day = now.l_ui / 86400 + MJD_1900;
 	now.l_ui %= 86400;
-	if (peerstats.fp != NULL) {
-		fprintf(peerstats.fp,
-		    "%lu %s %s %x %.9f %.9f %.9f %.9f\n", day,
-		    ulfptoa(&now, 3), stoa(addr), status, offset,
-		    delay, dispersion, jitter);
-		fflush(peerstats.fp);
-	}
+	fprintf(peerstats.fp,
+		"%lu %s %s %x %.9f %.9f %.9f %.9f\n", day,
+		ulfptoa(&now, 3), stoa(addr), status, offset,
+		delay, dispersion, jitter);
+	fflush(peerstats.fp);
 }
 
 
@@ -700,6 +744,13 @@ record_raw_stats(
 	u_long	day;
 
 	if (!stats_control)
+		return;
+
+	/*
+	 * Mode 6 and mode 7 packets do not have the format of normal
+	 * NTP packets and will log garbage.  So don't.  [Bug 3774]
+	 */
+	if (MODE_CONTROL == mode || MODE_PRIVATE == mode)
 		return;
 
 	get_systime(&now);
@@ -886,13 +937,14 @@ record_timing_stats(
  *
  * Note: This loads a new leapfile on the fly. Currently a leap file
  * without SHA1 signature is accepted, but if there is a signature line,
- * the signature must be valid or the file is rejected.
+ * the signature must be valid unless the ntp.conf leapfile line specified
+ * ignorehash.
  */
 void
 check_leap_file(
-	int           is_daily_check,
-	uint32_t      ntptime       ,
-	const time_t *systime
+	int		is_daily_check,
+	uint32_t	ntptime,
+	const time_t *	systime
 	)
 {
 	/* just do nothing if there is no leap file */
@@ -1049,3 +1101,20 @@ ntpd_time_stepped(void)
 	win_time_stepped();
 #endif
 }
+
+
+#ifdef DEBUG
+void
+append_flagstr(
+	char *		flagstr,
+	size_t		sz,
+	const char *	text
+)
+{
+	if ('\0' != flagstr[0]) {
+		strlcat(flagstr, ",", sz);
+	}
+	/* bail if we ran out of room */
+	INSIST(strlcat(flagstr, text, sz) < sz);
+}
+#endif	/* DEBUG */

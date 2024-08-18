@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_neoclock4x.c,v 1.12 2020/05/27 23:52:19 christos Exp $	*/
+/*	$NetBSD: refclock_neoclock4x.c,v 1.13 2024/08/18 20:47:18 christos Exp $	*/
 
 /*
  *
@@ -180,7 +180,7 @@ neoclock4x_start(int unit,
   /* LDISC_STD, LDISC_RAW
    * Open serial port. Use CLK line discipline, if available.
    */
-  fd = refclock_open(dev, B2400, LDISC_STD);
+  fd = refclock_open(&peer->srcadr, dev, B2400, LDISC_STD);
   if(fd <= 0)
     {
       return (0);
@@ -1061,7 +1061,7 @@ neol_check_firmware(int unit,
 #endif
 
 #else
-int refclock_neoclock4x_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* REFCLOCK */
 
 /*

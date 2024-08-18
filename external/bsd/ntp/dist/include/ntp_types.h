@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_types.h,v 1.7 2020/05/25 20:47:20 christos Exp $	*/
+/*	$NetBSD: ntp_types.h,v 1.8 2024/08/18 20:46:50 christos Exp $	*/
 
 /*
  *  ntp_types.h - defines how int32 and u_int32 are treated.
@@ -170,11 +170,11 @@ typedef unsigned long long u_int64;
 
 /*
  * and here the trouble starts: We need a representation with more than
- * 64 bits. If a scalar of that size is not available, we need a struct
+ * 32 bits. If a scalar of that size is not available, we need a struct
  * that holds the value in split representation.
  *
  * To ease the usage a bit, we alwys use a union that is in processor
- * byte order and might or might not contain a 64bit scalar.
+ * byte order and might or might not contain a 64-bit scalar.
  */
 
 #if SIZEOF_SHORT != 2
@@ -255,15 +255,6 @@ aligned_ptr(
 {
 	return base + ALIGN_UNITS((minsize < 1) ? 1 : minsize);
 }
-
-/*
- * Macro to use in otherwise-empty source files to comply with ANSI C
- * requirement that each translation unit (source file) contain some
- * declaration.  This has commonly been done by declaring an unused
- * global variable of type int or char.  An extern reference to exit()
- * serves the same purpose without bloat.
- */
-#define	NONEMPTY_TRANSLATION_UNIT	extern void exit(int);
 
 /*
  * On Unix struct sock_timeval is equivalent to struct timeval.

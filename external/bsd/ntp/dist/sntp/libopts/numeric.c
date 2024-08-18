@@ -1,4 +1,4 @@
-/*	$NetBSD: numeric.c,v 1.8 2020/05/25 20:47:34 christos Exp $	*/
+/*	$NetBSD: numeric.c,v 1.9 2024/08/18 20:47:24 christos Exp $	*/
 
 
 /**
@@ -12,7 +12,7 @@
 /*
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2018 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -126,7 +126,8 @@ optionNumericVal(tOptions * opts, tOptDesc * od)
      */
     if (  (od == NULL)
        || (od->optArg.argString == NULL)
-       || ((od->fOptState & OPTST_RESET) != 0))
+       || ((od->fOptState & OPTST_RESET) != 0)
+       || (opts <= OPTPROC_EMIT_LIMIT))
         return;
 
     errno = 0;
@@ -137,14 +138,14 @@ optionNumericVal(tOptions * opts, tOptDesc * od)
     if ((od->fOptState & OPTST_SCALED_NUM) != 0)
         switch (*(pz++)) {
         case NUL:  pz--; break;
-        case 't':  val *= 1000;
-        case 'g':  val *= 1000;
-        case 'm':  val *= 1000;
+        case 't':  val *= 1000; /* FALLTHROUGH */
+        case 'g':  val *= 1000; /* FALLTHROUGH */
+        case 'm':  val *= 1000; /* FALLTHROUGH */
         case 'k':  val *= 1000; break;
 
-        case 'T':  val *= 1024;
-        case 'G':  val *= 1024;
-        case 'M':  val *= 1024;
+        case 'T':  val *= 1024; /* FALLTHROUGH */
+        case 'G':  val *= 1024; /* FALLTHROUGH */
+        case 'M':  val *= 1024; /* FALLTHROUGH */
         case 'K':  val *= 1024; break;
 
         default:   goto bad_number;

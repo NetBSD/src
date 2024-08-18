@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.h,v 1.10 2020/05/25 20:47:26 christos Exp $	*/
+/*	$NetBSD: ntpq.h,v 1.11 2024/08/18 20:47:19 christos Exp $	*/
 
 /*
  * ntpq.h - definitions of interest to ntpq
@@ -13,7 +13,6 @@
 #include "ntp_malloc.h"
 #include "ntp_assert.h"
 #include "ntp_control.h"
-#include "lib_strbuf.h"
 
 #include "ntpq-opts.h"
 

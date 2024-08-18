@@ -1,4 +1,4 @@
-/*	$NetBSD: adjtime.c,v 1.6 2020/05/25 20:47:24 christos Exp $	*/
+/*	$NetBSD: adjtime.c,v 1.7 2024/08/18 20:47:13 christos Exp $	*/
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -383,6 +383,6 @@ adjtime (struct timeval *delta, struct timeval *olddelta)
     return 0;
 }
 # else /* no special adjtime() needed */
-int adjtime_bs;
+NONEMPTY_TRANSLATION_UNIT
 # endif
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_random.c,v 1.5 2020/05/25 20:47:24 christos Exp $	*/
+/*	$NetBSD: ntp_random.c,v 1.6 2024/08/18 20:47:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -498,4 +498,19 @@ ntp_random( void )
 		fptr = f; rptr = r;
 	}
 	return(i);
+}
+
+/*
+ * ntp_uurandom()
+ *
+ * Generate a Uniform-distributed Unity based random number. Replaces a
+ * few locations where the transformation was made in an ad-hoc style
+ * (and in one instance, wrong...)
+ *
+ * returns a number in [0.0 .. 1.0], both ends inclusive
+ */
+double
+ntp_uurandom( void )
+{
+	return (double)ntp_random() / 0x7FFFFFFFu;
 }

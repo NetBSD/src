@@ -1,4 +1,4 @@
-/*	$NetBSD: systime.c,v 1.7 2020/05/25 20:47:24 christos Exp $	*/
+/*	$NetBSD: systime.c,v 1.8 2024/08/18 20:47:13 christos Exp $	*/
 
 /*
  * systime -- routines to fiddle a UNIX clock.
@@ -18,7 +18,6 @@
 #include "timevalops.h"
 #include "timespecops.h"
 #include "ntp_calendar.h"
-#include "lib_strbuf.h"
 
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -237,7 +236,7 @@ get_systime(
 	 * must scale up the result by 2.0 to cover the full fractional
 	 * range.
 	 */
-	dfuzz = ntp_random() * 2. / FRAC * sys_fuzz;
+	dfuzz = ntp_uurandom() * sys_fuzz;
 	DTOLFP(dfuzz, &lfpfuzz);
 	L_ADD(&result, &lfpfuzz);
 
@@ -593,6 +592,8 @@ step_systime(
 	return TRUE;
 }
 
+
+#if SIZEOF_TIME_T > 4
 static const char *
 tv_fmt_libbuf(
 	const struct timeval * ptv
@@ -614,6 +615,7 @@ tv_fmt_libbuf(
 		 (u_int)ptv->tv_usec);
 	return retv;
 }
+#endif	/* SIZEOF_TIME_T > 4 */
 
 
 int /*BOOL*/

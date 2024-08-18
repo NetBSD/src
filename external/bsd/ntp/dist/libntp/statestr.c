@@ -1,4 +1,4 @@
-/*	$NetBSD: statestr.c,v 1.8 2020/05/25 20:47:24 christos Exp $	*/
+/*	$NetBSD: statestr.c,v 1.9 2024/08/18 20:47:13 christos Exp $	*/
 
 /*
  * pretty printing of status information
@@ -10,7 +10,6 @@
 #include "ntp_stdlib.h"
 #include "ntp_fp.h"
 #include "ntp.h"
-#include "lib_strbuf.h"
 #include "ntp_refclock.h"
 #include "ntp_control.h"
 #include "ntp_string.h"

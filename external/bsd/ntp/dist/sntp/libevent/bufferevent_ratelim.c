@@ -1,4 +1,4 @@
-/*	$NetBSD: bufferevent_ratelim.c,v 1.5 2020/05/25 20:47:33 christos Exp $	*/
+/*	$NetBSD: bufferevent_ratelim.c,v 1.6 2024/08/18 20:47:21 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -562,8 +562,7 @@ int
 bufferevent_set_rate_limit(struct bufferevent *bev,
     struct ev_token_bucket_cfg *cfg)
 {
-	struct bufferevent_private *bevp =
-	    EVUTIL_UPCAST(bev, struct bufferevent_private, bev);
+	struct bufferevent_private *bevp = BEV_UPCAST(bev);
 	int r = -1;
 	struct bufferevent_rate_limit *rlim;
 	struct timeval now;
@@ -739,8 +738,7 @@ bufferevent_add_to_rate_limit_group(struct bufferevent *bev,
     struct bufferevent_rate_limit_group *g)
 {
 	int wsuspend, rsuspend;
-	struct bufferevent_private *bevp =
-	    EVUTIL_UPCAST(bev, struct bufferevent_private, bev);
+	struct bufferevent_private *bevp = BEV_UPCAST(bev);
 	BEV_LOCK(bev);
 
 	if (!bevp->rate_limiting) {
@@ -791,8 +789,7 @@ int
 bufferevent_remove_from_rate_limit_group_internal_(struct bufferevent *bev,
     int unsuspend)
 {
-	struct bufferevent_private *bevp =
-	    EVUTIL_UPCAST(bev, struct bufferevent_private, bev);
+	struct bufferevent_private *bevp = BEV_UPCAST(bev);
 	BEV_LOCK(bev);
 	if (bevp->rate_limiting && bevp->rate_limiting->group) {
 		struct bufferevent_rate_limit_group *g =

@@ -1,4 +1,4 @@
-/*	$NetBSD: timevalops.c,v 1.3 2020/05/25 20:47:36 christos Exp $	*/
+/*	$NetBSD: timevalops.c,v 1.4 2024/08/18 20:47:27 christos Exp $	*/
 
 #include "config.h"
 
@@ -121,9 +121,9 @@ AssertTimevalClose(const struct timeval m, const struct timeval n, const struct 
 
 	printf("m_expr which is %lld.%06lu \nand\n"
 	       "n_expr which is %lld.%06lu\nare not close; diff=%lld.%06luusec\n",
-	       (long long)m.tv_sec, m.tv_usec,
-	       (long long)n.tv_sec, n.tv_usec,
-	       (long long)diff.tv_sec, diff.tv_usec); 
+	       (long long)m.tv_sec, (u_long)m.tv_usec,
+	       (long long)n.tv_sec, (u_long)n.tv_usec,
+	       (long long)diff.tv_sec, (u_long)diff.tv_usec); 
 	return FALSE;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.9 2020/05/25 20:47:34 christos Exp $	*/
+/*	$NetBSD: load.c,v 1.10 2024/08/18 20:47:24 christos Exp $	*/
 
 
 /**
@@ -14,7 +14,7 @@
 /*
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2018 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -32,26 +32,6 @@
  *  4379e7444a0e2ce2b12dd6f5a52a27a4d02d39d247901d3285c88cf0d37f477b  COPYING.lgplv3
  *  13aa749a5b0a454917a944ed8fffc530b784f5ead522b1aacaf4ec8aa55a6239  COPYING.mbsd
  */
-
-/* = = = START-STATIC-FORWARD = = = */
-static bool
-get_realpath(char * buf, size_t b_sz);
-
-static bool
-add_prog_path(char * buf, int b_sz, char const * fname, char const * prg_path);
-
-static bool
-add_env_val(char * buf, int buf_sz, char const * name);
-
-static char *
-assemble_arg_val(char * txt, tOptionLoadMode mode);
-
-static char *
-trim_quotes(char * arg);
-
-static bool
-direction_ok(opt_state_mask_t f, int dir);
-/* = = = END-STATIC-FORWARD = = = */
 
 static bool
 get_realpath(char * buf, size_t b_sz)
@@ -209,6 +189,8 @@ add_prog_path(char * buf, int b_sz, char const * fname, char const * prg_path)
     char const *   path;
     char const *   pz;
     int     skip = 2;
+    size_t  fname_len;
+    size_t  dir_len;  //!< length of the directory portion of the path to the exe
 
     switch (fname[2]) {
     case DIRCH:
@@ -242,17 +224,19 @@ add_prog_path(char * buf, int b_sz, char const * fname, char const * prg_path)
     if (pz == NULL)
         return false;
 
-    fname += skip;
+    fname    += skip;
+    fname_len = strlen(fname) + 1; // + NUL byte
+    dir_len   = (pz - path) + 1;   // + dir sep character
 
     /*
      *  Concatenate the file name to the end of the executable path.
      *  The result may be either a file or a directory.
      */
-    if ((unsigned)(pz - path) + 1 + strlen(fname) >= (unsigned)b_sz)
+    if (dir_len + fname_len > (unsigned)b_sz)
         return false;
 
-    memcpy(buf, path, (size_t)((pz - path)+1));
-    strcpy(buf + (pz - path) + 1, fname);
+    memcpy(buf, path, dir_len);
+    memcpy(buf + dir_len, fname, fname_len);
 
     /*
      *  If the "path" path was gotten from "pathfind()", then it was
@@ -291,10 +275,16 @@ add_env_val(char * buf, int buf_sz, char const * name)
     if (dir_part == NULL)
         return false;
 
-    if (strlen(dir_part) + 1 + strlen(name) >= (unsigned)buf_sz)
-        return false;
+    {
+        size_t dir_len = strlen(dir_part);
+        size_t nm_len  = strlen(name) + 1;
+        
+        if (dir_len + nm_len >= (unsigned)buf_sz)
+            return false;
+        memcpy(buf, dir_part, dir_len);
+        memcpy(buf + dir_len, name, nm_len);
+    }
 
-    sprintf(buf, "%s%s", dir_part, name);
     return true;
 }
 
@@ -306,10 +296,10 @@ add_env_val(char * buf, int buf_sz, char const * name)
  * @param[in,out] txt  the input and output string
  * @param[in]     mode the handling mode (cooking method)
  */
-LOCAL void
+static void
 munge_str(char * txt, tOptionLoadMode mode)
 {
-    char * pzE;
+    char * end;
 
     if (mode == OPTION_LOAD_KEEP)
         return;
@@ -318,13 +308,13 @@ munge_str(char * txt, tOptionLoadMode mode)
         char * src = SPN_WHITESPACE_CHARS(txt+1);
         size_t l   = strlen(src) + 1;
         memmove(txt, src, l);
-        pzE = txt + l - 1;
+        end = txt + l - 1;
 
     } else
-        pzE = txt + strlen(txt);
+        end = txt + strlen(txt);
 
-    pzE  = SPN_WHITESPACE_BACK(txt, pzE);
-    *pzE = NUL;
+    end  = SPN_WHITESPACE_BACK(txt, end);
+    *end = NUL;
 
     if (mode == OPTION_LOAD_UNCOOKED)
         return;
@@ -335,7 +325,7 @@ munge_str(char * txt, tOptionLoadMode mode)
     case '\'': break;
     }
 
-    switch (pzE[-1]) {
+    switch (end[-1]) {
     default: return;
     case '"':
     case '\'': break;
@@ -437,7 +427,7 @@ direction_ok(opt_state_mask_t f, int dir)
         if (PRESETTING(dir)) {
             /*
              *  We are in the presetting direction with an option we handle
-             *  immediately for disablement, but normally for disablement.
+             *  immediately for disablement, but normally for handling.
              *  Therefore, skip if NOT disabled.
              */
             if ((f & OPTST_DISABLED) != 0)
@@ -445,7 +435,7 @@ direction_ok(opt_state_mask_t f, int dir)
         } else {
             /*
              *  We are in the processing direction with an option we handle
-             *  immediately for disablement, but normally for disablement.
+             *  immediately for disablement, but normally for handling.
              *  Therefore, skip if disabled.
              */
             if ((f & OPTST_DISABLED) == 0)
@@ -478,7 +468,7 @@ direction_ok(opt_state_mask_t f, int dir)
  * @param[in]     direction  current processing direction (preset or not)
  * @param[in]     load_mode  option loading mode (OPTION_LOAD_*)
  */
-LOCAL void
+static void
 load_opt_line(tOptions * opts, tOptState * opt_state, char * line,
               tDirection direction, tOptionLoadMode load_mode )
 {

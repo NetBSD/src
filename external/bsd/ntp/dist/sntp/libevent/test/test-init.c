@@ -1,4 +1,4 @@
-/*	$NetBSD: test-init.c,v 1.5 2020/05/25 20:47:34 christos Exp $	*/
+/*	$NetBSD: test-init.c,v 1.6 2024/08/18 20:47:23 christos Exp $	*/
 
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
@@ -59,7 +59,7 @@ main(int argc, char **argv)
 	(void) WSAStartup(wVersionRequested, &wsaData);
 #endif
 
-	/* Initalize the event library */
+	/* Initialize the event library */
 	event_init();
 
 	return (0);

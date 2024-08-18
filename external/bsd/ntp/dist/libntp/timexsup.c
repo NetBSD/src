@@ -1,4 +1,4 @@
-/*	$NetBSD: timexsup.c,v 1.4 2022/10/09 21:41:03 christos Exp $	*/
+/*	$NetBSD: timexsup.c,v 1.5 2024/08/18 20:47:13 christos Exp $	*/
 
 /*
  * timexsup.c - 'struct timex' support functions
@@ -8,14 +8,27 @@
  */
 
 #include "config.h"
-#include "timexsup.h"
 #include <limits.h>
 #include <math.h>
 
+#ifdef HAVE_SYS_TIME_H
+# include <sys/time.h>
+#else
+# ifdef HAVE_TIME_H
+#  include <time.h>
+# endif
+#endif
 #ifdef HAVE_SYS_TIMEX_H
 # include <time.h>
 # include <sys/timex.h>
+#else
+# ifdef HAVE_TIMEX_H
+#  include <timex.h>
+# endif
 #endif
+
+#include "ntp_types.h"
+#include "timexsup.h"
 
 #if defined(MOD_NANO) != defined(STA_NANO)
 # warning inconsistent definitions of MOD_NANO vs STA_NANO
@@ -44,10 +57,11 @@ dbl_from_var_long(
 	)
 {
 #ifdef STA_NANO
-	if (status & STA_NANO)
+	if (STA_NANO & status) {
 		return (double)lval * 1e-9;
+	}
 #else
-	(void)status;
+	UNUSED_ARG(status);
 #endif
 	return (double)lval * 1e-6;
 }
@@ -70,7 +84,7 @@ var_long_from_dbl(
 	*modes |= MOD_NANO;
 	dval *= 1e+9;
 #else
-	(void)modes;
+	UNUSED_ARG(modes);
 	dval *= 1e+6;
 #endif
 	return clamp_rounded(dval);

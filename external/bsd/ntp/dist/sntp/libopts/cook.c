@@ -1,4 +1,4 @@
-/*	$NetBSD: cook.c,v 1.5 2020/05/25 20:47:34 christos Exp $	*/
+/*	$NetBSD: cook.c,v 1.6 2024/08/18 20:47:24 christos Exp $	*/
 
 /**
  * \file cook.c
@@ -12,7 +12,7 @@
 /*
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2018 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -30,11 +30,6 @@
  *  4379e7444a0e2ce2b12dd6f5a52a27a4d02d39d247901d3285c88cf0d37f477b  COPYING.lgplv3
  *  13aa749a5b0a454917a944ed8fffc530b784f5ead522b1aacaf4ec8aa55a6239  COPYING.mbsd
  */
-
-/* = = = START-STATIC-FORWARD = = = */
-static bool
-contiguous_quote(char ** pps, char * pq, int * lnct_p);
-/* = = = END-STATIC-FORWARD = = = */
 
 /*=export_func  ao_string_cook_escape_char
  * private:
@@ -137,6 +132,18 @@ ao_string_cook_escape_char(char const * pzIn, char * pRes, uint_t nl)
     return res;
 }
 
+/**
+ * count newlines between start and end
+ */
+static char *
+nl_count(char * start, char * end, int * lnct_p)
+{
+    while (start < end) {
+        if (*(start++) == NL)
+            (*lnct_p)++;
+    }
+    return end;
+}
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *
@@ -170,38 +177,22 @@ contiguous_quote(char ** pps, char * pq, int * lnct_p)
              */
             switch (ps[1]) {
             default:
-                *pps = NULL;
-                return false;
+                goto fail_return;
 
             case '/':
                 /*
                  *  Skip to end of line
                  */
                 ps = strchr(ps, NL);
-                if (ps == NULL) {
-                    *pps = NULL;
-                    return false;
-                }
+                if (ps == NULL)
+                    goto fail_return;
                 break;
 
             case '*':
-            {
-                char * p = strstr( ps+2, "*/" );
-                /*
-                 *  Skip to terminating star slash
-                 */
-                if (p == NULL) {
-                    *pps = NULL;
-                    return false;
-                }
-
-                while (ps < p) {
-                    if (*(ps++) == NL)
-                        (*lnct_p)++;
-                }
-
-                ps = p + 2;
-            }
+                ps = nl_count(ps + 2, strstr(ps + 2, "*/"), lnct_p);
+                if (ps == NULL)
+                    goto fail_return;
+                ps += 2;
             }
             continue;
 
@@ -214,6 +205,10 @@ contiguous_quote(char ** pps, char * pq, int * lnct_p)
             return false;
         }
     }
+
+ fail_return:
+    *pps = NULL;
+    return false;
 }
 
 /*=export_func  ao_string_cook

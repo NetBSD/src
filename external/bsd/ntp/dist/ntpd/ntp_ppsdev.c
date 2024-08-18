@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_ppsdev.c,v 1.1.1.1 2024/08/18 20:37:34 christos Exp $	*/
+/*	$NetBSD: ntp_ppsdev.c,v 1.2 2024/08/18 20:47:17 christos Exp $	*/
 
 /*
  * ntp_ppsdev.c - PPS-device support

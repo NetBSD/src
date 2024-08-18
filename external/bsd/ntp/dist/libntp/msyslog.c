@@ -1,4 +1,4 @@
-/*	$NetBSD: msyslog.c,v 1.7 2020/05/29 20:15:38 christos Exp $	*/
+/*	$NetBSD: msyslog.c,v 1.8 2024/08/18 20:47:13 christos Exp $	*/
 
 /*
  * msyslog - either send a message to the terminal or print it on
@@ -98,7 +98,7 @@ format_errmsg(
  * errno_to_str() - a thread-safe strerror() replacement.
  *		    Hides the varied signatures of strerror_r().
  *		    For Windows, we have:
- *			#define errno_to_str isc_strerror
+ *			#define errno_to_str isc__strerror
  */
 #ifndef errno_to_str
 void
@@ -348,14 +348,13 @@ msyslog(
 	...
 	)
 {
-	char	buf[1024];
 	va_list	ap;
 
 	va_start(ap, fmt);
-	mvsnprintf(buf, sizeof(buf), fmt, ap);
+	mvsyslog(level, fmt, ap);
 	va_end(ap);
-	addto_syslog(level, buf);
 }
+
 
 void
 mvsyslog(
@@ -365,6 +364,7 @@ mvsyslog(
 	)
 {
 	char	buf[1024];
+
 	mvsnprintf(buf, sizeof(buf), fmt, ap);
 	addto_syslog(level, buf);
 }
@@ -583,8 +583,9 @@ setup_logfile(
 			syslog_fname);
 }
 
-/* Helper for unit tests, where stdout + stderr are piped to the same
- * stream.  This works moderately reliable only if both streams are
+/*
+ * Helper for unit tests, where stdout + stderr are piped to the same
+ * stream.  This works moderately reliably only if both streams are
  * unbuffered or line buffered.  Unfortunately stdout can be fully
  * buffered on pipes or files...
  */

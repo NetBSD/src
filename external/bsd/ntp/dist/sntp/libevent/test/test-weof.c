@@ -1,4 +1,4 @@
-/*	$NetBSD: test-weof.c,v 1.5 2020/05/25 20:47:34 christos Exp $	*/
+/*	$NetBSD: test-weof.c,v 1.6 2024/08/18 20:47:24 christos Exp $	*/
 
 /*
  * Copyright (c) 2002-2007 Niels Provos <provos@citi.umich.edu>
@@ -26,6 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "../util-internal.h"
 #include "event2/event-config.h"
 
 #ifdef _WIN32
@@ -52,10 +53,6 @@
 #include "event2/event_struct.h"
 #include "event2/event_compat.h"
 #include "event2/util.h"
-
-#ifdef EVENT____func__
-#define __func__ EVENT____func__
-#endif
 
 evutil_socket_t pair[2];
 int test_okay = 1;
@@ -104,10 +101,10 @@ main(int argc, char **argv)
 	if (evutil_socketpair(AF_UNIX, SOCK_STREAM, 0, pair) == -1)
 		return (1);
 
-	/* Initalize the event library */
+	/* Initialize the event library */
 	event_init();
 
-	/* Initalize one event */
+	/* Initialize one event */
 	event_set(&ev, pair[1], EV_WRITE, write_cb, &ev);
 
 	event_add(&ev, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_mx4200.c,v 1.6 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: refclock_mx4200.c,v 1.7 2024/08/18 20:47:18 christos Exp $	*/
 
 /*
  * This software was developed by the Computer Systems Engineering group
@@ -219,7 +219,7 @@ mx4200_start(
 	 * Open serial port
 	 */
 	snprintf(gpsdev, sizeof(gpsdev), DEVICE, unit);
-	fd = refclock_open(gpsdev, SPEED232, LDISC_PPS);
+	fd = refclock_open(&peer->srcadr, gpsdev, SPEED232, LDISC_PPS);
 	if (fd <= 0)
 		return 0;
 
@@ -1637,5 +1637,5 @@ mx4200_send(peer, fmt, va_alist)
 }
 
 #else
-int refclock_mx4200_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* REFCLOCK */

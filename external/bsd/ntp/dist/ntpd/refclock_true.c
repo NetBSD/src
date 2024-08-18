@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_true.c,v 1.7 2020/05/25 20:47:26 christos Exp $	*/
+/*	$NetBSD: refclock_true.c,v 1.8 2024/08/18 20:47:19 christos Exp $	*/
 
 /*
  * refclock_true - clock driver for the Kinemetrics/TrueTime receivers
@@ -21,12 +21,6 @@
 #include "ntp_refclock.h"
 #include "ntp_unixtime.h"
 #include "ntp_stdlib.h"
-
-#ifdef SYS_WINNT
-extern int async_write(int, const void *, unsigned int);
-#undef write
-#define write(fd, data, octets)	async_write(fd, data, octets)
-#endif
 
 /* This should be an atom clock but those are very hard to build.
  *
@@ -283,7 +277,7 @@ true_start(
 	 * Open serial port
 	 */
 	snprintf(device, sizeof(device), DEVICE, unit);
-	fd = refclock_open(device, SPEED232, LDISC_CLK);
+	fd = refclock_open(&peer->srcadr, device, SPEED232, LDISC_CLK);
 	if (fd <= 0)
 		return 0;
 
@@ -642,7 +636,7 @@ true_send(
 		size_t len = strlen(cmd);
 
 		true_debug(peer, "Send '%s'\n", cmd);
-		if (write(pp->io.fd, cmd, len) != (ssize_t)len)
+		if (refclock_write(peer, cmd, len, NULL) != len)
 			refclock_report(peer, CEVNT_FAULT);
 		else
 			pp->polls++;
@@ -985,5 +979,5 @@ true_sample720(void)
 #endif
 
 #else
-int refclock_true_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* REFCLOCK */

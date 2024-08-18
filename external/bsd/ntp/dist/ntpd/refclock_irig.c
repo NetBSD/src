@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_irig.c,v 1.9 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: refclock_irig.c,v 1.10 2024/08/18 20:47:18 christos Exp $	*/
 
 /*
  * refclock_irig - audio IRIG-B/E demodulator/decoder
@@ -1041,5 +1041,5 @@ irig_gain(
 
 
 #else
-int refclock_irig_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* REFCLOCK */

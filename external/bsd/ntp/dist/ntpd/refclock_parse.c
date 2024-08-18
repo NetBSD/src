@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_parse.c,v 1.24 2022/10/09 21:41:04 christos Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.25 2024/08/18 20:47:18 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/ntpd/refclock_parse.c,v 4.81 2009/05/01 10:15:29 kardel RELEASE_20090105_A
@@ -105,6 +105,7 @@
 #include "timevalops.h"		/* includes <sys/time.h> */
 #include "ntp_control.h"
 #include "ntp_string.h"
+#include "ntp_clockdev.h"
 
 #include <stdio.h>
 #include <ctype.h>
@@ -2994,6 +2995,7 @@ parse_start(
 	struct parseunit * parse;
 	char parsedev[sizeof(PARSEDEVICE)+20];
 	char parseppsdev[sizeof(PARSEPPSDEVICE)+20];
+	const char *altdev;
 	parsectl_t tmp_ctl;
 	u_int type;
 
@@ -3020,8 +3022,20 @@ parse_start(
 	/*
 	 * Unit okay, attempt to open the device.
 	 */
-	(void) snprintf(parsedev, sizeof(parsedev), PARSEDEVICE, unit);
-	(void) snprintf(parseppsdev, sizeof(parsedev), PARSEPPSDEVICE, unit);
+
+	/* see if there's a configured alternative device name: */
+	altdev = clockdev_lookup(&peer->srcadr, 0);
+	if (altdev && (strlen(altdev) < sizeof(parsedev)))
+		strcpy(parsedev, altdev);
+	else
+		(void) snprintf(parsedev, sizeof(parsedev), PARSEDEVICE, unit);
+	
+	/* likewise for a pps device: */
+	altdev = clockdev_lookup(&peer->srcadr, 1);
+	if (altdev && (strlen(altdev) < sizeof(parseppsdev)))
+		strcpy(parseppsdev, altdev);
+	else
+		(void) snprintf(parseppsdev, sizeof(parseppsdev), PARSEPPSDEVICE, unit);
 
 #ifndef O_NOCTTY
 #define O_NOCTTY 0

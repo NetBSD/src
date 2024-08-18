@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_testutils.c,v 1.5 2020/05/25 20:47:34 christos Exp $	*/
+/*	$NetBSD: regress_testutils.c,v 1.6 2024/08/18 20:47:23 christos Exp $	*/
 
 /*
  * Copyright (c) 2010-2012 Niels Provos and Nick Mathewson
@@ -112,7 +112,7 @@ regress_get_dnsserver(struct event_base *base,
 	memset(&my_addr, 0, sizeof(my_addr));
 	my_addr.sin_family = AF_INET;
 	my_addr.sin_port = htons(*portnum);
-	my_addr.sin_addr.s_addr = htonl(0x7f000001UL);
+	my_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 	if (bind(sock, (struct sockaddr*)&my_addr, sizeof(my_addr)) < 0) {
 		evutil_closesocket(sock);
 		tt_abort_perror("bind");
@@ -131,17 +131,28 @@ end:
 void
 regress_clean_dnsserver(void)
 {
-	if (dns_port)
+	if (dns_port) {
 		evdns_close_server_port(dns_port);
-	if (dns_sock >= 0)
+		dns_port = NULL;
+	}
+	if (dns_sock >= 0) {
 		evutil_closesocket(dns_sock);
+		dns_sock = -1;
+	}
 }
 
+static void strtolower(char *s)
+{
+	while (*s) {
+		*s = EVUTIL_TOLOWER_(*s);
+		++s;
+	}
+}
 void
 regress_dns_server_cb(struct evdns_server_request *req, void *data)
 {
 	struct regress_dns_server_table *tab = data;
-	const char *question;
+	char *question;
 
 	if (req->nquestions != 1)
 		TT_DIE(("Only handling one question at a time; got %d",
@@ -156,6 +167,9 @@ regress_dns_server_cb(struct evdns_server_request *req, void *data)
 		TT_DIE(("Unexpected question: '%s'", question));
 
 	++tab->seen;
+
+	if (tab->lower)
+		strtolower(question);
 
 	if (!strcmp(tab->anstype, "err")) {
 		int err = atoi(tab->ans);

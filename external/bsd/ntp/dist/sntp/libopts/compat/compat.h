@@ -1,11 +1,11 @@
-/*	$NetBSD: compat.h,v 1.5 2020/05/25 20:47:35 christos Exp $	*/
+/*	$NetBSD: compat.h,v 1.6 2024/08/18 20:47:25 christos Exp $	*/
 
-/*  -*- Mode: C -*- 
+/*  -*- Mode: C -*-
  *
  *  compat.h is free software.
  *  This file is part of AutoGen and AutoOpts.
  *
- *  AutoGen Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
+ *  AutoGen Copyright (C) 1992-2018 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -184,9 +184,9 @@
 #  include <unistd.h>
 #endif
 
-#ifdef HAVE_STDBOOL_H
+#if defined(HAVE_STDBOOL_H)
 #  include <stdbool.h>
-#else
+#elif ! defined(bool)
    typedef enum { false = 0, true = 1 } _Bool;
 #  define bool _Bool
 

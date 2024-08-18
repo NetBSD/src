@@ -1,4 +1,4 @@
-/*	$NetBSD: modetoa.c,v 1.9 2020/05/25 20:47:24 christos Exp $	*/
+/*	$NetBSD: modetoa.c,v 1.10 2024/08/18 20:47:13 christos Exp $	*/
 
 /*
  * modetoa - return an asciized mode
@@ -6,7 +6,6 @@
 #include <config.h>
 #include <stdio.h>
 
-#include "lib_strbuf.h"
 #include "ntp_stdlib.h"
 
 const char *

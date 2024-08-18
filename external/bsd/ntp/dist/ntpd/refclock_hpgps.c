@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_hpgps.c,v 1.5 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: refclock_hpgps.c,v 1.6 2024/08/18 20:47:18 christos Exp $	*/
 
 /*
  * refclock_hpgps - clock driver for HP 58503A GPS receiver
@@ -173,7 +173,7 @@ hpgps_start(
 		ldisc |= LDISC_7O1;
 		speed = SPEED232Z;
 	}
-	fd = refclock_open(device, speed, ldisc);
+	fd = refclock_open(&peer->srcadr, device, speed, ldisc);
 	if (fd <= 0)
 		return (0);
 	/*
@@ -211,8 +211,8 @@ hpgps_start(
 	 * and get the local timezone information
 	 */
 	up->linecnt = 1;
-	if (write(pp->io.fd, "*IDN?\r:PTIME:TZONE?\r", 20) != 20)
-	    refclock_report(peer, CEVNT_FAULT);
+	if (refclock_write(peer, "*IDN?\r:PTIME:TZONE?\r", 20, NULL) != 20)
+		refclock_report(peer, CEVNT_FAULT);
 
 	return (1);
 }
@@ -351,10 +351,10 @@ hpgps_receive(
 	if (strrchr(prompt,'E') > strrchr(prompt,'s')){
 #ifdef DEBUG
 		if (debug)
-		    printf("hpgps: error indicated in prompt: %s\n", prompt);
+			printf("hpgps: error indicated in prompt: %s\n", prompt);
 #endif
-		if (write(pp->io.fd, "*CLS\r\r", 6) != 6)
-		    refclock_report(peer, CEVNT_FAULT);
+		if (refclock_write(peer, "*CLS\r\r", 6, NULL) != 6)
+			refclock_report(peer, CEVNT_FAULT);
 	}
 
 	/*
@@ -586,8 +586,8 @@ hpgps_receive(
 	 */
 	if (pp->sloppyclockflag & CLK_FLAG4){
 		up->linecnt = 22; 
-		if (write(pp->io.fd, ":SYSTEM:PRINT?\r", 15) != 15)
-		    refclock_report(peer, CEVNT_FAULT);
+		if (refclock_write(peer, ":SYSTEM:PRINT?\r", 15, NULL) != 15)
+			refclock_report(peer, CEVNT_FAULT);
 	}
 }
 
@@ -616,7 +616,7 @@ hpgps_poll(
 	    refclock_report(peer, CEVNT_TIMEOUT);
 	else
 	    up->pollcnt--;
-	if (write(pp->io.fd, ":PTIME:TCODE?\r", 14) != 14) {
+	if (refclock_write(peer, ":PTIME:TCODE?\r", 14, NULL) != 14) {
 		refclock_report(peer, CEVNT_FAULT);
 	}
 	else
@@ -624,5 +624,5 @@ hpgps_poll(
 }
 
 #else
-int refclock_hpgps_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* REFCLOCK */

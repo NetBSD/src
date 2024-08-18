@@ -1,4 +1,4 @@
-/*	$NetBSD: tokenize.c,v 1.9 2020/05/25 20:47:35 christos Exp $	*/
+/*	$NetBSD: tokenize.c,v 1.10 2024/08/18 20:47:25 christos Exp $	*/
 
 /** \file tokenize.c
  *
@@ -11,7 +11,7 @@
  *  This file defines the string_tokenize interface
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2018 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -30,23 +30,6 @@
  *  13aa749a5b0a454917a944ed8fffc530b784f5ead522b1aacaf4ec8aa55a6239  COPYING.mbsd
  */
 
-#include <errno.h>
-#include <stdlib.h>
-
-#define cc_t   const unsigned char
-#define ch_t   unsigned char
-
-/* = = = START-STATIC-FORWARD = = = */
-static void
-copy_cooked(ch_t ** ppDest, char const ** ppSrc);
-
-static void
-copy_raw(ch_t ** ppDest, char const ** ppSrc);
-
-static token_list_t *
-alloc_token_list(char const * str);
-/* = = = END-STATIC-FORWARD = = = */
-
 static void
 copy_cooked(ch_t ** ppDest, char const ** ppSrc)
 {
@@ -59,7 +42,7 @@ copy_cooked(ch_t ** ppDest, char const ** ppSrc)
         case NUL:   *ppSrc = NULL; return;
         case '"':   goto done;
         case '\\':
-            pSrc += ao_string_cook_escape_char((const char *)pSrc, (char *)&ch, 0x7F);
+            pSrc += ao_string_cook_escape_char(__UNCONST(pSrc), (char *)&ch, 0x7F);
             if (ch == 0x7F)
                 break;
             /* FALLTHROUGH */

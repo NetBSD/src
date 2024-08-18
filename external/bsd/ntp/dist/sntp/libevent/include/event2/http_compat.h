@@ -1,4 +1,4 @@
-/*	$NetBSD: http_compat.h,v 1.5 2020/05/25 20:47:34 christos Exp $	*/
+/*	$NetBSD: http_compat.h,v 1.6 2024/08/18 20:47:22 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -58,9 +58,11 @@ extern "C" {
  *
  * @param address the address to which the HTTP server should be bound
  * @param port the port number on which the HTTP server should listen
- * @return an struct evhttp object
+ * @return a pointer to a newly initialized evhttp server structure
+ *   or NULL on error
  */
-struct evhttp *evhttp_start(const char *address, unsigned short port);
+EVENT2_EXPORT_SYMBOL
+struct evhttp *evhttp_start(const char *address, ev_uint16_t port);
 
 /**
  * A connection object that can be used to for making HTTP requests.  The
@@ -69,8 +71,9 @@ struct evhttp *evhttp_start(const char *address, unsigned short port);
  *
  * @deprecated It does not allow an event base to be specified
  */
+EVENT2_EXPORT_SYMBOL
 struct evhttp_connection *evhttp_connection_new(
-	const char *address, unsigned short port);
+	const char *address, ev_uint16_t port);
 
 /**
  * Associates an event base with the connection - can only be called
@@ -78,6 +81,7 @@ struct evhttp_connection *evhttp_connection_new(
  *
  * @deprecated XXXX Why?
  */
+EVENT2_EXPORT_SYMBOL
 void evhttp_connection_set_base(struct evhttp_connection *evcon,
     struct event_base *base);
 

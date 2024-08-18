@@ -1,4 +1,4 @@
-/*	$NetBSD: vint64ops.c,v 1.5 2020/05/25 20:47:24 christos Exp $	*/
+/*	$NetBSD: vint64ops.c,v 1.6 2024/08/18 20:47:13 christos Exp $	*/
 
 /*
  * vint64ops.c - operations on 'vint64' values
@@ -17,43 +17,25 @@
 
 #include "ntp_types.h"
 #include "ntp_fp.h"
+#include "ntp_malloc.h"
 #include "vint64ops.h"
-
-/* ---------------------------------------------------------------------
- * GCC is rather sticky with its 'const' attribute. We have to do it more
- * explicit than with a cast if we want to get rid of a CONST qualifier.
- * Greetings from the PASCAL world, where casting was only possible via
- * untagged unions...
- */
-static inline void*
-noconst(
-	const void* ptr
-	)
-{
-	union {
-		const void * cp;
-		void *       vp;
-	} tmp;
-	tmp.cp = ptr;
-	return tmp.vp;
-}
 
 /* -------------------------------------------------------------------------*/
 
 vint64
 strtouv64(
-	const char * begp,
-	char **      endp,
-	int          base
+	char *	begp,
+	char ** endp,
+	int	base
 	)
 {
-	vint64  res;
-	u_char  digit;
-	int     sig, num;
-	const u_char *src;
+	vint64	res;
+	u_char	digit;
+	int	sig, num;
+	u_char *src;
 	
 	num = sig = 0;
-	src = (const u_char*)begp;
+	src = (u_char *)begp;
 	while (isspace(*src))
 		src++;
 
@@ -82,7 +64,7 @@ strtouv64(
 		return res;
 	}
 	
-	memset(&res, 0, sizeof(res));
+	ZERO(res);
 	while (*src) {
 		if (isdigit(*src))
 			digit = *src - '0';
@@ -118,7 +100,7 @@ strtouv64(
 	if (!num)
 		errno = EINVAL;
 	if (endp)
-		*endp = (char*)noconst(src);
+		*endp = (char *)src;
 	if (sig)
 		M_NEG(res.D_s.hi, res.D_s.lo);
 	return res;

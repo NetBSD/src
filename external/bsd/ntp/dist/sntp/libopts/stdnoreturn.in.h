@@ -1,8 +1,8 @@
-/*	$NetBSD: stdnoreturn.in.h,v 1.5 2020/05/25 20:47:35 christos Exp $	*/
+/*	$NetBSD: stdnoreturn.in.h,v 1.6 2024/08/18 20:47:25 christos Exp $	*/
 
 /* A substitute for ISO C11 <stdnoreturn.h>.
 
-   Copyright 2012-2015 Free Software Foundation, Inc.
+   Copyright 2012-2018 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as published by
@@ -15,7 +15,7 @@
    GNU Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public License
-   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
+   along with this program; if not, see <https://www.gnu.org/licenses/>.  */
 
 /* Written by Paul Eggert.  */
 
@@ -30,15 +30,25 @@
 
 /* The definition of _Noreturn is copied here.  */
 
-#if 1200 <= _MSC_VER
-/* Standard include files on this platform contain declarations like
-   "__declspec (noreturn) void abort (void);".  "#define noreturn
-   _Noreturn" would cause this declaration to be rewritten to the
-   invalid "__declspec (__declspec (noreturn)) void abort (void);".
-   Instead, define noreturn to empty, so that such declarations are
-   rewritten to "__declspec () void abort (void);", which is
-   equivalent to "void abort (void);"; this gives up on noreturn's
-   advice to the compiler but at least it is valid code.  */
+#if 1200 <= _MSC_VER || defined __CYGWIN__
+/* On MSVC, standard include files contain declarations like
+     __declspec (noreturn) void abort (void);
+   "#define noreturn _Noreturn" would cause this declaration to be rewritten
+   to the invalid
+     __declspec (__declspec (noreturn)) void abort (void);
+
+   Similarly, on Cygwin, standard include files contain declarations like
+     void __cdecl abort (void) __attribute__ ((noreturn));
+   "#define noreturn _Noreturn" would cause this declaration to be rewritten
+   to the invalid
+     void __cdecl abort (void) __attribute__ ((__attribute__ ((__noreturn__))));
+
+   Instead, define noreturn to empty, so that such declarations are rewritten to
+     __declspec () void abort (void);
+   or
+     void __cdecl abort (void) __attribute__ (());
+   respectively.  This gives up on noreturn's advice to the compiler but at
+   least it is valid code.  */
 # define noreturn /*empty*/
 #else
 # define noreturn _Noreturn

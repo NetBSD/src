@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword-gen.c,v 1.13 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: keyword-gen.c,v 1.14 2024/08/18 20:47:17 christos Exp $	*/
 
 /*
  * keyword-gen.c -- generate keyword scanner finite state machine and
@@ -25,7 +25,6 @@
 
 #include <ntp_stdlib.h>
 #include <ntp_config.h>
-#include <lib_strbuf.h>
 #include "ntp_scanner.h"
 #include "ntp_parser.h"
 
@@ -47,6 +46,8 @@ struct key_tok ntp_keywords[] = {
 { "broadcastdelay",	T_Broadcastdelay,	FOLLBY_TOKEN },
 { "checkhash",		T_Checkhash,		FOLLBY_TOKEN },
 { "ctl",		T_Ctl,			FOLLBY_TOKEN },
+{ "delrestrict",	T_Delrestrict,		FOLLBY_TOKEN },
+{ "device",		T_Device,		FOLLBY_STRING },
 { "disable",		T_Disable,		FOLLBY_TOKEN },
 { "driftfile",		T_Driftfile,		FOLLBY_STRING },
 { "dscp",		T_Dscp,			FOLLBY_TOKEN },
@@ -209,6 +210,9 @@ struct key_tok ntp_keywords[] = {
 { "time1",		T_Time1,		FOLLBY_TOKEN },
 { "time2",		T_Time2,		FOLLBY_TOKEN },
 { "minjitter",		T_Minjitter,		FOLLBY_TOKEN },
+/* device spec */
+{ "ppsdata",		T_PpsData,		FOLLBY_STRING },
+{ "timedata",		T_TimeData,		FOLLBY_STRING },
 /* system_option */
 { "auth",		T_Auth,			FOLLBY_TOKEN },
 { "bclient",		T_Bclient,		FOLLBY_TOKEN },

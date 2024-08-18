@@ -1,4 +1,4 @@
-/*	$NetBSD: listener.h,v 1.6 2020/05/25 20:47:34 christos Exp $	*/
+/*	$NetBSD: listener.h,v 1.7 2024/08/18 20:47:22 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -99,6 +99,18 @@ typedef void (*evconnlistener_errorcb)(struct evconnlistener *, void *);
  * This is only available on Linux and kernel 3.9+
  */
 #define LEV_OPT_REUSEABLE_PORT		(1u<<7)
+/** Flag: Indicates that the listener wants to work only in IPv6 socket.
+ *
+ * According to RFC3493 and most Linux distributions, default value is to
+ * work in IPv4-mapped mode. If there is a requirement to bind same port
+ * on same ip addresses but different handlers for both IPv4 and IPv6,
+ * it is required to set IPV6_V6ONLY socket option to be sure that the
+ * code works as expected without affected by bindv6only sysctl setting in
+ * system.
+ *
+ * This socket option also supported by Windows.
+ */
+#define LEV_OPT_BIND_IPV6ONLY		(1u<<8)
 
 /**
    Allocate a new evconnlistener object to listen for incoming TCP connections

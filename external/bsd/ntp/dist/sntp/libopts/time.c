@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.5 2020/05/25 20:47:35 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.6 2024/08/18 20:47:25 christos Exp $	*/
 
 
 /**
@@ -10,7 +10,7 @@
 /*
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2018 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -92,8 +92,10 @@ optionTimeDate(tOptions * opts, tOptDesc * od)
 
         if (envptr == NULL) {
             static char const fmt[] = "DATEMSK=%s/datemsk";
-            envptr = AGALOC(sizeof(fmt) + strlen(opts->pzPkgDataDir), fmt);
-            sprintf(envptr, fmt, opts->pzPkgDataDir);
+            size_t sz = sizeof(fmt) + strlen(opts->pzPkgDataDir);
+            envptr = AGALOC(sz, fmt);
+            if (snprintf(envptr, sz, fmt, opts->pzPkgDataDir) >= (int)sz)
+                option_exits(EXIT_FAILURE);
 
             putenv(envptr);
         }

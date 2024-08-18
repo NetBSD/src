@@ -1,4 +1,4 @@
-/*	$NetBSD: http-connect.c,v 1.1.1.1 2024/08/18 20:37:43 christos Exp $	*/
+/*	$NetBSD: http-connect.c,v 1.2 2024/08/18 20:47:23 christos Exp $	*/
 
 #include "event2/event-config.h"
 

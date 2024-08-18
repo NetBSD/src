@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_oncore.c,v 1.17 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: refclock_oncore.c,v 1.18 2024/08/18 20:47:18 christos Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -686,7 +686,7 @@ oncore_start(
 	}
 #endif	/* !SYS_WINNT */
 
-	fd1 = refclock_open(device1, SPEED, LDISC_RAW);
+	fd1 = refclock_open(&peer->srcadr, device1, SPEED, LDISC_RAW);
 	if (fd1 <= 0) {
 		oncore_log_f(instance, LOG_ERR, "Can't open fd1 (%s)",
 			     device1);
@@ -940,7 +940,8 @@ oncore_init_shmem(
 	u_char *cp, *cp1, *buf, *shmem_old;
 	struct msg_desc *mp;
 	struct stat sbuf;
-	size_t i, n, n1, shmem_length, shmem_old_size;
+	size_t i, n, n1, shmem_length;
+	ssize_t shmem_old_size;
 
 	/*
 	* The first thing we do is see if there is an instance->shmem_fname file (still)
@@ -957,7 +958,9 @@ oncore_init_shmem(
 		shmem_old_size = sbuf.st_size;
 		if (shmem_old_size != 0) {
 			shmem_old = emalloc((unsigned) sbuf.st_size);
-			read(fd, shmem_old, shmem_old_size);
+			if (read(fd, shmem_old, shmem_old_size) != shmem_old_size)
+				oncore_log(instance, LOG_WARNING,
+					   "ONCORE: truncated/failed read of SHMEM file");
 		}
 		close(fd);
 	}
@@ -1037,7 +1040,7 @@ oncore_init_shmem(
 	 */
 
 	if (shmem_old) {
-		if (shmem_old_size == shmem_length) {
+		if ((size_t)shmem_old_size == shmem_length) {
 			for (cp=buf+4, cp1=shmem_old+4; (n = 256*(*(cp-3)) + *(cp-2));	cp+=(n+3), cp1+=(n+3)) {
 				n1 = 256*(*(cp1-3)) + *(cp1-2);
 				if (n == 0 || n1 != n || strncmp((char *) cp, (char *) cp1, 4))
@@ -3431,10 +3434,9 @@ oncore_check_leap_sec(
 		instance->Bj_day = instance->BEHa[5];
 
 		if (instance->saw_Gj < 0) {	/* -1 DONT have Gj use Bj */
-			if ((instance->BEHa[4] == 6) || (instance->BEHa[4] == 12)) {
+			if ((instance->BEHa[4] == 6) || (instance->BEHa[4] == 12))
 				oncore_sendmsg(instance, oncore_cmd_Bj, sizeof(oncore_cmd_Bj));
-				oncore_sendmsg(instance, oncore_cmd_Bl, sizeof(oncore_cmd_Bl));
-			}
+			oncore_sendmsg(instance, oncore_cmd_Bl, sizeof(oncore_cmd_Bl));
 			return;
 		}
 
@@ -3540,7 +3542,8 @@ oncore_load_almanac(
 		if (!strncmp((char *) cp, "@@Cb", 4) &&
 		    oncore_checksum_ok(cp, 33) &&
 		    (*(cp+4) == 4 || *(cp+4) == 5)) {
-			write(instance->ttyfd, cp, n);
+			refclock_fdwrite(instance->peer, instance->ttyfd,
+					 cp, n, "data");
 			oncore_print_Cb(instance, cp);
 		}
 	}
@@ -3763,20 +3766,22 @@ oncore_sendmsg(
 {
 	int	fd;
 	u_char cs = 0;
+	const struct peer * peer;
 
-	fd = instance->ttyfd;
+	fd   = instance->ttyfd;
+	peer = instance->peer;
 #ifdef ONCORE_VERBOSE_SENDMSG
 	if (debug > 4) {
 		oncore_log_f(instance, LOG_DEBUG, "ONCORE: Send @@%c%c %d",
 			     ptr[0], ptr[1], (int)len);
 	}
 #endif
-	write(fd, "@@", (size_t) 2);
-	write(fd, ptr, len);
+	refclock_fdwrite(peer, fd, "@@", (size_t)2, "data");
+	refclock_fdwrite(peer, fd, ptr, len, "data");
 	while (len--)
 		cs ^= *ptr++;
-	write(fd, &cs, (size_t) 1);
-	write(fd, "\r\n", (size_t) 2);
+	refclock_fdwrite(peer, fd, &cs, (size_t)1, "data");
+	refclock_fdwrite(peer, fd, "\r\n", (size_t)2, "data");
 }
 
 
@@ -3875,10 +3880,9 @@ oncore_set_traim(
 			oncore_sendmsg(instance, oncore_cmd_Bnx, sizeof(oncore_cmd_Bnx));
 		else if (instance->chan == 8)
 			oncore_sendmsg(instance, oncore_cmd_Enx, sizeof(oncore_cmd_Enx));
-		else {	/* chan == 12 */
+		else	/* chan == 12 */
 			oncore_sendmsg(instance, oncore_cmd_Ge0, sizeof(oncore_cmd_Ge0));
-			oncore_sendmsg(instance, oncore_cmd_Hn0, sizeof(oncore_cmd_Hn0));
-		}
+		oncore_sendmsg(instance, oncore_cmd_Hn0, sizeof(oncore_cmd_Hn0));
 	}
 }
 
@@ -4135,5 +4139,5 @@ oncore_log_f(
 }
 
 #else
-int refclock_oncore_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif	/* REFCLOCK && CLOCK_ONCORE */
