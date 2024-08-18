@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrtoc8.c,v 1.6 2024/08/18 19:35:19 rillig Exp $	*/
+/*	$NetBSD: mbrtoc8.c,v 1.7 2024/08/18 19:46:53 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  *	scalar value at c8.
  *
  *	If the UTF-8 representation of that scalar value is multiple
- *	bytes long, mbrtoc8 will yield leading byte in one call that
+ *	bytes long, mbrtoc8 will yield the leading byte in one call that
  *	consumes input, and will yield the trailing bytes in subsequent
  *	calls without consuming any input and returning (size_t)-3
  *	instead.
@@ -61,7 +61,7 @@
  *	https://web.archive.org/web/20240718101254/https://www.unicode.org/versions/Unicode15.0.0/UnicodeStandard-15.0.pdf#page=144
  *
  *	The Unicode Standard, Version 15.0 -- Core Specification, The
- *	Unicode Consortium, Sec. 3.9 `Unicode Encoding Forms': UTF-16,
+ *	Unicode Consortium, Sec. 3.9 `Unicode Encoding Forms': UTF-8,
  *	p. 124.
  *	https://www.unicode.org/versions/Unicode15.0.0/UnicodeStandard-15.0.pdf#page=150
  *	https://web.archive.org/web/20240718101254/https://www.unicode.org/versions/Unicode15.0.0/UnicodeStandard-15.0.pdf#page=150
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mbrtoc8.c,v 1.6 2024/08/18 19:35:19 rillig Exp $");
+__RCSID("$NetBSD: mbrtoc8.c,v 1.7 2024/08/18 19:46:53 rillig Exp $");
 
 #include "namespace.h"
 
