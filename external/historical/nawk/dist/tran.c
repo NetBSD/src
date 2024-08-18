@@ -33,7 +33,6 @@ THIS SOFTWARE.
 #include <string.h>
 #include <stdlib.h>
 #include "awk.h"
-#include "awkgram.h"
 
 #define	FULLTAB	2	/* rehash when table gets this x full */
 #define	GROWTAB 4	/* grow table by this factor */
@@ -392,31 +391,6 @@ char *setsval(Cell *vp, const char *s)	/* set string val of a Cell */
 	return(vp->sval);
 }
 
-static int checkstr(const char *s, const char *v)
-{
-	while (*s && tolower((unsigned char)*s) == *v)
-		s++, v++;
-	while (isspace((unsigned char)*s))
-		s++;
-	return !(*s || *v);
-}
-
-static int checkinfnan(const char *s)
-{
-	while (isspace((unsigned char)*s))
-		s++;
-	if (*s == '+' || *s == '-')
-		s++;
-	switch (tolower((unsigned char)*s)) {
-	case 'i':
-		return checkstr(s, "inf") || checkstr(s, "infinity");
-	case 'n':
-		return checkstr(s, "nan");
-	default:
-		return 1;
-	}
-}
-
 Awkfloat getfval(Cell *vp)	/* get float val of a Cell */
 {
 	if ((vp->tval & (NUM | STR)) == 0)
@@ -428,10 +402,6 @@ Awkfloat getfval(Cell *vp)	/* get float val of a Cell */
 	if (!isnum(vp)) {	/* not a number */
 		double fval;
 		bool no_trailing;
-		if (checkinfnan(vp->sval))
-			vp->fval = atof(vp->sval);	/* best guess */
-		else
-			vp->fval = 0.0;
 
 		if (is_valid_number(vp->sval, true, & no_trailing, & fval)) {
 			vp->fval = fval;
