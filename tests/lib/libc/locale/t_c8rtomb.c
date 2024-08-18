@@ -1,4 +1,4 @@
-/*	$NetBSD: t_c8rtomb.c,v 1.2 2024/08/17 21:31:22 riastradh Exp $	*/
+/*	$NetBSD: t_c8rtomb.c,v 1.3 2024/08/18 02:19:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002 Tim J. Robbins
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_c8rtomb.c,v 1.2 2024/08/17 21:31:22 riastradh Exp $");
+__RCSID("$NetBSD: t_c8rtomb.c,v 1.3 2024/08/18 02:19:35 riastradh Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -117,8 +117,6 @@ ATF_TC_BODY(c8rtomb_c_locale_test, tc)
 	memset(&s, 0, sizeof(s));
 	memset(buf, 0xcc, sizeof(buf));
 	ATF_CHECK_EQ_MSG((n = c8rtomb(buf, 0xf0, &s)), 0, "n=%zu", n);
-	atf_tc_expect_fail("PR lib/58615:"
-	    " incomplete c8rtomb, c16rtomb handles NUL termination wrong");
 	ATF_CHECK_EQ_MSG((n = c8rtomb(buf, '\0', &s)), 1, "n=%zu", n);
 	ATF_CHECK_MSG(((unsigned char)buf[0] == '\0' &&
 		(unsigned char)buf[1] == 0xcc),
@@ -225,8 +223,6 @@ ATF_TC_BODY(c8rtomb_utf_8_test, tc)
 	memset(&s, 0, sizeof(s));
 	memset(buf, 0xcc, sizeof(buf));
 	ATF_CHECK_EQ_MSG((n = c8rtomb(buf, 0xf0, &s)), 0, "n=%zu", n);
-	atf_tc_expect_fail("PR lib/58615:"
-	    " incomplete c8rtomb, c16rtomb handles NUL termination wrong");
 	ATF_CHECK_EQ_MSG((n = c8rtomb(buf, '\0', &s)), 1, "n=%zu", n);
 	ATF_CHECK_MSG(((unsigned char)buf[0] == '\0' &&
 		(unsigned char)buf[1] == 0xcc),

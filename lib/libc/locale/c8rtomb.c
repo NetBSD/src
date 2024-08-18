@@ -1,4 +1,4 @@
-/*	$NetBSD: c8rtomb.c,v 1.4 2024/08/17 21:24:53 riastradh Exp $	*/
+/*	$NetBSD: c8rtomb.c,v 1.5 2024/08/18 02:19:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: c8rtomb.c,v 1.4 2024/08/17 21:24:53 riastradh Exp $");
+__RCSID("$NetBSD: c8rtomb.c,v 1.5 2024/08/18 02:19:35 riastradh Exp $");
 
 #include "namespace.h"
 
@@ -173,22 +173,21 @@ c8rtomb_l(char *restrict s, char8_t c8, mbstate_t *restrict ps, locale_t loc)
 	 */
 	S = (struct c8rtombstate *)(void *)ps;
 
-#if 0
 	/*
 	 * `If c8 is a null character, a null byte is stored, preceded
 	 *  by any shift sequence needed to restore the initial shift
 	 *  state; the resulting state described is the initial
 	 *  conversion state.'
 	 *
-	 * XXX But what else gets stored?  Do we just discard any
-	 * pending sequence, or do we convert it to something else, or
-	 * what?
+	 * So if c8 is null, discard any buffered input -- there's
+	 * nothing we can legitimately do with it -- and convert a null
+	 * scalar value, which by definition of c32rtomb writes out any
+	 * shift sequence reset followed by a null byte.
 	 */
-	if (c8 == u8'\0') {
-		memset(S->buf, 0, sizeof(S->buf));
-		S->n = 0;
+	if (c8 == '\0') {
+		c32 = 0;
+		goto accept;
 	}
-#endif
 
 	/*
 	 * Get the current state and buffer.
@@ -218,6 +217,7 @@ c8rtomb_l(char *restrict s, char8_t c8, mbstate_t *restrict ps, locale_t loc)
 		    __SHIFTIN(c32, __BITS(23,0)));
 		return 0;
 	case UTF8_ACCEPT:
+	accept:
 		/*
 		 * We have a scalar value.  Clear the state and output
 		 * the scalar value.
