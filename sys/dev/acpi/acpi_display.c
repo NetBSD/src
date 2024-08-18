@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_display.c,v 1.24 2024/05/10 19:29:46 maya Exp $	*/
+/*	$NetBSD: acpi_display.c,v 1.25 2024/08/18 00:43:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.24 2024/05/10 19:29:46 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.25 2024/08/18 00:43:07 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -271,9 +271,9 @@ struct acpidisp_brctl {
 	uint16_t	 bc_level_count;	/* Number of levels */
 	uint8_t		 bc_current;		/* Current level */
 
-	/* 
+	/*
 	 * Quirk if firmware returns wrong values for _BQC
-	 * (acpidisp_get_brightness) 
+	 * (acpidisp_get_brightness)
 	 */
 	bool		bc_bqc_broken;
 };
@@ -2003,7 +2003,7 @@ acpidisp_print_odinfo(device_t self, const struct acpidisp_odinfo *oi)
 static void
 ranger(uint8_t *a, size_t l, void (*pr)(const char *, ...) __printflike(1, 2))
 {
-	uint8_t b, e; 
+	uint8_t b, e;
 
 	if (l > 1)
 		(*pr)("[");
