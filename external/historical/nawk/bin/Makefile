@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.12 2024/08/17 22:22:28 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2024/08/18 14:10:42 christos Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR = maketab .WAIT awk
+SUBDIR = awk
 
 .include <bsd.subdir.mk>
