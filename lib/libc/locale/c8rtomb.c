@@ -1,4 +1,4 @@
-/*	$NetBSD: c8rtomb.c,v 1.5 2024/08/18 02:19:35 riastradh Exp $	*/
+/*	$NetBSD: c8rtomb.c,v 1.6 2024/08/18 12:41:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: c8rtomb.c,v 1.5 2024/08/18 02:19:35 riastradh Exp $");
+__RCSID("$NetBSD: c8rtomb.c,v 1.6 2024/08/18 12:41:38 riastradh Exp $");
 
 #include "namespace.h"
 
@@ -222,10 +222,6 @@ c8rtomb_l(char *restrict s, char8_t c8, mbstate_t *restrict ps, locale_t loc)
 		 * We have a scalar value.  Clear the state and output
 		 * the scalar value.
 		 */
-#ifndef __lint__
-		// XXX: lint does not grok struct decl after case label!
-		__CTASSERT(UTF8_ACCEPT == 0);
-#endif
 		S->state_c32 = 0;
 		return c32rtomb_l(s, c32, &S->mbs, loc);
 	}
