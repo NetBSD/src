@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2024/08/18 04:08:28 rin Exp $
+#	$NetBSD: Makefile,v 1.14 2024/08/18 19:26:28 christos Exp $
 
 NOCTF=
 .include <bsd.own.mk>
@@ -40,7 +40,7 @@ gdb-cfg.texi: ${DIST}/gdb/doc/all-cfg.texi
 	${TOOL_CAT} ${.ALLSRC} > ${.TARGET}
 
 CLEANFILES+= gdb-cfg.texi
-stabs.info gdb.info: gdb-cfg.texi GDBvn.texi
+annotate.info stabs.info gdb.info: gdb-cfg.texi GDBvn.texi
 
 FILES=		netbsd.xml
 FILESDIR=	/usr/share/gdb/syscalls
