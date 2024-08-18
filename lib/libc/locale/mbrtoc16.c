@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrtoc16.c,v 1.6 2024/08/17 21:24:54 riastradh Exp $	*/
+/*	$NetBSD: mbrtoc16.c,v 1.7 2024/08/18 20:06:05 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  * References:
  *
  *	The Unicode Standard, Version 15.0 -- Core Specification, The
- *	Unicode Consortium, Sec. 3.8 `Surrogates', p. 119.
+ *	Unicode Consortium, Sec. 3.8 `Surrogates', p. 118.
  *	https://www.unicode.org/versions/Unicode15.0.0/UnicodeStandard-15.0.pdf#page=144
  *	https://web.archive.org/web/20240718101254/https://www.unicode.org/versions/Unicode15.0.0/UnicodeStandard-15.0.pdf#page=144
  *
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mbrtoc16.c,v 1.6 2024/08/17 21:24:54 riastradh Exp $");
+__RCSID("$NetBSD: mbrtoc16.c,v 1.7 2024/08/18 20:06:05 rillig Exp $");
 
 #include "namespace.h"
 
@@ -196,10 +196,8 @@ mbrtoc16_l(char16_t *restrict pc16, const char *restrict s, size_t n,
 		_DIAGASSERT(S->surrogate == 0);
 	} else {
 		c32 -= 0x10000;
-		const char16_t w1 = (char16_t)(
-		    0xd800 | __SHIFTOUT(c32, __BITS(19,10)));
-		const char16_t w2 = (char16_t)(
-		    0xdc00 | __SHIFTOUT(c32, __BITS(9,0)));
+		const char16_t w1 = 0xd800 | __SHIFTOUT(c32, __BITS(19,10));
+		const char16_t w2 = 0xdc00 | __SHIFTOUT(c32, __BITS(9,0));
 		if (pc16)
 			*pc16 = w1;
 		S->surrogate = w2;
