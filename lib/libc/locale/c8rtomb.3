@@ -1,4 +1,4 @@
-.\"	$NetBSD: c8rtomb.3,v 1.5 2024/08/17 00:32:19 riastradh Exp $
+.\"	$NetBSD: c8rtomb.3,v 1.6 2024/08/18 02:19:35 riastradh Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -75,11 +75,13 @@ with the same state
 .Fa ps ,
 the sequence of
 .Fa c8
-values must be a well-formed UTF-8 code unit sequence.
+values must be a well-formed UTF-8 code unit sequence, or an
+incomplete UTF-8 code unit sequence followed by null.
 If
 .Fa c8 ,
 when appended to the sequence of code units passed in previous calls,
-does not form a well-formed UTF-8 code unit sequence, then
+is not null and does not form a well-formed UTF-8 code unit sequence,
+then
 .Nm
 returns
 .Li (size_t)-1
@@ -93,6 +95,17 @@ If
 is a null pointer, no output is stored, but the effects on
 .Fa ps
 and the return value are unchanged.
+.Pp
+If
+.Fa c8
+is null,
+.Nm
+discards any pending incomplete UTF-8 code unit sequence in
+.Fa ps ,
+outputs a (possibly empty) shift sequence to restore the initial state
+followed by a null byte, and resets
+.Fa ps
+to the initial conversion state.
 .Pp
 If
 .Fa ps
@@ -128,10 +141,11 @@ on failure.
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh EXAMPLES
 Convert a UTF-8 code unit sequence to a multibyte string,
-NUL-terminate it, and print it:
+NUL-terminate it (with any shift sequence needed to restore the initial
+state), and print it:
 .Bd -literal -offset indent
 char8_t c8[] = { 0xf0, 0x9f, 0x92, 0xa9 };
-char buf[__arraycount(c8)*MB_CUR_MAX + 1], *s = buf;
+char buf[(__arraycount(c8) + 1)*MB_CUR_MAX], *s = buf;
 size_t i;
 mbstate_t mbs = {0};    /* initial conversion state */
 
@@ -144,7 +158,10 @@ for (i = 0; i < __arraycount(c8); i++) {
         assert(len < sizeof(buf) - (s - buf));
         s += len;
 }
-*s = '\e0';             /* NUL-terminate */
+len = c8rtomb(s, '\e0', &mbs);           /* NUL-terminate */
+if (len == (size_t)-1)
+        err(1, "c16rtomb");
+assert(len <= sizeof(buf) - (s - buf));
 printf("%s\en", buf);
 .Ed
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -197,26 +214,9 @@ The
 function first appeared in
 .Nx 11.0 .
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-.Sh BUGS
-It is not clear from the standard how
-.Nm
-is supposed to behave when given an incomplete UTF-8 code unit sequence
-followed by a NUL:
-.Bd -literal -offset indent
-c8rtomb(s, 0xf0, ps);
-c8rtomb(s, 0x9f, ps);
-c8rtomb(s, 0x92, ps);
-c8rtomb(s, '\e0', ps);
-.Ed
-.Pp
-Currently this fails with
-.Er EILSEQ
-which matches other implementations, but this is at odds with language
-in the standard which suggests that passing
-.Li '\e0'
-should unconditionally store a null byte and reset
-.Fa ps
-to the initial conversion state:
+.Sh CAVEATS
+The standard requires that a null code unit unconditionally reset the
+conversion state and output null:
 .Bd -filled -offset indent
 If
 .Fa c8
@@ -225,7 +225,8 @@ sequence needed to restore the initial shift state; the resulting state
 described is the initial conversion state.
 .Ed
 .Pp
-However, it is unclear what else this should store besides a null
-byte.
-Should it discard the pending UTF-8 code unit sequence, or convert it
-to something else and store that?
+However, some implementations such as glibc 2.36 ignore this clause
+and, if the null was preceded by an incomplete UTF-8 code unit
+sequence, fail with
+.Er EILSEQ
+instead.

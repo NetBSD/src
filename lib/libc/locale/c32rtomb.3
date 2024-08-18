@@ -1,4 +1,4 @@
-.\"	$NetBSD: c32rtomb.3,v 1.7 2024/08/17 01:52:51 riastradh Exp $
+.\"	$NetBSD: c32rtomb.3,v 1.8 2024/08/18 02:19:35 riastradh Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -82,6 +82,15 @@ is a null pointer, no output is stored, but the effects on
 and the return value are unchanged.
 .Pp
 If
+.Fa c32
+is null,
+.Nm
+outputs a (possibly empty) shift sequence to restore the initial state
+followed by a null byte and resets
+.Fa ps
+to the initial conversion state.
+.Pp
+If
 .Fa ps
 is a null pointer,
 .Nm
@@ -115,10 +124,11 @@ on failure.
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh EXAMPLES
 Convert a sequence of Unicode scalar values to a multibyte sequence,
-NUL-terminate it, and print it:
+NUL-terminate it (with any shift sequence needed to restore the initial
+state), and print it:
 .Bd -literal -offset indent
 char32_t c32[] = { 0x1f4a9, 0x20ac, 0x21 };
-char buf[__arraycountb(c32)*MB_CUR_MAX + 1], *s = buf;
+char buf[(__arraycount(c32) + 1)*MB_CUR_MAX], *s = buf;
 size_t i;
 mbstate_t mbs = {0};    /* initial conversion state */
 
@@ -131,7 +141,10 @@ for (i = 0; i < __arraycount(c32); i++) {
         assert(len < sizeof(buf) - (s - buf));
         s += len;
 }
-*s = '\e0';             /* NUL-terminate */
+len = c32rtomb(s, L'\e0', &mbs);         /* NUL-terminate */
+if (len == (size_t)-1)
+        err(1, "c32rtomb");
+assert(len <= sizeof(buf) - (s - buf));
 printf("%s\en", buf);
 .Ed
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

@@ -1,4 +1,4 @@
-/*	$NetBSD: c16rtomb.c,v 1.5 2024/08/17 21:24:53 riastradh Exp $	*/
+/*	$NetBSD: c16rtomb.c,v 1.6 2024/08/18 02:19:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: c16rtomb.c,v 1.5 2024/08/17 21:24:53 riastradh Exp $");
+__RCSID("$NetBSD: c16rtomb.c,v 1.6 2024/08/18 02:19:35 riastradh Exp $");
 
 #include "namespace.h"
 
@@ -140,37 +140,37 @@ c16rtomb_l(char *restrict s, char16_t c16, mbstate_t *restrict ps,
 	 */
 	S = (struct c16rtombstate *)(void *)ps;
 
-#if 0
 	/*
-	 * `If c16 is a null wide character, a null byte is stored,
-	 *  preceded by any shift sequence needed to restore the
-	 *  initial shift state; the resulting state described is the
-	 *  initial conversion state.'
+	 * Handle several cases:
 	 *
-	 * XXX But what else gets stored?  Do we just discard any
-	 * pending high surrogate, or do we convert it to something
-	 * else, or what?
+	 * 1. c16 is null.
+	 * 2. Pending high surrogate.
+	 * 3. No pending high surrogate and c16 is a high surrogate.
+	 * 4. No pending high surrogate and c16 is a low surrogate.
+	 * 5. No pending high surrogate and c16 is a BMP scalar value.
 	 */
-	if (c16 == L'\0') {
+	if (c16 == L'\0') {	/* 1. null */
+		/*
+		 * `If c16 is a null wide character, a null byte is
+		 *  stored, preceded by any shift sequence needed to
+		 *  restore the initial shift state; the resulting
+		 *  state described is the initial conversion state.'
+		 *
+		 * So if c16 is null, discard any pending high
+		 * surrogate -- there's nothing we can legitimately do
+		 * with it -- and convert a null scalar value, which by
+		 * definition of c32rtomb writes out any shift sequence
+		 * reset followed by a null byte.
+		 */
 		S->surrogate = 0;
-	}
-#endif
-
-	/*
-	 * Check whether:
-	 *
-	 * 1. We had previously decoded a high surrogate.
-	 *    => Decode the low surrogate -- reject if it's not a low
-	 *       surrogate -- and combine them to output a scalar
-	 *       value; clear the high surrogate for next time.
-	 * 2. This is a high surrogate.
-	 *    => Save it and wait for the low surrogate with no output.
-	 * 3. This is a low surrogate.
-	 *    => Reject.
-	 * 4. This is not a surrogate.
-	 *    => Output a scalar value.
-	 */
-	if (S->surrogate != 0) {	/* 1. pending surrogate pair */
+		c32 = 0;
+	} else if (S->surrogate != 0) { /* 2. pending high surrogate */
+		/*
+		 * If the previous code unit was a high surrogate, the
+		 * next code unit must be a low surrogate.  Reject it
+		 * if not; otherwise clear the high surrogate for next
+		 * time and combine them to output a scalar value.
+		 */
 		if (c16 < 0xdc00 || c16 > 0xdfff) {
 			errno = EILSEQ;
 			return (size_t)-1;
@@ -182,13 +182,27 @@ c16rtomb_l(char *restrict s, char16_t c16, mbstate_t *restrict ps,
 		    __SHIFTIN(__SHIFTOUT(w2, __BITS(9,0)), __BITS(9,0)));
 		c32 += 0x10000;
 		S->surrogate = 0;
-	} else if (c16 >= 0xd800 && c16 <= 0xdbff) { /* 2. high surrogate */
+	} else if (c16 >= 0xd800 && c16 <= 0xdbff) { /* 3. high surrogate */
+		/*
+		 * No pending high surrogate and this code unit is a
+		 * high surrogate.  Save it for next time, and output
+		 * nothing -- we don't yet know what the next scalar
+		 * value will be until we receive the low surrogate.
+		 */
 		S->surrogate = c16;
 		return 0;	/* produced nothing */
-	} else if (c16 >= 0xdc00 && c16 <= 0xdfff) { /* 3. low surrogate */
+	} else if (c16 >= 0xdc00 && c16 <= 0xdfff) { /* 4. low surrogate */
+		/*
+		 * No pending high surrogate and this code unit is a
+		 * low surrogate.  That's invalid; fail with EILSEQ.
+		 */
 		errno = EILSEQ;
 		return (size_t)-1;
-	} else {		/* 4. not a surrogate */
+	} else {		/* 5. not a surrogate */
+		/*
+		 * Code unit is a scalar value in the BMP.  Just output
+		 * it as is.
+		 */
 		c32 = c16;
 	}
 
