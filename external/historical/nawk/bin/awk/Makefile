@@ -1,18 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2024/08/17 23:21:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2024/08/18 14:10:43 christos Exp $
 
 WARNS?= 4
 CWARNFLAGS.clang+=	-Wno-self-assign
 
 .include <bsd.own.mk>
-
-.if !defined(HOSTPROG)
-MAKETABDIR != cd ${.CURDIR}/../maketab && ${PRINTOBJDIR}
-MAKETAB = ${MAKETABDIR}/maketab
-.else
-MAKETABDIR != cd ${NETBSDSRCDIR}/tools/maketab && ${PRINTOBJDIR}
-MAKETAB = ${MAKETABDIR}/${_TOOL_PREFIX}maketab
-.endif
-
 
 BINDIR?= /usr/bin
 DIST=	${.CURDIR}/../../dist
@@ -43,10 +34,5 @@ TEXINFO=        awk.info
 .if ${MKINFO} != "no"
 .include <bsd.info.mk>
 .endif
-
-proctab.c: ${MAKETAB} awkgram.h
-	${.ALLSRC} > ${.TARGET}
-
-CLEANFILES += proctab.c
 
 .include <bsd.prog.mk>
