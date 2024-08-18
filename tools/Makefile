@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.224 2024/08/17 22:24:01 christos Exp $
+#	$NetBSD: Makefile,v 1.225 2024/08/18 14:11:21 christos Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -105,7 +105,7 @@ SUBDIR+= cap_mkdb crunchgen ctags gencat hexdump \
 		makewhatis mtree nbperf .WAIT uudecode
 .endif
 
-SUBDIR+= cat gzip rpcgen join lorder m4 mkdep tsort .WAIT yacc .WAIT maketab .WAIT awk .WAIT lex
+SUBDIR+= cat gzip rpcgen join lorder m4 mkdep tsort .WAIT yacc .WAIT awk .WAIT lex
 .if ${TOOLS_BUILDRUMP} == "no"
 SUBDIR+= xz-include .WAIT grep xz-lib pax .WAIT libprop
 
