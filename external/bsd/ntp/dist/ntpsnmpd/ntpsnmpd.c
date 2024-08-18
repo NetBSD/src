@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpsnmpd.c,v 1.1.1.9 2020/05/25 20:40:10 christos Exp $	*/
+/*	$NetBSD: ntpsnmpd.c,v 1.1.1.10 2024/08/18 20:37:38 christos Exp $	*/
 
 /*****************************************************************************
  *
@@ -69,7 +69,7 @@ main (int argc, char **argv) {
     snmp_enable_stderrlog();
 
   /* Become Subagent */
-    netsnmp_ds_set_boolean(NETSNMP_DS_APPLICATION_ID, NETSNMP_DS_AGENT_ROLE, 1);
+  netsnmp_ds_set_boolean(NETSNMP_DS_APPLICATION_ID, NETSNMP_DS_AGENT_ROLE, 1);
  
   /* go into background mode, if requested */
   if (background && netsnmp_daemonize(1, !use_syslog))

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_refclock.h,v 1.1.1.10 2020/05/25 20:40:05 christos Exp $	*/
+/*	$NetBSD: ntp_refclock.h,v 1.1.1.11 2024/08/18 20:37:36 christos Exp $	*/
 
 /*
  * ntp_refclock.h - definitions for reference clock support
@@ -215,13 +215,15 @@ struct refclock {
 extern	int	io_addclock	(struct refclockio *);
 extern	void	io_closeclock	(struct refclockio *);
 
+#define FDWRITE_ERROR	((size_t)-1)
+
 #ifdef REFCLOCK
 extern	void	refclock_buginfo(sockaddr_u *,
 				 struct refclockbug *);
 extern	void	refclock_control(sockaddr_u *,
 				 const struct refclockstat *,
 				 struct refclockstat *);
-extern	int	refclock_open	(const char *, u_int, u_int);
+extern	int	refclock_open	(const sockaddr_u *srcadr, const char *, u_int, u_int);
 extern	int	refclock_setup	(int, u_int, u_int);
 extern	void	refclock_timer	(struct peer *);
 extern	void	refclock_transmit(struct peer *);
@@ -234,6 +236,10 @@ extern	int	refclock_samples_expire(struct refclockproc *, int);
 extern	void	refclock_report	(struct peer *, int);
 extern	int	refclock_gtlin	(struct recvbuf *, char *, int, l_fp *);
 extern	int	refclock_gtraw	(struct recvbuf *, char *, int, l_fp *);
+extern	size_t	refclock_write  (const struct peer *, const void *, size_t,
+				 const char * what);
+extern	size_t	refclock_fdwrite(const struct peer *, int, const void *, size_t,
+				 const char * what);
 extern	int	indicate_refclock_packet(struct refclockio *,
 					 struct recvbuf *);
 extern	void	process_refclock_packet(struct recvbuf *);
@@ -251,6 +257,11 @@ struct refclock_atom;
 extern int	refclock_ppsaugment(
     const struct refclock_atom*, l_fp *rcvtime ,
     double rcvfudge, double ppsfudge);
+
+extern int ppsdev_reopen(const sockaddr_u *srcadr,
+			 int ttyfd, int ppsfd, const char *ppspath,
+			 int mode, int flags);
+extern void ppsdev_close(int ttyfd, int ppsfd);
 
 #endif /* REFCLOCK */
 

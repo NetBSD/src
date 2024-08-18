@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_sel240x.c,v 1.1.1.8 2020/05/25 20:40:06 christos Exp $	*/
+/*	$NetBSD: clk_sel240x.c,v 1.1.1.9 2024/08/18 20:37:37 christos Exp $	*/
 
 //////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2009,2012 -
@@ -170,5 +170,5 @@ cvt_sel240x( unsigned char *buffer,
 }
 
 #else  /* not (REFCLOCK && CLOCK_PARSE && CLOCK_SEL240X) */
-int clk_sel240x_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* not (REFCLOCK && CLOCK_PARSE && CLOCK_SEL240X) */

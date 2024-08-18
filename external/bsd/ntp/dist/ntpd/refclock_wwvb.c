@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_wwvb.c,v 1.1.1.9 2020/05/25 20:40:07 christos Exp $	*/
+/*	$NetBSD: refclock_wwvb.c,v 1.1.1.10 2024/08/18 20:37:35 christos Exp $	*/
 
 /*
  * refclock_wwvb - clock driver for Spectracom WWVB and GPS receivers
@@ -191,7 +191,7 @@ wwvb_start(
 	 * Open serial port. Use CLK line discipline, if available.
 	 */
 	snprintf(device, sizeof(device), DEVICE, unit);
-	fd = refclock_open(device, SPEED232, LDISC_CLK);
+	fd = refclock_open(&peer->srcadr, device, SPEED232, LDISC_CLK);
 	if (fd <= 0)
 		return (0);
 
@@ -601,5 +601,5 @@ wwvb_control(
 #endif	/* HAVE_PPSAPI */
 
 #else
-int refclock_wwvb_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* REFCLOCK */

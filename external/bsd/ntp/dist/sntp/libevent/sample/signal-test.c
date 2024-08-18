@@ -1,4 +1,4 @@
-/*	$NetBSD: signal-test.c,v 1.1.1.3 2015/07/10 13:11:13 christos Exp $	*/
+/*	$NetBSD: signal-test.c,v 1.1.1.4 2024/08/18 20:37:43 christos Exp $	*/
 
 /*
  * Compile with:
@@ -28,10 +28,6 @@
 
 #include <event2/event.h>
 
-#ifdef EVENT____func__
-#define __func__ EVENT____func__
-#endif
-
 int called = 0;
 
 static void
@@ -39,7 +35,7 @@ signal_cb(evutil_socket_t fd, short event, void *arg)
 {
 	struct event *signal = arg;
 
-	printf("%s: got signal %d\n", __func__, event_get_signal(signal));
+	printf("signal_cb: got signal %d\n", event_get_signal(signal));
 
 	if (called >= 2)
 		event_del(signal);
@@ -50,8 +46,9 @@ signal_cb(evutil_socket_t fd, short event, void *arg)
 int
 main(int argc, char **argv)
 {
-	struct event *signal_int;
+	struct event *signal_int = NULL;
 	struct event_base* base;
+	int ret = 0;
 #ifdef _WIN32
 	WORD wVersionRequested;
 	WSADATA wsaData;
@@ -61,17 +58,28 @@ main(int argc, char **argv)
 	(void) WSAStartup(wVersionRequested, &wsaData);
 #endif
 
-	/* Initalize the event library */
+	/* Initialize the event library */
 	base = event_base_new();
+	if (!base) {
+		ret = 1;
+		goto out;
+	}
 
-	/* Initalize one event */
+	/* Initialize one event */
 	signal_int = evsignal_new(base, SIGINT, signal_cb, event_self_cbarg());
-
+	if (!signal_int) {
+		ret = 2;
+		goto out;
+	}
 	event_add(signal_int, NULL);
 
 	event_base_dispatch(base);
-	event_base_free(base);
 
-	return (0);
+out:
+	if (signal_int)
+		event_free(signal_int);
+	if (base)
+		event_base_free(base);
+	return ret;
 }
 

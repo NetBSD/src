@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_tsyncpci.c,v 1.1.1.7 2020/05/25 20:40:07 christos Exp $	*/
+/*	$NetBSD: refclock_tsyncpci.c,v 1.1.1.8 2024/08/18 20:37:35 christos Exp $	*/
 
 /*******************************************************************************
 *
@@ -910,5 +910,5 @@ void DoyTimeFromSecTime(DoyTimeObj* pDt, SecTimeObj* pSt)
 } // End DoyTimeFromSecTime
 
 #else
-int refclock_tsyncpci_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* REFCLOCK */

@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.h,v 1.1.1.9 2020/05/25 20:40:11 christos Exp $	*/
+/*	$NetBSD: utilities.h,v 1.1.1.10 2024/08/18 20:37:39 christos Exp $	*/
 
 #ifndef UTILITIES_H
 #define UTILITIES_H
@@ -9,7 +9,6 @@
 
 #include "ntp.h"
 #include "ntp_stdlib.h"
-#include "lib_strbuf.h"
 
 #define HLINE "--------------------------------------------------------------------------------\n"
 #define PHLINE fprintf(output, HLINE);

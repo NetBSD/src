@@ -1,4 +1,4 @@
-/*	$NetBSD: windows-config.h,v 1.1.1.10 2020/05/25 20:40:15 christos Exp $	*/
+/*	$NetBSD: windows-config.h,v 1.1.1.11 2024/08/18 20:37:46 christos Exp $	*/
 
 
 /**
@@ -11,7 +11,7 @@
  *
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2018 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control

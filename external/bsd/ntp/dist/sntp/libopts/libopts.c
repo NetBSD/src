@@ -1,11 +1,11 @@
-/*	$NetBSD: libopts.c,v 1.1.1.9 2020/05/25 20:40:14 christos Exp $	*/
+/*	$NetBSD: libopts.c,v 1.1.1.10 2024/08/18 20:37:43 christos Exp $	*/
 
 #define  AUTOOPTS_INTERNAL 1
 #include "autoopts/project.h"
-#define  LOCAL static
+
 #include "ao-strs.h"
 static char const ao_ver_string[] =
-    "41:0:16\n";
+    "42:1:17\n";
 #include "autoopts/options.h"
 #include "autoopts/usage-txt.h"
 #include "genshell.h"
@@ -13,12 +13,14 @@ static char const ao_ver_string[] =
 #include "option-value-type.h"
 #include "ao-strs.h"
 #include "ag-char-map.h"
+#include "save-flags.h"
 #include "autoopts.h"
 #include "proto.h"
 #include "parse-duration.c"
 #include "ao-strs.c"
 #include "option-value-type.c"
 #include "option-xat-attribute.c"
+#include "save-flags.c"
 #include "autoopts.c"
 #include "alias.c"
 #include "boolean.c"

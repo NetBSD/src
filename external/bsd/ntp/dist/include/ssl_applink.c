@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl_applink.c,v 1.1.1.9 2020/05/25 20:40:05 christos Exp $	*/
+/*	$NetBSD: ssl_applink.c,v 1.1.1.10 2024/08/18 20:37:36 christos Exp $	*/
 
 /*
  * include/ssl_applink.c -- common NTP code for openssl/applink.c
@@ -16,7 +16,7 @@
 #   include "msvc_ssl_autolib.h"
 #  endif
 # endif
-# if OPENSSL_VERSION_NUMBER < 0x10100000L
+# if OPENSSL_VERSION_NUMBER < 0x10100000L || OPENSSL_VERSION_NUMBER >= 0x10101000L
 #  include <openssl/applink.c>
 # endif
 # ifdef _MSC_VER

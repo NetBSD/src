@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_varitext.c,v 1.1.1.8 2020/05/25 20:40:06 christos Exp $	*/
+/*	$NetBSD: clk_varitext.c,v 1.1.1.9 2024/08/18 20:37:37 christos Exp $	*/
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -254,7 +254,7 @@ inp_varitext(
 }
 
 #else /* not (REFCLOCK && CLOCK_PARSE && CLOCK_VARITEXT) */
-int clk_varitext_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* not (REFCLOCK && CLOCK_PARSE && CLOCK_VARITEXT) */
 
 /*

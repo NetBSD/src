@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_bancomm.c,v 1.1.1.9 2020/05/25 20:40:06 christos Exp $	*/
+/*	$NetBSD: refclock_bancomm.c,v 1.1.1.10 2024/08/18 20:37:34 christos Exp $	*/
 
 /* refclock_bancomm.c - clock driver for the  Datum/Bancomm bc635VME 
  * Time and Frequency Processor. It requires the BANCOMM bc635VME/
@@ -619,5 +619,5 @@ stfp_time2tvme(struct vmedate *time_vme, struct stfp_time *stfp)
 	return;
 }
 #else
-int refclock_bancomm_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* REFCLOCK */

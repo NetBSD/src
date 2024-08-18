@@ -1,4 +1,4 @@
-/*	$NetBSD: smeartest.c,v 1.1.1.7 2020/05/25 20:40:16 christos Exp $	*/
+/*	$NetBSD: smeartest.c,v 1.1.1.8 2024/08/18 20:37:48 christos Exp $	*/
 
 #include <config.h>
 
@@ -129,7 +129,7 @@ ltor(l_fp l)
 
 
 int
-main()
+main(void)
 {
 	l_fp l;
 	int rc;

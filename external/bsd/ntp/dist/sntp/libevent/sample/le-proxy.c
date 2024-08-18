@@ -1,4 +1,4 @@
-/*	$NetBSD: le-proxy.c,v 1.1.1.4 2015/07/10 13:11:13 christos Exp $	*/
+/*	$NetBSD: le-proxy.c,v 1.1.1.5 2024/08/18 20:37:43 christos Exp $	*/
 
 /*
   This example code shows how to write an (optionally encrypting) SSL proxy
@@ -32,9 +32,11 @@
 #include <event2/listener.h>
 #include <event2/util.h>
 
+#include "util-internal.h"
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include "openssl-compat.h"
 
 static struct event_base *base;
 static struct sockaddr_storage listen_on_addr;
@@ -195,6 +197,7 @@ accept_cb(struct evconnlistener *listener, evutil_socket_t fd,
 			perror("Bufferevent_openssl_new");
 			bufferevent_free(b_out);
 			bufferevent_free(b_in);
+			return;
 		}
 		b_out = b_ssl;
 	}
@@ -214,6 +217,13 @@ main(int argc, char **argv)
 
 	int use_ssl = 0;
 	struct evconnlistener *listener;
+
+#ifdef _WIN32
+	WORD wVersionRequested;
+	WSADATA wsaData;
+	wVersionRequested = MAKEWORD(2, 2);
+	(void) WSAStartup(wVersionRequested, &wsaData);
+#endif
 
 	if (argc < 3)
 		syntax();
@@ -260,16 +270,19 @@ main(int argc, char **argv)
 
 	if (use_ssl) {
 		int r;
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || \
+	(defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER < 0x20700000L)
 		SSL_library_init();
 		ERR_load_crypto_strings();
 		SSL_load_error_strings();
 		OpenSSL_add_all_algorithms();
+#endif
 		r = RAND_poll();
 		if (r == 0) {
 			fprintf(stderr, "RAND_poll() failed.\n");
 			return 1;
 		}
-		ssl_ctx = SSL_CTX_new(SSLv23_method());
+		ssl_ctx = SSL_CTX_new(TLS_method());
 	}
 
 	listener = evconnlistener_new_bind(base, accept_cb, NULL,
@@ -285,6 +298,10 @@ main(int argc, char **argv)
 
 	evconnlistener_free(listener);
 	event_base_free(base);
+
+#ifdef _WIN32
+	WSACleanup();
+#endif
 
 	return 0;
 }

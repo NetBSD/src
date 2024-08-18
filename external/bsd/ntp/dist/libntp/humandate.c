@@ -1,4 +1,4 @@
-/*	$NetBSD: humandate.c,v 1.1.1.10 2020/05/25 20:40:05 christos Exp $	*/
+/*	$NetBSD: humandate.c,v 1.1.1.11 2024/08/18 20:37:36 christos Exp $	*/
 
 /*
  * humandate.c - convert an NTP (or the current) time to something readable
@@ -8,7 +8,6 @@
 
 #include "ntp_fp.h"
 #include "ntp_unixtime.h"	/* includes <sys/time.h> and <time.h> */
-#include "lib_strbuf.h"
 #include "ntp_stdlib.h"
 
 

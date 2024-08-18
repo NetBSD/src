@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_atom.c,v 1.1.1.9 2020/05/25 20:40:06 christos Exp $	*/
+/*	$NetBSD: refclock_atom.c,v 1.1.1.10 2024/08/18 20:37:34 christos Exp $	*/
 
 /*
  * refclock_atom - clock driver for 1-pps signals
@@ -237,5 +237,5 @@ atom_poll(
 	refclock_receive(peer);
 }
 #else
-int refclock_atom_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* REFCLOCK */

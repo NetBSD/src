@@ -1,4 +1,4 @@
-/*	$NetBSD: vint64ops.h,v 1.1.1.7 2020/05/25 20:40:05 christos Exp $	*/
+/*	$NetBSD: vint64ops.h,v 1.1.1.8 2024/08/18 20:37:36 christos Exp $	*/
 
 /*
  * vint64ops.h - operations on 'vint64' values
@@ -25,6 +25,6 @@ extern vint64 subv64i32(const vint64 * lhs, int32_t rhs);
 extern vint64 subv64u32(const vint64 * lhs, uint32_t rhs);
 
 /* parsing. works like strtoul() or strtoull() */
-extern vint64 strtouv64(const char * begp, char ** endp, int base);
+extern vint64 strtouv64(char * begp, char ** endp, int base);
 
 #endif /*!defined(VINT64OPS_H)*/

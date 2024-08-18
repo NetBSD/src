@@ -1,4 +1,4 @@
-/*	$NetBSD: time-test.c,v 1.1.1.3 2015/07/10 13:11:13 christos Exp $	*/
+/*	$NetBSD: time-test.c,v 1.1.1.4 2024/08/18 20:37:43 christos Exp $	*/
 
 /*
  * XXX This sample code was once meant to show how to use the basic Libevent
@@ -90,10 +90,10 @@ main(int argc, char **argv)
 		flags = 0;
 	}
 
-	/* Initalize the event library */
+	/* Initialize the event library */
 	base = event_base_new();
 
-	/* Initalize one event */
+	/* Initialize one event */
 	event_assign(&timeout, base, -1, flags, timeout_cb, (void*) &timeout);
 
 	evutil_timerclear(&tv);
@@ -101,6 +101,9 @@ main(int argc, char **argv)
 	event_add(&timeout, &tv);
 
 	evutil_gettimeofday(&lasttime, NULL);
+
+	setbuf(stdout, NULL);
+	setbuf(stderr, NULL);
 
 	event_base_dispatch(base);
 

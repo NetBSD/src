@@ -1,4 +1,4 @@
-/*	$NetBSD: socktohost.c,v 1.1.1.10 2020/05/25 20:40:05 christos Exp $	*/
+/*	$NetBSD: socktohost.c,v 1.1.1.11 2024/08/18 20:37:37 christos Exp $	*/
 
 /*
  * socktoa - return a numeric host name from a sockaddr_storage structure
@@ -17,7 +17,6 @@
 #include <stdio.h>
 
 #include "ntp_fp.h"
-#include "lib_strbuf.h"
 #include "ntp_stdlib.h"
 #include "ntp.h"
 #include "ntp_debug.h"

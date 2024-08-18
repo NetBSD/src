@@ -1,10 +1,10 @@
-/*	$NetBSD: log.c,v 1.1.1.10 2020/05/25 20:40:11 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.11 2024/08/18 20:37:39 christos Exp $	*/
 
 #include <config.h>
 
 #include "log.h"
 
-const char *progname;		/* for msyslog use too */
+extern const char *progname;		/* for msyslog use too */
 
 static int counter = 0;
 

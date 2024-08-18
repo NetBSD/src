@@ -1,4 +1,4 @@
-/*	$NetBSD: dolfptoa.c,v 1.1.1.8 2020/05/25 20:40:05 christos Exp $	*/
+/*	$NetBSD: dolfptoa.c,v 1.1.1.9 2024/08/18 20:37:36 christos Exp $	*/
 
 /*
  * dolfptoa - do the grunge work of converting an l_fp number to decimal
@@ -7,8 +7,6 @@
 #include <stdio.h>
 
 #include "ntp_fp.h"
-#include "lib_strbuf.h"
-#include "ntp_string.h"
 #include "ntp_stdlib.h"
 
 char *

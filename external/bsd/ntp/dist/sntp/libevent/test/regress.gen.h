@@ -1,4 +1,5 @@
-/*	$NetBSD: regress.gen.h,v 1.1.1.8 2020/05/25 20:40:14 christos Exp $	*/
+/*	$NetBSD: regress.gen.h,v 1.1.1.9 2024/08/18 20:37:43 christos Exp $	*/
+
 
 /*
  * Automatically generated from /ntpbuild/data/snaps/ntp-stable/sntp/libevent/test/regress.rpc
@@ -7,9 +8,9 @@
 #ifndef EVENT_RPCOUT__NTPBUILD_DATA_SNAPS_NTP_STABLE_SNTP_LIBEVENT_TEST_REGRESS_RPC_
 #define EVENT_RPCOUT__NTPBUILD_DATA_SNAPS_NTP_STABLE_SNTP_LIBEVENT_TEST_REGRESS_RPC_
 
+
 #include <event2/util.h> /* for ev_uint*_t */
 #include <event2/rpc.h>
-
 struct msg;
 struct kill;
 struct run;

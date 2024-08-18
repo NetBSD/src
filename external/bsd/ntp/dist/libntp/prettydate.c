@@ -1,4 +1,4 @@
-/*	$NetBSD: prettydate.c,v 1.1.1.11 2020/05/25 20:40:05 christos Exp $	*/
+/*	$NetBSD: prettydate.c,v 1.1.1.12 2024/08/18 20:37:37 christos Exp $	*/
 
 /*
  * prettydate - convert a time stamp to something readable
@@ -8,7 +8,6 @@
 
 #include "ntp_fp.h"
 #include "ntp_unixtime.h"	/* includes <sys/time.h> */
-#include "lib_strbuf.h"
 #include "ntp_stdlib.h"
 #include "ntp_assert.h"
 #include "ntp_calendar.h"

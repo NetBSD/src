@@ -5,9 +5,9 @@ AC_PREREQ([2.68])
 AC_INIT(
     [sntp],
     [VERSION_NUMBER],
-    [http://bugs.ntp.org./],
+    [https://bugs.ntp.org/],
     [],
-    [http://www.ntp.org./]dnl
+    [https://www.ntp.org/]dnl
 )
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([libevent/build-aux])
@@ -33,14 +33,14 @@ AC_LANG([C])
 # the date YYYYMMDD optionally with -HHMM if there is more than one
 # bump in a day.
 
-sntp_configure_cache_version=20120806
+sntp_configure_cache_version=20240218
 
 # When the version of config.cache and configure do not
 # match, NTP_CACHEVERSION will flush the cache.
 
 NTP_CACHEVERSION([sntp], [$sntp_configure_cache_version])
 
-AM_INIT_AUTOMAKE([1.15 foreign -Wall -Wno-gnu])
+AM_INIT_AUTOMAKE([1.15 foreign subdir-objects -Wall -Wno-gnu])
 
 AM_SILENT_RULES([yes])
 
@@ -58,16 +58,11 @@ NTP_HARDEN
 
 NTP_LOCINFO()
 
-dnl AM_PROG_AR req. automake 1.12
-m4_ifdef(
-    [AM_PROG_AR],
-    [AM_PROG_AR]
-)
+AM_PROG_AR
 
 NTP_LIBNTP
 
-AC_DISABLE_SHARED
-AC_PROG_LIBTOOL
+LT_INIT([disable-shared])
 AC_SUBST([LIBTOOL_DEPS])
 
 NTP_WITHSNTP
@@ -86,7 +81,7 @@ esac
 # Therefore, by default:
 # - use the version we ship with
 # - do not install it
-# - build a static copy (AC_DISABLE_SHARED - done earlier)
+# - build a static copy (disable-shared - done earlier)
 case "${enable_local_libopts+set}" in
  set) ;;
  *) enable_local_libopts=yes ;;
@@ -125,7 +120,6 @@ NTP_FACILITYNAMES
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
 
-NTP_OPENSSL
 NTP_IPV6
 
 ###
@@ -139,9 +133,6 @@ AC_DEFINE([HAVE_TERMIOS], 1, [sntp does not care about TTY stuff])
 AC_CHECK_FUNCS([socket])
 
 NTP_UNITYBUILD
-## HMS: if we don't find c++ we should not look for gtest.
-#AC_PROG_CXX
-#NTP_GOOGLETEST
 
 SNTP_PROBLEM_TESTS
 
