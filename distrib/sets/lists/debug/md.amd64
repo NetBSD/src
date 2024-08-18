@@ -1,9 +1,8 @@
-# $NetBSD: md.amd64,v 1.128 2024/07/11 20:41:08 riastradh Exp $
+# $NetBSD: md.amd64,v 1.129 2024/08/18 04:02:58 rin Exp $
 #
 ./usr/lib/libtsan_g.a				comp-c-debuglib		debuglib,arch64,cxx,gcccmds,gcc
 ./usr/lib/libx86_64_g.a				comp-c-debuglib		debuglib
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/gdbserver.debug	base-util-debug		gdb,debug
 ./usr/libdata/debug/usr/bin/pmc.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/lib/libtsan.so.1.0.debug		comp-sys-debug	debug,cxx,gcccmds,gcc=10
 ./usr/libdata/debug/usr/lib/libtsan.so.2.0.debug		comp-sys-debug	debug,cxx,gcccmds,gcc=12

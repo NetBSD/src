@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1347 2024/07/11 08:13:48 riastradh Exp $
+# $NetBSD: mi,v 1.1348 2024/08/18 04:02:58 rin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -617,6 +617,7 @@
 ./usr/bin/fstat					base-util-bin
 ./usr/bin/ftp					base-netutil-bin
 ./usr/bin/gcpp					base-util-bin		gcccmds
+./usr/bin/gdbserver				base-util-bin		gdb,gdbserver
 ./usr/bin/gencat				base-locale-bin
 ./usr/bin/getaddrinfo				base-netutil-bin
 ./usr/bin/getcap				base-util-bin
