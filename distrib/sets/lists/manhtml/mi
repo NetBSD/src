@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.5 2024/08/01 14:29:07 martin Exp $
+# $NetBSD: mi,v 1.6 2024/08/18 04:06:38 rin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -153,6 +153,7 @@
 ./usr/share/man/html1/fstat.html		man-util-htmlman	html
 ./usr/share/man/html1/ftp.html			man-netutil-htmlman	html
 ./usr/share/man/html1/gcpp.html			man-util-htmlman	gcccmds,html
+./usr/share/man/html1/gdbserver.html		man-util-htmlman	gdb,gdbserver,html
 ./usr/share/man/html1/gencat.html		man-locale-htmlman	html
 ./usr/share/man/html1/getaddrinfo.html		man-netutil-htmlman	html
 ./usr/share/man/html1/getcap.html		man-util-htmlman	html
