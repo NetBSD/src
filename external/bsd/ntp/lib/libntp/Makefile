@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2024/04/21 17:19:52 rillig Exp $
+#	$NetBSD: Makefile,v 1.37 2024/08/18 20:50:00 christos Exp $
 
 LIBISPRIVATE=yes
 
@@ -56,10 +56,10 @@ ntp_intres.c \
 ntp_libopts.c \
 ntp_lineedit.c \
 ntp_random.c \
+ntp_realpath.c \
 ntp_rfc2553.c \
 ntp_worker.c \
 numtoa.c \
-numtohost.c \
 octtoint.c \
 prettydate.c \
 recvbuff.c \

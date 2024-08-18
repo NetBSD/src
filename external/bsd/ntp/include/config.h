@@ -172,12 +172,7 @@
 /* Zyfer GPStarplus */
 #define CLOCK_ZYFER 1
 
-/* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
-   systems. This function is required for `alloca.c' support on those systems.
-   */
-/* #undef CRAY_STACKSEG_END */
-
-/* Define to 1 if using `alloca.c'. */
+/* Define to 1 if using 'alloca.c'. */
 /* #undef C_ALLOCA */
 
 /* Enable debugging code? */
@@ -265,7 +260,7 @@
 /* #undef DECL_STRTOL_0 */
 
 /* Declare syscall()? */
-/* #undef DECL_SYSCALL */
+#define DECL_SYSCALL 1
 
 /* Declaration style */
 /* #undef DECL_SYSLOG_0 */
@@ -289,7 +284,7 @@
 #define DFLT_RLIMIT_MEMLOCK 32
 
 /* Default number of 4k pages for RLIMIT_STACK */
-#define DFLT_RLIMIT_STACK 128 
+#define DFLT_RLIMIT_STACK 128
 
 /* Directory separator character, usually / or \\ */
 #define DIR_SEP '/'
@@ -299,6 +294,9 @@
 
 /* use old autokey session key behavior? */
 /* #undef DISABLE_BUG3527_FIX */
+
+/* Disable debug assertion on OOB KoD RATE value? */
+/* #undef DISABLE_BUG3767_FIX */
 
 /* synch TODR hourly? */
 /* #undef DOSYNCTODR */
@@ -318,6 +316,9 @@
 /* Enable CMAC support? */
 #define ENABLE_CMAC 1
 
+/* auto-instantiate missing PPS devices on Linux */
+#define ENABLE_MAGICPPS 1
+
 /* nls support in libopts */
 /* #undef ENABLE_NLS */
 
@@ -333,13 +334,10 @@
 /* via __adjtimex */
 /* #undef HAVE_ADJTIMEX */
 
-#define HAVE_SETPROCTITLE 1
-
-/* Define to 1 if you have `alloca', as a function or macro. */
+/* Define to 1 if you have 'alloca', as a function or macro. */
 #define HAVE_ALLOCA 1
 
-/* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
-   */
+/* Define to 1 if <alloca.h> works. */
 /* #undef HAVE_ALLOCA_H */
 
 /* Define to 1 if you have the `arc4random_buf' function. */
@@ -374,6 +372,9 @@
 
 /* Define to 1 if you have the `clock_settime' function. */
 #define HAVE_CLOCK_SETTIME 1
+
+/* Define to 1 if you have the `closefrom' function. */
+#define HAVE_CLOSEFROM 1
 
 /* Define to 1 if you have the <cthreads.h> header file. */
 /* #undef HAVE_CTHREADS_H */
@@ -424,6 +425,9 @@
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
 
+/* Define to 1 if you have the `fdopendir' function. */
+#define HAVE_FDOPENDIR 1
+
 /* Define to 1 if you have the `finite' function. */
 /* #undef HAVE_FINITE */
 
@@ -438,6 +442,12 @@
 
 /* Define to 1 if you have the `fstat' function. */
 #define HAVE_FSTAT 1
+
+/* Define to 1 if you have the `fstatat' function. */
+#define HAVE_FSTATAT 1
+
+/* Define to 1 if we have realpath() that supports NULL as the 2nd argument */
+#define HAVE_FUNC_POSIX_REALPATH 1
 
 /* Define to 1 if you have the `getbootfile' function. */
 /* #undef HAVE_GETBOOTFILE */
@@ -491,9 +501,6 @@
 
 /* Define to 1 if the system has the type `int32'. */
 /* #undef HAVE_INT32 */
-
-/* int32 type in DNS headers, not others. */
-/* #undef HAVE_INT32_ONLY_WITH_DNS */
 
 /* Define to 1 if the system has the type `int32_t'. */
 #define HAVE_INT32_T 1
@@ -561,7 +568,7 @@
 /* Define to 1 if the system has the type `long long'. */
 #define HAVE_LONG_LONG 1
 
-/* Define to 1 if the system has the type 'long long int'. */
+/* Define to 1 if the system has the type `long long int'. */
 /* #undef HAVE_LONG_LONG_INT */
 
 /* if you have SunOS LWP package */
@@ -594,12 +601,14 @@
 /* Define to 1 if you have the `memchr' function. */
 #define HAVE_MEMCHR 1
 
- /* Define to 1 if you have the `memlk' function. */
 /* Define to 1 if you have the `memlk' function. */
 /* #undef HAVE_MEMLK */
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
+
+/* Define to 1 if you have the <minix/config.h> header file. */
+/* #undef HAVE_MINIX_CONFIG_H */
 
 /* Define to 1 if you have the `mkstemp' function. */
 #define HAVE_MKSTEMP 1
@@ -679,11 +688,11 @@
 /* if you have NT Threads */
 /* #undef HAVE_NT_THREADS */
 
+/* Define to 1 if you have the `openat' function. */
+#define HAVE_OPENAT 1
+
 /* Define to 1 if you have the <openssl/cmac.h> header file. */
 #define HAVE_OPENSSL_CMAC_H 1
-
-/* Define to 1 if you have the <openssl/hmac.h> header file. */
-#define HAVE_OPENSSL_HMAC_H 1
 
 /* Define to 1 if the system has the type `pid_t'. */
 #define HAVE_PID_T 1
@@ -820,6 +829,9 @@
 /* Define to 1 if you have the `setpriority' function. */
 #define HAVE_SETPRIORITY 1
 
+/* Define to 1 if you have the `setproctitle' function. */
+#define HAVE_SETPROCTITLE 1
+
 /* Define to 1 if you have the `setrlimit' function. */
 #define HAVE_SETRLIMIT 1
 
@@ -880,6 +892,9 @@
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
 
+/* Define to 1 if you have the <stdio.h> header file. */
+#define HAVE_STDIO_H 1
+
 /* Define to 1 if you have the <stdlib.h> header file. */
 #define HAVE_STDLIB_H 1
 
@@ -895,7 +910,7 @@
 /* Define to 1 if you have the `strerror' function. */
 #define HAVE_STRERROR 1
 
-/* Define to 1 if you have the `strerror_r' function. */
+/* Define if you have `strerror_r'. */
 #define HAVE_STRERROR_R 1
 
 /* Define to 1 if you have the <strings.h> header file. */
@@ -961,8 +976,8 @@
 /* Define to 1 if you have the <sysexits.h> header file. */
 #define HAVE_SYSEXITS_H 1
 
-/* */
-#define HAVE_SYSLOG_FACILITYNAMES 1
+/* syslog.h provides facilitynames */
+/* #undef HAVE_SYSLOG_FACILITYNAMES */
 
 /* Define to 1 if you have the <sys/audioio.h> header file. */
 #define HAVE_SYS_AUDIOIO_H 1
@@ -1025,6 +1040,9 @@
 
 /* Define to 1 if you have the <sys/prctl.h> header file. */
 /* #undef HAVE_SYS_PRCTL_H */
+
+/* Define to 1 if you have the <sys/procctl.h> header file. */
+/* #undef HAVE_SYS_PROCCTL_H */
 
 /* Define to 1 if you have the <sys/procset.h> header file. */
 /* #undef HAVE_SYS_PROCSET_H */
@@ -1191,7 +1209,7 @@
 /* deviant sigwait? */
 /* #undef HAVE_UNIXWARE_SIGWAIT */
 
-/* Define to 1 if the system has the type 'unsigned long long int'. */
+/* Define to 1 if the system has the type `unsigned long long int'. */
 #define HAVE_UNSIGNED_LONG_LONG_INT 1
 
 /* Define to 1 if you have the `updwtmp' function. */
@@ -1211,9 +1229,6 @@
 
 /* Define to 1 if the system has the type `u_int32'. */
 /* #undef HAVE_U_INT32 */
-
-/* u_int32 type in DNS headers, not others. */
-/* #undef HAVE_U_INT32_ONLY_WITH_DNS */
 
 /* Define to 1 if you have the <values.h> header file. */
 /* #undef HAVE_VALUES_H */
@@ -1353,9 +1368,9 @@
 /* ISC: provide inet_pton() */
 /* #undef ISC_PLATFORM_NEEDPTON */
 
-/* enable libisc thread support? */
 #ifndef __NetBSD__
 /* NetBSD: set by build process */
+/* enable libisc thread support? */
 #define ISC_PLATFORM_USETHREADS 1
 #endif
 
@@ -1474,6 +1489,9 @@
 #define OPENSSL /**/
 #endif
 
+/* Suppress OpenSSL 3 deprecation warnings */
+#define OPENSSL_SUPPRESS_DEPRECATED 1
+
 /* Should we open the broadcast socket? */
 #define OPEN_BCAST_SOCKET 1
 
@@ -1490,22 +1508,22 @@
 #define PACKAGE "ntp"
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "http://bugs.ntp.org./"
+#define PACKAGE_BUGREPORT "https://bugs.ntp.org/"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "ntp"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "ntp 4.2.8p15"
+#define PACKAGE_STRING "ntp 4.2.8p18"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "ntp"
 
 /* Define to the home page for this package. */
-#define PACKAGE_URL "http://www.ntp.org./"
+#define PACKAGE_URL "https://www.ntp.org/"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.2.8p15"
+#define PACKAGE_VERSION "4.2.8p18"
 
 /* data dir */
 #define PERLLIBDIR "/usr/local/share/ntp/lib"
@@ -1596,7 +1614,9 @@
 	STACK_DIRECTION = 0 => direction of growth unknown */
 /* #undef STACK_DIRECTION */
 
-/* Define to 1 if you have the ANSI C header files. */
+/* Define to 1 if all of the C90 standard headers exist (not just the ones
+   required in a freestanding environment). This macro is provided for
+   backward compatibility; new code need not use it. */
 #define STDC_HEADERS 1
 
 /* Step, then slew the clock? */
@@ -1626,9 +1646,6 @@
 /* Is K_TICK_NAME in nanoseconds? */
 /* #undef TICK_NANO */
 
-/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
-#define TIME_WITH_SYS_TIME 1
-
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
 /* #undef TM_IN_SYS_TIME */
 
@@ -1657,21 +1674,87 @@ typedef unsigned int	uintptr_t;
 #ifndef _ALL_SOURCE
 # define _ALL_SOURCE 1
 #endif
+/* Enable general extensions on macOS.  */
+#ifndef _DARWIN_C_SOURCE
+# define _DARWIN_C_SOURCE 1
+#endif
+/* Enable general extensions on Solaris.  */
+#ifndef __EXTENSIONS__
+# define __EXTENSIONS__ 1
+#endif
 /* Enable GNU extensions on systems that have them.  */
 #ifndef _GNU_SOURCE
 # define _GNU_SOURCE 1
 #endif
-/* Enable threading extensions on Solaris.  */
+/* Enable X/Open compliant socket functions that do not require linking
+   with -lxnet on HP-UX 11.11.  */
+#ifndef _HPUX_ALT_XOPEN_SOCKET_API
+# define _HPUX_ALT_XOPEN_SOCKET_API 1
+#endif
+/* Identify the host operating system as Minix.
+   This macro does not affect the system headers' behavior.
+   A future release of Autoconf may stop defining this macro.  */
+#ifndef _MINIX
+/* # undef _MINIX */
+#endif
+/* Enable general extensions on NetBSD.
+   Enable NetBSD compatibility extensions on Minix.  */
+#ifndef _NETBSD_SOURCE
+# define _NETBSD_SOURCE 1
+#endif
+/* Enable OpenBSD compatibility extensions on NetBSD.
+   Oddly enough, this does nothing on OpenBSD.  */
+#ifndef _OPENBSD_SOURCE
+# define _OPENBSD_SOURCE 1
+#endif
+/* Define to 1 if needed for POSIX-compatible behavior.  */
+#ifndef _POSIX_SOURCE
+/* # undef _POSIX_SOURCE */
+#endif
+/* Define to 2 if needed for POSIX-compatible behavior.  */
+#ifndef _POSIX_1_SOURCE
+/* # undef _POSIX_1_SOURCE */
+#endif
+/* Enable POSIX-compatible threading on Solaris.  */
 #ifndef _POSIX_PTHREAD_SEMANTICS
 # define _POSIX_PTHREAD_SEMANTICS 1
+#endif
+/* Enable extensions specified by ISO/IEC TS 18661-5:2014.  */
+#ifndef __STDC_WANT_IEC_60559_ATTRIBS_EXT__
+# define __STDC_WANT_IEC_60559_ATTRIBS_EXT__ 1
+#endif
+/* Enable extensions specified by ISO/IEC TS 18661-1:2014.  */
+#ifndef __STDC_WANT_IEC_60559_BFP_EXT__
+# define __STDC_WANT_IEC_60559_BFP_EXT__ 1
+#endif
+/* Enable extensions specified by ISO/IEC TS 18661-2:2015.  */
+#ifndef __STDC_WANT_IEC_60559_DFP_EXT__
+# define __STDC_WANT_IEC_60559_DFP_EXT__ 1
+#endif
+/* Enable extensions specified by ISO/IEC TS 18661-4:2015.  */
+#ifndef __STDC_WANT_IEC_60559_FUNCS_EXT__
+# define __STDC_WANT_IEC_60559_FUNCS_EXT__ 1
+#endif
+/* Enable extensions specified by ISO/IEC TS 18661-3:2015.  */
+#ifndef __STDC_WANT_IEC_60559_TYPES_EXT__
+# define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
+#endif
+/* Enable extensions specified by ISO/IEC TR 24731-2:2010.  */
+#ifndef __STDC_WANT_LIB_EXT2__
+# define __STDC_WANT_LIB_EXT2__ 1
+#endif
+/* Enable extensions specified by ISO/IEC 24747:2009.  */
+#ifndef __STDC_WANT_MATH_SPEC_FUNCS__
+# define __STDC_WANT_MATH_SPEC_FUNCS__ 1
 #endif
 /* Enable extensions on HP NonStop.  */
 #ifndef _TANDEM_SOURCE
 # define _TANDEM_SOURCE 1
 #endif
-/* Enable general extensions on Solaris.  */
-#ifndef __EXTENSIONS__
-# define __EXTENSIONS__ 1
+/* Enable X/Open extensions.  Define to 500 only if necessary
+   to make mbstate_t available.  */
+#ifndef _XOPEN_SOURCE
+/* # undef _XOPEN_SOURCE */
 #endif
 
 
@@ -1682,7 +1765,7 @@ typedef unsigned int	uintptr_t;
 /* #undef USE_UDP_SIGPOLL */
 
 /* Version number of package */
-#define VERSION "4.2.8p15"
+#define VERSION "4.2.8p18"
 
 /* vsnprintf expands "%m" to strerror(errno) */
 /* #undef VSNPRINTF_PERCENT_M */
@@ -1717,16 +1800,6 @@ typedef unsigned int	uintptr_t;
 /* routine worker child proc uses to exit. */
 #define WORKER_CHILD_EXIT _exit
 
-/* Define to 1 if on MINIX. */
-/* #undef _MINIX */
-
-/* Define to 2 if the system does not provide POSIX.1 features except with
-   this defined. */
-/* #undef _POSIX_1_SOURCE */
-
-/* Define to 1 if you need to in order for `stat' and other things to work. */
-/* #undef _POSIX_SOURCE */
-
 /* enable thread safety */
 #define _REENTRANT 1
 
@@ -1742,7 +1815,8 @@ typedef unsigned int	uintptr_t;
 /* Are we _special_? */
 /* #undef __APPLE_USE_RFC_3542 */
 
-/* Define to 1 if type `char' is unsigned and you are not using gcc.  */
+/* Define to 1 if type `char' is unsigned and your compiler does not
+   predefine this macro.  */
 #ifndef __CHAR_UNSIGNED__
 /* # undef __CHAR_UNSIGNED__ */
 #endif
@@ -1775,21 +1849,14 @@ typedef unsigned int	uintptr_t;
 /* Define to `long int' if <sys/types.h> does not define. */
 /* #undef off_t */
 
-/* Define to `int' if <sys/types.h> does not define. */
+/* Define as a signed integer type capable of holding a process identifier. */
 /* #undef pid_t */
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 /* #undef size_t */
 
-	
-	    #if !defined(_KERNEL) && !defined(PARSESTREAM)
-	    /*
-	     * stdio.h must be included after _GNU_SOURCE is defined
-	     * but before #define snprintf rpl_snprintf
-	     */
-	    # include <stdio.h>	
-	    #endif
-	
+	#include "c99_snprintf.h"
+    
 
 /* Define to rpl_snprintf if the replacement function should be used. */
 /* #undef snprintf */
@@ -1848,3 +1915,15 @@ typedef union mpinfou {
 	# endif
 	#endif	/* !defined(_KERNEL) && !defined(PARSESTREAM) */
 	
+
+
+	/*
+	 * Macro to use in otherwise-empty source files to comply with ANSI C
+	 * requirement that each translation unit (source file) contain some
+	 * declaration.  This has commonly been done by declaring an unused
+	 * global variable of type int or char.  An extern reference to abs()
+	 * serves the same purpose without bloat.  We once used exit() but
+	 * that can produce warnings on systems that declare exit() noreturn.
+	 */
+	#define	NONEMPTY_TRANSLATION_UNIT	extern int abs(int);
+

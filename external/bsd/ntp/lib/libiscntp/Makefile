@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2018/02/02 01:02:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2024/08/18 20:50:00 christos Exp $
 
 LIBISPRIVATE=yes
 
@@ -8,7 +8,7 @@ LIB=iscntp
 
 .include "${.CURDIR}/../Makefile.inc"
 
-DIST=	${IDIST}/lib/isc
+DIST=	${IDIST}/libntp/lib/isc
 
 .PATH.c::  ${DIST} ${DIST}/nls ${DIST}/unix ${DIST}/nothreads
 
