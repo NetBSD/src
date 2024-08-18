@@ -1,4 +1,4 @@
-/* $NetBSD: aligned_alloc.c,v 1.2 2018/07/27 13:08:47 maya Exp $ */
+/* $NetBSD: aligned_alloc.c,v 1.3 2024/08/18 18:47:20 riastradh Exp $ */
 
 /*-
  * Copyright (C) 2015 The NetBSD Foundation, Inc.
@@ -32,6 +32,9 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: aligned_alloc.c,v 1.3 2024/08/18 18:47:20 riastradh Exp $");
+
 #include <errno.h>
 #include <stdlib.h>
 
@@ -40,7 +43,7 @@ aligned_alloc(size_t alignment, size_t size)
 {
         void *memptr;
         int err;
-	
+
         /*
          * Check that alignment is a power of 2.
          */
@@ -48,7 +51,7 @@ aligned_alloc(size_t alignment, size_t size)
                 errno = EINVAL;
                 return NULL;
         }
-	
+
         /*
          * Adjust alignment to satisfy posix_memalign,
          * larger alignments satisfy smaller alignments.
@@ -56,13 +59,12 @@ aligned_alloc(size_t alignment, size_t size)
         while (alignment < sizeof(void *)) {
                 alignment <<= 1;
         }
-	
+
         err = posix_memalign(&memptr, alignment, size);
-	
         if (err) {
                 errno = err;
                 return NULL;
         }
-	
+
         return memptr;
 }
