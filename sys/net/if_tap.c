@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.133 2024/07/05 04:31:53 rin Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.134 2024/08/18 12:35:47 rin Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,11 +33,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.133 2024/07/05 04:31:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.134 2024/08/18 12:35:47 rin Exp $");
 
 #if defined(_KERNEL_OPT)
-
 #include "opt_modular.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
