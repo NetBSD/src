@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2470 2024/08/15 21:19:44 riastradh Exp $
+#	$NetBSD: mi,v 1.2471 2024/08/18 04:09:51 rin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11422,6 +11422,7 @@
 ./usr/share/man/cat5/config.samples.0		comp-util-catman	.cat
 ./usr/share/man/cat5/cpio.0			comp-util-catman	.cat
 ./usr/share/man/cat5/cvs.0			comp-cvs-catman		cvs,.cat
+./usr/share/man/cat5/gdbinit.0			comp-debug-catman	gdb,.cat
 ./usr/share/man/cat5/ldap.conf.0		comp-ldap-catman	ldap,.cat
 ./usr/share/man/cat5/ldif.0			comp-ldap-catman	ldap,.cat
 ./usr/share/man/cat5/libarchive-formats.0	comp-util-catman	.cat
@@ -19899,6 +19900,7 @@
 ./usr/share/man/html5/config.samples.html	comp-util-htmlman	html
 ./usr/share/man/html5/cpio.html			comp-util-htmlman	html
 ./usr/share/man/html5/cvs.html			comp-cvs-htmlman	cvs,html
+./usr/share/man/html5/gdbinit.html		comp-debug-htmlman	gdb,html
 ./usr/share/man/html5/ldap.conf.html		comp-ldap-htmlman	ldap,html
 ./usr/share/man/html5/ldif.html			comp-ldap-htmlman	ldap,html
 ./usr/share/man/html5/libarchive-formats.html	comp-util-htmlman	html
@@ -28446,6 +28448,7 @@
 ./usr/share/man/man5/config.samples.5		comp-util-man		.man
 ./usr/share/man/man5/cpio.5			comp-util-man		.man
 ./usr/share/man/man5/cvs.5			comp-cvs-man		cvs,.man
+./usr/share/man/man5/gdbinit.5			comp-debug-catman	gdb,.man
 ./usr/share/man/man5/ldap.conf.5		comp-ldap-man		ldap,.man
 ./usr/share/man/man5/ldif.5			comp-ldap-man		ldap,.man
 ./usr/share/man/man5/libarchive-formats.5	comp-util-man		.man
