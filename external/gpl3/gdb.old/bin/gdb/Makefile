@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2024/08/12 20:30:05 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2024/08/18 03:57:07 rin Exp $
 
 NOCTF=
 .include <bsd.own.mk>
@@ -31,7 +31,7 @@ CPPFLAGS+=	-I${.CURDIR} \
 		${GCPPFLAGS:M-D*}
 
 
-TEXINFO=	gdb.texinfo stabs.texinfo
+TEXINFO=	annotate.texinfo gdb.texinfo stabs.texinfo
 INFOFLAGS=	-I${DIST}/gdb/doc -I${DIST}/gdb/mi \
 		-I${DIST}/readline/readline/doc -I${.CURDIR}/.. -DGDBN=${GDBN}
 
