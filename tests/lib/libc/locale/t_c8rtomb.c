@@ -1,4 +1,4 @@
-/*	$NetBSD: t_c8rtomb.c,v 1.4 2024/08/18 04:51:16 riastradh Exp $	*/
+/*	$NetBSD: t_c8rtomb.c,v 1.5 2024/08/18 05:00:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002 Tim J. Robbins
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_c8rtomb.c,v 1.4 2024/08/18 04:51:16 riastradh Exp $");
+__RCSID("$NetBSD: t_c8rtomb.c,v 1.5 2024/08/18 05:00:20 riastradh Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -200,7 +200,7 @@ ATF_TC_BODY(c8rtomb_iso2022jp_locale_test, tc)
 	p += 1;
 	ATF_CHECK_EQ_MSG((n = c8rtomb(p, 0xe3, &s)), 0, "n=%zu", n); /* 4 */
 	ATF_CHECK_EQ_MSG((n = c8rtomb(p, 0x82, &s)), 0, "n=%zu", n);
-	ATF_CHECK_EQ_MSG((n = c8rtomb(p, 0xa2, &s)), 4, "n=%zu", n);
+	ATF_CHECK_EQ_MSG((n = c8rtomb(p, 0xa2, &s)), 5, "n=%zu", n);
 	p += 5;
 	ATF_CHECK_EQ_MSG((n = c8rtomb(p, 0xe3, &s)), 0, "n=%zu", n); /* 5 */
 	ATF_CHECK_EQ_MSG((n = c8rtomb(p, 0x82, &s)), 0, "n=%zu", n);
