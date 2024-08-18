@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.42 2023/06/03 21:20:53 lukem Exp $
+# $NetBSD: mkvars.mk,v 1.43 2024/08/18 04:01:35 rin Exp $
 
 #
 # Extra variables to print.
@@ -27,6 +27,7 @@ MKEXTRAVARS= \
 	MAKEVERBOSE \
 	MKCOMPAT \
 	MKCOMPATMODULES \
+	MKGDBSERVER \
 	MKMANPAGES \
 	MKSTATICPIE \
 	MKXORG \
