@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.356 2024/08/15 10:48:42 riastradh Exp $
+$NetBSD: UPDATING,v 1.357 2024/08/18 00:27:18 christos Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -19,6 +19,10 @@ See also: BUILDING, build.sh, Makefile.
 Recent changes:
 ^^^^^^^^^^^^^^^
 
+20240817:
+	Update builds will require cleaning in src/external/historical/nawk/bin
+	in order to remove the awk binary since now there is a subdirectory
+	called awk.
 20240812:
 	Update builds will require removing the tools objdir for gdb
 	if building with MKCROSSGDB=yes. All architectures use gdb.old
