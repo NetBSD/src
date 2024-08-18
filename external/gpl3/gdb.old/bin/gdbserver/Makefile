@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2024/08/12 20:30:05 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2024/08/18 04:05:18 rin Exp $
 
 NOCTF=
-NOMAN=
 .include <bsd.own.mk>
 .include "../Makefile.inc"
 
@@ -61,6 +60,6 @@ HOST_CFLAGS+=		${HOST_CXXFLAGS}
 CC:=			${CXX}
 CFLAGS:=		${CXXFLAGS} -std=gnu++11 -Wno-error=stack-protector -pthread
 
-.PATH: ${DIST}/gdbserver ${DIST}/gdb/nat ${DIST}/gdb/arch  \
+.PATH: ${DIST}/gdbserver ${DIST}/gdb/nat ${DIST}/gdb/arch ${DIST}/gdb/doc \
 	${.CURDIR}/arch/${GDB_MACHINE_ARCH} ${DIST}/gdb/target \
 	${DIST}/../lib/libgdbsupport/arch/${GDB_MACHINE_ARCH}
