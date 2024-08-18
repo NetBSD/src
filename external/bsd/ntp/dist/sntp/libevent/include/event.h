@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.5 2020/05/25 20:47:34 christos Exp $	*/
+/*	$NetBSD: event.h,v 1.6 2024/08/18 20:47:22 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -65,8 +65,6 @@ extern "C" {
 #include <winsock2.h>
 #include <windows.h>
 #undef WIN32_LEAN_AND_MEAN
-typedef unsigned char u_char;
-typedef unsigned short u_short;
 #endif
 
 #include <event2/event_struct.h>

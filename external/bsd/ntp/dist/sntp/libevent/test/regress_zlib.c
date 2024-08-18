@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_zlib.c,v 1.6 2020/05/25 20:47:34 christos Exp $	*/
+/*	$NetBSD: regress_zlib.c,v 1.7 2024/08/18 20:47:23 christos Exp $	*/
 
 /*
  * Copyright (c) 2008-2012 Niels Provos and Nick Mathewson
@@ -145,14 +145,14 @@ zlib_input_filter(struct evbuffer *src, struct evbuffer *dst,
 		n = evbuffer_peek(src, -1, NULL, v_in, 1);
 		if (n) {
 			p->avail_in = v_in[0].iov_len;
-			p->next_in = v_in[0].iov_base;
+			p->next_in = (unsigned char *)v_in[0].iov_base;
 		} else {
 			p->avail_in = 0;
 			p->next_in = 0;
 		}
 
 		evbuffer_reserve_space(dst, 4096, v_out, 1);
-		p->next_out = v_out[0].iov_base;
+		p->next_out = (unsigned char *)v_out[0].iov_base;
 		p->avail_out = v_out[0].iov_len;
 
 		/* we need to flush zlib if we got a flush */
@@ -199,14 +199,14 @@ zlib_output_filter(struct evbuffer *src, struct evbuffer *dst,
 		n = evbuffer_peek(src, -1, NULL, v_in, 1);
 		if (n) {
 			p->avail_in = v_in[0].iov_len;
-			p->next_in = v_in[0].iov_base;
+			p->next_in = (unsigned char *)v_in[0].iov_base;
 		} else {
 			p->avail_in = 0;
 			p->next_in = 0;
 		}
 
 		evbuffer_reserve_space(dst, 4096, v_out, 1);
-		p->next_out = v_out[0].iov_base;
+		p->next_out = (unsigned char *)v_out[0].iov_base;
 		p->avail_out = v_out[0].iov_len;
 
 		/* we need to flush zlib if we got a flush */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dcfd.c,v 1.6 2020/05/25 20:47:26 christos Exp $	*/
+/*	$NetBSD: dcfd.c,v 1.7 2024/08/18 20:47:19 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/parseutil/dcfd.c,v 4.18 2005/10/07 22:08:18 kardel RELEASE_20051008_A
@@ -991,7 +991,8 @@ read_drift(
 	{
 		int idrift = 0, fdrift = 0;
 
-		fscanf(df, "%4d.%03d", &idrift, &fdrift);
+		if (2 != fscanf(df, "%4d.%03d", &idrift, &fdrift))
+			LPRINTF("read_drift: trouble reading drift file");
 		fclose(df);
 		LPRINTF("read_drift: %d.%03d ppm ", idrift, fdrift);
 
@@ -1174,7 +1175,10 @@ detach(
        )
 {
 #   ifdef HAVE_DAEMON
-	daemon(0, 0);
+	if (daemon(0, 0)) {
+		fprintf(stderr, "'daemon()' fails: %d(%s)\n",
+			errno, strerror(errno));
+	}
 #   else /* not HAVE_DAEMON */
 	if (fork())
 	    exit(0);

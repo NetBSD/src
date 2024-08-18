@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_rawdcf.c,v 1.8 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: clk_rawdcf.c,v 1.9 2024/08/18 20:47:17 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/libparse/clk_rawdcf.c,v 4.18 2006/06/22 18:40:01 kardel RELEASE_20060622_A
@@ -744,7 +744,7 @@ inp_rawdcf(
 }
 
 #else /* not (REFCLOCK && CLOCK_PARSE && CLOCK_RAWDCF) */
-int clk_rawdcf_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* not (REFCLOCK && CLOCK_PARSE && CLOCK_RAWDCF) */
 
 /*

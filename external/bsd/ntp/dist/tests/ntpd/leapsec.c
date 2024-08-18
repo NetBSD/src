@@ -1,4 +1,4 @@
-/*	$NetBSD: leapsec.c,v 1.3 2020/05/25 20:47:36 christos Exp $	*/
+/*	$NetBSD: leapsec.c,v 1.4 2024/08/18 20:47:27 christos Exp $	*/
 
 //#include "ntpdtest.h"
 #include "config.h"
@@ -8,7 +8,6 @@
 #include "ntp_calendar.h"
 #include "ntp_stdlib.h"
 #include "ntp_leapsec.h"
-#include "lib_strbuf.h"
 
 #include "unity.h"
 

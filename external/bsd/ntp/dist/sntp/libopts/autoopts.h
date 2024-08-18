@@ -1,4 +1,4 @@
-/*	$NetBSD: autoopts.h,v 1.11 2020/05/25 20:47:34 christos Exp $	*/
+/*	$NetBSD: autoopts.h,v 1.12 2024/08/18 20:47:24 christos Exp $	*/
 
 
 /*
@@ -13,7 +13,7 @@
 /*
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2018 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -37,7 +37,9 @@
 #if 0
 #include <stdnoreturn.h>
 #else
+#ifndef noreturn
 #define noreturn __dead
+#endif
 #endif
 
 #define AO_NAME_LIMIT           127
@@ -47,6 +49,9 @@
 #  ifdef PATH_MAX
 #    define AG_PATH_MAX         ((size_t)PATH_MAX)
 #  else
+#    ifdef __gnu_hurd__
+#      define size_t unsigned long
+#    endif
 #    define AG_PATH_MAX         ((size_t)4096)
 #  endif
 #else
@@ -465,6 +470,13 @@ static char const   pkgdatadir_default[] = PKGDATADIR;
 static char const * program_pkgdatadir   = pkgdatadir_default;
 static tOptionLoadMode option_load_mode  = OPTION_LOAD_UNCOOKED;
 static tePagerState pagerState           = PAGER_STATE_INITIAL;
+
+static lo_noreturn void option_exits(int exit_code);
+static lo_noreturn void fserr_exit(char const * prog, char const * op,
+                                   char const * fname);
+static             void fserr_warn(char const * prog, char const * op,
+                                   char const * fname);
+static lo_noreturn void ao_bug(char const * msg);
 
        FILE *       option_usage_fp      = NULL;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_arc.c,v 1.10 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: refclock_arc.c,v 1.11 2024/08/18 20:47:18 christos Exp $	*/
 
 /*
  * refclock_arc - clock driver for ARCRON MSF/DCF/WWVB receivers
@@ -647,7 +647,7 @@ arc_start(
 	 * Open serial port. Use CLK line discipline, if available.
 	 */
 	snprintf(device, sizeof(device), DEVICE, unit);
-	temp_fd = refclock_open(device, SPEED, LDISC_CLK);
+	temp_fd = refclock_open(&peer->srcadr, device, SPEED, LDISC_CLK);
 	if (temp_fd <= 0)
 		return 0;
 	DPRINTF(1, ("arc: unit %d using tty_open().\n", unit));
@@ -872,15 +872,18 @@ arc_receive(
 	struct recvbuf *rbufp
 	)
 {
+	static int quality_average = 0;
+	static int quality_sum = 0;
+	static int quality_polls = 0;
 	register struct arcunit *up;
 	struct refclockproc *pp;
 	struct peer *peer;
 	char c;
-	int i, n, wday, month, flags, status;
+	int i, wday, month, flags, status;
 	int arc_last_offset;
-	static int quality_average = 0;
-	static int quality_sum = 0;
-	static int quality_polls = 0;
+    #ifdef DEBUG
+	int n;
+    #endif
 
 	/*
 	 * Initialize pointers and read the timecode and timestamp
@@ -1184,8 +1187,8 @@ arc_receive(
 	status = pp->a_lastcode[15];
 #ifdef DEBUG
 	if(debug) { printf("arc: status 0x%.2x flags 0x%.2x\n", flags, status); }
-#endif
 	n = 9;
+#endif
 
 	/*
 	  Validate received values at least enough to prevent internal

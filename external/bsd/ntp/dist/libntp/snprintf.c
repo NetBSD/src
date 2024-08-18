@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintf.c,v 1.6 2020/05/25 20:47:24 christos Exp $	*/
+/*	$NetBSD: snprintf.c,v 1.7 2024/08/18 20:47:13 christos Exp $	*/
 
 /*
  * Modified by Dave Hart for integration into NTP 4.2.7 <hart@ntp.org>
@@ -1589,7 +1589,7 @@ rpl_asprintf(va_alist) va_dcl
 }
 #endif	/* HW_WANT_RPL_ASPRINTF */
 #else	/* Dummy declaration to avoid empty translation unit warnings. */
-int main(void);
+NONEMPTY_TRANSLATION_UNIT
 #endif	/* HW_WANT_RPL_SNPRINTF || HW_WANT_RPL_VSNPRINTF || HW_WANT_RPL_ASPRINTF || [...] */
 
 #if TEST_SNPRINTF

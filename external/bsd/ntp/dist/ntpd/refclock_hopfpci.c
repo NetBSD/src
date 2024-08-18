@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_hopfpci.c,v 1.5 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: refclock_hopfpci.c,v 1.6 2024/08/18 20:47:18 christos Exp $	*/
 
 /*
  * refclock_hopfpci.c
@@ -256,5 +256,5 @@ hopfpci_poll(
 }
 
 #else
-int refclock_hopfpci_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* REFCLOCK */

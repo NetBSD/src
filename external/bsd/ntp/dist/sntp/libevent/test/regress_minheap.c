@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_minheap.c,v 1.7 2020/05/25 20:47:34 christos Exp $	*/
+/*	$NetBSD: regress_minheap.c,v 1.8 2024/08/18 20:47:23 christos Exp $	*/
 
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
@@ -65,7 +65,6 @@ test_heap_randomized(void *ptr)
 
 	for (i = 0; i < 1024; ++i) {
 		inserted[i] = malloc(sizeof(struct event));
-		assert(inserted[i] != NULL);
 		set_random_timeout(inserted[i]);
 		min_heap_push_(&heap, inserted[i]);
 	}

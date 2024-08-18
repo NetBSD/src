@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_ntop.c,v 1.1.1.1 2024/08/18 20:37:37 christos Exp $	*/
+/*	$NetBSD: inet_ntop.c,v 1.2 2024/08/18 20:47:14 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -90,7 +90,7 @@ isc_net_ntop(int af, const void *src, char *dst, size_t size)
 static const char *
 inet_ntop4(const unsigned char *src, char *dst, size_t size)
 {
-	static const char *fmt = "%u.%u.%u.%u";
+#define	fmt "%u.%u.%u.%u"
 	char tmp[sizeof("255.255.255.255")];
 	int len;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_heath.c,v 1.9 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: refclock_heath.c,v 1.10 2024/08/18 20:47:18 christos Exp $	*/
 
 /*
  * refclock_heath - clock driver for Heath GC-1000
@@ -224,7 +224,7 @@ heath_start(
 	 * Open serial port
 	 */
 	snprintf(device, sizeof(device), DEVICE, unit);
-	fd = refclock_open(device, speed[peer->ttl & 0x3],
+	fd = refclock_open(&peer->srcadr, device, speed[peer->ttl & 0x3],
 			   LDISC_REMOTE);
 	if (fd <= 0)
 		return (0);
@@ -429,7 +429,7 @@ heath_poll(
 	if (ioctl(pp->io.fd, TIOCMBIC, (char *)&bits) < 0)
 		refclock_report(peer, CEVNT_FAULT);
 	get_systime(&pp->lastrec);
-	if (write(pp->io.fd, "T", 1) != 1)
+	if (refclock_write(peer, "T", 1, "T") != 1)
 		refclock_report(peer, CEVNT_FAULT);
 	ioctl(pp->io.fd, TIOCMBIS, (char *)&bits);
 	if (pp->coderecv == pp->codeproc) {
@@ -448,5 +448,5 @@ heath_poll(
 }
 
 #else
-int refclock_heath_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* REFCLOCK */

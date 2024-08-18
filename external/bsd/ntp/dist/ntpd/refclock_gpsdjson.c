@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_gpsdjson.c,v 1.13 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: refclock_gpsdjson.c,v 1.14 2024/08/18 20:47:18 christos Exp $	*/
 
 /*
  * refclock_gpsdjson.c - clock driver as GPSD JSON client
@@ -152,6 +152,7 @@ typedef unsigned long int json_uint;
 #include "ntp_refclock.h"
 #include "ntp_stdlib.h"
 #include "ntp_calendar.h"
+#include "ntp_clockdev.h"
 #include "timespecops.h"
 
 /* get operation modes from mode word.
@@ -195,7 +196,7 @@ typedef unsigned long int json_uint;
 #define	REFID		"GPSD"	/* reference id */
 #define	DESCRIPTION	"GPSD JSON client clock" /* who we are */
 
-#define MAX_PDU_LEN	1600
+#define MAX_PDU_LEN	8192	/* multi-GNSS reports can be HUGE */
 #define TICKOVER_LOW	10
 #define TICKOVER_HIGH	120
 #define LOGTHROTTLE	3600
@@ -371,7 +372,7 @@ static void gpsd_parse(peerT * const peer,
 static BOOL convert_ascii_time(l_fp * fp, const char * gps_time);
 static void save_ltc(clockprocT * const pp, const char * const tc);
 static int  syslogok(clockprocT * const pp, gpsd_unitT * const up);
-static void log_data(peerT *peer, const char *what,
+static void log_data(peerT *peer, int level, const char *what,
 		     const char *buf, size_t len);
 static int16_t clamped_precision(int rawprec);
 
@@ -504,8 +505,10 @@ gpsd_start(
 	clockprocT  * const pp = peer->procptr;
 	gpsd_unitT  * up;
 	gpsd_unitT ** uscan    = &s_clock_units;
+	const char  *tmpName;
 
-	struct stat sb;
+	struct stat	sb;
+	char *		devname = NULL;
 
 	/* check if we can proceed at all or if init failed */
 	if ( ! gpsd_init_check())
@@ -533,13 +536,29 @@ gpsd_start(
 		 * practicable, we will have to read the symlink, if
 		 * any, so we can get the true device file.)
 		 */
-		if (-1 == myasprintf(&up->device, "%s%u",
-				     s_dev_stem, up->unit)) {
+		tmpName = clockdev_lookup(&peer->srcadr, 0);
+		if (NULL != tmpName) {
+			up->device = estrdup(tmpName);
+		} else if (-1 == myasprintf(&up->device, "%s%u", s_dev_stem, up->unit)) {
 			msyslog(LOG_ERR, "%s: clock device name too long",
 				up->logname);
 			goto dev_fail;
 		}
-		if (-1 == stat(up->device, &sb) || !S_ISCHR(sb.st_mode)) {
+		devname = up->device;
+		up->device = ntp_realpath(devname);
+		if (NULL == up->device) {
+			msyslog(LOG_ERR, "%s: '%s' has no absolute path",
+				up->logname, devname);
+			goto dev_fail;
+		}
+		free(devname);
+		devname = NULL;
+		if (-1 == lstat(up->device, &sb)) {
+			msyslog(LOG_ERR, "%s: '%s' not accessible",
+				up->logname, up->device);
+			goto dev_fail;
+		}
+		if (!S_ISCHR(sb.st_mode)) {
 			msyslog(LOG_ERR, "%s: '%s' is not a character device",
 				up->logname, up->device);
 			goto dev_fail;
@@ -587,7 +606,7 @@ gpsd_start(
 
 dev_fail:
 	/* On failure, remove all UNIT ressources and declare defeat. */
-
+	free(devname);
 	INSIST (up);
 	if (!--up->refcount) {
 		*uscan = up->next_unit;
@@ -659,7 +678,7 @@ gpsd_receive(
 	char       *pdst, *edst, ch;
 
 	/* log the data stream, if this is enabled */
-	log_data(peer, "recv", (const char*)rbufp->recv_buffer,
+	log_data(peer, 3, "recv", (const char*)rbufp->recv_buffer,
 		 (size_t)rbufp->recv_length);
 
 
@@ -674,7 +693,7 @@ gpsd_receive(
 	esrc = psrc + rbufp->recv_length;
 
 	pdst = up->buffer + up->buflen;
-	edst = pdst + sizeof(up->buffer) - 1; /* for trailing NUL */
+	edst = up->buffer + sizeof(up->buffer) - 1; /* for trailing NUL */
 
 	while (psrc != esrc) {
 		ch = *psrc++;
@@ -837,7 +856,7 @@ timer_primary(
 			size_t rlen = strlen(s_req_version);
 			DPRINTF(2, ("%s: timer livecheck: '%s'\n",
 				    up->logname, s_req_version));
-			log_data(peer, "send", s_req_version, rlen);
+			log_data(peer, 2, "send", s_req_version, rlen);
 			rc = write(pp->io.fd, s_req_version, rlen);
 			(void)rc;
 		} else if (-1 != up->fdt) {
@@ -1509,7 +1528,7 @@ process_version(
 
 	/* The logon string is actually the ?WATCH command of GPSD,
 	 * using JSON data and selecting the GPS device name we created
-	 * from our unit number. We have an old a newer version that
+	 * from our unit number. We have an old and a newer version that
 	 * request PPS (and TOFF) transmission.
 	 */
 	snprintf(up->buffer, sizeof(up->buffer),
@@ -1517,7 +1536,7 @@ process_version(
 		 up->device, (up->pf_toff ? ",\"pps\":true" : ""));
 	buf = up->buffer;
 	len = strlen(buf);
-	log_data(peer, "send", buf, len);
+	log_data(peer, 2, "send", buf, len);
 	if (len != write(pp->io.fd, buf, len) && (syslogok(pp, up))) {
 		/* Note: if the server fails to read our request, the
 		 * resulting data timeout will take care of the
@@ -2174,6 +2193,7 @@ add_string(
 static void
 log_data(
 	peerT      *peer,
+	int         level,
 	const char *what,
 	const char *buf ,
 	size_t      len )
@@ -2184,7 +2204,7 @@ log_data(
 	clockprocT * const pp = peer->procptr;
 	gpsd_unitT * const up = (gpsd_unitT *)pp->unitptr;
 
-	if (debug > 1) {
+	if (debug >= level) {
 		const char *sptr = buf;
 		const char *stop = buf + len;
 		char       *dptr = s_lbuf;
@@ -2206,6 +2226,7 @@ log_data(
 		mprintf("%s[%s]: '%s'\n", up->logname, what, s_lbuf);
 	}
 }
+
 
 #else
 NONEMPTY_TRANSLATION_UNIT

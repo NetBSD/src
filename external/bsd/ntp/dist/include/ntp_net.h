@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_net.h,v 1.5 2020/05/25 20:47:19 christos Exp $	*/
+/*	$NetBSD: ntp_net.h,v 1.6 2024/08/18 20:46:50 christos Exp $	*/
 
 /*
  * ntp_net.h - definitions for NTP network stuff
@@ -197,7 +197,7 @@ typedef union {
 #define SOCK_UNSPEC_S(psau)					\
 	(SOCK_UNSPEC(psau) && !SCOPE(psau))
 
-/* choose a default net interface (struct interface) for v4 or v6 */
+/* choose a default net interface (endpt) for v4 or v6 */
 #define ANY_INTERFACE_BYFAM(family)				\
 	((AF_INET == family)					\
 	     ? any_interface					\
@@ -229,6 +229,12 @@ typedef union {
  */
 #define	LOOPBACKADR	0x7f000001
 #define	LOOPNETMASK	0xff000000
+#ifdef WORDS_BIGENDIAN
+# define LOOPBACKADR_N	LOOPBACKADR
+#else 
+# define LOOPBACKADR_N	0x0100007f
+#endif
+
 
 #define	ISBADADR(srcadr)					\
 	(IS_IPV4(srcadr)					\
@@ -236,5 +242,10 @@ typedef union {
 	     == (LOOPBACKADR & LOOPNETMASK))			\
 	 && SRCADR(srcadr) != LOOPBACKADR)
 
+#define IS_LOOPBACK_ADDR(psau)					\
+		(IS_IPV4(psau)					\
+		    ? LOOPBACKADR == SRCADR(psau)		\
+		    : IN6_IS_ADDR_LOOPBACK(PSOCK_ADDR6(psau))	\
+		)
 
 #endif /* NTP_NET_H */

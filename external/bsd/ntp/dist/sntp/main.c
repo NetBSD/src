@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 2020/05/25 20:47:32 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2024/08/18 20:47:20 christos Exp $	*/
 
 #include <config.h>
 
@@ -22,6 +22,7 @@
 #include "log.h"
 #include "libntp.h"
 
+extern const char *progname;
 
 int shutting_down;
 int time_derived;
@@ -1011,12 +1012,12 @@ kill_asyncio(
 		sock6 = INVALID_SOCKET;
 	}
 	if (INVALID_SOCKET != bsock4) {
-		closesocket(sock4);
-		sock4 = INVALID_SOCKET;
+		closesocket(bsock4);
+		bsock4 = INVALID_SOCKET;
 	}
 	if (INVALID_SOCKET != bsock6) {
-		closesocket(sock6);
-		sock6 = INVALID_SOCKET;
+		closesocket(bsock6);
+		bsock6 = INVALID_SOCKET;
 	}
 }
 #endif
@@ -1034,9 +1035,9 @@ worker_resp_cb(
 {
 	blocking_child *	c;
 
-	DEBUG_INSIST(EV_READ & what);
+	REQUIRE(EV_READ & what);
 	c = ctx;
-	DEBUG_INSIST(fd == c->resp_read_pipe);
+	INSIST(fd == c->resp_read_pipe);
 	process_blocking_resp(c);
 }
 
@@ -1061,7 +1062,7 @@ intres_timeout_req(
 		ev_worker_timeout = event_new(base, -1,
 					      EV_TIMEOUT | EV_PERSIST,
 					      &worker_timeout, NULL);
-		DEBUG_INSIST(NULL != ev_worker_timeout);
+		INSIST(NULL != ev_worker_timeout);
 	} else {
 		event_del(ev_worker_timeout);
 	}
@@ -1083,7 +1084,7 @@ worker_timeout(
 	UNUSED_ARG(fd);
 	UNUSED_ARG(ctx);
 
-	DEBUG_REQUIRE(EV_TIMEOUT & what);
+	REQUIRE(EV_TIMEOUT & what);
 	worker_idle_timer_fired();
 }
 
@@ -1145,8 +1146,8 @@ generate_pkt (
 	}
 	if (pkt_key != NULL) {
 		x_pkt->exten[0] = htonl(key_id);
-		mac_size = make_mac(x_pkt, pkt_len, MAX_MDG_LEN,
-				    pkt_key, (char *)&x_pkt->exten[1]);
+		mac_size = make_mac(x_pkt, pkt_len, pkt_key,
+				    (char *)&x_pkt->exten[1], MAX_MDG_LEN);
 		if (mac_size > 0)
 			pkt_len += mac_size + KEY_MAC_LEN;
 #ifdef DEBUG

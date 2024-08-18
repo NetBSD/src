@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.1.1.1 2024/08/18 20:37:42 christos Exp $	*/
+/*	$NetBSD: getopt.c,v 1.2 2024/08/18 20:47:22 christos Exp $	*/
 
 /*	NetBSD: getopt.c,v 1.16 1999/12/02 13:15:56 kleink Exp 	*/
 

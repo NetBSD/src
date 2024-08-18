@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_leitch.c,v 1.5 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: refclock_leitch.c,v 1.6 2024/08/18 20:47:18 christos Exp $	*/
 
 /*
  * refclock_leitch - clock driver for the Leitch CSD-5300 Master Clock
@@ -244,7 +244,7 @@ leitch_start(
 {
 	struct leitchunit *leitch;
 	int fd232;
-	char leitchdev[20];
+	char leitchdev[32];
 
 	/*
 	 * Check configuration info.

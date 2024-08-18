@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.c,v 1.5 2020/05/25 20:47:34 christos Exp $	*/
+/*	$NetBSD: alias.c,v 1.6 2024/08/18 20:47:24 christos Exp $	*/
 
 
 /**
@@ -14,7 +14,7 @@
  *
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2018 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -33,7 +33,7 @@
  *  13aa749a5b0a454917a944ed8fffc530b784f5ead522b1aacaf4ec8aa55a6239  COPYING.mbsd
  */
 
-LOCAL tSuccess
+static tSuccess
 too_many_occurrences(tOptions * opts, tOptDesc * od)
 {
     if ((opts->fOptSet & OPTPROC_ERRSTOP) != 0) {

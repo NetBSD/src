@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_jjy.c,v 1.16 2022/10/09 21:41:03 christos Exp $	*/
+/*	$NetBSD: refclock_jjy.c,v 1.17 2024/08/18 20:47:18 christos Exp $	*/
 
 /*
  * refclock_jjy - clock driver for JJY receivers
@@ -534,7 +534,7 @@ jjy_start ( int unit, struct peer *peer )
 	}
 
 	/* Open the device */
-	fd = refclock_open ( sDeviceName, up->linespeed, up->linediscipline ) ;
+	fd = refclock_open ( &peer->srcadr, sDeviceName, up->linespeed, up->linediscipline ) ;
 	if ( fd <= 0 ) {
 		free ( (void*) up ) ;
 		return RC_START_ERROR ;
@@ -4527,5 +4527,5 @@ printableString ( char *sOutput, int iOutputLen, const char *sInput, int iInputL
 /**************************************************************************************************/
 
 #else
-int refclock_jjy_bs ;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* REFCLOCK */

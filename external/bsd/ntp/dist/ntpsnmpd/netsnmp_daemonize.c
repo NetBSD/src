@@ -1,4 +1,4 @@
-/*	$NetBSD: netsnmp_daemonize.c,v 1.7 2020/05/25 20:47:26 christos Exp $	*/
+/*	$NetBSD: netsnmp_daemonize.c,v 1.8 2024/08/18 20:47:19 christos Exp $	*/
 
 /*
  * system.c
@@ -59,20 +59,12 @@ SOFTWARE.
 #include <stdlib.h>
 #endif
 
-#if TIME_WITH_SYS_TIME
-# ifdef WIN32
-#  include <sys/timeb.h>
-# else
-#  include <sys/time.h>
-# endif
-# include <time.h>
+#ifdef WIN32
+# include <sys/timeb.h>
 #else
-# if HAVE_SYS_TIME_H
-#  include <sys/time.h>
-# else
-#  include <time.h>
-# endif
+# include <sys/time.h>
 #endif
+#include <time.h>
 
 #include <sys/types.h>
 
@@ -269,5 +261,5 @@ netsnmp_daemonize(int quit_immediately, int stderr_log)
 }
 
 #else /* !NEED_NETSNMP_DAEMONIZE */
-int netsnp_daemonize_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif

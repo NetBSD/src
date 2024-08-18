@@ -1,4 +1,4 @@
-/*	$NetBSD: bench_httpclient.c,v 1.6 2020/05/25 20:47:34 christos Exp $	*/
+/*	$NetBSD: bench_httpclient.c,v 1.7 2024/08/18 20:47:23 christos Exp $	*/
 
 /*
  * Copyright 2009-2012 Niels Provos and Nick Mathewson
@@ -115,13 +115,13 @@ errorcb(struct bufferevent *b, short what, void *arg)
 static void
 frob_socket(evutil_socket_t sock)
 {
-#ifdef HAVE_SO_LINGER
+#ifdef EVENT__HAVE_STRUCT_LINGER
 	struct linger l;
 #endif
 	int one = 1;
 	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void*)&one, sizeof(one))<0)
 		perror("setsockopt(SO_REUSEADDR)");
-#ifdef HAVE_SO_LINGER
+#ifdef EVENT__HAVE_STRUCT_LINGER
 	l.l_onoff = 1;
 	l.l_linger = 0;
 	if (setsockopt(sock, SOL_SOCKET, SO_LINGER, (void*)&l, sizeof(l))<0)
@@ -153,7 +153,7 @@ launch_request(void)
 	}
 	frob_socket(sock);
 	if (connect(sock, (struct sockaddr*)&sin, sizeof(sin)) < 0) {
-		int e = errno;
+		int e = evutil_socket_geterror(sock);
 		if (! EVUTIL_ERR_CONNECT_RETRIABLE(e)) {
 			evutil_closesocket(sock);
 			return -1;
@@ -161,10 +161,6 @@ launch_request(void)
 	}
 
 	ri = malloc(sizeof(*ri));
-	if (ri == NULL) {
-		printf("Unable to allocate memory in launch_request()\n");
-		return -1;
-	}
 	ri->n_read = 0;
 	evutil_gettimeofday(&ri->started, NULL);
 
@@ -187,6 +183,12 @@ main(int argc, char **argv)
 	struct timeval start, end, total;
 	long long usec;
 	double throughput;
+
+#ifdef _WIN32
+	WSADATA WSAData;
+	WSAStartup(0x101, &WSAData);
+#endif
+
 	resource = "/ref";
 
 	setvbuf(stdout, NULL, _IONBF, 0);
@@ -231,6 +233,10 @@ main(int argc, char **argv)
 	    throughput,
 	    (double)(usec/1000) / total_n_handled,
 	    (I64_TYP)total_n_bytes, n_errors);
+
+#ifdef _WIN32
+	WSACleanup();
+#endif
 
 	return 0;
 }

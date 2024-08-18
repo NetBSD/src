@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_stdlib.h,v 1.17 2020/05/29 20:15:37 christos Exp $	*/
+/*	$NetBSD: ntp_stdlib.h,v 1.18 2024/08/18 20:46:50 christos Exp $	*/
 
 /*
  * ntp_stdlib.h - Prototypes for NTP lib.
@@ -13,12 +13,19 @@
 
 #include "declcond.h"	/* ntpd uses ntpd/declcond.h, others include/ */
 #include "l_stdlib.h"
+#include "lib_strbuf.h"
+#include "ntp_md5.h"
 #include "ntp_net.h"
 #include "ntp_debug.h"
 #include "ntp_malloc.h"
+#include "lib_strbuf.h"
 #include "ntp_string.h"
 #include "ntp_syslog.h"
 #include "ntp_keyacc.h"
+
+#ifndef PATH_MAX
+# define PATH_MAX MAX_PATH
+#endif
 
 #ifdef __GNUC__
 #define NTP_PRINTF(fmt, args) __attribute__((__format__(__printf__, fmt, args)))
@@ -42,22 +49,16 @@ extern	void	mvsyslog(int, const char *, va_list) NTP_SYSLOG(2, 0);
 extern	void	init_logging	(const char *, u_int32, int);
 extern	int	change_logfile	(const char *, int);
 extern	void	setup_logfile	(const char *);
-#ifndef errno_to_str
+#ifndef errno_to_str		/* Windows port defines this */
 extern	void	errno_to_str(int, char *, size_t);
 #endif
 
-extern	int	xvsbprintf(char**, char* const, char const*, va_list) NTP_PRINTF(3, 0);
-extern	int	xsbprintf(char**, char* const, char const*, ...) NTP_PRINTF(3, 4);
+extern	char *	ntp_realpath(const char *fsname);
 
-/*
- * When building without OpenSSL, use a few macros of theirs to
- * minimize source differences in NTP.
- */
-#ifndef OPENSSL
-#define NID_md5	4	/* from openssl/objects.h */
-/* from openssl/evp.h */
-#define EVP_MAX_MD_SIZE	64	/* longest known is SHA512 */
-#endif
+extern	int	xvsbprintf(char **, char * const, char const *, va_list)
+				NTP_PRINTF(3, 0);
+extern	int	xsbprintf(char **, char * const, char const *, ...)
+				NTP_PRINTF(3, 4);
 
 #define SAVE_ERRNO(stmt)				\
 	{						\
@@ -73,8 +74,17 @@ extern	int	xsbprintf(char**, char* const, char const*, ...) NTP_PRINTF(3, 4);
 typedef void (*ctrl_c_fn)(void);
 
 /* authkeys.c */
+#define AUTHPWD_MAXSECLEN	64	/* max. length of secret blob */
+
+enum AuthPwdEnc {
+	AUTHPWD_UNSPEC,	/* format unspecified, length used for discrimination */
+	AUTHPWD_PLAIN,	/* plain text, used as is */
+	AUTHPWD_HEX	/* hex-encoded string */
+};
+
 extern	void	auth_delkeys	(void);
 extern	int	auth_havekey	(keyid_t);
+extern	size_t	authdecodepw	(u_char *dst, size_t dstlen, const char *src, enum AuthPwdEnc);
 extern	int	authdecrypt	(keyid_t, u_int32 *, size_t, size_t);
 extern	size_t	authencrypt	(keyid_t, u_int32 *, size_t);
 extern	int	authhavekey	(keyid_t);
@@ -106,10 +116,16 @@ extern	void	auth_prealloc_symkeys(int);
 extern	int	ymd2yd		(int, int, int);
 
 /* a_md5encrypt.c */
-extern	int	MD5authdecrypt	(int, const u_char *, size_t, u_int32 *, size_t, size_t);
-extern	size_t	MD5authencrypt	(int, const u_char *, size_t, u_int32 *, size_t);
-extern	void	MD5auth_setkey	(keyid_t, int, const u_char *, size_t, KeyAccT *c);
+extern	size_t	MD5authencrypt	(int type, const u_char *key, size_t klen,
+				 u_int32 *pkt, size_t length);
+extern	int	MD5authdecrypt	(int type, const u_char *key, size_t klen,
+				 u_int32 *pkt, size_t length, size_t size,
+				 keyid_t keyno);
 extern	u_int32	addr2refid	(sockaddr_u *);
+
+/* authkeys.c */
+extern	void	MD5auth_setkey	(keyid_t, int, const u_char *, size_t,
+				 KeyAccT *c);
 
 /* emalloc.c */
 #ifndef EREALLOC_CALLSITE	/* ntp_malloc.h defines */
@@ -172,7 +188,6 @@ extern	const char * k_st_flags	(u_int32);
 extern	char *	statustoa	(int, int);
 extern	sockaddr_u * netof	(sockaddr_u *);
 extern	char *	numtoa		(u_int32);
-extern	char *	numtohost	(u_int32);
 extern	const char * socktoa	(const sockaddr_u *);
 extern	const char * sockporttoa(const sockaddr_u *);
 extern	u_short	sock_hash	(const sockaddr_u *);
@@ -180,7 +195,7 @@ extern	int	sockaddr_masktoprefixlen(const sockaddr_u *);
 extern	const char * socktohost	(const sockaddr_u *);
 extern	int	octtoint	(const char *, u_long *);
 extern	u_long	ranp2		(int);
-extern	const char *refnumtoa	(sockaddr_u *);
+extern	const char *refnumtoa	(const sockaddr_u *);
 extern	const char *refid_str	(u_int32, int);
 
 extern	int	decodenetnum	(const char *, sockaddr_u *);
@@ -234,18 +249,21 @@ extern pset_tod_using	set_tod_using;
 #ifdef OPENSSL
 extern	void	ssl_init		(void);
 extern	void	ssl_check_version	(void);
-extern	int	ssl_init_done;
+extern	EVP_MD_CTX* digest_ctx;		/* also ssl_init_done */
 #define	INIT_SSL()				\
 	do {					\
-		if (!ssl_init_done)		\
+		if (NULL == digest_ctx)	{	\
 			ssl_init();		\
-	} while (0)
+		}				\
+	} while (FALSE)
 #else	/* !OPENSSL follows */
+#define ssl_check_version()	do {} while (0)
 #define	INIT_SSL()		do {} while (0)
 #endif
-extern	int	keytype_from_text	(const char *,	size_t *);
-extern	const char *keytype_name	(int);
-extern	char *	getpass_keytype		(int);
+extern	int	keytype_from_text	(const char *text,
+					 size_t *pdigest_len);
+extern	const char *keytype_name	(int type);
+extern	char *	getpass_keytype		(int type);
 
 /* strl-obsd.c */
 #ifndef HAVE_STRLCPY		/* + */

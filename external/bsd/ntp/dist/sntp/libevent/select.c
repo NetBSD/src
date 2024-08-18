@@ -1,4 +1,4 @@
-/*	$NetBSD: select.c,v 1.5 2020/05/25 20:47:33 christos Exp $	*/
+/*	$NetBSD: select.c,v 1.6 2024/08/18 20:47:21 christos Exp $	*/
 
 /*	$OpenBSD: select.c,v 1.2 2002/06/25 15:50:15 mickey Exp $	*/
 
@@ -100,7 +100,7 @@ const struct eventop selectops = {
 	select_del,
 	select_dispatch,
 	select_dealloc,
-	0, /* doesn't need reinit. */
+	1, /* need_reinit. */
 	EV_FEATURE_FDS,
 	0,
 };

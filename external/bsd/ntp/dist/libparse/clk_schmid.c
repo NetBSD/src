@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_schmid.c,v 1.6 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: clk_schmid.c,v 1.7 2024/08/18 20:47:17 christos Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/libparse/clk_schmid.c,v 4.9 2005/04/16 17:32:10 kardel RELEASE_20050508_A
@@ -224,7 +224,7 @@ inp_schmid(
 }
 
 #else /* not (REFCLOCK && CLOCK_PARSE && CLOCK_SCHMID) */
-int clk_schmid_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* not (REFCLOCK && CLOCK_PARSE && CLOCK_SCHMID) */
 
 /*

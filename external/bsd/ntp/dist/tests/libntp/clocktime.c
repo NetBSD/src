@@ -1,4 +1,4 @@
-/*	$NetBSD: clocktime.c,v 1.2 2020/05/25 20:47:36 christos Exp $	*/
+/*	$NetBSD: clocktime.c,v 1.3 2024/08/18 20:47:26 christos Exp $	*/
 
 #include "config.h"
 
@@ -30,7 +30,7 @@ void test_AlwaysInLimit(void);
  */
 
 void
-setUp()
+setUp(void)
 {
 	ntpcal_set_timefunc(timefunc);
 	settime(2000, 1, 1, 0, 0, 0);
@@ -39,7 +39,7 @@ setUp()
 }
 
 void
-tearDown()
+tearDown(void)
 {
 	ntpcal_set_timefunc(NULL);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: refnumtoa.c,v 1.5 2020/05/25 20:47:24 christos Exp $	*/
+/*	$NetBSD: refnumtoa.c,v 1.6 2024/08/18 20:47:13 christos Exp $	*/
 
 /*
  * refnumtoa - return asciized refclock addresses stored in local array space
@@ -7,12 +7,11 @@
 #include <stdio.h>
 
 #include "ntp_net.h"
-#include "lib_strbuf.h"
 #include "ntp_stdlib.h"
 
 const char *
 refnumtoa(
-	sockaddr_u *num
+	const sockaddr_u *num
 	)
 {
 	u_int32 netnum;

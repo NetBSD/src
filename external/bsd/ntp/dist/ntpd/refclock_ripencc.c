@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_ripencc.c,v 1.6 2020/05/25 20:47:26 christos Exp $	*/
+/*	$NetBSD: refclock_ripencc.c,v 1.7 2024/08/18 20:47:18 christos Exp $	*/
 
 /*
  * Id: refclock_ripencc.c,v 1.13 2002/06/18 14:20:55 marks Exp marks 
@@ -479,7 +479,7 @@ ripencc_start(int unit, struct peer *peer)
 	 * Open serial port
 	 */
 	(void)snprintf(device, sizeof(device), DEVICE, unit);
-	fd = refclock_open(device, SPEED232, LDISC_RAW);
+	fd = refclock_open(&peer->srcadr, device, SPEED232, LDISC_RAW);
 	if (fd <= 0) {
 		pp->io.fd = -1;
 		return (0);
@@ -5252,6 +5252,6 @@ TranslateTSIPReportToText(
 #endif /* TRIMBLE_OUTPUT_FUNC */
 
 #else  /* defined(REFCLOCK) && defined(CLOCK_RIPENCC) */
-int refclock_ripencc_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* defined(REFCLOCK) && defined(CLOCK_RIPENCC) */
 

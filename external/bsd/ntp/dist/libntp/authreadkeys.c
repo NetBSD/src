@@ -1,4 +1,4 @@
-/*	$NetBSD: authreadkeys.c,v 1.11 2020/05/25 20:47:24 christos Exp $	*/
+/*	$NetBSD: authreadkeys.c,v 1.12 2024/08/18 20:47:13 christos Exp $	*/
 
 /*
  * authreadkeys.c - routines to support the reading of the key file
@@ -40,7 +40,7 @@ nexttok(
 	 */
 	while (*cp == ' ' || *cp == '\t')
 		cp++;
-	
+
 	/*
 	 * Save this and space to end of token
 	 */
@@ -48,19 +48,19 @@ nexttok(
 	while (*cp != '\0' && *cp != '\n' && *cp != ' '
 	       && *cp != '\t' && *cp != '#')
 		cp++;
-	
+
 	/*
 	 * If token length is zero return an error, else set end of
 	 * token to zero and return start.
 	 */
 	if (starttok == cp)
 		return NULL;
-	
+
 	if (*cp == ' ' || *cp == '\t')
 		*cp++ = '\0';
 	else
 		*cp = '\0';
-	
+
 	*str = cp;
 	return starttok;
 }
@@ -116,7 +116,7 @@ free_keydata(
 	)
 {
 	KeyAccT *kap;
-	
+
 	if (node) {
 		while (node->keyacclist) {
 			kap = node->keyacclist;
@@ -144,9 +144,8 @@ authreadkeys(
 	keyid_t	keyno;
 	int	keytype;
 	char	buf[512];		/* lots of room for line */
-	u_char	keystr[32];		/* Bug 2537 */
+	u_char	keystr[AUTHPWD_MAXSECLEN];
 	size_t	len;
-	size_t	j;
 	u_int   nerr;
 	KeyDataT *list = NULL;
 	KeyDataT *next = NULL;
@@ -174,7 +173,7 @@ authreadkeys(
 		token = nexttok(&line);
 		if (token == NULL)
 			continue;
-		
+
 		/*
 		 * First is key number.  See if it is okay.
 		 */
@@ -210,10 +209,10 @@ authreadkeys(
 		 * have to process the line completely and have to
 		 * finally throw away the result... This is a bit more
 		 * work, but it also results in better error detection.
-		 */ 
+		 */
 #ifdef OPENSSL
 		/*
-		 * The key type is the NID used by the message digest 
+		 * The key type is the NID used by the message digest
 		 * algorithm. There are a number of inconsistencies in
 		 * the OpenSSL database. We attempt to discover them
 		 * here and prevent use of inconsistent data later.
@@ -221,14 +220,14 @@ authreadkeys(
 		keytype = keytype_from_text(token, NULL);
 		if (keytype == 0) {
 			log_maybe(NULL,
-				  "authreadkeys: invalid type for key %d",
-				  keyno);
+				  "authreadkeys: unsupported type %s for key %d",
+				  token, keyno);
 #  ifdef ENABLE_CMAC
 		} else if (NID_cmac != keytype &&
 				EVP_get_digestbynid(keytype) == NULL) {
 			log_maybe(NULL,
-				  "authreadkeys: no algorithm for key %d",
-				  keyno);
+				  "authreadkeys: no algorithm for %s key %d",
+				  token, keyno);
 			keytype = 0;
 #  endif /* ENABLE_CMAC */
 		}
@@ -237,7 +236,7 @@ authreadkeys(
 		 * The key type is unused, but is required to be 'M' or
 		 * 'm' for compatibility.
 		 */
-		if (!(*token == 'M' || *token == 'm')) {
+		if (! (toupper(*token) == 'M')) {
 			log_maybe(NULL,
 				  "authreadkeys: invalid type for key %d",
 				  keyno);
@@ -260,45 +259,35 @@ authreadkeys(
 			continue;
 		}
 		next = NULL;
-		len = strlen(token);
-		if (len <= 20) {	/* Bug 2537 */
-			next = emalloc(sizeof(KeyDataT) + len);
-			next->keyacclist = NULL;
-			next->keyid   = keyno;
-			next->keytype = keytype;
-			next->seclen  = len;
-			memcpy(next->secbuf, token, len);
-		} else {
-			static const char hex[] = "0123456789abcdef";
-			u_char	temp;
-			char	*ptr;
-			size_t	jlim;
-
-			jlim = min(len, 2 * sizeof(keystr));
-			for (j = 0; j < jlim; j++) {
-				ptr = strchr(hex, tolower((unsigned char)token[j]));
-				if (ptr == NULL)
-					break;	/* abort decoding */
-				temp = (u_char)(ptr - hex);
-				if (j & 1)
-					keystr[j / 2] |= temp;
-				else
-					keystr[j / 2] = temp << 4;
-			}
-			if (j < jlim) {
+		len = authdecodepw(keystr, sizeof(keystr), token, AUTHPWD_UNSPEC);
+		if (len > sizeof(keystr)) {
+			switch (errno) {
+			case ENOMEM:
 				log_maybe(&nerr,
-					  "authreadkeys: invalid hex digit for key %d",
+					  "authreadkeys: passwd too long for key %d",
 					  keyno);
-				continue;
+				break;
+			case EINVAL:
+				log_maybe(&nerr,
+					  "authreadkeys: passwd has bad char for key %d",
+					  keyno);
+				break;
+#ifdef DEBUG
+			default:
+				log_maybe(&nerr,
+					  "authreadkeys: unexpected errno %d for key %d",
+					  errno, keyno);
+				break;
+#endif
 			}
-			len = jlim/2; /* hmmmm.... what about odd length?!? */
-			next = emalloc(sizeof(KeyDataT) + len);
-			next->keyacclist = NULL;
-			next->keyid   = keyno;
-			next->keytype = keytype;
-			next->seclen  = len;
-			memcpy(next->secbuf, keystr, len);
+			continue;
 		}
+		next = emalloc(sizeof(KeyDataT) + len);
+		next->keyacclist = NULL;
+		next->keyid   = keyno;
+		next->keytype = keytype;
+		next->seclen  = len;
+		memcpy(next->secbuf, keystr, len);
 
 		token = nexttok(&line);
 		if (token != NULL) {	/* A comma-separated IP access list */
@@ -371,14 +360,22 @@ authreadkeys(
 			next = NULL;
 			continue;
 		}
-		
-		INSIST(NULL != next);
+
+		DEBUG_INSIST(NULL != next);
+#if defined(OPENSSL) && defined(ENABLE_CMAC)
+		if (NID_cmac == keytype && len < 16) {
+			msyslog(LOG_WARNING, CMAC " keys are 128 bits, "
+				"zero-extending key %u by %u bits",
+				(u_int)keyno, 8 * (16 - (u_int)len));
+		}
+#endif	/* OPENSSL && ENABLE_CMAC */
 		next->next = list;
 		list = next;
 	}
 	fclose(fp);
 	if (nerr > 0) {
 		const char * why = "";
+
 		if (nerr > nerr_maxlimit)
 			why = " (emergency break)";
 		msyslog(LOG_ERR,

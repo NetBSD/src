@@ -1,4 +1,4 @@
-/*	$NetBSD: win32select.c,v 1.5 2020/05/25 20:47:33 christos Exp $	*/
+/*	$NetBSD: win32select.c,v 1.6 2024/08/18 20:47:21 christos Exp $	*/
 
 /*
  * Copyright 2007-2012 Niels Provos and Nick Mathewson
@@ -59,7 +59,7 @@ extern struct event_list timequeue;
 extern struct event_list addqueue;
 
 struct win_fd_set {
-	u_int fd_count;
+	unsigned int fd_count;
 	SOCKET fd_array[1];
 };
 
@@ -328,6 +328,8 @@ win32_dispatch(struct event_base *base, struct timeval *tv)
 	event_debug(("%s: select returned %d", __func__, res));
 
 	if (res <= 0) {
+		event_debug(("%s: %s", __func__,
+		    evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR())));
 		return res;
 	}
 
@@ -352,7 +354,6 @@ win32_dispatch(struct event_base *base, struct timeval *tv)
 		}
 	}
 	if (win32op->writeset_out->fd_count) {
-		SOCKET s;
 		i = evutil_weakrand_range_(&base->weakrand_seed,
 		    win32op->writeset_out->fd_count);
 		for (j=0; j<win32op->writeset_out->fd_count; ++j) {

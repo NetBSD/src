@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_lists.h,v 1.6 2020/05/25 20:47:19 christos Exp $	*/
+/*	$NetBSD: ntp_lists.h,v 1.7 2024/08/18 20:46:50 christos Exp $	*/
 
 /*
  * ntp_lists.h - linked lists common code
@@ -183,7 +183,7 @@ do {								\
 
 #define UNLINK_EXPR_SLIST(punlinked, listhead, expr, nextlink,	\
 			  entrytype)				\
-do {								\
+if (NULL != (listhead)) {					\
 	entrytype **ppentry;					\
 								\
 	ppentry = &(listhead);					\
@@ -204,6 +204,8 @@ do {								\
 	} else {						\
 		(punlinked) = NULL;				\
 	}							\
+} else do {							\
+	(punlinked) = NULL;					\
 } while (FALSE)
 
 #define UNLINK_SLIST(punlinked, listhead, ptounlink, nextlink,	\

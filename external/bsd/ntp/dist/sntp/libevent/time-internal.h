@@ -1,4 +1,4 @@
-/*	$NetBSD: time-internal.h,v 1.6 2020/05/25 20:47:33 christos Exp $	*/
+/*	$NetBSD: time-internal.h,v 1.7 2024/08/18 20:47:21 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -56,6 +56,7 @@ extern "C" {
 #endif
 
 long evutil_tv_to_msec_(const struct timeval *tv);
+EVENT2_EXPORT_SYMBOL
 void evutil_usleep_(const struct timeval *tv);
 
 #ifdef _WIN32
@@ -88,8 +89,10 @@ struct evutil_monotonic_timer {
 	struct timeval last_time;
 };
 
+EVENT2_EXPORT_SYMBOL
 int evutil_configure_monotonic_time_(struct evutil_monotonic_timer *mt,
     int flags);
+EVENT2_EXPORT_SYMBOL
 int evutil_gettime_monotonic_(struct evutil_monotonic_timer *mt, struct timeval *tv);
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_gpsvme.c,v 1.5 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: refclock_gpsvme.c,v 1.6 2024/08/18 20:47:18 christos Exp $	*/
 
 /* refclock_psc.c:  clock driver for Brandywine PCI-SyncClock32/HP-UX 11.X */
 
@@ -251,5 +251,5 @@ check_leap_sec(struct refclockproc *pp, int unit)
 }
 
 #else
-int	refclock_gpsvme_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif	/* REFCLOCK	*/

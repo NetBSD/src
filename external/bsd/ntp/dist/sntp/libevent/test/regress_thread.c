@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_thread.c,v 1.6 2020/05/25 20:47:34 christos Exp $	*/
+/*	$NetBSD: regress_thread.c,v 1.7 2024/08/18 20:47:23 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -378,7 +378,7 @@ thread_conditions_simple(void *arg)
 		}
 		evutil_timeradd(target_delay, &launched_at, &target_time);
 		test_timeval_diff_leq(&target_time, &alerted[i].alerted_at,
-		    0, 50);
+		    0, 200);
 	}
 	tt_int_op(n_broadcast + n_signal + n_timed_out, ==, NUM_THREADS);
 	tt_int_op(n_signal, ==, 1);
@@ -566,8 +566,8 @@ end:
 	;
 }
 
-#define TEST(name)							\
-	{ #name, thread_##name, TT_FORK|TT_NEED_THREADS|TT_NEED_BASE,	\
+#define TEST(name, f)							\
+	{ #name, thread_##name, TT_FORK|TT_NEED_THREADS|TT_NEED_BASE|(f),	\
 	  &basic_setup, NULL }
 
 struct testcase_t thread_testcases[] = {
@@ -577,11 +577,16 @@ struct testcase_t thread_testcases[] = {
 	{ "forking", thread_basic, TT_FORK|TT_NEED_THREADS|TT_NEED_BASE,
 	  &basic_setup, (char*)"forking" },
 #endif
-	TEST(conditions_simple),
+	TEST(conditions_simple, TT_RETRIABLE),
 	{ "deferred_cb_skew", thread_deferred_cb_skew,
 	  TT_FORK|TT_NEED_THREADS|TT_OFF_BY_DEFAULT,
 	  &basic_setup, NULL },
-	TEST(no_events),
+#ifndef _WIN32
+	/****** XXX TODO FIXME windows seems to be having some timing trouble,
+	 * looking into it now. / ellzey
+	 ******/
+	TEST(no_events, TT_RETRIABLE),
+#endif
 	END_OF_TESTCASES
 };
 

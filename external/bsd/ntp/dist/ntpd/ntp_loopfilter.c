@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_loopfilter.c,v 1.13 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: ntp_loopfilter.c,v 1.14 2024/08/18 20:47:17 christos Exp $	*/
 
 /*
  * ntp_loopfilter.c - implements the NTP loop filter algorithm
@@ -131,9 +131,6 @@ static int loop_started;	/* TRUE after LOOP_DRIFTINIT */
 static void rstclock (int, double); /* transition function */
 static double direct_freq(double); /* direct set frequency */
 static void set_freq(double);	/* set frequency */
-#ifndef PATH_MAX
-# define PATH_MAX MAX_PATH
-#endif
 static char relative_path[PATH_MAX + 1]; /* relative path per recursive make */
 static char *this_file = NULL;
 
@@ -1032,6 +1029,22 @@ rstclock(
 		    tc_counter));
 	if (trans != state && trans != EVNT_FSET)
 		report_event(trans, NULL, NULL);
+#ifdef HAVE_WORKING_FORK
+	if (trans != state && EVNT_SYNC == trans) {
+		/*
+		 * If our parent process is waiting for the
+		 * first clock sync, send them home satisfied.
+		 */
+		if (daemon_pipe[1] != -1) {
+			if (2 != write(daemon_pipe[1], "S\n", 2)) {
+				msyslog(LOG_ERR, "daemon failed to notify parent ntpd (--wait-sync)");
+			}
+			close(daemon_pipe[1]);
+			daemon_pipe[1] = -1;
+		}
+	}
+#endif /* HAVE_WORKING_FORK */
+
 	state = trans;
 	last_offset = clock_offset = offset;
 	clock_epoch = current_time;
@@ -1119,6 +1132,11 @@ start_kern_loop(void)
 	 * unconditionally set to sys_poll, whereas elsewhere is is
 	 * modified depending on nanosecond vs. microsecond kernel?
 	 */
+	/*[bug 3699] make sure kernel PLL sees our initial drift compensation */
+	if (freq_set) {
+		ntv.modes |= MOD_FREQUENCY;
+		ntv.freq = DTOFREQ(drift_comp);
+	}
 #ifdef SIGSYS
 	/*
 	 * Use sigsetjmp() to save state and then call ntp_adjtime(); if
@@ -1316,7 +1334,12 @@ loop_config(
 
 	case LOOP_FREQ:		/* initial frequency (freq) */
 		init_drift_comp = freq;
-		freq_set++;
+		freq_set = 1;
+		break;
+
+	case LOOP_NOFREQ:	/* remove any initial drift comp spec */
+		init_drift_comp = 0;
+		freq_set = 0;
 		break;
 
 	case LOOP_HUFFPUFF:	/* huff-n'-puff length (huffpuff) */

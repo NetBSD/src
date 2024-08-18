@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_jupiter.c,v 1.12 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: refclock_jupiter.c,v 1.13 2024/08/18 20:47:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003
@@ -186,7 +186,7 @@ jupiter_start(
 	 * Open serial port
 	 */
 	snprintf(gpsdev, sizeof(gpsdev), DEVICE, unit);
-	fd = refclock_open(gpsdev, SPEED232, LDISC_RAW);
+	fd = refclock_open(&peer->srcadr, gpsdev, SPEED232, LDISC_RAW);
 	if (fd <= 0) {
 		jupiter_debug(peer, "jupiter_start", "open %s: %s",
 			      gpsdev, strerror(errno));
@@ -1030,5 +1030,5 @@ jupiter_recv(
 }
 
 #else /* not (REFCLOCK && CLOCK_JUPITER && HAVE_PPSAPI) */
-int refclock_jupiter_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* not (REFCLOCK && CLOCK_JUPITER && HAVE_PPSAPI) */

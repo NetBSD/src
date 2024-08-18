@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_fp.h,v 1.11 2020/05/25 20:47:19 christos Exp $	*/
+/*	$NetBSD: ntp_fp.h,v 1.12 2024/08/18 20:46:50 christos Exp $	*/
 
 /*
  * ntp_fp.h - definitions for NTP fixed/floating-point arithmetic
@@ -197,9 +197,9 @@ typedef u_int32 u_fp;
 	do { \
 		int32 add_f = (int32)(f); \
 		if (add_f >= 0) \
-			M_ADD((r_i), (r_f), 0, (uint32)( add_f)); \
+			M_ADD((r_i), (r_f), 0, (u_int32)( add_f)); \
 		else \
-			M_SUB((r_i), (r_f), 0, (uint32)(-add_f)); \
+			M_SUB((r_i), (r_f), 0, (u_int32)(-add_f)); \
 	} while(0)
 
 #define	M_ISNEG(v_i)			/* v < 0 */ \

@@ -1,4 +1,4 @@
-/*	$NetBSD: bench_cascade.c,v 1.5 2020/05/25 20:47:34 christos Exp $	*/
+/*	$NetBSD: bench_cascade.c,v 1.6 2024/08/18 20:47:23 christos Exp $	*/
 
 /*
  * Copyright 2007-2012 Niels Provos and Nick Mathewson
@@ -37,7 +37,8 @@
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#else
+#include <getopt.h>
+#else /* _WIN32 */
 #include <sys/socket.h>
 #include <sys/resource.h>
 #endif
@@ -50,7 +51,6 @@
 #include <unistd.h>
 #endif
 #include <errno.h>
-#include <getopt.h>
 #include <event.h>
 #include <evutil.h>
 
@@ -141,7 +141,7 @@ run_once(int num_pipes)
 int
 main(int argc, char **argv)
 {
-#ifdef HAVE_SETRLIMIT
+#ifdef EVENT__HAVE_SETRLIMIT
 	struct rlimit rl;
 #endif
 	int i, c;
@@ -164,7 +164,7 @@ main(int argc, char **argv)
 		}
 	}
 
-#ifdef HAVE_SETRLIMIT 
+#ifdef EVENT__HAVE_SETRLIMIT
 	rl.rlim_cur = rl.rlim_max = num_pipes * 2 + 50;
 	if (setrlimit(RLIMIT_NOFILE, &rl) == -1) {
 		perror("setrlimit");

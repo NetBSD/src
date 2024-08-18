@@ -1,4 +1,4 @@
-/*	$NetBSD: unity_internals.h,v 1.2 2020/05/25 20:47:36 christos Exp $	*/
+/*	$NetBSD: unity_internals.h,v 1.3 2024/08/18 20:47:26 christos Exp $	*/
 
 /* ==========================================
     Unity Project - A Test Framework for C
@@ -310,7 +310,7 @@ extern int UNITY_OUTPUT_CHAR(int);
 #if !defined(UNITY_NORETURN_ATTRIBUTE)
 #   ifdef __GNUC__ // includes clang
 #       if !(defined(__WIN32__) && defined(__clang__))
-#           define UNITY_NORETURN_ATTRIBUTE __attribute__((noreturn))
+#           define UNITY_NORETURN_ATTRIBUTE __attribute__((__noreturn__))
 #       endif
 #   endif
 #endif
@@ -521,6 +521,9 @@ void UnityAssertDoubleSpecial(const _UD actual,
                               const UNITY_FLOAT_TRAIT_T style);
 #endif
 
+void UnityExpectFailMessage(const char* msg,
+                            const UNITY_LINE_TYPE line);
+
 //-------------------------------------------------------
 // Error Strings We Might Need
 //-------------------------------------------------------
@@ -710,8 +713,7 @@ extern const char UnityStrErr64[];
 //End of UNITY_INTERNALS_H
 #endif
 
-//#define TEST_EXPECT_FAIL()																		Unity.isExpectingFail = 1;
-//#define TEST_EXPECT_FAIL_MESSAGE(message)														Unity.isExpectingFail = 1; Unity.XFAILMessage = message; //PROBLEM : does this work on all compilers?
+// Not part of standard distribution
 
-#define TEST_EXPECT_FAIL()																		UnityExpectFail();
-#define TEST_EXPECT_FAIL_MESSAGE(message)														UnityExpectFailMessage( (message) );
+#define TEST_EXPECT_FAIL()									UnityExpectFail();
+#define TEST_EXPECT_FAIL_MESSAGE(message)							UnityExpectFailMessage((message), __LINE__);

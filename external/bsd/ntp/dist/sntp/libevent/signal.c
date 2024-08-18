@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.c,v 1.5 2020/05/25 20:47:33 christos Exp $	*/
+/*	$NetBSD: signal.c,v 1.6 2024/08/18 20:47:21 christos Exp $	*/
 
 /*	$OpenBSD: select.c,v 1.2 2002/06/25 15:50:15 mickey Exp $	*/
 
@@ -87,7 +87,9 @@
 #ifndef _WIN32
 /* Windows wants us to call our signal handlers as __cdecl.  Nobody else
  * expects you to do anything crazy like this. */
+#ifndef __cdecl
 #define __cdecl
+#endif
 #endif
 
 static int evsig_add(struct event_base *, evutil_socket_t, short, short, void *);

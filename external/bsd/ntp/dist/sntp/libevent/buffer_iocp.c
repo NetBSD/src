@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer_iocp.c,v 1.5 2020/05/25 20:47:33 christos Exp $	*/
+/*	$NetBSD: buffer_iocp.c,v 1.6 2024/08/18 20:47:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
@@ -46,6 +46,7 @@
 #include "mm-internal.h"
 
 #include <winsock2.h>
+#include <winerror.h>
 #include <windows.h>
 #include <stdio.h>
 

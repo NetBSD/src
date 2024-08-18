@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.1.1.1 2024/08/18 20:37:37 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.2 2024/08/18 20:47:14 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")

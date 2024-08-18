@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.c,v 1.1.1.1 2024/08/18 20:37:37 christos Exp $	*/
+/*	$NetBSD: thread.c,v 1.2 2024/08/18 20:47:16 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")

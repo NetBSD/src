@@ -1,4 +1,4 @@
-/*	$NetBSD: work_thread.c,v 1.8 2020/05/25 20:47:24 christos Exp $	*/
+/*	$NetBSD: work_thread.c,v 1.9 2024/08/18 20:47:13 christos Exp $	*/
 
 /*
  * work_thread.c - threads implementation for blocking worker child.
@@ -43,19 +43,9 @@
 #ifndef THREAD_MINSTACKSIZE
 # define THREAD_MINSTACKSIZE	(64U * 1024)
 #endif
-#ifndef __sun
-#if defined(PTHREAD_STACK_MIN) && THREAD_MINSTACKSIZE < PTHREAD_STACK_MIN
-# undef THREAD_MINSTACKSIZE
-# define THREAD_MINSTACKSIZE PTHREAD_STACK_MIN
-#endif
-#endif
 
 #ifndef THREAD_MAXSTACKSIZE
 # define THREAD_MAXSTACKSIZE	(256U * 1024)
-#endif
-#if THREAD_MAXSTACKSIZE < THREAD_MINSTACKSIZE
-# undef  THREAD_MAXSTACKSIZE
-# define THREAD_MAXSTACKSIZE THREAD_MINSTACKSIZE
 #endif
 
 /* need a good integer to store a pointer... */
@@ -388,8 +378,12 @@ send_blocking_resp_internal(
 	{
 #	    ifdef WORK_PIPE
 		if (1 != write(c->resp_write_pipe, "", 1))
-			msyslog(LOG_WARNING, "async resolver: %s",
-				"failed to notify main thread!");
+			msyslog(LOG_WARNING, "async resolver: blocking_get%sinfo"
+				" failed to notify main thread!",
+				(BLOCKING_GETNAMEINFO == resp->rtype)
+				    ? "name"
+				    : "addr"
+				);
 #	    else
 		tickle_sem(c->responses_pending);
 #	    endif
@@ -401,7 +395,7 @@ send_blocking_resp_internal(
 #ifndef WORK_PIPE
 
 /* --------------------------------------------------------------------
- * Check if a (Windows-)hanndle to a semaphore is actually the same we
+ * Check if a (Windows-)handle to a semaphore is actually the same we
  * are using inside the sema wrapper.
  */
 static BOOL
@@ -501,7 +495,7 @@ start_blocking_thread(
 
 /* --------------------------------------------------------------------
  * Create a worker thread. There are several differences between POSIX
- * and Windows, of course -- most notably the Windows thread is no
+ * and Windows, of course -- most notably the Windows thread is a
  * detached thread, and we keep the handle around until we want to get
  * rid of the thread. The notification scheme also differs: Windows
  * makes use of semaphores in both directions, POSIX uses a pipe for
@@ -532,9 +526,12 @@ start_blocking_thread_internal(
 	}
 	/* remember the thread priority is only within the process class */
 	if (!SetThreadPriority(c->thr_table[0].thnd,
-			       THREAD_PRIORITY_BELOW_NORMAL))
+			       THREAD_PRIORITY_BELOW_NORMAL)) {
 		msyslog(LOG_ERR, "Error lowering blocking thread priority: %m");
-
+	}
+	if (NULL != pSetThreadDescription) {
+		(*pSetThreadDescription)(c->thr_table[0].thnd, L"ntp_worker");
+	}
 	resumed = ResumeThread(c->thr_table[0].thnd);
 	DEBUG_INSIST(resumed);
 	c->thread_ref = &c->thr_table[0];
@@ -596,12 +593,25 @@ start_blocking_thread_internal(
 			"start_blocking_thread: pthread_attr_getstacksize() -> %s",
 			strerror(rc));
 	} else {
-		if (ostacksize < THREAD_MINSTACKSIZE)
-			nstacksize = THREAD_MINSTACKSIZE;
-		else if (ostacksize > THREAD_MAXSTACKSIZE)
+		nstacksize = ostacksize;
+		/* order is important here: first clamp on upper limit,
+		 * and the PTHREAD min stack size is ultimate override!
+		 */ 
+		if (nstacksize > THREAD_MAXSTACKSIZE)
 			nstacksize = THREAD_MAXSTACKSIZE;
-		else
-			nstacksize = ostacksize;
+#            ifdef PTHREAD_STACK_MAX
+		if (nstacksize > PTHREAD_STACK_MAX)
+			nstacksize = PTHREAD_STACK_MAX;
+#            endif
+
+		/* now clamp on lower stack limit. */
+		if (nstacksize < THREAD_MINSTACKSIZE)
+			nstacksize = THREAD_MINSTACKSIZE;
+#            ifdef PTHREAD_STACK_MIN
+		if (nstacksize < PTHREAD_STACK_MIN)
+			nstacksize = PTHREAD_STACK_MIN;
+#            endif
+
 		if (nstacksize != ostacksize)
 			rc = pthread_attr_setstacksize(&thr_attr, nstacksize);
 		if (0 != rc)

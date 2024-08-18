@@ -1,4 +1,4 @@
-/*	$NetBSD: evutil_rand.c,v 1.5 2020/05/25 20:47:33 christos Exp $	*/
+/*	$NetBSD: evutil_rand.c,v 1.6 2024/08/18 20:47:21 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -173,9 +173,7 @@ evutil_secure_rng_init(void)
 	int val;
 
 	ARC4_LOCK_();
-	if (!arc4_seeded_ok)
-		arc4_stir();
-	val = arc4_seeded_ok ? 0 : -1;
+	val = (!arc4_stir()) ? 0 : -1;
 	ARC4_UNLOCK_();
 	return val;
 }
@@ -194,12 +192,14 @@ evutil_secure_rng_get_bytes(void *buf, size_t n)
 	ev_arc4random_buf(buf, n);
 }
 
+#if !defined(EVENT__HAVE_ARC4RANDOM) || defined(EVENT__HAVE_ARC4RANDOM_ADDRANDOM)
 void
 evutil_secure_rng_add_bytes(const char *buf, size_t n)
 {
 	arc4random_addrandom((unsigned char*)buf,
 	    n>(size_t)INT_MAX ? INT_MAX : (int)n);
 }
+#endif
 
 void
 evutil_free_secure_rng_globals_(void)

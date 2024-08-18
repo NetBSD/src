@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_as2201.c,v 1.5 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: refclock_as2201.c,v 1.6 2024/08/18 20:47:18 christos Exp $	*/
 
 /*
  * refclock_as2201 - clock driver for the Austron 2201A GPS
@@ -168,7 +168,7 @@ as2201_start(
 	 * Open serial port. Use CLK line discipline, if available.
 	 */
 	snprintf(gpsdev, sizeof(gpsdev), DEVICE, unit);
-	fd = refclock_open(gpsdev, SPEED232, LDISC_CLK);
+	fd = refclock_open(&peer->srcadr, gpsdev, SPEED232, LDISC_CLK);
 	if (fd <= 0)
 		return (0);
 
@@ -342,8 +342,9 @@ as2201_receive(
 		memcpy(up->lastptr, stat_command[up->index], octets);
 		up->lastptr += octets - 1;
 		*up->lastptr = '\0';
-		(void)write(pp->io.fd, stat_command[up->index],
-		    strlen(stat_command[up->index]));
+		refclock_write(peer, stat_command[up->index],
+			       strlen(stat_command[up->index]),
+			       "command");
 		up->index++;
 		if (*stat_command[up->index] == '\0')
 			up->index = 0;
@@ -386,5 +387,5 @@ as2201_poll(
 }
 
 #else
-int refclock_as2201_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* REFCLOCK */

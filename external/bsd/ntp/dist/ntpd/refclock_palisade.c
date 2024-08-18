@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_palisade.c,v 1.9 2022/10/09 21:41:04 christos Exp $	*/
+/*	$NetBSD: refclock_palisade.c,v 1.10 2024/08/18 20:47:18 christos Exp $	*/
 
 /*
  * This software was developed by the Software and Component Technologies
@@ -314,7 +314,7 @@ palisade_start (
 	 * Open serial port. 
 	 */
 	speed = (CLK_TYPE(peer) == CLK_COPERNICUS) ? SPEED232COP : SPEED232;
-	fd = refclock_open(gpsdev, speed, LDISC_RAW);
+	fd = refclock_open(&peer->srcadr, gpsdev, speed, LDISC_RAW);
 	if (fd <= 0) {
 #ifdef DEBUG
 		printf("Palisade(%d) start: open %s failed\n", unit, gpsdev);
@@ -1227,9 +1227,9 @@ palisade_poll (
 		return;  /* using synchronous packet input */
 
 	if(up->type == CLK_PRAECIS) {
-		if(write(peer->procptr->io.fd,"SPSTAT\r\n",8) < 0)
+		if (write(peer->procptr->io.fd,"SPSTAT\r\n",8) < 0) {
 			msyslog(LOG_ERR, "Palisade(%d) write: %m:",unit);
-		else {
+		} else {
 			praecis_msg = 1;
 			return;
 		}
@@ -1251,20 +1251,53 @@ praecis_parse (
 
 	pp = peer->procptr;
 
-	memcpy(buf+p,rbufp->recv_space.X_recv_buffer, rbufp->recv_length);
+	if ((size_t)(p + rbufp->recv_length) >= sizeof buf) {
+		struct palisade_unit *up;
+		up = pp->unitptr;
+
+		/*
+		 * We COULD see if there is a \r\n in the incoming
+		 * buffer before it overflows, and then process the
+		 * current line.
+		 *
+		 * Similarly, if we already have a hunk of data that
+		 * we're now flushing, that will cause the line of
+		 * data we're in the process of collecting to be garbage.
+		 *
+		 * Since we now check for this overflow and log when it
+		 * happens, we're now in a better place to easily see
+		 * what's going on and perhaps better choices can be made.
+		 */
+
+		/* Do we need to log the size of the overflow? */
+		msyslog(LOG_ERR, "Palisade(%d) praecis_parse(): input buffer overflow", 
+			up->unit);
+
+		p = 0;
+		praecis_msg = 0;
+
+		refclock_report(peer, CEVNT_BADREPLY);
+
+		return;
+	}
+
+	memcpy(buf+p, rbufp->recv_buffer, rbufp->recv_length);
 	p += rbufp->recv_length;
 
-	if(buf[p-2] == '\r' && buf[p-1] == '\n') {
+	if (   p >= 2
+	    && buf[p-2] == '\r' 
+	    && buf[p-1] == '\n') {
 		buf[p-2] = '\0';
 		record_clock_stats(&peer->srcadr, buf);
 
 		p = 0;
 		praecis_msg = 0;
 
-		if (HW_poll(pp) < 0)
+		if (HW_poll(pp) < 0) {
 			refclock_report(peer, CEVNT_FAULT);
-
+		}
 	}
+	return;
 }
 
 static void
@@ -1409,7 +1442,10 @@ HW_poll (
 
 	/* Edge trigger */
 	if (up->type == CLK_ACUTIME)
-		write (pp->io.fd, "", 1);
+		if (write (pp->io.fd, "", 1) != 1)
+			msyslog(LOG_WARNING,
+				"Palisade(%d) HW_poll: failed to send trigger: %m", 
+				up->unit);
 		
 	if (ioctl(pp->io.fd, TIOCMSET, &x) < 0) { 
 #ifdef DEBUG
@@ -1533,5 +1569,5 @@ getsingle(
 }
 
 #else	/* REFCLOCK && CLOCK_PALISADE*/
-int refclock_palisade_c_notempty;
+NONEMPTY_TRANSLATION_UNIT
 #endif

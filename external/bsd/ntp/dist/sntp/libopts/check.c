@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.5 2020/05/25 20:47:34 christos Exp $	*/
+/*	$NetBSD: check.c,v 1.6 2024/08/18 20:47:24 christos Exp $	*/
 
 /**
  * @file check.c
@@ -11,7 +11,7 @@
 /*
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2018 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -102,7 +102,7 @@ occurs_enough(tOptions * pOpts, tOptDesc * pOD)
  *
  *  Make sure that the argument list passes our consistency tests.
  */
-LOCAL bool
+static bool
 is_consistent(tOptions * pOpts)
 {
     tOptDesc * pOD   = pOpts->pOptDesc;

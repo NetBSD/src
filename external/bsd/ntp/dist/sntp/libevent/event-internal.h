@@ -1,4 +1,4 @@
-/*	$NetBSD: event-internal.h,v 1.5 2020/05/25 20:47:33 christos Exp $	*/
+/*	$NetBSD: event-internal.h,v 1.6 2024/08/18 20:47:21 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -221,7 +221,7 @@ struct event_base {
 	/** Function pointers used to describe the backend that this event_base
 	 * uses for signals */
 	const struct eventop *evsigsel;
-	/** Data to implement the common signal handelr code. */
+	/** Data to implement the common signal handler code. */
 	struct evsig_info sig;
 
 	/** Number of virtual events */
@@ -370,7 +370,10 @@ struct event_config {
 };
 
 /* Internal use only: Functions that might be missing from <sys/queue.h> */
-#if defined(EVENT__HAVE_SYS_QUEUE_H) && !defined(EVENT__HAVE_TAILQFOREACH)
+#ifndef LIST_END
+#define LIST_END(head)			NULL
+#endif
+
 #ifndef TAILQ_FIRST
 #define	TAILQ_FIRST(head)		((head)->tqh_first)
 #endif
@@ -396,7 +399,6 @@ struct event_config {
 	(listelm)->field.tqe_prev = &(elm)->field.tqe_next;		\
 } while (0)
 #endif
-#endif /* TAILQ_FOREACH */
 
 #define N_ACTIVE_CALLBACKS(base)					\
 	((base)->event_count_active)
@@ -418,26 +420,29 @@ int event_add_nolock_(struct event *ev,
  * if it is running in another thread and it doesn't have EV_FINALIZE set.
  */
 #define EVENT_DEL_AUTOBLOCK 2
-/** Argument for event_del_nolock_. Tells event_del to procede even if the
+/** Argument for event_del_nolock_. Tells event_del to proceed even if the
  * event is set up for finalization rather for regular use.*/
 #define EVENT_DEL_EVEN_IF_FINALIZING 3
 int event_del_nolock_(struct event *ev, int blocking);
 int event_remove_timer_nolock_(struct event *ev);
 
 void event_active_nolock_(struct event *ev, int res, short count);
+EVENT2_EXPORT_SYMBOL
 int event_callback_activate_(struct event_base *, struct event_callback *);
 int event_callback_activate_nolock_(struct event_base *, struct event_callback *);
 int event_callback_cancel_(struct event_base *base,
     struct event_callback *evcb);
 
 void event_callback_finalize_nolock_(struct event_base *base, unsigned flags, struct event_callback *evcb, void (*cb)(struct event_callback *, void *));
+EVENT2_EXPORT_SYMBOL
 void event_callback_finalize_(struct event_base *base, unsigned flags, struct event_callback *evcb, void (*cb)(struct event_callback *, void *));
 int event_callback_finalize_many_(struct event_base *base, int n_cbs, struct event_callback **evcb, void (*cb)(struct event_callback *, void *));
 
 
+EVENT2_EXPORT_SYMBOL
 void event_active_later_(struct event *ev, int res);
 void event_active_later_nolock_(struct event *ev, int res);
-void event_callback_activate_later_nolock_(struct event_base *base,
+int event_callback_activate_later_nolock_(struct event_base *base,
     struct event_callback *evcb);
 int event_callback_cancel_nolock_(struct event_base *base,
     struct event_callback *evcb, int even_if_finalizing);
@@ -445,6 +450,7 @@ void event_callback_init_(struct event_base *base,
     struct event_callback *cb);
 
 /* FIXME document. */
+EVENT2_EXPORT_SYMBOL
 void event_base_add_virtual_(struct event_base *base);
 void event_base_del_virtual_(struct event_base *base);
 
@@ -454,6 +460,7 @@ void event_base_del_virtual_(struct event_base *base);
 
     Returns on success; aborts on failure.
 */
+EVENT2_EXPORT_SYMBOL
 void event_base_assert_ok_(struct event_base *base);
 void event_base_assert_ok_nolock_(struct event_base *base);
 
@@ -468,6 +475,13 @@ void event_base_assert_ok_nolock_(struct event_base *base);
  */
 int event_base_foreach_event_nolock_(struct event_base *base,
     event_base_foreach_event_cb cb, void *arg);
+
+/* Cleanup function to reset debug mode during shutdown.
+ *
+ * Calling this function doesn't mean it'll be possible to re-enable
+ * debug mode if any events were added.
+ */
+void event_disable_debug_mode(void);
 
 #ifdef __cplusplus
 }

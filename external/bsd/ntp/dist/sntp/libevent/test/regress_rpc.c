@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_rpc.c,v 1.5 2020/05/25 20:47:34 christos Exp $	*/
+/*	$NetBSD: regress_rpc.c,v 1.6 2024/08/18 20:47:23 christos Exp $	*/
 
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
@@ -62,7 +62,6 @@
 #include "event2/http.h"
 #include "event2/http_compat.h"
 #include "event2/http_struct.h"
-#include "event2/rpc.h"
 #include "event2/rpc.h"
 #include "event2/rpc_struct.h"
 #include "event2/tag.h"
@@ -882,6 +881,53 @@ end:
 		evbuffer_free(tmp);
 }
 
+static void
+rpc_invalid_type(void)
+{
+	ev_uint16_t port;
+	struct evhttp *http = NULL;
+	struct evrpc_base *base = NULL;
+	struct evhttp_connection *evcon = NULL;
+	struct evhttp_request *req = NULL;
+
+	rpc_setup(&http, &port, &base);
+
+	evcon = evhttp_connection_new("127.0.0.1", port);
+	tt_assert(evcon);
+
+	/*
+	 * At this point, we want to schedule an HTTP POST request
+	 * server using our make request method.
+	 */
+
+	req = evhttp_request_new(rpc_postrequest_failure, NULL);
+	tt_assert(req);
+
+	/* Add the information that we care about */
+	evhttp_add_header(req->output_headers, "Host", "somehost");
+	evbuffer_add_printf(req->output_buffer, "Some Nonsense");
+
+	if (evhttp_make_request(evcon, req,
+		EVHTTP_REQ_GET,
+		"/.rpc.Message") == -1) {
+		tt_abort();
+	}
+
+	test_ok = 0;
+
+	event_dispatch();
+
+	evhttp_connection_free(evcon);
+
+	rpc_teardown(base);
+
+	tt_assert(test_ok == 1);
+
+end:
+	evhttp_free(http);
+}
+
+
 #define RPC_LEGACY(name)						\
 	{ #name, run_legacy_test_fn, TT_FORK|TT_NEED_BASE|TT_LEGACY,	\
 		    &legacy_setup,					\
@@ -900,6 +946,7 @@ struct testcase_t rpc_testcases[] = {
 	RPC_LEGACY(basic_client),
 	RPC_LEGACY(basic_queued_client),
 	RPC_LEGACY(basic_client_with_pause),
+	RPC_LEGACY(invalid_type),
 	RPC_LEGACY(client_timeout),
 	RPC_LEGACY(test),
 

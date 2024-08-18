@@ -1,4 +1,4 @@
-/*	$NetBSD: restore.c,v 1.5 2020/05/25 20:47:35 christos Exp $	*/
+/*	$NetBSD: restore.c,v 1.6 2024/08/18 20:47:25 christos Exp $	*/
 
 
 /*
@@ -14,7 +14,7 @@
 /*
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2018 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control

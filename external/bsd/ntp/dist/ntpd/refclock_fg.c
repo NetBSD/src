@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_fg.c,v 1.5 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: refclock_fg.c,v 1.6 2024/08/18 20:47:18 christos Exp $	*/
 
 /*
  * refclock_fg - clock driver for the Forum Graphic GPS datating station
@@ -109,7 +109,7 @@ fg_start(
 
 	DPRINTF(1, ("starting FG with device %s\n",device));
 
-	fd = refclock_open(device, SPEED232, LDISC_CLK);
+	fd = refclock_open(&peer->srcadr, device, SPEED232, LDISC_CLK);
 	if (fd <= 0)
 		return (0);
 	
@@ -246,11 +246,11 @@ fg_receive(
 	}
 
 	/* Below I trying to find a correct reply in buffer.
-	 * Sometime GPS reply located in the beginnig of buffer,
+	 * Sometime GPS reply located in the beginning of buffer,
 	 * sometime you can find it with some offset.
 	 */
 
-	bpt = (char *)rbufp->recv_space.X_recv_buffer;
+	bpt = (char *)rbufp->recv_buffer;
 	while (*bpt != '\x10')
 		bpt++;
 
@@ -333,5 +333,5 @@ fg_receive(
 
 
 #else
-int refclock_fg_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* REFCLOCK */

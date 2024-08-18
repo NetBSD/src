@@ -1,4 +1,4 @@
-/*	$NetBSD: strtolfp.c,v 1.2 2020/05/25 20:47:36 christos Exp $	*/
+/*	$NetBSD: strtolfp.c,v 1.3 2024/08/18 20:47:27 christos Exp $	*/
 
 #include "config.h"
 
@@ -28,6 +28,13 @@ setUp(void)
 	return;
 }
 
+static const char* fmtLFP(const l_fp *e, const l_fp *a)
+{
+    static char buf[100];
+    snprintf(buf, sizeof(buf), "e=$%08x.%08x, a=$%08x.%08x",
+	     e->l_ui, e->l_uf, a->l_ui, a->l_uf);
+    return buf;
+}
 
 void test_PositiveInteger(void) {
 	const char *str = "500";
@@ -39,8 +46,8 @@ void test_PositiveInteger(void) {
 	TEST_ASSERT_TRUE(atolfp(str, &actual));
 	TEST_ASSERT_TRUE(mstolfp(str_ms, &actual_ms));
 
-	TEST_ASSERT_TRUE(IsEqual(expected, actual));
-	TEST_ASSERT_TRUE(IsEqual(expected, actual_ms));
+	TEST_ASSERT_TRUE_MESSAGE(IsEqual(expected, actual), fmtLFP(&expected, &actual));
+	TEST_ASSERT_TRUE_MESSAGE(IsEqual(expected, actual_ms), fmtLFP(&expected, &actual_ms));
 }
 
 void test_NegativeInteger(void) {
@@ -56,8 +63,8 @@ void test_NegativeInteger(void) {
 	TEST_ASSERT_TRUE(atolfp(str, &actual));
 	TEST_ASSERT_TRUE(mstolfp(str_ms, &actual_ms));
 
-	TEST_ASSERT_TRUE(IsEqual(expected, actual));
-	TEST_ASSERT_TRUE(IsEqual(expected, actual_ms));
+	TEST_ASSERT_TRUE_MESSAGE(IsEqual(expected, actual), fmtLFP(&expected, &actual));
+	TEST_ASSERT_TRUE_MESSAGE(IsEqual(expected, actual_ms), fmtLFP(&expected, &actual_ms));
 }
 
 void test_PositiveFraction(void) {
@@ -70,8 +77,8 @@ void test_PositiveFraction(void) {
 	TEST_ASSERT_TRUE(atolfp(str, &actual));
 	TEST_ASSERT_TRUE(mstolfp(str_ms, &actual_ms));
 
-	TEST_ASSERT_TRUE(IsEqual(expected, actual));
-	TEST_ASSERT_TRUE(IsEqual(expected, actual_ms));
+	TEST_ASSERT_TRUE_MESSAGE(IsEqual(expected, actual), fmtLFP(&expected, &actual));
+	TEST_ASSERT_TRUE_MESSAGE(IsEqual(expected, actual_ms), fmtLFP(&expected, &actual_ms));
 }
 
 void test_NegativeFraction(void) {
@@ -87,8 +94,8 @@ void test_NegativeFraction(void) {
 	TEST_ASSERT_TRUE(atolfp(str, &actual));
 	TEST_ASSERT_TRUE(mstolfp(str_ms, &actual_ms));
 
-	TEST_ASSERT_TRUE(IsEqual(expected, actual));
-	TEST_ASSERT_TRUE(IsEqual(expected, actual_ms));
+	TEST_ASSERT_TRUE_MESSAGE(IsEqual(expected, actual), fmtLFP(&expected, &actual));
+	TEST_ASSERT_TRUE_MESSAGE(IsEqual(expected, actual_ms), fmtLFP(&expected, &actual_ms));
 }
 
 void test_PositiveMsFraction(void) {
@@ -102,9 +109,8 @@ void test_PositiveMsFraction(void) {
 	TEST_ASSERT_TRUE(atolfp(str, &actual));
 	TEST_ASSERT_TRUE(mstolfp(str_ms, &actual_ms));
 
-	TEST_ASSERT_TRUE(IsEqual(expected, actual));
-	TEST_ASSERT_TRUE(IsEqual(expected, actual_ms));
-
+	TEST_ASSERT_TRUE_MESSAGE(IsEqual(expected, actual), fmtLFP(&expected, &actual));
+	TEST_ASSERT_TRUE_MESSAGE(IsEqual(expected, actual_ms), fmtLFP(&expected, &actual_ms));
 }
 
 void test_NegativeMsFraction(void) {
@@ -120,9 +126,8 @@ void test_NegativeMsFraction(void) {
 	TEST_ASSERT_TRUE(atolfp(str, &actual));
 	TEST_ASSERT_TRUE(mstolfp(str_ms, &actual_ms));
 
-	TEST_ASSERT_TRUE(IsEqual(expected, actual));
-	TEST_ASSERT_TRUE(IsEqual(expected, actual_ms));
-
+	TEST_ASSERT_TRUE_MESSAGE(IsEqual(expected, actual), fmtLFP(&expected, &actual));
+	TEST_ASSERT_TRUE_MESSAGE(IsEqual(expected, actual_ms), fmtLFP(&expected, &actual_ms));
 }
 
 void test_InvalidChars(void) {

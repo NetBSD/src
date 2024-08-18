@@ -1,4 +1,4 @@
-/*	$NetBSD: test-changelist.c,v 1.5 2020/05/25 20:47:34 christos Exp $	*/
+/*	$NetBSD: test-changelist.c,v 1.6 2024/08/18 20:47:23 christos Exp $	*/
 
 /*
  * Copyright (c) 2010-2012 Niels Provos and Nick Mathewson
@@ -184,11 +184,11 @@ main(int argc, char **argv)
 	if (evutil_socketpair(AF_UNIX, SOCK_STREAM, 0, pair) == -1)
 		return (1);
 
-	/* Initalize the event library */
+	/* Initialize the event library */
 	if (!(base = event_base_new()))
 		return (1);
 
-	/* Initalize a timeout to terminate the test */
+	/* Initialize a timeout to terminate the test */
 	timeout = evtimer_new(base,timeout_cb,&timeout);
 	/* and watch for writability on one end of the pipe */
 	ev = event_new(base,pair[1],EV_WRITE | EV_PERSIST, write_cb, &ev);

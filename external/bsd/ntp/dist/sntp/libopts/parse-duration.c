@@ -1,7 +1,7 @@
-/*	$NetBSD: parse-duration.c,v 1.10 2020/05/25 20:47:35 christos Exp $	*/
+/*	$NetBSD: parse-duration.c,v 1.11 2024/08/18 20:47:25 christos Exp $	*/
 
 /* Parse a time duration and return a seconds count
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2018 Free Software Foundation, Inc.
    Written by Bruce Korb <bkorb@gnu.org>, 2008.
 
    This program is free software: you can redistribute it and/or modify
@@ -15,7 +15,7 @@
    GNU Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
@@ -62,20 +62,14 @@ typedef enum {
 static unsigned long
 str_const_to_ul (cch_t * str, cch_t ** ppz, int base)
 {
-  char * pz;
-  int rv = strtoul (str, &pz, base);
-  *ppz = pz;
-  return rv;
+  return strtoul (str, __UNCONST(ppz), base);
 }
 
 /* Wrapper around strtol that does not require a cast.  */
 static long
 str_const_to_l (cch_t * str, cch_t ** ppz, int base)
 {
-  char * pz;
-  int rv = strtol (str, &pz, base);
-  *ppz = pz;
-  return rv;
+  return strtol (str, __UNCONST(ppz), base);
 }
 
 /* Returns BASE + VAL * SCALE, interpreting BASE = BAD_TIME

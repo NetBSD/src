@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_realpath.c,v 1.1.1.1 2024/08/18 20:37:36 christos Exp $	*/
+/*	$NetBSD: ntp_realpath.c,v 1.2 2024/08/18 20:47:13 christos Exp $	*/
 
 /*
  * ntp_realpath.c - get real path for a file
