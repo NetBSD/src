@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrtoc8.c,v 1.4 2024/08/17 21:24:54 riastradh Exp $	*/
+/*	$NetBSD: mbrtoc8.c,v 1.5 2024/08/18 13:35:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 /*
- * mbrtoc16(&c16, s, n, ps)
+ * mbrtoc8(&c8, s, n, ps)
  *
  *	Decode a Unicode scalar value from up to n bytes out of the
  *	multibyte string s, using multibyte encoding state ps, and
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mbrtoc8.c,v 1.4 2024/08/17 21:24:54 riastradh Exp $");
+__RCSID("$NetBSD: mbrtoc8.c,v 1.5 2024/08/18 13:35:11 riastradh Exp $");
 
 #include "namespace.h"
 
