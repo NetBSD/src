@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.41 2024/08/18 15:11:43 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.42 2024/08/18 15:21:09 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -458,6 +458,5 @@ binary_operators_on_bit_fields(void)
 unsigned char
 combine_arithmetic_and_bit_operations(unsigned int c32)
 {
-	/* expect+1: warning: conversion from 'unsigned int' to 'unsigned char' may lose accuracy [132] */
 	return 0xc0 | (c32 & 0x07c0) / 64;
 }
