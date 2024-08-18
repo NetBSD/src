@@ -1,7 +1,8 @@
-# $NetBSD: mi,v 1.1781 2024/08/17 13:34:40 gutteridge Exp $
+# $NetBSD: mi,v 1.1782 2024/08/18 03:58:13 rin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
+./usr/share/info/annotate.info			man-debug-info		gdb,info
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	binutils,info
 ./usr/share/info/awk.info			man-util-info		info
@@ -18,8 +19,7 @@
 ./usr/share/info/g++FAQ.info			man-obsolete		obsolete
 ./usr/share/info/g77.info			comp-obsolete		obsolete
 ./usr/share/info/gcc.info			man-c-info		gcccmds,info
-./usr/share/info/gdb.info			man-debug-info		gdb=1320,info
-./usr/share/info/gdb.info			man-obsolete		gdb=1510,obsolete
+./usr/share/info/gdb.info			man-debug-info		gdb,info
 ./usr/share/info/gdbint.info			man-obsolete		obsolete
 ./usr/share/info/gettext.info			man-sys-info		info
 ./usr/share/info/gprof.info			man-debug-info		binutils,info
@@ -34,8 +34,7 @@
 ./usr/share/info/ld.info			man-computil-info	binutils,info
 ./usr/share/info/ldint.info			man-computil-info	binutils=242,info
 ./usr/share/info/send-pr.info			man-gnats-info		info
-./usr/share/info/stabs.info			man-debug-info		gdb=1320,info
-./usr/share/info/stabs.info			man-obsolete		gdb=1510,obsolete
+./usr/share/info/stabs.info			man-debug-info		gdb,info
 ./usr/share/info/tar.info			man-obsolete		obsolete
 ./usr/share/info/texinfo.info			man-texinfo-info	info
 ./usr/share/info/uucp.info			man-obsolete		obsolete
