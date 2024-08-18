@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2023/06/03 21:31:46 lukem Exp $
+#	$NetBSD: Makefile,v 1.33 2024/08/18 20:49:59 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,7 @@ MAN=	ntpd.8 ntp.conf.5 ntp.keys.5
 BINDIR=	/usr/sbin
 
 SRCS=	cmd_args.c				\
+	ntp_clockdev.c				\
 	ntp_config.c				\
 	ntp_control.c				\
 	ntp_crypto.c				\
@@ -16,6 +17,7 @@ SRCS=	cmd_args.c				\
 	ntp_loopfilter.c			\
 	ntp_monitor.c				\
 	ntp_parser.y				\
+	ntp_ppsdev.c				\
 	ntp_peer.c				\
 	ntp_prio_q.c				\
 	ntp_proto.c				\
