@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2024/08/14 23:56:19 christos Exp $
+#	$NetBSD: Makefile,v 1.51 2024/08/18 03:47:55 rin Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -19,7 +19,13 @@ CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 CONFIGURE_ARGS+=--enable-obsolete
 .endif
 
-MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q}
+# XXX
+# Unfortunately, our in-tree makeinfo(1) (latest GPLv2 release) is
+# too old to generate *.info. Use external tool from pkgsrc.
+EXTERN_MAKEINFO?=	/usr/pkg/bin/makeinfo
+MAKEINFOFLAGS?=		--no-split
+
+MAKE_ARGS=	MACHINE=
 
 ALL_TARGET=	all-gdb
 INSTALL_TARGET=	install-gdb
@@ -48,6 +54,8 @@ MKNATIVE_ENV=	${BINENV} ${CONFIGURE_ENV:NC*:NLD*:Nam_cv_func_iconv*} \
 			NM=${NM:Q} OBJDUMP=${OBJDUMP:Q} \
 			XGETTEXT=${TOOLDIR}/bin/${_TOOL_PREFIX}xgettext \
 			LIBS=-lintl \
+			MAKEINFO=${EXTERN_MAKEINFO} \
+			MAKEINFOFLAGS=${MAKEINFOFLAGS} \
 			${MKNATIVE_CONFIGURE_PRESET}
 
 MKENV_BUILD_MAKE=${MKNATIVE_ENV} ${BUILD_MAKE}
@@ -148,7 +156,9 @@ native-gdb: .native/.configure_done
 			${MKENV_BUILD_MAKE} backtrace-supported.h) && \
 		(if [ -d ${.OBJDIR}/.native/gdbserver ]; then \
 			cd ${.OBJDIR}/.native/gdbserver && \
-			${MKENV_BUILD_MAKE} version-generated.cc; fi)
+			${MKENV_BUILD_MAKE} version-generated.cc; fi) && \
+		(cd ${.OBJDIR}/.native/gdb/doc && \
+			${MKENV_BUILD_MAKE} info)
 	@touch $@
 
 clean: clean.native
