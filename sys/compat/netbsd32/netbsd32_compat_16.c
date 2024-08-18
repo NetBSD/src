@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_16.c,v 1.5 2024/05/01 11:32:29 mlelstv Exp $	*/
+/*	$NetBSD: netbsd32_compat_16.c,v 1.6 2024/08/18 18:42:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_16.c,v 1.5 2024/05/01 11:32:29 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_16.c,v 1.6 2024/08/18 18:42:57 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,8 @@ compat_netbsd32_16_init(void)
 {
 	int error;
 
-	error = syscall_establish(&emul_netbsd32, netbsd32_kern_sig_16_syscalls);
+	error = syscall_establish(&emul_netbsd32,
+	    netbsd32_kern_sig_16_syscalls);
 	if (error)
 		return error;
 
@@ -87,32 +88,34 @@ compat_netbsd32_16_fini(void)
 	proc_t *p;
 	int error;
 
-	error = syscall_disestablish(&emul_netbsd32, netbsd32_kern_sig_16_syscalls);
-        if (error)
-                return error;
-        /*
-         * Ensure sendsig_sigcontext() is not being used.
-         * module_lock prevents the flag being set on any
-         * further processes while we are here.  See
-         * sigaction1() for the opposing half.
-         */
-        mutex_enter(&proc_lock);
-        PROCLIST_FOREACH(p, &allproc) {
-                if ((p->p_lflag & PL_SIGCOMPAT) != 0) {
-                        break;
-                }
-        }
-        mutex_exit(&proc_lock);
-        if (p != NULL) {
-                syscall_establish(&emul_netbsd32, netbsd32_kern_sig_16_syscalls);
-                return EBUSY;
-        }
+	error = syscall_disestablish(&emul_netbsd32,
+	    netbsd32_kern_sig_16_syscalls);
+	if (error)
+		return error;
+	/*
+	 * Ensure sendsig_sigcontext() is not being used.
+	 * module_lock prevents the flag being set on any
+	 * further processes while we are here.  See
+	 * sigaction1() for the opposing half.
+	 */
+	mutex_enter(&proc_lock);
+	PROCLIST_FOREACH(p, &allproc) {
+		if ((p->p_lflag & PL_SIGCOMPAT) != 0) {
+			break;
+		}
+	}
+	mutex_exit(&proc_lock);
+	if (p != NULL) {
+		syscall_establish(&emul_netbsd32,
+		    netbsd32_kern_sig_16_syscalls);
+		return EBUSY;
+	}
 
 	rw_enter(&exec_lock, RW_WRITER);
 	exec_sigcode_free(&emul_netbsd);
 	emul_netbsd32.e_sigcode = NULL;
-       	emul_netbsd32.e_esigcode = NULL;
-       	emul_netbsd32.e_sigobject = NULL;
+	emul_netbsd32.e_esigcode = NULL;
+	emul_netbsd32.e_sigobject = NULL;
 	rw_exit(&exec_lock);
 	netbsd32_machdep_md_16_fini();
 	return 0;
