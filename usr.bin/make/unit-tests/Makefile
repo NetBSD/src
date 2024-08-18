@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.350 2024/07/07 09:37:00 rillig Exp $
+# $NetBSD: Makefile,v 1.351 2024/08/18 13:40:51 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -779,6 +779,7 @@ test:	${OUTFILES} .PHONY
 	  if [ "$$have_lua" = "yes" ]; then \
 	    (cd ${.CURDIR} && "$$lua" ./check-expect.lua *.mk); \
 	  fi; \
+	  rm -rf ${TMPDIR}; \
 	fi
 
 accept:
