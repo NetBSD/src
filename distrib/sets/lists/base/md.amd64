@@ -1,9 +1,8 @@
-# $NetBSD: md.amd64,v 1.299 2024/07/11 20:41:05 riastradh Exp $
+# $NetBSD: md.amd64,v 1.300 2024/08/18 04:02:58 rin Exp $
 #
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./usr/bin/fdformat				base-util-bin
-./usr/bin/gdbserver				base-util-bin		gdb
 ./usr/bin/pmc					base-obsolete		obsolete
 ./usr/lib/libtsan.so				base-sys-shlib		cxx,gcccmds,gcc
 ./usr/lib/libtsan.so.1				base-sys-shlib		cxx,gcccmds,gcc=10
