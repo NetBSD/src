@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.649 2024/07/10 20:33:37 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.650 2024/08/18 15:21:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.649 2024/07/10 20:33:37 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.650 2024/08/18 15:21:09 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -172,7 +172,7 @@ ic_bitand(integer_constraints a, integer_constraints b)
 	c.smin = INT64_MIN;
 	c.smax = INT64_MAX;
 	c.umin = 0;
-	c.umax = UINT64_MAX;
+	c.umax = ~(a.bclr | b.bclr);
 	c.bset = a.bset & b.bset;
 	c.bclr = a.bclr | b.bclr;
 	return c;
@@ -186,7 +186,7 @@ ic_bitor(integer_constraints a, integer_constraints b)
 	c.smin = INT64_MIN;
 	c.smax = INT64_MAX;
 	c.umin = 0;
-	c.umax = UINT64_MAX;
+	c.umax = ~(a.bclr & b.bclr);
 	c.bset = a.bset | b.bset;
 	c.bclr = a.bclr & b.bclr;
 	return c;
@@ -204,6 +204,23 @@ ic_mod(const type_t *tp, integer_constraints a, integer_constraints b)
 	c.smax = INT64_MAX;
 	c.umin = 0;
 	c.umax = b.umax - 1;
+	c.bset = 0;
+	c.bclr = ~u64_fill_right(c.umax);
+	return c;
+}
+
+static integer_constraints
+ic_div(const type_t *tp, integer_constraints a, integer_constraints b)
+{
+	integer_constraints c;
+
+	if (ic_maybe_signed(tp, &a) || ic_maybe_signed(tp, &b) || b.umin == 0)
+		return ic_any(tp);
+
+	c.smin = INT64_MIN;
+	c.smax = INT64_MAX;
+	c.umin = a.umin / b.umax;
+	c.umax = a.umax / b.umin;
 	c.bset = 0;
 	c.bclr = ~u64_fill_right(c.umax);
 	return c;
@@ -288,6 +305,10 @@ ic_expr(const tnode_t *tn)
 			return ic_any(tn->tn_type);
 		lc = ic_expr(tn->u.ops.left);
 		return ic_cvt(tn->tn_type, tn->u.ops.left->tn_type, lc);
+	case DIV:
+		lc = ic_expr(before_conversion(tn->u.ops.left));
+		rc = ic_expr(before_conversion(tn->u.ops.right));
+		return ic_div(tn->tn_type, lc, rc);
 	case MOD:
 		lc = ic_expr(before_conversion(tn->u.ops.left));
 		rc = ic_expr(before_conversion(tn->u.ops.right));
