@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2030 2024/08/17 22:39:07 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2031 2024/08/18 14:12:46 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -982,6 +982,7 @@ Responsible:	jdolecek
 License:	BSD-like
 Location:	external/historical/nawk/dist
 Notes:
+Build maketab from nawk sources and generate proctab.c.
 
 Package:	ndbootd
 Version:	0.5
