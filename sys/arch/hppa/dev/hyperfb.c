@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.11 2024/08/07 00:47:34 riastradh Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.12 2024/08/19 10:58:43 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.11 2024/08/07 00:47:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.12 2024/08/19 10:58:43 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -541,6 +541,10 @@ hyperfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_STI;
+		return 0;
+
+	case GCID:
+		*(u_int *)data = STI_DD_HCRX;
 		return 0;
 
 	case WSDISPLAYIO_GINFO:
