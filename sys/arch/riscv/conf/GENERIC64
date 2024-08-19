@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.10 2024/08/13 07:20:23 skrll Exp $
+# $NetBSD: GENERIC64,v 1.11 2024/08/19 07:33:55 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -54,6 +54,7 @@ fregulator*	at fdt? pass 4
 
 # Clock and reset controller
 jh7100clkc* 	at fdt?	pass 2		# StarFive JH7100 clock controller
+jh7110clkc* 	at fdt?	pass 2		# StarFive JH7110 clock controller
 sun20id1ccu* 	at fdt? pass 2		# Allwinner D1/D1s CCU
 
 # Security ID EFUSE

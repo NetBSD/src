@@ -1,4 +1,4 @@
-/* $NetBSD: jh71x0_clkc.c,v 1.2 2024/08/04 08:16:26 skrll Exp $ */
+/* $NetBSD: jh71x0_clkc.c,v 1.3 2024/08/19 07:33:55 skrll Exp $ */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jh71x0_clkc.c,v 1.2 2024/08/04 08:16:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jh71x0_clkc.c,v 1.3 2024/08/19 07:33:55 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -153,6 +153,8 @@ jh71x0_clkc_mux_set_parent(struct jh71x0_clkc_softc *sc,
 	if (i >= jcm->jcm_nparents)
 		return EINVAL;
 
+	KASSERT(i <= __SHIFTOUT_MASK(JH71X0_CLK_MUX_MASK));
+
 	uint32_t val = RD4(sc, jcc->jcc_reg);
 	val &= ~JH71X0_CLK_MUX_MASK;
 	val |= __SHIFTIN(i, JH71X0_CLK_MUX_MASK);
@@ -249,12 +251,13 @@ jh71x0_clkc_div_set_rate(struct jh71x0_clkc_softc *sc,
 		return ENXIO;
 
 	u_int parent_rate = clk_get_rate(clk_parent);
-
 	if (parent_rate == 0) {
 		return (new_rate == 0) ? 0 : ERANGE;
 	}
 	u_int ratio = howmany(parent_rate, new_rate);
 	u_int div = uimin(ratio, jcc_div->jcd_maxdiv);
+
+	KASSERT(div <= __SHIFTOUT_MASK(JH71X0_CLK_DIV_MASK));
 
 	jh71x0_clkc_update(sc, jcc,
 	    __SHIFTIN(div, JH71X0_CLK_DIV_MASK), JH71X0_CLK_DIV_MASK);
@@ -309,7 +312,6 @@ jh71x0_clkc_fracdiv_set_rate(struct jh71x0_clkc_softc *sc,
 {
 	KASSERT(jcc->jcc_type == JH71X0CLK_FRACDIV);
 
-//	struct jh71x0_clkc_fracdiv * const jcc_fracdiv = &jcc->jcc_fracdiv;
 	struct clk * const clk = &jcc->jcc_clk;
 	struct clk * const clk_parent = clk_get_parent(clk);
 
@@ -328,6 +330,8 @@ jh71x0_clkc_fracdiv_set_rate(struct jh71x0_clkc_softc *sc,
 	u_int ratio = howmany(parent_rate, new_rate);
 	u_int div = uimin(ratio, jcc_div->jcd_maxdiv);
 
+	KASSERT(div <= __SHIFTOUT_MASK(JH71X0_CLK_DIV_MASK));
+
 	jh71x0_clkc_update(sc, jcc,
 	    __SHIFTIN(div, JH71X0_CLK_DIV_MASK), JH71X0_CLK_DIV_MASK);
 #endif
@@ -344,6 +348,110 @@ jh71x0_clkc_fracdiv_get_parent(struct jh71x0_clkc_softc *sc,
 	struct jh71x0_clkc_fracdiv *jcc_fracdiv = &jcc->jcc_fracdiv;
 
 	return jcc_fracdiv->jcd_parent;
+}
+
+
+/*
+ * MUXDIV operations
+ */
+
+
+int
+jh71x0_clkc_muxdiv_set_parent(struct jh71x0_clkc_softc *sc,
+    struct jh71x0_clkc_clk *jcc, const char *name)
+{
+	KASSERT(jcc->jcc_type == JH71X0CLK_MUXDIV);
+
+	struct jh71x0_clkc_muxdiv * const jcmd = &jcc->jcc_muxdiv;
+
+	size_t i;
+	for (i = 0; i < jcmd->jcmd_nparents; i++) {
+		if (jcmd->jcmd_parents[i] != NULL &&
+		    strcmp(jcmd->jcmd_parents[i], name) == 0)
+			break;
+	}
+	if (i >= jcmd->jcmd_nparents)
+		return EINVAL;
+
+	KASSERT(i <= __SHIFTOUT_MASK(JH71X0_CLK_MUX_MASK));
+
+	uint32_t val = RD4(sc, jcc->jcc_reg);
+	val &= ~JH71X0_CLK_MUX_MASK;
+	val |= __SHIFTIN(i, JH71X0_CLK_MUX_MASK);
+	WR4(sc, jcc->jcc_reg, val);
+
+	return 0;
+}
+
+
+const char *
+jh71x0_clkc_muxdiv_get_parent(struct jh71x0_clkc_softc *sc,
+    struct jh71x0_clkc_clk *jcc)
+{
+	KASSERT(jcc->jcc_type == JH71X0CLK_MUXDIV);
+
+	uint32_t val = RD4(sc, jcc->jcc_reg);
+	size_t pindex = __SHIFTOUT(val, JH71X0_CLK_MUX_MASK);
+
+	if (pindex >= jcc->jcc_muxdiv.jcmd_nparents)
+		return NULL;
+
+	return jcc->jcc_muxdiv.jcmd_parents[pindex];
+}
+
+
+
+u_int
+jh71x0_clkc_muxdiv_get_rate(struct jh71x0_clkc_softc *sc,
+    struct jh71x0_clkc_clk *jcc)
+{
+	KASSERT(jcc->jcc_type == JH71X0CLK_MUXDIV);
+
+	struct clk * const clk = &jcc->jcc_clk;
+	struct clk * const clk_parent = clk_get_parent(clk);
+
+	if (clk_parent == NULL)
+		return 0;
+
+	u_int rate = clk_get_rate(clk_parent);
+	if (rate == 0)
+		return 0;
+
+	uint32_t val = RD4(sc, jcc->jcc_reg);
+	uint32_t div = __SHIFTOUT(val, JH71X0_CLK_DIV_MASK);
+
+	return rate / div;
+}
+
+int
+jh71x0_clkc_muxdiv_set_rate(struct jh71x0_clkc_softc *sc,
+    struct jh71x0_clkc_clk *jcc, u_int new_rate)
+{
+	KASSERT(jcc->jcc_type == JH71X0CLK_MUXDIV);
+
+	struct jh71x0_clkc_muxdiv * const jcc_muxdiv = &jcc->jcc_muxdiv;
+	struct clk * const clk = &jcc->jcc_clk;
+	struct clk * const clk_parent = clk_get_parent(clk);
+
+	if (clk_parent == NULL)
+		return ENXIO;
+
+	if (jcc_muxdiv->jcmd_maxdiv == 0)
+		return ENXIO;
+
+	u_int parent_rate = clk_get_rate(clk_parent);
+	if (parent_rate == 0) {
+		return (new_rate == 0) ? 0 : ERANGE;
+	}
+	u_int ratio = howmany(parent_rate, new_rate);
+	u_int div = uimin(ratio, jcc_muxdiv->jcmd_maxdiv);
+
+	KASSERT(div <= __SHIFTOUT_MASK(JH71X0_CLK_DIV_MASK));
+
+	jh71x0_clkc_update(sc, jcc,
+	    __SHIFTIN(div, JH71X0_CLK_DIV_MASK), JH71X0_CLK_DIV_MASK);
+
+	return 0;
 }
 
 
@@ -389,6 +497,13 @@ struct jh71x0_clkc_clkops jh71x0_clkc_ffactor_ops = {
 struct jh71x0_clkc_clkops jh71x0_clkc_mux_ops = {
 	.jcco_setparent = jh71x0_clkc_mux_set_parent,
 	.jcco_getparent = jh71x0_clkc_mux_get_parent,
+};
+
+struct jh71x0_clkc_clkops jh71x0_clkc_muxdiv_ops = {
+	.jcco_setrate = jh71x0_clkc_muxdiv_set_rate,
+	.jcco_getrate = jh71x0_clkc_muxdiv_get_rate,
+	.jcco_setparent = jh71x0_clkc_muxdiv_set_parent,
+	.jcco_getparent = jh71x0_clkc_muxdiv_get_parent,
 };
 
 
@@ -484,14 +599,21 @@ jh71x0_clkc_enable(void *priv, struct clk *clk)
 		struct jh71x0_clkc_div * const jcc_div = &jcc->jcc_div;
 		if (jcc_div->jcd_flags & JH71X0CLKC_DIV_GATE) {
 			jh71x0_clkc_update(sc, jcc, JH71X0_CLK_ENABLE, 0);
-			break;
+		}
+		break;
+	    }
+
+	case JH71X0CLK_MUX: {
+		struct jh71x0_clkc_mux * const jcc_mux = &jcc->jcc_mux;
+		if (jcc_mux->jcm_flags & JH71X0CLKC_MUX_GATE) {
+			jh71x0_clkc_update(sc, jcc, JH71X0_CLK_ENABLE, 0);
 		}
 		break;
 	    }
 
 	case JH71X0CLK_FIXED_FACTOR:
-	case JH71X0CLK_MUX:
 	case JH71X0CLK_INV:
+	case JH71X0CLK_MUXDIV:
 		break;
 
 	default:
@@ -510,12 +632,34 @@ jh71x0_clkc_disable(void *priv, struct clk *clk)
 
 	switch (jcc->jcc_type) {
 	case JH71X0CLK_GATE:
-		jh71x0_clkc_update(sc, jcc, JH71X0_CLK_ENABLE, 0);
-		return 0;
+		jh71x0_clkc_update(sc, jcc, 0, JH71X0_CLK_ENABLE);
+		break;
+
+	case JH71X0CLK_DIV: {
+		struct jh71x0_clkc_div * const jcc_div = &jcc->jcc_div;
+		if (jcc_div->jcd_flags & JH71X0CLKC_DIV_GATE) {
+			jh71x0_clkc_update(sc, jcc, 0, JH71X0_CLK_ENABLE);
+		}
+		break;
+	    }
+
+	case JH71X0CLK_MUX: {
+		struct jh71x0_clkc_mux * const jcc_mux = &jcc->jcc_mux;
+		if (jcc_mux->jcm_flags & JH71X0CLKC_MUX_GATE) {
+			jh71x0_clkc_update(sc, jcc, 0, JH71X0_CLK_ENABLE);
+		}
+		break;
+	    }
+
+	case JH71X0CLK_FIXED_FACTOR:
+	case JH71X0CLK_INV:
+	case JH71X0CLK_MUXDIV:
+		break;
 
 	default:
 		return ENXIO;
 	}
+	return 0;
 }
 
 
