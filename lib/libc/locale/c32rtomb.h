@@ -1,4 +1,4 @@
-/*	$NetBSD: c32rtomb.h,v 1.1 2024/08/15 14:16:33 riastradh Exp $	*/
+/*	$NetBSD: c32rtomb.h,v 1.2 2024/08/19 16:22:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -30,6 +30,10 @@
 #define	LIB_LIBC_LOCALE_C32RTOMB_H_
 
 struct c32rtombstate {
+	/*
+	 * XXX This needs to match the maximum size of any conversion
+	 * state actually used by wcrtomb_l.
+	 */
 	char		dummy;
 };
 

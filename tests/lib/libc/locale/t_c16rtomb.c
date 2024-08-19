@@ -1,4 +1,4 @@
-/*	$NetBSD: t_c16rtomb.c,v 1.5 2024/08/19 16:21:47 riastradh Exp $	*/
+/*	$NetBSD: t_c16rtomb.c,v 1.6 2024/08/19 16:22:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002 Tim J. Robbins
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_c16rtomb.c,v 1.5 2024/08/19 16:21:47 riastradh Exp $");
+__RCSID("$NetBSD: t_c16rtomb.c,v 1.6 2024/08/19 16:22:10 riastradh Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -155,8 +155,6 @@ ATF_TC_BODY(c16rtomb_iso2022jp_locale_test, tc)
 	p = buf;
 	ATF_CHECK_EQ_MSG((n = c16rtomb(p, L'A', &s)), 1, "n=%zu", n); /* 1 */
 	p += 1;
-	atf_tc_expect_fail("PR lib/58612:"
-	    " c8rtomb/c16rtomb/c32rtomb yield suboptimal shift sequences");
 	ATF_CHECK_EQ_MSG((n = c16rtomb(p, 0xa5, &s)), 4, "n=%zu", n); /* 2 */
 	p += 4;
 	ATF_CHECK_EQ_MSG((n = c16rtomb(p, 0xa5, &s)), 1, "n=%zu", n); /* 3 */
