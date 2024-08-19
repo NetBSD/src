@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.256 2024/08/19 07:45:31 ozaki-r Exp $	*/
+/*	$NetBSD: bpf.c,v 1.257 2024/08/19 07:47:16 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.256 2024/08/19 07:45:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.257 2024/08/19 07:47:16 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -643,10 +643,12 @@ bpf_close(struct file *fp)
 	 */
 	d->bd_pid = curproc->p_pid;
 
-	mutex_enter(d->bd_mtx);
+	mutex_enter(d->bd_buf_mtx);
 	if (d->bd_state == BPF_WAITING)
-		callout_halt(&d->bd_callout, d->bd_mtx);
+		callout_halt(&d->bd_callout, d->bd_buf_mtx);
 	d->bd_state = BPF_IDLE;
+	mutex_exit(d->bd_buf_mtx);
+	mutex_enter(d->bd_mtx);
 	if (d->bd_bif)
 		bpf_detachd(d);
 	mutex_exit(d->bd_mtx);
@@ -707,12 +709,12 @@ bpf_read(struct file *fp, off_t *offp, struct uio *uio,
 	if (uio->uio_resid != d->bd_bufsize)
 		return (EINVAL);
 
-	mutex_enter(d->bd_mtx);
+	mutex_enter(d->bd_buf_mtx);
 	if (d->bd_state == BPF_WAITING)
-		callout_halt(&d->bd_callout, d->bd_mtx);
+		callout_halt(&d->bd_callout, d->bd_buf_mtx);
 	timed_out = (d->bd_state == BPF_TIMED_OUT);
 	d->bd_state = BPF_IDLE;
-	mutex_exit(d->bd_mtx);
+	mutex_exit(d->bd_buf_mtx);
 	/*
 	 * If the hold buffer is empty, then do a timed sleep, which
 	 * ends when the timeout expires or when enough packets
@@ -796,13 +798,13 @@ static inline void
 bpf_wakeup(struct bpf_d *d)
 {
 
-	mutex_enter(d->bd_buf_mtx);
+	KASSERT(mutex_owned(d->bd_buf_mtx));
+
 	cv_broadcast(&d->bd_cv);
-	mutex_exit(d->bd_buf_mtx);
 
 	if (d->bd_async)
 		softint_schedule(d->bd_sih);
-	selnotify(&d->bd_sel, 0, 0);
+	selnotify(&d->bd_sel, 0, NOTE_SUBMIT);
 }
 
 static void
@@ -820,13 +822,13 @@ bpf_timed_out(void *arg)
 {
 	struct bpf_d *d = arg;
 
-	mutex_enter(d->bd_mtx);
+	mutex_enter(d->bd_buf_mtx);
 	if (d->bd_state == BPF_WAITING) {
 		d->bd_state = BPF_TIMED_OUT;
 		if (d->bd_slen != 0)
 			bpf_wakeup(d);
 	}
-	mutex_exit(d->bd_mtx);
+	mutex_exit(d->bd_buf_mtx);
 }
 
 static int
@@ -987,11 +989,11 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 		d->bd_compat32 = 0;
 #endif
 
-	mutex_enter(d->bd_mtx);
+	mutex_enter(d->bd_buf_mtx);
 	if (d->bd_state == BPF_WAITING)
-		callout_halt(&d->bd_callout, d->bd_mtx);
+		callout_halt(&d->bd_callout, d->bd_buf_mtx);
 	d->bd_state = BPF_IDLE;
-	mutex_exit(d->bd_mtx);
+	mutex_exit(d->bd_buf_mtx);
 
 	if (d->bd_locked) {
 		switch (cmd) {
@@ -1557,6 +1559,7 @@ bpf_poll(struct file *fp, int events)
 		 * An imitation of the FIONREAD ioctl code.
 		 */
 		mutex_enter(d->bd_mtx);
+		mutex_enter(d->bd_buf_mtx);
 		if (d->bd_hlen != 0 ||
 		    ((d->bd_immediate || d->bd_state == BPF_TIMED_OUT) &&
 			d->bd_slen != 0)) {
@@ -1570,6 +1573,7 @@ bpf_poll(struct file *fp, int events)
 				d->bd_state = BPF_WAITING;
 			}
 		}
+		mutex_exit(d->bd_buf_mtx);
 		mutex_exit(d->bd_mtx);
 	}
 
@@ -1598,12 +1602,18 @@ filt_bpfread(struct knote *kn, long hint)
 	 */
 	d->bd_pid = curproc->p_pid;
 
-	mutex_enter(d->bd_buf_mtx);
+	if (hint & NOTE_SUBMIT)
+		KASSERT(mutex_owned(d->bd_buf_mtx));
+	else
+		mutex_enter(d->bd_buf_mtx);
 	kn->kn_data = d->bd_hlen;
 	if (d->bd_immediate)
 		kn->kn_data += d->bd_slen;
 	rv = (kn->kn_data > 0);
-	mutex_exit(d->bd_buf_mtx);
+	if (hint & NOTE_SUBMIT)
+		KASSERT(mutex_owned(d->bd_buf_mtx));
+	else
+		mutex_exit(d->bd_buf_mtx);
 	return rv;
 }
 
@@ -2091,7 +2101,6 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 	 */
 	(*cpfn)(h + hdrlen, pkt, caplen);
 	d->bd_slen = curlen + totlen;
-	mutex_exit(d->bd_buf_mtx);
 
 	/*
 	 * Call bpf_wakeup after bd_slen has been updated so that kevent(2)
@@ -2099,6 +2108,8 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 	 */
 	if (do_wakeup)
 		bpf_wakeup(d);
+
+	mutex_exit(d->bd_buf_mtx);
 }
 
 /*
