@@ -1,4 +1,4 @@
-/*	$NetBSD: stireg.h,v 1.12 2024/08/06 07:26:56 macallan Exp $	*/
+/*	$NetBSD: stireg.h,v 1.13 2024/08/19 10:57:32 macallan Exp $	*/
 
 /*	$OpenBSD: stireg.h,v 1.14 2015/04/05 23:25:57 miod Exp $	*/
 
@@ -746,5 +746,8 @@ STI_DEP(util);
 #define	NGLE_BUFF1_CMAP0	0x02001e02
 #define	NGLE_BUFF1_CMAP3	0x0c001e02
 #define	NGLE_ARTIST_CMAP0	0x00000102
+
+/* mimic HP/UX, this will return the device's graphics ID */
+#define	GCID	_IOR('G', 40, u_int)
 
 #endif /* _IC_STIREG_H_ */
