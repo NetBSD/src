@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.22 2015/04/22 18:42:04 christos Exp $
+#	$NetBSD: list,v 1.23 2024/08/19 16:03:59 christos Exp $
 
 # hp300 extra's
 PROG	sbin/disklabel
@@ -19,7 +19,7 @@ PROG	usr/sbin/installboot
 # crunchgen source directory specials
 SPECIAL	vi	srcdir external/bsd/nvi/usr.bin/nvi
 SPECIAL	less	srcdir external/bsd/less/bin/less
-SPECIAL	awk	srcdir external/historical/nawk/bin
+SPECIAL	awk	srcdir external/historical/nawk/bin/awk
 
 # Minimize use of MFS
 SYMLINK	/tmp	var/tmp
