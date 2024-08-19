@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1784 2024/08/18 13:10:51 riastradh Exp $
+# $NetBSD: mi,v 1.1785 2024/08/19 15:04:05 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -827,6 +827,7 @@
 ./usr/share/man/cat4/acpiec.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpiecdt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpifan.0			man-sys-catman		.cat
+./usr/share/man/cat4/acpihed.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpilid.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpiout.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpipmtr.0			man-sys-catman		.cat
@@ -955,6 +956,7 @@
 ./usr/share/man/cat4/amr.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ams.0			man-sys-catman		.cat
 ./usr/share/man/cat4/an.0			man-sys-catman		.cat
+./usr/share/man/cat4/apei.0			man-sys-catman		.cat
 ./usr/share/man/cat4/aps.0			man-sys-catman		.cat
 ./usr/share/man/cat4/aq.0			man-sys-catman		.cat
 ./usr/share/man/cat4/arc/intro.0		man-sys-catman		.cat
@@ -4382,6 +4384,7 @@
 ./usr/share/man/man4/acpiec.4			man-sys-man		.man
 ./usr/share/man/man4/acpiecdt.4			man-sys-man		.man
 ./usr/share/man/man4/acpifan.4			man-sys-man		.man
+./usr/share/man/man4/acpihed.4			man-sys-man		.man
 ./usr/share/man/man4/acpilid.4			man-sys-man		.man
 ./usr/share/man/man4/acpiout.4			man-sys-man		.man
 ./usr/share/man/man4/acpipmtr.4			man-sys-man		.man
@@ -4510,6 +4513,7 @@
 ./usr/share/man/man4/amr.4			man-sys-man		.man
 ./usr/share/man/man4/ams.4			man-sys-man		.man
 ./usr/share/man/man4/an.4			man-sys-man		.man
+./usr/share/man/man4/apei.4			man-sys-man		.man
 ./usr/share/man/man4/aps.4			man-sys-man		.man
 ./usr/share/man/man4/aq.4			man-sys-man		.man
 ./usr/share/man/man4/arc/intro.4		man-sys-man		.man
