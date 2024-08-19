@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.c,v 1.3 2024/08/19 07:28:22 martin Exp $	*/
+/*	$NetBSD: assertions.c,v 1.4 2024/08/19 08:28:32 martin Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -73,7 +73,7 @@ isc_assertion_setcallback(isc_assertioncallback_t cb) {
 /*% Type to Text */
 const char *
 isc_assertion_typetotext(isc_assertiontype_t type) {
-	const char *result;
+	const char *result = "?";
 
 	/*
 	 * These strings have purposefully not been internationalized
