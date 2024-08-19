@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.49 2024/08/19 07:45:31 ozaki-r Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.50 2024/08/19 07:47:16 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -129,7 +129,7 @@ struct bpf_d {
 	struct pslist_entry	bd_bif_dlist_entry; /* For bpf_if */
 	struct pslist_entry	bd_bpf_dlist_entry; /* For the global list */
 	kmutex_t	*bd_mtx;
-	kmutex_t	*bd_buf_mtx;
+	kmutex_t	*bd_buf_mtx;	/* For buffers, bd_state, bd_sel and bd_cv */
 	kcondvar_t	bd_cv;
 #endif
 };
