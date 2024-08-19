@@ -26,7 +26,7 @@
 #if 0
 static char rcsid[] = "Id: entry.c,v 1.17 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: entry.c,v 1.11 2020/04/18 19:32:19 christos Exp $");
+__RCSID("$NetBSD: entry.c,v 1.12 2024/08/19 23:16:05 christos Exp $");
 #endif
 #endif
 
@@ -519,7 +519,7 @@ get_range(bitstr_t *bits, int low, int high, const char * const names[],
 
 	if (!star) {
 		ch = get_number(&num1, low, names, ch, file, ",- \t\n");
-		if (ch == EOF)
+		if (ch == EOF || num1 < 0)
 			return (EOF);
 
 		if (ch != '-') {
@@ -579,7 +579,7 @@ get_range(bitstr_t *bits, int low, int high, const char * const names[],
 		 * sent as a 0 since there is no offset either.
 		 */
 		ch = get_number(&num3, 0, PPC_NULL, ch, file, ", \t\n");
-		if (ch == EOF || num3 == 0)
+		if (ch == EOF || num3 <= 0)
 			return (EOF);
 	} else {
 		/* no step.  default==1.
