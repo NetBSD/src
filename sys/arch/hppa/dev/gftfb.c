@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.17 2024/08/01 00:20:22 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.18 2024/08/19 10:58:43 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -751,6 +751,10 @@ gftfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_STI;
+		return 0;
+
+	case GCID:
+		*(u_int *)data = STI_DD_EG;
 		return 0;
 
 	/* PCI config read/write passthrough. */
