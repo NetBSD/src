@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.6 2024/08/18 04:06:38 rin Exp $
+# $NetBSD: mi,v 1.7 2024/08/19 15:04:05 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -748,6 +748,7 @@
 ./usr/share/man/html4/acpiec.html		man-sys-htmlman		html
 ./usr/share/man/html4/acpiecdt.html		man-sys-htmlman		html
 ./usr/share/man/html4/acpifan.html		man-sys-htmlman		html
+./usr/share/man/html4/acpihed.html		man-sys-htmlman		html
 ./usr/share/man/html4/acpilid.html		man-sys-htmlman		html
 ./usr/share/man/html4/acpiout.html		man-sys-htmlman		html
 ./usr/share/man/html4/acpipmtr.html		man-sys-htmlman		html
@@ -875,6 +876,7 @@
 ./usr/share/man/html4/amr.html			man-sys-htmlman		html
 ./usr/share/man/html4/ams.html			man-sys-htmlman		html
 ./usr/share/man/html4/an.html			man-sys-htmlman		html
+./usr/share/man/html4/apei.html			man-sys-htmlman		html
 ./usr/share/man/html4/aps.html			man-sys-htmlman		html
 ./usr/share/man/html4/aq.html			man-sys-htmlman		html
 ./usr/share/man/html4/arc/intro.html		man-sys-htmlman		html
