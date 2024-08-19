@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.38 2024/08/19 10:57:32 macallan Exp $	*/
+/*	$NetBSD: sti.c,v 1.39 2024/08/19 16:09:42 skrll Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.38 2024/08/19 10:57:32 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.39 2024/08/19 16:09:42 skrll Exp $");
 
 #include "wsdisplay.h"
 
@@ -1082,7 +1082,7 @@ sti_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 	ret = 0;
 	switch (cmd) {
 	case GCID:
-		*(u_int *) data = rom->rom_dd.dd_grid[0];
+		*(u_int *)data = rom->rom_dd.dd_grid[0];
 		break;
 
 	case WSDISPLAYIO_GMODE:
@@ -1121,7 +1121,6 @@ sti_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_STI;
 		break;
-
 
 	case WSDISPLAYIO_GINFO:
 		wdf = (struct wsdisplay_fbinfo *)data;
