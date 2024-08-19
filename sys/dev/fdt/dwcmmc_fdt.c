@@ -1,4 +1,4 @@
-/* $NetBSD: dwcmmc_fdt.c,v 1.23 2024/02/09 17:16:42 skrll Exp $ */
+/* $NetBSD: dwcmmc_fdt.c,v 1.24 2024/08/19 07:35:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.23 2024/02/09 17:16:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.24 2024/08/19 07:35:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -74,6 +74,7 @@ static const struct dwcmmc_fdt_config dwmmc_default_config = {
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "rockchip,rk3288-dw-mshc",	.data = &dwcmmc_rk3288_config },
 	{ .compat = "snps,dw-mshc",		.data = &dwmmc_default_config },
+	{ .compat = "starfive,jh7110-mmc",	.data = &dwmmc_default_config },
 	DEVICE_COMPAT_EOL
 };
 
