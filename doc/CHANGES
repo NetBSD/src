@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3077 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3078 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -465,6 +465,19 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	awge(4): MP improvements [skrll 20240810]
 	mk: Add a way to build GCC without the isl library (NOGCCISL).
 		[mrg 20240810]
+	alpha: Switch to binutils 2.42.  [rin 20240813]
+	sh3: Switch to binutils 2.42.  [rin 20240813]
+	riscv: Initial support for Allwinner D1 devices, from
+		Rui-Xiang Guo.  [skrll 20240813]
+	libc: New C11 functions mbrtoc16, mbrtoc32, c16rtomb, c32rtomb.
+		[riastradh 20240815]
+	libc: New C23 functions c8rtomb(3) and mbrtoc8(3).
+		[riastradh 20240815]
+	libc: Make getentropy(3) visible to POSIX.1-2024
+		applications.  [riastradh 20240815]
+	rumphijack(3): Support flock(2) (from k-goda at IIJ)
+		[ozaki-r 20240816]
 	awk(1): Import 20240817 [christos 20240817]
 	ntp: Import ntp 4.2.8p18. [christos 2020818]
-
+	riscv: Add a clock driver for the JH7110 SoC found in the
+		StarFive VisionFive 2.  [skrll 20240819]
