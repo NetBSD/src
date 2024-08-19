@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.c,v 1.2 2024/08/18 20:47:14 christos Exp $	*/
+/*	$NetBSD: assertions.c,v 1.3 2024/08/19 07:28:22 martin Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -93,8 +93,6 @@ isc_assertion_typetotext(isc_assertiontype_t type) {
 	case isc_assertiontype_invariant:
 		result = "INVARIANT";
 		break;
-	default:
-		result = NULL;
 	}
 	return (result);
 }
