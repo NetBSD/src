@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.650 2024/08/18 15:21:09 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.651 2024/08/19 04:47:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.650 2024/08/18 15:21:09 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.651 2024/08/19 04:47:50 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -55,7 +55,6 @@ typedef struct integer_constraints {
 	int64_t		smax;	/* signed maximum */
 	uint64_t	umin;	/* unsigned minimum */
 	uint64_t	umax;	/* unsigned maximum */
-	uint64_t	bset;	/* bits that are definitely set */
 	uint64_t	bclr;	/* bits that are definitely clear */
 } integer_constraints;
 
@@ -119,14 +118,12 @@ ic_any(const type_t *tp)
 		c.smax = INT64_MAX;
 		c.umin = 0;
 		c.umax = vbits;
-		c.bset = 0;
 		c.bclr = ~c.umax;
 	} else {
 		c.smin = (int64_t)-1 - (int64_t)(vbits >> 1);
 		c.smax = (int64_t)(vbits >> 1);
 		c.umin = 0;
 		c.umax = UINT64_MAX;
-		c.bset = 0;
 		c.bclr = 0;
 	}
 	return c;
@@ -144,7 +141,6 @@ ic_con(const type_t *tp, const val_t *v)
 	c.smax = si;
 	c.umin = ui;
 	c.umax = ui;
-	c.bset = ui;
 	c.bclr = ~ui;
 	return c;
 }
@@ -173,7 +169,6 @@ ic_bitand(integer_constraints a, integer_constraints b)
 	c.smax = INT64_MAX;
 	c.umin = 0;
 	c.umax = ~(a.bclr | b.bclr);
-	c.bset = a.bset & b.bset;
 	c.bclr = a.bclr | b.bclr;
 	return c;
 }
@@ -187,7 +182,6 @@ ic_bitor(integer_constraints a, integer_constraints b)
 	c.smax = INT64_MAX;
 	c.umin = 0;
 	c.umax = ~(a.bclr & b.bclr);
-	c.bset = a.bset | b.bset;
 	c.bclr = a.bclr & b.bclr;
 	return c;
 }
@@ -204,7 +198,6 @@ ic_mod(const type_t *tp, integer_constraints a, integer_constraints b)
 	c.smax = INT64_MAX;
 	c.umin = 0;
 	c.umax = b.umax - 1;
-	c.bset = 0;
 	c.bclr = ~u64_fill_right(c.umax);
 	return c;
 }
@@ -221,7 +214,6 @@ ic_div(const type_t *tp, integer_constraints a, integer_constraints b)
 	c.smax = INT64_MAX;
 	c.umin = a.umin / b.umax;
 	c.umax = a.umax / b.umin;
-	c.bset = 0;
 	c.bclr = ~u64_fill_right(c.umax);
 	return c;
 }
@@ -246,7 +238,6 @@ ic_shl(const type_t *tp, integer_constraints a, integer_constraints b)
 	c.smax = INT64_MAX;
 	c.umin = 0;
 	c.umax = UINT64_MAX;
-	c.bset = a.bset << amount;
 	c.bclr = a.bclr << amount | (((uint64_t)1 << amount) - 1);
 	return c;
 }
@@ -271,7 +262,6 @@ ic_shr(const type_t *tp, integer_constraints a, integer_constraints b)
 	c.smax = INT64_MAX;
 	c.umin = 0;
 	c.umax = UINT64_MAX;
-	c.bset = a.bset >> amount;
 	c.bclr = a.bclr >> amount | ~(~(uint64_t)0 >> amount);
 	return c;
 }
@@ -285,7 +275,6 @@ ic_cond(integer_constraints a, integer_constraints b)
 	c.smax = a.smax > b.smax ? a.smax : b.smax;
 	c.umin = a.umin < b.umin ? a.umin : b.umin;
 	c.umax = a.umax > b.umax ? a.umax : b.umax;
-	c.bset = a.bset | b.bset;
 	c.bclr = a.bclr & b.bclr;
 	return c;
 }
