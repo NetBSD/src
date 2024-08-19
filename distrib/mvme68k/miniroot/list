@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.24 2015/04/22 19:25:18 christos Exp $
+#	$NetBSD: list,v 1.25 2024/08/19 16:03:59 christos Exp $
 
 # mvme68k's extras
 PROG	sbin/disklabel
@@ -17,7 +17,7 @@ PROG	usr/bin/less usr/bin/more
 # crunchgen source directory specials
 SPECIAL	less	srcdir external/bsd/less/bin/less
 SPECIAL	vi	srcdir external/bsd/nvi/usr.bin/nvi
-SPECIAL	awk	srcdir external/historical/nawk/bin
+SPECIAL	awk	srcdir external/historical/nawk/bin/awk
 
 # Minimize use of MFS
 SYMLINK	/tmp	var/tmp
