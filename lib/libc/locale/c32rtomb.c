@@ -1,4 +1,4 @@
-/*	$NetBSD: c32rtomb.c,v 1.3 2024/08/17 21:24:53 riastradh Exp $	*/
+/*	$NetBSD: c32rtomb.c,v 1.4 2024/08/19 16:22:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: c32rtomb.c,v 1.3 2024/08/17 21:24:53 riastradh Exp $");
+__RCSID("$NetBSD: c32rtomb.c,v 1.4 2024/08/19 16:22:10 riastradh Exp $");
 
 #include "namespace.h"
 
@@ -89,18 +89,35 @@ size_t
 c32rtomb_l(char *restrict s, char32_t c32, mbstate_t *restrict ps,
     locale_t loc)
 {
-	char buf[MB_LEN_MAX];
+	static mbstate_t psbuf;
 	struct _citrus_iconv *iconv = NULL;
-	char srcbuf[4];
+	char buf[2*MB_LEN_MAX];	/* [shift from init, wc] [shift to init] */
+	char utf32le[4];
 	const char *src;
 	char *dst;
-	size_t srcleft, dstleft, inval, len;
+	size_t srcleft, dstleft, inval;
+	mbstate_t mbrtowcstate = {0};
+	wchar_t wc;
+	int wlen;
+	size_t len;
 	int error, errno_save;
 
 	/*
 	 * Save errno in case _citrus_iconv_* clobbers it.
 	 */
 	errno_save = errno;
+
+	/*
+	 * `If ps is a null pointer, each function uses its own
+	 *  internal mbstate_t object instead, which is initialized at
+	 *  program startup to the initial conversion state; the
+	 *  functions are not required to avoid data races with other
+	 *  calls to the same function in this case.  The
+	 *  implementation behaves as if no library function calls
+	 *  these functions with a null pointer for ps.'
+	 */
+	if (ps == NULL)
+		ps = &psbuf;
 
 	/*
 	 * `If s is a null pointer, the c32rtomb function is equivalent
@@ -116,7 +133,10 @@ c32rtomb_l(char *restrict s, char32_t c32, mbstate_t *restrict ps,
 	}
 
 	/*
-	 * Reject surrogates.
+	 * Reject surrogate code points.  We only deal in scalar
+	 * values.
+	 *
+	 * XXX Is this necessary?  Won't iconv take care of it for us?
 	 */
 	if (c32 >= 0xd800 && c32 <= 0xdfff) {
 		errno = EILSEQ;
@@ -136,16 +156,14 @@ c32rtomb_l(char *restrict s, char32_t c32, mbstate_t *restrict ps,
 	}
 
 	/*
-	 * Convert from UTF-32LE in our buffer.
+	 * Convert from UTF-32LE to a multibyte sequence.
 	 */
-	le32enc(srcbuf, c32);
-	src = srcbuf;
-	srcleft = sizeof(srcbuf);
-	dst = s;
+	le32enc(utf32le, c32);
+	src = utf32le;
+	srcleft = sizeof(utf32le);
+	dst = buf;
 	dstleft = MB_CUR_MAX;
-	error = _citrus_iconv_convert(iconv,
-	    &src, &srcleft,
-	    &dst, &dstleft,
+	error = _citrus_iconv_convert(iconv, &src, &srcleft, &dst, &dstleft,
 	    _CITRUS_ICONV_F_HIDE_INVALID, &inval);
 	if (error) {		/* can't be incomplete, must be error */
 		errno = error;
@@ -166,6 +184,36 @@ c32rtomb_l(char *restrict s, char32_t c32, mbstate_t *restrict ps,
 		len = (size_t)-1;
 		goto out;
 	}
+
+	/*
+	 * Now get a wide character out of the buffer.  We don't care
+	 * how much it consumes other than for a diagnostic assertion.
+	 * It had better return exactly one wide character, because we
+	 * are only allowed to encode one wide character's worth of
+	 * multibyte output (possibly including a shift sequence).
+	 *
+	 * XXX What about combining characters?
+	 */
+	wlen = mbrtowc_l(&wc, buf, len, &mbrtowcstate, loc);
+	switch (wlen) {
+	case -1:		/* error, with errno set */
+		goto out;
+	case 0:			/* decoded NUL */
+		wc = 0;		/* paranoia */
+		break;
+	default:		/* decoded wc */
+		_DIAGASSERT(wlen > 0);
+		_DIAGASSERT((size_t)wlen <= len);
+	}
+
+	/*
+	 * Now put the wide character out, using the caller's
+	 * conversion state so that we don't output unnecessary shift
+	 * sequences.
+	 */
+	len = wcrtomb_l(s, wc, ps, loc);
+	if (len == (size_t)-1)	/* error, with errno set */
+		goto out;
 
 	/*
 	 * Make sure we preserve errno on success.
