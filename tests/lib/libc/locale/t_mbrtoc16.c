@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mbrtoc16.c,v 1.1 2024/08/15 14:16:34 riastradh Exp $	*/
+/*	$NetBSD: t_mbrtoc16.c,v 1.2 2024/08/19 16:24:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002 Tim J. Robbins
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mbrtoc16.c,v 1.1 2024/08/15 14:16:34 riastradh Exp $");
+__RCSID("$NetBSD: t_mbrtoc16.c,v 1.2 2024/08/19 16:24:05 riastradh Exp $");
 
 #include <errno.h>
 #include <inttypes.h>
@@ -113,7 +113,141 @@ ATF_TC_BODY(mbrtoc16_c_locale_test, tc)
 	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "C", 1, &s)), 1, "n=%zu", n);
 	ATF_CHECK_EQ_MSG(c16, L'C', "c16=U+%"PRIx16" L'C'=U+%"PRIx16,
 	    (uint16_t)c16, (uint16_t)L'C');
+}
 
+ATF_TC_WITHOUT_HEAD(mbrtoc16_iso2022jp_locale_test);
+ATF_TC_BODY(mbrtoc16_iso2022jp_locale_test, tc)
+{
+	size_t n;
+
+	require_lc_ctype("ja_JP.ISO-2022-JP");
+
+	/* Null wide character, internal state. */
+	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "", 1, NULL)), 0, "n=%zu", n);
+	ATF_CHECK_EQ_MSG(c16, 0, "c16=U+%04"PRIx16, (uint16_t)c16);
+
+	/* Null wide character. */
+	memset(&s, 0, sizeof(s));
+	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "", 1, &s)), 0, "n=%zu", n);
+	ATF_CHECK_EQ_MSG(c16, 0, "c16=U+%04"PRIx16, (uint16_t)c16);
+
+	/* Latin letter A, internal state. */
+	ATF_CHECK_EQ_MSG((n = mbrtoc16(NULL, 0, 0, NULL)), 0, "n=%zu", n);
+	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "A", 1, NULL)), 1, "n=%zu", n);
+	ATF_CHECK_EQ_MSG(c16, L'A', "c16=U+%04"PRIx16" L'A'=U+%04"PRIx16,
+	    (uint16_t)c16, (uint16_t)L'A');
+
+	/* Latin letter A. */
+	memset(&s, 0, sizeof(s));
+	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "A", 1, &s)), 1, "n=%zu", n);
+	ATF_CHECK_EQ_MSG(c16, L'A', "c16=U+%04"PRIx16" L'A'=U+%04"PRIx16,
+	    (uint16_t)c16, (uint16_t)L'A');
+
+	/* Incomplete character sequence. */
+	c16 = L'z';
+	memset(&s, 0, sizeof(s));
+	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "", 0, &s)), (size_t)-2,
+	    "n=%zu", n);
+	ATF_CHECK_EQ_MSG(c16, L'z', "c16=U+%04"PRIx16" L'z'=U+%04"PRIx16,
+	    (uint16_t)c16, (uint16_t)L'z');
+
+	/* Check that mbrtoc16() doesn't access the buffer when n == 0. */
+	c16 = L'z';
+	memset(&s, 0, sizeof(s));
+	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "", 0, &s)), (size_t)-2,
+	    "n=%zu", n);
+	ATF_CHECK_EQ_MSG(c16, L'z', "c16=U+%04"PRIx16" L'z'=U+%04"PRIx16,
+	    (uint16_t)c16, (uint16_t)L'z');
+
+	/* Check that mbrtoc16() doesn't read ahead too aggressively. */
+	memset(&s, 0, sizeof(s));
+	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "AB", 2, &s)), 1, "n=%zu", n);
+	ATF_CHECK_EQ_MSG(c16, L'A', "c16=U+%04"PRIx16" L'A'=U+%04"PRIx16,
+	    (uint16_t)c16, (uint16_t)L'A');
+	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "C", 1, &s)), 1, "n=%zu", n);
+	ATF_CHECK_EQ_MSG(c16, L'C', "c16=U+%04"PRIx16" L'C'=U+%04"PRIx16,
+	    (uint16_t)c16, (uint16_t)L'C');
+
+	/* Incomplete character sequence (shift sequence only). */
+	memset(&s, 0, sizeof(s));
+	c16 = 0;
+	atf_tc_expect_fail("PR lib/58618:"
+	    " mbrtocN(3) fails to keep shift state");
+	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "\x1b(J", 3, &s)), (size_t)-2,
+	    "n=%zu", n);
+	atf_tc_expect_pass();
+	ATF_CHECK_EQ_MSG(c16, 0, "c16=U+%04"PRIx16, (uint16_t)c16);
+
+	/* Same as above, but complete (U+00A5 YEN SIGN). */
+	memset(&s, 0, sizeof(s));
+	c16 = 0;
+	atf_tc_expect_fail("PR lib/58618:"
+	    " mbrtocN(3) fails to keep shift state");
+	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "\x1b(J\x5c", 4, &s)), 4,
+	    "n=%zu", n);
+	ATF_CHECK_EQ_MSG(c16, 0xa5, "c16=U+%04"PRIx16, (uint16_t)c16);
+	atf_tc_expect_pass();
+
+	/* Test restarting behaviour. */
+	memset(&s, 0, sizeof(s));
+	c16 = 0;
+	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "\x1b(", 2, &s)), (size_t)-2,
+	    "n=%zu", n);
+	ATF_CHECK_EQ_MSG(c16, 0, "c16=U+%04"PRIx16, (uint16_t)c16);
+	atf_tc_expect_fail("PR lib/58618:"
+	    " mbrtocN(3) fails to keep shift state");
+	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "J\x5c", 2, &s)), 2, "n=%zu", n);
+	ATF_CHECK_EQ_MSG(c16, 0xa5, "c16=U+%04"PRIx16, (uint16_t)c16);
+	atf_tc_expect_pass();
+
+	/*
+	 * Test shift sequence state in various increments:
+	 * 1. U+0042 LATIN CAPITAL LETTER A
+	 * 2. (shift ISO/IEC 646:JP) U+00A5 YEN SIGN
+	 * 3. U+00A5 YEN SIGN
+	 * 4. (shift JIS X 0208) U+30A2 KATAKANA LETTER A
+	 * 5. U+30A2 KATAKANA LETTER A
+	 * 6. (shift to initial state) U+0000 NUL
+	 */
+	memset(&s, 0, sizeof(s));
+	c16 = 0;
+	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "A\x1b(J", 4, &s)), 1,
+	    "n=%zu", n);
+	ATF_CHECK_EQ_MSG(c16, L'A', "c16=U+%04"PRIx16, (uint16_t)c16);
+	c16 = 0;
+	atf_tc_expect_fail("PR lib/58618:"
+	    " mbrtocN(3) fails to keep shift state");
+	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "\x1b(J", 3, &s)), (size_t)-2,
+	    "n=%zu", n);
+	ATF_CHECK_EQ_MSG(c16, 0, "c16=U+%04"PRIx16, (uint16_t)c16);
+	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "\x5c\x5c", 2, &s)), 1,
+	    "n=%zu", n);
+	ATF_CHECK_EQ_MSG(c16, 0x00a5, "c16=U+%04"PRIx16, (uint16_t)c16);
+	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "\x5c\x1b$", 3, &s)), 1,
+	    "n=%zu", n);
+	ATF_CHECK_EQ_MSG(c16, 0x00a5, "c16=U+%04"PRIx16, (uint16_t)c16);
+	c16 = 0x1234;
+	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "\x1b", 1, &s)), (size_t)-2,
+	    "n=%zu", n);
+	ATF_CHECK_EQ_MSG(c16, 0x1234, "c16=U+%04"PRIx16, (uint16_t)c16);
+	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "$B\x25\x22", 4, &s)), 4,
+	    "n=%zu", n);
+	ATF_CHECK_EQ_MSG(c16, 0x30a2, "c16=U+%04"PRIx16, (uint16_t)c16);
+	c16 = 0;
+	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "\x25", 1, &s)), (size_t)-2,
+	    "n=%zu", n);
+	ATF_CHECK_EQ_MSG(c16, 0, "c16=U+%04"PRIx16, (uint16_t)c16);
+	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "\x22\x1b(B\x00", 5, &s)), 1,
+	    "n=%zu", n);
+	ATF_CHECK_EQ_MSG(c16, 0x30a2, "c16=U+%04"PRIx16, (uint16_t)c16);
+	atf_tc_expect_pass();
+	c16 = 0;
+	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "\x1b(", 2, &s)), (size_t)-2,
+	    "n=%zu", n);
+	ATF_CHECK_EQ_MSG(c16, 0, "c16=U+%04"PRIx16, (uint16_t)c16);
+	c16 = 42;
+	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "B\x00", 2, &s)), 0, "n=%zu", n);
+	ATF_CHECK_EQ_MSG(c16, 0, "c16=U+%04"PRIx16, (uint16_t)c16);
 }
 
 ATF_TC_WITHOUT_HEAD(mbrtoc16_iso_8859_1_test);
@@ -233,6 +367,7 @@ ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, mbrtoc16_c_locale_test);
+	ATF_TP_ADD_TC(tp, mbrtoc16_iso2022jp_locale_test);
 	ATF_TP_ADD_TC(tp, mbrtoc16_iso_8859_1_test);
 	ATF_TP_ADD_TC(tp, mbrtoc16_iso_8859_15_test);
 	ATF_TP_ADD_TC(tp, mbrtoc16_utf_8_test);
