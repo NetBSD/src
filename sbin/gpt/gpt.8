@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.82 2024/06/10 09:17:29 kre Exp $
+.\" $NetBSD: gpt.8,v 1.83 2024/08/19 17:15:38 christos Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd July 15, 2023
+.Dd August 19, 2024
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -216,6 +216,8 @@ Linux RAID
 Linux swap
 .It Cm linux-lvm
 Linux LVM
+.It Cm obsd
+OpenBSD data
 .It Cm windows
 Microsoft basic data - NTFS, FAT32 ("msdos"), FAT16, also used for UDF
 .It Cm windows-reserved
@@ -722,8 +724,9 @@ They may be used by
 code in the future.
 .\" ==== uuid ====
 .It Nm Ic uuid Oo Fl a Oc
-.It Nm Ic uuid Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
-Oo Fl L Ar label Oc Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc
+.It Nm Ic uuid Oo Fl b Ar blocknr Oc Oo Fl i Ar index Ar Oc \
+Oo Fl L Ar label Oc Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc \
+Oo Fl U Ar newuuid Oc
 The
 .Ic uuid
 command allows the user to change the UUID of any and all partitions
@@ -732,6 +735,13 @@ It uses the same selection options as the
 .Ic label
 command.
 See above for a description of these options.
+If
+.Ar newuuid
+is not specified, a random UUID value is derived from the timestamp
+.Po see the
+.Fl T
+option
+.Pc .
 If
 .Fl a
 is used, then the header UUID is changed as well.
