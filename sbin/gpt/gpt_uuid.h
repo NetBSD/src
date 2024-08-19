@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.h,v 1.10 2023/09/27 09:44:10 riastradh Exp $	*/
+/*	$NetBSD: gpt_uuid.h,v 1.11 2024/08/19 17:15:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -71,6 +71,7 @@ typedef enum {
 	GPT_TYPE_NETBSD_LFS,
 	GPT_TYPE_NETBSD_RAIDFRAME,
 	GPT_TYPE_NETBSD_SWAP,
+	GPT_TYPE_OPENBSD_DATA,
 	GPT_TYPE_VMWARE_VMKCORE,
 	GPT_TYPE_VMWARE_VMFS,
 	GPT_TYPE_VMWARE_RESERVED

@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/remove.c,v 1.10 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: uuid.c,v 1.1 2019/06/25 04:53:40 jnemeth Exp $");
+__RCSID("$NetBSD: uuid.c,v 1.2 2024/08/19 17:15:38 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -53,7 +53,7 @@ static int cmd_uuid(gpt_t, int, char *[]);
 
 static const char *uuidhelp[] = {
 	"-a",
-	"[-b blocknr] [-i index] [-L label] [-s sectors] [-t type]",
+	"[-b blocknr] [-i index] [-L label] [-s sectors] [-t type] [-U newuuid]",
 };
 
 struct gpt_cmd c_uuid = {
@@ -70,7 +70,10 @@ change_ent(struct gpt_ent *ent, void *v, int backup)
 {
 	static gpt_uuid_t uuidstore;
 
-	if (!backup)
+	if (v != NULL) {
+		memcpy(uuidstore, v, sizeof(uuidstore));
+	}
+	else if (!backup)
 		gpt_uuid_generate(NULL, uuidstore);
 	memmove(ent->ent_guid, uuidstore, sizeof(ent->ent_guid));
 }
@@ -90,20 +93,35 @@ cmd_uuid(gpt_t gpt, int argc, char *argv[])
 {
 	int ch, rc;
 	struct gpt_find find;
+	gpt_uuid_t new_uuid;
+	void *v;
+
+	if (gpt == NULL)
+		return usage();
 
 	memset(&find, 0, sizeof(find));
 	find.msg = "UUID changed";
 
 	/* Get the uuid options */
-	while ((ch = getopt(argc, argv, GPT_FIND)) != -1) {
-		if (gpt == NULL || gpt_add_find(gpt, &find, ch) == -1)
-			return usage();
+	v = NULL;
+	while ((ch = getopt(argc, argv, GPT_FIND "U:")) != -1) {
+		switch (ch) {
+		case 'U':
+			if (gpt_uuid_parse(optarg, new_uuid) == -1)
+				return usage();
+			v = new_uuid;
+			break;
+		default:
+			if (gpt_add_find(gpt, &find, ch) == -1)
+				return usage();
+			break;
+		}
 	}
 
-	if (gpt == NULL || argc != optind)
+	if (argc != optind)
 		return usage();
 
-	rc = gpt_change_ent(gpt, &find, change_ent, NULL);
+	rc = gpt_change_ent(gpt, &find, change_ent, v);
 	if (rc != 0)
 		return rc;
 
