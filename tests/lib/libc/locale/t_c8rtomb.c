@@ -1,4 +1,4 @@
-/*	$NetBSD: t_c8rtomb.c,v 1.5 2024/08/18 05:00:20 riastradh Exp $	*/
+/*	$NetBSD: t_c8rtomb.c,v 1.6 2024/08/19 16:21:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002 Tim J. Robbins
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_c8rtomb.c,v 1.5 2024/08/18 05:00:20 riastradh Exp $");
+__RCSID("$NetBSD: t_c8rtomb.c,v 1.6 2024/08/19 16:21:47 riastradh Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -216,7 +216,7 @@ ATF_TC_BODY(c8rtomb_iso2022jp_locale_test, tc)
 		(unsigned char)buf[3] == 'J' &&
 		(unsigned char)buf[4] == 0x5c && /* YEN SIGN */
 		(unsigned char)buf[5] == 0x5c && /* YEN SIGN */
-		(unsigned char)buf[6] == 0x1b && /* shift JIS X 0208-1978 */
+		(unsigned char)buf[6] == 0x1b && /* shift JIS X 0208 */
 		(unsigned char)buf[7] == '$' &&
 		(unsigned char)buf[8] == 'B' &&
 		(unsigned char)buf[9] == 0x25 && /* KATAKANA LETTER A */
