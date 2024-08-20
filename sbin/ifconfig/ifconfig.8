@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.129 2024/04/08 20:28:34 andvar Exp $
+.\"	$NetBSD: ifconfig.8,v 1.130 2024/08/20 08:18:24 ozaki-r Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd April 8, 2024
+.Dd August 20, 2024
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -870,8 +870,8 @@ mutually exclusive with all other flags and commands.
 .Pp
 The
 .Fl v
-flag prints statistics on packets sent and received on the given
-interface.
+flag prints additional information like statistics on packets sent and received
+on the interface and the link state of the interface.
 If
 .Fl h
 is used in conjunction with
