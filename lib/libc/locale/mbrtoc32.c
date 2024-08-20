@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrtoc32.c,v 1.7 2024/08/18 20:06:05 rillig Exp $	*/
+/*	$NetBSD: mbrtoc32.c,v 1.8 2024/08/20 17:43:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mbrtoc32.c,v 1.7 2024/08/18 20:06:05 rillig Exp $");
+__RCSID("$NetBSD: mbrtoc32.c,v 1.8 2024/08/20 17:43:09 riastradh Exp $");
 
 #include "namespace.h"
 
@@ -102,10 +102,17 @@ mbrtoc32_l(char32_t *restrict pc32, const char *restrict s, size_t n,
     mbstate_t *restrict ps, locale_t restrict loc)
 {
 	static mbstate_t psbuf;
-	struct mbrtoc32state *S;
 	struct _citrus_iconv *iconv = NULL;
-	size_t len;
+	wchar_t wc;
+	mbstate_t wcrtombstate = {0};
+	char mb[MB_LEN_MAX];
+	int mblen;
+	char utf32le[MB_LEN_MAX];
+	const char *src;
+	char *dst;
+	size_t srcleft, dstleft, inval;
 	char32_t c32;
+	size_t len;
 	int error, errno_save;
 
 	/*
@@ -141,11 +148,6 @@ mbrtoc32_l(char32_t *restrict pc32, const char *restrict s, size_t n,
 	}
 
 	/*
-	 * Get the private conversion state.
-	 */
-	S = (struct mbrtoc32state *)(void *)ps;
-
-	/*
 	 * If input length is zero, the result is always incomplete by
 	 * definition.  Don't bother with iconv -- we'd have to
 	 * disentangle truncated outputs.
@@ -154,12 +156,6 @@ mbrtoc32_l(char32_t *restrict pc32, const char *restrict s, size_t n,
 		len = (size_t)-2;
 		goto out;
 	}
-
-	/*
-	 * Reset the destination buffer if this is the initial state.
-	 */
-	if (S->dstleft == 0)
-		S->dstleft = sizeof(S->dstbuf);
 
 	/*
 	 * Open an iconv handle to convert locale-dependent multibyte
@@ -173,47 +169,55 @@ mbrtoc32_l(char32_t *restrict pc32, const char *restrict s, size_t n,
 	}
 
 	/*
-	 * Try to iconv a minimal prefix.  If we succeed, set len to
-	 * the length consumed and goto ok.
+	 * Consume the next locale-dependent wide character.  If no
+	 * wide character can be obtained, stop here.
 	 */
-	for (len = 0; len < MIN(n, sizeof(S->srcbuf) - S->nsrc);) {
-		const char *src = S->srcbuf;
-		size_t srcleft;
-		char *dst = S->dstbuf + sizeof(S->dstbuf) - S->dstleft;
-		size_t inval;
-
-		S->srcbuf[S->nsrc++] = s[len++];
-		srcleft = S->nsrc;
-
-		error = _citrus_iconv_convert(iconv,
-		    &src, &srcleft,
-		    &dst, &S->dstleft,
-		    _CITRUS_ICONV_F_HIDE_INVALID, &inval);
-		if (error != EINVAL) {
-			if (error == 0)
-				break;
-			errno = error;
-			len = (size_t)-1;
-			goto out;
-		}
+	len = mbrtowc_l(&wc, s, n, ps, loc);
+	switch (len) {
+	case 0:			/* NUL */
+		if (pc32)
+			*pc32 = 0;
+		goto out;
+	case (size_t)-2:	/* still incomplete after n bytes */
+	case (size_t)-1:	/* error */
+		goto out;
+	default:		/* consumed len bytes of input */
+		break;
 	}
 
 	/*
-	 * If it is still incomplete after trying the whole input
-	 * buffer, return (size_t)-2 and let the caller try again.
+	 * We consumed a wide character from the input.  Convert it to
+	 * a multibyte sequence _in the initial conversion state_, so
+	 * we can pass that through iconv to get a Unicode scalar
+	 * value.
 	 */
-	if (error) {
-		len = (size_t)-2;
+	if ((mblen = wcrtomb_l(mb, wc, &wcrtombstate, loc)) == -1) {
+		len = (size_t)-1;
 		goto out;
 	}
 
 	/*
-	 * Successfully converted a minimal byte sequence, which should
-	 * produce exactly one UTF-32 code unit, encoded in
-	 * little-endian, representing a code point.  Get the code
+	 * Convert the multibyte sequence to UTF-16LE.
+	 */
+	src = mb;
+	srcleft = (size_t)mblen;
+	dst = utf32le;
+	dstleft = sizeof(utf32le);
+	error = _citrus_iconv_convert(iconv, &src, &srcleft, &dst, &dstleft,
+	    _CITRUS_ICONV_F_HIDE_INVALID, &inval);
+	if (error) {
+		errno = error;
+		len = (size_t)-1;
+		goto out;
+	}
+
+	/*
+	 * Successfully converted the multibyte sequence to UTF-16LE,
+	 * which should produce exactly one UTF-32 code unit, encoded
+	 * in little-endian, representing a code point.  Get the code
 	 * point.
 	 */
-	c32 = le32dec(S->dstbuf);
+	c32 = le32dec(utf32le);
 
 	/*
 	 * Reject surrogate code points.  We only deal in scalar
@@ -245,11 +249,7 @@ mbrtoc32_l(char32_t *restrict pc32, const char *restrict s, size_t n,
 	 */
 	errno = errno_save;
 
-out:	if (len != (size_t)-2) {
-		S->nsrc = 0;
-		memset(S, 0, sizeof(*S)); /* paranoia */
-	}
-	errno_save = errno;
+out:	errno_save = errno;
 	_citrus_iconv_close(iconv);
 	errno = errno_save;
 	return len;

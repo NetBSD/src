@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mbrtoc16.c,v 1.2 2024/08/19 16:24:05 riastradh Exp $	*/
+/*	$NetBSD: t_mbrtoc16.c,v 1.3 2024/08/20 17:43:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002 Tim J. Robbins
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mbrtoc16.c,v 1.2 2024/08/19 16:24:05 riastradh Exp $");
+__RCSID("$NetBSD: t_mbrtoc16.c,v 1.3 2024/08/20 17:43:09 riastradh Exp $");
 
 #include <errno.h>
 #include <inttypes.h>
@@ -171,22 +171,16 @@ ATF_TC_BODY(mbrtoc16_iso2022jp_locale_test, tc)
 	/* Incomplete character sequence (shift sequence only). */
 	memset(&s, 0, sizeof(s));
 	c16 = 0;
-	atf_tc_expect_fail("PR lib/58618:"
-	    " mbrtocN(3) fails to keep shift state");
 	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "\x1b(J", 3, &s)), (size_t)-2,
 	    "n=%zu", n);
-	atf_tc_expect_pass();
 	ATF_CHECK_EQ_MSG(c16, 0, "c16=U+%04"PRIx16, (uint16_t)c16);
 
 	/* Same as above, but complete (U+00A5 YEN SIGN). */
 	memset(&s, 0, sizeof(s));
 	c16 = 0;
-	atf_tc_expect_fail("PR lib/58618:"
-	    " mbrtocN(3) fails to keep shift state");
 	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "\x1b(J\x5c", 4, &s)), 4,
 	    "n=%zu", n);
 	ATF_CHECK_EQ_MSG(c16, 0xa5, "c16=U+%04"PRIx16, (uint16_t)c16);
-	atf_tc_expect_pass();
 
 	/* Test restarting behaviour. */
 	memset(&s, 0, sizeof(s));
@@ -194,11 +188,8 @@ ATF_TC_BODY(mbrtoc16_iso2022jp_locale_test, tc)
 	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "\x1b(", 2, &s)), (size_t)-2,
 	    "n=%zu", n);
 	ATF_CHECK_EQ_MSG(c16, 0, "c16=U+%04"PRIx16, (uint16_t)c16);
-	atf_tc_expect_fail("PR lib/58618:"
-	    " mbrtocN(3) fails to keep shift state");
 	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "J\x5c", 2, &s)), 2, "n=%zu", n);
 	ATF_CHECK_EQ_MSG(c16, 0xa5, "c16=U+%04"PRIx16, (uint16_t)c16);
-	atf_tc_expect_pass();
 
 	/*
 	 * Test shift sequence state in various increments:
@@ -215,8 +206,6 @@ ATF_TC_BODY(mbrtoc16_iso2022jp_locale_test, tc)
 	    "n=%zu", n);
 	ATF_CHECK_EQ_MSG(c16, L'A', "c16=U+%04"PRIx16, (uint16_t)c16);
 	c16 = 0;
-	atf_tc_expect_fail("PR lib/58618:"
-	    " mbrtocN(3) fails to keep shift state");
 	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "\x1b(J", 3, &s)), (size_t)-2,
 	    "n=%zu", n);
 	ATF_CHECK_EQ_MSG(c16, 0, "c16=U+%04"PRIx16, (uint16_t)c16);
@@ -240,7 +229,6 @@ ATF_TC_BODY(mbrtoc16_iso2022jp_locale_test, tc)
 	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "\x22\x1b(B\x00", 5, &s)), 1,
 	    "n=%zu", n);
 	ATF_CHECK_EQ_MSG(c16, 0x30a2, "c16=U+%04"PRIx16, (uint16_t)c16);
-	atf_tc_expect_pass();
 	c16 = 0;
 	ATF_CHECK_EQ_MSG((n = mbrtoc16(&c16, "\x1b(", 2, &s)), (size_t)-2,
 	    "n=%zu", n);

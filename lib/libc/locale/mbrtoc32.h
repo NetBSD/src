@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrtoc32.h,v 1.1 2024/08/15 14:16:33 riastradh Exp $	*/
+/*	$NetBSD: mbrtoc32.h,v 1.2 2024/08/20 17:43:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -29,14 +29,12 @@
 #ifndef	LIB_LIBC_LOCALE_MBRTOC32_H_
 #define	LIB_LIBC_LOCALE_MBRTOC32_H_
 
-#include <limits.h>
-#include <uchar.h>
-
 struct mbrtoc32state {
-	char			srcbuf[MB_LEN_MAX];
-	size_t			nsrc;
-	char			dstbuf[4];
-	size_t			dstleft;
+	/*
+	 * XXX This needs to match the maximum size of any conversion
+	 * state actually used by mbrtowc_l.
+	 */
+	char		dummy;
 };
 
 #endif	/* LIB_LIBC_LOCALE_MBRTOC32_H_ */
