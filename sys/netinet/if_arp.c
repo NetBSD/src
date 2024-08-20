@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.313 2024/06/29 12:59:08 riastradh Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.314 2024/08/20 08:21:04 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.313 2024/06/29 12:59:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.314 2024/08/20 08:21:04 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -924,8 +924,20 @@ again:
 	 */
 	if (in_nullhost(isaddr))
 		ARP_STATINC(ARP_STAT_RCVZEROSPA);
-	else if (in_hosteq(isaddr, myaddr))
+	else if (in_hosteq(isaddr, myaddr)) {
 		ARP_STATINC(ARP_STAT_RCVLOCALSPA);
+		/* This is the original behavior prior to supporting IPv4 DAD */
+		if (!ip_dad_enabled()) {
+			char llabuf[LLA_ADDRSTRLEN];
+			log(LOG_ERR,
+			    "duplicate IP address %s sent from link address %s\n",
+			    IN_PRINT(ipbuf, &isaddr),
+			    lla_snprintf(llabuf, sizeof(llabuf), ar_sha(ah),
+			                 ah->ar_hln));
+			itaddr = myaddr;
+			goto reply;
+		}
+	}
 
 	if (in_nullhost(itaddr))
 		ARP_STATINC(ARP_STAT_RCVZEROTPA);
@@ -941,7 +953,7 @@ again:
 	 * AND our address is either tentative or duplicated
 	 * If it was unicast then it's a valid Unicast Poll from RFC 1122.
 	 */
-	if (do_dad &&
+	if (ip_dad_enabled() && do_dad &&
 	    (in_hosteq(isaddr, myaddr) ||
 	    (in_nullhost(isaddr) && in_hosteq(itaddr, myaddr) &&
 	     m->m_flags & M_BCAST &&
