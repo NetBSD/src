@@ -1,4 +1,4 @@
-.\"	$NetBSD: c32rtomb.3,v 1.10 2024/08/20 20:04:45 riastradh Exp $
+.\"	$NetBSD: c32rtomb.3,v 1.11 2024/08/20 20:36:30 riastradh Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,9 +79,17 @@ is an integer either in [0,0xd7ff] or in [0xe000,0x10ffff].
 .Pp
 If
 .Fa s
-is a null pointer, no output is stored, but the effects on
+is a null pointer,
+no output is produced and
 .Fa ps
-and the return value are unchanged.
+is reset to the initial conversion state, as if the call had been
+.Fo c8rtomb
+.Va buf ,
+.Li 0 ,
+.Fa ps
+.Fc
+for some internal buffer
+.Va buf .
 .Pp
 If
 .Fa c32
@@ -138,7 +146,7 @@ for (i = 0; i < __arraycount(c32); i++) {
         assert(len < sizeof(buf) - (s - buf));
         s += len;
 }
-len = c32rtomb(s, L'\e0', &mbs);         /* NUL-terminate */
+len = c32rtomb(s, 0, &mbs);             /* NUL-terminate */
 if (len == (size_t)-1)
         err(1, "c32rtomb");
 assert(len <= sizeof(buf) - (s - buf));
