@@ -1,4 +1,4 @@
-.\"	$NetBSD: c32rtomb.3,v 1.9 2024/08/20 17:14:05 riastradh Exp $
+.\"	$NetBSD: c32rtomb.3,v 1.10 2024/08/20 20:04:45 riastradh Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,8 +50,8 @@
 The
 .Nm
 function converts Unicode scalar values to multibyte characters in the
-current locale, keeping state so it can restart after incremental
-progress.
+current locale, keeping state to remember incremental progress if
+restarted.
 .Pp
 Each call to
 .Nm
@@ -71,9 +71,11 @@ to denote error.
 .Pp
 The input
 .Fa c32
-is a UTF-32 code unit, representing represents a Unicode scalar value,
-i.e., a Unicode code point that is not a surrogate code point \(em in
-other words, an integer either in [0,0xd7ff] or in [0xe000,0x10ffff].
+is a UTF-32 code unit, representing a Unicode scalar value, i.e., a
+Unicode code point that is not a surrogate code point \(em in other
+words,
+.Fa c32
+is an integer either in [0,0xd7ff] or in [0xe000,0x10ffff].
 .Pp
 If
 .Fa s
@@ -83,10 +85,10 @@ and the return value are unchanged.
 .Pp
 If
 .Fa c32
-is null,
+is zero,
 .Nm
 outputs a (possibly empty) shift sequence to restore the initial state
-followed by a null byte and resets
+followed by a NUL byte and resets
 .Fa ps
 to the initial conversion state.
 .Pp
@@ -100,13 +102,8 @@ object with static storage duration, distinct from all other
 .Vt mbstate_t
 objects
 .Po
-including those used by
-.Xr mbrtoc8 3 ,
-.Xr mbrtoc16 3 ,
-.Xr mbrtoc32 3 ,
-.Xr c8rtomb 3 ,
-and
-.Xr c16rtomb 3
+including those used by other functions such as
+.Xr mbrtoc32 3
 .Pc ,
 which is initialized at program startup to the initial conversion
 state.
@@ -147,6 +144,7 @@ if (len == (size_t)-1)
 assert(len <= sizeof(buf) - (s - buf));
 printf("%s\en", buf);
 .Ed
+.Pp
 To avoid a variable-length array, this code uses
 .Dv MB_LEN_MAX ,
 which is a constant upper bound on the locale-dependent
@@ -160,8 +158,8 @@ is not a Unicode scalar value, i.e., it is a surrogate code point in
 the interval [0xd800,0xdfff] or it lies outside the Unicode codespace
 [0,0x10ffff] altogether.
 .It Bq Er EILSEQ
-The Unicode scalar value requested cannot be encoded as a multibyte
-sequence in the current locale.
+The input cannot be encoded as a multibyte sequence in the current
+locale.
 .It Bq Er EIO
 An error occurred in loading the locale's character conversions.
 .El
