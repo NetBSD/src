@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.84 2022/04/09 23:45:02 riastradh Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.85 2024/08/20 08:16:22 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.84 2022/04/09 23:45:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.85 2024/08/20 08:16:22 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -486,6 +486,8 @@ shmif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		ifd = data;
 		if (ifd->ifd_cmd == IFLINKSTR_UNSET) {
 			finibackend(sc);
+			/* Back to the default just in case */
+			ifp->if_link_state = LINK_STATE_UNKNOWN;
 			rv = 0;
 			break;
 		} else if (ifd->ifd_cmd != 0) {
@@ -525,6 +527,7 @@ shmif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		sc->sc_backfile = path;
 		sc->sc_backfilelen = ifd->ifd_len;
 
+		if_link_state_change(ifp, LINK_STATE_UP);
 		break;
 	default:
 		rv = ether_ioctl(ifp, cmd, data);
@@ -601,6 +604,14 @@ shmif_snd(struct ifnet *ifp, struct mbuf *m0)
 
 	bpf_mtap(ifp, m0, BPF_D_OUT);
 
+	/*
+	 * Compare with DOWN to allow UNKNOWN (the default value),
+	 * which is required by some AFT tests using rump servers
+	 * written by C.
+	 */
+	if (ifp->if_link_state == LINK_STATE_DOWN)
+		goto dontsend;
+
 	shmif_lockbus(busmem);
 	KASSERT(busmem->shm_magic == SHMIF_MAGIC);
 	busmem->shm_last = shmif_nextpktoff(busmem, busmem->shm_last);
@@ -621,6 +632,7 @@ shmif_snd(struct ifnet *ifp, struct mbuf *m0)
 	}
 	shmif_unlockbus(busmem);
 
+dontsend:
 	m_freem(m0);
 	if_statinc(ifp, if_opackets);
 
@@ -790,7 +802,14 @@ shmif_rcv(void *arg)
 		 * Test if we want to pass the packet upwards
 		 */
 		eth = mtod(m, struct ether_header *);
-		if (sp.sp_sender == sc->sc_uid) {
+		/*
+		 * Compare with DOWN to allow UNKNOWN (the default value),
+		 * which is required by some AFT tests using rump servers
+		 * written by C.
+		 */
+		if (ifp->if_link_state == LINK_STATE_DOWN) {
+			passup = false;
+		} else if (sp.sp_sender == sc->sc_uid) {
 			passup = false;
 		} else if (memcmp(eth->ether_dhost, CLLADDR(ifp->if_sadl),
 		    ETHER_ADDR_LEN) == 0) {
