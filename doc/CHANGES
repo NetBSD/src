@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3078 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3079 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -478,6 +478,6 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	rumphijack(3): Support flock(2) (from k-goda at IIJ)
 		[ozaki-r 20240816]
 	awk(1): Import 20240817 [christos 20240817]
-	ntp: Import ntp 4.2.8p18. [christos 2020818]
+	ntp: Import ntp 4.2.8p18. [christos 20240818]
 	riscv: Add a clock driver for the JH7110 SoC found in the
 		StarFive VisionFive 2.  [skrll 20240819]
