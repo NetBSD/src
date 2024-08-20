@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.45 2020/09/18 16:33:49 roy Exp $
+#	$NetBSD: t_arp.sh,v 1.46 2024/08/20 08:23:15 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -381,6 +381,35 @@ test_garp_common()
 	else
 		# No GARP packet is sent
 		atf_check -s exit:0 -o not-match:"$pkt" cat ./out
+	fi
+
+	#
+	# GARP on Link up
+	#
+	atf_check -s exit:0 rump.ifconfig shmif0 media none
+	extract_new_packets bus1 > ./out
+	atf_check -s exit:0 rump.ifconfig shmif0 media auto
+
+	atf_check -s exit:0 sleep 1
+	extract_new_packets bus1 > ./out
+
+	if $no_dad; then
+		# A GARP packet is sent for both primary and alias addresses.
+		pkt=$(make_pkt_str_arpreq 10.0.0.3 10.0.0.3)
+		atf_check -s exit:0 -o match:"$pkt" cat ./out
+		pkt=$(make_pkt_str_arpreq 10.0.0.4 10.0.0.4)
+		atf_check -s exit:0 -o match:"$pkt" cat ./out
+	else
+		# No GARP is sent.
+		pkt=$(make_pkt_str_arpreq 10.0.0.3 10.0.0.3)
+		atf_check -s exit:0 -o not-match:"$pkt" cat ./out
+		pkt=$(make_pkt_str_arpreq 10.0.0.4 10.0.0.4)
+		atf_check -s exit:0 -o not-match:"$pkt" cat ./out
+		# DAD packets are sent instead.
+		pkt=$(make_pkt_str_arpreq 10.0.0.3 0.0.0.0)
+		atf_check -s exit:0 -o match:"$pkt" cat ./out
+		pkt=$(make_pkt_str_arpreq 10.0.0.4 0.0.0.0)
+		atf_check -s exit:0 -o match:"$pkt" cat ./out
 	fi
 
 	rump_server_destroy_ifaces
