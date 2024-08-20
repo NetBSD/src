@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1332 2024/08/15 21:19:45 riastradh Exp $
+# $NetBSD: mi,v 1.1333 2024/08/20 08:20:19 ozaki-r Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4337,6 +4337,10 @@
 ./usr/tests/net/if_pppoe/Kyuafile			tests-net-tests		atf,rump,kyua
 ./usr/tests/net/if_pppoe/t_pppoe			tests-net-tests		atf,rump
 ./usr/tests/net/if_pppoe/t_pppoe_unnumbered		tests-net-tests		atf,rump
+./usr/tests/net/if_shmif				tests-net-tests		compattestfile,atf
+./usr/tests/net/if_shmif/Atffile			tests-net-tests		atf,rump
+./usr/tests/net/if_shmif/Kyuafile			tests-net-tests		atf,rump,kyua
+./usr/tests/net/if_shmif/t_shmif			tests-net-tests		atf,rump
 ./usr/tests/net/if_tap					tests-net-tests		compattestfile,atf
 ./usr/tests/net/if_tap/Atffile				tests-net-tests		atf,rump
 ./usr/tests/net/if_tap/Kyuafile				tests-net-tests		atf,rump,kyua
