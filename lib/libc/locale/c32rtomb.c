@@ -1,4 +1,4 @@
-/*	$NetBSD: c32rtomb.c,v 1.4 2024/08/19 16:22:10 riastradh Exp $	*/
+/*	$NetBSD: c32rtomb.c,v 1.5 2024/08/20 17:43:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: c32rtomb.c,v 1.4 2024/08/19 16:22:10 riastradh Exp $");
+__RCSID("$NetBSD: c32rtomb.c,v 1.5 2024/08/20 17:43:41 riastradh Exp $");
 
 #include "namespace.h"
 
@@ -98,7 +98,7 @@ c32rtomb_l(char *restrict s, char32_t c32, mbstate_t *restrict ps,
 	size_t srcleft, dstleft, inval;
 	mbstate_t mbrtowcstate = {0};
 	wchar_t wc;
-	int wlen;
+	size_t wc_len;
 	size_t len;
 	int error, errno_save;
 
@@ -194,16 +194,17 @@ c32rtomb_l(char *restrict s, char32_t c32, mbstate_t *restrict ps,
 	 *
 	 * XXX What about combining characters?
 	 */
-	wlen = mbrtowc_l(&wc, buf, len, &mbrtowcstate, loc);
-	switch (wlen) {
-	case -1:		/* error, with errno set */
+	wc_len = mbrtowc_l(&wc, buf, len, &mbrtowcstate, loc);
+	switch (wc_len) {
+	case (size_t)-1:	/* error, with errno set */
+		len = (size_t)-1;
 		goto out;
 	case 0:			/* decoded NUL */
 		wc = 0;		/* paranoia */
+		len = wc_len;
 		break;
 	default:		/* decoded wc */
-		_DIAGASSERT(wlen > 0);
-		_DIAGASSERT((size_t)wlen <= len);
+		_DIAGASSERT(wc_len <= len);
 	}
 
 	/*
