@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.86 2024/08/20 08:17:15 ozaki-r Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.87 2024/08/20 16:49:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.86 2024/08/20 08:17:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.87 2024/08/20 16:49:10 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -647,8 +647,8 @@ shmif_snd(struct ifnet *ifp, struct mbuf *m0)
 
 	/*
 	 * Compare with DOWN to allow UNKNOWN (the default value),
-	 * which is required by some AFT tests using rump servers
-	 * written by C.
+	 * which is required by some ATF tests using rump servers
+	 * written in C.
 	 */
 	if (ifp->if_link_state == LINK_STATE_DOWN)
 		goto dontsend;
@@ -845,8 +845,8 @@ shmif_rcv(void *arg)
 		eth = mtod(m, struct ether_header *);
 		/*
 		 * Compare with DOWN to allow UNKNOWN (the default value),
-		 * which is required by some AFT tests using rump servers
-		 * written by C.
+		 * which is required by some ATF tests using rump servers
+		 * written in C.
 		 */
 		if (ifp->if_link_state == LINK_STATE_DOWN) {
 			passup = false;
