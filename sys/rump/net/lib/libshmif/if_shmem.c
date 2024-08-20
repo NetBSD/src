@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.85 2024/08/20 08:16:22 ozaki-r Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.86 2024/08/20 08:17:15 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.85 2024/08/20 08:16:22 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.86 2024/08/20 08:17:15 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.85 2024/08/20 08:16:22 ozaki-r Exp $"
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
+#include <net/if_media.h>
 #include <net/ether_sw_offload.h>
 
 #include <netinet/in.h>
@@ -58,6 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.85 2024/08/20 08:16:22 ozaki-r Exp $"
 
 static int shmif_clone(struct if_clone *, int);
 static int shmif_unclone(struct ifnet *);
+
+static int shmif_mediachange(struct ifnet *);
+static void shmif_mediastatus(struct ifnet *, struct ifmediareq *);
 
 struct if_clone shmif_cloner =
     IF_CLONE_INITIALIZER("shmif", shmif_clone, shmif_unclone);
@@ -84,6 +88,7 @@ static void	shmif_stop(struct ifnet *, int);
 
 struct shmif_sc {
 	struct ethercom sc_ec;
+	struct ifmedia sc_im;
 	struct shmif_mem *sc_busmem;
 	int sc_memfd;
 	int sc_kq;
@@ -175,6 +180,11 @@ allocif(int unit, struct shmif_sc **scp)
 	sc->sc_uid = randnum;
 
 	ifp = &sc->sc_ec.ec_if;
+
+	ifmedia_init(&sc->sc_im, 0, shmif_mediachange, shmif_mediastatus);
+	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_AUTO, 0, NULL);
+	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_NONE, 0, NULL);
+	ifmedia_set(&sc->sc_im, IFM_ETHER|IFM_AUTO);
 
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "shmif%d", unit);
 	ifp->if_softc = sc;
@@ -446,6 +456,28 @@ shmif_init(struct ifnet *ifp)
 }
 
 static int
+shmif_mediachange(struct ifnet *ifp)
+{
+	struct shmif_sc *sc = ifp->if_softc;
+
+	if (IFM_SUBTYPE(sc->sc_im.ifm_cur->ifm_media) == IFM_NONE &&
+	    ifp->if_link_state != LINK_STATE_DOWN) {
+		if_link_state_change(ifp, LINK_STATE_DOWN);
+	} else if (IFM_SUBTYPE(sc->sc_im.ifm_cur->ifm_media) == IFM_AUTO &&
+	    ifp->if_link_state != LINK_STATE_UP) {
+		if_link_state_change(ifp, LINK_STATE_UP);
+	}
+	return 0;
+}
+
+static void
+shmif_mediastatus(struct ifnet *ifp, struct ifmediareq *imr)
+{
+	struct shmif_sc *sc = ifp->if_softc;
+	imr->ifm_active = sc->sc_im.ifm_cur->ifm_media;
+}
+
+static int
 shmif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct shmif_sc *sc = ifp->if_softc;
@@ -529,6 +561,15 @@ shmif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 		if_link_state_change(ifp, LINK_STATE_UP);
 		break;
+
+#ifdef OSIOCSIFMEDIA
+	case OSIOCSIFMEDIA:
+#endif
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
+		rv = ifmedia_ioctl(ifp, data, &sc->sc_im, cmd);
+		break;
+
 	default:
 		rv = ether_ioctl(ifp, cmd, data);
 		if (rv == ENETRESET)
