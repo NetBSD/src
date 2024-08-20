@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrtoc32.c,v 1.8 2024/08/20 17:43:09 riastradh Exp $	*/
+/*	$NetBSD: mbrtoc32.c,v 1.9 2024/08/20 17:43:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mbrtoc32.c,v 1.8 2024/08/20 17:43:09 riastradh Exp $");
+__RCSID("$NetBSD: mbrtoc32.c,v 1.9 2024/08/20 17:43:24 riastradh Exp $");
 
 #include "namespace.h"
 
@@ -106,7 +106,7 @@ mbrtoc32_l(char32_t *restrict pc32, const char *restrict s, size_t n,
 	wchar_t wc;
 	mbstate_t wcrtombstate = {0};
 	char mb[MB_LEN_MAX];
-	int mblen;
+	size_t mb_len;
 	char utf32le[MB_LEN_MAX];
 	const char *src;
 	char *dst;
@@ -191,7 +191,7 @@ mbrtoc32_l(char32_t *restrict pc32, const char *restrict s, size_t n,
 	 * we can pass that through iconv to get a Unicode scalar
 	 * value.
 	 */
-	if ((mblen = wcrtomb_l(mb, wc, &wcrtombstate, loc)) == -1) {
+	if ((mb_len = wcrtomb_l(mb, wc, &wcrtombstate, loc)) == (size_t)-1) {
 		len = (size_t)-1;
 		goto out;
 	}
@@ -200,7 +200,7 @@ mbrtoc32_l(char32_t *restrict pc32, const char *restrict s, size_t n,
 	 * Convert the multibyte sequence to UTF-16LE.
 	 */
 	src = mb;
-	srcleft = (size_t)mblen;
+	srcleft = mb_len;
 	dst = utf32le;
 	dstleft = sizeof(utf32le);
 	error = _citrus_iconv_convert(iconv, &src, &srcleft, &dst, &dstleft,
