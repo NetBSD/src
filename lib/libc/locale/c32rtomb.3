@@ -1,4 +1,4 @@
-.\"	$NetBSD: c32rtomb.3,v 1.8 2024/08/18 02:19:35 riastradh Exp $
+.\"	$NetBSD: c32rtomb.3,v 1.9 2024/08/20 17:14:05 riastradh Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -128,7 +128,7 @@ NUL-terminate it (with any shift sequence needed to restore the initial
 state), and print it:
 .Bd -literal -offset indent
 char32_t c32[] = { 0x1f4a9, 0x20ac, 0x21 };
-char buf[(__arraycount(c32) + 1)*MB_CUR_MAX], *s = buf;
+char buf[(__arraycount(c32) + 1)*MB_LEN_MAX], *s = buf;
 size_t i;
 mbstate_t mbs = {0};    /* initial conversion state */
 
@@ -147,6 +147,10 @@ if (len == (size_t)-1)
 assert(len <= sizeof(buf) - (s - buf));
 printf("%s\en", buf);
 .Ed
+To avoid a variable-length array, this code uses
+.Dv MB_LEN_MAX ,
+which is a constant upper bound on the locale-dependent
+.Dv MB_CUR_MAX .
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh ERRORS
 .Bl -tag -width Bq
