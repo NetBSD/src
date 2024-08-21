@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.59 2022/11/08 01:43:09 uwe Exp $
+.\"	$NetBSD: syslogd.8,v 1.60 2024/08/21 17:13:24 gutteridge Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd November 8, 2022
+.Dd August 21, 2024
 .Dt SYSLOGD 8
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd log systems messages
 .Sh SYNOPSIS
 .Nm
-.Op Fl nrSsTUvX
+.Op Fl knrSsTUvX
 .Op Fl B Ar buffer_length
 .Op Fl b Ar bind_address
 .Op Fl d Op Oo Cm \&~ Oc Ns Ar what
@@ -91,6 +91,15 @@ the default is
 Set GID to
 .Ar group
 after the sockets and log files have been opened.
+.It Fl k
+Disable the translation of (remote) messages received with facility
+.Dq kern
+to facility
+.Dq user .
+Usually the
+.Dq kern
+facility is reserved for messages read directly from
+.Pa /dev/klog .
 .It Fl m Ar mark_interval
 Select the number of minutes between ``mark'' messages;
 the default is 20 minutes.
