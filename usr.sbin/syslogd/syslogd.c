@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.142 2024/08/03 02:43:37 gutteridge Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.143 2024/08/21 16:30:27 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.142 2024/08/03 02:43:37 gutteridge Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.143 2024/08/21 16:30:27 gutteridge Exp $");
 #endif
 #endif /* not lint */
 
@@ -1554,7 +1554,7 @@ printline(const char *hname, char *msg, int flags)
 	 *	 messages with no facility specified.
 	 */
 	if ((pri & LOG_FACMASK) == LOG_KERN)
-		pri = LOG_MAKEPRI(LOG_USER, LOG_PRI(pri));
+		pri = LOG_USER | LOG_PRI(pri);
 
 	if (bsdsyslog) {
 		buffer = printline_bsdsyslog(hname, p, flags, pri);
