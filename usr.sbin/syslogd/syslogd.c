@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.143 2024/08/21 16:30:27 gutteridge Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.144 2024/08/21 17:13:24 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.143 2024/08/21 16:30:27 gutteridge Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.144 2024/08/21 17:13:24 gutteridge Exp $");
 #endif
 #endif /* not lint */
 
@@ -205,6 +205,7 @@ bool	BSDOutputFormat = true;	/* if true emit traditional BSD Syslog lines,
 				 * this, it will only break some syslog-sign
 				 * configurations (e.g. with SG="0").
 				 */
+bool	KernXlat = true;	/* translate kern.* -> user.* */
 char	appname[]   = "syslogd";/* the APPNAME for own messages */
 char   *include_pid;		/* include PID in own messages */
 char	include_pid_buf[11];
@@ -319,7 +320,7 @@ main(int argc, char *argv[])
 	/* should we set LC_TIME="C" to ensure correct timestamps&parsing? */
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "b:B:d::nsSf:m:o:p:P:ru:g:t:TUvX")) != -1)
+	while ((ch = getopt(argc, argv, "b:B:d::knsSf:m:o:p:P:ru:g:t:TUvX")) != -1)
 		switch(ch) {
 		case 'b':
 			bindhostname = optarg;
@@ -359,6 +360,9 @@ main(int argc, char *argv[])
 			group = optarg;
 			if (*group == '\0')
 				usage();
+			break;
+		case 'k':		/* pass-through (remote) kern.* */
+			KernXlat = false;
 			break;
 		case 'm':		/* mark interval */
 			MarkInterval = atoi(optarg) * 60;
@@ -686,7 +690,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-dnrSsTUvX] [-B buffer_length] [-b bind_address]\n"
+	    "usage: %s [-dknrSsTUvX] [-B buffer_length] [-b bind_address]\n"
 	    "\t[-f config_file] [-g group]\n"
 	    "\t[-m mark_interval] [-P file_list] [-p log_socket\n"
 	    "\t[-p log_socket2 ...]] [-t chroot_dir] [-u user]\n",
@@ -1549,11 +1553,11 @@ printline(const char *hname, char *msg, int flags)
 		pri = DEFUPRI;
 
 	/*
-	 * Don't allow users to log kernel messages.
+	 * Don't (usually) allow users to log kernel messages.
 	 * NOTE: Since LOG_KERN == 0, this will also match
 	 *	 messages with no facility specified.
 	 */
-	if ((pri & LOG_FACMASK) == LOG_KERN)
+	if ((pri & LOG_FACMASK) == LOG_KERN && KernXlat)
 		pri = LOG_USER | LOG_PRI(pri);
 
 	if (bsdsyslog) {
