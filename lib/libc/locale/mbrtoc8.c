@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrtoc8.c,v 1.7 2024/08/18 19:46:53 rillig Exp $	*/
+/*	$NetBSD: mbrtoc8.c,v 1.8 2024/08/21 18:36:11 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  * References:
  *
  *	The Unicode Standard, Version 15.0 -- Core Specification, The
- *	Unicode Consortium, Sec. 3.8 `Surrogates', p. 119.
+ *	Unicode Consortium, Sec. 3.8 `Surrogates', p. 118.
  *	https://www.unicode.org/versions/Unicode15.0.0/UnicodeStandard-15.0.pdf#page=144
  *	https://web.archive.org/web/20240718101254/https://www.unicode.org/versions/Unicode15.0.0/UnicodeStandard-15.0.pdf#page=144
  *
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mbrtoc8.c,v 1.7 2024/08/18 19:46:53 rillig Exp $");
+__RCSID("$NetBSD: mbrtoc8.c,v 1.8 2024/08/21 18:36:11 rillig Exp $");
 
 #include "namespace.h"
 
