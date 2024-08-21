@@ -1,4 +1,4 @@
-/*	$NetBSD: c16rtomb.c,v 1.6 2024/08/18 02:19:35 riastradh Exp $	*/
+/*	$NetBSD: c16rtomb.c,v 1.7 2024/08/21 18:36:11 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  * References:
  *
  *	The Unicode Standard, Version 15.0 -- Core Specification, The
- *	Unicode Consortium, Sec. 3.8 `Surrogates', p. 119.
+ *	Unicode Consortium, Sec. 3.8 `Surrogates', p. 118.
  *	https://www.unicode.org/versions/Unicode15.0.0/UnicodeStandard-15.0.pdf#page=144
  *	https://web.archive.org/web/20240718101254/https://www.unicode.org/versions/Unicode15.0.0/UnicodeStandard-15.0.pdf#page=144
  *
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: c16rtomb.c,v 1.6 2024/08/18 02:19:35 riastradh Exp $");
+__RCSID("$NetBSD: c16rtomb.c,v 1.7 2024/08/21 18:36:11 rillig Exp $");
 
 #include "namespace.h"
 
