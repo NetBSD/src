@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.43 2024/07/11 06:05:58 riastradh Exp $	*/
+/*	$NetBSD: syslog.h,v 1.44 2024/08/21 16:30:27 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -62,12 +62,11 @@
 #define	LOG_PRIMASK	0x07	/* mask to extract priority part (internal) */
 				/* extract priority */
 #define	LOG_PRI(p)	((p) & LOG_PRIMASK)
-#define	LOG_MAKEPRI(fac, pri)	(((fac) << 3) | (pri))
 
 #ifdef SYSLOG_NAMES
 #define	INTERNAL_NOPRI	0x10	/* the "no priority" priority */
 				/* mark "facility" */
-#define	INTERNAL_MARK	LOG_MAKEPRI(LOG_NFACILITIES, 0)
+#define	INTERNAL_MARK	(LOG_NFACILITIES<<3)
 typedef struct _code {
 	const char	*c_name;
 	int	c_val;
