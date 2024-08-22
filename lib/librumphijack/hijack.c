@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.136 2022/04/16 18:15:20 andvar Exp $	*/
+/*      $NetBSD: hijack.c,v 1.136.2.1 2024/08/22 19:34:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.136 2022/04/16 18:15:20 andvar Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.136.2.1 2024/08/22 19:34:37 martin Exp $");
 #endif
 
 #include <sys/param.h>
@@ -88,7 +88,7 @@ __RCSID("$NetBSD: hijack.c,v 1.136 2022/04/16 18:15:20 andvar Exp $");
  */
 enum dualcall {
 	DUALCALL_WRITE, DUALCALL_WRITEV, DUALCALL_PWRITE, DUALCALL_PWRITEV,
-	DUALCALL_IOCTL, DUALCALL_FCNTL,
+	DUALCALL_IOCTL, DUALCALL_FCNTL, DUALCALL_FLOCK,
 	DUALCALL_SOCKET, DUALCALL_ACCEPT,
 #ifndef __linux__
 	DUALCALL_PACCEPT,
@@ -321,6 +321,7 @@ struct sysnames {
 	{ DUALCALL_PWRITEV,	"pwritev",	RSYS_NAME(PWRITEV)	},
 	{ DUALCALL_IOCTL,	"ioctl",	RSYS_NAME(IOCTL)	},
 	{ DUALCALL_FCNTL,	"fcntl",	RSYS_NAME(FCNTL)	},
+	{ DUALCALL_FLOCK,	"flock",	RSYS_NAME(FLOCK)	},
 	{ DUALCALL_DUP2,	"dup2",		RSYS_NAME(DUP2)		},
 	{ DUALCALL_CLOSE,	"close",	RSYS_NAME(CLOSE)	},
 	{ DUALCALL_POLLTS,	S(REALPOLLTS),	RSYS_NAME(POLLTS)	},
@@ -1623,6 +1624,23 @@ fcntl(int fd, int cmd, ...)
 		return rv;
 	}
 	/*NOTREACHED*/
+}
+
+int
+flock(int fd, int operation)
+{
+	int (*op_flock)(int, int);
+
+	DPRINTF(("flock -> %d (operation %d)\n", fd, operation));
+
+	if (fd_isrump(fd)) {
+		fd = fd_host2rump(fd);
+		op_flock = GETSYSCALL(rump, FLOCK);
+	} else {
+		op_flock = GETSYSCALL(host, FLOCK);
+	}
+
+	return op_flock(fd, operation);
 }
 
 int
