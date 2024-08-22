@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.12 2024/08/07 11:03:34 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.13 2024/08/22 20:02:15 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -192,4 +192,17 @@ tests/libexec/ld.elf_so/t_tls_extern.c		1.15,1.16
 
 	ld.elf_so(1): PR 58154: fix aarch64 thread-local storage
 	[riastradh, ticket #1864]
+
+lib/libc/include/extern.h			1.27
+lib/libc/stdio/Makefile.inc			1.48
+lib/libc/stdio/vfwprintf.c			1.40
+tests/lib/libc/stdio/t_printf.c			1.9,1.10
+
+	PR 57250: fix formatting long double infinities on big-endian 32-bit.
+	[riastradh, ticket #1865]
+
+tests/lib/libc/stdio/t_printf.c			1.11-1.18 (patch)
+
+	PR 56937: libc: add tests for printf(3) long double %a.
+	[riastradh, ticket #1866]
 
