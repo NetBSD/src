@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.44 2022/11/02 09:35:12 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.44.2.1 2024/08/22 19:20:29 martin Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -527,7 +527,9 @@ rump_server_dump_buses()
 cleanup()
 {
 
-	rump_server_halt_servers
+	if [ -f $_rump_server_socks ]; then
+		rump_server_halt_servers
+	fi
 }
 
 dump()
