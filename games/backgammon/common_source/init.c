@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.10 2012/10/13 19:19:39 dholland Exp $	*/
+/*	$NetBSD: init.c,v 1.11 2024/08/22 20:46:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.10 2012/10/13 19:19:39 dholland Exp $");
+__RCSID("$NetBSD: init.c,v 1.11 2024/08/22 20:46:40 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,6 @@ int     rfl = 0;
 const char   *const color[] = {"White", "Red", "white", "red"};
 
 
-struct move gm;
 const char	*const *Colorptr;
 const char	*const *colorptr;
 int	*inopp;

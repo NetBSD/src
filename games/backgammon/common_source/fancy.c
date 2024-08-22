@@ -1,4 +1,4 @@
-/*	$NetBSD: fancy.c,v 1.18 2024/06/02 12:11:36 andvar Exp $	*/
+/*	$NetBSD: fancy.c,v 1.19 2024/08/22 20:46:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fancy.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fancy.c,v 1.18 2024/06/02 12:11:36 andvar Exp $");
+__RCSID("$NetBSD: fancy.c,v 1.19 2024/08/22 20:46:40 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,14 +56,14 @@ static void newline(void);
 char    PC;			/* padding character */
 char   *BC;			/* backspace sequence */
 #endif
-char   *CD;			/* clear to end of screen sequence */
-char   *CE;			/* clear to end of line sequence */
-char   *CL;			/* clear screen sequence */
-char   *CM;			/* cursor movement instructions */
-char   *HO;			/* home cursor sequence */
-char   *MC;			/* column cursor movement map */
-char   *ML;			/* row cursor movement map */
-char   *ND;			/* forward cursor sequence */
+static char   *CD;		/* clear to end of screen sequence */
+static char   *CE;		/* clear to end of line sequence */
+static char   *CL;		/* clear screen sequence */
+static char   *CM;		/* cursor movement instructions */
+static char   *HO;		/* home cursor sequence */
+static char   *MC;		/* column cursor movement map */
+static char   *ML;		/* row cursor movement map */
+static char   *ND;		/* forward cursor sequence */
 #if 0
 char   *UP;			/* up cursor sequence */
 #endif
@@ -450,7 +450,7 @@ newpos(void)
 	if (CM) {		/* try CM to get there */
 		mode = 0;
 		m = (char *) tgoto(CM, c, r);
-		ccount = strlen(m);
+		ccount = (int)strlen(m);
 	}
 	/* try HO and local movement */
 	if (HO && (n = r + c * lND + lHO) < ccount) {
@@ -504,6 +504,7 @@ newpos(void)
 	case -1:		/* error! */
 		write(2, "\r\nInternal cursor error.\r\n", 26);
 		getout(0);
+		/* NOTREACHED */
 
 		/* direct cursor motion */
 	case 0:
@@ -738,15 +739,15 @@ getcaps(const char *s)
 
 	/* get pertinent lengths */
 	if (HO)
-		lHO = strlen(HO);
+		lHO = (int)strlen(HO);
 	if (BC)
-		lBC = strlen(BC);
+		lBC = (int)strlen(BC);
 	else
 		lBC = 1;
 	if (UP)
-		lUP = strlen(UP);
+		lUP = (int)strlen(UP);
 	if (ND)
-		lND = strlen(ND);
+		lND = (int)strlen(ND);
 	if (LI < 24 || CO < 72 || !(CL && UP && ND))
 		return (0);
 	linect = (int *) calloc(LI + 1, sizeof(int));

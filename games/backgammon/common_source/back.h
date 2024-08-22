@@ -1,4 +1,4 @@
-/*	$NetBSD: back.h,v 1.23 2021/12/12 22:20:52 andvar Exp $	*/
+/*	$NetBSD: back.h,v 1.24 2024/08/22 20:46:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@
 #include <termcap.h>
 #include <unistd.h>
 
-#define rnum(r)	(random()%r)
+#define rnum(r)	((int)(random()%r))
 #define D0	dice[0]
 #define D1	dice[1]
 #define mswap(m) { \

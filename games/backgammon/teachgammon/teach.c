@@ -1,4 +1,4 @@
-/*	$NetBSD: teach.c,v 1.25 2019/02/03 03:19:25 mrg Exp $	*/
+/*	$NetBSD: teach.c,v 1.26 2024/08/22 20:46:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)teach.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: teach.c,v 1.25 2019/02/03 03:19:25 mrg Exp $");
+__RCSID("$NetBSD: teach.c,v 1.26 2024/08/22 20:46:40 rillig Exp $");
 #endif
 #endif				/* not lint */
 
@@ -90,6 +90,7 @@ main(int argc __unused, char *argv[])
 		switch (i) {
 		case 1:
 			leave();
+			/* NOTREACHED */
 
 		case 2:
 			if ((i = wrtext(intro1)) != 0)
