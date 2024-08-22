@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.35 2022/04/04 19:33:44 andvar Exp $	*/
+/*	$NetBSD: main.c,v 1.36 2024/08/22 20:46:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.35 2022/04/04 19:33:44 andvar Exp $");
+__RCSID("$NetBSD: main.c,v 1.36 2024/08/22 20:46:40 rillig Exp $");
 #endif
 #endif				/* not lint */
 
@@ -115,7 +115,7 @@ main(int argc __unused, char **argv)
 	if (tflag)
 		begscr = 0;
 	t = time(NULL);
-	srandom(t);		/* 'random' seed */
+	srandom((unsigned)t);	/* 'random' seed */
 
 	/* need this now beceause getarg() may try to load a game */
 	mm = &mmstore;

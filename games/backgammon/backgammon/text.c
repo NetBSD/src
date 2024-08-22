@@ -1,4 +1,4 @@
-/*	$NetBSD: text.c,v 1.9 2010/03/22 05:10:19 mrg Exp $	*/
+/*	$NetBSD: text.c,v 1.10 2024/08/22 20:46:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)text.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: text.c,v 1.9 2010/03/22 05:10:19 mrg Exp $");
+__RCSID("$NetBSD: text.c,v 1.10 2024/08/22 20:46:40 rillig Exp $");
 #endif
 #endif /* not lint */
 
 #include "back.h"
+#include "backlocal.h"
 
 const char   *const instr[] = {
 	"    If you did not notice by now, this program reacts to things as",

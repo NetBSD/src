@@ -1,4 +1,4 @@
-/*	$NetBSD: backlocal.h,v 1.5 2012/10/13 19:19:38 dholland Exp $	*/
+/*	$NetBSD: backlocal.h,v 1.6 2024/08/22 20:46:40 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -28,6 +28,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+struct move;
+
+extern const char *const instr[];
+extern const char *const message[];
 
 void		dble(void);
 int		dblgood(void);

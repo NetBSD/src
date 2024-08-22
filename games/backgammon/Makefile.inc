@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2012/10/13 19:25:22 dholland Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2024/08/22 20:46:40 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -8,5 +8,7 @@ DPADD+= ${LIBCOMMON}/libcommon.a ${LIBTERMINFO}
 LDADD+=	-L${LIBCOMMON} -lcommon -lterminfo
 
 HIDEGAME=hidegame
+
+LINTFLAGS+=	-w		# turn warnings into errors
 
 .include "../Makefile.inc"

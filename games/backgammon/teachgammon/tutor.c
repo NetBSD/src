@@ -1,4 +1,4 @@
-/*	$NetBSD: tutor.c,v 1.12 2021/05/02 12:50:43 rillig Exp $	*/
+/*	$NetBSD: tutor.c,v 1.13 2024/08/22 20:46:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tutor.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: tutor.c,v 1.12 2021/05/02 12:50:43 rillig Exp $");
+__RCSID("$NetBSD: tutor.c,v 1.13 2024/08/22 20:46:40 rillig Exp $");
 #endif
 #endif				/* not lint */
 
@@ -66,7 +66,7 @@ tutor(struct move *mm)
 	colen = 5;
 	wrboard();
 
-	while (1) {
+	for (;;) {
 		if (!brdeq(test[i].brd, board)) {
 			if (tflag && curr == 23)
 				curmove(18, 0);

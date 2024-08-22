@@ -1,4 +1,4 @@
-/*	$NetBSD: allow.c,v 1.8 2012/10/13 19:19:38 dholland Exp $	*/
+/*	$NetBSD: allow.c,v 1.9 2024/08/22 20:46:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)allow.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: allow.c,v 1.8 2012/10/13 19:19:38 dholland Exp $");
+__RCSID("$NetBSD: allow.c,v 1.9 2024/08/22 20:46:40 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -44,7 +44,6 @@ int
 movallow(struct move *mm)
 {
 	int     i, m, iold;
-	int     r;
 
 	if (mm->d0)
 		mswap(mm);
@@ -61,7 +60,7 @@ movallow(struct move *mm)
 				mm->g[i] = bar + cturn * mm->D1;
 			else
 				mm->g[i] = bar + cturn * mm->D0;
-			if ((r = makmove(mm, i)) != 0) {
+			if (makmove(mm, i) != 0) {
 				if (mm->d0 || m == 4)
 					break;
 				mswap(mm);
@@ -105,7 +104,7 @@ movallow(struct move *mm)
 			else
 				continue;
 		}
-		if (board[mm->p[i]] * cturn > 0 && (r = makmove(mm, i)) == 0)
+		if (board[mm->p[i]] * cturn > 0 && makmove(mm, i) == 0)
 			i++;
 	}
 	movback(mm, i);
