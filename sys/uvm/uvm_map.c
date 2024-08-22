@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.403.2.1 2023/05/15 10:32:53 martin Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.403.2.2 2024/08/22 19:28:40 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.403.2.1 2023/05/15 10:32:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.403.2.2 2024/08/22 19:28:40 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -1784,19 +1784,28 @@ uvm_findspace_invariants(struct vm_map *map, vaddr_t orig_hint, vaddr_t length,
     vaddr_t hint, struct vm_map_entry *entry, int line)
 {
 	const int topdown = map->flags & VM_MAP_TOPDOWN;
+	const int hint_location_ok =
+		topdown ? hint <= orig_hint
+			: hint >= orig_hint;
 
-	KASSERTMSG( topdown || hint >= orig_hint,
-	    "map=%p hint=%#"PRIxVADDR" orig_hint=%#"PRIxVADDR
-	    " length=%#"PRIxVSIZE" uobj=%p uoffset=%#llx align=%"PRIxVSIZE
+#if !(defined(__sh3__) && defined(DIAGNOSTIC)) /* XXXRO: kern/51254 */
+#define UVM_FINDSPACE_KASSERTMSG KASSERTMSG
+
+#else  /* sh3 && DIAGNOSTIC */
+/* like KASSERTMSG but make it not fatal */
+#define UVM_FINDSPACE_KASSERTMSG(e, msg, ...)			\
+		(__predict_true((e)) ? (void)0 :		\
+		    printf(__KASSERTSTR msg "\n",		\
+			"weak diagnostic ", #e,			\
+			__FILE__, __LINE__, ## __VA_ARGS__))
+#endif
+
+	UVM_FINDSPACE_KASSERTMSG(hint_location_ok,
+	    "%s map=%p hint=%#" PRIxVADDR " %s orig_hint=%#" PRIxVADDR
+	    " length=%#" PRIxVSIZE " uobj=%p uoffset=%#llx align=%" PRIxVSIZE
 	    " flags=%#x entry=%p (uvm_map_findspace line %d)",
-	    map, hint, orig_hint,
-	    length, uobj, (unsigned long long)uoffset, align,
-	    flags, entry, line);
-	KASSERTMSG(!topdown || hint <= orig_hint,
-	    "map=%p hint=%#"PRIxVADDR" orig_hint=%#"PRIxVADDR
-	    " length=%#"PRIxVSIZE" uobj=%p uoffset=%#llx align=%"PRIxVSIZE
-	    " flags=%#x entry=%p (uvm_map_findspace line %d)",
-	    map, hint, orig_hint,
+	    topdown ? "topdown" : "bottomup",
+	    map, hint, topdown ? ">" : "<", orig_hint,
 	    length, uobj, (unsigned long long)uoffset, align,
 	    flags, entry, line);
 }
