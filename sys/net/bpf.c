@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.249.2.1 2023/02/24 13:10:53 martin Exp $	*/
+/*	$NetBSD: bpf.c,v 1.249.2.2 2024/08/22 19:31:08 martin Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.249.2.1 2023/02/24 13:10:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.249.2.2 2024/08/22 19:31:08 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1611,7 +1611,7 @@ filt_bpfread(struct knote *kn, long hint)
 }
 
 static const struct filterops bpfread_filtops = {
-	.f_flags = FILTEROP_ISFD,
+	.f_flags = FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach = NULL,
 	.f_detach = filt_bpfrdetach,
 	.f_event = filt_bpfread,
