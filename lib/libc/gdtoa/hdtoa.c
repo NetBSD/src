@@ -1,4 +1,4 @@
-/*	$NetBSD: hdtoa.c,v 1.12 2021/06/15 10:56:52 christos Exp $	*/
+/*	$NetBSD: hdtoa.c,v 1.12.2.1 2024/08/22 19:59:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 David Schultz <das@FreeBSD.ORG>
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/gdtoa/_hdtoa.c,v 1.4 2007/01/03 04:57:58 das Exp $");
 #else
-__RCSID("$NetBSD: hdtoa.c,v 1.12 2021/06/15 10:56:52 christos Exp $");
+__RCSID("$NetBSD: hdtoa.c,v 1.12.2.1 2024/08/22 19:59:46 martin Exp $");
 #endif
 
 #include <float.h>
@@ -256,7 +256,7 @@ char *
 hldtoa(long double e, const char *xdigs, int ndigits, int *decpt, int *sign,
     char **rve)
 {
-	static const int sigfigs = (LDBL_MANT_DIG + 3) / 4 + 1;
+	static const int sigfigs = (LDBL_MANT_DIG + 3) / 4;
 	union ieee_ext_u u;
 	char *s, *s0;
 	size_t bufsize;
@@ -310,34 +310,23 @@ hldtoa(long double e, const char *xdigs, int ndigits, int *decpt, int *sign,
 	 */
 	for (s = s0 + bufsize - 1; s > s0 + sigfigs - 1; s--)
 		*s = 0;
-	for (; s > s0 + sigfigs -
-	    (EXT_FRACLBITS / 4) - 1 && s > s0; s--) {
+	for (; s > s0 + sigfigs - (EXT_FRACLBITS / 4) - 1 && s > s0; s--) {
 		*s = u.extu_ext.ext_fracl & 0xf;
 		u.extu_ext.ext_fracl >>= 4;
 	}
 #ifdef EXT_FRACHMBITS
-	for (; s > s0 + sigfigs - 
-	    ((EXT_FRACLBITS + EXT_FRACHMBITS) / 4) - 1; s--) {
+	for (; s > s0; s--) {
 		*s = u.extu_ext.ext_frachm & 0xf;
 		u.extu_ext.ext_frachm >>= 4;
 	}
-#else
-#define EXT_FRACHMBITS 0
 #endif
-
 #ifdef EXT_FRACLMBITS
-	for (; s > s0 + sigfigs -
-	    ((EXT_FRACLBITS + EXT_FRACHMBITS + EXT_FRACLMBITS) / 4) - 1; s--) {
-
+	for (; s > s0; s--) {
 		*s = u.extu_ext.ext_fraclm & 0xf;
 		u.extu_ext.ext_fraclm >>= 4;
 	}
-#else
-#define EXT_FRACLMBITS 0
 #endif
-
-	for (; s > s0 + sigfigs -
-	    ((EXT_FRACLBITS + EXT_FRACHMBITS + EXT_FRACLMBITS + EXT_FRACHBITS) / 4) - 1; s--) {
+	for (; s > s0; s--) {
 		*s = u.extu_ext.ext_frach & 0xf;
 		u.extu_ext.ext_frach >>= 4;
 	}
@@ -348,7 +337,7 @@ hldtoa(long double e, const char *xdigs, int ndigits, int *decpt, int *sign,
 	 * (partial) nibble, which is dealt with by the next
 	 * statement.  We also tack on the implicit normalization bit.
 	 */
-	*s = (u.extu_ext.ext_frach | (1U << ((LDBL_MANT_DIG - 1) % 4))) & 0xf;
+	*s = u.extu_ext.ext_frach | (1U << ((LDBL_MANT_DIG - 1) % 4));
 
 	/* If ndigits < 0, we are expected to auto-size the precision. */
 	if (ndigits < 0) {
