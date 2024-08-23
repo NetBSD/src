@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_display.c,v 1.22 2022/02/27 21:21:51 riastradh Exp $	*/
+/*	$NetBSD: acpi_display.c,v 1.22.4.1 2024/08/23 16:09:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.22 2022/02/27 21:21:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.22.4.1 2024/08/23 16:09:00 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -270,6 +270,12 @@ struct acpidisp_brctl {
 	uint8_t		*bc_level;		/* Array of levels */
 	uint16_t	 bc_level_count;	/* Number of levels */
 	uint8_t		 bc_current;		/* Current level */
+
+	/* 
+	 * Quirk if firmware returns wrong values for _BQC
+	 * (acpidisp_get_brightness) 
+	 */
+	bool		bc_bqc_broken;
 };
 
 /*
@@ -376,6 +382,7 @@ static int	acpidisp_get_brightness(const struct acpidisp_out_softc *,
 		    uint8_t *);
 static int	acpidisp_set_brightness(const struct acpidisp_out_softc *,
 		    uint8_t);
+static int	acpidisp_quirk_get_brightness(const struct acpidisp_out_softc *);
 
 static void	acpidisp_print_odinfo(device_t, const struct acpidisp_odinfo *);
 static void	acpidisp_print_brctl(device_t, const struct acpidisp_brctl *);
@@ -717,6 +724,10 @@ acpidisp_out_attach(device_t parent, device_t self, void *aux)
 			kmem_free(bc, sizeof(*bc));
 			osc->sc_brctl = NULL;
 		} else {
+			if (acpidisp_quirk_get_brightness(osc)) {
+				aprint_error_dev(self,
+				    "failed to test _BQC quirk\n");
+			}
 			acpidisp_print_brctl(self, osc->sc_brctl);
 		}
 	}
@@ -1860,6 +1871,11 @@ acpidisp_get_brightness(const struct acpidisp_out_softc *osc, uint8_t *valuep)
 	if (!(osc->sc_caps & ACPI_DISP_OUT_CAP__BQC))
 		return ENODEV;
 
+	if (osc->sc_brctl->bc_bqc_broken) {
+		*valuep = osc->sc_brctl->bc_current;
+		return 0;
+	}
+
 	rv = acpi_eval_integer(hdl, "_BQC", &val);
 	if (ACPI_FAILURE(rv)) {
 		aprint_error_dev(osc->sc_dev, "failed to evaluate %s.%s: %s\n",
@@ -1876,6 +1892,60 @@ acpidisp_get_brightness(const struct acpidisp_out_softc *osc, uint8_t *valuep)
 	    device_xname(osc->sc_dev), "brightness", *valuep));
 
 	return 0;
+}
+
+/*
+ * Quirk for when getting the brightness value always returns the same
+ * result, which breaks brightness controls which try to lower the
+ * brightness by a specific value and then check if it worked.
+ */
+static int
+acpidisp_quirk_get_brightness(const struct acpidisp_out_softc *osc)
+{
+	struct acpidisp_brctl *bc;
+	uint8_t original_brightness, test_brightness;
+	int error;
+
+	bc = osc->sc_brctl;
+
+	/* Avoid false results if quirk already enabled */
+	bc->bc_bqc_broken = false;
+
+	error = acpidisp_get_brightness(osc, &bc->bc_current);
+	if (error)
+		return error;
+	original_brightness = bc->bc_current;
+
+	/* Find a different brightness value */
+	test_brightness = bc->bc_level[bc->bc_level_count - 1];
+	if (test_brightness == original_brightness)
+		test_brightness = bc->bc_level[0];
+
+	if (test_brightness == original_brightness) {
+		aprint_error_dev(osc->sc_dev,
+		    "couldn't find different brightness levels"
+		    " for _BQC quirk test\n");
+		return 0;
+	}
+
+	bc->bc_current = test_brightness;
+	error = acpidisp_set_brightness(osc, bc->bc_current);
+	if (error)
+		return error;
+
+	error = acpidisp_get_brightness(osc, &bc->bc_current);
+	if (error)
+		return error;
+
+	/* We set a different value, but got the original value back */
+	if (bc->bc_current == original_brightness) {
+		aprint_normal_dev(osc->sc_dev, "_BQC broken, enabling quirk\n");
+		bc->bc_bqc_broken = true;
+	}
+
+	/* Restore original value */
+	bc->bc_current = original_brightness;
+	return acpidisp_set_brightness(osc, bc->bc_current);
 }
 
 static int
