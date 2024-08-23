@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.3 2014/05/22 15:01:56 uebayasi Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.3.34.1 2024/08/23 16:56:30 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #include <machine/setjmp.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: __setjmp14.S,v 1.3 2014/05/22 15:01:56 uebayasi Exp $")
+	RCSID("$NetBSD: __setjmp14.S,v 1.3.34.1 2024/08/23 16:56:30 martin Exp $")
 #endif
 
 /*
@@ -53,7 +53,19 @@
  * The previous signal state is restored.
  */
 
+/*
+ * setjmp(jmp_buf env@rdi)
+ *
+ * ELF symbol: __setjmp14, because the size of jmp_buf changed on some
+ * platforms in 1.4.
+ */
 ENTRY(__setjmp14)
+	/*
+	 * Save the callee-saves registers: %rbx, %rbp, %r12-r15,
+	 * plus %rsp and the return address on the stack since it
+	 * will be overwritten if the caller makes any subroutine
+	 * calls before longjmp.
+	 */
 	movq	(%rsp),%r11
 	movq	%rbx,(_JB_RBX * 8)(%rdi)
 	movq	%rbp,(_JB_RBP * 8)(%rdi)
@@ -64,47 +76,62 @@ ENTRY(__setjmp14)
 	movq	%rsp,(_JB_RSP * 8)(%rdi)
 	movq	%r11,(_JB_PC  * 8)(%rdi)
 
-	leaq	(_JB_SIGMASK * 8)(%rdi),%rdx
-	xorl	%edi,%edi
-	xorq	%rsi,%rsi
+	leaq	(_JB_SIGMASK * 8)(%rdi),%rdx	/* oset@rdx */
+	xorl	%edi,%edi		/* how@edi := 0 (ignored) */
+	xorl	%esi,%esi		/* set@rsi := NULL */
 
 #ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(__sigprocmask14))
 #else
 	call	_C_LABEL(__sigprocmask14)
 #endif
-2:	xorl	%eax,%eax
+	xorl	%eax,%eax
 	ret
 END(__setjmp14)
 
+/*
+ * longjmp(jmp_buf env@rdi, int val@esi)
+ *
+ * ELF symbol: __longjmp14, because the size of jmp_buf changed on some
+ * platforms in 1.4
+ */
 ENTRY(__longjmp14)
-	movq	%rdi,%r12
-	movl	%esi,%r8d
+	/*
+	 * Restore the callee-saves registers: %rbx, %rbp, %r12-r15,
+	 * plus %rsp and the return address on the stack.
+	 */
+	movq	(_JB_RBX * 8)(%rdi),%rbx
+	movq	(_JB_RBP * 8)(%rdi),%rbp
+	movq	(_JB_R12 * 8)(%rdi),%r12
+	movq	(_JB_R13 * 8)(%rdi),%r13
+	movq	(_JB_R14 * 8)(%rdi),%r14
+	movq	(_JB_R15 * 8)(%rdi),%r15
+	movq	(_JB_RSP * 8)(%rdi),%rsp
+	movq	(_JB_PC  * 8)(%rdi),%r11
+	movq	%r11,0(%rsp)
 
-	leaq	(_JB_SIGMASK * 8)(%rdi),%rsi
-	movl	$3,%edi		/* SIG_SETMASK */
-	xorq	%rdx,%rdx
+	/*
+	 * Use  pushq %rsi  instead of  pushl %esi  in order to keep
+	 * 16-byte stack alignment, even though we only care about the
+	 * 32-bit int in esi.
+	 */
+	pushq	%rsi		/* save val@esi */
 
-	pushq	%r8
+	leaq	(_JB_SIGMASK * 8)(%rdi),%rsi	/* set@rsi */
+	movl	$3,%edi		/* how@edi := SIG_SETMASK */
+	xorl	%edx,%edx	/* oset@rdx := NULL */
+
 #ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(__sigprocmask14))
 #else
 	call	_C_LABEL(__sigprocmask14)
 #endif
-	popq	%r8
-	movq	(_JB_RBX * 8)(%r12),%rbx
-	movq	(_JB_RBP * 8)(%r12),%rbp
-	movq	(_JB_R13 * 8)(%r12),%r13
-	movq	(_JB_R14 * 8)(%r12),%r14
-	movq	(_JB_R15 * 8)(%r12),%r15
-	movq	(_JB_RSP * 8)(%r12),%rsp
-	movq	(_JB_PC  * 8)(%r12),%r11
-	movq	(_JB_R12 * 8)(%r12),%r12
 
-	movl	%r8d,%eax
-	testl	%eax,%eax
-	jnz	1f
-	incl	%eax
-1:	movq	%r11,0(%rsp)
-	ret
+	popq	%rax		/* restore val@eax */
+
+	testl	%eax,%eax	/* val@eax == 0? */
+	jz	1f		/* jump if val@eax == 0 */
+	ret			/* return val@eax */
+1:	incl	%eax		/* val@eax := 1 */
+	ret			/* return val@eax */
 END(__longjmp14)

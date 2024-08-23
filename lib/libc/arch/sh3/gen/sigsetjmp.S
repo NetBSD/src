@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.9 2006/01/05 19:21:37 uwe Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.9.96.1 2024/08/23 16:56:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #include <machine/setjmp.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: sigsetjmp.S,v 1.9 2006/01/05 19:21:37 uwe Exp $")
+	RCSID("$NetBSD: sigsetjmp.S,v 1.9.96.1 2024/08/23 16:56:29 martin Exp $")
 #endif
 
 ENTRY(__sigsetjmp14)
@@ -85,44 +85,49 @@ ENTRY(__sigsetjmp14)
 
 
 ENTRY(__siglongjmp14)
-	mov.l	@(_JB_HAS_MASK * 4, r4), r0
-	tst	r0, r0
-	bt	2f			/* if no mask */
+	// return value can't be zero, adjust to 1 if it is
+	tst	r5, r5
+	bf/s	0f
+	 mov.l	@(_JB_REG_PR * 4, r4), r0
+	mov	#1, r5
+0:
+	// restore context first (callee-saved regs)
+	mov.l	@(_JB_REG_R8  * 4, r4), r8
+	mov.l	@(_JB_REG_R9  * 4, r4), r9
+	mov.l	@(_JB_REG_R10 * 4, r4), r10
+	mov.l	@(_JB_REG_R11 * 4, r4), r11
+	mov.l	@(_JB_REG_R12 * 4, r4), r12
+	mov.l	@(_JB_REG_R13 * 4, r4), r13
+	mov.l	@(_JB_REG_R14 * 4, r4), r14
+	mov.l	@(_JB_REG_R15 * 4, r4), r15
 
-	/* identical to longjmp */
-	/* we won't return here, so we don't need to save pr and r12 */
-	PIC_PROLOGUE_NOSAVE(.L_got_2)
-	mov.l	r5, @-sp
-	mov.l	r4, @-sp
-
-	mov.l	.L___sigprocmask14_2, r0
-	mov	r4, r5
-	mov	#3, r4			/* how = SIG_SETMASK */
-	add	#(_JB_SIGMASK * 4), r5	/* new = &sigmask */
-1:	CALL	r0
-	 mov	#0, r6			/* old = NULL */
-
-	mov.l	@sp+, r4
-	mov.l	@sp+, r5
-
-2:	/* identical to _longjmp */
-	lds.l	@r4+, pr
-	mov.l	@r4+, r8
-	mov.l	@r4+, r9
-	mov.l	@r4+, r10
-	mov.l	@r4+, r11
-	mov.l	@r4+, r12
-	mov.l	@r4+, r13
-	mov.l	@r4+, r14
-	mov.l	@r4+, r15
-
-	mov	r5, r0
-	tst	r0, r0	/* make sure return value is non-zero */
-	bf	.L0
-	add	#1, r0
-.L0:
+	// do we need to restore signal mask?
+	mov.l	@(_JB_HAS_MASK * 4, r4), r7
+	tst	r7, r7
+	bf/s	0f
+	 mov	#0, r6		// sigprocmask: oset = NULL
+	// ... no, just the registers
+	lds	r0, pr
 	rts
-	 nop
+	 mov	r5, r0
+0:
+	// create a frame
+	mov.l	r5, @-sp	// future return value (pre-adjusted)
+	mov.l	r0, @-sp	// caller's PR from the jumpbuf
+	PIC_PROLOGUE(.L_got_2)
+
+	// restore signal mask from &a[_JB_SIGMASK]
+	mov	r4, r5
+	mov.l	.L___sigprocmask14_2, r0
+	add	#(_JB_SIGMASK * 4), r5	// set = &a[_JB_SIGMASK]
+1:	CALL	r0
+	 mov	#3, r4			// how = SIG_SETMASK
+
+	// return "from" setjmp
+	PIC_EPILOGUE
+	lds.l	@sp+, pr
+	rts
+	 mov.l	@sp+, r0
 
 	.align	2
 .L_got_2:		PIC_GOT_DATUM
