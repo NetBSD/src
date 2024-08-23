@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.197.2.1 2023/09/04 17:33:28 martin Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.197.2.2 2024/08/23 18:28:09 martin Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -129,6 +129,7 @@
 ./usr/libdata/debug/usr/tests/lib/librumphijack
 ./usr/libdata/debug/usr/tests/lib/libskey
 ./usr/libdata/debug/usr/tests/lib/libsljit
+./usr/libdata/debug/usr/tests/lib/libstdc++
 ./usr/libdata/debug/usr/tests/lib/libtre
 ./usr/libdata/debug/usr/tests/lib/libusbhid
 ./usr/libdata/debug/usr/tests/lib/libutil
@@ -341,6 +342,7 @@
 ./usr/tests/lib/librumphijack
 ./usr/tests/lib/libskey
 ./usr/tests/lib/libsljit
+./usr/tests/lib/libstdc++
 ./usr/tests/lib/libtre
 ./usr/tests/lib/libtre/data
 ./usr/tests/lib/libusbhid
