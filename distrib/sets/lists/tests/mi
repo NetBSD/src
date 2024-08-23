@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1238.2.6 2024/03/25 14:14:55 martin Exp $
+# $NetBSD: mi,v 1.1238.2.7 2024/08/23 16:56:30 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3146,6 +3146,7 @@
 ./usr/tests/lib/libc/setjmp/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/setjmp/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
 ./usr/tests/lib/libc/setjmp/t_setjmp			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/setjmp/t_sigstack			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/setjmp/t_threadjmp			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/ssp				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/ssp/Atffile			tests-lib-tests		compattestfile,atf,ssp

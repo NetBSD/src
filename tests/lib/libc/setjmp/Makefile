@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/04/21 18:58:20 martin Exp $
+# $NetBSD: Makefile,v 1.2.54.1 2024/08/23 16:56:29 martin Exp $
 
 NOMAN=		# defined
 
@@ -9,6 +9,7 @@ WARNS=	4
 TESTSDIR=	${TESTSBASE}/lib/libc/setjmp
 
 TESTS_C+=	t_setjmp
+TESTS_C+=	t_sigstack
 TESTS_C+=	t_threadjmp
 
 LDFLAGS.t_threadjmp+= -pthread

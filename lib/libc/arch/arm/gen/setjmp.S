@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.18 2022/12/13 12:43:32 skrll Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.18.2.1 2024/08/23 16:56:30 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -142,6 +142,25 @@ ENTRY(__longjmp14)
 	cmp	r3, ip
 	bne	.Lbotch
 
+	/* Validate sp and lr */
+	ldr	r2, [r0, #(_JB_REG_R13 * 4)]
+#if defined(__thumb__) && defined(_ARM_ARCH_T2)
+	cbz	r2, .Lbotch
+#else
+	cmp	r2, #0
+	beq	.Lbotch
+#endif
+
+	ldr	r3, [r0, #(_JB_REG_R14 * 4)]
+#if defined(__thumb__) && defined(_ARM_ARCH_T2)
+	cbz	r3, .Lbotch
+#else
+	cmp	r3, #0
+	beq	.Lbotch
+#endif
+	mov	sp, r2
+	mov	lr, r3
+
 	/* Restore the signal mask. */
 	push	{r0-r2, lr}
 	movs	r2, #0
@@ -185,25 +204,6 @@ ENTRY(__longjmp14)
 	mov	r11, r3
 	adds	r0, r0, #4	/* skip ip(r12) */
 #endif
-
-	ldmia	r0!, {r2-r3}
-
-	/* Validate sp and lr */
-#if defined(__thumb__) && defined(_ARM_ARCH_T2)
-	cbz	r2, .Lbotch
-#else
-	cmp	r2, #0
-	beq	.Lbotch
-#endif
-	mov	sp, r2
-
-#if defined(__thumb__) && defined(_ARM_ARCH_T2)
-	cbz	r3, .Lbotch
-#else
-	cmp	r3, #0
-	beq	.Lbotch
-#endif
-	mov	lr, r3
 
 	/* Set return value */
 	movs	r0, r1
