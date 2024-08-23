@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.15.2.2 2024/02/25 15:47:34 martin Exp $	*/
+/*	$NetBSD: query.c,v 1.15.2.3 2024/08/23 18:18:04 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -909,7 +909,6 @@ query_checkcacheaccess(ns_client_t *client, const dns_name_t *name,
 					      msg);
 			}
 		} else {
-			pfilter_notify(result, client, "checkcacheaccess");
 			/*
 			 * We were denied by the "allow-query-cache" ACL.
 			 * There is no need to clear NS_QUERYATTR_CACHEACLOK
