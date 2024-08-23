@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.95 2019/03/04 17:30:33 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.95.10.1 2024/08/23 16:15:13 martin Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -61,6 +61,12 @@ MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 atoll.3 \
 	strtonum.3 system.3 \
 	tsearch.3 \
 	unlockpt.3
+
+strtou.3: strtoi.3
+	${_MKTARGET_CREATE}
+	${TOOL_SED} -e s/strtoi/strtou/g -e s/STRTOI/STRTOU/g \
+	    -e s/intmax_t/uintmax_t/g -e s/%jd/%ju/g ${.ALLSRC} > ${.TARGET}
+CLEANFILES += strtou.3
 
 MLINKS+=a64l.3 l64a.3
 MLINKS+=a64l.3 l64a_r.3

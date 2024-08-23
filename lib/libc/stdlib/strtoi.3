@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtoi.3,v 1.7 2017/07/03 21:32:50 wiz Exp $
+.\"	$NetBSD: strtoi.3,v 1.7.16.1 2024/08/23 16:15:14 martin Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,12 +36,12 @@
 .\" Created by Kamil Rytarowski, based on ID:
 .\" NetBSD: strtol.3,v 1.31 2015/03/11 09:57:35 wiz Exp
 .\"
-.Dd November 13, 2015
+.Dd January 20, 2024
 .Dt STRTOI 3
 .Os
 .Sh NAME
 .Nm strtoi
-.Nd convert string value to an intmax_t integer
+.Nd convert a string value to an intmax_t integer
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
@@ -58,8 +58,7 @@
 .Sh DESCRIPTION
 The
 .Fn strtoi
-function
-converts the string in
+function converts the string in
 .Fa nptr
 to an
 .Ft intmax_t
@@ -117,10 +116,11 @@ is taken as 10 (decimal) unless the next character is
 .Ql 0 ,
 in which case it is taken as 8 (octal).
 .Pp
-The remainder of the string is converted to a
+The remainder of the string is converted to an
 .Em intmax_t
 value in the obvious manner,
-stopping at the first character which is not a valid digit
+stopping at the end of the string
+or at the first character which is not a valid digit
 in the given base.
 (In bases above 10, the letter
 .Ql A
@@ -201,6 +201,12 @@ or the range given was invalid, i.e.
 >
 .Fa hi .
 .El
+.Pp
+The range check is more important than the unconverted characters check,
+and it is performed first.
+If a program needs to know if there were unconverted characters when an
+out of range number has been provided, it needs to supply and test
+.Fa endptr.
 .Sh SEE ALSO
 .Xr atof 3 ,
 .Xr atoi 3 ,

@@ -1,4 +1,4 @@
-/*	$NetBSD: strtonum.c,v 1.6 2018/12/06 06:29:56 kamil Exp $	*/
+/*	$NetBSD: strtonum.c,v 1.6.10.1 2024/08/23 16:15:13 martin Exp $	*/
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strtonum.c,v 1.6 2018/12/06 06:29:56 kamil Exp $");
+__RCSID("$NetBSD: strtonum.c,v 1.6.10.1 2024/08/23 16:15:13 martin Exp $");
 
 #include "namespace.h"
 
@@ -46,26 +46,33 @@ strtonum(const char *nptr, long long minval, long long maxval,
 	int e;
 	long long rv;
 	const char *resp;
+	char *eptr;
 
 	if (errstr == NULL)
 		errstr = &resp;
 
-	if (minval > maxval) {
-		*errstr = "invalid";
-		return 0;
-	}
+	if (minval > maxval)
+		goto out;
 
-	rv = (long long)strtoi(nptr, NULL, 10, minval, maxval, &e);
+	rv = (long long)strtoi(nptr, &eptr, 10, minval, maxval, &e);
 
-	if (e == 0) {
+	switch (e) {
+	case 0:
 		*errstr = NULL;
 		return rv;
+	case ECANCELED:
+	case ENOTSUP:
+		goto out;
+	case ERANGE:
+		if (*eptr)
+			goto out;
+		*errstr = rv == maxval ? "too large" : "too small";
+		return 0;
+	default:
+		abort();
 	}
 
-	if (e == ERANGE)
-		*errstr = (rv == maxval ? "too large" : "too small");
-	else
-		*errstr = "invalid";
-
+out:
+	*errstr = "invalid";
 	return 0;
 }
