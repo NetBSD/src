@@ -1,21 +1,21 @@
-/* $NetBSD: hmac.c,v 1.4 2021/10/16 10:53:33 nia Exp $ */
+/* $NetBSD: hmac.c,v 1.4.2.1 2024/08/23 16:40:48 martin Exp $ */
 
 /*
  * Copyright (c) 2004, Juniper Networks, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * modification, are permitted provided that the following conditions
+ * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.  
+ *    documentation and/or other materials provided with the distribution.
  * 3. Neither the name of the copyright holders nor the names of its
  *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission. 
- * 
+ *    from this software without specific prior written permission.
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -26,7 +26,7 @@
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
  * Implement HMAC as described in RFC 2104
@@ -42,7 +42,7 @@
  */
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: hmac.c,v 1.4 2021/10/16 10:53:33 nia Exp $");
+__RCSID("$NetBSD: hmac.c,v 1.4.2.1 2024/08/23 16:40:48 martin Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -74,7 +74,7 @@ HMAC_FUNC (const unsigned char *text, size_t text_len,
     /* Outer padding key XOR'd with opad */
     unsigned char k_opad[HMAC_BLOCKSZ];
     /* HASH(key) if needed */
-    unsigned char tk[HASH_LENGTH];	
+    unsigned char tk[HASH_LENGTH];
     size_t i;
 
     /*
@@ -253,7 +253,7 @@ HMAC_KAT (FILE *fp)
     unsigned char *data;
     char *result;
     int n = 0;
-    
+
     for (test = tests; test->key; test++) {
 	key = test->key;
 	X2B(key, kbuf);
@@ -262,7 +262,7 @@ HMAC_KAT (FILE *fp)
 	HMAC_FUNC(data, strlen(data), key, strlen(key), digest);
 	strcpy(dbuf, "0x");
 	b2x(&dbuf[2], (sizeof dbuf) - 2, digest, HASH_LENGTH);
-	
+
 	if (strcmp(dbuf, test->expect) == 0)
 	    result = "Ok";
 	else {
@@ -293,7 +293,7 @@ main (int argc, char *argv[])
     if (argc == 1)
 	exit(HMAC_KAT(stdout));
 #endif
-    
+
     if (argc < 3) {
 	fprintf(stderr, "Usage:\n\t%s key data\n", argv[0]);
 	exit(1);
@@ -307,5 +307,3 @@ main (int argc, char *argv[])
     exit(0);
 }
 #endif
-
-		
