@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_proto.c,v 1.16 2016/01/21 15:41:30 riastradh Exp $	*/
+/*	$NetBSD: bt_proto.c,v 1.16.48.1 2024/08/23 15:29:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,11 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.16 2016/01/21 15:41:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.16.48.1 2024/08/23 15:29:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
 #include <sys/kernel.h>
+#include <sys/module.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
@@ -113,6 +114,21 @@ kmutex_t *bt_lock;
 static void
 bt_init(void)
 {
+}
 
-	bt_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+MODULE(MODULE_CLASS_DRIVER, netbt, NULL);
+
+static int
+netbt_modcmd(modcmd_t cmd, void *aux)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		bt_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+		return 0;
+	case MODULE_CMD_FINI:
+		return EBUSY;	/* XXX */
+	default:
+		return ENOTTY;
+	}
 }
