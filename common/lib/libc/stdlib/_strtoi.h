@@ -1,4 +1,4 @@
-/*	$NetBSD: _strtoi.h,v 1.2 2015/01/18 17:55:22 christos Exp $	*/
+/*	$NetBSD: _strtoi.h,v 1.2.32.1 2024/08/23 16:15:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -100,25 +100,25 @@ INT_FUNCNAME(_int_, _FUNCNAME, _l)(const char * __restrict nptr,
 	errno = serrno;
 #endif
 
-	if (*rstatus == 0) {
-		/* No digits were found */
-		if (nptr == *endptr)
-			*rstatus = ECANCELED;
-		/* There are further characters after number */
-		else if (**endptr != '\0')
-			*rstatus = ENOTSUP;
-	}
+	/* No digits were found */
+	if (*rstatus == 0 && nptr == *endptr)
+		*rstatus = ECANCELED;
 
 	if (im < lo) {
 		if (*rstatus == 0)
 			*rstatus = ERANGE;
 		return lo;
 	}
+
 	if (im > hi) {
 		if (*rstatus == 0)
 			*rstatus = ERANGE;
 		return hi;
 	}
+
+	/* There are further characters after number */
+	if (*rstatus == 0 && **endptr != '\0')
+		*rstatus = ENOTSUP;
 
 	return im;
 }

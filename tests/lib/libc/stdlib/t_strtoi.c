@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtoi.c,v 1.2 2017/04/28 19:01:01 kamil Exp $	*/
+/*	$NetBSD: t_strtoi.c,v 1.2.20.1 2024/08/23 16:15:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtoi.c,v 1.2 2017/04/28 19:01:01 kamil Exp $");
+__RCSID("$NetBSD: t_strtoi.c,v 1.2.20.1 2024/08/23 16:15:14 martin Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -235,6 +235,38 @@ ATF_TC_BODY(strtoi_range, tc)
 	}
 }
 
+ATF_TC(strtoi_range_trail);
+ATF_TC_HEAD(strtoi_range_trail, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test ERANGE from strtoi(3) "
+		"with trailing characters");
+}
+
+ATF_TC_BODY(strtoi_range_trail, tc)
+{
+	struct test t[] = {
+		{ "11x", 9, 10, "x", 0,	9, ERANGE },
+		{ " -3y", -2, 10, "y", -2, 1, ERANGE },
+	};
+
+	intmax_t rv;
+	char *end;
+	int e;
+	size_t i;
+
+	for (i = 0; i < __arraycount(t); i++) {
+
+		errno = 0;
+		rv = strtoi(t[i].str, &end, t[i].base, t[i].lo, t[i].hi, &e);
+
+		if (errno != 0)
+			atf_tc_fail("strtoi(3) changed errno to %d ('%s')",
+			            e, strerror(e));
+
+		check(&t[i], rv, end, e);
+	}
+}
+
 ATF_TC(strtoi_signed);
 ATF_TC_HEAD(strtoi_signed, tc)
 {
@@ -298,6 +330,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, strtoi_base);
 	ATF_TP_ADD_TC(tp, strtoi_case);
 	ATF_TP_ADD_TC(tp, strtoi_range);
+	ATF_TP_ADD_TC(tp, strtoi_range_trail);
 	ATF_TP_ADD_TC(tp, strtoi_signed);
 
 	return atf_no_error();
