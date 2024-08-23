@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbrtoc32.3,v 1.8 2024/08/17 01:52:51 riastradh Exp $
+.\"	$NetBSD: mbrtoc32.3,v 1.9 2024/08/23 12:59:49 riastradh Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -216,8 +216,8 @@ while (n) {
 
         len = mbrtoc32(&c32, s, n, &mbs);
         switch (len) {
-        case 0:                 /* null terminator */
-                assert(c32 == L'\e0');
+        case 0:                 /* NUL terminator */
+                assert(c32 == 0);
                 goto out;
         default:                /* scalar value */
                 printf("U+%04"PRIx32"\en", (uint32_t)c32);

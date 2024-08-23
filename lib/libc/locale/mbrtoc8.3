@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbrtoc8.3,v 1.6 2024/08/17 12:37:29 riastradh Exp $
+.\"	$NetBSD: mbrtoc8.3,v 1.7 2024/08/23 12:59:49 riastradh Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -244,8 +244,8 @@ while (n) {
 
         len = mbrtoc8(&c8, s, n, &mbs);
         switch (len) {
-        case 0:         /* null terminator */
-                assert(c8 == '\e0');
+        case 0:         /* NUL terminator */
+                assert(c8 == 0);
                 goto out;
         default:        /* consumed input and yielded a byte c8 */
                 printf("0x%02hhx\en", c8);
