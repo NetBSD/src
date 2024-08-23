@@ -1,4 +1,4 @@
-/*	$NetBSD: wav.c,v 1.15.8.2 2024/03/25 15:09:38 martin Exp $	*/
+/*	$NetBSD: wav.c,v 1.15.8.3 2024/08/23 17:15:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2002, 2009, 2013, 2015, 2019, 2024 Matthew R. Green
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wav.c,v 1.15.8.2 2024/03/25 15:09:38 martin Exp $");
+__RCSID("$NetBSD: wav.c,v 1.15.8.3 2024/08/23 17:15:10 martin Exp $");
 #endif
 
 
@@ -91,8 +91,10 @@ wav_enc_from_val(int encoding)
  * WAV format helpers
  */
 
+#define RIFFNAMELEN	4
+
 static bool
-find_riff_chunk(const char search[4], size_t *remainp, char **wherep, uint32_t *partlen)
+find_riff_chunk(const char *search, size_t *remainp, char **wherep, uint32_t *partlen)
 {
 	wav_audioheaderpart part;
 
@@ -116,7 +118,7 @@ find_riff_chunk(const char search[4], size_t *remainp, char **wherep, uint32_t *
 			emsg = " (odd length, adjusted)";
 			len += 1;
 		}
-		if (strncmp(part.name, search, sizeof *search) == 0) {
+		if (strncmp(part.name, search, RIFFNAMELEN) == 0) {
 			*partlen = len;
 			if (verbose > 1)
 				fprintf(stderr, "Found part %.04s length %d%s\n",
@@ -148,10 +150,10 @@ audio_wav_parse_hdr(void *hdr, size_t sz, u_int *enc, u_int *prec,
 	uint32_t len = 0;
 	u_int16_t fmttag;
 	static const char
-	    strfmt[4] = "fmt ",
-	    strRIFF[4] = "RIFF",
-	    strWAVE[4] = "WAVE",
-	    strdata[4] = "data";
+	    strfmt[RIFFNAMELEN] = "fmt ",
+	    strRIFF[RIFFNAMELEN] = "RIFF",
+	    strWAVE[RIFFNAMELEN] = "WAVE",
+	    strdata[RIFFNAMELEN] = "data";
 	bool found;
 
 	if (sz < 32)
