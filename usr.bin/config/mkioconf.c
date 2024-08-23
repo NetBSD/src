@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.35 2017/11/19 01:46:29 christos Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.35.14.1 2024/08/23 17:19:19 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkioconf.c,v 1.35 2017/11/19 01:46:29 christos Exp $");
+__RCSID("$NetBSD: mkioconf.c,v 1.35.14.1 2024/08/23 17:19:19 martin Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -136,7 +136,12 @@ cforder(const void *a, const void *b)
 
 	n1 = (*(const struct devi * const *)a)->i_cfindex;
 	n2 = (*(const struct devi * const *)b)->i_cfindex;
-	return (n1 - n2);
+	if (n1 < n2)
+		return -1;
+	else if (n1 > n2)
+		return +1;
+	else
+		abort();	/* no ties possible */
 }
 
 static void

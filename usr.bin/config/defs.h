@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.106 2020/04/03 19:53:41 joerg Exp $	*/
+/*	$NetBSD: defs.h,v 1.106.6.1 2024/08/23 17:19:19 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -206,6 +206,8 @@ struct attr {
 	/* "device class" */
 	const char *a_devclass;		/* device class described */
 	struct where a_where;
+
+	size_t	a_idx;			/* index to break sorting ties */
 };
 
 /*

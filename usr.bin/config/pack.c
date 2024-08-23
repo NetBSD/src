@@ -1,4 +1,4 @@
-/*	$NetBSD: pack.c,v 1.10 2015/09/12 19:11:13 joerg Exp $	*/
+/*	$NetBSD: pack.c,v 1.10.26.1 2024/08/23 17:19:19 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pack.c,v 1.10 2015/09/12 19:11:13 joerg Exp $");
+__RCSID("$NetBSD: pack.c,v 1.10.26.1 2024/08/23 17:19:19 martin Exp $");
 
 #include <sys/param.h>
 #include <stdlib.h>
@@ -319,21 +319,38 @@ addlocs(const char **locs, int len)
 
 /*
  * Comparison function for qsort-by-locator-length, longest first.
- * We rashly assume that subtraction of these lengths does not overflow.
+ *
+ * In the event of equality, break ties by i_cfindex, which should be
+ * unique, obviating the need for a stable sort.
  */
 static int
 loclencmp(const void *a, const void *b)
 {
+	const struct devi *const *d1p = a, *d1 = *d1p;
+	const struct devi *const *d2p = b, *d2 = *d2p;
 	const struct pspec *p1, *p2;
 	int l1, l2;
 
-	p1 = (*(const struct devi * const *)a)->i_pspec;
+	p1 = d1->i_pspec;
 	l1 = p1 != NULL ? p1->p_iattr->a_loclen : 0;
 
-	p2 = (*(const struct devi * const *)b)->i_pspec;
+	p2 = d2->i_pspec;
 	l2 = p2 != NULL ? p2->p_iattr->a_loclen : 0;
 
-	return (l2 - l1);
+	/*
+	 * Longer locators first; among equal locator lengths, earliest
+	 * index first.
+	 */
+	if (l2 < l1)
+		return -1;
+	else if (l2 > l1)
+		return +1;
+	else if (d2->i_cfindex > d1->i_cfindex)
+		return -1;
+	else if (d2->i_cfindex < d1->i_cfindex)
+		return +1;
+	else
+		abort();	/* no ties possible */
 }
 
 static void
