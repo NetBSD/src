@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_rng.c,v 1.20 2021/10/07 12:52:27 msaitoh Exp $ */
+/* $NetBSD: cpu_rng.c,v 1.20.4.1 2024/08/23 18:15:31 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -260,8 +260,12 @@ cpu_rng(enum cpu_rng_mode mode, uint64_t *out)
 static void
 cpu_rng_get(size_t nbytes, void *cookie)
 {
-#define N howmany(256, 64)
-	uint64_t buf[2*N];
+	enum {
+		NBITS = 256,
+		NBYTES = howmany(NBITS, 8),
+		NWORDS = howmany(NBITS, 64),
+	};
+	uint64_t buf[2*NWORDS];
 	unsigned i, nbits = 0;
 
 	while (nbytes) {
@@ -273,7 +277,7 @@ cpu_rng_get(size_t nbytes, void *cookie)
 		 */
 		for (i = 0; i < __arraycount(buf); i++)
 			nbits += cpu_rng(cpu_rng_mode, &buf[i]);
-		if (consttime_memequal(buf, buf + N, N)) {
+		if (consttime_memequal(buf, buf + NWORDS, NBYTES)) {
 			printf("cpu_rng %s: failed repetition test\n",
 			    cpu_rng_name[cpu_rng_mode]);
 			nbits = 0;
@@ -281,7 +285,6 @@ cpu_rng_get(size_t nbytes, void *cookie)
 		rnd_add_data_sync(&cpu_rng_source, buf, sizeof buf, nbits);
 		nbytes -= MIN(MIN(nbytes, sizeof buf), MAX(1, 8*nbits));
 	}
-#undef N
 }
 
 void
