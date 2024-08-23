@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dir.h,v 1.22 2016/08/07 01:47:11 kre Exp $	*/
+/*	$NetBSD: ext2fs_dir.h,v 1.22.46.1 2024/08/23 17:10:10 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -174,7 +174,7 @@ ext2dt2dt(uint8_t type)
 {
 	switch (type) {
 	case EXT2_FT_REG_FILE:
-		return DT_FIFO;
+		return DT_REG;
 	case EXT2_FT_DIR:
 		return DT_DIR;
 	case EXT2_FT_CHRDEV:
