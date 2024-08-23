@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.818.2.6 2024/08/23 16:59:53 martin Exp $
+# $NetBSD: mi,v 1.818.2.7 2024/08/23 18:32:36 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -143,6 +143,7 @@
 ./usr/libdata/debug/usr/tests/lib/librumphijack				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libskey				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libsljit				tests-lib-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/lib/libstdc++				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libtre				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libusbhid				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libutil				tests-lib-debug		compattestfile,atf
@@ -3327,6 +3328,11 @@
 ./usr/tests/lib/libsljit/Kyuafile			tests-lib-tests		compattestfile,atf,sljit,kyua
 ./usr/tests/lib/libsljit/h_sljit			tests-lib-tests		compattestfile,atf,sljit
 ./usr/tests/lib/libsljit/t_sljit			tests-lib-tests		compattestfile,atf,sljit
+./usr/tests/lib/libstdc++				tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libstdc++/Atffile			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libstdc++/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
+./usr/tests/lib/libstdc++/h_cin_nosync			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libstdc++/t_sync_with_stdio		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libtre					tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libtre/Atffile				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libtre/Kyuafile				tests-lib-tests		compattestfile,atf,kyua
