@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.131 2021/11/02 20:35:51 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.131.4.1 2024/08/23 16:20:35 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -527,7 +527,7 @@ struct cmsghdr {
 	socklen_t	cmsg_len;	/* data byte count, including hdr */
 	int		cmsg_level;	/* originating protocol */
 	int		cmsg_type;	/* protocol-specific type */
-/* followed by	u_char  cmsg_data[]; */
+/* followed by unsigned char cmsg_data[]; */
 };
 
 /*
@@ -552,8 +552,8 @@ struct cmsghdr {
     (__CASTV(char *, (mhdr)->msg_control) + (mhdr)->msg_controllen)
 
 /* given pointer to struct cmsghdr, return pointer to data */
-#define	CMSG_DATA(cmsg) (__CASTV(u_char *, cmsg) + __CMSG_ASIZE)
-#define	CCMSG_DATA(cmsg) (__CASTCV(const u_char *, cmsg) + __CMSG_ASIZE)
+#define	CMSG_DATA(cmsg) (__CASTV(unsigned char *, cmsg) + __CMSG_ASIZE)
+#define	CCMSG_DATA(cmsg) (__CASTCV(const unsigned char *, cmsg) + __CMSG_ASIZE)
 
 /* given pointer to struct cmsghdr, return pointer to next cmsghdr */
 #define	CMSG_NXTHDR(mhdr, cmsg)	\
