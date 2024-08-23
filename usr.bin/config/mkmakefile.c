@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.71 2018/08/27 05:35:00 riastradh Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.71.10.1 2024/08/23 17:19:19 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.71 2018/08/27 05:35:00 riastradh Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.71.10.1 2024/08/23 17:19:19 martin Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -396,6 +396,7 @@ emitallkobjscb(const char *name, void *v, void *arg)
 		return 0;
 	if (TAILQ_EMPTY(&a->a_files))
 		return 0;
+	a->a_idx = attridx;
 	attrbuf[attridx++] = a;
 	/* XXX nattrs tracking is not exact yet */
 	if (attridx == nattrs) {
@@ -430,7 +431,21 @@ attrcmp(const void *l, const void *r)
 {
 	const struct attr * const *a = l, * const *b = r;
 	const int wa = (*a)->a_weight, wb = (*b)->a_weight;
-	return (wa > wb) ? -1 : (wa < wb) ? 1 : 0;
+
+	/*
+	 * Higher-weight first; then, among equal weights, earlier
+	 * index first.
+	 */
+	if (wa > wb)
+		return -1;
+	else if (wa < wb)
+		return +1;
+	else if ((*a)->a_idx < (*b)->a_idx)
+		return -1;
+	else if ((*a)->a_idx > (*b)->a_idx)
+		return +1;
+	else
+		abort();	/* no ties possible */
 }
 
 static void

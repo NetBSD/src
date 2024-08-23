@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.37 2020/03/07 19:26:13 christos Exp $	*/
+/*	$NetBSD: files.c,v 1.37.6.1 2024/08/23 17:19:19 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: files.c,v 1.37 2020/03/07 19:26:13 christos Exp $");
+__RCSID("$NetBSD: files.c,v 1.37.6.1 2024/08/23 17:19:19 martin Exp $");
 
 #include <sys/param.h>
 #include <assert.h>
@@ -281,9 +281,9 @@ cmpfiles(const void *a, const void *b)
 	if (sa < sb)
 		return -1;
 	else if (sa > sb)
-		return 1;
+		return +1;
 	else
-		return 0;
+		abort();	/* no ties possible */
 }
 
 /*
