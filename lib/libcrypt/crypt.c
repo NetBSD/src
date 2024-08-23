@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.38 2020/02/22 10:29:17 kamil Exp $	*/
+/*	$NetBSD: crypt.c,v 1.38.8.1 2024/08/23 16:40:48 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.38 2020/02/22 10:29:17 kamil Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.38.8.1 2024/08/23 16:40:48 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -480,7 +480,7 @@ ascii_to_bin(char ch)
 
 	if (sch >= 'a')
 		retval = sch - ('a' - 38);
-	else if (sch >= 'A') 
+	else if (sch >= 'A')
 		retval = sch - ('A' - 12);
 	else
 		retval = sch - '.';
@@ -499,13 +499,13 @@ ascii_is_unsafe(char ch)
 }
 
 /*
- * We extract the scheme from setting str to allow for 
+ * We extract the scheme from setting str to allow for
  * full scheme name comparison
- * Updated to reflect alc suggestion(s) 
+ * Updated to reflect alc suggestion(s)
  *
  * retuns boolean 0 on failure, 1 on success, 
  */
-static int 
+static int
 nondes_scheme_substr(const char * setting,char * scheme, unsigned int len)
 {
 	const char * start;
@@ -548,7 +548,7 @@ static char *
 __crypt(const char *key, const char *setting)
 {
 	char *encp;
-	char scheme[12]; 
+	char scheme[12];
 	int32_t i;
 	int t;
 	int r;

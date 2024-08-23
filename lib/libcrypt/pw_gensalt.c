@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_gensalt.c,v 1.13 2021/10/20 13:03:29 nia Exp $	*/
+/*	$NetBSD: pw_gensalt.c,v 1.13.2.1 2024/08/23 16:40:48 martin Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pw_gensalt.c,v 1.13 2021/10/20 13:03:29 nia Exp $");
+__RCSID("$NetBSD: pw_gensalt.c,v 1.13.2.1 2024/08/23 16:40:48 martin Exp $");
 #endif /* not lint */
 
 #include <sys/syslimits.h>
@@ -249,7 +249,7 @@ __gensalt_argon2(char *salt, size_t saltsiz,
 		return 0;
 	}
 
-	n = snprintf(salt, saltsiz, "$%s$v=%d$%s$", 
+	n = snprintf(salt, saltsiz, "$%s$v=%d$%s$",
 		argon2_type2string(atype,0), ARGON2_VERSION_NUMBER, buf);
 
 	if ((size_t)n + 16 >= saltsiz) {

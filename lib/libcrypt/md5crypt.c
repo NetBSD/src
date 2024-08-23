@@ -1,4 +1,4 @@
-/*	$NetBSD: md5crypt.c,v 1.15 2021/10/16 10:53:33 nia Exp $	*/
+/*	$NetBSD: md5crypt.c,v 1.15.2.1 2024/08/23 16:40:48 martin Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: md5crypt.c,v 1.15 2021/10/16 10:53:33 nia Exp $");
+__RCSID("$NetBSD: md5crypt.c,v 1.15.2.1 2024/08/23 16:40:48 martin Exp $");
 #endif /* not lint */
 
 #include <unistd.h>
@@ -46,9 +46,9 @@ __md5crypt(const char *pw, const char *salt)
 	MD5_CTX	ctx, ctx1;
 	u_int32_t l;
 	int pl;
-	
+
 	pwl = strlen(pw);
-	
+
 	/* Refine the salt first */
 	sp = salt;
 
