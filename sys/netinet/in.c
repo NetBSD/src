@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.234.2.1 2020/10/08 18:04:59 martin Exp $	*/
+/*	$NetBSD: in.c,v 1.234.2.2 2024/08/24 16:46:35 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.234.2.1 2020/10/08 18:04:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.234.2.2 2024/08/24 16:46:35 martin Exp $");
 
 #include "arp.h"
 
@@ -1470,8 +1470,7 @@ in_if_link_up(struct ifnet *ifp)
 		/* If detached then mark as tentative */
 		if (ia->ia4_flags & IN_IFF_DETACHED) {
 			ia->ia4_flags &= ~IN_IFF_DETACHED;
-			if (ip_dad_enabled() && if_do_dad(ifp) &&
-			    ia->ia_dad_start != NULL)
+			if (if_do_dad(ifp) && ia->ia_dad_start != NULL)
 				ia->ia4_flags |= IN_IFF_TENTATIVE;
 			else if ((ia->ia4_flags & IN_IFF_TENTATIVE) == 0)
 				rt_addrmsg(RTM_NEWADDR, ifa);
