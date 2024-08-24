@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.28 2024/07/05 04:31:50 rin Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.29 2024/08/24 07:24:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.28 2024/07/05 04:31:50 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.29 2024/08/24 07:24:34 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -389,7 +389,7 @@ cemac_intr(void *arg)
 		goto begin;
 #endif
 
-	return (1);
+	return 1;
 }
 
 
@@ -627,7 +627,7 @@ cemac_mediachange(struct ifnet *ifp)
 {
 	if (ifp->if_flags & IFF_UP)
 		cemac_ifinit(ifp);
-	return (0);
+	return 0;
 }
 
 static void
