@@ -1,4 +1,4 @@
-.\"	$NetBSD: mountd.8,v 1.40 2021/02/16 10:01:55 wiz Exp $
+.\"	$NetBSD: mountd.8,v 1.40.6.1 2024/08/24 16:19:29 martin Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,8 +48,14 @@ mount requests
 is the server for
 .Tn NFS
 mount requests from other client machines.
+.Pp
 .Nm
-listens for service requests at the port indicated in the
+makes all filesystems listed in
+.Xr exports 5
+available to
+.Tn NFS
+clients, and then listens for mount service requests at the port
+indicated in the
 .Tn NFS
 server specification; see
 .%T "Network File System Protocol Specification" ,
