@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_cemac.c,v 1.4 2022/10/26 11:31:11 jmcneill Exp $	*/
+/*	$NetBSD: zynq_cemac.c,v 1.5 2024/08/24 10:18:52 skrll Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,9 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_cemac.c,v 1.4 2022/10/26 11:31:11 jmcneill Exp $");
-
-#include "opt_soc.h"
+__KERNEL_RCSID(0, "$NetBSD: zynq_cemac.c,v 1.5 2024/08/24 10:18:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
