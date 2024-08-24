@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.40 2023/11/25 10:08:27 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.41 2024/08/24 09:39:44 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1723,18 +1723,18 @@ ccb_timeout(ccb_t *ccb)
 {
 	connection_t *conn = ccb->ccb_connection;
 
+	if (conn == NULL) {
+		/* XXX Should never happen */
+		printf("ccb_timeout: num=%d total=%d disp=%d invalid ccb=%p\n",
+			ccb->ccb_num_timeouts+1, ccb->ccb_total_tries,
+			ccb->ccb_disp, ccb);
+		return;
+	}
+
 	ccb->ccb_total_tries++;
 
 	DEBC(conn, 0, ("ccb_timeout: num=%d total=%d disp=%d\n",
 		ccb->ccb_num_timeouts+1, ccb->ccb_total_tries, ccb->ccb_disp));
-
-	/*
-	 * XXX can we time out after connection is closed ?
-	 */
-	if (conn == NULL) {
-		wake_ccb(ccb, ISCSI_STATUS_TIMEOUT);
-		return;
-	}
 
 	if (++ccb->ccb_num_timeouts > MAX_CCB_TIMEOUTS ||
 		ccb->ccb_total_tries > MAX_CCB_TRIES ||
