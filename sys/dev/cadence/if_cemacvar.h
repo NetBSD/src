@@ -1,4 +1,4 @@
-/*      $NetBSD: if_cemacvar.h,v 1.2 2024/08/24 10:02:55 skrll Exp $	*/
+/*      $NetBSD: if_cemacvar.h,v 1.3 2024/08/24 10:13:19 skrll Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -32,7 +32,6 @@ int cemac_match(device_t, cfdata_t, void *);
 void cemac_attach(device_t, device_t, void *);
 int cemac_intr(void *);
 
-int cemac_match_common(device_t, cfdata_t, void *);
 void cemac_attach_common(device_t, bus_space_tag_t, bus_space_handle_t,
     bus_dma_tag_t, int);
 
