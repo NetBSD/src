@@ -1,4 +1,4 @@
-#	$NetBSD: t_dad.sh,v 1.15 2017/03/11 02:01:10 ozaki-r Exp $
+#	$NetBSD: t_dad.sh,v 1.15.22.1 2024/08/24 16:45:04 martin Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -32,6 +32,7 @@ DEBUG=${DEBUG:-false}
 
 atf_test_case dad_basic cleanup
 atf_test_case dad_duplicated cleanup
+atf_test_case dad_duplicated_nodad cleanup
 
 dad_basic_head()
 {
@@ -42,6 +43,12 @@ dad_basic_head()
 dad_duplicated_head()
 {
 	atf_set "descr" "Tests for IPv4 DAD duplicated state"
+	atf_set "require.progs" "rump_server"
+}
+
+dad_duplicated_nodad_head()
+{
+	atf_set "descr" "Tests for IPv4 DAD duplicated state w/o DAD"
 	atf_set "require.progs" "rump_server"
 }
 
@@ -66,6 +73,16 @@ make_pkt_str()
 	local sender=$2
 	pkt="> ff:ff:ff:ff:ff:ff, ethertype ARP \(0x0806\), length 42:"
 	pkt="$pkt Request who-has $target tell $sender, length 28"
+	echo $pkt
+}
+
+make_reply_str()
+{
+	local srcmac=$1
+	local dstmac=$2
+	local ip=$3
+	pkt="$srcmac > $dstmac, ethertype ARP \(0x0806\), length 42:"
+	pkt="Reply $ip is-at $srcmac, length 28"
 	echo $pkt
 }
 
@@ -190,6 +207,71 @@ dad_duplicated_body()
 	rump_server_destroy_ifaces
 }
 
+dad_duplicated_nodad_body()
+{
+	local localip1=10.0.1.1
+	local localip2=10.0.1.11
+	local peerip=10.0.1.2
+	local lmac= pmac=
+
+	rump_server_start $SOCKLOCAL
+	rump_server_start $SOCKPEER
+
+	export RUMP_SERVER=$SOCKLOCAL
+	atf_check -s exit:0 -o ignore rump.sysctl -w net.inet.ip.dad_count=0
+	export RUMP_SERVER=$SOCKPEER
+	atf_check -s exit:0 -o ignore rump.sysctl -w net.inet.ip.dad_count=0
+
+	setup_server $SOCKLOCAL $localip1
+	setup_server $SOCKPEER $peerip
+
+	export RUMP_SERVER=$SOCKLOCAL
+
+	# The primary address isn't marked as duplicated
+	atf_check -s exit:0 -o not-match:"${localip1}.+DUPLICATED" \
+	    rump.ifconfig shmif0
+
+	extract_new_packets bus1 > ./out
+
+	# GARP packets are sent
+	pkt=$(make_pkt_str $localip1 $localip1)
+	atf_check -s exit:0 -o match:"$pkt" cat ./out
+	pkt=$(make_pkt_str $peerip $peerip)
+	atf_check -s exit:0 -o match:"$pkt" cat ./out
+
+	# No DAD probe packets are sent
+	pkt=$(make_pkt_str $localip1 0.0.0.0)
+	atf_check -s exit:0 -o not-match:"$pkt" cat ./out
+	pkt=$(make_pkt_str $peerip 0.0.0.0)
+	atf_check -s exit:0 -o not-match:"$pkt" cat ./out
+
+	#
+	# Add a new address duplicated with the peer server
+	#
+	atf_check -s exit:0 rump.ifconfig shmif0 inet $peerip alias
+	atf_check -s exit:0 sleep 2
+
+	# The new address is NOT marked as duplicated
+	atf_check -s exit:0 -o not-match:"${peerip}.+DUPLICATED" \
+	    rump.ifconfig shmif0
+
+	lmac=$(get_macaddr $SOCKLOCAL)
+	pmac=$(get_macaddr $SOCKPEER)
+	extract_new_packets bus1 > ./out
+
+	# The peer just replies a GARP of the peer
+	pkt=$(make_reply_str $pmac $lmac $peerip)
+	atf_check -s exit:0 -o match:"$pkt" cat ./out
+
+	# A unique address isn't marked as duplicated
+	atf_check -s exit:0 rump.ifconfig shmif0 inet $localip2 alias
+	atf_check -s exit:0 sleep 2
+	atf_check -s exit:0 -o not-match:"${localip2}.+DUPLICATED" \
+	    rump.ifconfig shmif0
+
+	rump_server_destroy_ifaces
+}
+
 dad_basic_cleanup()
 {
 	$DEBUG && dump
@@ -202,8 +284,16 @@ dad_duplicated_cleanup()
 	cleanup
 }
 
+dad_duplicated_nodad_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case dad_basic
 	atf_add_test_case dad_duplicated
+	atf_add_test_case dad_duplicated_nodad
 }
