@@ -1,4 +1,4 @@
-/* $NetBSD: cy82c693.c,v 1.10 2018/06/06 01:49:08 maya Exp $ */
+/* $NetBSD: cy82c693.c,v 1.10.34.1 2024/08/24 16:32:00 martin Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy82c693.c,v 1.10 2018/06/06 01:49:08 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy82c693.c,v 1.10.34.1 2024/08/24 16:32:00 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -54,14 +54,13 @@ ONCE_DECL(cyhc_once);
 static struct cy82c693_handle cyhc_handle;
 static int cyhc_initialized;
 
-static kmutex_t cyhc_slock;
+static kmutex_t cyhc_lock;
 
 static int
 cy82c693_onceinit(void)
 {
 
-	mutex_init(&cyhc_slock, MUTEX_DEFAULT, IPL_HIGH);
-
+	mutex_init(&cyhc_lock, MUTEX_DEFAULT, IPL_NONE);
 	return 0;
 }
 
@@ -75,16 +74,16 @@ cy82c693_init(bus_space_tag_t iot)
 	if (err)
 		return NULL;
 	
-	mutex_spin_enter(&cyhc_slock);
+	mutex_enter(&cyhc_lock);
 
 	if (cyhc_initialized) {
-		mutex_spin_exit(&cyhc_slock);
+		mutex_exit(&cyhc_lock);
 		KASSERT(bus_space_is_equal(iot, cyhc_handle.cyhc_iot));
 		return &cyhc_handle;
 	}
 
 	if (bus_space_map(iot, CYHC_CONFIG_ADDR, 2, 0, &ioh) != 0) {
-		mutex_spin_exit(&cyhc_slock);
+		mutex_exit(&cyhc_lock);
 		return NULL;
 	}
 
@@ -93,7 +92,7 @@ cy82c693_init(bus_space_tag_t iot)
 
 	cyhc_initialized = 1;
 
-	mutex_spin_exit(&cyhc_slock);
+	mutex_exit(&cyhc_lock);
 
 	return &cyhc_handle;
 }
@@ -103,17 +102,15 @@ cy82c693_read(const struct cy82c693_handle *cyhc, int reg)
 {
 	uint8_t rv;
 
-	mutex_spin_enter(&cyhc_slock);
+	KASSERT(cyhc != NULL);
+	KASSERT(cyhc_initialized);
 
-	if (cyhc_initialized == 0) {
-		mutex_spin_exit(&cyhc_slock);
-		panic("cy82c693_read");
-	}
+	mutex_enter(&cyhc_lock);
 
 	bus_space_write_1(cyhc->cyhc_iot, cyhc->cyhc_ioh, 0, reg);
 	rv = bus_space_read_1(cyhc->cyhc_iot, cyhc->cyhc_ioh, 1);
 
-	mutex_spin_exit(&cyhc_slock);
+	mutex_exit(&cyhc_lock);
 
 	return rv;
 }
@@ -122,15 +119,13 @@ void
 cy82c693_write(const struct cy82c693_handle *cyhc, int reg, u_int8_t val)
 {
 
-	mutex_spin_enter(&cyhc_slock);
+	KASSERT(cyhc != NULL);
+	KASSERT(cyhc_initialized);
 
-	if (cyhc_initialized == 0) {
-		mutex_spin_exit(&cyhc_slock);
-		panic("cy82c693_write");
-	}
+	mutex_enter(&cyhc_lock);
 
 	bus_space_write_1(cyhc->cyhc_iot, cyhc->cyhc_ioh, 0, reg);
 	bus_space_write_1(cyhc->cyhc_iot, cyhc->cyhc_ioh, 1, val);
 
-	mutex_spin_exit(&cyhc_slock);
+	mutex_exit(&cyhc_lock);
 }
