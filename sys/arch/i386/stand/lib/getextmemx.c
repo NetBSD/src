@@ -1,4 +1,4 @@
-/*	$NetBSD: getextmemx.c,v 1.11 2024/08/17 08:38:31 andvar Exp $	*/
+/*	$NetBSD: getextmemx.c,v 1.12 2024/08/24 20:23:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -39,8 +39,8 @@ int
 getextmemx(void)
 {
 	/*
-	 * Allocate 6 words, not 5, to work around buggy firmware -- see comment
-	 * on getmementry in biosmemx.S.
+	 * Allocate 6 words, not 5, to work around buggy firmware --
+	 * see comment on getmementry in biosmemx.S.
 	 */
 	int buf[6], i;
 	int extmem = getextmem1();

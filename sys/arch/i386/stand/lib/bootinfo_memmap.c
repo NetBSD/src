@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_memmap.c,v 1.7 2024/08/17 08:38:31 andvar Exp $	*/
+/*	$NetBSD: bootinfo_memmap.c,v 1.8 2024/08/24 20:23:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -37,9 +37,9 @@ extern int getmementry(int *, int *);
 void
 bi_getmemmap(void)
 {
-	/* 
-	 * Allocate 6 words, not 5, to work around buggy firmware -- see comment
-	 * on getmementry in biosmemx.S.
+	/*
+	 * Allocate 6 words, not 5, to work around buggy firmware --
+	 * see comment on getmementry in biosmemx.S.
 	 */
 	int buf[6], i, nranges, n;
 
