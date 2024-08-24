@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.403.2.2 2024/08/22 19:28:40 martin Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.403.2.3 2024/08/24 08:22:16 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.403.2.2 2024/08/22 19:28:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.403.2.3 2024/08/24 08:22:16 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -2012,7 +2012,7 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 		if (length > entry->next->start - vm_map_min(map))
 			hint = vm_map_min(map); /* XXX goto wraparound? */
 		else
-			hint = entry->next->start - length;
+			hint = MIN(orig_hint, entry->next->start - length);
 		KASSERT(hint >= vm_map_min(map));
 	} else {
 		hint = entry->end;
@@ -2184,7 +2184,8 @@ nextgap:
 	INVARIANTS();
 	for (;;) {
 		/* Update hint for current gap. */
-		hint = topdown ? entry->next->start - length : entry->end;
+		hint = topdown ? MIN(orig_hint, entry->next->start - length)
+		    : entry->end;
 		INVARIANTS();
 
 		/* See if it fits. */
