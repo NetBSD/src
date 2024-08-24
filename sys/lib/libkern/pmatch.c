@@ -1,4 +1,4 @@
-/*	$NetBSD: pmatch.c,v 1.7 2021/01/21 15:44:14 thorpej Exp $	*/
+/*	$NetBSD: pmatch.c,v 1.8 2024/08/24 22:30:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991 The Regents of the University of California.
@@ -51,7 +51,7 @@ pmatch(const char *string, const char *pattern, const char **estr)
 {
 	u_char stringc, patternc, rangec;
 	int match, negate_range;
-	const char *oestr, *pestr, *testr;
+	const char *oestr, *pestr, *testr = NULL;
 
 	if (estr == NULL)
 		estr = &testr;
