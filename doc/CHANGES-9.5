@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.14 2024/08/23 18:35:12 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.15 2024/08/24 16:50:25 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -287,6 +287,7 @@ distrib/sets/lists/debug/mi			1.433
 distrib/sets/lists/tests/mi			1.1313 (patch)
 etc/mtree/NetBSD.dist.tests			1.204
 external/gpl3/gcc/dist/libstdc++-v3/config/io/basic_file_stdio.cc 1.2
+tests/lib/Makefile				1.36
 tests/lib/libstdc++/Makefile			1.1
 tests/lib/libstdc++/h_cin_nosync.cc		1.1
 tests/lib/libstdc++/t_sync_with_stdio.sh	1.1,1.2
@@ -294,4 +295,44 @@ tests/lib/libstdc++/t_sync_with_stdio.sh	1.1,1.2
 	libstdc++: PR 58206: avoid undefined behaviour in sync_with_stdio -
 	don't fflush stdin.
 	[riastradh, ticket #1877]
+
+distrib/cdrom/Makefile				1.53
+etc/etc.mac68k/Makefile.inc			1.24
+
+	PR 41266: change mkisofs invocation to not error out on
+	expected file changes.
+	[hauke, ticket #1878]
+
+sys/uvm/uvm_map.c				1.423,1.425 (patch)
+
+	uvm_map(9): PR 51254_ make sure search in the nearest gap is monotonic.
+	[riastradh, ticket #1879]
+
+sys/dev/pci/pucdata.c				1.116
+
+	puc(4): PR 58358: add Brainboxes puc(4) devices.
+	[jakllsch, ticket #1880]
+
+lib/libc/time/strptime.c			1.64-1.66 (patch)
+tests/lib/libc/time/t_strptime.c		1.16 (patch)
+
+	strptime(3): PR 58041: add tests and avoid arithmetic
+        overflow.
+	[riastradh, ticket #1881]
+
+sbin/fsirand/fsirand.8				1.11
+usr.sbin/mountd/exports.5			1.33-1.38
+usr.sbin/mountd/mountd.8			1.43
+
+	nfs: PR 58063: clarify export semantics and security model.
+	[riastradh, ticket #1882]
+
+sys/netinet/if_arp.c				1.314
+sys/netinet/in.c				1.248
+tests/net/arp/t_arp.sh				1.46
+tests/net/arp/t_dad.sh				1.16
+
+	ipv4: fix some behaviors when DAD is disabled
+	and add tests.
+	[ozaki-r, ticket #1883]
 
