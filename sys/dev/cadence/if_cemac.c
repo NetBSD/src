@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.30 2024/08/24 10:09:02 skrll Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.31 2024/08/24 10:11:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.30 2024/08/24 10:09:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.31 2024/08/24 10:11:40 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -708,7 +708,7 @@ cemac_statchg(struct ifnet *ifp)
 static void
 cemac_tick(void *arg)
 {
-	struct cemac_softc* sc = (struct cemac_softc *)arg;
+	struct cemac_softc *sc = (struct cemac_softc *)arg;
 	struct ifnet * ifp = &sc->sc_ethercom.ec_if;
 	int s;
 
@@ -830,7 +830,7 @@ start:
 	sc->txqc++;
 
 	DPRINTFN(2,("%s: start sending idx #%i mbuf %p (txqc=%i, phys %p), len=%u\n",
-		__FUNCTION__, bi, sc->txq[bi].m, sc->txqc, (void*)segs->ds_addr,
+		__FUNCTION__, bi, sc->txq[bi].m, sc->txqc, (void *)segs->ds_addr,
 		(unsigned)m->m_pkthdr.len));
 #ifdef	DIAGNOSTIC
 	if (sc->txqc > TX_QLEN)
