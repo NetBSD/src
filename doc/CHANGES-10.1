@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.26 2024/08/23 18:36:36 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.27 2024/08/24 16:54:40 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -1185,6 +1185,7 @@ distrib/sets/lists/debug/mi			1.433
 distrib/sets/lists/tests/mi			1.1313
 etc/mtree/NetBSD.dist.tests			1.204
 external/gpl3/gcc/dist/libstdc++-v3/config/io/basic_file_stdio.cc 1.2
+tests/lib/Makefile				1.36
 tests/lib/libstdc++/Makefile			1.1
 tests/lib/libstdc++/h_cin_nosync.cc		1.1
 tests/lib/libstdc++/t_sync_with_stdio.sh	1.1,1.2
@@ -1192,4 +1193,77 @@ tests/lib/libstdc++/t_sync_with_stdio.sh	1.1,1.2
 	libstdc++: PR 58206: avoid undefined behaviour in sync_with_stdio -
 	don't fflush stdin.
 	[riastradh, ticket #801]
+
+sys/uvm/uvm_map.c				1.423,1.425
+
+	uvm_map(9): PR 51254_ make sure search in the nearest gap is monotonic.
+	[riastradh, ticket #804]
+
+sys/dev/pci/if_re_pci.c				1.53
+sys/dev/pci/pcidevs				1.1503
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	re(4): PR 57969: add (Realtek/)Killer E2600 Ethernet.
+	[jakllsch, ticket #805]
+
+sys/dev/pci/pucdata.c				1.116
+
+	puc(4): PR 58358: add Brainboxes puc(4) devices.
+	[jakllsch, ticket #806]
+
+sbin/fsirand/fsirand.8				1.11
+usr.sbin/mountd/exports.5			1.33-1.38
+usr.sbin/mountd/mountd.8			1.43
+
+	nfs: PR 58063: clarify export semantics and security model.
+	[riastradh, ticket #807]
+
+tests/lib/libc/stdlib/Makefile			1.34
+tests/lib/libc/stdlib/t_posix_memalign.c	1.6,1.7
+
+	posix_memalign(3), aligned_alloc(3): improve tests.
+	[riastradh, ticket #808]
+
+sys/dev/pci/cy82c693.c				1.11
+
+	cypide(4): PR 58602: fix locking rules violation.
+	[thorpej, ticket #809]
+
+tests/kernel/kqueue/t_sig.c			1.5
+
+	tests/kqueue: fix mismatch between '=' and '=='
+	[rin, ticket #810]
+
+distrib/sets/lists/tests/mi			1.1333
+etc/mtree/NetBSD.dist.tests			1.206
+sbin/ifconfig/ifconfig.8			1.130
+sbin/ifconfig/ifconfig.c			1.251
+sys/rump/net/lib/libshmif/if_shmem.c		1.85-1.87
+tests/net/Makefile				1.42
+tests/net/if_shmif/Makefile			1.1
+tests/net/if_shmif/t_shmif.sh			1.1
+
+	shmif(4): support linkstate change
+	- tweak shmif behavior about linkstate,
+	- suport linkstate change on shmif via ifconfig media,
+	- show linkstate on ifconfig -v, and
+	- add tests for shmif on the above changes.
+	[ozaki-r, ticket #811]
+
+sys/netinet/if_arp.c				1.314
+sys/netinet/in.c				1.248
+tests/net/arp/t_arp.sh				1.46
+tests/net/arp/t_dad.sh				1.16
+
+	ipv4: fix some behaviors when DAD is disabled
+	and add tests.
+	[ozaki-r, ticket #812]
+
+tests/kernel/kqueue/t_empty.c			1.2
+tests/net/net/t_tcp.c				1.13
+
+	tests: fix false positives due to race b/w connect(2) 
+	and accept(2)
+	[rin, ticket #813]
 
