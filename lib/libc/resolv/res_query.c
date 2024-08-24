@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.17 2023/08/01 08:47:25 mrg Exp $	*/
+/*	$NetBSD: res_query.c,v 1.18 2024/08/24 22:37:41 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -89,7 +89,7 @@
 static const char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_query.c,v 1.11 2008/11/14 02:36:51 marka Exp";
 #else
-__RCSID("$NetBSD: res_query.c,v 1.17 2023/08/01 08:47:25 mrg Exp $");
+__RCSID("$NetBSD: res_query.c,v 1.18 2024/08/24 22:37:41 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -151,7 +151,6 @@ res_nquery(res_state statp,
 	u_char buf[MAXPACKET];
 	HEADER *hp = (HEADER *)(void *)answer;
 	u_int oflags;
-	u_char *rdata;
 	int n;
 
 	oflags = statp->_flags;
@@ -169,10 +168,9 @@ again:
 	if (n > 0 && (statp->_flags & RES_F_EDNS0ERR) == 0 &&
 	    (statp->options & (RES_USE_EDNS0|RES_USE_DNSSEC|RES_NSID)) != 0U) {
 		n = res_nopt(statp, n, buf, (int)sizeof(buf), anslen);
-		rdata = &buf[n];
 		if (n > 0 && (statp->options & RES_NSID) != 0U) {
 			n = res_nopt_rdata(statp, n, buf, (int)sizeof(buf),
-			    rdata, NS_OPT_NSID, 0, NULL);
+			    buf + n, NS_OPT_NSID, 0, NULL);
 		}
 	}
 #endif
