@@ -1,4 +1,4 @@
-/* $NetBSD: t_sig.c,v 1.4 2021/10/10 18:11:31 thorpej Exp $ */
+/* $NetBSD: t_sig.c,v 1.4.2.1 2024/08/24 16:35:46 martin Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008, 2021 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sig.c,v 1.4 2021/10/10 18:11:31 thorpej Exp $");
+__RCSID("$NetBSD: t_sig.c,v 1.4.2.1 2024/08/24 16:35:46 martin Exp $");
 
 #include <sys/event.h>
 #include <sys/ioctl.h>
@@ -199,7 +199,7 @@ ATF_TC_BODY(sig_and_proc, tc)
 	ATF_REQUIRE(kevent(kq, NULL, 0, events, 1, NULL) == 1);
 	ATF_REQUIRE(events[0].filter == EVFILT_PROC);
 	ATF_REQUIRE(events[0].ident == (uintptr_t)pid);
-	ATF_REQUIRE(events[0].fflags = NOTE_EXIT);
+	ATF_REQUIRE(events[0].fflags == NOTE_EXIT);
 }
 
 ATF_TP_ADD_TCS(tp)
