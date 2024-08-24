@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.31 2024/08/24 10:11:40 skrll Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.32 2024/08/24 11:55:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,23 +40,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.31 2024/08/24 10:11:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.32 2024/08/24 11:55:45 skrll Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/ioctl.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
-#include <sys/malloc.h>
-#include <sys/time.h>
-#include <sys/device.h>
-#include <uvm/uvm_extern.h>
+#include <sys/types.h>
 
 #include <sys/bus.h>
-#include <machine/intr.h>
-
-#include <arm/cpufunc.h>
+#include <sys/device.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
+#include <sys/time.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
