@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.52 2020/02/18 03:48:22 msaitoh Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.52.24.1 2024/08/24 08:32:15 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.52 2020/02/18 03:48:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.52.24.1 2024/08/24 08:32:15 martin Exp $");
 
 #include <sys/types.h>
 
@@ -108,6 +108,9 @@ static const struct rtk_type re_devs[] = {
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169SC,
 	    RTK_8169,
 	    "RealTek 8169SC/8110SC Single-chip Gigabit Ethernet" },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_E2600,
+	    RTK_8169,
+	    "Killer E2600 Gigabit Ethernet" },
 	{ PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_LAPCIGT,
 	    RTK_8169,
 	    "Corega CG-LAPCIGT Gigabit Ethernet" },
