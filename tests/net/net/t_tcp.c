@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tcp.c,v 1.12 2021/11/08 10:57:09 rin Exp $	*/
+/*	$NetBSD: t_tcp.c,v 1.12.2.1 2024/08/24 16:53:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$Id: t_tcp.c,v 1.12 2021/11/08 10:57:09 rin Exp $");
+__RCSID("$Id: t_tcp.c,v 1.12.2.1 2024/08/24 16:53:09 martin Exp $");
 #endif
 
 /* Example code. Should block; does with accept not accept4_. */
@@ -159,6 +159,10 @@ accept_test(sa_family_t sfamily, sa_family_t cfamily,
 	if (ok != -1 || errno != EINPROGRESS)
 		FAIL("expected connect to fail");
 #endif
+
+	/* XXX avoid race between connect(2) and accept(2). */
+	sleep(1);
+
 	if (useaccept) {
 		acpt = accept(srvr, NULL, NULL);
 	} else {

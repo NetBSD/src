@@ -1,4 +1,4 @@
-/* $NetBSD: t_empty.c,v 1.1 2021/10/23 01:28:33 thorpej Exp $ */
+/* $NetBSD: t_empty.c,v 1.1.2.1 2024/08/24 16:53:09 martin Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_empty.c,v 1.1 2021/10/23 01:28:33 thorpej Exp $");
+__RCSID("$NetBSD: t_empty.c,v 1.1.2.1 2024/08/24 16:53:09 martin Exp $");
 
 #include <sys/event.h>
 #include <sys/socket.h>
@@ -162,6 +162,9 @@ ATF_TC_BODY(sock_tcp, tc)
 
 	ATF_REQUIRE_ERRNO(EINPROGRESS,
 	    connect(writesock, (struct sockaddr *)&sin, sizeof(sin)) == -1);
+
+	/* XXX Avoid race between connect(2) and accept(2). */
+	sleep(1);
 
 	slen = sizeof(sin);
 	ATF_REQUIRE((readsock = accept(readsock, (struct sockaddr *)&sin,
