@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenet.c,v 1.18 2024/08/25 08:31:07 mlelstv Exp $ */
+/* $NetBSD: bcmgenet.c,v 1.19 2024/08/25 12:38:20 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.18 2024/08/25 08:31:07 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.19 2024/08/25 12:38:20 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -684,7 +684,7 @@ genet_stop_locked(struct genet_softc *sc, int disable)
 	genet_disable_intr(sc);
 
 	/* Free TX buffers */
-	for (i=0; i<=TX_DESC_COUNT; ++i)
+	for (i=0; i<TX_DESC_COUNT; ++i)
 		genet_free_txbuf(sc, i);
 
 	ifp->if_flags &= ~IFF_RUNNING;
