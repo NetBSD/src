@@ -1,4 +1,4 @@
-/*      $NetBSD: cemacreg.h,v 1.3 2015/08/24 18:51:37 rjs Exp $	*/
+/*      $NetBSD: cemacreg.h,v 1.4 2024/08/25 16:32:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -36,53 +36,53 @@
 /* Ethernet MAC (EMAC),
  * at91rm9200.pdf, page 573 */
 
-#define	ETH_CTL		0x00U	/* 0x00: Control Register		*/
-#define	ETH_CFG		0x04U	/* 0x04: Configuration Register		*/
-#define	ETH_SR		0x08U	/* 0x08: Status Register		*/
-#define	ETH_TAR		0x0CU	/* 0x0C: Transmit Address Register (at91rm9200 only)	*/
-#define	ETH_TCR		0x10U	/* 0x10: Transmit Control Register (at91rm9200 only)	*/
-#define	ETH_TSR		0x14U	/* 0x14: Transmit Status Register	*/
-#define	ETH_RBQP	0x18U	/* 0x18: Receive Buffer Queue Pointer	*/
-#define ETH_TBQP	0x1CU	/* 0x1C: Transmit Buffer Queue Pointer	*/
-#define	ETH_RSR		0x20U	/* 0x20: Receive Status Register	*/
-#define	ETH_ISR		0x24U	/* 0x24: Interrupt Status Register	*/
-#define	ETH_IER		0x28U	/* 0x28: Interrupt Enable Register	*/
-#define	ETH_IDR		0x2CU	/* 0x2C: Interrupt Disable Register	*/
-#define	ETH_IMR		0x30U	/* 0x30: Interrupt Mask Register	*/
-#define	ETH_MAN		0x34U	/* 0x34: PHY Maintenance Register	*/
+#define	ETH_CTL		0x00U	/* Control Register			*/
+#define	ETH_CFG		0x04U	/* Configuration Register		*/
+#define	ETH_SR		0x08U	/* Status Register			*/
+#define	ETH_TAR		0x0CU	/* Transmit Address Register (at91rm9200 only)	*/
+#define	ETH_TCR		0x10U	/* Transmit Control Register (at91rm9200 only)	*/
+#define	ETH_TSR		0x14U	/* Transmit Status Register		*/
+#define	ETH_RBQP	0x18U	/* Receive Buffer Queue Pointer		*/
+#define	ETH_TBQP	0x1CU	/* Transmit Buffer Queue Pointer	*/
+#define	ETH_RSR		0x20U	/* Receive Status Register		*/
+#define	ETH_ISR		0x24U	/* Interrupt Status Register		*/
+#define	ETH_IER		0x28U	/* Interrupt Enable Register		*/
+#define	ETH_IDR		0x2CU	/* Interrupt Disable Register		*/
+#define	ETH_IMR		0x30U	/* Interrupt Mask Register		*/
+#define	ETH_MAN		0x34U	/* PHY Maintenance Register		*/
 
-#define	ETH_FRA		0x40U	/* 0x40: Frames Transmitted OK		*/
-#define	ETH_SCOL	0x44U	/* 0x44: Single Collision Frames	*/
-#define	ETH_MCOL	0x48U	/* 0x48: Multiple Collision Frames	*/
-#define	ETH_OK		0x4CU	/* 0x4C: Frames Received OK		*/
-#define	ETH_SEQE	0x50U	/* 0x50: Frame Check Sequence Errors	*/
-#define	ETH_ALE		0x54U	/* 0x54: Alignment Errors		*/
-#define	ETH_DTE		0x58U	/* 0x58: Deferred Transmission Frame	*/
-#define	ETH_LCOL	0x5CU	/* 0x5C: Late Collisions		*/
-#define	ETH_ECOL	0x60U	/* 0x60: Excessive Collisions		*/
-#define	ETH_CSE		0x64U	/* 0x64: Carrier Sense Errors		*/
-#define	ETH_TUE		0x68U	/* 0x68: Transmit Underrun Errors	*/
-#define	ETH_CDE		0x6CU	/* 0x6C: Code Errors			*/
-#define	ETH_ELR		0x70U	/* 0x70: Excessive Length Errors	*/
-#define	ETH_RJB		0x74U	/* 0x74: Receive Jabbers		*/
-#define	ETH_USF		0x78U	/* 0x78: Undersize Frames		*/
-#define	ETH_SQEE	0x7CU	/* 0x7C: SQE Test Errors		*/
-#define	ETH_DRFC	0x80U	/* 0x80: Discarded RX Frames		*/
+#define	ETH_FRA		0x40U	/* Frames Transmitted OK		*/
+#define	ETH_SCOL	0x44U	/* Single Collision Frames		*/
+#define	ETH_MCOL	0x48U	/* Multiple Collision Frames		*/
+#define	ETH_OK		0x4CU	/* Frames Received OK			*/
+#define	ETH_SEQE	0x50U	/* Frame Check Sequence Errors		*/
+#define	ETH_ALE		0x54U	/* Alignment Errors			*/
+#define	ETH_DTE		0x58U	/* Deferred Transmission Frame		*/
+#define	ETH_LCOL	0x5CU	/* Late Collisions			*/
+#define	ETH_ECOL	0x60U	/* Excessive Collisions			*/
+#define	ETH_CSE		0x64U	/* Carrier Sense Errors			*/
+#define	ETH_TUE		0x68U	/* Transmit Underrun Errors		*/
+#define	ETH_CDE		0x6CU	/* Code Errors				*/
+#define	ETH_ELR		0x70U	/* Excessive Length Errors		*/
+#define	ETH_RJB		0x74U	/* Receive Jabbers			*/
+#define	ETH_USF		0x78U	/* Undersize Frames			*/
+#define	ETH_SQEE	0x7CU	/* SQE Test Errors			*/
+#define	ETH_DRFC	0x80U	/* Discarded RX Frames			*/
 
-#define	ETH_HSH		0x90U	/* 0x90: Hash Address High		*/
-#define	ETH_HSL		0x94U	/* 0x94: Hash Address Low		*/
+#define	ETH_HSH		0x90U	/* Hash Address High			*/
+#define	ETH_HSL		0x94U	/* Hash Address Low			*/
 
-#define	ETH_SA1L	0x98U	/* 0x98: Specific Address 1 Low		*/
-#define	ETH_SA1H	0x9CU	/* 0x9C: Specific Address 1 High	*/
+#define	ETH_SA1L	0x98U	/* Specific Address 1 Low		*/
+#define	ETH_SA1H	0x9CU	/* Specific Address 1 High		*/
 
-#define	ETH_SA2L	0xA0U	/* 0xA0: Specific Address 2 Low		*/
-#define	ETH_SA2H	0xA4U	/* 0xA4: Specific Address 2 High	*/
+#define	ETH_SA2L	0xA0U	/* Specific Address 2 Low		*/
+#define	ETH_SA2H	0xA4U	/* Specific Address 2 High		*/
 
-#define	ETH_SA3L	0xA8U	/* 0xA8: Specific Address 3 Low		*/
-#define	ETH_SA3H	0xACU	/* 0xAC: Specific Address 3 High	*/
+#define	ETH_SA3L	0xA8U	/* Specific Address 3 Low		*/
+#define	ETH_SA3H	0xACU	/* Specific Address 3 High		*/
 
-#define	ETH_SA4L	0xB0U	/* 0xB0: Specific Address 4 Low		*/
-#define	ETH_SA4H	0xB4U	/* 0xB4: Specific Address 4 High	*/
+#define	ETH_SA4L	0xB0U	/* Specific Address 4 Low		*/
+#define	ETH_SA4H	0xB4U	/* Specific Address 4 High		*/
 
 /*
  * Gigabit Ethernet Controller (GEM)
