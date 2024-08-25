@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenet.c,v 1.14 2022/09/18 17:18:19 thorpej Exp $ */
+/* $NetBSD: bcmgenet.c,v 1.15 2024/08/25 07:02:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.14 2022/09/18 17:18:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.15 2024/08/25 07:02:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -114,7 +114,6 @@ genet_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 		}
 		delay(10);
 	}
-
 
 	if (retry == 0) {
 		device_printf(dev, "phy read timeout, phy=%d reg=%d\n",
