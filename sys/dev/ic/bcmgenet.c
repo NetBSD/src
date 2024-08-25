@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenet.c,v 1.16 2024/08/25 08:24:42 mlelstv Exp $ */
+/* $NetBSD: bcmgenet.c,v 1.17 2024/08/25 08:27:06 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.16 2024/08/25 08:24:42 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.17 2024/08/25 08:27:06 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -722,10 +722,12 @@ genet_rxintr(struct genet_softc *sc, int qid)
 			if_statinc(ifp, if_ierrors);
 			goto next;
 		}
+		MCLAIM(m0, &sc->sc_ec.ec_rx_mowner);
 
 		/* unload map before it gets loaded in setup_rxbuf */
 		if (sc->sc_rx.buf_map[index].map->dm_mapsize > 0) {
-			bus_dmamap_sync(sc->sc_rx.buf_tag, sc->sc_rx.buf_map[index].map,
+			bus_dmamap_sync(sc->sc_rx.buf_tag,
+			    sc->sc_rx.buf_map[index].map,
 			    0, sc->sc_rx.buf_map[index].map->dm_mapsize,
 			    BUS_DMASYNC_POSTREAD);
 		}
@@ -1011,6 +1013,21 @@ genet_setup_dma(struct genet_softc *sc, int qid)
 	return 0;
 }
 
+static void
+genet_claim_rxring(struct genet_softc *sc, int qid)
+{
+	struct mbuf *m;
+	int i;
+
+	/* Claim mbufs from RX ring */
+	for (i = 0; i < RX_DESC_COUNT; i++) {
+		m = sc->sc_rx.buf_map[i].mbuf;
+		if (m != NULL) {
+			MCLAIM(m, &sc->sc_ec.ec_rx_mowner);
+		}
+	}
+}
+
 int
 genet_attach(struct genet_softc *sc)
 {
@@ -1109,6 +1126,9 @@ genet_attach(struct genet_softc *sc)
 
 	/* Attach ethernet interface */
 	ether_ifattach(ifp, eaddr);
+
+	/* MBUFTRACE */
+	genet_claim_rxring(sc, GENET_DMA_DEFAULT_QUEUE);
 
 	rnd_attach_source(&sc->sc_rndsource, ifp->if_xname, RND_TYPE_NET,
 	    RND_FLAG_DEFAULT);
