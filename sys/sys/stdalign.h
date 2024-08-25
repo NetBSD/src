@@ -1,4 +1,4 @@
-/*	$NetBSD: stdalign.h,v 1.1 2016/10/02 17:19:00 kamil Exp $	*/
+/*	$NetBSD: stdalign.h,v 1.1 2024/08/25 22:10:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _STDALIGN_H_
-#define _STDALIGN_H_
+#ifndef _SYS_STDALIGN_H_
+#define _SYS_STDALIGN_H_
 
 /*-
  * ISO/IEC 9899:201x 7.15 Alignment <stdalign.h>
