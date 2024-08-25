@@ -1,4 +1,4 @@
-/* $NetBSD: jh71x0_clkc.h,v 1.2 2024/08/19 07:33:56 skrll Exp $ */
+/* $NetBSD: jh71x0_clkc.h,v 1.3 2024/08/25 15:23:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -241,7 +241,7 @@ const char *
 
 extern struct jh71x0_clkc_clkops jh71x0_clkc_mux_ops;
 
-#define	JH71X0CLKC_MUX_FLAGSX2(_id, _name, _parents, _cflags, _mflags)        \
+#define	JH71X0CLKC_MUX_FLAGSX2(_id, _name, _parents, _cflags, _mflags)	      \
 	[_id] = {							      \
 		.jcc_type = JH71X0CLK_MUX,				      \
 		.jcc_clk = {						      \
