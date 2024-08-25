@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_cemac.c,v 1.7 2024/08/25 07:13:57 skrll Exp $	*/
+/*	$NetBSD: zynq_cemac.c,v 1.8 2024/08/25 07:19:57 skrll Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_cemac.c,v 1.7 2024/08/25 07:13:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_cemac.c,v 1.8 2024/08/25 07:19:57 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -36,7 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: zynq_cemac.c,v 1.7 2024/08/25 07:13:57 skrll Exp $")
 #include <sys/intr.h>
 #include <sys/systm.h>
 
-#include <dev/cadence/cemacreg.h>
 #include <dev/cadence/if_cemacvar.h>
 
 #include <net/if_ether.h>
