@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenet.c,v 1.17 2024/08/25 08:27:06 mlelstv Exp $ */
+/* $NetBSD: bcmgenet.c,v 1.18 2024/08/25 08:31:07 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.17 2024/08/25 08:27:06 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.18 2024/08/25 08:31:07 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -621,11 +621,33 @@ genet_init(struct ifnet *ifp)
 	return error;
 }
 
+static int
+genet_free_txbuf(struct genet_softc *sc, int index)
+{
+	struct genet_bufmap *bmap;
+
+	bmap = &sc->sc_tx.buf_map[index];
+	if (bmap->mbuf == NULL)
+		return 0;
+
+	if (bmap->map->dm_mapsize > 0) {
+		bus_dmamap_sync(sc->sc_tx.buf_tag, bmap->map,
+		    0, bmap->map->dm_mapsize,
+		    BUS_DMASYNC_POSTWRITE);
+	}
+	bus_dmamap_unload(sc->sc_tx.buf_tag, bmap->map);
+	m_freem(bmap->mbuf);
+	bmap->mbuf = NULL;
+
+	return 1;
+}
+
 static void
 genet_stop_locked(struct genet_softc *sc, int disable)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	uint32_t val;
+	int i;
 
 	GENET_ASSERT_LOCKED(sc);
 
@@ -660,6 +682,10 @@ genet_stop_locked(struct genet_softc *sc, int disable)
 
 	/* Disable interrupts */
 	genet_disable_intr(sc);
+
+	/* Free TX buffers */
+	for (i=0; i<=TX_DESC_COUNT; ++i)
+		genet_free_txbuf(sc, i);
 
 	ifp->if_flags &= ~IFF_RUNNING;
 }
@@ -771,34 +797,22 @@ static void
 genet_txintr(struct genet_softc *sc, int qid)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	struct genet_bufmap *bmap;
 	int cidx, i, pkts = 0;
 
 	cidx = RD4(sc, GENET_TX_DMA_CONS_INDEX(qid)) & 0xffff;
 	i = sc->sc_tx.cidx % TX_DESC_COUNT;
 	while (sc->sc_tx.cidx != cidx) {
-		bmap = &sc->sc_tx.buf_map[i];
-		if (bmap->mbuf != NULL) {
-			/* XXX first segment already unloads */
-			if (bmap->map->dm_mapsize > 0) {
-				bus_dmamap_sync(sc->sc_tx.buf_tag, bmap->map,
-				    0, bmap->map->dm_mapsize,
-				    BUS_DMASYNC_POSTWRITE);
-			}
-			bus_dmamap_unload(sc->sc_tx.buf_tag, bmap->map);
-			m_freem(bmap->mbuf);
-			bmap->mbuf = NULL;
-			++pkts;
-		}
-
+		pkts += genet_free_txbuf(sc, i);
 		i = TX_NEXT(i);
 		sc->sc_tx.cidx = (sc->sc_tx.cidx + 1) & 0xffff;
 	}
 
-	if_statadd(ifp, if_opackets, pkts);
-
-	if (pkts != 0)
+	if (pkts != 0) {
+		if_statadd(ifp, if_opackets, pkts);
 		rnd_add_uint32(&sc->sc_rndsource, pkts);
+	}
+
+	if_schedule_deferred_start(ifp);
 }
 
 static void
@@ -819,7 +833,11 @@ genet_start_locked(struct genet_softc *sc)
 	cnt = 0;
 
 	sc->sc_tx.queued = (RD4(sc, GENET_TX_DMA_PROD_INDEX(qid))
-	          - RD4(sc, GENET_TX_DMA_CONS_INDEX(qid))) & 0xffff;
+	          - sc->sc_tx.cidx) & 0xffff;
+
+	/* At least one descriptor free ? */
+	if (sc->sc_tx.queued >= TX_DESC_COUNT - 1)
+		return;
 
 	for (;;) {
 		IFQ_POLL(&ifp->if_snd, m);
@@ -863,9 +881,7 @@ int
 genet_intr(void *arg)
 {
 	struct genet_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	uint32_t val;
-	bool dotx = false;
 
 	val = RD4(sc, GENET_INTRL2_CPU_STAT);
 	val &= ~RD4(sc, GENET_INTRL2_CPU_STAT_MASK);
@@ -879,11 +895,7 @@ genet_intr(void *arg)
 
 	if (val & GENET_IRQ_TXDMA_DONE) {
 		genet_txintr(sc, GENET_DMA_DEFAULT_QUEUE);
-		dotx = true;
 	}
-
-	if (dotx)
-		if_schedule_deferred_start(ifp);
 
 	return 1;
 }
