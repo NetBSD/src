@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.24 2019/02/05 11:33:13 mrg Exp $	*/
+/*	$NetBSD: mm.c,v 1.25 2024/08/25 11:29:38 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008, 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.24 2019/02/05 11:33:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.25 2024/08/25 11:29:38 uwe Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -55,7 +55,6 @@ static vaddr_t		dev_mem_addr	__read_mostly;
 
 static dev_type_open(mm_open);
 static dev_type_read(mm_readwrite);
-static dev_type_ioctl(mm_ioctl);
 static dev_type_mmap(mm_mmap);
 static dev_type_ioctl(mm_ioctl);
 
