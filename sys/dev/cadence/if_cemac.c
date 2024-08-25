@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.34 2024/08/25 15:49:36 skrll Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.35 2024/08/25 16:06:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.34 2024/08/25 15:49:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.35 2024/08/25 16:06:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -209,7 +209,7 @@ cemac_gctx(struct cemac_softc *sc)
 int
 cemac_intr(void *arg)
 {
-	struct cemac_softc *sc = (struct cemac_softc *)arg;
+	struct cemac_softc * const sc = arg;
 	struct ifnet * ifp = &sc->sc_ethercom.ec_if;
 	uint32_t imr, isr, ctl;
 #ifdef	CEMAC_DEBUG
@@ -570,7 +570,7 @@ cemac_mediachange(struct ifnet *ifp)
 static void
 cemac_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
-	struct cemac_softc *sc = ifp->if_softc;
+	struct cemac_softc * const sc = ifp->if_softc;
 
 	mii_pollstat(&sc->sc_mii);
 	ifmr->ifm_active = sc->sc_mii.mii_media_active;
@@ -581,9 +581,7 @@ cemac_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 static int
 cemac_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
-	struct cemac_softc *sc;
-
-	sc = device_private(self);
+	struct cemac_softc * const sc = device_private(self);
 
 	CEMAC_WRITE(ETH_MAN, (ETH_MAN_HIGH | ETH_MAN_RW_RD
 			     | ((phy << ETH_MAN_PHYA_SHIFT) & ETH_MAN_PHYA)
@@ -599,9 +597,7 @@ cemac_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 static int
 cemac_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
-	struct cemac_softc *sc;
-
-	sc = device_private(self);
+	struct cemac_softc * const sc = device_private(self);
 
 	CEMAC_WRITE(ETH_MAN, (ETH_MAN_HIGH | ETH_MAN_RW_WR
 			     | ((phy << ETH_MAN_PHYA_SHIFT) & ETH_MAN_PHYA)
@@ -618,7 +614,7 @@ cemac_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 static void
 cemac_statchg(struct ifnet *ifp)
 {
-	struct cemac_softc *sc = ifp->if_softc;
+	struct cemac_softc * const sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
 	uint32_t reg;
 
@@ -652,7 +648,7 @@ cemac_statchg(struct ifnet *ifp)
 static void
 cemac_tick(void *arg)
 {
-	struct cemac_softc *sc = (struct cemac_softc *)arg;
+	struct cemac_softc * const sc = arg;
 	struct ifnet * ifp = &sc->sc_ethercom.ec_if;
 	int s;
 
@@ -708,7 +704,7 @@ cemac_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 static void
 cemac_ifstart(struct ifnet *ifp)
 {
-	struct cemac_softc *sc = (struct cemac_softc *)ifp->if_softc;
+	struct cemac_softc * const sc = ifp->if_softc;
 	struct mbuf *m;
 	bus_dma_segment_t *segs;
 	int s, bi, err, nsegs;
@@ -814,7 +810,7 @@ stop:
 static void
 cemac_ifwatchdog(struct ifnet *ifp)
 {
-	struct cemac_softc *sc = (struct cemac_softc *)ifp->if_softc;
+	struct cemac_softc * const sc = ifp->if_softc;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
@@ -825,7 +821,7 @@ cemac_ifwatchdog(struct ifnet *ifp)
 static int
 cemac_ifinit(struct ifnet *ifp)
 {
-	struct cemac_softc *sc = ifp->if_softc;
+	struct cemac_softc * const sc = ifp->if_softc;
 	uint32_t dma, cfg;
 	int s = splnet();
 
@@ -871,7 +867,7 @@ static void
 cemac_ifstop(struct ifnet *ifp, int disable)
 {
 //	uint32_t u;
-	struct cemac_softc *sc = ifp->if_softc;
+	struct cemac_softc * const sc = ifp->if_softc;
 
 #if 0
 	CEMAC_WRITE(ETH_CTL, ETH_CTL_MPE);	// disable everything
@@ -906,7 +902,7 @@ cemac_ifstop(struct ifnet *ifp, int disable)
 static void
 cemac_setaddr(struct ifnet *ifp)
 {
-	struct cemac_softc *sc = ifp->if_softc;
+	struct cemac_softc * const sc = ifp->if_softc;
 	struct ethercom *ec = &sc->sc_ethercom;
 	struct ether_multi *enm;
 	struct ether_multistep step;
