@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_cemac.c,v 1.6 2024/08/25 07:12:37 skrll Exp $	*/
+/*	$NetBSD: zynq_cemac.c,v 1.7 2024/08/25 07:13:57 skrll Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_cemac.c,v 1.6 2024/08/25 07:12:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_cemac.c,v 1.7 2024/08/25 07:13:57 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -88,7 +88,8 @@ cemac_attach(device_t parent, device_t self, void *aux)
 
 	if (fdtbus_intr_establish(phandle, 0, IPL_NET, 0, cemac_intr,
 				  device_private(self)) == NULL) {
-		aprint_error(": failed to establish interrupt on %s\n", intrstr);
+		aprint_error(": failed to establish interrupt on %s\n",
+		    intrstr);
 		return;
 	}
 
@@ -97,7 +98,8 @@ cemac_attach(device_t parent, device_t self, void *aux)
 		prop_dictionary_set_data(prop, "mac-address", macaddr, len);
 	}
 
-	cemac_attach_common(self, faa->faa_bst, ioh, faa->faa_dmat, CEMAC_FLAG_GEM);
+	cemac_attach_common(self, faa->faa_bst, ioh, faa->faa_dmat,
+	    CEMAC_FLAG_GEM);
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 }
 
