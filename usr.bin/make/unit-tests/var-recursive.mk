@@ -1,4 +1,4 @@
-# $NetBSD: var-recursive.mk,v 1.6 2023/11/19 21:47:52 rillig Exp $
+# $NetBSD: var-recursive.mk,v 1.7 2024/08/25 20:44:31 rillig Exp $
 #
 # Tests for expressions that refer to themselves and thus
 # cannot be evaluated.
@@ -11,7 +11,7 @@ TEST?=	# none
 .if ${TEST} == ""
 all:
 .for test in ${TESTS}
-	@${.MAKE} -f ${MAKEFILE} TEST=${test} || :
+	@${.MAKE} -f ${MAKEFILE} TEST=${test} || echo "sub-exit status $$?"
 .endfor
 
 .elif ${TEST} == direct
@@ -19,6 +19,7 @@ all:
 DIRECT=	${DIRECT}	# Defining a recursive variable is not yet an error.
 # expect+1: still there
 .  info still there	# Therefore this line is printed.
+# expect+1: while evaluating variable "DIRECT" with value "${DIRECT}": Variable DIRECT is recursive.
 .  info ${DIRECT}	# But expanding the variable is an error.
 
 .elif ${TEST} == indirect
@@ -26,6 +27,7 @@ DIRECT=	${DIRECT}	# Defining a recursive variable is not yet an error.
 # The chain of variables that refer to each other may be long.
 INDIRECT1=	${INDIRECT2}
 INDIRECT2=	${INDIRECT1}
+# expect+1: while evaluating variable "INDIRECT1" with value "${INDIRECT2}": while evaluating variable "INDIRECT2" with value "${INDIRECT1}": Variable INDIRECT1 is recursive.
 .  info ${INDIRECT1}
 
 .elif ${TEST} == conditional
@@ -42,6 +44,7 @@ CONDITIONAL=	${1:?ok:${CONDITIONAL}}
 # which takes a different code path in Var_Parse for parsing the variable
 # name.  Ensure that these are checked as well.
 V=	$V
+# expect+1: while evaluating variable "V" with value "$V": Variable V is recursive.
 .  info $V
 
 .elif ${TEST} == target

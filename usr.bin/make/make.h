@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.344 2024/07/11 20:09:16 sjg Exp $	*/
+/*	$NetBSD: make.h,v 1.345 2024/08/25 20:44:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -864,6 +864,7 @@ char *getTmpdir(void) MAKE_ATTR_USE;
 bool ParseBoolean(const char *, bool) MAKE_ATTR_USE;
 const char *cached_realpath(const char *, char *);
 bool GetBooleanExpr(const char *, bool);
+void WaitForJobs(void);
 
 /* parse.c */
 extern int parseErrors;
