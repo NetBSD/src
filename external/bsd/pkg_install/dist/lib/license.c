@@ -1,4 +1,4 @@
-/*	$NetBSD: license.c,v 1.12 2024/06/11 09:26:57 wiz Exp $	*/
+/*	$NetBSD: license.c,v 1.13 2024/08/25 06:49:40 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2009 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -102,6 +102,7 @@ const char *default_acceptable_licenses =
     "unicode "
     "unicode-v3 "
     "unlicense "
+    "upl-1.0 "
     "vera-ttf-license "
     "w3c "
     "x11 "
