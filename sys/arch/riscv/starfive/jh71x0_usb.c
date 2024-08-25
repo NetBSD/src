@@ -1,4 +1,4 @@
-/* $NetBSD: jh71x0_usb.c,v 1.1 2024/01/18 07:48:57 skrll Exp $ */
+/* $NetBSD: jh71x0_usb.c,v 1.2 2024/08/25 15:23:51 skrll Exp $ */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jh71x0_usb.c,v 1.1 2024/01/18 07:48:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jh71x0_usb.c,v 1.2 2024/08/25 15:23:51 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -232,11 +232,11 @@ jh71x0_usb_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": USB\n");
 
-        for (int child = OF_child(phandle); child; child = OF_peer(child)) {
-                if (!fdtbus_status_okay(child))
-                        continue;
+	for (int child = OF_child(phandle); child; child = OF_peer(child)) {
+		if (!fdtbus_status_okay(child))
+			continue;
 		fdt_add_child(parent, child, faa, 0);
-        }
+	}
 
 	//fdtbus_register_phy_controller(self, phandle, &XXX_usbphy_funcs);
 
