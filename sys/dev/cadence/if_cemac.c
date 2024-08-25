@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.36 2024/08/25 16:25:29 skrll Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.37 2024/08/25 16:27:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.36 2024/08/25 16:25:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.37 2024/08/25 16:27:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -389,7 +389,7 @@ cemac_init(struct cemac_softc *sc)
 	CEMAC_GEM_WRITE(SA4L, 0);
 	CEMAC_GEM_WRITE(SA4H, 0);
 
-	/* Allocate a page of memory for receive queue descriptors */
+	/* Allocate memory for receive queue descriptors */
 	sc->rbqlen = roundup(ETH_DSC_SIZE * (RX_QLEN + 1) * 2, PAGE_SIZE);
 	DPRINTFN(1,("%s: rbqlen=%i\n", __FUNCTION__, sc->rbqlen));
 
@@ -418,7 +418,7 @@ cemac_init(struct cemac_softc *sc)
 	sc->rbqpage_dsaddr = sc->rbqpage_dmamap->dm_segs[0].ds_addr;
 	memset(sc->rbqpage, 0, sc->rbqlen);
 
-	/* Allocate a page of memory for transmit queue descriptors */
+	/* Allocate memory for transmit queue descriptors */
 	sc->tbqlen = roundup(ETH_DSC_SIZE * (TX_QLEN + 1) * 2, PAGE_SIZE);
 	DPRINTFN(1,("%s: tbqlen=%i\n", __FUNCTION__, sc->tbqlen));
 
