@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.27 2024/06/11 09:15:38 wiz Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.28 2024/08/25 06:47:51 wiz Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -6,7 +6,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.27 2024/06/11 09:15:38 wiz Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.28 2024/08/25 06:47:51 wiz Exp $");
 
 /*-
  * Copyright (c) 2003 Grant Beattie <grant@NetBSD.org>
@@ -1115,6 +1115,41 @@ check_implicit_conflict(struct pkg_task *pkg)
 	return status;
 }
 
+/* check if all REQUIRES files (usually libraries) are installed */
+static int
+check_requires(struct pkg_task *pkg)
+{
+	const char *data, *eol, *next_line;
+	int ret = 0;
+
+	data = pkg->meta_data.meta_build_info;
+
+	for (; data != NULL && *data != '\0'; data = next_line) {
+		if ((eol = strchr(data, '\n')) == NULL) {
+			eol = data + strlen(data);
+			next_line = eol;
+		} else
+			next_line = eol + 1;
+
+		if (strncmp(data, "REQUIRES=", 9) == 0) {
+			char *library_name = dup_value(data, eol);
+			struct stat sb;
+			if (stat(library_name, &sb) != 0 || !S_ISREG(sb.st_mode)) {
+				warnx("Missing required library: %s", library_name);
+#ifdef __NetBSD__
+				if (strncmp(library_name, "/usr/X11R7", 10) == 0) {
+					warnx("Please make sure to install the X sets");
+				}
+#endif
+				ret = 1;
+			}
+			free(library_name);
+		}
+	}
+
+	return ret;
+}
+
 /*
  * Install a required dependency and verify its installation.
  */
@@ -1124,7 +1159,7 @@ install_depend_pkg(const char *dep)
 	/* XXX check cyclic dependencies? */
 	if (Fake || NoRecord) {
 		if (!Force) {
-			warnx("Missing dependency %s\n", dep);
+			warnx("Missing dependency %s", dep);
 			return 1;
 		}
 		warnx("Missing dependency %s, continuing", dep);
@@ -1511,6 +1546,9 @@ pkg_do(const char *pkgpath, int mark_automatic, int top_level)
 		goto clean_memory;
 
 	if (check_implicit_conflict(pkg))
+		goto clean_memory;
+
+	if (check_requires(pkg))
 		goto clean_memory;
 
 	if (pkg->other_version != NULL) {
