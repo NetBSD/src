@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.32 2024/08/24 11:55:45 skrll Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.33 2024/08/25 07:25:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.32 2024/08/24 11:55:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.33 2024/08/25 07:25:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -87,44 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.32 2024/08/24 11:55:45 skrll Exp $");
 			bus_space_write_4(sc->sc_iot, sc->sc_ioh, (ETH_##x), (y)); \
 	} while(0)
 
-#define RX_QLEN 64
-#define	TX_QLEN	2		/* I'm very sorry but that's where we can get */
-
-struct cemac_qmeta {
-	struct mbuf	*m;
-	bus_dmamap_t	m_dmamap;
-};
-
-struct cemac_softc {
-	device_t		sc_dev;
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
-	bus_dma_tag_t		sc_dmat;
-	uint8_t			sc_enaddr[ETHER_ADDR_LEN];
-	struct ethercom		sc_ethercom;
-	mii_data_t		sc_mii;
-
-	void			*rbqpage;
-	unsigned		rbqlen;
-	bus_addr_t		rbqpage_dsaddr;
-	bus_dmamap_t		rbqpage_dmamap;
-	void			*tbqpage;
-	unsigned		tbqlen;
-	bus_addr_t		tbqpage_dsaddr;
-	bus_dmamap_t		tbqpage_dmamap;
-
-	volatile struct eth_dsc *RDSC;
-	int			rxqi;
-	struct cemac_qmeta	rxq[RX_QLEN];
-	volatile struct eth_dsc *TDSC;
-	int			txqi, txqc;
-	struct cemac_qmeta	txq[TX_QLEN];
-	callout_t		cemac_tick_ch;
-	bool			tx_busy;
-
-	int			cemac_flags;
-};
-
 static void	cemac_init(struct cemac_softc *);
 static int	cemac_gctx(struct cemac_softc *);
 static int	cemac_mediachange(struct ifnet *);
@@ -147,24 +109,10 @@ int cemac_debug = CEMAC_DEBUG;
 #define	DPRINTFN(n, fmt)
 #endif
 
-CFATTACH_DECL_NEW(cemac, sizeof(struct cemac_softc),
-    cemac_match, cemac_attach, NULL, NULL);
-
-
 void
-cemac_attach_common(device_t self, bus_space_tag_t iot,
-    bus_space_handle_t ioh, bus_dma_tag_t dmat, int flags)
+cemac_attach_common(struct cemac_softc *sc)
 {
-	struct cemac_softc	*sc = device_private(self);
-	prop_data_t		enaddr;
-	uint32_t		u;
-
-
-	sc->sc_dev = self;
-	sc->sc_ioh = ioh;
-	sc->sc_iot = iot;
-	sc->sc_dmat = dmat;
-	sc->cemac_flags = flags;
+	uint32_t u;
 
 	aprint_naive("\n");
 	if (ISSET(sc->cemac_flags, CEMAC_FLAG_GEM))
@@ -193,7 +141,8 @@ cemac_attach_common(device_t self, bus_space_tag_t iot,
 	CEMAC_WRITE(ETH_RSR, (u & (ETH_RSR_OVR | ETH_RSR_REC | ETH_RSR_BNA)));
 
 	/* Fetch the Ethernet address from property if set. */
-	enaddr = prop_dictionary_get(device_properties(self), "mac-address");
+	prop_dictionary_t prop = device_properties(sc->sc_dev);
+	prop_data_t enaddr = prop_dictionary_get(prop, "mac-address");
 
 	if (enaddr != NULL) {
 		KASSERT(prop_object_type(enaddr) == PROP_TYPE_DATA);
