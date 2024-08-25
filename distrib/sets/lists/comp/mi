@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2471 2024/08/18 04:09:51 rin Exp $
+#	$NetBSD: mi,v 1.2472 2024/08/25 22:10:40 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3585,6 +3585,7 @@
 ./usr/include/sys/specificdata.h		comp-c-include
 ./usr/include/sys/stat.h			comp-c-include
 ./usr/include/sys/statvfs.h			comp-c-include
+./usr/include/sys/stdalign.h			comp-c-include
 ./usr/include/sys/stdarg.h			comp-c-include
 ./usr/include/sys/stdbool.h			comp-c-include
 ./usr/include/sys/stdint.h			comp-c-include
