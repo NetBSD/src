@@ -1,4 +1,4 @@
-/*      $NetBSD: cemacreg.h,v 1.4 2024/08/25 16:32:59 skrll Exp $	*/
+/*      $NetBSD: cemacreg.h,v 1.5 2024/08/25 21:15:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -124,20 +124,20 @@
 #define GEM_CTL_HALTTX		__BIT(10)
 #define GEM_CTL_STARTTX		__BIT(9)
 
-#define	ETH_CTL_BP	0x100U	/* 1 = back pressure enabled		*/
-#define	ETH_CTL_WES	0x080U	/* 1 = statistics registers writeable	*/
-#define	ETH_CTL_ISR	0x040U	/* 1 = increment statistics registers	*/
-#define	ETH_CTL_CSR	0x020U	/* 1 = clear statistics registers	*/
-#define	ETH_CTL_MPE	0x010U	/* 1 = management port enabled		*/
-#define	ETH_CTL_TE	0x008U	/* 1 = transmit enable			*/
-#define	ETH_CTL_RE	0x004U	/* 1 = receive enable			*/
-#define	ETH_CTL_LBL	0x002U	/* 1 = local loopback enabled		*/
-#define	ETH_CTL_LB	0x001U	/* 1 = loopback signal is at high level	*/
+#define	ETH_CTL_BP	__BIT(8)  /* 1 = back pressure enabled		      */
+#define	ETH_CTL_WES	__BIT(7)  /* 1 = statistics registers writeable	      */
+#define	ETH_CTL_ISR	__BIT(6)  /* 1 = increment statistics registers	      */
+#define	ETH_CTL_CSR	__BIT(5)  /* 1 = clear statistics registers	      */
+#define	ETH_CTL_MPE	__BIT(4)  /* 1 = management port enabled	      */
+#define	ETH_CTL_TE	__BIT(3)  /* 1 = transmit enable		      */
+#define	ETH_CTL_RE	__BIT(2)  /* 1 = receive enable			      */
+#define	ETH_CTL_LBL	__BIT(1)  /* 1 = local loopback enabled		      */
+#define	ETH_CTL_LB	__BIT(0)  /* 1 = loopback signal is at high level     */
 
 
 /* Configuration Register bits: */
-#define	ETH_CFG_RMII	0x2000U	/* 1 = enable RMII (Reduce MII)	(AT91RM9200 only) */
-#define	ETH_CFG_RTY	0x1000U	/* 1 = retry test enabled		*/
+#define	ETH_CFG_RMII	__BIT(13)  /* 1 = enable RMII (Reduce MII) (AT91RM9200 only) */
+#define	ETH_CFG_RTY	__BIT(12)	/* 1 = retry test enabled		*/
 
 #define	ETH_CFG_CLK	0x0C00U	/* clock				*/
 #define	ETH_CFG_CLK_8	0x0000U
@@ -145,15 +145,15 @@
 #define	ETH_CFG_CLK_32	0x0800U
 #define	ETH_CFG_CLK_64	0x0C00U
 
-#define	ETH_CFG_EAE	0x0200U	/* 1 = external address match enable	*/
-#define	ETH_CFG_BIG	0x0100U	/* 1 = receive up to 1522 bytes	(VLAN)	*/
-#define	ETH_CFG_UNI	0x0080U	/* 1 = enable unicast hash		*/
-#define	ETH_CFG_MTI	0x0040U	/* 1 = enable multicast hash		*/
-#define	ETH_CFG_NBC	0x0020U	/* 1 = ignore received broadcasts	*/
-#define	ETH_CFG_CAF	0x0010U	/* 1 = receive all valid frames		*/
-#define	ETH_CFG_BR	0x0004U
-#define	ETH_CFG_FD	0x0002U	/* 1 = force full duplex		*/
-#define	ETH_CFG_SPD	0x0001U	/* 1 = 100 Mbps				*/
+#define	ETH_CFG_EAE	__BIT(9)	/* 1 = external address match enable	*/
+#define	ETH_CFG_BIG	__BIT(8)	/* 1 = receive up to 1522 bytes	(VLAN)	*/
+#define	ETH_CFG_UNI	__BIT(7)	/* 1 = enable unicast hash		*/
+#define	ETH_CFG_MTI	__BIT(6)	/* 1 = enable multicast hash		*/
+#define	ETH_CFG_NBC	__BIT(5)	/* 1 = ignore received broadcasts	*/
+#define	ETH_CFG_CAF	__BIT(4)	/* 1 = receive all valid frames		*/
+#define	ETH_CFG_BR	__BIT(2)
+#define	ETH_CFG_FD	__BIT(1)	/* 1 = force full duplex		*/
+#define	ETH_CFG_SPD	__BIT(0)	/* 1 = 100 Mbps				*/
 
 #define GEM_CFG_GEN	__BIT(10)
 #define GEM_CFG_CLK	__BITS(20, 18)
@@ -167,9 +167,9 @@
 #define	GEM_CFG_RX_CHKSUM_OFFLD_EN	__BIT(24)
 
 /* Status Register bits: */
-#define	ETH_SR_IDLE	0x0004U	/* 1 = PHY logic is running		*/
-#define	ETH_SR_MDIO	0x0002U	/* 1 = MDIO pin set			*/
-#define	ETH_SR_LINK	0x0001U
+#define	ETH_SR_IDLE	__BIT(2)	/* 1 = PHY logic is running		*/
+#define	ETH_SR_MDIO	__BIT(1)	/* 1 = MDIO pin set			*/
+#define	ETH_SR_LINK	__BIT(0)
 
 
 /* Transmit Control Register bits: */
@@ -178,44 +178,44 @@
 
 
 /* Transmit Status Register bits: */
-#define	ETH_TSR_UND	0x40U	/* 1 = transmit underrun detected	*/
-#define	ETH_TSR_COMP	0x20U	/* 1 = transmit complete		*/
-#define	ETH_TSR_BNQ	0x10U	/* 1 = transmit buffer not queued (at91rm9200 only)	*/
-#define	ETH_TSR_IDLE	0x08U	/* 1 = transmitter idle			*/
-#define	ETH_TSR_RLE	0x04U	/* 1 = retry limit exceeded		*/
-#define	ETH_TSR_COL	0x02U	/* 1 = collision occurred		*/
-#define	ETH_TSR_OVR	0x01U	/* 1 = transmit buffer overrun		*/
+#define	ETH_TSR_UND	__BIT(6)	/* 1 = transmit underrun detected	*/
+#define	ETH_TSR_COMP	__BIT(5)	/* 1 = transmit complete		*/
+#define	ETH_TSR_BNQ	__BIT(4)	/* 1 = transmit buffer not queued (at91rm9200 only)	*/
+#define	ETH_TSR_IDLE	__BIT(3)	/* 1 = transmitter idle			*/
+#define	ETH_TSR_RLE	__BIT(2)	/* 1 = retry limit exceeded		*/
+#define	ETH_TSR_COL	__BIT(1)	/* 1 = collision occurred		*/
+#define	ETH_TSR_OVR	__BIT(0)	/* 1 = transmit buffer overrun		*/
 
 #define	GEM_TSR_TXGO	__BIT(3)
 
 /* Receive Status Register bits: */
-#define	ETH_RSR_OVR	0x04U	/* 1 = RX overrun			*/
-#define	ETH_RSR_REC	0x02U	/* 1 = frame received			*/
-#define	ETH_RSR_BNA	0x01U	/* 1 = buffer not available		*/
+#define	ETH_RSR_OVR	__BIT(2)	/* 1 = RX overrun			*/
+#define	ETH_RSR_REC	__BIT(1)	/* 1 = frame received			*/
+#define	ETH_RSR_BNA	__BIT(0)	/* 1 = buffer not available		*/
 
 
 /* Interrupt bits: */
-#define	ETH_ISR_ABT	0x0800U	/* 1 = abort during DMA transfer	*/
-#define	ETH_ISR_ROVR	0x0400U	/* 1 = RX overrun			*/
-#define	ETH_ISR_LINK	0x0200U	/* 1 = link pin changed			*/
-#define	ETH_ISR_TIDLE	0x0100U	/* 1 = transmitter idle			*/
-#define	ETH_ISR_TCOM	0x0080U	/* 1 = transmit complete		*/
-#define	ETH_ISR_TBRE	0x0040U	/* 1 = transmit buffer register empty	*/
-#define	ETH_ISR_RTRY	0x0020U	/* 1 = retry limit exceeded		*/
-#define	ETH_ISR_TUND	0x0010U	/* 1 = transmit buffer underrun		*/
-#define	ETH_ISR_TOVR	0x0008U	/* 1 = transmit buffer overrun		*/
-#define	ETH_ISR_RBNA	0x0004U	/* 1 = receive buffer not available	*/
-#define	ETH_ISR_RCOM	0x0002U	/* 1 = receive complete			*/
-#define	ETH_ISR_DONE	0x0001U	/* 1 = management done			*/
+#define	ETH_ISR_ABT	__BIT(11)	/* 1 = abort during DMA transfer	*/
+#define	ETH_ISR_ROVR	__BIT(10)	/* 1 = RX overrun			*/
+#define	ETH_ISR_LINK	__BIT(9)	/* 1 = link pin changed			*/
+#define	ETH_ISR_TIDLE	__BIT(8)	/* 1 = transmitter idle			*/
+#define	ETH_ISR_TCOM	__BIT(7)	/* 1 = transmit complete		*/
+#define	ETH_ISR_TBRE	__BIT(6)	/* 1 = transmit buffer register empty	*/
+#define	ETH_ISR_RTRY	__BIT(5)	/* 1 = retry limit exceeded		*/
+#define	ETH_ISR_TUND	__BIT(4)	/* 1 = transmit buffer underrun		*/
+#define	ETH_ISR_TOVR	__BIT(3)	/* 1 = transmit buffer overrun		*/
+#define	ETH_ISR_RBNA	__BIT(2)	/* 1 = receive buffer not available	*/
+#define	ETH_ISR_RCOM	__BIT(1)	/* 1 = receive complete			*/
+#define	ETH_ISR_DONE	__BIT(0)	/* 1 = management done			*/
 
 
 /* PHY Maintenance Register bits: */
-#define	ETH_MAN_LOW	0x80000000U /* must not be set			*/
-#define	ETH_MAN_HIGH	0x40000000U /* must be set			*/
+#define	ETH_MAN_LOW	__BIT(31) /* must not be set			*/
+#define	ETH_MAN_HIGH	__BIT(30) /* must be set			*/
 
-#define	ETH_MAN_RW	0x30000000U
-#define	ETH_MAN_RW_RD	0x20000000U
-#define	ETH_MAN_RW_WR	0x10000000U
+#define	ETH_MAN_RW	__BITS(29, 28)
+#define	ETH_MAN_RW_RD	__BIT(29)
+#define	ETH_MAN_RW_WR	__BIT(28)
 
 #define	ETH_MAN_PHYA	0x0F800000U /* PHY address (normally 0)		*/
 #define	ETH_MAN_PHYA_SHIFT 23U
@@ -241,19 +241,19 @@ typedef struct eth_dsc {
 } __attribute__ ((aligned(4))) eth_dsc_t;
 
 /* flags: */
-#define	ETH_RDSC_F_WRAP		0x00000002U
-#define	ETH_RDSC_F_USED		0x00000001U
+#define	ETH_RDSC_F_WRAP		__BIT(1)
+#define	ETH_RDSC_F_USED		__BIT(0)
 
 /* frame info bits: */
 #define	ETH_RDSC_I_BCAST	__BIT(31)
 #define	ETH_RDSC_I_MULTICAST	__BIT(30)
 #define	ETH_RDSC_I_UNICAST	__BIT(29)
-#define	ETH_RDSC_I_VLAN		0x10000000U
-#define	ETH_RDSC_I_UNKNOWN_SRC	0x08000000U
-#define	ETH_RDSC_I_MATCH1	0x04000000U
-#define	ETH_RDSC_I_MATCH2	0x02000000U
-#define	ETH_RDSC_I_MATCH3	0x01000000U
-#define	ETH_RDSC_I_MATCH4	0x00800000U
+#define	ETH_RDSC_I_VLAN		__BIT(28)
+#define	ETH_RDSC_I_UNKNOWN_SRC	__BIT(27)
+#define	ETH_RDSC_I_MATCH1	__BIT(26)
+#define	ETH_RDSC_I_MATCH2	__BIT(25)
+#define	ETH_RDSC_I_MATCH3	__BIT(24)
+#define	ETH_RDSC_I_MATCH4	__BIT(23)
 #define	ETH_RDSC_I_CHKSUM	__BITS(23, 22)
 #define	ETH_RDSC_I_CHKSUM_NONE	__SHIFTIN(0, ETH_RDSC_I_CHKSUM)
 #define	ETH_RDSC_I_CHKSUM_IP	__SHIFTIN(1, ETH_RDSC_I_CHKSUM)
