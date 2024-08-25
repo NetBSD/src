@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenet.c,v 1.15 2024/08/25 07:02:27 skrll Exp $ */
+/* $NetBSD: bcmgenet.c,v 1.16 2024/08/25 08:24:42 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.15 2024/08/25 07:02:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.16 2024/08/25 08:24:42 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -949,8 +949,8 @@ genet_get_eaddr(struct genet_softc *sc, uint8_t *eaddr)
 
 	val = RD4(sc, GENET_SYS_RBUF_FLUSH_CTRL);
 	if ((val & GENET_SYS_RBUF_FLUSH_RESET) == 0) {
-		maclo = htobe32(RD4(sc, GENET_UMAC_MAC0));
-		machi = htobe16(RD4(sc, GENET_UMAC_MAC1) & 0xffff);
+		maclo = RD4(sc, GENET_UMAC_MAC0);
+		machi = RD4(sc, GENET_UMAC_MAC1) & 0xffff;
 	}
 
 	if (maclo == 0 && machi == 0) {
@@ -959,12 +959,12 @@ genet_get_eaddr(struct genet_softc *sc, uint8_t *eaddr)
 		machi = cprng_strong32() & 0xffff;
 	}
 
-	eaddr[0] = maclo & 0xff;
-	eaddr[1] = (maclo >> 8) & 0xff;
-	eaddr[2] = (maclo >> 16) & 0xff;
-	eaddr[3] = (maclo >> 24) & 0xff;
-	eaddr[4] = machi & 0xff;
-	eaddr[5] = (machi >> 8) & 0xff;
+	eaddr[0] = (maclo >> 24) & 0xff;
+	eaddr[1] = (maclo >> 16) & 0xff;
+	eaddr[2] = (maclo >>  8) & 0xff;
+	eaddr[3] = (maclo >>  0) & 0xff;
+	eaddr[4] = (machi >>  8) & 0xff;
+	eaddr[5] = (machi >>  0) & 0xff;
 }
 
 static int
