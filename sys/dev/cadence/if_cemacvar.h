@@ -1,4 +1,4 @@
-/*      $NetBSD: if_cemacvar.h,v 1.3 2024/08/24 10:13:19 skrll Exp $	*/
+/*      $NetBSD: if_cemacvar.h,v 1.4 2024/08/25 07:25:00 skrll Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -28,13 +28,55 @@
 #ifndef _IF_CEMACVAR_H_
 #define _IF_CEMACVAR_H_
 
-int cemac_match(device_t, cfdata_t, void *);
-void cemac_attach(device_t, device_t, void *);
+#include <net/if.h>
+#include <net/if_media.h>
+#include <net/if_ether.h>
+#include <net/if_media.h>
+
+#include <dev/mii/miivar.h>
+
+#define	RX_QLEN 64
+#define	TX_QLEN	2		/* I'm very sorry but that's where we can get */
+
+struct cemac_qmeta {
+	struct mbuf	*m;
+	bus_dmamap_t	m_dmamap;
+};
+
+struct cemac_softc {
+	device_t		sc_dev;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+	bus_dma_tag_t		sc_dmat;
+	uint8_t			sc_enaddr[ETHER_ADDR_LEN];
+	struct ethercom		sc_ethercom;
+	mii_data_t		sc_mii;
+
+	void			*rbqpage;
+	unsigned		rbqlen;
+	bus_addr_t		rbqpage_dsaddr;
+	bus_dmamap_t		rbqpage_dmamap;
+	void			*tbqpage;
+	unsigned		tbqlen;
+	bus_addr_t		tbqpage_dsaddr;
+	bus_dmamap_t		tbqpage_dmamap;
+
+	volatile struct eth_dsc *RDSC;
+	int			rxqi;
+	struct cemac_qmeta	rxq[RX_QLEN];
+	volatile struct eth_dsc *TDSC;
+	int			txqi, txqc;
+	struct cemac_qmeta	txq[TX_QLEN];
+	callout_t		cemac_tick_ch;
+	bool			tx_busy;
+
+	unsigned		cemac_flags;
+#define CEMAC_FLAG_GEM	__BIT(0)
+};
+
 int cemac_intr(void *);
 
-void cemac_attach_common(device_t, bus_space_tag_t, bus_space_handle_t,
-    bus_dma_tag_t, int);
+void cemac_attach_common(struct cemac_softc *);
 
-#define CEMAC_FLAG_GEM	0x0001
 
 #endif /* _IF_CEMACVAR_H_ */
