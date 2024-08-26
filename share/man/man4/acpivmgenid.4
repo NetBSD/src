@@ -1,4 +1,4 @@
-.\"	$NetBSD: acpivmgenid.4,v 1.1 2024/08/26 13:38:28 riastradh Exp $
+.\"	$NetBSD: acpivmgenid.4,v 1.2 2024/08/26 15:28:58 riastradh Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,12 @@ will reseed system random number generators, so that output of
 .Pa /dev/urandom
 and
 .Xr getentropy 3
-will be independent in the two clones.
+will be independent in the two clones, and the
+.Xr sysctl 7
+variable
+.Li kern.entropy.epoch
+will advance to notify applications that they should reseed random
+number generators from the system entropy pool.
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh SYSCTLS
 The following
@@ -94,19 +99,10 @@ driver first appeared in
 .Nx 11.0 .
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh BUGS
-Currently
-.Nx
-does not request fresh samples from all on-demand entropy sources when
-the VM generation ID changes, so although the outputs of the system
-entropy pool appear independent to an outside observer, disclosing the
-kernel memory of one VM clone to an adversary may allow the adversary
-to predict another VM clone's
-.Pa /dev/urandom
-outputs.
-.Pp
-Currently
-.Xr arc4random 3
-is not reseeded when the VM generation ID changes.
-.Pp
 Currently there is no cheaper way to detect VM generation ID changes
 than to query sysctl.
+(Applications deciding whether to reseed random number generators
+should generally query
+.Li kern.entropy.epoch ,
+not
+.Li "hw.acpivmgenid" Ns Va N Ns Li ".id" . )
