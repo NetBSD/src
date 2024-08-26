@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.35 2024/08/26 15:19:22 riastradh Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.36 2024/08/26 15:50:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: arc4random.c,v 1.35 2024/08/26 15:19:22 riastradh Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.36 2024/08/26 15:50:26 riastradh Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
@@ -810,8 +810,18 @@ main(int argc __unused, char **argv __unused)
 	switch (pid) {
 	case -1:
 		err(1, "fork");
-	case 0:
-		_exit(arc4random_prng_get()->arc4_seeded);
+	case 0: {
+		/*
+		 * Verify the epoch has been set to zero by fork.
+		 */
+		struct arc4random_prng *prng = NULL;
+#ifdef _REENTRANT
+		prng = thr_getspecific(arc4random_global.thread_key);
+#endif
+		if (prng == NULL)
+			prng = &arc4random_global.prng;
+		_exit(prng->arc4_epoch != 0);
+	}
 	default:
 		rpid = waitpid(pid, &status, 0);
 		if (rpid == -1)
