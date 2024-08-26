@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_vmgenid.c,v 1.1 2024/08/26 13:38:28 riastradh Exp $	*/
+/*	$NetBSD: acpi_vmgenid.c,v 1.2 2024/08/26 13:53:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_vmgenid.c,v 1.1 2024/08/26 13:38:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_vmgenid.c,v 1.2 2024/08/26 13:53:22 riastradh Exp $");
 
 #include <sys/device.h>
 #include <sys/entropy.h>
@@ -293,13 +293,19 @@ acpivmgenid_reset(void *cookie)
 	struct acpivmgenid_softc *const sc = cookie;
 
 	/*
+	 * Reset the system entropy pool's measure of entropy (not the
+	 * data, just the system's assessment of whether it has
+	 * entropy), and gather more entropy from any synchronous
+	 * sources we have available like CPU RNG instructions.  We
+	 * can't be interrupted by a signal so ignore return value.
+	 */
+	entropy_reset();
+	(void)entropy_gather();
+
+	/*
 	 * Grab the current VM generation ID to put it into the entropy
 	 * pool; then force consolidation so it affects all subsequent
 	 * draws from the entropy pool and the entropy epoch advances.
-	 *
-	 * XXX This should also reset the entropy count and request new
-	 * samples from all sources, but there currently isn't a good
-	 * way to do that after boot.
 	 */
 	acpivmgenid_set(sc, "cloned");
 	entropy_consolidate();
