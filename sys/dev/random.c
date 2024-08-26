@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.10 2021/12/28 13:22:43 riastradh Exp $	*/
+/*	$NetBSD: random.c,v 1.11 2024/08/26 13:46:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: random.c,v 1.10 2021/12/28 13:22:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: random.c,v 1.11 2024/08/26 13:46:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -298,8 +298,8 @@ random_write(dev_t dev, struct uio *uio, int flags)
 	kmem_free(buf, RANDOM_BUFSIZE);
 
 	/* If we added anything, consolidate entropy now.  */
-	if (any)
-		entropy_consolidate();
+	if (any && error == 0)
+		error = entropy_consolidate_sig();
 
 	return error;
 }
