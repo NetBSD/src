@@ -1,4 +1,4 @@
-#	$NetBSD: t_misc.sh,v 1.15 2024/07/28 14:47:05 riastradh Exp $
+#	$NetBSD: t_misc.sh,v 1.16 2024/08/26 17:52:46 riastradh Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -55,9 +55,13 @@ wg_rekey_body()
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore \
 	    rump.sysctl -w net.wg.rekey_after_time=$rekey_after_time
+	$DEBUG && atf_check -s exit:0 -o ignore \
+	    rump.sysctl -w net.wg.debug=-1
 	export RUMP_SERVER=$SOCK_PEER
 	atf_check -s exit:0 -o ignore \
 	    rump.sysctl -w net.wg.rekey_after_time=$rekey_after_time
+	$DEBUG && atf_check -s exit:0 -o ignore \
+	    rump.sysctl -w net.wg.debug=-1
 
 	# It sets key_priv_local key_pub_local key_priv_peer key_pub_peer
 	generate_keys
@@ -76,6 +80,7 @@ wg_rekey_body()
 
 	export RUMP_SERVER=$SOCK_LOCAL
 
+	echo ping1time=$(date)
 	$ping $ip_wg_peer
 
 	latest_handshake=$($HIJACKING wgconfig wg0 show peer peer0 \
@@ -84,6 +89,7 @@ wg_rekey_body()
 
 	sleep 1
 
+	echo ping2time=$(date)
 	$ping $ip_wg_peer
 
 	# No reinitiation is performed
@@ -93,6 +99,7 @@ wg_rekey_body()
 	# Wait for a reinitiation to be performed
 	sleep $rekey_after_time
 
+	echo ping3time=$(date)
 	$ping $ip_wg_peer
 
 	# A reinitiation should be performed
@@ -106,6 +113,7 @@ wg_rekey_body()
 	# Wait for a reinitiation to be performed again
 	sleep $((rekey_after_time+1))
 
+	echo ping4time=$(date)
 	$ping $ip_wg_peer
 
 	# A reinitiation should be performed
