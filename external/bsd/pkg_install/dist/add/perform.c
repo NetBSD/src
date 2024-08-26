@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.12 2024/08/25 06:49:40 wiz Exp $	*/
+/*	$NetBSD: perform.c,v 1.13 2024/08/26 22:41:39 wiz Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -6,7 +6,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.12 2024/08/25 06:49:40 wiz Exp $");
+__RCSID("$NetBSD: perform.c,v 1.13 2024/08/26 22:41:39 wiz Exp $");
 
 /*-
  * Copyright (c) 2003 Grant Beattie <grant@NetBSD.org>
@@ -897,7 +897,7 @@ check_platform(struct pkg_task *pkg)
 	const char *effective_os_version;
 	int fatal;
 
-        if (OverrideOpsys != NULL && OverrideOSVersion != NULL) {
+	if (OverrideOpsys != NULL && OverrideOSVersion != NULL) {
 		effective_opsys = OverrideOpsys;
 		effective_os_version = OverrideOSVersion;
 	} else {
@@ -1548,9 +1548,6 @@ pkg_do(const char *pkgpath, int mark_automatic, int top_level)
 	if (check_implicit_conflict(pkg))
 		goto clean_memory;
 
-	if (check_requires(pkg))
-		goto clean_memory;
-
 	if (pkg->other_version != NULL) {
 		/*
 		 * Replacing an existing package.
@@ -1572,13 +1569,19 @@ pkg_do(const char *pkgpath, int mark_automatic, int top_level)
 
 		if (check_dependencies(pkg))
 			goto nuke_pkgdb;
+
+		if (check_requires(pkg))
+			goto nuke_pkgdb;
 	} else {
 		/*
 		 * Normal installation.
 		 * Install/update dependencies first and
 		 * write the current package to disk afterwards.
-		 */ 
+		 */
 		if (check_dependencies(pkg))
+			goto clean_memory;
+
+		if (check_requires(pkg))
 			goto clean_memory;
 
 		if (write_meta_data(pkg))
