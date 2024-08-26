@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.132 2024/03/21 02:36:01 riastradh Exp $
+#	$NetBSD: files.acpi,v 1.133 2024/08/26 13:38:28 riastradh Exp $
 
 defflag	opt_acpi.h	ACPIVERBOSE ACPI_DEBUG ACPI_ACTIVATE_DEV
 			ACPI_DSDT_OVERRIDE ACPI_SCANPCI ACPI_BREAKPOINT
@@ -115,6 +115,11 @@ file	dev/acpi/acpi_pcc.c		acpipcc
 device	acpicppc: acpipcc
 attach	acpicppc at acpinodebus
 file	dev/acpi/acpi_cppc.c		acpicppc
+
+# ACPI Virtual Machine Generation ID
+device	acpivmgenid
+attach	acpivmgenid at acpinodebus
+file	dev/acpi/acpi_vmgenid.c		acpivmgenid
 
 # ACPI Platform Error Interface
 device	apei

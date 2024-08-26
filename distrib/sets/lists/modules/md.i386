@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.99 2024/03/21 02:36:01 riastradh Exp $
+# $NetBSD: md.i386,v 1.100 2024/08/26 13:38:28 riastradh Exp $
 #
 ./@MODULEDIR@/acpiacad				modules-base-kernel	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		modules-base-kernel	kmod
@@ -24,6 +24,8 @@
 ./@MODULEDIR@/acpiverbose/acpiverbose.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/acpivga				modules-base-kernel	kmod
 ./@MODULEDIR@/acpivga/acpivga.kmod		modules-base-kernel	kmod
+./@MODULEDIR@/acpivmgenid			modules-base-kernel	kmod
+./@MODULEDIR@/acpivmgenid/acpivmgenid.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/acpiwdrt				modules-base-kernel	kmod
 ./@MODULEDIR@/acpiwdrt/acpiwdrt.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/acpiwmi				modules-base-kernel	kmod
