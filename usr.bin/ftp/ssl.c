@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl.c,v 1.12.2.3 2023/05/16 16:26:03 martin Exp $	*/
+/*	$NetBSD: ssl.c,v 1.12.2.4 2024/08/26 07:28:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ssl.c,v 1.12.2.3 2023/05/16 16:26:03 martin Exp $");
+__RCSID("$NetBSD: ssl.c,v 1.12.2.4 2024/08/26 07:28:17 martin Exp $");
 #endif
 
 #include <err.h>
@@ -639,6 +639,9 @@ fetch_start_ssl(int sock, const char *servername)
 		/* Enable peer verification, (using the default callback) */
 		SSL_set_verify(ssl, SSL_VERIFY_PEER, NULL);
 	}
+#ifdef SSL_OP_IGNORE_UNEXPECTED_EOF
+	SSL_set_options(ssl, SSL_OP_IGNORE_UNEXPECTED_EOF);
+#endif
 
 						/* save current socket flags */
 	if ((flags = fcntl(sock, F_GETFL, 0)) == -1) {
