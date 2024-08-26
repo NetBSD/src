@@ -1,4 +1,4 @@
-/*	$NetBSD: entropy.h,v 1.4 2020/08/14 00:53:16 riastradh Exp $	*/
+/*	$NetBSD: entropy.h,v 1.5 2024/08/26 13:46:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@ struct knote;
 
 void	entropy_bootrequest(void);
 void	entropy_consolidate(void);
+int	entropy_consolidate_sig(void);
 unsigned entropy_epoch(void);
 bool	entropy_ready(void);
 int	entropy_extract(void *, size_t, int);
