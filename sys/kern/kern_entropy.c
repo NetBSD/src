@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.70 2024/08/26 13:52:56 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.71 2024/08/26 15:50:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.70 2024/08/26 13:52:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.71 2024/08/26 15:50:15 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -400,7 +400,7 @@ entropy_init(void)
 	    SYSCTL_DESCR("Number of samples pending on CPUs"),
 	    NULL, 0, &E->samplespending, 0, CTL_CREATE, CTL_EOL);
 	sysctl_createv(&entropy_sysctllog, 0, &entropy_sysctlroot, NULL,
-	    CTLFLAG_PERMANENT|CTLFLAG_READONLY|CTLFLAG_PRIVATE, CTLTYPE_INT,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_INT,
 	    "epoch", SYSCTL_DESCR("Entropy epoch"),
 	    NULL, 0, &E->epoch, 0, CTL_CREATE, CTL_EOL);
 
