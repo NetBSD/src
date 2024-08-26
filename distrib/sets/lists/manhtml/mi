@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.7 2024/08/19 15:04:05 riastradh Exp $
+# $NetBSD: mi,v 1.8 2024/08/26 13:38:28 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -755,6 +755,7 @@
 ./usr/share/man/html4/acpismbus.html		man-sys-htmlman		html
 ./usr/share/man/html4/acpitz.html		man-sys-htmlman		html
 ./usr/share/man/html4/acpivga.html		man-sys-htmlman		html
+./usr/share/man/html4/acpivmgenid.html		man-sys-htmlman		html
 ./usr/share/man/html4/acpiwdrt.html		man-sys-htmlman		html
 ./usr/share/man/html4/acpiwmi.html		man-sys-htmlman		html
 ./usr/share/man/html4/adb.html			man-sys-htmlman		html
