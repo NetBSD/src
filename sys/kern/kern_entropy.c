@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.66 2023/10/04 20:28:06 ad Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.67 2024/08/26 13:46:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.66 2023/10/04 20:28:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.67 2024/08/26 13:46:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1354,7 +1354,21 @@ entropy_notify(void)
 /*
  * entropy_consolidate()
  *
- *	Trigger entropy consolidation and wait for it to complete.
+ *	Trigger entropy consolidation and wait for it to complete, or
+ *	return early if interrupted by a signal.
+ */
+void
+entropy_consolidate(void)
+{
+
+	(void)entropy_consolidate_sig();
+}
+
+/*
+ * entropy_consolidate_sig()
+ *
+ *	Trigger entropy consolidation and wait for it to complete, or
+ *	return EINTR if interrupted by a signal.
  *
  *	This should be used sparingly, not periodically -- requiring
  *	conscious intervention by the operator or a clear policy
@@ -1362,8 +1376,8 @@ entropy_notify(void)
  *	when enough entropy has been gathered into per-CPU pools to
  *	transition to full entropy.
  */
-void
-entropy_consolidate(void)
+int
+entropy_consolidate_sig(void)
 {
 	uint64_t ticket;
 	int error;
@@ -1381,6 +1395,8 @@ entropy_consolidate(void)
 			break;
 	}
 	mutex_exit(&E->lock);
+
+	return error;
 }
 
 /*
