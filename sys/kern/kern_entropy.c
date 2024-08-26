@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.67 2024/08/26 13:46:03 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.68 2024/08/26 13:47:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.67 2024/08/26 13:46:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.68 2024/08/26 13:47:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1420,7 +1420,7 @@ sysctl_entropy_consolidate(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 	if (arg)
-		entropy_consolidate();
+		error = entropy_consolidate_sig();
 
 	return error;
 }
@@ -2793,7 +2793,7 @@ entropy_ioctl(unsigned long cmd, void *data)
 		/* Enter the data and consolidate entropy.  */
 		rnd_add_data(&seed_rndsource, rdata->data, rdata->len,
 		    entropybits);
-		entropy_consolidate();
+		error = entropy_consolidate_sig();
 		break;
 	}
 	default:
