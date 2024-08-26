@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.68 2024/08/26 13:47:52 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.69 2024/08/26 13:48:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.68 2024/08/26 13:47:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.69 2024/08/26 13:48:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1450,7 +1450,7 @@ sysctl_entropy_gather(SYSCTLFN_ARGS)
 		mutex_exit(&E->lock);
 	}
 
-	return 0;
+	return error;
 }
 
 /*
