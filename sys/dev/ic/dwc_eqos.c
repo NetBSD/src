@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.37 2024/07/05 04:31:51 rin Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.38 2024/08/26 18:25:29 bsiegert Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.37 2024/07/05 04:31:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.38 2024/08/26 18:25:29 bsiegert Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1265,7 +1265,7 @@ eqos_get_eaddr(struct eqos_softc *sc, uint8_t *eaddr)
 	machi = RD4(sc, GMAC_MAC_ADDRESS0_HIGH) & 0xFFFF;
 	if ((maclo & 0x00000001) != 0) {
 		aprint_error_dev(sc->sc_dev,
-		    "Wrong MAC address. Clear the multicast bit.\n");
+		    "Wrong MAC address. Clearing the multicast bit.\n");
 		maclo &= ~0x00000001;
 	}
 
