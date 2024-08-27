@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.633 2024/08/25 20:44:31 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.634 2024/08/27 04:52:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.633 2024/08/25 20:44:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.634 2024/08/27 04:52:14 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1859,13 +1859,6 @@ Error(const char *fmt, ...)
 	main_errors++;
 }
 
-void
-WaitForJobs(void)
-{
-	if (jobsRunning)
-		Job_Wait();
-}
-
 /*
  * Wait for any running jobs to finish, then produce an error message,
  * finally exit immediately.
@@ -1878,7 +1871,8 @@ Fatal(const char *fmt, ...)
 {
 	va_list ap;
 
-	WaitForJobs();
+	if (jobsRunning)
+		Job_Wait();
 
 	(void)fflush(stdout);
 	fprintf(stderr, "%s: ", progname);

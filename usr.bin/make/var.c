@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1137 2024/08/25 20:44:31 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1138 2024/08/27 04:52:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "trace.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1137 2024/08/25 20:44:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1138 2024/08/27 04:52:14 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4573,16 +4573,13 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode)
 
 	expr.name = v->name.str;
 	if (v->inUse && VarEvalMode_ShouldEval(emode)) {
-		if (scope->fname != NULL) {
-			fprintf(stderr, "In a command near ");
-			PrintLocation(stderr, false, scope);
-		}
-		WaitForJobs();
 		Parse_Error(PARSE_FATAL, "Variable %s is recursive.",
 		    v->name.str);
-		PrintOnError(NULL, "\n");
-		Trace_Log(MAKEERROR, NULL);
-		exit(2);	/* Not 1 so -q can distinguish error */
+		FStr_Done(&val);
+		if (*p != '\0')
+			p++;
+		*pp = p;
+		return FStr_InitRefer(var_Error);
 	}
 
 	/*

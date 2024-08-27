@@ -1,23 +1,20 @@
-make: "var-recursive.mk" line 21: still there
-make: "var-recursive.mk" line 23: while evaluating variable "DIRECT" with value "${DIRECT}": Variable DIRECT is recursive.
+make: "var-recursive.mk" line 11: while evaluating variable "DIRECT" with value "${DIRECT}": Variable DIRECT is recursive.
 	in directory <curdir>
-
-make: stopped in unit-tests
-sub-exit status 2
-make: "var-recursive.mk" line 31: while evaluating variable "INDIRECT1" with value "${INDIRECT2}": while evaluating variable "INDIRECT2" with value "${INDIRECT1}": Variable INDIRECT1 is recursive.
+make: "var-recursive.mk" line 11: <>
+make: "var-recursive.mk" line 19: while evaluating variable "INDIRECT1" with value "${INDIRECT2}": while evaluating variable "INDIRECT2" with value "${INDIRECT1}": Variable INDIRECT1 is recursive.
 	in directory <curdir>
-
-make: stopped in unit-tests
-sub-exit status 2
-make: "var-recursive.mk" line 39: ok
-make: "var-recursive.mk" line 48: while evaluating variable "V" with value "$V": Variable V is recursive.
+make: "var-recursive.mk" line 19: <>
+make: "var-recursive.mk" line 26: <ok>
+make: "var-recursive.mk" line 34: while evaluating variable "MODIFIERS" with value "${MODIFIERS:Mpattern}": Variable MODIFIERS is recursive.
 	in directory <curdir>
-
-make: stopped in unit-tests
-sub-exit status 2
+make: "var-recursive.mk" line 34: <Mpattern}>
+make: "var-recursive.mk" line 43: while evaluating variable "V" with value "$V": Variable V is recursive.
+	in directory <curdir>
+make: "var-recursive.mk" line 43: <>
+make: Fatal errors encountered -- cannot continue
+make: stopped making "loadtime" in unit-tests
+sub-exit status 1
 : OK
-In a command near "var-recursive.mk" line 60: make[1]: in target "target": while evaluating variable "VAR" with value "${VAR}": Variable VAR is recursive.
-
-make: stopped making "target" in unit-tests
+make: in target "runtime": while evaluating variable "VAR" with value "${VAR}": Variable VAR is recursive.
 sub-exit status 2
 exit status 0
