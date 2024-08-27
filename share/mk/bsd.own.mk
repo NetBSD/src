@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1399 2024/08/27 17:12:04 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1400 2024/08/27 21:52:39 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -125,19 +125,7 @@ NOGCCISL=	# defined
 #
 # What binutils is used?
 #
-.if \
-    ${MACHINE_CPU} == "aarch64" || \
-    ${MACHINE_ARCH} == "alpha" || \
-    ${MACHINE_CPU} == "arm" || \
-    ${MACHINE_CPU} == "hppa" || \
-    ${MACHINE_CPU} == "mips" || \
-    ${MACHINE_CPU} == "riscv" || \
-    ${MACHINE_CPU} == "sh3" || \
-    ${MACHINE_ARCH} == "x86_64"
 HAVE_BINUTILS?= 242
-.else
-HAVE_BINUTILS?=	239
-.endif
 
 .if ${HAVE_BINUTILS} == 242
 EXTERNAL_BINUTILS_SUBDIR=	binutils
@@ -150,12 +138,7 @@ EXTERNAL_BINUTILS_SUBDIR=	/does/not/exist
 #
 # What GDB is used?
 #
-.if \
-    ${MACHINE_CPU} != "powerpc"
 HAVE_GDB?=	1510
-.else
-HAVE_GDB?=	1320
-.endif
 
 .if ${HAVE_GDB} == 1510
 EXTERNAL_GDB_SUBDIR=		gdb
