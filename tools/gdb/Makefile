@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.52 2024/08/27 00:04:28 christos Exp $
+#	$NetBSD: Makefile,v 1.53 2024/08/27 13:56:49 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -131,15 +131,17 @@ native-gdb: .native/.configure_done
 	mkdir -p ${.OBJDIR}/.native/include
 	# we need to make a copy because ${GMPINC} has a config.h
 	cp -p ${GMPINC}/gmp.h ${.OBJDIR}/.native/include
+	# copy the rest because using --with-foo=${TOOLDIR} breaks with
+	# static linking because it picks the tools version of the libraries
+	cp -p ${MPFRINC}/mpfr.h ${.OBJDIR}/.native/include
+	cp -p ${MPFRINC}/mpf2mpfr.h ${.OBJDIR}/.native/include
+	cp -p ${MPCINC}/mpc.h ${.OBJDIR}/.native/include
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd ${.OBJDIR}/.native && \
 			${MKNATIVE_ENV} ${HOST_SH} ${GNUHOSTDIST}/configure \
 			--prefix=/usr \
 			--with-separate-debug-dir=/usr/libdata/debug \
 			--with-zstd=no \
-			--with-mpfr=${TOOLDIR} \
-			--with-mpc=${TOOLDIR} \
-			--with-gmp=${TOOLDIR} \
 			${CONFIGURE_ARGS_SIM} \
 			${CONFIGURE_ARGS_GDBSERVER} \
 			--build=`${GNUHOSTDIST}/config.guess` \
