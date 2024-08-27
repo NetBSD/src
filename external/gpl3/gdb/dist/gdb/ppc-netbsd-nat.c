@@ -19,8 +19,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-/* We define this to get types like register_t.  */
-#define _KERNTYPES
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <machine/reg.h>

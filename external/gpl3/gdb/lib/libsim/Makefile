@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2023/08/11 17:46:04 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2024/08/27 17:07:37 christos Exp $
 
 LIBISPRIVATE=	yes
 NOGCCERROR=
@@ -7,7 +7,7 @@ NOGCCERROR=
 .include "../Makefile.inc"
 
 LIB=	sim
-SRCS=	debug.c filter_filename.c bits.c sim-endian.c os_emul.c emul_generic.c \
+SRCS=	debug.c bits.c sim-endian.c os_emul.c emul_generic.c \
 	emul_bugapi.c emul_chirp.c emul_netbsd.c emul_unix.c registers.c vm.c \
 	corefile.c model.c spreg.c cpu.c interrupts.c events.c cap.c device.c \
 	tree.c device_table.c itable.c mon.c icache.c semantics.c idecode.c \
@@ -21,21 +21,25 @@ SRCS+=	target-newlib-errno.c target-newlib-open.c target-newlib-signal.c \
 MIC=	${HOST_SH} ${DIST}/move-if-change
 
 HOST_CPPFLAGS+=	-I. \
+		-I${DIST}/sim/common \
+		-I${DIST}/sim/igen \
 		-I${DIST}/sim/ppc -I${DIST}/include \
 		-I${.CURDIR}/arch/${GDB_MACHINE_ARCH} \
 		-I${.CURDIR}/../libbfd/arch/${GDB_MACHINE_ARCH} \
 		-I${.CURDIR}/../libgnulib/arch/${GDB_MACHINE_ARCH} \
+		-I${.CURDIR}/../libgdbsupport/arch/${GDB_MACHINE_ARCH} \
 		-I${DIST}/bfd \
 		-I${DIST}/gdb \
 		-I${DIST}/gdb/config \
 		-DHAVE_COMMON_FPU \
 		-I${.CURDIR}/../arch/${GDB_MACHINE_ARCH} \
-		-I${DIST}/sim/common
+		-I${DIST}/gnulib/import
 PSIM_DEFINES=	-DHAVE_CONFIG_H \
 		-DDEFAULT_INLINE=INLINE_LOCALS \
 		-DWITH_HOST_BYTE_ORDER=BYTE_ORDER \
 		-DWITH_SMP=5 \
 		-DSIM_COMMON_BUILD \
+		-DSIM_TOPDIR_BUILD \
 		-DHAVE_TERMIOS_STRUCTURE \
 		-DHAVE_DEVZERO  \
 		-DWITH_TRACE=0 \
@@ -71,7 +75,7 @@ IGEN_FLAGS=	-E    -F 32,f,o  -CSRI 1024  -N 5 \
 	-n support.c   -f  tmp-support.c
 IGENED_FILES=	icache.h icache.c idecode.h idecode.c semantics.h semantics.c \
 		itable.h itable.c model.h model.c support.h support.c
-IGENSRCS= igen.c table.c lf.c misc.c filter_host.c ld-decode.c ld-cache.c filter.c ld-insn.c gen-model.c gen-itable.c gen-icache.c gen-semantics.c gen-idecode.c gen-support.c
+IGENSRCS= igen.c table.c lf.c misc.c filter_host.c ld-decode.c ld-cache.c filter.c ld-insn.c gen-model.c gen-itable.c gen-icache.c gen-semantics.c gen-idecode.c gen-support.c lf-ppc.c dumpf.c filter-ppc.c
 IGENOBJS= ${IGENSRCS:S/.c/.lo/}
 DPSRCS+= ${IGENED_FILES:M*.h}
 
@@ -98,23 +102,23 @@ igen: ${IGENOBJS}
 	${HOST_LINK.c} ${IGENOBJS} -o ${.TARGET}
 
 # dgen portion
-DGEN_FLAGS=	-r ${DIST}/sim/ppc/ppc-spr-table \
-	-n spreg.h     -hp tmp-spreg.h \
-	-n spreg.c     -p  tmp-spreg.c
-DGENED_FILES=	spreg.h spreg.c
-DGENSRCS= dgen.c table.c lf.c misc.c filter_host.c
-DGENOBJS= ${DGENSRCS:S/.c/.lo/}
-DPSRCS+= ${DGENED_FILES:M*.h}
+#DGEN_FLAGS=	-r ${DIST}/sim/ppc/ppc-spr-table \
+#	-n spreg.h     -hp tmp-spreg.h \
+#	-n spreg.c     -p  tmp-spreg.c
+#DGENED_FILES=	spreg.h spreg.c
+#DGENSRCS= dgen.c table.c lf.c misc.c filter_host.c
+#DGENOBJS= ${DGENSRCS:S/.c/.lo/}
+#DPSRCS+= ${DGENED_FILES:M*.h}
 
-${DGENED_FILES}: run-dgen
-run-dgen: dgen
-	./dgen ${DGEN_FLAGS}
-	${MIC} tmp-spreg.h spreg.h
-	${MIC} tmp-spreg.c spreg.c
-	touch run-dgen
-
-dgen: ${DGENOBJS}
-	${HOST_LINK.c} ${DGENOBJS} -o ${.TARGET}
+#${DGENED_FILES}: run-dgen
+#run-dgen: dgen
+#	./dgen ${DGEN_FLAGS}
+#	${MIC} tmp-spreg.h spreg.h
+#	${MIC} tmp-spreg.c spreg.c
+#	touch run-dgen
+#
+#dgen: ${DGENOBJS}
+#	${HOST_LINK.c} ${DGENOBJS} -o ${.TARGET}
 
 # hw.c / hw.h portion
 HWSRCS=	hw_cpu.c hw_memory.c hw_nvram.c hw_iobus.c hw_htab.c hw_disk.c \
@@ -186,17 +190,15 @@ run-defines:
 	touch run-defines
 DPSRCS+= ${DEFINES_H}
 
-# misc. dependancies.
-filter_host.c: ${DIST}/sim/ppc/filter_filename.c
-	cp -f ${.ALLSRC} ${.TARGET}
-filter_host.lo: ppc-config.h
+# misc. dependencies.
+#filter_host.lo: ppc-config.h
 
-ppc-config.h: ${DIST}/sim/ppc/std-config.h
-	cp -f ${.ALLSRC} ${.TARGET}
-DPSRCS+= ppc-config.h
+#ppc-config.h: ${DIST}/sim/ppc/std-config.h
+#	cp -f ${.ALLSRC} ${.TARGET}
+#DPSRCS+= ppc-config.h
 
 CLEANFILES+=	igen dgen gentmap *.lo \
-		ppc-config.h filter_host.c \
+		ppc-config.h \
 		tmp-icache.h icache.h \
 		tmp-icache.c icache.c \
 		tmp-idecode.h idecode.h \
@@ -221,7 +223,7 @@ CLEANFILES+=	igen dgen gentmap *.lo \
 .c.lo:
 	${HOST_COMPILE.c} -o ${.TARGET} $<
 
-.PATH: ${DIST}/sim/ppc ${DIST}/sim/common
+.PATH: ${DIST}/sim/ppc ${DIST}/sim/common ${DIST}/sim/igen
 
 .include <bsd.lib.mk>
 .include "../../Makefile.inc"
