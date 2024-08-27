@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2023/07/31 17:02:04 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2024/08/27 21:50:00 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -8,10 +8,10 @@ SUBDIR+=	libdecnumber libgnulib libctf libsframe
 SUBDIR+=	libreadline
 .endif
 
-.if ${MACHINE_ARCH} == powerpc || ${MACHINE_ARCH} == powerpcle || \
-    ${MACHINE_ARCH} == powerpc64
-SUBDIR+= libsim
-.endif
+#.if ${MACHINE_ARCH} == powerpc || ${MACHINE_ARCH} == powerpcle || \
+#    ${MACHINE_ARCH} == powerpc64
+#SUBDIR+= libsim
+#.endif
 
 
 .include <bsd.subdir.mk>

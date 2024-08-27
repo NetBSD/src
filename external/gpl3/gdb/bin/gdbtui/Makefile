@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2024/08/14 23:54:49 christos Exp $
+#	$NetBSD: Makefile,v 1.21 2024/08/27 21:50:00 christos Exp $
 
 NOCTF=
 NOMAN=
@@ -43,12 +43,12 @@ LDADD+=		${LIBGDBDIR}/m2-lang.o
 #DPADD+= ${LIBGDBDIR}/libgdb.a
 
 # Simulator support
-.if ${GDB_MACHINE_ARCH} == powerpc || ${GDB_MACHINE_ARCH} == powerpcle || \
-    ${GDB_MACHINE_ARCH} == powerpc64
-PROGDPLIBS+= sim ${GDBLIBDIR}/libsim
-.elif ${MACHINE_CPU} == xxmips
-PROGDPLIBS+= sim ${GDBLIBDIR}/libsim
-.endif
+#.if ${GDB_MACHINE_ARCH} == powerpc || ${GDB_MACHINE_ARCH} == powerpcle || \
+#    ${GDB_MACHINE_ARCH} == powerpc64
+#PROGDPLIBS+= sim ${GDBLIBDIR}/libsim
+#.elif ${MACHINE_CPU} == xxmips
+#PROGDPLIBS+= sim ${GDBLIBDIR}/libsim
+#.endif
 
 PROGDPLIBS+= opcodes ${GDBLIBDIR}/libopcodes \
     bfd ${GDBLIBDIR}/libbfd \
