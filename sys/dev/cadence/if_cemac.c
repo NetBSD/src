@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.37 2024/08/25 16:27:33 skrll Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.38 2024/08/27 07:28:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.37 2024/08/25 16:27:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.38 2024/08/27 07:28:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -263,7 +263,7 @@ cemac_intr(void *arg)
 
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m != NULL)
-				 MCLGET(m, M_DONTWAIT);
+				MCLGET(m, M_DONTWAIT);
 			if (m != NULL && (m->m_flags & M_EXT)) {
 				bus_dmamap_sync(sc->sc_dmat, sc->rxq[bi].m_dmamap, 0,
 						MCLBYTES, BUS_DMASYNC_POSTREAD);
@@ -739,7 +739,7 @@ start:
 
 		MGETHDR(mn, M_DONTWAIT, MT_DATA);
 		if (mn == NULL)
-			 goto stop;
+			goto stop;
 		if (m->m_pkthdr.len > MHLEN) {
 			MCLGET(mn, M_DONTWAIT);
 			if ((mn->m_flags & M_EXT) == 0) {
