@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_device.c,v 1.13 2022/03/28 12:38:59 riastradh Exp $	*/
+/*	$NetBSD: subr_device.c,v 1.14 2024/08/27 13:44:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2006, 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.13 2022/03/28 12:38:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.14 2024/08/27 13:44:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -147,11 +147,28 @@ devhandle_lookup_device_call(devhandle_t handle, const char *name,
 }
 
 void
-devhandle_impl_inherit(struct devhandle_impl *impl,
-    const struct devhandle_impl *super)
+devhandle_impl_subclass(struct devhandle_impl *new_impl,
+    const struct devhandle_impl *super,
+    device_call_t (*new_lookup)(devhandle_t, const char *, devhandle_t *))
 {
-	memcpy(impl, super, sizeof(*impl));
-	impl->super = super;
+	new_impl->type = super->type;
+	new_impl->super = super;
+	new_impl->lookup_device_call = new_lookup;
+}
+
+/*
+ * Helper function that provides a short-hand method of the common
+ * "subclass a device handle" flow.
+ */
+devhandle_t
+devhandle_subclass(devhandle_t handle,
+    struct devhandle_impl *new_impl,
+    device_call_t (*new_lookup)(devhandle_t, const char *, devhandle_t *))
+{
+	devhandle_impl_subclass(new_impl, handle.impl, new_lookup);
+	handle.impl = new_impl;
+
+	return handle;
 }
 
 /*
@@ -345,9 +362,9 @@ device_handle(device_t dev)
 }
 
 int
-device_call_generic(device_t dev, const struct device_call_generic *gen)
+device_call_generic(device_t dev, devhandle_t handle,
+    const struct device_call_generic *gen)
 {
-	devhandle_t handle = device_handle(dev);
 	device_call_t call;
 	devhandle_t call_handle;
 
