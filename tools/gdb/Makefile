@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.51 2024/08/18 03:47:55 rin Exp $
+#	$NetBSD: Makefile,v 1.52 2024/08/27 00:04:28 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -48,7 +48,7 @@ MKNATIVE_ENV=	${BINENV} ${CONFIGURE_ENV:NC*:NLD*:Nam_cv_func_iconv*} \
 			CXX=${CXX:Q}' '${CCADDFLAGS:Q}' '${CXXADDFLAGS:Q} \
 			CPP=${CPP:Q}' '-I${DESTDIR}/usr/include \
 			CFLAGS= CPPFLAGS= \
-			CXXFLAGS= LDFLAGS=-L${GMPOBJ} \
+			CXXFLAGS= LDFLAGS='-L${GMPOBJ} -L${MPFROBJ} -L${MPCOBJ}'\
 			AS=${AS:Q} AWK=${TOOL_AWK:Q} LD=${LD:Q} \
 			MSGFMT=${TOOLDIR}/bin/${_TOOL_PREFIX}msgfmt \
 			NM=${NM:Q} OBJDUMP=${OBJDUMP:Q} \
