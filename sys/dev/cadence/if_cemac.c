@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.38 2024/08/27 07:28:59 skrll Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.39 2024/08/27 07:53:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.38 2024/08/27 07:28:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.39 2024/08/27 07:53:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -80,12 +80,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.38 2024/08/27 07:28:59 skrll Exp $");
 #define CEMAC_WRITE(x, y) \
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, (x), (y))
 #define CEMAC_GEM_WRITE(x, y)						      \
-	do {								      \
-		if (ISSET(sc->cemac_flags, CEMAC_FLAG_GEM))		      \
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh, (GEM_##x), (y)); \
-		else							      \
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh, (ETH_##x), (y)); \
-	} while(0)
+    do {								      \
+	if (ISSET(sc->cemac_flags, CEMAC_FLAG_GEM))			      \
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, (GEM_##x), (y));    \
+	else								      \
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, (ETH_##x), (y));    \
+    } while(0)
 
 static void	cemac_init(struct cemac_softc *);
 static int	cemac_gctx(struct cemac_softc *);
@@ -230,29 +230,40 @@ cemac_intr(void *arg)
 #ifdef	CEMAC_DEBUG
 	rsr = CEMAC_READ(ETH_RSR);		// get receive status register
 #endif
-	DPRINTFN(2, ("%s: isr=0x%08X rsr=0x%08X imr=0x%08X\n", __FUNCTION__, isr, rsr, imr));
+	DPRINTFN(2, ("%s: isr=0x%08X rsr=0x%08X imr=0x%08X\n", __FUNCTION__,
+	    isr, rsr, imr));
 
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
-	if (isr & ETH_ISR_RBNA) {		// out of receive buffers
-		CEMAC_WRITE(ETH_RSR, ETH_RSR_BNA);	// clear interrupt
-		ctl = CEMAC_READ(ETH_CTL);		// get current control register value
-		CEMAC_WRITE(ETH_CTL, ctl & ~ETH_CTL_RE);	// disable receiver
-		CEMAC_WRITE(ETH_RSR, ETH_RSR_BNA);	// clear BNA bit
-		CEMAC_WRITE(ETH_CTL, ctl |  ETH_CTL_RE);	// re-enable receiver
+	// out of receive buffers
+	if (isr & ETH_ISR_RBNA) {
+		// clear interrupt
+		CEMAC_WRITE(ETH_RSR, ETH_RSR_BNA);
+
+		ctl = CEMAC_READ(ETH_CTL);
+		// disable receiver
+		CEMAC_WRITE(ETH_CTL, ctl & ~ETH_CTL_RE);
+		// clear BNA bit
+		CEMAC_WRITE(ETH_RSR, ETH_RSR_BNA);
+		// re-enable receiver
+		CEMAC_WRITE(ETH_CTL, ctl |  ETH_CTL_RE);
+
 		if_statinc_ref(ifp, nsr, if_ierrors);
 		if_statinc_ref(ifp, nsr, if_ipackets);
 		DPRINTFN(1,("%s: out of receive buffers\n", __FUNCTION__));
 	}
 	if (isr & ETH_ISR_ROVR) {
-		CEMAC_WRITE(ETH_RSR, ETH_RSR_OVR);	// clear interrupt
+		// clear interrupt
+		CEMAC_WRITE(ETH_RSR, ETH_RSR_OVR);
 		if_statinc_ref(ifp, nsr, if_ierrors);
 		if_statinc_ref(ifp, nsr, if_ipackets);
 		DPRINTFN(1,("%s: receive overrun\n", __FUNCTION__));
 	}
 
-	if (isr & ETH_ISR_RCOM) {			// packet has been received!
+	// packet has been received!
+	if (isr & ETH_ISR_RCOM) {
 		uint32_t nfo;
-		DPRINTFN(2,("#2 RDSC[%i].INFO=0x%08X\n", sc->rxqi % RX_QLEN, sc->RDSC[sc->rxqi % RX_QLEN].Info));
+		DPRINTFN(2,("#2 RDSC[%i].INFO=0x%08X\n", sc->rxqi % RX_QLEN,
+		    sc->RDSC[sc->rxqi % RX_QLEN].Info));
 		while (sc->RDSC[(bi = sc->rxqi % RX_QLEN)].Addr & ETH_RDSC_F_USED) {
 			int fl, csum;
 			struct mbuf *m;
@@ -265,8 +276,9 @@ cemac_intr(void *arg)
 			if (m != NULL)
 				MCLGET(m, M_DONTWAIT);
 			if (m != NULL && (m->m_flags & M_EXT)) {
-				bus_dmamap_sync(sc->sc_dmat, sc->rxq[bi].m_dmamap, 0,
-						MCLBYTES, BUS_DMASYNC_POSTREAD);
+				bus_dmamap_sync(sc->sc_dmat,
+				    sc->rxq[bi].m_dmamap, 0, MCLBYTES,
+				    BUS_DMASYNC_POSTREAD);
 				bus_dmamap_unload(sc->sc_dmat,
 					sc->rxq[bi].m_dmamap);
 				m_set_rcvif(sc->rxq[bi].m, ifp);
@@ -296,15 +308,15 @@ cemac_intr(void *arg)
 					m_adj(m, mtod(m, intptr_t) & 3);
 				sc->rxq[bi].m = m;
 				bus_dmamap_load(sc->sc_dmat,
-					sc->rxq[bi].m_dmamap,
-					m->m_ext.ext_buf, MCLBYTES,
-					NULL, BUS_DMA_NOWAIT);
-				bus_dmamap_sync(sc->sc_dmat, sc->rxq[bi].m_dmamap, 0,
-						MCLBYTES, BUS_DMASYNC_PREREAD);
+				    sc->rxq[bi].m_dmamap, m->m_ext.ext_buf,
+					MCLBYTES, NULL, BUS_DMA_NOWAIT);
+				bus_dmamap_sync(sc->sc_dmat,
+				    sc->rxq[bi].m_dmamap, 0, MCLBYTES,
+				    BUS_DMASYNC_PREREAD);
 				sc->RDSC[bi].Info = 0;
 				sc->RDSC[bi].Addr =
-					sc->rxq[bi].m_dmamap->dm_segs[0].ds_addr
-					| (bi == (RX_QLEN-1) ? ETH_RDSC_F_WRAP : 0);
+				    sc->rxq[bi].m_dmamap->dm_segs[0].ds_addr
+				    | (bi == (RX_QLEN-1) ? ETH_RDSC_F_WRAP : 0);
 			} else {
 				/* Drop packets until we can get replacement
 				 * empty mbufs for the RXDQ.
@@ -393,9 +405,9 @@ cemac_init(struct cemac_softc *sc)
 	sc->rbqlen = roundup(ETH_DSC_SIZE * (RX_QLEN + 1) * 2, PAGE_SIZE);
 	DPRINTFN(1,("%s: rbqlen=%i\n", __FUNCTION__, sc->rbqlen));
 
+	// see EMAC errata why forced to 16384 byte boundary
 	err = bus_dmamem_alloc(sc->sc_dmat, sc->rbqlen, 0,
-	    MAX(16384, PAGE_SIZE),	// see EMAC errata why forced to 16384 byte boundary
-	    &segs, 1, &rsegs, BUS_DMA_WAITOK);
+	    MAX(16384, PAGE_SIZE), &segs, 1, &rsegs, BUS_DMA_WAITOK);
 	if (err == 0) {
 		DPRINTFN(1,("%s: -> bus_dmamem_map\n", __FUNCTION__));
 		err = bus_dmamem_map(sc->sc_dmat, &segs, 1, sc->rbqlen,
@@ -422,9 +434,9 @@ cemac_init(struct cemac_softc *sc)
 	sc->tbqlen = roundup(ETH_DSC_SIZE * (TX_QLEN + 1) * 2, PAGE_SIZE);
 	DPRINTFN(1,("%s: tbqlen=%i\n", __FUNCTION__, sc->tbqlen));
 
+	// see EMAC errata why forced to 16384 byte boundary
 	err = bus_dmamem_alloc(sc->sc_dmat, sc->tbqlen, 0,
-	    MAX(16384, PAGE_SIZE),	// see EMAC errata why forced to 16384 byte boundary
-	    &segs, 1, &rsegs, BUS_DMA_WAITOK);
+	    MAX(16384, PAGE_SIZE), &segs, 1, &rsegs, BUS_DMA_WAITOK);
 	if (err == 0) {
 		DPRINTFN(1,("%s: -> bus_dmamem_map\n", __FUNCTION__));
 		err = bus_dmamem_map(sc->sc_dmat, &segs, 1, sc->tbqlen,
@@ -465,10 +477,11 @@ cemac_init(struct cemac_softc *sc)
 	for (i = 0; i < RX_QLEN; i++) {
 		struct mbuf *m;
 
-		err = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, PAGE_SIZE,
-		    BUS_DMA_WAITOK, &sc->rxq[i].m_dmamap);
+		err = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
+		    PAGE_SIZE, BUS_DMA_WAITOK, &sc->rxq[i].m_dmamap);
 		if (err) {
-			panic("%s: dmamap_create failed: %i\n", __FUNCTION__, err);
+			panic("%s: dmamap_create failed: %i\n", __FUNCTION__,
+			    err);
 		}
 		MGETHDR(m, M_WAIT, MT_DATA);
 		MCLGET(m, M_WAIT);
@@ -768,22 +781,23 @@ start:
 	sc->txq[bi].m = m;
 	sc->txqc++;
 
-	DPRINTFN(2,("%s: start sending idx #%i mbuf %p (txqc=%i, phys %p), len=%u\n",
-		__FUNCTION__, bi, sc->txq[bi].m, sc->txqc, (void *)segs->ds_addr,
-		(unsigned)m->m_pkthdr.len));
+	DPRINTFN(2,("%s: start sending idx #%i mbuf %p (txqc=%i, phys %p), "
+	    "len=%u\n", __FUNCTION__, bi, sc->txq[bi].m, sc->txqc,
+	     (void *)segs->ds_addr, (unsigned)m->m_pkthdr.len));
 #ifdef	DIAGNOSTIC
 	if (sc->txqc > TX_QLEN)
 		panic("%s: txqc %i > %i", __FUNCTION__, sc->txqc, TX_QLEN);
 #endif
 
 	bus_dmamap_sync(sc->sc_dmat, sc->txq[bi].m_dmamap, 0,
-		sc->txq[bi].m_dmamap->dm_mapsize,
-		BUS_DMASYNC_PREWRITE);
+	    sc->txq[bi].m_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	if (ISSET(sc->cemac_flags, CEMAC_FLAG_GEM)) {
 		sc->TDSC[bi].Addr = segs->ds_addr;
-		sc->TDSC[bi].Info = __SHIFTIN(m->m_pkthdr.len, ETH_TDSC_I_LEN) |
-		    ETH_TDSC_I_LAST_BUF | (bi == (TX_QLEN - 1) ? ETH_TDSC_I_WRAP : 0);
+		sc->TDSC[bi].Info =
+		    __SHIFTIN(m->m_pkthdr.len, ETH_TDSC_I_LEN) |
+		    ETH_TDSC_I_LAST_BUF |
+		    (bi == (TX_QLEN - 1) ? ETH_TDSC_I_WRAP : 0);
 
 		DPRINTFN(3,("%s: TDSC[%i].Addr 0x%08x\n",
 			__FUNCTION__, bi, sc->TDSC[bi].Addr));
@@ -792,7 +806,8 @@ start:
 
 		uint32_t ctl = CEMAC_READ(ETH_CTL) | GEM_CTL_STARTTX;
 		CEMAC_WRITE(ETH_CTL, ctl);
-		DPRINTFN(3,("%s: ETH_CTL 0x%08x\n", __FUNCTION__, CEMAC_READ(ETH_CTL)));
+		DPRINTFN(3,("%s: ETH_CTL 0x%08x\n", __FUNCTION__,
+		    CEMAC_READ(ETH_CTL)));
 	} else {
 		CEMAC_WRITE(ETH_TAR, segs->ds_addr);
 		CEMAC_WRITE(ETH_TCR, m->m_pkthdr.len);
@@ -813,7 +828,7 @@ cemac_ifwatchdog(struct ifnet *ifp)
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 	aprint_error_ifnet(ifp, "device timeout, CTL = 0x%08x, CFG = 0x%08x\n",
-		CEMAC_READ(ETH_CTL), CEMAC_READ(ETH_CFG));
+	    CEMAC_READ(ETH_CTL), CEMAC_READ(ETH_CFG));
 }
 
 static int
@@ -979,9 +994,10 @@ cemac_setaddr(struct ifnet *ifp)
 	CEMAC_GEM_WRITE(SA1H, (sc->sc_enaddr[5] << 8)
 	    | (sc->sc_enaddr[4]));
 	if (nma > 0) {
-		DPRINTFN(1,("%s: en1 %02x:%02x:%02x:%02x:%02x:%02x\n", __FUNCTION__,
-			ias[0][0], ias[0][1], ias[0][2],
-			ias[0][3], ias[0][4], ias[0][5]));
+		DPRINTFN(1,("%s: en1 %02x:%02x:%02x:%02x:%02x:%02x\n",
+		    __FUNCTION__,
+		    ias[0][0], ias[0][1], ias[0][2],
+		    ias[0][3], ias[0][4], ias[0][5]));
 		CEMAC_WRITE(ETH_SA2L, (ias[0][3] << 24)
 		    | (ias[0][2] << 16) | (ias[0][1] << 8)
 		    | (ias[0][0]));
@@ -989,9 +1005,10 @@ cemac_setaddr(struct ifnet *ifp)
 		    | (ias[0][5]));
 	}
 	if (nma > 1) {
-		DPRINTFN(1,("%s: en2 %02x:%02x:%02x:%02x:%02x:%02x\n", __FUNCTION__,
-			ias[1][0], ias[1][1], ias[1][2],
-			ias[1][3], ias[1][4], ias[1][5]));
+		DPRINTFN(1,("%s: en2 %02x:%02x:%02x:%02x:%02x:%02x\n",
+		    __FUNCTION__,
+		    ias[1][0], ias[1][1], ias[1][2],
+		    ias[1][3], ias[1][4], ias[1][5]));
 		CEMAC_WRITE(ETH_SA3L, (ias[1][3] << 24)
 		    | (ias[1][2] << 16) | (ias[1][1] << 8)
 		    | (ias[1][0]));
@@ -999,9 +1016,10 @@ cemac_setaddr(struct ifnet *ifp)
 		    | (ias[1][5]));
 	}
 	if (nma > 2) {
-		DPRINTFN(1,("%s: en3 %02x:%02x:%02x:%02x:%02x:%02x\n", __FUNCTION__,
-			ias[2][0], ias[2][1], ias[2][2],
-			ias[2][3], ias[2][4], ias[2][5]));
+		DPRINTFN(1,("%s: en3 %02x:%02x:%02x:%02x:%02x:%02x\n",
+		    __FUNCTION__,
+		    ias[2][0], ias[2][1], ias[2][2],
+		    ias[2][3], ias[2][4], ias[2][5]));
 		CEMAC_WRITE(ETH_SA4L, (ias[2][3] << 24)
 		    | (ias[2][2] << 16) | (ias[2][1] << 8)
 		    | (ias[2][0]));
