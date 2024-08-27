@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.53 2024/08/27 13:56:49 christos Exp $
+#	$NetBSD: Makefile,v 1.54 2024/08/27 21:50:20 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -108,11 +108,11 @@ CONFIGURE_ENV+=	ac_cv_header_ncurses_h=no \
 # Disable sim unless it's known to work (configure's default is to
 # enable sim if supported).
 CONFIGURE_ARGS_SIM=
-.if \
-    ${MACHINE_CPU} != "powerpc" && \
-    ${MACHINE_CPU} != "powerpc64"
+#.if \
+#    ${MACHINE_CPU} != "powerpc" && \
+#    ${MACHINE_CPU} != "powerpc64"
 CONFIGURE_ARGS_SIM+= --disable-sim
-.endif
+#.endif
 
 CONFIGURE_ARGS_GDBSERVER=
 .if \
