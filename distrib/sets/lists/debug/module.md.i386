@@ -1,4 +1,4 @@
-# $NetBSD: module.md.i386,v 1.11 2024/07/11 20:41:08 riastradh Exp $
+# $NetBSD: module.md.i386,v 1.12 2024/08/27 13:30:57 martin Exp $
 #
 ./usr/libdata/debug/@MODULEDIR@/acpiacad				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpiacad/acpiacad.kmod.debug		modules-base-kernel	kmod,debug
@@ -24,6 +24,8 @@
 ./usr/libdata/debug/@MODULEDIR@/acpiverbose/acpiverbose.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpivga				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpivga/acpivga.kmod.debug		modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/acpivmgenid				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/acpivmgenid/acpivmgenid.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpiwdrt				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpiwdrt/acpiwdrt.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpiwmi				modules-base-kernel	kmod,debug
