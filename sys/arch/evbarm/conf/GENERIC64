@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.218 2024/07/16 12:01:19 riastradh Exp $
+#	$NetBSD: GENERIC64,v 1.219 2024/08/27 00:56:16 riastradh Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -127,6 +127,7 @@ acpifan*	at acpi?
 acpiged*	at acpi?
 acpilid*	at acpi?
 acpitz* 	at acpi?
+acpivmgenid*	at acpi?
 
 # CPUs
 cpus*		at fdt? pass 0
