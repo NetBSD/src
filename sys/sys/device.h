@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.188 2024/01/15 18:15:37 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.189 2024/08/27 13:44:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -622,11 +622,16 @@ bool		devhandle_is_valid(devhandle_t);
 devhandle_t	devhandle_invalid(void);
 devhandle_type_t devhandle_type(devhandle_t);
 int		devhandle_compare(devhandle_t, devhandle_t);
+devhandle_t	devhandle_subclass(devhandle_t, struct devhandle_impl *,
+		    device_call_t (*)(devhandle_t, const char *,
+				      devhandle_t *));
 
 device_call_t	devhandle_lookup_device_call(devhandle_t, const char *,
 		    devhandle_t *);
-void		devhandle_impl_inherit(struct devhandle_impl *,
-		    const struct devhandle_impl *);
+void		devhandle_impl_subclass(struct devhandle_impl *,
+		    const struct devhandle_impl *,
+		    device_call_t (*)(devhandle_t, const char *,
+				      devhandle_t *));
 
 device_t	deviter_first(deviter_t *, deviter_flags_t);
 void		deviter_init(deviter_t *, deviter_flags_t);
@@ -717,10 +722,13 @@ struct device_call_generic {
 	void *args;
 };
 
-int	device_call_generic(device_t, const struct device_call_generic *);
+int		device_call_generic(device_t, devhandle_t,
+		    const struct device_call_generic *);
 
 #define	device_call(dev, call)						\
-	device_call_generic((dev), &(call)->generic)
+	device_call_generic((dev), device_handle(dev), &(call)->generic)
+#define	devhandle_call(handle, call)					\
+	device_call_generic(NULL, (handle), &(call)->generic)
 
 #endif /* _KERNEL */
 
