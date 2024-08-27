@@ -14,7 +14,7 @@ make: "var-recursive.mk" line 43: <>
 make: Fatal errors encountered -- cannot continue
 make: stopped making "loadtime" in unit-tests
 sub-exit status 1
-: OK
+: before-recursive
 make: in target "runtime": while evaluating variable "VAR" with value "${VAR}": Variable VAR is recursive.
 sub-exit status 2
 exit status 0

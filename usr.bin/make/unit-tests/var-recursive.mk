@@ -1,4 +1,4 @@
-# $NetBSD: var-recursive.mk,v 1.8 2024/08/27 04:52:14 rillig Exp $
+# $NetBSD: var-recursive.mk,v 1.9 2024/08/27 05:01:03 rillig Exp $
 #
 # Tests for expressions that refer to themselves and thus cannot be
 # evaluated, as that would lead to an endless loop.
@@ -44,16 +44,16 @@ V=	$V
 
 .elif make(runtime)
 
-# If a recursive variable is accessed in a command of a target, the makefiles
-# have already been fully parsed, so there is no location information from the
-# .include and .for directives.  In such a case, use the location of the last
-# command of the target to provide at least a hint to the location.
 VAR=	${VAR}
 runtime:
-	: OK
+# expect: : before-recursive
+	: before-recursive
 # expect: make: in target "runtime": while evaluating variable "VAR" with value "${VAR}": Variable VAR is recursive.
-	: <${VAR}>
-	: OK
+# expect-not: recursive-line-before
+# expect-not: recursive-line-after
+	: recursive-line-before <${VAR}> recursive-line-after
+# expect-not: after-recursive
+	: after-recursive
 
 .else
 
