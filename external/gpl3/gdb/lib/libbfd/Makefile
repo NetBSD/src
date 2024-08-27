@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2023/08/11 18:25:27 christos Exp $
+#	$NetBSD: Makefile,v 1.18 2024/08/27 17:07:07 christos Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -90,3 +90,7 @@ pex64igen.c: peXXigen.c
 pe-aarch64igen.c: peXXigen.c
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e s/XX/peAArch64/g < $> > $@
+
+pe-riscv64igen.c: peXXigen.c
+	${_MKTARGET_CREATE}
+	${TOOL_SED} -e s/XX/peRiscV64/g < $> > $@

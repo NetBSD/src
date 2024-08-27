@@ -20,6 +20,7 @@
 #include "defs.h"
 
 #include "gdbarch.h"
+#include "extract-store-integer.h"
 #include "netbsd-tdep.h"
 #include "aarch64-tdep.h"
 #include "aarch64-netbsd-tdep.h"
@@ -61,7 +62,7 @@
 
 static void
 aarch64_nbsd_sigframe_init (const struct tramp_frame *self,
-			     frame_info_ptr this_frame,
+			     const frame_info_ptr& this_frame,
 			     struct trad_frame_cache *this_cache,
 			     CORE_ADDR func)
 {
