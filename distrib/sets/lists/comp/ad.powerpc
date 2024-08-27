@@ -1,7 +1,7 @@
-# $NetBSD: ad.powerpc,v 1.107 2024/07/11 20:41:06 riastradh Exp $
+# $NetBSD: ad.powerpc,v 1.108 2024/08/27 21:51:43 christos Exp $
 #
 ./usr/bin/elf2aout				comp-sysutil-bin
-./usr/bin/psim					comp-debug-bin		gdb
+./usr/bin/psim					comp-obsolete		obsolete
 ./usr/include/altivec.h				comp-obsolete		obsolete
 ./usr/include/clang-3.4/altivec.h		comp-obsolete		obsolete
 ./usr/include/clang-3.5/altivec.h		comp-obsolete		obsolete
