@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.36 2024/08/26 15:50:26 riastradh Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.37 2024/08/27 13:43:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: arc4random.c,v 1.36 2024/08/26 15:50:26 riastradh Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.37 2024/08/27 13:43:02 riastradh Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
@@ -71,6 +71,9 @@ __RCSID("$NetBSD: arc4random.c,v 1.36 2024/08/26 15:50:26 riastradh Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "arc4random.h"
+#include "reentrant.h"
 
 #ifdef __weak_alias
 __weak_alias(arc4random,_arc4random)
@@ -305,9 +308,7 @@ crypto_core_selftest(void)
 #define	crypto_prng_MAXOUTPUTBYTES	\
 	(crypto_core_OUTPUTBYTES - crypto_prng_SEEDBYTES)
 
-struct crypto_prng {
-	uint8_t		state[crypto_prng_SEEDBYTES];
-};
+__CTASSERT(sizeof(struct crypto_prng) == crypto_prng_SEEDBYTES);
 
 static void
 crypto_prng_seed(struct crypto_prng *prng, const void *seed)
@@ -457,11 +458,6 @@ entropy_epoch(void)
 
 /* arc4random state: per-thread, per-process (zeroed in child on fork) */
 
-struct arc4random_prng {
-	struct crypto_prng	arc4_prng;
-	unsigned		arc4_epoch;
-};
-
 static void
 arc4random_prng_addrandom(struct arc4random_prng *prng, const void *data,
     size_t datalen)
@@ -531,14 +527,7 @@ arc4random_prng_destroy(struct arc4random_prng *prng)
 
 /* Library state */
 
-static struct arc4random_global {
-#ifdef _REENTRANT
-	mutex_t			lock;
-	thread_key_t		thread_key;
-#endif
-	struct arc4random_prng	prng;
-	bool			initialized;
-} arc4random_global = {
+struct arc4random_global_state arc4random_global = {
 #ifdef _REENTRANT
 	.lock		= MUTEX_INITIALIZER,
 #endif
