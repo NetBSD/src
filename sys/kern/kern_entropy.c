@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.71 2024/08/26 15:50:15 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.72 2024/08/27 00:56:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.71 2024/08/26 15:50:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.72 2024/08/27 00:56:47 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1355,19 +1355,6 @@ entropy_notify(void)
  * entropy_consolidate()
  *
  *	Trigger entropy consolidation and wait for it to complete, or
- *	return early if interrupted by a signal.
- */
-void
-entropy_consolidate(void)
-{
-
-	(void)entropy_consolidate_sig();
-}
-
-/*
- * entropy_consolidate_sig()
- *
- *	Trigger entropy consolidation and wait for it to complete, or
  *	return EINTR if interrupted by a signal.
  *
  *	This should be used sparingly, not periodically -- requiring
@@ -1377,7 +1364,7 @@ entropy_consolidate(void)
  *	transition to full entropy.
  */
 int
-entropy_consolidate_sig(void)
+entropy_consolidate(void)
 {
 	uint64_t ticket;
 	int error;
@@ -1420,7 +1407,7 @@ sysctl_entropy_consolidate(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 	if (arg)
-		error = entropy_consolidate_sig();
+		error = entropy_consolidate();
 
 	return error;
 }
@@ -2818,7 +2805,7 @@ entropy_ioctl(unsigned long cmd, void *data)
 		/* Enter the data and consolidate entropy.  */
 		rnd_add_data(&seed_rndsource, rdata->data, rdata->len,
 		    entropybits);
-		error = entropy_consolidate_sig();
+		error = entropy_consolidate();
 		break;
 	}
 	default:
