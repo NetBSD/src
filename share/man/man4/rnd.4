@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.4,v 1.42 2024/08/27 11:21:02 riastradh Exp $
+.\"	$NetBSD: rnd.4,v 1.43 2024/08/27 17:38:52 uwe Exp $
 .\"
 .\" Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,14 +42,14 @@ and
 .Pa /dev/urandom
 devices generate bytes randomly with uniform distribution.
 Every read from them is independent.
-.Bl -tag -width /dev/urandom
-.It Pa /dev/urandom
-Never blocks.
-.It Pa /dev/random
-Sometimes blocks.
-Will block early at boot if the system's state is known to be
+.Pp
+.Pa /dev/urandom
+never blocks.
+.Pp
+.Pa /dev/random
+sometimes blocks.
+It will block early at boot if the system's state is known to be
 predictable.
-.El
 .Pp
 Applications should read from
 .Pa /dev/urandom ,
@@ -59,12 +59,10 @@ variable
 .Li kern.arandom ,
 when they need randomly generated data, e.g. key material for
 cryptography or seeds for simulations.
-(The
-.Xr sysctl 7
-variable
+The
 .Li kern.arandom
-is limited to 256 bytes per read, but is otherwise equivalent to
-reading from
+variable is limited to 256 bytes per read, but is otherwise equivalent
+to reading from
 .Pa /dev/urandom
 and always works even in a
 .Xr chroot 8
@@ -72,7 +70,7 @@ environment without requiring a populated
 .Pa /dev
 tree and without opening a file descriptor, so
 .Li kern.arandom
-may be preferable to use in libraries.)
+may be preferable to use in libraries.
 .Pp
 Systems should be engineered to judiciously read at least once from
 .Pa /dev/random
@@ -105,12 +103,13 @@ the outputs to
 to guarantee your system is in a state that nobody but you and the
 bored security guard watching the surveillance camera in your office
 can guess:
-.Bd -literal -offset abcd
-% echo tthhhhhthhhththtthhhhthtththttth... > /dev/random
-.Ed
 .Pp
-(Sequence generated from a genuine US quarter dollar, guaranteed
-random.)
+.Dl % echo tthhhhhthhhththtthhhhthtththttth... > /dev/random
+.Pp
+.Po
+Sequence generated from a genuine US quarter dollar, guaranteed
+random.
+.Pc
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh SECURITY MODEL
 The
@@ -134,7 +133,7 @@ means a single read, no matter how short it is.
 .Pp
 .Sq Cannot predict
 means it is conjectured of the cryptography in
-.Fa /dev/random
+.Pa /dev/random
 that any computationally bounded attacker who tries to distinguish
 outputs from uniform random cannot do more than negligibly better than
 uniform random guessing.
@@ -161,7 +160,8 @@ or
 .Em entropy
 for short in cryptography.
 For example:
-.Bl -bullet -offset abcd -compact
+.Pp
+.Bl -bullet -offset indent -compact
 .It
 A fair coin toss has one bit of entropy.
 .It
@@ -173,9 +173,9 @@ The toss of a pair of fair coins that are glued together has one bit of
 entropy.
 .It
 A uniform random distribution with
-.Fa n
+.Ar n
 possibilities has log_2
-.Fa n
+.Ar n
 bits of entropy.
 .It
 An utterance from an accounting troll who always says
@@ -222,7 +222,7 @@ kernel has started.
 For those that don't, the
 .Xr rndctl 8
 command can do it once userland has started, for example by setting
-.Dq Li random_seed=YES
+.Ql random_seed=YES
 in
 .Pa /etc/rc.conf ,
 which is enabled by default; see
@@ -322,7 +322,7 @@ typedef struct {
 .Ed
 .Pp
 Fill the
-.Fa sources
+.Fa source
 array with information about up to
 .Fa count
 entropy sources, starting at
@@ -345,7 +345,7 @@ Fill
 with information about the entropy source named
 .Fa name ,
 or fail with
-.Dv ENOENT
+.Er ENOENT
 if there is none.
 .It Dv RNDCTL Pq Vt rndctl_t
 .Bd -literal
@@ -413,7 +413,7 @@ variables provided by
 .Nm
 can be set by privileged users:
 .Bl -tag -width abcd
-.It Dv kern.entropy.collection Pq Vt bool
+.It Li kern.entropy.collection Pq Vt bool
 (Default on.)
 Enables entering data into the entropy pool.
 If disabled, no new data can be entered into the entropy pool, whether
@@ -424,7 +424,7 @@ or
 or by the
 .Dv RNDADDDATA
 ioctl.
-.It Dv kern.entropy.depletion Pq Vt bool
+.It Li kern.entropy.depletion Pq Vt bool
 (Default off.)
 Enables
 .Sq entropy depletion ,
@@ -434,9 +434,11 @@ the system entropy.
 This is not justified by modern cryptography \(em an adversary will
 never guess the 256-bit secret in a Keccak sponge no matter how much
 output from the sponge they see \(em but may be useful for testing.
-.It Dv kern.entropy.consolidate Pq Vt int
+.It Li kern.entropy.consolidate Pq Vt int
 Trigger for entropy consolidation: executing
+.Pp
 .Dl # sysctl -w kern.entropy.consolidate=1
+.Pp
 causes the system to consolidate pending entropy from per-CPU pools
 into the global pool, and waits until done.
 .El
@@ -446,24 +448,24 @@ The following read-only
 variables provide information to privileged users about the state of
 the entropy pool:
 .Bl -tag -width abcd
-.It Dv kern.entropy.needed Pq Vt unsigned int
+.It Li kern.entropy.needed Pq Vt unsigned int
 Number of bits of entropy the system is waiting for in the global pool
 before reads from
 .Pa /dev/random
 will return without blocking.
 When zero, the system is considered to have full entropy.
-.It Dv kern.entropy.pending Pq Vt unsigned int
+.It Li kern.entropy.pending Pq Vt unsigned int
 Number of bits of entropy pending in per-CPU pools.
 This is the amount of entropy that will be contributed to the global
 pool at the next consolidation, such as from triggering
-.Dv kern.entropy.consolidate .
+.Li kern.entropy.consolidate .
 .El
 .Pp
 The following read-only
 .Xr sysctl 8
 variables provide information to any users, privileged or unprivileged:
 .Bl -tag -width abcd
-.It Dv kern.entropy.epoch Pq Vt unsigned int
+.It Li kern.entropy.epoch Pq Vt unsigned int
 An integer that changes whenever the system determines applications
 should reseed from the system entropy pool.
 This can happen for various reasons:
@@ -536,7 +538,9 @@ entropy of the adversary's state of knowledge about the pool is zero.
 .Pp
 If the operator is confident that the drivers' estimates of the entropy
 of the sampling processes are too conservative, the operator can issue
+.Pp
 .Dl # sysctl -w kern.entropy.consolidate=1
+.Pp
 to force consolidation into the global pool.
 The operator can also fool the system into thinking it has more entropy
 than it does by feeding data from
@@ -564,14 +568,15 @@ When
 .Sq entropy depletion
 is enabled by
 setting the sysctl variable
-.Dv kern.entropy.depletion Ns Li \&=1 ,
+.Li kern.entropy.depletion
+to 1,
 every read from
 .Pa /dev/random
 is limited to 256 bits, since reading more than that would nearly
 always block again.
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh FILES
-.Bl -tag -width /dev/urandom -compact
+.Bl -tag -width ".Pa /dev/urandom" -compact
 .It Pa /dev/random
 Uniform random byte source.
 May block.
@@ -596,7 +601,7 @@ system resets its estimate of entropy to none.
 .Pp
 This message is rate-limited to happen no more often than once per
 minute, so if you want to make sure it is gone you should consult
-.Dv kern.entropy.needed
+.Li kern.entropy.needed
 to confirm it is zero.
 .El
 .Pp
