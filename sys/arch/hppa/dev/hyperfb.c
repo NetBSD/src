@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.12 2024/08/19 10:58:43 macallan Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.13 2024/08/28 06:20:30 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.12 2024/08/19 10:58:43 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.13 2024/08/28 06:20:30 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -649,8 +649,9 @@ hyperfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		hyperfb_set_video(sc, *(int *)data);
 		return 0;
 	case WSDISPLAYIO_GVIDEO:
-		return sc->sc_video_on ?
+		*(u_int *)data = sc->sc_video_on ?
 		    WSDISPLAYIO_VIDEO_ON : WSDISPLAYIO_VIDEO_OFF;
+		return 0;
 	}
 	return EPASSTHROUGH;
 }
