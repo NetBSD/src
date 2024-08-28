@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.18 2024/08/19 10:58:43 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.19 2024/08/28 06:20:30 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -854,8 +854,9 @@ gftfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		gftfb_set_video(sc, *(int *)data);
 		return 0;
 	case WSDISPLAYIO_GVIDEO:
-		return sc->sc_video_on ? 
+		*(u_int *)data = sc->sc_video_on ?
 		    WSDISPLAYIO_VIDEO_ON : WSDISPLAYIO_VIDEO_OFF;
+		return 0;
 	}
 	return EPASSTHROUGH;
 }
