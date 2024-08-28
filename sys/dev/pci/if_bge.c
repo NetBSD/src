@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.393 2024/07/05 04:31:51 rin Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.394 2024/08/28 05:58:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.393 2024/07/05 04:31:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.394 2024/08/28 05:58:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -203,9 +203,7 @@ static void bge_start_locked(struct ifnet *);
 static int bge_ifflags_cb(struct ethercom *);
 static int bge_ioctl(struct ifnet *, u_long, void *);
 static int bge_init(struct ifnet *);
-static int bge_init_locked(struct ifnet *);
 static void bge_stop(struct ifnet *, int);
-static void bge_stop_locked(struct ifnet *, bool);
 static bool bge_watchdog_tick(struct ifnet *);
 static int bge_ifmedia_upd(struct ifnet *);
 static void bge_ifmedia_sts(struct ifnet *, struct ifmediareq *);
@@ -1091,6 +1089,8 @@ bge_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	int rv = 0;
 	int i;
 
+	KASSERT(mutex_owned(sc->sc_intr_lock));
+
 	if (bge_ape_lock(sc, sc->bge_phy_ape_lock) != 0)
 		return -1;
 
@@ -1143,6 +1143,8 @@ bge_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 	uint32_t data, autopoll;
 	int rv = 0;
 	int i;
+
+	KASSERT(mutex_owned(sc->sc_intr_lock));
 
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906 &&
 	    (reg == MII_GTCR || reg == BRGPHY_MII_AUXCTL))
@@ -1197,6 +1199,8 @@ bge_miibus_statchg(struct ifnet *ifp)
 	struct bge_softc * const sc = ifp->if_softc;
 	struct mii_data *mii = &sc->bge_mii;
 	uint32_t mac_mode, rx_mode, tx_mode;
+
+	KASSERT(mutex_owned(sc->sc_intr_lock));
 
 	/*
 	 * Get flow control negotiation result.
@@ -1838,7 +1842,7 @@ bge_setmulti(struct bge_softc *sc)
 	uint32_t		h;
 	int			i;
 
-	KASSERT(mutex_owned(sc->sc_core_lock));
+	KASSERT(mutex_owned(sc->sc_mcast_lock));
 	if (sc->bge_if_flags & IFF_PROMISC)
 		goto allmulti;
 
@@ -2766,10 +2770,16 @@ bge_blockinit(struct bge_softc *sc)
 
 	/* 5718 step 35, 36, 37 */
 	/* Set up host coalescing defaults */
-	CSR_WRITE_4(sc, BGE_HCC_RX_COAL_TICKS, sc->bge_rx_coal_ticks);
-	CSR_WRITE_4(sc, BGE_HCC_TX_COAL_TICKS, sc->bge_tx_coal_ticks);
-	CSR_WRITE_4(sc, BGE_HCC_RX_MAX_COAL_BDS, sc->bge_rx_max_coal_bds);
-	CSR_WRITE_4(sc, BGE_HCC_TX_MAX_COAL_BDS, sc->bge_tx_max_coal_bds);
+	mutex_enter(sc->sc_intr_lock);
+	const uint32_t rx_coal_ticks = sc->bge_rx_coal_ticks;
+	const uint32_t tx_coal_ticks = sc->bge_tx_coal_ticks;
+	const uint32_t rx_max_coal_bds = sc->bge_rx_max_coal_bds;
+	const uint32_t tx_max_coal_bds = sc->bge_tx_max_coal_bds;
+	mutex_exit(sc->sc_intr_lock);
+	CSR_WRITE_4(sc, BGE_HCC_RX_COAL_TICKS, rx_coal_ticks);
+	CSR_WRITE_4(sc, BGE_HCC_TX_COAL_TICKS, tx_coal_ticks);
+	CSR_WRITE_4(sc, BGE_HCC_RX_MAX_COAL_BDS, rx_max_coal_bds);
+	CSR_WRITE_4(sc, BGE_HCC_TX_MAX_COAL_BDS, tx_max_coal_bds);
 	if (!(BGE_IS_5705_PLUS(sc))) {
 		CSR_WRITE_4(sc, BGE_HCC_RX_COAL_TICKS_INT, 0);
 		CSR_WRITE_4(sc, BGE_HCC_TX_COAL_TICKS_INT, 0);
@@ -3295,7 +3305,6 @@ bge_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->bge_stopping = false;
 	sc->bge_txrx_stopping = false;
 
 	/* Save various chip information. */
@@ -3869,7 +3878,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	else
 		sc->bge_return_ring_cnt = BGE_RETURN_RING_CNT;
 
-	sc->sc_core_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+	sc->sc_mcast_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SOFTNET);
 	sc->sc_intr_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
 
 	/* Set up ifnet structure */
@@ -3988,6 +3997,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 			mii_flags |= MIIF_HAVEFIBER;
 again:
 		bge_asf_driver_up(sc);
+		mutex_enter(sc->sc_intr_lock);
 		rv = bge_miibus_readreg(sc->bge_dev, sc->bge_phy_addr,
 		    MII_BMCR, &phyreg);
 		if ((rv != 0) || ((phyreg & BMCR_PDOWN) != 0)) {
@@ -4004,6 +4014,7 @@ again:
 				DELAY(1000);
 			}
 		}
+		mutex_exit(sc->sc_intr_lock);
 
 		mii_attach(sc->bge_dev, mii, capmask, sc->bge_phy_addr,
 		    MII_OFFSET_ANY, mii_flags);
@@ -4078,6 +4089,8 @@ again:
 #ifdef BGE_DEBUG
 	bge_debug_info(sc);
 #endif
+
+	sc->bge_attached = true;
 }
 
 /*
@@ -4089,6 +4102,9 @@ bge_detach(device_t self, int flags __unused)
 {
 	struct bge_softc * const sc = device_private(self);
 	struct ifnet * const ifp = &sc->ethercom.ec_if;
+
+	if (!sc->bge_attached)
+		return 0;
 
 	IFNET_LOCK(ifp);
 
@@ -4119,6 +4135,8 @@ bge_release_resources(struct bge_softc *sc)
 	if (sc->bge_log != NULL)
 		sysctl_teardown(&sc->bge_log);
 
+	callout_destroy(&sc->bge_timeout);
+
 #ifdef BGE_EVENT_COUNTERS
 	/* Detach event counters. */
 	evcnt_detach(&sc->bge_ev_intr);
@@ -4131,6 +4149,9 @@ bge_release_resources(struct bge_softc *sc)
 	evcnt_detach(&sc->bge_ev_rx_macctl);
 	evcnt_detach(&sc->bge_ev_xoffentered);
 #endif /* BGE_EVENT_COUNTERS */
+
+	mutex_obj_free(sc->sc_intr_lock);
+	mutex_obj_free(sc->sc_mcast_lock);
 
 	/* Disestablish the interrupt handler */
 	if (sc->bge_intrhand != NULL) {
@@ -4461,6 +4482,8 @@ bge_rxeof(struct bge_softc *sc)
 	bus_size_t tlen;
 	int tosync;
 
+	KASSERT(mutex_owned(sc->sc_intr_lock));
+
 	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
 	    offsetof(struct bge_ring_data, bge_status_block),
 	    sizeof(struct bge_status_block),
@@ -4630,6 +4653,8 @@ bge_txeof(struct bge_softc *sc)
 	bus_size_t tlen;
 	int tosync;
 	struct mbuf *m;
+
+	KASSERT(mutex_owned(sc->sc_intr_lock));
 
 	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
 	    offsetof(struct bge_ring_data, bge_status_block),
@@ -4828,11 +4853,7 @@ bge_tick(void *xsc)
 	struct ifnet * const ifp = &sc->ethercom.ec_if;
 	struct mii_data * const mii = &sc->bge_mii;
 
-	mutex_enter(sc->sc_core_lock);
-	if (sc->bge_stopping) {
-		mutex_exit(sc->sc_core_lock);
-		return;
-	}
+	mutex_enter(sc->sc_intr_lock);
 
 	if (BGE_IS_5705_PLUS(sc))
 		bge_stats_update_regs(sc);
@@ -4854,9 +4875,7 @@ bge_tick(void *xsc)
 		 * (extra input errors was reported for bcm5701 & bcm5704).
 		 */
 		if (!BGE_STS_BIT(sc, BGE_STS_LINK)) {
-			mutex_enter(sc->sc_intr_lock);
 			mii_tick(mii);
-			mutex_exit(sc->sc_intr_lock);
 		}
 	}
 
@@ -4865,8 +4884,7 @@ bge_tick(void *xsc)
 	const bool ok = bge_watchdog_tick(ifp);
 	if (ok)
 		callout_schedule(&sc->bge_timeout, hz);
-
-	mutex_exit(sc->sc_core_lock);
+	mutex_exit(sc->sc_intr_lock);
 }
 
 static void
@@ -5149,6 +5167,8 @@ bge_encap(struct bge_softc *sc, struct mbuf *m_head, uint32_t *txidx)
 	bool			have_vtag;
 	uint16_t		vtag;
 	bool			remap;
+
+	KASSERT(mutex_owned(sc->sc_intr_lock));
 
 	if (m_head->m_pkthdr.csum_flags) {
 		if (m_head->m_pkthdr.csum_flags & M_CSUM_IPv4)
@@ -5563,35 +5583,19 @@ static int
 bge_init(struct ifnet *ifp)
 {
 	struct bge_softc * const sc = ifp->if_softc;
-
-	KASSERT(IFNET_LOCKED(ifp));
-
-	if (sc->bge_detaching)
-		return ENXIO;
-
-	mutex_enter(sc->sc_core_lock);
-	int ret = bge_init_locked(ifp);
-	mutex_exit(sc->sc_core_lock);
-
-	return ret;
-}
-
-
-static int
-bge_init_locked(struct ifnet *ifp)
-{
-	struct bge_softc * const sc = ifp->if_softc;
 	const uint16_t *m;
 	uint32_t mode, reg;
 	int error = 0;
 
 	ASSERT_SLEEPABLE();
 	KASSERT(IFNET_LOCKED(ifp));
-	KASSERT(mutex_owned(sc->sc_core_lock));
 	KASSERT(ifp == &sc->ethercom.ec_if);
 
+	if (sc->bge_detaching)
+		return ENXIO;
+
 	/* Cancel pending I/O and flush buffers. */
-	bge_stop_locked(ifp, false);
+	bge_stop(ifp, 0);
 
 	bge_stop_fw(sc);
 	bge_sig_pre_reset(sc, BGE_RESET_START);
@@ -5680,7 +5684,9 @@ bge_init_locked(struct ifnet *ifp)
 		BGE_CLRBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
 
 	/* Program multicast filter. */
+	mutex_enter(sc->sc_mcast_lock);
 	bge_setmulti(sc);
+	mutex_exit(sc->sc_mcast_lock);
 
 	/* Init RX ring. */
 	bge_init_rx_ring_std(sc);
@@ -5763,7 +5769,6 @@ bge_init_locked(struct ifnet *ifp)
 
 	mutex_enter(sc->sc_intr_lock);
 	if ((error = bge_ifmedia_upd(ifp)) == 0) {
-		sc->bge_stopping = false;
 		sc->bge_txrx_stopping = false;
 
 		/* IFNET_LOCKED asserted above */
@@ -5773,7 +5778,9 @@ bge_init_locked(struct ifnet *ifp)
 	}
 	mutex_exit(sc->sc_intr_lock);
 
+	mutex_enter(sc->sc_mcast_lock);
 	sc->bge_if_flags = ifp->if_flags;
+	mutex_exit(sc->sc_mcast_lock);
 
 	return error;
 }
@@ -5919,7 +5926,7 @@ bge_ifflags_cb(struct ethercom *ec)
 	int ret = 0;
 
 	KASSERT(IFNET_LOCKED(ifp));
-	mutex_enter(sc->sc_core_lock);
+	mutex_enter(sc->sc_mcast_lock);
 
 	u_short change = ifp->if_flags ^ sc->bge_if_flags;
 
@@ -5935,7 +5942,7 @@ bge_ifflags_cb(struct ethercom *ec)
 	}
 
 	sc->bge_if_flags = ifp->if_flags;
-	mutex_exit(sc->sc_core_lock);
+	mutex_exit(sc->sc_mcast_lock);
 
 	return ret;
 }
@@ -5959,7 +5966,7 @@ bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	switch (command) {
 	case SIOCSIFMEDIA:
-		mutex_enter(sc->sc_core_lock);
+		mutex_enter(sc->sc_intr_lock);
 		/* XXX Flow control is not supported for 1000BASE-SX */
 		if (sc->bge_flags & BGEF_FIBER_TBI) {
 			ifr->ifr_media &= ~IFM_ETH_FMASK;
@@ -5979,7 +5986,7 @@ bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 			}
 			sc->bge_flowflags = ifr->ifr_media & IFM_ETH_FMASK;
 		}
-		mutex_exit(sc->sc_core_lock);
+		mutex_exit(sc->sc_intr_lock);
 
 		if (sc->bge_flags & BGEF_FIBER_TBI) {
 			error = ifmedia_ioctl(ifp, ifr, &sc->bge_ifmedia,
@@ -5997,11 +6004,11 @@ bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 		error = 0;
 
 		if (command == SIOCADDMULTI || command == SIOCDELMULTI) {
-			mutex_enter(sc->sc_core_lock);
+			mutex_enter(sc->sc_mcast_lock);
 			if (sc->bge_if_flags & IFF_RUNNING) {
 				bge_setmulti(sc);
 			}
-			mutex_exit(sc->sc_core_lock);
+			mutex_exit(sc->sc_mcast_lock);
 		}
 		break;
 	}
@@ -6015,7 +6022,7 @@ static bool
 bge_watchdog_check(struct bge_softc * const sc)
 {
 
-	KASSERT(mutex_owned(sc->sc_core_lock));
+	KASSERT(mutex_owned(sc->sc_intr_lock));
 
 	if (!sc->bge_tx_sending)
 		return true;
@@ -6058,7 +6065,7 @@ bge_watchdog_tick(struct ifnet *ifp)
 {
 	struct bge_softc * const sc = ifp->if_softc;
 
-	KASSERT(mutex_owned(sc->sc_core_lock));
+	KASSERT(mutex_owned(sc->sc_intr_lock));
 
 	if (!sc->sc_trigger_reset && bge_watchdog_check(sc))
 		return true;
@@ -6121,7 +6128,10 @@ bge_stop_block(struct bge_softc *sc, bus_addr_t reg, uint32_t bit)
 		    (u_long)reg, bit);
 }
 
-
+/*
+ * Stop the adapter and free any mbufs allocated to the
+ * RX and TX lists.
+ */
 static void
 bge_stop(struct ifnet *ifp, int disable)
 {
@@ -6130,31 +6140,11 @@ bge_stop(struct ifnet *ifp, int disable)
 	ASSERT_SLEEPABLE();
 	KASSERT(IFNET_LOCKED(ifp));
 
-	mutex_enter(sc->sc_core_lock);
-	bge_stop_locked(ifp, disable ? true : false);
-	mutex_exit(sc->sc_core_lock);
-}
-
-/*
- * Stop the adapter and free any mbufs allocated to the
- * RX and TX lists.
- */
-static void
-bge_stop_locked(struct ifnet *ifp, bool disable)
-{
-	struct bge_softc * const sc = ifp->if_softc;
-
-	ASSERT_SLEEPABLE();
-	KASSERT(IFNET_LOCKED(ifp));
-	KASSERT(mutex_owned(sc->sc_core_lock));
-
-	sc->bge_stopping = true;
-
 	mutex_enter(sc->sc_intr_lock);
 	sc->bge_txrx_stopping = true;
 	mutex_exit(sc->sc_intr_lock);
 
-	callout_halt(&sc->bge_timeout, sc->sc_core_lock);
+	callout_halt(&sc->bge_timeout, NULL);
 
 	/* Disable host interrupts. */
 	BGE_SETBIT(sc, BGE_PCI_MISC_CTL, BGE_PCIMISCCTL_MASK_PCI_INTR);
@@ -6252,7 +6242,9 @@ bge_stop_locked(struct ifnet *ifp, bool disable)
 
 	ifp->if_flags &= ~IFF_RUNNING;
 
+	mutex_enter(sc->sc_mcast_lock);
 	sc->bge_if_flags = ifp->if_flags;
+	mutex_exit(sc->sc_mcast_lock);
 }
 
 static void
