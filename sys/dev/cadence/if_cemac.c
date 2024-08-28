@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.39 2024/08/27 07:53:20 skrll Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.40 2024/08/28 06:50:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.39 2024/08/27 07:53:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.40 2024/08/28 06:50:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -855,7 +855,7 @@ cemac_ifinit(struct ifnet *ifp)
 			IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx |
 			IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_UDPv6_Rx)) {
 			cfg = CEMAC_READ(ETH_CFG);
-			cfg |= GEM_CFG_RX_CHKSUM_OFFLD_EN;
+			cfg |= GEM_CFG_RXCOEN;
 			CEMAC_WRITE(ETH_CFG, cfg);
 		}
 	}

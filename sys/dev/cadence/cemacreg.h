@@ -1,4 +1,4 @@
-/*      $NetBSD: cemacreg.h,v 1.5 2024/08/25 21:15:46 skrll Exp $	*/
+/*      $NetBSD: cemacreg.h,v 1.6 2024/08/28 06:50:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -164,7 +164,7 @@
 #define GEM_CFG_CLK_64	__SHIFTIN(4, GEM_CFG_CLK)
 #define GEM_CFG_CLK_96	__SHIFTIN(5, GEM_CFG_CLK)
 #define GEM_CFG_DBW	__BITS(22, 21)
-#define	GEM_CFG_RX_CHKSUM_OFFLD_EN	__BIT(24)
+#define	GEM_CFG_RXCOEN	__BIT(24)
 
 /* Status Register bits: */
 #define	ETH_SR_IDLE	__BIT(2)	/* 1 = PHY logic is running		*/
