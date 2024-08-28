@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.300 2024/07/01 04:03:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.301 2024/08/28 11:54:43 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -97,18 +97,13 @@ SUBDIR+=	../external/bsd/jemalloc/lib
 .if (${MKGCC} != "no")
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libobjc
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libgomp
-# Should probably move GMP, MPFR and MPC builds into the GCC >= 4.5
-# specific build area, but we get better parallelism this way.
-# We don't build compat versions of these.
-. if !defined(MLIBDIR) && (${MKGCCCMDS} != "no")
-SUBDIR+=	../external/lgpl3/mpfr/lib/libmpfr
-SUBDIR+=	../external/lgpl3/mpc/lib/libmpc
-. endif
 .endif
 
 # GCC and GDB >= 13 require GMP.
-.if !defined(MLIBDIR) && (${MKGCCCMDS} != "no" || \
-    (${MKGDB} != "no" && ${HAVE_GDB:U0} >= 1320))
+# We don't build compat versions of these
+.if !defined(MLIBDIR) && (${MKGCCCMDS} != "no" || ${MKGDB} != "no")
+SUBDIR+=	../external/lgpl3/mpfr/lib/libmpfr
+SUBDIR+=	../external/lgpl3/mpc/lib/libmpc
 SUBDIR+=	../external/lgpl3/gmp/lib/libgmp
 .endif
 
