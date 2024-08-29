@@ -384,7 +384,7 @@ sdmmc_init(unsigned int tag)
 	sc->flags = 0;
 	sc->sdifdv = dv;
 
-	/* Perfom SD-card initialization. */
+	/* Perform SD-card initialization. */
 	if( sdmmc_enable(sc) ) {
 		printf("Failed to enable SD interface\n");
 		errno = EIO;
