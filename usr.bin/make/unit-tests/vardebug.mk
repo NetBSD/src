@@ -1,4 +1,4 @@
-# $NetBSD: vardebug.mk,v 1.12 2024/08/06 18:00:17 rillig Exp $
+# $NetBSD: vardebug.mk,v 1.13 2024/08/29 20:20:36 rillig Exp $
 #
 # Demonstrates the debugging output for var.c.
 
@@ -59,7 +59,7 @@ VAR+=		3
 # as "is error", without surrounding quotes.
 # expect: Result of ${:unknown} is error (eval-defined, defined)
 # expect+2: Malformed conditional '${:Uvariable:unknown}'
-# expect+1: while evaluating "${:Uvariable:unknown}" with value "variable": Unknown modifier "unknown"
+# expect+1: Unknown modifier "unknown"
 .if ${:Uvariable:unknown}
 .endif
 

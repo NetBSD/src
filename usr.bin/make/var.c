@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1138 2024/08/27 04:52:14 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1139 2024/08/29 20:20:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,10 +126,9 @@
 #include "dir.h"
 #include "job.h"
 #include "metachar.h"
-#include "trace.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1138 2024/08/27 04:52:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1139 2024/08/29 20:20:35 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -369,15 +368,13 @@ EvalStack_Pop(void)
 	evalStack.len--;
 }
 
-const char *
-EvalStack_Details(void)
+void
+EvalStack_PrintDetails(void)
 {
 	size_t i;
 	Buffer *buf = &evalStack.details;
 
-
-	buf->len = 0;
-	for (i = 0; i < evalStack.len; i++) {
+	for (i = evalStack.len; i > 0; i--) {
 		static const char descr[][42] = {
 			"in target",
 			"while evaluating variable",
@@ -387,8 +384,10 @@ EvalStack_Details(void)
 			"while evaluating",
 			"while parsing",
 		};
-		EvalStackElement *elem = evalStack.elems + i;
+		EvalStackElement *elem = evalStack.elems + i - 1;
 		EvalStackElementKind kind = elem->kind;
+
+		buf->len = 0;
 		Buf_AddStr(buf, descr[kind]);
 		Buf_AddStr(buf, " \"");
 		Buf_AddStr(buf, elem->str);
@@ -397,9 +396,9 @@ EvalStack_Details(void)
 			Buf_AddStr(buf, "\" with value \"");
 			Buf_AddStr(buf, elem->value->str);
 		}
-		Buf_AddStr(buf, "\": ");
+		Buf_AddStr(buf, "\"");
+		debug_printf("\t%s\n", buf->data);
 	}
-	return buf->len > 0 ? buf->data : "";
 }
 
 static Var *

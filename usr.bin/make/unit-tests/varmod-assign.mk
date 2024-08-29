@@ -1,4 +1,4 @@
-# $NetBSD: varmod-assign.mk,v 1.24 2024/07/20 11:05:12 rillig Exp $
+# $NetBSD: varmod-assign.mk,v 1.25 2024/08/29 20:20:36 rillig Exp $
 #
 # Tests for the obscure ::= variable modifiers, which perform variable
 # assignments during evaluation, just like the = operator in C.
@@ -74,13 +74,13 @@ SINK4:=	${0:?${THEN4::=then4${IT4::=t4}}:${ELSE4::=else4${IE4::=e4}}} ${THEN4}${
 mod-assign-empty-1:
 	# Assigning to the empty variable would obviously not work since that
 	# variable is write-protected.
-# expect: make: in target "mod-assign-empty-1": while evaluating "${::=value}" with value "": Bad modifier ":"
+# expect: make: Bad modifier ":"
 	@echo $@: ${::=value}
 
 mod-assign-empty-2:
 	# In this variant, it is not as obvious that the name of the
 	# expression is empty.
-# expect: make: in target "mod-assign-empty-2": while evaluating "${:Uvalue::=overwritten}" with value "value": Bad modifier ":"
+# expect: make: Bad modifier ":"
 	@echo $@: ${:Uvalue::=overwritten}
 
 mod-assign-empty-3:
@@ -93,7 +93,7 @@ mod-assign-empty-3:
 mod-assign-parse-1:
 	# The modifier for assignment operators starts with a ':'.
 	# An 'x' after that is an invalid modifier.
-# expect: make: in target "mod-assign-parse-1": while evaluating variable "ASSIGN" with value "": Unknown modifier ":x"
+# expect: make: Unknown modifier ":x"
 	@echo ${ASSIGN::x}
 
 mod-assign-parse-2:
@@ -102,7 +102,7 @@ mod-assign-parse-2:
 	@echo ${SYSV::=sysv\:x}${SYSV::x=:y}
 
 mod-assign-parse-3:
-# expect: make: in target "mod-assign-parse-3": while evaluating variable "ASSIGN" with value "": Unfinished modifier ('}' missing)
+# expect: make: Unfinished modifier ('}' missing)
 	@echo ${ASSIGN::=value	# missing closing brace
 
 mod-assign-shell-error:
