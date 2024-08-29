@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.37 2024/08/27 13:43:02 riastradh Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.38 2024/08/29 13:39:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: arc4random.c,v 1.37 2024/08/27 13:43:02 riastradh Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.38 2024/08/29 13:39:42 riastradh Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
@@ -422,7 +422,7 @@ entropy_epoch(void)
 	static atomic_int mib0[3];
 	static atomic_bool initialized = false;
 	int mib[3];
-	unsigned epoch = -1;
+	unsigned epoch = (unsigned)-1;
 	size_t epochlen = sizeof(epoch);
 
 	/*
@@ -438,9 +438,9 @@ entropy_epoch(void)
 		size_t nmib = __arraycount(mib);
 
 		if (sysctlnametomib("kern.entropy.epoch", mib, &nmib) == -1)
-			return -1;
+			return (unsigned)-1;
 		if (nmib != __arraycount(mib))
-			return -1;
+			return (unsigned)-1;
 		atomic_store_explicit(&mib0[0], mib[0], memory_order_relaxed);
 		atomic_store_explicit(&mib0[1], mib[1], memory_order_relaxed);
 		atomic_store_explicit(&mib0[2], mib[2], memory_order_relaxed);
@@ -449,9 +449,9 @@ entropy_epoch(void)
 	}
 
 	if (sysctl(mib, __arraycount(mib), &epoch, &epochlen, NULL, 0) == -1)
-		return -1;
+		return (unsigned)-1;
 	if (epochlen != sizeof(epoch))
-		return -1;
+		return (unsigned)-1;
 
 	return epoch;
 }
