@@ -1,4 +1,4 @@
-# $NetBSD: varmod-edge.mk,v 1.30 2024/08/06 18:00:17 rillig Exp $
+# $NetBSD: varmod-edge.mk,v 1.31 2024/08/29 20:20:36 rillig Exp $
 #
 # Tests for edge cases in variable modifiers.
 #
@@ -56,7 +56,7 @@ EXP=	\(\{}\):
 INP=	(parentheses)
 MOD=	${INP:M${:U*)}}
 EXP=	(parentheses)}
-# expect+1: while evaluating variable "MOD" with value "${INP:M${:U*)}}": while evaluating variable "INP" with value "(parentheses)": while evaluating "${:U*)" with value "*)": Unclosed expression, expecting '}' for modifier "U*)"
+# expect+1: Unclosed expression, expecting '}' for modifier "U*)"
 .if ${MOD} != ${EXP}
 .  warning expected "${EXP}", got "${MOD}"
 .endif
@@ -84,7 +84,7 @@ EXP=	[
 INP=	[ [[ [[[
 MOD=	${INP:M${:U[[}}
 EXP=	[
-# expect+1: while evaluating variable "MOD" with value "${INP:M${:U[[}}": while evaluating variable "INP" with value "[ [[ [[[": Unfinished character list in pattern '[[' of modifier ':M'
+# expect+1: Unfinished character list in pattern '[[' of modifier ':M'
 .if ${MOD} != ${EXP}
 .  warning expected "${EXP}", got "${MOD}"
 .endif
@@ -174,7 +174,7 @@ EXP=	file.c file.ext
 INP=	file.c file...
 MOD=	${INP:a\=b}
 EXP=	# empty
-# expect+1: while evaluating variable "MOD" with value "${INP:a\=b}": while evaluating variable "INP" with value "file.c file...": Unfinished modifier ('=' missing)
+# expect+1: Unfinished modifier ('=' missing)
 .if ${MOD} != ${EXP}
 .  warning expected "${EXP}", got "${MOD}"
 .endif
@@ -189,8 +189,8 @@ EXP=	value
 INP=	value
 MOD=	${INP::::}
 EXP=	# empty
-# expect+2: while evaluating variable "MOD" with value "${INP::::}": while evaluating variable "INP" with value "value": Unknown modifier ":"
-# expect+1: while evaluating variable "MOD" with value "${INP::::}": while evaluating variable "INP" with value "": Unknown modifier ":"
+# expect+2: Unknown modifier ":"
+# expect+1: Unknown modifier ":"
 .if ${MOD} != ${EXP}
 .  warning expected "${EXP}", got "${MOD}"
 .endif
@@ -199,7 +199,7 @@ EXP=	# empty
 # XXX: The error message should mention the variable name of the expression,
 # even though that name is empty in this case.
 # expect+2: Malformed conditional '${:Z}'
-# expect+1: while evaluating "${:Z}" with value "": Unknown modifier "Z"
+# expect+1: Unknown modifier "Z"
 .if ${:Z}
 .  error
 .else
@@ -212,7 +212,7 @@ EXP=	# empty
 # variable name with quotes, leading to the rather confusing "Unfinished
 # modifier for  (',' missing)", having two spaces in a row.
 #
-# expect+2: while evaluating "${:S,}" with value "": Unfinished modifier (',' missing)
+# expect+2: Unfinished modifier (',' missing)
 # expect+1: Malformed conditional '${:S,}'
 .if ${:S,}
 .  error

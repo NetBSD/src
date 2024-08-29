@@ -1,4 +1,5 @@
-make: "varmod-sysv.mk" line 216: while evaluating variable "word216" with value "word216": Unfinished modifier ('=' missing)
+make: "varmod-sysv.mk" line 216: Unfinished modifier ('=' missing)
+	while evaluating variable "word216" with value "word216"
 make: "varmod-sysv.mk" line 216: Malformed conditional '${word216:L:from${:D=}to}'
 word                     modifier                 result                  
 ''                       =                        ""
@@ -145,7 +146,8 @@ pre-middle-suffix        pre%ffix=NPre%           "NPre-middle-su"
 suffix                   pre%ffix=NPre%NS         "suffix"
 prefix                   pre%ffix=NPre%NS         "prefix"
 pre-middle-suffix        pre%ffix=NPre%NS         "NPre-middle-suNS"
-make: "varmod-sysv.mk" line 261: while evaluating variable "error" with value "error": Unfinished modifier ('}' missing)
+make: "varmod-sysv.mk" line 261: Unfinished modifier ('}' missing)
+	while evaluating variable "error" with value "error"
 make: "varmod-sysv.mk" line 261: Malformed conditional '${error:L:from=$(})'
 make: Fatal errors encountered -- cannot continue
 make: stopped making "all" in unit-tests

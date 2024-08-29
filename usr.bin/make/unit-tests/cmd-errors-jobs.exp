@@ -7,15 +7,25 @@ begin undefined-indirect
 end undefined-indirect with status 0
 
 begin parse-error-direct
-make: in target "parse-error-unclosed-expression": Unclosed variable "UNCLOSED"
-make: in target "parse-error-unclosed-modifier": while evaluating variable "UNCLOSED" with value "": Unclosed expression, expecting '}'
-make: in target "parse-error-unknown-modifier": while evaluating variable "UNKNOWN" with value "": Unknown modifier "Z"
+make: Unclosed variable "UNCLOSED"
+	in target "parse-error-unclosed-expression"
+make: Unclosed expression, expecting '}'
+	while evaluating variable "UNCLOSED" with value ""
+	in target "parse-error-unclosed-modifier"
+make: Unknown modifier "Z"
+	while evaluating variable "UNKNOWN" with value ""
+	in target "parse-error-unknown-modifier"
 end parse-error-direct with status 2
 
 begin parse-error-indirect
-make: in target "parse-error-unclosed-expression": Unclosed variable "UNCLOSED"
-make: in target "parse-error-unclosed-modifier": while evaluating variable "UNCLOSED" with value "": Unclosed expression, expecting '}'
-make: in target "parse-error-unknown-modifier": while evaluating variable "UNKNOWN" with value "": Unknown modifier "Z"
+make: Unclosed variable "UNCLOSED"
+	in target "parse-error-unclosed-expression"
+make: Unclosed expression, expecting '}'
+	while evaluating variable "UNCLOSED" with value ""
+	in target "parse-error-unclosed-modifier"
+make: Unknown modifier "Z"
+	while evaluating variable "UNKNOWN" with value ""
+	in target "parse-error-unknown-modifier"
 end parse-error-indirect with status 2
 
 begin begin-direct

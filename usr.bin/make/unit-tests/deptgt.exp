@@ -8,8 +8,10 @@ ParseDependency(: empty-source)
 Parsing line 39: 	: command for empty targets list
 Parsing line 40: .MAKEFLAGS: -d0
 ParseDependency(.MAKEFLAGS: -d0)
-make: "deptgt.mk" line 45: while evaluating "${:U:Z}:" with value "": Unknown modifier "Z"
-make: "deptgt.mk" line 49: while parsing "${:U:Z}:": Unknown modifier "Z"
+make: "deptgt.mk" line 45: Unknown modifier "Z"
+	while evaluating "${:U:Z}:" with value ""
+make: "deptgt.mk" line 49: Unknown modifier "Z"
+	while parsing "${:U:Z}:"
 make: "deptgt.mk" line 52: warning: Extra target 'ordinary' ignored
 make: "deptgt.mk" line 55: warning: Extra target (ordinary) ignored
 make: "deptgt.mk" line 58: warning: Special and mundane targets don't mix. Mundane ones ignored
