@@ -1,4 +1,4 @@
-/*      $NetBSD: cemacreg.h,v 1.6 2024/08/28 06:50:17 skrll Exp $	*/
+/*      $NetBSD: cemacreg.h,v 1.7 2024/08/29 07:22:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -137,32 +137,30 @@
 
 /* Configuration Register bits: */
 #define	ETH_CFG_RMII	__BIT(13)  /* 1 = enable RMII (Reduce MII) (AT91RM9200 only) */
-#define	ETH_CFG_RTY	__BIT(12)	/* 1 = retry test enabled		*/
-
-#define	ETH_CFG_CLK	0x0C00U	/* clock				*/
-#define	ETH_CFG_CLK_8	0x0000U
-#define	ETH_CFG_CLK_16	0x0400U
-#define	ETH_CFG_CLK_32	0x0800U
-#define	ETH_CFG_CLK_64	0x0C00U
-
-#define	ETH_CFG_EAE	__BIT(9)	/* 1 = external address match enable	*/
-#define	ETH_CFG_BIG	__BIT(8)	/* 1 = receive up to 1522 bytes	(VLAN)	*/
-#define	ETH_CFG_UNI	__BIT(7)	/* 1 = enable unicast hash		*/
-#define	ETH_CFG_MTI	__BIT(6)	/* 1 = enable multicast hash		*/
-#define	ETH_CFG_NBC	__BIT(5)	/* 1 = ignore received broadcasts	*/
-#define	ETH_CFG_CAF	__BIT(4)	/* 1 = receive all valid frames		*/
+#define	ETH_CFG_RTY	__BIT(12)  /* 1 = retry test enabled		*/
+#define	ETH_CFG_CLK	__BITS(11, 10)	/* clock				*/
+#define	 ETH_CFG_CLK_8	__SHIFTIN(0, ETH_CFG_CLK)
+#define	 ETH_CFG_CLK_16	__SHIFTIN(1, ETH_CFG_CLK)
+#define	 ETH_CFG_CLK_32	__SHIFTIN(2, ETH_CFG_CLK)
+#define	 ETH_CFG_CLK_64	__SHIFTIN(3, ETH_CFG_CLK)
+#define	ETH_CFG_EAE	__BIT(9)  /* 1 = external address match enable	*/
+#define	ETH_CFG_BIG	__BIT(8)  /* 1 = receive up to 1522 bytes	(VLAN)	*/
+#define	ETH_CFG_UNI	__BIT(7)  /* 1 = enable unicast hash		*/
+#define	ETH_CFG_MTI	__BIT(6)  /* 1 = enable multicast hash		*/
+#define	ETH_CFG_NBC	__BIT(5)  /* 1 = ignore received broadcasts	*/
+#define	ETH_CFG_CAF	__BIT(4)  /* 1 = receive all valid frames		*/
 #define	ETH_CFG_BR	__BIT(2)
-#define	ETH_CFG_FD	__BIT(1)	/* 1 = force full duplex		*/
-#define	ETH_CFG_SPD	__BIT(0)	/* 1 = 100 Mbps				*/
+#define	ETH_CFG_FD	__BIT(1)  /* 1 = force full duplex		*/
+#define	ETH_CFG_SPD	__BIT(0)  /* 1 = 100 Mbps				*/
 
 #define GEM_CFG_GEN	__BIT(10)
 #define GEM_CFG_CLK	__BITS(20, 18)
-#define GEM_CFG_CLK_8	__SHIFTIN(0, GEM_CFG_CLK)
-#define GEM_CFG_CLK_16	__SHIFTIN(1, GEM_CFG_CLK)
-#define GEM_CFG_CLK_32	__SHIFTIN(2, GEM_CFG_CLK)
-#define GEM_CFG_CLK_48	__SHIFTIN(3, GEM_CFG_CLK)
-#define GEM_CFG_CLK_64	__SHIFTIN(4, GEM_CFG_CLK)
-#define GEM_CFG_CLK_96	__SHIFTIN(5, GEM_CFG_CLK)
+#define  GEM_CFG_CLK_8	__SHIFTIN(0, GEM_CFG_CLK)
+#define  GEM_CFG_CLK_16	__SHIFTIN(1, GEM_CFG_CLK)
+#define  GEM_CFG_CLK_32	__SHIFTIN(2, GEM_CFG_CLK)
+#define  GEM_CFG_CLK_48	__SHIFTIN(3, GEM_CFG_CLK)
+#define  GEM_CFG_CLK_64	__SHIFTIN(4, GEM_CFG_CLK)
+#define  GEM_CFG_CLK_96	__SHIFTIN(5, GEM_CFG_CLK)
 #define GEM_CFG_DBW	__BITS(22, 21)
 #define	GEM_CFG_RXCOEN	__BIT(24)
 
@@ -178,35 +176,35 @@
 
 
 /* Transmit Status Register bits: */
-#define	ETH_TSR_UND	__BIT(6)	/* 1 = transmit underrun detected	*/
-#define	ETH_TSR_COMP	__BIT(5)	/* 1 = transmit complete		*/
-#define	ETH_TSR_BNQ	__BIT(4)	/* 1 = transmit buffer not queued (at91rm9200 only)	*/
-#define	ETH_TSR_IDLE	__BIT(3)	/* 1 = transmitter idle			*/
-#define	ETH_TSR_RLE	__BIT(2)	/* 1 = retry limit exceeded		*/
-#define	ETH_TSR_COL	__BIT(1)	/* 1 = collision occurred		*/
-#define	ETH_TSR_OVR	__BIT(0)	/* 1 = transmit buffer overrun		*/
+#define	ETH_TSR_UND	__BIT(6)  /* 1 = transmit underrun detected	*/
+#define	ETH_TSR_COMP	__BIT(5)  /* 1 = transmit complete		*/
+#define	ETH_TSR_BNQ	__BIT(4)  /* 1 = transmit buffer not queued (at91rm9200 only)	*/
+#define	ETH_TSR_IDLE	__BIT(3)  /* 1 = transmitter idle			*/
+#define	ETH_TSR_RLE	__BIT(2)  /* 1 = retry limit exceeded		*/
+#define	ETH_TSR_COL	__BIT(1)  /* 1 = collision occurred		*/
+#define	ETH_TSR_OVR	__BIT(0)  /* 1 = transmit buffer overrun		*/
 
 #define	GEM_TSR_TXGO	__BIT(3)
 
 /* Receive Status Register bits: */
-#define	ETH_RSR_OVR	__BIT(2)	/* 1 = RX overrun			*/
-#define	ETH_RSR_REC	__BIT(1)	/* 1 = frame received			*/
-#define	ETH_RSR_BNA	__BIT(0)	/* 1 = buffer not available		*/
+#define	ETH_RSR_OVR	__BIT(2)  /* 1 = RX overrun			*/
+#define	ETH_RSR_REC	__BIT(1)  /* 1 = frame received			*/
+#define	ETH_RSR_BNA	__BIT(0)  /* 1 = buffer not available		*/
 
 
 /* Interrupt bits: */
-#define	ETH_ISR_ABT	__BIT(11)	/* 1 = abort during DMA transfer	*/
-#define	ETH_ISR_ROVR	__BIT(10)	/* 1 = RX overrun			*/
-#define	ETH_ISR_LINK	__BIT(9)	/* 1 = link pin changed			*/
-#define	ETH_ISR_TIDLE	__BIT(8)	/* 1 = transmitter idle			*/
-#define	ETH_ISR_TCOM	__BIT(7)	/* 1 = transmit complete		*/
-#define	ETH_ISR_TBRE	__BIT(6)	/* 1 = transmit buffer register empty	*/
-#define	ETH_ISR_RTRY	__BIT(5)	/* 1 = retry limit exceeded		*/
-#define	ETH_ISR_TUND	__BIT(4)	/* 1 = transmit buffer underrun		*/
-#define	ETH_ISR_TOVR	__BIT(3)	/* 1 = transmit buffer overrun		*/
-#define	ETH_ISR_RBNA	__BIT(2)	/* 1 = receive buffer not available	*/
-#define	ETH_ISR_RCOM	__BIT(1)	/* 1 = receive complete			*/
-#define	ETH_ISR_DONE	__BIT(0)	/* 1 = management done			*/
+#define	ETH_ISR_ABT	__BIT(11) /* 1 = abort during DMA transfer	*/
+#define	ETH_ISR_ROVR	__BIT(10) /* 1 = RX overrun			*/
+#define	ETH_ISR_LINK	__BIT(9)  /* 1 = link pin changed			*/
+#define	ETH_ISR_TIDLE	__BIT(8)  /* 1 = transmitter idle			*/
+#define	ETH_ISR_TCOM	__BIT(7)  /* 1 = transmit complete		*/
+#define	ETH_ISR_TBRE	__BIT(6)  /* 1 = transmit buffer register empty	*/
+#define	ETH_ISR_RTRY	__BIT(5)  /* 1 = retry limit exceeded		*/
+#define	ETH_ISR_TUND	__BIT(4)  /* 1 = transmit buffer underrun		*/
+#define	ETH_ISR_TOVR	__BIT(3)  /* 1 = transmit buffer overrun		*/
+#define	ETH_ISR_RBNA	__BIT(2)  /* 1 = receive buffer not available	*/
+#define	ETH_ISR_RCOM	__BIT(1)  /* 1 = receive complete			*/
+#define	ETH_ISR_DONE	__BIT(0)  /* 1 = management done			*/
 
 
 /* PHY Maintenance Register bits: */
@@ -226,7 +224,7 @@
 			0x00020000U
 #define	ETH_MAN_DATA	0x0000FFFFU /* data to be written to the PHY	*/
 
-#define	ETH_MAN_VAL	(ETH_MAN_HIGH|ETH_MAN_CODE_IEEE802_3)
+#define	ETH_MAN_VAL	(ETH_MAN_HIGH | ETH_MAN_CODE_IEEE802_3)
 
 
 /* received buffer descriptor: */
@@ -255,10 +253,10 @@ typedef struct eth_dsc {
 #define	ETH_RDSC_I_MATCH3	__BIT(24)
 #define	ETH_RDSC_I_MATCH4	__BIT(23)
 #define	ETH_RDSC_I_CHKSUM	__BITS(23, 22)
-#define	ETH_RDSC_I_CHKSUM_NONE	__SHIFTIN(0, ETH_RDSC_I_CHKSUM)
-#define	ETH_RDSC_I_CHKSUM_IP	__SHIFTIN(1, ETH_RDSC_I_CHKSUM)
-#define	ETH_RDSC_I_CHKSUM_TCP	__SHIFTIN(2, ETH_RDSC_I_CHKSUM)
-#define	ETH_RDSC_I_CHKSUM_UDP	__SHIFTIN(3, ETH_RDSC_I_CHKSUM)
+#define	 ETH_RDSC_I_CHKSUM_NONE	__SHIFTIN(0, ETH_RDSC_I_CHKSUM)
+#define	 ETH_RDSC_I_CHKSUM_IP	__SHIFTIN(1, ETH_RDSC_I_CHKSUM)
+#define	 ETH_RDSC_I_CHKSUM_TCP	__SHIFTIN(2, ETH_RDSC_I_CHKSUM)
+#define	 ETH_RDSC_I_CHKSUM_UDP	__SHIFTIN(3, ETH_RDSC_I_CHKSUM)
 #define	ETH_RDSC_I_LEN		__BITS(13, 0)
 
 #define ETH_TDSC_I_USED				__BIT(31)	/* done transmitting */
@@ -267,14 +265,14 @@ typedef struct eth_dsc {
 #define ETH_TDSC_I_AHB_ERR			__BIT(27)
 #define ETH_TDSC_I_LATE_COLL			__BIT(26)
 #define	ETH_TDSC_I_CHKSUM			__BITS(22, 20)
-#define ETH_TDSC_I_CHKSUM_GEN_STAT_NO_ERR	__SHIFTIN(0, ETH_TDSC_I_CHKSUM)
-#define ETH_TDSC_I_CHKSUM_GEN_STAT_VLAN_HDR_ERR	__SHIFTIN(1, ETH_TDSC_I_CHKSUM)
-#define ETH_TDSC_I_CHKSUM_GEN_STAT_SNAP_HDR_ERR	__SHIFTIN(2, ETH_TDSC_I_CHKSUM)
-#define ETH_TDSC_I_CHKSUM_GEN_STAT_IP_HDR_ERR	__SHIFTIN(3, ETH_TDSC_I_CHKSUM)
-#define ETH_TDSC_I_CHKSUM_GEN_STAT_UNKNOWN_TYPE	__SHIFTIN(4, ETH_TDSC_I_CHKSUM)
-#define ETH_TDSC_I_CHKSUM_GEN_STAT_UNSUPP_FRAG	__SHIFTIN(5, ETH_TDSC_I_CHKSUM)
-#define ETH_TDSC_I_CHKSUM_GEN_STAT_NOT_TCPUDP	__SHIFTIN(6, ETH_TDSC_I_CHKSUM)
-#define ETH_TDSC_I_CHKSUM_GEN_STAT_SHORT_PKT	__SHIFTIN(7, ETH_TDSC_I_CHKSUM)
+#define  ETH_TDSC_I_CHKSUM_GEN_STAT_NO_ERR	__SHIFTIN(0, ETH_TDSC_I_CHKSUM)
+#define  ETH_TDSC_I_CHKSUM_GEN_STAT_VLAN_HDR_ERR	__SHIFTIN(1, ETH_TDSC_I_CHKSUM)
+#define  ETH_TDSC_I_CHKSUM_GEN_STAT_SNAP_HDR_ERR	__SHIFTIN(2, ETH_TDSC_I_CHKSUM)
+#define  ETH_TDSC_I_CHKSUM_GEN_STAT_IP_HDR_ERR	__SHIFTIN(3, ETH_TDSC_I_CHKSUM)
+#define  ETH_TDSC_I_CHKSUM_GEN_STAT_UNKNOWN_TYPE	__SHIFTIN(4, ETH_TDSC_I_CHKSUM)
+#define  ETH_TDSC_I_CHKSUM_GEN_STAT_UNSUPP_FRAG	__SHIFTIN(5, ETH_TDSC_I_CHKSUM)
+#define  ETH_TDSC_I_CHKSUM_GEN_STAT_NOT_TCPUDP	__SHIFTIN(6, ETH_TDSC_I_CHKSUM)
+#define  ETH_TDSC_I_CHKSUM_GEN_STAT_SHORT_PKT	__SHIFTIN(7, ETH_TDSC_I_CHKSUM)
 #define ETH_TDSC_I_NO_CRC_APPENDED		__BIT(16)
 #define ETH_TDSC_I_LAST_BUF			__BIT(15)	/* last buf in frame */
 #define ETH_TDSC_I_LEN				__BITS(13, 0)
