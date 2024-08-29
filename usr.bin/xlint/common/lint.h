@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.50 2024/05/12 18:49:35 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.51 2024/08/29 20:35:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -87,6 +87,7 @@ typedef enum {
 	DCOMPLEX,	/* double _Complex */
 	LCOMPLEX,	/* long double _Complex */
 	VOID,		/* void */
+	AUTO_TYPE,	/* GCC's __auto_type */
 	STRUCT,		/* structure tag */
 	UNION,		/* union tag */
 	ENUM,		/* enum tag */

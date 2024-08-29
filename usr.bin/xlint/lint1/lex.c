@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.228 2024/05/12 18:49:36 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.229 2024/08/29 20:35:19 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.228 2024/05/12 18:49:36 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.229 2024/08/29 20:35:19 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -133,6 +133,7 @@ static const struct keyword {
 	kwdef_token(	"alignof",	T_ALIGNOF,		78,0,6),
 	kwdef_token(	"asm",		T_ASM,			78,1,7),
 	kwdef_token(	"_Atomic",	T_ATOMIC,		11,0,1),
+	kwdef("__auto_type", T_TYPE, .u.kw_tspec = AUTO_TYPE,	99,1,1),
 	kwdef_token(	"attribute",	T_ATTRIBUTE,		78,1,6),
 	kwdef_sclass(	"auto",		AUTO,			78,0,1),
 	kwdef_type(	"_Bool",	BOOL,			99),

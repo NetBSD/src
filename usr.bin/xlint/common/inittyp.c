@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.42 2024/01/20 10:25:57 rillig Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.43 2024/08/29 20:35:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: inittyp.c,v 1.42 2024/01/20 10:25:57 rillig Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.43 2024/08/29 20:35:18 rillig Exp $");
 #endif
 
 #if IS_LINT1
@@ -114,6 +114,7 @@ ttab_t ttab[NTSPEC] = {
 	typeinfo("long double _Complex", LCOMPLEX, LCOMPLEX,
 	    LDOUBLE_SIZE * 2, 3, 'c'),
 	typeinfo("void", VOID, VOID, 0, 0, ' '),
+	typeinfo("auto", AUTO_TYPE, AUTO_TYPE, 0, 0, ' '),
 	typeinfo("struct", STRUCT, STRUCT, 0, 0, ' '),
 	typeinfo("union", UNION, UNION, 0, 0, ' '),
 	// Will become more complicated in C23, which allows to choose the

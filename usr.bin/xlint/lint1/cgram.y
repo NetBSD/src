@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.506 2024/06/17 22:11:09 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.507 2024/08/29 20:35:19 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.506 2024/06/17 22:11:09 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.507 2024/08/29 20:35:19 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1113,7 +1113,8 @@ type_init_declarator:
 		begin_initialization($1);
 		cgram_declare($1, true, $2);
 	} T_ASSIGN initializer {
-		check_size($1);
+		if ($1->s_type->t_tspec != AUTO_TYPE)
+			check_size($1);
 		end_initialization();
 	}
 ;
