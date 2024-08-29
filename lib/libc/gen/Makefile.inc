@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.219 2024/08/29 13:39:42 riastradh Exp $
+#	$NetBSD: Makefile.inc,v 1.220 2024/08/29 21:05:01 rillig Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -40,6 +40,7 @@ SRCS+=	alarm.c alphasort.c arc4random.c assert.c asysctl.c \
 	vwarn.c vwarnx.c vwarnc.c verr.c verrx.c verrc.c
 
 LINTFLAGS.arc4random.c+=-Ac11	# stdatomic.h
+LINTFLAGS.arc4random.c+=-X 129	# expression has null effect (in atomic macros)
 
 # uses alloca
 COPTS.execvp.c = -Wno-stack-protector
