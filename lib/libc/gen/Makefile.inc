@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.218 2024/07/08 22:14:31 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.219 2024/08/29 13:39:42 riastradh Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -38,6 +38,8 @@ SRCS+=	alarm.c alphasort.c arc4random.c assert.c asysctl.c \
 	utmpx.c valloc.c vis.c wait.c wait3.c waitid.c waitpid.c warn.c \
 	warnx.c warnc.c wordexp.c xsyslog.c \
 	vwarn.c vwarnx.c vwarnc.c verr.c verrx.c verrc.c
+
+LINTFLAGS.arc4random.c+=-Ac11	# stdatomic.h
 
 # uses alloca
 COPTS.execvp.c = -Wno-stack-protector
