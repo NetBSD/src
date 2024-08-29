@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc.c,v 1.3 2024/06/08 13:50:47 rillig Exp $	*/
+/*	$NetBSD: gcc.c,v 1.4 2024/08/29 20:35:19 rillig Exp $	*/
 # 3 "gcc.c"
 
 /*
@@ -91,4 +91,11 @@ typeof_after_statement(void **ptr)
 		__typeof__(*ptr) ret = *ptr;
 		ret;
 	});
+}
+
+const char *
+auto_type(const char *ptr)
+{
+	__auto_type pp = &ptr;
+	return *pp;
 }
