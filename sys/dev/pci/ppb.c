@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.75 2023/11/26 06:38:28 rin Exp $	*/
+/*	$NetBSD: ppb.c,v 1.76 2024/08/29 20:41:49 andvar Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.75 2023/11/26 06:38:28 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.76 2024/08/29 20:41:49 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppb.h"
@@ -533,7 +533,7 @@ ppb_intr(void *arg)
 
 	/*
 	 * Not me. This check is only required for INTx.
-	 * ppb_intr() would be spilted int ppb_intr_legacy() and ppb_intr_msi()
+	 * ppb_intr() would be split into ppb_intr_legacy() and ppb_intr_msi()
 	 */
 	if ((reg & PCIE_SLCSR_STATCHG_MASK) == 0)
 		return 0;
