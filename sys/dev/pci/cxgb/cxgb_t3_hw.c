@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_t3_hw.c,v 1.8 2024/05/23 08:52:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_t3_hw.c,v 1.9 2024/08/29 04:55:33 andvar Exp $");
 
 
 #ifdef CONFIG_DEFINED
@@ -3618,7 +3618,7 @@ void mac_prep(struct cmac *mac, adapter_t *adapter, int index)
  *  @adapter: the adapter
  *  @ai: contains information about the adapter type and properties
  *
- *  Perfoms the part of HW initialization that is done early on when the
+ *  Performs the part of HW initialization that is done early on when the
  *  driver first detecs the card.  Most of the HW state is initialized
  *  lazily later on when a port or an offload function are first used.
  */
