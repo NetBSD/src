@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_363.c,v 1.5 2024/04/12 05:17:48 rillig Exp $	*/
+/*	$NetBSD: msg_363.c,v 1.6 2024/08/31 06:57:31 rillig Exp $	*/
 # 3 "msg_363.c"
 
 // Test for message: escaped character '%.*s' in description of conversion '%.*s' [363]
@@ -15,7 +15,7 @@
 typedef typeof(sizeof(0)) size_t;
 typedef unsigned long long uint64_t;
 
-int snprintb(char*, size_t, const char*, uint64_t);
+int snprintb(char *, size_t, const char *, uint64_t);
 
 void
 old_style_description(unsigned u32)

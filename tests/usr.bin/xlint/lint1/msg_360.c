@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_360.c,v 1.2 2024/03/03 00:50:41 rillig Exp $	*/
+/*	$NetBSD: msg_360.c,v 1.3 2024/08/31 06:57:31 rillig Exp $	*/
 # 3 "msg_360.c"
 
 // Test for message: missing new-style number base after '\177' [360]
@@ -14,7 +14,7 @@
 typedef typeof(sizeof(0)) size_t;
 typedef unsigned long long uint64_t;
 
-int snprintb(char*, size_t, const char*, uint64_t);
+int snprintb(char *, size_t, const char *, uint64_t);
 
 void
 new_style_number_base(void)
