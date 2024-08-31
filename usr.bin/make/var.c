@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1139 2024/08/29 20:20:35 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1140 2024/08/31 06:21:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1139 2024/08/29 20:20:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1140 2024/08/31 06:21:27 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -275,7 +275,6 @@ typedef struct {
 	EvalStackElement *elems;
 	size_t len;
 	size_t cap;
-	Buffer details;
 } EvalStack;
 
 /* Whether we have replaced the original environ (which we cannot free). */
@@ -372,7 +371,6 @@ void
 EvalStack_PrintDetails(void)
 {
 	size_t i;
-	Buffer *buf = &evalStack.details;
 
 	for (i = evalStack.len; i > 0; i--) {
 		static const char descr[][42] = {
@@ -386,18 +384,13 @@ EvalStack_PrintDetails(void)
 		};
 		EvalStackElement *elem = evalStack.elems + i - 1;
 		EvalStackElementKind kind = elem->kind;
+		const char* value = elem->value != NULL
+		    && (kind == VSK_VARNAME || kind == VSK_EXPR)
+		    ? elem->value->str : NULL;
 
-		buf->len = 0;
-		Buf_AddStr(buf, descr[kind]);
-		Buf_AddStr(buf, " \"");
-		Buf_AddStr(buf, elem->str);
-		if (elem->value != NULL
-		    && (kind == VSK_VARNAME || kind == VSK_EXPR)) {
-			Buf_AddStr(buf, "\" with value \"");
-			Buf_AddStr(buf, elem->value->str);
-		}
-		Buf_AddStr(buf, "\"");
-		debug_printf("\t%s\n", buf->data);
+		debug_printf("\t%s \"%s%s%s\"\n", descr[kind], elem->str,
+		    value != NULL ? "\" with value \"" : "",
+		    value != NULL ? value : "");
 	}
 }
 
