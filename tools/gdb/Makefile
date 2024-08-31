@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.54 2024/08/27 21:50:20 christos Exp $
+#	$NetBSD: Makefile,v 1.55 2024/08/31 03:50:23 rin Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -115,8 +115,7 @@ CONFIGURE_ARGS_SIM+= --disable-sim
 #.endif
 
 CONFIGURE_ARGS_GDBSERVER=
-.if \
-    ${MACHINE_CPU} == "x86_64"
+.if ${MKGDBSERVER} != "no"
 CONFIGURE_ARGS_GDBSERVER+= --enable-gdbserver
 .endif
 
