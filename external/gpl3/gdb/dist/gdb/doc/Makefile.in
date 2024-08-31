@@ -676,12 +676,16 @@ annotate/index.html: $(ANNOTATE_DOC_FILES)
 # trigger an attempt to rebuild these files while building and
 # installing a release of GDB, which is something we don't want.
 $(MAN1S) : %.1 : $(GDB_DOC_FILES)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_MAN1S:
 	$(ECHO_TEXI2POD) $(TEXI2POD) $(MANCONF) -D$* < $(srcdir)/gdb.texinfo > $*.pod
 	$(ECHO_TEXI2MAN) ($(POD2MAN1) $*.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	$(SILENCE) rm -f $*.pod
 
 $(MAN5S) : %.5 : $(GDB_DOC_FILES)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_MAN5S:
 	$(ECHO_TEXI2POD) $(TEXI2POD) $(MANCONF) -D$* < $(srcdir)/gdb.texinfo > $*.pod
 	$(ECHO_TEXI2MAN) ($(POD2MAN5) $*.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
@@ -717,7 +721,8 @@ distclean: clean
 maintainer-clean realclean: distclean
 	rm -f GDBvn.texi version.subst *.info* *.dvi *.ps *.html *.pdf $(MANS)
 
-install: install-info install-man
+install: install-man
+NetBSD_DISABLED_install: install-info install
 
 uninstall: uninstall-info uninstall-man
 
