@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2032 2024/08/18 20:52:03 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2033 2024/08/31 18:41:56 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -2353,11 +2353,11 @@ Notes:
 
 Package:	mozilla-certdata
 Version:	2024-02-12 (a6efd358880291357a62d58586f9a218d47ad98b)
-Current Vers:	2024-07-02 (e3195e969188a333692e5e366d6fda6bb8d7c761)
+Current Vers:	2024-08-27 (9727cd2f7983d01cc4fd3b5ef21b72fc8f6a052a)
 Maintainer:	Mozilla
 Archive Site:	https://hg.mozilla.org/projects/nss/log/tip/lib/ckfw/builtins/certdata.txt
 Home Page:	https://wiki.mozilla.org/CA
-Date:		2024-07-02
+Date:		2024-08-27
 Mailing List:	
 License:	MPL
 Responsible:	riastradh, security-team
