@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_362.c,v 1.3 2024/03/25 22:37:43 rillig Exp $	*/
+/*	$NetBSD: msg_362.c,v 1.4 2024/08/31 06:57:31 rillig Exp $	*/
 # 3 "msg_362.c"
 
 // Test for message: conversion '%.*s' should not be escaped [362]
@@ -13,7 +13,7 @@
 typedef typeof(sizeof(0)) size_t;
 typedef unsigned long long uint64_t;
 
-int snprintb(char*, size_t, const char*, uint64_t);
+int snprintb(char *, size_t, const char *, uint64_t);
 
 void
 example(unsigned u32)

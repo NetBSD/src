@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_361.c,v 1.2 2024/03/03 00:50:41 rillig Exp $	*/
+/*	$NetBSD: msg_361.c,v 1.3 2024/08/31 06:57:31 rillig Exp $	*/
 # 3 "msg_361.c"
 
 // Test for message: number base '%.*s' is %ju, must be 8, 10 or 16 [361]
@@ -13,7 +13,7 @@
 typedef typeof(sizeof(0)) size_t;
 typedef unsigned long long uint64_t;
 
-int snprintb(char*, size_t, const char*, uint64_t);
+int snprintb(char *, size_t, const char *, uint64_t);
 
 void
 old_style_number_base(void)

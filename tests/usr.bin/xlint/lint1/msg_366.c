@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_366.c,v 1.4 2024/03/25 22:37:43 rillig Exp $	*/
+/*	$NetBSD: msg_366.c,v 1.5 2024/08/31 06:57:31 rillig Exp $	*/
 # 3 "msg_366.c"
 
 // Test for message: missing '\0' at the end of '%.*s' [366]
@@ -17,7 +17,7 @@
 typedef typeof(sizeof(0)) size_t;
 typedef unsigned long long uint64_t;
 
-int snprintb(char*, size_t, const char*, uint64_t);
+int snprintb(char *, size_t, const char *, uint64_t);
 
 void
 example(unsigned u32)

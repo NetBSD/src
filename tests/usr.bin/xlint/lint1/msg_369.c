@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_369.c,v 1.2 2024/03/02 11:56:37 rillig Exp $	*/
+/*	$NetBSD: msg_369.c,v 1.3 2024/08/31 06:57:31 rillig Exp $	*/
 # 3 "msg_369.c"
 
 // Test for message: bit position '%.*s' in '%.*s' should be escaped as octal or hex [369]
@@ -15,7 +15,7 @@
 typedef typeof(sizeof(0)) size_t;
 typedef unsigned long long uint64_t;
 
-int snprintb(char*, size_t, const char*, uint64_t);
+int snprintb(char *, size_t, const char *, uint64_t);
 
 void
 example(unsigned u32, uint64_t u64)

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_358.c,v 1.2 2024/03/03 13:09:23 rillig Exp $	*/
+/*	$NetBSD: msg_358.c,v 1.3 2024/08/31 06:57:31 rillig Exp $	*/
 # 3 "msg_358.c"
 
 // Test for message: hex escape '%.*s' has more than 2 digits [358]
@@ -16,7 +16,7 @@
 typedef typeof(sizeof(0)) size_t;
 typedef unsigned long long uint64_t;
 
-int snprintb(char*, size_t, const char*, uint64_t);
+int snprintb(char *, size_t, const char *, uint64_t);
 
 void
 examples(unsigned u32, uint64_t u64)

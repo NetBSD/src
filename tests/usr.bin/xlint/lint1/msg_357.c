@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_357.c,v 1.1 2024/03/01 19:39:28 rillig Exp $	*/
+/*	$NetBSD: msg_357.c,v 1.2 2024/08/31 06:57:31 rillig Exp $	*/
 # 3 "msg_357.c"
 
 // Test for message: hex escape '%.*s' mixes uppercase and lowercase digits [357]
@@ -20,7 +20,7 @@
 typedef typeof(sizeof(0)) size_t;
 typedef unsigned long long uint64_t;
 
-int snprintb(char*, size_t, const char*, uint64_t);
+int snprintb(char *, size_t, const char *, uint64_t);
 
 void
 examples(unsigned u32, uint64_t u64)
