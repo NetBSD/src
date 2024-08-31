@@ -200,7 +200,8 @@ HAVE_NATIVE_GCORE_HOST = @HAVE_NATIVE_GCORE_HOST@
 
 all: info
 
-info: $(INFO_DEPS)
+info:
+NetBSD_DISABLED_info: $(INFO_DEPS)
 dvi: $(DVIFILES)
 ps: gdb.ps stabs.ps refcard.ps annotate.ps
 html: $(HTMLFILES)
