@@ -32,6 +32,7 @@ const char	*version = "version 20240728";
 #include <stdio.h>
 #include <ctype.h>
 #include <locale.h>
+#include <langinfo.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
@@ -141,8 +142,9 @@ int main(int argc, char *argv[])
 	const char *fs = NULL;
 	char *fn, *vn;
 
-	setlocale(LC_CTYPE, "");
 	setlocale(LC_NUMERIC, "C"); /* for parsing cmdline & prog */
+	/* Force C locale for non-UTF-8 */
+	setlocale(LC_CTYPE, strcmp(nl_langinfo(CODESET), "UTF-8") ? "C" : "");
 	awk_mb_cur_max = MB_CUR_MAX;
 	cmdname = argv[0];
 	if (argc == 1) {
