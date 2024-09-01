@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccm.c,v 1.4 2023/05/04 13:25:07 bouyer Exp $	*/
+/*	$NetBSD: imx6_ccm.c,v 1.5 2024/09/01 07:55:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010-2012, 2014  Genetec Corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.4 2023/05/04 13:25:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.5 2024/09/01 07:55:27 skrll Exp $");
 
 #include "opt_imx.h"
 #include "opt_cputypes.h"
@@ -75,7 +75,7 @@ static const struct clk_funcs imxccm_clk_funcs = {
 };
 
 void
-imx6ccm_attach_common(device_t self, struct imx6_clk *imx6_clks, int size, 
+imx6ccm_attach_common(device_t self, struct imx6_clk *imx6_clks, int size,
     struct imxccm_init_parent *imxccm_init_parents)
 {
 	struct imx6ccm_softc * const sc = device_private(self);

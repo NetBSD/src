@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_clk.c,v 1.6 2023/05/04 13:25:07 bouyer Exp $	*/
+/*	$NetBSD: imx6_clk.c,v 1.7 2024/09/01 07:55:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_clk.c,v 1.6 2023/05/04 13:25:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_clk.c,v 1.7 2024/09/01 07:55:27 skrll Exp $");
 
 #include "opt_fdt.h"
 
@@ -1275,8 +1275,8 @@ imx6qccm_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": can't get anatop registers\n");
 		return;
 	}
-		
-	
+
+
 	if (bus_space_map(sc->sc_iot, addr, size, 0, &sc->sc_ioh_analog)) {
 		aprint_error(": can't map anatop registers\n");
 		return;
@@ -1285,7 +1285,7 @@ imx6qccm_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Clock Control Module\n");
 
-	imx6ccm_attach_common(self, &imx6q_clks[0], __arraycount(imx6q_clks), 
+	imx6ccm_attach_common(self, &imx6q_clks[0], __arraycount(imx6q_clks),
 	    imxccm6q_init_parents);
 
 	imx6q_clk_fixed_from_fdt(sc, "ckil");
