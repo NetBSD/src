@@ -1,4 +1,4 @@
-/*      $NetBSD: msm6242b.c,v 1.4 2018/02/06 13:26:32 rin Exp $ */
+/*      $NetBSD: msm6242b.c,v 1.5 2024/09/01 19:56:18 andvar Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,11 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msm6242b.c,v 1.4 2018/02/06 13:26:32 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msm6242b.c,v 1.5 2024/09/01 19:56:18 andvar Exp $");
 
 /* 
  * Driver for OKI MSM6242B Real Time Clock. Somewhat based on an ancient, amiga
- * specifc a2kbbc driver (which was turned into frontend to this driver).
+ * specific a2kbbc driver (which was turned into frontend to this driver).
  */
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lwp_specificdata.c,v 1.4 2019/05/17 03:34:26 ozaki-r Exp $	*/
+/*	$NetBSD: subr_lwp_specificdata.c,v 1.5 2024/09/01 19:56:18 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #define _LWP_API_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lwp_specificdata.c,v 1.4 2019/05/17 03:34:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lwp_specificdata.c,v 1.5 2024/09/01 19:56:18 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -97,7 +97,7 @@ lwp_finispecific(struct lwp *l)
  *
  *	Note: LWP specific data is NOT INTERLOCKED.  An LWP should access
  *	only its OWN SPECIFIC DATA.  If it is necessary to access another
- *	LWP's specifc data, care must be taken to ensure that doing so
+ *	LWP's specific data, care must be taken to ensure that doing so
  *	would not cause internal data structure inconsistency (i.e. caller
  *	can guarantee that the target LWP is not inside an lwp_getspecific()
  *	or lwp_setspecific() call).
