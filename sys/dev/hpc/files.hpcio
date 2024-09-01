@@ -1,8 +1,8 @@
-#	$NetBSD: files.hpcio,v 1.7 2021/07/24 21:31:37 andvar Exp $
+#	$NetBSD: files.hpcio,v 1.8 2024/09/01 20:11:09 andvar Exp $
 #	H/PC GPIO interface
 
 #  platform:
-#    iochip: sepecify GPIO chip
+#    iochip: specify GPIO chip
 #    evtype: event type of config_hook
 #        id: event id of config_hook
 #      port: port number on GPIO
@@ -15,7 +15,7 @@
 #		0: low
 #		1: high
 #		default: edge
-#      edge: edge trriger interrupt
+#      edge: edge trigger interrupt
 #		1: positive edge
 #		2: negative edge
 #		other: both
