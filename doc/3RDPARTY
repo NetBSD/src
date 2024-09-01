@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2033 2024/08/31 18:41:56 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2034 2024/09/01 10:27:53 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -796,11 +796,11 @@ import. Talk to haad before importing new version.
 
 Package:	libpcap
 Version:	1.10.4
-Current Vers:	1.10.4
+Current Vers:	1.10.5
 Maintainer:	tcpdump-workers@tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
-Date:		2023-08-17
+Date:		2023-09-01
 Mailing List:	tcpdump-workers@tcpdump.org
 Responsible:	dyoung
 License:	BSD (3/4-clause)
@@ -811,11 +811,11 @@ tree. sys/net/dlt.h is a copy of the dlt constants from pcap.h
 
 Package:	tcpdump
 Version:	4.99.4
-Current Vers:	4.99.4
+Current Vers:	4.99.5
 Maintainer:	tcpdump-workers@lists.tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
-Date:		2023-08-17
+Date:		2023-09-01
 Mailing List:	tcpdump-workers@lists.tcpdump.org
 Responsible:
 License:	BSD (3-clause)
