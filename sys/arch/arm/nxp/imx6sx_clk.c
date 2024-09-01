@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6sx_clk.c,v 1.3 2023/05/05 09:34:09 bouyer Exp $	*/
+/*	$NetBSD: imx6sx_clk.c,v 1.4 2024/09/01 07:55:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6sx_clk.c,v 1.3 2023/05/05 09:34:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6sx_clk.c,v 1.4 2024/09/01 07:55:27 skrll Exp $");
 
 #include "opt_fdt.h"
 
@@ -977,8 +977,8 @@ static struct imx6_clk imx6sx_clks[] = {
 	CLK_FIXED("dummy", 0),
 	CLK_FIXED("ckil", IMX6_CKIL_FREQ),
 	CLK_FIXED("osc", IMX6_OSC_FREQ),
-	CLK_FIXED("ipp_di0", IMX6_OSC_FREQ), 
-	CLK_FIXED("ipp_di1", IMX6_OSC_FREQ), 
+	CLK_FIXED("ipp_di0", IMX6_OSC_FREQ),
+	CLK_FIXED("ipp_di1", IMX6_OSC_FREQ),
 	CLK_FIXED("anaclk1", IMX6_ANACLK1_FREQ),
 	CLK_FIXED("anaclk2", IMX6_ANACLK2_FREQ),
 
@@ -1388,8 +1388,8 @@ imx6sxccm_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": can't get anatop registers\n");
 		return;
 	}
-		
-	
+
+
 	if (bus_space_map(sc->sc_iot, addr, size, 0, &sc->sc_ioh_analog)) {
 		aprint_error(": can't map anatop registers\n");
 		return;
