@@ -1,4 +1,4 @@
-/*	$NetBSD: http.c,v 1.5 2024/02/02 22:19:05 christos Exp $	*/
+/*	$NetBSD: http.c,v 1.6 2024/09/01 15:07:31 christos Exp $	*/
 /*-
  * Copyright (c) 2000-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2003 Thomas Klausner <wiz@NetBSD.org>
@@ -771,16 +771,18 @@ http_connect(struct url *URL, struct url *purl, const char *flags, int *cached)
 				URL->host, URL->port);
 		http_cmd(conn, "Host: %s:%d\r\n",
 				URL->host, URL->port);
+		/* proxy authorization */
+		if (*purl->user || *purl->pwd)
+			http_basic_auth(conn, "Proxy-Authorization",
+			    purl->user, purl->pwd);
+		else if ((p = getenv("HTTP_PROXY_AUTH")) != NULL && *p != '\0')
+			http_authorize(conn, "Proxy-Authorization", p);
 		http_cmd(conn, "\r\n");
 		if (http_get_reply(conn) != HTTP_OK) {
 			http_seterr(conn->err);
 			goto ouch;
 		}
-		/* Read and discard the rest of the proxy response */
-		if (fetch_getln(conn) < 0) {
-			fetch_syserr();
-			goto ouch;
-		}
+		/* Read and discard the rest of the proxy response (if any) */
 		do {
 			switch ((h = http_next_header(conn, &p))) {
 			case hdr_syserror:
@@ -792,7 +794,7 @@ http_connect(struct url *URL, struct url *purl, const char *flags, int *cached)
 			default:
 				/* ignore */ ;
 			}
-		} while (h < hdr_end);
+		} while (h > hdr_end);
 	}
 	if (strcasecmp(URL->scheme, SCHEME_HTTPS) == 0 &&
 	    fetch_ssl(conn, URL, verbose) == -1) {
