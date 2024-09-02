@@ -23,16 +23,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-pptp.c,v 1.7 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-pptp.c,v 1.8 2024/09/02 16:15:32 christos Exp $");
 #endif
 
 /* \summary: Point-to-Point Tunnelling Protocol (PPTP) printer */
 
 /* specification: RFC 2637 */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 

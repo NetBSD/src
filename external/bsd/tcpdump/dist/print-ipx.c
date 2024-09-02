@@ -25,12 +25,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ipx.c,v 1.7 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-ipx.c,v 1.8 2024/09/02 16:15:31 christos Exp $");
 #endif
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 
@@ -161,7 +159,7 @@ ipx_sap_print(netdissect_options *ndo, const u_char *ipx, u_int length)
     int command, i;
 
     command = GET_BE_U_2(ipx);
-    ND_LCHECK_U(length, 2);
+    ND_ICHECK_U(length, <, 2);
     ipx += 2;
     length -= 2;
 
@@ -235,7 +233,7 @@ ipx_rip_print(netdissect_options *ndo, const u_char *ipx, u_int length)
     int command, i;
 
     command = GET_BE_U_2(ipx);
-    ND_LCHECK_U(length, 2);
+    ND_ICHECK_U(length, <, 2);
     ipx += 2;
     length -= 2;
 

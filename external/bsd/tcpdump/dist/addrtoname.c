@@ -23,12 +23,10 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: addrtoname.c,v 1.12 2023/08/17 20:19:39 christos Exp $");
+__RCSID("$NetBSD: addrtoname.c,v 1.13 2024/09/02 16:15:29 christos Exp $");
 #endif
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #ifdef HAVE_CASPER
 #include <libcasper.h>
@@ -530,8 +528,7 @@ lookup_nsap(netdissect_options *ndo, const u_char *nsap,
 		k = (ensap[0] << 8) | ensap[1];
 		j = (ensap[2] << 8) | ensap[3];
 		i = (ensap[4] << 8) | ensap[5];
-	}
-	else
+	} else
 		i = j = k = 0;
 
 	tp = &nsaptable[(i ^ j) & (HASHNAMESIZE-1)];
@@ -1120,7 +1117,7 @@ static const struct ipxsap_ent {
 	{ 0x030a, "GalacticommWorldgroupServer" },
 	{ 0x030c, "IntelNetport2/HP JetDirect/HP Quicksilver" },
 	{ 0x0320, "AttachmateGateway" },
-	{ 0x0327, "MicrosoftDiagnostiocs" },
+	{ 0x0327, "MicrosoftDiagnostics" },
 	{ 0x0328, "WATCOM SQL Server" },
 	{ 0x0335, "MultiTechSystems MultisynchCommServer" },
 	{ 0x0343, "Xylogics RemoteAccessServer/LANModem" },

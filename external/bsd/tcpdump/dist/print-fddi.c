@@ -21,14 +21,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-fddi.c,v 1.7 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-fddi.c,v 1.8 2024/09/02 16:15:31 christos Exp $");
 #endif
 
 /* \summary: Fiber Distributed Data Interface (FDDI) printer */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 
@@ -245,8 +243,7 @@ extract_fddi_addrs(const struct fddi_header *fddip, char *fsrc, char *fdst)
 			fdst[i] = fddi_bit_swap[fddip->fddi_dhost[i]];
 		for (i = 0; i < 6; ++i)
 			fsrc[i] = fddi_bit_swap[fddip->fddi_shost[i]];
-	}
-	else {
+	} else {
 		memcpy(fdst, (const char *)fddip->fddi_dhost, 6);
 		memcpy(fsrc, (const char *)fddip->fddi_shost, 6);
 	}

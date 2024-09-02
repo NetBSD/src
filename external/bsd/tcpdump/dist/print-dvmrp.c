@@ -21,14 +21,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-dvmrp.c,v 1.8 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-dvmrp.c,v 1.9 2024/09/02 16:15:31 christos Exp $");
 #endif
 
 /* \summary: Distance Vector Multicast Routing Protocol printer */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 
@@ -326,7 +324,7 @@ print_neighbors2(netdissect_options *ndo,
 			len -= 4;
 		}
 		if (ncount != -1) {
-			ND_PRINT(" [invalid ncount]");
+			ND_PRINT(" [ncount %d]", ncount);
 			goto invalid;
 		}
 	}

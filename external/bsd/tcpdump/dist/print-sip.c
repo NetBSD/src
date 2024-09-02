@@ -17,14 +17,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-sip.c,v 1.9 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-sip.c,v 1.10 2024/09/02 16:15:33 christos Exp $");
 #endif
 
 /* \summary: Session Initiation Protocol (SIP) printer */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 

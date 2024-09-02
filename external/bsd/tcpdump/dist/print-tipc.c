@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-tipc.c,v 1.5 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-tipc.c,v 1.6 2024/09/02 16:15:33 christos Exp $");
 #endif
 
 /* \summary: Transparent Inter-Process Communication (TIPC) protocol printer */
@@ -32,14 +32,11 @@ __RCSID("$NetBSD: print-tipc.c,v 1.5 2023/08/17 20:19:40 christos Exp $");
  *     https://web.archive.org/web/20161025110514/http://tipc.sourceforge.net/doc/tipc_message_formats.html
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 
 #include "netdissect.h"
-#include "ethertype.h"
 #include "extract.h"
 
 
@@ -334,8 +331,7 @@ tipc_print(netdissect_options *ndo, const u_char *bp, u_int length _U_,
 	w0 = GET_BE_U_4(ap->w0);
 	user = TIPC_USER(w0);
 
-	switch (user)
-	{
+	switch (user) {
 		case TIPC_USER_LOW_IMPORTANCE:
 		case TIPC_USER_MEDIUM_IMPORTANCE:
 		case TIPC_USER_HIGH_IMPORTANCE:

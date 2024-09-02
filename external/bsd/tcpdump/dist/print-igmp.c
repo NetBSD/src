@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-igmp.c,v 1.9 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-igmp.c,v 1.10 2024/09/02 16:15:31 christos Exp $");
 #endif
 
 /* \summary: Internet Group Management Protocol (IGMP) printer */
@@ -34,9 +34,7 @@ __RCSID("$NetBSD: print-igmp.c,v 1.9 2023/08/17 20:19:40 christos Exp $");
  *	draft-asaeda-mboned-mtrace-v2 for the mtrace message
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 

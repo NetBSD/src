@@ -29,14 +29,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ip6opts.c,v 1.8 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-ip6opts.c,v 1.9 2024/09/02 16:15:31 christos Exp $");
 #endif
 
 /* \summary: IPv6 header option printer */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 

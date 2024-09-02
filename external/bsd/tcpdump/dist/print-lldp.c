@@ -21,12 +21,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-lldp.c,v 1.10 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-lldp.c,v 1.11 2024/09/02 16:15:31 christos Exp $");
 #endif
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 
@@ -1103,7 +1101,7 @@ lldp_private_tia_print(netdissect_options *ndo,
 		tptr += 2;
                 lci_len -= 2;
 
-                ND_PRINT("\n\t      CA type \'%s\' (%u), length %u: ",
+                ND_PRINT("\n\t      CA type '%s' (%u), length %u: ",
                        tok2str(lldp_tia_location_lci_catype_values, "unknown", ca_type),
                        ca_type, ca_len);
 

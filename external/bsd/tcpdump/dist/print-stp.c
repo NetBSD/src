@@ -12,12 +12,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-stp.c,v 1.9 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-stp.c,v 1.10 2024/09/02 16:15:33 christos Exp $");
 #endif
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 
@@ -448,8 +446,7 @@ stp_print(netdissect_options *ndo, const u_char *p, u_int length)
             }
             stp_print_mstp_bpdu(ndo, stp_bpdu, length);
 
-            if (protocol_version == STP_PROTO_SPB)
-            {
+            if (protocol_version == STP_PROTO_SPB) {
               /* Validate v4 length */
               spb_len = GET_BE_U_2(p + MST_BPDU_VER3_LEN_OFFSET + mstp_len);
               spb_len += 2;

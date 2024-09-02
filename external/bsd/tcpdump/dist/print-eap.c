@@ -22,12 +22,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-eap.c,v 1.8 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-eap.c,v 1.9 2024/09/02 16:15:31 christos Exp $");
 #endif
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 
@@ -160,6 +158,7 @@ eap_print(netdissect_options *ndo,
     u_int count;
     const char *sep;
 
+    ndo->ndo_protocol = "eap";
     type = GET_U_1(cp);
     len = GET_BE_U_2(cp + 2);
     if (len != length) {

@@ -21,14 +21,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ether.c,v 1.10 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-ether.c,v 1.11 2024/09/02 16:15:31 christos Exp $");
 #endif
 
 /* \summary: Ethernet printer */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 
@@ -243,7 +241,7 @@ recurse:
 			 */
 			length_type = GET_BE_U_2(p);
 
-			ND_LCHECK_U(caplen, 2);
+			ND_ICHECK_U(caplen, <, 2);
 			length -= 2;
 			caplen -= 2;
 			p += 2;
@@ -417,7 +415,7 @@ invalid:
 }
 
 /*
- * Print an Ethernet frame while specyfing a non-standard Ethernet header
+ * Print an Ethernet frame while specifying a non-standard Ethernet header
  * length.
  * This might be encapsulated within another frame; we might be passed
  * a pointer to a function that can print header information for that

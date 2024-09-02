@@ -17,14 +17,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-calm-fast.c,v 1.4 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-calm-fast.c,v 1.5 2024/09/02 16:15:30 christos Exp $");
 #endif
 
 /* \summary: Communication access for land mobiles (CALM) printer */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 

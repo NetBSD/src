@@ -21,12 +21,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-udld.c,v 1.4 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-udld.c,v 1.5 2024/09/02 16:15:33 christos Exp $");
 #endif
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 

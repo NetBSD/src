@@ -35,14 +35,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-sctp.c,v 1.10 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-sctp.c,v 1.11 2024/09/02 16:15:33 christos Exp $");
 #endif
 
 /* \summary: Stream Control Transmission Protocol (SCTP) printer */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 
@@ -298,7 +296,7 @@ struct sctpUnifiedAbortHeavy{
 };
 
 /* For the graceful shutdown we must carry
- * the tag (in common header)  and the highest consequitive acking value
+ * the tag (in common header)  and the highest consecutive acking value
  */
 struct sctpShutdown {
   nd_uint32_t TSN_Seen;
@@ -559,8 +557,7 @@ sctp_print(netdissect_options *ndo,
       chunkID = GET_U_1(chunkDescPtr->chunkID);
       ND_PRINT("[%s] ", tok2str(sctp_chunkid_str, "Unknown chunk type: 0x%x",
 	       chunkID));
-      switch (chunkID)
-	{
+      switch (chunkID) {
 	case SCTP_DATA :
 	  {
 	    const struct sctpDataPart *dataHdrPtr;

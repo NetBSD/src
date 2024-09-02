@@ -15,14 +15,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-pgm.c,v 1.11 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-pgm.c,v 1.12 2024/09/02 16:15:32 christos Exp $");
 #endif
 
 /* \summary: Pragmatic General Multicast (PGM) printer */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 

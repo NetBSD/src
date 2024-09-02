@@ -19,12 +19,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-juniper.c,v 1.11 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-juniper.c,v 1.12 2024/09/02 16:15:31 christos Exp $");
 #endif
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 
@@ -1331,7 +1329,8 @@ juniper_parse_header(netdissect_options *ndo,
             /* sanity checks */
             if (tlv_type == 0 || tlv_len == 0)
                 break;
-            ND_LCHECK_U(extension_length, tlv_len + JUNIPER_EXT_TLV_OVERHEAD);
+            ND_ICHECK_U(extension_length, <,
+                        tlv_len + JUNIPER_EXT_TLV_OVERHEAD);
 
             if (ndo->ndo_vflag > 1)
                 ND_PRINT("\n\t  %s Extension TLV #%u, length %u, value ",
