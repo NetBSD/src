@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1786 2024/08/26 13:38:27 riastradh Exp $
+# $NetBSD: mi,v 1.1787 2024/09/02 05:17:45 ozaki-r Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -4173,6 +4173,7 @@
 ./usr/share/man/man1/shar.1			man-util-man		.man
 ./usr/share/man/man1/shlock.1			man-util-man		.man
 ./usr/share/man/man1/shmif_dumpbus.1		man-util-man		rump,.man
+./usr/share/man/man1/shmif_pcapin.1		man-util-man		rump,.man
 ./usr/share/man/man1/shuffle.1			man-util-man		.man
 ./usr/share/man/man1/skey.1			man-util-man		skey,.man
 ./usr/share/man/man1/skeyaudit.1		man-util-man		skey,.man

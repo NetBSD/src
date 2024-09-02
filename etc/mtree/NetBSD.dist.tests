@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.206 2024/08/20 08:20:19 ozaki-r Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.207 2024/09/02 05:17:46 ozaki-r Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -479,6 +479,7 @@
 ./usr/tests/usr.bin/sdiff
 ./usr/tests/usr.bin/sed
 ./usr/tests/usr.bin/shmif_dumpbus
+./usr/tests/usr.bin/shmif_pcapin
 ./usr/tests/usr.bin/sort
 ./usr/tests/usr.bin/stat
 ./usr/tests/usr.bin/tar

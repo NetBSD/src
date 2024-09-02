@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1334 2024/08/27 13:43:02 riastradh Exp $
+# $NetBSD: mi,v 1.1335 2024/09/02 05:17:45 ozaki-r Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6517,6 +6517,12 @@
 ./usr/tests/usr.bin/shmif_dumpbus/d_pkthdrs.out.bz2.uue	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/shmif_dumpbus/shmbus.bz2.uue	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/shmif_dumpbus/t_basic		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/shmif_pcapin			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/shmif_pcapin/Atffile		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/shmif_pcapin/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua
+./usr/tests/usr.bin/shmif_pcapin/d_pcap.in.bz2.uue	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/shmif_pcapin/d_pcap.out.bz2.uue	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/shmif_pcapin/t_basic		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/sort				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/sort/Atffile			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/sort/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
