@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.446 2024/08/27 13:43:01 riastradh Exp $
+# $NetBSD: mi,v 1.447 2024/09/02 05:17:45 ozaki-r Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -799,6 +799,7 @@
 ./usr/libdata/debug/usr/bin/sftp.debug		comp-secsh-debug	debug
 ./usr/libdata/debug/usr/bin/shlock.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/shmif_dumpbus.debug	comp-util-debug		debug,rump
+./usr/libdata/debug/usr/bin/shmif_pcapin.debug	comp-util-debug		debug,rump
 ./usr/libdata/debug/usr/bin/showmount.debug	comp-nfsclient-debug	debug
 ./usr/libdata/debug/usr/bin/shuffle.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/size.debug		comp-util-debug		binutils,debug
