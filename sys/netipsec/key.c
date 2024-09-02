@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.284 2024/07/05 04:31:54 rin Exp $	*/
+/*	$NetBSD: key.c,v 1.285 2024/09/02 18:56:20 andvar Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.284 2024/07/05 04:31:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.285 2024/09/02 18:56:20 andvar Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -7172,7 +7172,7 @@ key_api_acquire(struct socket *so, struct mbuf *m,
 			return 0;
 		}
 
-		/* reset acq counter in order to deletion by timehander. */
+		/* reset acq counter in order to deletion by timehandler. */
 		acq->created = time_uptime;
 		acq->count = 0;
 		mutex_exit(&key_misc.lock);
