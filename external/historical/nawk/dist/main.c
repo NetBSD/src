@@ -142,9 +142,11 @@ int main(int argc, char *argv[])
 	const char *fs = NULL;
 	char *fn, *vn;
 
+	setlocale(LC_CTYPE, "");
 	setlocale(LC_NUMERIC, "C"); /* for parsing cmdline & prog */
 	/* Force C locale for non-UTF-8 */
-	setlocale(LC_CTYPE, strcmp(nl_langinfo(CODESET), "UTF-8") ? "C" : "");
+	if (strcmp(nl_langinfo(CODESET), "UTF-8") != 0)
+		setlocale(LC_CTYPE, "C");
 	awk_mb_cur_max = MB_CUR_MAX;
 	cmdname = argv[0];
 	if (argc == 1) {
