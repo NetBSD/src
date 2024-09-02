@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2035 2024/09/02 15:36:24 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2036 2024/09/02 16:16:18 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -811,7 +811,7 @@ tree. sys/net/dlt.h is a copy of the dlt constants from dlt.h. We use our
 own copy of bpf_filter.c
 
 Package:	tcpdump
-Version:	4.99.4
+Version:	4.99.5
 Current Vers:	4.99.5
 Maintainer:	tcpdump-workers@lists.tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
