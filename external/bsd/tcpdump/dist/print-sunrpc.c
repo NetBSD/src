@@ -21,14 +21,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-sunrpc.c,v 1.8 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-sunrpc.c,v 1.9 2024/09/02 16:15:33 christos Exp $");
 #endif
 
 /* \summary: Sun Remote Procedure Call printer */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 /*
  * At least on HP-UX:

@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-babel.c,v 1.5 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-babel.c,v 1.6 2024/09/02 16:15:30 christos Exp $");
 #endif
 
 /* \summary: Babel Routing Protocol printer */
@@ -42,9 +42,7 @@ __RCSID("$NetBSD: print-babel.c,v 1.5 2023/08/17 20:19:40 christos Exp $");
  * draft-ietf-babel-source-specific-0
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 

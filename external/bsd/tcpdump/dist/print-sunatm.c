@@ -32,14 +32,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-sunatm.c,v 1.7 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-sunatm.c,v 1.8 2024/09/02 16:15:33 christos Exp $");
 #endif
 
 /* \summary: SunATM DLPI capture printer */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 

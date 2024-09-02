@@ -24,16 +24,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-m3ua.c,v 1.7 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-m3ua.c,v 1.8 2024/09/02 16:15:32 christos Exp $");
 #endif
 
 /* \summary: Message Transfer Part 3 (MTP3) User Adaptation Layer (M3UA) printer */
 
 /* RFC 4666 */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 

@@ -23,14 +23,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ospf.c,v 1.10 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-ospf.c,v 1.11 2024/09/02 16:15:32 christos Exp $");
 #endif
 
 /* \summary: Open Shortest Path First (OSPF) printer */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 
@@ -849,6 +847,11 @@ ospf_print_lsa(netdissect_options *ndo,
                         break;
 
                     }
+
+                    /* in OSPF everything has to be 32-bit aligned, including TLVs */
+                    if (tlv_length % 4) {
+                        tlv_length += (4 - (tlv_length % 4));
+                    }
                     tptr+=tlv_length;
                     ls_length_remaining-=tlv_length;
                 }
@@ -1072,7 +1075,8 @@ ospf_decode_v2(netdissect_options *ndo,
 
 	case OSPF_TYPE_LS_ACK:
                 lshp = op->ospf_lsa.lsa_lshdr;
-                while (ospf_print_lshdr(ndo, lshp) != -1) {
+                while ((const u_char *)lshp < dataend) {
+                    ospf_print_lshdr(ndo, lshp);
                     ++lshp;
                 }
                 break;

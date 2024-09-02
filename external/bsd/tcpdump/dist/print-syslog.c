@@ -16,15 +16,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-syslog.c,v 1.9 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-syslog.c,v 1.10 2024/09/02 16:15:33 christos Exp $");
 #endif
 
 /* \summary: Syslog protocol printer */
 /* specification: RFC 3164 (not RFC 5424) */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 
@@ -114,8 +112,7 @@ syslog_print(netdissect_options *ndo,
     facility = (pri & SYSLOG_FACILITY_MASK) >> 3;
     severity = pri & SYSLOG_SEVERITY_MASK;
 
-    if (ndo->ndo_vflag < 1 )
-    {
+    if (ndo->ndo_vflag < 1 ) {
         ND_PRINT("SYSLOG %s.%s, length: %u",
                tok2str(syslog_facility_values, "unknown (%u)", facility),
                tok2str(syslog_severity_values, "unknown (%u)", severity),

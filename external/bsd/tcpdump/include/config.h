@@ -4,6 +4,9 @@
 /* Define to 1 if arpa/inet.h declares `ether_ntohost' */
 /* #undef ARPA_INET_H_DECLARES_ETHER_NTOHOST */
 
+/* define if you want to build the instrument functions code */
+/* #undef ENABLE_INSTRUMENT_FUNCTIONS */
+
 /* define if you want to build the possibly-buggy SMB printer */
 /* #undef ENABLE_SMB */
 
@@ -40,9 +43,6 @@
 /* Define to 1 if you have the `EVP_DecryptInit_ex' function. */
 #define HAVE_EVP_DECRYPTINIT_EX 1
 
-/* Define to 1 if you have the <fcntl.h> header file. */
-#define HAVE_FCNTL_H 1
-
 /* Define to 1 if you have the `fork' function. */
 #define HAVE_FORK 1
 
@@ -61,26 +61,17 @@
 /* Define to 1 if you have the `cap-ng' library (-lcap-ng). */
 /* #undef HAVE_LIBCAP_NG */
 
-/* Define to 1 if you have the `crypto' library (-lcrypto). */
+/* Define to 1 if you have a usable `crypto' library (-lcrypto). */
 #define HAVE_LIBCRYPTO 1
 
 /* Define to 1 if you have the `rpc' library (-lrpc). */
 /* #undef HAVE_LIBRPC */
 
-/* Define to 1 if you have the <memory.h> header file. */
-#define HAVE_MEMORY_H 1
-
 /* Define to 1 if you have the <net/if.h> header file. */
 #define HAVE_NET_IF_H 1
 
-/* Define to 1 if printf(3) does not support the z length modifier. */
-/* #undef HAVE_NO_PRINTF_Z */
-
 /* Define to 1 if you have the `openat' function. */
 /* #undef HAVE_OPENAT */
-
-/* Define to 1 if you have the <openssl/evp.h> header file. */
-#define HAVE_OPENSSL_EVP_H 1
 
 #ifndef __NetBSD__
 /* in the Makefile */
@@ -104,7 +95,7 @@
 #define HAVE_PCAP_DATALINK_VAL_TO_DESCRIPTION 1
 
 /* define if libpcap has pcap_debug */
-#define HAVE_PCAP_DEBUG 1
+/* #undef HAVE_PCAP_DEBUG */
 
 /* Define to 1 if you have the `pcap_dump_flush' function. */
 #define HAVE_PCAP_DUMP_FLUSH 1
@@ -152,7 +143,7 @@
 /* #undef HAVE_PCAP_SET_OPTIMIZER_DEBUG */
 
 /* Define to 1 if you have the `pcap_set_parser_debug' function. */
-/* #undef HAVE_PCAP_SET_PARSER_DEBUG */
+#define HAVE_PCAP_SET_PARSER_DEBUG 1
 
 /* Define to 1 if you have the `pcap_set_tstamp_precision' function. */
 #define HAVE_PCAP_SET_TSTAMP_PRECISION 1
@@ -177,6 +168,9 @@
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
+
+/* Define to 1 if you have the <stdio.h> header file. */
+#define HAVE_STDIO_H 1
 
 /* Define to 1 if you have the <stdlib.h> header file. */
 #define HAVE_STDLIB_H 1
@@ -236,7 +230,7 @@
 #define PACKAGE_NAME "tcpdump"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "tcpdump 4.99.4"
+#define PACKAGE_STRING "tcpdump 4.99.5"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "tcpdump"
@@ -245,12 +239,21 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.99.4"
+#define PACKAGE_VERSION "4.99.5"
+
+/* The size of `time_t', as computed by sizeof. */
+#define SIZEOF_TIME_T 8
 
 /* The size of `void *', as computed by sizeof. */
-/* #undef SIZEOF_VOID_P */
+#ifdef _LP64
+#define SIZEOF_VOID_P 8
+#else
+#define SIZEOF_VOID_P 4
+#endif
 
-/* Define to 1 if you have the ANSI C header files. */
+/* Define to 1 if all of the C90 standard headers exist (not just the ones
+   required in a freestanding environment). This macro is provided for
+   backward compatibility; new code need not use it. */
 #define STDC_HEADERS 1
 
 /* Define to 1 if sys/ethernet.h declares `ether_ntohost' */

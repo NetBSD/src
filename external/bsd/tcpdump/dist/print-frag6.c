@@ -21,14 +21,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-frag6.c,v 1.8 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-frag6.c,v 1.9 2024/09/02 16:15:31 christos Exp $");
 #endif
 
 /* \summary: IPv6 fragmentation header printer */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 
@@ -47,24 +45,22 @@ frag6_print(netdissect_options *ndo, const u_char *bp, const u_char *bp2)
 	dp = (const struct ip6_frag *)bp;
 	ip6 = (const struct ip6_hdr *)bp2;
 
-	if (ndo->ndo_vflag) {
-		ND_PRINT("frag (0x%08x:%u|%zu)",
-			 GET_BE_U_4(dp->ip6f_ident),
-			 GET_BE_U_2(dp->ip6f_offlg) & IP6F_OFF_MASK,
+	ND_PRINT("frag (");
+	if (ndo->ndo_vflag)
+		ND_PRINT("0x%08x:", GET_BE_U_4(dp->ip6f_ident));
+	ND_PRINT("%u|", GET_BE_U_2(dp->ip6f_offlg) & IP6F_OFF_MASK);
+	if ((bp - bp2) + sizeof(struct ip6_frag) >
+	    sizeof(struct ip6_hdr) + GET_BE_U_2(ip6->ip6_plen))
+		ND_PRINT("[length < 0] (invalid))");
+	else
+		ND_PRINT("%zu)",
 			 sizeof(struct ip6_hdr) + GET_BE_U_2(ip6->ip6_plen) -
-			        (bp - bp2) - sizeof(struct ip6_frag));
-	} else {
-		ND_PRINT("frag (%u|%zu)",
-		         GET_BE_U_2(dp->ip6f_offlg) & IP6F_OFF_MASK,
-		         sizeof(struct ip6_hdr) + GET_BE_U_2(ip6->ip6_plen) -
-			         (bp - bp2) - sizeof(struct ip6_frag));
-	}
+			 (bp - bp2) - sizeof(struct ip6_frag));
 
 	/* it is meaningless to decode non-first fragment */
 	if ((GET_BE_U_2(dp->ip6f_offlg) & IP6F_OFF_MASK) != 0)
 		return -1;
-	else
-	{
+	else {
 		ND_PRINT(" ");
 		return sizeof(struct ip6_frag);
 	}

@@ -38,12 +38,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: addrtostr.c,v 1.5 2023/08/17 20:19:39 christos Exp $");
+__RCSID("$NetBSD: addrtostr.c,v 1.6 2024/09/02 16:15:29 christos Exp $");
 #endif
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 #include "addrtostr.h"
@@ -132,16 +130,12 @@ addrtostr6 (const void *src, char *dst, size_t size)
   best.base = -1;
   cur.len = 0;
   cur.base  = -1;
-  for (i = 0; i < (IN6ADDRSZ / INT16SZ); i++)
-  {
-    if (words[i] == 0)
-    {
+  for (i = 0; i < (IN6ADDRSZ / INT16SZ); i++) {
+    if (words[i] == 0) {
       if (cur.base == -1)
            cur.base = i, cur.len = 1;
       else cur.len++;
-    }
-    else if (cur.base != -1)
-    {
+    } else if (cur.base != -1) {
       if (best.base == -1 || cur.len > best.len)
          best = cur;
       cur.base = -1;
@@ -165,12 +159,10 @@ addrtostr6 (const void *src, char *dst, size_t size)
         *dp++ = c; \
         space_left--; \
     }
-  for (i = 0; i < (IN6ADDRSZ / INT16SZ); i++)
-  {
+  for (i = 0; i < (IN6ADDRSZ / INT16SZ); i++) {
     /* Are we inside the best run of 0x00's?
      */
-    if (best.base != -1 && i >= best.base && i < (best.base + best.len))
-    {
+    if (best.base != -1 && i >= best.base && i < (best.base + best.len)) {
       if (i == best.base)
 	  APPEND_CHAR(':');
       continue;
@@ -186,8 +178,7 @@ addrtostr6 (const void *src, char *dst, size_t size)
     if (i == 6 && best.base == 0 &&
         (best.len == 6 || (best.len == 5 && words[5] == 0xffff)))
     {
-      if (!addrtostr(srcaddr+12, dp, space_left))
-      {
+      if (!addrtostr(srcaddr+12, dp, space_left)) {
         errno = ENOSPC;
         return (NULL);
       }
@@ -199,8 +190,7 @@ addrtostr6 (const void *src, char *dst, size_t size)
     snprintfed = snprintf (dp, space_left, "%x", words[i]);
     if (snprintfed < 0)
         return (NULL);
-    if ((size_t) snprintfed >= space_left)
-    {
+    if ((size_t) snprintfed >= space_left) {
         errno = ENOSPC;
         return (NULL);
     }

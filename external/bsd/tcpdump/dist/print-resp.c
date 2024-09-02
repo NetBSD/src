@@ -29,14 +29,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-resp.c,v 1.5 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-resp.c,v 1.6 2024/09/02 16:15:32 christos Exp $");
 #endif
 
 /* \summary: REdis Serialization Protocol (RESP) printer */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 #include "netdissect.h"
@@ -311,7 +309,7 @@ resp_print_string_error_integer(netdissect_options *ndo, const u_char *bp, int l
      * preceding the \r\n.  That includes the opcode, so don't print
      * that.
      */
-    len = ND_BYTES_BETWEEN(bp_ptr, bp);
+    len = ND_BYTES_BETWEEN(bp, bp_ptr);
     RESP_PRINT_SEGMENT(ndo, bp, len);
     ret_len = 1 /*<opcode>*/ + len /*<string>*/ + 2 /*<CRLF>*/;
 
@@ -436,7 +434,7 @@ resp_print_inline(netdissect_options *ndo, const u_char *bp, int length) {
      * Found it; bp_ptr points to the \r or \n, so bp_ptr - bp is the
      * Length of the line text that precedes it.  Print it.
      */
-    len = ND_BYTES_BETWEEN(bp_ptr, bp);
+    len = ND_BYTES_BETWEEN(bp, bp_ptr);
     RESP_PRINT_SEGMENT(ndo, bp, len);
 
     /*

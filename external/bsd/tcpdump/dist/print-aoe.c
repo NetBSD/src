@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-aoe.c,v 1.6 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-aoe.c,v 1.7 2024/09/02 16:15:30 christos Exp $");
 #endif
 
 /* \summary: ATA over Ethernet (AoE) protocol printer */
@@ -36,9 +36,7 @@ __RCSID("$NetBSD: print-aoe.c,v 1.6 2023/08/17 20:19:40 christos Exp $");
  * https://web.archive.org/web/20161025044402/http://brantleycoilecompany.com/AoEr11.pdf
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 

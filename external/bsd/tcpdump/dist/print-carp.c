@@ -36,14 +36,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-carp.c,v 1.4 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-carp.c,v 1.5 2024/09/02 16:15:30 christos Exp $");
 #endif
 
 /* \summary: Common Address Redundancy Protocol (CARP) printer */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 
@@ -57,13 +55,14 @@ carp_print(netdissect_options *ndo, const u_char *bp, u_int len, u_int ttl)
 	const char *type_s;
 
 	ndo->ndo_protocol = "carp";
+	nd_print_protocol_caps(ndo);
 	version = (GET_U_1(bp) & 0xf0) >> 4;
 	type = GET_U_1(bp) & 0x0f;
 	if (type == 1)
 		type_s = "advertise";
 	else
 		type_s = "unknown";
-	ND_PRINT("CARPv%u-%s %u: ", version, type_s, len);
+	ND_PRINT("v%u-%s %u: ", version, type_s, len);
 	if (ttl != 255)
 		ND_PRINT("[ttl=%u!] ", ttl);
 	if (version != 2 || type != 1)

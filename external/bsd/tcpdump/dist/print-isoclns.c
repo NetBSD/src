@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-isoclns.c,v 1.10 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-isoclns.c,v 1.11 2024/09/02 16:15:31 christos Exp $");
 #endif
 
 /* \summary: ISO CLNS, ESIS, and ISIS printer */
@@ -39,9 +39,7 @@ __RCSID("$NetBSD: print-isoclns.c,v 1.10 2023/08/17 20:19:40 christos Exp $");
  * IS-IS: ISO 10589
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 
@@ -212,7 +210,7 @@ static const struct tok esis_option_values[] = {
     { ESIS_OPTION_SECURITY,        "Security" },
     { ESIS_OPTION_ES_CONF_TIME,    "ES Configuration Time" },
     { ESIS_OPTION_PRIORITY,        "Priority" },
-    { ESIS_OPTION_ADDRESS_MASK,    "Addressk Mask" },
+    { ESIS_OPTION_ADDRESS_MASK,    "Address Mask" },
     { ESIS_OPTION_SNPA_MASK,       "SNPA Mask" },
     { 0, NULL }
 };
@@ -617,7 +615,7 @@ static const struct tok isis_lsp_istype_values[] = {
 #define ISIS_PTP_ADJ_INIT 1
 #define ISIS_PTP_ADJ_DOWN 2
 
-static const struct tok isis_ptp_adjancey_values[] = {
+static const struct tok isis_ptp_adjacency_values[] = {
     { ISIS_PTP_ADJ_UP,    "Up" },
     { ISIS_PTP_ADJ_INIT,  "Initializing" },
     { ISIS_PTP_ADJ_DOWN,  "Down" },
@@ -1130,9 +1128,10 @@ clnp_print(netdissect_options *ndo,
 
         default:
             /* dump the PDU specific data */
-            if (length > ND_BYTES_BETWEEN(pptr, optr)) {
+            if (length > ND_BYTES_BETWEEN(optr, pptr)) {
                 ND_PRINT("\n\t  undecoded non-header data, length %u", length-li);
-                print_unknown_data(ndo, pptr, "\n\t  ", length - ND_BYTES_BETWEEN(pptr, optr));
+                print_unknown_data(ndo, pptr, "\n\t  ",
+                                   length - ND_BYTES_BETWEEN(optr, pptr));
             }
         }
 
@@ -1492,8 +1491,7 @@ isis_print_mt_port_cap_subtlv(netdissect_options *ndo,
   const struct isis_subtlv_spb_mcid *subtlv_spb_mcid;
   int i;
 
-  while (len > 2)
-  {
+  while (len > 2) {
     stlv_type = GET_U_1(tptr);
     stlv_len  = GET_U_1(tptr + 1);
 
@@ -1513,8 +1511,7 @@ isis_print_mt_port_cap_subtlv(netdissect_options *ndo,
     /* Make sure the entire subTLV is in the captured data */
     ND_TCHECK_LEN(tptr, stlv_len);
 
-    switch (stlv_type)
-    {
+    switch (stlv_type) {
       case ISIS_SUBTLV_SPB_MCID:
       {
 	if (stlv_len < ISIS_SUBTLV_SPB_MCID_MIN_LEN)
@@ -1555,8 +1552,7 @@ isis_print_mt_port_cap_subtlv(netdissect_options *ndo,
 
         ND_PRINT("\n\t         Digest: ");
 
-        for(i=1;i<=8; i++)
-        {
+        for(i=1;i<=8; i++) {
             ND_PRINT("%08x ", GET_BE_U_4(tptr));
             if (i%4 == 0 && i != 8)
               ND_PRINT("\n\t                 ");
@@ -1571,8 +1567,7 @@ isis_print_mt_port_cap_subtlv(netdissect_options *ndo,
 
       case ISIS_SUBTLV_SPB_BVID:
       {
-        while (stlv_len != 0)
-        {
+        while (stlv_len != 0) {
           if (stlv_len < 4)
             goto subtlv_too_short;
           ND_PRINT("\n\t           ECT: %08x",
@@ -1624,8 +1619,7 @@ isis_print_mt_capability_subtlv(netdissect_options *ndo,
 {
   u_int stlv_type, stlv_len, treecount;
 
-  while (len > 2)
-  {
+  while (len > 2) {
     stlv_type = GET_U_1(tptr);
     stlv_len  = GET_U_1(tptr + 1);
     tptr += 2;
@@ -1643,8 +1637,7 @@ isis_print_mt_capability_subtlv(netdissect_options *ndo,
     /* Make sure the entire subTLV is in the captured data */
     ND_TCHECK_LEN(tptr, stlv_len);
 
-    switch (stlv_type)
-    {
+    switch (stlv_type) {
       case ISIS_SUBTLV_SPB_INSTANCE:
           if (stlv_len < ISIS_SUBTLV_SPB_INSTANCE_MIN_LEN)
             goto subtlv_too_short;
@@ -1672,8 +1665,7 @@ isis_print_mt_capability_subtlv(netdissect_options *ndo,
           len -= ISIS_SUBTLV_SPB_INSTANCE_MIN_LEN;
           stlv_len -= ISIS_SUBTLV_SPB_INSTANCE_MIN_LEN;
 
-          while (treecount)
-          {
+          while (treecount) {
             if (stlv_len < ISIS_SUBTLV_SPB_INSTANCE_VLAN_TUPLE_LEN)
               goto trunc;
 
@@ -3159,7 +3151,7 @@ isis_print(netdissect_options *ndo,
 	    tlv_ptp_adj = (const struct isis_tlv_ptp_adj *)tptr;
 	    if(tlen>=1) {
 		ND_PRINT("\n\t      Adjacency State: %s (%u)",
-		       tok2str(isis_ptp_adjancey_values, "unknown", GET_U_1(tptr)),
+		       tok2str(isis_ptp_adjacency_values, "unknown", GET_U_1(tptr)),
 		       GET_U_1(tptr));
 		tlen--;
 	    }

@@ -27,19 +27,18 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-loopback.c,v 1.5 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-loopback.c,v 1.6 2024/09/02 16:15:32 christos Exp $");
 #endif
 
 /* \summary: Loopback Protocol printer */
 
 /*
  * originally defined as the Ethernet Configuration Testing Protocol.
- * specification: https://www.mit.edu/people/jhawk/ctp.pdf
+ * specification:
+ * https://web.archive.org/web/20060919181108/http://www.mit.edu/people/jhawk/ctp.pdf
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 

@@ -21,14 +21,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-atm.c,v 1.10 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-atm.c,v 1.11 2024/09/02 16:15:30 christos Exp $");
 #endif
 
 /* \summary: Asynchronous Transfer Mode (ATM) printer */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 
@@ -111,7 +109,7 @@ __RCSID("$NetBSD: print-atm.c,v 1.10 2023/08/17 20:19:40 christos Exp $");
 #define B_BEARER		0x5e	/* broadband bearer capability */
 #define B_LOWER			0x5f	/* broadband lower information */
 #define CALLING_PARTY		0x6c	/* calling party number */
-#define CALLED_PARTY		0x70	/* called party nmber */
+#define CALLED_PARTY		0x70	/* called party number */
 
 #define Q2931			0x09
 

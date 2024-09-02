@@ -21,14 +21,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-sll.c,v 1.10 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-sll.c,v 1.11 2024/09/02 16:15:33 christos Exp $");
 #endif
 
 /* \summary: Linux cooked sockets capture printer */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #ifdef HAVE_NET_IF_H
 /*

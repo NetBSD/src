@@ -21,14 +21,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-icmp.c,v 1.13 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-icmp.c,v 1.14 2024/09/02 16:15:31 christos Exp $");
 #endif
 
 /* \summary: Internet Control Message Protocol (ICMP) printer */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 

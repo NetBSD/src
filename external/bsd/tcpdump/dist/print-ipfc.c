@@ -21,16 +21,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ipfc.c,v 1.7 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-ipfc.c,v 1.8 2024/09/02 16:15:31 christos Exp $");
 #endif
 
 /* \summary: IP over Fibre Channel printer */
 
 /* specification: RFC 2625 */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 

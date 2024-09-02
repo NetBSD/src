@@ -19,12 +19,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-dtp.c,v 1.4 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-dtp.c,v 1.5 2024/09/02 16:15:31 christos Exp $");
 #endif
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 
@@ -89,7 +87,7 @@ dtp_print(netdissect_options *ndo, const u_char *tptr, u_int length)
 
         /* infinite loop check */
         if (len < 4 || len > length) {
-            ND_PRINT("[invalid TLV length %u]", len);
+            ND_PRINT("[TLV length %u]", len);
             goto invalid;
         }
 
