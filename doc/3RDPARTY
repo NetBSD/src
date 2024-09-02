@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2034 2024/09/01 10:27:53 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2035 2024/09/02 15:36:24 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -795,7 +795,7 @@ libdevmapper ioctl protocol code, therefore we should test it before
 import. Talk to haad before importing new version.
 
 Package:	libpcap
-Version:	1.10.4
+Version:	1.10.5
 Current Vers:	1.10.5
 Maintainer:	tcpdump-workers@tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
@@ -807,7 +807,8 @@ License:	BSD (3/4-clause)
 Location:	external/bsd/libpcap/dist
 Notes:
 Use the src/external/bsd/libpcap/libpcap2netbsd script to prepare source
-tree. sys/net/dlt.h is a copy of the dlt constants from pcap.h
+tree. sys/net/dlt.h is a copy of the dlt constants from dlt.h. We use our
+own copy of bpf_filter.c
 
 Package:	tcpdump
 Version:	4.99.4
