@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.72 2023/08/17 15:16:33 christos Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.73 2024/09/02 15:34:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.72 2023/08/17 15:16:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.73 2024/09/02 15:34:08 christos Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -211,7 +211,7 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 u_int
 bpf_filter_ext(const bpf_ctx_t *bc, const struct bpf_insn *pc, bpf_args_t *args)
 #else
-__strong_alias(pcap_filter, bpf_filter)
+__strong_alias(pcapint_filter, bpf_filter)
 u_int
 bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
     u_int buflen)
@@ -610,7 +610,7 @@ bpf_validate(const struct bpf_insn *f, int signed_len)
 int
 bpf_validate_ext(const bpf_ctx_t *bc, const struct bpf_insn *f, int signed_len)
 #else
-__strong_alias(pcap_validate_filter, bpf_validate)
+__strong_alias(pcapint_validate_filter, bpf_validate)
 int
 bpf_validate(const struct bpf_insn *f, int signed_len)
 #endif
