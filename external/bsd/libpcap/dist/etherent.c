@@ -1,4 +1,4 @@
-/*	$NetBSD: etherent.c,v 1.5 2023/08/17 15:18:12 christos Exp $	*/
+/*	$NetBSD: etherent.c,v 1.6 2024/09/02 15:33:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1994, 1995, 1996
@@ -22,11 +22,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: etherent.c,v 1.5 2023/08/17 15:18:12 christos Exp $");
+__RCSID("$NetBSD: etherent.c,v 1.6 2024/09/02 15:33:36 christos Exp $");
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include <pcap-types.h>
 
@@ -37,6 +35,8 @@ __RCSID("$NetBSD: etherent.c,v 1.5 2023/08/17 15:18:12 christos Exp $");
 #include "pcap-int.h"
 
 #include <pcap/namedb.h>
+
+#include "thread-local.h"
 
 #ifdef HAVE_OS_PROTO_H
 #include "os-proto.h"
@@ -92,7 +92,7 @@ pcap_next_etherent(FILE *fp)
 	u_char d;
 	char *bp;
 	size_t namesize;
-	static struct pcap_etherent e;
+	static thread_local struct pcap_etherent e;
 
 	memset((char *)&e, 0, sizeof(e));
 	for (;;) {

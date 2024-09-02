@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.34 2023/08/17 16:19:05 christos Exp $	
+# $NetBSD: Makefile,v 1.35 2024/09/02 15:33:39 christos Exp $	
 
 USE_SHLIBDIR=yes
 .include <bsd.init.mk>
@@ -140,7 +140,7 @@ pcap-common.c \
 pcap-new.c \
 pcap-rpcap.c \
 pcap-rpcap-unix.c \
-pcap-usb-linux-common.c \
+pcap-usb-linux.c \
 pcap-util.c \
 pcap.c \
 rpcap-protocol.c \

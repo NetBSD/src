@@ -1,4 +1,4 @@
-/*	$NetBSD: nlpid.h,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+/*	$NetBSD: nlpid.h,v 1.3 2024/09/02 15:33:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -21,7 +21,7 @@
 /* Types missing from some systems */
 
 /*
- * Network layer prototocol identifiers
+ * Network layer protocol identifiers
  */
 #ifndef ISO8473_CLNP
 #define ISO8473_CLNP		0x81

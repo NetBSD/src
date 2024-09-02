@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-septel.c,v 1.7 2023/08/17 15:18:12 christos Exp $	*/
+/*	$NetBSD: pcap-septel.c,v 1.8 2024/09/02 15:33:37 christos Exp $	*/
 
 /*
  * pcap-septel.c: Packet capture interface for Intel/Septel card.
@@ -8,11 +8,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pcap-septel.c,v 1.7 2023/08/17 15:18:12 christos Exp $");
+__RCSID("$NetBSD: pcap-septel.c,v 1.8 2024/09/02 15:33:37 christos Exp $");
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include <sys/param.h>
 
@@ -129,7 +127,7 @@ loop:
         caplen = packet_len;
       }
       /* Run the packet filter if there is one. */
-      if ((p->fcode.bf_insns == NULL) || pcap_filter(p->fcode.bf_insns, dp, packet_len, caplen)) {
+      if ((p->fcode.bf_insns == NULL) || pcapint_filter(p->fcode.bf_insns, dp, packet_len, caplen)) {
 
 
         /*  get a time stamp , consisting of :
@@ -176,7 +174,7 @@ loop:
 static int
 septel_inject(pcap_t *handle, const void *buf _U_, int size _U_)
 {
-  pcap_strlcpy(handle->errbuf, "Sending packets isn't supported on Septel cards",
+  pcapint_strlcpy(handle->errbuf, "Sending packets isn't supported on Septel cards",
           PCAP_ERRBUF_SIZE);
   return (-1);
 }
@@ -212,7 +210,7 @@ static pcap_t *septel_activate(pcap_t* handle) {
 
   handle->read_op = septel_read;
   handle->inject_op = septel_inject;
-  handle->setfilter_op = install_bpf_program;
+  handle->setfilter_op = pcapint_install_bpf_program;
   handle->set_datalink_op = NULL; /* can't change data link type */
   handle->getnonblock_op = septel_getnonblock;
   handle->setnonblock_op = septel_setnonblock;
@@ -272,7 +270,7 @@ septel_findalldevs(pcap_if_list_t *devlistp, char *errbuf)
   /*
    * XXX - do the notions of "up", "running", or "connected" apply here?
    */
-  if (add_dev(devlistp,"septel",0,"Intel/Septel device",errbuf) == NULL)
+  if (pcapint_add_dev(devlistp,"septel",0,"Intel/Septel device",errbuf) == NULL)
     return -1;
   return 0;
 }
@@ -308,7 +306,7 @@ septel_setnonblock(pcap_t *p, int nonblock _U_)
  * There are no regular interfaces, just Septel interfaces.
  */
 int
-pcap_platform_finddevs(pcap_if_list_t *devlistp, char *errbuf)
+pcapint_platform_finddevs(pcap_if_list_t *devlistp, char *errbuf)
 {
   return (0);
 }
@@ -317,7 +315,7 @@ pcap_platform_finddevs(pcap_if_list_t *devlistp, char *errbuf)
  * Attempts to open a regular interface fail.
  */
 pcap_t *
-pcap_create_interface(const char *device, char *errbuf)
+pcapint_create_interface(const char *device, char *errbuf)
 {
   snprintf(errbuf, PCAP_ERRBUF_SIZE,
                 "This version of libpcap only supports Septel cards");

@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: libpcap2netbsd,v 1.2 2014/11/19 19:33:30 christos Exp $
+#	$NetBSD: libpcap2netbsd,v 1.3 2024/09/02 15:33:36 christos Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,7 +37,10 @@
 #	$ cd libpcap-x.y.z
 #	$ cvs -d cvs.netbsd.org:/cvsroot import -m "Import libpcap-x.y.z" src/external/bsd/libpcap/dist TCPDUMP libpcap-x_y_z
 #	- check makefiles to see if any extra sources have been added.
+#	- run configure to generate config.h and check it against the existing
+#         one in include
 #	- update distrib/sets if necessary.
+#	- compare net/dlt.h and pcap/dlt.h and merge changes in net/dlt.h
 
 if [ $# -ne 1 ]; then echo "libpcap2netbsd src"; exit 1; fi
 

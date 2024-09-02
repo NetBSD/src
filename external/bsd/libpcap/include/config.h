@@ -7,6 +7,9 @@
 /* Enable optimizer debugging */
 /* #undef BDEBUG */
 
+/* define if you want to build the instrument functions code */
+/* #undef ENABLE_INSTRUMENT_FUNCTIONS */
+
 /* Define to 1 if remote packet capture is to be supported */
 /* #undef ENABLE_REMOTE */
 
@@ -103,9 +106,6 @@
 /* Define to 1 if you have the <linux/wireless.h> header file. */
 /* #undef HAVE_LINUX_WIRELESS_H */
 
-/* Define to 1 if you have the <memory.h> header file. */
-#define HAVE_MEMORY_H 1
-
 /* Define to 1 if you have the <netpacket/packet.h> header file. */
 /* #undef HAVE_NETPACKET_PACKET_H */
 
@@ -119,7 +119,7 @@
 /* #undef HAVE_NET_IF_DL_H */
 
 /* Define to 1 if you have the <net/if.h> header file. */
-#define HAVE_NET_IF_H 1
+/* #undef HAVE_NET_IF_H */
 
 /* Define to 1 if you have the <net/if_media.h> header file. */
 #define HAVE_NET_IF_MEDIA_H 1
@@ -136,8 +136,11 @@
 /* Define to 1 if you have the <net/raw.h> header file. */
 /* #undef HAVE_NET_RAW_H */
 
-/* Use OpenSSL from the Makefile */
-/* #define HAVE_OPENSSL 1 */
+/* Use OpenSSL */
+#ifdef notdef
+/* From the Makefile */
+/* #undef HAVE_OPENSSL */
+#endif
 
 /* if there's an os_proto.h for this platform, to use additional prototypes */
 /* #undef HAVE_OS_PROTO_H */
@@ -157,6 +160,9 @@
 /* On solaris */
 /* #undef HAVE_SOLARIS */
 
+/* target host supports Solaris "any" device */
+/* #undef HAVE_SOLARIS_ANY_DEVICE */
+
 /* define if we have the Solaris/IRIX getnetbyname_r() */
 /* #undef HAVE_SOLARIS_IRIX_GETNETBYNAME_R */
 
@@ -166,11 +172,11 @@
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
 
+/* Define to 1 if you have the <stdio.h> header file. */
+#define HAVE_STDIO_H 1
+
 /* Define to 1 if you have the <stdlib.h> header file. */
 #define HAVE_STDLIB_H 1
-
-/* Define to 1 if you have the `strerror' function. */
-#define HAVE_STRERROR 1
 
 /* Define to 1 if you have the <strings.h> header file. */
 #define HAVE_STRINGS_H 1
@@ -263,8 +269,11 @@
 /* define if __atomic_store_n is supported by the compiler */
 #define HAVE___ATOMIC_STORE_N 1
 
-/* IPv6 from the Makefile */
-/* #define INET6 1 */
+/* IPv6 */
+#ifdef notdef
+/* From the Makefile */
+#define INET6 1
+#endif
 
 /* Define to 1 if netinet/ether.h declares `ether_hostton' */
 /* #undef NETINET_ETHER_H_DECLARES_ETHER_HOSTTON */
@@ -285,7 +294,7 @@
 #define PACKAGE_NAME "pcap"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "pcap 1.10.4"
+#define PACKAGE_STRING "pcap 1.10.5"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "pcap"
@@ -294,7 +303,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.10.4"
+#define PACKAGE_VERSION "1.10.5"
 
 /* target host supports Bluetooth sniffing */
 /* #undef PCAP_SUPPORT_BT */
@@ -302,8 +311,10 @@
 /* target host supports Bluetooth Monitor */
 /* #undef PCAP_SUPPORT_BT_MONITOR */
 
+#ifdef notdef
 /* support D-Bus sniffing */
-/* #undef PCAP_SUPPORT_DBUS */
+#define PCAP_SUPPORT_DBUS 1
+#endif
 
 /* target host supports DPDK */
 /* #undef PCAP_SUPPORT_DPDK */
@@ -320,17 +331,19 @@
 /* target host supports RDMA sniffing */
 /* #undef PCAP_SUPPORT_RDMASNIFF */
 
-/* The size of `const void *', as computed by sizeof. */
-/* #undef SIZEOF_CONST_VOID_P */
+/* The size of `time_t', as computed by sizeof. */
+#define SIZEOF_TIME_T 8
 
-/* The size of `void *', as computed by sizeof. */
 #ifdef _LP64
+/* The size of `void *', as computed by sizeof. */
 #define SIZEOF_VOID_P 8
 #else
 #define SIZEOF_VOID_P 4
 #endif
 
-/* Define to 1 if you have the ANSI C header files. */
+/* Define to 1 if all of the C90 standard headers exist (not just the ones
+   required in a freestanding environment). This macro is provided for
+   backward compatibility; new code need not use it. */
 #define STDC_HEADERS 1
 
 /* Define to 1 if strings.h declares `ffs' */
@@ -345,11 +358,6 @@
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
 #define YYTEXT_POINTER 1
-
-/* Enable large inode numbers on Mac OS X 10.5.  */
-#ifndef _DARWIN_USE_64_BIT_INODE
-# define _DARWIN_USE_64_BIT_INODE 1
-#endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */

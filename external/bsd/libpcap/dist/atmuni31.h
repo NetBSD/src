@@ -1,4 +1,4 @@
-/*	$NetBSD: atmuni31.h,v 1.3 2023/08/17 15:18:12 christos Exp $	*/
+/*	$NetBSD: atmuni31.h,v 1.4 2024/09/02 15:33:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Yen Yen Lim and North Dakota State University
@@ -70,7 +70,7 @@
 #define B_BEARER		0x5e	/* broadband bearer capability */
 #define B_LOWER			0x5f	/* broadband lower information */
 #define CALLING_PARTY		0x6c	/* calling party number */
-#define CALLED_PARTY		0x70	/* called party nmber */
+#define CALLED_PARTY		0x70	/* called party number */
 
 #define Q2931			0x09
 
