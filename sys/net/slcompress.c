@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.c,v 1.41 2019/04/06 08:38:23 msaitoh Exp $   */
+/*	$NetBSD: slcompress.c,v 1.42 2024/09/02 18:19:14 andvar Exp $   */
 /*	Id: slcompress.c,v 1.3 1996/05/24 07:04:47 paulus Exp 	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 /*
- * Routines to compress and uncompess tcp packets (for transmission
+ * Routines to compress and uncompress tcp packets (for transmission
  * over low speed serial lines.
  *
  * Van Jacobson (van@helios.ee.lbl.gov), Dec 31, 1989:
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.41 2019/04/06 08:38:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.42 2024/09/02 18:19:14 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
