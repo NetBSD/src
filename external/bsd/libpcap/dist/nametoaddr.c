@@ -1,4 +1,4 @@
-/*	$NetBSD: nametoaddr.c,v 1.6 2023/08/17 15:18:12 christos Exp $	*/
+/*	$NetBSD: nametoaddr.c,v 1.7 2024/09/02 15:33:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -25,11 +25,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nametoaddr.c,v 1.6 2023/08/17 15:18:12 christos Exp $");
+__RCSID("$NetBSD: nametoaddr.c,v 1.7 2024/09/02 15:33:37 christos Exp $");
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #ifdef DECNETLIB
 #include <sys/types.h>
@@ -144,6 +142,8 @@ __RCSID("$NetBSD: nametoaddr.c,v 1.6 2023/08/17 15:18:12 christos Exp $");
 #include "gencode.h"
 #include <pcap/namedb.h>
 #include "nametoaddr.h"
+
+#include "thread-local.h"
 
 #ifdef HAVE_OS_PROTO_H
 #include "os-proto.h"
@@ -475,40 +475,33 @@ pcap_nametoport(const char *name, int *port, int *proto)
 int
 pcap_nametoportrange(const char *name, int *port1, int *port2, int *proto)
 {
-	u_int p1, p2;
 	char *off, *cpy;
 	int save_proto;
 
-	if (sscanf(name, "%d-%d", &p1, &p2) != 2) {
-		if ((cpy = strdup(name)) == NULL)
-			return 0;
+	if ((cpy = strdup(name)) == NULL)
+		return 0;
 
-		if ((off = strchr(cpy, '-')) == NULL) {
-			free(cpy);
-			return 0;
-		}
-
-		*off = '\0';
-
-		if (pcap_nametoport(cpy, port1, proto) == 0) {
-			free(cpy);
-			return 0;
-		}
-		save_proto = *proto;
-
-		if (pcap_nametoport(off + 1, port2, proto) == 0) {
-			free(cpy);
-			return 0;
-		}
+	if ((off = strchr(cpy, '-')) == NULL) {
 		free(cpy);
-
-		if (*proto != save_proto)
-			*proto = PROTO_UNDEF;
-	} else {
-		*port1 = p1;
-		*port2 = p2;
-		*proto = PROTO_UNDEF;
+		return 0;
 	}
+
+	*off = '\0';
+
+	if (pcap_nametoport(cpy, port1, proto) == 0) {
+		free(cpy);
+		return 0;
+	}
+	save_proto = *proto;
+
+	if (pcap_nametoport(off + 1, port2, proto) == 0) {
+		free(cpy);
+		return 0;
+	}
+	free(cpy);
+
+	if (*proto != save_proto)
+		*proto = PROTO_UNDEF;
 
 	return 1;
 }
@@ -747,16 +740,18 @@ pcap_ether_aton(const char *s)
 #ifndef HAVE_ETHER_HOSTTON
 /*
  * Roll our own.
- * XXX - not thread-safe, because pcap_next_etherent() isn't thread-
- * safe!  Needs a mutex or a thread-safe pcap_next_etherent().
+ *
+ * This should be thread-safe, as we define the static variables
+ * we use to be thread-local, and as pcap_next_etherent() does so
+ * as well.
  */
 u_char *
 pcap_ether_hostton(const char *name)
 {
 	register struct pcap_etherent *ep;
 	register u_char *ap;
-	static FILE *fp = NULL;
-	static int init = 0;
+	static thread_local FILE *fp = NULL;
+	static thread_local int init = 0;
 
 	if (!init) {
 		fp = fopen(PCAP_ETHERS_FILE, "r");
@@ -795,7 +790,7 @@ pcap_ether_hostton(const char *name)
 	/*
 	 * In AIX 7.1 and 7.2: int ether_hostton(char *, struct ether_addr *);
 	 */
-	pcap_strlcpy(namebuf, name, sizeof(namebuf));
+	pcapint_strlcpy(namebuf, name, sizeof(namebuf));
 	ap = NULL;
 	if (ether_hostton(namebuf, (struct ether_addr *)a) == 0) {
 		ap = (u_char *)malloc(6);

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.5 2018/09/03 15:26:44 christos Exp $	*/
+/*	$NetBSD: usb.h,v 1.6 2024/09/02 15:33:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Paolo Abeni (Italy)
@@ -126,6 +126,12 @@ typedef struct _usb_header_mmapped {
 	uint32_t xfer_flags;	/* copy of URB's transfer flags */
 	uint32_t ndesc;	/* number of isochronous descriptors */
 } pcap_usb_header_mmapped;
+
+/*
+ * Maximum number of descriptors supported.
+ * It's currently 128 in the Linux binary USB monitoring code.
+ */
+#define USB_MAXDESC	128
 
 /*
  * Isochronous descriptors; for isochronous transfers there might be

@@ -1,4 +1,4 @@
-/*	$NetBSD: fad-getad.c,v 1.5 2023/08/17 15:18:12 christos Exp $	*/
+/*	$NetBSD: fad-getad.c,v 1.6 2024/09/02 15:33:36 christos Exp $	*/
 
 /* -*- Mode: c; tab-width: 8; indent-tabs-mode: 1; c-basic-offset: 8; -*- */
 /*
@@ -35,11 +35,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fad-getad.c,v 1.5 2023/08/17 15:18:12 christos Exp $");
+__RCSID("$NetBSD: fad-getad.c,v 1.6 2024/09/02 15:33:36 christos Exp $");
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -65,7 +63,7 @@ __RCSID("$NetBSD: fad-getad.c,v 1.5 2023/08/17 15:18:12 christos Exp $");
  * we end up including both the OS's <net/bpf.h> and our <pcap/bpf.h>,
  * and their definitions of some data structures collide.
  */
-#if (defined(linux) || defined(__Lynx__)) && defined(AF_PACKET)
+#if (defined(__linux__) || defined(__Lynx__)) && defined(AF_PACKET)
 # ifdef HAVE_NETPACKET_PACKET_H
 /* Linux distributions with newer glibc */
 #  include <netpacket/packet.h>
@@ -80,7 +78,7 @@ __RCSID("$NetBSD: fad-getad.c,v 1.5 2023/08/17 15:18:12 christos Exp $");
 #  include <linux/if_packet.h>
 # endif /* __Lynx__ */
 # endif /* HAVE_NETPACKET_PACKET_H */
-#endif /* (defined(linux) || defined(__Lynx__)) && defined(AF_PACKET) */
+#endif /* (defined(__linux__) || defined(__Lynx__)) && defined(AF_PACKET) */
 
 /*
  * This is fun.
@@ -104,6 +102,17 @@ __RCSID("$NetBSD: fad-getad.c,v 1.5 2023/08/17 15:18:12 christos Exp $");
  * but not in the final version).  On the latter systems, we explicitly
  * check the AF_ type to determine the length; we assume that on
  * all those systems we have "struct sockaddr_storage".
+ *
+ * OSes that use this file are:
+ * - FreeBSD (HAVE_STRUCT_SOCKADDR_SA_LEN is defined)
+ * - Haiku (HAVE_STRUCT_SOCKADDR_SA_LEN is defined)
+ * - Hurd (HAVE_STRUCT_SOCKADDR_SA_LEN is defined)
+ * - illumos (HAVE_STRUCT_SOCKADDR_SA_LEN is not defined)
+ * - Linux (HAVE_STRUCT_SOCKADDR_SA_LEN is not defined)
+ * - macOS (HAVE_STRUCT_SOCKADDR_SA_LEN is defined)
+ * - NetBSD (HAVE_STRUCT_SOCKADDR_SA_LEN is defined)
+ * - OpenBSD (SA_LEN() is defined)
+ * - Solaris 11 (HAVE_STRUCT_SOCKADDR_SA_LEN is not defined)
  */
 #ifndef SA_LEN
 #ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
@@ -125,9 +134,14 @@ get_sa_len(struct sockaddr *addr)
 		return (sizeof (struct sockaddr_in6));
 #endif
 
-#if (defined(linux) || defined(__Lynx__)) && defined(AF_PACKET)
+#if (defined(__linux__) || defined(__Lynx__)) && defined(AF_PACKET)
 	case AF_PACKET:
 		return (sizeof (struct sockaddr_ll));
+#endif
+
+#ifdef AF_LINK
+	case AF_LINK:
+		return (sizeof (struct sockaddr_dl));
 #endif
 
 	default:
@@ -148,7 +162,7 @@ get_sa_len(struct sockaddr *addr)
  * could be opened.
  */
 int
-pcap_findalldevs_interfaces(pcap_if_list_t *devlistp, char *errbuf,
+pcapint_findalldevs_interfaces(pcap_if_list_t *devlistp, char *errbuf,
     int (*check_usable)(const char *), get_if_flags_func get_flags_func)
 {
 	struct ifaddrs *ifap, *ifa;
@@ -172,7 +186,7 @@ pcap_findalldevs_interfaces(pcap_if_list_t *devlistp, char *errbuf,
 	 * those.
 	 */
 	if (getifaddrs(&ifap) != 0) {
-		pcap_fmt_errmsg_for_errno(errbuf, PCAP_ERRBUF_SIZE,
+		pcapint_fmt_errmsg_for_errno(errbuf, PCAP_ERRBUF_SIZE,
 		    errno, "getifaddrs");
 		return (-1);
 	}
@@ -268,7 +282,7 @@ pcap_findalldevs_interfaces(pcap_if_list_t *devlistp, char *errbuf,
 		/*
 		 * Add information for this address to the list.
 		 */
-		if (add_addr_to_if(devlistp, ifa->ifa_name, ifa->ifa_flags,
+		if (pcapint_add_addr_to_if(devlistp, ifa->ifa_name, ifa->ifa_flags,
 		    get_flags_func,
 		    addr, addr_size, netmask, addr_size,
 		    broadaddr, broadaddr_size, dstaddr, dstaddr_size,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp.h,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+/*	$NetBSD: ppp.h,v 1.3 2024/09/02 15:33:38 christos Exp $	*/
 
 /*
  * Point to Point Protocol (PPP) RFC1331
@@ -48,7 +48,7 @@
 #define PPP_DECNETCP	0x8027	/* DECnet Control Protocol */
 #define PPP_APPLECP	0x8029	/* Appletalk Control Protocol */
 #define PPP_IPXCP	0x802b	/* Novell IPX Control Protocol */
-#define PPP_STIICP	0x8033	/* Strean Protocol Control Protocol */
+#define PPP_STIICP	0x8033	/* Stream Protocol Control Protocol */
 #define PPP_VINESCP	0x8035	/* Banyan Vines Control Protocol */
 #define PPP_IPV6CP	0x8057	/* IPv6 Control Protocol */
 #define PPP_MPLSCP      0x8281  /* rfc 3022 */

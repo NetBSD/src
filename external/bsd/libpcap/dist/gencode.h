@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.h,v 1.8 2023/08/17 15:18:12 christos Exp $	*/
+/*	$NetBSD: gencode.h,v 1.9 2024/09/02 15:33:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -333,8 +333,8 @@ struct block *gen_acode(compiler_state_t *, const char *, struct qual);
 struct block *gen_mcode(compiler_state_t *, const char *, const char *,
     bpf_u_int32, struct qual);
 #ifdef INET6
-struct block *gen_mcode6(compiler_state_t *, const char *, const char *,
-    bpf_u_int32, struct qual);
+struct block *gen_mcode6(compiler_state_t *, const char *, bpf_u_int32,
+    struct qual);
 #endif
 struct block *gen_ncode(compiler_state_t *, const char *, bpf_u_int32,
     struct qual);
