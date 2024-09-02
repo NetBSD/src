@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3083 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3084 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -481,6 +481,20 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	ntp: Import ntp 4.2.8p18. [christos 20240818]
 	riscv: Add a clock driver for the JH7110 SoC found in the
 		StarFive VisionFive 2.  [skrll 20240819]
+	gpt(8): Add -U option to specify new UUID, from Anon Ymous.
+		[chirstos 20240819]
+	gpt(8): Recognize OpenBSD UUID.  [chirstos 20240819]
+	ifconfig(8): Show link state on -v.  [ozaki-r 20240820]
+	tests: Add tests for shmif(4).  [ozaki-r 20240820]
 	syslogd(8): Add -k option. [gutteridge 20240821]
 	pkg_install: Import pkg_install-20240821. [wiz 20240825]
 	pkg_install: Import pkg_install-20240826. [wiz 20240826]
+	acpivmgenid(4): New driver for virtual machine generation ID.
+		Used to re-seed random number generators on
+		virtual machine fork.  [riastradh 20240826]
+	toolchain: Switched all remaining ports to binutils-2.42.
+		[christos 20240827]
+	shmif_pcapin(1): New utility program used in tests for
+		networking to send any frames that are stored in a
+		pcap(3) file format to a shmif(4) Ethernet interface.
+		Code from k-goda at IIJ.  [ozaki-r 202409202]
