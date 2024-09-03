@@ -1,4 +1,4 @@
-/* $NetBSD: t_fenv.c,v 1.6.10.1 2024/02/23 18:09:23 martin Exp $ */
+/* $NetBSD: t_fenv.c,v 1.6.10.2 2024/09/03 15:43:15 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fenv.c,v 1.6.10.1 2024/02/23 18:09:23 martin Exp $");
+__RCSID("$NetBSD: t_fenv.c,v 1.6.10.2 2024/09/03 15:43:15 martin Exp $");
 
 #include <atf-c.h>
 
@@ -194,6 +194,8 @@ ATF_TC_HEAD(fetestexcept_trap, tc)
 ATF_TC_BODY(fetestexcept_trap, tc)
 {
 	int except;
+
+	FPU_EXC_PREREQ();
 
 	fedisableexcept(FE_ALL_EXCEPT);
 	ATF_CHECK_EQ_MSG((except = fegetexcept()), 0,
