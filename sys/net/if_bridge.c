@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.193 2024/07/16 03:35:38 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.194 2024/09/03 07:59:48 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.193 2024/07/16 03:35:38 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.194 2024/09/03 07:59:48 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -102,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.193 2024/07/16 03:35:38 ozaki-r Exp 
 #include <sys/cprng.h>
 #include <sys/mutex.h>
 #include <sys/kmem.h>
+#include <sys/syslog.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -247,7 +248,7 @@ static void	bridge_forward(struct bridge_softc *, struct mbuf *);
 
 static void	bridge_timer(void *);
 
-static void	bridge_broadcast(struct bridge_softc *, struct ifnet *,
+static void	bridge_broadcast(struct bridge_softc *, struct ifnet *, bool,
 				 struct mbuf *);
 
 static int	bridge_rtupdate(struct bridge_softc *, const uint8_t *,
@@ -1011,6 +1012,18 @@ bridge_ioctl_sifflags(struct bridge_softc *sc, void *arg)
 			/* Nothing else can. */
 			bridge_release_member(sc, bif, &psref);
 			return EINVAL;
+		}
+	}
+
+	if (bif->bif_flags & IFBIF_PROTECTED) {
+		if ((req->ifbr_ifsflags & IFBIF_PROTECTED) == 0) {
+			log(LOG_INFO, "%s: disabling protection on %s\n",
+			    sc->sc_if.if_xname, bif->bif_ifp->if_xname);
+		}
+	} else {
+		if (req->ifbr_ifsflags & IFBIF_PROTECTED) {
+			log(LOG_INFO, "%s: enabling protection on %s\n",
+			    sc->sc_if.if_xname, bif->bif_ifp->if_xname);
 		}
 	}
 
@@ -1798,6 +1811,7 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 	struct psref psref;
 	struct psref psref_src;
 	DECLARE_LOCK_VARIABLE;
+	bool src_if_protected;
 
 	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0)
 		return;
@@ -1858,6 +1872,8 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 		goto out;
 	}
 
+	src_if_protected = ((bif->bif_flags & IFBIF_PROTECTED) != 0);
+
 	bridge_release_member(sc, bif, &psref);
 
 	/*
@@ -1889,7 +1905,7 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 		goto out;
 
 	if (dst_if == NULL) {
-		bridge_broadcast(sc, src_if, m);
+		bridge_broadcast(sc, src_if, src_if_protected, m);
 		goto out;
 	}
 
@@ -1920,6 +1936,12 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 			bridge_release_member(sc, bif, &psref);
 			goto out;
 		}
+	}
+
+	if ((bif->bif_flags & IFBIF_PROTECTED) && src_if_protected) {
+		m_freem(m);
+		bridge_release_member(sc, bif, &psref);
+		goto out;
 	}
 
 	bridge_release_member(sc, bif, &psref);
@@ -2101,7 +2123,7 @@ out:
  */
 static void
 bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
-    struct mbuf *m)
+    bool src_if_protected, struct mbuf *m)
 {
 	struct bridge_iflist *bif;
 	struct mbuf *mc;
@@ -2136,6 +2158,11 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 			goto next;
 
 		if (dst_if != src_if) {
+			if ((bif->bif_flags & IFBIF_PROTECTED) &&
+			    src_if_protected) {
+				goto next;
+			}
+
 			mc = m_copypacket(m, M_DONTWAIT);
 			if (mc == NULL) {
 				if_statinc(&sc->sc_if, if_oerrors);
