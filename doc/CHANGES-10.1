@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.28 2024/08/26 07:29:01 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.29 2024/09/03 15:44:15 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -1271,4 +1271,19 @@ usr.bin/ftp/ssl.c				1.16
 
 	ftp(1): adapt to newer OpenSSL EOF handling in ssl transfers.
 	[wiz, ticket #814]
+
+sys/arch/i386/stand/lib/biosmemx.S		1.12,1.13
+sys/arch/i386/stand/lib/bootinfo_memmap.c	1.7,1.8
+sys/arch/i386/stand/lib/getextmemx.c		1.11,1.12
+
+
+	x86: PR 49470: work around broken BIOS implementations that
+	copy more than the requested data when querying memory details.
+	[andvar, ticket #815]
+
+tests/lib/libm/t_fenv.c				1.16
+
+	The fetestexcept_trap test case only makes sense on FPUs that implement
+	exceptions.
+	[rin, ticket #816]
 
