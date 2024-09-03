@@ -1,4 +1,4 @@
-/*	$NetBSD: pflogd.c,v 1.12 2023/08/19 14:56:22 christos Exp $	*/
+/*	$NetBSD: pflogd.c,v 1.13 2024/09/03 09:03:18 rin Exp $	*/
 /*	$OpenBSD: pflogd.c,v 1.45 2007/06/06 14:11:26 henning Exp $	*/
 
 /*
@@ -106,6 +106,20 @@ static size_t bufleft = 0;	/* bytes left in buffer */
 /* if error, stop logging but count dropped packets */
 static int suspended = -1;
 static long packets_dropped = 0;
+
+/*
+ * XXX Taken from libpcap. These are no longer exposed for >= 1.10.5,
+ * for which tv_{,u}sec were converted to unsigned.
+ */
+struct pcap_timeval {
+	uint32_t tv_sec;
+	uint32_t tv_usec;
+};
+struct pcap_sf_pkthdr {
+	struct pcap_timeval ts;
+	uint32_t caplen;
+	uint32_t len;
+};
 
 void
 set_suspended(int s)
