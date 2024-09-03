@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.67 2024/01/29 18:27:14 christos Exp $
+#	$NetBSD: INSTALL,v 1.68 2024/09/03 19:51:02 andvar Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -228,7 +228,7 @@ vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 #ep*	at isa? port ? irq ?		# 3Com 3c509 Ethernet
 we1	at isa? port 0x300 iomem 0xe4000 irq 11	# WD/SMC Ethernet
 
-# ISA Plug-and-Play network intefaces
+# ISA Plug-and-Play network interfaces
 #ep*	at isapnp?			# 3Com 3c509 Ethernet
 #ne*	at isapnp?			# NE2000-compatible Ethernet
 
