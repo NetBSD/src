@@ -1,4 +1,4 @@
-#	$NetBSD: t_bridge.sh,v 1.19 2019/08/19 03:22:05 ozaki-r Exp $
+#	$NetBSD: t_bridge.sh,v 1.20 2024/09/03 07:54:36 ozaki-r Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,43 +39,6 @@ IP6BR2=fc00::12
 
 DEBUG=${DEBUG:-false}
 TIMEOUT=5
-
-atf_test_case bridge_create_destroy cleanup
-atf_test_case bridge_ipv4 cleanup
-atf_test_case bridge_ipv6 cleanup
-atf_test_case bridge_member_ipv4 cleanup
-atf_test_case bridge_member_ipv6 cleanup
-
-bridge_create_destroy_head()
-{
-
-	atf_set "descr" "Test creating/destroying bridge interfaces"
-	atf_set "require.progs" "rump_server"
-}
-
-bridge_ipv4_head()
-{
-	atf_set "descr" "Does simple if_bridge tests"
-	atf_set "require.progs" "rump_server"
-}
-
-bridge_ipv6_head()
-{
-	atf_set "descr" "Does simple if_bridge tests (IPv6)"
-	atf_set "require.progs" "rump_server"
-}
-
-bridge_member_ipv4_head()
-{
-	atf_set "descr" "Tests if_bridge with members with an IP address"
-	atf_set "require.progs" "rump_server"
-}
-
-bridge_member_ipv6_head()
-{
-	atf_set "descr" "Tests if_bridge with members with an IP address (IPv6)"
-	atf_set "require.progs" "rump_server"
-}
 
 setup_endpoint()
 {
@@ -320,7 +283,7 @@ test_ping6_member()
 	rump.ifconfig -v shmif0
 }
 
-bridge_create_destroy_body()
+test_create_destroy()
 {
 
 	rump_server_start $SOCK1 bridge
@@ -328,7 +291,7 @@ bridge_create_destroy_body()
 	test_create_destroy_common $SOCK1 bridge0
 }
 
-bridge_ipv4_body()
+test_ipv4()
 {
 	setup
 	test_setup
@@ -347,7 +310,7 @@ bridge_ipv4_body()
 	rump_server_destroy_ifaces
 }
 
-bridge_ipv6_body()
+test_ipv6()
 {
 	setup6
 	test_setup6
@@ -365,7 +328,7 @@ bridge_ipv6_body()
 	rump_server_destroy_ifaces
 }
 
-bridge_member_ipv4_body()
+test_member_ipv4()
 {
 	setup
 	test_setup
@@ -387,7 +350,7 @@ bridge_member_ipv4_body()
 	rump_server_destroy_ifaces
 }
 
-bridge_member_ipv6_body()
+test_member_ipv6()
 {
 	setup6
 	test_setup6
@@ -408,47 +371,32 @@ bridge_member_ipv6_body()
 	rump_server_destroy_ifaces
 }
 
-bridge_create_destroy_cleanup()
+add_test()
 {
+	local name=$1
+	local desc="$2"
 
-	$DEBUG && dump
-	cleanup
-}
-
-bridge_ipv4_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
-}
-
-bridge_ipv6_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
-}
-
-bridge_member_ipv4_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
-}
-
-bridge_member_ipv6_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
+	atf_test_case "bridge_${name}" cleanup
+	eval "bridge_${name}_head() {
+			atf_set descr \"${desc}\"
+			atf_set require.progs rump_server
+		}
+	    bridge_${name}_body() {
+			test_${name}
+		}
+	    bridge_${name}_cleanup() {
+			\$DEBUG && dump
+			cleanup
+		}"
+	atf_add_test_case "bridge_${name}"
 }
 
 atf_init_test_cases()
 {
 
-	atf_add_test_case bridge_create_destroy
-	atf_add_test_case bridge_ipv4
-	atf_add_test_case bridge_ipv6
-	atf_add_test_case bridge_member_ipv4
-	atf_add_test_case bridge_member_ipv6
+	add_test create_destroy "Tests creating/destroying bridge interfaces"
+	add_test ipv4           "Does basic if_bridge tests (IPv4)"
+	add_test ipv6           "Does basic if_bridge tests (IPv6)"
+	add_test member_ipv4    "Tests if_bridge with members with an IP address (IPv4)"
+	add_test member_ipv6    "Tests if_bridge with members with an IP address (IPv6)"
 }
