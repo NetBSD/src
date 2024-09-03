@@ -1,4 +1,4 @@
-/*	$NetBSD: getextmemx.c,v 1.10 2011/06/16 13:27:59 joerg Exp $	*/
+/*	$NetBSD: getextmemx.c,v 1.10.84.1 2024/09/03 15:23:40 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -38,7 +38,11 @@
 int
 getextmemx(void)
 {
-	int buf[5], i;
+	/*
+	 * Allocate 6 words, not 5, to work around buggy firmware --
+	 * see comment on getmementry in biosmemx.S.
+	 */
+	int buf[6], i;
 	int extmem = getextmem1();
 #ifdef SUPPORT_PS2
 	struct {
