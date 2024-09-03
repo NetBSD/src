@@ -1,4 +1,4 @@
-.\"	$NetBSD: brconfig.8,v 1.21 2024/09/03 08:00:30 ozaki-r Exp $
+.\"	$NetBSD: brconfig.8,v 1.22 2024/09/03 10:42:58 uwe Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -68,13 +68,13 @@ Ethernet and Token Ring together.
 Bridge interfaces are created using the
 .Xr ifconfig 8
 command's
-.Dq create
+.Cm create
 sub-command.
 All other bridge configuration is performed using
 .Nm .
 .Pp
 The options are as follows:
-.Bl -tag -width indent
+.Bl -tag -width Fl
 .It Fl a
 Display the status of all bridge devices present on the system.
 This flag is mutually exclusive with all other sub-commands.
@@ -84,7 +84,7 @@ All other operations require that a bridge be specified.
 If a bridge is specified with no sub-commands,
 the status of that bridge is displayed.
 The following sub-commands are available:
-.Bl -tag -width indent
+.Bl -tag -width Cm
 .It Cm up
 Start forwarding packets on the bridge.
 .It Cm down
@@ -232,11 +232,11 @@ The minimum is 0 and the maximum is 65535.
 The following, when placed in the file
 .Pa /etc/ifconfig.bridge0 ,
 will cause a bridge called
-.Sq bridge0
+.Ql bridge0
 to be created, add the interfaces
-.Sq ray0
+.Ql ray0
 and
-.Sq fxp0
+.Ql fxp0
 to the bridge, and then enable packet forwarding.
 Such a configuration could be used to implement a simple
 802.11-to-Ethernet bridge (assuming the 802.11 interface is
@@ -277,6 +277,7 @@ The
 utility first appeared in
 .Nx 1.6 .
 .Sh AUTHORS
+.An -nosplit
 The
 .Xr bridge 4
 driver and
