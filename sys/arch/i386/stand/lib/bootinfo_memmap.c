@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_memmap.c,v 1.6 2019/09/13 02:19:46 manu Exp $	*/
+/*	$NetBSD: bootinfo_memmap.c,v 1.6.26.1 2024/09/03 15:23:40 martin Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -37,7 +37,11 @@ extern int getmementry(int *, int *);
 void
 bi_getmemmap(void)
 {
-	int buf[5], i, nranges, n;
+	/*
+	 * Allocate 6 words, not 5, to work around buggy firmware --
+	 * see comment on getmementry in biosmemx.S.
+	 */
+	int buf[6], i, nranges, n;
 
 	nranges = 0;
 	i = 0;

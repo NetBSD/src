@@ -1,4 +1,4 @@
-/*	$NetBSD: biosmemx.S,v 1.11 2021/08/02 12:56:23 andvar Exp $	*/
+/*	$NetBSD: biosmemx.S,v 1.11.8.1 2024/09/03 15:23:40 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -84,12 +84,30 @@ ENTRY(getextmem2)
 	ret
 
 /*
- * int getmementry(int *iterator, int buffer[5])
+ * int getmementry(int *iterator, int buffer[6])
  *
  * return: 0=ok, else error
  * buffer[0]: start of memory chunk
  * buffer[2]: length (bytes)
  * buffer[4]: type
+ * buffer[5]: ACPI 3.0 Extended Attributes bitfield (unused)
+ *
+ * Some buggy BIOSes may write to 24 bytes even if only 20 were requested.
+ * Therefore, the buffer is defined for 6 elements to avoid stack buffer
+ * overruns.  See PR install/49470.
+ *
+ * More details can be found in the:
+ *
+ *	Advanced Configuration and Power Interface (ACPI)
+ *	Specification, Release 6.5, 2022-08-29, UEFI Forum, Inc.,
+ *	Sec. 15.1 `INT 15H E820H - Query System Address Map',
+ *	pp. 756-757
+ *	https://uefi.org/sites/default/files/resources/ACPI_Spec_6_5_Aug29.pdf#page=824
+ *	https://uefi.org/specs/ACPI/6.5/15_System_Address_Map_Interfaces.html#int-15h-e820h-query-system-address-map
+ *
+ * as well as this OSDev.org wiki page:
+ *
+ *	https://wiki.osdev.org/Detecting_Memory_(x86)#BIOS_Function:_INT_0x15,_EAX_=_0xE820
  */
 ENTRY(getmementry)
 	pushl	%ebp
