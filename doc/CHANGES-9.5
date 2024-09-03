@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.15 2024/08/24 16:50:25 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.16 2024/09/03 15:29:57 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -335,4 +335,13 @@ tests/net/arp/t_dad.sh				1.16
 	ipv4: fix some behaviors when DAD is disabled
 	and add tests.
 	[ozaki-r, ticket #1883]
+
+sys/arch/i386/stand/lib/biosmemx.S		1.12,1.13
+sys/arch/i386/stand/lib/bootinfo_memmap.c	1.7,1.8
+sys/arch/i386/stand/lib/getextmemx.c		1.11,1.12
+
+
+	x86: PR 49470: work around broken BIOS implementations that
+	copy more than the requested data when querying memory details.
+	[andvar, ticket #1884]
 
