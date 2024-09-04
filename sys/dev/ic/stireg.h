@@ -1,4 +1,4 @@
-/*	$NetBSD: stireg.h,v 1.13 2024/08/19 10:57:32 macallan Exp $	*/
+/*	$NetBSD: stireg.h,v 1.14 2024/09/04 10:45:50 macallan Exp $	*/
 
 /*	$OpenBSD: stireg.h,v 1.14 2015/04/05 23:25:57 miod Exp $	*/
 
@@ -650,6 +650,8 @@ STI_DEP(util);
 	(((R)<<8)|((M)<<16)|((X)<<24)|((S)<<29)|((D)<<28)|((L)<<31)|((B)<<1)|(F))
 	/* LSSD XXXX MMMM MMMM RRRR RRRR ???? ??BF */
 
+/* B = 1 -> background transparency for masked fills */
+
 #define	    IndexedDcd	0	/* Pixel data is indexed (pseudo) color */
 #define	    FractDcd	1	/* Pixel data is Fractional 8-8-8 */
 #define	    Otc04	2	/* Pixels in each longword transfer (4) */
@@ -687,7 +689,8 @@ STI_DEP(util);
 #define	NGLE_REG_6		0x000800	/* rectfill XY */
 #define	NGLE_REG_7		0x000804	/* bitblt size WH */
 #define	NGLE_REG_24		0x000808	/* bitblt src XY */
-#define	NGLE_REG_8		0x000820	/* transfer data */
+#define	NGLE_REG_8		0x000820	/* 'transfer data' - this is */
+						/* a pixel mask on fills */
 #define	NGLE_REG_37		0x000944	/* HCRX fast rect fill, size */
 #define	NGLE_REG_9		0x000a04	/* rect fill size, start */
 #define	NGLE_REG_25		0x000b00	/* bitblt dst XY, start */
@@ -695,8 +698,8 @@ STI_DEP(util);
 #define	NGLE_REG_10		0x018000	/* buffer ctl */
 #define	NGLE_REG_11		0x018004	/* dest bitmap access */
 #define	NGLE_REG_12		0x01800c	/* control plane register */
-#define	NGLE_REG_35		0x018010	/* fg color */
-#define	NGLE_REG_36		0x018014	/* bg colour? */
+#define	NGLE_REG_35		0x018010	/* fg colour */
+#define	NGLE_REG_36		0x018014	/* bg colour */
 #define	NGLE_REG_13		0x018018	/* image planemask */
 #define	NGLE_REG_14		0x01801c	/* raster op */
 #define	NGLE_REG_15		0x200000	/* 'busy dodger' idle */
