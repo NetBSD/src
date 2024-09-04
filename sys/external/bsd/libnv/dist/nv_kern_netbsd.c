@@ -1,4 +1,4 @@
-/*	$NetBSD: nv_kern_netbsd.c,v 1.6 2018/10/16 13:18:25 maxv Exp $	*/
+/*	$NetBSD: nv_kern_netbsd.c,v 1.7 2024/09/04 12:57:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nv_kern_netbsd.c,v 1.6 2018/10/16 13:18:25 maxv Exp $");
+__RCSID("$NetBSD: nv_kern_netbsd.c,v 1.7 2024/09/04 12:57:00 riastradh Exp $");
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/mman.h>
@@ -209,10 +209,14 @@ nvlist_recv_ioctl(int fd, unsigned long cmd, nvlist_t **nvlp)
 #endif
 
 void *
-nv_calloc(size_t n, size_t s)
+nv_calloc(size_t nelem, size_t elemsize)
 {
-	const size_t len = n * s;
-	void *buf = nv_malloc(len);
+
+	if (nelem > SIZE_MAX/elemsize)
+		return NULL;
+
+	const size_t len = nelem * elemsize;
+	void *const buf = nv_malloc(len);
 	if (buf == NULL)
 		return NULL;
 	memset(buf, 0, len);
@@ -222,8 +226,12 @@ nv_calloc(size_t n, size_t s)
 char *
 nv_strdup(const char *s1)
 {
-	size_t len = strlen(s1) + 1;
+	size_t len = strlen(s1);
 	char *s2;
+
+	if (len == SIZE_MAX)
+		return NULL;
+	len += 1;		/* NUL terminator */
 
 	s2 = nv_malloc(len);
 	if (s2) {
