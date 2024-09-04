@@ -1,4 +1,4 @@
-/*	$NetBSD: nvlist.c,v 1.9 2024/09/04 12:56:47 riastradh Exp $	*/
+/*	$NetBSD: nvlist.c,v 1.10 2024/09/04 12:57:00 riastradh Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -36,7 +36,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: head/sys/contrib/libnv/nvlist.c 335347 2018-06-18 22:57:32Z oshogbo $");
 #else
-__RCSID("$NetBSD: nvlist.c,v 1.9 2024/09/04 12:56:47 riastradh Exp $");
+__RCSID("$NetBSD: nvlist.c,v 1.10 2024/09/04 12:57:00 riastradh Exp $");
 #endif
 
 #include <sys/param.h>
@@ -803,7 +803,7 @@ nvlist_descriptors(const nvlist_t *nvl, size_t *nitemsp)
 	int *fds;
 
 	nitems = nvlist_ndescriptors(nvl);
-	fds = nv_malloc(sizeof(fds[0]) * (nitems + 1));
+	fds = nv_calloc(nitems + 1, sizeof(fds[0]));
 	if (fds == NULL)
 		return (NULL);
 	if (nitems > 0)
@@ -1351,7 +1351,7 @@ nvlist_recv(int sock, int flags)
 		goto out;
 
 	if (nfds > 0) {
-		fds = nv_malloc(nfds * sizeof(fds[0]));
+		fds = nv_calloc(nfds, sizeof(fds[0]));
 		if (fds == NULL)
 			goto out;
 		if (fd_recv(sock, fds, nfds) == -1)
