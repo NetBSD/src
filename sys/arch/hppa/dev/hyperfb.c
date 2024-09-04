@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.13 2024/08/28 06:20:30 macallan Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.14 2024/09/04 10:35:43 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.13 2024/08/28 06:20:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.14 2024/09/04 10:35:43 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -493,6 +493,36 @@ hyperfb_attach(device_t parent, device_t self, void *aux)
 	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARGS_NONE);
 
 	hyperfb_setup_fb(sc);
+	
+#ifdef HYPERFB_DEBUG
+	int i;
+
+	hyperfb_wait_fifo(sc, 4);
+	/* transfer data */
+	hyperfb_write4(sc, NGLE_REG_8, 0xff00ff00);
+	/* plane mask */
+	hyperfb_write4(sc, NGLE_REG_13, 0xff);
+	/* bitmap op */
+	hyperfb_write4(sc, NGLE_REG_14,
+	    IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc, 1, 0));
+	/* dst bitmap access */
+	hyperfb_write4(sc, NGLE_REG_11,
+	    BA(IndexedDcd, Otc32, OtsIndirect, AddrLong, 0, BINovly, 0));
+
+	hyperfb_wait_fifo(sc, 3);
+	hyperfb_write4(sc, NGLE_REG_35, 0xe0);
+	hyperfb_write4(sc, NGLE_REG_36, 0x1c);
+	/* dst XY */
+	hyperfb_write4(sc, NGLE_REG_6, (2 << 16) | 902);
+	/* len XY start */
+	hyperfb_write4(sc, NGLE_REG_9, (28 << 16) | 32);
+
+	for (i = 0; i < 32; i++)
+		hyperfb_write4(sc, NGLE_REG_8, (i & 4) ? 0xff00ff00 : 0x00ff00ff);
+
+	hyperfb_rectfill(sc, 70, 902, 16, 32, 0xe0);
+	hyperfb_rectfill(sc, 50, 902, 16, 32, 0x1c);
+#endif
 }
 
 static void
@@ -504,7 +534,11 @@ hyperfb_init_screen(void *cookie, struct vcons_screen *scr,
 
 	ri->ri_depth = 8;
 	ri->ri_width = 1280;
+#ifdef HYPERFB_DEBUG
+	ri->ri_height = 900;
+#else
 	ri->ri_height = 1024;
+#endif
 	ri->ri_stride = 2048;
 	ri->ri_flg = RI_CENTER | RI_8BIT_IS_RGB /*|
 		     RI_ENABLE_ALPHA | RI_PREFER_ALPHA*/;
@@ -973,79 +1007,39 @@ static void
 hyperfb_rectfill(struct hyperfb_softc *sc, int x, int y, int wi, int he,
     uint32_t bg)
 {
+	uint32_t mask = 0xffffffff;
+
 	/*
 	 * XXX
-	 * HCRX has the same problem as VisEG drawing rectangles less than 32
-	 * pixels wide, but here we don't seem to have any usable offscreen
-	 * memory, at least not as long as we're using the overlay planes.
-	 * As a workaround, fall back to memset()-based fills for rectangles
-	 * less than 32 pixels wide
+	 * HCRX and EG both always draw rectangles at least 32 pixels wide
+	 * for anything narrower we need to set a bit mask and enable 
+	 * transparency
 	 */
-	if (wi < 32) {
-#if 0
-		int i;
-		uint8_t *ptr = (uint8_t *)sc->sc_fb + (y << 11) + x;
 
-		if (sc->sc_hwmode != HW_FB)
-			hyperfb_setup_fb(sc);
-
-		for (i = 0; i < he; i++) {
-			memset(ptr, bg, wi);
-			ptr += 2048;
-		}
-#else
-		/*
-		 * instead of memset() we abuse the blitter - set / clear the
-		 * planes we want, select colour by planemask, do two passes
-		 * where necessary ( as in, anything not black or white )
-		 */
-		if (sc->sc_hwmode != HW_SFILL) {
-			hyperfb_wait(sc);
-			hyperfb_write4(sc, NGLE_REG_10,
-		 	 BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, BINovly, 0));
-			sc->sc_hwmode = HW_SFILL;
-		}
-		bg &= 0xff;
-		hyperfb_wait_fifo(sc, 2);
-		hyperfb_write4(sc, NGLE_REG_24, (x << 16) | y);
-		if (bg != 0) {
-			hyperfb_wait_fifo(sc, 4);
-			hyperfb_write4(sc, NGLE_REG_14,
-			    IBOvals(RopSet, 0, BitmapExtent08, 1, DataDynamic,
-				MaskOtc, 0, 0));
-			hyperfb_write4(sc, NGLE_REG_13, bg);
-			hyperfb_write4(sc, NGLE_REG_7, (wi << 16) | he);
-			hyperfb_write4(sc, NGLE_REG_25, (x << 16) | y);
-		}
-		if (bg != 0xff) {
-			hyperfb_wait_fifo(sc, 4);
-			hyperfb_write4(sc, NGLE_REG_14,
-			    IBOvals(RopClr, 0, BitmapExtent08, 1, DataDynamic,
-				MaskOtc, 0, 0));
-			hyperfb_write4(sc, NGLE_REG_13, bg ^ 0xff);
-			hyperfb_write4(sc, NGLE_REG_7, (wi << 16) | he);
-			hyperfb_write4(sc, NGLE_REG_25, (x << 16) | y);
-		}
-#endif
-		return;
-	}
 	if (sc->sc_hwmode != HW_FILL) {
-		hyperfb_wait_fifo(sc, 4);
-		/* transfer data */
-		hyperfb_write4(sc, NGLE_REG_8, 0xffffffff);
+		hyperfb_wait_fifo(sc, 3);
 		/* plane mask */
 		hyperfb_write4(sc, NGLE_REG_13, 0xff);
 		/* bitmap op */
 		hyperfb_write4(sc, NGLE_REG_14,
 		    IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc,
-			0, 0));
+			1 /* bg transparent */, 0));
 		/* dst bitmap access */
 		hyperfb_write4(sc, NGLE_REG_11,
 		    BA(IndexedDcd, Otc32, OtsIndirect, AddrLong, 0, BINovly,
 			0));
 		sc->sc_hwmode = HW_FILL;
 	}
-	hyperfb_wait_fifo(sc, 3);
+	hyperfb_wait_fifo(sc, 4);
+	if (wi < 32)
+		mask = 0xffffffff << (32 - wi);
+	/*
+	 * XXX - the NGLE code calls this 'transfer data'
+	 * in reality it's a bit mask applied per pixel, 
+	 * foreground colour in reg 35, bg in 36
+	 */
+	hyperfb_write4(sc, NGLE_REG_8, mask);
+
 	hyperfb_write4(sc, NGLE_REG_35, bg);
 	/* dst XY */
 	hyperfb_write4(sc, NGLE_REG_6, (x << 16) | y);
