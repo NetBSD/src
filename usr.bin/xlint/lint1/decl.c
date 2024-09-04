@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.403 2024/05/12 18:49:36 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.404 2024/09/04 04:15:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.403 2024/05/12 18:49:36 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.404 2024/09/04 04:15:30 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1687,14 +1687,14 @@ make_tag_type(sym_t *tag, tspec_t kind, bool decl, bool semi)
 }
 
 static bool
-has_named_member(const type_t *tp)
+has_named_member(const struct_or_union *sou)
 {
-	for (const sym_t *mem = tp->u.sou->sou_first_member;
+	for (const sym_t *mem = sou->sou_first_member;
 	    mem != NULL; mem = mem->s_next) {
 		if (mem->s_name != unnamed)
 			return true;
 		if (is_struct_or_union(mem->s_type->t_tspec)
-		    && has_named_member(mem->s_type))
+		    && has_named_member(mem->s_type->u.sou))
 			return true;
 	}
 	return false;
@@ -1722,7 +1722,7 @@ complete_struct_or_union(sym_t *first_member)
 	if (sou->sou_size_in_bits == 0)
 		/* zero sized %s is a C99 feature */
 		c99ism(47, tspec_name(tp->t_tspec));
-	else if (!has_named_member(tp))
+	else if (!has_named_member(sou))
 		/* '%s' has no named members */
 		warning(65, type_name(tp));
 	debug_step("%s: '%s'", __func__, type_name(tp));
@@ -1742,15 +1742,8 @@ complete_enum(sym_t *first_enumerator)
 	return tp;
 }
 
-/*
- * Processes the name of an enumerator in an enum declaration.
- *
- * sym points to the enumerator
- * val is the value of the enumerator
- * impl is true if the value of the enumerator was not explicitly specified.
- */
 sym_t *
-enumeration_constant(sym_t *sym, int val, bool impl)
+enumeration_constant(sym_t *sym, int val, bool implicit)
 {
 
 	if (sym->s_scl != NO_SCL) {
@@ -1782,7 +1775,7 @@ enumeration_constant(sym_t *sym, int val, bool impl)
 	sym->s_type = dcs->d_tag_type;
 	sym->u.s_enum_constant = val;
 
-	if (impl && val == TARG_INT_MIN)
+	if (implicit && val == TARG_INT_MIN)
 		/* enumeration value '%s' overflows */
 		warning(48, sym->s_name);
 
@@ -1792,7 +1785,7 @@ enumeration_constant(sym_t *sym, int val, bool impl)
 }
 
 static bool
-ends_with(const char *s, const char *suffix)
+str_ends_with(const char *s, const char *suffix)
 {
 	size_t s_len = strlen(s);
 	size_t suffix_len = strlen(suffix);
@@ -1806,7 +1799,7 @@ check_extern_declaration(const sym_t *sym)
 
 	if (sym->s_scl == EXTERN &&
 	    dcs->d_redeclared_symbol == NULL &&
-	    ends_with(curr_pos.p_file, ".c") &&
+	    str_ends_with(curr_pos.p_file, ".c") &&
 	    allow_c90 &&
 	    !ch_isdigit(sym->s_name[0]) &&	/* see mktempsym */
 	    strcmp(sym->s_name, "main") != 0) {
@@ -1828,7 +1821,7 @@ check_extern_declaration(const sym_t *sym)
  * Return whether an error has been detected.
  */
 static bool
-check_init(sym_t *sym)
+check_init(const sym_t *sym)
 {
 
 	if (sym->s_type->t_tspec == FUNC) {
@@ -1907,7 +1900,7 @@ end:
 
 /* Process a single external or 'static' declarator. */
 static void
-declare_extern(sym_t *dsym, bool has_initializer, sbuf_t *renaming)
+declare_extern(sym_t *dsym, bool has_initializer, const sbuf_t *renaming)
 {
 
 	if (renaming != NULL) {
@@ -2054,7 +2047,7 @@ declare(sym_t *decl, bool has_initializer, sbuf_t *renaming)
  * the same symbol.
  */
 void
-copy_usage_info(sym_t *sym, sym_t *rdsym)
+copy_usage_info(sym_t *sym, const sym_t *rdsym)
 {
 
 	sym->s_set_pos = rdsym->s_set_pos;
@@ -2183,29 +2176,20 @@ prototypes_compatible(const type_t *tp1, const type_t *tp2, bool *dowarn)
 /*
  * Returns whether all parameters of a prototype are compatible with an
  * old-style function declaration.
- *
- * This is the case if the following conditions are met:
- *	1. the prototype has a fixed number of parameters
- *	2. no parameter is of type float
- *	3. no parameter is converted to another type if integer promotion
- *	   is applied on it
  */
 static bool
-matches_no_arg_function(const type_t *tp, bool *dowarn)
+is_old_style_compat(const type_t *tp)
 {
 
-	if (tp->t_vararg && dowarn != NULL)
-		*dowarn = true;
+	if (tp->t_vararg)
+		return false;
 	for (const sym_t *p = tp->u.params; p != NULL; p = p->s_next) {
 		tspec_t t = p->s_type->t_tspec;
 		if (t == FLOAT ||
 		    t == CHAR || t == SCHAR || t == UCHAR ||
-		    t == SHORT || t == USHORT) {
-			if (dowarn != NULL)
-				*dowarn = true;
-		}
+		    t == SHORT || t == USHORT)
+			return false;
 	}
-	/* FIXME: Always returning true cannot be correct. */
 	return true;
 }
 
@@ -2256,18 +2240,14 @@ types_compatible(const type_t *tp1, const type_t *tp2,
 				return false;
 		}
 
-		/* don't check prototypes for traditional */
 		if (t == FUNC && allow_c90) {
 			if (tp1->t_proto && tp2->t_proto) {
 				if (!prototypes_compatible(tp1, tp2, dowarn))
 					return false;
-			} else if (tp1->t_proto) {
-				if (!matches_no_arg_function(tp1, dowarn))
-					return false;
-			} else if (tp2->t_proto) {
-				if (!matches_no_arg_function(tp2, dowarn))
-					return false;
-			}
+			} else if ((tp1->t_proto || tp2->t_proto)
+			    && dowarn != NULL
+			    && !is_old_style_compat(tp1->t_proto ? tp1 : tp2))
+				*dowarn = true;
 		}
 
 		tp1 = tp1->t_subt;
@@ -2289,7 +2269,7 @@ types_compatible(const type_t *tp1, const type_t *tp2,
  * duplicated.
  */
 void
-complete_type(sym_t *dsym, sym_t *ssym)
+complete_type(sym_t *dsym, const sym_t *ssym)
 {
 	type_t **dstp = &dsym->s_type;
 	type_t *src = ssym->s_type;
