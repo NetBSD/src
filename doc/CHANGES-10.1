@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.29 2024/09/03 15:44:15 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.30 2024/09/05 10:11:50 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -1286,4 +1286,47 @@ tests/lib/libm/t_fenv.c				1.16
 	The fetestexcept_trap test case only makes sense on FPUs that implement
 	exceptions.
 	[rin, ticket #816]
+
+distrib/sets/lists/base/mi			1.1350 (patch)
+distrib/sets/lists/debug/mi			1.447 (patch)
+distrib/sets/lists/man/mi			1.1787 (patch)
+distrib/sets/lists/tests/mi			1.1335 (patch)
+etc/mtree/NetBSD.dist.tests			1.207
+sys/rump/net/lib/libshmif/if_shmem.c		1.88
+sys/rump/net/lib/libshmif/shmifvar.h		1.12
+tests/usr.bin/Makefile				1.41 (patch)
+tests/usr.bin/shmif_pcapin/Makefile		1.1
+tests/usr.bin/shmif_pcapin/d_pcap.in.bz2.uue	1.1
+tests/usr.bin/shmif_pcapin/d_pcap.out.bz2.uue	1.1
+tests/usr.bin/shmif_pcapin/t_basic.sh		1.1
+usr.bin/Makefile				1.240
+usr.bin/shmif_pcapin/Makefile			1.1
+usr.bin/shmif_pcapin/shmif_pcapin.1		1.1
+usr.bin/shmif_pcapin/shmif_pcapin.c		1.1
+
+	shmif_pcapin(1): utility program for shmif(4) tests.
+	[ozaki-r, ticket #817]
+
+distrib/sets/lists/tests/mi			1.1336
+sbin/brconfig/brconfig.8			1.21
+sbin/brconfig/brconfig.c			1.18
+sys/net/if_bridge.c				1.194
+sys/net/if_bridgevar.h				1.39
+tests/net/if_bridge/Makefile			1.4
+tests/net/if_bridge/broadcast.pcap.uue		1.1
+tests/net/if_bridge/t_bridge.sh			1.20,1.21
+tests/net/if_bridge/unicast.pcap.uue		1.1
+
+	bridge(4): implement interface protection.
+	[ozaki-r, ticket #818]
+
+share/man/man4/ip6.4				1.35
+
+	ip6(4): fix copy-paste; ip6 is subnode of inet6, not inet
+	[rin, ticket #819]
+
+sys/external/bsd/libnv/dist/nvpair.c		1.13
+
+	libnv(9), npf(4): PR 58652: fix NUL bounds check.
+	[riastradh, ticket #820]
 
