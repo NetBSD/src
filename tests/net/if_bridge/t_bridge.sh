@@ -1,4 +1,4 @@
-#	$NetBSD: t_bridge.sh,v 1.19 2019/08/19 03:22:05 ozaki-r Exp $
+#	$NetBSD: t_bridge.sh,v 1.19.8.1 2024/09/05 09:27:13 martin Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,43 +39,6 @@ IP6BR2=fc00::12
 
 DEBUG=${DEBUG:-false}
 TIMEOUT=5
-
-atf_test_case bridge_create_destroy cleanup
-atf_test_case bridge_ipv4 cleanup
-atf_test_case bridge_ipv6 cleanup
-atf_test_case bridge_member_ipv4 cleanup
-atf_test_case bridge_member_ipv6 cleanup
-
-bridge_create_destroy_head()
-{
-
-	atf_set "descr" "Test creating/destroying bridge interfaces"
-	atf_set "require.progs" "rump_server"
-}
-
-bridge_ipv4_head()
-{
-	atf_set "descr" "Does simple if_bridge tests"
-	atf_set "require.progs" "rump_server"
-}
-
-bridge_ipv6_head()
-{
-	atf_set "descr" "Does simple if_bridge tests (IPv6)"
-	atf_set "require.progs" "rump_server"
-}
-
-bridge_member_ipv4_head()
-{
-	atf_set "descr" "Tests if_bridge with members with an IP address"
-	atf_set "require.progs" "rump_server"
-}
-
-bridge_member_ipv6_head()
-{
-	atf_set "descr" "Tests if_bridge with members with an IP address (IPv6)"
-	atf_set "require.progs" "rump_server"
-}
 
 setup_endpoint()
 {
@@ -320,7 +283,7 @@ test_ping6_member()
 	rump.ifconfig -v shmif0
 }
 
-bridge_create_destroy_body()
+test_create_destroy()
 {
 
 	rump_server_start $SOCK1 bridge
@@ -328,7 +291,7 @@ bridge_create_destroy_body()
 	test_create_destroy_common $SOCK1 bridge0
 }
 
-bridge_ipv4_body()
+test_ipv4()
 {
 	setup
 	test_setup
@@ -347,7 +310,7 @@ bridge_ipv4_body()
 	rump_server_destroy_ifaces
 }
 
-bridge_ipv6_body()
+test_ipv6()
 {
 	setup6
 	test_setup6
@@ -365,7 +328,7 @@ bridge_ipv6_body()
 	rump_server_destroy_ifaces
 }
 
-bridge_member_ipv4_body()
+test_member_ipv4()
 {
 	setup
 	test_setup
@@ -387,7 +350,7 @@ bridge_member_ipv4_body()
 	rump_server_destroy_ifaces
 }
 
-bridge_member_ipv6_body()
+test_member_ipv6()
 {
 	setup6
 	test_setup6
@@ -408,47 +371,166 @@ bridge_member_ipv6_body()
 	rump_server_destroy_ifaces
 }
 
-bridge_create_destroy_cleanup()
+BUS_SHMIF0=./bus0
+BUS_SHMIF1=./bus1
+BUS_SHMIF2=./bus2
+
+unpack_file()
 {
 
-	$DEBUG && dump
-	cleanup
+	atf_check -s exit:0 uudecode $(atf_get_srcdir)/${1}.uue
 }
 
-bridge_ipv4_cleanup()
+reset_if_stats()
 {
 
-	$DEBUG && dump
-	cleanup
+	for ifname in shmif0 shmif1 shmif2
+	do
+		atf_check -s exit:0 -o ignore rump.ifconfig -z $ifname
+	done
 }
 
-bridge_ipv6_cleanup()
+test_protection()
 {
 
-	$DEBUG && dump
-	cleanup
+	unpack_file unicast.pcap
+	unpack_file broadcast.pcap
+
+	rump_server_start $SOCK1 bridge
+	rump_server_add_iface $SOCK1 shmif0 $BUS_SHMIF0
+	rump_server_add_iface $SOCK1 shmif1 $BUS_SHMIF1
+	rump_server_add_iface $SOCK1 shmif2 $BUS_SHMIF2
+
+	export RUMP_SERVER=$SOCK1
+	atf_check -s exit:0 rump.ifconfig shmif0 up
+	atf_check -s exit:0 rump.ifconfig shmif1 up
+	atf_check -s exit:0 rump.ifconfig shmif2 up
+
+	atf_check -s exit:0 rump.ifconfig bridge0 create
+	atf_check -s exit:0 rump.ifconfig bridge0 up
+
+	atf_check -s exit:0 $HIJACKING brconfig bridge0 add shmif0 add shmif1 add shmif2
+	$DEBUG && rump.ifconfig
+
+	# Protected interfaces: -
+	# Learning: -
+	# Input: unicast through shmif0
+	# Output: shmif1, shmif2
+	reset_if_stats
+	atf_check -s exit:0 -o ignore shmif_pcapin unicast.pcap ${BUS_SHMIF0}
+	atf_check -s exit:0 -o match:"input: 1 packet" rump.ifconfig -v shmif0
+	atf_check -s exit:0 -o match:"output: 1 packet" rump.ifconfig -v shmif1
+	atf_check -s exit:0 -o match:"output: 1 packet" rump.ifconfig -v shmif2
+	$DEBUG && rump.ifconfig -v bridge0
+
+	# Protected interfaces: -
+	# Learning: -
+	# Input: broadcast through shmif0
+	# Output: shmif1, shmif2
+	reset_if_stats
+	atf_check -s exit:0 -o ignore shmif_pcapin broadcast.pcap ${BUS_SHMIF0}
+	atf_check -s exit:0 -o match:"input: 1 packet" rump.ifconfig -v shmif0
+	atf_check -s exit:0 -o match:"output: 1 packet" rump.ifconfig -v shmif1
+	atf_check -s exit:0 -o match:"output: 1 packet" rump.ifconfig -v shmif2
+	$DEBUG && rump.ifconfig -v bridge0
+
+	# Protect shmif0 and shmif2
+	atf_check -s exit:0 $HIJACKING brconfig bridge0 protect shmif0
+	atf_check -s exit:0 $HIJACKING brconfig bridge0 protect shmif2
+	atf_check -s exit:0 \
+	    -o match:"shmif0.+PROTECTED" \
+	    -o match:"shmif2.+PROTECTED" \
+	    -o not-match:"shmif1.+PROTECTED" \
+	    $HIJACKING brconfig bridge0
+
+	# Protected interfaces: shmif0 shmif2
+	# Learning: -
+	# Input: unicast through shmif0
+	# Output: shmif1
+	reset_if_stats
+	atf_check -s exit:0 -o ignore shmif_pcapin unicast.pcap ${BUS_SHMIF0}
+	atf_check -s exit:0 -o match:"input: 1 packet" rump.ifconfig -v shmif0
+	atf_check -s exit:0 -o match:"output: 1 packet" rump.ifconfig -v shmif1
+	atf_check -s exit:0 -o match:"output: 0 packet" rump.ifconfig -v shmif2
+	$DEBUG && rump.ifconfig -v bridge0
+
+	# Protected interfaces: shmif0 shmif2
+	# Learning: -
+	# Input: broadcast through shmif0
+	# Output: shmif1
+	reset_if_stats
+	atf_check -s exit:0 -o ignore shmif_pcapin broadcast.pcap ${BUS_SHMIF0}
+	atf_check -s exit:0 -o match:"input: 1 packet" rump.ifconfig -v shmif0
+	atf_check -s exit:0 -o match:"output: 1 packet" rump.ifconfig -v shmif1
+	atf_check -s exit:0 -o match:"output: 0 packet" rump.ifconfig -v shmif2
+	$DEBUG && rump.ifconfig -v bridge0
+
+	# Insert a route 00:aa:aa:aa:aa:aa shmif2 to test forwarding path of known-unicast-frame
+	atf_check -s exit:0 $HIJACKING brconfig bridge0 static shmif2 00:aa:aa:aa:aa:aa
+	atf_check -s exit:0 -o match:'00:aa:aa:aa:aa:aa shmif2 0 flags=1<STATIC>' \
+	    $HIJACKING brconfig bridge0
+	$DEBUG && $HIJACKING brconfig bridge0
+
+	# Protected interfaces: shmif0 shmif2
+	# Learning: 00:aa:aa:aa:aa:aa shmif2
+	# Input: broadcast through shmif0
+	# Output: -
+	reset_if_stats
+	atf_check -s exit:0 -o ignore shmif_pcapin unicast.pcap ${BUS_SHMIF0}
+	atf_check -s exit:0 -o match:"input: 1 packet" rump.ifconfig -v shmif0
+	atf_check -s exit:0 -o match:"output: 0 packet" rump.ifconfig -v shmif1
+	atf_check -s exit:0 -o match:"output: 0 packet" rump.ifconfig -v shmif2
+	$DEBUG && rump.ifconfig -v bridge0
+
+	# Unprotect shmif2
+	atf_check -s exit:0 $HIJACKING brconfig bridge0 -protect shmif2
+	atf_check -s exit:0 \
+	    -o match:"shmif0.+PROTECTED" \
+	    -o not-match:"shmif2.+PROTECTED" \
+	    -o not-match:"shmif1.+PROTECTED" \
+	    $HIJACKING brconfig bridge0
+
+	# Protected interfaces: shmif0
+	# Learning: 00:aa:aa:aa:aa:aa shmif2
+	# Input: broadcast through shmif0
+	# Output: shmif2
+	reset_if_stats
+	atf_check -s exit:0 -o ignore shmif_pcapin unicast.pcap ${BUS_SHMIF0}
+	atf_check -s exit:0 -o match:"input: 1 packet" rump.ifconfig -v shmif0
+	atf_check -s exit:0 -o match:"output: 0 packet" rump.ifconfig -v shmif1
+	atf_check -s exit:0 -o match:"output: 1 packet" rump.ifconfig -v shmif2
+	$DEBUG && rump.ifconfig -v bridge0
+
+	rump_server_destroy_ifaces
 }
 
-bridge_member_ipv4_cleanup()
+add_test()
 {
+	local name=$1
+	local desc="$2"
 
-	$DEBUG && dump
-	cleanup
-}
-
-bridge_member_ipv6_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
+	atf_test_case "bridge_${name}" cleanup
+	eval "bridge_${name}_head() {
+			atf_set descr \"${desc}\"
+			atf_set require.progs rump_server
+		}
+	    bridge_${name}_body() {
+			test_${name}
+		}
+	    bridge_${name}_cleanup() {
+			\$DEBUG && dump
+			cleanup
+		}"
+	atf_add_test_case "bridge_${name}"
 }
 
 atf_init_test_cases()
 {
 
-	atf_add_test_case bridge_create_destroy
-	atf_add_test_case bridge_ipv4
-	atf_add_test_case bridge_ipv6
-	atf_add_test_case bridge_member_ipv4
-	atf_add_test_case bridge_member_ipv6
+	add_test create_destroy "Tests creating/destroying bridge interfaces"
+	add_test ipv4           "Does basic if_bridge tests (IPv4)"
+	add_test ipv6           "Does basic if_bridge tests (IPv6)"
+	add_test member_ipv4    "Tests if_bridge with members with an IP address (IPv4)"
+	add_test member_ipv6    "Tests if_bridge with members with an IP address (IPv6)"
+	add_test protection     "Tests interface protection"
 }
