@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.37 2024/07/05 04:31:51 rin Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.38 2024/09/05 17:54:02 andvar Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.37 2024/07/05 04:31:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.38 2024/09/05 17:54:02 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1114,7 +1114,7 @@ vte_rxeof(struct vte_softc *sc)
 	    VTE_DESC_INC(cons, VTE_RX_RING_CNT)) {
 		rxd = &sc->vte_cdata.vte_rxdesc[cons];
 		status = le16toh(rxd->rx_desc->drst);
-		DPRINTF(("vte_rxoef rxd %d/%p mbuf %p status 0x%x len %d\n",
+		DPRINTF(("vte_rxeof rxd %d/%p mbuf %p status 0x%x len %d\n",
 			cons, rxd, rxd->rx_m, status,
 			VTE_RX_LEN(le16toh(rxd->rx_desc->drlen))));
 		if ((status & VTE_DRST_RX_OWN) != 0)
