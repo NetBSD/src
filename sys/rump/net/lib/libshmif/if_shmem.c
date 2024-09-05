@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.84.4.1 2024/08/24 16:42:26 martin Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.84.4.2 2024/09/05 09:22:44 martin Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.84.4.1 2024/08/24 16:42:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.84.4.2 2024/09/05 09:22:44 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -110,10 +110,6 @@ struct shmif_sc {
 };
 
 static void shmif_rcv(void *);
-
-#define LOCK_UNLOCKED	0
-#define LOCK_LOCKED	1
-#define LOCK_COOLDOWN	1001
 
 vmem_t *shmif_units;
 
