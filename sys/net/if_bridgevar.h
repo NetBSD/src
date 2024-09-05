@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.37 2021/09/30 03:57:48 yamaguchi Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.37.4.1 2024/09/05 09:27:12 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -130,8 +130,9 @@ struct ifbreq {
 #define	IFBIF_LEARNING		0x01	/* if can learn */
 #define	IFBIF_DISCOVER		0x02	/* if sends packets w/ unknown dest. */
 #define	IFBIF_STP		0x04	/* if participates in spanning tree */
+#define	IFBIF_PROTECTED		0x08	/* if participates in protected mode */
 
-#define	IFBIFBITS	"\020\1LEARNING\2DISCOVER\3STP"
+#define	IFBIFBITS	"\020\1LEARNING\2DISCOVER\3STP\4PROTECTED"
 
 /* BRDGFLUSH */
 #define	IFBF_FLUSHDYN		0x00	/* flush learned addresses only */

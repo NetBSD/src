@@ -1,4 +1,4 @@
-/*	$NetBSD: brconfig.c,v 1.17 2015/06/01 06:15:18 matt Exp $	*/
+/*	$NetBSD: brconfig.c,v 1.17.26.1 2024/09/05 09:27:12 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: brconfig.c,v 1.17 2015/06/01 06:15:18 matt Exp $");
+__RCSID("$NetBSD: brconfig.c,v 1.17.26.1 2024/09/05 09:27:12 martin Exp $");
 #endif
 
 
@@ -95,6 +95,7 @@ static void	cmd_ifpathcost(const struct command *, int, const char *, char **);
 static void	cmd_timeout(const struct command *, int, const char *, char **);
 static void	cmd_stp(const struct command *, int, const char *, char **);
 static void	cmd_ipf(const struct command *, int, const char *, char **);
+static void	cmd_protect(const struct command *, int, const char *, char **);
 
 static const struct command command_table[] = {
 	{ "add",		1,	0,		cmd_add },
@@ -130,6 +131,9 @@ static const struct command command_table[] = {
 
         { "ipf",                0,      0,              cmd_ipf },
         { "-ipf",               0,      CMD_INVERT,     cmd_ipf },
+
+	{ "protect",		1,	0,		cmd_protect },
+	{ "-protect",		1,	CMD_INVERT,	cmd_protect },
 
 	{ NULL,			0,	0,		NULL },
 };
@@ -621,6 +625,15 @@ cmd_stp(const struct command *cmd, int sock, const char *bridge,
 {
 
 	do_bridgeflag(sock, bridge, argv[0], IFBIF_STP,
+	    (cmd->cmd_flags & CMD_INVERT) ? 0 : 1);
+}
+
+static void
+cmd_protect(const struct command *cmd, int sock, const char *bridge,
+    char **argv)
+{
+
+	do_bridgeflag(sock, bridge, argv[0], IFBIF_PROTECTED,
 	    (cmd->cmd_flags & CMD_INVERT) ? 0 : 1);
 }
 
