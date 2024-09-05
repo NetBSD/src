@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.16 2024/09/03 15:29:57 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.17 2024/09/05 10:13:19 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -344,4 +344,9 @@ sys/arch/i386/stand/lib/getextmemx.c		1.11,1.12
 	x86: PR 49470: work around broken BIOS implementations that
 	copy more than the requested data when querying memory details.
 	[andvar, ticket #1884]
+
+sys/external/bsd/libnv/dist/nvpair.c		1.13
+
+	libnv(9), npf(4): PR 58652: fix NUL bounds check.
+	[riastradh, ticket #1885]
 
