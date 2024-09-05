@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.394.2.8 2024/08/23 18:28:10 martin Exp $
+# $NetBSD: mi,v 1.394.2.9 2024/09/05 09:22:43 martin Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -801,6 +801,7 @@
 ./usr/libdata/debug/usr/bin/sftp.debug		comp-secsh-debug	debug
 ./usr/libdata/debug/usr/bin/shlock.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/shmif_dumpbus.debug	comp-util-debug		debug,rump
+./usr/libdata/debug/usr/bin/shmif_pcapin.debug	comp-util-debug		debug,rump
 ./usr/libdata/debug/usr/bin/showmount.debug	comp-nfsclient-debug	debug
 ./usr/libdata/debug/usr/bin/shuffle.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/size.debug		comp-util-debug		binutils,debug

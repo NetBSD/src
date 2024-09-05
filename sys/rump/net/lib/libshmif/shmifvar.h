@@ -1,4 +1,4 @@
-/*	$NetBSD: shmifvar.h,v 1.11 2020/04/03 13:57:48 christos Exp $	*/
+/*	$NetBSD: shmifvar.h,v 1.11.22.1 2024/09/05 09:22:44 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -62,6 +62,10 @@ struct shmif_pkthdr {
 
 #define BUSMEM_SIZE (1024*1024U)
 #define BUSMEM_DATASIZE (BUSMEM_SIZE - sizeof(struct shmif_mem))
+
+#define LOCK_UNLOCKED	0
+#define LOCK_LOCKED	1
+#define LOCK_COOLDOWN	1001
 
 #if 0
 #ifdef _KERNEL

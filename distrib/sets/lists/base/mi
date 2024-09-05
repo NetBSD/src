@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1314.2.7 2024/06/20 18:07:03 martin Exp $
+# $NetBSD: mi,v 1.1314.2.8 2024/09/05 09:22:42 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -833,6 +833,7 @@
 ./usr/bin/shar					base-util-bin
 ./usr/bin/shlock				base-util-bin
 ./usr/bin/shmif_dumpbus				base-util-bin		rump
+./usr/bin/shmif_pcapin				base-util-bin		rump
 ./usr/bin/showmount				base-nfsclient-bin
 ./usr/bin/shuffle				base-util-bin
 ./usr/bin/skey					base-util-bin		skey
