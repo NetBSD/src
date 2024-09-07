@@ -1,4 +1,4 @@
-/*	$NetBSD: malo.c,v 1.20 2021/12/24 21:57:49 riastradh Exp $ */
+/*	$NetBSD: malo.c,v 1.21 2024/09/07 06:17:37 andvar Exp $ */
 /*	$OpenBSD: malo.c,v 1.92 2010/08/27 17:08:00 jsg Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.20 2021/12/24 21:57:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.21 2024/09/07 06:17:37 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1712,7 +1712,7 @@ malo_load_bootimg(struct malo_softc *sc)
 	/*
 	 * we loaded the firmware into card memory now tell the CPU
 	 * to fetch the code and execute it. The memory mapped via the
-	 * first bar is internaly mapped to 0xc0000000.
+	 * first bar is internally mapped to 0xc0000000.
 	 */
 	malo_send_cmd(sc, 0xc000bef8);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.134 2023/07/13 12:06:20 riastradh Exp $ */
+/*	$NetBSD: cpu.h,v 1.135 2024/09/07 06:17:37 andvar Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -266,7 +266,7 @@ extern struct pool_cache *fpstate_cache;
 
 /* CURCPU_INT() a local (per CPU) view of our cpu_info */
 #define	CURCPU_INT()	((struct cpu_info *)CPUINFO_VA)
-/* in general we prefer the globaly visible pointer */
+/* in general we prefer the globally visible pointer */
 #define	curcpu()	(CURCPU_INT()->ci_self)
 #define	cpu_number()	(curcpu()->ci_index)
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)

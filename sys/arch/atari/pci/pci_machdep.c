@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.64 2023/08/01 21:26:27 andvar Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.65 2024/09/07 06:17:38 andvar Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.64 2023/08/01 21:26:27 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.65 2024/09/07 06:17:38 andvar Exp $");
 
 #include "opt_mbtype.h"
 
@@ -314,7 +314,7 @@ overlap_pci_areas(struct pci_memreg *p, struct pci_memreg *self, u_int addr,
 
 /*
  * Enable memory and I/O on pci devices. Care about already enabled devices
- * (probabaly by the console driver).
+ * (probably by the console driver).
  *
  * The idea behind the following code is:
  * We build a by sizes sorted list of the requirements of the different

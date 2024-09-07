@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.36 2023/07/07 07:22:18 martin Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.37 2024/09/07 06:17:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -227,7 +227,7 @@ dme_attach(struct dme_softc *sc, const uint8_t *notusedanymore)
 		aprint_debug_dev(sc->sc_dev, "got MAC address!\n");
 	} else {
 		/*
-		 * If we did not get an externaly configure address,
+		 * If we did not get an externally configure address,
 		 * try to read one from the current setup, before
 		 * resetting the chip.
 		 */

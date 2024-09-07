@@ -1,4 +1,4 @@
-/*	$NetBSD: n_tanh.c,v 1.7 2014/03/06 10:59:00 martin Exp $	*/
+/*	$NetBSD: n_tanh.c,v 1.8 2024/09/07 06:17:37 andvar Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -66,7 +66,7 @@ static char sccsid[] = "@(#)tanh.c	8.1 (Berkeley) 6/4/93";
  *	only tanh(0)=0 is exact for finite argument.
  *
  * Accuracy:
- *	tanh(x) returns the exact hyperbolic tangent of x nealy rounded.
+ *	tanh(x) returns the exact hyperbolic tangent of x nearly rounded.
  *	In a test run with 1,024,000 random arguments on a VAX, the maximum
  *	observed error was 2.22 ulps (units in the last place).
  */

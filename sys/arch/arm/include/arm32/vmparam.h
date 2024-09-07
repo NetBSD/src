@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.57 2023/04/16 14:01:51 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.58 2024/09/07 06:17:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -54,7 +54,7 @@
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 
 /*
- * ARMv4 systems are normaly configured for 256MB KVA only, so restrict
+ * ARMv4 systems are normally configured for 256MB KVA only, so restrict
  * the size of the pager map to 4MB.
  */
 #ifndef _ARM_ARCH_5

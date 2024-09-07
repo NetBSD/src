@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.133 2024/01/19 18:49:10 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.134 2024/09/07 06:17:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -119,7 +119,7 @@ ASENTRY_NOPROFILE(start)
 	movel	%sp@+,%d5		| fphysize -- last page
 	movel	%sp@,%a4		| esym
 
-	RELOC(vectab,%a0)		| set Vector Base Register temporaly
+	RELOC(vectab,%a0)		| set Vector Base Register temporarily
 	movc	%a0,%vbr
 
 #if 0	/* XXX this should be done by the boot loader */
