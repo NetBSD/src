@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.394 2024/08/28 05:58:11 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.395 2024/09/07 06:25:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.394 2024/08/28 05:58:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.395 2024/09/07 06:25:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4150,9 +4150,6 @@ bge_release_resources(struct bge_softc *sc)
 	evcnt_detach(&sc->bge_ev_xoffentered);
 #endif /* BGE_EVENT_COUNTERS */
 
-	mutex_obj_free(sc->sc_intr_lock);
-	mutex_obj_free(sc->sc_mcast_lock);
-
 	/* Disestablish the interrupt handler */
 	if (sc->bge_intrhand != NULL) {
 		pci_intr_disestablish(sc->sc_pc, sc->bge_intrhand);
@@ -4183,6 +4180,14 @@ bge_release_resources(struct bge_softc *sc)
 		bus_space_unmap(sc->bge_apetag, sc->bge_apehandle,
 		    sc->bge_apesize);
 		sc->bge_apesize = 0;
+	}
+	if (sc->sc_intr_lock) {
+		mutex_obj_free(sc->sc_intr_lock);
+		sc->sc_intr_lock = NULL;
+	}
+	if (sc->sc_mcast_lock) {
+		mutex_obj_free(sc->sc_mcast_lock);
+		sc->sc_mcast_lock = NULL;
 	}
 }
 
