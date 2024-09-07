@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpower.c,v 1.14 2023/12/20 14:50:02 thorpej Exp $ */
+/*	$NetBSD: plumpower.c,v 1.15 2024/09/07 14:28:19 andvar Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumpower.c,v 1.14 2023/12/20 14:50:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumpower.c,v 1.15 2024/09/07 14:28:19 andvar Exp $");
 
 #undef PLUMPOWERDEBUG
 
@@ -115,7 +115,7 @@ plum_power_ioreset(plum_chipset_tag_t pc)
 	bus_space_handle_t regh = sc->sc_regh;
 	
 	plum_conf_write(regt, regh, PLUM_POWER_RESETC_REG,
-	    PLUM_POWER_RESETC_IO5CL1 |
+	    PLUM_POWER_RESETC_IO5CL0 |
 	    PLUM_POWER_RESETC_IO5CL1);
 	plum_conf_write(regt, regh, PLUM_POWER_RESETC_REG, 0);
 }
