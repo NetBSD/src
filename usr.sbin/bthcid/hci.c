@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.c,v 1.3 2009/10/05 12:34:26 plunky Exp $	*/
+/*	$NetBSD: hci.c,v 1.4 2024/09/07 13:57:25 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hci.c,v 1.3 2009/10/05 12:34:26 plunky Exp $");
+__RCSID("$NetBSD: hci.c,v 1.4 2024/09/07 13:57:25 mlelstv Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/time.h>
@@ -335,6 +335,6 @@ send_hci_cmd(int sock, struct sockaddr_bt *sa, uint16_t opcode, size_t len, void
 	if (len > 0)
 		memcpy(msg + sizeof(hci_cmd_hdr_t), buf, len);
 
-	return sendto(sock, msg, sizeof(hci_cmd_hdr_t) + len, 0,
+	return sendto(sock, msg, sizeof(hci_cmd_hdr_t) + len, MSG_NOSIGNAL,
 			(struct sockaddr *)sa, sizeof(*sa));
 }

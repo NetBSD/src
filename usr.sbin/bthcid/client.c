@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.5 2017/01/10 20:56:41 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.6 2024/09/07 13:57:25 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: client.c,v 1.5 2017/01/10 20:56:41 christos Exp $");
+__RCSID("$NetBSD: client.c,v 1.6 2024/09/07 13:57:25 mlelstv Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/queue.h>
@@ -268,7 +268,7 @@ send_client_request(bdaddr_t *laddr, bdaddr_t *raddr, int hci)
 	cp.time = PIN_REQUEST_TIMEOUT;
 
 	LIST_FOREACH(cl, &client_list, next) {
-		if (send(cl->fd, &cp, sizeof(cp), 0) != sizeof(cp))
+		if (send(cl->fd, &cp, sizeof(cp), MSG_NOSIGNAL) != sizeof(cp))
 			syslog(LOG_ERR, "send PIN request failed");
 		else
 			n++;
