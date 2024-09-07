@@ -1,4 +1,4 @@
-/* $NetBSD: ugreg.h,v 1.1 2007/05/08 16:48:38 xtraeme Exp $ */
+/* $NetBSD: ugreg.h,v 1.2 2024/09/07 06:17:37 andvar Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -38,7 +38,7 @@
 #define UG_NUM_SENSORS  19
 #define UG_MAX_SENSORS  32
 
-/* Data and Cmd offsets - Base is ussualy 0xE0 */
+/* Data and Cmd offsets - Base is usually 0xE0 */
 #define UG_CMD          0
 #define UG_DATA         4
 

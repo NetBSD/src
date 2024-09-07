@@ -1,4 +1,4 @@
-/*	$NetBSD: fpemu.S,v 1.7 2019/04/15 20:45:08 skrll Exp $	*/
+/*	$NetBSD: fpemu.S,v 1.8 2024/09/07 06:17:37 andvar Exp $	*/
 
 /*	$OpenBSD: fpemu.S,v 1.4 2001/03/29 02:18:45 mickey Exp $	*/
 
@@ -91,7 +91,7 @@ LEAF_ENTRY_NOPROFILE(fpu_emulate)
 
 L$fpu_cln1:
 	/*
-	 * theoreticaly we would need to determine the fpu instruction
+	 * theoretically we would need to determine the fpu instruction
 	 * exception type (there could be 4 of those, but stick w/
 	 * non-timex fpus for now.
 	 */
