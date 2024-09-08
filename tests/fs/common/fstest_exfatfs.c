@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_exfatfs.c,v 1.1.2.2 2024/08/14 15:31:27 perseant Exp $	*/
+/*	$NetBSD: fstest_exfatfs.c,v 1.1.2.3 2024/09/08 04:09:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2024 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@ exfatfs_fstest_newfs(const atf_tc_t *tc, void **buf, const char *image,
 	snprintf(args->ta_imgpath, MAXPATHLEN, "%s", image);
 	args->ta_uargs.fspec = args->ta_devpath;
 	args->ta_uargs.mask = 0755;
+	args->ta_uargs.dirmask = 0755;
 
 	res = rump_pub_etfs_register(args->ta_devpath, image, RUMP_ETFS_BLK);
 	if (res != 0) {
