@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.49 2023/08/19 08:54:36 rillig Exp $	*/
+/*	$NetBSD: time.h,v 1.50 2024/09/08 18:13:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -137,7 +137,7 @@ struct tm *getdate(const char *);
 extern int getdate_err;
 #endif
 
-/* ISO/IEC 9899:201x 7.27.1/3 Components of time */
+/* ISO/IEC 9899:2011 7.27.1/3 Components of time */
 #include <sys/timespec.h>
 
 #if (_POSIX_C_SOURCE - 0) >= 199309L || (_XOPEN_SOURCE - 0) >= 500 || \
@@ -234,7 +234,7 @@ char *strptime_l(const char * __restrict, const char * __restrict,
 
 #endif /* _NETBSD_SOURCE */
 
-/* ISO/IEC 9899:201x 7.27.2.5 The timespec_get function */
+/* ISO/IEC 9899:2011 7.27.2.5 The timespec_get function */
 #define TIME_UTC	1	/* time elapsed since epoch */
 int timespec_get(struct timespec *ts, int base);
 
