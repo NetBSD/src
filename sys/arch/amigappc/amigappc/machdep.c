@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.54 2024/03/05 14:15:28 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.55 2024/09/08 10:17:54 andvar Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54 2024/03/05 14:15:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55 2024/09/08 10:17:54 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -673,8 +673,10 @@ cpu_reboot(int howto, char *what)
 	/* Do dump if requested */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP) {
 		oea_dumpsys();
+#ifdef DDB
 		/* XXX dumpsys doesn't work, so give a chance to debug */
 		Debugger();
+#endif
 	}
 
 halt_sys:
