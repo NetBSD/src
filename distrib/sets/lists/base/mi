@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1351 2024/09/08 15:25:09 riastradh Exp $
+# $NetBSD: mi,v 1.1352 2024/09/08 22:35:02 kre Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -2190,7 +2190,7 @@
 ./usr/share/certs/mozilla/email/USERTrust_ECC_Certification_Authority.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/USERTrust_RSA_Certification_Authority.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/XRamp_Global_CA_Root.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/certSIGN_ROOT_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/certSIGN_ROOT_CA.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/email/e-Szigno_Root_CA_2017.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/ePKI_Root_Certification_Authority.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/emSign_ECC_Root_CA_-_C3.pem	base-mozcerts-share	share
