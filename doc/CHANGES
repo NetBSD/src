@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3087 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3088 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -483,7 +483,7 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		StarFive VisionFive 2.  [skrll 20240819]
 	gpt(8): Add -U option to specify new UUID, from Anon Ymous.
 		[chirstos 20240819]
-	gpt(8): Recognize OpenBSD UUID.  [chirstos 20240819]
+	gpt(8): Recognize OpenBSD UUID.  [christos 20240819]
 	ifconfig(8): Show link state on -v.  [ozaki-r 20240820]
 	tests: Add tests for shmif(4).  [ozaki-r 20240820]
 	syslogd(8): Add -k option. [gutteridge 20240821]
@@ -500,3 +500,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		Code from k-goda at IIJ.  [ozaki-r 20240902]
 	libpcap: Import 1.10.5. [christos 20240902]
 	tcpdump(8): Import 4.99.5. [christos 20240902]
+	OpenSSL: Imported 3.0.15. [christos 20240908]
