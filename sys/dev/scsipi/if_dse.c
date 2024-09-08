@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dse.c,v 1.6 2024/07/06 10:37:33 andvar Exp $ */
+/*	$NetBSD: if_dse.c,v 1.7 2024/09/08 04:40:34 nat Exp $ */
 
 /*
  * Driver for DaynaPORT SCSI/Link SCSI-Ethernet
@@ -983,7 +983,7 @@ dse_get_addr(struct dse_softc *sc, uint8_t *myaddr)
 	if (error == 0) {
 		memcpy(myaddr, &(tmpbuf[0]), ETHER_ADDR_LEN);
 
-		aprint_error_dev(sc->sc_dev, "ethernet address %s\n",
+		aprint_normal_dev(sc->sc_dev, "ethernet address %s\n",
 			   ether_sprintf(myaddr));
 	}
 
