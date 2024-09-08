@@ -1,4 +1,4 @@
--/* $NetBSD: isp_target.c,v 1.37 2021/12/12 13:05:14 andvar Exp $ */
+-/* $NetBSD: isp_target.c,v 1.38 2024/09/08 09:36:50 rillig Exp $ */
 /*-
  *  Copyright (c) 1997-2008 by Matthew Jacob
  *  All rights reserved.
@@ -65,7 +65,7 @@
 
 #ifdef	__NetBSD__
 #include <sys/cdefs.h> 
-__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.37 2021/12/12 13:05:14 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.38 2024/09/08 09:36:50 rillig Exp $");
 #include <dev/ic/isp_netbsd.h>
 #endif
 #ifdef	__FreeBSD__
@@ -1388,8 +1388,8 @@ isp_handle_atio2(ispsoftc_t *isp, at2_entry_t *aep)
 
 	case AT_RESET:
 		/*
-		 * A bus reset came along an blew away this command. Why
-		 * they do this in addition the async event code stuff,
+		 * A bus reset came along and blew away this command. Why
+		 * they do this in addition to the async event code stuff,
 		 * I dunno.
 		 *
 		 * Ignore it because the async event will clear things

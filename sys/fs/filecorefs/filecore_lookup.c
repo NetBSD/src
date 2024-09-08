@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.22 2022/08/06 18:26:42 andvar Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.23 2024/09/08 09:36:51 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.22 2022/08/06 18:26:42 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.23 2024/09/08 09:36:51 rillig Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.22 2022/08/06 18:26:42 andvar 
  * exists, lookup returns both the target and its parent directory locked.
  * When creating or renaming and LOCKPARENT is specified, the target may
  * not be ".".  When deleting and LOCKPARENT is specified, the target may
- * be "."., but the caller must check to ensure it does an vrele and iput
+ * be ".", but the caller must check to ensure it does a vrele and iput
  * instead of two iputs.
  *
  * Overall outline of ufs_lookup:

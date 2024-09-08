@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: diffutils2netbsd,v 1.1 2016/01/13 03:39:28 christos Exp $
+#	$NetBSD: diffutils2netbsd,v 1.2 2024/09/08 09:36:46 rillig Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -26,7 +26,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# diffutils2netbsd:  convert an diffutils source tree into a
+# diffutils2netbsd:  convert a diffutils source tree into a
 # format suitable for commit.  Works on current dir.
 #
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.61 2021/08/07 16:18:41 thorpej Exp $ */
+/*	$NetBSD: kbd.c,v 1.62 2024/09/08 09:36:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.61 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.62 2024/09/08 09:36:48 rillig Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.61 2021/08/07 16:18:41 thorpej Exp $");
 /* WSKBD */
 
 /*
- * If NWSKBD>0 we try to attach an wskbd device to us. What follows
+ * If NWSKBD>0 we try to attach a wskbd device to us. What follows
  * is definitions of callback functions and structures that are passed
  * to wscons when initializing.
  */

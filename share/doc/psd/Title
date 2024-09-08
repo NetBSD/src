@@ -1,4 +1,4 @@
-.\"	$NetBSD: Title,v 1.6 2014/10/01 14:12:29 christos Exp $
+.\"	$NetBSD: Title,v 1.7 2024/09/08 09:36:48 rillig Exp $
 .\"
 .\" Copyright (c) 1986, 1993, 1994 The Regents of the University of California.
 .\" All rights reserved.
@@ -481,7 +481,7 @@ and ``\s-1UNIX\s+1 System Manager's Manual'' (SMM).
 In particular, for an overview see ``The \s-1UNIX\s+1 Time-Sharing System'' (PSD:1)
 by Ritchie and Thompson; for a tutorial see
 ``\s8\s-1UNIX\s+1\s10 for Beginners'' (USD:1) by Kernighan,
-and for an guide to the new features of this latest version, see
+and for a guide to the new features of this latest version, see
 ``Berkeley Software Architecture Manual (4.4 Edition)'' (PSD:5).
 .LP
 Within the area it surveys, this volume attempts to be timely, complete

@@ -1,4 +1,4 @@
-/* $NetBSD: mips_mcclock.c,v 1.20 2021/11/10 15:39:03 msaitoh Exp $ */
+/* $NetBSD: mips_mcclock.c,v 1.21 2024/09/08 09:36:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.20 2021/11/10 15:39:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.21 2024/09/08 09:36:49 rillig Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ mips_mcclock_tickloop(void *mcclock_addr, int clockmask)
  *
  * Side Effects:
  * 	set the global variables "cpuspeed", used by DELAY() and delay()
- *	as an instructions-per-microsecond multiplier, to an value appropriate
+ *	as an instructions-per-microsecond multiplier, to a value appropriate
  *	for the estimated clock speed.
  */
 unsigned

@@ -1,8 +1,8 @@
-/*	$NetBSD: getether.c,v 1.9 2009/04/15 00:23:29 lukem Exp $	*/
+/*	$NetBSD: getether.c,v 1.10 2024/09/08 09:36:53 rillig Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getether.c,v 1.9 2009/04/15 00:23:29 lukem Exp $");
+__RCSID("$NetBSD: getether.c,v 1.10 2024/09/08 09:36:53 rillig Exp $");
 #endif
 
 /*
@@ -262,7 +262,7 @@ getether(char *ifname, char *eap)
 	/*
 	 * Get the Ethernet address the same way the ARP module
 	 * does when it is pushed onto a new stream (bind).
-	 * One should instead be able just do an dl_info_req
+	 * One should instead be able just do a dl_info_req
 	 * but many drivers do not supply the hardware address
 	 * in the response to dl_info_req (they MUST supply it
 	 * for dl_bind_ack because the ARP module requires it).

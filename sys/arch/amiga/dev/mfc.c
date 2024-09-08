@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.61 2022/10/26 23:54:19 riastradh Exp $ */
+/*	$NetBSD: mfc.c,v 1.62 2024/09/08 09:36:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -55,7 +55,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.61 2022/10/26 23:54:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.62 2024/09/08 09:36:48 rillig Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -349,7 +349,7 @@ const struct speedtab mfcs2speedtab2[] = {
 };
 
 /*
- * if we are an bsc/Alf Data MultFaceCard (I, II, and III)
+ * if we are a bsc/Alf Data MultFaceCard (I, II, and III)
  */
 int
 mfcmatch(device_t parent, cfdata_t cf, void *aux)

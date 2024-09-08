@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs_ras.S,v 1.11 2020/09/26 08:21:27 simonb Exp $	*/
+/*	$NetBSD: lock_stubs_ras.S,v 1.12 2024/09/08 09:36:49 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: lock_stubs_ras.S,v 1.11 2020/09/26 08:21:27 simonb Exp $")
+RCSID("$NetBSD: lock_stubs_ras.S,v 1.12 2024/09/08 09:36:49 rillig Exp $")
 
 #include "assym.h"
 
@@ -61,7 +61,7 @@ RCSID("$NetBSD: lock_stubs_ras.S,v 1.11 2020/09/26 08:21:27 simonb Exp $")
  *   the point where a restart occurs if we trap within the section.
  *
  * o The entire code block is aligned on a 256 byte boundary, and is
- *   256 bytes in size.  This is to allow us to do an pessimistic check
+ *   256 bytes in size.  This is to allow us to do a pessimistic check
  *   after taking a trap with:
  *
  *	if ((addr & ~255) == _lock_ras_start)

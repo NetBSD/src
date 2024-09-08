@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.40 2023/05/31 20:00:50 ad Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.41 2024/09/08 09:36:50 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.40 2023/05/31 20:00:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.41 2024/09/08 09:36:50 rillig Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,7 @@ ld_iop_attach(device_t parent, device_t self, void *aux)
 	printf(" %s, %s", typestr, fixedstr);
 
 	/*
-	 * Determine if the device has an private cache.  If so, print the
+	 * Determine if the device has a private cache.  If so, print the
 	 * cache size.  Even if the device doesn't appear to have a cache,
 	 * we perform a flush at shutdown.
 	 */

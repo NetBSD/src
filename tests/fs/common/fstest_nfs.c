@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_nfs.c,v 1.12 2020/06/17 00:16:21 kamil Exp $	*/
+/*	$NetBSD: fstest_nfs.c,v 1.13 2024/09/08 09:36:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -290,7 +290,7 @@ dounmount(const atf_tc_t *tc, const char *path, int flags)
 	int status, i, sverrno;
 
 	/*
-	 * NFS handles sillyrenames in an workqueue.  Some of them might
+	 * NFS handles sillyrenames in a workqueue.  Some of them might
 	 * be still in the queue even if all user activity has ceased.
 	 * We try to unmount for 2 seconds to give them a chance
 	 * to flush out.

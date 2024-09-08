@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.94 2023/08/26 05:22:50 riastradh Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.95 2024/09/08 09:36:52 rillig Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.94 2023/08/26 05:22:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.95 2024/09/08 09:36:52 rillig Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,7 +252,7 @@ ext2fs_readdir(void *v)
  * exists, lookup returns both the target and its parent directory locked.
  * When creating or renaming and LOCKPARENT is specified, the target may
  * not be ".".  When deleting and LOCKPARENT is specified, the target may
- * be "."., but the caller must check to ensure it does an vrele and vput
+ * be ".", but the caller must check to ensure it does a vrele and vput
  * instead of two vputs.
  *
  * Overall outline of ext2fs_lookup:

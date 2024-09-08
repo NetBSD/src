@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.44 2024/08/05 13:37:26 riastradh Exp $	*/
+/*	$NetBSD: ftree.c,v 1.45 2024/09/08 09:36:45 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -71,7 +71,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.44 2024/08/05 13:37:26 riastradh Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.45 2024/09/08 09:36:45 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -165,7 +165,7 @@ ftree_start(void)
 	 * set up the operation mode of fts, open the first file arg. We must
 	 * use FTS_NOCHDIR, as the user may have to open multiple archives and
 	 * if fts did a chdir off into the boondocks, we may create an archive
-	 * volume in an place where the user did not expect to.
+	 * volume in a place where the user did not expect to.
 	 */
 	ftsopts = FTS_NOCHDIR;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.32 2022/08/06 18:26:41 andvar Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.33 2024/09/08 09:36:51 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.32 2022/08/06 18:26:41 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.33 2024/09/08 09:36:51 rillig Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.32 2022/08/06 18:26:41 andvar Ex
  * and its parent directory locked.
  * When creating or renaming, the target may * not be ".".
  * When deleting , the target may be "."., but the caller must check
- * to ensure it does an vrele and vput instead of two vputs.
+ * to ensure it does a vrele and vput instead of two vputs.
  *
  * Overall outline of ufs_lookup:
  *

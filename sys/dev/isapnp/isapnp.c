@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.63 2022/09/25 17:20:03 thorpej Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.64 2024/09/08 09:36:50 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.63 2022/09/25 17:20:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.64 2024/09/08 09:36:50 rillig Exp $");
 
 #include "isadma.h"
 
@@ -702,7 +702,7 @@ isapnp_find(struct isapnp_softc *sc, int all)
 /* isapnp_configure():
  *	Configure a PnP card
  *	XXX: The memory configuration code is wrong. We need to check the
- *	     range/length bit an do appropriate sets.
+ *	     range/length bit and do appropriate sets.
  */
 static void
 isapnp_configure(struct isapnp_softc *sc, const struct isapnp_attach_args *ipa)

@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.8 2019/11/20 19:37:53 pgoyette Exp $	     */
+/*	$NetBSD: core_machdep.c,v 1.9 2024/09/08 09:36:50 rillig Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.8 2019/11/20 19:37:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.9 2024/09/08 09:36:50 rillig Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.8 2019/11/20 19:37:53 pgoyette Ex
 
 /*
  * Dump the machine specific header information at the start of a core dump.
- * First put all regs in PCB for debugging purposes. This is not an good
+ * First put all regs in PCB for debugging purposes. This is not a good
  * way to do this, but good for my purposes so far.
  */
 int

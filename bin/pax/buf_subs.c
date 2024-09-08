@@ -1,4 +1,4 @@
-/*	$NetBSD: buf_subs.c,v 1.31 2023/05/28 21:42:40 lukem Exp $	*/
+/*	$NetBSD: buf_subs.c,v 1.32 2024/09/08 09:36:45 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: buf_subs.c,v 1.31 2023/05/28 21:42:40 lukem Exp $");
+__RCSID("$NetBSD: buf_subs.c,v 1.32 2024/09/08 09:36:45 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -594,7 +594,7 @@ wr_skip(off_t skcnt)
 /*
  * wr_rdfile()
  *	fill write buffer with the contents of a file. We are passed an	open
- *	file descriptor to the file an the archive structure that describes the
+ *	file descriptor to the file and the archive structure that describes the
  *	file we are storing. The variable "left" is modified to contain the
  *	number of bytes of the file we were NOT able to write to the archive.
  *	it is important that we always write EXACTLY the number of bytes that

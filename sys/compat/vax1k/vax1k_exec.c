@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_exec.c,v 1.19 2019/11/20 19:37:53 pgoyette Exp $	*/
+/*	$NetBSD: vax1k_exec.c,v 1.20 2024/09/08 09:36:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.19 2019/11/20 19:37:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.20 2024/09/08 09:36:50 rillig Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ exec_vax1k_modcmd(modcmd_t cmd, void *arg)
 
 /*
  * exec_vax1k_makecmds(): Check if it's an a.out-format executable
- * with an vax1k magic number.
+ * with a vax1k magic number.
  *
  * Given a proc pointer and an exec package pointer, see if the referent
  * of the epp is in a.out format.  Just check 'standard' magic numbers for
@@ -175,7 +175,7 @@ done:
 }
 
 /*
- * exec_vax1k_prep_anymagic(): Prepare an vax1k ?MAGIC binary's exec package
+ * exec_vax1k_prep_anymagic(): Prepare a vax1k ?MAGIC binary's exec package
  *
  * First, set of the various offsets/lengths in the exec package.
  * Note that all code is mapped RW; no protection, but because it is

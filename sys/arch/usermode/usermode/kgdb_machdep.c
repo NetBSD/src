@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.4 2018/08/05 18:42:48 reinoud Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.5 2024/09/08 09:36:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.4 2018/08/05 18:42:48 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.5 2024/09/08 09:36:49 rillig Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -297,7 +297,7 @@ kgdb_port_init(void)
 }
 
 /*
- * handle an trap instruction encountered from KGDB
+ * handle a trap instruction encountered from KGDB
  */
 void
 kgdb_kernel_trap(int signo, vaddr_t pc, vaddr_t va, ucontext_t *ucp)
