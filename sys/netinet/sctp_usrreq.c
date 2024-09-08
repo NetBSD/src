@@ -1,5 +1,5 @@
 /*	$KAME: sctp_usrreq.c,v 1.50 2005/06/16 20:45:29 jinmei Exp $	*/
-/*	$NetBSD: sctp_usrreq.c,v 1.26 2024/09/08 09:36:52 rillig Exp $	*/
+/*	$NetBSD: sctp_usrreq.c,v 1.27 2024/09/08 17:28:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.26 2024/09/08 09:36:52 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.27 2024/09/08 17:28:37 rillig Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2431,7 +2431,7 @@ sctp_optsset(struct socket *so, struct sockopt *sopt)
 			set_opt = SCTP_PCB_FLAGS_AUTOCLOSE;
 			/*
 			 * The value is in ticks.
-			 * Note this does not effect old associations, only
+			 * Note this does not affect old associations, only
 			 * new ones.
 			 */
 			inp->sctp_ep.auto_close_time = (*mopt * hz);

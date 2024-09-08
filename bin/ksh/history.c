@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.19 2018/05/08 16:37:59 kamil Exp $	*/
+/*	$NetBSD: history.c,v 1.20 2024/09/08 17:28:36 rillig Exp $	*/
 
 /*
  * command history
@@ -19,7 +19,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: history.c,v 1.19 2018/05/08 16:37:59 kamil Exp $");
+__RCSID("$NetBSD: history.c,v 1.20 2024/09/08 17:28:36 rillig Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -325,7 +325,7 @@ hist_execute(cmd)
 	 * input 'cause posix says the redirection and variable assignments
 	 * in
 	 *	X=y fc -e - 42 2> /dev/null
-	 * are to effect the repeated commands environment.
+	 * are to affect the repeated commands environment.
 	 */
 	/* XXX: source should not get trashed by this.. */
 	sold = source;

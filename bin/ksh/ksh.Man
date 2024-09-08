@@ -1,5 +1,5 @@
 '\" t
-.\" $NetBSD: ksh.Man,v 1.29 2022/08/21 20:12:37 uwe Exp $
+.\" $NetBSD: ksh.Man,v 1.30 2024/09/08 17:28:36 rillig Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -2198,7 +2198,7 @@ directories (\fIi.e.\fP,  the shell handles \fB..\fP, which allows the user
 to be oblivious of symlink links to directories).
 Clear by default.
 Note that setting
-this option does not effect the current value of the \fBPWD\fP parameter;
+this option does not affect the current value of the \fBPWD\fP parameter;
 only the \fBcd\fP command changes \fBPWD\fP.
 See the \fBcd\fP and \fBpwd\fP commands above for more details.
 T}
@@ -2452,7 +2452,7 @@ command), in which case the output is slightly longer:
     sys    0.00
 .fi
 (the number of digits after the decimal may vary from system to system).
-Note that simple redirections of standard error do not effect the output
+Note that simple redirections of standard error do not affect the output
 of the time command:
 .ce
 \fBtime sleep 1 2> \fP\fIafile\fP
