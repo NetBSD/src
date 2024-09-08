@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dse.c,v 1.7 2024/09/08 04:40:34 nat Exp $ */
+/*	$NetBSD: if_dse.c,v 1.8 2024/09/08 04:42:49 nat Exp $ */
 
 /*
  * Driver for DaynaPORT SCSI/Link SCSI-Ethernet
@@ -578,8 +578,7 @@ dse_send_worker(struct work *wk, void *cookie)
 		error = dse_scsipi_cmd(sc->sc_periph,
 		    (void *)&cmd_send, sizeof(cmd_send),
 		    sc->sc_tbuf, len, DSE_RETRIES,
-		    DSE_TIMEOUT, NULL, XS_CTL_NOSLEEP | XS_CTL_POLL |
-		    XS_CTL_DATA_OUT);
+		    DSE_TIMEOUT, NULL, XS_CTL_NOSLEEP | XS_CTL_DATA_OUT);
 		if (error) {
 			aprint_error_dev(sc->sc_dev,
 			    "not queued, error %d\n", error);
@@ -1080,7 +1079,7 @@ dse_set_multi(struct dse_softc *sc)
 
 	error = dse_scsipi_cmd(sc->sc_periph,
 	    (struct scsipi_generic*)&cmd_set_multi, sizeof(cmd_set_multi),
-	    mybuf, len, DSE_RETRIES, DSE_TIMEOUT, NULL, XS_CTL_POLL | XS_CTL_DATA_OUT);
+	    mybuf, len, DSE_RETRIES, DSE_TIMEOUT, NULL, XS_CTL_DATA_OUT);
 
 	free(mybuf, M_DEVBUF);
 
