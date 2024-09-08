@@ -102,7 +102,6 @@ NAVER_Global_Root_Certification_Authority
 AC_RAIZ_FNMT-RCM_SERVIDORES_SEGUROS
 GlobalSign_Root_R46
 GlobalSign_Root_E46
-GLOBALTRUST_2020
 ANF_Secure_Server_Root_CA
 Certum_EC-384_CA
 Certum_Trusted_Root_CA
@@ -144,3 +143,8 @@ CommScope_Public_Trust_RSA_Root-01
 CommScope_Public_Trust_RSA_Root-02
 Telekom_Security_TLS_ECC_Root_2020
 Telekom_Security_TLS_RSA_Root_2023
+FIRMAPROFESIONAL_CA_ROOT-A_WEB
+TWCA_CYBER_Root_CA
+SecureSign_Root_CA12
+SecureSign_Root_CA14
+SecureSign_Root_CA15
