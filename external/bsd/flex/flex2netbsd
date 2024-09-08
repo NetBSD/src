@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: flex2netbsd,v 1.5 2017/01/07 15:45:14 christos Exp $
+#	$NetBSD: flex2netbsd,v 1.6 2024/09/08 10:01:58 rillig Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -26,7 +26,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# flex2netbsd:  convert a flex tree into a
+# flex2netbsd:  convert a flex source tree into a
 # netbsd flex source tree, under src/external/bsd/flex/dist,
 # based on flex2netbsd by Bernd Ernesti and changes by Simon Burge
 #

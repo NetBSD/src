@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: byacc2netbsd,v 1.5 2017/06/05 18:54:30 christos Exp $
+#	$NetBSD: byacc2netbsd,v 1.6 2024/09/08 10:01:58 rillig Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -26,7 +26,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# byacc2netbsd:  convert a byacc tree into a
+# byacc2netbsd:  convert a byacc source tree into a
 # netbsd byacc source tree, under src/external/bsd/byacc/dist,
 # based on byacc2netbsd by Bernd Ernesti and changes by Simon Burge
 #
