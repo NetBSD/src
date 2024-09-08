@@ -1,9 +1,9 @@
-/*	$NetBSD: var.c,v 1.25 2023/06/02 08:51:46 andvar Exp $	*/
+/*	$NetBSD: var.c,v 1.26 2024/09/08 17:28:36 rillig Exp $	*/
 
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: var.c,v 1.25 2023/06/02 08:51:46 andvar Exp $");
+__RCSID("$NetBSD: var.c,v 1.26 2024/09/08 17:28:36 rillig Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -1249,7 +1249,7 @@ set_array(var, reset, vals)
 		/* trash existing values and attributes */
 		unset(vp, 0);
 	/* todo: would be nice for assignment to completely succeed or
-	 * completely fail.  Only really effects integer arrays:
+	 * completely fail.  Only really affects integer arrays:
 	 * evaluation of some of vals[] may fail...
 	 */
 	for (i = 0; vals[i]; i++) {

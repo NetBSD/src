@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.45 2024/09/08 09:36:45 rillig Exp $	*/
+/*	$NetBSD: ftree.c,v 1.46 2024/09/08 17:28:36 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -71,7 +71,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.45 2024/09/08 09:36:45 rillig Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.46 2024/09/08 17:28:36 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -170,7 +170,7 @@ ftree_start(void)
 	ftsopts = FTS_NOCHDIR;
 
 	/*
-	 * optional user flags that effect file traversal
+	 * optional user flags that affect file traversal
 	 * -H command line symlink follow only (half follow)
 	 * -L follow sylinks (logical)
 	 * -P do not follow sylinks (physical). This is the default.
