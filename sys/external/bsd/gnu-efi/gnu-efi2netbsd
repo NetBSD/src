@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: gnu-efi2netbsd,v 1.1 2014/04/01 16:10:56 jakllsch Exp $
+#	$NetBSD: gnu-efi2netbsd,v 1.2 2024/09/08 09:36:51 rillig Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -26,7 +26,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# gnu-efi2netbsd:  convert an gnu-efi source tree into a
+# gnu-efi2netbsd:  convert a gnu-efi source tree into a
 # NetBSD gnu-efi source tree, under src/sys/external/bsd,
 #
 # Rough instructions for importing new gnu-efi release:

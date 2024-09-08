@@ -1,4 +1,4 @@
-.\"	$NetBSD: csh.g,v 1.7 2024/06/02 12:11:36 andvar Exp $
+.\"	$NetBSD: csh.g,v 1.8 2024/09/08 09:36:44 rillig Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -258,7 +258,7 @@ is usually used because it is easier to type.
 The
 .I chsh
 command is used to change the shell which you use on \s-2UNIX\s0.
-By default, you use an different version of the shell
+By default, you use a different version of the shell
 which resides in `/bin/sh'.
 You can change your shell to `/bin/csh' by doing
 .DS
@@ -334,7 +334,7 @@ on your terminal and simultaneously pressing another character, much like
 the \s-2SHIFT\s0 key is used to produce upper case characters. Thus
 .I control- c
 is produced by holding down the \s-2CONTROL\s0 key while pressing the
-`c' key.  Usually \s-2UNIX\s0 prints an caret (^) followed by the
+`c' key.  Usually \s-2UNIX\s0 prints a caret (^) followed by the
 corresponding letter when you type a
 .I control
 character (e.g. `^C' for

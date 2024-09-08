@@ -1,4 +1,4 @@
-##	$NetBSD: Makefile,v 1.7 2014/01/16 01:15:33 christos Exp $
+##	$NetBSD: Makefile,v 1.8 2024/09/08 09:36:48 rillig Exp $
 ##  Notes:
 ##    This set of tests creates a dummy directory tree in /tmp and
 ##    populates it with several files.  The test requires around 1100
@@ -10,7 +10,7 @@
 ##    orders. For each byte order it is checked that:
 ##      - the kernel understands both filesystems created
 ##      - fsck_ffs can convert them from one byte order to the other
-##      - dump handles properly the 'nodump' flag, an that restore can
+##      - dump handles properly the 'nodump' flag, and that restore can
 ##        properly restore the filesystem.
 ##
 ##    This is derived from work done by Brian Grayson, submitted in PR 6706.

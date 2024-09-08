@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.185 2024/07/14 05:10:40 kre Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.186 2024/09/08 09:36:51 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.185 2024/07/14 05:10:40 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.186 2024/09/08 09:36:51 rillig Exp $");
 
 #include <sys/param.h>
 
@@ -1042,7 +1042,7 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t **fpp)
 			mutex_exit(&ktrace_lock);
 
 			/*
-			 * XXX: not correct.  needs an way to detect
+			 * XXX: not correct.  needs a way to detect
 			 * whether ktruss or ktrace.
 			 */
 			if (fp->f_type == DTYPE_PIPE)

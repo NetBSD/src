@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.44 2020/01/21 16:27:53 tkusumi Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.45 2024/09/08 09:36:50 rillig Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.44 2020/01/21 16:27:53 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.45 2024/09/08 09:36:50 rillig Exp $");
 
 /*
  * This file implements initial version of device-mapper stripe target.
@@ -291,7 +291,7 @@ dm_target_stripe_strategy(dm_table_entry_t *table_en, struct buf *bp)
 		for (i = 0; i < stripe_devnr && tlc != NULL; i++)
 			tlc = TAILQ_NEXT(tlc, entries);
 
-		/* by this point we should have an tlc */
+		/* by this point we should have a tlc */
 		KASSERT(tlc != NULL);
 
 		nestbuf->b_blkno += tlc->offset;

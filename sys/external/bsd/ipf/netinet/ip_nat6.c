@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat6.c,v 1.12 2021/02/10 00:28:55 christos Exp $	*/
+/*	$NetBSD: ip_nat6.c,v 1.13 2024/09/08 09:36:51 rillig Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -994,7 +994,7 @@ ipf_nat6_add(fr_info_t *fin, ipnat_t *np, nat_t **natsave, u_int flags,
 		 * In the ICMP query NAT code, we translate the ICMP id fields
 		 * to make them unique. This is indepedent of the ICMP type
 		 * (e.g. in the unlikely event that a host sends an echo and
-		 * an tstamp request with the same id, both packets will have
+		 * a tstamp request with the same id, both packets will have
 		 * their ip address/id field changed in the same way).
 		 */
 		/* The icmp6_id field is used by the sender to identify the

@@ -1,4 +1,4 @@
-/*	$NetBSD: line.c,v 1.17 2021/09/06 07:03:50 rin Exp $	*/
+/*	$NetBSD: line.c,v 1.18 2024/09/08 09:36:47 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: line.c,v 1.17 2021/09/06 07:03:50 rin Exp $");
+__RCSID("$NetBSD: line.c,v 1.18 2024/09/08 09:36:47 rillig Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -121,7 +121,7 @@ vline(chtype ch, int count)
 
 /*
  * mvvline --
- *	Move to the given location an draw a vertical line of character ch.
+ *	Move to the given location and draw a vertical line of character ch.
  */
 int
 mvvline(int y, int x, chtype ch, int count)

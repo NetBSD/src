@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.c,v 1.30 2024/07/05 19:28:36 andvar Exp $	*/
+/*	$NetBSD: grfabs_fal.c,v 1.31 2024/09/08 09:36:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_fal.c,v 1.30 2024/07/05 19:28:36 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_fal.c,v 1.31 2024/09/08 09:36:48 rillig Exp $");
 
 #ifdef FALCON_VIDEO
 /*
@@ -456,8 +456,8 @@ falcon_use_colormap(view_t *v, colormap_t *cm)
 		return (EINVAL);
 
 	/*
-	 * First get the colormap addresses an calculate
-	 * howmany colors are in it.
+	 * First get the colormap addresses and calculate
+	 * how many colors are in it.
 	 */
 	if (dm->depth == 16) /* direct color, no colormap;
 				but also not (yet) supported */

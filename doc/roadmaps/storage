@@ -1,4 +1,4 @@
-$NetBSD: storage,v 1.28 2021/10/21 13:21:53 andvar Exp $
+$NetBSD: storage,v 1.29 2024/09/08 09:36:45 rillig Exp $
 
 NetBSD Storage Roadmap
 ======================
@@ -174,7 +174,7 @@ obviously one cannot encrypt the bootblocks, but it isn't clear where
 in boot the encrypted volume should take over, or how to make a best
 effort at protecting the unencrypted elements needed to boot. (At
 least, in the absence of something like UEFI secure boot combined with
-an cryptographic oracle to sign your bootloader image so UEFI will
+a cryptographic oracle to sign your bootloader image so UEFI will
 accept it.) There's also the question of how one runs cgdconfig(8) and
 where the cgdconfig binary comes from.
 

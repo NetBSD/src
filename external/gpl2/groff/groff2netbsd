@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: groff2netbsd,v 1.1 2016/01/13 19:01:55 christos Exp $
+#	$NetBSD: groff2netbsd,v 1.2 2024/09/08 09:36:46 rillig Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -26,7 +26,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# groff2netbsd:  convert an groff source tree into a
+# groff2netbsd:  convert a groff source tree into a
 # netbsd groff source tree, under basesrc/dist,
 # based on bind2netbsd by Bernd Ernesti and changes by Simon Burge
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rtld_r_debug.c,v 1.5 2023/11/24 17:40:20 riastradh Exp $	*/
+/*	$NetBSD: t_rtld_r_debug.c,v 1.6 2024/09/08 09:36:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ ATF_TC(dlopen);
 ATF_TC_HEAD(dlopen, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "check whether r_debug is well-formed after an dlopen(3) call");
+	    "check whether r_debug is well-formed after a dlopen(3) call");
 }
 ATF_TC_BODY(dlopen, tc)
 {

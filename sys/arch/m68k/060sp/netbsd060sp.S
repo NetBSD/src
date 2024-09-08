@@ -1,6 +1,6 @@
 /*
 #
-# $NetBSD: netbsd060sp.S,v 1.7 2001/07/12 17:17:45 scw Exp $
+# $NetBSD: netbsd060sp.S,v 1.8 2024/09/08 09:36:49 rillig Exp $
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -218,13 +218,13 @@ dmrws:
 	rts
 
 /*
-# 
+#
 # _060_imem_read_long():
 # Read an instruction longword from user memory.
 #
 # _060_dmem_read_long():
-# Read an data longword from user memory.
-# 
+# Read a data longword from user memory.
+#
 #
 # INPUTS:
 #	a0 - user source address

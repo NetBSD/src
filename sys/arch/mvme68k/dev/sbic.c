@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.36 2022/02/09 22:30:26 andvar Exp $	*/
+/*	$NetBSD: sbic.c,v 1.37 2024/09/08 09:36:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.36 2022/02/09 22:30:26 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.37 2024/09/08 09:36:49 rillig Exp $");
 
 #include "opt_ddb.h"
 
@@ -2419,7 +2419,7 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 		if (dev->sc_nexus) {
 			/*
 			 * Whoops! We've been reselected with
-			 * an command in progress!
+			 * a command in progress!
 			 * The best we can do is to put the current command
 			 * back on the ready list and hope for the best.
 			 */

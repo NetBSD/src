@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.45 2023/12/20 05:18:00 thorpej Exp $	*/
+/*	$NetBSD: dvma.c,v 1.46 2024/09/08 09:36:49 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.45 2023/12/20 05:18:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.46 2024/09/08 09:36:49 rillig Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.45 2023/12/20 05:18:00 thorpej Exp $");
 #include <sun3/sun3x/iommu.h>
 
 /*
- * Use an vmem arena to manage DVMA scratch-memory pages.
+ * Use a vmem arena to manage DVMA scratch-memory pages.
  * Note: SunOS says last three pages are reserved (PROM?)
  * Note: need a separate map (sub-map?) for last 1MB for
  *       use by VME slave interface.

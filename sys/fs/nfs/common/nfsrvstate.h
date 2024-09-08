@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsrvstate.h,v 1.2 2016/12/13 22:52:46 pgoyette Exp $	*/
+/*	$NetBSD: nfsrvstate.h,v 1.3 2024/09/08 09:36:51 rillig Exp $	*/
 /*-
  * Copyright (c) 2009 Rick Macklem, University of Guelph
  * All rights reserved.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  *
  * FreeBSD: head/sys/fs/nfs/nfsrvstate.h 298788 2016-04-29 16:07:25Z pfg 
- * $NetBSD: nfsrvstate.h,v 1.2 2016/12/13 22:52:46 pgoyette Exp $
+ * $NetBSD: nfsrvstate.h,v 1.3 2024/09/08 09:36:51 rillig Exp $
  */
 
 #ifndef _NFS_NFSRVSTATE_H_
@@ -261,7 +261,7 @@ struct nfslockfile {
 };
 
 /*
- * This structure is malloc'd an chained off hash lists for user/group
+ * This structure is malloc'd and chained off hash lists for user/group
  * names.
  */
 struct nfsusrgrp {

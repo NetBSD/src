@@ -1,4 +1,4 @@
-$NetBSD: virtualization,v 1.6 2019/06/17 18:22:41 sevan Exp $
+$NetBSD: virtualization,v 1.7 2024/09/08 09:36:45 rillig Exp $
 
 NetBSD Virtualization Roadmap
 =============================
@@ -24,7 +24,7 @@ Some explanations
 1. NetBSD/usermode
 ------------------
 
-NetBSD/usermode is an port of NetBSD to a POSIX-compatible user-space,
+NetBSD/usermode is a port of NetBSD to a POSIX-compatible user-space,
 with the intention that it should be possible to run the usermode
 version of NetBSD on any POSIX-compatible operating system.  This code
 has been committed to the repository by jmcneill, and updated by reinoud

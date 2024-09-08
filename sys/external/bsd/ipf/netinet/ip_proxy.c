@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.7 2018/06/03 10:37:23 maxv Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.8 2024/09/08 09:36:51 rillig Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -103,7 +103,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.7 2018/06/03 10:37:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.8 2024/09/08 09:36:51 rillig Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_proxy.c,v 1.1.1.2 2012/07/22 13:45:33 darrenr Exp";
 #endif
@@ -1055,7 +1055,7 @@ ipf_proxy_check(fr_info_t *fin, nat_t *nat)
 /*              pr(I)   - protocol number for proxy                         */
 /*              name(I) - proxy name                                        */
 /*                                                                          */
-/* Search for an proxy by the protocol it is being used with and its name.  */
+/* Search for a proxy by the protocol it is being used with and its name.   */
 /* ------------------------------------------------------------------------ */
 aproxy_t *
 ipf_proxy_lookup(void *arg, u_int pr, char *name)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.58 2023/06/26 10:57:09 andvar Exp $	*/
+/*	$NetBSD: kbd.c,v 1.59 2024/09/08 09:36:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.58 2023/06/26 10:57:09 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.59 2024/09/08 09:36:48 rillig Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -100,7 +100,7 @@ struct kbd_softc {
 
 /* WSKBD */
 /*
- * If NWSKBD>0 we try to attach an wskbd device to us. What follows
+ * If NWSKBD>0 we try to attach a wskbd device to us. What follows
  * is definitions of callback functions and structures that are passed
  * to wscons when initializing.
  */

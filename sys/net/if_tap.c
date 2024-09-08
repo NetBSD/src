@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.134 2024/08/18 12:35:47 rin Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.135 2024/09/08 09:36:51 rillig Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.134 2024/08/18 12:35:47 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.135 2024/09/08 09:36:51 rillig Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_modular.h"
@@ -663,7 +663,7 @@ tap_clone_destroyer(device_t dev)
  * call ends in tap_cdev_open.  The actual place where it is handled is
  * tap_dev_cloner.
  *
- * An tap device cannot be opened more than once at a time, so the cdevsw
+ * A tap device cannot be opened more than once at a time, so the cdevsw
  * part of open() does nothing but noting that the interface is being used and
  * hence ready to actually handle packets.
  */

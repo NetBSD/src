@@ -1,4 +1,4 @@
-/*	$NetBSD: dmovervar.h,v 1.10 2005/12/24 20:27:29 perry Exp $	*/
+/*	$NetBSD: dmovervar.h,v 1.11 2024/09/08 09:36:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -63,7 +63,7 @@ typedef union {
 /*
  * dmover_algdesc:
  *
- *	This structure describes an dmover algorithm.
+ *	This structure describes a dmover algorithm.
  *
  *	All members of this structure are public.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: h_quota2_tests.c,v 1.5 2017/01/13 21:30:39 christos Exp $	*/
+/*	$NetBSD: h_quota2_tests.c,v 1.6 2024/09/08 09:36:52 rillig Exp $	*/
 
 /*
  * rump server for advanced quota tests
@@ -97,7 +97,7 @@ quota_test1(const char *testopts)
 		warn("rump_sys_open");
 	} else {
 		/*
-		 * write up to the soft limit, wait a bit, an try to
+		 * write up to the soft limit, wait a bit, and try to
 		 * keep on writing
 		 */
 		int i;

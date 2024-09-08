@@ -1,5 +1,5 @@
 .\"	$OpenBSD: crypto.9,v 1.25 2003/07/11 13:47:41 jmc Exp $
-.\"	$NetBSD: opencrypto.9,v 1.23 2022/05/22 11:40:46 riastradh Exp $
+.\"	$NetBSD: opencrypto.9,v 1.24 2024/09/08 09:36:48 rillig Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -151,7 +151,7 @@ not use condition variables:
 The same holds for the framework.
 Thus, a callback mechanism is used
 to notify a consumer that a request has been completed (the
-callback is specified by the consumer on an per-request basis).
+callback is specified by the consumer on a per-request basis).
 The callback is invoked by the framework whether the request was
 successfully completed or not.
 An error indication is provided in the latter case.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.36 2024/07/05 04:31:54 rin Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.37 2024/09/08 09:36:51 rillig Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.36 2024/07/05 04:31:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.37 2024/09/08 09:36:51 rillig Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -645,7 +645,7 @@ sctp_choose_v4_boundspecific_stcb(struct sctp_inpcb *inp,
 		 * in our list, if so, we want that one.
 		 */
 		if (ifn) {
-			/* first try for an prefered address on the ep */
+			/* first try for a preferred address on the ep */
 			IFADDR_READER_FOREACH(ifa, ifn) {
 				if (sctp_is_addr_in_ep(inp, ifa)) {
 					sin = sctp_is_v4_ifa_addr_prefered (ifa, loopscope, ipv4_scope, &sin_loop, &sin_local);

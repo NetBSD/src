@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_exec.c,v 1.35 2023/12/20 15:34:45 thorpej Exp $	*/
+/*	$NetBSD: coff_exec.c,v 1.36 2024/09/08 09:36:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.35 2023/12/20 15:34:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.36 2024/09/08 09:36:49 rillig Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ exec_coff_modcmd(modcmd_t cmd, void *arg)
 }
 
 /*
- * exec_coff_makecmds(): Check if it's an coff-format executable.
+ * exec_coff_makecmds(): Check if it's a coff-format executable.
  *
  * Given a lwp pointer and an exec package pointer, see if the referent
  * of the epp is in coff format.  Check 'standard' magic numbers for

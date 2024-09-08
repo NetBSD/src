@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.76 2024/07/05 04:31:51 rin Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.77 2024/09/08 09:36:50 rillig Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.76 2024/07/05 04:31:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.77 2024/09/08 09:36:50 rillig Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -957,7 +957,7 @@ bah_ioctl(struct ifnet *ifp, u_long cmd, void *data)
  * software has not enabled the Receiver, would make our hardware wait forever
  * Discovered this after 20 times reading the docs.
  *
- * Only thing we do is disable transmitter. We'll get an transmit timeout,
+ * Only thing we do is disable transmitter. We'll get a transmit timeout,
  * and the int handler will have to decide not to retransmit (in case
  * retransmission is implemented).
  *

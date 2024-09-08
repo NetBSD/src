@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_kern.c,v 1.25 2022/08/03 21:13:46 riastradh Exp $	*/
+/*	$NetBSD: prop_kern.c,v 1.26 2024/09/08 09:36:45 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ prop_dictionary_externalize_to_pref(prop_dictionary_t dict,
 
 /*
  * prop_dictionary_externalize_to_pref --
- *	Externalize an dictionary into a plistref for sending to the kernel.
+ *	Externalize a dictionary into a plistref for sending to the kernel.
  */
 int
 prop_dictionary_send_syscall(prop_dictionary_t dict,

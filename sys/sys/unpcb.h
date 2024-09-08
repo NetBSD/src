@@ -1,4 +1,4 @@
-/*	$NetBSD: unpcb.h,v 1.18 2016/04/06 19:45:46 roy Exp $	*/
+/*	$NetBSD: unpcb.h,v 1.19 2024/09/08 09:36:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  * Protocol control block for an active
  * instance of a UNIX internal protocol.
  *
- * A socket may be associated with an vnode in the
+ * A socket may be associated with a vnode in the
  * file system.  If so, the unp_vnode pointer holds
  * a reference count to this vnode, which should be irele'd
  * when the socket goes away.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.158 2023/08/10 20:49:20 mrg Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.159 2024/09/08 09:36:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.158 2023/08/10 20:49:20 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.159 2024/09/08 09:36:52 rillig Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -300,7 +300,7 @@ ufs_getino(struct vnode *vdp, struct inode *ip, ino_t foundino,
  * exists, lookup returns both the target and its parent directory locked.
  * When creating or renaming and LOCKPARENT is specified, the target may
  * not be ".".  When deleting and LOCKPARENT is specified, the target may
- * be "."., but the caller must check to ensure it does an vrele and vput
+ * be ".", but the caller must check to ensure it does a vrele and vput
  * instead of two vputs.
  *
  * Overall outline of ufs_lookup:

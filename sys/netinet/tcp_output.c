@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.221 2024/07/05 04:31:54 rin Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.222 2024/09/08 09:36:52 rillig Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.221 2024/07/05 04:31:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.222 2024/09/08 09:36:52 rillig Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -867,7 +867,7 @@ again:
 	 * scaling has the drawback of growing the send buffer beyond
 	 * what is strictly necessary to make full use of a given
 	 * delay*bandwidth product.  However testing has shown this not
-	 * to be much of an problem.  At worst we are trading wasting
+	 * to be much of a problem.  At worst we are trading wasting
 	 * of available bandwidth (the non-use of it) for wasting some
 	 * socket buffer memory.
 	 *
