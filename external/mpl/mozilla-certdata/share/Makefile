@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2024/03/03 04:24:41 riastradh Exp $
+#	$NetBSD: Makefile,v 1.5 2024/09/08 15:23:55 riastradh Exp $
 #
 
 MOZCERTS=	/usr/share/certs/mozilla
@@ -57,9 +57,9 @@ SYMLINKS+=	../all/$C.pem ${MOZCERTS}/$D/$C.pem
 #	   any new files and cvs rm any deleted files under certs/,
 #	   and commit certs/ and *.trust.
 #
-# Latest revision, from 2024-02-12:
+# Latest revision, from 2024-08-23:
 #
-# https://hg.mozilla.org/projects/nss/raw-file/c17a3709bdd6e706040ac268a1d2b488c2fab5d8/lib/ckfw/builtins/certdata.txt
+# https://hg.mozilla.org/projects/nss/raw-file/872bd5fefe12bc48a9c65e9ea7f189df243d835a/lib/ckfw/builtins/certdata.txt
 #
 regen: .PHONY
 	rm -f certs/*.pem
