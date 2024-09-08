@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.47 2022/07/22 19:54:14 thorpej Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.48 2024/09/08 10:16:04 andvar Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.47 2022/07/22 19:54:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.48 2024/09/08 10:16:04 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mpc85xx.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.47 2022/07/22 19:54:14 thorpej Exp $
 #include <sys/ipi.h>
 #include <sys/bitops.h>
 #include <sys/interrupt.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -561,7 +562,7 @@ e500_splx(int ipl)
 		printf("%s: %p: cpl=%u: ignoring splx(%u) to raise ipl\n",
 		    __func__, __builtin_return_address(0), old_ipl, ipl);
 		if (old_ipl == IPL_NONE)
-			Debugger();
+			console_debugger();
 	}
 
 	// const

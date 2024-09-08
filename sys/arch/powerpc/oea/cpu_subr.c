@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.109 2024/01/20 00:19:07 jmcneill Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.110 2024/09/08 10:16:04 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.109 2024/01/20 00:19:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.110 2024/09/08 10:16:04 andvar Exp $");
 
 #include "sysmon_envsys.h"
 
@@ -1481,7 +1481,7 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 #endif
 		aprint_error("%d:CPU %d didn't start %d\n", cpu_spinstart_ack,
 		    ci->ci_cpuid, cpu_spinstart_ack);
-		Debugger();
+		console_debugger();
 		return -1;
 	}
 
