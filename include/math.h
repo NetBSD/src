@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.70 2024/05/07 15:17:35 riastradh Exp $	*/
+/*	$NetBSD: math.h,v 1.71 2024/09/09 15:05:51 riastradh Exp $	*/
 
 /*
  * ====================================================
@@ -25,9 +25,6 @@
  * Missing for C99 support:
  * - MATH_ERRNO
  * - MATH_ERREXCEPT
- * - FP_FAST_FMA
- * - FP_FAST_FMAF
- * - FP_FAST_FMAL
  * - math_errhandling
  */
 
@@ -143,6 +140,20 @@ extern const union __float_u __nanf;
 #define	_FP_LOMD	0x80		/* range for machine-specific classes */
 #define	_FP_HIMD	0xff
 
+/* 7.12#7 fast fma(3) feature test macros */
+#if __GNUC_PREREQ__(4, 4)
+#  ifdef __FP_FAST_FMA
+#    define	FP_FAST_FMA	1
+#  endif
+#  ifdef __FP_FAST_FMAF
+#    define	FP_FAST_FMAF	1
+#  endif
+#  ifdef __FP_FAST_FMAL
+#    define	FP_FAST_FMAL	1
+#  endif
+#endif
+
+/* 7.12#8 ilogb exceptional input result value macros */
 #define	FP_ILOGB0	INT_MIN
 #define	FP_ILOGBNAN	INT_MAX
 
