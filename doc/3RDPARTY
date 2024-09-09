@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2040 2024/09/08 15:26:46 riastradh Exp $
+#	$NetBSD: 3RDPARTY,v 1.2041 2024/09/09 21:10:06 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -488,12 +488,12 @@ Before importing a new version of external/gpl3/gcc:
 	  into gcc/dist/gcc/doc: cpp.1 cpp.info gcc.1 gcc.info gcov.1
 
 Package:	gdb
-Version:	13.2
+Version:	15.1
 Current Vers:	15.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gdb/
 Home Page:	http://www.gnu.org/software/gdb/
-Date:		2024-03-03
+Date:		2024-09-09
 Mailing List:	bug-gdb@gnu.org
 Responsible:	christos
 License:	GPLv3, LGPLv3.1
@@ -505,12 +505,12 @@ When updating GDB, it is imperative to test that:
 	  ("options KGDB") works correctly.
 
 Package:	binutils
-Version:	2.34/2.39
+Version:	2.42
 Current Vers:	2.42
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Home Page:	https://www.gnu.org/software/binutils/
-Date:		2024-01-29
+Date:		2024-09-09
 Mailing List:	bug-gnu-utils@gnu.org
 Responsible:	thorpej, mrg
 License:	GPLv3, LGPLv3, GPLv2, LGPLv2, BSD
