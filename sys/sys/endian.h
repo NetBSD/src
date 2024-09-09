@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.34 2024/09/09 18:17:14 riastradh Exp $	*/
+/*	$NetBSD: endian.h,v 1.35 2024/09/09 18:38:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -74,7 +74,7 @@ uint16_t ntohs(uint16_t) __constfunc;
 __END_DECLS
 
 #endif /* !_LOCORE */
-#endif /* _XOPEN_SOURCE || _POSIX_C_SOURCE >= 200809L || _NETBSD_SOURCE */
+#endif /* _XOPEN_SOURCE || _POSIX_C_SOURCE >= 200112L || _NETBSD_SOURCE */
 
 
 #include <machine/endian_machdep.h>
