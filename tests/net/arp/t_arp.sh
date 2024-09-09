@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.47 2024/09/09 07:26:10 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.48 2024/09/09 07:26:42 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -801,6 +801,76 @@ test_stray_entries()
 	rump_server_destroy_ifaces
 }
 
+test_cache_creation_common()
+{
+	local no_dad=$1
+
+	rump_server_start $SOCKSRC
+	rump_server_start $SOCKDST
+
+	if $no_dad; then
+		export RUMP_SERVER=$SOCKSRC
+		atf_check -s exit:0 -o match:'3 -> 0' \
+		    rump.sysctl -w net.inet.ip.dad_count=0
+		export RUMP_SERVER=$SOCKDST
+		atf_check -s exit:0 -o match:'3 -> 0' \
+		    rump.sysctl -w net.inet.ip.dad_count=0
+	fi
+
+	setup_dst_server
+	setup_src_server
+
+	macaddr_src=$(get_macaddr $SOCKSRC shmif0)
+	macaddr_dst=$(get_macaddr $SOCKDST shmif0)
+
+	# ARP cache entries are not created for DAD/GARP packets.
+	export RUMP_SERVER=$SOCKSRC
+	atf_check -s exit:0 -o empty rump.arp -n -a
+	export RUMP_SERVER=$SOCKDST
+	atf_check -s exit:0 -o empty rump.arp -n -a
+
+	export RUMP_SERVER=$SOCKSRC
+
+	extract_new_packets bus1 > ./out
+
+	atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 $IP4DST
+	$DEBUG && rump.arp -n -a
+
+	extract_new_packets bus1 > ./out
+
+	atf_check -s exit:0 -o match:"\? \(10.0.1.2\) at $macaddr_dst on shmif0 [0-9]+s R" \
+	    rump.arp -n -a
+
+	export RUMP_SERVER=$SOCKDST
+
+	# An entry was first created as stale then sending an ARP reply made it delay.
+	atf_check -s exit:0 -o match:"\? \(10.0.1.1\) at $macaddr_src on shmif0 [0-9]+s D" \
+	    rump.arp -n -a
+
+	# The sender resolves the receiver's address.
+	pkt=$(make_pkt_str_arpreq 10.0.1.2 10.0.1.1)
+	atf_check -s exit:0 -o match:"$pkt" cat ./out
+
+	# The receiver doesn't resolv the sender's address because the ARP request
+	# from the sender has let make an entry already.
+	pkt=$(make_pkt_str_arpreq 10.0.1.1 10.0.1.2)
+	atf_check -s exit:0 -o not-match:"$pkt" cat ./out
+
+	rump_server_destroy_ifaces
+}
+
+test_cache_creation()
+{
+
+	test_cache_creation_common false
+}
+
+test_cache_creation_nodad()
+{
+
+	test_cache_creation_common true
+}
+
 add_test()
 {
 	local name=$1
@@ -838,4 +908,6 @@ atf_init_test_cases()
 	add_test purge_on_route_delete "Tests if ARP entries are removed on route delete"
 	add_test purge_on_ifdown       "Tests if ARP entries are removed on interface down"
 	add_test stray_entries         "Tests if ARP entries are removed on route change"
+	add_test cache_creation        "Tests for ARP cache creation"
+	add_test cache_creation_nodad  "Tests for ARP cache creation without DAD"
 }
