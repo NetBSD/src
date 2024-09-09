@@ -1,4 +1,4 @@
-/* $NetBSD: jh7110_clkc.c,v 1.1 2024/08/19 07:33:55 skrll Exp $ */
+/* $NetBSD: jh7110_clkc.c,v 1.2 2024/09/09 07:34:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jh7110_clkc.c,v 1.1 2024/08/19 07:33:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jh7110_clkc.c,v 1.2 2024/09/09 07:34:08 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -414,7 +414,6 @@ static const char *i2srx_lrck_mst_parents[] = {
 };
 
 static struct jh71x0_clkc_clk jh7110_sysclk_clocks[] = {
-
 	JH71X0CLKC_FIXED_FACTOR(JH7110_SYSCLK_PLL0_OUT,	"pll0_out",	"osc",	 3, 125),
 	JH71X0CLKC_FIXED_FACTOR(JH7110_SYSCLK_PLL1_OUT,	"pll1_out",	"osc",	12, 533),
 	JH71X0CLKC_FIXED_FACTOR(JH7110_SYSCLK_PLL2_OUT,	"pll2_out",	"osc",	 2,  99),
@@ -422,7 +421,6 @@ static struct jh71x0_clkc_clk jh7110_sysclk_clocks[] = {
 	JH71X0CLKC_MUX(JH7110_SYSCLK_CPU_ROOT, "cpu_root", cpu_root_parents),
 	JH71X0CLKC_MUX(JH7110_SYSCLK_GPU_ROOT, "gpu_root", gpu_root_parents),
 	JH71X0CLKC_MUX(JH7110_SYSCLK_BUS_ROOT, "bus_root", bus_root_parents),
-
 
 	JH71X0CLKC_DIV(JH7110_SYSCLK_CPU_CORE, "cpu_core", 7, "cpu_root"),
 	JH71X0CLKC_DIV(JH7110_SYSCLK_CPU_BUS,  "cpu_bus", 2, "cpu_core"),
