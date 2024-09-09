@@ -1,4 +1,4 @@
-.\"	$NetBSD: select.2,v 1.45 2023/08/01 23:33:04 gutteridge Exp $
+.\"	$NetBSD: select.2,v 1.46 2024/09/09 01:20:20 riastradh Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)select.2	8.2 (Berkeley) 3/25/94
 .\"
-.Dd August 1, 2023
+.Dd September 9, 2024
 .Dt SELECT 2
 .Os
 .Sh NAME
@@ -268,6 +268,21 @@ One of its components is negative or too large.
 .Xr send 2 ,
 .Xr write 2 ,
 .Xr getdtablesize 3
+.Sh STANDARDS
+The
+.Fn select
+function, along with
+.Fn FD_CLR ,
+.Fn FD_ISSET ,
+.Fn FD_SET , and
+.Fn FD_ZERO ,
+conforms to
+.St -xpg4.2 .
+.Pp
+The
+.Fn pselect
+function conforms to
+.St -p1003.1-2004 .
 .Sh HISTORY
 The
 .Fn select
