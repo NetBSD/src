@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.125 2022/10/28 09:43:59 wiz Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.126 2024/09/09 15:15:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -63,9 +63,8 @@ typedef struct {
 	long rem;		/* remainder */
 } ldiv_t;
 
-#if !defined(_ANSI_SOURCE) && \
-    (defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
-     (__cplusplus - 0) >= 201103L || defined(_NETBSD_SOURCE))
+#if defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
+    defined(_NETBSD_SOURCE) || (__cplusplus - 0) >= 201103L
 typedef struct {
 	/* LONGLONG */
 	long long int quot;	/* quotient */
