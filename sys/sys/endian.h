@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.33 2024/09/09 15:22:50 riastradh Exp $	*/
+/*	$NetBSD: endian.h,v 1.34 2024/09/09 18:17:14 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -192,6 +192,8 @@ __END_DECLS
  * to/from an octet stream.
  */
 
+#ifdef _NETBSD_SOURCE
+
 #if __GNUC_PREREQ__(2, 95)
 
 #define __GEN_ENDIAN_ENC(bits, endian) \
@@ -336,6 +338,8 @@ le64dec(const void *buf)
 }
 
 #endif	/* GCC >= 2.95 */
+
+#endif	/* _NETBSD_SOURCE */
 
 #endif /* !_LOCORE */
 #endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
