@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2472 2024/08/25 22:10:40 christos Exp $
+#	$NetBSD: mi,v 1.2473 2024/09/09 11:30:05 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -9213,6 +9213,7 @@
 ./usr/share/man/cat3/mbrtoc8.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mbrtowc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mbsinit.0			comp-c-catman		.cat
+./usr/share/man/cat3/mbsnrtowcs.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mbsrtowcs.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mbstowcs.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mbtowc.0			comp-c-catman		.cat
@@ -11286,6 +11287,7 @@
 ./usr/share/man/cat3/wcsncmp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcsncpy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcsnlen.0			comp-c-catman		.cat
+./usr/share/man/cat3/wcsnrtombs.0		comp-c-catman		.cat
 ./usr/share/man/cat3/wcspbrk.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcsrchr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcsrtombs.0		comp-c-catman		.cat
@@ -17713,6 +17715,7 @@
 ./usr/share/man/html3/mbrtoc8.html		comp-c-htmlman		html
 ./usr/share/man/html3/mbrtowc.html		comp-c-htmlman		html
 ./usr/share/man/html3/mbsinit.html		comp-c-htmlman		html
+./usr/share/man/html3/mbsnrtowcs.html		comp-c-htmlman		html
 ./usr/share/man/html3/mbsrtowcs.html		comp-c-htmlman		html
 ./usr/share/man/html3/mbstowcs.html		comp-c-htmlman		html
 ./usr/share/man/html3/mbtowc.html		comp-c-htmlman		html
@@ -19764,6 +19767,7 @@
 ./usr/share/man/html3/wcsncmp.html		comp-c-htmlman		html
 ./usr/share/man/html3/wcsncpy.html		comp-c-htmlman		html
 ./usr/share/man/html3/wcsnlen.html		comp-c-htmlman		html
+./usr/share/man/html3/wcsnrtombs.html		comp-c-htmlman		html
 ./usr/share/man/html3/wcspbrk.html		comp-c-htmlman		html
 ./usr/share/man/html3/wcsrchr.html		comp-c-htmlman		html
 ./usr/share/man/html3/wcsrtombs.html		comp-c-htmlman		html
@@ -26220,6 +26224,7 @@
 ./usr/share/man/man3/mbrtoc8.3			comp-c-man		.man
 ./usr/share/man/man3/mbrtowc.3			comp-c-man		.man
 ./usr/share/man/man3/mbsinit.3			comp-c-man		.man
+./usr/share/man/man3/mbsnrtowcs.3		comp-c-man		.man
 ./usr/share/man/man3/mbsrtowcs.3		comp-c-man		.man
 ./usr/share/man/man3/mbstowcs.3			comp-c-man		.man
 ./usr/share/man/man3/mbtowc.3			comp-c-man		.man
@@ -28312,6 +28317,7 @@
 ./usr/share/man/man3/wcsncmp.3			comp-c-man		.man
 ./usr/share/man/man3/wcsncpy.3			comp-c-man		.man
 ./usr/share/man/man3/wcsnlen.3			comp-c-man		.man
+./usr/share/man/man3/wcsnrtombs.3		comp-c-man		.man
 ./usr/share/man/man3/wcspbrk.3			comp-c-man		.man
 ./usr/share/man/man3/wcsrchr.3			comp-c-man		.man
 ./usr/share/man/man3/wcsrtombs.3		comp-c-man		.man
