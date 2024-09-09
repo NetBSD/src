@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.71 2024/09/09 15:05:51 riastradh Exp $	*/
+/*	$NetBSD: math.h,v 1.72 2024/09/09 15:06:29 riastradh Exp $	*/
 
 /*
  * ====================================================
@@ -20,13 +20,6 @@
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
-
-/*
- * Missing for C99 support:
- * - MATH_ERRNO
- * - MATH_ERREXCEPT
- * - math_errhandling
- */
 
 union __float_u {
 	unsigned char __dummy[sizeof(float)];
@@ -156,6 +149,15 @@ extern const union __float_u __nanf;
 /* 7.12#8 ilogb exceptional input result value macros */
 #define	FP_ILOGB0	INT_MIN
 #define	FP_ILOGBNAN	INT_MAX
+
+/* 7.12#9 error handling (__math_errhandling from machine/math.h) */
+#define	MATH_ERRNO		1
+#define	MATH_ERREXCEPT		2
+#ifdef __vax__			/* XXX !__HAVE_FENV */
+#define	math_errhandling	MATH_ERRNO
+#else
+#define	math_errhandling	MATH_ERREXCEPT
+#endif
 
 #endif /* C99 || _XOPEN_SOURCE >= 600 */
 
