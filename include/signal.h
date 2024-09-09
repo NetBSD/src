@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.59 2021/11/02 20:12:25 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.60 2024/09/09 21:19:54 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -162,7 +162,7 @@ sigfillset(sigset_t *set)
 
 /*
  * X/Open CAE Specification Issue 4 Version 2
- */      
+ */
 #if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
     (_XOPEN_SOURCE - 0) >= 500 || (_POSIX_C_SOURCE - 0) >= 200809L || \
     defined(_NETBSD_SOURCE)
@@ -185,7 +185,7 @@ void	(*sigset (int, void (*)(int)))(int);
 
 /*
  * X/Open CAE Specification Issue 5; IEEE Std 1003.1b-1993 (POSIX)
- */      
+ */
 #if (_POSIX_C_SOURCE - 0) >= 199309L || (_XOPEN_SOURCE - 0) >= 500 || \
     defined(_NETBSD_SOURCE)
 int	sigwait	(const sigset_t * __restrict, int * __restrict);
@@ -201,7 +201,7 @@ int	__sigtimedwait(const sigset_t * __restrict,
     siginfo_t * __restrict, struct timespec * __restrict)
     __RENAME(____sigtimedwait50);
 #endif
-#endif /* _POSIX_C_SOURCE >= 200112 || _XOPEN_SOURCE_EXTENDED || ... */
+#endif /* _POSIX_C_SOURCE >= 199309L || _XOPEN_SOURCE_EXTENDED || ... */
 
 
 #if defined(_NETBSD_SOURCE)
