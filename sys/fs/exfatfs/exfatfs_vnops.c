@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_vnops.c,v 1.1.2.10 2024/08/14 15:37:49 perseant Exp $	*/
+/*	$NetBSD: exfatfs_vnops.c,v 1.1.2.11 2024/09/09 05:01:57 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_vnops.c,v 1.1.2.10 2024/08/14 15:37:49 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_vnops.c,v 1.1.2.11 2024/09/09 05:01:57 perseant Exp $");
 
 #include <sys/buf.h>
 #include <sys/dirent.h>
@@ -257,10 +257,8 @@ exfatfs_setattr(void *v)
 	 * Note we silently ignore uid or gid changes.
 	 */
 	if ((vap->va_type != VNON) || (vap->va_nlink != (nlink_t)VNOVAL) ||
-#if 0
 	    (vap->va_uid != VNOVAL && vap->va_uid != fs->xf_uid) ||
 	    (vap->va_gid != VNOVAL && vap->va_gid != fs->xf_gid) ||
-#endif /* 0 */
 	    (vap->va_fsid != VNOVAL) || (vap->va_fileid != VNOVAL) ||
 	    (vap->va_blocksize != VNOVAL) || (vap->va_rdev != VNOVAL) ||
 	    (vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL)) {
@@ -313,8 +311,9 @@ exfatfs_setattr(void *v)
 			error = EROFS;
 			goto bad;
 		}
-		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_FLAGS, vp,
-			NULL, genfs_can_chflags(vp, cred, fs->xf_uid, false));
+		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY,
+			vp, NULL, genfs_can_chmod(vp, cred, fs->xf_uid,
+			fs->xf_gid, false));
 		if (error)
 			goto bad;
 		/* We ignore the read and execute bits. */
@@ -732,6 +731,8 @@ exfatfs_remove(void *v)
 		printf("remove 0x%x...\n", TRACE_INUM);
 #endif /* TRACE_INUM */
 
+	if (vp->v_mount->mnt_flag & MNT_RDONLY)
+		return EROFS;
 	if (vp->v_type == VDIR)
 		return EISDIR;
 
@@ -947,7 +948,7 @@ havespace:
 		return error;
 
 	DPRINTF(("new empty space at byte %lld (entry %u)\n",
-		 (long long)r, (unsigned)EXFATFS_B2DIRENT(r)));
+		 (long long)r, (unsigned)EXFATFS_B2DIRENT(fs, r)));
 
 	/*
 	 * Assign disk addresses
@@ -1180,7 +1181,7 @@ static unsigned first_valid_file(void *v, struct xfinode *xip, off_t unused)
 	++*intp;
 
 	DPRINTF(("found valid file ino 0x%lx with ET 0x%hhx\n",
-		 INUM(xip), xip->xi_direntp[0]->xd_entryType));
+		 (unsigned long)INUM(xip), xip->xi_direntp[0]->xd_entryType));
 	return SCANDIR_STOP;
 }
 
@@ -1258,6 +1259,10 @@ exfatfs_rmdir(void *v)
 	new_key.dk_dirgen = xip;
 	exfatfs_rekey(vp, &new_key);
 	
+	/* Don't allow ".." to refer to this node anymore */
+	DPRINTF(("exfatfs_rmdir(), mark vp/xip %p/%p DELETED\n", vp, xip));
+	xip->xi_flag |= XI_DELETED;
+
 	/*
 	 * This is where we decrement the link count in the parent
 	 * directory.  Since dos filesystems don't do this we just purge
@@ -1423,6 +1428,12 @@ exfatfs_lookup(void *v)
 			}
 		}
 #endif /* TRACE_INUM */
+		if (*vpp != NULLVP && (VTOXI(*vpp)->xi_flag & XI_DELETED)) {
+			DPRINTF(("exfatfs_lookup refusing deleted cached node\n"));
+			VOP_UNLOCK(*vpp);
+			vrele(*vpp);
+			return ENOENT;
+		}
 		DPRINTF((" returning cached result\n"));
 		return *vpp == NULLVP ? ENOENT : 0;
 	}
@@ -1450,6 +1461,13 @@ exfatfs_lookup(void *v)
 
 		/* .., but not root's: we want parentvp. */
 		KASSERT(dxip->xi_parentvp != NULL);
+		DPRINTF(("exfatfs_lookup(), parent vp/xip %p/%p flags %x\n",
+			dxip->xi_parentvp, VTOXI(dxip->xi_parentvp),
+			(int)VTOXI(dxip->xi_parentvp)->xi_flag));
+		if (VTOXI(dxip->xi_parentvp)->xi_flag & XI_DELETED) {
+			DPRINTF(("exfatfs_lookup refusing deleted ..\n"));
+			return ENOENT;
+		}
 		*vpp = dxip->xi_parentvp;
 		vref(*vpp);
 		
@@ -2569,7 +2587,8 @@ deextend(struct xfinode *xip, off_t bytes, int ioflags,
 				if (pcn != opcn + 1 && IS_DSE_NOFATCHAIN(xip)) {
 					DPRINTF(("inum 0x%lx not consecutive"
 						 " with 0x%x != 0x%x+1\n",
-						 INUM(xip), pcn, opcn));
+						 (unsigned long)INUM(xip),
+						 pcn, opcn));
 					CLR_DSE_NOFATCHAIN(xip);
 					if ((error = rewrite_fat(xip, lcn, ioflags)) != 0)
 						return error;
