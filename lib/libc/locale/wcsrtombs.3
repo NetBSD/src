@@ -1,4 +1,4 @@
-.\" $NetBSD: wcsrtombs.3,v 1.14 2024/09/09 11:30:05 riastradh Exp $
+.\" $NetBSD: wcsrtombs.3,v 1.15 2024/09/09 14:21:37 uwe Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -37,13 +37,25 @@
 .Lb libc
 .\" ----------------------------------------------------------------------
 .Sh SYNOPSIS
+.
 .In wchar.h
+.
 .Ft size_t
-.Fn wcsrtombs "char * restrict s" "const wchar_t ** restrict pwcs" \
-"size_t n" "mbstate_t * restrict ps"
+.Fo wcsrtombs
+.Fa "char * restrict s"
+.Fa "const wchar_t ** restrict pwcs"
+.Fa "size_t n" "mbstate_t * restrict ps"
+.Fc
+.
 .Ft size_t
-.Fn wcsnrtombs "char * restrict s" "const wchar_t ** restrict pwcs" \
-"size_t nwc" "size_t n" "mbstat_t * restrict ps"
+.Fo wcsnrtombs
+.Fa "char * restrict s"
+.Fa "const wchar_t ** restrict pwcs"
+.Fa "size_t nwc"
+.Fa "size_t n"
+.Fa "mbstat_t * restrict ps"
+.Fc
+.
 .\" ----------------------------------------------------------------------
 .Sh DESCRIPTION
 The
@@ -81,9 +93,10 @@ if
 .Fa s
 is not a null pointer, the pointer object pointed to by
 .Fa pwcs
-is a null pointer (if the conversion is stopped due to reaching a
-nul wide character) or the first byte of the character just after
-the last character converted.
+is a null pointer
+.Pq if the conversion is stopped due to reaching a nul wide character
+or points to the first byte of the character just after the last
+character converted.
 .Pp
 If
 .Fa s
@@ -101,8 +114,8 @@ is affected by the
 category of the current locale.
 .Pp
 These are the special cases:
-.Bl -tag -width 012345678901
-.It "s == NULL"
+.Bl -tag -width Li
+.It Li "s == NULL"
 .Fn wcsrtombs
 returns the number of bytes to store the whole multibyte character string
 corresponding to the wide-character string pointed to by
@@ -111,9 +124,9 @@ not including the terminating nul byte.
 In this case,
 .Fa n
 is ignored.
-.It "pwcs == NULL || *pwcs == NULL"
+.It Li "pwcs == NULL || *pwcs == NULL"
 Undefined (may cause the program to crash).
-.It "ps == NULL"
+.It Li "ps == NULL"
 .Fn wcsrtombs
 uses its own internal state object to keep the conversion state,
 instead of
@@ -143,22 +156,24 @@ The
 and
 .Fn wcsnrtombs
 functions return:
-.Bl -tag -width 012345678901
-.It 0 or positive
+.Bl -tag -width Li
+.It Li 0 , No or positive
 Number of bytes stored in the array pointed to by
 .Fa s ,
 except for a nul byte.
 There are no cases that the value returned is greater than
 .Fa n
-(unless
+.Po
+unless
 .Fa s
-is a null pointer).
+is a null pointer
+.Pc .
 If the return value is equal to
 .Fa n ,
 the string pointed to by
 .Fa s
 will not be nul-terminated.
-.It (size_t)-1
+.It Li "(size_t)-1"
 .Fa pwcs
 points to a string containing an invalid wide character.
 The
@@ -180,7 +195,9 @@ functions may fail with the following errors:
 points to a string containing an invalid wide character.
 .It Bq Er EINVAL
 .Fa ps
-points to an invalid or uninitialized mbstate_t object.
+points to an invalid or uninitialized
+.Vt mbstate_t
+object.
 .El
 .\" ----------------------------------------------------------------------
 .Sh SEE ALSO
