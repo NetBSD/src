@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 2/18/91
-#	$NetBSD: Makefile.inc,v 1.67 2024/08/15 21:19:45 riastradh Exp $
+#	$NetBSD: Makefile.inc,v 1.68 2024/09/09 11:30:05 riastradh Exp $
 
 # locale sources
 .PATH: ${ARCHDIR}/locale ${.CURDIR}/locale
@@ -67,5 +67,8 @@ MLINKS+=towlower.3 towupper.3
 MLINKS+=wcstod.3 wcstof.3 wcstod.3 wcstold.3
 MLINKS+=wcstol.3 wcstoll.3 wcstol.3 wcstoimax.3 \
 	wcstol.3 wcstoul.3 wcstol.3 wcstoull.3 wcstol.3 wcstoumax.3
+
+MLINKS+=mbsrtowcs.3 mbsnrtowcs.3
+MLINKS+=wcsrtombs.3 wcsnrtombs.3
 
 COPTS.wcsftime.c = -Wno-format-nonliteral
