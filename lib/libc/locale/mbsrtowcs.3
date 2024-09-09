@@ -1,4 +1,4 @@
-.\" $NetBSD: mbsrtowcs.3,v 1.13 2024/09/09 11:30:05 riastradh Exp $
+.\" $NetBSD: mbsrtowcs.3,v 1.14 2024/09/09 14:21:37 uwe Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -38,13 +38,26 @@
 .Lb libc
 .\" ----------------------------------------------------------------------
 .Sh SYNOPSIS
+.
 .In wchar.h
+.
 .Ft size_t
-.Fn mbsrtowcs "wchar_t * restrict pwcs" "const char ** restrict s" "size_t n" \
-"mbstate_t * restrict ps"
-.Fn mbsnrtowcs "wchar_t * restrict pwcs" "const char ** restrict s" \
-"size_t nmc" "size_t n" \
-"mbstate_t * restrict ps"
+.Fo mbsrtowcs
+.Fa "wchar_t * restrict pwcs"
+.Fa "const char ** restrict s"
+.Fa "size_t n"
+.Fa "mbstate_t * restrict ps"
+.Fc
+.
+.Ft size_t
+.Fo mbsnrtowcs
+.Fa "wchar_t * restrict pwcs"
+.Fa "const char ** restrict s"
+.Fa "size_t nmc"
+.Fa "size_t n"
+.Fa "mbstate_t * restrict ps"
+.Fc
+.
 .\" ----------------------------------------------------------------------
 .Sh DESCRIPTION
 The
@@ -80,9 +93,10 @@ if
 is not a null pointer,
 the pointer object pointed to by
 .Fa s
-is a null pointer (if the conversion is stopped due to reaching a
-nul byte) or the first byte of the character just after the last
-character converted.
+is a null pointer
+.Pq if the conversion is stopped due to reaching a nul byte
+or the first byte of the character just after the last character
+converted.
 .Pp
 If
 .Fa pwcs
@@ -100,10 +114,12 @@ is affected by the
 category of the current locale.
 .Pp
 These are the special cases:
-.Bl -tag -width 012345678901
-.It "s == NULL || *s == NULL"
+.Bl -tag -width Li
+.
+.It Li "s == NULL || *s == NULL"
 Undefined (may cause the program to crash).
-.It "pwcs == NULL"
+.
+.It Li "pwcs == NULL"
 The conversion has taken place, but the resulting wide-character string
 was discarded.
 In this case, the pointer object pointed to by
@@ -111,7 +127,8 @@ In this case, the pointer object pointed to by
 is not modified and
 .Fa n
 is ignored.
-.It "ps == NULL"
+.
+.It Li "ps == NULL"
 The
 .Fn mbsrtowcs
 uses its own internal state object to keep the conversion state,
@@ -141,8 +158,8 @@ The
 and
 .Fn mbsnrtowcs
 functions return:
-.Bl -tag -width 012345678901
-.It 0 or positive
+.Bl -tag -width Li
+.It Li 0 , No or positive
 The value returned is the number of elements stored in the array
 pointed to by
 .Fa pwcs ,
@@ -160,7 +177,7 @@ If
 .Fa pwcs
 is a null pointer, the value returned is the number of elements to contain
 the whole string converted, except for a terminating nul wide character.
-.It (size_t)-1
+.It Li "(size_t)-1"
 The array indirectly pointed to by
 .Fa s
 contains a byte sequence forming invalid character.
