@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_inode.h,v 1.1.2.4 2024/07/19 16:19:15 perseant Exp $	*/
+/*	$NetBSD: exfatfs_inode.h,v 1.1.2.5 2024/09/09 05:01:57 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
@@ -336,6 +336,7 @@ void exfatfs_check_fence(struct exfatfs *fs);
 #define	XI_ACCESS	0x0004	/* Access time update */
 #define	XI_MODIFIED	0x0008	/* Xfinode has been modified. */
 #define	XI_RENAME	0x0010	/* Xfinode is being renamed */
+#define XI_DELETED	0x0020  /* Invalid, deleted */
 
 #define	EXFATFS_MAXNAMELEN	255
 
