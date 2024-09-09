@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.32 2024/01/03 18:43:52 christos Exp $	*/
+/*	$NetBSD: endian.h,v 1.33 2024/09/09 15:22:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -45,7 +45,9 @@
 #define	_PDP_ENDIAN	3412	/* LSB first in word, MSW first in long */
 
 
-#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
+#if defined(_XOPEN_SOURCE) || \
+    (_POSIX_C_SOURCE - 0) >= 200112L || \
+    defined(_NETBSD_SOURCE)
 #ifndef _LOCORE
 
 /* C-family endian-ness definitions */
@@ -72,7 +74,7 @@ uint16_t ntohs(uint16_t) __constfunc;
 __END_DECLS
 
 #endif /* !_LOCORE */
-#endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
+#endif /* _XOPEN_SOURCE || _POSIX_C_SOURCE >= 200809L || _NETBSD_SOURCE */
 
 
 #include <machine/endian_machdep.h>
