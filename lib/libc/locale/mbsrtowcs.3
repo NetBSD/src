@@ -1,4 +1,4 @@
-.\" $NetBSD: mbsrtowcs.3,v 1.14 2024/09/09 14:21:37 uwe Exp $
+.\" $NetBSD: mbsrtowcs.3,v 1.15 2024/09/09 18:55:26 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .Os
 .\" ----------------------------------------------------------------------
 .Sh NAME
-.Nm mbsrtowcs
+.Nm mbsrtowcs ,
 .Nm mbsrntowcs
 .Nd converts a multibyte character string to a wide-character string \
 (restartable)
@@ -71,8 +71,8 @@ array pointed to by
 The conversion stops due to the following reasons:
 .Bl -bullet
 .It
-The conversion reaches a nul byte.
-In this case, the nul byte is also converted.
+The conversion reaches a NUL byte.
+In this case, the NUL byte is also converted.
 .It
 The
 .Fn mbsrtowcs
@@ -90,18 +90,18 @@ is continuously called.
 After conversion,
 if
 .Fa pwcs
-is not a null pointer,
+is not a NULL pointer,
 the pointer object pointed to by
 .Fa s
-is a null pointer
-.Pq if the conversion is stopped due to reaching a nul byte
+is a NULL pointer
+.Pq if the conversion is stopped due to reaching a NUL byte
 or the first byte of the character just after the last character
 converted.
 .Pp
 If
 .Fa pwcs
-is not a null pointer and the conversion is stopped due to reaching
-a nul byte, the
+is not a NULL pointer and the conversion is stopped due to reaching
+a NUL byte, the
 .Fn mbsrtowcs
 places the state object pointed to by
 .Fa ps
@@ -163,7 +163,7 @@ functions return:
 The value returned is the number of elements stored in the array
 pointed to by
 .Fa pwcs ,
-except for a terminating nul wide character (if any).
+except for a terminating NUL wide character (if any).
 If
 .Fa pwcs
 is not
@@ -172,11 +172,11 @@ and the value returned is equal to
 .Fa n ,
 the wide-character string pointed to by
 .Fa pwcs
-is not nul-terminated.
+is not NUL-terminated.
 If
 .Fa pwcs
-is a null pointer, the value returned is the number of elements to contain
-the whole string converted, except for a terminating nul wide character.
+is a NULL pointer, the value returned is the number of elements to contain
+the whole string converted, except for a terminating NUL wide character.
 .It Li "(size_t)-1"
 The array indirectly pointed to by
 .Fa s
