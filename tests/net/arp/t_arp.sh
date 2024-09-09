@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.46 2024/08/20 08:23:15 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.47 2024/09/09 07:26:10 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,72 +38,6 @@ IP4DST_FAIL2=10.0.99.99
 
 DEBUG=${DEBUG:-false}
 TIMEOUT=1
-
-atf_test_case arp_cache_expiration cleanup
-atf_test_case arp_command cleanup
-atf_test_case arp_garp cleanup
-atf_test_case arp_garp_without_dad cleanup
-atf_test_case arp_cache_overwriting cleanup
-atf_test_case arp_proxy_arp_pub cleanup
-atf_test_case arp_proxy_arp_pubproxy cleanup
-atf_test_case arp_link_activation cleanup
-atf_test_case arp_static cleanup
-
-arp_cache_expiration_head()
-{
-	atf_set "descr" "Tests for ARP cache expiration"
-	atf_set "require.progs" "rump_server"
-}
-
-arp_command_head()
-{
-	atf_set "descr" "Tests for arp_commands of arp(8)"
-	atf_set "require.progs" "rump_server"
-}
-
-arp_garp_head()
-{
-	atf_set "descr" "Tests for GARP"
-	atf_set "require.progs" "rump_server"
-}
-
-arp_garp_without_dad_head()
-{
-
-	atf_set "descr" "Tests for GARP with DAD disabled"
-	atf_set "require.progs" "rump_server"
-}
-
-arp_cache_overwriting_head()
-{
-	atf_set "descr" "Tests for behavior of overwriting ARP caches"
-	atf_set "require.progs" "rump_server"
-}
-
-arp_proxy_arp_pub_head()
-{
-	atf_set "descr" "Tests for Proxy ARP (pub)"
-	atf_set "require.progs" "rump_server"
-}
-
-arp_proxy_arp_pubproxy_head()
-{
-	atf_set "descr" "Tests for Proxy ARP (pub proxy)"
-	atf_set "require.progs" "rump_server"
-}
-
-arp_link_activation_head()
-{
-	atf_set "descr" "Tests for activating a new MAC address"
-	atf_set "require.progs" "rump_server"
-}
-
-arp_static_head()
-{
-
-	atf_set "descr" "Tests for static ARP entries"
-	atf_set "require.progs" "rump_server"
-}
 
 setup_dst_server()
 {
@@ -155,7 +89,7 @@ get_timeout()
 	echo $timeout
 }
 
-arp_cache_expiration_body()
+test_cache_expiration()
 {
 	local arp_keep=7
 
@@ -212,7 +146,7 @@ check_arp_static_entry()
 	fi
 }
 
-arp_command_body()
+test_command()
 {
 	local arp_keep=5
 	local bonus=2
@@ -415,19 +349,19 @@ test_garp_common()
 	rump_server_destroy_ifaces
 }
 
-arp_garp_body()
+test_garp()
 {
 
 	test_garp_common false
 }
 
-arp_garp_without_dad_body()
+test_garp_without_dad()
 {
 
 	test_garp_common true
 }
 
-arp_cache_overwriting_body()
+test_cache_overwriting()
 {
 
 	rump_server_start $SOCKSRC
@@ -576,21 +510,21 @@ test_proxy_arp()
 	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 $IP4DST_PROXYARP2
 }
 
-arp_proxy_arp_pub_body()
+test_proxy_arp_pub()
 {
 
 	test_proxy_arp pub
 	rump_server_destroy_ifaces
 }
 
-arp_proxy_arp_pubproxy_body()
+test_proxy_arp_pubproxy()
 {
 
 	test_proxy_arp pubproxy
 	rump_server_destroy_ifaces
 }
 
-arp_link_activation_body()
+test_link_activation()
 {
 
 	rump_server_start $SOCKSRC
@@ -627,7 +561,7 @@ arp_link_activation_body()
 	rump_server_destroy_ifaces
 }
 
-arp_static_body()
+test_static()
 {
 	local macaddr_src=
 
@@ -652,70 +586,7 @@ arp_static_body()
 	rump_server_destroy_ifaces
 }
 
-arp_cache_expiration_cleanup()
-{
-	$DEBUG && dump
-	cleanup
-}
-
-arp_command_cleanup()
-{
-	$DEBUG && dump
-	cleanup
-}
-
-arp_garp_cleanup()
-{
-	$DEBUG && dump
-	cleanup
-}
-
-arp_garp_without_dad_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
-}
-
-arp_cache_overwriting_cleanup()
-{
-	$DEBUG && dump
-	cleanup
-}
-
-arp_proxy_arp_pub_cleanup()
-{
-	$DEBUG && dump
-	cleanup
-}
-
-arp_proxy_arp_pubproxy_cleanup()
-{
-	$DEBUG && dump
-	cleanup
-}
-
-arp_link_activation_cleanup()
-{
-	$DEBUG && dump
-	cleanup
-}
-
-arp_static_cleanup()
-{
-	$DEBUG && dump
-	cleanup
-}
-
-atf_test_case arp_rtm cleanup
-arp_rtm_head()
-{
-
-	atf_set "descr" "Tests for routing messages on operations of ARP entries"
-	atf_set "require.progs" "rump_server"
-}
-
-arp_rtm_body()
+test_rtm()
 {
 	local macaddr_src= macaddr_dst=
 	local file=./tmp
@@ -793,22 +664,7 @@ arp_rtm_body()
 	rump_server_destroy_ifaces
 }
 
-arp_rtm_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
-}
-
-atf_test_case arp_purge_on_route_change cleanup
-arp_purge_on_route_change_head()
-{
-
-	atf_set "descr" "Tests if ARP entries are removed on route change"
-	atf_set "require.progs" "rump_server"
-}
-
-arp_purge_on_route_change_body()
+test_purge_on_route_change()
 {
 
 	rump_server_start $SOCKSRC
@@ -835,22 +691,7 @@ arp_purge_on_route_change_body()
 	rump_server_destroy_ifaces
 }
 
-arp_purge_on_route_change_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
-}
-
-atf_test_case arp_purge_on_route_delete cleanup
-arp_purge_on_route_delete_head()
-{
-
-	atf_set "descr" "Tests if ARP entries are removed on route delete"
-	atf_set "require.progs" "rump_server"
-}
-
-arp_purge_on_route_delete_body()
+test_purge_on_route_delete()
 {
 
 	rump_server_start $SOCKSRC
@@ -873,22 +714,7 @@ arp_purge_on_route_delete_body()
 	rump_server_destroy_ifaces
 }
 
-arp_purge_on_route_delete_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
-}
-
-atf_test_case arp_purge_on_ifdown cleanup
-arp_purge_on_ifdown_head()
-{
-
-	atf_set "descr" "Tests if ARP entries are removed on interface down"
-	atf_set "require.progs" "rump_server"
-}
-
-arp_purge_on_ifdown_body()
+test_purge_on_ifdown()
 {
 
 	rump_server_start $SOCKSRC
@@ -911,22 +737,7 @@ arp_purge_on_ifdown_body()
 	rump_server_destroy_ifaces
 }
 
-arp_purge_on_ifdown_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
-}
-
-atf_test_case arp_stray_entries cleanup
-arp_stray_entries_head()
-{
-
-	atf_set "descr" "Tests if ARP entries are removed on route change"
-	atf_set "require.progs" "rump_server"
-}
-
-arp_stray_entries_body()
+test_stray_entries()
 {
 
 	rump_server_start $SOCKSRC
@@ -990,27 +801,41 @@ arp_stray_entries_body()
 	rump_server_destroy_ifaces
 }
 
-arp_stray_entries_cleanup()
+add_test()
 {
+	local name=$1
+	local desc="$2"
 
-	$DEBUG && dump
-	cleanup
+	atf_test_case "arp_${name}" cleanup
+	eval "arp_${name}_head() {
+			atf_set descr \"${desc}\"
+			atf_set require.progs rump_server
+		}
+	    arp_${name}_body() {
+			test_${name}
+		}
+	    arp_${name}_cleanup() {
+			\$DEBUG && dump
+			cleanup
+		}"
+	atf_add_test_case "arp_${name}"
 }
 
 atf_init_test_cases()
 {
-	atf_add_test_case arp_cache_expiration
-	atf_add_test_case arp_command
-	atf_add_test_case arp_garp
-	atf_add_test_case arp_garp_without_dad
-	atf_add_test_case arp_cache_overwriting
-	atf_add_test_case arp_proxy_arp_pub
-	atf_add_test_case arp_proxy_arp_pubproxy
-	atf_add_test_case arp_link_activation
-	atf_add_test_case arp_static
-	atf_add_test_case arp_rtm
-	atf_add_test_case arp_purge_on_route_change
-	atf_add_test_case arp_purge_on_route_delete
-	atf_add_test_case arp_purge_on_ifdown
-	atf_add_test_case arp_stray_entries
+
+	add_test cache_expiration      "Tests for ARP cache expiration"
+	add_test command               "Tests for arp_commands of arp(8)"
+	add_test garp                  "Tests for GARP"
+	add_test garp_without_dad      "Tests for GARP with DAD disabled"
+	add_test cache_overwriting     "Tests for behavior of overwriting ARP caches"
+	add_test proxy_arp_pub         "Tests for Proxy ARP (pub)"
+	add_test proxy_arp_pubproxy    "Tests for Proxy ARP (pub proxy)"
+	add_test link_activation       "Tests for activating a new MAC address"
+	add_test static                "Tests for static ARP entries"
+	add_test rtm                   "Tests for routing messages on operations of ARP entries"
+	add_test purge_on_route_change "Tests if ARP entries are removed on route change"
+	add_test purge_on_route_delete "Tests if ARP entries are removed on route delete"
+	add_test purge_on_ifdown       "Tests if ARP entries are removed on interface down"
+	add_test stray_entries         "Tests if ARP entries are removed on route change"
 }
