@@ -1,4 +1,4 @@
-.\" $NetBSD: wcsftime.3,v 1.3 2011/04/14 05:50:49 jruoho Exp $
+.\" $NetBSD: wcsftime.3,v 1.4 2024/09/10 04:43:39 rillig Exp $
 .\"
 .\" Copyright (c) 2002 Tim J. Robbins
 .\" All rights reserved.
@@ -38,8 +38,10 @@
 .In wchar.h
 .Ft size_t
 .Fo wcsftime
-.Fa "wchar_t * restrict wcs" "size_t maxsize"
-.Fa "const wchar_t * restrict format" "const struct tm * restrict timeptr"
+.Fa "wchar_t * restrict wcs"
+.Fa "size_t maxsize"
+.Fa "const wchar_t * restrict format"
+.Fa "const struct tm * restrict timeptr"
 .Fc
 .Sh DESCRIPTION
 The
