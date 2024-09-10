@@ -1,4 +1,4 @@
-/*	$NetBSD: t_errhandling.c,v 1.2 2024/09/09 17:03:08 jakllsch Exp $	*/
+/*	$NetBSD: t_errhandling.c,v 1.3 2024/09/10 17:36:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -26,12 +26,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define	__TEST_FENV
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_errhandling.c,v 1.2 2024/09/09 17:03:08 jakllsch Exp $");
+__RCSID("$NetBSD: t_errhandling.c,v 1.3 2024/09/10 17:36:12 riastradh Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
-#define	__TEST_FENV
 #include <fenv.h>
 #include <math.h>
 
