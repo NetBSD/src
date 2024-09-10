@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.49 2024/06/12 09:51:27 andvar Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.50 2024/09/10 17:56:35 andvar Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.49 2024/06/12 09:51:27 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.50 2024/09/10 17:56:35 andvar Exp $");
 
 #include "opt_kgdb.h"
 
@@ -177,7 +177,6 @@ STATIC uint32_t sdma_imask;		/* soft copy of SDMA IMASK reg */
 STATIC struct cnm_state gtmpsc_cnm_state;
 
 #ifdef KGDB
-static int gtmpsc_kgdb_addr;
 static int gtmpsc_kgdb_attached;
 
 STATIC int      gtmpsc_kgdb_getc(void *);
@@ -1220,7 +1219,7 @@ gtmpscshutdown(struct gtmpsc_softc *sc)
 	struct tty *tp;
 
 #ifdef KGDB
-	if (sc->sc_flags & GTMPSCF_KGDB != 0)
+	if (sc->sc_flags & GTMPSC_KGDB)
 		return;
 #endif
 	tp = sc->sc_tty;
