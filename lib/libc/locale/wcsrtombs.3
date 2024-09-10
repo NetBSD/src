@@ -1,4 +1,4 @@
-.\" $NetBSD: wcsrtombs.3,v 1.16 2024/09/09 18:55:26 wiz Exp $
+.\" $NetBSD: wcsrtombs.3,v 1.17 2024/09/10 04:43:39 rillig Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -45,7 +45,8 @@
 .Fo wcsrtombs
 .Fa "char * restrict s"
 .Fa "const wchar_t ** restrict pwcs"
-.Fa "size_t n" "mbstate_t * restrict ps"
+.Fa "size_t n"
+.Fa "mbstate_t * restrict ps"
 .Fc
 .
 .Ft size_t
