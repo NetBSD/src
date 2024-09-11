@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.112 2023/08/18 21:05:44 mrg Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.113 2024/09/11 00:27:54 perseant Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.112 2023/08/18 21:05:44 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.113 2024/09/11 00:27:54 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -707,12 +707,6 @@ msdosfs_update(struct vnode *vp, const struct timespec *acc,
 	}
 }
 
-/*
- * Flush the blocks of a file to disk.
- *
- * This function is worthless for vnodes that represent directories. Maybe we
- * could just do a sync if they try an fsync on a directory file.
- */
 int
 msdosfs_remove(void *v)
 {
@@ -1394,6 +1388,12 @@ msdosfs_pathconf(void *v)
 	/* NOTREACHED */
 }
 
+/*
+ * Flush the blocks of a file to disk.
+ *
+ * This function is worthless for vnodes that represent directories. Maybe we
+ * could just do a sync if they try an fsync on a directory file.
+ */
 int
 msdosfs_fsync(void *v)
 {
