@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.63 2024/05/13 00:01:53 msaitoh Exp $	*/
+/*	$NetBSD: zdump.c,v 1.64 2024/09/11 13:50:34 christos Exp $	*/
 /* Dump time zone data in a textual format.  */
 
 /*
@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zdump.c,v 1.63 2024/05/13 00:01:53 msaitoh Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.64 2024/09/11 13:50:34 christos Exp $");
 #endif /* !defined lint */
 
 #ifndef NETBSD_INSPIRED
@@ -94,7 +94,7 @@ static bool	warned;
 static bool	errout;
 
 static char const *abbr(struct tm const *);
-ATTRIBUTE_REPRODUCIBLE static intmax_t delta(struct tm *, struct tm *);
+static intmax_t delta(struct tm *, struct tm *);
 static void dumptime(struct tm const *);
 static time_t hunt(timezone_t, time_t, time_t, bool);
 static void show(timezone_t, char *, time_t, bool);
@@ -102,7 +102,7 @@ static void showextrema(timezone_t, char *, time_t, struct tm *, time_t);
 static void showtrans(char const *, struct tm const *, time_t, char const *,
 		      char const *);
 static const char *tformat(void);
-ATTRIBUTE_REPRODUCIBLE static time_t yeartot(intmax_t);
+ATTRIBUTE_PURE_114833 static time_t yeartot(intmax_t);
 
 /* Is C an ASCII digit?  */
 static bool
@@ -139,7 +139,7 @@ size_overflow(void)
 
 /* Return A + B, exiting if the result would overflow either ptrdiff_t
    or size_t.  A and B are both nonnegative.  */
-ATTRIBUTE_REPRODUCIBLE static ptrdiff_t
+ATTRIBUTE_PURE_114833 static ptrdiff_t
 sumsize(size_t a, size_t b)
 {
 #ifdef ckd_add
@@ -167,7 +167,7 @@ xstrsize(char const *str)
 
 /* Return a pointer to a newly allocated buffer of size SIZE, exiting
    on failure.  SIZE should be positive.  */
-ATTRIBUTE_MALLOC static void *
+static void *
 xmalloc(ptrdiff_t size)
 {
   void *p = malloc(size);
@@ -929,7 +929,7 @@ showextrema(timezone_t tz, char *zone, time_t lo, struct tm *lotmp, time_t hi)
 # include <stdarg.h>
 
 /* A substitute for snprintf that is good enough for zdump.  */
-ATTRIBUTE_FORMAT((printf, 3, 4)) static int
+static int
 my_snprintf(char *s, size_t size, char const *format, ...)
 {
   int n;

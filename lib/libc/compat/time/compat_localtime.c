@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_localtime.c,v 1.3 2011/02/21 22:07:44 christos Exp $	*/
+/*	$NetBSD: compat_localtime.c,v 1.4 2024/09/11 13:50:35 christos Exp $	*/
 
 /*
  * Written by Jason R. Thorpe <thorpej@NetBSD.org>, October 21, 1997.
@@ -15,8 +15,6 @@
 #include <compat/sys/time.h>
 
 #ifdef __weak_alias
-__weak_alias(ctime_r,_ctime_r)
-__weak_alias(ctime_rz,_ctime_rz)
 __weak_alias(gmtime_r,_gmtime_r)
 __weak_alias(localtime_r,_localtime_r)
 __weak_alias(localtime_rz,_localtime_rz)
@@ -32,12 +30,6 @@ __weak_alias(tzset,_tzset)
 __weak_alias(tzsetwall,_tzsetwall)
 #endif
 
-__warn_references(ctime_r,
-    "warning: reference to compatibility ctime_r();"
-    " include <time.h> for correct reference")
-__warn_references(ctime_rz,
-    "warning: reference to compatibility ctime_rz();"
-    " include <time.h> for correct reference")
 __warn_references(gmtime_r,
     "warning: reference to compatibility gmtime_r();"
     " include <time.h> for correct reference")
