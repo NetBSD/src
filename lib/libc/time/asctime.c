@@ -1,6 +1,6 @@
-/*	$NetBSD: asctime.c,v 1.30 2024/01/20 14:52:49 christos Exp $	*/
+/*	$NetBSD: asctime.c,v 1.31 2024/09/11 13:50:34 christos Exp $	*/
 
-/* asctime and asctime_r a la POSIX and ISO C, except pad years before 1000.  */
+/* asctime a la ISO C.  */
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -18,7 +18,7 @@
 #if 0
 static char	elsieid[] = "@(#)asctime.c	8.5";
 #else
-__RCSID("$NetBSD: asctime.c,v 1.30 2024/01/20 14:52:49 christos Exp $");
+__RCSID("$NetBSD: asctime.c,v 1.31 2024/09/11 13:50:34 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -43,8 +43,8 @@ __weak_alias(asctime_r,_asctime_r)
 ** leading zeroes to get the newline in the traditional place.
 ** The -4 ensures that we get four characters of output even if
 ** we call a strftime variant that produces fewer characters for some years.
-** The ISO C and POSIX standards prohibit padding the year,
-** but many implementations pad anyway; most likely the standards are buggy.
+** This conforms to recent ISO C and POSIX standards, which say behavior
+** is undefined when the year is less than 1000 or greater than 9999.
 */
 static char const ASCTIME_FMT[] = "%s %s%3d %.2d:%.2d:%.2d %-4s\n";
 /*
@@ -56,6 +56,17 @@ static char const ASCTIME_FMT[] = "%s %s%3d %.2d:%.2d:%.2d %-4s\n";
 static char const ASCTIME_FMT_B[] = "%s %s%3d %.2d:%.2d:%.2d     %s\n";
 
 enum { STD_ASCTIME_BUF_SIZE = 26 };
+#endif
+
+/* Publish asctime_r and ctime_r only when supporting older POSIX.  */
+#if SUPPORT_POSIX2008
+# define asctime_static
+#else
+# define asctime_static static
+# undef asctime_r
+# undef ctime_r
+# define asctime_r static_asctime_r
+# define ctime_r static_ctime_r
 #endif
 
 /*
@@ -70,17 +81,19 @@ enum { STD_ASCTIME_BUF_SIZE = 26 };
 */
 static char buf_ctime[2*3 + 5*INT_STRLEN_MAXIMUM(int) + 7 + 2 + 1 + 1];
 
+#ifndef __LIBC12_SOURCE__
 /* A similar buffer for ctime.
    C89 requires that they be the same buffer.
    This requirement was removed in C99, so support it only if requested,
    as support is more likely to lead to bugs in badly written programs.  */
-#ifndef __LIBC12_SOURCE__
 #if SUPPORT_C89
 # define buf_asctime buf_ctime
 #else
 static char buf_asctime[sizeof buf_ctime];
 #endif
 
+
+asctime_static
 char *
 asctime_r(struct tm const *restrict timeptr, char *restrict buf)
 {
@@ -134,8 +147,8 @@ asctime(const struct tm *timeptr)
 {
 	return asctime_r(timeptr, buf_asctime);
 }
-
 #endif /* !__LIBC12_SOURCE__ */
+
 
 char *
 ctime_rz(timezone_t sp, const time_t *timep, char *buf)
@@ -145,6 +158,7 @@ ctime_rz(timezone_t sp, const time_t *timep, char *buf)
   return tmp ? asctime_r(tmp, buf) : NULL;
 }
 
+asctime_static
 char *
 ctime_r(const time_t *timep, char *buf)
 {
