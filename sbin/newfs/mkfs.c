@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.132.2.1 2023/05/13 11:51:14 martin Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.132.2.2 2024/09/11 16:39:43 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.132.2.1 2023/05/13 11:51:14 martin Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.132.2.2 2024/09/11 16:39:43 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -672,7 +672,8 @@ mkfs(const char *fsys, int fi, int fo,
 	fld_width = verbosity < 4 ? 1 : snprintf(NULL, 0, "%" PRIu64, 
 		(uint64_t)FFS_FSBTODB(&sblock, cgsblock(&sblock, sblock.fs_ncg-1)));
 	/* Get terminal width */
-	if (ioctl(fileno(stdout), TIOCGWINSZ, &winsize) == 0)
+	if (ioctl(fileno(stdout), TIOCGWINSZ, &winsize) == 0 &&
+	    winsize.ws_col != 0)
 		max_cols = winsize.ws_col;
 	else
 		max_cols = 80;
