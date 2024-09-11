@@ -1,4 +1,4 @@
-/* $NetBSD: spivar.h,v 1.12 2022/01/19 13:33:11 thorpej Exp $ */
+/* $NetBSD: spivar.h,v 1.12.4.1 2024/09/11 16:42:34 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -55,15 +55,23 @@
 struct spi_handle;
 struct spi_transfer;
 
+#define	SPI_MODE_CPHA	__BIT(0)
+#define	SPI_MODE_CPOL	__BIT(1)
+
 /*
  * De facto standard latching modes.
  */
-#define	SPI_MODE_0	0	/* CPOL = 0, CPHA = 0 */
-#define	SPI_MODE_1	1	/* CPOL = 0, CPHA = 1 */
-#define	SPI_MODE_2	2	/* CPOL = 1, CPHA = 0 */
-#define	SPI_MODE_3	3	/* CPOL = 1, CPHA = 1 */
+#define	SPI_MODE_0	0
+#define	SPI_MODE_1	SPI_MODE_CPHA
+#define	SPI_MODE_2	SPI_MODE_CPOL
+#define	SPI_MODE_3	(SPI_MODE_CPHA | SPI_MODE_CPOL)
+
 /* Philips' Microwire is just Mode 0 */
 #define	SPI_MODE_MICROWIRE	SPI_MODE_0
+
+/* SPI transfer speed helper macros -- converts to Hz for spi_configure(). */
+#define	SPI_FREQ_kHz(x)	((x) * 1000)
+#define	SPI_FREQ_MHz(x)	((x) * 1000000)
 
 struct spi_controller {
 	void	*sct_cookie;	/* controller private data */
