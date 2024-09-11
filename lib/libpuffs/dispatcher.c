@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.49 2021/03/08 17:34:10 christos Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.49.6.1 2024/09/11 16:35:11 martin Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.49 2021/03/08 17:34:10 christos Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.49.6.1 2024/09/11 16:35:11 martin Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -893,7 +893,7 @@ dispatch(struct puffs_cc *pcc)
 		{
 			struct puffs_vnmsg_pathconf *auxt = auxbuf;
 			if (pops->puffs_node_pathconf == NULL) {
-				error = 0;
+				error = EINVAL;
 				break;
 			}
 
