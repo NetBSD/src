@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.14 2024/09/04 10:35:43 macallan Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.15 2024/09/11 13:31:13 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.14 2024/09/04 10:35:43 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.15 2024/09/11 13:31:13 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -1122,8 +1122,9 @@ hyperfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct wsdisplay_font *font = PICK_FONT(ri, c);
 	struct vcons_screen *scr = ri->ri_hw;
 	struct hyperfb_softc *sc = scr->scr_cookie;
-	int x, y, wi, he/*, rv = GC_NOPE*/;
-	uint32_t bg;
+	uint8_t *data;
+	int i, x, y, wi, he/*, rv = GC_NOPE*/;
+	uint32_t bg, fg, mask;
 
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
 		return;
@@ -1142,19 +1143,54 @@ hyperfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	y = ri->ri_yorigin + row * he;
 
 	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+	fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
 
-	if (c == 0x20) {
-		hyperfb_rectfill(sc, x, y, wi, he, bg);
+	/* clear the character cell */
+	hyperfb_rectfill(sc, x, y, wi, he, bg);
+
+	/* if we're drawing a space we're done here */
+	if (c == 0x20) 
 		return;
-	}
 
 #if 0
 	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
 	if (rv == GC_OK)
 		return;
 #endif
-	if (sc->sc_hwmode != HW_FB) hyperfb_setup_fb(sc);
-	sc->sc_putchar(cookie, row, col, c, attr);
+
+	data = WSFONT_GLYPH(c, font);
+
+	hyperfb_wait_fifo(sc, 2);
+
+	/* character colour */
+	hyperfb_write4(sc, NGLE_REG_35, fg);
+	/* dst XY */
+	hyperfb_write4(sc, NGLE_REG_6, (x << 16) | y);
+
+	/*
+	 * drawing a rectangle moves the starting coordinates down the
+	 * y-axis so we can just hammer the wi/he register to draw a full
+	 * character
+	 */
+	if (ri->ri_font->stride == 1) {
+		for (i = 0; i < he; i++) {
+			hyperfb_wait_fifo(sc, 2);
+			mask = ((uint32_t)*data) << 24;
+			hyperfb_write4(sc, NGLE_REG_8, mask);	
+			hyperfb_write4(sc, NGLE_REG_9, (wi << 16) | 1);
+			data++;
+		}
+	} else {
+		for (i = 0; i < he; i++) {
+			hyperfb_wait_fifo(sc, 2);
+			mask = ((uint32_t)*data) << 8;
+			data++;
+			mask |= *data;
+			data++;
+			hyperfb_write4(sc, NGLE_REG_8, mask << 16);	
+			hyperfb_write4(sc, NGLE_REG_9, (wi << 16) | 1);
+		}
+	}
 #if 0
 	if (rv == GC_ADD)
 		glyphcache_add(&sc->sc_gc, c, x, y);
