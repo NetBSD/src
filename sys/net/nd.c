@@ -1,4 +1,4 @@
-/*	$NetBSD: nd.c,v 1.5 2022/11/19 08:00:51 yamt Exp $	*/
+/*	$NetBSD: nd.c,v 1.5.2.1 2024/09/11 16:18:36 martin Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd.c,v 1.5 2022/11/19 08:00:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd.c,v 1.5.2.1 2024/09/11 16:18:36 martin Exp $");
 
 #include <sys/callout.h>
 #include <sys/mbuf.h>
@@ -105,7 +105,11 @@ nd_timer(void *arg)
 
 			m->m_nextpkt = NULL;
 			ln->ln_hold = NULL;
+			ln->la_numheld = 0;
 		}
+
+		KASSERTMSG(ln->la_numheld == 0, "la_numheld=%d",
+		    ln->la_numheld);
 
 		missed = ND_LLINFO_INCOMPLETE;
 		ln->ln_state = ND_LLINFO_WAITDELETE;
@@ -374,14 +378,25 @@ nd_resolve(struct llentry *ln, const struct rtentry *rt, struct mbuf *m,
 				break;
 			}
 		}
+		KASSERTMSG(ln->la_numheld == i, "la_numheld=%d i=%d",
+		    ln->la_numheld, i);
 		while (i >= nd->nd_maxqueuelen) {
 			m_hold = ln->ln_hold;
 			ln->ln_hold = ln->ln_hold->m_nextpkt;
 			m_freem(m_hold);
 			i--;
+			ln->la_numheld--;
 		}
-	} else
+	} else {
+		KASSERTMSG(ln->la_numheld == 0, "la_numheld=%d",
+		    ln->la_numheld);
 		ln->ln_hold = m;
+	}
+
+	KASSERTMSG(ln->la_numheld < nd->nd_maxqueuelen,
+	    "la_numheld=%d nd_maxqueuelen=%d",
+	    ln->la_numheld, nd->nd_maxqueuelen);
+	ln->la_numheld++;
 
 	if (ln->ln_asked >= nd->nd_mmaxtries)
 		error = (rt != NULL && rt->rt_flags & RTF_GATEWAY) ?
