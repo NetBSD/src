@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.41.2.1 2023/09/04 16:57:56 martin Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.41.2.2 2024/09/11 10:09:19 martin Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005, 2006, 2007 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.41.2.1 2023/09/04 16:57:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.41.2.2 2024/09/11 10:09:19 martin Exp $");
 
 #include <sys/param.h>
 
@@ -140,6 +140,10 @@ workqueue_runlist(struct workqueue *wq, struct workqhead *list)
 {
 	work_impl_t *wk;
 	work_impl_t *next;
+	struct lwp *l = curlwp;
+
+	KASSERTMSG(l->l_nopreempt == 0, "lwp %p nopreempt %d",
+	    l, l->l_nopreempt);
 
 	for (wk = SIMPLEQ_FIRST(list); wk != NULL; wk = next) {
 		next = SIMPLEQ_NEXT(wk, wk_entry);
@@ -148,6 +152,9 @@ workqueue_runlist(struct workqueue *wq, struct workqhead *list)
 		(*wq->wq_func)((void *)wk, wq->wq_arg);
 		SDT_PROBE4(sdt, kernel, workqueue, return,
 		    wq, wk, wq->wq_func, wq->wq_arg);
+		KASSERTMSG(l->l_nopreempt == 0,
+		    "lwp %p nopreempt %d func %p",
+		    l, l->l_nopreempt, wq->wq_func);
 	}
 }
 
