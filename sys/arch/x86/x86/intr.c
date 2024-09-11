@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.163.2.1 2023/04/01 15:11:00 martin Exp $	*/
+/*	$NetBSD: intr.c,v 1.163.2.2 2024/09/11 10:09:19 martin Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.163.2.1 2023/04/01 15:11:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.163.2.2 2024/09/11 10:09:19 martin Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -658,21 +658,25 @@ intr_source_free(struct cpu_info *ci, int slot, struct pic *pic, int idtvec)
 
 #ifdef MULTIPROCESSOR
 static int intr_biglock_wrapper(void *);
+static int intr_wrapper(void *);
 
 /*
+ * intr_wrapper: perform diagnostic checks before and after calling the
+ * real handler.
  * intr_biglock_wrapper: grab biglock and call a real interrupt handler.
  */
 
 static int
-intr_biglock_wrapper(void *vp)
+intr_wrapper(void *vp)
 {
 	struct intrhand *ih = vp;
+	struct lwp *l = curlwp;
 	int locks;
+	int nopreempt;
 	int ret;
 
-	KERNEL_LOCK(1, NULL);
-
 	locks = curcpu()->ci_biglock_count;
+	nopreempt = l->l_nopreempt;
 	SDT_PROBE3(sdt, kernel, intr, entry,
 	    ih->ih_realfun, ih->ih_realarg, ih);
 	ret = (*ih->ih_realfun)(ih->ih_realarg);
@@ -681,11 +685,28 @@ intr_biglock_wrapper(void *vp)
 	KASSERTMSG(locks == curcpu()->ci_biglock_count,
 	    "%s @ %p slipped locks %d -> %d",
 	    ih->ih_xname, ih->ih_realfun, locks, curcpu()->ci_biglock_count);
+	KASSERTMSG(nopreempt == l->l_nopreempt,
+	    "%s @ %p slipped nopreempt %d -> %d lwp %p/%p func %p",
+	    ih->ih_xname, ih->ih_realfun, nopreempt, l->l_nopreempt, l, curlwp,
+	    ih->ih_realfun);
+
+	return ret;
+}
+
+static int
+intr_biglock_wrapper(void *vp)
+{
+	int ret;
+
+	KERNEL_LOCK(1, NULL);
+
+	ret = intr_wrapper(vp);
 
 	KERNEL_UNLOCK_ONE(NULL);
 
 	return ret;
 }
+
 #endif /* MULTIPROCESSOR */
 
 #ifdef KDTRACE_HOOKS
@@ -693,13 +714,19 @@ static int
 intr_kdtrace_wrapper(void *vp)
 {
 	struct intrhand *ih = vp;
+	struct lwp *l = curlwp;
 	int ret;
 
+	int nopreempt;
+	nopreempt = l->l_nopreempt;
 	SDT_PROBE3(sdt, kernel, intr, entry,
 	    ih->ih_realfun, ih->ih_realarg, ih);
 	ret = (*ih->ih_realfun)(ih->ih_realarg);
 	SDT_PROBE4(sdt, kernel, intr, return,
 	    ih->ih_realfun, ih->ih_realarg, ih, ret);
+	KASSERTMSG(nopreempt == l->l_nopreempt,
+	    "%s @ %p slipped nopreempt %d -> %d  lwp %p/%p",
+	    ih->ih_xname, ih->ih_realfun, nopreempt, l->l_nopreempt, l, curlwp);
 
 	return ret;
 }
@@ -963,6 +990,15 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin, int type,
 		    __FPTRCAST(int (*)(void *), i8254_clockintr));
 		ih->ih_fun = intr_biglock_wrapper;
 		ih->ih_arg = ih;
+	} else {
+		if (handler !=
+		    __FPTRCAST(int (*)(void *), i8254_clockintr)) { /* XXX */
+#ifdef DIAGNOSTIC
+			/* wrap all interrupts */
+			ih->ih_fun = intr_wrapper;
+			ih->ih_arg = ih;
+#endif
+		}
 	}
 #endif /* MULTIPROCESSOR */
 

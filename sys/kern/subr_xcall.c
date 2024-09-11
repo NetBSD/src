@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.34 2020/12/22 01:57:29 ad Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.34.18.1 2024/09/11 10:09:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010, 2019 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.34 2020/12/22 01:57:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.34.18.1 2024/09/11 10:09:19 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -420,6 +420,10 @@ xc_thread(void *cookie)
 	xc_state_t *xc = &xc_low_pri;
 	void *arg1, *arg2;
 	xcfunc_t func;
+	struct lwp *l = curlwp;
+
+	KASSERTMSG(l->l_nopreempt == 0, "lwp %p nopreempt %d",
+	    l, l->l_nopreempt);
 
 	mutex_enter(&xc->xc_lock);
 	for (;;) {
@@ -438,6 +442,9 @@ xc_thread(void *cookie)
 
 		KASSERT(func != NULL);
 		(*func)(arg1, arg2);
+
+		KASSERTMSG(l->l_nopreempt == 0, "lwp %p nopreempt %d func %p",
+		    l, l->l_nopreempt, func);
 
 		mutex_enter(&xc->xc_lock);
 #ifdef __HAVE_ATOMIC64_LOADSTORE
