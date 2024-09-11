@@ -1,4 +1,4 @@
-/* $NetBSD: vmt_subr.c,v 1.3 2021/03/27 21:23:14 ryo Exp $ */
+/* $NetBSD: vmt_subr.c,v 1.3.16.1 2024/09/11 15:52:17 martin Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -72,16 +72,65 @@ static int vm_rpci_response_successful(struct vmt_softc *);
 static void vmt_tclo_state_change_success(struct vmt_softc *, int, char);
 static void vmt_do_reboot(struct vmt_softc *);
 static void vmt_do_shutdown(struct vmt_softc *);
+static bool vmt_shutdown(device_t, int);
 
 static void vmt_update_guest_info(struct vmt_softc *);
 static void vmt_update_guest_uptime(struct vmt_softc *);
 static void vmt_sync_guest_clock(struct vmt_softc *);
 
 static void vmt_tick(void *);
-static void vmt_tclo_tick(void *);
 static void vmt_clock_sync_tick(void *);
-static bool vmt_shutdown(device_t, int);
 static void vmt_pswitch_event(void *);
+
+static void vmt_tclo_tick(void *);
+static int vmt_tclo_process(struct vmt_softc *, const char *);
+static void vmt_tclo_reset(struct vmt_softc *);
+static void vmt_tclo_ping(struct vmt_softc *);
+static void vmt_tclo_halt(struct vmt_softc *);
+static void vmt_tclo_reboot(struct vmt_softc *);
+static void vmt_tclo_poweron(struct vmt_softc *);
+static void vmt_tclo_suspend(struct vmt_softc *);
+static void vmt_tclo_resume(struct vmt_softc *);
+static void vmt_tclo_capreg(struct vmt_softc *);
+static void vmt_tclo_broadcastip(struct vmt_softc *);
+
+struct vmt_tclo_rpc {
+	const char	*name;
+	void		(*cb)(struct vmt_softc *);
+} vmt_tclo_rpc[] = {
+	/* Keep sorted by name (case-sensitive) */
+	{ "Capabilities_Register",	vmt_tclo_capreg },
+	{ "OS_Halt",			vmt_tclo_halt },
+	{ "OS_PowerOn",			vmt_tclo_poweron },
+	{ "OS_Reboot",			vmt_tclo_reboot },
+	{ "OS_Resume",			vmt_tclo_resume },
+	{ "OS_Suspend",			vmt_tclo_suspend },
+	{ "Set_Option broadcastIP 1",	vmt_tclo_broadcastip },
+	{ "ping",			vmt_tclo_ping },
+	{ "reset",			vmt_tclo_reset },
+#if 0
+	/* Various unsupported commands */
+	{ "Set_Option autohide 0" },
+	{ "Set_Option copypaste 1" },
+	{ "Set_Option enableDnD 1" },
+	{ "Set_Option enableMessageBusTunnel 0" },
+	{ "Set_Option linkRootHgfsShare 0" },
+	{ "Set_Option mapRootHgfsShare 0" },
+	{ "Set_Option synctime 1" },
+	{ "Set_Option synctime.period 0" },
+	{ "Set_Option time.synchronize.tools.enable 1" },
+	{ "Set_Option time.synchronize.tools.percentCorrection 0" },
+	{ "Set_Option time.synchronize.tools.slewCorrection 1" },
+	{ "Set_Option time.synchronize.tools.startup 1" },
+	{ "Set_Option toolScripts.afterPowerOn 1" },
+	{ "Set_Option toolScripts.afterResume 1" },
+	{ "Set_Option toolScripts.beforePowerOff 1" },
+	{ "Set_Option toolScripts.beforeSuspend 1" },
+	{ "Time_Synchronize 0" },
+	{ "Vix_1_Relayed_Command \"38cdcae40e075d66\"" },
+#endif
+	{ NULL, NULL },
+};
 
 extern char hostname[MAXHOSTNAMELEN];
 
@@ -175,14 +224,17 @@ vmt_common_attach(struct vmt_softc *sc)
 	sc->sc_rpc_buf = kmem_alloc(VMT_RPC_BUFLEN, KM_SLEEP);
 
 	if (vm_rpc_open(&sc->sc_tclo_rpc, VM_RPC_OPEN_TCLO) != 0) {
-		aprint_error_dev(self, "failed to open backdoor RPC channel (TCLO protocol)\n");
+		aprint_error_dev(self, "failed to open backdoor RPC channel "
+		    "(TCLO protocol)\n");
 		goto free;
 	}
 	sc->sc_tclo_rpc_open = true;
 
 	/* don't know if this is important at all yet */
-	if (vm_rpc_send_rpci_tx(sc, "tools.capability.hgfs_server toolbox 1") != 0) {
-		aprint_error_dev(self, "failed to set HGFS server capability\n");
+	if (vm_rpc_send_rpci_tx(sc,
+	    "tools.capability.hgfs_server toolbox 1") != 0) {
+		aprint_error_dev(self,
+		    "failed to set HGFS server capability\n");
 		goto free;
 	}
 
@@ -313,7 +365,7 @@ vmt_sysctl_setup_clock_sync(device_t self, const struct sysctlnode *root_node)
 	rv = sysctl_createv(&sc->sc_log, 0, &node, &period_node,
 	    CTLFLAG_READWRITE, CTLTYPE_INT, "period",
 	    SYSCTL_DESCR("Period, in seconds, at which to update the "
-	        "guest's clock"),
+		"guest's clock"),
 	    vmt_sysctl_update_clock_sync_period, 0, (void *)sc, 0,
 	    CTL_CREATE, CTL_EOL);
 	return rv;
@@ -380,20 +432,23 @@ vmt_update_guest_info(struct vmt_softc *sc)
 	}
 
 	/*
-	 * we're supposed to pass the full network address information back here,
-	 * but that involves xdr (sunrpc) data encoding, which seems a bit unreasonable.
+	 * we're supposed to pass the full network address information back
+	 * here, but that involves xdr (sunrpc) data encoding, which seems
+	 * a bit unreasonable.
 	 */
 
 	if (sc->sc_set_guest_os == 0) {
 		if (vm_rpc_send_rpci_tx(sc, "SetGuestInfo  %d %s %s %s",
-		    VM_GUEST_INFO_OS_NAME_FULL, ostype, osrelease, machine_arch) != 0) {
-			device_printf(sc->sc_dev, "unable to set full guest OS\n");
+		    VM_GUEST_INFO_OS_NAME_FULL,
+		    ostype, osrelease, machine_arch) != 0) {
+			device_printf(sc->sc_dev,
+			    "unable to set full guest OS\n");
 			sc->sc_rpc_error = 1;
 		}
 
 		/*
-		 * host doesn't like it if we send an OS name it doesn't recognise,
-		 * so use "other" for i386 and "other-64" for amd64
+		 * Host doesn't like it if we send an OS name it doesn't
+		 * recognise, so use "other" for i386 and "other-64" for amd64.
 		 */
 		if (vm_rpc_send_rpci_tx(sc, "SetGuestInfo  %d %s",
 		    VM_GUEST_INFO_OS_NAME, VM_OS_NAME) != 0) {
@@ -442,7 +497,8 @@ vmt_tclo_state_change_success(struct vmt_softc *sc, int success, char state)
 {
 	if (vm_rpc_send_rpci_tx(sc, "tools.os.statechange.status %d %d",
 	    success, state) != 0) {
-		device_printf(sc->sc_dev, "unable to send state change result\n");
+		device_printf(sc->sc_dev,
+		    "unable to send state change result\n");
 		sc->sc_rpc_error = 1;
 	}
 }
@@ -493,8 +549,10 @@ vmt_shutdown(device_t self, int flags)
 {
 	struct vmt_softc *sc = device_private(self);
 
-	if (vm_rpc_send_rpci_tx(sc, "tools.capability.hgfs_server toolbox 0") != 0) {
-		device_printf(sc->sc_dev, "failed to disable hgfs server capability\n");
+	if (vm_rpc_send_rpci_tx(sc,
+	    "tools.capability.hgfs_server toolbox 0") != 0) {
+		device_printf(sc->sc_dev,
+		    "failed to disable hgfs server capability\n");
 	}
 
 	if (vm_rpc_send(&sc->sc_tclo_rpc, NULL, 0) != 0) {
@@ -515,24 +573,227 @@ vmt_pswitch_event(void *xarg)
 }
 
 static void
+vmt_tclo_reset(struct vmt_softc *sc)
+{
+
+	if (sc->sc_rpc_error != 0) {
+		device_printf(sc->sc_dev, "resetting rpc\n");
+		vm_rpc_close(&sc->sc_tclo_rpc);
+
+		/* reopen and send the reset reply next time around */
+		return;
+	}
+
+	if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_RESET_REPLY) != 0) {
+		device_printf(sc->sc_dev, "failed to send reset reply\n");
+		sc->sc_rpc_error = 1;
+	}
+
+}
+
+static void
+vmt_tclo_ping(struct vmt_softc *sc)
+{
+
+	vmt_update_guest_info(sc);
+	if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
+		device_printf(sc->sc_dev, "error sending ping response\n");
+		sc->sc_rpc_error = 1;
+	}
+}
+
+static void
+vmt_tclo_halt(struct vmt_softc *sc)
+{
+
+	vmt_do_shutdown(sc);
+}
+
+static void
+vmt_tclo_reboot(struct vmt_softc *sc)
+{
+
+	vmt_do_reboot(sc);
+}
+
+static void
+vmt_tclo_poweron(struct vmt_softc *sc)
+{
+
+	vmt_tclo_state_change_success(sc, 1, VM_STATE_CHANGE_POWERON);
+	if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
+		device_printf(sc->sc_dev, "error sending poweron response\n");
+		sc->sc_rpc_error = 1;
+	}
+}
+
+static void
+vmt_tclo_suspend(struct vmt_softc *sc)
+{
+
+	log(LOG_KERN | LOG_NOTICE,
+	    "VMware guest entering suspended state\n");
+
+	vmt_tclo_state_change_success(sc, 1, VM_STATE_CHANGE_SUSPEND);
+	if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
+		device_printf(sc->sc_dev, "error sending suspend response\n");
+		sc->sc_rpc_error = 1;
+	}
+}
+
+static void
+vmt_tclo_resume(struct vmt_softc *sc)
+{
+
+	vmt_do_resume(sc); /* XXX msaitoh extract */
+}
+
+static void
+vmt_tclo_capreg(struct vmt_softc *sc)
+{
+
+	/* don't know if this is important at all */
+	if (vm_rpc_send_rpci_tx(sc,
+		"vmx.capability.unified_loop toolbox") != 0) {
+		device_printf(sc->sc_dev, "unable to set unified loop\n");
+		sc->sc_rpc_error = 1;
+	}
+	if (vm_rpci_response_successful(sc) == 0) {
+		device_printf(sc->sc_dev,
+		    "host rejected unified loop setting\n");
+	}
+
+	/* the trailing space is apparently important here */
+	if (vm_rpc_send_rpci_tx(sc,
+		"tools.capability.statechange ") != 0) {
+		device_printf(sc->sc_dev,
+		    "unable to send statechange capability\n");
+		sc->sc_rpc_error = 1;
+	}
+	if (vm_rpci_response_successful(sc) == 0) {
+		device_printf(sc->sc_dev,
+		    "host rejected statechange capability\n");
+	}
+
+	if (vm_rpc_send_rpci_tx(sc,
+		"tools.set.version %u", VM_VERSION_UNMANAGED) != 0) {
+		device_printf(sc->sc_dev, "unable to set tools version\n");
+		sc->sc_rpc_error = 1;
+	}
+
+	vmt_update_guest_uptime(sc);
+
+	if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
+		device_printf(sc->sc_dev,
+		    "error sending capabilities_register response\n");
+		sc->sc_rpc_error = 1;
+	}
+}
+
+static void
+vmt_tclo_broadcastip(struct vmt_softc *sc)
+{
+	struct ifaddr *iface_addr = NULL;
+	struct ifnet *iface;
+	struct sockaddr_in *guest_ip;
+	int s;
+	struct psref psref;
+
+	/* find first available ipv4 address */
+	guest_ip = NULL;
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(iface) {
+
+		/* skip loopback */
+		if (strncmp(iface->if_xname, "lo", 2) == 0 &&
+		    iface->if_xname[2] >= '0' &&
+		    iface->if_xname[2] <= '9') {
+			continue;
+		}
+
+		IFADDR_READER_FOREACH(iface_addr, iface) {
+			if (iface_addr->ifa_addr->sa_family != AF_INET) {
+				continue;
+			}
+
+			guest_ip = satosin(iface_addr->ifa_addr);
+			ifa_acquire(iface_addr, &psref);
+			goto got;
+		}
+	}
+got:
+	pserialize_read_exit(s);
+
+	if (guest_ip != NULL) {
+		if (vm_rpc_send_rpci_tx(sc, "info-set guestinfo.ip %s",
+			inet_ntoa(guest_ip->sin_addr)) != 0) {
+			device_printf(sc->sc_dev,
+			    "unable to send guest IP address\n");
+			sc->sc_rpc_error = 1;
+		}
+		ifa_release(iface_addr, &psref);
+
+		if (vm_rpc_send_str(&sc->sc_tclo_rpc,
+			VM_RPC_REPLY_OK) != 0) {
+			device_printf(sc->sc_dev,
+			    "error sending broadcastIP response\n");
+			sc->sc_rpc_error = 1;
+		}
+	} else {
+		if (vm_rpc_send_str(&sc->sc_tclo_rpc,
+			VM_RPC_REPLY_ERROR_IP_ADDR) != 0) {
+			device_printf(sc->sc_dev,
+			    "error sending broadcastIP"
+			    " error response\n");
+			sc->sc_rpc_error = 1;
+		}
+	}
+}
+
+int
+vmt_tclo_process(struct vmt_softc *sc, const char *name)
+{
+	int i;
+
+	/* Search for rpc command and call handler */
+	for (i = 0; vmt_tclo_rpc[i].name != NULL; i++) {
+		if (strcmp(vmt_tclo_rpc[i].name, sc->sc_rpc_buf) == 0) {
+			vmt_tclo_rpc[i].cb(sc);
+			return (0);
+		}
+	}
+
+	device_printf(sc->sc_dev, "unknown command: \"%s\"\n", name);
+
+	return (-1);
+}
+
+static void
 vmt_tclo_tick(void *xarg)
 {
 	struct vmt_softc *sc = xarg;
 	u_int32_t rlen;
 	u_int16_t ack;
+	int delay;
 
+	/* By default, poll every second for new messages */
+	delay = 1;
+	
 	/* reopen tclo channel if it's currently closed */
 	if (sc->sc_tclo_rpc.channel == 0 &&
 	    sc->sc_tclo_rpc.cookie1 == 0 &&
 	    sc->sc_tclo_rpc.cookie2 == 0) {
 		if (vm_rpc_open(&sc->sc_tclo_rpc, VM_RPC_OPEN_TCLO) != 0) {
-			device_printf(sc->sc_dev, "unable to reopen TCLO channel\n");
-			callout_schedule(&sc->sc_tclo_tick, hz * 15);
-			return;
+			device_printf(sc->sc_dev,
+			    "unable to reopen TCLO channel\n");
+			delay = 15;
+			goto out;
 		}
 
-		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_RESET_REPLY) != 0) {
-			device_printf(sc->sc_dev, "failed to send reset reply\n");
+		if (vm_rpc_send_str(&sc->sc_tclo_rpc,
+		    VM_RPC_RESET_REPLY) != 0) {
+			device_printf(sc->sc_dev,
+			    "failed to send reset reply\n");
 			sc->sc_rpc_error = 1;
 			goto out;
 		} else {
@@ -542,14 +803,16 @@ vmt_tclo_tick(void *xarg)
 
 	if (sc->sc_tclo_ping) {
 		if (vm_rpc_send(&sc->sc_tclo_rpc, NULL, 0) != 0) {
-			device_printf(sc->sc_dev, "failed to send TCLO outgoing ping\n");
+			device_printf(sc->sc_dev,
+			    "failed to send TCLO outgoing ping\n");
 			sc->sc_rpc_error = 1;
 			goto out;
 		}
 	}
 
 	if (vm_rpc_get_length(&sc->sc_tclo_rpc, &rlen, &ack) != 0) {
-		device_printf(sc->sc_dev, "failed to get length of incoming TCLO data\n");
+		device_printf(sc->sc_dev,
+		    "failed to get length of incoming TCLO data\n");
 		sc->sc_rpc_error = 1;
 		goto out;
 	}
@@ -563,148 +826,36 @@ vmt_tclo_tick(void *xarg)
 		rlen = VMT_RPC_BUFLEN - 1;
 	}
 	if (vm_rpc_get_data(&sc->sc_tclo_rpc, sc->sc_rpc_buf, rlen, ack) != 0) {
-		device_printf(sc->sc_dev, "failed to get incoming TCLO data\n");
+		device_printf(sc->sc_dev,
+		    "failed to get incoming TCLO data\n");
 		sc->sc_rpc_error = 1;
 		goto out;
 	}
 	sc->sc_tclo_ping = 0;
 
+	/* The VM host can queue multiple messages; continue without delay */
+	delay = 0;
+
 #ifdef VMT_DEBUG
 	printf("vmware: received message '%s'\n", sc->sc_rpc_buf);
 #endif
 
-	if (strcmp(sc->sc_rpc_buf, "reset") == 0) {
-
-		if (sc->sc_rpc_error != 0) {
-			device_printf(sc->sc_dev, "resetting rpc\n");
-			vm_rpc_close(&sc->sc_tclo_rpc);
-			/* reopen and send the reset reply next time around */
-			goto out;
-		}
-
-		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_RESET_REPLY) != 0) {
-			device_printf(sc->sc_dev, "failed to send reset reply\n");
-			sc->sc_rpc_error = 1;
-		}
-
-	} else if (strcmp(sc->sc_rpc_buf, "ping") == 0) {
-
-		vmt_update_guest_info(sc);
-		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
-			device_printf(sc->sc_dev, "error sending ping response\n");
-			sc->sc_rpc_error = 1;
-		}
-
-	} else if (strcmp(sc->sc_rpc_buf, "OS_Halt") == 0) {
-		vmt_do_shutdown(sc);
-	} else if (strcmp(sc->sc_rpc_buf, "OS_Reboot") == 0) {
-		vmt_do_reboot(sc);
-	} else if (strcmp(sc->sc_rpc_buf, "OS_PowerOn") == 0) {
-		vmt_tclo_state_change_success(sc, 1, VM_STATE_CHANGE_POWERON);
-		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
-			device_printf(sc->sc_dev, "error sending poweron response\n");
-			sc->sc_rpc_error = 1;
-		}
-	} else if (strcmp(sc->sc_rpc_buf, "OS_Suspend") == 0) {
-		log(LOG_KERN | LOG_NOTICE, "VMware guest entering suspended state\n");
-
-		vmt_tclo_state_change_success(sc, 1, VM_STATE_CHANGE_SUSPEND);
-		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
-			device_printf(sc->sc_dev, "error sending suspend response\n");
-			sc->sc_rpc_error = 1;
-		}
-	} else if (strcmp(sc->sc_rpc_buf, "OS_Resume") == 0) {
-		vmt_do_resume(sc);
-	} else if (strcmp(sc->sc_rpc_buf, "Capabilities_Register") == 0) {
-
-		/* don't know if this is important at all */
-		if (vm_rpc_send_rpci_tx(sc, "vmx.capability.unified_loop toolbox") != 0) {
-			device_printf(sc->sc_dev, "unable to set unified loop\n");
-			sc->sc_rpc_error = 1;
-		}
-		if (vm_rpci_response_successful(sc) == 0) {
-			device_printf(sc->sc_dev, "host rejected unified loop setting\n");
-		}
-
-		/* the trailing space is apparently important here */
-		if (vm_rpc_send_rpci_tx(sc, "tools.capability.statechange ") != 0) {
-			device_printf(sc->sc_dev, "unable to send statechange capability\n");
-			sc->sc_rpc_error = 1;
-		}
-		if (vm_rpci_response_successful(sc) == 0) {
-			device_printf(sc->sc_dev, "host rejected statechange capability\n");
-		}
-
-		if (vm_rpc_send_rpci_tx(sc, "tools.set.version %u", VM_VERSION_UNMANAGED) != 0) {
-			device_printf(sc->sc_dev, "unable to set tools version\n");
-			sc->sc_rpc_error = 1;
-		}
-
-		vmt_update_guest_uptime(sc);
-
-		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
-			device_printf(sc->sc_dev, "error sending capabilities_register response\n");
-			sc->sc_rpc_error = 1;
-		}
-	} else if (strcmp(sc->sc_rpc_buf, "Set_Option broadcastIP 1") == 0) {
-		struct ifaddr *iface_addr = NULL;
-		struct ifnet *iface;
-		struct sockaddr_in *guest_ip;
-		int s;
-		struct psref psref;
-
-		/* find first available ipv4 address */
-		guest_ip = NULL;
-		s = pserialize_read_enter();
-		IFNET_READER_FOREACH(iface) {
-
-			/* skip loopback */
-			if (strncmp(iface->if_xname, "lo", 2) == 0 &&
-			    iface->if_xname[2] >= '0' && iface->if_xname[2] <= '9') {
-				continue;
-			}
-
-			IFADDR_READER_FOREACH(iface_addr, iface) {
-				if (iface_addr->ifa_addr->sa_family != AF_INET) {
-					continue;
-				}
-
-				guest_ip = satosin(iface_addr->ifa_addr);
-				ifa_acquire(iface_addr, &psref);
-				goto got;
-			}
-		}
-	got:
-		pserialize_read_exit(s);
-
-		if (guest_ip != NULL) {
-			if (vm_rpc_send_rpci_tx(sc, "info-set guestinfo.ip %s",
-			    inet_ntoa(guest_ip->sin_addr)) != 0) {
-				device_printf(sc->sc_dev, "unable to send guest IP address\n");
-				sc->sc_rpc_error = 1;
-			}
-			ifa_release(iface_addr, &psref);
-
-			if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
-				device_printf(sc->sc_dev, "error sending broadcastIP response\n");
-				sc->sc_rpc_error = 1;
-			}
-		} else {
-			if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_ERROR_IP_ADDR) != 0) {
-				device_printf(sc->sc_dev,
-				    "error sending broadcastIP error response\n");
-				sc->sc_rpc_error = 1;
-			}
-		}
-	} else {
-		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_ERROR) != 0) {
-			device_printf(sc->sc_dev, "error sending unknown command reply\n");
+	if (vmt_tclo_process(sc, sc->sc_rpc_buf) != 0) {
+		if (vm_rpc_send_str(&sc->sc_tclo_rpc,
+		    VM_RPC_REPLY_ERROR) != 0) {
+			device_printf(sc->sc_dev,
+			    "error sending unknown command reply\n");
 			sc->sc_rpc_error = 1;
 		}
 	}
 
+	if (sc->sc_rpc_error == 1) {
+		/* On error, give time to recover and wait a second */
+		delay = 1;
+	}
+
 out:
-	callout_schedule(&sc->sc_tclo_tick, sc->sc_tclo_ping ? hz : 1);
+	callout_schedule(&sc->sc_tclo_tick, hz * delay);
 }
 
 static void
@@ -928,7 +1079,8 @@ vm_rpci_response_successful(struct vmt_softc *sc)
 }
 
 static int
-vm_rpc_send_rpci_tx_buf(struct vmt_softc *sc, const uint8_t *buf, uint32_t length)
+vm_rpc_send_rpci_tx_buf(struct vmt_softc *sc, const uint8_t *buf,
+    uint32_t length)
 {
 	struct vm_rpc rpci;
 	u_int32_t rlen;
@@ -947,7 +1099,8 @@ vm_rpc_send_rpci_tx_buf(struct vmt_softc *sc, const uint8_t *buf, uint32_t lengt
 	}
 
 	if (vm_rpc_get_length(&rpci, &rlen, &ack) != 0) {
-		device_printf(sc->sc_dev, "failed to get length of rpci response data\n");
+		device_printf(sc->sc_dev,
+		    "failed to get length of rpci response data\n");
 		result = EIO;
 		goto out;
 	}
@@ -958,7 +1111,8 @@ vm_rpc_send_rpci_tx_buf(struct vmt_softc *sc, const uint8_t *buf, uint32_t lengt
 		}
 
 		if (vm_rpc_get_data(&rpci, sc->sc_rpc_buf, rlen, ack) != 0) {
-			device_printf(sc->sc_dev, "failed to get rpci response data\n");
+			device_printf(sc->sc_dev,
+			    "failed to get rpci response data\n");
 			result = EIO;
 			goto out;
 		}
@@ -983,7 +1137,8 @@ vm_rpc_send_rpci_tx(struct vmt_softc *sc, const char *fmt, ...)
 	va_end(args);
 
 	if (len >= VMT_RPC_BUFLEN) {
-		device_printf(sc->sc_dev, "rpci command didn't fit in buffer\n");
+		device_printf(sc->sc_dev,
+		    "rpci command didn't fit in buffer\n");
 		return EIO;
 	}
 
