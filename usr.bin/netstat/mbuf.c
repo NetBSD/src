@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.c,v 1.35 2022/09/01 10:10:20 msaitoh Exp $	*/
+/*	$NetBSD: mbuf.c,v 1.35.2.1 2024/09/11 16:44:16 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mbuf.c,v 1.35 2022/09/01 10:10:20 msaitoh Exp $");
+__RCSID("$NetBSD: mbuf.c,v 1.35.2.1 2024/09/11 16:44:16 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -225,7 +225,7 @@ dump_drain:
 
 	for (mo = (void *) data, lines = 0; len >= sizeof(*mo);
 	    len -= sizeof(*mo), mo++) {
-		char buf[32];
+		char buf[34];
 		if (vflag == 1 &&
 		    mo->mo_counter[MOWNER_COUNTER_CLAIMS] == 0 &&
 		    mo->mo_counter[MOWNER_COUNTER_EXT_CLAIMS] == 0 &&
@@ -239,7 +239,7 @@ dump_drain:
 		    mo->mo_counter[MOWNER_COUNTER_CLUSTER_CLAIMS] ==
 		    mo->mo_counter[MOWNER_COUNTER_CLUSTER_RELEASES])
 			continue;
-		snprintf(buf, sizeof(buf), "%16.16s %-13s",
+		snprintf(buf, sizeof(buf), "%16.16s %-13.16s",
 		    mo->mo_name, mo->mo_descr);
 		if ((lines % 24) == 0 || lines > 24) {
 			printf("%30s %-8s %10s %10s %10s\n",
