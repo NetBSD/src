@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_localcount.c,v 1.7 2017/11/17 09:26:36 ozaki-r Exp $	*/
+/*	$NetBSD: subr_localcount.c,v 1.7.36.1 2024/09/11 16:24:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_localcount.c,v 1.7 2017/11/17 09:26:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_localcount.c,v 1.7.36.1 2024/09/11 16:24:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/localcount.h>
@@ -161,11 +161,14 @@ localcount_xc(void *cookie0, void *cookie1)
 	struct localcount *lc = cookie0;
 	kmutex_t *interlock = cookie1;
 	int64_t *localp;
+	int s;
 
 	mutex_enter(interlock);
 	localp = percpu_getref(lc->lc_percpu);
+	s = splhigh();
 	*lc->lc_totalp += *localp;
 	*localp -= *localp;		/* ie, *localp = 0; */
+	splx(s);
 	percpu_putref(lc->lc_percpu);
 	mutex_exit(interlock);
 }
@@ -180,9 +183,12 @@ static void
 localcount_adjust(struct localcount *lc, int delta)
 {
 	int64_t *localp;
+	int s;
 
 	localp = percpu_getref(lc->lc_percpu);
+	s = splhigh();
 	*localp += delta;
+	splx(s);
 	percpu_putref(lc->lc_percpu);
 }
 
