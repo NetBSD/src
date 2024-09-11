@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.20 2018/06/03 05:55:08 chs Exp $	*/
+/*	$NetBSD: types.h,v 1.21 2024/09/11 18:39:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -72,17 +72,8 @@
 #include <sys/stdint.h>
 #endif
 
-#ifndef HAVE_NBTOOLS_CONFIG_H
-#ifdef _NETBSD_SOURCE
 #include_next <sys/types.h>
 #include_next <sys/ccompile.h>
-#else
-#define _NETBSD_SOURCE
-#include_next <sys/types.h>
-#include_next <sys/ccompile.h>
-#undef _NETBSD_SOURCE
-#endif
-#endif
 
 #undef longlong_t
 #undef u_longlong_t
