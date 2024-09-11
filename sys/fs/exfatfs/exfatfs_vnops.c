@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_vnops.c,v 1.1.2.11 2024/09/09 05:01:57 perseant Exp $	*/
+/*	$NetBSD: exfatfs_vnops.c,v 1.1.2.12 2024/09/11 13:50:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_vnops.c,v 1.1.2.11 2024/09/09 05:01:57 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_vnops.c,v 1.1.2.12 2024/09/11 13:50:21 perseant Exp $");
 
 #include <sys/buf.h>
 #include <sys/dirent.h>
@@ -278,6 +278,7 @@ exfatfs_setattr(void *v)
 		error = detrunc(xip, (u_long)vap->va_size, 0, cred);
 		if (error)
 			goto bad;
+		xip->xi_flag |= XI_UPDATE;
 		de_changed = 1;
 	}
 	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL) {
@@ -1499,6 +1500,18 @@ exfatfs_lookup(void *v)
 			       fx.xip->xi_dirgen);
 #endif /* TRACE_INUM */
 		nvp = NULL;
+
+		/*
+		 * Write access to directory required to delete files.
+		 */
+		if (cnp->cn_nameiop == DELETE && (cnp->cn_flags & ISLASTCN)) {
+			error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
+			if (error) {
+				exfatfs_freexfinode(fx.xip, 1);
+				return error;
+			}
+		}
+
 		/* Store xip where loadvnode can find it */
 		mutex_enter(&fs->xf_lock);
 		LIST_INSERT_HEAD(&fs->xf_newxip, fx.xip, xi_newxip);
