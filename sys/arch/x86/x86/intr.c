@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.163.2.2 2024/09/11 10:09:19 martin Exp $	*/
+/*	$NetBSD: intr.c,v 1.163.2.3 2024/09/11 16:32:56 martin Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.163.2.2 2024/09/11 10:09:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.163.2.3 2024/09/11 16:32:56 martin Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -911,6 +911,8 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin, int type,
 		/* FALLTHROUGH */
 	case IST_PULSE:
 		if (type != IST_NONE) {
+			int otype = source->is_type;
+
 			intr_source_free(ci, slot, pic, idt_vec);
 			intr_free_io_intrsource_direct(chained);
 			mutex_exit(&cpu_lock);
@@ -918,7 +920,7 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin, int type,
 			printf("%s: pic %s pin %d: can't share "
 			       "type %d with %d\n",
 				__func__, pic->pic_name, pin,
-				source->is_type, type);
+				otype, type);
 			return NULL;
 		}
 		break;
