@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.75.2.1 2024/03/11 20:08:15 martin Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.75.2.2 2024/09/11 15:56:21 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.75.2.1 2024/03/11 20:08:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.75.2.2 2024/09/11 15:56:21 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,10 +85,12 @@ struct ehci_pci_softc {
 	void 			*sc_ih;		/* interrupt vectoring */
 	enum {
 		EHCI_INIT_NONE,
+		EHCI_INIT_OWNER,
 		EHCI_INIT_INITED
 	} sc_init_state;
 };
 
+static void ehci_pci_release_resources(struct ehci_pci_softc *);
 static int ehci_sb700_match(const struct pci_attach_args *);
 static int ehci_apply_amd_quirks(struct ehci_pci_softc *);
 static enum ehci_pci_quirk_flags ehci_pci_lookup_quirkdata(pci_vendor_id_t,
@@ -200,9 +202,6 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = pci_intr_establish_xname(pc, sc->sc_pihp[0], IPL_USB,
 	    ehci_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
-		pci_intr_release(sc->sc_pc, sc->sc_pihp, 1);
-		sc->sc_pihp = NULL;
-
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
@@ -258,6 +257,7 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_ncomp = ncomp;
 
 	ehci_get_ownership(&sc->sc, pc, tag);
+	sc->sc_init_state = EHCI_INIT_OWNER;
 
 	int err = ehci_init(&sc->sc);
 	if (err) {
@@ -266,9 +266,8 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_init_state = EHCI_INIT_INITED;
 
-	if (!pmf_device_register1(self, ehci_pci_suspend, ehci_pci_resume,
-	    ehci_shutdown))
-		aprint_error_dev(self, "couldn't establish power handler\n");
+	pmf_device_register1(self, ehci_pci_suspend, ehci_pci_resume,
+	    ehci_shutdown);
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint,
@@ -276,15 +275,31 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	return;
 
 fail:
+	ehci_pci_release_resources(sc);
+	pmf_device_register(self, NULL, NULL);
+}
+
+static void
+ehci_pci_release_resources(struct ehci_pci_softc *sc)
+{
+	if (sc->sc_init_state >= EHCI_INIT_OWNER)
+		ehci_release_ownership(&sc->sc, sc->sc_pc, sc->sc_tag);
+
 	if (sc->sc_ih) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
+	if (sc->sc_pihp != NULL) {
+		pci_intr_release(sc->sc_pc, sc->sc_pihp, 1);
+		sc->sc_pihp = NULL;
+	}
+
 	if (sc->sc.sc_size) {
-		ehci_release_ownership(&sc->sc, sc->sc_pc, sc->sc_tag);
 		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 		sc->sc.sc_size = 0;
 	}
+
+	sc->sc_init_state = EHCI_INIT_NONE;
 }
 
 static int
@@ -302,26 +317,14 @@ ehci_pci_detach(device_t self, int flags)
 	pmf_device_deregister(self);
 	ehci_shutdown(self, flags);
 
-	/* disable interrupts */
-	EOWRITE4(&sc->sc, EHCI_USBINTR, 0);
-	/* XXX grotty hack to flush the write */
-	(void)EOREAD4(&sc->sc, EHCI_USBINTR);
-
-	if (sc->sc_ih != NULL) {
-		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
-		sc->sc_ih = NULL;
+	if (sc->sc_init_state >= EHCI_INIT_INITED) {
+		/* disable interrupts */
+		EOWRITE4(&sc->sc, EHCI_USBINTR, 0);
+		/* XXX grotty hack to flush the write */
+		(void)EOREAD4(&sc->sc, EHCI_USBINTR);
 	}
 
-	if (sc->sc_pihp != NULL) {
-		pci_intr_release(sc->sc_pc, sc->sc_pihp, 1);
-		sc->sc_pihp = NULL;
-	}
-
-	if (sc->sc.sc_size) {
-		ehci_release_ownership(&sc->sc, sc->sc_pc, sc->sc_tag);
-		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
-		sc->sc.sc_size = 0;
-	}
+	ehci_pci_release_resources(sc);
 
 #if 1
 	/* XXX created in ehci.c */
