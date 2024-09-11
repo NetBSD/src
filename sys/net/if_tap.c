@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.127.4.1 2023/01/06 13:54:58 martin Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.127.4.2 2024/09/11 16:12:49 martin Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.127.4.1 2023/01/06 13:54:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.127.4.2 2024/09/11 16:12:49 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -117,7 +117,7 @@ CFATTACH_DECL_NEW(tap, sizeof(struct tap_softc),
 extern struct cfdriver tap_cd;
 
 /* Real device access routines */
-static int	tap_dev_close(struct tap_softc *);
+static void	tap_dev_close(struct tap_softc *);
 static int	tap_dev_read(int, struct uio *, int);
 static int	tap_dev_write(int, struct uio *, int);
 static int	tap_dev_ioctl(int, u_long, void *, struct lwp *);
@@ -210,7 +210,7 @@ struct if_clone tap_cloners = IF_CLONE_INITIALIZER("tap",
 
 /* Helper functions shared by the two cloning code paths */
 static struct tap_softc *	tap_clone_creator(int);
-int	tap_clone_destroyer(device_t);
+static void			tap_clone_destroyer(device_t);
 
 static struct sysctllog *tap_sysctl_clog;
 
@@ -625,33 +625,25 @@ tap_clone_creator(int unit)
 	return device_private(config_attach_pseudo(cf));
 }
 
-/*
- * The clean design of if_clone and autoconf(9) makes that part
- * really straightforward.  The second argument of config_detach
- * means neither QUIET nor FORCED.
- */
 static int
 tap_clone_destroy(struct ifnet *ifp)
 {
 	struct tap_softc *sc = ifp->if_softc;
-	int error = tap_clone_destroyer(sc->sc_dev);
 
-	if (error == 0)
-		atomic_dec_uint(&tap_count);
-	return error;
+	tap_clone_destroyer(sc->sc_dev);
+	atomic_dec_uint(&tap_count);
+	return 0;
 }
 
-int
+static void
 tap_clone_destroyer(device_t dev)
 {
 	cfdata_t cf = device_cfdata(dev);
 	int error;
 
-	if ((error = config_detach(dev, 0)) != 0)
-		aprint_error_dev(dev, "unable to detach instance\n");
+	error = config_detach(dev, DETACH_FORCE);
+	KASSERTMSG(error == 0, "error=%d", error);
 	kmem_free(cf, sizeof(*cf));
-
-	return error;
 }
 
 /*
@@ -759,7 +751,8 @@ tap_cdev_close(dev_t dev, int flags, int fmt, struct lwp *l)
 	if (sc == NULL)
 		return ENXIO;
 
-	return tap_dev_close(sc);
+	tap_dev_close(sc);
+	return 0;
 }
 
 /*
@@ -773,33 +766,27 @@ tap_fops_close(file_t *fp)
 {
 	struct tap_softc *sc;
 	int unit = fp->f_devunit;
-	int error;
 
 	sc = device_lookup_private(&tap_cd, unit);
 	if (sc == NULL)
 		return ENXIO;
 
-	/* tap_dev_close currently always succeeds, but it might not
-	 * always be the case. */
 	KERNEL_LOCK(1, NULL);
-	if ((error = tap_dev_close(sc)) != 0) {
-		KERNEL_UNLOCK_ONE(NULL);
-		return error;
-	}
+	tap_dev_close(sc);
 
-	/* Destroy the device now that it is no longer useful,
-	 * unless it's already being destroyed. */
-	if ((sc->sc_flags & TAP_GOING) != 0) {
-		KERNEL_UNLOCK_ONE(NULL);
-		return 0;
-	}
+	/*
+	 * Destroy the device now that it is no longer useful, unless
+	 * it's already being destroyed.
+	 */
+	if ((sc->sc_flags & TAP_GOING) != 0)
+		goto out;
+	tap_clone_destroyer(sc->sc_dev);
 
-	error = tap_clone_destroyer(sc->sc_dev);
-	KERNEL_UNLOCK_ONE(NULL);
-	return error;
+out:	KERNEL_UNLOCK_ONE(NULL);
+	return 0;
 }
 
-static int
+static void
 tap_dev_close(struct tap_softc *sc)
 {
 	struct ifnet *ifp;
@@ -832,8 +819,6 @@ tap_dev_close(struct tap_softc *sc)
 	}
 	sc->sc_flags &= ~(TAP_INUSE | TAP_ASYNCIO);
 	if_link_state_change(ifp, LINK_STATE_DOWN);
-
-	return 0;
 }
 
 static int
@@ -872,13 +857,7 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 	if ((ifp->if_flags & IFF_UP) == 0)
 		return EHOSTDOWN;
 
-	/* In the TAP_NBIO case, we have to make sure we won't be sleeping */
-	if ((sc->sc_flags & TAP_NBIO) != 0) {
-		if (!mutex_tryenter(&sc->sc_lock))
-			return EWOULDBLOCK;
-	} else
-		mutex_enter(&sc->sc_lock);
-
+	mutex_enter(&sc->sc_lock);
 	if (IFQ_IS_EMPTY(&ifp->if_snd)) {
 		ifp->if_flags &= ~IFF_OACTIVE;
 		if (sc->sc_flags & TAP_NBIO)
