@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.33 2019/05/13 17:50:30 maxv Exp $	 */
+/*	$NetBSD: main.c,v 1.34 2024/09/11 20:15:36 andvar Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -191,31 +191,14 @@ static void
 print_banner(void)
 {
 	int extmem = getextmem();
-	char *s = "";
 
 	clear_pc_screen();
 
-#ifdef XMS
-	u_long xmsmem;
-	if (getextmem1() == 0 && (xmsmem = checkxms()) != 0) {
-		/*
-		 * With "CONSERVATIVE_MEMDETECT", extmem is 0 because
-		 *  getextmem() is getextmem1(). Without, the "smart"
-		 *  methods could fail to report all memory as well.
-		 * xmsmem is a few kB less than the actual size, but
-		 *  better than nothing.
-		 */
-		if ((int)xmsmem > extmem)
-			extmem = xmsmem;
-		s = "(xms) ";
-	}
-#endif
-
 	printf("\n"
 	       ">> %s, Revision %s (from NetBSD %s)\n"
-	       ">> Memory: %d/%d %sk\n",
+	       ">> Memory: %d/%d k\n",
 	       bootprog_name, bootprog_rev, bootprog_kernrev,
-	       getbasemem(), extmem, s);
+	       getbasemem(), extmem);
 }
 
 void 

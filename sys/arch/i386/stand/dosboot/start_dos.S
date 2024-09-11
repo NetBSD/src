@@ -1,4 +1,4 @@
-/*	$NetBSD: start_dos.S,v 1.1 2024/06/29 13:45:14 rin Exp $	*/
+/*	$NetBSD: start_dos.S,v 1.2 2024/09/11 20:15:36 andvar Exp $	*/
 	
 /*
  * startup for DOS .COM programs
@@ -6,7 +6,6 @@
  * netbsd:sys/arch/i386/boot/start.S
  * Tor Egge's patches for NetBSD boot (pr port-i386/1002)
  * freebsd:sys/i386/boot/netboot/start2.S
- * XMS support by Martin Husemann
  */
 
 /*
@@ -484,137 +483,3 @@ _C_LABEL(trace_str):
 	.code32
 	popl	%esi
 	ret
-
-#ifdef XMS
-
-/* pointer to XMS driver, 0 if no XMS used */
-
-	.data
-_C_LABEL(xmsdrv):
-	.long	0
-
-	.text
-ENTRY(checkxms)
-	.code32
-	pushl	%ebp
-	movl	%esp, %ebp
-	pushl	%ebx
-	pushl	%edx
-	pushl	%es
-	pushl	%esi
-	pushl	%edi
-
-	call	_C_LABEL(prot_to_real)	# enter real mode
-	.code16
-
-	movw	$0x4300, %ax
-	int	$0x2f			/* check if XMS installed */
-	cmpb	$0x80, %al
-	jnz	noxms
-
-	movw	$0x4310, %ax
-	int	$0x2f			/* get driver address */
-
-	movw	%bx, _C_LABEL(xmsdrv)	/* save es:bx to _xmsdrv */
-	movw	%es, _C_LABEL(xmsdrv) + 2
-
-	movb	$0x08, %ah		/* XMS: query free extended memory */
-#if 0
-	movb	$0x00, %bl
-#endif
-	lcall	*_C_LABEL(xmsdrv)
-	jmp	xdone
-
-noxms:		/* no XMS manager found */
-	mov	$0, %dx
-
-xdone:
-	calll	_C_LABEL(real_to_prot) # back to protected mode
-	.code32
-
-	xorl	%eax, %eax
-	movw	%dx, %ax
-
-	popl	%edi
-	popl	%esi
-	popl	%es
-	popl	%edx
-	popl	%ebx
-	popl	%ebp
-	ret
-
-/*
-	Allocate a block of XMS memory with the requested size
-		void *xmsalloc(long int kBytes);
-
-	Depends on _xmsdrv being set by getextmem() before first call
-	to this function.
-
-	Return value: a physical address.
-*/
-ENTRY(xmsalloc)
-	.code32
-	pushl	%ebp
-	movl	%esp, %ebp
-	pushl	%ebx
-	pushl	%edx
-	pushl	%esi
-	pushl	%edi
-
-	movl	0x8(%ebp), %edx # Kbytes needed
-
-	call	_C_LABEL(prot_to_real)	# enter real mode
-	.code16
-
-	movb	$0x09, %ah		# XMS allocate block
-	lcall	*_C_LABEL(xmsdrv)	# result: handle in %dx
-	movb	$0x0c, %ah		# XMS lock block
-	lcall	*_C_LABEL(xmsdrv)	# result: 32 bit physical addr in DX:BX
-
-	calll	_C_LABEL(real_to_prot) # back to protected mode
-	.code32
-
-	movl	%edx, %eax
-	shl	$16, %eax
-	movw	%bx, %ax	# result in %eax
-
-	popl	%edi
-	popl	%esi
-	popl	%edx
-	popl	%ebx
-	popl	%ebp
-	ret
-
-/*
- * ppbcopy(src, dst, cnt)
- *	where src and dst are physical addresses
- */
-ENTRY(ppbcopy)
-	.code32
-	pushl	%ebp
-	movl	%esp, %ebp
-	pushl	%es
-	pushl	%esi
-	pushl	%edi
-
-	cld
-
-	# set %es to point at the flat segment
-	movl	$flatdataseg, %eax
-	mov	%ax, %es
-
-	movl	8(%ebp), %esi		# source
-	movl	12(%ebp), %edi		# destination
-	movl	16(%ebp), %ecx		# count
-
-	es
-	rep
-	movsb
-
-	popl	%edi
-	popl	%esi
-	popl	%es
-	popl	%ebp
-	ret
-
-#endif

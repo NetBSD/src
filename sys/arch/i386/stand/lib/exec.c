@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.80 2024/01/06 21:26:43 mlelstv Exp $	 */
+/*	$NetBSD: exec.c,v 1.81 2024/09/11 20:15:36 andvar Exp $	 */
 
 /*
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -89,7 +89,6 @@
 
 /*
  * Starts a NetBSD ELF kernel. The low level startup is done in startprog.S.
- * This is a special version of exec.c to support use of XMS.
  */
 
 #include <sys/param.h>
@@ -353,7 +352,6 @@ common_load_prekern(const char *file, u_long *basemem, u_long *extmem,
 	/*
 	 * Gather some information for the kernel. Do this after the
 	 * "point of no return" to avoid memory leaks.
-	 * (but before DOS might be trashed in the XMS case)
 	 */
 #ifdef PASS_BIOSGEOM
 	bi_getbiosgeom();
@@ -376,43 +374,10 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
     physaddr_t loadaddr, int floppy, u_long marks[MARK_MAX])
 {
 	int fd;
-#ifdef XMS
-	u_long xmsmem;
-	physaddr_t origaddr = loadaddr;
-#endif
 
 	*extmem = getextmem();
 	*basemem = getbasemem();
 
-#ifdef XMS
-	if ((getextmem1() == 0) && (xmsmem = checkxms())) {
-		u_long kernsize;
-
-		/*
-		 * With "CONSERVATIVE_MEMDETECT", extmem is 0 because
-		 * getextmem() is getextmem1(). Without, the "smart"
-		 * methods could fail to report all memory as well.
-		 * xmsmem is a few kB less than the actual size, but
-		 * better than nothing.
-		 */
-		if (xmsmem > *extmem)
-			*extmem = xmsmem;
-		/*
-		 * Get the size of the kernel
-		 */
-		marks[MARK_START] = loadaddr;
-		if ((fd = loadfile(file, marks, COUNT_KERNEL)) == -1)
-			return errno;
-		close(fd);
-
-		kernsize = marks[MARK_END];
-		kernsize = (kernsize + 1023) / 1024;
-
-		loadaddr = xmsalloc(kernsize);
-		if (!loadaddr)
-			return ENOMEM;
-	}
-#endif
 	marks[MARK_START] = loadaddr;
 	if ((fd = loadfile(file, marks,
 	    LOAD_KERNEL & ~(floppy ? LOAD_BACKWARDS : 0))) == -1)
@@ -427,7 +392,6 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
 	/*
 	 * Gather some information for the kernel. Do this after the
 	 * "point of no return" to avoid memory leaks.
-	 * (but before DOS might be trashed in the XMS case)
 	 */
 #ifdef PASS_BIOSGEOM
 	bi_getbiosgeom();
@@ -436,20 +400,6 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
 	bi_getmemmap();
 #endif
 
-#ifdef XMS
-	if (loadaddr != origaddr) {
-		/*
-		 * We now have done our last DOS IO, so we may
-		 * trash the OS. Copy the data from the temporary
-		 * buffer to its real address.
-		 */
-		marks[MARK_START] -= loadaddr;
-		marks[MARK_END] -= loadaddr;
-		marks[MARK_SYM] -= loadaddr;
-		marks[MARK_END] -= loadaddr;
-		ppbcopy(loadaddr, origaddr, marks[MARK_END]);
-	}
-#endif
 	marks[MARK_END] = (((u_long) marks[MARK_END] + sizeof(int) - 1)) &
 	    (-sizeof(int));
 	image_end = marks[MARK_END];
