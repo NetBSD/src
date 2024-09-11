@@ -1,4 +1,4 @@
-/*	$NetBSD: nvlist.c,v 1.10 2024/09/04 12:57:00 riastradh Exp $	*/
+/*	$NetBSD: nvlist.c,v 1.11 2024/09/11 15:01:11 riastradh Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -36,7 +36,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: head/sys/contrib/libnv/nvlist.c 335347 2018-06-18 22:57:32Z oshogbo $");
 #else
-__RCSID("$NetBSD: nvlist.c,v 1.10 2024/09/04 12:57:00 riastradh Exp $");
+__RCSID("$NetBSD: nvlist.c,v 1.11 2024/09/11 15:01:11 riastradh Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1074,7 +1074,7 @@ static bool
 nvlist_check_header(struct nvlist_header *nvlhdrp)
 {
 
-	if (nvlhdrp->nvlh_size > SIZE_MAX - sizeof(nvlhdrp)) {
+	if (nvlhdrp->nvlh_size > SIZE_MAX - sizeof(*nvlhdrp)) {
 		ERRNO_SET(EINVAL);
 		return (false);
 	}
