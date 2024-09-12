@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.335 2022/08/28 10:26:37 mlelstv Exp $	*/
+/*	$NetBSD: sd.c,v 1.335.4.1 2024/09/12 19:31:53 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.335 2022/08/28 10:26:37 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.335.4.1 2024/09/12 19:31:53 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -351,8 +351,9 @@ sdattach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal("\n");
 
-	/* Discover wedges on this disk. */
-	dkwedge_discover(&dksc->sc_dkdev);
+	/* Discover wedges on this disk if it is online */
+	if (result == SDGP_RESULT_OK)
+		dkwedge_discover(&dksc->sc_dkdev);
 
 	/*
 	 * Establish a shutdown hook so that we can ensure that
