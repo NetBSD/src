@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.30 2024/09/05 10:11:50 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.31 2024/09/12 20:23:07 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -1329,4 +1329,189 @@ sys/external/bsd/libnv/dist/nvpair.c		1.13
 
 	libnv(9), npf(4): PR 58652: fix NUL bounds check.
 	[riastradh, ticket #820]
+
+sys/arch/x86/x86/intr.c				1.169
+sys/kern/kern_idle.c				1.36
+sys/kern/kern_softint.c				1.76
+sys/kern/subr_workqueue.c			1.48
+sys/kern/subr_xcall.c				1.38
+
+	Add KASSERTs for preemption count.
+	[rin, ticket #821]
+
+sys/dev/vmt/vmt_subr.c				1.4-1.9
+
+	vmt(4): process all queued messages from hypervisor without delay.
+	[rin, ticket #822]
+
+sys/dev/pci/ehci_pci.c				1.77
+
+	ehci(4): set up pmf(4) handlers even if attach fails
+	to allow suspend/resume to work.
+	[rin, ticket #823]
+
+lib/librumpuser/rumpuser_daemonize.c		1.9,1.10
+
+	rumpuser(3): add support for RUMP_STDOUT, RUMP_STDERR environment
+	variables.
+	[rin, ticket #824]
+
+sys/net/if_tap.c				1.129-1.132
+
+	tap(4): PRs 58166 and 58167: misc cleanups.
+	[rin, ticket #825]
+
+sys/netinet6/ip6_output.c			1.235
+
+	ip6_output: initialize plen for ip6_hopopts_input.
+	[rin, ticket #826]
+
+sys/net/nd.c					1.6,1.7
+
+	ndp: PRs 58297 and 58301: fix memory leak.
+	[rin, ticket #827]
+
+sys/dev/usb/if_cdce.c				1.82
+
+	cdce(4): pretend link up unconditionally.
+	[rin, ticket #828]
+
+sys/kern/subr_localcount.c			1.8
+
+	localcount(9): PR 58610: update per-CPU total at splhigh.
+	[rin, ticket #829]
+
+sys/kern/uipc_socket.c				1.304
+sys/kern/uipc_syscalls.c			1.207
+
+	socket(2): fix very old performance regressions.
+	[rin, ticket #830]
+
+sys/kern/sys_eventfd.c				1.11
+
+	eventfd(2): PR 57703: prune dead branch (fixes pullup #468)
+	[rin, ticket #831]
+
+sys/arch/x86/x86/intr.c				1.166
+
+	x86: intr_establish: fix use-after-free when detecting unsharable
+	interrupts.
+	[rin, ticket #832]
+
+lib/libpuffs/dispatcher.c			1.50
+
+	libpuffs: fix return value for pathconf(2).
+	[rin, ticket #833]
+
+usr.sbin/crash/crash.c				1.16
+
+	crash(8): implement cngetc(9).
+	[rin, ticket #834]
+
+sbin/newfs/mkfs.c				1.136
+
+	newfs(8): fallback to 80-column output if the window size is
+	unknown.
+	[rin, ticket #835]
+
+sys/dev/spi/spivar.h				1.13
+
+	spivar.h: refine and add some macros (NFC).
+	[rin, ticket #836]
+
+usr.bin/netstat/mbuf.c				1.36
+
+	netstat(1): avoid truncation and missing NUL for `-m` option.
+	[rin, ticket #837]
+
+sys/dev/scsipi/sd.c				1.336
+
+	sd(4): do not try to discover wedges when the unit is not online.
+	[rin, ticket #838]
+
+sys/dev/dkwedge/dkwedge_mbr.c			1.13
+
+	dkwedge: correctly print error code for missing MBR.
+	[rin, ticket #839]
+
+sys/modules/Makefile				1.282
+
+	Skip the sys/modules directory for "make includes" to speed up
+	the build.
+	[rin, ticket #840]
+
+sys/dev/usb/ucycom.c				1.57
+
+	ucycom(4): prevent (malicious) devices from leaking kernel memory
+	content to userland.
+	[rin, ticket #841]
+
+lib/libintl/gettext.c				1.32
+
+	libintl: PR 58136: fix use after free.
+	[rin, ticket #842]
+
+sys/kern/vfs_mount.c				1.105
+
+	dounmount(): avoid undefined behaviour.
+	[rin, ticket #843]
+
+sys/dev/acpi/acpi_bat.c				1.122,1.123
+
+	acpibat(4): PR 58201: fix inappropriate use of sysmon(9) APIs.
+	[rin, ticket #844]
+
+sys/arch/amiga/amiga/trap.c			1.143
+
+	amiga: avoid panic for user-space NULL pointer dereference.
+	[rin, ticket #845]
+
+usr.bin/tic/tic.c				1.42
+
+	tic(1): PR 58270: honor user-provided umask.
+	[rin, ticket #846]
+
+sys/arch/macppc/macppc/machdep.c		1.177
+
+	macppc: fix (potential) crash when switching backlight on/off with
+	quiesced Open Firmware.
+	[rin, ticket #847]
+
+distrib/notes/macppc/install			1.43
+
+	macppc: PR 54537: fix documententation for bootable ISO.
+	[rin, ticket #848]
+
+etc/mtree/special				1.179
+
+	PR 58465: backup /etc/wpa_supplicant.conf if present
+	[rin, ticket #849]
+
+usr.bin/grep/file.c				1.12,1.13
+
+	grep(1): fix native build with option WITHOUT_BZ2.
+	[rin, ticket #850]
+
+sys/dev/vnd.c					1.290
+
+	vnd(4): avoid division by zero when the backing file is revoked.
+	[rin, ticket #851]
+
+sys/net/if_tap.c				1.134
+
+	tap(4): explicitly include "opt_net_mpsafe.h".
+	[rin, ticket #852]
+
+share/man/man4/igc.4				1.2
+sys/dev/pci/igc/igc_defines.h			1.4
+
+	igc(4): sync typo fixes with -current.
+	[rin, ticket #853]
+
+distrib/sets/lists/base/mi			1.1349
+share/misc/Makefile				1.41
+share/misc/dot.clang-format			1.1
+
+	Add basic clang-format configuration file for NetBSD sources.
+	[rin, ticket #854]
 
