@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.56 2022/10/26 23:50:28 riastradh Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.56.2.1 2024/09/12 19:39:35 martin Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.56 2022/10/26 23:50:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.56.2.1 2024/09/12 19:39:35 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -978,6 +978,7 @@ ucycom_intr(void *cookie, void *ibuf, u_int len)
 		st = cp[0];
 		n = cp[1];
 		cp += 2;
+		n = uimin(n, 30);
 		break;
 
 	default:
