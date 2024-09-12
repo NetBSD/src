@@ -1,4 +1,4 @@
-/*	$NetBSD: igc_defines.h,v 1.2.2.3 2024/02/23 18:41:02 martin Exp $	*/
+/*	$NetBSD: igc_defines.h,v 1.2.2.4 2024/09/12 20:10:12 martin Exp $	*/
 /*	$OpenBSD: igc_defines.h,v 1.1 2021/10/31 14:52:57 patrick Exp $	*/
 
 /*-
@@ -750,7 +750,7 @@
 /* TTQF SCTP Bit, shift with IGC_TTQF_PROTOCOL_SHIFT */
 #define IGC_TTQF_PROTOCOL_SCTP		0x2
 #define IGC_TTQF_PROTOCOL_SHIFT		5       /* TTQF Protocol Shift */
-#define IGC_TTQF_QUEUE_SHIFT		16      /* TTQF Queue Shfit */
+#define IGC_TTQF_QUEUE_SHIFT		16      /* TTQF Queue Shift */
 #define IGC_TTQF_RX_QUEUE_MASK		0x70000 /* TTQF Queue Mask */
 #define IGC_TTQF_MASK_ENABLE		0x10000000 /* TTQF Mask Enable Bit */
 #define IGC_IMIR_CLEAR_MASK		0xF001FFFF /* IMIR Reg Clear Mask */
