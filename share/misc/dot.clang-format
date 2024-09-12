@@ -1,0 +1,45 @@
+# $NetBSD: dot.clang-format,v 1.1.2.2 2024/09/12 20:12:10 martin Exp $
+#
+# This is a base for using clang-format with NetBSD sources.
+#
+# /usr/share/misc/style has more details, some of which cannot be
+# captured here.
+#
+# To use it, rename it to .clang-format and put it in the directory
+# you're editing, or call clang-format with the --style argument:
+#
+#	clang-format --style=file:/usr/share/misc/dot.clang-format [...] file.c
+#
+# 80 characters line length
+ColumnLimit: 80
+# if comments get too long, fmt them.
+ReflowComments: true
+# default indentation level
+IndentWidth: 8
+# also for struct initializers
+BracedInitializerIndentWidth: 8
+# prefer using tabs to spaces when indenting
+UseTab: ForContinuationAndIndentation
+# indent 1 space more per #if-level
+PPIndentWidth: 1
+# and put the space after the hash but before the keyword (i.e., "# if")
+IndentPPDirectives: AfterHash
+# backslashes at end-of-line are aligned, but as far left as possible
+AlignEscapedNewlines: Left
+# not supported in clang-format 18, would include the last line (without backslash) in the offset consideration
+#AlignEscapedNewlines: LeftWithLastLine
+#
+# if function arguments get too long, start new line indented by 4
+AlignAfterOpenBracket: DontAlign
+ContinuationIndentWidth: 4
+# but keep first parameters on the first line
+AllowAllParametersOfDeclarationOnNextLine: False
+AllowAllArgumentsOnNextLine: false
+# for struct's etc. use 8 characters indent as well
+ConstructorInitializerIndentWidth: 8
+# attach "{", except for functions
+BreakBeforeBraces: WebKit
+# for functions, add newline after return type
+AlwaysBreakAfterReturnType: TopLevelDefinitions
+# align structure elements to the right
+AlignArrayOfStructures: Right
