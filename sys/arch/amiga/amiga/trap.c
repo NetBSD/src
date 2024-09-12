@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.139 2020/08/10 10:51:21 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.139.20.1 2024/09/12 19:50:47 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.139 2020/08/10 10:51:21 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.139.20.1 2024/09/12 19:50:47 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,7 +363,7 @@ trapmmufault(int type, u_int code, u_int v, struct frame *fp, struct lwp *l, u_q
 		ftype = VM_PROT_READ;
 	va = trunc_page((vaddr_t)v);
 #ifdef DEBUG
-	if (map == kernel_map && va == 0) {
+	if (map == kernel_map && va == 0 && onfault == 0) {
 		printf("trap: bad kernel access at %x pc %x\n", v, fp->f_pc);
 		panictrap(type, code, v, fp);
 	}
