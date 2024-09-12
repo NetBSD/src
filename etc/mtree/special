@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.175.2.1 2023/09/04 17:33:28 martin Exp $
+#	$NetBSD: special,v 1.175.2.2 2024/09/12 20:02:52 martin Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -357,6 +357,7 @@
 ./etc/weekly			type=file mode=0644
 ./etc/weekly.conf		type=file mode=0644
 ./etc/weekly.local		type=file mode=0644 optional
+./etc/wpa_supplicant.conf	type=file mode=0644 optional
 ./etc/wscons.conf		type=file mode=0644
 ./etc/zfs			type=dir  mode=0755
 
