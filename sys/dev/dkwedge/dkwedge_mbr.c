@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_mbr.c,v 1.12 2020/04/11 16:00:34 jdolecek Exp $	*/
+/*	$NetBSD: dkwedge_mbr.c,v 1.12.20.1 2024/09/12 19:33:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_mbr.c,v 1.12 2020/04/11 16:00:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_mbr.c,v 1.12.20.1 2024/09/12 19:33:47 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,9 +90,9 @@ getparts(mbr_args_t *a, uint32_t off, uint32_t extoff)
 
 	error = dkwedge_read(a->pdk, a->vp, off, a->bp->b_data, a->secsize);
 	if (error) {
+		a->error = error;
 		aprint_error("%s: unable to read MBR @ %u/%u, "
 		    "error = %d\n", a->pdk->dk_name, off, a->secsize, a->error);
-		a->error = error;
 		return;
 	}
 
