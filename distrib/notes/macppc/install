@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.42 2019/11/21 19:23:19 martin Exp $
+.\"	$NetBSD: install,v 1.42.8.1 2024/09/12 19:57:48 martin Exp $
 .
 .Ss2 Open Firmware boot syntax
 .
@@ -808,17 +808,6 @@ and for Open Firmware 3 machines, it must be either XCOFF or ELF (such as
 a kernel).
 Make sure that you have use binary mode to FTP the files, and
 that they are properly uncompressed.
-.Pp
-NB this error will occur with pre-release ISO installer images, because
-they are automatically generated, and it is not presently possible to create
-the necessary hybrid ISO9660/HFS image format without manual steps. Only
-formal release ISO installer images are bootable. If you wish to test a pre-
-release, you must start with an
-.Pa ofwboot.xcf
-or
-.Pa ofwboot.elf
-installed from a formal release (or place a newer version of such in a
-location that is bootable from), and then use that to boot the newer kernel.
 .It
 .To 2 "bad partition number, using 0no bootable HFS partition"
 .Dq Li "bad partition number, using 0no bootable HFS partition"
