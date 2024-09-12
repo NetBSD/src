@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.11 2019/04/05 13:34:41 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.11.10.1 2024/09/12 20:04:58 martin Exp $	*/
 /*	$FreeBSD: head/usr.bin/grep/file.c 211496 2010-08-19 09:28:59Z des $	*/
 /*	$OpenBSD: file.c,v 1.11 2010/07/02 20:48:48 nicm Exp $	*/
 
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: file.c,v 1.11 2019/04/05 13:34:41 christos Exp $");
+__RCSID("$NetBSD: file.c,v 1.11.10.1 2024/09/12 20:04:58 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -74,7 +74,9 @@ static inline int
 grep_refill(struct file *f)
 {
 	ssize_t nr = -1;
+#ifndef WITHOUT_BZ2
 	int bzerr;
+#endif
 
 	bufpos = buffer;
 	bufrem = 0;
