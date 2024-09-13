@@ -107,7 +107,12 @@ AcpiUtTrackStackPtr (
 
     if (&CurrentSp < AcpiGbl_LowestStackPointer)
     {
+#pragma GCC diagnostic push
+#if defined(__GNUC__) && __GNUC__ >= 12
+#pragma GCC diagnostic ignored "-Wdangling-pointer="
+#endif
         AcpiGbl_LowestStackPointer = &CurrentSp;
+#pragma GCC diagnostic pop
     }
 
     if (AcpiGbl_NestingLevel > AcpiGbl_DeepestNesting)

@@ -608,6 +608,8 @@ typedef struct acpi_cdat_sslbe
 
 } ACPI_CDAT_SSLBE;
 
+#define ACPI_CDAT_SSLBIS_US_PORT	0x0100
+#define ACPI_CDAT_SSLBIS_ANY_PORT	0xffff
 
 /*******************************************************************************
  *
@@ -712,20 +714,25 @@ typedef struct acpi_cedt_cfmws_target_element
 
 /* 2: CXL XOR Interleave Math Structure */
 
-struct acpi_cedt_cxims {
+typedef struct acpi_cedt_cxims {
     ACPI_CEDT_HEADER        Header;
     UINT16                  Reserved1;
     UINT8                   Hbig;
     UINT8                   NrXormaps;
     UINT64                  XormapList[];
-};
+} ACPI_CEDT_CXIMS;
+
+typedef struct acpi_cedt_cxims_target_element
+{
+    UINT64                   Xormap;
+
+} ACPI_CEDT_CXIMS_TARGET_ELEMENT;
+
 
 /* 3: CXL RCEC Downstream Port Association Structure */
 
 struct acpi_cedt_rdpas {
     ACPI_CEDT_HEADER        Header;
-    UINT8                   Reserved1;
-    UINT16                  Length;
     UINT16                  Segment;
     UINT16                  Bdf;
     UINT8                   Protocol;
@@ -930,6 +937,7 @@ typedef struct acpi_dbg2_device
 #define ACPI_DBG2_16550_WITH_GAS    0x0012
 #define ACPI_DBG2_SDM845_7_372MHZ   0x0013
 #define ACPI_DBG2_INTEL_LPSS        0x0014
+#define ACPI_DBG2_RISCV_SBI_CON     0x0015
 
 #define ACPI_DBG2_1394_STANDARD     0x0000
 
@@ -1340,6 +1348,12 @@ enum AcpiEinjCommandStatus
 #define ACPI_EINJ_PLATFORM_CORRECTABLE      (1<<9)
 #define ACPI_EINJ_PLATFORM_UNCORRECTABLE    (1<<10)
 #define ACPI_EINJ_PLATFORM_FATAL            (1<<11)
+#define ACPI_EINJ_CXL_CACHE_CORRECTABLE     (1<<12)
+#define ACPI_EINJ_CXL_CACHE_UNCORRECTABLE   (1<<13)
+#define ACPI_EINJ_CXL_CACHE_FATAL           (1<<14)
+#define ACPI_EINJ_CXL_MEM_CORRECTABLE       (1<<15)
+#define ACPI_EINJ_CXL_MEM_UNCORRECTABLE     (1<<16)
+#define ACPI_EINJ_CXL_MEM_FATAL             (1<<17)
 #define ACPI_EINJ_VENDOR_DEFINED            (1<<31)
 
 
@@ -2148,7 +2162,7 @@ typedef struct acpi_hmat_cache
     UINT32                  Reserved1;
     UINT64                  CacheSize;
     UINT32                  CacheAttributes;
-    UINT16                  Reserved2;
+    UINT16                  AddressMode;
     UINT16                  NumberOfSMBIOSHandles;
 
 } ACPI_HMAT_CACHE;
@@ -2160,6 +2174,9 @@ typedef struct acpi_hmat_cache
 #define ACPI_HMAT_CACHE_ASSOCIATIVITY   (0x00000F00)
 #define ACPI_HMAT_WRITE_POLICY          (0x0000F000)
 #define ACPI_HMAT_CACHE_LINE_SIZE       (0xFFFF0000)
+
+#define ACPI_HMAT_CACHE_MODE_UNKNOWN            (0)
+#define ACPI_HMAT_CACHE_MODE_EXTENDED_LINEAR    (1)
 
 /* Values for cache associativity flag */
 
