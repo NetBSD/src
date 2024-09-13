@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.31 2024/09/12 20:23:07 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.32 2024/09/13 14:44:56 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -1514,4 +1514,53 @@ share/misc/dot.clang-format			1.1
 
 	Add basic clang-format configuration file for NetBSD sources.
 	[rin, ticket #854]
+
+lib/libcurses/get_wch.c				1.27
+
+	curses(3): check return value for fgetc(3).
+	[rin, ticket #855]
+
+tests/lib/libc/gen/t_siginfo.c			1.54,1.55
+
+	t_siginfo: skip unsupported sigbus_adraln test for x86
+	[rin, ticket #856]
+
+sys/miscfs/procfs/procfs_vfsops.c		1.118,1.119
+sys/modules/procfs/Makefile			1.8
+
+	procfs kernel module: fix dependencies.
+	[pgoyette, ticket #857]
+
+sys/net/bpf.c					1.256,1.257
+sys/net/bpfdesc.h				1.49,1.50
+
+	bpf(4): PR 58596: fix locking.
+	[ozaki-r, ticket #858]
+
+sys/netinet/if_arp.c				1.315
+tests/net/arp/t_arp.sh				1.47,1.48
+
+	arp: fix cache initial state
+	[ozaki-r, ticket #859]
+
+share/man/man9/bus_dma.9			1.68
+
+	bus_dma(9): documentation improvements for sync operations.
+	[rin, ticket #860]
+
+sys/netinet/dccp_tfrc.c				1.11
+
+	DCCP: fix uninitialized variables.
+	[rin, ticket #862]
+
+sys/netinet/sctp_output.c			1.34
+
+	SCTP: Handle EHOSTDOWN the same way as EHOSTUNREACH and ENETDOWN.
+	[rin, ticket #863]
+
+sys/netinet6/frag6.c				1.77
+
+	Add a check for FreeBSD-SA-23:06.ipv6, although it is not
+	reproducible for us.  
+	[ozaki-r, ticket #865]
 
