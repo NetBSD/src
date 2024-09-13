@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wch.c,v 1.26 2021/09/06 07:45:48 rin Exp $ */
+/*   $NetBSD: get_wch.c,v 1.26.2.1 2024/09/13 14:03:56 martin Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wch.c,v 1.26 2021/09/06 07:45:48 rin Exp $");
+__RCSID("$NetBSD: get_wch.c,v 1.26.2.1 2024/09/13 14:03:56 martin Exp $");
 #endif						  /* not lint */
 
 #include <errno.h>
@@ -135,7 +135,7 @@ inkey(wchar_t *wc, int to, int delay)
 			}
 
 			c = __fgetc_resize(infd);
-			if (ferror(infd)) {
+			if (c == ERR || ferror(infd)) {
 				clearerr(infd);
 				return c;
 			}
@@ -179,7 +179,7 @@ inkey(wchar_t *wc, int to, int delay)
 			}
 
 			c = __fgetc_resize(infd);
-			if (ferror(infd)) {
+			if (c == ERR || ferror(infd)) {
 				clearerr(infd);
 				return c;
 			}
