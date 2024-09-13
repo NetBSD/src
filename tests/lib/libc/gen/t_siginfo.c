@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.47 2022/05/07 13:14:16 rin Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.47.2.1 2024/09/13 14:06:25 martin Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -434,8 +434,9 @@ sigbus_action(int signo, siginfo_t *info, void *ptr)
 	ATF_REQUIRE_EQ(info->si_code, BUS_ADRALN);
 
 #if defined(__i386__) || defined(__x86_64__)
-	atf_tc_expect_fail("x86 architecture does not correctly "
-	    "report the address where the unaligned access occurred");
+	atf_tc_skip("Data address is not provided for "
+	    "x86 alignment check exception, and NetBSD/x86 reports "
+	    "faulting PC instead");
 #endif
 	ATF_REQUIRE_EQ(info->si_addr, (volatile void *)addr);
 
