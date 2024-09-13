@@ -311,6 +311,7 @@ NoEcho('
 %type <n> DMATerm
 %type <n> DWordIOTerm
 %type <n> DWordMemoryTerm
+%type <n> DWordPccTerm
 %type <n> DWordSpaceTerm
 %type <n> EndDependentFnTerm
 %type <n> ExtendedIOTerm
@@ -338,6 +339,7 @@ NoEcho('
 %type <n> PinGroupFunctionTerm
 %type <n> QWordIOTerm
 %type <n> QWordMemoryTerm
+%type <n> QWordPccTerm
 %type <n> QWordSpaceTerm
 %type <n> RegisterTerm
 %type <n> SpiSerialBusTerm
@@ -350,6 +352,7 @@ NoEcho('
 %type <n> VendorShortTerm
 %type <n> WordBusNumberTerm
 %type <n> WordIOTerm
+%type <n> WordPccTerm
 %type <n> WordSpaceTerm
 
 /* Local types that help construct the AML, not in ACPI spec */

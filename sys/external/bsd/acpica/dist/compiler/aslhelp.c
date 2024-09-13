@@ -77,6 +77,7 @@ Usage (
     ACPI_OPTION ("-vd",             "Display compiler build date and time");
     ACPI_OPTION ("-vo",             "Enable optimization comments");
     ACPI_OPTION ("-vs",             "Disable signon");
+    ACPI_OPTION ("-ld",             "Disable deterministic output");
 
     printf ("\nHelp:\n");
     ACPI_OPTION ("-h",              "This message");

@@ -69,7 +69,8 @@ AcpiDmDumpSlic (
     ACPI_TABLE_HEADER       *Table)
 {
 
-    (void) AcpiDmDumpTable (Table->Length, sizeof (ACPI_TABLE_HEADER), Table,
+    (void) AcpiDmDumpTable (Table->Length, sizeof (ACPI_TABLE_HEADER),
+        (void *) (Table + sizeof (*Table)),
         Table->Length - sizeof (*Table), AcpiDmTableInfoSlic);
 }
 
@@ -233,6 +234,11 @@ AcpiDmDumpSrat (
         case ACPI_SRAT_TYPE_GENERIC_PORT_AFFINITY:
 
             InfoTable = AcpiDmTableInfoSrat6;
+            break;
+
+        case ACPI_SRAT_TYPE_RINTC_AFFINITY:
+
+            InfoTable = AcpiDmTableInfoSrat7;
             break;
 
         default:
