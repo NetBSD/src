@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.18 2024/09/09 17:02:17 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.19 2024/09/13 14:47:58 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -348,4 +348,15 @@ sys/external/bsd/libnv/dist/nvpair.c		1.13
 
 	libnv(9), npf(4): PR 58652: fix NUL bounds check.
 	[riastradh, ticket #1885]
+
+sys/net/bpf.c					1.256,1.257
+sys/net/bpfdesc.h				1.49,1.50
+
+	bpf(4): PR 58596: fix locking.
+	[ozaki-r, ticket #1886]
+
+sys/kern/subr_localcount.c			1.8
+
+	localcount(9): PR 58610: update per-CPU total at splhigh.
+	[riastradh, ticket #1888]
 
