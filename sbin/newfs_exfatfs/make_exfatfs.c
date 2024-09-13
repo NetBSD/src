@@ -1,4 +1,4 @@
-/*	$NetBSD: make_exfatfs.c,v 1.1.2.8 2024/08/14 15:28:44 perseant Exp $	*/
+/*	$NetBSD: make_exfatfs.c,v 1.1.2.9 2024/09/13 05:20:20 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_exfatfs.c,v 1.1.2.8 2024/08/14 15:28:44 perseant Exp $");
+__RCSID("$NetBSD: make_exfatfs.c,v 1.1.2.9 2024/09/13 05:20:20 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -271,10 +271,10 @@ make_exfatfs(struct uvnode *devvp, struct exfatfs *fs,
 			memcpy(bp->b_data, ((const char *)uctable) + i,
 				MIN(EXFATFS_LSIZE(fs), resid));
 			if (Vflag)
-				printf(" write upcase sector size %d (%d) at bn 0x%lx\n",
+				printf(" write upcase sector size %d (res=%d) at bn 0x%lx\n",
 		       			EXFATFS_LSIZE(fs), (int)resid, (unsigned long)bp->b_blkno);
 			bwrite(bp);
-			++daddr;
+			daddr += EXFATFS_L2D(fs, 1);
 		}
 	}
 
@@ -326,7 +326,7 @@ make_exfatfs(struct uvnode *devvp, struct exfatfs *fs,
 				end = EXFATFS_LC2D(fs, dirent_bitmap[1].xd_firstCluster);
 			else
 				end = EXFATFS_LC2D(fs, dirent_upcase.xd_firstCluster);
-			for (daddr = start; daddr < end; ++daddr) {
+			for (daddr = start; daddr < end; daddr += EXFATFS_L2D(fs, 1)) {
 				if (!Nflag) {
 					size_t size = EXFATFS_LSIZE(fs);
 					if (daddr < EXFATFS_LC2D(fs, end) - MAXPHYS / EXFATFS_LSIZE(fs))
@@ -346,7 +346,7 @@ make_exfatfs(struct uvnode *devvp, struct exfatfs *fs,
 					}
 					bwrite(bp);
 					if (size > (size_t)EXFATFS_LSIZE(fs))
-						daddr += size / EXFATFS_LSIZE(fs) - 1;
+						daddr += (size - EXFATFS_LSIZE(fs)) >> DEV_BSHIFT;
 				}
 			}
 			if (!Vflag && !Qflag) {
@@ -384,8 +384,9 @@ make_exfatfs(struct uvnode *devvp, struct exfatfs *fs,
 	}
 
 	/* Fill the rest of the root directory cluster with zero */
-	for (++daddr; EXFATFS_D2LC(fs, daddr)
-		     == fs->xf_FirstClusterOfRootDirectory; ++daddr) {
+	for (daddr += EXFATFS_L2D(fs, 1);
+	     EXFATFS_D2LC(fs, daddr) == fs->xf_FirstClusterOfRootDirectory;
+	     daddr += EXFATFS_L2D(fs, 1)) {
 		if (!Nflag) {
 			bp = getblk(devvp, daddr, EXFATFS_LSIZE(fs));
 			memset(bp->b_data, 0x00, EXFATFS_LSIZE(fs));
