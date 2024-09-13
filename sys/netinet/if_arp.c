@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.311.2.2 2024/08/24 16:45:05 martin Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.311.2.3 2024/09/13 14:17:26 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.311.2.2 2024/08/24 16:45:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.311.2.3 2024/09/13 14:17:26 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1034,6 +1034,17 @@ again:
 			/* This was a solicited ARP reply. */
 			la->ln_byhint = 0;
 			new_state = ND_LLINFO_REACHABLE;
+		} else if (op == ARPOP_REQUEST &&
+		           (la->ln_state == ND_LLINFO_NOSTATE ||
+			    la->ln_state == ND_LLINFO_INCOMPLETE)) {
+			/*
+			 * If an ARP request comes but there is no entry
+			 * and a new one has been created or an entry exists
+			 * but incomplete, make it stale to allow to send
+			 * packets to the requester without an ARP resolution.
+			 */
+			la->ln_byhint = 0;
+			new_state = ND_LLINFO_STALE;
 		}
 		rt_cmd = la->la_flags & LLE_VALID ? 0 : RTM_ADD;
 	}
