@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs_exfatfs.8,v 1.1.2.3 2024/08/02 00:23:21 perseant Exp $
+.\"	$NetBSD: newfs_exfatfs.8,v 1.1.2.4 2024/09/13 05:18:50 perseant Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -73,6 +73,9 @@ If not specified, the FAT alignment will be used.
 Specify the file system label.  The default label is "NONE GIVEN".
 .It Fl N
 Do not actually create the filesystem.
+.It Fl n Ar number-of-fats
+Create the filesystem with the given number of file allocation tables.
+Valid values are 1 and 2.
 .It Fl o Ar partition-offset
 The offset of this partition from the beginning of the disk, in sectors.
 The default value is taken from the disklabel.
@@ -96,6 +99,9 @@ Do not attempt to read the existing superblock, if any.
 By default the existing superblock will be read and the
 existing file system parameters will be used unless
 overridden by command-line arguments.
+.It Fl x Ar extended-bootcode-file
+Use the extended bootcode contained in the given file.
+If not specified, the extended boot blocks will not be written.
 .El
 .Sh SEE ALSO
 .Xr disktab 5 ,

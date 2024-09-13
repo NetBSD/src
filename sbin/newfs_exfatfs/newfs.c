@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.1.2.5 2024/08/13 05:37:24 perseant Exp $	*/
+/*	$NetBSD: newfs.c,v 1.1.2.6 2024/09/13 05:18:50 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.1.2.5 2024/08/13 05:37:24 perseant Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.1.2.6 2024/09/13 05:18:50 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -194,9 +194,6 @@ main(int argc, char **argv)
 		case 'q': /* quiet */
 			++Qflag;
 			break;
-		case 'w': /* Overwrite existing superblocks without reading */
-			Wflag = 1;
-			break;
 		case 's': /* size in DEV_BSIZE units */
 		        fssize = strsuftoi64("file system size", optarg,
 					     0, INT64_MAX, &byte_sized);
@@ -206,6 +203,9 @@ main(int argc, char **argv)
 			break;
 		case 'v': /* verbose */
 			Vflag++;
+			break;
+		case 'w': /* Overwrite existing superblocks without reading */
+			Wflag = 1;
 			break;
 		case 'x': /* take xbootcode from file */
 			xbootcodefile = optarg;
@@ -444,6 +444,9 @@ main(int argc, char **argv)
 		}
 	} else {
 		default_upcase_table(&uctable, &uctablesize);
+		if (Vflag)
+			printf("Using default upcase table of %zd bytes\n",
+				uctablesize);
 	}
 	
 	/* Make the filesystem */
@@ -561,8 +564,11 @@ usage(void)
 	fprintf(stderr, "\t-h cluster heap alignment in bytes\n");
 	fprintf(stderr, "\t-n number of FATs (1 or 2)\n");
 	fprintf(stderr, "\t-o partition offset in sectors\n");
+	fprintf(stderr, "\t-q (quiet)\n");
 	fprintf(stderr, "\t-s file system size in sectors\n");
 	fprintf(stderr, "\t-u upcase table file\n");
 	fprintf(stderr, "\t-v (verbose)\n");
+	fprintf(stderr, "\t-w (ignore and overwrite existing parameters)\n");
+	fprintf(stderr, "\t-x extended bootcode file\n");
 	exit(1);
 }
