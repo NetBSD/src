@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.44 2019/03/26 11:23:55 martin Exp $");
+__RCSID("$NetBSD: show.c,v 1.45 2024/09/13 11:07:35 mlelstv Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -286,7 +286,7 @@ show_all(gpt_t gpt)
 			printf(PFX "Type: %s\n", s1);
 			printf(PFX "TypeID: %s\n", s2);
 
-			gpt_uuid_snprintf(s2, sizeof(s1), "%d", ent->ent_guid);
+			gpt_uuid_snprintf(s2, sizeof(s2), "%d", ent->ent_guid);
 			printf(PFX "GUID: %s\n", s2);
 
 			printf(PFX "Size: ");
