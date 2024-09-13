@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $NetBSD: acpica2netbsd,v 1.1 2014/10/25 21:00:06 christos Exp $
+# $NetBSD: acpica2netbsd,v 1.2 2024/09/13 23:16:48 christos Exp $
 #
 #  Copyright (c) 2014 The NetBSD Foundation.
 #  All rights reserved.
@@ -45,3 +45,5 @@ mv source/* .
 mv components/* .
 rmdir source components
 echo; echo
+find . -type -f -exec chmod a-x {} +
+mv include/ACPIXF.h include/ascpxf.h
