@@ -147,7 +147,7 @@ ACPI_DMTABLE_INFO           AcpiDmTableInfoSpcr[] =
     {ACPI_DMT_UINT8,    ACPI_SPCR_OFFSET (StopBits),                "Stop Bits", 0},
     {ACPI_DMT_UINT8,    ACPI_SPCR_OFFSET (FlowControl),             "Flow Control", 0},
     {ACPI_DMT_UINT8,    ACPI_SPCR_OFFSET (TerminalType),            "Terminal Type", 0},
-    {ACPI_DMT_UINT8,    ACPI_SPCR_OFFSET (Reserved2),               "Reserved", 0},
+    {ACPI_DMT_UINT8,    ACPI_SPCR_OFFSET (Language),                "Language", 0},
     {ACPI_DMT_UINT16,   ACPI_SPCR_OFFSET (PciDeviceId),             "PCI Device ID", 0},
     {ACPI_DMT_UINT16,   ACPI_SPCR_OFFSET (PciVendorId),             "PCI Vendor ID", 0},
     {ACPI_DMT_UINT8,    ACPI_SPCR_OFFSET (PciBus),                  "PCI Bus", 0},
@@ -155,7 +155,11 @@ ACPI_DMTABLE_INFO           AcpiDmTableInfoSpcr[] =
     {ACPI_DMT_UINT8,    ACPI_SPCR_OFFSET (PciFunction),             "PCI Function", 0},
     {ACPI_DMT_UINT32,   ACPI_SPCR_OFFSET (PciFlags),                "PCI Flags", 0},
     {ACPI_DMT_UINT8,    ACPI_SPCR_OFFSET (PciSegment),              "PCI Segment", 0},
-    {ACPI_DMT_UINT32,   ACPI_SPCR_OFFSET (Reserved2),               "Reserved", 0},
+    {ACPI_DMT_UINT32,   ACPI_SPCR_OFFSET (UartClkFreq),             "Uart Clock Freq", 0},
+    {ACPI_DMT_UINT32,   ACPI_SPCR_OFFSET (PreciseBaudrate),         "Precise Baud rate", 0},
+    {ACPI_DMT_UINT16,   ACPI_SPCR_OFFSET (NameSpaceStringLength),   "NameSpaceStringLength", 0},
+    {ACPI_DMT_UINT16,   ACPI_SPCR_OFFSET (NameSpaceStringOffset),   "NameSpaceStringOffset", 0},
+    {ACPI_DMT_STRING,   ACPI_SPCR_OFFSET (NameSpaceString),         "NamespaceString", 0},
     ACPI_DMT_TERMINATOR
 };
 
@@ -302,6 +306,19 @@ ACPI_DMTABLE_INFO           AcpiDmTableInfoSrat5[] =
 ACPI_DMTABLE_INFO           AcpiDmTableInfoSrat6[] =
 {
     ACPI_DM_SRAT_GENERIC_AFFINITY,
+    ACPI_DMT_TERMINATOR
+};
+
+/* 7: RINTC Affinity Structure (ACPI 6.6) */
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoSrat7[] =
+{
+    {ACPI_DMT_UINT16,   ACPI_SRAT7_OFFSET (Reserved),               "Reserved", 0},
+    {ACPI_DMT_UINT32,   ACPI_SRAT7_OFFSET (ProximityDomain),        "Proximity Domain", 0},
+    {ACPI_DMT_UINT32,   ACPI_SRAT7_OFFSET (AcpiProcessorUid),       "Acpi Processor UID", 0},
+    {ACPI_DMT_UINT32,   ACPI_SRAT7_OFFSET (Flags),                  "Flags (decoded below)", DT_FLAG},
+    {ACPI_DMT_FLAG0,    ACPI_SRAT7_FLAG_OFFSET (Flags,0),           "Enabled", 0},
+    {ACPI_DMT_UINT32,   ACPI_SRAT7_OFFSET (ClockDomain),            "Clock Domain", 0},
     ACPI_DMT_TERMINATOR
 };
 
