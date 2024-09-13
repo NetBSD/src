@@ -1,5 +1,5 @@
 /*	$KAME: dccp_tfrc.c,v 1.16 2006/03/01 17:34:08 nishida Exp $	*/
-/*	$NetBSD: dccp_tfrc.c,v 1.9 2021/12/10 20:36:04 andvar Exp $ */
+/*	$NetBSD: dccp_tfrc.c,v 1.9.4.1 2024/09/13 14:21:32 martin Exp $ */
 
 /*
  * Copyright (c) 2003  Nils-Erik Mattsson
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_tfrc.c,v 1.9 2021/12/10 20:36:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_tfrc.c,v 1.9.4.1 2024/09/13 14:21:32 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dccp.h"
@@ -384,7 +384,7 @@ tfrc_time_no_feedback(void *ccb)
 		/* half send rate */
 		cb->x.denom *= 2;
 		v.num = cb->s;
-		v.denom *= TFRC_MAX_BACK_OFF_TIME;
+		v.denom = TFRC_MAX_BACK_OFF_TIME;
 		if (fixpoint_cmp(&cb->x, &v) < 0)
 			cb->x = v;
 
@@ -414,7 +414,7 @@ tfrc_time_no_feedback(void *ccb)
 
 		v.num = cb->s;
 		v.num *= 4;
-		v.denom *= cb->rtt;
+		v.denom = cb->rtt;
 		v.num *= 1000000;
 		normalize(&v.num, &v.denom);
 		if (!cb->idle || fixpoint_cmp(&cb->x_recv, &v) >= 0) {
