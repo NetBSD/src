@@ -122,6 +122,7 @@ AcpiRsDumpDescriptor (
     ACPI_RSDUMP_INFO        *Table);
 
 
+#ifdef ACPI_DEBUGGER
 /*******************************************************************************
  *
  * FUNCTION:    AcpiRsDumpResourceList
@@ -251,7 +252,7 @@ AcpiRsDumpIrqList (
             PrtElement, PrtElement->Length);
     }
 }
-
+#endif
 
 /*******************************************************************************
  *

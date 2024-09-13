@@ -522,6 +522,13 @@ AslDoOptions (
             AcpiGbl_DmOpt_Listing = TRUE;
             break;
 
+        case 'd':
+
+            /* Disable deterministic output, enabling timestamp */
+
+            AslGbl_Deterministic = FALSE;
+            break;
+
         case 'i':
 
             /* Produce preprocessor output file */

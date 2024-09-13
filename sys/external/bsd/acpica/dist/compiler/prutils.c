@@ -223,9 +223,17 @@ PrReplaceResizeSubstring(
          */
         PrevOffset = Args->Offset[i];
         temp = strstr (AslGbl_MacroTokenBuffer, Args->Name);
+        if (temp == NULL)
+        {
+            return;
+        }
 
 ResetHere1:
         temp = strstr (temp, Args->Name);
+        if (temp == NULL)
+        {
+            return;
+        }
         Args->Offset[i] = strlen (AslGbl_MacroTokenBuffer) -
             strlen (temp);
         if (Args->Offset[i] == 0)
@@ -267,7 +275,7 @@ JumpHere1:
             Buff[j] = AslGbl_MacroTokenBuffer[j];
         }
         Buff[strlen (AslGbl_MacroTokenBuffer)] = '\0';
-        //fprintf (stderr, "Buff: %s\n", Buff);
+        /* fprintf(stderr, "Buff: %s\n", Buff); */
 
         UINT32 len = strlen (Buff);
 
@@ -296,7 +304,7 @@ JumpHere1:
                 j--;
             }
         }
-        //fprintf(stderr, "Buff: %s\n", Buff);
+        /* fprintf(stderr, "Buff: %s\n", Buff); */
 
         for (k = 0; k < strlen (Buff); k++)
         {
@@ -323,9 +331,17 @@ JumpHere1:
 
         PrevOffset = Args->Offset[i];
         temp = strstr (AslGbl_MacroTokenBuffer, Args->Name);
+        if (temp == NULL)
+        {
+            return;
+        }
 
 ResetHere2:
         temp = strstr (temp, Args->Name);
+        if (temp == NULL)
+        {
+            return;
+        }
         Args->Offset[i] = strlen (AslGbl_MacroTokenBuffer) -
             strlen (temp);
         if (Args->Offset[i] == 0)
@@ -376,9 +392,17 @@ JumpHere2:
          */
         PrevOffset = Args->Offset[i];
         temp = strstr (AslGbl_MacroTokenBuffer, Args->Name);
+        if (temp == NULL)
+        {
+            return;
+        }
 
 ResetHere3:
         temp = strstr (temp, Args->Name);
+        if (temp == NULL)
+        {
+            return;
+        }
         Args->Offset[i] = strlen (AslGbl_MacroTokenBuffer) -
             strlen (temp);
         if (Args->Offset[i] == 0)

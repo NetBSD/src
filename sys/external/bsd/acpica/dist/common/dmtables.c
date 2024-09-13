@@ -82,7 +82,7 @@ extern ACPI_PARSE_OBJECT    *AcpiGbl_ParseOpRoot;
  * RETURN:      None
  *
  * DESCRIPTION: Create the disassembler header, including ACPICA signon with
- *              current time and date.
+ *              optional current time and date.
  *
  *****************************************************************************/
 
@@ -93,8 +93,6 @@ AdDisassemblerHeader (
 {
     time_t                  Timer;
 
-
-    time (&Timer);
 
     /* Header and input table info */
 
@@ -117,7 +115,15 @@ AdDisassemblerHeader (
         }
     }
 
-    AcpiOsPrintf (" * Disassembly of %s, %s", Filename, ctime (&Timer));
+    if (AslGbl_Deterministic)
+    {
+        AcpiOsPrintf (" * Disassembly of %s\n", Filename);
+    }
+    else
+    {
+        time (&Timer);
+        AcpiOsPrintf (" * Disassembly of %s, %s", Filename, ctime (&Timer));
+    }
     AcpiOsPrintf (" *\n");
 }
 
