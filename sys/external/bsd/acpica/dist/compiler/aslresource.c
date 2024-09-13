@@ -680,6 +680,11 @@ RsDoOneResourceDescriptor (
         Rnode = RsDoDwordMemoryDescriptor (Info);
         break;
 
+    case PARSEOP_DWORDPCC:
+
+        Rnode = RsDoDwordPccDescriptor (Info);
+        break;
+
     case PARSEOP_DWORDSPACE:
 
         Rnode = RsDoDwordSpaceDescriptor (Info);
@@ -781,6 +786,11 @@ RsDoOneResourceDescriptor (
         Rnode = RsDoQwordMemoryDescriptor (Info);
         break;
 
+    case PARSEOP_QWORDPCC:
+
+        Rnode = RsDoQwordPccDescriptor (Info);
+        break;
+
     case PARSEOP_QWORDSPACE:
 
         Rnode = RsDoQwordSpaceDescriptor (Info);
@@ -853,6 +863,11 @@ RsDoOneResourceDescriptor (
     case PARSEOP_WORDIO:
 
         Rnode = RsDoWordIoDescriptor (Info);
+        break;
+
+    case PARSEOP_WORDPCC:
+
+        Rnode = RsDoWordPccDescriptor (Info);
         break;
 
     case PARSEOP_WORDSPACE:

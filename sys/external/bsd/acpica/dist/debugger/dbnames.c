@@ -666,7 +666,12 @@ AcpiDbWalkForFields (
     ACPI_FREE (Buffer.Pointer);
 
     Buffer.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
-    AcpiEvaluateObject (ObjHandle, NULL, NULL, &Buffer);
+    Status = AcpiEvaluateObject (ObjHandle, NULL, NULL, &Buffer);
+    if (ACPI_FAILURE (Status))
+    {
+        AcpiOsPrintf ("Could Not evaluate object %p\n", ObjHandle);
+        return (AE_OK);
+    }
 
     /*
      * Since this is a field unit, surround the output in braces

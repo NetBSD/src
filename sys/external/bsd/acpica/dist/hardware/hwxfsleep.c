@@ -51,13 +51,11 @@
 
 /* Local prototypes */
 
-#if (!ACPI_REDUCED_HARDWARE)
 static ACPI_STATUS
 AcpiHwSetFirmwareWakingVector (
     ACPI_TABLE_FACS         *Facs,
     ACPI_PHYSICAL_ADDRESS   PhysicalAddress,
     ACPI_PHYSICAL_ADDRESS   PhysicalAddress64);
-#endif
 
 static ACPI_STATUS
 AcpiHwSleepDispatch (
@@ -91,13 +89,6 @@ static ACPI_SLEEP_FUNCTIONS         AcpiSleepDispatch[] =
 };
 
 
-/*
- * These functions are removed for the ACPI_REDUCED_HARDWARE case:
- *      AcpiSetFirmwareWakingVector
- *      AcpiEnterSleepStateS4bios
- */
-
-#if (!ACPI_REDUCED_HARDWARE)
 /*******************************************************************************
  *
  * FUNCTION:    AcpiHwSetFirmwareWakingVector
@@ -190,6 +181,12 @@ AcpiSetFirmwareWakingVector (
 ACPI_EXPORT_SYMBOL (AcpiSetFirmwareWakingVector)
 
 
+/*
+ * These functions are removed for the ACPI_REDUCED_HARDWARE case:
+ *      AcpiEnterSleepStateS4bios
+ */
+
+#if (!ACPI_REDUCED_HARDWARE)
 /*******************************************************************************
  *
  * FUNCTION:    AcpiEnterSleepStateS4bios

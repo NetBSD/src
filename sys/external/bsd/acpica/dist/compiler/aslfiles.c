@@ -238,7 +238,9 @@ FlGetFileHandle (
 
     while (Current)
     {
-        if (!strcmp (Current->Files[InFileId].Filename, Filename))
+        if (!((Current->FileType == ASL_INPUT_TYPE_ASCII_DATA) &&
+            (InFileId == ASL_FILE_SOURCE_OUTPUT)) &&
+            !strcmp (Current->Files[InFileId].Filename, Filename))
         {
             return (Current->Files[OutFileId].Handle);
         }
