@@ -1,4 +1,4 @@
-/*	$NetBSD: err_syntax10.tab.c,v 1.5 2021/02/20 22:57:57 christos Exp $	*/
+/*	$NetBSD: err_syntax10.tab.c,v 1.6 2024/09/14 21:29:03 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -156,7 +156,7 @@ static void yyerror(const char *);
 extern int YYPARSE_DECL();
 
 #define YYERRCODE 256
-typedef short YYINT;
+typedef int YYINT;
 static const YYINT err_syntax10_lhs[] = {                -1,
     0,
 };
@@ -532,7 +532,7 @@ YYPARSE_DECL()
     yyps->save = 0;
 #endif /* YYBTYACC */
     yym = 0;
-    yyn = 0;
+    /* yyn is set below */
     yynerrs = 0;
     yyerrflag = 0;
     yychar = YYEMPTY;

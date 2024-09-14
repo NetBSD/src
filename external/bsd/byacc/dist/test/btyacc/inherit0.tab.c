@@ -1,4 +1,4 @@
-/*	$NetBSD: inherit0.tab.c,v 1.5 2021/02/20 22:57:57 christos Exp $	*/
+/*	$NetBSD: inherit0.tab.c,v 1.6 2024/09/14 21:29:03 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -173,7 +173,7 @@ extern int YYPARSE_DECL();
 #define INTEGER 260
 #define NAME 261
 #define YYERRCODE 256
-typedef short YYINT;
+typedef int YYINT;
 static const YYINT inherit0_lhs[] = {                    -1,
     0,    0,    1,    1,    2,    2,    3,    3,    5,    6,
     4,
@@ -556,7 +556,7 @@ YYPARSE_DECL()
     yyps->save = 0;
 #endif /* YYBTYACC */
     yym = 0;
-    yyn = 0;
+    /* yyn is set below */
     yynerrs = 0;
     yyerrflag = 0;
     yychar = YYEMPTY;
@@ -1067,48 +1067,59 @@ yyreduce:
 case 1:
 #line 20 "inherit0.y"
 	{ yyval = yystack.l_mark[0]; }
+#line 1069 "inherit0.tab.c"
 break;
 case 2:
 #line 22 "inherit0.y"
 	{ yyval = yystack.l_mark[0]; }
+#line 1074 "inherit0.tab.c"
 break;
 case 3:
 #line 25 "inherit0.y"
 	{ yyval = 1; }
+#line 1079 "inherit0.tab.c"
 break;
 case 4:
 #line 26 "inherit0.y"
 	{ yyval = 2; }
+#line 1084 "inherit0.tab.c"
 break;
 case 5:
 #line 29 "inherit0.y"
 	{ yyval = 1; }
+#line 1089 "inherit0.tab.c"
 break;
 case 6:
 #line 30 "inherit0.y"
 	{ yyval = 2; }
+#line 1094 "inherit0.tab.c"
 break;
 case 7:
 #line 34 "inherit0.y"
 	{ mksymbol(yystack.l_mark[-2], yystack.l_mark[-3], yystack.l_mark[0]); }
+#line 1099 "inherit0.tab.c"
 break;
 case 8:
 #line 36 "inherit0.y"
 	{ mksymbol(yystack.l_mark[-1], yystack.l_mark[-2], yystack.l_mark[0]); }
+#line 1104 "inherit0.tab.c"
 break;
 case 9:
 #line 40 "inherit0.y"
 	{ yyval = 2; }
+#line 1109 "inherit0.tab.c"
 break;
 case 10:
 #line 41 "inherit0.y"
 	{ yyval = yystack.l_mark[-2]; }
+#line 1114 "inherit0.tab.c"
 break;
 case 11:
 #line 43 "inherit0.y"
 	{ yyval = yystack.l_mark[0]; }
+#line 1119 "inherit0.tab.c"
 break;
-#line 1110 "inherit0.tab.c"
+#line 1121 "inherit0.tab.c"
     default:
         break;
     }

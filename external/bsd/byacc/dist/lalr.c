@@ -1,10 +1,10 @@
-/*	$NetBSD: lalr.c,v 1.11 2021/02/20 22:57:56 christos Exp $	*/
+/*	$NetBSD: lalr.c,v 1.12 2024/09/14 21:29:02 christos Exp $	*/
 
 #include "defs.h"
-/* Id: lalr.c,v 1.13 2020/09/10 17:26:21 tom Exp  */
+/* Id: lalr.c,v 1.14 2021/05/20 23:57:23 tom Exp  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lalr.c,v 1.11 2021/02/20 22:57:56 christos Exp $");
+__RCSID("$NetBSD: lalr.c,v 1.12 2024/09/14 21:29:02 christos Exp $");
 
 typedef struct shorts
 {
@@ -45,7 +45,7 @@ Value_t *to_state;
 
 static Value_t infinity;
 static int maxrhs;
-static int ngotos;
+static Value_t ngotos;
 static unsigned *F;
 static Value_t **includes;
 static shorts **lookback;

@@ -1,4 +1,4 @@
-/*	$NetBSD: code_error.tab.c,v 1.1.1.4 2024/09/14 21:25:37 christos Exp $	*/
+/*	$NetBSD: code_error.tab.c,v 1.2 2024/09/14 21:29:04 christos Exp $	*/
 
 typedef int YYINT;
 const YYINT error_lhs[] = {                       -1,

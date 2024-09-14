@@ -1,11 +1,11 @@
-/*	$NetBSD: verbose.c,v 1.13 2021/02/20 22:57:56 christos Exp $	*/
+/*	$NetBSD: verbose.c,v 1.14 2024/09/14 21:29:02 christos Exp $	*/
 
-/* Id: verbose.c,v 1.13 2020/09/10 17:57:34 tom Exp  */
+/* Id: verbose.c,v 1.14 2021/05/20 23:57:23 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: verbose.c,v 1.13 2021/02/20 22:57:56 christos Exp $");
+__RCSID("$NetBSD: verbose.c,v 1.14 2024/09/14 21:29:02 christos Exp $");
 
 static void log_conflicts(void);
 static void log_unused(void);
@@ -41,9 +41,10 @@ verbose(void)
     if (SRtotal || RRtotal)
 	log_conflicts();
 
-    fprintf(verbose_file, "\n\n%d terminals, %d nonterminals\n", ntokens,
-	    nvars);
-    fprintf(verbose_file, "%d grammar rules, %d states\n", nrules - 2, nstates);
+    fprintf(verbose_file, "\n\n%ld terminals, %ld nonterminals\n",
+	    (long)ntokens, (long)nvars);
+    fprintf(verbose_file, "%ld grammar rules, %ld states\n",
+	    (long)(nrules - 2), (long)nstates);
 #if defined(YYBTYACC)
     {				/* print out the grammar symbol # and parser internal symbol # for each
 				   symbol as an aide to writing the implementation for YYDESTRUCT_CALL()
@@ -97,14 +98,14 @@ log_conflicts(void)
 	{
 	    fprintf(verbose_file, "State %d contains ", i);
 	    if (SRconflicts[i] > 0)
-		fprintf(verbose_file, "%d shift/reduce conflict%s",
-			SRconflicts[i],
+		fprintf(verbose_file, "%ld shift/reduce conflict%s",
+			(long)SRconflicts[i],
 			PLURAL(SRconflicts[i]));
 	    if (SRconflicts[i] && RRconflicts[i])
 		fprintf(verbose_file, ", ");
 	    if (RRconflicts[i] > 0)
-		fprintf(verbose_file, "%d reduce/reduce conflict%s",
-			RRconflicts[i],
+		fprintf(verbose_file, "%ld reduce/reduce conflict%s",
+			(long)RRconflicts[i],
 			PLURAL(RRconflicts[i]));
 	    fprintf(verbose_file, ".\n");
 	}
@@ -152,20 +153,20 @@ print_conflicts(int state)
 	    if (state == final_state && symbol == 0)
 	    {
 		fprintf(verbose_file, "%d: shift/reduce conflict \
-(accept, reduce %d) on $end\n", state, p->number - 2);
+(accept, reduce %ld) on $end\n", state, (long)(p->number - 2));
 	    }
 	    else
 	    {
 		if (act == SHIFT)
 		{
 		    fprintf(verbose_file, "%d: shift/reduce conflict \
-(shift %d, reduce %d) on %s\n", state, number, p->number - 2,
+(shift %ld, reduce %ld) on %s\n", state, (long)number, (long)(p->number - 2),
 			    symbol_name[symbol]);
 		}
 		else
 		{
 		    fprintf(verbose_file, "%d: reduce/reduce conflict \
-(reduce %d, reduce %d) on %s\n", state, number - 2, p->number - 2,
+(reduce %ld, reduce %ld) on %s\n", state, (long)(number - 2), (long)(p->number - 2),
 			    symbol_name[symbol]);
 		}
 	    }
@@ -201,7 +202,7 @@ print_core(int state)
 	    fprintf(verbose_file, " %s", symbol_name[*sp]);
 	    sp++;
 	}
-	fprintf(verbose_file, "  (%d)\n", -2 - *sp);
+	fprintf(verbose_file, "  (%ld)\n", (long)(-2 - *sp));
     }
 }
 
@@ -242,8 +243,8 @@ print_nulls(int state)
     for (i = 0; i < nnulls; ++i)
     {
 	j = null_rules[i];
-	fprintf(verbose_file, "\t%s : .  (%d)\n", symbol_name[rlhs[j]],
-		j - 2);
+	fprintf(verbose_file, "\t%s : .  (%ld)\n", symbol_name[rlhs[j]],
+		(long)(j - 2));
     }
     fprintf(verbose_file, "\n");
 }
@@ -292,8 +293,8 @@ print_shifts(action *p)
 	for (; p; p = p->next)
 	{
 	    if (p->action_code == SHIFT && p->suppressed == 0)
-		fprintf(verbose_file, "\t%s  shift %d\n",
-			symbol_name[p->symbol], p->number);
+		fprintf(verbose_file, "\t%s  shift %ld\n",
+			symbol_name[p->symbol], (long)p->number);
 #if defined(YYBTYACC)
 	    if (backtrack && p->action_code == SHIFT && p->suppressed == 1)
 		fprintf(verbose_file, "\t%s  [trial] shift %d\n",

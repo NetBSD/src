@@ -1,4 +1,4 @@
-/*	$NetBSD: varsyntax_calc1.tab.h,v 1.1.1.4 2024/09/14 21:25:37 christos Exp $	*/
+/*	$NetBSD: varsyntax_calc1.tab.h,v 1.2 2024/09/14 21:29:05 christos Exp $	*/
 
 #define DREG 257
 #define VREG 258

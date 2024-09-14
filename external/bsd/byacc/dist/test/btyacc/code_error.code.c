@@ -1,4 +1,4 @@
-/*	$NetBSD: code_error.code.c,v 1.5 2021/02/20 22:57:57 christos Exp $	*/
+/*	$NetBSD: code_error.code.c,v 1.6 2024/09/14 21:29:03 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -174,7 +174,7 @@ typedef int YYSTYPE;
 #define YYTRANSLATE(a) ((a) > YYMAXTOKEN ? YYUNDFTOKEN : (a))
 
 extern int YYPARSE_DECL();
-typedef short YYINT;
+typedef int YYINT;
 extern const YYINT yylhs[];
 extern const YYINT yylen[];
 extern const YYINT yydefred[];
@@ -514,7 +514,7 @@ YYPARSE_DECL()
     yyps->save = 0;
 #endif /* YYBTYACC */
     yym = 0;
-    yyn = 0;
+    /* yyn is set below */
     yynerrs = 0;
     yyerrflag = 0;
     yychar = YYEMPTY;

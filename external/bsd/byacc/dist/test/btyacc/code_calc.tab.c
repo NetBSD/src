@@ -1,9 +1,9 @@
-/*	$NetBSD: code_calc.tab.c,v 1.2 2017/02/11 19:33:12 christos Exp $	*/
+/*	$NetBSD: code_calc.tab.c,v 1.3 2024/09/14 21:29:03 christos Exp $	*/
 
 #undef YYBTYACC
 #define YYBTYACC 0
 #define YYDEBUGSTR YYPREFIX "debug"
-typedef short YYINT;
+typedef int YYINT;
 const YYINT calc_lhs[] = {                        -1,
     0,    0,    0,    1,    1,    2,    2,    2,    2,    2,
     2,    2,    2,    2,    2,    2,    3,    3,
