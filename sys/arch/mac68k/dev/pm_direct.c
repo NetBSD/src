@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.33 2024/09/14 20:59:45 nat Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.34 2024/09/14 21:02:46 nat Exp $	*/
 
 /*
  * Copyright (c) 2024 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -35,7 +35,7 @@
 /* From: pm_direct.c 1.3 03/18/98 Takashi Hamada */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.33 2024/09/14 20:59:45 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.34 2024/09/14 21:02:46 nat Exp $");
 
 #include "opt_adb.h"
 
@@ -1151,6 +1151,26 @@ pm_adb_poll_next_device_pm1(PMData *pmdata)
 	tmp_pmdata.data[2] = 0x00;
 	pmgrop(&tmp_pmdata);
 }
+
+void 
+pm_poweroff(void)
+{
+	PMData pmdata;
+	int attempt = 3;
+
+	while (pmHardware == PM_HW_PB1XX && attempt > 0) {
+		pmdata.command = 0x7e;
+		pmdata.num_data = 0;
+		pmdata.data[0] = pmdata.data[1] = 0;
+		pmdata.s_buf = &pmdata.data[2];
+		pmdata.r_buf = &pmdata.data[2];
+		(void)pm_pmgrop_pm1(&pmdata);
+		attempt--;
+	}	
+
+	return;
+}
+
 u_int
 pm_set_brightness(u_int brightness)
 {
