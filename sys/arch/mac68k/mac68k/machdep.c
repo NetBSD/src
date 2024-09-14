@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.369 2024/06/07 02:51:45 nat Exp $	*/
+/*	$NetBSD: machdep.c,v 1.370 2024/09/14 21:02:46 nat Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.369 2024/06/07 02:51:45 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.370 2024/09/14 21:02:46 nat Exp $");
 
 #include "opt_adb.h"
 #include "opt_compat_netbsd.h"
@@ -156,6 +156,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.369 2024/06/07 02:51:45 nat Exp $");
 #if NMACFB > 0
 #include <mac68k/dev/macfbvar.h>
 #endif
+#include <mac68k/dev/pm_direct.h>
 #include <mac68k/dev/zs_cons.h>
 
 #include "ksyms.h"
@@ -492,6 +493,11 @@ cpu_reboot(int howto, char *bootstr)
 		 */
 		adb_poweroff();
 #endif
+		/*
+		 * Try to shutdown via the power manager (PowerBooks mainly).
+		 */
+		pm_poweroff();
+
 		/*
 		 * RB_POWERDOWN implies RB_HALT... fall into it...
 		 */
