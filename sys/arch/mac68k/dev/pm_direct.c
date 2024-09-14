@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.34 2024/09/14 21:02:46 nat Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.35 2024/09/14 21:04:24 nat Exp $	*/
 
 /*
  * Copyright (c) 2024 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -35,7 +35,7 @@
 /* From: pm_direct.c 1.3 03/18/98 Takashi Hamada */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.34 2024/09/14 21:02:46 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.35 2024/09/14 21:04:24 nat Exp $");
 
 #include "opt_adb.h"
 
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.34 2024/09/14 21:02:46 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
+
+#include <dev/sysmon/sysmonvar.h>
 
 #include <machine/viareg.h>
 #include <machine/param.h>
@@ -88,6 +90,7 @@ u_short	pm_existent_ADB_devices = 0x0;	/* each bit expresses the existent ADB de
 u_int	pm_LCD_brightness = 0x0;
 u_int	pm_LCD_contrast = 0x0;
 u_int	pm_counter = 0;			/* clock count */
+struct sysmon_pswitch pbutton;
 
 /* these values shows that number of data returned after 'send' cmd is sent */
 char pm_send_cmd_type[] = {
@@ -260,6 +263,12 @@ pm_setup_adb(void)
 		case MACH_MACPB180:
 		case MACH_MACPB180C:
 			pmHardware = PM_HW_PB1XX;
+
+			memset(&pbutton, 0, sizeof(struct sysmon_pswitch));
+			pbutton.smpsw_name = "PB";
+			pbutton.smpsw_type = PSWITCH_TYPE_POWER;
+			if (sysmon_pswitch_register(&pbutton) != 0)
+				printf("Unable to register soft power\n");
 			break;
 		case MACH_MACPB150:
 		case MACH_MACPB210:
@@ -272,6 +281,13 @@ pm_setup_adb(void)
 		case MACH_MACPB190:
 		case MACH_MACPB190CS:
 			pmHardware = PM_HW_PB5XX;
+#if notyet
+			memset(&pbutton, 0, sizeof(struct sysmon_pswitch));
+			pbutton.smpsw_name = "PB";
+			pbutton.smpsw_type = PSWITCH_TYPE_POWER;
+			if (sysmon_pswitch_register(&pbutton) != 0)
+				printf("Unable to register soft power\n");
+#endif
 			break;
 		default:
 			break;
@@ -579,6 +595,9 @@ pm_intr_pm1(void *arg)
 			/* ADB device event */
 			pm_adb_get_ADB_data(&pmdata);
 		}
+	} else if ((pmdata.num_data == 0x1) && (pmdata.data[0] == 0)) {
+		/* PowerBook 160/180 Power button. */
+		sysmon_pswitch_event(&pbutton, PSWITCH_EVENT_PRESSED);
 	} else {
 #ifdef ADB_DEBUG
 		if (adb_debug)
