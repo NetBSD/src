@@ -1,4 +1,4 @@
-/*	$NetBSD: dkctl.c,v 1.26 2018/01/07 12:29:25 kre Exp $	*/
+/*	$NetBSD: dkctl.c,v 1.27 2024/09/14 08:30:44 mlelstv Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: dkctl.c,v 1.26 2018/01/07 12:29:25 kre Exp $");
+__RCSID("$NetBSD: dkctl.c,v 1.27 2024/09/14 08:30:44 mlelstv Exp $");
 #endif
 
 #include <sys/param.h>
@@ -100,6 +100,7 @@ static void	disk_badsectors(int, char *[]);
 static void	disk_addwedge(int, char *[]);
 static void	disk_delwedge(int, char *[]);
 static void	disk_getwedgeinfo(int, char *[]);
+static void	disk_getgeometry(int, char *[]);
 static void	disk_listwedges(int, char *[]);
 static void	disk_makewedges(int, char *[]);
 static void	disk_strategy(int, char *[]);
@@ -128,6 +129,11 @@ static struct command commands[] = {
 	{ "getwedgeinfo",
 	  "",
 	  disk_getwedgeinfo,
+	  O_RDONLY },
+
+	{ "getgeometry",
+	  "",
+	  disk_getgeometry,
 	  O_RDONLY },
 
 	{ "keeplabel",
@@ -623,6 +629,26 @@ disk_getwedgeinfo(int argc, char *argv[])
 	    dkw.dkw_wname);	/* XXX Unicode */
 	printf("%s: %"PRIu64" blocks at %"PRId64", type: %s\n",
 	    dkw.dkw_devname, dkw.dkw_size, dkw.dkw_offset, dkw.dkw_ptype);
+}
+
+static void
+disk_getgeometry(int argc, char *argv[])
+{
+	off_t bytes;
+	u_int secsize;
+
+	if (argc != 1)
+		usage();
+
+	if (ioctl(fd, DIOCGMEDIASIZE, &bytes) == -1)
+		err(EXIT_FAILURE, "%s: getmediasize", dvname);
+
+	secsize = DEV_BSIZE;
+	if (ioctl(fd, DIOCGSECTORSIZE, &secsize) == -1)
+		warn("%s: getsectorsize", dvname);
+
+	printf("%s: %"PRIu64" bytes in %"PRIu64" blocks of %u bytes\n",
+	    dvname, bytes, bytes/secsize, secsize);
 }
 
 static void

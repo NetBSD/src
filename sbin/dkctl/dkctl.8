@@ -1,4 +1,4 @@
-.\"	$NetBSD: dkctl.8,v 1.29 2020/03/30 08:36:09 wiz Exp $
+.\"	$NetBSD: dkctl.8,v 1.30 2024/09/14 08:30:44 mlelstv Exp $
 .\"
 .\" Copyright 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -132,6 +132,8 @@ Get and display the cache enables for the specified device.
 Display information about the specified disk wedge.
 .Ar device
 in this case is the wedge name.
+.It Ic getgeometry
+Display media and sector size of the specified disk, wedge or volume.
 .It Ic keeplabel Op Ar yes | no
 Specify to keep or drop the in-core disklabel on the last close of
 the disk device.
