@@ -1,4 +1,4 @@
-/*	$NetBSD: qduser.h,v 1.5 2006/10/09 18:42:59 oster Exp $	*/
+/*	$NetBSD: qduser.h,v 1.6 2024/09/14 21:38:28 andvar Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -396,7 +396,7 @@ struct qdinput {
 ******************************************************************/
 
 /*-----------------------------------
-* LK201 programmming definitions  */
+* LK201 programming definitions  */
 
 #define LK_UPDOWN 	0x86		/* bits for setting lk201 modes */
 #define LK_AUTODOWN 	0x82
