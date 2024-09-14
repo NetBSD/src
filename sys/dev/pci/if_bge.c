@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.395 2024/09/07 06:25:27 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.396 2024/09/14 07:01:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.395 2024/09/07 06:25:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.396 2024/09/14 07:01:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5934,6 +5934,7 @@ bge_ifflags_cb(struct ethercom *ec)
 	mutex_enter(sc->sc_mcast_lock);
 
 	u_short change = ifp->if_flags ^ sc->bge_if_flags;
+	sc->bge_if_flags = ifp->if_flags;
 
 	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0) {
 		ret = ENETRESET;
@@ -5946,7 +5947,6 @@ bge_ifflags_cb(struct ethercom *ec)
 		bge_setmulti(sc);
 	}
 
-	sc->bge_if_flags = ifp->if_flags;
 	mutex_exit(sc->sc_mcast_lock);
 
 	return ret;
