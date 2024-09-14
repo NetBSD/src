@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.59 2021/08/07 16:18:57 thorpej Exp $	*/
+/*	$NetBSD: adb.c,v 1.60 2024/09/14 20:56:50 nat Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.59 2021/08/07 16:18:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.60 2024/09/14 20:56:50 nat Exp $");
 
 #include "opt_adb.h"
 
@@ -93,6 +93,9 @@ adbmatch(device_t parent, cfdata_t cf, void *aux)
 static void
 adbattach(device_t parent, device_t self, void *aux)
 {
+
+	printf("...  Waiting 5 seconds for adb devices to settle.");
+	kpause("adb-slp", false, mstohz(5000), NULL);
 
 	adb_softintr_cookie = softint_establish(SOFTINT_SERIAL,
 	    (void (*)(void *))adb_soft_intr, NULL);
