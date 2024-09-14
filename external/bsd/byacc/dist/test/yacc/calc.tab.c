@@ -1,4 +1,4 @@
-/*	$NetBSD: calc.tab.c,v 1.4 2021/02/20 22:57:57 christos Exp $	*/
+/*	$NetBSD: calc.tab.c,v 1.5 2024/09/14 21:29:04 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -152,7 +152,7 @@ extern int YYPARSE_DECL();
 #define LETTER 258
 #define UMINUS 259
 #define YYERRCODE 256
-typedef short YYINT;
+typedef int YYINT;
 static const YYINT calc_lhs[] = {                        -1,
     0,    0,    0,    1,    1,    2,    2,    2,    2,    2,
     2,    2,    2,    2,    2,    2,    3,    3,
@@ -429,8 +429,8 @@ YYPARSE_DECL()
     }
 #endif
 
-    yym = 0;
-    yyn = 0;
+    /* yym is set below */
+    /* yyn is set below */
     yynerrs = 0;
     yyerrflag = 0;
     yychar = YYEMPTY;
@@ -556,64 +556,79 @@ yyreduce:
 case 3:
 #line 28 "calc.y"
 	{  yyerrok ; }
+#line 558 "calc.tab.c"
 break;
 case 4:
 #line 32 "calc.y"
 	{  printf("%d\n",yystack.l_mark[0]);}
+#line 563 "calc.tab.c"
 break;
 case 5:
 #line 34 "calc.y"
 	{  regs[yystack.l_mark[-2]] = yystack.l_mark[0]; }
+#line 568 "calc.tab.c"
 break;
 case 6:
 #line 38 "calc.y"
 	{  yyval = yystack.l_mark[-1]; }
+#line 573 "calc.tab.c"
 break;
 case 7:
 #line 40 "calc.y"
 	{  yyval = yystack.l_mark[-2] + yystack.l_mark[0]; }
+#line 578 "calc.tab.c"
 break;
 case 8:
 #line 42 "calc.y"
 	{  yyval = yystack.l_mark[-2] - yystack.l_mark[0]; }
+#line 583 "calc.tab.c"
 break;
 case 9:
 #line 44 "calc.y"
 	{  yyval = yystack.l_mark[-2] * yystack.l_mark[0]; }
+#line 588 "calc.tab.c"
 break;
 case 10:
 #line 46 "calc.y"
 	{  yyval = yystack.l_mark[-2] / yystack.l_mark[0]; }
+#line 593 "calc.tab.c"
 break;
 case 11:
 #line 48 "calc.y"
 	{  yyval = yystack.l_mark[-2] % yystack.l_mark[0]; }
+#line 598 "calc.tab.c"
 break;
 case 12:
 #line 50 "calc.y"
 	{  yyval = yystack.l_mark[-2] & yystack.l_mark[0]; }
+#line 603 "calc.tab.c"
 break;
 case 13:
 #line 52 "calc.y"
 	{  yyval = yystack.l_mark[-2] | yystack.l_mark[0]; }
+#line 608 "calc.tab.c"
 break;
 case 14:
 #line 54 "calc.y"
 	{  yyval = - yystack.l_mark[0]; }
+#line 613 "calc.tab.c"
 break;
 case 15:
 #line 56 "calc.y"
 	{  yyval = regs[yystack.l_mark[0]]; }
+#line 618 "calc.tab.c"
 break;
 case 17:
 #line 61 "calc.y"
 	{  yyval = yystack.l_mark[0]; base = (yystack.l_mark[0]==0) ? 8 : 10; }
+#line 623 "calc.tab.c"
 break;
 case 18:
 #line 63 "calc.y"
 	{  yyval = base * yystack.l_mark[-1] + yystack.l_mark[0]; }
+#line 628 "calc.tab.c"
 break;
-#line 615 "calc.tab.c"
+#line 630 "calc.tab.c"
     }
     yystack.s_mark -= yym;
     yystate = *yystack.s_mark;

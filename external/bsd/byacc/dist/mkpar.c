@@ -1,11 +1,11 @@
-/*	$NetBSD: mkpar.c,v 1.13 2021/02/20 22:57:56 christos Exp $	*/
+/*	$NetBSD: mkpar.c,v 1.14 2024/09/14 21:29:02 christos Exp $	*/
 
-/* Id: mkpar.c,v 1.17 2020/09/10 17:37:33 tom Exp  */
+/* Id: mkpar.c,v 1.18 2021/05/20 23:57:23 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkpar.c,v 1.13 2021/02/20 22:57:56 christos Exp $");
+__RCSID("$NetBSD: mkpar.c,v 1.14 2024/09/14 21:29:02 christos Exp $");
 
 #define NotSuppressed(p)	((p)->suppressed == 0)
 
@@ -225,7 +225,7 @@ unused_rules(void)
 	if (nunused == 1)
 	    fprintf(stderr, "%s: 1 rule never reduced\n", myname);
 	else
-	    fprintf(stderr, "%s: %d rules never reduced\n", myname, nunused);
+	    fprintf(stderr, "%s: %ld rules never reduced\n", myname, (long)nunused);
     }
 }
 

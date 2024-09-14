@@ -1,7 +1,7 @@
-/*	$NetBSD: expr.oxout.tab.h,v 1.2 2017/02/11 19:33:12 christos Exp $	*/
+/*	$NetBSD: expr.oxout.tab.h,v 1.3 2024/09/14 21:29:03 christos Exp $	*/
 
-#ifndef _expr.oxout__defines_h_
-#define _expr.oxout__defines_h_
+#ifndef _expr_oxout__defines_h_
+#define _expr_oxout__defines_h_
 
 #define ID 257
 #define CONST 258
@@ -11,12 +11,12 @@
 #endif
 #ifndef YYSTYPE_IS_DECLARED
 #define YYSTYPE_IS_DECLARED 1
-typedef union {
+typedef union YYSTYPE {
 struct yyyOxAttrbs {
 struct yyyStackItem *yyyOxStackItem;
 } yyyOxAttrbs;
 } YYSTYPE;
 #endif /* !YYSTYPE_IS_DECLARED */
-extern YYSTYPE expr.oxout_lval;
+extern YYSTYPE expr_oxout_lval;
 
-#endif /* _expr.oxout__defines_h_ */
+#endif /* _expr_oxout__defines_h_ */

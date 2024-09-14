@@ -1,4 +1,4 @@
-/*	$NetBSD: varsyntax_calc1.tab.c,v 1.4 2021/02/20 22:57:57 christos Exp $	*/
+/*	$NetBSD: varsyntax_calc1.tab.c,v 1.5 2024/09/14 21:29:05 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -133,7 +133,7 @@ INTERVAL vreg[26];
 #ifndef YYSTYPE_IS_DECLARED
 #define YYSTYPE_IS_DECLARED 1
 #line 32 "varsyntax_calc1.y"
-typedef union
+typedef union YYSTYPE
 {
 	int ival;	/* dreg & vreg array index values*/
 	double dval;	/* floating point values*/
@@ -178,7 +178,7 @@ extern int YYPARSE_DECL();
 #define CONST 259
 #define UMINUS 260
 #define YYERRCODE 256
-typedef short YYINT;
+typedef int YYINT;
 static const YYINT varsyntax_calc1_lhs[] = {             -1,
     3,    3,    0,    0,    0,    0,    0,    1,    1,    1,
     1,    1,    1,    1,    1,    2,    2,    2,    2,    2,
@@ -567,8 +567,8 @@ YYPARSE_DECL()
     }
 #endif
 
-    yym = 0;
-    yyn = 0;
+    /* yym is set below */
+    /* yyn is set below */
     yynerrs = 0;
     yyerrflag = 0;
     yychar = YYEMPTY;
@@ -696,78 +696,91 @@ case 3:
 	{
 		(void) printf("%15.8f\n", yystack.l_mark[-1].dval);
 	}
+#line 698 "varsyntax_calc1.tab.c"
 break;
 case 4:
 #line 63 "varsyntax_calc1.y"
 	{
 		(void) printf("(%15.8f, %15.8f)\n", yystack.l_mark[-1].vval.lo, yystack.l_mark[-1].vval.hi);
 	}
+#line 705 "varsyntax_calc1.tab.c"
 break;
 case 5:
 #line 67 "varsyntax_calc1.y"
 	{
 		dreg[yystack.l_mark[-3].ival] = yystack.l_mark[-1].dval;
 	}
+#line 712 "varsyntax_calc1.tab.c"
 break;
 case 6:
 #line 71 "varsyntax_calc1.y"
 	{
 		vreg[yystack.l_mark[-3].ival] = yystack.l_mark[-1].vval;
 	}
+#line 719 "varsyntax_calc1.tab.c"
 break;
 case 7:
 #line 75 "varsyntax_calc1.y"
 	{
 		yyerrok;
 	}
+#line 726 "varsyntax_calc1.tab.c"
 break;
 case 9:
 #line 82 "varsyntax_calc1.y"
 	{
 		yyval.dval = dreg[yystack.l_mark[0].ival]; /* $$ & $1 are sufficient here*/
 	}
+#line 733 "varsyntax_calc1.tab.c"
 break;
 case 10:
 #line 86 "varsyntax_calc1.y"
 	{
 		yyval.dval = yystack.l_mark[-2].dval + yystack.l_mark[0].dval;
 	}
+#line 740 "varsyntax_calc1.tab.c"
 break;
 case 11:
 #line 90 "varsyntax_calc1.y"
 	{
 		yyval.dval = yystack.l_mark[-2].dval - yystack.l_mark[0].dval;
 	}
+#line 747 "varsyntax_calc1.tab.c"
 break;
 case 12:
 #line 94 "varsyntax_calc1.y"
 	{
 		yyval.dval = yystack.l_mark[-2].dval * yystack.l_mark[0].dval;
 	}
+#line 754 "varsyntax_calc1.tab.c"
 break;
 case 13:
 #line 98 "varsyntax_calc1.y"
 	{
 		yyval.dval = yystack.l_mark[-2].dval / yystack.l_mark[0].dval;
 	}
+#line 761 "varsyntax_calc1.tab.c"
 break;
 case 14:
 #line 102 "varsyntax_calc1.y"
 	{
 		yyval.dval = -yystack.l_mark[0].dval;
 	}
+#line 768 "varsyntax_calc1.tab.c"
 break;
 case 15:
 #line 106 "varsyntax_calc1.y"
 	{
 		yyval.dval = yystack.l_mark[-1].dval;
 	}
+#line 775 "varsyntax_calc1.tab.c"
 break;
 case 16:
 #line 112 "varsyntax_calc1.y"
 	{
 		yyval.vval.hi = yyval.vval.lo = yystack.l_mark[0].dval;
 	}
+#line 782 "varsyntax_calc1.tab.c"
 break;
 case 17:
 #line 116 "varsyntax_calc1.y"
@@ -780,12 +793,14 @@ case 17:
 			YYERROR;
 		}
 	}
+#line 795 "varsyntax_calc1.tab.c"
 break;
 case 18:
 #line 126 "varsyntax_calc1.y"
 	{
 		yyval.vval = vreg[yystack.l_mark[0].ival];
 	}
+#line 802 "varsyntax_calc1.tab.c"
 break;
 case 19:
 #line 130 "varsyntax_calc1.y"
@@ -793,6 +808,7 @@ case 19:
 		yyval.vval.hi = yystack.l_mark[-2].vval.hi + yystack.l_mark[0].vval.hi;
 		yyval.vval.lo = yystack.l_mark[-2].vval.lo + yystack.l_mark[0].vval.lo;
 	}
+#line 810 "varsyntax_calc1.tab.c"
 break;
 case 20:
 #line 135 "varsyntax_calc1.y"
@@ -800,6 +816,7 @@ case 20:
 		yyval.vval.hi = yystack.l_mark[-2].dval + yystack.l_mark[0].vval.hi;
 		yyval.vval.lo = yystack.l_mark[-2].dval + yystack.l_mark[0].vval.lo;
 	}
+#line 818 "varsyntax_calc1.tab.c"
 break;
 case 21:
 #line 140 "varsyntax_calc1.y"
@@ -807,6 +824,7 @@ case 21:
 		yyval.vval.hi = yystack.l_mark[-2].vval.hi - yystack.l_mark[0].vval.lo;
 		yyval.vval.lo = yystack.l_mark[-2].vval.lo - yystack.l_mark[0].vval.hi;
 	}
+#line 826 "varsyntax_calc1.tab.c"
 break;
 case 22:
 #line 145 "varsyntax_calc1.y"
@@ -814,18 +832,21 @@ case 22:
 		yyval.vval.hi = yystack.l_mark[-2].dval - yystack.l_mark[0].vval.lo;
 		yyval.vval.lo = yystack.l_mark[-2].dval - yystack.l_mark[0].vval.hi;
 	}
+#line 834 "varsyntax_calc1.tab.c"
 break;
 case 23:
 #line 150 "varsyntax_calc1.y"
 	{
 		yyval.vval = vmul( yystack.l_mark[-2].vval.lo, yystack.l_mark[-2].vval.hi, yystack.l_mark[0].vval );
 	}
+#line 841 "varsyntax_calc1.tab.c"
 break;
 case 24:
 #line 154 "varsyntax_calc1.y"
 	{
 		yyval.vval = vmul (yystack.l_mark[-2].dval, yystack.l_mark[-2].dval, yystack.l_mark[0].vval );
 	}
+#line 848 "varsyntax_calc1.tab.c"
 break;
 case 25:
 #line 158 "varsyntax_calc1.y"
@@ -833,6 +854,7 @@ case 25:
 		if (dcheck(yystack.l_mark[0].vval)) YYERROR;
 		yyval.vval = vdiv ( yystack.l_mark[-2].vval.lo, yystack.l_mark[-2].vval.hi, yystack.l_mark[0].vval );
 	}
+#line 856 "varsyntax_calc1.tab.c"
 break;
 case 26:
 #line 163 "varsyntax_calc1.y"
@@ -840,6 +862,7 @@ case 26:
 		if (dcheck ( yystack.l_mark[0].vval )) YYERROR;
 		yyval.vval = vdiv (yystack.l_mark[-2].dval, yystack.l_mark[-2].dval, yystack.l_mark[0].vval );
 	}
+#line 864 "varsyntax_calc1.tab.c"
 break;
 case 27:
 #line 168 "varsyntax_calc1.y"
@@ -847,14 +870,16 @@ case 27:
 		yyval.vval.hi = -yystack.l_mark[0].vval.lo;
 		yyval.vval.lo = -yystack.l_mark[0].vval.hi;
 	}
+#line 872 "varsyntax_calc1.tab.c"
 break;
 case 28:
 #line 173 "varsyntax_calc1.y"
 	{
 		yyval.vval = yystack.l_mark[-1].vval;
 	}
+#line 879 "varsyntax_calc1.tab.c"
 break;
-#line 856 "varsyntax_calc1.tab.c"
+#line 881 "varsyntax_calc1.tab.c"
     }
     yystack.s_mark -= yym;
     yystate = *yystack.s_mark;

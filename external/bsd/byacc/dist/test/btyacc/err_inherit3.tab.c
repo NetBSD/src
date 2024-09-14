@@ -1,4 +1,4 @@
-/*	$NetBSD: err_inherit3.tab.c,v 1.5 2021/02/20 22:57:57 christos Exp $	*/
+/*	$NetBSD: err_inherit3.tab.c,v 1.6 2024/09/14 21:29:03 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -145,7 +145,7 @@ extern symbol *mksymbol(type t, class c, name id);
 #ifndef YYSTYPE_IS_DECLARED
 #define YYSTYPE_IS_DECLARED 1
 #line 39 "err_inherit3.y"
-typedef union
+typedef union YYSTYPE
 {
     class	cval;
     type	tval;
@@ -199,7 +199,7 @@ extern int YYPARSE_DECL();
 #define INTEGER 260
 #define NAME 261
 #define YYERRCODE 256
-typedef short YYINT;
+typedef int YYINT;
 static const YYINT err_inherit3_lhs[] = {                -1,
     5,    6,    0,    0,    3,    3,    4,    4,    7,    1,
     1,    8,    2,
@@ -442,8 +442,8 @@ YYDESTRUCT_DECL()
 		    free(pp->s); free(pp);
 		  }
 		}
+#line 444 "err_inherit3.tab.c"
 	break;
-#line 445 "err_inherit3.tab.c"
 	case 264:
 #line 30 "err_inherit3.y"
 	{
@@ -454,8 +454,8 @@ YYDESTRUCT_DECL()
 		    free(pp->s); free(pp);
 		  }
 		}
+#line 456 "err_inherit3.tab.c"
 	break;
-#line 457 "err_inherit3.tab.c"
 	case 265:
 #line 30 "err_inherit3.y"
 	{
@@ -466,8 +466,8 @@ YYDESTRUCT_DECL()
 		    free(pp->s); free(pp);
 		  }
 		}
+#line 468 "err_inherit3.tab.c"
 	break;
-#line 469 "err_inherit3.tab.c"
     }
 }
 #define YYDESTRUCT_IS_DECLARED 1
@@ -633,7 +633,7 @@ YYPARSE_DECL()
     yyps->save = 0;
 #endif /* YYBTYACC */
     yym = 0;
-    yyn = 0;
+    /* yyn is set below */
     yynerrs = 0;
     yyerrflag = 0;
     yychar = YYEMPTY;
@@ -1144,60 +1144,73 @@ yyreduce:
 case 1:
 #line 50 "err_inherit3.y"
 yyval.cval = yystack.l_mark[-1].cval;
+#line 1146 "err_inherit3.tab.c"
 break;
 case 2:
 #line 50 "err_inherit3.y"
 yyval.tval =  yystack.l_mark[-1].tval;
+#line 1151 "err_inherit3.tab.c"
 break;
 case 3:
 #line 51 "err_inherit3.y"
 	{ yyval.nlist = yystack.l_mark[0].nlist; }
+#line 1156 "err_inherit3.tab.c"
 break;
 case 4:
 #line 53 "err_inherit3.y"
 	{ yyval.nlist = yystack.l_mark[0].nlist; }
+#line 1161 "err_inherit3.tab.c"
 break;
 case 5:
 #line 56 "err_inherit3.y"
 	{ yyval.cval = cGLOBAL; }
+#line 1166 "err_inherit3.tab.c"
 break;
 case 6:
 #line 57 "err_inherit3.y"
 	{ yyval.cval = cLOCAL; }
+#line 1171 "err_inherit3.tab.c"
 break;
 case 7:
 #line 60 "err_inherit3.y"
 	{ yyval.tval = tREAL; }
+#line 1176 "err_inherit3.tab.c"
 break;
 case 8:
 #line 61 "err_inherit3.y"
 	{ yyval.tval = tINTEGER; }
+#line 1181 "err_inherit3.tab.c"
 break;
 case 9:
 #line 64 "err_inherit3.y"
 yyval.cval = yystack.l_mark[-2];
+#line 1186 "err_inherit3.tab.c"
 break;
 case 10:
 #line 65 "err_inherit3.y"
 	{ yyval.nlist->s = mksymbol(yystack.l_mark[-5].tval, yystack.l_mark[-5].cval, yystack.l_mark[0].id);
 	      yyval.nlist->next = yystack.l_mark[-1].nlist;
 	    }
+#line 1193 "err_inherit3.tab.c"
 break;
 case 11:
 #line 69 "err_inherit3.y"
 	{ yyval.nlist->s = mksymbol(yystack.l_mark[-3], yystack.l_mark[-3], yystack.l_mark[0].id);
 	      yyval.nlist->next = NULL;
 	    }
+#line 1200 "err_inherit3.tab.c"
 break;
 case 12:
 #line 74 "err_inherit3.y"
 yyval.cval = cLOCAL;
+#line 1205 "err_inherit3.tab.c"
 break;
 case 13:
 #line 75 "err_inherit3.y"
 	{ yyval.nlist = yystack.l_mark[0].nlist; }
+#line 1210 "err_inherit3.tab.c"
 break;
-#line 1199 "err_inherit3.tab.c"
+#line 1212 "err_inherit3.tab.c"
     default:
         break;
     }

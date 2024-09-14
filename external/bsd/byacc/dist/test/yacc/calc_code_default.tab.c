@@ -1,4 +1,4 @@
-/*	$NetBSD: calc_code_default.tab.c,v 1.1.1.2 2024/09/14 21:25:37 christos Exp $	*/
+/*	$NetBSD: calc_code_default.tab.c,v 1.2 2024/09/14 21:29:04 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */

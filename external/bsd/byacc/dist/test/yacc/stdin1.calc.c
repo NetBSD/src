@@ -1,4 +1,4 @@
-/*	$NetBSD: stdin1.calc.c,v 1.1.1.3 2024/09/14 21:25:37 christos Exp $	*/
+/*	$NetBSD: stdin1.calc.c,v 1.2 2024/09/14 21:29:05 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */

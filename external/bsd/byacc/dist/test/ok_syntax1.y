@@ -1,4 +1,4 @@
-/*	$NetBSD: ok_syntax1.y,v 1.1.1.4 2024/09/14 21:25:37 christos Exp $	*/
+/*	$NetBSD: ok_syntax1.y,v 1.2 2024/09/14 21:29:03 christos Exp $	*/
 
 %pure_parser
 

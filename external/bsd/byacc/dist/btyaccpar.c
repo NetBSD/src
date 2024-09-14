@@ -1,10 +1,10 @@
-/*	$NetBSD: btyaccpar.c,v 1.7 2018/12/23 15:38:53 christos Exp $	*/
+/*	$NetBSD: btyaccpar.c,v 1.8 2024/09/14 21:29:02 christos Exp $	*/
 
 /* This file generated automatically using
  * Id: skel2c,v 1.4 2016/06/07 00:26:09 tom Exp 
  */
 
-/* @Id: btyaccpar.skel,v 1.10 2018/05/25 01:03:46 tom Exp @ */
+/* @Id: btyaccpar.skel,v 1.12 2021/06/19 20:46:31 tom Exp @ */
 
 #include "defs.h"
 
@@ -487,7 +487,7 @@ const char *const body_3[] =
     "#endif /* YYBTYACC */",
 #endif			/* defined(YYBTYACC) */
     "    yym = 0;",
-    "    yyn = 0;",
+    "    /* yyn is set below */",
     "    yynerrs = 0;",
     "    yyerrflag = 0;",
     "    yychar = YYEMPTY;",

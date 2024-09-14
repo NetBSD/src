@@ -1,4 +1,4 @@
-/*	$NetBSD: btyacc_destroy1.tab.h,v 1.1.1.4 2024/09/14 21:25:39 christos Exp $	*/
+/*	$NetBSD: btyacc_destroy1.tab.h,v 1.2 2024/09/14 21:29:03 christos Exp $	*/
 
 #ifndef _destroy1__defines_h_
 #define _destroy1__defines_h_

@@ -1,4 +1,4 @@
-/*	$NetBSD: ok_syntax1.tab.h,v 1.1.1.5 2024/09/14 21:25:38 christos Exp $	*/
+/*	$NetBSD: ok_syntax1.tab.h,v 1.2 2024/09/14 21:29:04 christos Exp $	*/
 
 #ifndef _ok_syntax1__defines_h_
 #define _ok_syntax1__defines_h_

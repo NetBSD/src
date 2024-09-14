@@ -1,4 +1,4 @@
-/*	$NetBSD: err_inherit4.tab.h,v 1.3 2021/02/20 22:57:57 christos Exp $	*/
+/*	$NetBSD: err_inherit4.tab.h,v 1.4 2024/09/14 21:29:03 christos Exp $	*/
 
 #ifndef _err_inherit4__defines_h_
 #define _err_inherit4__defines_h_
@@ -14,7 +14,7 @@
 #endif
 #ifndef YYSTYPE_IS_DECLARED
 #define YYSTYPE_IS_DECLARED 1
-typedef union
+typedef union YYSTYPE
 {
     class	cval;
     type	tval;

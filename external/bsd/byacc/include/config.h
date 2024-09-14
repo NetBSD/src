@@ -21,6 +21,15 @@
 /* Define if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
 
+/* Define if you have the `getopt' function. */
+#define HAVE_GETOPT 1
+
+/* Define if you have the <getopt.h> header file. */
+#define HAVE_GETOPT_H 1
+
+/* Define to 1 if getopt variables are declared in header */
+#define HAVE_GETOPT_HEADER 1
+
 /* Define if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
@@ -41,6 +50,9 @@
 
 /* Define if you have the <stdlib.h> header file. */
 #define HAVE_STDLIB_H 1
+
+/* Define if <stdnoreturn.h> header is available and working */
+/* #undef HAVE_STDNORETURN_H */
 
 /* Define if you have the <strings.h> header file. */
 #define HAVE_STRINGS_H 1
@@ -66,11 +78,17 @@
 /* Define to 1 if filesystem supports mixed-case filenames. */
 #define MIXEDCASE_FILENAMES 1
 
+/* Define to 1 if we must include getopt.h */
+/* #undef NEED_GETOPT_H */
+
 /* Define to 1 if you want to perform memory-leak testing. */
 /* #undef NO_LEAKS */
 
 /* Define if you have the ANSI C header files. */
 #define STDC_HEADERS 1
+
+/* Define if C11 _Noreturn keyword is supported */
+/* #undef STDC_NORETURN */
 
 /* Define to the system name. */
 #define SYSTEM_NAME "NetBSD"

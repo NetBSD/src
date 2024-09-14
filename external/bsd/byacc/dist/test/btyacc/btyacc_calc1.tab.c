@@ -1,4 +1,4 @@
-/*	$NetBSD: btyacc_calc1.tab.c,v 1.5 2021/02/20 22:57:56 christos Exp $	*/
+/*	$NetBSD: btyacc_calc1.tab.c,v 1.6 2024/09/14 21:29:03 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -149,7 +149,7 @@ INTERVAL vreg[26];
 #ifndef YYSTYPE_IS_DECLARED
 #define YYSTYPE_IS_DECLARED 1
 #line 29 "btyacc_calc1.y"
-typedef union
+typedef union YYSTYPE
 {
 	int ival;
 	double dval;
@@ -198,7 +198,7 @@ extern int YYPARSE_DECL();
 #define CONST 259
 #define UMINUS 260
 #define YYERRCODE 256
-typedef short YYINT;
+typedef int YYINT;
 static const YYINT calc1_lhs[] = {                       -1,
     0,    0,    0,    3,    3,    3,    3,    1,    1,    1,
     1,    1,    1,    1,    1,    2,    2,    2,    2,    2,
@@ -841,7 +841,7 @@ YYPARSE_DECL()
     yyps->save = 0;
 #endif /* YYBTYACC */
     yym = 0;
-    yyn = 0;
+    /* yyn is set below */
     yynerrs = 0;
     yyerrflag = 0;
     yychar = YYEMPTY;
@@ -1352,6 +1352,7 @@ yyreduce:
 case 2:
 #line 51 "btyacc_calc1.y"
 {YYVALID;}
+#line 1354 "btyacc_calc1.tab.c"
 break;
 case 3:
 #line 52 "btyacc_calc1.y"
@@ -1360,6 +1361,7 @@ case 3:
 {
 		yyerrok;
 	}
+#line 1363 "btyacc_calc1.tab.c"
 break;
 case 4:
   if (!yytrial)
@@ -1367,6 +1369,7 @@ case 4:
 	{
 		(void) printf("%15.8f\n", yystack.l_mark[0].dval);
 	}
+#line 1371 "btyacc_calc1.tab.c"
 break;
 case 5:
   if (!yytrial)
@@ -1374,6 +1377,7 @@ case 5:
 	{
 		(void) printf("(%15.8f, %15.8f)\n", yystack.l_mark[0].vval.lo, yystack.l_mark[0].vval.hi);
 	}
+#line 1379 "btyacc_calc1.tab.c"
 break;
 case 6:
   if (!yytrial)
@@ -1381,6 +1385,7 @@ case 6:
 	{
 		dreg[yystack.l_mark[-2].ival] = yystack.l_mark[0].dval;
 	}
+#line 1387 "btyacc_calc1.tab.c"
 break;
 case 7:
   if (!yytrial)
@@ -1388,6 +1393,7 @@ case 7:
 	{
 		vreg[yystack.l_mark[-2].ival] = yystack.l_mark[0].vval;
 	}
+#line 1395 "btyacc_calc1.tab.c"
 break;
 case 9:
   if (!yytrial)
@@ -1395,6 +1401,7 @@ case 9:
 	{
 		yyval.dval = dreg[yystack.l_mark[0].ival];
 	}
+#line 1403 "btyacc_calc1.tab.c"
 break;
 case 10:
   if (!yytrial)
@@ -1402,6 +1409,7 @@ case 10:
 	{
 		yyval.dval = yystack.l_mark[-2].dval + yystack.l_mark[0].dval;
 	}
+#line 1411 "btyacc_calc1.tab.c"
 break;
 case 11:
   if (!yytrial)
@@ -1409,6 +1417,7 @@ case 11:
 	{
 		yyval.dval = yystack.l_mark[-2].dval - yystack.l_mark[0].dval;
 	}
+#line 1419 "btyacc_calc1.tab.c"
 break;
 case 12:
   if (!yytrial)
@@ -1416,6 +1425,7 @@ case 12:
 	{
 		yyval.dval = yystack.l_mark[-2].dval * yystack.l_mark[0].dval;
 	}
+#line 1427 "btyacc_calc1.tab.c"
 break;
 case 13:
   if (!yytrial)
@@ -1423,6 +1433,7 @@ case 13:
 	{
 		yyval.dval = yystack.l_mark[-2].dval / yystack.l_mark[0].dval;
 	}
+#line 1435 "btyacc_calc1.tab.c"
 break;
 case 14:
   if (!yytrial)
@@ -1430,6 +1441,7 @@ case 14:
 	{
 		yyval.dval = -yystack.l_mark[0].dval;
 	}
+#line 1443 "btyacc_calc1.tab.c"
 break;
 case 15:
   if (!yytrial)
@@ -1437,6 +1449,7 @@ case 15:
 	{
 		yyval.dval = yystack.l_mark[-1].dval;
 	}
+#line 1451 "btyacc_calc1.tab.c"
 break;
 case 16:
   if (!yytrial)
@@ -1444,6 +1457,7 @@ case 16:
 	{
 		yyval.vval.hi = yyval.vval.lo = yystack.l_mark[0].dval;
 	}
+#line 1459 "btyacc_calc1.tab.c"
 break;
 case 17:
   if (!yytrial)
@@ -1457,6 +1471,7 @@ case 17:
 			YYERROR;
 		}
 	}
+#line 1473 "btyacc_calc1.tab.c"
 break;
 case 18:
   if (!yytrial)
@@ -1464,6 +1479,7 @@ case 18:
 	{
 		yyval.vval = vreg[yystack.l_mark[0].ival];
 	}
+#line 1481 "btyacc_calc1.tab.c"
 break;
 case 19:
   if (!yytrial)
@@ -1472,6 +1488,7 @@ case 19:
 		yyval.vval.hi = yystack.l_mark[-2].vval.hi + yystack.l_mark[0].vval.hi;
 		yyval.vval.lo = yystack.l_mark[-2].vval.lo + yystack.l_mark[0].vval.lo;
 	}
+#line 1490 "btyacc_calc1.tab.c"
 break;
 case 20:
   if (!yytrial)
@@ -1480,6 +1497,7 @@ case 20:
 		yyval.vval.hi = yystack.l_mark[-2].dval + yystack.l_mark[0].vval.hi;
 		yyval.vval.lo = yystack.l_mark[-2].dval + yystack.l_mark[0].vval.lo;
 	}
+#line 1499 "btyacc_calc1.tab.c"
 break;
 case 21:
   if (!yytrial)
@@ -1488,6 +1506,7 @@ case 21:
 		yyval.vval.hi = yystack.l_mark[-2].vval.hi - yystack.l_mark[0].vval.lo;
 		yyval.vval.lo = yystack.l_mark[-2].vval.lo - yystack.l_mark[0].vval.hi;
 	}
+#line 1508 "btyacc_calc1.tab.c"
 break;
 case 22:
   if (!yytrial)
@@ -1496,6 +1515,7 @@ case 22:
 		yyval.vval.hi = yystack.l_mark[-2].dval - yystack.l_mark[0].vval.lo;
 		yyval.vval.lo = yystack.l_mark[-2].dval - yystack.l_mark[0].vval.hi;
 	}
+#line 1517 "btyacc_calc1.tab.c"
 break;
 case 23:
   if (!yytrial)
@@ -1503,6 +1523,7 @@ case 23:
 	{
 		yyval.vval = vmul( yystack.l_mark[-2].vval.lo, yystack.l_mark[-2].vval.hi, yystack.l_mark[0].vval );
 	}
+#line 1525 "btyacc_calc1.tab.c"
 break;
 case 24:
   if (!yytrial)
@@ -1510,6 +1531,7 @@ case 24:
 	{
 		yyval.vval = vmul (yystack.l_mark[-2].dval, yystack.l_mark[-2].dval, yystack.l_mark[0].vval );
 	}
+#line 1533 "btyacc_calc1.tab.c"
 break;
 case 25:
   if (!yytrial)
@@ -1518,6 +1540,7 @@ case 25:
 		if (dcheck(yystack.l_mark[0].vval)) YYERROR;
 		yyval.vval = vdiv ( yystack.l_mark[-2].vval.lo, yystack.l_mark[-2].vval.hi, yystack.l_mark[0].vval );
 	}
+#line 1542 "btyacc_calc1.tab.c"
 break;
 case 26:
   if (!yytrial)
@@ -1526,6 +1549,7 @@ case 26:
 		if (dcheck ( yystack.l_mark[0].vval )) YYERROR;
 		yyval.vval = vdiv (yystack.l_mark[-2].dval, yystack.l_mark[-2].dval, yystack.l_mark[0].vval );
 	}
+#line 1551 "btyacc_calc1.tab.c"
 break;
 case 27:
   if (!yytrial)
@@ -1534,6 +1558,7 @@ case 27:
 		yyval.vval.hi = -yystack.l_mark[0].vval.lo;
 		yyval.vval.lo = -yystack.l_mark[0].vval.hi;
 	}
+#line 1560 "btyacc_calc1.tab.c"
 break;
 case 28:
   if (!yytrial)
@@ -1541,8 +1566,9 @@ case 28:
 	{
 		yyval.vval = yystack.l_mark[-1].vval;
 	}
+#line 1568 "btyacc_calc1.tab.c"
 break;
-#line 1544 "btyacc_calc1.tab.c"
+#line 1570 "btyacc_calc1.tab.c"
     default:
         break;
     }
