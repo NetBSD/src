@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.133 2024/03/13 07:55:28 nat Exp $
+#	$NetBSD: files.mac68k,v 1.134 2024/09/14 21:04:24 nat Exp $
 
 # mac68k-specific configuration info
 
@@ -24,7 +24,7 @@ device	obio { [addr = -1] }
 attach	obio at mainbus
 file	arch/mac68k/obio/obio.c		obio
 
-device	adb { }
+device	adb { }: sysmon_power
 attach	adb at obio
 file	arch/mac68k/dev/adb.c		adb
 file	arch/mac68k/dev/adbsysasm.s
