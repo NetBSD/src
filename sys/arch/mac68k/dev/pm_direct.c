@@ -1,6 +1,9 @@
-/*	$NetBSD: pm_direct.c,v 1.32 2024/06/02 13:28:45 andvar Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.33 2024/09/14 20:59:45 nat Exp $	*/
 
 /*
+ * Copyright (c) 2024 Nathanial Sloss <nathanialsloss@yahoo.com.au>
+ * All rights reserved.
+ *
  * Copyright (C) 1997 Takashi Hamada
  * All rights reserved.
  *
@@ -32,7 +35,7 @@
 /* From: pm_direct.c 1.3 03/18/98 Takashi Hamada */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.32 2024/06/02 13:28:45 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.33 2024/09/14 20:59:45 nat Exp $");
 
 #include "opt_adb.h"
 
@@ -845,18 +848,8 @@ pm_intr_pm2(void *arg)
 			rval = pm_pmgrop_pm2(&pmdata);
 			pm_printerr("#33", rval, pmdata.num_data, pmdata.data);
 */
-			/* this is an experimental code */
-			pmdata.command = 0x41;
-			pmdata.num_data = 1;
-			pmdata.s_buf = pmdata.data;
-			pmdata.r_buf = pmdata.data;
-			pm_LCD_brightness = 0x7f - pm_LCD_brightness / 2;
-			if (pm_LCD_brightness < 0x25)
-				pm_LCD_brightness = 0x25;
-			if (pm_LCD_brightness > 0x5a)
-				pm_LCD_brightness = 0x7f;
-			pmdata.data[0] = pm_LCD_brightness;
-			rval = pm_pmgrop_pm2(&pmdata);
+			pm_LCD_brightness =
+			    pm_set_brightness(pm_LCD_brightness);
 			break;
 		case 0x10:			/* ADB data that were requested by TALK command */
 		case 0x14:
@@ -1157,4 +1150,43 @@ pm_adb_poll_next_device_pm1(PMData *pmdata)
 	tmp_pmdata.data[1] = 0x04;	/* magic spell for awaking the PM */
 	tmp_pmdata.data[2] = 0x00;
 	pmgrop(&tmp_pmdata);
+}
+u_int
+pm_set_brightness(u_int brightness)
+{
+	PMData pmdata;
+
+	pmdata.num_data = 1;
+	pmdata.s_buf = pmdata.data;
+	pmdata.r_buf = pmdata.data;
+
+	switch (pmHardware) {
+	case PM_HW_PB5XX:
+		/* this is an experimental code */
+		pmdata.command = 0x41;
+		brightness = 0x7f - brightness / 2;
+		if (brightness < 0x25)
+			brightness = 0x25;
+		if (brightness > 0x5a)
+			brightness = 0x7f;
+		pmdata.data[0] = brightness;
+		(void)pm_pmgrop_pm2(&pmdata);
+		break;
+	case PM_HW_PB1XX:
+		/* this is an experimental code also */
+		pmdata.command = 0x40;
+		if ((int)brightness < 0)
+			brightness = 0;
+		if ((int)brightness > 31)
+			brightness = 31;
+		pmdata.data[0] = 31 - brightness;
+		(void)pm_pmgrop_pm1(&pmdata);
+		break;
+	default:
+
+		return 0;
+		break;
+	}
+
+	return brightness;
 }

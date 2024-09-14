@@ -1,6 +1,9 @@
-/*	$NetBSD: pm_direct.h,v 1.1 1997/04/08 03:11:38 scottr Exp $	*/
+/*	$NetBSD: pm_direct.h,v 1.2 2024/09/14 20:59:45 nat Exp $	*/
 
 /*
+ * Copyright (c) 2024 Nathanial Sloss <nathanialsloss@yahoo.com.au>
+ * All rights reserved.
+ *
  * Copyright (C) 1997 Takashi Hamada
  * All rights reserved.
  *
@@ -45,3 +48,4 @@ typedef	struct	{
 }	PMData;
 
 int		pmgrop(PMData *);
+u_int		pm_set_brightness(u_int);
