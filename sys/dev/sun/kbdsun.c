@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdsun.c,v 1.11 2008/03/29 19:15:36 tsutsui Exp $	*/
+/*	$NetBSD: kbdsun.c,v 1.12 2024/09/14 21:22:37 andvar Exp $	*/
 /*	NetBSD: kbd.c,v 1.29 2001/11/13 06:54:32 lukem Exp	*/
 
 /*
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbdsun.c,v 1.11 2008/03/29 19:15:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbdsun.c,v 1.12 2024/09/14 21:22:37 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,7 +273,7 @@ kbd_sun_set_leds(struct kbd_softc *kbd, int leds, int isioctl)
 
 
 /*
- * Safe to call from intterupt handler.  Called at spltty()
+ * Safe to call from interrupt handler.  Called at spltty()
  * by kbd_sun_iocsled and kbd_sun_input (via kbd_update_leds).
  */
 static void

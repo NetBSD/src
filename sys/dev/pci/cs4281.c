@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.59 2023/12/20 05:08:34 thorpej Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.60 2024/09/14 21:22:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.59 2023/12/20 05:08:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.60 2024/09/14 21:22:37 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -670,7 +670,7 @@ cs4281_resume(device_t dv, const pmf_qual_t *qual)
 		BA0WRITE4(sc, CS4281_DMR1, sc->sc_suspend_state.cs4281.dmr1);
 		BA0WRITE4(sc, CS4281_DCR1, sc->sc_suspend_state.cs4281.dcr1);
 	}
-	/* enable intterupts */
+	/* enable interrupts */
 	if (sc->sc_prun || sc->sc_rrun)
 		BA0WRITE4(sc, CS4281_HICR, HICR_IEV | HICR_CHGM);
 

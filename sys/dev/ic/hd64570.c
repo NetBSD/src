@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.61 2024/09/14 21:12:10 andvar Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.62 2024/09/14 21:22:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.61 2024/09/14 21:12:10 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.62 2024/09/14 21:22:37 andvar Exp $");
 
 #include "opt_inet.h"
 
@@ -1205,7 +1205,7 @@ sca_hardintr(struct sca_softc *sc)
 			     (isr1 & 0xf0) >> 4);
 
 		/*
-		 * mcsi intterupts
+		 * msci interrupts
 		 */
 		if (isr0 & 0x0f)
 			ret += sca_msci_intr(&sc->sc_ports[0], isr0 & 0x0f);
