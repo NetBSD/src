@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.38 2024/08/26 18:25:29 bsiegert Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.39 2024/09/14 07:30:41 skrll Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.38 2024/08/26 18:25:29 bsiegert Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.39 2024/09/14 07:30:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1234,6 +1234,7 @@ eqos_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = (*ifp->if_init)(ifp);
 		else if (cmd == SIOCADDMULTI || cmd == SIOCDELMULTI) {
 			EQOS_LOCK(sc);
+			sc->sc_promisc = ifp->if_flags & IFF_PROMISC;
 			if (sc->sc_running)
 				eqos_setup_rxfilter(sc);
 			EQOS_UNLOCK(sc);
