@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.59 2023/02/18 13:28:05 nat Exp $	*/
+/*	$NetBSD: sbc.c,v 1.60 2024/09/14 21:11:07 nat Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.59 2023/02/18 13:28:05 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.60 2024/09/14 21:11:07 nat Exp $");
 
 #include "opt_ddb.h"
 
@@ -430,7 +430,7 @@ sbc_drq_intr(void *p)
 	u_int32_t *long_data;
 	volatile u_int8_t *drq = 0;	/* XXX gcc4 -Wuninitialized */
 	u_int8_t *data;
-	int count, dcount, resid;
+	int block, count, dcount, resid;
 
 	/*
 	 * If we're not ready to xfer data, or have no more, just return.
@@ -504,7 +504,15 @@ sbc_drq_intr(void *p)
 		 * Start the transfer.
 		 */
 		while (dh->dh_len) {
-			dcount = count = uimin(dh->dh_len, MAX_DMA_LEN);
+			if ((*ncr_sc->sci_csr & SCI_CSR_DREQ) == 0)
+				goto no_more;
+
+			block = 512;
+			if (resid && resid != 4)
+				block -= 4;
+			resid = 0;
+
+			dcount = count = uimin(dh->dh_len, block);
 			long_drq = (volatile u_int32_t *)sc->sc_drq_addr;
 			long_data = (u_int32_t *)dh->dh_addr;
 
@@ -536,8 +544,6 @@ sbc_drq_intr(void *p)
 		 * This seems to be necessary for us to notice that
 		 * the target has disconnected.  Ick.  06 jun 1996 (sr)
 		 */
-		if (dcount >= MAX_DMA_LEN)
-			drq = (volatile u_int8_t *)sc->sc_drq_addr;
 		(void)*drq;
 	} else {	/* Data In */
 		/*
@@ -560,7 +566,15 @@ sbc_drq_intr(void *p)
 		 * Start the transfer.
 		 */
 		while (dh->dh_len) {
-			dcount = count = uimin(dh->dh_len, MAX_DMA_LEN);
+			if ((*ncr_sc->sci_csr & SCI_CSR_DREQ) == 0)
+				goto no_more;
+
+			block = 512;
+			if (resid && resid != 4)
+				block -= 4;
+			resid = 0;
+
+			dcount = count = uimin(dh->dh_len, block);
 			long_data = (u_int32_t *)dh->dh_addr;
 			long_drq = (volatile u_int32_t *)sc->sc_drq_addr;
 
@@ -586,6 +600,7 @@ sbc_drq_intr(void *p)
 		dh->dh_flags |= SBC_DH_DONE;
 	}
 
+no_more:
 	/*
 	 * OK.  No bus error occurred above.  Clear the nofault flag
 	 * so we no longer short-circuit bus errors.
