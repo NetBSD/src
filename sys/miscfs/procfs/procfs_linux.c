@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.89 2024/07/01 01:35:53 christos Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.90 2024/09/14 01:37:42 pgoyette Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,10 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.89 2024/07/01 01:35:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.90 2024/09/14 01:37:42 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
+#include "opt_mqueue.h"
 #endif
 
 #include <sys/param.h>
@@ -71,7 +72,9 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.89 2024/07/01 01:35:53 christos E
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
+#ifdef MQUEUE
 #include <sys/mqueue.h>
+#endif
 
 #include <miscfs/procfs/procfs.h>
 
@@ -83,10 +86,12 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.89 2024/07/01 01:35:53 christos E
 
 extern struct devsw_conv *devsw_conv;
 extern int max_devsw_convs;
+#ifdef MQUEUE
 extern u_int mq_open_max;
 extern u_int mq_max_msgsize;
 extern u_int mq_def_maxmsg;
 extern u_int mq_max_maxmsg;
+#endif
 
 
 #define PGTOB(p)	((unsigned long)(p) << PAGE_SHIFT)
@@ -904,8 +909,11 @@ out:
 	return error;
 }
 
+#ifdef MQUEUE
+#define print_uint(value, uio) PFS_print_uint(value, uio);
+
 static int
-print_uint(unsigned int value, struct uio *uio)
+PFS_print_uint(unsigned int value, struct uio *uio)
 {
 	char *bf;
 	int offset = 0;
@@ -921,6 +929,11 @@ out:
 	free(bf, M_TEMP);
 	return error;
 }
+#else
+
+#define print_uint(value, uio) EINVAL
+
+#endif
 
 int
 procfs_domq_msg_def(struct lwp *curl, struct proc *p,
