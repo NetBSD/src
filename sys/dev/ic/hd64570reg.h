@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570reg.h,v 1.13 2024/07/06 10:09:15 andvar Exp $	*/
+/*	$NetBSD: hd64570reg.h,v 1.14 2024/09/14 21:12:10 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -434,7 +434,7 @@ struct hdlc_llc_header {
 #define	SCA_ISR2_TIMER_IRQ3	0x80	/* timer channel 3 int */
 
 /* masks/values for the Interrupt Control Register (ITCR) */
-#define SCA_ITCR_INTR_PRI_MASK	0x80	/* priority of intrerrupts */
+#define SCA_ITCR_INTR_PRI_MASK	0x80	/* priority of interrupts */
 #define	SCA_ITCR_INTR_PRI_MSCI	0x00	/* msci over dmac */
 #define	SCA_ITCR_INTR_PRI_DMAC	0x80	/* dmac over msci */
 #define	SCA_ITCR_ACK_MASK	0x60	/* mask for intr ack cycle setting */
