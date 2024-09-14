@@ -1,4 +1,4 @@
-# Id: makefile.in,v 1.24 2015/07/05 22:12:29 tom Exp 
+# Id: makefile.in,v 1.26 2023/05/19 23:16:31 tom Exp 
 #
 # UNIX template-makefile for Berkeley Yacc
 
@@ -27,6 +27,7 @@ LIBS		= @LIBS@
 AWK		= @AWK@
 CTAGS		= @CTAGS@
 ETAGS		= @ETAGS@
+FGREP		= @FGREP@
 LINT		= @LINT@
 LINTFLAGS	= @LINT_OPTS@
 
@@ -98,7 +99,7 @@ all : $(THIS)$x
 
 install: all installdirs
 	$(INSTALL_PROGRAM) $(THIS)$x $(bindir)/$(actual_bin)
-	- $(INSTALL_DATA) $(srcdir)/$(THIS).1 $(mandir)/$(actual_man)
+	@ $(SHELL) ./install-man $(srcdir)/$(THIS).1 $(mandir)/$(actual_man)
 
 installdirs:
 	mkdir -p $(bindir)
@@ -106,7 +107,7 @@ installdirs:
 
 uninstall:
 	- rm -f $(bindir)/$(actual_bin)
-	- rm -f $(mandir)/$(actual_man)
+	@ $(SHELL) ./install-man $(mandir)/$(actual_man)
 
 ################################################################################
 .SUFFIXES : .c $o .i .skel
@@ -134,7 +135,7 @@ clean :: mostlyclean
 	- rm -f $(THIS)$x
 
 distclean :: clean
-	- rm -f config.log config.cache config.status config.h makefile man2html.tmp
+	- rm -f config.log config.cache config.status config.h makefile man2html.tmp install-man*
 	- rm -f $(testdir)/yacc/test-* $(testdir)/btyacc/test-*
 
 realclean :: distclean
@@ -147,13 +148,16 @@ maintainer-clean :: realclean
 
 ################################################################################
 check:	$(THIS)$x
-	$(SHELL) $(testdir)/run_test.sh $(testdir)
+	@echo "** making $@"
+	@FGREP="$(FGREP)" $(SHELL) $(testdir)/run_test.sh $(testdir)
 
 check_make: $(THIS)$x
-	$(SHELL) $(testdir)/run_make.sh $(testdir)
+	@echo "** making $@"
+	@FGREP="$(FGREP)" $(SHELL) $(testdir)/run_make.sh $(testdir)
 
 check_lint:
-	$(SHELL) $(testdir)/run_lint.sh $(testdir)
+	@echo "** making $@"
+	@FGREP="$(FGREP)" $(SHELL) $(testdir)/run_lint.sh $(testdir)
 ################################################################################
 tags: $(H_FILES) $(C_FILES) 
 	$(CTAGS) $(C_FILES) $(H_FILES)
