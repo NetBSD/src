@@ -1,4 +1,4 @@
-/*	$NetBSD: btyacc_demo.tab.h,v 1.1.1.5 2021/02/20 20:30:11 christos Exp $	*/
+/*	$NetBSD: btyacc_demo.tab.h,v 1.1.1.6 2024/09/14 21:25:39 christos Exp $	*/
 
 #ifndef _demo__defines_h_
 #define _demo__defines_h_
@@ -22,7 +22,7 @@
 #endif
 #ifndef YYSTYPE_IS_DECLARED
 #define YYSTYPE_IS_DECLARED 1
-typedef union {
+typedef union YYSTYPE {
     Scope	*scope;
     Expr	*expr;
     Expr_List	*elist;

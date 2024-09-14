@@ -1,6 +1,6 @@
-/*	$NetBSD: mstring.c,v 1.1.1.5 2021/02/20 20:30:07 christos Exp $	*/
+/*	$NetBSD: mstring.c,v 1.1.1.6 2024/09/14 21:25:37 christos Exp $	*/
 
-/* Id: mstring.c,v 1.9 2019/11/19 23:54:53 tom Exp  */
+/* Id: mstring.c,v 1.10 2023/02/26 10:15:01 tom Exp  */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -42,7 +42,7 @@ msprintf(struct mstring *s, const char *fmt, ...)
     do
     {
 	va_start(args, fmt);
-	len = (size_t) vsnprintf(buf_ptr, buf_len, fmt, args);
+	len = (size_t)vsnprintf(buf_ptr, buf_len, fmt, args);
 	va_end(args);
 	if ((changed = (len > buf_len)) != 0)
 	{
@@ -59,17 +59,17 @@ msprintf(struct mstring *s, const char *fmt, ...)
     while (changed);
 #else
     va_start(args, fmt);
-    len = (size_t) vsprintf(buf_ptr, fmt, args);
+    len = (size_t)vsprintf(buf_ptr, fmt, args);
     va_end(args);
     if (len >= buf_len)
 	return;
 #endif
 
-    if (len > (size_t) (s->end - s->ptr))
+    if (len > (size_t)(s->end - s->ptr))
     {
 	char *new_base;
-	size_t cp = (size_t) (s->ptr - s->base);
-	size_t cl = (size_t) (s->end - s->base);
+	size_t cp = (size_t)(s->ptr - s->base);
+	size_t cl = (size_t)(s->end - s->base);
 	size_t nl = cl;
 	while (len > (nl - cp))
 	    nl = nl + nl + TAIL;
@@ -99,7 +99,7 @@ mputchar(struct mstring *s, int ch)
 	return ch;
     if (s->ptr == s->end)
     {
-	size_t len = (size_t) (s->end - s->base);
+	size_t len = (size_t)(s->end - s->base);
 	if ((s->base = realloc(s->base, len + len + TAIL)))
 	{
 	    s->ptr = s->base + len;

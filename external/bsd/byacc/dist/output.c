@@ -1,6 +1,6 @@
-/*	$NetBSD: output.c,v 1.1.1.12 2021/02/20 20:30:07 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.1.1.13 2024/09/14 21:25:37 christos Exp $	*/
 
-/* Id: output.c,v 1.94 2020/09/10 20:24:30 tom Exp  */
+/* Id: output.c,v 1.101 2023/05/16 21:19:48 tom Exp  */
 
 #include "defs.h"
 
@@ -98,7 +98,7 @@ write_code_lineno(FILE * fp)
     if (!lflag && (fp == code_file))
     {
 	++outline;
-	fprintf(fp, line_format, outline + 1, code_file_name);
+	fprintf_lineno(fp, outline + 1, code_file_name);
     }
 }
 
@@ -108,7 +108,7 @@ write_input_lineno(void)
     if (!lflag)
     {
 	++outline;
-	fprintf(code_file, line_format, lineno, input_file_name);
+	fprintf_lineno(code_file, lineno, input_file_name);
     }
 }
 
@@ -379,7 +379,7 @@ output_accessing_symbols(void)
 	int i, j;
 	int *translate;
 
-	translate = TMALLOC(int, nstates);
+	translate = TCMALLOC(int, nstates);
 	NO_SPACE(translate);
 
 	for (i = 0; i < nstates; ++i)
@@ -444,7 +444,7 @@ token_actions(void)
     Value_t csym = -1;
     Value_t cbase = 0;
 #endif
-    int max, min;
+    Value_t max, min;
     Value_t *actionrow, *r, *s;
     action *p;
 
@@ -836,7 +836,7 @@ pack_vector(int vector)
 {
     int i, j, k, l;
     int t;
-    int loc;
+    Value_t loc;
     int ok;
     Value_t *from;
     Value_t *to;
@@ -860,7 +860,7 @@ pack_vector(int vector)
 	ok = 1;
 	for (k = 0; ok && k < t; k++)
 	{
-	    loc = j + from[k];
+	    loc = (Value_t)(j + from[k]);
 	    if (loc >= maxtable - 1)
 	    {
 		if (loc >= MAXTABLE - 1)
@@ -899,7 +899,7 @@ pack_vector(int vector)
 	{
 	    for (k = 0; k < t; k++)
 	    {
-		loc = j + from[k];
+		loc = (Value_t)(j + from[k]);
 		table[loc] = to[k];
 		check[loc] = from[k];
 		if (loc > high)
@@ -1053,7 +1053,7 @@ output_table(void)
     if (high >= MAXYYINT)
     {
 	fprintf(stderr, "YYTABLESIZE: %ld\n", high);
-	fprintf(stderr, "Table is longer than %d elements.\n", MAXYYINT);
+	fprintf(stderr, "Table is longer than %ld elements.\n", (long)MAXYYINT);
 	done(1);
     }
 
@@ -1261,14 +1261,14 @@ output_defines(FILE * fp)
 	    }
 	    if (fp == code_file)
 		++outline;
-	    fprintf(fp, " %d\n", symbol_value[i]);
+	    fprintf(fp, " %ld\n", (long)symbol_value[i]);
 	}
     }
 
     if (fp == code_file)
 	++outline;
     if (fp != defines_file || iflag)
-	fprintf(fp, "#define YYERRCODE %d\n", symbol_value[1]);
+	fprintf(fp, "#define YYERRCODE %ld\n", (long)symbol_value[1]);
 
     if (fp == defines_file)
     {
@@ -1345,7 +1345,7 @@ output_debug(void)
     const char *s;
 
     ++outline;
-    fprintf(code_file, "#define YYFINAL %d\n", final_state);
+    fprintf(code_file, "#define YYFINAL %ld\n", (long)final_state);
 
     outline += output_yydebug(code_file);
 
@@ -1377,7 +1377,7 @@ output_debug(void)
     fprintf(code_file, "#define YYTRANSLATE(a) ((a) > YYMAXTOKEN ? "
 	    "YYUNDFTOKEN : (a))\n");
 
-    symnam = TMALLOC(const char *, max + 2);
+    symnam = TCMALLOC(const char *, max + 2);
     NO_SPACE(symnam);
 
     /* Note that it is not necessary to initialize the element          */
@@ -1625,21 +1625,14 @@ output_pure_parser(FILE * fp)
     if (fp == code_file)
 	++outline;
     fprintf(fp, "#define YYPURE %d\n", pure_parser);
-    putc_code(fp, '\n');
-}
-
 #if defined(YY_NO_LEAKS)
-static void
-output_no_leaks(FILE * fp)
-{
-    putc_code(fp, '\n');
-
     if (fp == code_file)
 	++outline;
     fputs("#define YY_NO_LEAKS 1\n", fp);
+#else
     putc_code(fp, '\n');
-}
 #endif
+}
 
 static void
 output_trailing_text(void)
@@ -1690,15 +1683,49 @@ static void
 output_semantic_actions(void)
 {
     int c, last;
+    int state;
+    char line_state[20];
 
     rewind(action_file);
     if ((c = getc(action_file)) == EOF)
 	return;
 
+    if (!lflag)
+    {
+	state = -1;
+	sprintf(line_state, line_format, 1, "");
+    }
+
     last = c;
     putc_code(code_file, c);
     while ((c = getc(action_file)) != EOF)
     {
+	/*
+	 * When writing the action file, we did not know the line-numbers in
+	 * the code-file, but wrote empty #line directives.  Detect those and
+	 * replace with proper #line directives.
+	 */
+	if (!lflag && (last == '\n' || state >= 0))
+	{
+	    if (c == line_state[state + 1])
+	    {
+		++state;
+		if (line_state[state + 1] == '\0')
+		{
+		    write_code_lineno(code_file);
+		    state = -1;
+		}
+		last = c;
+		continue;
+	    }
+	    else
+	    {
+		int n;
+		for (n = 0; n <= state; ++n)
+		    putc_code(code_file, line_state[n]);
+		state = -1;
+	    }
+	}
 	putc_code(code_file, c);
 	last = c;
     }
@@ -1961,8 +1988,8 @@ output_yydestruct_impl(void)
 		++outline;
 	    puts_code(code_file, destructor_code);
 	    putc_code(code_file, '\n');
-	    putl_code(code_file, "\tbreak;\n");
 	    write_code_lineno(code_file);
+	    putl_code(code_file, "\tbreak;\n");
 	    FREE(destructor_code);
 	}
     }
@@ -2060,9 +2087,6 @@ output(void)
 
     output_prefix(fp);
     output_pure_parser(fp);
-#if defined(YY_NO_LEAKS)
-    output_no_leaks(fp);
-#endif
     output_stored_text(fp);
     output_stype(fp);
 #if defined(YYBTYACC)

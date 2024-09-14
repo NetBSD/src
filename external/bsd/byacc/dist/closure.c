@@ -1,6 +1,6 @@
-/*	$NetBSD: closure.c,v 1.1.1.9 2021/02/20 20:30:06 christos Exp $	*/
+/*	$NetBSD: closure.c,v 1.1.1.10 2024/09/14 21:25:36 christos Exp $	*/
 
-/* Id: closure.c,v 1.13 2020/09/22 20:17:00 tom Exp  */
+/* Id: closure.c,v 1.14 2022/01/09 16:22:58 tom Exp  */
 
 #include "defs.h"
 
@@ -8,7 +8,6 @@ Value_t *itemset;
 Value_t *itemsetend;
 unsigned *ruleset;
 
-static unsigned *first_base;
 static unsigned *first_derives;
 static unsigned *EFF;
 
@@ -68,12 +67,11 @@ set_first_derives(void)
 
     rulesetsize = WORDSIZE(nrules);
     varsetsize = WORDSIZE(nvars);
-    first_base = NEW2(nvars * rulesetsize, unsigned);
-    first_derives = first_base - ntokens * rulesetsize;
+    first_derives = NEW2(nvars * rulesetsize, unsigned);
 
     set_EFF();
 
-    rrow = first_derives + ntokens * rulesetsize;
+    rrow = first_derives;
     for (i = start_symbol; i < nsyms; i++)
     {
 	unsigned *vrow = EFF + ((i - ntokens) * varsetsize);
@@ -133,7 +131,7 @@ closure(Value_t *nucleus, int n)
 
 	if (ISVAR(symbol))
 	{
-	    dsp = first_derives + symbol * rulesetsize;
+	    dsp = first_derives + (symbol - ntokens) * rulesetsize;
 	    rsp = ruleset;
 	    while (rsp < rsend)
 		*rsp++ |= *dsp++;
@@ -178,7 +176,7 @@ finalize_closure(void)
 {
     FREE(itemset);
     FREE(ruleset);
-    FREE(first_base);
+    FREE(first_derives);
 }
 
 #ifdef	DEBUG
@@ -238,7 +236,7 @@ print_first_derives(void)
     for (i = start_symbol; i < nsyms; i++)
     {
 	printf("\n%s derives\n", symbol_name[i]);
-	rp = first_derives + i * WORDSIZE(nrules);
+	rp = first_derives + (i - ntokens) * WORDSIZE(nrules);
 	k = BITS_PER_WORD;
 	for (j = 0; j <= nrules; k++, j++)
 	{

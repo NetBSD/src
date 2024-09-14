@@ -1,6 +1,6 @@
-/*	$NetBSD: lr0.c,v 1.1.1.10 2021/02/20 20:30:07 christos Exp $	*/
+/*	$NetBSD: lr0.c,v 1.1.1.11 2024/09/14 21:25:37 christos Exp $	*/
 
-/* Id: lr0.c,v 1.20 2020/09/10 17:30:37 tom Exp  */
+/* Id: lr0.c,v 1.21 2021/05/20 23:57:23 tom Exp  */
 
 #include "defs.h"
 
@@ -18,7 +18,7 @@ static void save_shifts(void);
 static void set_derives(void);
 static void set_nullable(void);
 
-int nstates;
+Value_t nstates;
 core *first_state;
 shifts *first_shift;
 reductions *first_reduction;

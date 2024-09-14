@@ -1,9 +1,9 @@
-/*	$NetBSD: code_error.tab.c,v 1.1.1.4 2017/02/11 19:30:03 christos Exp $	*/
+/*	$NetBSD: code_error.tab.c,v 1.1.1.5 2024/09/14 21:25:38 christos Exp $	*/
 
 #undef YYBTYACC
 #define YYBTYACC 0
 #define YYDEBUGSTR YYPREFIX "debug"
-typedef short YYINT;
+typedef int YYINT;
 const YYINT error_lhs[] = {                       -1,
     0,
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: rename_debug.c,v 1.1.1.7 2021/02/20 20:30:10 christos Exp $	*/
+/*	$NetBSD: rename_debug.c,v 1.1.1.8 2024/09/14 21:25:38 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -21,7 +21,7 @@
 #line 20 "rename_debug.c"
 #include "rename_debug.i"
 #include "rename_debug.h"
-typedef short YYINT;
+typedef int YYINT;
 static const YYINT yylhs[] = {                           -1,
     0,
 };
@@ -400,7 +400,7 @@ YYPARSE_DECL()
     yyps->save = 0;
 #endif /* YYBTYACC */
     yym = 0;
-    yyn = 0;
+    /* yyn is set below */
     yynerrs = 0;
     yyerrflag = 0;
     yychar = YYEMPTY;

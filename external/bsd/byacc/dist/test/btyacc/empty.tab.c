@@ -1,4 +1,4 @@
-/*	$NetBSD: empty.tab.c,v 1.1.1.7 2021/02/20 20:30:13 christos Exp $	*/
+/*	$NetBSD: empty.tab.c,v 1.1.1.8 2024/09/14 21:25:39 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -166,7 +166,7 @@ typedef int YYSTYPE;
 extern int YYPARSE_DECL();
 
 #define YYERRCODE 256
-typedef short YYINT;
+typedef int YYINT;
 static const YYINT empty_lhs[] = {                       -1,
     0,
 };
@@ -533,7 +533,7 @@ YYPARSE_DECL()
     yyps->save = 0;
 #endif /* YYBTYACC */
     yym = 0;
-    yyn = 0;
+    /* yyn is set below */
     yynerrs = 0;
     yyerrflag = 0;
     yychar = YYEMPTY;

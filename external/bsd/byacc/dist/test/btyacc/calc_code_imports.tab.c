@@ -1,4 +1,4 @@
-/*	$NetBSD: calc_code_imports.tab.c,v 1.1.1.1 2021/02/20 20:30:11 christos Exp $	*/
+/*	$NetBSD: calc_code_imports.tab.c,v 1.1.1.2 2024/09/14 21:25:38 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -172,7 +172,7 @@ extern int YYPARSE_DECL();
 #define LETTER 258
 #define UMINUS 259
 #define YYERRCODE 256
-typedef short YYINT;
+typedef int YYINT;
 static const YYINT calc_code_imports_lhs[] = {           -1,
     0,    0,    0,    1,    1,    2,    2,    2,    2,    2,
     2,    2,    2,    2,    2,    2,    3,    3,
@@ -671,7 +671,7 @@ YYPARSE_DECL()
     yyps->save = 0;
 #endif /* YYBTYACC */
     yym = 0;
-    yyn = 0;
+    /* yyn is set below */
     yynerrs = 0;
     yyerrflag = 0;
     yychar = YYEMPTY;
@@ -1182,64 +1182,79 @@ yyreduce:
 case 3:
 #line 31 "calc_code_imports.y"
 	{  yyerrok ; }
+#line 1184 "calc_code_imports.tab.c"
 break;
 case 4:
 #line 35 "calc_code_imports.y"
 	{  printf("%d\n",yystack.l_mark[0]);}
+#line 1189 "calc_code_imports.tab.c"
 break;
 case 5:
 #line 37 "calc_code_imports.y"
 	{  regs[yystack.l_mark[-2]] = yystack.l_mark[0]; }
+#line 1194 "calc_code_imports.tab.c"
 break;
 case 6:
 #line 41 "calc_code_imports.y"
 	{  yyval = yystack.l_mark[-1]; }
+#line 1199 "calc_code_imports.tab.c"
 break;
 case 7:
 #line 43 "calc_code_imports.y"
 	{  yyval = yystack.l_mark[-2] + yystack.l_mark[0]; }
+#line 1204 "calc_code_imports.tab.c"
 break;
 case 8:
 #line 45 "calc_code_imports.y"
 	{  yyval = yystack.l_mark[-2] - yystack.l_mark[0]; }
+#line 1209 "calc_code_imports.tab.c"
 break;
 case 9:
 #line 47 "calc_code_imports.y"
 	{  yyval = yystack.l_mark[-2] * yystack.l_mark[0]; }
+#line 1214 "calc_code_imports.tab.c"
 break;
 case 10:
 #line 49 "calc_code_imports.y"
 	{  yyval = yystack.l_mark[-2] / yystack.l_mark[0]; }
+#line 1219 "calc_code_imports.tab.c"
 break;
 case 11:
 #line 51 "calc_code_imports.y"
 	{  yyval = yystack.l_mark[-2] % yystack.l_mark[0]; }
+#line 1224 "calc_code_imports.tab.c"
 break;
 case 12:
 #line 53 "calc_code_imports.y"
 	{  yyval = yystack.l_mark[-2] & yystack.l_mark[0]; }
+#line 1229 "calc_code_imports.tab.c"
 break;
 case 13:
 #line 55 "calc_code_imports.y"
 	{  yyval = yystack.l_mark[-2] | yystack.l_mark[0]; }
+#line 1234 "calc_code_imports.tab.c"
 break;
 case 14:
 #line 57 "calc_code_imports.y"
 	{  yyval = - yystack.l_mark[0]; }
+#line 1239 "calc_code_imports.tab.c"
 break;
 case 15:
 #line 59 "calc_code_imports.y"
 	{  yyval = regs[yystack.l_mark[0]]; }
+#line 1244 "calc_code_imports.tab.c"
 break;
 case 17:
 #line 64 "calc_code_imports.y"
 	{  yyval = yystack.l_mark[0]; base = (yystack.l_mark[0]==0) ? 8 : 10; }
+#line 1249 "calc_code_imports.tab.c"
 break;
 case 18:
 #line 66 "calc_code_imports.y"
 	{  yyval = base * yystack.l_mark[-1] + yystack.l_mark[0]; }
+#line 1254 "calc_code_imports.tab.c"
 break;
-#line 1241 "calc_code_imports.tab.c"
+#line 1256 "calc_code_imports.tab.c"
     default:
         break;
     }
