@@ -1,4 +1,4 @@
-/*	$NetBSD: btyacc_destroy1.tab.h,v 1.1.1.3 2016/01/09 21:59:46 christos Exp $	*/
+/*	$NetBSD: btyacc_destroy1.tab.h,v 1.1.1.4 2024/09/14 21:25:39 christos Exp $	*/
 
 #ifndef _destroy1__defines_h_
 #define _destroy1__defines_h_
@@ -14,7 +14,7 @@
 #endif
 #ifndef YYSTYPE_IS_DECLARED
 #define YYSTYPE_IS_DECLARED 1
-typedef union
+typedef union YYSTYPE
 {
     class	cval;
     type	tval;
