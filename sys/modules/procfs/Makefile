@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2024/09/09 15:52:31 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.9 2024/09/14 01:36:11 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -9,8 +9,8 @@
 .PATH:  ${S}/arch/x86/x86
 .endif
 
-# enable the SYSV linux nodes
-COPTS+=	-D SYSVSHM -D SYSVSEM -D SYSVMSG
+# enable the SYSV and MQUEUE linux nodes
+COPTS+=	-D SYSVSHM -D SYSVSEM -D SYSVMSG -D MQUEUE
 
 KMOD=	procfs
 SRCS=	procfs_note.c procfs_status.c procfs_subr.c \
