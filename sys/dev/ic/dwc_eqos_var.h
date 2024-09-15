@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos_var.h,v 1.9 2023/11/02 13:50:02 riastradh Exp $ */
+/* $NetBSD: dwc_eqos_var.h,v 1.10 2024/09/15 07:33:33 skrll Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -73,7 +73,6 @@ struct eqos_softc {
 	bool			sc_running;
 	bool			sc_txrunning;
 	bool			sc_promisc;
-	bool			sc_allmulti;
 
 	struct eqos_ring	sc_tx;
 	struct eqos_ring	sc_rx;
