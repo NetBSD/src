@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.225 2024/08/18 14:11:21 christos Exp $
+#	$NetBSD: Makefile,v 1.226 2024/09/15 03:56:58 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -173,6 +173,7 @@ SUBDIR+=	ibmnws-ncdcs
 .if ${MACHINE} == "macppc"
 SUBDIR+=	macppc-fixcoff
 SUBDIR+=	macppc_installboot
+SUBDIR+=	macppc_mkboothfs
 .endif
 
 .if (${MACHINE} == "prep" || ${MACHINE} == "rs6000" || ${MACHINE} == "bebox")

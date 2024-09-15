@@ -1,5 +1,6 @@
-# $NetBSD: md.macppc,v 1.37 2024/07/11 20:41:06 riastradh Exp $
+# $NetBSD: md.macppc,v 1.38 2024/09/15 03:56:57 tsutsui Exp $
 #
+./usr/mdec/boothfs				base-sysutil-bin
 ./usr/mdec/bootxx				base-sysutil-bin
 ./usr/mdec/installboot				base-obsolete		obsolete
 ./usr/mdec/mbr					base-obsolete		obsolete
