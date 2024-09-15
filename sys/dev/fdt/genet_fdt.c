@@ -1,4 +1,4 @@
-/* $NetBSD: genet_fdt.c,v 1.6 2021/05/03 10:28:26 rin Exp $ */
+/* $NetBSD: genet_fdt.c,v 1.7 2024/09/15 08:30:01 skrll Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_net_mpsafe.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genet_fdt.c,v 1.6 2021/05/03 10:28:26 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genet_fdt.c,v 1.7 2024/09/15 08:30:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,12 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: genet_fdt.c,v 1.6 2021/05/03 10:28:26 rin Exp $");
 #include <dev/ic/bcmgenetvar.h>
 
 #include <dev/fdt/fdtvar.h>
-
-#ifdef NET_MPSAFE
-#define	FDT_INTR_FLAGS	FDT_INTR_MPSAFE
-#else
-#define	FDT_INTR_FLAGS	0
-#endif
 
 static int	genet_fdt_match(device_t, cfdata_t, void *);
 static void	genet_fdt_attach(device_t, device_t, void *);
