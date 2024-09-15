@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.48 2024/09/08 10:16:04 andvar Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.49 2024/09/15 19:08:34 andvar Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.48 2024/09/08 10:16:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.49 2024/09/15 19:08:34 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mpc85xx.h"
@@ -982,9 +982,7 @@ e500_extintr(struct trapframe *tf)
 			    __func__, tf, __LINE__, old_ipl, 
 			    15 - IPL_HIGH, openpic_read(cpu, OPENPIC_CTPR));
 		const uint32_t iack = openpic_read(cpu, OPENPIC_IACK);
-#ifdef DIAGNOSTIC
 		const int ipl = iack & 0xf;
-#endif
 		const int irq = (iack >> 4) - 1;
 #if 0
 		printf("%s: iack=%d ipl=%d irq=%d <%s>\n",
