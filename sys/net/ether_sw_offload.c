@@ -1,4 +1,4 @@
-/*	$NetBSD: ether_sw_offload.c,v 1.8 2021/09/03 21:55:00 andvar Exp $	*/
+/*	$NetBSD: ether_sw_offload.c,v 1.9 2024/09/15 08:33:13 andvar Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ether_sw_offload.c,v 1.8 2021/09/03 21:55:00 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ether_sw_offload.c,v 1.9 2024/09/15 08:33:13 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -69,7 +69,7 @@ static struct timeval eso_err_lasttime;
 
 /*
  * Handle TX offload in software. For TSO, split the packet into
- * chanks with payloads of size MSS. For chekcsum offload, update
+ * chunks with payloads of size MSS. For checksum offload, update
  * required checksum fields. The results are more than one packet
  * in general. Return a mbuf queue consists of them.
  */
