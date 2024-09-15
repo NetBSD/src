@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2024/06/08 13:07:48 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2024/09/15 03:56:57 tsutsui Exp $
 #
 #	etc.macppc/Makefile.inc -- macppc-specific etc Makefile targets
 #
@@ -17,19 +17,15 @@ INSTALLATION_DIRS+=	installation/floppy
 
 # For "make iso-image"
 # mkisofs arguments to create a hybrid (HFS/Rockridge) CD-ROM image.
-# XXX: files in ${DISTRIB_CDROMDIR} should be moved under distrib/macppc/cdrom?
-DISTRIB_CDROMDIR=	${NETBSDSRCDIR}/distrib/cdrom
+ETCMACHINEDIR=		${.CURDIR}/etc.${MACHINE}
 
-BOOTHFS=		boothfs
-UUDECODE_FILES=		${BOOTHFS}
-.SUFFIXES:	.uue
-.PATH.uue: ${DISTRIB_CDROMDIR}
+BOOTHFS=		${DESTDIR}/usr/mdec/boothfs
 
 MKISOFS_FLAGS+=	-hide-rr-moved \
-	-hfs -part -hide-hfs-list ${DISTRIB_CDROMDIR}/hide-hfs.lst \
-	--macbin -map ${DISTRIB_CDROMDIR}/hfsmap.lst \
-	-hide-joliet-list ${DISTRIB_CDROMDIR}/hide-jol.lst \
-	-boot-hfs-file ${.OBJDIR}/${BOOTHFS}
+	-hfs -part -hide-hfs-list ${ETCMACHINEDIR}/hide-hfs.lst \
+	--macbin -map ${ETCMACHINEDIR}/hfsmap.lst \
+	-hide-joliet-list ${ETCMACHINEDIR}/hide-jol.lst \
+	-boot-hfs-file ${BOOTHFS}
 # exclude large debug sets to avoid 700MB overflow
 MKISOFS_FLAGS+=	-m debug.tgz -m xdebug.tgz
 
