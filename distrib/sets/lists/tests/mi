@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1337 2024/09/09 15:06:29 riastradh Exp $
+# $NetBSD: mi,v 1.1338 2024/09/15 13:57:21 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4307,10 +4307,10 @@
 ./usr/tests/net/if_bridge				tests-net-tests		compattestfile,atf
 ./usr/tests/net/if_bridge/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/if_bridge/Kyuafile			tests-net-tests		atf,rump,kyua
-./usr/tests/net/if_bridge/broadcast.pcap.uue		tests-net-tests		compattestfile,atf
+./usr/tests/net/if_bridge/broadcast.pcap.uue		tests-net-tests		compattestfile,atf,rump
 ./usr/tests/net/if_bridge/t_bridge			tests-net-tests		atf,rump
 ./usr/tests/net/if_bridge/t_rtable			tests-net-tests		atf,rump
-./usr/tests/net/if_bridge/unicast.pcap.uue		tests-net-tests		compattestfile,atf
+./usr/tests/net/if_bridge/unicast.pcap.uue		tests-net-tests		compattestfile,atf,rump
 ./usr/tests/net/if_gif					tests-net-tests		compattestfile,atf
 ./usr/tests/net/if_gif/Atffile				tests-net-tests		atf,rump
 ./usr/tests/net/if_gif/Kyuafile				tests-net-tests		atf,rump,kyua
