@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.31.8.1 2024/09/12 19:41:09 martin Exp $	*/
+/*	$NetBSD: gettext.c,v 1.31.8.2 2024/09/15 10:58:53 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gettext.c,v 1.31.8.1 2024/09/12 19:41:09 martin Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.31.8.2 2024/09/15 10:58:53 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -174,11 +174,13 @@ pgettext_impl(const char *domainname, const char *msgctxt, const char *msgid1,
 
 	translation = dcngettext(domainname, msgctxt_id,
 		msgid2, n, category);
-	free(msgctxt_id);
 
-	if (translation == msgctxt_id)
+	if (translation == msgctxt_id) {
+		free(msgctxt_id);
 		return msgid1;
+	}
 
+	free(msgctxt_id);
 	p = strchr(translation, '\004');
 	if (p)
 		return p + 1;
