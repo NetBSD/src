@@ -1,4 +1,4 @@
-/* $NetBSD: genet_acpi.c,v 1.5 2021/05/03 10:28:26 rin Exp $ */
+/* $NetBSD: genet_acpi.c,v 1.6 2024/09/15 08:30:01 skrll Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_net_mpsafe.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genet_acpi.c,v 1.5 2021/05/03 10:28:26 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genet_acpi.c,v 1.6 2024/09/15 08:30:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,12 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: genet_acpi.c,v 1.5 2021/05/03 10:28:26 rin Exp $");
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_intr.h>
-
-#ifdef NET_MPSAFE
-#define	GENET_INTR_MPSAFE	true
-#else
-#define	GENET_INTR_MPSAFE	false
-#endif
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "BCM6E4E" },	/* Broadcom GENET v5 */
@@ -144,7 +136,7 @@ genet_acpi_attach(device_t parent, device_t self, void *aux)
 		goto done;
 
         ih = acpi_intr_establish(self, (uint64_t)(uintptr_t)handle, IPL_NET,
-	    GENET_INTR_MPSAFE, genet_intr, sc, device_xname(self));
+	    true, genet_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		goto done;
