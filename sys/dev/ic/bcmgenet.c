@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenet.c,v 1.19 2024/08/25 12:38:20 mlelstv Exp $ */
+/* $NetBSD: bcmgenet.c,v 1.20 2024/09/15 07:38:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -30,11 +30,10 @@
  * Broadcom GENETv5
  */
 
-#include "opt_net_mpsafe.h"
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.19 2024/08/25 12:38:20 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.20 2024/09/15 07:38:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -67,13 +66,6 @@ CTASSERT(MCLBYTES == 2048);
 #define	DPRINTF(...)	((void)0)
 #endif
 
-#ifdef NET_MPSAFE
-#define	GENET_MPSAFE		1
-#define	CALLOUT_FLAGS		CALLOUT_MPSAFE
-#else
-#define	CALLOUT_FLAGS		0
-#endif
-
 #define	TX_MAX_SEGS		128
 #define	TX_DESC_COUNT		256 /* GENET_DMA_DESC_COUNT */
 #define	RX_DESC_COUNT		256 /* GENET_DMA_DESC_COUNT */
@@ -84,9 +76,9 @@ CTASSERT(MCLBYTES == 2048);
 #define	TX_NEXT(n)		TX_SKIP(n, 1)
 #define	RX_NEXT(n)		(((n) + 1) % RX_DESC_COUNT)
 
-#define	GENET_LOCK(sc)		mutex_enter(&(sc)->sc_lock)
-#define	GENET_UNLOCK(sc)	mutex_exit(&(sc)->sc_lock)
-#define	GENET_ASSERT_LOCKED(sc)	KASSERT(mutex_owned(&(sc)->sc_lock))
+#define	GENET_LOCK(sc)			mutex_enter(&(sc)->sc_lock)
+#define	GENET_UNLOCK(sc)		mutex_exit(&(sc)->sc_lock)
+#define	GENET_ASSERT_LOCKED(sc)		KASSERT(mutex_owned(&(sc)->sc_lock))
 
 #define	GENET_TXLOCK(sc)		mutex_enter(&(sc)->sc_txlock)
 #define	GENET_TXUNLOCK(sc)		mutex_exit(&(sc)->sc_txlock)
@@ -324,18 +316,12 @@ genet_tick(void *softc)
 {
 	struct genet_softc *sc = softc;
 	struct mii_data *mii = &sc->sc_mii;
-#ifndef GENET_MPSAFE
-	int s = splnet();
-#endif
 
 	GENET_LOCK(sc);
 	mii_tick(mii);
-	callout_schedule(&sc->sc_stat_ch, hz);
+	if (sc->sc_running)
+		callout_schedule(&sc->sc_stat_ch, hz);
 	GENET_UNLOCK(sc);
-
-#ifndef GENET_MPSAFE
-	splx(s);
-#endif
 }
 
 static void
@@ -584,6 +570,7 @@ genet_init_locked(struct genet_softc *sc)
 	WR4(sc, GENET_UMAC_MAC1, val);
 
 	/* Setup RX filter */
+	sc->sc_promisc = ifp->if_flags & IFF_PROMISC;
 	genet_setup_rxfilter(sc);
 
 	/* Setup TX/RX rings */
@@ -598,6 +585,10 @@ genet_init_locked(struct genet_softc *sc)
 	/* Enable interrupts */
 	genet_enable_intr(sc);
 
+	GENET_ASSERT_TXLOCKED(sc);
+	sc->sc_txrunning = true;
+
+	sc->sc_running = true;
 	ifp->if_flags |= IFF_RUNNING;
 
 	mii_mediachg(mii);
@@ -651,7 +642,12 @@ genet_stop_locked(struct genet_softc *sc, int disable)
 
 	GENET_ASSERT_LOCKED(sc);
 
-	callout_stop(&sc->sc_stat_ch);
+	GENET_TXLOCK(sc);
+	sc->sc_txrunning = false;
+	GENET_TXUNLOCK(sc);
+
+	sc->sc_running = false;
+	callout_halt(&sc->sc_stat_ch, &sc->sc_lock);
 
 	mii_down(&sc->sc_mii);
 
@@ -824,7 +820,7 @@ genet_start_locked(struct genet_softc *sc)
 
 	GENET_ASSERT_TXLOCKED(sc);
 
-	if ((ifp->if_flags & IFF_RUNNING) == 0)
+	if (!sc->sc_txrunning)
 		return;
 
 	const int qid = GENET_DMA_DEFAULT_QUEUE;
@@ -904,42 +900,26 @@ static int
 genet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct genet_softc *sc = ifp->if_softc;
-	int error, s;
+	int error;
 
-#ifndef GENET_MPSAFE
-	s = splnet();
-#endif
-
-	switch (cmd) {
-	default:
-#ifdef GENET_MPSAFE
-		s = splnet();
-#endif
-		error = ether_ioctl(ifp, cmd, data);
-#ifdef GENET_MPSAFE
-		splx(s);
-#endif
-		if (error != ENETRESET)
-			break;
-
-		error = 0;
-
-		if (cmd == SIOCSIFCAP)
-			error = if_init(ifp);
-		else if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
-			;
-		else if ((ifp->if_flags & IFF_RUNNING) != 0) {
-			GENET_LOCK(sc);
-			genet_setup_rxfilter(sc);
-			GENET_UNLOCK(sc);
-		}
-		break;
-	}
-
-#ifndef GENET_MPSAFE
+	const int s = splnet();
+	error = ether_ioctl(ifp, cmd, data);
 	splx(s);
-#endif
 
+	if (error != ENETRESET)
+		return error;
+
+	error = 0;
+
+	if (cmd == SIOCSIFCAP)
+		error = if_init(ifp);
+	else if (cmd == SIOCADDMULTI || cmd == SIOCDELMULTI) {
+		GENET_LOCK(sc);
+		sc->sc_promisc = ifp->if_flags & IFF_PROMISC;
+		if (sc->sc_running)
+			genet_setup_rxfilter(sc);
+		GENET_UNLOCK(sc);
+	}
 	return error;
 }
 
@@ -1082,7 +1062,7 @@ genet_attach(struct genet_softc *sc)
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NET);
 	mutex_init(&sc->sc_txlock, MUTEX_DEFAULT, IPL_NET);
-	callout_init(&sc->sc_stat_ch, CALLOUT_FLAGS);
+	callout_init(&sc->sc_stat_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_stat_ch, genet_tick, sc);
 
 	genet_get_eaddr(sc, eaddr);
@@ -1101,9 +1081,7 @@ genet_attach(struct genet_softc *sc)
 	ifp->if_softc = sc;
 	snprintf(ifp->if_xname, IFNAMSIZ, "%s", device_xname(sc->sc_dev));
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-#ifdef GENET_MPSAFE
 	ifp->if_extflags = IFEF_MPSAFE;
-#endif
 	ifp->if_start = genet_start;
 	ifp->if_ioctl = genet_ioctl;
 	ifp->if_init = genet_init;
