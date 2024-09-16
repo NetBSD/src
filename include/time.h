@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.52 2024/09/16 17:58:43 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.53 2024/09/16 21:48:14 kre Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -184,9 +184,9 @@ char *ctime_r(const time_t *, char *) __RENAME(__ctime_r50);
 #ifndef __LIBC12_SOURCE__
 struct tm *gmtime_r(const time_t * __restrict, struct tm * __restrict)
     __RENAME(__gmtime_r50);
-#endif
 struct tm *localtime_r(const time_t * __restrict, struct tm * __restrict)
     __RENAME(__localtime_r50);
+#endif
 #endif
 
 #if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE)
