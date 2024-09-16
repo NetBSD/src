@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.111.4.2 2024/09/13 14:09:51 martin Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.111.4.3 2024/09/16 08:42:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,10 +76,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.111.4.2 2024/09/13 14:09:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.111.4.3 2024/09/16 08:42:20 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
+#include "opt_sysv_ipc.h"
 #endif
 
 #include <sys/param.h>
@@ -107,7 +108,11 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.111.4.2 2024/09/13 14:09:51 mart
 
 #include <uvm/uvm_extern.h>			/* for PAGE_SIZE */
 
-MODULE(MODULE_CLASS_VFS, procfs, "ptrace_common,mqueue,sysv_ipc");
+MODULE(MODULE_CLASS_VFS, procfs, "ptrace_common"
+#if defined(SYSVSHM) || defined(SYSVSEM) || defined(SYSVMSG)
+				",sysv_ipc"
+#endif
+);
 
 VFS_PROTOS(procfs);
 
