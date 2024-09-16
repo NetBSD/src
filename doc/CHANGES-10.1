@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.33 2024/09/15 10:59:35 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.34 2024/09/16 08:43:12 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -1563,4 +1563,9 @@ sys/netinet6/frag6.c				1.77
 	Add a check for FreeBSD-SA-23:06.ipv6, although it is not
 	reproducible for us.  
 	[ozaki-r, ticket #865]
+
+sys/miscfs/procfs/procfs_vfsops.c		1.120 (patch)
+
+	procfs kernel module: define dependencies based on build options.
+	[pgoyette, ticket #868]
 
