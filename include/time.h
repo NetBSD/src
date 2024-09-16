@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.51 2024/09/16 17:25:34 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.52 2024/09/16 17:58:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -176,12 +176,15 @@ int timer_getoverrun(timer_t);
 char *asctime_r(const struct tm * __restrict, char * __restrict);
 #ifndef __LIBC12_SOURCE__
 char *ctime_r(const time_t *, char *) __RENAME(__ctime_r50);
+#endif
+#endif
+
+#if (_POSIX_C_SOURCE - 0) >= 199506L || \
+    (_XOPEN_SOURCE - 0) >= 500 || defined(_REENTRANT) || defined(_NETBSD_SOURCE)
+#ifndef __LIBC12_SOURCE__
 struct tm *gmtime_r(const time_t * __restrict, struct tm * __restrict)
     __RENAME(__gmtime_r50);
 #endif
-#endif
-#if (_POSIX_C_SOURCE - 0) >= 199506L || \
-    (_XOPEN_SOURCE - 0) >= 500 || defined(_REENTRANT) || defined(_NETBSD_SOURCE)
 struct tm *localtime_r(const time_t * __restrict, struct tm * __restrict)
     __RENAME(__localtime_r50);
 #endif
