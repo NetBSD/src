@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.h,v 1.23 2021/11/07 17:13:12 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu.h,v 1.24 2024/09/16 23:37:13 macallan Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -432,6 +432,7 @@ const char *sunxi_ccu_mux_get_parent(struct sunxi_ccu_softc *,
 	[_id] = {						\
 		.type = SUNXI_CCU_MUX,				\
 		.base.name = (_name),				\
+		.base.flags = CLK_SET_RATE_PARENT,		\
 		.u.mux.reg = (_reg),				\
 		.u.mux.parents = (_parents),			\
 		.u.mux.nparents = __arraycount(_parents),	\
