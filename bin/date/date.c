@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.66 2024/01/21 16:55:56 christos Exp $ */
+/* $NetBSD: date.c,v 1.67 2024/09/17 09:55:38 kre Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.66 2024/01/21 16:55:56 christos Exp $");
+__RCSID("$NetBSD: date.c,v 1.67 2024/09/17 09:55:38 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,6 +77,10 @@ static char *fmt;
 __dead static void badcanotime(const char *, const char *, size_t);
 static void setthetime(const char *);
 __dead static void usage(void);
+
+#if !defined(isleap)
+# define isleap(y)   (((y) % 4) == 0 && (((y) % 100) != 0 || ((y) % 400) == 0))
+#endif
 
 int
 main(int argc, char *argv[])
