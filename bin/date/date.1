@@ -1,4 +1,4 @@
-.\"	$NetBSD: date.1,v 1.56 2024/09/17 14:56:48 kre Exp $
+.\"	$NetBSD: date.1,v 1.57 2024/09/17 15:25:39 kre Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -310,6 +310,15 @@ option can be omitted to parse the time as specified by
 or the second could be replaced by
 .Fl U
 to show the parsed time in the local timezone.
+.Pp
+Either of the commands:
+.Pp
+.Dl date -u -d 1970-01-01T00:00:00 -U +%c
+.Dl date -r 0 +%c
+.Pp
+print the local time of the
+.Ux
+epoch.
 .Sh DIAGNOSTICS
 Exit status is 0 on success, 1 if unable to set the date, and 2
 if able to set the local date, but unable to set it globally.
@@ -350,6 +359,13 @@ The
 .Nm
 utility is expected to be compatible with
 .St -p1003.2 .
+However, achieving true compatability requires running
+.Nm
+with the environment variable
+.Ev POSIXLY_CORRECT
+set, in order to parse the time string in the
+archaic format POSIX demands, rather than the
+more rational version described above.
 .Sh HISTORY
 A
 .Nm
