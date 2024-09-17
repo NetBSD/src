@@ -1,4 +1,4 @@
-#	$NetBSD: WII,v 1.4 2024/01/25 11:47:53 jmcneill Exp $
+#	$NetBSD: WII,v 1.5 2024/09/17 13:47:30 jakllsch Exp $
 #
 #	Nintendo Wii
 #
@@ -45,6 +45,10 @@ makeoptions DEBUG="-g"	# compile full symbol table
 # Compatibility options
 include 	"conf/compat_netbsd50.config"
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
+
+# Wedge support
+options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 
 # File systems
 file-system 	FFS		# UFS
