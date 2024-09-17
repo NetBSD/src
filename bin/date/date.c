@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.69 2024/09/17 14:56:48 kre Exp $ */
+/* $NetBSD: date.c,v 1.70 2024/09/17 15:25:39 kre Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.69 2024/09/17 14:56:48 kre Exp $");
+__RCSID("$NetBSD: date.c,v 1.70 2024/09/17 15:25:39 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -371,6 +371,23 @@ setthetime(const char *p)
 			warnx("Ignoring %zu extraneous"
 				" characters in date string (%s)",
 				strlen(t), t);
+		goto setit;
+	}
+	if (getenv("POSIXLY_CORRECT") != NULL) {
+		int yrdigs;
+		const char * const e = "Bad POSIX format date ``%s''";
+
+		t = strptime(p, "%m%d%H%M", lt);
+		if (t == NULL)
+			errx(EXIT_FAILURE, e, p);
+		if (*t != '\0') {
+			yrdigs = strspn(t, "0123456789");
+			if (yrdigs != 2 && yrdigs != 4)
+				errx(EXIT_FAILURE, e, p);
+			t = strptime(t, yrdigs == 2 ? "%y" : "%Y", lt);
+			if (t == NULL || *t != '\0')
+				errx(EXIT_FAILURE, e, p);
+		}
 		goto setit;
 	}
 #endif
