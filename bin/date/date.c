@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.68 2024/09/17 11:30:11 kre Exp $ */
+/* $NetBSD: date.c,v 1.69 2024/09/17 14:56:48 kre Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.68 2024/09/17 11:30:11 kre Exp $");
+__RCSID("$NetBSD: date.c,v 1.69 2024/09/17 14:56:48 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,11 +96,14 @@ main(int argc, char *argv[])
 	int ch;
 	long long val;
 	struct tm *tm;
+	char *default_tz;
 
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "ad:f:jnRr:u")) != -1) {
+	default_tz = getenv("TZ");
+
+	while ((ch = getopt(argc, argv, "ad:f:jnRr:Uuz:")) != -1) {
 		switch (ch) {
 		case 'a':		/* adjust time slowly */
 			aflag = 1;
@@ -151,8 +154,20 @@ main(int argc, char *argv[])
 			rflag = 1;
 			tval = (time_t)val;
 			break;
+		case 'U':		/* reset to default timezone */
+			if (default_tz)
+				(void)setenv("TZ", default_tz, 1);
+			else
+				(void)unsetenv("TZ");
+			break;
 		case 'u':		/* do everything in UTC */
 			(void)setenv("TZ", "UTC0", 1);
+			break;
+		case 'z':
+			if (optarg[0] == '\0')
+				(void)unsetenv("TZ");
+			else
+				(void)setenv("TZ", optarg, 1);
 			break;
 		default:
 			usage();
@@ -538,9 +553,10 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-ajnRu] [-d date] [-r seconds] [+format]",
+	    "Usage: %s [-ajnRUu] [-d date] [-r seconds] [-z zone] [+format]",
 	    getprogname());
-	(void)fprintf(stderr, " [[[[[[CC]yy]mm]dd]HH]MM[.SS]]\n");
+	(void)fprintf(stderr, "\n\t%*s[[[[[[CC]yy]mm]dd]HH]MM[.SS]]\n",
+	    (int)strlen(getprogname()), "");
 	(void)fprintf(stderr,
 	    "       %s [-ajnRu] -f input_format new_date [+format]\n",
 	    getprogname());
