@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.61 2024/09/18 01:29:02 nat Exp $	*/
+/*	$NetBSD: adb.c,v 1.62 2024/09/18 01:34:08 nat Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.61 2024/09/18 01:29:02 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.62 2024/09/18 01:34:08 nat Exp $");
 
 #include "opt_adb.h"
 
@@ -104,12 +104,6 @@ adbattach(device_t parent, device_t self, void *aux)
 		case MACH_MACPB180:
 		case MACH_MACPB180C:
 		case MACH_MACPB150:
-		case MACH_MACPB210:
-		case MACH_MACPB230:
-		case MACH_MACPB250:
-		case MACH_MACPB270:
-		case MACH_MACPB280:
-		case MACH_MACPB280C:
 			/* Reqired on machines with in-built trackballs. */
 			printf("...  Waiting 5 seconds for adb devices to "
 			     "settle.");
