@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.176 2024/07/05 04:31:53 rin Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.177 2024/09/18 23:20:20 rin Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.176 2024/07/05 04:31:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.177 2024/09/18 23:20:20 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1097,7 +1097,7 @@ filt_tunread(struct knote *kn, long hint)
 }
 
 static const struct filterops tunread_filtops = {
-	.f_flags = FILTEROP_ISFD,
+	.f_flags = FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach = NULL,
 	.f_detach = filt_tunrdetach,
 	.f_event = filt_tunread,
