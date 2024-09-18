@@ -1,4 +1,4 @@
-/* $NetBSD: jh7100_pinctrl.c,v 1.2 2024/02/08 07:13:10 skrll Exp $ */
+/* $NetBSD: jh7100_pinctrl.c,v 1.3 2024/09/18 08:31:50 skrll Exp $ */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jh7100_pinctrl.c,v 1.2 2024/02/08 07:13:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jh7100_pinctrl.c,v 1.3 2024/09/18 08:31:50 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -55,9 +55,9 @@ struct jh7100_pinctrl_gpio_pin {
 	bool				 pin_actlo;
 };
 
-#define	GPIORD4(sc, reg)						       \
+#define GPIORD4(sc, reg)						       \
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_gpio_bsh, (reg))
-#define	GPIOWR4(sc, reg, val)						       \
+#define GPIOWR4(sc, reg, val)						       \
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_gpio_bsh, (reg), (val))
 
 #define GPIO_DIN(pin)			(0x0048 + (((pin) / 32) * 4))
@@ -74,9 +74,9 @@ struct jh7100_pinctrl_gpio_pin {
 #define  GPI_NONE			0xff
 
 
-#define	PCTLRD4(sc, reg)						       \
+#define PCTLRD4(sc, reg)						       \
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_padctl_bsh, (reg))
-#define	PCTLWR4(sc, reg, val)						       \
+#define PCTLWR4(sc, reg, val)						       \
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_padctl_bsh, (reg), (val))
 
 #define PAD_GPIO(pin)			(0x0000 + (((pin) / 2) * 4))
