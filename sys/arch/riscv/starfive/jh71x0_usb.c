@@ -1,4 +1,4 @@
-/* $NetBSD: jh71x0_usb.c,v 1.2 2024/08/25 15:23:51 skrll Exp $ */
+/* $NetBSD: jh71x0_usb.c,v 1.3 2024/09/18 08:31:50 skrll Exp $ */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jh71x0_usb.c,v 1.2 2024/08/25 15:23:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jh71x0_usb.c,v 1.3 2024/09/18 08:31:50 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -49,9 +49,9 @@ struct jh71x0_usb_softc {
 };
 
 
-#define	RD4(sc, reg)							       \
+#define RD4(sc, reg)							       \
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
-#define	WR4(sc, reg, val)						       \
+#define WR4(sc, reg, val)						       \
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
 

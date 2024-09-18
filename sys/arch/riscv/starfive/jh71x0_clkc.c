@@ -1,4 +1,4 @@
-/* $NetBSD: jh71x0_clkc.c,v 1.3 2024/08/19 07:33:55 skrll Exp $ */
+/* $NetBSD: jh71x0_clkc.c,v 1.4 2024/09/18 08:31:50 skrll Exp $ */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jh71x0_clkc.c,v 1.3 2024/08/19 07:33:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jh71x0_clkc.c,v 1.4 2024/09/18 08:31:50 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -43,9 +43,9 @@ __KERNEL_RCSID(0, "$NetBSD: jh71x0_clkc.c,v 1.3 2024/08/19 07:33:55 skrll Exp $"
 
 #include <riscv/starfive/jh71x0_clkc.h>
 
-#define	RD4(sc, reg)							\
+#define RD4(sc, reg)							\
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
-#define	WR4(sc, reg, val)						\
+#define WR4(sc, reg, val)						\
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
 

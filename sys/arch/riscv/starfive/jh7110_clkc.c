@@ -1,4 +1,4 @@
-/* $NetBSD: jh7110_clkc.c,v 1.2 2024/09/09 07:34:08 skrll Exp $ */
+/* $NetBSD: jh7110_clkc.c,v 1.3 2024/09/18 08:31:50 skrll Exp $ */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jh7110_clkc.c,v 1.2 2024/09/09 07:34:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jh7110_clkc.c,v 1.3 2024/09/18 08:31:50 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -892,9 +892,9 @@ static const struct device_compatible_entry compat_data[] = {
 };
 
 
-#define	RD4(sc, reg)							\
+#define RD4(sc, reg)							\
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
-#define	WR4(sc, reg, val)						\
+#define WR4(sc, reg, val)						\
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
 
