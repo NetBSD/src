@@ -1,4 +1,4 @@
-/* $NetBSD: jh7110_clkc.c,v 1.3 2024/09/18 08:31:50 skrll Exp $ */
+/* $NetBSD: jh7110_clkc.c,v 1.4 2024/09/18 10:33:35 skrll Exp $ */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jh7110_clkc.c,v 1.3 2024/09/18 08:31:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jh7110_clkc.c,v 1.4 2024/09/18 10:33:35 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -739,7 +739,6 @@ static struct jh71x0_clkc_clk jh7110_stgclk_clocks[] = {
 	JH71X0CLKC_GATE(JH7110_STGCLK_DMA1P_AHB, "dma1p_ahb", "stg_axiahb"),
 };
 
-#if 0
 static const char *vin_p_axi_wr_parents[] = {
 	"mipi_rx0_pxl", "dvp_inv",
 };
@@ -767,7 +766,6 @@ static struct jh71x0_clkc_clk jh7110_ispclk_clocks[] = {
 	/* ispv2_top_wrapper */
 	JH71X0CLKC_MUXGATE(JH7110_ISPCLK_ISPV2_TOP_WRAPPER_C, "ispv2_top_wrapper_c", ispv2_top_wrapper_c_parents),
 };
-#endif
 
 static const char *dc8200_pix0_parents[] = {
 	"dc8200_pix", "hdmitx0_pixelclk",
@@ -822,12 +820,10 @@ static struct jh7110_clock_config jh7110_aonclk_config = {
 	.jhcc_nclks = __arraycount(jh7110_aonclk_clocks),
 };
 
-#if 0
 static struct jh7110_clock_config jh7110_ispclk_config = {
 	.jhcc_clocks = jh7110_ispclk_clocks,
 	.jhcc_nclks = __arraycount(jh7110_ispclk_clocks),
 };
-#endif
 
 static struct jh7110_clock_config jh7110_stgclk_config = {
 	.jhcc_clocks = jh7110_stgclk_clocks,
@@ -848,26 +844,27 @@ static struct jh7110_clock_config jh7110_voutclk_config = {
 struct jh7110_crg {
 	const char *jhc_name;
 	struct jh7110_clock_config *jhc_clk;
+	bool jhc_debug;
 };
 
 
 static struct jh7110_crg jh7110_sys_config = {
 	.jhc_name = "System",
 	.jhc_clk = &jh7110_sysclk_config,
+	.jhc_debug = true,
 };
 
 
 static struct jh7110_crg jh7110_aon_config = {
 	.jhc_name = "Always-On",
 	.jhc_clk = &jh7110_aonclk_config,
+	.jhc_debug = true,
 };
 
-#if 0
 static struct jh7110_crg jh7110_isp_config = {
 	.jhc_name = "Image-Signal-Process",
 	.jhc_clk = &jh7110_ispclk_config,
 };
-#endif
 
 static struct jh7110_crg jh7110_stg_config = {
 	.jhc_name = "System-Top-Group",
@@ -883,20 +880,16 @@ static struct jh7110_crg jh7110_vout_config = {
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "starfive,jh7110-syscrg", .data = &jh7110_sys_config },
 	{ .compat = "starfive,jh7110-aoncrg", .data = &jh7110_aon_config },
-#if 0
 	{ .compat = "starfive,jh7110-ispcrg", .data = &jh7110_isp_config },
-#endif
 	{ .compat = "starfive,jh7110-stgcrg", .data = &jh7110_stg_config },
 	{ .compat = "starfive,jh7110-voutcrg", .data = &jh7110_vout_config },
 	DEVICE_COMPAT_EOL
 };
 
-
 #define RD4(sc, reg)							\
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
 #define WR4(sc, reg, val)						\
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
-
 
 static struct clk *
 jh7110_clkc_clock_decode(device_t dev, int phandle, const void *data,
@@ -904,9 +897,8 @@ jh7110_clkc_clock_decode(device_t dev, int phandle, const void *data,
 {
 	struct jh71x0_clkc_softc * const sc = device_private(dev);
 
-	if (len != 4) {
+	if (len != sizeof(uint32_t))
 		return NULL;
-	}
 
 	u_int id = be32dec(data);
 	if (id >= sc->sc_nclks) {
@@ -978,14 +970,16 @@ jh7110_clkc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": JH7110 %s Clock and Reset Generator\n",
 	    jhc->jhc_name);
 
-	for (size_t id = 0; id < sc->sc_nclks; id++) {
-		if (sc->sc_clk[id].jcc_type == JH71X0CLK_UNKNOWN)
-			continue;
+	if (jhc->jhc_debug) {
+		for (size_t id = 0; id < sc->sc_nclks; id++) {
+			if (sc->sc_clk[id].jcc_type == JH71X0CLK_UNKNOWN)
+				continue;
 
-		struct clk * const clk = &sc->sc_clk[id].jcc_clk;
+			struct clk * const clk = &sc->sc_clk[id].jcc_clk;
 
-		aprint_debug_dev(self, "id %zu [%s]: %u Hz\n", id,
-		    clk->name ? clk->name : "<none>", clk_get_rate(clk));
+			aprint_debug_dev(self, "id %zu [%s]: %u Hz\n", id,
+			    clk->name ? clk->name : "<none>", clk_get_rate(clk));
+		}
 	}
 
 	fdtbus_register_clock_controller(self, phandle, &jh7110_clkc_fdtclock_funcs);
