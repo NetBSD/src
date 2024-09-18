@@ -187,7 +187,10 @@ static void wpa_priv_get_scan_results2(struct wpa_priv_interface *iface,
 	int val;
 	size_t i;
 
-	res = iface->driver->get_scan_results2(iface->drv_priv);
+	if (iface->driver->get_scan_results)
+		res = iface->driver->get_scan_results(iface->drv_priv, NULL);
+	else
+		res = iface->driver->get_scan_results2(iface->drv_priv);
 	if (res == NULL)
 		goto fail;
 
@@ -231,7 +234,7 @@ static void wpa_priv_cmd_get_scan_results(struct wpa_priv_interface *iface,
 	if (iface->drv_priv == NULL)
 		return;
 
-	if (iface->driver->get_scan_results2)
+	if (iface->driver->get_scan_results || iface->driver->get_scan_results2)
 		wpa_priv_get_scan_results2(iface, from, fromlen);
 	else
 		sendto(iface->fd, "", 0, 0, (struct sockaddr *) from, fromlen);
@@ -391,6 +394,7 @@ static void wpa_priv_cmd_set_key(struct wpa_priv_interface *iface,
 {
 	struct privsep_cmd_set_key *params;
 	int res;
+	struct wpa_driver_set_key_params p;
 
 	if (iface->drv_priv == NULL || iface->driver->set_key == NULL)
 		return;
@@ -402,14 +406,20 @@ static void wpa_priv_cmd_set_key(struct wpa_priv_interface *iface,
 
 	params = buf;
 
-	res = iface->driver->set_key(iface->ifname, iface->drv_priv,
-				     params->alg,
-				     params->addr, params->key_idx,
-				     params->set_tx,
-				     params->seq_len ? params->seq : NULL,
-				     params->seq_len,
-				     params->key_len ? params->key : NULL,
-				     params->key_len);
+	os_memset(&p, 0, sizeof(p));
+	p.ifname = iface->ifname;
+	p.alg = params->alg;
+	p.addr = params->addr;
+	p.key_idx = params->key_idx;
+	p.set_tx = params->set_tx;
+	p.seq = params->seq_len ? params->seq : NULL;
+	p.seq_len = params->seq_len;
+	p.key = params->key_len ? params->key : NULL;
+	p.key_len = params->key_len;
+	p.key_flag = params->key_flag;
+	p.link_id = -1;
+
+	res = iface->driver->set_key(iface->drv_priv, &p);
 	wpa_printf(MSG_DEBUG, "drv->set_key: res=%d", res);
 }
 
@@ -598,7 +608,7 @@ static void wpa_priv_cmd_l2_send(struct wpa_priv_interface *iface,
 	}
 
 	dst_addr = buf;
-	os_memcpy(&proto, buf + ETH_ALEN, 2);
+	os_memcpy(&proto, (char *) buf + ETH_ALEN, 2);
 
 	if (!wpa_priv_allowed_l2_proto(proto)) {
 		wpa_printf(MSG_DEBUG, "Refused l2_packet send for ethertype "
@@ -607,7 +617,8 @@ static void wpa_priv_cmd_l2_send(struct wpa_priv_interface *iface,
 	}
 
 	res = l2_packet_send(iface->l2[idx], dst_addr, proto,
-			     buf + ETH_ALEN + 2, len - ETH_ALEN - 2);
+			     (unsigned char *) buf + ETH_ALEN + 2,
+			     len - ETH_ALEN - 2);
 	wpa_printf(MSG_DEBUG, "L2 send[idx=%d]: res=%d", idx, res);
 }
 
@@ -1127,7 +1138,8 @@ void wpa_supplicant_event_global(void *ctx, enum wpa_event_type event,
 
 
 void wpa_supplicant_rx_eapol(void *ctx, const u8 *src_addr,
-			     const u8 *buf, size_t len)
+			     const u8 *buf, size_t len,
+			     enum frame_encryption encrypted)
 {
 	struct wpa_priv_interface *iface = ctx;
 	struct msghdr msg;
@@ -1183,14 +1195,15 @@ static void wpa_priv_fd_workaround(void)
 
 static void usage(void)
 {
-	printf("wpa_priv v" VERSION_STR "\n"
+	printf("wpa_priv v%s\n"
 	       "Copyright (c) 2007-2017, Jouni Malinen <j@w1.fi> and "
 	       "contributors\n"
 	       "\n"
 	       "usage:\n"
 	       "  wpa_priv [-Bdd] [-c<ctrl dir>] [-P<pid file>] "
 	       "<driver:ifname> \\\n"
-	       "           [driver:ifname ...]\n");
+	       "           [driver:ifname ...]\n",
+	       VERSION_STR);
 }
 
 

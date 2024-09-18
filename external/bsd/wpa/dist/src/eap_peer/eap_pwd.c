@@ -257,13 +257,13 @@ eap_pwd_perform_id_exchange(struct eap_sm *sm, struct eap_pwd_data *data,
 	struct eap_pwd_id *id;
 
 	if (data->state != PWD_ID_Req) {
-		ret->ignore = TRUE;
+		ret->ignore = true;
 		eap_pwd_state(data, FAILURE);
 		return;
 	}
 
 	if (payload_len < sizeof(struct eap_pwd_id)) {
-		ret->ignore = TRUE;
+		ret->ignore = true;
 		eap_pwd_state(data, FAILURE);
 		return;
 	}
@@ -369,14 +369,14 @@ eap_pwd_perform_commit_exchange(struct eap_sm *sm, struct eap_pwd_data *data,
 	int res;
 
 	if (data->state != PWD_Commit_Req) {
-		ret->ignore = TRUE;
+		ret->ignore = true;
 		goto fin;
 	}
 
 	if (!data->grp) {
 		wpa_printf(MSG_DEBUG,
 			   "EAP-PWD (client): uninitialized EAP-pwd group");
-		ret->ignore = TRUE;
+		ret->ignore = true;
 		goto fin;
 	}
 
@@ -666,7 +666,10 @@ eap_pwd_perform_commit_exchange(struct eap_sm *sm, struct eap_pwd_data *data,
 	 * sufficiently smaller than the prime or order might need pre-pending
 	 * with zeros.
 	 */
-	crypto_bignum_to_bin(data->my_scalar, scalar, order_len, order_len);
+	if (crypto_bignum_to_bin(data->my_scalar, scalar, order_len,
+				 order_len) < 0)
+		goto fin;
+
 	if (crypto_ec_point_to_bin(data->grp->group, data->my_element, element,
 				   element + prime_len) != 0) {
 		wpa_printf(MSG_INFO, "EAP-PWD (peer): point assignment fail");
@@ -696,7 +699,7 @@ eap_pwd_perform_confirm_exchange(struct eap_sm *sm, struct eap_pwd_data *data,
 	size_t prime_len = 0, order_len = 0;
 
 	if (data->state != PWD_Confirm_Req) {
-		ret->ignore = TRUE;
+		ret->ignore = true;
 		goto fin;
 	}
 
@@ -742,7 +745,9 @@ eap_pwd_perform_confirm_exchange(struct eap_sm *sm, struct eap_pwd_data *data,
 	 * zero the memory each time because this is mod prime math and some
 	 * value may start with a few zeros and the previous one did not.
 	 */
-	crypto_bignum_to_bin(data->k, cruft, prime_len, prime_len);
+	if (crypto_bignum_to_bin(data->k, cruft, prime_len, prime_len) < 0)
+		goto fin;
+
 	eap_pwd_h_update(hash, cruft, prime_len);
 
 	/* server element: x, y */
@@ -755,7 +760,10 @@ eap_pwd_perform_confirm_exchange(struct eap_sm *sm, struct eap_pwd_data *data,
 	eap_pwd_h_update(hash, cruft, prime_len * 2);
 
 	/* server scalar */
-	crypto_bignum_to_bin(data->server_scalar, cruft, order_len, order_len);
+	if (crypto_bignum_to_bin(data->server_scalar, cruft, order_len,
+				 order_len) < 0)
+		goto fin;
+
 	eap_pwd_h_update(hash, cruft, order_len);
 
 	/* my element: x, y */
@@ -768,7 +776,10 @@ eap_pwd_perform_confirm_exchange(struct eap_sm *sm, struct eap_pwd_data *data,
 	eap_pwd_h_update(hash, cruft, prime_len * 2);
 
 	/* my scalar */
-	crypto_bignum_to_bin(data->my_scalar, cruft, order_len, order_len);
+	if (crypto_bignum_to_bin(data->my_scalar, cruft, order_len,
+				 order_len) < 0)
+		goto fin;
+
 	eap_pwd_h_update(hash, cruft, order_len);
 
 	/* the ciphersuite */
@@ -796,7 +807,9 @@ eap_pwd_perform_confirm_exchange(struct eap_sm *sm, struct eap_pwd_data *data,
 		goto fin;
 
 	/* k */
-	crypto_bignum_to_bin(data->k, cruft, prime_len, prime_len);
+	if (crypto_bignum_to_bin(data->k, cruft, prime_len, prime_len) < 0)
+		goto fin;
+
 	eap_pwd_h_update(hash, cruft, prime_len);
 
 	/* my element */
@@ -809,7 +822,10 @@ eap_pwd_perform_confirm_exchange(struct eap_sm *sm, struct eap_pwd_data *data,
 	eap_pwd_h_update(hash, cruft, prime_len * 2);
 
 	/* my scalar */
-	crypto_bignum_to_bin(data->my_scalar, cruft, order_len, order_len);
+	if (crypto_bignum_to_bin(data->my_scalar, cruft, order_len,
+				 order_len) < 0)
+		goto fin;
+
 	eap_pwd_h_update(hash, cruft, order_len);
 
 	/* server element: x, y */
@@ -822,7 +838,10 @@ eap_pwd_perform_confirm_exchange(struct eap_sm *sm, struct eap_pwd_data *data,
 	eap_pwd_h_update(hash, cruft, prime_len * 2);
 
 	/* server scalar */
-	crypto_bignum_to_bin(data->server_scalar, cruft, order_len, order_len);
+	if (crypto_bignum_to_bin(data->server_scalar, cruft, order_len,
+				 order_len) < 0)
+		goto fin;
+
 	eap_pwd_h_update(hash, cruft, order_len);
 
 	/* the ciphersuite */
@@ -878,14 +897,14 @@ eap_pwd_process(struct eap_sm *sm, void *priv, struct eap_method_ret *ret,
 		wpa_printf(MSG_DEBUG, "EAP-pwd: Got a frame but pos is %s and "
 			   "len is %d",
 			   pos == NULL ? "NULL" : "not NULL", (int) len);
-		ret->ignore = TRUE;
+		ret->ignore = true;
 		return NULL;
 	}
 
-	ret->ignore = FALSE;
+	ret->ignore = false;
 	ret->methodState = METHOD_MAY_CONT;
 	ret->decision = DECISION_FAIL;
-	ret->allowNotifications = FALSE;
+	ret->allowNotifications = false;
 
 	lm_exch = *pos;
 	pos++;                  /* skip over the bits and the exch */
@@ -951,7 +970,7 @@ eap_pwd_process(struct eap_sm *sm, void *priv, struct eap_method_ret *ret,
 		if (len < 2) {
 			wpa_printf(MSG_DEBUG,
 				   "EAP-pwd: Frame too short to contain Total-Length field");
-			ret->ignore = TRUE;
+			ret->ignore = true;
 			return NULL;
 		}
 		tot_len = WPA_GET_BE16(pos);
@@ -962,7 +981,7 @@ eap_pwd_process(struct eap_sm *sm, void *priv, struct eap_method_ret *ret,
 		if (data->inbuf) {
 			wpa_printf(MSG_DEBUG,
 				   "EAP-pwd: Unexpected new fragment start when previous fragment is still in use");
-			ret->ignore = TRUE;
+			ret->ignore = true;
 			return NULL;
 		}
 		data->inbuf = wpabuf_alloc(tot_len);
@@ -1108,7 +1127,7 @@ eap_pwd_process(struct eap_sm *sm, void *priv, struct eap_method_ret *ret,
 }
 
 
-static Boolean eap_pwd_key_available(struct eap_sm *sm, void *priv)
+static bool eap_pwd_key_available(struct eap_sm *sm, void *priv)
 {
 	struct eap_pwd_data *data = priv;
 	return data->state == SUCCESS;
