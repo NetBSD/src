@@ -1,4 +1,4 @@
-/* $NetBSD: jh7110_clkc.c,v 1.4 2024/09/18 10:33:35 skrll Exp $ */
+/* $NetBSD: jh7110_clkc.c,v 1.5 2024/09/18 10:37:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jh7110_clkc.c,v 1.4 2024/09/18 10:33:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jh7110_clkc.c,v 1.5 2024/09/18 10:37:03 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -841,9 +841,66 @@ static struct jh7110_clock_config jh7110_voutclk_config = {
 };
 
 
+#define JH7110_SYSRST_ASSERT			0x2f8
+#define JH7110_SYSRST_STATUS			0x308
+#define JH7110_SYSRST_NRESETS			126
+
+#define JH7110_AONRST_ASSERT			0x38
+#define JH7110_AONRST_STATUS			0x3c
+#define JH7110_AONRST_NRESETS			8
+
+#define JH7110_STGRST_ASSERT			0x74
+#define JH7110_STGRST_STATUS			0x78
+#define JH7110_STGRST_NRESETS			23
+
+#define JH7110_ISPRST_ASSERT			0x38
+#define JH7110_ISPRST_STATUS			0x3c
+#define JH7110_ISPRST_NRESETS			12
+
+#define JH7110_VOUTRST_ASSERT			0x48
+#define JH7110_VOUTRST_STATUS			0x4c
+#define JH7110_VOUTRST_NRESETS			12
+
+struct jh7110_reset_config {
+	size_t jhcr_nresets;
+	bus_size_t jhcr_assert;
+	bus_size_t jhcr_status;
+};
+
+static struct jh7110_reset_config jh7110_sysrst_config = {
+	.jhcr_nresets = JH7110_SYSRST_NRESETS,
+	.jhcr_assert = JH7110_SYSRST_ASSERT,
+	.jhcr_status = JH7110_SYSRST_STATUS,
+};
+
+static struct jh7110_reset_config jh7110_aonrst_config = {
+	.jhcr_nresets = JH7110_AONRST_NRESETS,
+	.jhcr_assert = JH7110_AONRST_ASSERT,
+	.jhcr_status = JH7110_AONRST_STATUS,
+};
+
+static struct jh7110_reset_config jh7110_stgrst_config = {
+	.jhcr_nresets = JH7110_STGRST_NRESETS,
+	.jhcr_assert = JH7110_STGRST_ASSERT,
+	.jhcr_status = JH7110_STGRST_STATUS,
+};
+
+static struct jh7110_reset_config jh7110_isprst_config = {
+	.jhcr_nresets = JH7110_ISPRST_NRESETS,
+	.jhcr_assert = JH7110_ISPRST_ASSERT,
+	.jhcr_status = JH7110_ISPRST_STATUS,
+};
+
+static struct jh7110_reset_config jh7110_voutrst_config = {
+	.jhcr_nresets = JH7110_VOUTRST_NRESETS,
+	.jhcr_assert = JH7110_VOUTRST_ASSERT,
+	.jhcr_status = JH7110_VOUTRST_STATUS,
+};
+
 struct jh7110_crg {
 	const char *jhc_name;
 	struct jh7110_clock_config *jhc_clk;
+	struct jh7110_reset_config *jhc_rst;
 	bool jhc_debug;
 };
 
@@ -851,6 +908,7 @@ struct jh7110_crg {
 static struct jh7110_crg jh7110_sys_config = {
 	.jhc_name = "System",
 	.jhc_clk = &jh7110_sysclk_config,
+	.jhc_rst = &jh7110_sysrst_config,
 	.jhc_debug = true,
 };
 
@@ -858,22 +916,26 @@ static struct jh7110_crg jh7110_sys_config = {
 static struct jh7110_crg jh7110_aon_config = {
 	.jhc_name = "Always-On",
 	.jhc_clk = &jh7110_aonclk_config,
+	.jhc_rst = &jh7110_aonrst_config,
 	.jhc_debug = true,
 };
 
 static struct jh7110_crg jh7110_isp_config = {
 	.jhc_name = "Image-Signal-Process",
 	.jhc_clk = &jh7110_ispclk_config,
+	.jhc_rst = &jh7110_isprst_config,
 };
 
 static struct jh7110_crg jh7110_stg_config = {
 	.jhc_name = "System-Top-Group",
 	.jhc_clk = &jh7110_stgclk_config,
+	.jhc_rst = &jh7110_stgrst_config,
 };
 
 static struct jh7110_crg jh7110_vout_config = {
 	.jhc_name = "Video Output",
 	.jhc_clk = &jh7110_voutclk_config,
+	.jhc_rst = &jh7110_voutrst_config,
 };
 
 
@@ -886,10 +948,107 @@ static const struct device_compatible_entry compat_data[] = {
 	DEVICE_COMPAT_EOL
 };
 
+#define CLK_LOCK(sc)							\
+	mutex_enter(&sc->sc_lock);
+#define CLK_UNLOCK(sc)							\
+	mutex_exit(&sc->sc_lock);
+
 #define RD4(sc, reg)							\
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
 #define WR4(sc, reg, val)						\
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
+
+#define JH7110_RESET_RETRIES 1000
+
+static void *
+jh7110_clkc_reset_acquire(device_t dev, const void *data, size_t len)
+{
+	struct jh71x0_clkc_softc * const sc = device_private(dev);
+
+	if (len != sizeof(uint32_t))
+		return NULL;
+
+	const uint32_t reset_id = be32dec(data);
+	if (reset_id >= sc->sc_nrsts)
+		return NULL;
+
+	uint32_t *reset = kmem_alloc(sizeof(uint32_t), KM_SLEEP);
+	*reset = reset_id;
+
+	return reset;
+}
+
+static void
+jh7110_clkc_reset_release(device_t dev, void *priv)
+{
+
+	kmem_free(priv, sizeof(uint32_t));
+}
+
+static int
+jh7110_clkc_reset_set(struct jh71x0_clkc_softc *sc, unsigned reset_id,
+    bool assert)
+{
+	const uint32_t off = (reset_id / 32) * sizeof(uint32_t);
+	const uint32_t bit = reset_id % 32;
+	const bus_size_t assert_reg = sc->sc_reset_assert + off;
+	const bus_size_t status_reg = sc->sc_reset_status + off;
+
+	CLK_LOCK(sc);
+
+	const uint32_t val = RD4(sc, assert_reg);
+	if (assert)
+		WR4(sc, assert_reg, val | __BIT(bit));
+	else
+		WR4(sc, assert_reg, val & ~__BIT(bit));
+
+	unsigned i;
+	uint32_t status;
+	for (i = 0; i < JH7110_RESET_RETRIES; i++) {
+		status = RD4(sc, status_reg);
+		bool asserted = (status & __BIT(bit)) == 0;
+		if (asserted == assert)
+			break;
+	}
+	CLK_UNLOCK(sc);
+
+	if (i >= JH7110_RESET_RETRIES) {
+		printf("%s: reset %3d status %#010x / %2d didn't %sassert\n",
+		    __func__, reset_id, status, bit, assert ? "" : "de");
+		return ETIMEDOUT;
+	}
+
+	return 0;
+}
+
+static int
+jh7110_clkc_reset_assert(device_t dev, void *priv)
+{
+	struct jh71x0_clkc_softc * const sc = device_private(dev);
+	const uint32_t *reset = priv;
+	const uint32_t reset_id = *reset;
+
+	return jh7110_clkc_reset_set(sc, reset_id, true);
+}
+
+static int
+jh7110_clkc_reset_deassert(device_t dev, void *priv)
+{
+	struct jh71x0_clkc_softc * const sc = device_private(dev);
+	const uint32_t *reset = priv;
+	const uint32_t reset_id = *reset;
+
+	return jh7110_clkc_reset_set(sc, reset_id, false);
+}
+
+
+static const struct fdtbus_reset_controller_func jh7110_clkc_fdtreset_funcs = {
+	.acquire = jh7110_clkc_reset_acquire,
+	.release = jh7110_clkc_reset_release,
+	.reset_assert = jh7110_clkc_reset_assert,
+	.reset_deassert = jh7110_clkc_reset_deassert,
+};
+
 
 static struct clk *
 jh7110_clkc_clock_decode(device_t dev, int phandle, const void *data,
@@ -954,8 +1113,14 @@ jh7110_clkc_attach(device_t parent, device_t self, void *aux)
 	KASSERT(jhc != NULL);
 
 	struct jh7110_clock_config * const jhcc = jhc->jhc_clk;
+	struct jh7110_reset_config * const jhcr = jhc->jhc_rst;
 	sc->sc_clk = jhcc->jhcc_clocks;
 	sc->sc_nclks = jhcc->jhcc_nclks;
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	sc->sc_nrsts = jhcr->jhcr_nresets;
+	sc->sc_reset_assert = jhcr->jhcr_assert;
+	sc->sc_reset_status = jhcr->jhcr_status;
 
 	for (size_t id = 0; id < sc->sc_nclks; id++) {
 		if (sc->sc_clk[id].jcc_type == JH71X0CLK_UNKNOWN)
@@ -983,6 +1148,7 @@ jh7110_clkc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	fdtbus_register_clock_controller(self, phandle, &jh7110_clkc_fdtclock_funcs);
+	fdtbus_register_reset_controller(self, phandle, &jh7110_clkc_fdtreset_funcs);
 }
 
 CFATTACH_DECL_NEW(jh7110_clkc, sizeof(struct jh71x0_clkc_softc),

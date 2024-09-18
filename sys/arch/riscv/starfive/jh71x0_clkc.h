@@ -1,4 +1,4 @@
-/* $NetBSD: jh71x0_clkc.h,v 1.3 2024/08/25 15:23:29 skrll Exp $ */
+/* $NetBSD: jh71x0_clkc.h,v 1.4 2024/09/18 10:37:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -69,6 +69,8 @@ struct jh71x0_clkc_softc {
 	size_t			sc_nrsts;
 	bus_size_t		sc_reset_assert;
 	bus_size_t		sc_reset_status;
+
+	kmutex_t		sc_lock;
 };
 
 struct jh71x0_clkc_clk;
