@@ -1,4 +1,4 @@
-/* $NetBSD: efibootarm.c,v 1.4 2024/08/15 06:15:17 skrll Exp $ */
+/* $NetBSD: efibootarm.c,v 1.5 2024/09/18 19:43:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -35,6 +35,7 @@
 
 /* cache.S */
 void armv7_dcache_wbinv_range(vaddr_t, vsize_t);
+void armv7_dcache_wbinv_all(void);
 void armv7_icache_inv_all(void);
 void armv7_exec_kernel(register_t, register_t);
 
@@ -47,13 +48,7 @@ efi_dcache_flush(u_long start, u_long size)
 void
 efi_boot_kernel(u_long marks[MARK_MAX])
 {
-	u_long kernel_size;
-
-	kernel_size = marks[MARK_END] - marks[MARK_START];
-
-	armv7_dcache_wbinv_range(marks[MARK_START], kernel_size);
-	if (efi_fdt_size() > 0)
-		armv7_dcache_wbinv_range((u_long)efi_fdt_data(), efi_fdt_size());
+	armv7_dcache_wbinv_all();
 	armv7_icache_inv_all();
 
 	armv7_exec_kernel((register_t)marks[MARK_ENTRY], (register_t)efi_fdt_data());

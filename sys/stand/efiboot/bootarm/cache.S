@@ -53,6 +53,67 @@ ENTRY(armv7_dcache_wbinv_range)
 	bx	lr
 END(armv7_dcache_wbinv_range)
 
+/* LINTSTUB: void armv7_dcache_wbinv_all(void); */
+ENTRY_NP(armv7_dcache_wbinv_all)
+	mrc	p15, 1, r0, c0, c0, 1	@ read CLIDR
+	tst	r0, #0x07000000
+	bxeq	lr
+	mov	r3, #0			@ start with L1
+
+.Lstart_wbinv:
+	add	r2, r3, r3, lsr #1	@ r2 = level * 3 / 2
+	mov	r1, r0, lsr r2		@ r1 = cache type
+	tst	r1, #6			@ is it unified or data?
+	beq	.Lnext_level_wbinv	@ nope, skip level
+
+	mcr	p15, 2, r3, c0, c0, 0	@ select cache level
+	isb
+	mrc	p15, 1, r0, c0, c0, 0	@ read CCSIDR
+
+	ubfx	ip, r0, #0, #3		@ get linesize from CCSIDR
+	add	ip, ip, #4		@ apply bias
+	ubfx	r2, r0, #13, #15	@ get numsets - 1 from CCSIDR
+	lsl	r2, r2, ip		@ shift to set position
+	orr	r3, r3, r2		@ merge set into way/set/level
+	mov	r1, #1
+	lsl	r1, r1, ip		@ r1 = set decr
+
+	ubfx	ip, r0, #3, #10		@ get numways - 1 from [to be discarded] CCSIDR
+	clz	r2, ip			@ number of bits to MSB of way
+	lsl	ip, ip, r2		@ shift by that into way position
+	mov	r0, #1			@
+	lsl	r2, r0, r2		@ r2 now contains the way decr
+	mov	r0, r3 			@ get sets/level (no way yet)
+	orr	r3, r3, ip		@ merge way into way/set/level
+	bfc	r0, #0, #4		@ clear low 4 bits (level) to get numset - 1
+	sub	r2, r2, r0		@ subtract from way decr
+
+	/* r3 = ways/sets/level, r2 = way decr, r1 = set decr, r0 and ip are free */
+1:	mcr	p15, 0, r3, c7, c14, 2	@ DCCISW (data cache clean and invalidate by set/way)
+	cmp	r3, #15			@ are we done with this level (way/set == 0)
+	bls	.Lnext_level_wbinv	@ yes, go to next level
+	ubfx	r0, r3, #4, #18		@ extract set bits
+	cmp	r0, #0			@ compare
+	subne	r3, r3, r1		@ non-zero?, decrement set #
+	subeq	r3, r3, r2		@ zero?, decrement way # and restore set count
+	b	1b
+
+.Lnext_level_wbinv:
+	dsb
+	mrc	p15, 1, r0, c0, c0, 1	@ read CLIDR
+	ubfx	ip, r0, #24, #3		@ narrow to LoC
+	add	r3, r3, #2		@ go to next level
+	cmp	r3, ip, lsl #1		@ compare
+	blt	.Lstart_wbinv		@ not done, next level (r0 == CLIDR)
+
+.Ldone_wbinv:
+	mov	r0, #0			@ default back to cache level 0
+	mcr	p15, 2, r0, c0, c0, 0	@ select cache level
+	dsb
+	isb
+	bx	lr
+END(armv7_dcache_wbinv_all)
+
 /* * LINTSTUB: void armv7_icache_inv_all(void); */
 ENTRY_NP(armv7_icache_inv_all)
 	mov	r0, #0
