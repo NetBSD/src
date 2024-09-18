@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.53 2024/06/29 13:46:40 rin Exp $	*/
+/*	$NetBSD: libi386.h,v 1.54 2024/09/18 00:44:03 rin Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -97,12 +97,6 @@ struct multiboot_package *probe_multiboot2(const char *);
 
 /* this is in "user code"! */
 int parsebootfile(const char *, char **, char **, int *, int *, const char **);
-
-#ifdef XMS
-physaddr_t ppbcopy(physaddr_t, physaddr_t, int);
-int checkxms(void);
-physaddr_t xmsalloc(int);
-#endif
 
 /* parseutils.c */
 char *gettrailer(char *);
