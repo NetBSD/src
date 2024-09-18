@@ -15,6 +15,7 @@
 #include "utils/common.h"
 #include "common/ieee802_11_defs.h"
 #include "common/gas.h"
+#include "rsn_supp/wpa.h"
 #include "config.h"
 #include "wpa_supplicant_i.h"
 #include "driver_i.h"
@@ -64,14 +65,18 @@ const u8 * mbo_get_attr_from_ies(const u8 *ies, size_t ies_len,
 }
 
 
-const u8 * wpas_mbo_get_bss_attr(struct wpa_bss *bss, enum mbo_attr_id attr)
+static const u8 * wpas_mbo_get_bss_attr(struct wpa_bss *bss,
+					enum mbo_attr_id attr, bool beacon)
 {
 	const u8 *mbo, *end;
 
 	if (!bss)
 		return NULL;
 
-	mbo = wpa_bss_get_vendor_ie(bss, MBO_IE_VENDOR_TYPE);
+	if (beacon)
+		mbo = wpa_bss_get_vendor_ie_beacon(bss, MBO_IE_VENDOR_TYPE);
+	else
+		mbo = wpa_bss_get_vendor_ie(bss, MBO_IE_VENDOR_TYPE);
 	if (!mbo)
 		return NULL;
 
@@ -79,6 +84,48 @@ const u8 * wpas_mbo_get_bss_attr(struct wpa_bss *bss, enum mbo_attr_id attr)
 	mbo += MBO_IE_HEADER;
 
 	return get_ie(mbo, end - mbo, attr);
+}
+
+
+const u8 * wpas_mbo_check_assoc_disallow(struct wpa_bss *bss)
+{
+	const u8 *assoc_disallow;
+
+	assoc_disallow = wpas_mbo_get_bss_attr(bss, MBO_ATTR_ID_ASSOC_DISALLOW,
+					       bss->beacon_newer);
+	if (assoc_disallow && assoc_disallow[1] >= 1)
+		return assoc_disallow;
+
+	return NULL;
+}
+
+
+void wpas_mbo_check_pmf(struct wpa_supplicant *wpa_s, struct wpa_bss *bss,
+			struct wpa_ssid *ssid)
+{
+	const u8 *rsne, *mbo, *oce;
+	struct wpa_ie_data ie;
+
+	wpa_s->disable_mbo_oce = 0;
+	if (!bss)
+		return;
+	mbo = wpas_mbo_get_bss_attr(bss, MBO_ATTR_ID_AP_CAPA_IND, false);
+	oce = wpas_mbo_get_bss_attr(bss, OCE_ATTR_ID_CAPA_IND, false);
+	if (!mbo && !oce)
+		return;
+	if (oce && oce[1] >= 1 && (oce[2] & OCE_IS_STA_CFON))
+		return; /* STA-CFON is not required to enable PMF */
+	rsne = wpa_bss_get_ie(bss, WLAN_EID_RSN);
+	if (!rsne || wpa_parse_wpa_ie(rsne, 2 + rsne[1], &ie) < 0)
+		return; /* AP is not using RSN */
+
+	if (!(ie.capabilities & WPA_CAPABILITY_MFPC))
+		wpa_s->disable_mbo_oce = 1; /* AP uses RSN without PMF */
+	if (wpas_get_ssid_pmf(wpa_s, ssid) == NO_MGMT_FRAME_PROTECTION)
+		wpa_s->disable_mbo_oce = 1; /* STA uses RSN without PMF */
+	if (wpa_s->disable_mbo_oce)
+		wpa_printf(MSG_INFO,
+			   "MBO: Disable MBO/OCE due to misbehaving AP not having enabled PMF");
 }
 
 

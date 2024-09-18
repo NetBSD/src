@@ -61,6 +61,7 @@ void sta_ip6addr_del(struct hostapd_data *hapd, struct sta_info *sta)
 	dl_list_for_each_safe(ip6addr, prev, &sta->ip6addr, struct ip6addr,
 			      list) {
 		hostapd_drv_br_delete_ip_neigh(hapd, 6, (u8 *) &ip6addr->addr);
+		dl_list_del(&ip6addr->list);
 		os_free(ip6addr);
 	}
 }
@@ -150,10 +151,12 @@ static void handle_ndisc(void *ctx, const u8 *src_addr, const u8 *buf,
 				return;
 		}
 		break;
+#ifdef CONFIG_HS20
 	case ROUTER_ADVERTISEMENT:
 		if (hapd->conf->disable_dgaf)
 			ucast_to_stas(hapd, buf, len);
 		break;
+#endif /* CONFIG_HS20 */
 	case NEIGHBOR_ADVERTISEMENT:
 		if (hapd->conf->na_mcast_to_ucast)
 			ucast_to_stas(hapd, buf, len);

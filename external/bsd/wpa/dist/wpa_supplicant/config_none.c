@@ -5,7 +5,7 @@
  * This software may be distributed under the terms of the BSD license.
  * See README for more details.
  *
- * This file implements dummy example of a configuration backend. None of the
+ * This file implements stub example of a configuration backend. None of the
  * functions are actually implemented so this can be used as a simple
  * compilation test or a starting point for a new configuration backend.
  */
@@ -17,7 +17,8 @@
 #include "base64.h"
 
 
-struct wpa_config * wpa_config_read(const char *name, struct wpa_config *cfgp)
+struct wpa_config * wpa_config_read(const char *name, struct wpa_config *cfgp,
+				    bool ro)
 {
 	struct wpa_config *config;
 
