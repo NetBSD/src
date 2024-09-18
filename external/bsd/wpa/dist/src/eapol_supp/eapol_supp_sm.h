@@ -188,6 +188,7 @@ struct eapol_ctx {
 	 */
 	void (*aborted_cached)(void *ctx);
 
+#ifndef CONFIG_OPENSC_ENGINE_PATH
 	/**
 	 * opensc_engine_path - Path to the OpenSSL engine for opensc
 	 *
@@ -195,7 +196,9 @@ struct eapol_ctx {
 	 * engine (engine_opensc.so); if %NULL, this engine is not loaded.
 	 */
 	const char *opensc_engine_path;
+#endif /* CONFIG_OPENSC_ENGINE_PATH */
 
+#ifndef CONFIG_PKCS11_ENGINE_PATH
 	/**
 	 * pkcs11_engine_path - Path to the OpenSSL engine for PKCS#11
 	 *
@@ -203,7 +206,9 @@ struct eapol_ctx {
 	 * engine (engine_pkcs11.so); if %NULL, this engine is not loaded.
 	 */
 	const char *pkcs11_engine_path;
+#endif /* CONFIG_PKCS11_ENGINE_PATH */
 
+#ifndef CONFIG_PKCS11_MODULE_PATH
 	/**
 	 * pkcs11_module_path - Path to the OpenSSL OpenSC/PKCS#11 module
 	 *
@@ -212,6 +217,7 @@ struct eapol_ctx {
 	 * module is not loaded.
 	 */
 	const char *pkcs11_module_path;
+#endif /* CONFIG_PKCS11_MODULE_PATH */
 
 	/**
 	 * openssl_ciphers - OpenSSL cipher string
@@ -298,6 +304,22 @@ struct eapol_ctx {
 	 * @len: Length of anonymous identity in octets
 	 */
 	void (*set_anon_id)(void *ctx, const u8 *id, size_t len);
+
+	/**
+	 * confirm_auth_cb - Callback confirming if we can install a new PTK
+	 * @ctx: eapol_ctx from eap_peer_sm_init() call
+	 * Returns: 0 when authentication can continue, -1 when reconnecting
+	 *
+	 * Automatically triggers a reconnect when not.
+	 */
+	int (*confirm_auth_cb)(void *ctx);
+
+	/**
+	 * encryption_required - Check whether encryption is required
+	 * @ctx: eapol_ctx from eap_peer_sm_init() call
+	 * Returns: Whether the current session requires encryption
+	 */
+	bool (*encryption_required)(void *ctx);
 };
 
 
@@ -314,18 +336,18 @@ int eapol_sm_get_mib(struct eapol_sm *sm, char *buf, size_t buflen);
 void eapol_sm_configure(struct eapol_sm *sm, int heldPeriod, int authPeriod,
 			int startPeriod, int maxStart);
 int eapol_sm_rx_eapol(struct eapol_sm *sm, const u8 *src, const u8 *buf,
-		      size_t len);
+		      size_t len, enum frame_encryption encrypted);
 void eapol_sm_notify_tx_eapol_key(struct eapol_sm *sm);
-void eapol_sm_notify_portEnabled(struct eapol_sm *sm, Boolean enabled);
-void eapol_sm_notify_portValid(struct eapol_sm *sm, Boolean valid);
-void eapol_sm_notify_eap_success(struct eapol_sm *sm, Boolean success);
-void eapol_sm_notify_eap_fail(struct eapol_sm *sm, Boolean fail);
+void eapol_sm_notify_portEnabled(struct eapol_sm *sm, bool enabled);
+void eapol_sm_notify_portValid(struct eapol_sm *sm, bool valid);
+void eapol_sm_notify_eap_success(struct eapol_sm *sm, bool success);
+void eapol_sm_notify_eap_fail(struct eapol_sm *sm, bool fail);
 void eapol_sm_notify_config(struct eapol_sm *sm,
 			    struct eap_peer_config *config,
 			    const struct eapol_config *conf);
 int eapol_sm_get_key(struct eapol_sm *sm, u8 *key, size_t len);
 const u8 * eapol_sm_get_session_id(struct eapol_sm *sm, size_t *len);
-void eapol_sm_notify_logoff(struct eapol_sm *sm, Boolean logoff);
+void eapol_sm_notify_logoff(struct eapol_sm *sm, bool logoff);
 void eapol_sm_notify_cached(struct eapol_sm *sm);
 void eapol_sm_notify_pmkid_attempt(struct eapol_sm *sm);
 void eapol_sm_register_scard_ctx(struct eapol_sm *sm, void *ctx);
@@ -380,7 +402,8 @@ static inline void eapol_sm_configure(struct eapol_sm *sm, int heldPeriod,
 {
 }
 static inline int eapol_sm_rx_eapol(struct eapol_sm *sm, const u8 *src,
-				    const u8 *buf, size_t len)
+				    const u8 *buf, size_t len,
+				    enum frame_encryption encrypted)
 {
 	return 0;
 }
@@ -388,18 +411,18 @@ static inline void eapol_sm_notify_tx_eapol_key(struct eapol_sm *sm)
 {
 }
 static inline void eapol_sm_notify_portEnabled(struct eapol_sm *sm,
-					       Boolean enabled)
+					       bool enabled)
 {
 }
 static inline void eapol_sm_notify_portValid(struct eapol_sm *sm,
-					     Boolean valid)
+					     bool valid)
 {
 }
 static inline void eapol_sm_notify_eap_success(struct eapol_sm *sm,
-					       Boolean success)
+					       bool success)
 {
 }
-static inline void eapol_sm_notify_eap_fail(struct eapol_sm *sm, Boolean fail)
+static inline void eapol_sm_notify_eap_fail(struct eapol_sm *sm, bool fail)
 {
 }
 static inline void eapol_sm_notify_config(struct eapol_sm *sm,
@@ -416,7 +439,7 @@ eapol_sm_get_session_id(struct eapol_sm *sm, size_t *len)
 {
 	return NULL;
 }
-static inline void eapol_sm_notify_logoff(struct eapol_sm *sm, Boolean logoff)
+static inline void eapol_sm_notify_logoff(struct eapol_sm *sm, bool logoff)
 {
 }
 static inline void eapol_sm_notify_cached(struct eapol_sm *sm)

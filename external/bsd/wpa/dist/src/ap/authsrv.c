@@ -9,6 +9,7 @@
 #include "utils/includes.h"
 
 #include "utils/common.h"
+#include "crypto/crypto.h"
 #include "crypto/tls.h"
 #include "eap_server/eap.h"
 #include "eap_server/eap_sim_db.h"
@@ -105,33 +106,31 @@ static int hostapd_setup_radius_srv(struct hostapd_data *hapd)
 {
 	struct radius_server_conf srv;
 	struct hostapd_bss_config *conf = hapd->conf;
+
+#ifdef CONFIG_IEEE80211BE
+	if (!hostapd_mld_is_first_bss(hapd)) {
+		struct hostapd_data *first;
+
+		wpa_printf(MSG_DEBUG,
+			   "MLD: Using RADIUS server of the first BSS");
+
+		first = hostapd_mld_get_first_bss(hapd);
+		if (!first)
+			return -1;
+		hapd->radius_srv = first->radius_srv;
+		return 0;
+	}
+#endif /* CONFIG_IEEE80211BE */
+
 	os_memset(&srv, 0, sizeof(srv));
 	srv.client_file = conf->radius_server_clients;
 	srv.auth_port = conf->radius_server_auth_port;
 	srv.acct_port = conf->radius_server_acct_port;
 	srv.conf_ctx = hapd;
-	srv.eap_sim_db_priv = hapd->eap_sim_db_priv;
-	srv.ssl_ctx = hapd->ssl_ctx;
-	srv.msg_ctx = hapd->msg_ctx;
-	srv.pac_opaque_encr_key = conf->pac_opaque_encr_key;
-	srv.eap_fast_a_id = conf->eap_fast_a_id;
-	srv.eap_fast_a_id_len = conf->eap_fast_a_id_len;
-	srv.eap_fast_a_id_info = conf->eap_fast_a_id_info;
-	srv.eap_fast_prov = conf->eap_fast_prov;
-	srv.pac_key_lifetime = conf->pac_key_lifetime;
-	srv.pac_key_refresh_time = conf->pac_key_refresh_time;
-	srv.eap_teap_auth = conf->eap_teap_auth;
-	srv.eap_teap_pac_no_inner = conf->eap_teap_pac_no_inner;
-	srv.eap_sim_aka_result_ind = conf->eap_sim_aka_result_ind;
-	srv.eap_sim_id = conf->eap_sim_id;
-	srv.tnc = conf->tnc;
-	srv.wps = hapd->wps;
 	srv.ipv6 = conf->radius_server_ipv6;
 	srv.get_eap_user = hostapd_radius_get_eap_user;
 	srv.eap_req_id_text = conf->eap_req_id_text;
 	srv.eap_req_id_text_len = conf->eap_req_id_text_len;
-	srv.pwd_group = conf->pwd_group;
-	srv.server_id = conf->server_id ? conf->server_id : "hostapd";
 	srv.sqlite_file = conf->eap_user_sqlite;
 #ifdef CONFIG_RADIUS_TEST
 	srv.dump_msk_file = conf->dump_msk_file;
@@ -142,10 +141,8 @@ static int hostapd_setup_radius_srv(struct hostapd_data *hapd)
 	srv.hs20_sim_provisioning_url = conf->hs20_sim_provisioning_url;
 	srv.t_c_server_url = conf->t_c_server_url;
 #endif /* CONFIG_HS20 */
-	srv.erp = conf->eap_server_erp;
 	srv.erp_domain = conf->erp_domain;
-	srv.tls_session_lifetime = conf->tls_session_lifetime;
-	srv.tls_flags = conf->tls_flags;
+	srv.eap_cfg = hapd->eap_cfg;
 
 	hapd->radius_srv = radius_server_init(&srv);
 	if (hapd->radius_srv == NULL) {
@@ -188,13 +185,106 @@ static void authsrv_tls_event(void *ctx, enum tls_event ev,
 			wpa_printf(MSG_DEBUG, "authsrv: remote TLS alert: %s",
 				   data->alert.description);
 		break;
+	case TLS_UNSAFE_RENEGOTIATION_DISABLED:
+		/* Not applicable to TLS server */
+		break;
 	}
 }
 #endif /* EAP_TLS_FUNCS */
 
 
+static struct eap_config * authsrv_eap_config(struct hostapd_data *hapd)
+{
+	struct eap_config *cfg;
+
+	cfg = os_zalloc(sizeof(*cfg));
+	if (!cfg)
+		return NULL;
+
+	cfg->eap_server = hapd->conf->eap_server;
+	cfg->ssl_ctx = hapd->ssl_ctx;
+	cfg->msg_ctx = hapd->msg_ctx;
+	cfg->eap_sim_db_priv = hapd->eap_sim_db_priv;
+	cfg->tls_session_lifetime = hapd->conf->tls_session_lifetime;
+	cfg->tls_flags = hapd->conf->tls_flags;
+	cfg->max_auth_rounds = hapd->conf->max_auth_rounds;
+	cfg->max_auth_rounds_short = hapd->conf->max_auth_rounds_short;
+	if (hapd->conf->pac_opaque_encr_key)
+		cfg->pac_opaque_encr_key =
+			os_memdup(hapd->conf->pac_opaque_encr_key, 16);
+	if (hapd->conf->eap_fast_a_id) {
+		cfg->eap_fast_a_id = os_memdup(hapd->conf->eap_fast_a_id,
+					       hapd->conf->eap_fast_a_id_len);
+		cfg->eap_fast_a_id_len = hapd->conf->eap_fast_a_id_len;
+	}
+	if (hapd->conf->eap_fast_a_id_info)
+		cfg->eap_fast_a_id_info =
+			os_strdup(hapd->conf->eap_fast_a_id_info);
+	cfg->eap_fast_prov = hapd->conf->eap_fast_prov;
+	cfg->pac_key_lifetime = hapd->conf->pac_key_lifetime;
+	cfg->pac_key_refresh_time = hapd->conf->pac_key_refresh_time;
+	cfg->eap_teap_auth = hapd->conf->eap_teap_auth;
+	cfg->eap_teap_pac_no_inner = hapd->conf->eap_teap_pac_no_inner;
+	cfg->eap_teap_separate_result = hapd->conf->eap_teap_separate_result;
+	cfg->eap_teap_id = hapd->conf->eap_teap_id;
+	cfg->eap_teap_method_sequence = hapd->conf->eap_teap_method_sequence;
+	cfg->eap_sim_aka_result_ind = hapd->conf->eap_sim_aka_result_ind;
+	cfg->eap_sim_id = hapd->conf->eap_sim_id;
+	cfg->imsi_privacy_key = hapd->imsi_privacy_key;
+	cfg->eap_sim_aka_fast_reauth_limit =
+		hapd->conf->eap_sim_aka_fast_reauth_limit;
+	cfg->tnc = hapd->conf->tnc;
+	cfg->wps = hapd->wps;
+	cfg->fragment_size = hapd->conf->fragment_size;
+	cfg->pwd_group = hapd->conf->pwd_group;
+	cfg->pbc_in_m1 = hapd->conf->pbc_in_m1;
+	if (hapd->conf->server_id) {
+		cfg->server_id = (u8 *) os_strdup(hapd->conf->server_id);
+		cfg->server_id_len = os_strlen(hapd->conf->server_id);
+	} else {
+		cfg->server_id = (u8 *) os_strdup("hostapd");
+		cfg->server_id_len = 7;
+	}
+	cfg->erp = hapd->conf->eap_server_erp;
+#ifdef CONFIG_TESTING_OPTIONS
+	cfg->skip_prot_success = hapd->conf->eap_skip_prot_success;
+#endif /* CONFIG_TESTING_OPTIONS */
+
+	return cfg;
+}
+
+
 int authsrv_init(struct hostapd_data *hapd)
 {
+#ifdef CONFIG_IEEE80211BE
+	if (!hostapd_mld_is_first_bss(hapd)) {
+		struct hostapd_data *first;
+
+		first = hostapd_mld_get_first_bss(hapd);
+		if (!first)
+			return -1;
+
+		if (!first->eap_cfg) {
+			wpa_printf(MSG_DEBUG,
+				   "MLD: First BSS auth_serv does not exist. Init on its behalf");
+
+			if (authsrv_init(first))
+				return -1;
+		}
+
+		wpa_printf(MSG_DEBUG, "MLD: Using auth_serv of the first BSS");
+
+#ifdef EAP_TLS_FUNCS
+		hapd->ssl_ctx = first->ssl_ctx;
+#endif /* EAP_TLS_FUNCS */
+		hapd->eap_cfg = first->eap_cfg;
+#ifdef EAP_SIM_DB
+		hapd->eap_sim_db_priv = first->eap_sim_db_priv;
+#endif /* EAP_SIM_DB */
+		return 0;
+	}
+#endif /* CONFIG_IEEE80211BE */
+
 #ifdef EAP_TLS_FUNCS
 	if (hapd->conf->eap_server &&
 	    (hapd->conf->ca_cert || hapd->conf->server_cert ||
@@ -258,6 +348,22 @@ int authsrv_init(struct hostapd_data *hapd)
 	}
 #endif /* EAP_TLS_FUNCS */
 
+#ifdef CRYPTO_RSA_OAEP_SHA256
+	crypto_rsa_key_free(hapd->imsi_privacy_key);
+	hapd->imsi_privacy_key = NULL;
+	if (hapd->conf->imsi_privacy_key) {
+		hapd->imsi_privacy_key = crypto_rsa_key_read(
+			hapd->conf->imsi_privacy_key, true);
+		if (!hapd->imsi_privacy_key) {
+			wpa_printf(MSG_ERROR,
+				   "Failed to read/parse IMSI privacy key %s",
+				   hapd->conf->imsi_privacy_key);
+			authsrv_deinit(hapd);
+			return -1;
+		}
+	}
+#endif /* CRYPTO_RSA_OAEP_SHA256 */
+
 #ifdef EAP_SIM_DB
 	if (hapd->conf->eap_sim_db) {
 		hapd->eap_sim_db_priv =
@@ -273,6 +379,14 @@ int authsrv_init(struct hostapd_data *hapd)
 	}
 #endif /* EAP_SIM_DB */
 
+	hapd->eap_cfg = authsrv_eap_config(hapd);
+	if (!hapd->eap_cfg) {
+		wpa_printf(MSG_ERROR,
+			   "Failed to build EAP server configuration");
+		authsrv_deinit(hapd);
+		return -1;
+	}
+
 #ifdef RADIUS_SERVER
 	if (hapd->conf->radius_server_clients &&
 	    hostapd_setup_radius_srv(hapd))
@@ -285,10 +399,32 @@ int authsrv_init(struct hostapd_data *hapd)
 
 void authsrv_deinit(struct hostapd_data *hapd)
 {
+#ifdef CONFIG_IEEE80211BE
+	if (!hostapd_mld_is_first_bss(hapd)) {
+		wpa_printf(MSG_DEBUG,
+			   "MLD: Deinit auth_serv of a non-first BSS");
+
+		hapd->radius_srv = NULL;
+		hapd->eap_cfg = NULL;
+#ifdef EAP_SIM_DB
+		hapd->eap_sim_db_priv = NULL;
+#endif /* EAP_SIM_DB */
+#ifdef EAP_TLS_FUNCS
+		hapd->ssl_ctx = NULL;
+#endif /* EAP_TLS_FUNCS */
+		return;
+	}
+#endif /* CONFIG_IEEE80211BE */
+
 #ifdef RADIUS_SERVER
 	radius_server_deinit(hapd->radius_srv);
 	hapd->radius_srv = NULL;
 #endif /* RADIUS_SERVER */
+
+#ifdef CRYPTO_RSA_OAEP_SHA256
+	crypto_rsa_key_free(hapd->imsi_privacy_key);
+	hapd->imsi_privacy_key = NULL;
+#endif /* CRYPTO_RSA_OAEP_SHA256 */
 
 #ifdef EAP_TLS_FUNCS
 	if (hapd->ssl_ctx) {
@@ -303,4 +439,7 @@ void authsrv_deinit(struct hostapd_data *hapd)
 		hapd->eap_sim_db_priv = NULL;
 	}
 #endif /* EAP_SIM_DB */
+
+	eap_server_config_free(hapd->eap_cfg);
+	hapd->eap_cfg = NULL;
 }

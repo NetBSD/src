@@ -127,7 +127,8 @@ int compute_password_element(EAP_PWD_group *grp, u16 num,
 	u8 qr_or_qnr_bin[MAX_ECC_PRIME_LEN];
 	u8 x_bin[MAX_ECC_PRIME_LEN];
 	u8 prime_bin[MAX_ECC_PRIME_LEN];
-	struct crypto_bignum *tmp2 = NULL;
+	u8 x_y[2 * MAX_ECC_PRIME_LEN];
+	struct crypto_bignum *tmp2 = NULL, *y = NULL;
 	struct crypto_hash *hash;
 	unsigned char pwe_digest[SHA256_MAC_LEN], *prfbuf = NULL, ctr;
 	int ret = 0, res;
@@ -139,6 +140,7 @@ int compute_password_element(EAP_PWD_group *grp, u16 num,
 	u8 found_ctr = 0, is_odd = 0;
 	int cmp_prime;
 	unsigned int in_range;
+	unsigned int is_eq;
 
 	if (grp->pwe)
 		return -1;
@@ -151,11 +153,6 @@ int compute_password_element(EAP_PWD_group *grp, u16 num,
 	if (crypto_bignum_to_bin(prime, prime_bin, sizeof(prime_bin),
 				 primebytelen) < 0)
 		return -1;
-	grp->pwe = crypto_ec_point_init(grp->group);
-	if (!grp->pwe) {
-		wpa_printf(MSG_INFO, "EAP-pwd: unable to create bignums");
-		goto fail;
-	}
 
 	if ((prfbuf = os_malloc(primebytelen)) == NULL) {
 		wpa_printf(MSG_INFO, "EAP-pwd: unable to malloc space for prf "
@@ -261,10 +258,37 @@ int compute_password_element(EAP_PWD_group *grp, u16 num,
 	 */
 	crypto_bignum_deinit(x_candidate, 1);
 	x_candidate = crypto_bignum_init_set(x_bin, primebytelen);
-	if (!x_candidate ||
-	    crypto_ec_point_solve_y_coord(grp->group, grp->pwe, x_candidate,
-					  is_odd) != 0) {
-		wpa_printf(MSG_INFO, "EAP-pwd: Could not solve for y");
+	if (!x_candidate)
+		goto fail;
+
+	/* y = sqrt(x^3 + ax + b) mod p
+	 * if LSB(y) == LSB(pwd-seed): PWE = (x, y)
+	 * else: PWE = (x, p - y)
+	 *
+	 * Calculate y and the two possible values for PWE and after that,
+	 * use constant time selection to copy the correct alternative.
+	 */
+	y = crypto_ec_point_compute_y_sqr(grp->group, x_candidate);
+	if (!y ||
+	    dragonfly_sqrt(grp->group, y, y) < 0 ||
+	    crypto_bignum_to_bin(y, x_y, MAX_ECC_PRIME_LEN, primebytelen) < 0 ||
+	    crypto_bignum_sub(prime, y, y) < 0 ||
+	    crypto_bignum_to_bin(y, x_y + MAX_ECC_PRIME_LEN,
+				 MAX_ECC_PRIME_LEN, primebytelen) < 0) {
+		wpa_printf(MSG_DEBUG, "EAP-pwd: Could not solve y");
+		goto fail;
+	}
+
+	/* Constant time selection of the y coordinate from the two
+	 * options */
+	is_eq = const_time_eq(is_odd, x_y[primebytelen - 1] & 0x01);
+	const_time_select_bin(is_eq, x_y, x_y + MAX_ECC_PRIME_LEN,
+			      primebytelen, x_y + primebytelen);
+	os_memcpy(x_y, x_bin, primebytelen);
+	wpa_hexdump_key(MSG_DEBUG, "EAP-pwd: PWE", x_y, 2 * primebytelen);
+	grp->pwe = crypto_ec_point_from_bin(grp->group, x_y);
+	if (!grp->pwe) {
+		wpa_printf(MSG_DEBUG, "EAP-pwd: Could not generate PWE");
 		goto fail;
 	}
 
@@ -289,6 +313,7 @@ int compute_password_element(EAP_PWD_group *grp, u16 num,
 	/* cleanliness and order.... */
 	crypto_bignum_deinit(x_candidate, 1);
 	crypto_bignum_deinit(tmp2, 1);
+	crypto_bignum_deinit(y, 1);
 	crypto_bignum_deinit(qr, 1);
 	crypto_bignum_deinit(qnr, 1);
 	bin_clear_free(prfbuf, primebytelen);
@@ -296,6 +321,7 @@ int compute_password_element(EAP_PWD_group *grp, u16 num,
 	os_memset(qnr_bin, 0, sizeof(qnr_bin));
 	os_memset(qr_or_qnr_bin, 0, sizeof(qr_or_qnr_bin));
 	os_memset(pwe_digest, 0, sizeof(pwe_digest));
+	forced_memzero(x_y, sizeof(x_y));
 
 	return ret;
 }
@@ -330,9 +356,19 @@ int compute_keys(EAP_PWD_group *grp, const struct crypto_bignum *k,
 		return -1;
 	}
 	eap_pwd_h_update(hash, (const u8 *) ciphersuite, sizeof(u32));
-	crypto_bignum_to_bin(peer_scalar, cruft, order_len, order_len);
+	if (crypto_bignum_to_bin(peer_scalar, cruft, order_len,
+				 order_len) < 0) {
+		os_free(cruft);
+		return -1;
+	}
+
 	eap_pwd_h_update(hash, cruft, order_len);
-	crypto_bignum_to_bin(server_scalar, cruft, order_len, order_len);
+	if (crypto_bignum_to_bin(server_scalar, cruft, order_len,
+				 order_len) < 0) {
+		os_free(cruft);
+		return -1;
+	}
+
 	eap_pwd_h_update(hash, cruft, order_len);
 	eap_pwd_h_final(hash, &session_id[1]);
 
@@ -342,7 +378,12 @@ int compute_keys(EAP_PWD_group *grp, const struct crypto_bignum *k,
 		os_free(cruft);
 		return -1;
 	}
-	crypto_bignum_to_bin(k, cruft, prime_len, prime_len);
+
+	if (crypto_bignum_to_bin(k, cruft, prime_len, prime_len) < 0) {
+		os_free(cruft);
+		return -1;
+	}
+
 	eap_pwd_h_update(hash, cruft, prime_len);
 	os_free(cruft);
 	eap_pwd_h_update(hash, confirm_peer, SHA256_MAC_LEN);

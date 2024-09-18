@@ -97,7 +97,7 @@ static void * eap_pwd_init(struct eap_sm *sm)
 	if (data == NULL)
 		return NULL;
 
-	data->group_num = sm->pwd_group;
+	data->group_num = sm->cfg->pwd_group;
 	wpa_printf(MSG_DEBUG, "EAP-pwd: Selected group number %d",
 		   data->group_num);
 	data->state = PWD_ID_Req;
@@ -134,7 +134,7 @@ static void * eap_pwd_init(struct eap_sm *sm)
 	data->in_frag_pos = data->out_frag_pos = 0;
 	data->inbuf = data->outbuf = NULL;
 	/* use default MTU from RFC 5931 if not configured otherwise */
-	data->mtu = sm->fragment_size > 0 ? sm->fragment_size : 1020;
+	data->mtu = sm->cfg->fragment_size > 0 ? sm->cfg->fragment_size : 1020;
 
 	return data;
 }
@@ -293,7 +293,10 @@ static void eap_pwd_build_commit_req(struct eap_sm *sm,
 	/* We send the element as (x,y) followed by the scalar */
 	element = wpabuf_put(data->outbuf, 2 * prime_len);
 	scalar = wpabuf_put(data->outbuf, order_len);
-	crypto_bignum_to_bin(data->my_scalar, scalar, order_len, order_len);
+	if (crypto_bignum_to_bin(data->my_scalar, scalar, order_len,
+				 order_len) < 0)
+		goto fin;
+
 	if (crypto_ec_point_to_bin(data->grp->group, data->my_element, element,
 				   element + prime_len) < 0) {
 		wpa_printf(MSG_INFO, "EAP-PWD (server): point assignment "
@@ -349,7 +352,9 @@ static void eap_pwd_build_confirm_req(struct eap_sm *sm,
 	 *
 	 * First is k
 	 */
-	crypto_bignum_to_bin(data->k, cruft, prime_len, prime_len);
+	if (crypto_bignum_to_bin(data->k, cruft, prime_len, prime_len) < 0)
+		goto fin;
+
 	eap_pwd_h_update(hash, cruft, prime_len);
 
 	/* server element: x, y */
@@ -362,7 +367,10 @@ static void eap_pwd_build_confirm_req(struct eap_sm *sm,
 	eap_pwd_h_update(hash, cruft, prime_len * 2);
 
 	/* server scalar */
-	crypto_bignum_to_bin(data->my_scalar, cruft, order_len, order_len);
+	if (crypto_bignum_to_bin(data->my_scalar, cruft, order_len,
+				 order_len) < 0)
+		goto fin;
+
 	eap_pwd_h_update(hash, cruft, order_len);
 
 	/* peer element: x, y */
@@ -375,7 +383,10 @@ static void eap_pwd_build_confirm_req(struct eap_sm *sm,
 	eap_pwd_h_update(hash, cruft, prime_len * 2);
 
 	/* peer scalar */
-	crypto_bignum_to_bin(data->peer_scalar, cruft, order_len, order_len);
+	if (crypto_bignum_to_bin(data->peer_scalar, cruft, order_len,
+				 order_len) < 0)
+		goto fin;
+
 	eap_pwd_h_update(hash, cruft, order_len);
 
 	/* ciphersuite */
@@ -530,8 +541,8 @@ eap_pwd_build_req(struct eap_sm *sm, void *priv, u8 id)
 }
 
 
-static Boolean eap_pwd_check(struct eap_sm *sm, void *priv,
-			     struct wpabuf *respData)
+static bool eap_pwd_check(struct eap_sm *sm, void *priv,
+			  struct wpabuf *respData)
 {
 	struct eap_pwd_data *data = priv;
 	const u8 *pos;
@@ -540,7 +551,7 @@ static Boolean eap_pwd_check(struct eap_sm *sm, void *priv,
 	pos = eap_hdr_validate(EAP_VENDOR_IETF, EAP_TYPE_PWD, respData, &len);
 	if (pos == NULL || len < 1) {
 		wpa_printf(MSG_INFO, "EAP-pwd: Invalid frame");
-		return TRUE;
+		return true;
 	}
 
 	wpa_printf(MSG_DEBUG, "EAP-pwd: Received frame: exch = %d, len = %d",
@@ -548,20 +559,20 @@ static Boolean eap_pwd_check(struct eap_sm *sm, void *priv,
 
 	if (data->state == PWD_ID_Req &&
 	    ((EAP_PWD_GET_EXCHANGE(*pos)) == EAP_PWD_OPCODE_ID_EXCH))
-		return FALSE;
+		return false;
 
 	if (data->state == PWD_Commit_Req &&
 	    ((EAP_PWD_GET_EXCHANGE(*pos)) == EAP_PWD_OPCODE_COMMIT_EXCH))
-		return FALSE;
+		return false;
 
 	if (data->state == PWD_Confirm_Req &&
 	    ((EAP_PWD_GET_EXCHANGE(*pos)) == EAP_PWD_OPCODE_CONFIRM_EXCH))
-		return FALSE;
+		return false;
 
 	wpa_printf(MSG_INFO, "EAP-pwd: Unexpected opcode=%d in state=%d",
 		   *pos, data->state);
 
-	return TRUE;
+	return true;
 }
 
 
@@ -785,7 +796,9 @@ eap_pwd_process_confirm_resp(struct eap_sm *sm, struct eap_pwd_data *data,
 		goto fin;
 
 	/* k */
-	crypto_bignum_to_bin(data->k, cruft, prime_len, prime_len);
+	if (crypto_bignum_to_bin(data->k, cruft, prime_len, prime_len) < 0)
+		goto fin;
+
 	eap_pwd_h_update(hash, cruft, prime_len);
 
 	/* peer element: x, y */
@@ -798,7 +811,10 @@ eap_pwd_process_confirm_resp(struct eap_sm *sm, struct eap_pwd_data *data,
 	eap_pwd_h_update(hash, cruft, prime_len * 2);
 
 	/* peer scalar */
-	crypto_bignum_to_bin(data->peer_scalar, cruft, order_len, order_len);
+	if (crypto_bignum_to_bin(data->peer_scalar, cruft, order_len,
+				 order_len) < 0)
+		goto fin;
+
 	eap_pwd_h_update(hash, cruft, order_len);
 
 	/* server element: x, y */
@@ -811,7 +827,10 @@ eap_pwd_process_confirm_resp(struct eap_sm *sm, struct eap_pwd_data *data,
 	eap_pwd_h_update(hash, cruft, prime_len * 2);
 
 	/* server scalar */
-	crypto_bignum_to_bin(data->my_scalar, cruft, order_len, order_len);
+	if (crypto_bignum_to_bin(data->my_scalar, cruft, order_len,
+				 order_len) < 0)
+		goto fin;
+
 	eap_pwd_h_update(hash, cruft, order_len);
 
 	/* ciphersuite */
@@ -1003,14 +1022,14 @@ static u8 * eap_pwd_get_emsk(struct eap_sm *sm, void *priv, size_t *len)
 }
 
 
-static Boolean eap_pwd_is_success(struct eap_sm *sm, void *priv)
+static bool eap_pwd_is_success(struct eap_sm *sm, void *priv)
 {
 	struct eap_pwd_data *data = priv;
 	return data->state == SUCCESS;
 }
 
 
-static Boolean eap_pwd_is_done(struct eap_sm *sm, void *priv)
+static bool eap_pwd_is_done(struct eap_sm *sm, void *priv)
 {
 	struct eap_pwd_data *data = priv;
 	return (data->state == SUCCESS) || (data->state == FAILURE);

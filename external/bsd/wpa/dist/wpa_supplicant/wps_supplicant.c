@@ -26,7 +26,7 @@
 #include "wpa_supplicant_i.h"
 #include "driver_i.h"
 #include "notify.h"
-#include "blacklist.h"
+#include "bssid_ignore.h"
 #include "bss.h"
 #include "scan.h"
 #include "ap.h"
@@ -79,6 +79,18 @@ static void wpas_wps_assoc_with_cred_cancel(struct wpa_supplicant *wpa_s)
 }
 
 
+static struct wpabuf * wpas_wps_get_wps_ie(struct wpa_bss *bss)
+{
+	/* Return the latest receive WPS IE from the AP regardless of whether
+	 * it was from a Beacon frame or Probe Response frame to avoid using
+	 * stale information. */
+	if (bss->beacon_newer)
+		return wpa_bss_get_vendor_ie_multi_beacon(bss,
+							  WPS_IE_VENDOR_TYPE);
+	return wpa_bss_get_vendor_ie_multi(bss, WPS_IE_VENDOR_TYPE);
+}
+
+
 int wpas_wps_eapol_cb(struct wpa_supplicant *wpa_s)
 {
 	if (wpas_p2p_wps_eapol_cb(wpa_s) > 0)
@@ -94,14 +106,14 @@ int wpas_wps_eapol_cb(struct wpa_supplicant *wpa_s)
 		wpa_printf(MSG_DEBUG, "WPS: PIN registration with " MACSTR
 			   " did not succeed - continue trying to find "
 			   "suitable AP", MAC2STR(bssid));
-		wpa_blacklist_add(wpa_s, bssid);
+		wpa_bssid_ignore_add(wpa_s, bssid);
 
 		wpa_supplicant_deauthenticate(wpa_s,
 					      WLAN_REASON_DEAUTH_LEAVING);
 		wpa_s->reassociate = 1;
 		wpa_supplicant_req_scan(wpa_s,
-					wpa_s->blacklist_cleared ? 5 : 0, 0);
-		wpa_s->blacklist_cleared = 0;
+					wpa_s->bssid_ignore_cleared ? 5 : 0, 0);
+		wpa_s->bssid_ignore_cleared = false;
 		return 1;
 	}
 
@@ -141,8 +153,7 @@ int wpas_wps_eapol_cb(struct wpa_supplicant *wpa_s)
 			struct wpabuf *wps;
 			struct wps_parse_attr attr;
 
-			wps = wpa_bss_get_vendor_ie_multi(bss,
-							  WPS_IE_VENDOR_TYPE);
+			wps = wpas_wps_get_wps_ie(bss);
 			if (wps && wps_parse_msg(wps, &attr) == 0 &&
 			    attr.wps_state &&
 			    *attr.wps_state == WPS_STATE_CONFIGURED)
@@ -188,6 +199,7 @@ static void wpas_wps_security_workaround(struct wpa_supplicant *wpa_s,
 	const u8 *ie;
 	struct wpa_ie_data adv;
 	int wpa2 = 0, ccmp = 0;
+	enum wpa_driver_if_type iftype;
 
 	/*
 	 * Many existing WPS APs do not know how to negotiate WPA2 or CCMP in
@@ -239,9 +251,12 @@ static void wpas_wps_security_workaround(struct wpa_supplicant *wpa_s,
 		return;
 	}
 
+	iftype = ssid->p2p_group ? WPA_IF_P2P_CLIENT : WPA_IF_STATION;
+
 	if (ccmp && !(ssid->pairwise_cipher & WPA_CIPHER_CCMP) &&
 	    (ssid->pairwise_cipher & WPA_CIPHER_TKIP) &&
-	    (capa.key_mgmt & WPA_DRIVER_CAPA_KEY_MGMT_WPA2_PSK)) {
+	    (capa.key_mgmt_iftype[iftype] &
+	     WPA_DRIVER_CAPA_KEY_MGMT_WPA2_PSK)) {
 		wpa_printf(MSG_DEBUG, "WPS: Add CCMP into the credential "
 			   "based on scan results");
 		if (wpa_s->conf->ap_scan == 1)
@@ -280,8 +295,7 @@ static void wpas_wps_remove_dup_network(struct wpa_supplicant *wpa_s,
 		if (ssid->bssid_set || new_ssid->bssid_set) {
 			if (ssid->bssid_set != new_ssid->bssid_set)
 				continue;
-			if (os_memcmp(ssid->bssid, new_ssid->bssid, ETH_ALEN) !=
-			    0)
+			if (!ether_addr_equal(ssid->bssid, new_ssid->bssid))
 				continue;
 		}
 
@@ -352,8 +366,6 @@ static void wpas_wps_remove_dup_network(struct wpa_supplicant *wpa_s,
 		/* Remove the duplicated older network entry. */
 		wpa_printf(MSG_DEBUG, "Remove duplicate network %d", ssid->id);
 		wpas_notify_network_removed(wpa_s, ssid);
-		if (wpa_s->current_ssid == ssid)
-			wpa_s->current_ssid = NULL;
 		wpa_config_remove_network(wpa_s->conf, ssid->id);
 	}
 }
@@ -368,6 +380,7 @@ static int wpa_supplicant_wps_cred(void *ctx,
 #ifdef CONFIG_WPS_REG_DISABLE_OPEN
 	int registrar = 0;
 #endif /* CONFIG_WPS_REG_DISABLE_OPEN */
+	bool add_sae;
 
 	if ((wpa_s->conf->wps_cred_processing == 1 ||
 	     wpa_s->conf->wps_cred_processing == 2) && cred->cred_attr) {
@@ -484,7 +497,7 @@ static int wpa_supplicant_wps_cred(void *ctx,
 	case WPS_ENCR_NONE:
 		break;
 	case WPS_ENCR_TKIP:
-		ssid->pairwise_cipher = WPA_CIPHER_TKIP;
+		ssid->pairwise_cipher = WPA_CIPHER_TKIP | WPA_CIPHER_CCMP;
 		break;
 	case WPS_ENCR_AES:
 		ssid->pairwise_cipher = WPA_CIPHER_CCMP;
@@ -525,17 +538,20 @@ static int wpa_supplicant_wps_cred(void *ctx,
 	case WPS_AUTH_WPAPSK:
 		ssid->auth_alg = WPA_AUTH_ALG_OPEN;
 		ssid->key_mgmt = WPA_KEY_MGMT_PSK;
-		ssid->proto = WPA_PROTO_WPA;
+		ssid->proto = WPA_PROTO_WPA | WPA_PROTO_RSN;
 		break;
 	case WPS_AUTH_WPA2PSK:
 		ssid->auth_alg = WPA_AUTH_ALG_OPEN;
 		ssid->key_mgmt = WPA_KEY_MGMT_PSK;
-		if (wpa_s->conf->wps_cred_add_sae &&
-		    cred->key_len != 2 * PMK_LEN) {
+		add_sae = wpa_s->conf->wps_cred_add_sae;
+#ifdef CONFIG_P2P
+		if (ssid->p2p_group && is_p2p_6ghz_capable(wpa_s->global->p2p))
+			add_sae = true;
+#endif /* CONFIG_P2P */
+		if (add_sae && cred->key_len != 2 * PMK_LEN) {
+			ssid->auth_alg = 0;
 			ssid->key_mgmt |= WPA_KEY_MGMT_SAE;
-#ifdef CONFIG_IEEE80211W
 			ssid->ieee80211w = MGMT_FRAME_PROTECTION_OPTIONAL;
-#endif /* CONFIG_IEEE80211W */
 		}
 		ssid->proto = WPA_PROTO_RSN;
 		break;
@@ -717,7 +733,7 @@ static void wpa_supplicant_wps_event_success(struct wpa_supplicant *wpa_s)
 	wpas_notify_wps_event_success(wpa_s);
 	if (wpa_s->current_ssid)
 		wpas_clear_temp_disabled(wpa_s, wpa_s->current_ssid, 1);
-	wpa_s->extra_blacklist_count = 0;
+	wpa_s->consecutive_conn_failures = 0;
 
 	/*
 	 * Enable the networks disabled during wpas_wps_reassoc after 10
@@ -996,6 +1012,8 @@ static void wpas_wps_timeout(void *eloop_ctx, void *timeout_ctx)
 	 * during an EAP-WSC exchange).
 	 */
 	wpas_notify_wps_event_fail(wpa_s, &data.fail);
+	wpa_s->supp_pbc_active = false;
+	wpa_s->wps_overlap = false;
 	wpas_clear_wps(wpa_s);
 }
 
@@ -1043,7 +1061,7 @@ static struct wpa_ssid * wpas_wps_add_network(struct wpa_supplicant *wpa_s,
 		 */
 #ifndef CONFIG_P2P
 		dl_list_for_each(bss, &wpa_s->bss, struct wpa_bss, list) {
-			if (os_memcmp(bssid, bss->bssid, ETH_ALEN) != 0)
+			if (!ether_addr_equal(bssid, bss->bssid))
 				continue;
 
 			os_free(ssid->ssid);
@@ -1136,7 +1154,7 @@ static void wpas_wps_reassoc(struct wpa_supplicant *wpa_s,
 	wpa_s->scan_runs = 0;
 	wpa_s->normal_scans = 0;
 	wpa_s->wps_success = 0;
-	wpa_s->blacklist_cleared = 0;
+	wpa_s->bssid_ignore_cleared = false;
 
 	wpa_supplicant_cancel_sched_scan(wpa_s);
 	wpa_supplicant_req_scan(wpa_s, 0, 0);
@@ -1180,19 +1198,31 @@ int wpas_wps_start_pbc(struct wpa_supplicant *wpa_s, const u8 *bssid,
 				/* P2P in 60 GHz uses PBSS */
 				ssid->pbss = 1;
 			}
+			if (wpa_s->go_params->edmg &&
+			    wpas_p2p_try_edmg_channel(wpa_s,
+						      wpa_s->go_params) == 0)
+				ssid->enable_edmg = 1;
+
 			wpa_hexdump_ascii(MSG_DEBUG, "WPS: Use specific AP "
 					  "SSID", ssid->ssid, ssid->ssid_len);
 		}
 	}
 #endif /* CONFIG_P2P */
-	os_snprintf(phase1, sizeof(phase1), "pbc=1%s",
-		    multi_ap_backhaul_sta ? " multi_ap=1" : "");
+	if (multi_ap_backhaul_sta)
+		os_snprintf(phase1, sizeof(phase1), "pbc=1 multi_ap=%d",
+			    multi_ap_backhaul_sta);
+	else
+		os_snprintf(phase1, sizeof(phase1), "pbc=1");
 	if (wpa_config_set_quoted(ssid, "phase1", phase1) < 0)
 		return -1;
 	if (wpa_s->wps_fragment_size)
 		ssid->eap.fragment_size = wpa_s->wps_fragment_size;
-	if (multi_ap_backhaul_sta)
+	if (multi_ap_backhaul_sta) {
 		ssid->multi_ap_backhaul_sta = 1;
+		ssid->multi_ap_profile = multi_ap_backhaul_sta;
+	}
+	wpa_s->supp_pbc_active = true;
+	wpa_s->wps_overlap = false;
 	wpa_supplicant_wps_event(wpa_s, WPS_EV_PBC_ACTIVE, NULL);
 	eloop_register_timeout(WPS_PBC_WALK_TIME, 0, wpas_wps_timeout,
 			       wpa_s, NULL);
@@ -1263,6 +1293,11 @@ static int wpas_wps_start_dev_pw(struct wpa_supplicant *wpa_s,
 				/* P2P in 60 GHz uses PBSS */
 				ssid->pbss = 1;
 			}
+			if (wpa_s->go_params->edmg &&
+			    wpas_p2p_try_edmg_channel(wpa_s,
+						      wpa_s->go_params) == 0)
+				ssid->enable_edmg = 1;
+
 			wpa_hexdump_ascii(MSG_DEBUG, "WPS: Use specific AP "
 					  "SSID", ssid->ssid, ssid->ssid_len);
 		}
@@ -1286,6 +1321,10 @@ static int wpas_wps_start_dev_pw(struct wpa_supplicant *wpa_s,
 		wpa_printf(MSG_DEBUG, "WPS: Failed to set phase1 '%s'", val);
 		return -1;
 	}
+
+	if (dev_pw_id != DEV_PW_NFC_CONNECTION_HANDOVER)
+		wpa_msg(wpa_s, MSG_INFO, WPS_EVENT_PIN_ACTIVE);
+
 	if (wpa_s->wps_fragment_size)
 		ssid->eap.fragment_size = wpa_s->wps_fragment_size;
 	eloop_register_timeout(WPS_PBC_WALK_TIME, 0, wpas_wps_timeout,
@@ -1351,6 +1390,9 @@ int wpas_wps_cancel(struct wpa_supplicant *wpa_s)
 			wpas_clear_wps(wpa_s);
 	}
 
+	wpa_s->supp_pbc_active = false;
+	wpa_s->wps_overlap = false;
+	wpa_msg(wpa_s, MSG_INFO, WPS_EVENT_CANCEL);
 	wpa_s->after_wps = 0;
 
 	return 0;
@@ -1604,8 +1646,13 @@ int wpas_wps_init(struct wpa_supplicant *wpa_s)
 	os_memcpy(wps->dev.mac_addr, wpa_s->own_addr, ETH_ALEN);
 	wpas_wps_set_uuid(wpa_s, wps);
 
+#ifdef CONFIG_NO_TKIP
+	wps->auth_types = WPS_AUTH_WPA2PSK;
+	wps->encr_types = WPS_ENCR_AES;
+#else /* CONFIG_NO_TKIP */
 	wps->auth_types = WPS_AUTH_WPA2PSK | WPS_AUTH_WPAPSK;
 	wps->encr_types = WPS_ENCR_AES | WPS_ENCR_TKIP;
+#endif /* CONFIG_NO_TKIP */
 
 	os_memset(&rcfg, 0, sizeof(rcfg));
 	rcfg.new_psk_cb = wpas_wps_new_psk_cb;
@@ -1679,7 +1726,7 @@ int wpas_wps_ssid_bss_match(struct wpa_supplicant *wpa_s,
 	if (!(ssid->key_mgmt & WPA_KEY_MGMT_WPS))
 		return -1;
 
-	wps_ie = wpa_bss_get_vendor_ie_multi(bss, WPS_IE_VENDOR_TYPE);
+	wps_ie = wpas_wps_get_wps_ie(bss);
 	if (eap_is_wps_pbc_enrollee(&ssid->eap)) {
 		if (!wps_ie) {
 			wpa_printf(MSG_DEBUG, "   skip - non-WPS AP");
@@ -1753,13 +1800,13 @@ int wpas_wps_ssid_wildcard_ok(struct wpa_supplicant *wpa_s,
 	int ret = 0;
 
 	if (eap_is_wps_pbc_enrollee(&ssid->eap)) {
-		wps_ie = wpa_bss_get_vendor_ie_multi(bss, WPS_IE_VENDOR_TYPE);
+		wps_ie = wpas_wps_get_wps_ie(bss);
 		if (wps_ie && wps_is_selected_pbc_registrar(wps_ie)) {
 			/* allow wildcard SSID for WPS PBC */
 			ret = 1;
 		}
 	} else if (eap_is_wps_pin_enrollee(&ssid->eap)) {
-		wps_ie = wpa_bss_get_vendor_ie_multi(bss, WPS_IE_VENDOR_TYPE);
+		wps_ie = wpas_wps_get_wps_ie(bss);
 		if (wps_ie &&
 		    (wps_is_addr_authorized(wps_ie, wpa_s->own_addr, 1) ||
 		     wpa_s->scan_runs >= WPS_PIN_SCAN_IGNORE_SEL_REG)) {
@@ -1769,7 +1816,7 @@ int wpas_wps_ssid_wildcard_ok(struct wpa_supplicant *wpa_s,
 	}
 
 	if (!ret && ssid->bssid_set &&
-	    os_memcmp(ssid->bssid, bss->bssid, ETH_ALEN) == 0) {
+	    ether_addr_equal(ssid->bssid, bss->bssid)) {
 		/* allow wildcard SSID due to hardcoded BSSID match */
 		ret = 1;
 	}
@@ -1802,9 +1849,40 @@ int wpas_wps_ssid_wildcard_ok(struct wpa_supplicant *wpa_s,
 }
 
 
+static bool wpas_wps_is_pbc_overlap(struct wps_ap_info *ap,
+				    struct wpa_bss *selected,
+				    struct wpa_ssid *ssid,
+				    const u8 *sel_uuid)
+{
+	if (!ap->pbc_active ||
+	    ether_addr_equal(selected->bssid, ap->bssid))
+		return false;
+
+	if (!is_zero_ether_addr(ssid->bssid) &&
+	    !ether_addr_equal(ap->bssid, ssid->bssid)) {
+		wpa_printf(MSG_DEBUG, "WPS: Ignore another BSS " MACSTR
+			   " in active PBC mode due to local BSSID limitation",
+			   MAC2STR(ap->bssid));
+		return 0;
+	}
+
+	wpa_printf(MSG_DEBUG, "WPS: Another BSS in active PBC mode: " MACSTR,
+		   MAC2STR(ap->bssid));
+	wpa_hexdump(MSG_DEBUG, "WPS: UUID of the other BSS",
+		    ap->uuid, UUID_LEN);
+	if (!sel_uuid || os_memcmp(sel_uuid, ap->uuid, UUID_LEN) != 0)
+		return true;
+
+	/* TODO: verify that this is reasonable dual-band situation */
+
+	return false;
+}
+
+
 int wpas_wps_scan_pbc_overlap(struct wpa_supplicant *wpa_s,
 			      struct wpa_bss *selected, struct wpa_ssid *ssid)
 {
+	struct wpa_supplicant *iface;
 	const u8 *sel_uuid;
 	struct wpabuf *wps_ie;
 	int ret = 0;
@@ -1816,6 +1894,10 @@ int wpas_wps_scan_pbc_overlap(struct wpa_supplicant *wpa_s,
 	wpa_printf(MSG_DEBUG, "WPS: Check whether PBC session overlap is "
 		   "present in scan results; selected BSSID " MACSTR,
 		   MAC2STR(selected->bssid));
+	if (!is_zero_ether_addr(ssid->bssid))
+		wpa_printf(MSG_DEBUG,
+			   "WPS: Network profile limited to accept only a single BSSID " MACSTR,
+			   MAC2STR(ssid->bssid));
 
 	/* Make sure that only one AP is in active PBC mode */
 	wps_ie = wpa_bss_get_vendor_ie_multi(selected, WPS_IE_VENDOR_TYPE);
@@ -1829,28 +1911,21 @@ int wpas_wps_scan_pbc_overlap(struct wpa_supplicant *wpa_s,
 		sel_uuid = NULL;
 	}
 
-	for (i = 0; i < wpa_s->num_wps_ap; i++) {
-		struct wps_ap_info *ap = &wpa_s->wps_ap[i];
+	for (iface = wpa_s->global->ifaces; iface; iface = iface->next) {
+		for (i = 0; i < iface->num_wps_ap; i++) {
+			struct wps_ap_info *ap = &iface->wps_ap[i];
 
-		if (!ap->pbc_active ||
-		    os_memcmp(selected->bssid, ap->bssid, ETH_ALEN) == 0)
-			continue;
-
-		wpa_printf(MSG_DEBUG, "WPS: Another BSS in active PBC mode: "
-			   MACSTR, MAC2STR(ap->bssid));
-		wpa_hexdump(MSG_DEBUG, "WPS: UUID of the other BSS",
-			    ap->uuid, UUID_LEN);
-		if (sel_uuid == NULL ||
-		    os_memcmp(sel_uuid, ap->uuid, UUID_LEN) != 0) {
-			ret = 1; /* PBC overlap */
-			wpa_msg(wpa_s, MSG_INFO, "WPS: PBC overlap detected: "
-				MACSTR " and " MACSTR,
-				MAC2STR(selected->bssid),
-				MAC2STR(ap->bssid));
-			break;
+			if (wpas_wps_is_pbc_overlap(ap, selected, ssid,
+						    sel_uuid)) {
+				ret = 1; /* PBC overlap */
+				wpa_msg(iface, MSG_INFO,
+					"WPS: PBC overlap detected: "
+					MACSTR " and " MACSTR,
+					MAC2STR(selected->bssid),
+					MAC2STR(ap->bssid));
+				break;
+			}
 		}
-
-		/* TODO: verify that this is reasonable dual-band situation */
 	}
 
 	wpabuf_free(wps_ie);
@@ -1869,7 +1944,8 @@ void wpas_wps_notify_scan_results(struct wpa_supplicant *wpa_s)
 
 	dl_list_for_each(bss, &wpa_s->bss, struct wpa_bss, list) {
 		struct wpabuf *ie;
-		ie = wpa_bss_get_vendor_ie_multi(bss, WPS_IE_VENDOR_TYPE);
+
+		ie = wpas_wps_get_wps_ie(bss);
 		if (!ie)
 			continue;
 		if (wps_is_selected_pbc_registrar(ie))
@@ -2232,6 +2308,16 @@ void wpas_wps_update_config(struct wpa_supplicant *wpa_s)
 		wps->dev.model_number = wpa_s->conf->model_number;
 		wps->dev.serial_number = wpa_s->conf->serial_number;
 	}
+}
+
+
+void wpas_wps_update_mac_addr(struct wpa_supplicant *wpa_s)
+{
+	struct wps_context *wps;
+
+	wps = wpa_s->wps;
+	if (wps)
+		os_memcpy(wps->dev.mac_addr, wpa_s->own_addr, ETH_ALEN);
 }
 
 
@@ -2681,7 +2767,7 @@ static int wpas_wps_nfc_rx_handover_sel(struct wpa_supplicant *wpa_s,
 			 (attr.rf_bands == NULL ||
 			  *attr.rf_bands & WPS_RF_50GHZ))
 			freq = 5000 + 5 * chan;
-		else if (chan >= 1 && chan <= 4 &&
+		else if (chan >= 1 && chan <= 6 &&
 			 (attr.rf_bands == NULL ||
 			  *attr.rf_bands & WPS_RF_60GHZ))
 			freq = 56160 + 2160 * chan;
@@ -2838,10 +2924,11 @@ static void wpas_wps_dump_ap_info(struct wpa_supplicant *wpa_s)
 
 	for (i = 0; i < wpa_s->num_wps_ap; i++) {
 		struct wps_ap_info *ap = &wpa_s->wps_ap[i];
-		struct wpa_blacklist *e = wpa_blacklist_get(wpa_s, ap->bssid);
+		struct wpa_bssid_ignore *e = wpa_bssid_ignore_get(wpa_s,
+								  ap->bssid);
 
 		wpa_printf(MSG_DEBUG, "WPS: AP[%d] " MACSTR " type=%d "
-			   "tries=%d last_attempt=%d sec ago blacklist=%d",
+			   "tries=%d last_attempt=%d sec ago bssid_ignore=%d",
 			   (int) i, MAC2STR(ap->bssid), ap->type, ap->tries,
 			   ap->last_attempt.sec > 0 ?
 			   (int) now.sec - (int) ap->last_attempt.sec : -1,
@@ -2860,7 +2947,7 @@ static struct wps_ap_info * wpas_wps_get_ap_info(struct wpa_supplicant *wpa_s,
 
 	for (i = 0; i < wpa_s->num_wps_ap; i++) {
 		struct wps_ap_info *ap = &wpa_s->wps_ap[i];
-		if (os_memcmp(ap->bssid, bssid, ETH_ALEN) == 0)
+		if (ether_addr_equal(ap->bssid, bssid))
 			return ap;
 	}
 
@@ -2903,7 +2990,7 @@ static void wpas_wps_update_ap_info_bss(struct wpa_supplicant *wpa_s,
 				   MAC2STR(res->bssid), ap->type, type);
 			ap->type = type;
 			if (type != WPS_AP_NOT_SEL_REG)
-				wpa_blacklist_del(wpa_s, ap->bssid);
+				wpa_bssid_ignore_del(wpa_s, ap->bssid);
 		}
 		ap->pbc_active = pbc_active;
 		if (uuid)
@@ -2943,6 +3030,48 @@ void wpas_wps_update_ap_info(struct wpa_supplicant *wpa_s,
 		wpas_wps_update_ap_info_bss(wpa_s, scan_res->res[i]);
 
 	wpas_wps_dump_ap_info(wpa_s);
+}
+
+
+bool wpas_wps_partner_link_scan_done(struct wpa_supplicant *wpa_s)
+{
+	struct wpa_global *global = wpa_s->global;
+	struct wpa_supplicant *iface;
+
+	for (iface = global->ifaces; iface; iface = iface->next) {
+		if (iface == wpa_s)
+			continue;
+
+		if (!iface->supp_pbc_active)
+			continue;
+
+		/* Scan results are available for both links. While the current
+		 * link will proceed for network selection, ensure the partner
+		 * link also gets an attempt at network selection and connect
+		 * with the selected BSS. */
+		if (iface->wps_scan_done)
+			wpa_wps_supplicant_fast_associate(iface);
+		else
+			return false;
+	}
+
+	return true;
+}
+
+
+bool wpas_wps_partner_link_overlap_detect(struct wpa_supplicant *wpa_s)
+{
+	struct wpa_global *global = wpa_s->global;
+	struct wpa_supplicant *iface;
+
+	for (iface = global->ifaces; iface; iface = iface->next) {
+		if (iface == wpa_s)
+			continue;
+		if (iface->wps_overlap)
+			return true;
+	}
+
+	return false;
 }
 
 

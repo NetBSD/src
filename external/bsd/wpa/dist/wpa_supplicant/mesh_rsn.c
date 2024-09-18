@@ -100,7 +100,8 @@ static const u8 *auth_get_psk(void *ctx, const u8 *addr,
 
 
 static int auth_set_key(void *ctx, int vlan_id, enum wpa_alg alg,
-			const u8 *addr, int idx, u8 *key, size_t key_len)
+			const u8 *addr, int idx, u8 *key, size_t key_len,
+			enum key_flag key_flag)
 {
 	struct mesh_rsn *mesh_rsn = ctx;
 	u8 seq[6];
@@ -117,8 +118,8 @@ static int auth_set_key(void *ctx, int vlan_id, enum wpa_alg alg,
 	}
 	wpa_hexdump_key(MSG_DEBUG, "AUTH: set_key - key", key, key_len);
 
-	return wpa_drv_set_key(mesh_rsn->wpa_s, alg, addr, idx,
-			       1, seq, 6, key, key_len);
+	return wpa_drv_set_key(mesh_rsn->wpa_s, -1, alg, addr, idx,
+			       1, seq, 6, key, key_len, key_flag);
 }
 
 
@@ -141,6 +142,23 @@ static int auth_start_ampe(void *ctx, const u8 *addr)
 }
 
 
+static int auth_for_each_sta(
+	void *ctx, int (*cb)(struct wpa_state_machine *sm, void *ctx),
+	void *cb_ctx)
+{
+	struct mesh_rsn *rsn = ctx;
+	struct hostapd_data *hapd;
+	struct sta_info *sta;
+
+	hapd = rsn->wpa_s->ifmsh->bss[0];
+	for (sta = hapd->sta_list; sta; sta = sta->next) {
+		if (sta->wpa_sm && cb(sta->wpa_sm, cb_ctx))
+			return 1;
+	}
+	return 0;
+}
+
+
 static int __mesh_rsn_auth_init(struct mesh_rsn *rsn, const u8 *addr,
 				enum mfp_options ieee80211w, int ocv)
 {
@@ -150,6 +168,7 @@ static int __mesh_rsn_auth_init(struct mesh_rsn *rsn, const u8 *addr,
 		.get_psk = auth_get_psk,
 		.set_key = auth_set_key,
 		.start_ampe = auth_start_ampe,
+		.for_each_sta = auth_for_each_sta,
 	};
 	u8 seq[6] = {};
 
@@ -165,11 +184,9 @@ static int __mesh_rsn_auth_init(struct mesh_rsn *rsn, const u8 *addr,
 	conf.wpa_group_rekey = -1;
 	conf.wpa_group_update_count = 4;
 	conf.wpa_pairwise_update_count = 4;
-#ifdef CONFIG_IEEE80211W
 	conf.ieee80211w = ieee80211w;
 	if (ieee80211w != NO_MGMT_FRAME_PROTECTION)
 		conf.group_mgmt_cipher = rsn->mgmt_group_cipher;
-#endif /* CONFIG_IEEE80211W */
 #ifdef CONFIG_OCV
 	conf.ocv = ocv;
 #endif /* CONFIG_OCV */
@@ -186,7 +203,6 @@ static int __mesh_rsn_auth_init(struct mesh_rsn *rsn, const u8 *addr,
 		return -1;
 	rsn->mgtk_key_id = 1;
 
-#ifdef CONFIG_IEEE80211W
 	if (ieee80211w != NO_MGMT_FRAME_PROTECTION) {
 		rsn->igtk_len = wpa_cipher_key_len(conf.group_mgmt_cipher);
 		if (random_get_bytes(rsn->igtk, rsn->igtk_len) < 0)
@@ -196,19 +212,21 @@ static int __mesh_rsn_auth_init(struct mesh_rsn *rsn, const u8 *addr,
 		/* group mgmt */
 		wpa_hexdump_key(MSG_DEBUG, "mesh: Own TX IGTK",
 				rsn->igtk, rsn->igtk_len);
-		wpa_drv_set_key(rsn->wpa_s,
-				wpa_cipher_to_alg(rsn->mgmt_group_cipher), NULL,
+		wpa_drv_set_key(rsn->wpa_s, -1,
+				wpa_cipher_to_alg(rsn->mgmt_group_cipher),
+				broadcast_ether_addr,
 				rsn->igtk_key_id, 1,
-				seq, sizeof(seq), rsn->igtk, rsn->igtk_len);
+				seq, sizeof(seq), rsn->igtk, rsn->igtk_len,
+				KEY_FLAG_GROUP_TX_DEFAULT);
 	}
-#endif /* CONFIG_IEEE80211W */
 
 	/* group privacy / data frames */
 	wpa_hexdump_key(MSG_DEBUG, "mesh: Own TX MGTK",
 			rsn->mgtk, rsn->mgtk_len);
-	wpa_drv_set_key(rsn->wpa_s, wpa_cipher_to_alg(rsn->group_cipher), NULL,
+	wpa_drv_set_key(rsn->wpa_s, -1, wpa_cipher_to_alg(rsn->group_cipher),
+			broadcast_ether_addr,
 			rsn->mgtk_key_id, 1, seq, sizeof(seq),
-			rsn->mgtk, rsn->mgtk_len);
+			rsn->mgtk, rsn->mgtk_len, KEY_FLAG_GROUP_TX_DEFAULT);
 
 	return 0;
 }
@@ -344,7 +362,6 @@ static int mesh_rsn_build_sae_commit(struct wpa_supplicant *wpa_s,
 	}
 	return sae_prepare_commit(wpa_s->own_addr, sta->addr,
 				  (u8 *) password, os_strlen(password),
-				  ssid->sae_password_id,
 				  sta->sae);
 }
 
@@ -387,7 +404,8 @@ int mesh_rsn_auth_sae_sta(struct wpa_supplicant *wpa_s,
 			   " - try to use PMKSA caching instead of new SAE authentication",
 			   MAC2STR(sta->addr));
 		wpa_auth_pmksa_set_to_sm(pmksa, sta->wpa_sm, hapd->wpa_auth,
-					 sta->sae->pmkid, sta->sae->pmk);
+					 sta->sae->pmkid, sta->sae->pmk,
+					 &sta->sae->pmk_len);
 		sae_accept_sta(hapd, sta);
 		sta->mesh_sae_pmksa_caching = 1;
 		return 0;
@@ -545,10 +563,8 @@ int mesh_rsn_protect_frame(struct mesh_rsn *rsn, struct sta_info *sta,
 	len = sizeof(*ampe);
 	if (cat[1] == PLINK_OPEN)
 		len += rsn->mgtk_len + WPA_KEY_RSC_LEN + 4;
-#ifdef CONFIG_IEEE80211W
 	if (cat[1] == PLINK_OPEN && rsn->igtk_len)
 		len += 2 + 6 + rsn->igtk_len;
-#endif /* CONFIG_IEEE80211W */
 
 	if (2 + AES_BLOCK_SIZE + 2 + len > wpabuf_tailroom(buf)) {
 		wpa_printf(MSG_ERROR, "protect frame: buffer too small");
@@ -591,7 +607,6 @@ int mesh_rsn_protect_frame(struct mesh_rsn *rsn, struct sta_info *sta,
 	WPA_PUT_LE32(pos, 0xffffffff);
 	pos += 4;
 
-#ifdef CONFIG_IEEE80211W
 	/*
 	 * IGTKdata[variable]:
 	 * Key ID[2], IPN[6], IGTK[variable]
@@ -603,7 +618,6 @@ int mesh_rsn_protect_frame(struct mesh_rsn *rsn, struct sta_info *sta,
 		pos += 6;
 		os_memcpy(pos, rsn->igtk, rsn->igtk_len);
 	}
-#endif /* CONFIG_IEEE80211W */
 
 skip_keys:
 	wpa_hexdump_key(MSG_DEBUG, "mesh: Plaintext AMPE element",
@@ -774,7 +788,6 @@ int mesh_rsn_process_ampe(struct wpa_supplicant *wpa_s, struct sta_info *sta,
 		   WPA_GET_LE32(pos));
 	pos += 4;
 
-#ifdef CONFIG_IEEE80211W
 	/*
 	 * IGTKdata[variable]:
 	 * Key ID[2], IPN[6], IGTK[variable]
@@ -794,7 +807,6 @@ int mesh_rsn_process_ampe(struct wpa_supplicant *wpa_s, struct sta_info *sta,
 		wpa_hexdump_key(MSG_DEBUG, "mesh: IGTKdata - IGTK",
 				sta->igtk, sta->igtk_len);
 	}
-#endif /* CONFIG_IEEE80211W */
 
 free:
 	os_free(crypt);

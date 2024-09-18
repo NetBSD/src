@@ -1034,6 +1034,18 @@ static int wpa_driver_ndis_set_key(const char *ifname, void *priv,
 
 
 static int
+wpa_driver_ndis_set_key_wrapper(void *priv,
+				struct wpa_driver_set_key_params *params)
+{
+	return wpa_driver_ndis_set_key(params->ifname, priv,
+				       params->alg, params->addr,
+				       params->key_idx, params->set_tx,
+				       params->seq, params->seq_len,
+				       params->key, params->key_len);
+}
+
+
+static int
 wpa_driver_ndis_associate(void *priv,
 			  struct wpa_driver_associate_params *params)
 {
@@ -1099,20 +1111,20 @@ wpa_driver_ndis_associate(void *priv,
 		auth_mode = Ndis802_11AuthModeOpen;
 		priv_mode = Ndis802_11PrivFilterAcceptAll;
 		if (params->wps == WPS_MODE_PRIVACY) {
-			u8 dummy_key[5] = { 0x11, 0x22, 0x33, 0x44, 0x55 };
+			u8 stub_key[5] = { 0x11, 0x22, 0x33, 0x44, 0x55 };
 			/*
 			 * Some NDIS drivers refuse to associate in open mode
 			 * configuration due to Privacy field mismatch, so use
 			 * a workaround to make the configuration look like
 			 * matching one for WPS provisioning.
 			 */
-			wpa_printf(MSG_DEBUG, "NDIS: Set dummy WEP key as a "
+			wpa_printf(MSG_DEBUG, "NDIS: Set stub WEP key as a "
 				   "workaround to allow driver to associate "
 				   "for WPS");
 			wpa_driver_ndis_set_key(drv->ifname, drv, WPA_ALG_WEP,
 						bcast, 0, 1,
-						NULL, 0, dummy_key,
-						sizeof(dummy_key));
+						NULL, 0, stub_key,
+						sizeof(stub_key));
 		}
 #endif /* CONFIG_WPS */
 	} else {
@@ -1236,7 +1248,7 @@ static int wpa_driver_ndis_add_pmkid(void *priv,
 	prev = NULL;
 	entry = drv->pmkid;
 	while (entry) {
-		if (os_memcmp(entry->bssid, bssid, ETH_ALEN) == 0)
+		if (ether_addr_equal(entry->bssid, bssid))
 			break;
 		prev = entry;
 		entry = entry->next;
@@ -1281,7 +1293,7 @@ static int wpa_driver_ndis_remove_pmkid(void *priv,
 	entry = drv->pmkid;
 	prev = NULL;
 	while (entry) {
-		if (os_memcmp(entry->bssid, bssid, ETH_ALEN) == 0 &&
+		if (ether_addr_equal(entry->bssid, bssid) &&
 		    os_memcmp(entry->pmkid, pmkid, 16) == 0) {
 			if (prev)
 				prev->next = entry->next;
@@ -1422,7 +1434,7 @@ static int wpa_driver_ndis_get_associnfo(struct wpa_driver_ndis_data *drv)
 	pos = (char *) &b->Bssid[0];
 	for (i = 0; i < b->NumberOfItems; i++) {
 		NDIS_WLAN_BSSID_EX *bss = (NDIS_WLAN_BSSID_EX *) pos;
-		if (os_memcmp(drv->bssid, bss->MacAddress, ETH_ALEN) == 0 &&
+		if (ether_addr_equal(drv->bssid, bss->MacAddress) &&
 		    bss->IELength > sizeof(NDIS_802_11_FIXED_IEs)) {
 			data.assoc_info.beacon_ies =
 				((u8 *) bss->IEs) +
@@ -1465,7 +1477,7 @@ static void wpa_driver_ndis_poll_timeout(void *eloop_ctx, void *timeout_ctx)
 		}
 	} else {
 		/* Connected */
-		if (os_memcmp(drv->bssid, bssid, ETH_ALEN) != 0) {
+		if (!ether_addr_equal(drv->bssid, bssid)) {
 			os_memcpy(drv->bssid, bssid, ETH_ALEN);
 			wpa_driver_ndis_get_associnfo(drv);
 			wpa_supplicant_event(drv->ctx, EVENT_ASSOC, NULL);
@@ -2221,10 +2233,10 @@ static int wpa_driver_ndis_get_names(struct wpa_driver_ndis_data *drv)
 
 	/*
 	 * Windows 98 with Packet.dll 3.0 alpha3 does not include adapter
-	 * descriptions. Fill in dummy descriptors to work around this.
+	 * descriptions. Fill in stub descriptors to work around this.
 	 */
 	while (num_desc < num_name)
-		desc[num_desc++] = "dummy description";
+		desc[num_desc++] = "stub description";
 
 	if (num_name != num_desc) {
 		wpa_printf(MSG_DEBUG, "NDIS: mismatch in adapter name and "
@@ -2797,6 +2809,7 @@ static void * wpa_driver_ndis_init(void *ctx, const char *ifname)
 {
 	struct wpa_driver_ndis_data *drv;
 	u32 mode;
+	int i;
 
 	drv = os_zalloc(sizeof(*drv));
 	if (drv == NULL)
@@ -2842,6 +2855,11 @@ static void * wpa_driver_ndis_init(void *ctx, const char *ifname)
 		return NULL;
 	}
 	wpa_driver_ndis_get_capability(drv);
+
+	/* Update per interface supported AKMs */
+	for (i = 0; i < WPA_IF_MAX; i++)
+		drv->capa.key_mgmt_iftype[i] = drv->capa.key_mgmt;
+
 
 	/* Make sure that the driver does not have any obsolete PMKID entries.
 	 */
@@ -3146,10 +3164,10 @@ wpa_driver_ndis_get_interfaces(void *global_priv)
 
 	/*
 	 * Windows 98 with Packet.dll 3.0 alpha3 does not include adapter
-	 * descriptions. Fill in dummy descriptors to work around this.
+	 * descriptions. Fill in stub descriptors to work around this.
 	 */
 	while (num_desc < num_name)
-		desc[num_desc++] = "dummy description";
+		desc[num_desc++] = "stub description";
 
 	if (num_name != num_desc) {
 		wpa_printf(MSG_DEBUG, "NDIS: mismatch in adapter name and "
@@ -3195,7 +3213,7 @@ void driver_ndis_init_ops(void)
 	wpa_driver_ndis_ops.desc = ndis_drv_desc;
 	wpa_driver_ndis_ops.get_bssid = wpa_driver_ndis_get_bssid;
 	wpa_driver_ndis_ops.get_ssid = wpa_driver_ndis_get_ssid;
-	wpa_driver_ndis_ops.set_key = wpa_driver_ndis_set_key;
+	wpa_driver_ndis_ops.set_key = wpa_driver_ndis_set_key_wrapper;
 	wpa_driver_ndis_ops.init = wpa_driver_ndis_init;
 	wpa_driver_ndis_ops.deinit = wpa_driver_ndis_deinit;
 	wpa_driver_ndis_ops.deauthenticate = wpa_driver_ndis_deauthenticate;

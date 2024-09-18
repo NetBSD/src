@@ -1,5 +1,108 @@
 ChangeLog for wpa_supplicant
 
+2024-07-20 - v2.11
+	* Wi-Fi Easy Connect
+	  - add support for DPP release 3
+	  - allow Configurator parameters to be provided during config exchange
+	* MACsec
+	  - add support for GCM-AES-256 cipher suite
+	  - remove incorrect EAP Session-Id length constraint
+	  - add hardware offload support for additional drivers
+	* HE/IEEE 802.11ax/Wi-Fi 6
+	  - support BSS color updates
+	  - various fixes
+	* EHT/IEEE 802.11be/Wi-Fi 7
+	  - add preliminary support
+	* support OpenSSL 3.0 API changes
+	* improve EAP-TLS support for TLSv1.3
+	* EAP-SIM/AKA: support IMSI privacy
+	* improve mitigation against DoS attacks when PMF is used
+	* improve 4-way handshake operations
+	  - discard unencrypted EAPOL frames in additional cases
+	  - use Secure=1 in message 2 during PTK rekeying
+	* OCV: do not check Frequency Segment 1 Channel Number for 160 MHz cases
+	  to avoid interoperability issues
+	* support new SAE AKM suites with variable length keys
+	* support new AKM for 802.1X/EAP with SHA384
+	* improve cross-AKM roaming with driver-based SME/BSS selection
+	* PASN
+	  - extend support for secure ranging
+	  - allow PASN implementation to be used with external programs for
+	    Wi-Fi Aware
+	* FT: Use SHA256 to derive PMKID for AKM 00-0F-AC:3 (FT-EAP)
+	  - this is based on additional details being added in the IEEE 802.11
+	    standard
+	  - the new implementation is not backwards compatible, but PMKSA
+	    caching with FT-EAP was, and still is, disabled by default
+	* support a pregenerated MAC (mac_addr=3) as an alternative mechanism
+	  for using per-network random MAC addresses
+	* EAP-PEAP: require Phase 2 authentication by default (phase2_auth=1)
+	  to improve security for still unfortunately common invalid
+	  configurations that do not set ca_cert
+	* extend SCS support for QoS Characteristics
+	* extend MSCS support
+	* support unsynchronized service discovery (USD)
+	* add support for explicit SSID protection in 4-way handshake
+	  (a mitigation for CVE-2023-52424; disabled by default for now, can be
+	  enabled with ssid_protection=1)
+	  - in addition, verify SSID after key setup when beacon protection is
+	    used
+	* fix SAE H2E rejected groups validation to avoid downgrade attacks
+	* a large number of other fixes, cleanup, and extensions
+
+2022-01-16 - v2.10
+	* SAE changes
+	  - improved protection against side channel attacks
+	    [https://w1.fi/security/2022-1/]
+	  - added support for the hash-to-element mechanism (sae_pwe=1 or
+	    sae_pwe=2); this is currently disabled by default, but will likely
+	    get enabled by default in the future
+	  - fixed PMKSA caching with OKC
+	  - added support for SAE-PK
+	* EAP-pwd changes
+	  - improved protection against side channel attacks
+	  [https://w1.fi/security/2022-1/]
+	* fixed P2P provision discovery processing of a specially constructed
+	  invalid frame
+	  [https://w1.fi/security/2021-1/]
+	* fixed P2P group information processing of a specially constructed
+	  invalid frame
+	  [https://w1.fi/security/2020-2/]
+	* fixed PMF disconnection protection bypass in AP mode
+	  [https://w1.fi/security/2019-7/]
+	* added support for using OpenSSL 3.0
+	* increased the maximum number of EAP message exchanges (mainly to
+	  support cases with very large certificates)
+	* fixed various issues in experimental support for EAP-TEAP peer
+	* added support for DPP release 2 (Wi-Fi Device Provisioning Protocol)
+	* a number of MKA/MACsec fixes and extensions
+	* added support for SAE (WPA3-Personal) AP mode configuration
+	* added P2P support for EDMG (IEEE 802.11ay) channels
+	* fixed EAP-FAST peer with TLS GCM/CCM ciphers
+	* improved throughput estimation and BSS selection
+	* dropped support for libnl 1.1
+	* added support for nl80211 control port for EAPOL frame TX/RX
+	* fixed OWE key derivation with groups 20 and 21; this breaks backwards
+	  compatibility for these groups while the default group 19 remains
+	  backwards compatible
+	* added support for Beacon protection
+	* added support for Extended Key ID for pairwise keys
+	* removed WEP support from the default build (CONFIG_WEP=y can be used
+	  to enable it, if really needed)
+	* added a build option to remove TKIP support (CONFIG_NO_TKIP=y)
+	* added support for Transition Disable mechanism to allow the AP to
+	  automatically disable transition mode to improve security
+	* extended D-Bus interface
+	* added support for PASN
+	* added a file-based backend for external password storage to allow
+	  secret information to be moved away from the main configuration file
+	  without requiring external tools
+	* added EAP-TLS peer support for TLS 1.3 (disabled by default for now)
+	* added support for SCS, MSCS, DSCP policy
+	* changed driver interface selection to default to automatic fallback
+	  to other compiled in options
+	* a large number of other fixes, cleanup, and extensions
+
 2019-08-07 - v2.9
 	* SAE changes
 	  - disable use of groups using Brainpool curves
@@ -533,7 +636,7 @@ ChangeLog for wpa_supplicant
 	* fixed MSCHAP UTF-8 to UCS-2 conversion for three-byte encoding;
 	  this fixes password with include UTF-8 characters that use
 	  three-byte encoding EAP methods that use NtPasswordHash
-	* fixed couple of sequencies where radio work items could get stuck,
+	* fixed couple of sequences where radio work items could get stuck,
 	  e.g., when rfkill blocking happens during scanning or when
 	  scan-for-auth workaround is used
 	* P2P enhancements/fixes
@@ -627,7 +730,7 @@ ChangeLog for wpa_supplicant
 	* added 'dup_network <id_s> <id_d> <name>' command; this can be used to
 	  clone the psk field without having toextract it from wpa_supplicant
 	* fixed GSM authentication on USIM
-	* added support for usin epoll in eloop (CONFIG_ELOOP_EPOLL=y)
+	* added support for using epoll in eloop (CONFIG_ELOOP_EPOLL=y)
 	* fixed some concurrent virtual interface cases with dedicated P2P
 	  management interface to not catch events from removed interface (this
 	  could result in the management interface getting disabled)
@@ -1113,7 +1216,7 @@ ChangeLog for wpa_supplicant
 	    workarounds.
 	  - Add support for AuthorizedMACs attribute.
 	* TDLS:
-	  - Propogate TDLS related nl80211 capability flags from kernel and
+	  - Propagate TDLS related nl80211 capability flags from kernel and
 	    add them as driver capability flags. If the driver doesn't support
 	    capabilities, assume TDLS is supported internally. When TDLS is
 	    explicitly not supported, disable all user facing TDLS operations.
@@ -1864,7 +1967,8 @@ ChangeLog for wpa_supplicant
 	  generate, e.g., man pages
 	* l2_packet_linux: use socket type SOCK_DGRAM instead of SOCK_RAW for
 	  PF_PACKET in order to prepare for network devices that do not use
-	  Ethernet headers (e.g., network stack with native IEEE 802.11 frames)
+	  Ethernet headers (e.g., network stack that includes IEEE 802.11
+	  header in the frames)
 	* use receipt of EAPOL-Key frame as a lower layer success indication
 	  for EAP state machine to allow recovery from dropped EAP-Success
 	  frame
@@ -2221,7 +2325,7 @@ ChangeLog for wpa_supplicant
 	* added support for EAP-SIM pseudonyms and fast re-authentication
 	* added support for EAP-TLS/PEAP/TTLS fast re-authentication (TLS
 	  session resumption)
-	* added support for EAP-SIM with two challanges
+	* added support for EAP-SIM with two challenges
 	  (phase1="sim_min_num_chal=3" can be used to require three challenges)
 	* added support for configuring DH/DSA parameters for an ephemeral DH
 	  key exchange (EAP-TLS/PEAP/TTLS) using new configuration parameters
@@ -2332,7 +2436,7 @@ ChangeLog for wpa_supplicant
 	  ctrl_interface_group can be used to select which group gets access to
 	  the control interface;
 	  wpa_cli: by default, try to connect to the first interface available
-	  in /var/run/wpa_supplicant; this path can be overriden with -p option
+	  in /var/run/wpa_supplicant; this path can be overridden with -p option
 	  and an interface can be selected with -i option (i.e., in most common
 	  cases, wpa_cli does not need to get any arguments)
 	* added support for LEAP

@@ -300,6 +300,8 @@ static void p2p_listen_in_find(struct p2p_data *p2p, int dev_disc)
 		    ies) < 0) {
 		p2p_dbg(p2p, "Failed to start listen mode");
 		p2p->pending_listen_freq = 0;
+	} else {
+		p2p->pending_listen_wait_drv = true;
 	}
 	wpabuf_free(ies);
 }
@@ -349,6 +351,7 @@ int p2p_listen(struct p2p_data *p2p, unsigned int timeout)
 		wpabuf_free(ies);
 		return -1;
 	}
+	p2p->pending_listen_wait_drv = true;
 	wpabuf_free(ies);
 
 	p2p_set_state(p2p, P2P_LISTEN_ONLY);
@@ -377,7 +380,7 @@ struct p2p_device * p2p_get_device(struct p2p_data *p2p, const u8 *addr)
 {
 	struct p2p_device *dev;
 	dl_list_for_each(dev, &p2p->devices, struct p2p_device, list) {
-		if (os_memcmp(dev->info.p2p_device_addr, addr, ETH_ALEN) == 0)
+		if (ether_addr_equal(dev->info.p2p_device_addr, addr))
 			return dev;
 	}
 	return NULL;
@@ -395,7 +398,7 @@ struct p2p_device * p2p_get_device_interface(struct p2p_data *p2p,
 {
 	struct p2p_device *dev;
 	dl_list_for_each(dev, &p2p->devices, struct p2p_device, list) {
-		if (os_memcmp(dev->interface_addr, addr, ETH_ALEN) == 0)
+		if (ether_addr_equal(dev->interface_addr, addr))
 			return dev;
 	}
 	return NULL;
@@ -428,7 +431,9 @@ static struct p2p_device * p2p_create_device(struct p2p_data *p2p,
 			oldest = dev;
 	}
 	if (count + 1 > p2p->cfg->max_peers && oldest) {
-		p2p_dbg(p2p, "Remove oldest peer entry to make room for a new peer");
+		p2p_dbg(p2p,
+			"Remove oldest peer entry to make room for a new peer "
+			MACSTR, MAC2STR(oldest->info.p2p_device_addr));
 		dl_list_del(&oldest->list);
 		p2p_device_free(p2p, oldest);
 	}
@@ -438,6 +443,7 @@ static struct p2p_device * p2p_create_device(struct p2p_data *p2p,
 		return NULL;
 	dl_list_add(&p2p->devices, &dev->list);
 	os_memcpy(dev->info.p2p_device_addr, addr, ETH_ALEN);
+	dev->support_6ghz = false;
 
 	return dev;
 }
@@ -453,6 +459,8 @@ static void p2p_copy_client_info(struct p2p_device *dev,
 	dev->info.config_methods = cli->config_methods;
 	os_memcpy(dev->info.pri_dev_type, cli->pri_dev_type, 8);
 	dev->info.wps_sec_dev_type_list_len = 8 * cli->num_sec_dev_types;
+	if (dev->info.wps_sec_dev_type_list_len > WPS_SEC_DEV_TYPE_MAX_LEN)
+		dev->info.wps_sec_dev_type_list_len = WPS_SEC_DEV_TYPE_MAX_LEN;
 	os_memcpy(dev->info.wps_sec_dev_type_list, cli->sec_dev_types,
 		  dev->info.wps_sec_dev_type_list_len);
 }
@@ -478,8 +486,8 @@ static int p2p_add_group_clients(struct p2p_data *p2p, const u8 *go_dev_addr,
 	 * group, the information will be restored in the loop following this.
 	 */
 	dl_list_for_each(dev, &p2p->devices, struct p2p_device, list) {
-		if (os_memcmp(dev->member_in_go_iface, go_interface_addr,
-			      ETH_ALEN) == 0) {
+		if (ether_addr_equal(dev->member_in_go_iface,
+				     go_interface_addr)) {
 			os_memset(dev->member_in_go_iface, 0, ETH_ALEN);
 			os_memset(dev->member_in_go_dev, 0, ETH_ALEN);
 		}
@@ -487,8 +495,7 @@ static int p2p_add_group_clients(struct p2p_data *p2p, const u8 *go_dev_addr,
 
 	for (c = 0; c < info.num_clients; c++) {
 		struct p2p_client_info *cli = &info.client[c];
-		if (os_memcmp(cli->p2p_device_addr, p2p->cfg->dev_addr,
-			      ETH_ALEN) == 0)
+		if (ether_addr_equal(cli->p2p_device_addr, p2p->cfg->dev_addr))
 			continue; /* ignore our own entry */
 		dev = p2p_get_device(p2p, cli->p2p_device_addr);
 		if (dev) {
@@ -604,6 +611,8 @@ static void p2p_copy_wps_info(struct p2p_data *p2p, struct p2p_device *dev,
 		dev->info.group_capab = msg->capability[1];
 	}
 
+	p2p_update_peer_6ghz_capab(dev, msg);
+
 	if (msg->ext_listen_timing) {
 		dev->ext_listen_period = WPA_GET_LE16(msg->ext_listen_timing);
 		dev->ext_listen_interval =
@@ -624,6 +633,15 @@ static void p2p_copy_wps_info(struct p2p_data *p2p, struct p2p_device *dev,
 			dev->info.config_methods = new_config_methods;
 		}
 	}
+}
+
+
+void p2p_update_peer_6ghz_capab(struct p2p_device *dev,
+				const struct p2p_message *msg)
+{
+	if (msg->capability &&
+	    (msg->capability[0] & P2P_DEV_CAPAB_6GHZ_BAND_CAPABLE))
+		dev->support_6ghz = true;
 }
 
 
@@ -663,6 +681,8 @@ static void p2p_update_peer_vendor_elems(struct p2p_device *dev, const u8 *ies,
 		if (wpabuf_resize(&dev->info.vendor_elems, 2 + len) < 0)
 			break;
 		wpabuf_put_data(dev->info.vendor_elems, pos - 2, 2 + len);
+		if (wpabuf_size(dev->info.vendor_elems) > 2000)
+			break;
 	}
 }
 
@@ -733,7 +753,7 @@ int p2p_add_device(struct p2p_data *p2p, const u8 *addr, int freq,
 	}
 
 	if (!is_zero_ether_addr(p2p->peer_filter) &&
-	    os_memcmp(p2p_dev_addr, p2p->peer_filter, ETH_ALEN) != 0) {
+	    !ether_addr_equal(p2p_dev_addr, p2p->peer_filter)) {
 		p2p_dbg(p2p, "Do not add peer filter for " MACSTR
 			" due to peer filter", MAC2STR(p2p_dev_addr));
 		p2p_parse_free(&msg);
@@ -778,7 +798,7 @@ int p2p_add_device(struct p2p_data *p2p, const u8 *addr, int freq,
 	dev->flags &= ~(P2P_DEV_PROBE_REQ_ONLY | P2P_DEV_GROUP_CLIENT_ONLY |
 			P2P_DEV_LAST_SEEN_AS_GROUP_CLIENT);
 
-	if (os_memcmp(addr, p2p_dev_addr, ETH_ALEN) != 0)
+	if (!ether_addr_equal(addr, p2p_dev_addr))
 		os_memcpy(dev->interface_addr, addr, ETH_ALEN);
 	if (msg.ssid &&
 	    msg.ssid[1] <= sizeof(dev->oper_ssid) &&
@@ -1009,6 +1029,7 @@ static void p2p_search(struct p2p_data *p2p)
 		return;
 	}
 	p2p->cfg->stop_listen(p2p->cfg->cb_ctx);
+	p2p->pending_listen_wait_drv = false;
 
 	if (p2p->find_pending_full &&
 	    (p2p->find_type == P2P_FIND_PROGRESSIVE ||
@@ -1029,7 +1050,7 @@ static void p2p_search(struct p2p_data *p2p)
 
 	res = p2p->cfg->p2p_scan(p2p->cfg->cb_ctx, type, freq,
 				 p2p->num_req_dev_types, p2p->req_dev_types,
-				 p2p->find_dev_id, pw_id);
+				 p2p->find_dev_id, pw_id, p2p->include_6ghz);
 	if (res < 0) {
 		p2p_dbg(p2p, "Scan request schedule failed");
 		p2p_continue_find(p2p);
@@ -1153,7 +1174,7 @@ int p2p_find(struct p2p_data *p2p, unsigned int timeout,
 	     enum p2p_discovery_type type,
 	     unsigned int num_req_dev_types, const u8 *req_dev_types,
 	     const u8 *dev_id, unsigned int search_delay,
-	     u8 seek_count, const char **seek, int freq)
+	     u8 seek_count, const char **seek, int freq, bool include_6ghz)
 {
 	int res;
 	struct os_reltime start;
@@ -1178,7 +1199,7 @@ int p2p_find(struct p2p_data *p2p, unsigned int timeout,
 		p2p->find_dev_id = p2p->find_dev_id_buf;
 	} else
 		p2p->find_dev_id = NULL;
-
+	p2p->include_6ghz = p2p_wfd_enabled(p2p) && include_6ghz;
 	if (seek_count == 0 || !seek) {
 		/* Not an ASP search */
 		p2p->p2ps_seek = 0;
@@ -1226,6 +1247,7 @@ int p2p_find(struct p2p_data *p2p, unsigned int timeout,
 		p2p->pending_listen_freq = 0;
 	}
 	p2p->cfg->stop_listen(p2p->cfg->cb_ctx);
+	p2p->pending_listen_wait_drv = false;
 	p2p->find_pending_full = 0;
 	p2p->find_type = type;
 	if (freq != 2412 && freq != 2437 && freq != 2462 && freq != 60480)
@@ -1254,7 +1276,8 @@ int p2p_find(struct p2p_data *p2p, unsigned int timeout,
 						 P2P_SCAN_SPECIFIC, freq,
 						 p2p->num_req_dev_types,
 						 p2p->req_dev_types, dev_id,
-						 DEV_PW_DEFAULT);
+						 DEV_PW_DEFAULT,
+						 p2p->include_6ghz);
 			break;
 		}
 		/* fall through */
@@ -1262,13 +1285,13 @@ int p2p_find(struct p2p_data *p2p, unsigned int timeout,
 		res = p2p->cfg->p2p_scan(p2p->cfg->cb_ctx, P2P_SCAN_FULL, 0,
 					 p2p->num_req_dev_types,
 					 p2p->req_dev_types, dev_id,
-					 DEV_PW_DEFAULT);
+					 DEV_PW_DEFAULT, p2p->include_6ghz);
 		break;
 	case P2P_FIND_ONLY_SOCIAL:
 		res = p2p->cfg->p2p_scan(p2p->cfg->cb_ctx, P2P_SCAN_SOCIAL, 0,
 					 p2p->num_req_dev_types,
 					 p2p->req_dev_types, dev_id,
-					 DEV_PW_DEFAULT);
+					 DEV_PW_DEFAULT, p2p->include_6ghz);
 		break;
 	default:
 		return -1;
@@ -1319,7 +1342,13 @@ void p2p_stop_find_for_freq(struct p2p_data *p2p, int freq)
 
 void p2p_stop_listen_for_freq(struct p2p_data *p2p, int freq)
 {
-	if (freq > 0 && p2p->drv_in_listen == freq && p2p->in_listen) {
+	p2p_dbg(p2p,
+		"%s(freq=%d) pending_listen_freq=%d in_listen=%d drv_in_listen=%d",
+		__func__, freq, p2p->pending_listen_freq, p2p->in_listen,
+		p2p->drv_in_listen);
+	if (freq > 0 &&
+	    ((p2p->drv_in_listen == freq && p2p->in_listen) ||
+	     p2p->pending_listen_freq == (unsigned int) freq)) {
 		p2p_dbg(p2p, "Skip stop_listen since we are on correct channel for response");
 		return;
 	}
@@ -1336,7 +1365,15 @@ void p2p_stop_listen_for_freq(struct p2p_data *p2p, int freq)
 		p2p_dbg(p2p, "Clear drv_in_listen (%d)", p2p->drv_in_listen);
 		p2p->drv_in_listen = 0;
 	}
+	if (p2p->pending_listen_freq &&
+	    p2p->pending_listen_freq != (unsigned int) freq &&
+	    !p2p->drv_in_listen && p2p->pending_listen_wait_drv) {
+		p2p_dbg(p2p,
+			"Clear pending_listen_freq since the started listen did not complete before being stopped");
+		p2p->pending_listen_freq = 0;
+	}
 	p2p->cfg->stop_listen(p2p->cfg->cb_ctx);
+	p2p->pending_listen_wait_drv = false;
 }
 
 
@@ -1390,8 +1427,8 @@ static int p2p_prepare_channel_pref(struct p2p_data *p2p,
 		p2p->channels.reg_class[0].reg_class = p2p->op_reg_class;
 		p2p->channels.reg_class[0].channel[0] = p2p->op_channel;
 	} else {
-		os_memcpy(&p2p->channels, &p2p->cfg->channels,
-			  sizeof(struct p2p_channels));
+		p2p_copy_channels(&p2p->channels, &p2p->cfg->channels,
+				  p2p->allow_6ghz);
 	}
 
 	return 0;
@@ -1404,6 +1441,8 @@ static void p2p_prepare_channel_best(struct p2p_data *p2p)
 	const int op_classes_5ghz[] = { 124, 125, 115, 0 };
 	const int op_classes_ht40[] = { 126, 127, 116, 117, 0 };
 	const int op_classes_vht[] = { 128, 0 };
+	const int op_classes_edmg[] = { 181, 182, 183, 0 };
+	const int op_classes_6ghz[] = { 131, 0 };
 
 	p2p_dbg(p2p, "Prepare channel best");
 
@@ -1435,6 +1474,17 @@ static void p2p_prepare_channel_best(struct p2p_data *p2p)
 		p2p_dbg(p2p, "Select first pref_chan entry as operating channel preference");
 		p2p->op_reg_class = p2p->cfg->pref_chan[0].op_class;
 		p2p->op_channel = p2p->cfg->pref_chan[0].chan;
+	} else if (p2p_channel_select(&p2p->cfg->channels, op_classes_edmg,
+				      &p2p->op_reg_class, &p2p->op_channel) ==
+		   0) {
+		p2p_dbg(p2p, "Select possible EDMG channel (op_class %u channel %u) as operating channel preference",
+			p2p->op_reg_class, p2p->op_channel);
+	} else if (p2p->allow_6ghz &&
+		   (p2p_channel_select(&p2p->cfg->channels, op_classes_6ghz,
+				       &p2p->op_reg_class, &p2p->op_channel) ==
+		    0)) {
+		p2p_dbg(p2p, "Select possible 6 GHz channel (op_class %u channel %u) as operating channel preference",
+			p2p->op_reg_class, p2p->op_channel);
 	} else if (p2p_channel_select(&p2p->cfg->channels, op_classes_vht,
 				      &p2p->op_reg_class, &p2p->op_channel) ==
 		   0) {
@@ -1465,15 +1515,15 @@ static void p2p_prepare_channel_best(struct p2p_data *p2p)
 	} else {
 		/* Select any random available channel from the first available
 		 * operating class */
-		p2p_channel_select(&p2p->cfg->channels, NULL,
-				   &p2p->op_reg_class,
-				   &p2p->op_channel);
-		p2p_dbg(p2p, "Select random available channel %d from operating class %d as operating channel preference",
-			p2p->op_channel, p2p->op_reg_class);
+		if (p2p_channel_select(&p2p->cfg->channels, NULL,
+				       &p2p->op_reg_class,
+				       &p2p->op_channel) == 0)
+			p2p_dbg(p2p,
+				"Select random available channel %d from operating class %d as operating channel preference",
+				p2p->op_channel, p2p->op_reg_class);
 	}
 
-	os_memcpy(&p2p->channels, &p2p->cfg->channels,
-		  sizeof(struct p2p_channels));
+	p2p_copy_channels(&p2p->channels, &p2p->cfg->channels, p2p->allow_6ghz);
 }
 
 
@@ -1556,9 +1606,10 @@ int p2p_connect(struct p2p_data *p2p, const u8 *peer_addr,
 	p2p_dbg(p2p, "Request to start group negotiation - peer=" MACSTR
 		"  GO Intent=%d  Intended Interface Address=" MACSTR
 		" wps_method=%d persistent_group=%d pd_before_go_neg=%d "
-		"oob_pw_id=%u",
+		"oob_pw_id=%u allow_6ghz=%d",
 		MAC2STR(peer_addr), go_intent, MAC2STR(own_interface_addr),
-		wps_method, persistent_group, pd_before_go_neg, oob_pw_id);
+		wps_method, persistent_group, pd_before_go_neg, oob_pw_id,
+		p2p->allow_6ghz);
 
 	dev = p2p_get_device(p2p, peer_addr);
 	if (dev == NULL || (dev->flags & P2P_DEV_PROBE_REQ_ONLY)) {
@@ -1656,9 +1707,9 @@ int p2p_authorize(struct p2p_data *p2p, const u8 *peer_addr,
 
 	p2p_dbg(p2p, "Request to authorize group negotiation - peer=" MACSTR
 		"  GO Intent=%d  Intended Interface Address=" MACSTR
-		" wps_method=%d  persistent_group=%d oob_pw_id=%u",
+		" wps_method=%d  persistent_group=%d oob_pw_id=%u allow_6ghz=%d",
 		MAC2STR(peer_addr), go_intent, MAC2STR(own_interface_addr),
-		wps_method, persistent_group, oob_pw_id);
+		wps_method, persistent_group, oob_pw_id, p2p->allow_6ghz);
 
 	dev = p2p_get_device(p2p, peer_addr);
 	if (dev == NULL) {
@@ -1775,6 +1826,7 @@ int p2p_go_params(struct p2p_data *p2p, struct p2p_go_neg_results *params)
 	p2p->ssid_set = 0;
 
 	p2p_random(params->passphrase, p2p->cfg->passphrase_len);
+	params->passphrase[p2p->cfg->passphrase_len] = '\0';
 	return 0;
 }
 
@@ -1807,6 +1859,7 @@ void p2p_go_complete(struct p2p_data *p2p, struct p2p_device *peer)
 		os_memcpy(res.ssid, p2p->ssid, p2p->ssid_len);
 		res.ssid_len = p2p->ssid_len;
 		p2p_random(res.passphrase, p2p->cfg->passphrase_len);
+		res.passphrase[p2p->cfg->passphrase_len] = '\0';
 	} else {
 		res.freq = peer->oper_freq;
 		if (p2p->ssid_len) {
@@ -1984,6 +2037,7 @@ static void p2p_go_neg_start(void *eloop_ctx, void *timeout_ctx)
 		p2p->pending_listen_freq = 0;
 	}
 	p2p->cfg->stop_listen(p2p->cfg->cb_ctx);
+	p2p->pending_listen_wait_drv = false;
 	p2p->go_neg_peer->status = P2P_SC_SUCCESS;
 	/*
 	 * Set new timeout to make sure a previously set one does not expire
@@ -2004,6 +2058,7 @@ static void p2p_invite_start(void *eloop_ctx, void *timeout_ctx)
 		p2p->pending_listen_freq = 0;
 	}
 	p2p->cfg->stop_listen(p2p->cfg->cb_ctx);
+	p2p->pending_listen_wait_drv = false;
 	p2p_invite_send(p2p, p2p->invite_peer, p2p->invite_go_dev_addr,
 			p2p->invite_dev_pw_id);
 }
@@ -2053,6 +2108,7 @@ static void p2p_add_dev_from_probe_req(struct p2p_data *p2p, const u8 *addr,
 			}
 		}
 
+		p2p_update_peer_6ghz_capab(dev, &msg);
 		os_get_reltime(&dev->last_seen);
 		p2p_parse_free(&msg);
 		return; /* already known */
@@ -2337,7 +2393,7 @@ p2p_reply_probe(struct p2p_data *p2p, const u8 *addr, const u8 *dst,
 	}
 
 	if (dst && !is_broadcast_ether_addr(dst) &&
-	    os_memcmp(dst, p2p->cfg->dev_addr, ETH_ALEN) != 0) {
+	    !ether_addr_equal(dst, p2p->cfg->dev_addr)) {
 		/* Not sent to the broadcast address or our P2P Device Address
 		 */
 		p2p_dbg(p2p, "Probe Req DA " MACSTR " not ours - ignore it",
@@ -2421,7 +2477,7 @@ p2p_reply_probe(struct p2p_data *p2p, const u8 *addr, const u8 *dst,
 	}
 
 	if (msg.device_id &&
-	    os_memcmp(msg.device_id, p2p->cfg->dev_addr, ETH_ALEN) != 0) {
+	    !ether_addr_equal(msg.device_id, p2p->cfg->dev_addr)) {
 		/* Device ID did not match */
 		p2p_dbg(p2p, "Probe Req requested Device ID " MACSTR " did not match - ignore it",
 			MAC2STR(msg.device_id));
@@ -2510,8 +2566,7 @@ p2p_probe_req_rx(struct p2p_data *p2p, const u8 *addr, const u8 *dst,
 	 */
 	if ((p2p->state == P2P_CONNECT || p2p->state == P2P_CONNECT_LISTEN) &&
 	    p2p->go_neg_peer &&
-	    os_memcmp(addr, p2p->go_neg_peer->info.p2p_device_addr, ETH_ALEN)
-	    == 0 &&
+	    ether_addr_equal(addr, p2p->go_neg_peer->info.p2p_device_addr) &&
 	    !(p2p->go_neg_peer->flags & P2P_DEV_WAIT_GO_NEG_CONFIRM)) {
 		/* Received a Probe Request from GO Negotiation peer */
 		p2p_dbg(p2p, "Found GO Negotiation peer - try to start GO negotiation from timeout");
@@ -2523,8 +2578,7 @@ p2p_probe_req_rx(struct p2p_data *p2p, const u8 *addr, const u8 *dst,
 	if ((p2p->state == P2P_INVITE || p2p->state == P2P_INVITE_LISTEN) &&
 	    p2p->invite_peer &&
 	    (p2p->invite_peer->flags & P2P_DEV_WAIT_INV_REQ_ACK) &&
-	    os_memcmp(addr, p2p->invite_peer->info.p2p_device_addr, ETH_ALEN)
-	    == 0) {
+	    ether_addr_equal(addr, p2p->invite_peer->info.p2p_device_addr)) {
 		/* Received a Probe Request from Invite peer */
 		p2p_dbg(p2p, "Found Invite peer - try to start Invite from timeout");
 		eloop_cancel_timeout(p2p_invite_start, p2p, NULL);
@@ -2877,8 +2931,7 @@ void p2p_wps_success_cb(struct p2p_data *p2p, const u8 *mac_addr)
 		return; /* No pending Group Formation */
 	}
 
-	if (os_memcmp(mac_addr, p2p->go_neg_peer->intended_addr, ETH_ALEN) !=
-	    0) {
+	if (!ether_addr_equal(mac_addr, p2p->go_neg_peer->intended_addr)) {
 		p2p_dbg(p2p, "Ignore WPS registration success notification for "
 			MACSTR " (GO Negotiation peer " MACSTR ")",
 			MAC2STR(mac_addr),
@@ -2904,6 +2957,14 @@ void p2p_group_formation_failed(struct p2p_data *p2p)
 		MAC2STR(p2p->go_neg_peer->intended_addr));
 
 	p2p_clear_go_neg(p2p);
+}
+
+
+bool is_p2p_6ghz_disabled(struct p2p_data *p2p)
+{
+	if (p2p)
+		return p2p->cfg->p2p_6ghz_disable;
+	return false;
 }
 
 
@@ -3271,7 +3332,7 @@ skip_sd:
 }
 
 
-static void p2p_sd_cb(struct p2p_data *p2p, int success)
+void p2p_sd_query_cb(struct p2p_data *p2p, int success)
 {
 	p2p_dbg(p2p, "Service Discovery Query TX callback: success=%d",
 		success);
@@ -3335,8 +3396,8 @@ static void p2p_retry_pd(struct p2p_data *p2p)
 	 */
 
 	dl_list_for_each(dev, &p2p->devices, struct p2p_device, list) {
-		if (os_memcmp(p2p->pending_pd_devaddr,
-			      dev->info.p2p_device_addr, ETH_ALEN) != 0)
+		if (!ether_addr_equal(p2p->pending_pd_devaddr,
+				      dev->info.p2p_device_addr))
 			continue;
 		if (!dev->req_config_methods)
 			continue;
@@ -3451,12 +3512,18 @@ static void p2p_prov_disc_resp_cb(struct p2p_data *p2p, int success)
 
 	p2p->pending_action_state = P2P_NO_PENDING_ACTION;
 
-	if (!success)
+	if (!success) {
+		if (p2p->state == P2P_SEARCH)
+			p2p_continue_find(p2p);
 		return;
+	}
 
 	if (!p2p->cfg->prov_disc_resp_cb ||
-	    p2p->cfg->prov_disc_resp_cb(p2p->cfg->cb_ctx) < 1)
+	    p2p->cfg->prov_disc_resp_cb(p2p->cfg->cb_ctx) < 1) {
+		if (p2p->state == P2P_SEARCH)
+			p2p_continue_find(p2p);
 		return;
+	}
 
 	p2p_dbg(p2p,
 		"Post-Provision Discovery operations started - do not try to continue other P2P operations");
@@ -3490,12 +3557,17 @@ int p2p_scan_res_handler(struct p2p_data *p2p, const u8 *bssid, int freq,
 }
 
 
-void p2p_scan_res_handled(struct p2p_data *p2p)
+void p2p_scan_res_handled(struct p2p_data *p2p, unsigned int delay)
 {
 	if (!p2p->p2p_scan_running) {
 		p2p_dbg(p2p, "p2p_scan was not running, but scan results received");
 	}
 	p2p->p2p_scan_running = 0;
+
+	/* Use this delay only when p2p_find doesn't set it */
+	if (!p2p->search_delay)
+		p2p->search_delay = delay;
+
 	eloop_cancel_timeout(p2p_scan_timeout, p2p, NULL);
 
 	if (p2p_run_after_scan(p2p))
@@ -3763,7 +3835,7 @@ void p2p_send_action_cb(struct p2p_data *p2p, unsigned int freq, const u8 *dst,
 		p2p_go_neg_conf_cb(p2p, result);
 		break;
 	case P2P_PENDING_SD:
-		p2p_sd_cb(p2p, success);
+		p2p_sd_query_cb(p2p, success);
 		break;
 	case P2P_PENDING_PD:
 		p2p_prov_disc_cb(p2p, success);
@@ -3808,6 +3880,7 @@ void p2p_listen_cb(struct p2p_data *p2p, unsigned int freq,
 	p2p_dbg(p2p, "Starting Listen timeout(%u,%u) on freq=%u based on callback",
 		p2p->pending_listen_sec, p2p->pending_listen_usec,
 		p2p->pending_listen_freq);
+	p2p->pending_listen_wait_drv = false;
 	p2p->in_listen = 1;
 	p2p->drv_in_listen = freq;
 	if (p2p->pending_listen_sec || p2p->pending_listen_usec) {
@@ -3962,6 +4035,12 @@ static void p2p_timeout_wait_peer_idle(struct p2p_data *p2p)
 	}
 
 	p2p_dbg(p2p, "Go to Listen state while waiting for the peer to become ready for GO Negotiation");
+	p2p->cfg->stop_listen(p2p->cfg->cb_ctx);
+	p2p->pending_listen_wait_drv = false;
+	if (p2p->pending_listen_freq) {
+		p2p_dbg(p2p, "Clear pending_listen_freq for %s", __func__);
+		p2p->pending_listen_freq = 0;
+	}
 	p2p_set_state(p2p, P2P_WAIT_PEER_CONNECT);
 	p2p_listen_in_find(p2p, 0);
 }
@@ -4011,8 +4090,8 @@ static void p2p_timeout_prov_disc_req(struct p2p_data *p2p)
 		int for_join = 0;
 
 		dl_list_for_each(dev, &p2p->devices, struct p2p_device, list) {
-			if (os_memcmp(p2p->pending_pd_devaddr,
-				      dev->info.p2p_device_addr, ETH_ALEN) != 0)
+			if (!ether_addr_equal(p2p->pending_pd_devaddr,
+					      dev->info.p2p_device_addr))
 				continue;
 			if (dev->req_config_methods &&
 			    (dev->flags & P2P_DEV_PD_FOR_JOIN))
@@ -4044,9 +4123,11 @@ static void p2p_timeout_invite(struct p2p_data *p2p)
 		/*
 		 * Better remain on operating channel instead of listen channel
 		 * when running a group.
+		 * Wait 120 ms to let the P2P GO to send its beacon on the
+		 * intended TBTT.
 		 */
 		p2p_dbg(p2p, "Inviting in active GO role - wait on operating channel");
-		p2p_set_timeout(p2p, 0, 100000);
+		p2p_set_timeout(p2p, 0, 120000);
 		return;
 	}
 	p2p_listen_in_find(p2p, 0);
@@ -4083,6 +4164,7 @@ static void p2p_state_timeout(void *eloop_ctx, void *timeout_ctx)
 	if (p2p->drv_in_listen) {
 		p2p_dbg(p2p, "Driver is still in listen state - stop it");
 		p2p->cfg->stop_listen(p2p->cfg->cb_ctx);
+		p2p->pending_listen_wait_drv = false;
 	}
 
 	switch (p2p->state) {
@@ -4477,8 +4559,8 @@ static void p2p_process_presence_req(struct p2p_data *p2p, const u8 *da,
 	p2p_dbg(p2p, "Received P2P Action - P2P Presence Request");
 
 	for (g = 0; g < p2p->num_groups; g++) {
-		if (os_memcmp(da, p2p_group_get_interface_addr(p2p->groups[g]),
-			      ETH_ALEN) == 0) {
+		if (ether_addr_equal(
+			    da, p2p_group_get_interface_addr(p2p->groups[g]))) {
 			group = p2p->groups[g];
 			break;
 		}
@@ -4576,15 +4658,6 @@ static void p2p_ext_listen_timeout(void *eloop_ctx, void *timeout_ctx)
 				       p2p_ext_listen_timeout, p2p, NULL);
 	}
 
-	if ((p2p->cfg->is_p2p_in_progress &&
-	     p2p->cfg->is_p2p_in_progress(p2p->cfg->cb_ctx)) ||
-	    (p2p->pending_action_state == P2P_PENDING_PD &&
-	     p2p->pd_retries > 0)) {
-		p2p_dbg(p2p, "Operation in progress - skip Extended Listen timeout (%s)",
-			p2p_state_txt(p2p->state));
-		return;
-	}
-
 	if (p2p->state == P2P_LISTEN_ONLY && p2p->ext_listen_only) {
 		/*
 		 * This should not really happen, but it looks like the Listen
@@ -4595,6 +4668,15 @@ static void p2p_ext_listen_timeout(void *eloop_ctx, void *timeout_ctx)
 		p2p_dbg(p2p, "Previous Extended Listen operation had not been completed - try again");
 		p2p->ext_listen_only = 0;
 		p2p_set_state(p2p, P2P_IDLE);
+	}
+
+	if ((p2p->cfg->is_p2p_in_progress &&
+	     p2p->cfg->is_p2p_in_progress(p2p->cfg->cb_ctx)) ||
+	    (p2p->pending_action_state == P2P_PENDING_PD &&
+	     p2p->pd_retries > 0)) {
+		p2p_dbg(p2p, "Operation in progress - skip Extended Listen timeout (%s)",
+			p2p_state_txt(p2p->state));
+		return;
 	}
 
 	if (p2p->state != P2P_IDLE) {
@@ -4915,6 +4997,7 @@ int p2p_send_action(struct p2p_data *p2p, unsigned int freq, const u8 *dst,
 	res = p2p->cfg->send_action(p2p->cfg->cb_ctx, freq, dst, src, bssid,
 				    buf, len, wait_time, &scheduled);
 	if (res == 0 && scheduled && p2p->in_listen && freq > 0 &&
+	    p2p->drv_in_listen > 0 &&
 	    (unsigned int) p2p->drv_in_listen != freq) {
 		p2p_dbg(p2p,
 			"Stop listen on %d MHz to allow a frame to be sent immediately on %d MHz",
@@ -5485,7 +5568,7 @@ void p2p_go_neg_wait_timeout(void *eloop_ctx, void *timeout_ctx)
 
 
 void p2p_set_own_pref_freq_list(struct p2p_data *p2p,
-				const unsigned int *pref_freq_list,
+				const struct weighted_pcl *pref_freq_list,
 				unsigned int size)
 {
 	unsigned int i;
@@ -5493,10 +5576,11 @@ void p2p_set_own_pref_freq_list(struct p2p_data *p2p,
 	if (size > P2P_MAX_PREF_CHANNELS)
 		size = P2P_MAX_PREF_CHANNELS;
 	p2p->num_pref_freq = size;
+	os_memcpy(p2p->pref_freq_list, pref_freq_list,
+		  size * sizeof(struct weighted_pcl));
 	for (i = 0; i < size; i++) {
-		p2p->pref_freq_list[i] = pref_freq_list[i];
 		p2p_dbg(p2p, "Own preferred frequency list[%u]=%u MHz",
-			i, p2p->pref_freq_list[i]);
+			i, p2p->pref_freq_list[i].freq);
 	}
 }
 
@@ -5537,4 +5621,70 @@ struct wpabuf * p2p_build_probe_resp_template(struct p2p_data *p2p,
 	}
 
 	return buf;
+}
+
+
+bool p2p_is_peer_6ghz_capab(struct p2p_data *p2p, const u8 *addr)
+{
+	struct p2p_device *dev;
+
+	dev = p2p_get_device(p2p, addr);
+	if (!dev)
+		return false;
+
+	return dev->support_6ghz;
+}
+
+
+void p2p_set_6ghz_dev_capab(struct p2p_data *p2p, bool allow_6ghz)
+{
+	p2p->p2p_6ghz_capable = allow_6ghz;
+	p2p->allow_6ghz = allow_6ghz;
+	p2p_dbg(p2p, "Set 6 GHz capability to %d", allow_6ghz);
+
+	if (allow_6ghz)
+		p2p->dev_capab |= P2P_DEV_CAPAB_6GHZ_BAND_CAPABLE;
+	else
+		p2p->dev_capab &= ~P2P_DEV_CAPAB_6GHZ_BAND_CAPABLE;
+}
+
+
+bool is_p2p_6ghz_capable(struct p2p_data *p2p)
+{
+	return p2p->p2p_6ghz_capable;
+}
+
+
+bool p2p_wfd_enabled(struct p2p_data *p2p)
+{
+#ifdef CONFIG_WIFI_DISPLAY
+	return p2p->wfd_ie_probe_req != NULL;
+#else /* CONFIG_WIFI_DISPLAY */
+	return false;
+#endif /* CONFIG_WIFI_DISPLAY */
+}
+
+
+bool p2p_peer_wfd_enabled(struct p2p_data *p2p, const u8 *peer_addr)
+{
+#ifdef CONFIG_WIFI_DISPLAY
+	struct p2p_device *dev;
+
+	dev = p2p_get_device(p2p, peer_addr);
+	return dev && dev->info.wfd_subelems != NULL;
+#else /* CONFIG_WIFI_DISPLAY */
+	return false;
+#endif /* CONFIG_WIFI_DISPLAY */
+}
+
+
+bool is_p2p_allow_6ghz(struct p2p_data *p2p)
+{
+	return p2p->allow_6ghz;
+}
+
+
+void set_p2p_allow_6ghz(struct p2p_data *p2p, bool value)
+{
+	p2p->allow_6ghz = value;
 }
