@@ -13,6 +13,7 @@
 #include <assert.h>
 
 #include "common.h"
+#include "crypto/crypto.h"
 #include "config.h"
 #include "eapol_supp/eapol_supp_sm.h"
 #include "eloop.h"
@@ -38,6 +39,12 @@ struct preauth_test_data {
 static void _wpa_supplicant_deauthenticate(void *wpa_s, u16 reason_code)
 {
 	wpa_supplicant_deauthenticate(wpa_s, reason_code);
+}
+
+
+static void _wpa_supplicant_reconnect(void *wpa_s)
+{
+	wpa_supplicant_reconnect(wpa_s);
 }
 
 
@@ -124,10 +131,11 @@ static int wpa_supplicant_get_bssid(void *wpa_s, u8 *bssid)
 }
 
 
-static int wpa_supplicant_set_key(void *wpa_s, enum wpa_alg alg,
+static int wpa_supplicant_set_key(void *wpa_s, int link_id, enum wpa_alg alg,
 				  const u8 *addr, int key_idx, int set_tx,
 				  const u8 *seq, size_t seq_len,
-				  const u8 *key, size_t key_len)
+				  const u8 *key, size_t key_len,
+				  enum key_flag key_flag)
 {
 	printf("%s - not implemented\n", __func__);
 	return -1;
@@ -146,7 +154,9 @@ static int wpa_supplicant_mlme_setprotection(void *wpa_s, const u8 *addr,
 static int wpa_supplicant_add_pmkid(void *wpa_s, void *network_ctx,
 				    const u8 *bssid, const u8 *pmkid,
 				    const u8 *fils_cache_id,
-				    const u8 *pmk, size_t pmk_len)
+				    const u8 *pmk, size_t pmk_len,
+				    u32 pmk_lifetime, u8 pmk_reauth_threshold,
+				    int akmp)
 {
 	printf("%s - not implemented\n", __func__);
 	return -1;
@@ -184,10 +194,8 @@ static void test_eapol_clean(struct wpa_supplicant *wpa_s)
 	pmksa_candidate_free(wpa_s->wpa);
 	wpa_sm_deinit(wpa_s->wpa);
 	scard_deinit(wpa_s->scard);
-	if (wpa_s->ctrl_iface) {
-		wpa_supplicant_ctrl_iface_deinit(wpa_s->ctrl_iface);
-		wpa_s->ctrl_iface = NULL;
-	}
+	wpa_supplicant_ctrl_iface_deinit(wpa_s, wpa_s->ctrl_iface);
+	wpa_s->ctrl_iface = NULL;
 	wpa_config_free(wpa_s->conf);
 }
 
@@ -213,7 +221,7 @@ static void eapol_test_poll(void *eloop_ctx, void *timeout_ctx)
 }
 
 
-static struct wpa_driver_ops dummy_driver;
+static struct wpa_driver_ops stub_driver;
 
 
 static void wpa_init_conf(struct wpa_supplicant *wpa_s, const char *ifname)
@@ -221,8 +229,8 @@ static void wpa_init_conf(struct wpa_supplicant *wpa_s, const char *ifname)
 	struct l2_packet_data *l2;
 	struct wpa_sm_ctx *ctx;
 
-	os_memset(&dummy_driver, 0, sizeof(dummy_driver));
-	wpa_s->driver = &dummy_driver;
+	os_memset(&stub_driver, 0, sizeof(stub_driver));
+	wpa_s->driver = &stub_driver;
 
 	ctx = os_zalloc(sizeof(*ctx));
 	assert(ctx != NULL);
@@ -244,6 +252,7 @@ static void wpa_init_conf(struct wpa_supplicant *wpa_s, const char *ifname)
 	ctx->set_config_blob = wpa_supplicant_set_config_blob;
 	ctx->get_config_blob = wpa_supplicant_get_config_blob;
 	ctx->mlme_setprotection = wpa_supplicant_mlme_setprotection;
+	ctx->reconnect = _wpa_supplicant_reconnect;
 
 	wpa_s->wpa = wpa_sm_init(ctx);
 	assert(wpa_s->wpa != NULL);
@@ -309,7 +318,7 @@ int main(int argc, char *argv[])
 	}
 
 	os_memset(&wpa_s, 0, sizeof(wpa_s));
-	wpa_s.conf = wpa_config_read(argv[1], NULL);
+	wpa_s.conf = wpa_config_read(argv[1], NULL, false);
 	if (wpa_s.conf == NULL) {
 		printf("Failed to parse configuration file '%s'.\n", argv[1]);
 		return -1;
@@ -348,7 +357,7 @@ int main(int argc, char *argv[])
 		ret = -2;
 	else {
 		ret = pmksa_cache_set_current(wpa_s.wpa, NULL, bssid, NULL, 0,
-					      NULL, 0) ? 0 : -3;
+					      NULL, 0, false) ? 0 : -3;
 	}
 
 	test_eapol_clean(&wpa_s);
@@ -357,6 +366,7 @@ int main(int argc, char *argv[])
 
 	eloop_destroy();
 
+	crypto_unload();
 	os_program_deinit();
 
 	return ret;

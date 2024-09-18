@@ -98,6 +98,7 @@ struct wps_device_data {
 	u16 config_methods;
 	struct wpabuf *vendor_ext_m1;
 	struct wpabuf *vendor_ext[MAX_WPS_VENDOR_EXTENSIONS];
+	struct wpabuf *application_ext;
 
 	int p2p;
 	u8 multi_ap_ext;
@@ -194,6 +195,11 @@ struct wps_config {
 	 * enrollee
 	 */
 	int multi_ap_backhaul_sta;
+
+	/*
+	 * multi_ap_profile - Get the Multi-AP Profile
+	 */
+	int multi_ap_profile;
 };
 
 struct wps_data * wps_init(const struct wps_config *cfg);
@@ -344,6 +350,14 @@ struct wps_registrar_config {
 				 const char *dev_name);
 
 	/**
+	 * lookup_pskfile_cb - Callback for searching for PSK in wpa_psk_file
+	 * @ctx: Higher layer context data (cb_ctx)
+	 * @addr: Enrollee's MAC address
+	 * @psk: Pointer to found PSK (output arg)
+	 */
+	int (*lookup_pskfile_cb)(void *ctx, const u8 *mac_addr, const u8 **psk);
+
+	/**
 	 * cb_ctx: Higher layer context data for Registrar callbacks
 	 */
 	void *cb_ctx;
@@ -384,11 +398,6 @@ struct wps_registrar_config {
 	 * to be set with a suitable Credential and skip_cred_build being used.
 	 */
 	int disable_auto_conf;
-
-	/**
-	 * static_wep_only - Whether the BSS supports only static WEP
-	 */
-	int static_wep_only;
 
 	/**
 	 * dualband - Whether this is a concurrent dualband AP
@@ -837,6 +846,10 @@ struct wps_context {
 	struct wpabuf *ap_nfc_dh_pubkey;
 	struct wpabuf *ap_nfc_dh_privkey;
 	struct wpabuf *ap_nfc_dev_pw;
+
+	/* Whether to send WPA2-PSK passphrase as a passphrase instead of PSK
+	 * for WPA3-Personal transition mode needs. */
+	bool use_passphrase;
 };
 
 struct wps_registrar *
@@ -869,6 +882,11 @@ int wps_registrar_add_nfc_password_token(struct wps_registrar *reg,
 					 const u8 *oob_dev_pw,
 					 size_t oob_dev_pw_len);
 void wps_registrar_flush(struct wps_registrar *reg);
+int wps_registrar_update_multi_ap(struct wps_registrar *reg,
+				  const u8 *multi_ap_backhaul_ssid,
+				  size_t multi_ap_backhaul_ssid_len,
+				  const u8 *multi_ap_backhaul_network_key,
+				  size_t multi_ap_backhaul_network_key_len);
 
 int wps_build_credential_wrap(struct wpabuf *msg,
 			      const struct wps_credential *cred);

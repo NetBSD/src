@@ -55,7 +55,7 @@ static struct ap_info * ap_get_ap(struct hostapd_iface *iface, const u8 *ap)
 	struct ap_info *s;
 
 	s = iface->ap_hash[STA_HASH(ap)];
-	while (s != NULL && os_memcmp(s->addr, ap, ETH_ALEN) != 0)
+	while (s != NULL && !ether_addr_equal(s->addr, ap))
 		s = s->hnext;
 	return s;
 }
@@ -100,13 +100,13 @@ static void ap_ap_hash_del(struct hostapd_iface *iface, struct ap_info *ap)
 
 	s = iface->ap_hash[STA_HASH(ap->addr)];
 	if (s == NULL) return;
-	if (os_memcmp(s->addr, ap->addr, ETH_ALEN) == 0) {
+	if (ether_addr_equal(s->addr, ap->addr)) {
 		iface->ap_hash[STA_HASH(ap->addr)] = s->hnext;
 		return;
 	}
 
 	while (s->hnext != NULL &&
-	       os_memcmp(s->hnext->addr, ap->addr, ETH_ALEN) != 0)
+	       !ether_addr_equal(s->hnext->addr, ap->addr))
 		s = s->hnext;
 	if (s->hnext != NULL)
 		s->hnext = s->hnext->hnext;
@@ -228,7 +228,6 @@ void ap_list_process_beacon(struct hostapd_iface *iface,
 		set_beacon++;
 	}
 
-#ifdef CONFIG_IEEE80211N
 	if (!iface->olbc_ht && !ap->ht_support &&
 	    (ap->channel == 0 ||
 	     ap->channel == iface->conf->channel ||
@@ -241,7 +240,6 @@ void ap_list_process_beacon(struct hostapd_iface *iface,
 			   MAC2STR(ap->addr), ap->channel);
 		set_beacon++;
 	}
-#endif /* CONFIG_IEEE80211N */
 
 	if (set_beacon)
 		ieee802_11_update_beacons(iface);
@@ -285,14 +283,12 @@ void ap_list_timer(struct hostapd_iface *iface)
 			iface->olbc = 0;
 			set_beacon++;
 		}
-#ifdef CONFIG_IEEE80211N
 		if (!olbc_ht && iface->olbc_ht) {
 			wpa_printf(MSG_DEBUG, "OLBC HT not detected anymore");
 			iface->olbc_ht = 0;
 			hostapd_ht_operation_update(iface);
 			set_beacon++;
 		}
-#endif /* CONFIG_IEEE80211N */
 	}
 
 	if (set_beacon)

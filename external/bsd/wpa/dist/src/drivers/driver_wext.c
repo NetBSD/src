@@ -452,9 +452,10 @@ static void wpa_driver_wext_event_wireless(struct wpa_driver_wext_data *drv,
 				   MAC2STR((u8 *) iwe->u.ap_addr.sa_data));
 			if (is_zero_ether_addr(
 				    (const u8 *) iwe->u.ap_addr.sa_data) ||
-			    os_memcmp(iwe->u.ap_addr.sa_data,
-				      "\x44\x44\x44\x44\x44\x44", ETH_ALEN) ==
-			    0) {
+			    ether_addr_equal((const u8 *)
+					     iwe->u.ap_addr.sa_data,
+					     (const u8 *)
+					     "\x44\x44\x44\x44\x44\x44")) {
 				os_free(drv->assoc_req_ies);
 				drv->assoc_req_ies = NULL;
 				os_free(drv->assoc_resp_ies);
@@ -968,6 +969,7 @@ static void wext_check_hostap(struct wpa_driver_wext_data *drv)
 static int wpa_driver_wext_finish_drv_init(struct wpa_driver_wext_data *drv)
 {
 	int send_rfkill_event = 0;
+	int i;
 
 	if (linux_set_iface_flags(drv->ioctl_sock, drv->ifname, 1) < 0) {
 		if (rfkill_is_blocked(drv->rfkill)) {
@@ -995,6 +997,10 @@ static int wpa_driver_wext_finish_drv_init(struct wpa_driver_wext_data *drv)
 	}
 
 	wpa_driver_wext_get_range(drv);
+
+	/* Update per interface supported AKMs */
+	for (i = 0; i < WPA_IF_MAX; i++)
+		drv->capa.key_mgmt_iftype[i] = drv->capa.key_mgmt;
 
 	/*
 	 * Unlock the driver's BSSID and force to a random SSID to clear any
@@ -1712,7 +1718,8 @@ static int wpa_driver_wext_set_key_ext(void *priv, enum wpa_alg alg,
 				       const u8 *addr, int key_idx,
 				       int set_tx, const u8 *seq,
 				       size_t seq_len,
-				       const u8 *key, size_t key_len)
+				       const u8 *key, size_t key_len,
+				       enum key_flag key_flag)
 {
 	struct wpa_driver_wext_data *drv = priv;
 	struct iwreq iwr;
@@ -1751,32 +1758,31 @@ static int wpa_driver_wext_set_key_ext(void *priv, enum wpa_alg alg,
 		os_memcpy(ext + 1, key, key_len);
 		ext->key_len = key_len;
 	}
-	switch (alg) {
-	case WPA_ALG_NONE:
-		ext->alg = IW_ENCODE_ALG_NONE;
-		break;
-	case WPA_ALG_WEP:
-		ext->alg = IW_ENCODE_ALG_WEP;
-		break;
-	case WPA_ALG_TKIP:
-		ext->alg = IW_ENCODE_ALG_TKIP;
-		break;
-	case WPA_ALG_CCMP:
-		ext->alg = IW_ENCODE_ALG_CCMP;
-		break;
-	case WPA_ALG_PMK:
+	if (key_flag & KEY_FLAG_PMK) {
 		ext->alg = IW_ENCODE_ALG_PMK;
-		break;
-#ifdef CONFIG_IEEE80211W
-	case WPA_ALG_IGTK:
-		ext->alg = IW_ENCODE_ALG_AES_CMAC;
-		break;
-#endif /* CONFIG_IEEE80211W */
-	default:
-		wpa_printf(MSG_DEBUG, "%s: Unknown algorithm %d",
-			   __FUNCTION__, alg);
-		os_free(ext);
-		return -1;
+	} else {
+		switch (alg) {
+		case WPA_ALG_NONE:
+			ext->alg = IW_ENCODE_ALG_NONE;
+			break;
+		case WPA_ALG_WEP:
+			ext->alg = IW_ENCODE_ALG_WEP;
+			break;
+		case WPA_ALG_TKIP:
+			ext->alg = IW_ENCODE_ALG_TKIP;
+			break;
+		case WPA_ALG_CCMP:
+			ext->alg = IW_ENCODE_ALG_CCMP;
+			break;
+		case WPA_ALG_BIP_CMAC_128:
+			ext->alg = IW_ENCODE_ALG_AES_CMAC;
+			break;
+		default:
+			wpa_printf(MSG_DEBUG, "%s: Unknown algorithm %d",
+				   __FUNCTION__, alg);
+			os_free(ext);
+			return -1;
+		}
 	}
 
 	if (seq && seq_len) {
@@ -1805,37 +1811,27 @@ static int wpa_driver_wext_set_key_ext(void *priv, enum wpa_alg alg,
 /**
  * wpa_driver_wext_set_key - Configure encryption key
  * @priv: Pointer to private wext data from wpa_driver_wext_init()
- * @priv: Private driver interface data
- * @alg: Encryption algorithm (%WPA_ALG_NONE, %WPA_ALG_WEP,
- *	%WPA_ALG_TKIP, %WPA_ALG_CCMP); %WPA_ALG_NONE clears the key.
- * @addr: Address of the peer STA or ff:ff:ff:ff:ff:ff for
- *	broadcast/default keys
- * @key_idx: key index (0..3), usually 0 for unicast keys
- * @set_tx: Configure this key as the default Tx key (only used when
- *	driver does not support separate unicast/individual key
- * @seq: Sequence number/packet number, seq_len octets, the next
- *	packet number to be used for in replay protection; configured
- *	for Rx keys (in most cases, this is only used with broadcast
- *	keys and set to zero for unicast keys)
- * @seq_len: Length of the seq, depends on the algorithm:
- *	TKIP: 6 octets, CCMP: 6 octets
- * @key: Key buffer; TKIP: 16-byte temporal key, 8-byte Tx Mic key,
- *	8-byte Rx Mic Key
- * @key_len: Length of the key buffer in octets (WEP: 5 or 13,
- *	TKIP: 32, CCMP: 16)
+ * @params: Key parameters
  * Returns: 0 on success, -1 on failure
  *
  * This function uses SIOCSIWENCODEEXT by default, but tries to use
  * SIOCSIWENCODE if the extended ioctl fails when configuring a WEP key.
  */
-int wpa_driver_wext_set_key(const char *ifname, void *priv, enum wpa_alg alg,
-			    const u8 *addr, int key_idx,
-			    int set_tx, const u8 *seq, size_t seq_len,
-			    const u8 *key, size_t key_len)
+static int wpa_driver_wext_set_key(void *priv,
+				   struct wpa_driver_set_key_params *params)
 {
 	struct wpa_driver_wext_data *drv = priv;
 	struct iwreq iwr;
 	int ret = 0;
+	enum wpa_alg alg = params->alg;
+	enum key_flag key_flag = params->key_flag;
+	const u8 *addr = params->addr;
+	int key_idx = params->key_idx;
+	int set_tx = params->set_tx;
+	const u8 *seq = params->seq;
+	size_t seq_len = params->seq_len;
+	const u8 *key = params->key;
+	size_t key_len = params->key_len;
 
 	wpa_printf(MSG_DEBUG, "%s: alg=%d key_idx=%d set_tx=%d seq_len=%lu "
 		   "key_len=%lu",
@@ -1843,7 +1839,7 @@ int wpa_driver_wext_set_key(const char *ifname, void *priv, enum wpa_alg alg,
 		   (unsigned long) seq_len, (unsigned long) key_len);
 
 	ret = wpa_driver_wext_set_key_ext(drv, alg, addr, key_idx, set_tx,
-					  seq, seq_len, key, key_len);
+					  seq, seq_len, key, key_len, key_flag);
 	if (ret == 0)
 		return 0;
 
@@ -2201,7 +2197,6 @@ int wpa_driver_wext_associate(void *priv,
 					   IW_AUTH_RX_UNENCRYPTED_EAPOL,
 					   allow_unencrypted_eapol) < 0)
 		ret = -1;
-#ifdef CONFIG_IEEE80211W
 	switch (params->mgmt_frame_protection) {
 	case NO_MGMT_FRAME_PROTECTION:
 		value = IW_AUTH_MFP_DISABLED;
@@ -2215,7 +2210,6 @@ int wpa_driver_wext_associate(void *priv,
 	};
 	if (wpa_driver_wext_set_auth_param(drv, IW_AUTH_MFP, value) < 0)
 		ret = -1;
-#endif /* CONFIG_IEEE80211W */
 	if (params->freq.freq &&
 	    wpa_driver_wext_set_freq(drv, params->freq.freq) < 0)
 		ret = -1;
@@ -2431,7 +2425,7 @@ static int wpa_driver_wext_signal_poll(void *priv, struct wpa_signal_info *si)
 	struct iwreq iwr;
 
 	os_memset(si, 0, sizeof(*si));
-	si->current_signal = -WPA_INVALID_NOISE;
+	si->data.signal = -WPA_INVALID_NOISE;
 	si->current_noise = WPA_INVALID_NOISE;
 	si->chanwidth = CHAN_WIDTH_UNKNOWN;
 
@@ -2447,7 +2441,7 @@ static int wpa_driver_wext_signal_poll(void *priv, struct wpa_signal_info *si)
 		return -1;
 	}
 
-	si->current_signal = stats.qual.level -
+	si->data.signal = stats.qual.level -
 		((stats.qual.updated & IW_QUAL_DBM) ? 0x100 : 0);
 	si->current_noise = stats.qual.noise -
 		((stats.qual.updated & IW_QUAL_DBM) ? 0x100 : 0);

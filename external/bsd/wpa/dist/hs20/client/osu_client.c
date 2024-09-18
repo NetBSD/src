@@ -310,7 +310,7 @@ static int download_cert(struct hs20_osu_client *ctx, xml_node_t *params,
 	size_t len;
 	u8 digest1[SHA256_MAC_LEN], digest2[SHA256_MAC_LEN];
 	int res;
-	unsigned char *b64;
+	char *b64;
 	FILE *f;
 
 	url_node = get_node(ctx->xml, params, "CertURL");
@@ -364,7 +364,7 @@ static int download_cert(struct hs20_osu_client *ctx, xml_node_t *params,
 		return -1;
 	}
 
-	b64 = base64_encode((unsigned char *) cert, len, NULL);
+	b64 = base64_encode(cert, len, NULL);
 	os_free(cert);
 	if (b64 == NULL)
 		return -1;
@@ -1231,12 +1231,13 @@ static void set_pps_cred_home_sp_oi(struct hs20_osu_client *ctx, int id,
 		   homeoi, required);
 
 	if (required) {
-		if (set_cred(ctx->ifname, id, "required_roaming_consortium",
-			     homeoi) < 0)
-			wpa_printf(MSG_INFO, "Failed to set cred required_roaming_consortium");
+		if (set_cred_quoted(ctx->ifname, id, "required_home_ois",
+				    homeoi) < 0)
+			wpa_printf(MSG_INFO,
+				   "Failed to set cred required_home_ois");
 	} else {
-		if (set_cred(ctx->ifname, id, "roaming_consortium", homeoi) < 0)
-			wpa_printf(MSG_INFO, "Failed to set cred roaming_consortium");
+		if (set_cred_quoted(ctx->ifname, id, "home_ois", homeoi) < 0)
+			wpa_printf(MSG_INFO, "Failed to set cred home_ois");
 	}
 
 	xml_node_get_text_free(ctx->xml, homeoi);
@@ -2018,6 +2019,7 @@ static struct osu_data * parse_osu_providers(const char *fname, size_t *count)
 	struct osu_data *osu = NULL, *last = NULL;
 	size_t osu_count = 0;
 	char *pos, *end;
+	int res;
 
 	f = fopen(fname, "r");
 	if (f == NULL) {
@@ -2037,15 +2039,20 @@ static struct osu_data * parse_osu_providers(const char *fname, size_t *count)
 			osu = last;
 			last = &osu[osu_count++];
 			memset(last, 0, sizeof(*last));
-			snprintf(last->bssid, sizeof(last->bssid), "%s",
-				 buf + 13);
+			res = os_snprintf(last->bssid, sizeof(last->bssid),
+					  "%s", buf + 13);
+			if (os_snprintf_error(sizeof(last->bssid), res))
+				break;
 			continue;
 		}
 		if (!last)
 			continue;
 
 		if (strncmp(buf, "uri=", 4) == 0) {
-			snprintf(last->url, sizeof(last->url), "%s", buf + 4);
+			res = os_snprintf(last->url, sizeof(last->url),
+					  "%s", buf + 4);
+			if (os_snprintf_error(sizeof(last->url), res))
+				break;
 			continue;
 		}
 
@@ -2055,26 +2062,37 @@ static struct osu_data * parse_osu_providers(const char *fname, size_t *count)
 		}
 
 		if (strncmp(buf, "osu_ssid=", 9) == 0) {
-			snprintf(last->osu_ssid, sizeof(last->osu_ssid),
-				 "%s", buf + 9);
+			res = os_snprintf(last->osu_ssid,
+					  sizeof(last->osu_ssid),
+					  "%s", buf + 9);
+			if (os_snprintf_error(sizeof(last->osu_ssid), res))
+				break;
 			continue;
 		}
 
 		if (strncmp(buf, "osu_ssid2=", 10) == 0) {
-			snprintf(last->osu_ssid2, sizeof(last->osu_ssid2),
-				 "%s", buf + 10);
+			res = os_snprintf(last->osu_ssid2,
+					  sizeof(last->osu_ssid2),
+					  "%s", buf + 10);
+			if (os_snprintf_error(sizeof(last->osu_ssid2), res))
+				break;
 			continue;
 		}
 
 		if (os_strncmp(buf, "osu_nai=", 8) == 0) {
-			os_snprintf(last->osu_nai, sizeof(last->osu_nai),
-				    "%s", buf + 8);
+			res = os_snprintf(last->osu_nai, sizeof(last->osu_nai),
+					  "%s", buf + 8);
+			if (os_snprintf_error(sizeof(last->osu_nai), res))
+				break;
 			continue;
 		}
 
 		if (os_strncmp(buf, "osu_nai2=", 9) == 0) {
-			os_snprintf(last->osu_nai2, sizeof(last->osu_nai2),
-				    "%s", buf + 9);
+			res = os_snprintf(last->osu_nai2,
+					  sizeof(last->osu_nai2),
+					  "%s", buf + 9);
+			if (os_snprintf_error(sizeof(last->osu_nai2), res))
+				break;
 			continue;
 		}
 
@@ -2087,8 +2105,14 @@ static struct osu_data * parse_osu_providers(const char *fname, size_t *count)
 				continue;
 			*pos++ = '\0';
 			txt = &last->friendly_name[last->friendly_name_count++];
-			snprintf(txt->lang, sizeof(txt->lang), "%s", buf + 14);
-			snprintf(txt->text, sizeof(txt->text), "%s", pos);
+			res = os_snprintf(txt->lang, sizeof(txt->lang),
+					  "%s", buf + 14);
+			if (os_snprintf_error(sizeof(txt->lang), res))
+				break;
+			res = os_snprintf(txt->text, sizeof(txt->text),
+					  "%s", pos);
+			if (os_snprintf_error(sizeof(txt->text), res))
+				break;
 		}
 
 		if (strncmp(buf, "desc=", 5) == 0) {
@@ -2100,8 +2124,14 @@ static struct osu_data * parse_osu_providers(const char *fname, size_t *count)
 				continue;
 			*pos++ = '\0';
 			txt = &last->serv_desc[last->serv_desc_count++];
-			snprintf(txt->lang, sizeof(txt->lang), "%s", buf + 5);
-			snprintf(txt->text, sizeof(txt->text), "%s", pos);
+			res = os_snprintf(txt->lang, sizeof(txt->lang),
+					  "%s", buf + 5);
+			if (os_snprintf_error(sizeof(txt->lang), res))
+				break;
+			res = os_snprintf(txt->text, sizeof(txt->text),
+					  "%s", pos);
+			if (os_snprintf_error(sizeof(txt->text), res))
+				break;
 		}
 
 		if (strncmp(buf, "icon=", 5) == 0) {
@@ -2124,23 +2154,30 @@ static struct osu_data * parse_osu_providers(const char *fname, size_t *count)
 			if (!end)
 				continue;
 			*end = '\0';
-			snprintf(icon->lang, sizeof(icon->lang), "%s", pos);
+			res = os_snprintf(icon->lang, sizeof(icon->lang),
+					  "%s", pos);
+			if (os_snprintf_error(sizeof(icon->lang), res))
+				break;
 			pos = end + 1;
 
 			end = strchr(pos, ':');
 			if (end)
 				*end = '\0';
-			snprintf(icon->mime_type, sizeof(icon->mime_type),
-				 "%s", pos);
-			if (!pos)
+			res = os_snprintf(icon->mime_type,
+					  sizeof(icon->mime_type), "%s", pos);
+			if (os_snprintf_error(sizeof(icon->mime_type), res))
+				break;
+			if (!end)
 				continue;
 			pos = end + 1;
 
 			end = strchr(pos, ':');
 			if (end)
 				*end = '\0';
-			snprintf(icon->filename, sizeof(icon->filename),
-				 "%s", pos);
+			res = os_snprintf(icon->filename,
+					  sizeof(icon->filename), "%s", pos);
+			if (os_snprintf_error(sizeof(icon->filename), res))
+				break;
 			continue;
 		}
 	}
@@ -2233,7 +2270,7 @@ static int osu_connect(struct hs20_osu_client *ctx, const char *bssid,
 	wpa_ctrl_close(mon);
 
 	if (res < 0) {
-		wpa_printf(MSG_INFO, "Could not connect");
+		wpa_printf(MSG_INFO, "Could not connect to OSU network");
 		write_summary(ctx, "Could not connect to OSU network");
 		wpa_printf(MSG_INFO, "Remove OSU network connection");
 		snprintf(buf, sizeof(buf), "REMOVE_NETWORK %d", id);
@@ -2406,7 +2443,7 @@ static int cmd_osu_select(struct hs20_osu_client *ctx, const char *dir,
 
 	snprintf(fname, sizeof(fname), "file://%s/osu-providers.html", dir);
 	write_summary(ctx, "Start web browser with OSU provider selection page");
-	ret = hs20_web_browser(fname);
+	ret = hs20_web_browser(fname, 0);
 
 selected:
 	if (ret > 0 && (size_t) ret <= osu_count) {
@@ -2907,24 +2944,31 @@ static char * get_hostname(const char *url)
 static int osu_cert_cb(void *_ctx, struct http_cert *cert)
 {
 	struct hs20_osu_client *ctx = _ctx;
-	unsigned int i, j;
+	size_t i, j;
 	int found;
 	char *host = NULL;
 
-	wpa_printf(MSG_INFO, "osu_cert_cb(osu_cert_validation=%d, url=%s)",
-		   !ctx->no_osu_cert_validation, ctx->server_url);
+	wpa_printf(MSG_INFO, "osu_cert_cb(osu_cert_validation=%d, url=%s server_url=%s)",
+		   !ctx->no_osu_cert_validation, cert->url ? cert->url : "N/A",
+		   ctx->server_url);
 
-	host = get_hostname(ctx->server_url);
+	if (ctx->no_osu_cert_validation && cert->url)
+		host = get_hostname(cert->url);
+	else
+		host = get_hostname(ctx->server_url);
 
-	for (i = 0; i < ctx->server_dnsname_count; i++)
-		os_free(ctx->server_dnsname[i]);
-	os_free(ctx->server_dnsname);
-	ctx->server_dnsname = os_calloc(cert->num_dnsname, sizeof(char *));
-	ctx->server_dnsname_count = 0;
+	if (!ctx->no_osu_cert_validation) {
+		for (i = 0; i < ctx->server_dnsname_count; i++)
+			os_free(ctx->server_dnsname[i]);
+		os_free(ctx->server_dnsname);
+		ctx->server_dnsname = os_calloc(cert->num_dnsname,
+						sizeof(char *));
+		ctx->server_dnsname_count = 0;
+	}
 
 	found = 0;
 	for (i = 0; i < cert->num_dnsname; i++) {
-		if (ctx->server_dnsname) {
+		if (!ctx->no_osu_cert_validation && ctx->server_dnsname) {
 			ctx->server_dnsname[ctx->server_dnsname_count] =
 				os_strdup(cert->dnsname[i]);
 			if (ctx->server_dnsname[ctx->server_dnsname_count])
@@ -3002,7 +3046,7 @@ static int osu_cert_cb(void *_ctx, struct http_cert *cert)
 		size_t name_len = os_strlen(name);
 
 		wpa_printf(MSG_INFO,
-			   "[%i] Looking for icon file name '%s' match",
+			   "[%zu] Looking for icon file name '%s' match",
 			   j, name);
 		for (i = 0; i < cert->num_logo; i++) {
 			struct http_logo *logo = &cert->logo[i];
@@ -3010,7 +3054,7 @@ static int osu_cert_cb(void *_ctx, struct http_cert *cert)
 			char *pos;
 
 			wpa_printf(MSG_INFO,
-				   "[%i] Comparing to '%s' uri_len=%d name_len=%d",
+				   "[%zu] Comparing to '%s' uri_len=%d name_len=%d",
 				   i, logo->uri, (int) uri_len, (int) name_len);
 			if (uri_len < 1 + name_len) {
 				wpa_printf(MSG_INFO, "URI Length is too short");
@@ -3044,7 +3088,7 @@ static int osu_cert_cb(void *_ctx, struct http_cert *cert)
 
 			if (logo->hash_len != 32) {
 				wpa_printf(MSG_INFO,
-					   "[%i][%i] Icon hash length invalid (should be 32): %d",
+					   "[%zu][%zu] Icon hash length invalid (should be 32): %d",
 					   j, i, (int) logo->hash_len);
 				continue;
 			}
@@ -3054,7 +3098,7 @@ static int osu_cert_cb(void *_ctx, struct http_cert *cert)
 			}
 
 			wpa_printf(MSG_DEBUG,
-				   "[%u][%u] Icon hash did not match", j, i);
+				   "[%zu][%zu] Icon hash did not match", j, i);
 			wpa_hexdump_ascii(MSG_DEBUG, "logo->hash",
 					  logo->hash, 32);
 			wpa_hexdump_ascii(MSG_DEBUG, "ctx->icon_hash[j]",
@@ -3152,7 +3196,7 @@ static void check_workarounds(struct hs20_osu_client *ctx)
 
 static void usage(void)
 {
-	printf("usage: hs20-osu-client [-dddqqKt] [-S<station ifname>] \\\n"
+	printf("usage: hs20-osu-client [-dddqqKtT] [-S<station ifname>] \\\n"
 	       "    [-w<wpa_supplicant ctrl_iface dir>] "
 	       "[-r<result file>] [-f<debug file>] \\\n"
 	       "    [-s<summary file>] \\\n"
@@ -3198,7 +3242,7 @@ int main(int argc, char *argv[])
 		return -1;
 
 	for (;;) {
-		c = getopt(argc, argv, "df:hKNo:O:qr:s:S:tw:x:");
+		c = getopt(argc, argv, "df:hKNo:O:qr:s:S:tTw:x:");
 		if (c < 0)
 			break;
 		switch (c) {
@@ -3236,6 +3280,9 @@ int main(int argc, char *argv[])
 		case 't':
 			wpa_debug_timestamp++;
 			break;
+		case 'T':
+			ctx.ignore_tls = 1;
+			break;
 		case 'w':
 			wpas_ctrl_path = optarg;
 			break;
@@ -3246,7 +3293,6 @@ int main(int argc, char *argv[])
 		default:
 			usage();
 			exit(0);
-			break;
 		}
 	}
 
@@ -3403,7 +3449,7 @@ int main(int argc, char *argv[])
 
 		wpa_printf(MSG_INFO, "Launch web browser to URL %s",
 			   argv[optind + 1]);
-		ret = hs20_web_browser(argv[optind + 1]);
+		ret = hs20_web_browser(argv[optind + 1], ctx.ignore_tls);
 		wpa_printf(MSG_INFO, "Web browser result: %d", ret);
 	} else if (strcmp(argv[optind], "parse_cert") == 0) {
 		if (argc - optind < 2) {

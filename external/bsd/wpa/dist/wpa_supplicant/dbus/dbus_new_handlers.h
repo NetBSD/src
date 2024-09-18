@@ -117,6 +117,9 @@ DBusMessage * wpas_dbus_handler_select_network(DBusMessage *message,
 DBusMessage * wpas_dbus_handler_network_reply(DBusMessage *message,
 					      struct wpa_supplicant *wpa_s);
 
+DBusMessage * wpas_dbus_handler_roam(DBusMessage *message,
+				     struct wpa_supplicant *wpa_s);
+
 DBusMessage * wpas_dbus_handler_add_blob(DBusMessage *message,
 					 struct wpa_supplicant *wpa_s);
 
@@ -140,6 +143,22 @@ DBusMessage * wpas_dbus_handler_eap_logoff(DBusMessage *message,
 
 DBusMessage * wpas_dbus_handler_eap_logon(DBusMessage *message,
 					  struct wpa_supplicant *wpa_s);
+
+DBusMessage * wpas_dbus_handler_add_cred(DBusMessage *message,
+					 struct wpa_supplicant *wpa_s);
+
+DBusMessage * wpas_dbus_handler_remove_cred(DBusMessage *message,
+					    struct wpa_supplicant *wpa_s);
+
+DBusMessage * wpas_dbus_handler_remove_all_creds(DBusMessage *message,
+						 struct wpa_supplicant *wpa_s);
+
+DBusMessage *
+wpas_dbus_handler_interworking_select(DBusMessage *message,
+				      struct wpa_supplicant *wpa_s);
+
+DBusMessage *
+wpas_dbus_handler_anqp_get(DBusMessage *message, struct wpa_supplicant *wpa_s);
 
 DECLARE_ACCESSOR(wpas_dbus_getter_capabilities);
 DECLARE_ACCESSOR(wpas_dbus_getter_state);
@@ -167,6 +186,7 @@ DECLARE_ACCESSOR(wpas_dbus_setter_scan_interval);
 DECLARE_ACCESSOR(wpas_dbus_getter_ifname);
 DECLARE_ACCESSOR(wpas_dbus_getter_driver);
 DECLARE_ACCESSOR(wpas_dbus_getter_bridge_ifname);
+DECLARE_ACCESSOR(wpas_dbus_setter_bridge_ifname);
 DECLARE_ACCESSOR(wpas_dbus_getter_config_file);
 DECLARE_ACCESSOR(wpas_dbus_getter_current_bss);
 DECLARE_ACCESSOR(wpas_dbus_getter_current_network);
@@ -177,6 +197,9 @@ DECLARE_ACCESSOR(wpas_dbus_getter_pkcs11_engine_path);
 DECLARE_ACCESSOR(wpas_dbus_getter_pkcs11_module_path);
 DECLARE_ACCESSOR(wpas_dbus_getter_blobs);
 DECLARE_ACCESSOR(wpas_dbus_getter_stas);
+DECLARE_ACCESSOR(wpas_dbus_getter_mac_address_randomization_mask);
+DECLARE_ACCESSOR(wpas_dbus_setter_mac_address_randomization_mask);
+DECLARE_ACCESSOR(wpas_dbus_getter_mac_address);
 DECLARE_ACCESSOR(wpas_dbus_getter_sta_address);
 DECLARE_ACCESSOR(wpas_dbus_getter_sta_aid);
 DECLARE_ACCESSOR(wpas_dbus_getter_sta_caps);
@@ -196,6 +219,7 @@ DECLARE_ACCESSOR(wpas_dbus_getter_bss_rsn);
 DECLARE_ACCESSOR(wpas_dbus_getter_bss_wps);
 DECLARE_ACCESSOR(wpas_dbus_getter_bss_ies);
 DECLARE_ACCESSOR(wpas_dbus_getter_bss_age);
+DECLARE_ACCESSOR(wpas_dbus_getter_bss_anqp);
 DECLARE_ACCESSOR(wpas_dbus_getter_enabled);
 DECLARE_ACCESSOR(wpas_dbus_setter_enabled);
 DECLARE_ACCESSOR(wpas_dbus_getter_network_properties);
@@ -226,6 +250,8 @@ DECLARE_ACCESSOR(wpas_dbus_setter_wps_device_device_type);
 
 DECLARE_ACCESSOR(wpas_dbus_getter_mesh_peers);
 DECLARE_ACCESSOR(wpas_dbus_getter_mesh_group);
+
+DECLARE_ACCESSOR(wpas_dbus_getter_signal_change);
 
 DBusMessage * wpas_dbus_handler_tdls_discover(DBusMessage *message,
 					      struct wpa_supplicant *wpa_s);

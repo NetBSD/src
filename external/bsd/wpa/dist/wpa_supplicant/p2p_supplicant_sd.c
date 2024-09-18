@@ -826,7 +826,7 @@ static void wpas_sd_p2ps_serv_response(struct wpa_supplicant *wpa_s,
 		size_t buf_len;
 		u8 svc_len;
 
-		/* Sanity check fixed length+svc_str */
+		/* Validity check fixed length+svc_str */
 		if (6 >= tlv_end - pos)
 			break;
 		svc_len = pos[6];
@@ -854,7 +854,7 @@ static void wpas_sd_p2ps_serv_response(struct wpa_supplicant *wpa_s,
 		buf_len = WPA_GET_LE16(pos);
 		pos += sizeof(u16);
 
-		/* Sanity check buffer length */
+		/* Validity check buffer length */
 		if (buf_len > (unsigned int) (tlv_end - pos))
 			break;
 
@@ -1213,12 +1213,22 @@ int wpas_p2p_service_add_bonjour(struct wpa_supplicant *wpa_s,
 	bsrv = os_zalloc(sizeof(*bsrv));
 	if (bsrv == NULL)
 		return -1;
-	bsrv->query = query;
-	bsrv->resp = resp;
+	bsrv->query = wpabuf_dup(query);
+	if (!bsrv->query)
+		goto error_bsrv;
+	bsrv->resp = wpabuf_dup(resp);
+	if (!bsrv->resp)
+		goto error_query;
 	dl_list_add(&wpa_s->global->p2p_srv_bonjour, &bsrv->list);
 
 	wpas_p2p_sd_service_update(wpa_s);
 	return 0;
+
+error_query:
+	wpabuf_free(bsrv->query);
+error_bsrv:
+	os_free(bsrv);
+	return -1;
 }
 
 

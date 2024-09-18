@@ -21,6 +21,8 @@
 #ifndef CRYPTO_H
 #define CRYPTO_H
 
+#define HMAC_VECTOR_MAX_ELEM 11
+
 /**
  * md4_vector - MD4 hash for data vector
  * @num_elem: Number of elements in the data vector
@@ -485,7 +487,7 @@ int rc4_skip(const u8 *key, size_t keylen, size_t skip,
 	     u8 *data, size_t data_len);
 
 /**
- * crypto_get_random - Generate cryptographically strong pseudy-random bytes
+ * crypto_get_random - Generate cryptographically strong pseudo-random bytes
  * @buf: Buffer for data
  * @len: Number of bytes to generate
  * Returns: 0 on success, -1 on failure
@@ -494,6 +496,13 @@ int rc4_skip(const u8 *key, size_t keylen, size_t skip,
  * sequence, this functions must return -1.
  */
 int crypto_get_random(void *buf, size_t len);
+
+/**
+ * crypto_pkcs7_get_certificates - Extract X.509 certificates from PKCS#7 data
+ * @pkcs7: DER encoded PKCS#7 data
+ * Returns: Buffer of the extracted PEM X.509 certificates or %NULL on failure
+ */
+struct wpabuf * crypto_pkcs7_get_certificates(const struct wpabuf *pkcs7);
 
 
 /**
@@ -517,6 +526,13 @@ struct crypto_bignum * crypto_bignum_init(void);
  * Returns: Pointer to allocated bignum or %NULL on failure
  */
 struct crypto_bignum * crypto_bignum_init_set(const u8 *buf, size_t len);
+
+/**
+ * crypto_bignum_init_set - Allocate memory for bignum and set the value (uint)
+ * @val: Value to set
+ * Returns: Pointer to allocated bignum or %NULL on failure
+ */
+struct crypto_bignum * crypto_bignum_init_uint(unsigned int val);
 
 /**
  * crypto_bignum_deinit - Free bignum
@@ -613,6 +629,19 @@ int crypto_bignum_div(const struct crypto_bignum *a,
 		      struct crypto_bignum *c);
 
 /**
+ * crypto_bignum_addmod - d = a + b (mod c)
+ * @a: Bignum
+ * @b: Bignum
+ * @c: Bignum
+ * @d: Bignum; used to store the result of (a + b) % c
+ * Returns: 0 on success, -1 on failure
+ */
+int crypto_bignum_addmod(const struct crypto_bignum *a,
+			 const struct crypto_bignum *b,
+			 const struct crypto_bignum *c,
+			 struct crypto_bignum *d);
+
+/**
  * crypto_bignum_mulmod - d = a * b (mod c)
  * @a: Bignum
  * @b: Bignum
@@ -624,6 +653,17 @@ int crypto_bignum_mulmod(const struct crypto_bignum *a,
 			 const struct crypto_bignum *b,
 			 const struct crypto_bignum *c,
 			 struct crypto_bignum *d);
+
+/**
+ * crypto_bignum_sqrmod - c = a^2 (mod b)
+ * @a: Bignum
+ * @b: Bignum
+ * @c: Bignum; used to store the result of a^2 % b
+ * Returns: 0 on success, -1 on failure
+ */
+int crypto_bignum_sqrmod(const struct crypto_bignum *a,
+			 const struct crypto_bignum *b,
+			 struct crypto_bignum *c);
 
 /**
  * crypto_bignum_rshift - r = a >> n
@@ -683,6 +723,14 @@ int crypto_bignum_legendre(const struct crypto_bignum *a,
 struct crypto_ec;
 
 /**
+ * struct crypto_ec_point - Elliptic curve point
+ *
+ * Internal data structure for EC implementation to represent a point. The
+ * contents is specific to the used crypto library.
+ */
+struct crypto_ec_point;
+
+/**
  * crypto_ec_init - Initialize elliptic curve context
  * @group: Identifying number for the ECC group (IANA "Group Description"
  *	attribute registrty for RFC 2409)
@@ -732,12 +780,25 @@ const struct crypto_bignum * crypto_ec_get_prime(struct crypto_ec *e);
 const struct crypto_bignum * crypto_ec_get_order(struct crypto_ec *e);
 
 /**
- * struct crypto_ec_point - Elliptic curve point
- *
- * Internal data structure for EC implementation to represent a point. The
- * contents is specific to the used crypto library.
+ * crypto_ec_get_a - Get 'a' coefficient of an EC group's curve
+ * @e: EC context from crypto_ec_init()
+ * Returns: 'a' coefficient (bignum) of the group
  */
-struct crypto_ec_point;
+const struct crypto_bignum * crypto_ec_get_a(struct crypto_ec *e);
+
+/**
+ * crypto_ec_get_b - Get 'b' coeffiecient of an EC group's curve
+ * @e: EC context from crypto_ec_init()
+ * Returns: 'b' coefficient (bignum) of the group
+ */
+const struct crypto_bignum * crypto_ec_get_b(struct crypto_ec *e);
+
+/**
+ * crypto_ec_get_generator - Get generator point of the EC group's curve
+ * @e: EC context from crypto_ec_init()
+ * Returns: Pointer to generator point
+ */
+const struct crypto_ec_point * crypto_ec_get_generator(struct crypto_ec *e);
 
 /**
  * crypto_ec_point_init - Initialize data for an EC point
@@ -824,18 +885,6 @@ int crypto_ec_point_mul(struct crypto_ec *e, const struct crypto_ec_point *p,
 int crypto_ec_point_invert(struct crypto_ec *e, struct crypto_ec_point *p);
 
 /**
- * crypto_ec_point_solve_y_coord - Solve y coordinate for an x coordinate
- * @e: EC context from crypto_ec_init()
- * @p: EC point to use for the returning the result
- * @x: x coordinate
- * @y_bit: y-bit (0 or 1) for selecting the y value to use
- * Returns: 0 on success, -1 on failure
- */
-int crypto_ec_point_solve_y_coord(struct crypto_ec *e,
-				  struct crypto_ec_point *p,
-				  const struct crypto_bignum *x, int y_bit);
-
-/**
  * crypto_ec_point_compute_y_sqr - Compute y^2 = x^3 + ax + b
  * @e: EC context from crypto_ec_init()
  * @x: x coordinate
@@ -875,12 +924,466 @@ int crypto_ec_point_cmp(const struct crypto_ec *e,
 			const struct crypto_ec_point *a,
 			const struct crypto_ec_point *b);
 
+/**
+ * crypto_ec_point_debug_print - Dump EC point to debug log
+ * @e: EC context from crypto_ec_init()
+ * @p: EC point
+ * @title: Name of the EC point in the trace
+ */
+void crypto_ec_point_debug_print(const struct crypto_ec *e,
+				 const struct crypto_ec_point *p,
+				 const char *title);
+
+/**
+ * struct crypto_ec_key - Elliptic curve key pair
+ *
+ * Internal data structure for EC key pair. The contents is specific to the used
+ * crypto library.
+ */
+struct crypto_ec_key;
+
+/**
+ * struct crypto_ecdh - Elliptic Curve Diffie–Hellman context
+ *
+ * Internal data structure for ECDH. The contents is specific to the used
+ * crypto library.
+ */
 struct crypto_ecdh;
 
+/**
+ * crypto_ecdh_init - Initialize elliptic curve Diffie–Hellman context
+ * @group: Identifying number for the ECC group (IANA "Group Description"
+ *	attribute registry for RFC 2409)
+ * This function generates an ephemeral key pair.
+ * Returns: Pointer to ECDH context or %NULL on failure
+ */
 struct crypto_ecdh * crypto_ecdh_init(int group);
+
+/**
+ * crypto_ecdh_init2 - Initialize elliptic curve Diffie–Hellman context with a
+ * given EC key
+ * @group: Identifying number for the ECC group (IANA "Group Description"
+ *	attribute registry for RFC 2409)
+ * @own_key: Our own EC Key
+ * Returns: Pointer to ECDH context or %NULL on failure
+ */
+struct crypto_ecdh * crypto_ecdh_init2(int group,
+				       struct crypto_ec_key *own_key);
+
+/**
+ * crypto_ecdh_get_pubkey - Retrieve public key from ECDH context
+ * @ecdh: ECDH context from crypto_ecdh_init() or crypto_ecdh_init2()
+ * @inc_y: Whether public key should include y coordinate (explicit form)
+ * or not (compressed form)
+ * Returns: Binary data f the public key or %NULL on failure
+ */
 struct wpabuf * crypto_ecdh_get_pubkey(struct crypto_ecdh *ecdh, int inc_y);
+
+/**
+ * crypto_ecdh_set_peerkey - Compute ECDH secret
+ * @ecdh: ECDH context from crypto_ecdh_init() or crypto_ecdh_init2()
+ * @inc_y: Whether peer's public key includes y coordinate (explicit form)
+ * or not (compressed form)
+ * @key: Binary data of the peer's public key
+ * @len: Length of the @key buffer
+ * Returns: Binary data with the EDCH secret or %NULL on failure
+ */
 struct wpabuf * crypto_ecdh_set_peerkey(struct crypto_ecdh *ecdh, int inc_y,
 					const u8 *key, size_t len);
+
+/**
+ * crypto_ecdh_deinit - Free ECDH context
+ * @ecdh: ECDH context from crypto_ecdh_init() or crypto_ecdh_init2()
+ */
 void crypto_ecdh_deinit(struct crypto_ecdh *ecdh);
+
+/**
+ * crypto_ecdh_prime_len - Get length of the prime in octets
+ * @e: ECDH context from crypto_ecdh_init()
+ * Returns: Length of the prime defining the group
+ */
+size_t crypto_ecdh_prime_len(struct crypto_ecdh *ecdh);
+
+/**
+ * crypto_ec_key_parse_priv - Initialize EC key pair from ECPrivateKey ASN.1
+ * @der: DER encoding of ASN.1 ECPrivateKey
+ * @der_len: Length of @der buffer
+ * Returns: EC key or %NULL on failure
+ */
+struct crypto_ec_key * crypto_ec_key_parse_priv(const u8 *der, size_t der_len);
+
+/**
+ * crypto_ec_key_set_priv - Initialize EC key pair from raw key data
+ * @group: Identifying number for the ECC group
+ * @raw: Raw key data
+ * @raw_len: Length of @raw buffer
+ * Returns: EC key or %NULL on failure
+ */
+struct crypto_ec_key * crypto_ec_key_set_priv(int group,
+					      const u8 *raw, size_t raw_len);
+
+/**
+ * crypto_ec_key_parse_pub - Initialize EC key pair from SubjectPublicKeyInfo ASN.1
+ * @der: DER encoding of ASN.1 SubjectPublicKeyInfo
+ * @der_len: Length of @der buffer
+ * Returns: EC key or %NULL on failure
+ */
+struct crypto_ec_key * crypto_ec_key_parse_pub(const u8 *der, size_t der_len);
+
+/**
+ * crypto_ec_key_set_pub - Initialize an EC public key from EC point coordinates
+ * @group: Identifying number for the ECC group
+ * @x: X coordinate of the public key
+ * @y: Y coordinate of the public key
+ * @len: Length of @x and @y buffer
+ * Returns: EC key or %NULL on failure
+ *
+ * This function initialize an EC key from public key coordinates, in big endian
+ * byte order padded to the length of the prime defining the group.
+ */
+struct crypto_ec_key * crypto_ec_key_set_pub(int group, const u8 *x,
+					     const u8 *y, size_t len);
+
+/**
+ * crypto_ec_key_set_pub_point - Initialize an EC public key from EC point
+ * @e: EC context from crypto_ec_init()
+ * @pub: Public key point
+ * Returns: EC key or %NULL on failure
+ */
+struct crypto_ec_key *
+crypto_ec_key_set_pub_point(struct crypto_ec *e,
+			    const struct crypto_ec_point *pub);
+
+/**
+ * crypto_ec_key_gen - Generate EC key pair
+ * @group: Identifying number for the ECC group
+ * Returns: EC key or %NULL on failure
+ */
+struct crypto_ec_key * crypto_ec_key_gen(int group);
+
+/**
+ * crypto_ec_key_deinit - Free EC key
+ * @key: EC key from crypto_ec_key_parse_pub/priv() or crypto_ec_key_gen()
+ */
+void crypto_ec_key_deinit(struct crypto_ec_key *key);
+
+/**
+ * crypto_ec_key_get_subject_public_key - Get SubjectPublicKeyInfo ASN.1 for an EC key
+ * @key: EC key from crypto_ec_key_parse/set_pub/priv() or crypto_ec_key_gen()
+ * Returns: Buffer with DER encoding of ASN.1 SubjectPublicKeyInfo using
+ * compressed point format, or %NULL on failure
+ */
+struct wpabuf * crypto_ec_key_get_subject_public_key(struct crypto_ec_key *key);
+
+/**
+ * crypto_ec_key_get_ecprivate_key - Get ECPrivateKey ASN.1 for a EC key
+ * @key: EC key from crypto_ec_key_parse_priv() or crypto_ec_key_gen()
+ * @include_pub: Whether to include public key in the ASN.1 sequence
+ * Returns: Buffer with DER encoding of ASN.1 ECPrivateKey or %NULL on failure
+ */
+struct wpabuf * crypto_ec_key_get_ecprivate_key(struct crypto_ec_key *key,
+						bool include_pub);
+
+/**
+ * crypto_ec_key_get_pubkey_point - Get public key point coordinates
+ * @key: EC key from crypto_ec_key_parse/set_pub() or crypto_ec_key_parse_priv()
+ * @prefix: Whether output buffer should include the octet to indicate
+ * coordinate form (as defined for SubjectPublicKeyInfo)
+ * Returns: Buffer with coordinates of public key in uncompressed form or %NULL
+ * on failure
+ */
+struct wpabuf * crypto_ec_key_get_pubkey_point(struct crypto_ec_key *key,
+					       int prefix);
+
+/**
+ * crypto_ec_key_get_public_key - Get EC public key as an EC point
+ * @key: EC key from crypto_ec_key_parse/set_pub() or crypto_ec_key_parse_priv()
+ * Returns: Public key as an EC point or %NULL on failure
+ *
+ * The caller needs to free the returned value with crypto_ec_point_deinit().
+ */
+struct crypto_ec_point *
+crypto_ec_key_get_public_key(struct crypto_ec_key *key);
+
+/**
+ * crypto_ec_key_get_private_key - Get EC private key as a bignum
+ * @key: EC key from crypto_ec_key_parse/set_pub() or crypto_ec_key_parse_priv()
+ * Returns: Private key as a bignum or %NULL on failure
+ *
+ * The caller needs to free the returned value with crypto_bignum_deinit().
+ */
+struct crypto_bignum *
+crypto_ec_key_get_private_key(struct crypto_ec_key *key);
+
+/**
+ * crypto_ec_key_sign - Sign a buffer with an EC key
+ * @key: EC key from crypto_ec_key_parse_priv() or crypto_ec_key_gen()
+ * @data: Data to sign
+ * @len: Length of @data buffer
+ * Returns: Buffer with DER encoding of ASN.1 Ecdsa-Sig-Value or %NULL on failure
+ */
+struct wpabuf * crypto_ec_key_sign(struct crypto_ec_key *key, const u8 *data,
+				   size_t len);
+
+/**
+ * crypto_ec_key_sign_r_s - Sign a buffer with an EC key
+ * @key: EC key from crypto_ec_key_parse_priv() or crypto_ec_key_gen()
+ * @data: Data to sign
+ * @len: Length of @data buffer
+ * Returns: Buffer with the concatenated r and s values. Each value is in big
+ * endian byte order padded to the length of the prime defining the group of
+ * the key.
+ */
+struct wpabuf * crypto_ec_key_sign_r_s(struct crypto_ec_key *key,
+				       const u8 *data, size_t len);
+
+/**
+ * crypto_ec_key_verify_signature - Verify ECDSA signature
+ * @key: EC key from crypto_ec_key_parse/set_pub() or crypto_ec_key_gen()
+ * @data: Data to be signed
+ * @len: Length of @data buffer
+ * @sig: DER encoding of ASN.1 Ecdsa-Sig-Value
+ * @sig_len: Length of @sig buffer
+ * Returns: 1 if signature is valid, 0 if signature is invalid and -1 on failure
+ */
+int crypto_ec_key_verify_signature(struct crypto_ec_key *key, const u8 *data,
+				   size_t len, const u8 *sig, size_t sig_len);
+
+/**
+ * crypto_ec_key_verify_signature_r_s - Verify signature
+ * @key: EC key from crypto_ec_key_parse/set_pub() or crypto_ec_key_gen()
+ * @data: Data to signed
+ * @len: Length of @data buffer
+ * @r: Binary data, in big endian byte order, of the 'r' field of the ECDSA
+ * signature.
+ * @s: Binary data, in big endian byte order, of the 's' field of the ECDSA
+ * signature.
+ * @r_len: Length of @r buffer
+ * @s_len: Length of @s buffer
+ * Returns: 1 if signature is valid, 0 if signature is invalid, or -1 on failure
+ */
+int crypto_ec_key_verify_signature_r_s(struct crypto_ec_key *key,
+				       const u8 *data, size_t len,
+				       const u8 *r, size_t r_len,
+				       const u8 *s, size_t s_len);
+
+/**
+ * crypto_ec_key_group - Get IANA group identifier for an EC key
+ * @key: EC key from crypto_ec_key_parse/set_pub/priv() or crypto_ec_key_gen()
+ * Returns: IANA group identifier and -1 on failure
+ */
+int crypto_ec_key_group(struct crypto_ec_key *key);
+
+/**
+ * crypto_ec_key_cmp - Compare two EC public keys
+ * @key1: Key 1
+ * @key2: Key 2
+ * Returns: 0 if public keys are identical, -1 otherwise
+ */
+int crypto_ec_key_cmp(struct crypto_ec_key *key1, struct crypto_ec_key *key2);
+
+/**
+ * crypto_ec_key_debug_print - Dump EC key to debug log
+ * @key:  EC key from crypto_ec_key_parse/set_pub/priv() or crypto_ec_key_gen()
+ * @title: Name of the EC point in the trace
+ */
+void crypto_ec_key_debug_print(const struct crypto_ec_key *key,
+			       const char *title);
+
+/**
+ * struct crypto_csr - Certification Signing Request
+ *
+ * Internal data structure for CSR. The contents is specific to the used
+ * crypto library.
+ * For now it is assumed that only an EC public key can be used
+ */
+struct crypto_csr;
+
+/**
+ * enum crypto_csr_name - CSR name type
+ */
+enum crypto_csr_name {
+	CSR_NAME_CN,
+	CSR_NAME_SN,
+	CSR_NAME_C,
+	CSR_NAME_O,
+	CSR_NAME_OU,
+};
+
+/**
+ * enum crypto_csr_attr - CSR attribute
+ */
+enum crypto_csr_attr {
+	CSR_ATTR_CHALLENGE_PASSWORD,
+};
+
+/**
+ * crypto_csr_init - Initialize empty CSR
+ * Returns: Pointer to CSR data or %NULL on failure
+ */
+struct crypto_csr * crypto_csr_init(void);
+
+/**
+ * crypto_csr_verify - Initialize CSR from CertificationRequest
+ * @req: DER encoding of ASN.1 CertificationRequest
+ *
+ * Returns: Pointer to CSR data or %NULL on failure or if signature is invalid
+ */
+struct crypto_csr * crypto_csr_verify(const struct wpabuf *req);
+
+/**
+ * crypto_csr_deinit - Free CSR structure
+ * @csr: CSR structure from @crypto_csr_init() or crypto_csr_verify()
+ */
+void crypto_csr_deinit(struct crypto_csr *csr);
+
+/**
+ * crypto_csr_set_ec_public_key - Set public key in CSR
+ * @csr: CSR structure from @crypto_csr_init()
+ * @key: EC public key to set as public key in the CSR
+ * Returns: 0 on success, -1 on failure
+ */
+int crypto_csr_set_ec_public_key(struct crypto_csr *csr,
+				 struct crypto_ec_key *key);
+
+/**
+ * crypto_csr_set_name - Set name entry in CSR SubjectName
+ * @csr: CSR structure from @crypto_csr_init()
+ * @type: Name type  to add into the CSR SubjectName
+ * @name: UTF-8 string to write in the CSR SubjectName
+ * Returns: 0 on success, -1 on failure
+ */
+int crypto_csr_set_name(struct crypto_csr *csr, enum crypto_csr_name type,
+			const char *name);
+
+/**
+ * crypto_csr_set_attribute - Set attribute in CSR
+ * @csr: CSR structure from @crypto_csr_init()
+ * @attr: Attribute identifier
+ * @attr_type: ASN.1 type of @value buffer
+ * @value: Attribute value
+ * @len: length of @value buffer
+ * Returns: 0 on success, -1 on failure
+ */
+int crypto_csr_set_attribute(struct crypto_csr *csr, enum crypto_csr_attr attr,
+			     int attr_type, const u8 *value, size_t len);
+
+/**
+ * crypto_csr_get_attribute - Get attribute from CSR
+ * @csr: CSR structure from @crypto_csr_verify()
+ * @attr: Updated with atribute identifier
+ * @len: Updated with length of returned buffer
+ * @type: ASN.1 type of the attribute buffer
+ * Returns: Type, length, and pointer on attribute value or %NULL on failure
+ */
+const u8 * crypto_csr_get_attribute(struct crypto_csr *csr,
+				    enum crypto_csr_attr attr,
+				    size_t *len, int *type);
+
+/**
+ * crypto_csr_sign - Sign CSR and return ASN.1 CertificationRequest
+ * @csr: CSR structure from @crypto_csr_init()
+ * @key: Private key to sign the CSR (for now ony EC key are supported)
+ * @algo: Hash algorithm to use for the signature
+ * Returns: DER encoding of ASN.1 CertificationRequest for the CSR or %NULL on
+ * failure
+ */
+struct wpabuf * crypto_csr_sign(struct crypto_csr *csr,
+				struct crypto_ec_key *key,
+				enum crypto_hash_alg algo);
+
+struct crypto_rsa_key;
+
+/**
+ * crypto_rsa_key_read - Read an RSA key
+ * @file: File from which to read (PEM encoded, can be X.509v3 certificate)
+ * @private_key: Whether to read the private key instead of public key
+ * Returns: RSA key or %NULL on failure
+ */
+struct crypto_rsa_key * crypto_rsa_key_read(const char *file, bool private_key);
+
+/**
+ * crypto_rsa_oaep_sha256_encrypt - RSA-OAEP-SHA-256 encryption
+ * @key: RSA key from crypto_rsa_key_read()
+ * @in: Plaintext input data
+ * Returns: Encrypted output data or %NULL on failure
+ */
+struct wpabuf * crypto_rsa_oaep_sha256_encrypt(struct crypto_rsa_key *key,
+					       const struct wpabuf *in);
+
+/**
+ * crypto_rsa_oaep_sha256_decrypt - RSA-OAEP-SHA-256 decryption
+ * @key: RSA key from crypto_rsa_key_read()
+ * @in: Encrypted input data
+ * Returns: Decrypted output data or %NULL on failure
+ */
+struct wpabuf * crypto_rsa_oaep_sha256_decrypt(struct crypto_rsa_key *key,
+					       const struct wpabuf *in);
+
+/**
+ * crypto_rsa_key_free - Free an RSA key
+ * @key: RSA key from crypto_rsa_key_read()
+ */
+void crypto_rsa_key_free(struct crypto_rsa_key *key);
+
+enum hpke_mode {
+	HPKE_MODE_BASE = 0x00,
+	HPKE_MODE_PSK = 0x01,
+	HPKE_MODE_AUTH = 0x02,
+	HPKE_MODE_AUTH_PSK = 0x03,
+};
+
+enum hpke_kem_id {
+	HPKE_DHKEM_P256_HKDF_SHA256 = 0x0010,
+	HPKE_DHKEM_P384_HKDF_SHA384 = 0x0011,
+	HPKE_DHKEM_P521_HKDF_SHA512 = 0x0012,
+	HPKE_DHKEM_X5519_HKDF_SHA256 = 0x0020,
+	HPKE_DHKEM_X448_HKDF_SHA512 = 0x0021,
+};
+
+enum hpke_kdf_id {
+	HPKE_KDF_HKDF_SHA256 = 0x0001,
+	HPKE_KDF_HKDF_SHA384 = 0x0002,
+	HPKE_KDF_HKDF_SHA512 = 0x0003,
+};
+
+enum hpke_aead_id {
+	HPKE_AEAD_AES_128_GCM = 0x0001,
+	HPKE_AEAD_AES_256_GCM = 0x0002,
+	HPKE_AEAD_CHACHA20POLY1305 = 0x0003,
+};
+
+/**
+ * hpke_base_seal - HPKE base mode single-shot encrypt
+ * Returns: enc | ct; or %NULL on failure
+ */
+struct wpabuf * hpke_base_seal(enum hpke_kem_id kem_id,
+			       enum hpke_kdf_id kdf_id,
+			       enum hpke_aead_id aead_id,
+			       struct crypto_ec_key *peer_pub,
+			       const u8 *info, size_t info_len,
+			       const u8 *aad, size_t aad_len,
+			       const u8 *pt, size_t pt_len);
+
+/**
+ * hpke_base_open - HPKE base mode single-shot decrypt
+ * @enc_ct: enc | ct
+ * Returns: pt; or %NULL on failure
+ */
+struct wpabuf * hpke_base_open(enum hpke_kem_id kem_id,
+			       enum hpke_kdf_id kdf_id,
+			       enum hpke_aead_id aead_id,
+			       struct crypto_ec_key *own_priv,
+			       const u8 *info, size_t info_len,
+			       const u8 *aad, size_t aad_len,
+			       const u8 *enc_ct, size_t enc_ct_len);
+
+/**
+ * crypto_unload - Unload crypto resources
+ *
+ * This function is called just before the process exits to allow dynamic
+ * resource allocations to be freed.
+ */
+void crypto_unload(void);
 
 #endif /* CRYPTO_H */
