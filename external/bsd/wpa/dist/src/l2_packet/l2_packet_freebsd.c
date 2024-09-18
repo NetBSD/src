@@ -20,6 +20,9 @@
 #include <sys/sysctl.h>
 #endif /* __sun__ */
 
+#ifndef __NetBSD__
+#include <net/ethernet.h>
+#endif
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/route.h>
@@ -29,6 +32,9 @@
 #include "eloop.h"
 #include "l2_packet.h"
 
+#ifndef ETHER_VLAN_ENCAP_LEN
+#define ETHER_VLAN_ENCAP_LEN 4
+#endif
 
 static const u8 pae_group_addr[ETH_ALEN] =
 { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x03 };
@@ -84,7 +90,7 @@ static void l2_packet_receive(int sock, void *eloop_ctx, void *sock_ctx)
 
 	packet = pcap_next(pcap, &hdr);
 
-	if (packet == NULL || hdr.caplen < sizeof(*ethhdr))
+	if (!l2->rx_callback || !packet || hdr.caplen < sizeof(*ethhdr))
 		return;
 
 	ethhdr = (struct l2_ethhdr *) packet;
@@ -94,6 +100,13 @@ static void l2_packet_receive(int sock, void *eloop_ctx, void *sock_ctx)
 	} else {
 		buf = (unsigned char *) (ethhdr + 1);
 		len = hdr.caplen - sizeof(*ethhdr);
+
+		/* Handle IEEE 802.1Q encapsulated frames */
+		if (len >= ETHER_VLAN_ENCAP_LEN &&
+		    ethhdr->h_proto == htons(ETH_P_8021Q)) {
+			buf += ETHER_VLAN_ENCAP_LEN;
+			len -= ETHER_VLAN_ENCAP_LEN;
+		}
 	}
 	l2->rx_callback(l2->rx_callback_ctx, ethhdr->h_source, buf, len);
 }
@@ -122,10 +135,10 @@ static int l2_packet_init_libpcap(struct l2_packet_data *l2,
 	os_snprintf(pcap_filter, sizeof(pcap_filter),
 		    "not ether src " MACSTR " and "
 		    "( ether dst " MACSTR " or ether dst " MACSTR " ) and "
-		    "ether proto 0x%x",
+		    "( ether proto 0x%x or ( vlan 0 and ether proto 0x%x ) )",
 		    MAC2STR(l2->own_addr), /* do not receive own packets */
 		    MAC2STR(l2->own_addr), MAC2STR(pae_group_addr),
-		    protocol);
+		    protocol, protocol);
 	if (pcap_compile(l2->pcap, &pcap_fp, pcap_filter, 1, pcap_netp) < 0) {
 		fprintf(stderr, "pcap_compile: %s\n", pcap_geterr(l2->pcap));
 		return -1;

@@ -1,61 +1,99 @@
-# $NetBSD: Makefile,v 1.11 2023/05/09 21:05:24 christos Exp $
+# $NetBSD: Makefile,v 1.12 2024/09/18 15:09:30 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
 PROG=	wpa_supplicant
 SRCS= \
-base64.c \
-bitfield.c \
-blacklist.c \
 bss.c \
-common.c \
+bssid_ignore.c \
 config.c \
 config_file.c \
 ctrl_iface.c \
-ctrl_iface_common.c \
 ctrl_iface_unix.c \
-driver_common.c \
-driver_bsd.c \
-driver_wired_common.c \
-driver_wired.c \
-drivers.c \
-eap_common.c \
-eap_methods.c \
 eap_register.c \
-eapol_supp_sm.c \
-eloop.c \
 events.c \
-hw_features_common.c \
-ieee802_11_common.c \
-l2_packet_freebsd.c \
 main.c \
 notify.c \
 op_classes.c \
-os_unix.c \
-pmksa_cache.c \
-preauth.c \
 rrm.c \
-random.c \
+robust_av.c \
 scan.c \
-sha1-prf.c \
 wmm_ac.c \
-wpa.c \
-wpa_common.c \
-wpa_debug.c \
-wpa_ie.c \
 wpa_supplicant.c \
-wpabuf.c \
 wpas_glue.c
 
+# common
+SRCS+= \
+ctrl_iface_common.c \
+hw_features_common.c \
+ieee802_11_common.c \
+ptksa_cache.c \
+wpa_common.c \
+
+# crypto
+SRCS+= \
+random.c \
+sha1-prf.c \
+sha256.c \
+sha256-prf.c \
+
+# drivers
+SRCS+= \
+driver_bsd.c \
+driver_common.c \
+driver_wired_common.c \
+driver_wired.c \
+drivers.c \
+
+# eap_common
+SRCS+= \
+eap_common.c \
+
+# eap_peer
+SRCS+= \
+eap_methods.c \
+
+# eapol_supp
+SRCS+= \
+eapol_supp_sm.c \
+
+# l2_packet
+SRCS+= \
+l2_packet_freebsd.c \
+
+# rsn_supp
+SRCS+= \
+pmksa_cache.c \
+preauth.c \
+wpa.c \
+wpa_ie.c \
+
+
+# util
+SRCS+= \
+base64.c \
+bitfield.c \
+common.c \
+config_line.c \
+eloop.c \
+os_unix.c \
+wpa_debug.c \
+wpabuf.c \
 
 MAN=	wpa_supplicant.8 wpa_supplicant.conf.5
+
+CLEANFILES+= config_line.c
+
+config_line.c: ${WPA_DISTDIR}/src/utils/config.c
+	${MKTARGET_CREATE}
+	cp ${.ALLSRC} ${.TARGET}
 
 .PATH.c:  \
 	${WPA_SUPPLICANT_DISTDIR} \
 	${WPA_DISTDIR}/src/drivers \
 	${WPA_DISTDIR}/src/eap_peer \
 	${WPA_DISTDIR}/src/rsn_supp \
-	${COMMON_PATH}
+	${COMMON_PATH} \
 
 CPPFLAGS+= \
 	-I${WPA_SUPPLICANT_DISTDIR} \
@@ -130,6 +168,8 @@ tls_openssl.c
 SRCS+=aes-ctr.c \
 aes-eax.c \
 aes-encblock.c \
+
+NOSRCS+= \
 aes-omac1.c \
 
 # NB: requires patch to openssl
