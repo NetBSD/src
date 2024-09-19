@@ -511,13 +511,16 @@ int fatal_signal_mask;
 # endif
 #endif
 
+#undef HAVE_BSD_SIGNAL		/* PR lib/58674 .. tools build fails */
+#undef bsd_signal		/* bsd_signal() has a weird history. skip it */
+
 #if !defined HAVE_BSD_SIGNAL && !defined bsd_signal
 # if !defined HAVE_SIGACTION
 #  define bsd_signal signal
 # else
 typedef RETSIGTYPE (*bsd_signal_ret_t) ();
 
-static bsd_signal_ret_t
+/*static*/ bsd_signal_ret_t
 bsd_signal (int sig, bsd_signal_ret_t func)
 {
   struct sigaction act, oact;
