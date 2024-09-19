@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.77 2024/09/19 13:16:30 kre Exp $	*/
+/*	$NetBSD: signal.h,v 1.78 2024/09/19 14:41:05 kre Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -321,8 +321,21 @@ void	(*signal(int, void (*)(int)))(int);
 #if (_POSIX_C_SOURCE - 0) >= 200112L || defined(_NETBSD_SOURCE)
 int	sigqueue(pid_t, int, const union sigval);
 #endif
-#if defined(_NETBSD_SOURCE)
+
+#if defined(_NETBSD_SOURCE) ||					\
+    (!defined (_XOPEN_SOURCE) && defined(_XOPEN_VERSION) &&	\
+	(_XOPEN_VERSION - 0) >= 4) ||				\
+    (defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE - 0) <= 600)
+/*
+ * bsd_signal() was added to the standards in POSIX issue 4 (SusV4)
+ * (release 2 of SusV4) and then removed in POSIX issue 7 (2008),
+ * after being marked obsolete in POSIX issue 6 (2001).  It was
+ * always an X/Open extension function (though was moved to the
+ * base POSIX spec in issue 5, but still as an extension).
+ */
 void	(*bsd_signal(int, void (*)(int)))(int);
+#endif
+#if defined(_NETBSD_SOURCE)
 int	sigqueueinfo(pid_t, const siginfo_t *);
 #endif
 __END_DECLS
