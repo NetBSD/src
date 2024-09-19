@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.25 2024/08/15 05:59:49 skrll Exp $ */
+/* $NetBSD: exec.c,v 1.26 2024/09/19 06:26:11 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -154,7 +154,8 @@ generate_efirng(void)
 
 	/* Fill the page with whatever the EFI RNG will do.  */
 	if (efi_rng((void *)(uintptr_t)addr, size)) {
-		uefi_call_wrapper(BS->FreePages, 2, addr, size);
+		uefi_call_wrapper(BS->FreePages, 2, addr,
+		    EFI_SIZE_TO_PAGES(size));
 		return;
 	}
 
