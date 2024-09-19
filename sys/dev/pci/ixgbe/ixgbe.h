@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.98 2023/12/30 06:16:44 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.99 2024/09/19 17:57:15 andvar Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -458,8 +458,8 @@ struct ixgbe_vf {
 };
 
 /*
- * NetBSD: For trafic class
- * Crrently, the following structure is only for statistics.
+ * NetBSD: For traffic class
+ * Currently, the following structure is only for statistics.
  */
 struct ixgbe_tc {
 	char             evnamebuf[32];
