@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.448 2024/09/09 15:06:29 riastradh Exp $
+# $NetBSD: mi,v 1.449 2024/09/19 19:43:13 gdt Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -2337,6 +2337,7 @@
 ./usr/libdata/debug/usr/tests/lib/libm/t_next.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libm/t_pow.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libm/t_precision.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libm/t_remquo.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libm/t_round.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libm/t_scalbn.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libm/t_sin.debug			tests-lib-debug		debug,atf,compattestfile
