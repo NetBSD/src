@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.143 2023/10/09 22:00:38 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.144 2024/09/19 06:13:03 andvar Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,13 +60,13 @@
  *
  * rf_driver.c -- main setup, teardown, and access routines for the RAID driver
  *
- * all routines are prefixed with rf_ (raidframe), to avoid conficts.
+ * all routines are prefixed with rf_ (raidframe), to avoid conflicts.
  *
  ******************************************************************************/
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.143 2023/10/09 22:00:38 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.144 2024/09/19 06:13:03 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_diagnostic.h"
