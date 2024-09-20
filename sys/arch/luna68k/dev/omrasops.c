@@ -1,4 +1,4 @@
-/* $NetBSD: omrasops.c,v 1.26 2023/01/15 05:08:33 tsutsui Exp $ */
+/* $NetBSD: omrasops.c,v 1.27 2024/09/20 03:24:05 isaki Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,10 +31,10 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.26 2023/01/15 05:08:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.27 2024/09/20 03:24:05 isaki Exp $");
 
 /*
- * Designed speficically for 'm68k bitorder';
+ * Designed specifically for 'm68k bitorder';
  *	- most significant byte is stored at lower address,
  *	- most significant bit is displayed at left most on screen.
  * Implementation relies on;
