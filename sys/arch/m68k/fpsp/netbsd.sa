@@ -1,4 +1,4 @@
-*	$NetBSD: netbsd.sa,v 1.5 2001/10/02 06:34:52 chs Exp $
+*	$NetBSD: netbsd.sa,v 1.6 2024/09/20 19:38:53 andvar Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 *	M68000 Hi-Performance Microprocessor Division
@@ -166,7 +166,7 @@ not_fmt40:
 	bclr.b		#E3,E_BYTE(a6)		;clear and test E3 flag
 	beq.b		inex_cke1
 *
-* Clear dirty bit on dest resister in the frame before branching
+* Clear dirty bit on dest register in the frame before branching
 * to b1238_fix.
 *
 	movem.l		d0/d1,USER_DA(a6)

@@ -1,4 +1,4 @@
-*	$NetBSD: x_unfl.sa,v 1.5 2022/01/25 22:01:34 andvar Exp $
+*	$NetBSD: x_unfl.sa,v 1.6 2024/09/20 19:38:53 andvar Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 *	M68000 Hi-Performance Microprocessor Division
@@ -87,7 +87,7 @@ fpsp_unfl:
 	btst.b		#E3,E_BYTE(a6)
 	beq.b		no_e3_1
 *
-* Clear dirty bit on dest resister in the frame before branching
+* Clear dirty bit on dest register in the frame before branching
 * to b1238_fix.
 *
 	bfextu		CMDREG3B(a6){6:3},d0	;get dest reg no
@@ -121,7 +121,7 @@ take_inex:
 	btst.b		#E3,E_BYTE(a6)
 	beq.b		no_e3_2
 *
-* Clear dirty bit on dest resister in the frame before branching
+* Clear dirty bit on dest register in the frame before branching
 * to b1238_fix.
 *
 	bfextu		CMDREG3B(a6){6:3},d0	;get dest reg no
@@ -142,7 +142,7 @@ unfl_done:
 	bclr.b		#E3,E_BYTE(a6)
 	beq.b		e1_set		;if set then branch
 *
-* Clear dirty bit on dest resister in the frame before branching
+* Clear dirty bit on dest register in the frame before branching
 * to b1238_fix.
 *
 	bfextu		CMDREG3B(a6){6:3},d0		;get dest reg no
