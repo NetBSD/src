@@ -1,0 +1,374 @@
+.\"	$NetBSD: versioningsyscalls.9,v 1.7.4.2 2024/09/20 11:00:20 martin Exp $
+.\"
+.\" Copyright (c) 2023 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Theodore Preduta.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 20, 2024
+.Dt VERSIONINGSYSCALLS 9
+.Os
+.
+.Sh NAME
+.Nm versioningsyscalls
+.Nd guide on versioning syscalls
+.
+.Sh DESCRIPTION
+.Nx
+has the ability to change the ABI of a syscall whilst retaining backwards
+compatibility with existing code.
+This means that existing code keeps working the same way as before, and
+new code can use new features and/or functionality.
+In the past this has allowed
+.Ft dev_t
+to move from 16 bits to 32 bits,
+.Ft ino_t
+and
+.Ft time_t
+to move from 32 bits to 64 bits,
+and adding fields to
+.Ft struct kevent
+without disturbing existing binaries.
+To achieve this both kernel and userland changes are required.
+.Pp
+In the kernel, a new syscall is added with a new ABI, and the old syscall
+is retained and moved to a new location that holds the compatibility syscalls
+.Pq Pa src/sys/compat .
+Kernels can be compiled with or without backwards compatibility syscalls.
+See the
+.Dv COMPAT_ Ns Ar XX
+options in
+.Xr options 4 .
+.Pp
+In userland, the original syscall stub is moved into
+.Pa src/lib/libc/compat
+retaining the same symbol name and ABI.
+The new stub is added to libc, and in the header file the syscall symbol is
+made to point to the new name with the new ABI.
+.Pp
+This is done via symbol renaming instead of ELF versioned symbols for
+historical reasons.
+.Nx
+has retained binary compatibility with most syscalls since
+.Nx 0.9
+with the exception of Scheduler Activation syscalls which are not being
+emulated because of the cost and safety of doing so.
+.Pp
+To avoid confusion, the following words are used to disambiguate which version
+of the system call is being described.
+.Bl -tag -offset indent -width Em
+.It Em old
+Any previous versions of the syscall, which have already been versioned and
+superseded by the current version of the syscall.
+.It Em current
+The version of the syscall currently in use.
+.It Em next
+The version of the syscall that will become standard in the next release.
+.El
+.Pp
+Additionally,
+.Ar CNUM
+always represents the last
+.Nx
+release where the current
+version of the system call is the default, multiplied by ten and retaining a
+leading zero.
+For example
+.Nx 0.9
+has
+.Dv COMPAT_09
+whereas
+.Nx 10.0
+has
+.Dv COMPAT_100 .
+.
+.Sh VERSIONING THE SYSCALL
+This section describes what needs to be modified to add the new version of the
+syscall.
+It assumes the current version of the syscall is
+.Fn my_syscall "struct my_struct *ms"
+and that
+.Ft my_struct
+will be versioned.
+If not versioning a struct, passages that mention
+.Ft my_struct
+can be ignored.
+.Pp
+The syscall version suffix
+.Dv VNUM
+indicates the first release of
+.Nx
+the system call will appear in.
+The compat version 
+.Dv CNUM
+is the last version of
+.Nx the old system call was used.
+Typically VNUM = CNUM + 1 .
+.Pp
+For example if you are versioning
+.Xr getcontext 2
+just after
+.Nx 11 
+was released, and the original system call was called
+.Fn getcontext ,
+the system call will become
+.Fn __getcontext12
+and the compat entry point will become
+.Fn compat_11_getcontext .
+.Pp
+Next time
+.Xr getcontext 2
+needs versioning, for example just after
+.Nx 15
+was released, it will become
+.Fn __getcontext16
+and the compat entry will become
+.Fn compat_15___getcontext12 .
+.Pp
+Please note that the historical practice up to
+.Nx 11
+has been that the syscall suffix matched the version when the syscall
+was last used.
+.
+.Ss Versioning structs
+To version
+.Ft struct my_struct ,
+first make a copy of
+.Ft my_struct
+renamed to
+.Ft my_structCNUM
+in an equivalent header in
+.Pa sys/compat/sys .
+After that, you can freely modify
+.Ft my_struct
+as desired.
+.
+.Ss Versioning the entry point
+The stub for the next version of the syscall will be
+.Fn __my_syscallVNUM ,
+and will have entry point
+.Fn sys___my_syscallVNUM .
+.
+.Ss Modifying syscalls.conf
+.Pa sys/kern/syscalls.conf
+may need to be modified to contain
+.Li compat_CNUM
+in the
+.Va compatopts
+variable.
+.
+.Ss Modifying syscalls.master
+First, add the next syscall to
+.Pa sys/kern/syscalls.master
+keeping
+.Fn my_syscall
+as the name, and set the (optional) compat field of the declaration to
+.Ar CNUM .
+.Pp
+Next, modify the current version of the syscall, and replace the type
+field
+.Pq usually just Li STD
+with
+.Dv COMPAT_CNUM MODULAR compat_CNUM .
+.Pp
+The keyword
+.Dv MODULAR
+indicates that the system call can be part of a kernel module.
+Even if the system call was not part of a module before, now it will be part
+of the
+.Dv COMPAT_CNUM
+module.
+.Pp
+Finally, if applicable, replace the types of the current and old versions of the
+syscall with the compat type.
+.Pp
+Overall, the final diff should look like
+.Bd -literal
+- 123 STD                           { int|sys||my_syscall(struct my_struct *ms); }
++ 123 COMPAT_CNUM MODULAR compat_CNUM { int|sys||my_syscall(struct my_structCNUM *ms); }
+\&...
++ 456 STD               	    { int|sys|VNUM|my_syscall(struct my_struct *ms); }
+.Ed
+.
+.Ss Modifying Makefile.rump
+If the current syscall is rump,
+.Pa sys/rump/Makefile.rump
+must contain
+.Ar CNUM
+in the
+.Dv RUMP_NBCOMPAT
+variable.
+.
+.Ss Regenerating the system calls
+If versioning structs, then modify
+.Pa sys/kern/makesyscalls.sh
+by adding an entry for
+.Ft struct my_structCNUM
+type to
+.Va uncompattypes .
+.Pp
+The
+.Va uncompattypes
+map is used in
+.Xr rump 7
+system call table generation, to map from the versioned types to the original
+names since
+.Xr rump 7
+wants to have a non-versioned copy of the system call table.
+.Pp
+Then regenerate the syscall tables in the usual way, first by running
+.Pa sys/kern/makesyscalls.sh ,
+then if the system call is rump, doing a build in
+.Pa sys/rump
+and then running
+.Pa sys/rump/makerumpsyscalls.sh
+passing it the path to the result of the build you just did as its first
+argument.
+.
+.Sh KERNEL COMPATIBILITY
+This section covers maintaining compatibility at the kernel level, by
+adding an entry point for the current syscall in an appropriate compat
+module.
+For the purposes of this section, we assume the current
+syscall has entry point
+.Fn sys_my_syscall
+and lives inside
+.Pa sys/kern/my_file.c .
+.
+.Ss Creating the compat current syscall
+The compat version of the current syscall has entry point
+.Fn compat_CNUM_sys_my_syscall ,
+and should be implemented in
+.Pa sys/compat/common/my_file_CNUM.c
+with the same semantics as the current syscall.
+Often this involves translating the arguments to the next syscall,
+and then calling that syscall's entry point.
+.
+.Ss Adding it to the compat module
+.Pa sys/compat/common/my_file_CNUM.c
+must contain an array of
+.Ft struct syscall_package
+that declares the mapping between syscall number and entry point,
+terminating in a zero element (see sample diff below).
+.Pp
+Additionally,
+.Pa sys/compat/common/my_file_CNUM.c
+must contain two functions,
+.Fn my_file_CNUM_init
+and
+.Fn my_file_CNUM_fini
+that are used to initialize/clean up anything related to this syscall.
+At the minimum they must make calls to
+.Fn syscall_establish
+and
+.Fn syscall_disestablish
+respectively, adding and removing the syscalls.
+The stubs for these functions should be located in
+.Pa sys/compat/common/compat_mod.h .
+.Pp
+Overall,
+.Pa sys/compat/common/my_file_CNUM.c
+must at the minimum contain
+.Bd -literal -offset indent
+static const struct syscall_package my_file_CNUM_syscalls[] = {
+        { SYS_compat_CNUM_my_syscall, 0,
+            (sy_call_t *)compat_CNUM_sys_my_syscall },
+        { 0, 0, NULL },
+};
+
+int
+compat_CNUM_my_syscall(...)
+{ /* Compat implementation goes here. */ }
+
+int
+my_file_CNUM_init(void)
+{ return syscall_establish(NULL, my_file_CNUM_syscalls); }
+
+int
+my_file_CNUM_fini(void)
+{ return syscall_disestablish(NULL, my_file_CNUM_syscalls); }
+.Ed
+.Pp
+Finally,
+.Pa sys/compat/common/compat_CNUM_mod.c
+needs to be modified to have its
+.Fn compat_CNUM_init
+and
+.Fn compat_CNUM_fini
+functions call
+.Fn my_file_CNUM_init
+and
+.Fn my_file_CNUM_fini
+respectively.
+.
+.Ss Modifying old compat syscalls
+If the current syscall has already been versioned, you might need to
+modify the old compat syscalls in
+.Pa sys/compat/common
+to either use the next syscall or the current compat syscall.
+Note that compat code can be made to depend on compat code for more
+recent releases.
+.Sh USERLAND COMPATIBILITY
+With the exception of the libraries described below, making the rest
+of userland work will just involve recompiling, and perhaps changing a
+constant or a
+.Li #define .
+.
+.Ss libc
+A userland version of any old and current versions of the syscall must be
+implemented.
+For the current syscall with stub
+.Fn my_syscall struct\ my_struct\ *ms
+in
+.Pa sys/sys/my_header.h ,
+an implementation of
+.Fn my_syscall
+must be written in
+.Pa lib/libc/compat/sys/compat_my_syscall.c .
+.Pp
+Additionally, a call to
+.Fn __warn_references
+must be added in
+.Pa lib/libc/compat/sys/compat_my_syscall.c
+to warn of any uses of the compat syscall and mention how to use the next
+version of the syscall.
+In almost all cases the instructions on how to use the next version of the
+syscall will be
+.Dq include <sys/my_header.h> to generate correct reference .
+.Pp
+Overall,
+.Pa lib/libc/compat/sys/compat_my_syscall.c
+must at the minimum include
+.Bd -literal -offset indent
+#include <sys/compat/my_header.h>
+
+__warn_references(my_syscall,
+    "warning: reference to compatibility my_syscall();"
+    " message on how to use the next my_syscall()");
+
+int
+my_syscall()
+{ /* Compat implementation goes here. */ }
+.Ed

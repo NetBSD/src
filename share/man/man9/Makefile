@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.465.2.4 2024/09/20 10:27:11 martin Exp $
+#       $NetBSD: Makefile,v 1.465.2.5 2024/09/20 11:00:20 martin Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -67,7 +67,8 @@ MAN+=	secmodel_suser.9 \
 	usbd_status.9 usbdi.9 usbnet.9 \
 	userret.9 ustore.9 \
 	uvm.9 uvm_hotplug.9 uvm_km.9 uvm_map.9 \
-	vattr.9 veriexec.9 vcons.9 vfs.9 vfs_hooks.9 vfsops.9 vfssubr.9 \
+	vattr.9 veriexec.9 vcons.9 versioningsyscalls.9 \
+	vfs.9 vfs_hooks.9 vfsops.9 vfssubr.9 \
 	video.9 vme.9 vnfileops.9 vnode.9 vnodeops.9 vnsubr.9 vmem.9  \
 	wapbl.9 wdc.9 workqueue.9 \
 	wsbell.9 wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9 \
