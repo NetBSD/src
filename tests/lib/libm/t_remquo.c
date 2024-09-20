@@ -1,4 +1,4 @@
-/* $NetBSD: t_remquo.c,v 1.1 2024/09/19 19:43:13 gdt Exp $ */
+/* $NetBSD: t_remquo.c,v 1.2 2024/09/20 22:24:51 rin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -34,6 +34,33 @@
 #include <float.h>
 #include <math.h>
 
+/*
+ * remquo(3)
+ */
+ATF_TC(remquo_args);
+ATF_TC_HEAD(remquo_args, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test some selected arguments");
+}
+
+ATF_TP_ADD_TCS(tp)
+{
+
+	ATF_TP_ADD_TC(tp, remquo_args);
+
+	return atf_no_error();
+}
+
+#ifdef __vax__
+
+ATF_TC_BODY(remquo_args, tc)
+{
+        atf_tc_expect_fail("PR 57881: vax libm is missing various symbols");
+        atf_tc_fail("missing remquo on vax");
+}
+
+#else /* !__vax__ */
+
 static const struct {
 	double		x;
 	double		y;
@@ -54,15 +81,6 @@ static const struct {
 	{ 135.0,	90.0,		-45.0,	2 },
 	{ 180.0,	90.0,		0.0,	2 },
 };
-
-/*
- * remquo(3)
- */
-ATF_TC(remquo_args);
-ATF_TC_HEAD(remquo_args, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test some selected arguments");
-}
 
 ATF_TC_BODY(remquo_args, tc)
 {
@@ -105,10 +123,4 @@ ATF_TC_BODY(remquo_args, tc)
 	}
 }
 
-ATF_TP_ADD_TCS(tp)
-{
-
-	ATF_TP_ADD_TC(tp, remquo_args);
-
-	return atf_no_error();
-}
+#endif /* !__vax__ */
