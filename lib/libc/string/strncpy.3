@@ -1,0 +1,302 @@
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" This code is derived from software contributed to Berkeley by
+.\" Chris Torek and the American National Standards Committee X3,
+.\" on Information Processing Systems.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
+.\"     from: NetBSD: strcpy.3,v 1.23 2015/04/01 20:18:17 riastradh Exp
+.\"	$NetBSD: strncpy.3,v 1.16.4.2 2024/09/20 11:22:29 martin Exp $
+.\"
+.Dd August 11, 2023
+.Dt STRNCPY 3
+.Os
+.Sh NAME
+.Nm stpncpy ,
+.Nm strncpy
+.Nd copy fixed-width buffers with NUL padding
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In string.h
+.Ft char *
+.Fn stpncpy "char * restrict dst" "const char * restrict src" "size_t len"
+.Ft char *
+.Fn strncpy "char * restrict dst" "const char * restrict src" "size_t len"
+.Sh DESCRIPTION
+The
+.Fn stpncpy
+and
+.Fn strncpy
+functions fill a
+.Fa len Ns -byte
+buffer at
+.Fa dst
+by copying up to
+.Fa len
+.No non- Ns Tn NUL
+bytes from
+.Fa src
+followed by enough
+.Tn NUL
+bytes \(em possibly zero of them \(em to pad the remainder.
+.Pp
+The buffers
+.Fa src
+and
+.Fa dst
+may not overlap.
+.Pp
+The buffer
+.Fa src
+is not required to hold a
+.Tn NUL Ns -terminated
+string on input; it is only required
+.Em either
+to have at least
+.Fa len
+bytes allocated and initialized,
+.Em or
+to have a
+.Tn NUL
+byte if it is shorter than
+.Fa len
+bytes.
+.Pp
+The buffer
+.Fa dst
+is not guaranteed to hold a
+.Tn NUL Ns -terminated
+string on output;
+.Fn stpncpy
+and
+.Fn strncpy
+write exactly
+.Fa len
+bytes to it, which includes nonempty
+.Tn NUL
+padding only if a
+.Tn NUL
+byte appears in the first
+.Fa len
+bytes at
+.Fa src .
+.Sh RETURN VALUES
+The
+.Fn strncpy
+function returns
+.Fa dst .
+.Pp
+The
+.Fn stpncpy
+function returns a pointer to the byte after the last
+.No non- Ns Tn NUL
+byte of
+.Fa dst .
+This does not necessarily point to a
+.Tn NUL
+byte;
+.Fn stpncpy
+may return
+.Li \*(Am Ns Fa dst Ns Li "[" Fa len Ns Li "]" Ns ,
+if all
+.Fa len
+bytes starting at
+.Fa src
+are
+.No non- Tn NUL .
+.Sh EXAMPLES
+The following logic fills a fixed-width field in a record that might
+appear on disk with the content of a caller-provided string
+.Dv str ,
+padded to the end of the field with
+.Tn NUL
+bytes:
+.Bd -literal -offset indent
+struct record {
+	uint16_t	id;
+	char		name[6];
+	uint8_t		tag;
+	...
+};
+
+struct record *rec = ...;
+strncpy(rec->name, str, sizeof(rec->name));
+.Ed
+.Pp
+The following values for
+.Dv str
+result in the following corresponding contents of
+.Dv rec Ns Li "->name" :
+.Bl -column -offset indent ".Li \*qabcdefghi\e0\*q" ".Li \*qabc\e0\e0\e0\*q"
+.It Dv str Ta Dv rec Ns Li "->name"
+.It Li \*qabc\e0\*q Ta Li \*qabc\e0\e0\e0\*q
+.It Li \*qabc\e0\e0\e0\*q Ta Li \*qabc\e0\e0\e0\*q
+.It Li \*qabcde\e0\*q Ta Li \*qabcde\e0\*q
+.It Li \*qabcdef\e0\*q Ta Li \*qabcdef\*q
+.It Li \*qabcdef\*q Ta Li \*qabcdef\*q
+.It Li \*qabcdefghi\e0\*q Ta Li \*qabcdef\*q
+.It Li \*qabcdefghi\*q Ta Li \*qabcdef\*q
+.El
+.Pp
+Note that when
+.Dv str
+has at least six
+.No non- Ns Tn NUL
+bytes,
+.Dv rec Ns Li "->name"
+is
+.Em not
+.Tn NUL Ns -terminated
+\(em it is only
+.Em padded
+with (possibly zero)
+.Tn NUL
+bytes to fill the fixed-width buffer.
+When
+.Dv str
+has
+.Em more
+than six
+.No non- Ns Tn NUL
+bytes, the additional ones are truncated.
+If
+.Dv str
+has space for
+.Em fewer
+than six bytes, and the last one is not
+.Tn NUL ,
+using
+.Fn strncpy
+is undefined.
+.Pp
+Because
+.Fn strncpy
+does
+.Em not
+guarantee to
+.Tn NUL Ns -terminate
+the result, if
+.Tn NUL Ns -termination
+is required it must be done explicitly:
+.Bd -literal -offset indent
+char buf[1024];
+
+strncpy(buf, input, sizeof(buf) - 1);
+buf[sizeof(buf) - 1] = '\e0';
+.Ed
+.Pp
+If
+.Va input
+is guaranteed to be
+.Tn NUL Ns -terminated ,
+and if
+.Va buf
+need only be
+.Tn NUL Ns -terminated ,
+not fully initialized with
+.Tn NUL
+padding,
+this could be achieved using
+.Xr strlcpy 3
+as follows:
+.Bd -literal -offset indent
+strlcpy(buf, input, sizeof(buf));
+.Ed
+.Pp
+It is not enough for
+.Va input
+to have
+.Li sizeof(buf)
+bytes allocated; it MUST be
+.Tn NUL Ns -terminated
+for
+.Xr strlcpy 3
+to be used.
+.Pp
+Note that because
+.Xr strlcpy 3
+is not defined in any standards, it should
+only be used when portability is not a concern.
+.Pp
+.Sy WARNING :
+Because
+.Xr strlcpy 3
+does not fully initialize
+.Fa dst ,
+but does read all the way to a
+.Tn NUL
+terminator in
+.Fa src
+even past
+.Fa len
+bytes,
+.Xr strlcpy 3
+is
+.Em not
+a safe
+.Tn NUL Ns -terminating
+replacement for
+.Fn strncpy .
+Naively replacing
+.Fn strncpy
+by
+.Xr strlcpy 3
+can lead to crashes, undefined behaviour, and disclosure of secrets
+from uninitialized memory.
+.Sh SEE ALSO
+.Xr bcopy 3 ,
+.Xr memccpy 3 ,
+.Xr memcpy 3 ,
+.Xr memmove 3 ,
+.Xr strcpy 3 ,
+.Xr strlcpy 3 ,
+.Xr wcscpy 3
+.Sh STANDARDS
+The
+.Fn strncpy
+function conforms to
+.St -isoC-99 .
+.Pp
+The
+.Fn stpncpy
+function conforms to
+.St -p1003.1-2008 .
+.Sh HISTORY
+The
+.Fn stpncpy
+function first appeared in
+.Nx 6.0 .
+.Sh SECURITY CONSIDERATIONS
+The
+.Fn stpncpy
+and
+.Fn strncpy
+functions are not guaranteed to
+.Tn NUL Ns -terminate
+the result.

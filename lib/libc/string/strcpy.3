@@ -30,16 +30,14 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: strcpy.3,v 1.23 2015/04/01 20:18:17 riastradh Exp $
+.\"	$NetBSD: strcpy.3,v 1.23.26.1 2024/09/20 11:22:29 martin Exp $
 .\"
-.Dd April 1, 2015
+.Dd August 11, 2023
 .Dt STRCPY 3
 .Os
 .Sh NAME
 .Nm stpcpy ,
-.Nm stpncpy ,
-.Nm strcpy ,
-.Nm strncpy
+.Nm strcpy
 .Nd copy strings
 .Sh LIBRARY
 .Lb libc
@@ -48,11 +46,7 @@
 .Ft char *
 .Fn stpcpy "char * restrict dst" "const char * restrict src"
 .Ft char *
-.Fn stpncpy "char * restrict dst" "const char * restrict src" "size_t len"
-.Ft char *
 .Fn strcpy "char * restrict dst" "const char * restrict src"
-.Ft char *
-.Fn strncpy "char * restrict dst" "const char * restrict src" "size_t len"
 .Sh DESCRIPTION
 The
 .Fn stpcpy
@@ -62,165 +56,97 @@ functions
 copy the string
 .Fa src
 to
-.Fa dst
-(including the terminating
-.Ql \e0
-character).
-.Pp
-The
-.Fn stpncpy
-and
-.Fn strncpy
-functions copy at most
-.Fa len
-characters from
-.Fa src
-into
-.Fa dst .
-If
-.Fa src
-is less than
-.Fa len
-characters long,
-the remainder of
-.Fa dst
-is filled with
-.Ql \e0
-characters.
-Otherwise,
-.Fa dst
-is
-.Em not
-terminated.
+.Fa dst ,
+including the terminating
+.Tn NUL
+byte.
 .Pp
 The strings
 .Fa src
 and
 .Fa dst
 may not overlap.
+The string
+.Fa src
+must be terminated by a
+.Tn NUL
+byte.
+The memory for
+.Fa dst
+must have space for
+.Fn strlen src Li "+ 1"
+bytes.
 .Sh RETURN VALUES
 The
 .Fn strcpy
-and
-.Fn strncpy
-functions
-return
+function returns
 .Fa dst .
+.Pp
 The
 .Fn stpcpy
-and
-.Fn stpncpy
-functions return a pointer to the terminating
-.Ql \e0
-character of
+function returns a pointer to the terminating
+.Tn NUL
+byte of
 .Fa dst .
-If
-.Fn stpncpy
-does not terminate
-.Fa dst
-with a
-.Dv NUL
-character, it instead returns a pointer to
-.Li dst[len]
-(which does not necessarily refer to a valid memory location.)
-.Sh EXAMPLES
-The following sets
-.Va chararray
-to
-.Dq Li abc\e0\e0\e0 :
-.Bd -literal -offset indent
-char chararray[6];
-
-(void)strncpy(chararray, "abc", sizeof(chararray));
-.Ed
-.Pp
-The following sets
-.Va chararray
-to
-.Dq Li abcdef :
-.Bd -literal -offset indent
-char chararray[6];
-
-(void)strncpy(chararray, "abcdefgh", sizeof(chararray));
-.Ed
-.Pp
-Note that it does
-.Em not
-.Dv NUL Ns No -terminate
-.Va chararray
-because the length of the source string is greater than or equal
-to the length parameter.
-.Fn strncpy
-.Em only
-.Dv NUL Ns No -terminates
-the destination string when the length of the source
-string is less than the length parameter.
-.Pp
-The following copies as many characters from
-.Va input
-to
-.Va buf
-as will fit and
-.Dv NUL Ns No -terminates
-the result.
-Because
-.Fn strncpy
-does
-.Em not
-guarantee to
-.Dv NUL Ns No -terminate
-the string itself, this must be done explicitly.
-.Bd -literal -offset indent
-char buf[1024];
-
-(void)strncpy(buf, input, sizeof(buf) - 1);
-buf[sizeof(buf) - 1] = '\e0';
-.Ed
-.Pp
-This could be better and more simply achieved using
-.Xr strlcpy 3 ,
-as shown in the following example:
-.Bd -literal -offset indent
-(void)strlcpy(buf, input, sizeof(buf));
-.Ed
-.Pp
-Note that because
-.Xr strlcpy 3
-is not defined in any standards, it should
-only be used when portability is not a concern.
 .Sh SEE ALSO
 .Xr bcopy 3 ,
 .Xr memccpy 3 ,
 .Xr memcpy 3 ,
 .Xr memmove 3 ,
 .Xr strlcpy 3 ,
+.Xr strncpy 3 ,
 .Xr wcscpy 3
 .Sh STANDARDS
 The
 .Fn strcpy
-and
-.Fn strncpy
-functions
-conform to
+function conforms to
 .St -isoC-99 .
+.Pp
 The
 .Fn stpcpy
-and
-.Fn stpncpy
-functions conform to
+function conforms to
 .St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn stpcpy
-and
-.Fn stpncpy
-functions first appeared in
+function first appeared in
 .Nx 6.0 .
 .Sh SECURITY CONSIDERATIONS
 The
 .Fn strcpy
 and
 .Fn stpcpy
-functions are easily misused in a manner which enables malicious users
-to arbitrarily change a running program's functionality through a
-buffer overflow attack.
+functions copy until a
+.Tn NUL
+terminator without any bounds checks on the size of the input or output
+buffers.
+If the input buffer is missing a
+.Tn NUL
+terminator, or the input string is longer than the output buffer, this
+can lead to crashes or security vulnerabilities from buffer overruns,
+including disclosure of secrets in memory and arbitrary code
+execution.
+.Pp
+The
+.Xr strlcpy 3
+function is a safer replacement for
+.Fn strcpy
+which allows the caller to specify the space allocated for
+.Fa dst .
+.Xr strlcpy 3 ,
+or
+.Xr snprintf 3
+with a format string of
+.Li \*q%s\*q ,
+should be used instead of
+.Fn strcpy
+and
+.Fn stpcpy
+wherever possible to avoid buffer overruns in
+.Fa dst .
+.Po
+However, they still require
+.Fa src
+to be
+.Tn NUL Ns -terminated .
+.Pc
