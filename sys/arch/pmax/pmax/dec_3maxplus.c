@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.72 2024/02/05 22:08:05 andvar Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.73 2024/09/20 21:46:15 andvar Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -70,7 +70,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.72 2024/02/05 22:08:05 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.73 2024/09/20 21:46:15 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -264,7 +264,7 @@ dec_3maxplus_intr_establish(device_t dev, void *cookie, int level,
 		break;
 	default:
 #ifdef DIAGNOSTIC
-		printf("warning: enabling unknown intr %x\n", (int)cookie);
+		printf("warning: enabling unknown intr %p\n", cookie);
 #endif
 		return;
 	}
