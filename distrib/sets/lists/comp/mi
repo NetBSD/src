@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2425.2.7 2024/09/20 10:27:10 martin Exp $
+#	$NetBSD: mi,v 1.2425.2.8 2024/09/20 11:00:20 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -12915,6 +12915,7 @@
 ./usr/share/man/cat9/vdead_check.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vdevgone.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/veriexec.0			comp-sys-catman		.cat
+./usr/share/man/cat9/versioningsyscalls.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/vfinddev.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vflush.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vflushbuf.0		comp-sys-catman		.cat
@@ -21228,6 +21229,7 @@
 ./usr/share/man/html9/vdead_check.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vdevgone.html		comp-sys-htmlman	html
 ./usr/share/man/html9/veriexec.html		comp-sys-htmlman	html
+./usr/share/man/html9/versioningsyscalls.html	comp-sys-htmlman	html
 ./usr/share/man/html9/vfinddev.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vflush.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vflushbuf.html		comp-sys-htmlman	html
@@ -29774,6 +29776,7 @@
 ./usr/share/man/man9/vdead_check.9		comp-sys-man		.man
 ./usr/share/man/man9/vdevgone.9			comp-sys-man		.man
 ./usr/share/man/man9/veriexec.9			comp-sys-man		.man
+./usr/share/man/man9/versioningsyscalls.9	comp-sys-man		.man
 ./usr/share/man/man9/vfinddev.9			comp-sys-man		.man
 ./usr/share/man/man9/vflush.9			comp-sys-man		.man
 ./usr/share/man/man9/vflushbuf.9		comp-sys-man		.man
