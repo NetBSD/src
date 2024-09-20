@@ -156,5 +156,12 @@ fixup:
 	SET_HIGH_WORD(x,hx^sx);
 	q &= 0x7fffffff;
 	*quo = (sxy ? -q : q);
+	/*
+	 * If q is 0 and we need to return negative, we have to choose
+	 * the largest negative number (in 32 bits) because it is the
+	 * only value that is negative and congruent to 0 mod 2^31.
+	 */
+	if (q == 0 && sxy)
+	  *quo = 0x80000000;
 	return x;
 }
