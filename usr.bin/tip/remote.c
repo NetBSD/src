@@ -1,4 +1,4 @@
-/*	$NetBSD: remote.c,v 1.20 2015/06/16 22:54:11 christos Exp $	*/
+/*	$NetBSD: remote.c,v 1.21 2024/09/20 19:27:03 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,14 +40,14 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)remote.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: remote.c,v 1.20 2015/06/16 22:54:11 christos Exp $");
+__RCSID("$NetBSD: remote.c,v 1.21 2024/09/20 19:27:03 andvar Exp $");
 #endif /* not lint */
 
 #include "pathnames.h"
 #include "tip.h"
 
 /*
- * Attributes to be gleened from remote host description
+ * Attributes to be gleaned from remote host description
  *   data base.
  */
 static char **caps[] = {
