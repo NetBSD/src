@@ -1,0 +1,92 @@
+.\"	$NetBSD: portfeatures.9,v 1.3.4.2 2024/09/20 10:27:11 martin Exp $
+.\"
+.\" Copyright (c) The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+.\" AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.Dd March 6, 2023
+.Dt PORTFEATURES 9
+.Os
+.
+.Sh NAME
+.Nm portfeatures
+.Nd the __HAVEs (\|and the have nots\|)
+.
+.Sh DESCRIPTION
+Machine-independent kernel code adapts to differences in hardware
+capabilities provided by the machine-dependent parts of the kernel.
+A port declares its capabilities by defining various
+.Li __HAVE_ Ns Ar feature
+macros.
+This manual page provides an index of such macros with pointers to
+other manual pages in the kernel section that provide all the relevant
+details.
+.Bl -tag -width Dv
+.
+.\" ---------
+.It Dv __HAVE_MUTEX_STUBS Pq Xr mutex 9
+The port provides fast path mutex enter and exit stubs.
+.
+.\" ---------
+.It Dv __HAVE_PREEMPTION Pq Xr cpu_need_resched 9
+The port can preempt kernel lwps with
+.Dv RESCHED_KPREEMPT .
+.
+.\" ---------
+.It Dv __HAVE_PTRACE_MACHDEP
+The port has MD
+.Xr ptrace 2
+requests, defines
+.Dv PTRACE_MACHDEP_REQUEST_CASES
+macro with
+.Ic case
+labels for its MD requests.
+.
+.\" ---------
+.It Dv __HAVE_RAS Pq Xr ras 9
+The port supports restartable atomic sequences.
+.
+.\" ---------
+.It Dv __HAVE_SIMPLE_MUTEXES Pq Xr mutex 9
+The port provides a CAS function that is either MP-safe, or does not
+need to be MP safe.
+Adaptive mutexes on these architectures do not require an additional
+interlock.
+.
+.\" ---------
+.It Dv __HAVE_SPIN_MUTEX_STUBS Pq Xr mutex 9
+The port provides fast path enter and exit stubs for spin mutexes.
+.
+.\" ---------
+.It Dv __HAVE_UCAS_FULL Pq Xr ucas 9
+The port provides a full implementation of the low-level primitives
+required for atomic compare-and-swap operations to user-space addresses.
+.
+.\" ---------
+.It Dv __HAVE_UCAS_MP Pq Xr ucas 9
+The port does not provide a full implementation of the low-level
+primitives required for atomic compare-and-swap operations to user-space
+addresses, but does provide an implementation of those primitives that
+can be used if
+.Pq and only if
+the system has more than one processor.
+.El
