@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.167 2024/08/15 23:44:49 riastradh Exp $	*/
+/*	$NetBSD: unistd.h,v 1.168 2024/09/20 15:52:12 kre Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -173,6 +173,7 @@ ssize_t	 readlink(const char * __restrict, char * __restrict, size_t);
  */
 #if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 600 || \
     defined(_NETBSD_SOURCE)
+int	 gethostname(char *, size_t);
 int	 setegid(gid_t);
 int	 seteuid(uid_t);
 #endif
@@ -266,7 +267,6 @@ int	 fchown(int, uid_t, gid_t);
 #endif
 int	 getdtablesize(void);
 long	 gethostid(void);
-int	 gethostname(char *, size_t);
 __pure int
 	 getpagesize(void);		/* legacy */
 pid_t	 getpgid(pid_t);
