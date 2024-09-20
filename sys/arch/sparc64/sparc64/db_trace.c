@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.55 2020/05/31 11:28:52 martin Exp $ */
+/*	$NetBSD: db_trace.c,v 1.55.20.1 2024/09/20 09:30:52 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.55 2020/05/31 11:28:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.55.20.1 2024/09/20 09:30:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -57,7 +57,7 @@ void db_print_window(uint64_t);
 #endif
 
 #ifdef _KERNEL
-#define	KLOAD(x)	probeget((paddr_t)(u_long)&(x), ASI_PRIMARY, sizeof(x))	
+#define	KLOAD(x)	probeget((paddr_t)(u_long)&(x), ASI_PRIMARY, sizeof(x))
 #else
 static long
 kload(db_addr_t addr)
@@ -127,12 +127,8 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 			}
 			(*pr)("lid %d ", l.l_lid);
 			pcb = lwp_getpcb(&l);
-#ifndef _KERNEL
 			db_read_bytes((db_addr_t)&pcb->pcb_sp,
 			    sizeof(frame), (char *)&frame);
-#else
-			frame = (vaddr_t)pcb->pcb_sp;
-#endif
 			(*pr)("at %p\n", frame);
 		} else {
 			frame = (vaddr_t)addr;
@@ -153,12 +149,12 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		if (frame & 1) {
 			f64 = (struct frame64 *)(frame + BIAS);
 			pc = (db_addr_t)KLOAD(f64->fr_pc);
-		
+
 			frame = KLOAD(f64->fr_fp);
 		} else {
 			f32 = (struct frame32 *)(frame);
 			pc = (db_addr_t)KLOAD(f32->fr_pc);
-		
+
 			frame = (long)KLOAD(f32->fr_fp);
 		}
 
@@ -175,13 +171,13 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		if (!INKERNEL(frame))
 			break;
 #endif
-		
+
 		db_find_sym_and_offset(pc, &name, &offset);
 		if (name == NULL)
 			name = "?";
-		
+
 		(*pr)("%s(", name);
-		
+
 		/*
 		 * Print %i0..%i5; hope these still reflect the
 		 * actual arguments somewhat...
@@ -216,7 +212,7 @@ db_dump_window(db_expr_t addr, bool have_addr, db_expr_t count, const char *modi
 
 	/* Traverse window stack */
 	for (i=0; i<addr && frame; i++) {
-		if (frame & 1) 
+		if (frame & 1)
 			frame = (uint64_t)((struct frame64 *)(u_long)(frame + BIAS))->fr_fp;
 		else frame = (uint64_t)((struct frame32 *)(u_long)frame)->fr_fp;
 	}
@@ -226,13 +222,13 @@ db_dump_window(db_expr_t addr, bool have_addr, db_expr_t count, const char *modi
 }
 #endif
 
-void 
+void
 db_print_window(uint64_t frame)
 {
 	if (frame & 1) {
 		struct frame64* f = (struct frame64*)(u_long)(frame + BIAS);
 
-		db_printf("frame64 %p locals, ins:\n", f);		
+		db_printf("frame64 %p locals, ins:\n", f);
 		if (INKERNEL(f)) {
 			db_printf("%llx %llx %llx %llx ",
 				  (unsigned long long)f->fr_local[0],
@@ -245,12 +241,12 @@ db_print_window(uint64_t frame)
 				  (unsigned long long)f->fr_local[6],
 				  (unsigned long long)f->fr_local[7]);
 			db_printf("%llx %llx %llx %llx ",
-				  (unsigned long long)f->fr_arg[0],	
+				  (unsigned long long)f->fr_arg[0],
 				  (unsigned long long)f->fr_arg[1],
 				  (unsigned long long)f->fr_arg[2],
 				  (unsigned long long)f->fr_arg[3]);
 			db_printf("%llx %llx %llx=sp %llx=pc:",
-				  (unsigned long long)f->fr_arg[4],	
+				  (unsigned long long)f->fr_arg[4],
 				  (unsigned long long)f->fr_arg[5],
 				  (unsigned long long)f->fr_fp,
 				  (unsigned long long)f->fr_pc);
@@ -276,7 +272,7 @@ db_print_window(uint64_t frame)
 				  (unsigned long long)f->fr_arg[5],
 				  (unsigned long long)f->fr_fp,
 				  (unsigned long long)f->fr_pc);
-			db_printf("\n");	 
+			db_printf("\n");
 		}
 	} else {
 		struct frame32* f = (struct frame32*)(u_long)frame;
@@ -297,14 +293,14 @@ db_print_window(uint64_t frame)
 			if (copyin(f, &fr, sizeof(fr))) return;
 			f = &fr;
 			db_printf("%8x %8x %8x %8x %8x %8x %8x %8x\n",
-				  f->fr_local[0], f->fr_local[1], 
+				  f->fr_local[0], f->fr_local[1],
 				  f->fr_local[2], f->fr_local[3],
-				  f->fr_local[4], f->fr_local[5], 
+				  f->fr_local[4], f->fr_local[5],
 				  f->fr_local[6], f->fr_local[7]);
 			db_printf("%8x %8x %8x %8x %8x %8x %8x=sp %8x=pc\n",
-				  f->fr_arg[0], f->fr_arg[1], 
+				  f->fr_arg[0], f->fr_arg[1],
 				  f->fr_arg[2], f->fr_arg[3],
-				  f->fr_arg[4], f->fr_arg[5], 
+				  f->fr_arg[4], f->fr_arg[5],
 				  f->fr_fp, f->fr_pc);
 		}
 	}
@@ -391,7 +387,7 @@ db_dump_trap(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 		  tf, (unsigned long long)tf->tf_tstate,
 		  (unsigned long long)tf->tf_pc,
 		  (unsigned long long)tf->tf_npc);
-	db_printf("y: %x\tpil: %d\toldpil: %d\tfault: %llx\ttt: %x\tGlobals:\n", 
+	db_printf("y: %x\tpil: %d\toldpil: %d\tfault: %llx\ttt: %x\tGlobals:\n",
 		  (int)tf->tf_y, (int)tf->tf_pil, (int)tf->tf_oldpil,
 		  (unsigned long long)tf->tf_fault, (int)tf->tf_tt);
 	db_printf("%016llx %016llx %016llx %016llx\n",
