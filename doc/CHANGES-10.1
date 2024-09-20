@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.34 2024/09/16 08:43:12 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.35 2024/09/20 11:36:13 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -1568,4 +1568,161 @@ sys/miscfs/procfs/procfs_vfsops.c		1.120 (patch)
 
 	procfs kernel module: define dependencies based on build options.
 	[pgoyette, ticket #868]
+
+sys/arch/aarch64/aarch64/cpu.c			1.73
+usr.sbin/cpuctl/arch/aarch64.c			1.22
+
+	aarch64: correct width of MPIDR.
+	[rin, ticket #869]
+
+sys/kern/kern_sysctl.c				1.267,1.268
+
+	Fix SYSCTL_DEBUG_CREATE for non-x86 by using copyin(9) for
+	the user buffer.
+	[rin, ticket #870]
+
+sys/kern/subr_pool.c				1.286
+
+	subr_pool: Avoid undefined behavior (left shift of signed value
+	potentialy altering the sign bit)
+	[rin, ticket #871]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/zfs_ctldir.c 1.15
+
+	Provide pathconf for .zfs control directory.
+	[rin, ticket #872]
+
+sys/fs/union/union_vfsops.c			1.87
+
+	unionfs: set the lower mount only on success.
+	[rin, ticket #873]
+
+sys/arch/sparc64/sparc64/lock_stubs.s		1.12
+
+	sparc64: add missing LoadStore ordering for mutex_enter stub.
+	[rin, ticket #874]
+
+sys/arch/i386/i386/bioscall.S			1.11
+
+	i386/bioscall: disable preemption while we load the kernel pmap.
+	[rin, ticket #875]
+
+sys/arch/amd64/amd64/amd64_trap.S		1.55
+
+	amd64: annotate trap vectors with their mnemonics.
+	[rin, ticket #876]
+
+sys/dev/usb/ucom.c				1.138
+
+	ucom(4): PR 57259: simplify logic.
+	[rin, ticket #877]
+
+distrib/sets/lists/comp/mi			1.2426
+share/man/man9/Makefile				1.466
+share/man/man9/portfeatures.9			1.1-1.3
+
+	portfeatures(9): new man page for __HAVE* macros.
+	[rin, ticket #878]
+
+sys/nfs/nfs_vfsops.c				1.244
+
+	nfs: avoid overflow of nfs_commitsize on machines with > 32GB RAM.
+	[rin, ticket #879]
+
+sys/nfs/nfs_clntsubs.c				1.7
+sys/nfs/nfs_iod.c				1.9
+sys/nfs/nfs_vfsops.c				1.245
+
+	nfs: PR 57279: fix 32 bit time_t leftover in NFS code.
+	[rin, ticket #880]
+
+sys/arch/x86/x86/bus_dma.c			1.90
+
+	x86/bus_dma.c: enhance error diagnostics by using KASSERTMSG.
+	[rin, ticket #881]
+
+sys/kern/uipc_mbuf.c				1.249,1.250
+
+	uipc_mbuf: enhance error diagnostics by using KASSERTMSGs.
+	[rin, ticket #882]
+
+sys/arch/sparc64/sparc64/db_trace.c		1.56,1.57
+
+	sparc64: ddb: Use db_read_bytes() instead of pointer
+	dereference to avoid potential crashes.
+	[rin, ticket #883]
+
+sys/dev/md.c					1.87
+
+	md(4): Add constraints check for size given by ioctl(2).
+	[rin, ticket #884]
+
+sys/dev/usb/xhci.c				1.178,1.179
+sys/dev/usb/xhcireg.h				1.23
+
+	xhci(4): PR 56115: fix clearing of EINT and other transient flags.
+	[rin, ticket #885]
+
+external/bsd/libarchive/dist/libarchive/archive_read_disk_posix.c 1.3
+
+	libarchive: PR 56080: fix crash for tar(1) on NFS.
+	[rin, ticket #886]
+
+distrib/sets/lists/comp/mi			1.2435,1.2436
+share/man/man9/Makefile				1.467
+share/man/man9/versioningsyscalls.9		1.1-1.7
+
+	versioningsyscalls(9): new man page describing the details of
+	versioning a syscall.
+	[rin, ticket #887]
+
+sys/dev/dksubr.c				1.114
+
+	dk(4): call rnd_add_uint32(9) without spin lock held.
+	[rin, ticket #888]
+
+lib/libpthread/Makefile				1.97
+lib/librumpuser/configure.ac			1.6
+lib/librumpuser/rumpuser_port.h			1.53
+sys/rump/share/man/man3/rumpuser.3		1.4
+sys/rump/share/man/man7/rumpkernel.7		1.4
+sys/rump/share/man/man7/rumpkernel.7		1.5
+
+	rump: PR 57501: fix URLs for rump.
+	[rin, ticket #889]
+
+sys/arch/x86/x86/fpu.c				1.87
+
+	x86/fpu: in kernel mode fpu traps, print the instruction pointer.
+	[rin, ticket #890]
+
+lib/libc/string/Makefile.inc			1.88,1.89
+lib/libc/string/strcpy.3			1.24-1.27
+lib/libc/string/strlcpy.3			1.15-1.21
+lib/libc/string/strncpy.3			1.1-1.16
+
+	Major documentation improvements for strcpy(3) family routines.
+	[rin, ticket #891]
+
+sys/dev/wscons/wsmouse.c			1.73
+
+	wsmouse(4): make wsmouse_input safe to call from MP-safe interrupts.
+	[rin, ticket #892]
+
+sys/arch/i386/stand/Makefile.booters		1.98
+sys/arch/i386/stand/efiboot/Makefile.efiboot	1.23
+sys/arch/i386/stand/libsa/nfs.c			delete
+sys/arch/i386/stand/pxeboot/Makefile		1.29
+sys/lib/libsa/nfs.c				1.51-1.53
+sys/lib/libsa/nfsv2.h				1.5
+sys/lib/libsa/nfsv3.h				1.1
+sys/lib/libsa/rpcv2.h				1.4
+
+	libsa: add support for NFSv3 (fallback to NFSv2 if it fails).
+	[rin, ticket #894]
+
+sys/arch/evbppc/conf/WII			1.5
+
+	evbppc/wii: PR 58676: add DKWEDGE_AUTODISCOVER and DKWEDGE_METHOD_GPT.
+	[jakllsch, ticket #897]
 
