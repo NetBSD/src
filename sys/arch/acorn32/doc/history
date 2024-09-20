@@ -1,4 +1,4 @@
-#	$NetBSD: history,v 1.10 2024/09/08 09:36:48 rillig Exp $
+#	$NetBSD: history,v 1.11 2024/09/20 05:31:21 andvar Exp $
 ---------------------------------------------------------------------------
 This document is more included as a historical reference and nostalgia :)
 rather than a still worked on list.
@@ -69,11 +69,11 @@ rather than a still worked on list.
 	  bootstrap to use.
 	- The 936K kernel size limit has been removed.
 	- Added support for KTRACE in syscall.c
-	- Seondary bootstrap now zeros down its memory
+	- Secondary bootstrap now zeros down its memory
 	- cpu_switch now zeros curpcb while there is no valid process
 	-
 1/10/95
-	- cpuswitch now detects trahsed stacks.
+	- cpuswitch now detects trashed stacks.
 	- new compile option for generation of enhanced postmortem debugging
 	- merged console code 183b
 	- implemented a memcpy routine
@@ -140,7 +140,7 @@ rather than a still worked on list.
 
 03/11/95
 	- ALT-Cursor Left/Right now work the correct way round
-	- ALT-F6 now gernerates the correct code
+	- ALT-F6 now generates the correct code
 	- alpha version of the cumana SCSI II driver added
 	- alpha version of the ether1 driver added
 	- console code upgraded to V191
