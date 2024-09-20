@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.247.2.1 2023/11/27 20:00:17 martin Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.247.2.2 2024/09/20 10:50:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.247.2.1 2023/11/27 20:00:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.247.2.2 2024/09/20 10:50:00 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -539,7 +539,11 @@ m_get(int how, int type)
 	    how == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : PR_NOWAIT);
 	if (m == NULL)
 		return NULL;
-	KASSERT(((vaddr_t)m->m_dat & PAGE_MASK) + MLEN <= PAGE_SIZE);
+	KASSERTMSG(((vaddr_t)m->m_dat & PAGE_MASK) + MLEN <= PAGE_SIZE,
+	    "m=%p m->m_dat=%p"
+	    " MLEN=%u PAGE_MASK=0x%x PAGE_SIZE=%u",
+	    m, m->m_dat,
+	    (unsigned)MLEN, (unsigned)PAGE_MASK, (unsigned)PAGE_SIZE);
 
 	mbstat_type_add(type, 1);
 
@@ -593,8 +597,12 @@ m_clget(struct mbuf *m, int how)
 	if (m->m_ext_storage.ext_buf == NULL)
 		return;
 
-	KASSERT(((vaddr_t)m->m_ext_storage.ext_buf & PAGE_MASK) + mclbytes
-	    <= PAGE_SIZE);
+	KASSERTMSG((((vaddr_t)m->m_ext_storage.ext_buf & PAGE_MASK) + mclbytes
+		<= PAGE_SIZE),
+	    "m=%p m->m_ext_storage.ext_buf=%p"
+	    " mclbytes=%u PAGE_MASK=0x%x PAGE_SIZE=%u",
+	    m, m->m_dat,
+	    (unsigned)mclbytes, (unsigned)PAGE_MASK, (unsigned)PAGE_SIZE);
 
 	MCLINITREFERENCE(m);
 	m->m_data = m->m_ext.ext_buf;
@@ -691,6 +699,8 @@ m_copylen(int len, int copylen)
 static struct mbuf *
 m_copy_internal(struct mbuf *m, int off0, int len, int wait, bool deep)
 {
+	struct mbuf *m0 __diagused = m;
+	int len0 __diagused = len;
 	struct mbuf *n, **np;
 	int off = off0;
 	struct mbuf *top;
@@ -761,7 +771,9 @@ m_copy_internal(struct mbuf *m, int off0, int len, int wait, bool deep)
 			len -= n->m_len;
 		off += n->m_len;
 
-		KASSERT(off <= m->m_len);
+		KASSERTMSG(off <= m->m_len,
+		    "m=%p m->m_len=%d off=%d len=%d m0=%p off0=%d len0=%d",
+		    m, m->m_len, off, len, m0, off0, len0);
 
 		if (off == m->m_len) {
 			m = m->m_next;
@@ -1117,7 +1129,8 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 			m_freem(m);
 			return NULL;	/* ENOBUFS */
 		}
-		KASSERT(o->m_len >= len);
+		KASSERTMSG(o->m_len >= len, "o=%p o->m_len=%d len=%d",
+		    o, o->m_len, len);
 		for (mlast = o; mlast->m_next != NULL; mlast = mlast->m_next)
 			;
 		n->m_len = off;
@@ -1700,7 +1713,9 @@ m_defrag(struct mbuf *m, int how)
 			m0 = m_get(how, MT_DATA);
 			if (m0 == NULL)
 				return NULL;
-			KASSERT(m->m_len <= MHLEN);
+			KASSERTMSG(m->m_len <= MHLEN,
+			    "m=%p m->m_len=%d MHLEN=%u",
+			    m, m->m_len, (unsigned)MHLEN);
 			m_copydata(m, 0, m->m_len, mtod(m0, void *));
 
 			MCLGET(m, how);
@@ -1711,7 +1726,10 @@ m_defrag(struct mbuf *m, int how)
 			memcpy(m->m_data, mtod(m0, void *), m->m_len);
 			m_free(m0);
 		}
-		KASSERT(M_TRAILINGSPACE(m) >= (m->m_pkthdr.len - m->m_len));
+		KASSERTMSG(M_TRAILINGSPACE(m) >= (m->m_pkthdr.len - m->m_len),
+		    "m=%p M_TRAILINGSPACE(m)=%zd m->m_pkthdr.len=%d"
+		    " m->m_len=%d",
+		    m, M_TRAILINGSPACE(m), m->m_pkthdr.len, m->m_len);
 		m_copydata(m->m_next, 0, m->m_pkthdr.len - m->m_len,
 			    mtod(m, char *) + m->m_len);
 		m->m_len = m->m_pkthdr.len;
@@ -1814,11 +1832,12 @@ m_align(struct mbuf *m, int len)
 	int buflen, adjust;
 
 	KASSERT(len != M_COPYALL);
-	KASSERT(M_LEADINGSPACE(m) == 0);
+	KASSERTMSG(M_LEADINGSPACE(m) == 0, "m=%p M_LEADINGSPACE(m)=%zd",
+	    m, M_LEADINGSPACE(m));
 
 	buflen = M_BUFSIZE(m);
 
-	KASSERT(len <= buflen);
+	KASSERTMSG(len <= buflen, "m=%p len=%d buflen=%d", m, len, buflen);
 	adjust = buflen - len;
 	m->m_data += adjust &~ (sizeof(long)-1);
 }
