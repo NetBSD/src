@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcv2.h,v 1.3 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: rpcv2.h,v 1.3.194.1 2024/09/20 11:31:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -75,6 +75,7 @@
 /* RPC Prog definitions */
 #define	RPCPROG_MNT	100005
 #define	RPCMNT_VER1	1
+#define	RPCMNT_VER3	3
 #define	RPCMNT_MOUNT	1
 #define	RPCMNT_DUMP	2
 #define	RPCMNT_UMOUNT	3

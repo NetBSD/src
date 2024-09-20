@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.94.20.1 2023/12/14 17:56:08 martin Exp $
+#	$NetBSD: Makefile.booters,v 1.94.20.2 2024/09/20 11:31:31 martin Exp $
 
 NOLIBCSANITIZER=
 NOSANITIZER=
@@ -64,6 +64,7 @@ LIBZ=		${ZLIB}
 ### find out what to use for libsa
 SA_AS=		library
 SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
+SAMISCCPPFLAGS+=-DLIBSA_NFS_IMPLICIT_MOUNT
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 

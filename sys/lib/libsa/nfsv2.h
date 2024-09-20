@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsv2.h,v 1.4 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: nfsv2.h,v 1.4.194.1 2024/09/20 11:31:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -144,19 +144,3 @@ struct nfsv2_fattr {
 	struct nfsv2_time fa_ctime;
 };
 
-struct nfsv2_sattr {
-	n_long	sa_mode;
-	n_long	sa_uid;
-	n_long	sa_gid;
-	n_long	sa_size;
-	struct nfsv2_time sa_atime;
-	struct nfsv2_time sa_mtime;
-};
-
-struct nfsv2_statfs {
-	n_long	sf_tsize;
-	n_long	sf_bsize;
-	n_long	sf_blocks;
-	n_long	sf_bfree;
-	n_long	sf_bavail;
-};
