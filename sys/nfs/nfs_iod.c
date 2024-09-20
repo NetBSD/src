@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_iod.c,v 1.8 2018/09/03 16:29:36 riastradh Exp $	*/
+/*	$NetBSD: nfs_iod.c,v 1.8.30.1 2024/09/20 11:44:58 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_iod.c,v 1.8 2018/09/03 16:29:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_iod.c,v 1.8.30.1 2024/09/20 11:44:58 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -409,7 +409,8 @@ nfs_savenickauth(struct nfsmount *nmp, kauth_cred_t cred, int len, NFSKERBKEY_T 
 	struct timeval ktvin, ktvout;
 	u_int32_t nick;
 	char *dpos = *dposp, *cp2;
-	int deltasec, error = 0;
+	time_t deltasec;
+	int error = 0;
 
 	memset(&ktvout, 0, sizeof ktvout);	 /* XXX gcc */
 
