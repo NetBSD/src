@@ -1,4 +1,4 @@
-/* $NetBSD: jh7110_clkc.c,v 1.5 2024/09/18 10:37:03 skrll Exp $ */
+/* $NetBSD: jh7110_clkc.c,v 1.6 2024/09/20 07:29:39 rin Exp $ */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jh7110_clkc.c,v 1.5 2024/09/18 10:37:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jh7110_clkc.c,v 1.6 2024/09/20 07:29:39 rin Exp $");
 
 #include <sys/param.h>
 
 #include <sys/bus.h>
 #include <sys/device.h>
+#include <sys/kmem.h>
 
 #include <dev/clk/clk_backend.h>
 
