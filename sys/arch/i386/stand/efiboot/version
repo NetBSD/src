@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.3 2023/05/10 00:49:17 manu Exp $
+$NetBSD: version,v 1.4 2024/09/20 05:53:43 mrg Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE EFI BOOTLOADER HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -6,4 +6,10 @@ is taken as the current.
 
 1.0:	Initial version.
 1.1:	Add CD/DVD-ROM, serial, PXE boot and UEFI memory map compaction support.
-1.2:	Add reloc command
+1.2:	Support for partition labels, recursive labels inside RAID partitions,
+	booting a directory with kernel and modules, MultiBoot 2, not using
+	the default menu options from prompt "boot" command, new "root"
+	command that changes default root, bi-endian support in disklabel,
+	RAID and UFS, framebuffer fixes, and reloc command.
+1.3	Fix PXE device path type, fixes for buggy ACPI implementations, and
+	serial console support with raw I/O accessors.

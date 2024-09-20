@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.17 2017/10/07 10:32:56 maxv Exp $
+$NetBSD: version,v 1.18 2024/09/20 05:53:43 mrg Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -49,3 +49,8 @@ is taken as the current.
 5.9:	VESA VBE/DDC EDID support.
 5.10:	Support for using raw file-system images as memory disks.
 5.11:	Support for booting KASLR amd64 kernels.
+5.12:	Support for partition labels, recursive labels inside RAID partitions,
+	booting a directory with kernel and modules, MultiBoot 2, not using
+	the default menu options from prompt "boot" command, new "root"
+	command that changes default root, bi-endian support in disklabel,
+	RAID and UFS, fixes for buggy ACPI implementations, and ASCII art.
