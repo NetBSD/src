@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.113 2021/04/15 00:32:50 rin Exp $ */
+/* $NetBSD: dksubr.c,v 1.113.16.1 2024/09/20 11:02:23 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.113 2021/04/15 00:32:50 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.113.16.1 2024/09/20 11:02:23 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,6 @@ static int dk_subr_modcmd(modcmd_t, void *);
 
 static void	dk_makedisklabel(struct dk_softc *);
 static int	dk_translate(struct dk_softc *, struct buf *);
-static void	dk_done1(struct dk_softc *, struct buf *, bool);
 
 void
 dk_init(struct dk_softc *dksc, device_t dev, int dtype)
@@ -442,7 +441,9 @@ dk_start(struct dk_softc *dksc, struct buf *bp)
 			if (error != 0) {
 				bp->b_error = error;
 				bp->b_resid = bp->b_bcount;
-				dk_done1(dksc, bp, false);
+				mutex_exit(&dksc->sc_iolock);
+				dk_done(dksc, bp);
+				mutex_enter(&dksc->sc_iolock);
 			}
 
 			bp = bufq_get(dksc->sc_bufq);
@@ -454,8 +455,8 @@ done:
 	mutex_exit(&dksc->sc_iolock);
 }
 
-static void
-dk_done1(struct dk_softc *dksc, struct buf *bp, bool lock)
+void
+dk_done(struct dk_softc *dksc, struct buf *bp)
 {
 	struct disk *dk = &dksc->sc_dkdev;
 
@@ -467,22 +468,14 @@ dk_done1(struct dk_softc *dksc, struct buf *bp, bool lock)
 		printf("\n");
 	}
 
-	if (lock)
-		mutex_enter(&dksc->sc_iolock);
+	mutex_enter(&dksc->sc_iolock);
 	disk_unbusy(dk, bp->b_bcount - bp->b_resid, (bp->b_flags & B_READ));
+	mutex_exit(&dksc->sc_iolock);
 
 	if ((dksc->sc_flags & DKF_NO_RND) == 0)
 		rnd_add_uint32(&dksc->sc_rnd_source, bp->b_rawblkno);
-	if (lock)
-		mutex_exit(&dksc->sc_iolock);
 
 	biodone(bp);
-}
-
-void
-dk_done(struct dk_softc *dksc, struct buf *bp)
-{
-	dk_done1(dksc, bp, true);
 }
 
 void
