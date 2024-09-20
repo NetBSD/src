@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.266 2020/08/27 14:11:57 riastradh Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.266.20.1 2024/09/20 09:36:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #define __COMPAT_SYSCTL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.266 2020/08/27 14:11:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.266.20.1 2024/09/20 09:36:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_defcorename.h"
@@ -203,7 +203,7 @@ sysctl_copyout(struct lwp *l, const void *kaddr, void *uaddr, size_t len)
 	} else {
 		error = kcopy(kaddr, uaddr, len);
 	}
-	
+
 	return error;
 }
 
@@ -1228,9 +1228,16 @@ int
 sysctl_create(SYSCTLFN_ARGS)
 {
 	const struct sysctlnode *node;
-	int k, rc, ni, nl = namelen + (name - oname);
+	int k, v, rc, ni, nl = namelen + (name - oname);
+	struct sysctlnode nnode;
 
-	node = newp;
+	if (newp == NULL)
+		return EINVAL;
+	int error = sysctl_cvt_in(l, &v, newp, newlen, &nnode);
+	if (error)
+		return error;
+
+	node = &nnode;
 
 	printf("namelen %d (", nl);
 	for (ni = 0; ni < nl - 1; ni++)
@@ -2147,7 +2154,7 @@ sysctl_createv(struct sysctllog **log, int cflags,
 				/*
 				 * allow first caller to *set* a
 				 * description actually to set it
-				 * 
+				 *
 				 * discard const here so we can attach
 				 * the description
 				 */
