@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.54 2022/09/07 00:40:18 knakahara Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.54.4.1 2024/09/20 10:17:22 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -159,7 +159,7 @@
 
 	TEXT_USER_BEGIN
 
-IDTVEC(trap00)
+IDTVEC(trap00)		/* #DE - Divide-by-zero error */
 	ZTRAP(T_DIVIDE)
 IDTVEC_END(trap00)
 
@@ -178,7 +178,7 @@ IDTVEC_END(trap00)
  * not a problem, because in this particular case, the frame is known not
  * to contain secrets.
  */
-IDTVEC(trap01)
+IDTVEC(trap01)		/* #DB - Debug */
 #ifndef XENPV
 	subq	$(TF_REGSIZE+16),%rsp
 
@@ -247,7 +247,7 @@ IDTVEC_END(trap01)
  * We need to be careful about %gs too, because it is possible that we were
  * running in kernel mode with a userland %gs.
  */
-IDTVEC(trap02)
+IDTVEC(trap02)		/* NMI - Non-maskable interrupt */
 #if defined(XENPV)
 	ZTRAP(T_NMI)
 #else /* XENPV */
@@ -302,7 +302,7 @@ IDTVEC(trap02)
 #endif /* XENPV */
 IDTVEC_END(trap02)
 
-IDTVEC(trap03)
+IDTVEC(trap03)		/* #BP - Breakpoint */
 #ifndef KDTRACE_HOOKS
 	ZTRAP(T_BPTFLT)
 #else
@@ -331,19 +331,19 @@ IDTVEC(trap03)
 #endif
 IDTVEC_END(trap03)
 
-IDTVEC(trap04)
+IDTVEC(trap04)		/* #OF - Overflow */
 	ZTRAP(T_OFLOW)
 IDTVEC_END(trap04)
 
-IDTVEC(trap05)
+IDTVEC(trap05)		/* #BR - BOUND range exceeded */
 	ZTRAP(T_BOUND)
 IDTVEC_END(trap05)
 
-IDTVEC(trap06)
+IDTVEC(trap06)		/* #UD - Invalid opcode */
 	ZTRAP(T_PRIVINFLT)
 IDTVEC_END(trap06)
 
-IDTVEC(trap07)
+IDTVEC(trap07)		/* #NM - Device not available (x87) */
 	ZTRAP_NJ(T_DNA)
 	INTRENTRY
 #ifdef DIAGNOSTIC
@@ -358,7 +358,7 @@ IDTVEC_END(trap07)
  * Double faults execute on a particular stack, and we must not jump out
  * of it. So don't enable interrupts.
  */
-IDTVEC(trap08)
+IDTVEC(trap08)		/* #DF - Double fault */
 #if defined(XENPV)
 	TRAP(T_DOUBLEFLT)
 #else /* XENPV */
@@ -399,11 +399,11 @@ IDTVEC(trap08)
 #endif /* XENPV */
 IDTVEC_END(trap08)
 
-IDTVEC(trap09)
+IDTVEC(trap09)		/* Coprocessor segment overrun (legacy x87) */
 	ZTRAP(T_FPOPFLT)
 IDTVEC_END(trap09)
 
-IDTVEC(trap10)
+IDTVEC(trap10)		/* #TS - Invalid TSS */
 	TRAP(T_TSSFLT)
 IDTVEC_END(trap10)
 
@@ -416,26 +416,26 @@ IDTVEC_END(trap10)
 #define kernuser_reenter alltraps
 #endif /* XENPV */
 
-IDTVEC(trap11)		/* #NP() Segment not present */
+IDTVEC(trap11)		/* #NP - Segment not present */
 	TRAP_NJ(T_SEGNPFLT)
 	jmp	kernuser_reenter
 IDTVEC_END(trap11)
 
-IDTVEC(trap12)		/* #SS() Stack exception */
+IDTVEC(trap12)		/* #SS - Stack fault */
 	TRAP_NJ(T_STKFLT)
 	jmp	kernuser_reenter
 IDTVEC_END(trap12)
 
-IDTVEC(trap13)		/* #GP() General protection */
+IDTVEC(trap13)		/* #GP - General protection */
 	TRAP_NJ(T_PROTFLT)
 	jmp	kernuser_reenter
 IDTVEC_END(trap13)
 
-IDTVEC(trap14)
+IDTVEC(trap14)		/* #PF - Page fault */
 	TRAP(T_PAGEFLT)
 IDTVEC_END(trap14)
 
-IDTVEC(trap15)
+IDTVEC(trap15)		/* XXX ??? */
 	ZTRAP_NJ(T_ASTFLT)
 	INTRENTRY
 #ifdef DIAGNOSTIC
@@ -444,7 +444,7 @@ IDTVEC(trap15)
 	jmp	.Lalltraps_checkusr
 IDTVEC_END(trap15)
 
-IDTVEC(trap16)
+IDTVEC(trap16)		/* #MF - x87 floating-point exception */
 	ZTRAP_NJ(T_ARITHTRAP)
 .Ldo_fputrap:
 	INTRENTRY
@@ -464,30 +464,30 @@ IDTVEC(trap16)
 	jmp	.Lalltraps_checkusr
 IDTVEC_END(trap16)
 
-IDTVEC(trap17)
+IDTVEC(trap17)		/* #AC - Alignment check */
 	TRAP(T_ALIGNFLT)
 IDTVEC_END(trap17)
 
-IDTVEC(trap18)
+IDTVEC(trap18)		/* #MC - Machine check */
 	ZTRAP(T_MCA)
 IDTVEC_END(trap18)
 
-IDTVEC(trap19)
+IDTVEC(trap19)		/* #XM - SIMD floating-point exception */
 	ZTRAP_NJ(T_XMM)
 	jmp	.Ldo_fputrap
 IDTVEC_END(trap19)
 
-IDTVEC(trap20)
-IDTVEC(trap21)
+IDTVEC(trap20)		/* #VE - Virtualization (Intel) */
+IDTVEC(trap21)		/* #CP - Control protection */
 IDTVEC(trap22)
 IDTVEC(trap23)
 IDTVEC(trap24)
 IDTVEC(trap25)
 IDTVEC(trap26)
 IDTVEC(trap27)
-IDTVEC(trap28)
-IDTVEC(trap29)
-IDTVEC(trap30)
+IDTVEC(trap28)		/* #HV - Hypervisor injection (AMD) */
+IDTVEC(trap29)		/* #VC - VMM communication (AMD) */
+IDTVEC(trap30)		/* #SX - Security (AMD) */
 IDTVEC(trap31)
 	/* 20 - 31 reserved for future exp */
 	ZTRAP(T_RESERVED)
