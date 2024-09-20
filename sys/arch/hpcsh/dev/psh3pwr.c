@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3pwr.c,v 1.7 2024/05/10 20:08:04 andvar Exp $	*/
+/*	$NetBSD: psh3pwr.c,v 1.8 2024/09/20 19:32:19 andvar Exp $	*/
 /*
  * Copyright (c) 2005, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psh3pwr.c,v 1.7 2024/05/10 20:08:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psh3pwr.c,v 1.8 2024/09/20 19:32:19 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -139,7 +139,7 @@ psh3pwr_attach(device_t parent, device_t self, void *aux)
 	config_hook(CONFIG_HOOK_GET, CONFIG_HOOK_BATTERYVAL,
 	    CONFIG_HOOK_EXCLUSIVE, psh3pwr_apm_getpower_hook, sc);
 
-	/* regisiter sleep function to APM */
+	/* register sleep function to APM */
 	__sleep_func = psh3pwr_sleep;
 	__sleep_ctx = self;
 
