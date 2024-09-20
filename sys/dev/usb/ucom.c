@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.134.2.2 2023/03/07 19:52:01 martin Exp $	*/
+/*	$NetBSD: ucom.c,v 1.134.2.3 2024/09/20 10:20:56 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.134.2.2 2023/03/07 19:52:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.134.2.3 2024/09/20 10:20:56 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -552,14 +552,10 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 			ms = MIN(INT_MAX - 1000, delta.tv_sec*1000);
 			ms += howmany(delta.tv_usec, 1000);
 			ticks = MAX(1, MIN(INT_MAX, mstohz(ms)));
-			error = cv_timedwait(&sc->sc_statecv, &sc->sc_lock,
+			(void)cv_timedwait(&sc->sc_statecv, &sc->sc_lock,
 			    ticks);
 			mutex_exit(&sc->sc_lock);
-			/* The successful passage of time is not an error. */
-			if (error == EWOULDBLOCK) {
-				error = 0;
-			}
-			return error ? error : ERESTART;
+			return ERESTART;
 		}
 		timerclear(&sc->sc_hup_time);
 	}
