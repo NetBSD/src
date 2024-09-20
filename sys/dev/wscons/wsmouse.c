@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.72 2022/07/17 11:44:30 riastradh Exp $ */
+/* $NetBSD: wsmouse.c,v 1.72.4.1 2024/09/20 11:24:59 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.72 2022/07/17 11:44:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.72.4.1 2024/09/20 11:24:59 martin Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -372,17 +372,19 @@ wsmouse_input(device_t wsmousedev, u_int btns /* 0 is up */,
 	/* one for each dimension (4) + a bit for each button */
 	struct wscons_event events[4 + sizeof(d) * 8];
 
+	KERNEL_LOCK(1, NULL);
+
         /*
          * Discard input if not open.
          */
 	evar = sc->sc_base.me_evp;
 	if (evar == NULL)
-		return;
+		goto out;
 
 #ifdef DIAGNOSTIC
 	if (evar->q == NULL) {
 		printf("wsmouse_input: evar->q=NULL\n");
-		return;
+		goto out;
 	}
 #endif
 
@@ -528,6 +530,8 @@ wsmouse_input(device_t wsmousedev, u_int btns /* 0 is up */,
 			    device_xname(sc->sc_base.me_dv), evar));
 #endif
 	}
+
+out:	KERNEL_UNLOCK_ONE(NULL);
 }
 
 void
