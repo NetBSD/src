@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.157 2022/09/03 02:47:59 thorpej Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.157.4.1 2024/09/21 12:22:36 martin Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.157 2022/09/03 02:47:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.157.4.1 2024/09/21 12:22:36 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1160,12 +1160,13 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 	return 0;
 
  out:
+	mutex_exit(&sc->gif_lock);
+	encap_lock_exit();
+
 	sockaddr_free(nsrc);
 	sockaddr_free(ndst);
 	kmem_free(nvar, sizeof(*nvar));
 
-	mutex_exit(&sc->gif_lock);
-	encap_lock_exit();
 #ifndef GIF_MPSAFE
 	splx(s);
 #endif
