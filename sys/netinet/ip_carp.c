@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.117 2022/09/02 23:48:11 thorpej Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.117.4.1 2024/09/21 12:26:49 martin Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.117 2022/09/02 23:48:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.117.4.1 2024/09/21 12:26:49 martin Exp $");
 
 /*
  * TODO:
@@ -1091,6 +1091,8 @@ carp_send_ad(void *v)
 		_s = pserialize_read_enter();
 		ifa = ifaof_ifpforaddr(&sa, sc->sc_carpdev);
 		if (ifa == NULL)
+			ifa = ifaof_ifpforaddr(&sa, &sc->sc_if);
+		if (ifa == NULL)
 			ip->ip_src.s_addr = 0;
 		else
 			ip->ip_src.s_addr =
@@ -1142,6 +1144,7 @@ carp_send_ad(void *v)
 	if (sc->sc_naddrs6) {
 		struct ip6_hdr *ip6;
 		struct ifaddr *ifa;
+		struct ifnet *ifp;
 		int _s;
 
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
@@ -1168,7 +1171,12 @@ carp_send_ad(void *v)
 		memset(&sa, 0, sizeof(sa));
 		sa.sa_family = AF_INET6;
 		_s = pserialize_read_enter();
-		ifa = ifaof_ifpforaddr(&sa, sc->sc_carpdev);
+		ifp = sc->sc_carpdev;
+		ifa = ifaof_ifpforaddr(&sa, ifp);
+		if (ifa == NULL) {	/* This should never happen with IPv6 */
+			ifp = &sc->sc_if;
+			ifa = ifaof_ifpforaddr(&sa, ifp);
+		}
 		if (ifa == NULL)	/* This should never happen with IPv6 */
 			memset(&ip6->ip6_src, 0, sizeof(struct in6_addr));
 		else
@@ -1179,7 +1187,7 @@ carp_send_ad(void *v)
 
 		ip6->ip6_dst.s6_addr16[0] = htons(0xff02);
 		ip6->ip6_dst.s6_addr8[15] = 0x12;
-		if (in6_setscope(&ip6->ip6_dst, &sc->sc_if, NULL) != 0) {
+		if (in6_setscope(&ip6->ip6_dst, ifp, NULL) != 0) {
 			if_statinc(&sc->sc_if, if_oerrors);
 			m_freem(m);
 			CARP_LOG(sc, ("in6_setscope failed"));
@@ -1876,6 +1884,9 @@ carp_join_multicast(struct carp_softc *sc)
 	struct ip_moptions *imo = &sc->sc_imo, tmpimo;
 	struct in_addr addr;
 
+	if (sc->sc_carpdev == NULL)
+		return (ENETDOWN);
+
 	memset(&tmpimo, 0, sizeof(tmpimo));
 	addr.s_addr = INADDR_CARP_GROUP;
 	if ((tmpimo.imo_membership[0] =
@@ -1885,7 +1896,7 @@ carp_join_multicast(struct carp_softc *sc)
 
 	imo->imo_membership[0] = tmpimo.imo_membership[0];
 	imo->imo_num_memberships = 1;
-	imo->imo_multicast_if_index = sc->sc_if.if_index;
+	imo->imo_multicast_if_index = sc->sc_carpdev->if_index;
 	imo->imo_multicast_ttl = CARP_DFLTTL;
 	imo->imo_multicast_loop = 0;
 	return (0);
@@ -1970,6 +1981,9 @@ carp_join_multicast6(struct carp_softc *sc)
 	struct sockaddr_in6 addr6;
 	int error;
 
+	if (sc->sc_carpdev == NULL)
+		return (ENETDOWN);
+
 	/* Join IPv6 CARP multicast group */
 	memset(&addr6, 0, sizeof(addr6));
 	addr6.sin6_family = AF_INET6;
@@ -1996,7 +2010,7 @@ carp_join_multicast6(struct carp_softc *sc)
 	}
 
 	/* apply v6 multicast membership */
-	im6o->im6o_multicast_if_index = sc->sc_if.if_index;
+	im6o->im6o_multicast_if_index = sc->sc_carpdev->if_index;
 	if (imm)
 		LIST_INSERT_HEAD(&im6o->im6o_memberships, imm,
 		    i6mm_chain);

@@ -1,4 +1,4 @@
-#	$NetBSD: t_basic.sh,v 1.8 2019/08/19 03:22:05 ozaki-r Exp $
+#	$NetBSD: t_basic.sh,v 1.8.8.1 2024/09/21 12:26:48 martin Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -327,9 +327,6 @@ add_test_case()
 	else
 		name="${name}_nocarpdevip"
 		desc="$desc without carpdev IP"
-	fi
-	if [ $ipproto = ipv6 -a $carpdevip = no ]; then
-		expected_failure_code="atf_expect_fail 'nd6 needs to be fixed';"
 	fi
 
 	atf_test_case ${name} cleanup
