@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.263 2024/08/10 19:21:32 uwe Exp $
+.\"	$NetBSD: sh.1,v 1.264 2024/09/21 20:48:50 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -3924,12 +3924,18 @@ parameters.)
 .\"
 .Pp
 .It Ic shift Op Ar n
-Shift the positional parameters
-.Ar n
-times.
+If
+.Ar n ,
+which must be a decimal integer,
+is omitted, 1 is assumed.
+.Pp
 If
 .Ar n
-is omitted, 1 is assumed.
+is unsigned
+.Pq or omitted
+shift the positional parameters
+.Ar n
+times.
 Each
 .Ic shift
 sets the value of
@@ -3944,11 +3950,80 @@ and so on, decreasing
 the value of
 .Li $#
 by one.
-The shift count must be less than or equal to the number of
-positional parameters (
-.Dq Li $# )
+The shift count
+.Pq Ar n
+must be less than or equal to the number of
+positional parameters
+.Pq Dq Li $#
 before the shift.
+A shift of
+.Li $#
+positions is equivalent to
+.Dq Li set\  Ns Fl Fl
+and results in unsetting all of the positional parameters
+and setting
+.Li $#
+to zero.
+The command
+.Dq Li shift\ 0
+does not alter
+.Li $#
+or any of the positional parameters.
+.Pp
+If
+.Ar n
+is negative, then the
+.Ic shift
+becomes a clockwise rotation,
+.Ar \&\-n
+times.
+The absolute value of
+.Ar n
+must be less than or equal to
+.Li $#
+.Pq the number of set positional parameters .
+Each rotation sets the value of
+.Li $1
+to the previous value of
+.Li ${$#}
+(if that were valid syntax) \(en the previous last positional parameter,
+sets
+.Li $2
+to the previous value of
+.Li $1 ,
+the value of
+.Li $3
+to the previous value of
+.Li $2 ,
+and so on, with the new last positional parameter becoming
+what was previously the penultimate positional parameter.
+The value of
+.Li $#
+is not altered.
+Shifts of
+.Li \&\-0
+and
+.Li \&\-$#
+are no-ops.
+The command sequence:
+.Dl shift\ \-n;\ shift\ n
+unsets the final
+.Ar n
+positional parameters.
+.Pp
+An anti-clockwise rotation of
+.Ar n
+places
+.Pq 0\ <=\  Ns Ar n Ns \ <=\ $#
+can be achieved using
+.Dq Li shift\ \-$(($#\ \-\ n)) .
+The command
+.Dq Li shift\ \-$(($#\ \-\ 1))
+is equivalent to, but much faster than:
+.Dl set Fl Fl \&\  Ns Do $@ Dc Do $1 Dc ; shift 1
 .\"
+.Pp
+The exit status is 0 if no error occurs, otherwise greater than 0.
 .Pp
 .It Ic specialvar Ar variable ...
 For each

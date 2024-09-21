@@ -1,4 +1,4 @@
-# $NetBSD: t_shift.sh,v 1.2 2016/05/17 09:05:14 kre Exp $
+# $NetBSD: t_shift.sh,v 1.3 2024/09/21 20:48:50 kre Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,8 +35,10 @@ basic_shift_test_body() {
 
 	for a in			\
 	  "one-arg::0:one-arg"		\
+	  "one-arg:--:0:one-arg"	\
 	  "one-arg:1:0:one-arg"		\
-	  "one-arg:0:1 one-arg"		\
+	  "one-arg:-- 1:0:one-arg"	\
+	  "one-arg:-- 0:1 one-arg"	\
 	  "a b c::2 b c:a"		\
 	  "a b c:1:2 b c:a"		\
 	  "a b c:2:1 c:a:b"		\
@@ -66,6 +68,39 @@ basic_shift_test_body() {
 	atf_check -s exit:0 -o match:complete -o not-match:ERR -e empty \
 		${TEST_SH} -c \
     'set -- a b c d e;while [ $# -gt 0 ];do shift||echo ERR;done;echo complete'
+}
+
+atf_test_case basic_rotate
+basic_rotate_head() {
+	atf_set "descr" "Test correct operation of valid rotates"
+}
+basic_rotate_body() {
+
+	for a in			\
+	  "one-arg:-0:1 one-arg"	\
+	  "one-arg:-1:1 one-arg"	\
+	  "one-arg:-- -1:1 one-arg"	\
+	  "a b c:-1:3 c a b"		\
+	  "a b c:-2:3 b c a"		\
+	  "a b c:-3:3 a b c"		\
+	  "a b c:-- -3:3 a b c"		\
+	  "a b c:-0:3 a b c"		\
+	  "a b c d e f g h i j k l m n o:-1:15 o a b c d e f g h i j k l m n" \
+	  "a b c d e f g h i j k l m n o:-2:15 n o a b c d e f g h i j k l m" \
+	  "a b c d e f g h i j k l m n o:-9:15 g h i j k l m n o a b c d e f" \
+	  "a b c d e f g h i j k l m n o:-13:15 c d e f g h i j k l m n o a b" \
+	  "a b c d e f g h i j k l m n o:-14:15 b c d e f g h i j k l m n o a" \
+	  "a b c d e f g h i j k l m n o:-15:15 a b c d e f g h i j k l m n o"
+	do
+		oIFS="${IFS}"
+		IFS=:; set -- $a
+		IFS="${oIFS}"
+
+		init="$1"; n="$2"; res="$3"; shift 3
+
+		atf_check -s exit:0 -o "match:${res}" -e empty \
+			${TEST_SH} -c "set -- ${init}; shift $n;"' echo "$# $*"'
+	done
 }
 
 atf_test_case excessive_shift
@@ -115,6 +150,34 @@ excessive_shift_body() {
 	done
 }
 
+atf_test_case excessive_rotate
+excessive_rotate_head() {
+	atf_set "descr" "Test acceptable operation of rotate too many"
+}
+
+excessive_rotate_body() {
+	for a in				\
+		"one-arg:2"			\
+		"one-arg:4"			\
+		"one-arg:13"			\
+		"one two:3"			\
+		"one two:7"			\
+		"one two three four five:6"	\
+		"I II III IV V VI VII VIII IX X XI XII XIII XIV XV:16"	\
+		"I II III IV V VI VII VIII IX X XI XII XIII XIV XV:17"	\
+		"I II III IV V VI VII VIII IX X XI XII XIII XIV XV:30"	\
+		"I II III IV V VI VII VIII IX X XI XII XIII XIV XV:9999"
+	do
+		oIFS="${IFS}"
+		IFS=:; set -- $a
+		IFS="${oIFS}"
+
+		atf_check -s not-exit:0 -o match:OK -o not-match:ERR \
+			-e ignore ${TEST_SH} -c \
+			"set -- $1 ;echo OK:$#:-$2; shift -$2 && echo ERR"
+	done
+}
+
 atf_test_case function_shift
 function_shift_head() {
 	atf_set "descr" "Test that shift in a function does not affect outside"
@@ -149,10 +212,12 @@ non_numeric_shift_head() {
 non_numeric_shift_body() {
 
 	# there are 9 args set, 010 is 8 if parsed octal, 10 decimal
-	for a in a I 0x12 010 5V -1 ' ' '' +1 ' 1'
+	for a in a I 0x12 010 5V ' ' '' +1 ' 1'
 	do
 		atf_check -s not-exit:0 -o empty -e ignore ${TEST_SH} -c \
 			"set -- a b c d e f g h i; shift '$a' && echo ERROR"
+		atf_check -s not-exit:0 -o empty -e ignore ${TEST_SH} -c \
+			"set -- a b c d e f g h i; shift -- '$a' && echo ERROR"
 	done
 }
 
@@ -165,7 +230,7 @@ too_many_args_head() {
 too_many_args_body() {
 	# This tests the bug in PR bin/50896 is fixed
 
-	for a in "1 1" "1 0" "1 2 3" "1 foo" "1 --" "-- 1"
+	for a in "1 1" "1 0" "1 2 3" "1 foo" "1 --" "-- 1 2" "-1 2"
 	do
 		atf_check -s not-exit:0 -o empty -e not-empty ${TEST_SH} -c \
 			" set -- a b c d; shift ${a} ; echo FAILED "
@@ -178,4 +243,6 @@ atf_init_test_cases() {
 	atf_add_test_case function_shift
 	atf_add_test_case non_numeric_shift
 	atf_add_test_case too_many_args
+	atf_add_test_case basic_rotate
+	atf_add_test_case excessive_rotate
 }
