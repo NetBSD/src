@@ -1,6 +1,6 @@
-/*	$NetBSD: ifwatchd.c,v 1.46 2020/10/04 20:36:32 roy Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.46.6.1 2024/09/21 12:35:22 martin Exp $	*/
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ifwatchd.c,v 1.46 2020/10/04 20:36:32 roy Exp $");
+__RCSID("$NetBSD: ifwatchd.c,v 1.46.6.1 2024/09/21 12:35:22 martin Exp $");
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@ __RCSID("$NetBSD: ifwatchd.c,v 1.46 2020/10/04 20:36:32 roy Exp $");
 #include <unistd.h>
 
 enum event { ARRIVAL, DEPARTURE, UP, DOWN, CARRIER, NO_CARRIER };
-enum addrflag { NOTREADY, DETACHED, READY };
+enum addrflag { NOTREADY, DETACHED, DEPRECATED, READY };
 
 /* local functions */
 __dead static void usage(void);
@@ -303,6 +303,8 @@ check_addrflags(int af, int addrflags)
 			return NOTREADY;
 		if (addrflags & IN6_IFF_DETACHED)
 			return DETACHED;
+		if (addrflags & IN6_IFF_DEPRECATED)
+			return DEPRECATED;
 		break;
 	}
 	return READY;
