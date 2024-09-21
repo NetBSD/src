@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.324.2.1 2023/04/25 16:15:14 martin Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.324.2.2 2024/09/21 12:28:46 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.324.2.1 2023/04/25 16:15:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.324.2.2 2024/09/21 12:28:46 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -348,11 +348,6 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 		}
 		mtu = ifp->if_mtu;
 		ia = in_get_ia_from_ifp_psref(ifp, &psref_ia);
-		if (ia == NULL) {
-			IP_STATINC(IP_STAT_IFNOADDR);
-			error = EADDRNOTAVAIL;
-			goto bad;
-		}
 		if (IN_MULTICAST(ip->ip_dst.s_addr) ||
 		    ip->ip_dst.s_addr == INADDR_BROADCAST) {
 			isbroadcast = 0;
