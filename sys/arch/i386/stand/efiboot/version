@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.4 2024/09/20 05:53:43 mrg Exp $
+$NetBSD: version,v 1.5 2024/09/21 03:42:27 rin Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE EFI BOOTLOADER HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -10,6 +10,6 @@ is taken as the current.
 	booting a directory with kernel and modules, MultiBoot 2, not using
 	the default menu options from prompt "boot" command, new "root"
 	command that changes default root, bi-endian support in disklabel,
-	RAID and UFS, framebuffer fixes, and reloc command.
+	RAID and UFS, framebuffer fixes, reloc command, and NFSv3.
 1.3	Fix PXE device path type, fixes for buggy ACPI implementations, and
 	serial console support with raw I/O accessors.

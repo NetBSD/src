@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.4 2024/09/20 05:53:43 mrg Exp $
+$NetBSD: version,v 1.5 2024/09/21 03:42:27 rin Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -12,4 +12,4 @@ is taken as the current.
 	the default menu options from prompt "boot" command, new "root"
 	command that changes default root, bi-endian support in disklabel,
 	RAID and UFS, fixes for buggy ACPI implementations, and ASCII art,
-	and "vesa" command.
+	"vesa" command, and NFSv3.
