@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.34.18.1 2024/09/11 10:09:19 martin Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.34.18.2 2024/09/21 12:32:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010, 2019 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.34.18.1 2024/09/11 10:09:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.34.18.2 2024/09/21 12:32:39 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -261,7 +261,17 @@ xc_broadcast(unsigned int flags, xcfunc_t func, void *arg1, void *arg2)
 	ASSERT_SLEEPABLE();
 
 	if (__predict_false(!mp_online)) {
+		int s, bound;
+
+		if (flags & XC_HIGHPRI)
+			s = splsoftserial();
+		else
+			bound = curlwp_bind();
 		(*func)(arg1, arg2);
+		if (flags & XC_HIGHPRI)
+			splx(s);
+		else
+			curlwp_bindx(bound);
 		return 0;
 	}
 
@@ -301,19 +311,28 @@ xc_barrier(unsigned int flags)
  */
 uint64_t
 xc_unicast(unsigned int flags, xcfunc_t func, void *arg1, void *arg2,
-	   struct cpu_info *ci)
+    struct cpu_info *ci)
 {
-	int s;
 
 	KASSERT(ci != NULL);
 	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
 	ASSERT_SLEEPABLE();
 
 	if (__predict_false(!mp_online)) {
+		int s, bound;
+
 		KASSERT(ci == curcpu());
-		s = splsoftserial();
+
+		if (flags & XC_HIGHPRI)
+			s = splsoftserial();
+		else
+			bound = curlwp_bind();
 		(*func)(arg1, arg2);
-		splx(s);
+		if (flags & XC_HIGHPRI)
+			splx(s);
+		else
+			curlwp_bindx(bound);
+
 		return 0;
 	}
 
