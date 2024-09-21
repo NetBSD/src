@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.39 2020/11/25 14:15:41 christos Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.39.6.1 2024/09/21 12:34:07 martin Exp $	*/
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * Copyright (C) 2008 Timo Teras <timo.teras@iki.fi>.
@@ -849,7 +849,7 @@ kernel_sync()
 {
 	caddr_t ref, buf, end;
 	size_t bufsiz;
-	struct if_msghdr *ifm;
+	struct rt_msghdr *rtm;
 
 #define MIBSIZ 6
 	int mib[MIBSIZ] = {
@@ -871,8 +871,10 @@ kernel_sync()
 
 	if (sysctl(mib, MIBSIZ, buf, &bufsiz, NULL, 0) >= 0) {
 		/* Parse both interfaces and addresses. */
-		for (end = buf + bufsiz; buf < end; buf += ifm->ifm_msglen) {
-			ifm = (struct if_msghdr *) buf;
+		for (end = buf + bufsiz; buf < end; buf += rtm->rtm_msglen) {
+			rtm = (struct rt_msghdr *) buf;
+			if (rtm->rtm_version != RTM_VERSION)
+				continue;
 			kernel_handle_message(buf);
 		}
 	} else {
