@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.11 2021/12/04 13:23:03 andvar Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.12 2024/09/21 06:38:41 andvar Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii_ds.c,v 1.11 2021/12/04 13:23:03 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii_ds.c,v 1.12 2024/09/21 06:38:41 andvar Exp $");
 
 #include "sii.h"
 
@@ -136,10 +136,10 @@ kn230_copytobuf(u_short *src, volatile u_short *dst, int len)
 	int i, n;
 
 #if defined(DIAGNOSTIC) || defined(DEBUG)
-	if ((u_int)(src) & 0x3) {
+	if ((uintptr_t)(src) & 0x3) {
 		printf("kn230: copytobuf, src %p misaligned\n",  src);
 	}
-	if ((u_int)(dst) & 0x3) {
+	if ((uintptr_t)(dst) & 0x3) {
 		printf("kn230: copytobuf, dst %p misaligned\n",  dst);
 	}
 #endif
@@ -171,10 +171,10 @@ kn230_copyfrombuf(volatile u_short *src, char *dst, int len)
 	int i, n;
 
 #if defined(DIAGNOSTIC) || defined(DEBUG)
-	if ((u_int)(src) & 0x3) {
+	if ((uintptr_t)(src) & 0x3) {
 		printf("kn230: copyfrombuf, src %p misaligned\n",  src);
 	}
-	if ((u_int)(dst) & 0x3) {
+	if ((uintptr_t)(dst) & 0x3) {
 		printf("kn230: copyfrombuf, dst %p misaligned\n",  dst);
 	}
 #endif
@@ -205,10 +205,10 @@ static void
 kn01_copytobuf(u_short *src, volatile u_short *dst, int len)
 {
 #if defined(DIAGNOSTIC) || defined(DEBUG)
-	if ((u_int)(src) & 0x3) {
+	if ((uintptr_t)(src) & 0x3) {
 		printf("kn01: copytobuf, src %p misaligned\n",  src);
 	}
-	if ((u_int)(dst) & 0x3) {
+	if ((uintptr_t)(dst) & 0x3) {
 		printf("kn01: copytobuf, dst %p misaligned\n",  dst);
 	}
 #endif
@@ -221,10 +221,10 @@ kn01_copyfrombuf(volatile u_short *src, char *dst, int len)
 	/* dst:		 XXX assume 32-bit aligned? */
 {
 #if defined(DIAGNOSTIC) || defined(DEBUG)
-	if ((u_int)(src) & 0x3) {
+	if ((uintptr_t)(src) & 0x3) {
 		printf("kn01: copyfrombuf, src %p misaligned\n",  src);
 	}
-	if ((u_int)(dst) & 0x3) {
+	if ((uintptr_t)(dst) & 0x3) {
 		printf("kn01: copyfrombuf, dst %p misaligned\n",  dst);
 	}
 
