@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.35 2024/09/20 11:36:13 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.36 2024/09/21 12:38:36 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -1725,4 +1725,70 @@ sys/arch/evbppc/conf/WII			1.5
 
 	evbppc/wii: PR 58676: add DKWEDGE_AUTODISCOVER and DKWEDGE_METHOD_GPT.
 	[jakllsch, ticket #897]
+
+sys/stand/efiboot/exec.c			1.26
+
+	efiboot: fix memory deallocation in an error path of efi_rng().
+	[rin, ticket #898]
+
+sys/net/if_tun.c				1.177
+
+	tun(4): mark tunread_filtops `FILTEROP_MPSAFE`.
+	[rin, ticket #899]
+
+sys/arch/amd64/amd64/db_interface.c		1.42
+sys/arch/i386/i386/db_interface.c		1.89
+
+	x86: ddb: call x86_pause() when CPUs are paused.
+	[rin, ticket #900]
+
+sys/net/if_gif.c				1.159
+
+	if(4): drop locks before freeing unreferenced memory
+	in gif_set_tunnel.
+	[rin, ticket #901]
+
+sbin/ifconfig/carp.c				1.15
+sbin/ifconfig/ifconfig.8			1.125
+sys/netinet/ip_carp.c				1.118,1.119
+tests/net/carp/t_basic.sh			1.9
+
+	carp(4): various fixes:
+	- fix parser for carp state.
+	- use backing device to send advertisements.
+	- select virtual address as sender if backing interface is anonymous.
+	- use correct scope for IPv6.
+	- fix some tests.
+	[rin, ticket #902]
+
+sys/netinet/ip_output.c				1.326
+
+	Allow multicast packets to be sent from unnumbered interfaces.
+	[rin, ticket #903]
+
+sys/dev/pci/if_vmx.c				1.12
+
+	vmxnet(4): fix various MP bugs.
+	[rin, ticket #904]
+
+sys/kern/subr_xcall.c				1.36
+
+	xcall(9): if !mp_online, raise spl or set LP_BOUND to call func.
+	[rin, ticket #905]
+
+crypto/dist/ipsec-tools/src/racoon/grabmyaddr.c	1.40
+
+	racoon: cast to the correct message structure
+	[rin, ticket #906]
+
+usr.sbin/ifwatchd/ifwatchd.c			1.47
+
+	ifwatchd(8): don't call UP script when an IP address becomes
+	deprecated.
+	[rin, ticket #907]
+
+sys/arch/i386/i386/vector.S			1.90
+
+	i386: PR 58653: fix Hyper-V upcall interrupt handler.
+	[rin, ticket #908]
 
