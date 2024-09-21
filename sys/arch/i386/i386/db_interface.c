@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.88 2022/10/26 23:38:07 riastradh Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.88.2.1 2024/09/21 12:20:23 martin Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.88 2022/10/26 23:38:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.88.2.1 2024/09/21 12:20:23 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -369,7 +369,7 @@ ddb_suspend(struct trapframe *frame)
 	atomic_or_32(&ci->ci_flags, CPUF_PAUSE);
 
 	while (ci->ci_flags & CPUF_PAUSE)
-		;
+		x86_pause();
 	ci->ci_ddb_regs = 0;
 	tlbflushg();
 }
