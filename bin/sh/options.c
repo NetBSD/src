@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.59 2024/07/12 07:30:30 kre Exp $	*/
+/*	$NetBSD: options.c,v 1.60 2024/09/21 20:48:50 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.59 2024/07/12 07:30:30 kre Exp $");
+__RCSID("$NetBSD: options.c,v 1.60 2024/09/21 20:48:50 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -415,17 +415,78 @@ freeparam(volatile struct shparam *param)
  * The shift builtin command.
  */
 
+#ifndef TINY
+/* first the rotate variant */
+static inline int
+rotatecmd(int argc, char **argv)
+{
+	int n;
+	char **ap1, **ap2, **ss;
+
+	(void) nextopt(NULL);	/* ignore '--' as leading option */
+
+	/*
+	 * half this is just in case it ever becomes
+	 * a separate named command, while it remains
+	 * puerly an inline inside shift, the compiler
+	 * should optimise most of it to nothingness
+	 */
+	if (argptr[0] && argptr[1])
+		error("Usage: rotate [n]");
+	n = 1;
+	if (*argptr) {
+		if (**argptr == '-')
+			n = number(*argptr + 1);
+		else		/* anti-clockwise n == clockwise $# - n */
+			n = shellparam.nparam - number(*argptr);
+	}
+
+	if (n == 0 || n == shellparam.nparam)		/* nothing to do */
+		return 0;
+
+	if (n < 0 || n > shellparam.nparam)
+		error("can't rotate that many");
+
+	ap2 = ss = (char **)stalloc(n * sizeof(char *));
+	INTOFF;
+	for (ap1 = shellparam.p + shellparam.nparam - n;
+	     ap1 < shellparam.p + shellparam.nparam; )
+		*ap2++ = *ap1++;
+	for (ap2 = shellparam.p + shellparam.nparam, ap1 = ap2 - n;
+	     ap1 > shellparam.p; )
+		*--ap2 = *--ap1;
+	for (ap1 = ss + n; ap1 > ss; )
+		*--ap2 = *--ap1;
+	shellparam.optnext = NULL;
+	INTON;
+	stunalloc(ss);
+
+	return 0;
+}
+#endif
+
 int
 shiftcmd(int argc, char **argv)
 {
 	int n;
 	char **ap1, **ap2;
 
-	if (argc > 2)
+	(void) nextopt(NULL);	/* ignore '--' as leading option */
+
+	if (argptr[0] && argptr[1])
 		error("Usage: shift [n]");
+
+#ifndef TINY
+	if (*argptr && **argptr == '-') {
+		argptr = argv + 1;	/* reinit nextopt() */
+		optptr = NULL;
+		return rotatecmd(argc, argv);
+	}
+#endif
+
 	n = 1;
-	if (argc > 1)
-		n = number(argv[1]);
+	if (*argptr)
+		n = number(*argptr);
 	if (n > shellparam.nparam)
 		error("can't shift that many");
 	INTOFF;
