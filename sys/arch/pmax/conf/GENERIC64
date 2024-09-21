@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.36 2022/08/07 02:52:28 simonb Exp $
+# $NetBSD: GENERIC64,v 1.37 2024/09/21 06:42:21 andvar Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/pmax/conf/std.pmax64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.36 $"
+#ident		"GENERIC-$Revision: 1.37 $"
 
 maxusers	64
 
@@ -38,7 +38,7 @@ options 	DEC_3MAXPLUS	# DECstation 5000/240 (kn03), 5000/260 (kn05)
 options 	DDB			# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 options 	DDB_ONPANIC=0		# don't enter debugger on panic
-#options 	DIAGNOSTIC		# extra kernel debugging checks
+options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
 
@@ -171,7 +171,7 @@ mcclock* at	ibus0 addr ?		# DS1287 RTC
 dz*	at	ibus0 addr ?		# DC7085 quad line serial device
 lkkbd*	at	dz? line 0		# Keyboard
 vsms*	at	dz? line 1		# Mouse
-sii*	at	ibus0 addr ?		# DC7061 onboard SCSI`
+sii*	at	ibus0 addr ?		# DC7061 onboard SCSI
 
 # 3MIN, 3MAX+ and MAXINE have IOASIC in system slot
 ioasic0	at	tc?
