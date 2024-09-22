@@ -1,0 +1,45 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+include "../../_common/rndc.key";
+
+controls {
+	inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+tls self-signed {
+	cert-file "../self-signed-cert.pem";
+	key-file "../self-signed-key.pem";
+};
+
+options {
+	pid-file "named.pid";
+	##
+	# generic
+	listen-on port @PORT@ { 10.53.0.1; };
+	# test TLS
+	listen-on port @EXTRAPORT1@ tls self-signed { 10.53.0.1; };
+	listen-on-v6 port @EXTRAPORT1@ tls self-signed { fd92:7065:b8e:ffff::1; };
+	##
+	recursion no;
+	notify explicit;
+	statistics-file "named.stats";
+	dnssec-validation yes;
+	tcp-initial-timeout 1200;
+};
+
+zone "example" {
+	type primary;
+	file "example.db";
+	allow-transfer { any; };
+};

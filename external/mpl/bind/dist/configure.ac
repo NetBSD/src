@@ -16,7 +16,7 @@
 #
 m4_define([bind_VERSION_MAJOR], 9)dnl
 m4_define([bind_VERSION_MINOR], 18)dnl
-m4_define([bind_VERSION_PATCH], 24)dnl
+m4_define([bind_VERSION_PATCH], 30)dnl
 m4_define([bind_VERSION_EXTRA], )dnl
 m4_define([bind_DESCRIPTION], [(Extended Support Version)])dnl
 m4_define([bind_SRCID], [m4_esyscmd_s([git rev-parse --short HEAD | cut -b1-7])])dnl
@@ -265,7 +265,8 @@ AS_CASE([$host],
 		  ])
 	])
 
-AC_CHECK_HEADERS([fcntl.h regex.h sys/time.h unistd.h sys/mman.h sys/sockio.h sys/select.h sys/param.h sys/sysctl.h net/if6.h sys/socket.h net/route.h linux/netlink.h linux/rtnetlink.h], [], [],
+AC_CHECK_HEADERS([sys/param.h sys/socket.h])
+AC_CHECK_HEADERS([fcntl.h regex.h sys/time.h unistd.h sys/mman.h sys/sockio.h sys/select.h sys/sysctl.h net/if6.h net/route.h linux/netlink.h linux/rtnetlink.h], [], [],
 		 [$ac_includes_default
 		  #ifdef HAVE_SYS_PARAM_H
 		  # include <sys/param.h>
@@ -532,9 +533,16 @@ AM_CONDITIONAL([HAVE_LIBNGHTTP2], [test -n "$LIBNGHTTP2_LIBS"])
 AC_CHECK_FUNCS([flockfile getc_unlocked])
 
 #
-# Look for sysconf to allow detection of the number of processors.
+# Look for sysconf or other ways to allow detection of the number of processors.
 #
 AC_CHECK_FUNCS([sysconf])
+AC_CHECK_FUNCS(sysconf sched_getaffinity cpuset_getaffinity)
+AC_CHECK_HEADERS([sys/cpuset.h], [], [],
+		 [$ac_includes_default
+		  #ifdef HAVE_SYS_PARAM_H
+		  # include <sys/param.h>
+		  #endif
+		 ])
 
 #
 # Do we want to use pthread rwlock?
@@ -1199,10 +1207,10 @@ AM_CONDITIONAL([HAVE_XELATEX], [test -n "$XELATEX" && test -n "$LATEXMK"])
 AM_CONDITIONAL([BUILD_MANPAGES], [test -e doc/man/named.conf.5in || test -n "$SPHINX_BUILD"])
 
 #
-# Pull release date from CHANGES file last modification date
+# Pull release date from changelog.rst file last modification date
 # for reproducible builds
 #
-release_date=`date -u -r CHANGES +%Y-%m-%d`
+release_date=`date -u -r doc/arm/changelog.rst +%Y-%m-%d`
 AC_SUBST([RELEASE_DATE], $release_date)
 
 #
@@ -1301,8 +1309,7 @@ AS_CASE([$with_jemalloc],
 
 AS_IF([test "$with_jemalloc" = "no"],
       [AS_CASE([$host],
-	       [*-freebsd*],[AC_MSG_ERROR([You cannot compile without jemalloc; jemalloc is the system allocator on FreeBSD])])
-       AC_CHECK_FUNCS([malloc_size malloc_usable_size])])
+	       [*-freebsd*],[AC_MSG_ERROR([You cannot compile without jemalloc; jemalloc is the system allocator on FreeBSD])])])
 
 AM_CONDITIONAL([HAVE_JEMALLOC], [test "$with_jemalloc" = "yes"])
 

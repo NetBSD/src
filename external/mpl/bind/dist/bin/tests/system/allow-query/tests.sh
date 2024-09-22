@@ -639,9 +639,9 @@ n=$((n + 1))
 echo_i "test $n: default allow-recursion configuration"
 ret=0
 nextpart ns3/named.run >/dev/null
-$DIG -p ${PORT} @10.53.0.3 -b 127.0.0.1 a.normal.example a >dig.out.ns3.1.$n
+$DIG -p ${PORT} @10.53.0.3 -b 127.0.0.1 a.normal.example a >dig.out.ns3.1.$n || ret=1
 grep 'status: NOERROR' dig.out.ns3.1.$n >/dev/null || ret=1
-$DIG -p ${PORT} @10.53.0.3 -b 10.53.0.1 a.normal.example a >dig.out.ns3.2.$n
+$DIG -p ${PORT} @10.53.0.3 -b 10.53.0.1 a.normal.example a >dig.out.ns3.2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns3.2.$n >/dev/null || ret=1
 grep 'EDE: 18 (Prohibited)' dig.out.ns3.2.$n >/dev/null || ret=1
 nextpart ns3/named.run | grep 'allow-recursion did not match' >/dev/null || ret=1
@@ -652,9 +652,9 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "test $n: default allow-query-cache configuration"
 ret=0
-$DIG -p ${PORT} @10.53.0.3 -b 127.0.0.1 ns . >dig.out.ns3.1.$n
+$DIG -p ${PORT} @10.53.0.3 -b 127.0.0.1 ns . >dig.out.ns3.1.$n || ret=1
 grep 'status: NOERROR' dig.out.ns3.1.$n >/dev/null || ret=1
-$DIG -p ${PORT} @10.53.0.3 -b 10.53.0.1 ns . >dig.out.ns3.2.$n
+$DIG -p ${PORT} @10.53.0.3 -b 10.53.0.1 ns . >dig.out.ns3.2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns3.2.$n >/dev/null || ret=1
 grep 'EDE: 18 (Prohibited)' dig.out.ns3.2.$n >/dev/null || ret=1
 nextpart ns3/named.run | grep 'allow-recursion did not match' >/dev/null || ret=1
@@ -669,11 +669,11 @@ rndc_reload ns3 10.53.0.3
 echo_i "test $n: block recursion-on, allow query-cache-on"
 ret=0
 # this should query the cache, and an answer should already be there
-$DIG -p ${PORT} @10.53.0.3 a.normal.example a >dig.out.ns3.1.$n
+$DIG -p ${PORT} @10.53.0.3 a.normal.example a >dig.out.ns3.1.$n || ret=1
 grep 'recursion requested but not available' dig.out.ns3.1.$n >/dev/null || ret=1
 grep 'ANSWER: 1' dig.out.ns3.1.$n >/dev/null || ret=1
 # this should require recursion and therefore can't get an answer
-$DIG -p ${PORT} @10.53.0.3 b.normal.example a >dig.out.ns3.2.$n
+$DIG -p ${PORT} @10.53.0.3 b.normal.example a >dig.out.ns3.2.$n || ret=1
 grep 'recursion requested but not available' dig.out.ns3.2.$n >/dev/null || ret=1
 grep 'ANSWER: 0' dig.out.ns3.2.$n >/dev/null || ret=1
 nextpart ns3/named.run | grep 'allow-recursion-on did not match' >/dev/null || ret=1
@@ -688,18 +688,18 @@ rndc_reload ns3 10.53.0.3
 echo_i "test $n: inheritance of allow-query-cache-on"
 ret=0
 # this should query the cache, an answer should already be there
-$DIG -p ${PORT} @10.53.0.3 a.normal.example a >dig.out.ns3.1.$n
+$DIG -p ${PORT} @10.53.0.3 a.normal.example a >dig.out.ns3.1.$n || ret=1
 grep 'ANSWER: 1' dig.out.ns3.1.$n >/dev/null || ret=1
 # this should be refused due to allow-recursion-on/allow-query-cache-on
-$DIG -p ${PORT} @10.53.1.2 a.normal.example a >dig.out.ns3.2.$n
+$DIG -p ${PORT} @10.53.1.2 a.normal.example a >dig.out.ns3.2.$n || ret=1
 grep 'recursion requested but not available' dig.out.ns3.2.$n >/dev/null || ret=1
 grep 'status: REFUSED' dig.out.ns3.2.$n >/dev/null || ret=1
 grep 'EDE: 18 (Prohibited)' dig.out.ns3.2.$n >/dev/null || ret=1
 # this should require recursion and should be allowed
-$DIG -p ${PORT} @10.53.0.3 c.normal.example a >dig.out.ns3.3.$n
+$DIG -p ${PORT} @10.53.0.3 c.normal.example a >dig.out.ns3.3.$n || ret=1
 grep 'ANSWER: 1' dig.out.ns3.3.$n >/dev/null || ret=1
 # this should require recursion and be refused
-$DIG -p ${PORT} @10.53.1.2 d.normal.example a >dig.out.ns3.4.$n
+$DIG -p ${PORT} @10.53.1.2 d.normal.example a >dig.out.ns3.4.$n || ret=1
 grep 'recursion requested but not available' dig.out.ns3.4.$n >/dev/null || ret=1
 grep 'status: REFUSED' dig.out.ns3.4.$n >/dev/null || ret=1
 grep 'EDE: 18 (Prohibited)' dig.out.ns3.4.$n >/dev/null || ret=1
@@ -715,18 +715,18 @@ rndc_reload ns3 10.53.0.3
 echo_i "test $n: inheritance of allow-recursion-on"
 ret=0
 # this should query the cache, an answer should already be there
-$DIG -p ${PORT} @10.53.0.3 a.normal.example a >dig.out.ns3.1.$n
+$DIG -p ${PORT} @10.53.0.3 a.normal.example a >dig.out.ns3.1.$n || ret=1
 grep 'ANSWER: 1' dig.out.ns3.1.$n >/dev/null || ret=1
 # this should be refused due to allow-recursion-on/allow-query-cache-on
-$DIG -p ${PORT} @10.53.1.2 a.normal.example a >dig.out.ns3.2.$n
+$DIG -p ${PORT} @10.53.1.2 a.normal.example a >dig.out.ns3.2.$n || ret=1
 grep 'recursion requested but not available' dig.out.ns3.2.$n >/dev/null || ret=1
 grep 'status: REFUSED' dig.out.ns3.2.$n >/dev/null || ret=1
 grep 'EDE: 18 (Prohibited)' dig.out.ns3.2.$n >/dev/null || ret=1
 # this should require recursion and should be allowed
-$DIG -p ${PORT} @10.53.0.3 e.normal.example a >dig.out.ns3.3.$n
+$DIG -p ${PORT} @10.53.0.3 e.normal.example a >dig.out.ns3.3.$n || ret=1
 grep 'ANSWER: 1' dig.out.ns3.3.$n >/dev/null || ret=1
 # this should require recursion and be refused
-$DIG -p ${PORT} @10.53.1.2 f.normal.example a >dig.out.ns3.4.$n
+$DIG -p ${PORT} @10.53.1.2 f.normal.example a >dig.out.ns3.4.$n || ret=1
 grep 'recursion requested but not available' dig.out.ns3.4.$n >/dev/null || ret=1
 grep 'status: REFUSED' dig.out.ns3.4.$n >/dev/null || ret=1
 grep 'EDE: 18 (Prohibited)' dig.out.ns3.4.$n >/dev/null || ret=1

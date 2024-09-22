@@ -161,13 +161,19 @@ _rndccmd() {
   "$RNDC" -c ../_common/rndc.conf -p "$CONTROLPORT" -s "$@"
 }
 
-# Print IDs of keys used for generating RRSIG records for RRsets of type $1
-# found in dig output file $2.
+# Print IDs of keys used for generating RRSIG records for RRsets of type $1,
+# matching algorithm number $2, found in dig output file $3.
+# If $2 is equal to 0, any algorithm matches.
 get_keys_which_signed() {
   _qtype=$1
-  _output=$2
+  _alg=$2
+  _output=$3
   # The key ID is the 11th column of the RRSIG record line.
-  awk -v qt="$_qtype" '$4 == "RRSIG" && $5 == qt {print $11}' <"$_output"
+  if [ "$_alg" = "0" ]; then
+    awk -v qt="$_qtype" '$4 == "RRSIG" && $5 == qt {print $11}' <"$_output"
+  else
+    awk -v alg="$_alg" -v qt="$_qtype" '$4 == "RRSIG" && $5 == qt && $6 == alg {print $11}' <"$_output"
+  fi
 }
 
 # Get the key ids from key files for zone $2 in directory $1.
@@ -213,6 +219,7 @@ set_policy() {
   POLICY=$1
   NUM_KEYS=$2
   DNSKEY_TTL=$3
+  KEYFILE_TTL=$3
   CDS_DELETE="no"
 }
 # By default policies are considered to be secure.
@@ -329,7 +336,7 @@ check_key() {
   _alg_numpad=$(printf "%03d" "$_alg_num")
   _alg_string=$(key_get "$1" ALG_STR)
   _length=$(key_get "$1" "ALG_LEN")
-  _dnskey_ttl="$DNSKEY_TTL"
+  _dnskey_ttl="$KEYFILE_TTL"
   _lifetime=$(key_get "$1" LIFETIME)
   _legacy=$(key_get "$1" LEGACY)
   _private=$(key_get "$1" PRIVATE)
@@ -809,19 +816,19 @@ check_keys() {
 
   ret=0
   if [ "$(key_get KEY1 EXPECT)" = "yes" ]; then
-    echo_i "KEY1 ID $(key_get KEY1 ID)"
+    echo_i "KEY1 ID $(key_get KEY1 ID) ALG $(key_get KEY1 ALG_STR)"
     test "no" = "$(key_get KEY1 ID)" && _log_error "No KEY1 found for zone ${ZONE}"
   fi
   if [ "$(key_get KEY2 EXPECT)" = "yes" ]; then
-    echo_i "KEY2 ID $(key_get KEY2 ID)"
+    echo_i "KEY2 ID $(key_get KEY2 ID) ALG $(key_get KEY2 ALG_STR)"
     test "no" = "$(key_get KEY2 ID)" && _log_error "No KEY2 found for zone ${ZONE}"
   fi
   if [ "$(key_get KEY3 EXPECT)" = "yes" ]; then
-    echo_i "KEY3 ID $(key_get KEY3 ID)"
+    echo_i "KEY3 ID $(key_get KEY3 ID) ALG $(key_get KEY3 ALG_STR)"
     test "no" = "$(key_get KEY3 ID)" && _log_error "No KEY3 found for zone ${ZONE}"
   fi
   if [ "$(key_get KEY4 EXPECT)" = "yes" ]; then
-    echo_i "KEY4 ID $(key_get KEY4 ID)"
+    echo_i "KEY4 ID $(key_get KEY4 ID) ALG $(key_get KEY4 ALG_STR)"
     test "no" = "$(key_get KEY4 ID)" && _log_error "No KEY4 found for zone ${ZONE}"
   fi
   test "$ret" -eq 0 || echo_i "failed"
@@ -907,34 +914,34 @@ _check_signatures() {
   fi
 
   if [ "$(key_get KEY1 "$_expect_type")" = "yes" ] && [ "$(key_get KEY1 "$_role")" = "yes" ]; then
-    get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY1 ID)$" >/dev/null || return 1
+    get_keys_which_signed "$_qtype" "$(key_get KEY1 ALG_NUM)" "$_file" | grep "^$(key_get KEY1 ID)$" >/dev/null || return 1
     numsigs=$((numsigs + 1))
   elif [ "$(key_get KEY1 EXPECT)" = "yes" ]; then
-    get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY1 ID)$" >/dev/null && return 1
+    get_keys_which_signed "$_qtype" "$(key_get KEY1 ALG_NUM)" "$_file" | grep "^$(key_get KEY1 ID)$" >/dev/null && return 1
   fi
 
   if [ "$(key_get KEY2 "$_expect_type")" = "yes" ] && [ "$(key_get KEY2 "$_role")" = "yes" ]; then
-    get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY2 ID)$" >/dev/null || return 1
+    get_keys_which_signed "$_qtype" "$(key_get KEY2 ALG_NUM)" "$_file" | grep "^$(key_get KEY2 ID)$" >/dev/null || return 1
     numsigs=$((numsigs + 1))
   elif [ "$(key_get KEY2 EXPECT)" = "yes" ]; then
-    get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY2 ID)$" >/dev/null && return 1
+    get_keys_which_signed "$_qtype" "$(key_get KEY2 ALG_NUM)" "$_file" | grep "^$(key_get KEY2 ID)$" >/dev/null && return 1
   fi
 
   if [ "$(key_get KEY3 "$_expect_type")" = "yes" ] && [ "$(key_get KEY3 "$_role")" = "yes" ]; then
-    get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY3 ID)$" >/dev/null || return 1
+    get_keys_which_signed "$_qtype" "$(key_get KEY3 ALG_NUM)" "$_file" | grep "^$(key_get KEY3 ID)$" >/dev/null || return 1
     numsigs=$((numsigs + 1))
   elif [ "$(key_get KEY3 EXPECT)" = "yes" ]; then
-    get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY3 ID)$" >/dev/null && return 1
+    get_keys_which_signed "$_qtype" "$(key_get KEY3 ALG_NUM)" "$_file" | grep "^$(key_get KEY3 ID)$" >/dev/null && return 1
   fi
 
   if [ "$(key_get KEY4 "$_expect_type")" = "yes" ] && [ "$(key_get KEY4 "$_role")" = "yes" ]; then
-    get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY4 ID)$" >/dev/null || return 1
+    get_keys_which_signed "$_qtype" "$(key_get KEY4 ALG_NUM)" "$_file" | grep "^$(key_get KEY4 ID)$" >/dev/null || return 1
     numsigs=$((numsigs + 1))
   elif [ "$(key_get KEY4 EXPECT)" = "yes" ]; then
-    get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY4 ID)$" >/dev/null && return 1
+    get_keys_which_signed "$_qtype" "$(key_get KEY4 ALG_NUM)" "$_file" | grep "^$(key_get KEY4 ID)$" >/dev/null && return 1
   fi
 
-  lines=$(get_keys_which_signed "${_qtype}" "${_file}" | wc -l)
+  lines=$(get_keys_which_signed "${_qtype}" "0" "${_file}" | wc -l)
   test "$lines" -eq "$numsigs" || echo_i "bad number of signatures for $_qtype (got $lines, expected $numsigs)"
   test "$lines" -eq "$numsigs" || return 1
 
@@ -1055,7 +1062,7 @@ _find_dnskey() {
   _flags="$(key_get $1 FLAGS)"
   _key_file="$(key_get $1 BASEFILE).key"
 
-  awk '$1 == "'"$_owner"'" && $2 == "'"$DNSKEY_TTL"'" && $3 == "IN" && $4 == "DNSKEY" && $5 == "'"$_flags"'" && $6 == "3" && $7 == "'"$_alg"'" { print $8 }' <"$_key_file"
+  awk '$1 == "'"$_owner"'" && $2 == "'"$KEYFILE_TTL"'" && $3 == "IN" && $4 == "DNSKEY" && $5 == "'"$_flags"'" && $6 == "3" && $7 == "'"$_alg"'" { print $8 }' <"$_key_file"
 }
 
 # Test DNSKEY query.
@@ -1157,7 +1164,7 @@ check_subdomain() {
   _dig_with_opts "a.$ZONE" "@${SERVER}" $_qtype >"dig.out.$DIR.test$n" || _log_error "dig a.${ZONE} ${_qtype} failed"
   grep "status: NOERROR" "dig.out.$DIR.test$n" >/dev/null || _log_error "mismatch status in DNS response"
   grep "a.${ZONE}\..*${DEFAULT_TTL}.*IN.*${_qtype}.*10\.0\.0\.1" "dig.out.$DIR.test$n" >/dev/null || _log_error "missing a.${ZONE} ${_qtype} record in response"
-  lines=$(get_keys_which_signed $_qtype "dig.out.$DIR.test$n" | wc -l)
+  lines=$(get_keys_which_signed $_qtype 0 "dig.out.$DIR.test$n" | wc -l)
   check_signatures $_qtype "dig.out.$DIR.test$n" "ZSK"
   test "$ret" -eq 0 || echo_i "failed"
   status=$((status + ret))

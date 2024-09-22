@@ -37,19 +37,19 @@ ddns-confgen \- ddns key generation tool
 .sp
 \fBddns\-confgen\fP is an utility that generates keys for use in TSIG signing.
 The resulting keys can be used, for example, to secure dynamic DNS updates
-to a zone, or for the \fI\%rndc\fP command channel.
+to a zone, or for the \X'tty: link #std-iscman-rndc'\fI\%rndc\fP\X'tty: link' command channel.
 .sp
 The key name can specified using \fI\%\-k\fP parameter and defaults to \fBddns\-key\fP\&.
 The generated key is accompanied by configuration text and instructions that
-can be used with \fI\%nsupdate\fP and \fI\%named\fP when setting up dynamic DNS,
+can be used with \X'tty: link #std-iscman-nsupdate'\fI\%nsupdate\fP\X'tty: link' and \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' when setting up dynamic DNS,
 including an example \fBupdate\-policy\fP statement.
-(This usage is similar to the \fI\%rndc\-confgen\fP command for setting up
+(This usage is similar to the \X'tty: link #std-iscman-rndc-confgen'\fI\%rndc\-confgen\fP\X'tty: link' command for setting up
 command\-channel security.)
 .sp
-Note that \fI\%named\fP itself can configure a local DDNS key for use with
-\fI\%nsupdate \-l\fP; it does this when a zone is configured with
+Note that \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' itself can configure a local DDNS key for use with
+\X'tty: link #cmdoption-nsupdate-l'\fI\%nsupdate \-l\fP\X'tty: link'; it does this when a zone is configured with
 \fBupdate\-policy local;\fP\&. \fBddns\-confgen\fP is only needed when a more
-elaborate configuration is required: for instance, if \fI\%nsupdate\fP is to
+elaborate configuration is required: for instance, if \X'tty: link #std-iscman-nsupdate'\fI\%nsupdate\fP\X'tty: link' is to
 be used from a remote system.
 .SH OPTIONS
 .INDENT 0.0
@@ -80,13 +80,13 @@ letters, digits, hyphens, and periods.
 .B \-q
 This option enables quiet mode, which prints only the key, with no
 explanatory text or usage examples. This is essentially identical to
-\fI\%tsig\-keygen\fP\&.
+\X'tty: link #std-iscman-tsig-keygen'\fI\%tsig\-keygen\fP\X'tty: link'\&.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-s name
 This option generates a configuration example to allow dynamic updates
-of a single hostname. The example \fI\%named.conf\fP text shows how to set
+of a single hostname. The example \X'tty: link #std-iscman-named.conf'\fI\%named.conf\fP\X'tty: link' text shows how to set
 an update policy for the specified name using the \(dqname\(dq nametype. The
 default key name is \fBddns\-key.name\fP\&. Note that the \(dqself\(dq nametype
 cannot be used, since the name to be updated may differ from the key
@@ -96,14 +96,14 @@ name. This option cannot be used with the \fI\%\-z\fP option.
 .TP
 .B \-z zone
 This option generates a configuration example to allow
-dynamic updates of a zone. The example \fI\%named.conf\fP text shows how
+dynamic updates of a zone. The example \X'tty: link #std-iscman-named.conf'\fI\%named.conf\fP\X'tty: link' text shows how
 to set an update policy for the specified zone using the \(dqzonesub\(dq
 nametype, allowing updates to all subdomain names within that zone.
 This option cannot be used with the \fI\%\-s\fP option.
 .UNINDENT
 .SH SEE ALSO
 .sp
-\fI\%nsupdate(1)\fP, \fI\%named.conf(5)\fP, \fI\%named(8)\fP, BIND 9 Administrator Reference Manual.
+\X'tty: link #std-iscman-nsupdate'\fI\%nsupdate(1)\fP\X'tty: link', \X'tty: link #std-iscman-named.conf'\fI\%named.conf(5)\fP\X'tty: link', \X'tty: link #std-iscman-named'\fI\%named(8)\fP\X'tty: link', BIND 9 Administrator Reference Manual.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT

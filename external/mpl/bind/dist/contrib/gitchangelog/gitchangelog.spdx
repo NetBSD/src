@@ -1,0 +1,11 @@
+SPDXVersion: SPDX-2.2
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentName: gitchangelog
+DocumentNamespace: https://gitlab.isc.org/isc-projects/bind9/-/tree/main/contrib/gitchangelog/
+
+PackageName: gitchangelog
+SPDXID: SPDXRef-Package-gitchangelog
+PackageDownloadLocation: git+https://github.com/vaab/gitchangelog.git@95fe8d5bd171db29922b40d9d3a13dab5af094c0#src/gitchangelog
+PackageOriginator: Person: Valentin Lab <valentin.lab@kalysto.org>
+PackageLicenseDeclared: BSD-3-Clause

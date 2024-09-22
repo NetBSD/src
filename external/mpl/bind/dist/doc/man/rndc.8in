@@ -42,7 +42,7 @@ arguments.
 .sp
 \fBrndc\fP communicates with the name server over a TCP connection,
 sending commands authenticated with digital signatures. In the current
-versions of \fBrndc\fP and \fI\%named\fP, the only supported authentication
+versions of \fBrndc\fP and \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link', the only supported authentication
 algorithms are HMAC\-MD5 (for compatibility), HMAC\-SHA1, HMAC\-SHA224,
 HMAC\-SHA256 (default), HMAC\-SHA384, and HMAC\-SHA512. They use a shared
 secret on each end of the connection, which provides TSIG\-style
@@ -108,7 +108,7 @@ unless there is an error.
 .INDENT 0.0
 .TP
 .B \-r
-This option instructs \fBrndc\fP to print the result code returned by \fI\%named\fP
+This option instructs \fBrndc\fP to print the result code returned by \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link'
 after executing the requested command (e.g., ISC_R_SUCCESS,
 ISC_R_FAILURE, etc.).
 .UNINDENT
@@ -121,7 +121,7 @@ This option enables verbose logging.
 .TP
 .B \-y server_key
 This option indicates use of the key \fBserver_key\fP from the configuration file. For control message validation to succeed, \fBserver_key\fP must be known
-by \fI\%named\fP with the same algorithm and secret string. If no \fBserver_key\fP is specified,
+by \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' with the same algorithm and secret string. If no \fBserver_key\fP is specified,
 \fBrndc\fP first looks for a key clause in the server statement of
 the server being used, or if no server statement is present for that
 host, then in the default\-key clause of the options statement. Note that
@@ -141,14 +141,14 @@ Currently supported commands are:
 This command adds a zone while the server is running. This command requires the
 \fBallow\-new\-zones\fP option to be set to \fByes\fP\&. The configuration
 string specified on the command line is the zone configuration text
-that would ordinarily be placed in \fI\%named.conf\fP\&.
+that would ordinarily be placed in \X'tty: link #std-iscman-named.conf'\fI\%named.conf\fP\X'tty: link'\&.
 .sp
 The configuration is saved in a file called \fBviewname.nzf\fP (or, if
-\fI\%named\fP is compiled with liblmdb, an LMDB database file called
+\X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' is compiled with liblmdb, an LMDB database file called
 \fBviewname.nzd\fP). \fBviewname\fP is the name of the view, unless the view
 name contains characters that are incompatible with use as a file
 name, in which case a cryptographic hash of the view name is used
-instead. When \fI\%named\fP is restarted, the file is loaded into
+instead. When \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' is restarted, the file is loaded into
 the view configuration so that zones that were added can persist
 after a restart.
 .sp
@@ -175,10 +175,10 @@ are reported in the output of the \fBrndc delzone\fP command.)
 .sp
 If the zone was originally added via \fBrndc addzone\fP, then it is
 removed permanently. However, if it was originally configured in
-\fI\%named.conf\fP, then that original configuration remains in place;
+\X'tty: link #std-iscman-named.conf'\fI\%named.conf\fP\X'tty: link', then that original configuration remains in place;
 when the server is restarted or reconfigured, the zone is
 recreated. To remove it permanently, it must also be removed from
-\fI\%named.conf\fP\&.
+\X'tty: link #std-iscman-named.conf'\fI\%named.conf\fP\X'tty: link'\&.
 .sp
 See also \fI\%rndc addzone\fP and \fI\%rndc modzone\fP\&.
 .UNINDENT
@@ -194,7 +194,7 @@ zone.
 \fBrndc dnssec \-rollover\fP allows you to schedule key rollover for a
 specific key (overriding the original key lifetime).
 .sp
-\fBrndc dnssec \-checkds\fP informs \fI\%named\fP that the DS for
+\fBrndc dnssec \-checkds\fP informs \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' that the DS for
 a specified zone\(aqs key\-signing key has been confirmed to be published
 in, or withdrawn from, the parent zone. This is required in order to
 complete a KSK rollover.  The \fB\-key id\fP and \fB\-alg algorithm\fP arguments
@@ -211,7 +211,7 @@ notation.
 This command closes and re\-opens DNSTAP output files.
 .sp
 \fBrndc dnstap \-reopen\fP allows
-the output file to be renamed externally, so that \fI\%named\fP can
+the output file to be renamed externally, so that \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' can
 truncate and re\-open it.
 .sp
 \fBrndc dnstap \-roll\fP causes the output file
@@ -263,8 +263,8 @@ See also \fI\%rndc thaw\fP\&.
 This command stops the server immediately. Recent changes made through dynamic
 update or IXFR are not saved to the master files, but are rolled
 forward from the journal files when the server is restarted. If
-\fB\-p\fP is specified, \fI\%named\fP\(aqs process ID is returned. This allows
-an external process to determine when \fI\%named\fP has completed
+\fB\-p\fP is specified, \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link'\(aqs process ID is returned. This allows
+an external process to determine when \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' has completed
 halting.
 .sp
 See also \fI\%rndc stop\fP\&.
@@ -287,7 +287,7 @@ the Administrator Reference Manual for more details.)
 .TP
 .B managed\-keys (status | refresh | sync | destroy) [class [view]]
 This command inspects and controls the \(dqmanaged\-keys\(dq database which handles
-\fI\%RFC 5011\fP DNSSEC trust anchor maintenance. If a view is specified, these
+\X'tty: link https://datatracker.ietf.org/doc/html/rfc5011.html'\fI\%RFC 5011\fP\X'tty: link' DNSSEC trust anchor maintenance. If a view is specified, these
 commands are applied to that view; otherwise, they are applied to all
 views.
 .INDENT 7.0
@@ -312,11 +312,11 @@ This command should be used only with extreme caution.
 .sp
 Existing keys that are already trusted are not deleted from
 memory; DNSSEC validation can continue after this command is used.
-However, key maintenance operations cease until \fI\%named\fP is
+However, key maintenance operations cease until \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' is
 restarted or reconfigured, and all existing key maintenance states
 are deleted.
 .sp
-Running \fI\%rndc reconfig\fP or restarting \fI\%named\fP immediately
+Running \fI\%rndc reconfig\fP or restarting \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' immediately
 after this command causes key maintenance to be reinitialized
 from scratch, just as if the server were being started for the
 first time. This is primarily intended for testing, but it may
@@ -332,16 +332,16 @@ This command modifies the configuration of a zone while the server is running. T
 command requires the \fBallow\-new\-zones\fP option to be set to \fByes\fP\&.
 As with \fBaddzone\fP, the configuration string specified on the
 command line is the zone configuration text that would ordinarily be
-placed in \fI\%named.conf\fP\&.
+placed in \X'tty: link #std-iscman-named.conf'\fI\%named.conf\fP\X'tty: link'\&.
 .sp
 If the zone was originally added via \fI\%rndc addzone\fP, the
 configuration changes are recorded permanently and are still
 in effect after the server is restarted or reconfigured. However, if
-it was originally configured in \fI\%named.conf\fP, then that original
+it was originally configured in \X'tty: link #std-iscman-named.conf'\fI\%named.conf\fP\X'tty: link', then that original
 configuration remains in place; when the server is restarted or
 reconfigured, the zone reverts to its original configuration. To
 make the changes permanent, it must also be modified in
-\fI\%named.conf\fP\&.
+\X'tty: link #std-iscman-named.conf'\fI\%named.conf\fP\X'tty: link'\&.
 .sp
 See also \fI\%rndc addzone\fP and \fI\%rndc delzone\fP\&.
 .UNINDENT
@@ -362,18 +362,18 @@ See also \fI\%rndc trace\fP\&.
 .B nta [(\-class class | \-dump | \-force | \-remove | \-lifetime duration)] domain [view]
 This command sets a DNSSEC negative trust anchor (NTA) for \fBdomain\fP, with a
 lifetime of \fBduration\fP\&. The default lifetime is configured in
-\fI\%named.conf\fP via the \fBnta\-lifetime\fP option, and defaults to one
+\X'tty: link #std-iscman-named.conf'\fI\%named.conf\fP\X'tty: link' via the \fBnta\-lifetime\fP option, and defaults to one
 hour. The lifetime cannot exceed one week.
 .sp
 A negative trust anchor selectively disables DNSSEC validation for
 zones that are known to be failing because of misconfiguration rather
 than an attack. When data to be validated is at or below an active
-NTA (and above any other configured trust anchors), \fI\%named\fP
+NTA (and above any other configured trust anchors), \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link'
 aborts the DNSSEC validation process and treats the data as insecure
 rather than bogus. This continues until the NTA\(aqs lifetime has
 elapsed.
 .sp
-NTAs persist across restarts of the \fI\%named\fP server. The NTAs for a
+NTAs persist across restarts of the \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' server. The NTAs for a
 view are saved in a file called \fBname.nta\fP, where \fBname\fP is the name
 of the view; if it contains characters that are incompatible with
 use as a file name, a cryptographic hash is generated from the name of
@@ -391,7 +391,7 @@ If \fB\-dump\fP is used, any other arguments are ignored and a list
 of existing NTAs is printed. Note that this may include NTAs that are
 expired but have not yet been cleaned up.
 .sp
-Normally, \fI\%named\fP periodically tests to see whether data below
+Normally, \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' periodically tests to see whether data below
 an NTA can now be validated (see the \fBnta\-recheck\fP option in the
 Administrator Reference Manual for details). If data can be
 validated, then the NTA is regarded as no longer necessary and is
@@ -419,8 +419,8 @@ on and off.
 .sp
 Query logging can also be enabled by explicitly directing the
 \fBqueries\fP \fBcategory\fP to a \fBchannel\fP in the \fBlogging\fP section
-of \fI\%named.conf\fP, or by specifying \fBquerylog yes;\fP in the
-\fBoptions\fP section of \fI\%named.conf\fP\&.
+of \X'tty: link #std-iscman-named.conf'\fI\%named.conf\fP\X'tty: link', or by specifying \fBquerylog yes;\fP in the
+\fBoptions\fP section of \X'tty: link #std-iscman-named.conf'\fI\%named.conf\fP\X'tty: link'\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -433,7 +433,7 @@ avoids the need to examine the modification times of the zone files.
 .INDENT 0.0
 .TP
 .B recursing
-This command dumps the list of queries \fI\%named\fP is currently
+This command dumps the list of queries \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' is currently
 recursing on, and the list of domains to which iterative queries
 are currently being sent.
 .sp
@@ -501,7 +501,7 @@ If the first argument is \fB\-\fP, then the output is returned via the
 \fBrndc\fP response channel and printed to the standard output.
 Otherwise, it is written to the secroots dump file, which defaults to
 \fBnamed.secroots\fP, but can be overridden via the \fBsecroots\-file\fP
-option in \fI\%named.conf\fP\&.
+option in \X'tty: link #std-iscman-named.conf'\fI\%named.conf\fP\X'tty: link'\&.
 .sp
 See also \fI\%rndc managed\-keys\fP\&.
 .UNINDENT
@@ -509,11 +509,11 @@ See also \fI\%rndc managed\-keys\fP\&.
 .TP
 .B serve\-stale (on | off | reset | status) [class [view]]
 This command enables, disables, resets, or reports the current status of
-the serving of stale answers as configured in \fI\%named.conf\fP\&.
+the serving of stale answers as configured in \X'tty: link #std-iscman-named.conf'\fI\%named.conf\fP\X'tty: link'\&.
 .sp
 If serving of stale answers is disabled by \fBrndc\-serve\-stale off\fP, then it
-remains disabled even if \fI\%named\fP is reloaded or reconfigured. \fBrndc
-serve\-stale reset\fP restores the setting as configured in \fI\%named.conf\fP\&.
+remains disabled even if \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' is reloaded or reconfigured. \fBrndc
+serve\-stale reset\fP restores the setting as configured in \X'tty: link #std-iscman-named.conf'\fI\%named.conf\fP\X'tty: link'\&.
 .sp
 \fBrndc serve\-stale status\fP reports whether caching and serving of stale
 answers is currently enabled or disabled. It also reports the values of
@@ -573,7 +573,7 @@ depending on whether the opt\-out bit in the NSEC3
 chain should be set. \fBiterations\fP defines the number of additional times to apply
 the algorithm when generating an NSEC3 hash. The \fBsalt\fP is a string
 of data expressed in hexadecimal, a hyphen (\fB\-\fP) if no salt is to be
-used, or the keyword \fBauto\fP, which causes \fI\%named\fP to generate a
+used, or the keyword \fBauto\fP, which causes \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' to generate a
 random 64\-bit salt.
 .sp
 The only recommended configuration is \fBrndc signing \-nsec3param 1 0 0 \- zone\fP,
@@ -615,8 +615,8 @@ there is no explicit root zone configured.
 .B stop \-p
 This command stops the server, making sure any recent changes made through dynamic
 update or IXFR are first saved to the master files of the updated
-zones. If \fB\-p\fP is specified, \fI\%named\fP\(aqs process ID is returned.
-This allows an external process to determine when \fI\%named\fP has
+zones. If \fB\-p\fP is specified, \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link'\(aqs process ID is returned.
+This allows an external process to determine when \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' has
 completed stopping.
 .sp
 See also \fI\%rndc halt\fP\&.
@@ -678,7 +678,7 @@ apply to statically configured TSIG keys.
 .TP
 .B tsig\-list
 This command lists the names of all TSIG keys currently configured for use by
-\fI\%named\fP in each view. The list includes both statically configured keys and
+\X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' in each view. The list includes both statically configured keys and
 dynamic TKEY\-negotiated keys.
 .UNINDENT
 .INDENT 0.0
@@ -718,8 +718,8 @@ without using the configuration file.
 Several error messages could be clearer.
 .SH SEE ALSO
 .sp
-\fI\%rndc.conf(5)\fP, \fI\%rndc\-confgen(8)\fP,
-\fI\%named(8)\fP, \fI\%named.conf(5)\fP, BIND 9 Administrator
+\X'tty: link #std-iscman-rndc.conf'\fI\%rndc.conf(5)\fP\X'tty: link', \X'tty: link #std-iscman-rndc-confgen'\fI\%rndc\-confgen(8)\fP\X'tty: link',
+\X'tty: link #std-iscman-named'\fI\%named(8)\fP\X'tty: link', \X'tty: link #std-iscman-named.conf'\fI\%named.conf(5)\fP\X'tty: link', BIND 9 Administrator
 Reference Manual.
 .SH AUTHOR
 Internet Systems Consortium

@@ -98,6 +98,7 @@ options {
 	tcp-initial-timeout 1200;
 	transfers-in 100;
 	transfers-out 100;
+	max-records-per-type 0;
 };
 
 zone "." {

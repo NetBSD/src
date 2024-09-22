@@ -13,7 +13,7 @@ from xml.etree import ElementTree
 
 def junit_to_trs(junit_xml):
     root = ElementTree.fromstring(junit_xml)
-    testcases = root.findall("./testsuite/testcase")
+    testcases = root.findall(".//testcase")
 
     if len(testcases) < 1:
         print(":test-result: ERROR convert-junit-to-trs.py")

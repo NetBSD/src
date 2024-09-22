@@ -36,7 +36,7 @@ options {
 	nsip-enable yes
 	nsdname-enable yes;
 
-	include "../dnsrps-secondary.conf";
+	include "../dnsrps.conf";
 };
 
 logging { category rpz { default_debug; }; };

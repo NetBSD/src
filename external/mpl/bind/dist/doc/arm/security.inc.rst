@@ -85,7 +85,7 @@ Limiting access to the server by outside parties can help prevent
 spoofing and denial of service (DoS) attacks against the server.
 
 ACLs match clients on the basis of up to three characteristics: 1) The
-client's IP address; 2) the TSIG or SIG(0) key that was used to sign the
+client's IP address; 2) the TSIG key that was used to sign the
 request, if any; and 3) an address prefix encoded in an EDNS
 Client-Subnet option, if any.
 
@@ -126,7 +126,7 @@ and no queries at all from the networks specified in ``bogusnets``.
 
 In addition to network addresses and prefixes, which are matched against
 the source address of the DNS request, ACLs may include ``key``
-elements, which specify the name of a TSIG or SIG(0) key.
+elements, which specify the name of a TSIG key.
 
 When BIND 9 is built with GeoIP support, ACLs can also be used for
 geographic access restrictions. This is done by specifying an ACL

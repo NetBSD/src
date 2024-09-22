@@ -27,7 +27,7 @@ options {
 	querylog yes;
 
 	# let ns3 start dnsrpzd
-	include "../dnsrps-secondary.conf";
+	include "../dnsrps.conf";
 };
 
 key rndc_key {

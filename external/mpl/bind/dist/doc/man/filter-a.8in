@@ -35,8 +35,8 @@ filter-a \- filter A in DNS responses when AAAA is present
 \fBplugin query\fP \(dqfilter\-a.so\(dq [{ parameters }];
 .SH DESCRIPTION
 .sp
-\fBfilter\-a.so\fP is a query plugin module for \fI\%named\fP, enabling
-\fI\%named\fP to omit some IPv4 addresses when responding to clients.
+\fBfilter\-a.so\fP is a query plugin module for \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link', enabling
+\X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' to omit some IPv4 addresses when responding to clients.
 .sp
 For example:
 .INDENT 0.0

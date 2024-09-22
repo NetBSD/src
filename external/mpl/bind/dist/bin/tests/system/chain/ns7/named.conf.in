@@ -35,11 +35,28 @@ key rndc_key {
 	algorithm @DEFAULT_HMAC@;
 };
 
+key restart16 {
+	secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
 controls {
 	inet 10.53.0.7 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
 };
 
-zone "." {
-	type hint;
-	file "root.hint";
+view restart16 {
+	match-clients { key restart16; none; };
+	max-query-restarts 16;
+
+	zone "." {
+		type hint;
+		file "root.hint";
+	};
+};
+
+view default {
+	zone "." {
+		type hint;
+		file "root.hint";
+	};
 };

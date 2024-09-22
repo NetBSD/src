@@ -23,6 +23,7 @@ options {
 	notify yes;
 	minimal-responses no;
 	dnssec-validation no;
+	max-records-per-type 0;
 };
 
 zone "." {

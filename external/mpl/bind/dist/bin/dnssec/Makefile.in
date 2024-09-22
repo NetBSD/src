@@ -137,45 +137,52 @@ am__v_lt_1 =
 dnssec_cds_SOURCES = dnssec-cds.c
 dnssec_cds_OBJECTS = dnssec-cds.$(OBJEXT)
 dnssec_cds_LDADD = $(LDADD)
-dnssec_cds_DEPENDENCIES = libdnssectool.la $(LIBISC_LIBS) \
+am__DEPENDENCIES_1 =
+@HAVE_JEMALLOC_FALSE@am__DEPENDENCIES_2 =  \
+@HAVE_JEMALLOC_FALSE@	$(top_builddir)/lib/isc/libisc.la
+@HAVE_JEMALLOC_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) \
+@HAVE_JEMALLOC_TRUE@	$(top_builddir)/lib/isc/libisc.la
+dnssec_cds_DEPENDENCIES = libdnssectool.la $(am__DEPENDENCIES_2) \
 	$(LIBDNS_LIBS)
 dnssec_dsfromkey_SOURCES = dnssec-dsfromkey.c
 dnssec_dsfromkey_OBJECTS = dnssec-dsfromkey.$(OBJEXT)
 dnssec_dsfromkey_LDADD = $(LDADD)
-dnssec_dsfromkey_DEPENDENCIES = libdnssectool.la $(LIBISC_LIBS) \
+dnssec_dsfromkey_DEPENDENCIES = libdnssectool.la $(am__DEPENDENCIES_2) \
 	$(LIBDNS_LIBS)
 dnssec_importkey_SOURCES = dnssec-importkey.c
 dnssec_importkey_OBJECTS = dnssec-importkey.$(OBJEXT)
 dnssec_importkey_LDADD = $(LDADD)
-dnssec_importkey_DEPENDENCIES = libdnssectool.la $(LIBISC_LIBS) \
+dnssec_importkey_DEPENDENCIES = libdnssectool.la $(am__DEPENDENCIES_2) \
 	$(LIBDNS_LIBS)
 dnssec_keyfromlabel_SOURCES = dnssec-keyfromlabel.c
 dnssec_keyfromlabel_OBJECTS = dnssec-keyfromlabel.$(OBJEXT)
 dnssec_keyfromlabel_LDADD = $(LDADD)
-dnssec_keyfromlabel_DEPENDENCIES = libdnssectool.la $(LIBISC_LIBS) \
-	$(LIBDNS_LIBS)
+dnssec_keyfromlabel_DEPENDENCIES = libdnssectool.la \
+	$(am__DEPENDENCIES_2) $(LIBDNS_LIBS)
 dnssec_keygen_SOURCES = dnssec-keygen.c
 dnssec_keygen_OBJECTS = dnssec_keygen-dnssec-keygen.$(OBJEXT)
-dnssec_keygen_DEPENDENCIES = $(LDADD) $(LIBISCCFG_LIBS)
+am__DEPENDENCIES_3 = libdnssectool.la $(am__DEPENDENCIES_2) \
+	$(LIBDNS_LIBS)
+dnssec_keygen_DEPENDENCIES = $(am__DEPENDENCIES_3) $(LIBISCCFG_LIBS)
 dnssec_revoke_SOURCES = dnssec-revoke.c
 dnssec_revoke_OBJECTS = dnssec-revoke.$(OBJEXT)
 dnssec_revoke_LDADD = $(LDADD)
-dnssec_revoke_DEPENDENCIES = libdnssectool.la $(LIBISC_LIBS) \
+dnssec_revoke_DEPENDENCIES = libdnssectool.la $(am__DEPENDENCIES_2) \
 	$(LIBDNS_LIBS)
 dnssec_settime_SOURCES = dnssec-settime.c
 dnssec_settime_OBJECTS = dnssec-settime.$(OBJEXT)
 dnssec_settime_LDADD = $(LDADD)
-dnssec_settime_DEPENDENCIES = libdnssectool.la $(LIBISC_LIBS) \
+dnssec_settime_DEPENDENCIES = libdnssectool.la $(am__DEPENDENCIES_2) \
 	$(LIBDNS_LIBS)
 dnssec_signzone_SOURCES = dnssec-signzone.c
 dnssec_signzone_OBJECTS = dnssec-signzone.$(OBJEXT)
 dnssec_signzone_LDADD = $(LDADD)
-dnssec_signzone_DEPENDENCIES = libdnssectool.la $(LIBISC_LIBS) \
+dnssec_signzone_DEPENDENCIES = libdnssectool.la $(am__DEPENDENCIES_2) \
 	$(LIBDNS_LIBS)
 dnssec_verify_SOURCES = dnssec-verify.c
 dnssec_verify_OBJECTS = dnssec-verify.$(OBJEXT)
 dnssec_verify_LDADD = $(LDADD)
-dnssec_verify_DEPENDENCIES = libdnssectool.la $(LIBISC_LIBS) \
+dnssec_verify_DEPENDENCIES = libdnssectool.la $(am__DEPENDENCIES_2) \
 	$(LIBDNS_LIBS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -466,12 +473,16 @@ AM_CPPFLAGS = $(STD_CPPFLAGS) -include $(top_builddir)/config.h \
 	-DNAMED_CONFFILE=\"${sysconfdir}/named.conf\"
 AM_LDFLAGS = $(STD_LDFLAGS) $(am__append_1)
 LDADD = libdnssectool.la $(LIBISC_LIBS) $(LIBDNS_LIBS)
-LIBISC_CFLAGS = \
-	-I$(top_srcdir)/include				\
-	-I$(top_srcdir)/lib/isc/include			\
-	-I$(top_builddir)/lib/isc/include
-
-LIBISC_LIBS = $(top_builddir)/lib/isc/libisc.la
+@HAVE_JEMALLOC_FALSE@LIBISC_CFLAGS = -I$(top_srcdir)/include \
+@HAVE_JEMALLOC_FALSE@	-I$(top_srcdir)/lib/isc/include \
+@HAVE_JEMALLOC_FALSE@	-I$(top_builddir)/lib/isc/include
+@HAVE_JEMALLOC_TRUE@LIBISC_CFLAGS = $(JEMALLOC_CFLAGS) \
+@HAVE_JEMALLOC_TRUE@	-I$(top_srcdir)/include \
+@HAVE_JEMALLOC_TRUE@	-I$(top_srcdir)/lib/isc/include \
+@HAVE_JEMALLOC_TRUE@	-I$(top_builddir)/lib/isc/include
+@HAVE_JEMALLOC_FALSE@LIBISC_LIBS = $(top_builddir)/lib/isc/libisc.la
+@HAVE_JEMALLOC_TRUE@LIBISC_LIBS = $(JEMALLOC_LIBS) \
+@HAVE_JEMALLOC_TRUE@	$(top_builddir)/lib/isc/libisc.la
 LIBDNS_CFLAGS = \
 	-I$(top_srcdir)/lib/dns/include			\
 	-I$(top_builddir)/lib/dns/include

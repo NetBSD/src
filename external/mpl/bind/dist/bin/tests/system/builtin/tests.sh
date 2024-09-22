@@ -120,7 +120,8 @@ A.E.F.IP6.ARPA
 B.E.F.IP6.ARPA
 8.B.D.0.1.0.0.2.IP6.ARPA
 EMPTY.AS112.ARPA
-HOME.ARPA"
+HOME.ARPA
+RESOLVER.ARPA"
 
 n=$((n + 1))
 ret=0
@@ -134,7 +135,7 @@ for zone in ${emptyzones}; do
   count=$((count + 1))
 done
 lines=$(grep "automatic empty zone: " ns1/named.run | wc -l)
-test $count -eq $lines -a $count -eq 99 || {
+test $count -eq $lines -a $count -eq 100 || {
   ret=1
   echo_i "failed (count mismatch)"
 }

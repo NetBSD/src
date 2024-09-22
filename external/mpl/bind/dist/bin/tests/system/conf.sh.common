@@ -12,7 +12,7 @@
 # information regarding copyright ownership.
 
 testsock6() {
-	if test -n "$PERL" && $PERL -e "use IO::Socket::INET6;" 2> /dev/null
+	if test -n "$PERL" && $PERL -e "use IO::Socket::IP;" 2> /dev/null
 	then
 		$PERL "$TOP_SRCDIR/bin/tests/system/testsock6.pl" "$@"
 	else
@@ -20,7 +20,7 @@ testsock6() {
 	fi
 }
 
-export LANG=C
+export LC_ALL=C
 
 
 #
@@ -179,19 +179,19 @@ then
 	}
 	echo_i() {
 	    printf '%s\n' "$*" | while IFS= read -r __LINE ; do
-	       echoinfo "I:$SYSTESTDIR:$__LINE"
+	       echoinfo "I:$__LINE"
 	    done
 	}
 
 	echo_ic() {
 	    printf '%s\n' "$*" | while IFS= read -r __LINE ; do
-	       echoinfo "I:$SYSTESTDIR:  $__LINE"
+	       echoinfo "I:  $__LINE"
 	    done
 	}
 
 	echo_d() {
 	    printf '%s\n' "$*" | while IFS= read -r __LINE ; do
-	       echoinfo "D:$SYSTESTDIR:$__LINE"
+	       echoinfo "D:$__LINE"
 	    done
 	}
 else
@@ -216,32 +216,32 @@ else
 
 	echo_i() {
 	    echo "$@" | while IFS= read -r __LINE ; do
-	       echoinfo "I:$SYSTESTDIR:$__LINE"
+	       echoinfo "I:$__LINE"
 	    done
 	}
 
 	echo_ic() {
 	    echo "$@" | while IFS= read -r __LINE ; do
-	       echoinfo "I:$SYSTESTDIR:  $__LINE"
+	       echoinfo "I:  $__LINE"
 	    done
 	}
 
 	echo_d() {
 	    echo "$@" | while IFS= read -r __LINE ; do
-	       echoinfo "D:$SYSTESTDIR:$__LINE"
+	       echoinfo "D:$__LINE"
 	    done
 	}
 fi
 
 cat_i() {
     while IFS= read -r __LINE ; do
-       echoinfo "I:$SYSTESTDIR:$__LINE"
+       echoinfo "I:$__LINE"
     done
 }
 
 cat_d() {
     while IFS= read -r __LINE ; do
-       echoinfo "D:$SYSTESTDIR:$__LINE"
+       echoinfo "D:$__LINE"
     done
 }
 
@@ -609,7 +609,7 @@ _times() {
 }
 
 rndc_reload() {
-    $RNDC -c ../_common/rndc.conf -s $2 -p ${CONTROLPORT} reload $3 2>&1 | sed 's/^/'"I:$SYSTESTDIR:$1"' /'
+    $RNDC -c ../_common/rndc.conf -s $2 -p ${CONTROLPORT} reload $3 2>&1 | sed 's/^/'"I:$1"' /'
     # reloading single zone is synchronous, if we're reloading whole server
     # we need to wait for reload to finish
     if [ -z "$3" ]; then
@@ -622,7 +622,7 @@ rndc_reload() {
 
 rndc_reconfig() {
     seconds=${3:-10}
-    $RNDC -c ../_common/rndc.conf -s "$2" -p "${CONTROLPORT}" reconfig 2>&1 | sed 's/^/'"I:$SYSTESTDIR:$1"' /'
+    $RNDC -c ../_common/rndc.conf -s "$2" -p "${CONTROLPORT}" reconfig 2>&1 | sed 's/^/'"I:$1"' /'
     for _ in $(_times "$seconds"); do
         "$RNDC" -c ../_common/rndc.conf -s "$2" -p "${CONTROLPORT}" status | grep "reload/reconfig in progress" > /dev/null || break
         sleep 1

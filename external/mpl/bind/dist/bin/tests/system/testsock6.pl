@@ -13,13 +13,14 @@
 
 require 5.001;
 
-use IO::Socket::INET6;
+use IO::Socket::IP;
 
 foreach $addr (@ARGV) {
 	my $sock;
-	$sock = IO::Socket::INET6->new(LocalAddr => $addr,
-                                       LocalPort => 0,
-                                       Proto     => tcp)
+	$sock = IO::Socket::IP->new(LocalAddr => $addr,
+				    Domain => PF_INET6,
+                                    LocalPort => 0,
+                                    Proto     => tcp)
                              or die "Can't bind : $@\n";
 	close($sock);
 }

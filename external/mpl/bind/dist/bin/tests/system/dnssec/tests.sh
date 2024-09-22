@@ -386,9 +386,9 @@ status=$((status + ret))
 
 echo_i "checking negative validation NXDOMAIN NSEC3 ($n)"
 ret=0
-dig_with_opts +noauth q.nsec3.example. \
+dig_with_opts +noauth a.b.c.d.e.f.g.h.i.j.nsec3.example. \
   @10.53.0.3 a >dig.out.ns3.test$n || ret=1
-dig_with_opts +noauth q.nsec3.example. \
+dig_with_opts +noauth a.b.c.d.e.f.g.h.i.j.nsec3.example. \
   @10.53.0.4 a >dig.out.ns4.test$n || ret=1
 digcomp dig.out.ns3.test$n dig.out.ns4.test$n || ret=1
 grep "flags:.*ad.*QUERY" dig.out.ns4.test$n >/dev/null || ret=1
@@ -3672,6 +3672,18 @@ n=$((n + 1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status + ret))
 
+# Check that a query for a domain that has a KSK that is not actively signing
+# the DNSKEY RRset. This should not result in a broken trust chain if there is
+# another KSK that is signing the DNSKEY RRset.
+echo_i "checking that a secure chain with one active and one inactive KSK validates as secure ($n)"
+ret=0
+dig_with_opts @10.53.0.4 a.lazy-ksk A >dig.out.ns4.test$n
+grep "status: NOERROR," dig.out.ns4.test$n >/dev/null || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns4.test$n >/dev/null || ret=1
+n=$((n + 1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status + ret))
+
 # TODO: test case for GL #1689.
 # If we allow the dnssec tools to use deprecated algorithms (such as RSAMD5)
 # we could write a test that signs a zone with supported and unsupported
@@ -3945,9 +3957,9 @@ ret=0
 dig_with_opts any x.insecure.example. @10.53.0.3 >dig.out.ns3.1.test$n || ret=1
 grep "status: NOERROR" dig.out.ns3.1.test$n >/dev/null || ret=1
 grep "ANSWER: 0," dig.out.ns3.1.test$n >/dev/null || ret=1
-dig_with_opts any zz.secure.example. @10.53.0.3 >dig.out.ns3.2.test$n || ret=1
+dig_with_opts any z.secure.example. @10.53.0.3 >dig.out.ns3.2.test$n || ret=1
 grep "status: NOERROR" dig.out.ns3.2.test$n >/dev/null || ret=1
-# DNSKEY+RRSIG, NSEC+RRSIG
+# A+RRSIG, NSEC+RRSIG
 grep "ANSWER: 4," dig.out.ns3.2.test$n >/dev/null || ret=1
 n=$((n + 1))
 test "$ret" -eq 0 || echo_i "failed"

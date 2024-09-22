@@ -98,6 +98,12 @@ END {
 }' ns2/named.run >awk.out.ns2.test$n || ret=1
 test_end
 
+# See [GL#4689]
+test_start "checking server behaviour with invalid notify-source-v6 address"
+grep "zone ./IN: sending notify to fd92:7065:b8e:fffe::a35:4#" ns1/named.run >/dev/null || ret=1
+grep "dns_request_create: failed address not available" ns1/named.run >/dev/null || ret=1
+test_end
+
 nextpart ns3/named.run >/dev/null
 
 sleep 1 # make sure filesystem time stamp is newer for reload.
