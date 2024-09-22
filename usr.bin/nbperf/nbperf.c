@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf.c,v 1.8 2024/02/02 22:33:42 andvar Exp $	*/
+/*	$NetBSD: nbperf.c,v 1.9 2024/09/22 20:34:26 christos Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf.c,v 1.8 2024/02/02 22:33:42 andvar Exp $");
+__RCSID("$NetBSD: nbperf.c,v 1.9 2024/09/22 20:34:26 christos Exp $");
 
 #include <sys/endian.h>
 #include <err.h>
@@ -127,7 +127,7 @@ main(int argc, char **argv)
 	size_t line_allocated;
 	const void **keys = NULL;
 	size_t *keylens = NULL;
-	uint32_t max_iterations = 0xffffffU;
+	uint32_t max_iterations = ~0U;
 	long long tmp;
 	int looped, ch;
 	int (*build_hash)(struct nbperf *) = chm_compute;
@@ -259,7 +259,7 @@ main(int argc, char **argv)
 		if (!looped)
 			nbperf.check_duplicates = 1;
 		looped = 1;
-		if (max_iterations == 0xffffffffU)
+		if (max_iterations == ~0U)
 			continue;
 		if (--max_iterations == 0) {
 			fputc('\n', stderr);
