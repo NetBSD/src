@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-cds.c,v 1.10 2024/02/21 22:51:02 christos Exp $	*/
+/*	$NetBSD: dnssec-cds.c,v 1.11 2024/09/22 00:13:56 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1061,7 +1061,7 @@ usage(void) {
 			"    -T <ttl>           TTL of DS records\n"
 			"    -V                 print version\n"
 			"    -v <verbosity>\n");
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 static void
@@ -1359,5 +1359,6 @@ main(int argc, char *argv[]) {
 cleanup:
 	print_mem_stats = true;
 	cleanup();
-	exit(0);
+
+	return (0);
 }

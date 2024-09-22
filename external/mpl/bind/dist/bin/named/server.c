@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.21 2024/02/21 22:51:05 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.22 2024/09/22 00:13:56 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -223,8 +223,9 @@
 #define CHECKFATAL(op, msg)                         \
 	do {                                        \
 		result = (op);                      \
-		if (result != ISC_R_SUCCESS)        \
+		if (result != ISC_R_SUCCESS) {      \
 			fatal(server, msg, result); \
+		}                                   \
 	} while (0)
 
 /*%
@@ -325,6 +326,12 @@ typedef struct catz_chgzone_event {
 	bool mod;
 } catz_chgzone_event_t;
 
+typedef struct catz_reconfig_data {
+	dns_catz_zone_t *catz;
+	const cfg_obj_t *config;
+	catz_cb_data_t *cbd;
+} catz_reconfig_data_t;
+
 typedef struct {
 	unsigned int magic;
 #define DZARG_MAGIC ISC_MAGIC('D', 'z', 'a', 'r')
@@ -397,6 +404,9 @@ const char *empty_zones[] = {
 	/* RFC 8375 */
 	"HOME.ARPA",
 
+	/* RFC 9462 */
+	"RESOLVER.ARPA",
+
 	NULL
 };
 
@@ -439,7 +449,7 @@ configure_zone(const cfg_obj_t *config, const cfg_obj_t *zconfig,
 	       const cfg_obj_t *vconfig, isc_mem_t *mctx, dns_view_t *view,
 	       dns_viewlist_t *viewlist, dns_kasplist_t *kasplist,
 	       cfg_aclconfctx_t *aclconf, bool added, bool old_rpz_ok,
-	       bool modify);
+	       bool is_catz_member, bool modify);
 
 static void
 configure_zone_setviewcommit(isc_result_t result, const cfg_obj_t *zconfig,
@@ -2674,13 +2684,13 @@ catz_addmodzone_taskaction(isc_task_t *task, isc_event_t *event0) {
 	ns_cfgctx_t *cfg;
 	dns_zone_t *zone = NULL;
 
+	/*
+	 * A non-empty 'catalog-zones' statement implies that 'allow-new-zones'
+	 * is true, so this is expected to be non-NULL.
+	 */
 	cfg = (ns_cfgctx_t *)ev->view->new_zone_config;
 	if (cfg == NULL) {
-		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
-			      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
-			      "catz: allow-new-zones statement missing from "
-			      "config; cannot add zone from the catalog");
-		goto cleanup;
+		CHECK(ISC_R_FAILURE);
 	}
 
 	name = dns_catz_entry_getname(ev->entry);
@@ -2703,7 +2713,7 @@ catz_addmodzone_taskaction(isc_task_t *task, isc_event_t *event0) {
 		goto cleanup;
 	}
 
-	result = dns_zt_find(ev->view->zonetable, name, 0, NULL, &zone);
+	result = dns_view_findzone(ev->view, name, &zone);
 
 	if (ev->mod) {
 		dns_catz_zone_t *parentcatz;
@@ -2801,7 +2811,7 @@ catz_addmodzone_taskaction(isc_task_t *task, isc_event_t *event0) {
 		isc_buffer_free(&confbuf);
 	}
 	/*
-	 * Fail if either dns_catz_generate_zonecfg() or cfg_parse_buffer3()
+	 * Fail if either dns_catz_generate_zonecfg() or cfg_parse_buffer()
 	 * failed.
 	 */
 	if (result != ISC_R_SUCCESS) {
@@ -2825,10 +2835,11 @@ catz_addmodzone_taskaction(isc_task_t *task, isc_event_t *event0) {
 	result = isc_task_beginexclusive(task);
 	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 	dns_view_thaw(ev->view);
-	result = configure_zone(
-		cfg->config, zoneobj, cfg->vconfig, ev->cbd->server->mctx,
-		ev->view, &ev->cbd->server->viewlist,
-		&ev->cbd->server->kasplist, cfg->actx, true, false, ev->mod);
+	result = configure_zone(cfg->config, zoneobj, cfg->vconfig,
+				ev->cbd->server->mctx, ev->view,
+				&ev->cbd->server->viewlist,
+				&ev->cbd->server->kasplist, cfg->actx, true,
+				false, true, ev->mod);
 	dns_view_freeze(ev->view);
 	isc_task_endexclusive(task);
 
@@ -2880,7 +2891,7 @@ cleanup:
 	}
 	dns_catz_entry_detach(ev->origin, &ev->entry);
 	dns_catz_detach_catz(&ev->origin);
-	dns_view_detach(&ev->view);
+	dns_view_weakdetach(&ev->view);
 	isc_event_free(ISC_EVENT_PTR(&ev));
 }
 
@@ -2898,8 +2909,8 @@ catz_delzone_taskaction(isc_task_t *task, isc_event_t *event0) {
 
 	dns_name_format(dns_catz_entry_getname(ev->entry), cname,
 			DNS_NAME_FORMATSIZE);
-	result = dns_zt_find(ev->view->zonetable,
-			     dns_catz_entry_getname(ev->entry), 0, NULL, &zone);
+	result = dns_view_findzone(ev->view, dns_catz_entry_getname(ev->entry),
+				   &zone);
 	if (result != ISC_R_SUCCESS) {
 		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 			      NAMED_LOGMODULE_SERVER, ISC_LOG_WARNING,
@@ -2955,7 +2966,7 @@ cleanup:
 	}
 	dns_catz_entry_detach(ev->origin, &ev->entry);
 	dns_catz_detach_catz(&ev->origin);
-	dns_view_detach(&ev->view);
+	dns_view_weakdetach(&ev->view);
 	isc_event_free(ISC_EVENT_PTR(&ev));
 }
 
@@ -2997,7 +3008,7 @@ catz_create_chg_task(dns_catz_entry_t *entry, dns_catz_zone_t *origin,
 
 	dns_catz_entry_attach(entry, &event->entry);
 	dns_catz_attach_catz(origin, &event->origin);
-	dns_view_attach(view, &event->view);
+	dns_view_weakattach(view, &event->view);
 
 	isc_task_send(task, ISC_EVENT_PTR(&event));
 	isc_task_detach(&task);
@@ -3024,6 +3035,86 @@ catz_modzone(dns_catz_entry_t *entry, dns_catz_zone_t *origin, dns_view_t *view,
 	     isc_taskmgr_t *taskmgr, void *udata) {
 	return (catz_create_chg_task(entry, origin, view, taskmgr, udata,
 				     DNS_EVENT_CATZMODZONE));
+}
+
+static void
+catz_reconfigure(dns_catz_entry_t *entry, dns_view_t *view,
+		 catz_reconfig_data_t *data) {
+	isc_buffer_t namebuf;
+	isc_buffer_t *confbuf = NULL;
+	const cfg_obj_t *zlist = NULL;
+	char nameb[DNS_NAME_FORMATSIZE];
+	cfg_obj_t *zoneconf = NULL;
+	cfg_obj_t *zoneobj = NULL;
+	ns_cfgctx_t *cfg = NULL;
+	dns_zone_t *zone = NULL;
+	isc_result_t result;
+
+	isc_buffer_init(&namebuf, nameb, DNS_NAME_FORMATSIZE);
+	dns_name_totext(dns_catz_entry_getname(entry), DNS_NAME_OMITFINALDOT,
+			&namebuf);
+	isc_buffer_putuint8(&namebuf, 0);
+
+	result = dns_view_findzone(view, dns_catz_entry_getname(entry), &zone);
+	if (result != ISC_R_SUCCESS) {
+		return;
+	}
+
+	/*
+	 * A non-empty 'catalog-zones' statement implies that 'allow-new-zones'
+	 * is true, so this is expected to be non-NULL.
+	 */
+	cfg = (ns_cfgctx_t *)view->new_zone_config;
+	if (cfg == NULL) {
+		CHECK(ISC_R_FAILURE);
+	}
+
+	result = dns_catz_generate_zonecfg(data->catz, entry, &confbuf);
+	if (result == ISC_R_SUCCESS) {
+		cfg_parser_reset(cfg->add_parser);
+		result = cfg_parse_buffer(cfg->add_parser, confbuf, "catz", 0,
+					  &cfg_type_addzoneconf, 0, &zoneconf);
+		isc_buffer_free(&confbuf);
+	}
+	/*
+	 * Fail if either dns_catz_generate_zonecfg() or cfg_parse_buffer()
+	 * failed.
+	 */
+	if (result != ISC_R_SUCCESS) {
+		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
+			      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
+			      "catz_reconfigure: error \"%s\" while trying to "
+			      "generate config for member zone '%s'",
+			      isc_result_totext(result), nameb);
+		goto cleanup;
+	}
+
+	CHECK(cfg_map_get(zoneconf, "zone", &zlist));
+	if (!cfg_obj_islist(zlist)) {
+		CHECK(ISC_R_FAILURE);
+	}
+	zoneobj = cfg_listelt_value(cfg_list_first(zlist));
+
+	result = configure_zone(data->config, zoneobj, cfg->vconfig,
+				data->cbd->server->mctx, view,
+				&data->cbd->server->viewlist,
+				&data->cbd->server->kasplist, cfg->actx, true,
+				false, true, true);
+	if (result != ISC_R_SUCCESS) {
+		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
+			      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
+			      "catz_reconfigure : error \"%s\" while trying to "
+			      "reconfigure member zone '%s'",
+			      isc_result_totext(result), nameb);
+		goto cleanup;
+	}
+
+cleanup:
+	if (zoneconf != NULL) {
+		cfg_obj_destroy(cfg->add_parser, &zoneconf);
+	}
+
+	dns_zone_detach(&zone);
 }
 
 static isc_result_t
@@ -3064,18 +3155,18 @@ configure_catz_zone(dns_view_t *view, dns_view_t *pview,
 
 	if (result == ISC_R_EXISTS) {
 		isc_ht_iter_t *it = NULL;
+		catz_reconfig_data_t data = {
+			.catz = zone,
+			.config = config,
+			.cbd = (catz_cb_data_t *)dns_catz_zones_get_udata(
+				view->catzs),
+		};
 
 		RUNTIME_CHECK(pview != NULL);
 
 		/*
-		 * xxxwpk todo: reconfigure the zone!!!!
-		 */
-		cfg_obj_log(catz_obj, named_g_lctx, DNS_CATZ_ERROR_LEVEL,
-			    "catz: catalog zone '%s' will not be reconfigured",
-			    str);
-		/*
-		 * We have to walk through all the member zones and attach
-		 * them to current view
+		 * We have to walk through all the member zones, attach
+		 * them to the current view and reconfigure
 		 */
 		dns_catz_get_iterator(zone, &it);
 
@@ -3097,6 +3188,8 @@ configure_catz_zone(dns_view_t *view, dns_view_t *pview,
 
 			dns_zone_setview(dnszone, view);
 			dns_view_addzone(view, dnszone);
+
+			catz_reconfigure(entry, view, &data);
 
 			/*
 			 * The dns_view_findzone() call above increments the
@@ -4226,7 +4319,7 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist, cfg_obj_t *config,
 		const cfg_obj_t *zconfig = cfg_listelt_value(element);
 		CHECK(configure_zone(config, zconfig, vconfig, mctx, view,
 				     viewlist, kasplist, actx, false,
-				     old_rpz_ok, false));
+				     old_rpz_ok, false, false));
 		zone_element_latest = element;
 	}
 
@@ -4739,21 +4832,11 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist, cfg_obj_t *config,
 			 * view but is not yet configured.  If it is not the
 			 * view name but not a forward reference either, then it
 			 * is simply a named cache that is not shared.
-			 *
-			 * We use two separate memory contexts for the
-			 * cache, for the main cache memory and the heap
-			 * memory.
 			 */
-			isc_mem_create(&cmctx);
-			isc_mem_setname(cmctx, "cache");
-			isc_mem_create(&hmctx);
-			isc_mem_setname(hmctx, "cache_heap");
-			CHECK(dns_cache_create(cmctx, hmctx, named_g_taskmgr,
+			CHECK(dns_cache_create(mctx, named_g_taskmgr,
 					       named_g_timermgr, view->rdclass,
 					       cachename, "rbt", 0, NULL,
 					       &cache));
-			isc_mem_detach(&cmctx);
-			isc_mem_detach(&hmctx);
 		}
 		nsc = isc_mem_get(mctx, sizeof(*nsc));
 		nsc->cache = NULL;
@@ -5565,6 +5648,24 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist, cfg_obj_t *config,
 	dns_resolver_setclientsperquery(view->resolver, cfg_obj_asuint32(obj),
 					max_clients_per_query);
 
+	/*
+	 * This is used for the cache and also as a default value
+	 * for zone databases.
+	 */
+	obj = NULL;
+	result = named_config_get(maps, "max-records-per-type", &obj);
+	INSIST(result == ISC_R_SUCCESS);
+	dns_view_setmaxrrperset(view, cfg_obj_asuint32(obj));
+
+	/*
+	 * This is used for the cache and also as a default value
+	 * for zone databases.
+	 */
+	obj = NULL;
+	result = named_config_get(maps, "max-types-per-name", &obj);
+	INSIST(result == ISC_R_SUCCESS);
+	dns_view_setmaxtypepername(view, cfg_obj_asuint32(obj));
+
 	obj = NULL;
 	result = named_config_get(maps, "max-recursion-depth", &obj);
 	INSIST(result == ISC_R_SUCCESS);
@@ -5574,6 +5675,11 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist, cfg_obj_t *config,
 	result = named_config_get(maps, "max-recursion-queries", &obj);
 	INSIST(result == ISC_R_SUCCESS);
 	dns_resolver_setmaxqueries(view->resolver, cfg_obj_asuint32(obj));
+
+	obj = NULL;
+	result = named_config_get(maps, "max-query-restarts", &obj);
+	INSIST(result == ISC_R_SUCCESS);
+	dns_view_setmaxrestarts(view, cfg_obj_asuint32(obj));
 
 	obj = NULL;
 	result = named_config_get(maps, "fetches-per-zone", &obj);
@@ -6487,7 +6593,7 @@ configure_zone(const cfg_obj_t *config, const cfg_obj_t *zconfig,
 	       const cfg_obj_t *vconfig, isc_mem_t *mctx, dns_view_t *view,
 	       dns_viewlist_t *viewlist, dns_kasplist_t *kasplist,
 	       cfg_aclconfctx_t *aclconf, bool added, bool old_rpz_ok,
-	       bool modify) {
+	       bool is_catz_member, bool modify) {
 	dns_view_t *pview = NULL; /* Production view */
 	dns_zone_t *zone = NULL;  /* New or reused zone */
 	dns_zone_t *raw = NULL;	  /* New or reused raw zone */
@@ -6750,7 +6856,7 @@ configure_zone(const cfg_obj_t *config, const cfg_obj_t *zconfig,
 		}
 	}
 
-	if (view->catzs != NULL &&
+	if (!is_catz_member && view->catzs != NULL &&
 	    dns_catz_get_zone(view->catzs, origin) != NULL)
 	{
 		zone_is_catz = true;
@@ -7073,6 +7179,13 @@ directory_callback(const char *clausename, const cfg_obj_t *obj, void *arg) {
 			    "change directory to '%s' failed: %s", directory,
 			    isc_result_totext(result));
 		return (result);
+	}
+
+	char cwd[PATH_MAX];
+	if (getcwd(cwd, sizeof(cwd)) == cwd) {
+		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
+			      NAMED_LOGMODULE_SERVER, ISC_LOG_INFO,
+			      "the working directory is now '%s'", cwd);
 	}
 
 	return (ISC_R_SUCCESS);
@@ -8053,7 +8166,7 @@ configure_newzones(dns_view_t *view, cfg_obj_t *config, cfg_obj_t *vconfig,
 		CHECK(configure_zone(config, zconfig, vconfig, mctx, view,
 				     &named_g_server->viewlist,
 				     &named_g_server->kasplist, actx, true,
-				     false, false));
+				     false, false, false));
 	}
 
 	result = ISC_R_SUCCESS;
@@ -8237,7 +8350,7 @@ configure_newzone(const cfg_obj_t *zconfig, cfg_obj_t *config,
 		  cfg_aclconfctx_t *actx) {
 	return (configure_zone(
 		config, zconfig, vconfig, mctx, view, &named_g_server->viewlist,
-		&named_g_server->kasplist, actx, true, false, false));
+		&named_g_server->kasplist, actx, true, false, false, false));
 }
 
 /*%
@@ -8544,6 +8657,19 @@ load_configuration(const char *filename, named_server_t *server,
 		}
 		RUNTIME_CHECK(cfg_map_get(named_g_config, "options",
 					  &named_g_defaults) == ISC_R_SUCCESS);
+	}
+
+	/*
+	 * Log the current working directory.
+	 */
+	if (first_time) {
+		char cwd[PATH_MAX];
+		if (getcwd(cwd, sizeof(cwd)) == cwd) {
+			isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
+				      NAMED_LOGMODULE_SERVER, ISC_LOG_INFO,
+				      "the initial working directory is '%s'",
+				      cwd);
+		}
 	}
 
 	/*
@@ -10421,7 +10547,7 @@ fatal(named_server_t *server, const char *msg, isc_result_t result) {
 		      NAMED_LOGMODULE_SERVER, ISC_LOG_CRITICAL,
 		      "exiting (due to fatal error)");
 	named_os_shutdown();
-	exit(1);
+	_exit(EXIT_FAILURE);
 }
 
 static void
@@ -13933,7 +14059,7 @@ do_addzone(named_server_t *server, ns_cfgctx_t *cfg, dns_view_t *view,
 	result = configure_zone(cfg->config, zoneobj, cfg->vconfig,
 				server->mctx, view, &server->viewlist,
 				&server->kasplist, cfg->actx, true, false,
-				false);
+				false, false);
 	dns_view_freeze(view);
 
 	isc_task_endexclusive(server->task);
@@ -14121,7 +14247,7 @@ do_modzone(named_server_t *server, ns_cfgctx_t *cfg, dns_view_t *view,
 	result = configure_zone(cfg->config, zoneobj, cfg->vconfig,
 				server->mctx, view, &server->viewlist,
 				&server->kasplist, cfg->actx, true, false,
-				true);
+				false, true);
 	dns_view_freeze(view);
 
 	exclusive = false;

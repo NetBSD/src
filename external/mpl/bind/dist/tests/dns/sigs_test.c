@@ -1,4 +1,4 @@
-/*	$NetBSD: sigs_test.c,v 1.2 2024/02/21 22:52:50 christos Exp $	*/
+/*	$NetBSD: sigs_test.c,v 1.3 2024/09/22 00:14:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -61,10 +61,7 @@ typedef struct {
 	const char *type;
 } zonediff_t;
 
-#define ZONEDIFF_SENTINEL        \
-	{                        \
-		0, NULL, 0, NULL \
-	}
+#define ZONEDIFF_SENTINEL { 0, NULL, 0, NULL }
 
 /*%
  * Structure defining a dns__zone_updatesigs() test.

@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsdns.c,v 1.5 2024/02/21 22:52:32 christos Exp $	*/
+/*	$NetBSD: tlsdns.c,v 1.6 2024/09/22 00:14:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -89,6 +89,9 @@ static void
 tlsdns_set_tls_shutdown(isc_tls_t *tls) {
 	(void)SSL_set_shutdown(tls, SSL_SENT_SHUTDOWN);
 }
+
+static void
+tlsdns_maybe_restart_reading(isc_nmsocket_t *sock);
 
 static bool
 peer_verification_has_failed(isc_nmsocket_t *sock) {
@@ -500,9 +503,10 @@ start_tlsdns_child(isc_nm_t *mgr, isc_sockaddr_t *iface, isc_nmsocket_t *sock,
 		csock->fd = isc__nm_tlsdns_lb_socket(mgr,
 						     iface->type.sa.sa_family);
 	} else {
+		INSIST(fd >= 0);
 		csock->fd = dup(fd);
 	}
-	REQUIRE(csock->fd >= 0);
+	INSIST(csock->fd >= 0);
 
 	ievent = isc__nm_get_netievent_tlsdnslisten(mgr, csock);
 	isc__nm_maybe_enqueue_ievent(&mgr->workers[tid],
@@ -897,6 +901,7 @@ destroy:
 	 * had a chance to be executed.
 	 */
 	if (sock->quota != NULL) {
+		isc__nm_decstats(sock, STATID_CLIENTS);
 		isc_quota_detach(&sock->quota);
 	}
 }
@@ -1085,6 +1090,19 @@ tls_cycle_input(isc_nmsocket_t *sock) {
 		size_t len;
 
 		for (;;) {
+			/*
+			 * There is a similar branch in
+			 * isc__nm_process_sock_buffer() which is sufficient to
+			 * stop excessive processing in TCP. However, as we wrap
+			 * this call in a loop, we need to have it here in order
+			 * to limit the number of loop iterations (and,
+			 * consequently, the number of messages processed).
+			 */
+			if (atomic_load(&sock->ah) >= STREAM_CLIENTS_PER_CONN) {
+				isc__nm_stop_reading(sock);
+				break;
+			}
+
 			(void)SSL_peek(sock->tls.tls, &(char){ '\0' }, 0);
 
 			int pending = SSL_pending(sock->tls.tls);
@@ -1262,17 +1280,17 @@ call_pending_send_callbacks(isc_nmsocket_t *sock, const isc_result_t result) {
 }
 
 static void
-free_senddata(isc_nmsocket_t *sock, const isc_result_t result) {
+free_senddata(isc_nmsocket_t *sock, isc__nm_uvreq_t *req,
+	      const isc_result_t result) {
 	REQUIRE(VALID_NMSOCK(sock));
-	REQUIRE(sock->tls.senddata.base != NULL);
-	REQUIRE(sock->tls.senddata.length > 0);
+	REQUIRE(req != NULL && req->userbuf.base != NULL &&
+		req->userbuf.length > 0);
 
-	isc_mem_put(sock->mgr->mctx, sock->tls.senddata.base,
-		    sock->tls.senddata.length);
-	sock->tls.senddata.base = NULL;
-	sock->tls.senddata.length = 0;
+	isc_mem_put(sock->mgr->mctx, req->userbuf.base, req->userbuf.length);
 
 	call_pending_send_callbacks(sock, result);
+
+	isc__nm_uvreq_put(&req, sock);
 }
 
 static void
@@ -1285,11 +1303,19 @@ tls_write_cb(uv_write_t *req, int status) {
 	isc_nm_timer_stop(uvreq->timer);
 	isc_nm_timer_detach(&uvreq->timer);
 
-	free_senddata(sock, result);
-
-	isc__nm_uvreq_put(&uvreq, sock);
+	free_senddata(sock, uvreq, result);
 
 	if (status != 0) {
+		if (!sock->client &&
+		    (atomic_load(&sock->reading) || sock->reading_throttled))
+		{
+			/*
+			 * As we are resuming reading, it is not throttled
+			 * anymore (technically).
+			 */
+			sock->reading_throttled = false;
+			isc__nm_start_reading(sock);
+		}
 		tls_error(sock, result);
 		return;
 	}
@@ -1299,6 +1325,8 @@ tls_write_cb(uv_write_t *req, int status) {
 		tls_error(sock, result);
 		return;
 	}
+
+	tlsdns_maybe_restart_reading(sock);
 }
 
 static isc_result_t
@@ -1312,23 +1340,18 @@ tls_cycle_output(isc_nmsocket_t *sock) {
 		int rv;
 		int r;
 
-		if (sock->tls.senddata.base != NULL ||
-		    sock->tls.senddata.length > 0)
-		{
-			break;
-		}
-
 		if (pending > (int)ISC_NETMGR_TCP_RECVBUF_SIZE) {
 			pending = (int)ISC_NETMGR_TCP_RECVBUF_SIZE;
 		}
 
-		sock->tls.senddata.base = isc_mem_get(sock->mgr->mctx, pending);
-		sock->tls.senddata.length = pending;
-
 		/* It's a bit misnomer here, but it does the right thing */
 		req = isc__nm_get_read_req(sock, NULL);
-		req->uvbuf.base = (char *)sock->tls.senddata.base;
-		req->uvbuf.len = sock->tls.senddata.length;
+
+		req->userbuf.base = isc_mem_get(sock->mgr->mctx, pending);
+		req->userbuf.length = (size_t)pending;
+
+		req->uvbuf.base = (char *)req->userbuf.base;
+		req->uvbuf.len = (size_t)req->userbuf.length;
 
 		rv = BIO_read_ex(sock->tls.app_rbio, req->uvbuf.base,
 				 req->uvbuf.len, &bytes);
@@ -1340,32 +1363,36 @@ tls_cycle_output(isc_nmsocket_t *sock) {
 
 		if (r == pending) {
 			/* Wrote everything, restart */
-			isc__nm_uvreq_put(&req, sock);
-			free_senddata(sock, ISC_R_SUCCESS);
+			free_senddata(sock, req, ISC_R_SUCCESS);
 			continue;
 		}
 
 		if (r > 0) {
 			/* Partial write, send rest asynchronously */
-			memmove(req->uvbuf.base, req->uvbuf.base + r,
-				req->uvbuf.len - r);
-			req->uvbuf.len = req->uvbuf.len - r;
+			req->uvbuf.base += r;
+			req->uvbuf.len -= r;
 		} else if (r == UV_ENOSYS || r == UV_EAGAIN) {
 			/* uv_try_write is not supported, send
 			 * asynchronously */
 		} else {
 			result = isc__nm_uverr2result(r);
-			isc__nm_uvreq_put(&req, sock);
-			free_senddata(sock, result);
+			free_senddata(sock, req, result);
 			break;
 		}
+
+		isc_log_write(
+			isc_lctx, ISC_LOGCATEGORY_GENERAL, ISC_LOGMODULE_NETMGR,
+			ISC_LOG_DEBUG(3),
+			"throttling TCP connection, the other side is not "
+			"reading the data, switching to uv_write()");
+		sock->reading_throttled = true;
+		isc__nm_stop_reading(sock);
 
 		r = uv_write(&req->uv_req.write, &sock->uv_handle.stream,
 			     &req->uvbuf, 1, tls_write_cb);
 		if (r < 0) {
 			result = isc__nm_uverr2result(r);
-			isc__nm_uvreq_put(&req, sock);
-			free_senddata(sock, result);
+			free_senddata(sock, req, result);
 			break;
 		}
 
@@ -1534,6 +1561,28 @@ isc__nm_tlsdns_read_cb(uv_stream_t *stream, ssize_t nread,
 	result = tls_cycle(sock);
 	if (result != ISC_R_SUCCESS) {
 		isc__nm_failed_read_cb(sock, result, true);
+	} else if (!sock->client) {
+		/*
+		 * Stop reading if we have accumulated enough bytes in
+		 * the send queue; this means that the TCP client is not
+		 * reading back the data we sending to it, and there's
+		 * no reason to continue processing more incoming DNS
+		 * messages, if the client is not reading back the
+		 * responses.
+		 */
+		size_t write_queue_size =
+			uv_stream_get_write_queue_size(&sock->uv_handle.stream);
+
+		if (write_queue_size >= ISC_NETMGR_TCP_SENDBUF_SIZE) {
+			isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
+				      ISC_LOGMODULE_NETMGR, ISC_LOG_DEBUG(3),
+				      "throttling TCP connection, "
+				      "the other side is "
+				      "not reading the data (%zu)",
+				      write_queue_size);
+			sock->reading_throttled = true;
+			isc__nm_stop_reading(sock);
+		}
 	}
 free:
 	async_tlsdns_cycle(sock);
@@ -1726,6 +1775,8 @@ accept_connection(isc_nmsocket_t *ssock, isc_quota_t *quota) {
 		goto failure;
 	}
 
+	isc__nm_incstats(csock, STATID_CLIENTS);
+
 	/*
 	 * sock is now attached to the handle.
 	 */
@@ -1773,6 +1824,19 @@ isc__nm_tlsdns_send(isc_nmhandle_t *handle, isc_region_t *region,
 	isc__nm_enqueue_ievent(&sock->mgr->workers[sock->tid],
 			       (isc__netievent_t *)ievent);
 	return;
+}
+
+static void
+tlsdns_maybe_restart_reading(isc_nmsocket_t *sock) {
+	if (!sock->client && sock->reading_throttled &&
+	    !uv_is_active(&sock->uv_handle.handle))
+	{
+		isc_result_t result = isc__nm_process_sock_buffer(sock);
+		if (result != ISC_R_SUCCESS) {
+			atomic_store(&sock->reading, true);
+			isc__nm_failed_read_cb(sock, result, false);
+		}
+	}
 }
 
 /*
@@ -2111,6 +2175,7 @@ tlsdns_close_direct(isc_nmsocket_t *sock) {
 	REQUIRE(sock->tls.pending_req == NULL);
 
 	if (sock->quota != NULL) {
+		isc__nm_decstats(sock, STATID_CLIENTS);
 		isc_quota_detach(&sock->quota);
 	}
 

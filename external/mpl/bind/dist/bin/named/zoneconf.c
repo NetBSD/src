@@ -1,4 +1,4 @@
-/*	$NetBSD: zoneconf.c,v 1.15 2024/02/21 22:51:05 christos Exp $	*/
+/*	$NetBSD: zoneconf.c,v 1.16 2024/09/22 00:13:57 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1083,6 +1083,22 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 	dns_zone_setmaxrecords(mayberaw, cfg_obj_asuint32(obj));
 	if (zone != mayberaw) {
 		dns_zone_setmaxrecords(zone, 0);
+	}
+
+	obj = NULL;
+	result = named_config_get(maps, "max-records-per-type", &obj);
+	INSIST(result == ISC_R_SUCCESS && obj != NULL);
+	dns_zone_setmaxrrperset(mayberaw, cfg_obj_asuint32(obj));
+	if (zone != mayberaw) {
+		dns_zone_setmaxrrperset(zone, 0);
+	}
+
+	obj = NULL;
+	result = named_config_get(maps, "max-types-per-name", &obj);
+	INSIST(result == ISC_R_SUCCESS && obj != NULL);
+	dns_zone_setmaxtypepername(mayberaw, cfg_obj_asuint32(obj));
+	if (zone != mayberaw) {
+		dns_zone_setmaxtypepername(zone, 0);
 	}
 
 	if (raw != NULL && filename != NULL) {

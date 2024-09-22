@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-signzone.c,v 1.11 2024/02/21 22:51:03 christos Exp $	*/
+/*	$NetBSD: dnssec-signzone.c,v 1.12 2024/09/22 00:13:56 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1170,7 +1170,7 @@ has_dname(dns_db_t *db, dns_dbversion_t *ver, dns_dbnode_t *node) {
  * Signs all records at a name.
  */
 static void
-signname(dns_dbnode_t *node, dns_name_t *name) {
+signname(dns_dbnode_t *node, bool apex, dns_name_t *name) {
 	isc_result_t result;
 	dns_rdataset_t rdataset;
 	dns_rdatasetiter_t *rdsiter;
@@ -1221,6 +1221,10 @@ signname(dns_dbnode_t *node, dns_name_t *name) {
 			dns_name_format(name, namebuf, sizeof(namebuf));
 			fatal("'%s': found DS RRset without NS RRset\n",
 			      namebuf);
+		} else if (rdataset.type == dns_rdatatype_dnskey && !apex) {
+			char namebuf[DNS_NAME_FORMATSIZE];
+			dns_name_format(name, namebuf, sizeof(namebuf));
+			fatal("'%s': Non-apex DNSKEY RRset\n", namebuf);
 		}
 
 		signset(&del, &add, node, name, &rdataset);
@@ -1581,7 +1585,7 @@ signapex(void) {
 	check_result(result, "dns_dbiterator_seek()");
 	result = dns_dbiterator_current(gdbiter, &node, name);
 	check_dns_dbiterator_current(result);
-	signname(node, name);
+	signname(node, true, name);
 	dumpnode(name, node);
 	cleannode(gdb, gversion, node);
 	dns_db_detachnode(gdb, &node);
@@ -1755,7 +1759,7 @@ sign(isc_task_t *task, isc_event_t *event) {
 	fname = sevent->fname;
 	isc_event_free(&event);
 
-	signname(node, dns_fixedname_name(fname));
+	signname(node, false, dns_fixedname_name(fname));
 	wevent = (sevent_t *)isc_event_allocate(mctx, task, SIGNER_EVENT_WRITE,
 						writenode, NULL,
 						sizeof(sevent_t));
@@ -3309,7 +3313,7 @@ usage(void) {
 	fprintf(stderr, "(default: all zone keys that have private keys)\n");
 	fprintf(stderr, "\tkeyfile (Kname+alg+tag)\n");
 
-	exit(0);
+	exit(EXIT_FAILURE);
 }
 
 static void
@@ -3553,7 +3557,7 @@ main(int argc, char *argv[]) {
 			if (*endp != '\0') {
 				fprintf(stderr, "source serial number "
 						"must be numeric");
-				exit(1);
+				exit(EXIT_FAILURE);
 			}
 			break;
 
@@ -3568,7 +3572,7 @@ main(int argc, char *argv[]) {
 			if (*endp != '\0') {
 				fprintf(stderr, "maximum TTL "
 						"must be numeric");
-				exit(1);
+				exit(EXIT_FAILURE);
 			}
 			break;
 
@@ -3691,7 +3695,7 @@ main(int argc, char *argv[]) {
 		default:
 			fprintf(stderr, "%s: unhandled option -%c\n", program,
 				isc_commandline_option);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	}
 
@@ -3797,7 +3801,7 @@ main(int argc, char *argv[]) {
 			    rawversion > 1U)
 			{
 				fprintf(stderr, "unknown raw format version\n");
-				exit(1);
+				exit(EXIT_FAILURE);
 			}
 		} else {
 			fatal("unknown file format: %s", outputformatstr);

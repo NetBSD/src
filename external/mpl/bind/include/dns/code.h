@@ -101,6 +101,7 @@
 #include "rdata/generic/avc_258.c"
 #include "rdata/generic/doa_259.c"
 #include "rdata/generic/amtrelay_260.c"
+#include "rdata/generic/resinfo_261.c"
 #include "rdata/generic/ta_32768.c"
 #include "rdata/generic/dlv_32769.c"
 #include "rdata/generic/keydata_65533.c"
@@ -257,6 +258,7 @@
 	case 258: result = fromtext_avc(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 259: result = fromtext_doa(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 260: result = fromtext_amtrelay(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 261: result = fromtext_resinfo(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 32768: result = fromtext_ta(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 32769: result = fromtext_dlv(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 65533: result = fromtext_keydata(rdclass, type, lexer, origin, options, target, callbacks); break; \
@@ -413,6 +415,7 @@
 	case 258: result = totext_avc(rdata, tctx, target); break; \
 	case 259: result = totext_doa(rdata, tctx, target); break; \
 	case 260: result = totext_amtrelay(rdata, tctx, target); break; \
+	case 261: result = totext_resinfo(rdata, tctx, target); break; \
 	case 32768: result = totext_ta(rdata, tctx, target); break; \
 	case 32769: result = totext_dlv(rdata, tctx, target); break; \
 	case 65533: result = totext_keydata(rdata, tctx, target); break; \
@@ -569,6 +572,7 @@
 	case 258: result = fromwire_avc(rdclass, type, source, dctx, options, target); break; \
 	case 259: result = fromwire_doa(rdclass, type, source, dctx, options, target); break; \
 	case 260: result = fromwire_amtrelay(rdclass, type, source, dctx, options, target); break; \
+	case 261: result = fromwire_resinfo(rdclass, type, source, dctx, options, target); break; \
 	case 32768: result = fromwire_ta(rdclass, type, source, dctx, options, target); break; \
 	case 32769: result = fromwire_dlv(rdclass, type, source, dctx, options, target); break; \
 	case 65533: result = fromwire_keydata(rdclass, type, source, dctx, options, target); break; \
@@ -725,6 +729,7 @@
 	case 258: result = towire_avc(rdata, cctx, target); break; \
 	case 259: result = towire_doa(rdata, cctx, target); break; \
 	case 260: result = towire_amtrelay(rdata, cctx, target); break; \
+	case 261: result = towire_resinfo(rdata, cctx, target); break; \
 	case 32768: result = towire_ta(rdata, cctx, target); break; \
 	case 32769: result = towire_dlv(rdata, cctx, target); break; \
 	case 65533: result = towire_keydata(rdata, cctx, target); break; \
@@ -881,6 +886,7 @@
 	case 258: result = compare_avc(rdata1, rdata2); break; \
 	case 259: result = compare_doa(rdata1, rdata2); break; \
 	case 260: result = compare_amtrelay(rdata1, rdata2); break; \
+	case 261: result = compare_resinfo(rdata1, rdata2); break; \
 	case 32768: result = compare_ta(rdata1, rdata2); break; \
 	case 32769: result = compare_dlv(rdata1, rdata2); break; \
 	case 65533: result = compare_keydata(rdata1, rdata2); break; \
@@ -1037,6 +1043,7 @@
 	case 258: result = casecompare_avc(rdata1, rdata2); break; \
 	case 259: result = casecompare_doa(rdata1, rdata2); break; \
 	case 260: result = casecompare_amtrelay(rdata1, rdata2); break; \
+	case 261: result = casecompare_resinfo(rdata1, rdata2); break; \
 	case 32768: result = casecompare_ta(rdata1, rdata2); break; \
 	case 32769: result = casecompare_dlv(rdata1, rdata2); break; \
 	case 65533: result = casecompare_keydata(rdata1, rdata2); break; \
@@ -1193,6 +1200,7 @@
 	case 258: result = fromstruct_avc(rdclass, type, source, target); break; \
 	case 259: result = fromstruct_doa(rdclass, type, source, target); break; \
 	case 260: result = fromstruct_amtrelay(rdclass, type, source, target); break; \
+	case 261: result = fromstruct_resinfo(rdclass, type, source, target); break; \
 	case 32768: result = fromstruct_ta(rdclass, type, source, target); break; \
 	case 32769: result = fromstruct_dlv(rdclass, type, source, target); break; \
 	case 65533: result = fromstruct_keydata(rdclass, type, source, target); break; \
@@ -1349,6 +1357,7 @@
 	case 258: result = tostruct_avc(rdata, target, mctx); break; \
 	case 259: result = tostruct_doa(rdata, target, mctx); break; \
 	case 260: result = tostruct_amtrelay(rdata, target, mctx); break; \
+	case 261: result = tostruct_resinfo(rdata, target, mctx); break; \
 	case 32768: result = tostruct_ta(rdata, target, mctx); break; \
 	case 32769: result = tostruct_dlv(rdata, target, mctx); break; \
 	case 65533: result = tostruct_keydata(rdata, target, mctx); break; \
@@ -1505,6 +1514,7 @@
 	case 258: freestruct_avc(source); break; \
 	case 259: freestruct_doa(source); break; \
 	case 260: freestruct_amtrelay(source); break; \
+	case 261: freestruct_resinfo(source); break; \
 	case 32768: freestruct_ta(source); break; \
 	case 32769: freestruct_dlv(source); break; \
 	case 65533: freestruct_keydata(source); break; \
@@ -1661,6 +1671,7 @@
 	case 258: result = additionaldata_avc(rdata, owner, add, arg); break; \
 	case 259: result = additionaldata_doa(rdata, owner, add, arg); break; \
 	case 260: result = additionaldata_amtrelay(rdata, owner, add, arg); break; \
+	case 261: result = additionaldata_resinfo(rdata, owner, add, arg); break; \
 	case 32768: result = additionaldata_ta(rdata, owner, add, arg); break; \
 	case 32769: result = additionaldata_dlv(rdata, owner, add, arg); break; \
 	case 65533: result = additionaldata_keydata(rdata, owner, add, arg); break; \
@@ -1817,6 +1828,7 @@
 	case 258: result = digest_avc(rdata, digest, arg); break; \
 	case 259: result = digest_doa(rdata, digest, arg); break; \
 	case 260: result = digest_amtrelay(rdata, digest, arg); break; \
+	case 261: result = digest_resinfo(rdata, digest, arg); break; \
 	case 32768: result = digest_ta(rdata, digest, arg); break; \
 	case 32769: result = digest_dlv(rdata, digest, arg); break; \
 	case 65533: result = digest_keydata(rdata, digest, arg); break; \
@@ -1973,6 +1985,7 @@
 	case 258: result = checkowner_avc(name, rdclass, type, wildcard); break; \
 	case 259: result = checkowner_doa(name, rdclass, type, wildcard); break; \
 	case 260: result = checkowner_amtrelay(name, rdclass, type, wildcard); break; \
+	case 261: result = checkowner_resinfo(name, rdclass, type, wildcard); break; \
 	case 32768: result = checkowner_ta(name, rdclass, type, wildcard); break; \
 	case 32769: result = checkowner_dlv(name, rdclass, type, wildcard); break; \
 	case 65533: result = checkowner_keydata(name, rdclass, type, wildcard); break; \
@@ -2129,6 +2142,7 @@
 	case 258: result = checknames_avc(rdata, owner, bad); break; \
 	case 259: result = checknames_doa(rdata, owner, bad); break; \
 	case 260: result = checknames_amtrelay(rdata, owner, bad); break; \
+	case 261: result = checknames_resinfo(rdata, owner, bad); break; \
 	case 32768: result = checknames_ta(rdata, owner, bad); break; \
 	case 32769: result = checknames_dlv(rdata, owner, bad); break; \
 	case 65533: result = checknames_keydata(rdata, owner, bad); break; \
@@ -2203,6 +2217,7 @@
 			break; \
 		case 119: \
 			RDATATYPE_COMPARE("x25", 19, _typename,  _length, _typep); \
+			RDATATYPE_COMPARE("resinfo", 261, _typename,  _length, _typep); \
 			break; \
 		case 214: \
 			RDATATYPE_COMPARE("isdn", 20, _typename,  _length, _typep); \
@@ -2471,6 +2486,7 @@
 	case 258: return (RRTYPE_AVC_ATTRIBUTES); \
 	case 259: return (RRTYPE_DOA_ATTRIBUTES); \
 	case 260: return (RRTYPE_AMTRELAY_ATTRIBUTES); \
+	case 261: return (RRTYPE_RESINFO_ATTRIBUTES); \
 	case 32768: return (RRTYPE_TA_ATTRIBUTES); \
 	case 32769: return (RRTYPE_DLV_ATTRIBUTES); \
 	case 65533: return (RRTYPE_KEYDATA_ATTRIBUTES); \
@@ -2564,6 +2580,7 @@
 	case 258: return (str_totext("AVC", target)); \
 	case 259: return (str_totext("DOA", target)); \
 	case 260: return (str_totext("AMTRELAY", target)); \
+	case 261: return (str_totext("RESINFO", target)); \
 	case 32768: return (str_totext("TA", target)); \
 	case 32769: return (str_totext("DLV", target)); \
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr_test.c,v 1.2 2024/02/21 22:52:51 christos Exp $	*/
+/*	$NetBSD: netmgr_test.c,v 1.3 2024/09/22 00:14:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2403,6 +2403,7 @@ ISC_RUN_TEST_IMPL(tlsdns_recv_one) {
 	atomic_assert_int_eq(ssends, 0);
 }
 
+#ifdef HAVE_LIBNGHTTP2
 static void
 tlsdns_many_listen_read_cb(isc_nmhandle_t *handle, isc_result_t eresult,
 			   isc_region_t *region, void *cbarg) {
@@ -2572,6 +2573,7 @@ ISC_RUN_TEST_IMPL(tlsdns_server_send_many_recv_one) {
 	atomic_assert_int_eq(sreads, 1);
 	atomic_assert_int_eq(ssends, 1);
 }
+#endif /* HAVE_LIBNGHTTP2 */
 
 ISC_RUN_TEST_IMPL(tlsdns_recv_two) {
 	isc_result_t result = ISC_R_SUCCESS;
@@ -3051,8 +3053,6 @@ ISC_TEST_ENTRY_CUSTOM(tls_half_recv_half_send_quota_sendback, setup_test,
 
 /* TLSDNS */
 ISC_TEST_ENTRY_CUSTOM(tlsdns_recv_one, setup_test, teardown_test)
-ISC_TEST_ENTRY_CUSTOM(tlsdns_server_send_many_recv_one, setup_test,
-		      teardown_test)
 ISC_TEST_ENTRY_CUSTOM(tlsdns_recv_two, setup_test, teardown_test)
 ISC_TEST_ENTRY_CUSTOM(tlsdns_noop, setup_test, teardown_test)
 ISC_TEST_ENTRY_CUSTOM(tlsdns_noresponse, setup_test, teardown_test)
@@ -3064,6 +3064,8 @@ ISC_TEST_ENTRY_CUSTOM(tlsdns_half_recv_half_send, setup_test, teardown_test)
 ISC_TEST_ENTRY_CUSTOM(tlsdns_connect_noalpn, setup_test, teardown_test)
 #ifdef HAVE_LIBNGHTTP2
 ISC_TEST_ENTRY_CUSTOM(tlsdns_listen_noalpn, setup_test, teardown_test)
+ISC_TEST_ENTRY_CUSTOM(tlsdns_server_send_many_recv_one, setup_test,
+		      teardown_test)
 #endif
 
 ISC_TEST_LIST_END

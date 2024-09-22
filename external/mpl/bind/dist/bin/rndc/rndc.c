@@ -1,4 +1,4 @@
-/*	$NetBSD: rndc.c,v 1.11 2024/02/21 22:51:12 christos Exp $	*/
+/*	$NetBSD: rndc.c,v 1.12 2024/09/22 00:13:57 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1016,7 +1016,7 @@ main(int argc, char **argv) {
 		default:
 			fprintf(stderr, "%s: unhandled option -%c\n", program,
 				isc_commandline_option);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	}
 

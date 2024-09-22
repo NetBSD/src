@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.16 2024/02/23 21:09:49 christos Exp $	*/
+/*	$NetBSD: client.h,v 1.17 2024/09/22 00:14:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -146,7 +146,6 @@ struct ns_clientmgr {
 	unsigned int magic;
 
 	isc_mem_t      *mctx;
-	isc_mem_t      *send_mctx;
 	ns_server_t    *sctx;
 	isc_taskmgr_t  *taskmgr;
 	isc_timermgr_t *timermgr;
@@ -161,6 +160,8 @@ struct ns_clientmgr {
 	/* Lock covers the recursing list */
 	isc_mutex_t   reclock;
 	client_list_t recursing; /*%< Recursing clients */
+
+	uint8_t tcp_buffer[NS_CLIENT_TCP_BUFFER_SIZE];
 };
 
 /*% nameserver client structure */
@@ -189,7 +190,6 @@ struct ns_client {
 	unsigned char  *tcpbuf;
 	size_t		tcpbuf_size;
 	dns_message_t  *message;
-	unsigned char  *sendbuf;
 	dns_rdataset_t *opt;
 	dns_ednsopt_t  *ede;
 	uint16_t	udpsize;
@@ -242,6 +242,8 @@ struct ns_client {
 	 * bits will be used as the rcode in the response message.
 	 */
 	int32_t rcode_override;
+
+	uint8_t sendbuf[NS_CLIENT_SEND_BUFFER_SIZE];
 };
 
 #define NS_CLIENT_MAGIC	   ISC_MAGIC('N', 'S', 'C', 'c')

@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig-keygen.c,v 1.2 2024/02/21 22:51:00 christos Exp $	*/
+/*	$NetBSD: tsig-keygen.c,v 1.3 2024/09/22 00:13:55 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -141,13 +141,13 @@ main(int argc, char **argv) {
 			keysize = alg_bits(alg);
 			break;
 		case 'h':
-			usage(0);
+			usage(EXIT_SUCCESS);
 		case 'k':
 		case 'y':
 			if (progmode == progmode_confgen) {
 				keyname = isc_commandline_argument;
 			} else {
-				usage(1);
+				usage(EXIT_FAILURE);
 			}
 			break;
 		case 'M':
@@ -160,7 +160,7 @@ main(int argc, char **argv) {
 			if (progmode == progmode_confgen) {
 				quiet = true;
 			} else {
-				usage(1);
+				usage(EXIT_FAILURE);
 			}
 			break;
 		case 'r':
@@ -170,29 +170,29 @@ main(int argc, char **argv) {
 			if (progmode == progmode_confgen) {
 				self_domain = isc_commandline_argument;
 			} else {
-				usage(1);
+				usage(EXIT_FAILURE);
 			}
 			break;
 		case 'z':
 			if (progmode == progmode_confgen) {
 				zone = isc_commandline_argument;
 			} else {
-				usage(1);
+				usage(EXIT_FAILURE);
 			}
 			break;
 		case '?':
 			if (isc_commandline_option != '?') {
 				fprintf(stderr, "%s: invalid argument -%c\n",
 					program, isc_commandline_option);
-				usage(1);
+				usage(EXIT_FAILURE);
 			} else {
-				usage(0);
+				usage(EXIT_SUCCESS);
 			}
 			break;
 		default:
 			fprintf(stderr, "%s: unhandled option -%c\n", program,
 				isc_commandline_option);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	}
 
@@ -203,11 +203,11 @@ main(int argc, char **argv) {
 	POST(argv);
 
 	if (self_domain != NULL && zone != NULL) {
-		usage(1); /* -s and -z cannot coexist */
+		usage(EXIT_FAILURE); /* -s and -z cannot coexist */
 	}
 
 	if (argc > isc_commandline_index) {
-		usage(1);
+		usage(EXIT_FAILURE);
 	}
 
 	/* Use canonical algorithm name */

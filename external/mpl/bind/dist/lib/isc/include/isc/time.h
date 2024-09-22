@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.2 2024/02/21 22:52:31 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.3 2024/09/22 00:14:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,14 +23,15 @@
 #include <isc/lang.h>
 #include <isc/types.h>
 
-enum {
-	MS_PER_SEC = 1000,		 /*%< Milliseonds per second. */
-	US_PER_MS = 1000,		 /*%< Microseconds per millisecond. */
-	US_PER_SEC = 1000 * 1000,	 /*%< Microseconds per second. */
-	NS_PER_US = 1000,		 /*%< Nanoseconds per millisecond. */
-	NS_PER_MS = 1000 * 1000,	 /*%< Nanoseconds per microsecond. */
-	NS_PER_SEC = 1000 * 1000 * 1000, /*%< Nanoseconds per second. */
-};
+/*
+ * Define various time conversion constants.
+ */
+#define MS_PER_SEC 1000U
+#define US_PER_MS  1000U
+#define NS_PER_US  1000U
+#define US_PER_SEC (1000U * 1000U)
+#define NS_PER_MS  (1000U * 1000U)
+#define NS_PER_SEC (1000U * 1000U * 1000U)
 
 /***
  *** Intervals

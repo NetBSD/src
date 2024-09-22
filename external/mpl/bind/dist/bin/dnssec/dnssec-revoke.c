@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-revoke.c,v 1.9 2024/02/21 22:51:03 christos Exp $	*/
+/*	$NetBSD: dnssec-revoke.c,v 1.10 2024/09/22 00:13:56 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -61,7 +61,7 @@ usage(void) {
 	fprintf(stderr, "     K<name>+<alg>+<new id>.key, "
 			"K<name>+<alg>+<new id>.private\n");
 
-	exit(-1);
+	exit(EXIT_FAILURE);
 }
 
 int
@@ -133,7 +133,7 @@ main(int argc, char **argv) {
 		default:
 			fprintf(stderr, "%s: unhandled option -%c\n", program,
 				isc_commandline_option);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	}
 

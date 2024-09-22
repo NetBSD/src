@@ -1,4 +1,4 @@
-/*	$NetBSD: gen.c,v 1.12 2024/02/21 22:52:06 christos Exp $	*/
+/*	$NetBSD: gen.c,v 1.13 2024/09/22 00:14:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -206,7 +206,7 @@ next_file(isc_dir_t *dir) {
 				fprintf(stderr,
 					"Error: reading directory: %s\n",
 					strerror(errno));
-				exit(1);
+				exit(EXIT_FAILURE);
 			}
 		}
 	}
@@ -365,7 +365,7 @@ insert_into_typenames(int type, const char *typebuf, const char *attr) {
 			fprintf(stderr,
 				"Error:  type %d has two names: %s, %s\n", type,
 				typenames[i].typebuf, typebuf);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		if (typenames[i].typebuf[0] == 0 && ttn == NULL) {
 			ttn = &typenames[i];
@@ -373,13 +373,13 @@ insert_into_typenames(int type, const char *typebuf, const char *attr) {
 	}
 	if (ttn == NULL) {
 		fprintf(stderr, "Error: typenames array too small\n");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	/* XXXMUKS: This is redundant due to the INSIST above. */
 	if (strlen(typebuf) > sizeof(ttn->typebuf) - 1) {
 		fprintf(stderr, "Error:  type name %s is too long\n", typebuf);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	strncpy(ttn->typebuf, typebuf, sizeof(ttn->typebuf));
@@ -409,13 +409,13 @@ insert_into_typenames(int type, const char *typebuf, const char *attr) {
 			"Error:  type %d has different attributes: "
 			"%s, %s\n",
 			type, ttn->attr, attr);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	if (strlen(attr) > sizeof(ttn->attr) - 1) {
 		fprintf(stderr, "Error:  attr (%s) [name %s] is too long\n",
 			attr, typebuf);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	strncpy(ttn->attr, attr, sizeof(ttn->attr));
@@ -443,7 +443,7 @@ add(unsigned int rdclass, const char *classbuf, int type, const char *typebuf,
 
 	if (newtt == NULL) {
 		fprintf(stderr, "malloc() failed\n");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	newtt->next = NULL;
@@ -472,14 +472,14 @@ add(unsigned int rdclass, const char *classbuf, int type, const char *typebuf,
 
 	while ((tt != NULL) && (tt->type == type) && (tt->rdclass < rdclass)) {
 		if (strcmp(tt->typebuf, typebuf) != 0) {
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		oldtt = tt;
 		tt = tt->next;
 	}
 
 	if ((tt != NULL) && (tt->type == type) && (tt->rdclass == rdclass)) {
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	newtt->next = tt;
@@ -499,7 +499,7 @@ add(unsigned int rdclass, const char *classbuf, int type, const char *typebuf,
 	newcc = (struct cc *)malloc(sizeof(*newcc));
 	if (newcc == NULL) {
 		fprintf(stderr, "malloc() failed\n");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	newcc->rdclass = rdclass;
 	strncpy(newcc->classbuf, classbuf, sizeof(newcc->classbuf));
@@ -557,7 +557,7 @@ sd(unsigned int rdclass, const char *classbuf, const char *dirbuf,
 		if (type > 65535) {
 			fprintf(stderr, "Error: type value > 65535 (%s)\n",
 				dir.filename);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		add(rdclass, classbuf, type, typebuf, dirbuf);
 	}
@@ -573,7 +573,7 @@ HASH(char *string) {
 	n = strlen(string);
 	if (n == 0) {
 		fprintf(stderr, "n == 0?\n");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	a = tolower((unsigned char)string[0]);
 	b = tolower((unsigned char)string[n - 1]);
@@ -656,7 +656,7 @@ main(int argc, char **argv) {
 				    sizeof("/rdata/_65535_65535"))
 			{
 				fprintf(stderr, "\"%s\" too long\n", optarg);
-				exit(1);
+				exit(EXIT_FAILURE);
 			}
 			n = snprintf(srcdir, sizeof(srcdir), "%s/", optarg);
 			INSIST(n > 0 && (unsigned)n < sizeof(srcdir));
@@ -671,7 +671,7 @@ main(int argc, char **argv) {
 			suffix = optarg;
 			break;
 		case '?':
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	}
 
@@ -679,7 +679,7 @@ main(int argc, char **argv) {
 	INSIST(n > 0 && (unsigned)n < sizeof(srcdir));
 
 	if (!start_directory(buf, &dir)) {
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	while (next_file(&dir)) {
@@ -702,7 +702,7 @@ main(int argc, char **argv) {
 		if (rdclass > 65535) {
 			fprintf(stderr, "Error: class value > 65535 (%s)\n",
 				dir.filename);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		sd(rdclass, classbuf, buf, filetype);
 	}
@@ -1057,7 +1057,7 @@ main(int argc, char **argv) {
 	}
 
 	if (ferror(stdout) != 0) {
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	return (0);

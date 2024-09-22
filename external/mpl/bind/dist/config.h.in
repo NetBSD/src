@@ -51,6 +51,9 @@
 /* Use CMocka */
 #undef HAVE_CMOCKA
 
+/* Define to 1 if you have the `cpuset_getaffinity' function. */
+#undef HAVE_CPUSET_GETAFFINITY
+
 /* Define to 1 if you have the `CRYPTO_zalloc' function. */
 #undef HAVE_CRYPTO_ZALLOC
 
@@ -246,12 +249,6 @@
 /* Define to 1 if you have the <malloc_np.h> header file. */
 #undef HAVE_MALLOC_NP_H
 
-/* Define to 1 if you have the `malloc_size' function. */
-#undef HAVE_MALLOC_SIZE
-
-/* Define to 1 if you have the `malloc_usable_size' function. */
-#undef HAVE_MALLOC_USABLE_SIZE
-
 /* Define to 1 if you have the <minix/config.h> header file. */
 #undef HAVE_MINIX_CONFIG_H
 
@@ -326,6 +323,9 @@
 
 /* Define to 1 if you have the `RSA_set0_key' function. */
 #undef HAVE_RSA_SET0_KEY
+
+/* Define to 1 if you have the `sched_getaffinity' function. */
+#undef HAVE_SCHED_GETAFFINITY
 
 /* Define to 1 if you have the <sched.h> header file. */
 #undef HAVE_SCHED_H
@@ -416,6 +416,9 @@
 
 /* Define to 1 if you have the <sys/capability.h> header file. */
 #undef HAVE_SYS_CAPABILITY_H
+
+/* Define to 1 if you have the <sys/cpuset.h> header file. */
+#undef HAVE_SYS_CPUSET_H
 
 /* Define to 1 if you have the <sys/mman.h> header file. */
 #undef HAVE_SYS_MMAN_H

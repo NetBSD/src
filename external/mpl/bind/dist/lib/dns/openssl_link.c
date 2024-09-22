@@ -1,4 +1,4 @@
-/*	$NetBSD: openssl_link.c,v 1.10 2024/02/21 22:52:07 christos Exp $	*/
+/*	$NetBSD: openssl_link.c,v 1.11 2024/09/22 00:14:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -65,7 +65,7 @@ enable_fips_mode(void) {
 
 	if (FIPS_mode_set(1) == 0) {
 		dst__openssl_toresult2("FIPS_mode_set", DST_R_OPENSSLFAILURE);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 #endif /* HAVE_FIPS_MODE */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: catz.h,v 1.7 2024/02/21 22:52:09 christos Exp $	*/
+/*	$NetBSD: catz.h,v 1.8 2024/09/22 00:14:07 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -307,6 +307,15 @@ dns_catz_new_zones(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
  * \li 'catzsp' is not NULL and '*catzsp' is NULL.
  * \li 'zmm' is not NULL.
  *
+ */
+
+void *
+dns_catz_zones_get_udata(dns_catz_zones_t *catzs);
+/*%<
+ * Get the 'udata' member of the zone methods which was set when creating catzs.
+ *
+ * Requires:
+ * \li	'catzs' is a valid dns_catz_zones_t.
  */
 
 isc_result_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnsrps.c,v 1.11 2024/02/21 22:52:06 christos Exp $	*/
+/*	$NetBSD: dnsrps.c,v 1.12 2024/09/22 00:14:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -977,6 +977,8 @@ static dns_dbmethods_t rpsdb_db_methods = {
 	NULL, /* setservestalerefresh */
 	NULL, /* getservestalerefresh */
 	NULL, /* setgluecachestats */
+	NULL, /* setmaxrrperset */
+	NULL  /* setmaxtypepername */
 };
 
 static dns_rdatasetmethods_t rpsdb_rdataset_methods = {

@@ -127,8 +127,8 @@
 /* Define to 1 if you have the `EVP_sha1' function. */
 #define HAVE_EVP_SHA1 1
 
-/* Define to 1 if you have the `EVP_sha224' function. */
-#define HAVE_EVP_SHA224 1
+/* Define to 1 if you have the `EVP_sha230' function. */
+#define HAVE_EVP_SHA230 1
 
 /* Define to 1 if you have the `EVP_sha256' function. */
 #define HAVE_EVP_SHA256 1
@@ -251,12 +251,6 @@
 /* Define to 1 if you have the <malloc_np.h> header file. */
 /* #undef HAVE_MALLOC_NP_H */
 
-/* Define to 1 if you have the `malloc_size' function. */
-/* #undef HAVE_MALLOC_SIZE */
-
-/* Define to 1 if you have the `malloc_usable_size' function. */
-/* #undef HAVE_MALLOC_USABLE_SIZE */
-
 /* Define to 1 if you have the <minix/config.h> header file. */
 /* #undef HAVE_MINIX_CONFIG_H */
 
@@ -331,6 +325,9 @@
 
 /* Define to 1 if you have the `RSA_set0_key' function. */
 #define HAVE_RSA_SET0_KEY 1
+
+/* Define to 1 if you have the `sched_getaffinity' function. */
+/* #undef HAVE_SCHED_GETAFFINITY */
 
 /* Define to 1 if you have the <sched.h> header file. */
 #define HAVE_SCHED_H 1
@@ -425,6 +422,9 @@
 /* Define to 1 if you have the <sys/capability.h> header file. */
 /* #undef HAVE_SYS_CAPABILITY_H */
 
+/* Define to 1 if you have the <sys/cpuset.h> header file. */
+/* #undef HAVE_SYS_CPUSET_H */
+
 /* Define to 1 if you have the <sys/mman.h> header file. */
 #define HAVE_SYS_MMAN_H 1
 
@@ -465,7 +465,7 @@
 #define HAVE_TZSET 1
 
 /* Define to 1 if you have the <uchar.h> header file. */
-/* #undef HAVE_UCHAR_H */
+#define HAVE_UCHAR_H 1
 
 /* Define to 1 if the system has the type `uintptr_t'. */
 #define HAVE_UINTPTR_T 1
@@ -523,7 +523,7 @@
 #define PACKAGE_SRCID "6d7674f"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "BIND 9.18.24"
+#define PACKAGE_STRING "BIND 9.18.30"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "bind"
@@ -532,7 +532,7 @@
 #define PACKAGE_URL "https://www.isc.org/downloads/"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "9.18.24"
+#define PACKAGE_VERSION "9.18.30"
 
 /* BIND 9 Extra part of the version */
 #define PACKAGE_VERSION_EXTRA ""
@@ -544,7 +544,7 @@
 #define PACKAGE_VERSION_MINOR "18"
 
 /* BIND 9 Patch part of the version */
-#define PACKAGE_VERSION_PATCH "24"
+#define PACKAGE_VERSION_PATCH "30"
 
 /* Define to necessary symbol if this constant uses a non-standard name on
    your system. */
@@ -636,11 +636,11 @@
 #ifndef __STDC_WANT_IEC_60559_TYPES_EXT__
 # define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
 #endif
-/* Enable extensions specified by ISO/IEC TR 24731-2:2010.  */
+/* Enable extensions specified by ISO/IEC TR 30731-2:2010.  */
 #ifndef __STDC_WANT_LIB_EXT2__
 # define __STDC_WANT_LIB_EXT2__ 1
 #endif
-/* Enable extensions specified by ISO/IEC 24747:2009.  */
+/* Enable extensions specified by ISO/IEC 30747:2009.  */
 #ifndef __STDC_WANT_MATH_SPEC_FUNCS__
 # define __STDC_WANT_MATH_SPEC_FUNCS__ 1
 #endif
@@ -659,7 +659,7 @@
 #define VALIDATION_DEFAULT "auto"
 
 /* Version number of package */
-#define VERSION "9.18.24"
+#define VERSION "9.18.30"
 
 /* Define to enable very verbose query trace logging. */
 #define WANT_QUERYTRACE 1

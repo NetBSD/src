@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr.c,v 1.11 2024/02/21 22:52:29 christos Exp $	*/
+/*	$NetBSD: sockaddr.c,v 1.12 2024/09/22 00:14:08 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -498,4 +498,16 @@ isc_sockaddr_fromsockaddr(isc_sockaddr_t *isa, const struct sockaddr *sa) {
 	isa->length = length;
 
 	return (ISC_R_SUCCESS);
+}
+
+bool
+isc_sockaddr_disabled(const isc_sockaddr_t *sockaddr) {
+	if ((sockaddr->type.sa.sa_family == AF_INET &&
+	     isc_net_probeipv4() == ISC_R_DISABLED) ||
+	    (sockaddr->type.sa.sa_family == AF_INET6 &&
+	     isc_net_probeipv6() == ISC_R_DISABLED))
+	{
+		return (true);
+	}
+	return (false);
 }

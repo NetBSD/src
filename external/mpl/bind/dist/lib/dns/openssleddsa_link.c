@@ -1,4 +1,4 @@
-/*	$NetBSD: openssleddsa_link.c,v 1.9 2024/02/21 22:52:07 christos Exp $	*/
+/*	$NetBSD: openssleddsa_link.c,v 1.10 2024/09/22 00:14:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -351,13 +351,20 @@ err:
 static bool
 openssleddsa_isprivate(const dst_key_t *key) {
 	EVP_PKEY *pkey = key->keydata.pkey;
-	size_t len;
+	unsigned char buf[DNS_KEY_ED448SIZE];
+	size_t len = sizeof(buf);
+
+	STATIC_ASSERT(sizeof(buf) >= DNS_KEY_ED448SIZE,
+		      "increase size of 'buf'");
+	STATIC_ASSERT(sizeof(buf) >= DNS_KEY_ED25519SIZE,
+		      "increase size of 'buf'");
 
 	if (pkey == NULL) {
 		return (false);
 	}
 
-	if (EVP_PKEY_get_raw_private_key(pkey, NULL, &len) == 1 && len > 0) {
+	/* Must have a buffer to actually check if there is a private key. */
+	if (EVP_PKEY_get_raw_private_key(pkey, buf, &len) == 1) {
 		return (true);
 	}
 	/* can check if first error is EC_R_INVALID_PRIVATE_KEY */

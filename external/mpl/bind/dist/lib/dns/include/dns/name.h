@@ -1,4 +1,4 @@
-/*	$NetBSD: name.h,v 1.11 2024/02/21 22:52:10 christos Exp $	*/
+/*	$NetBSD: name.h,v 1.12 2024/09/22 00:14:07 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -170,25 +170,33 @@ extern const dns_name_t *dns_wildcardname;
  *	unsigned char offsets[] = { 0, 6 };
  *	dns_name_t value = DNS_NAME_INITABSOLUTE(data, offsets);
  */
-#define DNS_NAME_INITNONABSOLUTE(A, B)                                   \
-	{                                                                \
-		DNS_NAME_MAGIC, A, (sizeof(A) - 1), sizeof(B),           \
-			DNS_NAMEATTR_READONLY, B, NULL,                  \
-			{ (void *)-1, (void *)-1 }, { NULL, NULL }, NULL \
-	}
+#define DNS_NAME_INITNONABSOLUTE(A, B) \
+	{ DNS_NAME_MAGIC,              \
+	  A,                           \
+	  (sizeof(A) - 1),             \
+	  sizeof(B),                   \
+	  DNS_NAMEATTR_READONLY,       \
+	  B,                           \
+	  NULL,                        \
+	  { (void *)-1, (void *)-1 },  \
+	  { NULL, NULL },              \
+	  NULL }
 
-#define DNS_NAME_INITABSOLUTE(A, B)                                            \
-	{                                                                      \
-		DNS_NAME_MAGIC, A, sizeof(A), sizeof(B),                       \
-			DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE, B,      \
-			NULL, { (void *)-1, (void *)-1 }, { NULL, NULL }, NULL \
-	}
+#define DNS_NAME_INITABSOLUTE(A, B)                      \
+	{ DNS_NAME_MAGIC,                                \
+	  A,                                             \
+	  sizeof(A),                                     \
+	  sizeof(B),                                     \
+	  DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE, \
+	  B,                                             \
+	  NULL,                                          \
+	  { (void *)-1, (void *)-1 },                    \
+	  { NULL, NULL },                                \
+	  NULL }
 
-#define DNS_NAME_INITEMPTY                                               \
-	{                                                                \
-		DNS_NAME_MAGIC, NULL, 0, 0, 0, NULL, NULL,               \
-			{ (void *)-1, (void *)-1 }, { NULL, NULL }, NULL \
-	}
+#define DNS_NAME_INITEMPTY                                                       \
+	{ DNS_NAME_MAGIC, NULL, 0, 0, 0, NULL, NULL, { (void *)-1, (void *)-1 }, \
+	  { NULL, NULL }, NULL }
 
 /*%
  * Standard size of a wire format name

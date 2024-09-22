@@ -1,4 +1,4 @@
-/*	$NetBSD: ssu.c,v 1.8 2024/02/21 22:52:08 christos Exp $	*/
+/*	$NetBSD: ssu.c,v 1.9 2024/09/22 00:14:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -248,13 +248,12 @@ stf_from_address(dns_name_t *stfself, const isc_netaddr_t *tcpaddr) {
 	switch (tcpaddr->family) {
 	case AF_INET:
 		l = ntohl(tcpaddr->type.in.s_addr);
-		result = snprintf(buf, sizeof(buf),
-				  "%lx.%lx.%lx.%lx.%lx.%lx.%lx.%lx"
-				  "2.0.0.2.IP6.ARPA.",
-				  l & 0xf, (l >> 4) & 0xf, (l >> 8) & 0xf,
-				  (l >> 12) & 0xf, (l >> 16) & 0xf,
-				  (l >> 20) & 0xf, (l >> 24) & 0xf,
-				  (l >> 28) & 0xf);
+		result = snprintf(
+			buf, sizeof(buf),
+			"%lx.%lx.%lx.%lx.%lx.%lx.%lx.%lx.2.0.0.2.IP6.ARPA.",
+			l & 0xf, (l >> 4) & 0xf, (l >> 8) & 0xf,
+			(l >> 12) & 0xf, (l >> 16) & 0xf, (l >> 20) & 0xf,
+			(l >> 24) & 0xf, (l >> 28) & 0xf);
 		RUNTIME_CHECK(result < sizeof(buf));
 		break;
 	case AF_INET6:

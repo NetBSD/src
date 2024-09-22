@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.15 2024/02/21 22:52:31 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.16 2024/09/22 00:14:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -358,9 +358,9 @@ mock_assert(const int result, const char *const expression,
  * Alignment
  */
 #ifdef __GNUC__
-#define ISC_ALIGN(x, a) (((x) + (a)-1) & ~((typeof(x))(a)-1))
+#define ISC_ALIGN(x, a) (((x) + (a) - 1) & ~((typeof(x))(a) - 1))
 #else /* ifdef __GNUC__ */
-#define ISC_ALIGN(x, a) (((x) + (a)-1) & ~((uintmax_t)(a)-1))
+#define ISC_ALIGN(x, a) (((x) + (a) - 1) & ~((uintmax_t)(a) - 1))
 #endif /* ifdef __GNUC__ */
 
 /*%

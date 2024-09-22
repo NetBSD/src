@@ -1,4 +1,4 @@
-/*	$NetBSD: dns.h,v 1.2 2024/02/21 22:52:50 christos Exp $	*/
+/*	$NetBSD: dns.h,v 1.3 2024/09/22 00:14:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -46,10 +46,7 @@ typedef struct {
 	const char  *rdata;
 } zonechange_t;
 
-#define ZONECHANGE_SENTINEL            \
-	{                              \
-		0, NULL, 0, NULL, NULL \
-	}
+#define ZONECHANGE_SENTINEL { 0, NULL, 0, NULL, NULL }
 
 isc_result_t
 dns_test_makeview(const char *name, bool with_cache, dns_view_t **viewp);

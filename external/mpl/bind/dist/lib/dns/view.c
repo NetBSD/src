@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.15 2024/02/21 22:52:08 christos Exp $	*/
+/*	$NetBSD: view.c,v 1.16 2024/09/22 00:14:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -89,6 +89,12 @@ static void
 adb_shutdown(isc_task_t *task, isc_event_t *event);
 static void
 req_shutdown(isc_task_t *task, isc_event_t *event);
+
+/*%
+ * Default maximum number of chained queries before we give up
+ * to prevent CNAME loops.
+ */
+#define DEFAULT_MAX_RESTARTS 11
 
 isc_result_t
 dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass, const char *name,
@@ -267,6 +273,8 @@ dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass, const char *name,
 	view->plugins_free = NULL;
 	view->hooktable = NULL;
 	view->hooktable_free = NULL;
+
+	view->max_restarts = DEFAULT_MAX_RESTARTS;
 
 	isc_mutex_init(&view->new_zone_lock);
 
@@ -894,6 +902,9 @@ dns_view_setcache(dns_view_t *view, dns_cache_t *cache, bool shared) {
 	dns_cache_attach(cache, &view->cache);
 	dns_cache_attachdb(cache, &view->cachedb);
 	INSIST(DNS_DB_VALID(view->cachedb));
+
+	dns_cache_setmaxrrperset(view->cache, view->maxrrperset);
+	dns_cache_setmaxtypepername(view->cache, view->maxtypepername);
 }
 
 bool
@@ -2760,4 +2771,30 @@ dns_view_sfd_find(dns_view_t *view, const dns_name_t *name,
 	} else {
 		dns_name_copy(dns_rootname, foundname);
 	}
+}
+
+void
+dns_view_setmaxrrperset(dns_view_t *view, uint32_t value) {
+	REQUIRE(DNS_VIEW_VALID(view));
+	view->maxrrperset = value;
+	if (view->cache != NULL) {
+		dns_cache_setmaxrrperset(view->cache, value);
+	}
+}
+
+void
+dns_view_setmaxtypepername(dns_view_t *view, uint32_t value) {
+	REQUIRE(DNS_VIEW_VALID(view));
+	view->maxtypepername = value;
+	if (view->cache != NULL) {
+		dns_cache_setmaxtypepername(view->cache, value);
+	}
+}
+
+void
+dns_view_setmaxrestarts(dns_view_t *view, uint8_t max_restarts) {
+	REQUIRE(DNS_VIEW_VALID(view));
+	REQUIRE(max_restarts > 0);
+
+	view->max_restarts = max_restarts;
 }

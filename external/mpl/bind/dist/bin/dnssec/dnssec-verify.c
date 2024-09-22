@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-verify.c,v 1.7 2024/02/21 22:51:03 christos Exp $	*/
+/*	$NetBSD: dnssec-verify.c,v 1.8 2024/09/22 00:13:56 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -167,7 +167,7 @@ usage(void) {
 	fprintf(stderr, "\t-x:\tDNSKEY record signed with KSKs only, "
 			"not ZSKs\n");
 	fprintf(stderr, "\t-z:\tAll records signed with KSKs\n");
-	exit(0);
+	exit(EXIT_SUCCESS);
 }
 
 int
@@ -273,7 +273,7 @@ main(int argc, char *argv[]) {
 		default:
 			fprintf(stderr, "%s: unhandled option -%c\n", program,
 				isc_commandline_option);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	}
 

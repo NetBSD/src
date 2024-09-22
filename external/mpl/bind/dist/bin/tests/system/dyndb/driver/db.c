@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.8 2024/02/21 22:51:27 christos Exp $	*/
+/*	$NetBSD: db.c,v 1.9 2024/09/22 00:13:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -422,12 +422,12 @@ overmem(dns_db_t *db, bool over) {
 }
 
 static void
-settask(dns_db_t *db, isc_task_t *task) {
+settask(dns_db_t *db, isc_task_t *task, isc_task_t *prunetask) {
 	sampledb_t *sampledb = (sampledb_t *)db;
 
 	REQUIRE(VALID_SAMPLEDB(sampledb));
 
-	dns_db_settask(sampledb->rbtdb, task);
+	dns_db_settask(sampledb->rbtdb, task, prunetask);
 }
 
 static isc_result_t
@@ -565,28 +565,57 @@ hashsize(dns_db_t *db) {
  * determine which implementation of dns_db_*() function to call.
  */
 static dns_dbmethods_t sampledb_methods = {
-	attach,		detach,		beginload,
-	endload,	dump,		currentversion,
-	newversion,	attachversion,	closeversion,
-	findnode,	find,		findzonecut,
-	attachnode,	detachnode,	expirenode,
-	printnode,	createiterator, findrdataset,
-	allrdatasets,	addrdataset,	subtractrdataset,
-	deleterdataset, issecure,	nodecount,
-	ispersistent,	overmem,	settask,
-	getoriginnode,	transfernode,	getnsec3parameters,
-	findnsec3node,	setsigningtime, getsigningtime,
-	resigned,	isdnssec,	getrrsetstats,
+	attach,
+	detach,
+	beginload,
+	endload,
+	dump,
+	currentversion,
+	newversion,
+	attachversion,
+	closeversion,
+	findnode,
+	find,
+	findzonecut,
+	attachnode,
+	detachnode,
+	expirenode,
+	printnode,
+	createiterator,
+	findrdataset,
+	allrdatasets,
+	addrdataset,
+	subtractrdataset,
+	deleterdataset,
+	issecure,
+	nodecount,
+	ispersistent,
+	overmem,
+	settask,
+	getoriginnode,
+	transfernode,
+	getnsec3parameters,
+	findnsec3node,
+	setsigningtime,
+	getsigningtime,
+	resigned,
+	isdnssec,
+	getrrsetstats,
 	NULL, /* rpz_attach */
 	NULL, /* rpz_ready */
-	findnodeext,	findext,	setcachestats,
-	hashsize,	NULL, /* nodefullname */
-	NULL,		      /* getsize */
-	NULL,		      /* setservestalettl */
-	NULL,		      /* getservestalettl */
-	NULL,		      /* setservestalerefresh */
-	NULL,		      /* getservestalerefresh */
-	NULL,		      /* setgluecachestats */
+	findnodeext,
+	findext,
+	setcachestats,
+	hashsize,
+	NULL, /* nodefullname */
+	NULL, /* getsize */
+	NULL, /* setservestalettl */
+	NULL, /* getservestalettl */
+	NULL, /* setservestalerefresh */
+	NULL, /* getservestalerefresh */
+	NULL, /* setgluecachestats */
+	NULL, /* setmaxrrperset */
+	NULL  /* setmaxtypepername */
 };
 
 /* Auxiliary driver functions. */

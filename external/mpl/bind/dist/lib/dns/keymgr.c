@@ -1,4 +1,4 @@
-/*	$NetBSD: keymgr.c,v 1.11 2024/02/21 22:52:06 christos Exp $	*/
+/*	$NetBSD: keymgr.c,v 1.12 2024/09/22 00:14:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -415,6 +415,41 @@ keymgr_dnsseckey_kaspkey_match(dns_dnsseckey_t *dkey, dns_kasp_key_t *kkey) {
 	return (true);
 }
 
+/* Update lifetime and retire and remove time accordingly. */
+static void
+keymgr_key_update_lifetime(dns_dnsseckey_t *key, dns_kasp_t *kasp,
+			   isc_stdtime_t now, uint32_t lifetime) {
+	uint32_t l;
+	dst_key_state_t g = HIDDEN;
+	isc_result_t r;
+
+	(void)dst_key_getstate(key->key, DST_KEY_GOAL, &g);
+	r = dst_key_getnum(key->key, DST_NUM_LIFETIME, &l);
+	/* Initialize lifetime. */
+	if (r != ISC_R_SUCCESS) {
+		dst_key_setnum(key->key, DST_NUM_LIFETIME, lifetime);
+		return;
+	}
+	/* Skip keys that are still hidden or already retiring. */
+	if (g != OMNIPRESENT) {
+		return;
+	}
+	/* Update lifetime and timing metadata. */
+	if (l != lifetime) {
+		dst_key_setnum(key->key, DST_NUM_LIFETIME, lifetime);
+		if (lifetime > 0) {
+			uint32_t a = now;
+			(void)dst_key_gettime(key->key, DST_TIME_ACTIVATE, &a);
+			dst_key_settime(key->key, DST_TIME_INACTIVE,
+					(a + lifetime));
+			keymgr_settime_remove(key, kasp);
+		} else {
+			dst_key_unsettime(key->key, DST_TIME_INACTIVE);
+			dst_key_unsettime(key->key, DST_TIME_DELETE);
+		}
+	}
+}
+
 static bool
 keymgr_keyid_conflict(dst_key_t *newkey, dns_dnsseckeylist_t *keys) {
 	uint16_t id = dst_key_id(newkey);
@@ -572,6 +607,7 @@ keymgr_key_match_state(dst_key_t *key, dst_key_t *subject, int type,
 			continue;
 		}
 		if (next_state != NA && i == type &&
+		    dst_key_alg(key) == dst_key_alg(subject) &&
 		    dst_key_id(key) == dst_key_id(subject))
 		{
 			/* Check next state rather than current state. */
@@ -619,6 +655,13 @@ keymgr_dep(dst_key_t *k, dns_dnsseckeylist_t *keyring, uint32_t *dep) {
 		 * Check if k is a direct successor of d, e.g. d depends on k.
 		 */
 		if (keymgr_direct_dep(d->key, k)) {
+			dst_key_state_t hidden[NUM_KEYSTATES] = {
+				HIDDEN, HIDDEN, HIDDEN, HIDDEN
+			};
+			if (keymgr_key_match_state(d->key, k, NA, NA, hidden)) {
+				continue;
+			}
+
 			if (dep != NULL) {
 				*dep = dst_key_id(d->key);
 			}
@@ -2117,15 +2160,9 @@ dns_keymgr_run(const dns_name_t *origin, dns_rdataclass_t rdclass,
 					      keystr, keymgr_keyrole(dkey->key),
 					      dns_kasp_getname(kasp));
 
-				/* Initialize lifetime if not set. */
-				uint32_t l;
-				if (dst_key_getnum(dkey->key, DST_NUM_LIFETIME,
-						   &l) != ISC_R_SUCCESS)
-				{
-					dst_key_setnum(dkey->key,
-						       DST_NUM_LIFETIME,
-						       lifetime);
-				}
+				/* Update lifetime if changed. */
+				keymgr_key_update_lifetime(dkey, kasp, now,
+							   lifetime);
 
 				if (active_key) {
 					/* We already have an active key that
@@ -2220,11 +2257,16 @@ dns_keymgr_run(const dns_name_t *origin, dns_rdataclass_t rdclass,
 	for (dns_dnsseckey_t *dkey = ISC_LIST_HEAD(*keyring); dkey != NULL;
 	     dkey = ISC_LIST_NEXT(dkey, link))
 	{
-		if (dst_key_ismodified(dkey->key) && !dkey->purge) {
+		bool modified = dst_key_ismodified(dkey->key);
+		if (dst_key_getttl(dkey->key) != dns_kasp_dnskeyttl(kasp)) {
+			dst_key_setttl(dkey->key, dns_kasp_dnskeyttl(kasp));
+			modified = true;
+		}
+		if (modified && !dkey->purge) {
 			dns_dnssec_get_hints(dkey, now);
 			RETERR(dst_key_tofile(dkey->key, options, directory));
-			dst_key_setmodified(dkey->key, false);
 		}
+		dst_key_setmodified(dkey->key, false);
 	}
 
 	result = ISC_R_SUCCESS;
@@ -2438,8 +2480,6 @@ rollover_status(dns_dnsseckey_t *dkey, dns_kasp_t *kasp, isc_stdtime_t now,
 		}
 	} else {
 		isc_stdtime_t retire_time = 0;
-		uint32_t lifetime = 0;
-		(void)dst_key_getnum(key, DST_NUM_LIFETIME, &lifetime);
 		ret = dst_key_gettime(key, retire, &retire_time);
 		if (ret == ISC_R_SUCCESS) {
 			if (now < retire_time) {
@@ -2448,7 +2488,9 @@ rollover_status(dns_dnsseckey_t *dkey, dns_kasp_t *kasp, isc_stdtime_t now,
 							  "  Next rollover "
 							  "scheduled on ");
 					retire_time = keymgr_prepublication_time(
-						dkey, kasp, lifetime, now);
+						dkey, kasp,
+						(retire_time - active_time),
+						now);
 				} else {
 					isc_buffer_printf(
 						buf, "  Key will retire on ");
@@ -2626,7 +2668,6 @@ dns_keymgr_rollover(dns_kasp_t *kasp, dns_dnsseckeylist_t *keyring,
 	retire = when + prepub;
 
 	dst_key_settime(key->key, DST_TIME_INACTIVE, retire);
-	dst_key_setnum(key->key, DST_NUM_LIFETIME, (retire - active));
 
 	/* Store key state and update hints. */
 	isc_dir_init(&dir);

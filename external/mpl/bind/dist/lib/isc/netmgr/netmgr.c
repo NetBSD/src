@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr.c,v 1.13 2024/02/21 22:52:32 christos Exp $	*/
+/*	$NetBSD: netmgr.c,v 1.14 2024/09/22 00:14:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -51,8 +51,15 @@
  * How many isc_nmhandles and isc_nm_uvreqs will we be
  * caching for reuse in a socket.
  */
-#define ISC_NM_HANDLES_STACK_SIZE 600
-#define ISC_NM_REQS_STACK_SIZE	  600
+#define ISC_NM_HANDLES_STACK_SIZE 16
+#define ISC_NM_REQS_STACK_SIZE	  16
+
+/*%
+ * Same, but for UDP sockets which tend to need larger values as they
+ * process many requests per socket.
+ */
+#define ISC_NM_HANDLES_STACK_SIZE_UDP 64
+#define ISC_NM_REQS_STACK_SIZE_UDP    64
 
 /*%
  * Shortcut index arrays to get access to statistics counters.
@@ -69,7 +76,8 @@ static const isc_statscounter_t udp4statsindex[] = {
 	-1,
 	isc_sockstatscounter_udp4sendfail,
 	isc_sockstatscounter_udp4recvfail,
-	isc_sockstatscounter_udp4active
+	isc_sockstatscounter_udp4active,
+	-1,
 };
 
 static const isc_statscounter_t udp6statsindex[] = {
@@ -83,7 +91,8 @@ static const isc_statscounter_t udp6statsindex[] = {
 	-1,
 	isc_sockstatscounter_udp6sendfail,
 	isc_sockstatscounter_udp6recvfail,
-	isc_sockstatscounter_udp6active
+	isc_sockstatscounter_udp6active,
+	-1,
 };
 
 static const isc_statscounter_t tcp4statsindex[] = {
@@ -92,7 +101,7 @@ static const isc_statscounter_t tcp4statsindex[] = {
 	isc_sockstatscounter_tcp4connectfail, isc_sockstatscounter_tcp4connect,
 	isc_sockstatscounter_tcp4acceptfail,  isc_sockstatscounter_tcp4accept,
 	isc_sockstatscounter_tcp4sendfail,    isc_sockstatscounter_tcp4recvfail,
-	isc_sockstatscounter_tcp4active
+	isc_sockstatscounter_tcp4active,      isc_sockstatscounter_tcp4clients,
 };
 
 static const isc_statscounter_t tcp6statsindex[] = {
@@ -101,7 +110,7 @@ static const isc_statscounter_t tcp6statsindex[] = {
 	isc_sockstatscounter_tcp6connectfail, isc_sockstatscounter_tcp6connect,
 	isc_sockstatscounter_tcp6acceptfail,  isc_sockstatscounter_tcp6accept,
 	isc_sockstatscounter_tcp6sendfail,    isc_sockstatscounter_tcp6recvfail,
-	isc_sockstatscounter_tcp6active
+	isc_sockstatscounter_tcp6active,      isc_sockstatscounter_tcp6clients,
 };
 
 #if 0
@@ -1508,16 +1517,25 @@ void
 isc___nmsocket_init(isc_nmsocket_t *sock, isc_nm_t *mgr, isc_nmsocket_type type,
 		    isc_sockaddr_t *iface FLARG) {
 	uint16_t family;
+	size_t inactive_handles_stack_size = ISC_NM_HANDLES_STACK_SIZE;
+	size_t inactive_reqs_stack_size = ISC_NM_REQS_STACK_SIZE;
 
 	REQUIRE(sock != NULL);
 	REQUIRE(mgr != NULL);
 
-	*sock = (isc_nmsocket_t){ .type = type,
-				  .fd = -1,
-				  .inactivehandles = isc_astack_new(
-					  mgr->mctx, ISC_NM_HANDLES_STACK_SIZE),
-				  .inactivereqs = isc_astack_new(
-					  mgr->mctx, ISC_NM_REQS_STACK_SIZE) };
+	if (type == isc_nm_udpsocket) {
+		inactive_handles_stack_size = ISC_NM_HANDLES_STACK_SIZE_UDP;
+		inactive_reqs_stack_size = ISC_NM_REQS_STACK_SIZE_UDP;
+	}
+
+	*sock = (isc_nmsocket_t){
+		.type = type,
+		.fd = -1,
+		.inactivehandles = isc_astack_new(mgr->mctx,
+						  inactive_handles_stack_size),
+		.inactivereqs = isc_astack_new(mgr->mctx,
+					       inactive_reqs_stack_size)
+	};
 
 	ISC_LIST_INIT(sock->tls.sendreqs);
 
@@ -2093,6 +2111,7 @@ isc__nmsocket_writetimeout_cb(void *data, isc_result_t eresult) {
 
 	sock = req->sock;
 
+	isc__nm_start_reading(sock);
 	isc__nmsocket_reset(sock);
 }
 
@@ -2102,7 +2121,6 @@ isc__nmsocket_readtimeout_cb(uv_timer_t *timer) {
 
 	REQUIRE(VALID_NMSOCK(sock));
 	REQUIRE(sock->tid == isc_nm_tid());
-	REQUIRE(atomic_load(&sock->reading));
 
 	if (atomic_load(&sock->client)) {
 		uv_timer_stop(timer);
@@ -2349,8 +2367,10 @@ processbuffer(isc_nmsocket_t *sock) {
  * timers. If we do have a full message, reset the timer.
  *
  * Stop reading if this is a client socket, or if the server socket
- * has been set to sequential mode. In this case we'll be called again
- * later by isc__nm_resume_processing().
+ * has been set to sequential mode, or the number of queries we are
+ * processing simultaneously has reached the clients-per-connection
+ * limit. In this case we'll be called again later by
+ * isc__nm_resume_processing().
  */
 isc_result_t
 isc__nm_process_sock_buffer(isc_nmsocket_t *sock) {
@@ -2358,14 +2378,41 @@ isc__nm_process_sock_buffer(isc_nmsocket_t *sock) {
 		int_fast32_t ah = atomic_load(&sock->ah);
 		isc_result_t result = processbuffer(sock);
 		switch (result) {
-		case ISC_R_NOMORE:
+		case ISC_R_NOMORE: {
 			/*
 			 * Don't reset the timer until we have a
 			 * full DNS message.
 			 */
-			result = isc__nm_start_reading(sock);
-			if (result != ISC_R_SUCCESS) {
-				return (result);
+
+			/*
+			 * Restart reading if we have less data in the send
+			 * queue than the send buffer size, this means that the
+			 * TCP client has started reading some data again.
+			 * Starting reading when we go under the limit instead
+			 * of waiting for all data has been flushed allows
+			 * faster recovery (in case there was a congestion and
+			 * now there isn't).
+			 */
+			size_t write_queue_size =
+				uv_stream_get_write_queue_size(
+					&sock->uv_handle.stream);
+			if (write_queue_size < ISC_NETMGR_TCP_SENDBUF_SIZE) {
+				if (sock->reading_throttled) {
+					isc_log_write(isc_lctx,
+						      ISC_LOGCATEGORY_GENERAL,
+						      ISC_LOGMODULE_NETMGR,
+						      ISC_LOG_DEBUG(3),
+						      "resuming TCP "
+						      "connection, the other "
+						      "side is reading the "
+						      "data again (%zu)",
+						      write_queue_size);
+					sock->reading_throttled = false;
+				}
+				result = isc__nm_start_reading(sock);
+				if (result != ISC_R_SUCCESS) {
+					return (result);
+				}
 			}
 			/*
 			 * Start the timer only if there are no externally used
@@ -2377,6 +2424,7 @@ isc__nm_process_sock_buffer(isc_nmsocket_t *sock) {
 				isc__nmsocket_timer_start(sock);
 			}
 			goto done;
+		}
 		case ISC_R_CANCELED:
 			isc__nmsocket_timer_stop(sock);
 			isc__nm_stop_reading(sock);
@@ -2390,7 +2438,8 @@ isc__nm_process_sock_buffer(isc_nmsocket_t *sock) {
 			isc__nmsocket_timer_stop(sock);
 
 			if (atomic_load(&sock->client) ||
-			    atomic_load(&sock->sequential))
+			    atomic_load(&sock->sequential) ||
+			    atomic_load(&sock->ah) >= STREAM_CLIENTS_PER_CONN)
 			{
 				isc__nm_stop_reading(sock);
 				goto done;
@@ -3021,7 +3070,13 @@ isc__nmsocket_reset(isc_nmsocket_t *sock) {
 		isc__nmsocket_attach(sock, &(isc_nmsocket_t *){ NULL });
 		int r = uv_tcp_close_reset(&sock->uv_handle.tcp,
 					   reset_shutdown);
-		UV_RUNTIME_CHECK(uv_tcp_close_reset, r);
+		if (r != 0) {
+			isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
+				      ISC_LOGMODULE_NETMGR, ISC_LOG_DEBUG(1),
+				      "TCP Reset (RST) failed: %s",
+				      uv_strerror(r));
+			reset_shutdown(&sock->uv_handle.handle);
+		}
 	} else {
 		isc__nmsocket_shutdown(sock);
 	}

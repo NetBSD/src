@@ -1,4 +1,4 @@
-/*	$NetBSD: test_client.c,v 1.2 2024/02/21 22:51:13 christos Exp $	*/
+/*	$NetBSD: test_client.c,v 1.3 2024/09/22 00:13:57 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -451,5 +451,5 @@ main(int argc, char **argv) {
 
 	teardown();
 
-	exit(EXIT_SUCCESS);
+	return (EXIT_SUCCESS);
 }

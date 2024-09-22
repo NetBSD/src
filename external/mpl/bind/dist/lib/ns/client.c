@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.20 2024/02/23 21:09:49 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.21 2024/09/22 00:14:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -102,6 +102,9 @@
 
 #define COOKIE_SIZE 24U /* 8 + 4 + 4 + 8 */
 #define ECS_SIZE    20U /* 2 + 1 + 1 + [0..16] */
+
+#define TCPBUFFERS_FILLCOUNT 1U
+#define TCPBUFFERS_FREEMAX   8U
 
 #define WANTNSID(x)	(((x)->attributes & NS_CLIENTATTR_WANTNSID) != 0)
 #define WANTEXPIRE(x)	(((x)->attributes & NS_CLIENTATTR_WANTEXPIRE) != 0)
@@ -336,10 +339,34 @@ client_senddone(isc_nmhandle_t *handle, isc_result_t result, void *cbarg) {
 				      NS_LOGMODULE_CLIENT, ISC_LOG_DEBUG(3),
 				      "send failed: %s",
 				      isc_result_totext(result));
+			isc_nm_bad_request(handle);
 		}
 	}
 
 	isc_nmhandle_detach(&handle);
+}
+
+static void
+client_setup_tcp_buffer(ns_client_t *client) {
+	REQUIRE(client->tcpbuf == NULL);
+
+	client->tcpbuf = client->manager->tcp_buffer;
+	client->tcpbuf_size = NS_CLIENT_TCP_BUFFER_SIZE;
+}
+
+static void
+client_put_tcp_buffer(ns_client_t *client) {
+	if (client->tcpbuf == NULL) {
+		return;
+	}
+
+	if (client->tcpbuf != client->manager->tcp_buffer) {
+		isc_mem_put(client->manager->mctx, client->tcpbuf,
+			    client->tcpbuf_size);
+	}
+
+	client->tcpbuf = NULL;
+	client->tcpbuf_size = 0;
 }
 
 static void
@@ -351,12 +378,9 @@ client_allocsendbuf(ns_client_t *client, isc_buffer_t *buffer,
 	REQUIRE(datap != NULL);
 
 	if (TCP_CLIENT(client)) {
-		INSIST(client->tcpbuf == NULL);
-		client->tcpbuf = isc_mem_get(client->manager->send_mctx,
-					     NS_CLIENT_TCP_BUFFER_SIZE);
-		client->tcpbuf_size = NS_CLIENT_TCP_BUFFER_SIZE;
+		client_setup_tcp_buffer(client);
 		data = client->tcpbuf;
-		isc_buffer_init(buffer, data, NS_CLIENT_TCP_BUFFER_SIZE);
+		isc_buffer_init(buffer, data, client->tcpbuf_size);
 	} else {
 		data = client->sendbuf;
 		if ((client->attributes & NS_CLIENTATTR_HAVECOOKIE) == 0) {
@@ -389,11 +413,49 @@ client_sendpkg(ns_client_t *client, isc_buffer_t *buffer) {
 
 	if (isc_buffer_base(buffer) == client->tcpbuf) {
 		size_t used = isc_buffer_usedlength(buffer);
-		client->tcpbuf = isc_mem_reget(client->manager->send_mctx,
-					       client->tcpbuf,
-					       client->tcpbuf_size, used);
-		client->tcpbuf_size = used;
-		r.base = client->tcpbuf;
+		INSIST(client->tcpbuf_size == NS_CLIENT_TCP_BUFFER_SIZE);
+
+		/*
+		 * Copy the data into a smaller buffer before sending,
+		 * and keep the original big TCP send buffer for reuse
+		 * by other clients.
+		 */
+		if (used > NS_CLIENT_SEND_BUFFER_SIZE) {
+			/*
+			 * We can save space by allocating a new buffer with a
+			 * correct size and freeing the big buffer.
+			 */
+			unsigned char *new_tcpbuf =
+				isc_mem_get(client->manager->mctx, used);
+			memmove(new_tcpbuf, buffer->base, used);
+
+			/*
+			 * Put the big buffer so we can replace the pointer
+			 * and the size with the new ones.
+			 */
+			client_put_tcp_buffer(client);
+
+			/*
+			 * Keep the new buffer's information so it can be freed.
+			 */
+			client->tcpbuf = new_tcpbuf;
+			client->tcpbuf_size = used;
+
+			r.base = new_tcpbuf;
+		} else {
+			/*
+			 * The data fits in the available space in
+			 * 'sendbuf', there is no need for a new buffer.
+			 */
+			memmove(client->sendbuf, buffer->base, used);
+
+			/*
+			 * Put the big buffer, we don't need a dynamic buffer.
+			 */
+			client_put_tcp_buffer(client);
+
+			r.base = client->sendbuf;
+		}
 		r.length = used;
 	} else {
 		isc_buffer_usedregion(buffer, &r);
@@ -467,8 +529,7 @@ ns_client_sendraw(ns_client_t *client, dns_message_t *message) {
 	return;
 done:
 	if (client->tcpbuf != NULL) {
-		isc_mem_put(client->manager->send_mctx, client->tcpbuf,
-			    client->tcpbuf_size);
+		client_put_tcp_buffer(client);
 	}
 
 	ns_client_drop(client, result);
@@ -752,8 +813,7 @@ renderend:
 
 cleanup:
 	if (client->tcpbuf != NULL) {
-		isc_mem_put(client->manager->send_mctx, client->tcpbuf,
-			    client->tcpbuf_size);
+		client_put_tcp_buffer(client);
 	}
 
 	if (cleanup_cctx) {
@@ -1635,8 +1695,7 @@ ns__client_reset_cb(void *client0) {
 
 	ns_client_endrequest(client);
 	if (client->tcpbuf != NULL) {
-		isc_mem_put(client->manager->send_mctx, client->tcpbuf,
-			    client->tcpbuf_size);
+		client_put_tcp_buffer(client);
 	}
 
 	if (client->keytag != NULL) {
@@ -1667,8 +1726,6 @@ ns__client_put_cb(void *client0) {
 	client->magic = 0;
 	client->shuttingdown = true;
 
-	isc_mem_put(client->manager->send_mctx, client->sendbuf,
-		    NS_CLIENT_SEND_BUFFER_SIZE);
 	if (client->opt != NULL) {
 		INSIST(dns_rdataset_isassociated(client->opt));
 		dns_rdataset_disassociate(client->opt);
@@ -2117,6 +2174,13 @@ ns__client_request(isc_nmhandle_t *handle, isc_result_t eresult,
 		ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
 			      NS_LOGMODULE_CLIENT, ISC_LOG_DEBUG(3),
 			      "request is signed by a nonauthoritative key");
+	} else if (result == DNS_R_NOTVERIFIEDYET &&
+		   client->message->sig0 != NULL)
+	{
+		ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
+			      NS_LOGMODULE_CLIENT, ISC_LOG_DEBUG(3),
+			      "request has a SIG(0) signature but its support "
+			      "was removed (CVE-2024-1975)");
 	} else {
 		char tsigrcode[64];
 		isc_buffer_t b;
@@ -2345,8 +2409,6 @@ ns__client_setup(ns_client_t *client, ns_clientmgr_t *mgr, bool new) {
 		dns_message_create(client->mctx, DNS_MESSAGE_INTENTPARSE,
 				   &client->message);
 
-		client->sendbuf = isc_mem_get(client->manager->send_mctx,
-					      NS_CLIENT_SEND_BUFFER_SIZE);
 		/*
 		 * Set magic earlier than usual because ns_query_init()
 		 * and the functions it calls will require it.
@@ -2363,7 +2425,6 @@ ns__client_setup(ns_client_t *client, ns_clientmgr_t *mgr, bool new) {
 		ns_clientmgr_t *oldmgr = client->manager;
 		ns_server_t *sctx = client->sctx;
 		isc_task_t *task = client->task;
-		unsigned char *sendbuf = client->sendbuf;
 		dns_message_t *message = client->message;
 		isc_mem_t *oldmctx = client->mctx;
 		ns_query_t query = client->query;
@@ -2378,7 +2439,6 @@ ns__client_setup(ns_client_t *client, ns_clientmgr_t *mgr, bool new) {
 					 .manager = oldmgr,
 					 .sctx = sctx,
 					 .task = task,
-					 .sendbuf = sendbuf,
 					 .message = message,
 					 .query = query,
 					 .tid = tid };
@@ -2403,8 +2463,6 @@ ns__client_setup(ns_client_t *client, ns_clientmgr_t *mgr, bool new) {
 	return (ISC_R_SUCCESS);
 
 cleanup:
-	isc_mem_put(client->manager->send_mctx, client->sendbuf,
-		    NS_CLIENT_SEND_BUFFER_SIZE);
 	dns_message_detach(&client->message);
 	isc_task_detach(&client->task);
 	ns_clientmgr_detach(&client->manager);
@@ -2467,8 +2525,6 @@ clientmgr_destroy(ns_clientmgr_t *manager) {
 	isc_task_detach(&manager->task);
 	ns_server_detach(&manager->sctx);
 
-	isc_mem_detach(&manager->send_mctx);
-
 	isc_mem_putanddetach(&manager->mctx, manager, sizeof(*manager));
 }
 
@@ -2504,61 +2560,6 @@ ns_clientmgr_create(ns_server_t *sctx, isc_taskmgr_t *taskmgr,
 	ns_server_attach(sctx, &manager->sctx);
 
 	ISC_LIST_INIT(manager->recursing);
-
-	/*
-	 * We create specialised per-worker memory context specifically
-	 * dedicated and tuned for allocating send buffers as it is a very
-	 * common operation. Not doing so may result in excessive memory
-	 * use in certain workloads.
-	 *
-	 * Please see this thread for more details:
-	 *
-	 * https://github.com/jemalloc/jemalloc/issues/2483
-	 *
-	 * In particular, this information from the jemalloc developers is
-	 * of the most interest:
-	 *
-	 * https://github.com/jemalloc/jemalloc/issues/2483#issuecomment-1639019699
-	 * https://github.com/jemalloc/jemalloc/issues/2483#issuecomment-1698173849
-	 *
-	 * In essence, we use the following memory management strategy:
-	 *
-	 * 1. We use a per-worker memory arena for send buffers memory
-	 * allocation to reduce lock contention (In reality, we create a
-	 * per-client manager arena, but we have one client manager per
-	 * worker).
-	 *
-	 * 2. The automatically created arenas settings remain unchanged
-	 * and may be controlled by users (e.g. by setting the
-	 * "MALLOC_CONF" variable).
-	 *
-	 * 3. We attune the arenas to not use dirty pages cache as the
-	 * cache would have a poor reuse rate, and that is known to
-	 * significantly contribute to excessive memory use.
-	 *
-	 * 4. There is no strict need for the dirty cache, as there is a
-	 * per arena bin for each allocation size, so because we initially
-	 * allocate strictly 64K per send buffer (enough for a DNS
-	 * message), allocations would get directed to one bin (an "object
-	 * pool" or a "slab") maintained within an arena. That is, there
-	 * is an object pool already, specifically to optimise for the
-	 * case of frequent allocations of objects of the given size. The
-	 * object pool should suffice our needs, as we will end up
-	 * recycling the objects from there without the need to back it by
-	 * an additional layer of dirty pages cache. The dirty pages cache
-	 * would have worked better in the case when there are more
-	 * allocation bins involved due to a higher reuse rate (the case
-	 * of a more "generic" memory management).
-	 */
-	isc_mem_create_arena(&manager->send_mctx);
-	isc_mem_setname(manager->send_mctx, "sendbufs");
-	(void)isc_mem_arena_set_dirty_decay_ms(manager->send_mctx, 0);
-	/*
-	 * Disable muzzy pages cache too, as versions < 5.2.0 have it
-	 * enabled by default. The muzzy pages cache goes right below the
-	 * dirty pages cache and backs it.
-	 */
-	(void)isc_mem_arena_set_muzzy_decay_ms(manager->send_mctx, 0);
 
 	manager->magic = MANAGER_MAGIC;
 

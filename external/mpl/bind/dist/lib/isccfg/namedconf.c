@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.c,v 1.15 2024/02/21 22:52:44 christos Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.16 2024/09/22 00:14:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2107,6 +2107,7 @@ static cfg_clausedef_t view_clauses[] = {
 	{ "max-ncache-ttl", &cfg_type_duration, 0 },
 	{ "max-recursion-depth", &cfg_type_uint32, 0 },
 	{ "max-recursion-queries", &cfg_type_uint32, 0 },
+	{ "max-query-restarts", &cfg_type_uint32, 0 },
 	{ "max-stale-ttl", &cfg_type_duration, 0 },
 	{ "max-udp-size", &cfg_type_uint32, 0 },
 	{ "message-compression", &cfg_type_boolean, 0 },
@@ -2213,6 +2214,7 @@ static cfg_clausedef_t dnssecpolicy_clauses[] = {
 	{ "publish-safety", &cfg_type_duration, 0 },
 	{ "purge-keys", &cfg_type_duration, 0 },
 	{ "retire-safety", &cfg_type_duration, 0 },
+	{ "signatures-jitter", &cfg_type_duration, 0 },
 	{ "signatures-refresh", &cfg_type_duration, 0 },
 	{ "signatures-validity", &cfg_type_duration, 0 },
 	{ "signatures-validity-dnskey", &cfg_type_duration, 0 },
@@ -2299,6 +2301,12 @@ static cfg_clausedef_t zone_clauses[] = {
 	{ "max-journal-size", &cfg_type_size,
 	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR },
 	{ "max-records", &cfg_type_uint32,
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR |
+		  CFG_ZONE_STUB | CFG_ZONE_STATICSTUB | CFG_ZONE_REDIRECT },
+	{ "max-records-per-type", &cfg_type_uint32,
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR |
+		  CFG_ZONE_STUB | CFG_ZONE_STATICSTUB | CFG_ZONE_REDIRECT },
+	{ "max-types-per-name", &cfg_type_uint32,
 	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR |
 		  CFG_ZONE_STUB | CFG_ZONE_STATICSTUB | CFG_ZONE_REDIRECT },
 	{ "max-refresh-time", &cfg_type_uint32,

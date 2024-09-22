@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstap-read.c,v 1.9 2024/02/21 22:51:41 christos Exp $	*/
+/*	$NetBSD: dnstap-read.c,v 1.10 2024/09/22 00:14:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -34,6 +34,7 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <protobuf-c/protobuf-c.h>
 
@@ -85,7 +86,7 @@ fatal(const char *format, ...) {
 	vfprintf(stderr, format, args);
 	va_end(args);
 	fprintf(stderr, "\n");
-	exit(1);
+	_exit(EXIT_FAILURE);
 }
 
 static void
@@ -350,7 +351,7 @@ main(int argc, char *argv[]) {
 			break;
 		default:
 			usage();
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	}
 

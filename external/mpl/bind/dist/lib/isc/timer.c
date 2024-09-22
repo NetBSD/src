@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.13 2024/02/21 22:52:29 christos Exp $	*/
+/*	$NetBSD: timer.c,v 1.14 2024/09/22 00:14:08 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -233,8 +233,23 @@ timer_purge(isc_timer_t *timer) {
 
 	while ((event = ISC_LIST_HEAD(timer->active)) != NULL) {
 		timerevent_unlink(timer, event);
+		bool purged = isc_task_purgeevent(timer->task,
+						  (isc_event_t *)event);
 		UNLOCK(&timer->lock);
-		(void)isc_task_purgeevent(timer->task, (isc_event_t *)event);
+#if defined(UNIT_TESTING)
+		usleep(100);
+#endif
+		if (purged) {
+			isc_event_free((isc_event_t **)&event);
+		} else {
+			/*
+			 * The event was processed while we were trying to
+			 * purge it. The event's action is responsible for
+			 * calling isc_event_free(), which in turn will call
+			 * event->ev_destroy() (timerevent_destroy() here),
+			 * which will unlink and destroy it.
+			 */
+		}
 		LOCK(&timer->lock);
 	}
 }
@@ -469,6 +484,15 @@ isc_timer_touch(isc_timer_t *timer) {
 	UNLOCK(&timer->lock);
 
 	return (result);
+}
+
+void
+isc_timer_purge(isc_timer_t *timer) {
+	REQUIRE(VALID_TIMER(timer));
+
+	LOCK(&timer->lock);
+	timer_purge(timer);
+	UNLOCK(&timer->lock);
 }
 
 void

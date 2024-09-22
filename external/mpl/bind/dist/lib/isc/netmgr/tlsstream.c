@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsstream.c,v 1.2 2024/02/21 22:52:32 christos Exp $	*/
+/*	$NetBSD: tlsstream.c,v 1.3 2024/09/22 00:14:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -713,6 +713,7 @@ tlslisten_acceptcb(isc_nmhandle_t *handle, isc_result_t result, void *cbarg) {
 	tlssock = isc_mem_get(handle->sock->mgr->mctx, sizeof(*tlssock));
 	isc__nmsocket_init(tlssock, handle->sock->mgr, isc_nm_tlssocket,
 			   &handle->sock->iface);
+	isc__nmsocket_attach(tlslistensock, &tlssock->server);
 
 	tid = isc_nm_tid();
 	/* We need to initialize SSL now to reference SSL_CTX properly */
@@ -945,6 +946,10 @@ tls_close_direct(isc_nmsocket_t *sock) {
 
 	if (sock->listener != NULL) {
 		isc__nmsocket_detach(&sock->listener);
+	}
+
+	if (sock->server != NULL) {
+		isc__nmsocket_detach(&sock->server);
 	}
 
 	/* Further cleanup performed in isc__nm_tls_cleanup_data() */

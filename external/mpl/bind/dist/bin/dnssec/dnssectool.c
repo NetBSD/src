@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssectool.c,v 1.9 2024/02/21 22:51:03 christos Exp $	*/
+/*	$NetBSD: dnssectool.c,v 1.10 2024/09/22 00:13:56 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,6 +22,7 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <isc/base32.h>
 #include <isc/buffer.h>
@@ -83,7 +84,7 @@ fatal(const char *format, ...) {
 	if (fatalcallback != NULL) {
 		(*fatalcallback)();
 	}
-	exit(1);
+	_exit(EXIT_FAILURE);
 }
 
 void
@@ -113,7 +114,7 @@ vbprintf(int level, const char *fmt, ...) {
 void
 version(const char *name) {
 	fprintf(stderr, "%s %s\n", name, PACKAGE_VERSION);
-	exit(0);
+	exit(EXIT_SUCCESS);
 }
 
 void

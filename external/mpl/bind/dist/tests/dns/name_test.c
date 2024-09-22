@@ -1,4 +1,4 @@
-/*	$NetBSD: name_test.c,v 1.2 2024/02/21 22:52:50 christos Exp $	*/
+/*	$NetBSD: name_test.c,v 1.3 2024/09/22 00:14:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -271,6 +271,70 @@ ISC_RUN_TEST_IMPL(compression) {
 
 	dns_compress_rollback(&cctx, 0);
 	dns_compress_invalidate(&cctx);
+}
+
+ISC_RUN_TEST_IMPL(fromregion) {
+	dns_name_t name;
+	isc_buffer_t b;
+	isc_region_t r;
+	/*
+	 * target and source need to be bigger than DNS_NAME_MAXWIRE to
+	 * exercise 'len > DNS_NAME_MAXWIRE' test in dns_name_fromwire
+	 */
+	unsigned char target[DNS_NAME_MAXWIRE + 10];
+	unsigned char source[DNS_NAME_MAXWIRE + 10] = { '\007', 'e', 'x', 'a',
+							'm',	'p', 'l', 'e' };
+	/*
+	 * Extract the fully qualified name at the beginning of 'source'
+	 * into 'name' where 'name.ndata' points to the buffer 'target'.
+	 */
+	isc_buffer_init(&b, target, sizeof(target));
+	dns_name_init(&name, NULL);
+	dns_name_setbuffer(&name, &b);
+	r.base = source;
+	r.length = sizeof(source);
+	dns_name_fromregion(&name, &r);
+	assert_int_equal(9, name.length);
+	assert_ptr_equal(target, name.ndata);
+	assert_true(dns_name_isabsolute(&name));
+
+	/*
+	 * Extract the fully qualified name at the beginning of 'source'
+	 * into 'name' where 'name.ndata' points to the source.
+	 */
+	isc_buffer_init(&b, target, sizeof(target));
+	dns_name_init(&name, NULL);
+	r.base = source;
+	r.length = sizeof(source);
+	dns_name_fromregion(&name, &r);
+	assert_int_equal(9, name.length);
+	assert_ptr_equal(source, name.ndata);
+	assert_true(dns_name_isabsolute(&name));
+
+	/*
+	 * Extract the partially qualified name in 'source' into 'name'
+	 * where 'name.ndata' points to the source.
+	 */
+	isc_buffer_init(&b, target, sizeof(target));
+	dns_name_init(&name, NULL);
+	r.base = source;
+	r.length = 8;
+	dns_name_fromregion(&name, &r);
+	assert_int_equal(8, name.length);
+	assert_ptr_equal(source, name.ndata);
+	assert_false(dns_name_isabsolute(&name));
+
+	/*
+	 * Extract empty name in 'source' into 'name'.
+	 */
+	isc_buffer_init(&b, target, sizeof(target));
+	dns_name_init(&name, NULL);
+	r.base = source;
+	r.length = 0;
+	dns_name_fromregion(&name, &r);
+	assert_int_equal(0, name.length);
+	assert_ptr_equal(source, name.ndata);
+	assert_false(dns_name_isabsolute(&name));
 }
 
 /* is trust-anchor-telemetry test */
@@ -715,6 +779,7 @@ ISC_RUN_TEST_IMPL(benchmark) {
 ISC_TEST_LIST_START
 ISC_TEST_ENTRY(fullcompare)
 ISC_TEST_ENTRY(compression)
+ISC_TEST_ENTRY(fromregion)
 ISC_TEST_ENTRY(istat)
 ISC_TEST_ENTRY(init)
 ISC_TEST_ENTRY(invalidate)

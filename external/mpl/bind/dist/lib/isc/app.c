@@ -1,4 +1,4 @@
-/*	$NetBSD: app.c,v 1.9 2024/02/21 22:52:27 christos Exp $	*/
+/*	$NetBSD: app.c,v 1.10 2024/09/22 00:14:08 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -262,7 +262,7 @@ isc_app_ctxrun(isc_appctx_t *ctx) {
 		if (atomic_load_acquire(&ctx->want_shutdown) &&
 		    atomic_load_acquire(&ctx->blocked))
 		{
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	}
 

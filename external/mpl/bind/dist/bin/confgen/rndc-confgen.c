@@ -1,4 +1,4 @@
-/*	$NetBSD: rndc-confgen.c,v 1.7 2024/02/21 22:51:00 christos Exp $	*/
+/*	$NetBSD: rndc-confgen.c,v 1.8 2024/09/22 00:13:55 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -149,7 +149,8 @@ main(int argc, char **argv) {
 			keyfile = isc_commandline_argument;
 			break;
 		case 'h':
-			usage(0);
+			usage(EXIT_SUCCESS);
+			break;
 		case 'k':
 		case 'y': /* Compatible with rndc -y. */
 			keyname = isc_commandline_argument;
@@ -195,15 +196,15 @@ main(int argc, char **argv) {
 			if (isc_commandline_option != '?') {
 				fprintf(stderr, "%s: invalid argument -%c\n",
 					program, isc_commandline_option);
-				usage(1);
+				usage(EXIT_FAILURE);
 			} else {
-				usage(0);
+				usage(EXIT_SUCCESS);
 			}
 			break;
 		default:
 			fprintf(stderr, "%s: unhandled option -%c\n", program,
 				isc_commandline_option);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	}
 
@@ -212,7 +213,7 @@ main(int argc, char **argv) {
 	POST(argv);
 
 	if (argc > 0) {
-		usage(1);
+		usage(EXIT_FAILURE);
 	}
 
 	if (alg == DST_ALG_HMACMD5) {
