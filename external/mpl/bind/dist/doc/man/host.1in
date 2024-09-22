@@ -78,7 +78,7 @@ class resource records. The default class is IN (Internet).
 .INDENT 0.0
 .TP
 .B \-C
-This option indicates that \fI\%named\fP should check consistency, meaning that \fBhost\fP queries the SOA records for zone
+This option indicates that \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' should check consistency, meaning that \fBhost\fP queries the SOA records for zone
 \fBname\fP from all the listed authoritative name servers for that
 zone. The list of name servers is defined by the NS records that are
 found for the zone.
@@ -91,7 +91,7 @@ This option prints debugging traces, and is equivalent to the \fI\%\-v\fP verbos
 .INDENT 0.0
 .TP
 .B \-l
-This option tells \fI\%named\fP to list the zone, meaning the \fBhost\fP command performs a zone transfer of zone
+This option tells \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' to list the zone, meaning the \fBhost\fP command performs a zone transfer of zone
 \fBname\fP and prints out the NS, PTR, and address records (A/AAAA).
 .sp
 Together, the \fI\%\-l\fP \fI\%\-a\fP options print all records in the zone.
@@ -131,7 +131,7 @@ the value of the \fBattempts\fP option in \fB/etc/resolv.conf\fP, if set.
 .INDENT 0.0
 .TP
 .B \-s
-This option tells \fI\%named\fP \fInot\fP to send the query to the next nameserver if any server responds
+This option tells \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' \fInot\fP to send the query to the next nameserver if any server responds
 with a SERVFAIL response, which is the reverse of normal stub
 resolver behavior.
 .UNINDENT
@@ -188,7 +188,7 @@ also the \fI\%\-W\fP option.
 .INDENT 0.0
 .TP
 .B \-W wait
-This options sets the length of the wait timeout, indicating that \fI\%named\fP should wait for up to \fBwait\fP seconds for a reply. If \fBwait\fP is
+This options sets the length of the wait timeout, indicating that \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' should wait for up to \fBwait\fP seconds for a reply. If \fBwait\fP is
 less than 1, the wait interval is set to 1 second.
 .sp
 By default, \fBhost\fP waits for 5 seconds for UDP responses and 10
@@ -211,7 +211,7 @@ when \fBhost\fP runs.
 \fB/etc/resolv.conf\fP
 .SH SEE ALSO
 .sp
-\fI\%dig(1)\fP, \fI\%named(8)\fP\&.
+\X'tty: link #std-iscman-dig'\fI\%dig(1)\fP\X'tty: link', \X'tty: link #std-iscman-named'\fI\%named(8)\fP\X'tty: link'\&.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT

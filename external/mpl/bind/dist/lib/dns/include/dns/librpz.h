@@ -1,4 +1,4 @@
-/*	$NetBSD: librpz.h,v 1.1.1.7 2024/02/21 21:54:53 christos Exp $	*/
+/*	$NetBSD: librpz.h,v 1.1.1.8 2024/09/22 00:06:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -158,7 +158,7 @@ typedef struct {
 typedef uint32_t librpz_idx_t;
 #define LIBRPZ_IDX_NULL 0
 #define LIBRPZ_IDX_MIN	1
-#define LIBRPZ_IDX_BAD	((librpz_idx_t)-1)
+#define LIBRPZ_IDX_BAD	((librpz_idx_t) - 1)
 /**
  * Partial decoded results of a set of RPZ queries for a single DNS response
  * or iteration through the mapped file.

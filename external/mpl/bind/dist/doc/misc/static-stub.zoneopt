@@ -5,6 +5,8 @@ zone <string> [ <class> ] {
 	forward ( first | only );
 	forwarders [ port <integer> ]  { ( <ipv4_address> | <ipv6_address> ) [ port <integer> ]; ... };
 	max-records <integer>;
+	max-records-per-type <integer>;
+	max-types-per-name <integer>;
 	server-addresses { ( <ipv4_address> | <ipv6_address> ); ... };
 	server-names { <string>; ... };
 	zone-statistics ( full | terse | none | <boolean> );

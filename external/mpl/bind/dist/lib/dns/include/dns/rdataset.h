@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataset.h,v 1.1.1.10 2024/02/21 21:54:53 christos Exp $	*/
+/*	$NetBSD: rdataset.h,v 1.1.1.11 2024/09/22 00:06:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -150,11 +150,10 @@ struct dns_rdataset {
 
 #define DNS_RDATASET_COUNT_UNDEFINED UINT32_MAX
 
-#define DNS_RDATASET_INIT                                                  \
-	{                                                                  \
-		.magic = DNS_RDATASET_MAGIC, .link = ISC_LINK_INITIALIZER, \
-		.count = DNS_RDATASET_COUNT_UNDEFINED                      \
-	}
+#define DNS_RDATASET_INIT               \
+	{ .magic = DNS_RDATASET_MAGIC,  \
+	  .link = ISC_LINK_INITIALIZER, \
+	  .count = DNS_RDATASET_COUNT_UNDEFINED }
 
 /*!
  * \def DNS_RDATASETATTR_RENDERED

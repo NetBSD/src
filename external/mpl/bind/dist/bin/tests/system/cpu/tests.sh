@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -15,32 +17,49 @@
 status=0
 n=0
 
-n=$((n+1))
-echo_i "stop server ($n)"
-ret=0
-$PERL ../stop.pl cpu ns1 || ret=1
-test "$ret" -eq 0 || echo_i "failed"
-status=$((status+ret))
+CPUSET=$(command -v cpuset)
+NUMACTL=$(command -v numactl)
+TASKSET=$(command -v taskset)
 
-n=$((n+1))
-echo_i "start server with taskset ($n)"
-ret=0
-start_server --noclean --taskset fff0 --restart --port "${PORT}" cpu ns1 || ret=1
-test "$ret" -eq 0 || echo_i "failed"
-status=$((status+ret))
+cpulist() (
+  if [ -n "$CPUSET" ]; then
+    cpuset -g | head -1 | sed -e "s/.*: //" | tr -s ', ' '\n'
+  elif [ -n "$NUMACTL" ]; then
+    numactl --show | sed -ne 's/^physcpubind: //p' | tr -s ' ' '\n'
+  elif [ -n "$TASKSET" ]; then
+    # shellcheck disable=SC2046
+    seq $(taskset -c -p $$ | sed -e 's/.*: //' | tr -s ' -' ' ')
+  else
+    echo 0
+  fi
+)
 
-n=$((n+1))
-echo_i "check ps output ($n)"
+cpulimit() (
+  set -x
+  min_cpu="${1}"
+  shift
+  max_cpu="${1}"
+  shift
+
+  if [ -n "$CPUSET" ]; then
+    cpuset -l "${min_cpu}-${max_cpu}" "$@" 2>&1
+  elif [ -n "$NUMACTL" ]; then
+    numactl --physcpubind="${min_cpu}-${max_cpu}" "$@" 2>&1
+  elif [ -n "$TASKSET" ]; then
+    taskset -c "${min_cpu}-${max_cpu}" "$@" 2>&1
+  fi
+)
+
 ret=0
-ps -T -o pid,psr,time,comm -e > ps.out
-pid=$(cat ns1/named.pid)
-echo_i "pid=$pid"
-psr=$(awk -v pid="$pid" '$1 == pid && $4 == "isc-net-0000" {print $2}' < ps.out)
-echo_i "psr=$psr"
-# The next available cpu relative to the existing affinity mask is 4.
-test "$psr" -eq 4 || ret=1
+for cpu in $(cpulist); do
+  n=$((n + 1))
+  echo_i "testing that limiting CPU sets to 0-${cpu} works ($n)"
+  cpulimit 0 "$cpu" "$NAMED" -g >named.run.$n 2>&1 || true
+  ncpus=$(sed -ne 's/.*found \([0-9]*\) CPU.*\([0-9]*\) worker thread.*/\1/p' named.run.$n)
+  [ "$ncpus" -eq "$((cpu + 1))" ] || ret=1
+done
 test "$ret" -eq 0 || echo_i "failed"
-status=$((status+ret))
+status=$((status + ret))
 
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

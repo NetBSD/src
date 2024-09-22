@@ -439,12 +439,24 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 n=$((n + 1))
-echo_i "checking CNAME loops are detected ($n)"
+echo_i "checking CNAME loops are detected (resolver) ($n)"
 ret=0
 $RNDCCMD 10.53.0.7 null --- start test$n --- 2>&1 | sed 's/^/ns7 /' | cat_i
-$DIG $DIGOPTS @10.53.0.7 loop.example >dig.out.test$n
-grep "status: NOERROR" dig.out.test$n >/dev/null || ret=1
-grep "ANSWER: 17" dig.out.test$n >/dev/null || ret=1
+$DIG $DIGOPTS @10.53.0.7 loop.example >dig.out.1.test$n
+grep "status: NOERROR" dig.out.1.test$n >/dev/null || ret=1
+grep "ANSWER: 12" dig.out.1.test$n >/dev/null || ret=1
+# also check with max-query-restarts 16:
+$DIG $DIGOPTS @10.53.0.7 -y "${DEFAULT_HMAC}:restart16:1234abcd8765" loop.example >dig.out.2.test$n
+grep "status: NOERROR" dig.out.2.test$n >/dev/null || ret=1
+grep "ANSWER: 17" dig.out.2.test$n >/dev/null || ret=1
+
+n=$((n + 1))
+echo_i "checking CNAME loops are detected (auth) ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.2 loop.example >dig.out.test$n
+grep "status: SERVFAIL" dig.out.test$n >/dev/null || ret=1
+grep "max. restarts reached" dig.out.test$n >/dev/null || ret=1
+grep "ANSWER: 12" dig.out.test$n >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 

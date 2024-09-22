@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.1.1.13 2024/02/21 21:54:49 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.1.1.14 2024/09/22 00:06:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -74,6 +74,8 @@ unsigned int isc_mem_debugging = ISC_MEM_DEBUGGING;
 unsigned int isc_mem_defaultflags = ISC_MEMFLAG_DEFAULT;
 
 #define ISC_MEM_ILLEGAL_ARENA (UINT_MAX)
+
+volatile void *isc__mem_malloc = mallocx;
 
 /*
  * Constants.

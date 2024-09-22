@@ -42,7 +42,7 @@ delv \- DNS lookup and validation utility
 .SH DESCRIPTION
 .sp
 \fBdelv\fP is a tool for sending DNS queries and validating the results,
-using the same internal resolver and validator logic as \fI\%named\fP\&.
+using the same internal resolver and validator logic as \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link'\&.
 .sp
 \fBdelv\fP sends to a specified name server all queries needed to
 fetch and validate the requested data; this includes the original
@@ -125,9 +125,9 @@ key name can be specified using the \fI\%+root\fP option.
 .sp
 Note: When reading the trust anchor file, \fBdelv\fP treats \fBtrust\-anchors\fP,
 \fBinitial\-key\fP, and \fBstatic\-key\fP identically. That is, for a managed key,
-it is the \fIinitial\fP key that is trusted; \fI\%RFC 5011\fP key management is not
+it is the \fIinitial\fP key that is trusted; \X'tty: link https://datatracker.ietf.org/doc/html/rfc5011.html'\fI\%RFC 5011\fP\X'tty: link' key management is not
 supported. \fBdelv\fP does not consult the managed\-keys database maintained by
-\fI\%named\fP, which means that if either of the keys in \fB@sysconfdir@/bind.keys\fP is
+\X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link', which means that if either of the keys in \fB@sysconfdir@/bind.keys\fP is
 revoked and rolled over, \fB@sysconfdir@/bind.keys\fP must be updated to
 use DNSSEC validation in \fBdelv\fP\&.
 .UNINDENT
@@ -167,7 +167,7 @@ however, that this does not set the CD bit on upstream queries. If the
 server being queried is performing DNSSEC validation, then it does
 not return invalid data; this can cause \fBdelv\fP to time out. When it
 is necessary to examine invalid data to debug a DNSSEC problem, use
-\fI\%dig +cd\fP\&.)
+\X'tty: link #cmdoption-dig-arg-cd'\fI\%dig +cd\fP\X'tty: link'\&.)
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -362,7 +362,7 @@ parsing of the \fBdelv\fP output.
 .TP
 .B +dnssec, +nodnssec
 This option indicates whether to display RRSIG records in the \fBdelv\fP output.
-The default is to do so. Note that (unlike in \fI\%dig\fP) this does
+The default is to do so. Note that (unlike in \X'tty: link #std-iscman-dig'\fI\%dig\fP\X'tty: link') this does
 \fInot\fP control whether to request DNSSEC records or to
 validate them. DNSSEC records are always requested, and validation
 always occurs unless suppressed by the use of \fI\%\-i\fP or
@@ -386,7 +386,7 @@ use UDP unless a truncated response has been received.
 .INDENT 0.0
 .TP
 .B +unknownformat, +nounknownformat
-This option prints all RDATA in unknown RR\-type presentation format (\fI\%RFC 3597\fP).
+This option prints all RDATA in unknown RR\-type presentation format (\X'tty: link https://datatracker.ietf.org/doc/html/rfc3597.html'\fI\%RFC 3597\fP\X'tty: link').
 The default is to print RDATA for known types in the type\(aqs
 presentation format.
 .UNINDENT
@@ -402,7 +402,7 @@ This option prints response data in YAML format.
 \fB/etc/resolv.conf\fP
 .SH SEE ALSO
 .sp
-\fI\%dig(1)\fP, \fI\%named(8)\fP, \fI\%RFC 4034\fP, \fI\%RFC 4035\fP, \fI\%RFC 4431\fP, \fI\%RFC 5074\fP, \fI\%RFC 5155\fP\&.
+\X'tty: link #std-iscman-dig'\fI\%dig(1)\fP\X'tty: link', \X'tty: link #std-iscman-named'\fI\%named(8)\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc4034.html'\fI\%RFC 4034\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc4035.html'\fI\%RFC 4035\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc4431.html'\fI\%RFC 4431\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc5074.html'\fI\%RFC 5074\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc5155.html'\fI\%RFC 5155\fP\X'tty: link'\&.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT

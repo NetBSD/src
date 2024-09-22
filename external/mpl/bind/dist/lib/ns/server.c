@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.1.1.7 2024/02/21 21:54:47 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.1.1.8 2024/09/22 00:06:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -40,7 +40,7 @@
 isc_result_t
 ns_server_create(isc_mem_t *mctx, ns_matchview_t matchingview,
 		 ns_server_t **sctxp) {
-	ns_server_t *sctx;
+	ns_server_t *sctx = NULL;
 	isc_result_t result;
 
 	REQUIRE(sctxp != NULL && *sctxp == NULL);

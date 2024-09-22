@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.1.1.1 2024/02/21 21:54:48 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.1.1.2 2024/09/22 00:06:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -135,7 +135,7 @@ time_now(isc_time_t *t, clockid_t clock) {
 		return (ISC_R_UNEXPECTED);
 	}
 
-	if (ts.tv_sec < 0 || ts.tv_nsec < 0 || ts.tv_nsec >= NS_PER_SEC) {
+	if (ts.tv_sec < 0 || ts.tv_nsec < 0 || ts.tv_nsec >= (long)NS_PER_SEC) {
 		return (ISC_R_UNEXPECTED);
 	}
 
@@ -177,7 +177,7 @@ isc_time_nowplusinterval(isc_time_t *t, const isc_interval_t *i) {
 		return (ISC_R_UNEXPECTED);
 	}
 
-	if (ts.tv_sec < 0 || ts.tv_nsec < 0 || ts.tv_nsec >= NS_PER_SEC) {
+	if (ts.tv_sec < 0 || ts.tv_nsec < 0 || ts.tv_nsec >= (long)NS_PER_SEC) {
 		return (ISC_R_UNEXPECTED);
 	}
 

@@ -32,25 +32,25 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 mdig \- DNS pipelined lookup utility
 .SH SYNOPSIS
 .sp
-\fBmdig\fP \fI\%{@server\fP} [\fB\-f\fP filename] [\fB\-h\fP] [\fB\-v\fP] [ [\fB\-4\fP] | [\fB\-6\fP] ] [\fB\-m\fP] [\fB\-b\fP address] [\fB\-p\fP port#] [\fB\-c\fP class] [\fB\-t\fP type] [\fB\-i\fP] [\fB\-x\fP addr] [plusopt...]
+\fBmdig\fP \X'tty: link mailto:{@server'\fI\%{@server\fP\X'tty: link'} [\fB\-f\fP filename] [\fB\-h\fP] [\fB\-v\fP] [ [\fB\-4\fP] | [\fB\-6\fP] ] [\fB\-m\fP] [\fB\-b\fP address] [\fB\-p\fP port#] [\fB\-c\fP class] [\fB\-t\fP type] [\fB\-i\fP] [\fB\-x\fP addr] [plusopt...]
 .sp
 \fBmdig\fP {\fB\-h\fP}
 .sp
 \fBmdig\fP [@server] {global\-opt...} { {local\-opt...} {query} ...}
 .SH DESCRIPTION
 .sp
-\fBmdig\fP is a multiple/pipelined query version of \fI\%dig\fP: instead of
+\fBmdig\fP is a multiple/pipelined query version of \X'tty: link #std-iscman-dig'\fI\%dig\fP\X'tty: link': instead of
 waiting for a response after sending each query, it begins by sending
 all queries. Responses are displayed in the order in which they are
 received, not in the order the corresponding queries were sent.
 .sp
-\fBmdig\fP options are a subset of the \fI\%dig\fP options, and are divided
+\fBmdig\fP options are a subset of the \X'tty: link #std-iscman-dig'\fI\%dig\fP\X'tty: link' options, and are divided
 into \(dqanywhere options,\(dq which can occur anywhere, \(dqglobal options,\(dq which
 must occur before the query name (or they are ignored with a warning),
 and \(dqlocal options,\(dq which apply to the next query on the command line.
 .sp
 The \fB@server\fP option is a mandatory global option. It is the name or IP
-address of the name server to query. (Unlike \fI\%dig\fP, this value is not
+address of the name server to query. (Unlike \X'tty: link #std-iscman-dig'\fI\%dig\fP\X'tty: link', this value is not
 retrieved from \fB/etc/resolv.conf\fP\&.) It can be an IPv4 address in
 dotted\-decimal notation, an IPv6 address in colon\-delimited notation, or
 a hostname. When the supplied \fBserver\fP argument is a hostname,
@@ -410,7 +410,7 @@ This sets the timeout between UDP query retries to \fBT\fP\&.
 .INDENT 0.0
 .TP
 .B +unknownformat, +nounknownformat
-This prints [or does not print] all RDATA in unknown RR\-type presentation format (see \fI\%RFC 3597\fP).
+This prints [or does not print] all RDATA in unknown RR\-type presentation format (see \X'tty: link https://datatracker.ietf.org/doc/html/rfc3597.html'\fI\%RFC 3597\fP\X'tty: link').
 The default is to print RDATA for known types in the type\(aqs
 presentation format.
 .UNINDENT
@@ -427,7 +427,7 @@ This flag is off by default.
 .UNINDENT
 .SH SEE ALSO
 .sp
-\fI\%dig(1)\fP, \fI\%RFC 1035\fP\&.
+\X'tty: link #std-iscman-dig'\fI\%dig(1)\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html'\fI\%RFC 1035\fP\X'tty: link'\&.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT

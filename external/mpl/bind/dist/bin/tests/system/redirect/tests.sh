@@ -518,6 +518,14 @@ n=$((n + 1))
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
+echo_i "checking nxdomain-redirect against built-in RFC-1918 zone ($n)"
+ret=0
+$DIG $DIGOPTS -x 10.0.0.1 @10.53.0.4 -b 10.53.0.2 >dig.out.ns4.test$n || ret=1
+grep "status: NXDOMAIN" dig.out.ns4.test$n >/dev/null || ret=1
+n=$((n + 1))
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
 echo_i "checking tld nxdomain-redirect against signed root zone ($n)"
 ret=0
 $DIG $DIGOPTS @10.53.0.5 asdfasdfasdf >dig.out.ns5.test$n || ret=1

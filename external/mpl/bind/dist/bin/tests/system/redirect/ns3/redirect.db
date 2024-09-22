@@ -12,5 +12,6 @@
 $TTL 300
 @ IN SOA a.root-servers.nil. hostmaster.example.net. 0 0 0 0 0
 @ IN NS a.root-servers.nil.
+10.in-addr.arpa	TXT turn off redirect
 * IN A 100.100.100.1
 * IN AAAA 2001:ffff:ffff::100.100.100.1

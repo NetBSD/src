@@ -35,7 +35,7 @@ named.conf \- configuration file for **named**
 \fBnamed.conf\fP
 .SH DESCRIPTION
 .sp
-\fBnamed.conf\fP is the configuration file for \fI\%named\fP\&.
+\fBnamed.conf\fP is the configuration file for \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link'\&.
 .sp
 For complete documentation about the configuration statements, please refer to
 the Configuration Reference section in the BIND 9 Administrator Reference
@@ -78,6 +78,7 @@ dnssec\-policy <string> {
 	publish\-safety <duration>;
 	purge\-keys <duration>;
 	retire\-safety <duration>;
+	signatures\-jitter <duration>;
 	signatures\-refresh <duration>;
 	signatures\-validity <duration>;
 	signatures\-validity\-dnskey <duration>;
@@ -236,7 +237,9 @@ options {
 	max\-ixfr\-ratio ( unlimited | <percentage> );
 	max\-journal\-size ( default | unlimited | <sizeval> );
 	max\-ncache\-ttl <duration>;
+	max\-query\-restarts <integer>;
 	max\-records <integer>;
+	max\-records\-per\-type <integer>;
 	max\-recursion\-depth <integer>;
 	max\-recursion\-queries <integer>;
 	max\-refresh\-time <integer>;
@@ -247,6 +250,7 @@ options {
 	max\-transfer\-idle\-out <integer>;
 	max\-transfer\-time\-in <integer>;
 	max\-transfer\-time\-out <integer>;
+	max\-types\-per\-name <integer>;
 	max\-udp\-size <integer>;
 	max\-zone\-ttl ( unlimited | <duration> );
 	memstatistics <boolean>;
@@ -526,7 +530,9 @@ view <string> [ <class> ] {
 	max\-ixfr\-ratio ( unlimited | <percentage> );
 	max\-journal\-size ( default | unlimited | <sizeval> );
 	max\-ncache\-ttl <duration>;
+	max\-query\-restarts <integer>;
 	max\-records <integer>;
+	max\-records\-per\-type <integer>;
 	max\-recursion\-depth <integer>;
 	max\-recursion\-queries <integer>;
 	max\-refresh\-time <integer>;
@@ -536,6 +542,7 @@ view <string> [ <class> ] {
 	max\-transfer\-idle\-out <integer>;
 	max\-transfer\-time\-in <integer>;
 	max\-transfer\-time\-out <integer>;
+	max\-types\-per\-name <integer>;
 	max\-udp\-size <integer>;
 	max\-zone\-ttl ( unlimited | <duration> );
 	message\-compression <boolean>;
@@ -704,8 +711,10 @@ zone <string> [ <class> ] {
 	max\-ixfr\-ratio ( unlimited | <percentage> );
 	max\-journal\-size ( default | unlimited | <sizeval> );
 	max\-records <integer>;
+	max\-records\-per\-type <integer>;
 	max\-transfer\-idle\-out <integer>;
 	max\-transfer\-time\-out <integer>;
+	max\-types\-per\-name <integer>;
 	max\-zone\-ttl ( unlimited | <duration> );
 	notify ( explicit | master\-only | primary\-only | <boolean> );
 	notify\-delay <integer>;
@@ -768,12 +777,14 @@ zone <string> [ <class> ] {
 	max\-ixfr\-ratio ( unlimited | <percentage> );
 	max\-journal\-size ( default | unlimited | <sizeval> );
 	max\-records <integer>;
+	max\-records\-per\-type <integer>;
 	max\-refresh\-time <integer>;
 	max\-retry\-time <integer>;
 	max\-transfer\-idle\-in <integer>;
 	max\-transfer\-idle\-out <integer>;
 	max\-transfer\-time\-in <integer>;
 	max\-transfer\-time\-out <integer>;
+	max\-types\-per\-name <integer>;
 	min\-refresh\-time <integer>;
 	min\-retry\-time <integer>;
 	multi\-master <boolean>;
@@ -831,12 +842,14 @@ zone <string> [ <class> ] {
 	max\-ixfr\-ratio ( unlimited | <percentage> );
 	max\-journal\-size ( default | unlimited | <sizeval> );
 	max\-records <integer>;
+	max\-records\-per\-type <integer>;
 	max\-refresh\-time <integer>;
 	max\-retry\-time <integer>;
 	max\-transfer\-idle\-in <integer>;
 	max\-transfer\-idle\-out <integer>;
 	max\-transfer\-time\-in <integer>;
 	max\-transfer\-time\-out <integer>;
+	max\-types\-per\-name <integer>;
 	min\-refresh\-time <integer>;
 	min\-retry\-time <integer>;
 	multi\-master <boolean>;
@@ -905,6 +918,8 @@ zone <string> [ <class> ] {
 	masterfile\-format ( raw | text );
 	masterfile\-style ( full | relative );
 	max\-records <integer>;
+	max\-records\-per\-type <integer>;
+	max\-types\-per\-name <integer>;
 	max\-zone\-ttl ( unlimited | <duration> );
 	primaries [ port <integer> ]  { ( <remote\-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
 	zone\-statistics ( full | terse | none | <boolean> );
@@ -926,6 +941,8 @@ zone <string> [ <class> ] {
 	forward ( first | only );
 	forwarders [ port <integer> ]  { ( <ipv4_address> | <ipv6_address> ) [ port <integer> ]; ... };
 	max\-records <integer>;
+	max\-records\-per\-type <integer>;
+	max\-types\-per\-name <integer>;
 	server\-addresses { ( <ipv4_address> | <ipv6_address> ); ... };
 	server\-names { <string>; ... };
 	zone\-statistics ( full | terse | none | <boolean> );
@@ -954,10 +971,12 @@ zone <string> [ <class> ] {
 	masterfile\-format ( raw | text );
 	masterfile\-style ( full | relative );
 	max\-records <integer>;
+	max\-records\-per\-type <integer>;
 	max\-refresh\-time <integer>;
 	max\-retry\-time <integer>;
 	max\-transfer\-idle\-in <integer>;
 	max\-transfer\-time\-in <integer>;
+	max\-types\-per\-name <integer>;
 	min\-refresh\-time <integer>;
 	min\-retry\-time <integer>;
 	multi\-master <boolean>;
@@ -1003,7 +1022,7 @@ zone <string> [ <class> ] {
 \fB@sysconfdir@/named.conf\fP
 .SH SEE ALSO
 .sp
-\fI\%named(8)\fP, \fI\%named\-checkconf(8)\fP, \fI\%rndc(8)\fP, \fI\%rndc\-confgen(8)\fP, \fI\%tsig\-keygen(8)\fP, BIND 9 Administrator Reference Manual.
+\X'tty: link #std-iscman-named'\fI\%named(8)\fP\X'tty: link', \X'tty: link #std-iscman-named-checkconf'\fI\%named\-checkconf(8)\fP\X'tty: link', \X'tty: link #std-iscman-rndc'\fI\%rndc(8)\fP\X'tty: link', \X'tty: link #std-iscman-rndc-confgen'\fI\%rndc\-confgen(8)\fP\X'tty: link', \X'tty: link #std-iscman-tsig-keygen'\fI\%tsig\-keygen(8)\fP\X'tty: link', BIND 9 Administrator Reference Manual.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT

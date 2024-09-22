@@ -1,4 +1,4 @@
-/*	$NetBSD: stdtime.c,v 1.1.1.1 2024/02/21 21:54:49 christos Exp $	*/
+/*	$NetBSD: stdtime.c,v 1.1.1.2 2024/09/22 00:06:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -44,7 +44,8 @@ isc_stdtime_get(isc_stdtime_t *t) {
 		FATAL_SYSERROR(errno, "clock_gettime()");
 	}
 
-	REQUIRE(ts.tv_sec > 0 && ts.tv_nsec >= 0 && ts.tv_nsec < NS_PER_SEC);
+	REQUIRE(ts.tv_sec > 0 && ts.tv_nsec >= 0 &&
+		ts.tv_nsec < (long)NS_PER_SEC);
 
 	*t = (isc_stdtime_t)ts.tv_sec;
 }

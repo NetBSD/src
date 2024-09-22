@@ -37,6 +37,13 @@ controls {
         inet 10.53.0.2 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
 };
 
+dnssec-policy "dnssec" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
 zone "." {
 	type hint;
 	file "../../_common/root.hint";
@@ -200,6 +207,13 @@ zone "hours-vs-days" {
 zone "too-many-iterations" {
 	type primary;
 	file "too-many-iterations.db.signed";
+};
+
+zone "lazy-ksk" {
+	type primary;
+	file "lazy-ksk.db";
+	dnssec-policy "dnssec";
+	allow-update { any; };
 };
 
 include "trusted.conf";

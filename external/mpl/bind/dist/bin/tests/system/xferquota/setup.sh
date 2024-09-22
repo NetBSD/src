@@ -17,7 +17,7 @@
 
 . ../conf.sh
 
-$PERL setup.pl
+$PYTHON setup.py
 
 cp -f ns1/changing1.db ns1/changing.db
 

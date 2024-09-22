@@ -1,0 +1,5 @@
+# truncated record
+# header: QUERY, additional=1
+00 09 00 00 00 00 00 00 00 00 00 01
+# truncated A record (no ttl, length or data)
+00 00 01 00 01

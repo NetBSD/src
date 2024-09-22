@@ -15,10 +15,14 @@ options {
 	query-source address 10.53.0.6;
 	notify-source 10.53.0.6;
 	transfer-source 10.53.0.6;
+	query-source-v6 address fd92:7065:b8e:ffff::6;
+	notify-source-v6 fd92:7065:b8e:ffff::6;
+	transfer-source-v6 fd92:7065:b8e:ffff::6;
 	port @PORT@;
 	pid-file "named.pid";
 	session-keyfile "session.key";
 	listen-on { 10.53.0.6; };
+	listen-on-v6 { fd92:7065:b8e:ffff::6; };
 	recursion no;
 	notify yes;
 	minimal-responses no;
@@ -38,4 +42,10 @@ zone "in-addr.arpa" {
 	type primary;
 	file "in-addr.db";
 	update-policy {	grant * tcp-self . PTR(1) ANY(2) A; };
+};
+
+zone "2.0.0.2.ip6.arpa" {
+	type primary;
+	file "2.0.0.2.ip6.addr.db";
+	update-policy {	grant * 6to4-self . NS(10) DS(4); };
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: picohttpparser.c,v 1.1.1.1 2024/02/21 21:54:49 christos Exp $	*/
+/*	$NetBSD: picohttpparser.c,v 1.1.1.2 2024/09/22 00:06:13 christos Exp $	*/
 
 /*
  * Copyright (c) 2009-2014 Kazuho Oku, Tokuhiro Matsuno, Daisuke Murase,
@@ -54,7 +54,7 @@
 #define ALIGNED(n) __attribute__((aligned(n)))
 #endif
 
-#define IS_PRINTABLE_ASCII(c) ((unsigned char)(c)-040u < 0137u)
+#define IS_PRINTABLE_ASCII(c) ((unsigned char)(c) - 040u < 0137u)
 
 #define CHECK_EOF()           \
 	if (buf == buf_end) { \

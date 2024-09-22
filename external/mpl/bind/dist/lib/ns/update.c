@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.1.1.11 2024/02/21 21:54:47 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.1.1.12 2024/09/22 00:06:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -3304,9 +3304,18 @@ update_action(isc_task_t *task, isc_event_t *event) {
 						dns_diff_clear(&ctx.add_diff);
 						goto failure;
 					}
-					CHECK(update_one_rr(db, ver, &diff,
-							    DNS_DIFFOP_ADD,
-							    name, ttl, &rdata));
+					result = update_one_rr(
+						db, ver, &diff, DNS_DIFFOP_ADD,
+						name, ttl, &rdata);
+					if (result != ISC_R_SUCCESS) {
+						update_log(client, zone,
+							   LOGLEVEL_PROTOCOL,
+							   "adding an RR "
+							   "failed: %s",
+							   isc_result_totext(
+								   result));
+						goto failure;
+					}
 				}
 			}
 		} else if (update_class == dns_rdataclass_any) {
@@ -3389,6 +3398,34 @@ update_action(isc_task_t *task, isc_event_t *event) {
 							   "attempt to "
 							   "delete last "
 							   "NS ignored");
+						continue;
+					}
+				}
+				/*
+				 * Don't remove DNSKEY, CDNSKEY, CDS records
+				 * that are in use (under our control).
+				 */
+				if (dns_rdatatype_iskeymaterial(rdata.type)) {
+					isc_result_t r;
+					bool inuse = false;
+					r = dns_zone_dnskey_inuse(zone, &rdata,
+								  &inuse);
+					if (r != ISC_R_SUCCESS) {
+						FAIL(r);
+					}
+					if (inuse) {
+						char typebuf
+							[DNS_RDATATYPE_FORMATSIZE];
+
+						dns_rdatatype_format(
+							rdata.type, typebuf,
+							sizeof(typebuf));
+						update_log(client, zone,
+							   LOGLEVEL_PROTOCOL,
+							   "attempt to "
+							   "delete in use "
+							   "%s ignored",
+							   typebuf);
 						continue;
 					}
 				}

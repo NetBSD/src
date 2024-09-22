@@ -277,7 +277,7 @@ nsec03			NSEC	. TYPE1
 nsec04			NSEC	. TYPE127
 
 ; type 48
-dnskey01		DNSKEY	512 ( 255 1 AQMFD5raczCJHViKtLYhWGz8hMY
+@			DNSKEY	512 ( 255 1 AQMFD5raczCJHViKtLYhWGz8hMY
 				9UGRuniJDBzC7w0aRyzWZriO6i2odGWWQVucZqKV
 				sENW91IOW4vqudngPZsY3GvQ/xVA8/7pyFj6b7Esg
 				a60zyGW6LFe9r8n6paHrlG5ojqf0BaqHT+8= )
@@ -478,7 +478,10 @@ amtrelay04		AMTRELAY 0 0 2 ::
 amtrelay05		AMTRELAY 0 0 3 example.net.
 amtrelay06		AMTRELAY \# 2 0004
 
-; type 261 -- 32767 (unassigned)
+; type 261
+resinfo			RESINFO	qnamemin exterr=15,16,17 infourl=https://resolver.example.com/guide
+
+; type 262 -- 32767 (unassigned)
 
 ; type 32768
 ta			TA	30795 1 1 (

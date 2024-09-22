@@ -38,8 +38,10 @@ zone <string> [ <class> ] {
 	max-ixfr-ratio ( unlimited | <percentage> );
 	max-journal-size ( default | unlimited | <sizeval> );
 	max-records <integer>;
+	max-records-per-type <integer>;
 	max-transfer-idle-out <integer>;
 	max-transfer-time-out <integer>;
+	max-types-per-name <integer>;
 	max-zone-ttl ( unlimited | <duration> );
 	notify ( explicit | master-only | primary-only | <boolean> );
 	notify-delay <integer>;

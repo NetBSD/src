@@ -1,4 +1,4 @@
-/*	$NetBSD: server.h,v 1.1.1.7 2024/02/21 21:54:48 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.1.1.8 2024/09/22 00:06:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -102,6 +102,7 @@ struct ns_server {
 	uint16_t       transfer_tcp_message_size;
 	bool	       interface_auto;
 	dns_tkeyctx_t *tkeyctx;
+	uint8_t	       max_restarts;
 
 	/*% Server id for NSID */
 	char *server_id;

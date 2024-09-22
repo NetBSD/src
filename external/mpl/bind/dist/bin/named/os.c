@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.1.1.1 2024/02/21 21:54:34 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.1.1.2 2024/09/22 00:06:08 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -302,10 +302,10 @@ named_os_daemonize(void) {
 			char buf;
 			n = read(dfd[0], &buf, 1);
 			if (n == 1) {
-				_exit(0);
+				_exit(EXIT_SUCCESS);
 			}
 		} while (n == -1 && errno == EINTR);
-		_exit(1);
+		_exit(EXIT_FAILURE);
 	}
 	(void)close(dfd[0]);
 

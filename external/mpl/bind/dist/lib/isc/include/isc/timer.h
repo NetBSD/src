@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.h,v 1.1.1.8 2024/02/21 21:54:49 christos Exp $	*/
+/*	$NetBSD: timer.h,v 1.1.1.9 2024/09/22 00:06:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -224,6 +224,21 @@ isc_timer_touch(isc_timer_t *timer);
  *
  *\li	Success
  *\li	Unexpected error
+ */
+
+void
+isc_timer_purge(isc_timer_t *timer);
+/*%<
+ * Purge timer.
+ *
+ * Requires:
+ *
+ *\li	'timer' points to a valid timer.
+ *
+ * Ensures:
+ *
+ *\li	Any events already posted by the timer are purged.
+ *
  */
 
 void

@@ -21,6 +21,7 @@ dnssec-policy <string> {
 	publish-safety <duration>;
 	purge-keys <duration>;
 	retire-safety <duration>;
+	signatures-jitter <duration>;
 	signatures-refresh <duration>;
 	signatures-validity <duration>;
 	signatures-validity-dnskey <duration>;
@@ -179,7 +180,9 @@ options {
 	max-ixfr-ratio ( unlimited | <percentage> );
 	max-journal-size ( default | unlimited | <sizeval> );
 	max-ncache-ttl <duration>;
+	max-query-restarts <integer>;
 	max-records <integer>;
+	max-records-per-type <integer>;
 	max-recursion-depth <integer>;
 	max-recursion-queries <integer>;
 	max-refresh-time <integer>;
@@ -190,6 +193,7 @@ options {
 	max-transfer-idle-out <integer>;
 	max-transfer-time-in <integer>;
 	max-transfer-time-out <integer>;
+	max-types-per-name <integer>;
 	max-udp-size <integer>;
 	max-zone-ttl ( unlimited | <duration> );
 	memstatistics <boolean>;
@@ -469,7 +473,9 @@ view <string> [ <class> ] {
 	max-ixfr-ratio ( unlimited | <percentage> );
 	max-journal-size ( default | unlimited | <sizeval> );
 	max-ncache-ttl <duration>;
+	max-query-restarts <integer>;
 	max-records <integer>;
+	max-records-per-type <integer>;
 	max-recursion-depth <integer>;
 	max-recursion-queries <integer>;
 	max-refresh-time <integer>;
@@ -479,6 +485,7 @@ view <string> [ <class> ] {
 	max-transfer-idle-out <integer>;
 	max-transfer-time-in <integer>;
 	max-transfer-time-out <integer>;
+	max-types-per-name <integer>;
 	max-udp-size <integer>;
 	max-zone-ttl ( unlimited | <duration> );
 	message-compression <boolean>;

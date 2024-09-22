@@ -435,7 +435,7 @@ n=$((n + 1))
 echo_i "testing automatic zones are reported ($n)"
 ret=0
 $RNDC -s 10.53.0.4 -p ${EXTRAPORT6} -c ns4/key6.conf status >rndc.out.1.test$n || ret=1
-grep "number of zones: 201 (198 automatic)" rndc.out.1.test$n >/dev/null || ret=1
+grep "number of zones: 203 (200 automatic)" rndc.out.1.test$n >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -623,7 +623,7 @@ status=$((status + ret))
 
 n=$((n + 1))
 echo_i "check if query for the zone returns SERVFAIL ($n)"
-$DIG @10.53.0.6 -p ${PORT} -t soa huge.zone >dig.out.1.test$n
+$DIG @10.53.0.6 -p ${PORT} -t soa huge.zone >dig.out.1.test$n || ret=1
 grep "SERVFAIL" dig.out.1.test$n >/dev/null || ret=1
 if [ $ret != 0 ]; then
   echo_i "failed (ignored)"
@@ -639,7 +639,7 @@ status=$((status + ret))
 
 n=$((n + 1))
 echo_i "check if query for the zone returns NOERROR ($n)"
-$DIG @10.53.0.6 -p ${PORT} -t soa huge.zone >dig.out.1.test$n
+$DIG @10.53.0.6 -p ${PORT} -t soa huge.zone >dig.out.1.test$n || ret=1
 grep "NOERROR" dig.out.1.test$n >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))

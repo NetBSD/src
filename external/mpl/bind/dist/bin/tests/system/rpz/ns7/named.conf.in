@@ -32,7 +32,7 @@ options {
 	nsdname-enable yes
 	min-update-interval 0;
 
-	include "../dnsrps-secondary.conf";
+	include "../dnsrps.conf";
 };
 
 logging { category rpz { default_debug; }; };

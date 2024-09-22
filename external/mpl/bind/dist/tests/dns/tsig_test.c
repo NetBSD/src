@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig_test.c,v 1.1.1.1 2024/02/21 21:54:55 christos Exp $	*/
+/*	$NetBSD: tsig_test.c,v 1.1.1.2 2024/09/22 00:06:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -38,8 +38,6 @@
 #include <tests/dns.h>
 
 #define TEST_ORIGIN "test"
-
-static int debug = 0;
 
 static int
 setup_test(void **state) {

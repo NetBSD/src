@@ -20,12 +20,12 @@ DIGOPTS="+nosea +stat +noquest +nocomm +nocmd -p ${PORT}"
 status=0
 
 echo_i "Getting message size with compression enabled"
-$DIG $DIGOPTS -b 10.53.0.1 @10.53.0.1 mx example >dig.compen.test
+$DIG $DIGOPTS -b 10.53.0.1 @10.53.0.1 mx example >dig.compen.test || ret=1
 COMPEN=$(grep ';; MSG SIZE' dig.compen.test | sed -e "s/.*: //g")
 cat dig.compen.test | grep -v ';;' | sort >dig.compen.sorted.test
 
 echo_i "Getting message size with compression disabled"
-$DIG $DIGOPTS -b 10.53.0.2 @10.53.0.1 mx example >dig.compdis.test
+$DIG $DIGOPTS -b 10.53.0.2 @10.53.0.1 mx example >dig.compdis.test || ret=1
 COMPDIS=$(grep ';; MSG SIZE' dig.compdis.test | sed -e "s/.*: //g")
 cat dig.compdis.test | grep -v ';;' | sort >dig.compdis.sorted.test
 

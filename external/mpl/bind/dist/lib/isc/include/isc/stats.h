@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.h,v 1.1.1.7 2024/02/21 21:54:49 christos Exp $	*/
+/*	$NetBSD: stats.h,v 1.1.1.8 2024/09/22 00:06:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -102,7 +102,10 @@ enum {
 	isc_sockstatscounter_rawrecvfail = 60,
 	isc_sockstatscounter_rawactive = 61,
 
-	isc_sockstatscounter_max = 62
+	isc_sockstatscounter_tcp4clients = 62,
+	isc_sockstatscounter_tcp6clients = 63,
+
+	isc_sockstatscounter_max = 64
 };
 
 ISC_LANG_BEGINDECLS

@@ -29,6 +29,11 @@ R="RUMOURED"
 O="OMNIPRESENT"
 U="UNRETENTIVE"
 
+for zn in shorter-lifetime longer-lifetime limit-lifetime unlimit-lifetime; do
+  setup $zn
+  cp template.db.in $zonefile
+done
+
 # The child zones (step1, step2) beneath these zones represent the various
 # steps of unsigning a zone.
 for zn in going-insecure.kasp going-insecure-dynamic.kasp; do

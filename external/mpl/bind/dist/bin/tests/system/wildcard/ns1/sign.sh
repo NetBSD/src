@@ -20,6 +20,7 @@ dssets=
 # RFC 4592 example zone.
 cp allwild.db.in allwild.db
 cp example.db.in example.db
+cp nestedwild.db.in nestedwild.db
 
 zone=nsec
 infile=nsec.db.in

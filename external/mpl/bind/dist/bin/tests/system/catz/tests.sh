@@ -703,6 +703,23 @@ wait_for_soa @10.53.0.2 dom3.example. dig.out.test$n || ret=1
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
+# GL #4733
+n=$((n + 1))
+echo_i "reconfiguring secondary - checking if catz member zones are reconfigured ($n)"
+ret=0
+sed -e "s/^#T5//" <ns2/named1.conf.in >ns2/named.conf.tmp
+copy_setports ns2/named.conf.tmp ns2/named.conf
+rndccmd 10.53.0.2 reconfig || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "checking that dom3.example. is refused by secondary because of an activated allow-query ($n)"
+ret=0
+wait_for_no_soa @10.53.0.2 dom3.example. dig.out.test$n || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
 n=$((n + 1))
 echo_i "reconfiguring secondary - reverting the bad configuration ($n)"
 ret=0

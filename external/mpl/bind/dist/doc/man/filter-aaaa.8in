@@ -35,13 +35,13 @@ filter-aaaa \- filter AAAA in DNS responses when A is present
 \fBplugin query\fP \(dqfilter\-aaaa.so\(dq [{ parameters }];
 .SH DESCRIPTION
 .sp
-\fBfilter\-aaaa.so\fP is a query plugin module for \fI\%named\fP, enabling
-\fI\%named\fP to omit some IPv6 addresses when responding to clients.
+\fBfilter\-aaaa.so\fP is a query plugin module for \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link', enabling
+\X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' to omit some IPv6 addresses when responding to clients.
 .sp
-Until BIND 9.12, this feature was implemented natively in \fI\%named\fP and
+Until BIND 9.12, this feature was implemented natively in \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' and
 enabled with the \fBfilter\-aaaa\fP ACL and the \fBfilter\-aaaa\-on\-v4\fP and
 \fBfilter\-aaaa\-on\-v6\fP options. These options are now deprecated in
-\fI\%named.conf\fP but can be passed as parameters to the
+\X'tty: link #std-iscman-named.conf'\fI\%named.conf\fP\X'tty: link' but can be passed as parameters to the
 \fBfilter\-aaaa.so\fP plugin, for example:
 .INDENT 0.0
 .INDENT 3.5

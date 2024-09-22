@@ -102,6 +102,9 @@ sub handleQuery {
 		$packet->push("answer",
 			      new Net::DNS::RR($qname .
 				       " 300 CNAME goodcname.example.org"));
+	} elsif ($qname =~ /^longcname/) {
+		$cname = $qname =~ s/longcname/longcnamex/r;
+		$packet->push("answer", new Net::DNS::RR($qname . " 300 CNAME " . $cname));
 	} elsif ($qname =~ /^nodata\.example\.net$/i) {
 		$packet->header->aa(1);
 	} elsif ($qname =~ /^nxdomain\.example\.net$/i) {

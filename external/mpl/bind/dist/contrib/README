@@ -27,5 +27,9 @@ be fixed as time permits.
       named at runtime, enabling access to external data sources including
       LDAP, MySQL, Berkeley DB, perl scripts, etc.
 
+    - gitchangelog/
+
+      QA utility to produce changelog and release notes from git log.
+
 Some links to useful software and other resources related to BIND 9 and
 DNS can be found at https://www.isc.org/dns-tools-and-resources.

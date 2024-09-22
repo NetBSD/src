@@ -22,6 +22,8 @@ options {
 	notify no;
 	servfail-ttl 0;
 	dnssec-validation no;
+	max-records-per-type 2000;
+	max-types-per-name 200;
 };
 
 zone "example" {
@@ -56,9 +58,37 @@ zone "transfer4" {
 	file "transfer.db.full";
 };
 
-zone "large" {
+zone "under-limit" {
 	type secondary;
 	primaries { 10.53.0.1; };
 	masterfile-format raw;
-	file "large.bk";
+	file "under-limit.bk";
+};
+
+zone "under-limit-kasp" {
+	type secondary;
+	primaries { 10.53.0.1; };
+	masterfile-format raw;
+	file "under-limit-kasp.bk";
+};
+
+zone "on-limit" {
+	type secondary;
+	primaries { 10.53.0.1; };
+	masterfile-format raw;
+	file "on-limit.bk";
+};
+
+zone "on-limit-kasp" {
+	type secondary;
+	primaries { 10.53.0.1; };
+	masterfile-format raw;
+	file "on-limit-kasp.bk";
+};
+
+zone "255types" {
+	type secondary;
+	primaries { 10.53.0.1; };
+	masterfile-format raw;
+	file "255types.bk";
 };

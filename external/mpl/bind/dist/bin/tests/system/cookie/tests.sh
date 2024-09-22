@@ -379,21 +379,21 @@ grep 'A.10\.53\.0\.9' dig.out.test$n.5 >/dev/null || ret=1
 grep 'A.10\.53\.0\.10' dig.out.test$n.5 >/dev/null && ret=1
 grep ";; TSIG PSEUDOSECTION:" dig.out.test$n.1 >/dev/null && ret=1
 
-$DIG $DIGOPTS @10.53.0.9 +tcp tcponly.tld >dig.out.test$n.6
+$DIG $DIGOPTS @10.53.0.9 +tcp tcponly.tld >dig.out.test$n.6 || ret=1
 grep "status: NOERROR" dig.out.test$n.6 >/dev/null || ret=1
 grep "$pat" dig.out.test$n.6 >/dev/null || ret=1
 grep 'A.10\.53\.0\.9' dig.out.test$n.6 >/dev/null || ret=1
 grep 'A.10\.53\.0\.10' dig.out.test$n.6 >/dev/null && ret=1
 grep ";; TSIG PSEUDOSECTION:" dig.out.test$n.1 >/dev/null && ret=1
 
-$DIG $DIGOPTS @10.53.0.9 +tcp nocookie.tld >dig.out.test$n.7
+$DIG $DIGOPTS @10.53.0.9 +tcp nocookie.tld >dig.out.test$n.7 || ret=1
 grep "status: NOERROR" dig.out.test$n.7 >/dev/null || ret=1
 grep "; COOKIE:" dig.out.test$n.7 >/dev/null && ret=1
 grep 'A.10\.53\.0\.9' dig.out.test$n.7 >/dev/null || ret=1
 grep 'A.10\.53\.0\.10' dig.out.test$n.7 >/dev/null && ret=1
 grep ";; TSIG PSEUDOSECTION:" dig.out.test$n.1 >/dev/null && ret=1
 
-$DIG $DIGOPTS @10.53.0.9 +tcp withtsig.tld >dig.out.test$n.8
+$DIG $DIGOPTS @10.53.0.9 +tcp withtsig.tld >dig.out.test$n.8 || ret=1
 grep "status: NOERROR" dig.out.test$n.8 >/dev/null || ret=1
 grep "$pat" dig.out.test$n.8 >/dev/null || ret=1
 grep 'A.10\.53\.0\.9' dig.out.test$n.8 >/dev/null || ret=1
@@ -435,7 +435,7 @@ rndc_dumpdb ns1
 grep "$pat" ns1/named_dump.db.test$n >/dev/null || ret=1
 # check the disabled server response
 nextpart ns1/named.run >/dev/null
-$DIG $DIGOPTS @10.53.0.1 nocookie.tld >dig.out.test$n.2
+$DIG $DIGOPTS @10.53.0.1 nocookie.tld >dig.out.test$n.2 || ret=1
 wait_for_log 5 "$msg" ns1/named.run || ret=1
 grep "status: NOERROR" dig.out.test$n.2 >/dev/null || ret=1
 grep 'A.10\.53\.0\.9' dig.out.test$n.2 >/dev/null || ret=1
@@ -526,13 +526,13 @@ sys.exit(1)'; then
   ret=0
   pat='10\.53\.0\.10 .*\[cookie=................................\] \[ttl'
   # prime EDNS COOKIE state
-  $DIG $DIGOPTS @10.53.0.1 tsig. >dig.out.test$n.1
+  $DIG $DIGOPTS @10.53.0.1 tsig. >dig.out.test$n.1 || ret=1
   grep "status: NOERROR" dig.out.test$n.1 >/dev/null || ret=1
   rndc_dumpdb ns1
   grep "$pat" ns1/named_dump.db.test$n >/dev/null || ret=1
   # check the disabled server response
   nextpart ns1/named.run >/dev/null
-  $DIG $DIGOPTS @10.53.0.1 nocookie.tsig >dig.out.test$n.2
+  $DIG $DIGOPTS @10.53.0.1 nocookie.tsig >dig.out.test$n.2 || ret=1
   grep "status: NOERROR" dig.out.test$n.2 >/dev/null || ret=1
   grep 'A.10\.53\.0\.9' dig.out.test$n.2 >/dev/null || ret=1
   grep 'A.10\.53\.0\.10' dig.out.test$n.2 >/dev/null || ret=1
