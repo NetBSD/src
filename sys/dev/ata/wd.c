@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.469 2024/02/05 21:46:06 andvar Exp $ */
+/*	$NetBSD: wd.c,v 1.470 2024/09/22 17:31:43 uwe Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.469 2024/02/05 21:46:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.470 2024/09/22 17:31:43 uwe Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -104,7 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.469 2024/02/05 21:46:06 andvar Exp $");
 #define DEBUG_FUNCS  0x08
 #define DEBUG_PROBE  0x10
 #define DEBUG_DETACH 0x20
-#define	DEBUG_XFERS  0x40
+#define DEBUG_XFERS  0x40
 #ifdef ATADEBUG
 #ifndef ATADEBUG_WD_MASK
 #define ATADEBUG_WD_MASK 0x0
