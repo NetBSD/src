@@ -162,6 +162,16 @@ sub reply_handler {
 	    push @auth, $rr;
 	}
 	$rcode = "NOERROR";
+    } elsif ($qname eq "a-only-slow.example") {
+	if ($qtype eq "A") {
+	    sleep(1);
+	    my $rr = new Net::DNS::RR("a-only-slow.example 2 IN A $localaddr");
+	    push @ans, $rr;
+	} else {
+	    my $rr = new Net::DNS::RR($negSOA);
+	    push @auth, $rr;
+	}
+	$rcode = "NOERROR";
     } elsif ($qname eq "cname.example") {
 	if ($qtype eq "A") {
 	    my $rr = new Net::DNS::RR($CNAME);

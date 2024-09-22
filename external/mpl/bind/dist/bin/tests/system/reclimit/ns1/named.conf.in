@@ -22,6 +22,18 @@ options {
 	listen-on-v6 { none; };
 	recursion no;
 	dnssec-validation no;
+	max-records-per-type 0;
+	max-types-per-name 0;
 };
 
 zone "." { type primary; file "root.db"; };
+
+zone "big." {
+	type primary;
+	file "big.db";
+};
+
+zone "signed." {
+	type primary;
+	file "signed.db.signed";
+};

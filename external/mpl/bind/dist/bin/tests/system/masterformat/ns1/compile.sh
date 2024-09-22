@@ -26,7 +26,12 @@ $CHECKZONE -D -F raw=0 -o example.db.compat example-compat \
   example.db >/dev/null 2>&1
 $CHECKZONE -D -F raw -L 3333 -o example.db.serial.raw example \
   example.db >/dev/null 2>&1
-$CHECKZONE -D -F raw -o large.db.raw large large.db >/dev/null 2>&1
+$CHECKZONE -D -F raw -o under-limit.db.raw under-limit under-limit.db >/dev/null 2>&1
+$CHECKZONE -D -F raw -o under-limit-kasp.db.raw under-limit-kasp under-limit-kasp.db >/dev/null 2>&1
+$CHECKZONE -D -F raw -o on-limit.db.raw on-limit on-limit.db >/dev/null 2>&1
+$CHECKZONE -D -F raw -o on-limit-kasp.db.raw on-limit-kasp on-limit-kasp.db >/dev/null 2>&1
+$CHECKZONE -D -F raw -o over-limit.db.raw over-limit over-limit.db >/dev/null 2>&1
+$CHECKZONE -D -F raw -o 255types.db.raw 255types 255types.db >/dev/null 2>&1
 
 $KEYGEN -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -f KSK signed >/dev/null 2>&1
 $KEYGEN -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" signed >/dev/null 2>&1

@@ -28,6 +28,8 @@ managed.		NS	ns2.managed.
 ns2.managed.		A	10.53.0.2
 trusted.		NS	ns2.trusted.
 ns2.trusted.		A	10.53.0.2
+lazy-ksk.		NS	ns2.lazy-ksk.
+ns2.lazy-ksk.		A	10.53.0.2
 optout-tld		NS	ns6.optout-tld.
 ns6.optout-tld.		A	10.53.0.6
 in-addr.arpa.		NS	ns2.example.

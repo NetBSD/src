@@ -30,7 +30,6 @@ g			A	10.0.0.7
 z			A	10.0.0.26
 a.a.a.a.a.a.a.a.a.a.e	A	10.0.0.27
 x			CNAME	a
-zz			DNSKEY	258 3 5 Cg==
 
 private			NS	ns.private
 ns.private		A	10.53.0.2

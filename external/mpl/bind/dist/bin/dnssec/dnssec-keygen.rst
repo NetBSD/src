@@ -27,9 +27,7 @@ Description
 ~~~~~~~~~~~
 
 :program:`dnssec-keygen` generates keys for DNSSEC (Secure DNS), as defined in
-:rfc:`2535` and :rfc:`4034`. It can also generate keys for use with TSIG
-(Transaction Signatures) as defined in :rfc:`2845`, or TKEY (Transaction
-Key) as defined in :rfc:`2930`.
+:rfc:`2535` and :rfc:`4034`.
 
 The ``name`` of the key is specified on the command line. For DNSSEC
 keys, this must match the name of the zone for which the key is being

@@ -171,16 +171,22 @@ Options
       most systems; the way ``chroot`` is defined allows a process
       with root privileges to escape a chroot jail.
 
-.. option:: -U #listeners
+.. option:: -U #dispatches
 
-   This option tells :program:`named` the number of ``#listeners`` worker threads to listen on, for incoming UDP packets on
-   each address. If not specified, :program:`named` calculates a default
-   value based on the number of detected CPUs: 1 for 1 CPU, and the
-   number of detected CPUs minus one for machines with more than 1 CPU.
-   This cannot be increased to a value higher than the number of CPUs.
-   If :option:`-n` has been set to a higher value than the number of detected
-   CPUs, then :option:`-U` may be increased as high as that value, but no
-   higher.
+   This option specifies the number of per-interface UDP ``#dispatches`` that :program:`named` should use to handle the outgoing (recursive) UDP connection,
+   to reduce contention between the resolver threads.
+
+   If not specified, :program:`named` calculates a default value based on the
+   number of detected CPUs: 1 for a single CPU, and the number of detected CPUs minus
+   one for machines with more than 1 CPU.
+
+   This cannot be increased to a value higher than the number of CPUs
+   (see :option:`-n` on how to override the value).
+
+.. warning::
+
+      This option should be unnecessary for the vast majority of users,
+      and will be removed in the next version of BIND 9.
 
 .. option:: -u user
 

@@ -44,3 +44,8 @@ zone "undelegated" {
 	type primary;
 	file "undelegated.db.signed";
 };
+
+zone "unsigned" {
+	type primary;
+	file "unsigned.db";
+};

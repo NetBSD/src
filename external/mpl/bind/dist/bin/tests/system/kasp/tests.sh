@@ -353,18 +353,18 @@ update_is_signed() {
     dig_with_opts "a.${ZONE}" "@${SERVER}" A >"dig.out.$DIR.test$n.a" || return 1
     grep "status: NOERROR" "dig.out.$DIR.test$n.a" >/dev/null || return 1
     grep "a.${ZONE}\..*${DEFAULT_TTL}.*IN.*A.*${ip_a}" "dig.out.$DIR.test$n.a" >/dev/null || return 1
-    lines=$(get_keys_which_signed A "dig.out.$DIR.test$n.a" | wc -l)
+    lines=$(get_keys_which_signed A 0 "dig.out.$DIR.test$n.a" | wc -l)
     test "$lines" -eq 1 || return 1
-    get_keys_which_signed A "dig.out.$DIR.test$n.a" | grep "^${KEY_ID}$" >/dev/null || return 1
+    get_keys_which_signed A 0 "dig.out.$DIR.test$n.a" | grep "^${KEY_ID}$" >/dev/null || return 1
   fi
 
   if [ "$ip_d" != "-" ]; then
     dig_with_opts "d.${ZONE}" "@${SERVER}" A >"dig.out.$DIR.test$n".d || return 1
     grep "status: NOERROR" "dig.out.$DIR.test$n".d >/dev/null || return 1
     grep "d.${ZONE}\..*${DEFAULT_TTL}.*IN.*A.*${ip_d}" "dig.out.$DIR.test$n".d >/dev/null || return 1
-    lines=$(get_keys_which_signed A "dig.out.$DIR.test$n".d | wc -l)
+    lines=$(get_keys_which_signed A 0 "dig.out.$DIR.test$n".d | wc -l)
     test "$lines" -eq 1 || return 1
-    get_keys_which_signed A "dig.out.$DIR.test$n".d | grep "^${KEY_ID}$" >/dev/null || return 1
+    get_keys_which_signed A 0 "dig.out.$DIR.test$n".d | grep "^${KEY_ID}$" >/dev/null || return 1
   fi
 }
 
@@ -1376,6 +1376,48 @@ check_rrsig_refresh() {
 check_rrsig_refresh
 
 #
+# Zone: dnskey-ttl-mismatch.autosign
+#
+set_zone "dnskey-ttl-mismatch.autosign"
+set_policy "autosign" "2" "300"
+set_server "ns3" "10.53.0.3"
+# Key properties.
+key_clear "KEY1"
+set_keyrole "KEY1" "ksk"
+set_keylifetime "KEY1" "63072000"
+set_keyalgorithm "KEY1" "$DEFAULT_ALGORITHM_NUMBER" "$DEFAULT_ALGORITHM" "$DEFAULT_BITS"
+set_keysigning "KEY1" "yes"
+set_zonesigning "KEY1" "no"
+
+key_clear "KEY2"
+set_keyrole "KEY2" "zsk"
+set_keylifetime "KEY2" "31536000"
+set_keyalgorithm "KEY2" "$DEFAULT_ALGORITHM_NUMBER" "$DEFAULT_ALGORITHM" "$DEFAULT_BITS"
+set_keysigning "KEY2" "no"
+set_zonesigning "KEY2" "yes"
+
+# Both KSK and ZSK stay OMNIPRESENT.
+set_keystate "KEY1" "GOAL" "omnipresent"
+set_keystate "KEY1" "STATE_DNSKEY" "omnipresent"
+set_keystate "KEY1" "STATE_KRRSIG" "omnipresent"
+set_keystate "KEY1" "STATE_DS" "omnipresent"
+
+set_keystate "KEY2" "GOAL" "omnipresent"
+set_keystate "KEY2" "STATE_DNSKEY" "omnipresent"
+set_keystate "KEY2" "STATE_ZRRSIG" "omnipresent"
+# Expect only two keys.
+key_clear "KEY3"
+key_clear "KEY4"
+
+check_keys
+check_dnssecstatus "$SERVER" "$POLICY" "$ZONE"
+set_keytimes_autosign_policy
+check_keytimes
+check_apex
+check_subdomain
+dnssec_verify
+
+#
 # Zone: fresh-sigs.autosign.
 #
 set_zone "fresh-sigs.autosign"
@@ -2111,9 +2153,6 @@ active=$(key_get KEY1 ACTIVE)
 set_addkeytime "KEY1" "RETIRED" "${active}" 15552000
 retired=$(key_get KEY1 RETIRED)
 rndc_rollover "$SERVER" "$DIR" $(key_get KEY1 ID) "${retired}" "$ZONE"
-# Rollover starts in six months, but lifetime is set to six months plus
-# prepublication duration = 15552000 + 7500 = 15559500 seconds.
-set_keylifetime "KEY1" "15559500"
 set_addkeytime "KEY1" "RETIRED" "${active}" 15559500
 retired=$(key_get KEY1 RETIRED)
 # Retire interval of this policy is 26h (93600 seconds).
@@ -2129,9 +2168,6 @@ dnssec_verify
 # Schedule KSK rollover now.
 set_policy "manual-rollover" "3" "3600"
 set_keystate "KEY1" "GOAL" "hidden"
-# This key was activated one day ago, so lifetime is set to 1d plus
-# prepublication duration (7500 seconds) = 93900 seconds.
-set_keylifetime "KEY1" "93900"
 created=$(key_get KEY1 CREATED)
 set_keytime "KEY1" "RETIRED" "${created}"
 rndc_rollover "$SERVER" "$DIR" $(key_get KEY1 ID) "${created}" "$ZONE"
@@ -2156,9 +2192,6 @@ dnssec_verify
 # Schedule ZSK rollover now.
 set_policy "manual-rollover" "4" "3600"
 set_keystate "KEY2" "GOAL" "hidden"
-# This key was activated one day ago, so lifetime is set to 1d plus
-# prepublication duration (7500 seconds) = 93900 seconds.
-set_keylifetime "KEY2" "93900"
 created=$(key_get KEY2 CREATED)
 set_keytime "KEY2" "RETIRED" "${created}"
 rndc_rollover "$SERVER" "$DIR" $(key_get KEY2 ID) "${created}" "$ZONE"
@@ -3613,9 +3646,6 @@ check_apex
 check_subdomain
 dnssec_verify
 # Roll over KEY2.
-# Set expected key lifetime, which is DNSKEY TTL plus the zone propagation delay,
-# plus the publish-safety: 7200s + 1h + 1d = 97200 seconds.
-set_keylifetime "KEY2" "97200"
 created=$(key_get KEY2 CREATED)
 rndc_rollover "$SERVER" "$DIR" $(key_get KEY2 ID) "${created}" "$ZONE"
 # Update expected number of keys and key states.
@@ -3666,6 +3696,65 @@ check_dnssecstatus "$SERVER" "$POLICY" "$ZONE"
 check_apex
 check_subdomain
 dnssec_verify
+
+# Test key lifetime changes
+set_keytimes_lifetime_update() {
+  if [ $1 -eq 0 ]; then
+    set_keytime "KEY1" "RETIRED" "none"
+    set_keytime "KEY1" "REMOVED" "none"
+  else
+    active=$(key_get KEY1 ACTIVE)
+    set_addkeytime "KEY1" "RETIRED" "${active}" $1
+    # The key is removed after the retire time plus max-zone-ttl (1d),
+    # sign delay (9d), zone propagation delay (5m), retire safety (1h) =
+    # 777600 + 86400 + 300 + 3600 = 867900
+    retired=$(key_get KEY1 RETIRED)
+    set_addkeytime "KEY1" "REMOVED" "${retired}" 867900
+  fi
+}
+
+check_key_lifetime() {
+  zone=$1
+  policy=$2
+  lifetime=$3
+
+  set_zone "$zone"
+  set_policy "$policy" "1" "3600"
+  set_server "ns6" "10.53.0.6"
+  # Key properties.
+  key_clear "KEY1"
+  set_keyrole "KEY1" "csk"
+  set_keylifetime "KEY1" "$lifetime"
+  set_keyalgorithm "KEY1" "13" "ECDSAP256SHA256" "256"
+  set_keysigning "KEY1" "yes"
+  set_zonesigning "KEY1" "yes"
+  key_clear "KEY2"
+  key_clear "KEY3"
+  key_clear "KEY4"
+
+  # The CSK is rumoured.
+  set_keystate "KEY1" "GOAL" "omnipresent"
+  set_keystate "KEY1" "STATE_DNSKEY" "rumoured"
+  set_keystate "KEY1" "STATE_KRRSIG" "rumoured"
+  set_keystate "KEY1" "STATE_ZRRSIG" "rumoured"
+  set_keystate "KEY1" "STATE_DS" "hidden"
+  check_keys
+
+  # Key timings.
+  set_keytimes_csk_policy
+  set_keytimes_lifetime_update $lifetime
+
+  # Variuous checks.
+  check_keytimes
+  check_dnssecstatus "$SERVER" "$POLICY" "$ZONE"
+  check_apex
+  check_subdomain
+  dnssec_verify
+}
+check_key_lifetime "shorter-lifetime" "long-lifetime" "31536000"
+check_key_lifetime "longer-lifetime" "short-lifetime" "16070400"
+check_key_lifetime "limit-lifetime" "unlimited-lifetime" "0"
+check_key_lifetime "unlimit-lifetime" "short-lifetime" "16070400"
 
 #
 # Testing algorithm rollover.
@@ -3962,6 +4051,12 @@ check_apex
 check_subdomain
 dnssec_verify
 
+# Test key lifetime updates.
+check_key_lifetime "shorter-lifetime" "short-lifetime" "16070400"
+check_key_lifetime "longer-lifetime" "long-lifetime" "31536000"
+check_key_lifetime "limit-lifetime" "short-lifetime" "16070400"
+check_key_lifetime "unlimit-lifetime" "unlimited-lifetime" "0"
+
 #
 # Testing going insecure.
 #
@@ -3970,7 +4065,7 @@ dnssec_verify
 # Zone: step1.going-insecure.kasp
 #
 set_zone "step1.going-insecure.kasp"
-set_policy "insecure" "2" "7200"
+set_policy "insecure" "2" "3600"
 set_server "ns6" "10.53.0.6"
 # Expect a CDS/CDNSKEY Delete Record.
 set_cdsdelete
@@ -4007,7 +4102,7 @@ check_next_key_event 93600
 # Zone: step2.going-insecure.kasp
 #
 set_zone "step2.going-insecure.kasp"
-set_policy "insecure" "2" "7200"
+set_policy "insecure" "2" "3600"
 set_server "ns6" "10.53.0.6"
 
 # The DS is long enough removed from the zone to be considered HIDDEN.
@@ -4037,7 +4132,7 @@ check_next_key_event 7500
 #
 set_zone "step1.going-insecure-dynamic.kasp"
 set_dynamic
-set_policy "insecure" "2" "7200"
+set_policy "insecure" "2" "3600"
 set_server "ns6" "10.53.0.6"
 # Expect a CDS/CDNSKEY Delete Record.
 set_cdsdelete
@@ -4075,7 +4170,7 @@ check_next_key_event 93600
 #
 set_zone "step2.going-insecure-dynamic.kasp"
 set_dynamic
-set_policy "insecure" "2" "7200"
+set_policy "insecure" "2" "3600"
 set_server "ns6" "10.53.0.6"
 
 # The DS is long enough removed from the zone to be considered HIDDEN.

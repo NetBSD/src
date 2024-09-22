@@ -9,10 +9,10 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-import pytest_custom_markers
+import isctest.mark
 
 
 # The reclimit is known to be quite unstable. GL #1587
-@pytest_custom_markers.flaky(max_runs=2)
+@isctest.mark.flaky(max_runs=2)
 def test_reclimit(run_tests_sh):
     run_tests_sh()

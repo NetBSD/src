@@ -22,6 +22,7 @@ options {
 	listen-on-v6 { none; };
 	servfail-ttl 0;
 	qname-minimization disabled;
+	max-recursion-queries 50;
 	max-recursion-depth 12;
 	recursion yes;
 	dnssec-validation yes;

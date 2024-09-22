@@ -11,6 +11,7 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+
 """
 Example property-based test for wildcard synthesis.
 Verifies that otherwise-empty zone with single wildcard record * A 192.0.2.1
@@ -18,8 +19,6 @@ produces synthesized answers for <random_label>.test. A, and returns NODATA for
 <random_label>.test. when rdtype is not A.
 
 Limitations - untested properties:
-    - expansion works with multiple labels
-    - asterisk in qname does not cause expansion
     - empty non-terminals prevent expansion
     - or more generally any existing node prevents expansion
     - DNSSEC record inclusion
@@ -28,9 +27,10 @@ Limitations - untested properties:
     - flags beyond RCODE
     - special behavior of rdtypes like CNAME
 """
+
 import pytest
 
-pytest.importorskip("dns")
+pytest.importorskip("dns", minversion="2.0.0")
 import dns.message
 import dns.name
 import dns.query
@@ -39,74 +39,155 @@ import dns.rdataclass
 import dns.rdatatype
 import dns.rrset
 
-pytest.importorskip("hypothesis")
-from hypothesis import given
-from hypothesis.strategies import binary, integers
+# in FIPs mode md5 fails so we need 4.41.2 or later which does not use md5
+try:
+    import hashlib
+
+    hashlib.md5(b"1234")
+    pytest.importorskip("hypothesis")
+except ValueError:
+    pytest.importorskip("hypothesis", minversion="4.41.2")
+from hypothesis import assume, example, given
+
+from isctest.hypothesis.strategies import dns_names, dns_rdatatypes_without_meta
+import isctest.check
+import isctest.name
+import isctest.query
 
 
 # labels of a zone with * A 192.0.2.1 wildcard
-WILDCARD_ZONE = ("allwild", "test", "")
+SUFFIX = dns.name.from_text("allwild.test.")
 WILDCARD_RDTYPE = dns.rdatatype.A
 WILDCARD_RDATA = "192.0.2.1"
-IPADDR = "10.53.0.1"
+IP_ADDR = "10.53.0.1"
 TIMEOUT = 5  # seconds, just a sanity check
 
 
-# Helpers
-def is_nonexpanding_rdtype(rdtype):
-    """skip meta types to avoid weird rcodes caused by AXFR etc.; RFC 6895"""
-    return not (
-        rdtype == WILDCARD_RDTYPE
-        or dns.rdatatype.is_metatype(rdtype)  # known metatypes: OPT ...
-        or 128 <= rdtype <= 255
-    )  # unknown meta types
+@given(name=dns_names(suffix=SUFFIX), rdtype=dns_rdatatypes_without_meta)
+def test_wildcard_rdtype_mismatch(
+    name: dns.name.Name, rdtype: dns.rdatatype.RdataType, named_port: int
+) -> None:
+    """Any label non-matching rdtype must result in NODATA."""
+    assume(rdtype != WILDCARD_RDTYPE)
+
+    # NS and SOA are present in the zone and DS gets answered from parent.
+    assume(
+        not (
+            name == SUFFIX
+            and rdtype in (dns.rdatatype.SOA, dns.rdatatype.NS, dns.rdatatype.DS)
+        )
+    )
+
+    # Subdomains of *.allwild.test. are not to be synthesized.
+    # See RFC 4592 section 2.2.1.
+    assume(name == SUFFIX or name.labels[-len(SUFFIX) - 1] != b"*")
+
+    query_msg = dns.message.make_query(name, rdtype)
+    response_msg = isctest.query.tcp(query_msg, IP_ADDR, named_port, timeout=TIMEOUT)
+
+    isctest.check.is_response_to(response_msg, query_msg)
+    isctest.check.noerror(response_msg)
+    isctest.check.empty_answer(response_msg)
 
 
-def tcp_query(where, port, qname, qtype):
-    querymsg = dns.message.make_query(qname, qtype)
-    assert len(querymsg.question) == 1
-    return querymsg, dns.query.tcp(querymsg, where, port=port, timeout=TIMEOUT)
+@given(name=dns_names(suffix=SUFFIX, min_labels=len(SUFFIX) + 1))
+def test_wildcard_match(name: dns.name.Name, named_port: int) -> None:
+    """Any label with maching rdtype must result in wildcard data in answer."""
 
+    # Subdomains of *.allwild.test. are not to be synthesized.
+    # See RFC 4592 section 2.2.1.
+    assume(name.labels[-len(SUFFIX) - 1] != b"*")
 
-def query(where, port, label, rdtype):
-    labels = (label,) + WILDCARD_ZONE
-    qname = dns.name.Name(labels)
-    return tcp_query(where, port, qname, rdtype)
+    query_msg = dns.message.make_query(name, WILDCARD_RDTYPE)
+    response_msg = isctest.query.tcp(query_msg, IP_ADDR, named_port, timeout=TIMEOUT)
 
-
-# Tests
-@given(
-    label=binary(min_size=1, max_size=63),
-    rdtype=integers(min_value=0, max_value=65535).filter(is_nonexpanding_rdtype),
-)
-def test_wildcard_rdtype_mismatch(label, rdtype, named_port):
-    """any label non-matching rdtype must result in to NODATA"""
-    check_answer_nodata(*query(IPADDR, named_port, label, rdtype))
-
-
-def check_answer_nodata(querymsg, answer):
-    assert querymsg.is_response(answer), str(answer)
-    assert answer.rcode() == dns.rcode.NOERROR, str(answer)
-    assert answer.answer == [], str(answer)
-
-
-@given(label=binary(min_size=1, max_size=63))
-def test_wildcard_match(label, named_port):
-    """any label with maching rdtype must result in wildcard data in answer"""
-    check_answer_noerror(*query(IPADDR, named_port, label, WILDCARD_RDTYPE))
-
-
-def check_answer_noerror(querymsg, answer):
-    assert querymsg.is_response(answer), str(answer)
-    assert answer.rcode() == dns.rcode.NOERROR, str(answer)
-    assert len(querymsg.question) == 1, str(answer)
+    isctest.check.is_response_to(response_msg, query_msg)
+    isctest.check.noerror(response_msg)
     expected_answer = [
         dns.rrset.from_text(
-            querymsg.question[0].name,
+            query_msg.question[0].name,
             300,  # TTL, ignored by dnspython comparison
             dns.rdataclass.IN,
             WILDCARD_RDTYPE,
             WILDCARD_RDATA,
         )
     ]
-    assert answer.answer == expected_answer, str(answer)
+    assert response_msg.answer == expected_answer, str(response_msg)
+
+
+# Force the `*.*.allwild.test.` corner case to be checked.
+@example(name=isctest.name.prepend_label("*", isctest.name.prepend_label("*", SUFFIX)))
+@given(
+    name=dns_names(
+        suffix=isctest.name.prepend_label("*", SUFFIX), min_labels=len(SUFFIX) + 2
+    )
+)
+def test_wildcard_with_star_not_synthesized(
+    name: dns.name.Name, named_port: int
+) -> None:
+    """RFC 4592 section 2.2.1 ghost.*.example."""
+    query_msg = dns.message.make_query(name, WILDCARD_RDTYPE)
+    response_msg = isctest.query.tcp(query_msg, IP_ADDR, named_port, timeout=TIMEOUT)
+
+    isctest.check.is_response_to(response_msg, query_msg)
+    isctest.check.nxdomain(response_msg)
+    isctest.check.empty_answer(query_msg)
+
+
+NESTED_SUFFIX = dns.name.from_text("*.*.nestedwild.test.")
+
+
+# Force `*.*.*.nestedwild.test.` to be checked.
+@example(name=isctest.name.prepend_label("*", NESTED_SUFFIX))
+@given(name=dns_names(suffix=NESTED_SUFFIX, min_labels=len(NESTED_SUFFIX) + 1))
+def test_name_in_between_wildcards(name: dns.name.Name, named_port: int) -> None:
+    """Check nested wildcard cases.
+
+    There are `*.nestedwild.test. A` and `*.*.*.nestedwild.test. A` records present in their zone.
+    This means that `foo.*.nestedwild.test. A` must not be synthetized (see test above)
+    but `foo.*.*.nestedwild.test A` must.
+    """
+
+    # `*.*.*.nestedwild.test.` and `*.foo.*.*.nestedwild.test.` must be NOERROR
+    # `foo.*.*.*.nestedwild.test` must be NXDOMAIN (see test below).
+    assume(
+        len(name) == len(NESTED_SUFFIX) + 1
+        or name.labels[-len(NESTED_SUFFIX) - 1] != b"*"
+    )
+
+    query_msg = dns.message.make_query(name, WILDCARD_RDTYPE)
+    response_msg = isctest.query.tcp(query_msg, IP_ADDR, named_port, timeout=TIMEOUT)
+
+    isctest.check.is_response_to(response_msg, query_msg)
+    isctest.check.noerror(response_msg)
+    expected_answer = [
+        dns.rrset.from_text(
+            query_msg.question[0].name,
+            300,  # TTL, ignored by dnspython comparison
+            dns.rdataclass.IN,
+            WILDCARD_RDTYPE,
+            WILDCARD_RDATA,
+        )
+    ]
+    assert response_msg.answer == expected_answer, str(response_msg)
+
+
+@given(
+    name=dns_names(
+        suffix=isctest.name.prepend_label("*", NESTED_SUFFIX),
+        min_labels=len(NESTED_SUFFIX) + 2,
+    )
+)
+def test_name_nested_wildcard_subdomains_not_synthesized(
+    name: dns.name.Name, named_port: int
+):
+    """Check nested wildcard cases.
+
+    `foo.*.*.*.nestedwild.test. A` must not be synthesized.
+    """
+    query_msg = dns.message.make_query(name, WILDCARD_RDTYPE)
+    response_msg = isctest.query.tcp(query_msg, IP_ADDR, named_port, timeout=TIMEOUT)
+
+    isctest.check.is_response_to(response_msg, query_msg)
+    isctest.check.nxdomain(response_msg)
+    isctest.check.empty_answer(query_msg)

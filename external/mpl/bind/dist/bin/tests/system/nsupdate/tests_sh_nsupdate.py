@@ -9,6 +9,14 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import platform
 
+import isctest.mark
+
+
+MAX_RUNS = 2 if platform.system() == "FreeBSD" else 1  # GL#3846
+
+
+@isctest.mark.flaky(max_runs=MAX_RUNS)
 def test_nsupdate(run_tests_sh):
     run_tests_sh()

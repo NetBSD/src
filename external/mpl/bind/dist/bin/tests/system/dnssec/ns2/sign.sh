@@ -328,3 +328,44 @@ key1=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone -f KSK "$
 key2=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone "$zone")
 cat "$infile" "$key1.key" "$key2.key" >"$zonefile"
 "$SIGNER" -P -3 - -H too-many -g -o "$zone" "$zonefile" >/dev/null 2>&1
+
+#
+# A zone with a secure chain of trust of two KSKs, only one KSK is not signing.
+#
+zone=lazy-ksk
+infile=lazy-ksk.db.in
+zonefile=lazy-ksk.db
+ksk1=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone -f KSK "$zone")
+ksk2=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone -f KSK "$zone")
+ksk3=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone -f KSK "$zone")
+zsk=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone "$zone")
+cat "$infile" "$ksk1.key" "$ksk2.key" "$ksk3.key" "$zsk.key" >"$zonefile"
+$DSFROMKEY "$ksk1.key" >"dsset-$zone."
+$DSFROMKEY "$ksk2.key" >>"dsset-$zone."
+$DSFROMKEY "$ksk3.key" >>"dsset-$zone."
+# Keep the KSK with the highest key tag
+id1=$(keyfile_to_key_id "$ksk1")
+id2=$(keyfile_to_key_id "$ksk2")
+id3=$(keyfile_to_key_id "$ksk3")
+if [ $id1 -gt $id2 ]; then
+  if [ $id1 -gt $id3 ]; then
+    rm1="$ksk2"
+    rm2="$ksk3"
+  else # id3 -gt $id1
+    rm1="$ksk2"
+    rm2="$ksk1"
+  fi
+else # $id2 -gt $id1
+  if [ $id2 -gt $id3 ]; then
+    rm1="$ksk1"
+    rm2="$ksk3"
+  else #id3 -gt $id2
+    rm1="$ksk2"
+    rm2="$ksk1"
+  fi
+fi
+
+rm "$rm1.key"
+rm "$rm1.private"
+rm "$rm2.key"
+rm "$rm2.private"

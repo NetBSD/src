@@ -111,7 +111,7 @@ which is useful to know when rolling keys. The maxttl is the longest
 possible time before signatures that have been retrieved by resolvers
 expire from resolver caches. Zones that are signed with this
 option should be configured to use a matching \fBmax\-zone\-ttl\fP in
-\fI\%named.conf\fP\&. (Note: This option is incompatible with \fI\%\-D\fP,
+\X'tty: link #std-iscman-named.conf'\fI\%named.conf\fP\X'tty: link'\&. (Note: This option is incompatible with \fI\%\-D\fP,
 because it modifies non\-DNSSEC data in the output zone.)
 .UNINDENT
 .INDENT 0.0
@@ -239,7 +239,7 @@ This option sets the SOA serial number format of the signed zone. Possible forma
 This format indicates that the SOA serial number should not be modified.
 .TP
 \fBincrement\fP
-This format increments the SOA serial number using \fI\%RFC 1982\fP arithmetic.
+This format increments the SOA serial number using \X'tty: link https://datatracker.ietf.org/doc/html/rfc1982.html'\fI\%RFC 1982\fP\X'tty: link' arithmetic.
 .TP
 \fBunixtime\fP
 This format sets the SOA serial number to the number of seconds
@@ -268,8 +268,8 @@ zone. Possible formats are \fBtext\fP (the default), which is the standard
 textual representation of the zone; \fBfull\fP, which is text output in a
 format suitable for processing by external scripts; and \fBraw\fP and
 \fBraw=N\fP, which store the zone in binary formats for rapid loading by
-\fI\%named\fP\&. \fBraw=N\fP specifies the format version of the raw zone file:
-if N is 0, the raw file can be read by any version of \fI\%named\fP; if N is
+\X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link'\&. \fBraw=N\fP specifies the format version of the raw zone file:
+if N is 0, the raw file can be read by any version of \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link'; if N is
 1, the file can be read by release 9.9.0 or higher. The default is 1.
 .UNINDENT
 .INDENT 0.0
@@ -294,7 +294,7 @@ period are retained. This allows the zone to continue to validate
 with cached copies of the old DNSKEY RRset. The \fI\%\-Q\fP option forces
 \fBdnssec\-signzone\fP to remove signatures from keys that are no longer
 active. This enables ZSK rollover using the procedure described in
-\fI\%RFC 4641#4.2.1.1\fP (\(dqPre\-Publish Key Rollover\(dq).
+\X'tty: link https://datatracker.ietf.org/doc/html/rfc6781.html#4.1.1.1'\fI\%RFC 6781#4.1.1.1\fP\X'tty: link' (\(dqPre\-Publish Key Rollover\(dq).
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -313,7 +313,7 @@ This option removes signatures from keys that are no longer published.
 This option is similar to \fI\%\-Q\fP, except it forces
 \fBdnssec\-signzone\fP to remove signatures from keys that are no longer
 published. This enables ZSK rollover using the procedure described in
-\fI\%RFC 4641#4.2.1.2\fP (\(dqDouble Signature Zone Signing Key
+\X'tty: link https://datatracker.ietf.org/doc/html/rfc6781.html#4.1.1.2'\fI\%RFC 6781#4.1.1.2\fP\X'tty: link' (\(dqDouble Signature Zone Signing Key
 Rollover\(dq).
 .UNINDENT
 .INDENT 0.0
@@ -392,7 +392,7 @@ This option sets the debugging level.
 .B \-x
 This option indicates that BIND 9 should only sign the DNSKEY, CDNSKEY, and CDS RRsets with key\-signing keys,
 and should omit signatures from zone\-signing keys. (This is similar to the
-\fBdnssec\-dnskey\-kskonly yes;\fP zone option in \fI\%named\fP\&.)
+\fBdnssec\-dnskey\-kskonly yes;\fP zone option in \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link'\&.)
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -400,7 +400,7 @@ and should omit signatures from zone\-signing keys. (This is similar to the
 This option indicates that BIND 9 should ignore the KSK flag on keys when determining what to sign. This causes
 KSK\-flagged keys to sign all records, not just the DNSKEY RRset.
 (This is similar to the \fBupdate\-check\-ksk no;\fP zone option in
-\fI\%named\fP\&.)
+\X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link'\&.)
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -413,6 +413,7 @@ generating the NSEC3 chain.
 .INDENT 7.0
 .INDENT 3.5
 \fB\-3 \-\fP is the recommended configuration. Adding salt provides no practical benefits.
+See \X'tty: link https://datatracker.ietf.org/doc/html/rfc9276.html'\fI\%RFC 9276\fP\X'tty: link'\&.
 .UNINDENT
 .UNINDENT
 .UNINDENT
@@ -426,6 +427,7 @@ is 0.
 .INDENT 7.0
 .INDENT 3.5
 Values greater than 0 cause interoperability issues and also increase the risk of CPU\-exhausting DoS attacks.
+See \X'tty: link https://datatracker.ietf.org/doc/html/rfc9276.html'\fI\%RFC 9276\fP\X'tty: link'\&.
 .UNINDENT
 .UNINDENT
 .UNINDENT
@@ -439,6 +441,7 @@ records and should not generate NSEC3 records for insecure delegations.
 .INDENT 7.0
 .INDENT 3.5
 Do not use this option unless all its implications are fully understood. This option is intended only for extremely large zones (comparable to \fBcom.\fP) with sparse secure delegations.
+See \X'tty: link https://datatracker.ietf.org/doc/html/rfc9276.html'\fI\%RFC 9276\fP\X'tty: link'\&.
 .UNINDENT
 .UNINDENT
 .UNINDENT
@@ -465,7 +468,7 @@ the current directory, they are used for signing.
 .SH EXAMPLE
 .sp
 The following command signs the \fBexample.com\fP zone with the
-ECDSAP256SHA256 key generated by \fI\%dnssec\-keygen\fP
+ECDSAP256SHA256 key generated by \X'tty: link #std-iscman-dnssec-keygen'\fI\%dnssec\-keygen\fP\X'tty: link'
 (Kexample.com.+013+17247). Because the \fI\%\-S\fP option is not being used,
 the zone\(aqs keys must be in the master file (\fBdb.example.com\fP). This
 invocation looks for \fBdsset\fP files in the current directory, so that
@@ -486,7 +489,7 @@ db.example.com.signed
 .sp
 In the above example, \fBdnssec\-signzone\fP creates the file
 \fBdb.example.com.signed\fP\&. This file should be referenced in a zone
-statement in the \fI\%named.conf\fP file.
+statement in the \X'tty: link #std-iscman-named.conf'\fI\%named.conf\fP\X'tty: link' file.
 .sp
 This example re\-signs a previously signed zone with default parameters.
 The private keys are assumed to be in the current directory.
@@ -505,8 +508,8 @@ db.example.com.signed
 .UNINDENT
 .SH SEE ALSO
 .sp
-\fI\%dnssec\-keygen(8)\fP, BIND 9 Administrator Reference Manual, \fI\%RFC 4033\fP,
-\fI\%RFC 4641\fP\&.
+\X'tty: link #std-iscman-dnssec-keygen'\fI\%dnssec\-keygen(8)\fP\X'tty: link', BIND 9 Administrator Reference Manual, \X'tty: link https://datatracker.ietf.org/doc/html/rfc4033.html'\fI\%RFC 4033\fP\X'tty: link',
+\X'tty: link https://datatracker.ietf.org/doc/html/rfc6781.html'\fI\%RFC 6781\fP\X'tty: link'\&.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT

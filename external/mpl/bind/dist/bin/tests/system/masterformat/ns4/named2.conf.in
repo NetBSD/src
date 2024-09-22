@@ -1,0 +1,53 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS4
+
+options {
+	pid-file "named.pid";
+	listen-on port @PORT@ { 10.53.0.4; };
+	port @PORT@;
+	listen-on-v6 { none; };
+	recursion no;
+	notify no;
+	session-keyfile "session.key";
+	servfail-ttl 0;
+	dnssec-validation no;
+
+	/* Ridicously low on purpose */
+	max-records-per-type 1;
+	max-types-per-name 9;
+};
+
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
+controls {
+	inet 10.53.0.4 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+/*
+ * The template zone is fine, but when adding the DNSSEC records to the apex,
+ * the max-types-per-name will be exceeded, meaning signing should fail.
+ */
+zone "kasp-max-types-per-name" {
+	type primary;
+	file "kasp-max-types-per-name.db.raw";
+	masterfile-format raw;
+	dnssec-policy "default";
+	inline-signing no;
+	allow-update { any; };
+	allow-transfer { any; };
+};

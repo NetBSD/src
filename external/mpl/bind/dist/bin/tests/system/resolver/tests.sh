@@ -223,6 +223,17 @@ if [ -x "${RESOLVE}" ]; then
 fi
 
 n=$((n + 1))
+echo_i "checking long CNAME chain target filtering (deny) ($n)"
+ret=0
+dig_with_opts +tcp longcname1.example.net @10.53.0.1 a >dig.out.ns1.test${n} || ret=1
+grep -F "status: SERVFAIL" dig.out.ns1.test${n} >/dev/null || ret=1
+grep -F "max. restarts reached" dig.out.ns1.test${n} >/dev/null || ret=1
+lines=$(grep -F "CNAME" dig.out.ns1.test${n} | wc -l)
+test ${lines:-1} -eq 12 || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
 echo_i "checking DNAME target filtering (deny) ($n)"
 ret=0
 dig_with_opts +tcp foo.baddname.example.net @10.53.0.1 a >dig.out.ns1.test${n} || ret=1
@@ -598,18 +609,18 @@ n=$((n + 1))
 echo_i "check prefetch qtype * (${n})"
 ret=0
 dig_with_opts @10.53.0.5 fetchall.tld any >dig.out.1.${n} || ret=1
-ttl1=$(awk '/"A" "short" "ttl"/ { print $2 - 3 }' dig.out.1.${n})
+ttl1=$(awk '/^fetchall.tld/ { print $2 - 3; exit }' dig.out.1.${n})
 # sleep so we are in prefetch range
 sleep "${ttl1:-0}"
 # trigger prefetch
 dig_with_opts @10.53.0.5 fetchall.tld any >dig.out.2.${n} || ret=1
-ttl2=$(awk '/"A" "short" "ttl"/ { print $2 }' dig.out.2.${n})
+ttl2=$(awk '/^fetchall.tld/ { print $2; exit }' dig.out.2.${n})
 sleep 1
 # check that prefetch occurred;
-# note that only one record is prefetched, which is the TXT record in this case,
+# note that only the first record is prefetched,
 # because of the order of the records in the cache
 dig_with_opts @10.53.0.5 fetchall.tld any >dig.out.3.${n} || ret=1
-ttl3=$(awk '/"A" "short" "ttl"/ { print $2 }' dig.out.3.${n})
+ttl3=$(awk '/^fetchall.tld/ { print $2; exit }' dig.out.3.${n})
 test "${ttl3:-0}" -gt "${ttl2:-1}" || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
@@ -629,9 +640,21 @@ n=$((n + 1))
 echo_i "check that '-t aaaa' in .digrc does not have unexpected side effects ($n)"
 ret=0
 echo "-t aaaa" >.digrc
-(HOME="$(pwd)" dig_with_opts @10.53.0.4 . >dig.out.1.${n}) || ret=1
-(HOME="$(pwd)" dig_with_opts @10.53.0.4 . A >dig.out.2.${n}) || ret=1
-(HOME="$(pwd)" dig_with_opts @10.53.0.4 -x 127.0.0.1 >dig.out.3.${n}) || ret=1
+(
+  HOME="$(pwd)"
+  export HOME
+  dig_with_opts @10.53.0.4 . >dig.out.1.${n}
+) || ret=1
+(
+  HOME="$(pwd)"
+  export HOME
+  dig_with_opts @10.53.0.4 . A >dig.out.2.${n}
+) || ret=1
+(
+  HOME="$(pwd)"
+  export HOME
+  dig_with_opts @10.53.0.4 -x 127.0.0.1 >dig.out.3.${n}
+) || ret=1
 grep ';\..*IN.*AAAA$' dig.out.1.${n} >/dev/null || ret=1
 grep ';\..*IN.*A$' dig.out.2.${n} >/dev/null || ret=1
 grep 'extra type option' dig.out.2.${n} >/dev/null && ret=1
@@ -1037,6 +1060,7 @@ grep "ANSWER: [12]," dig.out.2.${n} >/dev/null || ret=1
 lines=$(awk '$1 == "mixedttl.tld." && $2 > 30 { print }' dig.out.2.${n} | wc -l)
 test ${lines:-1} -ne 0 && ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
 
 n=$((n + 1))
 echo_i "check resolver behavior when FORMERR for EDNS options happens (${n})"
@@ -1048,7 +1072,6 @@ dig_with_opts +tcp @10.53.0.5 options-formerr A >dig.out.${n} || ret=1
 grep "status: NOERROR" dig.out.${n} >/dev/null || ret=1
 nextpart ns5/named.run | grep "$msg" >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
-
 status=$((status + ret))
 
 echo_i "exit status: $status"

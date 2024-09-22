@@ -131,46 +131,47 @@ PROGRAMS = $(noinst_PROGRAMS)
 feature_test_SOURCES = feature-test.c
 feature_test_OBJECTS = feature_test-feature-test.$(OBJEXT)
 feature_test_LDADD = $(LDADD)
-feature_test_DEPENDENCIES = $(LIBISC_LIBS)
+am__DEPENDENCIES_1 =
+@HAVE_JEMALLOC_FALSE@am__DEPENDENCIES_2 =  \
+@HAVE_JEMALLOC_FALSE@	$(top_builddir)/lib/isc/libisc.la
+@HAVE_JEMALLOC_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) \
+@HAVE_JEMALLOC_TRUE@	$(top_builddir)/lib/isc/libisc.la
+feature_test_DEPENDENCIES = $(am__DEPENDENCIES_2)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
 makejournal_SOURCES = makejournal.c
 makejournal_OBJECTS = makejournal-makejournal.$(OBJEXT)
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@makejournal_DEPENDENCIES =  \
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LDADD) \
+am__DEPENDENCIES_3 = $(am__DEPENDENCIES_2)
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@makejournal_DEPENDENCIES = $(am__DEPENDENCIES_3) \
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_LIBS)
 pipelined_pipequeries_SOURCES = pipelined/pipequeries.c
 am__dirstamp = $(am__leading_dot)dirstamp
 pipelined_pipequeries_OBJECTS =  \
 	pipelined/pipequeries-pipequeries.$(OBJEXT)
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@pipelined_pipequeries_DEPENDENCIES =  \
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LDADD) \
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@pipelined_pipequeries_DEPENDENCIES = $(am__DEPENDENCIES_3) \
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_LIBS)
 resolve_SOURCES = resolve.c
 resolve_OBJECTS = resolve-resolve.$(OBJEXT)
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@resolve_DEPENDENCIES = $(LIBISC_LIBS) \
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@resolve_DEPENDENCIES = $(am__DEPENDENCIES_2) \
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBIRS_LIBS) \
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_LIBS)
 rndc_gencheck_SOURCES = rndc/gencheck.c
 rndc_gencheck_OBJECTS = rndc/gencheck.$(OBJEXT)
 rndc_gencheck_LDADD = $(LDADD)
-rndc_gencheck_DEPENDENCIES = $(LIBISC_LIBS)
+rndc_gencheck_DEPENDENCIES = $(am__DEPENDENCIES_2)
 rpz_dnsrps_SOURCES = rpz/dnsrps.c
 rpz_dnsrps_OBJECTS = rpz/dnsrps-dnsrps.$(OBJEXT)
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@rpz_dnsrps_DEPENDENCIES =  \
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LDADD) \
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@rpz_dnsrps_DEPENDENCIES = $(am__DEPENDENCIES_3) \
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_LIBS)
 tkey_keycreate_SOURCES = tkey/keycreate.c
 tkey_keycreate_OBJECTS = tkey/keycreate-keycreate.$(OBJEXT)
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@tkey_keycreate_DEPENDENCIES =  \
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LDADD) \
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@tkey_keycreate_DEPENDENCIES = $(am__DEPENDENCIES_3) \
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_LIBS)
 tkey_keydelete_SOURCES = tkey/keydelete.c
 tkey_keydelete_OBJECTS = tkey/keydelete-keydelete.$(OBJEXT)
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@tkey_keydelete_DEPENDENCIES =  \
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LDADD) \
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@tkey_keydelete_DEPENDENCIES = $(am__DEPENDENCIES_3) \
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_LIBS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -705,12 +706,16 @@ AM_CPPFLAGS = $(STD_CPPFLAGS) -include $(top_builddir)/config.h \
 	-I$(srcdir)/include $(LIBISC_CFLAGS)
 AM_LDFLAGS = $(STD_LDFLAGS) $(am__append_1)
 LDADD = $(LIBISC_LIBS)
-LIBISC_CFLAGS = \
-	-I$(top_srcdir)/include				\
-	-I$(top_srcdir)/lib/isc/include			\
-	-I$(top_builddir)/lib/isc/include
-
-LIBISC_LIBS = $(top_builddir)/lib/isc/libisc.la
+@HAVE_JEMALLOC_FALSE@LIBISC_CFLAGS = -I$(top_srcdir)/include \
+@HAVE_JEMALLOC_FALSE@	-I$(top_srcdir)/lib/isc/include \
+@HAVE_JEMALLOC_FALSE@	-I$(top_builddir)/lib/isc/include
+@HAVE_JEMALLOC_TRUE@LIBISC_CFLAGS = $(JEMALLOC_CFLAGS) \
+@HAVE_JEMALLOC_TRUE@	-I$(top_srcdir)/include \
+@HAVE_JEMALLOC_TRUE@	-I$(top_srcdir)/lib/isc/include \
+@HAVE_JEMALLOC_TRUE@	-I$(top_builddir)/lib/isc/include
+@HAVE_JEMALLOC_FALSE@LIBISC_LIBS = $(top_builddir)/lib/isc/libisc.la
+@HAVE_JEMALLOC_TRUE@LIBISC_LIBS = $(JEMALLOC_LIBS) \
+@HAVE_JEMALLOC_TRUE@	$(top_builddir)/lib/isc/libisc.la
 LIBDNS_CFLAGS = \
 	-I$(top_srcdir)/lib/dns/include			\
 	-I$(top_builddir)/lib/dns/include
@@ -827,6 +832,7 @@ SUBDIRS = dyndb/driver dlzexternal/driver hooks/driver
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	checknames		\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	checkzone		\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	cookie			\
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	cpu			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	database		\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	dialup			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	digdelv			\
@@ -1595,6 +1601,13 @@ checkzone.log: checkzone
 cookie.log: cookie
 	@p='cookie'; \
 	b='cookie'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+cpu.log: cpu
+	@p='cpu'; \
+	b='cpu'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \

@@ -38,7 +38,7 @@ dnssec-keyfromlabel \- DNSSEC key generation tool
 \fBdnssec\-keyfromlabel\fP generates a pair of key files that reference a
 key object stored in a cryptographic hardware service module (HSM). The
 private key file can be used for DNSSEC signing of zone data as if it
-were a conventional signing key created by \fI\%dnssec\-keygen\fP, but the
+were a conventional signing key created by \X'tty: link #std-iscman-dnssec-keygen'\fI\%dnssec\-keygen\fP\X'tty: link', but the
 key material is stored within the HSM and the actual signing takes
 place there.
 .sp
@@ -157,7 +157,7 @@ the default TTL to \fB0\fP or \fBnone\fP removes it.
 .B \-p protocol
 This option sets the protocol value for the key. The protocol is a number between
 0 and 255. The default is 3 (DNSSEC). Other possible values for this
-argument are listed in \fI\%RFC 2535\fP and its successors.
+argument are listed in \X'tty: link https://datatracker.ietf.org/doc/html/rfc2535.html'\fI\%RFC 2535\fP\X'tty: link' and its successors.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -193,7 +193,7 @@ This option prints version information.
 This option allows DNSSEC key files to be generated even if the key ID would
 collide with that of an existing key, in the event of either key
 being revoked. (This is only safe to enable if
-\fI\%RFC 5011\fP trust anchor maintenance is not used with either of the keys
+\X'tty: link https://datatracker.ietf.org/doc/html/rfc5011.html'\fI\%RFC 5011\fP\X'tty: link' trust anchor maintenance is not used with either of the keys
 involved.)
 .UNINDENT
 .SH TIMING OPTIONS
@@ -309,8 +309,8 @@ The \fB\&.private\fP file contains algorithm\-specific fields. For obvious
 security reasons, this file does not have general read permission.
 .SH SEE ALSO
 .sp
-\fI\%dnssec\-keygen(8)\fP, \fI\%dnssec\-signzone(8)\fP, BIND 9 Administrator Reference Manual,
-\fI\%RFC 4034\fP, \fI\%RFC 7512\fP\&.
+\X'tty: link #std-iscman-dnssec-keygen'\fI\%dnssec\-keygen(8)\fP\X'tty: link', \X'tty: link #std-iscman-dnssec-signzone'\fI\%dnssec\-signzone(8)\fP\X'tty: link', BIND 9 Administrator Reference Manual,
+\X'tty: link https://datatracker.ietf.org/doc/html/rfc4034.html'\fI\%RFC 4034\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc7512.html'\fI\%RFC 7512\fP\X'tty: link'\&.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT

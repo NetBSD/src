@@ -35,9 +35,10 @@ tsig-keygen \- TSIG key generation tool
 \fBtsig\-keygen\fP [\fB\-a\fP algorithm] [\fB\-h\fP] [name]
 .SH DESCRIPTION
 .sp
-\fBtsig\-keygen\fP is an utility that generates keys for use in TSIG signing.
-The resulting keys can be used, for example, to secure dynamic DNS updates
-to a zone, or for the \fI\%rndc\fP command channel.
+\fBtsig\-keygen\fP is an utility that generates keys for use with TSIG
+(Transaction Signatures) as defined in \X'tty: link https://datatracker.ietf.org/doc/html/rfc2845.html'\fI\%RFC 2845\fP\X'tty: link'\&. The resulting keys can be used,
+for example, to secure dynamic DNS updates to a zone, or for the \X'tty: link #std-iscman-rndc'\fI\%rndc\fP\X'tty: link'
+command channel.
 .sp
 A domain name can be specified on the command line to be used as the name
 of the generated key. If no name is specified, the default is \fBtsig\-key\fP\&.
@@ -57,7 +58,7 @@ This option prints a short summary of options and arguments.
 .UNINDENT
 .SH SEE ALSO
 .sp
-\fI\%nsupdate(1)\fP, \fI\%named.conf(5)\fP, \fI\%named(8)\fP, BIND 9 Administrator Reference Manual.
+\X'tty: link #std-iscman-nsupdate'\fI\%nsupdate(1)\fP\X'tty: link', \X'tty: link #std-iscman-named.conf'\fI\%named.conf(5)\fP\X'tty: link', \X'tty: link #std-iscman-named'\fI\%named(8)\fP\X'tty: link', BIND 9 Administrator Reference Manual.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT

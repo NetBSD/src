@@ -133,13 +133,18 @@ am__v_lt_1 =
 named_checkconf_SOURCES = named-checkconf.c
 named_checkconf_OBJECTS = named-checkconf.$(OBJEXT)
 named_checkconf_LDADD = $(LDADD)
-named_checkconf_DEPENDENCIES = libcheck-tool.la $(LIBISC_LIBS) \
+am__DEPENDENCIES_1 =
+@HAVE_JEMALLOC_FALSE@am__DEPENDENCIES_2 =  \
+@HAVE_JEMALLOC_FALSE@	$(top_builddir)/lib/isc/libisc.la
+@HAVE_JEMALLOC_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) \
+@HAVE_JEMALLOC_TRUE@	$(top_builddir)/lib/isc/libisc.la
+named_checkconf_DEPENDENCIES = libcheck-tool.la $(am__DEPENDENCIES_2) \
 	$(LIBDNS_LIBS) $(LIBNS_LIBS) $(LIBISCCFG_LIBS) \
 	$(LIBBIND9_LIBS)
 named_checkzone_SOURCES = named-checkzone.c
 named_checkzone_OBJECTS = named-checkzone.$(OBJEXT)
 named_checkzone_LDADD = $(LDADD)
-named_checkzone_DEPENDENCIES = libcheck-tool.la $(LIBISC_LIBS) \
+named_checkzone_DEPENDENCIES = libcheck-tool.la $(am__DEPENDENCIES_2) \
 	$(LIBDNS_LIBS) $(LIBNS_LIBS) $(LIBISCCFG_LIBS) \
 	$(LIBBIND9_LIBS)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -423,12 +428,16 @@ AM_CPPFLAGS = $(STD_CPPFLAGS) -include $(top_builddir)/config.h \
 AM_LDFLAGS = $(STD_LDFLAGS) $(am__append_1)
 LDADD = libcheck-tool.la $(LIBISC_LIBS) $(LIBDNS_LIBS) $(LIBNS_LIBS) \
 	$(LIBISCCFG_LIBS) $(LIBBIND9_LIBS)
-LIBISC_CFLAGS = \
-	-I$(top_srcdir)/include				\
-	-I$(top_srcdir)/lib/isc/include			\
-	-I$(top_builddir)/lib/isc/include
-
-LIBISC_LIBS = $(top_builddir)/lib/isc/libisc.la
+@HAVE_JEMALLOC_FALSE@LIBISC_CFLAGS = -I$(top_srcdir)/include \
+@HAVE_JEMALLOC_FALSE@	-I$(top_srcdir)/lib/isc/include \
+@HAVE_JEMALLOC_FALSE@	-I$(top_builddir)/lib/isc/include
+@HAVE_JEMALLOC_TRUE@LIBISC_CFLAGS = $(JEMALLOC_CFLAGS) \
+@HAVE_JEMALLOC_TRUE@	-I$(top_srcdir)/include \
+@HAVE_JEMALLOC_TRUE@	-I$(top_srcdir)/lib/isc/include \
+@HAVE_JEMALLOC_TRUE@	-I$(top_builddir)/lib/isc/include
+@HAVE_JEMALLOC_FALSE@LIBISC_LIBS = $(top_builddir)/lib/isc/libisc.la
+@HAVE_JEMALLOC_TRUE@LIBISC_LIBS = $(JEMALLOC_LIBS) \
+@HAVE_JEMALLOC_TRUE@	$(top_builddir)/lib/isc/libisc.la
 LIBDNS_CFLAGS = \
 	-I$(top_srcdir)/lib/dns/include			\
 	-I$(top_builddir)/lib/dns/include

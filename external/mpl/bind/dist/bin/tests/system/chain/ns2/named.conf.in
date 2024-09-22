@@ -26,6 +26,11 @@ options {
 	notify yes;
 };
 
+zone . {
+       type hint;
+       file "../../_common/root.hint";
+};
+
 zone "example" {
 	type primary;
 	file "example.db.signed";

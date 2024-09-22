@@ -39,6 +39,11 @@ controls {
         inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
 };
 
+zone "." {
+	type hint;
+	file "../../_common/root.hint.blackhole";
+};
+
 /* Zones that are getting initially signed */
 
 /* The default case: No keys created, using default policy. */
@@ -283,6 +288,16 @@ zone "three-is-a-crowd.kasp" {
 zone "expired-sigs.autosign" {
 	type primary;
 	file "expired-sigs.autosign.db";
+	inline-signing yes;
+	dnssec-policy "autosign";
+};
+
+/*
+ * Zone that has DNSKEY TTL mismatch with the dnssec-policy.
+ */
+zone "dnskey-ttl-mismatch.autosign" {
+	type primary;
+	file "dnskey-ttl-mismatch.autosign.db";
 	inline-signing yes;
 	dnssec-policy "autosign";
 };

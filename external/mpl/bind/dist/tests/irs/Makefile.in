@@ -98,6 +98,8 @@ target_triplet = @target@
 @HOST_MACOS_TRUE@	-Wl,-flat_namespace
 
 check_PROGRAMS = resconf_test$(EXEEXT)
+@HAVE_JEMALLOC_TRUE@am__append_2 = $(JEMALLOC_CFLAGS)
+@HAVE_JEMALLOC_TRUE@am__append_3 = $(JEMALLOC_LIBS)
 subdir = tests/irs
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_compile_flag.m4 \
@@ -125,8 +127,14 @@ resconf_test_SOURCES = resconf_test.c
 resconf_test_OBJECTS = resconf_test.$(OBJEXT)
 resconf_test_LDADD = $(LDADD)
 am__DEPENDENCIES_1 =
-resconf_test_DEPENDENCIES = $(LIBISC_LIBS) $(LIBIRS_LIBS) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+@HAVE_JEMALLOC_FALSE@am__DEPENDENCIES_2 =  \
+@HAVE_JEMALLOC_FALSE@	$(top_builddir)/lib/isc/libisc.la
+@HAVE_JEMALLOC_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) \
+@HAVE_JEMALLOC_TRUE@	$(top_builddir)/lib/isc/libisc.la
+@HAVE_JEMALLOC_TRUE@am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1)
+resconf_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(LIBIRS_LIBS) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -605,20 +613,26 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = -I $(top_srcdir)/m4
-AM_CFLAGS = $(STD_CFLAGS) -I$(top_srcdir)/tests/include $(TEST_CFLAGS)
+AM_CFLAGS = $(STD_CFLAGS) -I$(top_srcdir)/tests/include $(TEST_CFLAGS) \
+	$(am__append_2)
 AM_CPPFLAGS = $(STD_CPPFLAGS) -include $(top_builddir)/config.h \
 	-I$(srcdir)/include $(LIBISC_CFLAGS) $(LIBIRS_CFLAGS) \
 	$(CMOCKA_CFLAGS) -DNAMED_PLUGINDIR=\"$(pkglibdir)\" \
 	-DTESTS_DIR=\"$(abs_srcdir)\"
 AM_LDFLAGS = $(STD_LDFLAGS) $(am__append_1)
 LDADD = $(LIBISC_LIBS) $(LIBIRS_LIBS) \
-	$(top_builddir)/tests/libtest/libtest.la $(CMOCKA_LIBS)
-LIBISC_CFLAGS = \
-	-I$(top_srcdir)/include				\
-	-I$(top_srcdir)/lib/isc/include			\
-	-I$(top_builddir)/lib/isc/include
-
-LIBISC_LIBS = $(top_builddir)/lib/isc/libisc.la
+	$(top_builddir)/tests/libtest/libtest.la $(CMOCKA_LIBS) \
+	$(am__append_3)
+@HAVE_JEMALLOC_FALSE@LIBISC_CFLAGS = -I$(top_srcdir)/include \
+@HAVE_JEMALLOC_FALSE@	-I$(top_srcdir)/lib/isc/include \
+@HAVE_JEMALLOC_FALSE@	-I$(top_builddir)/lib/isc/include
+@HAVE_JEMALLOC_TRUE@LIBISC_CFLAGS = $(JEMALLOC_CFLAGS) \
+@HAVE_JEMALLOC_TRUE@	-I$(top_srcdir)/include \
+@HAVE_JEMALLOC_TRUE@	-I$(top_srcdir)/lib/isc/include \
+@HAVE_JEMALLOC_TRUE@	-I$(top_builddir)/lib/isc/include
+@HAVE_JEMALLOC_FALSE@LIBISC_LIBS = $(top_builddir)/lib/isc/libisc.la
+@HAVE_JEMALLOC_TRUE@LIBISC_LIBS = $(JEMALLOC_LIBS) \
+@HAVE_JEMALLOC_TRUE@	$(top_builddir)/lib/isc/libisc.la
 LIBDNS_CFLAGS = \
 	-I$(top_srcdir)/lib/dns/include			\
 	-I$(top_builddir)/lib/dns/include

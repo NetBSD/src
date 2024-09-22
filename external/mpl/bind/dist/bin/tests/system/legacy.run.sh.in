@@ -87,7 +87,7 @@ if [ "${srcdir}" != "${builddir}" ]; then
     cp -a "${srcdir}/_common" "${builddir}"
   fi
   # Some tests require additional files to work for out-of-tree test runs.
-  for file in ckdnsrps.sh conftest.py digcomp.pl ditch.pl fromhex.pl get_core_dumps.sh kasp.sh packet.pl start.pl stop.pl testcrypto.sh; do
+  for file in conftest.py digcomp.pl ditch.pl fromhex.pl get_core_dumps.sh kasp.sh packet.pl start.pl stop.pl testcrypto.sh; do
     if [ ! -r "${file}" ]; then
       cp -a "${srcdir}/${file}" "${builddir}"
     fi

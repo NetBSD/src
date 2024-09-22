@@ -1026,10 +1026,10 @@ responses such as NXDOMAIN.
 :any:`parental-agents` Block Definition and Usage
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:any:`parental-agents` lists allow for a common set of parental agents to be easily
-used by multiple primary and secondary zones.
-A parental agent is the entity that is allowed to
-change a zone's delegation information (defined in :rfc:`7344`).
+:any:`parental-agents` lists allow for a common set of parental agents to be
+easily used by multiple primary and secondary zones. A "parental agent" is a
+trusted DNS server that is queried to check if DS records for a given zones
+are up-to-date.
 
 :any:`primaries` Block Grammar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2147,7 +2147,7 @@ Boolean Options
    :short: Controls whether BIND 9 responds to root key sentinel probes.
 
    If ``yes``, respond to root key sentinel probes as described in
-   `draft-ietf-dnsop-kskroll-sentinel-08 <https://datatracker.ietf.org/doc/html/draft-ietf-dnsop-kskroll-sentinel-08>`_. The default is ``yes``.
+   :rfc:`8509`:. The default is ``yes``.
 
 .. namedconf:statement:: reuseport
    :tags: server
@@ -2706,8 +2706,10 @@ Boolean Options
 
    The :any:`querylog` option specifies whether query logging should be active when
    :iscman:`named` first starts. If :any:`querylog` is not specified, then query logging
-   is determined by the presence of the logging category ``queries``.  Query
-   logging can also be activated at runtime using the command ``rndc querylog
+   is determined by the presence of the logging category ``queries``.  Please
+   note that :option:`rndc reconfig` and :option:`rndc reload` have no effect on
+   this option, so it cannot be changed once the server is running. However,
+   query logging can be activated at runtime using the command ``rndc querylog
    on``, or deactivated with :option:`rndc querylog off <rndc querylog>`.
 
 .. namedconf:statement:: check-names
@@ -3766,6 +3768,54 @@ system.
    This sets the maximum number of records permitted in a zone. The default is
    zero, which means the maximum is unlimited.
 
+.. namedconf:statement:: max-records-per-type
+   :tags: server
+   :short: Sets the maximum number of records that can be stored in an RRset
+
+   This sets the maximum number of resource records that can be stored
+   in an RRset in a database. When configured in :namedconf:ref:`options`
+   or :namedconf:ref:`view`, it controls the cache database; it also sets
+   the default value for zone databases, which can be overridden by setting
+   it at the :namedconf:ref:`zone` level.
+
+   If set to a positive value, any attempt to cache or to add to a zone
+   an RRset with more than the specified number of records will result in
+   a failure.  If set to 0, there is no cap on RRset size.  The default is
+   100.
+
+.. namedconf:statement:: max-types-per-name
+   :tags: server
+   :short: Sets the maximum number of RR types that can be stored for an owner name
+
+   This sets the maximum number of resource record types that can be stored
+   for a single owner name in a database. When configured in
+   :namedconf:ref:`options` or :namedconf:ref:`view`, it controls the cache
+   database and sets the default value for zone databases, which can be
+   overridden by setting it at the :namedconf:ref:`zone` level.
+
+   An RR type and its corresponding signature are counted as two types. So,
+   for example, a signed node containing A and AAAA records has four types:
+   A, RRSIG(A), AAAA, and RRSIG(AAAA).
+
+   The behavior is slightly different for zone and cache databases:
+
+   In a zone, if :any:`max-types-per-name` is set to a positive number, any
+   attempt to add a new resource record set to a name that already has the
+   specified number of types will fail.
+
+   In a cache, if :any:`max-types-per-name` is set to a positive number, an
+   attempt to add a new resource record set to a name that already has the
+   specified number of types will temporarily succeed so that the query can
+   be answered. However, the newly added RRset will immediately be purged.
+
+   Certain high-priority types, including SOA, CNAME, DNSKEY, and their
+   corresponding signatures, are always cached. If :any:`max-types-per-name`
+   is set to a very low value, then it may be ignored to allow high-priority
+   types to be cached.
+
+   When :any:`max-types-per-name` is set to 0, there is no cap on the number
+   of RR types.  The default is 100.
+
 .. namedconf:statement:: recursive-clients
    :tags: query
    :short: Specifies the maximum number of concurrent recursive queries the server can perform.
@@ -4640,9 +4690,20 @@ Tuning
    :tags: server, query
    :short: Sets the maximum number of iterative queries while servicing a recursive query.
 
-   This sets the maximum number of iterative queries that may be sent while
-   servicing a recursive query. If more queries are sent, the recursive
-   query is terminated and returns SERVFAIL. The default is 100.
+   This sets the maximum number of iterative queries that may be sent
+   by a resolver while looking up a single name. If more queries than this
+   need to be sent before an answer is reached, then recursion is terminated
+   and a SERVFAIL response is returned to the client. (Note: if the answer
+   is a CNAME, then the subsequent lookup for the target of the CNAME is
+   counted separately.) The default is 32.
+
+.. namedconf:statement:: max-query-restarts
+   :tags: server, query
+   :short: Sets the maximum number of chained CNAMEs to follow
+
+   This sets the maximum number of successive CNAME targets to follow
+   when resolving a client query, before terminating the query to avoid a
+   CNAME loop. Valid values are 1 to 255. The default is 11.
 
 .. namedconf:statement:: notify-delay
    :tags: transfer, zone
@@ -4909,6 +4970,7 @@ The current list of empty zones is:
 -  B.E.F.IP6.ARPA
 -  EMPTY.AS112.ARPA
 -  HOME.ARPA
+-  RESOLVER.ARPA
 
 Empty zones can be set at the view level and only apply to views of
 class IN. Disabled empty zones are only inherited from options if there
@@ -6045,6 +6107,25 @@ uses a temporary key and certificate created for the current :iscman:`named`
 session only, and ``none``, which can be used when setting up an HTTP
 listener with no encryption.
 
+The main motivation behind having the ``ephemeral`` configuration is
+to aid in testing, as trusted certificate authorities do not issue the
+certificates associated with this configuration. Thus, these
+certificates will never be trusted by any clients that verify TLS
+certificates. They provide encryption of the traffic but no
+authentification of the transmission channel. That might be enough in
+the case of deployment in a controlled environment.
+
+It should be noted that on reconfiguration, the ``ephemeral`` TLS key
+and the certificate are recreated, and all TLS certificates and keys,
+as well as associated data, are reloaded from the disk. In that case,
+listening sockets associated with TLS remain intact.
+
+Please keep in mind that doing reconfiguration can cause a short
+interruption in BIND's ability to process inbound client packets. The
+length of interruption is environment and configuration-specific. A
+good example of when reconfiguration is necessary is when TLS keys and
+certificates are updated on the disk.
+
 BIND supports the following TLS authentication mechanisms described in
 the RFC 9103, Section 9.3: Opportunistic TLS, Strict TLS, and Mutual
 TLS.
@@ -6363,10 +6444,9 @@ propagating DS updates.
 
 .. _dnssec_policy_default:
 
-Policy ``default`` causes the zone to be signed with a single combined-signing
-key (CSK) using algorithm ECDSAP256SHA256; this key has an unlimited
-lifetime.  (A verbose copy of this policy may be found in the source
-tree, in the file ``doc/misc/dnssec-policy.default.conf``.)
+The policy ``default`` causes the zone to be signed with a single combined-signing
+key (CSK) using the algorithm ECDSAP256SHA256; this key has an unlimited
+lifetime. This policy can be displayed using the command :option:`named -C`.
 
 .. note:: The default signing policy may change in future releases.
    This could require changes to a signing policy when upgrading to a
@@ -6394,7 +6474,9 @@ The following options can be specified in a :any:`dnssec-policy` statement:
     This indicates the TTL to use when generating DNSKEY resource
     records. The default is 1 hour (3600 seconds).
 
-:any:`keys`
+.. _dnssec-policy-keys:
+
+keys
     This is a list specifying the algorithms and roles to use when
     generating keys and signing the zone.  Entries in this list do not
     represent specific DNSSEC keys, which may be changed on a regular
@@ -6444,10 +6526,11 @@ The following options can be specified in a :any:`dnssec-policy` statement:
     must be more than the publication interval (which is the sum of
     :any:`dnskey-ttl`, :any:`publish-safety`, and :any:`zone-propagation-delay`).
     It must also be more than the retire interval (which is the sum of
-    :any:`max-zone-ttl`, :any:`retire-safety` and :any:`zone-propagation-delay`
-    for ZSKs, and the sum of :any:`parent-ds-ttl`, :any:`retire-safety`, and
-    :any:`parent-propagation-delay` for KSKs and CSKs). BIND 9 treats a key
-    lifetime that is too short as an error.
+    :any:`max-zone-ttl`, :any:`retire-safety`, :any:`zone-propagation-delay`,
+    and signing delay (:any:`signatures-validity` minus
+    :any:`signatures-refresh`) for ZSKs, and the sum of :any:`parent-ds-ttl`,
+    :any:`retire-safety`, and :any:`parent-propagation-delay` for KSKs and
+    CSKs). BIND 9 treats a key lifetime that is too short as an error.
 
     The ``algorithm`` parameter specifies the key's algorithm, expressed
     either as a string ("rsasha256", "ecdsa384", etc.) or as a decimal
@@ -6487,6 +6570,18 @@ The following options can be specified in a :any:`dnssec-policy` statement:
     rollover timing calculations, to give some extra time to cover
     unforeseen events.  This increases the time a key remains published
     after it is no longer active.  The default is ``PT1H`` (1 hour).
+
+.. namedconf:statement:: signatures-jitter
+   :tags: dnssec
+   :short: Specifies a range for signatures expirations.
+
+    To prevent all signatures from expiring at the same moment, BIND 9 may
+    vary the validity interval of individual signatures. The validity of a
+    newly generated signatures is in range between :any:`signatures-validity`
+    (maximum) and :any:`signatures-validity` minus :any:`signatures-jitter`
+    (minimum). The default jitter is 12 hours and the configured value must
+    be lower than :any:`signatures-validity` and
+    :any:`signatures-validity-dnskey`.
 
 .. namedconf:statement:: signatures-refresh
    :tags: dnssec
@@ -6553,7 +6648,7 @@ The following options can be specified in a :any:`dnssec-policy` statement:
        Do not use extra :term:`iterations <Iterations>`, :term:`salt <Salt>`, and
        :term:`opt-out <Opt-out>` unless their implications are fully understood.
        A higher number of iterations causes interoperability problems and opens
-       servers to CPU-exhausting DoS attacks.
+       servers to CPU-exhausting DoS attacks. See :rfc:`9276`.
 
 .. namedconf:statement:: zone-propagation-delay
    :tags: dnssec, zone
@@ -7387,7 +7482,7 @@ the zone's filename, unless :any:`inline-signing` is enabled.
    updates are allowed. It specifies a set of rules, in which each rule
    either grants or denies permission for one or more names in the zone to
    be updated by one or more identities. Identity is determined by the key
-   that signed the update request, using either TSIG or SIG(0). In most
+   that signed the update request, using TSIG. In most
    cases, :any:`update-policy` rules only apply to key-based identities. There
    is no way to specify update permissions based on the client source address.
 
@@ -7444,7 +7539,7 @@ the zone's filename, unless :any:`inline-signing` is enabled.
    field. Details for each rule type are described below.
 
    The ``identity`` field must be set to a fully qualified domain name. In
-   most cases, this represents the name of the TSIG or SIG(0) key that
+   most cases, this represents the name of the TSIG key that
    must be used to sign the update request. If the specified name is a
    wildcard, it is subject to DNS wildcard expansion, and the rule may
    apply to multiple identities. When a TKEY exchange has been used to
@@ -7489,7 +7584,7 @@ the zone's filename, unless :any:`inline-signing` is enabled.
      send
      EOF
 
-   The ruletype field has 20 values: ``name``, ``subdomain``, ``zonesub``,
+   The ruletype field has 18 values: ``name``, ``subdomain``, ``zonesub``,
    ``wildcard``, ``self``, ``selfsub``, ``selfwild``, ``ms-self``,
    ``ms-selfsub``, ``ms-subdomain``, ``ms-subdomain-self-rhs``, ``krb5-self``,
    ``krb5-selfsub``, ``krb5-subdomain``,  ``krb5-subdomain-self-rhs``,
@@ -8211,3 +8306,6 @@ exceptions are noted in the descriptions.
 
 ``<TYPE>RecvErr``
     This indicates the number of errors in socket receive operations, including errors of send operations on a connected UDP socket, notified by an ICMP error message.
+
+``TCP4Clients``/``TCP6Clients``
+    This indicates the number of IPv4/IPv6 clients currently connected over TCP.

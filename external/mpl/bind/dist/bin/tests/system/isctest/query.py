@@ -20,16 +20,24 @@ QUERY_TIMEOUT = 10
 
 
 def udp(
-    message: dns.message.Message, ip: str, port: Optional[int] = None
+    message: dns.message.Message,
+    ip: str,
+    port: Optional[int] = None,
+    source: Optional[str] = None,
+    timeout: int = QUERY_TIMEOUT,
 ) -> dns.message.Message:
     if port is None:
         port = int(os.environ["PORT"])
-    return dns.query.udp(message, ip, QUERY_TIMEOUT, port=port)
+    return dns.query.udp(message, ip, timeout, port=port, source=source)
 
 
 def tcp(
-    message: dns.message.Message, ip: str, port: Optional[int] = None
+    message: dns.message.Message,
+    ip: str,
+    port: Optional[int] = None,
+    source: Optional[str] = None,
+    timeout: int = QUERY_TIMEOUT,
 ) -> dns.message.Message:
     if port is None:
         port = int(os.environ["PORT"])
-    return dns.query.tcp(message, ip, QUERY_TIMEOUT, port=port)
+    return dns.query.tcp(message, ip, timeout, port=port, source=source)

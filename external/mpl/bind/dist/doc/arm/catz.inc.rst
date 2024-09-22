@@ -25,10 +25,7 @@ changes are immediately put into effect. Because the catalog zone is a
 normal DNS zone, these configuration changes can be propagated using the
 standard AXFR/IXFR zone transfer mechanism.
 
-Catalog zones' format and behavior are specified as an Internet draft
-for interoperability among DNS implementations. The
-latest revision of the DNS catalog zones draft can be found here:
-https://datatracker.ietf.org/doc/draft-toorop-dnsop-dns-catalog-zones/ .
+Catalog zones' format and behavior are specified as :rfc:`9432`.
 
 Principle of Operation
 ~~~~~~~~~~~~~~~~~~~~~~

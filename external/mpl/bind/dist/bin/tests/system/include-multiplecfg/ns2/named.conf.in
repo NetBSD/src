@@ -17,7 +17,7 @@ options {
 	listen-on { 10.53.0.2; };
 	listen-on-v6 { none; };
 	recursion no;
-        notify no;
+	notify no;
 	dnssec-validation no;
 };
 

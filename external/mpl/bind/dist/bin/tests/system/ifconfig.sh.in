@@ -20,6 +20,8 @@
 # IPv6: fd92:7065:b8e:ffff::{1..11}		ULA
 #       fd92:7065:b8e:99ff::{1..2}
 #       fd92:7065:b8e:ff::{1..2}
+#       fd92:7065:b8e:fffe::10.53.0.4
+#       2002:0a35:0007::1                       6to4 for 10.53.0.7
 #
 # We also set the MTU on the 1500 bytes to match the default MTU on physical
 # interfaces, so we can properly test the cases with packets bigger than
@@ -240,7 +242,7 @@ sequence() (
 max=11
 case $1 in
   start | up | stop | down)
-    for i in $(sequence 0 2); do
+    for i in $(sequence 0 4); do
       case $i in
         0) ipv6="ff" ;;
         1) ipv6="99" ;;
@@ -250,8 +252,23 @@ case $1 in
       for ns in $(sequence 1 $max); do
         [ $i -gt 0 -a $ns -gt 2 ] && break
         int=$((i * max + ns))
-        a=10.53.$i.$ns
-        aaaa=fd92:7065:b8e:${ipv6}ff::$ns
+        case $i in
+          0 | 1 | 2)
+            [ $i -gt 0 -a $ns -gt 3 ] && break
+            a=10.53.$i.$ns
+            aaaa=fd92:7065:b8e:${ipv6}ff::$ns
+            ;;
+          3)
+            [ $ns -ne 4 ] && continue
+            a=
+            aaaa=fd92:7065:b8e:fffe::10.53.0.$ns
+            ;;
+          4)
+            [ $ns -ne 1 ] && continue
+            a=
+            aaaa=2002:0a35:0007::$ns
+            ;;
+        esac
         case "$1" in
           start | up) up ;;
           stop | down) down ;;

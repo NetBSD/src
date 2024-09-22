@@ -39,8 +39,8 @@ named-journalprint \- print zone journal in human-readable form
 printing it in a human\-readable form, or, optionally, converting it
 to a different journal file format.
 .sp
-Journal files are automatically created by \fI\%named\fP when changes are
-made to dynamic zones (e.g., by \fI\%nsupdate\fP). They record each addition
+Journal files are automatically created by \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' when changes are
+made to dynamic zones (e.g., by \X'tty: link #std-iscman-nsupdate'\fI\%nsupdate\fP\X'tty: link'). They record each addition
 or deletion of a resource record, in binary format, allowing the changes
 to be re\-applied to the zone when the server is restarted after a
 shutdown or crash. By default, the name of the journal file is formed by
@@ -54,7 +54,7 @@ the resource record in master\-file format.
 .sp
 The \fB\-c\fP (compact) option provides a mechanism to reduce the size of
 a journal by removing (most/all) transactions prior to the specified
-serial number. Note: this option \fImust not\fP be used while \fI\%named\fP is
+serial number. Note: this option \fImust not\fP be used while \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' is
 running, and can cause data loss if the zone file has not been updated
 to contain the data being removed from the journal. Use with extreme caution.
 .sp
@@ -67,10 +67,10 @@ replaced.  \fB\-d\fP writes out the journal in the format used by
 versions of BIND up to 9.16.11; \fB\-u\fP writes it out in the format used
 by versions since 9.16.13. (9.16.12 is omitted due to a journal\-formatting
 bug in that release.) Note that these options \fImust not\fP be used while
-\fI\%named\fP is running.
+\X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' is running.
 .SH SEE ALSO
 .sp
-\fI\%named(8)\fP, \fI\%nsupdate(1)\fP, BIND 9 Administrator Reference Manual.
+\X'tty: link #std-iscman-named'\fI\%named(8)\fP\X'tty: link', \X'tty: link #std-iscman-nsupdate'\fI\%nsupdate(1)\fP\X'tty: link', BIND 9 Administrator Reference Manual.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT

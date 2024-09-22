@@ -66,6 +66,11 @@ view auth {
 	recursion no;
 	allow-recursion { none; };
 
+	zone "." {
+		type hint;
+		file "../../_common/root.hint";
+	};
+
 	zone secure.example {
 		type secondary;
 		primaries { 10.53.0.3; };

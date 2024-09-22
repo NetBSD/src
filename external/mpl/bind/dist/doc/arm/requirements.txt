@@ -1,5 +1,3 @@
-# Make Read the Docs use the exact same package versions as in
-# registry.gitlab.isc.org/isc-projects/images/bind9:debian-bookworm-amd64
-Sphinx==7.2.6
+Sphinx==7.3.6
 docutils==0.20.1
 sphinx_rtd_theme==2.0.0

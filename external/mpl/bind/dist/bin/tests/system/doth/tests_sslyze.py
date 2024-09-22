@@ -15,6 +15,7 @@ import os
 import pathlib
 import subprocess
 
+import isctest
 import pytest
 
 
@@ -46,12 +47,12 @@ def run_sslyze_in_a_loop(executable, port, log_file_prefix):
             # Run sslyze, logging stdout+stderr.  Ignore the exit code since
             # sslyze is only used for triggering crashes here rather than
             # actual TLS analysis.
-            subprocess.run(
+            isctest.run.cmd(
                 sslyze_args,
                 stdout=sslyze_log,
                 stderr=subprocess.STDOUT,
                 timeout=30,
-                check=False,
+                raise_on_exception=False,
             )
             # Ensure ns1 is still alive after each sslyze run.
             assert is_pid_alive(pid), f"ns1 (PID: {pid}) exited prematurely"

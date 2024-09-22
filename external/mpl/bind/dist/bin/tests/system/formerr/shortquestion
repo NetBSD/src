@@ -1,0 +1,5 @@
+# truncated question section
+# header: QUERY, questions=1
+00 00 00 00 00 01 00 00 00 00 00 00
+# truncated question (no class)
+00 00 01

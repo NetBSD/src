@@ -133,36 +133,40 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 arpaname_SOURCES = arpaname.c
 arpaname_OBJECTS = arpaname.$(OBJEXT)
-arpaname_DEPENDENCIES = $(LIBISC_LIBS)
+am__DEPENDENCIES_1 =
+@HAVE_JEMALLOC_FALSE@am__DEPENDENCIES_2 =  \
+@HAVE_JEMALLOC_FALSE@	$(top_builddir)/lib/isc/libisc.la
+@HAVE_JEMALLOC_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) \
+@HAVE_JEMALLOC_TRUE@	$(top_builddir)/lib/isc/libisc.la
+arpaname_DEPENDENCIES = $(am__DEPENDENCIES_2)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
 dnstap_read_SOURCES = dnstap-read.c
 dnstap_read_OBJECTS = dnstap_read-dnstap-read.$(OBJEXT)
-am__DEPENDENCIES_1 =
 @HAVE_DNSTAP_TRUE@dnstap_read_DEPENDENCIES = $(LIBDNS_LIBS) \
-@HAVE_DNSTAP_TRUE@	$(LIBISC_LIBS) $(am__DEPENDENCIES_1)
+@HAVE_DNSTAP_TRUE@	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1)
 mdig_SOURCES = mdig.c
 mdig_OBJECTS = mdig-mdig.$(OBJEXT)
 mdig_DEPENDENCIES = $(LIBBIND9_LIBS) $(LIBISCCFG_LIBS) $(LIBDNS_LIBS) \
-	$(LIBISC_LIBS)
+	$(am__DEPENDENCIES_2)
 named_journalprint_SOURCES = named-journalprint.c
 named_journalprint_OBJECTS = named-journalprint.$(OBJEXT)
 named_journalprint_LDADD = $(LDADD)
-named_journalprint_DEPENDENCIES = $(LIBDNS_LIBS) $(LIBISC_LIBS)
+named_journalprint_DEPENDENCIES = $(LIBDNS_LIBS) $(am__DEPENDENCIES_2)
 named_nzd2nzf_SOURCES = named-nzd2nzf.c
 named_nzd2nzf_OBJECTS = named_nzd2nzf-named-nzd2nzf.$(OBJEXT)
-@HAVE_LMDB_TRUE@named_nzd2nzf_DEPENDENCIES = $(LIBISC_LIBS) \
+@HAVE_LMDB_TRUE@named_nzd2nzf_DEPENDENCIES = $(am__DEPENDENCIES_2) \
 @HAVE_LMDB_TRUE@	$(am__DEPENDENCIES_1)
 named_rrchecker_SOURCES = named-rrchecker.c
 named_rrchecker_OBJECTS = named-rrchecker.$(OBJEXT)
 named_rrchecker_LDADD = $(LDADD)
-named_rrchecker_DEPENDENCIES = $(LIBDNS_LIBS) $(LIBISC_LIBS)
+named_rrchecker_DEPENDENCIES = $(LIBDNS_LIBS) $(am__DEPENDENCIES_2)
 nsec3hash_SOURCES = nsec3hash.c
 nsec3hash_OBJECTS = nsec3hash.$(OBJEXT)
 nsec3hash_LDADD = $(LDADD)
-nsec3hash_DEPENDENCIES = $(LIBDNS_LIBS) $(LIBISC_LIBS)
+nsec3hash_DEPENDENCIES = $(LIBDNS_LIBS) $(am__DEPENDENCIES_2)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -445,12 +449,16 @@ AM_CPPFLAGS = $(STD_CPPFLAGS) -include $(top_builddir)/config.h \
 	-I$(srcdir)/include $(LIBISC_CFLAGS) $(LIBDNS_CFLAGS)
 AM_LDFLAGS = $(STD_LDFLAGS) $(am__append_1)
 LDADD = $(LIBDNS_LIBS) $(LIBISC_LIBS)
-LIBISC_CFLAGS = \
-	-I$(top_srcdir)/include				\
-	-I$(top_srcdir)/lib/isc/include			\
-	-I$(top_builddir)/lib/isc/include
-
-LIBISC_LIBS = $(top_builddir)/lib/isc/libisc.la
+@HAVE_JEMALLOC_FALSE@LIBISC_CFLAGS = -I$(top_srcdir)/include \
+@HAVE_JEMALLOC_FALSE@	-I$(top_srcdir)/lib/isc/include \
+@HAVE_JEMALLOC_FALSE@	-I$(top_builddir)/lib/isc/include
+@HAVE_JEMALLOC_TRUE@LIBISC_CFLAGS = $(JEMALLOC_CFLAGS) \
+@HAVE_JEMALLOC_TRUE@	-I$(top_srcdir)/include \
+@HAVE_JEMALLOC_TRUE@	-I$(top_srcdir)/lib/isc/include \
+@HAVE_JEMALLOC_TRUE@	-I$(top_builddir)/lib/isc/include
+@HAVE_JEMALLOC_FALSE@LIBISC_LIBS = $(top_builddir)/lib/isc/libisc.la
+@HAVE_JEMALLOC_TRUE@LIBISC_LIBS = $(JEMALLOC_LIBS) \
+@HAVE_JEMALLOC_TRUE@	$(top_builddir)/lib/isc/libisc.la
 LIBDNS_CFLAGS = \
 	-I$(top_srcdir)/lib/dns/include			\
 	-I$(top_builddir)/lib/dns/include

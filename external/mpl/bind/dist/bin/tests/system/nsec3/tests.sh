@@ -40,6 +40,7 @@ set_zone_policy() {
   POLICY=$2
   NUM_KEYS=$3
   DNSKEY_TTL=$4
+  KEYFILE_TTL=$4
 }
 # Set expected NSEC3 parameters: flags ($1), iterations ($2), and
 # salt length ($3).

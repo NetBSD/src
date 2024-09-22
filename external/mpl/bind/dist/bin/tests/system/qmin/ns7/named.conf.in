@@ -26,6 +26,7 @@ options {
 	querylog yes;
 	resolver-query-timeout 30000; # 30 seconds
 	dnssec-validation no;
+	disable-empty-zone 10.in-addr.arpa;
 };
 
 key rndc_key {

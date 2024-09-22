@@ -26,4 +26,6 @@ secure		NS	secure
 secure		DS	1312 50 100 96EEB2FFD9B00CD4694E78278B5EFDAB0A80446567B69F634DA078F0
 secure  	A	1.2.3.4
 secure  	AAAA	2002::1.2.3.4
+; obscured DNSKEY, regression test for [GL #4517]
+secure		DNSKEY	256 3 3 VGhpcyBzaG9ydCBzbmlwcGV0IG9mIHRleHQgaXMgc2FkIGFuZCBtZWFuaW5nbGVzcy4K
 out-of-zone.	A	1.2.3.4

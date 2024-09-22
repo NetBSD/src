@@ -35,6 +35,11 @@ controls {
 	inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
 };
 
+zone . {
+	type hint;
+	file "../../_common/root.hint.blackhole";
+};
+
 zone changed {
 	type primary;
 	update-policy local;

@@ -86,8 +86,8 @@ status=$((status + ret))
 
 echo_i "checking with max ttl (text) ($n)"
 ret=0
-$CHECKZONE -l 300 example zones/good1.db >test.out1.$n 2>&1 && ret=1
-$CHECKZONE -l 600 example zones/good1.db >test.out2.$n 2>&1 || ret=1
+$CHECKZONE -i local -l 300 example zones/good1.db >test.out1.$n 2>&1 && ret=1
+$CHECKZONE -i local -l 600 example zones/good1.db >test.out2.$n 2>&1 || ret=1
 n=$((n + 1))
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))

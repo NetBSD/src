@@ -155,11 +155,11 @@ Print a usage summary.
 .B \-k keyfile
 This option tells \fBdig\fP to sign queries using TSIG or
 SIG(0) using a key read from the given file. Key files can be
-generated using \fI\%tsig\-keygen\fP\&. When using TSIG authentication
+generated using \X'tty: link #std-iscman-tsig-keygen'\fI\%tsig\-keygen\fP\X'tty: link'\&. When using TSIG authentication
 with \fBdig\fP, the name server that is queried needs to
 know the key and algorithm that is being used. In BIND, this is
 done by providing appropriate \fBkey\fP and \fBserver\fP statements
-in \fI\%named.conf\fP for TSIG and by looking up the KEY record
+in \X'tty: link #std-iscman-named.conf'\fI\%named.conf\fP\X'tty: link' for TSIG and by looking up the KEY record
 in zone data for SIG(0).
 .UNINDENT
 .INDENT 0.0
@@ -202,7 +202,7 @@ SOA record was \fBN\fP\&.
 .sp
 All resource record types can be expressed as \fBTYPEnn\fP, where \fBnn\fP is
 the number of the type. If the resource record type is not supported
-in BIND 9, the result is displayed as described in \fI\%RFC 3597\fP\&.
+in BIND 9, the result is displayed as described in \X'tty: link https://datatracker.ietf.org/doc/html/rfc3597.html'\fI\%RFC 3597\fP\X'tty: link'\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -443,7 +443,7 @@ This option sends an EDNS Expire option.
 .INDENT 0.0
 .TP
 .B +fail, +nofail
-This option indicates that \fI\%named\fP should try [or not try] the next server if a SERVFAIL is received. The default is
+This option indicates that \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' should try [or not try] the next server if a SERVFAIL is received. The default is
 to not try the next server, which is the reverse of normal stub
 resolver behavior.
 .UNINDENT
@@ -686,7 +686,7 @@ This option performs [or does not perform] a search showing intermediate results
 .INDENT 0.0
 .TP
 .B +sigchase, +nosigchase
-This feature is now obsolete and has been removed; use \fI\%delv\fP
+This feature is now obsolete and has been removed; use \X'tty: link #std-iscman-delv'\fI\%delv\fP\X'tty: link'
 instead.
 .UNINDENT
 .INDENT 0.0
@@ -772,7 +772,7 @@ is used. This option has no effect if \fI\%+tls\-ca\fP is not specified.
 .TP
 .B +topdown, +notopdown
 This feature is related to \fI\%dig +sigchase\fP, which is obsolete and
-has been removed. Use \fI\%delv\fP instead.
+has been removed. Use \X'tty: link #std-iscman-delv'\fI\%delv\fP\X'tty: link' instead.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -801,7 +801,7 @@ the number of tries is silently rounded up to 1.
 .TP
 .B +trusted\-key=####
 This option formerly specified trusted keys for use with \fI\%dig +sigchase\fP\&. This
-feature is now obsolete and has been removed; use \fI\%delv\fP instead.
+feature is now obsolete and has been removed; use \X'tty: link #std-iscman-delv'\fI\%delv\fP\X'tty: link' instead.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -818,7 +818,7 @@ hours, days, and weeks. This implies \fI\%+ttlid\fP\&.
 .INDENT 0.0
 .TP
 .B +unknownformat, +nounknownformat
-This option prints all RDATA in unknown RR type presentation format (\fI\%RFC 3597\fP).
+This option prints all RDATA in unknown RR type presentation format (\X'tty: link https://datatracker.ietf.org/doc/html/rfc3597.html'\fI\%RFC 3597\fP\X'tty: link').
 The default is to print RDATA for known types in the type\(aqs
 presentation format.
 .UNINDENT
@@ -914,7 +914,7 @@ Internal error
 \fB${HOME}/.digrc\fP
 .SH SEE ALSO
 .sp
-\fI\%delv(1)\fP, \fI\%host(1)\fP, \fI\%named(8)\fP, \fI\%dnssec\-keygen(8)\fP, \fI\%RFC 1035\fP\&.
+\X'tty: link #std-iscman-delv'\fI\%delv(1)\fP\X'tty: link', \X'tty: link #std-iscman-host'\fI\%host(1)\fP\X'tty: link', \X'tty: link #std-iscman-named'\fI\%named(8)\fP\X'tty: link', \X'tty: link #std-iscman-dnssec-keygen'\fI\%dnssec\-keygen(8)\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html'\fI\%RFC 1035\fP\X'tty: link'\&.
 .SH BUGS
 .sp
 There are probably too many query options.

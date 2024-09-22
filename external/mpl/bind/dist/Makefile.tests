@@ -21,3 +21,8 @@ AM_CPPFLAGS +=					\
 LDADD +=						\
 	$(top_builddir)/tests/libtest/libtest.la	\
 	$(CMOCKA_LIBS)
+
+if HAVE_JEMALLOC
+AM_CFLAGS += $(JEMALLOC_CFLAGS)
+LDADD += $(JEMALLOC_LIBS)
+endif

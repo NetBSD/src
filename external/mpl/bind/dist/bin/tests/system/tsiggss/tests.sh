@@ -117,7 +117,7 @@ status=$((status + ret))
 
 echo_i "testing external update policy (CNAME) with auth sock ($n)"
 ret=0
-$PERL ./authsock.pl --type=CNAME --path=ns1/auth.sock --pidfile=authsock.pid --timeout=120 >/dev/null 2>&1 &
+$PERL ./authsock.pl --type=CNAME --path=ns1/auth.sock --pidfile=authsock.pid --timeout=120 >authsock.log 2>&1 &
 sleep 1
 test_update $n testcname.example.nil. CNAME "86400 CNAME testdenied.example.nil" "testdenied" || ret=1
 n=$((n + 1))
@@ -131,17 +131,19 @@ n=$((n + 1))
 if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
-echo_i "testing external policy with SIG(0) key ($n)"
+echo_i "testing external policy with unsupported SIG(0) key ($n)"
 ret=0
-$NSUPDATE -k ns1/Kkey.example.nil.*.private <<END >/dev/null 2>&1 || ret=1
+$NSUPDATE -d -k ns1/Kkey.example.nil.*.private <<END >nsupdate.out${n} 2>&1 || true
+debug
 server 10.53.0.1 ${PORT}
 zone example.nil
 update add fred.example.nil 120 cname foo.bar.
 send
 END
 output=$($DIG $DIGOPTS +short cname fred.example.nil.)
-[ -n "$output" ] || ret=1
-[ $ret -eq 0 ] || echo_i "failed"
+# update must have failed - SIG(0) signer is not supported
+[ -n "$output" ] && ret=1
+grep -F "signer=key.example.nil" authsock.log >/dev/null && ret=1
 n=$((n + 1))
 if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))

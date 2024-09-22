@@ -28,6 +28,7 @@ options {
 	pid-file "named.pid";
 	listen-on { 10.53.0.6; };
 	listen-on-v6 { none; };
+	dnssec-validation no;
 	recursion no;
 };
 

@@ -29,6 +29,7 @@ options {
 	allow-query {!10.53.0.8; any; };
 	max-zone-ttl unlimited;
 	attach-cache "globalcache";
+	max-recursion-queries 100;
 };
 
 server 10.53.0.3 {

@@ -1,0 +1,5 @@
+# OPT record with wrong name (not .)
+# header: QUERY, additional=1
+00 00 00 00 00 00 00 00 00 00 00 01
+# OPT record (owner A.)
+01 41 00 00 29 00 01 00 00 00 00 00 00

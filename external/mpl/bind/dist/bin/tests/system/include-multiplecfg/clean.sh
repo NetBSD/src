@@ -15,7 +15,6 @@
 # Clean up after allow query tests.
 #
 
-rm -f dig.out.*
 rm -f ns*/named.conf
 rm -f */named.memstats
 rm -f ns*/named.lock

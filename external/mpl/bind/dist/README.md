@@ -20,7 +20,6 @@ information regarding copyright ownership.
 1. [Building BIND](#build)
 1. [Automated testing](#testing)
 1. [Documentation](#doc)
-1. [Change log](#changes)
 1. [Acknowledgments](#ack)
 
 ### <a name="intro"/> Introduction
@@ -49,8 +48,7 @@ ongoing maintenance and improvement. BIND is open source software
 licensed under the terms of the Mozilla Public License, version 2.0.
 
 For a detailed list of changes made throughout the history of BIND 9, see
-the file [CHANGES](CHANGES). See [below](#changes) for details on the
-CHANGES file format.
+the [changelog](doc/arm/changelog.rst).
 
 For up-to-date versions and release notes, see
 [https://www.isc.org/download/](https://www.isc.org/download/).
@@ -128,7 +126,7 @@ multiple servers to run locally and communicate with each other). These
 IP addresses can be configured by running the command
 `bin/tests/system/ifconfig.sh up` as root.
 
-Some tests require Perl and the `Net::DNS` and/or `IO::Socket::INET6` modules,
+Some tests require Perl and the `Net::DNS` and/or `IO::Socket::IP` modules,
 and are skipped if these are not available. Some tests require Python
 and the `dnspython` module and are skipped if these are not available.
 See bin/tests/system/README for further details.
@@ -153,35 +151,6 @@ can be found in the ISC Knowledgebase at
 
 Additional information on various subjects can be found in other
 `README` files throughout the source tree.
-
-### <a name="changes"/> Change log
-
-A detailed list of all changes that have been made throughout the
-development of BIND 9 is included in the file CHANGES, with the most recent
-changes listed first. Change notes include tags indicating the category of
-the change that was made; these categories are:
-
-|Category	|Description	        			|
-|--------------	|-----------------------------------------------|
-| [func] | New feature |
-| [bug] | General bug fix |
-| [security] | Fix for a significant security flaw |
-| [experimental] | Used for new features when the syntax or other aspects of the design are still in flux and may change |
-| [port] | Portability enhancement |
-| [maint] | Updates to built-in data such as root server addresses and keys |
-| [tuning] | Changes to built-in configuration defaults and constants to improve performance |
-| [performance] | Other changes to improve server performance |
-| [protocol] | Updates to the DNS protocol such as new RR types |
-| [test] | Changes to the automatic tests, not affecting server functionality |
-| [cleanup] | Minor corrections and refactoring |
-| [doc] | Documentation |
-| [contrib] | Changes to the contributed tools and libraries in the 'contrib' subdirectory |
-| [placeholder] | Used in the main development branch to reserve change numbers for use in other branches, e.g., when fixing a bug that only exists in older releases |
-
-In general, [func] and [experimental] tags only appear in new-feature
-releases (i.e., those with version numbers ending in zero). Some new
-functionality may be backported to older releases on a case-by-case basis.
-All other change types may be applied to all currently supported releases.
 
 #### Bug report identifiers
 

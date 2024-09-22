@@ -10,5 +10,9 @@
 # information regarding copyright ownership.
 
 
+import isctest.mark
+
+
+@isctest.mark.flaky(max_runs=2)
 def test_autosign(run_tests_sh):
     run_tests_sh()

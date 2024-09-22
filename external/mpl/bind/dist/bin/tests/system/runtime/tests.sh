@@ -223,6 +223,32 @@ if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 n=$((n + 1))
+echo_i "checking that named log missing IPv4 primaries in -4 mode ($n)"
+ret=0
+INSTANCE_NAME="missing-primaries-ipv4-only-mode"
+testpid=$(run_named ns2 named$n.run -c named-alt8.conf -D "${INSTANCE_NAME}" -4)
+test -n "$testpid" || ret=1
+retry_quiet 60 check_named_log "running$" ns2/named$n.run || ret=1
+grep "IPv6 disabled and no IPv4 primaries" ns2/named$n.run >/dev/null || ret=1
+kill_named ns2/named.pid || ret=1
+test -n "$testpid" && retry_quiet 10 check_pid $testpid || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "checking that named log missing IPv6 primaries in -6 mode ($n)"
+ret=0
+INSTANCE_NAME="missing-primaries-ipv4-only-mode"
+testpid=$(run_named ns2 named$n.run -c named-alt8.conf -D "${INSTANCE_NAME}" -6)
+test -n "$testpid" || ret=1
+retry_quiet 60 check_named_log "running$" ns2/named$n.run || ret=1
+grep "IPv4 disabled and no IPv6 primaries" ns2/named$n.run >/dev/null || ret=1
+kill_named ns2/named.pid || ret=1
+test -n "$testpid" && retry_quiet 10 check_pid $testpid || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
 echo_i "verifying that named switches UID ($n)"
 if [ "$(id -u)" -eq 0 ]; then
   ret=0

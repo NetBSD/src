@@ -1,6 +1,7 @@
 example.		86400	IN	SOA	ns2.example. hostmaster.example. 1397051953 5 5 1814400 3600
 example.		3600	IN	NS	ns2.example.
 example.		3600	IN	NS	ns3.example.
+example.		3600	IN	DNSKEY	512 255 1 AQMFD5raczCJHViKtLYhWGz8hMY9UGRuniJDBzC7w0aRyzWZriO6i2od GWWQVucZqKVsENW91IOW4vqudngPZsY3GvQ/xVA8/7pyFj6b7Esga60z yGW6LFe9r8n6paHrlG5ojqf0BaqHT+8=
 a01.example.		3600	IN	A	0.0.0.1
 a02.example.		3600	IN	A	255.255.255.255
 a601.example.		3600	IN	A6	0 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
@@ -49,39 +50,36 @@ ds01.example.		3600	IN	DS	12892 5 2 26584835CA80C81C91999F31CFAF2A0E89D4FF1C8FAF
 ds02.example.		3600	IN	NS	ns43.example.
 ds02.example.		3600	IN	DS	12892 5 1 7AA4A3F416C2F2391FB7AB0D434F762CD62D1390
 eid01.example.		3600	IN	EID	1289AB
-eui48.example.		3600	IN	EUI48   01-23-45-67-89-ab
+eui48.example.		3600	IN	EUI48	01-23-45-67-89-ab
 eui64.example.		3600	IN	EUI64	01-23-45-67-89-ab-cd-ef
 gid01.example.		3600	IN	GID	\# 1 03
-unspec01.example.	3600	IN	UNSPEC	\# 1 04
 gpos01.example.		3600	IN	GPOS	"-22.6882" "116.8652" "250.0"
 gpos02.example.		3600	IN	GPOS	"" "" ""
 hinfo01.example.	3600	IN	HINFO	"Generic PC clone" "NetBSD-1.4"
 hinfo02.example.	3600	IN	HINFO	"PC" "NetBSD"
-ipseckey01.example.	3600	IN	IPSECKEY  10 1 2 192.0.2.38 AQNRU3mG7TVTO2BkR47usntb102uFJtugbo6BSGvgqt4AQ==
-ipseckey02.example.	3600	IN	IPSECKEY  10 0 2 . AQNRU3mG7TVTO2BkR47usntb102uFJtugbo6BSGvgqt4AQ==
-ipseckey03.example.	3600	IN	IPSECKEY  10 1 2 192.0.2.3 AQNRU3mG7TVTO2BkR47usntb102uFJtugbo6BSGvgqt4AQ==
-ipseckey04.example.	3600	IN	IPSECKEY  10 3 2 mygateway.example.com. AQNRU3mG7TVTO2BkR47usntb102uFJtugbo6BSGvgqt4AQ==
-ipseckey05.example.	3600	IN	IPSECKEY  10 2 2 2001:db8:0:8002::2000:1 AQNRU3mG7TVTO2BkR47usntb102uFJtugbo6BSGvgqt4AQ==
+hip1.example.		3600	IN	HIP	2 200100107B1A74DF365639CC39F1D578 AwEAAbdxyhNuSutc5EMzxTs9LBPCIkOFH8cIvM4p9+LrV4e19WzK00+CI6zBCQTdtWsuxKbWIy87UOoJTwkUs7lBu+Upr1gsNrut79ryra+bSRGQb1slImA8YVJyuIDsj7kwzG7jnERNqnWxZ48AWkskmdHaVDP4BcelrTI3rMXdXF5D
+hip2.example.		3600	IN	HIP	2 200100107B1A74DF365639CC39F1D578 AwEAAbdxyhNuSutc5EMzxTs9LBPCIkOFH8cIvM4p9+LrV4e19WzK00+CI6zBCQTdtWsuxKbWIy87UOoJTwkUs7lBu+Upr1gsNrut79ryra+bSRGQb1slImA8YVJyuIDsj7kwzG7jnERNqnWxZ48AWkskmdHaVDP4BcelrTI3rMXdXF5D rvs.example.com.
+https0.example.		3600	IN	HTTPS	0 example.net.
+https1.example.		3600	IN	HTTPS	1 . port=60
+ipseckey01.example.	3600	IN	IPSECKEY 10 1 2 192.0.2.38 AQNRU3mG7TVTO2BkR47usntb102uFJtugbo6BSGvgqt4AQ==
+ipseckey02.example.	3600	IN	IPSECKEY 10 0 2 . AQNRU3mG7TVTO2BkR47usntb102uFJtugbo6BSGvgqt4AQ==
+ipseckey03.example.	3600	IN	IPSECKEY 10 1 2 192.0.2.3 AQNRU3mG7TVTO2BkR47usntb102uFJtugbo6BSGvgqt4AQ==
+ipseckey04.example.	3600	IN	IPSECKEY 10 3 2 mygateway.example.com. AQNRU3mG7TVTO2BkR47usntb102uFJtugbo6BSGvgqt4AQ==
+ipseckey05.example.	3600	IN	IPSECKEY 10 2 2 2001:db8:0:8002::2000:1 AQNRU3mG7TVTO2BkR47usntb102uFJtugbo6BSGvgqt4AQ==
 isdn01.example.		3600	IN	ISDN	"isdn-address"
 isdn02.example.		3600	IN	ISDN	"isdn-address" "subaddress"
 isdn03.example.		3600	IN	ISDN	"isdn-address"
 isdn04.example.		3600	IN	ISDN	"isdn-address" "subaddress"
-hip1.example.		3600	IN	HIP	2 200100107B1A74DF365639CC39F1D578 AwEAAbdxyhNuSutc5EMzxTs9LBPCIkOFH8cIvM4p9+LrV4e19WzK00+CI6zBCQTdtWsuxKbWIy87UOoJTwkUs7lBu+Upr1gsNrut79ryra+bSRGQb1slImA8YVJyuIDsj7kwzG7jnERNqnWxZ48AWkskmdHaVDP4BcelrTI3rMXdXF5D
-hip2.example.		3600	IN 	HIP	2 200100107B1A74DF365639CC39F1D578 AwEAAbdxyhNuSutc5EMzxTs9LBPCIkOFH8cIvM4p9+LrV4e19WzK00+CI6zBCQTdtWsuxKbWIy87UOoJTwkUs7lBu+Upr1gsNrut79ryra+bSRGQb1slImA8YVJyuIDsj7kwzG7jnERNqnWxZ48AWkskmdHaVDP4BcelrTI3rMXdXF5D rvs.example.com.
-dnskey01.example.	3600	IN	DNSKEY	512 255 1 AQMFD5raczCJHViKtLYhWGz8hMY9UGRuniJDBzC7w0aRyzWZriO6i2od GWWQVucZqKVsENW91IOW4vqudngPZsY3GvQ/xVA8/7pyFj6b7Esga60z yGW6LFe9r8n6paHrlG5ojqf0BaqHT+8=
-https0.example.		3600	IN	HTTPS 0 example.net.
-https1.example.		3600	IN	HTTPS 1 . port=60
 keydata.example.	3600	IN	TYPE65533 \# 0
 keydata.example.	3600	IN	TYPE65533 \# 6 010203040506
 keydata.example.	3600	IN	TYPE65533 \# 18 010203040506010203040506010203040506
 kx01.example.		3600	IN	KX	10 kdc.example.
 kx02.example.		3600	IN	KX	10 .
-loc01.example.		3600	IN	LOC	60 9 0.000 N 24 39 0.000 E 10.00m 20m 2000m 20m
-loc02.example.		3600	IN	LOC	60 9 0.000 N 24 39 0.000 E 10.00m 20m 2000m 20m
 l32.example.		3600	IN	L32	10 1.2.3.4
 l64.example.		3600	IN	L64	10 14:4fff:ff20:ee64
+loc01.example.		3600	IN	LOC	60 9 0.000 N 24 39 0.000 E 10.00m 20m 2000m 20m
+loc02.example.		3600	IN	LOC	60 9 0.000 N 24 39 0.000 E 10.00m 20m 2000m 20m
 lp.example.		3600	IN	LP	10 example.net.
-nid.example.		3600	IN	NID	10 14:4fff:ff20:ee64
 mb01.example.		3600	IN	MG	madname.example.
 mb02.example.		3600	IN	MG	.
 mg01.example.		3600	IN	MG	mgmname.example.
@@ -94,6 +92,7 @@ mx01.example.		3600	IN	MX	10 mail.example.
 mx02.example.		3600	IN	MX	10 .
 naptr01.example.	3600	IN	NAPTR	0 0 "" "" "" .
 naptr02.example.	3600	IN	NAPTR	65535 65535 "blurgh" "blorf" "blllbb" foo.
+nid.example.		3600	IN	NID	10 14:4fff:ff20:ee64
 nimloc01.example.	3600	IN	NIMLOC	1289AB
 ninfo01.example.	3600	IN	NINFO	"foo"
 ninfo02.example.	3600	IN	NINFO	"foo" "bar"
@@ -112,24 +111,25 @@ ninfo14.example.	3600	IN	NINFO	"foo;"
 ninfo15.example.	3600	IN	NINFO	"bar\\;"
 ns2.example.		3600	IN	A	10.53.0.2
 ns3.example.		3600	IN	A	10.53.0.3
-nsap-ptr01.example.	3600	IN	NSAP-PTR .
 nsap-ptr01.example.	3600	IN	NSAP-PTR foo.
+nsap-ptr01.example.	3600	IN	NSAP-PTR .
 nsap01.example.		3600	IN	NSAP	0x47000580005a0000000001e133ffffff00016100
 nsap02.example.		3600	IN	NSAP	0x47000580005a0000000001e133ffffff00016100
 nsec01.example.		3600	IN	NSEC	a.secure.nil. NS SOA MX LOC RRSIG NSEC DNSKEY
 nsec02.example.		3600	IN	NSEC	. NSAP-PTR NSEC
 nsec03.example.		3600	IN	NSEC	. A
 nsec04.example.		3600	IN	NSEC	. TYPE127
-openpgpkey.example.	3600	IN	OPENPGPKEY  AQMFD5raczCJHViKtLYhWGz8hMY9UGRuniJDBzC7w0aRyzWZriO6i2od GWWQVucZqKVsENW91IOW4vqudngPZsY3GvQ/xVA8/7pyFj6b7Esga60z yGW6LFe9r8n6paHrlG5ojqf0BaqHT+8=
+openpgpkey.example.	3600	IN	OPENPGPKEY AQMFD5raczCJHViKtLYhWGz8hMY9UGRuniJDBzC7w0aRyzWZriO6i2od GWWQVucZqKVsENW91IOW4vqudngPZsY3GvQ/xVA8/7pyFj6b7Esga60z yGW6LFe9r8n6paHrlG5ojqf0BaqHT+8=
 ptr01.example.		3600	IN	PTR	example.
 px01.example.		3600	IN	PX	65535 foo. bar.
 px02.example.		3600	IN	PX	65535 . .
+resinfo.example.	3600	IN	RESINFO	"qnamemin" "exterr=15,16,17" "infourl=https://resolver.example.com/guide"
 rkey01.example.		3600	IN	RKEY	0 255 1 AQMFD5raczCJHViKtLYhWGz8hMY9UGRuniJDBzC7w0aRyzWZriO6i2od GWWQVucZqKVsENW91IOW4vqudngPZsY3GvQ/xVA8/7pyFj6b7Esga60z yGW6LFe9r8n6paHrlG5ojqf0BaqHT+8=
 rp01.example.		3600	IN	RP	mbox-dname.example. txt-dname.example.
 rp02.example.		3600	IN	RP	. .
+rrsig01.example.	3600	IN	RRSIG	NSEC 1 3 3600 20000102030405 19961211100908 2143 foo.nil. MxFcby9k/yvedMfQgKzhH5er0Mu/vILz45IkskceFGgiWCn/GxHhai6V AuHAoNUz4YoU1tVfSCSqQYn6//11U6Nld80jEeC8aTrO+KKmCaY=
 rt01.example.		3600	IN	RT	0 intermediate-host.example.
 rt02.example.		3600	IN	RT	65535 .
-rrsig01.example.	3600	IN	RRSIG	NSEC 1 3 3600 20000102030405 19961211100908 2143 foo.nil. MxFcby9k/yvedMfQgKzhH5er0Mu/vILz45IkskceFGgiWCn/GxHhai6V AuHAoNUz4YoU1tVfSCSqQYn6//11U6Nld80jEeC8aTrO+KKmCaY=
 sink01.example.		3600	IN	SINK	1 0 0
 sink02.example.		3600	IN	SINK	8 0 2 l4ik
 smimea.example.		3600	IN	SMIMEA	1 1 2 92003BA34942DC74152E2F2C408D29ECA5A520E7F2E06BB944F4DCA3 46BAF63C1B177615D466F6C4B71C216A50292BD58C9EBDD2F74E38FE 51FFD48C43326CBC
@@ -163,6 +163,7 @@ txt14.example.		3600	IN	TXT	"foo;"
 txt15.example.		3600	IN	TXT	"bar\\;"
 uid01.example.		3600	IN	UID	\# 1 02
 uinfo01.example.	3600	IN	UINFO	\# 1 01
+unspec01.example.	3600	IN	UNSPEC	\# 1 04
 uri01.example.		3600	IN	URI	10 20 "https://www.isc.org/"
 uri02.example.		3600	IN	URI	30 40 "https://www.isc.org/HolyCowThisSureIsAVeryLongURIRecordIDontEvenKnowWhatSomeoneWouldEverWantWithSuchAThingButTheSpecificationRequiresThatWesupportItSoHereWeGoTestingItLaLaLaLaLaLaLaSeriouslyThoughWhyWouldYouEvenConsiderUsingAURIThisLongItSeemsLikeASillyIdeaButEnhWhatAreYouGonnaDo/"
 uri03.example.		3600	IN	URI	30 40 ""
@@ -170,9 +171,9 @@ wks01.example.		3600	IN	WKS	10.0.0.1 6 0 1 2 21 23
 wks02.example.		3600	IN	WKS	10.0.0.1 17 0 1 2 53
 wks03.example.		3600	IN	WKS	10.0.0.2 6 65535
 x2501.example.		3600	IN	X25	"123456789"
-zonemd01.example.	3600    IN	ZONEMD	2019020700 1 1 C220B8A6ED5728A971902F7E3D4FD93ADEEA88B0453C2E8E8C863D46 5AB06CF34EB95B266398C98B59124FA239CB7EEB
+zonemd01.example.	3600	IN	ZONEMD	2019020700 1 1 C220B8A6ED5728A971902F7E3D4FD93ADEEA88B0453C2E8E8C863D46 5AB06CF34EB95B266398C98B59124FA239CB7EEB
 zonemd02.example.	3600	IN	ZONEMD	2019020700 1 2 08CFA1115C7B948C4163A901270395EA226A930CD2CBCF2FA9A5E6EB 85F37C8A4E114D884E66F176EAB121CB02DB7D652E0CC4827E7A3204 F166B47E5613FD27
-8f1tmio9avcom2k0frp92lgcumak0cad.example. 3600 IN NSEC3 1 0 10 D2CF0294C020CE6C 8FPNS2UCT7FBS643THP2B77PEQ77K6IU A NS SOA MX AAAA RRSIG DNSKEY NSEC3PARAM
-kcd3juae64f9c5csl1kif1htaui7un0g.example. 3600 IN NSEC3 1 0 10 D2CF0294C020CE6C KD5MN2M20340DGO0BL7NTSB8JP4BSC7E
-mr5ukvsk1l37btu4q7b1dfevft4hkqdk.example. 3600 IN NSEC3 1 0 10 D2CF0294C020CE6C MT38J6VG7S0SN5G17MCUF6IQIKFUAJ05 A AAAA RRSIG
+8f1tmio9avcom2k0frp92lgcumak0cad.example. 3600 IN NSEC3	1 0 10 D2CF0294C020CE6C 8FPNS2UCT7FBS643THP2B77PEQ77K6IU A NS SOA MX AAAA RRSIG DNSKEY NSEC3PARAM
+kcd3juae64f9c5csl1kif1htaui7un0g.example. 3600 IN NSEC3	1 0 10 D2CF0294C020CE6C KD5MN2M20340DGO0BL7NTSB8JP4BSC7E
+mr5ukvsk1l37btu4q7b1dfevft4hkqdk.example. 3600 IN NSEC3	1 0 10 D2CF0294C020CE6C MT38J6VG7S0SN5G17MCUF6IQIKFUAJ05 A AAAA RRSIG
 example.		86400	IN	SOA	ns2.example. hostmaster.example. 1397051953 5 5 1814400 3600

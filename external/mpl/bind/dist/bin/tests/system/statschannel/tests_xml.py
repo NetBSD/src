@@ -16,12 +16,12 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-import pytest_custom_markers
+import isctest.mark
 
 pytest.register_assert_rewrite("generic")
 import generic
 
-pytestmark = pytest_custom_markers.have_libxml2
+pytestmark = isctest.mark.have_libxml2
 requests = pytest.importorskip("requests")
 
 
@@ -130,5 +130,6 @@ def test_zone_with_many_keys_xml(statsport):
     )
 
 
+@isctest.mark.flaky(max_runs=2, rerun_filter=isctest.mark.with_tsan)
 def test_traffic_xml(statsport):
     generic.test_traffic(fetch_traffic_xml, statsip="10.53.0.2", statsport=statsport)

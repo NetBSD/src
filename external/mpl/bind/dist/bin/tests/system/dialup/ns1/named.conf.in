@@ -21,7 +21,7 @@ options {
 	pid-file "named.pid";
 	listen-on { 10.53.0.1; };
 	listen-on-v6 { none; };
-	heartbeat-interval 2;
+	heartbeat-interval 1;
 	recursion no;
 	dnssec-validation no;
 };

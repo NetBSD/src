@@ -35,7 +35,7 @@ burst() {
       echo "${num}${2}${3}.lamesub.example A" >>burst.input.$$
     fi
   done
-  $PERL ../ditch.pl -p ${PORT} -s ${server} burst.input.$$
+  $PERL ../ditch.pl -p ${PORT} -s ${server} -b ${EXTRAPORT8} burst.input.$$
   rm -f burst.input.$$
 }
 

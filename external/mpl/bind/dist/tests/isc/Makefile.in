@@ -116,6 +116,8 @@ check_PROGRAMS = aes_test$(EXEEXT) buffer_test$(EXEEXT) \
 @HAVE_LIBXML2_TRUE@am__append_4 = $(LIBXML2_LIBS)
 @HAVE_JSON_C_TRUE@am__append_5 = $(JSON_C_CFLAGS)
 @HAVE_JSON_C_TRUE@am__append_6 = $(JSON_C_LIBS)
+@HAVE_JEMALLOC_TRUE@am__append_7 = $(JEMALLOC_CFLAGS)
+@HAVE_JEMALLOC_TRUE@am__append_8 = $(JEMALLOC_LIBS)
 subdir = tests/isc
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_compile_flag.m4 \
@@ -144,8 +146,14 @@ aes_test_SOURCES = aes_test.c
 aes_test_OBJECTS = aes_test.$(OBJEXT)
 aes_test_LDADD = $(LDADD)
 am__DEPENDENCIES_1 =
-aes_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+@HAVE_JEMALLOC_FALSE@am__DEPENDENCIES_2 =  \
+@HAVE_JEMALLOC_FALSE@	$(top_builddir)/lib/isc/libisc.la
+@HAVE_JEMALLOC_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) \
+@HAVE_JEMALLOC_TRUE@	$(top_builddir)/lib/isc/libisc.la
+@HAVE_JEMALLOC_TRUE@am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1)
+aes_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -153,154 +161,180 @@ am__v_lt_1 =
 buffer_test_SOURCES = buffer_test.c
 buffer_test_OBJECTS = buffer_test.$(OBJEXT)
 buffer_test_LDADD = $(LDADD)
-buffer_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+buffer_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 counter_test_SOURCES = counter_test.c
 counter_test_OBJECTS = counter_test.$(OBJEXT)
 counter_test_LDADD = $(LDADD)
-counter_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+counter_test_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 crc64_test_SOURCES = crc64_test.c
 crc64_test_OBJECTS = crc64_test.$(OBJEXT)
 crc64_test_LDADD = $(LDADD)
-crc64_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+crc64_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 am__doh_test_SOURCES_DIST = doh_test.c uv_wrap.h
 @HAVE_LIBNGHTTP2_TRUE@am_doh_test_OBJECTS =  \
 @HAVE_LIBNGHTTP2_TRUE@	doh_test-doh_test.$(OBJEXT)
 doh_test_OBJECTS = $(am_doh_test_OBJECTS)
-am__DEPENDENCIES_2 = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
-@HAVE_LIBNGHTTP2_TRUE@doh_test_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+am__DEPENDENCIES_4 = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
+@HAVE_LIBNGHTTP2_TRUE@doh_test_DEPENDENCIES = $(am__DEPENDENCIES_4) \
 @HAVE_LIBNGHTTP2_TRUE@	$(am__DEPENDENCIES_1)
 errno_test_SOURCES = errno_test.c
 errno_test_OBJECTS = errno_test.$(OBJEXT)
 errno_test_LDADD = $(LDADD)
-errno_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+errno_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 file_test_SOURCES = file_test.c
 file_test_OBJECTS = file_test.$(OBJEXT)
 file_test_LDADD = $(LDADD)
-file_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+file_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 hash_test_SOURCES = hash_test.c
 hash_test_OBJECTS = hash_test.$(OBJEXT)
 hash_test_LDADD = $(LDADD)
-hash_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+hash_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 heap_test_SOURCES = heap_test.c
 heap_test_OBJECTS = heap_test.$(OBJEXT)
 heap_test_LDADD = $(LDADD)
-heap_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+heap_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 hmac_test_SOURCES = hmac_test.c
 hmac_test_OBJECTS = hmac_test-hmac_test.$(OBJEXT)
-hmac_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1)
+hmac_test_DEPENDENCIES = $(am__DEPENDENCIES_4) $(am__DEPENDENCIES_1)
 ht_test_SOURCES = ht_test.c
 ht_test_OBJECTS = ht_test.$(OBJEXT)
 ht_test_LDADD = $(LDADD)
-ht_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+ht_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 lex_test_SOURCES = lex_test.c
 lex_test_OBJECTS = lex_test.$(OBJEXT)
 lex_test_LDADD = $(LDADD)
-lex_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+lex_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 md_test_SOURCES = md_test.c
 md_test_OBJECTS = md_test-md_test.$(OBJEXT)
-md_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1)
+md_test_DEPENDENCIES = $(am__DEPENDENCIES_4) $(am__DEPENDENCIES_1)
 mem_test_SOURCES = mem_test.c
 mem_test_OBJECTS = mem_test.$(OBJEXT)
 mem_test_LDADD = $(LDADD)
-mem_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+mem_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 netaddr_test_SOURCES = netaddr_test.c
 netaddr_test_OBJECTS = netaddr_test.$(OBJEXT)
 netaddr_test_LDADD = $(LDADD)
-netaddr_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+netaddr_test_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 am_netmgr_test_OBJECTS = netmgr_test-netmgr_test.$(OBJEXT)
 netmgr_test_OBJECTS = $(am_netmgr_test_OBJECTS)
-netmgr_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1)
+netmgr_test_DEPENDENCIES = $(am__DEPENDENCIES_4) $(am__DEPENDENCIES_1)
 parse_test_SOURCES = parse_test.c
 parse_test_OBJECTS = parse_test.$(OBJEXT)
 parse_test_LDADD = $(LDADD)
-parse_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+parse_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 pool_test_SOURCES = pool_test.c
 pool_test_OBJECTS = pool_test.$(OBJEXT)
 pool_test_LDADD = $(LDADD)
-pool_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+pool_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 quota_test_SOURCES = quota_test.c
 quota_test_OBJECTS = quota_test.$(OBJEXT)
 quota_test_LDADD = $(LDADD)
-quota_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+quota_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 radix_test_SOURCES = radix_test.c
 radix_test_OBJECTS = radix_test.$(OBJEXT)
 radix_test_LDADD = $(LDADD)
-radix_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+radix_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 random_test_SOURCES = random_test.c
 random_test_OBJECTS = random_test.$(OBJEXT)
-random_test_DEPENDENCIES = $(am__DEPENDENCIES_2)
+random_test_DEPENDENCIES = $(am__DEPENDENCIES_4)
 regex_test_SOURCES = regex_test.c
 regex_test_OBJECTS = regex_test.$(OBJEXT)
 regex_test_LDADD = $(LDADD)
-regex_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+regex_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 result_test_SOURCES = result_test.c
 result_test_OBJECTS = result_test.$(OBJEXT)
 result_test_LDADD = $(LDADD)
-result_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+result_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 safe_test_SOURCES = safe_test.c
 safe_test_OBJECTS = safe_test.$(OBJEXT)
 safe_test_LDADD = $(LDADD)
-safe_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+safe_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 siphash_test_SOURCES = siphash_test.c
 siphash_test_OBJECTS = siphash_test.$(OBJEXT)
 siphash_test_LDADD = $(LDADD)
-siphash_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+siphash_test_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 sockaddr_test_SOURCES = sockaddr_test.c
 sockaddr_test_OBJECTS = sockaddr_test.$(OBJEXT)
 sockaddr_test_LDADD = $(LDADD)
-sockaddr_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+sockaddr_test_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 stats_test_SOURCES = stats_test.c
 stats_test_OBJECTS = stats_test.$(OBJEXT)
 stats_test_LDADD = $(LDADD)
-stats_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+stats_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 symtab_test_SOURCES = symtab_test.c
 symtab_test_OBJECTS = symtab_test.$(OBJEXT)
 symtab_test_LDADD = $(LDADD)
-symtab_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+symtab_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 task_test_SOURCES = task_test.c
 task_test_OBJECTS = task_test-task_test.$(OBJEXT)
-@HAVE_LIBXML2_TRUE@am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1)
-@HAVE_JSON_C_TRUE@am__DEPENDENCIES_4 = $(am__DEPENDENCIES_1)
-task_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+@HAVE_LIBXML2_TRUE@am__DEPENDENCIES_5 = $(am__DEPENDENCIES_1)
+@HAVE_JSON_C_TRUE@am__DEPENDENCIES_6 = $(am__DEPENDENCIES_1)
+task_test_DEPENDENCIES = $(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_6)
 taskpool_test_SOURCES = taskpool_test.c
 taskpool_test_OBJECTS = taskpool_test.$(OBJEXT)
 taskpool_test_LDADD = $(LDADD)
-taskpool_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+taskpool_test_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 time_test_SOURCES = time_test.c
 time_test_OBJECTS = time_test.$(OBJEXT)
 time_test_LDADD = $(LDADD)
-time_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+time_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 timer_test_SOURCES = timer_test.c
 timer_test_OBJECTS = timer_test.$(OBJEXT)
 timer_test_LDADD = $(LDADD)
-timer_test_DEPENDENCIES = $(LIBISC_LIBS) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1)
+timer_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -806,7 +840,8 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = -I $(top_srcdir)/m4
-AM_CFLAGS = $(STD_CFLAGS) -I$(top_srcdir)/tests/include $(TEST_CFLAGS)
+AM_CFLAGS = $(STD_CFLAGS) -I$(top_srcdir)/tests/include $(TEST_CFLAGS) \
+	$(am__append_7)
 AM_CPPFLAGS = $(STD_CPPFLAGS) -include $(top_builddir)/config.h \
 	-I$(srcdir)/include $(LIBISC_CFLAGS) $(LIBUV_CFLAGS) \
 	-I$(top_srcdir)/lib/isc $(CMOCKA_CFLAGS) \
@@ -814,13 +849,18 @@ AM_CPPFLAGS = $(STD_CPPFLAGS) -include $(top_builddir)/config.h \
 	-DTESTS_DIR=\"$(abs_srcdir)\"
 AM_LDFLAGS = $(STD_LDFLAGS) $(am__append_1)
 LDADD = $(LIBISC_LIBS) $(LIBUV_LIBS) \
-	$(top_builddir)/tests/libtest/libtest.la $(CMOCKA_LIBS)
-LIBISC_CFLAGS = \
-	-I$(top_srcdir)/include				\
-	-I$(top_srcdir)/lib/isc/include			\
-	-I$(top_builddir)/lib/isc/include
-
-LIBISC_LIBS = $(top_builddir)/lib/isc/libisc.la
+	$(top_builddir)/tests/libtest/libtest.la $(CMOCKA_LIBS) \
+	$(am__append_8)
+@HAVE_JEMALLOC_FALSE@LIBISC_CFLAGS = -I$(top_srcdir)/include \
+@HAVE_JEMALLOC_FALSE@	-I$(top_srcdir)/lib/isc/include \
+@HAVE_JEMALLOC_FALSE@	-I$(top_builddir)/lib/isc/include
+@HAVE_JEMALLOC_TRUE@LIBISC_CFLAGS = $(JEMALLOC_CFLAGS) \
+@HAVE_JEMALLOC_TRUE@	-I$(top_srcdir)/include \
+@HAVE_JEMALLOC_TRUE@	-I$(top_srcdir)/lib/isc/include \
+@HAVE_JEMALLOC_TRUE@	-I$(top_builddir)/lib/isc/include
+@HAVE_JEMALLOC_FALSE@LIBISC_LIBS = $(top_builddir)/lib/isc/libisc.la
+@HAVE_JEMALLOC_TRUE@LIBISC_LIBS = $(JEMALLOC_LIBS) \
+@HAVE_JEMALLOC_TRUE@	$(top_builddir)/lib/isc/libisc.la
 LIBDNS_CFLAGS = \
 	-I$(top_srcdir)/lib/dns/include			\
 	-I$(top_builddir)/lib/dns/include

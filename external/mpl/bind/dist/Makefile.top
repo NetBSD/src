@@ -20,12 +20,20 @@ AM_LDFLAGS +=					\
 	-Wl,-flat_namespace
 endif HOST_MACOS
 
-LIBISC_CFLAGS =						\
+if HAVE_JEMALLOC
+LIBISC_CFLAGS = $(JEMALLOC_CFLAGS)
+LIBISC_LIBS = $(JEMALLOC_LIBS)
+else
+LIBISC_CFLAGS =
+LIBISC_LIBS =
+endif
+
+LIBISC_CFLAGS +=						\
 	-I$(top_srcdir)/include				\
 	-I$(top_srcdir)/lib/isc/include			\
 	-I$(top_builddir)/lib/isc/include
 
-LIBISC_LIBS = $(top_builddir)/lib/isc/libisc.la
+LIBISC_LIBS += $(top_builddir)/lib/isc/libisc.la
 
 LIBDNS_CFLAGS = \
 	-I$(top_srcdir)/lib/dns/include			\

@@ -38,6 +38,11 @@ controls {
 	inet 10.53.0.6 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
 };
 
+zone "." {
+	type hint;
+	file "../../_common/root.hint.blackhole";
+};
+
 /* This zone switch from dynamic to inline-signing. */
 zone "dynamic2inline.kasp" {
 	type primary;
@@ -172,15 +177,37 @@ zone "step6.csk-algorithm-roll.kasp" {
 	dnssec-policy "csk-algoroll";
 };
 
-dnssec-policy "modified" {
-	keys {
-		csk lifetime unlimited algorithm rsasha256 2048;
-	};
-};
-
 zone example {
 	type primary;
 	file "example.db";
 	inline-signing yes;
 	dnssec-policy modified;
+};
+
+zone longer-lifetime {
+	type primary;
+	file "longer-lifetime.db";
+	inline-signing yes;
+	dnssec-policy long-lifetime;
+};
+
+zone shorter-lifetime {
+	type primary;
+	file "shorter-lifetime.db";
+	inline-signing yes;
+	dnssec-policy short-lifetime;
+};
+
+zone limit-lifetime {
+	type primary;
+	file "limit-lifetime.db";
+	inline-signing yes;
+	dnssec-policy short-lifetime;
+};
+
+zone unlimit-lifetime {
+	type primary;
+	file "unlimit-lifetime.db";
+	inline-signing yes;
+	dnssec-policy unlimited-lifetime;
 };

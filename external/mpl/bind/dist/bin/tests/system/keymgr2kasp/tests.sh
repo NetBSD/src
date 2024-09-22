@@ -499,7 +499,7 @@ status=$((status + ret))
 # Testing a good migration (CSK).
 #
 set_zone "csk.kasp"
-set_policy "default" "1" "7200"
+set_policy "default" "1" "3600"
 set_server "ns3" "10.53.0.3"
 
 key_clear "KEY1"
@@ -549,7 +549,7 @@ status=$((status + ret))
 # Testing a good migration (CSK, no SEP).
 #
 set_zone "csk-nosep.kasp"
-set_policy "default" "1" "7200"
+set_policy "default" "1" "3600"
 set_server "ns3" "10.53.0.3"
 
 key_clear "KEY1"

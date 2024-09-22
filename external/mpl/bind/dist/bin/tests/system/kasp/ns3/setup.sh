@@ -198,6 +198,14 @@ private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >>"$infile"
 cp $infile $zonefile
 $SIGNER -PS -x -s now-2mo -e now-1mo -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
 
+# The DNSKEY's TTLs do not match the policy.
+setup dnskey-ttl-mismatch.autosign
+KSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 30 -f KSK $ksktimes $zone 2>keygen.out.$zone.1)
+ZSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 30 $zsktimes $zone 2>keygen.out.$zone.2)
+cat template.db.in "${KSK}.key" "${ZSK}.key" >"$infile"
+cp $infile $zonefile
+$SIGNER -PS -x -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+
 # These signatures are still good, and can be reused.
 setup fresh-sigs.autosign
 T="now-6mo"

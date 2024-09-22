@@ -271,7 +271,7 @@ NSEC3PARAM
 .. warning::
    Before we dive into the details of NSEC3 parametrization, please note:
    the defaults should not be changed without a strong justification and a full
-   understanding of the potential impact.
+   understanding of the potential impact. See :rfc:`9276`.
 
 The above NSEC3 examples used four parameters: 1, 0, 0, and
 zero-length salt. 1 represents the algorithm, 0 represents the opt-out
@@ -315,7 +315,7 @@ NSEC3 Opt-Out
 +++++++++++++
 
 First things first: For most DNS administrators who do not manage a huge number
-of insecure delegations, the NSEC3 opt-out featuere is not relevant.
+of insecure delegations, the NSEC3 opt-out featuere is not relevant. See :rfc:`9276`.
 
 Opt-out allows for blocks of unsigned delegations to be covered by a single NSEC3
 record. In other words, use of the opt-out allows large registries to only sign as
@@ -370,9 +370,7 @@ NSEC3 Salt
 
 The properties of this extra salt are complicated and beyond scope of this
 document. For detailed description why the salt in the context of DNSSEC
-provides little value please see `IETF draft ietf-dnsop-nsec3-guidance version
-10 section 2.4
-<https://datatracker.ietf.org/doc/html/draft-ietf-dnsop-nsec3-guidance-10#section-2.4>`__.
+provides little value please see :rfc:`9276`.
 
 .. _advanced_discussions_nsec_or_nsec3:
 

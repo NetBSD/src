@@ -36,8 +36,8 @@ named \- Internet domain name server
 .SH DESCRIPTION
 .sp
 \fBnamed\fP is a Domain Name System (DNS) server, part of the BIND 9
-distribution from ISC. For more information on the DNS, see \fI\%RFC 1033\fP,
-\fI\%RFC 1034\fP, and \fI\%RFC 1035\fP\&.
+distribution from ISC. For more information on the DNS, see \X'tty: link https://datatracker.ietf.org/doc/html/rfc1033.html'\fI\%RFC 1033\fP\X'tty: link',
+\X'tty: link https://datatracker.ietf.org/doc/html/rfc1034.html'\fI\%RFC 1034\fP\X'tty: link', and \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html'\fI\%RFC 1035\fP\X'tty: link'\&.
 .sp
 When invoked without arguments, \fBnamed\fP reads the default
 configuration file \fB@sysconfdir@/named.conf\fP, reads any initial data, and
@@ -207,15 +207,24 @@ with root privileges to escape a chroot jail.
 .UNINDENT
 .INDENT 0.0
 .TP
-.B \-U #listeners
-This option tells \fBnamed\fP the number of \fB#listeners\fP worker threads to listen on, for incoming UDP packets on
-each address. If not specified, \fBnamed\fP calculates a default
-value based on the number of detected CPUs: 1 for 1 CPU, and the
-number of detected CPUs minus one for machines with more than 1 CPU.
-This cannot be increased to a value higher than the number of CPUs.
-If \fI\%\-n\fP has been set to a higher value than the number of detected
-CPUs, then \fI\%\-U\fP may be increased as high as that value, but no
-higher.
+.B \-U #dispatches
+This option specifies the number of per\-interface UDP \fB#dispatches\fP that \fBnamed\fP should use to handle the outgoing (recursive) UDP connection,
+to reduce contention between the resolver threads.
+.sp
+If not specified, \fBnamed\fP calculates a default value based on the
+number of detected CPUs: 1 for a single CPU, and the number of detected CPUs minus
+one for machines with more than 1 CPU.
+.sp
+This cannot be increased to a value higher than the number of CPUs
+(see \fI\%\-n\fP on how to override the value).
+.UNINDENT
+.sp
+\fBWARNING:\fP
+.INDENT 0.0
+.INDENT 3.5
+This option should be unnecessary for the vast majority of users,
+and will be removed in the next version of BIND 9.
+.UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -253,12 +262,12 @@ cryptographics algorithms, and exits.
 This option acquires a lock on the specified file at runtime; this helps to
 prevent duplicate \fBnamed\fP instances from running simultaneously.
 Use of this option overrides the \fBlock\-file\fP option in
-\fI\%named.conf\fP\&. If set to \fBnone\fP, the lock file check is disabled.
+\X'tty: link #std-iscman-named.conf'\fI\%named.conf\fP\X'tty: link'\&. If set to \fBnone\fP, the lock file check is disabled.
 .UNINDENT
 .SH SIGNALS
 .sp
 In routine operation, signals should not be used to control the
-nameserver; \fI\%rndc\fP should be used instead.
+nameserver; \X'tty: link #std-iscman-rndc'\fI\%rndc\fP\X'tty: link' should be used instead.
 .INDENT 0.0
 .TP
 .B SIGHUP
@@ -290,7 +299,7 @@ The default process\-id file.
 .UNINDENT
 .SH SEE ALSO
 .sp
-\fI\%RFC 1033\fP, \fI\%RFC 1034\fP, \fI\%RFC 1035\fP, \fI\%named\-checkconf(8)\fP, \fI\%named\-checkzone(8)\fP, \fI\%rndc(8)\fP, \fI\%named.conf(5)\fP, BIND 9 Administrator Reference Manual.
+\X'tty: link https://datatracker.ietf.org/doc/html/rfc1033.html'\fI\%RFC 1033\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc1034.html'\fI\%RFC 1034\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html'\fI\%RFC 1035\fP\X'tty: link', \X'tty: link #std-iscman-named-checkconf'\fI\%named\-checkconf(8)\fP\X'tty: link', \X'tty: link #std-iscman-named-checkzone'\fI\%named\-checkzone(8)\fP\X'tty: link', \X'tty: link #std-iscman-rndc'\fI\%rndc(8)\fP\X'tty: link', \X'tty: link #std-iscman-named.conf'\fI\%named.conf(5)\fP\X'tty: link', BIND 9 Administrator Reference Manual.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT

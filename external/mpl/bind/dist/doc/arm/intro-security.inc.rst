@@ -47,7 +47,7 @@ or ports come preconfigured with local (loopback address) security preconfigured
 If ``rndc`` is being invoked from a remote host, further configuration is required.
 The ``nsupdate`` tool uses **Dynamic DNS (DDNS)** features and allows users to dynamically
 change the contents of the zone file(s). ``nsupdate`` access and security may be controlled
-using ``named.conf`` :ref:`statements or using TSIG or SIG(0) cryptographic methods <dynamic_update_security>`.
+using ``named.conf`` :ref:`statements or via the TSIG cryptographic method <dynamic_update_security>`.
 Clearly, if the remote hosts used for either ``rndc`` or DDNS lie within a network entirely
 under the user's control, the security threat may be regarded as non-existent. Any implementation requirements,
 therefore, depend on the site's security policy.

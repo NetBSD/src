@@ -27,9 +27,10 @@ Synopsis
 Description
 ~~~~~~~~~~~
 
-:program:`tsig-keygen` is an utility that generates keys for use in TSIG signing.
-The resulting keys can be used, for example, to secure dynamic DNS updates
-to a zone, or for the :iscman:`rndc` command channel.
+:program:`tsig-keygen` is an utility that generates keys for use with TSIG
+(Transaction Signatures) as defined in :rfc:`2845`. The resulting keys can be used,
+for example, to secure dynamic DNS updates to a zone, or for the :iscman:`rndc`
+command channel.
 
 A domain name can be specified on the command line to be used as the name
 of the generated key. If no name is specified, the default is ``tsig-key``.

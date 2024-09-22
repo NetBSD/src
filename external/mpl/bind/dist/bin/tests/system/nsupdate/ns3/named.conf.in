@@ -26,6 +26,11 @@ options {
 	dnssec-validation yes;
 };
 
+zone "." {
+	type hint;
+	file "../../_common/root.hint.blackhole";
+};
+
 zone "example" {
 	type primary;
 	allow-update { any; };

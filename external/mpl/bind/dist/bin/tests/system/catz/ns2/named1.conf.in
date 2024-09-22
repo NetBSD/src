@@ -27,6 +27,7 @@ options {
 	listen-on-v6 { fd92:7065:b8e:ffff::2; };
 	notify no;
 	recursion no;
+#T5	allow-query { 10.53.0.99; };
 	serial-query-rate 100;
 	dnssec-validation no;
 };

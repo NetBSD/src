@@ -34,7 +34,7 @@ resolution_succeeds() {
 resolution_fails() {
   _servfail=0
   _timeout=0
-  $DIG $DIGOPTS +tcp +time=5 @10.53.0.1 ${1} TXT >dig.out.test$n
+  $DIG $DIGOPTS +tcp +time=5 @10.53.0.1 ${1} TXT >dig.out.test$n || true
   grep -F "status: SERVFAIL" dig.out.test$n >/dev/null && _servfail=1
   grep -F "timed out" dig.out.test$n >/dev/null && _timeout=1
   if [ $_servfail -eq 1 ] || [ $_timeout -eq 1 ]; then
@@ -156,7 +156,7 @@ ret=0
 $DIG $DIGOPTS +edns @10.53.0.4 plain soa >dig.out.1.test$n || ret=1
 grep "status: NOERROR" dig.out.1.test$n >/dev/null || ret=1
 grep "EDNS: version:" dig.out.1.test$n >/dev/null && ret=1
-$DIG $DIGOPTS +edns +tcp @10.53.0.4 plain soa >dig.out.2.test$n
+$DIG $DIGOPTS +edns +tcp @10.53.0.4 plain soa >dig.out.2.test$n || ret=1
 grep "status: NOERROR" dig.out.2.test$n >/dev/null || ret=1
 grep "EDNS: version:" dig.out.2.test$n >/dev/null && ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi

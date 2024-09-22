@@ -23,6 +23,8 @@ options {
 	session-keyfile "session.key";
 	servfail-ttl 0;
 	dnssec-validation no;
+	max-records-per-type 2050;
+	max-types-per-name 500;
 };
 
 key rndc_key {
@@ -32,6 +34,13 @@ key rndc_key {
 
 controls {
 	inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+dnssec-policy "masterformat" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
 };
 
 zone "example" {
@@ -71,9 +80,49 @@ zone "transfer4" {
 };
 
 
-zone "large" {
+zone "under-limit" {
 	type primary;
-	file "large.db.raw";
+	file "under-limit.db.raw";
+	masterfile-format raw;
+	allow-transfer { any; };
+};
+
+zone "under-limit-kasp" {
+	type primary;
+	file "under-limit-kasp.db.raw";
+	masterfile-format raw;
+	dnssec-policy masterformat;
+	inline-signing yes;
+	allow-transfer { any; };
+};
+
+zone "on-limit" {
+	type primary;
+	file "on-limit.db.raw";
+	masterfile-format raw;
+	allow-transfer { any; };
+};
+
+zone "on-limit-kasp" {
+	type primary;
+	file "on-limit-kasp.db.raw";
+	masterfile-format raw;
+	dnssec-policy masterformat;
+	inline-signing no;
+	allow-update { any; };
+	allow-transfer { any; };
+};
+
+zone "over-limit" {
+	type primary;
+	file "over-limit.db.raw";
+	masterfile-format raw;
+	allow-transfer { any; };
+};
+
+zone "255types" {
+	type primary;
+	file "255types.db.raw";
 	masterfile-format raw;
 	allow-transfer { any; };
 };

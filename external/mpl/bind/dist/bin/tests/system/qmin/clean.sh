@@ -11,10 +11,11 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-rm -f ns*/named.conf
 rm -f */named.memstats
 rm -f */named.run */named.run.prev
-rm -f dig.out.*
-rm -f ns*/named.lock
 rm -f ans*/query.log*
+rm -f dig.out.*
+rm -f named.run.*
+rm -f ns*/named.conf
+rm -f ns*/named.lock
 rm -f query*.log
