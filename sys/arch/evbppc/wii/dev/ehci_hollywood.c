@@ -1,4 +1,4 @@
-/* $NetBSD: ehci_hollywood.c,v 1.2 2024/01/23 21:56:07 jmcneill Exp $ */
+/* $NetBSD: ehci_hollywood.c,v 1.3 2024/09/22 13:56:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_hollywood.c,v 1.2 2024/01/23 21:56:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_hollywood.c,v 1.3 2024/09/22 13:56:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -80,6 +80,8 @@ ehci_hollywood_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": EHCI\n");
+
+	hollywood_claim_device(self, IOPEHCEN);
 
 	sc->sc_offs = EREAD1(sc, EHCI_CAPLENGTH);
 	EOWRITE4(sc, EHCI_USBINTR, 0);
