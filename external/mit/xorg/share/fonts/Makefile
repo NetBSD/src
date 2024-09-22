@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2018/05/31 09:09:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2024/09/22 09:34:55 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@
 
 SUBDIR=	encodings .WAIT \
 	font-alias font-util \
-	100dpi 75dpi Type1 TTF misc
+	100dpi 75dpi Type1 TTF misc cyrillic
 
 .endif
 
