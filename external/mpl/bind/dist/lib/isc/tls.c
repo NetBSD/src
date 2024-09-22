@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.4 2024/02/21 22:52:29 christos Exp $	*/
+/*	$NetBSD: tls.c,v 1.5 2024/09/22 00:14:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1544,6 +1544,8 @@ isc_tlsctx_client_session_cache_keep(isc_tlsctx_client_session_cache_t *cache,
 		SSL_SESSION_free(sess);
 		return;
 	}
+
+	SSL_set_session(tls, NULL);
 
 	isc_mutex_lock(&cache->lock);
 

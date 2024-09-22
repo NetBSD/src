@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.h,v 1.9 2024/02/21 22:52:09 christos Exp $	*/
+/*	$NetBSD: dnssec.h,v 1.10 2024/09/22 00:14:07 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -95,6 +95,23 @@ dns_dnssec_keyfromrdata(const dns_name_t *name, const dns_rdata_t *rdata,
  *\li		#ISC_R_NOMEMORY
  *\li		DST_R_INVALIDPUBLICKEY
  *\li		various errors from dns_name_totext
+ */
+
+isc_result_t
+dns_dnssec_make_dnskey(dst_key_t *key, unsigned char *buf, int bufsize,
+		       dns_rdata_t *target);
+/*%<
+ *	Convert a DST key into a DNS record.
+ *
+ *	Requires:
+ *\li		'key' is not NULL
+ *\li		'buf' is not NULL
+ *\li		'bufsize' equals DST_KEY_MAXSIZE
+ *\li		'target' is not NULL
+ *
+ *	Returns:
+ *\li		#ISC_R_SUCCESS
+ *\li		various errors from dst_key_todns
  */
 
 isc_result_t

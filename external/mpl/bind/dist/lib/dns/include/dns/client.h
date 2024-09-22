@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.8 2024/02/21 22:52:09 christos Exp $	*/
+/*	$NetBSD: client.h,v 1.9 2024/09/22 00:14:07 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -189,6 +189,19 @@ dns_client_clearservers(dns_client_t *client, dns_rdataclass_t rdclass,
  *\li	#ISC_R_SUCCESS				On success.
  *
  *\li	Anything else				Failure.
+ */
+
+void
+dns_client_setmaxrestarts(dns_client_t *client, uint8_t max_restarts);
+/*%<
+ * Set the number of permissible chained queries before we give up,
+ * to prevent CNAME loops. This defaults to 11.
+ *
+ * Requires:
+ *
+ *\li	'client' is a valid client.
+
+ *\li	'max_restarts' is greater than 0.
  */
 
 isc_result_t

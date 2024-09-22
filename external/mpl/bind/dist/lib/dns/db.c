@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.10 2024/02/21 22:52:06 christos Exp $	*/
+/*	$NetBSD: db.c,v 1.11 2024/09/22 00:14:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -650,6 +650,8 @@ dns_db_createiterator(dns_db_t *db, unsigned int flags,
 
 	REQUIRE(DNS_DB_VALID(db));
 	REQUIRE(iteratorp != NULL && *iteratorp == NULL);
+	REQUIRE((flags & (DNS_DB_NSEC3ONLY | DNS_DB_NONSEC3)) !=
+		(DNS_DB_NSEC3ONLY | DNS_DB_NONSEC3));
 
 	return (db->methods->createiterator(db, flags, iteratorp));
 }
@@ -831,10 +833,10 @@ dns_db_hashsize(dns_db_t *db) {
 }
 
 void
-dns_db_settask(dns_db_t *db, isc_task_t *task) {
+dns_db_settask(dns_db_t *db, isc_task_t *task, isc_task_t *prunetask) {
 	REQUIRE(DNS_DB_VALID(db));
 
-	(db->methods->settask)(db, task);
+	(db->methods->settask)(db, task, prunetask);
 }
 
 isc_result_t
@@ -1120,4 +1122,22 @@ dns_db_setgluecachestats(dns_db_t *db, isc_stats_t *stats) {
 	}
 
 	return (ISC_R_NOTIMPLEMENTED);
+}
+
+void
+dns_db_setmaxrrperset(dns_db_t *db, uint32_t value) {
+	REQUIRE(DNS_DB_VALID(db));
+
+	if (db->methods->setmaxrrperset != NULL) {
+		(db->methods->setmaxrrperset)(db, value);
+	}
+}
+
+void
+dns_db_setmaxtypepername(dns_db_t *db, uint32_t value) {
+	REQUIRE(DNS_DB_VALID(db));
+
+	if (db->methods->setmaxtypepername != NULL) {
+		(db->methods->setmaxtypepername)(db, value);
+	}
 }

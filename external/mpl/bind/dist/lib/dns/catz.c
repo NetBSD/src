@@ -1,4 +1,4 @@
-/*	$NetBSD: catz.c,v 1.12 2024/02/21 22:52:05 christos Exp $	*/
+/*	$NetBSD: catz.c,v 1.13 2024/09/22 00:14:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -527,7 +527,7 @@ dns__catz_zones_merge(dns_catz_zone_t *catz, dns_catz_zone_t *newcatz) {
 	     result = delcur ? isc_ht_iter_delcurrent_next(iter1)
 			     : isc_ht_iter_next(iter1))
 	{
-		isc_result_t zt_find_result;
+		isc_result_t find_result;
 		dns_catz_zone_t *parentcatz = NULL;
 		dns_catz_entry_t *nentry = NULL;
 		dns_catz_entry_t *oentry = NULL;
@@ -560,10 +560,10 @@ dns__catz_zones_merge(dns_catz_zone_t *catz, dns_catz_zone_t *newcatz) {
 					    &catz->zoneoptions, &nentry->opts);
 
 		/* Try to find the zone in the view */
-		zt_find_result = dns_zt_find(catz->catzs->view->zonetable,
-					     dns_catz_entry_getname(nentry), 0,
-					     NULL, &zone);
-		if (zt_find_result == ISC_R_SUCCESS) {
+		find_result = dns_view_findzone(catz->catzs->view,
+						dns_catz_entry_getname(nentry),
+						&zone);
+		if (find_result == ISC_R_SUCCESS) {
 			dns_catz_coo_t *coo = NULL;
 			char pczname[DNS_NAME_FORMATSIZE];
 			bool parentcatz_locked = false;
@@ -608,10 +608,6 @@ dns__catz_zones_merge(dns_catz_zone_t *catz, dns_catz_zone_t *newcatz) {
 				UNLOCK(&parentcatz->lock);
 				LOCK(&catz->lock);
 			}
-		}
-		if (zt_find_result == ISC_R_SUCCESS ||
-		    zt_find_result == DNS_R_PARTIALMATCH)
-		{
 			dns_zone_detach(&zone);
 		}
 
@@ -619,8 +615,7 @@ dns__catz_zones_merge(dns_catz_zone_t *catz, dns_catz_zone_t *newcatz) {
 		result = isc_ht_find(catz->entries, key, (uint32_t)keysize,
 				     (void **)&oentry);
 		if (result != ISC_R_SUCCESS) {
-			if (zt_find_result == ISC_R_SUCCESS &&
-			    parentcatz == catz)
+			if (find_result == ISC_R_SUCCESS && parentcatz == catz)
 			{
 				/*
 				 * This means that the zone's unique label
@@ -647,7 +642,7 @@ dns__catz_zones_merge(dns_catz_zone_t *catz, dns_catz_zone_t *newcatz) {
 			continue;
 		}
 
-		if (zt_find_result != ISC_R_SUCCESS) {
+		if (find_result != ISC_R_SUCCESS) {
 			isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
 				      DNS_LOGMODULE_MASTER, ISC_LOG_DEBUG(3),
 				      "catz: zone '%s' was expected to exist "
@@ -813,6 +808,13 @@ cleanup_task:
 	return (result);
 }
 
+void *
+dns_catz_zones_get_udata(dns_catz_zones_t *catzs) {
+	REQUIRE(DNS_CATZ_ZONES_VALID(catzs));
+
+	return (catzs->zmm->udata);
+}
+
 void
 dns_catz_catzs_set_view(dns_catz_zones_t *catzs, dns_view_t *view) {
 	REQUIRE(DNS_CATZ_ZONES_VALID(catzs));
@@ -820,7 +822,12 @@ dns_catz_catzs_set_view(dns_catz_zones_t *catzs, dns_view_t *view) {
 	/* Either it's a new one or it's being reconfigured. */
 	REQUIRE(catzs->view == NULL || !strcmp(catzs->view->name, view->name));
 
-	catzs->view = view;
+	if (catzs->view == NULL) {
+		dns_view_weakattach(view, &catzs->view);
+	} else if (catzs->view != view) {
+		dns_view_weakdetach(&catzs->view);
+		dns_view_weakattach(view, &catzs->view);
+	}
 }
 
 isc_result_t
@@ -1036,6 +1043,9 @@ dns__catz_zones_destroy(dns_catz_zones_t *catzs) {
 	isc_task_detach(&catzs->updater);
 	isc_mutex_destroy(&catzs->lock);
 	isc_refcount_destroy(&catzs->references);
+	if (catzs->view != NULL) {
+		dns_view_weakdetach(&catzs->view);
+	}
 
 	isc_mem_putanddetach(&catzs->mctx, catzs, sizeof(*catzs));
 }

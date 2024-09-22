@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.h,v 1.11 2024/02/21 22:52:11 christos Exp $	*/
+/*	$NetBSD: zone.h,v 1.12 2024/09/22 00:14:07 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -169,6 +169,19 @@ dns_zone_create(dns_zone_t **zonep, isc_mem_t *mctx);
  *\li	#ISC_R_SUCCESS
  *\li	#ISC_R_NOMEMORY
  *\li	#ISC_R_UNEXPECTED
+ */
+
+isc_result_t
+dns_zone_makedb(dns_zone_t *zone, dns_db_t **dbp);
+/*%<
+ *	Creates a new empty database for the 'zone'.
+ *
+ * Requires:
+ *\li	'zone' to be a valid zone.
+ *\li	'dbp' to point to NULL pointer.
+ *
+ * Returns:
+ *\li	dns_db_create() error codes.
  */
 
 void
@@ -357,6 +370,32 @@ dns_zone_getmaxrecords(dns_zone_t *zone);
  */
 
 void
+dns_zone_setmaxrrperset(dns_zone_t *zone, uint32_t maxrrperset);
+/*%<
+ * 	Sets the maximum number of records per rrset permitted in a zone.
+ *	0 implies unlimited.
+ *
+ * Requires:
+ *\li	'zone' to be valid initialised zone.
+ *
+ * Returns:
+ *\li	void
+ */
+
+void
+dns_zone_setmaxtypepername(dns_zone_t *zone, uint32_t maxtypepername);
+/*%<
+ * 	Sets the maximum number of resource record types per owner name
+ *	permitted in a zone.  0 implies unlimited.
+ *
+ * Requires:
+ *\li	'zone' to be valid initialised zone.
+ *
+ * Returns:
+ *\li	void
+ */
+
+void
 dns_zone_setmaxttl(dns_zone_t *zone, uint32_t maxttl);
 /*%<
  * 	Sets the max ttl of the zone.
@@ -396,6 +435,24 @@ dns_zone_unlock_keyfiles(dns_zone_t *zone);
  *
  * Require:
  *\li	'zone' to be a valid zone.
+ */
+
+isc_result_t
+dns_zone_dnskey_inuse(dns_zone_t *zone, dns_rdata_t *rdata, bool *inuse);
+/*%<
+ *	Check if the DNSKEY record 'rdata' is used by 'zone' for zone signing.
+ *	Store the result in 'inuse'.
+ *
+ * Require:
+ *\li	'zone' to be a valid zone.
+ *\li	'rdata' to represent a DNSKEY, CDNSKEY, or CDS record.
+ *
+ * Returns:
+ *\li	#ISC_R_SUCCESS
+ *\li	Any error result from dns_dnssec_keyfromrdata, dns_rdata_tostruct,
+ *	dns_dnssec_make_dnskey, dns_ds_buildrdata, or
+ *	dns_dnssec_findmatchingkeys.
+ *
  */
 
 isc_result_t

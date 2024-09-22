@@ -1,4 +1,4 @@
-/*	$NetBSD: isc.c,v 1.2 2024/02/21 22:52:51 christos Exp $	*/
+/*	$NetBSD: isc.c,v 1.3 2024/09/22 00:14:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -43,6 +43,7 @@ isc_timermgr_t *timermgr = NULL;
 isc_nm_t *netmgr = NULL;
 unsigned int workers = 0;
 isc_task_t *maintask = NULL;
+bool debug = false;
 
 int
 setup_managers(void **state) {

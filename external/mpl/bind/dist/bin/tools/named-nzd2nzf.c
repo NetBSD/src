@@ -1,4 +1,4 @@
-/*	$NetBSD: named-nzd2nzf.c,v 1.9 2024/02/21 22:51:41 christos Exp $	*/
+/*	$NetBSD: named-nzd2nzf.c,v 1.10 2024/09/22 00:14:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -37,7 +37,7 @@ main(int argc, char *argv[]) {
 
 	if (argc != 2) {
 		fprintf(stderr, "Usage: named-nzd2nzf <nzd-path>\n");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	path = argv[1];
@@ -46,35 +46,35 @@ main(int argc, char *argv[]) {
 	if (status != MDB_SUCCESS) {
 		fprintf(stderr, "named-nzd2nzf: mdb_env_create: %s",
 			mdb_strerror(status));
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	status = mdb_env_open(env, path, DNS_LMDB_FLAGS, 0600);
 	if (status != MDB_SUCCESS) {
 		fprintf(stderr, "named-nzd2nzf: mdb_env_open: %s",
 			mdb_strerror(status));
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	status = mdb_txn_begin(env, 0, MDB_RDONLY, &txn);
 	if (status != MDB_SUCCESS) {
 		fprintf(stderr, "named-nzd2nzf: mdb_txn_begin: %s",
 			mdb_strerror(status));
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	status = mdb_dbi_open(txn, NULL, 0, &dbi);
 	if (status != MDB_SUCCESS) {
 		fprintf(stderr, "named-nzd2nzf: mdb_dbi_open: %s",
 			mdb_strerror(status));
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	status = mdb_cursor_open(txn, dbi, &cursor);
 	if (status != MDB_SUCCESS) {
 		fprintf(stderr, "named-nzd2nzf: mdb_cursor_open: %s",
 			mdb_strerror(status));
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	for (status = mdb_cursor_get(cursor, &key, &data, MDB_FIRST);
@@ -88,7 +88,7 @@ main(int argc, char *argv[]) {
 				"named-nzd2nzf: empty column found in "
 				"database '%s'",
 				path);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 
 		/* zone zonename { config; }; */
@@ -100,5 +100,6 @@ main(int argc, char *argv[]) {
 	mdb_cursor_close(cursor);
 	mdb_txn_abort(txn);
 	mdb_env_close(env);
-	exit(0);
+
+	return (0);
 }

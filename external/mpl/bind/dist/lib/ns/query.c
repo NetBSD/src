@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.21 2024/04/19 12:35:28 christos Exp $	*/
+/*	$NetBSD: query.c,v 1.22 2024/09/22 00:14:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -88,12 +88,6 @@
  */
 #define dns64_bis_return_excluded_addresses 1
 #endif /* if 0 */
-
-/*%
- * Maximum number of chained queries before we give up
- * to prevent CNAME loops.
- */
-#define MAX_RESTARTS 16
 
 #define QUERY_ERROR(qctx, r)                  \
 	do {                                  \
@@ -197,11 +191,13 @@ client_trace(ns_client_t *client, int level, const char *message) {
 #define CCTRACE(l, m) ((void)m)
 #endif /* WANT_QUERYTRACE */
 
-#define DNS_GETDB_NOEXACT    0x01U
-#define DNS_GETDB_NOLOG	     0x02U
-#define DNS_GETDB_PARTIAL    0x04U
-#define DNS_GETDB_IGNOREACL  0x08U
-#define DNS_GETDB_STALEFIRST 0X0CU
+enum {
+	DNS_GETDB_NOEXACT = 1 << 0,
+	DNS_GETDB_NOLOG = 1 << 1,
+	DNS_GETDB_PARTIAL = 1 << 2,
+	DNS_GETDB_IGNOREACL = 1 << 3,
+	DNS_GETDB_STALEFIRST = 1 << 4,
+};
 
 #define PENDINGOK(x) (((x) & DNS_DBFIND_PENDINGOK) != 0)
 
@@ -2098,10 +2094,10 @@ addname:
 	/*
 	 * In some cases, a record that has been added as additional
 	 * data may *also* trigger the addition of additional data.
-	 * This cannot go more than MAX_RESTARTS levels deep.
+	 * This cannot go more than 'max-restarts' levels deep.
 	 */
 	if (trdataset != NULL && dns_rdatatype_followadditional(type)) {
-		if (client->additionaldepth++ < MAX_RESTARTS) {
+		if (client->additionaldepth++ < client->view->max_restarts) {
 			eresult = dns_rdataset_additionaldata(
 				trdataset, fname, query_additional_cb, qctx);
 		}
@@ -4156,6 +4152,7 @@ rpz_rewrite(ns_client_t *client, dns_rdatatype_t qtype, isc_result_t qresult,
 		break;
 	case ISC_R_FAILURE:
 	case ISC_R_TIMEDOUT:
+	case ISC_R_CANCELED:
 	case DNS_R_BROKENCHAIN:
 		rpz_log_fail(client, DNS_RPZ_DEBUG_LEVEL3, NULL,
 			     DNS_RPZ_TYPE_QNAME,
@@ -5328,6 +5325,7 @@ qctx_freedata(query_ctx_t *qctx) {
 		ns_client_releasename(qctx->client, &qctx->zfname);
 		dns_db_detachnode(qctx->zdb, &qctx->znode);
 		dns_db_detach(&qctx->zdb);
+		qctx->zversion = NULL;
 	}
 
 	if (qctx->event != NULL && !qctx->client->nodetach) {
@@ -7362,9 +7360,7 @@ query_checkrpz(query_ctx_t *qctx, isc_result_t result) {
 		 * Add SOA record to additional section
 		 */
 		if (qctx->rpz_st->m.rpz->addsoa) {
-			bool override_ttl =
-				dns_rdataset_isassociated(qctx->rdataset);
-			rresult = query_addsoa(qctx, override_ttl,
+			rresult = query_addsoa(qctx, UINT32_MAX,
 					       DNS_SECTION_ADDITIONAL);
 			if (rresult != ISC_R_SUCCESS) {
 				QUERY_ERROR(qctx, result);
@@ -11249,20 +11245,49 @@ query_addbestns(query_ctx_t *qctx) {
 	isc_buffer_t b;
 	dns_clientinfomethods_t cm;
 	dns_clientinfo_t ci;
+	dns_name_t qname;
 
 	CTRACE(ISC_LOG_DEBUG(3), "query_addbestns");
 
 	dns_clientinfomethods_init(&cm, ns_client_sourceip);
 	dns_clientinfo_init(&ci, client, NULL);
 
+	dns_name_init(&qname, NULL);
+	dns_name_clone(client->query.qname, &qname);
+
 	/*
 	 * Find the right database.
 	 */
-	result = query_getdb(client, client->query.qname, dns_rdatatype_ns, 0,
-			     &zone, &db, &version, &is_zone);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
+	do {
+		result = query_getdb(client, &qname, dns_rdatatype_ns, 0, &zone,
+				     &db, &version, &is_zone);
+		if (result != ISC_R_SUCCESS) {
+			goto cleanup;
+		}
+
+		/*
+		 * If this is a static stub zone look for a parent zone.
+		 */
+		if (zone != NULL &&
+		    dns_zone_gettype(zone) == dns_zone_staticstub)
+		{
+			unsigned int labels = dns_name_countlabels(&qname);
+			dns_db_detach(&db);
+			dns_zone_detach(&zone);
+			version = NULL;
+			if (labels != 1) {
+				dns_name_split(&qname, labels - 1, NULL,
+					       &qname);
+				continue;
+			}
+			if (!USECACHE(client)) {
+				goto cleanup;
+			}
+			dns_db_attach(client->view->cachedb, &db);
+			is_zone = false;
+		}
+		break;
+	} while (true);
 
 db_find:
 	/*
@@ -11549,6 +11574,7 @@ again:
 		 * Find the closest encloser.
 		 */
 		dns_name_copy(name, cname);
+		bool once = true;
 		while (result == DNS_R_NXDOMAIN) {
 			labels = dns_name_countlabels(cname) - 1;
 			/*
@@ -11558,10 +11584,21 @@ again:
 				goto cleanup;
 			}
 			dns_name_split(cname, labels, NULL, cname);
-			result = dns_db_findext(qctx->db, cname, qctx->version,
-						dns_rdatatype_nsec, options, 0,
-						NULL, fname, &cm, &ci, NULL,
-						NULL);
+			result = dns_db_findext(
+				qctx->db, cname, qctx->version,
+				dns_rdatatype_nsec,
+				options | (once ? DNS_DBFIND_WANTPARTIAL : 0),
+				0, NULL, fname, &cm, &ci, NULL, NULL);
+			if (result == DNS_R_PARTIALMATCH && once) {
+				unsigned int flabels =
+					dns_name_countlabels(fname);
+				if (labels > flabels + 1) {
+					dns_name_split(cname, flabels + 1, NULL,
+						       cname);
+				}
+				result = DNS_R_NXDOMAIN;
+			}
+			once = false;
 		}
 		/*
 		 * Add closest (provable) encloser NSEC3.
@@ -11885,7 +11922,7 @@ isc_result_t
 ns_query_done(query_ctx_t *qctx) {
 	isc_result_t result = ISC_R_UNSET;
 	const dns_namelist_t *secs = qctx->client->message->sections;
-	bool nodetach;
+	bool nodetach, partial_result_with_servfail = false;
 
 	CCTRACE(ISC_LOG_DEBUG(3), "ns_query_done");
 
@@ -11919,13 +11956,38 @@ ns_query_done(query_ctx_t *qctx) {
 	/*
 	 * Do we need to restart the query (e.g. for CNAME chaining)?
 	 */
-	if (qctx->want_restart && qctx->client->query.restarts < MAX_RESTARTS) {
-		qctx->client->query.restarts++;
-		return (ns__query_start(qctx));
+	if (qctx->want_restart) {
+		if (qctx->client->query.restarts <
+		    qctx->client->view->max_restarts)
+		{
+			qctx->client->query.restarts++;
+			return (ns__query_start(qctx));
+		} else {
+			/*
+			 * This is e.g. a long CNAME chain which we cut short.
+			 */
+			qctx->client->query.attributes |=
+				NS_QUERYATTR_PARTIALANSWER;
+			qctx->client->message->rcode = dns_rcode_servfail;
+			qctx->result = DNS_R_SERVFAIL;
+
+			/*
+			 * Send the answer back with a SERVFAIL result even
+			 * if recursion was requested.
+			 */
+			partial_result_with_servfail = true;
+
+			ns_client_extendederror(qctx->client, 0,
+						"max. restarts reached");
+			ns_client_log(qctx->client, NS_LOGCATEGORY_CLIENT,
+				      NS_LOGMODULE_QUERY, ISC_LOG_INFO,
+				      "query iterations limit reached");
+		}
 	}
 
 	if (qctx->result != ISC_R_SUCCESS &&
-	    (!PARTIALANSWER(qctx->client) || WANTRECURSION(qctx->client) ||
+	    (!PARTIALANSWER(qctx->client) ||
+	     (WANTRECURSION(qctx->client) && !partial_result_with_servfail) ||
 	     qctx->result == DNS_R_DROP))
 	{
 		if (qctx->result == DNS_R_DUPLICATE ||
@@ -12362,9 +12424,7 @@ ns_query_start(ns_client_t *client, isc_nmhandle_t *handle) {
 	/*
 	 * Turn on minimal response for (C)DNSKEY and (C)DS queries.
 	 */
-	if (qtype == dns_rdatatype_dnskey || qtype == dns_rdatatype_ds ||
-	    qtype == dns_rdatatype_cdnskey || qtype == dns_rdatatype_cds)
-	{
+	if (dns_rdatatype_iskeymaterial(qtype) || qtype == dns_rdatatype_ds) {
 		client->query.attributes |= (NS_QUERYATTR_NOAUTHORITY |
 					     NS_QUERYATTR_NOADDITIONAL);
 	} else if (qtype == dns_rdatatype_ns) {

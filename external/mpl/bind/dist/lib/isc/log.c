@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.10 2024/02/21 22:52:28 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.11 2024/09/22 00:14:08 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1078,8 +1078,10 @@ greatest_version(isc_logfile_t *file, int versions, int *greatestp) {
 			 * Remove any backup files that exceed versions.
 			 */
 			if (*digit_end == '\0' && version >= versions) {
-				int n = unlinkat(dirfd(dir.handle),
-						 dir.entry.name, 0);
+				int n = dirfd(dir.handle);
+				if (n >= 0) {
+					n = unlinkat(n, dir.entry.name, 0);
+				}
 				if (n < 0) {
 					result = isc_errno_toresult(errno);
 					if (result != ISC_R_SUCCESS &&
@@ -1225,8 +1227,10 @@ remove_old_tsversions(isc_logfile_t *file, int versions) {
 			 * Remove any backup files that exceed versions.
 			 */
 			if (*digit_end == '\0' && version < last) {
-				int n = unlinkat(dirfd(dir.handle),
-						 dir.entry.name, 0);
+				int n = dirfd(dir.handle);
+				if (n >= 0) {
+					n = unlinkat(n, dir.entry.name, 0);
+				}
 				if (n < 0) {
 					result = isc_errno_toresult(errno);
 					if (result != ISC_R_SUCCESS &&

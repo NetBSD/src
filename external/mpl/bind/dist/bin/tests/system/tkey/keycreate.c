@@ -1,4 +1,4 @@
-/*	$NetBSD: keycreate.c,v 1.8 2024/02/21 22:51:37 christos Exp $	*/
+/*	$NetBSD: keycreate.c,v 1.9 2024/09/22 00:14:03 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -47,7 +47,7 @@
 		if ((x) != ISC_R_SUCCESS) {                  \
 			fprintf(stderr, "I:%s: %s\n", (str), \
 				isc_result_totext(x));       \
-			exit(-1);                            \
+			exit(EXIT_FAILURE);                  \
 		}                                            \
 	}
 
@@ -83,7 +83,7 @@ recvquery(isc_task_t *task, isc_event_t *event) {
 	if (reqev->result != ISC_R_SUCCESS) {
 		fprintf(stderr, "I:request event result: %s\n",
 			isc_result_totext(reqev->result));
-		exit(-1);
+		exit(EXIT_FAILURE);
 	}
 
 	query = reqev->ev_arg;
@@ -98,7 +98,7 @@ recvquery(isc_task_t *task, isc_event_t *event) {
 		result = dns_result_fromrcode(response->rcode);
 		fprintf(stderr, "I:response rcode: %s\n",
 			isc_result_totext(result));
-		exit(-1);
+		exit(EXIT_FAILURE);
 	}
 
 	result = dns_tkey_processdhresponse(query, response, ourkey, &nonce,
@@ -206,7 +206,7 @@ main(int argc, char *argv[]) {
 
 	if (argc < 4) {
 		fprintf(stderr, "I:no DH key provided\n");
-		exit(-1);
+		exit(EXIT_FAILURE);
 	}
 	ip_address = argv[1];
 	port = atoi(argv[2]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.c,v 1.19 2024/02/21 22:52:08 christos Exp $	*/
+/*	$NetBSD: resolver.c,v 1.20 2024/09/22 00:14:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -201,7 +201,7 @@
 
 /* The default maximum number of iterative queries to allow before giving up. */
 #ifndef DEFAULT_MAX_QUERIES
-#define DEFAULT_MAX_QUERIES 100
+#define DEFAULT_MAX_QUERIES 50
 #endif /* ifndef DEFAULT_MAX_QUERIES */
 
 /*
@@ -385,6 +385,7 @@ struct fetchctx {
 	bool minimized;
 	unsigned int qmin_labels;
 	isc_result_t qmin_warning;
+	bool force_qmin_warning;
 	bool ip6arpaskip;
 	bool forwarding;
 	dns_fixedname_t qminfname;
@@ -975,7 +976,7 @@ valcreate(fetchctx_t *fctx, dns_message_t *message, dns_adbaddrinfo_t *addrinfo,
 
 	result = dns_validator_create(fctx->res->view, name, type, rdataset,
 				      sigrdataset, message, valoptions, task,
-				      validated, valarg, &validator);
+				      validated, valarg, fctx->qc, &validator);
 	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 	if (result == ISC_R_SUCCESS) {
 		inc_stats(fctx->res, dns_resstatscounter_val);
@@ -1861,9 +1862,8 @@ fctx__done_detach(fetchctx_t **fctxp, isc_result_t result, const char *file,
 		if (fctx->qmin_warning != ISC_R_SUCCESS) {
 			isc_log_write(dns_lctx, DNS_LOGCATEGORY_LAME_SERVERS,
 				      DNS_LOGMODULE_RESOLVER, ISC_LOG_INFO,
-				      "success resolving '%s' "
-				      "after disabling qname minimization due "
-				      "to '%s'",
+				      "success resolving '%s' after disabling "
+				      "qname minimization due to '%s'",
 				      fctx->info,
 				      isc_result_totext(fctx->qmin_warning));
 		}
@@ -1922,11 +1922,15 @@ resquery_senddone(isc_result_t eresult, isc_region_t *region, void *arg) {
 	case ISC_R_SHUTTINGDOWN:
 		break;
 
+	case ISC_R_HOSTDOWN:
 	case ISC_R_HOSTUNREACH:
+	case ISC_R_NETDOWN:
 	case ISC_R_NETUNREACH:
 	case ISC_R_NOPERM:
 	case ISC_R_ADDRNOTAVAIL:
 	case ISC_R_CONNREFUSED:
+	case ISC_R_CONNECTIONRESET:
+	case ISC_R_TIMEDOUT:
 		/* No route to remote. */
 		FCTXTRACE3("query canceled in resquery_senddone(): "
 			   "no route to host; no response",
@@ -2996,8 +3000,10 @@ resquery_connected(isc_result_t eresult, isc_region_t *region, void *arg) {
 		fctx_done_detach(&fctx, eresult);
 		break;
 
-	case ISC_R_NETUNREACH:
+	case ISC_R_HOSTDOWN:
 	case ISC_R_HOSTUNREACH:
+	case ISC_R_NETDOWN:
+	case ISC_R_NETUNREACH:
 	case ISC_R_CONNREFUSED:
 	case ISC_R_NOPERM:
 	case ISC_R_ADDRNOTAVAIL:
@@ -4341,6 +4347,24 @@ resume_qmin(isc_task_t *task, isc_event_t *event) {
 			goto cleanup;
 		}
 		break;
+
+	case ISC_R_SUCCESS:
+	case DNS_R_DELEGATION:
+	case DNS_R_NXRRSET:
+	case DNS_R_NCACHENXRRSET:
+	case DNS_R_CNAME:
+	case DNS_R_DNAME:
+		/*
+		 * We have previously detected a possible error of an
+		 * incorrect NXDOMAIN and now have a response that
+		 * indicates that it was an actual error.
+		 */
+		if (fctx->qmin_warning == DNS_R_NCACHENXDOMAIN ||
+		    fctx->qmin_warning == DNS_R_NXDOMAIN)
+		{
+			fctx->force_qmin_warning = true;
+		}
+		FALLTHROUGH;
 	default:
 		/*
 		 * When DNS_FETCHOPT_NOFOLLOW is set and a delegation
@@ -4787,16 +4811,6 @@ fctx_create(dns_resolver_t *res, isc_task_t *task, const dns_name_t *name,
 
 	dns_resolver_attach(res, &fctx->res);
 
-	if (qc != NULL) {
-		isc_counter_attach(qc, &fctx->qc);
-	} else {
-		result = isc_counter_create(res->mctx, res->maxqueries,
-					    &fctx->qc);
-		if (result != ISC_R_SUCCESS) {
-			goto cleanup_fetch;
-		}
-	}
-
 	/*
 	 * Make fctx->info point to a copy of a formatted string
 	 * "name/type". FCTXTRACE won't work until this is done.
@@ -4808,6 +4822,24 @@ fctx_create(dns_resolver_t *res, isc_task_t *task, const dns_name_t *name,
 	fctx->info = isc_mem_strdup(res->mctx, buf);
 
 	FCTXTRACE("create");
+
+	if (qc != NULL) {
+		isc_counter_attach(qc, &fctx->qc);
+		isc_log_write(dns_lctx, DNS_LOGCATEGORY_RESOLVER,
+			      DNS_LOGMODULE_RESOLVER, ISC_LOG_DEBUG(9),
+			      "fctx %p(%s): attached to counter %p (%d)", fctx,
+			      fctx->info, fctx->qc, isc_counter_used(fctx->qc));
+	} else {
+		result = isc_counter_create(res->mctx, res->maxqueries,
+					    &fctx->qc);
+		if (result != ISC_R_SUCCESS) {
+			goto cleanup_fetch;
+		}
+		isc_log_write(dns_lctx, DNS_LOGCATEGORY_RESOLVER,
+			      DNS_LOGMODULE_RESOLVER, ISC_LOG_DEBUG(9),
+			      "fctx %p(%s): created counter %p", fctx,
+			      fctx->info, fctx->qc);
+	}
 
 	isc_refcount_init(&fctx->references, 1);
 
@@ -5682,6 +5714,19 @@ validated(isc_task_t *task, isc_event_t *event) {
 			covers = dns_rdatatype_any;
 		} else {
 			covers = fctx->type;
+		}
+
+		/*
+		 * Don't report qname minimisation NXDOMAIN errors
+		 * when the result is NXDOMAIN except we have already
+		 * confirmed a higher error.
+		 */
+		if (!fctx->force_qmin_warning &&
+		    message->rcode == dns_rcode_nxdomain &&
+		    (fctx->qmin_warning == DNS_R_NXDOMAIN ||
+		     fctx->qmin_warning == DNS_R_NCACHENXDOMAIN))
+		{
+			fctx->qmin_warning = ISC_R_SUCCESS;
 		}
 
 		result = dns_db_findnode(fctx->cache, vevent->name, true,
@@ -6828,6 +6873,18 @@ ncache_message(fetchctx_t *fctx, dns_message_t *message,
 	}
 
 	/*
+	 * Don't report qname minimisation NXDOMAIN errors
+	 * when the result is NXDOMAIN except we have already
+	 * confirmed a higher error.
+	 */
+	if (!fctx->force_qmin_warning && message->rcode == dns_rcode_nxdomain &&
+	    (fctx->qmin_warning == DNS_R_NXDOMAIN ||
+	     fctx->qmin_warning == DNS_R_NCACHENXDOMAIN))
+	{
+		fctx->qmin_warning = ISC_R_SUCCESS;
+	}
+
+	/*
 	 * If we are asking for a SOA record set the cache time
 	 * to zero to facilitate locating the containing zone of
 	 * a arbitrary zone.
@@ -7390,7 +7447,7 @@ resume_dslookup(isc_task_t *task, isc_event_t *event) {
 	dns_rdataset_t nameservers;
 	dns_fixedname_t fixed;
 	dns_name_t *domain = NULL;
-	unsigned int n;
+	unsigned int n, options;
 
 	REQUIRE(event->ev_type == DNS_EVENT_FETCHDONE);
 
@@ -7517,9 +7574,10 @@ resume_dslookup(isc_task_t *task, isc_event_t *event) {
 
 		/* Starting a new fetch, so restore the extra reference */
 		fctx_addref(fctx);
+		options = fctx->options & ~DNS_FETCHOPT_TRYSTALE_ONTIMEOUT;
 		result = dns_resolver_createfetch(
 			res, fctx->nsname, dns_rdatatype_ns, domain, nsrdataset,
-			NULL, NULL, 0, fctx->options, 0, NULL, task,
+			NULL, NULL, 0, options, 0, fctx->qc, task,
 			resume_dslookup, fctx, &fctx->nsrrset, NULL,
 			&fctx->nsfetch);
 		if (result != ISC_R_SUCCESS) {
@@ -8177,7 +8235,9 @@ rctx_dispfail(respctx_t *rctx) {
 	 */
 	switch (rctx->result) {
 	case ISC_R_EOF:
+	case ISC_R_HOSTDOWN:
 	case ISC_R_HOSTUNREACH:
+	case ISC_R_NETDOWN:
 	case ISC_R_NETUNREACH:
 	case ISC_R_CONNREFUSED:
 	case ISC_R_CONNECTIONRESET:
@@ -9869,7 +9929,7 @@ rctx_chaseds(respctx_t *rctx, dns_message_t *message,
 	     dns_adbaddrinfo_t *addrinfo, isc_result_t result) {
 	fetchctx_t *fctx = rctx->fctx;
 	isc_task_t *task = NULL;
-	unsigned int n;
+	unsigned int n, options;
 
 	add_bad(fctx, message, addrinfo, result, rctx->broken_type);
 	fctx_cancelqueries(fctx, true, false);
@@ -9882,9 +9942,10 @@ rctx_chaseds(respctx_t *rctx, dns_message_t *message,
 
 	fctx_addref(fctx);
 	task = fctx->res->buckets[fctx->bucketnum].task;
+	options = fctx->options & ~DNS_FETCHOPT_TRYSTALE_ONTIMEOUT;
 	result = dns_resolver_createfetch(
 		fctx->res, fctx->nsname, dns_rdatatype_ns, NULL, NULL, NULL,
-		NULL, 0, fctx->options, 0, NULL, task, resume_dslookup, fctx,
+		NULL, 0, options, 0, fctx->qc, task, resume_dslookup, fctx,
 		&fctx->nsrrset, NULL, &fctx->nsfetch);
 	if (result != ISC_R_SUCCESS) {
 		if (result == DNS_R_DUPLICATE) {
@@ -10513,8 +10574,10 @@ prime_done(isc_task_t *task, isc_event_t *event) {
 	res = event->ev_arg;
 	REQUIRE(VALID_RESOLVER(res));
 
+	int level = (fevent->result == ISC_R_SUCCESS) ? ISC_LOG_DEBUG(1)
+						      : ISC_LOG_NOTICE;
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_RESOLVER,
-		      DNS_LOGMODULE_RESOLVER, ISC_LOG_INFO,
+		      DNS_LOGMODULE_RESOLVER, level,
 		      "resolver priming query complete: %s",
 		      isc_result_totext(fevent->result));
 

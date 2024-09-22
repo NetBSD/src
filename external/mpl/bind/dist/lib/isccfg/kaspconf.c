@@ -1,4 +1,4 @@
-/*	$NetBSD: kaspconf.c,v 1.7 2024/02/21 22:52:44 christos Exp $	*/
+/*	$NetBSD: kaspconf.c,v 1.8 2024/09/22 00:14:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -314,7 +314,7 @@ cfg_kasp_fromconfig(const cfg_obj_t *config, dns_kasp_t *default_kasp,
 	const char *kaspname = NULL;
 	dns_kasp_t *kasp = NULL;
 	size_t i = 0;
-	uint32_t sigrefresh = 0, sigvalidity = 0;
+	uint32_t sigjitter = 0, sigrefresh = 0, sigvalidity = 0;
 	uint32_t dnskeyttl = 0, dsttl = 0, maxttl = 0;
 	uint32_t publishsafety = 0, retiresafety = 0;
 	uint32_t zonepropdelay = 0, parentpropdelay = 0;
@@ -362,6 +362,10 @@ cfg_kasp_fromconfig(const cfg_obj_t *config, dns_kasp_t *default_kasp,
 	maps[i] = NULL;
 
 	/* Configuration: Signatures */
+	sigjitter = get_duration(maps, "signatures-jitter",
+				 DNS_KASP_SIG_JITTER);
+	dns_kasp_setsigjitter(kasp, sigjitter);
+
 	sigrefresh = get_duration(maps, "signatures-refresh",
 				  DNS_KASP_SIG_REFRESH);
 	dns_kasp_setsigrefresh(kasp, sigrefresh);
@@ -378,6 +382,15 @@ cfg_kasp_fromconfig(const cfg_obj_t *config, dns_kasp_t *default_kasp,
 	}
 	dns_kasp_setsigvalidity_dnskey(kasp, sigvalidity);
 
+	if (sigjitter > sigvalidity) {
+		cfg_obj_log(
+			config, logctx, ISC_LOG_ERROR,
+			"dnssec-policy: policy '%s' signatures-jitter cannot "
+			"be larger than signatures-validity-dnskey",
+			kaspname);
+		result = ISC_R_FAILURE;
+	}
+
 	sigvalidity = get_duration(maps, "signatures-validity",
 				   DNS_KASP_SIG_VALIDITY);
 	if (sigrefresh >= (sigvalidity * 0.9)) {
@@ -389,6 +402,15 @@ cfg_kasp_fromconfig(const cfg_obj_t *config, dns_kasp_t *default_kasp,
 		result = ISC_R_FAILURE;
 	}
 	dns_kasp_setsigvalidity(kasp, sigvalidity);
+
+	if (sigjitter > sigvalidity) {
+		cfg_obj_log(
+			config, logctx, ISC_LOG_ERROR,
+			"dnssec-policy: policy '%s' signatures-jitter cannot "
+			"be larger than signatures-validity",
+			kaspname);
+		result = ISC_R_FAILURE;
+	}
 
 	if (result != ISC_R_SUCCESS) {
 		goto cleanup;

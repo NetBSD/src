@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.11 2024/02/21 22:52:05 christos Exp $	*/
+/*	$NetBSD: cache.c,v 1.12 2024/09/22 00:14:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -129,8 +129,10 @@ struct dns_cache {
 	/* Unlocked. */
 	unsigned int magic;
 	isc_mutex_t lock;
-	isc_mem_t *mctx;  /* Main cache memory */
+	isc_mem_t *mctx;  /* Memory context for the dns_cache object */
 	isc_mem_t *hmctx; /* Heap memory */
+	isc_mem_t *tmctx; /* Tree memory */
+	isc_taskmgr_t *taskmgr;
 	char *name;
 	isc_refcount_t references;
 	isc_refcount_t live_tasks;
@@ -146,6 +148,8 @@ struct dns_cache {
 	dns_ttl_t serve_stale_ttl;
 	dns_ttl_t serve_stale_refresh;
 	isc_stats_t *stats;
+	uint32_t maxrrperset;
+	uint32_t maxtypepername;
 };
 
 /***
@@ -169,153 +173,88 @@ static void
 water(void *arg, int mark);
 
 static isc_result_t
-cache_create_db(dns_cache_t *cache, dns_db_t **db) {
+cache_create_db(dns_cache_t *cache, dns_db_t **dbp, isc_mem_t **tmctxp,
+		isc_mem_t **hmctxp) {
 	isc_result_t result;
-	result = dns_db_create(cache->mctx, cache->db_type, dns_rootname,
-			       dns_dbtype_cache, cache->rdclass, cache->db_argc,
-			       cache->db_argv, db);
-	if (result == ISC_R_SUCCESS) {
-		dns_db_setservestalettl(*db, cache->serve_stale_ttl);
-		dns_db_setservestalerefresh(*db, cache->serve_stale_refresh);
-	}
-	return (result);
-}
+	isc_task_t *dbtask = NULL;
+	isc_task_t *prunetask = NULL;
+	dns_db_t *db = NULL;
+	isc_mem_t *tmctx = NULL;
+	isc_mem_t *hmctx = NULL;
 
-isc_result_t
-dns_cache_create(isc_mem_t *cmctx, isc_mem_t *hmctx, isc_taskmgr_t *taskmgr,
-		 isc_timermgr_t *timermgr, dns_rdataclass_t rdclass,
-		 const char *cachename, const char *db_type,
-		 unsigned int db_argc, char **db_argv, dns_cache_t **cachep) {
-	isc_result_t result;
-	dns_cache_t *cache;
-	int i, extra = 0;
-	isc_task_t *dbtask;
-
-	REQUIRE(cachep != NULL);
-	REQUIRE(*cachep == NULL);
-	REQUIRE(cmctx != NULL);
-	REQUIRE(hmctx != NULL);
-	REQUIRE(cachename != NULL);
-
-	cache = isc_mem_get(cmctx, sizeof(*cache));
-
-	cache->mctx = cache->hmctx = NULL;
-	isc_mem_attach(cmctx, &cache->mctx);
-	isc_mem_attach(hmctx, &cache->hmctx);
-
-	cache->name = NULL;
-	if (cachename != NULL) {
-		cache->name = isc_mem_strdup(cmctx, cachename);
-	}
-
-	isc_mutex_init(&cache->lock);
-
-	isc_refcount_init(&cache->references, 1);
-	isc_refcount_init(&cache->live_tasks, 1);
-	cache->rdclass = rdclass;
-	cache->serve_stale_ttl = 0;
-
-	cache->stats = NULL;
-	result = isc_stats_create(cmctx, &cache->stats,
-				  dns_cachestatscounter_max);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup_lock;
-	}
-
-	cache->db_type = isc_mem_strdup(cmctx, db_type);
+	REQUIRE(dbp != NULL && *dbp == NULL);
+	REQUIRE(tmctxp != NULL && *tmctxp == NULL);
+	REQUIRE(hmctxp != NULL && *hmctxp == NULL);
 
 	/*
-	 * For databases of type "rbt" we pass hmctx to dns_db_create()
-	 * via cache->db_argv, followed by the rest of the arguments in
-	 * db_argv (of which there really shouldn't be any).
+	 * This will be the cache memory context, which is subject
+	 * to cleaning when the configured memory limits are exceeded.
 	 */
+	isc_mem_create(&tmctx);
+	isc_mem_setname(tmctx, "cache");
+
+	/*
+	 * This will be passed to RBTDB to use for heaps. This is separate
+	 * from the main cache memory because it can grow quite large under
+	 * heavy load and could otherwise cause the cache to be cleaned too
+	 * aggressively.
+	 */
+	isc_mem_create(&hmctx);
+	isc_mem_setname(hmctx, "cache_heap");
+
 	if (strcmp(cache->db_type, "rbt") == 0) {
-		extra = 1;
-	}
-
-	cache->db_argc = db_argc + extra;
-	cache->db_argv = NULL;
-
-	if (cache->db_argc != 0) {
-		cache->db_argv = isc_mem_get(cmctx,
-					     cache->db_argc * sizeof(char *));
-
-		for (i = 0; i < cache->db_argc; i++) {
-			cache->db_argv[i] = NULL;
-		}
-
 		cache->db_argv[0] = (char *)hmctx;
-		for (i = extra; i < cache->db_argc; i++) {
-			cache->db_argv[i] = isc_mem_strdup(cmctx,
-							   db_argv[i - extra]);
-		}
 	}
-
-	/*
-	 * Create the database
-	 */
-	cache->db = NULL;
-	result = cache_create_db(cache, &cache->db);
+	result = dns_db_create(tmctx, cache->db_type, dns_rootname,
+			       dns_dbtype_cache, cache->rdclass, cache->db_argc,
+			       cache->db_argv, &db);
 	if (result != ISC_R_SUCCESS) {
-		goto cleanup_dbargv;
-	}
-	if (taskmgr != NULL) {
-		dbtask = NULL;
-		result = isc_task_create(taskmgr, 1, &dbtask);
-		if (result != ISC_R_SUCCESS) {
-			goto cleanup_db;
-		}
-
-		isc_task_setname(dbtask, "cache_dbtask", NULL);
-		dns_db_settask(cache->db, dbtask);
-		isc_task_detach(&dbtask);
+		goto cleanup_mctx;
 	}
 
-	cache->magic = CACHE_MAGIC;
+	dns_db_setservestalettl(db, cache->serve_stale_ttl);
+	dns_db_setservestalerefresh(db, cache->serve_stale_refresh);
+	dns_db_setmaxrrperset(db, cache->maxrrperset);
+	dns_db_setmaxtypepername(db, cache->maxtypepername);
 
-	/*
-	 * RBT-type cache DB has its own mechanism of cache cleaning and doesn't
-	 * need the control of the generic cleaner.
-	 */
-	if (strcmp(db_type, "rbt") == 0) {
-		result = cache_cleaner_init(cache, NULL, NULL, &cache->cleaner);
-	} else {
-		result = cache_cleaner_init(cache, taskmgr, timermgr,
-					    &cache->cleaner);
+	if (cache->taskmgr == NULL) {
+		*dbp = db;
+		*tmctxp = tmctx;
+		*hmctxp = hmctx;
+		return (ISC_R_SUCCESS);
 	}
+
+	result = isc_task_create(cache->taskmgr, 1, &dbtask);
 	if (result != ISC_R_SUCCESS) {
 		goto cleanup_db;
 	}
+	isc_task_setname(dbtask, "cache_dbtask", NULL);
 
-	result = dns_db_setcachestats(cache->db, cache->stats);
+	result = isc_task_create(cache->taskmgr, UINT_MAX, &prunetask);
 	if (result != ISC_R_SUCCESS) {
-		goto cleanup_db;
+		goto cleanup_dbtask;
 	}
+	isc_task_setname(prunetask, "cache_prunetask", NULL);
 
-	*cachep = cache;
+	dns_db_settask(db, dbtask, prunetask);
+
+	isc_task_detach(&prunetask);
+	isc_task_detach(&dbtask);
+
+	*dbp = db;
+	*tmctxp = tmctx;
+	*hmctxp = hmctx;
+
 	return (ISC_R_SUCCESS);
 
+cleanup_dbtask:
+	isc_task_detach(&dbtask);
 cleanup_db:
-	dns_db_detach(&cache->db);
-cleanup_dbargv:
-	for (i = extra; i < cache->db_argc; i++) {
-		if (cache->db_argv[i] != NULL) {
-			isc_mem_free(cmctx, cache->db_argv[i]);
-		}
-	}
-	if (cache->db_argv != NULL) {
-		isc_mem_put(cmctx, cache->db_argv,
-			    cache->db_argc * sizeof(char *));
-	}
-	isc_mem_free(cmctx, cache->db_type);
-	isc_stats_detach(&cache->stats);
-cleanup_lock:
-	isc_mutex_destroy(&cache->lock);
-	if (cache->name != NULL) {
-		isc_mem_free(cmctx, cache->name);
-	}
-	isc_mem_detach(&cache->hmctx);
-	isc_mem_putanddetach(&cache->mctx, cache, sizeof(*cache));
+	dns_db_detach(&db);
+cleanup_mctx:
+	isc_mem_detach(&tmctx);
+	isc_mem_detach(&hmctx);
+
 	return (result);
 }
 
@@ -326,7 +265,7 @@ cache_free(dns_cache_t *cache) {
 	isc_refcount_destroy(&cache->references);
 	isc_refcount_destroy(&cache->live_tasks);
 
-	isc_mem_clearwater(cache->mctx);
+	isc_mem_clearwater(cache->tmctx);
 
 	if (cache->cleaner.task != NULL) {
 		isc_task_detach(&cache->cleaner.task);
@@ -358,6 +297,7 @@ cache_free(dns_cache_t *cache) {
 		int extra = 0;
 		if (strcmp(cache->db_type, "rbt") == 0) {
 			extra = 1;
+			cache->db_argv[0] = NULL;
 		}
 		for (int i = extra; i < cache->db_argc; i++) {
 			if (cache->db_argv[i] != NULL) {
@@ -380,11 +320,121 @@ cache_free(dns_cache_t *cache) {
 		isc_stats_detach(&cache->stats);
 	}
 
+	if (cache->taskmgr != NULL) {
+		isc_taskmgr_detach(&cache->taskmgr);
+	}
+
 	isc_mutex_destroy(&cache->lock);
 
 	cache->magic = 0;
-	isc_mem_detach(&cache->hmctx);
+	if (cache->hmctx != NULL) {
+		isc_mem_detach(&cache->hmctx);
+	}
+	if (cache->tmctx != NULL) {
+		isc_mem_detach(&cache->tmctx);
+	}
 	isc_mem_putanddetach(&cache->mctx, cache, sizeof(*cache));
+}
+
+isc_result_t
+dns_cache_create(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
+		 isc_timermgr_t *timermgr, dns_rdataclass_t rdclass,
+		 const char *cachename, const char *db_type,
+		 unsigned int db_argc, char **db_argv, dns_cache_t **cachep) {
+	isc_result_t result;
+	dns_cache_t *cache;
+	int i, extra = 0;
+
+	REQUIRE(cachep != NULL);
+	REQUIRE(*cachep == NULL);
+	REQUIRE(mctx != NULL);
+	REQUIRE(taskmgr != NULL || strcmp(db_type, "rbt") != 0);
+	REQUIRE(cachename != NULL);
+
+	cache = isc_mem_get(mctx, sizeof(*cache));
+	*cache = (dns_cache_t){
+		.db_type = isc_mem_strdup(mctx, db_type),
+		.rdclass = rdclass,
+		.db_argc = db_argc,
+		.name = cachename == NULL ? NULL
+					  : isc_mem_strdup(mctx, cachename),
+		.magic = CACHE_MAGIC,
+	};
+
+	isc_mutex_init(&cache->lock);
+	isc_mem_attach(mctx, &cache->mctx);
+
+	if (taskmgr != NULL) {
+		isc_taskmgr_attach(taskmgr, &cache->taskmgr);
+	}
+
+	isc_refcount_init(&cache->references, 1);
+	isc_refcount_init(&cache->live_tasks, 1);
+
+	result = isc_stats_create(mctx, &cache->stats,
+				  dns_cachestatscounter_max);
+	if (result != ISC_R_SUCCESS) {
+		goto cleanup;
+	}
+
+	/*
+	 * For databases of type "rbt" we pass hmctx to dns_db_create()
+	 * via cache->db_argv, followed by the rest of the arguments in
+	 * db_argv (of which there really shouldn't be any).
+	 */
+	if (strcmp(cache->db_type, "rbt") == 0) {
+		extra = 1;
+		cache->db_argc++;
+	}
+
+	if (cache->db_argc != 0) {
+		cache->db_argv = isc_mem_get(mctx,
+					     cache->db_argc * sizeof(char *));
+
+		for (i = 0; i < cache->db_argc; i++) {
+			cache->db_argv[i] = NULL;
+		}
+
+		for (i = extra; i < cache->db_argc; i++) {
+			cache->db_argv[i] = isc_mem_strdup(mctx,
+							   db_argv[i - extra]);
+		}
+	}
+
+	/*
+	 * Create the database
+	 */
+	result = cache_create_db(cache, &cache->db, &cache->tmctx,
+				 &cache->hmctx);
+	if (result != ISC_R_SUCCESS) {
+		goto cleanup;
+	}
+
+	/*
+	 * RBT-type cache DB has its own mechanism of cache cleaning and doesn't
+	 * need the control of the generic cleaner.
+	 */
+	if (strcmp(db_type, "rbt") == 0) {
+		result = cache_cleaner_init(cache, NULL, NULL, &cache->cleaner);
+	} else {
+		result = cache_cleaner_init(cache, taskmgr, timermgr,
+					    &cache->cleaner);
+	}
+	if (result != ISC_R_SUCCESS) {
+		goto cleanup;
+	}
+
+	result = dns_db_setcachestats(cache->db, cache->stats);
+	if (result != ISC_R_SUCCESS) {
+		goto cleanup;
+	}
+
+	*cachep = cache;
+	return (ISC_R_SUCCESS);
+
+cleanup:
+	cache_free(cache);
+	return (result);
 }
 
 void
@@ -826,7 +876,7 @@ water(void *arg, int mark) {
 	if (overmem != cache->cleaner.overmem) {
 		dns_db_overmem(cache->db, overmem);
 		cache->cleaner.overmem = overmem;
-		isc_mem_waterack(cache->mctx, mark);
+		isc_mem_waterack(cache->tmctx, mark);
 	}
 
 	if (cache->cleaner.overmem_event != NULL) {
@@ -837,10 +887,19 @@ water(void *arg, int mark) {
 	UNLOCK(&cache->cleaner.lock);
 }
 
+static void
+updatewater(dns_cache_t *cache) {
+	size_t hi = cache->size - (cache->size >> 3); /* ~ 7/8ths. */
+	size_t lo = cache->size - (cache->size >> 2); /* ~ 3/4ths. */
+	if (cache->size == 0U || hi == 0U || lo == 0U) {
+		isc_mem_clearwater(cache->tmctx);
+	} else {
+		isc_mem_setwater(cache->tmctx, water, cache, hi, lo);
+	}
+}
+
 void
 dns_cache_setcachesize(dns_cache_t *cache, size_t size) {
-	size_t hiwater, lowater;
-
 	REQUIRE(VALID_CACHE(cache));
 
 	/*
@@ -853,30 +912,8 @@ dns_cache_setcachesize(dns_cache_t *cache, size_t size) {
 
 	LOCK(&cache->lock);
 	cache->size = size;
+	updatewater(cache);
 	UNLOCK(&cache->lock);
-
-	hiwater = size - (size >> 3); /* Approximately 7/8ths. */
-	lowater = size - (size >> 2); /* Approximately 3/4ths. */
-
-	/*
-	 * If the cache was overmem and cleaning, but now with the new limits
-	 * it is no longer in an overmem condition, then the next
-	 * isc_mem_put for cache memory will do the right thing and trigger
-	 * water().
-	 */
-
-	if (size == 0U || hiwater == 0U || lowater == 0U) {
-		/*
-		 * Disable cache memory limiting.
-		 */
-		isc_mem_clearwater(cache->mctx);
-	} else {
-		/*
-		 * Establish new cache memory limits (either for the first
-		 * time, or replacing other limits).
-		 */
-		isc_mem_setwater(cache->mctx, water, cache, hiwater, lowater);
-	}
 }
 
 size_t
@@ -971,8 +1008,10 @@ dns_cache_flush(dns_cache_t *cache) {
 	dns_db_t *db = NULL, *olddb;
 	dns_dbiterator_t *dbiterator = NULL, *olddbiterator = NULL;
 	isc_result_t result;
+	isc_mem_t *tmctx = NULL, *oldtmctx;
+	isc_mem_t *hmctx = NULL, *oldhmctx;
 
-	result = cache_create_db(cache, &db);
+	result = cache_create_db(cache, &db, &tmctx, &hmctx);
 	if (result != ISC_R_SUCCESS) {
 		return (result);
 	}
@@ -980,11 +1019,14 @@ dns_cache_flush(dns_cache_t *cache) {
 	result = dns_db_createiterator(db, false, &dbiterator);
 	if (result != ISC_R_SUCCESS) {
 		dns_db_detach(&db);
+		isc_mem_detach(&tmctx);
+		isc_mem_detach(&hmctx);
 		return (result);
 	}
 
 	LOCK(&cache->lock);
 	LOCK(&cache->cleaner.lock);
+	isc_mem_clearwater(cache->tmctx);
 	if (cache->cleaner.state == cleaner_s_idle) {
 		olddbiterator = cache->cleaner.iterator;
 		cache->cleaner.iterator = dbiterator;
@@ -995,6 +1037,11 @@ dns_cache_flush(dns_cache_t *cache) {
 		}
 		cache->cleaner.replaceiterator = true;
 	}
+	oldhmctx = cache->hmctx;
+	cache->hmctx = hmctx;
+	oldtmctx = cache->tmctx;
+	cache->tmctx = tmctx;
+	updatewater(cache);
 	olddb = cache->db;
 	cache->db = db;
 	dns_db_setcachestats(cache->db, cache->stats);
@@ -1008,6 +1055,8 @@ dns_cache_flush(dns_cache_t *cache) {
 		dns_dbiterator_destroy(&olddbiterator);
 	}
 	dns_db_detach(&olddb);
+	isc_mem_detach(&oldhmctx);
+	isc_mem_detach(&oldtmctx);
 
 	return (ISC_R_SUCCESS);
 }
@@ -1196,6 +1245,26 @@ dns_cache_updatestats(dns_cache_t *cache, isc_result_t result) {
 	}
 }
 
+void
+dns_cache_setmaxrrperset(dns_cache_t *cache, uint32_t value) {
+	REQUIRE(VALID_CACHE(cache));
+
+	cache->maxrrperset = value;
+	if (cache->db != NULL) {
+		dns_db_setmaxrrperset(cache->db, value);
+	}
+}
+
+void
+dns_cache_setmaxtypepername(dns_cache_t *cache, uint32_t value) {
+	REQUIRE(VALID_CACHE(cache));
+
+	cache->maxtypepername = value;
+	if (cache->db != NULL) {
+		dns_db_setmaxtypepername(cache->db, value);
+	}
+}
+
 /*
  * XXX: Much of the following code has been copied in from statschannel.c.
  * We should refactor this into a generic function in stats.c that can be
@@ -1269,12 +1338,12 @@ dns_cache_dumpstats(dns_cache_t *cache, FILE *fp) {
 	fprintf(fp, "%20" PRIu64 " %s\n", (uint64_t)dns_db_hashsize(cache->db),
 		"cache database hash buckets");
 
-	fprintf(fp, "%20" PRIu64 " %s\n", (uint64_t)isc_mem_total(cache->mctx),
+	fprintf(fp, "%20" PRIu64 " %s\n", (uint64_t)isc_mem_total(cache->tmctx),
 		"cache tree memory total");
-	fprintf(fp, "%20" PRIu64 " %s\n", (uint64_t)isc_mem_inuse(cache->mctx),
+	fprintf(fp, "%20" PRIu64 " %s\n", (uint64_t)isc_mem_inuse(cache->tmctx),
 		"cache tree memory in use");
 	fprintf(fp, "%20" PRIu64 " %s\n",
-		(uint64_t)isc_mem_maxinuse(cache->mctx),
+		(uint64_t)isc_mem_maxinuse(cache->tmctx),
 		"cache tree highest memory in use");
 
 	fprintf(fp, "%20" PRIu64 " %s\n", (uint64_t)isc_mem_total(cache->hmctx),
@@ -1339,9 +1408,9 @@ dns_cache_renderxml(dns_cache_t *cache, void *writer0) {
 			dns_db_nodecount(cache->db, dns_dbtree_nsec), writer));
 	TRY0(renderstat("CacheBuckets", dns_db_hashsize(cache->db), writer));
 
-	TRY0(renderstat("TreeMemTotal", isc_mem_total(cache->mctx), writer));
-	TRY0(renderstat("TreeMemInUse", isc_mem_inuse(cache->mctx), writer));
-	TRY0(renderstat("TreeMemMax", isc_mem_maxinuse(cache->mctx), writer));
+	TRY0(renderstat("TreeMemTotal", isc_mem_total(cache->tmctx), writer));
+	TRY0(renderstat("TreeMemInUse", isc_mem_inuse(cache->tmctx), writer));
+	TRY0(renderstat("TreeMemMax", isc_mem_maxinuse(cache->tmctx), writer));
 
 	TRY0(renderstat("HeapMemTotal", isc_mem_total(cache->hmctx), writer));
 	TRY0(renderstat("HeapMemInUse", isc_mem_inuse(cache->hmctx), writer));
@@ -1415,15 +1484,15 @@ dns_cache_renderjson(dns_cache_t *cache, void *cstats0) {
 	CHECKMEM(obj);
 	json_object_object_add(cstats, "CacheBuckets", obj);
 
-	obj = json_object_new_int64(isc_mem_total(cache->mctx));
+	obj = json_object_new_int64(isc_mem_total(cache->tmctx));
 	CHECKMEM(obj);
 	json_object_object_add(cstats, "TreeMemTotal", obj);
 
-	obj = json_object_new_int64(isc_mem_inuse(cache->mctx));
+	obj = json_object_new_int64(isc_mem_inuse(cache->tmctx));
 	CHECKMEM(obj);
 	json_object_object_add(cstats, "TreeMemInUse", obj);
 
-	obj = json_object_new_int64(isc_mem_maxinuse(cache->mctx));
+	obj = json_object_new_int64(isc_mem_maxinuse(cache->tmctx));
 	CHECKMEM(obj);
 	json_object_object_add(cstats, "TreeMemMax", obj);
 

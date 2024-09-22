@@ -1,4 +1,4 @@
-/*	$NetBSD: interfacemgr.h,v 1.10 2024/02/21 22:52:46 christos Exp $	*/
+/*	$NetBSD: interfacemgr.h,v 1.11 2024/09/22 00:14:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -79,6 +79,7 @@ struct ns_interface {
 	char		   name[32];   /*%< Null terminated. */
 	isc_nmsocket_t	  *udplistensocket;
 	isc_nmsocket_t	  *tcplistensocket;
+	isc_nmsocket_t	  *tlslistensocket;
 	isc_nmsocket_t	  *http_listensocket;
 	isc_nmsocket_t	  *http_secure_listensocket;
 	isc_quota_t	  *http_quota;

@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.8 2023/01/25 21:43:31 christos Exp $	*/
+/*	$NetBSD: list.h,v 1.9 2024/09/22 00:14:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,9 +19,10 @@
 
 #define ISC_LINK_TOMBSTONE(type) ((type *)-1)
 
-#define ISC_LIST_INITIALIZER                \
-	{                                   \
-		.head = NULL, .tail = NULL, \
+#define ISC_LIST_INITIALIZER  \
+	{                     \
+		.head = NULL, \
+		.tail = NULL, \
 	}
 #define ISC_LINK_INITIALIZER_TYPE(type)           \
 	{                                         \

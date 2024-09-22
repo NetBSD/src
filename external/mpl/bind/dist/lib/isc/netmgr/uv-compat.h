@@ -1,4 +1,4 @@
-/*	$NetBSD: uv-compat.h,v 1.6 2024/02/21 22:52:32 christos Exp $	*/
+/*	$NetBSD: uv-compat.h,v 1.7 2024/09/22 00:14:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -126,3 +126,7 @@ isc_uv_udp_freebind(uv_udp_t *handle, const struct sockaddr *addr,
 int
 isc_uv_tcp_freebind(uv_tcp_t *handle, const struct sockaddr *addr,
 		    unsigned int flags);
+
+#if UV_VERSION_HEX < UV_VERSION(1, 19, 0)
+#define uv_stream_get_write_queue_size(stream) ((stream)->write_queue_size)
+#endif /* UV_VERSION_HEX < UV_VERSION(1, 19, 0) */

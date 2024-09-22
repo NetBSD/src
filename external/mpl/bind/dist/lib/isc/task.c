@@ -1,4 +1,4 @@
-/*	$NetBSD: task.c,v 1.19 2024/02/21 22:52:29 christos Exp $	*/
+/*	$NetBSD: task.c,v 1.20 2024/09/22 00:14:08 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -614,6 +614,15 @@ isc_task_purge(isc_task_t *task, void *sender, isc_eventtype_t type,
 	return (isc_task_purgerange(task, sender, type, type, tag));
 }
 
+/*
+ * The caller is responsible for freeing the event if this function returns
+ * true. If it returns false, then the event was already processed before it
+ * could be purged, so the event's action is responsible for freeing the event.
+ * The caller however must make sure that the event's destroy function, called
+ * when the event's action calls isc_event_destroy(), doesn't free the event
+ * while this function is still running. That is, 'event' must remain valid
+ * throughout the whole execution of this function.
+ */
 bool
 isc_task_purgeevent(isc_task_t *task, isc_event_t *event) {
 	bool found = false;
@@ -627,9 +636,7 @@ isc_task_purgeevent(isc_task_t *task, isc_event_t *event) {
 	/*
 	 * If 'event' is on the task's event queue, it will be purged,
 	 * unless it is marked as unpurgeable.  'event' does not have to be
-	 * on the task's event queue; in fact, it can even be an invalid
-	 * pointer.  Purging only occurs if the event is actually on the task's
-	 * event queue.
+	 * on the task's event queue.
 	 *
 	 * Purging never changes the state of the task.
 	 */
@@ -645,8 +652,6 @@ isc_task_purgeevent(isc_task_t *task, isc_event_t *event) {
 	if (!found) {
 		return (false);
 	}
-
-	isc_event_free(&event);
 
 	return (true);
 }
@@ -789,6 +794,18 @@ task_run(isc_task_t *task) {
 
 	LOCK(&task->lock);
 	quantum = task->quantum;
+
+	/*
+	 * Don't run more events than already scheduled.  If the quantum is set
+	 * to a high value, the following code would execute already scheduled,
+	 * and all events that result from running event->ev_action().  Setting
+	 * quantum to a number of scheduled events will postpone events
+	 * scheduled after we enter the loop here to the next task_run()
+	 * invocation.
+	 */
+	if (quantum > task->nevents) {
+		quantum = task->nevents;
+	}
 
 	if (task->state != task_state_ready) {
 		goto done;

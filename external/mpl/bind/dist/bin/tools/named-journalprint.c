@@ -1,4 +1,4 @@
-/*	$NetBSD: named-journalprint.c,v 1.8 2024/02/21 22:51:41 christos Exp $	*/
+/*	$NetBSD: named-journalprint.c,v 1.9 2024/09/22 00:14:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -33,7 +33,7 @@ const char *progname = NULL;
 static void
 usage(void) {
 	fprintf(stderr, "Usage: %s [-dux] journal\n", progname);
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 /*
@@ -87,7 +87,7 @@ main(int argc, char **argv) {
 			if (endp == isc_commandline_argument || *endp != 0) {
 				fprintf(stderr, "invalid serial: %s\n",
 					isc_commandline_argument);
-				exit(1);
+				exit(EXIT_FAILURE);
 			}
 			break;
 		case 'd':

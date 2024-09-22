@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3hash.c,v 1.7 2024/02/21 22:51:41 christos Exp $	*/
+/*	$NetBSD: nsec3hash.c,v 1.8 2024/09/22 00:14:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,6 +16,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <isc/attributes.h>
 #include <isc/base32.h>
@@ -49,7 +50,7 @@ fatal(const char *format, ...) {
 	vfprintf(stderr, format, args);
 	va_end(args);
 	fprintf(stderr, "\n");
-	exit(1);
+	_exit(EXIT_FAILURE);
 }
 
 static void
@@ -65,7 +66,7 @@ usage(void) {
 		program);
 	fprintf(stderr, "       %s -r algorithm flags iterations salt domain\n",
 		program);
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 typedef void

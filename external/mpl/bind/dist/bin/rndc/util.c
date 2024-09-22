@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.7 2024/02/21 22:51:12 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.8 2024/09/22 00:13:57 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <isc/print.h>
 
@@ -47,5 +48,5 @@ fatal(const char *format, ...) {
 	vfprintf(stderr, format, args);
 	va_end(args);
 	fprintf(stderr, "\n");
-	exit(1);
+	_exit(EXIT_FAILURE);
 }

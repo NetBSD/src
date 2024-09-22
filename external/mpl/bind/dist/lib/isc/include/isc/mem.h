@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.h,v 1.10 2024/02/21 22:52:30 christos Exp $	*/
+/*	$NetBSD: mem.h,v 1.11 2024/09/22 00:14:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -186,7 +186,39 @@ extern unsigned int isc_mem_defaultflags;
 	} while (0)
 
 /*@{*/
+/*
+ * This is a little hack to help with dynamic link order,
+ * see https://github.com/jemalloc/jemalloc/issues/2566
+ * for more information.
+ */
+#if HAVE_JEMALLOC
+
+/*
+ * cmocka.h has confliction definitions with the jemalloc header but we only
+ * need the mallocx symbol from jemalloc.
+ */
+void *
+mallocx(size_t size, int flags);
+
+extern volatile void *isc__mem_malloc;
+
+#ifndef CMM_ACCESS_ONCE
+/*
+ * This macro has been borrowed from Userspace-RCU to ensure the access
+ * to isc__mem_malloc will not be optimized away by the compiler.
+ */
+#define CMM_ACCESS_ONCE(x) (*(__volatile__ __typeof__(x) *)&(x))
+#endif
+
+#define isc_mem_create(cp)                                            \
+	{                                                             \
+		ISCMEMFUNC(create)((cp)_ISC_MEM_FILELINE);            \
+		isc__mem_malloc = mallocx;                            \
+		ISC_INSIST(CMM_ACCESS_ONCE(isc__mem_malloc) != NULL); \
+	}
+#else
 #define isc_mem_create(cp) ISCMEMFUNC(create)((cp)_ISC_MEM_FILELINE)
+#endif
 void ISCMEMFUNC(create)(isc_mem_t **_ISC_MEM_FLARG);
 
 /*!<

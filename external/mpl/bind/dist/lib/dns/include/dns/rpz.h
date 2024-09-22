@@ -1,4 +1,4 @@
-/*	$NetBSD: rpz.h,v 1.10 2024/02/21 22:52:10 christos Exp $	*/
+/*	$NetBSD: rpz.h,v 1.11 2024/09/22 00:14:07 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -91,7 +91,7 @@ typedef uint8_t dns_rpz_num_t;
  */
 typedef uint64_t dns_rpz_zbits_t;
 
-#define DNS_RPZ_ALL_ZBITS ((dns_rpz_zbits_t)-1)
+#define DNS_RPZ_ALL_ZBITS ((dns_rpz_zbits_t) - 1)
 
 #define DNS_RPZ_INVALID_NUM DNS_RPZ_MAX_ZONES
 

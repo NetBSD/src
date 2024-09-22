@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve.c,v 1.5 2024/02/21 22:51:17 christos Exp $	*/
+/*	$NetBSD: resolve.c,v 1.6 2024/09/22 00:13:58 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -139,7 +139,7 @@ usage(void) {
 			"[-S domain:serveraddr_for_domain ] [-s server_address]"
 			"[-b address[#port]] hostname\n");
 
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 static void
@@ -164,7 +164,7 @@ set_key(dns_client_t *client, char *keynamestr, char *keystr, bool is_sep) {
 		result = dns_secalg_fromtext(&alg, &tr);
 		if (result != ISC_R_SUCCESS) {
 			fprintf(stderr, "failed to identify the algorithm\n");
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	} else {
 		alg = DNS_KEYALG_RSASHA1;
@@ -184,7 +184,7 @@ set_key(dns_client_t *client, char *keynamestr, char *keystr, bool is_sep) {
 	result = isc_base64_decodestring(keystr, &keydatabuf);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "base64 decode failed\n");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	isc_buffer_usedregion(&keydatabuf, &r);
 	keystruct.datalen = r.length;
@@ -195,7 +195,7 @@ set_key(dns_client_t *client, char *keynamestr, char *keystr, bool is_sep) {
 				      &rrdatabuf);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "failed to construct key rdata\n");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	namelen = strlen(keynamestr);
 	isc_buffer_init(&b, keynamestr, namelen);
@@ -204,14 +204,14 @@ set_key(dns_client_t *client, char *keynamestr, char *keystr, bool is_sep) {
 	result = dns_name_fromtext(keyname, &b, dns_rootname, 0, NULL);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "failed to construct key name\n");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	result = dns_client_addtrustedkey(client, dns_rdataclass_in,
 					  dns_rdatatype_dnskey, keyname,
 					  &rrdatabuf);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "failed to add key for %s\n", keynamestr);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 }
 
@@ -236,7 +236,7 @@ addserver(dns_client_t *client, const char *addrstr, const char *port,
 	if (gaierror != 0) {
 		fprintf(stderr, "getaddrinfo failed: %s\n",
 			gai_strerror(gaierror));
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	INSIST(res->ai_addrlen <= sizeof(sa.type));
 	memmove(&sa.type, res->ai_addr, res->ai_addrlen);
@@ -255,7 +255,7 @@ addserver(dns_client_t *client, const char *addrstr, const char *port,
 		if (result != ISC_R_SUCCESS) {
 			fprintf(stderr, "failed to convert qname: %u\n",
 				result);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	}
 
@@ -263,7 +263,7 @@ addserver(dns_client_t *client, const char *addrstr, const char *port,
 				       &servers);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "set server failed: %u\n", result);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 }
 
@@ -305,7 +305,7 @@ main(int argc, char *argv[]) {
 			if (result != ISC_R_SUCCESS) {
 				fprintf(stderr, "invalid RRtype: %s\n",
 					isc_commandline_argument);
-				exit(1);
+				exit(EXIT_FAILURE);
 			}
 			break;
 		case 'a':
@@ -319,7 +319,7 @@ main(int argc, char *argv[]) {
 					fprintf(stderr, "only one local "
 							"address per family "
 							"can be specified\n");
-					exit(1);
+					exit(EXIT_FAILURE);
 				}
 				isc_sockaddr_fromin(&a4, &in4, 0);
 				addr4 = &a4;
@@ -330,14 +330,14 @@ main(int argc, char *argv[]) {
 					fprintf(stderr, "only one local "
 							"address per family "
 							"can be specified\n");
-					exit(1);
+					exit(EXIT_FAILURE);
 				}
 				isc_sockaddr_fromin6(&a6, &in6, 0);
 				addr6 = &a6;
 			} else {
 				fprintf(stderr, "invalid address %s\n",
 					isc_commandline_argument);
-				exit(1);
+				exit(EXIT_FAILURE);
 			}
 			break;
 		case 'e':
@@ -349,7 +349,7 @@ main(int argc, char *argv[]) {
 					"alternate server "
 					"already defined: %s\n",
 					altserver);
-				exit(1);
+				exit(EXIT_FAILURE);
 			}
 			altserver = isc_commandline_argument;
 			break;
@@ -359,7 +359,7 @@ main(int argc, char *argv[]) {
 					"server "
 					"already defined: %s\n",
 					server);
-				exit(1);
+				exit(EXIT_FAILURE);
 			}
 			server = isc_commandline_argument;
 			break;
@@ -390,7 +390,7 @@ main(int argc, char *argv[]) {
 		if (cp == NULL) {
 			fprintf(stderr, "invalid alternate server: %s\n",
 				altserver);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		*cp = '\0';
 		altservername = altserver;
@@ -405,7 +405,7 @@ main(int argc, char *argv[]) {
 	result = dst_lib_init(ctxs_mctx, NULL);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "dst_lib_init failed: %u\n", result);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	clientopt = 0;
@@ -415,7 +415,7 @@ main(int argc, char *argv[]) {
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "dns_client_create failed: %u, %s\n", result,
 			isc_result_totext(result));
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	/* Set the nameserver */
@@ -428,7 +428,7 @@ main(int argc, char *argv[]) {
 		if (result != ISC_R_SUCCESS && result != ISC_R_FILENOTFOUND) {
 			fprintf(stderr, "irs_resconf_load failed: %u\n",
 				result);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		nameservers = irs_resconf_getnameservers(resconf);
 		result = dns_client_setservers(client, dns_rdataclass_in, NULL,
@@ -437,7 +437,7 @@ main(int argc, char *argv[]) {
 			irs_resconf_destroy(&resconf);
 			fprintf(stderr, "dns_client_setservers failed: %u\n",
 				result);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		irs_resconf_destroy(&resconf);
 	} else {
@@ -454,7 +454,7 @@ main(int argc, char *argv[]) {
 		if (keystr == NULL) {
 			fprintf(stderr, "key string is missing "
 					"while key name is provided\n");
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		set_key(client, keynamestr, keystr, is_sep);
 	}

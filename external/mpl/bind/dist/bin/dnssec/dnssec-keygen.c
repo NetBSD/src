@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.11 2024/02/21 22:51:03 christos Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.12 2024/09/22 00:13:56 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -211,7 +211,7 @@ usage(void) {
 	fprintf(stderr, "     K<name>+<alg>+<id>.key, "
 			"K<name>+<alg>+<id>.private\n");
 
-	exit(-1);
+	exit(EXIT_FAILURE);
 }
 
 static void
@@ -1134,7 +1134,7 @@ main(int argc, char **argv) {
 		default:
 			fprintf(stderr, "%s: unhandled option -%c\n", program,
 				isc_commandline_option);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	}
 

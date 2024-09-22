@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.h,v 1.2 2024/02/21 22:52:50 christos Exp $	*/
+/*	$NetBSD: ns.h,v 1.3 2024/09/22 00:14:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -43,10 +43,7 @@ typedef struct ns_test_id {
 	int	    lineno;
 } ns_test_id_t;
 
-#define NS_TEST_ID(desc)                                \
-	{                                               \
-		.description = desc, .lineno = __LINE__ \
-	}
+#define NS_TEST_ID(desc) { .description = desc, .lineno = __LINE__ }
 
 #define CHECK(r)                             \
 	do {                                 \

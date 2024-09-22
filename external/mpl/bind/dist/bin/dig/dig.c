@@ -1,4 +1,4 @@
-/*	$NetBSD: dig.c,v 1.10 2024/02/21 22:51:01 christos Exp $	*/
+/*	$NetBSD: dig.c,v 1.11 2024/09/22 00:13:56 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -123,7 +123,7 @@ usage(void) {
 	print_usage(stderr);
 	fprintf(stderr, "\nUse \"dig -h\" (or \"dig -h | more\") "
 			"for complete list of options\n");
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 #endif /* if TARGET_OS_IPHONE */
 
@@ -719,8 +719,7 @@ printmessage(dig_query_t *query, const isc_buffer_t *msgbuf, dns_message_t *msg,
 		char *hash;
 		int pf;
 
-		printf("-\n");
-		printf("  type: MESSAGE\n");
+		printf("- type: MESSAGE\n");
 		printf("  message:\n");
 
 		if (isquery) {
@@ -1454,6 +1453,10 @@ plus_option(char *option, bool is_batchfile, bool *need_clone,
 							warn("Couldn't parse "
 							     "ednsflags");
 							goto exit_or_usage;
+						}
+						if (lookup->edns == -1) {
+							lookup->edns =
+								DEFAULT_EDNS_VERSION;
 						}
 						lookup->ednsflags = num;
 						break;
@@ -2277,7 +2280,7 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 			break;
 		case 'h':
 			help();
-			exit(0);
+			exit(EXIT_SUCCESS);
 			break;
 		case 'i':
 			/* deprecated */
@@ -2297,7 +2300,7 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 			break;
 		case 'v':
 			version();
-			exit(0);
+			exit(EXIT_SUCCESS);
 			break;
 		}
 		if (strlen(option) > 1U) {
@@ -2506,7 +2509,7 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 			ISC_LIST_APPEND(lookup_list, *lookup, link);
 		} else {
 			fprintf(stderr, "Invalid IP address %s\n", value);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		return (value_from_next);
 	invalid_option:
@@ -2963,8 +2966,7 @@ dig_error(const char *format, ...) {
 	va_list args;
 
 	if (yaml) {
-		printf("-\n");
-		printf("  type: DIG_ERROR\n");
+		printf("- type: DIG_ERROR\n");
 
 		/*
 		 * Print an indent before a literal block quote.
@@ -2981,10 +2983,7 @@ dig_error(const char *format, ...) {
 	va_start(args, format);
 	vprintf(format, args);
 	va_end(args);
-
-	if (!yaml) {
-		printf("\n");
-	}
+	printf("\n"); /* We get the error without a newline */
 }
 
 static void
@@ -3082,7 +3081,7 @@ void
 dig_shutdown(void) {
 	destroy_lookup(default_lookup);
 	if (atomic_load(&batchname) != 0) {
-		if (batchfp != stdin) {
+		if (batchfp != NULL && batchfp != stdin) {
 			fclose(batchfp);
 		}
 		atomic_store(&batchname, 0);

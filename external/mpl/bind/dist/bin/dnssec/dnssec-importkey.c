@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-importkey.c,v 1.8 2024/02/21 22:51:02 christos Exp $	*/
+/*	$NetBSD: dnssec-importkey.c,v 1.9 2024/09/22 00:13:56 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -292,7 +292,7 @@ usage(void) {
 	fprintf(stderr, "    -D sync date/[+-]offset/none: set/unset "
 			"CDS and CDNSKEY deletion date\n");
 
-	exit(-1);
+	exit(EXIT_FAILURE);
 }
 
 int
@@ -399,7 +399,7 @@ main(int argc, char **argv) {
 		default:
 			fprintf(stderr, "%s: unhandled option -%c\n", program,
 				isc_commandline_option);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	}
 

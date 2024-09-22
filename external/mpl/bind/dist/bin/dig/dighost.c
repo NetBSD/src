@@ -1,4 +1,4 @@
-/*	$NetBSD: dighost.c,v 1.16 2024/02/21 22:51:01 christos Exp $	*/
+/*	$NetBSD: dighost.c,v 1.17 2024/09/22 00:13:56 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -385,8 +385,6 @@ get_reverse(char *reverse, size_t len, char *value, bool strict) {
 	}
 }
 
-void (*dighost_pre_exit_hook)(void) = NULL;
-
 #if TARGET_OS_IPHONE
 void
 warn(const char *format, ...) {
@@ -419,10 +417,7 @@ digexit(void) {
 		exitcode = 10;
 	}
 	if (fatalexit != 0) {
-		exitcode = fatalexit;
-	}
-	if (dighost_pre_exit_hook != NULL) {
-		dighost_pre_exit_hook();
+		_exit(fatalexit);
 	}
 	exit(exitcode);
 }
@@ -437,6 +432,11 @@ fatal(const char *format, ...) {
 	vfprintf(stderr, format, args);
 	va_end(args);
 	fprintf(stderr, "\n");
+	if (fatalexit == 0 && exitcode != 0) {
+		fatalexit = exitcode;
+	} else if (fatalexit == 0) {
+		fatalexit = EXIT_FAILURE;
+	}
 	digexit();
 }
 
@@ -3088,7 +3088,7 @@ start_tcp(dig_query_t *query) {
 			isc_nm_httpconnect(netmgr, &localaddr, &query->sockaddr,
 					   uri, !query->lookup->https_get,
 					   tcp_connected, connectquery, tlsctx,
-					   sess_cache, 0, local_timeout);
+					   sess_cache, local_timeout, 0);
 #endif
 		} else {
 			isc_nm_tcpdnsconnect(netmgr, &localaddr,
@@ -3251,7 +3251,7 @@ udp_ready(isc_nmhandle_t *handle, isc_result_t eresult, void *arg) {
 			start_udp(next);
 			check_if_done();
 		} else {
-			dighost_error("no servers could be reached\n");
+			dighost_error("no servers could be reached");
 			clear_current_lookup();
 		}
 
@@ -3434,10 +3434,10 @@ force_next(dig_query_t *query) {
 		isc_netaddr_fromsockaddr(&netaddr, &query->sockaddr);
 		isc_netaddr_format(&netaddr, buf, sizeof(buf));
 
-		dighost_error("no response from %s\n", buf);
+		dighost_error("no response from %s", buf);
 	} else {
 		printf("%s", l->cmdline);
-		dighost_error("no servers could be reached\n");
+		dighost_error("no servers could be reached");
 	}
 
 	if (exitcode < 9) {
@@ -3657,7 +3657,7 @@ tcp_connected(isc_nmhandle_t *handle, isc_result_t eresult, void *arg) {
 			start_tcp(next);
 			check_if_done();
 		} else {
-			dighost_error("no servers could be reached\n");
+			dighost_error("no servers could be reached");
 			clear_current_lookup();
 		}
 
@@ -4111,7 +4111,7 @@ recv_done(isc_nmhandle_t *handle, isc_result_t eresult, isc_region_t *region,
 			 * and cancel the lookup.
 			 */
 			printf("%s", l->cmdline);
-			dighost_error("no servers could be reached\n");
+			dighost_error("no servers could be reached");
 
 			if (exitcode < 9) {
 				exitcode = 9;
@@ -4363,29 +4363,32 @@ recv_done(isc_nmhandle_t *handle, isc_result_t eresult, isc_region_t *region,
 	if ((msg->rcode == dns_rcode_servfail && !l->servfail_stops) ||
 	    (check_ra && (msg->flags & DNS_MESSAGEFLAG_RA) == 0 && l->recurse))
 	{
+		const char *err = (msg->rcode == dns_rcode_servfail &&
+				   !l->servfail_stops)
+					  ? "SERVFAIL reply"
+					  : "recursion not available";
 		dig_query_t *next = ISC_LIST_NEXT(query, link);
 		if (l->current_query == query) {
 			query_detach(&l->current_query);
 		}
-		if (next != NULL) {
+		if (next != NULL && (!l->ns_search_only || l->trace_root)) {
+			dighost_comments(l,
+					 "Got %s from %s, trying next server",
+					 err, query->servname);
 			debug("sending query %p", next);
 			if (l->tcp_mode) {
 				start_tcp(next);
 			} else {
 				start_udp(next);
 			}
-			dighost_comments(l,
-					 "Got %s from %s, trying next "
-					 "server",
-					 msg->rcode == dns_rcode_servfail
-						 ? "SERVFAIL reply"
-						 : "recursion not available",
-					 query->servname);
 			if (check_if_queries_done(l, query)) {
 				goto cancel_lookup;
 			}
 
 			goto detach_query;
+		} else {
+			dighost_comments(l, "Got %s from %s", err,
+					 query->servname);
 		}
 	}
 

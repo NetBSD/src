@@ -1,4 +1,4 @@
-/*	$NetBSD: svcb_64.c,v 1.4 2024/02/21 22:52:15 christos Exp $	*/
+/*	$NetBSD: svcb_64.c,v 1.5 2024/09/22 00:14:08 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -619,10 +619,6 @@ generic_fromtext_in_svcb(ARGS_FROMTEXT) {
 		warn_badname(&name, lexer, callbacks);
 	}
 
-	if (alias) {
-		return (ISC_R_SUCCESS);
-	}
-
 	/*
 	 * SvcParams
 	 */
@@ -801,7 +797,7 @@ static isc_result_t
 generic_fromwire_in_svcb(ARGS_FROMWIRE) {
 	dns_name_t name;
 	isc_region_t region, man = { .base = NULL, .length = 0 };
-	bool alias, first = true, have_alpn = false;
+	bool first = true, have_alpn = false;
 	uint16_t lastkey = 0, mankey = 0;
 
 	UNUSED(type);
@@ -819,17 +815,12 @@ generic_fromwire_in_svcb(ARGS_FROMWIRE) {
 		return (ISC_R_UNEXPECTEDEND);
 	}
 	RETERR(mem_tobuffer(target, region.base, 2));
-	alias = uint16_fromregion(&region) == 0;
 	isc_buffer_forward(source, 2);
 
 	/*
 	 * TargetName.
 	 */
 	RETERR(dns_name_fromwire(&name, source, dctx, options, target));
-
-	if (alias) {
-		return (ISC_R_SUCCESS);
-	}
 
 	/*
 	 * SvcParams.

@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.2 2024/02/21 22:52:28 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.3 2024/09/22 00:14:08 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -82,14 +82,10 @@
 
 #ifdef __OpenBSD__
 #define USE_SYSCTL_PORTRANGE
-#define SYSCTL_V4PORTRANGE_LOW                                         \
-	{                                                              \
-		CTL_NET, PF_INET, IPPROTO_IP, IPCTL_IPPORT_HIFIRSTAUTO \
-	}
-#define SYSCTL_V4PORTRANGE_HIGH                                       \
-	{                                                             \
-		CTL_NET, PF_INET, IPPROTO_IP, IPCTL_IPPORT_HILASTAUTO \
-	}
+#define SYSCTL_V4PORTRANGE_LOW \
+	{ CTL_NET, PF_INET, IPPROTO_IP, IPCTL_IPPORT_HIFIRSTAUTO }
+#define SYSCTL_V4PORTRANGE_HIGH \
+	{ CTL_NET, PF_INET, IPPROTO_IP, IPCTL_IPPORT_HILASTAUTO }
 /* Same for IPv6 */
 #define SYSCTL_V6PORTRANGE_LOW	SYSCTL_V4PORTRANGE_LOW
 #define SYSCTL_V6PORTRANGE_HIGH SYSCTL_V4PORTRANGE_HIGH

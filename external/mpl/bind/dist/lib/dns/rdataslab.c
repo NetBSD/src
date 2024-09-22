@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataslab.c,v 1.8 2024/02/21 22:52:08 christos Exp $	*/
+/*	$NetBSD: rdataslab.c,v 1.9 2024/09/22 00:14:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -116,7 +116,8 @@ fillin_offsets(unsigned char *offsetbase, unsigned int *offsettable,
 
 isc_result_t
 dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
-			   isc_region_t *region, unsigned int reservelen) {
+			   isc_region_t *region, unsigned int reservelen,
+			   uint32_t maxrrperset) {
 	/*
 	 * Use &removed as a sentinel pointer for duplicate
 	 * rdata as rdata.data == NULL is valid.
@@ -156,6 +157,10 @@ dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
 		*rawbuf++ = 0;
 		*rawbuf = 0;
 		return (ISC_R_SUCCESS);
+	}
+
+	if (maxrrperset > 0 && nitems > maxrrperset) {
+		return (DNS_R_TOOMANYRECORDS);
 	}
 
 	if (nitems > 0xffff) {
@@ -322,7 +327,9 @@ dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
 					    ? DNS_RDATASLAB_OFFLINE
 					    : 0;
 		}
-		memmove(rawbuf, x[i].rdata.data, x[i].rdata.length);
+		if (x[i].rdata.length != 0) {
+			memmove(rawbuf, x[i].rdata.data, x[i].rdata.length);
+		}
 		rawbuf += x[i].rdata.length;
 	}
 
@@ -484,7 +491,8 @@ isc_result_t
 dns_rdataslab_merge(unsigned char *oslab, unsigned char *nslab,
 		    unsigned int reservelen, isc_mem_t *mctx,
 		    dns_rdataclass_t rdclass, dns_rdatatype_t type,
-		    unsigned int flags, unsigned char **tslabp) {
+		    unsigned int flags, uint32_t maxrrperset,
+		    unsigned char **tslabp) {
 	unsigned char *ocurrent, *ostart, *ncurrent, *tstart, *tcurrent, *data;
 	unsigned int ocount, ncount, count, olength, tlength, tcount, length;
 	dns_rdata_t ordata = DNS_RDATA_INIT;
@@ -523,6 +531,10 @@ dns_rdataslab_merge(unsigned char *oslab, unsigned char *nslab,
 	ncurrent += (4 * ncount);
 #endif /* if DNS_RDATASET_FIXED */
 	INSIST(ocount > 0 && ncount > 0);
+
+	if (maxrrperset > 0 && ocount + ncount > maxrrperset) {
+		return (DNS_R_TOOMANYRECORDS);
+	}
 
 #if DNS_RDATASET_FIXED
 	oncount = ncount;

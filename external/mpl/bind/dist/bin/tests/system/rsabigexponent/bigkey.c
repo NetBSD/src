@@ -1,4 +1,4 @@
-/*	$NetBSD: bigkey.c,v 1.9 2024/02/21 22:51:36 christos Exp $	*/
+/*	$NetBSD: bigkey.c,v 1.10 2024/09/22 00:14:02 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -70,7 +70,7 @@ EVP_PKEY *pkey;
 				msg, isc_result_totext(result), __FILE__,     \
 				__LINE__);                                    \
 			ERR_clear_error();                                    \
-			exit(1);                                              \
+			exit(EXIT_FAILURE);                                   \
 		}                                                             \
 	} while (0)
 
@@ -88,7 +88,7 @@ main(int argc, char **argv) {
 	{
 		fprintf(stderr, "fatal error: basic OpenSSL failure\n");
 		ERR_clear_error();
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	/* e = 0x1000000000001 */
@@ -104,7 +104,7 @@ main(int argc, char **argv) {
 			"at file %s line %d\n",
 			__FILE__, __LINE__);
 		ERR_clear_error();
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	isc_mem_create(&mctx);

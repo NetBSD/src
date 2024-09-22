@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdns.c,v 1.10 2024/02/21 22:52:32 christos Exp $	*/
+/*	$NetBSD: tcpdns.c,v 1.11 2024/09/22 00:14:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -399,9 +399,10 @@ start_tcpdns_child(isc_nm_t *mgr, isc_sockaddr_t *iface, isc_nmsocket_t *sock,
 		csock->fd = isc__nm_tcpdns_lb_socket(mgr,
 						     iface->type.sa.sa_family);
 	} else {
+		INSIST(fd >= 0);
 		csock->fd = dup(fd);
 	}
-	REQUIRE(csock->fd >= 0);
+	INSIST(csock->fd >= 0);
 
 	ievent = isc__nm_get_netievent_tcpdnslisten(mgr, csock);
 	isc__nm_maybe_enqueue_ievent(&mgr->workers[tid],
@@ -691,6 +692,7 @@ destroy:
 	 * chance to be executed.
 	 */
 	if (sock->quota != NULL) {
+		isc__nm_decstats(sock, STATID_CLIENTS);
 		isc_quota_detach(&sock->quota);
 	}
 }
@@ -735,7 +737,7 @@ isc__nm_async_tcpdnsread(isc__networker_t *worker, isc__netievent_t *ev0) {
 	isc__netievent_tcpdnsread_t *ievent =
 		(isc__netievent_tcpdnsread_t *)ev0;
 	isc_nmsocket_t *sock = ievent->sock;
-	isc_result_t result;
+	isc_result_t result = ISC_R_SUCCESS;
 
 	UNUSED(worker);
 
@@ -744,7 +746,7 @@ isc__nm_async_tcpdnsread(isc__networker_t *worker, isc__netievent_t *ev0) {
 
 	if (isc__nmsocket_closing(sock)) {
 		result = ISC_R_CANCELED;
-	} else {
+	} else if (!sock->reading_throttled) {
 		result = isc__nm_process_sock_buffer(sock);
 	}
 
@@ -914,6 +916,28 @@ isc__nm_tcpdns_read_cb(uv_stream_t *stream, ssize_t nread,
 	result = isc__nm_process_sock_buffer(sock);
 	if (result != ISC_R_SUCCESS) {
 		isc__nm_failed_read_cb(sock, result, true);
+	} else if (!sock->client) {
+		/*
+		 * Stop reading if we have accumulated enough bytes in
+		 * the send queue; this means that the TCP client is not
+		 * reading back the data we sending to it, and there's
+		 * no reason to continue processing more incoming DNS
+		 * messages, if the client is not reading back the
+		 * responses.
+		 */
+		size_t write_queue_size =
+			uv_stream_get_write_queue_size(&sock->uv_handle.stream);
+
+		if (write_queue_size >= ISC_NETMGR_TCP_SENDBUF_SIZE) {
+			isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
+				      ISC_LOGMODULE_NETMGR, ISC_LOG_DEBUG(3),
+				      "throttling TCP connection, "
+				      "the other side is "
+				      "not reading the data (%zu)",
+				      write_queue_size);
+			sock->reading_throttled = true;
+			isc__nm_stop_reading(sock);
+		}
 	}
 free:
 	if (nread < 0) {
@@ -1083,6 +1107,8 @@ accept_connection(isc_nmsocket_t *ssock, isc_quota_t *quota) {
 
 	isc_nmhandle_detach(&handle);
 
+	isc__nm_incstats(csock, STATID_CLIENTS);
+
 	/*
 	 * sock is now attached to the handle.
 	 */
@@ -1135,6 +1161,19 @@ isc__nm_tcpdns_send(isc_nmhandle_t *handle, isc_region_t *region,
 }
 
 static void
+tcpdns_maybe_restart_reading(isc_nmsocket_t *sock) {
+	if (!sock->client && sock->reading_throttled &&
+	    !uv_is_active(&sock->uv_handle.handle))
+	{
+		isc_result_t result = isc__nm_process_sock_buffer(sock);
+		if (result != ISC_R_SUCCESS) {
+			atomic_store(&sock->reading, true);
+			isc__nm_failed_read_cb(sock, result, false);
+		}
+	}
+}
+
+static void
 tcpdns_send_cb(uv_write_t *req, int status) {
 	isc__nm_uvreq_t *uvreq = (isc__nm_uvreq_t *)req->data;
 	isc_nmsocket_t *sock = NULL;
@@ -1151,10 +1190,23 @@ tcpdns_send_cb(uv_write_t *req, int status) {
 		isc__nm_incstats(sock, STATID_SENDFAIL);
 		isc__nm_failed_send_cb(sock, uvreq,
 				       isc__nm_uverr2result(status));
+
+		if (!sock->client &&
+		    (atomic_load(&sock->reading) || sock->reading_throttled))
+		{
+			/*
+			 * As we are resuming reading, it is not throttled
+			 * anymore (technically).
+			 */
+			sock->reading_throttled = false;
+			isc__nm_start_reading(sock);
+			isc__nmsocket_reset(sock);
+		}
 		return;
 	}
 
 	isc__nm_sendcb(sock, uvreq, ISC_R_SUCCESS, false);
+	tcpdns_maybe_restart_reading(sock);
 }
 
 /*
@@ -1219,6 +1271,13 @@ isc__nm_async_tcpdnssend(isc__networker_t *worker, isc__netievent_t *ev0) {
 		result = isc__nm_uverr2result(r);
 		goto fail;
 	}
+
+	isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL, ISC_LOGMODULE_NETMGR,
+		      ISC_LOG_DEBUG(3),
+		      "throttling TCP connection, the other side is not "
+		      "reading the data, switching to uv_write()");
+	sock->reading_throttled = true;
+	isc__nm_stop_reading(sock);
 
 	r = uv_write(&uvreq->uv_req.write, &sock->uv_handle.stream, bufs, nbufs,
 		     tcpdns_send_cb);
@@ -1368,6 +1427,7 @@ tcpdns_close_direct(isc_nmsocket_t *sock) {
 	REQUIRE(atomic_load(&sock->closing));
 
 	if (sock->quota != NULL) {
+		isc__nm_decstats(sock, STATID_CLIENTS);
 		isc_quota_detach(&sock->quota);
 	}
 

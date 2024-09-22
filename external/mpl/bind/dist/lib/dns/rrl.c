@@ -1,4 +1,4 @@
-/*	$NetBSD: rrl.c,v 1.9 2024/02/21 22:52:08 christos Exp $	*/
+/*	$NetBSD: rrl.c,v 1.10 2024/09/22 00:14:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -55,30 +55,8 @@ log_end(dns_rrl_t *rrl, dns_rrl_entry_t *e, bool early, char *log_buf,
 static int
 hash_divisor(unsigned int initial) {
 	static uint16_t primes[] = {
-		3,
-		5,
-		7,
-		11,
-		13,
-		17,
-		19,
-		23,
-		29,
-		31,
-		37,
-		41,
-		43,
-		47,
-		53,
-		59,
-		61,
-		67,
-		71,
-		73,
-		79,
-		83,
-		89,
-		97,
+		3,  5,	7,  11, 13, 17, 19, 23, 29, 31, 37, 41,
+		43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97,
 #if 0
 		101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157,
 		163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227,

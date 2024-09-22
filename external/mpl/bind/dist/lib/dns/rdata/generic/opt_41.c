@@ -1,4 +1,4 @@
-/*	$NetBSD: opt_41.c,v 1.11 2024/02/21 22:52:13 christos Exp $	*/
+/*	$NetBSD: opt_41.c,v 1.12 2024/09/22 00:14:08 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -74,9 +74,9 @@ totext_opt(ARGS_TOTEXT) {
 			or = r;
 			or.length = length;
 			if (tctx->width == 0) { /* No splitting */
-				RETERR(isc_base64_totext(& or, 60, "", target));
+				RETERR(isc_base64_totext(&or, 60, "", target));
 			} else {
-				RETERR(isc_base64_totext(& or, tctx->width - 2,
+				RETERR(isc_base64_totext(&or, tctx->width - 2,
 							 tctx->linebreak,
 							 target));
 			}

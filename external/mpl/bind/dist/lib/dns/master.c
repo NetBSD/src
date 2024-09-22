@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.12 2024/02/21 22:52:07 christos Exp $	*/
+/*	$NetBSD: master.c,v 1.13 2024/09/22 00:14:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -216,33 +216,52 @@ task_send(dns_loadctx_t *lctx);
 static void
 loadctx_destroy(dns_loadctx_t *lctx);
 
-#define GETTOKENERR(lexer, options, token, eol, err)                      \
-	do {                                                              \
-		result = gettoken(lexer, options, token, eol, callbacks); \
-		switch (result) {                                         \
-		case ISC_R_SUCCESS:                                       \
-			break;                                            \
-		case ISC_R_UNEXPECTED:                                    \
-			goto insist_and_cleanup;                          \
-		default:                                                  \
-			if (MANYERRS(lctx, result)) {                     \
-				SETRESULT(lctx, result);                  \
-				LOGIT(result);                            \
-				read_till_eol = true;                     \
-				err goto next_line;                       \
-			} else                                            \
-				goto log_and_cleanup;                     \
-		}                                                         \
-		if ((token)->type == isc_tokentype_special) {             \
-			result = DNS_R_SYNTAX;                            \
-			if (MANYERRS(lctx, result)) {                     \
-				SETRESULT(lctx, result);                  \
-				LOGIT(result);                            \
-				read_till_eol = true;                     \
-				goto next_line;                           \
-			} else                                            \
-				goto log_and_cleanup;                     \
-		}                                                         \
+#define LCTX_MANYERRORS(lctx) (((lctx)->options & DNS_MASTER_MANYERRORS) != 0)
+
+#define GETTOKENERR(lexer, options, token, eol, err)                         \
+	do {                                                                 \
+		result = gettoken(lexer, options, token, eol, callbacks);    \
+		switch (result) {                                            \
+		case ISC_R_SUCCESS:                                          \
+			break;                                               \
+		case ISC_R_NOTFILE:                                          \
+			/* Treat "bad" $INCLUDE as eof. */                   \
+			if (ictx->parent != NULL && LCTX_MANYERRORS(lctx)) { \
+				SETRESULT(lctx, result);                     \
+				COMMITALL;                                   \
+				lctx->inc = ictx->parent;                    \
+				ictx->parent = NULL;                         \
+				incctx_destroy(lctx->mctx, ictx);            \
+				RUNTIME_CHECK(isc_lex_close(lctx->lex) ==    \
+					      ISC_R_SUCCESS);                \
+				line = isc_lex_getsourceline(lctx->lex);     \
+				POST(line);                                  \
+				source = isc_lex_getsourcename(lctx->lex);   \
+				ictx = lctx->inc;                            \
+				continue;                                    \
+			}                                                    \
+			goto insist_and_cleanup;                             \
+		case ISC_R_UNEXPECTED:                                       \
+			goto insist_and_cleanup;                             \
+		default:                                                     \
+			if (MANYERRS(lctx, result)) {                        \
+				SETRESULT(lctx, result);                     \
+				LOGIT(result);                               \
+				read_till_eol = true;                        \
+				err goto next_line;                          \
+			} else                                               \
+				goto log_and_cleanup;                        \
+		}                                                            \
+		if ((token)->type == isc_tokentype_special) {                \
+			result = DNS_R_SYNTAX;                               \
+			if (MANYERRS(lctx, result)) {                        \
+				SETRESULT(lctx, result);                     \
+				LOGIT(result);                               \
+				read_till_eol = true;                        \
+				goto next_line;                              \
+			} else                                               \
+				goto log_and_cleanup;                        \
+		}                                                            \
 	} while (0)
 #define GETTOKEN(lexer, options, token, eol) \
 	GETTOKENERR(lexer, options, token, eol, {})
@@ -295,7 +314,7 @@ loadctx_destroy(dns_loadctx_t *lctx);
 
 #define MANYERRS(lctx, result)                                     \
 	((result != ISC_R_SUCCESS) && (result != ISC_R_IOERROR) && \
-	 ((lctx)->options & DNS_MASTER_MANYERRORS) != 0)
+	 LCTX_MANYERRORS(lctx))
 
 #define SETRESULT(lctx, r)                           \
 	do {                                         \
@@ -628,7 +647,8 @@ static const char *hex = "0123456789abcdef0123456789ABCDEF";
  * counting the terminating NUL.
  */
 static unsigned int
-nibbles(char *numbuf, size_t length, unsigned int width, char mode, int value) {
+nibbles(char *numbuf, size_t length, unsigned int width, char mode,
+	unsigned int value) {
 	unsigned int count = 0;
 
 	/*

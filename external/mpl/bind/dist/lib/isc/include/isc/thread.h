@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.h,v 1.2 2024/02/21 22:52:31 christos Exp $	*/
+/*	$NetBSD: thread.h,v 1.3 2024/09/22 00:14:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -50,6 +50,6 @@ isc_thread_yield(void);
 void
 isc_thread_setname(isc_thread_t thread, const char *name);
 
-#define isc_thread_self (uintptr_t) pthread_self
+#define isc_thread_self (uintptr_t)pthread_self
 
 ISC_LANG_ENDDECLS

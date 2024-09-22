@@ -1,4 +1,4 @@
-/*	$NetBSD: masterdump.c,v 1.14 2024/02/21 22:52:07 christos Exp $	*/
+/*	$NetBSD: masterdump.c,v 1.15 2024/09/22 00:14:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -478,11 +478,43 @@ str_totext(const char *source, isc_buffer_t *target) {
 }
 
 static isc_result_t
+yaml_stringify(isc_buffer_t *target, char *start) {
+	isc_region_t r;
+	char *s = start;
+	char *tmp = NULL;
+
+	isc_buffer_availableregion(target, &r);
+	if (r.length < 1) {
+		return (ISC_R_NOSPACE);
+	}
+
+	/* NUL terminate buffer for string operations below */
+	r.base[0] = '\0';
+
+	/* Escape quotes in string using quote quote */
+	while ((tmp = strchr(s, '\'')) != NULL) {
+		isc_buffer_availableregion(target, &r);
+		/* Space to shift by 1 with trailing NUL? */
+		if (r.length < 2) {
+			return (ISC_R_NOSPACE);
+		}
+		memmove(tmp + 1, tmp,
+			(char *)isc_buffer_used(target) - tmp + 1);
+		isc_buffer_add(target, 1);
+		/* We now have "''..." - skip both quotes. */
+		s = tmp + 2;
+	}
+
+	return (ISC_R_SUCCESS);
+}
+
+static isc_result_t
 ncache_summary(dns_rdataset_t *rdataset, bool omit_final_dot,
 	       dns_totext_ctx_t *ctx, isc_buffer_t *target) {
 	isc_result_t result = ISC_R_SUCCESS;
 	dns_rdataset_t rds;
 	dns_name_t name;
+	char *start = NULL;
 
 	dns_rdataset_init(&rds);
 	dns_name_init(&name, NULL);
@@ -503,7 +535,8 @@ ncache_summary(dns_rdataset_t *rdataset, bool omit_final_dot,
 			}
 
 			if ((ctx->style.flags & DNS_STYLEFLAG_YAML) != 0) {
-				CHECK(str_totext("- ", target));
+				CHECK(str_totext("- '", target));
+				start = isc_buffer_used(target);
 			} else {
 				CHECK(str_totext("; ", target));
 			}
@@ -514,7 +547,7 @@ ncache_summary(dns_rdataset_t *rdataset, bool omit_final_dot,
 			if (rds.type == dns_rdatatype_rrsig) {
 				CHECK(str_totext(" ", target));
 				CHECK(dns_rdatatype_totext(rds.covers, target));
-				CHECK(str_totext(" ...\n", target));
+				CHECK(str_totext(" ...", target));
 			} else {
 				dns_rdata_t rdata = DNS_RDATA_INIT;
 				dns_rdataset_current(&rds, &rdata);
@@ -522,8 +555,12 @@ ncache_summary(dns_rdataset_t *rdataset, bool omit_final_dot,
 				CHECK(dns_rdata_tofmttext(&rdata, dns_rootname,
 							  0, 0, 0, " ",
 							  target));
-				CHECK(str_totext("\n", target));
 			}
+			if (start != NULL) {
+				RETERR(yaml_stringify(target, start));
+				CHECK(str_totext("\'", target));
+			}
+			CHECK(str_totext("\n", target));
 		}
 		dns_rdataset_disassociate(&rds);
 		result = dns_rdataset_next(rdataset);
@@ -561,6 +598,7 @@ rdataset_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 	dns_fixedname_t fixed;
 	dns_name_t *name = NULL;
 	unsigned int i;
+	char *start = NULL;
 
 	REQUIRE(DNS_RDATASET_VALID(rdataset));
 
@@ -594,7 +632,8 @@ rdataset_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 		 * YAML or comment prefix?
 		 */
 		if ((ctx->style.flags & DNS_STYLEFLAG_YAML) != 0) {
-			RETERR(str_totext("- ", target));
+			RETERR(str_totext("- '", target));
+			start = isc_buffer_used(target);
 		} else if ((ctx->style.flags & DNS_STYLEFLAG_COMMENTDATA) != 0)
 		{
 			RETERR(str_totext(";", target));
@@ -742,7 +781,6 @@ rdataset_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 			break;
 		} else {
 			dns_rdata_t rdata = DNS_RDATA_INIT;
-			isc_region_t r;
 
 			dns_rdataset_current(rdataset, &rdata);
 
@@ -752,13 +790,12 @@ rdataset_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 					ctx->style.rdata_column,
 				ctx->style.split_width, ctx->linebreak,
 				target));
-
-			isc_buffer_availableregion(target, &r);
-			if (r.length < 1) {
-				return (ISC_R_NOSPACE);
+			if (start != NULL) {
+				RETERR(yaml_stringify(target, start));
+				RETERR(str_totext("'\n", target));
+			} else {
+				RETERR(str_totext("\n", target));
 			}
-			r.base[0] = '\n';
-			isc_buffer_add(target, 1);
 		}
 
 		first = false;
@@ -794,13 +831,18 @@ question_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 		isc_buffer_t *target) {
 	unsigned int column;
 	isc_result_t result;
-	isc_region_t r;
+	char *start = NULL;
 
 	REQUIRE(DNS_RDATASET_VALID(rdataset));
 	result = dns_rdataset_first(rdataset);
 	REQUIRE(result == ISC_R_NOMORE);
 
 	column = 0;
+
+	if ((ctx->style.flags & DNS_STYLEFLAG_YAML) != 0) {
+		RETERR(str_totext("- '", target));
+		start = isc_buffer_used(target);
+	}
 
 	/* Owner name */
 	{
@@ -844,12 +886,11 @@ question_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 		column += (target->used - type_start);
 	}
 
-	isc_buffer_availableregion(target, &r);
-	if (r.length < 1) {
-		return (ISC_R_NOSPACE);
+	if (start != NULL) {
+		RETERR(yaml_stringify(target, start));
+		RETERR(str_totext("\'", target));
 	}
-	r.base[0] = '\n';
-	isc_buffer_add(target, 1);
+	RETERR(str_totext("\n", target));
 
 	return (ISC_R_SUCCESS);
 }

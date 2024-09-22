@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.c,v 1.14 2024/02/21 22:52:06 christos Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.15 2024/09/22 00:14:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1848,9 +1848,9 @@ failure:
 	return (result);
 }
 
-static isc_result_t
-make_dnskey(dst_key_t *key, unsigned char *buf, int bufsize,
-	    dns_rdata_t *target) {
+isc_result_t
+dns_dnssec_make_dnskey(dst_key_t *key, unsigned char *buf, int bufsize,
+		       dns_rdata_t *target) {
 	isc_result_t result;
 	isc_buffer_t b;
 	isc_region_t r;
@@ -1906,7 +1906,7 @@ publish_key(dns_diff_t *diff, dns_dnsseckey_t *key, const dns_name_t *origin,
 	dns_rdata_t dnskey = DNS_RDATA_INIT;
 
 	dns_rdata_reset(&dnskey);
-	RETERR(make_dnskey(key->key, buf, sizeof(buf), &dnskey));
+	RETERR(dns_dnssec_make_dnskey(key->key, buf, sizeof(buf), &dnskey));
 	dst_key_format(key->key, keystr, sizeof(keystr));
 
 	report("Fetching %s (%s) from key %s.", keystr,
@@ -1946,7 +1946,7 @@ remove_key(dns_diff_t *diff, dns_dnsseckey_t *key, const dns_name_t *origin,
 	report("Removing %s key %s/%d/%s from DNSKEY RRset.", reason, namebuf,
 	       dst_key_id(key->key), alg);
 
-	RETERR(make_dnskey(key->key, buf, sizeof(buf), &dnskey));
+	RETERR(dns_dnssec_make_dnskey(key->key, buf, sizeof(buf), &dnskey));
 	result = delrdata(&dnskey, diff, origin, ttl, mctx);
 
 failure:
@@ -1985,6 +1985,19 @@ dns_dnssec_syncupdate(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *rmkeys,
 	unsigned char keybuf[DST_KEY_MAXSIZE];
 	isc_result_t result;
 	dns_dnsseckey_t *key;
+	dns_ttl_t cdsttl = ttl;
+	dns_ttl_t cdnskeyttl = ttl;
+
+	REQUIRE(keys != NULL);
+	REQUIRE(rmkeys != NULL);
+
+	if (dns_rdataset_isassociated(cds)) {
+		cdsttl = cds->ttl;
+	}
+
+	if (dns_rdataset_isassociated(cdnskey)) {
+		cdnskeyttl = cdnskey->ttl;
+	}
 
 	for (key = ISC_LIST_HEAD(*keys); key != NULL;
 	     key = ISC_LIST_NEXT(key, link))
@@ -1994,8 +2007,8 @@ dns_dnssec_syncupdate(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *rmkeys,
 		dns_rdata_t cdnskeyrdata = DNS_RDATA_INIT;
 		dns_name_t *origin = dst_key_name(key->key);
 
-		RETERR(make_dnskey(key->key, keybuf, sizeof(keybuf),
-				   &cdnskeyrdata));
+		RETERR(dns_dnssec_make_dnskey(key->key, keybuf, sizeof(keybuf),
+					      &cdnskeyrdata));
 
 		/*
 		 * We construct the SHA-1 version of the record so we can
@@ -2026,25 +2039,25 @@ dns_dnssec_syncupdate(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *rmkeys,
 			if (!dns_rdataset_isassociated(cdnskey) ||
 			    !exists(cdnskey, &cdnskeyrdata))
 			{
-				isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
-					      DNS_LOGMODULE_DNSSEC,
-					      ISC_LOG_INFO,
-					      "CDS for key %s is now published",
-					      keystr);
-				RETERR(addrdata(&cdnskeyrdata, diff, origin,
-						ttl, mctx));
-			}
-			/* Only publish SHA-256 (SHA-1 is deprecated) */
-			if (!dns_rdataset_isassociated(cds) ||
-			    !exists(cds, &cds_sha256))
-			{
 				isc_log_write(
 					dns_lctx, DNS_LOGCATEGORY_GENERAL,
 					DNS_LOGMODULE_DNSSEC, ISC_LOG_INFO,
 					"CDNSKEY for key %s is now published",
 					keystr);
-				RETERR(addrdata(&cds_sha256, diff, origin, ttl,
-						mctx));
+				RETERR(addrdata(&cdnskeyrdata, diff, origin,
+						cdnskeyttl, mctx));
+			}
+			/* Only publish SHA-256 (SHA-1 is deprecated) */
+			if (!dns_rdataset_isassociated(cds) ||
+			    !exists(cds, &cds_sha256))
+			{
+				isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
+					      DNS_LOGMODULE_DNSSEC,
+					      ISC_LOG_INFO,
+					      "CDS for key %s is now published",
+					      keystr);
+				RETERR(addrdata(&cds_sha256, diff, origin,
+						cdsttl, mctx));
 			}
 		}
 
@@ -2116,8 +2129,8 @@ dns_dnssec_syncupdate(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *rmkeys,
 		char keystr[DST_KEY_FORMATSIZE];
 		dst_key_format(key->key, keystr, sizeof(keystr));
 
-		RETERR(make_dnskey(key->key, keybuf, sizeof(keybuf),
-				   &cdnskeyrdata));
+		RETERR(dns_dnssec_make_dnskey(key->key, keybuf, sizeof(keybuf),
+					      &cdnskeyrdata));
 
 		if (dns_rdataset_isassociated(cds)) {
 			RETERR(dns_ds_buildrdata(origin, &cdnskeyrdata,

@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.h,v 1.2 2024/02/21 22:52:29 christos Exp $	*/
+/*	$NetBSD: attributes.h,v 1.3 2024/09/22 00:14:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -82,3 +82,5 @@
 #define ISC_ATTR_MALLOC_DEALLOCATOR(deallocator)
 #define ISC_ATTR_MALLOC_DEALLOCATOR_IDX(deallocator, idx)
 #endif /* HAVE_FUNC_ATTRIBUTE_MALLOC */
+
+#define ISC_ATTR_UNUSED __attribute__((__unused__))

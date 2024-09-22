@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.h,v 1.9 2024/02/21 22:52:10 christos Exp $	*/
+/*	$NetBSD: rdata.h,v 1.10 2024/09/22 00:14:07 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -572,6 +572,13 @@ dns_rdatatype_isdnssec(dns_rdatatype_t type);
  *
  * Requires:
  * \li	'type' is a valid rdata type.
+ */
+
+bool
+dns_rdatatype_iskeymaterial(dns_rdatatype_t type);
+/*%<
+ * Return true iff the rdata type 'type' is a DNSSEC key
+ * related type, like DNSKEY, CDNSKEY, or CDS.
  */
 
 bool

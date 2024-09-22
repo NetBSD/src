@@ -1,4 +1,4 @@
-/*	$NetBSD: sdlz.c,v 1.12 2024/02/21 22:52:08 christos Exp $	*/
+/*	$NetBSD: sdlz.c,v 1.13 2024/09/22 00:14:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1215,9 +1215,10 @@ overmem(dns_db_t *db, bool over) {
 }
 
 static void
-settask(dns_db_t *db, isc_task_t *task) {
+settask(dns_db_t *db, isc_task_t *task, isc_task_t *prunetask) {
 	UNUSED(db);
 	UNUSED(task);
+	UNUSED(prunetask);
 }
 
 /*
@@ -1244,34 +1245,57 @@ getoriginnode(dns_db_t *db, dns_dbnode_t **nodep) {
 }
 
 static dns_dbmethods_t sdlzdb_methods = {
-	attach,		detach,		beginload,
-	endload,	dump,		currentversion,
-	newversion,	attachversion,	closeversion,
-	findnode,	find,		findzonecut,
-	attachnode,	detachnode,	expirenode,
-	printnode,	createiterator, findrdataset,
-	allrdatasets,	addrdataset,	subtractrdataset,
-	deleterdataset, issecure,	nodecount,
-	ispersistent,	overmem,	settask,
-	getoriginnode,	NULL,		      /* transfernode */
-	NULL,				      /* getnsec3parameters */
-	NULL,				      /* findnsec3node */
-	NULL,				      /* setsigningtime */
-	NULL,				      /* getsigningtime */
-	NULL,				      /* resigned */
-	NULL,				      /* isdnssec */
-	NULL,				      /* getrrsetstats */
-	NULL,				      /* rpz_attach */
-	NULL,				      /* rpz_ready */
-	findnodeext,	findext,	NULL, /* setcachestats */
-	NULL,				      /* hashsize */
-	NULL,				      /* nodefullname */
-	NULL,				      /* getsize */
-	NULL,				      /* setservestalettl */
-	NULL,				      /* getservestalettl */
-	NULL,				      /* setservestalerefresh */
-	NULL,				      /* getservestalerefresh */
-	NULL,				      /* setgluecachestats */
+	attach,
+	detach,
+	beginload,
+	endload,
+	dump,
+	currentversion,
+	newversion,
+	attachversion,
+	closeversion,
+	findnode,
+	find,
+	findzonecut,
+	attachnode,
+	detachnode,
+	expirenode,
+	printnode,
+	createiterator,
+	findrdataset,
+	allrdatasets,
+	addrdataset,
+	subtractrdataset,
+	deleterdataset,
+	issecure,
+	nodecount,
+	ispersistent,
+	overmem,
+	settask,
+	getoriginnode,
+	NULL, /* transfernode */
+	NULL, /* getnsec3parameters */
+	NULL, /* findnsec3node */
+	NULL, /* setsigningtime */
+	NULL, /* getsigningtime */
+	NULL, /* resigned */
+	NULL, /* isdnssec */
+	NULL, /* getrrsetstats */
+	NULL, /* rpz_attach */
+	NULL, /* rpz_ready */
+	findnodeext,
+	findext,
+	NULL, /* setcachestats */
+	NULL, /* hashsize */
+	NULL, /* nodefullname */
+	NULL, /* getsize */
+	NULL, /* setservestalettl */
+	NULL, /* getservestalettl */
+	NULL, /* setservestalerefresh */
+	NULL, /* getservestalerefresh */
+	NULL, /* setgluecachestats */
+	NULL, /* setmaxrrperset */
+	NULL  /* setmaxtypepername */
 };
 
 /*
