@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2024/09/22 09:34:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2024/09/22 13:58:22 jakllsch Exp $
 
 .include <bsd.own.mk>
 
@@ -44,8 +44,6 @@ ISOS=		ISO8859-1 ISO8859-2 ISO8859-3 ISO8859-4 ISO8859-5 \
 .for _l in	${ISOS}
 UCSFILES+=	clR6x12 ${_l}
 .endfor
-
-.endif
 
 .include "../../Makefile.bdf"
 
