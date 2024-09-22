@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.48 2024/09/22 15:51:59 jakllsch Exp $
+# $NetBSD: mi,v 1.49 2024/09/22 16:02:49 jakllsch Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3936,6 +3936,7 @@
 ./usr/X11R7/lib/X11/fonts/cyrillic/crox4hb.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/cyrillic/crox4hbo.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/cyrillic/crox4ho.pcf.gz		xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/cyrillic/crox4t.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/cyrillic/crox4tb.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/cyrillic/crox4tbo.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/cyrillic/crox4to.pcf.gz		xfont	share,xorg,x11fonts
