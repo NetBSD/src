@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.305 2023/10/09 11:55:34 riastradh Exp $	*/
+/*	$NetBSD: if.h,v 1.306 2024/09/22 08:21:33 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -451,7 +451,7 @@ typedef struct ifnet {
 /*			0x0020		   was IFF_NOTRAILERS */
 #else
 /*
- * sys/compat/svr4 is remvoed on 19 Dec 2018.
+ * sys/compat/svr4 is removed on 19 Dec 2018.
  * And then, IFF_NOTRAILERS itself is removed by if.h:r1.268 on 5 Feb 2019.
  */
 #define	IFF_UNNUMBERED	0x0020		/* explicit unnumbered */
