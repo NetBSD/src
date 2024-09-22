@@ -1,4 +1,4 @@
-#	$NetBSD: WII,v 1.5 2024/09/17 13:47:30 jakllsch Exp $
+#	$NetBSD: WII,v 1.6 2024/09/22 14:07:13 jmcneill Exp $
 #
 #	Nintendo Wii
 #
@@ -147,8 +147,8 @@ avenc0		at iic0 addr 0x70			# A/V Encoder
 resetbtn0	at hollywood0 irq 17			# Reset button
 
 ehci0		at hollywood0 addr 0x0d040000 irq 4	# EHCI
-#ohci0		at hollywood0 addr 0x0d050000 irq 5	# OHCI0
-#ohci1		at hollywood0 addr 0x0d060000 irq 6	# OHCI1
+ohci0		at hollywood0 addr 0x0d050000 irq 5	# OHCI0
+ohci1		at hollywood0 addr 0x0d060000 irq 6	# OHCI1
 usb*		at usbus?
 
 sdhc0		at hollywood0 addr 0x0d070000 irq 7	# SD card
