@@ -1,4 +1,4 @@
-/*	$NetBSD: uncompr.c,v 1.4 2022/10/15 19:49:32 christos Exp $	*/
+/*	$NetBSD: uncompr.c,v 1.5 2024/09/22 19:12:27 christos Exp $	*/
 
 /* uncompr.c -- decompress a memory buffer
  * Copyright (C) 1995-2003, 2010, 2014, 2016 Jean-loup Gailly, Mark Adler
@@ -26,12 +26,8 @@
    Z_DATA_ERROR if the input data was corrupted, including if the input data is
    an incomplete zlib stream.
 */
-int ZEXPORT uncompress2(dest, destLen, source, sourceLen)
-    Bytef *dest;
-    uLongf *destLen;
-    const Bytef *source;
-    uLong *sourceLen;
-{
+int ZEXPORT uncompress2(Bytef *dest, uLongf *destLen, const Bytef *source,
+                        uLong *sourceLen) {
     z_stream stream;
     int err;
     const uInt max = (uInt)-1;
@@ -85,11 +81,7 @@ int ZEXPORT uncompress2(dest, destLen, source, sourceLen)
            err;
 }
 
-int ZEXPORT uncompress(dest, destLen, source, sourceLen)
-    Bytef *dest;
-    uLongf *destLen;
-    const Bytef *source;
-    uLong sourceLen;
-{
+int ZEXPORT uncompress(Bytef *dest, uLongf *destLen, const Bytef *source,
+                       uLong sourceLen) {
     return uncompress2(dest, destLen, source, &sourceLen);
 }

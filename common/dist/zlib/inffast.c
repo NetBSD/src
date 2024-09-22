@@ -1,4 +1,4 @@
-/*	$NetBSD: inffast.c,v 1.5 2022/10/15 19:49:32 christos Exp $	*/
+/*	$NetBSD: inffast.c,v 1.6 2024/09/22 19:12:27 christos Exp $	*/
 
 /* inffast.c -- fast decoding
  * Copyright (C) 1995-2017 Mark Adler
@@ -49,10 +49,7 @@
       requires strm->avail_out >= 258 for each loop to avoid checking for
       output space.
  */
-void ZLIB_INTERNAL inflate_fast(strm, start)
-z_streamp strm;
-unsigned start;         /* inflate()'s starting value for strm->avail_out */
-{
+void ZLIB_INTERNAL inflate_fast(z_streamp strm, unsigned start) {
     struct inflate_state FAR *state;
     z_const unsigned char FAR *in;      /* local strm->next_in */
     z_const unsigned char FAR *last;    /* have enough input while in < last */
