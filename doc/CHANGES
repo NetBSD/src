@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3095 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3096 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -522,4 +522,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	mac68k: Support for the power button on PB 160/180.  [nat 20240914]
 	byacc: Update to 20240109. [christos 20240914]
 	wpa: Import wpa_supplicant and hostapd 2.11. [christos 20240918]
-
+	bind: Import 9.18.30 [christos 20240921]
