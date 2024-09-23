@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.7 2024/07/16 12:01:19 riastradh Exp $
+# $NetBSD: GENERIC,v 1.8 2024/09/23 10:38:31 rin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/virt68k/conf/std.virt68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.7 $"
+#ident 		"GENERIC-$Revision: 1.8 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -68,6 +68,9 @@ file-system	MSDOSFS
 file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+file-system	NULLFS		# loopback file system
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
+pseudo-device	putter		# for puffs and pud
 
 # File system options
 #options 	FFS_EI		# FFS Endian Independent support
@@ -104,6 +107,11 @@ include 	"conf/compat_netbsd09.config"
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 #options 	COMPAT_LINUX	# compatibility with Linux/m68k binaries
 #options 	COMPAT_OSSAUDIO	# compatibility with Linux/m68k binaries
+
+# Shared memory options
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
 
 ## force NFS root and swap
 #config	netbsd		root on ? type nfs
@@ -142,6 +150,10 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	npf			# NPF packet filter
 pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
+
+# crypto pseudo-devices
+pseudo-device	crypto			# /dev/crypto device
+pseudo-device	swcrypto		# software crypto implementation
 
 # random number generator pseudo-device
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
