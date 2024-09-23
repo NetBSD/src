@@ -82,15 +82,9 @@ typedef enum witness_rank_e witness_rank_t;
 /* PER-WITNESS DATA */
 /******************************************************************************/
 #if defined(JEMALLOC_DEBUG)
-#  define WITNESS_INITIALIZER(_field, _name, _rank) _field = { \
-	.name = _name, \
-	.rank = _rank, \
-	.comp = NULL, \
-	.opaque = NULL, \
-	.link = { .qre_prev = NULL, .qre_next = NULL }, \
-},
+#  define WITNESS_INITIALIZER(name, rank) {name, rank, NULL, NULL, {NULL, NULL}}
 #else
-#  define WITNESS_INITIALIZER(field, name, rank)
+#  define WITNESS_INITIALIZER(name, rank)
 #endif
 
 typedef struct witness_s witness_t;

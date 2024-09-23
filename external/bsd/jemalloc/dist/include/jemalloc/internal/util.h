@@ -84,6 +84,7 @@ util_prefetch_read(void *ptr) {
 	}
 	__builtin_prefetch(ptr, /* read or write */ 0, /* locality hint */ 3);
 #else
+	/*LINTED*/
 	*(volatile char *)ptr;
 #endif
 }
@@ -100,6 +101,7 @@ util_prefetch_write(void *ptr) {
 	 */
 	__builtin_prefetch(ptr, 1, 3);
 #else
+	/*LINTED*/
 	*(volatile char *)ptr;
 #endif
 }

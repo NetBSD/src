@@ -692,7 +692,7 @@ edata_esnead_comp(const edata_t *a, const edata_t *b) {
 	return ret;
 }
 
-ph_proto(, edata_avail, edata_t)
-ph_proto(, edata_heap, edata_t)
+ph_proto(, edata_avail, edata_t);
+ph_proto(, edata_heap, edata_t);
 
 #endif /* JEMALLOC_INTERNAL_EDATA_H */

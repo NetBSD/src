@@ -50,10 +50,10 @@ extern size_t lg_prof_sample;
 extern bool prof_booted;
 
 void prof_backtrace_hook_set(prof_backtrace_hook_t hook);
-prof_backtrace_hook_t prof_backtrace_hook_get();
+prof_backtrace_hook_t prof_backtrace_hook_get(void);
 
 void prof_dump_hook_set(prof_dump_hook_t hook);
-prof_dump_hook_t prof_dump_hook_get();
+prof_dump_hook_t prof_dump_hook_get(void);
 
 /* Functions only accessed in prof_inlines.h */
 prof_tdata_t *prof_tdata_init(tsd_t *tsd);
