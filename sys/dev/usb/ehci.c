@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.326 2024/09/23 10:07:26 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.327 2024/09/23 16:28:06 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.326 2024/09/23 10:07:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.327 2024/09/23 16:28:06 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -615,6 +615,13 @@ ehci_init(ehci_softc_t *sc)
 		sqh->qh->qh_qtd.qtd_next = EHCI_NULL;
 		sqh->qh->qh_qtd.qtd_altnext = EHCI_NULL;
 		sqh->qh->qh_qtd.qtd_status = htole32(EHCI_QTD_HALTED);
+
+		ehci_qtd_t *qh_qtd = &sqh->qh->qh_qtd;
+		for (unsigned n = 0; n < EHCI_QTD_NBUFFERS; n++) {
+			qh_qtd->qtd_buffer[n] = 0;
+			qh_qtd->qtd_buffer_hi[n] = 0;
+		}
+
 		sqh->sqtd = NULL;
 		usb_syncmem(&sqh->dma, sqh->offs, sizeof(*sqh->qh),
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
@@ -649,6 +656,13 @@ ehci_init(ehci_softc_t *sc)
 	sqh->qh->qh_qtd.qtd_next = EHCI_NULL;
 	sqh->qh->qh_qtd.qtd_altnext = EHCI_NULL;
 	sqh->qh->qh_qtd.qtd_status = htole32(EHCI_QTD_HALTED);
+
+	ehci_qtd_t *qh_qtd = &sqh->qh->qh_qtd;
+	for (unsigned n = 0; n < EHCI_QTD_NBUFFERS; n++) {
+		qh_qtd->qtd_buffer[n] = 0;
+		qh_qtd->qtd_buffer_hi[n] = 0;
+	}
+
 	sqh->sqtd = NULL;
 	usb_syncmem(&sqh->dma, sqh->offs, sizeof(*sqh->qh),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
@@ -2075,6 +2089,12 @@ ehci_open(struct usbd_pipe *pipe)
 		sqh->qh->qh_qtd.qtd_altnext = EHCI_NULL;
 		sqh->qh->qh_qtd.qtd_status = htole32(0);
 
+		ehci_qtd_t *qh_qtd = &sqh->qh->qh_qtd;
+		for (unsigned n = 0; n < EHCI_QTD_NBUFFERS; n++) {
+			qh_qtd->qtd_buffer[n] = 0;
+			qh_qtd->qtd_buffer_hi[n] = 0;
+		}
+
 		usb_syncmem(&sqh->dma, sqh->offs, sizeof(*sqh->qh),
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 		epipe->sqh = sqh;
@@ -2222,7 +2242,6 @@ ehci_rem_qh(ehci_softc_t *sc, ehci_soft_qh_t *sqh, ehci_soft_qh_t *head)
 Static void
 ehci_set_qh_qtd(ehci_soft_qh_t *sqh, ehci_soft_qtd_t *sqtd)
 {
-	int i;
 	uint32_t status;
 
 	/* Save toggle bit and ping status. */
@@ -2241,8 +2260,11 @@ ehci_set_qh_qtd(ehci_soft_qh_t *sqh, ehci_soft_qtd_t *sqtd)
 	sqh->qh->qh_curqtd = 0;
 	sqh->qh->qh_qtd.qtd_next = htole32(sqtd->physaddr);
 	sqh->qh->qh_qtd.qtd_altnext = EHCI_NULL;
-	for (i = 0; i < EHCI_QTD_NBUFFERS; i++)
-		sqh->qh->qh_qtd.qtd_buffer[i] = 0;
+	for (unsigned n = 0; n < EHCI_QTD_NBUFFERS; n++) {
+		sqh->qh->qh_qtd.qtd_buffer[n] = 0;
+		sqh->qh->qh_qtd.qtd_buffer_hi[n] = 0;
+	}
+
 	sqh->sqtd = sqtd;
 	usb_syncmem(&sqh->dma, sqh->offs, sizeof(*sqh->qh),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
@@ -2949,6 +2971,7 @@ ehci_alloc_sqh(ehci_softc_t *sc)
 
 	memset(sqh->qh, 0, sizeof(*sqh->qh));
 	sqh->next = NULL;
+
 	return sqh;
 }
 
@@ -3279,8 +3302,8 @@ ehci_alloc_itd(ehci_softc_t *sc)
 	itd = freeitd;
 	LIST_REMOVE(itd, free_list);
 	mutex_exit(&sc->sc_lock);
-	memset(itd->itd, 0, sizeof(*itd->itd));
 
+	memset(itd->itd, 0, sizeof(*itd->itd));
 	itd->frame_list.next = NULL;
 	itd->frame_list.prev = NULL;
 	itd->xfer_next = NULL;
@@ -3342,7 +3365,6 @@ ehci_alloc_sitd(ehci_softc_t *sc)
 	mutex_exit(&sc->sc_lock);
 
 	memset(sitd->sitd, 0, sizeof(*sitd->sitd));
-
 	sitd->frame_list.next = NULL;
 	sitd->frame_list.prev = NULL;
 	sitd->xfer_next = NULL;
