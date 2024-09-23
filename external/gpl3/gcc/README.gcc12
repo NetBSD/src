@@ -1,4 +1,4 @@
-$NetBSD: README.gcc12,v 1.26 2024/09/23 08:33:53 rin Exp $
+$NetBSD: README.gcc12,v 1.27 2024/09/23 09:48:01 rin Exp $
 
 
 new stuff:
@@ -61,7 +61,7 @@ powerpc		y	y	y	y	y	y		y	y	y
 powerpc64	y	?	?	y	b	b		?	?	y
 sh3eb		y	?	y	y	b	y		?	?	?
 sh3el		y	n[20]	y	y	b	y		n[22]	?	?
-sparc		y	y	y	y	n[21]	y		y	y	y
+sparc		y	y	y	y	n[26]	y		y	y	y
 sparc64		y	b	y	y	n[16]	y		y	?	y
 vax		y	y	y	y	n[23]	n		n[24,25] ?	?
 x86_64		y	y	y	y	y[13]	y		y	y	y
@@ -95,16 +95,6 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 [20]: kernel needs -O1 for ffs32() and ffs_nodealloccg() for multi-user boot. Even if the whole kernel is built with -O1, it panics during ATF:
       kernel/t_sysv (92/935): 3 test cases
           msg: [ 3981.4751382] panic: kernel diagnostic assertion "msghdr->msg_spot >= 0" failed: file "../../../../kern/sysv_msg.c", line 426
-[21]: asan has v7/v8/atomic issues:
-      ld: /usr/lib/libasan.so: undefined reference to `__sync_val_compare_and_swap_8'
-      nm shows some more:
-	U __sync_add_and_fetch_4
-	U __sync_fetch_and_add_4
-	U __sync_lock_test_and_set_4
-	U __sync_val_compare_and_swap_1
-	U __sync_val_compare_and_swap_4
-      liblsan and libubsan are mssing the _4 and _8 versions, too.
-      -- they're not really supported (not my atf) in gcc 10 currently.
 [22]: single-user shell crashes. if userland is built with DBG=-O1, it boots into multi-user mode.
       however, at least db(3) is broken, by which files are corrupted when edited by vi(1).
 [23]: sanitizers fail to build:
@@ -119,6 +109,13 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
       during RTL pass: final
       hello.c: In function 'main':
       hello.c:9:1: internal compiler error: Segmentation fault
+[26]: divide by zero with ubsan hits CheckLocked assertion failure, and stalls at LockSlow indefinitely:
+      (gdb) bt
+      #0 __sanitizer::StaticSpinMutex::LockSlow at sanitizer_mutex.cpp:24
+      ...
+      #17 __ubsan::ScopedReport::CheckLocked ubsan_diag.h:255
+      #19 0xed9a8f68 in handleDivremOverflowImpl ubsan_diag.h:210
+      #20 0xed9aab00 in __ubsan::__ubsan_handle_divrem_overflow ubsan_handlers.cpp:320 
 
 
 CPU vs platform test table (for CPUs with multiple ports).  this is "make release" or just kernels.
