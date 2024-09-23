@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.100 2024/07/24 08:55:08 kre Exp $
+#	$NetBSD: Makefile.inc,v 1.101 2024/09/23 15:42:06 christos Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -28,7 +28,7 @@ SRCS+= erand48_ieee754.c
 .if ${RUMPRUN} != "yes"
 .   if (${USE_JEMALLOC} != "no")
 .      if ${HAVE_JEMALLOC} > 100
-.         include "${NETBSDSRCDIR}/external/bsd/jemalloc/lib/Makefile.inc"
+.         include "${NETBSDSRCDIR}/external/bsd/${JEMALLOC_EXTERNAL_SUBDIR}/lib/Makefile.inc"
 .      else
 SRCS+=	jemalloc.c aligned_alloc.c
 .      endif 
