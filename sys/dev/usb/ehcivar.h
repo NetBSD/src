@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.52 2024/01/20 00:51:29 jmcneill Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.53 2024/09/23 10:07:26 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/pool.h>
 
 typedef struct ehci_soft_qtd {
-	ehci_qtd_t qtd;
+	ehci_qtd_t *qtd;
 	struct ehci_soft_qtd *nextqtd;	/* mirrors nextqtd in TD */
 	ehci_physaddr_t physaddr;	/* qTD's physical address */
 	usb_dma_t dma;			/* qTD's DMA infos */
@@ -43,12 +43,9 @@ typedef struct ehci_soft_qtd {
 	struct usbd_xfer *xfer;		/* xfer back pointer */
 	uint16_t len;
 } ehci_soft_qtd_t;
-#define EHCI_SQTD_ALIGN	MAX(EHCI_QTD_ALIGN, CACHE_LINE_SIZE)
-#define EHCI_SQTD_SIZE (roundup(sizeof(struct ehci_soft_qtd), EHCI_SQTD_ALIGN))
-#define EHCI_SQTD_CHUNK (EHCI_PAGE_SIZE / EHCI_SQTD_SIZE)
 
 typedef struct ehci_soft_qh {
-	ehci_qh_t qh;
+	ehci_qh_t *qh;
 	struct ehci_soft_qh *next;
 	struct ehci_soft_qtd *sqtd;
 	ehci_physaddr_t physaddr;
@@ -56,13 +53,11 @@ typedef struct ehci_soft_qh {
 	int offs;			/* QH's offset in usb_dma_t */
 	int islot;
 } ehci_soft_qh_t;
-#define EHCI_SQH_SIZE (roundup(sizeof(struct ehci_soft_qh), EHCI_QH_ALIGN))
-#define EHCI_SQH_CHUNK (EHCI_PAGE_SIZE / EHCI_SQH_SIZE)
 
 typedef struct ehci_soft_itd {
 	union {
-		ehci_itd_t itd;
-		ehci_sitd_t sitd;
+		ehci_itd_t *itd;
+		ehci_sitd_t *sitd;
 	};
 	union {
 		struct {
@@ -80,8 +75,6 @@ typedef struct ehci_soft_itd {
 	int slot;
 	struct timeval t; /* store free time */
 } ehci_soft_itd_t;
-#define EHCI_ITD_SIZE (roundup(sizeof(struct ehci_soft_itd), EHCI_ITD_ALIGN))
-#define EHCI_ITD_CHUNK (EHCI_PAGE_SIZE / EHCI_ITD_SIZE)
 
 #define ehci_soft_sitd_t ehci_soft_itd_t
 #define ehci_soft_sitd ehci_soft_itd
