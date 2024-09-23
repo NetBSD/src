@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.11 2024/09/23 11:38:50 uwe Exp $
+#	$NetBSD: dot.profile,v 1.12 2024/09/23 12:12:36 uwe Exp $
 #
 # This is the default .profile file.
 # Users are expected to edit it to meet their own needs.
@@ -27,7 +27,14 @@ export EDITOR=vi
 # Set the pager. This is used by, among other things, man(1) for
 # showing man pages. The default is "more". Another reasonable choice
 # (included with the system by default) is "less".
-#export PAGER=more
+#export PAGER=less
+
+# Many modern terminal emulators don't provide a way to disable
+# alternate screen switching (like xterm's titeInhibit).  less(1) has
+# its own option (-X) for that that you can use to alleviate the pain,
+# as PAGER is the most common scenario for hitting this.  Add other
+# flags according to taste.
+#export LESS='-i -M -X'
 
 # Set your default printer, if desired.
 #export PRINTER=change-this-to-a-printer
