@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.301 2024/08/28 11:54:43 christos Exp $
+#	$NetBSD: Makefile,v 1.302 2024/09/23 13:00:46 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -92,7 +92,7 @@ SUBDIR+=	../external/mit/expat/lib
 
 SUBDIR+=	../external/gpl2/libmalloc
 
-SUBDIR+=	../external/bsd/jemalloc/lib
+SUBDIR+=	../external/bsd/${EXTERNAL_JEMALLOC_SUBDIR}/lib
 
 .if (${MKGCC} != "no")
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libobjc
