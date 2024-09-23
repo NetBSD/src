@@ -1,4 +1,4 @@
-$NetBSD: README.gcc12,v 1.25 2024/06/29 23:25:55 mrg Exp $
+$NetBSD: README.gcc12,v 1.26 2024/09/23 08:33:53 rin Exp $
 
 
 new stuff:
@@ -49,10 +49,10 @@ earmv7eb	y	b	?	y	?	?		?	?	y
 earmv7hf	y	y	y	y	b	y		y	y	y
 earmv7hfeb	y	y	y	y	b	y		y	y	y
 hppa		y	y	y	y	?	y		y	y	y
-i386		y	y	y	y	y[18]	y		y	n[19]	y
+i386		y	y	y	y	y	y		y	y	y
 ia64		y	b	y	y	y	y		y[3]	n	y
-m68000		y	y	y	y	b	n		y[14]	?	?
-m68k		y	y	y	y	b	y		y[14]	y[14]	?
+m68000		y	y	y	y	b	n		y[14]	?	y
+m68k		y	y	y	y	b	y		y[14]	y[14]	y
 mipseb		y	b	y	y	b	y		y	y	y
 mipsel		y	b	y	y	b	y		y	?	y
 mips64eb	y	b	y	y	b	y		y	y	y
@@ -92,13 +92,6 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
       -- some wip patches make this less bad
 [17]: (NOT A REGRESSION) libtsan is newly introduced, which fails with:
       FATAL: ThreadSanitizer: unexpected memory mapping 0x200100000-0x200101000
-[18]: lib*san is compiled with -march=i586 to ensure required atomic ops are present
-[19]: kernel freezes with garbage parmanently output to console, after lib/libc/sys/t_ptrace_wait:syscall_signal_on_sce fails:
-          syscall_signal_on_sce: [[ 3013.0266693] sorry pid 1847 was killed: orphanes
-          ss
-          ss
-          ss
-          ...
 [20]: kernel needs -O1 for ffs32() and ffs_nodealloccg() for multi-user boot. Even if the whole kernel is built with -O1, it panics during ATF:
       kernel/t_sysv (92/935): 3 test cases
           msg: [ 3981.4751382] panic: kernel diagnostic assertion "msghdr->msg_spot >= 0" failed: file "../../../../kern/sysv_msg.c", line 426
