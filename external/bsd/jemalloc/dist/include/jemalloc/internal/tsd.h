@@ -121,6 +121,7 @@ typedef ql_elm(tsd_t) tsd_link_t;
     /* tcache_slow */		TCACHE_SLOW_ZERO_INITIALIZER,		\
     /* rtree_ctx */		RTREE_CTX_INITIALIZER,
 
+
 /*  O(name,			type,			nullable type) */
 #define TSD_DATA_FAST							\
     O(thread_allocated,		uint64_t,		uint64_t)	\
@@ -175,7 +176,7 @@ void tsd_postfork_child(tsd_t *tsd);
  */
 void tsd_global_slow_inc(tsdn_t *tsdn);
 void tsd_global_slow_dec(tsdn_t *tsdn);
-bool tsd_global_slow();
+bool tsd_global_slow(void);
 
 enum {
 	/* Common case --> jnz. */

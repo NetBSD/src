@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2024/09/23 15:03:47 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2024/09/23 17:53:42 christos Exp $
 
 JEMALLOC:=${.PARSEDIR}/..
 
@@ -78,3 +78,20 @@ SRCS+=${JEMALLOC_SRCS}
 
 jemalloc.d jemalloc.pico jemalloc.o jemalloc.ln jemalloc.po jemalloc.go: \
     ${JEMALLOC}/dist/src/jemalloc.c
+
+# jemalloc
+.for i in ${JEMALLOC_SRCS}
+LINTFLAGS.${i} += -X 86,89,117,132,161,191,193,207,217,226,261
+.endfor
+
+LINTFLAGS.arena.c += -X 298
+LINTFLAGS.ckh.c += -X 239
+LINTFLAGS.ctl.c += -X 135,239,298
+LINTFLAGS.extent.c += -X 239
+LINTFLAGS.jemalloc.c += -X 236	# XXX: lint bug, it is a constructor
+LINTFLAGS.pages.c += -X 298
+LINTFLAGS.rtree.c += -X 239
+LINTFLAGS.sc.c += -X 119,239
+LINTFLAGS.stats.c += -X 42,135,239,247
+LINTFLAGS.tcache.c += -X 239,309
+LINTFLAGS.thread_event.c += -X 239

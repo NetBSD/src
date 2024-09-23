@@ -22,7 +22,7 @@ JEMALLOC_ALWAYS_INLINE void
 safety_check_verify_redzone(const void *ptr, size_t usize, size_t bumped_usize)
 {
 	for (size_t i = usize; i < bumped_usize && i < usize + 32; ++i) {
-		if (unlikely(*((unsigned char *)ptr + i) != 0xBC)) {
+		if (unlikely(*((const unsigned char *)ptr + i) != 0xBC)) {
 			safety_check_fail("Use after free error\n");
 		}
 	}

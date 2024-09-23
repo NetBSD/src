@@ -445,7 +445,7 @@ typedef struct {							\
 									\
 typedef struct {							\
 	ph_t ph;							\
-} a_prefix##_t;
+} a_prefix##_t
 
 /*
  * The ph_proto() macro generates function prototypes that correspond to the
@@ -460,7 +460,7 @@ a_attr a_type *a_prefix##_any(a_prefix##_t *ph);			\
 a_attr void a_prefix##_insert(a_prefix##_t *ph, a_type *phn);		\
 a_attr a_type *a_prefix##_remove_first(a_prefix##_t *ph);		\
 a_attr void a_prefix##_remove(a_prefix##_t *ph, a_type *phn);		\
-a_attr a_type *a_prefix##_remove_any(a_prefix##_t *ph);
+a_attr a_type *a_prefix##_remove_any(a_prefix##_t *ph)
 
 /* The ph_gen() macro generates a type-specific pairing heap implementation. */
 #define ph_gen(a_attr, a_prefix, a_type, a_field, a_cmp)		\

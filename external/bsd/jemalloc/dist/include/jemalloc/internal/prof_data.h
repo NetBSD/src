@@ -20,7 +20,7 @@ bool prof_data_init(tsd_t *tsd);
 prof_tctx_t *prof_lookup(tsd_t *tsd, prof_bt_t *bt);
 char *prof_thread_name_alloc(tsd_t *tsd, const char *thread_name);
 int prof_thread_name_set_impl(tsd_t *tsd, const char *thread_name);
-void prof_unbias_map_init();
+void prof_unbias_map_init(void);
 void prof_dump_impl(tsd_t *tsd, write_cb_t *prof_dump_write, void *cbopaque,
     prof_tdata_t *tdata, bool leakcheck);
 prof_tdata_t * prof_tdata_init_impl(tsd_t *tsd, uint64_t thr_uid,
