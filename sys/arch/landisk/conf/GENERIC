@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.80 2024/09/23 10:18:08 rin Exp $
+# $NetBSD: GENERIC,v 1.81 2024/09/23 13:12:45 andvar Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.80 $"
+#ident          "GENERIC-$Revision: 1.81 $"
 
 maxusers	16		# estimated number of users
 
@@ -49,7 +49,7 @@ options 	SH4_CACHE_DISABLE_EMODE
 # Standard system options
 
 # sh3 uses only one page by default; if anything goes slightly awry or
-# if you have any USB devices - that signle page can't hold even the
+# if you have any USB devices - that single page can't hold even the
 # full initial dmesg at boot time, so bump it up a bit
 options 	MSGBUFSIZE=0x2000
 
