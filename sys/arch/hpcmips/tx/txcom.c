@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.52 2021/08/07 16:18:54 thorpej Exp $ */
+/*	$NetBSD: txcom.c,v 1.53 2024/09/23 19:11:34 andvar Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.52 2021/08/07 16:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.53 2024/09/23 19:11:34 andvar Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -855,7 +855,7 @@ txcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		goto out;
 	}
 	if ((err = (*tp->t_linesw->l_open)(dev, tp))) {
-		DPRINTF("line dicipline open failed\n");
+		DPRINTF("line discipline open failed\n");
 		goto out;
 	}
 
