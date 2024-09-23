@@ -286,13 +286,13 @@ prof_backtrace(tsd_t *tsd, prof_bt_t *bt) {
 }
 
 void
-prof_hooks_init() {
+prof_hooks_init(void) {
 	prof_backtrace_hook_set(&prof_backtrace_impl);
 	prof_dump_hook_set(NULL);
 }
 
 void
-prof_unwind_init() {
+prof_unwind_init(void) {
 #ifdef JEMALLOC_PROF_LIBGCC
 	/*
 	 * Cause the backtracing machinery to allocate its internal
@@ -447,7 +447,7 @@ prof_open_maps_internal(const char *format, ...) {
 #endif
 
 static int
-prof_dump_open_maps_impl() {
+prof_dump_open_maps_impl(void) {
 	int mfd;
 
 	cassert(config_prof);

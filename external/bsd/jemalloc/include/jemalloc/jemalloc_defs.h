@@ -5,13 +5,20 @@
 /* Defined if alloc_size attribute is supported. */
 #define JEMALLOC_HAVE_ATTR_ALLOC_SIZE 
 
-#ifndef __clang__
+/* Defined if format_arg(...) attribute is supported. */
+#define JEMALLOC_HAVE_ATTR_FORMAT_ARG 
+
 /* Defined if format(gnu_printf, ...) attribute is supported. */
 #define JEMALLOC_HAVE_ATTR_FORMAT_GNU_PRINTF 
-#endif
 
 /* Defined if format(printf, ...) attribute is supported. */
 #define JEMALLOC_HAVE_ATTR_FORMAT_PRINTF 
+
+/* Defined if fallthrough attribute is supported. */
+#define JEMALLOC_HAVE_ATTR_FALLTHROUGH 
+
+/* Defined if cold attribute is supported. */
+#define JEMALLOC_HAVE_ATTR_COLD 
 
 /*
  * Define overrides for non-standard allocator-related functions if they are
@@ -45,8 +52,4 @@
 #endif
 
 /* sizeof(void *) == 2^LG_SIZEOF_PTR. */
-#ifdef _LP64
 #define LG_SIZEOF_PTR 3
-#else
-#define LG_SIZEOF_PTR 2
-#endif

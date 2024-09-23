@@ -731,8 +731,14 @@ pthread_create_fptr_init(void) {
 			    "\"pthread_create\")\n");
 			abort();
 		} else {
+#ifdef __NetBSD__
+			malloc_write("<jemalloc>: Error in dlsym(RTLD_NEXT, "
+			    "\"pthread_create\")\n");
+			abort();
+#else
 			/* Fall back to the default symbol. */
 			pthread_create_fptr = pthread_create;
+#endif
 		}
 	}
 

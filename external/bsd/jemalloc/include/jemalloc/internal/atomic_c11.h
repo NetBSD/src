@@ -27,7 +27,7 @@ atomic_load_##short_type(const atomic_##short_type##_t *a,		\
 	 * convenient for our purposes. This cast is a workaround.	\
 	 */								\
 	atomic_##short_type##_t* a_nonconst =				\
-	    (atomic_##short_type##_t*)(_Atomic void *)(_Atomic uintptr_t)(a);			\
+	    (atomic_##short_type##_t*)a;				\
 	return atomic_load_explicit(a_nonconst, mo);			\
 }									\
 									\
