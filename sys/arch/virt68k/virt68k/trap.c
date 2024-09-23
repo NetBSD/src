@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.3 2024/02/25 14:35:31 mlelstv Exp $	*/
+/*	$NetBSD: trap.c,v 1.4 2024/09/23 10:43:33 rin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.3 2024/02/25 14:35:31 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.4 2024/09/23 10:43:33 rin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -505,6 +505,10 @@ trap(struct frame *fp, int type, unsigned int code, unsigned int v)
 	case T_TRAP15|T_USER:	/* SUN user trace trap */
 		fp->f_sr &= ~PSL_T;
 		ksi.ksi_signo = SIGTRAP;
+		if (type == (T_TRAP15|T_USER))
+			ksi.ksi_code = TRAP_BRKPT;
+		else
+			ksi.ksi_code = TRAP_TRACE;
 		break;
 
 	case T_ASTFLT:		/* system async trap, cannot happen */
