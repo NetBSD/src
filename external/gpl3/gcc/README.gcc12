@@ -1,4 +1,4 @@
-$NetBSD: README.gcc12,v 1.27 2024/09/23 09:48:01 rin Exp $
+$NetBSD: README.gcc12,v 1.28 2024/09/23 10:25:04 rin Exp $
 
 
 new stuff:
@@ -59,8 +59,8 @@ mips64eb	y	b	y	y	b	y		y	y	y
 mips64el	y	b	y	y	b	y		y	?	y
 powerpc		y	y	y	y	y	y		y	y	y
 powerpc64	y	?	?	y	b	b		?	?	y
-sh3eb		y	?	y	y	b	y		?	?	?
-sh3el		y	n[20]	y	y	b	y		n[22]	?	?
+sh3eb		y	?	y	y	b	y		?	?	y
+sh3el		y	y	y	y	b	y		y	y	y
 sparc		y	y	y	y	n[26]	y		y	y	y
 sparc64		y	b	y	y	n[16]	y		y	?	y
 vax		y	y	y	y	n[23]	n		n[24,25] ?	?
@@ -92,11 +92,6 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
       -- some wip patches make this less bad
 [17]: (NOT A REGRESSION) libtsan is newly introduced, which fails with:
       FATAL: ThreadSanitizer: unexpected memory mapping 0x200100000-0x200101000
-[20]: kernel needs -O1 for ffs32() and ffs_nodealloccg() for multi-user boot. Even if the whole kernel is built with -O1, it panics during ATF:
-      kernel/t_sysv (92/935): 3 test cases
-          msg: [ 3981.4751382] panic: kernel diagnostic assertion "msghdr->msg_spot >= 0" failed: file "../../../../kern/sysv_msg.c", line 426
-[22]: single-user shell crashes. if userland is built with DBG=-O1, it boots into multi-user mode.
-      however, at least db(3) is broken, by which files are corrupted when edited by vi(1).
 [23]: sanitizers fail to build:
       sanitizer_flag_parser.h:141:72: error: format '%zx' expects argument of type 'size_t', but argument 4 has type 'unsigned int' [-Werror=format=]
 [24]: (NOT A REGRESSION) c++ exception handling is broken. mechanically applying
