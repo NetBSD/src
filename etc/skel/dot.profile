@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.10 2018/03/01 06:12:09 snj Exp $
+#	$NetBSD: dot.profile,v 1.11 2024/09/23 11:38:50 uwe Exp $
 #
 # This is the default .profile file.
 # Users are expected to edit it to meet their own needs.
@@ -9,10 +9,11 @@
 # See sh(1) for details.
 #
 
-# Set your editor. Default to explicitly setting vi, as otherwise some
-# software will run ed and other software will fail. Can be set to
-# emacs or nano or whatever other editor you may prefer, but of course
-# those editors must be installed before you can use them.
+# Set your editor.  Can be set to emacs or nano or whatever other
+# editor you may prefer, but of course those editors must be installed
+# before you can use them.  Default to explicitly setting vi, as
+# otherwise some software (including sh's own fc) will run ed and
+# other software will fail.
 export EDITOR=vi
 
 # vi settings: set show-match auto-indent always-redraw shift-width=4
