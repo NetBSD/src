@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.246 2024/06/18 18:55:32 riastradh Exp $
+# $NetBSD: HACKS,v 1.247 2024/09/23 07:35:44 rin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -1138,17 +1138,21 @@ kcah
 
 hack	m68k: work around stack protector m68k compiler bug
 cdate	Thu Jun  6 15:53:21 PDT 2024
+udate	Sat Aug 17 15:18:30 UTC 2024
 port	m68k
-who	mrg
+who	mrg, rin
 file	lib/libc/stdlib/strsuftoll.c : 1.10
 file	lib/libc/citrus/citrus_module.c : 1.14
 file	crypto/external/bsd/openssl/lib/libcrypto/blake2.inc : 1.3
+file	crypto/external/bsd/openssl/lib/libcrypto/sha.inc : 1.8
+file	external/mit/xorg/lib/freetype/Makefile : 1.26
+file	external/mit/xorg/lib/gallium/Makefile : 1.56
 descr
 	With GCC 12, strsuftoll() triggers an stack protector issue
 	that does not appear to be valid.  _citrus_find_getops() does
 	the same.  They both have minimal stack usage themselves and
 	I suspect a GCC bug.
-	The blake2 version is less well studied.
+	Other cases are less well studied.
 kcah
 
 hack	gcc: work around alignment limitations in ld.elf_so
