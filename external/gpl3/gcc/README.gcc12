@@ -1,4 +1,4 @@
-$NetBSD: README.gcc12,v 1.28 2024/09/23 10:25:04 rin Exp $
+$NetBSD: README.gcc12,v 1.29 2024/09/23 10:28:54 rin Exp $
 
 
 new stuff:
@@ -109,8 +109,9 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
       #0 __sanitizer::StaticSpinMutex::LockSlow at sanitizer_mutex.cpp:24
       ...
       #17 __ubsan::ScopedReport::CheckLocked ubsan_diag.h:255
-      #19 0xed9a8f68 in handleDivremOverflowImpl ubsan_diag.h:210
-      #20 0xed9aab00 in __ubsan::__ubsan_handle_divrem_overflow ubsan_handlers.cpp:320 
+      #18 __ubsan::Diag::~Diag ubsan_diag.cpp:347
+      #19 handleDivremOverflowImpl ubsan_diag.h:210
+      #20 __ubsan::__ubsan_handle_divrem_overflow ubsan_handlers.cpp:320 
 
 
 CPU vs platform test table (for CPUs with multiple ports).  this is "make release" or just kernels.
