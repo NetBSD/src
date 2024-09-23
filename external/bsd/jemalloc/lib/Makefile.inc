@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.18 2024/09/23 17:53:42 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.19 2024/09/23 22:37:35 christos Exp $
 
 JEMALLOC:=${.PARSEDIR}/..
 
@@ -27,23 +27,34 @@ exp_grow.c \
 extent.c \
 extent_dss.c \
 extent_mmap.c \
+fxp.c \
 hash.c \
+hpa.c \
 hpa_hooks.c \
+hpdata.c \
 hook.c \
+inspect.c \
 large.c \
 log.c \
 malloc_io.c \
 mutex.c \
 nstime.c \
 pa.c \
+pa_extra.c \
 pac.c \
 pai.c \
 pages.c \
 peak_event.c \
 prof.c \
+prof_data.c \
+prof_recent.c \
+psset.c \
 rtree.c \
+safety_check.c \
 san.c \
+san_bump.c \
 sc.c \
+sec.c \
 stats.c \
 sz.c \
 test_hooks.c \
@@ -90,8 +101,11 @@ LINTFLAGS.ctl.c += -X 135,239,298
 LINTFLAGS.extent.c += -X 239
 LINTFLAGS.jemalloc.c += -X 236	# XXX: lint bug, it is a constructor
 LINTFLAGS.pages.c += -X 298
+LINTFLAGS.prof_data.c += -X 236
+LINTFLAGS.prof_recent.c += -X 42
 LINTFLAGS.rtree.c += -X 239
 LINTFLAGS.sc.c += -X 119,239
+LINTFLAGS.sec.c += -X 247
 LINTFLAGS.stats.c += -X 42,135,239,247
 LINTFLAGS.tcache.c += -X 239,309
 LINTFLAGS.thread_event.c += -X 239

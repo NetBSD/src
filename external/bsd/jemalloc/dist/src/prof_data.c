@@ -452,7 +452,7 @@ prof_thread_name_alloc(tsd_t *tsd, const char *thread_name) {
 
 	size = strlen(thread_name) + 1;
 	if (size == 1) {
-		return "";
+		return __UNCONST("");
 	}
 
 	ret = iallocztm(tsd_tsdn(tsd), size, sz_size2index(size), false, NULL,
@@ -482,7 +482,7 @@ prof_thread_name_set_impl(tsd_t *tsd, const char *thread_name) {
 		return EFAULT;
 	}
 	for (i = 0; thread_name[i] != '\0'; i++) {
-		char c = thread_name[i];
+		unsigned char c = thread_name[i];
 		if (!isgraph(c) && !isblank(c)) {
 			return EFAULT;
 		}
@@ -538,7 +538,7 @@ prof_double_uint64_cast(double d) {
 }
 #endif
 
-void prof_unbias_map_init() {
+void prof_unbias_map_init(void) {
 	/* See the comment in prof_sample_new_event_wait */
 #ifdef JEMALLOC_PROF
 	for (szind_t i = 0; i < SC_NSIZES; i++) {
@@ -1137,7 +1137,7 @@ prof_cnt_all(prof_cnt_t *cnt_all) {
 
 void
 prof_bt_hash(const void *key, size_t r_hash[2]) {
-	prof_bt_t *bt = (prof_bt_t *)key;
+	prof_bt_t *bt = (prof_bt_t *)__UNCONST(key);
 
 	cassert(config_prof);
 
@@ -1146,8 +1146,8 @@ prof_bt_hash(const void *key, size_t r_hash[2]) {
 
 bool
 prof_bt_keycomp(const void *k1, const void *k2) {
-	const prof_bt_t *bt1 = (prof_bt_t *)k1;
-	const prof_bt_t *bt2 = (prof_bt_t *)k2;
+	const prof_bt_t *bt1 = (const prof_bt_t *)k1;
+	const prof_bt_t *bt2 = (const prof_bt_t *)k2;
 
 	cassert(config_prof);
 
