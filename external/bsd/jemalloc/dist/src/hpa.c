@@ -24,7 +24,7 @@ static void hpa_dalloc_batch(tsdn_t *tsdn, pai_t *self,
 static uint64_t hpa_time_until_deferred_work(tsdn_t *tsdn, pai_t *self);
 
 bool
-hpa_supported() {
+hpa_supported(void) {
 #ifdef _WIN32
 	/*
 	 * At least until the API and implementation is somewhat settled, we
@@ -87,7 +87,7 @@ hpa_alloc_ps(tsdn_t *tsdn, hpa_central_t *central) {
 	    CACHELINE);
 }
 
-hpdata_t *
+static hpdata_t *
 hpa_central_extract(tsdn_t *tsdn, hpa_central_t *central, size_t size,
     bool *oom) {
 	/* Don't yet support big allocations; these should get filtered out. */

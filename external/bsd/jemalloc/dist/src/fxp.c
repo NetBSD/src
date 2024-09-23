@@ -43,7 +43,7 @@ fxp_parse(fxp_t *result, const char *str, char **end) {
 	if (*cur != '.') {
 		*result = (integer_part << 16);
 		if (end != NULL) {
-			*end = (char *)cur;
+			*end = (char *)__UNCONST(cur);
 		}
 		return false;
 	}
@@ -89,7 +89,7 @@ fxp_parse(fxp_t *result, const char *str, char **end) {
 	/* Success! */
 	*result = (integer_part << 16) + fractional_repr;
 	if (end != NULL) {
-		*end = (char *)cur;
+		*end = (char *)__UNCONST(cur);
 	}
 	return false;
 }
