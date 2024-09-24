@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.35 2022/12/18 07:53:30 skrll Exp $	*/
+/*	$NetBSD: copy.S,v 1.36 2024/09/24 20:19:30 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -150,7 +150,7 @@ ENTRY(kcopy)
 
 /*
  * Using 'rep movs' to copy backwards is not as fast as for forwards copies
- * and ought not be done when the copy doesn't acually overlap.
+ * and ought not be done when the copy doesn't actually overlap.
  * However kcopy() isn't used any that looks even vaguely used often.
  * I'm also not sure it is ever asked to do overlapping copies!
  */
