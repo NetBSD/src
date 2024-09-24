@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2049 2024/09/23 15:08:36 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2050 2024/09/24 21:33:42 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1029,12 +1029,12 @@ Notes:
 We have lots of local fixes.
 
 Package:	OpenLDAP
-Version:	2.5.6
+Version:	2.5.18
 Current Vers:	2.5.6
 Maintainer:	OpenLDAP Foundation
 Archive Site:	http://www.openldap.org/
 Home Page:	http://www.openldap.org/
-Date:		2021-08-14
+Date:		2024-09-24
 Mailing List:
 Responsible:
 License:	BSD (3-clause)
@@ -1081,12 +1081,12 @@ Notes:
 Patch applied after OpenSSH import.
 
 Package:	OpenSSH
-Version:	9.8
-Current Vers:	9.8 / portable 9.8p1
+Version:	9.9
+Current Vers:	9.9 / portable 9.9p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Home Page:	http://www.openssh.com/portable.html
-Date:		2024-06-25
+Date:		2024-09-24
 Mailing List:	openssh-unix-announce@mindrot.org
 Responsible:	thorpej, christos, elric
 License:	BSD. See src/crypto/external/bsd/openssh/dist/LICENSE
