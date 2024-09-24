@@ -1,4 +1,4 @@
-.\"	$NetBSD: vether.4,v 1.2 2020/09/27 13:59:24 wiz Exp $
+.\"	$NetBSD: vether.4,v 1.3 2024/09/24 13:03:30 roy Exp $
 .\"
 .\"	$OpenBSD: vether.4,v 1.5 2017/10/17 22:47:58 schwarze Exp $
 .\"
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd October 17, 2017
+.Dd September 24, 2017
 .Dt VETHER 4
 .Os
 .Sh NAME
@@ -41,6 +41,17 @@ An Ethernet header will be prepended and, if the
 interface is a member of a
 .Xr bridge 4 ,
 the frame will show up there.
+.Pp
+The
+.Nm
+link state can be controlled using
+.Xr ifconfig 8 .
+.Bl -tag -width ".Cm -link0" -compact
+.It Cm link0
+link state DOWN
+.It Cm -link0
+link state UP
+.El
 .Sh SEE ALSO
 .Xr bridge 4 ,
 .Xr ifconfig 8
