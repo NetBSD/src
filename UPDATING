@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.357 2024/08/18 00:27:18 christos Exp $
+$NetBSD: UPDATING,v 1.358 2024/09/24 13:59:30 martin Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -19,10 +19,16 @@ See also: BUILDING, build.sh, Makefile.
 Recent changes:
 ^^^^^^^^^^^^^^^
 
+20240923:
+	Update builds will require cleaning the object directories for
+	jemalloc (like: rm -rf "$OBJ/external/bsd/jemalloc*") and the
+	libc dependency files (like: "rm $OBJ/lib/libc/stdlib/jemalloc.*").
+
 20240817:
 	Update builds will require cleaning in src/external/historical/nawk/bin
 	in order to remove the awk binary since now there is a subdirectory
 	called awk.
+
 20240812:
 	Update builds will require removing the tools objdir for gdb
 	if building with MKCROSSGDB=yes. All architectures use gdb.old
