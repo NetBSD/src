@@ -1,4 +1,4 @@
-/* $NetBSD: balloon.c,v 1.23 2020/05/06 19:52:19 bouyer Exp $ */
+/* $NetBSD: balloon.c,v 1.24 2024/09/24 20:54:53 andvar Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  *
  * Shrinking memory on a live system is a difficult task, and may render
  * it unstable or lead to crash. The driver takes a conservative approach
- * there by doing memory operations in smal steps of a few MiB each time. It
+ * there by doing memory operations in small steps of a few MiB each time. It
  * will also refuse to decrease reservation below a certain threshold
  * (XEN_RESERVATION_MIN), so as to avoid a complete kernel memory exhaustion.
  *
@@ -75,7 +75,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.23 2020/05/06 19:52:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.24 2024/09/24 20:54:53 andvar Exp $");
 
 #include <sys/inttypes.h>
 #include <sys/device.h>
