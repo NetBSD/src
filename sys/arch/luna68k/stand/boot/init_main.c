@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.16 2015/02/14 13:07:39 tsutsui Exp $	*/
+/*	$NetBSD: init_main.c,v 1.17 2024/09/24 11:17:54 rin Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -226,6 +226,15 @@ main(void)
 	unit = 0;
 	part = 0;
 
+/*
+ * - LUNA1_BOOTINFOADDR is in the 0-th page [0, 0x1000), which causes
+ *   -Warray-bounds for GCC12 and later.
+ * - LUNA2_BOOTINFOADDR is also in the 0-th page, if we switch to
+ *   8KB page.
+ */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+
 	if (machtype == LUNA_I) {
 		const struct luna1_bootinfo *bi1 = (void *)LUNA1_BOOTINFOADDR;
 
@@ -285,6 +294,8 @@ main(void)
 		    bi2->bi_devinfo[bdev].bd_part);
 #endif
 	}
+
+#pragma GCC diagnostic pop
 
 	snprintf(default_file, sizeof(default_file),
 	    "%s(%d,%d)%s", bootdev, unit, part, "netbsd");
