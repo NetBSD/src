@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3100 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3101 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -528,3 +528,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	zlib: Import 1.3.1 [christos 20240922]
 	jemalloc(3): Import 5.3.0. [christos 20140923]
 	vether(4): allow link state to be toggled by link0. [roy 20240924]
+	OpenSSH: Import 9.9. [christos 20240924]
