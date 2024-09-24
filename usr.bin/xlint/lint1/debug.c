@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.79 2024/05/11 16:12:28 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.80 2024/09/24 19:58:06 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.79 2024/05/11 16:12:28 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.80 2024/09/24 19:58:06 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: debug.c,v 1.79 2024/05/11 16:12:28 rillig Exp $");
 
 #ifdef DEBUG
 
+bool debug_enabled;
 static int debug_indentation = 0;
 static bool did_indentation;
 
@@ -64,6 +65,9 @@ debug_file(void)
 static void
 debug_vprintf(const char *fmt, va_list va)
 {
+
+	if (!debug_enabled)
+		return;
 
 	if (!did_indentation) {
 		did_indentation = true;
