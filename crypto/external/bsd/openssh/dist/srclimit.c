@@ -1,4 +1,4 @@
-/*	$NetBSD: srclimit.c,v 1.4 2024/07/08 22:33:44 christos Exp $	*/
+/*	$NetBSD: srclimit.c,v 1.5 2024/09/24 21:32:19 christos Exp $	*/
 
 /*
  * Copyright (c) 2020 Darren Tucker <dtucker@openbsd.org>
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: srclimit.c,v 1.4 2024/07/08 22:33:44 christos Exp $");
+__RCSID("$NetBSD: srclimit.c,v 1.5 2024/09/24 21:32:19 christos Exp $");
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -382,6 +382,10 @@ srclimit_penalise(struct xaddr *addr, int penalty_type)
 	case SRCLIMIT_PENALTY_NOAUTH:
 		penalty_secs = penalty_cfg.penalty_noauth;
 		reason = "penalty: connections without attempting authentication";
+		break;
+	case SRCLIMIT_PENALTY_REFUSECONNECTION:
+		penalty_secs = penalty_cfg.penalty_refuseconnection;
+		reason = "penalty: connection prohibited by RefuseConnection";
 		break;
 	case SRCLIMIT_PENALTY_GRACE_EXCEEDED:
 		penalty_secs = penalty_cfg.penalty_crash;

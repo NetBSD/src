@@ -1,5 +1,5 @@
-/*	$NetBSD: match.c,v 1.16 2023/10/25 20:19:57 christos Exp $	*/
-/* $OpenBSD: match.c,v 1.44 2023/04/06 03:19:32 djm Exp $ */
+/*	$NetBSD: match.c,v 1.17 2024/09/24 21:32:18 christos Exp $	*/
+/* $OpenBSD: match.c,v 1.45 2024/09/06 02:30:44 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: match.c,v 1.16 2023/10/25 20:19:57 christos Exp $");
+__RCSID("$NetBSD: match.c,v 1.17 2024/09/24 21:32:18 christos Exp $");
 #include <sys/types.h>
 
 #include <ctype.h>
@@ -238,7 +238,7 @@ match_user(const char *user, const char *host, const char *ipaddr,
 
 	/* test mode */
 	if (user == NULL && host == NULL && ipaddr == NULL) {
-		if ((p = strchr(pattern, '@')) != NULL &&
+		if ((p = strrchr(pattern, '@')) != NULL &&
 		    match_host_and_ip(NULL, NULL, p + 1) < 0)
 			return -1;
 		return 0;
@@ -247,11 +247,11 @@ match_user(const char *user, const char *host, const char *ipaddr,
 	if (user == NULL)
 		return 0; /* shouldn't happen */
 
-	if ((p = strchr(pattern, '@')) == NULL)
+	if (strrchr(pattern, '@') == NULL)
 		return match_pattern(user, pattern);
 
 	pat = xstrdup(pattern);
-	p = strchr(pat, '@');
+	p = strrchr(pat, '@');
 	*p++ = '\0';
 
 	if ((ret = match_pattern(user, pat)) == 1)

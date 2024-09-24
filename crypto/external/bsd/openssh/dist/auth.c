@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.c,v 1.35 2024/07/08 22:33:43 christos Exp $	*/
-/* $OpenBSD: auth.c,v 1.161 2024/05/17 00:30:23 djm Exp $ */
+/*	$NetBSD: auth.c,v 1.36 2024/09/24 21:32:18 christos Exp $	*/
+/* $OpenBSD: auth.c,v 1.162 2024/09/15 01:18:26 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth.c,v 1.35 2024/07/08 22:33:43 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.36 2024/09/24 21:32:18 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -554,6 +554,7 @@ getpwnamallow(struct ssh *ssh, const char *user)
 
 	ci = server_get_connection_info(ssh, 1, options.use_dns);
 	ci->user = user;
+	ci->user_invalid = getpwnam(user) == NULL;
 	parse_server_match_config(&options, &includes, ci);
 	log_change_level(options.log_level);
 	log_verbose_reset();

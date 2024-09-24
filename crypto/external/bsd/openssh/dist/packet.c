@@ -1,5 +1,5 @@
-/*	$NetBSD: packet.c,v 1.51 2024/07/08 22:33:44 christos Exp $	*/
-/* $OpenBSD: packet.c,v 1.315 2024/05/31 08:49:35 djm Exp $ */
+/*	$NetBSD: packet.c,v 1.52 2024/09/24 21:32:18 christos Exp $	*/
+/* $OpenBSD: packet.c,v 1.317 2024/08/23 04:51:00 deraadt Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: packet.c,v 1.51 2024/07/08 22:33:44 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.52 2024/09/24 21:32:18 christos Exp $");
 
 #include <sys/param.h>	/* MIN roundup */
 #include <sys/types.h>
@@ -997,9 +997,8 @@ ssh_set_newkeys(struct ssh *ssh, int mode)
 	/* explicit_bzero(enc->iv,  enc->block_size);
 	   explicit_bzero(enc->key, enc->key_len);
 	   explicit_bzero(mac->key, mac->key_len); */
-	if ((comp->type == COMP_ZLIB ||
-	    (comp->type == COMP_DELAYED &&
-	    state->after_authentication)) && comp->enabled == 0) {
+	if (((comp->type == COMP_DELAYED && state->after_authentication)) &&
+	    comp->enabled == 0) {
 		if ((r = ssh_packet_init_compression(ssh)) < 0)
 			return r;
 		if (mode == MODE_OUT) {
@@ -2636,6 +2635,11 @@ sshpkt_put_ec(struct ssh *ssh, const EC_POINT *v, const EC_GROUP *g)
 	return sshbuf_put_ec(ssh->state->outgoing_packet, v, g);
 }
 
+int
+sshpkt_put_ec_pkey(struct ssh *ssh, EVP_PKEY *pkey)
+{
+	return sshbuf_put_ec_pkey(ssh->state->outgoing_packet, pkey);
+}
 
 int
 sshpkt_put_bignum2(struct ssh *ssh, const BIGNUM *v)
