@@ -1,5 +1,5 @@
-/*	$NetBSD: kex.c,v 1.36 2024/07/08 22:33:43 christos Exp $	*/
-/* $OpenBSD: kex.c,v 1.186 2024/05/17 00:30:23 djm Exp $ */
+/*	$NetBSD: kex.c,v 1.37 2024/09/24 21:32:18 christos Exp $	*/
+/* $OpenBSD: kex.c,v 1.187 2024/08/23 04:51:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kex.c,v 1.36 2024/07/08 22:33:43 christos Exp $");
+__RCSID("$NetBSD: kex.c,v 1.37 2024/09/24 21:32:18 christos Exp $");
 
 #include <sys/param.h>	/* MAX roundup */
 #include <sys/types.h>
@@ -842,8 +842,6 @@ choose_comp(struct sshcomp *comp, char *client, char *server)
 #ifdef WITH_ZLIB
 	if (strcmp(name, "zlib@openssh.com") == 0) {
 		comp->type = COMP_DELAYED;
-	} else if (strcmp(name, "zlib") == 0) {
-		comp->type = COMP_ZLIB;
 	} else
 #endif	/* WITH_ZLIB */
 	if (strcmp(name, "none") == 0) {

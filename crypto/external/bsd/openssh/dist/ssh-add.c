@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-add.c,v 1.31 2024/06/25 16:36:54 christos Exp $	*/
-/* $OpenBSD: ssh-add.c,v 1.172 2024/01/11 01:45:36 djm Exp $ */
+/*	$NetBSD: ssh-add.c,v 1.32 2024/09/24 21:32:19 christos Exp $	*/
+/* $OpenBSD: ssh-add.c,v 1.173 2024/09/06 02:30:44 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-add.c,v 1.31 2024/06/25 16:36:54 christos Exp $");
+__RCSID("$NetBSD: ssh-add.c,v 1.32 2024/09/24 21:32:19 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -695,7 +695,7 @@ parse_dest_constraint_hop(const char *s, struct dest_constraint_hop *dch,
 
 	memset(dch, '\0', sizeof(*dch));
 	os = xstrdup(s);
-	if ((host = strchr(os, '@')) == NULL)
+	if ((host = strrchr(os, '@')) == NULL)
 		host = os;
 	else {
 		*host++ = '\0';

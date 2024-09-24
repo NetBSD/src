@@ -1,5 +1,6 @@
-/*	$NetBSD: kex-names.c,v 1.2 2024/07/08 22:33:43 christos Exp $	*/
-/* $OpenBSD: kex-names.c,v 1.1 2024/05/17 00:32:32 djm Exp $ */
+/*	$NetBSD: kex-names.c,v 1.3 2024/09/24 21:32:18 christos Exp $	*/
+/* $OpenBSD: kex-names.c,v 1.4 2024/09/09 02:39:57 djm Exp $ */
+
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kex-names.c,v 1.2 2024/07/08 22:33:43 christos Exp $");
+__RCSID("$NetBSD: kex-names.c,v 1.3 2024/09/24 21:32:18 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -73,6 +74,10 @@ static const struct kexalg kexalgs[] = {
 	{ KEX_CURVE25519_SHA256_OLD, KEX_C25519_SHA256, 0, SSH_DIGEST_SHA256 },
 	{ KEX_SNTRUP761X25519_SHA512, KEX_KEM_SNTRUP761X25519_SHA512, 0,
 	    SSH_DIGEST_SHA512 },
+	{ KEX_SNTRUP761X25519_SHA512_OLD, KEX_KEM_SNTRUP761X25519_SHA512, 0,
+	    SSH_DIGEST_SHA512 },
+	{ KEX_MLKEM768X25519_SHA256, KEX_KEM_MLKEM768X25519_SHA256, 0,
+	    SSH_DIGEST_SHA256 },
 	{ NULL, 0, -1, -1},
 };
 

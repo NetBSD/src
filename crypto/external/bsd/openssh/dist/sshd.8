@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd.8,v 1.32 2024/07/08 22:33:44 christos Exp $
+.\"	$NetBSD: sshd.8,v 1.33 2024/09/24 21:32:19 christos Exp $
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -34,8 +34,8 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd.8,v 1.326 2024/06/17 08:30:29 djm Exp $
-.Dd June 17 2024
+.\" $OpenBSD: sshd.8,v 1.327 2024/09/15 01:19:56 djm Exp $
+.Dd September 15 2024
 .Dt SSHD 8
 .Os
 .Sh NAME
@@ -116,6 +116,10 @@ and
 .Dq rdomain
 and correspond to source address, user, resolved source host name,
 local address, local port number and routing domain respectively.
+Additionally the
+.Dq invalid-user
+flag (which does not take a value argument) may be specified to simulate
+a connection from an unrecognised username.
 .It Fl c Ar host_certificate_file
 Specifies a path to a certificate file to identify
 .Nm

@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keygen.c,v 1.47 2024/06/25 16:36:54 christos Exp $	*/
-/* $OpenBSD: ssh-keygen.c,v 1.472 2024/01/11 01:45:36 djm Exp $ */
+/*	$NetBSD: ssh-keygen.c,v 1.48 2024/09/24 21:32:19 christos Exp $	*/
+/* $OpenBSD: ssh-keygen.c,v 1.475 2024/09/15 00:47:01 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keygen.c,v 1.47 2024/06/25 16:36:54 christos Exp $");
+__RCSID("$NetBSD: ssh-keygen.c,v 1.48 2024/09/24 21:32:19 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -254,7 +254,7 @@ ask_filename(struct passwd *pw, const char *prompt)
 	if (key_type_name == NULL)
 		name = _PATH_SSH_CLIENT_ID_ED25519;
 	else {
-		switch (sshkey_type_from_name(key_type_name)) {
+		switch (sshkey_type_from_shortname(key_type_name)) {
 #ifdef WITH_DSA
 		case KEY_DSA_CERT:
 		case KEY_DSA:
@@ -304,7 +304,7 @@ ask_filename(struct passwd *pw, const char *prompt)
 static struct sshkey *
 load_identity(const char *filename, char **commentp)
 {
-	char *pass;
+	char *prompt, *pass;
 	struct sshkey *prv;
 	int r;
 
@@ -316,8 +316,11 @@ load_identity(const char *filename, char **commentp)
 		fatal_r(r, "Load key \"%s\"", filename);
 	if (identity_passphrase)
 		pass = xstrdup(identity_passphrase);
-	else
-		pass = read_passphrase("Enter passphrase: ", RP_ALLOW_STDIN);
+	else {
+		xasprintf(&prompt, "Enter passphrase for \"%s\": ", filename);
+		pass = read_passphrase(prompt, RP_ALLOW_STDIN);
+		free(prompt);
+	}
 	r = sshkey_load_private(filename, pass, &prv, commentp);
 	freezero(pass, strlen(pass));
 	if (r != 0)
@@ -366,7 +369,8 @@ do_convert_to_pkcs8(struct sshkey *k)
 {
 	switch (sshkey_type_plain(k->type)) {
 	case KEY_RSA:
-		if (!PEM_write_RSA_PUBKEY(stdout, k->rsa))
+		if (!PEM_write_RSA_PUBKEY(stdout,
+		    EVP_PKEY_get0_RSA(k->pkey)))
 			fatal("PEM_write_RSA_PUBKEY failed");
 		break;
 #ifdef WITH_DSA
@@ -376,7 +380,8 @@ do_convert_to_pkcs8(struct sshkey *k)
 		break;
 #endif
 	case KEY_ECDSA:
-		if (!PEM_write_EC_PUBKEY(stdout, k->ecdsa))
+		if (!PEM_write_EC_PUBKEY(stdout,
+		    EVP_PKEY_get0_EC_KEY(k->pkey)))
 			fatal("PEM_write_EC_PUBKEY failed");
 		break;
 	default:
@@ -390,7 +395,8 @@ do_convert_to_pem(struct sshkey *k)
 {
 	switch (sshkey_type_plain(k->type)) {
 	case KEY_RSA:
-		if (!PEM_write_RSAPublicKey(stdout, k->rsa))
+		if (!PEM_write_RSAPublicKey(stdout,
+		    EVP_PKEY_get0_RSA(k->pkey)))
 			fatal("PEM_write_RSAPublicKey failed");
 		break;
 #ifdef WITH_DSA
@@ -400,7 +406,8 @@ do_convert_to_pem(struct sshkey *k)
 		break;
 #endif
 	case KEY_ECDSA:
-		if (!PEM_write_EC_PUBKEY(stdout, k->ecdsa))
+		if (!PEM_write_EC_PUBKEY(stdout,
+		    EVP_PKEY_get0_EC_KEY(k->pkey)))
 			fatal("PEM_write_EC_PUBKEY failed");
 		break;
 	default:
@@ -477,6 +484,8 @@ do_convert_private_ssh2(struct sshbuf *b)
 #endif
 	BIGNUM *rsa_n = NULL, *rsa_e = NULL, *rsa_d = NULL;
 	BIGNUM *rsa_p = NULL, *rsa_q = NULL, *rsa_iqmp = NULL;
+	BIGNUM *rsa_dmp1 = NULL, *rsa_dmq1 = NULL;
+	RSA *rsa = NULL;
 
 	if ((r = sshbuf_get_u32(b, &magic)) != 0)
 		fatal_fr(r, "parse magic");
@@ -571,15 +580,25 @@ do_convert_private_ssh2(struct sshbuf *b)
 		buffer_get_bignum_bits(b, rsa_iqmp);
 		buffer_get_bignum_bits(b, rsa_q);
 		buffer_get_bignum_bits(b, rsa_p);
-		if (!RSA_set0_key(key->rsa, rsa_n, rsa_e, rsa_d))
+		if ((r = ssh_rsa_complete_crt_parameters(rsa_d, rsa_p, rsa_q,
+		    rsa_iqmp, &rsa_dmp1, &rsa_dmq1)) != 0)
+			fatal_fr(r, "generate RSA CRT parameters");
+		if ((key->pkey = EVP_PKEY_new()) == NULL)
+			fatal_f("EVP_PKEY_new failed");
+		if ((rsa = RSA_new()) == NULL)
+			fatal_f("RSA_new failed");
+		if (!RSA_set0_key(rsa, rsa_n, rsa_e, rsa_d))
 			fatal_f("RSA_set0_key failed");
 		rsa_n = rsa_e = rsa_d = NULL; /* transferred */
-		if (!RSA_set0_factors(key->rsa, rsa_p, rsa_q))
+		if (!RSA_set0_factors(rsa, rsa_p, rsa_q))
 			fatal_f("RSA_set0_factors failed");
 		rsa_p = rsa_q = NULL; /* transferred */
-		if ((r = ssh_rsa_complete_crt_parameters(key, rsa_iqmp)) != 0)
-			fatal_fr(r, "generate RSA parameters");
-		BN_clear_free(rsa_iqmp);
+		if (RSA_set0_crt_params(rsa, rsa_dmp1, rsa_dmq1, rsa_iqmp) != 1)
+			fatal_f("RSA_set0_crt_params failed");
+		rsa_dmp1 = rsa_dmq1 = rsa_iqmp = NULL;
+		if (EVP_PKEY_set1_RSA(key->pkey, rsa) != 1)
+			fatal_f("EVP_PKEY_set1_RSA failed");
+		RSA_free(rsa);
 		alg = "rsa-sha2-256";
 		break;
 	}
@@ -699,7 +718,8 @@ do_convert_from_pkcs8(struct sshkey **k, int *private)
 		if ((*k = sshkey_new(KEY_UNSPEC)) == NULL)
 			fatal("sshkey_new failed");
 		(*k)->type = KEY_RSA;
-		(*k)->rsa = EVP_PKEY_get1_RSA(pubkey);
+		(*k)->pkey = pubkey;
+		pubkey = NULL;
 		break;
 #ifdef WITH_DSA
 	case EVP_PKEY_DSA:
@@ -712,9 +732,11 @@ do_convert_from_pkcs8(struct sshkey **k, int *private)
 	case EVP_PKEY_EC:
 		if ((*k = sshkey_new(KEY_UNSPEC)) == NULL)
 			fatal("sshkey_new failed");
+		if (((*k)->ecdsa_nid = sshkey_ecdsa_fixup_group(pubkey)) == -1)
+			fatal("sshkey_ecdsa_fixup_group failed");
 		(*k)->type = KEY_ECDSA;
-		(*k)->ecdsa = EVP_PKEY_get1_EC_KEY(pubkey);
-		(*k)->ecdsa_nid = sshkey_ecdsa_key_to_nid((*k)->ecdsa);
+		(*k)->pkey = pubkey;
+		pubkey = NULL;
 		break;
 	default:
 		fatal_f("unsupported pubkey type %d",
@@ -735,8 +757,12 @@ do_convert_from_pem(struct sshkey **k, int *private)
 	if ((rsa = PEM_read_RSAPublicKey(fp, NULL, NULL, NULL)) != NULL) {
 		if ((*k = sshkey_new(KEY_UNSPEC)) == NULL)
 			fatal("sshkey_new failed");
+		if (((*k)->pkey = EVP_PKEY_new()) == NULL)
+			fatal("EVP_PKEY_new failed");
 		(*k)->type = KEY_RSA;
-		(*k)->rsa = rsa;
+		if (EVP_PKEY_set1_RSA((*k)->pkey, rsa) != 1)
+			fatal("EVP_PKEY_set1_RSA failed");
+		RSA_free(rsa);
 		fclose(fp);
 		return;
 	}
@@ -783,12 +809,14 @@ do_convert_from(struct passwd *pw)
 			break;
 #endif
 		case KEY_ECDSA:
-			ok = PEM_write_ECPrivateKey(stdout, k->ecdsa, NULL,
-			    NULL, 0, NULL, NULL);
+			ok = PEM_write_ECPrivateKey(stdout,
+			    EVP_PKEY_get0_EC_KEY(k->pkey), NULL, NULL, 0,
+			    NULL, NULL);
 			break;
 		case KEY_RSA:
-			ok = PEM_write_RSAPrivateKey(stdout, k->rsa, NULL,
-			    NULL, 0, NULL, NULL);
+			ok = PEM_write_RSAPrivateKey(stdout,
+			    EVP_PKEY_get0_RSA(k->pkey), NULL, NULL, 0,
+			    NULL, NULL);
 			break;
 		default:
 			fatal_f("unsupported key type %s", sshkey_type(k));
@@ -1096,7 +1124,7 @@ do_gen_all_hostkeys(struct passwd *pw)
 		}
 		printf("%s ", key_types[i].key_type_display);
 		fflush(stdout);
-		type = sshkey_type_from_name(key_types[i].key_type);
+		type = sshkey_type_from_shortname(key_types[i].key_type);
 		if ((fd = mkstemp(prv_tmp)) == -1) {
 			error("Could not save your private key in %s: %s",
 			    prv_tmp, strerror(errno));
@@ -1803,7 +1831,7 @@ do_ca_sign(struct passwd *pw, const char *ca_key_path, int prefer_agent,
 	free(tmp);
 
 	if (key_type_name != NULL) {
-		if (sshkey_type_from_name(key_type_name) != ca->type) {
+		if (sshkey_type_from_shortname(key_type_name) != ca->type) {
 			fatal("CA key type %s doesn't match specified %s",
 			    sshkey_ssh_name(ca), key_type_name);
 		}
@@ -3090,17 +3118,22 @@ read_check_passphrase(const char *prompt1, const char *prompt2,
 }
 
 static char *
-private_key_passphrase(void)
+private_key_passphrase(const char *path)
 {
+	char *prompt, *ret;
+
 	if (identity_passphrase)
 		return xstrdup(identity_passphrase);
 	if (identity_new_passphrase)
 		return xstrdup(identity_new_passphrase);
 
-	return read_check_passphrase(
-	    "Enter passphrase (empty for no passphrase): ",
+	xasprintf(&prompt, "Enter passphrase for \"%s\" "
+	    "(empty for no passphrase): ", path);
+	ret = read_check_passphrase(prompt,
 	    "Enter same passphrase again: ",
 	    "Passphrases do not match.  Try again.");
+	free(prompt);
+	return ret;
 }
 
 static char *
@@ -3196,7 +3229,7 @@ do_download_sk(const char *skprovider, const char *device)
 
 		/* Save the key with the application string as the comment */
 		if (pass == NULL)
-			pass = private_key_passphrase();
+			pass = private_key_passphrase(path);
 		if ((r = sshkey_save_private(key, path, pass,
 		    key->sk_application, private_key_format,
 		    openssh_format_cipher, rounds)) != 0) {
@@ -3790,7 +3823,7 @@ main(int argc, char **argv)
 	if (key_type_name == NULL)
 		key_type_name = DEFAULT_KEY_TYPE_NAME;
 
-	type = sshkey_type_from_name(key_type_name);
+	type = sshkey_type_from_shortname(key_type_name);
 	type_bits_valid(type, key_type_name, &bits);
 
 	if (!quiet)
@@ -3892,7 +3925,7 @@ main(int argc, char **argv)
 		exit(1);
 
 	/* Determine the passphrase for the private key */
-	passphrase = private_key_passphrase();
+	passphrase = private_key_passphrase(identity_file);
 	if (identity_comment) {
 		strlcpy(comment, identity_comment, sizeof(comment));
 	} else {

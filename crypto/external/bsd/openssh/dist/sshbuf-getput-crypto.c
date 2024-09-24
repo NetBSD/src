@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshbuf-getput-crypto.c,v 1.11 2024/02/01 02:37:33 djm Exp $	*/
+/*	$OpenBSD: sshbuf-getput-crypto.c,v 1.12 2024/08/15 00:51:51 djm Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshbuf-getput-crypto.c,v 1.12 2024/06/25 16:36:54 christos Exp $");
+__RCSID("$NetBSD: sshbuf-getput-crypto.c,v 1.13 2024/09/24 21:32:19 christos Exp $");
 
 #include <sys/types.h>
 #include <stdlib.h>
@@ -171,3 +171,12 @@ sshbuf_put_eckey(struct sshbuf *buf, const EC_KEY *v)
 	    EC_KEY_get0_group(v));
 }
 
+int
+sshbuf_put_ec_pkey(struct sshbuf *buf, EVP_PKEY *pkey)
+{
+	const EC_KEY *ec;
+
+	if ((ec = EVP_PKEY_get0_EC_KEY(pkey)) == NULL)
+		return SSH_ERR_LIBCRYPTO_ERROR;
+	return sshbuf_put_eckey(buf, ec);
+}

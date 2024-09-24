@@ -1,5 +1,5 @@
-/*	$NetBSD: crypto_api.h,v 1.5 2023/07/26 17:58:15 christos Exp $	*/
-/* $OpenBSD: crypto_api.h,v 1.8 2023/01/15 23:05:32 djm Exp $ */
+/*	$NetBSD: crypto_api.h,v 1.6 2024/09/24 21:32:18 christos Exp $	*/
+/* $OpenBSD: crypto_api.h,v 1.9 2024/09/02 12:13:56 djm Exp $ */
 
 /*
  * Assembled from generated headers and source files by Markus Friedl.
@@ -49,5 +49,10 @@ int	crypto_kem_sntrup761_enc(unsigned char *cstr, unsigned char *k,
 int	crypto_kem_sntrup761_dec(unsigned char *k,
     const unsigned char *cstr, const unsigned char *sk);
 int	crypto_kem_sntrup761_keypair(unsigned char *pk, unsigned char *sk);
+
+#define crypto_kem_mlkem768_PUBLICKEYBYTES 1184
+#define crypto_kem_mlkem768_SECRETKEYBYTES 2400
+#define crypto_kem_mlkem768_CIPHERTEXTBYTES 1088
+#define crypto_kem_mlkem768_BYTES 32
 
 #endif /* crypto_api_h */

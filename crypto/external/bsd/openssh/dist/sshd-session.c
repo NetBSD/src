@@ -1,6 +1,6 @@
-/*	$NetBSD: sshd-session.c,v 1.3 2024/07/11 17:26:53 riastradh Exp $	*/
+/*	$NetBSD: sshd-session.c,v 1.4 2024/09/24 21:32:19 christos Exp $	*/
+/* $OpenBSD: sshd-session.c,v 1.9 2024/09/09 02:39:57 djm Exp $ */
 
-/* $OpenBSD: sshd-session.c,v 1.4 2024/06/26 23:16:52 deraadt Exp $ */
 /*
  * SSH2 implementation:
  * Privilege Separation:
@@ -30,7 +30,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd-session.c,v 1.3 2024/07/11 17:26:53 riastradh Exp $");
+__RCSID("$NetBSD: sshd-session.c,v 1.4 2024/09/24 21:32:19 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -792,7 +792,6 @@ check_ip_options(struct ssh *ssh)
 		fatal("Connection from %.100s port %d with IP opts: %.800s",
 		    ssh_remote_ipaddr(ssh), ssh_remote_port(ssh), text);
 	}
-	return;
 }
 
 #ifdef __OpenBSD__
@@ -842,6 +841,7 @@ main(int ac, char **av)
 	struct connection_info *connection_info = NULL;
 	sigset_t sigmask;
 	uint64_t timing_secret = 0;
+	struct itimerval itv;
 
 	sigemptyset(&sigmask);
 	sigprocmask(SIG_SETMASK, &sigmask, NULL);
@@ -1217,8 +1217,17 @@ main(int ac, char **av)
 	 * are about to discover the bug.
 	 */
 	ssh_signal(SIGALRM, grace_alarm_handler);
-	if (!debug_flag)
-		alarm(options.login_grace_time);
+	if (!debug_flag && options.login_grace_time > 0) {
+		int ujitter = arc4random_uniform(4 * 1000000);
+
+		timerclear(&itv.it_interval);
+		itv.it_value.tv_sec = options.login_grace_time;
+		itv.it_value.tv_sec += ujitter / 1000000;
+		itv.it_value.tv_usec = ujitter % 1000000; 
+
+		if (setitimer(ITIMER_REAL, &itv, NULL) == -1)
+			fatal("login grace time setitimer failed");
+	}
 
 	if ((r = kex_exchange_identification(ssh, -1,
 	    options.version_addendum)) != 0)
@@ -1262,7 +1271,10 @@ main(int ac, char **av)
 	 * Cancel the alarm we set to limit the time taken for
 	 * authentication.
 	 */
-	alarm(0);
+	timerclear(&itv.it_interval);
+	timerclear(&itv.it_value);
+	if (setitimer(ITIMER_REAL, &itv, NULL) == -1)
+		fatal("login grace time clear failed");
 	ssh_signal(SIGALRM, SIG_DFL);
 	authctxt->authenticated = 1;
 	if (startup_pipe != -1) {
@@ -1384,6 +1396,7 @@ do_ssh2_kex(struct ssh *ssh)
 #endif
 	kex->kex[KEX_C25519_SHA256] = kex_gen_server;
 	kex->kex[KEX_KEM_SNTRUP761X25519_SHA512] = kex_gen_server;
+	kex->kex[KEX_KEM_MLKEM768X25519_SHA256] = kex_gen_server;
 	kex->load_host_public_key=&get_hostkey_public_by_type;
 	kex->load_host_private_key=&get_hostkey_private_by_type;
 	kex->host_key_index=&get_hostkey_index;
