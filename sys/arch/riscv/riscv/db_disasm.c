@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.11 2024/08/04 08:16:25 skrll Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.12 2024/09/24 20:39:08 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: db_disasm.c,v 1.11 2024/08/04 08:16:25 skrll Exp $");
+__RCSID("$NetBSD: db_disasm.c,v 1.12 2024/09/24 20:39:08 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,6 @@ db_disasm_16(db_addr_t loc, uint32_t insn, bool altfmt)
 	uint32_t imm;
 	unsigned rd, rs1, rs2;
 
-	//warnx("toot 0x%x", insn);
 	switch (COMBINE(INSN16_FUNCT3(insn), INSN16_QUADRANT(insn))) {
 	    case IN_Q0(Q0_ADDI4SPN):
 		rd = INSN16_RS2x(insn);
