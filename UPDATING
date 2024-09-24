@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.358 2024/09/24 13:59:30 martin Exp $
+$NetBSD: UPDATING,v 1.359 2024/09/24 14:04:49 martin Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -21,8 +21,11 @@ Recent changes:
 
 20240923:
 	Update builds will require cleaning the object directories for
-	jemalloc (like: rm -rf "$OBJ/external/bsd/jemalloc*") and the
-	libc dependency files (like: "rm $OBJ/lib/libc/stdlib/jemalloc.*").
+	jemalloc (like: "rm -rf $OBJ/external/bsd/jemalloc*") and the
+	libc dependency files (like: "rm $OBJ/lib/libc/jemalloc.*").
+	On architectures with COMPAT libs, those also have to be cleaned,
+	e.g. on sparc64: "rm -rf $OBJ/compat/sparc64/sparc/external/bsd/jemalloc*"
+	and "rm $OBJ/compat/sparc64/sparc/lib/libc/jemalloc.*".
 
 20240817:
 	Update builds will require cleaning in src/external/historical/nawk/bin
