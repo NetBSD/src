@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.349 2024/05/06 08:43:37 mrg Exp $
+#	$NetBSD: bsd.prog.mk,v 1.350 2024/09/24 14:25:43 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -244,10 +244,11 @@ PAM_STATIC_DPADD=
 
 #	NB:	If you are a library here, add it in bsd.README
 #	This list is sorted with -f so that it matches the order in bsd.README
-_X11LIBLIST= dps fntstubs fontcache fontconfig fontenc freetype FS GL GLU \
-    ICE lbxutil SM X11 X11_xcb Xau Xaw xcb xcvt Xdmcp Xext Xfont Xfont2 Xft Xi \
+_X11LIBLIST= dps EGL fntstubs fontcache fontconfig fontenc freetype FS GL GLU \
+    GLw I810XvMC  ICE IntelXvMC lbxutil SM X11 X11_xcb Xres Xau Xau7 Xaw xcb \
+    Xcomposite Xcursor xcvt Xdamage Xdmcp Xext Xfixes Xfont Xfont2 Xft Xi \
     Xinerama xkbfile Xmu Xmuu Xpm Xrandr Xrender Xss Xt XTrap Xtst Xv Xxf86dga \
-    Xxf86misc Xxf86vm Xcomposite Xdamage Xfixes
+    Xxf86misc Xxf86vm
 _XCBLIBLIST= \
     atom aux composite damage dpms dri2 dri3 event glx icccm image keysyms \
     present property randr record render_util render reply res screensaver \
