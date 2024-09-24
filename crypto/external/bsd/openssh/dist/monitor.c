@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.240 2024/06/06 17:15:25 djm Exp $ */
+/* $OpenBSD: monitor.c,v 1.244 2024/09/15 01:09:40 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -81,6 +81,7 @@
 #include "match.h"
 #include "ssherr.h"
 #include "sk-api.h"
+#include "srclimit.h"
 
 #ifdef GSSAPI
 static Gssctxt *gsscontext = NULL;
@@ -723,6 +724,15 @@ mm_answer_pwnamallow(struct ssh *ssh, int sock, struct sshbuf *m)
 	ssh_packet_set_log_preamble(ssh, "%suser %s",
 	    authctxt->valid ? "authenticating" : "invalid ", authctxt->user);
 
+	if (options.refuse_connection) {
+		logit("administratively prohibited connection for "
+		    "%s%s from %.128s port %d",
+		    authctxt->valid ? "" : "invalid user ",
+		    authctxt->user, ssh_remote_ipaddr(ssh),
+		    ssh_remote_port(ssh));
+		cleanup_exit(EXIT_CONFIG_REFUSED);
+	}
+
 	/* Send active options to unpriv */
 	mm_encode_server_options(m);
 
@@ -1243,7 +1253,7 @@ mm_answer_keyverify(struct ssh *ssh, int sock, struct sshbuf *m)
 	}
 	auth2_record_key(authctxt, ret == 0, key);
 
-	if (key_blobtype == MM_USERKEY)
+	if (key_blobtype == MM_USERKEY && ret == 0)
 		auth_activate_options(ssh, key_opts);
 	monitor_reset_key_state();
 
@@ -1456,6 +1466,7 @@ monitor_apply_keystate(struct ssh *ssh, struct monitor *pmonitor)
 #endif
 	kex->kex[KEX_C25519_SHA256] = kex_gen_server;
 	kex->kex[KEX_KEM_SNTRUP761X25519_SHA512] = kex_gen_server;
+	kex->kex[KEX_KEM_MLKEM768X25519_SHA256] = kex_gen_server;
 	kex->load_host_public_key=&get_hostkey_public_by_type;
 	kex->load_host_private_key=&get_hostkey_private_by_type;
 	kex->host_key_index=&get_hostkey_index;
