@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.83 2024/05/12 18:00:58 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.84 2024/09/24 19:58:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: main1.c,v 1.83 2024/05/12 18:00:58 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.84 2024/09/24 19:58:06 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -214,14 +214,6 @@ main(int argc, char *argv[])
 	/* initialize output */
 	outopen(argv[1]);
 
-#ifdef DEBUG
-	setvbuf(stdout, NULL, _IONBF, 0);
-#endif
-#if YYDEBUG
-	if (yflag)
-		yydebug = 1;
-#endif
-
 	(void)signal(SIGFPE, sigfpe);
 	init_decl();
 	init_lex();
@@ -235,6 +227,15 @@ main(int argc, char *argv[])
 		yyparse();
 		(void)fclose(yyin);
 	}
+
+#ifdef DEBUG
+	debug_enabled = true;
+	setvbuf(stdout, NULL, _IONBF, 0);
+#endif
+#if YYDEBUG
+	if (yflag)
+		yydebug = 1;
+#endif
 
 	/* open the input file */
 	if ((yyin = fopen(argv[0], "r")) == NULL)

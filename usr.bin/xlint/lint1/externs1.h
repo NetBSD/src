@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.231 2024/09/04 04:15:30 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.232 2024/09/24 19:58:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -131,6 +131,7 @@ void expr_restore_memory(memory_pool);
  */
 
 #ifdef DEBUG
+extern bool debug_enabled;
 const char *decl_level_kind_name(decl_level_kind);
 const char *scl_name(scl_t);
 const char *symbol_kind_name(symbol_kind);
