@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.98 2024/05/12 11:48:05 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.99 2024/09/25 10:06:15 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -243,6 +243,7 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 	int i, isconsole, items;
 	uint32_t fbva[2] = {0, 0};
 	uint32_t *ptr = fbva;
+	int ver, impl;
 #if NSX > 0
 	device_t dv;
 	deviter_t di;
@@ -353,6 +354,12 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 		printf(" (console)\n");
 	else
 		printf("\n");
+
+	ver = sc->sc_ctl->ctl_rsr & CG14_RSR_REVMASK;
+	impl = sc->sc_ctl->ctl_rsr & CG14_RSR_IMPLMASK;
+	aprint_normal_dev(sc->sc_dev, "rev %d, %d CLUTs\n",
+		ver == 0 ? 1 : 2,
+		(impl & 1) == 0 ? 2 : 3);
 
 	sc->sc_depth = 8;
 
@@ -475,7 +482,8 @@ cgfourteenioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 			return (error);
 		/* now blast them into the chip */
 		/* XXX should use retrace interrupt */
-		cg14_load_hwcmap(sc, p->index, p->count);
+		if (sc->sc_depth == 8)
+			cg14_load_hwcmap(sc, p->index, p->count);
 #undef p
 		break;
 
@@ -810,7 +818,7 @@ cg14_init_cmap(struct cgfourteen_softc *sc)
 {
 	struct rasops_info *ri = &sc->sc_console_screen.scr_ri;
 	int i, j = 0;
-	uint32_t r, g, b, c;
+	uint32_t r, g, b, c, cc;
 	uint8_t cmap[768];
 
 	if (sc->sc_depth == 16) {
@@ -821,17 +829,17 @@ cg14_init_cmap(struct cgfourteen_softc *sc)
 			r |= r >> 5;		/* fill lower bits so 0xf8 */
 			c = 0x40000000 | r;	/* becomes 0xff */
 			g = i & 0x7;		/* upper 3 bits of green */
-			g |= g << 3;
+			g |= g << 3;		/* 0x003f */
 			c |= ((g << 10) & 0xf000);	/* make it 4 */
 			sc->sc_clut1->clut_lut[i] = c;
 			/* lower byte */
 			g = i & 0xe0;		/* lower half of green */
 			g |= g >> 3;
-			c = 0x40000000 | ((g << 4) & 0x0f00);
+			cc = 0x40000000 | ((g << 4) & 0x0f00);
 			b = i & 0x1f;		/* and blue */
 			b = (b << 3) | (b >> 2);
-			c |= (b << 16); 
-			sc->sc_clut2->clut_lut[i] = c;
+			cc |= (b << 16); 
+			sc->sc_clut2->clut_lut[i] = cc;
 		}	
 
 		/*
@@ -908,7 +916,10 @@ cg14_putcmap(struct cgfourteen_softc *sc, struct wsdisplay_cmap *cm)
 		
 		index++;
 	}
-	cg14_load_hwcmap(sc, 0, 256);
+
+	if (sc->sc_depth == 8)
+		cg14_load_hwcmap(sc, 0, 256);
+
 	return 0;
 }
 
@@ -1008,8 +1019,9 @@ cg14_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			cg14_set_video(sc, *(int *)data);
 			return 0;
 		case WSDISPLAYIO_GVIDEO:
-			return cg14_get_video(sc) ? 
+			*(int *)data = cg14_get_video(sc) ? 
 			    WSDISPLAYIO_VIDEO_ON : WSDISPLAYIO_VIDEO_OFF;
+			return 0;
 		case WSDISPLAYIO_GCURPOS:
 			{
 				struct wsdisplay_curpos *cp = (void *)data;
