@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2024/09/24 11:13:41 rin Exp $
+#	$NetBSD: Makefile,v 1.7 2024/09/25 08:32:44 rin Exp $
 #
 LIB	= libtos.a
 
@@ -12,9 +12,3 @@ include ../Makefile.inc
 ${LIB}: ${OBJS}
 	@${RM} ${LIB}
 	${AR} ${LIB} ${OBJS}
-
-.if ${HAVE_GCC:U0} >= 12
-# ADDR_* defined in tosdefs.h are in the 0-th page, even if 4KB page,
-# i.e., [0, 0x1000). This causes -Warray-bounds for GCC12 and later.
-COPTS.sysinfo.c+=	-Wno-error=array-bounds
-.endif
