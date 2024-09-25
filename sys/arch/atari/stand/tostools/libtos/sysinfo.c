@@ -1,4 +1,4 @@
-/*	$NetBSD: sysinfo.c,v 1.9 2009/03/14 15:36:04 dsl Exp $	*/
+/*	$NetBSD: sysinfo.c,v 1.10 2024/09/25 08:32:44 rin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,14 @@
 #include "libtos.h"
 #include "tosdefs.h"
 #include "kparamb.h"
+
+/*
+ * ADDR_* defined in tosdefs.h are in the 0-th page, even if 4KB page,
+ * i.e., [0, 0x1000). This causes -Warray-bounds for GCC12 and later.
+ */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+
 /*
  * Extract memory and CPU/FPU info from system.
  */
@@ -130,3 +138,5 @@ sys_info(osdsc_t *od)
 		} while (jar[-2]);
 	}
 }
+
+#pragma GCC diagnostic pop
