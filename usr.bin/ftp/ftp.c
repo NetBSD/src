@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.176 2024/02/18 22:29:56 christos Exp $	*/
+/*	$NetBSD: ftp.c,v 1.177 2024/09/25 16:53:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2021 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.176 2024/02/18 22:29:56 christos Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.177 2024/09/25 16:53:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,13 +123,13 @@ __RCSID("$NetBSD: ftp.c,v 1.176 2024/02/18 22:29:56 christos Exp $");
 
 #include "ftp_var.h"
 
-volatile sig_atomic_t	abrtflag;
-volatile sig_atomic_t	timeoutflag;
+static volatile sig_atomic_t	abrtflag;
+static volatile sig_atomic_t	timeoutflag;
 
-sigjmp_buf	ptabort;
-int	ptabflg;
-int	ptflag = 0;
-char	pasv[BUFSIZ];	/* passive port for proxy data connection */
+static sigjmp_buf	ptabort;
+static int	ptabflg;
+static int	ptflag = 0;
+static char	pasv[BUFSIZ];	/* passive port for proxy data connection */
 size_t	ftp_buflen = FTPBUFLEN;
 
 static int empty(FILE *, FILE *, int);
@@ -155,7 +155,7 @@ struct sockinet {
 #define su_family	si_su.su_sin.sin_family
 #define su_port		si_su.su_sin.sin_port
 
-struct sockinet myctladdr, hisctladdr, data_addr;
+static struct sockinet myctladdr, hisctladdr, data_addr;
 
 char *
 hookup(const char *host, const char *port)
@@ -241,7 +241,7 @@ hookup(const char *host, const char *port)
 	res0 = res = NULL;
 
 	len = hisctladdr.su_len;
-	if (getsockname(s, (struct sockaddr *)&myctladdr.si_su, &len) == -1) {
+	if (getsockname(s, (struct sockaddr *)(void *)&myctladdr.si_su, &len) == -1) {
 		warn("Can't determine my address of connection to `%s:%s'",
 		    host, port);
 		code = -1;
@@ -298,7 +298,7 @@ hookup(const char *host, const char *port)
 }
 
 void
-cmdabort(int notused)
+cmdabort(int notused __unused)
 {
 	int oerrno = errno;
 
@@ -313,7 +313,7 @@ cmdabort(int notused)
 }
 
 void
-cmdtimeout(int notused)
+cmdtimeout(int notused __unused)
 {
 	int oerrno = errno;
 
@@ -569,10 +569,10 @@ empty(FILE *ecin, FILE *din, int sec)
 	return nr;
 }
 
-sigjmp_buf	xferabort;
+static sigjmp_buf	xferabort;
 
 __dead static void
-abortxfer(int notused)
+abortxfer(int notused __unused)
 {
 	char msgbuf[100];
 	size_t len;
@@ -623,7 +623,7 @@ copy_bytes(int infd, int outfd, char *buf, size_t bufsize,
 	else
 		bufchunk = bufsize;
 
-	while (1) {
+	for (;;) {
 		if (rate_limit) {
 			(void)gettimeofday(&tvthen, NULL);
 		}
@@ -664,7 +664,7 @@ copy_bytes(int infd, int outfd, char *buf, size_t bufsize,
 			}
 		}
 		if (rate_limit) {	/* rate limited; wait if necessary */
-			while (1) {
+			for (;;) {
 				(void)gettimeofday(&tvnow, NULL);
 				timersub(&tvnow, &tvthen, &tvdiff);
 				if (tvdiff.tv_sec > 0)
@@ -776,7 +776,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 
 	if (restart_point &&
 	    (strcmp(cmd, "STOR") == 0 || strcmp(cmd, "APPE") == 0)) {
-		int rc;
+		off_t rc;
 
 		rc = -1;
 		switch (curtype) {
@@ -1518,7 +1518,7 @@ initconn(void)
 		} else
 			goto bad;
 
-		if (ftp_connect(data, (struct sockaddr *)&data_addr.si_su,
+		if (ftp_connect(data, (struct sockaddr *)(void *)&data_addr.si_su,
 		    data_addr.su_len, 1) < 0) {
 			if (activefallback) {
 				(void)close(data);
@@ -1563,7 +1563,7 @@ initconn(void)
 			warn("Can't set SO_REUSEADDR on data connection");
 			goto bad;
 		}
-	if (bind(data, (struct sockaddr *)&data_addr.si_su,
+	if (bind(data, (struct sockaddr *)(void *)&data_addr.si_su,
 	    data_addr.su_len) < 0) {
 		warn("Can't bind for data connection");
 		goto bad;
@@ -1575,7 +1575,7 @@ initconn(void)
 	}
 	len = sizeof(data_addr.si_su);
 	memset((char *)&data_addr, 0, sizeof (data_addr));
-	if (getsockname(data, (struct sockaddr *)&data_addr.si_su, &len) == -1) {
+	if (getsockname(data, (struct sockaddr *)(void *)&data_addr.si_su, &len) == -1) {
 		warn("Can't determine my address of data connection");
 		goto bad;
 	}
@@ -1607,7 +1607,7 @@ initconn(void)
 			if (tmp.su_family == AF_INET6)
 				tmp.si_su.su_sin6.sin6_scope_id = 0;
 #endif
-			if (getnameinfo((struct sockaddr *)&tmp.si_su,
+			if (getnameinfo((struct sockaddr *)(void *)&tmp.si_su,
 			    tmp.su_len, hname, sizeof(hname), sname,
 			    sizeof(sname), NI_NUMERICHOST | NI_NUMERICSERV)) {
 				result = ERROR;
@@ -1730,7 +1730,7 @@ dataconn(const char *lmode)
 	do {
 		(void)gettimeofday(&now, NULL);
 		timersub(&endtime, &now, &td);
-		timeout = td.tv_sec * 1000 + td.tv_usec/1000;
+		timeout = (int)(td.tv_sec * 1000 + td.tv_usec / 1000);
 		if (timeout < 0)
 			timeout = 0;
 		rv = ftp_poll(pfd, 1, timeout);
@@ -1748,7 +1748,7 @@ dataconn(const char *lmode)
 				/* (non-blocking) accept the connection */
 	fromlen = myctladdr.su_len;
 	do {
-		s = accept(data, (struct sockaddr *) &from.si_su, &fromlen);
+		s = accept(data, (struct sockaddr *)(void *)&from.si_su, &fromlen);
 			/* loop until accept !EINTR && !EAGAIN */
 	} while (s == -1 && (errno == EINTR || errno == EAGAIN));
 	if (s == -1) {
@@ -1779,7 +1779,7 @@ dataconn(const char *lmode)
 }
 
 void
-psabort(int notused)
+psabort(int notused __unused)
 {
 	int oerrno = errno;
 
@@ -1877,7 +1877,7 @@ pswitch(int flag)
 }
 
 __dead static void
-abortpt(int notused)
+abortpt(int notused __unused)
 {
 
 	sigint_raised = 1;
@@ -2041,7 +2041,8 @@ gunique(const char *local)
 {
 	static char new[MAXPATHLEN];
 	char *cp = strrchr(local, '/');
-	int d, count=0, len;
+	int d, count = 0;
+	size_t len;
 	char ext = '1';
 
 	if (cp)
@@ -2176,7 +2177,7 @@ ai_unmapped(struct addrinfo *ai)
 	if (ai->ai_addrlen != sizeof(struct sockaddr_in6) ||
 	    sizeof(sin) > ai->ai_addrlen)
 		return;
-	sin6 = (struct sockaddr_in6 *)ai->ai_addr;
+	sin6 = (struct sockaddr_in6 *)(void *)ai->ai_addr;
 	if (!IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))
 		return;
 

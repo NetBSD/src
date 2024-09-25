@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl.c,v 1.19 2024/07/19 03:51:21 lukem Exp $	*/
+/*	$NetBSD: ssl.c,v 1.20 2024/09/25 16:53:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ssl.c,v 1.19 2024/07/19 03:51:21 lukem Exp $");
+__RCSID("$NetBSD: ssl.c,v 1.20 2024/09/25 16:53:58 christos Exp $");
 #endif
 
 #include <err.h>
@@ -113,7 +113,8 @@ fetch_writev(struct fetch_connect *conn, struct iovec *iov, int iovcnt)
 			do {
 				(void)gettimeofday(&now, NULL);
 				timersub(&timeout, &now, &delta);
-				timeout_secs = delta.tv_sec * 1000 + delta.tv_usec/1000;
+				timeout_secs = (int)(delta.tv_sec * 1000
+				    + delta.tv_usec / 1000);
 				if (timeout_secs < 0)
 					timeout_secs = 0;
 				rv = ftp_poll(pfd, 1, timeout_secs);
@@ -129,7 +130,7 @@ fetch_writev(struct fetch_connect *conn, struct iovec *iov, int iovcnt)
 		errno = 0;
 #ifdef WITH_SSL
 		if (conn->ssl != NULL)
-			len = SSL_write(conn->ssl, iov->iov_base, iov->iov_len);
+			len = SSL_write(conn->ssl, iov->iov_base, (int)iov->iov_len);
 		else
 #endif
 			len = writev(fd, iov, iovcnt);
@@ -177,7 +178,7 @@ fetch_printf(struct fetch_connect *conn, const char *fmt, ...)
 	va_list ap;
 	size_t len;
 	char *msg;
-	int r;
+	ssize_t r;
 
 	va_start(ap, fmt);
 	len = vasprintf(&msg, fmt, ap);
@@ -190,7 +191,7 @@ fetch_printf(struct fetch_connect *conn, const char *fmt, ...)
 
 	r = fetch_write(msg, len, conn);
 	free(msg);
-	return r;
+	return (int)r;
 }
 
 int
@@ -301,8 +302,8 @@ fetch_close(struct fetch_connect *conn)
 static ssize_t
 fetch_ssl_read(SSL *ssl, void *buf, size_t len)
 {
-	ssize_t rlen;
-	rlen = SSL_read(ssl, buf, len);
+	int rlen;
+	rlen = SSL_read(ssl, buf, (int)len);
 	if (rlen >= 0)
 		return rlen;
 
@@ -376,7 +377,8 @@ fetch_wait(struct fetch_connect *conn, ssize_t rlen, struct timeval *timeout)
 		if (quit_time > 0) {
 			gettimeofday(&now, NULL);
 			timersub(timeout, &now, &delta);
-			timeout_secs = delta.tv_sec * 1000 + delta.tv_usec/1000;
+			timeout_secs = (int)(delta.tv_sec * 1000
+			    + delta.tv_usec / 1000);
 			if (timeout_secs < 0)
 				timeout_secs = 0;
 		} else {
@@ -555,7 +557,7 @@ fetch_getline(struct fetch_connect *conn, char *buf, size_t buflen,
 	size_t len;
 	int rv;
 
-	if (fetch_getln(buf, buflen, conn) == NULL) {
+	if (fetch_getln(buf, (int)buflen, conn) == NULL) {
 		if (conn->iseof) {	/* EOF */
 			rv = -2;
 			if (errormsg)
@@ -572,7 +574,7 @@ fetch_getline(struct fetch_connect *conn, char *buf, size_t buflen,
 	if (buf[len - 1] == '\n') {	/* clear any trailing newline */
 		buf[--len] = '\0';
 	} else if (len == buflen - 1) {	/* line too long */
-		while (1) {
+		for (;;) {
 			char c;
 			size_t rlen = fetch_read(&c, sizeof(c), 1, conn);
 			if (rlen == 0 || c == '\n')
@@ -585,7 +587,7 @@ fetch_getline(struct fetch_connect *conn, char *buf, size_t buflen,
 	}
 	if (errormsg)
 		*errormsg = NULL;
-	return len;
+	return (int)len;
 }
 
 #ifdef WITH_SSL
@@ -687,7 +689,8 @@ fetch_start_ssl(int sock, const char *servername)
 		}
 		(void)gettimeofday(&now, NULL);
 		timersub(&timeout, &now, &delta);
-		timeout_secs = delta.tv_sec * 1000 + delta.tv_usec/1000;
+		timeout_secs = (int)(delta.tv_sec * 1000
+		    + delta.tv_usec / 1000);
 		if (timeout_secs < 0)
 			timeout_secs = 0;
 		rv = ftp_poll(pfd, 1, timeout_secs);

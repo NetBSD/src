@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.142 2024/07/19 03:53:13 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.143 2024/09/25 16:53:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2021 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.142 2024/07/19 03:53:13 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.143 2024/09/25 16:53:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -172,7 +172,7 @@ confirm(const char *cmd, const char *file)
 		promptleft = cmd;
 		promptright = file;
 	}
-	while (1) {
+	for (;;) {
 		fprintf(ttyout, "%s %s [anpqy?]? ", promptleft, promptright);
 		(void)fflush(ttyout);
 		if (get_line(stdin, cline, sizeof(cline), &errormsg) < 0) {
@@ -1830,10 +1830,10 @@ account(int argc, char *argv[])
 	memset(ap, 0, strlen(ap));
 }
 
-sigjmp_buf abortprox;
+static sigjmp_buf abortprox;
 
 void
-proxabort(int notused)
+proxabort(int notused __unused)
 {
 
 	sigint_raised = 1;
@@ -1855,7 +1855,7 @@ void
 doproxy(int argc, char *argv[])
 {
 	struct cmd *c;
-	int cmdpos;
+	size_t cmdpos;
 	sigfunc oldintr;
 	char cmdbuf[MAX_C_NAME];
 
@@ -2038,7 +2038,7 @@ setnmap(int argc, char *argv[])
 }
 
 static const char *
-domap(char *dst, size_t dlen, const char *src)
+domap(char *dst, size_t dlen __unused, const char *src)
 {
 	const char *cp1 = src;
 	char *cp2 = mapin;
@@ -2483,7 +2483,7 @@ macdef(int argc, char *argv[])
 		}
 		tmp++;
 	}
-	while (1) {
+	for (;;) {
 		while ((c = getchar()) != '\n' && c != EOF)
 			/* LOOP */;
 		if (c == EOF || getchar() == '\n') {
@@ -2605,7 +2605,8 @@ lpage(int argc, char *argv[])
 void
 page(int argc, char *argv[])
 {
-	int ohash, orestart_point, overbose;
+	int ohash, overbose;
+	off_t orestart_point;
 	size_t len;
 	const char *p;
 	char *pager;
@@ -2627,7 +2628,8 @@ page(int argc, char *argv[])
 	ohash = hash;
 	orestart_point = restart_point;
 	overbose = verbose;
-	hash = restart_point = verbose = 0;
+	hash = verbose = 0;
+	restart_point = 0;
 	recvrequest("RETR", pager, argv[1], "r+", 1, 0);
 	hash = ohash;
 	restart_point = orestart_point;
