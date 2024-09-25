@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19 2024/09/23 22:37:35 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.20 2024/09/25 16:12:34 christos Exp $
 
 JEMALLOC:=${.PARSEDIR}/..
 
@@ -98,8 +98,11 @@ LINTFLAGS.${i} += -X 86,89,117,132,161,191,193,207,217,226,261
 LINTFLAGS.arena.c += -X 298
 LINTFLAGS.ckh.c += -X 239
 LINTFLAGS.ctl.c += -X 135,239,298
+LINTFLAGS.hpa.c += -X 135	# i386: alignment pai_s[4] -> hpa_shard_s[8]
 LINTFLAGS.extent.c += -X 239
 LINTFLAGS.jemalloc.c += -X 236	# XXX: lint bug, it is a constructor
+LINTFLAGS.jemalloc.c += -X 141	# i386: lint is right, overflow is on purpose.
+LINTFLAGS.pac.c += -X 135	# i386: alignment pai_s[4] -> hpa_shard_s[8]
 LINTFLAGS.pages.c += -X 298
 LINTFLAGS.prof_data.c += -X 236
 LINTFLAGS.prof_recent.c += -X 42
