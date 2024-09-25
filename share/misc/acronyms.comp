@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.392 2024/08/30 16:19:25 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.393 2024/09/25 02:42:52 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -874,6 +874,7 @@ KB	kilobyte
 KBD	keyboard
 KBD	kilobaud
 KCS	keyboard controller style
+KDF	key derivation function
 KEK	key encryption key
 KEM	key encapsulation mechanism
 KLOC	thousand lines of code
@@ -1123,6 +1124,7 @@ NIA	next instruction address
 NIC	network information center
 NIC	network interface card
 NIDS	network intrusion detection system
+NIKE	Non-Interactive Key Exchange
 NIP	network interface protocol
 NIPR	non-classified IP router (network)
 NIPS	network intrusion prevention system
