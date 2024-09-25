@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_inode.c,v 1.2 2011/07/18 21:51:49 apb Exp $	*/
+/*	$NetBSD: v7fs_inode.c,v 1.3 2024/09/25 20:10:36 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_inode.c,v 1.2 2011/07/18 21:51:49 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_inode.c,v 1.3 2024/09/25 20:10:36 andvar Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -124,7 +124,7 @@ v7fs_inode_allocate(struct v7fs_self *fs, v7fs_ino_t *ino)
 	if ((error = v7fs_inode_number_sanity(sb, inode_number))) {
 		DPRINTF("new inode#%d %d %d\n", inode_number, sb->nfreeinode,
 		    sb->total_freeinode);
-		DPRINTF("free inode list corupt\n");
+		DPRINTF("free inode list corrupt\n");
 		goto errexit;
 	}
 	*ino = inode_number;
