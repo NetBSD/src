@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.54 2024/06/25 14:55:23 riastradh Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.55 2024/09/25 17:12:47 christos Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.54 2024/06/25 14:55:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.55 2024/09/25 17:12:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -755,13 +755,8 @@ static __inline void
 virtio_pci_bus_space_write_8(bus_space_tag_t iot, bus_space_handle_t ioh,
     bus_size_t offset, uint64_t value)
 {
-#if _QUAD_HIGHWORD
 	bus_space_write_4(iot, ioh, offset, BUS_ADDR_LO32(value));
 	bus_space_write_4(iot, ioh, offset + 4, BUS_ADDR_HI32(value));
-#else
-	bus_space_write_4(iot, ioh, offset, BUS_ADDR_HI32(value));
-	bus_space_write_4(iot, ioh, offset + 4, BUS_ADDR_LO32(value));
-#endif
 }
 
 static void
