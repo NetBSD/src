@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2019/10/27 11:21:52 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2024/09/25 09:39:11 rin Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -141,9 +141,21 @@ regdump(int *rp /* must not be register */, int sbytes)
 #if 0
 		if (rp[PS] & PSL_S) {
 #endif
+
+/*
+ * XXXGCC12
+ * Dereference to `(int *)(&rp) - 1` (SR in H/W exception frame) is
+ * blamed by GCC12 and later. Just silence as done for m68k/regdump.c.
+ */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+
 			printf("\n\nKernel stack (%s):",
 			       hexstr((int)(((int *)&rp) - 1), 8));
 			dumpmem(((int *)&rp) - 1, sbytes, 0);
+
+#pragma GCC diagnostic pop
+
 #if 0
 		} else {
 			printf("\n\nUser stack (%s):", hexstr(rp[SP], 8));
