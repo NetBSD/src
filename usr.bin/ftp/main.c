@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.131 2024/09/25 16:53:58 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.132 2024/09/25 16:55:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2023 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.131 2024/09/25 16:53:58 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.132 2024/09/25 16:55:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,11 +134,14 @@ static int	usage(void);
 static int	usage_help(void);
 static void	setupoption(const char *, const char *, const char *);
 
+struct http_headers custom_headers;
+
 int
 main(int volatile argc, char **volatile argv)
 {
 	int ch, rval;
 	struct passwd *pw;
+	struct entry *p;
 	char *cp, *ep, *anonpass, *upload_path, *src_addr;
 	const char *anonuser;
 	int dumbterm, isupload;
@@ -267,7 +270,8 @@ main(int volatile argc, char **volatile argv)
 		}
 	}
 
-	while ((ch = getopt(argc, argv, ":46Aab:defginN:o:pP:q:r:Rs:tT:u:vVx:")) != -1) {
+	SLIST_INIT(&custom_headers);
+	while ((ch = getopt(argc, argv, ":46Aab:defgH:inN:o:pP:q:r:Rs:tT:u:vVx:")) != -1) {
 		switch (ch) {
 		case '4':
 			family = AF_INET;
@@ -313,6 +317,12 @@ main(int volatile argc, char **volatile argv)
 
 		case 'g':
 			doglob = 0;
+			break;
+
+		case 'H':
+			p = ftp_malloc(sizeof(*p));
+			p->header = ftp_strdup(optarg);
+			SLIST_INSERT_HEAD(&custom_headers, p, entries);
 			break;
 
 		case 'i':

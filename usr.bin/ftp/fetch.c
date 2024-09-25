@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.240 2024/09/25 16:53:58 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.241 2024/09/25 16:55:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.240 2024/09/25 16:53:58 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.241 2024/09/25 16:55:39 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -865,6 +865,7 @@ print_get(FETCH *fin, int hasleading, int isproxy, const struct urlinfo *oui,
     const struct urlinfo *ui)
 {
 	const char *leading = hasleading ? ", " : "  (";
+	struct entry *np;
 
 	if (isproxy) {
 		if (verbose) {
@@ -882,6 +883,10 @@ print_get(FETCH *fin, int hasleading, int isproxy, const struct urlinfo *oui,
 	print_host(fin, ui);
 	fetch_printf(fin, "Accept: */*\r\n");
 	fetch_printf(fin, "Connection: close\r\n");
+	SLIST_FOREACH(np, &custom_headers, entries) {
+		fetch_printf(fin, "%s\r\n", np->header);
+	}
+
 	if (restart_point) {
 		fputs(leading, ttyout);
 		fetch_printf(fin, "Range: bytes=" LLF "-\r\n",
