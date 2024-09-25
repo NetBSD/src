@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.155 2024/07/19 03:51:21 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.156 2024/09/25 16:55:39 christos Exp $
 .\"
 .\" Copyright (c) 1996-2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd July 19, 2024
+.Dd September 25, 2024
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -67,6 +67,7 @@
 .Nm
 .Op Fl 46AadefginpRtVv\&?
 .Op Fl b Ar bufsize
+.Op Fl h Ar header
 .Op Fl N Ar netrc
 .Op Fl o Ar output
 .Op Fl P Ar port
@@ -223,6 +224,14 @@ or
 proxies.
 .It Fl g
 Disables file name globbing.
+It Fl H Ar header
+Include the provided
+.Ar header
+string as a custom 
+.Tn HTTP
+header for an
+.Th HTTP
+request.
 .It Fl i
 Turns off interactive prompting during
 multiple file transfers.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.88 2024/02/18 22:33:15 wiz Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.89 2024/09/25 16:55:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -101,6 +101,7 @@
 #endif
 
 #include <sys/param.h>
+#include <sys/queue.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -165,6 +166,14 @@ enum {
 	FEAT_max
 };
 
+/*
+ * Custom HTTP headers
+ */
+struct entry {
+	SLIST_ENTRY(entry)	entries;
+	const char		*header;
+};
+SLIST_HEAD(http_headers, entry);
 
 /*
  * Global defines
@@ -320,8 +329,9 @@ GLOBAL	FILE	*cin;
 GLOBAL	FILE	*cout;
 GLOBAL	int	 data;
 
-extern	struct cmd	cmdtab[];
-extern	struct option	optiontab[];
+extern	struct cmd		cmdtab[];
+extern	struct option		optiontab[];
+extern	struct http_headers	custom_headers;
 
 extern	size_t ftp_buflen;
 
