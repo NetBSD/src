@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.167 2023/05/05 15:46:06 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.168 2024/09/25 16:53:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2023 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.167 2023/05/05 15:46:06 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.168 2024/09/25 16:53:58 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -202,11 +202,11 @@ getremoteinfo(void)
 			/* determine remote system type */
 	if (command("SYST") == COMPLETE) {
 		if (overbose) {
-			int os_len = strcspn(reply_string + 4, " \r\n\t");
+			off_t os_len = strcspn(reply_string + 4, " \r\n\t");
 			if (os_len > 1 && reply_string[4 + os_len - 1] == '.')
 				os_len--;
 			fprintf(ttyout, "Remote system type is %.*s.\n",
-			    os_len, reply_string + 4);
+			    (int)os_len, reply_string + 4);
 		}
 		/*
 		 * Decide whether we should default to binary.
@@ -311,7 +311,7 @@ cleanuppeer(void)
  * Top-level signal handler for interrupted commands.
  */
 void
-intr(int signo)
+intr(int signo __unused)
 {
 
 	sigint_raised = 1;
@@ -949,7 +949,7 @@ list_vertical(StringList *sl)
  * Update the global ttywidth value, using TIOCGWINSZ.
  */
 void
-setttywidth(int a)
+setttywidth(int a __unused)
 {
 	struct winsize winsize;
 	int oerrno = errno;
@@ -1072,7 +1072,7 @@ strsuftoi(const char *arg)
 	if (val < 0 || val > INT_MAX)
 		return (-1);
 
-	return (val);
+	return (int)(val);
 }
 
 /*
@@ -1314,7 +1314,7 @@ get_line(FILE *stream, char *buf, size_t buflen, const char **errormsg)
 	int	rv, ch;
 	size_t	len;
 
-	if (fgets(buf, buflen, stream) == NULL) {
+	if (fgets(buf, (int)buflen, stream) == NULL) {
 		if (feof(stream)) {	/* EOF */
 			rv = -2;
 			if (errormsg)
@@ -1340,7 +1340,7 @@ get_line(FILE *stream, char *buf, size_t buflen, const char **errormsg)
 	}
 	if (errormsg)
 		*errormsg = NULL;
-	return len;
+	return (int)len;
 }
 
 /*
@@ -1431,7 +1431,8 @@ ftp_connect(int sock, const struct sockaddr *name, socklen_t namelen, int pe)
 			if (quit_time > 0) {	/* determine timeout */
 				(void)gettimeofday(&now, NULL);
 				timersub(&endtime, &now, &td);
-				timeout = td.tv_sec * 1000 + td.tv_usec/1000;
+				timeout = (int)(td.tv_sec * 1000
+				    + td.tv_usec / 1000);
 				if (timeout < 0)
 					timeout = 0;
 			} else {

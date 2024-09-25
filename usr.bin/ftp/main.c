@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.130 2024/02/18 22:29:56 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.131 2024/09/25 16:53:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2023 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.130 2024/02/18 22:29:56 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.131 2024/09/25 16:53:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -346,13 +346,13 @@ main(int volatile argc, char **volatile argv)
 			break;
 
 		case 'q':
-			quit_time = strtol(optarg, &ep, 10);
+			quit_time = (int)strtol(optarg, &ep, 10);
 			if (quit_time < 1 || *ep != '\0')
 				errx(1, "Bad quit value: %s", optarg);
 			break;
 
 		case 'r':
-			retry_connect = strtol(optarg, &ep, 10);
+			retry_connect = (int)strtol(optarg, &ep, 10);
 			if (retry_connect < 1 || *ep != '\0')
 				errx(1, "Bad retry value: %s", optarg);
 			break;
@@ -765,7 +765,8 @@ getcmd(const char *name)
 {
 	const char *p, *q;
 	struct cmd *c, *found;
-	int nmatches, longest;
+	int nmatches;
+	ptrdiff_t longest;
 
 	if (name == NULL)
 		return (0);
@@ -795,7 +796,7 @@ getcmd(const char *name)
  * Slice a string up into argc/argv.
  */
 
-int slrflag;
+static int slrflag;
 
 void
 makeargv(void)

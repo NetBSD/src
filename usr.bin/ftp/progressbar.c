@@ -1,4 +1,4 @@
-/*	$NetBSD: progressbar.c,v 1.25 2024/07/19 03:53:13 lukem Exp $	*/
+/*	$NetBSD: progressbar.c,v 1.26 2024/09/25 16:53:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2024 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progressbar.c,v 1.25 2024/07/19 03:53:13 lukem Exp $");
+__RCSID("$NetBSD: progressbar.c,v 1.26 2024/09/25 16:53:58 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -76,7 +76,7 @@ static void updateprogressmeter(int);
  * SIGALRM handler to update the progress meter
  */
 static void
-updateprogressmeter(int dummy)
+updateprogressmeter(int dummy __unused)
 {
 	int oerrno = errno;
 
@@ -376,7 +376,7 @@ ptransfer(int siginfo)
  * SIG{INFO,QUIT} handler to print transfer stats if a transfer is in progress
  */
 void
-psummary(int notused)
+psummary(int notused __unused)
 {
 	int oerrno = errno;
 
