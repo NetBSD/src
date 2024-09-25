@@ -1,4 +1,4 @@
-/* $NetBSD: t_clone.c,v 1.4 2017/05/23 15:56:55 christos Exp $ */
+/* $NetBSD: t_clone.c,v 1.5 2024/09/25 19:24:15 christos Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,11 +32,12 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_clone.c,v 1.4 2017/05/23 15:56:55 christos Exp $");
+__RCSID("$NetBSD: t_clone.c,v 1.5 2024/09/25 19:24:15 christos Exp $");
 
+#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
-#include <sys/types.h>
 #include <sys/wait.h>
 
 #include <errno.h>
@@ -52,6 +53,27 @@ __RCSID("$NetBSD: t_clone.c,v 1.4 2017/05/23 15:56:55 christos Exp $");
 #define	STACKSIZE	(8 * 1024)
 #define	FROBVAL		41973
 #define	CHILDEXIT	0xa5
+
+static void *
+getstack(void)
+{
+	void *stack = mmap(NULL, STACKSIZE, PROT_READ|PROT_WRITE,
+	    MAP_PRIVATE|MAP_ANON, -1, (off_t) 0);
+	ATF_REQUIRE_ERRNO(errno, stack != MAP_FAILED);
+#ifndef __MACHINE_STACK_GROWS_UP
+	stack = (char *)stack + STACKSIZE;
+#endif
+	return stack;
+}
+
+static void 
+putstack(void *stack)
+{
+#ifndef __MACHINE_STACK_GROWS_UP
+	stack = (char *)stack - STACKSIZE;
+#endif
+	ATF_REQUIRE_ERRNO(errno, munmap(stack, STACKSIZE) != -1);
+}
 
 static int
 dummy(void *arg)
@@ -94,20 +116,10 @@ ATF_TC_HEAD(clone_basic, tc)
 ATF_TC_BODY(clone_basic, tc)
 {
 	sigset_t mask;
-	void *allocstack, *stack;
+	void *stack = getstack();
 	pid_t pid;
 	volatile long frobme[2];
 	int stat;
-
-	allocstack = mmap(NULL, STACKSIZE, PROT_READ|PROT_WRITE,
-	    MAP_PRIVATE|MAP_ANON, -1, (off_t) 0);
-
-	ATF_REQUIRE_ERRNO(errno, allocstack != MAP_FAILED);
-
-	stack = allocstack;
-#ifndef __MACHINE_STACK_GROWS_UP
-	stack = (char *)stack + STACKSIZE;
-#endif
 
 	printf("parent: stack = %p, frobme = %p\n", stack, frobme);
 	fflush(stdout);
@@ -158,7 +170,7 @@ ATF_TC_BODY(clone_basic, tc)
 		/*NOTREACHED*/
 	}
 
-	ATF_REQUIRE_ERRNO(errno, munmap(allocstack, STACKSIZE) != -1);
+	putstack(stack);
 }
 
 ATF_TC(clone_null_stack);
@@ -190,16 +202,9 @@ ATF_TC_HEAD(clone_null_func, tc)
 
 ATF_TC_BODY(clone_null_func, tc)
 {
-	void *allocstack, *stack;
+	void *stack = getstack();
 	int rv;
 
-	allocstack = mmap(NULL, STACKSIZE, PROT_READ|PROT_WRITE,
-	    MAP_PRIVATE|MAP_ANON, -1, (off_t) 0);
-	ATF_REQUIRE_ERRNO(errno, allocstack != MAP_FAILED);
-	stack = allocstack;
-#ifndef __MACHINE_STACK_GROWS_UP
-	stack = (char *)stack + STACKSIZE;
-#endif
 
 	errno = 0;
 	rv = __clone(0, stack,
@@ -208,7 +213,7 @@ ATF_TC_BODY(clone_null_func, tc)
 	ATF_REQUIRE_EQ(rv, -1);
 	ATF_REQUIRE_EQ(errno, EINVAL);
 
-	ATF_REQUIRE_ERRNO(errno, munmap(allocstack, STACKSIZE) != -1);
+	putstack(stack);
 }
 
 ATF_TC(clone_out_of_proc);
@@ -222,6 +227,7 @@ ATF_TC_HEAD(clone_out_of_proc, tc)
 
 ATF_TC_BODY(clone_out_of_proc, tc)
 {
+	char *stack = getstack();
 	struct rlimit rl;
 	int rv;
 
@@ -233,11 +239,12 @@ ATF_TC_BODY(clone_out_of_proc, tc)
 	ATF_REQUIRE_ERRNO(errno, setrlimit(RLIMIT_NPROC, &rl) != -1);
 
 	errno = 0;
-	rv = __clone(dummy, malloc(10240),
+	rv = __clone(dummy, stack,
 	    CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|SIGCHLD, (void *)&rl);
 
 	ATF_REQUIRE_EQ(rv, -1);
 	ATF_REQUIRE_EQ(errno, EAGAIN);
+	putstack(stack);
 }
 
 ATF_TP_ADD_TCS(tp)
