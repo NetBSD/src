@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.130 2024/08/20 08:18:24 ozaki-r Exp $
+.\"	$NetBSD: ifconfig.8,v 1.131 2024/09/25 14:55:31 roy Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd August 20, 2024
+.Dd September 25, 2024
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -796,24 +796,13 @@ If the
 .Fl s
 flag is passed before an interface name,
 .Nm
-will attempt to query the interface for its media status.
-If the
-interface supports reporting media status, and it reports that it does
-not appear to be connected to a network,
+will query the interface for its link state.
+If the link state is reported to be down,
 .Nm
 will exit with status of 1
 .Pq false ;
-otherwise, it will exit with a zero
-.Pq true
-exit status.
-For interface drivers that do not support media status reporting.
-then if the link state is not reported to be up,
-.Nm
-will exit with a status of 1
-.Pq false ;
-otherwise, it will exit with a zero
-.Pq true
-exit status.
+otherwise, it will exit with a status of 0
+.Pq true .
 .Pp
 If the
 .Fl m
