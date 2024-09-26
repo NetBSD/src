@@ -4506,4 +4506,30 @@ _malloc_postfork_child(void)
 	ctl_postfork_child(tsd_tsdn(tsd));
 }
 
+void (*
+je_malloc_message_get(void))(void *, const char *)
+{
+	return je_malloc_message;
+}
+
+void
+je_malloc_message_set(void (*m)(void *, const char *))
+{
+	je_malloc_message = m;
+}
+
+const char *
+je_malloc_conf_get(void)
+{
+	return je_malloc_conf;
+}
+
+void
+je_malloc_conf_set(const char *m)
+{
+	je_malloc_conf = m;
+}
+
+ /******************************************************************************/
+
 /******************************************************************************/
