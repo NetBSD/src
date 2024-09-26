@@ -1,4 +1,4 @@
-.\"	$NetBSD: vether.4,v 1.5 2024/09/24 15:23:53 roy Exp $
+.\"	$NetBSD: vether.4,v 1.6 2024/09/26 09:59:56 roy Exp $
 .\"
 .\"	$OpenBSD: vether.4,v 1.5 2017/10/17 22:47:58 schwarze Exp $
 .\"
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd September 24, 2017
+.Dd September 26, 2017
 .Dt VETHER 4
 .Os
 .Sh NAME
@@ -48,10 +48,10 @@ link state can be controlled using
 .Xr ifconfig 8 :
 .Pp
 .Bl -tag -offset indent -width Cm -compact
-.It Cm link0
+.It Cm media auto
 link state
 .Dq up
-.It Fl link0
+.It Cm media none
 link state
 .Dq down
 .El
