@@ -1,16 +1,27 @@
-/*	$NetBSD: msg_192.c,v 1.9 2023/09/12 22:01:05 rillig Exp $	*/
+/*	$NetBSD: msg_192.c,v 1.10 2024/09/26 21:31:09 rillig Exp $	*/
 # 3 "msg_192.c"
 
 // Test for message: '%s' unused in function '%s' [192]
+//
+// See also:
+//	msg_231		for unused parameters
 
 /* lint1-extra-flags: -X 351 */
 
 void
-/* expect+1: warning: parameter 'param' unused in function 'example' [231] */
-example(int param)
+example(void)
 {
-	/* expect+1: warning: 'local' unused in function 'example' [192] */
-	int local;
+	/* expect+1: warning: 'local_scalar' unused in function 'example' [192] */
+	int local_scalar;
+	/* expect+1: warning: 'local_ptr' unused in function 'example' [192] */
+	char *local_ptr;
+	/* expect+1: warning: 'local_arr' unused in function 'example' [192] */
+	char local_arr[5];
+	/* expect+1: warning: 'local_func' unused in function 'example' [192] */
+	void (*local_func)(int, double);
+	typedef void (*handler)(int);
+	/* expect+1: warning: 'local_signal' unused in function 'example' [192] */
+	handler (*local_signal)(int, handler);
 }
 
 
