@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.39 2021/12/31 20:22:48 andvar Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.40 2024/09/26 02:37:46 ozaki-r Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.21 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.39 2021/12/31 20:22:48 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.40 2024/09/26 02:37:46 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -306,7 +306,7 @@ cbq_remove_altq(struct pf_altq *a)
 	return (0);
 }
 
-#define NSEC_TO_PSEC(s)	((uint64_t)(s) * 1000 * 1000)
+#define NSEC_TO_PSEC(s)	((uint64_t)(s) * 1000)
 int
 cbq_add_queue(struct pf_altq *a)
 {
