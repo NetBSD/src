@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.c,v 1.15 2024/04/05 06:51:41 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.c,v 1.16 2024/09/26 06:08:24 rin Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.15 2024/04/05 06:51:41 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.16 2024/09/26 06:08:24 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -171,6 +171,8 @@ lagg_proto_alloc(lagg_proto pr, struct lagg_softc *sc)
 	if (psc == NULL)
 		return NULL;
 
+	snprintf(xnamebuf, sizeof(xnamebuf), "%s.proto",
+	    sc->sc_if.if_xname);
 	psc->psc_workq = lagg_workq_create(xnamebuf,
 		    PRI_SOFTNET, IPL_SOFTNET, WQ_MPSAFE);
 	if (psc->psc_workq == NULL) {
