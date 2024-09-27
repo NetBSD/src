@@ -1,4 +1,4 @@
-/* $NetBSD: t_clone.c,v 1.5 2024/09/25 19:24:15 christos Exp $ */
+/* $NetBSD: t_clone.c,v 1.6 2024/09/27 18:50:01 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_clone.c,v 1.5 2024/09/25 19:24:15 christos Exp $");
+__RCSID("$NetBSD: t_clone.c,v 1.6 2024/09/27 18:50:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -66,7 +66,7 @@ getstack(void)
 	return stack;
 }
 
-static void 
+static void
 putstack(void *stack)
 {
 #ifndef __MACHINE_STACK_GROWS_UP
