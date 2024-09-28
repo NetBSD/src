@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.80 2024/09/24 19:58:06 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.81 2024/09/28 15:51:40 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.80 2024/09/24 19:58:06 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.81 2024/09/28 15:51:40 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -352,6 +352,12 @@ type_qualifiers_string(type_qualifiers tq)
 	    tq.tq_volatile ? " volatile" : "",
 	    tq.tq_atomic ? " atomic" : "");
 	return buf[0] != '\0' ? buf + 1 : "none";
+}
+
+const char *
+type_attributes_string(type_attributes attrs)
+{
+	return attrs.used ? "used" : "none";
 }
 
 const char *

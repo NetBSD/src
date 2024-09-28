@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.232 2024/09/24 19:58:06 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.233 2024/09/28 15:51:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -136,6 +136,7 @@ const char *decl_level_kind_name(decl_level_kind);
 const char *scl_name(scl_t);
 const char *symbol_kind_name(symbol_kind);
 const char *type_qualifiers_string(type_qualifiers);
+const char *type_attributes_string(type_attributes);
 const char *function_specifier_name(function_specifier);
 const char *named_constant_name(named_constant);
 void debug_dcs(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_arg.c,v 1.14 2024/09/28 14:25:04 rillig Exp $	*/
+/*	$NetBSD: decl_arg.c,v 1.15 2024/09/28 15:51:40 rillig Exp $	*/
 # 3 "decl_arg.c"
 
 /*
@@ -99,8 +99,6 @@ const
 // The attribute 'format' belongs to the function type.
 void
 param_func_attr_unused(
-    /* FIXME: handle the 'unused' attribute */
-    /* expect+1: warning: parameter 'pr' unused in function 'param_func_attr_unused' [231] */
     void (*pr)(const char *, ...)
 	__attribute__((__unused__))
 	__attribute__((__format__(__printf__, 1, 2)))
