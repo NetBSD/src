@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.507 2024/08/29 20:35:19 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.508 2024/09/28 11:20:29 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.507 2024/08/29 20:35:19 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.508 2024/09/28 11:20:29 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -154,7 +154,7 @@ new_attribute(const sbuf_t *prefix, const sbuf_t *name,
 
 %}
 
-%expect 110
+%expect 107
 
 %union {
 	val_t	*y_val;
@@ -1243,8 +1243,7 @@ member_declaration:
 		error(249, "member without type");
 		$$ = NULL;
 	}
-|	begin_type_specifier_qualifier_list end_type type_attribute_opt
-	    T_SEMI {
+|	begin_type_specifier_qualifier_list end_type T_SEMI {
 		set_sym_kind(SK_VCFT);
 		if (!allow_c11 && !allow_gcc)
 			/* anonymous struct/union members is a C11 feature */
