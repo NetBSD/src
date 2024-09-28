@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.30 2024/07/08 22:14:31 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.31 2024/09/28 14:24:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -24,6 +24,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>	/* __off_t */
 #include <stdarg.h>
 #include <ucontext.h>
 
