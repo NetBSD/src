@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.h,v 1.10 2021/09/19 23:51:37 thorpej Exp $	*/
+/*	$NetBSD: linux_sched.h,v 1.11 2024/09/28 19:35:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -61,6 +61,38 @@
 				0x01000000	/* set TID in the child */
 #define LINUX_CLONE_STOPPED	0x02000000	/* start in stopped state */
 
+/*
+ * Flags that clone supports but are yet to be supported in NetBSD
+ */
+
+#define	LINUX_CLONE_PIDFD		0x00001000	/* since Linux 5.2 */
+#define	LINUX_CLONE_NEWCGROUP		0x02000000	/* New cgroup NS */
+#define	LINUX_CLONE_NEWUTS		0x04000000
+#define	LINUX_CLONE_NEWIPC		0x08000000
+#define	LINUX_CLONE_NEWUSER		0x10000000
+#define	LINUX_CLONE_NEWPID		0x20000000
+#define	LINUX_CLONE_NEWNET		0x40000000
+#define	LINUX_CLONE_IO			0x80000000
+
+/* Flags for the clone3() syscall. */
+#define	LINUX_CLONE_CLEAR_SIGHAND	0x100000000ULL
+#define	LINUX_CLONE_INTO_CGROUP		0x200000000ULL
+#define	LINUX_CLONE_NEWTIME		0x00000080
+
+#define	LINUX_CLONE_LEGACY_FLAGS	0xffffffffULL
+
+#define LINUX_CLONE_ALLOWED_FLAGS ( \
+    LINUX_CLONE_VM | LINUX_CLONE_FS | LINUX_CLONE_FILES | \
+    LINUX_CLONE_SIGHAND | LINUX_CLONE_THREAD | LINUX_CLONE_VFORK | \
+    LINUX_CLONE_PARENT_SETTID | LINUX_CLONE_CHILD_CLEARTID | \
+    LINUX_CLONE_CHILD_SETTID | LINUX_CLONE_SETTLS)
+
+#define LINUX_CLONE_UNIMPLEMENTED_FLAGS ( \
+    LINUX_CLONE_NEWNS | LINUX_CLONE_NEWUTS | LINUX_CLONE_NEWIPC | \
+    LINUX_CLONE_NEWUSER | LINUX_CLONE_NEWPID | LINUX_CLONE_NEWNET | \
+    LINUX_CLONE_PIDFD)
+
+#define	LINUX_CSIGNAL			0x000000ff
 struct linux_sched_param {
 	int	sched_priority;
 };
@@ -78,6 +110,26 @@ struct linux_itimerspec {
 	struct linux_timespec it_interval;
 	struct linux_timespec it_value;
 };
+
+struct linux_user_clone3_args {
+	uint64_t flags;        /* Flags bit mask */
+	uint64_t pidfd;        /* Where to store PID file descriptor (int *) */
+	uint64_t child_tid;    /* Where to store child TID, in child's memory
+				  (pid_t *) */
+	uint64_t parent_tid;   /* Where to store child TID, in parent's memory
+				  (pid_t *) */
+	uint64_t exit_signal;  /* Signal to deliver to parent on child
+				  termination */
+	uint64_t stack;        /* Pointer to lowest byte of stack */
+	uint64_t stack_size;   /* Size of stack */
+	uint64_t tls;          /* Location of new TLS */
+	uint64_t set_tid;      /* Pointer to a pid_t array (since Linux 5.5) */
+	uint64_t set_tid_size; /* Number of elements in set_tid (since Linux
+				  5.5) */
+	uint64_t cgroup;       /* File descriptor for target cgroup of child
+				  (since Linux 5.7) */
+};
+
 
 #define LINUX_CLOCK_REALTIME		0
 #define LINUX_CLOCK_MONOTONIC		1

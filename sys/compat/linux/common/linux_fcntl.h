@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fcntl.h,v 1.22 2023/08/19 17:57:54 christos Exp $	*/
+/*	$NetBSD: linux_fcntl.h,v 1.23 2024/09/28 19:35:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -54,6 +54,29 @@ struct stat;
 #define LINUX_AT_SYMLINK_FOLLOW		0x0400
 #define LINUX_AT_NO_AUTOMOUNT		0x0800
 #define LINUX_AT_EMPTY_PATH		0x1000
+
+
+/*
+ * sync_file_range flags
+ */
+#define	LINUX_SYNC_FILE_RANGE_WAIT_BEFORE	1
+#define	LINUX_SYNC_FILE_RANGE_WRITE		2
+#define	LINUX_SYNC_FILE_RANGE_WAIT_AFTER	4
+#define	LINUX_SYNC_FILE_RANGE_ALL	\
+    (LINUX_SYNC_FILE_RANGE_WAIT_BEFORE | \
+    LINUX_SYNC_FILE_RANGE_WRITE	| \
+    LINUX_SYNC_FILE_RANGE_WAIT_AFTER)
+
+/*
+ * renameat2 flags
+ */
+#define	LINUX_RENAME_NOREPLACE	1
+#define	LINUX_RENAME_EXCHANGE	2
+#define	LINUX_RENAME_WHITEOUT	4
+#define	LINUX_RENAME_ALL \
+    (LINUX_RENAME_NOREPLACE | \
+    LINUX_RENAME_EXCHANGE | \
+    LINUX_RENAME_WHITEOUT)
 
 #ifdef _KERNEL
 int linux_to_bsd_ioflags(int);

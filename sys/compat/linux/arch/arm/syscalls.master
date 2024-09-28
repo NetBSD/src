@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.81 2024/07/01 01:35:52 christos Exp $
+	$NetBSD: syscalls.master,v 1.82 2024/09/28 19:35:55 christos Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -573,7 +573,8 @@
 339	NOARGS		{ int|sys||__futex_get_robust_list(lwpid_t lwpid, \
 			    void **headp, size_t *lenp); }
 340	UNIMPL		splice
-341	UNIMPL		sync_file_range2
+341	STD		{ int|linux_sys||sync_file_range(int fd, \
+			    off_t offset, off_t nbytes, unsigned int flags); }
 342	UNIMPL		tee
 343	UNIMPL		vmsplice
 344	UNIMPL		move_pages
@@ -625,7 +626,7 @@
 370	UNIMPL		name_to_handle_at
 371	UNIMPL		open_by_handle_at
 372	UNIMPL		clock_adjtime
-373	UNIMPL		syncfs
+373	STD		{ int|linux_sys||syncfs(int fd); }
 374	STD		{ int|linux_sys||sendmmsg(int s, \
 			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
 			    unsigned int flags); }
@@ -636,7 +637,9 @@
 379	UNIMPL		finit_module
 380	UNIMPL		sched_setattr
 381	UNIMPL		sched_getattr
-382	UNIMPL		renameat2
+382	STD		{ int|linux_sys||renameat2(int fromfd, \
+			    const char *from, int tofd, const char *to, \
+			    unsigned int flags); }
 383	UNIMPL		seccomp
 ; XXX FIX-me?
 ; 384	NOARGS		{ ssize_t|sys||getrandom(void *buf, size_t buflen, \
@@ -658,7 +661,9 @@
 388	UNIMPL		usr32
 389	STD		{ int|linux_sys||set_tls(void *tls); }
 390	UNIMPL
-391	UNIMPL
+391	STD		{ ssize_t|linux_sys||copy_file_range(int fd_in, \
+			off_t * off_in, int fd_out, off_t * off_out, \
+			size_t len, unsigned int flags); }
 392	UNIMPL
 393	UNIMPL
 394	UNIMPL
@@ -704,7 +709,9 @@
 432	UNIMPL
 433	UNIMPL
 434	UNIMPL
-435	UNIMPL
+435	STD		{ int|linux_sys||clone3( \
+			    struct linux_user_clone3_args *cl_args, \
+			    size_t size); }
 436	STD		{ int|linux_sys||close_range(unsigned int first, \
 			    unsigned int last, unsigned int flags); }
 437	UNIMPL

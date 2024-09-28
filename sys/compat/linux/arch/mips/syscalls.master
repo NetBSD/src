@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.81 2024/07/01 01:35:53 christos Exp $  
+	$NetBSD: syscalls.master,v 1.82 2024/09/28 19:35:56 christos Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -534,7 +534,8 @@
 			    linux_sigset_t *sigset); }
 303	UNIMPL		unshare
 304	UNIMPL		splice
-305	UNIMPL		sync_file_range
+305	STD		{ int|linux_sys||sync_file_range(int fd, \
+			    off_t offset, off_t nbytes, unsigned int flags); }
 306	UNIMPL		tee
 307	UNIMPL		vmsplice
 308	UNIMPL		move_pages
@@ -599,7 +600,7 @@
 340	UNIMPL		name_to_handle_at
 341	UNIMPL		open_by_handle_at
 342	UNIMPL		clock_adjtime
-343	UNIMPL		syncfs
+343	STD		{ int|linux_sys||syncfs(int fd); }
 344	STD		{ int|linux_sys||sendmmsg(int s, \
 			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
 			    unsigned int flags); }
@@ -610,7 +611,9 @@
 349	UNIMPL		finit_module
 350	UNIMPL		sched_setattr
 351	UNIMPL		sched_getattr
-352	UNIMPL		renameat2
+352	STD		{ int|linux_sys||renameat2(int fromfd, \
+			    const char *from, int tofd, const char *to, \
+			    unsigned int flags); }
 353	NOARGS		{ ssize_t|sys||getrandom(void *buf, size_t buflen, \
 			    unsigned int flags); }
 354	STD		{ int|linux_sys||memfd_create(const char *name, \
@@ -620,7 +623,9 @@
 357	UNIMPL		userfaultfd
 358	UNIMPL		membarrier
 359	UNIMPL		mlock2
-360	UNIMPL		copy_file_range
+360	STD		{ ssize_t|linux_sys||copy_file_range(int fd_in, \
+			off_t * off_in, int fd_out, off_t * off_out, \
+			size_t len, unsigned int flags); }
 361	UNIMPL		preadv2
 362	UNIMPL		pwritev2
 363	UNIMPL		pkey_mprotect
@@ -697,7 +702,9 @@
 432	UNIMPL
 433	UNIMPL
 434	UNIMPL
-435	UNIMPL
+435	STD		{ int|linux_sys||clone3( \
+			    struct linux_user_clone3_args *cl_args, \
+			    size_t size); }
 436	STD		{ int|linux_sys||close_range(unsigned int first, \
 			    unsigned int last, unsigned int flags); }
 437	UNIMPL
