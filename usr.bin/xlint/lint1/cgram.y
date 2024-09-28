@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.510 2024/09/28 15:51:40 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.511 2024/09/28 16:09:23 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.510 2024/09/28 15:51:40 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.511 2024/09/28 16:09:23 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -2506,6 +2506,7 @@ gcc_attribute:
 		if (is_either(name, "packed", "__packed__"))
 			dcs_add_packed();
 		else if (is_either(name, "used", "__used__") ||
+		    is_either(name, "constructor", "__constructor__") ||
 		    is_either(name, "unused", "__unused__"))
 			$$.used = true;
 		else if (is_either(name, "fallthrough", "__fallthrough__"))
