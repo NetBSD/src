@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute_var.c,v 1.11 2023/07/15 21:47:35 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute_var.c,v 1.12 2024/09/28 11:20:29 rillig Exp $	*/
 # 3 "gcc_attribute_var.c"
 
 /*
@@ -83,3 +83,20 @@ struct attribute_in_member_declaration {
 	    bit2:2 __attribute__(()),
 	    bit3:3 __attribute__(());
 };
+
+
+void
+anonymous_members(void)
+{
+	struct single_attribute_outer {
+		struct single_attribute_inner {
+			int member;
+		} __attribute__(());
+	} __attribute__(());
+
+	struct multiple_attributes_outer {
+		struct multiple_attributes_inner {
+			int member;
+		} __attribute__(()) __attribute__(());
+	} __attribute__(()) __attribute__(());
+}
