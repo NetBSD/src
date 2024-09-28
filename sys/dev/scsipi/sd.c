@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.336 2024/02/24 22:06:49 mlelstv Exp $	*/
+/*	$NetBSD: sd.c,v 1.337 2024/09/28 08:57:47 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.336 2024/02/24 22:06:49 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.337 2024/09/28 08:57:47 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -1315,7 +1315,7 @@ static int
 sd_validate_blksize(struct scsipi_periph *periph, int len)
 {
 
-	if (len >= 256 && powerof2(len) && len <= 4096) {
+	if (len >= 256 && powerof2(len) && len <= MAXPHYS) {
 		return 1;
 	}
 
