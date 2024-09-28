@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_247.c,v 1.33 2023/08/07 22:30:39 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.34 2024/09/28 19:09:37 rillig Exp $	*/
 # 3 "msg_247.c"
 
-// Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
+// Test for message: pointer cast from '%s' to unrelated '%s' [247]
 
 //
 // The word 'may' in the message text means that the trouble is not necessarily
@@ -78,7 +78,7 @@ cast_to_unsigned_char_pointer(struct Other *arg)
 signed char *
 cast_to_signed_char_pointer(struct Other *arg)
 {
-	/* expect+1: warning: pointer cast from 'pointer to struct Other' to 'pointer to signed char' may be troublesome [247] */
+	/* expect+1: warning: pointer cast from 'struct Other' to unrelated 'signed char' [247] */
 	return (signed char *)arg;
 }
 
@@ -224,7 +224,7 @@ char_to_struct(void *ptr)
 
 	sink((struct counter *)(unsigned char *)ptr);
 
-	/* expect+1: warning: pointer cast from 'pointer to signed char' to 'pointer to struct counter' may be troublesome [247] */
+	/* expect+1: warning: pointer cast from 'signed char' to unrelated 'struct counter' [247] */
 	sink((struct counter *)(signed char *)ptr);
 }
 
@@ -284,10 +284,10 @@ cast_between_sockaddr_variants(void *ptr)
 	void *t3 = (struct sockaddr_in6 *)(struct sockaddr *)t2;
 	void *t4 = (struct sockaddr *)(struct sockaddr_in6 *)t3;
 
-	/* expect+1: warning: pointer cast from 'pointer to struct sockaddr_in6' to 'pointer to struct sockaddr_in' may be troublesome [247] */
+	/* expect+1: warning: pointer cast from 'struct sockaddr_in6' to unrelated 'struct sockaddr_in' [247] */
 	void *t5 = (struct sockaddr_in *)(struct sockaddr_in6 *)t4;
 
-	/* expect+1: warning: pointer cast from 'pointer to struct sockaddr_in' to 'pointer to struct sockaddr_in6' may be troublesome [247] */
+	/* expect+1: warning: pointer cast from 'struct sockaddr_in' to unrelated 'struct sockaddr_in6' [247] */
 	void *t6 = (struct sockaddr_in6 *)(struct sockaddr_in *)t5;
 
 	return t6;
@@ -373,7 +373,7 @@ conversions_from_and_to_union(void)
 
 	/* expect+1: warning: illegal combination of 'pointer to int' and 'pointer to double', op '=' [124] */
 	p_int = p_double;
-	/* expect+1: warning: pointer cast from 'pointer to double' to 'pointer to int' may be troublesome [247] */
+	/* expect+1: warning: pointer cast from 'double' to unrelated 'int' [247] */
 	p_int = (int *)p_double;
 
 	/* expect+1: warning: illegal combination of 'pointer to union typedef anything' and 'pointer to double', op '=' [124] */

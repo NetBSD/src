@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.651 2024/08/19 04:47:50 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.652 2024/09/28 19:09:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.651 2024/08/19 04:47:50 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.652 2024/09/28 19:09:37 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3664,8 +3664,8 @@ convert_pointer_from_pointer(type_t *ntp, tnode_t *tn)
 	}
 
 	if (cflag && should_warn_about_pointer_cast(nstp, nst, ostp, ost)) {
-		/* pointer cast from '%s' to '%s' may be troublesome */
-		warning(247, type_name(otp), type_name(ntp));
+		/* pointer cast from '%s' to unrelated '%s' */
+		warning(247, type_name(ostp), type_name(nstp));
 	}
 }
 
