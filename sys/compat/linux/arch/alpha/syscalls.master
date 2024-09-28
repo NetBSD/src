@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.108 2024/07/01 01:35:52 christos Exp $
+	$NetBSD: syscalls.master,v 1.109 2024/09/28 19:35:55 christos Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -774,7 +774,8 @@
 467	NOARGS		{ int|sys||__futex_get_robust_list(lwpid_t lwpid, \
 			    void **headp, size_t *lenp); }
 468	UNIMPL		splice
-469	UNIMPL		sync_file_range
+469	STD		{ int|linux_sys||sync_file_range(int fd, \
+			    off_t offset, off_t nbytes, unsigned int flags); }
 470	UNIMPL		tee
 471	UNIMPL		vmsplice
 472	UNIMPL		move_pages
@@ -823,7 +824,7 @@
 497	UNIMPL		name_to_handle_at
 498	UNIMPL		open_by_handle_at
 499	UNIMPL		clock_adjtime
-500	UNIMPL		syncfs
+500	STD		{ int|linux_sys||syncfs(int fd); }
 501	UNIMPL		setns
 502	STD		{ int|linux_sys||accept4(int s, \
 			    struct osockaddr *name, \
@@ -837,7 +838,9 @@
 507	UNIMPL		finit_module
 508	UNIMPL		sched_setattr
 509	UNIMPL		sched_getattr
-510	UNIMPL		renameat2
+510	STD		{ int|linux_sys||renameat2(int fromfd, \
+			    const char *from, int tofd, const char *to, \
+			    unsigned int flags); }
 511	UNIMPL
 512	UNIMPL
 513	UNIMPL
@@ -846,7 +849,9 @@
 516	UNIMPL
 517	UNIMPL
 518	UNIMPL
-519	UNIMPL
+519	STD		{ ssize_t|linux_sys||copy_file_range(int fd_in, \
+			off_t * off_in, int fd_out, off_t * off_out, \
+			size_t len, unsigned int flags); }
 520	UNIMPL
 521	UNIMPL
 522	STD		{ int|linux_sys||statx(int fd, const char *path, \
@@ -874,7 +879,9 @@
 542	UNIMPL
 543	UNIMPL
 544	UNIMPL
-545	UNIMPL
+545	STD		{ int|linux_sys||clone3( \
+			     struct linux_user_clone3_args *cl_args, \
+			     size_t size); }
 546	STD		{ int|linux_sys||close_range(unsigned int first, \
 			    unsigned int last, unsigned int flags); }
 547	UNIMPL

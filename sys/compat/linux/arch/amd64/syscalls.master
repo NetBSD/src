@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.74 2024/07/01 01:35:52 christos Exp $
+	$NetBSD: syscalls.master,v 1.75 2024/09/28 19:35:55 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -62,6 +62,7 @@
 #include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/common/linux_mqueue.h>
 #include <compat/linux/common/linux_machdep.h>
+#include <compat/linux/common/linux_sched.h>
 
 #include <compat/linux/linux_syscallargs.h>
 
@@ -533,7 +534,8 @@
 			    void **headp, size_t *lenp); }
 275	UNIMPL		splice
 276	UNIMPL		tee
-277	UNIMPL		sync_file_range
+277	STD		{ int|linux_sys||sync_file_range(int fd, \
+			    off_t offset, off_t nbytes, unsigned int flags); }
 278	UNIMPL		vmsplice
 279	UNIMPL		move_pages
 280	STD		{ int|linux_sys||utimensat(int fd, const char *path, \
@@ -580,7 +582,7 @@
 303	UNIMPL		name_to_handle_at
 304	UNIMPL		open_by_handle_at
 305	UNIMPL		clock_adjtime
-306	UNIMPL		syncfs
+306	STD		{ int|linux_sys||syncfs(int fd); }
 307	STD		{ int|linux_sys||sendmmsg(int s, \
 			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
 			    unsigned int flags); }
@@ -594,7 +596,9 @@
 313	UNIMPL		finit_module
 314	UNIMPL		sched_setattr
 315	UNIMPL		sched_getattr
-316	UNIMPL		renameat2
+316	STD		{ int|linux_sys||renameat2(int fromfd, \
+			    const char *from, int tofd, const char *to, \
+			    unsigned int flags); }
 317	UNIMPL		seccomp
 318	NOARGS		{ ssize_t|sys||getrandom(void *buf, size_t buflen, \
 			    unsigned int flags); }
@@ -606,7 +610,9 @@
 323	UNIMPL		userfaultfd
 324	UNIMPL		membarrier
 325	UNIMPL		mlock2
-326	UNIMPL		copy_file_range
+326	STD		{ ssize_t|linux_sys||copy_file_range(int fd_in, \
+			off_t * off_in, int fd_out, off_t * off_out, \
+			size_t len, unsigned int flags); }
 327	UNIMPL		preadv2
 328	UNIMPL		pwritev2
 329	UNIMPL		pkey_mprotect
@@ -717,7 +723,9 @@
 432	UNIMPL		fsmount
 433	UNIMPL		fspick
 434	UNIMPL		pidfd_open
-435	UNIMPL		clone3
+435	STD		{ int|linux_sys||clone3( \
+			    struct linux_user_clone3_args *cl_args, \
+			    size_t size); }
 436	STD		{ int|linux_sys||close_range(unsigned int first, \
 			    unsigned int last, unsigned int flags); }
 437	UNIMPL		openat2

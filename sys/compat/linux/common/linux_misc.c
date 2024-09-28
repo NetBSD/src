@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.264 2024/06/29 13:46:10 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.265 2024/09/28 19:35:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.264 2024/06/29 13:46:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.265 2024/09/28 19:35:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,11 +169,11 @@ const struct linux_mnttypes linux_fstypes[] = {
 };
 const int linux_fstypes_cnt = sizeof(linux_fstypes) / sizeof(linux_fstypes[0]);
 
-# ifdef DEBUG_LINUX
-#define	DPRINTF(a)	uprintf a
-# else
-#define	DPRINTF(a)
-# endif
+#ifdef DEBUG_LINUX
+#define DPRINTF(a, ...)	uprintf(a, __VA_ARGS__)
+#else
+#define DPRINTF(a, ...)
+#endif
 
 /* Local linux_misc.c functions: */
 static void linux_to_bsd_mmap_args(struct sys_mmap_args *,
@@ -2052,8 +2052,8 @@ linux_sys_memfd_create(struct lwp *l,
 	}
 
 	if (lflags & ~LINUX_MFD_KNOWN_FLAGS) {
-		DPRINTF(("linux_sys_memfd_create: ignored flags %x\n",
-		    lflags & ~LINUX_MFD_KNOWN_FLAGS));
+		DPRINTF("%s: ignored flags %#x\n", __func__,
+		    lflags & ~LINUX_MFD_KNOWN_FLAGS);
 	}
 
 	SCARG(&muap, name) = SCARG(uap, name);
@@ -2170,4 +2170,64 @@ linux_sys_getcpu(lwp_t *l, const struct linux_sys_getcpu_args *uap,
 	}
 
 	return 0;
+}
+
+int
+linux_sys_clone3(struct lwp *l, const struct linux_sys_clone3_args *uap, register_t *retval)
+{
+	struct linux_user_clone3_args cl_args;
+	struct linux_sys_clone_args clone_args;
+	int error;
+
+	if (SCARG(uap, size) != sizeof(cl_args)) {
+	    DPRINTF("%s: Invalid size less or more\n", __func__);
+	    return EINVAL;
+	}
+
+	error = copyin(SCARG(uap, cl_args), &cl_args, SCARG(uap, size));
+	if (error) {
+		DPRINTF("%s: Copyin failed: %d\n", __func__, error);
+		return error;
+	}
+
+	DPRINTF("%sFlags: %#lx\n", (unsigned long)cl_args.flags);
+
+	/* Define allowed flags */
+	if (cl_args.flags & LINUX_CLONE_UNIMPLEMENTED_FLAGS) {
+		DPRINTF("%s: Unsupported flags for clone3: %#x\n", __func__,
+		    cl_args.flags & LINUX_CLONE_UNIMPLEMENTED_FLAGS);
+		return EOPNOTSUPP;
+	}
+	if (cl_args.flags & ~LINUX_CLONE_ALLOWED_FLAGS) {
+		DPRINTF("%s: Disallowed flags for clone3: %#x\n", __func__,
+		    cl_args.flags & ~LINUX_CLONE_ALLOWED_FLAGS);
+		return EINVAL;
+	}
+
+	if ((cl_args.exit_signal & ~(uint64_t)LINUX_CLONE_CSIGNAL) != 0){
+		DPRINTF("%s: Disallowed flags for clone3: %#x\n", __func__,
+		    cl_args.exit_signal & ~(uint64_t)LINUX_CLONE_CSIGNAL);
+		return EINVAL;
+	}
+	
+	if (cl_args.stack == 0 && cl_args.stack_size != 0) {
+		DPRINTF("%s: Stack is NULL but stack size is not 0\n",
+		    __func__);
+		return EINVAL;
+	}
+	if (cl_args.stack != 0 && cl_args.stack_size == 0) {
+		DPRINTF("%s: Stack is not NULL but stack size is 0\n",
+		    __func__);
+		return EINVAL;
+	}
+
+	int flags = cl_args.flags & LINUX_CLONE_ALLOWED_FLAGS;
+	int sig = cl_args.exit_signal & LINUX_CLONE_CSIGNAL;
+	SCARG(&clone_args, flags) = flags | sig;
+	SCARG(&clone_args, stack) = (void *)cl_args.stack;
+	SCARG(&clone_args, parent_tidptr) = (void *)cl_args.parent_tid;
+	SCARG(&clone_args, tls) = (void *)cl_args.tls;
+	SCARG(&clone_args, child_tidptr) = (void *)cl_args.child_tid;
+
+	return linux_sys_clone(l, &clone_args, retval);
 }

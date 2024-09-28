@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.13 2024/07/01 01:35:52 christos Exp $
+	$NetBSD: syscalls.master,v 1.14 2024/09/28 19:35:55 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -203,7 +203,8 @@
 81	NOARGS		{ int|sys||sync(void); }
 82	NOARGS		{ int|sys||fsync(int fd); }
 83	STD		{ int|linux_sys||fdatasync(int fd); }
-84	UNIMPL		sync_file_range
+84	STD		{ int|linux_sys||sync_file_range(int fd, \
+			    off_t offset, off_t nbytes, unsigned int flags); }
 85	STD		{ int|linux_sys||timerfd_create(clockid_t clock_id, \
 			    int flags); }
 86	STD		{ int|linux_sys||timerfd_settime(int fd, int flags, \
@@ -519,7 +520,7 @@
 264	UNIMPL		name_to_handle_at
 265	UNIMPL		open_by_handle_at
 266	UNIMPL		clock_adjtime
-267	UNIMPL		syncfs
+267	STD		{ int|linux_sys||syncfs(int fd); }
 268	UNIMPL		setns
 269	STD		{ int|linux_sys||sendmmsg(int s, \
 			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
@@ -530,7 +531,9 @@
 273	UNIMPL		finit_module
 274	UNIMPL		sched_setattr
 275	UNIMPL		sched_getattr
-276	UNIMPL		renameat2
+276	STD		{ int|linux_sys||renameat2(int fromfd, \
+			    const char *from, int tofd, const char *to, \
+			    unsigned int flags); }
 277	UNIMPL		seccomp
 278	NOARGS		{ ssize_t|sys||getrandom(void *buf, size_t buflen, \
 			    unsigned int flags); }
@@ -541,7 +544,9 @@
 282	UNIMPL		userfaultfd
 283	UNIMPL		membarrier
 284	UNIMPL		mlock2
-285	UNIMPL		copy_file_range
+285	STD		{ ssize_t|linux_sys||copy_file_range(int fd_in, \
+			off_t * off_in, int fd_out, off_t * off_out, \
+			size_t len, unsigned int flags); }
 286	UNIMPL		preadv2
 287	UNIMPL		pwritev2
 288	UNIMPL		pkey_mprotect
@@ -693,7 +698,9 @@
 432	UNIMPL		fsmount
 433	UNIMPL		fspick
 434	UNIMPL		pidfd_open
-435	UNIMPL		clone3
+435	STD		{ int|linux_sys||clone3( \
+			    struct linux_user_clone3_args *cl_args, \
+			    size_t size); }
 436	STD		{ int|linux_sys||close_range(unsigned int first, \
 			    unsigned int last, unsigned int flags); }
 437	UNIMPL		openat2
