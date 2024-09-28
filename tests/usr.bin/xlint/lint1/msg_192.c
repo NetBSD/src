@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_192.c,v 1.11 2024/09/27 16:57:00 rillig Exp $	*/
+/*	$NetBSD: msg_192.c,v 1.12 2024/09/28 15:51:40 rillig Exp $	*/
 # 3 "msg_192.c"
 
 // Test for message: '%s' unused in function '%s' [192]
@@ -23,20 +23,10 @@ example(void)
 	/* expect+1: warning: 'local_signal' unused in function 'example' [192] */
 	handler (*local_signal)(int, handler);
 
-	/* FIXME */
-	/* expect+1: warning: 'local_scalar_attr' unused in function 'example' [192] */
 	int local_scalar_attr __attribute__((__unused__));
-	/* FIXME */
-	/* expect+1: warning: 'local_ptr_attr' unused in function 'example' [192] */
 	char *local_ptr_attr __attribute__((__unused__));
-	/* FIXME */
-	/* expect+1: warning: 'local_arr_attr' unused in function 'example' [192] */
 	char local_arr_attr[5] __attribute__((__unused__));
-	/* FIXME */
-	/* expect+1: warning: 'local_func_attr' unused in function 'example' [192] */
 	void (*local_func_attr)(int, double) __attribute__((__unused__));
-	/* FIXME */
-	/* expect+1: warning: 'local_signal_attr' unused in function 'example' [192] */
 	void (*(*local_signal_attr)(int sig, void (*handler)(int)))(int) __attribute__((__unused__));
 }
 

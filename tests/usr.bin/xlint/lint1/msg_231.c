@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_231.c,v 1.8 2024/09/27 16:57:00 rillig Exp $	*/
+/*	$NetBSD: msg_231.c,v 1.9 2024/09/28 15:51:40 rillig Exp $	*/
 # 3 "msg_231.c"
 
 // Test for message: parameter '%s' unused in function '%s' [231]
@@ -24,11 +24,7 @@ example(
 	int param_scalar_attr __attribute__((__unused__)),
 	char *param_ptr_attr __attribute__((__unused__)),
 	char param_arr_attr[5] __attribute__((__unused__)),
-	/* FIXME */
-	/* expect+1: warning: parameter 'param_func_attr' unused in function 'example' [231] */
 	void (*param_func_attr)(int, double) __attribute__((__unused__)),
-	/* FIXME */
-	/* expect+1: warning: parameter 'param_signal_attr' unused in function 'example' [231] */
 	void (*param_signal_attr(int sig, void (*handler)(int)))(int) __attribute__((__unused__))
 )
 {

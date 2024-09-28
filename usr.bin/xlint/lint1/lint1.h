@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.227 2024/05/11 16:12:28 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.228 2024/09/28 15:51:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -77,6 +77,10 @@ typedef struct {
 	bool tq_volatile;
 	bool tq_atomic;
 } type_qualifiers;
+
+typedef struct {
+	bool used;
+} type_attributes;
 
 /* A bool, integer or floating-point value. */
 typedef struct {
@@ -380,6 +384,7 @@ typedef struct {
 	sym_t	*first;
 	bool	vararg:1;
 	bool	prototype:1;
+	bool	used:1;
 } parameter_list;
 
 /*
