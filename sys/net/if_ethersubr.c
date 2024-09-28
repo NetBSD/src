@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.328 2024/09/28 09:01:37 mlelstv Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.329 2024/09/28 09:03:13 mlelstv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.328 2024/09/28 09:01:37 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.329 2024/09/28 09:03:13 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -856,7 +856,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		default:
 			if (subtype == 0 || subtype > 10) {
 				/* illegal value */
-				goto error;
+				goto noproto;
 			}
 			/* unknown subtype */
 			break;
