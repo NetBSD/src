@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.508 2024/09/28 11:20:29 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.509 2024/09/28 14:25:04 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.508 2024/09/28 11:20:29 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.509 2024/09/28 14:25:04 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -154,7 +154,7 @@ new_attribute(const sbuf_t *prefix, const sbuf_t *name,
 
 %}
 
-%expect 107
+%expect 110
 
 %union {
 	val_t	*y_val;
@@ -1699,15 +1699,15 @@ abstract_declaration:		/* specific to lint */
 ;
 
 abstract_decl_param_list:	/* specific to lint */
-	abstract_decl_lparen T_RPAREN type_attribute_opt {
+	abstract_decl_lparen T_RPAREN type_attribute_list_opt {
 		$$ = (parameter_list){ .first = NULL };
 	}
 |	abstract_decl_lparen vararg_parameter_type_list T_RPAREN
-	    type_attribute_opt {
+	    type_attribute_list_opt {
 		$$ = $2;
 		$$.prototype = true;
 	}
-|	abstract_decl_lparen error T_RPAREN type_attribute_opt {
+|	abstract_decl_lparen error T_RPAREN type_attribute_list_opt {
 		$$ = (parameter_list){ .first = NULL };
 	}
 ;
