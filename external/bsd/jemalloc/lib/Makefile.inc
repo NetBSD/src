@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2024/09/25 16:12:34 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2024/09/28 14:25:45 christos Exp $
 
 JEMALLOC:=${.PARSEDIR}/..
 
@@ -68,7 +68,9 @@ witness.c
 .SUFFIXES: .3
 .PATH.3: ${JEMALLOC}/dist/doc
 .for i in ${JEMALLOC_SRCS}
-CPPFLAGS.${i}+=-I${JEMALLOC}/include
+# we need gnu11 for clang because of structure redefinitions.
+# this is a c11 feature, that is accepted by gcc and gnu99
+CPPFLAGS.${i}+=-I${JEMALLOC}/include -std=gnu11
 # helps in tracking bad malloc/pointer usage, but has a serious
 # performance penalty:
 #   CPPFLAGS.${i}+= -DDJEMALLOC_PROTECT_NOSTD -DJEMALLOC_DEBUG
