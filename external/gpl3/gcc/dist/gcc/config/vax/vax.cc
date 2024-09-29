@@ -164,8 +164,7 @@ vax_option_override (void)
   SUBTARGET_OVERRIDE_OPTIONS;
 #endif
 }
-/* Implement the TARGET_INIT_BUILTINS target hook.
-   */
+/* Implement the TARGET_INIT_BUILTINS target hook. */
 
 static void
 vax_init_builtins (void)
