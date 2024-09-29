@@ -301,6 +301,10 @@ static unsigned HOST_WIDE_INT
 lowpart_bitmask (int n)
 {
   unsigned HOST_WIDE_INT mask = HOST_WIDE_INT_M1U;
+  if (n < 1)
+    return 0;
+  if (n >= HOST_BITS_PER_WIDE_INT)
+    return mask;
 #if 1 // XXXMRG
   gcc_assert(n >= 0 && n <= HOST_BITS_PER_WIDE_INT);
   if (n == 0)
@@ -1340,6 +1344,8 @@ all_positions_needed_p (store_info *s_info, poly_int64 start,
 	  return false;
       return true;
     }
+  else if (const_start >= HOST_BITS_PER_WIDE_INT || const_start < 0)
+    return true;
   else
     {
       unsigned HOST_WIDE_INT mask
