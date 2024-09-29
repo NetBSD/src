@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.41 2024/09/29 08:55:21 skrll Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.42 2024/09/29 09:13:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.41 2024/09/29 08:55:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.42 2024/09/29 09:13:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -197,8 +197,8 @@ cemac_gctx(struct cemac_softc *sc)
 	}
 
 	// mark we're free
-	if (sc->tx_busy) {
-		sc->tx_busy = false;
+	if (sc->sc_txbusy) {
+		sc->sc_txbusy = false;
 		/* Disable transmit-buffer-free interrupt */
 		/*CEMAC_WRITE(ETH_IDR, ETH_ISR_TBRE);*/
 	}
@@ -725,7 +725,7 @@ start:
 	if (cemac_gctx(sc) == 0) {
 		/* Enable transmit-buffer-free interrupt */
 		CEMAC_WRITE(ETH_IER, ETH_ISR_TBRE);
-		sc->tx_busy = true;
+		sc->sc_txbusy = true;
 		ifp->if_timer = 10;
 		splx(s);
 		return;
@@ -908,7 +908,7 @@ cemac_ifstop(struct ifnet *ifp, int disable)
 
 	ifp->if_flags &= ~IFF_RUNNING;
 	ifp->if_timer = 0;
-	sc->tx_busy = false;
+	sc->sc_txbusy = false;
 	sc->sc_mii.mii_media_status &= ~IFM_ACTIVE;
 }
 
