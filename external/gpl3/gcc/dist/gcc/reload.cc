@@ -4554,7 +4554,7 @@ find_reloads (rtx_insn *insn, int replace, int ind_levels, int live_known,
       }
   }
 
-#if 1
+#ifdef NB_FIX_VAX_BACKEND
   /*
    * Scan the reloads again looking for a case where there is
    * precisely one RELOAD_FOR_OPERAND_ADDRESS reload and one
