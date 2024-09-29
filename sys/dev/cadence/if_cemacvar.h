@@ -1,4 +1,4 @@
-/*      $NetBSD: if_cemacvar.h,v 1.4 2024/08/25 07:25:00 skrll Exp $	*/
+/*      $NetBSD: if_cemacvar.h,v 1.5 2024/09/29 09:13:14 skrll Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -68,10 +68,11 @@ struct cemac_softc {
 	int			txqi, txqc;
 	struct cemac_qmeta	txq[TX_QLEN];
 	callout_t		cemac_tick_ch;
-	bool			tx_busy;
 
 	unsigned		cemac_flags;
 #define CEMAC_FLAG_GEM	__BIT(0)
+
+	bool			sc_txbusy;
 };
 
 int cemac_intr(void *);
