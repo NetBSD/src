@@ -2869,36 +2869,6 @@
 
 
 
-;; Exception handling
-;; This is used when compiling the stack unwinding routines.
-(define_expand "eh_return"
-  [(use (match_operand 0 "general_operand"))]
-  ""
-{
-  if (GET_MODE (operands[0]) != word_mode)
-    operands[0] = convert_to_mode (word_mode, operands[0], 0);
-  emit_insn (gen_eh_set_retaddr (operands[0]));
-  DONE;
-})
-
-(define_insn_and_split "eh_set_retaddr"
-  [(unspec [(match_operand:SI 0 "general_operand")] VUNSPEC_EH_RETURN)
-   (clobber (match_scratch:SI 1 "=&r"))
-   ]
-  ""
-  "#"
-  "reload_completed"
-  [(const_int 0)]
-{
-  rtx tmp = RETURN_ADDR_RTX(0, frame_pointer_rtx);
-  MEM_VOLATILE_P(tmp) = 1;
-  tmp = gen_rtx_SET(tmp, operands[0]);
-  emit_insn(tmp);
-  DONE;
-})
-
-
-
 (define_insn "nop"
   [(const_int 0)]
   ""
