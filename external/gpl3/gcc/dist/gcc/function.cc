@@ -1724,6 +1724,7 @@ instantiate_virtual_regs_in_insn (rtx_insn *insn)
 	  break;
 
 	case SUBREG:
+#ifdef NB_FIX_VAX_BACKEND
 	  if (MEM_P (XEXP (x, 0)))
 	    {
 	      /* convert a subreg of a MEMORY operand into a
@@ -1742,7 +1743,7 @@ instantiate_virtual_regs_in_insn (rtx_insn *insn)
               /* generate a new subreg expression */
 	      x = gen_rtx_SUBREG (GET_MODE (x), mx, SUBREG_BYTE (x));
 	    }
-
+#endif
 	  new_rtx = instantiate_new_reg (SUBREG_REG (x), &offset);
 	  if (new_rtx == NULL)
 	    continue;
@@ -1849,12 +1850,14 @@ instantiate_decl_rtl (rtx x)
       return;
     }
 
+#ifdef NB_FIX_VAX_BACKEND
   /* If this is a SUBREG, recurse for the pieces */
   if (GET_CODE (x) == SUBREG)
     {
       instantiate_decl_rtl (XEXP (x, 0));
       return;
     }
+#endif
 
   /* If this is not a MEM, no need to do anything.  Similarly if the
      address is a constant or a register that is not a virtual register.  */
