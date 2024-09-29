@@ -1694,13 +1694,67 @@ vax_output_int_subtract (rtx_insn *insn, rtx *operands, machine_mode mode)
 	      {
 		/* Negation is tricky.  It's basically complement and increment.
 		   Negate hi, then lo, and subtract the carry back.  */
-		if ((MEM_P (low[0]) && GET_CODE (XEXP (low[0], 0)) == POST_INC)
-		    || (MEM_P (operands[0])
-			&& GET_CODE (XEXP (operands[0], 0)) == POST_INC))
-		  fatal_insn ("illegal operand detected", insn);
-		output_asm_insn ("mnegl %2,%0", operands);
+
+		/*
+		 * If the source *or* the destination operands are
+		 * indirect memory references with post-increment
+		 * addressing, an memory reference using the base
+		 * register plus an offset must be constructed to
+		 * address the high word of the source or result.
+		 *
+		 * pre-decrement memory references are rejected by the
+		 * illegal_addsub_di_memory_operand predicate
+		 */
+
+		rtx earlyhiw[3];
+
+		/* high word - destination */
+		if (MEM_P (operands[0])
+		    && GET_CODE (XEXP (operands[0], 0)) == POST_INC)
+		  {
+		    const enum machine_mode mode = GET_MODE (operands[0]);
+		    rtx x = XEXP (XEXP (operands[0], 0), 0);
+		    x = plus_constant (Pmode, x, GET_MODE_SIZE (mode));
+		    x = gen_rtx_MEM (mode, x);
+		    earlyhiw[0] = x;
+		  }
+		else
+		  earlyhiw[0] = operands[0];
+
+		earlyhiw[1] = operands[1]; /* easy, this is const0_rtx */
+
+		/* high word - source */
+		if (MEM_P (operands[2])
+		    && GET_CODE (XEXP (operands[2], 0)) == POST_INC)
+		  {
+		    const enum machine_mode mode = GET_MODE (operands[2]);
+		    rtx x = XEXP (XEXP (operands[2], 0), 0);
+		    x = plus_constant (Pmode, x, GET_MODE_SIZE (mode));
+		    x = gen_rtx_MEM (mode, x);
+		    earlyhiw[2] = x;
+		  }
+		else
+		  earlyhiw[2] = operands[2];
+
+		output_asm_insn ("mnegl %2,%0", earlyhiw);
 		output_asm_insn ("mnegl %2,%0", low);
-		return "sbwc $0,%0";
+
+		if (earlyhiw[2] != operands[2])
+		  {
+		    rtx ops[3];
+		    const enum machine_mode mode = GET_MODE (operands[2]);
+
+		    output_asm_insn ("sbwc $0,%0", operands);
+		    /* update the source operand's base register to
+		       point to the following word */
+		    ops[0] = XEXP (XEXP (operands[2], 0), 0);
+		    ops[1] = const0_rtx;
+		    ops[2] = gen_int_mode (GET_MODE_SIZE (mode), SImode);
+		    output_asm_insn ("addl2 %2,%0", ops);
+		    return "";
+		  }
+		else
+		  return "sbwc $0,%0";
 	      }
 	    gcc_assert (rtx_equal_p (operands[0], operands[1]));
 	    gcc_assert (rtx_equal_p (low[0], low[1]));
