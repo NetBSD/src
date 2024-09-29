@@ -13,7 +13,7 @@
 
 /* Define to 1 if the assembler supports .cfi_sections .debug_frame directive.
    */
-/* #undef HAVE_AS_CFI_SECTIONS */
+#define HAVE_AS_CFI_SECTIONS 1
 
 /* Define to 1 if the assembler supports LSE. */
 /* #undef HAVE_AS_LSE */
