@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3101 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3102 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -529,3 +529,11 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	jemalloc(3): Import 5.3.0. [christos 20140923]
 	vether(4): allow link state to be toggled by link0. [roy 20240924]
 	OpenSSH: Import 9.9. [christos 20240924]
+	ftp(1): Add flag to allow specifying extra http header fields
+		(from Sunil Nimmagadda).  [christos 20240925]
+	vether(4): Control link state via media rather than flags.
+		This mirrors shmif(4) from rump.  [roy 20240926]
+	lint(1): Handle __attribute__((__unused__)) for functions and
+		variables.  [rillig 20240928]
+	compat_linux(8): Implement renameat2, clone3, sync_file_range, syncfs
+		system calls (from Shivraj Jamgade).  [christos 20240928]
