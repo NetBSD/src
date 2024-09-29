@@ -46,6 +46,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "target-def.h"
 
 static void vax_option_override (void);
+static void vax_init_builtins (void);
 static bool vax_legitimate_address_p (machine_mode, rtx, bool);
 static void vax_file_start (void);
 static void vax_init_libfuncs (void);
@@ -81,6 +82,9 @@ static int vax_bitfield_may_trap_p (const_rtx, unsigned);
 
 #undef TARGET_INIT_LIBFUNCS
 #define TARGET_INIT_LIBFUNCS vax_init_libfuncs
+
+#undef TARGET_INIT_BUILTINS
+#define TARGET_INIT_BUILTINS vax_init_builtins
 
 #undef TARGET_ASM_OUTPUT_MI_THUNK
 #define TARGET_ASM_OUTPUT_MI_THUNK vax_output_mi_thunk
@@ -165,6 +169,17 @@ vax_option_override (void)
   SUBTARGET_OVERRIDE_OPTIONS;
 #endif
 }
+/* Implement the TARGET_INIT_BUILTINS target hook.
+   */
+
+static void
+vax_init_builtins (void)
+{
+#ifdef SUBTARGET_INIT_BUILTINS
+  SUBTARGET_INIT_BUILTINS;
+#endif
+}
+
 
 static void
 vax_add_reg_cfa_offset (rtx insn, int offset, rtx src)
