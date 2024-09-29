@@ -2000,7 +2000,14 @@
   if (INTVAL (operands[3]) & 31)
     return \"rotl %R3,%1,%0\;bicl2 %M2,%0\";
   if (rtx_equal_p (operands[0], operands[1]))
-    return \"bicl2 %M2,%0\";
+    {
+      if (INTVAL (operands[2]) == 32)
+	return \"\";  /* no-op */
+      else
+	return \"bicl2 %M2,%0\";
+    }
+  if (INTVAL (operands[2]) == 32)
+    return \"movl %1,%0\";
   return \"bicl3 %M2,%1,%0\";
 }")
 
