@@ -160,11 +160,6 @@ vax_option_override (void)
   if (TARGET_G_FLOAT)
     REAL_MODE_FORMAT (DFmode) = &vax_g_format;
 
-  /* XXX For NetBSD, disable gas(1) directives for CFI tables.
-     Otherwise, wired relocations occur for readonly section
-     `.eh_frame', by which libc.so cannot link.  */
-  flag_dwarf2_cfi_asm = 0;
-
 #ifdef SUBTARGET_OVERRIDE_OPTIONS
   SUBTARGET_OVERRIDE_OPTIONS;
 #endif
