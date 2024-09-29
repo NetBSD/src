@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2024/09/29 16:02:32 kalvisd Exp $
+#	$NetBSD: Makefile,v 1.25 2024/09/29 16:45:29 kalvisd Exp $
 
 PROG=		cc1
 SRCS=		${G_C_OBJS:S,c-family/,,:S,c/,,:S,known-headers.o,known-headers.cc,:S,c-spellcheck.o,c-spellcheck.cc,:Nlibcpp.a:.o=.cc}
@@ -48,11 +48,11 @@ BUILDSYMLINKS+= ${GNUHOSTDIST}/gcc/config/sh/sh-c.cc sh-c.c
 .endif
 
 .if ${MACHINE_CPU} == "vax" && 0
-COPTS.c-decl.c+=-O0
-COPTS.c-typeck.c+=-O0
+#COPTS.c-decl.c+=-O0
+#COPTS.c-typeck.c+=-O0
 #COPTS.c-array-notation.c+=-O0
-COPTS.c-common.c+=-O0
-COPTS.c-ada-spec.c+=-O0
+#COPTS.c-common.c+=-O0
+#COPTS.c-ada-spec.c+=-O0
 #COPTS.cilk.c+=-O0
 #COPTS.c-ubsan.c+=-O0
 #COPTS.cc1-checksum.c+=-O0
