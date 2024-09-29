@@ -68,6 +68,7 @@ static void vax_trampoline_init (rtx, tree, rtx);
 static poly_int64 vax_return_pops_args (tree, tree, poly_int64);
 static bool vax_mode_dependent_address_p (const_rtx, addr_space_t);
 static HOST_WIDE_INT vax_starting_frame_offset (void);
+static int vax_bitfield_may_trap_p (const_rtx, unsigned);
 
 /* Initialize the GCC target structure.  */
 #undef TARGET_ASM_ALIGNED_HI_OP
@@ -140,6 +141,9 @@ static HOST_WIDE_INT vax_starting_frame_offset (void);
 
 #undef TARGET_HAVE_SPECULATION_SAFE_VALUE
 #define TARGET_HAVE_SPECULATION_SAFE_VALUE speculation_safe_value_not_needed
+
+#undef TARGET_BITFIELD_MAY_TRAP_P
+#define TARGET_BITFIELD_MAY_TRAP_P vax_bitfield_may_trap_p
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 
@@ -2328,3 +2332,33 @@ vax_starting_frame_offset (void)
   return TARGET_ELF ? -4 : 0;
 }
 
+/* Return 1 if a bitfield instruction (extv/extzv) may trap */
+static int
+vax_bitfield_may_trap_p (const_rtx x, unsigned flags)
+{
+  /* per the VARM
+   * Bitfield instructions may trap if
+   * size (arg1) GTRU 32
+   * size (arg1) NEQ 0, pos (arg 2) GTRU 31 and the field is in a register
+   * i.e. REG_P(operands[0]) is true
+   *
+   * GCC can only determine that a bitfield instruction will not trap
+   * if the size and position arguments are constants; if they aren't,
+   * the instruction must be assumed to trap.
+   */
+  rtx field = XEXP (x, 0);
+  rtx size = XEXP (x, 1);
+  rtx pos = XEXP (x, 2);
+  int retval = 0;
+
+  if (!CONST_INT_P (size) || !CONST_INT_P (pos))
+    retval = 1;
+  else if (INTVAL (size) < 0 || INTVAL (size) > GET_MODE_BITSIZE ( SImode ))
+    retval = 1;
+  else if (REG_P (field) && INTVAL (size) != 0
+	   && (INTVAL (pos) < 0 || INTVAL (pos) >= GET_MODE_BITSIZE ( SImode )))
+    retval = 1;
+  else
+    retval = 0;
+  return retval;
+}
