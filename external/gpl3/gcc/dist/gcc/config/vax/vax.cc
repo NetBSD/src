@@ -1916,7 +1916,6 @@ static bool
 index_term_p (rtx prod, machine_mode mode, bool strict)
 {
   rtx xfoo0, xfoo1;
-  bool log_p;
 
   if (GET_MODE_SIZE (mode) == 1)
     return BASE_REGISTER_P (prod, strict);
@@ -1925,18 +1924,24 @@ index_term_p (rtx prod, machine_mode mode, bool strict)
       || GET_MODE_SIZE (mode) > 8)
     return false;
 
-  log_p = GET_CODE (prod) == ASHIFT;
   xfoo0 = XEXP (prod, 0);
   xfoo1 = XEXP (prod, 1);
 
-  if (!log_p
+  if (GET_CODE (prod) == MULT
       && CONST_INT_P (xfoo0)
       && GET_MODE_SIZE (mode) == INTVAL (xfoo0)
       && INDEX_REGISTER_P (xfoo1, strict))
     return true;
 
-  if (CONST_INT_P (xfoo1)
-      && GET_MODE_SIZE (mode) == (log_p ? 1 << INTVAL (xfoo1) : INTVAL (xfoo1))
+  if (GET_CODE (prod) == MULT
+      && CONST_INT_P (xfoo1)
+      && GET_MODE_SIZE (mode) == INTVAL (xfoo1)
+      && INDEX_REGISTER_P (xfoo0, strict))
+    return true;
+
+  if (GET_CODE (prod) == ASHIFT
+      && CONST_INT_P (xfoo1)
+      && GET_MODE_SIZE (mode) == (1 << INTVAL (xfoo1))
       && INDEX_REGISTER_P (xfoo0, strict))
     return true;
 
