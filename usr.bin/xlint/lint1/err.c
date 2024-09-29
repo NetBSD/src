@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.248 2024/09/28 19:09:37 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.249 2024/09/29 13:16:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.248 2024/09/28 19:09:37 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.249 2024/09/29 13:16:57 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -612,6 +612,7 @@ void
 assert_failed(const char *file, int line, const char *func, const char *cond)
 {
 
+#if LINT_FUZZING
 	/*
 	 * After encountering a parse error in the grammar, lint often does not
 	 * properly clean up its data structures, especially in 'dcs', the
@@ -624,6 +625,7 @@ assert_failed(const char *file, int line, const char *func, const char *cond)
 	 */
 	if (sytxerr > 0)
 		norecover();
+#endif
 
 	(void)fflush(stdout);
 	(void)fprintf(stderr,
