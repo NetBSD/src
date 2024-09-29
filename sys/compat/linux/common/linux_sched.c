@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.79 2021/09/07 11:43:04 riastradh Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.80 2024/09/29 00:09:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.79 2021/09/07 11:43:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.80 2024/09/29 00:09:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -69,9 +69,9 @@ static int linux_clone_nptl(struct lwp *, const struct linux_sys_clone_args *,
 #define	LINUX_CPU_MASK_SIZE (sizeof(long) * ((ncpu + LONG_BIT - 1) / LONG_BIT))
 
 #if DEBUG_LINUX
-#define DPRINTF(x) uprintf x
+#define DPRINTF(x, ...) uprintf(x, __VA_ARGS__)
 #else
-#define DPRINTF(x)
+#define DPRINTF(x, ...)
 #endif
 
 static void
@@ -159,11 +159,86 @@ linux_sys_clone(struct lwp *l, const struct linux_sys_clone_args *uap,
 	 */
 	if ((error = fork1(l, flags, sig, SCARG(uap, stack), 0,
 	    linux_child_return, NULL, retval)) != 0) {
-		DPRINTF(("%s: fork1: error %d\n", __func__, error));
+		DPRINTF("%s: fork1: error %d\n", __func__, error);
 		return error;
 	}
 
 	return 0;
+}
+
+
+int
+linux_sys_clone3(struct lwp *l, const struct linux_sys_clone3_args *uap, register_t *retval)
+{
+	struct linux_user_clone3_args cl_args;
+	struct linux_sys_clone_args clone_args;
+	int error;
+
+	if (SCARG(uap, size) != sizeof(cl_args)) {
+	    DPRINTF("%s: Invalid size less or more\n", __func__);
+	    return EINVAL;
+	}
+
+	error = copyin(SCARG(uap, cl_args), &cl_args, SCARG(uap, size));
+	if (error) {
+		DPRINTF("%s: Copyin failed: %d\n", __func__, error);
+		return error;
+	}
+
+	DPRINTF("%s: Flags: %#jx\n", __func__, (intmax_t)cl_args.flags);
+
+	/* Define allowed flags */
+	if (cl_args.flags & LINUX_CLONE_UNIMPLEMENTED_FLAGS) {
+		DPRINTF("%s: Unsupported flags for clone3: %#x\n", __func__,
+		    cl_args.flags & LINUX_CLONE_UNIMPLEMENTED_FLAGS);
+		return EOPNOTSUPP;
+	}
+	if (cl_args.flags & ~LINUX_CLONE_ALLOWED_FLAGS) {
+		DPRINTF("%s: Disallowed flags for clone3: %#x\n", __func__,
+		    cl_args.flags & ~LINUX_CLONE_ALLOWED_FLAGS);
+		return EINVAL;
+	}
+
+#if 0
+	// XXX: this is wrong, exit_signal is the signal to deliver to the
+	// process upon exit.
+	if ((cl_args.exit_signal & ~(uint64_t)LINUX_CLONE_CSIGNAL) != 0){
+		DPRINTF("%s: Disallowed flags for clone3: %#x\n", __func__,
+		    cl_args.exit_signal & ~(uint64_t)LINUX_CLONE_CSIGNAL);
+		return EINVAL;
+	}
+#endif
+	
+	if (cl_args.stack == 0 && cl_args.stack_size != 0) {
+		DPRINTF("%s: Stack is NULL but stack size is not 0\n",
+		    __func__);
+		return EINVAL;
+	}
+	if (cl_args.stack != 0 && cl_args.stack_size == 0) {
+		DPRINTF("%s: Stack is not NULL but stack size is 0\n",
+		    __func__);
+		return EINVAL;
+	}
+
+	int flags = cl_args.flags & LINUX_CLONE_ALLOWED_FLAGS;
+#if 0
+	int sig = cl_args.exit_signal & LINUX_CLONE_CSIGNAL;
+#endif
+	// XXX: Pidfd member handling 
+	// XXX: we don't have cgroups
+	// XXX: what to do with tid_set and tid_set_size
+	// XXX: clone3 has stacksize, instead implement clone as a clone3
+	// wrapper.
+	SCARG(&clone_args, flags) = flags;
+	SCARG(&clone_args, stack) = (void *)cl_args.stack;
+	SCARG(&clone_args, parent_tidptr) =
+	    (void *)(intptr_t)cl_args.parent_tid;
+	SCARG(&clone_args, tls) =
+	    (void *)(intptr_t)cl_args.tls;
+	SCARG(&clone_args, child_tidptr) =
+	    (void *)(intptr_t)cl_args.child_tid;
+
+	return linux_sys_clone(l, &clone_args, retval);
 }
 
 static int
@@ -348,8 +423,8 @@ sched_native2linux(int native_policy, struct sched_param *native_params,
 
 		memset(linux_params, 0, sizeof(*linux_params));
 
-		DPRINTF(("%s: native: policy %d, priority %d\n",
-		    __func__, native_policy, prio));
+		DPRINTF("%s: native: policy %d, priority %d\n",
+		    __func__, native_policy, prio);
 
 		if (native_policy == SCHED_OTHER) {
 			linux_params->sched_priority = 0;
@@ -360,8 +435,8 @@ sched_native2linux(int native_policy, struct sched_param *native_params,
 			    / (SCHED_PRI_MAX - SCHED_PRI_MIN)
 			    + LINUX_SCHED_RTPRIO_MIN;
 		}
-		DPRINTF(("%s: linux: policy %d, priority %d\n",
-		    __func__, -1, linux_params->sched_priority));
+		DPRINTF("%s: linux: policy %d, priority %d\n",
+		    __func__, -1, linux_params->sched_priority);
 	}
 
 	return 0;
@@ -426,14 +501,14 @@ linux_sys_sched_getparam(struct lwp *l, const struct linux_sys_sched_getparam_ar
 	error = do_sched_getparam(SCARG(uap, pid), 0, &policy, &sp);
 	if (error)
 		goto out;
-	DPRINTF(("%s: native: policy %d, priority %d\n",
-	    __func__, policy, sp.sched_priority));
+	DPRINTF("%s: native: policy %d, priority %d\n",
+	    __func__, policy, sp.sched_priority);
 
 	error = sched_native2linux(policy, &sp, NULL, &lp);
 	if (error)
 		goto out;
-	DPRINTF(("%s: linux: policy %d, priority %d\n",
-	    __func__, policy, lp.sched_priority));
+	DPRINTF("%s: linux: policy %d, priority %d\n",
+	    __func__, policy, lp.sched_priority);
 
 	error = copyout(&lp, SCARG(uap, sp), sizeof(lp));
 	if (error)
@@ -463,14 +538,14 @@ linux_sys_sched_setscheduler(struct lwp *l, const struct linux_sys_sched_setsche
 	error = copyin(SCARG(uap, sp), &lp, sizeof(lp));
 	if (error)
 		goto out;
-	DPRINTF(("%s: linux: policy %d, priority %d\n",
-	    __func__, SCARG(uap, policy), lp.sched_priority));
+	DPRINTF("%s: linux: policy %d, priority %d\n",
+	    __func__, SCARG(uap, policy), lp.sched_priority);
 
 	error = sched_linux2native(SCARG(uap, policy), &lp, &policy, &sp);
 	if (error)
 		goto out;
-	DPRINTF(("%s: native: policy %d, priority %d\n",
-	    __func__, policy, sp.sched_priority));
+	DPRINTF("%s: native: policy %d, priority %d\n",
+	    __func__, policy, sp.sched_priority);
 
 	error = do_sched_setparam(SCARG(uap, pid), 0, policy, &sp);
 	if (error)
