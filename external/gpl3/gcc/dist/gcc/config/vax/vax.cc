@@ -569,7 +569,7 @@ print_operand (FILE *file, rtx x, int code)
   else if (code == 'b' && CONST_INT_P (x))
     fprintf (file, "$%d", (int) (0xff & - INTVAL (x)));
   else if (code == 'M' && CONST_INT_P (x))
-    fprintf (file, "$%d", ~((1 << INTVAL (x)) - 1));
+    fprintf (file, "$%d", ((unsigned int)(~0) << (INTVAL (x))));
   else if (code == 'x' && CONST_INT_P (x))
     fprintf (file, HOST_WIDE_INT_PRINT_HEX, INTVAL (x));
   else if (REG_P (x))
