@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.40 2024/08/28 06:50:17 skrll Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.41 2024/09/29 08:55:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.40 2024/08/28 06:50:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.41 2024/09/29 08:55:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -210,7 +210,7 @@ int
 cemac_intr(void *arg)
 {
 	struct cemac_softc * const sc = arg;
-	struct ifnet * ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
 	uint32_t imr, isr, ctl;
 #ifdef	CEMAC_DEBUG
 	uint32_t rsr;
@@ -347,7 +347,7 @@ cemac_init(struct cemac_softc *sc)
 {
 	bus_dma_segment_t segs;
 	int rsegs, err, i;
-	struct ifnet * ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data * const mii = &sc->sc_mii;
 	uint32_t u;
 #if 0
@@ -660,7 +660,7 @@ static void
 cemac_tick(void *arg)
 {
 	struct cemac_softc * const sc = arg;
-	struct ifnet * ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
 	int s;
 
 	if (ISSET(sc->cemac_flags, CEMAC_FLAG_GEM))
