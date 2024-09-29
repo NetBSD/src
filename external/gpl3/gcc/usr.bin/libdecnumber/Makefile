@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2023/08/01 05:57:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2024/09/29 16:53:05 kalvisd Exp $
 
 DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
@@ -14,9 +14,6 @@ SRCS=		decNumber.c decContext.c decimal32.c decimal64.c decimal128.c
 CPPFLAGS+=	-I${.CURDIR}/arch/${GCC_MACHINE_ARCH} -I${DIST}/libdecnumber
 CPPFLAGS+=	-I${DIST}/libgcc
 
-.if ${MACHINE_ARCH} == "vax" && 0
-COPTS.decNumber.c=-O0
-.endif
 
 .include <bsd.lib.mk>
 

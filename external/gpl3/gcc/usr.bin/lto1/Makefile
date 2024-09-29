@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2024/06/30 16:15:04 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2024/09/29 16:53:06 kalvisd Exp $
 
 PROG=		lto1
 SRCS=		attribs.cc \
@@ -20,11 +20,6 @@ COPTS.lto-common.cc+=	-Wno-error=stack-protector
 .include "../Makefile.backtrace"
 .include "../Makefile.libcpp"
 .include "../Makefile.libdecnumber"
-
-.if ${MACHINE_ARCH} == "vax" && 0
-COPTS.lto-lang.c+=-O0
-COPTS.lto-symtab.c+=-O0
-.endif
 
 LDADD+= ${LIBIBERTYOBJ}/libiberty.a
 DPADD+= ${LIBIBERTYOBJ}/libiberty.a
