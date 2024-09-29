@@ -2948,7 +2948,7 @@
   "#"
   "reload_completed"
   [(parallel
-     [(match_dup 1)
+     [(use (match_dup 1))
       (set (pc)
 	   (plus:SI (sign_extend:SI
 		      (mem:HI (plus:SI
@@ -2957,11 +2957,13 @@
 				  (const_int 2))
 				(pc))))
 		    (label_ref:SI (match_dup 2))))
-      (clobber (reg:CC VAX_PSL_REGNUM))])]
+      (clobber (reg:CC VAX_PSL_REGNUM))
+      (use (label_ref:SI (match_dup 2)))
+     ])]
   "")
 
 (define_insn "*casesi1"
-  [(match_operand:SI 1 "const_int_operand" "n")
+  [(use (match_operand:SI 1 "const_int_operand" "n"))
    (set (pc)
 	(plus:SI (sign_extend:SI
 		   (mem:HI (plus:SI
@@ -2970,7 +2972,9 @@
 			       (const_int 2))
 			     (pc))))
 		 (label_ref:SI (match_operand 2 "" ""))))
-   (clobber (reg:CC VAX_PSL_REGNUM))]
+   (clobber (reg:CC VAX_PSL_REGNUM))
+   (use (label_ref:SI (match_dup 2)))
+   ]
   "reload_completed"
   "casel %0,$0,%1")
 
