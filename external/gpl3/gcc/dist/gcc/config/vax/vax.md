@@ -274,6 +274,28 @@
 #endif
 }")
 
+;; Split a store of the upper half of a 64 bit value in memory into
+;; two operations.
+(define_split
+  [(set (match_operand:SI 0 "nonimmediate_operand" "")
+        (subreg:SI
+	  (match_operand:DI 1 "indexed_memory_operand" "")
+	  4
+	  )
+    )
+   (clobber (match_scratch:DI 2 ""))
+   ]
+  ""
+  [
+   (set (match_dup 2)
+        (match_dup 1)
+	)
+   (set (match_dup 0)
+        (subreg:SI (match_dup 2) 4)
+	)
+  ]
+)
+
 (define_insn_and_split "movsi_2"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(match_operand:SI 1 "nonsymbolic_operand" "nrmT"))]
