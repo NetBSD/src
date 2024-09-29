@@ -138,6 +138,10 @@
 
 ;; This effectively combines the two peepholes above,
 ;; matching the sequence produced by `ffs<mode>2'.
+;;
+;; note - should really only do this for memory references
+;;        without a mode dependent address, or for
+;;        registers.
 (define_peephole2
   [(parallel
      [(set (match_operand:SI 0 "register_operand")
@@ -151,7 +155,13 @@
 	(compare:CCZ (match_dup 0)
 		     (const_int 0)))]
   "!rtx_equal_p (operands[0], operands[2])
-   && peep2_reg_dead_p (3, operands[0])"
+   && peep2_reg_dead_p (3, operands[0])
+   && (REG_P (operands[1])
+       || (MEM_P (operands[1])
+	   && !mode_dependent_address_p (XEXP (operands[1], 0),
+					 MEM_ADDR_SPACE (operands[1])))
+      )
+  "
   [(parallel
      [(set (reg:CCZ VAX_PSL_REGNUM)
 	   (compare:CCZ (match_dup 1)
