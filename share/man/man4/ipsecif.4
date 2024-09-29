@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipsecif.4,v 1.5 2018/01/25 09:29:18 maxv Exp $
+.\"	$NetBSD: ipsecif.4,v 1.6 2024/09/29 19:35:35 bad Exp $
 .\"
 .\" Copyright (C) 2017 Internet Initiative Japan Inc.
 .\" All rights reserved.
@@ -108,7 +108,7 @@ The
 configuration will fail if such security policies already exist, and
 vice versa.
 .Pp
-The related security associates can be established by an IKE daemon such as
+The related security associations can be established by an IKE daemon such as
 .Xr racoon 8 .
 They can also be manipulated manually by
 .Xr setkey 8
@@ -131,7 +131,7 @@ do
 ifconfig ipsec0 -link2
 .Ed
 .Pp
-to reduce security associates for IPv6 packets.
+to reduce security associations for IPv6 packets.
 .Sh EXAMPLES
 Configuration example:
 .Bd -literal
@@ -162,7 +162,7 @@ On NetBSD_A:
 # ifconfig ipsec0 create
 # ifconfig ipsec0 tunnel 192.168.0.1 192.168.0.2
 # ifconfig ipsec0 inet 172.16.100.1/32 172.16.200.1
-start IKE daemon or set security associates manually.
+start IKE daemon or set security associations manually.
 # ifconfig wm1 inet 10.100.0.1/24
 # route add 10.200.0.1 172.16.100.1
 .Ed
@@ -173,7 +173,7 @@ On NetBSD_B:
 # ifconfig ipsec0 create
 # ifconfig ipsec0 tunnel 192.168.0.2 192.168.0.1
 # ifconfig ipsec0 inet 172.16.200.1/32 172.16.100.1
-start IKE daemon or set security associates manually.
+start IKE daemon or set security associations manually.
 # ifconfig wm1 inet 10.200.0.1/24
 # route add 10.100.0.1 172.16.200.1
 .Ed
