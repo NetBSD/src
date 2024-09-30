@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2024/02/29 20:41:52 christos Exp $
+#	$NetBSD: Makefile,v 1.23 2024/09/30 17:37:26 christos Exp $
 
 NOLINT=yes # XXX
 LIB=isc
@@ -43,11 +43,6 @@ SRCS=		app.c assertions.c astack.c base32.c base64.c buffer.c \
 		taskpool.c timer.c tls.c tm.c url.c utf8.c \
 		${UNIX_SRCS} ${PTHREAD_SRCS} ${CRYPTO_SRCS} ${NETMGR_SRCS}
 
-
-.if (${USE_INET6} == "no")
-CPPFLAGS.net.c=	-Wno-error
-SRCS+=		ipv6.c
-.endif
 
 LDFLAGS+=-Wl,--version-script=${.CURDIR}/isc.map
 LDADD+=-Wl,-Bstatic
