@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.157 2024/09/27 16:31:36 riastradh Exp $
+.\" 	$NetBSD: ftp.1,v 1.158 2024/09/30 13:03:36 christos Exp $
 .\"
 .\" Copyright (c) 1996-2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd September 25, 2024
+.Dd September 30, 2024
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -67,7 +67,7 @@
 .Nm
 .Op Fl 46AadefginpRtVv\&?
 .Op Fl b Ar bufsize
-.Op Fl h Ar header
+.Op Fl H Ar header
 .Op Fl N Ar netrc
 .Op Fl o Ar output
 .Op Fl P Ar port
@@ -232,6 +232,9 @@ string as a custom
 header for an
 .Th HTTP
 request.
+You can specify multiple headers by repeating the
+.Fl H
+option.
 .It Fl i
 Turns off interactive prompting during
 multiple file transfers.

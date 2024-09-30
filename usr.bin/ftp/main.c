@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.132 2024/09/25 16:55:39 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.133 2024/09/30 13:03:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2023 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.132 2024/09/25 16:55:39 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.133 2024/09/30 13:03:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1080,8 +1080,9 @@ synopsis(FILE * stream)
 	const char * progname = getprogname();
 
 	fprintf(stream,
-"usage: %s [-46AadefginpRtVv] [-N NETRC] [-o OUTPUT] [-P PORT] [-q QUITTIME]\n"
-"           [-r RETRY] [-s SRCADDR] [-T DIR,MAX[,INC]] [-x XFERSIZE]\n"
+"usage: %s [-46AadefginpRtVv] [-H HEADER] [-N NETRC] [-o OUTPUT] [-P PORT]\n"
+"           [-q QUITTIME] [-r RETRY] [-s SRCADDR] [-T DIR,MAX[,INC]]\n"
+"	    [-x XFERSIZE]\n"
 "           [[USER@]HOST [PORT]]\n"
 "           [[USER@]HOST:[PATH][/]]\n"
 "           [file:///PATH]\n"
