@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.20 2024/09/10 08:49:33 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.21 2024/09/30 15:54:42 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -174,6 +174,42 @@ gftfb_match(device_t parent, cfdata_t cf, void *aux)
 	return 0;
 }
 
+static inline uint32_t
+gftfb_read4(struct gftfb_softc *sc, uint32_t offset)
+{
+	struct sti_rom *rom = sc->sc_base.sc_rom;
+	bus_space_tag_t memt = rom->memt;
+	bus_space_handle_t memh = rom->regh[2];
+	return bus_space_read_stream_4(memt, memh, offset);
+}
+
+static inline void
+gftfb_write4(struct gftfb_softc *sc, uint32_t offset, uint32_t val)
+{
+	struct sti_rom *rom = sc->sc_base.sc_rom;
+	bus_space_tag_t memt = rom->memt;
+	bus_space_handle_t memh = rom->regh[2];
+	bus_space_write_stream_4(memt, memh, offset, val);
+}
+
+static inline uint8_t
+gftfb_read1(struct gftfb_softc *sc, uint32_t offset)
+{
+	struct sti_rom *rom = sc->sc_base.sc_rom;
+	bus_space_tag_t memt = rom->memt;
+	bus_space_handle_t memh = rom->regh[2];
+	return bus_space_read_1(memt, memh, offset);
+}
+
+static inline void
+gftfb_write1(struct gftfb_softc *sc, uint32_t offset, uint8_t val)
+{
+	struct sti_rom *rom = sc->sc_base.sc_rom;
+	bus_space_tag_t memt = rom->memt;
+	bus_space_handle_t memh = rom->regh[2];
+	bus_space_write_1(memt, memh, offset, val);
+}
+
 void
 gftfb_attach(device_t parent, device_t self, void *aux)
 {
@@ -226,6 +262,10 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(sc->sc_dev, "%s at %dx%d\n", sc->sc_scr.name, 
 	    sc->sc_width, sc->sc_height);
 	gftfb_setup(sc);
+
+#ifdef GFTFB_DEBUG
+	sc->sc_height -= 200;
+#endif
 
 	sc->sc_defaultscreen_descr = (struct wsscreen_descr){
 		"default",
@@ -610,30 +650,23 @@ gftfb_disable_rom(struct sti_softc *sc)
 static inline void
 gftfb_wait(struct gftfb_softc *sc)
 {
-	struct sti_rom *rom = sc->sc_base.sc_rom;
-	bus_space_tag_t memt = rom->memt;
-	bus_space_handle_t memh = rom->regh[2];
 	uint8_t stat;
 
 	do {
-		stat = bus_space_read_1(memt, memh, NGLE_REG_15b0);
+		stat = gftfb_read1(sc, NGLE_REG_15b0);
 		if (stat == 0)
-			stat = bus_space_read_1(memt, memh, NGLE_REG_15b0);
+			stat = gftfb_read1(sc, NGLE_REG_15b0);
 	} while (stat != 0);
 }
 
 static inline void
 gftfb_setup_fb(struct gftfb_softc *sc)
 {
-	struct sti_rom *rom = sc->sc_base.sc_rom;
-	bus_space_tag_t memt = rom->memt;
-	bus_space_handle_t memh = rom->regh[2];
-
 	gftfb_wait(sc);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_10, 0x13601000);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_14, 0x83000300);
+	gftfb_write4(sc, NGLE_REG_10, 0x13601000);
+	gftfb_write4(sc, NGLE_REG_14, 0x83000300);
 	gftfb_wait(sc);
-	bus_space_write_1(memt, memh, NGLE_REG_16b1, 1);
+	gftfb_write1(sc, NGLE_REG_16b1, 1);
 	sc->sc_hwmode = HW_FB;
 }
 
@@ -661,73 +694,73 @@ gftfb_setup(struct gftfb_softc *sc)
 
 	/* attr. planes */
 	gftfb_wait(sc);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_11, 0x2ea0d000);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_14, 0x23000302);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_12, NGLE_ARTIST_CMAP0);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_8, 0xffffffff);
+	gftfb_write4(sc, NGLE_REG_11, 0x2ea0d000);
+	gftfb_write4(sc, NGLE_REG_14, 0x23000302);
+	gftfb_write4(sc, NGLE_REG_12, NGLE_ARTIST_CMAP0);
+	gftfb_write4(sc, NGLE_REG_8, 0xffffffff);
 
 	gftfb_wait(sc);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_6, 0x00000000);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_9,
+	gftfb_write4(sc, NGLE_REG_6, 0x00000000);
+	gftfb_write4(sc, NGLE_REG_9,
 	    (sc->sc_scr.scr_cfg.scr_width << 16) | sc->sc_scr.scr_cfg.scr_height);
 	/*
 	 * blit into offscreen memory to force flush previous - apparently 
 	 * some chips have a bug this works around
 	 */
-	bus_space_write_stream_4(memt, memh, NGLE_REG_6, 0x05000000);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_9, 0x00040001);
+	gftfb_write4(sc, NGLE_REG_6, 0x05000000);
+	gftfb_write4(sc, NGLE_REG_9, 0x00040001);
 
 	gftfb_wait(sc);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_12, 0x00000000);
+	gftfb_write4(sc, NGLE_REG_12, 0x00000000);
 
 	gftfb_setup_fb(sc);
 
 	/* make sure video output is enabled */
 	gftfb_wait(sc);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_21,
-	    bus_space_read_stream_4(memt, memh, NGLE_REG_21) | 0x0a000000);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_27,
-	    bus_space_read_stream_4(memt, memh, NGLE_REG_27) | 0x00800000);
+	gftfb_write4(sc, NGLE_REG_21,
+	    gftfb_read4(sc, NGLE_REG_21) | 0x0a000000);
+	gftfb_write4(sc, NGLE_REG_27,
+	    gftfb_read4(sc, NGLE_REG_27) | 0x00800000);
 
 	/* initialize cursor sprite */
 	gftfb_wait(sc);
 	
 	/* cursor mask */
 	gftfb_wait(sc);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_14, 0x300);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_13, 0xffffffff);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_11, 0x28A07000);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_3, 0);
+	gftfb_write4(sc, NGLE_REG_14, 0x300);
+	gftfb_write4(sc, NGLE_REG_13, 0xffffffff);
+	gftfb_write4(sc, NGLE_REG_11, 0x28A07000);
+	gftfb_write4(sc, NGLE_REG_3, 0);
 	for (i = 0; i < 64; i++) {
-		bus_space_write_stream_4(memt, memh, NGLE_REG_4, 0xffffffff);
-		bus_space_write_stream_4(memt, memh, NGLE_REG_5, 0xffffffff);
+		gftfb_write4(sc, NGLE_REG_4, 0xffffffff);
+		gftfb_write4(sc, NGLE_REG_5, 0xffffffff);
 	}
 
 	/* cursor image */
 	gftfb_wait(sc);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_14, 0x300);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_13, 0xffffffff);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_11, 0x28A06000);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_3, 0);
+	gftfb_write4(sc, NGLE_REG_14, 0x300);
+	gftfb_write4(sc, NGLE_REG_13, 0xffffffff);
+	gftfb_write4(sc, NGLE_REG_11, 0x28A06000);
+	gftfb_write4(sc, NGLE_REG_3, 0);
 	for (i = 0; i < 64; i++) {
-		bus_space_write_stream_4(memt, memh, NGLE_REG_4, 0xff00ff00);
-		bus_space_write_stream_4(memt, memh, NGLE_REG_5, 0xff00ff00);
+		gftfb_write4(sc, NGLE_REG_4, 0xff00ff00);
+		gftfb_write4(sc, NGLE_REG_5, 0xff00ff00);
 	}
 
 	/* colour map */
 	gftfb_wait(sc);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_10, 0xBBE0F000);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_14, 0x03000300);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_13, 0xffffffff);
+	gftfb_write4(sc, NGLE_REG_10, 0xBBE0F000);
+	gftfb_write4(sc, NGLE_REG_14, 0x03000300);
+	gftfb_write4(sc, NGLE_REG_13, 0xffffffff);
 	gftfb_wait(sc);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_3, 0);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_4, 0);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_4, 0);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_4, 0x000000ff);	/* BG */
-	bus_space_write_stream_4(memt, memh, NGLE_REG_4, 0x00ff0000);	/* FG */
+	gftfb_write4(sc, NGLE_REG_3, 0);
+	gftfb_write4(sc, NGLE_REG_4, 0);
+	gftfb_write4(sc, NGLE_REG_4, 0);
+	gftfb_write4(sc, NGLE_REG_4, 0x000000ff);	/* BG */
+	gftfb_write4(sc, NGLE_REG_4, 0x00ff0000);	/* FG */
 	gftfb_wait(sc);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_2, 0);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_26, 0x80008004);
+	gftfb_write4(sc, NGLE_REG_2, 0);
+	gftfb_write4(sc, NGLE_REG_26, 0x80008004);
 	gftfb_setup_fb(sc);	
 
 	gftfb_move_cursor(sc, 100, 100);
@@ -995,24 +1028,18 @@ static int
 gftfb_putpalreg(struct gftfb_softc *sc, uint8_t idx, uint8_t r, uint8_t g,
     uint8_t b)
 {
-	struct sti_rom *rom = sc->sc_base.sc_rom;
-	bus_space_tag_t memt = rom->memt;
-	bus_space_handle_t memh = rom->regh[2];
-
 	mutex_enter(&sc->sc_hwlock);
 	gftfb_wait(sc);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_10, 0xbbe0f000);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_14, 0x03000300);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_13, 0xffffffff);
+	gftfb_write4(sc, NGLE_REG_10, 0xbbe0f000);
+	gftfb_write4(sc, NGLE_REG_14, 0x03000300);
+	gftfb_write4(sc, NGLE_REG_13, 0xffffffff);
 
 	gftfb_wait(sc);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_3,
-	    0x400 | (idx << 2));
-	bus_space_write_stream_4(memt, memh, NGLE_REG_4,
-	    (r << 16) | (g << 8) | b);
+	gftfb_write4(sc, NGLE_REG_3, 0x400 | (idx << 2));
+	gftfb_write4(sc, NGLE_REG_4, (r << 16) | (g << 8) | b);
 
-	bus_space_write_stream_4(memt, memh, NGLE_REG_2, 0x400);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_26, 0x80000100);
+	gftfb_write4(sc, NGLE_REG_2, 0x400);
+	gftfb_write4(sc, NGLE_REG_26, 0x80000100);
 	gftfb_setup_fb(sc);
 	mutex_exit(&sc->sc_hwlock);
 	return 0;
@@ -1021,13 +1048,10 @@ gftfb_putpalreg(struct gftfb_softc *sc, uint8_t idx, uint8_t r, uint8_t g,
 static inline void
 gftfb_wait_fifo(struct gftfb_softc *sc, uint32_t slots)
 {
-	struct sti_rom *rom = sc->sc_base.sc_rom;
-	bus_space_tag_t memt = rom->memt;
-	bus_space_handle_t memh = rom->regh[2];
 	uint32_t reg;
 
 	do {
-		reg = bus_space_read_stream_4(memt, memh, NGLE_REG_34);
+		reg = gftfb_read4(sc, NGLE_REG_34);
 	} while (reg < slots);
 }
 
@@ -1035,20 +1059,17 @@ static void
 gftfb_rectfill(struct gftfb_softc *sc, int x, int y, int wi, int he,
 		      uint32_t bg)
 {
-	struct sti_rom *rom = sc->sc_base.sc_rom;
-	bus_space_tag_t memt = rom->memt;
-	bus_space_handle_t memh = rom->regh[2];
 	uint32_t mask = 0xffffffff;
 
 	if (sc->sc_hwmode != HW_FILL) {
 		gftfb_wait_fifo(sc, 3);
 		/* plane mask */
-		bus_space_write_stream_4(memt, memh, NGLE_REG_13, 0xff);
+		gftfb_write4(sc, NGLE_REG_13, 0xff);
 		/* bitmap op */
-		bus_space_write_stream_4(memt, memh, NGLE_REG_14, 
+		gftfb_write4(sc, NGLE_REG_14, 
 		    IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc, 1, 0));
 		/* dst bitmap access */
-		bus_space_write_stream_4(memt, memh, NGLE_REG_11,
+		gftfb_write4(sc, NGLE_REG_11,
 		    BA(IndexedDcd, Otc32, OtsIndirect, AddrLong, 0, BINapp0I, 0));
 		sc->sc_hwmode = HW_FILL;
 	}
@@ -1057,12 +1078,12 @@ gftfb_rectfill(struct gftfb_softc *sc, int x, int y, int wi, int he,
 	if (wi < 32)
 		mask = 0xffffffff << (32 - wi);
 	/* transfer data */
-	bus_space_write_stream_4(memt, memh, NGLE_REG_8, mask);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_35, bg);
+	gftfb_write4(sc, NGLE_REG_8, mask);
+	gftfb_write4(sc, NGLE_REG_35, bg);
 	/* dst XY */
-	bus_space_write_stream_4(memt, memh, NGLE_REG_6, (x << 16) | y);
+	gftfb_write4(sc, NGLE_REG_6, (x << 16) | y);
 	/* len XY start */
-	bus_space_write_stream_4(memt, memh, NGLE_REG_9, (wi << 16) | he);
+	gftfb_write4(sc, NGLE_REG_9, (wi << 16) | he);
 
 }
 
@@ -1071,21 +1092,18 @@ gftfb_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
 			    int he, int rop)
 {
 	struct gftfb_softc *sc = cookie;
-	struct sti_rom *rom = sc->sc_base.sc_rom;
-	bus_space_tag_t memt = rom->memt;
-	bus_space_handle_t memh = rom->regh[2];
 
 	if (sc->sc_hwmode != HW_BLIT) {
 		gftfb_wait(sc);
-		bus_space_write_stream_4(memt, memh, NGLE_REG_10, 0x13a01000);
+		gftfb_write4(sc, NGLE_REG_10, 0x13a01000);
 		sc->sc_hwmode = HW_BLIT;
 	}
 	gftfb_wait_fifo(sc, 5);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_14, ((rop << 8) & 0xf00) | 0x23000000);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_13, 0xff);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_24, (xs << 16) | ys);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_7, (wi << 16) | he);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_25, (xd << 16) | yd);
+	gftfb_write4(sc, NGLE_REG_14, ((rop << 8) & 0xf00) | 0x23000000);
+	gftfb_write4(sc, NGLE_REG_13, 0xff);
+	gftfb_write4(sc, NGLE_REG_24, (xs << 16) | ys);
+	gftfb_write4(sc, NGLE_REG_7, (wi << 16) | he);
+	gftfb_write4(sc, NGLE_REG_25, (xd << 16) | yd);
 }
 
 static void
@@ -1289,9 +1307,6 @@ gftfb_eraserows(void *cookie, int row, int nrows, long fillattr)
 static void
 gftfb_move_cursor(struct gftfb_softc *sc, int x, int y)
 {
-	struct sti_rom *rom = sc->sc_base.sc_rom;
-	bus_space_tag_t memt = rom->memt;
-	bus_space_handle_t memh = rom->regh[2];
 	uint32_t pos;
 
 	sc->sc_cursor_x = x;
@@ -1304,17 +1319,13 @@ gftfb_move_cursor(struct gftfb_softc *sc, int x, int y)
 	pos = (x << 16) | y;
 	if (sc->sc_enabled) pos |= 0x80000000;
 	gftfb_wait(sc);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_17, pos);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_18, 0x80);
+	gftfb_write4(sc, NGLE_REG_17, pos);
+	gftfb_write4(sc, NGLE_REG_18, 0x80);
 }
 
 static int
 gftfb_do_cursor(struct gftfb_softc *sc, struct wsdisplay_cursor *cur)
 {
-	struct sti_rom *rom = sc->sc_base.sc_rom;
-	bus_space_tag_t memt = rom->memt;
-	bus_space_handle_t memh = rom->regh[2];
-
 	if (cur->which & WSDISPLAY_CURSOR_DOCUR) {
 
 		sc->sc_enabled = cur->enable;
@@ -1339,19 +1350,19 @@ gftfb_do_cursor(struct gftfb_softc *sc, struct wsdisplay_cursor *cur)
 		copyin(cur->cmap.red, r, 2);
 		mutex_enter(&sc->sc_hwlock);
 		gftfb_wait(sc);
-		bus_space_write_stream_4(memt, memh, NGLE_REG_10, 0xBBE0F000);
-		bus_space_write_stream_4(memt, memh, NGLE_REG_14, 0x03000300);
-		bus_space_write_stream_4(memt, memh, NGLE_REG_13, 0xffffffff);
+		gftfb_write4(sc, NGLE_REG_10, 0xBBE0F000);
+		gftfb_write4(sc, NGLE_REG_14, 0x03000300);
+		gftfb_write4(sc, NGLE_REG_13, 0xffffffff);
 		gftfb_wait(sc);
-		bus_space_write_stream_4(memt, memh, NGLE_REG_3, 0);
-		bus_space_write_stream_4(memt, memh, NGLE_REG_4, 0);
-		bus_space_write_stream_4(memt, memh, NGLE_REG_4, 0);
+		gftfb_write4(sc, NGLE_REG_3, 0);
+		gftfb_write4(sc, NGLE_REG_4, 0);
+		gftfb_write4(sc, NGLE_REG_4, 0);
 		rgb = (r[0] << 16) | (g[0] << 8) | b[0];
-		bus_space_write_stream_4(memt, memh, NGLE_REG_4, rgb);	/* BG */
+		gftfb_write4(sc, NGLE_REG_4, rgb);	/* BG */
 		rgb = (r[1] << 16) | (g[1] << 8) | b[1];
-		bus_space_write_stream_4(memt, memh, NGLE_REG_4, rgb);	/* FG */
-		bus_space_write_stream_4(memt, memh, NGLE_REG_2, 0);
-		bus_space_write_stream_4(memt, memh, NGLE_REG_26, 0x80008004);
+		gftfb_write4(sc, NGLE_REG_4, rgb);	/* FG */
+		gftfb_write4(sc, NGLE_REG_2, 0);
+		gftfb_write4(sc, NGLE_REG_26, 0x80008004);
 		gftfb_setup_fb(sc);	
 		mutex_exit(&sc->sc_hwlock);
 
@@ -1362,10 +1373,10 @@ gftfb_do_cursor(struct gftfb_softc *sc, struct wsdisplay_cursor *cur)
 
 		copyin(cur->mask, buffer, 512);
 		gftfb_wait(sc);
-		bus_space_write_stream_4(memt, memh, NGLE_REG_14, 0x300);
-		bus_space_write_stream_4(memt, memh, NGLE_REG_13, 0xffffffff);
-		bus_space_write_stream_4(memt, memh, NGLE_REG_11, 0x28A07000);
-		bus_space_write_stream_4(memt, memh, NGLE_REG_3, 0);
+		gftfb_write4(sc, NGLE_REG_14, 0x300);
+		gftfb_write4(sc, NGLE_REG_13, 0xffffffff);
+		gftfb_write4(sc, NGLE_REG_11, 0x28A07000);
+		gftfb_write4(sc, NGLE_REG_3, 0);
 		for (i = 0; i < 128; i += 2) {
 			latch = 0;
 			tmp = buffer[i] & 0x80808080;
@@ -1384,7 +1395,7 @@ gftfb_do_cursor(struct gftfb_softc *sc, struct wsdisplay_cursor *cur)
 			latch |= tmp << 5;
 			tmp = buffer[i] & 0x01010101;
 			latch |= tmp << 7;
-			bus_space_write_stream_4(memt, memh, NGLE_REG_4, latch);
+			gftfb_write4(sc, NGLE_REG_4, latch);
 			latch = 0;
 			tmp = buffer[i + 1] & 0x80808080;
 			latch |= tmp >> 7;
@@ -1402,15 +1413,15 @@ gftfb_do_cursor(struct gftfb_softc *sc, struct wsdisplay_cursor *cur)
 			latch |= tmp << 5;
 			tmp = buffer[i + 1] & 0x01010101;
 			latch |= tmp << 7;
-			bus_space_write_stream_4(memt, memh, NGLE_REG_5, latch);
+			gftfb_write4(sc, NGLE_REG_5, latch);
 		}
 
 		copyin(cur->image, buffer, 512);
 		gftfb_wait(sc);
-		bus_space_write_stream_4(memt, memh, NGLE_REG_14, 0x300);
-		bus_space_write_stream_4(memt, memh, NGLE_REG_13, 0xffffffff);
-		bus_space_write_stream_4(memt, memh, NGLE_REG_11, 0x28A06000);
-		bus_space_write_stream_4(memt, memh, NGLE_REG_3, 0);
+		gftfb_write4(sc, NGLE_REG_14, 0x300);
+		gftfb_write4(sc, NGLE_REG_13, 0xffffffff);
+		gftfb_write4(sc, NGLE_REG_11, 0x28A06000);
+		gftfb_write4(sc, NGLE_REG_3, 0);
 		for (i = 0; i < 128; i += 2) {
 			latch = 0;
 			tmp = buffer[i] & 0x80808080;
@@ -1429,7 +1440,7 @@ gftfb_do_cursor(struct gftfb_softc *sc, struct wsdisplay_cursor *cur)
 			latch |= tmp << 5;
 			tmp = buffer[i] & 0x01010101;
 			latch |= tmp << 7;
-			bus_space_write_stream_4(memt, memh, NGLE_REG_4, latch);
+			gftfb_write4(sc, NGLE_REG_4, latch);
 			latch = 0;
 			tmp = buffer[i + 1] & 0x80808080;
 			latch |= tmp >> 7;
@@ -1447,7 +1458,7 @@ gftfb_do_cursor(struct gftfb_softc *sc, struct wsdisplay_cursor *cur)
 			latch |= tmp << 5;
 			tmp = buffer[i + 1] & 0x01010101;
 			latch |= tmp << 7;
-			bus_space_write_stream_4(memt, memh, NGLE_REG_5, latch);
+			gftfb_write4(sc, NGLE_REG_5, latch);
 		}
 		gftfb_setup_fb(sc);
 	}
@@ -1458,10 +1469,6 @@ gftfb_do_cursor(struct gftfb_softc *sc, struct wsdisplay_cursor *cur)
 static void
 gftfb_set_video(struct gftfb_softc *sc, int on)
 {
-	struct sti_rom *rom = sc->sc_base.sc_rom;
-	bus_space_tag_t memt = rom->memt;
-	bus_space_handle_t memh = rom->regh[2];
-
 	if (sc->sc_video_on == on)
 		return;
 		
@@ -1469,14 +1476,14 @@ gftfb_set_video(struct gftfb_softc *sc, int on)
 
 	gftfb_wait(sc);
 	if (on) {
-		bus_space_write_stream_4(memt, memh, NGLE_REG_21,
-		    bus_space_read_stream_4(memt, memh, NGLE_REG_21) | 0x0a000000);
-		bus_space_write_stream_4(memt, memh, NGLE_REG_27,
-		    bus_space_read_stream_4(memt, memh, NGLE_REG_27) | 0x00800000);
+		gftfb_write4(sc, NGLE_REG_21,
+		    gftfb_read4(sc, NGLE_REG_21) | 0x0a000000);
+		gftfb_write4(sc, NGLE_REG_27,
+		    gftfb_read4(sc, NGLE_REG_27) | 0x00800000);
 	} else {
-		bus_space_write_stream_4(memt, memh, NGLE_REG_21,
-		    bus_space_read_stream_4(memt, memh, NGLE_REG_21) &  ~0x0a000000);
-		bus_space_write_stream_4(memt, memh, NGLE_REG_27,
-		    bus_space_read_stream_4(memt, memh, NGLE_REG_27) & ~0x00800000);
+		gftfb_write4(sc, NGLE_REG_21,
+		    gftfb_read4(sc, NGLE_REG_21) &  ~0x0a000000);
+		gftfb_write4(sc, NGLE_REG_27,
+		    gftfb_read4(sc, NGLE_REG_27) & ~0x00800000);
 	}
 }
