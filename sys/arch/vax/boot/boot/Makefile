@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2018/03/19 17:29:08 ragge Exp $
+#	$NetBSD: Makefile,v 1.47 2024/09/30 00:59:25 kalvisd Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -50,5 +50,7 @@ install:
 
 VERSIONFLAGS+=-n
 .include "${S}/conf/newvers_stand.mk"
+
+COPTS.autoconf.c+=	${CC_WNO_ARRAY_BOUNDS}
 
 .include <bsd.prog.mk>
