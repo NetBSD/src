@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.158 2024/09/30 13:03:36 christos Exp $
+.\" 	$NetBSD: ftp.1,v 1.159 2024/09/30 19:23:31 kre Exp $
 .\"
 .\" Copyright (c) 1996-2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -224,17 +224,17 @@ or
 proxies.
 .It Fl g
 Disables file name globbing.
-It Fl H Ar header
+.It Fl H Ar header
 Include the provided
 .Ar header
 string as a custom
 .Tn HTTP
 header for an
-.Th HTTP
+.Tn HTTP
 request.
-You can specify multiple headers by repeating the
+The
 .Fl H
-option.
+option can be repeated to add additional headers.
 .It Fl i
 Turns off interactive prompting during
 multiple file transfers.
