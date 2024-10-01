@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.127 2024/10/01 17:00:27 riastradh Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.128 2024/10/01 17:05:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.127 2024/10/01 17:00:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.128 2024/10/01 17:05:16 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -912,7 +912,6 @@ linux_sys_dup3(struct lwp *l, const struct linux_sys_dup3_args *uap,
 	return dodup(l, SCARG(uap, from), SCARG(uap, to), flags, retval);
 }
 
-
 int
 linux_to_bsd_atflags(int lflags)
 {
@@ -937,7 +936,7 @@ linux_sys_faccessat2(lwp_t *l, const struct linux_sys_faccessat2_args *uap,
 		syscallarg(const char *) path;
 		syscallarg(int) amode;
 		syscallarg(int) flags;
-	}*/
+	} */
 	int flag = linux_to_bsd_atflags(SCARG(uap, flags));
 	int mode = SCARG(uap, amode);
 	int fd = SCARG(uap, fd);
@@ -945,7 +944,6 @@ linux_sys_faccessat2(lwp_t *l, const struct linux_sys_faccessat2_args *uap,
 
 	return do_sys_accessat(l, fd, path, mode, flag);
 }
-
 
 int
 linux_sys_sync_file_range(lwp_t *l,
@@ -1083,11 +1081,10 @@ linux_sys_copy_file_range(lwp_t *l,
 	int error = 0;
 	size_t len = SCARG(uap, len);
 	unsigned int flags = SCARG(uap, flags);
-	// Structures for actual copy
+	/* Structures for actual copy */
 	char *buffer = NULL;
 	struct uio auio;
 	struct iovec aiov;
-
 
 	if (len > SSIZE_MAX) {
 		DPRINTF("%s: len is greater than SSIZE_MAX\n",
@@ -1283,7 +1280,6 @@ out:
 	}
 	return error;
 }
-
 
 #define LINUX_NOT_SUPPORTED(fun) \
 int \
