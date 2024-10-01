@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.126 2024/10/01 16:41:29 riastradh Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.127 2024/10/01 17:00:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.126 2024/10/01 16:41:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.127 2024/10/01 17:00:27 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -174,7 +174,8 @@ linux_hilo_to_off_t(unsigned long hi, unsigned long lo)
  * Just call open(2) with the TRUNC, CREAT and WRONLY flags.
  */
 int
-linux_sys_creat(struct lwp *l, const struct linux_sys_creat_args *uap, register_t *retval)
+linux_sys_creat(struct lwp *l, const struct linux_sys_creat_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -223,7 +224,8 @@ linux_open_ctty(struct lwp *l, int flags, int fd)
  * (XXX is this necessary?)
  */
 int
-linux_sys_open(struct lwp *l, const struct linux_sys_open_args *uap, register_t *retval)
+linux_sys_open(struct lwp *l, const struct linux_sys_open_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -247,7 +249,8 @@ linux_sys_open(struct lwp *l, const struct linux_sys_open_args *uap, register_t 
 }
 
 int
-linux_sys_openat(struct lwp *l, const struct linux_sys_openat_args *uap, register_t *retval)
+linux_sys_openat(struct lwp *l, const struct linux_sys_openat_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -279,7 +282,8 @@ linux_sys_openat(struct lwp *l, const struct linux_sys_openat_args *uap, registe
  * because the flag values and lock structure are different.
  */
 int
-linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_t *retval)
+linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -511,7 +515,8 @@ bsd_to_linux_stat(struct stat *bsp, struct linux_stat *lsp)
  * by one function to avoid code duplication.
  */
 int
-linux_sys_fstat(struct lwp *l, const struct linux_sys_fstat_args *uap, register_t *retval)
+linux_sys_fstat(struct lwp *l, const struct linux_sys_fstat_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -530,7 +535,8 @@ linux_sys_fstat(struct lwp *l, const struct linux_sys_fstat_args *uap, register_
 }
 
 static int
-linux_stat1(const struct linux_sys_stat_args *uap, register_t *retval, int flags)
+linux_stat1(const struct linux_sys_stat_args *uap, register_t *retval,
+    int flags)
 {
 	struct linux_stat tmplst;
 	struct stat tmpst;
@@ -546,7 +552,8 @@ linux_stat1(const struct linux_sys_stat_args *uap, register_t *retval, int flags
 }
 
 int
-linux_sys_stat(struct lwp *l, const struct linux_sys_stat_args *uap, register_t *retval)
+linux_sys_stat(struct lwp *l, const struct linux_sys_stat_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -559,7 +566,8 @@ linux_sys_stat(struct lwp *l, const struct linux_sys_stat_args *uap, register_t 
 /* Note: this is "newlstat" in the Linux sources */
 /*	(we don't bother with the old lstat currently) */
 int
-linux_sys_lstat(struct lwp *l, const struct linux_sys_lstat_args *uap, register_t *retval)
+linux_sys_lstat(struct lwp *l, const struct linux_sys_lstat_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -575,7 +583,8 @@ linux_sys_lstat(struct lwp *l, const struct linux_sys_lstat_args *uap, register_
  */
 
 int
-linux_sys_linkat(struct lwp *l, const struct linux_sys_linkat_args *uap, register_t *retval)
+linux_sys_linkat(struct lwp *l, const struct linux_sys_linkat_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd1;
@@ -629,7 +638,8 @@ linux_unlink_dircheck(const char *path)
 }
 
 int
-linux_sys_unlink(struct lwp *l, const struct linux_sys_unlink_args *uap, register_t *retval)
+linux_sys_unlink(struct lwp *l, const struct linux_sys_unlink_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -644,7 +654,8 @@ linux_sys_unlink(struct lwp *l, const struct linux_sys_unlink_args *uap, registe
 }
 
 int
-linux_sys_unlinkat(struct lwp *l, const struct linux_sys_unlinkat_args *uap, register_t *retval)
+linux_sys_unlinkat(struct lwp *l, const struct linux_sys_unlinkat_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -666,7 +677,8 @@ linux_sys_unlinkat(struct lwp *l, const struct linux_sys_unlinkat_args *uap, reg
 }
 
 int
-linux_sys_mknod(struct lwp *l, const struct linux_sys_mknod_args *uap, register_t *retval)
+linux_sys_mknod(struct lwp *l, const struct linux_sys_mknod_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -684,7 +696,8 @@ linux_sys_mknod(struct lwp *l, const struct linux_sys_mknod_args *uap, register_
 }
 
 int
-linux_sys_mknodat(struct lwp *l, const struct linux_sys_mknodat_args *uap, register_t *retval)
+linux_sys_mknodat(struct lwp *l, const struct linux_sys_mknodat_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -718,7 +731,8 @@ linux_sys_mknodat(struct lwp *l, const struct linux_sys_mknodat_args *uap, regis
 }
 
 int
-linux_sys_fchmodat(struct lwp *l, const struct linux_sys_fchmodat_args *uap, register_t *retval)
+linux_sys_fchmodat(struct lwp *l, const struct linux_sys_fchmodat_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -731,7 +745,8 @@ linux_sys_fchmodat(struct lwp *l, const struct linux_sys_fchmodat_args *uap, reg
 }
 
 int
-linux_sys_fchownat(struct lwp *l, const struct linux_sys_fchownat_args *uap, register_t *retval)
+linux_sys_fchownat(struct lwp *l, const struct linux_sys_fchownat_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -748,7 +763,8 @@ linux_sys_fchownat(struct lwp *l, const struct linux_sys_fchownat_args *uap, reg
 }
 
 int
-linux_sys_faccessat(struct lwp *l, const struct linux_sys_faccessat_args *uap, register_t *retval)
+linux_sys_faccessat(struct lwp *l, const struct linux_sys_faccessat_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -767,7 +783,8 @@ linux_sys_faccessat(struct lwp *l, const struct linux_sys_faccessat_args *uap, r
  *	(syscall #148 on the arm)
  */
 int
-linux_sys_fdatasync(struct lwp *l, const struct linux_sys_fdatasync_args *uap, register_t *retval)
+linux_sys_fdatasync(struct lwp *l, const struct linux_sys_fdatasync_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -780,7 +797,8 @@ linux_sys_fdatasync(struct lwp *l, const struct linux_sys_fdatasync_args *uap, r
  * pread(2).
  */
 int
-linux_sys_pread(struct lwp *l, const struct linux_sys_pread_args *uap, register_t *retval)
+linux_sys_pread(struct lwp *l, const struct linux_sys_pread_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -803,7 +821,8 @@ linux_sys_pread(struct lwp *l, const struct linux_sys_pread_args *uap, register_
  * pwrite(2).
  */
 int
-linux_sys_pwrite(struct lwp *l, const struct linux_sys_pwrite_args *uap, register_t *retval)
+linux_sys_pwrite(struct lwp *l, const struct linux_sys_pwrite_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -1040,7 +1059,8 @@ linux_sys_renameat2(struct lwp *l, const struct linux_sys_renameat2_args *uap,
 	return error;
 }
 
-int linux_sys_copy_file_range(lwp_t *l,
+int
+linux_sys_copy_file_range(lwp_t *l,
     const struct linux_sys_copy_file_range_args *uap, register_t *retval)
 {
 	/* {
