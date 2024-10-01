@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mod.c,v 1.16 2024/07/01 01:35:53 christos Exp $	*/
+/*	$NetBSD: linux_mod.c,v 1.17 2024/10/01 16:41:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.16 2024/07/01 01:35:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.17 2024/10/01 16:41:29 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -145,7 +145,7 @@ linux_sysctl_enable(SYSCTLFN_ARGS)
 		error = exec_add(linux_execsw, __arraycount(linux_execsw));
 	else if (val == 0)
 		error = exec_remove(linux_execsw, __arraycount(linux_execsw));
-	else 
+	else
 		error = EINVAL;
 
 	if (error)

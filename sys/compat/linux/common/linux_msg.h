@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_msg.h,v 1.13 2009/11/18 15:19:24 njoly Exp $	*/
+/*	$NetBSD: linux_msg.h,v 1.14 2024/10/01 16:41:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,6 @@ struct linux_msqid64_ds {
 	int			l_msg_lrpid;
 	ulong			l___unused4;
 	ulong			l___unused5;
-	
 };
 
 #define LINUX_MSG_NOERROR	0x1000

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_inotify.c,v 1.6 2024/02/09 22:08:34 andvar Exp $	*/
+/*	$NetBSD: linux_inotify.c,v 1.7 2024/10/01 16:41:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_inotify.c,v 1.6 2024/02/09 22:08:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_inotify.c,v 1.7 2024/10/01 16:41:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -886,7 +886,7 @@ leave:
 	return idep;
 }
 
-static size_t 
+static size_t
 find_entry(struct inotify_dir_entries *i1, struct inotify_dir_entries *i2)
 {
 	for (size_t i = 0; i < i2->ide_count; i++)

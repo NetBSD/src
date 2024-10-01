@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.266 2024/09/29 00:09:52 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.267 2024/10/01 16:41:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.266 2024/09/29 00:09:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.267 2024/10/01 16:41:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1161,7 +1161,7 @@ linux_sys_personality(struct lwp *l, const struct linux_sys_personality_args *ua
 		retval[0] = led->led_personality;
 		return 0;
 	}
-	 
+
 	switch (per & LINUX_PER_MASK) {
 	case LINUX_PER_LINUX:
 	case LINUX_PER_LINUX32:
@@ -1308,7 +1308,7 @@ linux_sys_ptrace(struct lwp *l, const struct linux_sys_ptrace_args *uap, registe
 			case LINUX_PTRACE_PEEKTEXT:
 			case LINUX_PTRACE_PEEKDATA:
 				error = copyout (retval,
-				    (void *)SCARG(uap, data), 
+				    (void *)SCARG(uap, data),
 				    sizeof *retval);
 				*retval = SCARG(uap, data);
 				break;
@@ -1457,7 +1457,7 @@ linux_sys_sysinfo(struct lwp *l, const struct linux_sys_sysinfo_args *uap, regis
 	si.sharedram = 0;	/* XXX */
 	si.bufferram = (u_long)(filepg * uvmexp.pagesize);
 	si.totalswap = (u_long)uvmexp.swpages * uvmexp.pagesize;
-	si.freeswap = 
+	si.freeswap =
 	    (u_long)(uvmexp.swpages - uvmexp.swpginuse) * uvmexp.pagesize;
 	si.procs = atomic_load_relaxed(&nprocs);
 
@@ -1685,7 +1685,7 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap,
 	const int op = (SCARG(uap, op) & FUTEX_CMD_MASK);
 	if ((op == FUTEX_WAIT || op == FUTEX_WAIT_BITSET) &&
 	    SCARG(uap, timeout) != NULL) {
-		if ((error = copyin(SCARG(uap, timeout), 
+		if ((error = copyin(SCARG(uap, timeout),
 		    &lts, sizeof(lts))) != 0) {
 			return error;
 		}
@@ -2160,7 +2160,7 @@ linux_sys_getcpu(lwp_t *l, const struct linux_sys_getcpu_args *uap,
 			return error;
 
 	}
-	
+
 	// TO-DO: Test on a NUMA machine if the node_id returned is correct
 	if (SCARG(uap, node)) {
 		u_int node_id = l->l_cpu->ci_data.cpu_numa_id;

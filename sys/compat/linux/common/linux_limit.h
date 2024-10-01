@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_limit.h,v 1.9 2024/05/12 17:23:10 christos Exp $ */
+/* 	$NetBSD: linux_limit.h,v 1.10 2024/10/01 16:41:29 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ static int linux_to_bsd_limit(int);
 
 static int
 linux_to_bsd_limit(int lim)
-{      
+{
 	switch (lim) {
 	case LINUX_RLIMIT_CPU:
 		return RLIMIT_CPU;
@@ -103,7 +103,7 @@ linux_to_bsd_limit(int lim)
 	default:
 		return -EINVAL;
 	}
-}      
+}
 
 
 #endif /* _LINUX_LIMIT_H_ */
