@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.31 2024/09/28 14:24:59 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.32 2024/10/01 16:35:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -24,7 +24,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>	/* __off_t */
+#include <sys/types.h>	/* off_t */
 #include <stdarg.h>
 #include <ucontext.h>
 
@@ -40,7 +40,7 @@ extern char **environ;
 int __getcwd(char *, size_t);
 int __getlogin(char *, size_t);
 int __setlogin(const char *);
-int __posix_fadvise50(int, int, __off_t, __off_t, int);
+int __posix_fadvise50(int, int, off_t, off_t, int);
 void  __section(".text.startup") __attribute__((__visibility__("hidden")))
     __libc_atomic_init(void);
 void _resumecontext(void) __dead;
