@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.130 2024/10/01 17:11:39 riastradh Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.131 2024/10/01 17:15:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.130 2024/10/01 17:11:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.131 2024/10/01 17:15:59 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1069,7 +1069,7 @@ linux_sys_copy_file_range(lwp_t *l,
 		syscallarg(size_t) len;
 		syscallarg(unsigned int) flags;
 	} */
-
+	const off_t OFF_MAX = __type_max(off_t);
 	int fd_in, fd_out;
 	file_t *fp_in, *fp_out;
 	struct vnode *invp, *outvp;
@@ -1156,12 +1156,12 @@ linux_sys_copy_file_range(lwp_t *l,
 		have_off_out = true;
 	}
 
-	off_t new_size = off_out + len;
-	if (new_size < 0) {
+	if (off_out < 0 || len > OFF_MAX - off_out) {
 		DPRINTF("%s: New size is greater than OFF_MAX\n", __func__);
 		error = EFBIG;
 		goto out;
 	}
+	const off_t new_size = off_out + len;
 
 	/* Identify overlapping ranges */
 	if ((invp == outvp) &&
