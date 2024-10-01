@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.15 2024/09/11 13:31:13 macallan Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.16 2024/10/01 06:21:10 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.15 2024/09/11 13:31:13 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.16 2024/10/01 06:21:10 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -92,7 +92,6 @@ struct	hyperfb_softc {
 	struct wsscreen_list sc_screenlist;
 	struct vcons_data vd;
 	int sc_mode;
-	void (*sc_putchar)(void *, int, int, u_int, long);
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
@@ -554,7 +553,6 @@ hyperfb_init_screen(void *cookie, struct vcons_screen *scr,
 
 	ri->ri_hw = scr;
 
-	sc->sc_putchar = ri->ri_ops.putchar;
 	ri->ri_ops.copyrows = hyperfb_copyrows;
 	ri->ri_ops.copycols = hyperfb_copycols;
 	ri->ri_ops.eraserows = hyperfb_eraserows;
