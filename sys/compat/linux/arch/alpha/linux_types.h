@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.8 2023/02/12 14:59:22 andvar Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.9 2024/10/01 16:35:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ struct linux_stat64 {
 	unsigned int		__pad0;
 
 	unsigned long		lst_atime;
-	unsigned long		lst_atime_nsec; 
+	unsigned long		lst_atime_nsec;
 	unsigned long		lst_mtime;
 	unsigned long		lst_mtime_nsec;
 	unsigned long		lst_ctime;

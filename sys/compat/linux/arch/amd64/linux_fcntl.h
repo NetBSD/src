@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fcntl.h,v 1.5 2014/06/25 16:30:42 njoly Exp $ */
+/*	$NetBSD: linux_fcntl.h,v 1.6 2024/10/01 16:35:42 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -14,14 +14,14 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Emmanuel Dreyfus
- * 4. The name of the author may not be used to endorse or promote 
- *    products derived from this software without specific prior written 
+ * 4. The name of the author may not be used to endorse or promote
+ *    products derived from this software without specific prior written
  *    permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE THE AUTHOR AND CONTRIBUTORS ``AS IS'' 
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
+ * THIS SOFTWARE IS PROVIDED BY THE THE AUTHOR AND CONTRIBUTORS ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
  * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS 
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -63,7 +63,7 @@
 #define LINUX_F_SETFD		2
 #define LINUX_F_GETFL		3
 #define LINUX_F_SETFL		4
-#define LINUX_F_GETLK		5	
+#define LINUX_F_GETLK		5
 #define LINUX_F_SETLK		6
 #define LINUX_F_SETLKW		7
 #define LINUX_F_SETOWN		8
@@ -73,7 +73,7 @@
 #define LINUX_F_SETLKW64	14
 
 #define LINUX_F_RDLCK		0
-#define LINUX_F_WRLCK		1	
+#define LINUX_F_WRLCK		1
 #define LINUX_F_UNLCK		2
 
 #endif /* !_AMD64_LINUX_FCNTL_H */

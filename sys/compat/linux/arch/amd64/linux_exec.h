@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.6 2021/11/26 08:56:28 ryo Exp $ */
+/*	$NetBSD: linux_exec.h,v 1.7 2024/10/01 16:35:42 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -14,12 +14,12 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Emmanuel Dreyfus
- * 4. The name of the author may not be used to endorse or promote 
- *    products derived from this software without specific prior written 
+ * 4. The name of the author may not be used to endorse or promote
+ *    products derived from this software without specific prior written
  *    permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE THE AUTHOR AND CONTRIBUTORS ``AS IS'' 
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
+ * THIS SOFTWARE IS PROVIDED BY THE THE AUTHOR AND CONTRIBUTORS ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
  * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR

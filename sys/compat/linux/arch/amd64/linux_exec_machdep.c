@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.24 2020/09/05 16:30:10 riastradh Exp $ */
+/*	$NetBSD: linux_exec_machdep.c,v 1.25 2024/10/01 16:35:42 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved
@@ -14,14 +14,14 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Emmanuel Dreyfus
- * 4. The name of the author may not be used to endorse or promote 
- *    products derived from this software without specific prior written 
+ * 4. The name of the author may not be used to endorse or promote
+ *    products derived from this software without specific prior written
  *    permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE THE AUTHOR AND CONTRIBUTORS ``AS IS'' 
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
+ * THIS SOFTWARE IS PROVIDED BY THE THE AUTHOR AND CONTRIBUTORS ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
  * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS 
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.24 2020/09/05 16:30:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.25 2024/10/01 16:35:42 riastradh Exp $");
 
 #define ELFSIZE 64
 
@@ -210,7 +210,7 @@ ELFNAME2(linux,copyargs)(struct lwp *l, struct exec_package *pack,
 	esd.ai[i++].a_v = kauth_cred_getgid(l->l_cred);
 
 	esd.ai[i].a_type = LINUX_AT_EUID;
-	esd.ai[i++].a_v = ((vap->va_mode & S_ISUID) ? 
+	esd.ai[i++].a_v = ((vap->va_mode & S_ISUID) ?
 	    vap->va_uid : kauth_cred_geteuid(l->l_cred));
 
 	esd.ai[i].a_type = LINUX_AT_UID;
@@ -234,7 +234,7 @@ ELFNAME2(linux,copyargs)(struct lwp *l, struct exec_package *pack,
 
 	KASSERT(i == LINUX_ELF_AUX_ENTRIES);
 
-	strcpy(esd.hw_platform, LINUX_PLATFORM); 
+	strcpy(esd.hw_platform, LINUX_PLATFORM);
 
 	exec_free_emul_arg(pack);
 
