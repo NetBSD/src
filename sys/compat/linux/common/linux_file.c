@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.128 2024/10/01 17:05:16 riastradh Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.129 2024/10/01 17:08:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.128 2024/10/01 17:05:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.129 2024/10/01 17:08:47 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1173,11 +1173,6 @@ linux_sys_copy_file_range(lwp_t *l,
 	}
 
 	buffer = kmem_alloc(LINUX_COPY_FILE_RANGE_MAX_CHUNK, KM_SLEEP);
-	/* Allocation cannot fail, so no need for error handling? */
-	if (buffer == NULL) {
-		error = ENOMEM;
-		goto out;
-	}
 
 	bytes_left = len;
 
