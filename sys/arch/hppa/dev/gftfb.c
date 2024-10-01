@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.21 2024/09/30 15:54:42 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.22 2024/10/01 07:02:14 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -137,6 +137,7 @@ static void	gftfb_bitblt(void *, int, int, int, int, int,
 
 static void	gftfb_cursor(void *, int, int, int);
 static void	gftfb_putchar(void *, int, int, u_int, long);
+static void	gftfb_putchar_aa(void *, int, int, u_int, long);
 static void	gftfb_copycols(void *, int, int, int, int);
 static void	gftfb_erasecols(void *, int, int, int, long);
 static void	gftfb_copyrows(void *, int, int, int);
@@ -482,9 +483,7 @@ gftfb_check_rom(struct gftfb_softc *spc, struct pci_attach_args *pa)
 			break;
 #endif
 		default:
-#ifdef GFTFB_DEBUG
 			DPRINTF((" (wrong architecture)"));
-#endif
 			break;
 		}
 		DPRINTF(("%s\n", selected == offs ? " -> SELECTED" : ""));
@@ -943,7 +942,10 @@ gftfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.eraserows = gftfb_eraserows;
 	ri->ri_ops.erasecols = gftfb_erasecols;
 	ri->ri_ops.cursor = gftfb_cursor;
-	ri->ri_ops.putchar = gftfb_putchar;
+	if (FONT_IS_ALPHA(ri->ri_font)) {
+		ri->ri_ops.putchar = gftfb_putchar_aa;
+	} else	
+		ri->ri_ops.putchar = gftfb_putchar;
 }
 
 static int
@@ -1157,6 +1159,89 @@ gftfb_cursor(void *cookie, int on, int row, int col)
 
 static void
 gftfb_putchar(void *cookie, int row, int col, u_int c, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, c);
+	struct vcons_screen *scr = ri->ri_hw;
+	struct gftfb_softc *sc = scr->scr_cookie;
+	void *data;
+	int i, x, y, wi, he, rv = GC_NOPE;
+	uint32_t bg, fg, mask;
+
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
+		return;
+
+	if (!CHAR_IN_FONT(c, font))
+		return;
+
+	if (row == ri->ri_crow && col == ri->ri_ccol) {
+		ri->ri_flg &= ~RI_CURSOR;
+	}
+
+	wi = font->fontwidth;
+	he = font->fontheight;
+
+	x = ri->ri_xorigin + col * wi;
+	y = ri->ri_yorigin + row * he;
+
+	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+
+	/* if we're drawing a space we're done here */
+	if (c == 0x20) {
+		gftfb_rectfill(sc, x, y, wi, he, bg);
+		return;
+	}
+
+	fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
+
+	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
+	if (rv == GC_OK)
+		return;
+
+	/* clear the character cell */
+	gftfb_rectfill(sc, x, y, wi, he, bg);
+
+	data = WSFONT_GLYPH(c, font);
+
+	/*
+	* we're in rectangle mode with transparency enabled from the call to
+	* gftfb_rectfill() above, so all we need to do is reset the starting
+	* cordinates, then hammer mask and size/start. Starting coordinates 
+	* will automatically move down the y-axis 
+	*/
+	gftfb_wait_fifo(sc, 2);
+
+	/* character colour */
+	gftfb_write4(sc, NGLE_REG_35, fg);
+	/* dst XY */
+	gftfb_write4(sc, NGLE_REG_6, (x << 16) | y);
+
+	if (ri->ri_font->stride == 1) {
+		uint8_t *data8 = data;
+		for (i = 0; i < he; i++) {
+			gftfb_wait_fifo(sc, 2);
+			mask = *data8;
+			gftfb_write4(sc, NGLE_REG_8, mask << 24);	
+			gftfb_write4(sc, NGLE_REG_9, (wi << 16) | 1);
+			data8++;
+		}
+	} else {
+		uint16_t *data16 = data;
+		for (i = 0; i < he; i++) {
+			gftfb_wait_fifo(sc, 2);
+			mask = *data16;
+			gftfb_write4(sc, NGLE_REG_8, mask << 16);	
+			gftfb_write4(sc, NGLE_REG_9, (wi << 16) | 1);
+			data16++;
+		}
+	}
+
+	if (rv == GC_ADD)
+		glyphcache_add(&sc->sc_gc, c, x, y);
+}
+
+static void
+gftfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 {
 	struct rasops_info *ri = cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, c);
