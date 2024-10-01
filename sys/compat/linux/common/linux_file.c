@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.129 2024/10/01 17:08:47 riastradh Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.130 2024/10/01 17:11:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.129 2024/10/01 17:08:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.130 2024/10/01 17:11:39 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1092,7 +1092,7 @@ linux_sys_copy_file_range(lwp_t *l,
 		return EOVERFLOW;
 	}
 
-	if(flags != 0) {
+	if (flags != 0) {
 		DPRINTF("%s: unsupported flags %#x\n", __func__, flags);
 		return EINVAL;
 	}
@@ -1106,8 +1106,8 @@ linux_sys_copy_file_range(lwp_t *l,
 
 	error = fd_getvnode(fd_out, &fp_out);
 	if (error) {
-		    fd_putfile(fd_in);
-		    return error;
+		fd_putfile(fd_in);
+		return error;
 	}
 
 	invp = fp_in->f_vnode;
@@ -1124,16 +1124,16 @@ linux_sys_copy_file_range(lwp_t *l,
 		goto out;
 	}
 	if ((SCARG(uap, off_in) != NULL && *SCARG(uap, off_in) < 0) ||
-	   (SCARG(uap, off_out) != NULL && *SCARG(uap, off_out) < 0) ||
-	   vattr_in.va_type != VREG || vattr_out.va_type != VREG)
-        {
+	    (SCARG(uap, off_out) != NULL && *SCARG(uap, off_out) < 0) ||
+	    vattr_in.va_type != VREG || vattr_out.va_type != VREG) {
 		error = EINVAL;
 		DPRINTF("%s: Invalid offset or file type\n", __func__);
 		goto out;
 	}
 
 	if ((fp_in->f_flag & FREAD) == 0 ||
-	    (fp_out->f_flag & FWRITE) == 0 || (fp_out->f_flag & FAPPEND) != 0) {
+	    (fp_out->f_flag & FWRITE) == 0 ||
+	    (fp_out->f_flag & FAPPEND) != 0) {
 		DPRINTF("%s: input file can't be read or output file "
 		    "can't be written\n", __func__);
 		error = EBADF;
@@ -1141,19 +1141,19 @@ linux_sys_copy_file_range(lwp_t *l,
 	}
 	/* Retrieve and validate offsets if provided */
 	if (SCARG(uap, off_in) != NULL) {
-	    error = copyin(SCARG(uap, off_in), &off_in, sizeof(off_in));
-	    if (error) {
-		    goto out;
-	    }
-	    have_off_in = true;
+		error = copyin(SCARG(uap, off_in), &off_in, sizeof(off_in));
+		if (error) {
+			goto out;
+		}
+		have_off_in = true;
 	}
 
 	if (SCARG(uap, off_out) != NULL) {
-	    error = copyin(SCARG(uap, off_out), &off_out, sizeof(off_out));
-	    if (error) {
-		    goto out;
-	    }
-	    have_off_out = true;
+		error = copyin(SCARG(uap, off_out), &off_out, sizeof(off_out));
+		if (error) {
+			goto out;
+		}
+		have_off_out = true;
 	}
 
 	off_t new_size = off_out + len;
@@ -1166,7 +1166,7 @@ linux_sys_copy_file_range(lwp_t *l,
 	/* Identify overlapping ranges */
 	if ((invp == outvp) &&
 	    ((off_in <= off_out && off_in + (off_t)len > off_out) ||
-	    (off_in > off_out && off_out + (off_t)len > off_in))) {
+		(off_in > off_out && off_out + (off_t)len > off_in))) {
 		DPRINTF("%s: Ranges overlap\n", __func__);
 		error = EINVAL;
 		goto out;
