@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.132 2024/10/01 17:18:45 riastradh Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.133 2024/10/01 17:46:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.132 2024/10/01 17:18:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.133 2024/10/01 17:46:51 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1162,7 +1162,6 @@ linux_sys_copy_file_range(lwp_t *l,
 		error = EFBIG;
 		goto out;
 	}
-	const off_t new_size = off_out + len;
 
 	/* Identify overlapping ranges */
 	if ((invp == outvp) &&
