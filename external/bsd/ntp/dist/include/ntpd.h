@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.h,v 1.13 2024/08/18 20:46:50 christos Exp $	*/
+/*	$NetBSD: ntpd.h,v 1.14 2024/10/01 20:59:51 christos Exp $	*/
 
 /*
  * ntpd.h - Prototypes and external variables for ntpd.
@@ -567,8 +567,8 @@ extern keyid_t	info_auth_keyid;	/* keyid used to authenticate requests */
 extern u_long	auth_timereset;
 
 /* ntp_restrict.c */
-extern restrict_u *	restrictlist4;	/* IPv4 restriction list */
-extern restrict_u *	restrictlist6;	/* IPv6 restriction list */
+extern struct restrict_4 *	restrictlist4;	/* IPv4 restriction list */
+extern struct restrict_6 *	restrictlist6;	/* IPv6 restriction list */
 extern int		ntp_minpkt;
 extern u_char		ntp_minpoll;
 

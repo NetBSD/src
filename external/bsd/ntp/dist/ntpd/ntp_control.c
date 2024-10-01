@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.c,v 1.24 2024/08/18 20:47:17 christos Exp $	*/
+/*	$NetBSD: ntp_control.c,v 1.25 2024/10/01 20:59:51 christos Exp $	*/
 
 /*
  * ntp_control.c - respond to mode 6 control messages and send async
@@ -99,10 +99,16 @@ static	void	send_random_tag_value(int);
 static	void	read_mru_list	(struct recvbuf *, int);
 static	void	send_ifstats_entry(endpt *, u_int);
 static	void	read_ifstats	(struct recvbuf *);
-static	void	sockaddrs_from_restrict_u(sockaddr_u *,	sockaddr_u *,
-					  restrict_u *, int);
-static	void	send_restrict_entry(restrict_u *, int, u_int);
-static	void	send_restrict_list(restrict_u *, int, u_int *);
+static	void	sockaddrs_from_struct_restrict_4(sockaddr_u *,	sockaddr_u *,
+					  struct restrict_4 *);
+static	void	sockaddrs_from_struct_restrict_6(sockaddr_u *,	sockaddr_u *,
+					  struct restrict_6 *);
+static	void	send_restrict_entry(struct restrict_info *, sockaddr_u *,
+					  sockaddr_u *, u_int);
+static	void	send_restrict4_entry(struct restrict_4 *, u_int);
+static	void	send_restrict6_entry(struct restrict_6 *, u_int);
+static	void	send_restrict4_list(struct restrict_4 *, u_int *);
+static	void	send_restrict6_list(struct restrict_6 *, u_int *);
 static	void	read_addr_restrictions(struct recvbuf *);
 static	void	read_ordlist	(struct recvbuf *, int);
 static	u_int32	derive_nonce	(sockaddr_u *, u_int32, u_int32);
@@ -4372,30 +4378,36 @@ read_ifstats(
 }
 
 static void
-sockaddrs_from_restrict_u(
+sockaddrs_from_struct_restrict_4(
 	sockaddr_u *	psaA,
 	sockaddr_u *	psaM,
-	restrict_u *	pres,
-	int		ipv6
+	struct restrict_4 *	pres
 	)
 {
 	ZERO(*psaA);
 	ZERO(*psaM);
-	if (!ipv6) {
-		psaA->sa.sa_family = AF_INET;
-		psaA->sa4.sin_addr.s_addr = htonl(pres->u.v4.addr);
-		psaM->sa.sa_family = AF_INET;
-		psaM->sa4.sin_addr.s_addr = htonl(pres->u.v4.mask);
-	} else {
-		psaA->sa.sa_family = AF_INET6;
-		memcpy(&psaA->sa6.sin6_addr, &pres->u.v6.addr,
-		       sizeof(psaA->sa6.sin6_addr));
-		psaM->sa.sa_family = AF_INET6;
-		memcpy(&psaM->sa6.sin6_addr, &pres->u.v6.mask,
-		       sizeof(psaA->sa6.sin6_addr));
-	}
+	psaA->sa.sa_family = AF_INET;
+	psaA->sa4.sin_addr.s_addr = htonl(pres->v4.addr);
+	psaM->sa.sa_family = AF_INET;
+	psaM->sa4.sin_addr.s_addr = htonl(pres->v4.mask);
 }
 
+static void
+sockaddrs_from_struct_restrict_6(
+	sockaddr_u *	psaA,
+	sockaddr_u *	psaM,
+	struct restrict_6 *	pres
+	)
+{
+	ZERO(*psaA);
+	ZERO(*psaM);
+	psaA->sa.sa_family = AF_INET6;
+	memcpy(&psaA->sa6.sin6_addr, &pres->v6.addr,
+	       sizeof(psaA->sa6.sin6_addr));
+	psaM->sa.sa_family = AF_INET6;
+	memcpy(&psaM->sa6.sin6_addr, &pres->v6.mask,
+	       sizeof(psaA->sa6.sin6_addr));
+}
 
 /*
  * Send a restrict entry in response to a "ntpq -c reslist" request.
@@ -4407,8 +4419,9 @@ sockaddrs_from_restrict_u(
  */
 static void
 send_restrict_entry(
-	restrict_u *	pres,
-	int		ipv6,
+	struct restrict_info *ri,
+	sockaddr_u *addr,
+	sockaddr_u *mask,
 	u_int		idx
 	)
 {
@@ -4422,14 +4435,11 @@ send_restrict_entry(
 	u_int32		noise;
 	u_int		which;
 	u_int		remaining;
-	sockaddr_u	addr;
-	sockaddr_u	mask;
 	const char *	pch;
 	char *		buf;
 	const char *	match_str;
 	const char *	access_str;
 
-	sockaddrs_from_restrict_u(&addr, &mask, pres, ipv6);
 	remaining = COUNTOF(sent);
 	ZERO(sent);
 	noise = 0;
@@ -4451,25 +4461,25 @@ send_restrict_entry(
 
 		case 0:
 			snprintf(tag, sizeof(tag), addr_fmtu, idx);
-			pch = stoa(&addr);
+			pch = stoa(addr);
 			ctl_putunqstr(tag, pch, strlen(pch));
 			break;
 
 		case 1:
 			snprintf(tag, sizeof(tag), mask_fmtu, idx);
-			pch = stoa(&mask);
+			pch = stoa(mask);
 			ctl_putunqstr(tag, pch, strlen(pch));
 			break;
 
 		case 2:
 			snprintf(tag, sizeof(tag), hits_fmt, idx);
-			ctl_putuint(tag, pres->count);
+			ctl_putuint(tag, ri->count);
 			break;
 
 		case 3:
 			snprintf(tag, sizeof(tag), flags_fmt, idx);
-			match_str = res_match_flags(pres->mflags);
-			access_str = res_access_flags(pres->rflags);
+			match_str = res_match_flags(ri->mflags);
+			access_str = res_access_flags(ri->rflags);
 			if ('\0' == match_str[0]) {
 				pch = access_str;
 			} else {
@@ -4487,20 +4497,51 @@ send_restrict_entry(
 	send_random_tag_value((int)idx);
 }
 
+static void
+send_restrict4_entry(
+	struct restrict_4 *	pres,
+	u_int 		pidx)
+{
+	sockaddr_u	addr;
+	sockaddr_u	mask;
+	sockaddrs_from_struct_restrict_4(&addr, &mask, pres);
+	send_restrict_entry(&pres->ri, &addr, &mask, pidx);
+}
 
 static void
-send_restrict_list(
-	restrict_u *	pres,
-	int		ipv6,
+send_restrict6_entry(
+	struct restrict_6 *	pres,
+	u_int 		pidx)
+{
+	sockaddr_u	addr;
+	sockaddr_u	mask;
+	sockaddrs_from_struct_restrict_6(&addr, &mask, pres);
+	send_restrict_entry(&pres->ri, &addr, &mask, pidx);
+}
+
+static void
+send_restrict4_list(
+	struct restrict_4 *	pres,
 	u_int *		pidx
 	)
 {
 	for ( ; pres != NULL; pres = pres->link) {
-		send_restrict_entry(pres, ipv6, *pidx);
+		send_restrict4_entry(pres, *pidx);
 		(*pidx)++;
 	}
 }
 
+static void
+send_restrict6_list(
+	struct restrict_6 *	pres,
+	u_int *		pidx
+	)
+{
+	for ( ; pres != NULL; pres = pres->link) {
+		send_restrict6_entry(pres, *pidx);
+		(*pidx)++;
+	}
+}
 
 /*
  * read_addr_restrictions - returns IPv4 and IPv6 access control lists
@@ -4513,8 +4554,8 @@ read_addr_restrictions(
 	u_int idx;
 
 	idx = 0;
-	send_restrict_list(restrictlist4, FALSE, &idx);
-	send_restrict_list(restrictlist6, TRUE, &idx);
+	send_restrict4_list(restrictlist4, &idx);
+	send_restrict6_list(restrictlist6, &idx);
 	ctl_flushpkt(0);
 }
 
