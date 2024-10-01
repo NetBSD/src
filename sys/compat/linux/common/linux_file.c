@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.131 2024/10/01 17:15:59 riastradh Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.132 2024/10/01 17:18:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.131 2024/10/01 17:15:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.132 2024/10/01 17:18:45 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1156,7 +1156,8 @@ linux_sys_copy_file_range(lwp_t *l,
 		have_off_out = true;
 	}
 
-	if (off_out < 0 || len > OFF_MAX - off_out) {
+	if (off_out < 0 || len > OFF_MAX - off_out ||
+	    off_in < 0 || len > OFF_MAX - off_in) {
 		DPRINTF("%s: New size is greater than OFF_MAX\n", __func__);
 		error = EFBIG;
 		goto out;
