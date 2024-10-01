@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.61 2021/10/27 16:40:04 thorpej Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.62 2024/10/01 16:35:42 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -14,14 +14,14 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Emmanuel Dreyfus
- * 4. The name of the author may not be used to endorse or promote 
- *    products derived from this software without specific prior written 
+ * 4. The name of the author may not be used to endorse or promote
+ *    products derived from this software without specific prior written
  *    permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE THE AUTHOR AND CONTRIBUTORS ``AS IS'' 
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
+ * THIS SOFTWARE IS PROVIDED BY THE THE AUTHOR AND CONTRIBUTORS ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
  * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS 
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.61 2021/10/27 16:40:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.62 2024/10/01 16:35:42 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.61 2021/10/27 16:40:04 thorpej E
 #include <machine/cpufunc.h>
 #include <x86/include/sysarch.h>
 
-/* 
+/*
  * To see whether wscons is configured (for virtual console ioctl calls).
  */
 #if defined(_KERNEL_OPT)
@@ -147,7 +147,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	onstack =
 	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
-	
+
 	/* Allocate space for the signal handler context. */
 	if (onstack)
 		sp = ((char *)l->l_sigstk.ss_sp +
@@ -159,8 +159,8 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	sp = (char *) (((long)sp - sizeof (*fpsp)) & ~0xfUL);
 	fpsp = (struct linux__fpstate *)sp;
 
-	/* 
-	 * Populate the rt_sigframe 
+	/*
+	 * Populate the rt_sigframe
 	 */
 	sp = (char *)
 	    ((((long)sp - sizeof(struct linux_rt_sigframe)) & ~0xfUL) - 8);
@@ -168,13 +168,13 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	memset(&sigframe, 0, sizeof(sigframe));
 	if (ps->sa_sigdesc[sig].sd_vers != __SIGTRAMP_SIGCODE_VERSION)
-		sigframe.pretcode = 
+		sigframe.pretcode =
 		    (char *)(u_long)ps->sa_sigdesc[sig].sd_tramp;
 	else
 		sigframe.pretcode = NULL;
 
-	/* 
-	 * The user context 
+	/*
+	 * The user context
 	 */
 	sigframe.uc.luc_flags = 0;
 	sigframe.uc.luc_link = NULL;
@@ -221,8 +221,8 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	mutex_exit(p->p_lock);
 	error = 0;
 
-	/* 
-	 * Save FPU state, if any 
+	/*
+	 * Save FPU state, if any
 	 */
 	if (fpsp != NULL) {
 		size_t fp_size = sizeof fpregs;
@@ -335,7 +335,7 @@ linux_sys_rt_sigreturn(struct lwp *l, const void *v, register_t *retval)
 	mctx = (mcontext_t *)&uctx.uc_mcontext;
 	fxarea = (struct fxsave *)&mctx->__fpregs;
 
-	/* 
+	/*
 	 * Set the flags. Linux always have CPU, stack and signal state,
 	 * FPU is optional. uc_flags is not used to tell what we have.
 	 */
@@ -345,7 +345,7 @@ linux_sys_rt_sigreturn(struct lwp *l, const void *v, register_t *retval)
 	uctx.uc_link = NULL;
 
 	/*
-	 * Signal set 
+	 * Signal set
 	 */
 	linux_to_native_sigset(&uctx.uc_sigmask, &luctx->luc_sigmask);
 
@@ -380,7 +380,7 @@ linux_sys_rt_sigreturn(struct lwp *l, const void *v, register_t *retval)
 	mctx->__gregs[_REG_SS] = tf->tf_ss & 0xFFFF;
 
 	/*
-	 * FPU state 
+	 * FPU state
 	 */
 	if (lsigctx->fpstate != NULL) {
 		/* Both structures match the fxstate data */
@@ -442,7 +442,7 @@ linux_sys_arch_prctl(struct lwp *l,
 
 	default:
 #ifdef DEBUG_LINUX
-		printf("linux_sys_arch_prctl: unexpected code %d\n", 
+		printf("linux_sys_arch_prctl: unexpected code %d\n",
 		    SCARG(uap, code));
 #endif
 		return EINVAL;

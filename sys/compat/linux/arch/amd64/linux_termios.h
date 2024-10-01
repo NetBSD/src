@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.h,v 1.3 2008/06/29 08:50:09 njoly Exp $ */
+/*	$NetBSD: linux_termios.h,v 1.4 2024/10/01 16:35:42 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -14,14 +14,14 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Emmanuel Dreyfus
- * 4. The name of the author may not be used to endorse or promote 
- *    products derived from this software without specific prior written 
+ * 4. The name of the author may not be used to endorse or promote
+ *    products derived from this software without specific prior written
  *    permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE THE AUTHOR AND CONTRIBUTORS ``AS IS'' 
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
+ * THIS SOFTWARE IS PROVIDED BY THE THE AUTHOR AND CONTRIBUTORS ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
  * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS 
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -59,7 +59,7 @@
 #define LINUX_B230400	0010003
 
 #define LINUX_NSPEEDS   16
-#define LINUX_NXSPEEDS   3 
+#define LINUX_NXSPEEDS   3
 
 #define LINUX_IGNBRK	0000001
 #define LINUX_BRKINT	0000002
@@ -67,12 +67,12 @@
 #define LINUX_PARMRK	0000010
 #define LINUX_INPCK	0000020
 #define LINUX_ISTRIP	0000040
-#define LINUX_INLCR	0000100  
-#define LINUX_IGNCR	0000200  
-#define LINUX_ICRNL	0000400  
-#define LINUX_IUCLC	0001000  
-#define LINUX_IXON	0002000  
-#define LINUX_IXANY	0004000  
+#define LINUX_INLCR	0000100
+#define LINUX_IGNCR	0000200
+#define LINUX_ICRNL	0000400
+#define LINUX_IUCLC	0001000
+#define LINUX_IXON	0002000
+#define LINUX_IXANY	0004000
 #define LINUX_IXOFF	0010000
 #define LINUX_IMAXBEL	0020000
 #define LINUX_IUTF8	0040000
@@ -100,11 +100,11 @@
 #define LINUX_ICANON	0000002
 #define LINUX_XCASE	0000004
 #define LINUX_ECHO	0000010
-#define LINUX_ECHOE	0000020  
-#define LINUX_ECHOK	0000040  
-#define LINUX_ECHONL	0000100  
-#define LINUX_NOFLSH	0000200  
-#define LINUX_TOSTOP	0000400  
+#define LINUX_ECHOE	0000020
+#define LINUX_ECHOK	0000040
+#define LINUX_ECHONL	0000100
+#define LINUX_NOFLSH	0000200
+#define LINUX_TOSTOP	0000400
 #define LINUX_ECHOCTL	0001000
 #define LINUX_ECHOPRT	0002000
 #define LINUX_ECHOKE	0004000

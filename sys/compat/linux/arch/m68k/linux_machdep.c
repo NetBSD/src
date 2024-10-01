@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.44 2022/08/07 20:14:01 tsutsui Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.45 2024/10/01 16:35:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.44 2022/08/07 20:14:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.45 2024/10/01 16:35:42 riastradh Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -680,7 +680,7 @@ linux_sys_rt_sigreturn(struct lwp *l, const void *v, register_t *retval)
 
 	/* Grab whole of the ucontext. */
 	if (copyin(ucp, &tuc, sizeof tuc)) {
-bad:		
+bad:
 		mutex_enter(p->p_lock);
 		sigexit(l, SIGSEGV);
 	}
