@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.81 2024/09/30 01:26:47 kre Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.82 2024/10/01 16:41:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.81 2024/09/30 01:26:47 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.82 2024/10/01 16:41:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -208,7 +208,7 @@ linux_sys_clone3(struct lwp *l, const struct linux_sys_clone3_args *uap, registe
 		return EINVAL;
 	}
 #endif
-	
+
 	if (cl_args.stack == 0 && cl_args.stack_size != 0) {
 		DPRINTF("%s: Stack is NULL but stack size is not 0\n",
 		    __func__);
@@ -224,7 +224,7 @@ linux_sys_clone3(struct lwp *l, const struct linux_sys_clone3_args *uap, registe
 #if 0
 	int sig = cl_args.exit_signal & LINUX_CLONE_CSIGNAL;
 #endif
-	// XXX: Pidfd member handling 
+	// XXX: Pidfd member handling
 	// XXX: we don't have cgroups
 	// XXX: what to do with tid_set and tid_set_size
 	// XXX: clone3 has stacksize, instead implement clone as a clone3
@@ -362,7 +362,7 @@ sched_linux2native(int linux_policy, struct linux_sched_param *linux_params,
 
 	if (linux_params != NULL) {
 		int prio = linux_params->sched_priority;
-	
+
 		KASSERT(native_params != NULL);
 
 		if (linux_policy == LINUX_SCHED_OTHER) {

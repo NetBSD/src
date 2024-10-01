@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.125 2024/09/28 19:35:56 christos Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.126 2024/10/01 16:41:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.125 2024/09/28 19:35:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.126 2024/10/01 16:41:29 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -156,7 +156,7 @@ linux_hilo_to_off_t(unsigned long hi, unsigned long lo)
 	 * argument regardless, the "lo" argument has all the bits in
 	 * this case.
 	 */
-	(void) hi; 
+	(void) hi;
 	return (off_t)lo;
 #else
 	return (((off_t)hi) << 32) | lo;
@@ -928,7 +928,7 @@ linux_sys_faccessat2(lwp_t *l, const struct linux_sys_faccessat2_args *uap,
 }
 
 
-int	
+int
 linux_sys_sync_file_range(lwp_t *l,
     const struct linux_sys_sync_file_range_args *uap, register_t *retval)
 {
@@ -938,7 +938,7 @@ linux_sys_sync_file_range(lwp_t *l,
 		syscallarg(off_t) nbytes;
 		syscallarg(unsigned int) flags;
 	} */
-	
+
 	struct sys_fsync_range_args ua;
 
 	if (SCARG(uap, offset) < 0 || SCARG(uap, nbytes) < 0 ||
@@ -955,13 +955,13 @@ linux_sys_sync_file_range(lwp_t *l,
 	if (SCARG(&ua, length) != 0) {
 		/* Round up length to nbytes+offset to page boundary */
 		SCARG(&ua, length) = roundup(SCARG(uap, nbytes)
-		    + SCARG(uap, offset) - SCARG(&ua, start), PAGE_SIZE);	
+		    + SCARG(uap, offset) - SCARG(&ua, start), PAGE_SIZE);
 	}
-	
+
 	return sys_fsync_range(l, &ua, retval);
 }
 
-int	
+int
 linux_sys_syncfs(lwp_t *l, const struct linux_sys_syncfs_args *uap,
     register_t *retval)
 {
@@ -974,15 +974,15 @@ linux_sys_syncfs(lwp_t *l, const struct linux_sys_syncfs_args *uap,
 	file_t *fp;
 	int error, fd;
 	fd = SCARG(uap, fd);
-	
+
 	/* Get file pointer */
 	if ((error = fd_getvnode(fd, &fp)) != 0)
 		return error;
-    
+
 	/* Get vnode and mount point */
 	vp = fp->f_vnode;
 	mp = vp->v_mount;
-    
+
 	mutex_enter(mp->mnt_updating);
 	if ((mp->mnt_flag & MNT_RDONLY) == 0) {
 		int asyncflag = mp->mnt_flag & MNT_ASYNC;
@@ -992,7 +992,7 @@ linux_sys_syncfs(lwp_t *l, const struct linux_sys_syncfs_args *uap,
 			mp->mnt_flag |= MNT_ASYNC;
 	}
 	mutex_exit(mp->mnt_updating);
-	
+
 	/* Cleanup vnode and file pointer */
 	vrele(vp);
 	fd_putfile(fd);
@@ -1000,7 +1000,7 @@ linux_sys_syncfs(lwp_t *l, const struct linux_sys_syncfs_args *uap,
 
 }
 
-int 
+int
 linux_sys_renameat2(struct lwp *l, const struct linux_sys_renameat2_args *uap,
     register_t *retval)
 {
@@ -1024,13 +1024,13 @@ linux_sys_renameat2(struct lwp *l, const struct linux_sys_renameat2_args *uap,
 	if (flags != 0) {
 		if (flags & ~LINUX_RENAME_ALL)
 			return EINVAL;
-		if ((flags & LINUX_RENAME_EXCHANGE) != 0 && 
+		if ((flags & LINUX_RENAME_EXCHANGE) != 0 &&
 		    (flags & (LINUX_RENAME_NOREPLACE | LINUX_RENAME_WHITEOUT))
 		    != 0)
 			return EINVAL;
 		/*
 		 * Suppoting renameat2 flags without support from file systems
-		 * becomes a messy affair cause of locks and how VOP_RENAME 
+		 * becomes a messy affair cause of locks and how VOP_RENAME
 		 * protocol is implemented. So, return EOPNOTSUPP for now.
 		 */
 		return EOPNOTSUPP;
@@ -1079,7 +1079,7 @@ int linux_sys_copy_file_range(lwp_t *l,
 		DPRINTF("%s: unsupported flags %#x\n", __func__, flags);
 		return EINVAL;
 	}
-	
+
 	fd_in = SCARG(uap, fd_in);
 	fd_out = SCARG(uap, fd_out);
 	error = fd_getvnode(fd_in, &fp_in);
@@ -1092,21 +1092,21 @@ int linux_sys_copy_file_range(lwp_t *l,
 		    fd_putfile(fd_in);
 		    return error;
 	}
-	
+
 	invp = fp_in->f_vnode;
 	outvp = fp_out->f_vnode;
 
 	/* Get attributes of input and output files */
 	VOP_GETATTR(invp, &vattr_in, l->l_cred);
 	VOP_GETATTR(outvp, &vattr_out, l->l_cred);
-	
+
 	/* Check if input and output files are regular files */
 	if (vattr_in.va_type == VDIR || vattr_out.va_type == VDIR) {
 		error = EISDIR;
 		DPRINTF("%s: Input or output is a directory\n", __func__);
 		goto out;
-	} 
-	if ((SCARG(uap, off_in) != NULL && *SCARG(uap, off_in) < 0) || 
+	}
+	if ((SCARG(uap, off_in) != NULL && *SCARG(uap, off_in) < 0) ||
 	   (SCARG(uap, off_out) != NULL && *SCARG(uap, off_out) < 0) ||
 	   vattr_in.va_type != VREG || vattr_out.va_type != VREG)
         {
@@ -1138,7 +1138,7 @@ int linux_sys_copy_file_range(lwp_t *l,
 	    }
 	    have_off_out = true;
 	}
-	
+
 	off_t new_size = off_out + len;
 	if (new_size < 0) {
 		DPRINTF("%s: New size is greater than OFF_MAX\n", __func__);
@@ -1166,7 +1166,7 @@ int linux_sys_copy_file_range(lwp_t *l,
 
 	while (bytes_left > 0) {
 		to_copy = MIN(bytes_left, LINUX_COPY_FILE_RANGE_MAX_CHUNK);
-		
+
 		/* Lock the input vnode for reading */
 		vn_lock(fp_in->f_vnode, LK_SHARED | LK_RETRY);
 		/* Set up iovec and uio for reading */
@@ -1233,7 +1233,7 @@ int linux_sys_copy_file_range(lwp_t *l,
 
 	if (have_off_in) {
 		/* Adjust user space offset */
-		error = copyout(&off_in, SCARG(uap, off_in), sizeof(off_t));	
+		error = copyout(&off_in, SCARG(uap, off_in), sizeof(off_t));
 		if (error) {
 			DPRINTF("%s: Error adjusting user space offset\n",
 			    __func__);
@@ -1243,7 +1243,7 @@ int linux_sys_copy_file_range(lwp_t *l,
 
 	if (have_off_out) {
 		/* Adjust user space offset */
-		error = copyout(&off_out, SCARG(uap, off_out), sizeof(off_t));	
+		error = copyout(&off_out, SCARG(uap, off_out), sizeof(off_t));
 		if (error) {
 			DPRINTF("%s: Error adjusting user space offset\n",
 			    __func__);

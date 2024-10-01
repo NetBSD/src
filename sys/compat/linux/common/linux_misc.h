@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.h,v 1.33 2024/06/29 13:46:10 christos Exp $	*/
+/*	$NetBSD: linux_misc.h,v 1.34 2024/10/01 16:41:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@ extern const int linux_fstypes_cnt;
 /* Personality flags. */
 #define LINUX_PER_ADDR_NO_RANDOMIZE	0x00040000
 
-/* 
+/*
  * Convert POSIX_FADV_* constants from Linux to NetBSD
  * (it's f(x)=x everywhere except S390)
  */

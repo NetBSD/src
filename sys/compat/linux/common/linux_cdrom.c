@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_cdrom.c,v 1.28 2021/09/07 11:43:04 riastradh Exp $ */
+/*	$NetBSD: linux_cdrom.c,v 1.29 2024/10/01 16:41:29 riastradh Exp $ */
 
 /*
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.28 2021/09/07 11:43:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.29 2024/10/01 16:41:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ linux_ioctl_cdrom(struct lwp *l, const struct linux_sys_ioctl_args *uap, registe
 	file_t *fp;
 	int (*ioctlf)(file_t *, u_long, void *);
 
-	union { 
+	union {
 		struct linux_cdrom_blk ll_blk;
 		struct linux_cdrom_msf ll_msf;
 		struct linux_cdrom_ti ll_ti;

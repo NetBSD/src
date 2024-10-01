@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.155 2022/12/24 15:23:02 andvar Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.156 2024/10/01 16:41:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.155 2022/12/24 15:23:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.156 2024/10/01 16:41:29 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -599,7 +599,7 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 			cmsg->cmsg_type = l_cmsg.cmsg_type;
 
 			/* Zero area between header and data */
-			memset(cmsg + 1, 0, 
+			memset(cmsg + 1, 0,
 				CMSG_ALIGN(sizeof(*cmsg)) - sizeof(*cmsg));
 
 			/* Copyin the data */
