@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_restrict.c,v 1.12 2024/08/18 20:47:18 christos Exp $	*/
+/*	$NetBSD: ntp_restrict.c,v 1.13 2024/10/01 20:59:51 christos Exp $	*/
 
 /*
  * ntp_restrict.c - determine host restrictions
@@ -45,22 +45,22 @@
  * Auto-tune these to be just less than 1KB (leaving at least 32 bytes
  * for allocator overhead).
  */
-#define	INC_RESLIST4	((1024 - 32) / V4_SIZEOF_RESTRICT_U)
-#define	INC_RESLIST6	((1024 - 32) / V6_SIZEOF_RESTRICT_U)
+#define	INC_RESLIST4	((1024 - 32) / sizeof(struct restrict_4))
+#define	INC_RESLIST6	((1024 - 32) / sizeof(struct restrict_6))
 
 /*
  * The restriction list
  */
-restrict_u *restrictlist4;
-restrict_u *restrictlist6;
-static int restrictcount;	/* count in the restrict lists */
+struct restrict_4 *restrictlist4;
+struct restrict_6 *restrictlist6;
+static size_t restrictcount;	/* count in the restrict lists */
 
 /*
  * The free list and associated counters.  Also some uninteresting
  * stat counters.
  */
-static restrict_u *resfree4;	/* available entries (free list) */
-static restrict_u *resfree6;
+static struct restrict_4 *resfree4;	/* available entries (free list) */
+static struct restrict_6 *resfree6;
 
 static u_long res_calls;
 static u_long res_found;
@@ -77,8 +77,8 @@ static	u_long res_limited_refcnt;
  *
  * We can make this cleaner with c99 support: see init_restrict().
  */
-static	restrict_u	restrict_def4;
-static	restrict_u	restrict_def6;
+static	struct restrict_4	restrict_def4;
+static	struct restrict_6	restrict_def6;
 
 /*
  * "restrict source ..." enabled knob and restriction bits.
@@ -91,59 +91,69 @@ static	short		restrict_source_ippeerlimit;
 /*
  * private functions
  */
-static	restrict_u *	alloc_res4(void);
-static	restrict_u *	alloc_res6(void);
-static	void		free_res(restrict_u *, int);
+static	struct restrict_4 *	alloc_res4(void);
+static	struct restrict_6 *	alloc_res6(void);
+static	void		free_res4(struct restrict_4 *);
+static	void		free_res6(struct restrict_6 *);
 static	inline void	inc_res_limited(void);
 static	inline void	dec_res_limited(void);
-static	restrict_u *	match_restrict4_addr(u_int32, u_short);
-static	restrict_u *	match_restrict6_addr(const struct in6_addr *,
+static	struct restrict_4 *	match_restrict4_addr(u_int32, u_short);
+static	struct restrict_6 *	match_restrict6_addr(const struct in6_addr *,
 					     u_short);
-static	restrict_u *	match_restrict_entry(const restrict_u *, int);
 static inline int/*BOOL*/	mflags_sorts_before(u_short, u_short);
-static	int/*BOOL*/	res_sorts_before4(restrict_u *, restrict_u *);
-static	int/*BOOL*/	res_sorts_before6(restrict_u *, restrict_u *);
+static	int/*BOOL*/	res_sorts_before4(struct restrict_4 *, 
+					struct restrict_4 *);
+static	int/*BOOL*/	res_sorts_before6(struct restrict_6 *, 
+					struct restrict_6 *);
 
-typedef int (*res_sort_fn)(restrict_u *, restrict_u *);
-
-
-/* dump_restrict() & dump_restricts() are DEBUG-only */
 #ifdef DEBUG	
-static void		dump_restrict(restrict_u *, int);
+/* dump_restrict() & dump_restricts() are DEBUG-only */
 
+static void
+dump_restrict(const struct restrict_info *ri, const char *as, const char *ms)
+{
+	printf("%s/%s: hits %u ippeerlimit %hd mflags %s rflags %s",
+		as, ms, ri->count, ri->ippeerlimit,
+		mflags_str(ri->mflags),
+		rflags_str(ri->rflags));
+	if (ri->expire > 0) {
+		printf(" expire %u\n", ri->expire);
+	} else {
+		printf("\n");
+	}
+}
 
 /*
  * dump_restrict - spit out a single restriction entry
  */
 static void
-dump_restrict(
-	restrict_u *	res,
-	int		is_ipv6
-)
+dump_restrict4(
+	struct restrict_4 *	res)
 {
 	char as[INET6_ADDRSTRLEN];
 	char ms[INET6_ADDRSTRLEN];
 
-	if (is_ipv6) {
-		inet_ntop(AF_INET6, &res->u.v6.addr, as, sizeof as);
-		inet_ntop(AF_INET6, &res->u.v6.mask, ms, sizeof ms);
-	} else {
-		struct in_addr	sia, sim;
+	struct in_addr	sia, sim;
 
-		sia.s_addr = htonl(res->u.v4.addr);
-		sim.s_addr = htonl(res->u.v4.addr);
-		inet_ntop(AF_INET, &sia, as, sizeof as);
-		inet_ntop(AF_INET, &sim, ms, sizeof ms);
-	}
-	printf("%s/%s: hits %u ippeerlimit %hd mflags %s rflags %s",
-		as, ms, res->count, res->ippeerlimit,
-		mflags_str(res->mflags),
-		rflags_str(res->rflags));
-	if (res->expire > 0) {
-		printf(" expire %u\n", res->expire);
-	} else {
-		printf("\n");
-	}
+	sia.s_addr = htonl(res->v4.addr);
+	sim.s_addr = htonl(res->v4.addr);
+	inet_ntop(AF_INET, &sia, as, sizeof as);
+	inet_ntop(AF_INET, &sim, ms, sizeof ms);
+
+	dump_restrict(&res->ri, as, ms);
+}
+
+static void
+dump_restrict6(
+	struct restrict_6 *	res)
+{
+	char as[INET6_ADDRSTRLEN];
+	char ms[INET6_ADDRSTRLEN];
+
+	inet_ntop(AF_INET6, &res->v6.addr, as, sizeof as);
+	inet_ntop(AF_INET6, &res->v6.mask, ms, sizeof ms);
+
+	dump_restrict(&res->ri, as, ms);
 }
 
 
@@ -153,18 +163,19 @@ dump_restrict(
 void
 dump_restricts(void)
 {
-	restrict_u *	res;
+	struct restrict_4 *	res4;
+	struct restrict_6 *	res6;
 
 	/* Spit out the IPv4 list */
 	printf("dump_restricts: restrictlist4: %p\n", restrictlist4);
-	for (res = restrictlist4; res != NULL; res = res->link) {
-		dump_restrict(res, 0);
+	for (res4 = restrictlist4; res4 != NULL; res4 = res4->link) {
+		dump_restrict4(res4);
 	}
 
 	/* Spit out the IPv6 list */
 	printf("dump_restricts: restrictlist6: %p\n", restrictlist6);
-	for (res = restrictlist6; res != NULL; res = res->link) {
-		dump_restrict(res, 1);
+	for (res6 = restrictlist6; res6 != NULL; res6 = res6->link) {
+		dump_restrict6(res6);
 	}
 }
 #endif /* DEBUG - dump_restrict() / dump_restricts() */
@@ -214,8 +225,8 @@ init_restrict(void)
 	 * remaining.
 	 */
 
-	restrict_def4.ippeerlimit = -1;		/* Cleaner if we have C99 */
-	restrict_def6.ippeerlimit = -1;		/* Cleaner if we have C99 */
+	restrict_def4.ri.ippeerlimit = -1;	/* Cleaner if we have C99 */
+	restrict_def6.ri.ippeerlimit = -1;	/* Cleaner if we have C99 */
 
 	LINK_SLIST(restrictlist4, &restrict_def4, link);
 	LINK_SLIST(restrictlist6, &restrict_def6, link);
@@ -223,13 +234,13 @@ init_restrict(void)
 }
 
 
-static restrict_u *
+static struct restrict_4 *
 alloc_res4(void)
 {
-	const size_t	cb = V4_SIZEOF_RESTRICT_U;
 	const size_t	count = INC_RESLIST4;
-	restrict_u*	rl;
-	restrict_u*	res;
+	struct restrict_4*	rl;
+	struct restrict_4*	res;
+	const size_t	cb = sizeof(*rl);
 	size_t		i;
 
 	UNLINK_HEAD_SLIST(res, resfree4, link);
@@ -249,13 +260,13 @@ alloc_res4(void)
 }
 
 
-static restrict_u *
+static struct restrict_6 *
 alloc_res6(void)
 {
-	const size_t	cb = V6_SIZEOF_RESTRICT_U;
 	const size_t	count = INC_RESLIST6;
-	restrict_u *	rl;
-	restrict_u *	res;
+	struct restrict_6 *	rl;
+	struct restrict_6 *	res;
+	const size_t	cb = sizeof(*rl);
 	size_t		i;
 
 	UNLINK_HEAD_SLIST(res, resfree6, link);
@@ -276,35 +287,34 @@ alloc_res6(void)
 
 
 static void
-free_res(
-	restrict_u *	res,
-	int		v6
-	)
+free_res6(struct restrict_6 *	res)
 {
-	restrict_u **	rlisthead_ptr;
-	restrict_u **	flisthead_ptr;
-	restrict_u *	unlinked;
-	size_t		sz;
+	struct restrict_6 *	unlinked;
 
 	restrictcount--;
-	if (RES_LIMITED & res->rflags) {
+	if (RES_LIMITED & res->ri.rflags) {
 		dec_res_limited();
 	}
-	if (v6) {
-		rlisthead_ptr = &restrictlist6;
-		flisthead_ptr = &resfree6;
-		sz = V6_SIZEOF_RESTRICT_U;
-	} else {
-		rlisthead_ptr = &restrictlist4;
-		flisthead_ptr = &resfree4;
-		sz = V4_SIZEOF_RESTRICT_U;
-	}
-	UNLINK_SLIST(unlinked, *rlisthead_ptr, res, link, restrict_u);
+	UNLINK_SLIST(unlinked, restrictlist6, res, link, struct restrict_6);
 	INSIST(unlinked == res);
-	zero_mem(res, sz);
-	LINK_SLIST(*flisthead_ptr, res, link);
+	zero_mem(res, sizeof(*res));
+	LINK_SLIST(resfree6, res, link);
 }
 
+static void
+free_res4(struct restrict_4 *	res)
+{
+	struct restrict_4 *	unlinked;
+
+	restrictcount--;
+	if (RES_LIMITED & res->ri.rflags) {
+		dec_res_limited();
+	}
+	UNLINK_SLIST(unlinked, restrictlist4, res, link, struct restrict_4);
+	INSIST(unlinked == res);
+	zero_mem(res, sizeof(*res));
+	LINK_SLIST(resfree4, res, link);
+}
 
 static inline void
 inc_res_limited(void)
@@ -326,23 +336,22 @@ dec_res_limited(void)
 }
 
 
-static restrict_u *
+static struct restrict_4 *
 match_restrict4_addr(
 	u_int32	addr,
 	u_short	port
 	)
 {
-	const int	v6 = FALSE;
-	restrict_u *	res;
-	restrict_u *	next;
+	struct restrict_4 *	res;
+	struct restrict_4 *	next;
 
 	for (res = restrictlist4; res != NULL; res = next) {
 		next = res->link;
-		if (res->expire && res->expire <= current_time) {
-			free_res(res, v6);	/* zeroes the contents */
+		if (res->ri.expire && res->ri.expire <= current_time) {
+			free_res4(res);	/* zeroes the contents */
 		}
-		if (   res->u.v4.addr == (addr & res->u.v4.mask)
-		    && (   !(RESM_NTPONLY & res->mflags)
+		if (   res->v4.addr == (addr & res->v4.mask)
+		    && (   !(RESM_NTPONLY & res->ri.mflags)
 			|| NTP_PORT == port)) {
 
 			break;
@@ -352,25 +361,24 @@ match_restrict4_addr(
 }
 
 
-static restrict_u *
+static struct restrict_6 *
 match_restrict6_addr(
 	const struct in6_addr *	addr,
 	u_short			port
 	)
 {
-	const int	v6 = TRUE;
-	restrict_u *	res;
-	restrict_u *	next;
+	struct restrict_6 *	res;
+	struct restrict_6 *	next;
 	struct in6_addr	masked;
 
 	for (res = restrictlist6; res != NULL; res = next) {
 		next = res->link;
-		if (res->expire && res->expire <= current_time) {
-			free_res(res, v6);
+		if (res->ri.expire && res->ri.expire <= current_time) {
+			free_res6(res);
 		}
-		MASK_IPV6_ADDR(&masked, addr, &res->u.v6.mask);
-		if (ADDR6_EQ(&masked, &res->u.v6.addr)
-		    && (   !(RESM_NTPONLY & res->mflags)
+		MASK_IPV6_ADDR(&masked, addr, &res->v6.mask);
+		if (ADDR6_EQ(&masked, &res->v6.addr)
+		    && (   !(RESM_NTPONLY & res->ri.mflags)
 			|| NTP_PORT == (int)port)) {
 
 			break;
@@ -385,37 +393,39 @@ match_restrict6_addr(
  *
  * Exact match is addr, mask, and mflags all equal.
  * In order to use more common code for IPv4 and IPv6, this routine
- * requires the caller to populate a restrict_u with mflags and either
+ * requires the caller to populate a restrict_[46] with mflags and either
  * the v4 or v6 address and mask as appropriate.  Other fields in the
  * input restrict_u are ignored.
  */
-static restrict_u *
-match_restrict_entry(
-	const restrict_u *	pmatch,
-	int			v6
-	)
+static struct restrict_4 *
+match_restrict4_entry(
+	const struct restrict_4 *	pmatch)
 {
-	restrict_u *res;
-	restrict_u *rlist;
-	size_t cb;
+	struct restrict_4 *res;
 
-	if (v6) {
-		rlist = restrictlist6;
-		cb = sizeof(pmatch->u.v6);
-	} else {
-		rlist = restrictlist4;
-		cb = sizeof(pmatch->u.v4);
-	}
-
-	for (res = rlist; res != NULL; res = res->link) {
-		if (res->mflags == pmatch->mflags &&
-		    !memcmp(&res->u, &pmatch->u, cb)) {
+	for (res = restrictlist4; res != NULL; res = res->link) {
+		if (res->ri.mflags == pmatch->ri.mflags &&
+		    !memcmp(&res->v4, &pmatch->v4, sizeof(res->v4))) {
 			break;
 		}
 	}
 	return res;
 }
 
+static struct restrict_6 *
+match_restrict6_entry(
+	const struct restrict_6 *	pmatch)
+{
+	struct restrict_6 *res;
+
+	for (res = restrictlist6; res != NULL; res = res->link) {
+		if (res->ri.mflags == pmatch->ri.mflags &&
+		    !memcmp(&res->v6, &pmatch->v6, sizeof(res->v6))) {
+			break;
+		}
+	}
+	return res;
+}
 
 /*
  * mflags_sorts_before - common mflags sorting code
@@ -449,22 +459,22 @@ mflags_sorts_before(
  */
 static int/*BOOL*/
 res_sorts_before4(
-	restrict_u *r1,
-	restrict_u *r2
+	struct restrict_4 *r1,
+	struct restrict_4 *r2
 	)
 {
 	int r1_before_r2;
 
-	if (r1->u.v4.addr > r2->u.v4.addr) {
+	if (r1->v4.addr > r2->v4.addr) {
 		r1_before_r2 = TRUE;
-	} else if (r1->u.v4.addr < r2->u.v4.addr) {
+	} else if (r1->v4.addr < r2->v4.addr) {
 		r1_before_r2 = FALSE;
-	} else if (r1->u.v4.mask > r2->u.v4.mask) {
+	} else if (r1->v4.mask > r2->v4.mask) {
 		r1_before_r2 = TRUE;
-	} else if (r1->u.v4.mask < r2->u.v4.mask) {
+	} else if (r1->v4.mask < r2->v4.mask) {
 		r1_before_r2 = FALSE;
 	} else {
-		r1_before_r2 = mflags_sorts_before(r1->mflags, r2->mflags);
+		r1_before_r2 = mflags_sorts_before(r1->ri.mflags, r2->ri.mflags);
 	}
 
 	return r1_before_r2;
@@ -480,27 +490,27 @@ res_sorts_before4(
  */
 static int/*BOOL*/
 res_sorts_before6(
-	restrict_u* r1,
-	restrict_u* r2
+	struct restrict_6* r1,
+	struct restrict_6* r2
 )
 {
 	int r1_before_r2;
 	int cmp;
 
-	cmp = ADDR6_CMP(&r1->u.v6.addr, &r2->u.v6.addr);
+	cmp = ADDR6_CMP(&r1->v6.addr, &r2->v6.addr);
 	if (cmp > 0) {		/* r1->addr > r2->addr */
 		r1_before_r2 = TRUE;
 	} else if (cmp < 0) {	/* r2->addr > r1->addr */
 		r1_before_r2 = FALSE;
 	} else {
-		cmp = ADDR6_CMP(&r1->u.v6.mask, &r2->u.v6.mask);
+		cmp = ADDR6_CMP(&r1->v6.mask, &r2->v6.mask);
 		if (cmp > 0) {		/* r1->mask > r2->mask*/
 			r1_before_r2 = TRUE;
 		} else if (cmp < 0) {	/* r2->mask > r1->mask */
 			r1_before_r2 = FALSE;
 		} else {
-			r1_before_r2 = mflags_sorts_before(r1->mflags,
-							   r2->mflags);
+			r1_before_r2 = mflags_sorts_before(r1->ri.mflags,
+							   r2->ri.mflags);
 		}
 	}
 
@@ -517,7 +527,6 @@ restrictions(
 	r4addr *r4a
 	)
 {
-	restrict_u *match;
 	struct in6_addr *pin6;
 
 	DEBUG_REQUIRE(NULL != r4a);
@@ -525,6 +534,7 @@ restrictions(
 	res_calls++;
 
 	if (IS_IPV4(srcadr)) {
+		struct restrict_4 *match;
 		/*
 		 * Ignore any packets with a multicast source address
 		 * (this should be done early in the receive process,
@@ -537,7 +547,7 @@ restrictions(
 		match = match_restrict4_addr(SRCADR(srcadr),
 					     SRCPORT(srcadr));
 		DEBUG_INSIST(match != NULL);
-		match->count++;
+		match->ri.count++;
 		/*
 		 * res_not_found counts only use of the final default
 		 * entry, not any "restrict default ntpport ...", which
@@ -547,9 +557,10 @@ restrictions(
 			res_not_found++;
 		else
 			res_found++;
-		r4a->rflags = match->rflags;
-		r4a->ippeerlimit = match->ippeerlimit;
+		r4a->rflags = match->ri.rflags;
+		r4a->ippeerlimit = match->ri.ippeerlimit;
 	} else {
+		struct restrict_6 *match;
 		DEBUG_REQUIRE(IS_IPV6(srcadr));
 
 		pin6 = PSOCK_ADDR6(srcadr);
@@ -564,13 +575,13 @@ restrictions(
 		}
 		match = match_restrict6_addr(pin6, SRCPORT(srcadr));
 		DEBUG_INSIST(match != NULL);
-		match->count++;
+		match->ri.count++;
 		if (&restrict_def6 == match)
 			res_not_found++;
 		else
 			res_found++;
-		r4a->rflags = match->rflags;
-		r4a->ippeerlimit = match->ippeerlimit;
+		r4a->rflags = match->ri.rflags;
+		r4a->ippeerlimit = match->ri.ippeerlimit;
 	}
 
 	return;
@@ -612,12 +623,10 @@ hack_restrict(
 	u_int32		expire
 	)
 {
-	int		v6;
 	int		bump_res_limited = FALSE;
-	restrict_u	match;
-	restrict_u *	res;
-	restrict_u **	plisthead;
-	res_sort_fn	pfn_sort;
+	struct restrict_4	match4, *res4 = NULL;
+	struct restrict_6	match6, *res6 = NULL;
+	struct restrict_info *ri;
 
 #ifdef DEBUG
 	if (debug > 0) {
@@ -649,33 +658,36 @@ hack_restrict(
 		return TRUE;
 	}
 
-	ZERO(match);
 
 	if (IS_IPV4(resaddr)) {
 		DEBUG_INVARIANT(IS_IPV4(resmask));
-		v6 = FALSE;
 		/*
 		 * Get address and mask in host byte order for easy
 		 * comparison as u_int32
 		 */
-		match.u.v4.addr = SRCADR(resaddr);
-		match.u.v4.mask = SRCADR(resmask);
-		match.u.v4.addr &= match.u.v4.mask;
+		ZERO(match4);
+		match4.v4.addr = SRCADR(resaddr);
+		match4.v4.mask = SRCADR(resmask);
+		match4.v4.addr &= match4.v4.mask;
+		match4.ri.mflags = mflags;
+		res4 = match_restrict4_entry(&match4);
+		ri = res4 ? &res4->ri : NULL;
 	} else {
 		DEBUG_INVARIANT(IS_IPV6(resaddr));
 		DEBUG_INVARIANT(IS_IPV6(resmask));
-		v6 = TRUE;
 		/*
 		 * Get address and mask in network byte order for easy
 		 * comparison as byte sequences (e.g. memcmp())
 		 */
-		match.u.v6.mask = SOCK_ADDR6(resmask);
-		MASK_IPV6_ADDR(&match.u.v6.addr, PSOCK_ADDR6(resaddr),
-			       &match.u.v6.mask);
+		ZERO(match6);
+		match6.v6.mask = SOCK_ADDR6(resmask);
+		MASK_IPV6_ADDR(&match6.v6.addr, PSOCK_ADDR6(resaddr),
+			       &match6.v6.mask);
+		match6.ri.mflags = mflags;
+		res6 = match_restrict6_entry(&match6);
+		ri = res6 ? &res6->ri : NULL;
 	}
 
-	match.mflags = mflags;
-	res = match_restrict_entry(&match, v6);
 
 	switch (op) {
 
@@ -684,33 +696,36 @@ hack_restrict(
 		 * Here we add bits to the rflags. If we already have
 		 * this restriction modify it.
 		 */
-		if (NULL != res) {
+		if (NULL != ri) {
 			if (    (RES_LIMITED & rflags)
-			    && !(RES_LIMITED & res->rflags)) {
+			    && !(RES_LIMITED & ri->rflags)) {
 
 				bump_res_limited = TRUE;
 			}
-			res->rflags |= rflags;
-			res->expire = expire;
+			ri->rflags |= rflags;
+			ri->expire = expire;
 		} else {
-			match.rflags = rflags;
-			match.expire = expire;
-			match.ippeerlimit = ippeerlimit;
-			if (v6) {
-				res = alloc_res6();
-				memcpy(res, &match, V6_SIZEOF_RESTRICT_U);
-				plisthead = &restrictlist6;
-				pfn_sort = &res_sorts_before6;
+			if (IS_IPV4(resaddr)) {
+				match4.ri.rflags = rflags;
+				match4.ri.expire = expire;
+				match4.ri.ippeerlimit = ippeerlimit;
+				res4 = alloc_res4();
+				memcpy(res4, &match4, sizeof(*res4));
+				LINK_SORT_SLIST(
+				    restrictlist4, res4,
+				    res_sorts_before4(res4, L_S_S_CUR()),
+				    link, struct restrict_4);
 			} else {
-				res = alloc_res4();
-				memcpy(res, &match, V4_SIZEOF_RESTRICT_U);
-				plisthead = &restrictlist4;
-				pfn_sort = &res_sorts_before4;
+				match6.ri.rflags = rflags;
+				match6.ri.expire = expire;
+				match6.ri.ippeerlimit = ippeerlimit;
+				res6 = alloc_res6();
+				memcpy(res6, &match6, sizeof(*res6));
+				LINK_SORT_SLIST(
+				    restrictlist6, res6,
+				    res_sorts_before6(res6, L_S_S_CUR()),
+				    link, struct restrict_6);
 			}
-			LINK_SORT_SLIST(
-				*plisthead, res,
-				(*pfn_sort)(res, L_S_S_CUR()),
-				link, restrict_u);
 			restrictcount++;
 			if (RES_LIMITED & rflags) {
 				bump_res_limited = TRUE;
@@ -726,17 +741,17 @@ hack_restrict(
 		 * Remove some bits from the rflags. If we didn't
 		 * find this one, just return.
 		 */
-		if (NULL == res) {
+		if (NULL == ri) {
 			DPRINTF(1, ("No match for %s %s removing rflags %s\n",
 				    stoa(resaddr), stoa(resmask),
 				    rflags_str(rflags)));
 			return FALSE;
 		}
-		if (   (RES_LIMITED & res->rflags)
+		if (   (RES_LIMITED & ri->rflags)
 		    && (RES_LIMITED & rflags)) {
 			dec_res_limited();
 		}
-		res->rflags &= ~rflags;
+		ri->rflags &= ~rflags;
 		return TRUE;
 
 	case RESTRICT_REMOVE:
@@ -746,14 +761,17 @@ hack_restrict(
 		 * found one. Don't remove the default entry and
 		 * don't remove an interface entry unless asked.
 		 */
-		if (   res != NULL
+		if (   ri != NULL
 		    && (   RESTRICT_REMOVEIF == op
-			|| !(RESM_INTERFACE & res->mflags))
-		    && res != &restrict_def4
-		    && res != &restrict_def6) {
-
-			free_res(res, v6);
-			return TRUE;
+			|| !(RESM_INTERFACE & ri->mflags))) {
+			if (res4 && res4 != &restrict_def4) {
+				free_res4(res4);
+				return TRUE;
+			}
+			if (res6 && res6 != &restrict_def6) {
+				free_res6(res6);
+				return TRUE;
+			}
 		}
 		DPRINTF(1, ("No match removing %s %s restriction\n",
 			    stoa(resaddr), stoa(resmask)));

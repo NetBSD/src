@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.c,v 1.19 2024/08/18 20:47:18 christos Exp $	*/
+/*	$NetBSD: ntp_request.c,v 1.20 2024/10/01 20:59:51 christos Exp $	*/
 
 /*
  * ntp_request.c - respond to information requests
@@ -83,8 +83,8 @@ static	void	do_unconf	(sockaddr_u *, endpt *, struct req_pkt *);
 static	void	set_sys_flag	(sockaddr_u *, endpt *, struct req_pkt *);
 static	void	clr_sys_flag	(sockaddr_u *, endpt *, struct req_pkt *);
 static	void	setclr_flags	(sockaddr_u *, endpt *, struct req_pkt *, u_long);
-static	void	list_restrict4	(const restrict_u *, struct info_restrict **);
-static	void	list_restrict6	(const restrict_u *, struct info_restrict **);
+static	void	list_restrict4	(const struct restrict_4 *, struct info_restrict **);
+static	void	list_restrict6	(const struct restrict_6 *, struct info_restrict **);
 static	void	list_restrict	(sockaddr_u *, endpt *, struct req_pkt *);
 static	void	do_resaddflags	(sockaddr_u *, endpt *, struct req_pkt *);
 static	void	do_ressubflags	(sockaddr_u *, endpt *, struct req_pkt *);
@@ -1569,16 +1569,16 @@ setclr_flags(
  * To avoid this trouble the list reversal is done iteratively using a
  * scratch pad.
  */
-typedef struct RestrictStack RestrictStackT;
-struct RestrictStack {
-	RestrictStackT   *link;
+typedef struct RestrictStack4 RestrictStack4T;
+struct RestrictStack4 {
+	RestrictStack4T   *link;
 	size_t            fcnt;
-	const restrict_u *pres[63];
+	const struct restrict_4 *pres[63];
 };
 
 static size_t
-getStackSheetSize(
-	RestrictStackT *sp
+getStackSheetSize4(
+	RestrictStack4T *sp
 	)
 {
 	if (sp)
@@ -1587,18 +1587,18 @@ getStackSheetSize(
 }
 
 static int/*BOOL*/
-pushRestriction(
-	RestrictStackT  **spp,
-	const restrict_u *ptr
+pushRestriction4(
+	RestrictStack4T  **spp,
+	const struct restrict_4 *ptr
 	)
 {
-	RestrictStackT *sp;
+	RestrictStack4T *sp;
 
 	if (NULL == (sp = *spp) || 0 == sp->fcnt) {
 		/* need another sheet in the scratch pad */
 		sp = emalloc(sizeof(*sp));
 		sp->link = *spp;
-		sp->fcnt = getStackSheetSize(sp);
+		sp->fcnt = getStackSheetSize4(sp);
 		*spp = sp;
 	}
 	sp->pres[--sp->fcnt] = ptr;
@@ -1606,18 +1606,18 @@ pushRestriction(
 }
 
 static int/*BOOL*/
-popRestriction(
-	RestrictStackT   **spp,
-	const restrict_u **opp
+popRestriction4(
+	RestrictStack4T   **spp,
+	const struct restrict_4 **opp
 	)
 {
-	RestrictStackT *sp;
+	RestrictStack4T *sp;
 
-	if (NULL == (sp = *spp) || sp->fcnt >= getStackSheetSize(sp))
+	if (NULL == (sp = *spp) || sp->fcnt >= getStackSheetSize4(sp))
 		return FALSE;
 	
 	*opp = sp->pres[sp->fcnt++];
-	if (sp->fcnt >= getStackSheetSize(sp)) {
+	if (sp->fcnt >= getStackSheetSize4(sp)) {
 		/* discard sheet from scratch pad */
 		*spp = sp->link;
 		free(sp);
@@ -1626,11 +1626,11 @@ popRestriction(
 }
 
 static void
-flushRestrictionStack(
-	RestrictStackT **spp
+flushRestrictionStack4(
+	RestrictStack4T **spp
 	)
 {
-	RestrictStackT *sp;
+	RestrictStack4T *sp;
 
 	while (NULL != (sp = *spp)) {
 		*spp = sp->link;
@@ -1644,30 +1644,99 @@ flushRestrictionStack(
  */
 static void
 list_restrict4(
-	const restrict_u *	res,
+	const struct restrict_4 *	res,
 	struct info_restrict **	ppir
 	)
 {
-	RestrictStackT *	rpad;
+	RestrictStack4T *	rpad;
 	struct info_restrict *	pir;
 
 	pir = *ppir;
 	for (rpad = NULL; res; res = res->link)
-		if (!pushRestriction(&rpad, res))
+		if (!pushRestriction4(&rpad, res))
 			break;
 	
-	while (pir && popRestriction(&rpad, &res)) {
-		pir->addr = htonl(res->u.v4.addr);
+	while (pir && popRestriction4(&rpad, &res)) {
+		pir->addr = htonl(res->v4.addr);
 		if (client_v6_capable) 
 			pir->v6_flag = 0;
-		pir->mask = htonl(res->u.v4.mask);
-		pir->count = htonl(res->count);
-		pir->rflags = htons(res->rflags);
-		pir->mflags = htons(res->mflags);
+		pir->mask = htonl(res->v4.mask);
+		pir->count = htonl(res->ri.count);
+		pir->rflags = htons(res->ri.rflags);
+		pir->mflags = htons(res->ri.mflags);
 		pir = (struct info_restrict *)more_pkt();
 	}
-	flushRestrictionStack(&rpad);
+	flushRestrictionStack4(&rpad);
 	*ppir = pir;
+}
+
+typedef struct RestrictStack6 RestrictStack6T;
+struct RestrictStack6 {
+	RestrictStack6T   *link;
+	size_t            fcnt;
+	const struct restrict_6 *pres[63];
+};
+
+static size_t
+getStackSheetSize6(
+	RestrictStack6T *sp
+	)
+{
+	if (sp)
+		return sizeof(sp->pres)/sizeof(sp->pres[0]);
+	return 0u;
+}
+
+static int/*BOOL*/
+pushRestriction6(
+	RestrictStack6T  **spp,
+	const struct restrict_6 *ptr
+	)
+{
+	RestrictStack6T *sp;
+
+	if (NULL == (sp = *spp) || 0 == sp->fcnt) {
+		/* need another sheet in the scratch pad */
+		sp = emalloc(sizeof(*sp));
+		sp->link = *spp;
+		sp->fcnt = getStackSheetSize6(sp);
+		*spp = sp;
+	}
+	sp->pres[--sp->fcnt] = ptr;
+	return TRUE;
+}
+
+static int/*BOOL*/
+popRestriction6(
+	RestrictStack6T   **spp,
+	const struct restrict_6 **opp
+	)
+{
+	RestrictStack6T *sp;
+
+	if (NULL == (sp = *spp) || sp->fcnt >= getStackSheetSize6(sp))
+		return FALSE;
+	
+	*opp = sp->pres[sp->fcnt++];
+	if (sp->fcnt >= getStackSheetSize6(sp)) {
+		/* discard sheet from scratch pad */
+		*spp = sp->link;
+		free(sp);
+	}
+	return TRUE;
+}
+
+static void
+flushRestrictionStack6(
+	RestrictStack6T **spp
+	)
+{
+	RestrictStack6T *sp;
+
+	while (NULL != (sp = *spp)) {
+		*spp = sp->link;
+		free(sp);
+	}
 }
 
 /*
@@ -1676,28 +1745,28 @@ list_restrict4(
  */
 static void
 list_restrict6(
-	const restrict_u *	res,
+	const struct restrict_6 *	res,
 	struct info_restrict **	ppir
 	)
 {
-	RestrictStackT *	rpad;
+	RestrictStack6T *	rpad;
 	struct info_restrict *	pir;
 
 	pir = *ppir;
 	for (rpad = NULL; res; res = res->link)
-		if (!pushRestriction(&rpad, res))
+		if (!pushRestriction6(&rpad, res))
 			break;
 
-	while (pir && popRestriction(&rpad, &res)) {
-		pir->addr6 = res->u.v6.addr; 
-		pir->mask6 = res->u.v6.mask;
+	while (pir && popRestriction6(&rpad, &res)) {
+		pir->addr6 = res->v6.addr; 
+		pir->mask6 = res->v6.mask;
 		pir->v6_flag = 1;
-		pir->count = htonl(res->count);
-		pir->rflags = htons(res->rflags);
-		pir->mflags = htons(res->mflags);
+		pir->count = htonl(res->ri.count);
+		pir->rflags = htons(res->ri.rflags);
+		pir->mflags = htons(res->ri.mflags);
 		pir = (struct info_restrict *)more_pkt();
 	}
-	flushRestrictionStack(&rpad);
+	flushRestrictionStack6(&rpad);
 	*ppir = pir;
 }
 

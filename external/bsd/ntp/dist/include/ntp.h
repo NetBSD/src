@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp.h,v 1.13 2024/08/18 20:46:50 christos Exp $	*/
+/*	$NetBSD: ntp.h,v 1.14 2024/10/01 20:59:51 christos Exp $	*/
 
 /*
  * ntp.h - NTP definitions for the masses
@@ -854,23 +854,25 @@ typedef struct res_addr6_tag {
 	struct in6_addr mask;		/* IPv6 mask (net order) */
 } res_addr6;
 
-typedef struct restrict_u_tag	restrict_u;
-struct restrict_u_tag {
-	restrict_u *	link;		/* link to next entry */
+struct restrict_info {
 	u_int32		count;		/* number of packets matched */
 	u_int32		expire;		/* valid until current_time */
-	u_short		rflags;		/* restrict (accesslist) flags */
 	u_int32		mflags;		/* match flags */
+	u_short		rflags;		/* restrict (accesslist) flags */
 	short		ippeerlimit;	/* limit of associations matching */
-	union {				/* variant starting here */
-		res_addr4 v4;
-		res_addr6 v6;
-	} u;
 };
-#define	V4_SIZEOF_RESTRICT_U	(offsetof(restrict_u, u)	\
-				 + sizeof(res_addr4))
-#define	V6_SIZEOF_RESTRICT_U	(offsetof(restrict_u, u)	\
-				 + sizeof(res_addr6))
+
+struct restrict_4 {
+	struct restrict_4 *link;	/* link to next entry */
+	struct restrict_info ri;
+	res_addr4 v4;
+};
+
+struct restrict_6 {
+	struct restrict_6 *link;	/* link to next entry */
+	struct restrict_info ri;
+	res_addr6 v6;
+};
 
 /* restrictions for (4) a given address */
 typedef struct r4addr_tag	r4addr;
