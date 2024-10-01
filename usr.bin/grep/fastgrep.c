@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fastgrep.c,v 1.5 2011/04/18 03:27:40 joerg Exp $");
+__RCSID("$NetBSD: fastgrep.c,v 1.6 2024/10/01 14:56:42 christos Exp $");
 
 #include <limits.h>
 #include <stdbool.h>
@@ -54,24 +54,48 @@ __RCSID("$NetBSD: fastgrep.c,v 1.5 2011/04/18 03:27:40 joerg Exp $");
 static inline int	grep_cmp(const unsigned char *, const unsigned char *, size_t);
 static inline void	grep_revstr(unsigned char *, int);
 
-void
-fgrepcomp(fastgrep_t *fg, const char *pat)
+static void
+alloc_pattern(fastgrep_t *fg, const char *pat)
 {
 	unsigned int i;
 
+	fg->pattern = (unsigned char *)grep_strdup(pat);
+	if (!iflag)
+		return;
+	for (i = 0;  fg->pattern[i]; i++)
+		fg->pattern[i] = towupper((unsigned char)fg->pattern[i]);
+}
+
+static void
+map_pattern(fastgrep_t *fg, int hasDot)
+{
+	unsigned int i;
+
+	for (i = 0; i <= UCHAR_MAX; i++)
+		fg->qsBc[i] = fg->len - hasDot;
+	for (i = hasDot + 1; i < fg->len; i++) {
+		unsigned char ch = fg->pattern[i];
+		if (iflag) {
+			fg->qsBc[ch] = fg->len - i;
+			ch = towlower(ch);
+		}
+		fg->qsBc[ch] = fg->len - i;
+	}
+}
+
+void
+fgrepcomp(fastgrep_t *fg, const char *pat)
+{
 	/* Initialize. */
 	fg->len = strlen(pat);
 	fg->bol = false;
 	fg->eol = false;
 	fg->reversed = false;
 
-	fg->pattern = (unsigned char *)grep_strdup(pat);
+	alloc_pattern(fg, pat);
 
 	/* Preprocess pattern. */
-	for (i = 0; i <= UCHAR_MAX; i++)
-		fg->qsBc[i] = fg->len;
-	for (i = 1; i < fg->len; i++)
-		fg->qsBc[fg->pattern[i]] = fg->len - i;
+	map_pattern(fg, 0);
 }
 
 /*
@@ -85,7 +109,6 @@ fastcomp(fastgrep_t *fg, const char *pat)
 	int firstLastHalfDot = -1;
 	int hasDot = 0;
 	int lastHalfDot = 0;
-	int shiftPatternLen;
 
 	/* Initialize. */
 	fg->len = strlen(pat);
@@ -121,9 +144,7 @@ fastcomp(fastgrep_t *fg, const char *pat)
 	 * the word match character classes at the beginning and ending
 	 * of the string respectively.
 	 */
-	fg->pattern = grep_malloc(fg->len + 1);
-	memcpy(fg->pattern, pat, fg->len);
-	fg->pattern[fg->len] = '\0';
+	alloc_pattern(fg, pat);
 
 	/* Look for ways to cheat...er...avoid the full regex engine. */
 	for (i = 0; i < fg->len; i++) {
@@ -181,15 +202,8 @@ fastcomp(fastgrep_t *fg, const char *pat)
 	 * thi.		1
 	 */
 
-	/* Adjust the shift based on location of the last dot ('.'). */
-	shiftPatternLen = fg->len - hasDot;
-
 	/* Preprocess pattern. */
-	for (i = 0; i <= (signed)UCHAR_MAX; i++)
-		fg->qsBc[i] = shiftPatternLen;
-	for (i = hasDot + 1; i < fg->len; i++) {
-		fg->qsBc[fg->pattern[i]] = fg->len - i;
-	}
+	map_pattern(fg, hasDot);
 
 	/*
 	 * Put pattern back to normal after pre-processing to allow for easy
@@ -309,7 +323,7 @@ grep_cmp(const unsigned char *pat, const unsigned char *data, size_t len)
 				continue;
 			free(wpat);
 			free(wdata);
-				return (i);
+			return (i);
 		}
 	} else {
 		for (i = 0; i < len; i++) {
