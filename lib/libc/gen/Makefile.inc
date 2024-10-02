@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.220 2024/08/29 21:05:01 rillig Exp $
+#	$NetBSD: Makefile.inc,v 1.221 2024/10/02 18:12:35 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -218,5 +218,7 @@ errlist.c: errlist.awk ${NETBSDSRCDIR}/sys/sys/errno.h
 LINTFLAGS.rb.c += -X 231	# XXX: marked as unused already why?
 LINTFLAGS.siglist.c += -X 351	# XXX: renames
 LINTFLAGS.signame.c += -X 351	# XXX: renames
+# missing atomic decls
+LINTFLAGS.arc4random.c += ${${ACTIVE_CC} == "clang":? -X 215 :}
 
 CLEANFILES+= errlist.c
