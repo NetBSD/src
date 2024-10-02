@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.19 2024/09/13 14:47:58 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.20 2024/10/02 18:28:23 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -359,4 +359,20 @@ sys/kern/subr_localcount.c			1.8
 
 	localcount(9): PR 58610: update per-CPU total at splhigh.
 	[riastradh, ticket #1888]
+
+sbin/gpt/biosboot.c				1.33
+
+	gpt(8): portability fix for the tool version.
+	[lloyd, ticket #1889]
+
+etc/defaults/npf.boot.conf			1.4
+
+	NPF: allow DHCPv6 during early boot stage so that dhcpcd(8) does
+	not complain at boot when using the ia_pd option.
+	[nakayama, ticket #1890]
+
+sys/arch/sparc64/sparc64/lock_stubs.s		1.12
+
+	sparc64: add missing LoadStore ordering for mutex_enter stub.
+	[rin, ticket #1891]
 
