@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.63.2.5 2023/06/03 14:40:25 martin Exp $	*/
+/*	$NetBSD: virtio.c,v 1.63.2.6 2024/10/02 18:20:48 martin Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.63.2.5 2023/06/03 14:40:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.63.2.6 2024/10/02 18:20:48 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ virtio_set_status(struct virtio_softc *sc, int status)
  *	virtio_reset(sc);	     // this will stop the device activity
  *	<dequeue finished requests>; // virtio_dequeue() still can be called
  *	<revoke pending requests in the vqs if any>;
- *	virtio_reinit_start(sc);     // dequeue prohibitted
+ *	virtio_reinit_start(sc);     // dequeue prohibited
  *	newfeatures = virtio_negotiate_features(sc, requestedfeatures);
  *	<some other initialization>;
  *	virtio_reinit_end(sc);	     // device activated; enqueue allowed
@@ -276,8 +276,15 @@ virtio_read_device_config_le_2(struct virtio_softc *sc, int index)
 	uint16_t val;
 
 	val = bus_space_read_2(iot, ioh, index);
+#if !defined(__aarch64__) && !defined(__arm__)
+	/*
+	 * For big-endian aarch64/armv7, bus endian is always LSB, but
+	 * byte-order is automatically swapped by bus_space(9) (see also
+	 * comments in virtio_pci.c). Therefore, no need to swap here.
+	 */
 	if (sc->sc_bus_endian != LITTLE_ENDIAN)
 		val = bswap16(val);
+#endif
 
 	DPRINTFR("read_le_2", "%04x", val, index, 2);
 	DPRINTFR2("read_le_2", "%04x",
@@ -294,8 +301,11 @@ virtio_read_device_config_le_4(struct virtio_softc *sc, int index)
 	uint32_t val;
 
 	val = bus_space_read_4(iot, ioh, index);
+#if !defined(__aarch64__) && !defined(__arm__)
+	/* See virtio_read_device_config_le_2() above. */
 	if (sc->sc_bus_endian != LITTLE_ENDIAN)
 		val = bswap32(val);
+#endif
 
 	DPRINTFR("read_le_4", "%08x", val, index, 4);
 	DPRINTFR2("read_le_4", "%08x",
@@ -660,7 +670,7 @@ virtio_stop_vq_intr(struct virtio_softc *sc, struct virtqueue *vq)
 		 * No way to disable the interrupt completely with
 		 * RingEventIdx. Instead advance used_event by half the
 		 * possible value. This won't happen soon and is far enough in
-		 * the past to not trigger a spurios interrupt.
+		 * the past to not trigger a spurious interrupt.
 		 */
 		*vq->vq_used_event = virtio_rw16(sc, vq->vq_used_idx + 0x8000);
 		vq_sync_aring_used(sc, vq, BUS_DMASYNC_PREWRITE);
@@ -1037,6 +1047,7 @@ virtio_enqueue_prep(struct virtio_softc *sc, struct virtqueue *vq, int *slotp)
 {
 	uint16_t slot;
 
+	KASSERT(sc->sc_child_state == VIRTIO_CHILD_ATTACH_FINISHED);
 	KASSERT(slotp != NULL);
 
 	slot = vq_alloc_slot(sc, vq, 1);
@@ -1059,7 +1070,8 @@ virtio_enqueue_reserve(struct virtio_softc *sc, struct virtqueue *vq,
 	struct vring_desc_extra *vdx;
 	int i;
 
-	KASSERT(1 <= nsegs && nsegs <= vq->vq_num);
+	KASSERT(1 <= nsegs);
+	KASSERT(nsegs <= vq->vq_num);
 
 	vdx = &vq->vq_descx[slot];
 	vd = &vq->vq_desc[slot];
