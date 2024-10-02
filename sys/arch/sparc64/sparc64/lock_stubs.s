@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.9 2013/04/28 23:42:23 nakayama Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.9.40.1 2024/10/02 18:26:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #define	CURLWP	(CPUINFO_VA+CI_CURLWP)
 
 #if defined(MULTIPROCESSOR)
-#define	MB_READ	membar #LoadLoad
+#define	MB_READ	membar #LoadLoad | #LoadStore
 #define	MB_MEM	membar #LoadStore | #StoreStore
 #else
 #define	MB_READ	/* nothing */
