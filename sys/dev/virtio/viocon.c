@@ -1,4 +1,4 @@
-/*	$NetBSD: viocon.c,v 1.5.4.2 2024/08/07 11:05:22 martin Exp $	*/
+/*	$NetBSD: viocon.c,v 1.5.4.3 2024/10/02 18:20:48 martin Exp $	*/
 /*	$OpenBSD: viocon.c,v 1.8 2021/11/05 11:38:29 mpi Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viocon.c,v 1.5.4.2 2024/08/07 11:05:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viocon.c,v 1.5.4.3 2024/10/02 18:20:48 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -378,7 +378,7 @@ viocon_rx_fill(struct viocon_port *vp)
 		virtio_enqueue_commit(vsc, vq, slot, 0);
 		ndone++;
 	}
-	KASSERT(r == 0 || r == EAGAIN);
+	KASSERTMSG(r == 0 || r == EAGAIN, "r=%d", r);
 	if (ndone > 0)
 		virtio_notify(vsc, vq);
 }
@@ -454,9 +454,9 @@ vioconstart(struct tty *tp)
 			SET(tp->t_state, TS_BUSY);
 			break;
 		}
-		KASSERT(ret == 0);
+		KASSERTMSG(ret == 0, "ret=%d", ret);
 		ret = virtio_enqueue_reserve(vsc, vq, slot, 1);
-		KASSERT(ret == 0);
+		KASSERTMSG(ret == 0, "ret=%d", ret);
 		buf = vp->vp_tx_buf + slot * BUFSIZE;
 		cnt = q_to_b(&tp->t_outq, buf, BUFSIZE);
 		bus_dmamap_sync(virtio_dmat(vsc), vp->vp_dmamap,

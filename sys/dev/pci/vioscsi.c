@@ -1,4 +1,4 @@
-/*	$NetBSD: vioscsi.c,v 1.30.2.1 2023/05/13 10:56:10 martin Exp $	*/
+/*	$NetBSD: vioscsi.c,v 1.30.2.2 2024/10/02 18:20:48 martin Exp $	*/
 /*	$OpenBSD: vioscsi.c,v 1.3 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.30.2.1 2023/05/13 10:56:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.30.2.2 2024/10/02 18:20:48 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,7 +302,7 @@ vioscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t
 	 */
 	vr = vioscsi_req_get(sc);
 	if (vr == NULL) {
-		xs->error = XS_RESOURCE_SHORTAGE;
+		xs->error = XS_BUSY;
 		scsipi_done(xs);
 		return;
 	}
@@ -389,11 +389,9 @@ stuffup:
 
 	error = virtio_enqueue_reserve(vsc, vq, slot, nsegs);
 	if (error) {
-		aprint_error_dev(sc->sc_dev, "error reserving %d (nsegs %d)\n",
-		    error, nsegs);
 		bus_dmamap_unload(virtio_dmat(vsc), vr->vr_data);
 		/* slot already freed by virtio_enqueue_reserve() */
-		xs->error = XS_RESOURCE_SHORTAGE;
+		xs->error = XS_BUSY;
 		scsipi_done(xs);
 		return;
 	}
