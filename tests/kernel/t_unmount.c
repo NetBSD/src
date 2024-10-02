@@ -1,7 +1,7 @@
-/*	$NetBSD: t_unmount.c,v 1.3 2024/08/11 12:58:10 bad Exp $	*/
+/*	$NetBSD: t_unmount.c,v 1.4 2024/10/02 17:16:32 bad Exp $	*/
 
 /*-
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2024 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2024\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_unmount.c,v 1.3 2024/08/11 12:58:10 bad Exp $");
+__RCSID("$NetBSD: t_unmount.c,v 1.4 2024/10/02 17:16:32 bad Exp $");
 
 #include <sys/types.h>
 #include <sys/mount.h>
