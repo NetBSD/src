@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.57 2021/10/15 18:12:48 jmcneill Exp $	*/
+/*	$NetBSD: tsc.c,v 1.57.4.1 2024/10/02 18:24:35 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.57 2021/10/15 18:12:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.57.4.1 2024/10/02 18:24:35 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,6 +132,18 @@ tsc_is_invariant(void)
 		 * Manual Volume 3: General-Purpose and System Instructions.
 		 * The check is done below.
 		 */
+
+		 /*
+		  * AMD Errata 778: Processor Core Time Stamp Counters May
+		  * Experience Drift
+		  *
+		  * This affects all family 15h and family 16h processors.
+		  */
+		switch (CPUID_TO_FAMILY(ci->ci_signature)) {
+		case 0x15:
+		case 0x16:
+			return false;
+		}
 	}
 
 	/*
