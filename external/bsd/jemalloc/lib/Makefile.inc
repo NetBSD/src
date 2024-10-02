@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.21 2024/09/28 14:25:45 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.22 2024/10/02 18:13:17 christos Exp $
 
 JEMALLOC:=${.PARSEDIR}/..
 
@@ -76,7 +76,7 @@ CPPFLAGS.${i}+=-I${JEMALLOC}/include -std=gnu11
 #   CPPFLAGS.${i}+= -DDJEMALLOC_PROTECT_NOSTD -DJEMALLOC_DEBUG
 CPPFLAGS.${i}+=-DJEMALLOC_PROTECT_NOSTD
 COPTS.${i}+= -fvisibility=hidden -funroll-loops
-COPTS.${i}+= ${${ACTIVE_CC} == "clang":? -Wno-atomic-alignment :}
+COPTS.${i}+= ${${ACTIVE_CC} == "clang":? -Wno-atomic-alignment -Wno-error=missing-noreturn:}
 LINTFLAGS.${i}+=	-X 231	# argument unused
 LINTFLAGS.${i}+=	-X 220	# fallthrough on case statement
 .endfor
