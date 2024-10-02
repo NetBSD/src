@@ -37,7 +37,7 @@ atomic_fence(atomic_memory_order_t mo) {
 }
 
 #define JEMALLOC_GENERATE_ATOMICS(type, short_type,			\
-    /* unused */ lg_size)						\
+    lg_size)								\
 typedef struct {							\
 	type repr;							\
 } atomic_##short_type##_t;						\
@@ -88,8 +88,8 @@ atomic_compare_exchange_strong_##short_type(atomic_##short_type##_t *a,	\
 
 
 #define JEMALLOC_GENERATE_INT_ATOMICS(type, short_type,			\
-    /* unused */ lg_size)						\
-JEMALLOC_GENERATE_ATOMICS(type, short_type, /* unused */ lg_size)	\
+    lg_size)								\
+JEMALLOC_GENERATE_ATOMICS(type, short_type, lg_size)			\
 									\
 ATOMIC_INLINE type							\
 atomic_fetch_add_##short_type(atomic_##short_type##_t *a, type val,	\
