@@ -50,7 +50,7 @@ remquo(double x, double y, int *quo)
 		goto fixup;	/* |x|<|y| return x or x-y */
 	    }
 	    if(lx==ly) {
-		*quo = 1;
+		*quo = (sxy ? -1 : 1);
 		return Zero[(u_int32_t)sx>>31];	/* |x|=|y| return x*0*/
 	    }
 	}
@@ -113,6 +113,7 @@ remquo(double x, double y, int *quo)
 
     /* convert back to floating value and restore the sign */
 	if((hx|lx)==0) {			/* return sign(x)*0 */
+	    q &= 0x7fffffff;
 	    *quo = (sxy ? -q : q);
 	    return Zero[(u_int32_t)sx>>31];
 	}
@@ -128,9 +129,9 @@ remquo(double x, double y, int *quo)
 		lx = (lx>>n)|((u_int32_t)hx<<(32-n));
 		hx >>= n;
 	    } else if (n<=31) {
-		lx = (hx<<(32-n))|(lx>>n); hx = sx;
+		lx = (hx<<(32-n))|(lx>>n); hx = 0;
 	    } else {
-		lx = hx>>(n-32); hx = sx;
+		lx = hx>>(n-32); hx = 0;
 	    }
 	}
 fixup:
@@ -149,5 +150,12 @@ fixup:
 	SET_HIGH_WORD(x,hx^sx);
 	q &= 0x7fffffff;
 	*quo = (sxy ? -q : q);
+	/*
+	 * If q is 0 and we need to return negative, we have to choose
+	 * the largest negative number (in 32 bits) because it is the
+	 * only value that is negative and congruent to 0 mod 2^31.
+	 */
+	if (q == 0 && sxy)
+	  *quo = 0x80000000;
 	return x;
 }
