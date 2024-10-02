@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.62 2020/12/09 07:10:01 skrll Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.62.18.1 2024/10/02 12:28:15 martin Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,18 +36,16 @@
 #include <sys/pool.h>
 
 typedef struct ohci_soft_ed {
-	ohci_ed_t ed;
+	ohci_ed_t *ed;
 	struct ohci_soft_ed *next;
 	ohci_physaddr_t physaddr;
 	usb_dma_t dma;
 	int offs;
 } ohci_soft_ed_t;
-#define OHCI_SED_SIZE (roundup(sizeof(struct ohci_soft_ed), OHCI_ED_ALIGN))
-#define OHCI_SED_CHUNK 128
 
 
 typedef struct ohci_soft_td {
-	ohci_td_t td;
+	ohci_td_t *td;
 	struct ohci_soft_td *nexttd;	/* mirrors nexttd in TD */
 	struct ohci_soft_td *dnext;	/* next in done list */
 	struct ohci_soft_td **held;	/* where the ref to this std is held */
@@ -61,12 +59,12 @@ typedef struct ohci_soft_td {
 #define OHCI_CALL_DONE	0x0001
 #define OHCI_ADD_LEN	0x0002
 } ohci_soft_td_t;
-#define OHCI_STD_SIZE (roundup(sizeof(struct ohci_soft_td), OHCI_TD_ALIGN))
-#define OHCI_STD_CHUNK 128
+// #define OHCI_STD_SIZE (roundup(sizeof(struct ohci_soft_td), OHCI_TD_ALIGN))
+// #define OHCI_STD_CHUNK 128
 
 
 typedef struct ohci_soft_itd {
-	ohci_itd_t itd;
+	ohci_itd_t *itd;
 	struct ohci_soft_itd *nextitd;	/* mirrors nexttd in ITD */
 	struct ohci_soft_itd *dnext;	/* next in done list */
 	struct ohci_soft_itd **held;	/* where the ref to this sitd is held */
@@ -78,8 +76,8 @@ typedef struct ohci_soft_itd {
 	uint16_t flags;
 	bool isdone;	/* used only when DIAGNOSTIC is defined */
 } ohci_soft_itd_t;
-#define OHCI_SITD_SIZE (roundup(sizeof(struct ohci_soft_itd), OHCI_ITD_ALIGN))
-#define OHCI_SITD_CHUNK 64
+// #define OHCI_SITD_SIZE (roundup(sizeof(struct ohci_soft_itd), OHCI_ITD_ALIGN))
+// #define OHCI_SITD_CHUNK 64
 
 
 #define OHCI_NO_EDS (2*OHCI_NO_INTRS-1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcireg.h,v 1.28 2020/06/03 15:38:02 skrll Exp $	*/
+/*	$NetBSD: ohcireg.h,v 1.28.20.1 2024/10/02 12:28:15 martin Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcireg.h,v 1.8 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ typedef uint32_t ohci_physaddr_t;
 #define OHCI_NO_INTRS 32
 struct ohci_hcca {
 	volatile ohci_physaddr_t	hcca_interrupt_table[OHCI_NO_INTRS];
-	volatile uint32_t	hcca_frame_number;
+	volatile uint32_t		hcca_frame_number;
 	volatile ohci_physaddr_t	hcca_done_head;
 #define OHCI_DONE_INTRS 1
 };
@@ -186,6 +186,10 @@ typedef struct {
 } ohci_ed_t;
 /* #define OHCI_ED_SIZE 16 */
 #define OHCI_ED_ALIGN 16
+#define OHCI_ED_ALLOC_ALIGN	MAX(OHCI_ED_ALIGN, CACHE_LINE_SIZE)
+#define OHCI_ED_SIZE		(roundup(sizeof(ohci_ed_t), OHCI_ED_ALLOC_ALIGN))
+#define OHCI_ED_CHUNK (PAGE_SIZE / OHCI_ED_SIZE)
+
 
 typedef struct {
 	volatile uint32_t	td_flags;
@@ -220,6 +224,10 @@ typedef struct {
 } ohci_td_t;
 /* #define OHCI_TD_SIZE 16 */
 #define OHCI_TD_ALIGN 16
+#define OHCI_TD_ALLOC_ALIGN	MAX(OHCI_TD_ALIGN, CACHE_LINE_SIZE)
+#define OHCI_TD_SIZE		(roundup(sizeof(ohci_td_t), OHCI_TD_ALLOC_ALIGN))
+#define OHCI_TD_CHUNK (PAGE_SIZE / OHCI_TD_SIZE)
+
 
 #define OHCI_ITD_NOFFSET 8
 typedef struct {
@@ -252,6 +260,9 @@ typedef struct {
 } ohci_itd_t;
 /* #define OHCI_ITD_SIZE 32 */
 #define OHCI_ITD_ALIGN 32
+#define OHCI_ITD_ALLOC_ALIGN	MAX(OHCI_ITD_ALIGN, CACHE_LINE_SIZE)
+#define OHCI_ITD_SIZE		(roundup(sizeof(ohci_itd_t), OHCI_ITD_ALLOC_ALIGN))
+#define OHCI_ITD_CHUNK		(PAGE_SIZE / OHCI_ITD_SIZE)
 
 
 #define OHCI_CC_NO_ERROR		0

@@ -1,4 +1,4 @@
-/* $NetBSD: wii.h,v 1.7.2.2 2024/02/03 11:47:08 martin Exp $ */
+/* $NetBSD: wii.h,v 1.7.2.3 2024/10/02 12:28:15 martin Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -114,6 +114,11 @@
 #define HW_ARMIRQFLAGS			(HOLLYWOOD_PRIV_BASE + 0x038)
 #define HW_ARMIRQMASK			(HOLLYWOOD_PRIV_BASE + 0x03c)
 #define HW_AHBPROT			(HOLLYWOOD_PRIV_BASE + 0x064)
+#define  IOPSD1EN			__BIT(24)
+#define  IOPSD0EN			__BIT(23)
+#define  IOPOH1EN			__BIT(22)
+#define  IOPOH0EN			__BIT(21)
+#define  IOPEHCEN			__BIT(20)
 #define HW_GPIOB_OUT			(HOLLYWOOD_BASE + 0x0c0)
 #define HW_GPIOB_DIR			(HOLLYWOOD_BASE + 0x0c4)
 #define HW_GPIOB_IN			(HOLLYWOOD_BASE + 0x0c8)
