@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2024/09/24 21:32:20 christos Exp $
+#	$NetBSD: Makefile,v 1.41 2024/10/02 21:21:26 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -136,5 +136,8 @@ COPTS.sshbuf-getput-crypto.c+=	-Wno-error=deprecated-declarations
 COPTS.sshkey.c+=	-Wno-error=deprecated-declarations
 COPTS.umac.c+=		-Wno-error=deprecated-declarations
 COPTS.umac128.c+=	-Wno-error=deprecated-declarations
+COPTS.kexmlkem768x25519.c+=${${ACTIVE_CC} == "clang":? -Wno-error=missing-noreturn:}
+
+
 
 .include <bsd.lib.mk>
