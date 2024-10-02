@@ -13,8 +13,10 @@ extern "C" {
 /* Defined if format_arg(...) attribute is supported. */
 #define JEMALLOC_HAVE_ATTR_FORMAT_ARG
 
+#ifndef __clang__
 /* Defined if format(gnu_printf, ...) attribute is supported. */
 #define JEMALLOC_HAVE_ATTR_FORMAT_GNU_PRINTF
+#endif
 
 /* Defined if format(printf, ...) attribute is supported. */
 #define JEMALLOC_HAVE_ATTR_FORMAT_PRINTF
