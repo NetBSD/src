@@ -1,4 +1,4 @@
-/* $NetBSD: hollywood.h,v 1.2.2.2 2024/02/03 11:47:04 martin Exp $ */
+/* $NetBSD: hollywood.h,v 1.2.2.3 2024/10/02 12:28:15 martin Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -36,6 +36,7 @@ struct hollywood_attach_args {
 	bus_dma_tag_t haa_dmat;
 };
 
+void hollywood_claim_device(device_t, uint32_t);
 void *hollywood_intr_establish(int, int, int (*)(void *), void *, const char *);
 
 #endif /* _WII_DEV_HOLLYWOOD_H_ */

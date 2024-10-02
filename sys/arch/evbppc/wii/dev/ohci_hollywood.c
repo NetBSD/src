@@ -1,4 +1,4 @@
-/* $NetBSD: ohci_hollywood.c,v 1.2.2.2 2024/02/03 11:47:05 martin Exp $ */
+/* $NetBSD: ohci_hollywood.c,v 1.2.2.3 2024/10/02 12:28:15 martin Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_hollywood.c,v 1.2.2.2 2024/02/03 11:47:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_hollywood.c,v 1.2.2.3 2024/10/02 12:28:15 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -83,6 +83,9 @@ ohci_hollywood_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": OHCI\n");
+
+	hollywood_claim_device(self,
+	    device_unit(self) == 0 ? IOPOH0EN : IOPOH1EN);
 
 	bus_space_write_4(sc->iot, sc->ioh, OHCI_INTERRUPT_DISABLE,
 	    OHCI_ALL_INTRS);

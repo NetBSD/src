@@ -1,4 +1,4 @@
-/* $NetBSD: hollywood.c,v 1.2.2.2 2024/02/03 11:47:04 martin Exp $ */
+/* $NetBSD: hollywood.c,v 1.2.2.3 2024/10/02 12:28:15 martin Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hollywood.c,v 1.2.2.2 2024/02/03 11:47:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hollywood.c,v 1.2.2.3 2024/10/02 12:28:15 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -218,4 +218,11 @@ hollywood_intr_establish(int irq, int ipl, int (*func)(void *), void *arg,
 
 	return intr_establish_xname(hollywood_pic.pic_intrbase + irq,
 	    IST_LEVEL, ipl, func, arg, name);
+}
+
+void
+hollywood_claim_device(device_t dev, uint32_t mask)
+{
+	/* Restrict IOP access to a device, giving exclusive access to PPC. */
+	WR4(HW_AHBPROT, RD4(HW_AHBPROT) & ~mask);
 }
