@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.313 2024/05/20 01:30:34 christos Exp $
+	$NetBSD: syscalls.master,v 1.314 2024/10/03 16:50:52 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -1065,3 +1065,6 @@
 			    const struct timespec *timeout, \
 			    const sigset_t *sigmask); }
 505	STD	RUMP	{ int|sys|100|dup3(int from, int to, int flags); }
+506	STD 		{ int|sys||semtimedop(int semid, \
+			    struct sembuf *sops, size_t nsops, \
+			    struct timespec *timeout); }

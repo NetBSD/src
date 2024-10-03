@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.98 2019/08/07 00:38:02 pgoyette Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.99 2024/10/03 16:50:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.98 2019/08/07 00:38:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.99 2024/10/03 16:50:52 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -800,17 +800,12 @@ sys_semget(struct lwp *l, const struct sys_semget_args *uap, register_t *retval)
 
 #define SMALL_SOPS 8
 
-int
-sys_semop(struct lwp *l, const struct sys_semop_args *uap, register_t *retval)
+static int
+do_semop(struct lwp *l, int semid, struct sembuf *usops,
+    size_t nsops, struct timespec *utimeout, register_t *retval)
 {
-	/* {
-		syscallarg(int) semid;
-		syscallarg(struct sembuf *) sops;
-		syscallarg(size_t) nsops;
-	} */
 	struct proc *p = l->l_proc;
-	int semid = SCARG(uap, semid), seq;
-	size_t nsops = SCARG(uap, nsops);
+	int semid, seq;
 	struct sembuf small_sops[SMALL_SOPS];
 	struct sembuf *sops;
 	struct semid_ds *semaptr;
@@ -818,12 +813,14 @@ sys_semop(struct lwp *l, const struct sys_semop_args *uap, register_t *retval)
 	struct __sem *semptr = NULL;
 	struct sem_undo *suptr = NULL;
 	kauth_cred_t cred = l->l_cred;
+	struct timespec timeout;
+	int timo = 0;
 	int i, error;
 	int do_wakeup, do_undos;
 
 	RUN_ONCE(&exithook_control, seminit_exithook);
 
-	SEM_PRINTF(("call to semop(%d, %p, %zd)\n", semid, SCARG(uap,sops), nsops));
+	SEM_PRINTF(("call to semop(%d, %p, %zu)\n", semid, usops, nsops));
 
 	if (__predict_false((p->p_flag & PK_SYSVSEM) == 0)) {
 		mutex_enter(p->p_lock);
@@ -837,15 +834,15 @@ restart:
 	} else if (nsops <= seminfo.semopm) {
 		sops = kmem_alloc(nsops * sizeof(*sops), KM_SLEEP);
 	} else {
-		SEM_PRINTF(("too many sops (max=%d, nsops=%zd)\n",
+		SEM_PRINTF(("too many sops (max=%d, nsops=%zu)\n",
 		    seminfo.semopm, nsops));
 		return (E2BIG);
 	}
 
-	error = copyin(SCARG(uap, sops), sops, nsops * sizeof(sops[0]));
+	error = copyin(usops, sops, nsops * sizeof(sops[0]));
 	if (error) {
-		SEM_PRINTF(("error = %d from copyin(%p, %p, %zd)\n", error,
-		    SCARG(uap, sops), &sops, nsops * sizeof(sops[0])));
+		SEM_PRINTF(("error = %d from copyin(%p, %p, %zu)\n", error,
+		    usops, &sops, nsops * sizeof(sops[0])));
 		if (sops != small_sops)
 			kmem_free(sops, nsops * sizeof(*sops));
 		return error;
@@ -862,8 +859,21 @@ restart:
 		goto out;
 	}
 
+	if (utimeout) {
+		error = copyin(utimeout, &timeout, sizeof(timeout));
+		if (error) {
+			SEM_PRINTF(("error = %d from copyin(%p, %p, %zu)\n",
+			    error, utimeout, &timeout, sizeof(timeout)));
+			return error;
+		}
+		error = ts2timo(CLOCK_MONOTONIC, TIMER_RELTIME, &timeout,
+		    &timo, NULL);
+		if (error)
+			return error;
+	}
+
 	semaptr = &sema[semid];
-	seq = IPCID_TO_SEQ(SCARG(uap, semid));
+	seq = IPCID_TO_SEQ(semid);
 	if ((semaptr->sem_perm.mode & SEM_ALLOC) == 0 ||
 	    semaptr->sem_perm._seq != seq) {
 		error = EINVAL;
@@ -880,7 +890,6 @@ restart:
 			error = EFBIG;
 			goto out;
 		}
-
 	/*
 	 * Loop trying to satisfy the vector of requests.
 	 * If we reach a point where we must wait, any requests already
@@ -964,7 +973,7 @@ restart:
 
 		sem_waiters++;
 		SEM_PRINTF(("semop:  good night!\n"));
-		error = cv_wait_sig(&semcv[semid], &semlock);
+		error = cv_timedwait_sig(&semcv[semid], &semlock, timo);
 		SEM_PRINTF(("semop:  good morning (error=%d)!\n", error));
 		sem_waiters--;
 
@@ -998,12 +1007,14 @@ restart:
 
 		/* Is it really morning, or was our sleep interrupted? */
 		if (error != 0) {
-			error = EINTR;
+			if (error == ERESTART)
+				error = EINTR;  // Simplify to just EINTR
+			else if (error == EWOULDBLOCK)
+				error = EAGAIN;  // Convert timeout to EAGAIN
 			goto out;
 		}
 		SEM_PRINTF(("semop:  good morning!\n"));
 	}
-
 done:
 	/*
 	 * Process any SEM_UNDO requests.
@@ -1074,11 +1085,44 @@ done:
 	SEM_PRINTF(("semop:  done\n"));
 	*retval = 0;
 
- out:
+out:
 	mutex_exit(&semlock);
 	if (sops != small_sops)
 		kmem_free(sops, nsops * sizeof(*sops));
 	return error;
+}
+
+int
+sys_semtimedop(struct lwp *l, const struct sys_semtimedop_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) semid;
+		syscallarg(struct sembuf *) sops;
+		syscallarg(size_t) nsops;
+		syscallarg(struct timespec) timeout;
+	} */
+	int semid = SCARG(uap, semid);
+	struct sembuf *sops = SCARG(uap, sops);
+	size_t nsops = SCARG(uap, nsops);
+	struct timespec *utimeout = SCARG(uap, timeout);
+
+	return do_semop(l, semid, sops, nsops, utimeout, retval);
+}
+
+int
+sys_semop(struct lwp *l, const struct sys_semop_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) semid;
+		syscallarg(struct sembuf *) sops;
+		syscallarg(size_t) nsops;
+	} */
+	int semid = SCARG(uap, semid);
+	struct sembuf *sops = SCARG(uap, sops);
+	size_t nsops = SCARG(uap, nsops);
+
+	return do_semop(l, semid, sops, nsops, NULL, retval);
 }
 
 /*
