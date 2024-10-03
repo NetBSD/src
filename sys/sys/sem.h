@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.35 2024/05/12 10:34:56 rillig Exp $	*/
+/*	$NetBSD: sem.h,v 1.36 2024/10/03 16:50:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -217,6 +217,8 @@ int	semctl(int, int, int, ...) __RENAME(__semctl50);
 #endif
 int	semget(key_t, int, int);
 int	semop(int, struct sembuf *, size_t);
+struct timespec;
+int	semtimedop(int, struct sembuf *, size_t, struct timespec *);
 #if defined(_NETBSD_SOURCE)
 int	semconfig(int);
 #endif
