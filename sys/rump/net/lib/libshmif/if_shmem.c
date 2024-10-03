@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.84.4.2 2024/09/05 09:22:44 martin Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.84.4.3 2024/10/03 16:19:59 martin Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.84.4.2 2024/09/05 09:22:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.84.4.3 2024/10/03 16:19:59 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -455,14 +455,14 @@ static int
 shmif_mediachange(struct ifnet *ifp)
 {
 	struct shmif_sc *sc = ifp->if_softc;
+	int link_state;
 
-	if (IFM_SUBTYPE(sc->sc_im.ifm_cur->ifm_media) == IFM_NONE &&
-	    ifp->if_link_state != LINK_STATE_DOWN) {
-		if_link_state_change(ifp, LINK_STATE_DOWN);
-	} else if (IFM_SUBTYPE(sc->sc_im.ifm_cur->ifm_media) == IFM_AUTO &&
-	    ifp->if_link_state != LINK_STATE_UP) {
-		if_link_state_change(ifp, LINK_STATE_UP);
-	}
+	if (IFM_SUBTYPE(sc->sc_im.ifm_cur->ifm_media) == IFM_NONE)
+		link_state = LINK_STATE_DOWN;
+	else
+		link_state = LINK_STATE_UP;
+
+	if_link_state_change(ifp, link_state);
 	return 0;
 }
 
@@ -470,7 +470,12 @@ static void
 shmif_mediastatus(struct ifnet *ifp, struct ifmediareq *imr)
 {
 	struct shmif_sc *sc = ifp->if_softc;
+
 	imr->ifm_active = sc->sc_im.ifm_cur->ifm_media;
+
+	imr->ifm_status = IFM_AVALID;
+	if (IFM_SUBTYPE(imr->ifm_active) != IFM_NONE)
+		imr->ifm_status |= IFM_ACTIVE;
 }
 
 static int
