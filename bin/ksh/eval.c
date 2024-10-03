@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.26 2019/09/26 11:01:09 mlelstv Exp $	*/
+/*	$NetBSD: eval.c,v 1.27 2024/10/03 20:14:01 rillig Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: eval.c,v 1.26 2019/09/26 11:01:09 mlelstv Exp $");
+__RCSID("$NetBSD: eval.c,v 1.27 2024/10/03 20:14:01 rillig Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -1179,7 +1179,8 @@ debunk(dp, sp, dlen)
 	const char *sp;
 	size_t dlen;
 {
-	char *d, *s;
+	char *d;
+	const char *s;
 
 	if ((s = strchr(sp, MAGIC))) {
 		if (s - sp >= (ptrdiff_t)dlen)

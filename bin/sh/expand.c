@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.144 2023/12/29 15:49:23 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.145 2024/10/03 20:14:01 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.144 2023/12/29 15:49:23 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.145 2024/10/03 20:14:01 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -1816,7 +1816,7 @@ static int
 match_charclass(const char *p, wchar_t chr, const char **end)
 {
 	char name[20];
-	char *nameend;
+	const char *nameend;
 	wctype_t cclass;
 	char *q;
 
