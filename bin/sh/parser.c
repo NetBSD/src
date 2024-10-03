@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.182 2024/07/12 08:35:47 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.183 2024/10/03 20:14:01 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.182 2024/07/12 08:35:47 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.183 2024/10/03 20:14:01 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -2215,7 +2215,7 @@ parsesub: {
 	int subtype;
 	int typeloc;
 	int flags;
-	char *p;
+	const char *p;
 	static const char types[] = "}-+?=";
 
 	c = pgetc_linecont();
