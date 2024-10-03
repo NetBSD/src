@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.327 2024/09/23 16:28:06 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.328 2024/10/03 12:58:10 hannken Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.327 2024/09/23 16:28:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.328 2024/10/03 12:58:10 hannken Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -294,7 +294,7 @@ void			ehci_dump(void);
 Static void		ehci_dump_regs(ehci_softc_t *);
 Static void		ehci_dump_sqtds(ehci_soft_qtd_t *);
 Static void		ehci_dump_sqtd(ehci_soft_qtd_t *);
-Static void		ehci_dump_qh_qtd(struct ehci_qh_qtd_t *);
+Static void		ehci_dump_qh_qtd(ehci_qtd_t *);
 Static void		ehci_dump_qtd(ehci_qtd_t *);
 Static void		ehci_dump_sqh(ehci_soft_qh_t *);
 Static void		ehci_dump_sitd(struct ehci_soft_itd *);
@@ -1771,7 +1771,7 @@ ehci_dump_sqtd(ehci_soft_qtd_t *sqtd)
 }
 
 Static void
-ehci_dump_qh_qtd(struct ehci_qh_qtd_t *qh_qtd)
+ehci_dump_qh_qtd(ehci_qtd_t *qh_qtd)
 {
 	ehci_qtd_t qtd = {
 		.qtd_next = qh_qtd->qtd_next,
