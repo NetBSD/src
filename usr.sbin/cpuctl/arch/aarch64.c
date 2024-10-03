@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.21.2.1 2024/09/20 09:33:48 martin Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.21.2.2 2024/10/03 16:11:37 martin Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.21.2.1 2024/09/20 09:33:48 martin Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.21.2.2 2024/10/03 16:11:37 martin Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -93,6 +93,8 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_THUNDERX2RX, "ThunderX2", "Marvell", "v8.1-A" },
 	{ CPU_ID_APPLE_M1_ICESTORM & CPU_PARTMASK, "M1 Icestorm", "Apple", "Apple Silicon" },
 	{ CPU_ID_APPLE_M1_FIRESTORM & CPU_PARTMASK, "M1 Firestorm", "Apple", "Apple Silicon" },
+	{ CPU_ID_AMPERE1 & CPU_PARTMASK, "Ampere-1", "Ampere", "v8.6-A+" },
+	{ CPU_ID_AMPERE1A & CPU_PARTMASK, "Ampere-1A", "Ampere", "v8.6-A+" },
 };
 
 const struct impltab implids[] = {
@@ -110,7 +112,8 @@ const struct impltab implids[] = {
 	{ CPU_ID_MARVELL,	"Marvell International Ltd."		},
 	{ CPU_ID_APPLE,		"Apple Inc."				},
 	{ CPU_ID_FARADAY,	"Faraday Technology Corporation"	},
-	{ CPU_ID_INTEL,		"Intel Corporation"			}
+	{ CPU_ID_INTEL,		"Intel Corporation"			},
+	{ CPU_ID_AMPERE,	"Ampere"				},
 };
 
 #define FIELDNAME(_bitpos, _bitwidth, _name)	\
