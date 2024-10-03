@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1339 2024/09/19 19:43:13 gdt Exp $
+# $NetBSD: mi,v 1.1340 2024/10/03 17:14:12 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2351,6 +2351,7 @@
 ./usr/tests/kernel/t_ptrace_waitpid			tests-obsolete		obsolete
 ./usr/tests/kernel/t_pty				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_rnd				tests-kernel-tests	atf,rump
+./usr/tests/kernel/t_semtimedop				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_sigaction				tests-obsolete		obsolete
 ./usr/tests/kernel/t_signal_and_sp			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_simplehook				tests-kernel-tests	atf,rump

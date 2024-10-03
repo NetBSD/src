@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.449 2024/09/19 19:43:13 gdt Exp $
+# $NetBSD: mi,v 1.450 2024/10/03 17:14:12 christos Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -1825,6 +1825,7 @@
 ./usr/libdata/debug/usr/tests/kernel/t_ptrace_waitpid.debug		tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_pty.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_rnd.debug			tests-kernel-tests	debug,atf,rump
+./usr/libdata/debug/usr/tests/kernel/t_semtimedop.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_sigaction.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_signal_and_sp.debug		tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_subr_prf.debug			tests-kernel-tests	debug,atf,compattestfile
