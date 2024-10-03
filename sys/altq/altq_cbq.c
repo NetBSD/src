@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.39 2021/12/31 20:22:48 andvar Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.39.4.1 2024/10/03 11:56:22 martin Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.21 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.39 2021/12/31 20:22:48 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.39.4.1 2024/10/03 11:56:22 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -306,7 +306,7 @@ cbq_remove_altq(struct pf_altq *a)
 	return (0);
 }
 
-#define NSEC_TO_PSEC(s)	((uint64_t)(s) * 1000 * 1000)
+#define NSEC_TO_PSEC(s)	((uint64_t)(s) * 1000)
 int
 cbq_add_queue(struct pf_altq *a)
 {
@@ -750,7 +750,7 @@ cbq_class_create(cbq_state_t *cbqp, struct cbq_add_class *acp,
 	/* save the allocated class */
 	cbqp->cbq_class_tbl[i] = cl;
 
-	if ((spec->flags & CBQCLF_CLASSMASK) != 0)
+	if ((spec->flags & CBQCLF_DEFCLASS) != 0)
 		cbqp->ifnp.default_ = cl;
 	if ((spec->flags & CBQCLF_CTLCLASS) != 0)
 		cbqp->ifnp.ctl_ = cl;
