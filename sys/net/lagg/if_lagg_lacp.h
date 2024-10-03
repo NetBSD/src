@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.h,v 1.4 2022/03/31 02:04:50 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.h,v 1.4.4.1 2024/10/03 11:53:46 martin Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -129,35 +129,4 @@ struct markerdu {
 	struct tlvhdr		 mdu_tlv_term;
 	uint8_t			 mdu_resv[90];
 } __packed;
-
-/*
- * lacp media:
- *   1byte
- * +-------+-------+-------+-------+
- * | media |                 speed |
- * +-------+-------+-------+-------+
- */
-
-enum lacp_linkspeed {
-	LACP_LINKSPEED_UNKNOWN = 0,
-	LACP_LINKSPEED_10,
-	LACP_LINKSPEED_100,
-	LACP_LINKSPEED_1000,
-	LACP_LINKSPEED_2500,
-	LACP_LINKSPEED_5000,
-	LACP_LINKSPEED_10G,
-	LACP_LINKSPEED_25G,
-	LACP_LINKSPEED_40G,
-	LACP_LINKSPEED_50G,
-	LACP_LINKSPEED_56G,
-	LACP_LINKSPEED_100G,
-	LACP_LINKSPEED_200G,
-};
-
-#define LACP_MEDIA_OFFSET	24
-#define LACP_MEDIA_MASK		0xff000000U
-#define LACP_MEDIA_ETHER	(__BIT(0) << LACP_MEDIA_OFFSET)
-#define LACP_MEDIA_FDX		(__BIT(1) << LACP_MEDIA_OFFSET)
-#define LACP_MEDIA_DEFAULT	(LACP_LINKSPEED_UNKNOWN |	\
-				 LACP_MEDIA_ETHER | LACP_MEDIA_FDX)
 #endif

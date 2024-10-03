@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.48.4.3 2023/12/12 16:45:00 martin Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.48.4.4 2024/10/03 11:53:46 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.48.4.3 2023/12/12 16:45:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.48.4.4 2024/10/03 11:53:46 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -114,7 +114,7 @@ static const struct lagg_proto lagg_protos[] = {
 		.pr_startport = lagg_common_startport,
 		.pr_stopport = lagg_common_stopport,
 		.pr_portstat = lagg_fail_portstat,
-		.pr_linkstate = lagg_common_linkstate,
+		.pr_linkstate = lagg_common_linkstate_ifnet_locked,
 		.pr_ioctl = lagg_fail_ioctl,
 	},
 	[LAGG_PROTO_LOADBALANCE] = {
@@ -128,7 +128,7 @@ static const struct lagg_proto lagg_protos[] = {
 		.pr_startport = lagg_lb_startport,
 		.pr_stopport = lagg_lb_stopport,
 		.pr_portstat = lagg_lb_portstat,
-		.pr_linkstate = lagg_common_linkstate,
+		.pr_linkstate = lagg_common_linkstate_ifnet_locked,
 	},
 };
 
@@ -1024,7 +1024,7 @@ lagg_tx_common(struct ifnet *ifp, struct mbuf *m)
 	} else {
 		m_freem(m);
 		if_statinc(ifp, if_oerrors);
-		error = ENOBUFS;
+		error = EIO;
 	}
 
 	lagg_variant_putref(var, &psref);
@@ -1065,22 +1065,26 @@ lagg_output(struct lagg_softc *sc, struct lagg_port *lp, struct mbuf *m)
 	mflags = m->m_flags;
 
 	error = pfil_run_hooks(ifp->if_pfil, &m, ifp, PFIL_OUT);
-	if (error != 0)
+	if (error != 0) {
+		if (m != NULL) {
+			m_freem(m);
+		}
 		return;
+	}
 	bpf_mtap(ifp, m, BPF_D_OUT);
 
 	error = lagg_port_xmit(lp, m);
 	if (error) {
 		/* mbuf is already freed */
 		if_statinc(ifp, if_oerrors);
+	} else {
+		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+		if_statinc_ref(nsr, if_opackets);
+		if_statadd_ref(nsr, if_obytes, len);
+		if (mflags & M_MCAST)
+			if_statinc_ref(nsr, if_omcasts);
+		IF_STAT_PUTREF(ifp);
 	}
-
-	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
-	if_statinc_ref(nsr, if_opackets);
-	if_statadd_ref(nsr, if_obytes, len);
-	if (mflags & M_MCAST)
-		if_statinc_ref(nsr, if_omcasts);
-	IF_STAT_PUTREF(ifp);
 }
 
 static struct mbuf *
@@ -1136,11 +1140,6 @@ lagg_input_ethernet(struct ifnet *ifp_port, struct mbuf *m)
 
 	ifp = &lp->lp_softc->sc_if;
 
-	/*
-	 * Drop promiscuously received packets
-	 * if we are not in promiscuous mode.
-	 */
-
 	if (__predict_false(m->m_len < (int)sizeof(*eh))) {
 		if ((m = m_pullup(m, sizeof(*eh))) == NULL) {
 			if_statinc(ifp, if_ierrors);
@@ -1163,6 +1162,10 @@ lagg_input_ethernet(struct ifnet *ifp_port, struct mbuf *m)
 
 		if_statinc(ifp_port, if_imcasts);
 	} else {
+		/*
+		 * Drop promiscuously received packets
+		 * if we are not in promiscuous mode.
+		 */
 		if ((ifp->if_flags & IFF_PROMISC) == 0 &&
 		    (ifp_port->if_flags & IFF_PROMISC) != 0 &&
 		    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
@@ -1173,8 +1176,13 @@ lagg_input_ethernet(struct ifnet *ifp_port, struct mbuf *m)
 	if_statadd(ifp_port, if_ibytes, m->m_pkthdr.len);
 
 	if (pfil_run_hooks(ifp_port->if_pfil, &m,
-	    ifp_port, PFIL_IN) != 0)
+	    ifp_port, PFIL_IN) != 0) {
+		if (m != NULL) {
+			m_freem(m);
+			m = NULL;
+		}
 		goto out;
+	}
 
 	m = lagg_proto_input(lp->lp_softc, lp, m);
 	if (m != NULL) {
@@ -1216,11 +1224,60 @@ lagg_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	imr->ifm_active = IFM_ETHER | IFM_AUTO;
 
 	LAGG_LOCK(sc);
+
+	imr->ifm_active |= sc->sc_media_active;
+
 	LAGG_PORTS_FOREACH(sc, lp) {
 		if (lagg_portactive(lp))
 			imr->ifm_status |= IFM_ACTIVE;
 	}
 	LAGG_UNLOCK(sc);
+}
+
+static uint64_t
+lagg_search_media_type(uint64_t linkspeed)
+{
+
+	if (linkspeed == IF_Gbps(40))
+		return IFM_40G_T | IFM_FDX;
+
+	if (linkspeed == IF_Gbps(25))
+		return IFM_25G_T | IFM_FDX;
+
+	if (linkspeed == IF_Gbps(10))
+		return IFM_10G_T | IFM_FDX;
+
+	if (linkspeed == IF_Gbps(5))
+		return IFM_5000_T | IFM_FDX;
+
+	if (linkspeed == IF_Mbps(2500))
+		return IFM_2500_T | IFM_FDX;
+
+	if (linkspeed == IF_Gbps(1))
+		return IFM_1000_T | IFM_FDX;
+
+	if (linkspeed == IF_Mbps(100))
+		return IFM_100_TX | IFM_FDX;
+
+	if (linkspeed == IF_Mbps(10))
+		return IFM_10_T | IFM_FDX;
+
+	return 0;
+}
+
+void
+lagg_set_linkspeed(struct lagg_softc *sc, uint64_t linkspeed)
+{
+	struct ifnet *ifp;
+
+	ifp = &sc->sc_if;
+
+	KASSERT(LAGG_LOCKED(sc));
+
+	ifp->if_baudrate = linkspeed;
+
+	sc->sc_media_active =
+	    lagg_search_media_type(linkspeed);
 }
 
 static int
@@ -1600,11 +1657,9 @@ lagg_pr_attach(struct lagg_softc *sc, lagg_proto pr)
 {
 	struct lagg_variant *newvar, *oldvar;
 	struct lagg_proto_softc *psc;
-	bool cleanup_oldvar;
 	int error;
 
 	error = 0;
-	cleanup_oldvar = false;
 	newvar = kmem_alloc(sizeof(*newvar), KM_SLEEP);
 
 	LAGG_LOCK(sc);
@@ -1612,30 +1667,29 @@ lagg_pr_attach(struct lagg_softc *sc, lagg_proto pr)
 
 	if (oldvar != NULL && oldvar->lv_proto == pr) {
 		error = 0;
-		goto done;
+		goto failed;
 	}
 
 	error = lagg_proto_attach(sc, pr, &psc);
 	if (error != 0)
-		goto done;
+		goto failed;
 
 	newvar->lv_proto = pr;
 	newvar->lv_psc = psc;
-
 	lagg_variant_update(sc, newvar);
-	newvar = NULL;
+	lagg_set_linkspeed(sc, 0);
+	LAGG_UNLOCK(sc);
 
 	if (oldvar != NULL) {
 		lagg_proto_detach(oldvar);
-		cleanup_oldvar = true;
-	}
-done:
-	LAGG_UNLOCK(sc);
-
-	if (newvar != NULL)
-		kmem_free(newvar, sizeof(*newvar));
-	if (cleanup_oldvar)
 		kmem_free(oldvar, sizeof(*oldvar));
+	}
+
+	return 0;
+
+failed:
+	LAGG_UNLOCK(sc);
+	kmem_free(newvar, sizeof(*newvar));
 
 	return error;
 }
@@ -1646,15 +1700,14 @@ lagg_pr_detach(struct lagg_softc *sc)
 	struct lagg_variant *var;
 
 	LAGG_LOCK(sc);
-
 	var = sc->sc_var;
 	atomic_store_release(&sc->sc_var, NULL);
+	LAGG_UNLOCK(sc);
 	pserialize_perform(sc->sc_psz);
 
 	if (var != NULL)
 		lagg_proto_detach(var);
 
-	LAGG_UNLOCK(sc);
 
 	if (var != NULL)
 		kmem_free(var, sizeof(*var));
@@ -2109,6 +2162,7 @@ lagg_port_setsadl(struct lagg_port *lp, const uint8_t *lladdr)
 
 		if (ifp_port->if_init != NULL) {
 			error = 0;
+			/* Apply updated ifp_port->if_sadl to the device */
 			if (ISSET(ifp_port->if_flags, IFF_RUNNING))
 				error = if_init(ifp_port);
 
@@ -2210,6 +2264,9 @@ lagg_port_setup(struct lagg_softc *sc,
 	switch (ifp_port->if_type) {
 	case IFT_ETHER:
 	case IFT_L2TP:
+		if (VLAN_ATTACHED((struct ethercom *)ifp_port))
+			return EBUSY;
+
 		if_type = IFT_IEEE8023ADLAG;
 		break;
 	default:
@@ -2655,10 +2712,11 @@ lagg_port_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	int error = 0;
 	u_int ifflags;
 
-	if ((lp = ifp->if_lagg) == NULL ||
-	    (sc = lp->lp_softc) == NULL) {
+	if ((lp = ifp->if_lagg) == NULL)
 		goto fallback;
-	}
+
+	sc = lp->lp_softc;
+	KASSERT(sc != NULL);
 
 	KASSERT(IFNET_LOCKED(lp->lp_ifp));
 
@@ -2730,12 +2788,9 @@ lagg_ifdetach(void *xifp_port)
 	if (lp == NULL) {
 		pserialize_read_exit(s);
 		return;
-	}
-
-	sc = lp->lp_softc;
-	if (sc == NULL) {
-		pserialize_read_exit(s);
-		return;
+	} else {
+		sc = lp->lp_softc;
+		KASSERT(sc != NULL);
 	}
 	pserialize_read_exit(s);
 
@@ -2875,7 +2930,9 @@ lagg_chg_sadl(struct ifnet *ifp, const uint8_t *lla, size_t lla_len)
 	error = 0;
 	ifa_lla = NULL;
 
+	/* Renew all AF_LINK address to update sdl_type */
 	while (1) {
+		/* find a Link-Level address that has the previous sdl_type */
 		s = pserialize_read_enter();
 		IFADDR_READER_FOREACH(ifa_cur, ifp) {
 			sdl = satocsdl(ifa_cur->ifa_addr);
@@ -2891,7 +2948,10 @@ lagg_chg_sadl(struct ifnet *ifp, const uint8_t *lla, size_t lla_len)
 
 		if (ifa_cur == NULL)
 			break;
-
+		/*
+		 * create a new address that has new sdl_type,
+		 * and copy address from the previous.
+		 */
 		ifa_next = if_dl_create(ifp, &nsdl);
 		if (ifa_next == NULL) {
 			error = ENOMEM;
@@ -2903,6 +2963,7 @@ lagg_chg_sadl(struct ifnet *ifp, const uint8_t *lla, size_t lla_len)
 		    CLLADDR(sdl), ifp->if_addrlen);
 		ifa_insert(ifp, ifa_next);
 
+		/* the next Link-Level address is already set */
 		if (ifa_lla == NULL &&
 		    memcmp(CLLADDR(sdl), lla, lla_len) == 0) {
 			ifa_lla = ifa_next;
@@ -2918,6 +2979,7 @@ lagg_chg_sadl(struct ifnet *ifp, const uint8_t *lla, size_t lla_len)
 			ifafree(ifa_cur);
 		}
 
+		/* remove the old address */
 		ifaref(ifa_cur);
 		ifa_release(ifa_cur, &psref_cur);
 		ifa_remove(ifp, ifa_cur);
@@ -2927,6 +2989,7 @@ lagg_chg_sadl(struct ifnet *ifp, const uint8_t *lla, size_t lla_len)
 		ifa_release(ifa_next, &psref_next);
 	}
 
+	/* acquire or create the next Link-Level address */
 	if (ifa_lla != NULL) {
 		ifa_next = ifa_lla;
 
@@ -2946,13 +3009,19 @@ lagg_chg_sadl(struct ifnet *ifp, const uint8_t *lla, size_t lla_len)
 		ifa_insert(ifp, ifa_next);
 	}
 
-	if (ifa_next != ifp->if_dl) {
+	/* Activate the next Link-Level address */
+	if (__predict_true(ifa_next != ifp->if_dl)) {
+		/* save the current address */
 		ifa_cur = ifp->if_dl;
 		if (ifa_cur != NULL)
 			ifa_acquire(ifa_cur, &psref_cur);
 
 		if_activate_sadl(ifp, ifa_next, nsdl);
 
+		/*
+		 * free the saved address after switching,
+		 * if the address is not if_hwdl.
+		 */
 		if (ifa_cur != NULL) {
 			if (ifa_cur != ifp->if_hwdl) {
 				ifaref(ifa_cur);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.h,v 1.18 2022/06/26 17:55:24 riastradh Exp $	*/
+/*	$NetBSD: if_laggproto.h,v 1.18.4.1 2024/10/03 11:53:46 martin Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -146,6 +146,7 @@ struct lagg_vlantag {
 struct lagg_softc {
 	kmutex_t		 sc_lock;
 	struct ifmedia		 sc_media;
+	uint64_t		 sc_media_active;
 	u_char			 sc_iftype;
 
 	/* interface link-layer address */
@@ -286,6 +287,7 @@ void		lagg_port_putref(struct lagg_port *, struct psref *);
 void		lagg_output(struct lagg_softc *,
 		    struct lagg_port *, struct mbuf *);
 uint32_t	lagg_hashmbuf(struct lagg_softc *, struct mbuf *);
+void		lagg_set_linkspeed(struct lagg_softc *, uint64_t);
 
 void		lagg_common_detach(struct lagg_proto_softc *);
 int		lagg_common_allocport(struct lagg_proto_softc *,
@@ -296,7 +298,7 @@ void		lagg_common_startport(struct lagg_proto_softc *,
 		    struct lagg_port *);
 void		lagg_common_stopport(struct lagg_proto_softc *,
 		    struct lagg_port *);
-void		lagg_common_linkstate(struct lagg_proto_softc *,
+void		lagg_common_linkstate_ifnet_locked(struct lagg_proto_softc *,
 		    struct lagg_port *);
 
 int		lagg_none_attach(struct lagg_softc *,
