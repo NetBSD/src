@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2473 2024/09/09 11:30:05 riastradh Exp $
+#	$NetBSD: mi,v 1.2474 2024/10/03 17:14:12 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -5018,6 +5018,7 @@
 ./usr/share/man/cat2/semctl.0			comp-c-catman		.cat
 ./usr/share/man/cat2/semget.0			comp-c-catman		.cat
 ./usr/share/man/cat2/semop.0			comp-c-catman		.cat
+./usr/share/man/cat2/semtimedop.0		comp-c-catman		.cat
 ./usr/share/man/cat2/send.0			comp-c-catman		.cat
 ./usr/share/man/cat2/sendmmsg.0			comp-c-catman		.cat
 ./usr/share/man/cat2/sendmsg.0			comp-c-catman		.cat
@@ -13592,6 +13593,7 @@
 ./usr/share/man/html2/semctl.html		comp-c-htmlman		html
 ./usr/share/man/html2/semget.html		comp-c-htmlman		html
 ./usr/share/man/html2/semop.html		comp-c-htmlman		html
+./usr/share/man/html2/semtimedop.html		comp-c-htmlman		html
 ./usr/share/man/html2/send.html			comp-c-htmlman		html
 ./usr/share/man/html2/sendmmsg.html		comp-c-htmlman		html
 ./usr/share/man/html2/sendmsg.html		comp-c-htmlman		html
@@ -22006,6 +22008,7 @@
 ./usr/share/man/man2/semctl.2			comp-c-man		.man
 ./usr/share/man/man2/semget.2			comp-c-man		.man
 ./usr/share/man/man2/semop.2			comp-c-man		.man
+./usr/share/man/man2/semtimedop.2		comp-c-man		.man
 ./usr/share/man/man2/send.2			comp-c-man		.man
 ./usr/share/man/man2/sendmmsg.2			comp-c-man		.man
 ./usr/share/man/man2/sendmsg.2			comp-c-man		.man
