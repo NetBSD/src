@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.256 2024/10/03 16:58:17 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.257 2024/10/03 16:59:15 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -383,7 +383,7 @@ MLINKS+=setuid.2 setegid.2 setuid.2 seteuid.2 setuid.2 setgid.2
 MLINKS+=shmat.2 shmdt.2
 MLINKS+=symlink.2 symlinkat.2
 MLINKS+=timer_settime.2 timer_gettime.2 timer_settime.2 timer_getoverrun.2
-MLINKS+=semop2. semtimedop.2
+MLINKS+=semop.2 semtimedop.2
 MLINKS+=sigqueue.2 sigqueueinfo.2
 MLINKS+=sigtimedwait.2 sigwaitinfo.2
 MLINKS+=sigtimedwait.2 sigwait.2
