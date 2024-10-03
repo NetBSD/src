@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.108 2023/02/21 11:40:00 riastradh Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.109 2024/10/03 20:19:55 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.108 2023/02/21 11:40:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.109 2024/10/03 20:19:55 andvar Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_copy_symtab.h"
@@ -244,7 +244,7 @@ findsym(const char *name, struct ksyms_symtab *table, int type)
 /*
  * ksyms can be loaded even if the kernel has a missing "pseudo-device ksyms"
  * statement because ddb and modules require it. Fixing it properly requires
- * fixing config to warn about required, but missing preudo-devices. For now,
+ * fixing config to warn about required, but missing pseudo-devices. For now,
  * if we don't have the pseudo-device we don't need the attach function; this
  * is fine, as it does nothing.
  */
