@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.36 2024/09/21 12:38:36 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.37 2024/10/03 16:26:03 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -1791,4 +1791,117 @@ sys/arch/i386/i386/vector.S			1.90
 
 	i386: PR 58653: fix Hyper-V upcall interrupt handler.
 	[rin, ticket #908]
+
+sys/dev/usb/ohci.c				1.328
+
+	ohci(4): fix/add some memory sync calls.
+	[skrll, ticket #926]
+
+sys/arch/evbppc/conf/WII			1.6
+sys/arch/evbppc/include/wii.h			1.8
+sys/arch/evbppc/wii/dev/ehci_hollywood.c	1.3
+sys/arch/evbppc/wii/dev/hollywood.c		1.3
+sys/arch/evbppc/wii/dev/hollywood.h		1.3
+sys/arch/evbppc/wii/dev/ohci_hollywood.c	1.3
+sys/arch/evbppc/wii/dev/sdhc_hollywood.c	1.3
+sys/dev/usb/ohci.c				1.329
+sys/dev/usb/ohcireg.h				1.29
+sys/dev/usb/ohcivar.h				1.63
+
+	evbppc: wii: add support for ohci(4).
+	[jmcneill, ticket #910]
+
+sbin/gpt/biosboot.c				1.33
+
+	gpt(8): portability fix for the tool version.
+	[lloyd, ticket #911]
+
+distrib/sets/lists/debug/mi			1.449
+distrib/sets/lists/tests/mi			1.1339
+lib/libm/src/s_remquo.c				1.3,1.4
+tests/lib/libm/Makefile				1.51
+tests/lib/libm/t_remquo.c			1.1,1.2
+
+	libm: fix remquo() returning wrong quotient.
+	[gdt, ticket #912]
+
+etc/defaults/npf.boot.conf			1.4
+
+	NPF: allow DHCPv6 during early boot stage so that dhcpcd(8) does
+	not complain at boot when using the ia_pd option.
+	[nakayama, ticket #913]
+
+sys/dev/pci/ld_virtio.c				1.33-1.35
+sys/dev/pci/vioscsi.c				1.35
+sys/dev/pci/virtio.c				1.79-1.82
+sys/dev/pci/virtio_pci.c			1.45-1.54
+sys/dev/virtio/viocon.c				1.9
+
+	virtio(4): various fixes:
+	- PR 57981: ld@virtio: fix F_SEG_MAX negotiation
+	- PR 58338: ld@virtio: fix maximum size parameters
+	- virtio@pci: add support to arm{,64}be
+	- PR 58555: viocon: fix kernel panic during boot
+	- vioscsi: improve error handling for queue shortage
+	[rin, ticket #914]
+
+sys/arch/x86/x86/tsc.c				1.59,1.60
+
+	x86/tsc(4): mitigation for AMD errata 778.
+	[rin, ticket #915]
+
+sys/net/lagg/if_lagg.c				1.54,1.55,1.59,1.60,1.62-1.70
+sys/net/lagg/if_lagg_lacp.c			1.28-1.43
+sys/net/lagg/if_lagg_lacp.h			1.5
+sys/net/lagg/if_laggproto.c			1.7-1.16
+sys/net/lagg/if_laggproto.h			1.19,1.20
+tests/net/if_lagg/t_lagg.sh			1.11
+
+	lagg(4): various fixes to improve stability.
+	[rin, ticket #916]
+
+sys/altq/altq_cbq.c				1.40,1.41
+
+	altq: fix regressions on CBQ
+	[ozaki-r, ticket #917]
+
+sys/arch/x86/include/specialreg.h		1.209-1.211
+sys/arch/x86/x86/errata.c			1.28-1.30,1.33-1.35
+usr.sbin/cpuctl/arch/i386.c			1.144
+
+	x68: mitigation for AMD Zen2 errata 1474
+	[rin, ticket #919]
+
+tools/gmp/Makefile				1.6
+
+	PR 58707: build fix for tools/gmp on newer macOS toolchains.
+	[bad, ticket #921]
+
+sys/arch/aarch64/aarch64/cpu.c			1.79,1.80
+sys/arch/arm/include/cputypes.h			1.17
+usr.sbin/cpuctl/arch/aarch64.c			1.24
+
+	aarch64: add Ampere 1/1A CPU identification.
+	[jakllsch, ticket #922]
+
+external/cddl/osnet/sys/sys/types.h		1.21
+
+	PR 57807: fix cross-build on recent -current.
+	[rin, ticket #923]
+
+sys/rump/net/lib/libshmif/if_shmem.c		1.89
+
+	shmif(4): fix logics for media change and status.
+	[rin, ticket #924]
+
+share/man/man4/cgd.4				1.25
+
+	cgd(4): improve man page.
+	[nia, ticket #925]
+
+sys/arch/x86/x86/mpacpi.c			1.111
+
+	x86: PR 57737: remove a bogus check on X2APIC Id that cause issues on
+	recent systems.
+	[bouyer, ticket #927]
 
