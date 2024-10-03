@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.99 2024/10/03 16:50:52 christos Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.100 2024/10/03 16:54:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.99 2024/10/03 16:50:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.100 2024/10/03 16:54:08 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -801,7 +801,7 @@ sys_semget(struct lwp *l, const struct sys_semget_args *uap, register_t *retval)
 #define SMALL_SOPS 8
 
 static int
-do_semop(struct lwp *l, int semid, struct sembuf *usops,
+do_semop(struct lwp *l, int usemid, struct sembuf *usops,
     size_t nsops, struct timespec *utimeout, register_t *retval)
 {
 	struct proc *p = l->l_proc;
@@ -820,7 +820,7 @@ do_semop(struct lwp *l, int semid, struct sembuf *usops,
 
 	RUN_ONCE(&exithook_control, seminit_exithook);
 
-	SEM_PRINTF(("call to semop(%d, %p, %zu)\n", semid, usops, nsops));
+	SEM_PRINTF(("call to semop(%d, %p, %zu)\n", usemid, usops, nsops));
 
 	if (__predict_false((p->p_flag & PK_SYSVSEM) == 0)) {
 		mutex_enter(p->p_lock);
@@ -853,7 +853,7 @@ restart:
 	while (__predict_false(sem_realloc_state))
 		cv_wait(&sem_realloc_cv, &semlock);
 
-	semid = IPCID_TO_IX(semid);	/* Convert back to zero origin */
+	semid = IPCID_TO_IX(usemid);	/* Convert back to zero origin */
 	if (semid < 0 || semid >= seminfo.semmni) {
 		error = EINVAL;
 		goto out;
