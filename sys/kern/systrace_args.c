@@ -1,4 +1,4 @@
-/* $NetBSD: systrace_args.c,v 1.53 2024/05/20 01:40:44 christos Exp $ */
+/* $NetBSD: systrace_args.c,v 1.54 2024/10/03 16:51:35 christos Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -3942,6 +3942,16 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		iarg[1] = SCARG(p, to); /* int */
 		iarg[2] = SCARG(p, flags); /* int */
 		*n_args = 3;
+		break;
+	}
+	/* sys_semtimedop */
+	case 506: {
+		const struct sys_semtimedop_args *p = params;
+		iarg[0] = SCARG(p, semid); /* int */
+		uarg[1] = (intptr_t) SCARG(p, sops); /* struct sembuf * */
+		uarg[2] = SCARG(p, nsops); /* size_t */
+		uarg[3] = (intptr_t) SCARG(p, timeout); /* struct timespec * */
+		*n_args = 4;
 		break;
 	}
 	default:
@@ -10654,6 +10664,25 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* sys_semtimedop */
+	case 506:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "struct sembuf *";
+			break;
+		case 2:
+			p = "size_t";
+			break;
+		case 3:
+			p = "struct timespec *";
+			break;
+		default:
+			break;
+		};
+		break;
 	default:
 		break;
 	};
@@ -12883,6 +12912,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* sys___dup3100 */
 	case 505:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* sys_semtimedop */
+	case 506:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
