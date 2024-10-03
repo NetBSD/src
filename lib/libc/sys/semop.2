@@ -1,4 +1,4 @@
-.\"	$NetBSD: semop.2,v 1.17 2010/03/22 19:30:55 joerg Exp $
+.\"	$NetBSD: semop.2,v 1.18 2024/10/03 16:58:17 christos Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -29,11 +29,11 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 3, 2005
+.Dd October 3, 2024
 .Dt SEMOP 2
 .Os
 .Sh NAME
-.Nm semop
+.Nm semop, semtimedop
 .Nd semaphore operations
 .Sh LIBRARY
 .Lb libc
@@ -41,6 +41,8 @@
 .In sys/sem.h
 .Ft int
 .Fn semop "int semid" "struct sembuf *sops" "size_t nsops"
+.Ft int
+.Fn semtimedop "int semid" "struct sembuf *sops" "size_t nsops" "struct timespec *timeout"
 .Sh DESCRIPTION
 .Fn semop
 provides a number of atomic operations on a set of semaphores.
@@ -114,9 +116,37 @@ This is useful to prevent other processes waiting on a semaphore to block
 forever, should the process that has the semaphore locked terminate in a
 critical section.
 .El
+.Pp
+.Fn semtimedop
+is similar to
+.Fn semop ,
+but it also allows specifying a timeout.
+When the semaphore is not available,
+the thread typically sleeps until the semaphore is available.
+.Fn semtimedop
+allows specifying a maximum amount of time in
+.Fa timeout
+argument that a thread should sleep while waiting for the semaphore to be available.
+If the specified time limit has been reached,
+.Fn semtimedop
+fails with
+.Er EAGAIN
+(and none of the operations in
+.Fa sops
+are performed).
+If
+.Fa timeout
+is
+.Dv NULL ,
+.Fn semtimedop
+behaves exactly like
+.Fn semop .
 .Sh RETURN VALUES
-Upon successful completion, a value of 0 is returned.
-Otherwise, \-1 is returned and the global variable
+Upon successful completion both
+.Fn semop
+and
+.Fn semtimedop
+return a value of 0. Otherwise, \-1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
@@ -156,7 +186,56 @@ was set in
 .It Bq Er EFAULT
 .Fa sops
 points to an illegal address.
+.It Bq Er EINTR
+While blocked in this system call, the thread caught a signal.
 .El
+.Pp
+In addition,
+.Fn semtimedop
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EAGAIN
+An operation could not proceed immediately and either
+.Dv IPC_NOWAIT
+was specified in
+.Va sem_flg
+or the time limit specified in
+.Fa timeout
+expired.
+.It Bq Er EFAULT
+An address specified in the
+.Fa timeout
+argument isn't accessible.
+.El
+.Sh EXAMPLES
+The following example shows how to perform a semaphore operation with a timeout:
+.Bd -literal -offset indent
+
+/* Performs a semaphore operation with a 5 sec timeout*/
+
+struct sembuf sops[1];        /* Semaphore operation structure */
+struct timespec timeout;      /* Timeout structure */
+
+/* Create semaphore set with 1 semaphore */
+int semid = semget(key, 1, 0666 | IPC_CREAT);
+
+/* Initialize semaphore to 0 */
+if (semctl(semid, 0, SETVAL, 0) == -1) {
+    warn("semctl SETVAL");
+    exit(EXIT_FAILURE);
+}
+
+sops[0].sem_num = 0;          /* Operation on semaphore 0 */
+sops[0].sem_op = -1;          /* Decrement semaphore by 1 */
+sops[0].sem_flg = 0;          /* No flags */
+
+timeout.tv_sec = 5;           /* 5 seconds */
+timeout.tv_nsec = 0;          /* 0 nanoseconds */
+
+if (semtimedop(semid, sops, 1, &timeout) == -1) {
+    warn("semtimedop");       /* Print error message */
+}
+.Ed
 .Sh SEE ALSO
 .Xr semctl 2 ,
 .Xr semget 2
