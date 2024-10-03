@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.82 2024/10/01 16:41:29 riastradh Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.83 2024/10/03 12:56:49 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.82 2024/10/01 16:41:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.83 2024/10/03 12:56:49 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -189,13 +189,13 @@ linux_sys_clone3(struct lwp *l, const struct linux_sys_clone3_args *uap, registe
 
 	/* Define allowed flags */
 	if (cl_args.flags & LINUX_CLONE_UNIMPLEMENTED_FLAGS) {
-		DPRINTF("%s: Unsupported flags for clone3: %#x\n", __func__,
-		    cl_args.flags & LINUX_CLONE_UNIMPLEMENTED_FLAGS);
+		DPRINTF("%s: Unsupported flags for clone3: %#" PRIx64 "\n",
+		    __func__, cl_args.flags & LINUX_CLONE_UNIMPLEMENTED_FLAGS);
 		return EOPNOTSUPP;
 	}
 	if (cl_args.flags & ~LINUX_CLONE_ALLOWED_FLAGS) {
-		DPRINTF("%s: Disallowed flags for clone3: %#x\n", __func__,
-		    cl_args.flags & ~LINUX_CLONE_ALLOWED_FLAGS);
+		DPRINTF("%s: Disallowed flags for clone3: %#" PRIx64 "\n",
+		    __func__, cl_args.flags & ~LINUX_CLONE_ALLOWED_FLAGS);
 		return EINVAL;
 	}
 
@@ -274,7 +274,7 @@ linux_clone_nptl(struct lwp *l, const struct linux_sys_clone_args *uap, register
 	    SCARG(uap, stack), 0, child_return, NULL, &l2, l->l_class,
 	    &l->l_sigmask, &l->l_sigstk);
 	if (__predict_false(error)) {
-		DPRINTF(("%s: lwp_create error=%d\n", __func__, error));
+		DPRINTF("%s: lwp_create error=%d\n", __func__, error);
 		uvm_uarea_free(uaddr);
 		return error;
 	}
@@ -305,8 +305,8 @@ linux_clone_nptl(struct lwp *l, const struct linux_sys_clone_args *uap, register
 	if (flags & LINUX_CLONE_SETTLS) {
 		error = LINUX_LWP_SETPRIVATE(l2, tls);
 		if (error) {
-			DPRINTF(("%s: LINUX_LWP_SETPRIVATE %d\n", __func__,
-			    error));
+			DPRINTF("%s: LINUX_LWP_SETPRIVATE %d\n", __func__,
+			    error);
 			lwp_exit(l2);
 			return error;
 		}
