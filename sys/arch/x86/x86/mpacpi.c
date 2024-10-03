@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.109.4.1 2023/03/30 11:43:17 martin Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.109.4.2 2024/10/03 16:23:54 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.109.4.1 2023/03/30 11:43:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.109.4.2 2024/10/03 16:23:54 martin Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -392,17 +392,6 @@ mpacpi_config_cpu(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 
 	case ACPI_MADT_TYPE_LOCAL_X2APIC:
 		x2apic = (ACPI_MADT_LOCAL_X2APIC *)hdrp;
-
-		/* ACPI spec: "Logical processors with APIC ID values
-		 * less than 255 must use the Processor Local APIC
-		 * structure to convey their APIC information to OSPM."
-		 * But Xen with PVH dom0 breaks this ACPI spec.
-		 */
-		if (x2apic->LocalApicId <= 0xff && vm_guest != VM_GUEST_XENPVH) {
-			printf("bogus MADT X2APIC entry (id = 0x%"PRIx32")\n",
-			    x2apic->LocalApicId);
-			break;
-		}
 
 		if (x2apic->LapicFlags & ACPI_MADT_ENABLED) {
 			if (x2apic->LocalApicId != cpunum)
