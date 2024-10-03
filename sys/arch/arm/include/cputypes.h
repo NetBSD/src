@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.16 2021/11/13 01:09:51 simonb Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.16.4.1 2024/10/03 16:11:36 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -61,6 +61,7 @@
 #define CPU_ID_APPLE		0x61000000 /* 'a' */
 #define CPU_ID_FARADAY		0x66000000 /* 'f' */
 #define CPU_ID_INTEL		0x69000000 /* 'i' */
+#define CPU_ID_AMPERE		0xc0000000 /* 'À' */
 
 /* How to decide what format the CPUID is in. */
 #define CPU_ID_ISOLD(x)		(((x) & 0x0000f000) == 0x00000000)
@@ -207,6 +208,9 @@
 #define CPU_ID_THUNDERX81XXRX	0x43000a20
 #define CPU_ID_THUNDERX83XXRX	0x43000a30
 #define CPU_ID_THUNDERX2RX	0x43000af0
+
+#define CPU_ID_AMPERE1		0xc00fac30
+#define CPU_ID_AMPERE1A		0xc00fac40
 
 /*
  * Chip-specific errata. These defines are intended to be

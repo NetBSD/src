@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.70.4.2 2024/09/20 09:33:48 martin Exp $ */
+/* $NetBSD: cpu.c,v 1.70.4.3 2024/10/03 16:11:36 martin Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.70.4.2 2024/09/20 09:33:48 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.70.4.3 2024/10/03 16:11:36 martin Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -213,6 +213,8 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_THUNDERX2RX, "ThunderX2", "Marvell", "v8.1-A" },
 	{ CPU_ID_APPLE_M1_ICESTORM & CPU_PARTMASK, "M1 Icestorm", "Apple", "Apple Silicon" },
 	{ CPU_ID_APPLE_M1_FIRESTORM & CPU_PARTMASK, "M1 Firestorm", "Apple", "Apple Silicon" },
+	{ CPU_ID_AMPERE1 & CPU_PARTMASK, "Ampere-1", "Ampere", "v8.6-A+" },
+	{ CPU_ID_AMPERE1A & CPU_PARTMASK, "Ampere-1A", "Ampere", "v8.6-A+" },
 };
 
 static void
