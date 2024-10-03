@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.c,v 1.6 2022/03/31 07:59:05 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.c,v 1.6.4.1 2024/10/03 11:53:46 martin Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.6 2022/03/31 07:59:05 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.6.4.1 2024/10/03 11:53:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -57,15 +57,16 @@ struct lagg_proto_softc {
 	size_t			 psc_ctxsiz;
 	void			*psc_ctx;
 	size_t			 psc_nactports;
+	struct workqueue	*psc_workq;
+	struct lagg_work	 psc_work_linkspeed;
 };
 
 /*
  * Locking notes:
  * - Items of struct lagg_proto_softc is protected by
  *   psc_lock (an adaptive mutex)
- * - psc_ports is protected by pserialize (psc_psz)
- *   - Updates of psc_ports is serialized by sc_lock in
- *     struct lagg_softc
+ * - psc_ports is protected by pselialize (psc_psz) and
+ *   it updates exclusively by LAGG_PROTO_LOCK.
  * - Other locking notes are described in if_laggproto.h
  */
 
@@ -90,7 +91,9 @@ struct lagg_lb {
 struct lagg_proto_port {
 	struct pslist_entry	 lpp_entry;
 	struct lagg_port	*lpp_laggport;
+	uint64_t		 lpp_linkspeed;
 	bool			 lpp_active;
+	bool			 lpp_running;
 };
 
 #define LAGG_PROTO_LOCK(_psc)	mutex_enter(&(_psc)->psc_lock)
@@ -107,6 +110,11 @@ static void	lagg_proto_remove_port(struct lagg_proto_softc *,
 static struct lagg_port *
 		lagg_link_active(struct lagg_proto_softc *psc,
 		    struct lagg_proto_port *, struct psref *);
+static void	lagg_fail_linkspeed_work(struct lagg_work *, void *);
+static void	lagg_lb_linkspeed_work(struct lagg_work*,
+		    void *);
+static void	lagg_common_linkstate(struct lagg_proto_softc *,
+		    struct lagg_port *);
 
 static inline struct lagg_portmap *
 lagg_portmap_active(struct lagg_portmaps *maps)
@@ -124,7 +132,6 @@ lagg_portmap_next(struct lagg_portmaps *maps)
 	size_t i;
 
 	i = atomic_load_consume(&maps->maps_activepmap);
-	i &= 0x1;
 	i ^= 0x1;
 
 	return &maps->maps_pmap[i];
@@ -146,6 +153,7 @@ static struct lagg_proto_softc *
 lagg_proto_alloc(lagg_proto pr, struct lagg_softc *sc)
 {
 	struct lagg_proto_softc *psc;
+	char xnamebuf[MAXCOMLEN];
 	size_t ctxsiz;
 
 	switch (pr) {
@@ -163,9 +171,20 @@ lagg_proto_alloc(lagg_proto pr, struct lagg_softc *sc)
 	if (psc == NULL)
 		return NULL;
 
+	snprintf(xnamebuf, sizeof(xnamebuf), "%s.proto",
+	    sc->sc_if.if_xname);
+	psc->psc_workq = lagg_workq_create(xnamebuf,
+		    PRI_SOFTNET, IPL_SOFTNET, WQ_MPSAFE);
+	if (psc->psc_workq == NULL) {
+		LAGG_LOG(sc, LOG_ERR, "workqueue create failed\n");
+		kmem_free(psc, sizeof(*psc));
+		return NULL;
+	}
+
 	if (ctxsiz > 0) {
 		psc->psc_ctx = kmem_zalloc(ctxsiz, KM_NOSLEEP);
 		if (psc->psc_ctx == NULL) {
+			lagg_workq_destroy(psc->psc_workq);
 			kmem_free(psc, sizeof(*psc));
 			return NULL;
 		}
@@ -185,8 +204,11 @@ static void
 lagg_proto_free(struct lagg_proto_softc *psc)
 {
 
+	lagg_workq_wait(psc->psc_workq, &psc->psc_work_linkspeed);
 	pserialize_destroy(psc->psc_psz);
 	mutex_destroy(&psc->psc_lock);
+	lagg_workq_destroy(psc->psc_workq);
+	PSLIST_DESTROY(&psc->psc_ports);
 
 	if (psc->psc_ctxsiz > 0)
 		kmem_free(psc->psc_ctx, psc->psc_ctxsiz);
@@ -251,6 +273,7 @@ lagg_common_freeport(struct lagg_proto_softc *psc, struct lagg_port *lp)
 	struct lagg_proto_port *pport;
 
 	pport = lp->lp_proto_ctx;
+	KASSERT(!pport->lpp_running);
 	lp->lp_proto_ctx = NULL;
 
 	kmem_free(pport, sizeof(*pport));
@@ -299,8 +322,12 @@ lagg_proto_remove_port(struct lagg_proto_softc *psc,
 
 	LAGG_PROTO_LOCK(psc);
 	PSLIST_WRITER_REMOVE(pport, lpp_entry);
-	pserialize_perform(psc->psc_psz);
 	LAGG_PROTO_UNLOCK(psc);
+	pserialize_perform(psc->psc_psz);
+
+	/* re-initialize for reuse */
+	PSLIST_ENTRY_DESTROY(pport, lpp_entry);
+	PSLIST_ENTRY_INIT(pport, lpp_entry);
 }
 
 void
@@ -310,6 +337,10 @@ lagg_common_startport(struct lagg_proto_softc *psc, struct lagg_port *lp)
 
 	pport = lp->lp_proto_ctx;
 	lagg_proto_insert_port(psc, pport);
+
+	LAGG_PROTO_LOCK(psc);
+	pport->lpp_running = true;
+	LAGG_PROTO_UNLOCK(psc);
 
 	lagg_common_linkstate(psc, lp);
 }
@@ -321,6 +352,11 @@ lagg_common_stopport(struct lagg_proto_softc *psc, struct lagg_port *lp)
 	struct ifnet *ifp;
 
 	pport = lp->lp_proto_ctx;
+
+	LAGG_PROTO_LOCK(psc);
+	pport->lpp_running = false;
+	LAGG_PROTO_UNLOCK(psc);
+
 	lagg_proto_remove_port(psc, pport);
 
 	if (pport->lpp_active) {
@@ -334,22 +370,46 @@ lagg_common_stopport(struct lagg_proto_softc *psc, struct lagg_port *lp)
 
 		pport->lpp_active = false;
 	}
+
+	lagg_workq_add(psc->psc_workq, &psc->psc_work_linkspeed);
+}
+static void
+lagg_common_linkstate(struct lagg_proto_softc *psc, struct lagg_port *lp)
+{
+
+	IFNET_ASSERT_UNLOCKED(lp->lp_ifp);
+
+	IFNET_LOCK(lp->lp_ifp);
+	lagg_common_linkstate_ifnet_locked(psc, lp);
+	IFNET_UNLOCK(lp->lp_ifp);
 }
 
 void
-lagg_common_linkstate(struct lagg_proto_softc *psc, struct lagg_port *lp)
+lagg_common_linkstate_ifnet_locked(struct lagg_proto_softc *psc, struct lagg_port *lp)
 {
 	struct lagg_proto_port *pport;
-	struct ifnet *ifp;
+	struct ifnet *ifp, *ifp_port;
+	struct ifmediareq ifmr;
+	uint64_t linkspeed;
 	bool is_active;
+	int error;
 
 	pport = lp->lp_proto_ctx;
 	is_active = lagg_portactive(lp);
+	ifp_port = lp->lp_ifp;
 
-	if (pport->lpp_active == is_active)
+	KASSERT(IFNET_LOCKED(ifp_port));
+
+	LAGG_PROTO_LOCK(psc);
+	if (!pport->lpp_running ||
+	    pport->lpp_active == is_active) {
+		LAGG_PROTO_UNLOCK(psc);
 		return;
+	}
 
 	ifp = &psc->psc_softc->sc_if;
+	pport->lpp_active = is_active;
+
 	if (is_active) {
 		psc->psc_nactports++;
 		if (psc->psc_nactports == 1)
@@ -361,8 +421,20 @@ lagg_common_linkstate(struct lagg_proto_softc *psc, struct lagg_port *lp)
 		if (psc->psc_nactports == 0)
 			if_link_state_change(ifp, LINK_STATE_DOWN);
 	}
+	LAGG_PROTO_UNLOCK(psc);
 
-	atomic_store_relaxed(&pport->lpp_active, is_active);
+	memset(&ifmr, 0, sizeof(ifmr));
+	error = if_ioctl(ifp_port, SIOCGIFMEDIA, (void *)&ifmr);
+	if (error == 0) {
+		linkspeed = ifmedia_baudrate(ifmr.ifm_active);
+	} else {
+		linkspeed = 0;
+	}
+
+	LAGG_PROTO_LOCK(psc);
+	pport->lpp_linkspeed = linkspeed;
+	LAGG_PROTO_UNLOCK(psc);
+	lagg_workq_add(psc->psc_workq, &psc->psc_work_linkspeed);
 }
 
 void
@@ -392,6 +464,8 @@ lagg_fail_attach(struct lagg_softc *sc, struct lagg_proto_softc **xpsc)
 
 	fovr = psc->psc_ctx;
 	fovr->fo_rx_all = true;
+	lagg_work_set(&psc->psc_work_linkspeed,
+	    lagg_fail_linkspeed_work, psc);
 
 	*xpsc = psc;
 	return 0;
@@ -510,6 +584,33 @@ lagg_fail_ioctl(struct lagg_proto_softc *psc, struct laggreqproto *lreq)
 	return error;
 }
 
+void
+lagg_fail_linkspeed_work(struct lagg_work *_lw __unused, void *xpsc)
+{
+	struct lagg_proto_softc *psc = xpsc;
+	struct lagg_proto_port *pport;
+	struct lagg_port *lp;
+	struct psref psref;
+	uint64_t linkspeed;
+
+	kpreempt_disable();
+	lp = lagg_link_active(psc, NULL, &psref);
+	if (lp != NULL) {
+		pport = lp->lp_proto_ctx;
+		LAGG_PROTO_LOCK(psc);
+		linkspeed = pport->lpp_linkspeed;
+		LAGG_PROTO_UNLOCK(psc);
+		lagg_port_putref(lp, &psref);
+	} else {
+		linkspeed = 0;
+	}
+	kpreempt_enable();
+
+	LAGG_LOCK(psc->psc_softc);
+	lagg_set_linkspeed(psc->psc_softc, linkspeed);
+	LAGG_UNLOCK(psc->psc_softc);
+}
+
 int
 lagg_lb_attach(struct lagg_softc *sc, struct lagg_proto_softc **xpsc)
 {
@@ -522,6 +623,8 @@ lagg_lb_attach(struct lagg_softc *sc, struct lagg_proto_softc **xpsc)
 
 	lb = psc->psc_ctx;
 	lb->lb_pmaps.maps_activepmap = 0;
+	lagg_work_set(&psc->psc_work_linkspeed,
+	    lagg_lb_linkspeed_work, psc);
 
 	*xpsc = psc;
 	return 0;
@@ -550,8 +653,8 @@ lagg_lb_startport(struct lagg_proto_softc *psc, struct lagg_port *lp)
 	pm_next->pm_nports = n;
 
 	lagg_portmap_switch(&lb->lb_pmaps);
-	pserialize_perform(psc->psc_psz);
 	LAGG_PROTO_UNLOCK(psc);
+	pserialize_perform(psc->psc_psz);
 }
 
 void
@@ -576,9 +679,11 @@ lagg_lb_stopport(struct lagg_proto_softc *psc, struct lagg_port *lp)
 		n++;
 	}
 
+	pm_next->pm_nports = n;
+
 	lagg_portmap_switch(&lb->lb_pmaps);
-	pserialize_perform(psc->psc_psz);
 	LAGG_PROTO_UNLOCK(psc);
+	pserialize_perform(psc->psc_psz);
 
 	lagg_common_stopport(psc, lp);
 }
@@ -595,14 +700,18 @@ lagg_lb_transmit(struct lagg_proto_softc *psc, struct mbuf *m)
 	int s;
 
 	lb = psc->psc_ctx;
-	hash  = lagg_hashmbuf(psc->psc_softc, m);
+	hash = lagg_hashmbuf(psc->psc_softc, m);
 
 	s = pserialize_read_enter();
 
 	pm = lagg_portmap_active(&lb->lb_pmaps);
-	hash %= pm->pm_nports;
-	lp0 = pm->pm_ports[hash];
-	lp = lagg_link_active(psc, lp0->lp_proto_ctx, &psref);
+	if (__predict_true(pm->pm_nports != 0)) {
+		hash %= pm->pm_nports;
+		lp0 = pm->pm_ports[hash];
+		lp = lagg_link_active(psc, lp0->lp_proto_ctx, &psref);
+	} else {
+		lp = NULL;
+	}
 
 	pserialize_read_exit(s);
 
@@ -639,4 +748,28 @@ lagg_lb_portstat(struct lagg_proto_softc *psc, struct lagg_port *lp,
 		SET(resp->rp_flags, LAGG_PORT_ACTIVE |
 		    LAGG_PORT_COLLECTING | LAGG_PORT_DISTRIBUTING);
 	}
+}
+
+static void
+lagg_lb_linkspeed_work(struct lagg_work *_lw __unused, void *xpsc)
+{
+	struct lagg_proto_softc *psc = xpsc;
+	struct lagg_proto_port *pport;
+	uint64_t linkspeed, l;
+
+	linkspeed = 0;
+
+	LAGG_PROTO_LOCK(psc); /* acquired to refer lpp_linkspeed */
+	PSLIST_READER_FOREACH(pport, &psc->psc_ports,
+	    struct lagg_proto_port, lpp_entry) {
+		if (pport->lpp_active) {
+			l = pport->lpp_linkspeed;
+			linkspeed = MAX(linkspeed, l);
+		}
+	}
+	LAGG_PROTO_UNLOCK(psc);
+
+	LAGG_LOCK(psc->psc_softc);
+	lagg_set_linkspeed(psc->psc_softc, linkspeed);
+	LAGG_UNLOCK(psc->psc_softc);
 }
