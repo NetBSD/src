@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.79 2024/08/09 23:24:15 bad Exp $
+# $NetBSD: Makefile,v 1.80 2024/10/03 17:11:14 christos Exp $
 
 NOMAN=		# defined
 
@@ -12,47 +12,48 @@ TESTS_C+=	t_fcntl
 .if ${MKRUMP} != "no"
 TESTS_C+=	t_fdrestart
 .endif
+TESTS_C+=	t_kauth_pr_47598
+TESTS_C+=	t_ksem
 TESTS_C+=	t_lock
 TESTS_C+=	t_lockf
-TESTS_C+=	t_pty
 TESTS_C+=	t_memfd_create
 TESTS_C+=	t_mqueue
+TESTS_C+=	t_open_pr_57260
 TESTS_C+=	t_proccwd
+TESTS_C+=	t_pty
+TESTS_C+=	t_semtimedop
 TESTS_C+=	t_signal_and_sp
 TESTS_C+=	t_sysv
 TESTS_C+=	t_subr_prf
-TESTS_C+=	t_kauth_pr_47598
-TESTS_C+=	t_ksem
 TESTS_C+=	t_sysctl
 TESTS_C+=	t_timeleft
 .if ${MKRUMP} != "no"
 TESTS_C+=	t_unmount
 .endif
 TESTS_C+=	t_zombie
-TESTS_C+=	t_open_pr_57260
 
-TESTS_SH=	t_umount
-TESTS_SH+=	t_umountstress
-TESTS_SH+=	t_ps_strings
-TESTS_SH+=	t_trapsignal
+TESTS_SH+=	t_fexecve
+TESTS_SH+=	t_fpufork
 TESTS_SH+=	t_interp
 TESTS_SH+=	t_magic_symlinks
 TESTS_SH+=	t_nointerpreter
 TESTS_SH+=	t_origin
 TESTS_SH+=	t_procpath
-TESTS_SH+=	t_fexecve
-TESTS_SH+=	t_fpufork
+TESTS_SH+=	t_ps_strings
 .if ${MKRUMP} != "no"
 TESTS_SH+=	t_simplehook
 .endif
+TESTS_SH+=	t_trapsignal
+TESTS_SH+=	t_umountstress
+TESTS_SH=	t_umount
 
 BINDIR=		${TESTSDIR}
 PROGS=		h_fexecve
+PROGS+=		h_fpufork
+PROGS+=		h_getprocpath
 PROGS+=		h_ps_strings1
 PROGS+=		h_ps_strings2
 PROGS+=		h_segv
-PROGS+=		h_getprocpath
-PROGS+=		h_fpufork
 
 SCRIPTSDIR=	${TESTSDIR}
 SCRIPTS=	h_interpreter.sh
