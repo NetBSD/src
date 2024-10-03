@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.198.2.5 2024/07/20 14:19:31 martin Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.198.2.6 2024/10/03 12:00:57 martin Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -481,7 +481,7 @@
 	"b\14AVX512_BITALG\0" "b\15TME_EN\0" "b\16AVX512_VPOPCNTDQ\0"	      \
 	"b\20LA57\0"							      \
 	"f\21\5MAWAU\0"			"b\26RDPID\0"	"b\27KL\0"	      \
-	"b\30BUS_LOCK_DETECT" "b\31CLDEMOTE\0"		"b\33MOVDIRI\0"	      \
+	"b\30BUS_LOCK_DETECT\0" "b\31CLDEMOTE\0"	"b\33MOVDIRI\0"	      \
 	"b\34MOVDIR64B\0" "b\35ENQCMD\0" "b\36SGXLC\0"	"b\37PKS\0"
 
 /* %ecx = 0, %edx */
@@ -1021,7 +1021,7 @@
 #define CPUID_AMD_ENCMEM_SEVES	__BIT(3)   /* SEV Encrypted State */
 #define CPUID_AMD_ENCMEM_SEV_SNP __BIT(4)  /* Secure Nested Paging */
 #define CPUID_AMD_ENCMEM_VMPL	__BIT(5)   /* Virtual Machine Privilege Lvl */
-#define CPUID_AMD_ENCMEM_RPMQUERY __BIT(6) /* RMPQUERY instruction */
+#define CPUID_AMD_ENCMEM_RMPQUERY __BIT(6) /* RMPQUERY instruction */
 #define CPUID_AMD_ENCMEM_VMPLSSS __BIT(7)  /* VMPL Secure Shadow Stack */
 #define CPUID_AMD_ENCMEM_SECTSC	__BIT(8)   /* Secure TSC */
 #define CPUID_AMD_ENCMEM_TSCAUX_V __BIT(9)  /* TSC AUX Virtualization */
@@ -1361,6 +1361,10 @@
 #define 	NB_CFG_DISIOREQLOCK	0x0000000000000008ULL
 #define 	NB_CFG_DISDATMSK	0x0000001000000000ULL
 #define 	NB_CFG_INITAPICCPUIDLO	(1ULL << 54)
+
+/* AMD Errata 1474. */
+#define MSR_CC6_CFG	0xc0010296
+#define 	CC6_CFG_DISABLE_BITS	(__BIT(22) | __BIT(14) | __BIT(6))
 
 #define MSR_LS_CFG	0xc0011020
 #define 	LS_CFG_ERRATA_1033	__BIT(4)
