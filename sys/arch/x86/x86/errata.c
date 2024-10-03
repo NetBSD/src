@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.27.4.2 2023/07/27 16:39:40 martin Exp $	*/
+/*	$NetBSD: errata.c,v 1.27.4.3 2024/10/03 12:00:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,14 +41,19 @@
  * AMD Opteron Processors, Publication #25759, Revision: 3.69,
  * Issue Date: September 2006
  *
+ * https://www.amd.com/system/files/TechDocs/25759.pdf
+ *
  * XXX This should perhaps be integrated with the identcpu code.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.27.4.2 2023/07/27 16:39:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.27.4.3 2024/10/03 12:00:57 martin Exp $");
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/xcall.h>
+#include <sys/kthread.h>
+#include <sys/clock.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -64,42 +69,121 @@ typedef struct errata {
 	const uint8_t	*e_set;
 	bool		(*e_act)(struct cpu_info *, struct errata *);
 	uint64_t	e_data2;
+	const char	*e_name;	/* use if e_num == 0 */
 } errata_t;
 
+/* These names match names from various AMD Errata/Revision Guides. */
 typedef enum cpurev {
+	/* K8 / Family 0Fh */
 	BH_E4, CH_CG, CH_D0, DH_CG, DH_D0, DH_E3, DH_E6, JH_E1,
 	JH_E6, SH_B0, SH_B3, SH_C0, SH_CG, SH_D0, SH_E4, SH_E5,
+
+	/* K10 / Family 10h */
 	DR_BA, DR_B2, DR_B3, RB_C2, RB_C3, BL_C2, BL_C3, DA_C2,
-	DA_C3, HY_D0, HY_D1, HY_D1_G34R1,  PH_E0, LN_B0, KB_A1,
-	ML_A1, ZP_B1, ZP_B2, PiR_B2, Rome_B0, Z2_XB, Z2_Ren,
-	Z2_Luc, Z2_Mat, Z2_VG, Z2_Men, Milan_B1, Milan_B2, Genoa_B1,
+	DA_C3, HY_D0, HY_D1, HY_D1_G34R1,  PH_E0,
+
+	/* Llano / Family 12h */
+	LN_B0,
+
+	/* Jaguar / Family 16h */
+	KB_A1, ML_A1,
+
+	/* Zen/Zen+/Zen2 / Family 17h */
+	ZP_B1, ZP_B2, PiR_B2, Rome_B0,
+
+	/* XXX client Zen2 names aren't known yet. */
+	Z2_XB, Z2_Ren, Z2_Luc, Z2_Mat, Z2_VG, Z2_Men,
+
+	/* Zen3/Zen4 / Family 19h */
+	Milan_B1, Milan_B2, Genoa_B1,
 	OINK
 } cpurev_t;
 
-/* These names match names from various AMD Errata/Revision Guides. */
+/*
+ * The bit-layout in the 0x80000001 CPUID result is, with bit-size
+ * as the final number here:
+ *
+ *    resv1_4 extfam_8 extmodel_4 resv2_4 fam_4 model_4 stepping_4
+ *
+ * The CPUREV(family,model,stepping) macro handles the mapping for
+ * family 6 and family 15 in the "fam_4" nybble, if 6 or 15, the
+ * extended model is present and is bit-concatenated, and if 15,
+ * the extended family is additional (ie, family 0x10 is 0xF in
+ * fam_4 and 0x01 in extfam_8.)
+ */
+#define CPUREV(fam,mod,step)				\
+	(((fam) > 0xf ?					\
+	  (0xf << 8) | ((fam) - 0xf) << 20 :		\
+	  (fam) << 8) |					\
+	 (((mod) & 0xf) << 4) |				\
+	 (((fam) == 6 || ((fam) >= 0xf)) ?		\
+	  ((mod) & 0xf0) << 12 : 0) |			\
+	 ((step) & 0xf))
 static const u_int cpurevs[] = {
-	BH_E4, 0x0020fb1, CH_CG, 0x0000f82, CH_CG, 0x0000fb2,
-	CH_D0, 0x0010f80, CH_D0, 0x0010fb0, DH_CG, 0x0000fc0,
-	DH_CG, 0x0000fe0, DH_CG, 0x0000ff0, DH_D0, 0x0010fc0,
-	DH_D0, 0x0010ff0, DH_E3, 0x0020fc0, DH_E3, 0x0020ff0,
-	DH_E6, 0x0020fc2, DH_E6, 0x0020ff2, JH_E1, 0x0020f10,
-	JH_E6, 0x0020f12, JH_E6, 0x0020f32, SH_B0, 0x0000f40,
-	SH_B3, 0x0000f51, SH_C0, 0x0000f48, SH_C0, 0x0000f58,
-	SH_CG, 0x0000f4a, SH_CG, 0x0000f5a, SH_CG, 0x0000f7a,
-	SH_D0, 0x0010f40, SH_D0, 0x0010f50, SH_D0, 0x0010f70,
-	SH_E4, 0x0020f51, SH_E4, 0x0020f71, SH_E5, 0x0020f42,
-	DR_BA, 0x0100f2a, DR_B2, 0x0100f22, DR_B3, 0x0100f23,
-	RB_C2, 0x0100f42, RB_C3, 0x0100f43, BL_C2, 0x0100f52,
-	BL_C3, 0x0100f53, DA_C2, 0x0100f62, DA_C3, 0x0100f63,
-	HY_D0, 0x0100f80, HY_D1, 0x0100f81, HY_D1_G34R1, 0x0100f91,
-	PH_E0, 0x0100fa0, LN_B0, 0x0300f10, KB_A1, 0x0700F01,
-	ML_A1, 0x0730F01, ZP_B1, 0x0800F11, ZP_B2, 0x0800F12,
-	PiR_B2, 0x0800F82, Rome_B0, 0x0830F10,
-	/* XXX client Zen2 names aren't known yet. */
-	Z2_XB, 0x0840F70, Z2_Ren, 0x0860F01, Z2_Luc, 0x0860F81,
-	Z2_Mat, 0x0870F10, Z2_VG, 0x0890F02, Z2_Men, 0x08A0F00,
-	Milan_B1, 0x0A00F11, Milan_B2, 0x0A00F12,
-	Genoa_B1, 0x0A10F11,
+	BH_E4,		CPUREV(0x0F, 0x2B, 0x1),
+	CH_CG,		CPUREV(0x0F, 0x08, 0x2),
+	CH_CG,		CPUREV(0x0F, 0x0B, 0x2),
+	CH_D0,		CPUREV(0x0F, 0x18, 0x0),
+	CH_D0,		CPUREV(0x0F, 0x1B, 0x0),
+	DH_CG,		CPUREV(0x0F, 0x0C, 0x0),
+	DH_CG,		CPUREV(0x0F, 0x0E, 0x0),
+	DH_CG,		CPUREV(0x0F, 0x0F, 0x0),
+	DH_D0,		CPUREV(0x0F, 0x1C, 0x0),
+	DH_D0,		CPUREV(0x0F, 0x1F, 0x0),
+	DH_E3,		CPUREV(0x0F, 0x2C, 0x0),
+	DH_E3,		CPUREV(0x0F, 0x2F, 0x0),
+	DH_E6,		CPUREV(0x0F, 0x2C, 0x2),
+	DH_E6,		CPUREV(0x0F, 0x2F, 0x2),
+	JH_E1,		CPUREV(0x0F, 0x21, 0x0),
+	JH_E6,		CPUREV(0x0F, 0x21, 0x2),
+	JH_E6,		CPUREV(0x0F, 0x23, 0x2),
+	SH_B0,		CPUREV(0x0F, 0x04, 0x0),
+	SH_B3,		CPUREV(0x0F, 0x05, 0x1),
+	SH_C0,		CPUREV(0x0F, 0x04, 0x8),
+	SH_C0,		CPUREV(0x0F, 0x05, 0x8),
+	SH_CG,		CPUREV(0x0F, 0x04, 0xA),
+	SH_CG,		CPUREV(0x0F, 0x05, 0xA),
+	SH_CG,		CPUREV(0x0F, 0x07, 0xA),
+	SH_D0,		CPUREV(0x0F, 0x14, 0x0),
+	SH_D0,		CPUREV(0x0F, 0x15, 0x0),
+	SH_D0,		CPUREV(0x0F, 0x17, 0x0),
+	SH_E4,		CPUREV(0x0F, 0x25, 0x1),
+	SH_E4,		CPUREV(0x0F, 0x27, 0x1),
+	SH_E5,		CPUREV(0x0F, 0x24, 0x2),
+
+	DR_BA,		CPUREV(0x10, 0x02, 0xA),
+	DR_B2,		CPUREV(0x10, 0x02, 0x2),
+	DR_B3,		CPUREV(0x10, 0x02, 0x3),
+	RB_C2,		CPUREV(0x10, 0x04, 0x2),
+	RB_C3,		CPUREV(0x10, 0x04, 0x3),
+	BL_C2,		CPUREV(0x10, 0x05, 0x2),
+	BL_C3,		CPUREV(0x10, 0x05, 0x3),
+	DA_C2,		CPUREV(0x10, 0x06, 0x2),
+	DA_C3,		CPUREV(0x10, 0x06, 0x3),
+	HY_D0,		CPUREV(0x10, 0x08, 0x0),
+	HY_D1,		CPUREV(0x10, 0x08, 0x1),
+	HY_D1_G34R1,	CPUREV(0x10, 0x09, 0x1),
+	PH_E0,		CPUREV(0x10, 0x0A, 0x0),
+
+	LN_B0,		CPUREV(0x12, 0x01, 0x0),
+
+	KB_A1,		CPUREV(0x16, 0x00, 0x1),
+	ML_A1,		CPUREV(0x16, 0x30, 0x1),
+
+	ZP_B1,		CPUREV(0x17, 0x01, 0x1),
+	ZP_B2,		CPUREV(0x17, 0x01, 0x2),
+	PiR_B2,		CPUREV(0x17, 0x08, 0x2),
+	Rome_B0,	CPUREV(0x17, 0x31, 0x0),
+	Z2_XB,		CPUREV(0x17, 0x47, 0x0),
+	Z2_Ren,		CPUREV(0x17, 0x60, 0x1),
+	Z2_Luc,		CPUREV(0x17, 0x68, 0x1),
+	Z2_Mat,		CPUREV(0x17, 0x71, 0x0),
+	Z2_VG,		CPUREV(0x17, 0x90, 0x2),
+	Z2_Men,		CPUREV(0x17, 0xA0, 0x0),
+
+	Milan_B1,	CPUREV(0x19, 0x01, 0x1),
+	Milan_B2,	CPUREV(0x19, 0x01, 0x2),
+	Genoa_B1,	CPUREV(0x19, 0x11, 0x1),
 	OINK
 };
 
@@ -168,12 +252,13 @@ static const uint8_t x86_errata_set15[] = {
 	KB_A1, ML_A1, OINK
 };
 
-static const uint8_t x86_errata_set16[] = {
+static const uint8_t x86_errata_zen2[] = {
 	Rome_B0, Z2_XB, Z2_Ren, Z2_Luc, Z2_Mat, Z2_VG, Z2_Men, OINK
 };
 
 static bool x86_errata_setmsr(struct cpu_info *, errata_t *);
 static bool x86_errata_testmsr(struct cpu_info *, errata_t *);
+static bool x86_errata_amd_1474(struct cpu_info *, errata_t *);
 
 static errata_t errata[] = {
 	/*
@@ -182,21 +267,21 @@ static errata_t errata[] = {
 	 */
 	{
 		81, FALSE, MSR_DC_CFG, x86_errata_set5,
-		x86_errata_testmsr, DC_CFG_DIS_SMC_CHK_BUF
+		x86_errata_testmsr, DC_CFG_DIS_SMC_CHK_BUF, NULL
 	},
 	/*
 	 * 86: DRAM Data Masking Feature Can Cause ECC Failures
 	 */
 	{
 		86, FALSE, MSR_NB_CFG, x86_errata_set1,
-		x86_errata_testmsr, NB_CFG_DISDATMSK
+		x86_errata_testmsr, NB_CFG_DISDATMSK, NULL
 	},
 	/*
 	 * 89: Potential Deadlock With Locked Transactions
 	 */
 	{
 		89, FALSE, MSR_NB_CFG, x86_errata_set8,
-		x86_errata_testmsr, NB_CFG_DISIOREQLOCK
+		x86_errata_testmsr, NB_CFG_DISIOREQLOCK, NULL
 	},
 	/*
 	 * 94: Sequential Prefetch Feature May Cause Incorrect
@@ -204,7 +289,7 @@ static errata_t errata[] = {
 	 */
 	{
 		94, FALSE, MSR_IC_CFG, x86_errata_set1,
-		x86_errata_testmsr, IC_CFG_DIS_SEQ_PREFETCH
+		x86_errata_testmsr, IC_CFG_DIS_SEQ_PREFETCH, NULL
 	},
 	/*
 	 * 97: 128-Bit Streaming Stores May Cause Coherency
@@ -216,7 +301,7 @@ static errata_t errata[] = {
 	 */
 	{
 		97, FALSE, MSR_DC_CFG, x86_errata_set6,
-		x86_errata_testmsr, DC_CFG_DIS_CNV_WC_SSO
+		x86_errata_testmsr, DC_CFG_DIS_CNV_WC_SSO, NULL
 	},
 	/*
 	 * 104: DRAM Data Masking Feature Causes ChipKill ECC
@@ -224,14 +309,14 @@ static errata_t errata[] = {
 	 */
 	{
 		104, FALSE, MSR_NB_CFG, x86_errata_set7,
-		x86_errata_testmsr, NB_CFG_DISDATMSK
+		x86_errata_testmsr, NB_CFG_DISDATMSK, NULL
 	},
 	/*
 	 * 113: Enhanced Write-Combining Feature Causes System Hang
 	 */
 	{
 		113, FALSE, MSR_BU_CFG, x86_errata_set3,
-		x86_errata_setmsr, BU_CFG_WBENHWSBDIS
+		x86_errata_setmsr, BU_CFG_WBENHWSBDIS, NULL
 	},
 	/*
 	 * 69: Multiprocessor Coherency Problem with Hardware
@@ -239,7 +324,7 @@ static errata_t errata[] = {
 	 */
 	{
 		69, FALSE, MSR_BU_CFG, x86_errata_set5,
-		x86_errata_setmsr, BU_CFG_WBPFSMCCHKDIS
+		x86_errata_setmsr, BU_CFG_WBPFSMCCHKDIS, NULL
 	},
 	/*
 	 * 101: DRAM Scrubber May Cause Data Corruption When Using
@@ -247,7 +332,7 @@ static errata_t errata[] = {
 	 */
 	{
 		101, FALSE, 0, x86_errata_set2,
-		NULL, 0
+		NULL, 0, NULL
 	},
 	/*
 	 * 106: Potential Deadlock with Tightly Coupled Semaphores
@@ -255,7 +340,7 @@ static errata_t errata[] = {
 	 */
 	{
 		106, FALSE, MSR_LS_CFG, x86_errata_set2,
-		x86_errata_testmsr, LS_CFG_DIS_LS2_SQUISH
+		x86_errata_testmsr, LS_CFG_DIS_LS2_SQUISH, NULL
 	},
 	/*
 	 * 107: Possible Multiprocessor Coherency Problem with
@@ -263,7 +348,7 @@ static errata_t errata[] = {
 	 */
 	{
 		107, FALSE, MSR_BU_CFG, x86_errata_set2,
-		x86_errata_testmsr, BU_CFG_THRL2IDXCMPDIS
+		x86_errata_testmsr, BU_CFG_THRL2IDXCMPDIS, NULL
 	},
 	/*
 	 * 122: TLB Flush Filter May Cause Coherency Problem in
@@ -271,14 +356,14 @@ static errata_t errata[] = {
 	 */
 	{
 		122, FALSE, MSR_HWCR, x86_errata_set4,
-		x86_errata_setmsr, HWCR_FFDIS
+		x86_errata_setmsr, HWCR_FFDIS, NULL
 	},
 	/*
 	 * 254: Internal Resource Livelock Involving Cached TLB Reload
 	 */
 	{
 		254, FALSE, MSR_BU_CFG, x86_errata_set9,
-		x86_errata_testmsr, BU_CFG_ERRATA_254
+		x86_errata_testmsr, BU_CFG_ERRATA_254, NULL
 	},
 	/*
 	 * 261: Processor May Stall Entering Stop-Grant Due to Pending Data
@@ -286,7 +371,7 @@ static errata_t errata[] = {
 	 */
 	{
 		261, FALSE, MSR_DC_CFG, x86_errata_set10,
-		x86_errata_testmsr, DC_CFG_ERRATA_261
+		x86_errata_testmsr, DC_CFG_ERRATA_261, NULL
 	},
 	/*
 	 * 298: L2 Eviction May Occur During Processor Operation To Set
@@ -294,11 +379,11 @@ static errata_t errata[] = {
 	 */
 	{
 		298, FALSE, MSR_HWCR, x86_errata_set9,
-		x86_errata_testmsr, HWCR_TLBCACHEDIS
+		x86_errata_testmsr, HWCR_TLBCACHEDIS, NULL
 	},
 	{
 		298, FALSE, MSR_BU_CFG, x86_errata_set9,
-		x86_errata_testmsr, BU_CFG_ERRATA_298
+		x86_errata_testmsr, BU_CFG_ERRATA_298, NULL
 	},
 	/*
 	 * 309: Processor Core May Execute Incorrect Instructions on
@@ -306,14 +391,14 @@ static errata_t errata[] = {
 	 */
 	{
 		309, FALSE, MSR_BU_CFG, x86_errata_set9,
-		x86_errata_testmsr, BU_CFG_ERRATA_309
+		x86_errata_testmsr, BU_CFG_ERRATA_309, NULL
 	},
 	/*
 	 * 721: Processor May Incorrectly Update Stack Pointer
 	 */
 	{
 		721, FALSE, MSR_DE_CFG, x86_errata_set11,
-		x86_errata_setmsr, DE_CFG_ERRATA_721
+		x86_errata_setmsr, DE_CFG_ERRATA_721, NULL
 	},
 	/*
 	 * 776: Incorrect Processor Branch Prediction for Two Consecutive
@@ -321,7 +406,7 @@ static errata_t errata[] = {
 	 */
 	{
 		776, FALSE, MSR_IC_CFG, x86_errata_set12,
-		x86_errata_setmsr, IC_CFG_ERRATA_776
+		x86_errata_setmsr, IC_CFG_ERRATA_776, NULL
 	},
 	/*
 	 * 793: Specific Combination of Writes to Write Combined Memory
@@ -329,7 +414,7 @@ static errata_t errata[] = {
 	 */
 	{
 		793, FALSE, MSR_LS_CFG, x86_errata_set15,
-		x86_errata_setmsr, LS_CFG_ERRATA_793
+		x86_errata_setmsr, LS_CFG_ERRATA_793, NULL
 	},
 	/*
 	 * 1021: Load Operation May Receive Stale Data From Older Store
@@ -337,21 +422,21 @@ static errata_t errata[] = {
 	 */
 	{
 		1021, FALSE, MSR_DE_CFG, x86_errata_set13,
-		x86_errata_setmsr, DE_CFG_ERRATA_1021
+		x86_errata_setmsr, DE_CFG_ERRATA_1021, NULL
 	},
 	/*
 	 * 1033: A Lock Operation May Cause the System to Hang
 	 */
 	{
 		1033, FALSE, MSR_LS_CFG, x86_errata_set14,
-		x86_errata_setmsr, LS_CFG_ERRATA_1033
+		x86_errata_setmsr, LS_CFG_ERRATA_1033, NULL
 	},
 	/*
 	 * 1049: FCMOV Instruction May Not Execute Correctly
 	 */
 	{
 		1049, FALSE, MSR_FP_CFG, x86_errata_set13,
-		x86_errata_setmsr, FP_CFG_ERRATA_1049
+		x86_errata_setmsr, FP_CFG_ERRATA_1049, NULL
 	},
 #if 0	/* Should we apply this errata? The other OSes don't. */
 	/*
@@ -360,7 +445,7 @@ static errata_t errata[] = {
 	 */
 	{
 		1091, FALSE, MSR_LS_CFG2, x86_errata_set13,
-		x86_errata_setmsr, LS_CFG2_ERRATA_1091
+		x86_errata_setmsr, LS_CFG2_ERRATA_1091, NULL
 	},
 #endif
 	/*
@@ -369,7 +454,14 @@ static errata_t errata[] = {
 	 */
 	{
 		1095, FALSE, MSR_LS_CFG, x86_errata_set13,
-		x86_errata_setmsr, LS_CFG_ERRATA_1095
+		x86_errata_setmsr, LS_CFG_ERRATA_1095, NULL
+	},
+	/*
+	 * 1474: A CPU core may hang after about 1044 days
+	 */
+	{
+		1474, FALSE, MSR_CC6_CFG, x86_errata_zen2,
+		x86_errata_amd_1474, CC6_CFG_DISABLE_BITS, NULL
 	},
 	/*
 	 * Zenbleed:
@@ -378,10 +470,111 @@ static errata_t errata[] = {
 	 * https://lock.cmpxchg8b.com/zenbleed.html
 	 */
 	{
-		-1, FALSE, MSR_DE_CFG, x86_errata_set16,
+		0, FALSE, MSR_DE_CFG, x86_errata_zen2,
 		x86_errata_setmsr, DE_CFG_ERRATA_ZENBLEED,
+		"ZenBleed"
 	},
 };
+
+/*
+ * 1474: A CPU core may hang after about 1044 days
+ *
+ * This requires disabling CC6 power level, which can be a performance
+ * issue since it stops full turbo in some implementations (eg, half the
+ * cores must be in CC6 to achieve the highest boost level.)  Set a timer
+ * to fire in 1000 days -- except NetBSD timers end up having a signed
+ * 32-bit hz-based value, which rolls over in under 25 days with HZ=1000,
+ * and doing xcall(9) or kthread(9) from a callout is not allowed anyway,
+ * so just have a kthread wait 1 day for 1000 times.
+ */
+
+#define AMD_ERRATA_1474_WARN_DAYS	 950
+#define AMD_ERRATA_1474_BAD_DAYS	1000
+
+static void
+amd_errata_1474_disable_cc6(void *a1, void *a2)
+{
+	errata_t *e = a1;
+	uint64_t val;
+
+	val = rdmsr_locked(e->e_data1);
+	if ((val & e->e_data2) == 0)
+		return;
+	wrmsr_locked(e->e_data1, val & ~e->e_data2);
+	aprint_debug_dev(curcpu()->ci_dev, "erratum %u patched\n",
+	    e->e_num);
+}
+
+static void
+amd_errata_1474_thread(void *arg)
+{
+	int loops = 0;
+	int ticks;
+
+	ticks = hz * SECS_PER_DAY;
+#ifdef X86_ERRATA_TEST_AMD_1474
+	/*
+	 * Make this trigger warning after 50 seconds, and workaround
+	 * at 100 seconds, for easy testing.
+	 */
+	ticks = hz;
+	loops = 900;
+#endif
+
+	while (loops++ < AMD_ERRATA_1474_BAD_DAYS) {
+		if (loops == AMD_ERRATA_1474_WARN_DAYS) {
+			printf("warning: AMD Errata 1474 workaround scheduled "
+			       "for %u days.\n", AMD_ERRATA_1474_BAD_DAYS -
+						 AMD_ERRATA_1474_WARN_DAYS);
+			printf("warning: reboot required to avoid.\n");
+		}
+		kpause("amd1474", false, ticks, NULL);
+	}
+
+	/* Been 1000 days, disable CC6 and warn about it. */
+	uint64_t xc = xc_broadcast(0, amd_errata_1474_disable_cc6, arg, NULL);
+	xc_wait(xc);
+
+	printf("warning: AMD CC6 disabled due to errata 1474.\n");
+	printf("warning: reboot required to restore full turbo speeds.\n");
+
+	kthread_exit(0);
+}
+
+static bool
+x86_errata_amd_1474(struct cpu_info *ci, errata_t *e)
+{
+	int error;
+
+	/* Don't do anything on non-primary CPUs. */
+	if (!CPU_IS_PRIMARY(ci))
+		return FALSE;
+
+	error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
+	    amd_errata_1474_thread, e, NULL, "amd1474");
+	if (error) {
+		printf("WARNING: Unable to disable AMD errata 1474!\n");
+		printf("WARNING: reboot system after %u days to avoid CPU "
+		    "hangs.\n", AMD_ERRATA_1474_BAD_DAYS);
+	} else {
+		aprint_debug_dev(ci->ci_dev, "workaround for erratum %u "
+		    "scheduled for %u days\n", e->e_num,
+		    AMD_ERRATA_1474_BAD_DAYS);
+	}
+
+	/* Do own warning here, it's not like most others. */
+	return FALSE;
+}
+
+static void
+x86_errata_log(device_t dev, errata_t *e, const char *msg)
+{
+
+	if (e->e_num == 0)
+		aprint_debug_dev(dev, "erratum '%s' %s\n", e->e_name, msg);
+	else
+		aprint_debug_dev(dev, "erratum %u %s\n", e->e_num, msg);
+}
 
 static bool
 x86_errata_testmsr(struct cpu_info *ci, errata_t *e)
@@ -409,8 +602,7 @@ x86_errata_setmsr(struct cpu_info *ci, errata_t *e)
 	if ((val & e->e_data2) != 0)
 		return FALSE;
 	wrmsr_locked(e->e_data1, val | e->e_data2);
-	aprint_debug_dev(ci->ci_dev, "erratum %d patched\n",
-	    e->e_num);
+	x86_errata_log(ci->ci_dev, e, "patched");
 
 	return FALSE;
 }
@@ -436,6 +628,11 @@ x86_errata(void)
 	ci = curcpu();
 
 	x86_cpuid(0x80000001, descs);
+	if (CPU_IS_PRIMARY(ci)) {
+		aprint_verbose_dev(ci->ci_dev,
+		    "searching errata for cpu revision 0x%08"PRIx32"\n",
+		    descs[0]);
+	}
 
 	for (i = 0;; i += 2) {
 		if ((rev = cpurevs[i]) == OINK)
@@ -456,16 +653,14 @@ x86_errata(void)
 				continue;
 		}
 
-		aprint_debug_dev(ci->ci_dev, "testing for erratum %d\n",
-		    e->e_num);
+		x86_errata_log(ci->ci_dev, e, "testing");
 
 		if (e->e_act == NULL)
 			e->e_reported = TRUE;
 		else if ((*e->e_act)(ci, e) == FALSE)
 			continue;
 
-		aprint_verbose_dev(ci->ci_dev, "erratum %d present\n",
-		    e->e_num);
+		x86_errata_log(ci->ci_dev, e, "present");
 		upgrade = 1;
 	}
 
