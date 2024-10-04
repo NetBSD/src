@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.50 2024/06/07 20:50:27 riastradh Exp $
+# $NetBSD: Makefile.inc,v 1.51 2024/10/04 20:35:58 christos Exp $
 
 COMPILER_RT_DIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt
 COMPILER_RT_SRCDIR=	${COMPILER_RT_DIR}/dist
@@ -434,5 +434,6 @@ LINTFLAGS.udivsi3.c += -X 117
 LINTFLAGS.udivti3.c += -X 351
 LINTFLAGS.umodsi3.c += -X 351
 LINTFLAGS.umodti3.c += -X 351
+LINTFLAGS.gcc_personality_v0.c += ${${ACTIVE_CC} == "clang":? -X 298:}
 
 .include "${COMPILER_RT_DIR}/abi.mk"
