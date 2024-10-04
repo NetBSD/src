@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.60 2024/01/19 19:08:49 christos Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.61 2024/10/04 20:32:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000, 2009\
  The NetBSD Foundation, Inc.  All rights reserved.\
   Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.60 2024/01/19 19:08:49 christos Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.61 2024/10/04 20:32:20 christos Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -166,23 +166,23 @@ static int	warning;
 static struct pwddb sdb, idb;
 
 
-void	bailout(void) __dead;
-void	cp(const char *, const char *, mode_t);
-void	deldbent(struct pwddb *, int, void *);
-void	mkpw_error(const char *, ...) __dead;
-void	mkpw_warning(const char *, ...);
-int	getdbent(struct pwddb *, int, void *, struct passwd **);
-void	inconsistency(void) __dead;
-void	install(const char *, const char *);
-void	putdbents(struct pwddb *, struct passwd *, const char *, int, int,
-    u_int, u_int);
-void	putyptoken(struct pwddb *);
-void	rm(const char *);
-int	scan(FILE *, struct passwd *, int *, int *);
-void	usage(void) __dead;
-void	wr_error(const char *) __dead;
-uint32_t getversion(const char *);
-void	setversion(struct pwddb *);
+static void	bailout(void) __dead;
+static void	cp(const char *, const char *, mode_t);
+static void	deldbent(struct pwddb *, int, void *);
+static void	mkpw_error(const char *, ...) __dead;
+static void	mkpw_warning(const char *, ...);
+static int	getdbent(struct pwddb *, int, void *, struct passwd **);
+static void	inconsistency(void) __dead;
+static void	install(const char *, const char *);
+static void	putdbents(struct pwddb *, struct passwd *, const char *, int,
+    int, u_int, u_int);
+static void	putyptoken(struct pwddb *);
+static void	rm(const char *);
+static int	scan(FILE *, struct passwd *, int *, int *);
+static void	usage(void) __dead;
+static void	wr_error(const char *) __dead;
+static uint32_t getversion(const char *);
+static void	setversion(struct pwddb *);
 
 #ifndef __lint__
 #define SWAP(sw) \
@@ -381,7 +381,7 @@ main(int argc, char *argv[])
 		    flags, PERM_INSECURE);
 		clean |= FILE_INSECURE;
 	}
-		 
+
 
 	/* Open the temporary encrypted password database. */
 	opendb(&sdb, _PATH_SMP_DB, username, req_version, flags, PERM_SECURE);
@@ -581,7 +581,7 @@ main(int argc, char *argv[])
 	/* NOTREACHED */
 }
 
-int
+static int
 scan(FILE *fp, struct passwd *pw, int *flags, int *lineno)
 {
 	static char line[LINE_MAX];
@@ -616,7 +616,7 @@ scan(FILE *fp, struct passwd *pw, int *flags, int *lineno)
 	return (1);
 }
 
-void
+static void
 install(const char *from, const char *to)
 {
 	char buf[MAXPATHLEN];
@@ -626,7 +626,7 @@ install(const char *from, const char *to)
 		mkpw_error("Cannot rename `%s' to `%s'", from, buf);
 }
 
-void
+static void
 rm(const char *victim)
 {
 
@@ -634,9 +634,9 @@ rm(const char *victim)
 		warn("unlink(%s)", victim);
 }
 
-void                    
-cp(const char *from, const char *to, mode_t mode)              
-{               
+static void
+cp(const char *from, const char *to, mode_t mode)
+{
 	static char buf[MAXBSIZE];
 	int from_fd, to_fd;
 	ssize_t rcount, wcount;
@@ -667,13 +667,13 @@ on_error:
 	mkpw_error("Cannot copy `%s' to `%s'", from, to);
 }
 
-void
+static void
 wr_error(const char *str)
 {
 	mkpw_error("Cannot write `%s'", str);
 }
 
-void
+static void
 mkpw_error(const char *fmt, ...)
 {
 	va_list ap;
@@ -690,7 +690,7 @@ mkpw_error(const char *fmt, ...)
 	bailout();
 }
 
-void
+static void
 mkpw_warning(const char *fmt, ...)
 {
 	va_list ap;
@@ -702,7 +702,7 @@ mkpw_warning(const char *fmt, ...)
 	va_end(ap);
 }
 
-void
+static void
 inconsistency(void)
 {
 
@@ -711,7 +711,7 @@ inconsistency(void)
 	bailout();
 }
 
-void
+static void
 bailout(void)
 {
 
@@ -725,7 +725,7 @@ bailout(void)
 	exit(EXIT_FAILURE);
 }
 
-uint32_t
+static uint32_t
 getversion(const char *fname)
 {
 	DBT data, key;
@@ -772,7 +772,7 @@ out:
 	/*NOTREACHED*/
 }
 
-void
+static void
 setversion(struct pwddb *db)
 {
 	DBT data, key;
@@ -790,7 +790,7 @@ setversion(struct pwddb *db)
 
 
 /*
- * Write entries to a database for a single user. 
+ * Write entries to a database for a single user.
  *
  * The databases actually contain three copies of the original data.  Each
  * password file entry is converted into a rough approximation of a ``struct
@@ -798,15 +798,15 @@ setversion(struct pwddb *db)
  * the data for three separate keys.  The first key * is the pw_name field
  * prepended by the _PW_KEYBYNAME character.  The second key is the pw_uid
  * field prepended by the _PW_KEYBYUID character.  The third key is the line
- * number in the original file prepended by the _PW_KEYBYNUM character. 
+ * number in the original file prepended by the _PW_KEYBYNUM character.
  * (The special characters are prepended to ensure that the keys do not
  * collide.)
  */
 #define	COMPACT(e)	for (t = e; (*p++ = *t++) != '\0';)
 
-void
+static void
 putdbents(struct pwddb *db, struct passwd *pw, const char *passwd, int flags,
-      int lineno, u_int dbflg, u_int uid_dbflg)
+    int lineno, u_int dbflg, u_int uid_dbflg)
 {
 	struct passwd pwd;
 	char buf[MAX(MAXPATHLEN, LINE_MAX * 2)], tbuf[1024], *p;
@@ -895,7 +895,7 @@ putdbents(struct pwddb *db, struct passwd *pw, const char *passwd, int flags,
 		wr_error(db->dbname);
 }
 
-void
+static void
 deldbent(struct pwddb *db, int type, void *keyp)
 {
 	char tbuf[1024];
@@ -926,7 +926,7 @@ deldbent(struct pwddb *db, int type, void *keyp)
 		wr_error(db->dbname);
 }
 
-int
+static int
 getdbent(struct pwddb *db, int type, void *keyp, struct passwd **tpwd)
 {
 	static char buf[MAX(MAXPATHLEN, LINE_MAX * 2)];
@@ -1004,7 +1004,7 @@ getdbent(struct pwddb *db, int type, void *keyp, struct passwd **tpwd)
 				pwvar = SWAP(pwvar); \
 		} \
 	} while (0)
-		
+
 	READPWTIMEVAR(pwd.pw_change);
 
 	pwd.pw_class = p;
@@ -1031,7 +1031,7 @@ getdbent(struct pwddb *db, int type, void *keyp, struct passwd **tpwd)
 	return (0);
 }
 
-void
+static void
 putyptoken(struct pwddb *db)
 {
 	DBT data, key;
@@ -1045,7 +1045,7 @@ putyptoken(struct pwddb *db)
 		wr_error(db->dbname);
 }
 
-void
+static void
 usage(void)
 {
 
