@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.147 2024/04/28 17:12:30 maya Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.148 2024/10/04 08:45:46 rillig Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -1083,7 +1083,7 @@ handle_redirect(bozo_httpreq_t *request, const char *url, int absolute)
 #endif /* !NO_USER_SUPPORT */
 
 	if (absolute) {
-		char *sep = NULL;
+		const char *sep = NULL;
 		const char *s;
 
 		/*
