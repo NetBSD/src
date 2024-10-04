@@ -1,4 +1,4 @@
-/*	$NetBSD: ruserpass.c,v 1.10 2003/10/21 00:16:55 fvdl Exp $	*/
+/*	$NetBSD: ruserpass.c,v 1.11 2024/10/04 03:18:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: ruserpass.c,v 1.10 2003/10/21 00:16:55 fvdl Exp $");
+__RCSID("$NetBSD: ruserpass.c,v 1.11 2024/10/04 03:18:02 rillig Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -95,6 +95,7 @@ ruserpass(host, aname, apass)
 	char **aname, **apass;
 {
 	char *hdir, buf[BUFSIZ], *tmp;
+	const char *ctmp;
 	char myname[MAXHOSTNAMELEN + 1], *mydomain;
 	int t, i, c, usedefault = 0;
 	struct stat stb;
@@ -142,11 +143,11 @@ next:
 			 */
 			if (strcasecmp(host, tokval) == 0)
 				goto match;
-			if ((tmp = strchr(host, '.')) != NULL &&
-			    strcasecmp(tmp, mydomain) == 0 &&
+			if ((ctmp = strchr(host, '.')) != NULL &&
+			    strcasecmp(ctmp, mydomain) == 0 &&
 			    strncasecmp(host, tokval,
-			    (size_t)(tmp - host)) == 0 &&
-			    tokval[tmp - host] == '\0')
+			    (size_t)(ctmp - host)) == 0 &&
+			    tokval[ctmp - host] == '\0')
 				goto match;
 			continue;
 		}

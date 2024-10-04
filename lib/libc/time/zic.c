@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.92 2024/09/11 13:50:34 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.93 2024/10/04 03:18:01 rillig Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.92 2024/09/11 13:50:34 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.93 2024/10/04 03:18:01 rillig Exp $");
 #endif /* !defined lint */
 
 /* Use the system 'time' function, instead of any private replacement.
@@ -2803,9 +2803,9 @@ doabbr(char *abbr, size_t abbrlen, struct zone const *zp, const char *letters,
     bool isdst, zic_t save, bool doquotes)
 {
 	char *	cp;
-	char *	slashp;
+	const char *slashp;
 	ptrdiff_t	len;
-	char const *format = zp->z_format;
+	const char *format = zp->z_format;
 
 	slashp = strchr(format, '/');
 	if (slashp == NULL) {
