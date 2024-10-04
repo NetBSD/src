@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_comment.c,v 1.2 2024/10/04 11:24:13 rillig Exp $	*/
+/*	$NetBSD: lex_comment.c,v 1.3 2024/10/04 11:38:03 rillig Exp $	*/
 # 3 "lex_comment.c"
 
 /*
@@ -68,14 +68,12 @@ lint_comment(void)
 	} else if (s8 == 1)
 		;
 	/* LINTED 132 */
-	/* expect+1: warning: conversion from 'long long' to 'signed char' may lose accuracy [132] */
 	s8 = s64;
 
 	if (s8 == 0) {
 	} else if (s8 == 1) {
 	}
 	/* LINTED 132 */
-	/* expect+1: warning: conversion from 'long long' to 'signed char' may lose accuracy [132] */
 	s8 = s64;
 }
 

@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.511 2024/09/28 16:09:23 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.512 2024/10/04 11:38:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.511 2024/09/28 16:09:23 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.512 2024/10/04 11:38:03 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -2158,7 +2158,7 @@ selection_statement:
 		save_warning_flags();
 		stmt_if_then_stmt();
 	} statement {
-		clear_warning_flags();
+		restore_warning_flags();
 		stmt_if_else_stmt(true);
 	}
 |	if_without_else T_ELSE error {
