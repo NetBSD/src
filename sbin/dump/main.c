@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.78 2020/12/03 08:25:57 kre Exp $	*/
+/*	$NetBSD: main.c,v 1.79 2024/10/04 11:38:44 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.78 2020/12/03 08:25:57 kre Exp $");
+__RCSID("$NetBSD: main.c,v 1.79 2024/10/04 11:38:44 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -409,6 +409,7 @@ main(int argc, char *argv[])
 			tsize = cartridge ? 1700L*120L : 2300L*120L;
 	}
 
+	/* LINTED 346 "call to 'strchr' effectively discards 'const'" */
 	if ((cp = strchr(tape, ':')) != NULL) {
 		host = tape;
 		/* This is fine, because all the const strings don't have : */
