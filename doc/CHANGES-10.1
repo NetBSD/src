@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.37 2024/10/03 16:26:03 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.38 2024/10/04 11:41:28 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -1904,4 +1904,97 @@ sys/arch/x86/x86/mpacpi.c			1.111
 	x86: PR 57737: remove a bogus check on X2APIC Id that cause issues on
 	recent systems.
 	[bouyer, ticket #927]
+
+share/man/man9/bus_dma.9			1.69
+sys/arch/sparc64/dev/pci_machdep.c		1.83
+sys/arch/sparc64/include/pci_machdep.h		1.31
+sys/arch/x86/x86/bus_dma.c			1.91
+sys/arch/xen/include/pci_machdep.h		1.24
+sys/arch/xen/xen/xpci_xenbus.c			1.29
+sys/dev/acpi/acpi_mcfg.c			1.29
+sys/dev/pci/pci.c				1.168 (patch)
+sys/dev/pci/pcivar.h				1.120
+sys/external/bsd/common/include/asm/barrier.h	1.20,1.21
+sys/external/bsd/common/include/linux/bitops.h	1.17
+sys/external/bsd/common/include/linux/printk.h	1.14
+sys/external/bsd/common/linux/linux_tasklet.c	1.12
+sys/external/bsd/drm2/amdgpu/files.amdgpu	1.31
+sys/external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu.h 1.9
+sys/external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_acpi.c 1.6
+sys/external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_cik.c 1.7
+sys/external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_device.c 1.20,1.21
+sys/external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_gart.c 1.12
+sys/external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_si.c 1.5
+sys/external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_vi.c 1.4
+sys/external/bsd/drm2/dist/drm/amd/display/dc/core/amdgpu_dc_stream.c 1.3
+sys/external/bsd/drm2/dist/drm/amd/powerplay/hwmgr/amdgpu_hwmgr.c 1.3
+sys/external/bsd/drm2/dist/drm/amd/powerplay/hwmgr/amdgpu_smu7_hwmgr.c 1.5
+sys/external/bsd/drm2/dist/drm/drm_dp_helper.c	1.17
+sys/external/bsd/drm2/dist/drm/drm_gem.c	1.24,1.25
+sys/external/bsd/drm2/dist/drm/i915/display/intel_acpi.h 1.5
+sys/external/bsd/drm2/dist/drm/i915/display/intel_opregion.h 1.6
+sys/external/bsd/drm2/dist/drm/i915/gem/i915_gem_dmabuf.c 1.7
+sys/external/bsd/drm2/dist/drm/i915/gem/i915_gem_mman.c 1.23,1.26,1.27
+sys/external/bsd/drm2/dist/drm/i915/i915_drv.h	1.49
+sys/external/bsd/drm2/dist/drm/i915/i915_gem.h	1.8
+sys/external/bsd/drm2/dist/drm/nouveau/include/nvkm/core/device.h 1.10
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_acpi.c 1.5
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_acpi.h 1.4
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_display.c 1.6
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_drv.h 1.5
+sys/external/bsd/drm2/dist/drm/nouveau/nvkm/engine/device/nouveau_nvkm_engine_device_acpi.c 1.4
+sys/external/bsd/drm2/dist/drm/nouveau/nvkm/engine/device/nouveau_nvkm_engine_device_base.c 1.13
+sys/external/bsd/drm2/dist/drm/nouveau/nvkm/engine/device/nouveau_nvkm_engine_device_pci.c 1.12
+sys/external/bsd/drm2/dist/drm/nouveau/nvkm/engine/device/nouveau_nvkm_engine_device_tegra.c 1.4
+sys/external/bsd/drm2/dist/drm/nouveau/nvkm/engine/device/priv.h 1.4
+sys/external/bsd/drm2/dist/drm/nouveau/nvkm/engine/disp/nouveau_nvkm_engine_disp_sorgm200.c 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/nvkm/subdev/bios/nouveau_nvkm_subdev_bios_shadowacpi.c 1.4
+sys/external/bsd/drm2/dist/drm/nouveau/nvkm/subdev/instmem/nouveau_nvkm_subdev_instmem_gk20a.c 1.10
+sys/external/bsd/drm2/dist/drm/nouveau/nvkm/subdev/mxm/nouveau_nvkm_subdev_mxm_base.c 1.5
+sys/external/bsd/drm2/dist/drm/nouveau/nvkm/subdev/pci/nouveau_nvkm_subdev_pci_pcie.c 1.4,1.5
+sys/external/bsd/drm2/dist/drm/radeon/radeon.h	1.12
+sys/external/bsd/drm2/dist/drm/radeon/radeon_acpi.c 1.5,1.6
+sys/external/bsd/drm2/dist/drm/radeon/radeon_bios.c 1.13,1.14
+sys/external/bsd/drm2/dist/drm/radeon/radeon_ci_dpm.c 1.7
+sys/external/bsd/drm2/dist/drm/radeon/radeon_cik.c 1.8
+sys/external/bsd/drm2/dist/drm/radeon/radeon_drv.h 1.5
+sys/external/bsd/drm2/dist/drm/radeon/radeon_evergreen.c 1.6
+sys/external/bsd/drm2/dist/drm/radeon/radeon_r600.c 1.7
+sys/external/bsd/drm2/dist/drm/radeon/radeon_rv770.c 1.3
+sys/external/bsd/drm2/dist/drm/radeon/radeon_si.c 1.6
+sys/external/bsd/drm2/dist/drm/radeon/radeon_si_dpm.c 1.9
+sys/external/bsd/drm2/drm/drm_cdevsw.c		1.31
+sys/external/bsd/drm2/drm/drm_gem_cma_helper.c	1.15
+sys/external/bsd/drm2/drm/drm_module.c		1.32
+sys/external/bsd/drm2/include/acpi/acpi_bus.h	1.1
+sys/external/bsd/drm2/include/acpi/video.h	1.3
+sys/external/bsd/drm2/include/linux/acpi.h	1.11
+sys/external/bsd/drm2/include/linux/interval_tree.h 1.14
+sys/external/bsd/drm2/include/linux/kref.h	1.14
+sys/external/bsd/drm2/include/linux/mxm-wmi.h	1.1
+sys/external/bsd/drm2/include/linux/nbsd-namespace-acpi.h 1.2
+sys/external/bsd/drm2/include/linux/pci.h	1.57,1.58
+sys/external/bsd/drm2/include/linux/smp.h	1.5
+sys/external/bsd/drm2/linux/linux_dma_buf.c	1.17
+sys/external/bsd/drm2/linux/linux_pci.c		1.26,1.30
+sys/external/bsd/drm2/linux/linux_sync_file.c	1.3
+sys/external/bsd/drm2/linux/linux_xa.c		1.4
+sys/external/bsd/drm2/nouveau/files.nouveau	1.40
+sys/external/bsd/drm2/pci/files.drmkms_pci	1.18
+sys/external/bsd/drm2/radeon/files.radeon	1.40
+sys/external/bsd/drm2/radeon/radeon_pci.c	1.23
+sys/external/bsd/drm2/ttm/ttm_bo_vm.c		1.23,1.28
+sys/modules/amdgpu/Makefile			1.9
+sys/modules/drmkms/drmkms_pci.h			1.1
+
+	drm: fix various issues
+	- PR 58133: X server crashes; radeon 5450; modesetting
+	- PR 58180: render nodes are busted
+	- PR 58210: linux_sync_file missing struct file::f_data initialization
+	- PR 58307: Slow/incremental updating of mouse cursor sprite
+	- PR 58308: x86 bus_dmamem_map lacks BUS_DMA_PREFETCHABLE support
+	- PR 58309: BUS_DMA_PREFETCHABLE is undocumented
+	- PR 58384: amdgpu maps wrong bar for pre-bonaire chips
+	- PR 58385: amdgpu_gart_map maps the same GPU vaddr over and over again
+	[rin, ticket #928]
 
