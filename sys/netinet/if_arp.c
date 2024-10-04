@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.315 2024/09/09 07:25:32 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.316 2024/10/04 23:31:06 roy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.315 2024/09/09 07:25:32 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.316 2024/10/04 23:31:06 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -217,7 +217,7 @@ static struct ifnet *myip_ifp = NULL;
 
 static int arp_drainwanted;
 
-static int log_movements = 0;
+static int log_movements = 1;
 static int log_permanent_modify = 1;
 static int log_wrong_iface = 1;
 
@@ -793,14 +793,6 @@ in_arpinput(struct mbuf *m)
 	if (ah->ar_pln != sizeof(struct in_addr))
 		goto out;
 
-	ifp = if_get_bylla(ar_sha(ah), ah->ar_hln, &psref);
-	if (ifp) {
-		/* it's from me, ignore it. */
-		if_put(ifp, &psref);
-		ARP_STATINC(ARP_STAT_RCVLOCALSHA);
-		goto out;
-	}
-
 	rcvif = ifp = m_get_rcvif_psref(m, &psref);
 	if (__predict_false(rcvif == NULL))
 		goto out;
@@ -909,6 +901,12 @@ again:
 	}
 
 	myaddr = ia->ia_addr.sin_addr;
+
+	/* XXX checks for bridge case? */
+	if (!memcmp(ar_sha(ah), CLLADDR(ifp->if_sadl), ifp->if_addrlen)) {
+		ARP_STATINC(ARP_STAT_RCVLOCALSHA);
+		goto out;	/* it's from me, ignore it. */
+	}
 
 	/* XXX checks for bridge case? */
 	if (!memcmp(ar_sha(ah), ifp->if_broadcastaddr, ifp->if_addrlen)) {
