@@ -1,4 +1,4 @@
-/*	$NetBSD: quip_server.c,v 1.6 2013/10/19 17:16:37 christos Exp $	*/
+/*	$NetBSD: quip_server.c,v 1.7 2024/10/04 15:37:00 rillig Exp $	*/
 /*	$KAME: quip_server.c,v 1.6 2001/08/20 06:41:32 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -431,6 +431,7 @@ string_match(const char *s1, const char *s2)
 static int
 query_list(const char *cmd, const char *arg, char *msg, size_t maxmsg)
 {
+	const char *colon;
 	char tmp[256], *cp, *ep;
 	struct ifinfo *ifinfo;
 	struct classinfo *clinfo;
@@ -442,9 +443,9 @@ query_list(const char *cmd, const char *arg, char *msg, size_t maxmsg)
 		print_if = print_class = print_fltr = 1;
 	} else {
 		print_if = print_class = print_fltr = 0;
-		if ((cp = strchr(arg, ':')) == NULL)
+		if ((colon = strchr(arg, ':')) == NULL)
 			print_if = 1;
-		else if (strchr(cp+1, ':') == NULL)
+		else if (strchr(colon+1, ':') == NULL)
 			print_class = 1;
 		else
 			print_fltr = 1;
