@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.28 2016/07/07 06:55:38 msaitoh Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.28.48.1 2024/10/04 11:40:52 martin Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -95,10 +95,10 @@ int		pci_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
 
-int		sparc64_pci_enumerate_bus(struct pci_softc *, const int *,
-		    int (*)(const struct pci_attach_args *),
+int		sparc64_pci_enumerate_bus1(struct pci_softc *, const int *,
+		    int (*)(void *, const struct pci_attach_args *), void *,
 		    struct pci_attach_args *);
-#define PCI_MACHDEP_ENUMERATE_BUS sparc64_pci_enumerate_bus
+#define PCI_MACHDEP_ENUMERATE_BUS1 sparc64_pci_enumerate_bus1
 
 #define	pci_conf_read(pc, tag, reg) \
 		((pc)->spc_conf_read(pc, tag, reg))

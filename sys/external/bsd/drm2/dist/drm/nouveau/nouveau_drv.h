@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_drv.h,v 1.4 2022/05/21 17:50:21 riastradh Exp $	*/
+/*	$NetBSD: nouveau_drv.h,v 1.4.4.1 2024/10/04 11:40:51 martin Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 #ifndef __NOUVEAU_DRV_H__
@@ -40,6 +40,7 @@
  *      - implemented limited ABI16/NVIF interop
  */
 
+#include <linux/acpi.h>
 #include <linux/notifier.h>
 
 #include <nvif/client.h>

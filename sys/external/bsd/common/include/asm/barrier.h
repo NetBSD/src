@@ -1,4 +1,4 @@
-/*	$NetBSD: barrier.h,v 1.19 2022/07/19 21:30:40 riastradh Exp $	*/
+/*	$NetBSD: barrier.h,v 1.19.4.1 2024/10/04 11:40:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -100,18 +100,14 @@
 #  define	smp_mb				membar_sync
 #  define	smp_wmb				membar_producer
 #  define	smp_rmb				membar_consumer
+#  define	smp_mb__before_atomic		membar_release
+#  define	smp_mb__after_atomic		membar_acquire
 #else
 #  define	smp_mb()			__insn_barrier()
 #  define	smp_wmb()			__insn_barrier()
 #  define	smp_rmb()			__insn_barrier()
-#endif
-
-#if defined(MULTIPROCESSOR) && !defined(__HAVE_ATOMIC_AS_MEMBAR)
-#  define	smp_mb__before_atomic()		membar_release()
-#  define	smp_mb__after_atomic()		membar_acquire()
-#else
-#  define	smp_mb__before_atomic()		__insn_barrier()
-#  define	smp_mb__after_atomic()		__insn_barrier()
+#  define	smp_mb__before_atomic()		__nothing
+#  define	smp_mb__after_atomic()		__nothing
 #endif
 
 #endif  /* _ASM_BARRIER_H_ */

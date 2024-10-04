@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.56 2022/10/25 23:37:06 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.56.2.1 2024/10/04 11:40:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -62,17 +62,7 @@
 struct acpi_devnode;
 struct pci_driver;
 struct pci_dev;
-
-struct pci_bus {
-	/* NetBSD private members */
-	pci_chipset_tag_t	pb_pc;
-	device_t		pb_dev;
-
-	/* Linux API */
-	u_int			number;
-
-	struct pci_dev		*self;
-};
+struct pci_bus;
 
 struct pci_device_id {
 	uint32_t	vendor;
@@ -99,6 +89,10 @@ CTASSERT(PCI_CLASS_DISPLAY_VGA == 0x0300);
 #define	PCI_CLASS_DISPLAY_OTHER						\
 	((PCI_CLASS_DISPLAY << 8) | PCI_SUBCLASS_DISPLAY_MISC)
 CTASSERT(PCI_CLASS_DISPLAY_OTHER == 0x0380);
+
+#define	PCI_CLASS_DISPLAY_3D						\
+	((PCI_CLASS_DISPLAY << 8) | PCI_SUBCLASS_DISPLAY_3D)
+CTASSERT(PCI_CLASS_DISPLAY_3D == 0x0302);
 
 #define	PCI_CLASS_BRIDGE_ISA						\
 	((PCI_CLASS_BRIDGE << 8) | PCI_SUBCLASS_BRIDGE_ISA)
@@ -150,6 +144,8 @@ CTASSERT(PCI_CLASS_BRIDGE_ISA == 0x0601);
 #define  PCI_EXP_LNKCTL2_TLS_8_0GT	PCIE_LCSR2_TGT_LSPEED_8G
 #define PCI_EXP_LNKCAP			PCIE_LCAP
 #define  PCI_EXP_LNKCAP_CLKPM		PCIE_LCAP_CLOCK_PM
+#define PCI_EXP_DEVCAP2_ATOMIC_COMP32	PCIE_DCAP2_32ATOM
+#define PCI_EXP_DEVCAP2_ATOMIC_COMP64	PCIE_DCAP2_64ATOM
 
 
 typedef int pci_power_t;
@@ -233,6 +229,18 @@ enum pcie_link_width {
 
 #define	__pci_rom_iomem
 
+struct pci_bus {
+	/* NetBSD private members */
+	pci_chipset_tag_t	pb_pc;
+	device_t		pb_dev;
+
+	/* Linux API */
+	u_int			number;
+	enum pci_bus_speed	max_bus_speed;
+
+	struct pci_dev		*self;
+};
+
 /* Namespace.  */
 #define	pci_bus_alloc_resource		linux_pci_bus_alloc_resource
 #define	pci_bus_read_config_byte	linux_pci_bus_read_config_byte
@@ -289,6 +297,7 @@ enum pcie_link_width {
 #define	pcie_read_config_word		linux_pcie_capability_read_word
 #define	pcie_write_config_dword		linux_pcie_capability_write_dword
 #define	pcie_write_config_word		linux_pcie_capability_write_word
+#define	pci_enable_atomic_ops_to_root	linux_pci_enable_atomic_ops_to_root
 
 /* NetBSD local additions.  */
 void		linux_pci_dev_init(struct pci_dev *, device_t, device_t,
@@ -395,6 +404,13 @@ dev_is_pci(struct device *dev)
 	struct device *parent = device_parent(dev);
 
 	return parent && device_is_a(parent, "pci");
+}
+
+static inline int
+pci_enable_atomic_ops_to_root(struct pci_dev *dev, uint32_t cap_mask)
+{
+
+	return -EINVAL;
 }
 
 #endif  /* _LINUX_PCI_H_ */

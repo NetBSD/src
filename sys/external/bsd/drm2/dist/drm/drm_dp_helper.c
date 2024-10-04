@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_helper.c,v 1.16 2021/12/19 12:41:54 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_helper.c,v 1.16.4.1 2024/10/04 11:40:48 martin Exp $	*/
 
 /*
  * Copyright © 2009 Keith Packard
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_dp_helper.c,v 1.16 2021/12/19 12:41:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_dp_helper.c,v 1.16.4.1 2024/10/04 11:40:48 martin Exp $");
 
 #include <linux/delay.h>
 #include <linux/errno.h>
@@ -128,6 +128,13 @@ u8 drm_dp_get_adjust_request_pre_emphasis(const u8 link_status[DP_LINK_STATUS_SI
 }
 EXPORT_SYMBOL(drm_dp_get_adjust_request_pre_emphasis);
 
+#ifndef __NetBSD__
+/*
+ * XXXGCC12
+ * this unused function is bad.  DP_LINK_STATUS_SIZE is 6, and
+ * DP_ADJUST_REQUEST_POST_CURSOR2 triggers an offset of 10 into link_status[].
+ * fortunately, it is not used.
+ */
 u8 drm_dp_get_adjust_request_post_cursor(const u8 link_status[DP_LINK_STATUS_SIZE],
 					 unsigned int lane)
 {
@@ -137,6 +144,7 @@ u8 drm_dp_get_adjust_request_post_cursor(const u8 link_status[DP_LINK_STATUS_SIZ
 	return (value >> (lane << 1)) & 0x3;
 }
 EXPORT_SYMBOL(drm_dp_get_adjust_request_post_cursor);
+#endif
 
 void drm_dp_link_train_clock_recovery_delay(const u8 dpcd[DP_RECEIVER_CAP_SIZE])
 {

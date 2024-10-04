@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_xa.c,v 1.3 2021/12/19 12:05:25 riastradh Exp $	*/
+/*	$NetBSD: linux_xa.c,v 1.3.4.1 2024/10/04 11:40:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_xa.c,v 1.3 2021/12/19 12:05:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_xa.c,v 1.3.4.1 2024/10/04 11:40:50 martin Exp $");
 
 /*
  * This is a lame-o implementation of the Linux xarray data type, which
@@ -124,7 +124,7 @@ xa_load(struct xarray *xa, unsigned long key)
 void *
 xa_store(struct xarray *xa, unsigned long key, void *datum, gfp_t gfp)
 {
-	struct node *n, *collision;
+	struct node *n, *collision, *recollision;
 
 	KASSERT(datum != NULL);
 	KASSERT(((uintptr_t)datum & 0x3) == 0);
@@ -137,6 +137,11 @@ xa_store(struct xarray *xa, unsigned long key, void *datum, gfp_t gfp)
 
 	mutex_enter(&xa->xa_lock);
 	collision = rb_tree_insert_node(&xa->xa_tree, n);
+	if (collision != n) {
+		rb_tree_remove_node(&xa->xa_tree, n);
+		recollision = rb_tree_insert_node(&xa->xa_tree, n);
+		KASSERT(recollision == n);
+	}
 	mutex_exit(&xa->xa_lock);
 
 	if (collision != n) {

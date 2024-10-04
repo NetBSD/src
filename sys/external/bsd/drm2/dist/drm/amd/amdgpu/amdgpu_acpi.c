@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_acpi.c,v 1.5 2022/02/27 14:24:26 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_acpi.c,v 1.5.4.1 2024/10/04 11:40:50 martin Exp $	*/
 
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_acpi.c,v 1.5 2022/02/27 14:24:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_acpi.c,v 1.5.4.1 2024/10/04 11:40:50 martin Exp $");
 
 #include <linux/pci.h>
 #include <linux/acpi.h>
@@ -39,6 +39,14 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_acpi.c,v 1.5 2022/02/27 14:24:26 riastradh Ex
 #include "amdgpu_display.h"
 #include "amd_acpi.h"
 #include "atom.h"
+
+#ifdef __NetBSD__
+#include <dev/acpi/acpi_pci.h>
+#include <dev/acpi/acpireg.h>
+#define	_COMPONENT	ACPI_DISPLAY_COMPONENT
+ACPI_MODULE_NAME("radeon_acpi")
+#include <linux/nbsd-namespace-acpi.h>
+#endif
 
 struct amdgpu_atif_notification_cfg {
 	bool enabled;
@@ -362,6 +370,8 @@ out:
 	return err;
 }
 
+#ifndef __NetBSD__		/* XXX amdgpu acpi */
+
 /**
  * amdgpu_atif_get_sbios_requests - get requested sbios event
  *
@@ -487,6 +497,8 @@ static int amdgpu_atif_handler(struct amdgpu_device *adev,
 	 */
 	return NOTIFY_BAD;
 }
+
+#endif	/* __NetBSD__ */
 
 /* Call the ATCS method
  */
@@ -635,7 +647,17 @@ int amdgpu_acpi_pcie_notify_device_ready(struct amdgpu_device *adev)
 	struct amdgpu_atcs *atcs = &adev->atcs;
 
 	/* Get the device handle */
+#ifdef __NetBSD__
+	const struct pci_attach_args *pa = &adev->pdev->pd_pa;
+	struct acpi_devnode *const d =
+	    acpi_pcidev_find(pci_get_segment(pa->pa_pc),
+		pa->pa_bus, pa->pa_device, pa->pa_function);
+	if (d == NULL)
+		return -EINVAL;
+	handle = d->ad_handle;
+#else
 	handle = ACPI_HANDLE(&adev->pdev->dev);
+#endif
 	if (!handle)
 		return -EINVAL;
 
@@ -678,7 +700,17 @@ int amdgpu_acpi_pcie_performance_request(struct amdgpu_device *adev,
 		return -EINVAL;
 
 	/* Get the device handle */
+#ifdef __NetBSD__
+	const struct pci_attach_args *pa = &adev->pdev->pd_pa;
+	struct acpi_devnode *const d =
+	    acpi_pcidev_find(pci_get_segment(pa->pa_pc),
+		pa->pa_bus, pa->pa_device, pa->pa_function);
+	if (d == NULL)
+		return -EINVAL;
+	handle = d->ad_handle;
+#else
 	handle = ACPI_HANDLE(&adev->pdev->dev);
+#endif
 	if (!handle)
 		return -EINVAL;
 
@@ -743,6 +775,7 @@ int amdgpu_acpi_pcie_performance_request(struct amdgpu_device *adev,
  * acpi events.
  * Returns NOTIFY code
  */
+#ifndef __NetBSD__		/* XXX amdgpu acpi */
 static int amdgpu_acpi_event(struct notifier_block *nb,
 			     unsigned long val,
 			     void *data)
@@ -762,6 +795,7 @@ static int amdgpu_acpi_event(struct notifier_block *nb,
 	/* Check for pending SBIOS requests */
 	return amdgpu_atif_handler(adev, entry);
 }
+#endif
 
 /* Call all ACPI methods here */
 /**
@@ -781,7 +815,17 @@ int amdgpu_acpi_init(struct amdgpu_device *adev)
 	int ret;
 
 	/* Get the device handle */
+#ifdef __NetBSD__
+	const struct pci_attach_args *pa = &adev->pdev->pd_pa;
+	struct acpi_devnode *const d =
+	    acpi_pcidev_find(pci_get_segment(pa->pa_pc),
+		pa->pa_bus, pa->pa_device, pa->pa_function);
+	if (d == NULL)
+		return -EINVAL;
+	handle = d->ad_handle;
+#else
 	handle = ACPI_HANDLE(&adev->pdev->dev);
+#endif
 
 	if (!adev->bios || !handle)
 		return 0;
@@ -862,8 +906,10 @@ int amdgpu_acpi_init(struct amdgpu_device *adev)
 	}
 
 out:
+#ifndef __NetBSD__		/* XXX amdgpu acpi */
 	adev->acpi_nb.notifier_call = amdgpu_acpi_event;
 	register_acpi_notifier(&adev->acpi_nb);
+#endif
 
 	return ret;
 }
@@ -889,6 +935,8 @@ void amdgpu_acpi_get_backlight_caps(struct amdgpu_device *adev,
  */
 void amdgpu_acpi_fini(struct amdgpu_device *adev)
 {
+#ifndef __NetBSD__		/* XXX radeon acpi */
 	unregister_acpi_notifier(&adev->acpi_nb);
+#endif
 	kfree(adev->atif);
 }

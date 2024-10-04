@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.117 2022/02/27 14:18:52 riastradh Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.117.4.1 2024/10/04 11:40:53 martin Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -339,12 +339,15 @@ const struct device_compatible_entry *
 	    const struct device_compatible_entry *);
 int	pci_compatible_match_subsys(const struct pci_attach_args *,
 	    const struct device_compatible_entry *);
-#ifndef PCI_MACHDEP_ENUMERATE_BUS
 int	pci_enumerate_bus(struct pci_softc *, const int *,
 	    int (*)(const struct pci_attach_args *), struct pci_attach_args *);
+#ifndef PCI_MACHDEP_ENUMERATE_BUS1
+int	pci_enumerate_bus1(struct pci_softc *, const int *,
+	    int (*)(void *, const struct pci_attach_args *), void *,
+	    struct pci_attach_args *);
 #endif
-int	pci_probe_device(struct pci_softc *, pcitag_t tag,
-	    int (*)(const struct pci_attach_args *),
+int	pci_probe_device1(struct pci_softc *, pcitag_t tag,
+	    int (*)(void *, const struct pci_attach_args *), void *,
 	    struct pci_attach_args *);
 void	pci_devinfo(pcireg_t, pcireg_t, int, char *, size_t);
 void	pci_aprint_devinfo_fancy(const struct pci_attach_args *,
@@ -382,8 +385,10 @@ int	pci_vpd_write(pci_chipset_tag_t, pcitag_t, int, int, pcireg_t *);
 /*
  * Misc.
  */
-int	pci_find_device(struct pci_attach_args *pa,
-			int (*match)(const struct pci_attach_args *));
+int	pci_find_device(struct pci_attach_args *,
+	    int (*match)(const struct pci_attach_args *));
+int	pci_find_device1(struct pci_attach_args *,
+	    int (*match)(void *, const struct pci_attach_args *), void *);
 int	pci_dma64_available(const struct pci_attach_args *);
 void	pci_conf_capture(pci_chipset_tag_t, pcitag_t, struct pci_conf_state *);
 void	pci_conf_restore(pci_chipset_tag_t, pcitag_t, struct pci_conf_state *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_instmem_gk20a.c,v 1.9 2021/12/19 12:29:47 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_instmem_gk20a.c,v 1.9.4.1 2024/10/04 11:40:51 martin Exp $	*/
 
 /*
  * Copyright (c) 2015, NVIDIA CORPORATION. All rights reserved.
@@ -44,7 +44,7 @@
  * goes beyond a certain threshold. At the moment this limit is 1MB.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_gk20a.c,v 1.9 2021/12/19 12:29:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_gk20a.c,v 1.9.4.1 2024/10/04 11:40:51 martin Exp $");
 
 #include "priv.h"
 
@@ -241,7 +241,7 @@ gk20a_instobj_acquire_iommu(struct nvkm_memory *memory)
 #ifdef __NetBSD__
 	void *kva;
 	if (bus_dmamem_map(imem->dmat, node->segs, node->nsegs, size,
-		&kva, BUS_DMA_WAITOK))
+		&kva, BUS_DMA_WAITOK|BUS_DMA_PREFETCHABLE))
 		node->base.vaddr = NULL;
 	else
 		node->base.vaddr = kva;

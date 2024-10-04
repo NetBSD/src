@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon.h,v 1.11 2021/12/19 11:52:38 riastradh Exp $	*/
+/*	$NetBSD: radeon.h,v 1.11.4.1 2024/10/04 11:40:48 martin Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -69,6 +69,7 @@
 #include <linux/interval_tree.h>
 #include <linux/hashtable.h>
 #include <linux/dma-fence.h>
+#include <linux/acpi.h>
 
 #ifdef CONFIG_MMU_NOTIFIER
 #include <linux/mmu_notifier.h>

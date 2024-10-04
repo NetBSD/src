@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_evergreen.c,v 1.5 2021/12/18 23:45:43 riastradh Exp $	*/
+/*	$NetBSD: radeon_evergreen.c,v 1.5.4.1 2024/10/04 11:40:48 martin Exp $	*/
 
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_evergreen.c,v 1.5 2021/12/18 23:45:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_evergreen.c,v 1.5.4.1 2024/10/04 11:40:48 martin Exp $");
 
 #include <linux/firmware.h>
 #include <linux/pci.h>
@@ -1285,7 +1285,6 @@ int evergreen_set_uvd_clocks(struct radeon_device *rdev, u32 vclk, u32 dclk)
 
 void evergreen_fix_pci_max_read_req_size(struct radeon_device *rdev)
 {
-#ifndef __NetBSD__		/* XXX radeon pcie */
 	int readrq;
 	u16 v;
 
@@ -1296,7 +1295,6 @@ void evergreen_fix_pci_max_read_req_size(struct radeon_device *rdev)
 	 */
 	if ((v == 0) || (v == 6) || (v == 7))
 		pcie_set_readrq(rdev->pdev, 512);
-#endif
 }
 
 void dce4_program_fmt(struct drm_encoder *encoder)
@@ -5338,7 +5336,6 @@ void evergreen_fini(struct radeon_device *rdev)
 
 void evergreen_pcie_gen2_enable(struct radeon_device *rdev)
 {
-#ifndef __NetBSD__		/* XXX radeon pcie */
 	u32 link_width_cntl, speed_cntl;
 
 	if (radeon_pcie_gen2 == 0)
@@ -5398,7 +5395,6 @@ void evergreen_pcie_gen2_enable(struct radeon_device *rdev)
 			link_width_cntl &= ~LC_UPCONFIGURE_DIS;
 		WREG32_PCIE_PORT(PCIE_LC_LINK_WIDTH_CNTL, link_width_cntl);
 	}
-#endif
 }
 
 void evergreen_program_aspm(struct radeon_device *rdev)

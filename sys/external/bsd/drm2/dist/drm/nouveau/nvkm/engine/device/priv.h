@@ -1,4 +1,4 @@
-/*	$NetBSD: priv.h,v 1.3 2021/12/18 23:45:34 riastradh Exp $	*/
+/*	$NetBSD: priv.h,v 1.3.4.1 2024/10/04 11:40:48 martin Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_DEVICE_PRIV_H__
@@ -54,6 +54,9 @@
 int  nvkm_device_ctor(const struct nvkm_device_func *,
 		      const struct nvkm_device_quirk *,
 		      struct device *, enum nvkm_device_type, u64 handle,
+#ifdef __NetBSD__		/* XXX nouveau acpi */
+		      struct acpi_devnode *acpidev,
+#endif
 		      const char *name, const char *cfg, const char *dbg,
 		      bool detect, bool mmio, u64 subdev_mask,
 		      struct nvkm_device *);

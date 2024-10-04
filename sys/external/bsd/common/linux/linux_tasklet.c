@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_tasklet.c,v 1.11 2022/04/09 23:43:31 riastradh Exp $	*/
+/*	$NetBSD: linux_tasklet.c,v 1.11.4.1 2024/10/04 11:40:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2020, 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_tasklet.c,v 1.11 2022/04/09 23:43:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_tasklet.c,v 1.11.4.1 2024/10/04 11:40:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -395,9 +395,7 @@ tasklet_disable_nosync(struct tasklet_struct *tasklet)
 	KASSERT(disablecount != 0);
 
 	/* Pairs with membar_release in __tasklet_enable.  */
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 	membar_acquire();
-#endif
 }
 
 /*
@@ -515,9 +513,7 @@ tasklet_trylock(struct tasklet_struct *tasklet)
 		state | TASKLET_RUNNING) != state);
 
 	/* Pairs with membar_release in tasklet_unlock.  */
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 	membar_acquire();
-#endif
 
 	return true;
 }
@@ -539,9 +535,7 @@ tasklet_unlock(struct tasklet_struct *tasklet)
 	 * Pairs with membar_acquire in tasklet_trylock and with
 	 * atomic_load_acquire in tasklet_unlock_wait.
 	 */
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 	membar_release();
-#endif
 	atomic_and_uint(&tasklet->tl_state, ~TASKLET_RUNNING);
 }
 
@@ -590,9 +584,7 @@ __tasklet_disable_sync_once(struct tasklet_struct *tasklet)
 	KASSERT(disablecount != 0);
 
 	/* Pairs with membar_release in __tasklet_enable_sync_once.  */
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 	membar_acquire();
-#endif
 
 	/*
 	 * If it was zero, wait for it to finish running.  If it was
@@ -614,9 +606,7 @@ __tasklet_enable_sync_once(struct tasklet_struct *tasklet)
 	unsigned int disablecount;
 
 	/* Pairs with membar_acquire in __tasklet_disable_sync_once.  */
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 	membar_release();
-#endif
 
 	/* Decrement the disable count.  */
 	disablecount = atomic_dec_uint_nv(&tasklet->tl_disablecount);
@@ -683,9 +673,7 @@ __tasklet_enable(struct tasklet_struct *tasklet)
 	 * Pairs with atomic_load_acquire in tasklet_softintr and with
 	 * membar_acquire in tasklet_disable.
 	 */
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 	membar_release();
-#endif
 
 	/* Decrement the disable count.  */
 	disablecount = atomic_dec_uint_nv(&tasklet->tl_disablecount);

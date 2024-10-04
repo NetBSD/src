@@ -1,4 +1,4 @@
-/*      $NetBSD: xpci_xenbus.c,v 1.25 2021/08/07 16:19:08 thorpej Exp $      */
+/*      $NetBSD: xpci_xenbus.c,v 1.25.6.1 2024/10/04 11:40:54 martin Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.25 2021/08/07 16:19:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.25.6.1 2024/10/04 11:40:54 martin Exp $");
 
 #include "opt_xen.h"
 
@@ -491,8 +491,9 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 }
 
 int
-xpci_enumerate_bus(struct pci_softc *sc, const int *locators,
-    int (*match)(const struct pci_attach_args *), struct pci_attach_args *pap)
+xpci_enumerate_bus1(struct pci_softc *sc, const int *locators,
+    int (*match)(void *, const struct pci_attach_args *), void *cookie,
+    struct pci_attach_args *pap)
 {
 #if 0
 	char *string;
@@ -550,7 +551,7 @@ xpci_enumerate_bus(struct pci_softc *sc, const int *locators,
 			if (busn != sc->sc_bus)
 				goto endfor;
 			tag = pci_make_tag(pc, busn, devn, funcn);
-			err = pci_probe_device(sc, tag, match, pap);
+			err = pci_probe_device1(sc, tag, match, pap);
 			if (match != NULL && err != 0)
 				return (err);
 		}
@@ -619,7 +620,7 @@ endfor:
 					goto next;
 				}
 			}
-			err = pci_probe_device(sc, tag, match, pap);
+			err = pci_probe_device1(sc, tag, match, pap);
 			if (match != NULL && err != 0)
 				return (err);
 next:

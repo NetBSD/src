@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_vi.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_vi.c,v 1.3.4.1 2024/10/04 11:40:50 martin Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_vi.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_vi.c,v 1.3.4.1 2024/10/04 11:40:50 martin Exp $");
 
 #include <linux/pci.h>
 #include <linux/slab.h>
@@ -914,7 +914,6 @@ static int vi_set_vce_clocks(struct amdgpu_device *adev, u32 evclk, u32 ecclk)
 
 static void vi_pcie_gen3_enable(struct amdgpu_device *adev)
 {
-#ifndef __NetBSD__		/* XXX amdgpu pcie */
 	if (pci_is_root_bus(adev->pdev->bus))
 		return;
 
@@ -929,7 +928,6 @@ static void vi_pcie_gen3_enable(struct amdgpu_device *adev)
 		return;
 
 	/* todo */
-#endif
 }
 
 static void vi_program_aspm(struct amdgpu_device *adev)

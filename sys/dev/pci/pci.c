@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.165 2022/08/24 11:19:25 riastradh Exp $	*/
+/*	$NetBSD: pci.c,v 1.165.4.1 2024/10/04 11:40:53 martin Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.165 2022/08/24 11:19:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.165.4.1 2024/10/04 11:40:53 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -69,8 +69,8 @@ int pci_config_dump = 0;
 
 int	pciprint(void *, const char *);
 
-#ifdef PCI_MACHDEP_ENUMERATE_BUS
-#define pci_enumerate_bus PCI_MACHDEP_ENUMERATE_BUS
+#ifdef PCI_MACHDEP_ENUMERATE_BUS1
+#define pci_enumerate_bus1 PCI_MACHDEP_ENUMERATE_BUS1
 #endif
 
 /*
@@ -290,8 +290,8 @@ pci_bus_get_child_devhandle(struct pci_softc *sc, pcitag_t tag)
 }
 
 int
-pci_probe_device(struct pci_softc *sc, pcitag_t tag,
-    int (*match)(const struct pci_attach_args *),
+pci_probe_device1(struct pci_softc *sc, pcitag_t tag,
+    int (*match)(void *, const struct pci_attach_args *), void *cookie,
     struct pci_attach_args *pap)
 {
 	pci_chipset_tag_t pc = sc->sc_pc;
@@ -470,7 +470,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 #endif
 
 	if (match != NULL) {
-		ret = (*match)(&pa);
+		ret = (*match)(cookie, &pa);
 		if (ret != 0 && pap != NULL)
 			*pap = pa;
 	} else {
@@ -681,9 +681,48 @@ pci_get_ext_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
 	return 0;
 }
 
+static int
+pci_match_cookieless(void *cookie, const struct pci_attach_args *pa)
+{
+	int (*match)(const struct pci_attach_args *) = cookie;
+
+	return (*match)(pa);
+}
+
+#if 1
+/*
+ * Only for netbsd-10. Preserve pci_probe_device() just for sure.
+ * Nothing uses this function although.
+ */
+
+int	pci_probe_device(struct pci_softc *, pcitag_t tag,
+	    int (*)(const struct pci_attach_args *),
+	    struct pci_attach_args *);
+int
+pci_probe_device(struct pci_softc *sc, pcitag_t tag,
+    int (*match)(const struct pci_attach_args *),
+    struct pci_attach_args *pap)
+{
+	void *cookie = match;
+
+	return pci_probe_device1(sc, tag, &pci_match_cookieless, cookie, pap);
+}
+#endif
+
 int
 pci_find_device(struct pci_attach_args *pa,
-		int (*match)(const struct pci_attach_args *))
+    int (*match)(const struct pci_attach_args *))
+{
+	void *cookie = match;
+
+	return (match == NULL
+	    ? pci_find_device1(pa, NULL, NULL)
+	    : pci_find_device1(pa, &pci_match_cookieless, cookie));
+}
+
+int
+pci_find_device1(struct pci_attach_args *pa,
+    int (*match)(void *, const struct pci_attach_args *), void *cookie)
 {
 	extern struct cfdriver pci_cd;
 	device_t pcidev;
@@ -696,21 +735,34 @@ pci_find_device(struct pci_attach_args *pa,
 	for (i = 0; i < pci_cd.cd_ndevs; i++) {
 		pcidev = device_lookup(&pci_cd, i);
 		if (pcidev != NULL &&
-		    pci_enumerate_bus(device_private(pcidev), wildcard,
-		    		      match, pa) != 0)
+		    pci_enumerate_bus1(device_private(pcidev), wildcard,
+			match, cookie, pa) != 0)
 			return 1;
 	}
 	return 0;
 }
 
-#ifndef PCI_MACHDEP_ENUMERATE_BUS
+int
+pci_enumerate_bus(struct pci_softc *sc, const int *locators,
+    int (*match)(const struct pci_attach_args *), struct pci_attach_args *pap)
+{
+	void *cookie = match;
+
+	return (match == NULL
+	    ? pci_enumerate_bus1(sc, locators, NULL, NULL, pap)
+	    : pci_enumerate_bus1(sc, locators, &pci_match_cookieless, cookie,
+		pap));
+}
+
+#ifndef PCI_MACHDEP_ENUMERATE_BUS1
 /*
  * Generic PCI bus enumeration routine.  Used unless machine-dependent
  * code needs to provide something else.
  */
 int
-pci_enumerate_bus(struct pci_softc *sc, const int *locators,
-    int (*match)(const struct pci_attach_args *), struct pci_attach_args *pap)
+pci_enumerate_bus1(struct pci_softc *sc, const int *locators,
+    int (*match)(void *, const struct pci_attach_args *), void *cookie,
+    struct pci_attach_args *pap)
 {
 	pci_chipset_tag_t pc = sc->sc_pc;
 	int device, function, nfunctions, ret;
@@ -816,14 +868,14 @@ pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 			    (qd->quirks & PCI_QUIRK_SKIP_FUNC(function)) != 0)
 				continue;
 			tag = pci_make_tag(pc, sc->sc_bus, device, function);
-			ret = pci_probe_device(sc, tag, match, pap);
+			ret = pci_probe_device1(sc, tag, match, cookie, pap);
 			if (match != NULL && ret != 0)
 				return ret;
 		}
 	}
 	return 0;
 }
-#endif /* PCI_MACHDEP_ENUMERATE_BUS */
+#endif /* PCI_MACHDEP_ENUMERATE_BUS1 */
 
 
 /*

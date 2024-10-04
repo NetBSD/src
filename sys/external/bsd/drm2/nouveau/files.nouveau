@@ -1,4 +1,4 @@
-#	$NetBSD: files.nouveau,v 1.38 2022/07/19 23:19:07 riastradh Exp $
+#	$NetBSD: files.nouveau,v 1.38.4.1 2024/10/04 11:40:50 martin Exp $
 
 version	20180827
 
@@ -99,6 +99,7 @@ file	external/bsd/drm2/dist/drm/nouveau/dispnv50/nouveau_dispnv50_wndw.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/dispnv50/nouveau_dispnv50_wndwc37e.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/dispnv50/nouveau_dispnv50_wndwc57e.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_abi16.c	nouveau
+file	external/bsd/drm2/dist/drm/nouveau/nouveau_acpi.c	nouveau & acpi
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_bios.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_bo.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_chan.c	nouveau

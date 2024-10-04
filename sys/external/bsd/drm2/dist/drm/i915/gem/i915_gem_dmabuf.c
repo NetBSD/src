@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_dmabuf.c,v 1.6 2021/12/19 11:33:30 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_dmabuf.c,v 1.6.4.1 2024/10/04 11:40:52 martin Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_dmabuf.c,v 1.6 2021/12/19 11:33:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_dmabuf.c,v 1.6.4.1 2024/10/04 11:40:52 martin Exp $");
 
 #include <linux/dma-buf.h>
 #include <linux/highmem.h>
@@ -126,10 +126,9 @@ static int i915_gem_dmabuf_mmap(struct dma_buf *dma_buf, struct vm_area_struct *
 		return -EINVAL;
 	if (!obj->base.filp)
 		return -ENODEV;
-	/* XXX review mmap refcount */
-	drm_gem_object_get(&obj->base);
+	uao_reference(obj->base.filp);
 	*advicep = UVM_ADV_RANDOM;
-	*uobjp = &obj->base.gemo_uvmobj;
+	*uobjp = obj->base.filp;
 	*maxprotp = prot;
 #else
 	if (obj->base.size < vma->vm_end - vma->vm_start)

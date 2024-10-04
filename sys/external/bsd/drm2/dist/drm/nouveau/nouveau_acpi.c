@@ -1,8 +1,8 @@
-/*	$NetBSD: nouveau_acpi.c,v 1.4 2022/02/27 14:24:27 riastradh Exp $	*/
+/*	$NetBSD: nouveau_acpi.c,v 1.4.4.1 2024/10/04 11:40:51 martin Exp $	*/
 
 // SPDX-License-Identifier: MIT
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_acpi.c,v 1.4 2022/02/27 14:24:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_acpi.c,v 1.4.4.1 2024/10/04 11:40:51 martin Exp $");
 
 #include <linux/pci.h>
 #include <linux/acpi.h>
@@ -14,6 +14,13 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_acpi.c,v 1.4 2022/02/27 14:24:27 riastradh E
 
 #include "nouveau_drv.h"
 #include "nouveau_acpi.h"
+
+#ifdef __NetBSD__
+#include <dev/acpi/acpireg.h>
+#define	_COMPONENT	ACPI_DISPLAY_COMPONENT
+ACPI_MODULE_NAME("nouveau_acpi")
+#include <linux/nbsd-namespace-acpi.h>
+#endif
 
 #define NOUVEAU_DSM_LED 0x02
 #define NOUVEAU_DSM_LED_STATE 0x00
@@ -256,7 +263,11 @@ static void nouveau_dsm_pci_probe(struct pci_dev *pdev, acpi_handle *dhandle_out
 	bool supports_mux;
 	int optimus_funcs;
 
+#ifdef __NetBSD__
+	dhandle = pdev->pd_ad->ad_handle;
+#else
 	dhandle = ACPI_HANDLE(&pdev->dev);
+#endif
 	if (!dhandle)
 		return;
 
@@ -421,12 +432,20 @@ static int nouveau_rom_call(acpi_handle rom_handle, uint8_t *bios,
 	return len;
 }
 
+#ifdef __NetBSD__
+bool nouveau_acpi_rom_supported(struct acpi_devnode *acpidev)
+#else
 bool nouveau_acpi_rom_supported(struct device *dev)
+#endif
 {
 	acpi_status status;
 	acpi_handle dhandle, rom_handle;
 
+#ifdef __NetBSD__
+	dhandle = (acpidev ? acpidev->ad_handle : NULL);
+#else
 	dhandle = ACPI_HANDLE(dev);
+#endif
 	if (!dhandle)
 		return false;
 
@@ -446,6 +465,9 @@ int nouveau_acpi_get_bios_chunk(uint8_t *bios, int offset, int len)
 void *
 nouveau_acpi_edid(struct drm_device *dev, struct drm_connector *connector)
 {
+#ifdef __NetBSD__		/* XXX nouveau acpi video */
+	return NULL;
+#else
 	struct acpi_device *acpidev;
 	acpi_handle handle;
 	int type, ret;
@@ -460,7 +482,11 @@ nouveau_acpi_edid(struct drm_device *dev, struct drm_connector *connector)
 		return NULL;
 	}
 
+#ifdef __NetBSD__
+	handle = (dev->pdev->pd_ad ? dev->pdev->pd_ad->ad_handle : NULL);
+#else
 	handle = ACPI_HANDLE(&dev->pdev->dev);
+#endif
 	if (!handle)
 		return NULL;
 
@@ -473,4 +499,5 @@ nouveau_acpi_edid(struct drm_device *dev, struct drm_connector *connector)
 		return NULL;
 
 	return kmemdup(edid, EDID_LENGTH, GFP_KERNEL);
+#endif
 }

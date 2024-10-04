@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_acpi.c,v 1.4 2022/02/27 14:24:27 riastradh Exp $	*/
+/*	$NetBSD: radeon_acpi.c,v 1.4.4.1 2024/10/04 11:40:48 martin Exp $	*/
 
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_acpi.c,v 1.4 2022/02/27 14:24:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_acpi.c,v 1.4.4.1 2024/10/04 11:40:48 martin Exp $");
 
 #include <linux/acpi.h>
 #include <linux/pci.h>
@@ -42,10 +42,20 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_acpi.c,v 1.4 2022/02/27 14:24:27 riastradh Ex
 #include "radeon.h"
 #include "radeon_acpi.h"
 
+#ifdef __NetBSD__
+#include <dev/acpi/acpi_pci.h>
+#include <dev/acpi/acpireg.h>
+#define	_COMPONENT	ACPI_DISPLAY_COMPONENT
+ACPI_MODULE_NAME("radeon_acpi")
+#include <linux/nbsd-namespace-acpi.h>
+#endif
+
+#ifndef __NetBSD__		/* XXX radeon acpi */
 #if defined(CONFIG_VGA_SWITCHEROO)
 bool radeon_atpx_dgpu_req_power_for_displays(void);
 #else
 static inline bool radeon_atpx_dgpu_req_power_for_displays(void) { return false; }
+#endif
 #endif
 
 #define ACPI_AC_CLASS           "ac_adapter"
@@ -310,6 +320,8 @@ out:
 	return err;
 }
 
+#ifndef __NetBSD__		/* XXX radeon acpi */
+
 /**
  * radeon_atif_get_sbios_requests - get requested sbios event
  *
@@ -429,6 +441,8 @@ static int radeon_atif_handler(struct radeon_device *rdev,
 	 */
 	return NOTIFY_BAD;
 }
+
+#endif	/* __NetBSD__ */
 
 /* Call the ATCS method
  */
@@ -577,7 +591,17 @@ int radeon_acpi_pcie_notify_device_ready(struct radeon_device *rdev)
 	struct radeon_atcs *atcs = &rdev->atcs;
 
 	/* Get the device handle */
+#ifdef __NetBSD__
+	const struct pci_attach_args *pa = &rdev->pdev->pd_pa;
+	struct acpi_devnode *const d =
+	    acpi_pcidev_find(pci_get_segment(pa->pa_pc),
+		pa->pa_bus, pa->pa_device, pa->pa_function);
+	if (d == NULL)
+		return -EINVAL;
+	handle = d->ad_handle;
+#else
 	handle = ACPI_HANDLE(&rdev->pdev->dev);
+#endif
 	if (!handle)
 		return -EINVAL;
 
@@ -617,7 +641,17 @@ int radeon_acpi_pcie_performance_request(struct radeon_device *rdev,
 	u32 retry = 3;
 
 	/* Get the device handle */
+#ifdef __NetBSD__
+	const struct pci_attach_args *pa = &rdev->pdev->pd_pa;
+	struct acpi_devnode *const d =
+	    acpi_pcidev_find(pci_get_segment(pa->pa_pc),
+		pa->pa_bus, pa->pa_device, pa->pa_function);
+	if (d == NULL)
+		return -EINVAL;
+	handle = d->ad_handle;
+#else
 	handle = ACPI_HANDLE(&rdev->pdev->dev);
+#endif
 	if (!handle)
 		return -EINVAL;
 
@@ -682,6 +716,7 @@ int radeon_acpi_pcie_performance_request(struct radeon_device *rdev,
  * acpi events.
  * Returns NOTIFY code
  */
+#ifndef __NetBSD__		/* XXX radeon acpi */
 static int radeon_acpi_event(struct notifier_block *nb,
 			     unsigned long val,
 			     void *data)
@@ -701,6 +736,7 @@ static int radeon_acpi_event(struct notifier_block *nb,
 	/* Check for pending SBIOS requests */
 	return radeon_atif_handler(rdev, entry);
 }
+#endif
 
 /* Call all ACPI methods here */
 /**
@@ -720,7 +756,17 @@ int radeon_acpi_init(struct radeon_device *rdev)
 	int ret;
 
 	/* Get the device handle */
+#ifdef __NetBSD__
+	const struct pci_attach_args *pa = &rdev->pdev->pd_pa;
+	struct acpi_devnode *const d =
+	    acpi_pcidev_find(pci_get_segment(pa->pa_pc),
+		pa->pa_bus, pa->pa_device, pa->pa_function);
+	if (d == NULL)
+		return -EINVAL;
+	handle = d->ad_handle;
+#else
 	handle = ACPI_HANDLE(&rdev->pdev->dev);
+#endif
 
 	/* No need to proceed if we're sure that ATIF is not supported */
 	if (!ASIC_IS_AVIVO(rdev) || !rdev->bios || !handle)
@@ -789,8 +835,10 @@ int radeon_acpi_init(struct radeon_device *rdev)
 	}
 
 out:
+#ifndef __NetBSD__		/* XXX radeon acpi */
 	rdev->acpi_nb.notifier_call = radeon_acpi_event;
 	register_acpi_notifier(&rdev->acpi_nb);
+#endif
 
 	return ret;
 }
@@ -804,5 +852,7 @@ out:
  */
 void radeon_acpi_fini(struct radeon_device *rdev)
 {
+#ifndef __NetBSD__		/* XXX radeon acpi */
 	unregister_acpi_notifier(&rdev->acpi_nb);
+#endif
 }

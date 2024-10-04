@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_display.c,v 1.5 2021/12/18 23:45:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_display.c,v 1.5.4.1 2024/10/04 11:40:51 martin Exp $	*/
 
 /*
  * Copyright (C) 2008 Maarten Maathuis.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_display.c,v 1.5 2021/12/18 23:45:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_display.c,v 1.5.4.1 2024/10/04 11:40:51 martin Exp $");
 
 #include <acpi/video.h>
 
@@ -48,6 +48,11 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_display.c,v 1.5 2021/12/18 23:45:32 riastrad
 #include <nvif/class.h>
 #include <nvif/cl0046.h>
 #include <nvif/event.h>
+
+#ifdef __NetBSD__
+/* Used only for runtime power management, not in NetBSD for now.  */
+#undef	CONFIG_ACPI
+#endif
 
 static int
 nouveau_display_vblank_handler(struct nvif_notify *notify)

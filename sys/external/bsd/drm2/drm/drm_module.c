@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.31 2022/07/19 22:24:47 riastradh Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.31.4.1 2024/10/04 11:40:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.31 2022/07/19 22:24:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.31.4.1 2024/10/04 11:40:51 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.31 2022/07/19 22:24:47 riastradh Ex
  */
 #if defined(__powerpc__) || defined(__i386__) || defined(__x86_64__)
 #include "agp.h"
+#include "drmkms_pci.h"
 #endif
 
 /*
@@ -114,7 +115,7 @@ drm_init(void)
 	drm_core_init_complete = true;
 
 	drm_agp_hooks_init();
-#if NAGP > 0
+#if NDRMKMS_PCI > 0 && NAGP > 0
 	extern int drmkms_agp_guarantee_initialized(void);
 	error = drmkms_agp_guarantee_initialized();
 	if (error) {

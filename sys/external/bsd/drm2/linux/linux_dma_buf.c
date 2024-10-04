@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_buf.c,v 1.15.4.1 2023/02/24 14:14:16 martin Exp $	*/
+/*	$NetBSD: linux_dma_buf.c,v 1.15.4.2 2024/10/04 11:40:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_buf.c,v 1.15.4.1 2023/02/24 14:14:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_buf.c,v 1.15.4.2 2024/10/04 11:40:50 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -285,7 +285,7 @@ dmabuf_fop_mmap(struct file *file, off_t *offp, size_t size, int prot,
 {
 	struct dma_buf *dmabuf = file->f_data;
 
-	if (size > dmabuf->size)
+	if (size > dmabuf->size || *offp < 0 || *offp > dmabuf->size - size)
 		return EINVAL;
 
 	return dmabuf->ops->mmap(dmabuf, offp, size, prot, flagsp, advicep,

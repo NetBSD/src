@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.89.4.1 2024/09/20 10:47:52 martin Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.89.4.2 2024/10/04 11:40:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.89.4.1 2024/09/20 10:47:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.89.4.2 2024/10/04 11:40:52 martin Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -1164,7 +1164,7 @@ _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 /*
  * Common function for mapping DMA-safe memory.  May be called by
  * bus-specific DMA memory map functions.
- * This supports BUS_DMA_NOCACHE.
+ * This supports BUS_DMA_NOCACHE and BUS_DMA_PREFETCHABLE.
  */
 static int
 _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
@@ -1178,8 +1178,13 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	u_int pmapflags = PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE;
 
 	size = round_page(size);
+	KASSERTMSG(((flags & (BUS_DMA_NOCACHE|BUS_DMA_PREFETCHABLE)) !=
+		(BUS_DMA_NOCACHE|BUS_DMA_PREFETCHABLE)),
+	    "BUS_DMA_NOCACHE and BUS_DMA_PREFETCHABLE are mutually exclusive");
 	if (flags & BUS_DMA_NOCACHE)
 		pmapflags |= PMAP_NOCACHE;
+	if (flags & BUS_DMA_PREFETCHABLE)
+		pmapflags |= PMAP_WRITE_COMBINE;
 
 	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | kmflags);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dc_stream.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dc_stream.c,v 1.2.4.1 2024/10/04 11:40:53 martin Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc_stream.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc_stream.c,v 1.2.4.1 2024/10/04 11:40:53 martin Exp $");
 
 #include <linux/delay.h>
 #include <linux/slab.h>
@@ -465,9 +465,18 @@ bool dc_stream_remove_writeback(struct dc *dc,
 	/* remove writeback info for disabled writeback pipes from stream */
 	for (i = 0, j = 0; i < stream->num_wb_info; i++) {
 		if (stream->writeback_info[i].wb_enabled) {
+#ifdef __NetBSD__
+			/*
+			 * XXXGCC12
+			 * The array is only 1 entry long, so i and j must
+			 * always be 0 here, so the below test fails.
+			 */
+			CTASSERT(ARRAY_SIZE(stream->writeback_info) == 1);
+#else
 			if (i != j)
 				/* trim the array */
 				stream->writeback_info[j] = stream->writeback_info[i];
+#endif
 			j++;
 		}
 	}

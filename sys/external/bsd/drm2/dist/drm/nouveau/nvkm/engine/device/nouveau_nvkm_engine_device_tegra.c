@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_device_tegra.c,v 1.3 2021/12/18 23:45:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_device_tegra.c,v 1.3.4.1 2024/10/04 11:40:49 martin Exp $	*/
 
 /*
  * Copyright (c) 2014, NVIDIA CORPORATION. All rights reserved.
@@ -22,7 +22,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_tegra.c,v 1.3 2021/12/18 23:45:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_tegra.c,v 1.3.4.1 2024/10/04 11:40:49 martin Exp $");
 
 #include <core/tegra.h>
 #ifdef CONFIG_NOUVEAU_PLATFORM_DRIVER
@@ -364,7 +364,11 @@ nvkm_device_tegra_new(const struct nvkm_device_tegra_func *func,
 	tdev->gpu_speedo = tegra_sku_info.gpu_speedo_value;
 	tdev->gpu_speedo_id = tegra_sku_info.gpu_speedo_id;
 	ret = nvkm_device_ctor(&nvkm_device_tegra_func, NULL, &pdev->dev,
-			       NVKM_DEVICE_TEGRA, pdev->id, NULL,
+			       NVKM_DEVICE_TEGRA, pdev->id,
+#ifdef __NetBSD__
+			       /*acpidev*/NULL,
+#endif
+			       /*name*/NULL,
 			       cfg, dbg, detect, mmio, subdev_mask,
 			       &tdev->device);
 	if (ret)

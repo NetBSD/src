@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_acpi.h,v 1.4 2021/12/19 11:16:17 riastradh Exp $	*/
+/*	$NetBSD: intel_acpi.h,v 1.4.4.1 2024/10/04 11:40:49 martin Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -7,6 +7,8 @@
 
 #ifndef __INTEL_ACPI_H__
 #define __INTEL_ACPI_H__
+
+#include <linux/acpi.h>
 
 struct drm_i915_private;
 

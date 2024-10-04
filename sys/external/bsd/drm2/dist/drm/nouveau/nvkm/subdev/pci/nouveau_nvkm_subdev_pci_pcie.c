@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_pci_pcie.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_pci_pcie.c,v 1.3.4.1 2024/10/04 11:40:49 martin Exp $	*/
 
 /*
  * Copyright 2015 Karol Herbst <nouveau@karolherbst.de>
@@ -24,7 +24,7 @@
  * Authors: Karol Herbst <git@karolherbst.de>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pci_pcie.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pci_pcie.c,v 1.3.4.1 2024/10/04 11:40:49 martin Exp $");
 
 #include "priv.h"
 
@@ -48,7 +48,7 @@ nvkm_pcie_speed(enum pci_bus_speed speed)
 		/* XXX 0x16 is 8_0, assume 0x17 will be 16_0 for now */
 		if (speed == 0x17)
 			return NVKM_PCIE_SPEED_8_0;
-		return -1;
+		return NVKM_PCIE_SPEED_2_5;
 	}
 }
 
@@ -138,13 +138,6 @@ nvkm_pcie_set_link(struct nvkm_pci *pci, enum nvkm_pcie_speed speed, u8 width)
 		return -ENODEV;
 	}
 
-#ifdef __NetBSD__		/* XXX pcie speed */
-	__USE(cur_speed);
-	__USE(max_speed);
-	__USE(pbus);
-	__USE(nvkm_pcie_speed);
-	ret = 0;
-#else
 	cur_speed = pci->func->pcie.cur_speed(pci);
 	max_speed = min(nvkm_pcie_speed(pbus->max_bus_speed),
 			pci->func->pcie.max_speed(pci));
@@ -172,7 +165,6 @@ nvkm_pcie_set_link(struct nvkm_pci *pci, enum nvkm_pcie_speed speed, u8 width)
 	ret = pci->func->pcie.set_link(pci, speed, width);
 	if (ret < 0)
 		nvkm_error(subdev, "setting link failed: %i\n", ret);
-#endif
 
 	return ret;
 }
