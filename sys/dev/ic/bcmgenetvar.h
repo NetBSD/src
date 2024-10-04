@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenetvar.h,v 1.5 2024/09/15 07:38:08 skrll Exp $ */
+/* $NetBSD: bcmgenetvar.h,v 1.6 2024/10/04 10:41:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -68,9 +68,8 @@ struct genet_softc {
 	kmutex_t		sc_lock;
 	kmutex_t		sc_txlock;
 
-	bool			sc_running;
+	u_short			sc_if_flags;
 	bool			sc_txrunning;
-	bool			sc_promisc;
 
 	struct genet_ring	sc_tx;
 	struct genet_ring	sc_rx;

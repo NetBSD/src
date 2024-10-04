@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.39 2024/09/14 07:30:41 skrll Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.40 2024/10/04 10:42:12 skrll Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.39 2024/09/14 07:30:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.40 2024/10/04 10:42:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -458,7 +458,7 @@ eqos_tick(void *softc)
 
 	EQOS_LOCK(sc);
 	mii_tick(mii);
-	if (sc->sc_running)
+	if ((sc->sc_if_flags & IFF_RUNNING) != 0)
 		callout_schedule(&sc->sc_stat_ch, hz);
 	EQOS_UNLOCK(sc);
 }
@@ -496,7 +496,7 @@ eqos_setup_rxfilter(struct eqos_softc *sc)
 	hash[0] = hash[1] = ~0U;
 
 	ETHER_LOCK(ec);
-	if (sc->sc_promisc) {
+	if ((sc->sc_if_flags & IFF_PROMISC) != 0)  {
 		ec->ec_flags |= ETHER_F_ALLMULTI;
 		pfil |= GMAC_MAC_PACKET_FILTER_PR |
 			GMAC_MAC_PACKET_FILTER_PCF_ALL;
@@ -614,7 +614,7 @@ eqos_init_locked(struct eqos_softc *sc)
 	eqos_init_rings(sc, 0);
 
 	/* Setup RX filter */
-	sc->sc_promisc = ifp->if_flags & IFF_PROMISC;
+	sc->sc_if_flags = ifp->if_flags;
 	eqos_setup_rxfilter(sc);
 
 	WR4(sc, GMAC_MAC_1US_TIC_COUNTER, (sc->sc_csr_clock / 1000000) - 1);
@@ -699,8 +699,8 @@ eqos_init_locked(struct eqos_softc *sc)
 	EQOS_ASSERT_TXLOCKED(sc);
 	sc->sc_txrunning = true;
 
-	sc->sc_running = true;
 	ifp->if_flags |= IFF_RUNNING;
+	sc->sc_if_flags |= IFF_RUNNING;
 
 	mii_mediachg(mii);
 	callout_schedule(&sc->sc_stat_ch, hz);
@@ -736,7 +736,6 @@ eqos_stop_locked(struct eqos_softc *sc, int disable)
 	sc->sc_txrunning = false;
 	EQOS_TXUNLOCK(sc);
 
-	sc->sc_running = false;
 	callout_halt(&sc->sc_stat_ch, &sc->sc_lock);
 
 	mii_down(&sc->sc_mii);
@@ -783,6 +782,7 @@ eqos_stop_locked(struct eqos_softc *sc, int disable)
 	/* Disable interrupts */
 	eqos_disable_intr(sc);
 
+	sc->sc_if_flags &= ~IFF_RUNNING;
 	ifp->if_flags &= ~IFF_RUNNING;
 }
 
@@ -1234,8 +1234,7 @@ eqos_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = (*ifp->if_init)(ifp);
 		else if (cmd == SIOCADDMULTI || cmd == SIOCDELMULTI) {
 			EQOS_LOCK(sc);
-			sc->sc_promisc = ifp->if_flags & IFF_PROMISC;
-			if (sc->sc_running)
+			if ((sc->sc_if_flags & IFF_RUNNING) != 0)
 				eqos_setup_rxfilter(sc);
 			EQOS_UNLOCK(sc);
 		}
@@ -1245,6 +1244,31 @@ eqos_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	return error;
 }
+
+static int
+eqos_ifflags_cb(struct ethercom *ec)
+{
+	struct ifnet * const ifp = &ec->ec_if;
+	struct eqos_softc * const sc = ifp->if_softc;
+	int ret = 0;
+
+	KASSERT(IFNET_LOCKED(ifp));
+	EQOS_LOCK(sc);
+
+	u_short change = ifp->if_flags ^ sc->sc_if_flags;
+	sc->sc_if_flags = ifp->if_flags;
+
+	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0) {
+		ret = ENETRESET;
+	} else if ((change & (IFF_PROMISC | IFF_ALLMULTI)) != 0) {
+		if ((sc->sc_if_flags & IFF_RUNNING) != 0)
+			eqos_setup_rxfilter(sc);
+	}
+	EQOS_UNLOCK(sc);
+
+	return ret;
+}
+
 
 static void
 eqos_get_eaddr(struct eqos_softc *sc, uint8_t *eaddr)
@@ -1629,6 +1653,7 @@ eqos_attach(struct eqos_softc *sc)
 
 	/* Attach ethernet interface */
 	ether_ifattach(ifp, eaddr);
+	ether_set_ifflags_cb(&sc->sc_ec, eqos_ifflags_cb);
 
 	eqos_init_sysctls(sc);
 

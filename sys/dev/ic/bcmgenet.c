@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenet.c,v 1.20 2024/09/15 07:38:08 skrll Exp $ */
+/* $NetBSD: bcmgenet.c,v 1.21 2024/10/04 10:41:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.20 2024/09/15 07:38:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.21 2024/10/04 10:41:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -319,7 +319,7 @@ genet_tick(void *softc)
 
 	GENET_LOCK(sc);
 	mii_tick(mii);
-	if (sc->sc_running)
+	if ((sc->sc_if_flags & IFF_RUNNING) != 0)
 		callout_schedule(&sc->sc_stat_ch, hz);
 	GENET_UNLOCK(sc);
 }
@@ -570,7 +570,7 @@ genet_init_locked(struct genet_softc *sc)
 	WR4(sc, GENET_UMAC_MAC1, val);
 
 	/* Setup RX filter */
-	sc->sc_promisc = ifp->if_flags & IFF_PROMISC;
+	sc->sc_if_flags = ifp->if_flags;
 	genet_setup_rxfilter(sc);
 
 	/* Setup TX/RX rings */
@@ -588,8 +588,8 @@ genet_init_locked(struct genet_softc *sc)
 	GENET_ASSERT_TXLOCKED(sc);
 	sc->sc_txrunning = true;
 
-	sc->sc_running = true;
 	ifp->if_flags |= IFF_RUNNING;
+	sc->sc_if_flags |= IFF_RUNNING;
 
 	mii_mediachg(mii);
 	callout_schedule(&sc->sc_stat_ch, hz);
@@ -646,7 +646,6 @@ genet_stop_locked(struct genet_softc *sc, int disable)
 	sc->sc_txrunning = false;
 	GENET_TXUNLOCK(sc);
 
-	sc->sc_running = false;
 	callout_halt(&sc->sc_stat_ch, &sc->sc_lock);
 
 	mii_down(&sc->sc_mii);
@@ -683,6 +682,7 @@ genet_stop_locked(struct genet_softc *sc, int disable)
 	for (i=0; i<TX_DESC_COUNT; ++i)
 		genet_free_txbuf(sc, i);
 
+	sc->sc_if_flags &= ~IFF_RUNNING;
 	ifp->if_flags &= ~IFF_RUNNING;
 }
 
@@ -902,6 +902,14 @@ genet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct genet_softc *sc = ifp->if_softc;
 	int error;
 
+	switch (cmd) {
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		break;
+	default:
+		KASSERT(IFNET_LOCKED(ifp));
+	}
+
 	const int s = splnet();
 	error = ether_ioctl(ifp, cmd, data);
 	splx(s);
@@ -915,12 +923,35 @@ genet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = if_init(ifp);
 	else if (cmd == SIOCADDMULTI || cmd == SIOCDELMULTI) {
 		GENET_LOCK(sc);
-		sc->sc_promisc = ifp->if_flags & IFF_PROMISC;
-		if (sc->sc_running)
+		if ((sc->sc_if_flags & IFF_RUNNING) != 0)
 			genet_setup_rxfilter(sc);
 		GENET_UNLOCK(sc);
 	}
 	return error;
+}
+
+static int
+genet_ifflags_cb(struct ethercom *ec)
+{
+	struct ifnet * const ifp = &ec->ec_if;
+	struct genet_softc * const sc = ifp->if_softc;
+	int ret = 0;
+
+	KASSERT(IFNET_LOCKED(ifp));
+	GENET_LOCK(sc);
+
+	u_short change = ifp->if_flags ^ sc->sc_if_flags;
+	sc->sc_if_flags = ifp->if_flags;
+
+	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0) {
+		ret = ENETRESET;
+	} else if ((change & (IFF_PROMISC | IFF_ALLMULTI)) != 0) {
+		if ((sc->sc_if_flags & IFF_RUNNING) != 0)
+			genet_setup_rxfilter(sc);
+	}
+	GENET_UNLOCK(sc);
+
+	return ret;
 }
 
 static void
@@ -1116,6 +1147,8 @@ genet_attach(struct genet_softc *sc)
 
 	/* Attach ethernet interface */
 	ether_ifattach(ifp, eaddr);
+	ether_set_ifflags_cb(&sc->sc_ec, genet_ifflags_cb);
+
 
 	/* MBUFTRACE */
 	genet_claim_rxring(sc, GENET_DMA_DEFAULT_QUEUE);
