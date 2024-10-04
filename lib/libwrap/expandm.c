@@ -1,4 +1,4 @@
-/*	$NetBSD: expandm.c,v 1.12 2019/01/24 22:07:14 mrg Exp $	*/
+/*	$NetBSD: expandm.c,v 1.13 2024/10/04 08:37:20 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: expandm.c,v 1.12 2019/01/24 22:07:14 mrg Exp $");
+__RCSID("$NetBSD: expandm.c,v 1.13 2024/10/04 08:37:20 rillig Exp $");
 
 #include <limits.h>
 #include <stdio.h>
@@ -50,15 +50,15 @@ expandm(const char *fmt, const char *sf, char **rbuf)
 {
 	const int err = errno;
 	const char *e = NULL;
-	char *buf, *m, *nbuf;
-	const char *ptr;
+	char *buf, *nbuf;
+	const char *ptr, *m;
 
 	buf = NULL;
 	for (ptr = fmt; (m = strstr(ptr, "%m")) != NULL; ptr = m + 2) {
 		size_t cnt = 0;
 		size_t nlen;
 
-		for (char *p = m; p >= ptr && *p == '%'; p--)
+		for (const char *p = m; p >= ptr && *p == '%'; p--)
 			cnt++;
 
 		nlen = (size_t)(m - ptr);
