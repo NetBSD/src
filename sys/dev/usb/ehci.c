@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.328 2024/10/03 12:58:10 hannken Exp $ */
+/*	$NetBSD: ehci.c,v 1.329 2024/10/04 10:25:51 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.328 2024/10/03 12:58:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.329 2024/10/04 10:25:51 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -294,7 +294,6 @@ void			ehci_dump(void);
 Static void		ehci_dump_regs(ehci_softc_t *);
 Static void		ehci_dump_sqtds(ehci_soft_qtd_t *);
 Static void		ehci_dump_sqtd(ehci_soft_qtd_t *);
-Static void		ehci_dump_qh_qtd(ehci_qtd_t *);
 Static void		ehci_dump_qtd(ehci_qtd_t *);
 Static void		ehci_dump_sqh(ehci_soft_qh_t *);
 Static void		ehci_dump_sitd(struct ehci_soft_itd *);
@@ -1770,23 +1769,6 @@ ehci_dump_sqtd(ehci_soft_qtd_t *sqtd)
 	    sizeof(*sqtd->qtd), BUS_DMASYNC_PREREAD);
 }
 
-Static void
-ehci_dump_qh_qtd(ehci_qtd_t *qh_qtd)
-{
-	ehci_qtd_t qtd = {
-		.qtd_next = qh_qtd->qtd_next,
-		.qtd_altnext = qh_qtd->qtd_altnext,
-		.qtd_status = qh_qtd->qtd_status,
-	};
-
-	/* Manually memcpy(), because of volatile. */
-	for (unsigned i = 0; i < EHCI_QTD_NBUFFERS; i++) {
-		qtd.qtd_buffer[i] = qh_qtd->qtd_buffer[i];
-		qtd.qtd_buffer_hi[i] = qh_qtd->qtd_buffer_hi[i];
-	}
-
-	ehci_dump_qtd(&qtd);
-}
 
 Static void
 ehci_dump_qtd(ehci_qtd_t *qtd)
@@ -1864,7 +1846,7 @@ ehci_dump_sqh(ehci_soft_qh_t *sqh)
 	link = le32toh(qh->qh_curqtd);
 	ehci_dump_link(link, false);
 	DPRINTFN(10, "Overlay qTD:", 0, 0, 0, 0);
-	ehci_dump_qh_qtd(&qh->qh_qtd);
+	ehci_dump_qtd(&qh->qh_qtd);
 
 	usb_syncmem(&sqh->dma, sqh->offs, sizeof(*sqh->qh),
 	    BUS_DMASYNC_PREREAD);
