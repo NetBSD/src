@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.80 2024/10/03 17:11:14 christos Exp $
+# $NetBSD: Makefile,v 1.81 2024/10/04 05:56:03 msaitoh Exp $
 
 NOMAN=		# defined
 
@@ -32,7 +32,7 @@ TESTS_C+=	t_unmount
 .endif
 TESTS_C+=	t_zombie
 
-TESTS_SH+=	t_fexecve
+TESTS_SH=	t_fexecve
 TESTS_SH+=	t_fpufork
 TESTS_SH+=	t_interp
 TESTS_SH+=	t_magic_symlinks
@@ -45,7 +45,7 @@ TESTS_SH+=	t_simplehook
 .endif
 TESTS_SH+=	t_trapsignal
 TESTS_SH+=	t_umountstress
-TESTS_SH=	t_umount
+TESTS_SH+=	t_umount
 
 BINDIR=		${TESTSDIR}
 PROGS=		h_fexecve
