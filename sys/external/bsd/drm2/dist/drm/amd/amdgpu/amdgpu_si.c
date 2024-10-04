@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_si.c,v 1.4 2022/10/17 03:05:32 mrg Exp $	*/
+/*	$NetBSD: amdgpu_si.c,v 1.4.2.1 2024/10/04 11:40:50 martin Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_si.c,v 1.4 2022/10/17 03:05:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_si.c,v 1.4.2.1 2024/10/04 11:40:50 martin Exp $");
 
 #include <linux/firmware.h>
 #include <linux/slab.h>
@@ -2077,7 +2077,6 @@ static void si_program_aspm(struct amdgpu_device *adev)
 
 static void si_fix_pci_max_read_req_size(struct amdgpu_device *adev)
 {
-#ifndef __NetBSD__		/* XXX amdgpu pcie */
 	int readrq;
 	u16 v;
 
@@ -2085,7 +2084,6 @@ static void si_fix_pci_max_read_req_size(struct amdgpu_device *adev)
 	v = ffs(readrq) - 8;
 	if ((v == 0) || (v == 6) || (v == 7))
 		pcie_set_readrq(adev->pdev, 512);
-#endif
 }
 
 static int si_common_hw_init(void *handle)

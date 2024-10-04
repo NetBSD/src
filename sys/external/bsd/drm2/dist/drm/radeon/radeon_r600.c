@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_r600.c,v 1.6 2021/12/18 23:45:43 riastradh Exp $	*/
+/*	$NetBSD: radeon_r600.c,v 1.6.4.1 2024/10/04 11:40:48 martin Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_r600.c,v 1.6 2021/12/18 23:45:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_r600.c,v 1.6.4.1 2024/10/04 11:40:48 martin Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -4546,7 +4546,6 @@ int r600_get_pcie_lanes(struct radeon_device *rdev)
 
 static void r600_pcie_gen2_enable(struct radeon_device *rdev)
 {
-#ifndef __NetBSD__		/* XXX radeon pcie */
 	u32 link_width_cntl, lanes, speed_cntl, training_cntl, tmp;
 	u16 link_cntl2;
 
@@ -4657,7 +4656,6 @@ static void r600_pcie_gen2_enable(struct radeon_device *rdev)
 			link_width_cntl &= ~LC_UPCONFIGURE_DIS;
 		WREG32_PCIE_PORT(PCIE_LC_LINK_WIDTH_CNTL, link_width_cntl);
 	}
-#endif
 }
 
 /**

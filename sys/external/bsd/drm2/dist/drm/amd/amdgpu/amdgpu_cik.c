@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_cik.c,v 1.6 2022/10/17 03:05:32 mrg Exp $	*/
+/*	$NetBSD: amdgpu_cik.c,v 1.6.2.1 2024/10/04 11:40:50 martin Exp $	*/
 
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  * Authors: Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_cik.c,v 1.6 2022/10/17 03:05:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_cik.c,v 1.6.2.1 2024/10/04 11:40:50 martin Exp $");
 
 #include <linux/firmware.h>
 #include <linux/slab.h>
@@ -1733,9 +1733,6 @@ static void cik_program_aspm(struct amdgpu_device *adev)
 				WREG32_PCIE(ixPCIE_LC_LINK_WIDTH_CNTL, data);
 
 			if (!disable_clkreq) {
-#ifdef __NetBSD__		/* XXX amdgpu pcie */
-				clk_req_support = false;
-#else
 				struct pci_dev *root = adev->pdev->bus->self;
 				u32 lnkcap;
 
@@ -1743,7 +1740,6 @@ static void cik_program_aspm(struct amdgpu_device *adev)
 				pcie_capability_read_dword(root, PCI_EXP_LNKCAP, &lnkcap);
 				if (lnkcap & PCI_EXP_LNKCAP_CLKPM)
 					clk_req_support = true;
-#endif
 			} else {
 				clk_req_support = false;
 			}

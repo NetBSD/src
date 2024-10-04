@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5.4.1 2023/08/02 10:28:07 martin Exp $
+# $NetBSD: Makefile,v 1.5.4.2 2024/10/04 11:40:54 martin Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -13,6 +13,11 @@ WARNS=	3
 COPTS.amdgpu_float+=	${${ACTIVE_CC} == "gcc" :? -mhard-float :} -msse -msse2
 .elif !empty(MACHINE_ARCH:Maarch64*)
 COPTS.amdgpu_float+=	-march=armv8-a
+.endif
+
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || \
+	${MACHINE_CPU} == "arm" || ${MACHINE_CPU} == "aarch64"
+CPPFLAGS+=	-DNACPICA=1
 .endif
 
 # sed -ne 's,^makeoptions	amdgpu	"\([^.]*\)\.amdgpu"+="\(.*\)",\1+=	\2,gp' <files.amdgpu | sed -e 's,\$S,${S},g'
@@ -144,6 +149,7 @@ COPTS.amdgpu_rn_clk_mgr.c+=	${COPTS.amdgpu_float}
 # sed -ne 's,^file	external/bsd/drm2/.*/\([^/ 	]*\)	.*,SRCS+=	\1,gp' <files.amdgpu | sort -u
 SRCS+=	amdgpu_acp.c
 SRCS+=	amdgpu_acp_hw.c
+SRCS+=	amdgpu_acpi.c
 SRCS+=	amdgpu_afmt.c
 SRCS+=	amdgpu_amd_powerplay.c
 SRCS+=	amdgpu_amdkfd.c

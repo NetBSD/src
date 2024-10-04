@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.79 2022/10/01 07:59:25 charlotte Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.79.4.1 2024/10/04 11:40:52 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.79 2022/10/01 07:59:25 charlotte Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.79.4.1 2024/10/04 11:40:52 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -245,8 +245,9 @@ pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag, int *bp, int *dp, int *fp)
 }
 
 int
-sparc64_pci_enumerate_bus(struct pci_softc *sc, const int *locators,
-    int (*match)(const struct pci_attach_args *), struct pci_attach_args *pap)
+sparc64_pci_enumerate_bus1(struct pci_softc *sc, const int *locators,
+    int (*match)(void *, const struct pci_attach_args *), void *cookie,
+    struct pci_attach_args *pap)
 {
 	struct ofw_pci_register reg;
 	pci_chipset_tag_t pc = sc->sc_pc;
@@ -308,8 +309,10 @@ sparc64_pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 		if (OF_getprop(node, "class-code", &class, sizeof(class)) != 
 		    sizeof(class))
 			continue;
-		if (OF_getprop(node, "reg", &reg, sizeof(reg)) < sizeof(reg))
-			panic("pci_enumerate_bus: \"%s\" regs too small", name);
+		if (OF_getprop(node, "reg", &reg, sizeof(reg)) < sizeof(reg)) {
+			panic("pci_enumerate_bus1: \"%s\" regs too small",
+			    name);
+		}
 
 		b = OFW_PCI_PHYS_HI_BUS(reg.phys_hi);
 		d = OFW_PCI_PHYS_HI_DEVICE(reg.phys_hi);
@@ -362,7 +365,7 @@ sparc64_pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 			(cl << PCI_CACHELINE_SHIFT);
 		pci_conf_write(pc, tag, PCI_BHLC_REG, bhlc);
 
-		ret = pci_probe_device(sc, tag, match, pap);
+		ret = pci_probe_device1(sc, tag, match, cookie, pap);
 		if (match != NULL && ret != 0)
 			return (ret);
 	}

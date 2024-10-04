@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_disp_sorgm200.c,v 1.2 2021/12/18 23:45:35 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_disp_sorgm200.c,v 1.2.4.1 2024/10/04 11:40:51 martin Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_sorgm200.c,v 1.2 2021/12/18 23:45:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_sorgm200.c,v 1.2.4.1 2024/10/04 11:40:51 martin Exp $");
 
 #include "ior.h"
 
@@ -74,6 +74,7 @@ gm200_sor_route_get(struct nvkm_outp *outp, int *link)
 	const int sublinks = outp->info.sorconf.link;
 	int lnk[2], sor[2], m, s;
 
+	sor[0] = sor[1] = 0;	/* GCC 12.3 maybe-uninitialized */
 	for (*link = 0, m = __ffs(outp->info.or) * 2, s = 0; s < 2; m++, s++) {
 		if (sublinks & BIT(s)) {
 			u32 data = nvkm_rd32(device, 0x612308 + (m * 0x80));

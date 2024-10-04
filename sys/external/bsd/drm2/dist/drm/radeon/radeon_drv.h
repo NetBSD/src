@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_drv.h,v 1.4 2022/05/28 01:07:47 manu Exp $	*/
+/*	$NetBSD: radeon_drv.h,v 1.4.4.1 2024/10/04 11:40:48 martin Exp $	*/
 
 /* radeon_drv.h -- Private header for radeon driver -*- linux-c -*-
  *
@@ -32,15 +32,6 @@
 
 #ifndef __RADEON_DRV_H__
 #define __RADEON_DRV_H__
-
-#if defined(__NetBSD__)
-#ifdef _KERNEL_OPT
-#include "acpica.h"
-#endif  /* _KERNEL_OPT */
-#if (NACPICA > 0)
-#define CONFIG_ACPI
-#endif  /* NACPICA > 0 */
-#endif  /* __NetBSD__ */
 
 #include <linux/firmware.h>
 #include <linux/platform_device.h>

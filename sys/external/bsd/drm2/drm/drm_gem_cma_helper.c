@@ -1,4 +1,4 @@
-/* $NetBSD: drm_gem_cma_helper.c,v 1.14 2022/07/02 00:26:07 riastradh Exp $ */
+/* $NetBSD: drm_gem_cma_helper.c,v 1.14.4.1 2024/10/04 11:40:51 martin Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_cma_helper.c,v 1.14 2022/07/02 00:26:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_cma_helper.c,v 1.14.4.1 2024/10/04 11:40:51 martin Exp $");
 
 #include <linux/err.h>
 
@@ -44,7 +44,7 @@ drm_gem_cma_create_internal(struct drm_device *ddev, size_t size,
     struct sg_table *sgt)
 {
 	struct drm_gem_cma_object *obj;
-	int error, nsegs;
+	int error = EINVAL, nsegs;
 
 	obj = kmem_zalloc(sizeof(*obj), KM_SLEEP);
 	obj->dmat = ddev->dmat;

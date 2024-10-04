@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.11 2021/12/19 10:51:57 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.11.4.1 2024/10/04 11:40:49 martin Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.11 2021/12/19 10:51:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.11.4.1 2024/10/04 11:40:49 martin Exp $");
 
 #include <core/pci.h>
 #include "priv.h"
@@ -1721,7 +1721,11 @@ nvkm_device_pci_new(struct pci_dev *pci_dev, const char *cfg, const char *dbg,
 			       (u64)pci_domain_nr(pci_dev->bus) << 32 |
 				    pci_dev->bus->number << 16 |
 				    PCI_SLOT(pci_dev->devfn) << 8 |
-				    PCI_FUNC(pci_dev->devfn), name,
+				    PCI_FUNC(pci_dev->devfn),
+#ifdef __NetBSD__
+			       /*acpidev*/pci_dev->pd_ad,
+#endif
+			       name,
 			       cfg, dbg, detect, mmio, subdev_mask,
 			       &pdev->device);
 

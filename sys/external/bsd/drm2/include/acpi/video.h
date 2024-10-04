@@ -1,4 +1,4 @@
-/*	$NetBSD: video.h,v 1.2 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: video.h,v 1.2.66.1 2024/10/04 11:40:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _DRM2_COMPAT_ACPI_VIDEO_H_
 #define _DRM2_COMPAT_ACPI_VIDEO_H_
+
+#include <linux/acpi.h>
 
 static inline void
 acpi_video_register(void)

@@ -1,11 +1,11 @@
-#	$NetBSD: files.drmkms_pci,v 1.17 2022/07/19 23:19:07 riastradh Exp $
+#	$NetBSD: files.drmkms_pci,v 1.17.4.1 2024/10/04 11:40:54 martin Exp $
 
 define	drmkms_pci: drmkms
 
 makeoptions	drmkms_pci	"CPPFLAGS.drmkms_pci"+="${CPPFLAGS.drmkms}"
 
 #file	external/bsd/drm2/dist/drm/ati_pcigart.c	drmkms_pci
-file	external/bsd/drm2/dist/drm/drm_agpsupport.c	drmkms_pci & agp
+file	external/bsd/drm2/dist/drm/drm_agpsupport.c	drmkms_pci & agp	needs-flag
 file	external/bsd/drm2/pci/drm_pci.c			drmkms_pci
 file	external/bsd/drm2/pci/drm_pci_module.c		drmkms_pci
 

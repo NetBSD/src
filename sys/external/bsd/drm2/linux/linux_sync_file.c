@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sync_file.c,v 1.2 2022/02/12 15:51:29 thorpej Exp $	*/
+/*	$NetBSD: linux_sync_file.c,v 1.2.4.1 2024/10/04 11:40:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sync_file.c,v 1.2 2022/02/12 15:51:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sync_file.c,v 1.2.4.1 2024/10/04 11:40:50 martin Exp $");
 
 #include <sys/event.h>
 #include <sys/fcntl.h>
@@ -51,15 +51,17 @@ sync_file_create(struct dma_fence *fence, struct file *fp)
 
 	sf = kmem_zalloc(sizeof(*sf), KM_SLEEP);
 	sf->file = fp;
-	sf->sf_fence = dma_fence_get(fence);
+
 	mutex_init(&sf->sf_lock, MUTEX_DEFAULT, IPL_VM);
 	selinit(&sf->sf_selq);
 	sf->sf_polling = false;
 	sf->sf_signalled = false;
+	sf->sf_fence = dma_fence_get(fence);
 
 	fp->f_type = DTYPE_MISC;
 	fp->f_flag = FREAD | FWRITE;
 	fp->f_ops = &sync_file_ops;
+	fp->f_data = sf;
 
 	return sf;
 }
@@ -73,6 +75,8 @@ sync_file_close(struct file *fp)
 		dma_fence_remove_callback(sf->sf_fence, &sf->sf_fcb);
 	dma_fence_put(sf->sf_fence);
 	sf->sf_fence = NULL;
+	seldestroy(&sf->sf_selq);
+	mutex_destroy(&sf->sf_lock);
 
 	kmem_free(sf, sizeof(*sf));
 

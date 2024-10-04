@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_cik.c,v 1.7 2022/10/17 03:05:32 mrg Exp $	*/
+/*	$NetBSD: radeon_cik.c,v 1.7.2.1 2024/10/04 11:40:48 martin Exp $	*/
 
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_cik.c,v 1.7 2022/10/17 03:05:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_cik.c,v 1.7.2.1 2024/10/04 11:40:48 martin Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -9827,17 +9827,13 @@ static void cik_program_aspm(struct radeon_device *rdev)
 
 			if (!disable_clkreq &&
 			    !pci_is_root_bus(rdev->pdev->bus)) {
-#ifndef __NetBSD__		/* XXX radeon pcie */
 				struct pci_dev *root = rdev->pdev->bus->self;
 				u32 lnkcap;
-#endif
 
 				clk_req_support = false;
-#ifndef __NetBSD__		/* XXX radeon pcie */
 				pcie_capability_read_dword(root, PCI_EXP_LNKCAP, &lnkcap);
 				if (lnkcap & PCI_EXP_LNKCAP_CLKPM)
 					clk_req_support = true;
-#endif
 			} else {
 				clk_req_support = false;
 			}

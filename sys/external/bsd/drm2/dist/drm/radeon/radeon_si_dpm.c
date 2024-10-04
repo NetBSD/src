@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_si_dpm.c,v 1.8 2021/12/19 12:40:43 riastradh Exp $	*/
+/*	$NetBSD: radeon_si_dpm.c,v 1.8.4.1 2024/10/04 11:40:48 martin Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_si_dpm.c,v 1.8 2021/12/19 12:40:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_si_dpm.c,v 1.8.4.1 2024/10/04 11:40:48 martin Exp $");
 
 #include <linux/math64.h>
 #include <linux/pci.h>
@@ -6908,9 +6908,7 @@ int si_dpm_init(struct radeon_device *rdev)
 	struct si_power_info *si_pi;
 	struct atom_clock_dividers dividers;
 	enum pci_bus_speed speed_cap = PCI_SPEED_UNKNOWN;
-#ifndef __NetBSD__		/* XXX radeon pcie */
 	struct pci_dev *root = rdev->pdev->bus->self;
-#endif
 	int ret;
 
 	si_pi = kzalloc(sizeof(struct si_power_info), GFP_KERNEL);
@@ -6921,10 +6919,8 @@ int si_dpm_init(struct radeon_device *rdev)
 	eg_pi = &ni_pi->eg;
 	pi = &eg_pi->rv7xx;
 
-#ifndef __NetBSD__		/* XXX radeon pcie */
 	if (!pci_is_root_bus(rdev->pdev->bus))
 		speed_cap = pcie_get_speed_cap(root);
-#endif
 	if (speed_cap == PCI_SPEED_UNKNOWN) {
 		si_pi->sys_pcie_mask = 0;
 	} else {

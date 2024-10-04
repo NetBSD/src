@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_pci.c,v 1.21.4.2 2023/08/11 14:48:34 martin Exp $	*/
+/*	$NetBSD: radeon_pci.c,v 1.21.4.3 2024/10/04 11:40:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.21.4.2 2023/08/11 14:48:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.21.4.3 2024/10/04 11:40:52 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "genfb.h"
@@ -286,7 +286,7 @@ radeon_attach_real(device_t self)
 	 * with a firmware-provided framebuffer address, we may have to
 	 * turn it off early, before we are ready to switch the console
 	 * over -- something goes wrong if we're still writing to the
-	 * firmware-provided framebuffer during nouveau initialization.
+	 * firmware-provided framebuffer during initialization.
 	 */
     {
 	bool is_console;

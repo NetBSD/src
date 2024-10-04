@@ -1,4 +1,4 @@
-#	$NetBSD: files.radeon,v 1.37 2022/07/19 23:19:07 riastradh Exp $
+#	$NetBSD: files.radeon,v 1.37.4.1 2024/10/04 11:40:52 martin Exp $
 
 version	20180827
 
@@ -48,7 +48,7 @@ file	external/bsd/drm2/radeon/radeon_pci.c			radeon
 file	external/bsd/drm2/radeon/radeondrmkmsfb.c		radeondrmkmsfb
 
 # Generated from radeon2netbsd.
-#file	external/bsd/drm2/dist/drm/radeon/radeon_acpi.c	radeon
+file	external/bsd/drm2/dist/drm/radeon/radeon_acpi.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_agp.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_asic.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_atom.c	radeon

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_smu7_hwmgr.c,v 1.4 2021/12/19 12:37:54 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_smu7_hwmgr.c,v 1.4.4.1 2024/10/04 11:40:53 martin Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_smu7_hwmgr.c,v 1.4 2021/12/19 12:37:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_smu7_hwmgr.c,v 1.4.4.1 2024/10/04 11:40:53 martin Exp $");
 
 #include "pp_debug.h"
 #include <linux/delay.h>
@@ -31,6 +31,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_smu7_hwmgr.c,v 1.4 2021/12/19 12:37:54 riastr
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/slab.h>
+#include <linux/acpi.h>
 #include <asm/div64.h>
 #include <drm/amdgpu_drm.h>
 #include "ppatomctrl.h"

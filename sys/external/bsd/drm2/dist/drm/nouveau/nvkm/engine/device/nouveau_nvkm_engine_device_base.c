@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.12 2021/12/19 10:50:22 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.12.4.1 2024/10/04 11:40:49 martin Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.12 2021/12/19 10:50:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.12.4.1 2024/10/04 11:40:49 martin Exp $");
 
 #include "priv.h"
 #include "acpi.h"
@@ -2961,6 +2961,9 @@ int
 nvkm_device_ctor(const struct nvkm_device_func *func,
 		 const struct nvkm_device_quirk *quirk,
 		 struct device *dev, enum nvkm_device_type type, u64 handle,
+#ifdef __NetBSD__		/* XXX nouveau acpi */
+		 struct acpi_devnode *acpidev,
+#endif
 		 const char *name, const char *cfg, const char *dbg,
 		 bool detect, bool mmio, u64 subdev_mask,
 		 struct nvkm_device *device)
@@ -2986,6 +2989,9 @@ nvkm_device_ctor(const struct nvkm_device_func *func,
 	device->dev = dev;
 	device->type = type;
 	device->handle = handle;
+#ifdef __NetBSD__		/* XXX nouveau acpi */
+	device->acpidev = acpidev;
+#endif
 	device->cfgopt = cfg;
 	device->dbgopt = dbg;
 	device->name = name;

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu.h,v 1.8 2022/10/08 19:06:30 riastradh Exp $	*/
+/*	$NetBSD: amdgpu.h,v 1.8.2.1 2024/10/04 11:40:51 martin Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -46,6 +46,7 @@
 #include <linux/rbtree.h>
 #include <linux/hashtable.h>
 #include <linux/dma-fence.h>
+#include <linux/acpi.h>
 
 #include <drm/ttm/ttm_bo_api.h>
 #include <drm/ttm/ttm_bo_driver.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.9 2021/12/18 23:45:33 riastradh Exp $	*/
+/*	$NetBSD: device.h,v 1.9.4.1 2024/10/04 11:40:54 martin Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_DEVICE_H__
@@ -92,6 +92,9 @@ struct nvkm_device {
 	struct device *dev;
 	enum nvkm_device_type type;
 	u64 handle;
+#ifdef __NetBSD__
+	struct acpi_devnode *acpidev;
+#endif
 	const char *name;
 	const char *cfgopt;
 	const char *dbgopt;

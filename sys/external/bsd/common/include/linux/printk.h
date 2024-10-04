@@ -1,4 +1,4 @@
-/*	$NetBSD: printk.h,v 1.13 2022/07/29 23:50:44 riastradh Exp $	*/
+/*	$NetBSD: printk.h,v 1.13.4.1 2024/10/04 11:40:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #define	pr_warn		printf	/* XXX */
 #define	pr_warn_once	printf	/* XXX */
 #define	pr_notice	printf	/* XXX */
-#define	pr_debug	printf	/* XXX */
+#define	pr_debug	aprint_debug
 #define	KERN_EMERG	"emerg: "
 #define	KERN_ALERT	"alert: "
 #define	KERN_CRIT	"crit: "

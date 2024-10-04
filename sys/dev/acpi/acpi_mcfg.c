@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.c,v 1.26 2022/10/14 22:10:15 jmcneill Exp $	*/
+/*	$NetBSD: acpi_mcfg.c,v 1.26.2.1 2024/10/04 11:40:54 martin Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -28,7 +28,7 @@
 #include "opt_pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.26 2022/10/14 22:10:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.26.2.1 2024/10/04 11:40:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -523,10 +523,6 @@ acpimcfg_device_probe(const struct pci_attach_args *pa)
 
 	return 0;
 }
-
-#ifdef PCI_MACHDEP_ENUMERATE_BUS
-#define pci_enumerate_bus PCI_MACHDEP_ENUMERATE_BUS
-#endif
 
 static void
 acpimcfg_scan_bus(struct pci_softc *sc, pci_chipset_tag_t pc, int bus)
