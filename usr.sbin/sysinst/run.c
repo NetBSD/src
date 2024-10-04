@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.15 2022/04/21 17:30:15 martin Exp $	*/
+/*	$NetBSD: run.c,v 1.16 2024/10/04 15:11:09 rillig Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -284,12 +284,11 @@ do_system(const char *execstr)
 }
 
 static char **
-make_argv(const char *cmd)
+make_argv(char *cmd)
 {
 	char **argv = 0;
 	int argc = 0;
-	const char *cp;
-	char *dp, *fn;
+	char *cp, *dp, *fn;
 	DIR *dir;
 	struct dirent *dirent;
 	int l;
