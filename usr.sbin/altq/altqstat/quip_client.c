@@ -1,4 +1,4 @@
-/*	$NetBSD: quip_client.c,v 1.15 2023/05/07 11:41:49 andvar Exp $	*/
+/*	$NetBSD: quip_client.c,v 1.16 2024/10/04 15:37:00 rillig Exp $	*/
 /*	$KAME: quip_client.c,v 1.9 2003/05/17 05:59:00 itojun Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -144,7 +144,8 @@ quip_closeserver(void)
 void
 quip_sendrequest(FILE *fp, const char *request)
 {
-	char buf[QUIPMSG_MAXSIZE], *cp;
+	char buf[QUIPMSG_MAXSIZE];
+	const char *cp;
 	int n;
 
 	if ((cp = strstr(request, "QUIP")) == NULL) {
@@ -445,7 +446,7 @@ quip_printfilter(const char *ifname, const u_long handle)
 static char *
 extract_ifname(const char *name)
 {
-	char *cp;
+	const char *cp;
 	int len;
 	static char ifname[64];
 
