@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.73 2024/04/05 00:43:42 riastradh Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.74 2024/10/04 16:18:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.73 2024/04/05 00:43:42 riastradh Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.74 2024/10/04 16:18:45 rillig Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -78,7 +78,7 @@ static void emitload(FILE *);
 static void emitincludes(FILE *);
 static void emitappmkoptions(FILE *);
 static void emitmkoption(FILE *, const char *, const struct nvlist *);
-static void emitsubs(FILE *, const char *, const char *, int);
+static void emitsubs(FILE *, char *, const char *, int);
 static int  selectopt(const char *, void *);
 
 int has_build_kernel;
@@ -226,7 +226,7 @@ emitmkoption(FILE *fp, const char *ass, const struct nvlist *nv)
 }
 
 static void
-emitsubs(FILE *fp, const char *line, const char *file, int lineno)
+emitsubs(FILE *fp, char *line, const char *file, int lineno)
 {
 	char *nextpct;
 	const char *optname;
