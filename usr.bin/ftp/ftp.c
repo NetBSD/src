@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.177 2024/09/25 16:53:58 christos Exp $	*/
+/*	$NetBSD: ftp.c,v 1.178 2024/10/04 18:06:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2021 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.177 2024/09/25 16:53:58 christos Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.178 2024/10/04 18:06:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -925,7 +925,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 }
 
 void
-recvrequest(const char *cmd, const char *volatile local, const char *remote,
+recvrequest(const char *cmd, char *volatile local, const char *remote,
 	    const char *lmode, int printnames, int ignorespecial)
 {
 	FILE *volatile fout;
@@ -2037,7 +2037,7 @@ reset(int argc, char *argv[])
 }
 
 char *
-gunique(const char *local)
+gunique(char *local)
 {
 	static char new[MAXPATHLEN];
 	char *cp = strrchr(local, '/');
