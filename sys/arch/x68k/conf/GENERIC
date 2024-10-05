@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.209 2024/01/07 07:58:33 isaki Exp $
+# $NetBSD: GENERIC,v 1.210 2024/10/05 03:56:54 isaki Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.209 $"
+#ident 		"GENERIC-$Revision: 1.210 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -229,6 +229,7 @@ kbd0	at mfp0				# standard keyboard
 ite0	at grf0 grfaddr 0		# internal terminal emulator
 options 	ITE_KERNEL_ATTR=4	# bold for kernel messages
 					# see /sys/arch/x68k/dev/itevar.h
+#options 	ITE_SIXEL
 
 ## floppy disks
 fdc0	at intio0 addr 0xe94000 intr 96 dma 0 dmaintr 100 # floppy controller

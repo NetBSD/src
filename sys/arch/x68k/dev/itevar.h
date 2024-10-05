@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.17 2024/01/07 07:58:33 isaki Exp $	*/
+/*	$NetBSD: itevar.h,v 1.18 2024/10/05 03:56:54 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,6 +50,7 @@ struct itesw {
 	void	(*ite_putc)(struct ite_softc *, int, int, int, int);
 	void	(*ite_cursor)(struct ite_softc *, int);
 	void	(*ite_scroll)(struct ite_softc *, int, int, int, int);
+	void	(*ite_sixel)(struct ite_softc *, int, int);
 };
 
 enum ite_arraymaxs {
@@ -94,6 +95,28 @@ struct ite_softc {
 	short	save_curx, save_cury, save_attribute, save_char;
 	char	sc_G0, sc_G1, sc_G2, sc_G3;
 	char	*sc_GL, *sc_GR;
+	enum {
+		DCS_START = 0,
+		DCS_SIXEL = 'q',	/* DECRQSS also use 'q'... */
+		DCS_DISCARD = -1,
+	} dcs_cmd;
+	enum {
+		DECSIXEL_INIT = 0,
+		DECSIXEL_RASTER_PAD,
+		DECSIXEL_RASTER_PH,
+		DECSIXEL_RASTER_PV,
+		DECSIXEL_REPEAT = '!',
+		DECSIXEL_RASTER = '\"',
+		DECSIXEL_COLOR = '#',
+	} decsixel_state;
+	int	decsixel_ph;
+	int	decsixel_x;
+	int	decsixel_y;
+	int	decsixel_repcount;
+	int	decsixel_color;
+	int	decsixel_ormode;
+#define MAX_SIXEL_WIDTH (768)
+	uint32_t decsixel_buf[MAX_SIXEL_WIDTH];
 };
 
 enum emul_level {
