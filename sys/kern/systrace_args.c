@@ -1,4 +1,4 @@
-/* $NetBSD: systrace_args.c,v 1.54 2024/10/03 16:51:35 christos Exp $ */
+/* $NetBSD: systrace_args.c,v 1.55 2024/10/05 18:06:42 mlelstv Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -3944,6 +3944,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 3;
 		break;
 	}
+#if defined(SYSVSHM) || !defined(_KERNEL_OPT)
 	/* sys_semtimedop */
 	case 506: {
 		const struct sys_semtimedop_args *p = params;
@@ -3954,6 +3955,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 4;
 		break;
 	}
+#endif
 	default:
 		*n_args = 0;
 		break;
@@ -10664,6 +10666,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+#if defined(SYSVSHM) || !defined(_KERNEL_OPT)
 	/* sys_semtimedop */
 	case 506:
 		switch(ndx) {
@@ -10683,6 +10686,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+#endif
 	default:
 		break;
 	};
@@ -12915,11 +12919,13 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
+#if defined(SYSVSHM) || !defined(_KERNEL_OPT)
 	/* sys_semtimedop */
 	case 506:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
+#endif
 	default:
 		break;
 	};
