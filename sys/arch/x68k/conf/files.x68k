@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.84 2024/01/09 04:16:27 thorpej Exp $
+#	$NetBSD: files.x68k,v 1.85 2024/10/05 03:56:54 isaki Exp $
 #
 # new style config file for x68k architecture
 #
@@ -68,6 +68,7 @@ file	arch/x68k/dev/grf_tv.c		grf | ite
 file	arch/x68k/dev/grf_gv.c		grf | ite
 
 defparam opt_ite.h	ITE_KERNEL_ATTR
+defflag opt_ite.h	ITE_SIXEL
 device	ite : tty
 attach	ite at grf
 file	arch/x68k/dev/ite.c		ite needs-flag
