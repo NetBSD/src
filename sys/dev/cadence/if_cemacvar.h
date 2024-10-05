@@ -1,4 +1,4 @@
-/*      $NetBSD: if_cemacvar.h,v 1.5 2024/09/29 09:13:14 skrll Exp $	*/
+/*      $NetBSD: if_cemacvar.h,v 1.6 2024/10/05 07:37:22 skrll Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -72,7 +72,19 @@ struct cemac_softc {
 	unsigned		cemac_flags;
 #define CEMAC_FLAG_GEM	__BIT(0)
 
-	bool			sc_txbusy;
+	kmutex_t *sc_mcast_lock;	/* m: lock for SIOCADD/DELMULTI */
+	kmutex_t *sc_intr_lock;		/* i: lock for interrupt operations */
+
+	u_short sc_if_flags;		/* m: if_flags cache */
+	time_t sc_tx_lastsent;		/* i: time of last tx */
+	bool sc_txbusy;			/* i: no Tx because down or busy */
+	bool sc_stopping;		/* i: ignore intr because down */
+	bool sc_tx_sending;		/* i: expecting tx complete irq */
+	bool sc_trigger_reset;		/* i */
+
+	struct workqueue *sc_reset_wq;
+	struct work sc_reset_work;	/* i */
+	volatile unsigned sc_reset_pending;
 };
 
 int cemac_intr(void *);
