@@ -1,4 +1,4 @@
-/*	$NetBSD: mc68450reg.h,v 1.5 2008/04/28 20:23:50 martin Exp $	*/
+/*	$NetBSD: mc68450reg.h,v 1.6 2024/10/05 20:20:38 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #define DMAC_NCHAN	4	/* Number of channels */
-#define DMAC_CHAN_SIZE	0x40	/* I/O area size per channes */
+#define DMAC_CHAN_SIZE	0x40	/* I/O area size per channel */
 
 /* register location per channel */
 #define DMAC_REG_CSR	0x00	/* Channel Status Register  */
