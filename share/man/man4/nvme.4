@@ -1,4 +1,4 @@
-.\"	$NetBSD: nvme.4,v 1.11 2024/09/07 20:33:53 rillig Exp $
+.\"	$NetBSD: nvme.4,v 1.12 2024/10/05 14:25:45 jdolecek Exp $
 .\"	$OpenBSD: nvme.4,v 1.2 2016/04/14 11:53:37 jmc Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd April 27, 2017
+.Dd October 5, 2024
 .Dt NVME 4
 .Os
 .Sh NAME
@@ -135,7 +135,18 @@ into older generation slot.
 .Pp
 The driver was also tested and confirmed working fine for emulated
 .Nm
-devices under QEMU 2.8.0 and
+devices under QEMU 2.8.0,
 .Tn Oracle
 .Tn VirtualBox
-5.1.20.
+5.1.20,
+and
+.Tn Parallels
+Desktop 16.
+.Pp
+For
+.Tn Parallels
+Desktop, it's important the virtual machine has the NVMe disks configured
+starting from 'NVMe 1', in order for the NVMe namespaces to be correctly
+initialized and
+.Xr ld 4
+devices to be attached.
