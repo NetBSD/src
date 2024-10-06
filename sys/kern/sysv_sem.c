@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.100 2024/10/03 16:54:08 christos Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.101 2024/10/06 22:15:33 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.100 2024/10/03 16:54:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.101 2024/10/06 22:15:33 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -873,7 +873,7 @@ restart:
 	}
 
 	semaptr = &sema[semid];
-	seq = IPCID_TO_SEQ(semid);
+	seq = IPCID_TO_SEQ(usemid);
 	if ((semaptr->sem_perm.mode & SEM_ALLOC) == 0 ||
 	    semaptr->sem_perm._seq != seq) {
 		error = EINVAL;
