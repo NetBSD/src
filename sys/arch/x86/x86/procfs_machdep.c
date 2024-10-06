@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.48 2023/08/07 09:27:14 msaitoh Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.49 2024/10/06 15:36:05 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.48 2023/08/07 09:27:14 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.49 2024/10/06 15:36:05 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,7 @@ static const char * const x86_features[][32] = {
 	"sme", "sev", NULL, "sev_es", NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
+	NULL, NULL, NULL, NULL, "svsm", NULL, NULL, NULL},
 };
 
 static int	procfs_getonecpu(int, struct cpu_info *, char *, size_t *);
