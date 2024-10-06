@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835reg.h,v 1.32 2021/03/08 14:27:45 mlelstv Exp $	*/
+/*	$NetBSD: bcm2835reg.h,v 1.33 2024/10/06 20:55:12 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 /*
- * Reference: BCM2835 ARM Periperhals
+ * Reference: BCM2835 ARM Peripherals
  *
  * 	http://www.raspberrypi.org/wp-content/uploads/2012/02/BCM2835-ARM-Peripherals.pdf
  */
