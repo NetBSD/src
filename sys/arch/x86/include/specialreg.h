@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.213 2024/10/06 08:49:12 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.214 2024/10/06 09:32:31 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -956,7 +956,8 @@
 	"\21" "VGIF"	"\22" "GMET"	"\23x2AVIC"	"\24SSSCHECK"	\
 	"\25" "SPEC_CTRL" "\26" "ROGPT"		"\30HOST_MCE_OVERRIDE"	\
 	"\31" "TLBICTL"	"\32VNMI" "\33IBSVIRT" "\34ExtLvtOffsetFaultChg" \
-	"\35VmcbAddrChkChg" "\36BusLockThreshold" "\37IdleHltIntercept"
+	"\35VmcbAddrChkChg" "\36BusLockThreshold" "\37IdleHltIntercept" \
+							"\40B31"
 
 /*
  * AMD Instruction-Based Sampling Capabilities.
@@ -980,7 +981,9 @@
 	"\1IBSFFV"	"\2FetchSam"	"\3OpSam"	"\4RdWrOpCnt"	   \
 	"\5OpCnt"	"\6BrnTrgt"	"\7OpCntExt"	"\10RipInvalidChk" \
 	"\11OpBrnFuse" "\12IbsFetchCtlExtd" "\13IbsOpData4"		   \
-						   "\14IbsL3MissFiltering"
+						   "\14IbsL3MissFiltering" \
+	"\15B12"							   \
+							"\24B19"
 
 /*
  * AMD Cache Topology Information.
@@ -1084,8 +1087,11 @@
 				"\3LfenceAlwaysSerialize" "\4SmmPgCfgLock"    \
 			     "\7NullSelectClearsBase" "\10UpperAddressIgnore" \
 	"\11AutomaticIBRS" "\12NoSmmCtlMSR"	"\13FSRS"	"\14FSRC"     \
-			"\16PrefetchCtlMSR"				      \
-			"\22CpuidUserDis"	"\23EPSF"
+	"\15B12"	"\16PrefetchCtlMSR"	"\17B14"	"\20B15"      \
+	"\21B16"	"\22CpuidUserDis"	"\23EPSF"	"\24B19"      \
+	"\25B20"	"\26B21"					      \
+	"\31B24"						"\34B27"      \
+	"\35B28"				"\37B30"
 
 /*
  * AMD Extended Performance Monitoring and Debug
