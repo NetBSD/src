@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenet.c,v 1.21 2024/10/04 10:41:58 skrll Exp $ */
+/* $NetBSD: bcmgenet.c,v 1.22 2024/10/06 19:34:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.21 2024/10/04 10:41:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.22 2024/10/06 19:34:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -360,11 +360,12 @@ genet_setup_rxfilter(struct genet_softc *sc)
 		ETHER_NEXT_MULTI(step, enm);
 
 	if (n > GENET_MAX_MDF_FILTER)
-		ifp->if_flags |= IFF_ALLMULTI;
+		ec->ec_flags |= ETHER_F_ALLMULTI;
 	else
-		ifp->if_flags &= ~IFF_ALLMULTI;
+		ec->ec_flags &= ~ETHER_F_ALLMULTI;
 
-	if ((ifp->if_flags & (IFF_PROMISC|IFF_ALLMULTI)) != 0) {
+	if ((sc->sc_if_flags & IFF_PROMISC) != 0) {
+		ec->ec_flags |= ETHER_F_ALLMULTI;
 		cmd |= GENET_UMAC_CMD_PROMISC;
 		mdf_ctrl = 0;
 	} else {
@@ -945,7 +946,7 @@ genet_ifflags_cb(struct ethercom *ec)
 
 	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0) {
 		ret = ENETRESET;
-	} else if ((change & (IFF_PROMISC | IFF_ALLMULTI)) != 0) {
+	} else if ((change & IFF_PROMISC) != 0) {
 		if ((sc->sc_if_flags & IFF_RUNNING) != 0)
 			genet_setup_rxfilter(sc);
 	}
