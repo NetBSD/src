@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.172 2024/07/17 13:37:05 msaitoh Exp $
+$NetBSD: miidevs,v 1.173 2024/10/06 15:38:11 msaitoh Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -106,6 +106,7 @@ oui xxDAVICOM			0x000676	Davicom Semiconductor
 oui xxAMLOGIC			0x00068a	Amlogic
 oui xxQUALSEMI			0x00068a	Quality Semiconductor
 oui xxREALTEK			0x000732	Realtek
+oui xxADMTEK			0x000749	ADMTek
 oui xxBROADCOM			0x000818	Broadcom Corporation
 oui xxPMCSIERRA			0x0009c0	PMC-Sierra
 oui xxICPLUS			0x0009c3	IC Plus Corp.
