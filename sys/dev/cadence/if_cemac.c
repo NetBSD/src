@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.43 2024/10/05 07:37:22 skrll Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.44 2024/10/06 19:18:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.43 2024/10/05 07:37:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.44 2024/10/06 19:18:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1083,7 +1083,7 @@ cemac_ifstop(struct ifnet *ifp, int disable)
 
 	ifp->if_flags &= ~IFF_RUNNING;
 	sc->sc_txbusy = false;
-	    sc->sc_mii.mii_media_status &= ~IFM_ACTIVE;
+	sc->sc_mii.mii_media_status &= ~IFM_ACTIVE;
 }
 
 static void
