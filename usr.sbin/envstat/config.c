@@ -1,4 +1,4 @@
-/* 	$NetBSD: config.c,v 1.14 2020/11/14 09:11:55 mlelstv Exp $	*/
+/* 	$NetBSD: config.c,v 1.15 2024/10/06 19:08:34 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: config.c,v 1.14 2020/11/14 09:11:55 mlelstv Exp $");
+__RCSID("$NetBSD: config.c,v 1.15 2024/10/06 19:08:34 rillig Exp $");
 #endif /* not lint */
 
 #include <inttypes.h>
@@ -242,7 +242,7 @@ config_dict_adddev_prop(const char *key, const char *value, int line)
 	prop_dictionary_t d = NULL;
 	uint64_t timo;
 	size_t len;
-	char *endptr, *tmp, *strval;
+	char *endptr, *strval;
 	bool minutes, hours;
 
 	minutes = hours = false;
@@ -250,13 +250,13 @@ config_dict_adddev_prop(const char *key, const char *value, int line)
 	/*
 	 * Check what was specified: seconds, minutes or hours.
 	 */
-	if ((tmp = strchr(value, 's'))) {
-		/* 
+	if (strchr(value, 's')) {
+		/*
 		 * do nothing, by default the value will be sent as seconds.
 		 */
-	} else if ((tmp = strchr(value, 'm'))) {
+	} else if (strchr(value, 'm')) {
 		minutes = true;
-	} else if ((tmp = strchr(value, 'h'))) {
+	} else if (strchr(value, 'h')) {
 		hours = true;
 	} else
 		goto bad;
@@ -287,7 +287,7 @@ config_dict_adddev_prop(const char *key, const char *value, int line)
 	if (minutes)
 		timo *= 60;
 	else if (hours) {
-		/* 
+		/*
 		 * Make sure the value is not too high...
 		 */
 		if (timo > 999)
@@ -710,7 +710,7 @@ convert_val_to_pnumber(prop_dictionary_t kdict, const char *prop,
 	prop_object_t obj;
 	prop_number_t num;
 	double val, max, min;
-	char *strval, *tmp, *endptr;
+	char *strval, *endptr;
 	bool celsius;
 	size_t len;
 
@@ -727,12 +727,10 @@ convert_val_to_pnumber(prop_dictionary_t kdict, const char *prop,
 	 * Make the conversion for sensor's type.
 	 */
 	if (prop_string_equals_string(obj, "Temperature")) {
-		tmp = strchr(value, 'C');
-		if (tmp)
+		if (strchr(value, 'C'))
 			celsius = true;
 		else {
-			tmp = strchr(value, 'F');
-			if (!tmp)
+			if (!strchr(value, 'F'))
 				config_errmsg(VALUE_ERR, prop, sensor);
 
 			celsius = false;
@@ -742,7 +740,7 @@ convert_val_to_pnumber(prop_dictionary_t kdict, const char *prop,
 		strval = calloc(len, sizeof(*value));
 		if (!strval)
 			err(EXIT_FAILURE, "calloc");
-	
+
 		(void)strlcpy(strval, value, len);
 		val = strtod(strval, &endptr);
 		if (*endptr != '\0') {
