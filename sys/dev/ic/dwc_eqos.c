@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.40 2024/10/04 10:42:12 skrll Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.41 2024/10/06 19:30:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.40 2024/10/04 10:42:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.41 2024/10/06 19:30:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1260,7 +1260,7 @@ eqos_ifflags_cb(struct ethercom *ec)
 
 	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0) {
 		ret = ENETRESET;
-	} else if ((change & (IFF_PROMISC | IFF_ALLMULTI)) != 0) {
+	} else if ((change & IFF_PROMISC) != 0) {
 		if ((sc->sc_if_flags & IFF_RUNNING) != 0)
 			eqos_setup_rxfilter(sc);
 	}
