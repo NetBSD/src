@@ -1,5 +1,5 @@
 /*	$OpenBSD: misc.c,v 1.41 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: misc.c,v 1.24 2016/01/16 17:01:22 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.25 2024/10/06 19:31:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.24 2016/01/16 17:01:22 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.25 2024/10/06 19:31:26 rillig Exp $");
 #include <sys/types.h>
 #include <errno.h>
 #include <unistd.h>
@@ -71,7 +71,7 @@ unsigned char *endpbb;			/* end of push-back buffer     */
 ptrdiff_t
 indx(const char *s1, const char *s2)
 {
-	char *t;
+	const char *t;
 
 	t = strstr(s1, s2);
 	if (t == NULL)
