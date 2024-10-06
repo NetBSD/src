@@ -6129,8 +6129,8 @@ void wpa_supplicant_event(void *ctx, enum wpa_event_type event,
 			wpa_s->scan_start_time.sec = 0;
 			wpa_s->scan_start_time.usec = 0;
 			wpa_s->wps_scan_done = true;
-			wpa_dbg(wpa_s, MSG_DEBUG, "Scan completed in %ld.%06ld seconds",
-				diff.sec, diff.usec);
+			wpa_dbg(wpa_s, MSG_DEBUG, "Scan completed in %jd.%06ld seconds",
+				(intmax_t)diff.sec, (long)diff.usec);
 		}
 		if (wpa_supplicant_event_scan_results(wpa_s, data))
 			break; /* interface may have been removed */
