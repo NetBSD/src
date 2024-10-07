@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_vtw.h,v 1.10 2022/12/11 08:09:20 mlelstv Exp $	*/
+/*	$NetBSD: tcp_vtw.h,v 1.11 2024/10/07 23:17:00 jakllsch Exp $	*/
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -151,7 +151,7 @@
  */
 struct fatp_mi;
 
-#if CACHE_LINE_SIZE == 128
+#if CACHE_LINE_SIZE >= 128
 typedef uint64_t fatp_word_t;
 #else
 typedef uint32_t fatp_word_t;

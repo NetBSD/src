@@ -121,7 +121,7 @@
 
 #include <netinet/tcp_vtw.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.24 2022/11/04 09:00:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.25 2024/10/07 23:17:00 jakllsch Exp $");
 
 #define db_trace(__a, __b)	do { } while (/*CONSTCOND*/0)
 
@@ -258,7 +258,8 @@ fatp_key(fatp_ctl_t *fat, fatp_t *fp, uint32_t slot)
 {
 	CTASSERT(CACHE_LINE_SIZE == 32 ||
 	         CACHE_LINE_SIZE == 64 ||
-		 CACHE_LINE_SIZE == 128);
+	         CACHE_LINE_SIZE == 128 ||
+		 CACHE_LINE_SIZE == 256);
 
 	switch (fatp_ntags()) {
 	case 7:
@@ -278,7 +279,8 @@ fatp_slot_from_key(fatp_ctl_t *fat, uint32_t key)
 {
 	CTASSERT(CACHE_LINE_SIZE == 32 ||
 	         CACHE_LINE_SIZE == 64 ||
-		 CACHE_LINE_SIZE == 128);
+	         CACHE_LINE_SIZE == 128 ||
+		 CACHE_LINE_SIZE == 256);
 
 	switch (fatp_ntags()) {
 	case 7:
@@ -298,7 +300,8 @@ fatp_from_key(fatp_ctl_t *fat, uint32_t key)
 {
 	CTASSERT(CACHE_LINE_SIZE == 32 ||
 	         CACHE_LINE_SIZE == 64 ||
-		 CACHE_LINE_SIZE == 128);
+	         CACHE_LINE_SIZE == 128 ||
+		 CACHE_LINE_SIZE == 256);
 
 	switch (fatp_ntags()) {
 	case 7:
