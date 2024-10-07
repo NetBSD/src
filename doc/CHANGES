@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3102 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3103 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -537,3 +537,13 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		variables.  [rillig 20240928]
 	compat_linux(8): Implement renameat2, clone3, sync_file_range, syncfs
 		system calls (from Shivraj Jamgade).  [christos 20240928]
+	udl(4): Add support for SANWA SUPPLY 500-KC002N USB to VGA Adapter.
+		[tsutsui 20241002]
+	kemtimedop(2): New system call, from Shivraj Jamgade (GSoC 2024).
+		[christos 20241003]
+	amdzentemp(4): Add support for Zen 5.  [msaitoh 20241004]
+	evbarm: Make cemac(4) MP safe.  [skrll 20241005]
+	x68k: Add SIXEL graphics sequence support.  [isaki 20241005]
+	pkill(1): Add -F option to use a pidfile and -L to ensure it's
+		locked.  Taken from FreeBSD.  [roy 2024107]
+
