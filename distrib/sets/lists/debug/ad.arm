@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.83 2024/07/11 20:41:07 riastradh Exp $
+# $NetBSD: ad.arm,v 1.84 2024/10/07 09:14:22 skrll Exp $
 #
 ./usr/lib/libarm_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
@@ -24,36 +24,3 @@
 ./usr/libdata/debug/usr/sbin/sbkeygen.debug	comp-util-debug		debug,endian=1234
 ./usr/libdata/debug/usr/sbin/sbtool.debug	comp-util-debug		debug,endian=1234
 ./usr/libdata/debug/usr/sbin/tpctl.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/netbsd-epe0-TS7200.debug	comp-sysutil-debug	debug,machine_arch=earmv4
-./usr/libdata/debug/netbsd-fxp0-INTEGRATOR.debug	comp-sysutil-debug	debug,machine_arch=earmv4
-./usr/libdata/debug/netbsd-ld0-INTEGRATOR_CP.debug	comp-sysutil-debug	debug,machine_arch=earmv4
-./usr/libdata/debug/netbsd-sd0-INTEGRATOR.debug	comp-sysutil-debug	debug,machine_arch=earmv4
-./usr/libdata/debug/netbsd-sm0-INTEGRATOR_CP.debug	comp-sysutil-debug	debug,machine_arch=earmv4
-./usr/libdata/debug/netbsd-wd0-TS7200.debug	comp-sysutil-debug	debug,machine_arch=earmv4
-./usr/libdata/debug/netbsd-fxp0-ADI_BRH.debug	comp-sysutil-debug	debug,machine_arch=earmv5
-./usr/libdata/debug/netbsd-fxp0-IQ80310.debug	comp-sysutil-debug	debug,machine_arch=earmv5
-./usr/libdata/debug/netbsd-mvgbe0-MV2120.debug	comp-sysutil-debug	debug,machine_arch=earmv5
-./usr/libdata/debug/netbsd-ne0-TWINTAIL.debug	comp-sysutil-debug	debug,machine_arch=earmv5
-./usr/libdata/debug/netbsd-sd0-ADI_BRH.debug	comp-sysutil-debug	debug,machine_arch=earmv5
-./usr/libdata/debug/netbsd-sd0-CP3100.debug	comp-sysutil-debug	debug,machine_arch=earmv5
-./usr/libdata/debug/netbsd-sd0-IQ80310.debug	comp-sysutil-debug	debug,machine_arch=earmv5
-./usr/libdata/debug/netbsd-sd0-IQ80321.debug	comp-sysutil-debug	debug,machine_arch=earmv5
-./usr/libdata/debug/netbsd-sd0-TEAMASA_NPWR.debug	comp-sysutil-debug	debug,machine_arch=earmv5
-./usr/libdata/debug/netbsd-sm0-GUMSTIX.debug	comp-sysutil-debug	debug,machine_arch=earmv5
-./usr/libdata/debug/netbsd-smsh0-GUMSTIX.debug	comp-sysutil-debug	debug,machine_arch=earmv5
-./usr/libdata/debug/netbsd-wd0-ADI_BRH.debug	comp-sysutil-debug	debug,machine_arch=earmv5
-./usr/libdata/debug/netbsd-wd0-CP3100.debug	comp-sysutil-debug	debug,machine_arch=earmv5
-./usr/libdata/debug/netbsd-wd0-IQ80310.debug	comp-sysutil-debug	debug,machine_arch=earmv5
-./usr/libdata/debug/netbsd-wd0-IQ80321.debug	comp-sysutil-debug	debug,machine_arch=earmv5
-./usr/libdata/debug/netbsd-wd0-KUROBOX_PRO.debug	comp-sysutil-debug	debug,machine_arch=earmv5
-./usr/libdata/debug/netbsd-wd0e-MV2120.debug	comp-sysutil-debug	debug,machine_arch=earmv5
-./usr/libdata/debug/netbsd-wd0f-MV2120.debug	comp-sysutil-debug	debug,machine_arch=earmv5
-./usr/libdata/debug/netbsd-wd0g-MV2120.debug	comp-sysutil-debug	debug,machine_arch=earmv5
-./usr/libdata/debug/netbsd-wd0h-MV2120.debug	comp-sysutil-debug	debug,machine_arch=earmv5
-./usr/libdata/debug/netbsd-wm0-CP3100.debug	comp-sysutil-debug	debug,machine_arch=earmv5
-./usr/libdata/debug/netbsd-wm0-IQ80321.debug	comp-sysutil-debug	debug,machine_arch=earmv5
-./usr/libdata/debug/netbsd-wm0-TEAMASA_NPWR.debug	comp-sysutil-debug	debug,machine_arch=earmv5
-./usr/libdata/debug/netbsd-fxp0-ADI_BRH.debug	comp-sysutil-debug	debug,machine_arch=earmv5eb
-./usr/libdata/debug/netbsd-sd0-ADI_BRH.debug	comp-sysutil-debug	debug,machine_arch=earmv5eb
-./usr/libdata/debug/netbsd-wd0-ADI_BRH.debug	comp-sysutil-debug	debug,machine_arch=earmv5eb
-./usr/libdata/debug/netbsd-wd0-KUROBOX_PRO.debug	comp-sysutil-debug	debug,machine_arch=earmv5eb
