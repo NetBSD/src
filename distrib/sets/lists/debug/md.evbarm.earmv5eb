@@ -1,0 +1,12 @@
+# $NetBSD: md.evbarm.earmv5eb,v 1.1 2024/10/07 09:14:22 skrll Exp $
+#
+./usr/libdata/debug/netbsd-ADI_BRH.debug		comp-sysutil-debug	debug		
+./usr/libdata/debug/netbsd-ADI_BRH_INSTALL.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-KUROBOX_PRO.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-KUROBOX_PRO_INSTALL.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-NSLU2.debug			comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-OPENBLOCKS_A6.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-fxp0-ADI_BRH.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-sd0-ADI_BRH.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-wd0-ADI_BRH.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-wd0-KUROBOX_PRO.debug	comp-sysutil-debug	debug

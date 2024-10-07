@@ -1,0 +1,21 @@
+# $NetBSD: md.evbarm.earmv4,v 1.1 2024/10/07 09:14:22 skrll Exp $
+#
+./usr/libdata/debug/netbsd-GEMINI.debug			comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-GEMINI_INSTALL.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-INTEGRATOR.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-INTEGRATOR_CP.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-INTEGRATOR_CP_INSTALL.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-INTEGRATOR_INSTALL.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-IXM1200.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-SMDK2410.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-SMDK2410_INSTALL.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-SMDK2800.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-SMDK2800_INSTALL.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-TS7200.debug			comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-TS7200_INSTALL.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-epe0-TS7200.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-fxp0-INTEGRATOR.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-ld0-INTEGRATOR_CP.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-sd0-INTEGRATOR.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-sm0-INTEGRATOR_CP.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-wd0-TS7200.debug		comp-sysutil-debug	debug
