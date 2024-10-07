@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.17 2024/09/27 15:07:16 jakllsch Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.18 2024/10/07 23:11:33 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -50,6 +50,7 @@
 #define CPU_ID_BROADCOM		0x42000000 /* 'B' */
 #define CPU_ID_CAVIUM		0x43000000 /* 'C' */
 #define CPU_ID_DEC		0x44000000 /* 'D' */
+#define CPU_ID_FUJITSU		0x46000000 /* 'F' */
 #define CPU_ID_INFINEON		0x49000000 /* 'I' */
 #define CPU_ID_MOTOROLA		0x4d000000 /* 'M' */
 #define CPU_ID_NVIDIA		0x4e000000 /* 'N' */
@@ -177,6 +178,9 @@
 #define CPU_ID_NEOVERSEN1R3	0x413fd0c0
 #define CPU_ID_NEOVERSEE1R1	0x411fd4a0
 #define CPU_ID_CORTEXA77R0	0x410fd0d0
+#define CPU_ID_NEOVERSEV1R1	0x411fd400
+#define CPU_ID_CORTEXA710R2	0x412fd470
+#define CPU_ID_NEOVERSEN2R0	0x410fd490
 
 #define CPU_ID_CORTEX_P(n)	((n & 0xff0fe000) == 0x410fc000)
 #define CPU_ID_CORTEX_A5_P(n)	((n & 0xff0ff0f0) == 0x410fc050)
@@ -208,6 +212,8 @@
 #define CPU_ID_THUNDERX81XXRX	0x43000a20
 #define CPU_ID_THUNDERX83XXRX	0x43000a30
 #define CPU_ID_THUNDERX2RX	0x43000af0
+
+#define CPU_ID_A64FX		0x460f0010
 
 #define CPU_ID_AMPERE1		0xc00fac30
 #define CPU_ID_AMPERE1A		0xc00fac40

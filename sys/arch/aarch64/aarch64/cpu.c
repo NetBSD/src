@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.80 2024/09/27 15:12:45 jakllsch Exp $ */
+/* $NetBSD: cpu.c,v 1.81 2024/10/07 23:11:33 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.80 2024/09/27 15:12:45 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.81 2024/10/07 23:11:33 jakllsch Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -229,10 +229,13 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_CORTEXA76R3 & CPU_PARTMASK, "Cortex-A76", "Arm", "v8.2-A+" },
 	{ CPU_ID_CORTEXA76AER1 & CPU_PARTMASK, "Cortex-A76AE", "Arm", "v8.2-A+" },
 	{ CPU_ID_CORTEXA77R0 & CPU_PARTMASK, "Cortex-A77", "Arm", "v8.2-A+" },
+	{ CPU_ID_CORTEXA710R2 & CPU_PARTMASK, "Cortex-A710", "Arm", "v9.0-A" },
 	{ CPU_ID_NVIDIADENVER2 & CPU_PARTMASK, "Denver2", "NVIDIA", "v8-A" },
 	{ CPU_ID_EMAG8180 & CPU_PARTMASK, "eMAG", "Ampere", "v8-A" },
 	{ CPU_ID_NEOVERSEE1R1 & CPU_PARTMASK, "Neoverse E1", "Arm", "v8.2-A+" },
 	{ CPU_ID_NEOVERSEN1R3 & CPU_PARTMASK, "Neoverse N1", "Arm", "v8.2-A+" },
+	{ CPU_ID_NEOVERSEV1R1 & CPU_PARTMASK, "Neoverse V1", "Arm", "v8.4-A+" },
+	{ CPU_ID_NEOVERSEN2R0 & CPU_PARTMASK, "Neoverse N2", "Arm", "v9.0-A" },
 	{ CPU_ID_THUNDERXRX, "ThunderX", "Cavium", "v8-A" },
 	{ CPU_ID_THUNDERX81XXRX, "ThunderX CN81XX", "Cavium", "v8-A" },
 	{ CPU_ID_THUNDERX83XXRX, "ThunderX CN83XX", "Cavium", "v8-A" },
@@ -241,6 +244,7 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_APPLE_M1_FIRESTORM & CPU_PARTMASK, "M1 Firestorm", "Apple", "Apple Silicon" },
 	{ CPU_ID_AMPERE1 & CPU_PARTMASK, "Ampere-1", "Ampere", "v8.6-A+" },
 	{ CPU_ID_AMPERE1A & CPU_PARTMASK, "Ampere-1A", "Ampere", "v8.6-A+" },
+	{ CPU_ID_A64FX & CPU_PARTMASK, "A64FX", "Fujitsu", "v8.2-A+" },
 };
 
 static void
