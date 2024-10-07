@@ -1,4 +1,4 @@
-#	$NetBSD: files.rmixl,v 1.4 2011/03/18 02:13:46 cliff Exp $
+#	$NetBSD: files.rmixl,v 1.5 2024/10/07 15:04:32 andvar Exp $
 #
 # Configuration info for RMI XLP, XLR, XLS
 #
@@ -56,7 +56,7 @@ device  rmixl_pcix: pcibus
 attach  rmixl_pcix at obio
 file    arch/mips/rmi/rmixl_pcix.c		rmixl_pcix	needs-flag
 
-# RMI Periperal IO Bus to Flash, PCMCIA memory controllers
+# RMI Peripheral IO Bus to Flash, PCMCIA memory controllers
 define	rmixl_iobus { [cs=-1], [addr=-1], [size=-1], [intr=-1] }
 device	rmixl_iobus: rmixl_iobus
 attach  rmixl_iobus at obio                        
