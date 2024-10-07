@@ -1,4 +1,4 @@
-/*	$NetBSD: imxsdmareg.h,v 1.2 2014/07/25 07:49:56 hkenken Exp $	*/
+/*	$NetBSD: imxsdmareg.h,v 1.3 2024/10/07 15:04:32 andvar Exp $	*/
 
 /*
  * Copyright (c) 2009  Genetec Corporation.  All rights reserved.
@@ -38,7 +38,7 @@
 #define	SDMA_PRIORITY_MIN	1
 #define	SDMA_PRIORITY_MAX	7
 
-#define	SDMA_N_EVENTS	32	/* DMA events from periperals */
+#define	SDMA_N_EVENTS	32	/* DMA events from peripherals */
 
 #define	SDMA_MC0PTR	0x0000
 #define	SDMA_INTR	0x0004

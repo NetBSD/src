@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.44 2022/11/19 09:29:26 yamt Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.45 2024/10/07 15:04:32 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.44 2022/11/19 09:29:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.45 2024/10/07 15:04:32 andvar Exp $");
 
 #define _INTR_PRIVATE
 
@@ -115,7 +115,7 @@ static int bcm2836mp_int_base[_BCM2836_NCPUS];
 #define BCM2836_INT_CNTHPIRQ_CPUN(n)	(BCM2836_INT_BASECPUN(n) + BCM2836_INT_CNTHPIRQ)
 #define BCM2836_INT_MAILBOX0_CPUN(n)	(BCM2836_INT_BASECPUN(n) + BCM2836_INT_MAILBOX0)
 
-/* Periperal Interrupt sources */
+/* Peripheral Interrupt sources */
 #define	BCM2835_NIRQ			96
 
 #define BCM2835_INT_GPU0BASE		(BCM2835_INT_BASE + 0)
