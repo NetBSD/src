@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkill.1,v 1.32 2022/10/29 08:17:16 simonb Exp $
+.\"	$NetBSD: pkill.1,v 1.33 2024/10/07 06:14:05 roy Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 29, 2022
+.Dd October 6, 2024
 .Dt PKILL 1
 .Os
 .Sh NAME
@@ -37,8 +37,9 @@
 .Nd find or signal processes by name
 .Sh SYNOPSIS
 .Nm pgrep
-.Op Fl filnqvx
+.Op Fl fiLlnqvx
 .Op Fl d Ar delim
+.Op Fl F Ar pidfile
 .Op Fl G Ar gid
 .Op Fl g Ar pgrp
 .Op Fl P Ar ppid
@@ -49,7 +50,8 @@
 .Ar pattern ...
 .Nm pkill
 .Op Fl signal
-.Op Fl filnvx
+.Op Fl fiLlnvx
+.Op Fl F Ar pidfile
 .Op Fl G Ar gid
 .Op Fl g Ar pgrp
 .Op Fl P Ar ppid
@@ -89,7 +91,7 @@ The following options are available for
 .Nm pkill
 and
 .Nm pgrep :
-.Bl -tag -width xxxxxxxx
+.Bl -tag -width ".Fl F Ar pidfile"
 .It Fl d Ar delim
 Specify a delimiter to be printed between each process ID.
 The default is a newline.
@@ -99,6 +101,10 @@ command.
 .It Fl f
 Match against full argument lists.
 The default is to match against process names.
+.It Fl F Ar pidfile
+Restrict matches to processes which pid is stored in
+.Ar pidfile
+file.
 .It Fl G Ar gid
 Restrict matches to processes with a real group ID in the comma-separated
 list
@@ -114,6 +120,15 @@ or
 command.
 .It Fl i
 Ignore case distinctions in both the process table and the supplied pattern.
+.It Fl L
+The
+.Ar pidfile
+given for the
+.Fl F
+option must be locked with the
+.Xr flock 2
+syscall or created with
+.Xr pidfile_lock 3 .
 .It Fl l
 Long output.
 Print the process name in addition to the process ID for each matching
@@ -181,7 +196,7 @@ This option is valid only when given as the first argument to
 .Pp
 The following option is also available for
 .Nm pgrep :
-.Bl -tag -width xxxxxxxx
+.Bl -tag -width ".Fl F Ar pidfile"
 .It Fl q
 Quiet; do not write anything to standard output.
 .El
