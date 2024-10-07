@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.33 2022/10/29 08:17:16 simonb Exp $	*/
+/*	$NetBSD: pkill.c,v 1.34 2024/10/07 06:14:05 roy Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2022 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.33 2022/10/29 08:17:16 simonb Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.34 2024/10/07 06:14:05 roy Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: pkill.c,v 1.33 2022/10/29 08:17:16 simonb Exp $");
 #include <ctype.h>
 #include <kvm.h>
 #include <err.h>
+#include <fcntl.h>
 #include <pwd.h>
 #include <grp.h>
 #include <errno.h>
@@ -61,6 +62,9 @@ __RCSID("$NetBSD: pkill.c,v 1.33 2022/10/29 08:17:16 simonb Exp $");
 #define	STATUS_NOMATCH	1
 #define	STATUS_BADUSAGE	2
 #define	STATUS_ERROR	3
+
+#define	MIN_PID		5
+#define	MAX_PID		30000 // XXX PID_MAX from sys/proc.h?
 
 enum listtype {
 	LT_GENERIC,
@@ -109,12 +113,13 @@ static int	killact(const struct kinfo_proc2 *);
 static int	reniceact(const struct kinfo_proc2 *);
 static int	grepact(const struct kinfo_proc2 *);
 static void	makelist(struct listhead *, enum listtype, char *);
+static int	takepid(const char *, int);
 
 int
 main(int argc, char **argv)
 {
-	char buf[_POSIX2_LINE_MAX], **pargv, *q;
-	int i, j, ch, bestidx, rv, criteria;
+  	char buf[_POSIX2_LINE_MAX], **pargv, *q, *pidfile = NULL;
+	int i, j, ch, bestidx, rv, criteria, pidfromfile, pidfilelock = 0;
 	int (*action)(const struct kinfo_proc2 *);
 	const struct kinfo_proc2 *kp;
 	struct list *li;
@@ -182,11 +187,18 @@ main(int argc, char **argv)
 		} else
 			usage();
 	} else {
-		while ((ch = getopt(argc, argv, "G:P:U:d:fg:ilnqs:t:u:vx")) != -1)
+		while ((ch = getopt(argc, argv, "F:G:LP:U:d:fg:ilnqs:t:u:vx")) != -1)
 			switch (ch) {
+			case 'F':
+				pidfile = optarg;
+				criteria = 1;
+				break;
 			case 'G':
 				makelist(&rgidlist, LT_GROUP, optarg);
 				criteria = 1;
+				break;
+			case 'L':
+				pidfilelock = 1;
 				break;
 			case 'P':
 				makelist(&ppidlist, LT_GENERIC, optarg);
@@ -253,6 +265,15 @@ main(int argc, char **argv)
 		criteria = 1;
 	if (!criteria)
 		usage();
+	if (pidfile != NULL)
+		pidfromfile = takepid(pidfile, pidfilelock);
+	else {
+		if (pidfilelock) {
+			errx(STATUS_ERROR,
+			    "Option -L doesn't make sense without -F");
+		}
+		pidfromfile = -1;
+	}
 
 	mypid = getpid();
 
@@ -330,6 +351,11 @@ main(int argc, char **argv)
 	for (i = 0, kp = plist; i < nproc; i++, kp++) {
 		if ((kp->p_flag & P_SYSTEM) != 0)
 			continue;
+
+		if (pidfromfile >= 0 && kp->p_pid != pidfromfile) {
+			selected[i] = 0;
+			continue;
+		}
 
 		SLIST_FOREACH(li, &ruidlist, li_chain)
 			if (kp->p_ruid == (uid_t)li->li_number)
@@ -449,12 +475,12 @@ usage(void)
 		    getprogname());
 	else {
 		if (pgrep)
-			ustr = "[-filnqvx] [-d delim]";
+			ustr = "[-Lfilnqvx] [-d delim]";
 		else
-			ustr = "[-signal] [-filnvx]";
+			ustr = "[-signal] [-Lfilnvx]";
 
 		(void)fprintf(stderr,
-		    "Usage: %s %s [-G gid] [-g pgrp] [-P ppid] [-s sid] "
+		    "Usage: %s %s [-F pidfile] [-G gid] [-g pgrp] [-P ppid] [-s sid] "
 			   "[-t tty]\n"
 		    "             [-U uid] [-u euid] pattern ...\n",
 			      getprogname(), ustr);
@@ -643,4 +669,49 @@ makelist(struct listhead *head, enum listtype type, char *src)
 
 	if (empty)
 		usage();
+}
+
+static int
+takepid(const char *pidfile, int pidfilelock)
+{
+	char *endp, line[BUFSIZ];
+	FILE *fh;
+	long rval;
+
+	fh = fopen(pidfile, "r");
+	if (fh == NULL)
+		err(STATUS_ERROR, "Cannot open pidfile `%s'", pidfile);
+
+	if (pidfilelock) {
+		/*
+		 * If we can lock pidfile, this means that daemon is not
+		 * running, so would be better not to kill some random process.
+		 */
+		if (flock(fileno(fh), LOCK_EX | LOCK_NB) == 0) {
+			(void)fclose(fh);
+			errx(STATUS_ERROR, "File '%s' can be locked", pidfile);
+		} else {
+			if (errno != EWOULDBLOCK) {
+				errx(STATUS_ERROR,
+				    "Error while locking file '%s'", pidfile);
+			}
+		}
+	}
+
+	if (fgets(line, sizeof(line), fh) == NULL) {
+		if (feof(fh)) {
+			(void)fclose(fh);
+			errx(STATUS_ERROR, "Pidfile `%s' is empty", pidfile);
+		}
+		(void)fclose(fh);
+		err(STATUS_ERROR, "Cannot read from pid file `%s'", pidfile);
+	}
+	(void)fclose(fh);
+
+	rval = strtol(line, &endp, 10);
+	if (*endp != '\0' && !isspace((unsigned char)*endp))
+		errx(STATUS_ERROR, "Invalid pid in file `%s'", pidfile);
+	else if (rval < MIN_PID || rval > MAX_PID)
+		errx(STATUS_ERROR, "Invalid pid in file `%s'", pidfile);
+	return (rval);
 }
