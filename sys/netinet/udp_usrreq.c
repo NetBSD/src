@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.265 2024/07/05 04:31:54 rin Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.266 2024/10/08 02:30:04 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.265 2024/07/05 04:31:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.266 2024/10/08 02:30:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -575,10 +575,12 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 		if (inp->inp_flags & INP_ESPINUDP) {
 			switch (udp4_espinudp(mp, off)) {
 			case -1: /* Error, m was freed */
+				KASSERT(*mp == NULL);
 				rcvcnt = -1;
 				goto bad;
 
 			case 1: /* ESP over UDP */
+				KASSERT(*mp == NULL);
 				rcvcnt++;
 				goto bad;
 
@@ -599,6 +601,7 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 			    sintosa(src), inp->inp_overudp_arg);
 			switch (ret) {
 			case -1: /* Error, m was freed */
+				KASSERT(*mp == NULL);
 				rcvcnt = -1;
 				goto bad;
 
@@ -1258,7 +1261,7 @@ udp4_espinudp(struct mbuf **mp, int off)
 
 	if (m->m_len < minlen) {
 		if ((*mp = m_pullup(m, minlen)) == NULL) {
-			return -1;
+			return -1; /* dropped */
 		}
 		m = *mp;
 	}
@@ -1270,15 +1273,15 @@ udp4_espinudp(struct mbuf **mp, int off)
 	if ((len == 1) && (*data == 0xff)) {
 		m_freem(m);
 		*mp = NULL; /* avoid any further processing by caller */
-		return 1;
+		return 1;	/* consumed */
 	}
 
 	/* Handle Non-ESP marker (32bit). If zero, then IKE. */
 	marker = (uint32_t *)data;
 	if (len <= sizeof(uint32_t))
-		return 0;
+		return 0;	/* passthrough */
 	if (marker[0] == 0)
-		return 0;
+		return 0;	/* passthrough */
 
 	/*
 	 * Get the UDP ports. They are handled in network order
@@ -1323,7 +1326,8 @@ udp4_espinudp(struct mbuf **mp, int off)
 	if ((tag = m_tag_get(PACKET_TAG_IPSEC_NAT_T_PORTS,
 	    sizeof(sport) + sizeof(dport), M_DONTWAIT)) == NULL) {
 		m_freem(m);
-		return -1;
+		*mp = NULL;
+		return -1;	/* dropped */
 	}
 	((u_int16_t *)(tag + 1))[0] = sport;
 	((u_int16_t *)(tag + 1))[1] = dport;
@@ -1336,7 +1340,7 @@ udp4_espinudp(struct mbuf **mp, int off)
 
 	/* We handled it, it shouldn't be handled by UDP */
 	*mp = NULL; /* avoid free by caller ... */
-	return 1;
+	return 1;		/* consumed */
 }
 #endif
 
