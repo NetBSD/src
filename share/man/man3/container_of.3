@@ -1,0 +1,77 @@
+.\"	$NetBSD: container_of.3,v 1.1 2024/10/08 23:11:21 christos Exp $
+.\"
+.\" Copyright (c) 2024 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd October 8, 2011
+.Dt CONTAINER_OF 3
+.Os
+.Sh NAME
+.Nm container_of
+.Nd cast a pointer to member of a structure to a pointer of its
+container structure.
+.Sh SYNOPSIS
+.In sys/container_of.h
+.Ft type
+.Fn container_of "pointer" "type" "member"
+.Sh DESCRIPTION
+Given a
+.Fa pointer
+that points to a
+.Fa member
+of the container
+.Fa type
+the
+.Fn container_of
+macro returns a pointer that points to the enclosing container structure.
+.Pp
+A compiler error will result if
+.Ar member
+is not aligned to a byte boundary (i.e. it is a bit-field).
+.Sh EXAMPLES
+.Bd -literal -offset indent
+#include <assert.h>
+#include <sys/container_of.h>
+struct container {
+	double	other_member;
+	int	member;
+};
+
+struct container one;
+
+void test(void) {
+	int *ptr = &one.member;
+	struct container *onep = container_of(ptr, struct container, member);
+	assert(onep == &one);
+}
+.Ed
+.Sh SEE ALSO
+.Xr __alignof__ 3 ,
+.Xr offsetof 3 ,
+.Xr stddef 3 ,
+.Xr typeof 3
+.Sh HISTORY
+The
+.Fn container_of
+macro appeared first in the Linux kernel.
