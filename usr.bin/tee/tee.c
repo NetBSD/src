@@ -84,7 +84,6 @@ main(int argc, char *argv[])
 		case 'i':
 			(void)signal(SIGINT, SIG_IGN);
 			break;
-		case '?':
 		default:
 			(void)fprintf(stderr, "usage: tee [-ai] [file ...]\n");
 			exit(1);
@@ -99,13 +98,13 @@ main(int argc, char *argv[])
 
 	for (exitval = 0; *argv; ++argv)
 		if ((fd = open(*argv, append ? O_WRONLY|O_CREAT|O_APPEND :
-		    O_WRONLY|O_CREAT|O_TRUNC, DEFFILEMODE)) < 0) {
+		    O_WRONLY|O_CREAT|O_TRUNC, DEFFILEMODE)) == -1) {
 			warn("%s", *argv);
 			exitval = 1;
 		} else
 			add(fd, *argv);
 
-	while ((rval = read(STDIN_FILENO, buf, BSIZE)) > 0)
+	while ((rval = read(STDIN_FILENO, buf, BSIZE)) != 0 && rval != -1)
 		for (p = head; p; p = p->next) {
 			const char *bp = buf;
 			size_t n = rval;
@@ -120,7 +119,7 @@ main(int argc, char *argv[])
 				bp += wval;
 			} while (n -= wval);
 		}
-	if (rval < 0) {
+	if (rval == -1) {
 		warn("read");
 		exitval = 1;
 	}
