@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.184 2024/08/25 22:10:40 christos Exp $
+#	$NetBSD: Makefile,v 1.185 2024/10/08 22:53:20 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,7 @@ INCS=	acct.h acl.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h \
 	common_ansi.h common_int_const.h common_int_fmtio.h \
 	common_int_limits.h common_int_mwgwtypes.h common_int_types.h \
 	common_limits.h common_lock.h common_wchar_limits.h \
-	condvar.h conf.h core.h \
+	condvar.h conf.h container_of.h core.h \
 	cpufreq.h cpuio.h ctype_bits.h ctype_inline.h \
 	device.h device_if.h \
 	dir.h dirent.h \
@@ -42,7 +42,7 @@ INCS=	acct.h acl.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h \
 	sleepq.h socket.h \
 	socketvar.h sockio.h spawn.h specificdata.h stat.h \
 	statvfs.h syscall.h syscallargs.h sysctl.h stdalign.h stdarg.h \
-	stdbool.h stdint.h swap.h syncobj.h syslimits.h syslog.h \
+	stdbool.h stddef.h stdint.h swap.h syncobj.h syslimits.h syslog.h \
 	tape.h termios.h time.h timeb.h timepps.h timerfd.h times.h timespec.h \
 	timex.h tls.h trace.h tree.h tty.h ttychars.h ttycom.h \
 	ttydefaults.h ttydev.h types.h \
@@ -54,18 +54,19 @@ INCSYMLINKS=\
 	sys/cdbr.h /usr/include/cdbr.h \
 	sys/exec_elf.h /usr/include/elf.h \
 	sys/fcntl.h /usr/include/fcntl.h \
+	sys/md4.h /usr/include/md4.h \
+	sys/md5.h /usr/include/md5.h \
 	sys/poll.h /usr/include/poll.h \
-	sys/stdalign.h /usr/include/stdalign.h \
-	sys/stdarg.h /usr/include/stdarg.h \
-	sys/stdbool.h /usr/include/stdbool.h \
-	sys/stdint.h /usr/include/stdint.h \
-	sys/syslog.h /usr/include/syslog.h \
-	sys/termios.h /usr/include/termios.h \
 	sys/rmd160.h /usr/include/rmd160.h \
 	sys/sha1.h /usr/include/sha1.h \
 	sys/sha2.h /usr/include/sha2.h \
-	sys/md4.h /usr/include/md4.h \
-	sys/md5.h /usr/include/md5.h
+	sys/stdalign.h /usr/include/stdalign.h \
+	sys/stdarg.h /usr/include/stdarg.h \
+	sys/stdbool.h /usr/include/stdbool.h \
+	sys/stddef.h /usr/include/stddef.h \
+	sys/stdint.h /usr/include/stdint.h \
+	sys/syslog.h /usr/include/syslog.h \
+	sys/termios.h /usr/include/termios.h
 
 INCSYMLINKS+=	../soundcard.h ${INCSDIR}/soundcard.h
 
