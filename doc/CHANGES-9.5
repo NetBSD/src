@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.20 2024/10/02 18:28:23 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.21 2024/10/08 11:30:35 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -375,4 +375,27 @@ sys/arch/sparc64/sparc64/lock_stubs.s		1.12
 
 	sparc64: add missing LoadStore ordering for mutex_enter stub.
 	[rin, ticket #1891]
+
+crypto/external/bsd/openssh/dist/kex.c		1.38
+
+	openssh: kex: do not pass NULL as %s for logit() in our local diff.
+	[rin, ticket #1892]
+
+crypto/external/bsd/openssh/dist/auth2.c	1.30
+crypto/external/bsd/openssh/dist/monitor.c	1.44
+
+	sshd(8): fix spurious block for users with multiple public keys.
+	[rin, ticket #1893]
+
+sys/netinet/tcp_input.c				1.441
+
+	tcp_reass: PR 58708: mitigate CVE-2018-6922 (SegmentSmack).
+	[rin, ticket #1894]
+
+external/bsd/atf/dist/tools/atf-run.1		1.5
+external/bsd/atf/dist/tools/atf-run.cpp		1.6,1.7
+
+	atf-run(1): add support for running individual test cases under
+	isolation.
+	[rin, ticket #1895]
 
