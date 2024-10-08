@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2474 2024/10/03 17:14:12 christos Exp $
+#	$NetBSD: mi,v 1.2475 2024/10/08 22:53:21 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3419,6 +3419,7 @@
 ./usr/include/sys/common_wchar_limits.h		comp-c-include
 ./usr/include/sys/condvar.h			comp-c-include
 ./usr/include/sys/conf.h			comp-c-include
+./usr/include/sys/container_of.h		comp-c-include
 ./usr/include/sys/core.h			comp-c-include
 ./usr/include/sys/cpu_data.h			comp-obsolete		obsolete
 ./usr/include/sys/cpufreq.h			comp-c-include
@@ -3588,6 +3589,7 @@
 ./usr/include/sys/stdalign.h			comp-c-include
 ./usr/include/sys/stdarg.h			comp-c-include
 ./usr/include/sys/stdbool.h			comp-c-include
+./usr/include/sys/stddef.h			comp-c-include
 ./usr/include/sys/stdint.h			comp-c-include
 ./usr/include/sys/swap.h			comp-c-include
 ./usr/include/sys/syncobj.h			comp-c-include

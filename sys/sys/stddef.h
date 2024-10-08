@@ -1,4 +1,4 @@
-/*	$NetBSD: stddef.h,v 1.24 2020/05/13 14:00:58 joerg Exp $	*/
+/*	$NetBSD: stddef.h,v 1.1 2024/10/08 22:53:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -31,8 +31,8 @@
  *	@(#)stddef.h	8.1 (Berkeley) 6/2/93
  */
 
-#ifndef _STDDEF_H_
-#define _STDDEF_H_
+#ifndef _SYS_STDDEF_H_
+#define _SYS_STDDEF_H_
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
@@ -75,4 +75,4 @@ typedef union {
 } max_align_t;
 #endif
 
-#endif /* _STDDEF_H_ */
+#endif /* _SYS_STDDEF_H_ */
