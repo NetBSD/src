@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.43 2024/10/08 19:39:54 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.44 2024/10/08 19:50:49 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -236,19 +236,15 @@ be32enc(void *buf, u32_t u)
 void
 test_ic_mult(void)
 {
-	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned int' may lose accuracy [132] */
-	u32 = u16 * 65536ULL;
-	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned int' may lose accuracy [132] */
 	u32 = u16 * 65537ULL;
+	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned int' may lose accuracy [132] */
+	u32 = u16 * 65538ULL;
 
-	/* expect+1: warning: conversion from 'int' to 'unsigned short' may lose accuracy [132] */
 	u16 = 0 * u16;
-	/* expect+1: warning: conversion from 'int' to 'unsigned short' may lose accuracy [132] */
 	u16 = 1 * u16;
 	/* expect+1: warning: conversion from 'int' to 'unsigned short' may lose accuracy [132] */
 	u16 = 2 * u16;
 
-	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned int' may lose accuracy [132] */
 	u32 = (u16 & 1023ULL) / 1ULL * 1024ULL | (u16 & 1023ULL) / 1ULL * 1ULL;
 }
 

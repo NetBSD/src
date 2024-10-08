@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.652 2024/09/28 19:09:37 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.653 2024/10/08 19:50:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.652 2024/09/28 19:09:37 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.653 2024/10/08 19:50:49 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -158,6 +158,23 @@ ic_cvt(const type_t *ntp, const type_t *otp, integer_constraints a)
 	if (nw > ow && ou)
 		return a;
 	return ic_any(ntp);
+}
+
+static integer_constraints
+ic_mult(const type_t *tp, integer_constraints a, integer_constraints b)
+{
+	integer_constraints c;
+
+	if (ic_maybe_signed(tp, &a) || ic_maybe_signed(tp, &b)
+	    || (a.umax > 0 && b.umax > ic_any(tp).umax / a.umax))
+		return ic_any(tp);
+
+	c.smin = INT64_MIN;
+	c.smax = INT64_MAX;
+	c.umin = a.umin * b.umin;
+	c.umax = a.umax * b.umax;
+	c.bclr = ~u64_fill_right(c.umax);
+	return c;
 }
 
 static integer_constraints
@@ -294,6 +311,10 @@ ic_expr(const tnode_t *tn)
 			return ic_any(tn->tn_type);
 		lc = ic_expr(tn->u.ops.left);
 		return ic_cvt(tn->tn_type, tn->u.ops.left->tn_type, lc);
+	case MULT:
+		lc = ic_expr(before_conversion(tn->u.ops.left));
+		rc = ic_expr(before_conversion(tn->u.ops.right));
+		return ic_mult(tn->tn_type, lc, rc);
 	case DIV:
 		lc = ic_expr(before_conversion(tn->u.ops.left));
 		rc = ic_expr(before_conversion(tn->u.ops.right));
