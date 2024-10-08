@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.438 2022/11/04 09:01:53 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.438.2.1 2024/10/08 11:24:50 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.438 2022/11/04 09:01:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.438.2.1 2024/10/08 11:24:50 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -230,6 +230,8 @@ int	tcp_do_autorcvbuf = 1;
 int	tcp_autorcvbuf_inc = 16 * 1024;
 int	tcp_autorcvbuf_max = 256 * 1024;
 int	tcp_msl = (TCPTV_MSL / PR_SLOWHZ);
+
+int tcp_reass_maxqueuelen = 100;
 
 static int tcp_rst_ppslim_count = 0;
 static struct timeval tcp_rst_ppslim_last;
@@ -707,6 +709,13 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 #endif
 
 insert_it:
+	/* limit tcp segments per reassembly queue */
+	if (tp->t_segqlen > tcp_reass_maxqueuelen) {
+		TCP_STATINC(TCP_STAT_RCVMEMDROP);
+		m_freem(m);
+		goto out;
+	}
+
 	/*
 	 * Allocate a new queue entry (block) since the received segment
 	 * did not collapse onto any other out-of-order block. If it had
