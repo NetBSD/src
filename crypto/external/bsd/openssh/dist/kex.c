@@ -1,4 +1,4 @@
-/*	$NetBSD: kex.c,v 1.31.2.3 2023/12/25 12:22:55 martin Exp $	*/
+/*	$NetBSD: kex.c,v 1.31.2.4 2024/10/08 11:05:49 martin Exp $	*/
 /* $OpenBSD: kex.c,v 1.184 2023/12/18 14:45:49 djm Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kex.c,v 1.31.2.3 2023/12/25 12:22:55 martin Exp $");
+__RCSID("$NetBSD: kex.c,v 1.31.2.4 2024/10/08 11:05:49 martin Exp $");
 
 #include <sys/param.h>	/* MAX roundup */
 #include <sys/types.h>
@@ -1270,7 +1270,7 @@ kex_choose_conf(struct ssh *ssh, uint32_t seq)
 			      ssh_remote_ipaddr(ssh),
 			      ssh_remote_port(ssh),
 			      newkeys->enc.name,
-			      newkeys->mac.name,
+			      authlen == 0 ? newkeys->mac.name : "<implicit>",
 			      newkeys->comp.name);
 		}
 		log_flag = 1;
