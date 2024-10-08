@@ -1,4 +1,4 @@
-/*	$NetBSD: c8rtomb.c,v 1.6 2024/08/18 12:41:38 riastradh Exp $	*/
+/*	$NetBSD: c8rtomb.c,v 1.7 2024/10/08 13:42:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: c8rtomb.c,v 1.6 2024/08/18 12:41:38 riastradh Exp $");
+__RCSID("$NetBSD: c8rtomb.c,v 1.7 2024/10/08 13:42:17 riastradh Exp $");
 
 #include "namespace.h"
 
@@ -193,8 +193,8 @@ c8rtomb_l(char *restrict s, char8_t c8, mbstate_t *restrict ps, locale_t loc)
 	 * Get the current state and buffer.
 	 */
 	__CTASSERT(UTF8_ACCEPT == 0); /* initial conversion state */
-	state = (utf8_state_t)__SHIFTOUT(S->state_c32, __BITS(31,24));
-	c32 = (char32_t)__SHIFTOUT(S->state_c32, __BITS(23,0));
+	state = __SHIFTOUT(S->state_c32, __BITS(31,24));
+	c32 = __SHIFTOUT(S->state_c32, __BITS(23,0));
 
 	/*
 	 * Feed the byte into the state machine to update the state.
@@ -211,6 +211,11 @@ c8rtomb_l(char *restrict s, char8_t c8, mbstate_t *restrict ps, locale_t loc)
 		/*
 		 * Valid UTF-8 so far but incomplete.  Update state and
 		 * output nothing.
+		 *
+		 * XXX lint is unconvinced that this cast is needless.
+		 * Related to (but perhaps not addressed by solving):
+		 * PR toolchain/58728: __SHIFTIN/__BITS of values in
+		 * known-limited range without cast
 		 */
 		S->state_c32 = (char32_t)(
 		    __SHIFTIN(state, __BITS(31,24)) |
