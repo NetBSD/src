@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.38 2024/10/04 11:41:28 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.39 2024/10/08 11:27:01 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -1997,4 +1997,49 @@ sys/modules/drmkms/drmkms_pci.h			1.1
 	- PR 58384: amdgpu maps wrong bar for pre-bonaire chips
 	- PR 58385: amdgpu_gart_map maps the same GPU vaddr over and over again
 	[rin, ticket #928]
+
+crypto/external/bsd/openssh/dist/kex.c		1.38
+
+	openssh: kex: do not pass NULL as %s for logit() in our local diff.
+	[rin, ticket #929]
+
+crypto/external/bsd/openssh/dist/pfilter.c	1.9
+distrib/sets/lists/base/shl.mi			1.987 (patch)
+distrib/sets/lists/comp/mi			1.2462
+distrib/sets/lists/debug/shl.mi			1.347 (patch)
+external/bsd/blocklist/README			1.3
+external/bsd/blocklist/bin/blocklistd.8		1.3
+external/bsd/blocklist/bin/blocklistd.c		1.5
+external/bsd/blocklist/bin/support.c		1.2
+external/bsd/blocklist/bin/support.h		1.2
+external/bsd/blocklist/include/bl.h		1.2
+external/bsd/blocklist/include/blocklist.h	1.3
+external/bsd/blocklist/lib/bl.c			1.3
+external/bsd/blocklist/lib/blocklist.c		1.3
+external/bsd/blocklist/lib/libblocklist.3	1.4
+external/bsd/blocklist/lib/libblocklist.3	1.5
+external/bsd/blocklist/lib/libblocklist.3	1.6
+external/bsd/blocklist/lib/shlib_version	1.2
+external/bsd/blocklist/libexec/blocklistd-helper 1.8
+lib/libc/gen/Makefile.inc			1.218
+lib/libc/gen/syslog.3				1.34
+lib/libc/gen/syslog.3				1.35
+lib/libc/gen/syslog_ss.c			1.4
+lib/libc/include/extern.h			1.30
+sys/sys/syslog.h				1.42
+
+	sshd(8): CVE-2024-6387: use vsyslog_ss() for logging via
+	blocklist(3).
+	[rin, ticket #930]
+
+crypto/external/bsd/openssh/dist/auth2.c	1.30
+crypto/external/bsd/openssh/dist/monitor.c	1.44
+
+	sshd(8): fix spurious block for users with multiple public keys.
+	[rin, ticket #931]
+
+sys/netinet/tcp_input.c				1.441
+
+	tcp_reass: PR 58708: mitigate CVE-2018-6922 (SegmentSmack).
+	[rin, ticket #932]
 
