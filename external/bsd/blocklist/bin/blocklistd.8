@@ -1,4 +1,4 @@
-.\" $NetBSD: blocklistd.8,v 1.2 2020/06/15 02:29:44 christos Exp $
+.\" $NetBSD: blocklistd.8,v 1.2.6.1 2024/10/08 11:16:17 martin Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@ for notifications from other daemons about successful or failed connection
 attempts.
 If no such file is specified, then it only listens to the socket path
 specified by
-.Ar sockspath
+.Ar sockpath
 or if that is not specified to
 .Pa /var/run/blocklistd.sock .
 Each notification contains an (action, port, protocol, address, owner) tuple

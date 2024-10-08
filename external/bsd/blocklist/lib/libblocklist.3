@@ -1,4 +1,4 @@
-.\" $NetBSD: libblocklist.3,v 1.3 2020/06/15 21:27:57 christos Exp $
+.\" $NetBSD: libblocklist.3,v 1.3.6.1 2024/10/08 11:16:17 martin Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,11 +27,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 30, 2020
+.Dd August 2, 2024
 .Dt LIBBLOCKLIST 3
 .Os
 .Sh NAME
 .Nm blocklist_open ,
+.Nm blocklist_open2 ,
 .Nm blocklist_close ,
 .Nm blocklist_r ,
 .Nm blocklist ,
@@ -44,6 +45,8 @@
 .In blocklist.h
 .Ft struct blocklist *
 .Fn blocklist_open "void"
+.Ft struct blocklist *
+.Fn blocklist_open2 "void (*logger)(int, struct syslog_data *, va_list)"
 .Ft void
 .Fn blocklist_close "struct blocklist *cookie"
 .Ft int
@@ -68,6 +71,19 @@ and returns a pointer to it, or
 .Dv NULL
 on failure.
 .Pp
+The function
+.Fn blocklist_open2
+is similar to
+.Fn blocklist_open
+but allows a
+.Fa logger
+to be specified.
+If the
+.Fa logger
+is
+.Dv NULL ,
+then no logging is performed.
+.Pp
 The
 .Fn blocklist_close
 function frees all memory and resources used.
@@ -89,17 +105,17 @@ argument.
 The
 .Ar action
 parameter can take these values:
-.Bl -tag -width ".Va BLOCKLIST_ABUSIVE_BEHAVIOR"
-.It Va BLOCKLIST_AUTH_FAIL
+.Bl -tag -width ".Dv BLOCKLIST_ABUSIVE_BEHAVIOR"
+.It Dv BLOCKLIST_AUTH_FAIL
 There was an unsuccessful authentication attempt.
-.It Va BLOCKLIST_AUTH_OK
+.It Dv BLOCKLIST_AUTH_OK
 A user successfully authenticated.
-.It Va BLOCKLIST_ABUSIVE_BEHAVIOR
+.It Dv BLOCKLIST_ABUSIVE_BEHAVIOR
 The sending daemon has detected abusive behavior
 from the remote system.
 The remote address should
 be blocked as soon as possible.
-.It Va BLOCKLIST_BAD_USER
+.It Dv BLOCKLIST_BAD_USER
 The sending daemon has determined the username
 presented for authentication is invalid.
 The
@@ -108,7 +124,7 @@ daemon compares the username to a configured list of forbidden
 usernames and
 blocks the address immediately if a forbidden username matches.
 (The
-.Ar BLOCKLIST_BAD_USER
+.Dv BLOCKLIST_BAD_USER
 support is not currently available.)
 .El
 .Pp

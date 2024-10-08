@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.3,v 1.33 2017/07/03 21:32:49 wiz Exp $
+.\"	$NetBSD: syslog.3,v 1.33.16.1 2024/10/08 11:16:17 martin Exp $
 .\"	$OpenBSD: syslog.3,v 1.25 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)syslog.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd March 22, 2017
+.Dd July 2, 2024
 .Dt SYSLOG 3
 .Os
 .Sh NAME
@@ -40,8 +40,12 @@
 .Nm vsyslog_r ,
 .Nm syslogp ,
 .Nm syslogp_r ,
+.Nm syslog_ss ,
+.Nm syslogp_ss ,
 .Nm vsyslogp ,
 .Nm vsyslogp_r ,
+.Nm vsyslog_ss ,
+.Nm vsyslogp_ss ,
 .Nm openlog ,
 .Nm openlog_r ,
 .Nm closelog ,
@@ -61,8 +65,10 @@
 .Fn syslogp "int priority" "const char *msgid" "const char *sdfmt" "const char *message" "..."
 .Ft void
 .Fn syslogp_r "int priority" "struct syslog_data *data" "const char *msgid" "const char *sdfmt" "const char *message" "..."
-.\" .Ft void
-.\" .Fn syslog_ss "int priority" "struct syslog_data *data" "const char *message" "..."
+.Ft void
+.Fn syslog_ss "int priority" "struct syslog_data *data" "const char *message" "..."
+.Ft void
+.Fn syslogp_ss "int priority" "struct syslog_data *data" "const char *msgid" "const char *sdfmt" "const char *message" "..."
 .Ft void
 .Fn openlog "const char *ident" "int logopt" "int facility"
 .Ft void
@@ -84,8 +90,10 @@
 .Fn vsyslogp "int priority" "const char *msgid" "const char *sdfmt" "const char *message" "va_list args"
 .Ft void
 .Fn vsyslogp_r "int priority" "struct syslog_data *data" "const char *msgid" "const char *sdfmt" "const char *message" "va_list args"
-.\" .Ft void
-.\" .Fn vsyslog_ss "int priority" "struct syslog_data *data" "const char *message" "va_list args"
+.Ft void
+.Fn vsyslog_ss "int priority" "struct syslog_data *data" "const char *message" "va_list args"
+.Ft void
+.Fn vsyslogp_ss "int priority" "struct syslog_data *data" "const char *msgid" "const char *sdfmt" "const char *message" "va_list args"
 .Sh DESCRIPTION
 The
 .Fn syslog
@@ -170,29 +178,46 @@ facility code
 .It Va log_mask
 mask of priorities to be logged
 .El
-.\" .Pp
-.\" The
-.\" .Fn syslog_ss
-.\" is the async-signal-safe version of
-.\" .Fn syslog_r
-.\" and is also multithread-safe.
-.\" It has the following limitations:
-.\" .Bl -enum -offset indent
-.\" .It
-.\" The format string cannot contain multi-byte character sequences.
-.\" .It
-.\" Floating point formats are not supported and print
-.\" .Dq UNK .
-.\" .It
-.\" The time of the event is not sent to
-.\" .Xr syslogd 8 .
-.\" .It
-.\" The error string in the %m format is not printed symbolically but as
-.\" .Dq Error %d .
-.\" .El
-.\" .Pp
-.\" For more information about async-signal-safe functions and signal handlers, see
-.\" .Xr signal 7 .
+.Pp
+The
+.Fn syslog_ss
+is the async-signal-safe version of
+.Fn syslog_r
+and is also multithread-safe.
+It has the following limitations:
+.Bl -enum -offset indent
+.It
+The format string cannot contain multi-byte character sequences.
+.It
+Positional
+.Xr printf 3
+arguments are not supported.
+.It
+Floating point formats are not supported and print
+.Dq UNK .
+.It
+The time of the event is not sent to
+.Xr syslogd 8 .
+.It
+The error string in the %m format is not printed symbolically but as
+.Dq Error %d .
+.El
+.Pp
+For more information about async-signal-safe functions and signal handlers, see
+.Xr signal 7 .
+.Pp
+Similarly
+.Fn vsyslog_ss
+is the async-signal-safe version of
+.Fn vsyslog_r .
+Same for
+.Fn syslogp_ss
+and
+.Fn syslogp_r ,
+and finally
+.Fn vsyslogp_ss
+and
+.Fn vsyslogp_r .
 .Pp
 The
 .Fn vsyslog

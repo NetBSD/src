@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.216 2022/05/31 13:42:59 riastradh Exp $
+#	$NetBSD: Makefile.inc,v 1.216.2.1 2024/10/08 11:16:17 martin Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -191,9 +191,11 @@ MLINKS+=sysctl.3 sysctlbyname.3 \
 MLINKS+=syslog.3 closelog.3 syslog.3 openlog.3 syslog.3 setlogmask.3 \
 	syslog.3 vsyslog.3
 MLINKS+=syslog.3 closelog_r.3 syslog.3 openlog_r.3 syslog.3 setlogmask_r.3 \
-	syslog.3 syslog_r.3 syslog.3 vsyslog_r.3
+	syslog.3 syslog_r.3 syslog.3 vsyslog_r.3 \
+	syslog.3 syslog_ss.3 syslog.3 vsyslog_ss.3
 MLINKS+=syslog.3 syslogp.3 syslog.3 syslogp_r.3 \
-	syslog.3 vsyslogp.3 syslog.3 vsyslogp_r.3
+	syslog.3 vsyslogp.3 syslog.3 vsyslogp_r.3 \
+	syslog.3 syslogp_ss.3 syslog.3 vsyslogp_ss.3
 MLINKS+=ttyname.3 isatty.3 ttyname.3 ttyslot.3 ttyname.3 ttyname_r.3
 MLINKS+=unvis.3 strunvis.3 unvis.3 strunvisx.3
 MLINKS+=unvis.3 strnunvis.3 unvis.3 strnunvisx.3
