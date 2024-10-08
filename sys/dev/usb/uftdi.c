@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.79 2024/04/25 01:33:03 thorpej Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.80 2024/10/08 20:40:10 lloyd Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.79 2024/04/25 01:33:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.80 2024/10/08 20:40:10 lloyd Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -242,6 +242,20 @@ static const struct uftdi_match_quirk_entry uftdi_match_quirks[] = {
 	  .product_str	= "JTAG Debugger",
 	  .match_ret	= UMATCH_NONE,
 	},
+	/*
+	 * The iCEBreaker board (https://1bitsquared.com/products/icebreaker)
+         * has two interfaces, one of which is meant to act as a
+         * regular USB serial port (interface 1), the other of which
+         * is meant for other protocols.
+	 */
+	{
+	  .vendor_id	= USB_VENDOR_FTDI,
+	  .product_id	= USB_PRODUCT_FTDI_SERIAL_2232C,
+	  .iface_no	= 0,
+	  .vendor_str	= "1BitSquared",
+	  .product_str	= "iCEBreaker *",
+	  .match_ret	= UMATCH_NONE,
+	},
 };
 
 static int
@@ -265,7 +279,7 @@ uftdi_quirk_match(struct usbif_attach_arg *uiaa, int rv)
 		}
 		if (q->product_str != NULL &&
 		    (dev->ud_product == NULL ||
-		     strcmp(dev->ud_product, q->product_str) != 0)) {
+		     pmatch(dev->ud_product, q->product_str, NULL) != 2)) {
 			continue;
 		}
 		/*
