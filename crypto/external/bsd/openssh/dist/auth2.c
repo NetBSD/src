@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2.c,v 1.26.2.3 2023/12/25 12:22:55 martin Exp $	*/
+/*	$NetBSD: auth2.c,v 1.26.2.4 2024/10/08 11:21:02 martin Exp $	*/
 /* $OpenBSD: auth2.c,v 1.168 2023/12/18 14:45:49 djm Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2.c,v 1.26.2.3 2023/12/25 12:22:55 martin Exp $");
+__RCSID("$NetBSD: auth2.c,v 1.26.2.4 2024/10/08 11:21:02 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -320,7 +320,6 @@ input_userauth_request(int type, u_int32_t seq, struct ssh *ssh)
 			authctxt->valid = 0;
 			/* Invalid user, fake password information */
 			authctxt->pw = fakepw();
-			pfilter_notify(1);
 		}
 #ifdef USE_PAM
 		if (options.use_pam)
