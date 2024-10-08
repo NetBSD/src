@@ -1,4 +1,4 @@
-#	$NetBSD: t_basic.sh,v 1.5 2024/10/08 02:28:43 riastradh Exp $
+#	$NetBSD: t_basic.sh,v 1.6 2024/10/08 02:29:40 riastradh Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -60,8 +60,6 @@ check_badudp()
 	else
 		atf_check -o ignore -e ignore \
 		    $HIJACKING nc -6uv -w1 $ip $port </dev/null
-		atf_expect_fail "PR kern/58688:" \
-		    " userland panic of kernel via wg(4)"
 	fi
 }
 
