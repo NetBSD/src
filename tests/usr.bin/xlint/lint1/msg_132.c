@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.42 2024/08/18 15:21:09 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.43 2024/10/08 19:39:54 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -233,6 +233,25 @@ be32enc(void *buf, u32_t u)
 	p[3] = u & 0xff;
 }
 
+void
+test_ic_mult(void)
+{
+	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned int' may lose accuracy [132] */
+	u32 = u16 * 65536ULL;
+	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned int' may lose accuracy [132] */
+	u32 = u16 * 65537ULL;
+
+	/* expect+1: warning: conversion from 'int' to 'unsigned short' may lose accuracy [132] */
+	u16 = 0 * u16;
+	/* expect+1: warning: conversion from 'int' to 'unsigned short' may lose accuracy [132] */
+	u16 = 1 * u16;
+	/* expect+1: warning: conversion from 'int' to 'unsigned short' may lose accuracy [132] */
+	u16 = 2 * u16;
+
+	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned int' may lose accuracy [132] */
+	u32 = (u16 & 1023ULL) / 1ULL * 1024ULL | (u16 & 1023ULL) / 1ULL * 1ULL;
+}
+
 u32_t
 test_ic_shr(u64_t x)
 {
@@ -456,7 +475,7 @@ binary_operators_on_bit_fields(void)
 }
 
 unsigned char
-combine_arithmetic_and_bit_operations(unsigned int c32)
+combine_arithmetic_and_bit_operations(void)
 {
-	return 0xc0 | (c32 & 0x07c0) / 64;
+	return 0xc0 | (u32 & 0x07c0) / 64;
 }
