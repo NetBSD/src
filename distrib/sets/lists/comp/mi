@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2475 2024/10/08 22:53:21 christos Exp $
+#	$NetBSD: mi,v 1.2476 2024/10/08 23:13:10 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -7028,6 +7028,7 @@
 ./usr/share/man/cat3/conjl.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/consttime_bcmp.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/consttime_memequal.0	comp-c-catman		.cat
+./usr/share/man/cat3/container_of.0		comp-c-catman		.cat
 ./usr/share/man/cat3/copysign.0			comp-c-catman		.cat
 ./usr/share/man/cat3/copysignf.0		comp-c-catman		.cat
 ./usr/share/man/cat3/copysignl.0		comp-c-catman		.cat
@@ -15556,6 +15557,7 @@
 ./usr/share/man/html3/conjl.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/consttime_bcmp.html	comp-obsolete		obsolete
 ./usr/share/man/html3/consttime_memequal.html	comp-c-htmlman		html
+./usr/share/man/html3/container_of.html		comp-c-htmlman		html
 ./usr/share/man/html3/copysign.html		comp-c-htmlman		html
 ./usr/share/man/html3/copysignf.html		comp-c-htmlman		html
 ./usr/share/man/html3/copysignl.html		comp-c-htmlman		html
@@ -24029,6 +24031,7 @@
 ./usr/share/man/man3/conjl.3			comp-c-man		complex,.man
 ./usr/share/man/man3/consttime_bcmp.3		comp-obsolete		obsolete
 ./usr/share/man/man3/consttime_memequal.3	comp-c-man		.man
+./usr/share/man/man3/container_of.3		comp-c-man		.man
 ./usr/share/man/man3/copysign.3			comp-c-man		.man
 ./usr/share/man/man3/copysignf.3		comp-c-man		.man
 ./usr/share/man/man3/copysignl.3		comp-c-man		.man
