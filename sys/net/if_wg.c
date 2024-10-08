@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.131 2024/07/31 00:26:01 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.132 2024/10/08 02:29:40 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.131 2024/07/31 00:26:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.132 2024/10/08 02:29:40 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -3662,6 +3662,24 @@ wg_so_upcall(struct socket *so, void *cookie, int events, int waitflag)
 	mutex_exit(wg->wg_intr_lock);
 }
 
+/*
+ * wg_overudp_cb(&m, offset, so, src, arg)
+ *
+ *	Callback for incoming UDP packets in high-priority
+ *	packet-processing path.
+ *
+ *	Three cases:
+ *
+ *	- Data packet.  Consumed here for high-priority handling.
+ *	  => Returns 1 and takes ownership of m.
+ *
+ *	- Handshake packet.  Defer to thread context via so_receive in
+ *	  wg_receive_packets.
+ *	  => Returns 0 and leaves caller with ownership of m.
+ *
+ *	- Invalid.  Dropped on the floor and freed.
+ *	  => Returns -1 and takes ownership of m (frees m).
+ */
 static int
 wg_overudp_cb(struct mbuf **mp, int offset, struct socket *so,
     struct sockaddr *src, void *arg)
@@ -3677,7 +3695,8 @@ wg_overudp_cb(struct mbuf **mp, int offset, struct socket *so,
 	if (__predict_false(m_length(m) - offset < sizeof(struct wg_msg))) {
 		/* drop on the floor */
 		m_freem(m);
-		return -1;
+		*mp = NULL;
+		return -1;	/* dropped */
 	}
 
 	/*
@@ -3699,21 +3718,24 @@ wg_overudp_cb(struct mbuf **mp, int offset, struct socket *so,
 		m_adj(m, offset);
 		if (__predict_false(m->m_len < sizeof(struct wg_msg_data))) {
 			m = m_pullup(m, sizeof(struct wg_msg_data));
-			if (m == NULL)
-				return -1;
+			if (m == NULL) {
+				*mp = NULL;
+				return -1; /* dropped */
+			}
 		}
 		wg_handle_msg_data(wg, m, src);
 		*mp = NULL;
-		return 1;
+		return 1;	/* consumed */
 	case WG_MSG_TYPE_INIT:
 	case WG_MSG_TYPE_RESP:
 	case WG_MSG_TYPE_COOKIE:
 		/* pass through to so_receive in wg_receive_packets */
-		return 0;
+		return 0;	/* passthrough */
 	default:
 		/* drop on the floor */
 		m_freem(m);
-		return -1;
+		*mp = NULL;
+		return -1;	/* dropped */
 	}
 }
 
