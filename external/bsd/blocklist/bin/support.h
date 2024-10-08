@@ -1,4 +1,4 @@
-/*	$NetBSD: support.h,v 1.1.1.1 2020/06/15 01:52:53 christos Exp $	*/
+/*	$NetBSD: support.h,v 1.1.1.1.6.1 2024/10/08 11:16:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,8 +34,9 @@
 __BEGIN_DECLS
 const char *fmttime(char *, size_t, time_t);
 const char *fmtydhms(char *, size_t, time_t);
-void vdlog(int, const char *, va_list)
-    __attribute__((__format__(__printf__, 2, 0)));
+struct syslog_data;
+void vdlog(int, struct syslog_data *, const char *, va_list)
+    __attribute__((__format__(__printf__, 3, 0)));
 void dlog(int, const char *, ...)
     __attribute__((__format__(__printf__, 2, 3)));
 ssize_t blhexdump(char *, size_t, const char *, const void *, size_t);

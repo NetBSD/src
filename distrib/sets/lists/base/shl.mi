@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.942.2.15 2024/02/25 15:47:58 martin Exp $
+# $NetBSD: shl.mi,v 1.942.2.16 2024/10/08 11:16:16 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -19,7 +19,7 @@
 ./lib/libblacklist.so				base-obsolete		obsolete,compatfile
 ./lib/libblocklist.so				base-sys-shlib		dynamicroot
 ./lib/libblocklist.so.0				base-sys-shlib		dynamicroot
-./lib/libblocklist.so.0.0			base-sys-shlib		dynamicroot
+./lib/libblocklist.so.0.1			base-sys-shlib		dynamicroot
 ./lib/libc.so					base-sys-shlib		dynamicroot
 ./lib/libc.so.12				base-sys-shlib		dynamicroot
 ./lib/libc.so.12.220				base-sys-shlib		dynamicroot
@@ -235,7 +235,7 @@
 ./usr/lib/libblacklist.so			base-obsolete		obsolete,compatfile
 ./usr/lib/libblocklist.so			base-sys-shlib		compatfile
 ./usr/lib/libblocklist.so.0			base-sys-shlib		compatfile
-./usr/lib/libblocklist.so.0.0			base-sys-shlib		compatfile
+./usr/lib/libblocklist.so.0.1			base-sys-shlib		compatfile
 ./usr/lib/libbluetooth.so			base-sys-shlib		compatfile
 ./usr/lib/libbluetooth.so.4			base-sys-shlib		compatfile
 ./usr/lib/libbluetooth.so.4.2			base-sys-shlib		compatfile

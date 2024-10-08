@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.41 2017/03/22 17:52:36 roy Exp $	*/
+/*	$NetBSD: syslog.h,v 1.41.44.1 2024/10/08 11:16:17 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -37,6 +37,7 @@
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
 #include <sys/ansi.h>
+#include <sys/stdarg.h>
 
 #define	_PATH_LOG	"/var/run/log"
 
@@ -219,6 +220,14 @@ void	syslogp_r(int, struct syslog_data *, const char *, const char *,
     const char *, ...) __RENAME(__syslogp_r60) __sysloglike(5, 6);
 void	vsyslogp_r(int, struct syslog_data *, const char *, const char *,
     const char *, __va_list) __RENAME(__vsyslogp_r60) __sysloglike(5, 0);
+void	syslog_ss(int, struct syslog_data *, const char *, ...)
+    __RENAME(__syslog_ss60) __sysloglike(3, 4);
+void    vsyslog_ss(int, struct syslog_data *, const char *, va_list) 
+    __RENAME(__vsyslog_ss60) __sysloglike(3, 0); 
+void	syslogp_ss(int, struct syslog_data *, const char *, const char *, 
+    const char *, ...) __RENAME(__syslogp_ss60) __sysloglike(5, 0);
+void	vsyslogp_ss(int, struct syslog_data *, const char *, const char *, 
+    const char *, va_list) __RENAME(__vsyslogp_ss60) __sysloglike(5, 0);
 #endif
 void	syslogp(int, const char *, const char *, const char *, ...)
     __sysloglike(4, 5);

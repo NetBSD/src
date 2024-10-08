@@ -1,4 +1,4 @@
-/*	$NetBSD: blocklist.h,v 1.2 2020/06/15 02:29:45 christos Exp $	*/
+/*	$NetBSD: blocklist.h,v 1.2.6.1 2024/10/08 11:16:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,9 +32,13 @@
 #define _BLOCKLIST_H
 
 #include <sys/socket.h>
+#include <syslog.h>
 
 __BEGIN_DECLS
+struct syslog_data;
 struct blocklist *blocklist_open(void);
+struct blocklist *blocklist_open2(
+    void (*)(int, struct syslog_data *, const char *, va_list));
 void blocklist_close(struct blocklist *);
 int blocklist(int, int, const char *);
 int blocklist_r(struct blocklist *, int, int, const char *);

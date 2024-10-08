@@ -1,4 +1,4 @@
-/*	$NetBSD: blocklistd.c,v 1.3.2.1 2023/12/25 18:59:46 martin Exp $	*/
+/*	$NetBSD: blocklistd.c,v 1.3.2.2 2024/10/08 11:16:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blocklistd.c,v 1.3.2.1 2023/12/25 18:59:46 martin Exp $");
+__RCSID("$NetBSD: blocklistd.c,v 1.3.2.2 2024/10/08 11:16:17 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -334,7 +334,7 @@ static void
 addfd(struct pollfd **pfdp, bl_t **blp, size_t *nfd, size_t *maxfd,
     const char *path)
 {
-	bl_t bl = bl_create(true, path, vflag ? vdlog : vsyslog);
+	bl_t bl = bl_create(true, path, vflag ? vdlog : vsyslog_r);
 	if (bl == NULL || !bl_isconnected(bl))
 		exit(EXIT_FAILURE);
 	if (*nfd >= *maxfd) {
