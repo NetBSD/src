@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.57 2024/07/13 13:43:58 kre Exp $	*/
+/*	$NetBSD: trap.c,v 1.58 2024/10/09 13:43:33 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.57 2024/07/13 13:43:58 kre Exp $");
+__RCSID("$NetBSD: trap.c,v 1.58 2024/10/09 13:43:33 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ void printsignals(struct output *, int);
  * or -1 if it isn't one
  */
 
-static int
+int
 signame_to_signum(const char *p)
 {
 	int i;
