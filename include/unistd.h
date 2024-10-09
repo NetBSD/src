@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.163 2022/05/31 13:42:59 riastradh Exp $	*/
+/*	$NetBSD: unistd.h,v 1.163.2.1 2024/10/09 13:12:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -320,6 +320,14 @@ int	unlinkat(int, const char *, int);
 int	fexecve(int, char * const *, char * const *);
 #endif
 
+/*
+ * IEEE Std 1003.1-2024 (POSIX.1-2024)
+ */
+#if (_POSIX_C_SOURCE - 0) >= 202405L || (_XOPEN_SOURCE - 0 >= 800) || \
+    defined(_NETBSD_SOURCE)
+int	 getentropy(void *, size_t);
+#endif
+
 
 /*
  * Implementation-defined extensions
@@ -338,7 +346,6 @@ int	 fchroot(int);
 int	 fdiscard(int, off_t, off_t);
 int	 fsync_range(int, int, off_t, off_t);
 int	 getdomainname(char *, size_t);
-int	 getentropy(void *, size_t);
 int	 getgrouplist(const char *, gid_t, gid_t *, int *);
 int	 getgroupmembership(const char *, gid_t, gid_t *, int, int *);
 mode_t	 getmode(const void *, mode_t);
