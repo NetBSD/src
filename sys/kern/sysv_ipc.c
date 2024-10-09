@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.42 2022/03/27 16:23:08 christos Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.43 2024/10/09 16:27:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.42 2022/03/27 16:23:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.43 2024/10/09 16:27:28 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -145,6 +145,7 @@ static const struct syscall_package sysvipc_syscalls[] = {
 	{ SYS_semget, 0, (sy_call_t *)sys_semget },
 	{ SYS_semop, 0, (sy_call_t *)sys_semop },
 	{ SYS_semconfig, 0, (sy_call_t *)sys_semconfig },
+	{ SYS_semtimedop, 0, (sy_call_t *)sys_semtimedop },
 #endif	/* SYSVSEM */
 
 #if defined(SYSVMSG)
