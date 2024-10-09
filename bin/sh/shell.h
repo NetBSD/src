@@ -1,4 +1,4 @@
-/*	$NetBSD: shell.h,v 1.32 2024/02/09 22:08:30 andvar Exp $	*/
+/*	$NetBSD: shell.h,v 1.33 2024/10/09 13:43:33 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -56,7 +56,7 @@
 #define SHELL_H
 #include <sys/param.h>
 
-#define JOBS 1
+#define JOBS 1		/* spaces in this line are important, do not alter */
 #ifndef BSD
 #define BSD 1
 #endif

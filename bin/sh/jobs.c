@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.122 2024/06/18 07:21:31 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.123 2024/10/09 13:43:32 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.122 2024/06/18 07:21:31 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.123 2024/10/09 13:43:32 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -980,13 +980,124 @@ jobidcmd(int argc, char **argv)
 	return 0;
 }
 
+#if JOBS
+#ifndef SMALL
+
+static int
+stop_me(int sig, int force, int pgrp, pid_t pid)
+{
+	if (force || (!loginsh && mflag && rootshell)) {
+		struct sigaction sig_dfl, sig_was;
+
+		sig_dfl.sa_handler = SIG_DFL;
+		sig_dfl.sa_flags = 0;
+		sigemptyset(&sig_dfl.sa_mask);
+
+		(void)sigaction(sig, &sig_dfl, &sig_was);
+
+		if (kill(pgrp ? 0 : pid, sig) == -1) {
+			sh_warn("suspend myself");
+			(void)sigaction(sig, &sig_was, NULL);
+			error(NULL);
+		}
+
+		(void)sigaction(sig, &sig_was, NULL);
+
+		return 0;
+	}
+
+	if (!rootshell)
+		sh_warnx("subshell environment");
+	else if (!mflag)
+		sh_warnx("job control disabled");
+	else if (loginsh)
+		sh_warnx("login shell");
+	else
+		sh_warnx("not possible??");
+
+	return 1;
+}
+
+int
+suspendcmd(int argc, char **argv)
+{
+	int sig = SIGTSTP;
+	int force = 0;
+	int pgrp = 0;
+	int status = 0;
+	char *target;
+	int c;
+
+	while ((c = nextopt("fgs:")) != 0) {
+		switch (c) {
+		case 'f':
+			force = 1;
+			break;
+		case 'g':
+			pgrp = 1;
+			break;
+		case 's':
+			sig = signame_to_signum(optionarg);
+
+			if (sig != SIGSTOP && sig != SIGTSTP &&
+			    sig != SIGTTIN && sig != SIGTTOU)
+				error("bad signal '%s'", optionarg);
+			break;
+		}
+	}
+
+	if (!*argptr)		/* suspend myself */
+		return stop_me(sig, force, pgrp, getpid());
+
+	while ((target = *argptr++) != NULL)
+	{
+		int pid;
+
+		if (is_number(target)) {
+			if ((pid = number(target)) == 0) {
+				sh_warnx("Cannot (yet) suspend kernel (%s)",
+				    target);
+				status = 1;
+				continue;
+			}
+		} else if ((pid = getjobpgrp(target)) == 0) {
+			sh_warnx("Unknown job: %s", target);
+			status = 1;
+			continue;
+		}
+
+		if (pid == rootpid || pid == getpid()) {
+			status |= stop_me(sig, force, pgrp, pid);
+			continue;
+		}
+
+		if (pid == 1 || pid == -1) {
+			sh_warnx("Don't be funny");
+			status = 1;
+			continue;
+		}
+
+		if (pid > 0 && pgrp)
+			pid = -pid;
+
+		if (kill(pid, sig) == -1) {
+			sh_warn("failed to suspend %s", target);
+			status = 1;
+		}
+	}
+
+	return status;
+}
+#endif	/* SMALL */
+#endif	/* JOBS */
+
 int
 getjobpgrp(const char *name)
 {
 	struct job *jp;
 
 	if (jobs_invalid)
-		error("No such job: %s", name);
+		return 0;
 	jp = getjob(name, 1);
 	if (jp == 0)
 		return 0;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.264 2024/09/21 20:48:50 kre Exp $
+.\"	$NetBSD: sh.1,v 1.265 2024/10/09 13:43:32 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd July 13, 2024
+.Dd October 6, 2024
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
 .ds flags abCEeFfhIiLlmnpquVvXx
@@ -416,7 +416,7 @@ This option defaults to
 .Dq on
 in this shell.
 For more details see the section
-.Sx LINENO
+.Sx Using Dv LINENO
 below.
 .It Fl l Em login
 When set on the command line, the shell will be considered
@@ -3618,7 +3618,7 @@ Using
 is an extension not implemented by most shells.
 .Pp
 See the section
-.Sx LINENO
+.Sx Using Dv LINENO
 below for details of the effects of making the variable
 .Dv LINENO
 local.
@@ -4058,6 +4058,81 @@ of most of the special variables should use this command,
 naming the variables required,
 to ensure that their special properties are available.
 .\"
+.Pp
+.It Ic suspend Oo Fl fg Oc Oo Fl s Ar sig Oc Oo Ar pid Ns \&| Ns Ar job ... Oc
+Causes the processes or jobs indicated to be suspended, if possible.
+If no
+.Ar pid
+or
+.Ar job
+arguments are given, or if a
+.Ar pid
+argument refers to the shell itself, and if the
+.Ic suspend
+command is issued in a shell that is not a login shell,
+has job control enabled,
+and is not executing in a subshell environment,
+then the shell will suspend itself.
+The
+.Fl f
+(force) option causes those checks to be ignored,
+the shell, when instructed to suspend itself with force,
+will always attempt to do so, which may result in a subshell
+environment becoming suspended.
+.Pp
+The
+.Fl g
+option indicates that each
+.Ar pid
+argument is to be treated as a process group identifier,
+or if no targets are given, the current process group of the shell,
+and that process group will be suspended, instead of just
+the process identified.
+This option is implied, for the one agument only, by use of a
+.Ar job
+specifier.
+Note that, unlike other built-in commands, use of a
+.Ar pid
+argument causes only that process to be suspended,
+even if that
+.Ar pid
+happens to be the process leader of a job, or another
+process in a job.
+.Pp
+The
+.Fl s Ar sig
+option cause the signal
+.Ar sig
+to be used to suspend the process, or process group.
+Only the signals that, by default, cause processes to be
+suspended
+.Pq Dv STOP Dv TSTP Dv TTIN No and Dv TTOU
+are permitted.
+The default is
+.Dv SIGTSTP .
+Note that except when
+.Dv SIGSTOP
+is sent, the target process can arrange to catch or
+ignore the signal, and perhaps not become suspended,
+if it so desires.
+Interactive processes that suport job control
+(eg: shells)
+generally ignore those signals.
+.Pp
+The
+.Ic suspend
+command exits with status 0, except if an error occurs,
+in which case it exits with a status greater than 0.
+Possible errors include usage errors;
+attempting to suspend the shell itself, when not
+permitted and without the
+.Fl f
+option;
+a target process or job not existing;
+insufficient prvileges to signal the target process or job;
+and more.
+It is not an error if the target process decides not to comply
+with a request to suspend itself.
 .Pp
 .It Ic times
 Prints two lines to standard output.
@@ -4542,6 +4617,7 @@ The
 .Ic jobid ,
 .Ic jobs ,
 .Ic kill ,
+.Ic suspend ,
 and
 .Ic wait
 commands all accept job identifiers as arguments, in addition to
@@ -4562,7 +4638,11 @@ command.
 To cause a foreground process to stop, enter the terminal's
 .Ic stop
 character (usually control-Z).
-To cause a background process to stop, send it a
+To cause a background process to stop,
+use the
+.Ic suspend
+built in command, or
+send it a
 .Dv STOP
 signal, using the kill command.
 A useful function to define is
@@ -4638,9 +4718,11 @@ It's similar to
 pressing the
 .Aq ESC
 key will throw you into vi command mode.
+Insert mode is re-entered in any of the usual vi ways,
+using the append (a) insert (i) substitute (s) (etc) commands.
 Pressing the
 .Aq return
-key while in command mode will pass the line to the shell.
+key in either mode will pass the line to the shell.
 .Pp
 The emacs-mode uses commands similar to a subset available in the
 .Ic emacs
@@ -4937,7 +5019,7 @@ See
 .It Dv LINENO
 The current line number in the script or function.
 See the section
-.Sx LINENO
+.Sx Using Dv LINENO
 below for more details.
 .It Ev MAIL
 The name of a mail file, that will be checked for the arrival of new mail.
@@ -5317,7 +5399,7 @@ that were used when building the shell will be listed.
 behaves like any other variable that has the read-only
 and un-exportable attributes set.
 .El
-.Ss Dv LINENO
+.Ss Using Dv LINENO
 .Dv LINENO
 is in many respects a normal shell variable, containing an
 integer value, and can be expanded using any of the forms
