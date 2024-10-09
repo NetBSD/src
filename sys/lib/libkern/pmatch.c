@@ -1,4 +1,4 @@
-/*	$NetBSD: pmatch.c,v 1.8 2024/08/24 22:30:26 christos Exp $	*/
+/*	$NetBSD: pmatch.c,v 1.9 2024/10/09 23:16:03 gutteridge Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991 The Regents of the University of California.
@@ -44,7 +44,7 @@ int pmatch(const char *, const char *, const char **);
  *	Return 1 on substring match.
  *	Return 0 on no match.
  *	Return -1 on error.
- * *estr will point to the end of thelongest exact or substring match.
+ * *estr will point to the end of the longest exact or substring match.
  */
 int
 pmatch(const char *string, const char *pattern, const char **estr)
