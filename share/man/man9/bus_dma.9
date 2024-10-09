@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.78 2024/10/09 22:02:51 uwe Exp $
+.\" $NetBSD: bus_dma.9,v 1.79 2024/10/09 22:13:21 uwe Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -915,7 +915,7 @@ Behavior is undefined if invalid arguments are passed
 to
 .Fn bus_dmamem_mmap .
 .Pp
-Returns -1 to indicate failure.
+Returns \-1 to indicate failure.
 Otherwise, returns an opaque value to be interpreted by the device pager.
 .It Fn bus_dmatag_subregion "tag" "min_addr" "max_addr" "newtag" "flags"
 Given a
@@ -948,6 +948,7 @@ It is safe to wait (sleep) for resources during this call.
 It is not safe to wait (sleep) for resources during this call.
 .El
 .El
+.Pp
 The address range
 .Fa min_addr
 to
