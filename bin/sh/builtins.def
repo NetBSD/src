@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: builtins.def,v 1.27 2021/11/10 18:25:52 kre Exp $
+#	$NetBSD: builtins.def,v 1.28 2024/10/09 12:27:11 kre Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -38,14 +38,15 @@
 # of a C routine.
 # The -j flag specifies that this command is to be excluded from systems
 # without job control.
-# The -h flag specifies that this command is to be excluded from systems
-# based on the SMALL compile-time symbol.
+# The -h flag (no history) specifies that this command is to be excluded
+# from systems based on the SMALL compile-time symbol.
 # The -s flag specifies that this is a posix 'special builtin' command.
 # The -u flag specifies that this is a posix 'standard utility'.
 # The rest of the line specifies the command name or names used to run
 # the command.
 
-bltincmd	-u command
+bltincmd	-u command		# MUST be first
+aliascmd	-u alias
 bgcmd -j	-u bg
 breakcmd	-s break -s continue
 cdcmd		-u cd chdir
@@ -57,14 +58,16 @@ exitcmd		-s exit
 expcmd		exp let
 exportcmd	-s export -s readonly
 falsecmd	-u false
-histcmd -h	-u fc
-inputrc		inputrc
+fdflagscmd	fdflags
 fgcmd -j	-u fg
 fgcmd_percent -j	-u %
 getoptscmd	-u getopts
 hashcmd		-u hash
+histcmd -h	-u fc
+inputrc		inputrc
 jobidcmd	jobid
 jobscmd		-u jobs
+killcmd		-u kill		# mandated by posix for 'kill %job'
 localcmd	local
 #ifndef TINY
 printfcmd	-u printf
@@ -73,25 +76,23 @@ pwdcmd		-u pwd
 readcmd		-u read
 returncmd	-s return
 setcmd		-s set
-fdflagscmd	fdflags
 setvarcmd	setvar
 shiftcmd	-s shift
 #ifndef SMALL
 specialvarcmd	specialvar
 #endif
+testcmd		-u test -u [
 timescmd	-s times
 trapcmd		-s trap
 truecmd		-s : -u true
 typecmd		-u type
+ulimitcmd	-u ulimit
 umaskcmd	-u umask
 unaliascmd	-u unalias
 unsetcmd	-s unset
 waitcmd		-u wait
-aliascmd	-u alias
-ulimitcmd	-u ulimit
-testcmd		-u test -u [
-killcmd		-u kill		# mandated by posix for 'kill %job'
 wordexpcmd	wordexp
+
 #newgrp		-u newgrp	# optional command in posix
 #exprcmd	-u expr		# not currently built in, but could be
 
