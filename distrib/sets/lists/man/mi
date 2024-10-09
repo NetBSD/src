@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1757.2.12 2024/09/05 09:22:42 martin Exp $
+# $NetBSD: mi,v 1.1757.2.13 2024/10/09 13:00:12 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -768,6 +768,7 @@
 ./usr/share/man/cat4/acpiec.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpiecdt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpifan.0			man-sys-catman		.cat
+./usr/share/man/cat4/acpihed.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpilid.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpiout.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpipmtr.0			man-sys-catman		.cat
@@ -895,6 +896,7 @@
 ./usr/share/man/cat4/amr.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ams.0			man-sys-catman		.cat
 ./usr/share/man/cat4/an.0			man-sys-catman		.cat
+./usr/share/man/cat4/apei.0			man-sys-catman		.cat
 ./usr/share/man/cat4/aps.0			man-sys-catman		.cat
 ./usr/share/man/cat4/aq.0			man-sys-catman		.cat
 ./usr/share/man/cat4/arc/intro.0		man-sys-catman		.cat
@@ -4219,6 +4221,7 @@
 ./usr/share/man/html4/acpiec.html		man-sys-htmlman		html
 ./usr/share/man/html4/acpiecdt.html		man-sys-htmlman		html
 ./usr/share/man/html4/acpifan.html		man-sys-htmlman		html
+./usr/share/man/html4/acpihed.html		man-sys-htmlman		html
 ./usr/share/man/html4/acpilid.html		man-sys-htmlman		html
 ./usr/share/man/html4/acpiout.html		man-sys-htmlman		html
 ./usr/share/man/html4/acpipmtr.html		man-sys-htmlman		html
@@ -4345,6 +4348,7 @@
 ./usr/share/man/html4/amr.html			man-sys-htmlman		html
 ./usr/share/man/html4/ams.html			man-sys-htmlman		html
 ./usr/share/man/html4/an.html			man-sys-htmlman		html
+./usr/share/man/html4/apei.html			man-sys-htmlman		html
 ./usr/share/man/html4/aps.html			man-sys-htmlman		html
 ./usr/share/man/html4/aq.html			man-sys-htmlman		html
 ./usr/share/man/html4/arc/intro.html		man-sys-htmlman		html
@@ -7364,6 +7368,7 @@
 ./usr/share/man/man4/acpiec.4			man-sys-man		.man
 ./usr/share/man/man4/acpiecdt.4			man-sys-man		.man
 ./usr/share/man/man4/acpifan.4			man-sys-man		.man
+./usr/share/man/man4/acpihed.4			man-sys-man		.man
 ./usr/share/man/man4/acpilid.4			man-sys-man		.man
 ./usr/share/man/man4/acpiout.4			man-sys-man		.man
 ./usr/share/man/man4/acpipmtr.4			man-sys-man		.man
@@ -7491,6 +7496,7 @@
 ./usr/share/man/man4/amr.4			man-sys-man		.man
 ./usr/share/man/man4/ams.4			man-sys-man		.man
 ./usr/share/man/man4/an.4			man-sys-man		.man
+./usr/share/man/man4/apei.4			man-sys-man		.man
 ./usr/share/man/man4/aps.4			man-sys-man		.man
 ./usr/share/man/man4/aq.4			man-sys-man		.man
 ./usr/share/man/man4/arc/intro.4		man-sys-man		.man
