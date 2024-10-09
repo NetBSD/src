@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.81 2024/10/04 05:56:03 msaitoh Exp $
+# $NetBSD: Makefile,v 1.82 2024/10/09 13:02:53 kre Exp $
 
 NOMAN=		# defined
 
@@ -18,6 +18,7 @@ TESTS_C+=	t_lock
 TESTS_C+=	t_lockf
 TESTS_C+=	t_memfd_create
 TESTS_C+=	t_mqueue
+TESTS_C+=	t_nanosleep
 TESTS_C+=	t_open_pr_57260
 TESTS_C+=	t_proccwd
 TESTS_C+=	t_pty
