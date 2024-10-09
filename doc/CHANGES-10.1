@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.41 2024/10/09 13:29:35 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.42 2024/10/09 15:29:37 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -1813,7 +1813,7 @@ sys/dev/usb/ohcivar.h				1.63
 
 sbin/gpt/biosboot.c				1.33
 
-	gpt(8): portability fix for the tool version.
+	gpt(8): PR 58663: portability fix for the tool version.
 	[lloyd, ticket #911]
 
 distrib/sets/lists/debug/mi			1.449
@@ -1881,7 +1881,7 @@ sys/arch/aarch64/aarch64/cpu.c			1.79,1.80
 sys/arch/arm/include/cputypes.h			1.17
 usr.sbin/cpuctl/arch/aarch64.c			1.24
 
-	aarch64: add Ampere 1/1A CPU identification.
+	aarch64: PR 58704: add Ampere 1/1A CPU identification.
 	[jakllsch, ticket #922]
 
 external/cddl/osnet/sys/sys/types.h		1.21
