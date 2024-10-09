@@ -1,4 +1,4 @@
-#	$NetBSD: t_misc.sh,v 1.12 2022/06/13 07:59:15 martin Exp $
+#	$NetBSD: t_misc.sh,v 1.12.2.1 2024/10/09 11:15:39 martin Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -55,9 +55,13 @@ wg_rekey_body()
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore \
 	    rump.sysctl -w net.wg.rekey_after_time=$rekey_after_time
+	$DEBUG && atf_check -s exit:0 -o ignore \
+	    rump.sysctl -w net.wg.debug=-1
 	export RUMP_SERVER=$SOCK_PEER
 	atf_check -s exit:0 -o ignore \
 	    rump.sysctl -w net.wg.rekey_after_time=$rekey_after_time
+	$DEBUG && atf_check -s exit:0 -o ignore \
+	    rump.sysctl -w net.wg.debug=-1
 
 	# It sets key_priv_local key_pub_local key_priv_peer key_pub_peer
 	generate_keys
@@ -76,17 +80,17 @@ wg_rekey_body()
 
 	export RUMP_SERVER=$SOCK_LOCAL
 
+	echo ping1time=$(date)
 	$ping $ip_wg_peer
 
 	latest_handshake=$($HIJACKING wgconfig wg0 show peer peer0 \
 	    | awk -F ': ' '/latest-handshake/ {print $2;}')
-	$DEBUG && echo $latest_handshake
+	$DEBUG && echo handshake1=$latest_handshake
 
 	sleep 1
 
+	echo ping2time=$(date)
 	$ping $ip_wg_peer
-
-	atf_expect_fail "PR kern/56252"
 
 	# No reinitiation is performed
 	atf_check -s exit:0 -o match:"$latest_handshake" \
@@ -95,6 +99,7 @@ wg_rekey_body()
 	# Wait for a reinitiation to be performed
 	sleep $rekey_after_time
 
+	echo ping3time=$(date)
 	$ping $ip_wg_peer
 
 	# A reinitiation should be performed
@@ -103,11 +108,12 @@ wg_rekey_body()
 
 	latest_handshake=$($HIJACKING wgconfig wg0 show peer peer0 \
 	    | awk -F ': ' '/latest-handshake/ {print $2;}')
-	$DEBUG && echo $latest_handshake
+	$DEBUG && echo handshake2=$latest_handshake
 
 	# Wait for a reinitiation to be performed again
 	sleep $((rekey_after_time+1))
 
+	echo ping4time=$(date)
 	$ping $ip_wg_peer
 
 	# A reinitiation should be performed
@@ -115,8 +121,6 @@ wg_rekey_body()
 	    $HIJACKING wgconfig wg0 show peer peer0
 
 	destroy_wg_interfaces
-
-	atf_fail "failed to trigger PR kern/56252"
 }
 
 wg_rekey_cleanup()
@@ -143,10 +147,9 @@ wg_handshake_timeout_body()
 	local ip_wg_local=10.0.0.1
 	local ip_wg_peer=10.0.0.2
 	local port=51820
-	local rekey_after_time=3
 	local outfile=./out
-	local rekey_timeout=3
-	local rekey_attempt_time=8
+	local rekey_timeout=4
+	local rekey_attempt_time=10
 	local n=
 
 	setup_servers
@@ -198,8 +201,6 @@ wg_handshake_timeout_body()
 
 	n=$(grep "$ip_local.$port > $ip_peer.$port" $outfile |wc -l)
 
-	atf_expect_fail "PR kern/56252"
-
 	# Give up handshaking after three attempts
 	atf_check_equal $n 3
 
@@ -208,8 +209,6 @@ wg_handshake_timeout_body()
 	export RUMP_SERVER=$SOCK_LOCAL
 
 	destroy_wg_interfaces
-
-	atf_fail "failed to trigger PR kern/56252"
 }
 
 wg_handshake_timeout_cleanup()
@@ -271,8 +270,6 @@ wg_cookie_body()
 	# and a session doesn't start
 	$ping_fail $ip_wg_peer
 
-	atf_expect_fail "PR kern/56252"
-
 	extract_new_packets $BUS > $outfile
 	$DEBUG && cat $outfile
 	# XXX length 64 indicates the message is a cookie message
@@ -296,8 +293,6 @@ wg_cookie_body()
 	    $HIJACKING wgconfig wg0
 
 	destroy_wg_interfaces
-
-	atf_fail "failed to trigger PR kern/56252"
 }
 
 wg_cookie_cleanup()
@@ -354,8 +349,6 @@ wg_mobility_body()
 	export RUMP_SERVER=$SOCK_LOCAL
 	$ping_fail $ip_wg_peer
 
-	atf_expect_fail "PR kern/56252"
-
 	extract_new_packets $BUS > $outfile
 	$DEBUG && cat $outfile
 
@@ -394,8 +387,6 @@ wg_mobility_body()
 	atf_check -s exit:0 -o not-match:"$ip_local.$port > $ip_peer.$port" cat $outfile
 
 	destroy_wg_interfaces
-
-	atf_fail "failed to trigger PR kern/56252"
 }
 
 wg_mobility_cleanup()
