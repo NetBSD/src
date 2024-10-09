@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.57.4.4 2023/08/11 14:35:25 martin Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.57.4.5 2024/10/09 13:04:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.57.4.4 2023/08/11 14:35:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.57.4.5 2024/10/09 13:04:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1354,7 +1354,21 @@ entropy_notify(void)
 /*
  * entropy_consolidate()
  *
- *	Trigger entropy consolidation and wait for it to complete.
+ *	Trigger entropy consolidation and wait for it to complete, or
+ *	return early if interrupted by a signal.
+ */
+void
+entropy_consolidate(void)
+{
+
+	(void)entropy_consolidate_sig();
+}
+
+/*
+ * entropy_consolidate_sig()
+ *
+ *	Trigger entropy consolidation and wait for it to complete, or
+ *	return EINTR if interrupted by a signal.
  *
  *	This should be used sparingly, not periodically -- requiring
  *	conscious intervention by the operator or a clear policy
@@ -1362,8 +1376,8 @@ entropy_notify(void)
  *	when enough entropy has been gathered into per-CPU pools to
  *	transition to full entropy.
  */
-void
-entropy_consolidate(void)
+int
+entropy_consolidate_sig(void)
 {
 	uint64_t ticket;
 	int error;
@@ -1381,6 +1395,8 @@ entropy_consolidate(void)
 			break;
 	}
 	mutex_exit(&E->lock);
+
+	return error;
 }
 
 /*
@@ -1404,7 +1420,7 @@ sysctl_entropy_consolidate(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 	if (arg)
-		entropy_consolidate();
+		error = entropy_consolidate_sig();
 
 	return error;
 }
@@ -1434,7 +1450,7 @@ sysctl_entropy_gather(SYSCTLFN_ARGS)
 		mutex_exit(&E->lock);
 	}
 
-	return 0;
+	return error;
 }
 
 /*
@@ -2777,7 +2793,7 @@ entropy_ioctl(unsigned long cmd, void *data)
 		/* Enter the data and consolidate entropy.  */
 		rnd_add_data(&seed_rndsource, rdata->data, rdata->len,
 		    entropybits);
-		entropy_consolidate();
+		error = entropy_consolidate_sig();
 		break;
 	}
 	default:
