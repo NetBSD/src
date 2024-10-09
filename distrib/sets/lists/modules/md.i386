@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.96.2.1 2023/12/30 19:13:50 martin Exp $
+# $NetBSD: md.i386,v 1.96.2.2 2024/10/09 13:00:12 martin Exp $
 #
 ./@MODULEDIR@/acpiacad				modules-base-kernel	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		modules-base-kernel	kmod
@@ -12,6 +12,8 @@
 ./@MODULEDIR@/acpidalb/acpidalb.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/acpifan				modules-base-kernel	kmod
 ./@MODULEDIR@/acpifan/acpifan.kmod		modules-base-kernel	kmod
+./@MODULEDIR@/acpihed				modules-base-kernel	kmod
+./@MODULEDIR@/acpihed/acpihed.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/acpilid				modules-base-kernel	kmod
 ./@MODULEDIR@/acpilid/acpilid.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/acpipmtr				modules-base-kernel	kmod
@@ -36,6 +38,8 @@
 ./@MODULEDIR@/amdtemp/amdtemp.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/amdzentemp			modules-base-kernel	kmod
 ./@MODULEDIR@/amdzentemp/amdzentemp.kmod	modules-base-kernel	kmod
+./@MODULEDIR@/apei				modules-base-kernel	kmod
+./@MODULEDIR@/apei/apei.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/aps				modules-base-kernel	kmod
 ./@MODULEDIR@/aps/aps.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/asus				modules-base-kernel	kmod

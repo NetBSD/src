@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.274.2.5 2024/09/12 19:36:21 martin Exp $
+#	$NetBSD: Makefile,v 1.274.2.6 2024/10/09 13:00:13 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -282,6 +282,7 @@ SUBDIR+=	acpibut
 SUBDIR+=	acpicpu
 SUBDIR+=	acpidalb
 SUBDIR+=	acpifan
+SUBDIR+=	acpihed
 SUBDIR+=	acpilid
 SUBDIR+=	acpipmtr
 SUBDIR+=	acpitz
@@ -289,6 +290,7 @@ SUBDIR+=	acpivga
 SUBDIR+=	acpiwdrt
 SUBDIR+=	acpiwmi
 SUBDIR+=	aibs
+SUBDIR+=	apei
 SUBDIR+=	asus
 SUBDIR+=	fujbp
 SUBDIR+=	fujhk
