@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.76 2024/10/09 21:53:50 uwe Exp $
+.\" $NetBSD: bus_dma.9,v 1.77 2024/10/09 21:56:35 uwe Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -913,8 +913,11 @@ to
 Returns -1 to indicate failure.
 Otherwise, returns an opaque value to be interpreted by the device pager.
 .It Fn bus_dmatag_subregion "tag" "min_addr" "max_addr" "newtag" "flags"
-Given a bus_dma_tag_t
-create a new bus_dma_tag_t with a limited bus address space.
+Given a
+.Vt bus_dma_tag_t
+create a new
+.Vt bus_dma_tag_t
+with a limited bus address space.
 This function should not normally be used, but is useful for devices
 that do not support the full address space of the parent bus.
 Not all ports implement this method; on ports where it is unavailable,
@@ -922,13 +925,16 @@ Not all ports implement this method; on ports where it is unavailable,
 is returned.
 .Bl -tag -width Ds \" Fa
 .It Fa tag
-This is the bus_dma_tag_t to subregion.
+This is the
+.Vt bus_dma_tag_t
+to subregion.
 .It Fa min_addr
 The smallest address this new tag can address.
 .It Fa max_addr
 The largest address this new tag can address.
 .It Fa newtag
-Pointer filled in with the address of the new bus_dma_tag_t.
+Pointer filled in with the address of the new
+.Vt bus_dma_tag_t .
 .It Fa flags
 .Bl -tag -width Ds \" Dv
 .It Dv BUS_DMA_WAITOK
