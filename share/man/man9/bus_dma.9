@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.70 2024/10/09 16:14:30 uwe Exp $
+.\" $NetBSD: bus_dma.9,v 1.71 2024/10/09 16:22:52 uwe Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,49 +49,139 @@
 .Nm bus_dmatag_subregion ,
 .Nm bus_dmatag_destroy
 .Nd Bus and Machine Independent DMA Mapping Interface
+.
 .Sh SYNOPSIS
+.
 .In sys/bus.h
+.
 .Ft int
-.Fn bus_dmamap_create "bus_dma_tag_t tag" "bus_size_t size" "int nsegments" \
-"bus_size_t maxsegsz" "bus_size_t boundary" "int flags" "bus_dmamap_t *dmamp"
+.Fo bus_dmamap_create
+.Fa "bus_dma_tag_t tag"
+.Fa "bus_size_t size"
+.Fa "int nsegments"
+.Fa "bus_size_t maxsegsz"
+.Fa "bus_size_t boundary"
+.Fa "int flags"
+.Fa "bus_dmamap_t *dmamp"
+.Fc
+.
 .Ft void
-.Fn bus_dmamap_destroy "bus_dma_tag_t tag" "bus_dmamap_t dmam"
+.Fo bus_dmamap_destroy
+.Fa "bus_dma_tag_t tag"
+.Fa "bus_dmamap_t dmam"
+.Fc
+.
 .Ft int
-.Fn bus_dmamap_load "bus_dma_tag_t tag" "bus_dmamap_t dmam" "void *buf" \
-"bus_size_t buflen" "struct proc *p" "int flags"
+.Fo bus_dmamap_load
+.Fa "bus_dma_tag_t tag"
+.Fa "bus_dmamap_t dmam"
+.Fa "void *buf"
+.Fa "bus_size_t buflen"
+.Fa "struct proc *p"
+.Fa "int flags"
+.Fc
+.
 .Ft int
-.Fn bus_dmamap_load_mbuf "bus_dma_tag_t tag" "bus_dmamap_t dmam" \
-"struct mbuf *chain" "int flags"
+.Fo bus_dmamap_load_mbuf
+.Fa "bus_dma_tag_t tag"
+.Fa "bus_dmamap_t dmam"
+.Fa "struct mbuf *chain"
+.Fa "int flags"
+.Fc
+.
 .Ft int
-.Fn bus_dmamap_load_uio "bus_dma_tag_t tag" "bus_dmamap_t dmam" \
-"struct uio *uio" "int flags"
+.Fo bus_dmamap_load_uio
+.Fa "bus_dma_tag_t tag"
+.Fa "bus_dmamap_t dmam"
+.Fa "struct uio *uio"
+.Fa "int flags"
+.Fc
+.
 .Ft int
-.Fn bus_dmamap_load_raw "bus_dma_tag_t tag" "bus_dmamap_t dmam" \
-"bus_dma_segment_t *segs" "int nsegs" "bus_size_t size" "int flags"
+.Fo bus_dmamap_load_raw
+.Fa "bus_dma_tag_t tag"
+.Fa "bus_dmamap_t dmam"
+.Fa "bus_dma_segment_t *segs"
+.Fa "int nsegs"
+.Fa "bus_size_t size"
+.Fa "int flags"
+.Fc
+.
 .Ft void
-.Fn bus_dmamap_unload "bus_dma_tag_t tag" "bus_dmamap_t dmam"
+.Fo bus_dmamap_unload
+.Fa "bus_dma_tag_t tag"
+.Fa "bus_dmamap_t dmam"
+.Fc
+.
 .Ft void
-.Fn bus_dmamap_sync "bus_dma_tag_t tag" "bus_dmamap_t dmam" \
-"bus_addr_t offset" "bus_size_t len" "int ops"
+.Fo bus_dmamap_sync
+.Fa "bus_dma_tag_t tag"
+.Fa "bus_dmamap_t dmam"
+.Fa "bus_addr_t offset"
+.Fa "bus_size_t len"
+.Fa "int ops"
+.Fc
+.
 .Ft int
-.Fn bus_dmamem_alloc "bus_dma_tag_t tag" "bus_size_t size" \
-"bus_size_t alignment" "bus_size_t boundary" "bus_dma_segment_t *segs" \
-"int nsegs" "int *rsegs" "int flags"
+.Fo bus_dmamem_alloc
+.Fa "bus_dma_tag_t tag"
+.Fa "bus_size_t size"
+.Fa "bus_size_t alignment"
+.Fa "bus_size_t boundary"
+.Fa "bus_dma_segment_t *segs"
+.Fa "int nsegs"
+.Fa "int *rsegs"
+.Fa "int flags"
+.Fc
+.
 .Ft void
-.Fn bus_dmamem_free "bus_dma_tag_t tag" "bus_dma_segment_t *segs" "int nsegs"
+.Fo bus_dmamem_free
+.Fa "bus_dma_tag_t tag"
+.Fa "bus_dma_segment_t *segs"
+.Fa "int nsegs"
+.Fc
+.
 .Ft int
-.Fn bus_dmamem_map "bus_dma_tag_t tag" "bus_dma_segment_t *segs" "int nsegs" \
-"size_t size" "void **kvap" "int flags"
+.Fo bus_dmamem_map
+.Fa "bus_dma_tag_t tag"
+.Fa "bus_dma_segment_t *segs"
+.Fa "int nsegs"
+.Fa "size_t size"
+.Fa "void **kvap"
+.Fa "int flags"
+.Fc
+.
 .Ft void
-.Fn bus_dmamem_unmap "bus_dma_tag_t tag" "void *kva" "size_t size"
+.Fo bus_dmamem_unmap
+.Fa "bus_dma_tag_t tag"
+.Fa "void *kva"
+.Fa "size_t size"
+.Fc
+.
 .Ft paddr_t
-.Fn bus_dmamem_mmap "bus_dma_tag_t tag" "bus_dma_segment_t *segs" \
-"int nsegs" "off_t off" "int prot" "int flags"
+.Fo bus_dmamem_mmap
+.Fa "bus_dma_tag_t tag"
+.Fa "bus_dma_segment_t *segs"
+.Fa "int nsegs"
+.Fa "off_t off"
+.Fa "int prot"
+.Fa "int flags"
+.Fc
+.
 .Ft int
-.Fn bus_dmatag_subregion "bus_dma_tag_t tag" "bus_addr_t min_addr" \
-"bus_addr_t max_addr" "bus_dma_tag_t *newtag" "int flags"
+.Fo bus_dmatag_subregion
+.Fa "bus_dma_tag_t tag"
+.Fa "bus_addr_t min_addr"
+.Fa "bus_addr_t max_addr"
+.Fa "bus_dma_tag_t *newtag"
+.Fa "int flags"
+.Fc
+.
 .Ft void
-.Fn bus_dmatag_destroy "bus_dma_tag_t tag"
+.Fo bus_dmatag_destroy
+.Fa "bus_dma_tag_t tag"
+.Fc
+.
 .Sh DESCRIPTION
 Provide a bus- and machine-independent "DMA mapping interface."
 .Ss Implementation Notes
