@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.74 2024/10/09 21:17:16 uwe Exp $
+.\" $NetBSD: bus_dma.9,v 1.75 2024/10/09 21:40:14 uwe Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -258,7 +258,9 @@ Allocates a DMA handle and initializes it according to the parameters
 provided.
 .Bl -tag -width nsegments -compact
 .It Fa tag
-This is the bus_dma_tag_t passed down from the parent driver via
+This is the
+.Vt bus_dma_tag_t
+passed down from the parent driver via
 .Fa <bus>_attach_args .
 .It Fa size
 This is the maximum DMA transfer that can be mapped by the handle.
@@ -319,7 +321,9 @@ Returns 0 on success, or an error code to indicate mode of failure.
 Frees all resources associated with a given DMA handle.
 .Bl -tag -width dmam -compact
 .It Fa tag
-This is the bus_dma_tag_t passed down from the parent driver via
+This is the
+.Vt bus_dma_tag_t
+passed down from the parent driver via
 .Fa <bus>_attach_args .
 .It Fa dmam
 The DMA handle to destroy.
@@ -340,7 +344,9 @@ Loads a DMA handle with mappings for a DMA transfer.
 It assumes that all pages involved in a DMA transfer are wired.
 .Bl -tag -width buflen -compact
 .It Fa tag
-This is the bus_dma_tag_t passed down from the parent driver via
+This is the
+.Vt bus_dma_tag_t
+passed down from the parent driver via
 .Fa <bus>_attach_args .
 .It Fa dmam
 The DMA handle with which to map the transfer.
@@ -470,7 +476,9 @@ argument is the size of the DMA transfer.
 Deletes the mappings for a given DMA handle.
 .Bl -tag -width dmam -compact
 .It Fa tag
-This is the bus_dma_tag_t passed down from the parent driver via
+This is the
+.Vt bus_dma_tag_t
+passed down from the parent driver via
 .Fa <bus>_attach_args .
 .It Fa dmam
 The DMA handle containing the mappings which are to be deleted.
@@ -509,7 +517,9 @@ always succeeds.
 Performs pre- and post-DMA operation cache and/or buffer synchronization.
 .Bl -tag -width offset -compact
 .It Fa tag
-This is the bus_dma_tag_t passed down from the parent driver via
+This is the
+.Vt bus_dma_tag_t
+passed down from the parent driver via
 .Fa <bus>_attach_args .
 .It Fa dmam
 The DMA mapping to be synchronized.
@@ -648,7 +658,9 @@ Callers may wish to take advantage of this, and cluster allocation of small
 data structures.
 .Bl -tag -width alignment -compact
 .It Fa tag
-This is the bus_dma_tag_t passed down from the parent driver via
+This is the
+.Vt bus_dma_tag_t
+passed down from the parent driver via
 .Fa <bus>_attach_args .
 .It Fa size
 The amount of memory to allocate.
@@ -719,7 +731,9 @@ Any mappings
 will be invalidated.
 .Bl -tag -width nsegs -compact
 .It Fa tag
-This is the bus_dma_tag_t passed down from the parent driver via
+This is the
+.Vt bus_dma_tag_t
+passed down from the parent driver via
 .Fa <bus>_attach_args .
 .It Fa segs
 The array of bus_dma_segment_t's filled in by
@@ -741,7 +755,9 @@ Maps memory allocated with
 into kernel virtual address space.
 .Bl -tag -width flags -compact
 .It Fa tag
-This is the bus_dma_tag_t passed down from the parent driver via
+This is the
+.Vt bus_dma_tag_t
+passed down from the parent driver via
 .Fa <bus>_attach_args .
 .It Fa segs
 The array of bus_dma_segment_t's filled in by
@@ -828,7 +844,9 @@ freeing the
 kernel virtual address space used by the mapping.
 .Bl -tag -width size -compact
 .It Fa tag
-This is the bus_dma_tag_t passed down from the parent driver via
+This is the
+.Vt bus_dma_tag_t
+passed down from the parent driver via
 .Fa <bus>_attach_args .
 .It Fa kva
 The kernel virtual address of the mapped memory.
@@ -850,7 +868,9 @@ This function is to be called by a device driver's (*d_mmap)() entry
 point, which is called by the device pager for each page to be mapped.
 .Bl -tag -width nsegs -compact
 .It Fa tag
-This is the bus_dma_tag_t passed down from the parent driver via
+This is the
+.Vt bus_dma_tag_t
+passed down from the parent driver via
 .Fa <bus>_attach_args .
 .It Fa segs
 The array of bus_dma_segment_t's filled in by
