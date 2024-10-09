@@ -1,4 +1,4 @@
-/*	$NetBSD: readdir.c,v 1.26 2012/06/25 22:32:43 abs Exp $	*/
+/*	$NetBSD: readdir.c,v 1.26.42.1 2024/10/09 11:19:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)readdir.c	8.3 (Berkeley) 9/29/94";
 #else
-__RCSID("$NetBSD: readdir.c,v 1.26 2012/06/25 22:32:43 abs Exp $");
+__RCSID("$NetBSD: readdir.c,v 1.26.42.1 2024/10/09 11:19:20 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,35 +56,50 @@ __RCSID("$NetBSD: readdir.c,v 1.26 2012/06/25 22:32:43 abs Exp $");
 struct dirent *
 _readdir_unlocked(DIR *dirp, int skipdeleted)
 {
+	const int saved_errno = errno;
 	struct dirent *dp;
 
 	for (;;) {
 		if (dirp->dd_loc >= dirp->dd_size) {
 			if (dirp->dd_flags & __DTF_READALL)
-				return (NULL);
+				break;
 			dirp->dd_loc = 0;
 		}
 		if (dirp->dd_loc == 0 && !(dirp->dd_flags & __DTF_READALL)) {
 			dirp->dd_seek = lseek(dirp->dd_fd, (off_t)0, SEEK_CUR);
 			dirp->dd_size = getdents(dirp->dd_fd,
 			    dirp->dd_buf, (size_t)dirp->dd_len);
-			if (dirp->dd_size <= 0)
-				return (NULL);
+			if (dirp->dd_size == 0) /* end of directory */
+				break;
+			if (dirp->dd_size == -1) /* getdents sets errno */
+				return NULL;
+			if (dirp->dd_size < 0) { /* paranoia */
+				errno = EIO;
+				return NULL;
+			}
 		}
 		dp = (struct dirent *)
 		    (void *)(dirp->dd_buf + (size_t)dirp->dd_loc);
-		if ((intptr_t)dp & _DIRENT_ALIGN(dp))/* bogus pointer check */
-			return (NULL);
+		/* bogus pointer check */
+		if ((intptr_t)dp & _DIRENT_ALIGN(dp)) {
+			errno = EIO;
+			return NULL;
+		}
 		/* d_reclen is unsigned; no need to compare it <= 0 */
-		if (dp->d_reclen > dirp->dd_len + 1 - dirp->dd_loc)
-			return (NULL);
+		if (dp->d_reclen > dirp->dd_len + 1 - dirp->dd_loc) {
+			errno = EIO;
+			return NULL;
+		}
 		dirp->dd_loc += dp->d_reclen;
 		if (dp->d_ino == 0 && skipdeleted)
 			continue;
 		if (dp->d_type == DT_WHT && (dirp->dd_flags & DTF_HIDEW))
 			continue;
-		return (dp);
+		return dp;
 	}
+
+	errno = saved_errno;
+	return NULL;
 }
 
 struct dirent *
