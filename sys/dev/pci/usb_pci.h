@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_pci.h,v 1.6 2010/12/11 17:58:41 matt Exp $	*/
+/*	$NetBSD: usb_pci.h,v 1.7 2024/10/09 19:56:21 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 /*
- * EHCI controllers need a way to find their compainion controllers
+ * EHCI controllers need a way to find their companion controllers
  * so we keep track of them as we attach.
  */
 

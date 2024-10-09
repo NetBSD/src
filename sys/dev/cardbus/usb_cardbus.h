@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_cardbus.h,v 1.5 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: usb_cardbus.h,v 1.6 2024/10/09 19:56:21 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 /*
- * EHCI controllers need a way to find their compainion controllers
+ * EHCI controllers need a way to find their companion controllers
  * so we keep track of them as we attach.
  */
 
