@@ -1,4 +1,4 @@
-.\"	$NetBSD: arc4random.3,v 1.21 2016/07/15 21:19:19 wiz Exp $
+.\"	$NetBSD: arc4random.3,v 1.21.24.1 2024/10/09 13:25:10 martin Exp $
 .\"
 .\" Copyright (c) 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 16, 2014
+.Dd August 27, 2024
 .Dt ARC4RANDOM 3
 .Os
 .Sh NAME
@@ -233,6 +233,15 @@ and
 .Fn arc4random_addrandom
 may abort the process in the highly unlikely event that the operating
 system fails to provide entropy.
+.Pp
+If
+.Nm
+detects that the sysctl variable
+.Li kern.entropy.epoch
+.Pq see Xr rnd 4
+has changed since its last output, it reseeds itself with additional
+data from the system entropy pool again before generating its next
+output.
 .Sh SEE ALSO
 .Xr rand 3 ,
 .Xr random 3 ,
@@ -252,7 +261,7 @@ for testing purposes.
 .Pp
 The name
 .Sq arc4random
-was chosen for hysterical raisins -- it was originally implemented
+was chosen for hysterical raisins \(em it was originally implemented
 using the RC4 stream cipher, which has been known since shortly after
 it was published in 1994 to have observable biases in the output, and
 is now known to be broken badly enough to admit practical attacks in

@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.33 2022/04/19 20:32:15 rillig Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.33.2.1 2024/10/09 13:25:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: arc4random.c,v 1.33 2022/04/19 20:32:15 rillig Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.33.2.1 2024/10/09 13:25:10 martin Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
@@ -65,11 +65,15 @@ __RCSID("$NetBSD: arc4random.c,v 1.33 2022/04/19 20:32:15 rillig Exp $");
 
 #include <assert.h>
 #include <sha2.h>
+#include <stdatomic.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "arc4random.h"
+#include "reentrant.h"
 
 #ifdef __weak_alias
 __weak_alias(arc4random,_arc4random)
@@ -125,7 +129,7 @@ rotate(uint32_t u, unsigned c)
 	(c) += (d); (b) ^= (c); (b) = rotate((b),  7);			      \
 } while (0)
 
-const uint8_t crypto_core_constant32[16] = "expand 32-byte k";
+static const uint8_t crypto_core_constant32[16] = "expand 32-byte k";
 
 static void
 crypto_core(uint8_t *out, const uint8_t *in, const uint8_t *k,
@@ -304,9 +308,7 @@ crypto_core_selftest(void)
 #define	crypto_prng_MAXOUTPUTBYTES	\
 	(crypto_core_OUTPUTBYTES - crypto_prng_SEEDBYTES)
 
-struct crypto_prng {
-	uint8_t		state[crypto_prng_SEEDBYTES];
-};
+__CTASSERT(sizeof(struct crypto_prng) == crypto_prng_SEEDBYTES);
 
 static void
 crypto_prng_seed(struct crypto_prng *prng, const void *seed)
@@ -398,12 +400,63 @@ crypto_onetimestream(const void *seed, void *buf, size_t n)
 		(void)explicit_memset(block, 0, sizeof block);
 }
 
-/* arc4random state: per-thread, per-process (zeroed in child on fork) */
+/*
+ * entropy_epoch()
+ *
+ *	Return the current entropy epoch, from the sysctl node
+ *	kern.entropy.epoch.
+ *
+ *	The entropy epoch is never zero.  Initially, or on error, it is
+ *	(unsigned)-1.  It may wrap around but it skips (unsigned)-1 and
+ *	0 when it does.  Changes happen less than once per second, so
+ *	wraparound will only affect systems after 136 years of uptime.
+ *
+ *	XXX This should get it from a page shared read-only by kernel
+ *	with userland, but until we implement such a mechanism, this
+ *	sysctl -- incurring the cost of a syscall -- will have to
+ *	serve.
+ */
+static unsigned
+entropy_epoch(void)
+{
+	static atomic_int mib0[3];
+	static atomic_bool initialized = false;
+	int mib[3];
+	unsigned epoch = (unsigned)-1;
+	size_t epochlen = sizeof(epoch);
 
-struct arc4random_prng {
-	struct crypto_prng	arc4_prng;
-	bool			arc4_seeded;
-};
+	/*
+	 * Resolve kern.entropy.epoch if we haven't already.  Cache it
+	 * for the next caller.  Initialization is idempotent, so it's
+	 * OK if two threads do it at once.
+	 */
+	if (atomic_load_explicit(&initialized, memory_order_acquire)) {
+		mib[0] = atomic_load_explicit(&mib0[0], memory_order_relaxed);
+		mib[1] = atomic_load_explicit(&mib0[1], memory_order_relaxed);
+		mib[2] = atomic_load_explicit(&mib0[2], memory_order_relaxed);
+	} else {
+		size_t nmib = __arraycount(mib);
+
+		if (sysctlnametomib("kern.entropy.epoch", mib, &nmib) == -1)
+			return (unsigned)-1;
+		if (nmib != __arraycount(mib))
+			return (unsigned)-1;
+		atomic_store_explicit(&mib0[0], mib[0], memory_order_relaxed);
+		atomic_store_explicit(&mib0[1], mib[1], memory_order_relaxed);
+		atomic_store_explicit(&mib0[2], mib[2], memory_order_relaxed);
+		atomic_store_explicit(&initialized, true,
+		    memory_order_release);
+	}
+
+	if (sysctl(mib, __arraycount(mib), &epoch, &epochlen, NULL, 0) == -1)
+		return (unsigned)-1;
+	if (epochlen != sizeof(epoch))
+		return (unsigned)-1;
+
+	return epoch;
+}
+
+/* arc4random state: per-thread, per-process (zeroed in child on fork) */
 
 static void
 arc4random_prng_addrandom(struct arc4random_prng *prng, const void *data,
@@ -413,6 +466,7 @@ arc4random_prng_addrandom(struct arc4random_prng *prng, const void *data,
 	SHA256_CTX ctx;
 	uint8_t buf[crypto_prng_SEEDBYTES];
 	size_t buflen = sizeof buf;
+	unsigned epoch = entropy_epoch();
 
 	__CTASSERT(sizeof buf == SHA256_DIGEST_LENGTH);
 
@@ -436,7 +490,7 @@ arc4random_prng_addrandom(struct arc4random_prng *prng, const void *data,
 	/* reseed(SHA256(prng() || sysctl(KERN_ARND) || data)) */
 	crypto_prng_seed(&prng->arc4_prng, buf);
 	(void)explicit_memset(buf, 0, sizeof buf);
-	prng->arc4_seeded = true;
+	prng->arc4_epoch = epoch;
 }
 
 #ifdef _REENTRANT
@@ -473,14 +527,7 @@ arc4random_prng_destroy(struct arc4random_prng *prng)
 
 /* Library state */
 
-static struct arc4random_global {
-#ifdef _REENTRANT
-	mutex_t			lock;
-	thread_key_t		thread_key;
-#endif
-	struct arc4random_prng	prng;
-	bool			initialized;
-} arc4random_global = {
+struct arc4random_global_state arc4random_global = {
 #ifdef _REENTRANT
 	.lock		= MUTEX_INITIALIZER,
 #endif
@@ -567,7 +614,7 @@ arc4random_prng_get(void)
 	}
 
 	/* Guarantee the PRNG is seeded.  */
-	if (__predict_false(!prng->arc4_seeded))
+	if (__predict_false(prng->arc4_epoch != entropy_epoch()))
 		arc4random_prng_addrandom(prng, NULL, 0);
 
 	return prng;
@@ -752,8 +799,18 @@ main(int argc __unused, char **argv __unused)
 	switch (pid) {
 	case -1:
 		err(1, "fork");
-	case 0:
-		_exit(arc4random_prng_get()->arc4_seeded);
+	case 0: {
+		/*
+		 * Verify the epoch has been set to zero by fork.
+		 */
+		struct arc4random_prng *prng = NULL;
+#ifdef _REENTRANT
+		prng = thr_getspecific(arc4random_global.thread_key);
+#endif
+		if (prng == NULL)
+			prng = &arc4random_global.prng;
+		_exit(prng->arc4_epoch != 0);
+	}
 	default:
 		rpid = waitpid(pid, &status, 0);
 		if (rpid == -1)

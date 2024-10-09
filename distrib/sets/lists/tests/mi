@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1238.2.12 2024/10/02 12:46:13 martin Exp $
+# $NetBSD: mi,v 1.1238.2.13 2024/10/09 13:25:12 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2942,6 +2942,7 @@
 ./usr/tests/lib/libc/gen/posix_spawn/t_spawn		tests-kernel-tests	compattestfile,atf
 ./usr/tests/lib/libc/gen/posix_spawn/t_spawnattr	tests-kernel-tests	compattestfile,atf
 ./usr/tests/lib/libc/gen/t_alarm			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/gen/t_arc4random			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/gen/t_assert			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/gen/t_basedirname			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/gen/t_closefrom			tests-lib-tests		compattestfile,atf

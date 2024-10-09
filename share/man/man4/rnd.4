@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.4,v 1.40.2.1 2023/08/11 14:35:24 martin Exp $
+.\"	$NetBSD: rnd.4,v 1.40.2.2 2024/10/09 13:25:11 martin Exp $
 .\"
 .\" Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 7, 2023
+.Dd August 27, 2024
 .Dt RND 4
 .Os
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -457,18 +457,37 @@ Number of bits of entropy pending in per-CPU pools.
 This is the amount of entropy that will be contributed to the global
 pool at the next consolidation, such as from triggering
 .Dv kern.entropy.consolidate .
+.El
+.Pp
+The following read-only
+.Xr sysctl 8
+variables provide information to any users, privileged or unprivileged:
+.Bl -tag -width abcd
 .It Dv kern.entropy.epoch Pq Vt unsigned int
-Number of times system has reached full entropy, or entropy has been
-consolidated with
-.Dv kern.entropy.consolidate ,
-as an unsigned 32-bit integer.
-Consulted inside the kernel by subsystems such as
-.Xr cprng 9
+An integer that changes whenever the system determines applications
+should reseed from the system entropy pool.
+This can happen for various reasons:
+.Bl -dash -compact
+.It
+The system has reached full entropy for the first time.
+.It
+A virtual machine clone has been detected
+.Pq e.g., by Xr acpivmgenid 4 .
+.It
+An operator has set
+.Li kern.entropy.consolidate .
+.El
+.Pp
+Consulted by
+.Xr arc4random 3 ,
+and inside the kernel by subsystems such as
+.Xr cprng 9 ,
 to decide whether to reseed.
+.Pp
 Initially set to 2^32 \- 1
 .Pq i.e., Li "(unsigned)\-1"
-meaning the system has never reached full entropy and the entropy has
-never been consolidated; never again set to 2^32 \- 1.
+meaning the system has never reached full entropy; never again set to
+2^32 \- 1.
 Never zero, so applications can initialize a cache of the epoch to zero
 to ensure they reseed the next time they check whether it is different
 from the stored epoch.
@@ -625,6 +644,7 @@ The system has full entropy for the first time.
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh SEE ALSO
 .Xr arc4random 3 ,
+.Xr acpivmgenid 4 ,
 .Xr entropy 7 ,
 .Xr rndctl 8 ,
 .Xr cprng 9 ,
