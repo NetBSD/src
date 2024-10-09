@@ -1,4 +1,4 @@
-#	$NetBSD: t_basic.sh,v 1.4 2021/03/02 07:16:24 simonb Exp $
+#	$NetBSD: t_basic.sh,v 1.4.6.1 2024/10/09 11:15:39 martin Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -46,6 +46,21 @@ check_ping_payload()
 	for size in $(seq 1 100) $(seq 450 550) $(seq 1400 1500); do
 		$ping -s $size $ip
 	done
+}
+
+check_badudp()
+{
+	local proto=$1
+	local ip=$2
+	local port=51820        # XXX parametrize more clearly
+
+	if [ $proto = inet ]; then
+		atf_check -o ignore -e ignore \
+		    $HIJACKING nc -4uv -w1 $ip $port </dev/null
+	else
+		atf_check -o ignore -e ignore \
+		    $HIJACKING nc -6uv -w1 $ip $port </dev/null
+	fi
 }
 
 test_common()
@@ -107,6 +122,9 @@ test_common()
 	elif [ $type = payload ]; then
 		export RUMP_SERVER=$SOCK_LOCAL
 		check_ping_payload $inner_proto $ip_wg_peer
+	elif [ $type = badudp ]; then
+		export RUMP_SERVER=$SOCK_LOCAL
+		check_badudp $outer_proto $ip_peer
 	fi
 
 	destroy_wg_interfaces
@@ -273,6 +291,36 @@ add_payload_sizes_test()
 		}
 		${name}_body() {
 			test_common payload $outer $inner
+			rump_server_destroy_ifaces
+		}
+		${name}_cleanup() {
+			\$DEBUG && dump
+			cleanup
+		}"
+	atf_add_test_case ${name}
+}
+
+add_badudp_test()
+{
+	local inner=$1
+	local outer=$2
+	local ipv4=inet
+	local ipv6=inet6
+
+	name="wg_badudp_${inner}_over_${outer}"
+	fulldesc="Test wg(4) with ${inner} over ${outer} with bad UDP packets"
+
+	eval inner=\$$inner
+	eval outer=\$$outer
+
+	atf_test_case ${name} cleanup
+	eval "
+		${name}_head() {
+			atf_set descr \"${fulldesc}\"
+			atf_set require.progs rump_server wgconfig wg-keygen nc
+		}
+		${name}_body() {
+			test_common badudp $outer $inner
 			rump_server_destroy_ifaces
 		}
 		${name}_cleanup() {
@@ -458,6 +506,11 @@ wg_multiple_peers_cleanup()
 
 atf_init_test_cases()
 {
+
+	add_badudp_test ipv4 ipv4
+	add_badudp_test ipv4 ipv6
+	add_badudp_test ipv6 ipv4
+	add_badudp_test ipv6 ipv6
 
 	add_basic_test ipv4 ipv4
 	add_basic_test ipv4 ipv6
