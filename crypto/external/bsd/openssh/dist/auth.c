@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.33.2.1 2023/08/11 15:36:39 martin Exp $	*/
+/*	$NetBSD: auth.c,v 1.33.2.2 2024/10/09 10:21:44 martin Exp $	*/
 /* $OpenBSD: auth.c,v 1.160 2023/03/05 05:34:09 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth.c,v 1.33.2.1 2023/08/11 15:36:39 martin Exp $");
+__RCSID("$NetBSD: auth.c,v 1.33.2.2 2024/10/09 10:21:44 martin Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -415,6 +415,7 @@ auth_maxtries_exceeded(struct ssh *ssh)
 {
 	Authctxt *authctxt = (Authctxt *)ssh->authctxt;
 
+	pfilter_notify(1);
 	error("maximum authentication attempts exceeded for "
 	    "%s%.100s from %.200s port %d ssh2",
 	    authctxt->valid ? "" : "invalid user ",
