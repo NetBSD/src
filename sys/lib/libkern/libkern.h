@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.145 2023/09/06 19:14:52 mrg Exp $	*/
+/*	$NetBSD: libkern.h,v 1.146 2024/10/09 13:59:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,6 +43,8 @@
 #include <sys/types.h>
 #include <sys/inttypes.h>
 #include <sys/null.h>
+#include <sys/stddef.h>
+#include <sys/container_of.h>
 
 #include <lib/libkern/strlist.h>
 
@@ -313,56 +315,6 @@ tolower(int ch)
  * XXX: For compatibility we use SMALL_RANDOM by default.
  */
 #define SMALL_RANDOM
-
-#ifndef offsetof
-#if __GNUC_PREREQ__(4, 0)
-#define offsetof(type, member)	__builtin_offsetof(type, member)
-#else
-#define	offsetof(type, member) \
-    ((size_t)(unsigned long)(&(((type *)0)->member)))
-#endif
-#endif
-
-/*
- * Return the container of an embedded struct.  Given x = &c->f,
- * container_of(x, T, f) yields c, where T is the type of c.  Example:
- *
- *	struct foo { ... };
- *	struct bar {
- *		int b_x;
- *		struct foo b_foo;
- *		...
- *	};
- *
- *	struct bar b;
- *	struct foo *fp = &b.b_foo;
- *
- * Now we can get at b from fp by:
- *
- *	struct bar *bp = container_of(fp, struct bar, b_foo);
- *
- * The 0*sizeof((PTR) - ...) causes the compiler to warn if the type of
- * *fp does not match the type of struct bar::b_foo.
- * We skip the validation for coverity runs to avoid warnings.
- */
-#if defined(__COVERITY__) || defined(__LGTM_BOT__)
-#define __validate_container_of(PTR, TYPE, FIELD) 0
-#define __validate_const_container_of(PTR, TYPE, FIELD) 0
-#else
-#define __validate_container_of(PTR, TYPE, FIELD)			\
-    (0 * sizeof((PTR) - &((TYPE *)(((char *)(PTR)) -			\
-    offsetof(TYPE, FIELD)))->FIELD))
-#define __validate_const_container_of(PTR, TYPE, FIELD)			\
-    (0 * sizeof((PTR) - &((const TYPE *)(((const char *)(PTR)) -	\
-    offsetof(TYPE, FIELD)))->FIELD))
-#endif
-
-#define	container_of(PTR, TYPE, FIELD)					\
-    ((TYPE *)(((char *)(PTR)) - offsetof(TYPE, FIELD))			\
-	+ __validate_container_of(PTR, TYPE, FIELD))
-#define	const_container_of(PTR, TYPE, FIELD)				\
-    ((const TYPE *)(((const char *)(PTR)) - offsetof(TYPE, FIELD))	\
-	+ __validate_const_container_of(PTR, TYPE, FIELD))
 
 /* Prototypes for which GCC built-ins exist. */
 void	*memcpy(void *, const void *, size_t);
