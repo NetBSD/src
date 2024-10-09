@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.75 2024/10/09 21:40:14 uwe Exp $
+.\" $NetBSD: bus_dma.9,v 1.76 2024/10/09 21:53:50 uwe Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -252,11 +252,11 @@ member indicates the number of segments in
 .El
 .
 .Ss Functions
-.Bl -tag -width compact
+.Bl -tag -width Ds \" Fn
 .It Fn bus_dmamap_create "tag" "size" "nsegments" "maxsegsz" "boundary" "flags" "dmamp"
 Allocates a DMA handle and initializes it according to the parameters
 provided.
-.Bl -tag -width nsegments -compact
+.Bl -tag -width Ds \" Fa
 .It Fa tag
 This is the
 .Vt bus_dma_tag_t
@@ -286,7 +286,7 @@ If no boundary condition needs to be observed, a
 .Fa boundary
 argument of 0 should be used.
 .It Fa flags
-.Bl -tag -width BUS_DMA_ALLOCNOW -compact
+.Bl -tag -width Ds \" Dv
 .It Dv BUS_DMA_WAITOK
 It is safe to wait (sleep) for resources during this call.
 .It Dv BUS_DMA_NOWAIT
@@ -319,7 +319,7 @@ Behavior is not defined if invalid arguments are passed to
 Returns 0 on success, or an error code to indicate mode of failure.
 .It Fn bus_dmamap_destroy "tag" "dmam"
 Frees all resources associated with a given DMA handle.
-.Bl -tag -width dmam -compact
+.Bl -tag -width Ds \" Fa
 .It Fa tag
 This is the
 .Vt bus_dma_tag_t
@@ -342,7 +342,7 @@ always succeeds.
 .It Fn bus_dmamap_load "tag" "dmam" "buf" "buflen" "p" "flags"
 Loads a DMA handle with mappings for a DMA transfer.
 It assumes that all pages involved in a DMA transfer are wired.
-.Bl -tag -width buflen -compact
+.Bl -tag -width Ds \" Fa
 .It Fa tag
 This is the
 .Vt bus_dma_tag_t
@@ -363,7 +363,7 @@ Otherwise, the buffer is assumed to be in proc
 .Fa p Ap s
 address space.
 .It Fa flags
-.Bl -tag -width "BUS_DMA_STREAMING" -compact
+.Bl -tag -width Ds \" Dv
 .It Dv BUS_DMA_WAITOK
 It is safe to wait (sleep) for resources during this call.
 .It Dv BUS_DMA_NOWAIT
@@ -425,7 +425,7 @@ Behavior is not defined if invalid arguments are passed to
 Returns 0 on success, or an error code to indicate mode of failure.
 Possible error codes include the following:
 .Pp
-.Bl -tag -width dmam -compact
+.Bl -tag -width Er
 .It Er EFBIG
 Too many segments.
 .It Er EINVAL
@@ -474,7 +474,7 @@ The
 argument is the size of the DMA transfer.
 .It Fn bus_dmamap_unload "tag" "dmam"
 Deletes the mappings for a given DMA handle.
-.Bl -tag -width dmam -compact
+.Bl -tag -width Ds \" Fa
 .It Fa tag
 This is the
 .Vt bus_dma_tag_t
@@ -515,7 +515,7 @@ If given valid arguments,
 always succeeds.
 .It Fn bus_dmamap_sync "tag" "dmam" "offset" "len" "ops"
 Performs pre- and post-DMA operation cache and/or buffer synchronization.
-.Bl -tag -width offset -compact
+.Bl -tag -width Ds \" Fa
 .It Fa tag
 This is the
 .Vt bus_dma_tag_t
@@ -532,7 +532,7 @@ to synchronize.
 .It Fa ops
 One or more synchronization operation to perform.
 The following DMA synchronization operations are defined:
-.Bl -tag -width BUS_DMASYNC_POSTWRITE -compact
+.Bl -tag -width Ds \" Dv
 .It Dv BUS_DMASYNC_PREREAD
 Perform any synchronization required prior to an update of host memory by the
 device.
@@ -545,6 +545,7 @@ and prior to device access to host memory.
 .It Dv BUS_DMASYNC_POSTWRITE
 Perform any synchronization required after device access to host memory.
 .El
+.Pp
 where each operation may involve cache flush/invalidation, bounce buffer
 copying, and/or memory barriers.
 .Pp
@@ -554,7 +555,6 @@ Mixing of
 and
 .Dv POST
 operations is not allowed, and behavior is undefined if this is attempted.
-.El
 .Pp
 Synchronization operations are expressed from the perspective of
 the host RAM, i.e., a
@@ -565,6 +565,7 @@ and a
 .Em memory No \(-> Em device
 operation is a
 .Dv WRITE .
+.El
 .Pp
 .Fn bus_dmamap_sync
 may consult state kept within the DMA map to determine if the memory
@@ -656,7 +657,7 @@ can be used for this purpose.
 Allocations will always be rounded to the hardware page size.
 Callers may wish to take advantage of this, and cluster allocation of small
 data structures.
-.Bl -tag -width alignment -compact
+.Bl -tag -width Ds \" Fa
 .It Fa tag
 This is the
 .Vt bus_dma_tag_t
@@ -688,7 +689,7 @@ of segments that the allocated memory may contain.
 .It Fa rsegs
 Used to return the actual number of segments the memory contains.
 .It Fa flags
-.Bl -tag -width BUS_DMA_STREAMING -compact
+.Bl -tag -width Ds \" Dv
 .It Dv BUS_DMA_WAITOK
 It is safe to wait (sleep) for resources during this call.
 .It Dv BUS_DMA_NOWAIT
@@ -729,7 +730,7 @@ Frees memory previously allocated by
 .Fn bus_dmamem_alloc .
 Any mappings
 will be invalidated.
-.Bl -tag -width nsegs -compact
+.Bl -tag -width Ds \" Fa
 .It Fa tag
 This is the
 .Vt bus_dma_tag_t
@@ -753,7 +754,7 @@ always succeeds.
 Maps memory allocated with
 .Fn bus_dmamem_alloc
 into kernel virtual address space.
-.Bl -tag -width flags -compact
+.Bl -tag -width Ds \" Fa
 .It Fa tag
 This is the
 .Vt bus_dma_tag_t
@@ -771,7 +772,7 @@ The size of the mapping.
 .It Fa kvap
 Filled in to specify the kernel virtual address where the memory is mapped.
 .It Fa flags
-.Bl -tag -width BUS_DMA_COHERENT -compact
+.Bl -tag -width Ds \" Dv
 .It Dv BUS_DMA_WAITOK
 It is safe to wait (sleep) for resources during this call.
 .It Dv BUS_DMA_NOWAIT
@@ -842,7 +843,7 @@ Unmaps memory previously mapped with
 .Fn bus_dmamem_map ,
 freeing the
 kernel virtual address space used by the mapping.
-.Bl -tag -width size -compact
+.Bl -tag -width Ds \" Fa
 .It Fa tag
 This is the
 .Vt bus_dma_tag_t
@@ -866,7 +867,7 @@ Provides support for user
 of DMA-safe memory.
 This function is to be called by a device driver's (*d_mmap)() entry
 point, which is called by the device pager for each page to be mapped.
-.Bl -tag -width nsegs -compact
+.Bl -tag -width Ds \" Fa
 .It Fa tag
 This is the
 .Vt bus_dma_tag_t
@@ -886,7 +887,7 @@ The offset of the page in DMA memory which is to be mapped.
 .It Fa prot
 The protection codes for the mapping.
 .It Fa flags
-.Bl -tag -width BUS_DMA_COHERENT -compact
+.Bl -tag -width Ds \" Dv
 .It Dv BUS_DMA_WAITOK
 It is safe to wait (sleep) for resources during this call.
 .It Dv BUS_DMA_NOWAIT
@@ -919,7 +920,7 @@ that do not support the full address space of the parent bus.
 Not all ports implement this method; on ports where it is unavailable,
 .Er EOPNOTSUPP
 is returned.
-.Bl -tag -width max_addr -compact
+.Bl -tag -width Ds \" Fa
 .It Fa tag
 This is the bus_dma_tag_t to subregion.
 .It Fa min_addr
@@ -929,7 +930,7 @@ The largest address this new tag can address.
 .It Fa newtag
 Pointer filled in with the address of the new bus_dma_tag_t.
 .It Fa flags
-.Bl -tag -width BUS_DMA_WAITOK -compact
+.Bl -tag -width Ds \" Dv
 .It Dv BUS_DMA_WAITOK
 It is safe to wait (sleep) for resources during this call.
 .It Dv BUS_DMA_NOWAIT
