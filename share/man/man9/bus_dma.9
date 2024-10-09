@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.71 2024/10/09 16:22:52 uwe Exp $
+.\" $NetBSD: bus_dma.9,v 1.72 2024/10/09 16:40:00 uwe Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -183,7 +183,9 @@
 .Fc
 .
 .Sh DESCRIPTION
-Provide a bus- and machine-independent "DMA mapping interface."
+Provide a bus- and machine-independent
+.Dq Tn DMA No mapping interface .
+.
 .Ss Implementation Notes
 All data types and constants will be defined
 by the port-specific header
@@ -192,7 +194,8 @@ All functions will be defined
 by the port-specific header
 .In machine/bus_funcs.h .
 Note that this document
-assumes the existence of types already defined by the current "bus.h"
+assumes the existence of types already defined by the current
+.Xr bus_space 9
 interface.
 .Pp
 Unless otherwise noted, all function calls in this interface may be
@@ -202,15 +205,15 @@ macros.
 .Ss Data Types
 Individual implementations may name these structures whatever they
 wish, providing that the external representations are:
-.Bl -tag -width Ds
-.It Fa bus_dma_tag_t
+.Bl -tag -width Vt
+.It Vt bus_dma_tag_t
 A machine-dependent opaque type describing the implementation of
 DMA for a given bus.
-.It Fa bus_dma_segment_t
+.It Vt bus_dma_segment_t
 A structure with at least the following members:
-.Bd -literal
-	bus_addr_t	ds_addr;
-	bus_size_t	ds_len;
+.Bd -literal -offset indent
+bus_addr_t      ds_addr;
+bus_size_t      ds_len;
 .Ed
 .Pp
 The structure may have machine-dependent members and arbitrary layout.
@@ -220,18 +223,18 @@ and
 .Fa ds_len
 are suitable for programming into
 DMA controller address and length registers.
-.It Fa bus_dmamap_t
+.It Vt bus_dmamap_t
 A pointer to a structure with at least the following members:
-.Bd -literal
-	bus_size_t	dm_maxsegsz;
-	bus_size_t	dm_mapsize;
-	int		dm_nsegs;
-	bus_dma_segment_t *dm_segs;
+.Bd -literal -offset indent
+bus_size_t      dm_maxsegsz;
+bus_size_t      dm_mapsize;
+int             dm_nsegs;
+bus_dma_segment_t *dm_segs;
 .Ed
 .Pp
 The structure may have machine-dependent members and arbitrary layout.
 The
-.Fa  dm_maxsegsz
+.Fa dm_maxsegsz
 member indicates the maximum number of bytes that may be transferred by
 any given DMA segment.
 The
@@ -247,6 +250,7 @@ The
 member indicates the number of segments in
 .Fa dm_segs .
 .El
+.
 .Ss Functions
 .Bl -tag -width compact
 .It Fn bus_dmamap_create "tag" "size" "nsegments" "maxsegsz" "boundary" "flags" "dmamp"
@@ -300,7 +304,8 @@ These flags are placeholders, and may be used by busses to provide
 bus-dependent functionality.
 .El
 .It Fa dmamp
-This is a pointer to a bus_dmamap_t.
+This is a pointer to a
+.Vt bus_dmamap_t .
 A DMA map will be allocated and pointed to by
 .Fa dmamp
 upon successful completion of this routine.
@@ -585,27 +590,27 @@ might look like this:
 bus_dmamap_load(...);
 
 while (not done) {
-	/* invalidate soon-to-be-stale cache blocks */
-	bus_dmamap_sync(..., BUS_DMASYNC_PREREAD);
+        /* invalidate soon-to-be-stale cache blocks */
+        bus_dmamap_sync(..., BUS_DMASYNC_PREREAD);
 
-	[ do read DMA ]
+        [ do read DMA ]
 
-	/* copy from bounce */
-	bus_dmamap_sync(..., BUS_DMASYNC_POSTREAD);
+        /* copy from bounce */
+        bus_dmamap_sync(..., BUS_DMASYNC_POSTREAD);
 
-	/* read data now in driver-provided buffer */
+        /* read data now in driver-provided buffer */
 
-	[ computation ]
+        [ computation ]
 
-	/* data to be written now in driver-provided buffer */
+        /* data to be written now in driver-provided buffer */
 
-	/* flush write buffers and writeback, copy to bounce */
-	bus_dmamap_sync(..., BUS_DMASYNC_PREWRITE);
+        /* flush write buffers and writeback, copy to bounce */
+        bus_dmamap_sync(..., BUS_DMASYNC_PREWRITE);
 
-	[ do write DMA ]
+        [ do write DMA ]
 
-	/* probably a no-op, but provided for consistency */
-	bus_dmamap_sync(..., BUS_DMASYNC_POSTWRITE);
+        /* probably a no-op, but provided for consistency */
+        bus_dmamap_sync(..., BUS_DMASYNC_POSTWRITE);
 }
 
 bus_dmamap_unload(...);
