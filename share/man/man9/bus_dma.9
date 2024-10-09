@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.69 2024/06/04 21:43:13 riastradh Exp $
+.\" $NetBSD: bus_dma.9,v 1.70 2024/10/09 16:14:30 uwe Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -94,7 +94,7 @@
 .Fn bus_dmatag_destroy "bus_dma_tag_t tag"
 .Sh DESCRIPTION
 Provide a bus- and machine-independent "DMA mapping interface."
-.Sh IMPLEMENTATION NOTES
+.Ss Implementation Notes
 All data types and constants will be defined
 by the port-specific header
 .In machine/bus_defs.h .
@@ -109,10 +109,10 @@ Unless otherwise noted, all function calls in this interface may be
 defined as
 .Xr cpp 1
 macros.
-.Sh DATA TYPES
+.Ss Data Types
 Individual implementations may name these structures whatever they
 wish, providing that the external representations are:
-.Bl -tag -width compact
+.Bl -tag -width Ds
 .It Fa bus_dma_tag_t
 A machine-dependent opaque type describing the implementation of
 DMA for a given bus.
@@ -157,7 +157,7 @@ The
 member indicates the number of segments in
 .Fa dm_segs .
 .El
-.Sh FUNCTIONS
+.Ss Functions
 .Bl -tag -width compact
 .It Fn bus_dmamap_create "tag" "size" "nsegments" "maxsegsz" "boundary" "flags" "dmamp"
 Allocates a DMA handle and initializes it according to the parameters
