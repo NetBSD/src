@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.55 2022/05/31 13:42:59 riastradh Exp $
+# $NetBSD: Makefile,v 1.55.2.1 2024/10/09 13:25:13 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,7 @@ TESTS_SUBDIRS+=	execve
 TESTS_SUBDIRS+=	posix_spawn
 
 TESTS_C+=	t_alarm
+TESTS_C+=	t_arc4random
 TESTS_C+=	t_assert
 TESTS_C+=	t_basedirname
 TESTS_C+=	t_closefrom
@@ -44,6 +45,7 @@ TESTS_C+=	t_vis
 COPTS.t_siginfo.c+=	-DENABLE_TESTS
 .endif
 
+CPPFLAGS.t_arc4random.c+=-I${NETBSDSRCDIR}/lib/libc/include
 CPPFLAGS.t_siginfo.c+=-D__TEST_FENV
 COPTS.t_fpsetround.c+=${${ACTIVE_CC} == "gcc":? -frounding-math :}
 
@@ -54,6 +56,8 @@ DPADD.t_fpclassify+=	${LIBM}
 LDADD.t_fpsetround+=	-lm
 DPADD.t_fpsetround+=	${LIBM}
 
+LDADD.t_arc4random+=	-lpthread
+DPADD.t_arc4random+=	${LIBPTHREAD}
 LDADD.t_nice+=		-lpthread
 DPADD.t_nice+=		${LIBPTHREAD}
 LDADD.t_syslog+=	-lpthread

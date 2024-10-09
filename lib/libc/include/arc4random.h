@@ -1,7 +1,7 @@
-/*	$NetBSD: entropy.h,v 1.4.20.2 2024/10/09 13:25:13 martin Exp $	*/
+/*	$NetBSD: arc4random.h,v 1.1.2.2 2024/10/09 13:25:11 martin Exp $	*/
 
 /*-
- * Copyright (c) 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,35 +29,32 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_SYS_ENTROPY_H
-#define	_SYS_ENTROPY_H
+#ifndef	_LIBC_GEN_ARC4RANDOM_H_
+#define	_LIBC_GEN_ARC4RANDOM_H_
 
-#ifndef _KERNEL
-#error This header is known to the state of California to cause cancer in users.
-#endif
+#include <stdbool.h>
+#include <stdint.h>
 
-#include <sys/types.h>
+#include "reentrant.h"
 
-#include <lib/libkern/entpool.h>
+struct crypto_prng {
+	uint8_t		state[32];
+};
 
-struct knote;
+struct arc4random_prng {
+	struct crypto_prng	arc4_prng;
+	unsigned		arc4_epoch;
+};
 
-#define	ENTROPY_CAPACITY	ENTPOOL_CAPACITY	/* bytes */
+struct arc4random_global_state {
+	mutex_t			lock;
+	thread_key_t		thread_key;
+	struct arc4random_prng	prng;
+	bool			initialized;
+};
 
-#define	ENTROPY_WAIT		0x01
-#define	ENTROPY_SIG		0x02
-#define	ENTROPY_HARDFAIL	0x04
+#define	arc4random_global	__arc4random_global /* libc private symbol */
 
-void	entropy_bootrequest(void);
-void	entropy_reset(void);
-int	entropy_gather(void);
-void	entropy_consolidate(void);
-int	entropy_consolidate_sig(void);
-unsigned entropy_epoch(void);
-bool	entropy_ready(void);
-int	entropy_extract(void *, size_t, int);
-int	entropy_poll(int);
-int	entropy_kqfilter(struct knote *);
-int	entropy_ioctl(unsigned long, void *);
+extern struct arc4random_global_state arc4random_global;
 
-#endif	/* _SYS_ENTROPY_H */
+#endif	/* _LIBC_GEN_ARC4RANDOM_H_ */

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1757.2.13 2024/10/09 13:00:12 martin Exp $
+# $NetBSD: mi,v 1.1757.2.14 2024/10/09 13:25:11 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -775,6 +775,7 @@
 ./usr/share/man/cat4/acpismbus.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acpitz.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpivga.0			man-sys-catman		.cat
+./usr/share/man/cat4/acpivmgenid.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acpiwdrt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpiwmi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adb.0			man-sys-catman		.cat
@@ -4228,6 +4229,7 @@
 ./usr/share/man/html4/acpismbus.html		man-sys-htmlman		html
 ./usr/share/man/html4/acpitz.html		man-sys-htmlman		html
 ./usr/share/man/html4/acpivga.html		man-sys-htmlman		html
+./usr/share/man/html4/acpivmgenid.html		man-sys-htmlman		html
 ./usr/share/man/html4/acpiwdrt.html		man-sys-htmlman		html
 ./usr/share/man/html4/acpiwmi.html		man-sys-htmlman		html
 ./usr/share/man/html4/adb.html			man-sys-htmlman		html
@@ -7375,6 +7377,7 @@
 ./usr/share/man/man4/acpismbus.4		man-sys-man		.man
 ./usr/share/man/man4/acpitz.4			man-sys-man		.man
 ./usr/share/man/man4/acpivga.4			man-sys-man		.man
+./usr/share/man/man4/acpivmgenid.4		man-sys-man		.man
 ./usr/share/man/man4/acpiwdrt.4			man-sys-man		.man
 ./usr/share/man/man4/acpiwmi.4			man-sys-man		.man
 ./usr/share/man/man4/adb.4			man-sys-man		.man

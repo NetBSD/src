@@ -1,4 +1,4 @@
-/*	$NetBSD: reentrant.h,v 1.21 2021/12/08 20:11:54 andvar Exp $	*/
+/*	$NetBSD: reentrant.h,v 1.21.2.1 2024/10/09 13:25:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2003 The NetBSD Foundation, Inc.
@@ -90,6 +90,9 @@
  * pthread library, and the real function in the pthread library if it
  * is.
  */
+
+#ifndef	_LIBC_REENTRANT_H_
+#define	_LIBC_REENTRANT_H_
 
 #include <pthread.h>
 #include <signal.h>
@@ -326,3 +329,5 @@ thr_once(once_t *once_control, void (*routine)(void))
 #define	FUNLOCKFILE(fp) __nothing
 
 #endif /* _REENTRANT */
+
+#endif	/* _LIBC_REENTRANT_H_ */

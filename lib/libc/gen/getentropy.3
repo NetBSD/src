@@ -1,4 +1,4 @@
-.\"	$NetBSD: getentropy.3,v 1.4.2.2 2024/10/09 13:12:40 martin Exp $ $
+.\"	$NetBSD: getentropy.3,v 1.4.2.3 2024/10/09 13:25:10 martin Exp $ $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 28, 2023
+.Dd August 28, 2024
 .Dt GETENTROPY 3
 .Os
 .Sh NAME
@@ -41,9 +41,8 @@
 .Fn getentropy "void *buf" "size_t buflen"
 .In limits.h
 .Pp
-.Li #define GETENTROPY_MAX	256
+.Li #define GETENTROPY_MAX  256
 .Sh DESCRIPTION
-.Pp
 The
 .Nm
 function fills
@@ -99,6 +98,21 @@ However, the
 interface alone can make no security guarantees without a physical
 system configuration that includes random number generation hardware or
 secret seed material from such hardware on another machine.
+.Pp
+.Nx
+attempts to reseed the system entropy pool when it has detected the
+system has been cloned as a guest in a virtual machine, so that
+subsequent calls to
+.Nm
+in the clones yield independent outputs.
+However, this relies on the virtual machine host to notify the guest,
+e.g. through the
+.Xr acpivmgenid 4
+device, and even so there is an unavoidable small window of time
+between when the virtual machine is actually cloned and when the system
+is reseeded during which
+.Nm
+may yield identical outputs in the clones.
 .Sh SEE ALSO
 .Xr arc4random 3 ,
 .Xr rnd 4 ,

@@ -1,0 +1,108 @@
+.\"	$NetBSD: acpivmgenid.4,v 1.3.2.2 2024/10/09 13:25:11 martin Exp $
+.\"
+.\" Copyright (c) 2024 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 26, 2024
+.Dt ACPIVMGENID 4
+.Os
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh NAME
+.Nm acpivmgenid
+.Nd ACPI Virtual Machine Generation ID
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SYNOPSIS
+.Cd "acpivmgenid* at acpi?"
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh DESCRIPTION
+.Nm
+provides a generation ID for virtual machines.
+.Pp
+When starting two otherwise identical virtual machines, whether from
+the same clean image or by cloning snapshots or any other mechanism,
+the VM host may choose a different generation ID.
+Although this generation ID is not secret, it is incorporated into the
+.Xr entropy 7
+pool (with a measure of zero entropy) so that the two virtual machines
+will produce independent random output.
+.Pp
+If a live VM is cloned, the VM host may change the generation ID in one
+or both of the clones and notify them through the
+.Nm
+device.
+When this happens,
+.Nx
+will reseed system random number generators, so that output of
+.Pa /dev/urandom
+and
+.Xr getentropy 3
+will be independent in the two clones, and the
+.Xr sysctl 7
+variable
+.Li kern.entropy.epoch
+will advance to notify applications that they should reseed random
+number generators from the system entropy pool.
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SYSCTLS
+The following
+.Xr sysctl 7
+nodes are available:
+.Bl -tag -width Li
+.It Li "hw.acpivmgenid" Ns Va N Ns Li ".id"
+The current 16-byte VM generation ID.
+.It Li "hw.acpivmgenid" Ns Va N Ns Li ".paddr"
+The physical address of the VM generation ID provided by the host.
+.El
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SEE ALSO
+.Xr arc4random 3 ,
+.Xr getentropy 3 ,
+.Xr rnd 4 ,
+.Xr entropy 7
+.Rs
+.%T Virtual Machine Generation ID
+.%Q Microsoft
+.%D 2018-08-01
+.%U http://go.microsoft.com/fwlink/?LinkId=260709
+.Re
+.Rs
+.%T Virtual Machine Generation ID Device
+.%Q The QEMU Project Developers
+.%U https://www.qemu.org/docs/master/specs/vmgenid.html
+.Re
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 11.0 .
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh BUGS
+Currently there is no cheaper way to detect VM generation ID changes
+than to query sysctl.
+(Applications deciding whether to reseed random number generators
+should generally query
+.Li kern.entropy.epoch ,
+not
+.Li "hw.acpivmgenid" Ns Va N Ns Li ".id" . )
