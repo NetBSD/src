@@ -1,4 +1,4 @@
-#	$NetBSD: files.libsodium,v 1.6 2021/08/21 09:09:39 christos Exp $
+#	$NetBSD: files.libsodium,v 1.6.4.1 2024/10/09 10:49:04 martin Exp $
 
 define		libsodium
 
@@ -12,6 +12,7 @@ makeoptions libsodium "CWARNFLAGS.libsodium"+="-Wno-unused-function"
 makeoptions libsodium "CWARNFLAGS.libsodium"+="-Wno-unused-variable"
 
 file	external/isc/libsodium/src/sodium_module.c	libsodium
+file	external/isc/libsodium/src/sodium_selftest.c	libsodium
 
 file	external/isc/libsodium/dist/src/libsodium/crypto_scalarmult/curve25519/ref10/x25519_ref10.c	libsodium
 file	external/isc/libsodium/dist/src/libsodium/crypto_scalarmult/curve25519/scalarmult_curve25519.c	libsodium

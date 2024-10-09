@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile.sodmod,v 1.3 2021/08/21 09:07:08 christos Exp $
+#	$NetBSD: Makefile.sodmod,v 1.3.4.1 2024/10/09 10:49:04 martin Exp $
 
 SODIUMDIR=	${S}/external/isc/libsodium
 SODIUMSRCDIR=	${SODIUMDIR}/dist/src/libsodium
 
 .PATH:	${SODIUMDIR}/src
 SRCS+=	sodium_module.c
+SRCS+=	sodium_selftest.c
 
 .PATH:	${SODIUMSRCDIR}/crypto_scalarmult/curve25519/ref10
 SRCS+=	x25519_ref10.c

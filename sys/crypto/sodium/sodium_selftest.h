@@ -1,7 +1,7 @@
-/*	$NetBSD: sodium_module.c,v 1.1.4.1 2024/10/09 10:49:03 martin Exp $	*/
+/*	$NetBSD: sodium_selftest.h,v 1.2.2.2 2024/10/09 10:49:04 martin Exp $	*/
 
 /*-
- * Copyright (c) 2021 The NetBSD Foundation, Inc.
+ * Copyright (c) 2024 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,35 +26,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sodium_module.c,v 1.1.4.1 2024/10/09 10:49:03 martin Exp $");
+#ifndef	_SYS_CRYPTO_SODIUM_SODIUM_SELFTEST_H_
+#define	_SYS_CRYPTO_SODIUM_SODIUM_SELFTEST_H_
 
-#include <sys/param.h>
-#include <sys/kernel.h>
-#include <sys/module.h>
+int crypto_aead_chacha20poly1305_ietf_selftest(void);
+int crypto_aead_xchacha20poly1305_ietf_selftest(void);
 
-#include <crypto/sodium/sodium_selftest.h>
+int sodium_selftest(void);
 
-MODULE(MODULE_CLASS_MISC, sodium, NULL);
-
-static int
-sodium_modcmd(modcmd_t cmd, void *arg)
-{
-
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-		if (sodium_selftest()) {
-			printf("sodium self-test failed\n");
-			return EIO;
-		}
-		break;
-
-	case MODULE_CMD_FINI:
-		break;
-
-	default:
-		return ENOTTY;
-	}
-
-	return 0;
-}
+#endif	/* _SYS_CRYPTO_SODIUM_SODIUM_SELFTEST_H_ */
