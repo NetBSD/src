@@ -1,4 +1,4 @@
-.\"	$NetBSD: container_of.3,v 1.1 2024/10/08 23:11:21 christos Exp $
+.\"	$NetBSD: container_of.3,v 1.2 2024/10/09 00:55:24 uwe Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,14 +33,14 @@
 container structure.
 .Sh SYNOPSIS
 .In sys/container_of.h
-.Ft type
+.Ft "type *"
 .Fn container_of "pointer" "type" "member"
 .Sh DESCRIPTION
 Given a
 .Fa pointer
 that points to a
 .Fa member
-of the container
+of the container structure
 .Fa type
 the
 .Fn container_of
@@ -48,22 +48,23 @@ macro returns a pointer that points to the enclosing container structure.
 .Pp
 A compiler error will result if
 .Ar member
-is not aligned to a byte boundary (i.e. it is a bit-field).
+is not aligned to a byte boundary
+.Pq i.e. it is a bit-field .
 .Sh EXAMPLES
-.Bd -literal -offset indent
+.Bd -literal
 #include <assert.h>
 #include <sys/container_of.h>
 struct container {
-	double	other_member;
-	int	member;
+        double  other_member;
+        int     member;
 };
 
 struct container one;
 
 void test(void) {
-	int *ptr = &one.member;
-	struct container *onep = container_of(ptr, struct container, member);
-	assert(onep == &one);
+        int *ptr = &one.member;
+        struct container *onep = container_of(ptr, struct container, member);
+        assert(onep == &one);
 }
 .Ed
 .Sh SEE ALSO
