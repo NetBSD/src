@@ -1,4 +1,4 @@
-/*      $NetBSD: amdzentemp.c,v 1.16.2.2 2023/08/22 16:07:34 martin Exp $ */
+/*      $NetBSD: amdzentemp.c,v 1.16.2.3 2024/10/09 13:27:51 martin Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.16.2.2 2023/08/22 16:07:34 martin Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.16.2.3 2024/10/09 13:27:51 martin Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -208,6 +208,7 @@ amdzentemp_attach(device_t parent, device_t self, void *aux)
 		break;
 	case 0x17:
 	case 0x19:
+	case 0x1a:
 		sc->sc_sme->sme_refresh = amdzentemp_family17_refresh;
 		break;
 	default:
@@ -429,6 +430,25 @@ amdzentemp_probe_ccd_sensors19h(struct amdzentemp_softc *sc, int model)
 }
 
 static int
+amdzentemp_probe_ccd_sensors1ah(struct amdzentemp_softc *sc, int model)
+{
+	int maxreg;
+
+	switch (model) {
+	case 0x40 ... 0x4f: /* Zen5 */
+		sc->sc_ccd_offset = 0x300;
+		maxreg = 8;
+		break;
+	default:
+		aprint_error_dev(sc->sc_dev,
+		    "Unrecognized Family 19h Model: %02xh\n", model);
+		return 0;
+	}
+
+	return maxreg;
+}
+
+static int
 amdzentemp_probe_ccd_sensors(struct amdzentemp_softc *sc, int family, int model)
 {
 	int nccd;
@@ -439,6 +459,9 @@ amdzentemp_probe_ccd_sensors(struct amdzentemp_softc *sc, int family, int model)
 		break;
 	case 0x19:
 		nccd = amdzentemp_probe_ccd_sensors19h(sc, model);
+		break;
+	case 0x1a:
+		nccd = amdzentemp_probe_ccd_sensors1ah(sc, model);
 		break;
 	default:
 		return 0;
