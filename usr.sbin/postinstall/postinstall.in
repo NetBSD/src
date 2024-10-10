@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.63 2024/04/05 16:44:54 christos Exp $
+# $NetBSD: postinstall.in,v 1.64 2024/10/10 13:06:22 uwe Exp $
 #
 # Copyright (c) 2002-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -608,57 +608,86 @@ _obsolete_libs()
 
 	(
 
-	if [ ! -e "${DEST_DIR}/${dir}" ]
-	then
-		return 0
-	fi
-
+	[ -e "${DEST_DIR}/${dir}" ] || return 0
 	cd "${DEST_DIR}/${dir}" || err 2 "can't cd to ${DEST_DIR}/${dir}"
-	echo lib*.so.* \
-	| tr ' ' '\n' \
-	| ${AWK} -v LibDir="${dir}/" '
+
+	# TODO: make this selectable with a command line option?
+	local maybe_purge_major
+	#maybe_purge_major='-v PurgeOldMajor=1'
+
+	printf '%s\n' lib*.so.* | ${AWK} ${maybe_purge_major} '
 #{
 
-function digit(v, c, n) { return (n <= c) ? v[n] : 0 }
+BEGIN {
+	BASE_REGEX  = "^lib.*\\.so\\."
+	MAJOR_REGEX = (BASE_REGEX "[0-9]+\\.")
 
-function checklib(results, line, regex) {
-	if (! match(line, regex))
+	# in the usual case different major versions of the same
+	# library are considered different stems and do not compete
+	# with each other, we keep one of each, but you may request to
+	# purge old majors, in which case all versions compete for the
+	# single basename stem
+	if (PurgeOldMajor)
+		keepone = BASE_REGEX
+	else
+		keepone = MAJOR_REGEX
+}
+
+# major version symlink
+PurgeOldMajor && /^lib.*\.so\.[0-9]+$/ {
+	checklib(major, $0, BASE_REGEX)
+}
+
+# specific minor version of a library
+/^lib.*\.so\.[0-9]+\.[0-9]+(\.[0-9]+)?(\.debug)?$/ {
+	checklib(minor, $0, keepone)
+}
+
+function checklib(latest, libname, stem_regex) {
+	if (! match(libname, stem_regex))
 		return
-	lib = substr(line, RSTART, RLENGTH)
-	rev = substr($0, RLENGTH+1)
-	if (! (lib in results)) {
-		results[lib] = rev
+	stem = substr(libname, RSTART, RLENGTH)
+	vers = substr(libname, RLENGTH + 1)
+
+	# first time we see this stem? just record the version
+	if (! (stem in latest)) {
+		latest[stem] = vers
 		return
 	}
-	orevc = split(results[lib], orev, ".")
-	nrevc = split(rev, nrev, ".")
-	maxc = (orevc > nrevc) ? orevc : nrevc
-	for (i = 1; i <= maxc; i++) {
-		res = digit(orev, orevc, i) - digit(nrev, nrevc, i)
-		if (res < 0) {
-			print LibDir lib results[lib]
-			results[lib] = rev
+
+	# split version suffixes into the list of numeric components
+	oversc = split(latest[stem], overs, ".")
+	nversc = split(vers,         nvers, ".")
+	maxc = (oversc > nversc) ? oversc : nversc
+
+	# is the new version "later" than the one we have seen?
+	for (i = 1; i <= maxc; ++i) {
+		cmp = (overs[i]+0) - (nvers[i]+0)
+
+		if (cmp < 0) {
+			# the one we have seen is older, so report it
+			# as obsolete and update the latest seen
+			# version to this new one
+			print stem latest[stem]
+			latest[stem] = vers
 			return
-		} else if (res > 0) {
-			print LibDir lib rev
+		}
+		else if (cmp > 0) {
+			# the one we have just read is older than the
+			# one we have seen previously, so report this
+			# "new" one as obsolete
+			print libname
 			return
 		}
 	}
 }
 
-/^lib.*\.so\.[0-9]+\.[0-9]+(\.[0-9]+)?(\.debug)?$/ {
-	if (AllLibs)
-		checklib(minor, $0, "^lib.*\\.so\\.")
-	else
-		checklib(found, $0, "^lib.*\\.so\\.[0-9]+\\.")
-}
-
-/^lib.*\.so\.[0-9]+$/ {
-	if (AllLibs)
-		checklib(major, $0, "^lib.*\\.so\\.")
-}
-
-#}' | exclude_libs
+	# the ouput if further filtered by exclude_libs that protects
+	# libraries that have symlinks pointing to them, which one
+	# encounters when downgrading
+#}'	\
+	| exclude_libs \
+	| ${SED} "s|^|${dir}/|"
 
 	)
 }
