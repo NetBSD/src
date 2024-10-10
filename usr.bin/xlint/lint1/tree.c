@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.653 2024/10/08 19:50:49 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.654 2024/10/10 05:01:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.653 2024/10/08 19:50:49 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.654 2024/10/10 05:01:03 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3452,10 +3452,6 @@ check_prototype_conversion(int arg, tspec_t nt, tspec_t ot, type_t *tp,
 static bool
 can_represent(const type_t *tp, const tnode_t *tn)
 {
-
-	debug_step("%s: type '%s'", __func__, type_name(tp));
-	debug_node(tn);
-
 	uint64_t nmask = value_bits(width_in_bits(tp));
 	if (!is_uinteger(tp->t_tspec))
 		nmask >>= 1;
@@ -3470,6 +3466,10 @@ can_represent(const type_t *tp, const tnode_t *tn)
 	    : tpc.smin <= c.smin && tpc.smax >= c.smax)
 		return true;
 
+	debug_enter();
+	debug_step("type '%s' cannot represent:", type_name(tp));
+	debug_node(tn);
+	debug_leave();
 	return false;
 }
 
