@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.65 2024/10/10 21:42:24 uwe Exp $
+# $NetBSD: postinstall.in,v 1.66 2024/10/10 22:14:34 uwe Exp $
 #
 # Copyright (c) 2002-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -591,14 +591,24 @@ exclude()
 }
 
 #
-# find all the target symlinks of shared libraries and exclude them
-# from consideration for removal
+# Find all the symlink targets of shared libraries and exclude them
+# from consideration for removal.
+#
+# This protects "new old" libs after downgrading a system.  Say, you
+# had a more recent system that comes with libfoo.so.1.2 and then
+# downgraded to an older version that had libfoo.so.1.1.  You still
+# have 1.2 that "wins" the competition for the "libfoo.so.1" stem and
+# thus 1.1 is considered obsolete by the awk script in _obsolete_libs
+# below.  But your libfoo.so.1 now points to 1.1 so deleting 1.1 will
+# render your system broken.  exclude_libs is fed the output of
+# potentially obsolete libs and absolves those (libfoo.so.1.1) that
+# are a target of a symlink (libfoo.so.1 -> libfoo.so.1.1)
 #
 exclude_libs()
 {
-	local target="$(find lib*.so.* -prune -type l -exec readlink '{}' + 2> /dev/null \
+	local targets="$(find lib*.so.* -prune -type l -exec readlink '{}' + 2> /dev/null \
 	    | ${SED} -e 's@.*/@@' | ${SORT} -u)"
-	exclude -t ${target}
+	${GREP} -F -v -x "$targets"
 }
 
 _obsolete_libs()
@@ -681,7 +691,7 @@ function checklib(latest, libname, stem_regex) {
 	}
 }
 
-	# the ouput if further filtered by exclude_libs that protects
+	# the ouput is further filtered by exclude_libs that protects
 	# libraries that have symlinks pointing to them, which one
 	# encounters when downgrading
 #}'	\
