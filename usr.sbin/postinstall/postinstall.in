@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.64 2024/10/10 13:06:22 uwe Exp $
+# $NetBSD: postinstall.in,v 1.65 2024/10/10 21:42:24 uwe Exp $
 #
 # Copyright (c) 2002-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -596,8 +596,7 @@ exclude()
 #
 exclude_libs()
 {
-	local target="$(ls -l -d lib*.so.* 2> /dev/null \
-	    | ${AWK} '{ print $11; }' \
+	local target="$(find lib*.so.* -prune -type l -exec readlink '{}' + 2> /dev/null \
 	    | ${SED} -e 's@.*/@@' | ${SORT} -u)"
 	exclude -t ${target}
 }
