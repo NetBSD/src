@@ -1,4 +1,4 @@
-/*	$NetBSD: t_semtimedop.c,v 1.1 2024/10/03 17:11:14 christos Exp $	*/
+/*	$NetBSD: t_semtimedop.c,v 1.2 2024/10/10 07:45:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_semtimedop.c,v 1.1 2024/10/03 17:11:14 christos Exp $");
+__RCSID("$NetBSD: t_semtimedop.c,v 1.2 2024/10/10 07:45:02 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -40,6 +40,12 @@ __RCSID("$NetBSD: t_semtimedop.c,v 1.1 2024/10/03 17:11:14 christos Exp $");
 #include <atf-c.h>
 #include <sys/wait.h>
 
+union semun {
+	int	val;		/* value for SETVAL */
+	struct	semid_ds *buf;	/* buffer for IPC_{STAT,SET} */
+	u_short	*array;		/* array for GETALL & SETALL */
+};
+
 ATF_TC(semtimedop_basic);
 ATF_TC_HEAD(semtimedop_basic, tc)
 {
@@ -51,6 +57,7 @@ ATF_TC_BODY(semtimedop_basic, tc)
 	key_t		key = IPC_PRIVATE;
 	int		semid;
 	struct sembuf	sops;
+	union semun	sun;
 	struct timespec	timeout;
 
 	/* Create semaphore set with 1 semaphore */
@@ -58,7 +65,8 @@ ATF_TC_BODY(semtimedop_basic, tc)
 	ATF_REQUIRE_MSG(semid != -1, "semget failed: %s", strerror(errno));
 
 	/* Initialize semaphore to 0 */
-	if (semctl(semid, 0, SETVAL, 0) == -1) {
+	sun.val = 0;
+	if (semctl(semid, 0, SETVAL, sun) == -1) {
 		ATF_REQUIRE_MSG(0, "semctl SETVAL failed: %s",
 		    strerror(errno));
 	}
@@ -100,6 +108,7 @@ ATF_TC_BODY(semtimedop_timeout, tc)
 	key_t		key = IPC_PRIVATE;
 	int		semid;
 	struct sembuf	sops;
+	union semun	sun;
 	struct timespec	timeout;
 	pid_t		pid;
 	int		status;
@@ -109,7 +118,8 @@ ATF_TC_BODY(semtimedop_timeout, tc)
 	ATF_REQUIRE_MSG(semid != -1, "semget failed: %s", strerror(errno));
 
 	/* Initialize semaphore to 0 */
-	if (semctl(semid, 0, SETVAL, 0) == -1) {
+	sun.val = 0;
+	if (semctl(semid, 0, SETVAL, sun) == -1) {
 		ATF_REQUIRE_MSG(0, "semctl SETVAL failed: %s", strerror(errno));
 	}
 
@@ -159,6 +169,7 @@ ATF_TC_BODY(semtimedop_semundo, tc)
 	key_t		key = IPC_PRIVATE;
 	int		semid;
 	struct sembuf	sops;
+	union semun	sun;
 	struct timespec	timeout;
 	pid_t		pid;
 	int		val;
@@ -168,7 +179,8 @@ ATF_TC_BODY(semtimedop_semundo, tc)
 	ATF_REQUIRE_MSG(semid != -1, "semget failed: %s", strerror(errno));
 
 	/* Initialize semaphore to 0 */
-	if (semctl(semid, 0, SETVAL, 0) == -1) {
+	sun.val = 0;
+	if (semctl(semid, 0, SETVAL, sun) == -1) {
 		ATF_REQUIRE_MSG(0, "semctl SETVAL failed: %s", strerror(errno));
 	}
 
@@ -216,6 +228,7 @@ ATF_TC_HEAD(semtimedop_invalid, tc)
 ATF_TC_BODY(semtimedop_invalid, tc)
 {
 	struct sembuf	sops;
+	union semun	sun;
 	struct timespec	timeout;
 
 	/* Invalid semaphore id */
@@ -236,7 +249,8 @@ ATF_TC_BODY(semtimedop_invalid, tc)
 	ATF_REQUIRE_MSG(semid != -1, "semget failed: %s", strerror(errno));
 
 	/* Initialize semaphore to 0 */
-	if (semctl(semid, 0, SETVAL, 0) == -1) {
+	sun.val = 0;
+	if (semctl(semid, 0, SETVAL, sun) == -1) {
 		ATF_REQUIRE_MSG(0, "semctl SETVAL failed: %s", strerror(errno));
 	}
 
