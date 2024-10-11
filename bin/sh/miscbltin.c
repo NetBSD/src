@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.54 2023/10/05 20:33:31 kre Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.55 2024/10/11 09:02:10 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.54 2023/10/05 20:33:31 kre Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.55 2024/10/11 09:02:10 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,29 +45,32 @@ __RCSID("$NetBSD: miscbltin.c,v 1.54 2023/10/05 20:33:31 kre Exp $");
  * Miscellaneous builtins.
  */
 
-#include <sys/types.h>		/* quad_t */
 #include <sys/param.h>		/* BSD4_4 */
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/resource.h>
-#include <unistd.h>
-#include <stdlib.h>
+#include <sys/types.h>		/* quad_t */
+
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
+#include <stdlib.h>
+#ifndef SMALL
+#include <termios.h>
+#endif
+#include <unistd.h>
 
 #include "shell.h"
 #include "options.h"
 #include "var.h"
+#include "input.h"		/* for whichprompt */
 #include "output.h"
+#include "parser.h"		/* for getprompt() */
 #include "memalloc.h"
 #include "error.h"
 #include "builtins.h"
 #include "mystring.h"
 #include "redir.h"		/* for user_fd_limit */
-
-#undef rflag
-
-
 
 /*
  * The read builtin.
@@ -86,13 +89,119 @@ __RCSID("$NetBSD: miscbltin.c,v 1.54 2023/10/05 20:33:31 kre Exp $");
  * ':b c:'	x='',  y='b c:'
  */
 
+#ifndef SMALL
+static int b_flag;
+
+static int
+setrawmode(int fd, int on, int end, struct termios *t)
+{
+	struct termios n;
+
+	if (on) {
+		if (tcgetattr(fd, t) != 0)
+			return 0;
+		n = *t;
+		if (on == 1 && b_flag) {
+			n.c_cc[VEOL] = end;
+		} else {
+			cfmakeraw(&n);
+			n.c_iflag |= ICRNL;
+			n.c_oflag = t->c_oflag;
+			n.c_lflag |= ECHO | ISIG;
+		}
+		if (tcsetattr(fd, TCSADRAIN | TCSASOFT, &n) == 0)
+			return 1;
+	} else
+		(void)tcsetattr(fd, TCSADRAIN | TCSASOFT, t);
+	return 0;
+}
+
+static int
+is_a_pipe(int fd)
+{
+	if (lseek(fd, 0, SEEK_CUR) == -1 && errno == ESPIPE) {
+		errno = 0;
+		return 1;
+	}
+	return 0;
+}
+
+#define	READ_BUFFER_SIZE	512
+
+static int
+next_read_char(int fd, size_t max)
+{
+	static char buffer[READ_BUFFER_SIZE];
+	static int pos = 0, len = 0;
+
+	if (max == 0) {
+		pos = len = 0;
+		return -1;
+	}
+	if (max == (size_t)-1) {
+		/*
+		 * If possible, and necessary, rewind the file
+		 * so unprocessed data  can be read again next time
+		 *
+		 * If that fails, never mind (-b allows that to happen)
+		 */
+		if (b_flag && pos < len)
+			(void)lseek(fd, (off_t)(pos - len), SEEK_CUR);
+		return -1;
+	}
+
+	if (b_flag == 0) {
+		char c;
+
+		(void) max;
+		if (read(fd, &c, 1) != 1)
+			return -1;
+		return (c & 0xFF);
+	}
+
+	if (pos >= len) {
+		pos = 0;
+		if (max > sizeof buffer)
+			max = sizeof buffer;
+		len = read(fd, buffer, max);
+		if (len <= 0)
+			return -1;
+	}
+
+	return buffer[pos++] & 0xFF;
+}
+
+#define READ_OPTS	"bd:n:p:r"
+
+#else
+
+static inline int
+next_read_char(int fd, size_t max)
+{
+	char c;
+
+	if (max == 0 || max == (size_t)-1)
+		return 0;
+
+	if (read(fd, &c, 1) != 1)
+		return -1;
+	return (c & 0xFF);
+}
+
+#define n_flag 0
+#define maxlen 0
+
+#define READ_OPTS	"d:p:r"
+
+#endif
+
 int
 readcmd(int argc, char **argv)
 {
 	char **ap;
-	char c;
+	int c;
 	char end;
-	int rflag;
+	int r_flag;
 	char *prompt;
 	const char *ifs;
 	char *p;
@@ -101,14 +210,27 @@ readcmd(int argc, char **argv)
 	int i;
 	int is_ifs;
 	int saveall = 0;
+	int read_tty = 0;
 	ptrdiff_t wordlen = 0;
 	char *newifs = NULL;
 	struct stackmark mk;
 
+#ifndef SMALL
+	struct termios ttystate;
+	int n_flag, maxlen;
+	int setraw = 0;
+
+	b_flag = 0;
+	n_flag = 0;
+	maxlen = READ_BUFFER_SIZE - 1;
+#endif
+
 	end = '\n';				/* record delimiter */
-	rflag = 0;
+	r_flag = 0;
 	prompt = NULL;
-	while ((i = nextopt("d:p:r")) != '\0') {
+	whichprompt = 2;			/* for continuation lines */
+
+	while ((i = nextopt(READ_OPTS)) != '\0') {
 		switch (i) {
 		case 'd':
 			end = *optionarg;	/* even if '\0' */
@@ -117,39 +239,80 @@ readcmd(int argc, char **argv)
 			prompt = optionarg;
 			break;
 		case 'r':
-			rflag = 1;
+			r_flag = 1;
 			break;
+#ifndef SMALL
+		case 'n':
+			maxlen = number(optionarg);
+			if (maxlen > (INT_MAX >> 8) + 1)	/* sanity */
+				error("-n %s too large", optionarg);
+			n_flag = 1;
+			break;
+		case 'b':
+			if (!is_a_pipe(0))
+				b_flag = 1;
+			break;
+#endif
 		}
 	}
 
 	if (*(ap = argptr) == NULL)
 		error("variable name required\n"
-			"Usage: read [-r] [-p prompt] var...");
+#ifdef SMALL
+		      "Usage: read [-r] [-d C] [-p prompt] var...");
+#else
+		      "Usage: read [-br] [-d C] [-n len] [-p prompt] var...");
 
-	if (prompt && isatty(0)) {
-		out2str(prompt);
-		flushall();
+	(void)next_read_char(0, 0);	/* make sure the buffer is empty */
+#endif
+
+	if (isatty(0)) {
+		read_tty = 1;
+		if (prompt) {
+			out2str(prompt);
+			flushall();
+		}
+#ifndef SMALL
+		b_flag = 1;	/* always buffer reads from ttys */
+
+		if (n_flag || end != '\n')
+			setraw = setrawmode(0, 1 + n_flag, end, &ttystate);
+#endif
 	}
 
+/*
 	if ((ifs = bltinlookup("IFS", 1)) == NULL)
 		ifs = " \t\n";
+*/
+	ifs = ifsval();
 
 	setstackmark(&mk);
 	status = 0;
 	startword = 2;
 	STARTSTACKSTR(p);
-	for (;;) {
-		if (read(0, &c, 1) != 1) {
+
+#ifdef SMALL
+	for ( ; ; ) {
+#else
+	for ( ; !n_flag || --maxlen >= 0 ; ) {
+#endif
+		if ((c = next_read_char(0, maxlen + 1)) < 0) {
 			status = 1;
 			break;
 		}
-		if (c == '\\' && c != end && !rflag) {
-			if (read(0, &c, 1) != 1) {
+		if (c == '\\' && c != end && !r_flag) {
+#ifndef SMALL
+			if (n_flag && --maxlen < 0)
+				break;
+#endif
+			if ((c = next_read_char(0, maxlen + 1)) < 0) {
 				status = 1;
 				break;
 			}
 			if (c != '\n')	/* \ \n is always just removed */
 				goto wdch;
+			if (read_tty)
+				out2str(getprompt(NULL));
 			continue;
 		}
 		if (c == end)
@@ -179,7 +342,7 @@ readcmd(int argc, char **argv)
 
 		if (is_ifs == 0) {
   wdch:;
-			if (c == '\0')	/* always ignore attempts to input \0 */
+			if (c == '\0') /* always ignore attempts to input \0 */
 				continue;
 			/* append this character to the current variable */
 			startword = 0;
@@ -222,6 +385,13 @@ readcmd(int argc, char **argv)
 		wordlen = 0;
 	}
 	STACKSTRNUL(p);
+
+#ifndef SMALL
+	(void)next_read_char(0, (size_t)-1);	/* attempt to seek back */
+	if (setraw)
+		setrawmode(0, 0, end, &ttystate);
+#endif
+
 
 	/* Remove trailing IFS chars */
 	for (; stackblock() + wordlen <= --p; *p = 0) {
