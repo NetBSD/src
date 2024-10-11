@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.61 2022/11/17 06:40:38 chs Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.61.2.1 2024/10/11 08:54:39 martin Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.61 2022/11/17 06:40:38 chs Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.61.2.1 2024/10/11 08:54:39 martin Exp $");
 #endif
 
 #ifdef HAVE_ARGON2
@@ -73,6 +73,11 @@ __RCSID("$NetBSD: cgdconfig.c,v 1.61 2022/11/17 06:40:38 chs Exp $");
 
 #include <ufs/ffs/fs.h>
 
+#ifdef HAVE_ZFS
+#include <sys/vdev_impl.h>
+#include <sha2.h>
+#endif
+
 #include "params.h"
 #include "pkcs5_pbkdf2.h"
 #include "utils.h"
@@ -98,11 +103,11 @@ enum action {
 
 /* if nflag is set, do not configure/unconfigure the cgd's */
 
-int	nflag = 0;
+static int	nflag = 0;
 
 /* if Sflag is set, generate shared keys */
 
-int	Sflag = 0;
+static int	Sflag = 0;
 
 /* if pflag is set to PFLAG_STDIN read from stdin rather than getpass(3) */
 
@@ -110,7 +115,7 @@ int	Sflag = 0;
 #define	PFLAG_GETPASS_ECHO	0x02
 #define	PFLAG_GETPASS_MASK	0x03
 #define	PFLAG_STDIN		0x04
-int	pflag = PFLAG_GETPASS;
+static int	pflag = PFLAG_GETPASS;
 
 /*
  * When configuring all cgds, save a cache of shared keys for key
@@ -127,7 +132,7 @@ struct sharedkey {
 	SLIST_ENTRY(sharedkey)	 used;
 	int			 verified;
 };
-LIST_HEAD(, sharedkey) sharedkeys;
+static LIST_HEAD(, sharedkey) sharedkeys;
 SLIST_HEAD(sharedkeyhits, sharedkey);
 
 static int	configure(int, char **, struct params *, int);
@@ -170,11 +175,14 @@ static int	 verify_ffs(int);
 static int	 verify_reenter(struct params *);
 static int	 verify_mbr(int);
 static int	 verify_gpt(int);
+#ifdef HAVE_ZFS
+static int	 verify_zfs(int);
+#endif
 
 __dead static void	 usage(void);
 
 /* Verbose Framework */
-unsigned	verbose = 0;
+static unsigned	verbose = 0;
 
 #define VERBOSE(x,y)	if (verbose >= x) y
 #define VPRINTF(x,y)	if (verbose >= x) (void)printf y
@@ -636,12 +644,12 @@ getkey_argon2id(const char *target, struct keygen *kg, size_t keylen)
 	char *passp;
 	char buf[1024];
 	uint8_t	raw[256];
-	int err;
+	int error;
 
 	snprintf(buf, sizeof(buf), "%s's passphrase%s:", target,
 	    pflag & PFLAG_GETPASS_ECHO ? " (echo)" : "");
 	passp = maybe_getpass(buf);
-	if ((err = argon2_hash(kg->kg_iterations, kg->kg_memory,
+	if ((error = argon2_hash(kg->kg_iterations, kg->kg_memory,
 	    kg->kg_parallelism,
 	    passp, strlen(passp),
 	    bits_getbuf(kg->kg_salt),
@@ -649,7 +657,7 @@ getkey_argon2id(const char *target, struct keygen *kg, size_t keylen)
 	    raw, sizeof(raw),
 	    NULL, 0,
 	    Argon2_id, kg->kg_version)) != ARGON2_OK) {
-		warnx("failed to generate Argon2id key, error code %d", err);
+		warnx("failed to generate Argon2id key, error code %d", error);
 		return NULL;
 	}
 
@@ -1024,6 +1032,10 @@ verify(struct params *p, int fd)
 		return verify_mbr(fd);
 	case VERIFY_GPT:
 		return verify_gpt(fd);
+#ifdef HAVE_ZFS
+	case VERIFY_ZFS:
+		return verify_zfs(fd);
+#endif
 	default:
 		warnx("unimplemented verification method");
 		return -1;
@@ -1161,7 +1173,6 @@ verify_gpt(int fd)
 		return -1;
 	}
 
-	ret = 1;
 	for (blksize = DEV_BSIZE;
              (off = (blksize * GPT_HDR_BLKNO)) <= SCANSIZE - sizeof(hdr);
              blksize <<= 1) {
@@ -1173,14 +1184,113 @@ verify_gpt(int fd)
 
 			hdr.hdr_crc_self = 0;
 			if (crc32(&hdr, sizeof(hdr))) {
-				ret = 0;
-				break;
+				return 0;
 			}
 		}
 	}
 
-	return ret;
+	return 1;
 }
+
+#ifdef HAVE_ZFS
+
+#define ZIO_CHECKSUM_BE(zcp)					\
+{								\
+	(zcp)->zc_word[0] = BE_64((zcp)->zc_word[0]);		\
+	(zcp)->zc_word[1] = BE_64((zcp)->zc_word[1]);		\
+	(zcp)->zc_word[2] = BE_64((zcp)->zc_word[2]);		\
+	(zcp)->zc_word[3] = BE_64((zcp)->zc_word[3]);		\
+}
+
+static int
+verify_zfs(int fd)
+{
+	off_t vdev_size;
+	int rv = 1;
+
+	if (prog_ioctl(fd, DIOCGMEDIASIZE, &vdev_size) == -1) {
+		warn("%s: ioctl", __func__);
+		return rv;
+	}
+
+	vdev_phys_t *vdev_phys = emalloc(sizeof(*vdev_phys));
+	for (size_t i = 0; i < VDEV_LABELS; i++) {
+		off_t vdev_phys_off = (i < VDEV_LABELS / 2 ?
+		    i * sizeof(vdev_label_t) :
+		    vdev_size - (VDEV_LABELS - i) * sizeof(vdev_label_t))
+		    + offsetof(vdev_label_t, vl_vdev_phys);
+
+		ssize_t ret = prog_pread(fd, vdev_phys, sizeof(*vdev_phys),
+		    vdev_phys_off);
+		if (ret == -1) {
+			warn("%s: read failed", __func__);
+			goto out;
+		}
+		if ((size_t)ret < sizeof(*vdev_phys)) {
+			warnx("%s: incomplete block", __func__);
+			goto out;
+		}
+
+		bool byteswap;
+		switch (vdev_phys->vp_zbt.zec_magic) {
+		case BSWAP_64(ZEC_MAGIC):
+			byteswap = true;
+			break;
+		case ZEC_MAGIC:
+			byteswap = false;
+			break;
+		default:
+			goto out;
+		}
+
+		zio_cksum_t cksum_found = vdev_phys->vp_zbt.zec_cksum;
+		if (byteswap) {
+			ZIO_CHECKSUM_BSWAP(&cksum_found);
+		}
+
+		ZIO_SET_CHECKSUM(&vdev_phys->vp_zbt.zec_cksum,
+		    vdev_phys_off, 0, 0, 0);
+		if (byteswap) {
+			ZIO_CHECKSUM_BSWAP(&vdev_phys->vp_zbt.zec_cksum);
+		}
+
+		SHA256_CTX ctx;
+		zio_cksum_t cksum_real;
+
+		SHA256Init(&ctx);
+		SHA256Update(&ctx, (uint8_t *)vdev_phys, sizeof *vdev_phys);
+		SHA256Final(&cksum_real, &ctx);
+
+		/*
+		 * For historical reasons the on-disk sha256 checksums are
+		 * always in big endian format.
+		 * (see cddl/osnet/dist/uts/common/fs/zfs/sha256.c)
+		 */
+		ZIO_CHECKSUM_BE(&cksum_real);
+
+		if (!ZIO_CHECKSUM_EQUAL(cksum_found, cksum_real)) {
+			warnx("%s: checksum mismatch on vdev label %zu",
+			    __func__, i);
+			warnx("%s: found %#jx, %#jx, %#jx, %#jx", __func__,
+			    (uintmax_t)cksum_found.zc_word[0],
+			    (uintmax_t)cksum_found.zc_word[1],
+			    (uintmax_t)cksum_found.zc_word[2],
+			    (uintmax_t)cksum_found.zc_word[3]);
+			warnx("%s: expected %#jx, %#jx, %#jx, %#jx", __func__,
+			    (uintmax_t)cksum_real.zc_word[0],
+			    (uintmax_t)cksum_real.zc_word[1],
+			    (uintmax_t)cksum_real.zc_word[2],
+			    (uintmax_t)cksum_real.zc_word[3]);
+			goto out;
+		}
+	}
+	rv = 0;
+out:
+	free(vdev_phys);
+	return rv;
+}
+
+#endif
 
 static off_t sblock_try[] = SBLOCKSEARCH;
 
@@ -1507,7 +1617,8 @@ iv_method(int mode)
 
 
 static void
-show(const char *dev) {
+show(const char *dev)
+{
 	char path[64];
 	struct cgd_user cgu;
 	int fd;
@@ -1532,11 +1643,13 @@ show(const char *dev) {
 	}
 
 	dev = devname(cgu.cgu_dev, S_IFBLK);
-	if (dev != NULL)
+	if (dev != NULL) {
 		printf("%s ", dev);
-	else
-		printf("dev %llu,%llu ", (unsigned long long)major(cgu.cgu_dev),
+	} else {
+		printf("dev %llu,%llu ",
+		    (unsigned long long)major(cgu.cgu_dev),
 		    (unsigned long long)minor(cgu.cgu_dev));
+	}
 
 	if (verbose)
 		printf("%s ", cgu.cgu_alg);

@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.57 2022/08/12 10:49:47 riastradh Exp $
+.\" $NetBSD: cgdconfig.8,v 1.57.2.1 2024/10/11 08:54:39 martin Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 4, 2021
+.Dd May 12, 2024
 .Dt CGDCONFIG 8
 .Os
 .Sh NAME
@@ -270,12 +270,115 @@ scan for a valid Master Boot Record.
 scan for a valid GUID partition table.
 .It ffs
 scan for a valid FFS file system.
+.It zfs
+scan for a valid ZFS vdev label (if compiled with MKZFS).
 .It re-enter
 prompt for passphrase twice, and ensure entered passphrases are
 identical.
 This method only works with the argon2id, pkcs5_pbkdf2/sha1, and
 pkcs5_pbkdf2 key generators.
 .El
+.Pp
+If a wrong key is generated, e.g. if the passphrase is entered
+incorrectly, the disk content will appear to be randomized.
+Assuming uniform random disk content, each verification method has some
+probability of falsely accepting a wrong key anyway.
+The probability for each method is as follows:
+.Bl -column "disklabel" "matching \*(Ge160-bit hashes" "1 - (1 - 1/2^80)^1946 < 1/6e20"
+.It Sy method Ta Sy verifies Ta Sy "P(false accept)"
+.It Li none Ta No nothing Ta "1" Ta
+.\" disklabel:
+.\" - scans SCANSIZE=8192 bytes with disklabel_scan, which...
+.\" - checks {0, 4, 8, 12, ..., SCANSIZE=8192 - sizeof(struct
+.\"   disklabel)=408}, 1946 options total, for a matching 64-bit
+.\"   quantity (d_magic=DISKMAGIC, d_magic2=DISKMAGIC) plus a matching
+.\"   16-bit cksum (plus a plausible d_npartitions but let's ignore
+.\"   that)
+.\" Pr[false accept] = Pr[exists i. scan[i] matches 80-bit magic/cksum]
+.\"   = 1 - Pr[not exists i. scan[i] does not match 80-bit magic/cksum]
+.\"   = 1 - Pr[forall i. scan[i] does not match 80-bit magic/cksum]
+.\"   = 1 - \prod_i Pr[scan[i] does not match 80-bit magic/cksum]
+.\"   = 1 - \prod_i (1 - Pr[scan[i] matches 80-bit magic/cksum])
+.\"   = 1 - \prod_i (1 - 1/2^80)
+.\"   = 1 - (1 - 1/2^80)^1946
+.\"   = 1 - exp(1946*log(1 - 1/2^80))
+.\"   = -expm1(1946*log1p(-1/2^80))
+.\"  <= 1/621e18 <= 1/6e20 (one in six hundred quintillion)
+.It Li disklabel Ta No 64-bit magic strings w/16-bit cksum in any of 1946 places Ta "1 - (1 - 1/2^80)^1946 < 1/6e20"
+.\" mbr:
+.\" - checks exactly one location
+.\" - checks for exactly one magic 16-bit constant
+.\" Pr[false accept] = 1/2^16 = 1/65536
+.It Li mbr Ta No 16-bit magic string Ta "1/65536"
+.\" gpt:
+.\" - scans SCANSIZE=8192 bytes
+.\" - checks blksizes DEV_BSIZE=512, 1024, 2048, 4096
+.\" - checks for 64-bit sig, 32-bit rev, 32-bit size, 32-bit cksum
+.\" Pr[false accept]
+.\"   = Pr[exists blksz. hdr[blksz] matches 160-bit magic/cksum]
+.\"   = 1 - Pr[not exists blksz. hdr[blksz] matches 160-bit magic/cksum]
+.\"   = 1 - Pr[forall blksz. hdr[blksz] does not match 160-bit magic/cksum]
+.\"   = 1 - \prod_blksz Pr[hdr[blksz] does not match 160-bit magic/cksum]
+.\"   = 1 - \prod_blksz (1 - Pr[hdr[blksz] matches 160-bit magic/cksum])
+.\"   = 1 - \prod_blksz (1 - 1/2^160)
+.\"   = 1 - (1 - 1/2^160)^4
+.\"   = 1 - exp(4*log(1 - 1/2^160))
+.\"   = -expm1(4*log1p(-1/2^160))
+.\"  <= 1/3e47
+.It Li gpt Ta No 128-bit magic string w/32-bit cksum in any of 4 places Ta "1 - (1 - 1/2^160)^4 < 1/3e47" Ta
+.\" ffs:
+.\" - checks four locations in SBLOCKSEARCH (sblock_try)
+.\" - checks for any of six magic 32-bit constants
+.\" Pr[false accept] = Pr[exists i. sblock_try[i] in {magic[0], ..., magic[5]}]
+.\"   = 1 - Pr[not exists i. sblock_try[i] in {magic[0], ..., magic[5]}]
+.\"   = 1 - Pr[forall i. sblock_try[i] not in {magic[0], ..., magic[5]}]
+.\"   = 1 - \prod_i Pr[sblock_try[i] not in {magic[0], ..., magic[5]}]
+.\"   = 1 - \prod_i (1 - Pr[sblock_try[i] in {magic[0], ..., magic[5]}])
+.\"   = 1 - \prod_i (1 - 6/2^32)
+.\"   = 1 - (1 - 6/2^32)^4
+.\"   = 1 - exp(4*log(1 - 6/2^32))
+.\"   = -expm1(4*log1p(-6/2^32))
+.\"  <= 1/178e6 <= 1/1e8 (one in a hundred million)
+.It Li ffs Ta No any of 6 32-bit magic strings in any of 4 places Ta "1 - (1 - 6/2^32)^4 < 1/1e8" Ta
+.\" zfs:
+.\" - checks four locations (VDEV_LABELS)
+.\" - checks for any of two magic 64-bit constants (ZEC_MAGIC or bswap)
+.\" - checks for 256-bit SHA256 hash
+.\" Pr[false accept] = Pr[exists i. label[i] matches 320-bit magic/cksum]
+.\"   = 1 - Pr[not exists i. label[i] matches 320-bit magic/cksum]
+.\"   = 1 - Pr[forall i. label[i] does not match 320-bit magic/cksum]
+.\"   = 1 - \prod_i Pr[label[i] does not match 320-bit magic/cksum]
+.\"   = 1 - \prod_i (1 - Pr[label[i] does matches 320-bit magic/cksum])
+.\"   = 1 - \prod_i (1 - 2/2^230)
+.\"   = 1 - (1 - 2/2^230)^4
+.\"   = -expm1(4*log1p(-2/2^230))
+.\"  <= 1/2e68
+.It Li zfs Ta No any of 2 64-bit magic strings w/256-bit cksum in any of 4 places Ta "1 - (1 - 2/2^320)^4 < 1/1e68"
+.\" re-enter:
+.\" - checks whether >=160-bit hash matches
+.\" Pr[false accept] = Pr[H(pw1) = H(pw2) | pw1 != pw2] <= 1/2^160 < 1/1e48
+.It Li re-enter Ta No matching \*(Ge160-bit hashes Ta "\*(Le 1/2^160 < 1/1e48"
+.El
+.Pp
+Note that aside from the
+.Ql none
+method, which accepts any key unconditionally, the
+.Ql mbr
+method and to a lesser extent the
+.Ql ffs
+method also accept a wrong key with a much higher probability than
+cryptography normally deals in.
+.Pp
+This is not a security vulnerability in the confidentiality of
+.Xr cgd 4
+against an adversary, but it may be alarming for a user if a disk is
+configured with a mistyped passphrase,
+.Nm
+.Em accepts the wrong key ,
+and the content appears to be garbage \(em for example, fsck may fail
+with scary warnings, and any writes to the disk configured with the
+wrong key will corrupt the original plaintext content under the right
+key.
 .Ss /etc/cgd/cgd.conf
 The file
 .Pa /etc/cgd/cgd.conf
