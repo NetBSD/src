@@ -1,4 +1,4 @@
-/*	$NetBSD: featuretest.h,v 1.10 2013/04/26 18:29:06 christos Exp $	*/
+/*	$NetBSD: featuretest.h,v 1.10.66.1 2024/10/11 18:51:20 martin Exp $	*/
 
 /*
  * Written by Klaus Klein <kleink@NetBSD.org>, February 2, 1998.
@@ -73,4 +73,62 @@
 #if ((_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500) && \
     !defined(_REENTRANT)
 #define _REENTRANT
+#endif
+
+/*
+ * The _XOPEN_SOURCE namespaces are supersets of corresponding
+ * _POSIX_C_SOURCE namespaces, so to keep the namespace tests in header
+ * files simpler, if _XOPEN_SOURCE is defined but _POSIX_C_SOURCE is
+ * not, define _POSIX_C_SOURCE to the corresponding value.
+ */
+#if defined(_XOPEN_SOURCE) && !defined(_POSIX_C_SOURCE)
+
+/*
+ * `[I]f _XOPEN_SOURCE is set equal to 800 and _POSIX_C_SOURCE is set
+ *  equal to 202405L, the behavior is the same as if only _XOPEN_SOURCE
+ *  is defined and set equal to 800.
+ *
+ * IEEE Std 1003.1-2024, 2.2.1.2 `The _XOPEN_SOURCE Feature Test Macro'
+ * https://pubs.opengroup.org/onlinepubs/9799919799.2024edition/functions/V2_chap02.html#tag_16_02_01_02
+ */
+#if (_XOPEN_SOURCE - 0) == 800
+#define	_POSIX_C_SOURCE	202405L
+
+/*
+ * `[I]f _XOPEN_SOURCE is set equal to 700 and _POSIX_C_SOURCE is set
+ *  equal to 200809L, the behavior is the same as if only _XOPEN_SOURCE
+ *  is defined and set equal to 700.'
+ *
+ * IEEE Std 1003.1-2008, 2.2.1 `POSIX.1 Symbols', subsection `The
+ * _XOPEN_SOURCE Feature Test Macro'
+ * https://pubs.opengroup.org/onlinepubs/9699919799.2018edition/functions/V2_chap02.html
+ */
+#elif (_XOPEN_SOURCE - 0) == 700
+#define	_POSIX_C_SOURCE	200809L
+
+/*
+ * `[I]f _XOPEN_SOURCE is set equal to 600 and _POSIX_C_SOURCE is set
+ *  equal to 200112L, the behavior is the same as if only _XOPEN_SOURCE
+ *  is defined and set equal to 600.'
+ *
+ * IEEE Std 1003.1-2001, 2.2.1 `POSIX.1 Symbols', subsection `The
+ * _XOPEN_SOURCE Feature Test Macro'
+ * https://pubs.opengroup.org/onlinepubs/007904875/functions/xsh_chap02_02.html
+ */
+#elif (_XOPEN_SOURCE - 0) == 600
+#define	_POSIX_C_SOURCE	200112L
+
+/*
+ * `[I]f _XOPEN_SOURCE is set equal to 500 and _POSIX_SOURCE is
+ *  defined, or _POSIX_C_SOURCE is set greater than zero and less than
+ *  or equal to 199506L, the behaviour is the same as if only
+ *  _XOPEN_SOURCE is defined and set equal to 500.'
+ *
+ * Single UNIX Specification, Version 2, `The Compilation Environment'
+ * https://pubs.opengroup.org/onlinepubs/007908799/xsh/compilation.html
+ */
+#elif (_XOPEN_SOURCE - 0) == 500
+#define	_POSIX_C_SOURCE	199506L
+#endif
+
 #endif
