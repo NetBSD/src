@@ -1,4 +1,4 @@
-.\"	$NetBSD: ts2timo.9,v 1.3 2013/05/24 14:41:32 njoly Exp $
+.\"	$NetBSD: ts2timo.9,v 1.3.42.1 2024/10/11 17:07:16 martin Exp $
 .\"
 .\" Copyright (c) 2013 Christos Zoulas
 .\" All rights reserved.
@@ -51,7 +51,7 @@ or
 .Dv TIMER_RELTIME .
 If the interval is specified as an absolute time, then the
 .Fa clock_id
-clock is used to convert it to a relative time.
+clock is used to calculate the corresponding relative time.
 If the
 .Fa start
 argument is not
@@ -63,18 +63,23 @@ clock is placed in that argument.
 On success
 .Fn ts2timo
 returns
-.Dv 0 .
+.Dv 0 ,
+and places the computed number of ticks
+in the integer referenced by
+.Fa timo .
 On failure it returns
 .Er ETIMEDOUT
 if  interval computed was
 .Dv 0
-or negative, and
+or negative, or
 .Er EINVAL
-if
-.Fa ts->tv_usec
-field in the computed interval is out of range, or the
+if the
+.Fa ts->tv_nsec
+field is out of range, or the
 .Fa clock_id
-argument is invalid.
+argument is invalid, or if
+computing the relative time from a supplied absolute value
+would cause an arithmetic overflow.
 .Sh SEE ALSO
 .Xr clock_gettime 2 ,
 .Xr clock_nanosleep 2
