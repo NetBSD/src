@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.23 2024/10/11 17:38:21 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.24 2024/10/11 18:43:38 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -417,4 +417,11 @@ lib/libc/locale/wcsrtombs.3			1.14-1.16
 
 	mbsnrtowcs(3), wcsnrtombs(3): PR 52343: add man pages.
 	[riastradh, ticket #1897]
+
+lib/libc/gen/readdir.c				1.27
+
+	readdir(3): PR 57145: preserve errno on end-of-directory as
+	required by POSIX.  Fixes random errors in gmake under certain
+	circumstances.
+	[riastradh, ticket #1898]
 
