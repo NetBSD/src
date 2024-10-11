@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.67 2022/08/27 08:31:59 christos Exp $	*/
+/*	$NetBSD: math.h,v 1.67.2.1 2024/10/11 19:01:11 martin Exp $	*/
 
 /*
  * ====================================================
@@ -20,16 +20,6 @@
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
-
-/*
- * Missing for C99 support:
- * - MATH_ERRNO
- * - MATH_ERREXCEPT
- * - FP_FAST_FMA
- * - FP_FAST_FMAF
- * - FP_FAST_FMAL
- * - math_errhandling
- */
 
 union __float_u {
 	unsigned char __dummy[sizeof(float)];
@@ -143,8 +133,31 @@ extern const union __float_u __nanf;
 #define	_FP_LOMD	0x80		/* range for machine-specific classes */
 #define	_FP_HIMD	0xff
 
+/* 7.12#7 fast fma(3) feature test macros */
+#if __GNUC_PREREQ__(4, 4)
+#  ifdef __FP_FAST_FMA
+#    define	FP_FAST_FMA	1
+#  endif
+#  ifdef __FP_FAST_FMAF
+#    define	FP_FAST_FMAF	1
+#  endif
+#  ifdef __FP_FAST_FMAL
+#    define	FP_FAST_FMAL	1
+#  endif
+#endif
+
+/* 7.12#8 ilogb exceptional input result value macros */
 #define	FP_ILOGB0	INT_MIN
 #define	FP_ILOGBNAN	INT_MAX
+
+/* 7.12#9 error handling (__math_errhandling from machine/math.h) */
+#define	MATH_ERRNO		1
+#define	MATH_ERREXCEPT		2
+#ifdef __vax__			/* XXX !__HAVE_FENV */
+#define	math_errhandling	MATH_ERRNO
+#else
+#define	math_errhandling	MATH_ERREXCEPT
+#endif
 
 #endif /* C99 || _XOPEN_SOURCE >= 600 */
 
