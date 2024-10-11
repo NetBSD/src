@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.34 2022/08/12 10:49:35 riastradh Exp $ */
+/* $NetBSD: params.c,v 1.34.2.1 2024/10/11 08:54:39 martin Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: params.c,v 1.34 2022/08/12 10:49:35 riastradh Exp $");
+__RCSID("$NetBSD: params.c,v 1.34.2.1 2024/10/11 08:54:39 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -287,6 +287,10 @@ params_verify_method(string_t *in)
 		p->verify_method = VERIFY_MBR;
 	if (!strcmp("gpt", vm))
 		p->verify_method = VERIFY_GPT;
+#ifdef HAVE_ZFS
+	if (!strcmp("zfs", vm))
+		p->verify_method = VERIFY_ZFS;
+#endif
 
 	string_free(in);
 
@@ -1065,6 +1069,11 @@ params_fput(struct params *p, FILE *f)
 	case VERIFY_GPT:
 		print_kvpair_cstr(f, ts, "verify_method", "gpt");
 		break;
+#ifdef HAVE_ZFS
+	case VERIFY_ZFS:
+		print_kvpair_cstr(f, ts, "verify_method", "zfs");
+		break;
+#endif
 	default:
 		warnx("unsupported verify_method (%d)", p->verify_method);
 		return -1;
