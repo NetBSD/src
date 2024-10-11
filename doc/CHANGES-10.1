@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.43 2024/10/10 09:42:23 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.44 2024/10/11 08:55:41 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -2194,4 +2194,13 @@ sys/arch/x86/pci/amdzentemp.c			1.21
 	amdzentemp(4): add support for CPU family 0x1a 
 	model 0x40...0x4f (Zen 5)
 	[msaitoh, ticket #940]
+
+sbin/cgdconfig/Makefile				1.23
+sbin/cgdconfig/cgdconfig.8			1.58,1.59
+sbin/cgdconfig/cgdconfig.c			1.62,1.63
+sbin/cgdconfig/params.c				1.35
+sbin/cgdconfig/params.h				1.15
+
+	cgdconfig(8): PR 58212: add zfs verification method.
+	[riastradh, ticket #941]
 
