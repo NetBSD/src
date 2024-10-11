@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.265 2024/10/09 13:43:32 kre Exp $
+.\"	$NetBSD: sh.1,v 1.266 2024/10/11 09:02:10 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd October 6, 2024
+.Dd October 11, 2024
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
 .ds flags abCEeFfhIiLlmnpquVvXx
@@ -3304,7 +3304,7 @@ if both the
 and
 .Fl q
 options are given, then an error message will be printed about
-.Ar command Ns No s
+.Ar command Ns s
 unable to be found, but the exit status will remain 0.
 This is not considered useful.
 .\"
@@ -3663,24 +3663,183 @@ the program will use
 and the built-in uses a separately cached value.
 .\"
 .Pp
-.It Ic read Oo Fl d Ar delim Oc Oo Fl p Ar prompt Oc Oo Fl r Oc Ar variable Op Ar ...
+.It Ic read Oo Fl br Oc Oo Fl d Ar delim Oc Oo Fl n Ar max Oc Oo Fl p Ar prompt Oc Ar variable Op Ar ...
+.Pp
 The
+.Ic read
+command reads a record (by default one line) from its standard input,
+splits that record as if by field splitting, and assigns the results
+to the named
+.Ar variable
+arguments, as detailed below.
+.Pp
+The options are:
+.Bl -tag -width ".Fl ppromptM"
+.It Fl b
+Do buffered reads, rather than reading one byte at a time.
+This option is ignored if reading from a pipe.
+Use of this option might result in reading more bytes from
+standard input than the
+.Ic read
+utility actually processes,
+causing some data from standard input to be unavailable
+to any subsequent utility that expects to obtain them,
+though this will be avoided wherever possible.
+.It Fl d Ar delim
+End the read when the first byte of
+.Ar delim
+is obtained from standard input.
+The default end delimiter is
+.Aq newline
+.Pq Sq \en .
+Specifying
+.Qq
+as
+.Ar delim
+causes the nul character
+.Pq Sq \e0
+to be the end delimiter.
+If the delimiter is set to
+.Aq backslash
+.Pq Sq \&\e
+then neither line continuation nor escaping are available.
+The input will end when the first
+.Aq backslash
+is read.
+.It Fl n Ar max
+.Ic read
+will read no more than
+.Ar max
+bytes from standard input.
+The default is unlimited.
+If the end
+.Ar delim
+has not been encountered within
+.Ar max
+bytes, and EOF has not been reached,
+.Ic read
+will act as if the delimiter immediately followed
+the
+.Ar max Ns 'th
+byte, without attempting to obtain it.
+However, even if the
+.Fl r
+option is not given and the final byte actually read
+were the escape character (not itself escaped), 
+no more bytes will be read, and that escape
+character would simply be removed as described below.
+.It Fl p Ar prompt
+If the standard input is a terminal, then
 .Ar prompt
-is printed on standard error if the
+is written to standard error before the read commences.
+If more lines of data are required in that case, the
+normal
+.Ev PS2
+prompt is written as each subsequent line is to be obtained.
+.It Fl r
+Reduced processing of the input.
+No escape characters are recognised,
+and line continuation is not performed.
+See below.
+.El
+.Pp
+If the read is from a terminal device,
+and the
 .Fl p
-option is specified and the standard input is a terminal.
-Then a record, terminated by the
-first character of
+option was given,
+.Ar prompt
+is printed on standard error.
+Then a record, terminated by the first character of
 .Ar delim
 if the
 .Fl d
-option was given, or a newline character otherwise,
+option was given, or a
+.Aq newline
+.Pq Sq \en
+character otherwise,
+but no longer than
+.Ar max
+bytes if the
+.Fl n
+option was given,
 is read from the standard input.
-The ending delimiter is deleted from the
-record which is then split as described in the field splitting section of the
+If the
+.Fl b
+option is not given, no data from standard
+input beyond the end delimiter, or the
+.Ar max
+bytes that may be read,
+whichever occurs first,
+are obtained.
+Any nul characters
+.Pq Sq \e0
+encountered in the input stream,
+other than when being the delimiter if
+.Fl d Qq
+was used,
+are simply ignored, even if escaped (in which case the
+preceding
+.Sq \e
+is also ignored) though these ignored characters are
+included in the byte count for the purposes of the
+.Fl n
+option.
+.Pp
+If the
+.Fl r
+option was not given,
+and the two character sequence
+.Sq \&\e
+.Sq \en
+is encountered,
+those two characters are simply deleted,
+and provided that
+.Ar max
+bytes have not yet been obtained,
+and the end delimiter has yet to be encountered,
+more input is obtained,
+with the first character of the following line
+placed in the input where the deleted
+.Sq \e
+had been.
+This allows logical lines longer than the maximum line
+length permitted for text files to be processed.
+The two removed characters are still counted
+for the purposes of the
+.Ar max
+input limit.
+.Pp
+If the
+.Fl r
+flag was not given, the
+.Aq backslash
+character
+.Pq Sq \e
+character is then treated as an escape character,
+the character following it, if not
+.Sq \e0 ,
+is always treated as a normal,
+insignificant, data character,
+and is never treated as the end delimiter nor as
+an IFS character for field splitting.
+.Pp
+After field splitting has completed,
+but before data has been
+assigned to any variables,
+all escape characters are removed.
+Note that the two character sequence
+.Sq \&\e
+.Sq \&\e
+can be used to enter the escape character as data,
+the first acts as the escape character, the second
+becomes just a normal data character.
+.Pp
+The ending delimiter, if encountered, and not escaped,
+is deleted from the record which is then split as described
+in the field splitting section of the
 .Sx Word Expansions
 section above.
-The pieces are assigned to the
+The pieces (fields) are assigned to the
 .Ar variable Ns s
 in order.
 If there are more pieces than variables,
@@ -3691,50 +3850,31 @@ that separated them) are all assigned to the last
 .Ar variable .
 If there are more variables than pieces,
 the remaining variables are assigned the null string.
+.Pp
 The
 .Ic read
-built-in will indicate success unless EOF, or a read error,
-is encountered on input, in
-which case failure is returned.
-.Pp
-By default, unless the
-.Fl r
-option is specified, the backslash
-.Pq Ql \e
-acts as an escape character,
-causing the following character,
-when that character is the escape character, or end delimiter character,
-to be treated literally when reading the record.
-This is the only form of quoting that applies.
-If an unescaped backslash is followed by a newline,
-the backslash and the newline will be deleted,
-and replaced by the contents from the following line,
-which is processed as if it had been part of the original line.
-This includes reading yet more input if necessary,
-until a line is read that contains or ends with an unescaped
-copy of the delimiter character.
-If the end delimiter (when it is not a newline) is escaped,
-it is treated as a normal character, and
+built-in utility will indicate success (exit status 0)
+unless EOF, or a read error,
+is encountered on input, before encountering the delimiter,
+or having read
+.Ar max
+bytes.
+In this case any data previously read will be assigned to
+the variables, as if the delimiter had been located at that
+point, and
 .Ic read
-continues looking for an unescaped end delimiter character.
-No other escape sequences are meaningful, the escape character
-is simply ignored.
-This happens as the record is read,
-before field splitting occurs.
-When
-.Fl r
-is used,
-no escaping occurs,
-no line joining happens,
-any input backslash is simply an input character.
+will exit with status 1.
+If there is a usage error (unknown option, etc)
+no variables will be altered,
+.Ic read
+will issue a diagnostic to standard error,
+and exit with a status greater than 1.
 .Pp
-Note that if
-.Ar delim
-is given as an empty string, the nul character
-.Pq Ql \e0
-is used as the delimiter.
-Other than this use, any nul characters in the input
-stream are silently deleted.
+The
+.Fl b
+and
+.Fl n
+options are not available in SMALL shells.
 .\"
 .Pp
 .It Ic readonly Ar name Ns Oo =value Oc ...
@@ -5009,7 +5149,8 @@ This is normally set to
 .Aq tab ,
 and
 .Aq newline .
-.Sx White Space Splitting
+See the
+.Sx Field Splitting
 section for more details.
 .It Ev LANG
 The string used to specify localization information that allows users
