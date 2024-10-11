@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.22 2024/10/09 10:26:50 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.23 2024/10/11 17:38:21 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -399,4 +399,22 @@ external/bsd/atf/dist/tools/atf-run.cpp		1.6,1.7
 	atf-run(1): add support for running individual test cases under
 	isolation.
 	[rin, ticket #1895]
+
+sys/kern/kern_resource.c			1.190,1.191 (patch)
+sys/kern/subr_time.c				1.36,1.37 (patch)
+sys/kern/subr_time.c				1.38 (patch)
+sys/sys/resourcevar.h				1.58 (patch)
+tests/lib/libc/sys/t_clock_gettime.c		1.4-1.6 (patch)
+
+	clock_gettime(2): PR 57512: fix CLOCK_PROCESS/THREAD_CPUTIME_ID
+	so they are monotonic using the same calculation as getrusage.
+	[riastradh, ticket #1896]
+
+distrib/sets/lists/comp/mi			1.2473
+lib/libc/locale/Makefile.inc			1.68
+lib/libc/locale/mbsrtowcs.3			1.13-1.15
+lib/libc/locale/wcsrtombs.3			1.14-1.16
+
+	mbsnrtowcs(3), wcsnrtombs(3): PR 52343: add man pages.
+	[riastradh, ticket #1897]
 
