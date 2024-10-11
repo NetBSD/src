@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.126 2024/09/09 15:15:24 riastradh Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.127 2024/10/11 18:43:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -117,7 +117,6 @@ void	*malloc(size_t);
 void	 qsort(void *, size_t, size_t, int (*)(const void *, const void *));
 int	 rand(void);
 void	*realloc(void *, size_t);
-void	*reallocarray(void *, size_t, size_t);
 void	 srand(unsigned);
 double	 strtod(const char * __restrict, char ** __restrict);
 long	 strtol(const char * __restrict, char ** __restrict, int);
@@ -394,6 +393,11 @@ size_t	 wcstombs_l(char * __restrict, const wchar_t * __restrict, size_t,
 
 #  endif /* _NETBSD_SOURCE */
 #endif /* _POSIX_C_SOURCE >= 200809 || _NETBSD_SOURCE */
+
+#if (_POSIX_C_SOURCE - 0) >= 202405L || \
+    defined(_NETBSD_SOURCE) || defined(_OPENBSD_SOURCE)
+void	*reallocarray(void *, size_t, size_t);
+#endif	/* _POSIX_C_SOURCE >= 202405L || _NETBSD_SOURCE || _OPENBSD_SOURCE */
 
 __END_DECLS
 
