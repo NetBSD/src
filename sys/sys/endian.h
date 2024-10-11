@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.31 2022/08/08 18:55:18 rillig Exp $	*/
+/*	$NetBSD: endian.h,v 1.31.4.1 2024/10/11 19:07:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -45,14 +45,16 @@
 #define	_PDP_ENDIAN	3412	/* LSB first in word, MSW first in long */
 
 
-#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
+#if defined(_XOPEN_SOURCE) || \
+    (_POSIX_C_SOURCE - 0) >= 200112L || \
+    defined(_NETBSD_SOURCE)
 #ifndef _LOCORE
 
 /* C-family endian-ness definitions */
 
 #include <sys/ansi.h>
 #include <sys/cdefs.h>
-#include <sys/types.h>
+#include <sys/stdint.h>
 
 #ifndef in_addr_t
 typedef __in_addr_t	in_addr_t;
@@ -72,7 +74,7 @@ uint16_t ntohs(uint16_t) __constfunc;
 __END_DECLS
 
 #endif /* !_LOCORE */
-#endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
+#endif /* _XOPEN_SOURCE || _POSIX_C_SOURCE >= 200112L || _NETBSD_SOURCE */
 
 
 #include <machine/endian_machdep.h>
@@ -189,6 +191,8 @@ __END_DECLS
  * Routines to encode/decode big- and little-endian multi-octet values
  * to/from an octet stream.
  */
+
+#ifdef _NETBSD_SOURCE
 
 #if __GNUC_PREREQ__(2, 95)
 
@@ -334,6 +338,8 @@ le64dec(const void *buf)
 }
 
 #endif	/* GCC >= 2.95 */
+
+#endif	/* _NETBSD_SOURCE */
 
 #endif /* !_LOCORE */
 #endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
