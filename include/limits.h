@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.43.2.1 2024/10/09 13:12:40 martin Exp $	*/
+/*	$NetBSD: limits.h,v 1.43.2.2 2024/10/11 17:26:32 martin Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -61,35 +61,23 @@
 #define	_POSIX_SYMLOOP_MAX	8
 
 /*
- * We have not implemented these yet
- *
- * _POSIX_THREAD_ATTR_STACKADDR
- * _POSIX_THREAD_ATTR_STACKSIZE
- * _POSIX_THREAD_CPUTIME
- * _POSIX_THREAD_PRIORITY_SCHEDULING
- * _POSIX_THREAD_PRIO_INHERIT
- * _POSIX_THREAD_PRIO_PROTECT
- * _POSIX_THREAD_PROCESS_SHARED
- * _POSIX_THREAD_SAFE_FUNCTIONS
- * _POSIX_THREAD_SPORADIC_SERVER
- */
-
-/*
- * The following 3 are defined in 
+ * Exact minimum values prescribed by:
  * Open Group Base Specifications Issue 7
+ * https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/limits.h.html
  */
 #define	_POSIX_THREAD_DESTRUCTOR_ITERATIONS	4
 #define	_POSIX_THREAD_KEYS_MAX			128
 #define	_POSIX_THREAD_THREADS_MAX		64
 
 /*
- * These are the correct names, defined in terms of the above
- * except for PTHREAD_KEYS_MAX which is bigger than standard 
- * mandated minimum value _POSIX_THREAD_KEYS_MAX.
+ * Actual values used by libpthread, defined in terms of the above
+ * except for PTHREAD_KEYS_MAX which is bigger than standard mandated
+ * minimum value _POSIX_THREAD_KEYS_MAX, and PTHREAD_STACK_MIN which
+ * doesn't have a defined name for the minimum value of zero.
  */
 #define	PTHREAD_DESTRUCTOR_ITERATIONS 	_POSIX_THREAD_DESTRUCTOR_ITERATIONS
 #define	PTHREAD_KEYS_MAX		256
-/* Not yet: PTHREAD_STACK_MIN */
+#define	PTHREAD_STACK_MIN		4096 /* XXX MIN_PAGE_SIZE */
 #define	PTHREAD_THREADS_MAX		_POSIX_THREAD_THREADS_MAX
 
 #define	_POSIX_TIMER_MAX	32
