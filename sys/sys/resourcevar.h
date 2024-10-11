@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.57 2018/05/07 21:03:45 christos Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.57.32.1 2024/10/11 17:12:28 martin Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -40,6 +40,8 @@
 
 #include <sys/mutex.h>
 #include <sys/resource.h>
+
+struct bintime;
 
 /*
  * Kernel per-process accounting / statistics
@@ -107,6 +109,7 @@ void	addupc_intr(struct lwp *, u_long);
 void	addupc_task(struct lwp *, u_long, u_int);
 void	calcru(struct proc *, struct timeval *, struct timeval *,
 	    struct timeval *, struct timeval *);
+void	addrulwp(struct lwp *, struct bintime *);
 
 struct plimit *lim_copy(struct plimit *);
 void	lim_addref(struct plimit *);

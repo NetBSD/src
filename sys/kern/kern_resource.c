@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.189 2022/04/09 23:38:33 riastradh Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.189.4.1 2024/10/11 17:12:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.189 2022/04/09 23:38:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.189.4.1 2024/10/11 17:12:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -478,6 +478,30 @@ sys_getrlimit(struct lwp *l, const struct sys_getrlimit_args *uap,
 	return copyout(&rl, SCARG(uap, rlp), sizeof(rl));
 }
 
+void
+addrulwp(struct lwp *l, struct bintime *tm)
+{
+
+	lwp_lock(l);
+	bintime_add(tm, &l->l_rtime);
+	if ((l->l_pflag & LP_RUNNING) != 0 &&
+	    (l->l_pflag & (LP_INTR | LP_TIMEINTR)) != LP_INTR) {
+		struct bintime diff;
+		/*
+		 * Adjust for the current time slice.  This is
+		 * actually fairly important since the error
+		 * here is on the order of a time quantum,
+		 * which is much greater than the sampling
+		 * error.
+		 */
+		binuptime(&diff);
+		membar_consumer(); /* for softint_dispatch() */
+		bintime_sub(&diff, &l->l_stime);
+		bintime_add(tm, &diff);
+	}
+	lwp_unlock(l);
+}
+
 /*
  * Transform the running time and tick information in proc p into user,
  * system, and interrupt time usage.
@@ -504,24 +528,7 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 	tm = p->p_rtime;
 
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-		lwp_lock(l);
-		bintime_add(&tm, &l->l_rtime);
-		if ((l->l_pflag & LP_RUNNING) != 0 &&
-		    (l->l_pflag & (LP_INTR | LP_TIMEINTR)) != LP_INTR) {
-			struct bintime diff;
-			/*
-			 * Adjust for the current time slice.  This is
-			 * actually fairly important since the error
-			 * here is on the order of a time quantum,
-			 * which is much greater than the sampling
-			 * error.
-			 */
-			binuptime(&diff);
-			membar_consumer(); /* for softint_dispatch() */
-			bintime_sub(&diff, &l->l_stime);
-			bintime_add(&tm, &diff);
-		}
-		lwp_unlock(l);
+		addrulwp(l, &tm);
 	}
 
 	tot = st + ut + it;
@@ -601,7 +608,8 @@ sys___getrusage50(struct lwp *l, const struct sys___getrusage50_args *uap,
 }
 
 int
-getrusage1(struct proc *p, int who, struct rusage *ru) {
+getrusage1(struct proc *p, int who, struct rusage *ru)
+{
 
 	switch (who) {
 	case RUSAGE_SELF:
