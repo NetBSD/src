@@ -1,4 +1,4 @@
-.\" $NetBSD: mbsrtowcs.3,v 1.12 2010/12/16 17:42:27 wiz Exp $
+.\" $NetBSD: mbsrtowcs.3,v 1.12.56.1 2024/10/11 17:34:00 martin Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -24,12 +24,13 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 4, 2002
+.Dd September 9, 2024
 .Dt MBSRTOWCS 3
 .Os
 .\" ----------------------------------------------------------------------
 .Sh NAME
-.Nm mbsrtowcs
+.Nm mbsrtowcs ,
+.Nm mbsrntowcs
 .Nd converts a multibyte character string to a wide-character string \
 (restartable)
 .\" ----------------------------------------------------------------------
@@ -37,15 +38,32 @@
 .Lb libc
 .\" ----------------------------------------------------------------------
 .Sh SYNOPSIS
+.
 .In wchar.h
+.
 .Ft size_t
-.Fn mbsrtowcs "wchar_t * restrict pwcs" "const char ** restrict s" "size_t n" \
-"mbstate_t * restrict ps"
+.Fo mbsrtowcs
+.Fa "wchar_t * restrict pwcs"
+.Fa "const char ** restrict s"
+.Fa "size_t n"
+.Fa "mbstate_t * restrict ps"
+.Fc
+.
+.Ft size_t
+.Fo mbsnrtowcs
+.Fa "wchar_t * restrict pwcs"
+.Fa "const char ** restrict s"
+.Fa "size_t nmc"
+.Fa "size_t n"
+.Fa "mbstate_t * restrict ps"
+.Fc
+.
 .\" ----------------------------------------------------------------------
 .Sh DESCRIPTION
 The
 .Fn mbsrtowcs
-converts the multibyte character string indirectly pointed to by
+function converts the multibyte character string indirectly pointed to
+by
 .Fa s
 to the corresponding wide-character string, and stores it in the
 array pointed to by
@@ -53,8 +71,8 @@ array pointed to by
 The conversion stops due to the following reasons:
 .Bl -bullet
 .It
-The conversion reaches a nul byte.
-In this case, the nul byte is also converted.
+The conversion reaches a NUL byte.
+In this case, the NUL byte is also converted.
 .It
 The
 .Fn mbsrtowcs
@@ -72,17 +90,18 @@ is continuously called.
 After conversion,
 if
 .Fa pwcs
-is not a null pointer,
+is not a NULL pointer,
 the pointer object pointed to by
 .Fa s
-is a null pointer (if the conversion is stopped due to reaching a
-nul byte) or the first byte of the character just after the last
-character converted.
+is a NULL pointer
+.Pq if the conversion is stopped due to reaching a NUL byte
+or the first byte of the character just after the last character
+converted.
 .Pp
 If
 .Fa pwcs
-is not a null pointer and the conversion is stopped due to reaching
-a nul byte, the
+is not a NULL pointer and the conversion is stopped due to reaching
+a NUL byte, the
 .Fn mbsrtowcs
 places the state object pointed to by
 .Fa ps
@@ -95,10 +114,12 @@ is affected by the
 category of the current locale.
 .Pp
 These are the special cases:
-.Bl -tag -width 012345678901
-.It "s == NULL || *s == NULL"
+.Bl -tag -width Li
+.
+.It Li "s == NULL || *s == NULL"
 Undefined (may cause the program to crash).
-.It "pwcs == NULL"
+.
+.It Li "pwcs == NULL"
 The conversion has taken place, but the resulting wide-character string
 was discarded.
 In this case, the pointer object pointed to by
@@ -106,7 +127,8 @@ In this case, the pointer object pointed to by
 is not modified and
 .Fa n
 is ignored.
-.It "ps == NULL"
+.
+.It Li "ps == NULL"
 The
 .Fn mbsrtowcs
 uses its own internal state object to keep the conversion state,
@@ -120,16 +142,28 @@ never changes the internal state of
 .Fn mbsrtowcs ,
 which is initialized at startup time of the program.
 .El
+.Pp
+The
+.Fn mbsnrtowcs
+function behaves identically to
+.Fn mbsrtowcs ,
+except that the conversion stops after reading at most
+.Fa nmc
+characters from the buffer pointed to by
+.Fa s .
 .\" ----------------------------------------------------------------------
 .Sh RETURN VALUES
+The
 .Fn mbsrtowcs
-returns:
-.Bl -tag -width 012345678901
-.It 0 or positive
+and
+.Fn mbsnrtowcs
+functions return:
+.Bl -tag -width Li
+.It Li 0 , No or positive
 The value returned is the number of elements stored in the array
 pointed to by
 .Fa pwcs ,
-except for a terminating nul wide character (if any).
+except for a terminating NUL wide character (if any).
 If
 .Fa pwcs
 is not
@@ -138,12 +172,12 @@ and the value returned is equal to
 .Fa n ,
 the wide-character string pointed to by
 .Fa pwcs
-is not nul-terminated.
+is not NUL-terminated.
 If
 .Fa pwcs
-is a null pointer, the value returned is the number of elements to contain
-the whole string converted, except for a terminating nul wide character.
-.It (size_t)-1
+is a NULL pointer, the value returned is the number of elements to contain
+the whole string converted, except for a terminating NUL wide character.
+.It Li "(size_t)-1"
 The array indirectly pointed to by
 .Fa s
 contains a byte sequence forming invalid character.
@@ -155,13 +189,16 @@ to indicate the error.
 .El
 .\" ----------------------------------------------------------------------
 .Sh ERRORS
+The
 .Fn mbsrtowcs
-may cause an error in the following case:
+and
+.Fn mbsnrtowcs
+functions may fail with the following errors:
 .Bl -tag -width Er
 .It Bq Er EILSEQ
-The pointer pointed to by
 .Fa s
-points to an invalid or incomplete multibyte character.
+points to a string containing an invalid or incomplete multibyte
+character.
 .It Bq Er EINVAL
 .Fa ps
 points to an invalid or uninitialized mbstate_t object.
@@ -177,5 +214,12 @@ The
 .Fn mbsrtowcs
 function conforms to
 .St -isoC-amd1 .
-The restrict qualifier is added at
+The
+.Li restrict
+qualifier was added by
 .St -isoC-99 .
+.Pp
+The
+.Fn mbsnrtowcs
+function conforms to
+.St -p1003.1-2008 .
