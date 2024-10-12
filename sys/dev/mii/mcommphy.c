@@ -1,4 +1,4 @@
-/* $NetBSD: mcommphy.c,v 1.1 2022/01/03 17:18:12 jmcneill Exp $ */
+/* $NetBSD: mcommphy.c,v 1.2 2024/10/12 18:16:05 skrll Exp $ */
 
 /*
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcommphy.c,v 1.1 2022/01/03 17:18:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcommphy.c,v 1.2 2024/10/12 18:16:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,21 +48,22 @@ __KERNEL_RCSID(0, "$NetBSD: mcommphy.c,v 1.1 2022/01/03 17:18:12 jmcneill Exp $"
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
 
-#define	MCOMMPHY_OUI			0x000000
-#define	MCOMMPHY_MODEL			0x10
-#define	MCOMMPHY_REV			0x0a
+#define	YT85X1_MCOMMPHY_OUI		0x000000
+#define	YT8511_MCOMMPHY_MODEL		0x10
+#define	YT85X1_MCOMMPHY_REV		0x0a
 
-#define	EXT_REG_ADDR			0x1e
-#define	EXT_REG_DATA			0x1f
+#define	YTPHY_EXT_REG_ADDR		0x1e
+#define	YTPHY_EXT_REG_DATA		0x1f
 
 /* Extended registers */
-#define	PHY_CLOCK_GATING_REG		0x0c
-#define	 TX_CLK_DELAY_SEL		__BITS(7,4)
-#define	 CLK_25M_SEL			__BITS(2,1)
-#define	 CLK_25M_SEL_125M		3
-#define	 RX_CLK_DELAY_EN		__BIT(0)
-#define	PHY_SLEEP_CONTROL1_REG		0x27
-#define	 PLLON_IN_SLP			__BIT(14)
+#define	YT8511_CLOCK_GATING_REG		0x0c
+#define	 YT8511_TX_CLK_DELAY_SEL	__BITS(7,4)
+#define	 YT8511_CLK_25M_SEL		__BITS(2,1)
+#define	 YT8511_CLK_25M_SEL_125M	3
+#define	 YT8511_RX_CLK_DELAY_EN		__BIT(0)
+
+#define	YT8511_SLEEP_CONTROL1_REG	0x27
+#define	 YT8511_PLLON_IN_SLP		__BIT(14)
 
 static int	mcommphymatch(device_t, cfdata_t, void *);
 static void	mcommphyattach(device_t, device_t, void *);
@@ -85,9 +86,9 @@ mcommphymatch(device_t parent, cfdata_t match, void *aux)
 	 * The YT8511C reports an OUI of 0. Best we can do here is to match
 	 * exactly the contents of the PHY identification registers.
 	 */
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MCOMMPHY_OUI &&
-	    MII_MODEL(ma->mii_id2) == MCOMMPHY_MODEL &&
-	    MII_REV(ma->mii_id2) == MCOMMPHY_REV) {
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == YT85X1_MCOMMPHY_OUI &&
+	    MII_MODEL(ma->mii_id2) == YT8511_MCOMMPHY_MODEL &&
+	    MII_REV(ma->mii_id2) == YT85X1_MCOMMPHY_REV) {
 		return 10;
 	}
 
@@ -119,31 +120,31 @@ mcommphyattach(device_t parent, device_t self, void *aux)
 
 	PHY_RESET(sc);
 
-	PHY_READ(sc, EXT_REG_ADDR, &oldaddr);
+	PHY_READ(sc, YTPHY_EXT_REG_ADDR, &oldaddr);
 
-	PHY_WRITE(sc, EXT_REG_ADDR, PHY_CLOCK_GATING_REG);
-	PHY_READ(sc, EXT_REG_DATA, &data);
-	data &= ~CLK_25M_SEL;
-	data |= __SHIFTIN(CLK_25M_SEL_125M, CLK_25M_SEL);
+	PHY_WRITE(sc, YTPHY_EXT_REG_ADDR, YT8511_CLOCK_GATING_REG);
+	PHY_READ(sc, YTPHY_EXT_REG_DATA, &data);
+	data &= ~YT8511_CLK_25M_SEL;
+	data |= __SHIFTIN(YT8511_CLK_25M_SEL_125M, YT8511_CLK_25M_SEL);
 	if (ISSET(sc->mii_flags, MIIF_RXID)) {
-		data |= RX_CLK_DELAY_EN;
+		data |= YT8511_RX_CLK_DELAY_EN;
 	} else {
-		data &= ~RX_CLK_DELAY_EN;
+		data &= ~YT8511_RX_CLK_DELAY_EN;
 	}
-	data &= ~TX_CLK_DELAY_SEL;
+	data &= ~YT8511_TX_CLK_DELAY_SEL;
 	if (ISSET(sc->mii_flags, MIIF_TXID)) {
-		data |= __SHIFTIN(0xf, TX_CLK_DELAY_SEL);
+		data |= __SHIFTIN(0xf, YT8511_TX_CLK_DELAY_SEL);
 	} else {
-		data |= __SHIFTIN(0x2, TX_CLK_DELAY_SEL);
+		data |= __SHIFTIN(0x2, YT8511_TX_CLK_DELAY_SEL);
 	}
-	PHY_WRITE(sc, EXT_REG_DATA, data);
+	PHY_WRITE(sc, YTPHY_EXT_REG_DATA, data);
 
-	PHY_WRITE(sc, EXT_REG_ADDR, PHY_SLEEP_CONTROL1_REG);
-	PHY_READ(sc, EXT_REG_DATA, &data);
-	data |= PLLON_IN_SLP;
-	PHY_WRITE(sc, EXT_REG_DATA, data);
+	PHY_WRITE(sc, YTPHY_EXT_REG_ADDR, YT8511_SLEEP_CONTROL1_REG);
+	PHY_READ(sc, YTPHY_EXT_REG_DATA, &data);
+	data |= YT8511_PLLON_IN_SLP;
+	PHY_WRITE(sc, YTPHY_EXT_REG_DATA, data);
 
-	PHY_WRITE(sc, EXT_REG_ADDR, oldaddr);
+	PHY_WRITE(sc, YTPHY_EXT_REG_ADDR, oldaddr);
 
 	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
 	sc->mii_capabilities &= ma->mii_capmask;
