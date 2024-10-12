@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.207 2024/09/02 05:17:46 ozaki-r Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.208 2024/10/12 22:19:37 riastradh Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -452,6 +452,7 @@
 ./usr/tests/usr.bin/error
 ./usr/tests/usr.bin/find
 ./usr/tests/usr.bin/fstat
+./usr/tests/usr.bin/ftp
 ./usr/tests/usr.bin/gdb
 ./usr/tests/usr.bin/grep
 ./usr/tests/usr.bin/gzip

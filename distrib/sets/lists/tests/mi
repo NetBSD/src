@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1341 2024/10/09 13:02:53 kre Exp $
+# $NetBSD: mi,v 1.1342 2024/10/12 22:19:36 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4918,6 +4918,11 @@
 ./usr/tests/usr.bin/fstat/Atffile			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/fstat/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
 ./usr/tests/usr.bin/fstat/t_fstat			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/ftp					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/ftp/Atffile				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/ftp/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
+./usr/tests/usr.bin/ftp/custom_headers.sh		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/ftp/t_custom_headers		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/gdb					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/gdb/Atffile				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/gdb/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
