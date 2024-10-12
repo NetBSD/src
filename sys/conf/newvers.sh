@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.62 2017/04/08 18:24:09 christos Exp $
+#	$NetBSD: newvers.sh,v 1.62.18.1 2024/10/12 11:41:21 martin Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -134,7 +134,7 @@ source_lines()
 	else
 		cat
 	fi \
-	| awk '{
+	| "${AWK}" '{
 		# awk does not care about whether or not the last line
 		# of input ends with a newline.
 		# Convert <backslash> to <backslash><backslash>.
@@ -153,6 +153,7 @@ if [ ! -e version ]; then
 	echo 0 > version
 fi
 
+AWK=${TOOL_AWK:-awk}
 Rflag=false
 nflag=false
 timestamp=
