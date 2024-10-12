@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.68 2024/10/12 07:00:17 spz Exp $
+# $NetBSD: postinstall.in,v 1.69 2024/10/12 09:58:38 uwe Exp $
 #
 # Copyright (c) 2002-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -558,8 +558,8 @@ obsolete_paths()
 #	to be obsolete.
 #
 #	The implementation supports removing obsolete major libraries
-#	if the awk variable AllLibs is set, although there is no way to
-#	enable that in the enclosing shell function as this time.
+#	if the awk variable PurgeOldMajor is set, although there is no
+#	way to enable that in the enclosing shell function as this time.
 #
 obsolete_libs()
 {
