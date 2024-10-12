@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.45 2024/10/12 06:48:30 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.46 2024/10/12 09:45:26 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -290,27 +290,16 @@ test_ic_mod(void)
 	bits.u10 = u64 % 1000;
 	u16 = u64 % 1000;
 
-	/*
-	 * For signed division, if the result of 'a / b' is not representable
-	 * exactly, the result of 'a % b' is defined such that
-	 * '(a / b) * a + a % b == a'.
-	 *
-	 * If the result of 'a / b' is not representable exactly, the result
-	 * of 'a % b' is not defined.  Due to this uncertainty, lint does not
-	 * narrow down the range for signed modulo expressions.
-	 *
-	 * C90 6.3.5, C99 6.5.5.
-	 */
-
-	/* expect+1: warning: conversion from 'int' to 'signed char' may lose accuracy [132] */
 	s8 = s16 % s8;
-
-	/*
-	 * The result is always 0, it's a theoretical edge case though, so
-	 * lint doesn't care to implement this.
-	 */
-	/* expect+1: warning: conversion from 'long long' to 'signed char' may lose accuracy [132] */
+	/* expect+1: warning: conversion from 'int' to 'signed char' may lose accuracy [132] */
+	s8 = s16 % s16;
 	s8 = s64 % 1;
+	s8 = s64 % (s16 & 1);
+	/* expect+1: warning: conversion from 'long long' to 'signed char' may lose accuracy [132] */
+	s8 = s64 % (s16 & 0);
+	s8 = (s64 & 0x7f) % s64;
+	/* expect+1: warning: conversion from 'long long' to 'signed char' may lose accuracy [132] */
+	s8 = (s64 & 0xff) % s64;
 }
 
 void
