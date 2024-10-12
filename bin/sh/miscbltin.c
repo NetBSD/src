@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.55 2024/10/11 09:02:10 kre Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.56 2024/10/12 23:34:56 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.55 2024/10/11 09:02:10 kre Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.56 2024/10/12 23:34:56 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -280,11 +280,8 @@ readcmd(int argc, char **argv)
 #endif
 	}
 
-/*
 	if ((ifs = bltinlookup("IFS", 1)) == NULL)
 		ifs = " \t\n";
-*/
-	ifs = ifsval();
 
 	setstackmark(&mk);
 	status = 0;
