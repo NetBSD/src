@@ -1,4 +1,4 @@
-#	$NetBSD: t_morse.sh,v 1.2 2024/06/17 03:23:19 rillig Exp $
+#	$NetBSD: t_morse.sh,v 1.3 2024/10/12 20:44:11 rillig Exp $
 #
 # Copyright (c) 2024 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -26,10 +26,12 @@
 #
 
 atf_test_case digits
-digits_head() {
+digits_head()
+{
 	atf_set 'require.progs' '/usr/games/morse'
 }
-digits_body() {
+digits_body()
+{
 	trailing_space=' '
 	morse_s_digits="\
  -----
@@ -66,10 +68,12 @@ $trailing_space
 	    /usr/games/morse 0123456789
 }
 
+
 # Before 2024-06-16, non-ASCII characters invoked undefined behavior,
 # possibly crashing morse.
 atf_test_case nonascii
-nonascii_head() {
+nonascii_head()
+{
 	atf_set 'require.progs' '/usr/games/morse'
 }
 nonascii_body()
@@ -82,8 +86,42 @@ nonascii_body()
 	    /usr/games/morse äöü
 }
 
+
+atf_test_case roundtrip
+roundtrip_head() {
+	atf_set 'require.progs' '/usr/games/morse'
+}
+roundtrip_body()
+{
+	# Most punctuation is ignored during encoding.
+	# Missing are: !#$%&*;<>[\]^{|}~
+
+	input=\
+' !"#$%&'\''()*+,-./'\
+'0123456789:;<=>?'\
+'@ABCDEFGHIJKLMNO'\
+'PQRSTUVWXYZ[\]^_'\
+'`abcdefghijklmno'\
+'pqrstuvwxyz{|}~'
+
+	expected=\
+' "'\''()+,-./'\
+'0123456789:=?'\
+'@ABCDEFGHIJKLMNO'\
+'PQRSTUVWXYZ_'\
+'ABCDEFGHIJKLMNO'\
+'PQRSTUVWXYZ \n'
+
+	atf_check -o 'save:roundtrip.morse' \
+	    /usr/games/morse -s "$input"
+	atf_check -o "inline:$expected" \
+	    /usr/games/morse -d < roundtrip.morse
+}
+
+
 atf_init_test_cases()
 {
 	atf_add_test_case digits
 	atf_add_test_case nonascii
+	atf_add_test_case roundtrip
 }
