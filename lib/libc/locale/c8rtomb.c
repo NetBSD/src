@@ -1,4 +1,4 @@
-/*	$NetBSD: c8rtomb.c,v 1.7 2024/10/08 13:42:17 riastradh Exp $	*/
+/*	$NetBSD: c8rtomb.c,v 1.8 2024/10/12 16:34:03 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: c8rtomb.c,v 1.7 2024/10/08 13:42:17 riastradh Exp $");
+__RCSID("$NetBSD: c8rtomb.c,v 1.8 2024/10/12 16:34:03 rillig Exp $");
 
 #include "namespace.h"
 
@@ -92,7 +92,7 @@ __CTASSERT(alignof(struct c8rtombstate) <= alignof(mbstate_t));
 typedef uint_fast8_t utf8_class_t;
 typedef uint_fast8_t utf8_state_t;
 
-static uint8_t utf8_classtab[] = {
+static const uint8_t utf8_classtab[] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -103,7 +103,7 @@ static uint8_t utf8_classtab[] = {
    11,3,3,3,3,3,3,3,3,3,3,3,3,4,3,3, 7,6,6,6,5,8,8,8,8,8,8,8,8,8,8,8,
 };
 
-static uint8_t utf8_statetab[] = {
+static const uint8_t utf8_statetab[] = {
      0,96,12,36,48,84,72,60,96,96,96,24, 96, 0,96,96,96,96,96,96, 0, 0,96,96,
     96,12,96,96,96,96,96,96,96,96,96,96, 96,12,96,96,96,96,96,96,12,12,96,96,
     96,96,96,96,96,96,96,96,12,12,96,96, 96,36,96,96,96,96,96,96,96,36,96,96,
