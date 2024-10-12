@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.24 2024/10/11 18:43:38 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.25 2024/10/12 11:42:35 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -424,4 +424,10 @@ lib/libc/gen/readdir.c				1.27
 	required by POSIX.  Fixes random errors in gmake under certain
 	circumstances.
 	[riastradh, ticket #1898]
+
+sys/conf/newvers.mk				1.4 (patch)
+sys/conf/newvers.sh				1.64 (patch)
+
+	sys/conf/newvers: PR 58220: use ${TOOL_AWK}
+	[riastradh, ticket #1899]
 
