@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.62 2017/04/08 18:24:09 christos Exp $
+#	$NetBSD: newvers.sh,v 1.62.44.1 2024/10/12 11:16:04 martin Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -134,7 +134,7 @@ source_lines()
 	else
 		cat
 	fi \
-	| awk '{
+	| "${AWK}" '{
 		# awk does not care about whether or not the last line
 		# of input ends with a newline.
 		# Convert <backslash> to <backslash><backslash>.
@@ -153,6 +153,8 @@ if [ ! -e version ]; then
 	echo 0 > version
 fi
 
+DATE=${TOOL_DATE:-date}
+AWK=${TOOL_AWK:-awk}
 Rflag=false
 nflag=false
 timestamp=
@@ -206,7 +208,7 @@ if ${Rflag}; then
 else
 	if [ -z "${timestamp}" ]; then
 		v=$(cat version)
-		t=$(LC_ALL=C date)
+		t=$(LC_ALL=C ${DATE})
 		u=${USER-root}
 		h=$(hostname)
 		d=$(pwd)
@@ -214,7 +216,7 @@ else
 		echo $(expr ${v} + 1) > version
 	else
 		v=0
-		t=$(LC_ALL=C TZ=UTC date -r "${timestamp}")
+		t=$(LC_ALL=C TZ=UTC ${DATE} -r "${timestamp}")
 		u=mkrepro
 		h=mkrepro.NetBSD.org
 		d="/usr/src/sys/arch/${machine}/compile/${id}"
