@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2022/06/06 10:56:29 nia Exp $
+#	$NetBSD: Makefile,v 1.22 2024/10/12 16:16:36 bad Exp $
 
 .include <bsd.own.mk>
 
@@ -20,10 +20,10 @@ SUBDIR+=rump_tmpfs rump_udf rump_v7fs
 # ditto for kernfs
 #SUBDIR+=rump_kernfs
 
-# rump_mqmfs is just another ffs, useful mainly for debugging
+# rump_nqmfs is just another ffs, useful mainly for debugging
 #SUBDIR+=rump_nqmfs
 
-# rump_au-naturel presents lets you access '/' for a rump kernel.
+# rump_au-naturel lets you access '/' for a rump kernel.
 # mostly for debugging.
 #SUBDIR+=rump_au-naturel
 
