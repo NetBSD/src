@@ -1,4 +1,4 @@
-/* $NetBSD: jh71x0_clkc.h,v 1.4 2024/09/18 10:37:03 skrll Exp $ */
+/* $NetBSD: jh71x0_clkc.h,v 1.5 2024/10/12 18:07:24 skrll Exp $ */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ const char *
 
 extern struct jh71x0_clkc_clkops jh71x0_clkc_ffactor_ops;
 
-#define	JH71X0CLKC_FIXED_FACTOR(_id, _name, _parent, _div, _mult)	      \
+#define JH71X0CLKC_FIXED_FACTOR(_id, _name, _parent, _div, _mult)	      \
 	[_id] = {							      \
 		.jcc_type = JH71X0CLK_FIXED_FACTOR,			      \
 		.jcc_clk.name = (_name),				      \
@@ -134,7 +134,7 @@ const char *
 
 extern struct jh71x0_clkc_clkops jh71x0_clkc_gate_ops;
 
-#define	JH71X0CLKC_GATE(_id, _name, _pname)				      \
+#define JH71X0CLKC_GATE(_id, _name, _pname)				      \
 	[_id] = {							      \
 		.jcc_type = JH71X0CLK_GATE,				      \
 		.jcc_clk = {						      \
@@ -155,7 +155,7 @@ struct jh71x0_clkc_div {
 	const char *	jcd_parent;
 	uint32_t	jcd_maxdiv;
 	uint32_t	jcd_flags;
-#define	JH71X0CLKC_DIV_GATE	__BIT(0)
+#define JH71X0CLKC_DIV_GATE	__BIT(0)
 };
 
 u_int	jh71x0_clkc_div_get_rate(struct jh71x0_clkc_softc *,
@@ -168,7 +168,7 @@ const char *
 
 extern struct jh71x0_clkc_clkops jh71x0_clkc_div_ops;
 
-#define	JH71X0CLKC_DIV_FLAGS(_id, _name, _maxdiv, _parent, _flags)	      \
+#define JH71X0CLKC_DIV_FLAGS(_id, _name, _maxdiv, _parent, _flags)	      \
 	[_id] = {							      \
 		.jcc_type = JH71X0CLK_DIV,				      \
 		.jcc_clk = {						      \
@@ -183,10 +183,10 @@ extern struct jh71x0_clkc_clkops jh71x0_clkc_div_ops;
 		.jcc_ops = &jh71x0_clkc_div_ops,			      \
 	}
 
-#define	JH71X0CLKC_DIV(_id, _n, _m, _p)					      \
+#define JH71X0CLKC_DIV(_id, _n, _m, _p)					      \
     JH71X0CLKC_DIV_FLAGS((_id), (_n), (_m), (_p), 0)
 
-#define	JH71X0CLKC_GATEDIV(_id, _n, _m, _p)				      \
+#define JH71X0CLKC_GATEDIV(_id, _n, _m, _p)				      \
     JH71X0CLKC_DIV_FLAGS((_id), (_n), (_m), (_p), JH71X0CLKC_DIV_GATE)
 
 /*
@@ -197,7 +197,7 @@ struct jh71x0_clkc_fracdiv {
 	bus_size_t	jcd_reg;
 	const char *	jcd_parent;
 	uint32_t	jcd_flags;
-#define	JH71X0CLKC_DIV_GATE	__BIT(0)
+#define JH71X0CLKC_DIV_GATE	__BIT(0)
 };
 
 u_int	jh71x0_clkc_fracdiv_get_rate(struct jh71x0_clkc_softc *,
@@ -210,7 +210,7 @@ const char *
 
 extern struct jh71x0_clkc_clkops jh71x0_clkc_fracdiv_ops;
 
-#define	JH71X0CLKC_FRACDIV(_id, _name, _parent)				      \
+#define JH71X0CLKC_FRACDIV(_id, _name, _parent)				      \
 	[_id] = {							      \
 		.jcc_type = JH71X0CLK_FRACDIV,				      \
 		.jcc_clk = {						      \
@@ -232,7 +232,7 @@ struct jh71x0_clkc_mux {
 	size_t		jcm_nparents;
 	const char **	jcm_parents;
 	uint32_t	jcm_flags;
-#define	JH71X0CLKC_MUX_GATE	__BIT(0)
+#define JH71X0CLKC_MUX_GATE	__BIT(0)
 };
 
 int	jh71x0_clkc_mux_set_parent(struct jh71x0_clkc_softc *,
@@ -243,7 +243,7 @@ const char *
 
 extern struct jh71x0_clkc_clkops jh71x0_clkc_mux_ops;
 
-#define	JH71X0CLKC_MUX_FLAGSX2(_id, _name, _parents, _cflags, _mflags)	      \
+#define JH71X0CLKC_MUX_FLAGSX2(_id, _name, _parents, _cflags, _mflags)	      \
 	[_id] = {							      \
 		.jcc_type = JH71X0CLK_MUX,				      \
 		.jcc_clk = {						      \
@@ -259,16 +259,16 @@ extern struct jh71x0_clkc_clkops jh71x0_clkc_mux_ops;
 		.jcc_ops = &jh71x0_clkc_mux_ops,			      \
 	}
 
-#define	JH71X0CLKC_MUX(_id, _n, _p)					      \
+#define JH71X0CLKC_MUX(_id, _n, _p)					      \
     JH71X0CLKC_MUX_FLAGSX2((_id), (_n), (_p), 0, 0)
 
-#define	JH71X0CLKC_MUX_FLAGS(_id, _n, _p, _f)				      \
+#define JH71X0CLKC_MUX_FLAGS(_id, _n, _p, _f)				      \
     JH71X0CLKC_MUX_FLAGSX2((_id), (_n), (_p), (_f), 0)
 
-#define	JH71X0CLKC_MUXGATE(_id, _n, _p)					      \
+#define JH71X0CLKC_MUXGATE(_id, _n, _p)					      \
     JH71X0CLKC_MUX_FLAGSX2((_id), (_n), (_p), 0, JH71X0CLKC_MUX_GATE)
 
-#define	JH71X0CLKC_MUXGATE_FLAGS(_id, _n, _p, _f)			      \
+#define JH71X0CLKC_MUXGATE_FLAGS(_id, _n, _p, _f)			      \
     JH71X0CLKC_MUX_FLAGSX2((_id), (_n), (_p), (_f), JH71X0CLKC_MUX_GATE)
 
 
@@ -282,7 +282,7 @@ struct jh71x0_clkc_muxdiv {
 	const char **	jcmd_parents;
 	uint32_t	jcmd_maxdiv;
 	uint32_t	jcmd_flags;
-#define	JH71X0CLKC_MUXDIV_GATE	__BIT(0)
+#define JH71X0CLKC_MUXDIV_GATE	__BIT(0)
 };
 
 u_int	jh71x0_clkc_muxdiv_get_rate(struct jh71x0_clkc_softc *,
@@ -297,7 +297,7 @@ const char *
 	    struct jh71x0_clkc_clk *);
 extern struct jh71x0_clkc_clkops jh71x0_clkc_muxdiv_ops;
 
-#define	JH71X0CLKC_MUXDIV_FLAGSX2(_id, _name, _maxdiv, _parents, _cf, _mf)    \
+#define JH71X0CLKC_MUXDIV_FLAGSX2(_id, _name, _maxdiv, _parents, _cf, _mf)    \
 	[_id] = {							      \
 		.jcc_type = JH71X0CLK_MUXDIV,				      \
 		.jcc_clk = {						      \
@@ -314,16 +314,16 @@ extern struct jh71x0_clkc_clkops jh71x0_clkc_muxdiv_ops;
 		.jcc_ops = &jh71x0_clkc_muxdiv_ops,			      \
 	}
 
-#define	JH71X0CLKC_MUXDIV(_id, _n, _m, _p)					      \
+#define JH71X0CLKC_MUXDIV(_id, _n, _m, _p)					      \
     JH71X0CLKC_MUXDIV_FLAGSX2((_id), (_n), (_m), (_p), 0, 0)
 
-#define	JH71X0CLKC_MUXDIV_FLAGS(_id, _n, _m, _p, _f)				      \
+#define JH71X0CLKC_MUXDIV_FLAGS(_id, _n, _m, _p, _f)				      \
     JH71X0CLKC_MUXDIV_FLAGSX2((_id), (_n), (_m), (_p), (_f), 0)
 
-#define	JH71X0CLKC_MUXDIVGATE(_id, _n, _m, _p)					      \
+#define JH71X0CLKC_MUXDIVGATE(_id, _n, _m, _p)					      \
     JH71X0CLKC_MUXDIV_FLAGSX2((_id), (_n), (_m), (_p), 0, JH71X0CLKC_MUX_GATE)
 
-#define	JH71X0CLKC_MUXDIVGATE_FLAGS(_id, _n, _m, _p, _f)			      \
+#define JH71X0CLKC_MUXDIVGATE_FLAGS(_id, _n, _m, _p, _f)			      \
     JH71X0CLKC_MUXDIV_FLAGSX2((_id), (_n), (_m), (_p), (_f), JH71X0CLKC_MUX_GATE)
 
 
@@ -337,7 +337,7 @@ jh71x0_clkc_inv_get_parent(struct jh71x0_clkc_softc *sc,
 
 extern struct jh71x0_clkc_clkops jh71x0_clkc_inv_ops;
 
-#define	JH71X0CLKC_INV(_id, _name, _pname)				      \
+#define JH71X0CLKC_INV(_id, _name, _pname)				      \
 	[_id] = {							      \
 		.jcc_type = JH71X0CLK_INV,				      \
 		.jcc_clk = {						      \
