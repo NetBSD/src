@@ -1,4 +1,4 @@
-# $NetBSD: ad.riscv,v 1.22 2024/07/11 20:41:06 riastradh Exp $
+# $NetBSD: ad.riscv,v 1.23 2024/10/12 12:27:33 skrll Exp $
 #
 ./usr/include/g++/bits/riscv32			comp-c-include		arch64,compat
 ./usr/include/g++/bits/riscv32/c++config.h	comp-c-include		arch64,gcc,compat
@@ -46,6 +46,7 @@
 ./usr/include/riscv/pmc.h			comp-obsolete		obsolete
 ./usr/include/riscv/proc.h			comp-c-include
 ./usr/include/riscv/profile.h			comp-c-include
+./usr/include/riscv/pte.h			comp-c-include
 ./usr/include/riscv/ptrace.h			comp-c-include
 ./usr/include/riscv/reg.h			comp-c-include
 ./usr/include/riscv/rwlock.h			comp-c-include

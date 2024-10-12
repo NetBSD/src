@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.13 2023/05/07 12:41:48 skrll Exp $ */
+/* $NetBSD: pte.h,v 1.14 2024/10/12 12:27:33 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ typedef uint32_t pd_entry_t;
 
 #define	PTE_PPN_SHIFT	10
 
-#define	NPTEPG		(PAGE_SIZE / sizeof(pt_entry_t))
+#define	NPTEPG		(NBPG / sizeof(pt_entry_t))
 #define	NSEGPG		NPTEPG
 #define	NPDEPG		NPTEPG
 
@@ -86,10 +86,10 @@ typedef uint32_t pd_entry_t;
 
 #define	PTE_ISLEAF_P(pte) (((pte) & PTE_RWX) != 0)
 
-#define	PA_TO_PTE(pa)	(((pa) >> PAGE_SHIFT) << PTE_PPN_SHIFT)
-#define	PTE_TO_PA(pte)	(((pte) >> PTE_PPN_SHIFT) << PAGE_SHIFT)
+#define	PA_TO_PTE(pa)	(((pa) >> PGSHIFT) << PTE_PPN_SHIFT)
+#define	PTE_TO_PA(pte)	(((pte) >> PTE_PPN_SHIFT) << PGSHIFT)
 
-
+#if defined(_KERNEL)
 
 static inline bool
 pte_valid_p(pt_entry_t pte)
@@ -251,13 +251,13 @@ pte_invalid_pde(void)
 static inline pd_entry_t
 pte_pde_pdetab(paddr_t pa, bool kernel_p)
 {
-	return PTE_V | (pa >> PAGE_SHIFT) << PTE_PPN_SHIFT;
+	return PTE_V | PA_TO_PTE(pa);
 }
 
 static inline pd_entry_t
 pte_pde_ptpage(paddr_t pa, bool kernel_p)
 {
-	return PTE_V | (pa >> PAGE_SHIFT) << PTE_PPN_SHIFT;
+	return PTE_V | PA_TO_PTE(pa);
 }
 
 static inline bool
@@ -294,11 +294,12 @@ pte_pde_set(pd_entry_t *pdep, pd_entry_t npde)
 	*pdep = npde;
 }
 
-
 static inline pt_entry_t
 pte_value(pt_entry_t pte)
 {
 	return pte;
 }
+
+#endif /* _KERNEL */
 
 #endif /* _RISCV_PTE_H_ */
