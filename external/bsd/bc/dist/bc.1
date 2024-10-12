@@ -1,4 +1,4 @@
-.\" $NetBSD: bc.1,v 1.11 2022/05/26 08:06:58 mlelstv Exp $
+.\" $NetBSD: bc.1,v 1.12 2024/10/12 17:56:45 rillig Exp $
 .\"
 .\" bc.1 - the bc manual
 .\"
@@ -294,8 +294,8 @@ the scale of the first expression times the value of the exponent and
 the maximum of
 .Ic scale
 and the scale of the first expression.
-(e.g. scale(a^b) = min(scale(a)*b, max(
-.Ic scale ,
+(e.g. scale(a^b) = min(scale(a)*b,
+.No max( Ns Ic scale ,
 scale(a))).)
 It should be noted
 that expr^0 will always return the value of 1.
@@ -572,9 +572,9 @@ The
 is printed to the output.
 Strings start with a double quote
 character and contain all characters until the next double quote character.
-All characters are take literally, including any newline.
+All characters are taken literally, including any newline.
 No newline character is printed after the string.
-.It Ic  print Ar list
+.It Ic print Ar list
 The
 .Ic print
 statement (an extension) provides another method of output.
@@ -734,7 +734,7 @@ Return the value 0 from a function.
 (See the section on functions.)
 .It Ic return Ic \&( Ns Ar expression Ns Ic \&)
 Return the value of the expression from a function.
-(See the section on  functions.)
+(See the section on functions.)
 As an extension, the parentheses are not required.
 .El
 .Ss PSEUDO STATEMENTS
@@ -1092,7 +1092,7 @@ quit
 .Pp
 The following is the definition of the recursive factorial function.
 .Bd -literal -offset indent
-define f (x) {
+define f(x) {
   if (x <= 1) return (1);
   return (f(x-1) * x);
 }
