@@ -1,4 +1,4 @@
-/*	$NetBSD: uchar.h,v 1.3 2024/08/17 21:24:53 riastradh Exp $	*/
+/*	$NetBSD: uchar.h,v 1.4 2024/10/13 21:32:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 #define	_UCHAR_H
 
 #include <sys/ansi.h>
+#include <sys/featuretest.h>
 
 /*
  * C23	`2. The macro
