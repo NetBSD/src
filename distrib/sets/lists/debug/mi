@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.285.2.9 2024/08/23 18:32:36 martin Exp $
+# $NetBSD: mi,v 1.285.2.10 2024/10/13 15:09:57 martin Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2230,6 +2230,7 @@
 ./usr/libdata/debug/usr/tests/lib/libm/t_libm.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libm/t_log.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libm/t_modf.debug			tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libm/t_next.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libm/t_pow.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libm/t_precision.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libm/t_round.debug			tests-lib-debug		debug,atf,compattestfile
