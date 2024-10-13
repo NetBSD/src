@@ -1,4 +1,4 @@
-/*	$NetBSD: regsub.c,v 1.4 2016/01/21 04:55:40 mrg Exp $	*/
+/*	$NetBSD: regsub.c,v 1.4.26.1 2024/10/13 14:20:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 extern "C" {
 
 #include <sys/param.h>
+#include <sys/types.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
