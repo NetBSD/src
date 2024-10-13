@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.7 2022/10/05 22:20:15 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.8 2024/10/13 20:35:52 christos Exp $	*/
 
 /* options.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: options.c,v 1.7 2022/10/05 22:20:15 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.8 2024/10/13 20:35:52 christos Exp $");
 
 #define DHCP_OPTION_DATA
 #include "dhcpd.h"
@@ -235,7 +235,8 @@ int parse_option_buffer (options, buffer, length, universe)
 				log_error("parse_option_buffer: "
 					  "save_option_buffer failed");
 				buffer_dereference(&bp, MDL);
-				option_dereference(&option, MDL);
+				if (option)
+					option_dereference(&option, MDL);
 				return (0);
 			}
 		} else if (universe->concat_duplicates) {
@@ -247,7 +248,8 @@ int parse_option_buffer (options, buffer, length, universe)
 					     MDL)) {
 				log_error("parse_option_buffer: No memory.");
 				buffer_dereference(&bp, MDL);
-				option_dereference(&option, MDL);
+				if (option)
+					option_dereference(&option, MDL);
 				return (0);
 			}
 			/* Copy old option to new data object. */
@@ -272,7 +274,8 @@ int parse_option_buffer (options, buffer, length, universe)
 			if (!option_cache_allocate(&nop, MDL)) {
 				log_error("parse_option_buffer: No memory.");
 				buffer_dereference(&bp, MDL);
-				option_dereference(&option, MDL);
+				if (option)
+					option_dereference(&option, MDL);
 				return (0);
 			}
 
