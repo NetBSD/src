@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.46 2019/04/26 08:52:16 maya Exp $
+# $NetBSD: Makefile,v 1.46.2.1 2024/10/13 15:09:57 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -35,6 +35,7 @@ TESTS_C+=	t_infinity
 TESTS_C+=	t_ldexp
 TESTS_C+=	t_log
 TESTS_C+=	t_modf
+TESTS_C+=	t_next
 TESTS_C+=	t_pow
 TESTS_C+=	t_precision
 TESTS_C+=	t_round
