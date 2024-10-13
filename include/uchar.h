@@ -1,4 +1,4 @@
-/*	$NetBSD: uchar.h,v 1.5 2024/10/13 22:00:23 riastradh Exp $	*/
+/*	$NetBSD: uchar.h,v 1.6 2024/10/13 22:00:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -85,12 +85,12 @@ typedef _BSD_SIZE_T_	size_t;
  */
 #if defined(_NETBSD_SOURCE) || defined(_ISOC23_SOURCE) || \
     __STDC_VERSION__ - 0 >= 202311L
-#if !defined(__cpp_char8_t) || __cpp_char8_t < 201811L
+#if __cpp_char8_t - 0 < 201811L
 typedef unsigned char		char8_t;
 #endif
 #endif
 
-#if !defined(__cplusplus) || __cplusplus < 201103L
+#if __cplusplus - 0 < 201103L
 typedef __UINT_LEAST16_TYPE__	char16_t;
 typedef __UINT_LEAST32_TYPE__	char32_t;
 #endif
