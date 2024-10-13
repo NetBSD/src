@@ -1,6 +1,6 @@
-.\" 	$NetBSD: ftp.1,v 1.147.2.4 2024/06/20 18:04:49 martin Exp $
+.\" 	$NetBSD: ftp.1,v 1.147.2.5 2024/10/13 16:06:36 martin Exp $
 .\"
-.\" Copyright (c) 1996-2023 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1996-2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -57,7 +57,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd April 17, 2024
+.Dd September 30, 2024
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -66,6 +66,8 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl 46AadefginpRtVv?
+.Op Fl b Ar bufsize
+.Op Fl H Ar header
 .Op Fl N Ar netrc
 .Op Fl o Ar output
 .Op Fl P Ar port
@@ -201,6 +203,14 @@ implement passive mode properly.
 Causes
 .Nm
 to bypass normal login procedure, and use an anonymous login instead.
+.It Fl b Ar bufsize
+Change the input buffer size to
+.Ar bufsize .
+The default
+.Ar bufsize
+is
+.Dv 16384
+(16 KiB).
 .It Fl d
 Enables debugging.
 .It Fl e
@@ -214,6 +224,17 @@ or
 proxies.
 .It Fl g
 Disables file name globbing.
+.It Fl H Ar header
+Include the provided
+.Ar header
+string as a custom
+.Tn HTTP
+header for an
+.Tn HTTP
+request.
+The
+.Fl H
+option can be repeated to add additional headers.
 .It Fl i
 Turns off interactive prompting during
 multiple file transfers.
