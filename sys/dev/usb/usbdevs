@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.806.4.4 2024/06/20 17:52:12 martin Exp $
+$NetBSD: usbdevs,v 1.806.4.5 2024/10/13 15:25:37 martin Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -3459,6 +3459,7 @@ product TPLINK RTL8188EU	0x010c	RTL8188EU
 product	TPLINK T4UV2		0x010d  Archer T4U ver 2
 product	TPLINK T4UHV2		0x010e  Archer T4UH ver 2
 product	TPLINK T2UNANO		0x011e  Archer T2U Nano
+product	TPLINK UE300		0x0601	UE300 10/100/1000 LAN
 
 /* Trek Technology products */
 product TREK THUMBDRIVE		0x1111	ThumbDrive
