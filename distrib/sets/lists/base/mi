@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1314.2.9 2024/09/12 20:12:10 martin Exp $
+# $NetBSD: mi,v 1.1314.2.10 2024/10/13 11:09:47 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1958,6 +1958,7 @@
 ./usr/share/certs/mozilla/all/Entrust_Root_Certification_Authority_-_G2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Entrust_Root_Certification_Authority_-_G4.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Explicitly_Distrust_DigiNotar_Root_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/FIRMAPROFESIONAL_CA_ROOT-A_WEB.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/GDCA_TrustAUTH_R5_ROOT.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/GLOBALTRUST_2020.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/GTS_Root_R1.pem	base-mozcerts-share	share
@@ -2017,6 +2018,9 @@
 ./usr/share/certs/mozilla/all/Sectigo_Public_Server_Authentication_Root_E46.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Sectigo_Public_Server_Authentication_Root_R46.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/SecureSign_RootCA11.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/SecureSign_Root_CA12.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/SecureSign_Root_CA14.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/SecureSign_Root_CA15.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/SecureTrust_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Secure_Global_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Security_Communication_ECC_RootCA1.pem	base-mozcerts-share	share
@@ -2034,7 +2038,9 @@
 ./usr/share/certs/mozilla/all/T-TeleSec_GlobalRoot_Class_2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/T-TeleSec_GlobalRoot_Class_3.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/TUBITAK_Kamu_SM_SSL_Kok_Sertifikasi_-_Surum_1.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/TWCA_CYBER_Root_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/TWCA_Global_Root_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/TWCA_Global_Root_CA_G2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/TWCA_Root_Certification_Authority.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Telekom_Security_SMIME_ECC_Root_2021.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Telekom_Security_SMIME_RSA_Root_2023.pem	base-mozcerts-share	share
@@ -2070,7 +2076,7 @@
 ./usr/share/certs/mozilla/all/vTrus_Root_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/code			base-mozcerts-share	share
 ./usr/share/certs/mozilla/email			base-mozcerts-share	share
-./usr/share/certs/mozilla/email/ACCVRAIZ1.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/ACCVRAIZ1.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/email/Actalis_Authentication_Root_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/Amazon_Root_CA_1.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/Amazon_Root_CA_2.pem	base-mozcerts-share	share
@@ -2116,7 +2122,7 @@
 ./usr/share/certs/mozilla/email/Entrust_Root_Certification_Authority_-_EC1.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/Entrust_Root_Certification_Authority_-_G2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/Entrust_Root_Certification_Authority_-_G4.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/GLOBALTRUST_2020.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/GLOBALTRUST_2020.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/email/GTS_Root_R1.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/GTS_Root_R2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/GTS_Root_R3.pem	base-mozcerts-share	share
@@ -2164,6 +2170,7 @@
 ./usr/share/certs/mozilla/email/SwissSign_Silver_CA_-_G2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/T-TeleSec_GlobalRoot_Class_2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/TWCA_Global_Root_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/TWCA_Global_Root_CA_G2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/TWCA_Root_Certification_Authority.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/Telekom_Security_SMIME_ECC_Root_2021.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/Telekom_Security_SMIME_RSA_Root_2023.pem	base-mozcerts-share	share
@@ -2178,7 +2185,7 @@
 ./usr/share/certs/mozilla/email/USERTrust_ECC_Certification_Authority.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/USERTrust_RSA_Certification_Authority.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/XRamp_Global_CA_Root.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/certSIGN_ROOT_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/certSIGN_ROOT_CA.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/email/e-Szigno_Root_CA_2017.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/ePKI_Root_Certification_Authority.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/emSign_ECC_Root_CA_-_C3.pem	base-mozcerts-share	share
@@ -2246,8 +2253,9 @@
 ./usr/share/certs/mozilla/server/Entrust_Root_Certification_Authority_-_EC1.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Entrust_Root_Certification_Authority_-_G2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Entrust_Root_Certification_Authority_-_G4.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/FIRMAPROFESIONAL_CA_ROOT-A_WEB.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/GDCA_TrustAUTH_R5_ROOT.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/GLOBALTRUST_2020.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/GLOBALTRUST_2020.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/GTS_Root_R1.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/GTS_Root_R2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/GTS_Root_R3.pem	base-mozcerts-share	share
@@ -2294,6 +2302,9 @@
 ./usr/share/certs/mozilla/server/Sectigo_Public_Server_Authentication_Root_E46.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Sectigo_Public_Server_Authentication_Root_R46.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/SecureSign_RootCA11.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/SecureSign_Root_CA12.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/SecureSign_Root_CA14.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/SecureSign_Root_CA15.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/SecureTrust_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Secure_Global_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Security_Communication_ECC_RootCA1.pem	base-mozcerts-share	share
@@ -2307,6 +2318,7 @@
 ./usr/share/certs/mozilla/server/SwissSign_Silver_CA_-_G2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/T-TeleSec_GlobalRoot_Class_2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/T-TeleSec_GlobalRoot_Class_3.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/TWCA_CYBER_Root_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/TWCA_Global_Root_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/TWCA_Root_Certification_Authority.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Telekom_Security_TLS_ECC_Root_2020.pem	base-mozcerts-share	share
