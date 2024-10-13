@@ -1,4 +1,4 @@
-.\"	$NetBSD: funopen.3,v 1.25 2019/03/21 21:13:45 uwe Exp $
+.\"	$NetBSD: funopen.3,v 1.26 2024/10/13 14:56:30 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)funopen.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd March 16, 2012
+.Dd October 13, 2024
 .Dt FUNOPEN 3
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@
 .In stdio.h
 .Ft FILE *
 .Fo funopen
-.Fa "void *cookie"
+.Fa "const void *cookie"
 .Fa "int (*readfn)(void *, char *, int)"
 .Fa "int (*writefn)(void *, const char *, int)"
 .Fa "off_t (*seekfn)(void *, off_t, int)"
@@ -56,7 +56,7 @@
 .Fc
 .Ft FILE *
 .Fo funopen2
-.Fa "void *cookie"
+.Fa "const void *cookie"
 .Fa "ssize_t (*readfn)(void *, void *, size_t)"
 .Fa "ssize_t (*writefn)(void *, const void *, size_t)"
 .Fa "off_t (*seekfn)(void *, off_t, int)"

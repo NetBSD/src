@@ -1,4 +1,4 @@
-.\" $NetBSD: sdp.3,v 1.4 2012/03/15 19:04:46 njoly Exp $
+.\" $NetBSD: sdp.3,v 1.5 2024/10/13 14:56:30 rillig Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 7, 2009
+.Dd October 13, 2024
 .Dt SDP 3
 .Os
 .Sh NAME
@@ -53,19 +53,19 @@
 .Fn sdp_close "sdp_session_t ss"
 .Ft bool
 .Fo sdp_service_search
-.Fa "sdp_session_t ss" "sdp_data_t *ssp" "uint32_t *handlep" "int *num"
+.Fa "sdp_session_t ss" "const sdp_data_t *ssp" "uint32_t *handlep" "int *num"
 .Fc
 .Ft bool
 .Fo sdp_service_attribute
-.Fa "sdp_session_t ss" "uint32_t handle" "sdp_data_t *ail" "sdp_data_t *response"
+.Fa "sdp_session_t ss" "uint32_t handle" "const sdp_data_t *ail" "sdp_data_t *response"
 .Fc
 .Ft bool
 .Fo sdp_service_search_attribute
-.Fa "sdp_session_t ss" "sdp_data_t *ssp" "sdp_data_t *ail" "sdp_data_t *response"
+.Fa "sdp_session_t ss" "const sdp_data_t *ssp" "const sdp_data_t *ail" "sdp_data_t *response"
 .Fc
 .Ft bool
 .Fo sdp_record_insert
-.Fa "sdp_session_t ss" "bdaddr_t *bdaddr" "uint32_t *handlep" "sdp_data_t *record"
+.Fa "sdp_session_t ss" "bdaddr_t *bdaddr" "uint32_t *handlep" "const sdp_data_t *record"
 .Fc
 .Ft bool
 .Fn sdp_record_update "sdp_session_t ss" "uint32_t handle" "sdp_data_t *record"

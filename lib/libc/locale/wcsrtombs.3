@@ -1,4 +1,4 @@
-.\" $NetBSD: wcsrtombs.3,v 1.17 2024/09/10 04:43:39 rillig Exp $
+.\" $NetBSD: wcsrtombs.3,v 1.18 2024/10/13 14:56:30 rillig Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 27, 2017
+.Dd October 13, 2024
 .Dt WCSRTOMBS 3
 .Os
 .\" ----------------------------------------------------------------------
@@ -55,7 +55,7 @@
 .Fa "const wchar_t ** restrict pwcs"
 .Fa "size_t nwc"
 .Fa "size_t n"
-.Fa "mbstat_t * restrict ps"
+.Fa "mbstate_t * restrict ps"
 .Fc
 .
 .\" ----------------------------------------------------------------------
