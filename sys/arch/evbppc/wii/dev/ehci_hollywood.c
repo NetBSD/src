@@ -1,4 +1,4 @@
-/* $NetBSD: ehci_hollywood.c,v 1.3 2024/09/22 13:56:25 jmcneill Exp $ */
+/* $NetBSD: ehci_hollywood.c,v 1.4 2024/10/13 16:21:37 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_hollywood.c,v 1.3 2024/09/22 13:56:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_hollywood.c,v 1.4 2024/10/13 16:21:37 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,6 +43,9 @@ __KERNEL_RCSID(0, "$NetBSD: ehci_hollywood.c,v 1.3 2024/09/22 13:56:25 jmcneill 
 
 #include <machine/wii.h>
 #include "hollywood.h"
+
+#define USB_CHICKENBITS		0x0d0400cc
+#define  EHCI_INTR_ENABLE	0x00008000
 
 extern struct powerpc_bus_dma_tag wii_mem2_bus_dma_tag;
 
@@ -85,6 +88,8 @@ ehci_hollywood_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_offs = EREAD1(sc, EHCI_CAPLENGTH);
 	EOWRITE4(sc, EHCI_USBINTR, 0);
+
+	out32(USB_CHICKENBITS, in32(USB_CHICKENBITS) | EHCI_INTR_ENABLE);
 
 	hollywood_intr_establish(haa->haa_irq, IPL_USB, ehci_intr, sc,
 	    device_xname(self));
