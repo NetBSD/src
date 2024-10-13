@@ -1,4 +1,4 @@
-/* $NetBSD: ascaudio.c,v 1.1 2024/03/13 07:55:28 nat Exp $ */
+/* $NetBSD: ascaudio.c,v 1.2 2024/10/13 12:34:56 nat Exp $ */
 
 /*-
  * Copyright (c) 2017, 2023 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -29,7 +29,7 @@
 /* Based on pad(4) and asc(4) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.1 2024/03/13 07:55:28 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.2 2024/10/13 12:34:56 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -134,7 +134,8 @@ static const struct audio_hw_if ascaudio_hw_if = {
 	.get_locks	 = ascaudio_get_locks,
 };
 
-#define EASC_VER 0xb0
+#define EASC_VER	0xb0
+#define EASC_VER2	0xbb
 
 enum {
 	ASC_OUTPUT_CLASS,
@@ -243,6 +244,9 @@ ascaudioattach(device_t parent, device_t self, void *aux)
 		if (sc->sc_slowcpu)
 			sc->sc_rate /= 2;
 	}
+
+	if (sc->sc_ver == EASC_VER2)
+		sc->sc_ver = EASC_VER;
 
 	if (sc->sc_ver != EASC_VER)
 		printf(": Apple Sound Chip");
