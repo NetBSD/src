@@ -1,4 +1,4 @@
-/* $NetBSD: setlocale.c,v 1.65 2018/01/04 20:57:29 kamil Exp $ */
+/* $NetBSD: setlocale.c,v 1.65.14.1 2024/10/13 16:08:53 martin Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setlocale.c,v 1.65 2018/01/04 20:57:29 kamil Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.65.14.1 2024/10/13 16:08:53 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -65,6 +65,7 @@ _setlocale_cache(locale_t loc, struct _locale_cache_t *cache)
 {
 	const char *monetary_name = loc->part_name[LC_MONETARY];
 	const char *numeric_name = loc->part_name[LC_NUMERIC];
+	const char *message_name = loc->part_name[LC_MESSAGES];
 	_NumericLocale *numeric = loc->part_impl[LC_NUMERIC];
 	_MonetaryLocale *monetary = loc->part_impl[LC_MONETARY];
 	struct lconv *ldata;
@@ -77,6 +78,9 @@ _setlocale_cache(locale_t loc, struct _locale_cache_t *cache)
 			continue;
 		if (numeric_name != old_cache->numeric_name &&
 		    strcmp(numeric_name, old_cache->numeric_name) != 0)
+			continue;
+		if (message_name != old_cache->message_name &&
+		    strcmp(message_name, old_cache->message_name) != 0)
 			continue;
 		loc->cache = old_cache;
 		free(cache);
@@ -91,6 +95,10 @@ _setlocale_cache(locale_t loc, struct _locale_cache_t *cache)
 
 	cache->monetary_name = monetary_name;
 	cache->numeric_name = numeric_name;
+	cache->message_name = message_name;
+	cache->errlist = NULL;
+	cache->errlistp = &cache->errlist;
+	cache->errlist_prefix = NULL;
 	ldata = &cache->ldata;
 
 	ldata->decimal_point = __UNCONST(numeric->decimal_point);

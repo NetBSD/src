@@ -1,4 +1,4 @@
-/* $NetBSD: global_locale.c,v 1.25 2016/04/29 16:26:48 joerg Exp $ */
+/* $NetBSD: global_locale.c,v 1.25.26.1 2024/10/13 16:08:53 martin Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,12 +28,15 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: global_locale.c,v 1.25 2016/04/29 16:26:48 joerg Exp $");
+__RCSID("$NetBSD: global_locale.c,v 1.25.26.1 2024/10/13 16:08:53 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
+
+#include "namespace.h"
 
 #include <sys/types.h>
 #include <sys/ctype_bits.h>
 #include <sys/localedef.h>
+#include <errno.h>
 #include <langinfo.h>
 #include <limits.h>
 #define __SETLOCALE_SOURCE__
@@ -141,6 +144,9 @@ __dso_hidden const struct _locale_cache_t _C_cache = {
     },
     .monetary_name = _lc_C_locale_name,
     .numeric_name = _lc_C_locale_name,
+    .message_name = _lc_C_locale_name,
+    .errlistp = &sys_errlist,
+    .errlist_prefix = "Unknown error: %d",
 };
 
 struct _locale _lc_global_locale = {
