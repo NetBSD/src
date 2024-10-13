@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.70.4.3 2024/10/03 16:11:36 martin Exp $ */
+/* $NetBSD: cpu.c,v 1.70.4.4 2024/10/13 10:43:11 martin Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.70.4.3 2024/10/03 16:11:36 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.70.4.4 2024/10/13 10:43:11 martin Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.70.4.3 2024/10/03 16:11:36 martin Exp $");
 #include <sys/kmem.h>
 #include <sys/reboot.h>
 #include <sys/rndsource.h>
+#include <sys/sdt.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 
@@ -166,6 +167,8 @@ cpu_attach(device_t dv, cpuid_t id)
 	aarch64_printcacheinfo(dv, ci);
 	cpu_identify2(dv, ci);
 
+	cpu_setup_rng(dv, ci);
+
 	if (unit != 0) {
 	    return;
 	}
@@ -177,7 +180,6 @@ cpu_attach(device_t dv, cpuid_t id)
 	cpu_init_counter(ci);
 
 	/* These currently only check the BP. */
-	cpu_setup_rng(dv, ci);
 	cpu_setup_aes(dv, ci);
 	cpu_setup_chacha(dv, ci);
 }
@@ -584,8 +586,9 @@ rndrrs_get(size_t nbytes, void *cookie)
 	const unsigned bpb = 4;
 	size_t nbits = nbytes*NBBY;
 	uint64_t x;
-	int error;
+	int error, bound;
 
+	bound = curlwp_bind();	/* bind to CPU for rndrrs_fail evcnt */
 	while (nbits) {
 		/*
 		 * x := random 64-bit sample
@@ -605,12 +608,16 @@ rndrrs_get(size_t nbytes, void *cookie)
 		    "mrs	%0, s3_3_c2_c4_1\n"
 		    "cset	%w1, eq"
 		    : "=r"(x), "=r"(error));
-		if (error)
+		if (error) {
+			DTRACE_PROBE(rndrrs_fail);
+			curcpu()->ci_rndrrs_fail.ev_count++;
 			break;
+		}
 		rnd_add_data_sync(&rndrrs_source, &x, sizeof(x),
 		    bpb*sizeof(x));
 		nbits -= MIN(nbits, bpb*sizeof(x));
 	}
+	curlwp_bindx(bound);
 
 	explicit_memset(&x, 0, sizeof x);
 }
@@ -631,7 +638,16 @@ cpu_setup_rng(device_t dv, struct cpu_info *ci)
 		return;
 	}
 
-	/* Attach it.  */
+	/* Attach event counter for RNDRRS failure.  */
+	evcnt_attach_dynamic(&ci->ci_rndrrs_fail, EVCNT_TYPE_MISC, NULL,
+	    ci->ci_cpuname, "rndrrs fail");
+
+	/*
+	 * On the primary CPU, attach random source -- this only
+	 * happens once globally.
+	 */
+	if (!CPU_IS_PRIMARY(ci))
+		return;
 	rndsource_setcb(&rndrrs_source, rndrrs_get, NULL);
 	rnd_attach_source(&rndrrs_source, "rndrrs", RND_TYPE_RNG,
 	    RND_FLAG_DEFAULT|RND_FLAG_HASCB);
