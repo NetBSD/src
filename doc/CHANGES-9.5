@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.25 2024/10/12 11:42:35 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.26 2024/10/13 15:58:39 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -430,4 +430,76 @@ sys/conf/newvers.sh				1.64 (patch)
 
 	sys/conf/newvers: PR 58220: use ${TOOL_AWK}
 	[riastradh, ticket #1899]
+
+tests/lib/libc/c063/t_fchmodat.c		1.4-1.7
+tests/lib/libc/c063/t_utimensat.c		1.7
+
+	tests/lib/libc/c063: fix bugs in various tests so they actually
+	test what is intended by doing ATF_CHECK(foo == bar) instead of
+	ATF_CHECK(foo = bar), plus some other associated fixes and
+	tidying.
+	[riastradh, ticket #1900]
+
+tests/lib/libc/c063/t_utimensat.c		1.8,1.9
+
+	tests/lib/libc/c063: PR 58571: tidy up t_utimensat and skip the atime
+	tests on file systems mounted noatime.
+	[riastradh, ticket #1901]
+
+tools/README					1.6
+
+	tools/README: PR 58699: fix path to nbtools_config.h.
+	[riastradh, ticket #1902]
+
+external/gpl3/gcc/dist/gcc/regsub.cc		1.2
+	(applied to .../regsub.c)
+
+	tools/gcc: PR 58686: use <sys/types.h> for ssize_t (in our own
+	local patches to gcc) to fix tools on some platforms.
+	[riastradh, ticket #1903]
+
+sys/arch/xen/xen/xen_clock.c			1.19 (patch)
+	(applied to .../clock.c)
+
+	xen clock: PR 58362: avoid passing stack garbage to hypervisor in
+	XENPF_settime, by zeroing the op first.
+	[riastradh, ticket #1904]
+
+lib/libc/compat/gen/compat_ldexp_ieee754.c	1.9
+
+	ldexp(3): PR 58347: avoid undefined behaviour in arithmetic overflow
+	on certain inputs.
+	[riastradh, ticket #1905]
+
+distrib/sets/lists/debug/mi			1.435 (patch)
+distrib/sets/lists/tests/mi			1.1315 (patch)
+lib/libm/src/s_nexttoward.c			1.3 (patch)
+tests/lib/libm/Makefile				1.49 (patch)
+tests/lib/libm/t_next.c				1.1-1.6 (patch)
+
+	nexttoward(3): PR 58236: fix for subnormal inputs so it goes in
+	the correct direction, not the opposite direction.
+	[riastradh, ticket #963]
+
+build.sh					1.378,1.379
+
+	build.sh: PR 58399: improve xsrc existence test.
+	[riastradh, ticket #1907]
+
+share/man/man3/tm.3				1.6,1.7
+
+	tm(3): PR 58651: fix types of NetBSD extensions tm_gmtoff and
+	tm_zone in man page.
+	[riastradh, ticket #1908]
+
+share/man/man9/ts2timo.9			1.4,1.5
+sys/kern/subr_time.c				1.39 (patch)
+
+	PR 58733: avoid ts2timo() clobbering its arg.
+	[kre, ticket #1909]
+
+share/man/man5/acct.5				1.10-1.12
+
+	acct(5): PR 58515: update man page to reflect reality.
+	[riastradh, ticket #1910]
 
