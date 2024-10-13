@@ -1,4 +1,4 @@
-/* $NetBSD: wii.h,v 1.8 2024/09/22 13:56:25 jmcneill Exp $ */
+/* $NetBSD: wii.h,v 1.9 2024/10/13 16:21:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -119,6 +119,8 @@
 #define  IOPOH1EN			__BIT(22)
 #define  IOPOH0EN			__BIT(21)
 #define  IOPEHCEN			__BIT(20)
+#define HW_AIPPROT			(HOLLYWOOD_PRIV_BASE + 0x070)
+#define  ENAHBIOPI			__BIT(0)
 #define HW_GPIOB_OUT			(HOLLYWOOD_BASE + 0x0c0)
 #define HW_GPIOB_DIR			(HOLLYWOOD_BASE + 0x0c4)
 #define HW_GPIOB_IN			(HOLLYWOOD_BASE + 0x0c8)
@@ -153,6 +155,21 @@ wii_slot_led_blink(u_int interval_us)
 		delay(interval_us);
 		out32(HW_GPIOB_OUT, val);
 	}
+}
+
+/* Enable or disable the slot LED. */
+static inline void
+wii_slot_led(bool enable)
+{
+	uint32_t val;
+
+	val = in32(HW_GPIOB_OUT);
+	if (enable) {
+		val |= __BIT(GPIO_SLOT_LED);
+	} else {
+		val &= ~__BIT(GPIO_SLOT_LED);
+	}
+	out32(HW_GPIOB_OUT, val);
 }
 
 #endif /* !_WII_H */
