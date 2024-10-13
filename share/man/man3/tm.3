@@ -1,4 +1,4 @@
-.\" $NetBSD: tm.3,v 1.6 2024/08/28 14:36:19 riastradh Exp $
+.\" $NetBSD: tm.3,v 1.7 2024/10/13 01:30:45 riastradh Exp $
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -69,7 +69,7 @@ In addition, the following NetBSD-specific fields are available:
 "Type         " "Field  " "Months since January 1"
 .It Sy Type Ta Sy Field Ta Sy Represents
 .It Vt long Ta Va tm_gmtoff Ta Offset from UTC in seconds
-.It Vt char Ta Va tm_zone Ta Timezone abbreviation
+.It Vt "const char *" Ta Va tm_zone Ta Timezone abbreviation
 .El
 .Pp
 The
