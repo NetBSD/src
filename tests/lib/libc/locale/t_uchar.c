@@ -1,4 +1,4 @@
-/*	$NetBSD: t_uchar.c,v 1.1 2024/08/15 13:14:44 riastradh Exp $	*/
+/*	$NetBSD: t_uchar.c,v 1.2 2024/10/13 23:21:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -32,8 +32,13 @@
 #include <uchar.h>
 typedef mbstate_t nbtest_mbstate_t;
 typedef size_t nbtest_size_t;
+typedef char8_t nbtest_char8_t;
 typedef char16_t nbtest_char16_t;
 typedef char32_t nbtest_char32_t;
+static size_t (*nbtest_mbrtoc8)(char8_t *restrict, const char *restrict,
+    size_t, mbstate_t *restrict) __unused = &mbrtoc8;
+static size_t (*nbtest_c8rtomb)(char *restrict, char8_t,
+    mbstate_t *restrict) __unused = &c8rtomb;
 static size_t (*nbtest_mbrtoc16)(char16_t *restrict, const char *restrict,
     size_t, mbstate_t *restrict) __unused = &mbrtoc16;
 static size_t (*nbtest_c16rtomb)(char *restrict, char16_t,
@@ -44,7 +49,7 @@ static size_t (*nbtest_c32rtomb)(char *restrict, char32_t,
     mbstate_t *restrict) __unused = &c32rtomb;
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_uchar.c,v 1.1 2024/08/15 13:14:44 riastradh Exp $");
+__RCSID("$NetBSD: t_uchar.c,v 1.2 2024/10/13 23:21:30 riastradh Exp $");
 
 #include <atf-c.h>
 #include <stdint.h>
@@ -57,6 +62,9 @@ ATF_TC_HEAD(uchartypes, tc)
 ATF_TC_BODY(uchartypes, tc)
 {
 
+	ATF_CHECK_EQ_MSG(sizeof(char8_t), sizeof(unsigned char),
+	    "char16_t %zu, unsigned char %zu",
+	    sizeof(char16_t), sizeof(unsigned char));
 	ATF_CHECK_EQ_MSG(sizeof(char16_t), sizeof(uint_least16_t),
 	    "char16_t %zu, uint_least16_t %zu",
 	    sizeof(char16_t), sizeof(uint_least16_t));
