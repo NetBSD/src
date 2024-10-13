@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.52 2024/08/16 20:11:18 riastradh Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.53 2024/10/13 22:25:38 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.52 2024/08/16 20:11:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.53 2024/10/13 22:25:38 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -616,7 +616,7 @@ cdevsw_attach(const struct cdevsw *devsw, devmajor_t *devmajor)
 static void
 devsw_detach_locked(const struct bdevsw *bdev, const struct cdevsw *cdev)
 {
-	int bi, ci = -1/*XXXGCC*/, di;
+	int bi = -1, ci = -1/*XXXGCC*/, di;
 	struct cfdriver *cd;
 	device_t dv;
 
