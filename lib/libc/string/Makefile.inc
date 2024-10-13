@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile.inc,v 1.85.6.1 2024/09/20 11:22:29 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.85.6.2 2024/10/13 16:08:53 martin Exp $
 
 # string sources
 .PATH: ${ARCHDIR}/string ${.CURDIR}/string
@@ -39,6 +39,8 @@ CPPFLAGS.wmemcmp.c+=	-I${LIBCDIR}/locale
 # printf("foo") may be converted to puts("foo")), since that tends
 # to recurse and blow the stack.
 COPTS.memset.c+=	${${ACTIVE_CC} == "gcc":? -fno-builtin :}
+
+COPTS.strerror_r.c+= 	-Wno-format-nonliteral
 
 .include "${ARCHDIR}/string/Makefile.inc"
 
