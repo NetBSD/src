@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtree.h,v 1.5 2019/03/07 14:39:21 roy Exp $	*/
+/*	$NetBSD: rbtree.h,v 1.5.30.1 2024/10/13 10:05:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,10 @@
 #endif
 #include <sys/queue.h>
 #include <sys/endian.h>
+
+#if !defined(_KERNEL) && !defined(_STANDALONE) && defined(RBDEBUG)
+#include <stdbool.h>
+#endif
 
 __BEGIN_DECLS
 
