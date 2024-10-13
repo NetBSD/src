@@ -1,4 +1,4 @@
-.\" $NetBSD: tm.3,v 1.5 2022/10/23 15:43:40 jschauma Exp $
+.\" $NetBSD: tm.3,v 1.5.2.1 2024/10/13 15:20:49 martin Exp $
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -68,8 +68,8 @@ In addition, the following NetBSD-specific fields are available:
 .Bl -column -offset indent \
 "Type         " "Field  " "Months since January 1"
 .It Sy Type Ta Sy Field Ta Sy Represents
-.It Vt int Ta Va tm_gmtoff Ta Offset from UTC in seconds
-.It Vt __aconst char Ta Va tm_zone Ta Timezone abbreviation
+.It Vt long Ta Va tm_gmtoff Ta Offset from UTC in seconds
+.It Vt "const char *" Ta Va tm_zone Ta Timezone abbreviation
 .El
 .Pp
 The
