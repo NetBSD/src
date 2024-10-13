@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.97 2022/08/20 14:08:59 riastradh Exp $	*/
+/*	$NetBSD: if_url.c,v 1.97.4.1 2024/10/13 15:18:07 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.97 2022/08/20 14:08:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.97.4.1 2024/10/13 15:18:07 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -422,7 +422,7 @@ url_uno_mcast(struct ifnet *ifp)
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	uint32_t mchash[2] = { 0, 0 };
-	int h = 0, rcr;
+	uint32_t h = 0, rcr;
 
 	DPRINTF(("%s: %s: enter\n", device_xname(un->un_dev), __func__));
 
