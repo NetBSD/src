@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.40 2022/09/04 08:50:25 skrll Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.40.4.1 2024/10/13 15:44:54 martin Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -261,6 +261,21 @@ struct txdmamap_pool_entry {
 #define	ASF_NEW_HANDSHAKE	2
 #define	ASF_STACKUP		4
 
+/*
+ * Locking notes:
+ *
+ *	n		IFNET_LOCK
+ *	m		sc_mcast_lock
+ *	i		sc_intr_lock
+ *	i/n		while down, IFNET_LOCK; while up, sc_intr_lock
+ *
+ * Otherwise, stable from attach to detach.
+ *
+ * Lock order:
+ *
+ *	IFNET_LOCK -> sc_intr_lock
+ *	IFNET_LOCK -> sc_mcast_lock
+ */
 struct bge_softc {
 	device_t		bge_dev;
 	struct ethercom		ethercom;	/* interface info */
@@ -276,10 +291,10 @@ struct bge_softc {
 	pcitag_t		sc_pcitag;
 
 	struct pci_attach_args	bge_pa;
-	struct mii_data		bge_mii;
-	struct ifmedia		bge_ifmedia;	/* media info */
+	struct mii_data		bge_mii;	/* i: mii data */
+	struct ifmedia		bge_ifmedia;	/* i: media info */
 	uint32_t		bge_return_ring_cnt;
-	uint32_t		bge_tx_prodidx;
+	uint32_t		bge_tx_prodidx; /* i: tx producer idx */
 	bus_dma_tag_t		bge_dmatag;
 	bus_dma_tag_t		bge_dmatag32;
 	bool			bge_dma64;
@@ -287,7 +302,7 @@ struct bge_softc {
 	uint32_t		bge_pciecap;
 	uint16_t		bge_mps;
 	int			bge_expmrq;
-	uint32_t		bge_lasttag;
+	uint32_t		bge_lasttag;	/* i: last status tag */
 	uint32_t		bge_mfw_flags;  /* Management F/W flags */
 #define	BGE_MFW_ON_RXCPU	__BIT(0)
 #define	BGE_MFW_ON_APE		__BIT(1)
@@ -297,73 +312,82 @@ struct bge_softc {
 	int			bge_phy_addr;
 	uint32_t		bge_chipid;
 	uint8_t			bge_asf_mode;
-	uint8_t			bge_asf_count;
+	uint8_t			bge_asf_count;	/* i: XXX ??? */
 	struct bge_ring_data	*bge_rdata;	/* rings */
 	struct bge_chain_data	bge_cdata;	/* mbufs */
 	bus_dmamap_t		bge_ring_map;
 	bus_dma_segment_t	bge_ring_seg;
 	int			bge_ring_rseg;
-	uint16_t		bge_tx_saved_considx;
-	uint16_t		bge_rx_saved_considx;
-	uint16_t		bge_std;	/* current std ring head */
-	uint16_t		bge_std_cnt;
-	uint16_t		bge_jumbo;	/* current jumo ring head */
+	uint16_t		bge_tx_saved_considx; /* i: tx consumer idx */
+	uint16_t		bge_rx_saved_considx; /* i: rx consumer idx */
+	uint16_t		bge_std;	/* i: current std ring head */
+	uint16_t		bge_std_cnt;	/* i: number of std mbufs */
+	uint16_t		bge_jumbo;
+					/* i: current jumbo ring head */
 	SLIST_HEAD(__bge_jfreehead, bge_jpool_entry)	bge_jfree_listhead;
+					/* i: list of free jumbo mbufs */
 	SLIST_HEAD(__bge_jinusehead, bge_jpool_entry)	bge_jinuse_listhead;
+					/* i: list of jumbo mbufs in use */
 	uint32_t		bge_stat_ticks;
-	uint32_t		bge_rx_coal_ticks;
-	uint32_t		bge_tx_coal_ticks;
-	uint32_t		bge_rx_max_coal_bds;
-	uint32_t		bge_tx_max_coal_bds;
-	uint32_t		bge_sts;
+	uint32_t		bge_rx_coal_ticks;	/* i */
+	uint32_t		bge_tx_coal_ticks;	/* i */
+	uint32_t		bge_rx_max_coal_bds;	/* i */
+	uint32_t		bge_tx_max_coal_bds;	/* i */
+	uint32_t		bge_sts;	/* i/n: link status */
 #define BGE_STS_LINK		__BIT(0)	/* MAC link status */
 #define BGE_STS_LINK_EVT	__BIT(1)	/* pending link event */
 #define BGE_STS_AUTOPOLL	__BIT(2)	/* PHY auto-polling  */
 #define BGE_STS_BIT(sc, x)	((sc)->bge_sts & (x))
 #define BGE_STS_SETBIT(sc, x)	((sc)->bge_sts |= (x))
 #define BGE_STS_CLRBIT(sc, x)	((sc)->bge_sts &= ~(x))
-	u_short			bge_if_flags;
-	uint32_t		bge_flags;
+	u_short			bge_if_flags;	/* m: if_flags cache */
+	uint32_t		bge_flags;	/* i/n */
 	uint32_t		bge_phy_flags;
-	int			bge_flowflags;
+	int			bge_flowflags;	/* i */
 	time_t			bge_tx_lastsent;
-	bool			bge_stopping;
+						/* i: time of last tx */
 	bool			bge_txrx_stopping;
-	bool			bge_tx_sending;
+						/* i: true when going down */
+	bool			bge_tx_sending;	/* i: true when tx inflight */
 
 #ifdef BGE_EVENT_COUNTERS
 	/*
 	 * Event counters.
 	 */
-	struct evcnt bge_ev_intr;	/* interrupts */
-	struct evcnt bge_ev_intr_spurious;  /* spurious intr. (tagged status)*/
-	struct evcnt bge_ev_intr_spurious2; /* spurious interrupts */
-	struct evcnt bge_ev_tx_xoff;	/* send PAUSE(len>0) packets */
-	struct evcnt bge_ev_tx_xon;	/* send PAUSE(len=0) packets */
-	struct evcnt bge_ev_rx_xoff;	/* receive PAUSE(len>0) packets */
-	struct evcnt bge_ev_rx_xon;	/* receive PAUSE(len=0) packets */
-	struct evcnt bge_ev_rx_macctl;	/* receive MAC control packets */
-	struct evcnt bge_ev_xoffentered;/* XOFF state entered */
+	struct evcnt bge_ev_intr;	/* i: interrupts */
+	struct evcnt bge_ev_intr_spurious;
+					/* i: spurious intr. (tagged status) */
+	struct evcnt bge_ev_intr_spurious2; /* i: spurious interrupts */
+	struct evcnt bge_ev_tx_xoff;	/* i: send PAUSE(len>0) packets */
+	struct evcnt bge_ev_tx_xon;	/* i: send PAUSE(len=0) packets */
+	struct evcnt bge_ev_rx_xoff;	/* i: receive PAUSE(len>0) packets */
+	struct evcnt bge_ev_rx_xon;	/* i: receive PAUSE(len=0) packets */
+	struct evcnt bge_ev_rx_macctl;	/* i: receive MAC control packets */
+	struct evcnt bge_ev_xoffentered;/* i: XOFF state entered */
 #endif /* BGE_EVENT_COUNTERS */
-	uint64_t		bge_if_collisions;
-	int			bge_txcnt;
-	struct callout		bge_timeout;
+	uint64_t		bge_if_collisions;	/* i */
+	int			bge_txcnt;	/* i: # tx descs in use */
+	struct callout		bge_timeout;	/* i: tx timeout */
 	bool			bge_pending_rxintr_change;
-	bool			bge_detaching;
-	SLIST_HEAD(, txdmamap_pool_entry) txdma_list;
-	struct txdmamap_pool_entry *txdma[BGE_TX_RING_CNT];
+						/* i: change pending to
+						 * rx_coal_ticks and
+						 * rx_max_coal_bds */
+	bool			bge_attached;
+	bool			bge_detaching;	/* n */
+	SLIST_HEAD(, txdmamap_pool_entry) txdma_list;		/* i */
+	struct txdmamap_pool_entry *txdma[BGE_TX_RING_CNT];	/* i */
 
 	struct sysctllog	*bge_log;
 
 	krndsource_t	rnd_source;	/* random source */
 
-	kmutex_t *sc_core_lock;		/* lock for softc operations */
-	kmutex_t *sc_intr_lock;		/* lock for interrupt operations */
+	kmutex_t *sc_mcast_lock;	/* m: lock for SIOCADD/DELMULTI */
+	kmutex_t *sc_intr_lock;		/* i: lock for interrupt operations */
 	struct workqueue *sc_reset_wq;
-	struct work sc_reset_work;
+	struct work sc_reset_work;	/* i */
 	volatile unsigned sc_reset_pending;
 
-	bool sc_trigger_reset;
+	bool sc_trigger_reset;		/* i */
 };
 
 #endif /* _DEV_PCI_IF_BGEVAR_H_ */
