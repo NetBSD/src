@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.365.2.2 2023/09/11 14:41:51 martin Exp $
+#	$NetBSD: build.sh,v 1.365.2.3 2024/10/13 15:12:59 martin Exp $
 #
 # Copyright (c) 2001-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1542,7 +1542,7 @@ sanitycheck()
 
 	while [ ${MKX11-no} = "yes" ]; do		# not really a loop
 		test -n "${X11SRCDIR}" && {
-		    test -d "${X11SRCDIR}" ||
+		    test -d "${X11SRCDIR}/external" ||
 		    	bomb "X11SRCDIR (${X11SRCDIR}) does not exist (with -x)"
 		    break
 		}
@@ -1551,7 +1551,7 @@ sanitycheck()
 		    "${NETBSDSRCDIR}/xsrc" \
 		    /usr/xsrc
 		do
-		    test -d "${_xd}" &&
+		    test -f "${_xd}/Makefile" &&
 			setmakeenv X11SRCDIR "${_xd}" &&
 			break 2
 		done
@@ -2010,7 +2010,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.365.2.2 2023/09/11 14:41:51 martin Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.365.2.3 2024/10/13 15:12:59 martin Exp $
 # with these arguments: ${_args}
 #
 
