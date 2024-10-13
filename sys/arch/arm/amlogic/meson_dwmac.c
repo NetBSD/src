@@ -1,4 +1,4 @@
-/* $NetBSD: meson_dwmac.c,v 1.15 2024/08/10 12:16:46 skrll Exp $ */
+/* $NetBSD: meson_dwmac.c,v 1.16 2024/10/13 08:55:24 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.15 2024/08/10 12:16:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.16 2024/10/13 08:55:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -281,7 +281,7 @@ meson_dwmac_attach(device_t parent, device_t self, void *aux)
 
 	if (of_hasprop(phandle, "snps,reset-gpio")) {
 		if (meson_dwmac_reset_eth(phandle) != 0)
-			aprint_error_dev(self, "PHY reset failed\n");
+			aprint_error_dev(self, "reset failed\n");
 	} else {
 		if (meson_dwmac_reset_phy(phandle_phy) != 0)
 			aprint_error_dev(self, "PHY reset failed\n");
