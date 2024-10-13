@@ -1,4 +1,4 @@
-/* $NetBSD: compat_ldexp_ieee754.c,v 1.7.16.1 2020/05/25 15:26:05 martin Exp $ */
+/* $NetBSD: compat_ldexp_ieee754.c,v 1.7.16.2 2024/10/13 15:00:10 martin Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_ldexp_ieee754.c,v 1.7.16.1 2020/05/25 15:26:05 martin Exp $");
+__RCSID("$NetBSD: compat_ldexp_ieee754.c,v 1.7.16.2 2024/10/13 15:00:10 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -115,17 +115,31 @@ ldexp(double val, int expon)
 
 	/*
 	 * u.v is now normalized and oldexp has been adjusted if necessary.
-	 * Calculate the new exponent and check for underflow and overflow.
+	 * We have
+	 *
+	 *	0 <= oldexp <= DBL_EXP_INFNAN,
+	 *
+	 * but
+	 *
+	 *	INT_MIN <= expon <= INT_MAX.
+	 *
+	 * Check for underflow and overflow, and if none, calculate the
+	 * new exponent.
 	 */
-	newexp = oldexp + expon;
-
-	if (newexp >= DBL_EXP_INFNAN ||
-	    (oldexp >= 0 && expon >= DBL_EXP_INFNAN)) {
+	if (expon >= DBL_EXP_INFNAN - oldexp) {
 		/*
 		 * The result overflowed; return +/-Inf.
 		 */
 		return overflow(val);
-	} else if (newexp <= 0) {
+	}
+
+	/*
+	 * We now have INT_MIN <= oldexp + expon <= DBL_EXP_INFNAN <= INT_MAX,
+	 * so the arithmetic is safe.
+	 */
+	newexp = oldexp + expon;
+
+	if (newexp <= 0) {
 		/*
 		 * The output number is either denormal or underflows (see
 		 * comments in machine/ieee.h).
