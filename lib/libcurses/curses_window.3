@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_window.3,v 1.16 2013/10/15 22:15:17 roy Exp $
+.\"	$NetBSD: curses_window.3,v 1.17 2024/10/13 14:56:30 rillig Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd October 15, 2013
+.Dd October 13, 2024
 .Dt CURSES_WINDOW 3
 .Os
 .Sh NAME
@@ -53,7 +53,7 @@
 .In curses.h
 .Ft int
 .Fo copywin
-.Fa "WINDOW *source"
+.Fa "const WINDOW *source"
 .Fa "WINDOW *dest"
 .Fa "int sminrow"
 .Fa "int smincol"
