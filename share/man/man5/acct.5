@@ -1,4 +1,4 @@
-.\"	$NetBSD: acct.5,v 1.10 2021/11/15 17:41:20 christos Exp $
+.\"	$NetBSD: acct.5,v 1.10.2.1 2024/10/13 15:46:47 martin Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)acct.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd November 15, 2021
+.Dd August 5, 2024
 .Dt ACCT 5
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@ The kernel maintains the following
 information structure for all
 processes. If a process terminates, and accounting is enabled,
 the kernel calls the
-.Xr acct 2
+.Xr acct_process 9
 function call to prepare and append the record
 to the accounting file.
 .Bd -literal
@@ -52,25 +52,25 @@ to the accounting file.
  * exponent, 13 bit fraction ``floating point'' number.  Units are 1/AHZ
  * seconds.
  */
-typedef u_short comp_t;
+typedef uint16_t comp_t;
 
 struct acct {
-	char	ac_comm[10];	/* name of command */
-	comp_t	ac_utime;	/* user time */
-	comp_t	ac_stime;	/* system time */
-	comp_t	ac_etime;	/* elapsed time */
-	time_t	ac_btime;	/* starting time */
-	uid_t	ac_uid;		/* user id */
-	gid_t	ac_gid;		/* group id */
-	short	ac_mem;		/* memory usage average */
-	comp_t	ac_io;		/* count of IO blocks */
-	dev_t	ac_tty;		/* controlling tty */
-#define	AFORK	0x01		/* forked but not execed */
+	char	  ac_comm[16];	/* name of command */
+	comp_t	  ac_utime;	/* user time */
+	comp_t	  ac_stime;	/* system time */
+	comp_t	  ac_etime;	/* elapsed time */
+	time_t	  ac_btime;	/* starting time */
+	uid_t	  ac_uid;	/* user id */
+	gid_t	  ac_gid;	/* group id */
+	uint16_t  ac_mem;	/* memory usage average */
+	comp_t	  ac_io;	/* count of IO blocks */
+	dev_t	  ac_tty;	/* controlling tty */
+#define	AFORK	0x01		/* fork'd but not exec'd */
 #define	ASU	0x02		/* used super-user permissions */
 #define	ACOMPAT	0x04		/* used compatibility mode */
 #define	ACORE	0x08		/* dumped core */
 #define	AXSIG	0x10		/* killed by a signal */
-	char	ac_flag;	/* accounting flags */
+	uint8_t	  ac_flag;	/* accounting flags */
 };
 
 /*
@@ -79,9 +79,10 @@ struct acct {
  */
 #define	AHZ	64
 
-#ifdef KERNEL
-struct vnode	*acctp;
-#endif
+#ifdef _KERNEL
+void   acct_init(void);
+int    acct_process(struct lwp *);
+endif
 .Ed
 .Pp
 If a terminated process was created by an
@@ -127,7 +128,8 @@ flags are retained for source compatibility.
 .Xr acct 2 ,
 .Xr execve 2 ,
 .Xr accton 8 ,
-.Xr sa 8
+.Xr sa 8 ,
+.Xr acct_process 9
 .Sh HISTORY
 A
 .Nm
