@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.4 2015/01/03 13:20:11 apb Exp $
+$NetBSD: README,v 1.4.18.1 2024/10/13 14:01:31 martin Exp $
 
 Notes for NetBSD src/tools
 
@@ -61,7 +61,7 @@ ${TOOLDIR}/lib/libnbcompat.a
 
     A library containing functions that are needed by some tools.
 
-${TOOLDIR}/include/nbtool_compat.h
+${TOOLDIR}/include/compat/nbtool_compat.h
 
     A header file defining macros that are needed by some tools.
 
