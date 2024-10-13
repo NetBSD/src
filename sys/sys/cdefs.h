@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.159 2022/01/22 08:58:48 skrll Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.159.4.1 2024/10/13 16:15:07 martin Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -645,9 +645,12 @@
 
 #ifndef __ASSEMBLER__
 /* __BIT(n): nth bit, where __BIT(0) == 0x1. */
-#define	__BIT(__n)	\
-    (((uintmax_t)(__n) >= NBBY * sizeof(uintmax_t)) ? 0 : \
-    ((uintmax_t)1 << (uintmax_t)((__n) & (NBBY * sizeof(uintmax_t) - 1))))
+#define	__BIT(__n)							      \
+	(((__UINTMAX_TYPE__)(__n) >= __CHAR_BIT__ * sizeof(__UINTMAX_TYPE__)) \
+	    ? 0								      \
+	    : ((__UINTMAX_TYPE__)1 <<					      \
+		(__UINTMAX_TYPE__)((__n) &				      \
+		    (__CHAR_BIT__ * sizeof(__UINTMAX_TYPE__) - 1))))
 
 /* __MASK(n): first n bits all set, where __MASK(4) == 0b1111. */
 #define	__MASK(__n)	(__BIT(__n) - 1)
@@ -689,8 +692,8 @@
 
 #define __USE(a) (/*LINTED*/(void)(a))
 
-#define __type_mask(t) (/*LINTED*/sizeof(t) < sizeof(intmax_t) ? \
-    (~((1ULL << (sizeof(t) * NBBY)) - 1)) : 0ULL)
+#define __type_mask(t) (/*LINTED*/sizeof(t) < sizeof(__INTMAX_TYPE__) ? \
+    (~((1ULL << (sizeof(t) * __CHAR_BIT__)) - 1)) : 0ULL)
 
 #ifndef __ASSEMBLER__
 static __inline long long __zeroll(void) { return 0; }
@@ -702,8 +705,8 @@ static __inline unsigned long long __zeroull(void) { return 0; }
 
 #define __negative_p(x) (!((x) > 0) && ((x) != 0))
 
-#define __type_min_s(t) ((t)((1ULL << (sizeof(t) * NBBY - 1))))
-#define __type_max_s(t) ((t)~((1ULL << (sizeof(t) * NBBY - 1))))
+#define __type_min_s(t) ((t)((1ULL << (sizeof(t) * __CHAR_BIT__ - 1))))
+#define __type_max_s(t) ((t)~((1ULL << (sizeof(t) * __CHAR_BIT__ - 1))))
 #define __type_min_u(t) ((t)0ULL)
 #define __type_max_u(t) ((t)~0ULL)
 #define __type_is_signed(t) (/*LINTED*/__type_min_s(t) + (t)1 < (t)1)
@@ -711,13 +714,18 @@ static __inline unsigned long long __zeroull(void) { return 0; }
 #define __type_max(t) (__type_is_signed(t) ? __type_max_s(t) : __type_max_u(t))
 
 
-#define __type_fit_u(t, a) (/*LINTED*/!__negative_p(a) && \
-    (uintmax_t)((a) + __zeroull()) <= (uintmax_t)__type_max_u(t))
+#define __type_fit_u(t, a)						      \
+	(/*LINTED*/!__negative_p(a) &&					      \
+	    ((__UINTMAX_TYPE__)((a) + __zeroull()) <=			      \
+		(__UINTMAX_TYPE__)__type_max_u(t)))
 
-#define __type_fit_s(t, a) (/*LINTED*/__negative_p(a) ? \
-    ((intmax_t)((a) + __zeroll()) >= (intmax_t)__type_min_s(t)) : \
-    ((intmax_t)((a) + __zeroll()) >= (intmax_t)0 && \
-     (intmax_t)((a) + __zeroll()) <= (intmax_t)__type_max_s(t)))
+#define __type_fit_s(t, a)						      \
+	(/*LINTED*/__negative_p(a)					      \
+	    ? ((__INTMAX_TYPE__)((a) + __zeroll()) >=			      \
+		(__INTMAX_TYPE__)__type_min_s(t))			      \
+	    : ((__INTMAX_TYPE__)((a) + __zeroll()) >= (__INTMAX_TYPE__)0 &&   \
+		((__INTMAX_TYPE__)((a) + __zeroll()) <=			      \
+		    (__INTMAX_TYPE__)__type_max_s(t))))
 
 /*
  * return true if value 'a' fits in type 't'
