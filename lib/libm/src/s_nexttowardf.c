@@ -1,4 +1,4 @@
-/*	$NetBSD: s_nexttowardf.c,v 1.3 2013/02/09 23:14:44 christos Exp $	*/
+/*	$NetBSD: s_nexttowardf.c,v 1.3.44.1 2024/10/14 15:41:30 martin Exp $	*/
 
 /*
  * ====================================================
@@ -15,7 +15,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/msun/src/s_nexttowardf.c,v 1.3 2011/02/10 07:38:38 das Exp $");
 #else
-__RCSID("$NetBSD: s_nexttowardf.c,v 1.3 2013/02/09 23:14:44 christos Exp $");
+__RCSID("$NetBSD: s_nexttowardf.c,v 1.3.44.1 2024/10/14 15:41:30 martin Exp $");
 #endif
 
 #include <string.h>
@@ -25,7 +25,23 @@ __RCSID("$NetBSD: s_nexttowardf.c,v 1.3 2013/02/09 23:14:44 christos Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef EXT_EXP_INFNAN
+/*
+ * On ports where long double is just double, reuse the ieee_double_u
+ * union as if it were ieee_ext_u -- broken-down components of (long)
+ * double values.
+ */
+#ifndef __HAVE_LONG_DOUBLE
+#define	ieee_ext_u	ieee_double_u
+#define	extu_ld		dblu_d
+#define	extu_ext	dblu_dbl
+#define	ext_sign	dbl_sign
+#define	ext_exp		dbl_exp
+#define	ext_frach	dbl_frach
+#define	ext_fracl	dbl_fracl
+#define	EXT_EXP_INFNAN	DBL_EXP_INFNAN
+#define	LDBL_NBIT	0
+#endif
+
 float
 nexttowardf(float x, long double y)
 {
@@ -38,7 +54,7 @@ nexttowardf(float x, long double y)
 
 	memset(&uy, 0, sizeof(uy));
 	uy.extu_ld = y;
-	uy.extu_ext.ext_frach &= ~0x80000000;
+	uy.extu_ext.ext_frach &= ~LDBL_NBIT;
 
 	if((ix>0x7f800000) ||
 	   (uy.extu_ext.ext_exp == EXT_EXP_INFNAN &&
@@ -66,4 +82,3 @@ nexttowardf(float x, long double y)
 	SET_FLOAT_WORD(x,hx);
 	return x;
 }
-#endif
