@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.74 2024/08/03 03:05:58 kre Exp $	*/
+/*	$NetBSD: input.c,v 1.75 2024/10/14 08:11:57 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.74 2024/08/03 03:05:58 kre Exp $");
+__RCSID("$NetBSD: input.c,v 1.75 2024/10/14 08:11:57 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -293,9 +293,15 @@ preadbuffer(void)
 	for (more = 1; more;) {
 		switch (*p) {
 		case '\0':
+#ifdef REJECT_NULS
+			parsenleft = parselleft = 0;
+			error("nul ('\\0') in shell input");
+			/* NOTREACHED */
+#else
 			p++;	/* Skip nul */
 			parsefile->nskip++;
 			goto check;
+#endif
 
 		case '\t':
 		case ' ':
@@ -318,7 +324,9 @@ preadbuffer(void)
 		else
 			q = ++p;
 
- check:
+#ifndef REJECT_NULS
+ check:;
+#endif
 		if (--parselleft <= 0) {
 			parsenleft = q - parsenextc - 1;
 			if (parsenleft < 0)
