@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_asm.S,v 1.7 2018/05/28 21:05:03 chs Exp $	*/
+/*	$NetBSD: dtrace_asm.S,v 1.7.12.1 2024/10/14 16:58:20 martin Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -37,6 +37,11 @@
 #include <machine/asm.h>
 #include <machine/frameasm.h>
 #include <machine/trap.h>
+
+#define DTRACE_SMAP_DISABLE			\
+	call	dtrace_smap_disable
+#define DTRACE_SMAP_ENABLE			\
+	call	dtrace_smap_enable
 
 #define INTR_POP		\
 	addl	$16, %esp;	\
@@ -225,8 +230,10 @@ void dtrace_copy(uintptr_t src, uintptr_t dest, size_t size)
 	movl	8(%ebp), %esi		/* Load source address */
 	movl	12(%ebp), %edi		/* Load destination address */
 	movl	16(%ebp), %ecx		/* Load count */
+	DTRACE_SMAP_DISABLE
 	repz				/* Repeat for count... */
 	smovb				/*   move from %ds:si to %es:di */
+	DTRACE_SMAP_ENABLE
 
 	popl	%edi
 	popl	%esi
@@ -248,6 +255,7 @@ void dtrace_copystr(uintptr_t uaddr, uintptr_t kaddr, size_t size)
 	movl	8(%ebp), %ebx		/* Load source address */
 	movl	12(%ebp), %edx		/* Load destination address */
 	movl	16(%ebp), %ecx		/* Load count */
+	DTRACE_SMAP_DISABLE
 
 0:
 	movb	(%ebx), %al		/* Load from source */
@@ -261,6 +269,7 @@ void dtrace_copystr(uintptr_t uaddr, uintptr_t kaddr, size_t size)
 	jne	0b
 
 1:
+	DTRACE_SMAP_ENABLE
 	popl	%ebx
 	movl	%ebp, %esp
 	popl	%ebp
@@ -275,7 +284,9 @@ uintptr_t dtrace_fulword(void *addr)
 	ENTRY(dtrace_fulword)
 	movl	4(%esp), %ecx
 	xorl	%eax, %eax
+	DTRACE_SMAP_DISABLE
 	movl	(%ecx), %eax
+	DTRACE_SMAP_ENABLE
 	ret
 	END(dtrace_fulword)
 
@@ -286,7 +297,9 @@ uint8_t dtrace_fuword8_nocheck(void *addr)
 	ENTRY(dtrace_fuword8_nocheck)
 	movl	4(%esp), %ecx
 	xorl	%eax, %eax
+	DTRACE_SMAP_DISABLE
 	movzbl	(%ecx), %eax
+	DTRACE_SMAP_ENABLE
 	ret
 	END(dtrace_fuword8_nocheck)
 
@@ -297,7 +310,9 @@ uint16_t dtrace_fuword16_nocheck(void *addr)
 	ENTRY(dtrace_fuword16_nocheck)
 	movl	4(%esp), %ecx
 	xorl	%eax, %eax
+	DTRACE_SMAP_DISABLE
 	movzwl	(%ecx), %eax
+	DTRACE_SMAP_ENABLE
 	ret
 	END(dtrace_fuword16_nocheck)
 
@@ -308,7 +323,9 @@ uint32_t dtrace_fuword32_nocheck(void *addr)
 	ENTRY(dtrace_fuword32_nocheck)
 	movl	4(%esp), %ecx
 	xorl	%eax, %eax
+	DTRACE_SMAP_DISABLE
 	movl	(%ecx), %eax
+	DTRACE_SMAP_ENABLE
 	ret
 	END(dtrace_fuword32_nocheck)
 
@@ -320,8 +337,10 @@ uint64_t dtrace_fuword64_nocheck(void *addr)
 	movl	4(%esp), %ecx
 	xorl	%eax, %eax
 	xorl	%edx, %edx
+	DTRACE_SMAP_DISABLE
 	movl	(%ecx), %eax
 	movl	4(%ecx), %edx
+	DTRACE_SMAP_ENABLE
 	ret
 	END(dtrace_fuword64_nocheck)
 

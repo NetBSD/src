@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_subr.c,v 1.15 2021/04/06 12:48:59 simonb Exp $	*/
+/*	$NetBSD: dtrace_subr.c,v 1.15.6.1 2024/10/14 16:58:20 martin Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -47,6 +47,7 @@
 #include <machine/frame.h>
 #include <machine/cpu_counter.h>
 #include <machine/cpufunc.h>
+#include <machine/cpuvar.h>
 
 int dtrace_invop(uintptr_t, struct trapframe *, uintptr_t);
 
@@ -59,6 +60,9 @@ dtrace_invop_hdlr_t *dtrace_invop_hdlr;
 
 void dtrace_gethrtime_init(void *);
 void dtrace_getnanotime(struct timespec *);
+
+void dtrace_smap_disable(void);
+void dtrace_smap_enable(void);
 
 int
 dtrace_invop(uintptr_t addr, struct trapframe *frame, uintptr_t eax)
@@ -454,4 +458,22 @@ dtrace_trap(struct trapframe *frame, u_int type)
 
 	/* Handle the trap in the usual way. */
 	return (0);
+}
+
+void
+dtrace_smap_disable(void)
+{
+
+	if (cpu_feature[5] & CPUID_SEF_SMAP) {
+		__asm volatile("stac");
+	}
+}
+
+void
+dtrace_smap_enable(void)
+{
+
+	if (cpu_feature[5] & CPUID_SEF_SMAP) {
+		__asm volatile ("clac");
+	}
 }
