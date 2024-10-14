@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2.2.2 2024/02/03 11:47:07 martin Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2.2.3 2024/10/14 16:44:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.2.2 2024/02/03 11:47:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.2.3 2024/10/14 16:44:42 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,8 @@ cpu_configure(void)
 		panic("configure: mainbus not configured");
 
 	genppc_cpu_configure();
+
+	wii_slot_led(false);
 }
 
 void

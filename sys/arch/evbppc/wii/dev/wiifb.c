@@ -1,4 +1,4 @@
-/* $NetBSD: wiifb.c,v 1.5.2.3 2024/02/06 12:33:17 martin Exp $ */
+/* $NetBSD: wiifb.c,v 1.5.2.4 2024/10/14 16:44:42 martin Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wiifb.c,v 1.5.2.3 2024/02/06 12:33:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wiifb.c,v 1.5.2.4 2024/10/14 16:44:42 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -221,8 +221,13 @@ wiifb_init(struct wiifb_softc *sc)
 	}
 
 	/* Reset video interface. */
-	WR2(sc, VI_DCR, dcr | VI_DCR_RST);
-	WR2(sc, VI_DCR, dcr & ~VI_DCR_RST);
+	WR2(sc, VI_DCR, VI_DCR_RST);
+	delay(1000);
+
+	/* Initialize video format and interlace selector. */
+	dcr = __SHIFTIN(sc->sc_format, VI_DCR_FMT) |
+	      (sc->sc_interlaced ? 0 : VI_DCR_NIN);
+	WR2(sc, VI_DCR, dcr);
 }
 
 static void
@@ -241,6 +246,8 @@ wiifb_set_mode(struct wiifb_softc *sc, uint8_t format, bool interlaced)
 		WR4(sc, VI_VTE, 0x00020019);
 		WR4(sc, VI_BBOI, 0x410C410C);
 		WR4(sc, VI_BBEI, 0x40ED40ED);
+		WR2(sc, VI_DPV, 0x0000);
+		WR2(sc, VI_DPH, 0x0000);
 	} else if (modeidx == WIIFB_MODE_INDEX(VI_DCR_FMT_NTSC, 0)) {
 		/* NTSC 480p */
 		WR2(sc, VI_VTR, 0x1e0c);
@@ -250,6 +257,8 @@ wiifb_set_mode(struct wiifb_softc *sc, uint8_t format, bool interlaced)
 		WR4(sc, VI_VTE, 0x00060030);
 		WR4(sc, VI_BBOI, 0x81d881d8);
 		WR4(sc, VI_BBEI, 0x81d881d8);
+		WR2(sc, VI_DPV, 0x0000);
+		WR2(sc, VI_DPH, 0x0000);
 	} else if (modeidx == WIIFB_MODE_INDEX(VI_DCR_FMT_PAL, 1)) {
 		/* PAL 576i */
 		WR2(sc, VI_VTR, 0x11f5);
@@ -259,6 +268,8 @@ wiifb_set_mode(struct wiifb_softc *sc, uint8_t format, bool interlaced)
 		WR4(sc, VI_VTE, 0x00000024);
 		WR4(sc, VI_BBOI, 0x4d2b4d6d);
 		WR4(sc, VI_BBEI, 0x4d8a4d4c);
+		WR2(sc, VI_DPV, 0x013c);
+		WR2(sc, VI_DPH, 0x0144);
 	} else {
 		/*
 		 * Display mode is not supported. Blink the slot LED to
@@ -272,6 +283,21 @@ wiifb_set_mode(struct wiifb_softc *sc, uint8_t format, bool interlaced)
 		    sc->sc_format, sc->sc_interlaced);
 	}
 	sc->sc_curmode = &wiifb_modes[modeidx];
+
+	/* Filter coefficient table, values from YAGCD. */
+	WR4(sc, VI_FCT0, 0x1ae771f0);
+	WR4(sc, VI_FCT1, 0x0db4a574);
+	WR4(sc, VI_FCT2, 0x00c1188e);
+	WR4(sc, VI_FCT3, 0xc4c0cbe2);
+	WR4(sc, VI_FCT4, 0xfcecdecf);
+	WR4(sc, VI_FCT5, 0x13130f08);
+	WR4(sc, VI_FCT6, 0x00080C0f);
+
+	/* Unknown registers. */
+	WR4(sc, VI_UNKNOWN_68H, 0x00ff0000);
+	WR2(sc, VI_UNKNOWN_76H, 0x00ff);
+	WR4(sc, VI_UNKNOWN_78H, 0x00ff00ff);
+	WR4(sc, VI_UNKNOWN_7CH, 0x00ff00ff);
 
 	/* Picture configuration */
 	strides = (sc->sc_curmode->width * 2) / (interlaced ? 16 : 32);
@@ -296,6 +322,9 @@ wiifb_set_mode(struct wiifb_softc *sc, uint8_t format, bool interlaced)
 
 	/* Set framebuffer address */
 	wiifb_set_fb(sc);
+
+	/* Finally, enable the framebuffer */
+	WR2(sc, VI_DCR, RD2(sc, VI_DCR) | VI_DCR_ENB);
 }
 
 static void
