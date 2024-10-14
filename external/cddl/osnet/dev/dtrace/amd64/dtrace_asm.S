@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_asm.S,v 1.8 2018/05/28 21:05:03 chs Exp $	*/
+/*	$NetBSD: dtrace_asm.S,v 1.8.12.1 2024/10/14 16:58:20 martin Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -38,6 +38,11 @@
 #define MEXITCOUNT
 
 #include "assym.h"
+
+#define DTRACE_SMAP_DISABLE			\
+	call	dtrace_smap_disable
+#define DTRACE_SMAP_ENABLE			\
+	call	dtrace_smap_enable
 
 #define INTR_POP				\
 	MEXITCOUNT;				\
@@ -217,8 +222,10 @@ dtrace_copy(uintptr_t src, uintptr_t dest, size_t size)
 
 	xchgq	%rdi, %rsi		/* make %rsi source, %rdi dest */
 	movq	%rdx, %rcx		/* load count */
+	DTRACE_SMAP_DISABLE
 	repz				/* repeat for count ... */
 	smovb				/*   move from %ds:rsi to %ed:rdi */
+	DTRACE_SMAP_ENABLE
 	leave
 	ret
 	END(dtrace_copy)
@@ -231,6 +238,7 @@ dtrace_copystr(uintptr_t uaddr, uintptr_t kaddr, size_t size,
 	ENTRY(dtrace_copystr)
 	pushq	%rbp
 	movq	%rsp, %rbp
+	DTRACE_SMAP_DISABLE
 
 0:
 	movb	(%rdi), %al		/* load from source */
@@ -248,6 +256,7 @@ dtrace_copystr(uintptr_t uaddr, uintptr_t kaddr, size_t size,
 	cmpq	$0, %rdx
 	jne	0b
 2:
+	DTRACE_SMAP_ENABLE
 	leave
 	ret
 
@@ -258,7 +267,9 @@ uintptr_t
 dtrace_fulword(void *addr)
 */
 	ENTRY(dtrace_fulword)
+	DTRACE_SMAP_DISABLE
 	movq	(%rdi), %rax
+	DTRACE_SMAP_ENABLE
 	ret
 	END(dtrace_fulword)
 
@@ -268,7 +279,9 @@ dtrace_fuword8_nocheck(void *addr)
 */
 	ENTRY(dtrace_fuword8_nocheck)
 	xorq	%rax, %rax
+	DTRACE_SMAP_DISABLE
 	movb	(%rdi), %al
+	DTRACE_SMAP_ENABLE
 	ret
 	END(dtrace_fuword8_nocheck)
 
@@ -278,7 +291,9 @@ dtrace_fuword16_nocheck(void *addr)
 */
 	ENTRY(dtrace_fuword16_nocheck)
 	xorq	%rax, %rax
+	DTRACE_SMAP_DISABLE
 	movw	(%rdi), %ax
+	DTRACE_SMAP_ENABLE
 	ret
 	END(dtrace_fuword16_nocheck)
 
@@ -288,7 +303,9 @@ dtrace_fuword32_nocheck(void *addr)
 */
 	ENTRY(dtrace_fuword32_nocheck)
 	xorq	%rax, %rax
+	DTRACE_SMAP_DISABLE
 	movl	(%rdi), %eax
+	DTRACE_SMAP_ENABLE
 	ret
 	END(dtrace_fuword32_nocheck)
 
@@ -297,7 +314,9 @@ uint64_t
 dtrace_fuword64_nocheck(void *addr)
 */
 	ENTRY(dtrace_fuword64_nocheck)
+	DTRACE_SMAP_DISABLE
 	movq	(%rdi), %rax
+	DTRACE_SMAP_ENABLE
 	ret
 	END(dtrace_fuword64_nocheck)
 
