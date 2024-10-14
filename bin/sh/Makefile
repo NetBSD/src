@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.123 2023/10/19 04:27:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.124 2024/10/14 08:13:23 kre Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -25,6 +25,8 @@ SCRIPT_ENV= \
 
 CPPFLAGS+=-DSHELL -I. -I${.CURDIR} -I${NETBSDSRCDIR}/lib/libedit
 CPPFLAGS+= -DUSE_LRAND48
+CPPFLAGS+= -DREJECT_NULS
+
 #XXX: For testing only.
 #CPPFLAGS+=-DDEBUG=1
 #COPTS+=-g
@@ -98,3 +100,5 @@ COPTS.parser.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 12:? -Wno-error=cl
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
+
+${OBJS}: Makefile
