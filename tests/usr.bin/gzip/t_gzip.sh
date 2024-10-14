@@ -1,4 +1,4 @@
-# $NetBSD: t_gzip.sh,v 1.1 2012/03/17 16:33:13 jruoho Exp $
+# $NetBSD: t_gzip.sh,v 1.1.44.1 2024/10/14 18:11:36 martin Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -100,6 +100,22 @@ EOF
 	atf_check gzip -d good.gz
 }
 
+atf_test_case lzip
+lzip_head()
+{
+	atf_set "descr" "Checks lzip compression levels (PR/58223)"
+}
+lzip_body()
+{
+	n=games.tar
+	tar -C /usr/games -cf games.tar .
+	for i in $(jot 10 0 9); do
+		f=$n.$i.lz
+		lzip -$ic < $n > $f
+		gunzip -t $f > /dev/null
+	done
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case concatenated
@@ -107,4 +123,5 @@ atf_init_test_cases()
 	atf_add_test_case truncated
 	atf_add_test_case crcerror
 	atf_add_test_case good
+	atf_add_test_case lzip
 }

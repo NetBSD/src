@@ -1,4 +1,4 @@
-/*	$NetBSD: unlz.c,v 1.7.2.1 2024/02/04 11:07:40 martin Exp $	*/
+/*	$NetBSD: unlz.c,v 1.7.2.2 2024/10/14 18:11:35 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -295,7 +295,7 @@ lz_flush(struct lz_decoder *lz)
 
 	size_t size = (size_t)offs;
 	lz_crc_update(&lz->crc, lz->obuf + lz->spos, size);
-	if (fwrite(lz->obuf + lz->spos, 1, size, lz->fout) != size)
+	if (!tflag && fwrite(lz->obuf + lz->spos, 1, size, lz->fout) != size)
 		return -1;
 
 	lz->wrapped = lz->pos >= lz->dict_size;
@@ -602,7 +602,7 @@ static unsigned
 lz_get_dict_size(unsigned char c)
 {
 	unsigned dict_size = 1 << (c & 0x1f);
-	dict_size -= (dict_size >> 2) * ( (c >> 5) & 0x7);
+	dict_size -= (dict_size >> 4) * ( (c >> 5) & 0x7);
 	if (dict_size < MIN_DICTIONARY_SIZE || dict_size > MAX_DICTIONARY_SIZE)
 		return 0;
 	return dict_size;
