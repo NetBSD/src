@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1238.2.16 2024/10/13 16:06:36 martin Exp $
+# $NetBSD: mi,v 1.1238.2.17 2024/10/14 17:20:21 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3032,11 +3032,17 @@
 ./usr/tests/lib/libc/locale/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
 ./usr/tests/lib/libc/locale/t_btowc			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/locale/t_c16rtomb			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/locale/t_c32rtomb			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/locale/t_c8rtomb			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_ctype1			tests-obsolete		obsolete
 ./usr/tests/lib/libc/locale/t_ctype2			tests-obsolete		obsolete
 ./usr/tests/lib/libc/locale/t_digittoint		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_ducet			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_io			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/locale/t_mbrtoc16			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/locale/t_mbrtoc32			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/locale/t_mbrtoc8			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_mbrtowc			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_mbsnrtowcs		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_mbstowcs			tests-lib-tests		compattestfile,atf
@@ -3044,6 +3050,7 @@
 ./usr/tests/lib/libc/locale/t_sprintf			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_strfmon			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_toupper			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/locale/t_uchar			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_wcscoll			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_wcscspn			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_wcspbrk			tests-lib-tests		compattestfile,atf

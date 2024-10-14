@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.293 2021/11/01 05:53:45 thorpej Exp $
+#	$NetBSD: shlib_version,v 1.293.2.1 2024/10/14 17:20:21 martin Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -55,3 +55,4 @@
 # - remove tzsetwall(3), upstream has removed it
 major=12
 minor=220
+teeny=1

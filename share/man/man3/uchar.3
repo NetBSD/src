@@ -1,0 +1,151 @@
+.\"	$NetBSD: uchar.3,v 1.2.2.2 2024/10/14 17:20:21 martin Exp $
+.\"
+.\" Copyright (c) 2024 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 15, 2024
+.Dt UCHAR 3
+.Os
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh NAME
+.Nm uchar
+.Nd Unicode utilities
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SYNOPSIS
+.In uchar.h
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh DESCRIPTION
+The
+.In uchar.h
+header file declares types and functions for manipulating Unicode code
+units.
+.\""""""""""""""""""""""""""""""""""""""
+.Ss Types
+.Bl -tag -width ".Vt char32_t"
+.It Vt char8_t
+(C23)
+Unsigned integer type for UTF-8 code units.
+.Pp
+Same type as
+.Vt unsigned char .
+.It Vt char16_t
+Unsigned integer type for UTF-16 code units.
+.Pp
+Same type as
+.Vt uint_least16_t
+from
+.In stdint.h .
+May represent both surrogate code points, i.e., code points in the
+interval [0xd800,0xdfff], and Unicode scalar values in the Basic
+Multilingual Plane, which are the 16-bit code points other than
+surrogate code points.
+.It Vt char32_t
+Unsigned integer type for UTF-32 code units.
+.Pp
+Same type as
+.Vt uint_least32_t
+from
+.In stdint.h .
+Can represent all Unicode scalar values, not just those in the Basic
+Multilingual Plane.
+Intended to represent only Unicode scalar values, not surrogate code
+points.
+.It Vt mbstate_t
+Opaque multibyte conversion state.
+.Pp
+Same type as in
+.Vt stddef.h
+and
+.Vt wchar.h .
+.It Vt size_t
+Unsigned integer type to represent array sizes.
+.Pp
+Same type as in
+.Vt stddef.h ,
+.Vt stdint.h ,
+and
+.Vt sys/types.h .
+.El
+.\""""""""""""""""""""""""""""""""""""""
+.Ss Functions
+The
+.In uchar.h
+header file declares the functions
+.Xr mbrtoc8 3 ,
+.Xr c8rtomb 3 ,
+.Xr mbrtoc16 3 ,
+.Xr c16rtomb 3 ,
+.Xr mbrtoc32 3 ,
+and
+.Xr c32rtomb 3
+for conversion between multibyte sequences and UTF-8/UTF-16/UTF-32 code
+units.
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SEE ALSO
+.Xr c8rtomb 3 ,
+.Xr c16rtomb 3 ,
+.Xr c32rtomb 3 ,
+.Xr mbrtoc8 3 ,
+.Xr mbrtoc16 3 ,
+.Xr mbrtoc32 3
+.Rs
+.%B The Unicode Standard
+.%O Version 15.0 \(em Core Specification
+.%Q The Unicode Consortium
+.%D September 2022
+.%U https://www.unicode.org/versions/Unicode15.0.0/UnicodeStandard-15.0.pdf
+.Re
+.Rs
+.%A P. Hoffman
+.%A F. Yergeau
+.%T UTF-16, an encoding of ISO 10646
+.%R RFC 2781
+.%D February 2000
+.%I Internet Engineering Task Force
+.%U https://datatracker.ietf.org/doc/html/rfc2781
+.Re
+.Rs
+.%A F. Yergeau
+.%T UTF-8, a transformation format of ISO 10646
+.%R RFC 3629
+.%D November 2003
+.%I Internet Engineering Task Force
+.%U https://datatracker.ietf.org/doc/html/rfc3629
+.Re
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh STANDARDS
+The
+.In uchar.h
+header file conforms to
+.St -isoC-2011
+.\" .St -isoC-2023
+.\" .\" XXX PR misc/58600: man pages lack C17, C23, C++98, C++03, C++11, C++17, C++20, C++23 citation syntax
+and
+.St -p1003.1-2024 .
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh HISTORY
+The
+.In uchar.h
+header file first appeared in
+.Nx 11.0 .

@@ -1,0 +1,200 @@
+.\"	$NetBSD: c32rtomb.3,v 1.11.2.2 2024/10/14 17:20:17 martin Exp $
+.\"
+.\" Copyright (c) 2024 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 14, 2024
+.Dt C32RTOMB 3
+.Os
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh NAME
+.Nm c32rtomb
+.Nd Restartable UTF-32 to multibyte conversion
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh LIBRARY
+.Lb libc
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SYNOPSIS
+.
+.In uchar.h
+.
+.Ft size_t
+.Fo c32rtomb
+.Fa "char * restrict s"
+.Fa "char32_t c32"
+.Fa "mbstate_t * restrict ps"
+.Fc
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh DESCRIPTION
+The
+.Nm
+function converts Unicode scalar values to multibyte characters in the
+current locale, keeping state to remember incremental progress if
+restarted.
+.Pp
+Each call to
+.Nm
+updates the conversion state
+.Fa ps
+with a UTF-32 code unit
+.Fa c32 ,
+writes up to
+.Dv MB_CUR_MAX
+bytes to
+.Fa s ,
+and returns either the number of bytes written to
+.Fa s
+or
+.Li (size_t)-1
+to denote error.
+.Pp
+The input
+.Fa c32
+is a UTF-32 code unit, representing a Unicode scalar value, i.e., a
+Unicode code point that is not a surrogate code point \(em in other
+words,
+.Fa c32
+is an integer either in [0,0xd7ff] or in [0xe000,0x10ffff].
+.Pp
+If
+.Fa s
+is a null pointer,
+no output is produced and
+.Fa ps
+is reset to the initial conversion state, as if the call had been
+.Fo c8rtomb
+.Va buf ,
+.Li 0 ,
+.Fa ps
+.Fc
+for some internal buffer
+.Va buf .
+.Pp
+If
+.Fa c32
+is zero,
+.Nm
+outputs a (possibly empty) shift sequence to restore the initial state
+followed by a NUL byte and resets
+.Fa ps
+to the initial conversion state.
+.Pp
+If
+.Fa ps
+is a null pointer,
+.Nm
+uses an internal
+.Vt mbstate_t
+object with static storage duration, distinct from all other
+.Vt mbstate_t
+objects
+.Po
+including those used by other functions such as
+.Xr mbrtoc32 3
+.Pc ,
+which is initialized at program startup to the initial conversion
+state.
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh RETURN VALUES
+The
+.Nm
+function returns the number of bytes written to
+.Fa s
+on success, or sets
+.Xr errno 2
+and returns
+.Li "(size_t)-1"
+on failure.
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh EXAMPLES
+Convert a sequence of Unicode scalar values to a multibyte sequence,
+NUL-terminate it (with any shift sequence needed to restore the initial
+state), and print it:
+.Bd -literal -offset indent
+char32_t c32[] = { 0x1f4a9, 0x20ac, 0x21 };
+char buf[(__arraycount(c32) + 1)*MB_LEN_MAX], *s = buf;
+size_t i;
+mbstate_t mbs = {0};    /* initial conversion state */
+
+for (i = 0; i < __arraycount(c32); i++) {
+        size_t len;
+
+        len = c32rtomb(s, c32[i], &mbs);
+        if (len == (size_t)-1)
+                err(1, "c32rtomb");
+        assert(len < sizeof(buf) - (s - buf));
+        s += len;
+}
+len = c32rtomb(s, 0, &mbs);             /* NUL-terminate */
+if (len == (size_t)-1)
+        err(1, "c32rtomb");
+assert(len <= sizeof(buf) - (s - buf));
+printf("%s\en", buf);
+.Ed
+.Pp
+To avoid a variable-length array, this code uses
+.Dv MB_LEN_MAX ,
+which is a constant upper bound on the locale-dependent
+.Dv MB_CUR_MAX .
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh ERRORS
+.Bl -tag -width Bq
+.It Bq Er EILSEQ
+.Fa c32
+is not a Unicode scalar value, i.e., it is a surrogate code point in
+the interval [0xd800,0xdfff] or it lies outside the Unicode codespace
+[0,0x10ffff] altogether.
+.It Bq Er EILSEQ
+The input cannot be encoded as a multibyte sequence in the current
+locale.
+.It Bq Er EIO
+An error occurred in loading the locale's character conversions.
+.El
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SEE ALSO
+.Xr c16rtomb 3 ,
+.Xr c8rtomb 3 ,
+.Xr mbrtoc16 3 ,
+.Xr mbrtoc32 3 ,
+.Xr mbrtoc8 3 ,
+.Xr uchar 3
+.Rs
+.%B The Unicode Standard
+.%O Version 15.0 \(em Core Specification
+.%Q The Unicode Consortium
+.%D September 2022
+.%U https://www.unicode.org/versions/Unicode15.0.0/UnicodeStandard-15.0.pdf
+.Re
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh STANDARDS
+The
+.Nm
+function conforms to
+.St -isoC-2011 .
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh HISTORY
+The
+.Nm
+function first appeared in
+.Nx 11.0 .
