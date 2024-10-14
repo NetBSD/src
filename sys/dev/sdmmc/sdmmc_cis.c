@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_cis.c,v 1.8 2019/10/28 06:31:39 mlelstv Exp $	*/
+/*	$NetBSD: sdmmc_cis.c,v 1.8.26.1 2024/10/14 17:47:00 martin Exp $	*/
 /*	$OpenBSD: sdmmc_cis.c,v 1.1 2006/06/01 21:53:41 uwe Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines to decode the Card Information Structure of SD I/O cards */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_cis.c,v 1.8 2019/10/28 06:31:39 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_cis.c,v 1.8.26.1 2024/10/14 17:47:00 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -100,6 +100,30 @@ decode_funce_common(struct sdmmc_function *sf, struct sdmmc_cis *cis,
 	DPRINTF(
 	    ("CISTPL_FUNCE: FN0_BLK_SIZE=0x%x, MAX_TRAN_SPEED=0x%x(%dkHz)\n",
 	    fn0_blk_size, max_tran_speed, sf->csd.tran_speed));
+}
+
+static void
+decode_funce_lan_nid(struct sdmmc_function *sf, struct sdmmc_cis *cis,
+		     int tpllen, uint32_t reg)
+{
+	struct sdmmc_function *sf0 = sf->sc->sc_fn0;
+	device_t dev = sf->sc->sc_dev;
+	uint8_t mac[6] __unused;
+	int i;
+
+	if (tpllen != 8) {
+		aprint_error_dev(dev,
+		    "CISTPL_FUNCE(lan_nid) too short\n");
+		return;
+	}
+
+	for (i = 0; i < 6; i++) {
+		mac[i] = sdmmc_io_read_1(sf0, reg++);
+	}
+
+	DPRINTF(
+	    ("CISTPL_FUNCE: LAN_NID=%02x:%02x:%02x:%02x:%02x:%02x\n",
+	    mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]));
 }
 
 static void
@@ -221,10 +245,16 @@ sdmmc_read_cis(struct sdmmc_function *sf, struct sdmmc_cis *cis)
 
 		switch (tplcode) {
 		case PCMCIA_CISTPL_FUNCE:
-			if (sdmmc_io_read_1(sf0, reg++) == 0)
+			switch (sdmmc_io_read_1(sf0, reg++)) {
+			case 0:
 				decode_funce_common(sf, cis, tpllen, reg);
-			else
+				break;
+			case PCMCIA_TPLFE_TYPE_LAN_NID:
+				decode_funce_lan_nid(sf, cis, tpllen, reg);
+				break;
+			default:
 				decode_funce_function(sf, cis, tpllen, reg);
+			}
 			reg += (tpllen - 1);
 			break;
 
