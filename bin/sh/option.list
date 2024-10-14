@@ -1,4 +1,4 @@
-/* $NetBSD: option.list,v 1.10 2022/09/18 06:03:19 kre Exp $ */
+/* $NetBSD: option.list,v 1.11 2024/10/14 08:27:53 kre Exp $ */
 
 /*
  * define the shell's settable options
@@ -54,6 +54,7 @@ hflag	trackall	h		# [U] locate cmds in funcs during defn
 // 's' is standard for command line, not as 'set' option, nor 'stdin' name
 sflag	stdin		s		# read from standard input
 // minusc		c		# command line option only.
+// --			r		# command line option only.
 // --			o		# handled differently...
 
 // non-standard options -- 'i' is just a state, not an option in standard.
