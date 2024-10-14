@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.4.2.2 2024/02/03 11:47:07 martin Exp $ */
+/* $NetBSD: machdep.c,v 1.4.2.3 2024/10/14 16:44:42 martin Exp $ */
 
 /*
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.2.2 2024/02/03 11:47:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.2.3 2024/10/14 16:44:42 martin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -122,10 +122,16 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.2.2 2024/02/03 11:47:07 martin Exp $
 #include "ksyms.h"
 #include "ukbd.h"
 
+#ifndef WII_DEFAULT_CMDLINE
+#define WII_DEFAULT_CMDLINE "root=ld0a"
+#endif
+
 #define IBM750CL_SPR_HID4	1011
 #define	 L2_CCFI		0x00100000	/* L2 complete castout prior
 						 * to L2 flash invalidate.
 						 */
+
+#define MINI_MEM2_START		0x13f00000	/* Start of reserved MEM2 for MINI */
 
 extern u_int l2cr_config;
 
@@ -228,19 +234,34 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	extern u_long ticks_per_sec;
 	extern unsigned char edata[], end[];
 	extern struct wii_argv wii_argv;
-	uint32_t mem2_size;
+	uint32_t mem2_start, mem2_end;
 	register_t scratch;
 
 	memset(&edata, 0, end - edata); /* clear BSS */
 
+	wii_cmdline[0] = '\0';
 	if (wii_argv.magic == WII_ARGV_MAGIC) {
 		void *ptr = (void *)(uintptr_t)(wii_argv.cmdline & ~0x80000000);
 		if (ptr != NULL) {
 			memcpy(wii_cmdline, ptr, wii_argv.length);
 		}
+	} else {
+		snprintf(wii_cmdline, sizeof(wii_cmdline), WII_DEFAULT_CMDLINE);
 	}
 
-	mem2_size = in32(GLOBAL_MEM2_SIZE);
+	mem2_start = in32(GLOBAL_MEM2_AVAIL_START) & ~0x80000000;
+	mem2_end = in32(GLOBAL_MEM2_AVAIL_END) & ~0x80000000;
+	if (mem2_start < WII_MEM2_BASE) {
+		/* Must have been booted from MINI. */
+		mem2_start = WII_MEM2_BASE + DSP_MEM_SIZE;
+		mem2_end = MINI_MEM2_START;
+	}
+	/*
+	 * Clear GLOBAL_MEM2_AVAIL_{START,END} so we can detect the correct
+	 * memory size when soft resetting from IOS to MINI.
+	 */
+	out32(GLOBAL_MEM2_AVAIL_START, 0);
+	out32(GLOBAL_MEM2_AVAIL_END, 0);
 
 	/* MEM1 24MB 1T-SRAM */
 	physmemr[0].start = WII_MEM1_BASE;
@@ -248,7 +269,7 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 
 	/* MEM2 64MB GDDR3 */
 	physmemr[1].start = WII_MEM2_BASE;
-	physmemr[1].size = mem2_size;
+	physmemr[1].size = WII_MEM2_SIZE;
 
 	physmemr[2].size = 0;
 
@@ -259,16 +280,8 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	availmemr[0].size -= XFB_SIZE;
 
 	/* MEM2 available memory */
-	availmemr[1].start = physmemr[1].start;
-	availmemr[1].size = physmemr[1].size;
-	if (mem2_size != 0) {
-		/* DSP uses 16KB at the start of MEM2 */
-		availmemr[1].start += DSP_MEM_SIZE;
-		availmemr[1].size -= DSP_MEM_SIZE;
-		/* IPC and Starlet use memory at the end of MEM2 */
-		availmemr[1].size -= IPC_SIZE;
-		availmemr[1].size -= ARM_SIZE;
-	}
+	availmemr[1].start = mem2_start;
+	availmemr[1].size = mem2_end - mem2_start;
 
 	availmemr[2].size = 0;
 
@@ -415,10 +428,13 @@ static void
 wii_setup(void)
 {
 	/* Turn on the drive slot LED. */
-	out32(HW_GPIOB_OUT, in32(HW_GPIOB_OUT) | __BIT(GPIO_SLOT_LED));
+	wii_slot_led(true);
 
 	/* Enable PPC access to SHUTDOWN GPIO. */
 	out32(HW_GPIO_OWNER, in32(HW_GPIO_OWNER) | __BIT(GPIO_SHUTDOWN));
+
+	/* Enable PPC access to EXI bus. */
+	out32(HW_AIPPROT, in32(HW_AIPPROT) | ENAHBIOPI);
 }
 
 static void

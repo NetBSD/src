@@ -1,4 +1,4 @@
-/* $NetBSD: wii_mmuinit.S,v 1.1.2.2 2024/02/03 11:47:07 martin Exp $ */
+/* $NetBSD: wii_mmuinit.S,v 1.1.2.3 2024/10/14 16:44:42 martin Exp $ */
 
 /*-
  * Copyright (C) 2012 Margarida Gouveia
@@ -66,6 +66,27 @@
 4:
 
 	MMU_REALMODE()
+
+	/* Initialize HID0 and HID4 */
+	lis	%r11, 0x0011
+	ori	%r11, %r11, 0x0c64
+	mtspr	SPR_HID0, %r11
+	isync
+
+	lis	%r11, 0x8200
+	mtspr	1011, %r11	/* 1011 = SPR_HID4 */
+	isync
+
+	mfspr	%r11, 920
+	oris	%r11, %r11, 0xa000
+	mtspr	920, %r11
+
+	mfspr	%r11, SPR_HID0
+	ori	%r11, %r11, 0xc000
+	ori	%r11, %r11, 0x0800
+	ori	%r11, %r11, 0x0200
+	mtspr	SPR_HID0, %r11
+	isync
 
 	/* Reset standard BATs */
 	li	%r11, 0

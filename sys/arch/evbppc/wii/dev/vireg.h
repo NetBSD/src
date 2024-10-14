@@ -1,4 +1,4 @@
-/* $NetBSD: vireg.h,v 1.2.2.2 2024/02/03 11:47:05 martin Exp $ */
+/* $NetBSD: vireg.h,v 1.2.2.3 2024/10/14 16:44:42 martin Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -145,12 +145,13 @@
 #define	 VI_HSR_STP	__BITS(8,0)
 
 /* [4B] FCT[0-6] - Filter Coefficient Table 0-6 */
-#define VI_FCT0		0x50
-#define VI_FCT1		0x54
-#define VI_FCT2		0x58
-#define	VI_FCT3		0x5c
-#define	VI_FCT4		0x60
-#define	VI_FCT5		0x64
+#define VI_FCT0		0x4c
+#define VI_FCT1		0x50
+#define VI_FCT2		0x54
+#define VI_FCT3		0x58
+#define VI_FCT4		0x5c
+#define VI_FCT5		0x60
+#define VI_FCT6		0x64
 
 /* [4B] ??? */
 #define VI_UNKNOWN_68H	0x68

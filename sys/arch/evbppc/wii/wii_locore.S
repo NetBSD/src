@@ -1,4 +1,4 @@
-/*	$NetBSD: wii_locore.S,v 1.2.2.2 2024/02/03 11:47:07 martin Exp $	*/
+/*	$NetBSD: wii_locore.S,v 1.2.2.3 2024/10/14 16:44:42 martin Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -97,27 +97,35 @@ __mmu_init:
 #include "wii_mmuinit.S"
 
 	/* compute end of kernel memory */
-	lis	4,_C_LABEL(end)@ha
-	addi	4,4,_C_LABEL(end)@l
-	rlwinm	4,4,0,1,31
+	lis	%r4, _C_LABEL(end)@ha
+	addi	%r4, %r4, _C_LABEL(end)@l
 
-	INIT_CPUINFO(4,1,9,5)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
+	/* If we had symbol table location we'd store it here and would've adjusted r4 here */
+	lis	%r7, _C_LABEL(startsym)@ha
+	addi	%r7, %r7, _C_LABEL(startsym)@l
+	stw	%r4, 0(%r7)
+	lis	%r7, _C_LABEL(endsym)@ha
+	addi	%r7, %r7,_C_LABEL(endsym)@l
+	stw	%r4, 0(%r7)
+#endif
 
-	lis	3,__start@ha
-	addi	3,3,__start@l
-	rlwinm	3,3,0,1,31
+	lis	%r1, 0
+	INIT_CPUINFO(%r4, %r1, %r9, %r0)
 
-	xor	5,5,5
-	xor	6,6,6
-	bl	_C_LABEL(cpu_model_init)
+	lis	%r3, __start@ha
+	addi	%r3, %r3, __start@l
+
+	xor	%r5, %r5, %r5
+	xor	%r6, %r6, %r6
 	bl	_C_LABEL(initppc)
 
 	sync
 	isync
-	mfspr	8,SPR_HID0
-	ori	8, 8, (HID0_ICE | HID0_DCE)@l
+	mfspr	%r8, SPR_HID0
+	ori	%r8, %r8, (HID0_ICE | HID0_DCE)@l
 	isync
-	mtspr	SPR_HID0,8
+	mtspr	SPR_HID0, %r8
 	sync
 	isync
 
@@ -127,16 +135,16 @@ loop:	b	loop			/* XXX not reached */
 
 	.globl	_C_LABEL(enable_intr)
 _C_LABEL(enable_intr):
-	mfmsr	3
-	ori	3,3,PSL_EE@l
-	mtmsr	3
+	mfmsr	%r3
+	ori	%r3, %r3, PSL_EE@l
+	mtmsr	%r3
 	blr
 
 	.globl	_C_LABEL(disable_intr)
 _C_LABEL(disable_intr):
-	mfmsr	3
-	andi.	3,3,~PSL_EE@l
-	mtmsr	3
+	mfmsr	%r3
+ 	andi.	%r3, %r3, ~PSL_EE@l
+	mtmsr	%r3
 	blr
 
 /*
