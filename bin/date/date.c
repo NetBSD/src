@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.63.2.1 2023/06/03 15:23:42 martin Exp $ */
+/* $NetBSD: date.c,v 1.63.2.2 2024/10/14 17:44:57 martin Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.63.2.1 2023/06/03 15:23:42 martin Exp $");
+__RCSID("$NetBSD: date.c,v 1.63.2.2 2024/10/14 17:44:57 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,11 +72,20 @@ __RCSID("$NetBSD: date.c,v 1.63.2.1 2023/06/03 15:23:42 martin Exp $");
 
 static time_t tval;
 static int Rflag, aflag, jflag, rflag, nflag;
-static char *fmt;
 
 __dead static void badcanotime(const char *, const char *, size_t);
 static void setthetime(const char *);
 __dead static void usage(void);
+
+#if HAVE_NBTOOL_CONFIG_H
+static int parse_iso_datetime(time_t *, const char *);
+#else
+static char *fmt;
+#endif
+
+#if !defined(isleap)
+# define isleap(y)   (((y) % 4) == 0 && (((y) % 100) != 0 || ((y) % 400) == 0))
+#endif
 
 int
 main(int argc, char *argv[])
@@ -98,21 +107,25 @@ main(int argc, char *argv[])
 			nflag = 1;
 			break;
 		case 'd':
-#ifndef HAVE_NBTOOL_CONFIG_H
 			rflag = 1;
+#ifdef HAVE_NBTOOL_CONFIG_H
+			if (parse_iso_datetime(&tval, optarg))
+				break;
+			errx(EXIT_FAILURE,
+			    "-d only supports ISO format in the tool version");
+			break;
+#else
+			errno = 0;
 			tval = parsedate(optarg, NULL, NULL);
-			if (tval == -1) {
+			if (tval == -1 && errno != 0) {
 				errx(EXIT_FAILURE,
 				    "%s: Unrecognized date format", optarg);
 			}
 			break;
-#else
-			errx(EXIT_FAILURE,
-			    "-d not supported in the tool version");
-#endif
 		case 'f':
 			fmt = optarg;
 			break;
+#endif
 		case 'j':		/* don't set time */
 			jflag = 1;
 			break;
@@ -165,8 +178,11 @@ main(int argc, char *argv[])
 	if (*argv) {
 		setthetime(*argv);
 		++argv;
-	} else if (fmt)
+#ifndef HAVE_NBTOOL_CONFIG_H
+	} else if (fmt) {
 		usage();
+#endif
+	}
 
 	if (*argv && **argv == '+')
 		format = *argv;
@@ -199,6 +215,122 @@ badcanotime(const char *msg, const char *val, size_t where)
 
 #define ATOI2(s) ((s) += 2, ((s)[-2] - '0') * 10 + ((s)[-1] - '0'))
 
+#if HAVE_NBTOOL_CONFIG_H
+
+inline static int
+digitstring(const char *s, int len)
+{
+	while (--len > 0) {
+		if (!isdigit(*(unsigned char *)s))
+			return 0;
+		s++;
+	}
+	return 1;
+}
+
+static int
+parse_iso_datetime(time_t * res, const char * string)
+{
+	struct tm tm;
+	time_t t;
+
+	memset(&tm, 0, sizeof tm);
+
+	if (!digitstring(string, 4))
+		return 0;
+	tm.tm_year = ATOI2(string) * 100;
+	tm.tm_year += ATOI2(string);
+	tm.tm_year -= 1900;
+
+	if (*string == '-')
+		string++;
+
+	if (!digitstring(string, 2))
+		return 0;
+
+	tm.tm_mon = ATOI2(string);
+	if (tm.tm_mon < 1 || tm.tm_mon > 12)
+		return 0;
+	tm.tm_mon--;
+
+	if (*string == '-')
+		string++;
+
+	if (!digitstring(string, 2))
+		return 0;
+
+	tm.tm_mday = ATOI2(string);
+	if (tm.tm_mday < 1)
+		return 0;
+	switch (tm.tm_mon) {
+	case 0: case 2: case 4: case 6: case 7: case 9: case 11:
+		if (tm.tm_mday > 31)
+			return 0;
+		break;
+	case 3: case 5: case 8: case 10:
+		if (tm.tm_mday > 30)
+			return 0;
+		break;
+	case 1:
+		if (tm.tm_mday > 28 + isleap(tm.tm_year + 1900))
+			return 0;
+		break;
+	default:
+		abort();
+	}
+
+	do {
+		if (*string == '\0')
+			break;
+		if (*string == 'T' || *string == 't' || *string == ' ' ||
+		    *string == '-')
+			string++;
+
+		if (!digitstring(string, 2))
+			return 0;
+		tm.tm_hour = ATOI2(string);
+		if (tm.tm_hour > 23)
+			return 0;
+
+		if (*string == '\0')
+			break;
+		if (*string == ':')
+			string++;
+
+		if (!digitstring(string, 2))
+			return 0;
+		tm.tm_min = ATOI2(string);
+		if (tm.tm_min >= 60)
+			return 0;
+
+		if (*string == '\0')
+			break;
+		if (*string == ':')
+			string++;
+
+		if (!digitstring(string, 2))
+			return 0;
+		tm.tm_sec = ATOI2(string);
+		if (tm.tm_sec >= 60)
+			return 0;
+	} while (0);
+
+	if (*string != '\0')
+		return 0;
+
+	tm.tm_isdst = -1;
+	tm.tm_wday = -1;
+
+	t = mktime(&tm);
+	if (tm.tm_wday == -1)
+		return 0;
+
+	*res = t;
+	return 1;
+}
+
+#endif	/*NBTOOL*/
+
 static void
 setthetime(const char *p)
 {
@@ -214,6 +346,7 @@ setthetime(const char *p)
 
 	lt->tm_isdst = -1;			/* Divine correct DST */
 
+#ifndef HAVE_NBTOOL_CONFIG_H
 	if (fmt) {
 		t = strptime(p, fmt, lt);
 		if (t == NULL) {
@@ -225,6 +358,7 @@ setthetime(const char *p)
 				strlen(t), t);
 		goto setit;
 	}
+#endif
 	for (t = p, dot = NULL; *t; ++t) {
 		if (*t == '.') {
 			if (dot == NULL) {
