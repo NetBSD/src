@@ -1,9 +1,18 @@
 #! /bin/sh
 
-# $NetBSD: mknodenames.sh,v 1.6 2018/08/18 03:09:37 kre Exp $
+# $NetBSD: mknodenames.sh,v 1.7 2024/10/14 08:27:19 kre Exp $
 
 # Use this script however you like, but it would be amazing if
 # it has any purpose other than as part of building the shell...
+
+# All (like every single one) uses of echo in this script
+# have at most 1 argument (string) to print, and none use -n
+# hence replacing echo with printf is trivial...
+
+echo()
+{
+	command printf '%s\n' "$1"
+}
 
 if [ -z "$1" ]; then
 	echo "Usage: $0 nodes.h" 1>&2
@@ -25,7 +34,7 @@ echo "#define NODENAMES_H_INCLUDED"
 echo
 echo "#ifdef DEBUG"
 
-MAX=$(awk < "$NODES" '
+MAX=$(${AWK:-awk} < "$NODES" '
 	/#define/ {
 		if ($3 > MAX) MAX = $3
 	}
