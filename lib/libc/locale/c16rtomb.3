@@ -1,0 +1,222 @@
+.\"	$NetBSD: c16rtomb.3,v 1.11.2.2 2024/10/14 17:20:18 martin Exp $
+.\"
+.\" Copyright (c) 2024 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 14, 2024
+.Dt C16RTOMB 3
+.Os
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh NAME
+.Nm c16rtomb
+.Nd Restartable UTF-16 to multibyte conversion
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh LIBRARY
+.Lb libc
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SYNOPSIS
+.
+.In uchar.h
+.
+.Ft size_t
+.Fo c16rtomb
+.Fa "char * restrict s"
+.Fa "char16_t c16"
+.Fa "mbstate_t * restrict ps"
+.Fc
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh DESCRIPTION
+The
+.Nm
+function decodes UTF-16 and converts it to multibyte characters in the
+current locale, keeping state to remember incremental progress if
+restarted.
+.Pp
+Each call to
+.Nm
+updates the conversion state
+.Fa ps
+with a UTF-16 code unit
+.Fa c16 ,
+writes up to
+.Dv MB_CUR_MAX
+bytes to
+.Fa s
+(possibly none), and returns either the number of bytes written to
+.Fa s
+or
+.Li (size_t)-1
+to denote error.
+.Pp
+If
+.Fa s
+is a null pointer,
+no output is produced and
+.Fa ps
+is reset to the initial conversion state, as if the call had been
+.Fo c8rtomb
+.Va buf ,
+.Li 0 ,
+.Fa ps
+.Fc
+for some internal buffer
+.Va buf .
+.Pp
+If
+.Fa c16
+is zero,
+.Nm
+discards any pending incomplete UTF-16 code unit sequence in
+.Fa ps ,
+outputs a (possibly empty) shift sequence to restore the initial state
+followed by a NUL byte, and resets
+.Fa ps
+to the initial conversion state.
+.Pp
+If
+.Fa ps
+is a null pointer,
+.Nm
+uses an internal
+.Vt mbstate_t
+object with static storage duration, distinct from all other
+.Vt mbstate_t
+objects
+.Po
+including those used by other functions such as
+.Xr mbrtoc16 3
+.Pc ,
+which is initialized at program startup to the initial conversion
+state.
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh RETURN VALUES
+The
+.Nm
+function returns the number of bytes written to
+.Fa s
+on success, or sets
+.Xr errno 2
+and returns
+.Li "(size_t)-1"
+on failure.
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh EXAMPLES
+Convert a UTF-16 code unit sequence to a multibyte string,
+NUL-terminate it (with any shift sequence needed to restore the initial
+state), and print it:
+.Bd -literal -offset indent
+char16_t c16[] = { 0xd83d, 0xdca9 };
+char buf[(__arraycount(c16) + 1)*MB_LEN_MAX], *s = buf;
+size_t i;
+mbstate_t mbs = {0};    /* initial conversion state */
+
+for (i = 0; i < __arraycount(c16); i++) {
+        size_t len;
+
+        len = c16rtomb(s, c16[i], &mbs);
+        if (len == (size_t)-1)
+                err(1, "c16rtomb");
+        assert(len < sizeof(buf) - (s - buf));
+        s += len;
+}
+len = c16rtomb(s, 0, &mbs);             /* NUL-terminate */
+if (len == (size_t)-1)
+        err(1, "c16rtomb");
+assert(len <= sizeof(buf) - (s - buf));
+printf("%s\en", buf);
+.Ed
+.Pp
+To avoid a variable-length array, this code uses
+.Dv MB_LEN_MAX ,
+which is a constant upper bound on the locale-dependent
+.Dv MB_CUR_MAX .
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh ERRORS
+.Bl -tag -width Bq
+.It Bq Er EILSEQ
+.Fa c16
+is invalid as the next code unit in the conversion state
+.Fa ps .
+.It Bq Er EILSEQ
+The input cannot be encoded as a multibyte sequence in the current
+locale.
+.It Bq Er EIO
+An error occurred in loading the locale's character conversions.
+.El
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SEE ALSO
+.Xr c32rtomb 3 ,
+.Xr c8rtomb 3 ,
+.Xr mbrtoc16 3 ,
+.Xr mbrtoc32 3 ,
+.Xr mbrtoc8 3 ,
+.Xr uchar 3
+.Rs
+.%B The Unicode Standard
+.%O Version 15.0 \(em Core Specification
+.%Q The Unicode Consortium
+.%D September 2022
+.%U https://www.unicode.org/versions/Unicode15.0.0/UnicodeStandard-15.0.pdf
+.Re
+.Rs
+.%A P. Hoffman
+.%A F. Yergeau
+.%T UTF-16, an encoding of ISO 10646
+.%R RFC 2781
+.%D February 2000
+.%I Internet Engineering Task Force
+.%U https://datatracker.ietf.org/doc/html/rfc2781
+.Re
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh STANDARDS
+The
+.Nm
+function conforms to
+.St -isoC-2011 .
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh HISTORY
+The
+.Nm
+function first appeared in
+.Nx 11.0 .
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh BUGS
+The standard requires that passing zero as
+.Fa c16
+unconditionally reset the conversion state and output a NUL byte:
+.Bd -filled -offset indent
+If
+.Fa c16
+is a null wide character, a null byte is stored, preceded by any shift
+sequence needed to restore the initial shift state; the resulting state
+described is the initial conversion state.
+.Ed
+.Pp
+However, some implementations such as
+.Fx 14.0 ,
+.Ox 7.4 ,
+and glibc 2.36 ignore this clause and, if the zero was preceded by an
+incomplete UTF-16 code unit sequence, fail with
+.Er EILSEQ
+instead.

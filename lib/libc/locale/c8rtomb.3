@@ -1,0 +1,220 @@
+.\"	$NetBSD: c8rtomb.3,v 1.9.2.2 2024/10/14 17:20:18 martin Exp $
+.\"
+.\" Copyright (c) 2024 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 15, 2024
+.Dt C8RTOMB 3
+.Os
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh NAME
+.Nm c8rtomb
+.Nd Restartable UTF-8 to multibyte conversion
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh LIBRARY
+.Lb libc
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SYNOPSIS
+.
+.In uchar.h
+.
+.Ft size_t
+.Fo c8rtomb
+.Fa "char * restrict s"
+.Fa "char8_t c8"
+.Fa "mbstate_t * restrict ps"
+.Fc
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh DESCRIPTION
+The
+.Nm
+function decodes UTF-8 and converts it to multibyte characters in the
+current locale, keeping state to remember incremental progress if
+restarted.
+.Pp
+Each call to
+.Nm
+updates the conversion state
+.Fa ps
+with a UTF-8 code unit
+.Fa c8 ,
+writes up to
+.Dv MB_CUR_MAX
+bytes (possibly none) to
+.Fa s ,
+and returns either the number of bytes written to
+.Fa s
+or
+.Li (size_t)-1
+to denote error.
+.Pp
+If
+.Fa s
+is a null pointer,
+no output is produced and
+.Fa ps
+is reset to the initial conversion state, as if the call had been
+.Fo c8rtomb
+.Va buf ,
+.Li 0 ,
+.Fa ps
+.Fc
+for some internal buffer
+.Va buf .
+.Pp
+If
+.Fa c8
+is zero,
+.Nm
+discards any pending incomplete UTF-8 code unit sequence in
+.Fa ps ,
+outputs a (possibly empty) shift sequence to restore the initial state
+followed by a NUL byte, and resets
+.Fa ps
+to the initial conversion state.
+.Pp
+If
+.Fa ps
+is a null pointer,
+.Nm
+uses an internal
+.Vt mbstate_t
+object with static storage duration, distinct from all other
+.Vt mbstate_t
+objects
+.Po
+including those used by other functions such as
+.Xr mbrtoc8 3
+.Pc ,
+which is initialized at program startup to the initial conversion
+state.
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh RETURN VALUES
+The
+.Nm
+function returns the number of bytes written to
+.Fa s
+on success, or sets
+.Xr errno 2
+and returns
+.Li "(size_t)-1"
+on failure.
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh EXAMPLES
+Convert a UTF-8 code unit sequence to a multibyte string,
+NUL-terminate it (with any shift sequence needed to restore the initial
+state), and print it:
+.Bd -literal -offset indent
+char8_t c8[] = { 0xf0, 0x9f, 0x92, 0xa9 };
+char buf[(__arraycount(c8) + 1)*MB_LEN_MAX], *s = buf;
+size_t i;
+mbstate_t mbs = {0};    /* initial conversion state */
+
+for (i = 0; i < __arraycount(c8); i++) {
+        size_t len;
+
+        len = c8rtomb(s, c8[i], &mbs);
+        if (len == (size_t)-1)
+                err(1, "c8rtomb");
+        assert(len < sizeof(buf) - (s - buf));
+        s += len;
+}
+len = c8rtomb(s, 0, &mbs);              /* NUL-terminate */
+if (len == (size_t)-1)
+        err(1, "c16rtomb");
+assert(len <= sizeof(buf) - (s - buf));
+printf("%s\en", buf);
+.Ed
+.Pp
+To avoid a variable-length array, this code uses
+.Dv MB_LEN_MAX ,
+which is a constant upper bound on the locale-dependent
+.Dv MB_CUR_MAX .
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh ERRORS
+.Bl -tag -width Bq
+.It Bq Er EILSEQ
+.Fa c8
+is invalid as the next code unit in the conversion state
+.Fa ps .
+.It Bq Er EILSEQ
+The input cannot be encoded as a multibyte sequence in the current
+locale.
+.It Bq Er EIO
+An error occurred in loading the locale's character conversions.
+.El
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SEE ALSO
+.Xr c16rtomb 3 ,
+.Xr c32rtomb 3 ,
+.Xr mbrtoc8 3 ,
+.Xr mbrtoc16 3 ,
+.Xr mbrtoc32 3 ,
+.Xr uchar 3
+.Rs
+.%B The Unicode Standard
+.%O Version 15.0 \(em Core Specification
+.%Q The Unicode Consortium
+.%D September 2022
+.%U https://www.unicode.org/versions/Unicode15.0.0/UnicodeStandard-15.0.pdf
+.Re
+.Rs
+.%A F. Yergeau
+.%T UTF-8, a transformation format of ISO 10646
+.%R RFC 3629
+.%D November 2003
+.%I Internet Engineering Task Force
+.%U https://datatracker.ietf.org/doc/html/rfc3629
+.Re
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.\" .Sh STANDARDS
+.\" The
+.\" .Nm
+.\" function conforms to
+.\" .St -isoC-2023 .
+.\" .\" XXX PR misc/58600: man pages lack C17, C23, C++98, C++03, C++11, C++17, C++20, C++23 citation syntax
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh HISTORY
+The
+.Nm
+function first appeared in
+.Nx 11.0 .
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh CAVEATS
+The standard requires that passing zero as
+.Fa c8
+unconditionally reset the conversion state and output a NUL byte:
+.Bd -filled -offset indent
+If
+.Fa c8
+is a null character, a null byte is stored, preceded by any shift
+sequence needed to restore the initial shift state; the resulting state
+described is the initial conversion state.
+.Ed
+.Pp
+However, some implementations such as glibc 2.36 ignore this clause
+and, if the zero was preceded by a nonempty incomplete UTF-8 code unit
+sequence, fail with
+.Er EILSEQ
+instead.

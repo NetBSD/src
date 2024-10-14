@@ -1,0 +1,311 @@
+.\"	$NetBSD: mbrtoc8.3,v 1.7.2.2 2024/10/14 17:20:18 martin Exp $
+.\"
+.\" Copyright (c) 2024 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 15, 2024
+.Dt MBRTOC8 3
+.Os
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh NAME
+.Nm mbrtoc8
+.Nd Restartable multibyte to UTF-8 conversion
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh LIBRARY
+.Lb libc
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SYNOPSIS
+.
+.In uchar.h
+.
+.Ft size_t
+.Fo mbrtoc8
+.Fa "char8_t * restrict pc8"
+.Fa "const char * restrict s"
+.Fa "size_t n"
+.Fa "mbstate_t * restrict ps"
+.Fc
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh DESCRIPTION
+The
+.Nm
+function decodes multibyte characters in the current locale and
+converts them to UTF-8, keeping state so it can restart after
+incremental progress.
+.Pp
+Each call to
+.Nm :
+.Bl -enum -compact
+.It
+examines up to
+.Fa n
+bytes starting at
+.Fa s ,
+.It
+yields a UTF-8 code unit if available by storing it at
+.Li * Ns Fa pc8 ,
+.It
+saves state at
+.Fa ps ,
+and
+.It
+returns either the number of bytes consumed if any or a special return
+value.
+.El
+.Pp
+Specifically:
+.Bl -bullet
+.It
+If the multibyte sequence at
+.Fa s
+is invalid after any previous input saved at
+.Fa ps ,
+or if an error occurs in decoding,
+.Nm
+returns
+.Li (size_t)-1
+and sets
+.Xr errno 2
+to indicate the error.
+.It
+If the multibyte sequence at
+.Fa s
+is still incomplete after
+.Fa n
+bytes, including any previous input saved in
+.Fa ps ,
+.Nm
+saves its state in
+.Fa ps
+after all the input so far and returns
+.Li "(size_t)-2".
+.Sy All
+.Fa n
+bytes of input are consumed in this case.
+.It
+If
+.Nm
+had previously decoded a multibyte character but has not yet yielded
+all the code units of its UTF-8 encoding, it stores the next UTF-8 code
+unit at
+.Li * Ns Fa pc8
+and returns
+.Li "(size_t)-3" .
+.Sy \&No
+input is consumed in this case.
+.It
+If
+.Nm
+decodes the null multibyte character, then it stores zero at
+.Li * Ns Fa pc8
+and returns zero.
+.It
+Otherwise,
+.Nm
+decodes a single multibyte character, stores the first (and possibly
+only) code unit in its UTF-8 encoding at
+.Li * Ns Fa pc8 ,
+and returns the number of bytes consumed to decode the first multibyte
+character.
+.El
+.Pp
+If
+.Fa pc8
+is a null pointer, nothing is stored, but the effects on
+.Fa ps
+and the return value are unchanged.
+.Pp
+If
+.Fa s
+is a null pointer, the
+.Nm
+call is equivalent to:
+.Bd -ragged -offset indent
+.Fo mbrtoc8
+.Li NULL ,
+.Li \*q\*q ,
+.Li 1 ,
+.Fa ps
+.Fc
+.Ed
+.Pp
+This always returns zero, and has the effect of resetting
+.Fa ps
+to the initial conversion state, without writing to
+.Fa pc8 ,
+even if it is nonnull.
+.Pp
+If
+.Fa ps
+is a null pointer,
+.Nm
+uses an internal
+.Vt mbstate_t
+object with static storage duration, distinct from all other
+.Vt mbstate_t
+objects
+.Po
+including those used by
+.Xr mbrtoc16 3 ,
+.Xr mbrtoc32 3 ,
+.Xr c8rtomb 3 ,
+.Xr c16rtomb 3 ,
+and
+.Xr c32rtomb 3
+.Pc ,
+which is initialized at program startup to the initial conversion
+state.
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh IMPLEMENTATION NOTES
+On well-formed input, the
+.Nm
+function yields either a Unicode scalar value in US-ASCII range, i.e.,
+a 7-bit Unicode code point, or, over two to four successive calls, the
+leading and trailing code units in order of the UTF-8 encoding of a
+Unicode scalar value outside the US-ASCII range.
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh RETURN VALUES
+The
+.Nm
+function returns:
+.Bl -tag -width Li
+.It Li 0
+.Bq null
+if
+.Nm
+decoded a null multibyte character.
+.It Ar i
+.Bq code unit
+where
+.Li 1
+\*(Le
+.Ar i
+\*(Le
+.Fa n ,
+if
+.Nm
+consumed
+.Ar i
+bytes of input to decode the next multibyte character, yielding a
+UTF-8 code unit.
+.It Li (size_t)-3
+.Bq continuation
+if
+.Nm
+consumed no new bytes of input but yielded a UTF-8 code unit that was
+pending from previous input.
+.It Li (size_t)-2
+.Bq incomplete
+if
+.Nm
+found only an incomplete multibyte sequence after all
+.Fa n
+bytes of input and any previous input, and saved its state to restart
+in the next call with
+.Fa ps .
+.It Li (size_t)-1
+.Bq error
+if any encoding error was detected;
+.Xr errno 2
+is set to reflect the error.
+.El
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh EXAMPLES
+Print the UTF-8 code units of a multibyte string in hexadecimal text:
+.Bd -literal -offset indent
+char *s = ...;
+size_t n = ...;
+mbstate_t mbs = {0};    /* initial conversion state */
+
+while (n) {
+        char8_t c8;
+        size_t len;
+
+        len = mbrtoc8(&c8, s, n, &mbs);
+        switch (len) {
+        case 0:         /* NUL terminator */
+                assert(c8 == 0);
+                goto out;
+        default:        /* consumed input and yielded a byte c8 */
+                printf("0x%02hhx\en", c8);
+                break;
+        case (size_t)-3: /* yielded a pending byte c8 */
+                printf("continue 0x%02hhx\en", c8);
+                break;
+        case (size_t)-2: /* incomplete */
+                printf("incomplete\en");
+                goto readmore;
+        case (size_t)-1: /* error */
+                printf("error: %d\en", errno);
+                goto out;
+        }
+        s += len;
+        n -= len;
+}
+.Ed
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh ERRORS
+.Bl -tag -width Bq
+.It Bq Er EILSEQ
+The multibyte sequence cannot be decoded in the current locale as a
+Unicode scalar value.
+.It Bq Er EIO
+An error occurred in loading the locale's character conversions.
+.El
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SEE ALSO
+.Xr c8rtomb 3 ,
+.Xr c16rtomb 3 ,
+.Xr c32rtomb 3 ,
+.Xr mbrtoc16 3 ,
+.Xr mbrtoc32 3 ,
+.Xr uchar 3
+.Rs
+.%B The Unicode Standard
+.%O Version 15.0 \(em Core Specification
+.%Q The Unicode Consortium
+.%D September 2022
+.%U https://www.unicode.org/versions/Unicode15.0.0/UnicodeStandard-15.0.pdf
+.Re
+.Rs
+.%A F. Yergeau
+.%T UTF-8, a transformation format of ISO 10646
+.%R RFC 3629
+.%D November 2003
+.%I Internet Engineering Task Force
+.%U https://datatracker.ietf.org/doc/html/rfc3629
+.Re
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.\" .Sh STANDARDS
+.\" The
+.\" .Nm
+.\" function conforms to
+.\" .St -isoC-2023 .
+.\" .\" XXX PR misc/58600: man pages lack C17, C23, C++98, C++03, C++11, C++17, C++20, C++23 citation syntax
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh HISTORY
+The
+.Nm
+function first appeared in
+.Nx 11.0 .
