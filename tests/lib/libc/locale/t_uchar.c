@@ -1,4 +1,4 @@
-/*	$NetBSD: t_uchar.c,v 1.2 2024/10/13 23:21:30 riastradh Exp $	*/
+/*	$NetBSD: t_uchar.c,v 1.3 2024/10/14 06:02:14 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ static size_t (*nbtest_c32rtomb)(char *restrict, char32_t,
     mbstate_t *restrict) __unused = &c32rtomb;
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_uchar.c,v 1.2 2024/10/13 23:21:30 riastradh Exp $");
+__RCSID("$NetBSD: t_uchar.c,v 1.3 2024/10/14 06:02:14 rillig Exp $");
 
 #include <atf-c.h>
 #include <stdint.h>
@@ -63,8 +63,8 @@ ATF_TC_BODY(uchartypes, tc)
 {
 
 	ATF_CHECK_EQ_MSG(sizeof(char8_t), sizeof(unsigned char),
-	    "char16_t %zu, unsigned char %zu",
-	    sizeof(char16_t), sizeof(unsigned char));
+	    "char8_t %zu, unsigned char %zu",
+	    sizeof(char8_t), sizeof(unsigned char));
 	ATF_CHECK_EQ_MSG(sizeof(char16_t), sizeof(uint_least16_t),
 	    "char16_t %zu, uint_least16_t %zu",
 	    sizeof(char16_t), sizeof(uint_least16_t));
