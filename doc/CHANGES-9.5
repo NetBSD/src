@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.29 2024/10/14 16:33:28 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.30 2024/10/14 18:14:29 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -517,4 +517,11 @@ etc/mtree/special				1.179
 	/etc/mtree/special: PR 58465: add wpa_supplicant.conf as optional
 	so that it gets saved in /var/backups.
 	[riastradh, ticket #1912]
+
+tests/usr.bin/gzip/t_gzip.sh			1.2
+usr.bin/gzip/unlz.c				1.9,1.10
+usr.bin/gzip/unxz.c				1.9
+
+	gzip(1) PR 58223: fix lzip dict size, do not write to stdout.
+	[christos, ticket #1913]
 
