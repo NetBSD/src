@@ -1,4 +1,4 @@
-/*	$NetBSD: unxz.c,v 1.8 2018/10/06 16:36:45 martin Exp $	*/
+/*	$NetBSD: unxz.c,v 1.8.10.1 2024/10/14 18:11:35 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unxz.c,v 1.8 2018/10/06 16:36:45 martin Exp $");
+__RCSID("$NetBSD: unxz.c,v 1.8.10.1 2024/10/14 18:11:35 martin Exp $");
 
 #include <stdarg.h>
 #include <errno.h>
@@ -99,7 +99,8 @@ unxz(int i, int o, char *pre, size_t prelen, off_t *bytes_in)
 		if (strm.avail_out == 0 || ret != LZMA_OK) {
 			const size_t write_size = sizeof(obuf) - strm.avail_out;
 
-			if (write(o, obuf, write_size) != (ssize_t)write_size)
+			if (!tflag &&
+			    write(o, obuf, write_size) != (ssize_t)write_size)
 				maybe_err("write failed");
 
 			strm.next_out = obuf;
