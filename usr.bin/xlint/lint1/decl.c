@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.405 2024/09/28 15:51:40 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.406 2024/10/14 18:43:23 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.405 2024/09/28 15:51:40 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.406 2024/10/14 18:43:23 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2538,20 +2538,20 @@ check_func_old_style_parameters(void)
 }
 
 static void
-check_local_hiding(const sym_t *dsym)
+check_local_hiding(const sym_t *dsym, const sym_t *rdsym)
 {
 	switch (dsym->s_scl) {
 	case AUTO:
-		/* automatic '%s' hides external declaration */
-		warning(86, dsym->s_name);
+		/* automatic '%s' hides external declaration with type '%s' */
+		warning(86, dsym->s_name, type_name(rdsym->s_type));
 		break;
 	case STATIC:
-		/* static '%s' hides external declaration */
-		warning(87, dsym->s_name);
+		/* static '%s' hides external declaration with type '%s' */
+		warning(87, dsym->s_name, type_name(rdsym->s_type));
 		break;
 	case TYPEDEF:
-		/* typedef '%s' hides external declaration */
-		warning(88, dsym->s_name);
+		/* typedef '%s' hides external declaration with type '%s' */
+		warning(88, dsym->s_name, type_name(rdsym->s_type));
 		break;
 	case EXTERN:
 		/* Already checked in declare_external_in_block. */
@@ -2566,7 +2566,7 @@ check_local_redeclaration(const sym_t *dsym, sym_t *rdsym)
 {
 	if (rdsym->s_block_level == 0) {
 		if (hflag)
-			check_local_hiding(dsym);
+			check_local_hiding(dsym, rdsym);
 
 	} else if (rdsym->s_block_level == block_level) {
 

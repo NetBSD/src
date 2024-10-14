@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.249 2024/09/29 13:16:57 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.250 2024/10/14 18:43:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.249 2024/09/29 13:16:57 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.250 2024/10/14 18:43:23 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -141,9 +141,9 @@ static const char *const msgs[] = {
 	"storage class after type is obsolescent",			// 83
 	"C90 to C17 require formal parameter before '...'",		// 84
 	"dubious tag declaration '%s %s'",				// 85
-	"automatic '%s' hides external declaration",			// 86
-	"static '%s' hides external declaration",			// 87
-	"typedef '%s' hides external declaration",			// 88
+	"automatic '%s' hides external declaration with type '%s'",	// 86
+	"static '%s' hides external declaration with type '%s'",	// 87
+	"typedef '%s' hides external declaration with type '%s'",	// 88
 	"typedef '%s' redeclared",					// 89
 	"inconsistent redeclaration of extern '%s'",			// 90
 	"declaration of '%s' hides parameter",				// 91

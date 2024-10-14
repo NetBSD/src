@@ -1,23 +1,26 @@
-/*	$NetBSD: msg_086.c,v 1.7 2023/08/02 18:51:25 rillig Exp $	*/
+/*	$NetBSD: msg_086.c,v 1.8 2024/10/14 18:43:24 rillig Exp $	*/
 # 3 "msg_086.c"
 
-// Test for message: automatic '%s' hides external declaration [86]
+// Test for message: automatic '%s' hides external declaration with type '%s' [86]
 
 /* lint1-flags: -S -g -h -w -X 351 */
 
-extern int identifier;
+extern double variable;
+void parameter(double);
+void err(int, const char *, ...);
 
-int
-local_auto(void)
-{
-	/* expect+1: warning: automatic 'identifier' hides external declaration [86] */
-	int identifier = 3;
-	return identifier;
-}
+int sink;
 
+void
 /* XXX: the function parameter does not trigger the warning. */
-int
-arg_auto(int identifier)
+local_(int parameter)
 {
-	return identifier;
+	/* expect+1: warning: automatic 'variable' hides external declaration with type 'double' [86] */
+	int variable = 3;
+	/* expect+1: warning: automatic 'err' hides external declaration with type 'function(int, pointer to const char, ...) returning void' [86] */
+	int err = 5;
+
+	sink = variable;
+	sink = parameter;
+	sink = err;
 }
