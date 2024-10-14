@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.50 2024/10/14 15:43:00 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.51 2024/10/14 17:48:50 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -2445,4 +2445,84 @@ sys/sys/cdefs.h					1.162
 
 	sys/cdefs.h: make various macros work more robustly.
 	[riastradh, ticket #973]
+
+sys/arch/evbppc/include/wii.h			1.9
+sys/arch/evbppc/wii/autoconf.c			1.3
+sys/arch/evbppc/wii/dev/avenc.c			1.2
+sys/arch/evbppc/wii/dev/ehci_hollywood.c	1.4
+sys/arch/evbppc/wii/dev/vireg.h			1.3
+sys/arch/evbppc/wii/dev/wiifb.c			1.7
+sys/arch/evbppc/wii/machdep.c			1.5,1.7
+sys/arch/evbppc/wii/wii_locore.S		1.3
+sys/arch/evbppc/wii/wii_mmuinit.S		1.2
+
+	evbppc: wii: support loading the kernel from boot2
+	[jmcneill, ticket #974]
+
+external/cddl/osnet/dev/dtrace/amd64/dtrace_asm.S	(apply patch)
+external/cddl/osnet/dev/dtrace/amd64/dtrace_subr.c	(apply patch)
+external/cddl/osnet/dev/dtrace/i386/dtrace_asm.S	(apply patch)
+external/cddl/osnet/dev/dtrace/i386/dtrace_subr.c	(apply patch)
+
+	dtrace: add support for SMAP.
+	[chs, ticket #975]
+
+distrib/sets/lists/base/shl.mi			1.988 (patch)
+distrib/sets/lists/comp/mi			1.2468-1.2470 (patch)
+distrib/sets/lists/debug/mi			1.442-1.444 (patch)
+distrib/sets/lists/tests/mi			1.1330-1.1332 (patch)
+include/Makefile				1.147 (patch)
+include/uchar.h					1.1-1.6 (patch)
+lib/libc/include/namespace.h			1.204,1.205 (patch)
+lib/libc/locale/Makefile.inc			1.66,1.67 (patch)
+lib/libc/locale/c16rtomb.3			1.1-1.11 (patch)
+lib/libc/locale/c16rtomb.c			1.1-1.7 (patch)
+lib/libc/locale/c32rtomb.3			1.1-1.11 (patch)
+lib/libc/locale/c32rtomb.c			1.1-1.6 (patch)
+lib/libc/locale/c32rtomb.h			1.1,1.2 (patch)
+lib/libc/locale/c8rtomb.3			1.1-1.9 (patch)
+lib/libc/locale/c8rtomb.c			1.1-1.6 (patch)
+lib/libc/locale/mbrtoc16.3			1.1-1.10 (patch)
+lib/libc/locale/mbrtoc16.c			1.1-1.7 (patch)
+lib/libc/locale/mbrtoc32.3			1.1-1.9 (patch)
+lib/libc/locale/mbrtoc32.c			1.1-1.9 (patch)
+lib/libc/locale/mbrtoc32.h			1.1,1.2 (patch)
+lib/libc/locale/mbrtoc8.3			1.1-1.7 (patch)
+lib/libc/locale/mbrtoc8.c			1.1-1.8 (patch)
+lib/libc/shlib_version				1.297 (patch)
+share/man/man3/Makefile				1.93 (patch)
+share/man/man3/uchar.3				1.1,1.2 (patch)
+tests/lib/libc/locale/Makefile			1.15-1.18 (patch)
+tests/lib/libc/locale/t_c16rtomb.c		1.1-1.6 (patch)
+tests/lib/libc/locale/t_c32rtomb.c		1.1-1.7 (patch)
+tests/lib/libc/locale/t_mbrtoc16.c		1.1-1.3 (patch)
+tests/lib/libc/locale/t_mbrtoc32.c		1.1 (patch)
+tests/lib/libc/locale/t_mbrtoc8.c		1.1-1.3 (patch)
+tests/lib/libc/locale/t_uchar.c			1.1-1.3 (patch)
+
+	uchar.h: New header file for UTF-8/16/32<->multibyte conversion,
+	for compliance with C11 and C23, and functions in libc to
+	implement it.
+
+	PR 52374: <uchar.h> missing
+	PR 58601: uchar.h C23 compliance: char8_t, mbrtoc8, c8rtomb
+	PR 58612: c8rtomb/c16rtomb/c32rtomb yield suboptimal shift sequences
+	PR 58613: c*rtomb, mbrtoc* should have locale-parametric _l variants
+	PR 58615: incomplete c8rtomb, c16rtomb handles NUL termination wrong
+	PR 58618: mbrtocN(3) fails to keep shift state
+	[riastradh, ticket #976]
+
+sys/dev/sdmmc/sdmmc_cis.c			1.9
+
+	sdmmc(4): decode CISTPL_FUNCE of type PCMCIA_TPLFE_TYPE_LAN_NID
+	[jmcneill, ticket #977]
+
+bin/date/date.c					(apply patch)
+external/gpl2/gmake/dist/main.c			1.2
+sys/sys/signal.h				1.77
+sys/sys/signal.h				1.78
+usr.bin/sed/process.c				1.54
+
+	PR 58674: tools portability build "fixes".
+	[kre, ticket #978]
 
