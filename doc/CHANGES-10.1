@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.52 2024/10/14 18:07:37 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.53 2024/10/14 18:12:30 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -2526,4 +2526,11 @@ usr.bin/sed/process.c				1.54
 
 	PR 58674: tools portability build "fixes".
 	[kre, ticket #978]
+
+tests/usr.bin/gzip/t_gzip.sh			1.2
+usr.bin/gzip/unlz.c				1.9,1.10
+usr.bin/gzip/unxz.c				1.9
+
+	gzip(1) PR 58223: fix lzip dict size, do not write to stdout.
+	[christos, ticket #979]
 
