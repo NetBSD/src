@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.31 2017/10/02 21:53:55 joerg Exp $ */
+/* $NetBSD: tic.c,v 1.31.6.1 2024/10/14 16:29:22 martin Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.31 2017/10/02 21:53:55 joerg Exp $");
+__RCSID("$NetBSD: tic.c,v 1.31.6.1 2024/10/14 16:29:22 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -451,6 +451,7 @@ write_database(const char *dbname)
 	char *tmp_dbname;
 	TERM *term;
 	int fd;
+	mode_t m;
 
 	db = cdbw_open();
 	if (db == NULL)
@@ -465,7 +466,9 @@ write_database(const char *dbname)
 		err(1, "creating temporary database %s failed", tmp_dbname);
 	if (cdbw_output(db, fd, "NetBSD terminfo", cdbw_stable_seeder))
 		err(1, "writing temporary database %s failed", tmp_dbname);
-	if (fchmod(fd, DEFFILEMODE))
+	m = umask(0);
+	(void)umask(m);
+	if (fchmod(fd, DEFFILEMODE & ~m))
 		err(1, "fchmod failed");
 	if (close(fd))
 		err(1, "writing temporary database %s failed", tmp_dbname);
