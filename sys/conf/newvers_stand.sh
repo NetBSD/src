@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $NetBSD: newvers_stand.sh,v 1.10 2024/04/02 14:15:19 christos Exp $
+# $NetBSD: newvers_stand.sh,v 1.11 2024/10/14 17:01:18 christos Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,6 +36,7 @@
 #	sh ${S}/conf/newvers_stand.sh [-dkn] [-D <date>] [-m <machine>] VERSION_TEMPLATE [EXTRA_MSG]
 
 DATE=${TOOL_DATE:-date}
+AWK=${TOOL_AWK:-awk}
 
 cwd=$(dirname "$0")
 
@@ -60,9 +61,9 @@ done
 
 shift $(expr ${OPTIND} - 1)
 
-r=$(awk -F: '$1 ~ /^[0-9.]*$/ { it = $1; } END { print it }' "$1")
+r=$("${AWK}" -F: '$1 ~ /^[0-9.]*$/ { it = $1; } END { print it }' "$1")
 shift
-t=$(LC_ALL=C TZ=UTC ${DATE} ${dateargs})
+t=$(LC_ALL=C TZ=UTC "${DATE}" ${dateargs})
 
 if ${add_date}; then
 	echo "const char bootprog_rev[] = \"${r} (${t})\";" > vers.c
