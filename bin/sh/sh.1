@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.266 2024/10/11 09:02:10 kre Exp $
+.\"	$NetBSD: sh.1,v 1.267 2024/10/14 08:27:53 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,10 +31,10 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd October 11, 2024
+.Dd October 14, 2024
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
-.ds flags abCEeFfhIiLlmnpquVvXx
+.ds flags abCEeFfhIiLlmnpqruVvXx
 .Os
 .Sh NAME
 .Nm sh
@@ -108,6 +108,28 @@ That is, commands
 can be typed directly to the running shell or can be put into a file and
 the file can be executed directly by the shell.
 .Ss Invocation
+If the
+.Fl r
+option is present on the command line,
+alone, or following other (valid) options,
+the
+.Nm
+immediately prints its version information to standard output
+and exits.
+This allows invocations like
+.Dl Nm Fl version
+as the (preceding)
+.Fl v
+and
+.Fl e
+are valid options, then when the
+.Fl r
+is encountered, the version information is printed, and
+no more processing is attempted.
+Whether the remaining (apparent) options after the
+.Fl r
+would have been valid or not is immaterial.
+.Pp
 If no arguments are present and if the standard input,
 and standard error output, of the shell
 are connected to a terminal (or terminals, or if the
@@ -476,6 +498,18 @@ these being
 and the file specified by the
 .Ev ENV
 environment variable.
+.It Fl r
+Print
+.Nm
+version information and exit.
+It is immaterial whether the option follows
+.Fl
+or
+.Cm + .
+See
+.Sx Invocation
+above.
+This option is valid only on the command line.
 .It Fl s Em stdin
 Read commands from standard input (set automatically if
 neither

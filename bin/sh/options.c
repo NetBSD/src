@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.60 2024/09/21 20:48:50 kre Exp $	*/
+/*	$NetBSD: options.c,v 1.61 2024/10/14 08:27:53 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.60 2024/09/21 20:48:50 kre Exp $");
+__RCSID("$NetBSD: options.c,v 1.61 2024/10/14 08:27:53 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -244,6 +244,9 @@ options(int cmdline)
 				else
 					set_debug("*$", val);
 #endif
+			} else if (cmdline && c == 'r') {
+				out1fmt("NetBSD shell: %s\n", lookupvar("NETBSD_SHELL"));
+				sh_exit(0);
 			} else {
 				setoption(c, val);
 			}
