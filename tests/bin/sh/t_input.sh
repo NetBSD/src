@@ -1,4 +1,4 @@
-# $NetBSD: t_input.sh,v 1.1 2021/02/16 09:46:24 kre Exp $
+# $NetBSD: t_input.sh,v 1.2 2024/10/14 12:26:28 kre Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -47,6 +47,8 @@ nul_elimination_body() {
 	atf_require_prog dd
 	atf_require_prog cat
 	atf_require_prog rm
+
+	atf_expect_fail "nuls are now errors, not ignored, revisit later"
 
 	# please do not make even trivial changes (like correcting spelling)
 	# to the following script without taking care to fix the following
