@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.85 2024/10/14 08:11:57 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.86 2024/10/14 08:15:43 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.85 2024/10/14 08:11:57 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.86 2024/10/14 08:15:43 kre Exp $");
 #endif
 #endif /* not lint */
 
