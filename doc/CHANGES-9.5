@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.28 2024/10/14 16:14:22 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.29 2024/10/14 16:33:28 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -506,4 +506,15 @@ share/man/man5/acct.5				1.10-1.12
 
 	acct(5): PR 58515: update man page to reflect reality.
 	[riastradh, ticket #1910]
+
+usr.bin/tic/tic.c				1.42
+
+	tic(1): PR 58270: respect user's umask.
+	[riastradh, ticket #1911]
+
+etc/mtree/special				1.179
+
+	/etc/mtree/special: PR 58465: add wpa_supplicant.conf as optional
+	so that it gets saved in /var/backups.
+	[riastradh, ticket #1912]
 
