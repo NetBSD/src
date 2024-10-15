@@ -70,16 +70,16 @@ typedef struct SHA256state_st {
     unsigned int num, md_len;
 } SHA256_CTX;
 
-OSSL_DEPRECATEDIN_3_0 int SHA224_Init(SHA256_CTX *c);
+OSSL_DEPRECATEDIN_3_0 int SHA224_Init(SHA256_CTX *c) __RENAME(_OpenSSL_SHA224_Init);
 OSSL_DEPRECATEDIN_3_0 int SHA224_Update(SHA256_CTX *c,
-                                        const void *data, size_t len);
-OSSL_DEPRECATEDIN_3_0 int SHA224_Final(unsigned char *md, SHA256_CTX *c);
-OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+                                        const void *data, size_t len) __RENAME(_OpenSSL_SHA224_Update);
+OSSL_DEPRECATEDIN_3_0 int SHA224_Final(unsigned char *md, SHA256_CTX *c) __RENAME(_OpenSSL_SHA224_Final);
+OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c) __RENAME(_OpenSSL_SHA256_Init);
 OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
-                                        const void *data, size_t len);
-OSSL_DEPRECATEDIN_3_0 int SHA256_Final(unsigned char *md, SHA256_CTX *c);
+                                        const void *data, size_t len) __RENAME(_OpenSSL_SHA256_Update);
+OSSL_DEPRECATEDIN_3_0 int SHA256_Final(unsigned char *md, SHA256_CTX *c) __RENAME(_OpenSSL_SHA256_Final);
 OSSL_DEPRECATEDIN_3_0 void SHA256_Transform(SHA256_CTX *c,
-                                            const unsigned char *data);
+                                            const unsigned char *data) __RENAME(_OpenSSL_SHA256_Transform);
 # endif
 
 unsigned char *SHA224(const unsigned char *d, size_t n, unsigned char *md);
@@ -120,16 +120,16 @@ typedef struct SHA512state_st {
     unsigned int num, md_len;
 } SHA512_CTX;
 
-OSSL_DEPRECATEDIN_3_0 int SHA384_Init(SHA512_CTX *c);
+OSSL_DEPRECATEDIN_3_0 int SHA384_Init(SHA512_CTX *c) __RENAME(_OpenSSL_SHA384_Init);
 OSSL_DEPRECATEDIN_3_0 int SHA384_Update(SHA512_CTX *c,
-                                        const void *data, size_t len);
-OSSL_DEPRECATEDIN_3_0 int SHA384_Final(unsigned char *md, SHA512_CTX *c);
-OSSL_DEPRECATEDIN_3_0 int SHA512_Init(SHA512_CTX *c);
+                                        const void *data, size_t len) __RENAME(_OpenSSL_SHA384_Update);
+OSSL_DEPRECATEDIN_3_0 int SHA384_Final(unsigned char *md, SHA512_CTX *c) __RENAME(_OpenSSL_SHA384_Final);
+OSSL_DEPRECATEDIN_3_0 int SHA512_Init(SHA512_CTX *c) __RENAME(_OpenSSL_SHA512_Init);
 OSSL_DEPRECATEDIN_3_0 int SHA512_Update(SHA512_CTX *c,
-                                        const void *data, size_t len);
-OSSL_DEPRECATEDIN_3_0 int SHA512_Final(unsigned char *md, SHA512_CTX *c);
+                                        const void *data, size_t len) __RENAME(_OpenSSL_SHA512_Update);
+OSSL_DEPRECATEDIN_3_0 int SHA512_Final(unsigned char *md, SHA512_CTX *c) __RENAME(_OpenSSL_SHA512_Final);
 OSSL_DEPRECATEDIN_3_0 void SHA512_Transform(SHA512_CTX *c,
-                                            const unsigned char *data);
+                                            const unsigned char *data) __RENAME(_OpenSSL_SHA512_Transform);
 # endif
 
 unsigned char *SHA384(const unsigned char *d, size_t n, unsigned char *md);
