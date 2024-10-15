@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.2 2014/01/07 02:13:00 joerg Exp $	*/
+/*	$NetBSD: common.h,v 1.2.36.1 2024/10/15 06:29:09 martin Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * All rights reserved.
@@ -45,9 +45,16 @@
 #include <openssl/err.h>
 #endif
 
+#if defined(__GNUC__) && __GNUC__ >= 3
+#define LIBFETCH_PRINTFLIKE(fmtarg, firstvararg)	\
+	    __attribute__((__format__ (__printf__, fmtarg, firstvararg)))
+#else
+#define LIBFETCH_PRINTFLIKE(fmtarg, firstvararg)
+#endif
+
 #if !defined(__sun) && !defined(__hpux) && !defined(__INTERIX) && \
     !defined(__digital__) && !defined(__linux) && !defined(__MINT__) && \
-    !defined(__sgi)
+    !defined(__sgi) && !defined(__minix) && !defined(__CYGWIN__)
 #define HAVE_SA_LEN
 #endif
 
@@ -59,6 +66,7 @@ struct fetchconn {
 	char		*buf;		/* buffer */
 	size_t		 bufsize;	/* buffer size */
 	size_t		 buflen;	/* length of buffer contents */
+	int		 buf_events;	/* poll flags for the next cycle */
 	char		*next_buf;	/* pending buffer, e.g. after getln */
 	size_t		 next_len;	/* size of pending buffer */
 	int		 err;		/* last protocol reply code */
@@ -90,7 +98,7 @@ struct fetcherr {
 
 void		 fetch_seterr(struct fetcherr *, int);
 void		 fetch_syserr(void);
-void		 fetch_info(const char *, ...) __printflike(1, 2);
+void		 fetch_info(const char *, ...) LIBFETCH_PRINTFLIKE(1, 2);
 int		 fetch_default_port(const char *);
 int		 fetch_default_proxy_port(const char *);
 int		 fetch_bind(int, int, const char *);
@@ -98,7 +106,7 @@ conn_t		*fetch_cache_get(const struct url *, int);
 void		 fetch_cache_put(conn_t *, int (*)(conn_t *));
 conn_t		*fetch_connect(struct url *, int, int);
 conn_t		*fetch_reopen(int);
-int		 fetch_ssl(conn_t *, int);
+int		 fetch_ssl(conn_t *, const struct url *, int);
 ssize_t		 fetch_read(conn_t *, char *, size_t);
 int		 fetch_getln(conn_t *);
 ssize_t		 fetch_write(conn_t *, const void *, size_t);
