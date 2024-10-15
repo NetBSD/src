@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.32 2024/10/15 13:29:14 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.33 2024/10/15 18:59:55 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -524,4 +524,13 @@ usr.bin/gzip/unxz.c				1.9
 
 	gzip(1) PR 58223: fix lzip dict size, do not write to stdout.
 	[christos, ticket #1913]
+
+bin/date/date.c					(apply patch)
+external/gpl2/gmake/dist/main.c			1.2
+sys/sys/signal.h				1.77
+sys/sys/signal.h				1.78
+usr.bin/sed/process.c				1.54
+
+	PR 58674: tools portability build "fixes".
+	[kre, ticket #1914]
 
