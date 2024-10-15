@@ -1,4 +1,4 @@
-/*	$NetBSD: s_nexttowardf.c,v 1.3.36.1 2024/10/14 16:12:31 martin Exp $	*/
+/*	$NetBSD: s_nexttowardf.c,v 1.3.36.2 2024/10/15 06:21:58 martin Exp $	*/
 
 /*
  * ====================================================
@@ -15,7 +15,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/msun/src/s_nexttowardf.c,v 1.3 2011/02/10 07:38:38 das Exp $");
 #else
-__RCSID("$NetBSD: s_nexttowardf.c,v 1.3.36.1 2024/10/14 16:12:31 martin Exp $");
+__RCSID("$NetBSD: s_nexttowardf.c,v 1.3.36.2 2024/10/15 06:21:58 martin Exp $");
 #endif
 
 #include <string.h>
@@ -39,6 +39,14 @@ __RCSID("$NetBSD: s_nexttowardf.c,v 1.3.36.1 2024/10/14 16:12:31 martin Exp $");
 #define	ext_frach	dbl_frach
 #define	ext_fracl	dbl_fracl
 #define	EXT_EXP_INFNAN	DBL_EXP_INFNAN
+#define	LDBL_NBIT	0
+#endif
+
+/*
+ * XXX We should arrange to define LDBL_NBIT unconditionally in the
+ * appropriate MD header file.
+ */
+#ifdef LDBL_IMPLICIT_NBIT
 #define	LDBL_NBIT	0
 #endif
 
