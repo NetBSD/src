@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.57 2024/10/15 13:09:12 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.58 2024/10/15 15:22:00 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -2544,4 +2544,10 @@ external/bsd/fetch/dist/libfetch/http.c         up to 1.6
 
 	libfetch: PR 57179: fix pkg_install core dumps.
 	[wiz, ticket #980]
+
+sys/conf/newvers_stand.sh			1.11
+
+	sys/conf/newvers_stand.sh: PR 58220: use TOOL_AWK instead
+	of the host system's awk.
+	[riastradh, ticket #984]
 
