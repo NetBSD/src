@@ -1,4 +1,4 @@
-/*	$NetBSD: fixunstfsi_ieee754.c,v 1.2 2012/08/05 04:28:58 matt Exp $	*/
+/*	$NetBSD: fixunstfsi_ieee754.c,v 1.2.42.1 2024/10/15 09:56:57 martin Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,10 +31,11 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fixunstfsi_ieee754.c,v 1.2 2012/08/05 04:28:58 matt Exp $");
+__RCSID("$NetBSD: fixunstfsi_ieee754.c,v 1.2.42.1 2024/10/15 09:56:57 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <float.h>
 #include <machine/ieee.h>
