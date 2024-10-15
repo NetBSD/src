@@ -2072,7 +2072,7 @@ BIO_s_file                              2118	3_0_0	EXIST::FUNCTION:
 RSA_X931_derive_ex                      2119	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 EVP_PKEY_decrypt_init                   2120	3_0_0	EXIST::FUNCTION:
 ENGINE_get_destroy_function             2121	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
-SHA224_Init                             2122	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
+_OpenSSL_SHA224_Init                    2122	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 X509V3_EXT_add_conf                     2123	3_0_0	EXIST::FUNCTION:
 ASN1_object_size                        2124	3_0_0	EXIST::FUNCTION:
 X509_REVOKED_free                       2125	3_0_0	EXIST::FUNCTION:
@@ -2190,7 +2190,7 @@ PEM_write_bio_PKCS8_PRIV_KEY_INFO       2238	3_0_0	EXIST::FUNCTION:
 EC_GROUP_set_curve_GF2m                 2239	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC,EC2M
 ENGINE_load_builtin_engines             2240	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
 SRP_VBASE_init                          2241	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,SRP
-SHA224_Final                            2242	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
+_OpenSSL_SHA224_Final                   2242	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 OCSP_CERTSTATUS_free                    2243	3_0_0	EXIST::FUNCTION:OCSP
 d2i_TS_TST_INFO                         2244	3_0_0	EXIST::FUNCTION:TS
 IPAddressOrRange_it                     2245	3_0_0	EXIST::FUNCTION:RFC3779
@@ -2496,7 +2496,7 @@ d2i_NETSCAPE_CERT_SEQUENCE              2550	3_0_0	EXIST::FUNCTION:
 X509_CRL_set_version                    2551	3_0_0	EXIST::FUNCTION:
 ASN1_PCTX_set_cert_flags                2552	3_0_0	EXIST::FUNCTION:
 PKCS8_PRIV_KEY_INFO_free                2553	3_0_0	EXIST::FUNCTION:
-SHA224_Update                           2554	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
+_OpenSSL_SHA224_Update                  2554	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 EC_GROUP_new_by_curve_name              2555	3_0_0	EXIST::FUNCTION:EC
 X509_STORE_set_purpose                  2556	3_0_0	EXIST::FUNCTION:
 X509_CRL_get0_signature                 2557	3_0_0	EXIST::FUNCTION:
@@ -2726,7 +2726,7 @@ CMS_RecipientInfo_encrypt               2786	3_0_0	EXIST::FUNCTION:CMS
 X509_get_pubkey_parameters              2787	3_0_0	EXIST::FUNCTION:
 PKCS12_setup_mac                        2788	3_0_0	EXIST::FUNCTION:
 PEM_read_bio_PKCS7                      2789	3_0_0	EXIST::FUNCTION:
-SHA512_Final                            2790	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
+_OpenSSL_SHA512_Final                   2790	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 X509_VERIFY_PARAM_set1_host             2791	3_0_0	EXIST::FUNCTION:
 OCSP_resp_find_status                   2792	3_0_0	EXIST::FUNCTION:OCSP
 d2i_ASN1_T61STRING                      2793	3_0_0	EXIST::FUNCTION:
@@ -2900,14 +2900,14 @@ EC_curve_nid2nist                       2964	3_0_0	EXIST::FUNCTION:EC
 ENGINE_get_finish_function              2965	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
 EC_POINT_add                            2966	3_0_0	EXIST::FUNCTION:EC
 EC_KEY_oct2key                          2967	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
-SHA384_Init                             2968	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
+_OpenSSL_SHA384_Init                    2968	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 ASN1_UNIVERSALSTRING_new                2969	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_print_private                  2970	3_0_0	EXIST::FUNCTION:
 ASN1_INTEGER_new                        2971	3_0_0	EXIST::FUNCTION:
 NAME_CONSTRAINTS_it                     2972	3_0_0	EXIST::FUNCTION:
 TS_REQ_get_cert_req                     2973	3_0_0	EXIST::FUNCTION:TS
 BIO_pop                                 2974	3_0_0	EXIST::FUNCTION:
-SHA256_Final                            2975	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
+_OpenSSL_SHA256_Final                   2975	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 EVP_PKEY_set1_DH                        2976	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 DH_get_ex_data                          2977	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 CRYPTO_secure_malloc                    2978	3_0_0	EXIST::FUNCTION:
@@ -2979,7 +2979,7 @@ i2d_X509_PUBKEY                         3045	3_0_0	EXIST::FUNCTION:
 EVP_DecryptUpdate                       3046	3_0_0	EXIST::FUNCTION:
 CAST_cbc_encrypt                        3047	3_0_0	EXIST::FUNCTION:CAST,DEPRECATEDIN_3_0
 BN_BLINDING_invert                      3048	3_0_0	EXIST::FUNCTION:
-SHA512_Update                           3049	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
+_OpenSSL_SHA512_Update                  3049	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 ESS_ISSUER_SERIAL_new                   3050	3_0_0	EXIST::FUNCTION:
 PKCS12_SAFEBAG_get0_pkcs8               3051	3_0_0	EXIST::FUNCTION:
 X509_get_ext_by_NID                     3052	3_0_0	EXIST::FUNCTION:
@@ -3551,7 +3551,7 @@ PKCS5_pbe_set                           3631	3_0_0	EXIST::FUNCTION:
 TS_RESP_CTX_free                        3632	3_0_0	EXIST::FUNCTION:TS
 d2i_PUBKEY                              3633	3_0_0	EXIST::FUNCTION:
 ASYNC_cleanup_thread                    3634	3_0_0	EXIST::FUNCTION:
-SHA384_Update                           3635	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
+_OpenSSL_SHA384_Update                  3635	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 CRYPTO_cfb128_1_encrypt                 3636	3_0_0	EXIST::FUNCTION:
 BIO_set_cipher                          3637	3_0_0	EXIST::FUNCTION:
 PEM_read_PUBKEY                         3638	3_0_0	EXIST::FUNCTION:STDIO
@@ -3813,7 +3813,7 @@ CRL_DIST_POINTS_free                    3899	3_0_0	EXIST::FUNCTION:
 d2i_OCSP_SINGLERESP                     3900	3_0_0	EXIST::FUNCTION:OCSP
 EVP_CIPHER_CTX_get_num                  3901	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_verify_recover_init            3902	3_0_0	EXIST::FUNCTION:
-SHA512_Init                             3903	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
+_OpenSSL_SHA512_Init                    3903	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 TS_MSG_IMPRINT_set_msg                  3904	3_0_0	EXIST::FUNCTION:TS
 CMS_unsigned_add1_attr                  3905	3_0_0	EXIST::FUNCTION:CMS
 OPENSSL_LH_doall                        3906	3_0_0	EXIST::FUNCTION:
