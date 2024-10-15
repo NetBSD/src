@@ -1,4 +1,4 @@
-/*      $NetBSD: if_cemacvar.h,v 1.6 2024/10/05 07:37:22 skrll Exp $	*/
+/*      $NetBSD: if_cemacvar.h,v 1.7 2024/10/15 00:58:15 lloyd Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -51,6 +51,7 @@ struct cemac_softc {
 	uint8_t			sc_enaddr[ETHER_ADDR_LEN];
 	struct ethercom		sc_ethercom;
 	mii_data_t		sc_mii;
+	int			sc_phyno;
 
 	void			*rbqpage;
 	unsigned		rbqlen;

@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_cemac.c,v 1.9 2024/08/25 07:25:00 skrll Exp $	*/
+/*	$NetBSD: zynq_cemac.c,v 1.10 2024/10/15 00:58:15 lloyd Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_cemac.c,v 1.9 2024/08/25 07:25:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_cemac.c,v 1.10 2024/10/15 00:58:15 lloyd Exp $");
 
 #include <sys/param.h>
 
@@ -38,14 +38,37 @@ __KERNEL_RCSID(0, "$NetBSD: zynq_cemac.c,v 1.9 2024/08/25 07:25:00 skrll Exp $")
 
 #include <dev/cadence/if_cemacvar.h>
 
+#include <net/if.h>
+#include <net/if_media.h>
 #include <net/if_ether.h>
 
 #include <dev/fdt/fdtvar.h>
+
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "cdns,zynq-gem" },
 	DEVICE_COMPAT_EOL
 };
+
+static int
+cemac_get_phyid(const int phandle)
+{
+	bus_addr_t addr;
+	int phy_phandle;
+
+	phy_phandle = fdtbus_get_phandle(phandle, "phy");
+	if (phy_phandle == -1)
+		phy_phandle = fdtbus_get_phandle(phandle, "phy-handle");
+	if (phy_phandle == -1)
+		return MII_PHY_ANY;
+
+	if (fdtbus_get_reg(phy_phandle, 0, &addr, NULL) != 0)
+		return MII_PHY_ANY;
+
+	return (int)addr;
+}
 
 static int
 cemac_match(device_t parent, cfdata_t cfdata, void *aux)
@@ -100,6 +123,7 @@ cemac_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_iot = faa->faa_bst;
 	sc->sc_dmat = faa->faa_dmat;
+	sc->sc_phyno = cemac_get_phyid(phandle);
 	sc->cemac_flags = CEMAC_FLAG_GEM;
 
 	cemac_attach_common(sc);
