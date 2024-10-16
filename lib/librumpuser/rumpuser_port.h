@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.53 2023/07/14 23:28:01 lukem Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.54 2024/10/16 09:09:07 ozaki-r Exp $	*/
 
 #ifndef _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
 #define _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
@@ -28,7 +28,9 @@
 #define HAVE_MEMORY_H 1
 #define HAVE_PATHS_H 1
 #define HAVE_POSIX_MEMALIGN 1
+#define HAVE_PREADV 1
 #define HAVE_PTHREAD_SETNAME3 1
+#define HAVE_PWRITEV 1
 #define HAVE_SETPROGNAME 1
 #define HAVE_STDINT_H 1
 #define HAVE_STDLIB_H 1
