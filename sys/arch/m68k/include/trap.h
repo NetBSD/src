@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.11 2011/02/08 20:20:16 rmind Exp $	*/
+/*	$NetBSD: trap.h,v 1.12 2024/10/16 06:54:55 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,13 +53,13 @@
 #define	T_MMUFLT	8
 #define	T_SSIR		9
 #define	T_FMTERR	10
-#define T_FPERR		11
-#define T_COPERR	12
-#define T_ASTFLT	13
-#define T_TRAP15	15
+#define	T_FPERR		11
+#define	T_COPERR	12
+#define	T_ASTFLT	13
+#define	T_TRAP15	15
 #define	T_BREAKPOINT	T_TRAP15
-#define T_FPEMULI	16
-#define T_FPEMULD	17
+#define	T_FPEMULI	16
+#define	T_FPEMULD	17
 
 #define	T_USER		0x80		/* user-mode flag or'ed with type */
 
