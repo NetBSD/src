@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.360 2024/09/26 20:08:44 wiz Exp $
+$NetBSD: UPDATING,v 1.361 2024/10/16 09:26:39 martin Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20241015:
+	OpenSSL symbol changes require a full rebuild of all libs
+	and all binaries linked against libcrypto. Recommended
+	workaround is a clean build or removing the $OBJ directory
+	completely.
 
 20240926:
 	Building -current when running on amd64 from about 20240924
