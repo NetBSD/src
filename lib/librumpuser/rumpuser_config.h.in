@@ -57,11 +57,17 @@
 /* Define to 1 if you have the `posix_memalign' function. */
 #undef HAVE_POSIX_MEMALIGN
 
+/* Define to 1 if you have the `preadv' function. */
+#undef HAVE_PREADV
+
 /* Define to 1 if you have 2-arg pthread_setname_np() */
 #undef HAVE_PTHREAD_SETNAME2
 
 /* Define to 1 if you have 3-arg pthread_setname_np() */
 #undef HAVE_PTHREAD_SETNAME3
+
+/* Define to 1 if you have the `pwritev' function. */
+#undef HAVE_PWRITEV
 
 /* Define to 1 if the system has the type `register_t'. */
 #undef HAVE_REGISTER_T
