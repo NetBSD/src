@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_file.c,v 1.4 2014/11/04 21:08:12 pooka Exp $	*/
+/*	$NetBSD: rumpuser_file.c,v 1.5 2024/10/16 09:09:39 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_file.c,v 1.4 2014/11/04 21:08:12 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_file.c,v 1.5 2024/10/16 09:09:39 ozaki-r Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -250,6 +250,9 @@ rumpuser_iovread(int fd, struct rumpuser_iovec *ruiov, size_t iovlen,
 	if (off == RUMPUSER_IOV_NOSEEK) {
 		KLOCK_WRAP(nn = readv(fd, iov, iovlen));
 	} else {
+#ifdef HAVE_PREADV
+		KLOCK_WRAP(nn = preadv(fd, iov, iovlen, off));
+#else
 		int nlocks;
 
 		rumpkern_unsched(&nlocks, NULL);
@@ -259,6 +262,7 @@ rumpuser_iovread(int fd, struct rumpuser_iovec *ruiov, size_t iovlen,
 			nn = -1;
 		}
 		rumpkern_sched(nlocks, NULL);
+#endif
 	}
 
 	if (nn == -1) {
@@ -283,6 +287,9 @@ rumpuser_iovwrite(int fd, const struct rumpuser_iovec *ruiov, size_t iovlen,
 	if (off == RUMPUSER_IOV_NOSEEK) {
 		KLOCK_WRAP(nn = writev(fd, iov, iovlen));
 	} else {
+#ifdef HAVE_PWRITEV
+		KLOCK_WRAP(nn = pwritev(fd, iov, iovlen, off));
+#else
 		int nlocks;
 
 		rumpkern_unsched(&nlocks, NULL);
@@ -292,6 +299,7 @@ rumpuser_iovwrite(int fd, const struct rumpuser_iovec *ruiov, size_t iovlen,
 			nn = -1;
 		}
 		rumpkern_sched(nlocks, NULL);
+#endif
 	}
 
 	if (nn == -1) {
