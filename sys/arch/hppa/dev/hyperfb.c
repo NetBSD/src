@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.17 2024/10/01 07:44:22 macallan Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.18 2024/10/16 09:56:34 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.17 2024/10/01 07:44:22 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.18 2024/10/16 09:56:34 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -705,7 +705,7 @@ hyperfb_mmap(void *v, void *vs, off_t offset, int prot)
 		pa = bus_space_mmap(sc->sc_iot, sc->sc_base + HCRX_FBOFFSET,
 		    offset, prot,
 		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
-	} else if (offset >= 0x80000000 && offset < 0x8040000) {
+	} else if (offset >= 0x80000000 && offset < 0x80400000) {
 		/* blitter registers etc. */
 		pa = bus_space_mmap(sc->sc_iot, sc->sc_base + HCRX_REGOFFSET,
 		    offset - 0x80000000, prot, BUS_SPACE_MAP_LINEAR);
