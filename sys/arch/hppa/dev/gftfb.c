@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.22 2024/10/01 07:02:14 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.23 2024/10/16 09:56:34 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -903,7 +903,7 @@ gftfb_mmap(void *v, void *vs, off_t offset, int prot)
 		/* framebuffer */
 		pa = bus_space_mmap(rom->memt, sc->sc_scr.fbaddr, offset,
 		    prot, BUS_SPACE_MAP_LINEAR);
-	} else if (offset >= 0x80000000 && offset < 0x8040000) {
+	} else if (offset >= 0x80000000 && offset < 0x80400000) {
 		/* blitter registers etc. */
 		pa = bus_space_mmap(rom->memt, rom->regh[2],
 		    offset - 0x80000000, prot, BUS_SPACE_MAP_LINEAR);
