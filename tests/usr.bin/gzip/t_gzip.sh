@@ -1,4 +1,4 @@
-# $NetBSD: t_gzip.sh,v 1.1.44.1 2024/10/14 18:11:36 martin Exp $
+# $NetBSD: t_gzip.sh,v 1.1.44.2 2024/10/16 14:53:46 martin Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -104,11 +104,12 @@ atf_test_case lzip
 lzip_head()
 {
 	atf_set "descr" "Checks lzip compression levels (PR/58223)"
+	atf_set "require.progs" "lzip"
 }
 lzip_body()
 {
-	n=games.tar
-	tar -C /usr/games -cf games.tar .
+	n=net_tests.tar
+	tar -C /usr/tests/net -cf $n .
 	for i in $(jot 10 0 9); do
 		f=$n.$i.lz
 		lzip -$ic < $n > $f
