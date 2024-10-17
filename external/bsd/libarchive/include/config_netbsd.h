@@ -170,16 +170,16 @@
 /* #undef ARCHIVE_XATTR_LINUX */
 
 /* Version number of bsdcat */
-#define BSDCAT_VERSION_STRING "3.7.4"
+#define BSDCAT_VERSION_STRING "3.7.7"
 
 /* Version number of bsdcpio */
-#define BSDCPIO_VERSION_STRING "3.7.4"
+#define BSDCPIO_VERSION_STRING "3.7.7"
 
 /* Version number of bsdtar */
-#define BSDTAR_VERSION_STRING "3.7.4"
+#define BSDTAR_VERSION_STRING "3.7.7"
 
 /* Version number of bsdunzip */
-#define BSDUNZIP_VERSION_STRING "3.7.4"
+#define BSDUNZIP_VERSION_STRING "3.7.7"
 
 /* Define to 1 if the system has the type `ace_t'. */
 /* #undef HAVE_ACE_T */
@@ -698,9 +698,6 @@
 /* Define to 1 if you have the <libxml/xmlwriter.h> header file. */
 /* #undef HAVE_LIBXML_XMLWRITER_H */
 
-/* Define to 1 if you have the `z' library (-lz). */
-#define HAVE_LIBZ 1
-
 /* Define to 1 if you have the `zstd' library (-lzstd). */
 /* #undef HAVE_LIBZSTD */
 
@@ -1122,9 +1119,6 @@
 /* Define to 1 if you have the <sys/poll.h> header file. */
 #define HAVE_SYS_POLL_H 1
 
-/* Define to 1 if you have the <sys/queue.h> header file. */
-#define HAVE_SYS_QUEUE_H 1
-
 /* Define to 1 if you have the <sys/richacl.h> header file. */
 /* #undef HAVE_SYS_RICHACL_H */
 
@@ -1257,7 +1251,7 @@
 /* Define to 1 if you have a working FS_IOC_GETFLAGS */
 /* #undef HAVE_WORKING_FS_IOC_GETFLAGS */
 
-/* Define to 1 if you have the <zlib.h> header file. */
+/* Define to 1 if you have zlib >= 1.2.1 */
 #define HAVE_ZLIB_H 1
 
 /* Define to 1 if you have the <zstd.h> header file. */
@@ -1280,10 +1274,10 @@
 #define ICONV_CONST 
 
 /* Version number of libarchive as a single integer */
-#define LIBARCHIVE_VERSION_NUMBER "3007004"
+#define LIBARCHIVE_VERSION_NUMBER "3007007"
 
 /* Version number of libarchive */
-#define LIBARCHIVE_VERSION_STRING "3.7.4"
+#define LIBARCHIVE_VERSION_STRING "3.7.7"
 
 /* Define to 1 if `lstat' dereferences a symlink specified with a trailing
    slash. */
@@ -1313,7 +1307,7 @@
 #define PACKAGE_NAME "libarchive"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libarchive 3.7.4"
+#define PACKAGE_STRING "libarchive 3.7.7"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libarchive"
@@ -1322,7 +1316,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "3.7.4"
+#define PACKAGE_VERSION "3.7.7"
 
 /* Define to 1 if PCRE2_STATIC needs to be defined. */
 /* #undef PCRE2_STATIC */
@@ -1440,7 +1434,7 @@
 
 
 /* Version number of package */
-#define VERSION "3.7.4"
+#define VERSION "3.7.7"
 
 /* Define to '0x0502' for Windows Server 2003 APIs. */
 /* #undef WINVER */
