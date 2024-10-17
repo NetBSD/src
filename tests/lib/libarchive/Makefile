@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2024/06/13 21:03:33 martin Exp $
+# $NetBSD: Makefile,v 1.13 2024/10/17 16:51:20 christos Exp $
 
 NOMAN=
 
@@ -395,15 +395,16 @@ test_read_format_7zip_copy.7z.uu  \
 test_read_format_7zip_copy_2.7z.uu  \
 test_read_format_7zip_deflate.7z.uu  \
 test_read_format_7zip_deflate_arm64.7z.uu  \
-test_read_format_7zip_delta_lzma1.7z.uu  \
-test_read_format_7zip_delta_lzma2.7z.uu  \
 test_read_format_7zip_delta4_lzma1.7z.uu  \
 test_read_format_7zip_delta4_lzma2.7z.uu  \
+test_read_format_7zip_delta_lzma1.7z.uu  \
+test_read_format_7zip_delta_lzma2.7z.uu  \
 test_read_format_7zip_empty_archive.7z.uu  \
 test_read_format_7zip_empty_file.7z.uu  \
 test_read_format_7zip_encryption.7z.uu  \
 test_read_format_7zip_encryption_header.7z.uu  \
 test_read_format_7zip_encryption_partially.7z.uu  \
+test_read_format_7zip_extract_second.7z.uu \
 test_read_format_7zip_lzma1.7z.uu  \
 test_read_format_7zip_lzma1_2.7z.uu  \
 test_read_format_7zip_lzma1_lzma2.7z.uu  \
@@ -440,6 +441,7 @@ test_read_format_gtar_sparse_1_17_posix10_modified.tar.uu  \
 test_read_format_gtar_sparse_skip_entry.tar.Z.uu  \
 test_read_format_iso.iso.Z.uu  \
 test_read_format_iso_2.iso.Z.uu  \
+test_read_format_iso_3.iso.Z.uu \
 test_read_format_iso_joliet.iso.Z.uu  \
 test_read_format_iso_joliet_by_nero.iso.Z.uu  \
 test_read_format_iso_joliet_long.iso.Z.uu  \
@@ -474,6 +476,7 @@ test_read_format_rar5_bad_window_sz_in_mltarc_file.rar.uu \
 test_read_format_rar5_blake2.rar.uu  \
 test_read_format_rar5_block_size_is_too_small.rar.uu \
 test_read_format_rar5_compressed.rar.uu  \
+test_read_format_rar5_data_ready_pointer_leak.rar.uu \
 test_read_format_rar5_decode_number_out_of_bounds_read.rar.uu \
 test_read_format_rar5_different_solid_window_size.rar.uu \
 test_read_format_rar5_different_window_size.rar.uu \
@@ -543,6 +546,7 @@ test_read_format_ustar_filename_cp866.tar.Z.uu  \
 test_read_format_ustar_filename_eucjp.tar.Z.uu  \
 test_read_format_ustar_filename_koi8r.tar.Z.uu  \
 test_read_format_warc.warc.uu  \
+test_read_format_xar_duplicate_filename_node.xar.uu \
 test_read_format_zip.zip.uu  \
 test_read_format_zip_7075_utf8_paths.zip.uu  \
 test_read_format_zip_7z_deflate.zip.uu \
