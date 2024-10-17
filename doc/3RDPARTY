@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2052 2024/10/17 16:57:57 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2053 2024/10/17 18:39:01 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -578,12 +578,12 @@ Package:	ipf
 Version:	5.1.1
 Current Vers:	5.1.2
 Maintainer:	Darren Reed
-Archive Site:
-Home Page:
-Date:		2019-01-09
+Archive Site:	rsync -a a.cvs.sourceforge.net::cvsroot/ipfilter/
+Home Page:	https://www.phildev.net/ipf/
+Date:		2024-10-17
 Mailing List:	ipfilter@postbox.anu.edu.au
 Responsible:	darrenr, christos
-License:	BSD-based; see src/external/ipf/dist/IPFILTER.LICENCE
+License:	BSD-based; see src/external/bsd/ipf/dist/IPFILTER.LICENCE
 Location:	external/bsd/ipf,sys/external/bsd/ipf
 Notes:
 ipf2netbsd should be used on a virgin ipfilter source tree.
