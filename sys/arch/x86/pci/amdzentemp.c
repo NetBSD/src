@@ -1,4 +1,4 @@
-/*      $NetBSD: amdzentemp.c,v 1.21 2024/10/04 03:04:40 msaitoh Exp $ */
+/*      $NetBSD: amdzentemp.c,v 1.22 2024/10/17 14:16:48 msaitoh Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.21 2024/10/04 03:04:40 msaitoh Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.22 2024/10/17 14:16:48 msaitoh Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -417,6 +417,7 @@ amdzentemp_probe_ccd_sensors19h(struct amdzentemp_softc *sc, int model)
 		maxreg = 8;
 		break;
 	case 0x10 ... 0x1f: /* Zen4 "Genoa" */
+	case 0xa0 ... 0xaf: /* Zen4 "Siena" */
 		sc->sc_ccd_offset = 0x300;
 		maxreg = 12;
 		break;
@@ -435,7 +436,19 @@ amdzentemp_probe_ccd_sensors1ah(struct amdzentemp_softc *sc, int model)
 	int maxreg;
 
 	switch (model) {
-	case 0x40 ... 0x4f: /* Zen5 */
+	case 0x00 ... 0x0f: /* Zen5 "Turin Classic" */
+		sc->sc_ccd_offset = 0x300;
+		maxreg = 16;
+		break;
+	case 0x10 ... 0x1f: /* Zen5 "Turin Dense" */
+		sc->sc_ccd_offset = 0x300;
+		maxreg = 12;
+		break;
+	case 0x20 ... 0x2f: /* Zen5 "Strix Point" */
+		sc->sc_ccd_offset = 0x300;
+		maxreg = 8;
+		break;
+	case 0x40 ... 0x4f: /* Zen5 "Granite Ridge "*/
 		sc->sc_ccd_offset = 0x300;
 		maxreg = 8;
 		break;
