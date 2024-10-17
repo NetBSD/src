@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1342 2024/10/12 22:19:36 riastradh Exp $
+# $NetBSD: mi,v 1.1343 2024/10/17 16:56:58 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2693,6 +2693,7 @@
 ./usr/tests/lib/libarchive/test_read_format_7zip_encryption.7z.uu				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_7zip_encryption_header.7z.uu			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_7zip_encryption_partially.7z.uu			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libarchive/test_read_format_7zip_extract_second.7z.uu				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_7zip_lzma1.7z.uu					tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_7zip_lzma1_2.7z.uu					tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_7zip_lzma1_lzma2.7z.uu				tests-lib-tests		compattestfile,atf
@@ -2729,6 +2730,7 @@
 ./usr/tests/lib/libarchive/test_read_format_gtar_sparse_skip_entry.tar.Z.uu			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_iso.iso.Z.uu					tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_iso_2.iso.Z.uu					tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libarchive/test_read_format_iso_3.iso.Z.uu					tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_iso_joliet.iso.Z.uu					tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_iso_joliet_by_nero.iso.Z.uu				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_iso_joliet_long.iso.Z.uu				tests-lib-tests		compattestfile,atf
@@ -2763,6 +2765,7 @@
 ./usr/tests/lib/libarchive/test_read_format_rar5_blake2.rar.uu					tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_rar5_block_size_is_too_small.rar.uu			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_rar5_compressed.rar.uu				tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libarchive/test_read_format_rar5_data_ready_pointer_leak.rar.uu			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_rar5_decode_number_out_of_bounds_read.rar.uu	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_rar5_different_solid_window_size.rar.uu		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_rar5_different_window_size.rar.uu			tests-lib-tests		compattestfile,atf
@@ -2832,6 +2835,7 @@
 ./usr/tests/lib/libarchive/test_read_format_ustar_filename_eucjp.tar.Z.uu			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_ustar_filename_koi8r.tar.Z.uu			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_warc.warc.uu					tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libarchive/test_read_format_xar_duplicate_filename_node.xar.uu			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_zip.zip.uu						tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_zip_7075_utf8_paths.zip.uu				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_zip_7z_deflate.zip.uu				tests-lib-tests		compattestfile,atf
