@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.89 2019/06/02 14:48:55 jdolecek Exp $	*/
+/*	$NetBSD: viaide.c,v 1.90 2024/10/17 17:15:33 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.89 2019/06/02 14:48:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.90 2024/10/17 17:15:33 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -552,11 +552,11 @@ via_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 				sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 				break;
 			case PCI_PRODUCT_VIATECH_VX800:
-				aprint_normal("VT800 ATA133 controller\n");
+				aprint_normal("VX800 ATA133 controller\n");
 				sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 				break;
 			case PCI_PRODUCT_VIATECH_VX855:
-				aprint_normal("VT855 ATA133 controller\n");
+				aprint_normal("VX855 ATA133 controller\n");
 				sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 				break;
 			default:
