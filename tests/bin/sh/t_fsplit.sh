@@ -1,4 +1,4 @@
-# $NetBSD: t_fsplit.sh,v 1.7 2017/06/24 11:06:17 kre Exp $
+# $NetBSD: t_fsplit.sh,v 1.8 2024/10/18 06:32:08 kre Exp $
 #
 # Copyright (c) 2007-2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -51,7 +51,7 @@ check()
 	(*)	atf_fail "Internal test error, $# args to check test ${TEST}";;
 	esac
 
-	result=$( ${TEST_SH} -c "unset x; $1" )
+	result=$( ${TEST_SH} -c "unset x a b d c e f g h; $1" )
 	STATUS="$?"
 
 	# Remove newlines
@@ -439,6 +439,98 @@ split_arith_body() {
 	check 'IFS="159 "; echo 11$(( 11234567899 ))95'	'11  234 678  95'
 }
 
+atf_test_case read_split
+read_split_head() {
+	atf_set "descr" "Checks that field splitting works for the read" \
+	                "built-in utility"
+}
+#
+# CAUTION: There are literal <tab> chars in the following test.
+# It is important that they be retained as is (the ones in the data
+# and results - those used for test formatting are immaterial).
+#
+read_split_body() {
+	DATA="  aaa bbb:ccc ddd+eee	fff:ggg+hhh	  "   # CAUTION: tabs!
+
+	TEST=0
+
+	check "unset IFS; printf '%s\n' '${DATA}' | {
+	  read a b c d e f g h || printf 'FAIL:%d' \"\$?\" &&
+	  printf '<%s>' "'"$a" "$b" "$c" "$d" "$e" "$f" "$g" "$h"; }' \
+	  '<aaa><bbb:ccc><ddd+eee><fff:ggg+hhh><><><><>'
+
+	check "unset IFS; printf '%s\n' '${DATA}' | {
+	  read x || printf 'FAIL:%d' \"\$?\" &&
+	  printf '<%s>' "'"$x"; }' \
+	  '<aaa bbb:ccc ddd+eee	fff:ggg+hhh>'
+
+	check "IFS=; printf '%s\n' '${DATA}' | {
+	  read a b c d e f g h || printf 'FAIL:%d' \"\$?\" &&
+	  printf '<%s>' "'"$a" "$b" "$c" "$d" "$e" "$f" "$g" "$h"; }' \
+	  "<${DATA}><><><><><><><>"
+
+	check "IFS=' 	'; printf '%s\n' '${DATA}' | {
+	  read a b c d e f g h || printf 'FAIL:%d' \"\$?\" &&
+	  printf '<%s>' "'"$a" "$b" "$c" "$d" "$e" "$f" "$g" "$h"; }' \
+	  '<aaa><bbb:ccc><ddd+eee><fff:ggg+hhh><><><><>'
+
+	check "IFS=':'; printf '%s\n' '${DATA}' | {
+	  read a b c d e f g h || printf 'FAIL:%d' \"\$?\" &&
+	  printf '<%s>' "'"$a" "$b" "$c" "$d" "$e" "$f" "$g" "$h"; }' \
+	  '<  aaa bbb><ccc ddd+eee	fff><ggg+hhh	  ><><><><><>'
+
+	check "IFS=': '; printf '%s\n' '${DATA}' | {
+	  read a b c d e f g h || printf 'FAIL:%d' \"\$?\" &&
+	  printf '<%s>' "'"$a" "$b" "$c" "$d" "$e" "$f" "$g" "$h"; }' \
+	  '<aaa><bbb><ccc><ddd+eee	fff><ggg+hhh	><><><>'
+
+	check "IFS=':	'; printf '%s\n' '${DATA}' | {
+	  read a b c d e f g h || printf 'FAIL:%d' \"\$?\" &&
+	  printf '<%s>' "'"$a" "$b" "$c" "$d" "$e" "$f" "$g" "$h"; }' \
+	  '<  aaa bbb><ccc ddd+eee><fff><ggg+hhh><  ><><><>'
+
+	check "IFS='+'; printf '%s\n' '${DATA}' | {
+	  read a b c d e f g h || printf 'FAIL:%d' \"\$?\" &&
+	  printf '<%s>' "'"$a" "$b" "$c" "$d" "$e" "$f" "$g" "$h"; }' \
+	  '<  aaa bbb:ccc ddd><eee	fff:ggg><hhh	  ><><><><><>'
+
+	check "IFS=' +'; printf '%s\n' '${DATA}' | {
+	  read a b c d e f g h || printf 'FAIL:%d' \"\$?\" &&
+	  printf '<%s>' "'"$a" "$b" "$c" "$d" "$e" "$f" "$g" "$h"; }' \
+	  '<aaa><bbb:ccc><ddd><eee	fff:ggg><hhh	><><><>'
+
+	check "IFS='+	'; printf '%s\n' '${DATA}' | {
+	  read a b c d e f g h || printf 'FAIL:%d' \"\$?\" &&
+	  printf '<%s>' "'"$a" "$b" "$c" "$d" "$e" "$f" "$g" "$h"; }' \
+	  '<  aaa bbb:ccc ddd><eee><fff:ggg><hhh><  ><><><>'
+
+	# This tests the bug from PR bin/57849 (which existed about 2 days)
+	# It also tests that a var-assign before read does not corrupt the
+	# value of the var in the executing shell environment
+	check "IFS='+'; printf '%s\n' '${DATA}' | {
+	  IFS=: read a b c d e f g h || printf 'FAIL:%d' \"\$?\" &&
+	  printf '<%s>' "'"$IFS" "$a" "$b" "$c" "$d" "$e" "$f" "$g" "$h"; }' \
+	  '<+><  aaa bbb><ccc ddd+eee	fff><ggg+hhh	  ><><><><><>'
+
+	check "IFS='+'; printf '%s\n' '${DATA}' | {
+	  IFS= read a b c d e f g h || printf 'FAIL:%d' \"\$?\" &&
+	  printf '<%s>' "'"$IFS" "$a" "$b" "$c" "$d" "$e" "$f" "$g" "$h"; }' \
+	  "<+><${DATA}><><><><><><><>"
+
+	# This doesn't really belong here, just tests that EOF works...
+	# (and that read sets unused vars to '', doesn't leave them unset)
+	check "unset IFS; set -u;
+	  read a b c d e f g h </dev/null || printf 'FAIL:%d' \"\$?\" &&
+	  printf '<%s>' "'"$a" "$b" "$c" "$d" "$e" "$f" "$g" "$h"'	\
+	  "FAIL:1<><><><><><><><>"
+
+	# And a similar one where EOF follows some data (which is read)
+	check "unset IFS; set -u; printf 'a b c' | {
+	  read a b c d e f g h || printf 'FAIL:%d' \"\$?\" &&
+	  printf '<%s>' "'"$a" "$b" "$c" "$d" "$e" "$f" "$g" "$h"; }'	\
+	  "FAIL:1<a><b><c><><><><><>"
+}
+
 atf_init_test_cases() {
 	atf_add_test_case for
 	atf_add_test_case default_val
@@ -449,4 +541,5 @@ atf_init_test_cases() {
 	atf_add_test_case ifs
 	atf_add_test_case var_length
 	atf_add_test_case split_arith
+	atf_add_test_case read_split
 }
