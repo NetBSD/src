@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.208 2024/10/12 22:19:37 riastradh Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.209 2024/10/18 23:23:40 christos Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -503,6 +503,7 @@
 ./usr/tests/usr.sbin/cpuctl
 ./usr/tests/usr.sbin/execsnoop
 ./usr/tests/usr.sbin/inetd
+./usr/tests/usr.sbin/makefs
 ./usr/tests/usr.sbin/mtree
 ./usr/tests/usr.sbin/opensnoop
 ./usr/tests/usr.sbin/stdethers
