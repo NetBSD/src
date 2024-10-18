@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.40 2024/05/08 15:57:56 christos Exp $	*/
+/*	$NetBSD: walk.c,v 1.41 2024/10/18 23:28:03 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.40 2024/05/08 15:57:56 christos Exp $");
+__RCSID("$NetBSD: walk.c,v 1.41 2024/10/18 23:28:03 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -117,6 +117,72 @@ fsnode_sort(fsnode *first, const char *root, const char *dir)
 			    __func__, root, dir, tmp->name);
 
 	return first;
+}
+
+/*
+ * join current entry with the list. Return the current entry to replace
+ * in cur, and 1 if it is a directory and we need to add or 0 if we need
+ * to replace it.
+ */
+static int
+fsnode_join(fsnode **curp, fsnode *join, fsnode *last, const char *path,
+    const char *name, const struct stat *st, int replace)
+{
+	fsnode *cur;
+
+	/* Look for the entry to replace by name */
+	cur = join->next;
+	for (;;) {
+		if (cur == NULL || strcmp(cur->name, name) == 0)
+			break;
+		if (cur == last) {
+			cur = NULL;
+			break;
+		}
+		cur = cur->next;
+	}
+	if (cur == NULL) {
+		/* Not found */
+		*curp = NULL;
+		return 0;
+	}
+	if (S_ISDIR(cur->type) && S_ISDIR(st->st_mode)) {
+		/*
+                 * both the entry to join and this entry are directories
+		 * need to merge the two directories
+		 */
+		if (debug & DEBUG_WALK_DIR_NODE)
+			printf("%s: merging %s with %p\n",
+			    __func__, path, cur->child);
+		*curp = cur;
+		return 1;
+	}
+	if (!replace) {
+		/*
+		 * if they are not both directories and replace is not
+		 * specified, bail out
+		 */
+		errx(EXIT_FAILURE, "Can't merge %s `%s' with existing %s",
+		    inode_type(st->st_mode), path, inode_type(cur->type));
+	}
+
+	if (debug & DEBUG_WALK_DIR_NODE)
+		printf("%s: replacing %s %s\n",
+		    __func__, inode_type(st->st_mode), path);
+
+	/* merge the join list */
+	if (cur == join->next)
+		join->next = cur->next;
+	else {
+		fsnode *p;
+		for (p = join->next;
+		    p->next != cur; p = p->next)
+			continue;
+		p->next = cur->next;
+	}
+	/* return the entry to be replaced */
+	*curp = cur;
+	return 0;
 }
 
 /*
@@ -201,55 +267,28 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join,
 #ifdef S_ISSOCK
 		if (S_ISSOCK(stbuf.st_mode & S_IFMT)) {
 			if (debug & DEBUG_WALK_DIR_NODE)
-				printf("%s: skipping socket %s\n", __func__, path);
+				printf("%s: skipping socket %s\n", __func__,
+				     path);
 			continue;
 		}
 #endif
 
 		if (join != NULL) {
-			cur = join->next;
-			for (;;) {
-				if (cur == NULL || strcmp(cur->name, name) == 0)
-					break;
-				if (cur == last) {
-					cur = NULL;
-					break;
+			if (fsnode_join(&cur, join, last, path, name, &stbuf,
+			    replace)) {
+				cur->child = walk_dir(root, rp, cur,
+				    cur->child, replace, follow);
+				continue;
+			} else if (cur) {
+				if (prev == cur) {
+					fsnode *p = join;
+					while (p->next != NULL)
+					     p = p->next;
+					prev = p;
 				}
-				cur = cur->next;
-			}
-			if (cur != NULL) {
-				if (S_ISDIR(cur->type) &&
-				    S_ISDIR(stbuf.st_mode)) {
-					if (debug & DEBUG_WALK_DIR_NODE)
-						printf("%s: merging %s with %p\n",
-						    __func__, path, cur->child);
-					cur->child = walk_dir(root, rp, cur,
-					    cur->child, replace, follow);
-					continue;
-				}
-				if (!replace)
-					errx(EXIT_FAILURE,
-					    "Can't merge %s `%s' with "
-					    "existing %s",
-					    inode_type(stbuf.st_mode), path,
-					    inode_type(cur->type));
-				else {
-					if (debug & DEBUG_WALK_DIR_NODE)
-						printf("%s: replacing %s %s\n",
-						    __func__,
-						    inode_type(stbuf.st_mode),
-						    path);
-					if (cur == join->next)
-						join->next = cur->next;
-					else {
-						fsnode *p;
-						for (p = join->next;
-						    p->next != cur; p = p->next)
-							continue;
-						p->next = cur->next;
-					}
-					free(cur);
-				}
+				free(cur->name);
+				free(cur->path);
+				free(cur);
 			}
 		}
 
