@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3105 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3106 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -547,3 +547,5 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	pkill(1): Add -F option to use a pidfile and -L to ensure it's
 		locked.  Taken from FreeBSD.  [roy 20241007]
 	libarchive: Import libarchive-3.7.7. [christos 20241017]
+	sdmmc(4): Add support for caches found in Application Class 2 (A2)
+		capable SD memory cards. [jmcneill 20241018]
