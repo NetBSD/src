@@ -1,4 +1,4 @@
-# $NetBSD: t_fsplit.sh,v 1.8 2024/10/18 06:32:08 kre Exp $
+# $NetBSD: t_fsplit.sh,v 1.9 2024/10/18 09:05:23 kre Exp $
 #
 # Copyright (c) 2007-2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -44,11 +44,16 @@ nl='
 
 check()
 {
+	if [ "${TEST}" -eq 0 ]
+	then
+		FAILURES=
+	fi
+
 	TEST=$((${TEST} + 1))
 
 	case "$#" in
 	(2)	;;
-	(*)	atf_fail "Internal test error, $# args to check test ${TEST}";;
+	(*)	atf_fail "Internal test error, $# args to check, test ${TEST}";;
 	esac
 
 	result=$( ${TEST_SH} -c "unset x a b d c e f g h; $1" )
@@ -60,46 +65,78 @@ check()
 	result="$(echo $result)"
 	IFS="$oifs"
 
-	# trim the test text in case we use it in a message below
-	case "$1" in
-	????????????????*)
-		set -- "$(expr "$1" : '\(............\).*')..." "$2" ;;
-	esac
+	#  # trim the test text in case we use it in a message below
+	#  case "$1" in
+	#  ????????????????*)
+	#	  set -- "$(expr "$1" : '\(............\).*')..." "$2" ;;
+	#  esac
 
-	if [ "$2" != "$result" ]
+	if [ "$2" != "${result}" ]
 	then
-		if [ "${STATUS}" = "0" ]
+		FAILURES="${FAILURES}${FAILURES:+ }${TEST}"
+		printf >&2 'Sub-test %d failed:\n      %s\n' \
+			"${TEST}" "$1"
+		printf >&2 ' Expected: [%s]\n' "$2"
+		printf >&2 ' Received: [%s]\n' "${result}"
+
+		if [ "${STATUS}" != 0 ]
 		then
-		  atf_fail "Test ${TEST} '$1': expected [$2], found [$result]"
-		else
-		  atf_fail \
-	  "TEST ${TEST} '$1' failed ($STATUS): expected [$2], found [$result]"
+			printf >&2 ' Sub-test exit status: %d\n' "${STATUS}"
 		fi
 	elif [ "${STATUS}" != 0 ]
 	then
-		  atf_fail "TEST ${TEST} '$1' failed ($STATUS)"
+		FAILURES="${FAILURES}${FAILURES:+ }${TEST}"
+		printf >&2 'Sub-test %d failed:\n\t%s\n' \
+			"${TEST}" "$1"
+		printf >&2 ' Sub-test exit status: %d (with correct output)\n' \
+			"${STATUS}"
 	fi
 
 	return 0
 }
 
+check_results()
+{
+	NAME=$1
+
+	set -- ${FAILURES}
+
+	if [ $# -eq 0 ]
+	then
+		return 0
+	fi
+
+	unset IFS
+	printf >&2 'Subtest %s: %d sub-tests (of %d) [%s] failed.\n' \
+		"${NAME}" "$#" "${TEST}" "$*"
+
+	atf_fail "$# of ${TEST} sub-tests (${FAILURES}), see stderr"
+	return 0
+}
+
 atf_test_case for
-for_head() {
+for_head()
+{
 	atf_set "descr" "Checks field splitting in for loops"
 }
-for_body() {
+for_body()
+{
 	unset x
 
 	TEST=0
 	# Since I managed to break this, leave the test in
 	check 'for f in $x; do echo x${f}y; done' ''
+
+	check_results for
 }
 
 atf_test_case default_val
-default_val_head() {
+default_val_head()
+{
 	atf_set "descr" "Checks field splitting in variable default values"
 }
-default_val_body() {
+default_val_body()
+{
 	TEST=0
 	# Check that IFS is applied to text from ${x-...} unless it is inside
 	# any set of "..."
@@ -157,13 +194,17 @@ default_val_body() {
 		'za b cz zdz'
 	check 'for i in ${x-a ${x-"b c"} d};   do echo "z${i}z"; done' \
 		'zaz zb cz zdz'
+
+	check_results default_val
 }
 
 atf_test_case replacement_val
-replacement_val_head() {
+replacement_val_head()
+{
 	atf_set "descr" "Checks field splitting in variable replacement values"
 }
-replacement_val_body() {
+replacement_val_body()
+{
 	TEST=0
 
 	# Check that IFS is applied to text from ${x+...} unless it is inside
@@ -229,14 +270,18 @@ replacement_val_body() {
 		'zaz zb cz zdz'
 	check 'x=BOGUS; for i in ${x+a ${x+b c} d};     do echo "z${i}z"; done'\
 		'zaz zbz zcz zdz'
+
+	check_results replacement_val
 }
 
 atf_test_case ifs_alpha
-ifs_alpha_head() {
+ifs_alpha_head()
+{
 	atf_set "descr" "Checks that field splitting works with alphabetic" \
 	                "characters"
 }
-ifs_alpha_body() {
+ifs_alpha_body()
+{
 	unset x
 
 	TEST=0
@@ -257,14 +302,18 @@ ifs_alpha_body() {
 
 	check 'IFS=q; for i in ${x-aq${x-"bqc"}qd};  do echo "z${i}z"; done' \
 		'zaz zbqcz zdz'
+
+	check_results ifs_alpha
 }
 
 atf_test_case quote
-quote_head() {
+quote_head()
+{
 	atf_set "descr" "Checks that field splitting works with multi-word" \
 	                "fields"
 }
-quote_body() {
+quote_body()
+{
 	unset x
 
 	TEST=0
@@ -277,14 +326,18 @@ quote_body() {
 	check 'set "${x-"a b" c}"; echo $1' 'a b c'
 
 	check 'for i in "${x-a b c}"; do echo "z${i}z"; done' 'za b cz'
+
+	check_results quote
 }
 
 atf_test_case dollar_at
-dollar_at_head() {
+dollar_at_head()
+{
 	atf_set "descr" "Checks that field splitting works when expanding" \
 	                "\$@"
 }
-dollar_at_body() {
+dollar_at_body()
+{
 	unset x
 
 	TEST=0
@@ -292,7 +345,8 @@ dollar_at_body() {
 
 	check 'set --;        for i in x"$@"x;  do echo "z${i}z"; done' 'zxxz'
 	check 'set a;         for i in x"$@"x;  do echo "z${i}z"; done' 'zxaxz'
-	check 'set a b;       for i in x"$@"x;  do echo "z${i}z"; done' 'zxaz zbxz'
+	check 'set a b;       for i in x"$@"x;  do echo "z${i}z"; done' \
+		'zxaz zbxz'
 
 	check 'set --;        for i;            do echo "z${i}z"; done' ''
 	check 'set --;        for i in $@;      do echo "z${i}z"; done' ''
@@ -325,39 +379,58 @@ dollar_at_body() {
 		'zaz zbz zcaz zbz zcz'
 	check 'set a b c;     for i in "$@""$@";do echo "z${i}z"; done' \
 		'zaz zbz zcaz zbz zcz'
+
+	check_results dollar_at
 }
 
 atf_test_case ifs
-ifs_head() {
+ifs_head()
+{
 	atf_set "descr" "Checks that IFS correctly configures field" \
 	                "splitting behavior"
 }
-ifs_body() {
+ifs_body()
+{
 	unset x
 
 	TEST=0
 	# Some IFS tests
-	check 't="-- ";    IFS=" ";  set $t; IFS=":"; r="$*"; IFS=; echo $# $r' '0'
-	check 't=" x";     IFS=" x"; set $t; IFS=":"; r="$*"; IFS=; echo $# $r' '1'
-	check 't=" x ";    IFS=" x"; set $t; IFS=":"; r="$*"; IFS=; echo $# $r' '1'
-	check 't=axb;      IFS="x";  set $t; IFS=":"; r="$*"; IFS=; echo $# $r' '2 a:b'
-	check 't="a x b";  IFS="x";  set $t; IFS=":"; r="$*"; IFS=; echo $# $r' '2 a : b'
-	check 't="a xx b"; IFS="x";  set $t; IFS=":"; r="$*"; IFS=; echo $# $r' '3 a :: b'
-	check 't="a xx b"; IFS="x "; set $t; IFS=":"; r="$*"; IFS=; echo $# $r' '3 a::b'
-	# A recent 'clarification' means that a single trailing IFS non-whitespace
-	# doesn't generate an empty parameter
-	check 't="xax";  IFS="x";     set $t; IFS=":"; r="$*"; IFS=; echo $# $r' '2 :a'
-	check 't="xax "; IFS="x ";   set $t; IFS=":"; r="$*"; IFS=; echo $# $r' '2 :a'
+	check 't="-- "; IFS=" ";  set $t; IFS=":"; r="$*"; IFS=; echo $# $r' '0'
+	check 't=" x";  IFS=" x"; set $t; IFS=":"; r="$*"; IFS=; echo $# $r' '1'
+	check 't=" x "; IFS=" x"; set $t; IFS=":"; r="$*"; IFS=; echo $# $r' '1'
+	check 't=axb; IFS="x"; set $t; IFS=":"; r="$*"; IFS=; echo $# $r'  \
+		'2 a:b'
+	check 't="a x b"; IFS="x";  set $t; IFS=":"; r="$*"; IFS=; echo $# $r' \
+		'2 a : b'
+	check 't="a xx b"; IFS="x"; set $t; IFS=":"; r="$*"; IFS=; echo $# $r' \
+		'3 a :: b'
+	check 't="a xx b"; IFS="x ";set $t; IFS=":"; r="$*"; IFS=; echo $# $r' \
+		'3 a::b'
+	# A recent 'clarification' means that a single trailing IFS
+	# non-whitespace doesn't generate an empty parameter
+	check 't="xax"; IFS="x"; set $t; IFS=":"; r="$*"; IFS=; echo $# $r' \
+		'2 :a'
+	check 't="xax "; IFS="x "; set $t; IFS=":"; r="$*"; IFS=; echo $# $r' \
+		'2 :a'
 	# Verify that IFS isn't being applied where it shouldn't be.
-	check 'IFS="x";             set axb; IFS=":"; r="$*"; IFS=; echo $# $r' '1 axb'
+	check 'IFS="x"; set axb; IFS=":"; r="$*"; IFS=; echo $# $r' '1 axb'
+	check 'IFS=x; set axb; IFS=:; r=$*; IFS=; echo $# $r'       '1 axb'
+	check 'IFS=x; set axb; set -- "$*"; IFS=:; r=$*; IFS=; echo $# $r' \
+		'1 axb'
+	check 'IFS=x; set axb; set --  $*  ; IFS=:; r=$*; IFS=; echo $# $r' \
+		'2 a:b'
+
+	check_results ifs
 }
 
 atf_test_case var_length
-var_length_head() {
+var_length_head()
+{
 	atf_set "descr" "Checks that field splitting works when expanding" \
 	                "a variable's length"
 }
-var_length_body() {
+var_length_body()
+{
 	TEST=0
 
 	long=12345678123456781234567812345678
@@ -378,14 +451,18 @@ var_length_body() {
 	check 'IFS=2; set ${x-${#long}};   :      ; echo $* "$#"'   '1 8 2'
 	check 'IFS=2; set ${x-${#long}};   :      ; echo "$*" "$#"' '128 2'
 	check 'IFS=2; set ${x-${#long}};   :      ; echo "$@" "$#"' '1 8 2'
+
+	check_results var_length
 }
 
 atf_test_case split_arith
-split_arith_head() {
+split_arith_head()
+{
 	atf_set "descr" "Checks that field splitting works when expanding" \
 	                "the results from arithmetic"
 }
-split_arith_body() {
+split_arith_body()
+{
 	TEST=0
 
 	# Check that we apply IFS to $(( expr ))
@@ -437,10 +514,13 @@ split_arith_body() {
 	check 'IFS=159; echo 11$(( 123456789 ))95'	'11 234 678 95'
 	check 'IFS="159 "; echo 11$(( 123456789 ))95'	'11 234 678 95'
 	check 'IFS="159 "; echo 11$(( 11234567899 ))95'	'11  234 678  95'
+
+	check_results split_arith
 }
 
 atf_test_case read_split
-read_split_head() {
+read_split_head()
+{
 	atf_set "descr" "Checks that field splitting works for the read" \
 	                "built-in utility"
 }
@@ -449,7 +529,8 @@ read_split_head() {
 # It is important that they be retained as is (the ones in the data
 # and results - those used for test formatting are immaterial).
 #
-read_split_body() {
+read_split_body()
+{
 	DATA="  aaa bbb:ccc ddd+eee	fff:ggg+hhh	  "   # CAUTION: tabs!
 
 	TEST=0
@@ -529,9 +610,12 @@ read_split_body() {
 	  read a b c d e f g h || printf 'FAIL:%d' \"\$?\" &&
 	  printf '<%s>' "'"$a" "$b" "$c" "$d" "$e" "$f" "$g" "$h"; }'	\
 	  "FAIL:1<a><b><c><><><><><>"
+
+	check_results read_split
 }
 
-atf_init_test_cases() {
+atf_init_test_cases()
+{
 	atf_add_test_case for
 	atf_add_test_case default_val
 	atf_add_test_case replacement_val
@@ -542,4 +626,67 @@ atf_init_test_cases() {
 	atf_add_test_case var_length
 	atf_add_test_case split_arith
 	atf_add_test_case read_split
+	atf_add_test_case designed_to_fail	# ZZZ
+}
+
+# ZZZ from previous line to end of file
+atf_test_case designed_to_fail
+designed_to_fail_head()
+{
+	atf_set "descr" "Checks that failing works!"
+}
+#
+# CAUTION: There are literal <tab> chars in the following test.
+# It is important that they be retained as is (the ones in the data
+# and results - those used for test formatting are immaterial).
+#
+designed_to_fail_body()
+{
+	TEST=0
+
+	# In some (but not all) of these the expected answers are wrong.
+	check 'set -- ${x};        echo $#' 0
+	check 'set -- ${x-};       echo $#' 1
+	check 'set -- ${x-""};     echo $#; exit 3' 2
+	check 'set -- ""${x};      echo $#' 1
+
+	check 'x=BOGUS; set -- ${x+"a b" c}; echo $#'   2
+	check 'x=BOGUS; set -- ${x+a "b c"}; echo $#'   2
+	check 'x=BOGUS; set -- ${x+"a b c"}; echo $#'   1
+
+	check 'IFS=q; set ${x-aqbqc}; echo $#' 4
+
+	check 'set "${x-a b c}";   echo $#' 1
+
+	check 'set --;    for i in x"$@"x;  do echo "z${i}z"; done' 'zxxz'
+	check 'set a;     for i in x"$@"x;  do echo "z${i}z"; done' 'zxaxz'
+	check 'set a b;   for i in x"$@"y;  do echo "z${i}z"; done' 'zxaz zbxz'
+
+	check 't="-- "; IFS=" " ; set $t; IFS=":"; r="$*"; IFS=; echo $# $r' '0'
+	check 't=" x" ; IFS=" x"; set $t; IFS=":"; r="$*"; IFS=; echo $# $r' '1'
+	check 't=" x "; IFS=" x"; set $t; IFS=":"; r="$*"; IFS=; echo $# $r' '1'
+
+	long=12345678123456781234567812345678
+	long=$long$long$long$long
+	export long
+	check 'echo ${#long}; IFS=8; echo ${#long}; set 1 ${#long};echo $#' \
+		'128 1 8 3'
+
+	check 'IFS=5; echo $(( 123456789 ))'	'1234 6789'
+	check 'IFS=5; echo "$(( 123456789 ))"; exit 7'	'123456789'
+	check 'IFS=379; echo $(( 123456789 ))'	'12 456 89'
+
+	DATA="  aaa bbb:ccc ddd+eee	fff:ggg+hhh	  "   # CAUTION: tabs!
+
+	check "unset IFS; printf '%s\n' '${DATA}' | {
+	  read a b c d e f g h || printf 'FAIL:%d' \"\$?\" &&
+	  printf '<%s>' "'"$a" "$b" "$c" "$d" "$e" "$f" "$g" "$h"; }' \
+	  '<aaa><bbb:ccc><ddd+eee><fff:ggg+hhh><><><><>'
+
+	check "unset IFS; printf '%s\n' 'D=${DATA}' | {
+	  read x || printf 'FAIL:%d' \"\$?\" &&
+	  printf '<%s>' "'"$x"; }' \
+	  '<aaa bbb:ccc ddd+eee	fff:ggg+hhh>'
+
+	check_results designed_to_fail
 }
