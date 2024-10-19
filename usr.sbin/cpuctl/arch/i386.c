@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.144 2024/03/08 20:29:17 rillig Exp $	*/
+/*	$NetBSD: i386.c,v 1.145 2024/10/19 06:36:38 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.144 2024/03/08 20:29:17 rillig Exp $");
+__RCSID("$NetBSD: i386.c,v 1.145 2024/10/19 06:36:38 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2303,6 +2303,14 @@ identifycpu(int fd, const char *cpuname)
 			    ncore, nnb, numc);
 			aprint_verbose("%s: Perfmon: LBR Stack %hhu entries\n",
 			    cpuname, nlbrs);
+		}
+		if (ci->ci_max_ext_cpuid >= 0x80000027) {
+			uint8_t classes;
+
+			x86_cpuid(0x80000027, descs);
+			classes = __SHIFTOUT(descs[0], CPUID_HWC_NWC);
+			aprint_verbose("%s: Hetero workload class: "
+			    "%hhu classes\n", cpuname, classes);
 		}
 	} else if (cpu_vendor == CPUVENDOR_INTEL) {
 		if (ci->ci_max_cpuid >= 0x0a) {
