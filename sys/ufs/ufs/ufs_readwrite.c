@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.128 2022/02/21 17:07:45 hannken Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.129 2024/10/19 14:13:44 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.128 2022/02/21 17:07:45 hannken Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.129 2024/10/19 14:13:44 jakllsch Exp $");
+
+#include <sys/bitops.h>
 
 #define	FS			struct fs
 #define	I_FS			i_fs
@@ -248,6 +250,7 @@ WRITE(void *v)
 	vsize_t bytelen;
 	bool async;
 	struct ufsmount *ump;
+	const unsigned int fshift = ilog2(MAXPHYS);
 
 	cred = ap->a_cred;
 	ioflag = ap->a_ioflag;
@@ -428,10 +431,10 @@ WRITE(void *v)
 		 * XXXUBC simplistic async flushing.
 		 */
 
-		if (!async && oldoff >> 16 != uio->uio_offset >> 16) {
+		if (!async && oldoff >> fshift != uio->uio_offset >> fshift) {
 			rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
-			error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
-			    (uio->uio_offset >> 16) << 16,
+			error = VOP_PUTPAGES(vp, (oldoff >> fshift) << fshift,
+			    (uio->uio_offset >> fshift) << fshift,
 			    PGO_CLEANIT | PGO_JOURNALLOCKED | PGO_LAZY);
 			if (error)
 				break;
