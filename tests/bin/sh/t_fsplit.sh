@@ -1,4 +1,4 @@
-# $NetBSD: t_fsplit.sh,v 1.9 2024/10/18 09:05:23 kre Exp $
+# $NetBSD: t_fsplit.sh,v 1.10 2024/10/19 11:59:51 kre Exp $
 #
 # Copyright (c) 2007-2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -626,67 +626,4 @@ atf_init_test_cases()
 	atf_add_test_case var_length
 	atf_add_test_case split_arith
 	atf_add_test_case read_split
-	atf_add_test_case designed_to_fail	# ZZZ
-}
-
-# ZZZ from previous line to end of file
-atf_test_case designed_to_fail
-designed_to_fail_head()
-{
-	atf_set "descr" "Checks that failing works!"
-}
-#
-# CAUTION: There are literal <tab> chars in the following test.
-# It is important that they be retained as is (the ones in the data
-# and results - those used for test formatting are immaterial).
-#
-designed_to_fail_body()
-{
-	TEST=0
-
-	# In some (but not all) of these the expected answers are wrong.
-	check 'set -- ${x};        echo $#' 0
-	check 'set -- ${x-};       echo $#' 1
-	check 'set -- ${x-""};     echo $#; exit 3' 2
-	check 'set -- ""${x};      echo $#' 1
-
-	check 'x=BOGUS; set -- ${x+"a b" c}; echo $#'   2
-	check 'x=BOGUS; set -- ${x+a "b c"}; echo $#'   2
-	check 'x=BOGUS; set -- ${x+"a b c"}; echo $#'   1
-
-	check 'IFS=q; set ${x-aqbqc}; echo $#' 4
-
-	check 'set "${x-a b c}";   echo $#' 1
-
-	check 'set --;    for i in x"$@"x;  do echo "z${i}z"; done' 'zxxz'
-	check 'set a;     for i in x"$@"x;  do echo "z${i}z"; done' 'zxaxz'
-	check 'set a b;   for i in x"$@"y;  do echo "z${i}z"; done' 'zxaz zbxz'
-
-	check 't="-- "; IFS=" " ; set $t; IFS=":"; r="$*"; IFS=; echo $# $r' '0'
-	check 't=" x" ; IFS=" x"; set $t; IFS=":"; r="$*"; IFS=; echo $# $r' '1'
-	check 't=" x "; IFS=" x"; set $t; IFS=":"; r="$*"; IFS=; echo $# $r' '1'
-
-	long=12345678123456781234567812345678
-	long=$long$long$long$long
-	export long
-	check 'echo ${#long}; IFS=8; echo ${#long}; set 1 ${#long};echo $#' \
-		'128 1 8 3'
-
-	check 'IFS=5; echo $(( 123456789 ))'	'1234 6789'
-	check 'IFS=5; echo "$(( 123456789 ))"; exit 7'	'123456789'
-	check 'IFS=379; echo $(( 123456789 ))'	'12 456 89'
-
-	DATA="  aaa bbb:ccc ddd+eee	fff:ggg+hhh	  "   # CAUTION: tabs!
-
-	check "unset IFS; printf '%s\n' '${DATA}' | {
-	  read a b c d e f g h || printf 'FAIL:%d' \"\$?\" &&
-	  printf '<%s>' "'"$a" "$b" "$c" "$d" "$e" "$f" "$g" "$h"; }' \
-	  '<aaa><bbb:ccc><ddd+eee><fff:ggg+hhh><><><><>'
-
-	check "unset IFS; printf '%s\n' 'D=${DATA}' | {
-	  read x || printf 'FAIL:%d' \"\$?\" &&
-	  printf '<%s>' "'"$x"; }' \
-	  '<aaa bbb:ccc ddd+eee	fff:ggg+hhh>'
-
-	check_results designed_to_fail
 }
