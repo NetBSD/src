@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.215 2024/10/17 14:22:35 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.216 2024/10/19 06:35:09 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -1045,6 +1045,8 @@
 #define CPUID_AMD_ENCMEM_IBSVGUEST __BIT(19) /* IBS Virt. for SEV-ES guest */
 #define CPUID_AMD_ENCMEM_PMCVGUEST __BIT(20) /* PMC Virt. for SEV-ES guest */
 #define CPUID_AMD_ENCMEM_RMPREAD __BIT(21)  /* RMPREAD instruction */
+#define CPUID_AMD_ENCMEM_GUESTINTERCEPT __BIT(22) /* Guest Intercept 4SEV-ES */
+#define CPUID_AMD_ENCMEM_SEGRMP __BIT(23)  /* Segmented RMP */
 #define CPUID_AMD_ENCMEM_VMSA_REGPROT __BIT(24) /* VmsaRegProt */
 #define CPUID_AMD_ENCMEM_SMTPROTECT __BIT(25) /* SMT Protection */
 #define CPUID_AMD_ENCMEM_SECAVIC __BIT(26) /* Secure AVIC */
@@ -1061,6 +1063,7 @@
 	"\15" "RSTRINJ"	"\16" "ALTINJ"	"\17" "DebugSwap" "\20PreventHostIbs" \
 	"\21VTE"      "\22VmgexitParam" "\23VirtualTomMsr" "\24IbsVirtGuest"  \
 	"\25PmcVirtGuest" "\26RMPREAD"					      \
+				"\27GuestInterceptControl" "\30SegmentedRmp"  \
 	"\31VmsaRegProt" "\32SmtProtection" "\33SecureAvic" "\34AllowedSev"   \
 	"\35SvsmCommPageMSR" "\36NestedVirtSnpMsr" "\37HvInuseWrAllowed"      \
 	"\40IbpbOnEntry"
@@ -1083,15 +1086,11 @@
 #define CPUID_AMDEXT2_FSRC	  __BIT(11) /* Fast Short Rep Cmpsb */
 #define CPUID_AMDEXT2_PMCPRECISERETIRE __BIT(12) /* PMC Presize Retire */
 #define CPUID_AMDEXT2_PREFETCHCTL __BIT(13) /* Prefetch control MSR */
-
 #define CPUID_AMDEXT2_L2TLBSIZEX32 __BIT(14) /* L2TLB size encoded as x32 */
 #define CPUID_AMDEXT2_ERMSB	  __BIT(15) /* AMD implementation of ERMSB */
-#define CPUID_AMDEXT2_ __BIT(16) /*  */
-
-
+#define CPUID_AMDEXT2_OPF17RECLAIM __BIT(16) /* Reserve opcode 0f 01/7 */
 #define CPUID_AMDEXT2_CPUIDUSRDIS __BIT(17) /* CPUID dis. for non-priv. soft */
 #define CPUID_AMDEXT2_EPSF	  __BIT(18) /* Enhanced Predictive Store Fwd */
-
 #define CPUID_AMDEXT2_0F017_RECLAIM __BIT(19) /* Opecode 0f 01/7 reserved */
 #define CPUID_AMDEXT2_PREFETCHI	  __BIT(20) /* IC prefetch support */
 #define CPUID_AMDEXT2_FP512_DOWNGRADE __BIT(21) /* FP512 dpath down to 256 */
@@ -1134,7 +1133,16 @@
 #define CPUID_AXPERF_NCPC      __BITS(3, 0)	/* Num of Core PMC counters */
 #define CPUID_AXPERF_NLBRSTACK __BITS(9, 4)	/* Num of LBR Stack entries */
 #define CPUID_AXPERF_NNBPC     __BITS(15, 10)	/* Num of NorthBridge PMCs */
-#define CPUID_AXPERF_NUMCPC    __BITS(21, 16)	/* Num of UMC PMCs */
+#define CPUID_AXPERF_NUMCPC    __BITS(23, 16)	/* Num of UMC PMCs */
+
+/*
+ * AMD Hetero Workload Classification
+ * CPUID Fn8000_0027
+ */
+
+/* %eax */
+
+#define CPUID_HWC_NWC	        __BITS(3, 0) /* Number of Workload Class IDs */
 
 /*
  * Centaur Extended Feature flags.
