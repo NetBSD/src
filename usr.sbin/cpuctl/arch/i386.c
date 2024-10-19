@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.146 2024/10/19 16:32:43 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.147 2024/10/19 16:43:46 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.146 2024/10/19 16:32:43 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.147 2024/10/19 16:43:46 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1349,7 +1349,8 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
 
 	cai = &ci->ci_cinfo[CAI_L2_1GBITLB];
-	cai->cai_totalsize = AMD_L2_1GB_EBX_IUTLB_ENTRIES(descs[1]);
+	cai->cai_totalsize =
+	    AMD_L2_1GB_EBX_IUTLB_ENTRIES(descs[1])  * (l2tlbx32 ? 32 : 1);
 	cai->cai_associativity = AMD_L2_1GB_EBX_IUTLB_ASSOC(descs[1]);
 	cai->cai_linesize = (1024 * 1024 * 1024);
 	cp = cpu_cacheinfo_lookup(amd_cpuid_l2l3cache_assoc_info,
@@ -1360,7 +1361,8 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
 
 	cai = &ci->ci_cinfo[CAI_L2_1GBDTLB];
-	cai->cai_totalsize = AMD_L2_1GB_EBX_DUTLB_ENTRIES(descs[1]);
+	cai->cai_totalsize =
+	    AMD_L2_1GB_EBX_DUTLB_ENTRIES(descs[1]) * (l2tlbx32 ? 32 : 1);
 	cai->cai_associativity = AMD_L2_1GB_EBX_DUTLB_ASSOC(descs[1]);
 	cai->cai_linesize = (1024 * 1024 * 1024);
 	cp = cpu_cacheinfo_lookup(amd_cpuid_l2l3cache_assoc_info,
