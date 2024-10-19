@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1511 2024/10/16 14:52:41 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1512 2024/10/19 06:39:43 mlelstv Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -656,6 +656,7 @@ vendor ZHAOXIN		0x1d17	Zhaoxin
 vendor AQUANTIA		0x1d6a	Aquantia
 vendor ROCKCHIP		0x1d87	Rockchip
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
+vendor RASPBERRYPI	0x1de4	Raspberry Pi (Trading) Limited
 vendor AMPERE		0x1def	Ampere Computing
 vendor SUNIX2		0x1fd4	SUNIX Co
 vendor HINT		0x3388	HiNT
@@ -9263,6 +9264,9 @@ product RALINK	RT5390_5	0x539f	RT5390
 
 /* RATOC Systems products */
 product RATOC	REXPCI31	0x0853	REX PCI-31/33 SCSI
+
+/* Raspberry Pi (Trading) Limited */
+product RASPBERRYPI	RP1_ETH	0x0001	RP1 PCIe 2.0 South Bridge Ethernet
 
 /* RDC Semiconductor products */
 product RDC	R1010_IDE	0x1010	R1010 IDE Controller
