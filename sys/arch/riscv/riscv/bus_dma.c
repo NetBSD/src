@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.4 2024/10/20 13:43:36 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.5 2024/10/20 13:43:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define _RISCV_NEED_BUS_DMA_BOUNCE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.4 2024/10/20 13:43:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.5 2024/10/20 13:43:56 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -1140,12 +1140,16 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		case _BUS_DMA_BUFTYPE_LINEAR:
 			memcpy(dataptr, cookie->id_origlinearbuf + offset, len);
 			break;
+
 		case _BUS_DMA_BUFTYPE_MBUF:
 			m_copydata(cookie->id_origmbuf, offset, len, dataptr);
 			break;
+
 		case _BUS_DMA_BUFTYPE_UIO:
-			_bus_dma_uiomove(dataptr, cookie->id_origuio, len, UIO_WRITE);
+			_bus_dma_uiomove(dataptr, cookie->id_origuio, len,
+			    UIO_WRITE);
 			break;
+
 #ifdef DIAGNOSTIC
 		case _BUS_DMA_BUFTYPE_RAW:
 			panic("%s:(pre): _BUS_DMA_BUFTYPE_RAW", __func__);
