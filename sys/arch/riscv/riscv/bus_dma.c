@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.2 2024/02/08 18:25:58 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.3 2024/10/20 13:37:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define _RISCV_NEED_BUS_DMA_BOUNCE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.2 2024/02/08 18:25:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.3 2024/10/20 13:37:51 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -1077,8 +1077,8 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	/*
 	 * Mixing of PRE and POST operations is not allowed.
 	 */
-	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
-	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
+	if ((ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)) != 0 &&
+	    (ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE)) != 0)
 		panic("%s: mix PRE and POST", __func__);
 
 	KASSERTMSG(offset < map->dm_mapsize,
@@ -1096,7 +1096,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 *	here in case a write-back is required by the back-end.
 	 *
 	 *	PREWRITE -- Write-back the D-cache.  Note that if
-	 *	we are doing a PREREAD|PREWRITE, we can collapse
+	 *	we are doing a PREREAD | PREWRITE, we can collapse
 	 *	the whole thing into a single Wb-Inv.
 	 *
 	 *	POSTREAD -- Re-invalidate the D-cache in case speculative
@@ -1111,8 +1111,8 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	const bool bouncing = false;
 #endif
 
-	const int pre_ops = ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-	const int post_ops = ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	const int pre_ops = ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	const int post_ops = ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	if (pre_ops == 0 && post_ops == 0)
 		return;
 
@@ -1166,7 +1166,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	/* Skip cache frobbing if mapping was COHERENT */
 	if ((map->_dm_flags & _BUS_DMAMAP_COHERENT)) {
 		switch (ops) {
-		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
+		case BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE:
 			STAT_INCR(sync_coherent_prereadwrite);
 			break;
 
@@ -1178,7 +1178,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			STAT_INCR(sync_coherent_prewrite);
 			break;
 
-		case BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE:
+		case BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE:
 			STAT_INCR(sync_coherent_postreadwrite);
 			break;
 
