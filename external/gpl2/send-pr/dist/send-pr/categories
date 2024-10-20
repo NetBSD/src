@@ -50,6 +50,7 @@ port-playstation2
 port-pmax
 port-powerpc
 port-prep
+port-riscv
 port-sandpoint
 port-sbmips
 port-sgimips
