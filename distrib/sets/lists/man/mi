@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1787 2024/09/02 05:17:45 ozaki-r Exp $
+# $NetBSD: mi,v 1.1788 2024/10/20 14:22:37 mlelstv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -1427,6 +1427,7 @@
 ./usr/share/man/cat4/iee.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ieee1394if.0		man-sys-catman		.cat
 ./usr/share/man/cat4/ieee80211.0		man-sys-catman		.cat
+./usr/share/man/cat4/ietp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ifmedia.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ifpci.0			man-obsolete		obsolete
 ./usr/share/man/cat4/igc.0			man-sys-catman		.cat
@@ -4986,6 +4987,7 @@
 ./usr/share/man/man4/iee.4			man-sys-man		.man
 ./usr/share/man/man4/ieee1394if.4		man-sys-man		.man
 ./usr/share/man/man4/ieee80211.4		man-sys-man		.man
+./usr/share/man/man4/ietp.4			man-sys-man		.man
 ./usr/share/man/man4/ifmedia.4			man-sys-man		.man
 ./usr/share/man/man4/ifpci.4			man-obsolete		obsolete
 ./usr/share/man/man4/igc.4			man-sys-man		.man

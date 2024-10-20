@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.9 2024/09/02 05:17:45 ozaki-r Exp $
+# $NetBSD: mi,v 1.10 2024/10/20 14:22:37 mlelstv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1279,6 +1279,7 @@
 ./usr/share/man/html4/iee.html			man-sys-htmlman		html
 ./usr/share/man/html4/ieee1394if.html		man-sys-htmlman		html
 ./usr/share/man/html4/ieee80211.html		man-sys-htmlman		html
+./usr/share/man/html4/ietp.html			man-sys-htmlman		html
 ./usr/share/man/html4/ifmedia.html		man-sys-htmlman		html
 ./usr/share/man/html4/ifpci.html		man-obsolete		obsolete
 ./usr/share/man/html4/igc.html			man-sys-htmlman		html
