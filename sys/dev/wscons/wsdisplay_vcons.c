@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.68 2024/02/09 22:08:37 andvar Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.69 2024/10/20 09:25:00 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.68 2024/02/09 22:08:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.69 2024/10/20 09:25:00 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -838,6 +838,20 @@ vcons_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			vcons_hard_switch(LIST_FIRST(&vdp->screens));
 		} else
 			vcons_disable_polling(vd);
+		}
+		break;
+
+	case WSDISPLAYIO_GFONT: {
+		struct wsdisplay_getfont *gf = data;
+		size_t actual;
+		struct wsdisplay_font *font;
+		const char *fontname;
+
+		font = ((struct vcons_screen *)vs)->scr_ri.ri_font;
+		fontname = font && font->name ? font->name : "";
+		error = copyoutstr(fontname, gf->gf_name, gf->gf_size, &actual);
+		if (!error)
+			gf->gf_actual = actual;
 		}
 		break;
 

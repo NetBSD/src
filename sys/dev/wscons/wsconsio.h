@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.128 2024/10/20 08:44:22 mlelstv Exp $ */
+/* $NetBSD: wsconsio.h,v 1.129 2024/10/20 09:25:00 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -729,5 +729,21 @@ struct wsdisplayio_fontinfo {
  */
 
 #define WSDISPLAYIO_LISTFONTS	_IOWR('W', 107, struct wsdisplayio_fontinfo)
+
+struct wsdisplay_getfont {
+	char *gf_name;
+	uint32_t gf_size;
+	uint32_t gf_actual;
+};
+
+/*
+ * return currently active font
+ *
+ * gf_name points to a buffer of gf_size bytes, the result may be truncated
+ * and NUL-terminated.
+ * gf_actual is set to the size of full name.
+ */
+
+#define WSDISPLAYIO_GFONT	_IOWR('W', 108, struct wsdisplay_getfont)
 
 #endif /* _DEV_WSCONS_WSCONSIO_H_ */
