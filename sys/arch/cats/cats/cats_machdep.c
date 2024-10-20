@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.94 2023/04/20 08:28:03 skrll Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.95 2024/10/20 15:06:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.94 2023/04/20 08:28:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.95 2024/10/20 15:06:35 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cats.h"
@@ -314,15 +314,6 @@ initarm(void *arm_bootargs)
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	const bool mapallmem_p = true;
-
-#ifndef PMAP_NEED_ALLOC_POOLPAGE
-	if (ram_size > KERNEL_VM_BASE - KERNEL_BASE) {
-		printf("%s: dropping RAM size from %luMB to %uMB\n",
-		    __func__, (unsigned long) (ram_size >> 20),
-		    (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
-		ram_size = KERNEL_VM_BASE - KERNEL_BASE;
-        }
-#endif
 #else
         const bool mapallmem_p = false;
 #endif
