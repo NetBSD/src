@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.c,v 1.22 2024/08/19 17:15:38 christos Exp $	*/
+/*	$NetBSD: gpt_uuid.c,v 1.23 2024/10/20 08:21:30 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt_uuid.c,v 1.22 2024/08/19 17:15:38 christos Exp $");
+__RCSID("$NetBSD: gpt_uuid.c,v 1.23 2024/10/20 08:21:30 mlelstv Exp $");
 #endif
 
 #include <err.h>
@@ -272,7 +272,7 @@ gpt_uuid_create(gpt_type_t t, gpt_uuid_t u, uint16_t *b, size_t s)
 }
 
 static int
-gpt_uuid_random(gpt_t gpt, void *v, size_t n)
+gpt_uuid_random(gpt_t gpt, struct dce_uuid *u, size_t n)
 {
 	int fd;
 	uint8_t *p;
@@ -284,7 +284,7 @@ gpt_uuid_random(gpt_t gpt, void *v, size_t n)
 		gpt_warn(gpt, "Can't open `/dev/urandom'");
 		return -1;
 	}
-	for (p = v;  n > 0; p += nread, n -= (size_t)nread) {
+	for (p = (uint8_t *)u;  n > 0; p += nread, n -= (size_t)nread) {
 		nread = read(fd, p, n);
 		if (nread < 0) {
 			gpt_warn(gpt, "Can't read `/dev/urandom'");
@@ -300,21 +300,59 @@ gpt_uuid_random(gpt_t gpt, void *v, size_t n)
 		}
 	}
 	(void)close(fd);
+
+	/* Set the version number to 4.  */
+	u->time_hi_and_version &= (uint16_t)~0xf000;
+	u->time_hi_and_version |= 0x4000;
+
 	return 0;
 out:
 	(void)close(fd);
 	return -1;
 }
 
+/*
+ * For reproducable builds, we can base UUIDs on one external timestamp.
+ *
+ * Bump timestamp by one 100ns unit to make them unique within a GPT.
+ * Use zero clock sequence and node id, ideally these should also be
+ * passed as input.
+ */
 static int 
-gpt_uuid_tstamp(gpt_t gpt, void *v, size_t l)
+gpt_uuid_tstamp(gpt_t gpt, struct dce_uuid *u, size_t l)
 {
-	uint8_t *p;
-	// Perhaps use SHA?
-	uint32_t x = (uint32_t)gpt->timestamp;
+	uint64_t x;
 
-	for (p = v; l > 0; p += sizeof(x), l -= sizeof(x))
-		memcpy(p, &x, sizeof(x));
+	/* check for underflow/overflow of 60bit UUID time */
+	if (gpt->timestamp < -12219292800 ||
+	    gpt->timestamp > 103072857660)
+		return -1;
+
+	/*
+	 * Convert to UUID epoch (Gregorian)
+	 * and 100ns units
+	 */
+	x = (uint64_t)(gpt->timestamp + 12219292800) * 10000000;
+	
+	/* Make UUID unique */
+	x += gpt->uuidgen++;
+
+	/* Set UUID fields for version 1 */
+	u->time_low = x & 0xffffffff;
+	u->time_mid = (x >> 32) & 0xffff;
+	u->time_hi_and_version = 0x1000 | ((x >> 48) & 0xfff);
+
+	/*
+	 * The clock sequence should make UUIDs unique in case
+	 * the clock went backwards.
+	 */
+	u->clock_seq_hi_and_reserved = 0;
+	u->clock_seq_low = 0;
+
+	/*
+	 * A unique system identifier (usually MAC address)
+	 */
+	memset(u->node, 0, sizeof(u->node));
 
 	return 0;
 }
@@ -324,6 +362,7 @@ gpt_uuid_generate(gpt_t gpt, gpt_uuid_t t)
 {
 	int rv;
 	struct dce_uuid u;
+
 	if (gpt && (gpt->flags & GPT_TIMESTAMP))
 		rv = gpt_uuid_tstamp(gpt, &u, sizeof(u));
 	else
@@ -331,10 +370,6 @@ gpt_uuid_generate(gpt_t gpt, gpt_uuid_t t)
 
 	if (rv == -1)
 		return -1;
-
-	/* Set the version number to 4.  */
-	u.time_hi_and_version &= (uint16_t)~0xf000;
-	u.time_hi_and_version |= 0x4000;
 
 	/* Fix the reserved bits.  */
 	u.clock_seq_hi_and_reserved &= (uint8_t)~0x40;
