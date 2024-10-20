@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.5 2024/10/20 13:43:56 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.6 2024/10/20 15:07:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define _RISCV_NEED_BUS_DMA_BOUNCE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.5 2024/10/20 13:43:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.6 2024/10/20 15:07:32 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -89,8 +89,6 @@ static struct evcnt bus_dma_sync_postreadwrite =
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync postreadwrite");
 static struct evcnt bus_dma_sync_postwrite =
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync postwrite");
-static struct evcnt bus_dma_inrange_fail =
-	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "inrange check failed");
 
 static struct evcnt bus_dma_sync_coherent_prereadwrite =
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync coherent prereadwrite");
@@ -127,7 +125,6 @@ EVCNT_ATTACH_STATIC(bus_dma_sync_postreadwrite);
 EVCNT_ATTACH_STATIC(bus_dma_sync_postwrite);
 EVCNT_ATTACH_STATIC(bus_dma_inrange_fail);
 
-EVCNT_ATTACH_STATIC(bus_dma_sync_coherent_prereadwrite);
 EVCNT_ATTACH_STATIC(bus_dma_sync_coherent_preread);
 EVCNT_ATTACH_STATIC(bus_dma_sync_coherent_prewrite);
 EVCNT_ATTACH_STATIC(bus_dma_sync_coherent_postread);
