@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.18 2024/10/20 13:44:37 mlelstv Exp $ */
+/*	$NetBSD: display.c,v 1.19 2024/10/20 13:49:41 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -52,7 +52,6 @@ static struct wsdisplay_param brightness;
 static struct wsdisplay_param contrast;
 static struct wsdisplay_scroll_data scroll_l;
 static struct wsdisplayio_edid_info edid_info;
-static uint8_t edid_buf[256];
 static int msg_default_attrs, msg_default_bg, msg_default_fg;
 static int msg_kernel_attrs, msg_kernel_bg, msg_kernel_fg;
 static int splash_enable, splash_progress;
@@ -79,6 +78,32 @@ struct field display_field_tab[] = {
 
 int display_field_tab_len = sizeof(display_field_tab) /
 	sizeof(display_field_tab[0]);
+
+static int
+display_get_edid(int fd, struct wsdisplayio_edid_info *ei)
+{
+	size_t sz = 256;
+	int res;
+
+	while (sz <= 65536) {
+		ei->buffer_size = sz;
+		ei->edid_data = malloc(sz);
+		if (ei->edid_data == NULL) {
+			res = -1;
+			break;
+		}
+
+		res = ioctl(fd, WSDISPLAYIO_GET_EDID, ei);
+		if (res == 0 || errno != EAGAIN)
+			break;
+
+		free(ei->edid_data);
+		ei->edid_data = NULL;
+		sz *= 2;
+	}
+
+	return res;
+}
 
 void
 display_get_values(int fd)
@@ -158,11 +183,8 @@ display_get_values(int fd)
 	}
 
 	if (field_by_value(&edid_info)->flags & FLG_GET) {
-		edid_info.edid_data = edid_buf;
-		edid_info.buffer_size = sizeof(edid_buf);
-		if (ioctl(fd, WSDISPLAYIO_GET_EDID, &edid_info) < 0) {
+		if (display_get_edid(fd, &edid_info) < 0)
 			field_disable_by_value(&edid_info);
-		}
 	}
 }
 
