@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.33 2021/12/25 13:54:13 mlelstv Exp $ */
+/*	$NetBSD: util.c,v 1.34 2024/10/20 08:46:02 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1998, 2006, 2012 The NetBSD Foundation, Inc.
@@ -129,7 +129,6 @@ static struct nameint dpytype_tab[] = {
 	{ WSDISPLAY_TYPE_TVRX,		"hp-tiger" },
 	{ WSDISPLAY_TYPE_HYPERION,	"hp-hyperion" },
 	{ WSDISPLAY_TYPE_AMIGACC,	"amiga-cc" },
-	{ WSDISPLAY_TYPE_GRF,		"grf" },
 	{ WSDISPLAY_TYPE_SUN24,		"sun24" },
 	{ WSDISPLAY_TYPE_NEWPORT,	"sgi-newport" },
 	{ WSDISPLAY_TYPE_GR2,		"sgi-gr2" },
@@ -137,6 +136,34 @@ static struct nameint dpytype_tab[] = {
 	{ WSDISPLAY_TYPE_SUNCG14,	"suncg14" },
 	{ WSDISPLAY_TYPE_SUNTCX,	"suntcx" },
 	{ WSDISPLAY_TYPE_SUNFFB,	"sunffb" },
+	{ WSDISPLAY_TYPE_STI,		"hp-sti" },
+	{ WSDISPLAY_TYPE_HDLCD,		"hd44780" },
+	{ WSDISPLAY_TYPE_VESA,		"vesa" },
+	{ WSDISPLAY_TYPE_XILFB,		"xilinx" },
+	{ WSDISPLAY_TYPE_LIGHT,		"sgi-light" },
+	{ WSDISPLAY_TYPE_GENFB,		"genfb" },
+	{ WSDISPLAY_TYPE_CRIME,		"sgi-o2" },
+	{ WSDISPLAY_TYPE_PXALCD,	"pxa" },
+	{ WSDISPLAY_TYPE_AG10,		"fujitsu-ag10" },
+	{ WSDISPLAY_TYPE_DL,		"displaylink" },
+	{ WSDISPLAY_TYPE_XVR1000,	"sun-xvr1000" },
+	{ WSDISPLAY_TYPE_LUNA,		"omron-luna" },
+	{ WSDISPLAY_TYPE_GRF,		"grf" },
+	{ WSDISPLAY_TYPE_VNC,		"vnc" },
+	{ WSDISPLAY_TYPE_VALKYRIE,	"apple-valkyrie" },
+	{ WSDISPLAY_TYPE_IMXIPU,	"imx-ipu" },
+	{ WSDISPLAY_TYPE_VC4,		"videocore4" },
+	{ WSDISPLAY_TYPE_OMAP3,		"omap3530" },
+	{ WSDISPLAY_TYPE_WINDERMERE,	"windermere" },
+	{ WSDISPLAY_TYPE_CLPS711X,	"clps-711x" },
+	{ WSDISPLAY_TYPE_ALLWINNER,	"allwinner" },
+	{ WSDISPLAY_TYPE_MGX,		"ssb-mgx" },
+	{ WSDISPLAY_TYPE_MESON,		"amlogc-meson" },
+	{ WSDISPLAY_TYPE_TEGRA,		"nvidia-tegra" },
+	{ WSDISPLAY_TYPE_PLATINUM,	"platinum" },
+	{ WSDISPLAY_TYPE_PLFB,		"primcell-pl11x" },
+	{ WSDISPLAY_TYPE_SSDFB,		"ssdfb" },
+	{ WSDISPLAY_TYPE_VC6,		"videocore6" },
 };
 
 static struct nameint kbdenc_tab[] = {
