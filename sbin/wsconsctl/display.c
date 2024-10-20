@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.17 2021/12/25 13:54:13 mlelstv Exp $ */
+/*	$NetBSD: display.c,v 1.18 2024/10/20 13:44:37 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -45,6 +45,8 @@
 static int border;
 static int dpytype;
 static struct wsdisplay_usefontdata font;
+static struct wsdisplay_getfont gfont;
+static char fontname_buf[256];
 static struct wsdisplay_param backlight;
 static struct wsdisplay_param brightness;
 static struct wsdisplay_param contrast;
@@ -58,7 +60,7 @@ static int splash_enable, splash_progress;
 struct field display_field_tab[] = {
     { "border",			&border,	FMT_COLOR,	0 },
     { "type",			&dpytype,	FMT_DPYTYPE,	FLG_RDONLY },
-    { "font",			&font.name,	FMT_STRING,	FLG_WRONLY },
+    { "font",			&font.name,	FMT_STRING,	0 },
     { "backlight",		&backlight.curval,  FMT_UINT,	0 },
     { "brightness",		&brightness.curval, FMT_UINT,	FLG_MODIFY },
     { "contrast",		&contrast.curval,   FMT_UINT,	FLG_MODIFY },
@@ -81,6 +83,13 @@ int display_field_tab_len = sizeof(display_field_tab) /
 void
 display_get_values(int fd)
 {
+	if (field_by_value(&font.name)->flags & FLG_GET) {
+		gfont.gf_name = fontname_buf;
+		gfont.gf_size = sizeof(fontname_buf);
+		font.name = gfont.gf_name;
+		if (ioctl(fd, WSDISPLAYIO_GFONT, &gfont) < 0)
+			field_disable_by_value(&font.name);
+	}
 
 	if (field_by_value(&dpytype)->flags & FLG_GET)
 		if (ioctl(fd, WSDISPLAYIO_GTYPE, &dpytype) < 0)
