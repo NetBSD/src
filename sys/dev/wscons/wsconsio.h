@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.127 2024/01/20 00:23:12 jmcneill Exp $ */
+/* $NetBSD: wsconsio.h,v 1.128 2024/10/20 08:44:22 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -367,6 +367,7 @@ struct wsmouse_parameters {
 #define	WSDISPLAY_TYPE_PLFB	65	/* ARM PrimeCell PL11x */
 #define	WSDISPLAY_TYPE_SSDFB	66	/* ssdfb(4) */
 #define	WSDISPLAY_TYPE_HOLLYWOOD 67	/* Nintendo Wii "Hollywood" SoC */
+#define	WSDISPLAY_TYPE_VC6	68	/* Broadcom VideoCore 6 */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
