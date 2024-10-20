@@ -615,6 +615,41 @@ static void ReadNullSepFileToArray(const char *path, char ***arr,
 }
 #endif
 
+#if SANITIZER_NETBSD
+static char **
+load_vector(int m)
+{
+  size_t size;
+  int nv;
+  char **v, **ap, *bp, *buf, *endp;
+  int mib[4] = {CTL_KERN, KERN_PROC_ARGS, getpid(), 0};
+  size = sizeof(nv);
+  mib[3] = m == KERN_PROC_ARGV ? KERN_PROC_NARGV : KERN_PROC_NENV;
+  if (internal_sysctl(mib, 4, &nv, &size, NULL, 0) == -1) {
+    Printf("sysctl KERN_PROC_N{ARGV,ENV} failed\n");
+    Die();
+  }
+  v = (char **)MmapOrDie((nv + 1) * sizeof(char *), "Arg vector");
+  buf = (char *)MmapOrDie(ARG_MAX, "Arg space");
+  size = ARG_MAX;
+  mib[3] = m;
+  if (internal_sysctl(mib, 4, buf, &size, NULL, 0) == -1) {
+    Printf("sysctl KERN_PROC_{ARGV,ENV} failed\n");
+    Die();
+  }
+  bp = buf;
+  ap = v;
+  endp = bp + size;
+
+  while (bp < endp) {
+    *ap++ = bp;
+    bp += internal_strlen(bp) + 1;
+  }
+  *ap = NULL;
+  return v;
+}
+#endif
+
 static void GetArgsAndEnv(char ***argv, char ***envp) {
 #if SANITIZER_FREEBSD
   // On FreeBSD, retrieving the argument and environment arrays is done via the
@@ -629,8 +664,8 @@ static void GetArgsAndEnv(char ***argv, char ***envp) {
   *argv = pss->ps_argvstr;
   *envp = pss->ps_envstr;
 #elif SANITIZER_NETBSD
-  *argv = __ps_strings->ps_argvstr;
-  *envp = __ps_strings->ps_envstr;
+  *argv = load_vector(KERN_PROC_ARGV);
+  *envp = load_vector(KERN_PROC_ENV);
 #else // SANITIZER_FREEBSD
 #if !SANITIZER_GO
   if (&__libc_stack_end) {
