@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.59 2024/07/05 04:31:54 rin Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.60 2024/10/20 14:01:52 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.59 2024/07/05 04:31:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.60 2024/10/20 14:01:52 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs_boot.h"
@@ -594,6 +594,7 @@ bootpc_call(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 	 * Allocate buffer used for request
 	 */
 	m = m_gethdr(M_WAIT, MT_DATA);
+	MCLAIM(m, &nfs_mowner);
 	m_clget(m, M_WAIT);
 	bootp = mtod(m, struct bootp*);
 	m->m_pkthdr.len = m->m_len = BOOTP_SIZE_MAX;

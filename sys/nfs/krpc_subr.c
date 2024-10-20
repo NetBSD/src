@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.43 2024/07/05 04:31:54 rin Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.44 2024/10/20 14:01:52 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.43 2024/07/05 04:31:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.44 2024/10/20 14:01:52 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,6 +280,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func, struct mbu
 	 * Prepend RPC message header.
 	 */
 	mhead = m_gethdr(M_WAIT, MT_DATA);
+	MCLAIM(mhead, &nfs_mowner);
 	mhead->m_next = *data;
 	call = mtod(mhead, struct rpc_call *);
 	mhead->m_len = sizeof(*call);

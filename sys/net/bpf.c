@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.257 2024/08/19 07:47:16 ozaki-r Exp $	*/
+/*	$NetBSD: bpf.c,v 1.258 2024/10/20 14:03:51 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.257 2024/08/19 07:47:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.258 2024/10/20 14:03:51 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -456,6 +456,8 @@ bpf_movein(struct ifnet *ifp, struct uio *uio, int linktype, uint64_t mtu,
 		m0->m_data += hlen;
 		m0->m_len -= hlen;
 	}
+
+	m_claimm(m, ifp->if_mowner);
 
 	*mp = m0;
 	return (0);
