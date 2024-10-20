@@ -18,7 +18,7 @@
 using namespace __sanitizer;
 
 #if SANITIZER_NETBSD
-#define sigaction_symname __sigaction14
+#define sigaction_symname __sigaction_siginfo
 #else
 #define sigaction_symname sigaction
 #endif
