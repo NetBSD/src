@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs_vnops.c,v 1.8 2022/12/11 11:31:55 mlelstv Exp $	*/
+/*	$NetBSD: autofs_vnops.c,v 1.9 2024/10/20 14:06:49 mlelstv Exp $	*/
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
  * Copyright (c) 2016 The DragonFly Project
@@ -34,7 +34,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autofs_vnops.c,v 1.8 2022/12/11 11:31:55 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autofs_vnops.c,v 1.9 2024/10/20 14:06:49 mlelstv Exp $");
 
 #include "autofs.h"
 
@@ -595,6 +595,7 @@ static const struct vnodeopv_entry_desc autofs_vnodeop_entries[] = {
 	{ &vop_accessx_desc,	genfs_accessx },
 	{ &vop_getattr_desc,	autofs_getattr },
 	{ &vop_fsync_desc,	autofs_fsync },
+	{ &vop_seek_desc,	genfs_seek },
 	{ &vop_mkdir_desc,	autofs_mkdir },
 	{ &vop_readdir_desc,	autofs_readdir },
 	{ &vop_reclaim_desc,	autofs_reclaim },
