@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.3 2024/10/20 13:37:51 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.4 2024/10/20 13:43:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define _RISCV_NEED_BUS_DMA_BOUNCE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.3 2024/10/20 13:37:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.4 2024/10/20 13:43:36 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -1812,10 +1812,10 @@ int
 _bus_dmatag_subregion(bus_dma_tag_t tag, bus_addr_t min_addr,
     bus_addr_t max_addr, bus_dma_tag_t *newtag, int flags)
 {
+#ifdef _RISCV_NEED_BUS_DMA_BOUNCE
 	if (min_addr >= max_addr)
 		return EOPNOTSUPP;
 
-#ifdef _RISCV_NEED_BUS_DMA_BOUNCE
 	struct riscv_dma_range *dr;
 	bool psubset = true;
 	size_t nranges = 0;
