@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.144 2023/07/28 06:21:02 rin Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.145 2024/10/20 14:51:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.144 2023/07/28 06:21:02 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.145 2024/10/20 14:51:13 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -232,7 +232,10 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 		 */
 		curaddr = (paddr - dr->dr_sysbase) + dr->dr_busbase;
 #if 0
-		printf("%p: %#lx: range %#lx/%#lx/%#lx/%#x: %#x <-- %#lx\n",
+		printf("%p: %#" PRIxPADDR
+		    ": range %#" PRIxPADDR "/%#" PRIxBUSADDR
+		    "/%#" PRIxBUSSIZE "/%#" PRIx32 ": %#" PRIx32
+		    " <-- %#" PRIxBUSADDR "\n",
 		    t, paddr, dr->dr_sysbase, dr->dr_busbase,
 		    dr->dr_len, dr->dr_flags, _ds_flags, curaddr);
 #endif
@@ -357,7 +360,9 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	int error = 0;
 
 #ifdef DEBUG_DMA
-	printf("dmamap_create: t=%p size=%#lx nseg=%#x msegsz=%#lx boundary=%#lx"
+	printf("dmamap_create: t=%p size=%#" PRIxBUSSIZE
+	    " nseg=%#x msegsz=%#" PRIxBUSSIZE
+	    " boundary=%#" PRIxBUSSIZE
 	    " flags=%#x\n", t, size, nsegments, maxsegsz, boundary, flags);
 #endif	/* DEBUG_DMA */
 
@@ -513,8 +518,8 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	int error;
 
 #ifdef DEBUG_DMA
-	printf("dmamap_load: t=%p map=%p buf=%p len=%#lx p=%p f=%#x\n",
-	    t, map, buf, buflen, p, flags);
+	printf("dmamap_load: t=%p map=%p buf=%p len=%#" PRIxBUSSIZE
+	    " p=%p f=%#x\n", t, map, buf, buflen, p, flags);
 #endif	/* DEBUG_DMA */
 
 	if (map->dm_nsegs > 0) {
@@ -642,7 +647,6 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 		}
 		switch (m->m_flags & (M_EXT | M_EXT_CLUSTER | M_EXT_PAGES)) {
 		case M_EXT | M_EXT_CLUSTER:
-			/* XXX KDASSERT */
 			KASSERT(m->m_ext.ext_paddr != M_PADDR_INVALID);
 			paddr = m->m_ext.ext_paddr +
 			    (m->m_data - m->m_ext.ext_buf);
@@ -870,8 +874,9 @@ _bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops,
 	KASSERTMSG((va & PAGE_MASK) == (pa & PAGE_MASK),
 	    "va %#" PRIxVADDR " pa %#" PRIxPADDR, va, pa);
 #if 0
-	printf("sync_segment: va=%#lx pa=%#lx len=%#lx ops=%#x ro=%d\n",
-	    va, pa, len, ops, readonly_p);
+	printf("sync_segment: va=%#" PRIxVADDR
+	    " pa=%#" PRIxPADDR " len=%#" PRIxVSIZE " ops=%#x\n",
+	    va, pa, len, ops);
 #endif
 
 	switch (ops) {
@@ -1095,8 +1100,8 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
 #ifdef DEBUG_DMA
-	printf("dmamap_sync: t=%p map=%p offset=%#lx len=%#lx ops=%#x\n",
-	    t, map, offset, len, ops);
+	printf("dmamap_sync: t=%p map=%p offset=%#" PRIxBUSADDR
+	    " len=%#" PRIxBUSSIZE " ops=%#x\n", t, map, offset, len, ops);
 #endif	/* DEBUG_DMA */
 
 	/*
@@ -1335,7 +1340,9 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	int error, i;
 
 #ifdef DEBUG_DMA
-	printf("dmamem_alloc t=%p size=%#lx align=%#lx boundary=%#lx "
+	printf("dmamem_alloc t=%p size=%#" PRIxBUSSIZE
+	    " align=%#" PRIxBUSSIZE
+	    " boundary=%#" PRIxBUSSIZE " "
 	    "segs=%p nsegs=%#x rsegs=%p flags=%#x\n", t, size, alignment,
 	    boundary, segs, nsegs, rsegs, flags);
 #endif
@@ -1412,8 +1419,8 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	vsize_t align = 0;
 
 #ifdef DEBUG_DMA
-	printf("dmamem_map: t=%p segs=%p nsegs=%#x size=%#lx flags=%#x\n", t,
-	    segs, nsegs, (unsigned long)size, flags);
+	printf("dmamem_map: t=%p segs=%p nsegs=%#x size=%#zx flags=%#x\n", t,
+	    segs, nsegs, size, flags);
 #endif	/* DEBUG_DMA */
 
 #ifdef PMAP_MAP_POOLPAGE
@@ -1511,7 +1518,8 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			bool uncached = (flags & BUS_DMA_COHERENT);
 			bool prefetchable = (flags & BUS_DMA_PREFETCHABLE);
 #ifdef DEBUG_DMA
-			printf("wiring P%#lx to V%#lx\n", pa, va);
+			printf("wiring P%#" PRIxPADDR
+			    " to V%#" PRIxVADDR "\n", pa, va);
 #endif	/* DEBUG_DMA */
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
@@ -1632,14 +1640,13 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	bus_addr_t curaddr;
 	vaddr_t vaddr = (vaddr_t)buf;
 	int error;
-	pmap_t pmap;
 
 #ifdef DEBUG_DMA
-	printf("_bus_dmamap_load_buffer(buf=%p, len=%#lx, flags=%#x)\n",
-	    buf, buflen, flags);
-#endif	/* DEBUG_DMA */
+	printf("_bus_dmamap_load_buffer(buf=%p, len=%#" PRIxBUSSIZE
+	    ", flags=%#x)\n", buf, buflen, flags);
+#endif /* DEBUG_DMA */
 
-	pmap = vm_map_pmap(&vm->vm_map);
+	pmap_t pmap = vm_map_pmap(&vm->vm_map);
 
 	while (buflen > 0) {
 		/*
@@ -1657,7 +1664,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		KASSERT(ok);
 
 		KASSERTMSG((vaddr & PAGE_MASK) == (curaddr & PAGE_MASK),
-		    "va %#lx curaddr %#lx", vaddr, curaddr);
+		    "va %#" PRIxVADDR " curaddr %#" PRIxBUSADDR, vaddr, curaddr);
 
 		/*
 		 * Compute the segment size, and adjust counts.
@@ -1696,7 +1703,10 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	    "invalid boundary %#" PRIxBUSSIZE, boundary);
 
 #ifdef DEBUG_DMA
-	printf("alloc_range: t=%p size=%#lx align=%#lx boundary=%#lx segs=%p nsegs=%#x rsegs=%p flags=%#x lo=%#lx hi=%#lx\n",
+	printf("alloc_range: t=%p size=%#" PRIxBUSSIZE
+	    " align=%#" PRIxBUSSIZE " boundary=%#" PRIxBUSSIZE
+	    " segs=%p nsegs=%#x rsegs=%p flags=%#x"
+	    " lo=%#" PRIxPADDR " hi=%#" PRIxPADDR "\n",
 	    t, size, alignment, boundary, segs, nsegs, rsegs, flags, low, high);
 #endif	/* DEBUG_DMA */
 
@@ -1735,19 +1745,18 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	    VM_PAGE_TO_PHYS(m);
 	segs[curseg].ds_len = PAGE_SIZE;
 #ifdef DEBUG_DMA
-		printf("alloc: page %#lx\n", lastaddr);
+	printf("alloc: page %#" PRIxPADDR "\n", lastaddr);
 #endif	/* DEBUG_DMA */
 	m = TAILQ_NEXT(m, pageq.queue);
 
 	for (; m != NULL; m = TAILQ_NEXT(m, pageq.queue)) {
 		curaddr = VM_PAGE_TO_PHYS(m);
 		KASSERTMSG(low <= curaddr && curaddr < high,
-		    "uvm_pglistalloc returned non-sensical "
-		    "address %#" PRIxPADDR "(low=%#" PRIxPADDR
-		    ", high=%#" PRIxPADDR "\n",
+		    "uvm_pglistalloc returned non-sensicaladdress %#" PRIxPADDR
+		    "(low=%#" PRIxPADDR ", high=%#" PRIxPADDR "\n",
 		    curaddr, low, high);
 #ifdef DEBUG_DMA
-		printf("alloc: page %#lx\n", curaddr);
+		printf("alloc: page %#" PRIxPADDR "\n", curaddr);
 #endif	/* DEBUG_DMA */
 		if (curaddr == lastaddr + PAGE_SIZE
 		    && (lastaddr & boundary) == (curaddr & boundary))
