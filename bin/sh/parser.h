@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.h,v 1.29 2024/07/12 08:35:47 kre Exp $	*/
+/*	$NetBSD: parser.h,v 1.30 2024/10/21 15:57:45 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -49,7 +49,8 @@
 #define	CTLNONL '\212'		/* The \n in a deleted \ \n sequence */
 			/* pure concidence that (CTLNONL & 0x7f) == '\n' */
 #define	CTLCNL	'\213'		/* A $'\n' - newline not counted */
-#define	CTL_LAST '\213'		/* last 'special' character */
+#define	CTLVARMOD '\214'	/* a modifier in a variable expansion */
+#define	CTL_LAST '\214'		/* last 'special' character */
 
 /* variable substitution byte (follows CTLVAR) */
 #define VSTYPE		0x0f	/* type of variable substitution */
@@ -59,7 +60,7 @@
 #define VSPATQ		0x40	/* ensure correct pattern quoting in ${x#pat} */
 #define VSQUOTE	 	0x80	/* inside double quotes--suppress splitting */
 
-/* values of VSTYPE field */
+/* values of VSTYPE field (nb: 0 reserved for "not determined yet") */
 #define VSNORMAL	0x1		/* normal variable:  $var or ${var} */
 #define VSMINUS		0x2		/* ${var-text} */
 #define VSPLUS		0x3		/* ${var+text} */
@@ -70,6 +71,7 @@
 #define VSTRIMRIGHT	0x8		/* ${var%pattern} */
 #define VSTRIMRIGHTMAX 	0x9		/* ${var%%pattern} */
 #define VSLENGTH	0xa		/* ${#var} */
+#define VSUNKNOWN	0xf		/* unknown modifier */
 
 union node *parsecmd(int);
 void fixredir(union node *, const char *, int);
