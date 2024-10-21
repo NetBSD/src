@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.193 2024/08/03 03:05:58 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.194 2024/10/21 15:31:34 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.193 2024/08/03 03:05:58 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.194 2024/10/21 15:31:34 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1223,6 +1223,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	switch (cmdentry.cmdtype) {
 		volatile int saved;
 		struct funcdef * volatile savefunc;
+		const char * volatile savectx;
 
 	case CMDFUNCTION:
 		VXTRACE(DBG_EVAL, ("Shell function%s:  ",vforked?" VF":""),
@@ -1237,6 +1238,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		shellparam.optnext = NULL;
 		INTOFF;
 		savelocalvars = localvars;
+		savectx = currentcontext;
 		localvars = NULL;
 		reffunc(savefunc = cmdentry.u.func);
 		INTON;
@@ -1255,6 +1257,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			localvars = savelocalvars;
 			funclinebase = savefuncline;
 			funclineabs = savefuncabs;
+			currentcontext = savectx;
 			handler = savehandler;
 			longjmp(handler->loc, 1);
 		}
@@ -1266,6 +1269,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			else
 				funclinebase = 0;
 			funclineabs = cmdentry.lineno;
+			currentcontext = argv[0];
 
 			VTRACE(DBG_EVAL,
 			  ("function: node: %d '%s' # %d%s; funclinebase=%d\n",
@@ -1287,6 +1291,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		localvars = savelocalvars;
 		funclinebase = savefuncline;
 		funclineabs = savefuncabs;
+		currentcontext = savectx;
 		freeparam(&shellparam);
 		shellparam = saveparam;
 		handler = savehandler;
