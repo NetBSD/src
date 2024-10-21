@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.48 2024/06/04 20:43:58 riastradh Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.49 2024/10/21 06:47:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.48 2024/06/04 20:43:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.49 2024/10/21 06:47:10 skrll Exp $");
 
 #define _MIPS_BUS_DMA_PRIVATE
 
@@ -541,10 +541,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 	map->dm_nsegs = 0;
 	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
-#ifdef DIAGNOSTIC
-	if ((m0->m_flags & M_PKTHDR) == 0)
-		panic("_bus_dmamap_load_mbuf: no packet header");
-#endif
+	KASSERT(m0->m_flags & M_PKTHDR);
 
 	if (m0->m_pkthdr.len > map->_dm_size)
 		return EINVAL;
