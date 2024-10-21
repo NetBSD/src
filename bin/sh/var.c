@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.86 2024/10/14 08:15:43 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.87 2024/10/21 15:56:44 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.86 2024/10/14 08:15:43 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.87 2024/10/21 15:56:44 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1355,6 +1355,9 @@ find_var(const char *name, struct var ***vppp, int *lenp)
 	len = p - name;
 	if (lenp)
 		*lenp = len;
+
+	if (len == 0)
+		return NULL;
 
 	vpp = &vartab[hashval % VTABSIZE];
 	if (vppp)
