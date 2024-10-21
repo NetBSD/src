@@ -1,4 +1,4 @@
-#	$NetBSD: files.uba,v 1.17 2008/03/11 05:34:01 matt Exp $
+#	$NetBSD: files.uba,v 1.18 2024/10/21 11:28:25 rin Exp $
 #
 # Config file and device description for machine-independent
 # code for devices Digital Equipment Corp. Unibus and Q22 bus.
@@ -33,7 +33,7 @@ attach	uda at uba
 file	dev/qbus/uda.c				uda | mtc
 
 # DELQA-PLUS Turbo mode Ethernet controller
-device	qt: ifnet, ether, arp
+device	qt: ifnet, ether, arp, ifuba
 attach	qt at uba
 file	dev/qbus/if_qt.c			qt
 
