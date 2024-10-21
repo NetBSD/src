@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.145 2024/10/03 20:14:01 rillig Exp $	*/
+/*	$NetBSD: expand.c,v 1.146 2024/10/21 15:57:45 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.145 2024/10/03 20:14:01 rillig Exp $");
+__RCSID("$NetBSD: expand.c,v 1.146 2024/10/21 15:57:45 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -913,12 +913,12 @@ evalvar(const char *p, int flag)
 	varflags = (unsigned char)*p++;
 	subtype = varflags & VSTYPE;
 	var = p;
-	special = !is_name(*p);
+	special = subtype != VSUNKNOWN && !is_name(*p);
 	p = strchr(p, '=') + 1;
 
 	CTRACE(DBG_EXPAND,
 	    ("evalvar \"%.*s\", flag=%#X quotes=%#X vf=%#X subtype=%X\n",
-	    p - var - 1, var, flag, quotes, varflags, subtype));
+	    (int)(p - var - 1), var, flag, quotes, varflags, subtype));
 
  again: /* jump here after setting a variable with ${var=text} */
 	if (varflags & VSLINENO) {
@@ -1105,6 +1105,26 @@ evalvar(const char *p, int flag)
 		}
 		apply_ifs = 0;		/* never executed */
 		break;
+
+	case VSUNKNOWN:
+		VTRACE(DBG_EXPAND,
+	    	   ("evalvar \"%.*s\", unknown [%p %p] \"%.3s\" (%#2x %#2x)\n",
+		    (int)(p - var - 1), var, var, p, p, p[0] & 0xFF, p[1] & 0xFF));
+
+		if ((p - var) <= 1)
+			error("%d: unknown expansion type", line_number);
+		else {
+			if (*p == '#')	/* only VSUNKNOWN as a ${#var:...} */
+				error("%d: ${#%.*s%c..}: unknown modifier",
+				     line_number, (int)(p - var - 1),
+				     var, p[1]&0xFF);
+
+			if (*p == CTLESC)
+				p++;
+			error("%d: ${%.*s%c..}: unknown modifier",
+			    line_number, (int)(p - var - 1), var, (*p & 0xFF));
+		}
+		/* NOTREACHED */
 
 	default:
 		abort();

@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.183 2024/10/03 20:14:01 rillig Exp $	*/
+/*	$NetBSD: parser.c,v 1.184 2024/10/21 15:57:45 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.183 2024/10/03 20:14:01 rillig Exp $");
+__RCSID("$NetBSD: parser.c,v 1.184 2024/10/21 15:57:45 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -2216,7 +2216,7 @@ parsesub: {
 	int typeloc;
 	int flags;
 	const char *p;
-	static const char types[] = "}-+?=";
+	static const char types[] = "}-+?=";	/* see parser.h VSXYZ defs */
 
 	c = pgetc_linecont();
 	VTRACE(DBG_LEXER, ("\"$%c\"(%#.2x)", c&0xFF, c&0x1FF));
@@ -2323,10 +2323,8 @@ parsesub: {
 			c = pgetc_linecont();
 		}
 		else {
-			VTRACE(DBG_LEXER, ("\"$%c(%#.2x)??\n", c&0xFF,c&0x1FF));
- badsub:;
-			cleanup_state_stack(stack);
-			synerror("Bad substitution");
+			VTRACE(DBG_LEXER, ("\"$%c(%#.2x)??", c&0xFF, c&0xFF));
+			subtype = VSUNKNOWN;
 		}
 
 		STPUTC('=', out);
@@ -2338,9 +2336,29 @@ parsesub: {
 				/*FALLTHROUGH*/
 			default:
 				p = strchr(types, c);
-				if (p == NULL)
-					goto badsub;
-				subtype = p - types + VSNORMAL;
+				if (__predict_false(p == NULL)) {
+					subtype = VSUNKNOWN;
+						/*
+						 * keep the unknown modifier
+						 * for the error message.
+						 *
+						 * Note that if we came from
+						 * the case ':' above, that
+						 * is the unknown modifier,
+						 * not the following character
+						 *
+						 * It is not important that
+						 * we keep the remaining word
+						 * intact, it will never be
+						 * used.
+						 */
+					if (flags & VSNUL)
+						/* (ie: lose c) */
+						STPUTC(':', out);
+					else
+						STPUTC(c, out);
+				} else
+					subtype = p - types + VSNORMAL;
 				break;
 			case '%':
 			case '#':
@@ -2357,8 +2375,10 @@ parsesub: {
 				}
 			}
 		} else {
-			if (subtype == VSLENGTH && c != /*{*/ '}')
-				synerror("no modifiers allowed with ${#var}");
+			if (subtype == VSLENGTH && c != /*{*/ '}') {
+				STPUTC('#', out);
+				subtype = VSUNKNOWN;
+			}
 			pungetc();
 		}
 		if (quoted || arinest)
