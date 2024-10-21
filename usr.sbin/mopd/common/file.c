@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.17 2020/10/27 17:16:24 abs Exp $	*/
+/*	$NetBSD: file.c,v 1.18 2024/10/21 05:39:48 kalvisd Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include "port.h"
 #ifndef lint
-__RCSID("$NetBSD: file.c,v 1.17 2020/10/27 17:16:24 abs Exp $");
+__RCSID("$NetBSD: file.c,v 1.18 2024/10/21 05:39:48 kalvisd Exp $");
 #endif
 
 #include "os.h"
@@ -969,7 +969,8 @@ mopFileRead(struct dllist *dlslot, u_char *buf)
 		if (dlslot->e_curpos >= (dlslot->e_sections[sec].s_loff +
 					 dlslot->e_sections[sec].s_fsize +
 					 dlslot->e_sections[sec].s_pad))
-			dlslot->e_cursec++;
+			if (++dlslot->e_cursec >= dlslot->e_nsec)
+				return (0);
 		break;
 
 	case IMAGE_TYPE_AOUT:
