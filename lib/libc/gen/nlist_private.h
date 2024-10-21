@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_private.h,v 1.26 2020/03/30 20:34:11 maya Exp $ */
+/* $NetBSD: nlist_private.h,v 1.27 2024/10/21 06:43:33 skrll Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -61,7 +61,7 @@
 #  define	NLIST_ELF32
 #elif defined(__riscv__)
 #  define	NLIST_ELF32
-#  ifdef __riscv64
+#  ifdef _LP64
 #    define	NLIST_ELF64
 #  endif
 #elif defined(__aarch64__)
