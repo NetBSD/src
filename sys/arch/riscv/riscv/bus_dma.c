@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.7 2024/10/20 15:37:37 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.8 2024/10/21 07:10:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define _RISCV_NEED_BUS_DMA_BOUNCE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.7 2024/10/20 15:37:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.8 2024/10/21 07:10:43 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -1089,8 +1089,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	    len, offset, map->dm_mapsize);
 
 	/*
-	 * For a virtually-indexed write-back cache, we need
-	 * to do the following things:
+	 * For a write-back cache, we need to do the following things:
 	 *
 	 *	PREREAD -- Invalidate the D-cache.  We do this
 	 *	here in case a write-back is required by the back-end.
