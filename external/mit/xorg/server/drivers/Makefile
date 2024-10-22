@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.113 2024/06/22 23:21:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.114 2024/10/22 13:58:16 macallan Exp $
 
 .include <bsd.own.mk>
 
@@ -217,6 +217,7 @@ SUBDIR+= \
 .if ${MACHINE} == "hppa"
 SUBDIR+= \
 	xf86-video-mga \
+	xf86-video-ngle \
 	xf86-video-r128 \
 	xf86-video-wsfb
 .endif	# ${MACHINE} == "hppa"
@@ -329,7 +330,6 @@ SUBDIR+= \
 	xf86-video-suncg6 \
 	xf86-video-sunffb \
 	xf86-video-wsfb
-
 # needs porting for xorg-server 21.1.3
 #	xf86-video-glint
 #	xf86-video-ag10e \
