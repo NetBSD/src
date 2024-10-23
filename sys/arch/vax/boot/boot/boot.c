@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.35 2024/09/30 00:35:49 kalvisd Exp $ */
+/*	$NetBSD: boot.c,v 1.36 2024/10/23 12:47:39 rin Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -320,7 +320,7 @@ loadpcs(void)
 
 	/*
 	 * XXXGCC12
-	 * GCC2 blames pointer access to 0-th page, [0, 0xfff] as
+	 * GCC12 blames pointer access to 0-th page, [0, 0xfff], for
 	 * -Warray-bounds. Just silence as it is harmless.
 	 */
 #pragma GCC diagnostic push
