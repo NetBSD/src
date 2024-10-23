@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.18 2024/10/21 05:39:48 kalvisd Exp $	*/
+/*	$NetBSD: file.c,v 1.19 2024/10/23 00:45:58 kalvisd Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include "port.h"
 #ifndef lint
-__RCSID("$NetBSD: file.c,v 1.18 2024/10/21 05:39:48 kalvisd Exp $");
+__RCSID("$NetBSD: file.c,v 1.19 2024/10/23 00:45:58 kalvisd Exp $");
 #endif
 
 #include "os.h"
@@ -36,7 +36,7 @@ __RCSID("$NetBSD: file.c,v 1.18 2024/10/21 05:39:48 kalvisd Exp $");
 #include <stddef.h>
 
 #ifndef NOAOUT
-# if defined(__NetBSD__) || defined(__OpenBSD__)
+# if defined (HAVE_NBTOOL_CONFIG_H) || defined(__NetBSD__) || defined(__OpenBSD__)
 #  include <sys/exec_aout.h>
 # endif
 # if defined(__bsdi__)
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: file.c,v 1.18 2024/10/21 05:39:48 kalvisd Exp $");
 #endif /* NOAOUT */
 
 #ifndef NOELF
-# if defined(__NetBSD__)
+# if defined (HAVE_NBTOOL_CONFIG_H) || defined(__NetBSD__)
 #  include <sys/exec_elf.h>
 # else
 #  define NOELF

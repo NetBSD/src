@@ -1,4 +1,4 @@
-/*	$NetBSD: mopcopy.c,v 1.12 2022/05/24 06:28:02 andvar Exp $	*/
+/*	$NetBSD: mopcopy.c,v 1.13 2024/10/23 00:45:58 kalvisd Exp $	*/
 
 /* mopcopy - Convert a Unix format kernel into something that
  * can be transferred via MOP.
@@ -49,7 +49,7 @@
 
 #include "port.h"
 #ifndef lint
-__RCSID("$NetBSD: mopcopy.c,v 1.12 2022/05/24 06:28:02 andvar Exp $");
+__RCSID("$NetBSD: mopcopy.c,v 1.13 2024/10/23 00:45:58 kalvisd Exp $");
 #endif
 
 #include "os.h"
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: mopcopy.c,v 1.12 2022/05/24 06:28:02 andvar Exp $");
 #include "mopdef.h"
 #include "file.h"
 #if !defined(NOAOUT)
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined (HAVE_NBTOOL_CONFIG_H) || defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/exec_aout.h>
 #endif
 #if defined(__FreeBSD__)
@@ -76,7 +76,7 @@ __RCSID("$NetBSD: mopcopy.c,v 1.12 2022/05/24 06:28:02 andvar Exp $");
 #endif
 
 #ifndef NOELF
-# if defined(__NetBSD__)
+# if defined (HAVE_NBTOOL_CONFIG_H) || defined(__NetBSD__)
 #  include <sys/exec_elf.h>
 # else
 #  define NOELF
