@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.69 2024/10/12 09:58:38 uwe Exp $
+# $NetBSD: postinstall.in,v 1.70 2024/10/23 10:16:52 rin Exp $
 #
 # Copyright (c) 2002-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1415,7 +1415,6 @@ do_fontconfig()
 10-autohint.conf
 10-no-sub-pixel.conf
 10-sub-pixel-bgr.conf
-10-sub-pixel-rgb.conf
 10-sub-pixel-vbgr.conf
 10-sub-pixel-vrgb.conf
 10-unhinted.conf
