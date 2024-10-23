@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.173 2024/10/06 15:38:11 msaitoh Exp $
+$NetBSD: miidevs,v 1.174 2024/10/23 05:44:10 skrll Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@ oui BROADCOM4			0x18c086	Broadcom Corporation
 oui RENESAS			0x749050	Renesas
 oui INTEL2			0x984fee	Intel
 oui MAXLINEAR			0xac9a96	MaxLinear
+oui MOTORCOMM			0xc82b5e	Motorcomm
 
 /* Unregistered or wrong OUI */
 oui yyREALTEK			0x000004	Realtek
@@ -347,6 +348,9 @@ model MICREL KSZ9031		0x0022 Micrel KSZ9031 10/100/1000 PHY
 model MICREL KSZ9477		0x0023 Micrel KSZ9477 10/100/1000 PHY
 model MICREL KSZ9131		0x0024 Micrel KSZ9131 10/100/1000 PHY
 model MICREL KS8737		0x0032 Micrel KS8737 10/100 PHY
+
+/* Motorcomm */
+model MOTORCOMM YT8531		0x0011 Motorcomm YT8531 Gigabit PHY
 
 /* Myson Technology PHYs */
 model xxMYSON MTD972		0x0000 MTD972 10/100 media interface
