@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.450 2024/09/24 14:25:43 christos Exp $
+#	$NetBSD: bsd.README,v 1.451 2024/10/23 00:45:58 kalvisd Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -650,6 +650,9 @@ TOOL_SUNLABEL		Read or modify a SunOS disk label.  [sunlabel]
 TOOL_TBL		Format tables for groff.  [tbl]
 
 TOOL_UUDECODE		Uudecode a binary file.  [uudecode]
+
+TOOL_VAXMOPCOPY		Creates a MOP image from another executable format.
+			[vax-mopcopy]
 
 TOOL_VGRIND		Grind nice listings of programs.  [vgrind -f]
 
