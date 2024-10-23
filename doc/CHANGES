@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3106 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3107 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -546,6 +546,24 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	x68k: Add SIXEL graphics sequence support.  [isaki 20241005]
 	pkill(1): Add -F option to use a pidfile and -L to ensure it's
 		locked.  Taken from FreeBSD.  [roy 20241007]
+	sh(1): Implement suspend as a builtin.  [kre 20241009]
+	sh(1): Add -b and -nMAX options to the read builtin.  [kre 20241011]
+	evbppc: Improve hardware initialization so the WII kernel can be
+		launched directly from boot2 and does not rely on any other
+		software to setup the hardware.  [jmcneill 20241013]
+	sh(1): Reject NUL characters in shell input.  [kre 20241014]
+	sh(1): Add an -r option to display version information.  [kre 20241014]
+	amdsmn(4): Add support AMD family F1Ah model 0xh "Turin".
+		[msaitoh 20241017]
+	amdzentemp(4): Add support for Siena, Turin Classic, Turin Dense,
+		Strix Point.  [msaitoh 20241017]
 	libarchive: Import libarchive-3.7.7. [christos 20241017]
 	sdmmc(4): Add support for caches found in Application Class 2 (A2)
 		capable SD memory cards. [jmcneill 20241018]
+	wscons(4): Add WSDISPLAYIO_GFONT ioctl for obtaining information
+		about the current font.  [mlelstv 20241020]
+	hppa: Add a dedicated X.Org driver for HP's NGLE family of
+		graphics devices, supporting acceleration on the
+		Visualize EG.  [macallan 20241022]
+	mcommphy(4): Add support for YT85[23]1, found on a VisionFive2 board.
+		[skrll 20241023]
