@@ -1,4 +1,4 @@
-/* $NetBSD: jh7100.dtsi,v 1.1 2024/10/24 09:46:37 skrll Exp $ */
+/* $NetBSD: jh7100.dtsi,v 1.2 2024/10/24 12:03:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -28,6 +28,61 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "../../../external/gpl2/dts/dist/include/dt-bindings/clock/starfive-jh7100-audio.h"
+
+/ {
+	soc {
+		audclk: clock-controller@10480000 {
+			compatible = "starfive,jh7100-audclk";
+			reg = <0x0 0x10480000 0x0 0x10000>;
+			clocks = <&clkgen JH7100_CLK_AUDIO_SRC>,
+				 <&clkgen JH7100_CLK_AUDIO_12288>,
+				 <&clkgen JH7100_CLK_DOM7AHB_BUS>;
+			clock-names = "audio_src", "audio_12288", "dom7ahb_bus";
+			#clock-cells = <1>;
+		};
+
+		audrst: reset-controller@10490000 {
+			compatible = "starfive,jh7100-audrst";
+			reg = <0x0 0x10490000 0x0 0x10000>;
+			#reset-cells = <1>;
+		};
+
+		sysaudio: syscon@104a0000 {
+			compatible = "starfive,jh7100-sysaudio", "syscon";
+			reg = <0x0 0x104a0000 0x0 0x10000>;
+		};
+
+		usb3: usb@104c0000 {
+			compatible = "starfive,jh7100-usb";
+			ranges = <0x0 0x0 0x104c0000 0x100000>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			clocks = <&audclk JH7100_AUDCLK_USB_LPM>,
+			         <&audclk JH7100_AUDCLK_USB_STB>,
+			         <&clkgen JH7100_CLK_USB_AXI>,
+			         <&clkgen JH7100_CLK_USBNOC_AXI>;
+			clock-names = "lpm", "stb", "axi", "nocaxi";
+			resets = <&rstgen JH7100_RSTN_USB_AXI>,
+			         <&rstgen JH7100_RSTN_USBNOC_AXI>;
+			reset-names = "axi", "nocaxi";
+			starfive,syscon = <&sysaudio>;
+			status = "disabled";
+
+			usb_cdns3: usb@0 {
+				compatible = "cdns,usb3";
+				reg = <0x00000 0x10000>,
+				      <0x10000 0x10000>,
+				      <0x20000 0x10000>;
+				reg-names = "otg", "xhci", "dev";
+				interrupts = <44>, <52>, <43>;
+				interrupt-names = "host", "peripheral", "otg";
+			};
+		};
+	};
+};
+
 
 &sdio0 {
 	max-frequency = <10000000>;
