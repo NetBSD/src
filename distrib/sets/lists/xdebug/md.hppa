@@ -1,8 +1,9 @@
-# $NetBSD: md.hppa,v 1.6 2024/07/11 20:41:10 riastradh Exp $
+# $NetBSD: md.hppa,v 1.7 2024/10/24 05:22:54 rin Exp $
 #
 ./usr/libdata/debug/usr/X11R7/bin/Xorg.debug		xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug		xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.2.debug	xdebug-xf86-input-keyboard-debug	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ngle_drv.so.0.debug	xdebug-xf86-video-ngle-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mga_drv.so.2.debug	xdebug-xf86-video-mga-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mouse_drv.so.1.debug	xdebug-xf86-input-mouse-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/r128_drv.so.6.debug	xdebug-xf86-video-r128-debug	xorg,debug
