@@ -1,4 +1,4 @@
-.\" $NetBSD: mcommphy.4,v 1.2 2022/01/06 22:10:39 wiz Exp $
+.\" $NetBSD: mcommphy.4,v 1.3 2024/10/24 06:48:52 skrll Exp $
 .\"
 .\" Copyright (c) 2022 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,19 +27,20 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 6, 2022
+.Dd October 24, 2024
 .Dt MCOMMPHY 4
 .Os
 .Sh NAME
 .Nm mcommphy
-.Nd Motorcomm YT8511C / YT8511H Ethernet Transceiver
+.Nd Motorcomm YT8511 / YT8531 family Gigabit Ethernet PHYs
 .Sh SYNOPSIS
 .Cd "mcommphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for the Motorcomm YT8511C / YT8511H Integrated
-10/100/1000 Gigabit Ethernet Transceiver.
+10/100/1000 Gigabit Ethernet Transceiver, and the Motorcomm YT8531(D)H /
+YT8531(D)C / YT8531P 10/100/1000 Gigabit Ethernet Transceiver.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
@@ -50,6 +51,9 @@ driver provides support for the Motorcomm YT8511C / YT8511H Integrated
 The
 .Nm
 device driver was written by
-.An Jared D. McNeill .
+.An Jared D. McNeill ,
+and updated by
+.An Nick Hudson
+with YT8531 support.
 It first appeared in
 .Nx 10.0 .
