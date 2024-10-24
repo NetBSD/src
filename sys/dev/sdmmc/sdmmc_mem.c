@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.76 2024/10/18 11:03:52 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.77 2024/10/24 10:50:31 skrll Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.76 2024/10/18 11:03:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.77 2024/10/24 10:50:31 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -904,19 +904,18 @@ skipswitchfuncs:
 	/* update bus clock */
 	if (sc->sc_busclk > sf->csd.tran_speed)
 		sc->sc_busclk = sf->csd.tran_speed;
-	if (sc->sc_busclk == bus_clock && sc->sc_busddr == ddr)
-		return 0;
+	if (sc->sc_busclk != bus_clock || sc->sc_busddr != ddr) {
+		/* change bus clock */
+		error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, sc->sc_busclk,
+		    ddr);
+		if (error) {
+			aprint_error_dev(sc->sc_dev, "can't change bus clock\n");
+			return error;
+		}
 
-	/* change bus clock */
-	error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, sc->sc_busclk,
-	    ddr);
-	if (error) {
-		aprint_error_dev(sc->sc_dev, "can't change bus clock\n");
-		return error;
+		sc->sc_transfer_mode = switch_group0_functions[best_func].name;
+		sc->sc_busddr = ddr;
 	}
-
-	sc->sc_transfer_mode = switch_group0_functions[best_func].name;
-	sc->sc_busddr = ddr;
 
 	/* get card status */
 	error = sdmmc_mem_send_ssr(sc, sf, &status);
