@@ -1,4 +1,4 @@
-/* $NetBSD: jh7100-beaglev-starlight.dts,v 1.2 2024/10/24 12:03:16 skrll Exp $ */
+/* $NetBSD: jh7100-common.dtsi,v 1.1 2024/10/24 12:03:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -29,8 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "../../../external/gpl2/dts/dist/arch/riscv/boot/dts/starfive/jh7100-beaglev-starlight.dts"
+&usb3 {
+	status = "okay";
+};
 
-#include "jh7100.dtsi"
-#include "jh7100-common.dtsi"
-
+&usb_cdns3 {
+	dr_mode = "host";
+};
