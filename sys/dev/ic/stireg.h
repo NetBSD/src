@@ -1,4 +1,4 @@
-/*	$NetBSD: stireg.h,v 1.14 2024/09/04 10:45:50 macallan Exp $	*/
+/*	$NetBSD: stireg.h,v 1.15 2024/10/25 09:26:00 macallan Exp $	*/
 
 /*	$OpenBSD: stireg.h,v 1.14 2015/04/05 23:25:57 miod Exp $	*/
 
@@ -646,21 +646,20 @@ STI_DEP(util);
 	(((F)<<31)|((C)<<27)|((S)<<24)|((A)<<21)|((J)<<16)|((B)<<12)|(I))
 	/* FCCC CSSS AAAJ JJJJ BBBB IIII IIII IIII */
 
-#define IBOvals(R,M,X,S,D,L,B,F)					\
-	(((R)<<8)|((M)<<16)|((X)<<24)|((S)<<29)|((D)<<28)|((L)<<31)|((B)<<1)|(F))
-	/* LSSD XXXX MMMM MMMM RRRR RRRR ???? ??BF */
-
-/* B = 1 -> background transparency for masked fills */
-
+/* F */
 #define	    IndexedDcd	0	/* Pixel data is indexed (pseudo) color */
 #define	    FractDcd	1	/* Pixel data is Fractional 8-8-8 */
+/* C */
 #define	    Otc04	2	/* Pixels in each longword transfer (4) */
 #define	    Otc32	5	/* Pixels in each longword transfer (32) */
 #define	    Otc24	7	/* NGLE uses this for 24bit blits */
+/* S */
 #define	    Ots08	3	/* Each pixel is size (8)d transfer (1) */
 #define	    OtsIndirect	6	/* Each bit goes through FG/BG color(8) */
+/* A */
 #define	    AddrByte	3	/* byte access? Used by NGLE for direct fb */
 #define	    AddrLong	5	/* FB address is Long aligned (pixel) */
+/* B */
 #define	    BINapp0I	0x0	/* Application Buffer 0, Indexed */
 #define	    BINapp1I	0x1	/* Application Buffer 1, Indexed */
 #define	    BINovly	0x2	/* 8 bit overlay */
@@ -668,15 +667,32 @@ STI_DEP(util);
 #define	    BINapp0F8	0xa	/* Application Buffer 0, Fractional 8-8-8 */
 #define	    BINattr	0xd	/* Attribute Bitmap */
 #define	    BINcmap	0xf	/* colour map(s) */
+/* other buffers are unknown */
+/* J - 'BA just point' - function unknown */
+/* I - 'BA index base' - function unknown */
+
+#define IBOvals(R,M,X,S,D,L,B,F)					\
+	(((R)<<8)|((M)<<16)|((X)<<24)|((S)<<29)|((D)<<28)|((L)<<31)|((B)<<1)|(F))
+	/* LSSD XXXX MMMM MMMM RRRR RRRR ???? ??BF */
+
+/* R is a standard X11 ROP, no idea if the other bits areused for anything  */
 #define	    RopClr 	0x0
 #define	    RopSrc 	0x3
 #define	    RopInv 	0xc
 #define	    RopSet 	0xf
+/* M: 'mask addr offset' - function unknown */
+/* X */
 #define	    BitmapExtent08  3	/* Each write hits ( 8) bits in depth */
 #define	    BitmapExtent32  5	/* Each write hits (32) bits in depth */
+/* S: 'static reg' flag, NGLE sets it for blits, function is unknown but
+      we get occasional garbage in 8bit blits without it  */
+/* D */
 #define	    DataDynamic	    0	/* Data register reloaded by direct access */
+/* L */
 #define	    MaskDynamic	    1	/* Mask register reloaded by direct access */
 #define	    MaskOtc	    0	/* Mask contains Object Count valid bits */
+/* B = 1 -> background transparency for masked fills */
+/* F probably the same for foreground */
 
 #define	NGLE_REG_1		0x000118	/* Artist LUT blt ctrl */
 #define	NGLE_REG_28		0x000420	/* HCRX video bus access */
