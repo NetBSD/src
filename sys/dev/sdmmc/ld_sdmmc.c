@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.42.4.1 2024/02/03 12:39:17 martin Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.42.4.2 2024/10/26 15:26:43 martin Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.42.4.1 2024/02/03 12:39:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.42.4.2 2024/10/26 15:26:43 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -322,16 +322,21 @@ ld_sdmmc_doattach(void *arg)
 	struct ld_sdmmc_softc *sc = (struct ld_sdmmc_softc *)arg;
 	struct ld_softc *ld = &sc->sc_ld;
 	struct sdmmc_softc *ssc = device_private(device_parent(ld->sc_dv));
-	const u_int cache_size = sc->sc_sf->ext_csd.cache_size;
+	const u_int emmc_cache_size = sc->sc_sf->ext_csd.cache_size;
+	const bool sd_cache = sc->sc_sf->ssr.cache;
 	char buf[sizeof("9999 KB")];
 
 	ldattach(ld, BUFQ_DISK_DEFAULT_STRAT);
 	aprint_normal_dev(ld->sc_dv, "%d-bit width,", sc->sc_sf->width);
 	if (ssc->sc_transfer_mode != NULL)
 		aprint_normal(" %s,", ssc->sc_transfer_mode);
-	if (cache_size > 0) {
-		format_bytes(buf, sizeof(buf), cache_size);
+	if (emmc_cache_size > 0) {
+		format_bytes(buf, sizeof(buf), emmc_cache_size);
 		aprint_normal(" %s cache%s,", buf,
+		    ISSET(sc->sc_sf->flags, SFF_CACHE_ENABLED) ? "" :
+		    " (disabled)");
+	} else if (sd_cache) {
+		aprint_normal(" Cache%s,",
 		    ISSET(sc->sc_sf->flags, SFF_CACHE_ENABLED) ? "" :
 		    " (disabled)");
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.74.8.1 2023/04/30 10:58:07 martin Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.74.8.2 2024/10/26 15:26:43 martin Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.74.8.1 2023/04/30 10:58:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.74.8.2 2024/10/26 15:26:43 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -83,7 +83,15 @@ static int sdmmc_mem_send_ssr(struct sdmmc_softc *, struct sdmmc_function *,
     sdmmc_bitfield512_t *);
 static int sdmmc_mem_decode_ssr(struct sdmmc_softc *, struct sdmmc_function *,
     sdmmc_bitfield512_t *);
+static int sdmmc_mem_decode_general_info(struct sdmmc_softc *,
+    struct sdmmc_function * ,const uint8_t *);
+static int sdmmc_mem_pef_enable_cache(struct sdmmc_softc *,
+    struct sdmmc_function *);
 static int sdmmc_mem_send_cxd_data(struct sdmmc_softc *, int, void *, size_t);
+static int sdmmc_mem_read_extr_single(struct sdmmc_softc *, struct sdmmc_function *,
+    uint8_t, uint8_t, uint32_t, uint16_t, void *);
+static int sdmmc_mem_write_extr_single(struct sdmmc_softc *, struct sdmmc_function *,
+    uint8_t, uint8_t, uint32_t, uint8_t, bool);
 static int sdmmc_set_bus_width(struct sdmmc_function *, int);
 static int sdmmc_mem_sd_switch(struct sdmmc_function *, int, int, int, sdmmc_bitfield512_t *);
 static int sdmmc_mem_mmc_switch(struct sdmmc_function *, uint8_t, uint8_t,
@@ -926,6 +934,27 @@ skipswitchfuncs:
 		return error;
 	}
 
+	/* detect extended functions */
+	if (!ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE) && sf->scr.support_cmd48) {
+		uint8_t ginfo[512];
+		error = sdmmc_mem_read_extr_single(sc, sf, SD_EXTR_MIO_MEM, 0, 0,
+		    sizeof(ginfo), ginfo);
+		if (error == 0) {
+			sdmmc_mem_decode_general_info(sc, sf, ginfo);
+		}
+	}
+
+	/* enable card cache if supported */
+	if (sf->ssr.cache && sf->ext_sd.pef.valid) {
+		error = sdmmc_mem_pef_enable_cache(sc, sf);
+		if (error != 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "can't enable cache: %d", error);
+		} else {
+			SET(sf->flags, SFF_CACHE_ENABLED);
+		}
+	}
+
 	return 0;
 }
 
@@ -1308,11 +1337,20 @@ sdmmc_mem_decode_scr(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 
 	ver = SCR_STRUCTURE(resp);
 	sf->scr.sd_spec = SCR_SD_SPEC(resp);
+	if (sf->scr.sd_spec == 2) {
+		sf->scr.sd_spec3 = SCR_SD_SPEC3(resp);
+		if (sf->scr.sd_spec3) {
+			sf->scr.sd_spec4 = SCR_SD_SPEC4(resp);
+		}
+	}
 	sf->scr.bus_width = SCR_SD_BUS_WIDTHS(resp);
+	if (sf->scr.sd_spec4) {
+		sf->scr.support_cmd48 = SCR_CMD_SUPPORT_CMD48(resp);
+	}
 
-	DPRINTF(("%s: sdmmc_mem_decode_scr: %08x%08x ver=%d, spec=%d, bus width=%d\n",
+	DPRINTF(("%s: sdmmc_mem_decode_scr: %08x%08x ver=%d, spec=%d,%d,%d, bus width=%d\n",
 	    SDMMCDEVNAME(sc), resp[1], resp[0],
-	    ver, sf->scr.sd_spec, sf->scr.bus_width));
+	    ver, sf->scr.sd_spec, sf->scr.sd_spec3, sf->scr.sd_spec4, sf->scr.bus_width));
 
 	if (ver != 0 && ver != 1) {
 		DPRINTF(("%s: unknown structure version: %d\n",
@@ -1413,6 +1451,7 @@ sdmmc_mem_decode_ssr(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 	const int uhs_speed_grade = SSR_UHS_SPEED_GRADE(ssr);
 	const int video_speed_class = SSR_VIDEO_SPEED_CLASS(ssr);
 	const int app_perf_class = SSR_APP_PERF_CLASS(ssr);
+	const uint64_t perf_enhance = SSR_PERFORMANCE_ENHANCE(ssr);
 
 	switch (speed_class) {
 	case SSR_SPEED_CLASS_0:	speed_class_val = 0; break;
@@ -1427,6 +1466,10 @@ sdmmc_mem_decode_ssr(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 	case SSR_DAT_BUS_WIDTH_1: bus_width_val = 1; break;
 	case SSR_DAT_BUS_WIDTH_4: bus_width_val = 4; break;
 	default: bus_width_val = -1;
+	}
+
+	if (ISSET(perf_enhance, SSR_PERFORMANCE_ENHANCE_CACHE)) {
+		sf->ssr.cache = true;
 	}
 
 	/*
@@ -1445,7 +1488,99 @@ sdmmc_mem_decode_ssr(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 		printf(", V%d", video_speed_class);
 	if (app_perf_class)
 		printf(", A%d", app_perf_class);
+	if (ISSET(perf_enhance, SSR_PERFORMANCE_ENHANCE_CACHE))
+		printf(", Cache");
+	if (ISSET(perf_enhance, SSR_PERFORMANCE_ENHANCE_HOST_MAINT|
+				SSR_PERFORMANCE_ENHANCE_CARD_MAINT)) {
+		printf(", %s self-maintenance",
+		       perf_enhance == SSR_PERFORMANCE_ENHANCE_HOST_MAINT ? "Host" :
+		       perf_enhance == SSR_PERFORMANCE_ENHANCE_CARD_MAINT ? "Card" :
+		       "Host/Card");
+	}
 	printf("\n");
+
+	return 0;
+}
+
+static int
+sdmmc_mem_decode_general_info(struct sdmmc_softc *sc, struct sdmmc_function *sf,
+    const uint8_t *ginfo)
+{
+	uint16_t len = SD_GENERAL_INFO_HDR_LENGTH(ginfo);
+	unsigned num_ext = SD_GENERAL_INFO_HDR_NUM_EXT(ginfo);
+	unsigned index = SD_GENERAL_INFO_EXT_FIRST;
+	unsigned ext;
+
+	DPRINTF(("%s: sdmmc_mem_decode_general_info: rev=%u, len=%u, num_ext=%u\n",
+		SDMMCDEVNAME(sc), SD_GENERAL_INFO_HDR_REVISION(ginfo),
+		len, num_ext));
+
+	/*
+	 * General Information Length can span more than one page, but for
+	 * now just parse the first one.
+	 */
+	len = uimin(SDMMC_SECTOR_SIZE, len);
+
+	for (ext = 0; ext < num_ext && index < len && index != 0; ext++) {
+		uint16_t sfc = SD_EXTENSION_INFO_SFC(ginfo, index);
+		unsigned num_reg = SD_EXTENSION_INFO_NUM_REG(ginfo, index);
+		uint32_t reg;
+
+		if (num_reg == 0) {
+			goto next_ext;
+		}
+		reg = SD_EXTENSION_INFO_REG(ginfo, index, 0);
+
+		DPRINTF(("%s: sdmmc_mem_decode_general_info: sfc=0x%04x, reg=0x%08x\n",
+			SDMMCDEVNAME(sc), sfc, reg));
+
+		switch (sfc) {
+		case SD_SFC_PEF:
+			sf->ext_sd.pef.valid = true;
+			sf->ext_sd.pef.fno =
+			    SD_EXTENSION_INFO_REG_FNO(reg);
+			sf->ext_sd.pef.start_addr = 
+			    SD_EXTENSION_INFO_REG_START_ADDR(reg);
+			break;
+		}
+
+next_ext:
+		index = SD_EXTENSION_INFO_NEXT(ginfo, index);
+	}
+
+	return 0;
+}
+
+static int
+sdmmc_mem_pef_enable_cache(struct sdmmc_softc *sc,
+    struct sdmmc_function *sf)
+{
+	uint8_t data[512];
+	int error;
+
+	error = sdmmc_mem_read_extr_single(sc, sf, SD_EXTR_MIO_MEM,
+	    sf->ext_sd.pef.fno, sf->ext_sd.pef.start_addr,
+	    sizeof(data), data);
+	if (error != 0) {
+		return error;
+	}
+
+	if (SD_PEF_CACHE_ENABLE(data)) {
+		/* Cache is already enabled. */
+		return 0;
+	}
+
+	error = sdmmc_mem_write_extr_single(sc, sf, SD_EXTR_MIO_MEM,
+	    sf->ext_sd.pef.fno,
+	    sf->ext_sd.pef.start_addr + SD_PEF_CACHE_ENABLE_OFFSET, 1,
+	    false);
+	if (error != 0) {
+		device_printf(sc->sc_dev,
+		    "setting cache enable failed: %d\n", error);
+		return error;
+	}
+
+	device_printf(sc->sc_dev, "cache enabled\n");
 
 	return 0;
 }
@@ -1520,6 +1655,168 @@ dmamem_free:
 			free(ptr, M_DEVBUF);
 		}
 	}
+	return error;
+}
+
+static int
+sdmmc_mem_read_extr_single(struct sdmmc_softc *sc, struct sdmmc_function *sf,
+    uint8_t mio, uint8_t fno, uint32_t addr, uint16_t datalen, void *data)
+{
+	struct sdmmc_command cmd;
+	bus_dma_segment_t ds[1];
+	void *ptr = NULL;
+	int rseg;
+	int error = 0;
+
+	if (ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
+		error = bus_dmamem_alloc(sc->sc_dmat, datalen, PAGE_SIZE, 0, ds,
+		    1, &rseg, BUS_DMA_NOWAIT);
+		if (error)
+			goto out;
+		error = bus_dmamem_map(sc->sc_dmat, ds, 1, datalen, &ptr,
+		    BUS_DMA_NOWAIT);
+		if (error)
+			goto dmamem_free;
+		error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmap, ptr, datalen,
+		    NULL, BUS_DMA_NOWAIT|BUS_DMA_STREAMING|BUS_DMA_READ);
+		if (error)
+			goto dmamem_unmap;
+
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap, 0, datalen,
+		    BUS_DMASYNC_PREREAD);
+	} else {
+		ptr = data;
+	}
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.c_data = ptr;
+	cmd.c_datalen = datalen;
+	cmd.c_blklen = SDMMC_SECTOR_SIZE;
+	cmd.c_opcode = SD_READ_EXTR_SINGLE;
+	cmd.c_arg = __SHIFTIN((uint32_t)mio, SD_EXTR_MIO) |
+		    __SHIFTIN((uint32_t)fno, SD_EXTR_FNO) |
+		    __SHIFTIN(addr, SD_EXTR_ADDR) |
+		    __SHIFTIN(datalen - 1, SD_EXTR_LEN);
+	cmd.c_flags = SCF_CMD_ADTC | SCF_CMD_READ | SCF_RSP_R1;
+	if (ISSET(sc->sc_caps, SMC_CAPS_DMA))
+		cmd.c_dmamap = sc->sc_dmap;
+
+	error = sdmmc_mmc_command(sc, &cmd);
+	if (error == 0) {
+		if (ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap, 0, datalen,
+			    BUS_DMASYNC_POSTREAD);
+			memcpy(data, ptr, datalen);
+		}
+#ifdef SDMMC_DEBUG
+		sdmmc_dump_data("EXT", data, datalen);
+#endif
+	}
+
+out:
+	if (ptr != NULL) {
+		if (ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
+			bus_dmamap_unload(sc->sc_dmat, sc->sc_dmap);
+dmamem_unmap:
+			bus_dmamem_unmap(sc->sc_dmat, ptr, datalen);
+dmamem_free:
+			bus_dmamem_free(sc->sc_dmat, ds, rseg);
+		}
+	}
+	return error;
+}
+
+static int
+sdmmc_mem_write_extr_single(struct sdmmc_softc *sc, struct sdmmc_function *sf,
+    uint8_t mio, uint8_t fno, uint32_t addr, uint8_t value, bool poll)
+{
+	struct sdmmc_command cmd;
+	bus_dma_segment_t ds[1];
+	uint8_t buf[512];
+	uint16_t buflen = sizeof(buf);
+	void *ptr = NULL;
+	int rseg;
+	int error = 0;
+
+	if (ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
+		error = bus_dmamem_alloc(sc->sc_dmat, buflen, PAGE_SIZE, 0, ds,
+		    1, &rseg, BUS_DMA_NOWAIT);
+		if (error)
+			goto out;
+		error = bus_dmamem_map(sc->sc_dmat, ds, 1, buflen, &ptr,
+		    BUS_DMA_NOWAIT);
+		if (error)
+			goto dmamem_free;
+		error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmap, ptr, buflen,
+		    NULL, BUS_DMA_NOWAIT|BUS_DMA_STREAMING|BUS_DMA_WRITE);
+		if (error)
+			goto dmamem_unmap;
+
+		memset(ptr, 0, buflen);
+		*(uint8_t *)ptr = value;
+
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap, 0, buflen,
+		    BUS_DMASYNC_PREWRITE);
+	} else {
+		buf[0] = value;
+		ptr = buf;
+	}
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.c_data = ptr;
+	cmd.c_datalen = buflen;
+	cmd.c_blklen = SDMMC_SECTOR_SIZE;
+	cmd.c_opcode = SD_WRITE_EXTR_SINGLE;
+	cmd.c_arg = __SHIFTIN((uint32_t)mio, SD_EXTR_MIO) |
+		    __SHIFTIN((uint32_t)fno, SD_EXTR_FNO) |
+		    __SHIFTIN(addr, SD_EXTR_ADDR) |
+		    __SHIFTIN(0, SD_EXTR_LEN);
+	cmd.c_flags = SCF_CMD_ADTC | SCF_RSP_R1;
+	if (ISSET(sc->sc_caps, SMC_CAPS_DMA))
+		cmd.c_dmamap = sc->sc_dmap;
+
+	error = sdmmc_mmc_command(sc, &cmd);
+	if (error == 0) {
+		if (ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap, 0, buflen,
+			    BUS_DMASYNC_POSTWRITE);
+		}
+	}
+
+out:
+	if (ptr != NULL) {
+		if (ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
+			bus_dmamap_unload(sc->sc_dmat, sc->sc_dmap);
+dmamem_unmap:
+			bus_dmamem_unmap(sc->sc_dmat, ptr, buflen);
+dmamem_free:
+			bus_dmamem_free(sc->sc_dmat, ds, rseg);
+		}
+	}
+
+	if (!error) {
+		do {
+			memset(&cmd, 0, sizeof(cmd));
+			cmd.c_opcode = MMC_SEND_STATUS;
+			cmd.c_arg = MMC_ARG_RCA(sf->rca);
+			cmd.c_flags = SCF_CMD_AC | SCF_RSP_R1 | SCF_RSP_SPI_R2 |
+				      SCF_TOUT_OK;
+			if (poll) {
+				cmd.c_flags |= SCF_POLL;
+			}
+			error = sdmmc_mmc_command(sc, &cmd);
+			if (error)
+				break;
+			/* XXX time out */
+		} while (!ISSET(MMC_R1(cmd.c_resp), MMC_R1_READY_FOR_DATA));
+
+		if (error) {
+			aprint_error_dev(sc->sc_dev,
+			    "error waiting for data ready after ext write : %d\n",
+			    error);
+		}
+	}
+
 	return error;
 }
 
@@ -2259,15 +2556,33 @@ sdmmc_mem_flush_cache(struct sdmmc_function *sf, bool poll)
 	SDMMC_LOCK(sc);
 	mutex_enter(&sc->sc_mtx);
 
-	error = sdmmc_mem_mmc_switch(sf,
-	    EXT_CSD_CMD_SET_NORMAL, EXT_CSD_FLUSH_CACHE,
-	    EXT_CSD_FLUSH_CACHE_FLUSH, poll);
+	if (ISSET(sc->sc_flags, SMF_SD_MODE)) {
+		KASSERT(sf->ext_sd.pef.valid);
+		error = sdmmc_mem_write_extr_single(sc, sf, SD_EXTR_MIO_MEM,
+		    sf->ext_sd.pef.fno,
+		    sf->ext_sd.pef.start_addr + SD_PEF_CACHE_FLUSH_OFFSET, 1,
+		    poll);
+		if (error == 0) {
+			uint8_t data[512];
+
+			error = sdmmc_mem_read_extr_single(sc, sf, SD_EXTR_MIO_MEM,
+			    sf->ext_sd.pef.fno, sf->ext_sd.pef.start_addr,
+			    sizeof(data), data);
+			if (error == 0 && SD_PEF_CACHE_FLUSH(data) != 0) {
+				device_printf(sc->sc_dev, "cache flush failed\n");
+			}
+		}
+	} else {
+		error = sdmmc_mem_mmc_switch(sf,
+		    EXT_CSD_CMD_SET_NORMAL, EXT_CSD_FLUSH_CACHE,
+		    EXT_CSD_FLUSH_CACHE_FLUSH, poll);
+	}
 
 	mutex_exit(&sc->sc_mtx);
 	SDMMC_UNLOCK(sc);
 
 #ifdef SDMMC_DEBUG
-	device_printf(sc->sc_dev, "mmc flush cache error %d\n", error);
+	device_printf(sc->sc_dev, "flush cache error %d\n", error);
 #endif
 
 	return error;

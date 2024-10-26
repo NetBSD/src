@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.36 2021/03/13 23:22:44 mlelstv Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.36.18.1 2024/10/26 15:26:43 martin Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -66,8 +66,26 @@ struct sdmmc_cid {
 
 struct sdmmc_scr {
 	int	sd_spec;
+	int	sd_spec3;
+	int	sd_spec4;
 	int	bus_width;
+	bool	support_cmd48;
 };
+
+struct sdmmc_ssr {
+	bool	cache;		/* cache supported */
+};
+
+struct sdmmc_ext_regset {
+	bool		valid;
+	uint8_t		fno;
+	uint32_t	start_addr;
+};
+
+struct sdmmc_ext_sd {
+	struct sdmmc_ext_regset	pef;	/* Performance Enhancement */
+};
+
 
 typedef uint32_t sdmmc_response[4];
 
@@ -201,6 +219,8 @@ struct sdmmc_function {
 	sdmmc_response raw_cid;		/* temp. storage for decoding */
 	uint32_t raw_scr[2];
 	struct sdmmc_scr scr;		/* decoded SCR value */
+	struct sdmmc_ssr ssr;		/* decoded SSR value */
+	struct sdmmc_ext_sd ext_sd;	/* decoded SD extension value */
 
 	void *bbuf;			/* bounce buffer */
 	bus_dmamap_t bbuf_dmap;		/* DMA map for bounce buffer */

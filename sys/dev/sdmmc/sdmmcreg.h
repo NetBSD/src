@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.34 2018/04/19 21:50:09 christos Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.34.34.1 2024/10/26 15:26:43 martin Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -63,6 +63,8 @@
 #define SD_VOLTAGE_SWITCH		11	/* R1 */
 #define SD_ERASE_WR_BLK_START		32	/* R1 */
 #define SD_ERASE_WR_BLK_END		33	/* R1 */
+#define SD_READ_EXTR_SINGLE		48	/* R1 */
+#define SD_WRITE_EXTR_SINGLE		49	/* R1 */
 
 /* SD application commands */			/* response type */
 #define SD_APP_SET_BUS_WIDTH		6	/* R1 */
@@ -70,6 +72,15 @@
 #define SD_APP_SET_WR_BLK_ERASE_COUNT	23	/* R1 */
 #define SD_APP_OP_COND			41	/* R3 */
 #define SD_APP_SEND_SCR			51	/* R1 */
+
+/* SD extended register argument fields */
+#define SD_EXTR_MIO			(0x1U << 31)
+#define SD_EXTR_MIO_MEM			0
+#define SD_EXTR_MIO_IO			1
+#define SD_EXTR_FNO			(0xfU << 27)
+#define SD_EXTR_MW			(1U << 26)	/* write only */
+#define SD_EXTR_ADDR			(0x1ffff << 9)
+#define SD_EXTR_LEN			0x1ff
 
 /* SD erase arguments */
 #define SD_ERASE_DISCARD		0x00000001
@@ -355,7 +366,9 @@
 #define  SCR_SD_BUS_WIDTHS_4BIT		(1 << 2) /* 4bit (DAT0-3) */
 #define SCR_SD_SPEC3(scr)		MMC_RSP_BITS((scr), 47, 1)
 #define SCR_EX_SECURITY(scr)		MMC_RSP_BITS((scr), 43, 4)
+#define SCR_SD_SPEC4(scr)		MMC_RSP_BITS((scr), 42, 1)
 #define SCR_RESERVED(scr)		MMC_RSP_BITS((scr), 34, 9)
+#define SCR_CMD_SUPPORT_CMD48(scr)	MMC_RSP_BITS((scr), 34, 1)
 #define SCR_CMD_SUPPORT_CMD23(scr)	MMC_RSP_BITS((scr), 33, 1)
 #define SCR_CMD_SUPPORT_CMD20(scr)	MMC_RSP_BITS((scr), 32, 1)
 #define SCR_RESERVED2(scr)		MMC_RSP_BITS((scr), 0, 32)
@@ -393,6 +406,10 @@
 #define  SSR_APP_PERF_CLASS_A1		1
 #define  SSR_APP_PERF_CLASS_A2		2
 #define SSR_PERFORMANCE_ENHANCE(resp)	__bitfield((resp), 328, 8)
+#define  SSR_PERFORMANCE_ENHANCE_CACHE		__BIT(0)
+#define  SSR_PERFORMANCE_ENHANCE_HOST_MAINT	__BIT(1)
+#define  SSR_PERFORMANCE_ENHANCE_CARD_MAINT	__BIT(2)
+#define  SSR_PERFORMANCE_ENHANCE_COMMAND_QUEUE	__BITS(7,3)
 #define SSR_DISCARD_SUPPORT(resp)	__bitfield((resp), 313, 1)
 #define SSR_FULE_SUPPORT(resp)		__bitfield((resp), 312, 1)
 
@@ -405,6 +422,29 @@
 #define SD_ACCESS_MODE_SDR50	2
 #define SD_ACCESS_MODE_SDR104	3
 #define SD_ACCESS_MODE_DDR50	4
+
+/* SD extension data */
+#define SD_GENERAL_INFO_HDR_REVISION(data)	le16dec(&(data)[0])
+#define SD_GENERAL_INFO_HDR_LENGTH(data)	le16dec(&(data)[2])
+#define SD_GENERAL_INFO_HDR_NUM_EXT(data)	((data)[4])
+#define SD_GENERAL_INFO_EXT_FIRST		16
+#define SD_EXTENSION_INFO_SFC(data, index)	le16dec(&(data)[(index) + 0])
+#define SD_EXTENSION_INFO_NEXT(data, index)	le16dec(&(data)[(index) + 40])
+#define	SD_EXTENSION_INFO_NUM_REG(data, index)	((data)[(index) + 42])
+#define SD_EXTENSION_INFO_REG(data, index, num)	le32dec(&(data)[(index) + 44 + (num) * 4])
+
+#define SD_EXTENSION_INFO_REG_FNO(addr)		(((addr) >> 18) & 0xf)
+#define SD_EXTENSION_INFO_REG_START_ADDR(addr)	((addr) & 0x1ffff)
+
+/* SD extension standard function codes */
+#define SD_SFC_PEF	0x0002
+
+/* Performance Enhancement Function */
+#define SD_PEF_CACHE_SUPPORT(data)		((data)[4] & 0x01)
+#define SD_PEF_CACHE_ENABLE(data)		((data)[260] & 0x01)
+#define SD_PEF_CACHE_FLUSH(data)		((data)[261] & 0x01)
+#define SD_PEF_CACHE_ENABLE_OFFSET		260
+#define SD_PEF_CACHE_FLUSH_OFFSET		261
 
 /* This assumes the response fields are in host byte order in 32-bit units.  */
 #define MMC_RSP_BITS(resp, start, len)	__bitfield((resp), (start)-8, (len))
