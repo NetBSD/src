@@ -1,0 +1,264 @@
+#! /bin/bash
+#
+#	Copyright (c) 2020-2022 Apple Inc. All rights reserved.
+#
+
+declare -r version=1.1
+declare -r script=${BASH_SOURCE[0]}
+declare -r rcodesURL='https://www.iana.org/assignments/dns-parameters/dns-parameters-6.csv'
+
+#============================================================================================================================
+
+PrintHelp()
+{
+	echo ""
+	echo "Usage: $( basename "${script}" ) [options]"
+	echo ""
+	echo "Options:"
+	echo "    -h  Display script usage."
+	echo "    -V  Display version of this script and exit."
+	echo ""
+	echo "This script writes C functions to convert DNS RCODE values to strings and vice versa to stdout"
+	echo "based on the latest DNS RCODE data available at"
+	echo ""
+	echo "    ${rcodesURL}"
+	echo ""
+}
+
+#============================================================================================================================
+
+ErrQuit()
+{
+	echo "error: $*" 1>&2
+	exit 1
+}
+
+#============================================================================================================================
+
+StripLeadingTrailingWhitespace()
+{
+	sed 's/^[[:space:]]*//;s/[[:space:]]*$//'
+}
+
+#============================================================================================================================
+
+GetNamesAndValues()
+{
+	shopt -s nocasematch
+	while IFS=',' read value name others; do
+		name=$( StripLeadingTrailingWhitespace <<< "${name}" )
+		[[ ${name} =~ ^unassigned$ ]] && continue
+		
+		value=$( StripLeadingTrailingWhitespace <<< "${value}" )
+		[[ ${value} =~ ^[0-9]+$ ]] || continue
+		[ "${value}" -le 65535 ] || continue # Currently, RCODEs can be up to 16-bits in size.
+		
+		# The value 65535 is reserved according to <https://datatracker.ietf.org/doc/html/rfc6895#section-2.3>.
+		# However, the name in the CSV file is "Reserved, can be allocated by Standards Action". For simplicity, we just
+		# use the name "Reserved".
+		
+		if [ "${value}" -eq 65535 ]; then
+			name='Reserved'
+		fi
+		echo "${name},${value}"
+	done
+	shopt -u nocasematch
+}
+
+#============================================================================================================================
+
+RCodeMnemonicToEnum()
+{
+	name="${1//[^A-Za-z0-9_]/_}" # Only allow alphanumeric and underscore characters.
+	printf "kDNSRCode_${name}"
+}
+
+#============================================================================================================================
+
+PrintRCodeEnums()
+{
+	local -r inputFile=${1}
+	printf "typedef enum\n"
+	printf "{\n"
+	local sep=""
+	< "${inputFile}" sort --field-separator=, --key=2,2 --numeric-sort --unique |
+	while IFS=',' read name value; do
+		printf "%b" "${sep}"
+		local enum=$( RCodeMnemonicToEnum "${name}" )
+		printf "\t%-20s= %d" "${enum}" "${value}"
+		sep=",\n"
+	done
+	printf "\n"
+	printf "\t\n"
+	printf "}\tDNSRCode;\n"
+}
+
+#============================================================================================================================
+
+PrintValueToStringElseIf()
+{
+	local -r first=${1}
+	local -r last=${2}
+	[ "${first}" -le "${last}" ] || ErrQuit "${first} > ${last}"
+	shift 2
+	local stringArray=( "$@" )
+	
+	if [ "${last}" -ne "${first}" ]; then
+		printf "\telse if( ( inValue >= ${first} ) && ( inValue <= ${last} ) )\n"
+		local -r arrayVarName="sNames_${first}_${last}"
+	else
+		printf "\telse if( inValue == ${first} )\n"
+		local -r arrayVarName="sNames_${first}"
+	fi
+	printf "\t{\n"
+	printf "\t\tstatic const char * const\t\t${arrayVarName}[] =\n"
+	printf "\t\t{\n"
+	local value=${first}
+	for string in "${stringArray[@]}"; do
+		printf "\t\t\t%-15s // %3d\n" "\"${string}\"," "${value}"
+		value=$(( value + 1 ))
+	done
+	local -r stringCount=$(( value - first ))
+	local -r expectedCount=$(( last - first + 1 ))
+	[ "${stringCount}" -eq "${expectedCount}" ] || ErrQuit "${stringCount} != ${expectedCount}"
+	printf "\t\t};\n"
+	printf "\t\tstring = ${arrayVarName}[ inValue - ${first} ];\n"
+	printf "\t}\n"
+}
+
+#============================================================================================================================
+
+PrintValueToStringFunction()
+{
+	local -r inputFile=${1}
+	printf "const char *\tDNSRCodeToString( const int inValue )\n"
+	printf "{\n"
+	printf "\tswitch( inValue )\n"
+	printf "\t{\n"
+	< "${inputFile}" sort --field-separator=, --key=2,2 --numeric-sort --unique |
+	{
+		local stringArray=()
+		while IFS=',' read name value; do
+		    local enum=$( RCodeMnemonicToEnum "${name}" )
+			printf "\t\t%-28s%s\n" "case ${enum}:" "return( \"${name}\" );"
+		done
+	}
+	printf "\t\t%-28sreturn( NULL );\n" "default:"
+	printf "\t}\n"
+	printf "}\n"
+}
+
+#============================================================================================================================
+
+PrintStringToValueFunction()
+{
+	local -r inputFile=${1}
+	printf "#include <stdlib.h>\n"
+	printf "\n"
+	printf "typedef struct\n"
+	printf "{\n"
+	printf "\tconst char *\t\tname;\n"
+	printf "\tint\t\t\t\t\tvalue;\n"
+	printf "\t\n"
+	printf "}\t_DNSRCodeTableEntry;\n"
+	printf "\n"
+	printf "static int\t_DNSRCodeFromStringCmp( const void *inKey, const void *inElement );\n"
+	printf "\n"
+	printf "int\tDNSRCodeFromString( const char * const inString )\n"
+	printf "{\n"
+	printf "\t// The name-value table is sorted by name in ascending lexicographical order to allow going from name to\n"
+	printf "\t// value in logarithmic time via a binary search.\n"
+	printf "\t\n"
+	printf "\tstatic const _DNSRCodeTableEntry\t\tsTable[] =\n"
+	printf "\t{\n"
+	
+	local sep=""
+	< "${inputFile}" sort --field-separator=, --key=1,1 --ignore-case --unique |
+	while IFS=',' read name value; do
+		printf "%b" "${sep}"
+		local enum=$( RCodeMnemonicToEnum "${name}" )
+		printf "\t\t%-16s%-20s}" "{ \"${name}\"," "${enum}"
+		sep=",\n"
+	done
+	printf "\n"
+	printf "\t};\n"
+	printf "\tconst _DNSRCodeTableEntry *\t\t\tentry;\n"
+	printf "\t\n"
+	printf "\tentry = (_DNSRCodeTableEntry *) bsearch( inString, sTable, sizeof( sTable ) / sizeof( sTable[ 0 ] ),\n"
+	printf "\t\tsizeof( sTable[ 0 ] ), _DNSRCodeFromStringCmp );\n"
+	printf "\treturn( entry ? entry->value : -1 );\n"
+	printf "}\n"
+	printf "\n"
+	printf "static int\t_DNSRCodeFromStringCmp( const void * const inKey, const void * const inElement )\n"
+	printf "{\n"
+	printf "\tconst _DNSRCodeTableEntry * const\t\tentry = (const _DNSRCodeTableEntry *) inElement;\n"
+	printf "\treturn( strcasecmp( (const char *) inKey, entry->name ) );\n"
+	printf "}\n"
+}
+
+#============================================================================================================================
+
+ExitHandler()
+{
+	if [ -d "${tempDir}" ]; then
+		rm -fr "${tempDir}"
+	fi
+}
+
+#============================================================================================================================
+
+PrintAutoGenNote()
+{
+	printf "// This code was autogenerated on $( date -u '+%Y-%m-%d' ) by $( basename ${script} ) version ${version}\n"
+	printf "// Data source URL: ${rcodesURL}\n"
+	printf "\n"
+}
+
+#============================================================================================================================
+
+main()
+{
+	while getopts ":hO:V" option; do
+		case "${option}" in
+			h)
+				PrintHelp
+				exit 0
+				;;
+			V)
+				echo "$( basename "${script}" ) version ${version}"
+				exit 0
+				;;
+			:)
+				ErrQuit "option '${OPTARG}' requires an argument."
+				;;
+			*)
+				ErrQuit "unknown option '${OPTARG}'."
+				;;
+		esac
+	done
+	
+	[ "${OPTIND}" -gt "$#" ] || ErrQuit "unexpected argument \"${!OPTIND}\"."
+	
+	trap ExitHandler EXIT
+	tempDir=$( mktemp -d ) || ErrQuit "Failed to make temporary directory."
+	declare -r originalRCodesFile="${tempDir}/rcodesOriginal.csv"
+	curl --output "${originalRCodesFile}" "${rcodesURL}" || ErrQuit "Failed to download CSV file."
+	
+	declare -r rcodesFile="${tempDir}/rcodes.csv"
+	< "${originalRCodesFile}" GetNamesAndValues > "${rcodesFile}"
+	
+	declare -r tempFile="${tempDir}/temp.csv"
+	< "${rcodesFile}" sort --field-separator=, --key=2,2 --unique --numeric-sort > "${tempFile}"
+	< "${tempFile}" sort --field-separator=, --key=1,1 --unique --ignore-case > "${rcodesFile}"
+	
+	PrintAutoGenNote
+	PrintRCodeEnums "${rcodesFile}"
+	printf "\n"
+	PrintAutoGenNote
+	PrintValueToStringFunction "${rcodesFile}"
+	printf "\n"
+	PrintAutoGenNote
+	PrintStringToValueFunction "${rcodesFile}"
+}
+
+main "$@"

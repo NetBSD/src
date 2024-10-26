@@ -1,0 +1,285 @@
+#! /bin/bash
+#
+#	Copyright (c) 2019-2020 Apple Inc. All rights reserved.
+#
+
+declare -r version=1.4
+declare -r script=${BASH_SOURCE[0]}
+declare -r recordTypesURL='https://www.iana.org/assignments/dns-parameters/dns-parameters-4.csv'
+
+#============================================================================================================================
+
+PrintHelp()
+{
+	echo ""
+	echo "Usage: $( basename "${script}" ) [options]"
+	echo ""
+	echo "Options:"
+	echo "    -O '<name>,<value>' Specifies a record name-value pair override. Can be used more than once."
+	echo "    -h                  Display script usage."
+	echo "    -V                  Display version of this script and exit."
+	echo ""
+	echo "This script writes C functions to convert DNS resource record type values to strings and vice versa to stdout"
+	echo "based on the latest DNS resource record type data available at"
+	echo ""
+	echo "    ${recordTypesURL}"
+	echo ""
+}
+
+#============================================================================================================================
+
+ErrQuit()
+{
+	echo "error: $*" 1>&2
+	exit 1
+}
+
+#============================================================================================================================
+
+StripLeadingTrailingWhitespace()
+{
+	sed 's/^[[:space:]]*//;s/[[:space:]]*$//'
+}
+
+#============================================================================================================================
+
+GetNamesAndValues()
+{
+	local -r isOverride=${1}
+	shopt -s nocasematch
+	while IFS=',' read name value others; do
+		name=$( StripLeadingTrailingWhitespace <<< "${name}" )
+		[[ ${name} =~ ^unassigned$ ]] && continue
+		
+		value=$( StripLeadingTrailingWhitespace <<< "${value}" )
+		[[ ${value} =~ ^[0-9]+$ ]] || continue
+		[ "${value}" -le 65535 ] || continue
+
+		if [ "${value}" -eq 255 ]; then
+			name=ANY
+		fi
+		echo "${name},${value},${isOverride}"
+	done
+	shopt -u nocasematch
+}
+
+#============================================================================================================================
+
+RecordTypeMnemonicToEnum()
+{
+	name="${1//[^A-Za-z0-9_]/_}" # Only allow alphanumeric and underscore characters.
+	printf "kDNSRecordType_${name}"
+}
+
+PrintRecordTypesEnum()
+{
+	local -r inputFile=${1}
+	printf "typedef enum\n"
+	printf "{\n"
+	< "${inputFile}" sort --field-separator=, --key=2,2 --numeric-sort --unique |
+	while IFS=',' read name value override; do
+		local enum=$( RecordTypeMnemonicToEnum "${name}" )
+		printf "\t%-28s= %d," "${enum}" "${value}"
+		if [ "${override}" -ne 0 ]; then
+			printf " // OVERRIDE"
+		fi
+		printf "\n"
+	done
+	printf "\t\n"
+	printf "}\tDNSRecordType;\n"
+}
+
+#============================================================================================================================
+
+PrintValueToStringElseIf()
+{
+	local -r first=${1}
+	local -r last=${2}
+	[ "${first}" -le "${last}" ] || ErrQuit "${first} > ${last}"
+	shift 2
+	local stringArray=( "$@" )
+	
+	if [ "${last}" -ne "${first}" ]; then
+		printf "\telse if( ( inValue >= ${first} ) && ( inValue <= ${last} ) )\n"
+		local -r arrayVarName="sNames_${first}_${last}"
+	else
+		printf "\telse if( inValue == ${first} )\n"
+		local -r arrayVarName="sNames_${first}"
+	fi
+	printf "\t{\n"
+	printf "\t\tstatic const char * const\t\t${arrayVarName}[] =\n"
+	printf "\t\t{\n"
+	local value=${first}
+	for string in "${stringArray[@]}"; do
+		printf "\t\t\t%-15s // %3d\n" "\"${string}\"," "${value}"
+		value=$(( value + 1 ))
+	done
+	local -r stringCount=$(( value - first ))
+	local -r expectedCount=$(( last - first + 1 ))
+	[ "${stringCount}" -eq "${expectedCount}" ] || ErrQuit "${stringCount} != ${expectedCount}"
+	printf "\t\t};\n"
+	printf "\t\tstring = ${arrayVarName}[ inValue - ${first} ];\n"
+	printf "\t}\n"
+}
+
+#============================================================================================================================
+
+PrintValueToStringFunction()
+{
+	local -r inputFile=${1}
+	printf "const char *\tDNSRecordTypeValueToString( const int inValue )\n"
+	printf "{\n"
+	printf "\tswitch( inValue )\n"
+	printf "\t{\n"
+	< "${inputFile}" sort --field-separator=, --key=2,2 --numeric-sort --unique |
+	{
+		local stringArray=()
+		while IFS=',' read name value override; do
+		    local enum=$( RecordTypeMnemonicToEnum "${name}" )
+			if [ "${override}" -eq 0 ]; then
+				printf "\t\t%-32s%s" "case ${enum}:" "return( \"${name}\" );"
+			else
+				printf "\t\t%-32s%-24s // OVERRIDE" "case ${enum}:" "return( \"${name}\" );"
+			fi
+			printf "\n"
+		done
+	}
+	printf "\t}\n"
+	printf "\treturn( NULL );\n"
+	printf "}\n"
+}
+
+#============================================================================================================================
+
+PrintStringToValueFunction()
+{
+	local -r inputFile=${1}
+	printf "#include <stdlib.h>\n"
+	printf "\n"
+	printf "typedef struct\n"
+	printf "{\n"
+	printf "\tconst char *\t\tname;\n"
+	printf "\tuint16_t\t\t\tvalue;\n"
+	printf "\t\n"
+	printf "}\t_DNSRecordTypeItem;\n"
+	printf "\n"
+	printf "static int\t_DNSRecordTypeStringToValueCmp( const void *inKey, const void *inElement );\n"
+	printf "\n"
+	printf "uint16_t\tDNSRecordTypeStringToValue( const char * const inString )\n"
+	printf "{\n"
+	printf "\t// The name-value table is sorted by name in ascending lexicographical order to allow going from name to\n"
+	printf "\t// value in logarithmic time via a binary search.\n"
+	printf "\t\n"
+	printf "\tstatic const _DNSRecordTypeItem\t\tsTable[] =\n"
+	printf "\t{\n"
+	
+	< "${inputFile}" sort --field-separator=, --key=1,1 --ignore-case --unique |
+	while IFS=',' read name value override; do
+		local enum=$( RecordTypeMnemonicToEnum "${name}" )
+		printf "\t\t%-16s%-28s }," "{ \"${name}\"," "${enum}"
+		if [ "${override}" -ne 0 ]; then
+			printf " // OVERRIDE"
+		fi
+		printf "\n"
+	done
+	printf "\t};\n"
+	printf "\tconst _DNSRecordTypeItem *\t\t\titem;\n"
+	printf "\t\n"
+	printf "\titem = (_DNSRecordTypeItem *) bsearch( inString, sTable, sizeof( sTable ) / sizeof( sTable[ 0 ] ),\n"
+	printf "\t\tsizeof( sTable[ 0 ] ), _DNSRecordTypeStringToValueCmp );\n"
+	printf "\treturn( item ? item->value : 0 );\n"
+	printf "}\n"
+	printf "\n"
+	printf "static int\t_DNSRecordTypeStringToValueCmp( const void * const inKey, const void * const inElement )\n"
+	printf "{\n"
+	printf "\tconst _DNSRecordTypeItem * const\t\titem = (const _DNSRecordTypeItem *) inElement;\n"
+	printf "\treturn( strcasecmp( (const char *) inKey, item->name ) );\n"
+	printf "}\n"
+}
+
+#============================================================================================================================
+
+ExitHandler()
+{
+	if [ -d "${tempDir}" ]; then
+		rm -fr "${tempDir}"
+	fi
+}
+
+#============================================================================================================================
+
+PrintAutoGenNote()
+{
+	printf "// This code was autogenerated on $( date -u '+%Y-%m-%d' ) by $( basename ${script} ) version ${version}\n"
+	printf "// Data source URL: ${recordTypesURL}\n"
+	printf "// Overrides: "
+	if [ "${#}" -gt 0 ]; then
+		local separator=""
+		for override in "${@}"; do
+			printf "%s'%s'" "${separator}" "${override}"
+			separator=", "
+		done
+		printf "\n"
+	else
+		printf "none\n"
+	fi
+	printf "\n"
+}
+
+#============================================================================================================================
+
+main()
+{
+	local -a overrides
+	while getopts ":hO:V" option; do
+		case "${option}" in
+			h)
+				PrintHelp
+				exit 0
+				;;
+			O)
+				overrides+=( "${OPTARG}" )
+				;;
+			V)
+				echo "$( basename "${script}" ) version ${version}"
+				exit 0
+				;;
+			:)
+				ErrQuit "option '${OPTARG}' requires an argument."
+				;;
+			*)
+				ErrQuit "unknown option '${OPTARG}'."
+				;;
+		esac
+	done
+	
+	[ "${OPTIND}" -gt "$#" ] || ErrQuit "unexpected argument \"${!OPTIND}\"."
+	
+	trap ExitHandler EXIT
+	tempDir=$( mktemp -d ) || ErrQuit "Failed to make temporary directory."
+	declare -r originalRecordTypesFile="${tempDir}/recordTypesOriginal.csv"
+	curl --output "${originalRecordTypesFile}" "${recordTypesURL}" || ErrQuit "Failed to download CSV file."
+	
+	declare -r overridesFile="${tempDir}/overrides.csv"
+	for override in "${overrides[@]}"; do
+		echo "${override}"
+	done | GetNamesAndValues 1 > "${overridesFile}"
+	
+	declare -r recordTypesFile="${tempDir}/recordTypes.csv"
+	< "${originalRecordTypesFile}" GetNamesAndValues 0 > "${recordTypesFile}"
+	
+	declare -r tempFile="${tempDir}/temp.csv"
+	cat "${overridesFile}" "${recordTypesFile}" | sort --field-separator=, --key=2,2 --unique --numeric-sort > "${tempFile}"
+	cat "${overridesFile}" "${tempFile}" | sort --field-separator=, --key=1,1 --unique --ignore-case > "${recordTypesFile}"
+	
+	PrintAutoGenNote "${overrides[@]}"
+	PrintRecordTypesEnum "${recordTypesFile}"
+	printf "\n"
+	PrintAutoGenNote "${overrides[@]}"
+	PrintValueToStringFunction "${recordTypesFile}"
+	printf "\n"
+	PrintAutoGenNote "${overrides[@]}"
+	PrintStringToValueFunction "${recordTypesFile}"
+}
+
+main "$@"

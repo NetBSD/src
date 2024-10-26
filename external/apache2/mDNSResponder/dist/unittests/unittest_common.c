@@ -37,7 +37,7 @@ mDNSexport mStatus init_mdns_environment(mDNSBool enableLogging)
 // This function sets up the minimum environement to run a unit test. It
 // initializes logging and timenow.  This is the call to use if your
 // unit test does not use interfaces.
-mDNSexport mStatus init_mdns_storage()
+mDNSexport mStatus init_mdns_storage(void)
 {
 	mDNS *m = &mDNSStorage;
 
@@ -52,7 +52,7 @@ mDNSexport mStatus init_mdns_storage()
 	return mStatus_NoError;
 }
 
-mDNSlocal void init_client_request(request_state* req, char *msgbuf, size_t msgSize, uint32_t op)
+mDNSlocal void init_client_request(request_state* req, const uint8_t *msgbuf, uint32_t msgSize, uint32_t op)
 {
 	// Simulate read_msg behavior since unit test does not open a socket
 	memset(req, 0, sizeof(request_state));
@@ -76,13 +76,13 @@ mDNSlocal void init_client_request(request_state* req, char *msgbuf, size_t msgS
 
 // This function calls the mDNSResponder handle_client_request() API.  It initializes
 // the request and query data structures.
-mDNSexport mStatus start_client_request(request_state* req, char *msgbuf, size_t msgsz, uint32_t op, UDPSocket* socket)
+mDNSexport mStatus start_client_request(request_state* req, const uint8_t *msgbuf, uint32_t msgsz, uint32_t op, UDPSocket* socket)
 {
 	// Process the unit test's client request
 	init_client_request(req, msgbuf, msgsz, op);
 
 	mStatus result = handle_client_request_ut((void*)req);
-	DNSQuestion* q = &req->u.queryrecord.q;
+	DNSQuestion* q = &req->queryrecord->op.q;
 	q->LocalSocket = socket;
 	return result;
 }
@@ -94,7 +94,7 @@ mDNSexport void receive_response(const request_state* req, DNSMessage *msg, size
 	mDNSAddr srcaddr;
 	mDNSIPPort srcport, dstport;
 	const mDNSu8 * end;
-	DNSQuestion *q = (DNSQuestion *)&req->u.queryrecord.q;
+	DNSQuestion *q = (DNSQuestion *)&req->queryrecord->op.q;
 	UInt8* data = (UInt8*)msg;
 
 	// Used same values for DNS server as specified during init of unit test
@@ -155,3 +155,71 @@ mDNSexport void get_ip(const char *const name, struct sockaddr_storage *result)
 	if (aiList) freeaddrinfo(aiList);
 }
 
+// The AddDNSServer_ut function adds a dns server to mDNSResponder's list.
+mDNSexport mStatus AddDNSServerScoped_ut(mDNSInterfaceID interfaceID, ScopeType scoped)
+{
+    mDNS *m = &mDNSStorage;
+    m->timenow = 0;
+    mDNS_Lock(m);
+    domainname  d;
+    mDNSAddr    addr;
+    mDNSIPPort  port;
+    mDNSs32     serviceID      = 0;
+    mDNSu32     timeout        = dns_server_timeout;
+    mDNSBool    cellIntf       = 0;
+    mDNSBool    isExpensive    = 0;
+    mDNSBool    isConstrained  = 0;
+    mDNSBool    isCLAT46       = mDNSfalse;
+    mDNSu32     resGroupID     = dns_server_resGroupID;
+    mDNSBool    reqA           = mDNStrue;
+    mDNSBool    reqAAAA        = mDNStrue;
+    mDNSBool    reqDO          = mDNSfalse;
+    d.c[0]                     = 0;
+    addr.type                  = mDNSAddrType_IPv4;
+    addr.ip.v4.NotAnInteger    = dns_server_ipv4.NotAnInteger;
+    port.NotAnInteger          = client_resp_src_port;
+    mDNS_AddDNSServer(m, &d, interfaceID, serviceID, &addr, port, scoped, timeout,
+                      cellIntf, isExpensive, isConstrained, isCLAT46, resGroupID,
+                      reqA, reqAAAA, reqDO);
+    mDNS_Unlock(m);
+    return mStatus_NoError;
+}
+
+mDNSexport mStatus AddDNSServer_ut(void)
+{
+    return AddDNSServerScoped_ut(primary_interfaceID, kScopeNone);
+}
+
+mDNSexport mStatus  force_uDNS_SetupDNSConfig_ut(mDNS *const m)
+{
+    m->p->LastConfigGeneration = 0;
+    return uDNS_SetupDNSConfig(m);
+}
+
+mDNSexport mStatus verify_cache_addr_order_for_domain_ut(mDNS *const m, mDNSu8* octet, mDNSu32 count, const domainname *const name)
+{
+    mStatus result = mStatus_NoError;
+    const CacheGroup *cg = CacheGroupForName(m, DomainNameHashValue(name), name);
+    if (cg)
+    {
+        mDNSu32 i;
+        CacheRecord **rp = (CacheRecord **)&cg->members;
+        for (i = 0 ; *rp && i < count ; i++ )
+        {
+            if ((*rp)->resrec.rdata->u.ipv4.b[3] != octet[i])
+            {
+                LogInfo ("Octet %d compare failed %d != %d", i, (*rp)->resrec.rdata->u.ipv4.b[3], octet[i]);
+                break;
+            }
+            rp = &(*rp)->next;
+        }
+        if (i != count) result = mStatus_Invalid;
+    }
+    else
+    {
+        LogInfo ("Cache group not found");
+        result = mStatus_Invalid;
+    }
+
+    return result;
+}
