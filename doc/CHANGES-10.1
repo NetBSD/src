@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.59 2024/10/16 14:54:52 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.60 2024/10/26 16:07:00 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -2550,4 +2550,42 @@ sys/conf/newvers_stand.sh			1.11
 	sys/conf/newvers_stand.sh: PR 58220: use TOOL_AWK instead
 	of the host system's awk.
 	[riastradh, ticket #984]
+
+sys/dev/sdmmc/ld_sdmmc.c			1.44
+sys/dev/sdmmc/sdmmc_mem.c			1.76
+sys/dev/sdmmc/sdmmcreg.h			1.35
+sys/dev/sdmmc/sdmmcvar.h			1.37
+
+	sdmmc: Add support for SD card caches.
+	[jmcneill, ticket #985]
+
+sys/arch/evbppc/wii/machdep.c			1.8
+sys/arch/powerpc/powerpc/clock.c		1.19
+
+	Improve delay() accuracy on Nintendo Wii.
+	[jmcneill, ticket #986]
+
+sys/compat/netbsd32/netbsd32_compat_80.c	1.7,1.8 (patch)
+
+	compat_netbsd32_80: add missing _90 dependency.
+	[rin, ticket #987]
+
+sys/compat/netbsd32/netbsd32_ioctl.c		1.121
+sys/compat/netbsd32/netbsd32_ioctl.h		1.80
+
+	COMPAT_NETBSD32: PR 58235: add support for SIOCGIFDATA and
+	SIOCZIFDATA ioctls.
+	[rin, ticket #988]
+
+sys/compat/netbsd32/netbsd32_compat_16.c	1.5,1.6
+sys/compat/netbsd32/netbsd32_signal.c		1.54
+
+	COMPAT_NETBSD32: fixes for signal handling.
+	[rin, ticket #989]
+
+sys/crypto/cprng_fast/cprng_fast.c		1.20
+
+	cprng_fast(9): PR 58575: revert to asynchronous seeding in softint.
+	This should address deadlocks and LOCKDEBUG crashes.
+	[riastradh, ticket #990]
 
