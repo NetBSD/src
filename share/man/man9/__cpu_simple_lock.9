@@ -1,4 +1,4 @@
-.\"	$NetBSD: __cpu_simple_lock.9,v 1.1 2022/02/12 17:10:20 riastradh Exp $
+.\"	$NetBSD: __cpu_simple_lock.9,v 1.2 2024/10/26 03:05:06 riastradh Exp $
 .\"
 .\" Copyright (c) 2022 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 12, 2022
+.Dd October 25, 2024
 .Dt __CPU_SIMPLE_LOCK 9
 .Os
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -37,6 +37,8 @@
 .\"
 .Ft void
 .Fn __cpu_simple_lock_init "__cpu_simple_lock_t *lock"
+.\"
+.Vt #define __SIMPLELOCK_UNLOCKED   ...
 .\"
 .Ft void
 .Fn __cpu_simple_lock "__cpu_simple_lock_t *lock"
@@ -95,6 +97,22 @@ contention.
 Unless you know what you are doing, you should use
 .Xr mutex 9
 instead.
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh INITIALIZATION
+The macro
+.Dv __SIMPLELOCK_UNLOCKED
+expands to an initializer for the type
+.Vt __cpu_simple_lock_t :
+.Dl "__cpu_simple_lock_t lock = __SIMPLELOCK_UNLOCKED;"
+.Pp
+A
+.Vt __cpu_simple_lock_t
+object can also be initialized with
+.Fn __cpu_simple_lock_init .
+.Pp
+No actions are needed to destroy a
+.Vt __cpu_simple_lock_t
+object.
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh FUNCTIONS
 .Bl -tag -width abcd
