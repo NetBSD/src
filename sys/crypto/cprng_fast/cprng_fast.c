@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng_fast.c,v 1.18.4.1 2023/08/11 14:35:25 martin Exp $	*/
+/*	$NetBSD: cprng_fast.c,v 1.18.4.2 2024/10/26 15:59:53 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.18.4.1 2023/08/11 14:35:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.18.4.2 2024/10/26 15:59:53 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -39,9 +39,9 @@ __KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.18.4.1 2023/08/11 14:35:25 martin E
 #include <sys/cpu.h>
 #include <sys/entropy.h>
 #include <sys/evcnt.h>
+#include <sys/intr.h>
 #include <sys/kmem.h>
 #include <sys/percpu.h>
-#include <sys/pserialize.h>
 
 #include <crypto/chacha/chacha.h>
 
@@ -58,7 +58,8 @@ struct cprng_fast {
 };
 
 static void	cprng_fast_init_cpu(void *, void *, struct cpu_info *);
-static void	cprng_fast_reseed(struct cprng_fast **, unsigned);
+static void	cprng_fast_schedule_reseed(struct cprng_fast *);
+static void	cprng_fast_intr(void *);
 
 static void	cprng_fast_seed(struct cprng_fast *, const void *);
 static void	cprng_fast_buf(struct cprng_fast *, void *, unsigned);
@@ -67,6 +68,7 @@ static void	cprng_fast_buf_short(void *, size_t);
 static void	cprng_fast_buf_long(void *, size_t);
 
 static percpu_t	*cprng_fast_percpu	__read_mostly;
+static void	*cprng_fast_softint	__read_mostly;
 
 void
 cprng_fast_init(void)
@@ -74,14 +76,20 @@ cprng_fast_init(void)
 
 	cprng_fast_percpu = percpu_create(sizeof(struct cprng_fast),
 	    cprng_fast_init_cpu, NULL, NULL);
+	cprng_fast_softint = softint_establish(SOFTINT_SERIAL|SOFTINT_MPSAFE,
+	    &cprng_fast_intr, NULL);
 }
 
 static void
 cprng_fast_init_cpu(void *p, void *arg __unused, struct cpu_info *ci)
 {
 	struct cprng_fast *const cprng = p;
+	uint8_t seed[CPRNG_FAST_SEED_BYTES];
 
-	cprng->epoch = 0;
+	cprng->epoch = entropy_epoch();
+	cprng_strong(kern_cprng, seed, sizeof seed, 0);
+	cprng_fast_seed(cprng, seed);
+	(void)explicit_memset(seed, 0, sizeof seed);
 
 	cprng->reseed_evcnt = kmem_alloc(sizeof(*cprng->reseed_evcnt),
 	    KM_SLEEP);
@@ -93,21 +101,13 @@ static int
 cprng_fast_get(struct cprng_fast **cprngp)
 {
 	struct cprng_fast *cprng;
-	unsigned epoch;
 	int s;
 
-	KASSERT(!cpu_intr_p());
-	KASSERT(pserialize_not_in_read_section());
-
 	*cprngp = cprng = percpu_getref(cprng_fast_percpu);
-	s = splsoftserial();
+	s = splvm();
 
-	epoch = entropy_epoch();
-	if (__predict_false(cprng->epoch != epoch)) {
-		splx(s);
-		cprng_fast_reseed(cprngp, epoch);
-		s = splsoftserial();
-	}
+	if (__predict_false(cprng->epoch != entropy_epoch()))
+		cprng_fast_schedule_reseed(cprng);
 
 	return s;
 }
@@ -123,31 +123,29 @@ cprng_fast_put(struct cprng_fast *cprng, int s)
 }
 
 static void
-cprng_fast_reseed(struct cprng_fast **cprngp, unsigned epoch)
+cprng_fast_schedule_reseed(struct cprng_fast *cprng __unused)
 {
+
+	softint_schedule(cprng_fast_softint);
+}
+
+static void
+cprng_fast_intr(void *cookie __unused)
+{
+	unsigned epoch = entropy_epoch();
 	struct cprng_fast *cprng;
 	uint8_t seed[CPRNG_FAST_SEED_BYTES];
 	int s;
 
-	/*
-	 * Drop the percpu(9) reference to extract a fresh seed from
-	 * the entropy pool.  cprng_strong may sleep on an adaptive
-	 * lock, which invalidates our percpu(9) reference.
-	 *
-	 * This may race with reseeding in another thread, which is no
-	 * big deal -- worst case, we rewind the entropy epoch here and
-	 * cause the next caller to reseed again, and in the end we
-	 * just reseed a couple more times than necessary.
-	 */
-	percpu_putref(cprng_fast_percpu);
 	cprng_strong(kern_cprng, seed, sizeof(seed), 0);
-	*cprngp = cprng = percpu_getref(cprng_fast_percpu);
 
-	s = splsoftserial();
+	cprng = percpu_getref(cprng_fast_percpu);
+	s = splvm();
 	cprng_fast_seed(cprng, seed);
 	cprng->epoch = epoch;
 	cprng->reseed_evcnt->ev_count++;
 	splx(s);
+	percpu_putref(cprng_fast_percpu);
 
 	explicit_memset(seed, 0, sizeof(seed));
 }
