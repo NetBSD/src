@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2053 2024/10/17 18:39:01 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2054 2024/10/26 18:16:34 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -887,16 +887,16 @@ Notes:
 Uses libc's ohash
 
 Package:	mDNSResponder
-Version:	878.30.4
-Current Vers:	2200.0.8
+Version:	2559.1.1
+Current Vers:	2559.1.1
 Maintainer:	Apple
 Archive Site:	https://www.opensource.apple.com/tarballs/mDNSResponder/
 Home Page:	https://developer.apple.com/bonjour/
-Date:		2023-10-08
+Date:		2024-10-26
 Mailing List:	bonjour-dev@lists.apple.com
 License:	Apache2 (mdnsd), BSD 3-clause (libdns_sd),
 		BSD 3-clause like (dns-sd)
-Responsible:	tsarna
+Responsible:	tsarna, christos
 Location:	external/apache2/mDNSResponder/dist
 Notes:
 

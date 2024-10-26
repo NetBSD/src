@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3107 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3108 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -567,3 +567,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		Visualize EG.  [macallan 20241022]
 	mcommphy(4): Add support for YT85[23]1, found on a VisionFive2 board.
 		[skrll 20241023]
+	mdnsd(8), dns-sd(1), libdns_sd: import mDNSResponder 2559.1.1
