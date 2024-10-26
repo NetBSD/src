@@ -54,13 +54,13 @@ extern "C" {
     #endif
 #endif
 
-// FreeBSD
+// FreeBSD || NetBSD
 
-#if ( !defined( TARGET_OS_FREEBSD ) )
-    #if ( defined( __FreeBSD__ ) )
-        #define TARGET_OS_FREEBSD       1
+#if ( !defined( TARGET_OS_BSD ) )
+    #if ( defined( __FreeBSD__ )  || defined( __NetBSD__ ))
+        #define TARGET_OS_BSD       1
     #else
-        #define TARGET_OS_FREEBSD       0
+        #define TARGET_OS_BSD       0
     #endif
 #endif
 
@@ -177,9 +177,9 @@ extern "C" {
     #include    <libkern/OSTypes.h>
     #include    <sys/types.h>
 
-#elif ( TARGET_OS_FREEBSD )
+#elif ( TARGET_OS_BSD )
 
-// FreeBSD
+// BSD
     #include    <stdint.h>
     #include    <pthread.h>
     #include    <netinet/in.h>
@@ -447,7 +447,7 @@ typedef int socklen_t;
 // - Mac OS X when not building with BSD headers
 // - Windows
 
-#if ( !defined(_SSIZE_T) && ( TARGET_OS_WIN32 || !defined( _BSD_SSIZE_T_DEFINED_ ) ) && !TARGET_OS_FREEBSD && !TARGET_OS_LINUX && !TARGET_OS_MAC)
+#if ( !defined(_SSIZE_T) && ( TARGET_OS_WIN32 || !defined( _BSD_SSIZE_T_DEFINED_ ) ) && !TARGET_OS_BSD && !TARGET_OS_LINUX && !TARGET_OS_MAC)
 typedef int ssize_t;
 #endif
 

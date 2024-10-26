@@ -1,6 +1,6 @@
-/* -*- Mode: C; tab-width: 4 -*-
+/* -*- Mode: C; tab-width: 4; c-file-style: "bsd"; c-basic-offset: 4; fill-column: 108; indent-tabs-mode: nil; -*-
  *
- * Copyright (c) 2002-2015 Apple Inc. All rights reserved.
+ * Copyright (c) 2002-2022 Apple Inc. All rights reserved.
  *
  * Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple Inc.
  * ("Apple") in consideration of your agreement to the following terms, and your
@@ -61,16 +61,24 @@
 #include <stdio.h>          // For stdout, stderr
 #include <stdlib.h>         // For exit()
 #include <string.h>         // For strlen(), strcpy()
+#include <stdarg.h>         // For va_start, va_arg, va_end, etc.
 #include <errno.h>          // For errno, EINTR
 #include <time.h>
 #include <sys/types.h>      // For u_char
+
+
+#ifndef __printflike
+    #define __printflike(A, B)
+#endif
 
 #ifdef _WIN32
     #include <winsock2.h>
     #include <ws2tcpip.h>
     #include <Iphlpapi.h>
     #include <process.h>
+    #include <stdint.h>
 typedef int pid_t;
+typedef int suseconds_t;
     #define getpid     _getpid
     #define strcasecmp _stricmp
     #define snprintf   _snprintf
@@ -140,6 +148,46 @@ static size_t _sa_len(const struct sockaddr *addr)
 
 #   define SA_LEN(addr) (_sa_len(addr))
 
+typedef void (WINAPI* SystemTimeFunc)(LPFILETIME);
+
+static const uint64_t epoch_diff = (UINT64)11644473600000000ULL;
+static SystemTimeFunc fpTimeFunc;
+
+int gettimeofday(struct timeval* tp, struct timezone* tzp)
+{
+    FILETIME ft;
+    UINT64 us;
+
+    if (!fpTimeFunc)
+    {
+        /* available on Windows 7 */
+        fpTimeFunc = GetSystemTimeAsFileTime;
+
+        HMODULE hKernel32 = LoadLibraryW(L"kernel32.dll");
+        if (hKernel32)
+        {
+            FARPROC fp;
+
+            /* available on Windows 8+ */
+            fp = GetProcAddress(hKernel32, "GetSystemTimePreciseAsFileTime");
+            if (fp)
+            {
+                fpTimeFunc = (SystemTimeFunc)fp;
+            }
+        }
+    }
+
+    fpTimeFunc(&ft);
+
+    us = (((uint64_t)ft.dwHighDateTime << 32) | (uint64_t)ft.dwLowDateTime) / 10;
+    us -= epoch_diff;
+
+    tp->tv_sec = (long)(us / 1000000);
+    tp->tv_usec = (long)(us % 1000000);
+
+    return 0;
+}
+
 #else
     #include <unistd.h>         // For getopt() and optind
     #include <netdb.h>          // For getaddrinfo()
@@ -165,17 +213,13 @@ static const char kFilePathSep = '/';
 #undef _DNS_SD_LIBDISPATCH
 #endif
 #include "dns_sd.h"
-#include "dns_sd_internal.h"
 #include "ClientCommon.h"
+
 
 #if TEST_NEW_CLIENTSTUB
 #include "../mDNSShared/dnssd_ipc.c"
 #include "../mDNSShared/dnssd_clientlib.c"
 #include "../mDNSShared/dnssd_clientstub.c"
-#endif
-
-#if _DNS_SD_LIBDISPATCH
-#include <dispatch/private.h>
 #endif
 
 //*************************************************************************************************************
@@ -185,7 +229,7 @@ static const char kFilePathSep = '/';
 typedef struct
 {
     unsigned short keyTag;
-    unsigned char alg; 
+    unsigned char alg;
     unsigned char digestType;
     unsigned char  *digest;
 } rdataDS;
@@ -199,12 +243,12 @@ typedef struct
     unsigned char *data;
 } rdataDNSKey;
 
-//size of rdataRRSIG excluding signerName and signature (which are variable fields) 
+//size of rdataRRSIG excluding signerName and signature (which are variable fields)
 #define RRSIG_FIXED_SIZE      18
 typedef struct
 {
     unsigned short typeCovered;
-    unsigned char alg; 
+    unsigned char alg;
     unsigned char labels;
     unsigned int origTTL;
     unsigned int sigExpireTime;
@@ -230,7 +274,9 @@ static DNSRecordRef record = NULL;
 static char myhinfoW[14] = "\002PC\012Windows XP";
 static char myhinfoX[ 9] = "\003Mac\004OS X";
 static char updatetest[3] = "\002AA";
-static char bigNULL[8192];  // 8K is maximum rdata we support
+static char bigNULL[8192];       // 8K is maximum rdata we support
+static int exitTimeout;          // If nonzero, we exit immediately if kDNSServiceFlagsMoreComing is not set, and after that many seconds otherwise.
+static int exitWhenNoMoreComing; // If true, then when we get a callback with the kDNSServiceFlagsMoreComing bit clear, exit after printing the result.
 
 #if _DNS_SD_LIBDISPATCH
 dispatch_queue_t main_queue;
@@ -252,13 +298,13 @@ static volatile int timeOut = LONG_TIME;
 
 //*************************************************************************************************************
 // Supporting Utility Functions
-static uint16_t GetRRClass(const char *s)   
+static uint16_t GetRRClass(const char *s)
 {
-    if (!strcasecmp(s, "IN")) 
+    if (!strcasecmp(s, "IN"))
         return kDNSServiceClass_IN;
     else
         return(atoi(s));
-}     
+}
 
 static uint16_t GetRRType(const char *s)
 {
@@ -313,6 +359,8 @@ static uint16_t GetRRType(const char *s)
     else if (!strcasecmp(s, "ds"      )) return(kDNSServiceType_DS);
     else if (!strcasecmp(s, "rrsig"   )) return(kDNSServiceType_RRSIG);
     else if (!strcasecmp(s, "nsec"    )) return(kDNSServiceType_NSEC);
+    else if (!strcasecmp(s, "SVCB"    )) return(kDNSServiceType_SVCB);
+    else if (!strcasecmp(s, "HTTPS"   )) return(kDNSServiceType_HTTPS);
     else if (!strcasecmp(s, "ANY"     )) return(kDNSServiceType_ANY);
     else return(atoi(s));
 }
@@ -384,8 +432,10 @@ static char *DNSTypeName(unsigned short rr_type)
         case kDNSServiceType_AXFR:       return("AXFR");
         case kDNSServiceType_MAILB:      return("MAILB");
         case kDNSServiceType_MAILA:      return("MAILA");
+        case kDNSServiceType_SVCB:       return("SVCB");
+        case kDNSServiceType_HTTPS:      return("HTTPS");
         case kDNSServiceType_ANY:        return("ANY");
-        default:            
+        default:
         {
             static char buffer[RR_TYPE_SIZE];
             snprintf(buffer, sizeof(buffer), "TYPE%d", rr_type);
@@ -400,12 +450,12 @@ static unsigned short swap16(unsigned short x)
     return (unsigned short)((unsigned short)ptr[0] << 8 | ptr[1]);
 }
 
-static unsigned int swap32(unsigned int x) 
+static unsigned int swap32(unsigned int x)
 {
     unsigned char *ptr = (unsigned char *)&x;
     return (unsigned int)((unsigned int)ptr[0] << 24 | (unsigned int)ptr[1] << 16 | (unsigned int)ptr[2] << 8 | ptr[3]);
 }
-static unsigned int keytag(unsigned char *key, unsigned int keysize)  
+static unsigned int keytag(unsigned char *key, unsigned int keysize)
 {
     unsigned long ac;
     unsigned int i;
@@ -416,46 +466,36 @@ static unsigned int keytag(unsigned char *key, unsigned int keysize)
     return ac & 0xFFFF;
 }
 
-static void base64Encode(char *buffer, int buflen, void *rdata, unsigned int rdlen)
+// Base 64 encoding according to <https://tools.ietf.org/html/rfc4648#section-4>.
+#define kBase64EncodingTable "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+
+static void base64Encode(char *buffer, size_t buflen, void *rdata, size_t rdlen)
 {
-#if _DNS_SD_LIBDISPATCH
-    const void *result = NULL;
-    size_t size;
-    dispatch_data_t src_data = NULL, dest_data = NULL, null_str = NULL, data = NULL, map = NULL;
+    const uint8_t *src = (const uint8_t *)rdata;
+    const uint8_t *const end = &src[rdlen];
+    char *dst = buffer;
+    const char *lim;
 
-    src_data = dispatch_data_create(rdata, rdlen, dispatch_get_global_queue(0, 0), ^{});
-    if (!src_data)
-        goto done;
+    if (buflen == 0) return;
+    lim = &buffer[buflen - 1];
+    while ((src < end) && (dst < lim))
+    {
+        uint32_t i;
+        const size_t rem = (size_t)(end - src);
 
-    dest_data = dispatch_data_create_with_transform(src_data, DISPATCH_DATA_FORMAT_TYPE_NONE, DISPATCH_DATA_FORMAT_TYPE_BASE64);
-    if (!dest_data)
-        goto done;
+        // Form a 24-bit input group. If less than 24 bits remain, pad with zero bits.
+        if (     rem >= 3) i = (src[0] << 16) | (src[1] << 8) | src[2]; // 24 bits are equal to 4 6-bit groups.
+        else if (rem == 2) i = (src[0] << 16) | (src[1] << 8);          // 16 bits are treated as 3 6-bit groups + 1 pad
+        else               i =  src[0] << 16;                           //  8 bits are treated as 2 6-bit groups + 2 pads
 
-    null_str = dispatch_data_create("", 1, dispatch_get_global_queue(0, 0), ^{});
-    if (!null_str)
-        goto done;
- 
-    data = dispatch_data_create_concat(dest_data, null_str);
-    if (!data)
-        goto done;    
-
-    map = dispatch_data_create_map(data, &result, &size);    
-    if (!map)
-        goto done;
-
-    snprintf(buffer, buflen, " %s", (char *)result);
-    
-done:
-    if (src_data) dispatch_release(src_data);
-    if (dest_data) dispatch_release(dest_data);
-    if (data)     dispatch_release(data);
-    if (null_str) dispatch_release(null_str);
-    if (map)      dispatch_release(map);
-    return;
-#else  //_DNS_SD_LIBDISPATCH
-    snprintf(buffer, buflen, " %s", ".");
-    return;
-#endif //_DNS_SD_LIBDISPATCH 
+        // Encode each 6-bit group.
+                       *dst++ =              kBase64EncodingTable[(i >> 18) & 0x3F];
+        if (dst < lim) *dst++ =              kBase64EncodingTable[(i >> 12) & 0x3F];
+        if (dst < lim) *dst++ = (rem >= 2) ? kBase64EncodingTable[(i >>  6) & 0x3F] : '=';
+        if (dst < lim) *dst++ = (rem >= 3) ? kBase64EncodingTable[ i        & 0x3F] : '=';
+        src += (rem > 3) ? 3 : rem;
+    }
+    *dst = '\0';
 }
 
 static DNSServiceProtocol GetProtocol(const char *s)
@@ -471,6 +511,28 @@ static DNSServiceProtocol GetProtocol(const char *s)
     else return(atoi(s));
 }
 
+static char
+DNSSECResultToCharRepresentation(const DNSServiceFlags flags)
+{
+    char dnssec_result;
+    if ((flags & kDNSServiceFlagsValidate) == 0)
+    {
+        dnssec_result = ' ';
+    }
+    else if ((flags & kDNSServiceFlagsSecure) == kDNSServiceFlagsSecure)
+    {
+        dnssec_result = 'S';
+    }
+    else if ((flags & kDNSServiceFlagsInsecure) == kDNSServiceFlagsInsecure)
+    {
+        dnssec_result = 'I';
+    }
+    else
+    {
+        dnssec_result = 'E';
+    }
+    return dnssec_result;
+}
 
 //*************************************************************************************************************
 // Sample callback functions for each of the operation types
@@ -505,17 +567,17 @@ static void printtimestamp_F(FILE *outstream)
 }
 
 // formating time to RFC 4034 format
-static void FormatTime(unsigned long te, unsigned char *buf, int bufsize) 
+static void FormatTime(unsigned long te, unsigned char *buf, int bufsize)
 {
     struct tm tmTime;
 #ifdef _WIN32
-	__time32_t t = (__time32_t) te;
-	_gmtime32_s(&tmTime, &t);
+    __time32_t t = (__time32_t) te;
+    _gmtime32_s(&tmTime, &t);
 #else
     // Time since epoch : strftime takes "tm". Convert seconds to "tm" using
     // gmtime_r first and then use strftime
-	time_t t = (time_t)te;
-	gmtime_r(&t, &tmTime);
+    time_t t = (time_t)te;
+    gmtime_r(&t, &tmTime);
 #endif
     strftime((char *)buf, bufsize, "%Y%m%d%H%M%S", &tmTime);
 }
@@ -523,49 +585,51 @@ static void FormatTime(unsigned long te, unsigned char *buf, int bufsize)
 static void print_usage(const char *arg0, int print_all)
 {
     // Print the commonly used command line options.  These are listed in "the order they have been in historically".
-    fprintf(stderr, "%s -E                              (Enumerate recommended registration domains)\n", arg0);
-    fprintf(stderr, "%s -F                                  (Enumerate recommended browsing domains)\n", arg0);
-    fprintf(stderr, "%s -R <Name> <Type> <Domain> <Port> [<TXT>...]             (Register a service)\n", arg0);
-    fprintf(stderr, "%s -B        <Type> <Domain>                     (Browse for service instances)\n", arg0);
-    fprintf(stderr, "%s -L <Name> <Type> <Domain>                       (Resolve a service instance)\n", arg0);
-    fprintf(stderr, "%s -Q <name> <rrtype> <rrclass>             (Generic query for any record type)\n", arg0);
-    fprintf(stderr, "%s -Z        <Type> <Domain>               (Output results in Zone File format)\n", arg0);
-    fprintf(stderr, "%s -G     v4/v6/v4v6 <name>              (Get address information for hostname)\n", arg0);
-    fprintf(stderr, "%s -H                                   (Print usage for complete command list)\n", arg0);
-    fprintf(stderr, "%s -V                (Get version of currently running daemon / system service)\n", arg0);
+    fprintf(stderr, "%s -E                          (Enumerate recommended registration domains)\n", arg0);
+    fprintf(stderr, "%s -F                          (Enumerate recommended browsing     domains)\n", arg0);
+    fprintf(stderr, "%s -R <Name> <Type> <Domain> <Port> [<TXT>...]         (Register a service)\n", arg0);
+    fprintf(stderr, "%s -P <Name> <Type> <Domain> <Port> <Host> <IP> [<TXT>...] (Register Proxy)\n", arg0);
+    fprintf(stderr, "%s -B        <Type> <Domain>                 (Browse for service instances)\n", arg0);
+    fprintf(stderr, "%s -Z        <Type> <Domain>           (Output results in Zone File format)\n", arg0);
+    fprintf(stderr, "%s -L <Name> <Type> <Domain>        (Resolve (‘lookup’) a service instance)\n", arg0);
+    fprintf(stderr, "%s -Q <name> <rrtype> <rrclass>         (Generic query for any record type)\n", arg0);
+    fprintf(stderr, "%s -q <name> <rrtype> <rrclass>     (Generic query, using SuppressUnusable)\n", arg0);
+    fprintf(stderr, "%s -G v4/v6/v4v6 <hostname>          (Get address information for hostname)\n", arg0);
+    fprintf(stderr, "%s -X udp/tcp/udptcp <IntPort> <ExtPort> <TTL>           (NAT Port Mapping)\n", arg0);
+    fprintf(stderr, "%s -H                               (Print usage for complete command list)\n", arg0);
+    fprintf(stderr, "%s -V            (Get version of currently running daemon / system service)\n", arg0);
 
     if (print_all)  // Print all available options for dns-sd tool.  Keep these in alphabetical order for easier maintenance.
     {
         fprintf(stderr, "\n");
-        fprintf(stderr, "%s -A                                  (Test Adding/Updating/Deleting a record)\n", arg0);
-        fprintf(stderr, "%s -C <FQDN> <rrtype> <rrclass>               (Query; reconfirming each result)\n", arg0);
-        fprintf(stderr, "%s -D <name> <rrtype> <rrclass>(Validate query for any record type with DNSSEC)\n", arg0);
-        fprintf(stderr, "%s -I               (Test registering and then immediately updating TXT record)\n", arg0);
-        fprintf(stderr, "%s -N                                         (Test adding a large NULL record)\n", arg0);
-        fprintf(stderr, "%s -M                  (Test creating a registration with multiple TXT records)\n", arg0);
-        fprintf(stderr, "%s -P <Name> <Type> <Domain> <Port> <Host> <IP> [<TXT>...]              (Proxy)\n", arg0);
-        fprintf(stderr, "%s -S                             (Test multiple operations on a shared socket)\n", arg0);
-        fprintf(stderr, "%s -T                                        (Test creating a large TXT record)\n", arg0);
-        fprintf(stderr, "%s -U                                              (Test updating a TXT record)\n", arg0);
-        fprintf(stderr, "%s -X udp/tcp/udptcp <IntPort> <ExtPort> <TTL>               (NAT Port Mapping)\n", arg0);
-        fprintf(stderr, "%s -ble                                      (Use kDNSServiceInterfaceIndexBLE)\n", arg0);
-        fprintf(stderr, "%s -g v4/v6/v4v6 <name>        (Validate address info for hostname with DNSSEC)\n", arg0);
-        fprintf(stderr, "%s -i <Interface>             (Run dns-sd cmd on a specific interface (en0/en1)\n", arg0);
-        fprintf(stderr, "%s -includep2p                            (Set kDNSServiceFlagsIncludeP2P flag)\n", arg0);
-        fprintf(stderr, "%s -includeAWDL                          (Set kDNSServiceFlagsIncludeAWDL flag)\n", arg0);
-        fprintf(stderr, "%s -intermediates                (Set kDNSServiceFlagsReturnIntermediates flag)\n", arg0);
-        fprintf(stderr, "%s -ku                                   (Set kDNSServiceFlagsKnownUnique flag)\n", arg0);
-        fprintf(stderr, "%s -lo                              (Run dns-sd cmd using local only interface)\n", arg0);
-        fprintf(stderr, "%s -optional                        (Set kDNSServiceFlagsValidateOptional flag)\n", arg0);
-        fprintf(stderr, "%s -p2p                                      (Use kDNSServiceInterfaceIndexP2P)\n", arg0);
-        fprintf(stderr, "%s -q <name> <rrtype> <rrclass> (Equivalent to -Q with kDNSServiceFlagsSuppressUnusable set)\n", arg0);
-        fprintf(stderr, "%s -tc                        (Set kDNSServiceFlagsBackgroundTrafficClass flag)\n", arg0);
-        fprintf(stderr, "%s -test                                      (Run basic API input range tests)\n", arg0);
-        fprintf(stderr, "%s -t1                                  (Set kDNSServiceFlagsThresholdOne flag)\n", arg0);
-        fprintf(stderr, "%s -tFinder                          (Set kDNSServiceFlagsThresholdFinder flag)\n", arg0);
-        fprintf(stderr, "%s -timeout                                  (Set kDNSServiceFlagsTimeout flag)\n", arg0);
-        fprintf(stderr, "%s -unicastResponse                  (Set kDNSServiceFlagsUnicastResponse flag)\n", arg0);
-        fprintf(stderr, "%s -autoTrigger                          (Set kDNSServiceFlagsAutoTrigger flag)\n", arg0);
+        fprintf(stderr, "%s -A                              (Test Adding/Updating/Deleting a record)\n", arg0);
+        fprintf(stderr, "%s -C <name> <rrtype> <rrclass>           (Query; reconfirming each result)\n", arg0);
+        fprintf(stderr, "%s -D                               (Set kDNSServiceFlagsEnableDNSSEC flag)\n", arg0);
+        fprintf(stderr, "%s -I           (Test registering and then immediately updating TXT record)\n", arg0);
+        fprintf(stderr, "%s -N                                     (Test adding a large NULL record)\n", arg0);
+        fprintf(stderr, "%s -M              (Test creating a registration with multiple TXT records)\n", arg0);
+        fprintf(stderr, "%s -S                         (Test multiple operations on a shared socket)\n", arg0);
+        fprintf(stderr, "%s -T                                    (Test creating a large TXT record)\n", arg0);
+        fprintf(stderr, "%s -U                                          (Test updating a TXT record)\n", arg0);
+        fprintf(stderr, "%s -ble                                  (Use kDNSServiceInterfaceIndexBLE)\n", arg0);
+        fprintf(stderr, "%s -fmc                      (Force multicast--use mDNS even if not .local)\n", arg0);
+        fprintf(stderr, "%s -i <Interface>         (Run dns-sd cmd on a specific interface (en0/en1)\n", arg0);
+        fprintf(stderr, "%s -includep2p                        (Set kDNSServiceFlagsIncludeP2P flag)\n", arg0);
+        fprintf(stderr, "%s -includeAWDL                      (Set kDNSServiceFlagsIncludeAWDL flag)\n", arg0);
+        fprintf(stderr, "%s -intermediates            (Set kDNSServiceFlagsReturnIntermediates flag)\n", arg0);
+        fprintf(stderr, "%s -ku                               (Set kDNSServiceFlagsKnownUnique flag)\n", arg0);
+        fprintf(stderr, "%s -lo                          (Run dns-sd cmd using local only interface)\n", arg0);
+        fprintf(stderr, "%s -m                    (Exit when no more results are coming immediately)\n", arg0);
+        fprintf(stderr, "%s -p2p                                  (Use kDNSServiceInterfaceIndexP2P)\n", arg0);
+        fprintf(stderr, "%s -sh                                    (Set kDNSServiceFlagsShared flag)\n", arg0);
+        fprintf(stderr, "%s -t <seconds>                                      (Exit after <seconds>)\n", arg0);
+        fprintf(stderr, "%s -tc                    (Set kDNSServiceFlagsBackgroundTrafficClass flag)\n", arg0);
+        fprintf(stderr, "%s -test                                  (Run basic API input range tests)\n", arg0);
+        fprintf(stderr, "%s -t1                              (Set kDNSServiceFlagsThresholdOne flag)\n", arg0);
+        fprintf(stderr, "%s -tFinder                      (Set kDNSServiceFlagsThresholdFinder flag)\n", arg0);
+        fprintf(stderr, "%s -timeout                              (Set kDNSServiceFlagsTimeout flag)\n", arg0);
+        fprintf(stderr, "%s -unicastResponse              (Set kDNSServiceFlagsUnicastResponse flag)\n", arg0);
+        fprintf(stderr, "%s -autoTrigger                      (Set kDNSServiceFlagsAutoTrigger flag)\n", arg0);
     }
 }
 
@@ -633,7 +697,11 @@ static void DNSSD_API enum_reply(DNSServiceRef sdref, const DNSServiceFlags flag
         }
     }
 
-    if (!(flags & kDNSServiceFlagsMoreComing)) fflush(stdout);
+    if (!(flags & kDNSServiceFlagsMoreComing))
+    {
+        fflush(stdout);
+        if (exitWhenNoMoreComing) exit(0);
+    }
 }
 
 static int CopyLabels(char *dst, const char *lim, const char **srcp, int labels)
@@ -708,7 +776,11 @@ static void DNSSD_API zonedata_resolve(DNSServiceRef sdref, const DNSServiceFlag
     DNSServiceRefDeallocate(sdref);
     free(context);
 
-    if (!(flags & kDNSServiceFlagsMoreComing)) fflush(stdout);
+    if (!(flags & kDNSServiceFlagsMoreComing))
+    {
+        fflush(stdout);
+        if (exitWhenNoMoreComing) exit(0);
+    }
 }
 
 static void DNSSD_API zonedata_browse(DNSServiceRef sdref, const DNSServiceFlags flags, uint32_t ifIndex, DNSServiceErrorType errorCode,
@@ -738,12 +810,16 @@ static void DNSSD_API browse_reply(DNSServiceRef sdref, const DNSServiceFlags fl
 
     if (num_printed++ == 0) printf("Timestamp     A/R    Flags  if %-20s %-20s %s\n", "Domain", "Service Type", "Instance Name");
     printtimestamp();
-    if (errorCode) 
+    if (errorCode)
         printf("Error code %d\n", errorCode);
-    else 
-        printf("%s %8X %3d %-20s %-20s %s\n", 
+    else
+        printf("%s %8X %3d %-20s %-20s %s\n",
                 op, flags, ifIndex, replyDomain, replyType, replyName);
-    if (!(flags & kDNSServiceFlagsMoreComing)) fflush(stdout);
+    if (!(flags & kDNSServiceFlagsMoreComing))
+    {
+        fflush(stdout);
+        if (exitWhenNoMoreComing) exit(0);
+    }
 
     // To test selective cancellation of operations of shared sockets,
     // cancel the current operation when we've got a multiple of five results
@@ -810,7 +886,11 @@ static void DNSSD_API resolve_reply(DNSServiceRef sdref, const DNSServiceFlags f
 
     printf("\n");
 
-    if (!(flags & kDNSServiceFlagsMoreComing)) fflush(stdout);
+    if (!(flags & kDNSServiceFlagsMoreComing))
+    {
+        fflush(stdout);
+        if (exitWhenNoMoreComing) exit(0);
+    }
 }
 
 static void myTimerCallBack(void)
@@ -907,101 +987,123 @@ static void DNSSD_API reg_reply(DNSServiceRef sdref, const DNSServiceFlags flags
     else
         printf("Error %d\n", errorCode);
 
-    if (!(flags & kDNSServiceFlagsMoreComing)) fflush(stdout);
+    if (!(flags & kDNSServiceFlagsMoreComing))
+    {
+        fflush(stdout);
+        if (exitWhenNoMoreComing) exit(0);
+    }
+}
+
+__printflike(3, 4)
+static int snprintf_safe(char *str, size_t size, const char *format, ...)
+{
+    int length = 0;
+    va_list ptr;
+    va_start(ptr, format);
+    int result = vsnprintf(str, size, format, ptr);
+    va_end(ptr);
+    if (result > 0 && size > 0)
+    {
+#ifndef MIN
+#define MIN(a,b) (((a) < (b)) ? (a) : (b))
+#endif
+        length = (int)MIN((size_t)result, size-1);
+    }
+    return length;
 }
 
 // Output the wire-format domainname pointed to by rd
-static int snprintd(char *p, int max, const unsigned char **rd)
+static size_t snprintd(char *p, size_t max, const unsigned char **rd)
 {
     const char *const buf = p;
     const char *const end = p + max;
-    while (**rd) 
-    { 
-        p += snprintf(p, end-p, "%.*s.", **rd, *rd+1); 
-        *rd += 1 + **rd; 
+    while (**rd)
+    {
+        p += snprintf_safe(p, end-p, "%.*s.", **rd, *rd+1);
+        *rd += 1 + **rd;
     }
     *rd += 1;   // Advance over the final zero byte
     return(p-buf);
 }
 
-static void ParseDNSSECRecords(uint16_t rrtype, char *rdb, char *p, unsigned const char *rd, uint16_t rdlen)
+static void ParseDNSSECRecords(uint16_t rrtype, char *rdb, size_t rdb_size, unsigned const char *rd, uint16_t rdlen)
 {
-    int rdb_size = 1000;
-    switch (rrtype) 
+    char *p = rdb;
+    switch (rrtype)
     {
         case kDNSServiceType_DS:
         {
             unsigned char *ptr;
             int i;
             rdataDS *rrds = (rdataDS *)rd;
-            p += snprintf(p, rdb + rdb_size - p, "%d  %d  %d  ",
+            p += snprintf_safe(p, rdb + rdb_size - p, "%d  %d  %d  ",
                           rrds->alg, swap16(rrds->keyTag), rrds->digestType);
             ptr = (unsigned char *)(rd + DS_FIXED_SIZE);
             for (i = 0; i < (rdlen - DS_FIXED_SIZE); i++)
-                p += snprintf(p, rdb + rdb_size - p, "%x", ptr[i]);   
-            break; 
-        } 
-            
+                p += snprintf_safe(p, rdb + rdb_size - p, "%x", ptr[i]);
+            break;
+        }
+
         case kDNSServiceType_DNSKEY:
         {
             rdataDNSKey *rrkey = (rdataDNSKey *)rd;
-            p += snprintf(p, rdb + rdb_size - p, "%d  %d  %d  %u", swap16(rrkey->flags), rrkey->proto,
+            p += snprintf_safe(p, rdb + rdb_size - p, "%d  %d  %d  %u ", swap16(rrkey->flags), rrkey->proto,
                           rrkey->alg, (unsigned int)keytag((unsigned char *)rrkey, rdlen));
             base64Encode(p, rdb + rdb_size - p, (unsigned char *)(rd + DNSKEY_FIXED_SIZE), rdlen - DNSKEY_FIXED_SIZE);
             break;
         }
-            
-        case kDNSServiceType_NSEC: 
+
+        case kDNSServiceType_NSEC:
         {
             unsigned char *next = (unsigned char *)rd;
-            int len, bitmaplen;
-            int win, wlen, type;
+            size_t len, bitmaplen;
+            size_t win, wlen, type;
             unsigned char *bmap;
             char *l = NULL;
-            
+
             l = p;
             p += snprintd(p, rdb + rdb_size - p, &rd);
             len = p - l + 1;
-            
+
             bitmaplen = rdlen - len;
             bmap = (unsigned char *)((unsigned char *)next + len);
-            
+
             while (bitmaplen > 0)
             {
-                int i;
-                
+                size_t i;
+
                 if (bitmaplen < 3)
                 {
-                    printf("Case NSEC: malformed nsec, bitmaplen %d short\n", bitmaplen);
+                    printf("Case NSEC: malformed nsec, bitmaplen %zu short\n", bitmaplen);
                     break;
-                }   
-                
+                }
+
                 win = *bmap++;
                 wlen = *bmap++;
                 bitmaplen -= 2;
                 if (bitmaplen < wlen || wlen < 1 || wlen > 32)
                 {
-                    printf("Case NSEC: malformed nsec, bitmaplen %d wlen %d\n", bitmaplen, wlen);
+                    printf("Case NSEC: malformed nsec, bitmaplen %zu wlen %zu\n", bitmaplen, wlen);
                     break;
                 }
-                if (win < 0 || win >= 256)
+                if (win >= 256)
                 {
-                    printf("Case NSEC: malformed nsec, bad window win %d\n", win);
+                    printf("Case NSEC: malformed nsec, bad window win %zu\n", win);
                     break;
                 }
                 type = win * 256;
                 for (i = 0; i < wlen * 8; i++)
                 {
                     if (bmap[i>>3] & (128 >> (i&7)))
-                        p += snprintf(p, rdb + rdb_size - p, " %s ", DNSTypeName(type + i));
+                        p += snprintf_safe(p, rdb + rdb_size - p, " %s ", DNSTypeName(type + i));
                 }
                 bmap += wlen;
                 bitmaplen -= wlen;
             }
             break;
         }
-            
-        case kDNSServiceType_RRSIG:    
+
+        case kDNSServiceType_RRSIG:
         {
             rdataRRSig *rrsig = (rdataRRSig *)rd;
             unsigned char expTimeBuf[64];
@@ -1010,28 +1112,33 @@ static void ParseDNSSECRecords(uint16_t rrtype, char *rdb, char *p, unsigned con
             unsigned long expClock;
             const unsigned char *q = NULL;
             char *k = NULL;
-            int len;
-            
+            size_t len;
+
             expClock = (unsigned long)swap32(rrsig->sigExpireTime);
             FormatTime(expClock, expTimeBuf, sizeof(expTimeBuf));
-            
+
             inceptClock = (unsigned long)swap32(rrsig->sigInceptTime);
             FormatTime(inceptClock, inceptTimeBuf, sizeof(inceptTimeBuf));
-            
-            p += snprintf(p, rdb + rdb_size - p, " %-7s  %d  %d  %d  %s  %s  %7d  ",
+
+            p += snprintf_safe(p, rdb + rdb_size - p, " %-7s  %d  %d  %d  %s  %s  %7d  ",
                           DNSTypeName(swap16(rrsig->typeCovered)), rrsig->alg, rrsig->labels, swap32(rrsig->origTTL),
                           expTimeBuf, inceptTimeBuf, swap16(rrsig->keyTag));
-            
+
             q = (const unsigned char *)&rrsig->signerName;
             k = p;
             p += snprintd(p, rdb + rdb_size - p, &q);
             len = p - k + 1;
-            
+
+            if ((&rdb[rdb_size] - p) >= 2)
+            {
+                *p++ = ' ';
+                *p   = '\0';
+            }
             base64Encode(p, rdb + rdb_size - p, (unsigned char *)(rd + len + RRSIG_FIXED_SIZE), rdlen - (len + RRSIG_FIXED_SIZE));
             break;
         }
     }
-    return;                           
+    return;
 }
 
 static void DNSSD_API qr_reply(DNSServiceRef sdref, const DNSServiceFlags flags, uint32_t ifIndex, DNSServiceErrorType errorCode,
@@ -1042,10 +1149,8 @@ static void DNSSD_API qr_reply(DNSServiceRef sdref, const DNSServiceFlags flags,
     const unsigned char *end = (const unsigned char *) rdata + rdlen;
     char rdb[1000] = "0.0.0.0", *p = rdb;
     int unknowntype = 0;
-    char dnssec_status[15] = "Unknown";
     char rr_type[RR_TYPE_SIZE];
-    char rr_class[3];
-    DNSServiceFlags check_flags = flags;//local flags for dnssec status checking
+    char rr_class[6];
 
     (void)sdref;    // Unused
     (void)ifIndex;  // Unused
@@ -1055,10 +1160,7 @@ static void DNSSD_API qr_reply(DNSServiceRef sdref, const DNSServiceFlags flags,
 
     if (num_printed++ == 0)
     {
-        if (operation == 'D') 
-            printf("Timestamp     A/R if %-30s%-6s%-7s%-18s Rdata\n", "Name", "Type", "Class", "DNSSECStatus"); 
-        else     
-            printf("Timestamp     A/R Flags if %-30s%-6s%-7s Rdata\n", "Name", "Type", "Class");
+        printf("Timestamp     %3s  %-11s  %3s  %-29s %-6s %-6s Rdata\n", "A/R", "Flags", "IF", "Name", "Type", "Class");
     }
     printtimestamp();
 
@@ -1075,84 +1177,70 @@ static void DNSSD_API qr_reply(DNSServiceRef sdref, const DNSServiceFlags flags,
 
     if (!errorCode) //to avoid printing garbage in rdata
     {
-        if (!(check_flags & (kDNSServiceFlagsValidate | kDNSServiceFlagsValidateOptional)))
+        switch (rrtype)
         {
-            switch (rrtype)
-            {
-                case kDNSServiceType_A:
-                    snprintf(rdb, sizeof(rdb), "%d.%d.%d.%d", rd[0], rd[1], rd[2], rd[3]);
-                    break;
-    
-                case kDNSServiceType_NS:
-                case kDNSServiceType_CNAME:
-                case kDNSServiceType_PTR:
-                case kDNSServiceType_DNAME:
-                    snprintd(p, sizeof(rdb), &rd);
-                    break;
+            case kDNSServiceType_A:
+                snprintf_safe(rdb, sizeof(rdb), "%d.%d.%d.%d", rd[0], rd[1], rd[2], rd[3]);
+                break;
 
-                case kDNSServiceType_SOA:
-                    p += snprintd(p, rdb + sizeof(rdb) - p, &rd);           // mname
-                    p += snprintf(p, rdb + sizeof(rdb) - p, " ");
-                    p += snprintd(p, rdb + sizeof(rdb) - p, &rd);           // rname
-                         snprintf(p, rdb + sizeof(rdb) - p, " Ser %d Ref %d Ret %d Exp %d Min %d",
-                             ntohl(((uint32_t*)rd)[0]), ntohl(((uint32_t*)rd)[1]), ntohl(((uint32_t*)rd)[2]), ntohl(((uint32_t*)rd)[3]), ntohl(((uint32_t*)rd)[4]));
-                    break;
+            case kDNSServiceType_NS:
+            case kDNSServiceType_CNAME:
+            case kDNSServiceType_PTR:
+            case kDNSServiceType_DNAME:
+                snprintd(p, sizeof(rdb), &rd);
+                break;
 
-                case kDNSServiceType_AAAA:
-                    snprintf(rdb, sizeof(rdb), "%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X",
-                        rd[0x0], rd[0x1], rd[0x2], rd[0x3], rd[0x4], rd[0x5], rd[0x6], rd[0x7],
-                        rd[0x8], rd[0x9], rd[0xA], rd[0xB], rd[0xC], rd[0xD], rd[0xE], rd[0xF]);
-                    break;
+            case kDNSServiceType_SOA:
+                p += snprintd(p, rdb + sizeof(rdb) - p, &rd);           // mname
+                p += snprintf_safe(p, rdb + sizeof(rdb) - p, " ");
+                p += snprintd(p, rdb + sizeof(rdb) - p, &rd);           // rname
+                     snprintf(p, rdb + sizeof(rdb) - p, " Ser %d Ref %d Ret %d Exp %d Min %d",
+                         ntohl(((uint32_t*)rd)[0]), ntohl(((uint32_t*)rd)[1]), ntohl(((uint32_t*)rd)[2]), ntohl(((uint32_t*)rd)[3]), ntohl(((uint32_t*)rd)[4]));
+                break;
 
-                case kDNSServiceType_SRV:
-                    p += snprintf(p, rdb + sizeof(rdb) - p, "%d %d %d ",        // priority, weight, port
-                             ntohs(*(unsigned short*)rd), ntohs(*(unsigned short*)(rd+2)), ntohs(*(unsigned short*)(rd+4)));
-                    rd += 6;
-                         snprintd(p, rdb + sizeof(rdb) - p, &rd);               // target host
-                    break;
+            case kDNSServiceType_AAAA:
+                snprintf(rdb, sizeof(rdb), "%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X",
+                    rd[0x0], rd[0x1], rd[0x2], rd[0x3], rd[0x4], rd[0x5], rd[0x6], rd[0x7],
+                    rd[0x8], rd[0x9], rd[0xA], rd[0xB], rd[0xC], rd[0xD], rd[0xE], rd[0xF]);
+                break;
 
-                case kDNSServiceType_DS:
-                case kDNSServiceType_DNSKEY:
-                case kDNSServiceType_NSEC:
-                case kDNSServiceType_RRSIG:
-                    ParseDNSSECRecords(rrtype, rdb, p, rd, rdlen);
-                    break;
+            case kDNSServiceType_SRV:
+                p += snprintf_safe(p, rdb + sizeof(rdb) - p, "%d %d %d ",        // priority, weight, port
+                         ntohs(*(unsigned short*)rd), ntohs(*(unsigned short*)(rd+2)), ntohs(*(unsigned short*)(rd+4)));
+                rd += 6;
+                     snprintd(p, rdb + sizeof(rdb) - p, &rd);               // target host
+                break;
 
-                default: 
-                    snprintf(rdb, sizeof(rdb), "%d bytes%s", rdlen, rdlen ? ":" : ""); 
-                    unknowntype = 1;
-                    break;
-            }   
-        }   
-        else 
-        {
-            strncpy(rdb, "----", sizeof(rdb));
-            //Clear all o/p bits, and then check for dnssec status
-            check_flags &= ~kDNSServiceOutputFlags;
-            if (check_flags & kDNSServiceFlagsSecure)
-                strncpy(dnssec_status, "Secure", sizeof(dnssec_status));
-            else if (check_flags & kDNSServiceFlagsInsecure)
-                strncpy(dnssec_status, "Insecure", sizeof(dnssec_status));
-            else if (check_flags & kDNSServiceFlagsIndeterminate)
-                strncpy(dnssec_status, "Indeterminate", sizeof(dnssec_status));
-            else if (check_flags & kDNSServiceFlagsBogus) 
-                strncpy(dnssec_status, "Bogus", sizeof(dnssec_status));
+            case kDNSServiceType_DS:
+            case kDNSServiceType_DNSKEY:
+            case kDNSServiceType_NSEC:
+            case kDNSServiceType_RRSIG:
+                ParseDNSSECRecords(rrtype, rdb, sizeof(rdb), rd, rdlen);
+                break;
+
+            default:
+                snprintf(rdb, sizeof(rdb), "%d bytes%s", rdlen, rdlen ? ":" : "");
+                unknowntype = 1;
+                break;
         }
     }
 
-    if (operation == 'D')
-        printf("%s%3d %-30s%-6s%-7s%-18s %s", op, ifIndex, fullname, rr_type, rr_class, dnssec_status, rdb);
-    else
-        printf("%s%6X%3d %-30s%-7s%-6s %s", op, flags, ifIndex, fullname, rr_type, rr_class, rdb);
+    const char dnssec_result = DNSSECResultToCharRepresentation(flags);
+
+    printf("%-3s  %-9X %c  %3d  %-29s %-6s %-6s %s",
+        op, flags, dnssec_result, ifIndex, fullname, rr_type, rr_class, rdb);
+
     if (unknowntype)
-    { 
-        while (rd < end) 
+    {
+        while (rd < end)
             printf(" %02X", *rd++);
     }
     if (errorCode)
     {
-        if (errorCode == kDNSServiceErr_NoSuchRecord) 
+        if (errorCode == kDNSServiceErr_NoSuchRecord)
             printf("    No Such Record");
+        else if (errorCode == kDNSServiceErr_NoAuth)
+            printf("    No Authorization");
         else if (errorCode == kDNSServiceErr_Timeout)
         {
             printf("    No Such Record\n");
@@ -1166,8 +1254,11 @@ static void DNSSD_API qr_reply(DNSServiceRef sdref, const DNSServiceFlags flags,
         if (flags & kDNSServiceFlagsAdd)
             DNSServiceReconfirmRecord(flags, ifIndex, fullname, rrtype, rrclass, rdlen, rdata);
 
-    if (!(flags & kDNSServiceFlagsMoreComing)) 
+    if (!(flags & kDNSServiceFlagsMoreComing))
+    {
         fflush(stdout);
+        if (exitWhenNoMoreComing) exit(0);
+    }
 }
 
 static void DNSSD_API port_mapping_create_reply(DNSServiceRef sdref, DNSServiceFlags flags, uint32_t ifIndex, DNSServiceErrorType errorCode, uint32_t publicAddress, uint32_t protocol, uint16_t privatePort, uint16_t publicPort, uint32_t ttl, void *context)
@@ -1189,29 +1280,28 @@ static void DNSSD_API port_mapping_create_reply(DNSServiceRef sdref, DNSServiceF
         printf("%-4d %-20s %-15d %-15d %-15d %-6d%s\n", ifIndex, addr, protocol, ntohs(privatePort), ntohs(publicPort), ttl, errorCode == kDNSServiceErr_DoubleNAT ? " Double NAT" : "");
     }
 
-    if (!(flags & kDNSServiceFlagsMoreComing)) fflush(stdout);
+    if (!(flags & kDNSServiceFlagsMoreComing))
+    {
+        fflush(stdout);
+        if (exitWhenNoMoreComing) exit(0);
+    }
 }
 
 static void DNSSD_API addrinfo_reply(DNSServiceRef sdref, const DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *hostname, const struct sockaddr *address, uint32_t ttl, void *context)
 {
     char *op = (flags & kDNSServiceFlagsAdd) ? "Add" : "Rmv";
     char addr[256] = "";
-    char dnssec_status[15] = "Unknown"; 
-    DNSServiceFlags check_flags = flags;
-	(void) sdref;
-	(void) context;
+    (void) sdref;
+    (void) context;
 
     EXIT_IF_LIBDISPATCH_FATAL_ERROR(errorCode);
 
     if (num_printed++ == 0)
     {
-        if (operation == 'g') 
-            printf("Timestamp     A/R if %-25s %-44s %-18s\n", "Hostname", "Address", "DNSSECStatus");
-        else  
-            printf("Timestamp     A/R Flags if %-38s %-44s %s\n", "Hostname", "Address", "TTL");
+        printf("Timestamp     %3s  %-11s  %3s  %-38s %-44s %s\n", "A/R", "Flags", "IF", "Hostname", "Address", "TTL");
     }
     printtimestamp();
-   
+
     if (address && address->sa_family == AF_INET)
     {
         const unsigned char *b = (const unsigned char *) &((struct sockaddr_in *)address)->sin_addr;
@@ -1224,42 +1314,29 @@ static void DNSSD_API addrinfo_reply(DNSServiceRef sdref, const DNSServiceFlags 
         const unsigned char       *b  = (const unsigned char *      )&s6->sin6_addr;
         if (!if_indextoname(s6->sin6_scope_id, if_name))
             snprintf(if_name, sizeof(if_name), "<%d>", s6->sin6_scope_id);
-            snprintf(addr, sizeof(addr), "%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X%%%s",
+        snprintf(addr, sizeof(addr), "%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X%%%s",
             b[0x0], b[0x1], b[0x2], b[0x3], b[0x4], b[0x5], b[0x6], b[0x7],
             b[0x8], b[0x9], b[0xA], b[0xB], b[0xC], b[0xD], b[0xE], b[0xF], if_name);
     }
 
-    //go through this only if you have a dnssec validation status
-    if (!errorCode && (check_flags & (kDNSServiceFlagsValidate | kDNSServiceFlagsValidateOptional)))
-    {
-        strncpy(addr, "----", sizeof(addr));
-        //Clear all o/p bits, and then check for dnssec status
-        check_flags &= ~kDNSServiceOutputFlags;
-        if (check_flags & kDNSServiceFlagsSecure)
-            strncpy(dnssec_status, "Secure", sizeof(dnssec_status));
-        else if (check_flags & kDNSServiceFlagsInsecure)
-            strncpy(dnssec_status, "Insecure", sizeof(dnssec_status));
-        else if (check_flags & kDNSServiceFlagsIndeterminate)
-            strncpy(dnssec_status, "Indeterminate", sizeof(dnssec_status));
-        else if (check_flags & kDNSServiceFlagsBogus) 
-            strncpy(dnssec_status, "Bogus", sizeof(dnssec_status));
-    }
-    
-    if (operation == 'g')
-        printf("%s%3d %-25s %-44s %-18s", op, interfaceIndex, hostname, addr, dnssec_status);
-    else
-        printf("%s%6X%3d %-38s %-44s %d", op, flags, interfaceIndex, hostname, addr, ttl);
+    const char dnssec_result = DNSSECResultToCharRepresentation(flags);
+
+    printf("%-3s  %-9X %c  %3d  %-38s %-44s %d", op, flags, dnssec_result, interfaceIndex, hostname, addr, ttl);
+
     if (errorCode)
     {
-        if (errorCode == kDNSServiceErr_NoSuchRecord) 
+        if (errorCode == kDNSServiceErr_NoSuchRecord)
             printf("   No Such Record");
-        else 
+        else
             printf("   Error code %d", errorCode);
     }
     printf("\n");
 
-    if (!(flags & kDNSServiceFlagsMoreComing)) 
+    if (!(flags & kDNSServiceFlagsMoreComing))
+    {
         fflush(stdout);
+        if (exitWhenNoMoreComing) exit(0);
+    }
 }
 
 //*************************************************************************************************************
@@ -1283,6 +1360,13 @@ static void HandleEvents(void)
             dispatch_resume(timer_source);
         }
     }
+    if (exitTimeout > 0)
+    {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (uint64_t)exitTimeout * NSEC_PER_SEC), main_queue,
+                       ^{
+                           exit(0);
+                       });
+    }
     dispatch_main();
 }
 #else
@@ -1293,8 +1377,15 @@ static void HandleEvents(void)
     fd_set readfds;
     struct timeval tv;
     int result;
+    uint64_t timeout_when, now;
+    int expectingMyTimer;
 
     if (dns_sd_fd2 > dns_sd_fd) nfds = dns_sd_fd2 + 1;
+
+    if (exitTimeout != 0) {
+        gettimeofday(&tv, NULL);
+        timeout_when = tv.tv_sec * 1000ULL * 1000ULL + tv.tv_usec + exitTimeout * 1000ULL * 1000ULL;
+    }
 
     while (!stopNow)
     {
@@ -1308,9 +1399,23 @@ static void HandleEvents(void)
         if (client_pa) FD_SET(dns_sd_fd2, &readfds);
 
         // 3. Set up the timeout.
-        tv.tv_sec  = timeOut;
-        tv.tv_usec = 0;
-
+        expectingMyTimer = 1;
+        if (exitTimeout > 0) {
+            gettimeofday(&tv, NULL);
+            now = tv.tv_sec * 1000ULL * 1000ULL + tv.tv_usec;
+            if (timeout_when <= now) {
+                exit(0);
+            }
+            if (timeout_when - now < timeOut * 1000ULL * 1000ULL) {
+                tv.tv_sec = (time_t)(timeout_when - now) / 1000 / 1000;
+                tv.tv_usec = (suseconds_t)(timeout_when % (1000 * 1000));
+                expectingMyTimer = 0;
+            }
+        }
+        if (expectingMyTimer) {
+            tv.tv_sec  = timeOut;
+            tv.tv_usec = 0;
+        }
         result = select(nfds, &readfds, (fd_set*)NULL, (fd_set*)NULL, &tv);
         if (result > 0)
         {
@@ -1320,7 +1425,17 @@ static void HandleEvents(void)
             if (err) { printtimestamp_F(stderr); fprintf(stderr, "DNSServiceProcessResult returned %d\n", err); stopNow = 1; }
         }
         else if (result == 0)
-            myTimerCallBack();
+        {
+            if (expectingMyTimer)
+            {
+                myTimerCallBack();
+            }
+            else
+            {
+                // exitTimeout has elapsed.
+                exit(0);
+            }
+        }
         else
         {
             printf("select() returned %d errno %d %s\n", result, errno, strerror(errno));
@@ -1373,7 +1488,11 @@ static void DNSSD_API MyRegisterRecordCallback(DNSServiceRef service, DNSRecordR
     case kDNSServiceErr_NameConflict: printf("Name in use, please choose another\n"); exit(-1);
     default:                          printf("Error %d\n", errorCode); break;
     }
-    if (!(flags & kDNSServiceFlagsMoreComing)) fflush(stdout);
+    if (!(flags & kDNSServiceFlagsMoreComing))
+    {
+        fflush(stdout);
+        if (exitWhenNoMoreComing) exit(0);
+    }
 }
 
 static void getip(const char *const name, struct sockaddr_storage *result)
@@ -1394,7 +1513,10 @@ static DNSServiceErrorType RegisterProxyAddressRecord(DNSServiceRef sdref, const
     struct sockaddr_storage hostaddr;
     memset(&hostaddr, 0, sizeof(hostaddr));
     getip(ip, &hostaddr);
-    flags |= kDNSServiceFlagsUnique;
+    if (!(flags & kDNSServiceFlagsShared))
+    {
+        flags |= kDNSServiceFlagsUnique;
+    }
     if (hostaddr.ss_family == AF_INET)
         return(DNSServiceRegisterRecord(sdref, &record, flags, opinterface, host,
                                         kDNSServiceType_A,    kDNSServiceClass_IN,  4, &((struct sockaddr_in *)&hostaddr)->sin_addr,  240, MyRegisterRecordCallback, (void*)host));
@@ -1410,12 +1532,14 @@ static DNSServiceErrorType RegisterProxyAddressRecord(DNSServiceRef sdref, const
 
 #define HexPair(P) ((HexVal((P)[0]) << 4) | HexVal((P)[1]))
 
+#define MAXTXTRecordSize 8900
 static DNSServiceErrorType RegisterService(DNSServiceRef *sdref,
-                                           const char *nam, const char *typ, const char *dom, const char *host, const char *port, int argc, char **argv, DNSServiceFlags flags)
+                                           const char *nam, const char *typ, const char *dom, const char *host, const char *port, int argc, char **argv, DNSServiceFlags flags, const char **callName)
 {
     uint16_t PortAsNumber = atoi(port);
     Opaque16 registerPort = { { PortAsNumber >> 8, PortAsNumber & 0xFF } };
-    unsigned char txt[2048] = "";
+    unsigned char txt[MAXTXTRecordSize];
+    txt[0] = '\0';
     unsigned char *ptr = txt;
     int i;
 
@@ -1426,14 +1550,19 @@ static DNSServiceErrorType RegisterService(DNSServiceRef *sdref,
     if (host && *host) printf(" host %s", host);
     printf(" port %s", port);
 
+    *callName = "Constructing TXT record";
     if (argc)
     {
         for (i = 0; i < argc; i++)
         {
             const char *p = argv[i];
+            if (ptr >= txt + sizeof(txt))
+                return kDNSServiceErr_BadParam;
             *ptr = 0;
-            while (*p && *ptr < 255 && ptr + 1 + *ptr < txt+sizeof(txt))
+            while (*p && *ptr < 255)
             {
+                if (ptr + 1 + *ptr >= txt + sizeof(txt))
+                    return kDNSServiceErr_BadParam;
                 if      (p[0] != '\\' || p[1] == 0)                       { ptr[++*ptr] = *p;           p+=1; }
                 else if (p[1] == 'x' && isxdigit(p[2]) && isxdigit(p[3])) { ptr[++*ptr] = HexPair(p+2); p+=4; }
                 else                                                      { ptr[++*ptr] = p[1];         p+=2; }
@@ -1448,6 +1577,7 @@ static DNSServiceErrorType RegisterService(DNSServiceRef *sdref,
     //flags |= kDNSServiceFlagsAllowRemoteQuery;
     //flags |= kDNSServiceFlagsNoAutoRename;
 
+    *callName = "DNSServiceRegister";
     return(DNSServiceRegister(sdref, flags, opinterface, nam, typ, dom, host, registerPort.NotAnInteger, (uint16_t) (ptr-txt), txt, reg_reply, NULL));
 }
 
@@ -1459,12 +1589,12 @@ static char *gettype(char *buffer, char *typ)
     return(typ);
 }
 
-// Do some basic tests to verify API handles > 63 byte strings gracefully with 
+// Do some basic tests to verify API handles > 63 byte strings gracefully with
 // a returned error code.
 
 #define STRING_64_BYTES "_123456789012345678901234567890123456789012345678901234567890123"
 
-static int API_string_limit_test()
+static int API_string_limit_test(void)
 {
     const char * regtype;
     DNSServiceRef sdRef = NULL;
@@ -1513,13 +1643,7 @@ static int API_string_limit_test()
     return 0;
 }
 
-// local prototypes for routines that don't have prototypes in dns_sd.h
-#if APPLE_OSX_mDNSResponder
-DNSServiceErrorType DNSSD_API DNSServiceSetDefaultDomainForUser(DNSServiceFlags flags, const char *domain);
-DNSServiceErrorType DNSSD_API DNSServiceCreateDelegateConnection(DNSServiceRef *sdRef, int32_t pid, uuid_t uuid);
-#endif
-
-static int API_NULL_input_test()
+static int API_NULL_input_test(void)
 {
     printf("Running basic API input range tests with various pointer parameters set to NULL:\n");
 
@@ -1547,148 +1671,140 @@ static int API_NULL_input_test()
         uint32_t   result;
         uint32_t   size;
 
-	    if (    (DNSServiceGetProperty(                                0, &result, &size) == 0)
-	         || (DNSServiceGetProperty(kDNSServiceProperty_DaemonVersion,       0, &size) == 0)
-	         || (DNSServiceGetProperty(kDNSServiceProperty_DaemonVersion, &result, 0) == 0)
+        if (    (DNSServiceGetProperty(                                0, &result, &size) == 0)
+             || (DNSServiceGetProperty(kDNSServiceProperty_DaemonVersion,       0, &size) == 0)
+             || (DNSServiceGetProperty(kDNSServiceProperty_DaemonVersion, &result, 0) == 0)
            )
-	    {
-	        printf("DNSServiceGetProperty(): expected error return\n");
-	        return 1;
-	    }
+        {
+            printf("DNSServiceGetProperty(): expected error return\n");
+            return 1;
+        }
     }
 
     // DNSServiceResolve()
     {
-	    DNSServiceRef       sdRef;
-	    DNSServiceFlags     flags = 0;
-	    uint32_t            interfaceIndex = 0;
-	    const char          *name = "name";
-	    const char          *regtype = "_test._tcp";
-	    const char          *domain = "local";
-	    DNSServiceResolveReply callBack = 0;
-	    void                *context = 0;   // can be a NULL pointer
+        DNSServiceRef       sdRef;
+        DNSServiceFlags     flags = 0;
+        uint32_t            interfaceIndex = 0;
+        const char          *name = "name";
+        const char          *regtype = "_test._tcp";
+        const char          *domain = "local";
+        DNSServiceResolveReply callBack = 0;
+        void                *context = 0;   // can be a NULL pointer
 
-	    if (    (DNSServiceResolve(    0,  flags, interfaceIndex, name, regtype, domain, callBack, context) == 0)
+        if (    (DNSServiceResolve(    0,  flags, interfaceIndex, name, regtype, domain, callBack, context) == 0)
             ||  (DNSServiceResolve(&sdRef, flags, interfaceIndex,    0, regtype, domain, callBack, context) == 0)
             ||  (DNSServiceResolve(&sdRef, flags, interfaceIndex, name,       0, domain, callBack, context) == 0)
             ||  (DNSServiceResolve(&sdRef, flags, interfaceIndex, name, regtype,      0, callBack, context) == 0)
             ||  (DNSServiceResolve(&sdRef, flags, interfaceIndex, name, regtype, domain, callBack, context) == 0)
            )
-	    {
-	        printf("DNSServiceResolve(): expected error return\n");
-	        return 1;
-	    }
+        {
+            printf("DNSServiceResolve(): expected error return\n");
+            return 1;
+        }
     }
 
     // DNSServiceQueryRecord()
     {
-	    DNSServiceRef       sdRef;
-	    DNSServiceFlags     flags = 0;
-	    uint32_t            interfaceIndex = 0;
-	    const char          *fullname = "fullname";
-	    uint16_t            rrtype = 0;
-	    uint16_t            rrclass = 0;
-	    DNSServiceQueryRecordReply callBack = 0;
-	    void                *context = 0;  /* may be NULL */
+        DNSServiceRef       sdRef;
+        DNSServiceFlags     flags = 0;
+        uint32_t            interfaceIndex = 0;
+        const char          *fullname = "fullname";
+        uint16_t            rrtype = 0;
+        uint16_t            rrclass = 0;
+        DNSServiceQueryRecordReply callBack = 0;
+        void                *context = 0;  /* may be NULL */
 
-	    if (    (DNSServiceQueryRecord(     0, flags, interfaceIndex, fullname, rrtype, rrclass, callBack, context) == 0)
-	        ||  (DNSServiceQueryRecord(&sdRef, flags, interfaceIndex, 0,        rrtype, rrclass, callBack, context) == 0)
-	        ||  (DNSServiceQueryRecord(&sdRef, flags, interfaceIndex, fullname, rrtype, rrclass,        0, context) == 0)
+        if (    (DNSServiceQueryRecord(     0, flags, interfaceIndex, fullname, rrtype, rrclass, callBack, context) == 0)
+            ||  (DNSServiceQueryRecord(&sdRef, flags, interfaceIndex, 0,        rrtype, rrclass, callBack, context) == 0)
+            ||  (DNSServiceQueryRecord(&sdRef, flags, interfaceIndex, fullname, rrtype, rrclass,        0, context) == 0)
            )
-	    {
-	        printf("DNSServiceQueryRecord(): expected error return\n");
-	        return 1;
-	    }
+        {
+            printf("DNSServiceQueryRecord(): expected error return\n");
+            return 1;
+        }
     }
 
     // DNSServiceGetAddrInfo()
     {
-	    DNSServiceRef       sdRef;
-	    DNSServiceFlags     flags = 0;
-	    uint32_t            interfaceIndex = 0;
-	    DNSServiceProtocol  protocol = kDNSServiceProtocol_IPv4|kDNSServiceProtocol_IPv6;
-	    const char          *hostname = "host.local";
-	    DNSServiceGetAddrInfoReply callBack = 0;
-	    void                *context = 0;   // may be NULL
+        DNSServiceRef       sdRef;
+        DNSServiceFlags     flags = 0;
+        uint32_t            interfaceIndex = 0;
+        DNSServiceProtocol  protocol = kDNSServiceProtocol_IPv4|kDNSServiceProtocol_IPv6;
+        const char          *hostname = "host.local";
+        DNSServiceGetAddrInfoReply callBack = 0;
+        void                *context = 0;   // may be NULL
 
-	    if (    (DNSServiceGetAddrInfo(     0, flags, interfaceIndex, protocol, hostname, callBack, context) == 0)
+        if (    (DNSServiceGetAddrInfo(     0, flags, interfaceIndex, protocol, hostname, callBack, context) == 0)
             ||  (DNSServiceGetAddrInfo(&sdRef, flags, interfaceIndex, protocol,        0, callBack, context) == 0)
             ||  (DNSServiceGetAddrInfo(&sdRef, flags, interfaceIndex, protocol, hostname,        0, context) == 0)
            )
-	    {
-	        printf("DNSServiceGetAddrInfo(): expected error return\n");
-	        return 1;
-	    }
+        {
+            printf("DNSServiceGetAddrInfo(): expected error return\n");
+            return 1;
+        }
     }
 
     // DNSServiceBrowse()
     {
-	    DNSServiceRef       sdRef;
-	    DNSServiceFlags     flags = 0;
-	    uint32_t            interfaceIndex = 0;
-	    const char          *regtype = "_test._tcp";
-	    const char          *domain = 0;    /* may be NULL */
-	    DNSServiceBrowseReply callBack = 0;
-	    void                *context = 0;   /* may be NULL */
+        DNSServiceRef       sdRef;
+        DNSServiceFlags     flags = 0;
+        uint32_t            interfaceIndex = 0;
+        const char          *regtype = "_test._tcp";
+        const char          *domain = 0;    /* may be NULL */
+        DNSServiceBrowseReply callBack = 0;
+        void                *context = 0;   /* may be NULL */
 
-	    if (    (DNSServiceBrowse(     0, flags, interfaceIndex, regtype, domain, callBack, context) == 0)
+        if (    (DNSServiceBrowse(     0, flags, interfaceIndex, regtype, domain, callBack, context) == 0)
             ||  (DNSServiceBrowse(&sdRef, flags, interfaceIndex,       0, domain, callBack, context) == 0)
             ||  (DNSServiceBrowse(&sdRef, flags, interfaceIndex, regtype, domain,        0, context) == 0)
            )
-	    {
-	        printf("DNSServiceBrowse(): expected error return\n");
-	        return 1;
-	    }
+        {
+            printf("DNSServiceBrowse(): expected error return\n");
+            return 1;
+        }
     }
 
-#if APPLE_OSX_mDNSResponder
-    // DNSServiceSetDefaultDomainForUser()
-    if (DNSServiceSetDefaultDomainForUser(0, 0) == 0)
-    {
-        printf("DNSServiceSetDefaultDomainForUser(): expected error return\n");
-        return 1;
-    }
-#endif
 
     // DNSServiceRegister()
     {
-	    DNSServiceRef       sdRef;
-	    DNSServiceFlags     flags = 0;
-	    uint32_t            interfaceIndex = 0;
-	    const char          *name = 0;         /* may be NULL */
-	    const char          *regtype = "_test._tcp";
-	    const char          *domain = 0;       /* may be NULL */
-	    const char          *host = 0;         /* may be NULL */
-	    uint16_t            port = 0x2211;     /* In network byte order */
-	    uint16_t            txtLen = 1;
-	    const void          *txtRecord = "\0";    /* may be NULL */
-	    DNSServiceRegisterReply callBack = 0;  /* may be NULL */
-	    void                *context = 0;      /* may be NULL */
+        DNSServiceRef       sdRef;
+        DNSServiceFlags     flags = 0;
+        uint32_t            interfaceIndex = 0;
+        const char          *name = 0;         /* may be NULL */
+        const char          *regtype = "_test._tcp";
+        const char          *domain = 0;       /* may be NULL */
+        const char          *host = 0;         /* may be NULL */
+        uint16_t            port = 0x2211;     /* In network byte order */
+        uint16_t            txtLen = 1;
+        const void          *txtRecord = "\0";    /* may be NULL */
+        DNSServiceRegisterReply callBack = 0;  /* may be NULL */
+        void                *context = 0;      /* may be NULL */
 
-	    if (    (DNSServiceRegister(     0, flags, interfaceIndex, name, regtype, domain, host, port, txtLen, txtRecord, callBack, context) == 0)
+        if (    (DNSServiceRegister(     0, flags, interfaceIndex, name, regtype, domain, host, port, txtLen, txtRecord, callBack, context) == 0)
             ||  (DNSServiceRegister(&sdRef, flags, interfaceIndex, name,       0, domain, host, port, txtLen, txtRecord, callBack, context) == 0)
            )
-	    {
-	        printf("DNSServiceRegister(): expected error return\n");
-	        return 1;
-	    }
+        {
+            printf("DNSServiceRegister(): expected error return\n");
+            return 1;
+        }
     }
 
     // DNSServiceEnumerateDomains()
     {
-	    DNSServiceRef       sdRef;
-	    DNSServiceFlags     flags = 0;
-	    uint32_t            interfaceIndex = 0;
-	    DNSServiceDomainEnumReply callBack = 0;
-	    void                *context = 0;  /* may be NULL */
+        DNSServiceRef       sdRef;
+        DNSServiceFlags     flags = 0;
+        uint32_t            interfaceIndex = 0;
+        DNSServiceDomainEnumReply callBack = 0;
+        void                *context = 0;  /* may be NULL */
 
-	    if (    (DNSServiceEnumerateDomains(     0, flags, interfaceIndex, callBack, context) == 0)
+        if (    (DNSServiceEnumerateDomains(     0, flags, interfaceIndex, callBack, context) == 0)
             ||  (DNSServiceEnumerateDomains(&sdRef, flags, interfaceIndex,        0, context) == 0)
            )
-	    {
-	        printf("DNSServiceEnumerateDomains(): expected error return\n");
-	        return 1;
-	    }
+        {
+            printf("DNSServiceEnumerateDomains(): expected error return\n");
+            return 1;
+        }
     }
 
     // DNSServiceCreateConnection()
@@ -1698,139 +1814,131 @@ static int API_NULL_input_test()
         return 1;
     }
 
-#if APPLE_OSX_mDNSResponder
-    // DNSServiceCreateDelegateConnection()
-    if (DNSServiceCreateDelegateConnection(0, 0, 0) == 0)
-    {
-        printf("DNSServiceCreateDelegateConnection(): expected error return\n");
-        return 1;
-    }
-#endif
 
     // DNSServiceRegisterRecord()
     {
-	    DNSServiceRef       sdRef;
-	    DNSRecordRef        RecordRef;
-	    DNSServiceFlags     flags = 0;
-	    uint32_t            interfaceIndex = 0;
-	    const char          *fullname = "test1._test._tcp.local";
-	    uint16_t            rrtype = kDNSServiceType_TXT;
-	    uint16_t            rrclass = kDNSServiceClass_IN;
-	    uint16_t            rdlen = 1;
-	    const void          *rdata = "\0";
-	    uint32_t            ttl = 0;
-	    DNSServiceRegisterRecordReply callBack = 0;
-	    void                *context = 0;    /* may be NULL */
+        DNSServiceRef       sdRef;
+        DNSRecordRef        RecordRef;
+        DNSServiceFlags     flags = 0;
+        uint32_t            interfaceIndex = 0;
+        const char          *fullname = "test1._test._tcp.local";
+        uint16_t            rrtype = kDNSServiceType_TXT;
+        uint16_t            rrclass = kDNSServiceClass_IN;
+        uint16_t            rdlen = 1;
+        const void          *rdata = "\0";
+        uint32_t            ttl = 0;
+        DNSServiceRegisterRecordReply callBack = 0;
+        void                *context = 0;    /* may be NULL */
 
         // Need an initialize sdRef
         if (DNSServiceCreateConnection(&sdRef))
         {
-	        printf("DNSServiceCreateConnection(): failed\n");
-	        return 1;
+            printf("DNSServiceCreateConnection(): failed\n");
+            return 1;
         }
 
-	    if (    (DNSServiceRegisterRecord(     0, &RecordRef, flags, interfaceIndex, fullname, rrtype, rrclass, rdlen, rdata, ttl, callBack, context) == 0)
-	        ||  (DNSServiceRegisterRecord(sdRef, &RecordRef, flags, interfaceIndex,         0, rrtype, rrclass, rdlen, rdata, ttl, callBack, context) == 0)
-	        ||  (DNSServiceRegisterRecord(sdRef, &RecordRef, flags, interfaceIndex,  fullname, rrtype, rrclass, rdlen,     0, ttl, callBack, context) == 0)
-	        ||  (DNSServiceRegisterRecord(sdRef, &RecordRef, flags, interfaceIndex,  fullname, rrtype, rrclass, rdlen, rdata, ttl,        0, context) == 0)
+        if (    (DNSServiceRegisterRecord(     0, &RecordRef, flags, interfaceIndex, fullname, rrtype, rrclass, rdlen, rdata, ttl, callBack, context) == 0)
+            ||  (DNSServiceRegisterRecord(sdRef, &RecordRef, flags, interfaceIndex,         0, rrtype, rrclass, rdlen, rdata, ttl, callBack, context) == 0)
+            ||  (DNSServiceRegisterRecord(sdRef, &RecordRef, flags, interfaceIndex,  fullname, rrtype, rrclass, rdlen,     0, ttl, callBack, context) == 0)
+            ||  (DNSServiceRegisterRecord(sdRef, &RecordRef, flags, interfaceIndex,  fullname, rrtype, rrclass, rdlen, rdata, ttl,        0, context) == 0)
            )
-	    {
-	        printf("DNSServiceRegisterRecord(): expected error return\n");
-	        return 1;
-	    }
+        {
+            printf("DNSServiceRegisterRecord(): expected error return\n");
+            return 1;
+        }
     }
 
-    // DNSServiceAddRecord(), DNSServiceUpdateRecord(), and DNSServiceRemoveRecord() verify that they 
-    // get a valid DNSServiceRef returned from DNSServiceRegister() 
+    // DNSServiceAddRecord(), DNSServiceUpdateRecord(), and DNSServiceRemoveRecord() verify that they
+    // get a valid DNSServiceRef returned from DNSServiceRegister()
     {
         DNSServiceErrorType err;
-	    Opaque16            registerPort = { { 0x12, 0x34 } };
-	    static const char   TXT[] = "\xC" "First String";
+        Opaque16            registerPort = { { 0x12, 0x34 } };
+        static const char   TXT[] = "\xC" "First String";
         DNSServiceRef       sdRef;
 
-	    DNSRecordRef        RecordRef;
-	    DNSServiceFlags     flags = 0;
-	    uint16_t            rrtype = kDNSServiceType_TXT;
-	    uint16_t            rdlen = 1;
-	    const void          *rdata = "\0";
-	    uint32_t            ttl = 100;
+        DNSRecordRef        RecordRef;
+        DNSServiceFlags     flags = 0;
+        uint16_t            rrtype = kDNSServiceType_TXT;
+        uint16_t            rdlen = 1;
+        const void          *rdata = "\0";
+        uint32_t            ttl = 100;
 
-	    err = DNSServiceRegister(&sdRef, 0, 0, "Test", "_test._tcp.", "", NULL, registerPort.NotAnInteger, sizeof(TXT)-1, TXT, reg_reply, NULL);
+        err = DNSServiceRegister(&sdRef, 0, 0, "Test", "_test._tcp.", "", NULL, registerPort.NotAnInteger, sizeof(TXT)-1, TXT, reg_reply, NULL);
         if (err)
         {
             printf("DNSServiceRegister() failed with: %d\n", err);
             return 1;
         }
-	
-	    // DNSServiceAddRecord()
-	    if (    (DNSServiceAddRecord(    0, &RecordRef, flags, rrtype, rdlen, rdata, ttl) == 0)
-	        ||  (DNSServiceAddRecord(sdRef,          0, flags, rrtype, rdlen, rdata, ttl) == 0)
-	        ||  (DNSServiceAddRecord(sdRef, &RecordRef, flags, rrtype, rdlen,     0, ttl) == 0)
+
+        // DNSServiceAddRecord()
+        if (    (DNSServiceAddRecord(    0, &RecordRef, flags, rrtype, rdlen, rdata, ttl) == 0)
+            ||  (DNSServiceAddRecord(sdRef,          0, flags, rrtype, rdlen, rdata, ttl) == 0)
+            ||  (DNSServiceAddRecord(sdRef, &RecordRef, flags, rrtype, rdlen,     0, ttl) == 0)
            )
 
-	    {
-	        printf("DNSServiceAddRecord(): expected error return\n");
-	        return 1;
-	    }
+        {
+            printf("DNSServiceAddRecord(): expected error return\n");
+            return 1;
+        }
 
         // (rdlen == 0 && rdata == 0) should indicate a TXT with rdata containing only a 0 length byte.
         if (DNSServiceAddRecord(sdRef, &RecordRef, flags, rrtype, 0, 0, ttl) == kDNSServiceErr_BadParam)
         {
-	        printf("DNSServiceAddRecord(): with (rdlen == 0 && rdata == 0) returned kDNSServiceErr_BadParam\n");
-	        return 1;
+            printf("DNSServiceAddRecord(): with (rdlen == 0 && rdata == 0) returned kDNSServiceErr_BadParam\n");
+            return 1;
         }
-	
-	    // DNSServiceUpdateRecord()
+
+        // DNSServiceUpdateRecord()
         // Note, RecordRef can be NULL per explanation with declaration in dns_sd.h
-	    if (    (DNSServiceUpdateRecord(    0, RecordRef, flags, rdlen, rdata, ttl) == 0)
-	        ||  (DNSServiceUpdateRecord(sdRef, RecordRef, flags, rdlen,     0, ttl) == 0)
+        if (    (DNSServiceUpdateRecord(    0, RecordRef, flags, rdlen, rdata, ttl) == 0)
+            ||  (DNSServiceUpdateRecord(sdRef, RecordRef, flags, rdlen,     0, ttl) == 0)
            )
-	    {
-	        printf("DNSServiceUpdateRecord(): expected error return\n");
-	        return 1;
-	    }
-	
+        {
+            printf("DNSServiceUpdateRecord(): expected error return\n");
+            return 1;
+        }
+
         // (rdlen == 0 && rdata == 0) should indicate a TXT with rdata containing only a 0 length byte.
         if (DNSServiceUpdateRecord(sdRef, RecordRef, flags, 0, 0, ttl) == kDNSServiceErr_BadParam)
         {
-	        printf("DNSServiceUpdateRecord(): with (rdlen == 0 && rdata == 0) returned kDNSServiceErr_BadParam\n");
-	        return 1;
+            printf("DNSServiceUpdateRecord(): with (rdlen == 0 && rdata == 0) returned kDNSServiceErr_BadParam\n");
+            return 1;
         }
 
-	    // DNSServiceRemoveRecord()
-	    if (    (DNSServiceRemoveRecord(    0, RecordRef, flags) == 0)
-	        ||  (DNSServiceRemoveRecord(sdRef,         0, flags) == 0)
+        // DNSServiceRemoveRecord()
+        if (    (DNSServiceRemoveRecord(    0, RecordRef, flags) == 0)
+            ||  (DNSServiceRemoveRecord(sdRef,         0, flags) == 0)
            )
-	    {
-	        printf("DNSServiceRemoveRecord(): expected error return\n");
-	        return 1;
-	    }
+        {
+            printf("DNSServiceRemoveRecord(): expected error return\n");
+            return 1;
+        }
 
         DNSServiceRefDeallocate(sdRef);
     }
 
     // DNSServiceReconfirmRecord()
     {
-	    DNSServiceFlags     flags = 0;
-	    uint32_t            interfaceIndex = 0;
-	    const char          *fullname = "aaa._test._tcp.local";
-	    uint16_t            rrtype = kDNSServiceType_TXT;
-	    uint16_t            rrclass = kDNSServiceClass_IN;
-	    uint16_t            rdlen = 1;
-	    const void          *rdata = "\0";
-	
-	    if (    (DNSServiceReconfirmRecord(flags, interfaceIndex,        0, rrtype, rrclass, rdlen, rdata) == 0)
+        DNSServiceFlags     flags = 0;
+        uint32_t            interfaceIndex = 0;
+        const char          *fullname = "aaa._test._tcp.local";
+        uint16_t            rrtype = kDNSServiceType_TXT;
+        uint16_t            rrclass = kDNSServiceClass_IN;
+        uint16_t            rdlen = 1;
+        const void          *rdata = "\0";
+
+        if (    (DNSServiceReconfirmRecord(flags, interfaceIndex,        0, rrtype, rrclass, rdlen, rdata) == 0)
             ||  (DNSServiceReconfirmRecord(flags, interfaceIndex, fullname, rrtype, rrclass, rdlen,     0) == 0)
            )
-	    {
-	        printf("DNSServiceReconfirmRecord(): expected error return\n");
-	        return 1;
-	    }
+        {
+            printf("DNSServiceReconfirmRecord(): expected error return\n");
+            return 1;
+        }
         // (rdlen == 0 && rdata == 0) should indicate a TXT with rdata containing only a 0 length byte.
         if (DNSServiceReconfirmRecord(flags, interfaceIndex, fullname, rrtype, rrclass, 0, 0) == kDNSServiceErr_BadParam)
         {
-	        printf("DNSServiceReconfirmRecord(): with (rdlen == 0 && rdata == 0) returned kDNSServiceErr_BadParam\n");
-	        return 1;
+            printf("DNSServiceReconfirmRecord(): with (rdlen == 0 && rdata == 0) returned kDNSServiceErr_BadParam\n");
+            return 1;
         }
     }
 
@@ -1839,7 +1947,7 @@ static int API_NULL_input_test()
     return 0;
 }
 
-static int API_input_range_test()
+static int API_input_range_test(void)
 {
 
     if (API_string_limit_test())
@@ -1857,7 +1965,8 @@ int main(int argc, char **argv)
     char buffer[TypeBufferSize], *typ, *dom;
     int opi;
     DNSServiceFlags flags = 0;
-    int optional = 0;
+    unsigned char enable_dnssec = 0;
+    const char *callName = "DNS Service call";
 
     // Extract the program name from argv[0], which by convention contains the path to this executable.
     // Note that this is just a voluntary convention, not enforced by the kernel --
@@ -1887,58 +1996,66 @@ int main(int argc, char **argv)
         // record current argc to see if we process an argument in this pass
         entryCount = argc;
 
-	    if (argc > 1 && !strcmp(argv[1], "-test"))
-	    {
-	        argc--;
-	        argv++;
-	        return API_input_range_test();
-	    }
-	
-	    if (argc > 1 && !strcmp(argv[1], "-lo"))
-	    {
-	        argc--;
-	        argv++;
-	        opinterface = kDNSServiceInterfaceIndexLocalOnly;
-	        printf("Using LocalOnly\n");
-	    }
-	
-	    if (argc > 1 && (!strcasecmp(argv[1], "-p2p")))
-	    {
-	        argc--;
-	        argv++;
-	        opinterface = kDNSServiceInterfaceIndexP2P;
-	    }
-	
-	    if (argc > 1 && (!strcasecmp(argv[1], "-ble")))
-	    {
-	        argc--;
-	        argv++;
-	        opinterface = kDNSServiceInterfaceIndexBLE;
-	    }
-	
-	    if (argc > 1 && !strcasecmp(argv[1], "-includep2p"))
-	    {
-	        argc--;
-	        argv++;
-	        flags |= kDNSServiceFlagsIncludeP2P;
-	        printf("Setting kDNSServiceFlagsIncludeP2P\n");
-	    }
+        if (argc > 1 && !strcmp(argv[1], "-test"))
+        {
+            argc--;
+            argv++;
+            return API_input_range_test();
+        }
 
-	    if (argc > 1 && !strcasecmp(argv[1], "-fmc"))
-	    {
-	        argc--;
-	        argv++;
-	        flags |= kDNSServiceFlagsForceMulticast;
-	        printf("Setting kDNSServiceFlagsForceMulticast flag for this request\n");
-	    }
-	
-	    if (argc > 1 && !strcasecmp(argv[1], "-includeAWDL"))
-	    {
-	        argc--;
-	        argv++;
-	        flags |= kDNSServiceFlagsIncludeAWDL;
-	        printf("Setting kDNSServiceFlagsIncludeAWDL\n");
-	    }
+        if (argc > 1 && !strcmp(argv[1], "-lo"))
+        {
+            argc--;
+            argv++;
+            opinterface = kDNSServiceInterfaceIndexLocalOnly;
+            printf("Using LocalOnly\n");
+        }
+
+        if (argc > 1 && (!strcasecmp(argv[1], "-p2p")))
+        {
+            argc--;
+            argv++;
+            opinterface = kDNSServiceInterfaceIndexP2P;
+        }
+
+        if (argc > 1 && (!strcasecmp(argv[1], "-ble")))
+        {
+            argc--;
+            argv++;
+            opinterface = kDNSServiceInterfaceIndexBLE;
+        }
+
+        if (argc > 1 && !strcasecmp(argv[1], "-allowexpired"))
+        {
+            argc--;
+            argv++;
+            flags |= kDNSServiceFlagsAllowExpiredAnswers;
+            printf("Setting kDNSServiceFlagsAllowExpiredAnswers\n");
+        }
+
+        if (argc > 1 && !strcasecmp(argv[1], "-includep2p"))
+        {
+            argc--;
+            argv++;
+            flags |= kDNSServiceFlagsIncludeP2P;
+            printf("Setting kDNSServiceFlagsIncludeP2P\n");
+        }
+
+        if (argc > 1 && !strcasecmp(argv[1], "-fmc"))
+        {
+            argc--;
+            argv++;
+            flags |= kDNSServiceFlagsForceMulticast;
+            printf("Setting kDNSServiceFlagsForceMulticast flag for this request\n");
+        }
+
+        if (argc > 1 && !strcasecmp(argv[1], "-includeAWDL"))
+        {
+            argc--;
+            argv++;
+            flags |= kDNSServiceFlagsIncludeAWDL;
+            printf("Setting kDNSServiceFlagsIncludeAWDL\n");
+        }
 
         if (argc > 1 && !strcasecmp(argv[1], "-intermediates"))
         {
@@ -1949,85 +2066,107 @@ int main(int argc, char **argv)
         }
 
         if (argc > 1 && !strcasecmp(argv[1], "-tc"))
-	    {
-	        argc--;
-	        argv++;
-	        flags |= kDNSServiceFlagsBackgroundTrafficClass;
-	        printf("Setting kDNSServiceFlagsBackgroundTrafficClass\n");
-	    }
-	
-	    if (argc > 1 && !strcasecmp(argv[1], "-t1"))
-	    {
-	        argc--;
-	        argv++;
-	        flags |= kDNSServiceFlagsThresholdOne;
-	        printf("Setting kDNSServiceFlagsThresholdOne\n");
-	    }
-	
-	    if (argc > 1 && !strcasecmp(argv[1], "-tFinder"))
-	    {
-	        argc--;
-	        argv++;
-	        flags |= kDNSServiceFlagsThresholdFinder;
-	        printf("Setting kDNSServiceFlagsThresholdFinder\n");
-	    }
-	
-	    if (argc > 1 && !strcasecmp(argv[1], "-wo"))
-	    {
-	        argc--;
-	        argv++;
-	        flags |= kDNSServiceFlagsWakeOnlyService;
-	        printf("Setting kDNSServiceFlagsWakeOnlyService\n");
-	    }
-	
-	    if (argc > 1 && !strcasecmp(argv[1], "-ku"))
-	    {
-	        argc--;
-	        argv++;
-	        flags |= kDNSServiceFlagsKnownUnique;
-	        printf("Setting kDNSServiceFlagsKnownUnique\n");
-	    }
-	
-	    if (argc > 1 && !strcasecmp(argv[1], "-unicastResponse"))
-	    {
-	        argc--;
-	        argv++;
-	        flags |= kDNSServiceFlagsUnicastResponse;
-	        printf("Setting kDNSServiceFlagsUnicastResponse\n");
-	    }
+        {
+            argc--;
+            argv++;
+            flags |= kDNSServiceFlagsBackgroundTrafficClass;
+            printf("Setting kDNSServiceFlagsBackgroundTrafficClass\n");
+        }
 
-	    if (argc > 1 && !strcasecmp(argv[1], "-timeout"))
-	    {
-	        argc--;
-	        argv++;
-	        flags |= kDNSServiceFlagsTimeout;
-	        printf("Setting kDNSServiceFlagsTimeout\n");
-	    }
+        if (argc > 1 && !strcasecmp(argv[1], "-t1"))
+        {
+            argc--;
+            argv++;
+            flags |= kDNSServiceFlagsThresholdOne;
+            printf("Setting kDNSServiceFlagsThresholdOne\n");
+        }
 
-	    if (argc > 1 && !strcasecmp(argv[1], "-autoTrigger"))
-	    {
-	        argc--;
-	        argv++;
-	        flags |= kDNSServiceFlagsAutoTrigger;
-	        printf("Setting kDNSServiceFlagsAutoTrigger\n");
-	    }
+        if (argc > 1 && !strcasecmp(argv[1], "-tFinder"))
+        {
+            argc--;
+            argv++;
+            flags |= kDNSServiceFlagsThresholdFinder;
+            printf("Setting kDNSServiceFlagsThresholdFinder\n");
+        }
 
-	    if (argc > 1 && !strcasecmp(argv[1], "-optional"))
-	    {
-	        argc--;
-	        argv++;
-	        optional = 1;
-	        printf("Setting DNSSEC optional flag\n");
-	    }
+        if (argc > 1 && !strcasecmp(argv[1], "-wo"))
+        {
+            argc--;
+            argv++;
+            flags |= kDNSServiceFlagsWakeOnlyService;
+            printf("Setting kDNSServiceFlagsWakeOnlyService\n");
+        }
 
-	    if (argc > 2 && !strcmp(argv[1], "-i"))
-	    {
-	        opinterface = if_nametoindex(argv[2]);
-	        if (!opinterface) opinterface = atoi(argv[2]);
-	        if (!opinterface) { fprintf(stderr, "Unknown interface %s\n", argv[2]); goto Fail; }
-	        argc -= 2;
-	        argv += 2;
-	    }
+        if (argc > 1 && !strcasecmp(argv[1], "-ku"))
+        {
+            argc--;
+            argv++;
+            flags |= kDNSServiceFlagsKnownUnique;
+            printf("Setting kDNSServiceFlagsKnownUnique\n");
+        }
+
+        if (argc > 1 && !strcasecmp(argv[1], "-sh"))
+        {
+            argc--;
+            argv++;
+            flags |= kDNSServiceFlagsShared;
+            printf("Setting kDNSServiceFlagsShared\n");
+        }
+
+        if (argc > 1 && !strcasecmp(argv[1], "-unicastResponse"))
+        {
+            argc--;
+            argv++;
+            flags |= kDNSServiceFlagsUnicastResponse;
+            printf("Setting kDNSServiceFlagsUnicastResponse\n");
+        }
+
+        if (argc > 1 && !strcasecmp(argv[1], "-timeout"))
+        {
+            argc--;
+            argv++;
+            flags |= kDNSServiceFlagsTimeout;
+            printf("Setting kDNSServiceFlagsTimeout\n");
+        }
+
+        if (argc > 1 && !strcasecmp(argv[1], "-autoTrigger"))
+        {
+            argc--;
+            argv++;
+            flags |= kDNSServiceFlagsAutoTrigger;
+            printf("Setting kDNSServiceFlagsAutoTrigger\n");
+        }
+
+        if (argc > 1 && !strcasecmp(argv[1], "-D"))
+        {
+            argc--;
+            argv++;
+            enable_dnssec = 1;
+            printf("Setting kDNSServiceFlagsEnableDNSSEC\n");
+        }
+
+        if (argc > 2 && !strcmp(argv[1], "-i"))
+        {
+            opinterface = if_nametoindex(argv[2]);
+            if (!opinterface) opinterface = atoi(argv[2]);
+            if (!opinterface) { fprintf(stderr, "Unknown interface %s\n", argv[2]); goto Fail; }
+            argc -= 2;
+            argv += 2;
+        }
+
+        if (argc > 2 && !strcmp(argv[1], "-t"))
+        {
+            exitTimeout = atoi(argv[2]);
+            argc -= 2;
+            argv += 2;
+        }
+
+        if (argc > 2 && !strcmp(argv[1], "-m"))
+        {
+            exitWhenNoMoreComing = 1;
+            argc -= 1;
+            argv += 1;
+        }
 
         // Exit loop if if we didn't match one of the multi character options.
         if (argc == entryCount)
@@ -2046,10 +2185,12 @@ int main(int argc, char **argv)
     switch (operation)
     {
     case 'E':   printf("Looking for recommended registration domains:\n");
+        callName = "DNSServiceEnumerateDomains";
         err = DNSServiceEnumerateDomains(&client, kDNSServiceFlagsRegistrationDomains, opinterface, enum_reply, NULL);
         break;
 
     case 'F':   printf("Looking for recommended browsing domains:\n");
+        callName = "DNSServiceEnumerateDomains";
         err = DNSServiceEnumerateDomains(&client, kDNSServiceFlagsBrowseDomains, opinterface, enum_reply, NULL);
         //enum_reply(client, kDNSServiceFlagsAdd, 0, 0, "nicta.com.au.", NULL);
         //enum_reply(client, kDNSServiceFlagsAdd, 0, 0, "bonjour.nicta.com.au.", NULL);
@@ -2062,6 +2203,7 @@ int main(int argc, char **argv)
         typ = gettype(buffer, typ);
         if (dom[0] == '.' && dom[1] == 0) dom[0] = 0;               // We allow '.' on the command line as a synonym for empty string
         printf("Browsing for %s%s%s\n", typ, dom[0] ? "." : "", dom);
+        callName = "DNSServiceBrowse";
         err = DNSServiceBrowse(&client, flags, opinterface, typ, dom, browse_reply, NULL);
         break;
 
@@ -2073,6 +2215,7 @@ int main(int argc, char **argv)
         err = DNSServiceCreateConnection(&client);
         if (err) { fprintf(stderr, "DNSServiceCreateConnection returned %d\n", err); return(err); }
         sc1 = client;
+        callName = "DNSServiceBrowse";
         err = DNSServiceBrowse(&sc1, kDNSServiceFlagsShareConnection, opinterface, typ, dom, zonedata_browse, NULL);
         break;
 
@@ -2085,6 +2228,7 @@ int main(int argc, char **argv)
         if (dom[0] == '.' && dom[1] == 0) dom = "local";               // We allow '.' on the command line as a synonym for "local"
         printf("Lookup %s.%s.%s\n", argv[opi+0], typ, dom);
         if (operation == 'l') flags |= kDNSServiceFlagsWakeOnResolve;
+        callName = "DNSServiceResolve";
         err = DNSServiceResolve(&client, flags, opinterface, argv[opi+0], typ, dom, resolve_reply, NULL);
         break;
     }
@@ -2094,40 +2238,39 @@ int main(int argc, char **argv)
         dom = (argc < opi+3) ? "" : argv[opi+2];
         typ = gettype(buffer, typ);
         if (dom[0] == '.' && dom[1] == 0) dom[0] = 0;               // We allow '.' on the command line as a synonym for empty string
-        err = RegisterService(&client, argv[opi+0], typ, dom, NULL, argv[opi+3], argc-(opi+4), argv+(opi+4), flags);
+        err = RegisterService(&client, argv[opi+0], typ, dom, NULL, argv[opi+3], argc-(opi+4), argv+(opi+4), flags, &callName);
         break;
 
 
     case 'P':   if (argc < opi+6) goto Fail;
         err = DNSServiceCreateConnection(&client_pa);
         if (err) { fprintf(stderr, "DNSServiceCreateConnection returned %d\n", err); return(err); }
+        callName = "DNSServiceRegisterRecord";
         err = RegisterProxyAddressRecord(client_pa, argv[opi+4], argv[opi+5], flags);
         if (err) break;
-        err = RegisterService(&client, argv[opi+0], gettype(buffer, argv[opi+1]), argv[opi+2], argv[opi+4], argv[opi+3], argc-(opi+6), argv+(opi+6), flags);
+        err = RegisterService(&client, argv[opi+0], gettype(buffer, argv[opi+1]), argv[opi+2], argv[opi+4], argv[opi+3], argc-(opi+6), argv+(opi+6), flags, &callName);
         break;
 
-    case 'D':
     case 'q':
     case 'Q':
     case 'C':   {
         uint16_t rrtype, rrclass;
-        flags |= kDNSServiceFlagsReturnIntermediates;
+        // For the exitWhenNoMoreComing test case, we do not want intermediates, since this would result in
+        // a premature exit.
+        if (!exitWhenNoMoreComing) {
+            flags |= kDNSServiceFlagsReturnIntermediates;
+        }
         if (operation == 'q')
             flags |= kDNSServiceFlagsSuppressUnusable;
-        if (argc < opi+1) 
+        if (enable_dnssec)
+            flags |= kDNSServiceFlagsEnableDNSSEC;
+        if (argc < opi+1)
             goto Fail;
         rrtype = (argc <= opi+1) ? kDNSServiceType_A  : GetRRType(argv[opi+1]);
         rrclass = (argc <= opi+2) ? kDNSServiceClass_IN : GetRRClass(argv[opi+2]);
         if (rrtype == kDNSServiceType_TXT || rrtype == kDNSServiceType_PTR)
             flags |= kDNSServiceFlagsLongLivedQuery;
-        if (operation == 'D')
-        {
-            flags |= kDNSServiceFlagsSuppressUnusable;
-            if (optional)
-                flags |= kDNSServiceFlagsValidateOptional;
-            else
-                flags |= kDNSServiceFlagsValidate;
-        }
+        callName = "DNSServiceQueryRecord";
         err = DNSServiceQueryRecord(&client, flags, opinterface, argv[opi+0], rrtype, rrclass, qr_reply, NULL);
         break;
     }
@@ -2138,6 +2281,7 @@ int main(int argc, char **argv)
         Opaque16 registerPort = { { 0x12, 0x34 } };
         static const char TXT[] = "\xC" "First String" "\xD" "Second String" "\xC" "Third String";
         printf("Registering Service Test._testupdate._tcp.local.\n");
+        callName = "DNSServiceRegister";
         err = DNSServiceRegister(&client, 0, opinterface, "Test", "_testupdate._tcp.", "", NULL, registerPort.NotAnInteger, sizeof(TXT)-1, TXT, reg_reply, NULL);
         break;
     }
@@ -2149,6 +2293,7 @@ int main(int argc, char **argv)
         for (i=0; i<sizeof(TXT); i++)
             if ((i & 0x1F) == 0) TXT[i] = 0x1F;else TXT[i] = 'A' + (i >> 5);
         printf("Registering Service Test._testlargetxt._tcp.local.\n");
+        callName = "DNSServiceRegister";
         err = DNSServiceRegister(&client, 0, opinterface, "Test", "_testlargetxt._tcp.", "", NULL, registerPort.NotAnInteger, sizeof(TXT), TXT, reg_reply, NULL);
         break;
     }
@@ -2159,8 +2304,13 @@ int main(int argc, char **argv)
         static const char TXT1[] = "\xC" "First String"  "\xD" "Second String" "\xC" "Third String";
         static const char TXT2[] = "\xD" "Fourth String" "\xC" "Fifth String"  "\xC" "Sixth String";
         printf("Registering Service Test._testdualtxt._tcp.local.\n");
+        callName = "DNSServiceRegister";
         err = DNSServiceRegister(&client, flags, opinterface, "Test", "_testdualtxt._tcp.", "", NULL, registerPort.NotAnInteger, sizeof(TXT1)-1, TXT1, reg_reply, NULL);
-        if (!err) err = DNSServiceAddRecord(client, &record, flags, kDNSServiceType_TXT, sizeof(TXT2)-1, TXT2, 0);
+        if (!err)
+        {
+            callName = "DNSServiceAddRecord";
+            err = DNSServiceAddRecord(client, &record, flags, kDNSServiceType_TXT, sizeof(TXT2)-1, TXT2, 0);
+        }
         break;
     }
 
@@ -2169,14 +2319,22 @@ int main(int argc, char **argv)
         Opaque16 registerPort = { { pid >> 8, pid & 0xFF } };
         static const char TXT[] = "\x09" "Test Data";
         printf("Registering Service Test._testtxt._tcp.local.\n");
+        callName = "DNSServiceRegister";
         err = DNSServiceRegister(&client, 0, opinterface, "Test", "_testtxt._tcp.", "", NULL, registerPort.NotAnInteger, 0, NULL, reg_reply, NULL);
-        if (!err) err = DNSServiceUpdateRecord(client, NULL, 0, sizeof(TXT)-1, TXT, 0);
+        if (!err)
+        {
+            callName = "DNSServiceUpdateRecord";
+            err = DNSServiceUpdateRecord(client, NULL, 0, sizeof(TXT)-1, TXT, 0);
+        }
         break;
     }
 
     case 'X':   {
         if (argc == opi)                // If no arguments, just fetch IP address
+        {
+            callName = "DNSServiceNATPortMappingCreate";
             err = DNSServiceNATPortMappingCreate(&client, 0, 0, 0, 0, 0, 0, port_mapping_create_reply, NULL);
+        }
         else if (argc >= opi+2 && atoi(argv[opi+0]) == 0)
         {
             DNSServiceProtocol prot  = GetProtocol(argv[opi+0]);                                    // Must specify TCP or UDP
@@ -2185,28 +2343,25 @@ int main(int argc, char **argv)
             uint32_t ttl             = (argc < opi+4) ? 0 : atoi(argv[opi+3]);              // Optional desired lease lifetime
             Opaque16 intp = { { IntPortAsNumber >> 8, IntPortAsNumber & 0xFF } };
             Opaque16 extp = { { ExtPortAsNumber >> 8, ExtPortAsNumber & 0xFF } };
+            callName = "DNSServiceNATPortMappingCreate";
             err = DNSServiceNATPortMappingCreate(&client, 0, 0, prot, intp.NotAnInteger, extp.NotAnInteger, ttl, port_mapping_create_reply, NULL);
         }
         else goto Fail;
         break;
     }
 
-    case 'g':
     case 'G':   {
         flags |= kDNSServiceFlagsReturnIntermediates;
+        if (enable_dnssec)
+            flags |= kDNSServiceFlagsEnableDNSSEC;
 
-        if (operation == 'g')
-        {
-            flags |= kDNSServiceFlagsSuppressUnusable;
-            if (optional)
-                flags |= kDNSServiceFlagsValidateOptional;
-            else
-                flags |= kDNSServiceFlagsValidate;
-        }
-        if (argc != opi+2) 
+        if (argc != opi+2)
             goto Fail;
-        else 
+        else
+        {
+            callName = "DNSServiceGetAddrInfo";
             err = DNSServiceGetAddrInfo(&client, flags, opinterface, GetProtocol(argv[opi+0]), argv[opi+1], addrinfo_reply, NULL);
+        }
         break;
     }
 
@@ -2248,8 +2403,30 @@ int main(int argc, char **argv)
         uint32_t v;
         uint32_t size = sizeof(v);
         err = DNSServiceGetProperty(kDNSServiceProperty_DaemonVersion, &v, &size);
-        if (err) fprintf(stderr, "DNSServiceGetProperty failed %ld\n", (long int)err);
-        else printf("Currently running daemon (system service) is version %d.%d.%d\n",  v / 10000, v / 100 % 100, v % 100);
+        if (err)
+        {
+            fprintf(stderr, "DNSServiceGetProperty failed %ld\n", (long int)err);
+        }
+        else
+        {
+            // Version strings are of the form x[.y[.z]].
+            // Newer version strings are encoded as (x * 1000000) + (y * 1000) + z, where 0 ≤ y,z ≤ 999.
+            // Older version strings were encoded as (x * 10000) + (y * 100) + z, where 0 ≤ y,z ≤ 99.
+            uint32_t x, y, z;
+            if (v > DNS_SD_ORIGINAL_ENCODING_VERSION_NUMBER_MAX)
+            {
+                x = v / 1000000;
+                y = (v / 1000) % 1000;
+                z = v % 1000;
+            }
+            else
+            {
+                x = v / 10000;
+                y = (v / 100) % 100;
+                z = v % 100;
+            }
+            printf("Currently running daemon (system service) is version %u.%u.%u\n", x, y, z);
+        }
         exit(0);
     }
 
@@ -2260,7 +2437,7 @@ int main(int argc, char **argv)
 
     if (!client || err != kDNSServiceErr_NoError)
     {
-        fprintf(stderr, "DNSService call failed %ld%s\n", (long int)err,
+        fprintf(stderr, "%s failed %ld%s\n", callName, (long int)err,
             (err == kDNSServiceErr_ServiceNotRunning) ? " (Service Not Running)" : "");
         return (-1);
     }
@@ -2277,8 +2454,8 @@ Fail:
     if (operation == 'H') print_usage(a0,1);
     else print_usage(a0,0);
     return 0;
-
 }
+
 
 // Note: The C preprocessor stringify operator ('#') makes a string from its argument, without macro expansion
 // e.g. If "version" is #define'd to be "4", then STRINGIFY_AWE(version) will return the string "version", not "4"
@@ -2288,12 +2465,14 @@ Fail:
 
 // NOT static -- otherwise the compiler may optimize it out
 // The "@(#) " pattern is a special prefix the "what" command looks for
-const char VersionString_SCCS[] = "@(#) dns-sd "
-    STRINGIFY(mDNSResponderVersion)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdate-time"
+    const char VersionString_SCCS[] = "@(#) dns-sd " STRINGIFY(mDNSResponderVersion)
 #ifndef MDNS_VERSIONSTR_NODTS
     " (" __DATE__ " " __TIME__ ")"
 #endif
 ;
+#pragma GCC diagnostic pop
 
 #if _BUILDING_XCODE_PROJECT_
 // If the process crashes, then this string will be magically included in the automatically-generated crash log

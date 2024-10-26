@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4 -*-
  *
- * Copyright (c) 2003-2015 Apple Inc. All rights reserved.
+ * Copyright (c) 2003-2024 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,6 +30,7 @@
 #define DNSSD_IPC_H
 
 #include "dns_sd.h"
+#include "general.h"
 
 //
 // Common cross platform services
@@ -75,6 +76,9 @@ extern char *win32_strerror(int inErrorCode);
 #if defined(USE_TCP_LOOPBACK)
 #   define AF_DNSSD             AF_INET
 #   define MDNS_TCP_SERVERADDR  "127.0.0.1"
+#ifdef WIN32_CENTENNIAL
+#   define MDNS_TCP_SERVERPORT_CENTENNIAL  53545
+#endif
 #   define MDNS_TCP_SERVERPORT  5354
 #   define LISTENQ              5
 #   define dnssd_sockaddr_t     struct sockaddr_in
@@ -100,7 +104,27 @@ extern char *win32_strerror(int inErrorCode);
 
 // IPC data encoding constants and types
 #define VERSION 1
-#define IPC_FLAGS_NOREPLY 1 // set flag if no asynchronous replies are to be sent to client
+#define IPC_FLAGS_NOREPLY       (1U << 0) // Set flag if no asynchronous replies are to be sent to client.
+#define IPC_FLAGS_TRAILING_TLVS (1U << 1) // Set flag if TLVs follow the standard request data.
+#define IPC_FLAGS_NOERRSD       (1U << 2) // Set flag if flag kDNSServiceFlagsMoreComing is set on client side.
+
+#define IPC_TLV_TYPE_RESOLVER_CONFIG_PLIST_DATA     1 // An nw_resolver_config as a binary property list.
+#define IPC_TLV_TYPE_REQUIRE_PRIVACY                2 // A uint8. Non-zero means privacy required, zero means not required.
+#define IPC_TLV_TYPE_SERVICE_ATTR_AAAA_POLICY       3 // A uint32 for a DNSServiceAAAAPolicy value.
+#define IPC_TLV_TYPE_SERVICE_ATTR_FAILOVER_POLICY   4 // A uint32 for a DNSServiceFailoverPolicy value.
+#define IPC_TLV_TYPE_SERVICE_ATTR_TIMESTAMP         5 // A uint32 value for the time, in seconds, since Jan 1st 1970 UTC.
+#define IPC_TLV_TYPE_SERVICE_ATTR_VALIDATION_POLICY 6 // A uint32 for a DNSServiceValidationPolicy value.
+#define IPC_TLV_TYPE_SERVICE_ATTR_VALIDATION_DATA   7 // A ptr for the validation data.
+#define IPC_TLV_TYPE_GET_TRACKER_STR                8 // A uint8. If non-zero, include tracker domain if applicable.
+#define IPC_TLV_TYPE_SERVICE_ATTR_TRACKER_STR       9 // A null-terminated string. The domain (original hostname or resolved CNAME)
+                                                      // that was identified as a tracker
+#define IPC_TLV_TYPE_RESOLVER_OVERRIDE             10 // UUID of resolver configuration to use as an override. [1]
+#define IPC_TLV_TYPE_SERVICE_ATTR_HOST_KEY_HASH    11 // A uint32 value for a host key hash.
+
+// Notes:
+// 1. If this TLV is specified, then the UUID identifies the libnetwork resolver configuration to use for the DNS-SD
+//    API operation (currently limited to DNSServiceQueryRecordWithAttribute()). This overrides the normal DNS service
+//    select process.
 
 // Structure packing macro. If we're not using GNUC, it's not fatal. Most compilers naturally pack the on-the-wire
 // structures correctly anyway, so a plain "struct" is usually fine. In the event that structures are not packed
@@ -133,7 +157,7 @@ typedef enum
     getproperty_request,    // New in B4W 1.0.4
     port_mapping_request,   // New in Leopard and B4W 2.0
     addrinfo_request,
-    send_bpf,               // New in SL
+    send_bpf_OBSOLETE,      // New in SL (obsolete in 2023)
     getpid_request,
     release_request,
     connection_delegate_request,
@@ -151,7 +175,8 @@ typedef enum
     reg_record_reply_op,    // Up to here is in Tiger and B4W 1.0.3
     getproperty_reply_op,   // New in B4W 1.0.4
     port_mapping_reply_op,  // New in Leopard and B4W 2.0
-    addrinfo_reply_op
+    addrinfo_reply_op,
+    async_error_op
 } reply_op_t;
 
 #if defined(_WIN64)
@@ -188,23 +213,11 @@ typedef packedstruct
 // ptr is the address of the pointer to the start of the field.
 // it is advanced to point to the next field, or the end of the message
 
-// Keep these out of the general namespace -- they're only used internally
-// by the library.
-#define put_uint32		__dnssd_ipc_put_uint32
-#define get_uint32		__dnssd_ipc_get_uint32
-#define put_uint16		__dnssd_ipc_put_uint16
-#define get_uint16		__dnssd_ipc_get_uint16
-#define put_string		__dnssd_ipc_put_string
-#define get_string		__dnssd_ipc_get_string
-#define put_rdata		__dnssd_ipc_put_rdata
-#define get_rdata		__dnssd_ipc_get_rdata
-#define ConvertHeaderBytes	__dnssd_ipc_ConvertHeaderBytes
+void put_uint32(const uint32_t l, uint8_t **ptr);
+uint32_t get_uint32(const uint8_t **ptr, const uint8_t *end);
 
-void put_uint32(const uint32_t l, char **ptr);
-uint32_t get_uint32(const char **ptr, const char *end);
-
-void put_uint16(uint16_t s, char **ptr);
-uint16_t get_uint16(const char **ptr, const char *end);
+void put_uint16(uint16_t s, uint8_t **ptr);
+uint16_t get_uint16(const uint8_t **ptr, const uint8_t *end);
 
 #define put_flags put_uint32
 #define get_flags get_uint32
@@ -212,12 +225,29 @@ uint16_t get_uint16(const char **ptr, const char *end);
 #define put_error_code put_uint32
 #define get_error_code get_uint32
 
-int put_string(const char *str, char **ptr);
-int get_string(const char **ptr, const char *const end, char *buffer, int buflen);
+int put_string(const char *str, uint8_t **ptr);
+int get_string(const uint8_t **ptr, const uint8_t *end, char *buffer, size_t buflen);
 
-void put_rdata(const int rdlen, const unsigned char *rdata, char **ptr);
-const char *get_rdata(const char **ptr, const char *end, int rdlen);  // return value is rdata pointed to by *ptr -
+void put_rdata(const size_t rdlen, const uint8_t *rdata, uint8_t **ptr);
+const uint8_t *get_rdata(const uint8_t **ptr, const uint8_t *end, int rdlen);  // return value is rdata pointed to by *ptr -
 // rdata is not copied from buffer.
+
+size_t get_required_tlv_length(uint16_t value_length);
+size_t get_required_tlv_string_length(const char *str_value);
+size_t get_required_tlv_uint8_length(void);
+size_t get_required_tlv_uint32_length(void);
+size_t put_tlv(uint16_t type, uint16_t length, const uint8_t *value, uint8_t **ptr, const uint8_t *limit);
+void put_tlv_string(const uint16_t type, const char *const str_value, uint8_t **const ptr, const uint8_t *const limit,
+    int *const out_error);
+void put_tlv_uint8(uint16_t type, uint8_t u8, uint8_t **ptr, const uint8_t *limit);
+void put_tlv_uint16(uint16_t type, uint16_t u16, uint8_t **ptr, const uint8_t *limit);
+size_t put_tlv_uint32(uint16_t type, uint32_t u32, uint8_t **ptr, const uint8_t *limit);
+size_t put_tlv_uuid(uint16_t type, const uint8_t uuid[MDNS_STATIC_ARRAY_PARAM MDNS_UUID_SIZE], uint8_t **ptr,
+    const uint8_t *limit);
+const uint8_t *get_tlv(const uint8_t *src, const uint8_t *end, uint16_t type, size_t *out_length);
+const char *get_tlv_string(const uint8_t *const start, const uint8_t *const end, const uint16_t type);
+uint32_t get_tlv_uint32(const uint8_t *src, const uint8_t *end, uint16_t type, int *out_error);
+const uint8_t *get_tlv_uuid(const uint8_t *src, const uint8_t *end, uint16_t type);
 
 void ConvertHeaderBytes(ipc_msg_hdr *hdr);
 

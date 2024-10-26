@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: prepare-import.sh,v 1.6 2023/06/29 23:59:43 gutteridge Exp $
+# $NetBSD: prepare-import.sh,v 1.7 2024/10/26 18:14:17 christos Exp $
 #
 # Extract the new tarball and run this script with the first argument
 # the mDNSResponder-X.Y directory that was created. cd to that directory
@@ -31,7 +31,7 @@ rm -f Services.txt libnss_mdns.8 mdnsd.sh nss_ReadMe.txt nss_mdns.c
 rm -f nss_mdns.conf nss_mdns.conf.5 parselog.py)
 
 (cd mDNSShared
-rm -rf DebugServices.c DebugServices.h Java dnssd_clientshim.c mDNS.1
+rm -rf Java dnssd_clientshim.c mDNS.1
 rm -f dnsextd.8 dnsextd.c dnsextd.conf dnsextd.h dnsextd_lexer.l
 rm -f dnsextd_parser.)
 
