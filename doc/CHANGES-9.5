@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.34 2024/10/16 14:57:05 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.35 2024/10/26 15:06:49 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -533,4 +533,9 @@ usr.bin/sed/process.c				1.54
 
 	PR 58674: tools portability build "fixes".
 	[kre, ticket #1914]
+
+external/cddl/osnet/sys/sys/types.h		1.21
+
+	PR 57807: fix cross-build on recent -current.
+	[rin, ticket #1915]
 
