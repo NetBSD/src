@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.53 2021/11/06 20:42:56 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.53.4.1 2024/10/26 15:56:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.53 2021/11/06 20:42:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.53.4.1 2024/10/26 15:56:31 martin Exp $");
 
 #if defined(_KERNEL_OPT) 
 #include "opt_ktrace.h"
@@ -184,7 +184,7 @@ netbsd32___sigaction_sigtramp(struct lwp *l, const struct netbsd32___sigaction_s
 		 */
 #ifdef __HAVE_STRUCT_SIGCONTEXT
 		struct proc *p = l->l_proc;
-		bool sigcontext_valid = false;
+		bool sigcontext_valid;
 
 		/*
 		 * We need to ensure the compat_netbsd32_16 module
@@ -196,9 +196,7 @@ netbsd32___sigaction_sigtramp(struct lwp *l, const struct netbsd32___sigaction_s
 			kernconfig_lock();
 			(void)module_autoload("compat_netbsd32_16",
 			    MODULE_CLASS_ANY);
-			if (netbsd32_sendsig_sigcontext_16_hook.hooked) {
-				sigcontext_valid = true;
-			}
+			sigcontext_valid = netbsd32_sendsig_sigcontext_16_hook.hooked;
 			mutex_enter(&proc_lock);
 			/*
 			 * Prevent unload of compat module while
@@ -207,6 +205,11 @@ netbsd32___sigaction_sigtramp(struct lwp *l, const struct netbsd32___sigaction_s
 			p->p_lflag |= PL_SIGCOMPAT;
 			mutex_exit(&proc_lock);
 			kernconfig_unlock();
+		} else {
+			/*
+			 * Module is already loaded and locked in memory
+			 */
+			sigcontext_valid = netbsd32_sendsig_sigcontext_16_hook.hooked;
 		}
 		if (!sigcontext_valid) {
 			return EINVAL;
