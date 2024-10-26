@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.61 2024/10/26 20:53:07 nat Exp $	*/
+/*	$NetBSD: sbc.c,v 1.62 2024/10/26 20:58:34 nat Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.61 2024/10/26 20:53:07 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.62 2024/10/26 20:58:34 nat Exp $");
 
 #include "opt_ddb.h"
 
@@ -543,11 +543,17 @@ sbc_drq_intr(void *p)
 		dh->dh_flags |= SBC_DH_DONE;
 		if (dcount >= MAX_DMA_LEN)
 			drq = (volatile u_int8_t *)sc->sc_drq_addr;
+		/*
+		 * Write an extra byte to handle last ack.
+		 * From NCR5380 Interface manual.
+		 */
+		*drq = 0;
 
 		/*
 		 * XXX -- Read a byte from the SBC to trigger a /BERR.
 		 * This seems to be necessary for us to notice that
 		 * the target has disconnected.  Ick.  06 jun 1996 (sr)
+		 * Unsure if this is still necessary - See comment above.
 		 */
 		(void)*drq;
 	} else {	/* Data In */
