@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.4.2.3 2024/10/14 16:44:42 martin Exp $ */
+/* $NetBSD: machdep.c,v 1.4.2.4 2024/10/26 15:28:55 martin Exp $ */
 
 /*
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.2.3 2024/10/14 16:44:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.2.4 2024/10/26 15:28:55 martin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -231,7 +231,8 @@ static void init_decrementer(void);
 void
 initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 {
-	extern u_long ticks_per_sec;
+	extern uint32_t ticks_per_sec;
+	extern uint32_t ticks_per_msec;
 	extern unsigned char edata[], end[];
 	extern struct wii_argv wii_argv;
 	uint32_t mem2_start, mem2_end;
@@ -319,6 +320,7 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	 * Get CPU clock
 	 */
 	ticks_per_sec = TIMEBASE_FREQ_HZ;
+	ticks_per_msec = ticks_per_sec / 1000;
 	cpu_timebase = ticks_per_sec;
 
 	wii_setup();
@@ -442,7 +444,7 @@ init_decrementer(void)
 {
 	extern uint32_t ns_per_tick;
 	extern uint32_t ticks_per_intr;
-	extern u_long ticks_per_sec;
+	extern uint32_t ticks_per_sec;
 	int scratch, msr;
 
 	KASSERT(ticks_per_sec != 0);
