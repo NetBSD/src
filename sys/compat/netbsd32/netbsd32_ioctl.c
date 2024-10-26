@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.120 2021/12/22 00:21:32 roy Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.120.4.1 2024/10/26 15:53:47 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.120 2021/12/22 00:21:32 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.120.4.1 2024/10/26 15:53:47 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -148,6 +148,20 @@ netbsd32_to_oifreq(struct netbsd32_oifreq *s32p, struct oifreq *p, u_long cmd)
 	 */
 	if (cmd == SIOCGIFDATA || cmd == SIOCZIFDATA)
 		p->ifr_data = (void *)NETBSD32PTR64(s32p->ifr_data);
+}
+
+static inline void
+netbsd32_to_ifdatareq(struct netbsd32_ifdatareq *s32p, struct ifdatareq *p, u_long cmd)
+{
+
+	memcpy(p, s32p, sizeof *s32p);
+	switch (cmd) {
+	case SIOCGIFDATA:
+	case SIOCZIFDATA:
+		netbsd32_to_timespec(&s32p->ifdr_data.ifi_lastchange,
+		    &p->ifdr_data.ifi_lastchange);
+		break;
+	}
 }
 
 static inline void
@@ -690,6 +704,20 @@ netbsd32_from_oifreq(struct oifreq *p,
 	memcpy(s32p, p, sizeof *s32p);
 	if (cmd == SIOCGIFDATA || cmd == SIOCZIFDATA)
 		NETBSD32PTR32(s32p->ifr_data, p->ifr_data);
+}
+
+static inline void
+netbsd32_from_ifdatareq(const struct ifdatareq *p, struct netbsd32_ifdatareq *p32, u_long cmd)
+{
+
+	memcpy(p32, p, sizeof *p32);
+	switch (cmd) {
+	case SIOCGIFDATA:
+	case SIOCZIFDATA:
+		netbsd32_from_timespec(&p->ifdr_data.ifi_lastchange,
+		    &p32->ifdr_data.ifi_lastchange);
+		break;
+	}
 }
 
 static inline void
@@ -1537,6 +1565,10 @@ netbsd32_ioctl(struct lwp *l,
 	case SIOCSIFADDRPREF32:
 		IOCTL_STRUCT_CONV_TO(SIOCSIFADDRPREF, if_addrprefreq);
 
+	case SIOCGIFDATA32:
+		IOCTL_STRUCT_CONV_TO(SIOCGIFDATA, ifdatareq);
+	case SIOCZIFDATA32:
+		IOCTL_STRUCT_CONV_TO(SIOCZIFDATA, ifdatareq);
 
 	case OSIOCGIFFLAGS32:
 		IOCTL_STRUCT_CONV_TO(OSIOCGIFFLAGS, oifreq);

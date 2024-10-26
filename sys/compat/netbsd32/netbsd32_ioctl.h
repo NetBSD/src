@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.79 2021/12/22 00:21:32 roy Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.79.4.1 2024/10/26 15:53:47 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -316,6 +316,35 @@ struct netbsd32_if_clonereq {
 	netbsd32_charp ifcr_buffer;
 };
 
+struct netbsd32_if_data {
+	u_char	ifi_type;
+	u_char	ifi_addrlen;
+	u_char	ifi_hdrlen;
+	u_char  __pack_dummy;
+	int	ifi_link_state;
+	uint64_t ifi_mtu;
+	uint64_t ifi_metric;
+	uint64_t ifi_baudrate;
+	uint64_t ifi_ipackets;
+	uint64_t ifi_ierrors;
+	uint64_t ifi_opackets;
+	uint64_t ifi_oerrors;
+	uint64_t ifi_collisions;
+	uint64_t ifi_ibytes;
+	uint64_t ifi_obytes;
+	uint64_t ifi_imcasts;
+	uint64_t ifi_omcasts;
+	uint64_t ifi_iqdrops;
+	uint64_t ifi_noproto;
+	struct	netbsd32_timespec ifi_lastchange;
+} __packed;
+
+struct netbsd32_ifdatareq {
+	char	ifdr_name[IFNAMSIZ];		/* if name, e.g. "en0" */
+	struct	netbsd32_if_data ifdr_data;
+};
+
+
 /* from <dev/pci/if_devar.h> */
 #define	SIOCGADDRROM32		_IOW('i', 240, struct netbsd32_ifreq)	/* get 128 bytes of ROM */
 #define	SIOCGCHIPID32		_IOWR('i', 241, struct netbsd32_ifreq)	/* get chipid */
@@ -388,6 +417,10 @@ struct netbsd32_if_clonereq {
 
 #define	SIOCGIFMTU32	_IOWR('i', 126, struct netbsd32_ifreq)	/* get ifnet mtu */
 #define	OSIOCGIFMTU32	_IOWR('i', 126, struct netbsd32_oifreq)	/* get ifnet mtu */
+
+#define SIOCGIFDATA32	_IOWR('i', 133, struct netbsd32_ifdatareq)
+#define SIOCZIFDATA32	_IOWR('i', 134, struct netbsd32_ifdatareq)
+
 /* was 125 SIOCSIFASYNCMAP32 */
 /* was 124 SIOCGIFASYNCMAP32 */
 /* from <net/bpf.h> */
