@@ -1,4 +1,4 @@
-.\"	$NetBSD: makefs.8,v 1.72 2024/05/08 15:57:56 christos Exp $
+.\"	$NetBSD: makefs.8,v 1.73 2024/10/27 18:35:52 christos Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 8, 2024
+.Dd October 27, 2024
 .Dt MAKEFS 8
 .Os
 .Sh NAME
@@ -102,11 +102,71 @@ An optional
 suffix may be provided to indicate that
 .Ar free-blocks
 indicates a percentage of the calculated image size.
-.It Fl d Ar debug-mask
+.It Fl d Ar debug-mask | comma-separated-debug-option
 Enable various levels of debugging, depending upon which bits are
 set in
 .Ar debug-mask .
-XXX: document these
+The mask can also be set by specifying a comma separated list of debugging
+options.
+These are:
+.Bl -tag -width X -offset indent -compact
+.It Ar debug_time
+Print the time it takes to perform each step.
+.It Ar debug_walk_dir
+Print each directory as it gets processed.
+.It Ar debug_walk_dir_node
+Print each file as it gets processed.
+.It Ar debug_walk_dir_linkcheck
+Print file information for files that have a link count > 1.
+.It Ar debug_dump_fsnodes
+Dump information about the filesystem nodes.
+.It Ar debug_dump_fsnodes_verbose
+Enable more detail if
+.Dv debug_dump_fsnodes
+is enabled.
+.It Ar debug_fs_parse_opts
+Print debugging information about specific filesystem option parsing.
+.It Ar debug_fs_makefs
+Print nodes as they are created and enable buffer consistency checks.
+.It Ar debug_fs_validate
+Enable file-system specific validation (ffs only).
+.It Ar debug_fs_create_image
+Print image file creation stats (ffs only).
+.It Ar debug_fs_size_dir
+Print directory size information (ffs only).
+.It Ar debug_fs_size_dir_node
+Print directory size information per node (ffs only).
+.It Ar debug_fs_size_dir_add_dirent
+Print directory size information as entries are added (ffs only).
+.It Ar debug_fs_populate
+Print information at each directory population pass (ffs only).
+.It Ar debug_fs_populate_dirbuf
+Dump the directory buffer (ffs only).
+.It Ar debug_fs_populate_node
+Print information about each file during directory population (ffs only).
+.It Ar debug_fs_write_file
+Print buffer informaion when writing files (ffs only).
+.It Ar debug_fs_write_file_block
+Print block information when writing files (ffs only).
+.It Ar debug_fs_make_dirbuf
+Print directory buffer information (ffs only).
+.It Ar debug_fs_write_inode
+Print inode information (ffs only).
+.It Ar debug_buf_bread
+Print block buffer information (ffs only).
+.It Ar debug_buf_bwrite
+Print block write information (ffs only).
+.It Ar debug_buf_getblk
+Print block allocaion information (ffs only).
+.It Ar debug_apply_specfile
+Print information about each directory in the specfile.
+.It Ar debug_apply_specentry
+Print information about each entry in the specfile.
+.It Ar debug_apply_speconly
+Debug the
+.Fl x
+special file exclusion.
+.El
 .It Fl F Ar mtree-specfile
 Use
 .Ar mtree-specfile

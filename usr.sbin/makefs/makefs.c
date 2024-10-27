@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.58 2024/05/08 15:57:56 christos Exp $	*/
+/*	$NetBSD: makefs.c,v 1.59 2024/10/27 18:35:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.58 2024/05/08 15:57:56 christos Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.59 2024/10/27 18:35:52 christos Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -89,9 +89,10 @@ u_int		debug;
 struct timespec	start_time;
 struct stat stampst;
 
-static	fstype_t *get_fstype(const char *);
+static fstype_t *get_fstype(const char *);
 static int get_tstamp(const char *, struct stat *);
-static	void	usage(fstype_t *, fsinfo_t *) __dead;
+static void usage(fstype_t *, fsinfo_t *) __dead;
+static u_int parse_debug(char *);
 
 int
 main(int argc, char *argv[])
@@ -168,7 +169,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'd':
-			debug = (int)strtoll(optarg, NULL, 0);
+			debug = parse_debug(optarg);
 			break;
 
 		case 'f':
@@ -500,6 +501,13 @@ get_tstamp(const char *b, struct stat *st)
 	return 0;
 }
 
+static struct {
+	const char *n;
+	u_int v;
+} nv[] = {
+	DEBUG_STRINGS
+};
+
 static void
 usage(fstype_t *fstype, fsinfo_t *fsoptions)
 {
@@ -507,12 +515,16 @@ usage(fstype_t *fstype, fsinfo_t *fsoptions)
 
 	prog = getprogname();
 	fprintf(stderr,
-"Usage: %s [-rxZ] [-B endian] [-b free-blocks] [-d debug-mask]\n"
+"Usage: %s [-rxZ] [-B endian] [-b free-blocks] [-d debug-mask|comma-separated-option]\n"
 "\t[-F mtree-specfile] [-f free-files] [-M minimum-size] [-m maximum-size]\n"
 "\t[-N userdb-dir] [-O offset] [-o fs-options] [-S sector-size]\n"
 "\t[-s image-size] [-T <timestamp/file>] [-t fs-type]"
 " image-file directory [extra-directory ...]\n",
 	    prog);
+
+	fprintf(stderr, "\nDebugging options:\n");
+	for (size_t i = 0; i < __arraycount(nv); i++)
+		fprintf(stderr, "\t0x%8.8x\t%s\n", nv[i].v, nv[i].n);
 
 	if (fstype) {
 		size_t i;
@@ -527,3 +539,29 @@ usage(fstype_t *fstype, fsinfo_t *fsoptions)
 	}
 	exit(EXIT_FAILURE);
 }
+
+
+static u_int
+parse_debug(char *str)
+{
+	char *ep;
+	u_int d;
+	size_t i;
+
+	errno = 0;
+	d = (u_int)strtoul(str, &ep, 0);
+	if (str != ep && !*ep && errno == 0)
+		return d;
+	d = 0;
+	for (char *a = strtok(str, ","); a != NULL; a = strtok(NULL, ",")) {
+		for (i = 0; i < __arraycount(nv); i++)
+			if (strcmp(nv[i].n, a) == 0) {
+				d |= nv[i].v;
+				break;
+			}
+		if (i == __arraycount(nv))
+			errx(EXIT_FAILURE, "Unknown debug option `%s'", a);
+	}
+	return d;
+}
+
