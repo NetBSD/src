@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.70 2024/10/23 10:16:52 rin Exp $
+# $NetBSD: postinstall.in,v 1.71 2024/10/27 19:58:26 spz Exp $
 #
 # Copyright (c) 2002-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -968,7 +968,7 @@ fixblock()
 		continue
 	fi
 
-	if ${GREP} '[bB]lack' "${target}" > /dev/null; then
+	if ${GREP} '[bB]lacklist' "${target}" > /dev/null; then
 		if [ "$1" = "check" ]; then
 			msg "Fix old configuration file(s)."
 			return 1
@@ -1001,7 +1001,7 @@ do_blocklist()
 			msg "Rename old file(s)."
 			return 1
 		fi
-		local new=$(echo "${old}" | ${SED} s/black/block/)
+		local new=$(echo "${old}" | ${SED} s/blacklist/blocklist/)
 		mv "${old}" "${new}" || return 1
 	done
 
