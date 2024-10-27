@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.23 2024/10/16 09:56:34 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.24 2024/10/27 10:12:14 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -662,7 +662,8 @@ static inline void
 gftfb_setup_fb(struct gftfb_softc *sc)
 {
 	gftfb_wait(sc);
-	gftfb_write4(sc, NGLE_REG_10, 0x13601000);
+	gftfb_write4(sc, NGLE_REG_10,
+	    BA(IndexedDcd, Otc04, Ots08, AddrByte, 0, BINapp0I, 0));
 	gftfb_write4(sc, NGLE_REG_14, 0x83000300);
 	gftfb_wait(sc);
 	gftfb_write1(sc, NGLE_REG_16b1, 1);
@@ -1097,11 +1098,13 @@ gftfb_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
 
 	if (sc->sc_hwmode != HW_BLIT) {
 		gftfb_wait(sc);
-		gftfb_write4(sc, NGLE_REG_10, 0x13a01000);
+		gftfb_write4(sc, NGLE_REG_10,
+		    BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, BINapp0I, 0));
 		sc->sc_hwmode = HW_BLIT;
 	}
 	gftfb_wait_fifo(sc, 5);
-	gftfb_write4(sc, NGLE_REG_14, ((rop << 8) & 0xf00) | 0x23000000);
+	gftfb_write4(sc, NGLE_REG_14,
+	   IBOvals(rop, 0, BitmapExtent08, 1, DataDynamic, MaskOtc, 0, 0));
 	gftfb_write4(sc, NGLE_REG_13, 0xff);
 	gftfb_write4(sc, NGLE_REG_24, (xs << 16) | ys);
 	gftfb_write4(sc, NGLE_REG_7, (wi << 16) | he);
