@@ -2018,6 +2018,7 @@ DNSServiceErrorType DNSServiceRegisterInternal
 )
 {
     uint8_t *ptr;
+    const uint8_t *limit;
     size_t len;
     ipc_msg_hdr *hdr;
     DNSServiceErrorType err;
@@ -2054,6 +2055,7 @@ DNSServiceErrorType DNSServiceRegisterInternal
     if (!hdr) { DNSServiceRefDeallocate(*sdRef); *sdRef = NULL; return kDNSServiceErr_NoMemory; }
     if (!callBack) hdr->ipc_flags |= IPC_FLAGS_NOREPLY;
 
+    limit = ptr + len;
     put_flags(flags, &ptr);
     put_uint32(interfaceIndex, &ptr);
     put_string(name, &ptr);
@@ -2064,12 +2066,10 @@ DNSServiceErrorType DNSServiceRegisterInternal
     *ptr++ = port.b[1];
     put_uint16(txtLen, &ptr);
     put_rdata(txtLen, txtRecord, &ptr);
-#if 0
     if (attr)
     {
         put_attribute_tlvs(attr, hdr, &ptr, limit);
     }
-#endif
 
     err = deliver_request(hdr, *sdRef);     // Will free hdr for us
     if (err == kDNSServiceErr_NoAuth && !_should_return_noauth_error())
@@ -2332,6 +2332,7 @@ DNSServiceErrorType DNSServiceRegisterRecordInternal
 {
     DNSServiceErrorType err;
     uint8_t *ptr;
+    const uint8_t *limit;
     size_t len;
     ipc_msg_hdr *hdr = NULL;
     DNSRecordRef rref = NULL;
@@ -2391,6 +2392,7 @@ DNSServiceErrorType DNSServiceRegisterRecordInternal
     hdr = create_hdr(reg_record_request, &len, &ptr, !(flags & kDNSServiceFlagsQueueRequest), sdRef);
     if (!hdr) return kDNSServiceErr_NoMemory;
 
+    limit = ptr + len;
     put_flags(flags, &ptr);
     put_uint32(interfaceIndex, &ptr);
     put_string(fullname, &ptr);
@@ -2399,12 +2401,10 @@ DNSServiceErrorType DNSServiceRegisterRecordInternal
     put_uint16(rdlen, &ptr);
     put_rdata(rdlen, rdata, &ptr);
     put_uint32(ttl, &ptr);
-#if 0
     if (attr)
     {
         put_attribute_tlvs(attr, hdr, &ptr, limit);
     }
-#endif
     if (flags & kDNSServiceFlagsQueueRequest)
     {
         hdr->ipc_flags |= IPC_FLAGS_NOERRSD;
