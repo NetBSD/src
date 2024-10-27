@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_cper.h,v 1.2 2024/03/26 22:16:12 rillig Exp $	*/
+/*	$NetBSD: apei_cper.h,v 1.3 2024/10/27 12:13:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -62,14 +62,14 @@ struct cper_header {
 } __packed;
 __CTASSERT(sizeof(struct cper_header) == 128);
 
-enum {				/* struct cper_header::error_severity */
+enum {				/* struct cper_header::ErrorSeverity */
 	CPER_ERROR_SEVERITY_RECOVERABLE		= 0,
 	CPER_ERROR_SEVERITY_FATAL		= 1,
 	CPER_ERROR_SEVERITY_CORRECTED		= 2,
 	CPER_ERROR_SEVERITY_INFORMATIONAL	= 3,
 };
 
-enum {				/* struct cper_header::validation_bits */
+enum {				/* struct cper_header::ValidationBits */
 	CPER_VALID_PLATFORM_ID		= __BIT(0),
 	CPER_VALID_TIMESTAMP		= __BIT(1),
 	CPER_VALID_PARTITION_ID		= __BIT(2),
@@ -78,7 +78,7 @@ enum {				/* struct cper_header::validation_bits */
 /*
  * https://uefi.org/specs/UEFI/2.10/Apx_N_Common_Platform_Error_Record.html#error-record-header-flags
  */
-enum {				/* struct cper_header::flags */
+enum {				/* struct cper_header::Flags */
 	CPER_HW_ERROR_FLAG_RECOVERED	= __BIT(0),
 	CPER_HW_ERROR_FLAG_PREVERR	= __BIT(1),
 	CPER_HW_ERROR_FLAG_SIMULATED	= __BIT(2),
@@ -144,7 +144,7 @@ struct cper_memory_error_ext {
 } __packed;
 __CTASSERT(sizeof(struct cper_memory_error_ext) == 80);
 
-enum {				/* struct cper_memory_error::validation_bits */
+enum {				/* struct cper_memory_error::ValidationBits */
 	CPER_MEMORY_ERROR_VALID_ERROR_STATUS		= __BIT(0),
 	CPER_MEMORY_ERROR_VALID_PHYSICAL_ADDRESS	= __BIT(1),
 	CPER_MEMORY_ERROR_VALID_PHYSICAL_ADDRESS_MASK	= __BIT(2),
@@ -194,7 +194,7 @@ enum {				/* struct cper_memory_error::validation_bits */
 	"b\025"	"CHIP_ID\0"						      \
 	"\0"
 
-enum {				/* struct cper_memory_error::bank */
+enum {				/* struct cper_memory_error::Bank */
 	CPER_MEMORY_ERROR_BANK_ADDRESS	= __BITS(7,0),
 	CPER_MEMORY_ERROR_BANK_GROUP	= __BITS(15,8),
 };
@@ -219,13 +219,13 @@ enum {				/* struct cper_memory_error::bank */
 	F(CPER_MEMORY_ERROR_PHYSMEM_MAPOUT_EVENT, PHYSMEM_MAPOUT_EVENT, 15)   \
 	/* end of CPER_MEMORY_ERROR_TYPES */
 
-enum cper_memory_error_type { /* struct cper_memory_error::memory_error_type */
+enum cper_memory_error_type { /* struct cper_memory_error::MemoryErrorType */
 #define	CPER_MEMORY_ERROR_TYPE_DEF(LN, SN, V)	LN = V,
 	CPER_MEMORY_ERROR_TYPES(CPER_MEMORY_ERROR_TYPE_DEF)
 #undef	CPER_MEMORY_ERROR_TYPE_DEF
 };
 
-enum {				/* struct cper_memory_error_ext::extended */
+enum {				/* struct cper_memory_error_ext::Extended */
 	CPER_MEMORY_ERROR_EXTENDED_ROWBIT16		= __BIT(0),
 	CPER_MEMORY_ERROR_EXTENDED_ROWBIT17		= __BIT(1),
 	CPER_MEMORY_ERROR_EXTENDED_CHIPID		= __BITS(7,5),
