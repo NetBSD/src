@@ -1,4 +1,4 @@
-/*	$NetBSD: apei.c,v 1.7 2024/10/27 12:59:08 riastradh Exp $	*/
+/*	$NetBSD: apei.c,v 1.8 2024/10/27 17:27:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei.c,v 1.7 2024/10/27 12:59:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei.c,v 1.8 2024/10/27 17:27:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -608,16 +608,27 @@ apei_cper_pcie_error_report(struct apei_softc *sc, const void *buf, size_t len,
 	}
 	if (PE->ValidationBits & CPER_PCIE_ERROR_VALID_CAPABILITY_STRUCTURE) {
 		uint32_t dcsr, dsr;
-		char hex[2*sizeof(PE->CapabilityStructure) + 1];
+		char hex[9*sizeof(PE->CapabilityStructure)/4];
 		unsigned i;
 
-		for (i = 0; i < sizeof(PE->CapabilityStructure); i++) {
-			snprintf(hex + 2*i, sizeof(hex) - 2*i, "%02hhx",
-			    PE->CapabilityStructure[i]);
+		/*
+		 * Display a hex dump of each 32-bit register in the
+		 * PCIe capability structure.
+		 */
+		__CTASSERT(sizeof(PE->CapabilityStructure) % 4 == 0);
+		for (i = 0; i < sizeof(PE->CapabilityStructure)/4; i++) {
+			snprintf(hex + 9*i, sizeof(hex) - 9*i, "%08"PRIx32" ",
+			    le32dec(&PE->CapabilityStructure[4*i]));
 		}
+		hex[sizeof(hex) - 1] = '\0';
 		device_printf(sc->sc_dev, "%s: CapabilityStructure={%s}\n",
 		    ctx, hex);
 
+		/*
+		 * If the Device Status Register has any bits set,
+		 * highlight it in particular -- these are probably
+		 * error bits.
+		 */
 		dcsr = le32dec(&PE->CapabilityStructure[PCIE_DCSR]);
 		dsr = __SHIFTOUT(dcsr, __BITS(31,16));
 		if (dsr != 0) {
@@ -642,13 +653,20 @@ apei_cper_pcie_error_report(struct apei_softc *sc, const void *buf, size_t len,
 		uint32_t uc_status, uc_sev;
 		uint32_t cor_status;
 		uint32_t control;
-		char hex[2*sizeof(PE->AERInfo) + 1];
+		char hex[9*sizeof(PE->AERInfo)/4];
 		unsigned i;
 
-		for (i = 0; i < sizeof(PE->AERInfo); i++) {
-			snprintf(hex + 2*i, sizeof(hex) - 2*i, "%02hhx",
-			    PE->AERInfo[i]);
+		/*
+		 * Display a hex dump of each 32-bit register in the
+		 * PCIe Advanced Error Reporting extended capability
+		 * structure.
+		 */
+		__CTASSERT(sizeof(PE->AERInfo) % 4 == 0);
+		for (i = 0; i < sizeof(PE->AERInfo)/4; i++) {
+			snprintf(hex + 9*i, sizeof(hex) - 9*i, "%08"PRIx32" ",
+			    le32dec(&PE->AERInfo[4*i]));
 		}
+		hex[sizeof(hex) - 1] = '\0';
 		device_printf(sc->sc_dev, "%s: AERInfo={%s}\n", ctx, hex);
 
 			/* XXX move me to pcireg.h */
@@ -673,6 +691,18 @@ apei_cper_pcie_error_report(struct apei_softc *sc, const void *buf, size_t len,
 	"b\032"	"POISONTLP_EGRESS_BLOCKED\0"				      \
 	"\0"
 
+		/*
+		 * If there are any hardware error status bits set,
+		 * highlight them in particular, in three groups:
+		 *
+		 * - uncorrectable fatal (UC_STATUS and UC_SEVERITY)
+		 * - uncorrectable nonfatal (UC_STATUS but not UC_SEVERITY)
+		 * - corrected (COR_STATUS)
+		 *
+		 * And if there are any uncorrectable errors, show
+		 * which one was reported first, according to
+		 * CAP_CONTROL.
+		 */
 		uc_status = le32dec(&PE->AERInfo[PCI_AER_UC_STATUS]);
 		uc_sev = le32dec(&PE->AERInfo[PCI_AER_UC_SEVERITY]);
 		cor_status = le32dec(&PE->AERInfo[PCI_AER_COR_STATUS]);
