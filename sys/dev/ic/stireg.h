@@ -1,4 +1,4 @@
-/*	$NetBSD: stireg.h,v 1.15 2024/10/25 09:26:00 macallan Exp $	*/
+/*	$NetBSD: stireg.h,v 1.16 2024/10/27 10:43:50 macallan Exp $	*/
 
 /*	$OpenBSD: stireg.h,v 1.14 2015/04/05 23:25:57 miod Exp $	*/
 
@@ -659,11 +659,13 @@ STI_DEP(util);
 /* A */
 #define	    AddrByte	3	/* byte access? Used by NGLE for direct fb */
 #define	    AddrLong	5	/* FB address is Long aligned (pixel) */
+#define     Addr24	7	/* used for colour map access */
 /* B */
 #define	    BINapp0I	0x0	/* Application Buffer 0, Indexed */
 #define	    BINapp1I	0x1	/* Application Buffer 1, Indexed */
 #define	    BINovly	0x2	/* 8 bit overlay */
-#define	    BINcursor	0x7	/* cursor bitmap on EG */
+#define	    BINcursor	0x6	/* cursor bitmap on EG */
+#define	    BINcmask	0x7	/* cursor mask on EG */
 #define	    BINapp0F8	0xa	/* Application Buffer 0, Fractional 8-8-8 */
 #define	    BINattr	0xd	/* Attribute Bitmap */
 #define	    BINcmap	0xf	/* colour map(s) */
