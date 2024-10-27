@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_hest.c,v 1.5 2024/10/27 12:12:53 riastradh Exp $	*/
+/*	$NetBSD: apei_hest.c,v 1.6 2024/10/27 12:13:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei_hest.c,v 1.5 2024/10/27 12:12:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei_hest.c,v 1.6 2024/10/27 12:13:07 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -400,6 +400,8 @@ apei_hest_attach_ghes(struct apei_softc *sc, ACPI_HEST_GENERIC *ghes,
 	 */
 	switch (ghes->Notify.Type) {
 	case ACPI_HEST_NOTIFY_POLLED:
+		if (ghes->Notify.PollInterval == 0) /* paranoia */
+			break;
 		callout_init(&src->as_ch, CALLOUT_MPSAFE);
 		callout_setfunc(&src->as_ch, &apei_hest_ghes_poll, src);
 		callout_schedule(&src->as_ch, 0);
@@ -451,6 +453,8 @@ apei_hest_detach_ghes(struct apei_softc *sc, ACPI_HEST_GENERIC *ghes,
 	 */
 	switch (ghes->Notify.Type) {
 	case ACPI_HEST_NOTIFY_POLLED:
+		if (ghes->Notify.PollInterval == 0) /* paranoia */
+			break;
 		callout_halt(&src->as_ch, NULL);
 		callout_destroy(&src->as_ch);
 		break;
@@ -583,6 +587,8 @@ apei_hest_attach_ghes_v2(struct apei_softc *sc, ACPI_HEST_GENERIC_V2 *ghes_v2,
 	 */
 	switch (ghes_v2->Notify.Type) {
 	case ACPI_HEST_NOTIFY_POLLED:
+		if (ghes_v2->Notify.PollInterval == 0) /* paranoia */
+			break;
 		callout_init(&src->as_ch, CALLOUT_MPSAFE);
 		callout_setfunc(&src->as_ch, &apei_hest_ghes_v2_poll, src);
 		callout_schedule(&src->as_ch, 0);
@@ -634,6 +640,8 @@ apei_hest_detach_ghes_v2(struct apei_softc *sc, ACPI_HEST_GENERIC_V2 *ghes_v2,
 	 */
 	switch (ghes_v2->Notify.Type) {
 	case ACPI_HEST_NOTIFY_POLLED:
+		if (ghes_v2->Notify.PollInterval == 0) /* paranoia */
+			break;
 		callout_halt(&src->as_ch, NULL);
 		callout_destroy(&src->as_ch);
 		break;
