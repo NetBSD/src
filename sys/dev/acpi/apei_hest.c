@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_hest.c,v 1.4 2024/10/27 12:12:39 riastradh Exp $	*/
+/*	$NetBSD: apei_hest.c,v 1.5 2024/10/27 12:12:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei_hest.c,v 1.4 2024/10/27 12:12:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei_hest.c,v 1.5 2024/10/27 12:12:53 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -265,7 +265,7 @@ apei_hest_ghes_v2_poll(void *cookie)
  * confusion, let's try to have only one CPU process error
  * notifications at a time.
  */
-static __cpu_simple_lock_t apei_hest_nmi_lock;
+static __cpu_simple_lock_t apei_hest_nmi_lock = __SIMPLELOCK_UNLOCKED;
 
 /*
  * apei_hest_ghes_nmi(tf, cookie)
