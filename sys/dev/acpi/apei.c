@@ -1,4 +1,4 @@
-/*	$NetBSD: apei.c,v 1.3 2024/03/26 22:01:03 rillig Exp $	*/
+/*	$NetBSD: apei.c,v 1.4 2024/10/27 12:13:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei.c,v 1.3 2024/03/26 22:01:03 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei.c,v 1.4 2024/10/27 12:13:28 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -313,10 +313,10 @@ apei_format_guid(const struct uuid *uuid, char guidstr[static 69])
 {
 
 	snprintf(guidstr, 69, "{0x%08x,0x%04x,0x%04x,"
-	    "0x%02x%02x,"
-	    "{0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x}}",
+	    "{0x%02x,%02x,"
+	    "0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x}}",
 	    uuid->time_low, uuid->time_mid, uuid->time_hi_and_version,
-	    uuid->clock_seq_hi_and_reserved, uuid->clock_seq_hi_and_reserved,
+	    uuid->clock_seq_hi_and_reserved, uuid->clock_seq_low,
 	    uuid->node[0], uuid->node[1], uuid->node[2],
 	    uuid->node[3], uuid->node[4], uuid->node[5]);
 }
