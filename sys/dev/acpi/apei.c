@@ -1,4 +1,4 @@
-/*	$NetBSD: apei.c,v 1.6 2024/10/27 12:14:07 riastradh Exp $	*/
+/*	$NetBSD: apei.c,v 1.7 2024/10/27 12:59:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -38,12 +38,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei.c,v 1.6 2024/10/27 12:14:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei.c,v 1.7 2024/10/27 12:59:08 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 
 #include <sys/atomic.h>
+#include <sys/endian.h>
 #include <sys/device.h>
 #include <sys/module.h>
 #include <sys/sysctl.h>
@@ -58,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: apei.c,v 1.6 2024/10/27 12:14:07 riastradh Exp $");
 #include <dev/acpi/apei_hestvar.h>
 #include <dev/acpi/apei_interp.h>
 #include <dev/acpi/apeivar.h>
+#include <dev/pci/pcireg.h>
 
 #define	_COMPONENT	ACPI_RESOURCE_COMPONENT
 ACPI_MODULE_NAME	("apei")
@@ -489,6 +491,241 @@ out:	/*
 }
 
 /*
+ * N.2.7. PCI Express Error Section
+ *
+ * https://uefi.org/specs/UEFI/2.10/Apx_N_Common_Platform_Error_Record.html#pci-express-error-section
+ */
+static const struct uuid CPER_PCIE_ERROR_SECTION =
+    {0xd995e954,0xbbc1,0x430f,0xad,0x91,{0xb4,0x4d,0xcb,0x3c,0x6f,0x35}};
+
+static const char *const cper_pcie_error_port_type[] = {
+#define	F(LN, SN, V)	[LN] = #SN,
+	CPER_PCIE_ERROR_PORT_TYPES(F)
+#undef	F
+};
+
+static void
+apei_cper_pcie_error_report(struct apei_softc *sc, const void *buf, size_t len,
+    const char *ctx, bool ratelimitok)
+{
+	const struct cper_pcie_error *PE = buf;
+	char bitbuf[1024];
+
+	/*
+	 * If we've hit the rate limit, skip printing the error.
+	 */
+	if (!ratelimitok)
+		goto out;
+
+	snprintb(bitbuf, sizeof(bitbuf),
+	    CPER_PCIE_ERROR_VALIDATION_BITS_FMT, PE->ValidationBits);
+	aprint_debug_dev(sc->sc_dev, "%s: ValidationBits=%s\n", ctx, bitbuf);
+	if (PE->ValidationBits & CPER_PCIE_ERROR_VALID_PORT_TYPE) {
+		const uint32_t t = PE->PortType;
+		const char *n = t < __arraycount(cper_pcie_error_port_type)
+		    ? cper_pcie_error_port_type[t] : NULL;
+
+		if (n) {
+			device_printf(sc->sc_dev, "%s: PortType=%"PRIu32
+			    " (%s)\n", ctx, t, n);
+		} else {
+			device_printf(sc->sc_dev, "%s: PortType=%"PRIu32"\n",
+			    ctx, t);
+		}
+	}
+	if (PE->ValidationBits & CPER_PCIE_ERROR_VALID_VERSION) {
+		/* XXX BCD */
+		device_printf(sc->sc_dev, "%s: Version=0x08%"PRIx32"\n",
+		    ctx, PE->Version);
+	}
+	if (PE->ValidationBits & CPER_PCIE_ERROR_VALID_COMMAND_STATUS) {
+		/* XXX move me to pcireg.h */
+		snprintb(bitbuf, sizeof(bitbuf), "\177\020"
+			/* command */
+		    "b\000"	"IO_ENABLE\0"
+		    "b\001"	"MEM_ENABLE\0"
+		    "b\002"	"MASTER_ENABLE\0"
+		    "b\003"	"SPECIAL_ENABLE\0"
+		    "b\004"	"INVALIDATE_ENABLE\0"
+		    "b\005"	"PALETTE_ENABLE\0"
+		    "b\006"	"PARITY_ENABLE\0"
+		    "b\007"	"STEPPING_ENABLE\0"
+		    "b\010"	"SERR_ENABLE\0"
+		    "b\011"	"BACKTOBACK_ENABLE\0"
+		    "b\012"	"INTERRUPT_DISABLE\0"
+			/* status */
+		    "b\023"	"INT_STATUS\0"
+		    "b\024"	"CAPLIST_SUPPORT\0"
+		    "b\025"	"66MHZ_SUPPORT\0"
+		    "b\026"	"UDF_SUPPORT\0"
+		    "b\027"	"BACKTOBACK_SUPPORT\0"
+		    "b\030"	"PARITY_ERROR\0"
+		    "f\031\002"	"DEVSEL\0"
+			"=\000"		"FAST\0"
+			"=\001"		"MEDIUM\0"
+			"=\002"		"SLOW\0"
+		    "b\033"	"TARGET_TARGET_ABORT\0"
+		    "b\034"	"MASTER_TARGET_ABORT\0"
+		    "b\035"	"MASTER_ABORT\0"
+		    "b\036"	"SPECIAL_ERROR\0"
+		    "b\037"	"PARITY_DETECT\0"
+		    "\0", PE->CommandStatus);
+		device_printf(sc->sc_dev, "%s: CommandStatus=%s\n",
+		    ctx, bitbuf);
+	}
+	if (PE->ValidationBits & CPER_PCIE_ERROR_VALID_DEVICE_ID) {
+		device_printf(sc->sc_dev, "%s: DeviceID:"
+		    " VendorID=0x%04"PRIx16
+		    " DeviceID=0x%04"PRIx16
+		    " ClassCode=0x%06"PRIx32
+		    " Function=%"PRIu8
+		    " Device=%"PRIu8
+		    " Segment=%"PRIu16
+		    " Bus=%"PRIu8
+		    " SecondaryBus=%"PRIu8
+		    " Slot=0x%04"PRIx16
+		    " Reserved0=0x%02"PRIx8
+		    "\n",
+		    ctx,
+		    le16dec(PE->DeviceID.VendorID),
+		    le16dec(PE->DeviceID.DeviceID),
+		    (PE->DeviceID.ClassCode[0] |	/* le24dec */
+			((uint32_t)PE->DeviceID.ClassCode[1] << 8) |
+			((uint32_t)PE->DeviceID.ClassCode[2] << 16)),
+		    PE->DeviceID.Function, PE->DeviceID.Device,
+		    le16dec(PE->DeviceID.Segment), PE->DeviceID.Bus,
+		    PE->DeviceID.SecondaryBus, le16dec(PE->DeviceID.Slot),
+		    PE->DeviceID.Reserved0);
+	}
+	if (PE->ValidationBits & CPER_PCIE_ERROR_VALID_DEVICE_SERIAL) {
+		device_printf(sc->sc_dev, "%s: DeviceSerial={%016"PRIx64"}\n",
+		    ctx, PE->DeviceSerial);
+	}
+	if (PE->ValidationBits & CPER_PCIE_ERROR_VALID_BRIDGE_CONTROL_STATUS) {
+		/* XXX snprintb */
+		device_printf(sc->sc_dev, "%s: BridgeControlStatus=%"PRIx32
+		    "\n", ctx, PE->BridgeControlStatus);
+	}
+	if (PE->ValidationBits & CPER_PCIE_ERROR_VALID_CAPABILITY_STRUCTURE) {
+		uint32_t dcsr, dsr;
+		char hex[2*sizeof(PE->CapabilityStructure) + 1];
+		unsigned i;
+
+		for (i = 0; i < sizeof(PE->CapabilityStructure); i++) {
+			snprintf(hex + 2*i, sizeof(hex) - 2*i, "%02hhx",
+			    PE->CapabilityStructure[i]);
+		}
+		device_printf(sc->sc_dev, "%s: CapabilityStructure={%s}\n",
+		    ctx, hex);
+
+		dcsr = le32dec(&PE->CapabilityStructure[PCIE_DCSR]);
+		dsr = __SHIFTOUT(dcsr, __BITS(31,16));
+		if (dsr != 0) {
+			/*
+			 * XXX move me to pcireg.h; note: high
+			 * half of DCSR
+			 */
+			snprintb(bitbuf, sizeof(bitbuf), "\177\020"
+			    "b\000"	"CORRECTABLE_ERROR\0"
+			    "b\001"	"NONFATAL_UNCORRECTABLE_ERROR\0"
+			    "b\002"	"FATAL_ERROR\0"
+			    "b\003"	"UNSUPPORTED_REQUEST\0"
+			    "b\004"	"AUX_POWER\0"
+			    "b\005"	"TRANSACTIONS_PENDING\0"
+			    "\0", dsr);
+			device_printf(sc->sc_dev, "%s: PCIe Device Status:"
+			    " %s\n",
+			    ctx, bitbuf);
+		}
+	}
+	if (PE->ValidationBits & CPER_PCIE_ERROR_VALID_AER_INFO) {
+		uint32_t uc_status, uc_sev;
+		uint32_t cor_status;
+		uint32_t control;
+		char hex[2*sizeof(PE->AERInfo) + 1];
+		unsigned i;
+
+		for (i = 0; i < sizeof(PE->AERInfo); i++) {
+			snprintf(hex + 2*i, sizeof(hex) - 2*i, "%02hhx",
+			    PE->AERInfo[i]);
+		}
+		device_printf(sc->sc_dev, "%s: AERInfo={%s}\n", ctx, hex);
+
+			/* XXX move me to pcireg.h */
+#define	PCI_AER_UC_STATUS_FMT	"\177\020"				      \
+	"b\000"	"UNDEFINED\0"						      \
+	"b\004"	"DL_PROTOCOL_ERROR\0"					      \
+	"b\005"	"SURPRISE_DOWN_ERROR\0"					      \
+	"b\014"	"POISONED_TLP\0"					      \
+	"b\015"	"FC_PROTOCOL_ERROR\0"					      \
+	"b\016"	"COMPLETION_TIMEOUT\0"					      \
+	"b\017"	"COMPLETION_ABORT\0"					      \
+	"b\020"	"UNEXPECTED_COMPLETION\0"				      \
+	"b\021"	"RECEIVER_OVERFLOW\0"					      \
+	"b\022"	"MALFORMED_TLP\0"					      \
+	"b\023"	"ECRC_ERROR\0"						      \
+	"b\024"	"UNSUPPORTED_REQUEST_ERROR\0"				      \
+	"b\025"	"ACS_VIOLATION\0"					      \
+	"b\026"	"INTERNAL_ERROR\0"					      \
+	"b\027"	"MC_BLOCKED_TLP\0"					      \
+	"b\030"	"ATOMIC_OP_EGRESS_BLOCKED\0"				      \
+	"b\031"	"TLP_PREFIX_BLOCKED_ERROR\0"				      \
+	"b\032"	"POISONTLP_EGRESS_BLOCKED\0"				      \
+	"\0"
+
+		uc_status = le32dec(&PE->AERInfo[PCI_AER_UC_STATUS]);
+		uc_sev = le32dec(&PE->AERInfo[PCI_AER_UC_SEVERITY]);
+		cor_status = le32dec(&PE->AERInfo[PCI_AER_COR_STATUS]);
+		control = le32dec(&PE->AERInfo[PCI_AER_CAP_CONTROL]);
+
+		if (uc_status & uc_sev) {
+			snprintb(bitbuf, sizeof(bitbuf), PCI_AER_UC_STATUS_FMT,
+			    uc_status & uc_sev);
+			device_printf(sc->sc_dev, "%s:"
+			    " AER hardware fatal uncorrectable errors: %s\n",
+			    ctx, bitbuf);
+		}
+		if (uc_status & ~uc_sev) {
+			snprintb(bitbuf, sizeof(bitbuf), PCI_AER_UC_STATUS_FMT,
+			    uc_status & uc_sev);
+			device_printf(sc->sc_dev, "%s:"
+			    " AER hardware fatal uncorrectable errors: %s\n",
+			    ctx, bitbuf);
+		}
+		if (uc_status) {
+			unsigned first = __SHIFTOUT(control,
+			    PCI_AER_FIRST_ERROR_PTR);
+			snprintb(bitbuf, sizeof(bitbuf), PCI_AER_UC_STATUS_FMT,
+			    (uint32_t)1 << first);
+			device_printf(sc->sc_dev, "%s:"
+			    " AER hardware first uncorrectable error: %s\n",
+			    ctx, bitbuf);
+		}
+		if (cor_status) {
+			/* XXX move me to pcireg.h */
+			snprintb(bitbuf, sizeof(bitbuf), "\177\020"
+			    "b\000"	"RECEIVER_ERROR\0"
+			    "b\006"	"BAD_TLP\0"
+			    "b\007"	"BAD_DLLP\0"
+			    "b\010"	"REPLAY_NUM_ROLLOVER\0"
+			    "b\014"	"REPLAY_TIMER_TIMEOUT\0"
+			    "b\015"	"ADVISORY_NF_ERROR\0"
+			    "b\016"	"INTERNAL_ERROR\0"
+			    "b\017"	"HEADER_LOG_OVERFLOW\0"
+			    "\0", cor_status);
+			device_printf(sc->sc_dev, "%s:"
+			    " AER hardware corrected error: %s\n",
+			    ctx, bitbuf);
+		}
+	}
+
+out:	/*
+	 * XXX pass this on to the PCI subsystem to handle
+	 */
+	return;
+}
+
+/*
  * apei_cper_reports
  *
  *	Table of known Common Platform Error Record types, symbolic
@@ -509,6 +746,9 @@ static const struct apei_cper_report {
 	{ "memory", &CPER_MEMORY_ERROR_SECTION,
 	  sizeof(struct cper_memory_error),
 	  apei_cper_memory_error_report },
+	{ "PCIe", &CPER_PCIE_ERROR_SECTION,
+	  sizeof(struct cper_pcie_error),
+	  apei_cper_pcie_error_report },
 };
 
 /*
