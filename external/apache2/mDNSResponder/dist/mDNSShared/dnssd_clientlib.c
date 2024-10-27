@@ -366,14 +366,12 @@ DNSServiceErrorType DNSSD_API TXTRecordGetItemAtIndex
 #define DNSSD_USED
 #endif
 
-// NOT static -- otherwise the compiler may optimize it out
-// The "@(#) " pattern is a special prefix the "what" command looks for
-    STRINGIFY(mDNSResponderVersion)
-
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdate-time"
 #endif
+// NOT static -- otherwise the compiler may optimize it out
+// The "@(#) " pattern is a special prefix the "what" command looks for
 const char VersionString_SCCS_libdnssd[] DNSSD_USED = "@(#) libdns_sd " STRINGIFY(mDNSResponderVersion)
 #ifndef MDNS_VERSIONSTR_NODTS
     " (" __DATE__ " " __TIME__ ")" 
