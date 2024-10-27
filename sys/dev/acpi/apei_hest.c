@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_hest.c,v 1.3 2024/03/21 02:35:09 riastradh Exp $	*/
+/*	$NetBSD: apei_hest.c,v 1.4 2024/10/27 12:12:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei_hest.c,v 1.3 2024/03/21 02:35:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei_hest.c,v 1.4 2024/10/27 12:12:39 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -907,7 +907,7 @@ apei_hest_attach(struct apei_softc *sc)
 	 * limit on it; if you have gigabytes of HEST something is
 	 * probably wrong.
 	 */
-	if (n > INT32_MAX/sizeof(hsc->hsc_source[0])) {
+	if (n > MIN(SIZE_MAX, INT32_MAX)/sizeof(hsc->hsc_source[0])) {
 		aprint_error_dev(sc->sc_dev, "HEST: too many error sources\n");
 		return;
 	}
