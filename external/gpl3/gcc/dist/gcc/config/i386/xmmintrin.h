@@ -927,21 +927,21 @@ _mm_load_ps1 (float const *__P)
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_load_ps (float const *__P)
 {
-  return *(__m128 *)__P;
+  return *(__m128 const *)__P;
 }
 
 /* Load four SPFP values from P.  The address need not be 16-byte aligned.  */
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_loadu_ps (float const *__P)
 {
-  return *(__m128_u *)__P;
+  return *(__m128_u const *)__P;
 }
 
 /* Load four SPFP values in reverse order.  The address must be aligned.  */
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_loadr_ps (float const *__P)
 {
-  __v4sf __tmp = *(__v4sf *)__P;
+  __v4sf __tmp = *(__v4sf const *)__P;
   return (__m128) __builtin_ia32_shufps (__tmp, __tmp, _MM_SHUFFLE (0,1,2,3));
 }
 
