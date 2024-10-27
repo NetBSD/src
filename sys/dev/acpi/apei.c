@@ -1,4 +1,4 @@
-/*	$NetBSD: apei.c,v 1.8 2024/10/27 17:27:11 riastradh Exp $	*/
+/*	$NetBSD: apei.c,v 1.9 2024/10/27 21:28:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei.c,v 1.8 2024/10/27 17:27:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei.c,v 1.9 2024/10/27 21:28:54 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -717,9 +717,10 @@ apei_cper_pcie_error_report(struct apei_softc *sc, const void *buf, size_t len,
 		}
 		if (uc_status & ~uc_sev) {
 			snprintb(bitbuf, sizeof(bitbuf), PCI_AER_UC_STATUS_FMT,
-			    uc_status & uc_sev);
+			    uc_status & ~uc_sev);
 			device_printf(sc->sc_dev, "%s:"
-			    " AER hardware fatal uncorrectable errors: %s\n",
+			    " AER hardware non-fatal uncorrectable errors:"
+			    " %s\n",
 			    ctx, bitbuf);
 		}
 		if (uc_status) {
