@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_cper.h,v 1.3 2024/10/27 12:13:54 riastradh Exp $	*/
+/*	$NetBSD: apei_cper.h,v 1.4 2024/10/27 12:14:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -110,6 +110,8 @@ enum {
 	"\0"
 
 /*
+ * N.2.5. Memory Error Section
+ *
  * https://uefi.org/specs/UEFI/2.10/Apx_N_Common_Platform_Error_Record.html#memory-error-section
  *
  * Type: {0xa5bc1114,0x6f64,0x4ede,{0xb8,0x63,0x3e,0x83,0xed,0x7c,0x83,0xb1}}

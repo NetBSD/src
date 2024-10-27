@@ -1,4 +1,4 @@
-/*	$NetBSD: apei.c,v 1.5 2024/10/27 12:13:42 riastradh Exp $	*/
+/*	$NetBSD: apei.c,v 1.6 2024/10/27 12:14:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei.c,v 1.5 2024/10/27 12:13:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei.c,v 1.6 2024/10/27 12:14:07 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -356,6 +356,8 @@ static const char *const apei_gede_severity[] = {
 };
 
 /*
+ * N.2.5. Memory Error Section
+ *
  * https://uefi.org/specs/UEFI/2.10/Apx_N_Common_Platform_Error_Record.html#memory-error-section
  */
 static const struct uuid CPER_MEMORY_ERROR_SECTION =
