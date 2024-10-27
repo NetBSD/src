@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.25 2024/10/27 10:55:10 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.26 2024/10/27 19:23:47 riastradh Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -260,7 +260,7 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_width = sc->sc_scr.scr_cfg.scr_width;
 	sc->sc_height = sc->sc_scr.scr_cfg.scr_height;
 
-	aprint_normal_dev(sc->sc_dev, "%s at %dx%d\n", sc->sc_scr.name, 
+	aprint_normal_dev(sc->sc_dev, "%s at %dx%d\n", sc->sc_scr.name,
 	    sc->sc_width, sc->sc_height);
 	gftfb_setup(sc);
 
@@ -676,7 +676,7 @@ gftfb_setup(struct gftfb_softc *sc)
 	struct sti_rom *rom = sc->sc_base.sc_rom;
 	bus_space_tag_t memt = rom->memt;
 	bus_space_handle_t memh = rom->regh[2];
-	int i;	
+	int i;
 
 	sc->sc_hwmode = HW_FB;
 	sc->sc_hot_x = 0;
@@ -704,7 +704,7 @@ gftfb_setup(struct gftfb_softc *sc)
 	gftfb_write4(sc, NGLE_REG_9,
 	    (sc->sc_scr.scr_cfg.scr_width << 16) | sc->sc_scr.scr_cfg.scr_height);
 	/*
-	 * blit into offscreen memory to force flush previous - apparently 
+	 * blit into offscreen memory to force flush previous - apparently
 	 * some chips have a bug this works around
 	 */
 	gftfb_write4(sc, NGLE_REG_6, 0x05000000);
@@ -724,7 +724,7 @@ gftfb_setup(struct gftfb_softc *sc)
 
 	/* initialize cursor sprite */
 	gftfb_wait(sc);
-	
+
 	/* cursor mask */
 	gftfb_wait(sc);
 	gftfb_write4(sc, NGLE_REG_14, 0x300);
@@ -751,7 +751,7 @@ gftfb_setup(struct gftfb_softc *sc)
 
 	/* colour map */
 	gftfb_wait(sc);
-	gftfb_write4(sc, NGLE_REG_10, 
+	gftfb_write4(sc, NGLE_REG_10,
 	    BA(FractDcd, Otc24, Ots08, Addr24, 0, BINcmap, 0));
 	gftfb_write4(sc, NGLE_REG_14, 0x03000300);
 	gftfb_write4(sc, NGLE_REG_13, 0xffffffff);
@@ -764,7 +764,7 @@ gftfb_setup(struct gftfb_softc *sc)
 	gftfb_wait(sc);
 	gftfb_write4(sc, NGLE_REG_2, 0);
 	gftfb_write4(sc, NGLE_REG_26, 0x80008004);
-	gftfb_setup_fb(sc);	
+	gftfb_setup_fb(sc);
 
 	gftfb_move_cursor(sc, 100, 100);
 
@@ -795,7 +795,7 @@ gftfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		    cmd, data, flag, l);
 
 	case WSDISPLAYIO_GET_BUSID:
-		return wsdisplayio_busid_pci(sc->sc_dev, sc->sc_pc, 
+		return wsdisplayio_busid_pci(sc->sc_dev, sc->sc_pc,
 		    sc->sc_tag, data);
 
 	case WSDISPLAYIO_GINFO:
@@ -927,7 +927,7 @@ gftfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = 2048;
-	ri->ri_flg = RI_CENTER | RI_8BIT_IS_RGB | 
+	ri->ri_flg = RI_CENTER | RI_8BIT_IS_RGB |
 		     RI_ENABLE_ALPHA | RI_PREFER_ALPHA;
 
 	ri->ri_bits = (void *)sc->sc_scr.fbaddr;
@@ -948,7 +948,7 @@ gftfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.cursor = gftfb_cursor;
 	if (FONT_IS_ALPHA(ri->ri_font)) {
 		ri->ri_ops.putchar = gftfb_putchar_aa;
-	} else	
+	} else
 		ri->ri_ops.putchar = gftfb_putchar;
 }
 
@@ -1073,7 +1073,7 @@ gftfb_rectfill(struct gftfb_softc *sc, int x, int y, int wi, int he,
 		/* plane mask */
 		gftfb_write4(sc, NGLE_REG_13, 0xff);
 		/* bitmap op */
-		gftfb_write4(sc, NGLE_REG_14, 
+		gftfb_write4(sc, NGLE_REG_14,
 		    IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc, 1, 0));
 		/* dst bitmap access */
 		gftfb_write4(sc, NGLE_REG_11,
@@ -1121,7 +1121,7 @@ gftfb_nuke_cursor(struct rasops_info *ri)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct gftfb_softc *sc = scr->scr_cookie;
 	int wi, he, x, y;
-		
+
 	if (ri->ri_flg & RI_CURSOR) {
 		wi = ri->ri_font->fontwidth;
 		he = ri->ri_font->fontheight;
@@ -1139,10 +1139,10 @@ gftfb_cursor(void *cookie, int on, int row, int col)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct gftfb_softc *sc = scr->scr_cookie;
 	int x, y, wi, he;
-	
+
 	wi = ri->ri_font->fontwidth;
 	he = ri->ri_font->fontheight;
-	
+
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		if (on) {
 			if (ri->ri_flg & RI_CURSOR) {
@@ -1213,8 +1213,8 @@ gftfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	/*
 	* we're in rectangle mode with transparency enabled from the call to
 	* gftfb_rectfill() above, so all we need to do is reset the starting
-	* cordinates, then hammer mask and size/start. Starting coordinates 
-	* will automatically move down the y-axis 
+	* cordinates, then hammer mask and size/start. Starting coordinates
+	* will automatically move down the y-axis
 	*/
 	gftfb_wait_fifo(sc, 2);
 
@@ -1228,7 +1228,7 @@ gftfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		for (i = 0; i < he; i++) {
 			gftfb_wait_fifo(sc, 2);
 			mask = *data8;
-			gftfb_write4(sc, NGLE_REG_8, mask << 24);	
+			gftfb_write4(sc, NGLE_REG_8, mask << 24);
 			gftfb_write4(sc, NGLE_REG_9, (wi << 16) | 1);
 			data8++;
 		}
@@ -1237,7 +1237,7 @@ gftfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		for (i = 0; i < he; i++) {
 			gftfb_wait_fifo(sc, 2);
 			mask = *data16;
-			gftfb_write4(sc, NGLE_REG_8, mask << 16);	
+			gftfb_write4(sc, NGLE_REG_8, mask << 16);
 			gftfb_write4(sc, NGLE_REG_9, (wi << 16) | 1);
 			data16++;
 		}
@@ -1298,9 +1298,9 @@ gftfb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct gftfb_softc *sc = scr->scr_cookie;
 	int32_t xs, xd, y, width, height;
-	
+
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-		if (ri->ri_crow == row && 
+		if (ri->ri_crow == row &&
 		   (ri->ri_ccol >= srccol && ri->ri_ccol < (srccol + ncols)) &&
 		   (ri->ri_flg & RI_CURSOR)) {
 			gftfb_nuke_cursor(ri);
@@ -1312,7 +1312,7 @@ gftfb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 		width = ri->ri_font->fontwidth * ncols;
 		height = ri->ri_font->fontheight;
 		gftfb_bitblt(sc, xs, y, xd, y, width, height, RopSrc);
-		if (ri->ri_crow == row && 
+		if (ri->ri_crow == row &&
 		   (ri->ri_ccol >= dstcol && ri->ri_ccol < (dstcol + ncols)))
 			ri->ri_flg &= ~RI_CURSOR;
 	}
@@ -1325,7 +1325,7 @@ gftfb_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct gftfb_softc *sc = scr->scr_cookie;
 	int32_t x, y, width, height, fg, bg, ul;
-	
+
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		x = ri->ri_xorigin + ri->ri_font->fontwidth * startcol;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
@@ -1334,7 +1334,7 @@ gftfb_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
 		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
 
 		gftfb_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
-		if (ri->ri_crow == row && 
+		if (ri->ri_crow == row &&
 		   (ri->ri_ccol >= startcol && ri->ri_ccol < (startcol + ncols)))
 			ri->ri_flg &= ~RI_CURSOR;
 	}
@@ -1371,7 +1371,7 @@ gftfb_eraserows(void *cookie, int row, int nrows, long fillattr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct gftfb_softc *sc = scr->scr_cookie;
 	int32_t x, y, width, height, fg, bg, ul;
-	
+
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		x = ri->ri_xorigin;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
@@ -1395,7 +1395,7 @@ gftfb_eraserows(void *cookie, int row, int nrows, long fillattr)
  * of negative coordinates. The rest of it, colour map, sprite image etc.,
  * behave like Artist.
  */
- 
+
 static void
 gftfb_move_cursor(struct gftfb_softc *sc, int x, int y)
 {
@@ -1456,7 +1456,7 @@ gftfb_do_cursor(struct gftfb_softc *sc, struct wsdisplay_cursor *cur)
 		gftfb_write4(sc, NGLE_REG_4, rgb);	/* FG */
 		gftfb_write4(sc, NGLE_REG_2, 0);
 		gftfb_write4(sc, NGLE_REG_26, 0x80008004);
-		gftfb_setup_fb(sc);	
+		gftfb_setup_fb(sc);
 		mutex_exit(&sc->sc_hwlock);
 
 	}
@@ -1566,7 +1566,7 @@ gftfb_set_video(struct gftfb_softc *sc, int on)
 {
 	if (sc->sc_video_on == on)
 		return;
-		
+
 	sc->sc_video_on = on;
 
 	gftfb_wait(sc);
