@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.240 2024/09/02 05:14:45 ozaki-r Exp $
+#	$NetBSD: Makefile,v 1.241 2024/10/28 17:55:12 nia Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
 
 SUBDIR= aiomixer apply asa at audio audiocfg \
 	banner base64 basename biff bthset btkey btpin \
-	bzip2 bzip2recover c11 c89 c99 cal calendar cap_mkdb cdplay \
+	bzip2 bzip2recover c11 c17 c89 c99 cal calendar cap_mkdb cdplay \
 	checknr chflags chpass cksum cmp cleantags col colcrt colrm \
 	column comm compress config crunch csplit ctags cut cvslatest \
 	dc deroff db dirname du \
