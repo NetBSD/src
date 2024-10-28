@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.69 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.70 2024/10/28 14:28:01 nat Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.69 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.70 2024/10/28 14:28:01 nat Exp $");
 
 #include "opt_ddb.h"
 
@@ -393,6 +393,7 @@ ncr5380_init(struct ncr5380_softc *sc)
 static void
 ncr5380_reset_scsibus(struct ncr5380_softc *sc)
 {
+	struct sci_req *sr;
 
 	NCR_TRACE("reset_scsibus, cur=0x%x\n",
 			  (long) sc->sc_current);
@@ -409,6 +410,9 @@ ncr5380_reset_scsibus(struct ncr5380_softc *sc)
 	delay(100000);
 
 	/* XXX - Need to cancel disconnected requests. */
+	sr = sc->sc_current;
+	if (sr && (sc->sc_state & NCR_ABORTING) == 0)
+		ncr5380_abort(sc);
 }
 
 
