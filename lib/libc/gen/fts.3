@@ -1,4 +1,4 @@
-.\"	$NetBSD: fts.3,v 1.35 2024/10/28 09:46:54 uwe Exp $
+.\"	$NetBSD: fts.3,v 1.36 2024/10/28 09:52:09 uwe Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -95,7 +95,9 @@ or physically
 order the walk of the hierarchy or prune and/or re-visit portions of
 the hierarchy.
 .Pp
-Two structures are defined (and typedef'd) in the include file
+Two structures are defined
+.Pq and Li typedef Ap ed
+in the include file
 .In fts.h .
 The first is
 .Vt FTS ,
@@ -118,22 +120,22 @@ The
 .Vt FTSENT
 structure contains at least the following fields, which are
 described in greater detail below:
-.Bd -literal -offset 2n
+.Bd -literal -offset indent
 typedef struct _ftsent {
-	u_short fts_info;		/* flags for FTSENT structure */
-	char *fts_accpath;		/* access path */
-	char *fts_path;			/* root path */
-	short fts_pathlen;		/* strlen(fts_path) */
-	char *fts_name;			/* file name */
-	short fts_namelen;		/* strlen(fts_name) */
-	short fts_level;		/* depth (\-1 to N) */
-	int fts_errno;			/* file errno */
-	long fts_number;		/* local numeric value */
-	void *fts_pointer;		/* local address value */
-	struct ftsent *fts_parent;	/* parent directory */
-	struct ftsent *fts_link;	/* next file structure */
-	struct ftsent *fts_cycle;	/* cycle structure */
-	struct stat *fts_statp;		/* stat(2) information */
+        u_short fts_info;           /* flags for FTSENT structure */
+        char *fts_accpath;          /* access path */
+        char *fts_path;             /* root path */
+        short fts_pathlen;          /* strlen(fts_path) */
+        char *fts_name;             /* file name */
+        short fts_namelen;          /* strlen(fts_name) */
+        short fts_level;            /* depth (\-1 to N) */
+        int fts_errno;              /* file errno */
+        long fts_number;            /* local numeric value */
+        void *fts_pointer;          /* local address value */
+        struct ftsent *fts_parent;  /* parent directory */
+        struct ftsent *fts_link;    /* next file structure */
+        struct ftsent *fts_cycle;   /* cycle structure */
+        struct stat *fts_statp;     /* stat(2) information */
 } FTSENT;
 .Ed
 .Pp
