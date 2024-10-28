@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.190 2024/06/14 18:44:18 kardel Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.191 2024/10/28 14:36:43 nat Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.190 2024/06/14 18:44:18 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.191 2024/10/28 14:36:43 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -96,6 +96,8 @@ SDT_PROBE_DEFINE1(scsi, base, xfer, restart,  "struct scsipi_xfer *"/*xs*/);
 SDT_PROBE_DEFINE1(scsi, base, xfer, free,  "struct scsipi_xfer *"/*xs*/);
 
 static int	scsipi_complete(struct scsipi_xfer *);
+static struct scsipi_channel*
+		scsipi_done_internal(struct scsipi_xfer *, bool);
 static void	scsipi_request_sense(struct scsipi_xfer *);
 static int	scsipi_enqueue(struct scsipi_xfer *);
 static void	scsipi_run_queue(struct scsipi_channel *chan);
@@ -1597,6 +1599,28 @@ scsipi_free_opcodeinfo(struct scsipi_periph *periph)
 void
 scsipi_done(struct scsipi_xfer *xs)
 {
+	struct scsipi_channel *chan;
+	/*
+	 * If there are more xfers on the channel's queue, attempt to
+	 * run them.
+	 */
+	if ((chan = scsipi_done_internal(xs, true)) != NULL)
+		scsipi_run_queue(chan);
+}
+
+/*
+ * Just like scsipi_done(), but no recursion.  Useful if aborting the current
+ * transfer.
+ */
+void
+scsipi_done_once(struct scsipi_xfer *xs)
+{
+	(void)scsipi_done_internal(xs, false);
+}
+
+static struct scsipi_channel*
+scsipi_done_internal(struct scsipi_xfer *xs, bool more)
+{
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct scsipi_channel *chan = periph->periph_channel;
 	int freezecnt;
@@ -1685,7 +1709,7 @@ scsipi_done(struct scsipi_xfer *xs)
 		 */
 		if (xs->xs_control & XS_CTL_POLL) {
 			mutex_exit(chan_mtx(chan));
-			return;
+			return NULL;
 		}
 		cv_broadcast(xs_cv(xs));
 		mutex_exit(chan_mtx(chan));
@@ -1697,7 +1721,7 @@ scsipi_done(struct scsipi_xfer *xs)
 	 * without error; no use in taking a context switch
 	 * if we can handle it in interrupt context.
 	 */
-	if (xs->error == XS_NOERROR) {
+	if (xs->error == XS_NOERROR && more == true) {
 		mutex_exit(chan_mtx(chan));
 		(void) scsipi_complete(xs);
 		goto out;
@@ -1712,11 +1736,7 @@ scsipi_done(struct scsipi_xfer *xs)
 	mutex_exit(chan_mtx(chan));
 
  out:
-	/*
-	 * If there are more xfers on the channel's queue, attempt to
-	 * run them.
-	 */
-	scsipi_run_queue(chan);
+	return chan;
 }
 
 /*
