@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.70 2024/10/28 14:28:01 nat Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.71 2024/10/28 14:32:04 nat Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.70 2024/10/28 14:28:01 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.71 2024/10/28 14:32:04 nat Exp $");
 
 #include "opt_ddb.h"
 
@@ -621,9 +621,11 @@ ncr5380_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			/* Terminate any current command. */
 			sr = sc->sc_current;
 			if (sr) {
+#ifdef	NCR5380_DEBUG
 				printf("%s: polled request aborting %d/%d\n",
 				    device_xname(sc->sc_dev),
 				    sr->sr_target, sr->sr_lun);
+#endif
 				ncr5380_abort(sc);
 			}
 			if (sc->sc_state != NCR_IDLE) {
