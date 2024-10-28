@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsipi.9,v 1.31 2017/07/03 21:28:48 wiz Exp $
+.\"	$NetBSD: scsipi.9,v 1.32 2024/10/28 15:04:26 nat Exp $
 .\"
 .\"
 .\" Copyright (c) 2001 Manuel Bouyer.
@@ -24,7 +24,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd November 20, 2016
+.Dd October 28, 2024
 .Dt SCSIPI 9
 .Os
 .Sh NAME
@@ -49,6 +49,8 @@
 .Fn scsipi_periph_timed_thaw "void *arg"
 .Ft void
 .Fn scsipi_done "struct scsipi_xfer *xs"
+.Ft void
+.Fn scsipi_done_once "struct scsipi_xfer *xs"
 .Ft void
 .Fn scsipi_printaddr "struct scsipi_periph *periph"
 .Ft int
@@ -85,7 +87,9 @@ A request is sent to the HBA driver through the
 callback.
 The HBA driver signals completion (with or without errors) of the
 request through
-.Fn scsipi_done .
+.Fn scsipi_done 
+or
+.Fn scsipi_done_once .
 .Nm
 knows the resource's limits of the HBA (max number of concurrent requests per
 adapter of channel, and per periph), and will make sure the HBA won't receive
@@ -274,7 +278,9 @@ status flags:
 .Bl -tag -width XS_STS_PRIVATE -compact
 .It Va XS_STS_DONE
 xfer is done (set by
-.Fn scsipi_done )
+.Fn scsipi_done
+or
+.Fn scspi_done_once )
 .It Va XS_STS_PRIVATE
 mask of flags reserved for HBA's use (0xf0000000)
 .El
@@ -287,6 +293,8 @@ The HBA should start the timeout at the time the command is accepted
 by the device.
 If the timeout happens, the HBA shall terminate the command through
 .Fn scsipi_done
+or
+.Fn scsipi_done_once
 with a XS_TIMEOUT error
 .It Va struct scsipi_generic *cmd
 scsipi command to execute
@@ -339,6 +347,8 @@ is a pointer to the
 .Va struct scsipi_xfer .
 Once the xfer is complete the HBA driver shall call
 .Fn scsipi_done
+or
+.Fn scsipi_done_once
 with updated status and error information.
 .It Dv ADAPTER_REQ_GROW_RESOURCES
 ask the adapter to increase resources of the channel (grow
@@ -471,8 +481,12 @@ mid-layer for SCSI CHECK CONDITION handling.
 .El
 .Pp
 .It Fn scsipi_done "struct scsipi_xfer *xs"
+.It Fn scsipi_done_once "struct scsipi_xfer *xs"
 shall be called by the HBA when the xfer is complete, or when it needs to
 be requeued by the mid-layer.
+.Fn scsi_pi_done_once
+does not run more commands from the xfer queue, it is up
+to the caller to check the queue after the xfer is complete.
 .Va error
 in the scsipi_xfer shall be set to one of the following:
 .Bl -tag -width xxxxxxxx -compact
