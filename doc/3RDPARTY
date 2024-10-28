@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2055 2024/10/28 13:57:30 riastradh Exp $
+#	$NetBSD: 3RDPARTY,v 1.2056 2024/10/28 13:59:13 riastradh Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -900,6 +900,8 @@ License:	Apache2 (mdnsd), BSD 3-clause (libdns_sd),
 		BSD 3-clause like (dns-sd)
 Responsible:	tsarna, christos
 Location:	external/apache2/mDNSResponder/dist
+Vendor tag:	APPLE
+Release tag:	mdnsresponder-X-Y-Z for mDNSResponder X.Y.Z
 Notes:
 
 Package:	mandoc
