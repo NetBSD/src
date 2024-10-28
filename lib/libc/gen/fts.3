@@ -1,4 +1,4 @@
-.\"	$NetBSD: fts.3,v 1.31 2013/06/30 19:19:12 wiz Exp $
+.\"	$NetBSD: fts.3,v 1.32 2024/10/28 01:18:54 jschauma Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)fts.3	8.5 (Berkeley) 4/16/94
 .\"
-.Dd March 30, 2011
+.Dd October 27, 2024
 .Dt FTS 3
 .Os
 .Sh NAME
@@ -506,6 +506,14 @@ the directory traversal order is in the order listed in
 .Fa path_argv
 for the root paths, and in the order listed in the directory for
 everything else.
+.Pp
+If an error occurs,
+.Fn fts_open
+returns
+.Dv NULL
+and sets
+.Va errno
+appropriately.
 .Sh FTS_READ
 The
 .Fn fts_read
