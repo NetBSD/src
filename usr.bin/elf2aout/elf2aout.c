@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2aout.c,v 1.23 2019/05/19 09:14:13 wiz Exp $	*/
+/*	$NetBSD: elf2aout.c,v 1.24 2024/10/28 13:06:34 kre Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -55,6 +55,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <arpa/inet.h>
 
 
 struct sect {
