@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2054 2024/10/26 18:16:34 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2055 2024/10/28 13:57:30 riastradh Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -35,6 +35,8 @@
 # License:	description of license
 # Responsible:	comma-separated list of NetBSD developers
 # Location:	comma-separated list of subdirectories in the NetBSD src tree
+# Vendor tag:	name of branch where vendor imports go (usually uppercase)
+# Release tag:	tag of the latest vendor import (lowercase with version number)
 # Notes:
 # Multiple lines of free-form text,
 # Must be last.
