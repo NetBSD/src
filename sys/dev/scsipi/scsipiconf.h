@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.132 2024/10/28 14:36:43 nat Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.133 2024/10/29 15:50:07 nat Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -702,7 +702,6 @@ int	scsipi_mode_sense_big(struct scsipi_periph *, int, int,
 	    struct scsi_mode_parameter_header_10 *, int, int, int, int);
 int	scsipi_start(struct scsipi_periph *, int, int);
 void	scsipi_done(struct scsipi_xfer *);
-void	scsipi_done_once(struct scsipi_xfer *);
 void	scsipi_user_done(struct scsipi_xfer *);
 int	scsipi_interpret_sense(struct scsipi_xfer *);
 void	scsipi_wait_drain(struct scsipi_periph *);

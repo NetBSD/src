@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.72 2024/10/28 14:36:43 nat Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.73 2024/10/29 15:50:07 nat Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.72 2024/10/28 14:36:43 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.73 2024/10/29 15:50:07 nat Exp $");
 
 #include "opt_ddb.h"
 
@@ -808,13 +808,10 @@ finish:
 	sc->sc_ncmds--;
 
 	/* Tell common SCSI code it is done. */
-	scsipi_done_once(xs);
+	scsipi_done(xs);
 
 	sc->sc_state = NCR_IDLE;
 	/* Now ncr5380_sched() may be called again. */
-
-	/* Check the queue. */
-	scsipi_channel_thaw(&sc->sc_channel, 0);
 }
 
 
