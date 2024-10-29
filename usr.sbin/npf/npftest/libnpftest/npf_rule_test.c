@@ -52,6 +52,29 @@ static const struct test_case {
 		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
 	},
 
+	/*
+	 * Pass any of the { fe80::1, fe80::2 } group but nothing else
+	 * in fe80::/112.
+	 */
+	{
+		.af = AF_INET6,
+		.src = "fe80::1", .dst = "fe80::adec:c91c:d116:7592",
+		.ifname = IFNAME_EXT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
+	},
+	{
+		.af = AF_INET6,
+		.src = "fe80::2", .dst = "fe80::adec:c91c:d116:7592",
+		.ifname = IFNAME_EXT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
+	},
+	{
+		.af = AF_INET6,
+		.src = "fe80::3", .dst = "fe80::adec:c91c:d116:7592",
+		.ifname = IFNAME_EXT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
+	},
+
 	/* Block. */
 	{
 		.af = AF_INET,

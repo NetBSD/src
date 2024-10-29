@@ -1,4 +1,4 @@
-# $NetBSD: t_npf.sh,v 1.4 2020/06/01 11:08:57 martin Exp $
+# $NetBSD: t_npf.sh,v 1.5 2024/10/29 22:24:30 riastradh Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -28,6 +28,12 @@
 run_test()
 {
 	local name="${1}"
+
+	case $name in
+	npf_rule)
+		atf_expect_fail "PR bin/55403: npfctl miscompiles IPv6 rules"
+		;;
+	esac
 
 	atf_check -o ignore -e ignore npfctl debug -c "$(atf_get_srcdir)/npftest.conf" -o ./npf.plist
 	atf_check -o ignore npftest -c npf.plist -T "${name}"
