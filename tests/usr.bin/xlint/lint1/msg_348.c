@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_348.c,v 1.10 2024/03/01 17:22:55 rillig Exp $	*/
+/*	$NetBSD: msg_348.c,v 1.11 2024/10/29 20:48:31 rillig Exp $	*/
 # 3 "msg_348.c"
 
 // Test for message: maximum value %d of '%s' does not match maximum array index %d [348]
@@ -158,9 +158,9 @@ color_name_incomplete_array(enum color color)
 }
 
 enum large {
-	/* expect+1: warning: integral constant too large [56] */
+	/* expect+1: warning: constant -0x10000000000 too large for 'int' [56] */
 	min = -1LL << 40,
-	/* expect+1: warning: integral constant too large [56] */
+	/* expect+1: warning: constant 0x10000000000 too large for 'int' [56] */
 	max = 1LL << 40,
 	zero = 0
 };

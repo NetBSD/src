@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_enum.c,v 1.5 2024/05/01 12:36:56 rillig Exp $	*/
+/*	$NetBSD: decl_enum.c,v 1.6 2024/10/29 20:48:31 rillig Exp $	*/
 # 3 "decl_enum.c"
 
 /*
@@ -10,9 +10,9 @@
 // TIME_MIN thus gets truncated from 0x8000_0000_0000_0000 to 0.
 // TIME_MAX thus gets truncated from 0x7fff_ffff_ffff_ffff to -1.
 enum {
-	/* expect+1: warning: integral constant too large [56] */
+	/* expect+1: warning: constant -0x8000000000000000 too large for 'int' [56] */
 	TIME_MIN = (long long)(1ULL << 63),
-	/* expect+1: warning: integral constant too large [56] */
+	/* expect+1: warning: constant 0x7fffffffffffffff too large for 'int' [56] */
 	TIME_MAX = (long long)~(1ULL << 63),
 };
 

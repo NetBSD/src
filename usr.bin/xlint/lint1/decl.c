@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.406 2024/10/14 18:43:23 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.407 2024/10/29 20:48:31 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.406 2024/10/14 18:43:23 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.407 2024/10/29 20:48:31 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -3171,8 +3171,15 @@ to_int_constant(tnode_t *tn, bool required)
 	bool out_of_bounds = is_unsigned
 	    ? (uint64_t)val > (uint64_t)TARG_INT_MAX
 	    : val > (int64_t)TARG_INT_MAX || val < (int64_t)TARG_INT_MIN;
-	if (out_of_bounds)
-		/* integral constant too large */
-		warning(56);
+	if (out_of_bounds) {
+		char buf[256];
+		unsigned long long abs_val = is_unsigned || val >= 0
+		    ? (unsigned long long)val
+		    : -(unsigned long long)val;
+		snprintf(buf, sizeof(buf), "%s%#llx",
+		    is_unsigned || val >= 0 ? "" : "-",	abs_val);
+		/* constant %s too large for 'int' */
+		warning(56, buf);
+	}
 	return (int)val;
 }

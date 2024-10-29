@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.250 2024/10/14 18:43:23 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.251 2024/10/29 20:48:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.250 2024/10/14 18:43:23 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.251 2024/10/29 20:48:31 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -111,7 +111,7 @@ static const char *const msgs[] = {
 	"declared parameter '%s' is missing",				// 53
 	"trailing ',' in enum declaration requires C99 or later",	// 54
 	"integral constant expression expected",			// 55
-	"integral constant too large",					// 56
+	"constant %s too large for 'int'",				// 56
 	"enumeration constant '%s' hides parameter",			// 57
 	"type of '%s' does not match prototype",			// 58
 	"formal parameter #%d lacks name",				// 59
