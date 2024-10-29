@@ -1,4 +1,4 @@
-/* $NetBSD: t_fpsetround.c,v 1.7 2024/10/28 21:48:55 riastradh Exp $ */
+/* $NetBSD: t_fpsetround.c,v 1.8 2024/10/29 20:04:30 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fpsetround.c,v 1.7 2024/10/28 21:48:55 riastradh Exp $");
+__RCSID("$NetBSD: t_fpsetround.c,v 1.8 2024/10/29 20:04:30 riastradh Exp $");
 
 #include <float.h>
 #include <math.h>
@@ -173,10 +173,12 @@ ATF_TC_BODY(fpsetround_noftz, tc)
 	y = x/2;
 	ATF_CHECK_MSG(y != 0, "machine runs flush-to-zero by default");
 
-#ifdef __aarch64__
-	atf_tc_expect_fail("PR port-arm/58782:"
-	    " fpsetround flips all the other fpcsr bits on aarch64");
-#endif
+	/*
+	 * This curious test is a regression test for:
+	 *
+	 * PR port-arm/58782: fpsetround flips all the other fpcsr bits
+	 * on aarch64
+	 */
 
 	ATF_CHECK_EQ_MSG((r = fpsetround(FP_RN)), FP_RN,
 	    "r=%d FP_RN=%d", r, FP_RN);
