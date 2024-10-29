@@ -1,4 +1,4 @@
-.\"	$NetBSD: fts.3,v 1.37 2024/10/28 10:01:08 uwe Exp $
+.\"	$NetBSD: fts.3,v 1.38 2024/10/29 00:18:54 uwe Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -356,7 +356,7 @@ The
 .Fa fts_name
 field is always
 .Tn NUL Ns -terminated .
-.Sh FTS_OPEN
+.Ss FTS_OPEN
 The
 .Fn fts_open
 function takes a pointer to an array of character pointers naming one
@@ -522,7 +522,7 @@ returns
 and sets
 .Va errno
 appropriately.
-.Sh FTS_READ
+.Ss FTS_READ
 The
 .Fn fts_read
 function returns a pointer to an
@@ -576,7 +576,7 @@ after the
 structure has been returned by the function
 .Fn fts_read
 in post-order.
-.Sh FTS_CHILDREN
+.Ss FTS_CHILDREN
 The
 .Fn fts_children
 function returns a pointer to an
@@ -647,7 +647,7 @@ and
 .Fa fts_namelen
 fields.
 .El
-.Sh FTS_SET
+.Ss FTS_SET
 The function
 .Fn fts_set
 allows the user application to determine further processing for the
@@ -718,7 +718,7 @@ The file may be one of those most recently returned by either
 or
 .Fn fts_read .
 .El
-.Sh FTS_CLOSE
+.Ss FTS_CLOSE
 The
 .Fn fts_close
 function closes a file hierarchy stream
