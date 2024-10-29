@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.34 2024/02/10 09:21:52 andvar Exp $	*/
+/*	$NetBSD: state.c,v 1.35 2024/10/29 13:10:10 kre Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: state.c,v 1.34 2024/02/10 09:21:52 andvar Exp $");
+__RCSID("$NetBSD: state.c,v 1.35 2024/10/29 13:10:10 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -549,8 +549,10 @@ willoption(int option)
 
 #ifdef	AUTHENTICATION
 		case TELOPT_AUTHENTICATION:
-			func = auth_request;
-			changeok++;
+			if (auth_level >= 0) {
+				func = auth_request;
+				changeok++;
+			}
 			break;
 #endif
 
