@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2024/10/29 14:38:32 christos Exp $	
+# $NetBSD: Makefile,v 1.3 2024/10/29 20:51:37 christos Exp $	
 
 NOLINT=yes	# XXX
 WARNS?=		4
@@ -61,18 +61,19 @@ INCSDIR=	/usr/include
 
 LIBDPLIBS += pthread ${NETBSDSRCDIR}/lib/libpthread
 
-FILES+=				libzstd.pc
-FILESOWN_libarchive.pc=		${BINOWN}
-FILESGRP_libarchive.pc=		${BINGRP}
-FILESMODE_libarchive.pc=	${NONBINMODE}
-FILESDIR_libarchive.pc=		/usr/lib/pkgconfig
+PC=libzstd.pc
+FILES+=			${PC}
+FILESOWN_${PC}=		${BINOWN}
+FILESGRP_${PC}=		${BINGRP}
+FILESMODE_${PC}=	${NONBINMODE}
+FILESDIR_${PC}=		/usr/lib/pkgconfig
 
-CLEANFILES+=libzstd.pc
+CLEANFILES+=		${PC}
 
-all: libzstd.pc
+all: ${PC}
 dependall: all
 
-libzstd.pc: libzstd.pc.in
+${PC}: ${PC}.in
 	@${_MKTARGET_CREATE}
 	@(V=$$( (echo '#include <zstd.h>'; echo ZSTD_LIB_VERSION) | \
 	    ${CC} -E - | tail -1 | tr -d ' ') && \
