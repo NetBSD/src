@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2024/10/27 01:28:38 kre Exp $
+#	$NetBSD: Makefile,v 1.4 2024/10/29 18:41:57 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -14,7 +14,4 @@ INCSDIR=/usr/include
 
 .PATH:	${DIST}/mDNSShared
 
-zoot:
-	ls ${DIST}/mDNSShared/dnssd_clientlib.c
-	
 .include <bsd.lib.mk>
