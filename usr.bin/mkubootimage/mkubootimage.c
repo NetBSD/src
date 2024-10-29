@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.33 2024/05/21 04:01:26 gutteridge Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.34 2024/10/29 02:54:38 gutteridge Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.33 2024/05/21 04:01:26 gutteridge Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.34 2024/10/29 02:54:38 gutteridge Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -276,14 +276,14 @@ usage(void)
 static void
 dump_header_uimg(struct uboot_image_header *hdr)
 {
-	time_t tm = ntohl(hdr->ih_time);
+	time_t tm = be32toh(hdr->ih_time);
 
-	printf(" magic:       0x%08x\n", ntohl(hdr->ih_magic));
+	printf(" magic:       0x%08x\n", be32toh(hdr->ih_magic));
 	printf(" time:        %s", ctime(&tm));
-	printf(" size:        %u\n", ntohl(hdr->ih_size));
-	printf(" load addr:   0x%08x\n", ntohl(hdr->ih_load));
-	printf(" entry point: 0x%08x\n", ntohl(hdr->ih_ep));
-	printf(" data crc:    0x%08x\n", ntohl(hdr->ih_dcrc));
+	printf(" size:        %u\n", be32toh(hdr->ih_size));
+	printf(" load addr:   0x%08x\n", be32toh(hdr->ih_load));
+	printf(" entry point: 0x%08x\n", be32toh(hdr->ih_ep));
+	printf(" data crc:    0x%08x\n", be32toh(hdr->ih_dcrc));
 	printf(" os:          %d (%s)\n", hdr->ih_os,
 	    get_os_name(hdr->ih_os));
 	printf(" arch:        %d (%s)\n", hdr->ih_arch,
@@ -324,8 +324,8 @@ generate_header_uimg(struct uboot_image_header *hdr, time_t repro_time,
 	if (image_type == IH_TYPE_SCRIPT) {
 		struct iovec iov[3];
 		dsize = (uint32_t)(st.st_size + (sizeof(uint32_t) * 2));
-		size_buf[0] = htonl(st.st_size);
-		size_buf[1] = htonl(0);
+		size_buf[0] = htobe32(st.st_size);
+		size_buf[1] = htobe32(0);
 		iov[0].iov_base = &size_buf[0];
 		iov[0].iov_len = sizeof(size_buf[0]);
 		iov[1].iov_base = &size_buf[1];
@@ -341,19 +341,19 @@ generate_header_uimg(struct uboot_image_header *hdr, time_t repro_time,
 	munmap(p, st.st_size);
 
 	memset(hdr, 0, sizeof(*hdr));
-	hdr->ih_magic = htonl(image_magic);
-	hdr->ih_time = htonl(repro_time ? repro_time : st.st_mtime);
-	hdr->ih_size = htonl(dsize);
-	hdr->ih_load = htonl(image_loadaddr);
-	hdr->ih_ep = htonl(image_entrypoint);
-	hdr->ih_dcrc = htonl(crc);
+	hdr->ih_magic = htobe32(image_magic);
+	hdr->ih_time = htobe32(repro_time ? repro_time : st.st_mtime);
+	hdr->ih_size = htobe32(dsize);
+	hdr->ih_load = htobe32(image_loadaddr);
+	hdr->ih_ep = htobe32(image_entrypoint);
+	hdr->ih_dcrc = htobe32(crc);
 	hdr->ih_os = image_os;
 	hdr->ih_arch = image_arch;
 	hdr->ih_type = image_type;
 	hdr->ih_comp = image_comp;
 	strlcpy((char *)hdr->ih_name, image_name, sizeof(hdr->ih_name));
 	crc = crc32((void *)hdr, sizeof(*hdr));
-	hdr->ih_hcrc = htonl(crc);
+	hdr->ih_hcrc = htobe32(crc);
 
 	dump_header_uimg(hdr);
 
@@ -425,8 +425,8 @@ write_image(void *hdr, size_t hdrlen, int kernel_fd, int image_fd)
 	}
 
 	if (image_type == IH_TYPE_SCRIPT) {
-		size_buf[0] = htonl(st.st_size);
-		size_buf[1] = htonl(0);
+		size_buf[0] = htobe32(st.st_size);
+		size_buf[1] = htobe32(0);
 		wlen = write(image_fd, &size_buf, sizeof(size_buf));
 		if (wlen != sizeof(size_buf)) {
 			perror("short write");
