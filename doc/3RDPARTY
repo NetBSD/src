@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2056 2024/10/28 13:59:13 riastradh Exp $
+#	$NetBSD: 3RDPARTY,v 1.2057 2024/10/29 21:39:34 kre Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1465,6 +1465,8 @@ Mailing List:	tz@iana.org
 Responsible:	kleink, christos, kre
 License:	Public domain
 Location:	lib/libc/time/zoneinfo, external/public-domain/tz/share
+Vendor tag:	?? / TZDATA
+Release tag:	?? / TZDATA2024BTGZ
 Notes:
 Don't use src/lib/libc/time/tzcode2netbsd to prepare the source tree for import.
 Diffs are now applied by hand, since we have too many diffs (re-entrant tzcode,
