@@ -1,4 +1,4 @@
-/*	$NetBSD: ctags.c,v 1.15 2024/02/10 08:36:03 andvar Exp $	*/
+/*	$NetBSD: ctags.c,v 1.16 2024/10/29 11:30:20 kre Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)ctags.c	8.4 (Berkeley) 2/7/95";
 #endif
-__RCSID("$NetBSD: ctags.c,v 1.15 2024/02/10 08:36:03 andvar Exp $");
+__RCSID("$NetBSD: ctags.c,v 1.16 2024/10/29 11:30:20 kre Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -167,7 +167,7 @@ usage:		(void)fprintf(stderr,
 				++aflag;
 			}
 			if (!(outf = fopen(outfile, aflag ? "a" : "w")))
-				err(exit_val, "%s", outfile);
+				err(EXIT_FAILURE, "%s", outfile);
 			put_entries(head);
 			(void)fclose(outf);
 			if (uflag) {
