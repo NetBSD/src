@@ -15,6 +15,7 @@
 #define	RESULT_BLOCK	ENETUNREACH
 
 static const struct test_case {
+	int		af;
 	const char *	src;
 	const char *	dst;
 	const char *	ifname;
@@ -25,11 +26,13 @@ static const struct test_case {
 
 	/* Stateful pass. */
 	{
+		.af = AF_INET,
 		.src = "10.1.1.1",		.dst = "10.1.1.2",
 		.ifname = IFNAME_INT,		.di = PFIL_OUT,
 		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
 	},
 	{
+		.af = AF_INET,
 		.src = "10.1.1.2",		.dst = "10.1.1.1",
 		.ifname = IFNAME_INT,		.di = PFIL_IN,
 		.stateful_ret = RESULT_PASS,	.ret = RESULT_BLOCK
@@ -37,18 +40,22 @@ static const struct test_case {
 
 	/* Pass forwards stream only. */
 	{
+		.af = AF_INET,
 		.src = "10.1.1.1",		.dst = "10.1.1.3",
 		.ifname = IFNAME_INT,		.di = PFIL_OUT,
 		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
 	},
 	{
+		.af = AF_INET,
 		.src = "10.1.1.3",		.dst = "10.1.1.1",
 		.ifname = IFNAME_INT,		.di = PFIL_IN,
 		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
 	},
 
 	/* Block. */
-	{	.src = "10.1.1.1",		.dst = "10.1.1.4",
+	{
+		.af = AF_INET,
+		.src = "10.1.1.1",		.dst = "10.1.1.4",
 		.ifname = IFNAME_INT,		.di = PFIL_OUT,
 		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
 	},
@@ -65,7 +72,7 @@ run_raw_testcase(unsigned i)
 	npf_rule_t *rl;
 	int slock, error;
 
-	m = mbuf_get_pkt(AF_INET, IPPROTO_UDP, t->src, t->dst, 9000, 9000);
+	m = mbuf_get_pkt(t->af, IPPROTO_UDP, t->src, t->dst, 9000, 9000);
 	npc = get_cached_pkt(m, t->ifname);
 
 	slock = npf_config_read_enter(npf);
@@ -91,7 +98,7 @@ run_handler_testcase(unsigned i)
 	struct mbuf *m;
 	int error;
 
-	m = mbuf_get_pkt(AF_INET, IPPROTO_UDP, t->src, t->dst, 9000, 9000);
+	m = mbuf_get_pkt(t->af, IPPROTO_UDP, t->src, t->dst, 9000, 9000);
 	error = npfk_packet_handler(npf, &m, ifp, t->di);
 	if (m) {
 		m_freem(m);
