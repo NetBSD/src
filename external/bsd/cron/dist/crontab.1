@@ -1,4 +1,4 @@
-.\"	$NetBSD: crontab.1,v 1.5 2010/05/13 22:35:57 joerg Exp $
+.\"	$NetBSD: crontab.1,v 1.6 2024/10/29 22:22:09 kre Exp $
 .\"
 .\"/* Copyright 1988,1990,1993 by Paul Vixie
 .\" * All rights reserved
@@ -29,9 +29,9 @@
 .Nd maintain crontab files for individual users (ISC Cron V4.1)
 .Sh SYNOPSIS
 .Nm
-.Op Fl u Ar user
+.Oo Fl u Ar user Oc Ar file
 .Nm
-.Op Fl elr
+.Oo Fl elr Oc Oo Fl u Ar user Oc
 .Sh DESCRIPTION
 .Nm
 is the program used to install, deinstall, or list the tables
@@ -69,7 +69,9 @@ file.
 .Pp
 If the
 .Fl u
-option is given, it specifies the name of the user whose crontab is to be
+option is given,
+which is allowed only for privileged users,
+it specifies the name of the user whose crontab is to be
 tweaked.
 If this option is not given,
 .Nm
@@ -87,7 +89,9 @@ you should always use the
 option for safety's sake.
 .Pp
 The first form of this command is used to install a new crontab from some
-named file or standard input if the pseudo-filename
+named
+.Ar file
+or standard input if the pseudo-filename
 .Dq -
 is given.
 .Pp
@@ -137,7 +141,13 @@ line.
 The
 .Nm
 command conforms to
-.St -p1003.2 .
+.St -p1003.2 ,
+except that using
+.Dq \&-
+as
+.Ar file
+is required, for safety reasons, to use standard input to replace the
+current crontab.
 This new command syntax
 differs from previous versions of Vixie Cron, as well as from the classic
 .At v3
