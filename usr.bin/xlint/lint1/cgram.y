@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.512 2024/10/04 11:38:03 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.513 2024/10/29 20:44:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.512 2024/10/04 11:38:03 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.513 2024/10/29 20:44:22 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -712,7 +712,7 @@ gcc_statement_expr_item:
 			/* XXX: do that only on the last name */
 			if ($1->tn_op == NAME)
 				$1->u.sym->s_used = true;
-			expr($1, false, false, false, false);
+			expr($1, true, false, false, false);
 			suppress_fallthrough = false;
 			$$ = $1;
 		}

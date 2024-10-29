@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_129.c,v 1.9 2024/10/29 20:39:52 rillig Exp $	*/
+/*	$NetBSD: msg_129.c,v 1.10 2024/10/29 20:44:22 rillig Exp $	*/
 # 3 "msg_129.c"
 
 // Test for message: expression has null effect [129]
@@ -101,8 +101,6 @@ return_statement_expression(int arg)
 {
 	({
 		int local = arg;
-		/* XXX: redundant warning, also occurs outside the braces. */
-		/* expect+1: warning: expression has null effect [129] */
 		local + 4;
 	/* expect+1: warning: expression has null effect [129] */
 	});
@@ -110,16 +108,18 @@ return_statement_expression(int arg)
 	if (arg == 1)
 		return ({
 			int local = arg;
-			/* FIXME: The expression _does_ have an effect. */
-			/* expect+1: warning: expression has null effect [129] */
+			// Before cgram.y 1.513 from 2024-10-29, lint wrongly
+			// warned that this expression would have a null effect.
 			local;
 		});
+
 	if (arg == 2)
 		return ({
 			int local = arg;
-			/* FIXME: The expression _does_ have an effect. */
-			/* expect+1: warning: expression has null effect [129] */
+			// Before cgram.y 1.513 from 2024-10-29, lint wrongly
+			// warned that this expression would have a null effect.
 			local + 4;
 		});
+
 	return 0;
 }
