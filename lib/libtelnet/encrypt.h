@@ -1,4 +1,4 @@
-/*	$NetBSD: encrypt.h,v 1.9 2012/01/09 15:25:33 christos Exp $	*/
+/*	$NetBSD: encrypt.h,v 1.10 2024/10/29 13:10:06 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -94,7 +94,6 @@ typedef struct {
 
 #include "enc-proto.h"
 
-extern int encrypt_debug_mode;
 extern int (*decrypt_input)(int);
 extern void (*encrypt_output)(unsigned char *, int);
 # endif /* __ENCRYPTION__ */

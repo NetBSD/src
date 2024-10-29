@@ -1,4 +1,4 @@
-/*	$NetBSD: enc_des.c,v 1.17 2024/09/08 09:36:47 rillig Exp $	*/
+/*	$NetBSD: enc_des.c,v 1.18 2024/10/29 13:10:06 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)enc_des.c	8.3 (Berkeley) 5/30/95"; */
 #else
-__RCSID("$NetBSD: enc_des.c,v 1.17 2024/09/08 09:36:47 rillig Exp $");
+__RCSID("$NetBSD: enc_des.c,v 1.18 2024/10/29 13:10:06 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -201,7 +201,7 @@ fb64_start(struct fb *fbp, int dir, int server)
 		}
 		state &= ~NO_SEND_IV;
 		state |= NO_RECV_IV;
-		if (encrypt_debug_mode)
+		if (encrypt_debug())
 			printf("Creating new feed\r\n");
 		/*
 		 * Create a random feed and send it over.
@@ -257,16 +257,16 @@ fb64_is(unsigned char *data, int cnt, struct fb *fbp)
 	switch (*data++) {
 	case FB64_IV:
 		if (cnt != sizeof(Block)) {
-			if (encrypt_debug_mode)
+			if (encrypt_debug())
 				printf("CFB64: initial vector failed on size\r\n");
 			state = FAILED;
 			goto failure;
 		}
 
-		if (encrypt_debug_mode)
+		if (encrypt_debug())
 			printf("CFB64: initial vector received\r\n");
 
-		if (encrypt_debug_mode)
+		if (encrypt_debug())
 			printf("Initializing Decrypt stream\r\n");
 
 		fb64_stream_iv((void *)data, &fbp->streams[DIR_DECRYPT-1]);
@@ -284,7 +284,7 @@ fb64_is(unsigned char *data, int cnt, struct fb *fbp)
 		break;
 
 	default:
-		if (encrypt_debug_mode) {
+		if (encrypt_debug()) {
 			printf("Unknown option type: %d\r\n", *(data-1));
 			printd(data, cnt);
 			printf("\r\n");
@@ -351,7 +351,7 @@ fb64_reply(unsigned char *data, int cnt, struct fb *fbp)
 		break;
 
 	default:
-		if (encrypt_debug_mode) {
+		if (encrypt_debug()) {
 			printf("Unknown option type: %d\r\n", data[-1]);
 			printd(data, cnt);
 			printf("\r\n");
@@ -381,7 +381,7 @@ fb64_session(Session_Key *key, int server, struct fb *fbp)
 {
 
 	if (!key || key->type != SK_DES) {
-		if (encrypt_debug_mode)
+		if (encrypt_debug())
 			printf("Can't set krbdes's session key (%d != %d)\r\n",
 				key ? key->type : -1, SK_DES);
 		return;
