@@ -1,4 +1,4 @@
-/*	$NetBSD: ctags.c,v 1.16 2024/10/29 11:30:20 kre Exp $	*/
+/*	$NetBSD: ctags.c,v 1.17 2024/10/30 11:37:00 kre Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)ctags.c	8.4 (Berkeley) 2/7/95";
 #endif
-__RCSID("$NetBSD: ctags.c,v 1.16 2024/10/29 11:30:20 kre Exp $");
+__RCSID("$NetBSD: ctags.c,v 1.17 2024/10/30 11:37:00 kre Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -134,17 +134,18 @@ main(int argc, char **argv)
 	argv += optind;
 	argc -= optind;
 	if (!argc) {
-usage:		(void)fprintf(stderr,
+ usage:;	(void)fprintf(stderr,
 			"usage: ctags [-BFadtuwvx] [-f tagsfile] file ...\n");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	init();
 
-	for (exit_val = step = 0; step < argc; ++step)
+	exit_val = EXIT_SUCCESS;
+	for (step = 0; step < argc; ++step)
 		if (!(inf = fopen(argv[step], "r"))) {
 			warn("%s", argv[step]);
-			exit_val = 1;
+			exit_val = EXIT_FAILURE;
 		}
 		else {
 			curfile = argv[step];
@@ -158,25 +159,44 @@ usage:		(void)fprintf(stderr,
 		else {
 			if (uflag) {
 				for (step = 0; step < argc; step++) {
-					(void)snprintf(cmd, sizeof(cmd),
-						"mv %s OTAGS; fgrep -v '\t%s\t' OTAGS >%s; rm OTAGS",
-							outfile, argv[step],
-							outfile);
-					system(cmd);
+					if (snprintf(cmd, sizeof(cmd),
+					    "mv %s OTAGS &&\n"
+					      "\tfgrep -v '\t%s\t' OTAGS >%s &&"
+					      "\n\trm OTAGS",
+					    outfile, argv[step], outfile)
+							>= (int)sizeof(cmd))
+						errx(EXIT_FAILURE,
+						  "Command to update %s for -u"
+						     " %s too long",
+						  argv[step], outfile);
+					 if (system(cmd) != 0)
+						errx(EXIT_FAILURE,
+						  "Update (-u) of %s failed.   "
+						  "Cmd:\n    %s", outfile, cmd);
 				}
 				++aflag;
 			}
 			if (!(outf = fopen(outfile, aflag ? "a" : "w")))
 				err(EXIT_FAILURE, "%s", outfile);
 			put_entries(head);
+			(void)fflush(outf);
+			if (ferror(outf))
+				err(EXIT_FAILURE, "output error (%s)", outfile);
 			(void)fclose(outf);
 			if (uflag) {
-				(void)snprintf(cmd, sizeof(cmd),
-				    "sort -o %s %s", outfile, outfile);
-				system(cmd);
+				if (snprintf(cmd, sizeof(cmd), "sort -o %s %s",
+				    outfile, outfile) >= (int)sizeof(cmd))
+					errx(EXIT_FAILURE,
+					    "sort command (-u) for %s too long",
+					    outfile);
+				if (system(cmd) != 0)
+					errx(EXIT_FAILURE, "-u: sort %s failed"
+					    "\t[ %s ]", outfile, cmd);
 			}
 		}
 	}
+	if ((vflag || xflag) && (fflush(stdout) != 0 || ferror(stdout) != 0))
+		errx(EXIT_FAILURE, "write error (stdout)");
 	exit(exit_val);
 }
 
