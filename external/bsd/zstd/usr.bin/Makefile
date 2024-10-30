@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2024/10/30 18:09:18 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2024/10/30 19:56:34 christos Exp $
 
 .include <bsd.own.mk>
 
-DIST=${.CURDIR}/../dist/
+DIST=${.CURDIR}/../dist
 .PATH:  ${DIST}/programs
 
 BINDIR=/usr/bin
@@ -31,7 +31,7 @@ SYMLINKS+=      ${BINDIR}/zstd ${BINDIR}/unzstd
 SCRIPTSDIR=	/usr/bin
 SCRIPTS=	zstdgrep zstdless
 
-MAN+=	zstdgrep.1 zstdless.1
+MAN+=	zstd.1 zstdgrep.1 zstdless.1
 MLINKS+=  zstd.1 zstdmt.1 zstd.1 zstdcat.1 zstd.1 unzstd.1
 
 .include <bsd.prog.mk>
