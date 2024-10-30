@@ -1,4 +1,4 @@
-/*	$NetBSD: langinfo.h,v 1.10 2013/08/19 08:03:33 joerg Exp $	*/
+/*	$NetBSD: langinfo.h,v 1.11 2024/10/30 15:56:10 riastradh Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>
@@ -9,6 +9,7 @@
 #define _LANGINFO_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <nl_types.h>
 
 #define D_T_FMT		((nl_item)0)	/* String for formatting date and

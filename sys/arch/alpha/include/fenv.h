@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.3 2019/10/27 21:27:10 christos Exp $	*/
+/*	$NetBSD: fenv.h,v 1.4 2024/10/30 15:56:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -31,6 +31,7 @@
 #ifndef	_ALPHA_FENV_H_
 #define	_ALPHA_FENV_H_
 
+#include <sys/featuretest.h>
 #include <sys/stdint.h>
 
 typedef	__uint64_t	fenv_t;

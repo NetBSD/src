@@ -1,4 +1,4 @@
-/* $NetBSD: float.h,v 1.1 2014/09/19 17:36:26 matt Exp $ */
+/* $NetBSD: float.h,v 1.2 2024/10/30 15:56:11 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define _RISCV_FLOAT_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 
 #define LDBL_MANT_DIG	__LDBL_MANT_DIG__
 #define LDBL_DIG	__LDBL_DIG__

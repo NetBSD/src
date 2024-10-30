@@ -1,4 +1,4 @@
-/*	$NetBSD: common_limits.h,v 1.3 2019/01/21 20:29:27 dholland Exp $	*/
+/*	$NetBSD: common_limits.h,v 1.4 2024/10/30 15:56:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _SYS_COMMON_LIMITS_H_
 #define _SYS_COMMON_LIMITS_H_
+
+#include <sys/featuretest.h>
 
 #define	CHAR_BIT	__CHAR_BIT__	/* number of bits in a char */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.7 2022/09/13 01:22:12 rin Exp $	*/
+/*	$NetBSD: fenv.h,v 1.8 2024/10/30 15:56:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -31,6 +31,7 @@
 #ifndef	_POWERPC_FENV_H_
 #define	_POWERPC_FENV_H_
 
+#include <sys/featuretest.h>
 #include <sys/stdint.h>
 
 /* Exception flags */

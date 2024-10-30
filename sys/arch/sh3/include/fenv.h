@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.3 2017/03/22 23:11:10 chs Exp $	*/
+/*	$NetBSD: fenv.h,v 1.4 2024/10/30 15:56:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -32,11 +32,13 @@
 #ifndef _SH3_FENV_H_
 #define _SH3_FENV_H_
 
+#include <sys/featuretest.h>
 #include <sys/stdint.h>
+
 #include <sh3/float.h>
 #include <sh3/fpreg.h>
 
-#ifndef __fenv_static   
+#ifndef __fenv_static
 #define __fenv_static   static
 #endif
 

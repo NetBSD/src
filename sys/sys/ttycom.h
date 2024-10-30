@@ -1,4 +1,4 @@
-/*	$NetBSD: ttycom.h,v 1.22 2022/12/21 19:08:22 chs Exp $	*/
+/*	$NetBSD: ttycom.h,v 1.23 2024/10/30 15:56:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -59,6 +59,12 @@ struct winsize {
 };
 #endif /* !_POSIX_SYS_TTYCOM_H_ */
 
+#include <sys/featuretest.h>
+
+/*
+ * XXX This is revolting -- should not depend on order of includes via
+ * _SYS_IOCTL_H_.
+ */
 #if defined(_NETBSD_SOURCE) || defined(_SYS_IOCTL_H_)
 
 #ifndef	_NETBSD_SYS_TTYCOM_H_

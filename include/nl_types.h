@@ -1,4 +1,4 @@
-/*	$NetBSD: nl_types.h,v 1.13 2013/08/19 08:03:33 joerg Exp $	*/
+/*	$NetBSD: nl_types.h,v 1.14 2024/10/30 15:56:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,9 @@
 
 #ifndef _NL_TYPES_H_
 #define _NL_TYPES_H_
+
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 
 #ifdef _NLS_PRIVATE
 /*

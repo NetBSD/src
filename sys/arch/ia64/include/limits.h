@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.10 2024/03/16 21:50:47 christos Exp $	*/
+/*	$NetBSD: limits.h,v 1.11 2024/10/30 15:56:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,6 +33,8 @@
 
 #ifndef	_MACHINE_LIMITS_H_
 #define	_MACHINE_LIMITS_H_
+
+#include <sys/featuretest.h>
 
 #define	CHAR_BIT	8		/* number of bits in a char */
 

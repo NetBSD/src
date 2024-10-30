@@ -1,4 +1,4 @@
-/*	$NetBSD: epoll.h,v 1.2 2023/07/30 18:31:14 christos Exp $	*/
+/*	$NetBSD: epoll.h,v 1.3 2024/10/30 15:56:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Roman Divacky
@@ -32,8 +32,10 @@
 #define	_SYS_EPOLL_H_
 
 #include <sys/fcntl.h>			/* for O_CLOEXEC */
-#include <sys/types.h>			/* for uint32_t, uint64_t */
+#include <sys/featuretest.h>
 #include <sys/sigtypes.h>		/* for sigset_t */
+#include <sys/types.h>			/* for uint32_t, uint64_t */
+
 struct timespec;
 
 #define	EPOLL_CLOEXEC	O_CLOEXEC

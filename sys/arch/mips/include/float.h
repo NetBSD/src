@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.19 2024/04/27 06:01:08 rillig Exp $ */
+/*	$NetBSD: float.h,v 1.20 2024/10/30 15:56:11 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -29,6 +29,7 @@
 #define	_MIPS_FLOAT_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 
 #if defined(__mips_n32) || defined(__mips_n64)
 

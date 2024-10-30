@@ -1,7 +1,9 @@
-/*	$NetBSD: float.h,v 1.8 2011/07/11 02:54:04 matt Exp $	*/
+/*	$NetBSD: float.h,v 1.9 2024/10/30 15:56:11 riastradh Exp $	*/
 
 #ifndef _HPPA_FLOAT_H_
 #define _HPPA_FLOAT_H_
+
+#include <sys/featuretest.h>
 
 #ifdef _LP64
 #ifdef __LDBL_MANT_DIG__
