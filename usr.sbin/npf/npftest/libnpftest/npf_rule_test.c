@@ -53,46 +53,132 @@ static const struct test_case {
 	},
 
 	/*
-	 * Pass in any of the { fe80::1, fe80::2 } group.
+	 * Pass in from any of the { fe80::1, fe80:1000:0:0/95,
+	 * fe80::2, fe80::2000:0:0/96, fe80::3, fe80::3000:0:0/97 }
+	 * group.
 	 */
-	{
+	{			/* fe80::1 */
 		.af = AF_INET6,
 		.src = "fe80::1", .dst = "fe80::adec:c91c:d116:7592",
 		.ifname = IFNAME_INT,		.di = PFIL_IN,
 		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
 	},
-	{
+	{			/* fe80::1000:0:0/95 */
+		.af = AF_INET6,
+		.src = "fe80::1001:0:0", .dst = "fe80::adec:c91c:d116:7592",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
+	},
+	{			/* fe80::1000:0:0/95, one bit off */
+		.af = AF_INET6,
+		.src = "fe80::1003:0:0", .dst = "fe80::adec:c91c:d116:7592",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
+	},
+	{			/* fe80::2 */
 		.af = AF_INET6,
 		.src = "fe80::2", .dst = "fe80::adec:c91c:d116:7592",
 		.ifname = IFNAME_INT,		.di = PFIL_IN,
 		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
 	},
-	{
+	{			/* fe80::2000:0:0/96 */
+		.af = AF_INET6,
+		.src = "fe80::2000:8000:0", .dst = "fe80::adec:c91c:d116:7592",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
+	},
+	{			/* fe80::2000:0:0/96, one bit off */
+		.af = AF_INET6,
+		.src = "fe80::2001:8000:0", .dst = "fe80::adec:c91c:d116:7592",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
+	},
+	{			/* fe80::3 */
 		.af = AF_INET6,
 		.src = "fe80::3", .dst = "fe80::adec:c91c:d116:7592",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
+	},
+	{			/* fe80::3000:0:0/97 */
+		.af = AF_INET6,
+		.src = "fe80::3000:7fff:0", .dst = "fe80::adec:c91c:d116:7592",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
+	},
+	{			/* fe80::3000:0:0/97, one bit off */
+		.af = AF_INET6,
+		.src = "fe80::3000:ffff:0", .dst = "fe80::adec:c91c:d116:7592",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
+	},
+	{
+		.af = AF_INET6,
+		.src = "fe80::4", .dst = "fe80::adec:c91c:d116:7592",
 		.ifname = IFNAME_INT,		.di = PFIL_IN,
 		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
 	},
 
 	/*
-	 * Pass in anything _not_ in the group { fe80::1, fe80::2 }, as
-	 * long as it is to that group.
+	 * Pass in from anywhere _not_ in that group, as long as it is
+	 * to that group.
 	 */
-	{
+	{			/* fe80::1 */
 		.af = AF_INET6,
 		.src = "fe80::adec:c91c:d116:7592", .dst = "fe80::1",
 		.ifname = IFNAME_INT,		.di = PFIL_IN,
 		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
 	},
-	{
+	{			/* fe80::1000:0:0/95 */
+		.af = AF_INET6,
+		.src = "fe80::adec:c91c:d116:7592", .dst = "fe80::1001:0:0",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
+	},
+	{			/* fe80::1000:0:0/95, one bit off */
+		.af = AF_INET6,
+		.src = "fe80::adec:c91c:d116:7592", .dst = "fe80::1003:0:0",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
+	},
+	{			/* fe80::2 */
 		.af = AF_INET6,
 		.src = "fe80::adec:c91c:d116:7592", .dst = "fe80::2",
 		.ifname = IFNAME_INT,		.di = PFIL_IN,
 		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
 	},
-	{
+	{			/* fe80::2000:0:0/96 */
+		.af = AF_INET6,
+		.src = "fe80::adec:c91c:d116:7592", .dst = "fe80::2000:8000:0",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
+	},
+	{			/* fe80::2000:0:0/96, one bit off */
+		.af = AF_INET6,
+		.src = "fe80::adec:c91c:d116:7592", .dst = "fe80::2001:8000:0",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
+	},
+	{			/* fe80::3 */
 		.af = AF_INET6,
 		.src = "fe80::adec:c91c:d116:7592", .dst = "fe80::3",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
+	},
+	{			/* fe80::3000:0:0/97 */
+		.af = AF_INET6,
+		.src = "fe80::adec:c91c:d116:7592", .dst = "fe80::3000:7fff:0",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
+	},
+	{			/* fe80::3000:0:0/97, one bit off */
+		.af = AF_INET6,
+		.src = "fe80::adec:c91c:d116:7592", .dst = "fe80::3000:ffff:0",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
+	},
+	{
+		.af = AF_INET6,
+		.src = "fe80::adec:c91c:d116:7592", .dst = "fe80::4",
 		.ifname = IFNAME_INT,		.di = PFIL_IN,
 		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
 	},
