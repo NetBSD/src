@@ -53,25 +53,47 @@ static const struct test_case {
 	},
 
 	/*
-	 * Pass any of the { fe80::1, fe80::2 } group but nothing else
-	 * in fe80::/112.
+	 * Pass in any of the { fe80::1, fe80::2 } group.
 	 */
 	{
 		.af = AF_INET6,
 		.src = "fe80::1", .dst = "fe80::adec:c91c:d116:7592",
-		.ifname = IFNAME_EXT,		.di = PFIL_IN,
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
 		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
 	},
 	{
 		.af = AF_INET6,
 		.src = "fe80::2", .dst = "fe80::adec:c91c:d116:7592",
-		.ifname = IFNAME_EXT,		.di = PFIL_IN,
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
 		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
 	},
 	{
 		.af = AF_INET6,
 		.src = "fe80::3", .dst = "fe80::adec:c91c:d116:7592",
-		.ifname = IFNAME_EXT,		.di = PFIL_IN,
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
+	},
+
+	/*
+	 * Pass in anything _not_ in the group { fe80::1, fe80::2 }, as
+	 * long as it is to that group.
+	 */
+	{
+		.af = AF_INET6,
+		.src = "fe80::adec:c91c:d116:7592", .dst = "fe80::1",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
+	},
+	{
+		.af = AF_INET6,
+		.src = "fe80::adec:c91c:d116:7592", .dst = "fe80::2",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
+	},
+	{
+		.af = AF_INET6,
+		.src = "fe80::adec:c91c:d116:7592", .dst = "fe80::3",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
 		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
 	},
 

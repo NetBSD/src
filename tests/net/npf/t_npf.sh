@@ -1,4 +1,4 @@
-# $NetBSD: t_npf.sh,v 1.5 2024/10/29 22:24:30 riastradh Exp $
+# $NetBSD: t_npf.sh,v 1.6 2024/10/30 10:12:31 riastradh Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,7 +30,7 @@ run_test()
 	local name="${1}"
 
 	case $name in
-	npf_rule)
+	rule)
 		atf_expect_fail "PR bin/55403: npfctl miscompiles IPv6 rules"
 		;;
 	esac
