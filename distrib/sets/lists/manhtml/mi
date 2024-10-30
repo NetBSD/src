@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.10 2024/10/20 14:22:37 mlelstv Exp $
+# $NetBSD: mi,v 1.11 2024/10/30 18:09:17 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -633,6 +633,7 @@
 ./usr/share/man/html1/unvis.html		man-util-htmlman	html
 ./usr/share/man/html1/unxz.html			man-util-htmlman	html
 ./usr/share/man/html1/unzip.html		man-util-htmlman	html
+./usr/share/man/html1/unzstd.html		man-util-htmlman	html
 ./usr/share/man/html1/uptime.html		man-util-htmlman	html
 ./usr/share/man/html1/usbhidaction.html		man-util-htmlman	html
 ./usr/share/man/html1/usbhidctl.html		man-util-htmlman	html
@@ -688,6 +689,11 @@
 ./usr/share/man/html1/zless.html		man-util-htmlman	html
 ./usr/share/man/html1/zmore.html		man-util-htmlman	html
 ./usr/share/man/html1/znew.html			man-util-htmlman	html
+./usr/share/man/html1/zstd.html			man-util-htmlman	html
+./usr/share/man/html1/zstdcat.html		man-util-htmlman	html
+./usr/share/man/html1/zstdgrep.html		man-util-htmlman	html
+./usr/share/man/html1/zstdless.html		man-util-htmlman	html
+./usr/share/man/html1/zstdmt.html		man-util-htmlman	html
 ./usr/share/man/html1/ztest.html		man-zfs-htmlman		zfs,html
 ./usr/share/man/html3/eddsa_pk_new.html			man-util-htmlman	html
 ./usr/share/man/html3/es256_pk_new.html			man-util-htmlman	html

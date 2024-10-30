@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2058 2024/10/30 08:41:18 kre Exp $
+#	$NetBSD: 3RDPARTY,v 1.2059 2024/10/30 18:09:17 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1503,6 +1503,19 @@ Location:	common/dist/zlib
 Notes:
 Imported to src/common/dist/zlib and shared by the kernel and userland.
 Remember to run cleantags
+
+Package:	zstd
+Version:	1.5.6
+Current Vers:	1.5.6
+Maintainer:	Meta
+Archive Site:	https://github.com/facebook/zstd
+Home Page:	https://github.com/facebook/zstd
+Date: 		2024-09-22
+Mailing List:
+Responsible:	christos
+License:	BSD (3-clause)/GPLv2
+Location:	external/bsd/zlib
+Notes:
 
 Package:	services, protocols
 Version:	2021-04-07 (services), 2021-02-26 (protocols)

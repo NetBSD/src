@@ -103,7 +103,7 @@
 #define HAVE_LIBZ 1
 
 /* Define to 1 if you have the `zstd' library (-lzstd). */
-/* #undef HAVE_LIBZSTD */
+#define HAVE_LIBZSTD 1
 
 /* Define to 1 if you have the `localtime_r' function. */
 #define HAVE_LOCALTIME_R 1
@@ -287,10 +287,10 @@
 #define HAVE_ZLIB_H 1
 
 /* Define to 1 if you have the <zstd_errors.h> header file. */
-/* #undef HAVE_ZSTD_ERRORS_H */
+#define HAVE_ZSTD_ERRORS_H 1
 
 /* Define to 1 if you have the <zstd.h> header file. */
-/* #undef HAVE_ZSTD_H */
+#define HAVE_ZSTD_H 1
 
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
 #define LT_OBJDIR ".libs/"
@@ -445,7 +445,7 @@
 #define ZLIBSUPPORT 1
 
 /* Enable zstdlib compression support */
-/* #undef ZSTDLIBSUPPORT */
+#define ZSTDLIBSUPPORT 1
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */

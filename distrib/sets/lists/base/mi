@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1353 2024/09/12 09:43:56 riastradh Exp $
+# $NetBSD: mi,v 1.1354 2024/10/30 18:09:16 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -901,6 +901,7 @@
 ./usr/bin/unvis					base-util-bin
 ./usr/bin/unxz					base-util-bin
 ./usr/bin/unzip					base-util-bin
+./usr/bin/unzstd				base-util-bin
 ./usr/bin/uptime				base-util-bin
 ./usr/bin/usbhidaction				base-util-bin
 ./usr/bin/usbhidctl				base-util-bin
@@ -957,6 +958,11 @@
 ./usr/bin/zless					base-util-bin
 ./usr/bin/zmore					base-util-bin
 ./usr/bin/znew					base-util-bin
+./usr/bin/zstd					base-util-bin
+./usr/bin/zstdcat				base-util-bin
+./usr/bin/zstdgrep				base-util-bin
+./usr/bin/zstdless				base-util-bin
+./usr/bin/zstdmt				base-util-bin
 ./usr/bin/ztest					base-zfs-bin		zfs
 ./usr/games					base-games-usr
 ./usr/games/hide				base-games-usr

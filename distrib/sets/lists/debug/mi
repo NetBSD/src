@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.451 2024/10/09 13:02:53 kre Exp $
+# $NetBSD: mi,v 1.452 2024/10/30 18:09:17 christos Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -282,6 +282,7 @@
 ./usr/lib/libzfs_core_g.a			comp-c-debuglib		debuglib,compatfile,zfs
 ./usr/lib/libzfs_g.a				comp-c-debuglib		debuglib,compatfile,zfs
 ./usr/lib/libzpool_g.a				comp-c-debuglib		debuglib,compatfile,zfs
+./usr/lib/libzstd_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chmod.debug		comp-util-debug		debug
@@ -903,6 +904,7 @@
 ./usr/libdata/debug/usr/bin/ypcat.debug		comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/bin/ypmatch.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/bin/ypwhich.debug	comp-nis-debug		yp,debug
+./usr/libdata/debug/usr/bin/zstd.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/ztest.debug		comp-zfs-debug		zfs,debug
 ./usr/libdata/debug/usr/games/adventure.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/arithmetic.debug	comp-games-debug	debug

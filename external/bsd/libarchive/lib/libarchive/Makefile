@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2024/06/09 19:47:56 christos Exp $
+#	$NetBSD: Makefile,v 1.18 2024/10/30 18:09:18 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -10,6 +10,7 @@ LIB=		archive
 LIBDPLIBS+=	bz2	${NETBSDSRCDIR}/lib/libbz2 \
 		crypto	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto \
 		expat	${NETBSDSRCDIR}/external/mit/expat/lib/libexpat \
+		zstd	${NETBSDSRCDIR}/external/bsd/zstd/lib \
 		lzma	${NETBSDSRCDIR}/external/public-domain/xz/lib \
 		z	${NETBSDSRCDIR}/lib/libz
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.302 2024/09/23 13:00:46 christos Exp $
+#	$NetBSD: Makefile,v 1.303 2024/10/30 18:09:18 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -202,7 +202,8 @@ SUBDIR+= ../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/lib${sanitizer}
 SUBDIR+=	../external/apache2/llvm/librt
 .endif
 
-SUBDIR+=	../external/bsd/libarchive/lib	# depends on libxz
+SUBDIR+=	../external/bsd/zstd/lib
+SUBDIR+=	../external/bsd/libarchive/lib	# depends on libxz, zstd
 
 SUBDIR+=	../external/bsd/file/lib	# depends on libz, libbz2, libxz
 

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2024/10/17 16:51:20 christos Exp $
+# $NetBSD: Makefile,v 1.14 2024/10/30 18:09:19 christos Exp $
 
 NOMAN=
 
@@ -21,8 +21,6 @@ DPADD+=	${LIBARCHIVE} ${LIBEXPAT} ${LIBBZ2} ${LIBLZMA} ${LIBZ} \
 LDADD+=	-larchive -lexpat -lbz2 -llzma -lz -lcrypto -lpthread
 
 SRCS.h_libarchive= \
-test_main.c \
-test_utils.c \
 read_open_memory.c \
 test_acl_nfs4.c \
 test_acl_pax.c \
@@ -92,6 +90,7 @@ test_filter_count.c \
 test_fuzz.c \
 test_gnutar_filename_encoding.c \
 test_link_resolver.c \
+test_main.c \
 test_open_failure.c \
 test_open_fd.c \
 test_open_file.c \
@@ -214,6 +213,7 @@ test_tar_filenames.c \
 test_tar_large.c \
 test_ustar_filename_encoding.c \
 test_ustar_filenames.c \
+test_utils.c \
 test_warn_missing_hardlink_target.c \
 test_write_disk.c \
 test_write_disk_appledouble.c \
@@ -349,6 +349,8 @@ test_compat_zip_6.zip.uu  \
 test_compat_zip_7.xps.uu  \
 test_compat_zip_8.zip.uu  \
 test_compat_zstd_1.tar.zst.uu  \
+test_compat_zstd_1.tar.zst.uu \
+test_compat_zstd_2.tar.zst.uu \
 test_fuzz.cab.uu  \
 test_fuzz.lzh.uu  \
 test_fuzz_1.iso.Z.uu  \
@@ -413,8 +415,13 @@ test_read_format_7zip_lzma2_arm.7z.uu \
 test_read_format_7zip_malformed.7z.uu  \
 test_read_format_7zip_malformed2.7z.uu  \
 test_read_format_7zip_ppmd.7z.uu  \
+test_read_format_7zip_solid_zstd.7z.uu \
 test_read_format_7zip_symbolic_name.7z.uu  \
 test_read_format_7zip_win_attrib.7z.uu \
+test_read_format_7zip_zstd.7z.uu \
+test_read_format_7zip_zstd_arm.7z.uu \
+test_read_format_7zip_zstd_bcj.7z.uu \
+test_read_format_7zip_zstd_nobcj.7z.uu \
 test_read_format_ar.ar.uu  \
 test_read_format_cab_1.cab.uu  \
 test_read_format_cab_2.cab.uu  \
@@ -597,6 +604,8 @@ test_read_format_zip_with_invalid_traditional_eocd.zip.uu  \
 test_read_format_zip_xz_multi.zipx.uu  \
 test_read_format_zip_zip64a.zip.uu  \
 test_read_format_zip_zip64b.zip.uu  \
+test_read_format_zip_zstd.zipx.uu \
+test_read_format_zip_zstd_multi.zipx.uu \
 test_read_large_splitted_rar_aa.uu  \
 test_read_large_splitted_rar_ab.uu  \
 test_read_large_splitted_rar_ac.uu  \

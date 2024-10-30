@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1788 2024/10/20 14:22:37 mlelstv Exp $
+# $NetBSD: mi,v 1.1789 2024/10/30 18:09:17 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -692,6 +692,7 @@
 ./usr/share/man/cat1/unvis.0			man-util-catman		.cat
 ./usr/share/man/cat1/unxz.0			man-util-catman		.cat
 ./usr/share/man/cat1/unzip.0			man-util-catman		.cat
+./usr/share/man/cat1/unzstd.0			man-util-catman		.cat
 ./usr/share/man/cat1/uptime.0			man-util-catman		.cat
 ./usr/share/man/cat1/usbhidaction.0		man-util-catman		.cat
 ./usr/share/man/cat1/usbhidctl.0		man-util-catman		.cat
@@ -750,6 +751,11 @@
 ./usr/share/man/cat1/zless.0			man-util-catman		.cat
 ./usr/share/man/cat1/zmore.0			man-util-catman		.cat
 ./usr/share/man/cat1/znew.0			man-util-catman		.cat
+./usr/share/man/cat1/zstd.0			man-util-catman		.cat
+./usr/share/man/cat1/zstdcat.0			man-util-catman		.cat
+./usr/share/man/cat1/zstdgrep.0			man-util-catman		.cat
+./usr/share/man/cat1/zstdless.0			man-util-catman		.cat
+./usr/share/man/cat1/zstdmt.0			man-util-catman		.cat
 ./usr/share/man/cat1/ztest.0			man-zfs-catman		zfs,.cat
 ./usr/share/man/cat3/atari/ahdi_buildlabel.0	man-obsolete		obsolete
 ./usr/share/man/cat3/atari/ahdi_checklabel.0	man-obsolete		obsolete
@@ -4252,6 +4258,7 @@
 ./usr/share/man/man1/unvis.1			man-util-man		.man
 ./usr/share/man/man1/unxz.1			man-util-man		.man
 ./usr/share/man/man1/unzip.1			man-util-man		.man
+./usr/share/man/man1/unzstd.1			man-util-man		.man
 ./usr/share/man/man1/uptime.1			man-util-man		.man
 ./usr/share/man/man1/usbhidaction.1		man-util-man		.man
 ./usr/share/man/man1/usbhidctl.1		man-util-man		.man
@@ -4310,6 +4317,11 @@
 ./usr/share/man/man1/zless.1			man-util-man		.man
 ./usr/share/man/man1/zmore.1			man-util-man		.man
 ./usr/share/man/man1/znew.1			man-util-man		.man
+./usr/share/man/man1/zstd.1			man-util-man		.man
+./usr/share/man/man1/zstdcat.1			man-util-man		.man
+./usr/share/man/man1/zstdgrep.1			man-util-man		.man
+./usr/share/man/man1/zstdless.1			man-util-man		.man
+./usr/share/man/man1/zstdmt.1			man-util-man		.man
 ./usr/share/man/man1/ztest.1			man-zfs-man		zfs,.man
 ./usr/share/man/man3/atari/ahdi_buildlabel.3	man-obsolete		obsolete
 ./usr/share/man/man3/atari/ahdi_checklabel.3	man-obsolete		obsolete

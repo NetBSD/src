@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1344 2024/10/18 23:24:52 christos Exp $
+# $NetBSD: mi,v 1.1345 2024/10/30 18:09:17 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2638,6 +2638,7 @@
 ./usr/tests/lib/libarchive/test_compat_zip_7.xps.uu						tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_compat_zip_8.zip.uu						tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_compat_zstd_1.tar.zst.uu					tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libarchive/test_compat_zstd_2.tar.zst.uu					tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_fuzz.cab.uu							tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_fuzz.lzh.uu							tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_fuzz_1.iso.Z.uu							tests-lib-tests		compattestfile,atf
@@ -2702,8 +2703,13 @@
 ./usr/tests/lib/libarchive/test_read_format_7zip_malformed.7z.uu				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_7zip_malformed2.7z.uu				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_7zip_ppmd.7z.uu					tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libarchive/test_read_format_7zip_solid_zstd.7z.uu				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_7zip_symbolic_name.7z.uu				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_7zip_win_attrib.7z.uu				tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libarchive/test_read_format_7zip_zstd.7z.uu					tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libarchive/test_read_format_7zip_zstd_arm.7z.uu					tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libarchive/test_read_format_7zip_zstd_bcj.7z.uu					tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libarchive/test_read_format_7zip_zstd_nobcj.7z.uu				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_ar.ar.uu						tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_cab_1.cab.uu					tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_cab_2.cab.uu					tests-lib-tests		compattestfile,atf
@@ -2886,6 +2892,8 @@
 ./usr/tests/lib/libarchive/test_read_format_zip_xz_multi.zipx.uu				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_zip_zip64a.zip.uu					tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_format_zip_zip64b.zip.uu					tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libarchive/test_read_format_zip_zstd.zipx.uu					tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libarchive/test_read_format_zip_zstd_multi.zipx.uu				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_large_splitted_rar_aa.uu					tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_large_splitted_rar_ab.uu					tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_large_splitted_rar_ac.uu					tests-lib-tests		compattestfile,atf
