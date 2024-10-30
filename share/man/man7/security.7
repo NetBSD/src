@@ -1,4 +1,4 @@
-.\" $NetBSD: security.7,v 1.16 2021/01/10 23:24:26 riastradh Exp $
+.\" $NetBSD: security.7,v 1.17 2024/10/30 01:44:43 gutteridge Exp $
 .\"
 .\" Copyright (c) 2006, 2011 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 21, 2016
+.Dd October 30, 2024
 .Dt SECURITY 7
 .Os
 .Sh NAME
@@ -419,6 +419,14 @@ The per-user temporary storage is implemented by using
 .Dq magic symlinks .
 These are further described in
 .Xr symlink 7 .
+.Pp
+Note that some programs will not work correctly with the present
+.Dq magic symlinks
+implementation, if they invoke
+.Xr realpath 3
+on temporary file paths.
+In this case, resolution will fail, so this feature is not suited for
+all uses.
 .Ss Information filtering
 .Nx
 provides administrators the ability to restrict information passed from
