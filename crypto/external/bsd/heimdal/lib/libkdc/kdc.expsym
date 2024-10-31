@@ -1,0 +1,17 @@
+HEIMDAL_KDC_1.0
+_kdc_db_fetch@@HEIMDAL_KDC_1.0
+_kdc_free_ent@@HEIMDAL_KDC_1.0
+kdc_check_flags@@HEIMDAL_KDC_1.0
+kdc_log@@HEIMDAL_KDC_1.0
+kdc_log_msg@@HEIMDAL_KDC_1.0
+kdc_log_msg_va@@HEIMDAL_KDC_1.0
+kdc_openlog@@HEIMDAL_KDC_1.0
+krb5_kdc_get_config@@HEIMDAL_KDC_1.0
+krb5_kdc_pk_initialize@@HEIMDAL_KDC_1.0
+krb5_kdc_pkinit_config@@HEIMDAL_KDC_1.0
+krb5_kdc_process_krb5_request@@HEIMDAL_KDC_1.0
+krb5_kdc_process_request@@HEIMDAL_KDC_1.0
+krb5_kdc_save_request@@HEIMDAL_KDC_1.0
+krb5_kdc_set_dbinfo@@HEIMDAL_KDC_1.0
+krb5_kdc_update_time@@HEIMDAL_KDC_1.0
+krb5_kdc_windc_init@@HEIMDAL_KDC_1.0
