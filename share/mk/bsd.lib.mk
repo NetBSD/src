@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.408 2024/10/31 15:04:11 riastradh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.409 2024/10/31 21:53:40 rillig Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -722,9 +722,10 @@ ${_LIB.ln}: ${LOBJS}
 .endif
 .endif									# }
 
+# Only intended to be invoked manually, not as part of dependall.
 lint: ${LOBJS}
 .if defined(LOBJS) && !empty(LOBJS)
-	${LINT} ${LINTFLAGS} ${LOBJS}
+	${LINT} ${LINTFLAGS} -Cmanual-lint ${LOBJS}
 .endif
 
 
@@ -751,7 +752,7 @@ LIBCLEANFILES4+= ${_LIB_pic.a}
 LIBCLEANFILES4+= ${_LIB.so}.* ${_LIB.so} ${_LIB.so.debug}
 .endif
 LIBCLEANFILES4+= ${SOBJS} ${SOBJS:=.tmp}
-LIBCLEANFILES5+= ${_LIB.ln} ${LOBJS}
+LIBCLEANFILES5+= ${_LIB.ln} ${LOBJS} llib-lmanual-lint.ln
 
 .if !target(libinstall)							# {
 # Make sure it gets defined, in case MKPIC==no && MKLINKLIB==no
