@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2024/01/20 21:35:59 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2024/10/31 08:29:24 jmcneill Exp $
 #
 #	etc.evbppc/Makefile.inc -- evbppc-specific etc Makefile targets
 #
@@ -61,7 +61,7 @@ __mkimage: .USE
 
 .if ${MACHINE_ARCH} == "powerpc"
 smp_wii: __mkimage
-MKI_OPTS.smp_wii=	-K ${IMAGE.kern}
+MKI_OPTS.smp_wii=	-K ${IMAGE.kern} -x
 SNAP_MD_POST_DEPS+=	smp_wii
 INSTALLATION_DIRS+=	binary/gzimg
 .endif
