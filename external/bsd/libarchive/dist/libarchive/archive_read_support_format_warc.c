@@ -24,7 +24,6 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD$");
 
 /**
  * WARC is standardised by ISO TC46/SC4/WG12 and currently available as
@@ -127,7 +126,7 @@ static int _warc_skip(struct archive_read *a);
 static int _warc_rdhdr(struct archive_read *a, struct archive_entry *e);
 
 /* private routines */
-static unsigned int _warc_rdver(const char buf[10], size_t bsz);
+static unsigned int _warc_rdver(const char *buf, size_t bsz);
 static unsigned int _warc_rdtyp(const char *buf, size_t bsz);
 static warc_string_t _warc_rduri(const char *buf, size_t bsz);
 static ssize_t _warc_rdlen(const char *buf, size_t bsz);
@@ -216,6 +215,7 @@ _warc_rdhdr(struct archive_read *a, struct archive_entry *entry)
 	const char *buf;
 	ssize_t nrd;
 	const char *eoh;
+	char *tmp;
 	/* for the file name, saves some strndup()'ing */
 	warc_string_t fnam;
 	/* warc record type, not that we really use it a lot */
@@ -322,7 +322,14 @@ start_over:
 		 * malloc()+free() roundtrip */
 		if (fnam.len + 1U > w->pool.len) {
 			w->pool.len = ((fnam.len + 64U) / 64U) * 64U;
-			w->pool.str = realloc(w->pool.str, w->pool.len);
+			tmp = realloc(w->pool.str, w->pool.len);
+			if (tmp == NULL) {
+				archive_set_error(
+					&a->archive, ENOMEM,
+					"Out of memory");
+				return (ARCHIVE_FATAL);
+			}
+			w->pool.str = tmp;
 		}
 		memcpy(w->pool.str, fnam.str, fnam.len);
 		w->pool.str[fnam.len] = '\0';
@@ -337,6 +344,14 @@ start_over:
 			mtime = rtime;
 		}
 		break;
+	case WT_NONE:
+	case WT_INFO:
+	case WT_META:
+	case WT_REQ:
+	case WT_RVIS:
+	case WT_CONV:
+	case WT_CONT:
+	case LAST_WT:
 	default:
 		fnam.len = 0U;
 		fnam.str = NULL;
@@ -361,6 +376,14 @@ start_over:
 			break;
 		}
 		/* FALLTHROUGH */
+	case WT_NONE:
+	case WT_INFO:
+	case WT_META:
+	case WT_REQ:
+	case WT_RVIS:
+	case WT_CONV:
+	case WT_CONT:
+	case LAST_WT:
 	default:
 		/* consume the content and start over */
 		_warc_skip(a);
@@ -427,7 +450,7 @@ _warc_skip(struct archive_read *a)
 static void*
 deconst(const void *c)
 {
-	return (char *)0x1 + (((const char *)c) - (const char *)0x1);
+	return (void *)(uintptr_t)c;
 }
 
 static char*
@@ -514,11 +537,11 @@ strtoi_lim(const char *str, const char **ep, int llim, int ulim)
 static time_t
 time_from_tm(struct tm *t)
 {
-#if HAVE_TIMEGM
+#if HAVE__MKGMTIME
+        return _mkgmtime(t);
+#elif HAVE_TIMEGM
         /* Use platform timegm() if available. */
         return (timegm(t));
-#elif HAVE__MKGMTIME64
-        return (_mkgmtime64(t));
 #else
         /* Else use direct calculation using POSIX assumptions. */
         /* First, fix up tm_yday based on the year/month/day. */
@@ -626,7 +649,8 @@ _warc_rdver(const char *buf, size_t bsz)
 		if (ver >= 1200U) {
 			if (memcmp(c, "\r\n", 2U) != 0)
 				ver = 0U;
-		} else if (ver < 1200U) {
+		} else {
+			/* ver < 1200U */
 			if (*c != ' ' && *c != '\t')
 				ver = 0U;
 		}

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.942.2.17 2024/10/14 17:20:19 martin Exp $
+# $NetBSD: shl.mi,v 1.942.2.18 2024/10/31 18:39:57 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -207,7 +207,7 @@
 ./usr/lib/libamu.so.5.0				base-amd-shlib		compatfile
 ./usr/lib/libarchive.so				base-sys-shlib		compatfile
 ./usr/lib/libarchive.so.5			base-sys-shlib		compatfile
-./usr/lib/libarchive.so.5.0			base-sys-shlib		compatfile
+./usr/lib/libarchive.so.5.1			base-sys-shlib		compatfile
 ./usr/lib/libasan.so				base-sys-shlib		compatfile,cxx,gcc
 ./usr/lib/libasan.so.5				base-sys-shlib		compatfile,cxx,gcc=9
 ./usr/lib/libasan.so.5.0			base-sys-shlib		compatfile,cxx,gcc=9

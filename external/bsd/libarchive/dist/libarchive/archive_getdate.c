@@ -27,10 +27,7 @@
 **  This code is in the public domain and has no copyright.
 */
 
-#ifdef __FreeBSD__
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD$");
-#endif
+#include "archive_platform.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -694,8 +691,12 @@ Convert(time_t Month, time_t Day, time_t Year,
 	signed char DaysInMonth[12] = {
 		31, 0, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 	};
-	time_t	Julian;
-	int	i;
+	time_t		Julian;
+	int		i;
+	struct tm	*ltime;
+#if defined(HAVE_LOCALTIME_R) || defined(HAVE_LOCALTIME_S)
+	struct tm	tmbuf;
+#endif
 
 	if (Year < 69)
 		Year += 2000;
@@ -705,7 +706,7 @@ Convert(time_t Month, time_t Day, time_t Year,
 	    ? 29 : 28;
 	/* Checking for 2038 bogusly assumes that time_t is 32 bits.  But
 	   I'm too lazy to try to check for time_t overflow in another way.  */
-	if (Year < EPOCH || Year > 2038
+	if (Year < EPOCH || Year >= 2038
 	    || Month < 1 || Month > 12
 	    /* Lint fluff:  "conversion from long may lose accuracy" */
 	    || Day < 1 || Day > DaysInMonth[(int)--Month]
@@ -722,21 +723,44 @@ Convert(time_t Month, time_t Day, time_t Year,
 	Julian *= DAY;
 	Julian += Timezone;
 	Julian += Hours * HOUR + Minutes * MINUTE + Seconds;
+#if defined(HAVE_LOCALTIME_S)
+	ltime = localtime_s(&tmbuf, &Julian) ? NULL : &tmbuf;
+#elif defined(HAVE_LOCALTIME_R)
+	ltime = localtime_r(&Julian, &tmbuf);
+#else
+	ltime = localtime(&Julian);
+#endif
 	if (DSTmode == DSTon
-	    || (DSTmode == DSTmaybe && localtime(&Julian)->tm_isdst))
+	    || (DSTmode == DSTmaybe && ltime->tm_isdst))
 		Julian -= HOUR;
 	return Julian;
 }
 
-
 static time_t
 DSTcorrect(time_t Start, time_t Future)
 {
-	time_t	StartDay;
-	time_t	FutureDay;
-
-	StartDay = (localtime(&Start)->tm_hour + 1) % 24;
-	FutureDay = (localtime(&Future)->tm_hour + 1) % 24;
+	time_t		StartDay;
+	time_t		FutureDay;
+	struct tm	*ltime;
+#if defined(HAVE_LOCALTIME_R) || defined(HAVE_LOCALTIME_S)
+	struct tm	tmbuf;
+#endif
+#if defined(HAVE_LOCALTIME_S)
+	ltime = localtime_s(&tmbuf, &Start) ? NULL : &tmbuf;
+#elif defined(HAVE_LOCALTIME_R)
+	ltime = localtime_r(&Start, &tmbuf);
+#else
+	ltime = localtime(&Start);
+#endif
+	StartDay = (ltime->tm_hour + 1) % 24;
+#if defined(HAVE_LOCALTIME_S)
+	ltime = localtime_s(&tmbuf, &Future) ? NULL : &tmbuf;
+#elif defined(HAVE_LOCALTIME_R)
+	ltime = localtime_r(&Future, &tmbuf);
+#else
+	ltime = localtime(&Future);
+#endif
+	FutureDay = (ltime->tm_hour + 1) % 24;
 	return (Future - Start) + (StartDay - FutureDay) * HOUR;
 }
 
@@ -747,9 +771,18 @@ RelativeDate(time_t Start, time_t zone, int dstmode,
 {
 	struct tm	*tm;
 	time_t	t, now;
+#if defined(HAVE_GMTIME_R) || defined(HAVE_GMTIME_S)
+	struct tm	tmbuf;
+#endif
 
 	t = Start - zone;
+#if defined(HAVE_GMTIME_S)
+	tm = gmtime_s(&tmbuf, &t) ? NULL : &tmbuf;
+#elif defined(HAVE_GMTIME_R)
+	tm = gmtime_r(&t, &tmbuf);
+#else
 	tm = gmtime(&t);
+#endif
 	now = Start;
 	now += DAY * ((DayNumber - tm->tm_wday + 7) % 7);
 	now += 7 * DAY * (DayOrdinal <= 0 ? DayOrdinal : DayOrdinal - 1);
@@ -765,10 +798,19 @@ RelativeMonth(time_t Start, time_t Timezone, time_t RelMonth)
 	struct tm	*tm;
 	time_t	Month;
 	time_t	Year;
+#if defined(HAVE_LOCALTIME_R) || defined(HAVE_LOCALTIME_S)
+	struct tm	tmbuf;
+#endif
 
 	if (RelMonth == 0)
 		return 0;
+#if defined(HAVE_LOCALTIME_S)
+	tm = localtime_s(&tmbuf, &Start) ? NULL : &tmbuf;
+#elif defined(HAVE_LOCALTIME_R)
+	tm = localtime_r(&Start, &tmbuf);
+#else
 	tm = localtime(&Start);
+#endif
 	Month = 12 * (tm->tm_year + 1900) + tm->tm_mon + RelMonth;
 	Year = Month / 12;
 	Month = Month % 12 + 1;
@@ -913,20 +955,34 @@ __archive_get_date(time_t now, const char *p)
 	gds = &_gds;
 
 	/* Look up the current time. */
+#if defined(HAVE_LOCALTIME_S)
+	tm = localtime_s(&local, &now) ? NULL : &local;
+#elif defined(HAVE_LOCALTIME_R)
+	tm = localtime_r(&now, &local);
+#else
 	memset(&local, 0, sizeof(local));
-	tm = localtime (&now);
+	tm = localtime(&now);
+#endif
 	if (tm == NULL)
 		return -1;
+#if !defined(HAVE_LOCALTIME_R) && !defined(HAVE_LOCALTIME_S)
 	local = *tm;
+#endif
 
 	/* Look up UTC if we can and use that to determine the current
 	 * timezone offset. */
+#if defined(HAVE_GMTIME_S)
+	gmt_ptr = gmtime_s(&gmt, &now) ? NULL : &gmt;
+#elif defined(HAVE_GMTIME_R)
+	gmt_ptr = gmtime_r(&now, &gmt);
+#else
 	memset(&gmt, 0, sizeof(gmt));
-	gmt_ptr = gmtime (&now);
+	gmt_ptr = gmtime(&now);
 	if (gmt_ptr != NULL) {
 		/* Copy, in case localtime and gmtime use the same buffer. */
 		gmt = *gmt_ptr;
 	}
+#endif
 	if (gmt_ptr != NULL)
 		tzone = difftm (&gmt, &local);
 	else
@@ -960,7 +1016,13 @@ __archive_get_date(time_t now, const char *p)
 	 * time components instead of the local timezone. */
 	if (gds->HaveZone && gmt_ptr != NULL) {
 		now -= gds->Timezone;
-		gmt_ptr = gmtime (&now);
+#if defined(HAVE_GMTIME_S)
+		gmt_ptr = gmtime_s(&gmt, &now) ? NULL : &gmt;
+#elif defined(HAVE_GMTIME_R)
+		gmt_ptr = gmtime_r(&now, &gmt);
+#else
+		gmt_ptr = gmtime(&now);
+#endif
 		if (gmt_ptr != NULL)
 			local = *gmt_ptr;
 		now += gds->Timezone;

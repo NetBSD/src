@@ -25,7 +25,6 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: head/lib/libarchive/archive_write_set_format_mtree.c 201171 2009-12-29 06:39:07Z kientzle $");
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -37,6 +36,7 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_write_set_format_mtree.c 201171 
 #include "archive.h"
 #include "archive_digest_private.h"
 #include "archive_entry.h"
+#include "archive_entry_private.h"
 #include "archive_private.h"
 #include "archive_rb.h"
 #include "archive_string.h"
@@ -82,24 +82,7 @@ struct dir_info {
 struct reg_info {
 	int compute_sum;
 	uint32_t crc;
-#ifdef ARCHIVE_HAS_MD5
-	unsigned char buf_md5[16];
-#endif
-#ifdef ARCHIVE_HAS_RMD160
-	unsigned char buf_rmd160[20];
-#endif
-#ifdef ARCHIVE_HAS_SHA1
-	unsigned char buf_sha1[20];
-#endif
-#ifdef ARCHIVE_HAS_SHA256
-	unsigned char buf_sha256[32];
-#endif
-#ifdef ARCHIVE_HAS_SHA384
-	unsigned char buf_sha384[48];
-#endif
-#ifdef ARCHIVE_HAS_SHA512
-	unsigned char buf_sha512[64];
-#endif
+	struct ae_digest digest;
 };
 
 struct mtree_entry {
@@ -186,7 +169,7 @@ struct mtree_writer {
 #endif
 	/* Keyword options */
 	int keys;
-#define	F_CKSUM		0x00000001		/* check sum */
+#define	F_CKSUM		0x00000001		/* checksum */
 #define	F_DEV		0x00000002		/* device type */
 #define	F_DONE		0x00000004		/* directory done */
 #define	F_FLAGS		0x00000008		/* file flags */
@@ -371,7 +354,7 @@ mtree_quote(struct archive_string *s, const char *str)
 }
 
 /*
- * Indent a line as mtree utility to be readable for people.
+ * Indent a line as the mtree utility does so it is readable for people.
  */
 static void
 mtree_indent(struct mtree_writer *mtree)
@@ -446,8 +429,8 @@ mtree_indent(struct mtree_writer *mtree)
 
 /*
  * Write /set keyword.
- * Set most used value of uid,gid,mode and fflags, which are
- * collected by attr_counter_set_collect() function.
+ * Set the most used value of uid, gid, mode and fflags, which are
+ * collected by the attr_counter_set_collect() function.
  */
 static void
 write_global(struct mtree_writer *mtree)
@@ -649,7 +632,7 @@ attr_counter_inc(struct attr_counter **top, struct attr_counter *ac,
 }
 
 /*
- * Tabulate uid,gid,mode and fflags of a entry in order to be used for /set.
+ * Tabulate uid, gid, mode and fflags of a entry in order to be used for /set.
  */
 static int
 attr_counter_set_collect(struct mtree_writer *mtree, struct mtree_entry *me)
@@ -912,7 +895,7 @@ archive_write_mtree_header(struct archive_write *a,
 
 	/* If the current file is a regular file, we have to
 	 * compute the sum of its content.
-	 * Initialize a bunch of sum check context. */
+	 * Initialize a bunch of checksum context. */
 	if (mtree_entry->reg_info)
 		sum_init(mtree);
 
@@ -1265,7 +1248,7 @@ archive_write_mtree_free(struct archive_write *a)
 	if (mtree == NULL)
 		return (ARCHIVE_OK);
 
-	/* Make sure we dot not leave any entries. */
+	/* Make sure we do not leave any entries. */
 	mtree_entry_register_free(mtree);
 	archive_string_free(&mtree->cur_dirstr);
 	archive_string_free(&mtree->ebuf);
@@ -1571,27 +1554,27 @@ sum_final(struct mtree_writer *mtree, struct reg_info *reg)
 	}
 #ifdef ARCHIVE_HAS_MD5
 	if (mtree->compute_sum & F_MD5)
-		archive_md5_final(&mtree->md5ctx, reg->buf_md5);
+		archive_md5_final(&mtree->md5ctx, reg->digest.md5);
 #endif
 #ifdef ARCHIVE_HAS_RMD160
 	if (mtree->compute_sum & F_RMD160)
-		archive_rmd160_final(&mtree->rmd160ctx, reg->buf_rmd160);
+		archive_rmd160_final(&mtree->rmd160ctx, reg->digest.rmd160);
 #endif
 #ifdef ARCHIVE_HAS_SHA1
 	if (mtree->compute_sum & F_SHA1)
-		archive_sha1_final(&mtree->sha1ctx, reg->buf_sha1);
+		archive_sha1_final(&mtree->sha1ctx, reg->digest.sha1);
 #endif
 #ifdef ARCHIVE_HAS_SHA256
 	if (mtree->compute_sum & F_SHA256)
-		archive_sha256_final(&mtree->sha256ctx, reg->buf_sha256);
+		archive_sha256_final(&mtree->sha256ctx, reg->digest.sha256);
 #endif
 #ifdef ARCHIVE_HAS_SHA384
 	if (mtree->compute_sum & F_SHA384)
-		archive_sha384_final(&mtree->sha384ctx, reg->buf_sha384);
+		archive_sha384_final(&mtree->sha384ctx, reg->digest.sha384);
 #endif
 #ifdef ARCHIVE_HAS_SHA512
 	if (mtree->compute_sum & F_SHA512)
-		archive_sha512_final(&mtree->sha512ctx, reg->buf_sha512);
+		archive_sha512_final(&mtree->sha512ctx, reg->digest.sha512);
 #endif
 	/* Save what types of sum are computed. */
 	reg->compute_sum = mtree->compute_sum;
@@ -1621,42 +1604,47 @@ sum_write(struct archive_string *str, struct reg_info *reg)
 		archive_string_sprintf(str, " cksum=%ju",
 		    (uintmax_t)reg->crc);
 	}
+
+#define append_digest(_s, _r, _t) \
+	strappend_bin(_s, _r->digest._t, sizeof(_r->digest._t))
+
 #ifdef ARCHIVE_HAS_MD5
 	if (reg->compute_sum & F_MD5) {
 		archive_strcat(str, " md5digest=");
-		strappend_bin(str, reg->buf_md5, sizeof(reg->buf_md5));
+		append_digest(str, reg, md5);
 	}
 #endif
 #ifdef ARCHIVE_HAS_RMD160
 	if (reg->compute_sum & F_RMD160) {
 		archive_strcat(str, " rmd160digest=");
-		strappend_bin(str, reg->buf_rmd160, sizeof(reg->buf_rmd160));
+		append_digest(str, reg, rmd160);
 	}
 #endif
 #ifdef ARCHIVE_HAS_SHA1
 	if (reg->compute_sum & F_SHA1) {
 		archive_strcat(str, " sha1digest=");
-		strappend_bin(str, reg->buf_sha1, sizeof(reg->buf_sha1));
+		append_digest(str, reg, sha1);
 	}
 #endif
 #ifdef ARCHIVE_HAS_SHA256
 	if (reg->compute_sum & F_SHA256) {
 		archive_strcat(str, " sha256digest=");
-		strappend_bin(str, reg->buf_sha256, sizeof(reg->buf_sha256));
+		append_digest(str, reg, sha256);
 	}
 #endif
 #ifdef ARCHIVE_HAS_SHA384
 	if (reg->compute_sum & F_SHA384) {
 		archive_strcat(str, " sha384digest=");
-		strappend_bin(str, reg->buf_sha384, sizeof(reg->buf_sha384));
+		append_digest(str, reg, sha384);
 	}
 #endif
 #ifdef ARCHIVE_HAS_SHA512
 	if (reg->compute_sum & F_SHA512) {
 		archive_strcat(str, " sha512digest=");
-		strappend_bin(str, reg->buf_sha512, sizeof(reg->buf_sha512));
+		append_digest(str, reg, sha512);
 	}
 #endif
+#undef append_digest
 }
 
 static int
@@ -2024,7 +2012,7 @@ mtree_entry_tree_add(struct archive_write *a, struct mtree_entry **filep)
 
 	if (file->parentdir.length == 0) {
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-		    "Internal programing error "
+		    "Internal programming error "
 		    "in generating canonical name for %s",
 		    file->pathname.s);
 		return (ARCHIVE_FAILED);

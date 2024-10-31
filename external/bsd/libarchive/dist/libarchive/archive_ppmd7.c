@@ -4,7 +4,7 @@ This code is based on PPMd var.H (2001): Dmitry Shkarin : Public domain */
 
 #include "archive_platform.h"
 
-#include <memory.h>
+#include <stdlib.h>
 
 #include "archive_ppmd7_private.h"
 
@@ -138,7 +138,7 @@ static Bool Ppmd7_Alloc(CPpmd7 *p, UInt32 size)
       #else
         4 - (size & 3);
       #endif
-    if ((p->Base = (Byte *)malloc(p->AlignOffset + size
+    if ((p->Base = malloc(p->AlignOffset + size
         #ifndef PPMD_32BIT
         + UNIT_SIZE
         #endif
@@ -1000,7 +1000,7 @@ static void RangeEnc_ShiftLow(CPpmd7z_RangeEnc *p)
 
 static void RangeEnc_Encode(CPpmd7z_RangeEnc *p, UInt32 start, UInt32 size, UInt32 total)
 {
-  p->Low += start * (p->Range /= total);
+  p->Low += (UInt64)start * (UInt64)(p->Range /= total);
   p->Range *= size;
   while (p->Range < kTopValue)
   {

@@ -25,8 +25,6 @@
 
 #include "archive_platform.h"
 
-__FBSDID("$FreeBSD$");
-
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
 #endif
@@ -85,9 +83,9 @@ archive_write_add_filter_b64encode(struct archive *_a)
 	struct private_b64encode *state;
 
 	archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_write_add_filter_uu");
+	    ARCHIVE_STATE_NEW, "archive_write_add_filter_b64encode");
 
-	state = (struct private_b64encode *)calloc(1, sizeof(*state));
+	state = calloc(1, sizeof(*state));
 	if (state == NULL) {
 		archive_set_error(f->archive, ENOMEM,
 		    "Can't allocate data for b64encode filter");
@@ -149,14 +147,9 @@ archive_filter_b64encode_open(struct archive_write_filter *f)
 {
 	struct private_b64encode *state = (struct private_b64encode *)f->data;
 	size_t bs = 65536, bpb;
-	int ret;
-
-	ret = __archive_write_open_filter(f->next_filter);
-	if (ret != ARCHIVE_OK)
-		return (ret);
 
 	if (f->archive->magic == ARCHIVE_WRITE_MAGIC) {
-		/* Buffer size should be a multiple number of the of bytes
+		/* Buffer size should be a multiple number of the bytes
 		 * per block for performance. */
 		bpb = archive_write_get_bytes_per_block(f->archive);
 		if (bpb > bs)
@@ -266,7 +259,6 @@ static int
 archive_filter_b64encode_close(struct archive_write_filter *f)
 {
 	struct private_b64encode *state = (struct private_b64encode *)f->data;
-	int ret, ret2;
 
 	/* Flush remaining bytes. */
 	if (state->hold_len != 0)
@@ -274,12 +266,8 @@ archive_filter_b64encode_close(struct archive_write_filter *f)
 	archive_string_sprintf(&state->encoded_buff, "====\n");
 	/* Write the last block */
 	archive_write_set_bytes_in_last_block(f->archive, 1);
-	ret = __archive_write_filter(f->next_filter,
+	return __archive_write_filter(f->next_filter,
 	    state->encoded_buff.s, archive_strlen(&state->encoded_buff));
-	ret2 = __archive_write_close_filter(f->next_filter);
-	if (ret > ret2)
-		ret = ret2;
-	return (ret);
 }
 
 static int

@@ -1,34 +1,15 @@
 /*-
+ * SPDX-License-Identifier: BSD-2-Clause
+ *
  * Copyright (c) 2003-2008 Tim Kientzle
  * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
- * Command line parser for tar.
+ * Command line parser for bsdcat.
  */
 
 #include "bsdcat_platform.h"
-__FBSDID("$FreeBSD$");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -44,12 +25,12 @@ __FBSDID("$FreeBSD$");
 #include "err.h"
 
 /*
- * Short options for tar.  Please keep this sorted.
+ * Short options for bsdcat.  Please keep this sorted.
  */
 static const char *short_options = "h";
 
 /*
- * Long options for tar.  Please keep this list sorted.
+ * Long options for bsdcat.  Please keep this list sorted.
  *
  * The symbolic names for options that lack a short equivalent are
  * defined in bsdcat.h.  Also note that so far I've found no need
@@ -61,7 +42,7 @@ static const struct bsdcat_option {
 	const char *name;
 	int required;      /* 1 if this option requires an argument. */
 	int equivalent;    /* Equivalent short option. */
-} tar_longopts[] = {
+} bsdcat_longopts[] = {
 	{ "help",                 0, 'h' },
 	{ "version",              0, OPTION_VERSION },
 	{ NULL, 0, 0 }
@@ -90,7 +71,7 @@ static const struct bsdcat_option {
  * -W long options: There's an obscure GNU convention (only rarely
  * supported even there) that allows "-W option=argument" as an
  * alternative way to support long options.  This was supported in
- * early bsdcat as a way to access long options on platforms that did
+ * early bsdtar as a way to access long options on platforms that did
  * not support getopt_long() and is preserved here for backwards
  * compatibility.  (Of course, if I'd started with a custom
  * command-line parser from the beginning, I would have had normal
@@ -115,12 +96,18 @@ bsdcat_getopt(struct bsdcat *bsdcat)
 	enum { state_start = 0, state_old_tar, state_next_word,
 	       state_short, state_long };
 
-	const struct bsdcat_option *popt, *match = NULL, *match2 = NULL;
-	const char *p, *long_prefix = "--";
+	const struct bsdcat_option *popt, *match, *match2;
+	const char *p, *long_prefix;
 	size_t optlength;
-	int opt = '?';
-	int required = 0;
+	int opt;
+	int required;
 
+again:
+	match = NULL;
+	match2 = NULL;
+	long_prefix = "--";
+	opt = '?';
+	required = 0;
 	bsdcat->argument = NULL;
 
 	/* First time through, initialize everything. */
@@ -173,7 +160,7 @@ bsdcat_getopt(struct bsdcat *bsdcat)
 		if (opt == '\0') {
 			/* End of this group; recurse to get next option. */
 			bsdcat->getopt_state = state_next_word;
-			return bsdcat_getopt(bsdcat);
+			goto again;
 		}
 
 		/* Does this option take an argument? */
@@ -223,7 +210,7 @@ bsdcat_getopt(struct bsdcat *bsdcat)
 		}
 
 		/* Search the table for an unambiguous match. */
-		for (popt = tar_longopts; popt->name != NULL; popt++) {
+		for (popt = bsdcat_longopts; popt->name != NULL; popt++) {
 			/* Short-circuit if first chars don't match. */
 			if (popt->name[0] != bsdcat->getopt_word[0])
 				continue;

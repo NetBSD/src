@@ -23,8 +23,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: head/lib/libarchive/test/test_write_format_cpio_odc.c 201247 2009-12-30 05:59:21Z kientzle $");
-
 
 static int
 is_octal(const char *p, size_t l)
@@ -54,7 +52,7 @@ DEFINE_TEST(test_write_format_cpio_odc)
 
 	/* Create a new archive in memory. */
 	assert((a = archive_write_new()) != NULL);
-	assertEqualIntA(a, 0, archive_write_set_format_cpio(a));
+	assertEqualIntA(a, 0, archive_write_set_format_cpio_odc(a));
 	assertEqualIntA(a, 0, archive_write_add_filter_none(a));
 	assertEqualIntA(a, 0, archive_write_open_memory(a, buff, buffsize, &used));
 

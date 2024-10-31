@@ -25,8 +25,6 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD$");
-
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -44,6 +42,7 @@ __FBSDID("$FreeBSD$");
 #include "archive_entry_locale.h"
 #include "archive_private.h"
 #include "archive_write_private.h"
+#include "archive_write_set_format_private.h"
 
 struct v7tar {
 	uint64_t	entry_bytes_remaining;
@@ -161,7 +160,7 @@ archive_write_set_format_v7tar(struct archive *_a)
 		return (ARCHIVE_FATAL);
 	}
 
-	v7tar = (struct v7tar *)calloc(1, sizeof(*v7tar));
+	v7tar = calloc(1, sizeof(*v7tar));
 	if (v7tar == NULL) {
 		archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate v7tar data");
@@ -242,7 +241,7 @@ archive_write_v7tar_header(struct archive_write *a, struct archive_entry *entry)
 	/* Only regular files (not hardlinks) have data. */
 	if (archive_entry_hardlink(entry) != NULL ||
 	    archive_entry_symlink(entry) != NULL ||
-	    !(archive_entry_filetype(entry) == AE_IFREG))
+	    archive_entry_filetype(entry) != AE_IFREG)
 		archive_entry_set_size(entry, 0);
 
 	if (AE_IFDIR == archive_entry_filetype(entry)) {
@@ -491,31 +490,11 @@ format_header_v7tar(struct archive_write *a, char h[512],
 		case AE_IFLNK:
 			h[V7TAR_typeflag_offset] = '2';
 			break;
-		case AE_IFCHR:
-			archive_set_error(&a->archive,
-			    ARCHIVE_ERRNO_FILE_FORMAT,
-			    "tar format cannot archive character device");
-			return (ARCHIVE_FAILED);
-		case AE_IFBLK:
-			archive_set_error(&a->archive,
-			    ARCHIVE_ERRNO_FILE_FORMAT,
-			    "tar format cannot archive block device");
-			return (ARCHIVE_FAILED);
-		case AE_IFIFO:
-			archive_set_error(&a->archive,
-			    ARCHIVE_ERRNO_FILE_FORMAT,
-			    "tar format cannot archive fifo");
-			return (ARCHIVE_FAILED);
-		case AE_IFSOCK:
-			archive_set_error(&a->archive,
-			    ARCHIVE_ERRNO_FILE_FORMAT,
-			    "tar format cannot archive socket");
-			return (ARCHIVE_FAILED);
 		default:
-			archive_set_error(&a->archive,
-			    ARCHIVE_ERRNO_FILE_FORMAT,
-			    "tar format cannot archive this (mode=0%lo)",
-			    (unsigned long)archive_entry_mode(entry));
+			/* AE_IFBLK, AE_IFCHR, AE_IFIFO, AE_IFSOCK
+			 * and unknown */
+			__archive_write_entry_filetype_unsupported(
+			    &a->archive, entry, "v7tar");
 			ret = ARCHIVE_FAILED;
 		}
 	}

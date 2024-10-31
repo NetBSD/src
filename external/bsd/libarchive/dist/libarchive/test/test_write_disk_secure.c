@@ -23,7 +23,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: head/lib/libarchive/test/test_write_disk_secure.c 201247 2009-12-30 05:59:21Z kientzle $");
 
 #define UMASK 022
 
@@ -50,6 +49,10 @@ DEFINE_TEST(test_write_disk_secure)
 #endif
 	const char *pname =
 	    "libarchive_test-test_write_disk_secure-absolute_path.tmp";
+#if defined(HAVE_LCHMOD) && defined(HAVE_SYMLINK) && \
+    defined(S_IRUSR) && defined(S_IWUSR) && defined(S_IXUSR)
+	int working_lchmod;
+#endif
 
 	/* Start with a known umask. */
 	assertUmask(UMASK);
@@ -275,10 +278,32 @@ DEFINE_TEST(test_write_disk_secure)
 	assert(0 == lstat("link_to_dir", &st));
 	failure("link_to_dir: st.st_mode=%o", st.st_mode);
 	assert(S_ISLNK(st.st_mode));
-#if HAVE_LCHMOD
-	/* Systems that lack lchmod() can't set symlink perms, so skip this. */
-	failure("link_to_dir: st.st_mode=%o", st.st_mode);
-	assert((st.st_mode & 07777) == 0755);
+#if defined(HAVE_SYMLINK) && defined(HAVE_LCHMOD) && \
+    defined(S_IRUSR) && defined(S_IWUSR) && defined(S_IXUSR)
+	/* Verify if we are able to lchmod() */
+	if (symlink("dir", "testlink_to_dir") == 0) {
+		if (lchmod("testlink_to_dir",
+		    S_IRUSR | S_IWUSR | S_IXUSR) != 0) {
+			switch (errno) {
+				case ENOTSUP:
+				case ENOSYS:
+#if ENOTSUP != EOPNOTSUPP
+				case EOPNOTSUPP:
+#endif
+					working_lchmod = 0;
+					break;
+				default:
+					working_lchmod = 1;
+			}
+		} else
+			working_lchmod = 1;
+	} else
+		working_lchmod = 0;
+
+	if (working_lchmod) {
+		failure("link_to_dir: st.st_mode=%o", st.st_mode);
+		assert((st.st_mode & 07777) == 0755);
+	}
 #endif
 
 	assert(0 == lstat("dir/filea", &st));

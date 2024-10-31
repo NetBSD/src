@@ -25,8 +25,6 @@
 
 #include "archive_platform.h"
 
-__FBSDID("$FreeBSD: head/lib/libarchive/archive_write_set_compression_gzip.c 201081 2009-12-28 02:04:42Z kientzle $");
-
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
 #endif
@@ -184,10 +182,6 @@ archive_compressor_gzip_open(struct archive_write_filter *f)
 	struct private_data *data = (struct private_data *)f->data;
 	int ret;
 
-	ret = __archive_write_open_filter(f->next_filter);
-	if (ret != ARCHIVE_OK)
-		return (ret);
-
 	if (data->compressed == NULL) {
 		size_t bs = 65536, bpb;
 		if (f->archive->magic == ARCHIVE_WRITE_MAGIC) {
@@ -200,8 +194,7 @@ archive_compressor_gzip_open(struct archive_write_filter *f)
 				bs -= bs % bpb;
 		}
 		data->compressed_buffer_size = bs;
-		data->compressed
-		    = (unsigned char *)malloc(data->compressed_buffer_size);
+		data->compressed = malloc(data->compressed_buffer_size);
 		if (data->compressed == NULL) {
 			archive_set_error(f->archive, ENOMEM,
 			    "Can't allocate data for compression buffer");
@@ -307,7 +300,7 @@ archive_compressor_gzip_close(struct archive_write_filter *f)
 {
 	unsigned char trailer[8];
 	struct private_data *data = (struct private_data *)f->data;
-	int ret, r1;
+	int ret;
 
 	/* Finish compression cycle */
 	ret = drive_compressor(f, data, 1);
@@ -338,8 +331,7 @@ archive_compressor_gzip_close(struct archive_write_filter *f)
 		    "Failed to clean up compressor");
 		ret = ARCHIVE_FATAL;
 	}
-	r1 = __archive_write_close_filter(f->next_filter);
-	return (r1 < ret ? r1 : ret);
+	return ret;
 }
 
 /*

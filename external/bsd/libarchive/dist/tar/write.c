@@ -1,31 +1,12 @@
 /*-
+ * SPDX-License-Identifier: BSD-2-Clause
+ *
  * Copyright (c) 2003-2007 Tim Kientzle
  * Copyright (c) 2012 Michihiro NAKAJIMA
  * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "bsdtar_platform.h"
-__FBSDID("$FreeBSD: src/usr.bin/tar/write.c,v 1.79 2008/11/27 05:49:52 kientzle Exp $");
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -33,7 +14,9 @@ __FBSDID("$FreeBSD: src/usr.bin/tar/write.c,v 1.79 2008/11/27 05:49:52 kientzle 
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
-#ifdef HAVE_ATTR_XATTR_H
+#if HAVE_SYS_XATTR_H
+#include <sys/xattr.h>
+#elif HAVE_ATTR_XATTR_H
 #include <attr/xattr.h>
 #endif
 #ifdef HAVE_ERRNO_H
@@ -196,6 +179,10 @@ set_reader_options(struct bsdtar *bsdtar, struct archive *a)
 		else
 			archive_clear_error(a);
 	}
+	if (bsdtar->flags & OPTFLAG_IGNORE_ZEROS)
+		if (archive_read_set_options(a,
+		    "read_concatenated_archives") != ARCHIVE_OK)
+			lafe_errc(1, 0, "%s", archive_error_string(a));
 }
 
 void
@@ -690,6 +677,8 @@ append_archive(struct bsdtar *bsdtar, struct archive *a, struct archive *ina)
 	while (ARCHIVE_OK == (e = archive_read_next_header(ina, &in_entry))) {
 		if (archive_match_excluded(bsdtar->matching, in_entry))
 			continue;
+		if(edit_pathname(bsdtar, in_entry))
+			continue;
 		if ((bsdtar->flags & OPTFLAG_INTERACTIVE) &&
 		    !yes("copy '%s'", archive_entry_pathname(in_entry)))
 			continue;
@@ -939,7 +928,9 @@ write_hierarchy(struct bsdtar *bsdtar, struct archive *a, const char *path)
 
 		while (entry != NULL) {
 			write_file(bsdtar, a, entry);
-			archive_entry_free(entry);
+			if (entry != spare_entry) {
+				archive_entry_free(entry);
+			}
 			entry = spare_entry;
 			spare_entry = NULL;
 		}

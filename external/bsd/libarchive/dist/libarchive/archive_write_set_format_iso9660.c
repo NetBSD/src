@@ -289,12 +289,12 @@ struct isoent {
 		struct extr_rec	*current;
 	}			 extr_rec_list;
 
-	int			 virtual:1;
+	unsigned int		 virtual:1;
 	/* If set to one, this file type is a directory.
 	 * A convenience flag to be used as
 	 * "archive_entry_filetype(isoent->file->entry) == AE_IFDIR".
 	 */
-	int			 dir:1;
+	unsigned int		 dir:1;
 };
 
 struct hardlink {
@@ -652,7 +652,7 @@ struct iso_option {
 #define VOLUME_IDENTIFIER_SIZE		32
 
 	/*
-	 * Usage  : !zisofs [DEFAULT] 
+	 * Usage  : !zisofs [DEFAULT]
 	 *        :    Disable to generate RRIP 'ZF' extension.
 	 *        : zisofs
 	 *        :    Make files zisofs file and generate RRIP 'ZF'
@@ -689,7 +689,7 @@ struct iso9660 {
 	uint64_t		 bytes_remaining;
 	int			 need_multi_extent;
 
-	/* Temporary string buffer for Joliet extension. */ 
+	/* Temporary string buffer for Joliet extension. */
 	struct archive_string	 utf16be;
 	struct archive_string	 mbs;
 
@@ -755,9 +755,9 @@ struct iso9660 {
 
 	/* Used for making zisofs. */
 	struct {
-		int		 detect_magic:1;
-		int		 making:1;
-		int		 allzero:1;
+		unsigned int	 detect_magic:1;
+		unsigned int	 making:1;
+		unsigned int	 allzero:1;
 		unsigned char	 magic_buffer[64];
 		int		 magic_cnt;
 
@@ -2178,7 +2178,8 @@ get_system_identitier(char *system_id, size_t size)
 	strncpy(system_id, "Windows", size-1);
 	system_id[size-1] = '\0';
 #else
-#error no way to get the system identifier on your platform.
+	strncpy(system_id, "Unknown", size-1);
+	system_id[size-1] = '\0';
 #endif
 }
 
@@ -2236,7 +2237,7 @@ set_str_utf16be(struct archive_write *a, unsigned char *p, const char *s,
 	int onepad;
 
 	if (s == NULL)
-		s = "";
+		s = "\0\0";
 	if (l & 0x01) {
 		onepad = 1;
 		l &= ~1;
@@ -2520,12 +2521,11 @@ get_gmoffset(struct tm *tm)
 static void
 get_tmfromtime(struct tm *tm, time_t *t)
 {
-#if HAVE_LOCALTIME_R
+#if HAVE_LOCALTIME_S
+	localtime_s(tm, t);
+#elif HAVE_LOCALTIME_R
 	tzset();
 	localtime_r(t, tm);
-#elif HAVE__LOCALTIME64_S
-	__time64_t tmp_t = (__time64_t) *t; //time_t may be shorter than 64 bits
-	_localtime64_s(tm, &tmp_t);
 #else
 	memcpy(tm, localtime(t), sizeof(*tm));
 #endif
@@ -3650,7 +3650,7 @@ wb_consume(struct archive_write *a, size_t size)
 	if (size > iso9660->wbuff_remaining ||
 	    iso9660->wbuff_remaining == 0) {
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-		    "Internal Programing error: iso9660:wb_consume()"
+		    "Internal Programming error: iso9660:wb_consume()"
 		    " size=%jd, wbuff_remaining=%jd",
 		    (intmax_t)size, (intmax_t)iso9660->wbuff_remaining);
 		return (ARCHIVE_FATAL);
@@ -3671,7 +3671,7 @@ wb_set_offset(struct archive_write *a, int64_t off)
 
 	if (iso9660->wbuff_type != WB_TO_TEMP) {
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-		    "Internal Programing error: iso9660:wb_set_offset()");
+		    "Internal Programming error: iso9660:wb_set_offset()");
 		return (ARCHIVE_FATAL);
 	}
 
@@ -4073,11 +4073,8 @@ write_information_block(struct archive_write *a)
 	}
 	memset(info.s, 0, info_size);
 	opt = 0;
-#if defined(HAVE__CTIME64_S)
-	{
-		__time64_t iso9660_birth_time_tmp = (__time64_t) iso9660->birth_time; //time_t may be shorter than 64 bits
-		_ctime64_s(buf, sizeof(buf), &(iso9660_birth_time_tmp));
-	}
+#if defined(HAVE_CTIME_S)
+	ctime_s(buf, sizeof(buf), &(iso9660->birth_time));
 #elif defined(HAVE_CTIME_R)
 	ctime_r(&(iso9660->birth_time), buf);
 #else
@@ -5094,13 +5091,11 @@ isofile_init_hardlinks(struct iso9660 *iso9660)
 static void
 isofile_free_hardlinks(struct iso9660 *iso9660)
 {
-	struct archive_rb_node *n, *next;
+	struct archive_rb_node *n, *tmp;
 
-	for (n = ARCHIVE_RB_TREE_MIN(&(iso9660->hardlink_rbtree)); n;) {
-		next = __archive_rb_tree_iterate(&(iso9660->hardlink_rbtree),
-		    n, ARCHIVE_RB_DIR_RIGHT);
+	ARCHIVE_RB_TREE_FOREACH_SAFE(n, &(iso9660->hardlink_rbtree), tmp) {
+		__archive_rb_tree_remove_node(&(iso9660->hardlink_rbtree), n);
 		free(n);
-		n = next;
 	}
 }
 
@@ -6803,6 +6798,7 @@ isoent_rr_move(struct archive_write *a)
  * This comparing rule is according to ISO9660 Standard 6.9.1
  */
 static int
+__LA_LIBC_CC
 _compare_path_table(const void *v1, const void *v2)
 {
 	const struct isoent *p1, *p2;
@@ -6845,6 +6841,7 @@ _compare_path_table(const void *v1, const void *v2)
 }
 
 static int
+__LA_LIBC_CC
 _compare_path_table_joliet(const void *v1, const void *v2)
 {
 	const struct isoent *p1, *p2;
@@ -7801,8 +7798,8 @@ struct zisofs_extract {
 	uint64_t	 pz_uncompressed_size;
 	size_t		 uncompressed_buffer_size;
 
-	int		 initialized:1;
-	int		 header_passed:1;
+	unsigned int	 initialized:1;
+	unsigned int	 header_passed:1;
 
 	uint32_t	 pz_offset;
 	unsigned char	*block_pointers;
@@ -8128,7 +8125,7 @@ zisofs_write_to_temp(struct archive_write *a, const void *buff, size_t s)
 {
 	(void)buff; /* UNUSED */
 	(void)s; /* UNUSED */
-	archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC, "Programing error");
+	archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC, "Programming error");
 	return (ARCHIVE_FATAL);
 }
 

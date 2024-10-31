@@ -1,29 +1,10 @@
 /*-
+ * SPDX-License-Identifier: BSD-2-Clause
+ *
  * Copyright (c) 2003-2007 Tim Kientzle
  * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/usr.bin/tar/test/test_copy.c,v 1.3 2008/08/15 06:12:02 kientzle Exp $");
 
 #if defined(__CYGWIN__)
 # include <limits.h>
@@ -160,21 +141,21 @@ create_tree(void)
 		failure("Internal sanity check failed: i = %d", i);
 		assert(filenames[i] != NULL);
 
-		sprintf(buff, "f/%s", filenames[i]);
+		snprintf(buff, sizeof(buff), "f/%s", filenames[i]);
 		assertMakeFile(buff, 0777, buff);
 
 		/* Create a link named "l/abcdef..." to the above. */
-		sprintf(buff2, "l/%s", filenames[i]);
+		snprintf(buff2, sizeof(buff2), "l/%s", filenames[i]);
 		assertMakeHardlink(buff2, buff);
 
 		/* Create a link named "m/abcdef..." to the above. */
-		sprintf(buff2, "m/%s", filenames[i]);
+		snprintf(buff2, sizeof(buff2), "m/%s", filenames[i]);
 		assertMakeHardlink(buff2, buff);
 
 		if (canSymlink()) {
 			/* Create a symlink named "s/abcdef..." to the above. */
-			sprintf(buff, "s/%s", filenames[i]);
-			sprintf(buff2, "../f/%s", filenames[i]);
+			snprintf(buff, sizeof(buff), "s/%s", filenames[i]);
+			snprintf(buff2, sizeof(buff2), "../f/%s", filenames[i]);
 			failure("buff=\"%s\" buff2=\"%s\"", buff, buff2);
 			assertMakeSymlink(buff, buff2, 0);
 		}
@@ -191,7 +172,7 @@ create_tree(void)
 #define LIMIT_USTAR 100
 
 static void
-verify_tree(size_t limit)
+verify_tree(size_t limit, const char *format)
 {
 	char name1[260];
 	char name2[260];
@@ -202,15 +183,17 @@ verify_tree(size_t limit)
 	/* Generate the names we know should be there and verify them. */
 	for (i = 1; i < LOOP_MAX; i++) {
 		/* Verify a file named "f/abcdef..." */
-		sprintf(name1, "f/%s", filenames[i]);
+		snprintf(name1, sizeof(name1), "f/%s", filenames[i]);
 		if (i <= limit) {
+			failure("Verifying %s", format);
 			assertFileExists(name1);
 			assertFileContents(name1, (int)strlen(name1), name1);
 		}
 
-		sprintf(name2, "l/%s", filenames[i]);
+		snprintf(name2, sizeof(name2), "l/%s", filenames[i]);
 		if (i + 2 <= limit) {
 			/* Verify hardlink "l/abcdef..." */
+			failure("Verifying %s", format);
 			assertIsHardlink(name1, name2);
 			/* Verify hardlink "m/abcdef..." */
 			name2[0] = 'm';
@@ -219,15 +202,18 @@ verify_tree(size_t limit)
 
 		if (canSymlink()) {
 			/* Verify symlink "s/abcdef..." */
-			sprintf(name1, "s/%s", filenames[i]);
-			sprintf(name2, "../f/%s", filenames[i]);
-			if (strlen(name2) <= limit)
+			snprintf(name1, sizeof(name1), "s/%s", filenames[i]);
+			snprintf(name2, sizeof(name2), "../f/%s", filenames[i]);
+			if (strlen(name2) <= limit) {
+				failure("Verifying %s", format);
 				assertIsSymlink(name1, name2, 0);
+			}
 		}
 
 		/* Verify dir "d/abcdef...". */
-		sprintf(name1, "d/%s", filenames[i]);
+		snprintf(name1, sizeof(name1), "d/%s", filenames[i]);
 		if (i + 1 <= limit) { /* +1 for trailing slash */
+			failure("Verifying %s", format);
 			if (assertIsDir(name1, -1)) {
 				/* TODO: opendir/readdir this
 				 * directory and make sure
@@ -247,7 +233,7 @@ verify_tree(size_t limit)
 			char dir[2];
 			dir[0] = *dp; dir[1] = '\0';
 			d = opendir(dir);
-			failure("Unable to open dir '%s'", dir);
+			failure("Unable to open dir '%s' for testing %s", dir, format);
 			if (!assert(d != NULL))
 				continue;
 			while ((de = readdir(d)) != NULL) {
@@ -279,25 +265,25 @@ verify_tree(size_t limit)
 }
 
 static void
-copy_basic(void)
+copy_basic(const char *extra_args, const char *name)
 {
 	int r;
 
 	/* NOTE: for proper operation on cygwin-1.5 and windows, the
-	 * length of the name of the directory below, "plain", must be
+	 * length of the name of the directory below must be
 	 * less than or equal to the length of the name of the original
 	 * directory, "original"  This restriction derives from the
 	 * extremely limited pathname lengths on those platforms.
 	 */
-	assertMakeDir("plain", 0775);
-	assertEqualInt(0, chdir("plain"));
+	assertMakeDir(name, 0775);
+	assertEqualInt(0, chdir(name));
 
 	/*
 	 * Use the tar program to create an archive.
 	 */
-	r = systemf("%s cf archive -C ../original f d l m s >pack.out 2>pack.err",
-	    testprog);
-	failure("Error invoking \"%s cf\"", testprog);
+	r = systemf("%s cf archive %s -C ../original f d l m s >pack.out 2>pack.err",
+	    testprog, extra_args);
+	failure("Error invoking \"%s cf archive %s\"", testprog, extra_args);
 	assertEqualInt(r, 0);
 
 	/* Verify that nothing went to stdout or stderr. */
@@ -315,20 +301,7 @@ copy_basic(void)
 	assertEmptyFile("unpack.err");
 	assertEmptyFile("unpack.out");
 
-	verify_tree(LIMIT_NONE);
-
-	/*
-	 * Unpack a second time to make sure that things are still ok
-	 */
-	r = systemf("%s xf archive >unpack.out 2>unpack.err", testprog);
-	failure("Error invoking %s xf archive", testprog);
-	assertEqualInt(r, 0);
-
-	/* Verify that nothing went to stdout or stderr. */
-	assertEmptyFile("unpack.err");
-	assertEmptyFile("unpack.out");
-
-	verify_tree(LIMIT_NONE);
+	verify_tree(LIMIT_NONE, name);
 	assertEqualInt(0, chdir(".."));
 }
 
@@ -371,8 +344,8 @@ copy_ustar(void)
 	assertEmptyFile("unpack.err");
 	assertEmptyFile("unpack.out");
 
-	verify_tree(LIMIT_USTAR);
-	assertEqualInt(0, chdir("../.."));
+	verify_tree(LIMIT_USTAR, "ustar");
+	assertEqualInt(0, chdir(".."));
 }
 
 DEFINE_TEST(test_copy)
@@ -381,8 +354,11 @@ DEFINE_TEST(test_copy)
 	create_tree(); /* Create sample files in "original" dir. */
 
 	/* Test simple "tar -c | tar -x" pipeline copy. */
-	copy_basic();
+	copy_basic("", "default");
 
 	/* Same, but constrain to ustar format. */
 	copy_ustar();
+
+	/* Same, but with pax format. */
+	copy_basic(" --format pax", "pax");
 }

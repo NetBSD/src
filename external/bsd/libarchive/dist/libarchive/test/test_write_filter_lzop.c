@@ -25,8 +25,6 @@
  */
 
 #include "test.h"
-__FBSDID("$FreeBSD$");
-
 /*
  * A basic exercise of lzop reading and writing.
  */
@@ -54,10 +52,10 @@ DEFINE_TEST(test_write_filter_lzop)
 	}
 
 	buffsize = 2000000;
-	assert(NULL != (buff = (char *)malloc(buffsize)));
+	assert(NULL != (buff = malloc(buffsize)));
 
 	datasize = 10000;
-	assert(NULL != (data = (char *)calloc(1, datasize)));
+	assert(NULL != (data = calloc(datasize, 1)));
 	filecount = 10;
 
 	/*
@@ -79,7 +77,7 @@ DEFINE_TEST(test_write_filter_lzop)
 	archive_entry_set_filetype(ae, AE_IFREG);
 	archive_entry_set_size(ae, datasize);
 	for (i = 0; i < filecount; i++) {
-		sprintf(path, "file%03d", i);
+		snprintf(path, sizeof(path), "file%03d", i);
 		archive_entry_copy_pathname(ae, path);
 		assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
 		assertA(datasize
@@ -99,7 +97,7 @@ DEFINE_TEST(test_write_filter_lzop)
 		assertEqualIntA(a, ARCHIVE_OK,
 		    archive_read_open_memory(a, buff, used1));
 		for (i = 0; i < filecount; i++) {
-			sprintf(path, "file%03d", i);
+			snprintf(path, sizeof(path), "file%03d", i);
 			if (!assertEqualInt(ARCHIVE_OK,
 				archive_read_next_header(a, &ae)))
 				break;
@@ -135,7 +133,7 @@ DEFINE_TEST(test_write_filter_lzop)
 	assertEqualIntA(a, ARCHIVE_OK,
 	    archive_write_open_memory(a, buff, buffsize, &used2));
 	for (i = 0; i < filecount; i++) {
-		sprintf(path, "file%03d", i);
+		snprintf(path, sizeof(path), "file%03d", i);
 		assert((ae = archive_entry_new()) != NULL);
 		archive_entry_copy_pathname(ae, path);
 		archive_entry_set_size(ae, datasize);
@@ -163,7 +161,7 @@ DEFINE_TEST(test_write_filter_lzop)
 		assertEqualIntA(a, ARCHIVE_OK,
 		    archive_read_open_memory(a, buff, used2));
 		for (i = 0; i < filecount; i++) {
-			sprintf(path, "file%03d", i);
+			snprintf(path, sizeof(path), "file%03d", i);
 			if (!assertEqualInt(ARCHIVE_OK,
 				archive_read_next_header(a, &ae)))
 				break;
@@ -188,7 +186,7 @@ DEFINE_TEST(test_write_filter_lzop)
 	assertEqualIntA(a, ARCHIVE_OK,
 	    archive_write_open_memory(a, buff, buffsize, &used2));
 	for (i = 0; i < filecount; i++) {
-		sprintf(path, "file%03d", i);
+		snprintf(path, sizeof(path), "file%03d", i);
 		assert((ae = archive_entry_new()) != NULL);
 		archive_entry_copy_pathname(ae, path);
 		archive_entry_set_size(ae, datasize);
@@ -218,7 +216,7 @@ DEFINE_TEST(test_write_filter_lzop)
 		assertEqualIntA(a, ARCHIVE_OK,
 		    archive_read_open_memory(a, buff, used2));
 		for (i = 0; i < filecount; i++) {
-			sprintf(path, "file%03d", i);
+			snprintf(path, sizeof(path), "file%03d", i);
 			if (!assertEqualInt(ARCHIVE_OK,
 				archive_read_next_header(a, &ae)))
 				break;

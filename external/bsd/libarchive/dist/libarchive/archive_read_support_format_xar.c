@@ -23,7 +23,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "archive_platform.h"
-__FBSDID("$FreeBSD$");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -417,7 +416,7 @@ static void	unknowntag_end(struct xar *, const char *);
 static int	xml_start(struct archive_read *,
     const char *, struct xmlattr_list *);
 static void	xml_end(void *, const char *);
-static void	xml_data(void *, const char *, int);
+static void	xml_data(void *, const char *, size_t);
 static int	xml_parse_file_flags(struct xar *, const char *);
 static int	xml_parse_file_ext2(struct xar *, const char *);
 #if defined(HAVE_LIBXML_XMLREADER_H)
@@ -451,7 +450,7 @@ archive_read_support_format_xar(struct archive *_a)
 	archive_check_magic(_a, ARCHIVE_READ_MAGIC,
 	    ARCHIVE_STATE_NEW, "archive_read_support_format_xar");
 
-	xar = (struct xar *)calloc(1, sizeof(*xar));
+	xar = calloc(1, sizeof(*xar));
 	if (xar == NULL) {
 		archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate xar data");
@@ -623,8 +622,10 @@ read_toc(struct archive_read *a)
 			(size_t)xar->toc_chksum_size, NULL, 0);
 		__archive_read_consume(a, xar->toc_chksum_size);
 		xar->offset += xar->toc_chksum_size;
+#ifndef DONT_FAIL_ON_CRC_ERROR
 		if (r != ARCHIVE_OK)
 			return (ARCHIVE_FATAL);
+#endif
 	}
 
 	/*
@@ -827,10 +828,12 @@ xar_read_header(struct archive_read *a, struct archive_entry *entry)
 		    xattr->a_sum.val, xattr->a_sum.len,
 		    xattr->e_sum.val, xattr->e_sum.len);
 		if (r != ARCHIVE_OK) {
+#ifndef DONT_FAIL_ON_CRC_ERROR
 			archive_set_error(&(a->archive), ARCHIVE_ERRNO_MISC,
 			    "Xattr checksum error");
 			r = ARCHIVE_WARN;
 			break;
+#endif
 		}
 		if (xattr->name.s == NULL) {
 			archive_set_error(&(a->archive), ARCHIVE_ERRNO_MISC,
@@ -1123,7 +1126,7 @@ atohex(unsigned char *b, size_t bsize, const char *p, size_t psize)
 			x |= p[1] - '0';
 		else
 			return (-1);
-		
+
 		*b++ = x;
 		bsize--;
 		p += 2;
@@ -1135,11 +1138,11 @@ atohex(unsigned char *b, size_t bsize, const char *p, size_t psize)
 static time_t
 time_from_tm(struct tm *t)
 {
-#if HAVE_TIMEGM
+#if HAVE__MKGMTIME
+        return _mkgmtime(t);
+#elif HAVE_TIMEGM
         /* Use platform timegm() if available. */
         return (timegm(t));
-#elif HAVE__MKGMTIME64
-        return (_mkgmtime64(t));
 #else
         /* Else use direct calculation using POSIX assumptions. */
         /* First, fix up tm_yday based on the year/month/day. */
@@ -1239,7 +1242,7 @@ heap_add_entry(struct archive_read *a,
 			return (ARCHIVE_FATAL);
 		}
 		new_pending_files = (struct xar_file **)
-		    malloc(new_size * sizeof(new_pending_files[0]));
+		    calloc(new_size, sizeof(new_pending_files[0]));
 		if (new_pending_files == NULL) {
 			archive_set_error(&a->archive,
 			    ENOMEM, "Out of memory");
@@ -1613,9 +1616,9 @@ decompress(struct archive_read *a, const void **buff, size_t *outbytes,
 	switch (xar->rd_encoding) {
 	case GZIP:
 		xar->stream.next_in = (Bytef *)(uintptr_t)b;
-		xar->stream.avail_in = avail_in;
+		xar->stream.avail_in = (uInt)avail_in;
 		xar->stream.next_out = (unsigned char *)outbuff;
-		xar->stream.avail_out = avail_out;
+		xar->stream.avail_out = (uInt)avail_out;
 		r = inflate(&(xar->stream), 0);
 		switch (r) {
 		case Z_OK: /* Decompressor made some progress.*/
@@ -1632,9 +1635,9 @@ decompress(struct archive_read *a, const void **buff, size_t *outbytes,
 #if defined(HAVE_BZLIB_H) && defined(BZ_CONFIG_ERROR)
 	case BZIP2:
 		xar->bzstream.next_in = (char *)(uintptr_t)b;
-		xar->bzstream.avail_in = avail_in;
+		xar->bzstream.avail_in = (unsigned int)avail_in;
 		xar->bzstream.next_out = (char *)outbuff;
-		xar->bzstream.avail_out = avail_out;
+		xar->bzstream.avail_out = (unsigned int)avail_out;
 		r = BZ2_bzDecompress(&(xar->bzstream));
 		switch (r) {
 		case BZ_STREAM_END: /* Found end of stream. */
@@ -2052,6 +2055,12 @@ xml_start(struct archive_read *a, const char *name, struct xmlattr_list *list)
 			    attr = attr->next) {
 				if (strcmp(attr->name, "link") != 0)
 					continue;
+				if (xar->file->hdnext != NULL || xar->file->link != 0 ||
+				    xar->file == xar->hdlink_orgs) {
+					archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+					    "File with multiple link attributes");
+					return (ARCHIVE_FATAL);
+				}
 				if (strcmp(attr->value, "original") == 0) {
 					xar->file->hdnext = xar->hdlink_orgs;
 					xar->hdlink_orgs = xar->file;
@@ -2622,15 +2631,14 @@ strappend_base64(struct xar *xar,
 	while (l > 0) {
 		int n = 0;
 
-		if (l > 0) {
-			if (base64[b[0]] < 0 || base64[b[1]] < 0)
-				break;
-			n = base64[*b++] << 18;
-			n |= base64[*b++] << 12;
-			*out++ = n >> 16;
-			len++;
-			l -= 2;
-		}
+		if (base64[b[0]] < 0 || base64[b[1]] < 0)
+			break;
+		n = base64[*b++] << 18;
+		n |= base64[*b++] << 12;
+		*out++ = n >> 16;
+		len++;
+		l -= 2;
+
 		if (l > 0) {
 			if (base64[*b] < 0)
 				break;
@@ -2666,7 +2674,7 @@ is_string(const char *known, const char *data, size_t len)
 }
 
 static void
-xml_data(void *userData, const char *s, int len)
+xml_data(void *userData, const char *s, size_t len)
 {
 	struct archive_read *a;
 	struct xar *xar;
@@ -2699,6 +2707,9 @@ xml_data(void *userData, const char *s, int len)
 
 	switch (xar->xmlsts) {
 	case FILE_NAME:
+		if (xar->file->has & HAS_PATHNAME)
+			break;
+
 		if (xar->file->parent != NULL) {
 			archive_string_concat(&(xar->file->pathname),
 			    &(xar->file->parent->pathname));
@@ -3182,8 +3193,11 @@ xml2_read_toc(struct archive_read *a)
 			if (r == ARCHIVE_OK)
 				r = xml_start(a, name, &list);
 			xmlattr_cleanup(&list);
-			if (r != ARCHIVE_OK)
+			if (r != ARCHIVE_OK) {
+				xmlFreeTextReader(reader);
+				xmlCleanupParser();
 				return (r);
+			}
 			if (empty)
 				xml_end(a, name);
 			break;
@@ -3249,6 +3263,9 @@ expat_start_cb(void *userData, const XML_Char *name, const XML_Char **atts)
 	struct xmlattr_list list;
 	int r;
 
+	if (ud->state != ARCHIVE_OK)
+		return;
+
 	r = expat_xmlattr_setup(a, &list, atts);
 	if (r == ARCHIVE_OK)
 		r = xml_start(a, (const char *)name, &list);
@@ -3269,7 +3286,7 @@ expat_data_cb(void *userData, const XML_Char *s, int len)
 {
 	struct expat_userData *ud = (struct expat_userData *)userData;
 
-	xml_data(ud->archive, s, len);
+	xml_data(ud->archive, s, (size_t)len);
 }
 
 static int
@@ -3305,14 +3322,16 @@ expat_read_toc(struct archive_read *a)
 
 		d = NULL;
 		r = rd_contents(a, &d, &outbytes, &used, xar->toc_remaining);
-		if (r != ARCHIVE_OK)
+		if (r != ARCHIVE_OK) {
+			XML_ParserFree(parser);
 			return (r);
+		}
 		xar->toc_remaining -= used;
 		xar->offset += used;
 		xar->toc_total += outbytes;
 		PRINT_TOC(d, outbytes);
 
-		xr = XML_Parse(parser, d, outbytes, xar->toc_remaining == 0);
+		xr = XML_Parse(parser, d, (int)outbytes, xar->toc_remaining == 0);
 		__archive_read_consume(a, used);
 		if (xr == XML_STATUS_ERROR) {
 			XML_ParserFree(parser);

@@ -25,7 +25,6 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD$");
 
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
@@ -98,7 +97,7 @@ struct program_bidder {
 static int	program_bidder_bid(struct archive_read_filter_bidder *,
 		    struct archive_read_filter *upstream);
 static int	program_bidder_init(struct archive_read_filter *);
-static int	program_bidder_free(struct archive_read_filter_bidder *);
+static void	program_bidder_free(struct archive_read_filter_bidder *);
 
 /*
  * The actual filter needs to track input and output data.
@@ -123,10 +122,29 @@ static ssize_t	program_filter_read(struct archive_read_filter *,
 static int	program_filter_close(struct archive_read_filter *);
 static void	free_state(struct program_bidder *);
 
-static int
-set_bidder_signature(struct archive_read_filter_bidder *bidder,
-    struct program_bidder *state, const void *signature, size_t signature_len)
+static const struct archive_read_filter_bidder_vtable
+program_bidder_vtable = {
+	.bid = program_bidder_bid,
+	.init = program_bidder_init,
+	.free = program_bidder_free,
+};
+
+int
+archive_read_support_filter_program_signature(struct archive *_a,
+    const char *cmd, const void *signature, size_t signature_len)
 {
+	struct archive_read *a = (struct archive_read *)_a;
+	struct program_bidder *state;
+
+	/*
+	 * Allocate our private state.
+	 */
+	state = calloc(1, sizeof (*state));
+	if (state == NULL)
+		goto memerr;
+	state->cmd = strdup(cmd);
+	if (state->cmd == NULL)
+		goto memerr;
 
 	if (signature != NULL && signature_len > 0) {
 		state->signature_len = signature_len;
@@ -134,55 +152,25 @@ set_bidder_signature(struct archive_read_filter_bidder *bidder,
 		memcpy(state->signature, signature, signature_len);
 	}
 
-	/*
-	 * Fill in the bidder object.
-	 */
-	bidder->data = state;
-	bidder->bid = program_bidder_bid;
-	bidder->init = program_bidder_init;
-	bidder->options = NULL;
-	bidder->free = program_bidder_free;
-	return (ARCHIVE_OK);
-}
-
-int
-archive_read_support_filter_program_signature(struct archive *_a,
-    const char *cmd, const void *signature, size_t signature_len)
-{
-	struct archive_read *a = (struct archive_read *)_a;
-	struct archive_read_filter_bidder *bidder;
-	struct program_bidder *state;
-
-	/*
-	 * Get a bidder object from the read core.
-	 */
-	if (__archive_read_get_bidder(a, &bidder) != ARCHIVE_OK)
+	if (__archive_read_register_bidder(a, state, NULL,
+				&program_bidder_vtable) != ARCHIVE_OK) {
+		free_state(state);
 		return (ARCHIVE_FATAL);
+	}
+	return (ARCHIVE_OK);
 
-	/*
-	 * Allocate our private state.
-	 */
-	state = (struct program_bidder *)calloc(1, sizeof (*state));
-	if (state == NULL)
-		goto memerr;
-	state->cmd = strdup(cmd);
-	if (state->cmd == NULL)
-		goto memerr;
-
-	return set_bidder_signature(bidder, state, signature, signature_len);
 memerr:
 	free_state(state);
 	archive_set_error(_a, ENOMEM, "Can't allocate memory");
 	return (ARCHIVE_FATAL);
 }
 
-static int
+static void
 program_bidder_free(struct archive_read_filter_bidder *self)
 {
 	struct program_bidder *state = (struct program_bidder *)self->data;
 
 	free_state(state);
-	return (ARCHIVE_OK);
 }
 
 static void
@@ -393,6 +381,12 @@ child_read(struct archive_read_filter *self, char *buf, size_t buf_len)
 	}
 }
 
+static const struct archive_read_filter_vtable
+program_reader_vtable = {
+	.read = program_filter_read,
+	.close = program_filter_close,
+};
+
 int
 __archive_read_program(struct archive_read_filter *self, const char *cmd)
 {
@@ -400,12 +394,12 @@ __archive_read_program(struct archive_read_filter *self, const char *cmd)
 	static const size_t out_buf_len = 65536;
 	char *out_buf;
 	const char *prefix = "Program: ";
-	pid_t child;
+	int ret;
 	size_t l;
 
 	l = strlen(prefix) + strlen(cmd) + 1;
-	state = (struct program_filter *)calloc(1, sizeof(*state));
-	out_buf = (char *)malloc(out_buf_len);
+	state = calloc(1, sizeof(*state));
+	out_buf = malloc(out_buf_len);
 	if (state == NULL || out_buf == NULL ||
 	    archive_string_ensure(&state->description, l) == NULL) {
 		archive_set_error(&self->archive->archive, ENOMEM,
@@ -426,9 +420,9 @@ __archive_read_program(struct archive_read_filter *self, const char *cmd)
 	state->out_buf = out_buf;
 	state->out_buf_len = out_buf_len;
 
-	child = __archive_create_child(cmd, &state->child_stdin,
-	    &state->child_stdout);
-	if (child == -1) {
+	ret = __archive_create_child(cmd, &state->child_stdin,
+	    &state->child_stdout, &state->child);
+	if (ret != ARCHIVE_OK) {
 		free(state->out_buf);
 		archive_string_free(&state->description);
 		free(state);
@@ -437,26 +431,9 @@ __archive_read_program(struct archive_read_filter *self, const char *cmd)
 		    cmd);
 		return (ARCHIVE_FATAL);
 	}
-#if defined(_WIN32) && !defined(__CYGWIN__)
-	state->child = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, child);
-	if (state->child == NULL) {
-		child_stop(self, state);
-		free(state->out_buf);
-		archive_string_free(&state->description);
-		free(state);
-		archive_set_error(&self->archive->archive, EINVAL,
-		    "Can't initialize filter; unable to run program \"%s\"",
-		    cmd);
-		return (ARCHIVE_FATAL);
-	}
-#else
-	state->child = child;
-#endif
 
 	self->data = state;
-	self->read = program_filter_read;
-	self->skip = NULL;
-	self->close = program_filter_close;
+	self->vtable = &program_reader_vtable;
 
 	/* XXX Check that we can read at least one byte? */
 	return (ARCHIVE_OK);

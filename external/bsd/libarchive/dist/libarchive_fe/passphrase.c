@@ -50,8 +50,6 @@
 
 
 #include "lafe_platform.h"
-__FBSDID("$FreeBSD$");
-
 #include <errno.h>
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
@@ -78,6 +76,7 @@ __FBSDID("$FreeBSD$");
 
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
+#include <string.h>
 #include <windows.h>
 
 static char *
@@ -115,8 +114,7 @@ readpassphrase(const char *prompt, char *buf, size_t bufsiz, int flags)
 	WriteFile(hStdout, "\r\n", 2, NULL, NULL);
 	buf[rbytes] = '\0';
 	/* Remove trailing carriage return(s). */
-	if (rbytes > 2 && buf[rbytes - 2] == '\r' && buf[rbytes - 1] == '\n')
-		buf[rbytes - 2] = '\0';
+	buf[strcspn(buf, "\r\n")] = '\0';
 
 	return (buf);
 }
@@ -171,8 +169,10 @@ readpassphrase(const char *prompt, char *buf, size_t bufsiz, int flags)
 	int input, output, save_errno, i, need_restart;
 	char ch, *p, *end;
 	struct termios term, oterm;
+#ifdef HAVE_SIGACTION
 	struct sigaction sa, savealrm, saveint, savehup, savequit, saveterm;
 	struct sigaction savetstp, savettin, savettou, savepipe;
+#endif
 
 	/* I suppose we could alloc on demand in this case (XXX). */
 	if (bufsiz == 0) {
@@ -221,6 +221,7 @@ restart:
 		oterm.c_lflag |= ECHO;
 	}
 
+#ifdef HAVE_SIGACTION
 	/*
 	 * Catch signals that would otherwise cause the user to end
 	 * up with echo turned off in the shell.  Don't worry about
@@ -239,6 +240,7 @@ restart:
 	(void)sigaction(SIGTSTP, &sa, &savetstp);
 	(void)sigaction(SIGTTIN, &sa, &savettin);
 	(void)sigaction(SIGTTOU, &sa, &savettou);
+#endif
 
 	if (!(flags & RPP_STDIN)) {
 		int r = write(output, prompt, strlen(prompt));
@@ -276,6 +278,7 @@ restart:
 			continue;
 		signo[SIGTTOU] = sigttou;
 	}
+#ifdef HAVE_SIGACTION
 	(void)sigaction(SIGALRM, &savealrm, NULL);
 	(void)sigaction(SIGHUP, &savehup, NULL);
 	(void)sigaction(SIGINT, &saveint, NULL);
@@ -285,6 +288,7 @@ restart:
 	(void)sigaction(SIGTSTP, &savetstp, NULL);
 	(void)sigaction(SIGTTIN, &savettin, NULL);
 	(void)sigaction(SIGTTOU, &savettou, NULL);
+#endif
 	if (input != STDIN_FILENO)
 		(void)close(input);
 
@@ -325,7 +329,7 @@ lafe_readpassphrase(const char *prompt, char *buf, size_t bufsiz)
 			break;
 		default:
 			lafe_errc(1, errno, "Couldn't read passphrase");
-			break;
+			/* NOTREACHED */
 		}
 	}
 	return (p);

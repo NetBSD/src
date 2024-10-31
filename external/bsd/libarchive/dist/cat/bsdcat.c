@@ -1,30 +1,11 @@
 /*-
+ * SPDX-License-Identifier: BSD-2-Clause
+ *
  * Copyright (c) 2011-2014, Mike Kazantsev
  * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "bsdcat_platform.h"
-__FBSDID("$FreeBSD$");
 
 #include <stdio.h>
 #ifdef HAVE_STDLIB_H
@@ -37,6 +18,9 @@ __FBSDID("$FreeBSD$");
 #include <string.h>
 #endif
 
+#include <archive.h>
+#include <archive_entry.h>
+
 #include "bsdcat.h"
 #include "err.h"
 
@@ -48,7 +32,7 @@ static const char *bsdcat_current_path;
 static int exit_status = 0;
 
 
-void
+static __LA_NORETURN void
 usage(FILE *stream, int eval)
 {
 	const char *p;
@@ -58,7 +42,7 @@ usage(FILE *stream, int eval)
 	exit(eval);
 }
 
-static void
+static __LA_NORETURN void
 version(void)
 {
 	printf("bsdcat %s - %s \n",
@@ -67,7 +51,15 @@ version(void)
 	exit(0);
 }
 
-void
+static void
+bsdcat_print_error(void)
+{
+	lafe_warnc(0, "%s: %s",
+	    bsdcat_current_path, archive_error_string(a));
+	exit_status = 1;
+}
+
+static void
 bsdcat_next(void)
 {
 	if (a != NULL) {
@@ -82,15 +74,7 @@ bsdcat_next(void)
 	archive_read_support_format_raw(a);
 }
 
-void
-bsdcat_print_error(void)
-{
-	lafe_warnc(0, "%s: %s",
-	    bsdcat_current_path, archive_error_string(a));
-	exit_status = 1;
-}
-
-void
+static void
 bsdcat_read_to_stdout(const char* filename)
 {
 	int r;
@@ -130,12 +114,16 @@ main(int argc, char **argv)
 		switch (c) {
 		case 'h':
 			usage(stdout, 0);
-			break;
+			/* NOTREACHED */
+			/* Fallthrough */
 		case OPTION_VERSION:
 			version();
-			break;
+			/* NOTREACHED */
+			/* Fallthrough */
 		default:
 			usage(stderr, 1);
+			/* Fallthrough */
+			/* NOTREACHED */
 		}
 	}
 

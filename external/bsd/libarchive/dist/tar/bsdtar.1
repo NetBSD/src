@@ -1,31 +1,11 @@
+.\"
+.\" SPDX-License-Identifier: BSD-2-Clause
+.\"
 .\" Copyright (c) 2003-2007 Tim Kientzle
 .\" Copyright (c) 2017 Martin Matuska
 .\" All rights reserved.
 .\"
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
-.\"
-.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
-.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
-.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
-.\"
-.\" $FreeBSD$
-.\"
-.Dd June 3, 2019
+.Dd April 23, 2024
 .Dt TAR 1
 .Os
 .Sh NAME
@@ -167,12 +147,14 @@ if it is unknown suffix or no suffix, creates a new archive with
 restricted pax format and bzip2 compression.
 .It Fl Fl acls
 (c, r, u, x modes only)
-Archive or extract POSIX.1e or NFSv4 ACLs. This is the reverse of
+Archive or extract POSIX.1e or NFSv4 ACLs.
+This is the reverse of
 .Fl Fl no-acls
 and the default behavior in c, r, and u modes (except on Mac OS X) or if
 .Nm
-is run in x mode as root. On Mac OS X this option translates extended ACLs
-to NFSv4 ACLs. To store extended ACLs the
+is run in x mode as root.
+On Mac OS X this option translates extended ACLs to NFSv4 ACLs.
+To store extended ACLs the
 .Fl Fl mac-metadata
 option is preferred.
 .It Fl B , Fl Fl read-full-blocks
@@ -207,15 +189,16 @@ specified on the command line.
 .It Fl Fl exclude-vcs
 Do not process files or directories internally used by the
 version control systems
-.Sq CVS ,
-.Sq RCS ,
-.Sq SCCS ,
-.Sq SVN ,
 .Sq Arch ,
 .Sq Bazaar ,
-.Sq Mercurial
+.Sq CVS ,
+.Sq Darcs ,
+.Sq Mercurial ,
+.Sq RCS ,
+.Sq SCCS ,
+.Sq SVN
 and
-.Sq Darcs .
+.Sq git .
 .It Fl Fl fflags
 (c, r, u, x modes only)
 Archive or extract platform-specific file attributes or file flags.
@@ -271,6 +254,15 @@ will be used instead.
 On create, this sets the group name that will be stored
 in the archive;
 the name will not be verified against the system group database.
+.It Fl Fl group Ar name Ns Op : Ns Ar gid
+Use the provided group, if
+.Ar gid
+is not provided,
+.Ar name
+can be either a group name or numeric id.
+See the
+.Fl Fl gname
+option for details.
 .It Fl H
 (c and r modes only)
 Symbolic links named on the command line will be followed; the
@@ -390,14 +382,18 @@ Do not extract modification time.
 By default, the modification time is set to the time stored in the archive.
 .It Fl Fl mac-metadata
 (c, r, u and x mode only)
-Mac OS X specific. Archive or extract extended ACLs and extended file
+Mac OS X specific.
+Archive or extract extended ACLs and extended file
 attributes using
 .Xr copyfile 3
-in AppleDouble format. This is the reverse of
+in AppleDouble format.
+This is the reverse of
 .Fl Fl no-mac-metadata .
 and the default behavior in c, r, and u modes or if
 .Nm
 is run in x mode as root.
+Currently supported only for pax formats
+(including "pax restricted", the default tar format for bsdtar.)
 .It Fl n , Fl Fl norecurse , Fl Fl no-recursion
 Do not operate recursively on the content of directories.
 .It Fl Fl newer Ar date
@@ -439,28 +435,44 @@ option to
 .Xr find 1 .
 .It Fl Fl no-acls
 (c, r, u, x modes only)
-Do not archive or extract POSIX.1e or NFSv4 ACLs. This is the reverse of
+Do not archive or extract POSIX.1e or NFSv4 ACLs.
+This is the reverse of
 .Fl Fl acls
 and the default behavior if
 .Nm
 is run as non-root in x mode (on Mac OS X as any user in c, r, u and x modes).
 .It Fl Fl no-fflags
 (c, r, u, x modes only)
-Do not archive or extract file attributes or file flags. This is the reverse of
+Do not archive or extract file attributes or file flags.
+This is the reverse of
 .Fl Fl fflags
 and the default behavior if
 .Nm
 is run as non-root in x mode.
 .It Fl Fl no-mac-metadata
 (x mode only)
-Mac OS X specific. Do not archive or extract ACLs and extended file attributes
+Mac OS X specific.
+Do not archive or extract ACLs and extended file attributes
 using
 .Xr copyfile 3
-in AppleDouble format. This is the reverse of
+in AppleDouble format.
+This is the reverse of
 .Fl Fl mac-metadata .
 and the default behavior if
 .Nm
 is run as non-root in x mode.
+.It Fl Fl no-read-sparse
+(c, r, u modes only)
+Do not read sparse file information from disk.
+This is the reverse of
+.Fl Fl read-sparse .
+.It Fl Fl no-safe-writes
+(x mode only)
+Do not create temporary files and use
+.Xr rename 2
+to replace the original ones.
+This is the reverse of
+.Fl Fl safe-writes .
 .It Fl Fl no-same-owner
 (x mode only)
 Do not extract owner and group IDs.
@@ -480,7 +492,8 @@ and the default behavior if
 is run as non-root.
 .It Fl Fl no-xattrs
 (c, r, u, x modes only)
-Do not archive or extract extended file attributes. This is the reverse of
+Do not archive or extract extended file attributes.
+This is the reverse of
 .Fl Fl xattrs
 and the default behavior if
 .Nm
@@ -558,7 +571,14 @@ As above, but the corresponding key and value will be provided
 only to modules whose name matches
 .Ar module .
 .El
-The currently supported modules and keys are:
+.Pp
+The complete list of supported modules and keys
+for create and append modes is in
+.Xr archive_write_set_options 3
+and for extract and list modes in
+.Xr archive_read_set_options 3 .
+.Pp
+Examples of supported options:
 .Bl -tag -compact -width indent
 .It Cm iso9660:joliet
 Support Joliet extensions.
@@ -577,7 +597,8 @@ to disable.
 .It Cm gzip:compression-level
 A decimal integer from 1 to 9 specifying the gzip compression level.
 .It Cm gzip:timestamp
-Store timestamp. This is enabled by default, use
+Store timestamp.
+This is enabled by default, use
 .Cm !timestamp
 or
 .Cm gzip:!timestamp
@@ -593,7 +614,8 @@ A decimal integer from 1 to 9 specifying the lrzip compression level.
 .It Cm lz4:compression-level
 A decimal integer from 1 to 9 specifying the lzop compression level.
 .It Cm lz4:stream-checksum
-Enable stream checksum. This is by default, use
+Enable stream checksum.
+This is by default, use
 .Cm lz4:!stream-checksum
 to disable.
 .It Cm lz4:block-checksum
@@ -604,12 +626,75 @@ A decimal integer from 4 to 7 specifying the lz4 compression block size
 .It Cm lz4:block-dependence
 Use the previous block of the block being compressed for
 a compression dictionary to improve compression ratio.
-.It Cm zstd:compression-level
-A decimal integer from 1 to 22 specifying the zstd compression level.
+.It Cm zstd:compression-level Ns = Ns Ar N
+A decimal integer specifying the zstd compression level.
+Supported values depend
+on the library version, common values are from 1 to 22.
+.It Cm zstd:threads Ns = Ns Ar N
+Specify the number of worker threads to use, or 0 to use as many
+threads as there are CPU cores in the system.
+.It Cm zstd:frame-per-file
+Start a new compression frame at the beginning of each file in the
+archive.
+.It Cm zstd:min-frame-in Ns = Ns Ar N
+In combination with
+.Cm zstd:frame-per-file ,
+do not start a new compression frame unless the uncompressed size of
+the current frame is at least
+.Ar N
+bytes.
+The number may be followed by
+.Li k / Li kB ,
+.Li M / Li MB ,
+or
+.Li G / Li GB
+to indicate kilobytes, megabytes or gigabytes respectively.
+.It Cm zstd:min-frame-out Ns = Ns Ar N , Cm zstd:min-frame-size Ns = Ns Ar N
+In combination with
+.Cm zstd:frame-per-file ,
+do not start a new compression frame unless the compressed size of the
+current frame is at least
+.Ar N
+bytes.
+The number may be followed by
+.Li k / Li kB ,
+.Li M / Li MB ,
+or
+.Li G / Li GB
+to indicate kilobytes, megabytes or gigabytes respectively.
+.It Cm zstd:max-frame-in Ns = Ns Ar N , Cm zstd:max-frame-size Ns = Ns Ar N
+Start a new compression frame as soon as possible after the
+uncompressed size of the current frame exceeds
+.Ar N
+bytes.
+The number may be followed by
+.Li k / Li kB ,
+.Li M / Li MB ,
+or
+.Li G / Li GB
+to indicate kilobytes, megabytes or gigabytes respectively.
+Values less than 1,024 will be rejected.
+.It Cm zstd:max-frame-out Ns = Ns Ar N
+Start a new compression frame as soon as possible after the compressed
+size of the current frame exceeds
+.Ar N
+bytes.
+The number may be followed by
+.Li k / Li kB ,
+.Li M / Li MB ,
+or
+.Li G / Li GB
+to indicate kilobytes, megabytes or gigabytes respectively.
+Values less than 1,024 will be rejected.
 .It Cm lzop:compression-level
 A decimal integer from 1 to 9 specifying the lzop compression level.
 .It Cm xz:compression-level
 A decimal integer from 0 to 9 specifying the xz compression level.
+.It Cm xz:threads
+Specify the number of worker threads to use.
+Setting threads to a special value 0 makes
+.Xr xz 1
+use as many threads as there are CPU cores on the system.
 .It Cm mtree: Ns Ar keyword
 The mtree writer module allows you to specify which mtree keywords
 will be included in the output.
@@ -646,9 +731,10 @@ Supported values are zipcrypt (traditional zip encryption),
 aes128 (WinZip AES-128 encryption) and aes256 (WinZip AES-256 encryption).
 .It Cm read_concatenated_archives
 Ignore zeroed blocks in the archive, which occurs when multiple tar archives
-have been concatenated together.  Without this option, only the contents of
-the first concatenated archive would be read.  This option is comparable to
-the
+have been concatenated together.
+Without this option, only the contents of
+the first concatenated archive would be read.
+This option is comparable to the
 .Fl i , Fl Fl ignore-zeros
 option of GNU tar.
 .El
@@ -670,11 +756,13 @@ This option suppresses these behaviors.
 Preserve file permissions.
 Attempt to restore the full permissions, including file modes, file attributes
 or file flags, extended file attributes and ACLs, if available, for each item
-extracted from the archive. This is the reverse of
+extracted from the archive.
+This is the reverse of
 .Fl Fl no-same-permissions
 and the default if
 .Nm
-is being run as root. It can be partially overridden by also specifying
+is being run as root.
+It can be partially overridden by also specifying
 .Fl Fl no-acls ,
 .Fl Fl no-fflags ,
 .Fl Fl no-mac-metadata
@@ -700,6 +788,12 @@ By default, the archive is always read to the very end, since
 there can be multiple entries with the same name and, by convention,
 later entries overwrite earlier entries.
 This option is provided as a performance optimization.
+.It Fl Fl read-sparse
+(c, r, u modes only)
+Read sparse file information from disk.
+This is the reverse of
+.Fl Fl no-read-sparse
+and the default behavior.
 .It Fl S
 (x mode only)
 Extract files as sparse files.
@@ -710,7 +804,7 @@ This works similar to the conv=sparse option of dd.
 Modify file or archive member names according to
 .Pa pattern .
 The pattern has the format
-.Ar /old/new/ Ns Op ghHprRsS
+.Ar /old/new/ Ns Op bghHprRsS
 where
 .Ar old
 is a basic regular expression,
@@ -732,6 +826,9 @@ of symbolic links.
 The optional trailing p specifies that after a successful substitution
 the original path name and the new path name should be printed to
 standard error.
+The optional trailing b specifies that the substitution should be
+matched from the beginning of the string rather than from right after the
+position at which the previous matching substitution ended.
 Optional trailing H, R, or S characters suppress substitutions
 for hardlink targets, regular filenames, or symlink targets,
 respectively.
@@ -742,6 +839,26 @@ The default is
 .Ar hrs
 which applies substitutions to all names.
 In particular, it is never necessary to specify h, r, or s.
+.It Fl Fl safe-writes
+(x mode only)
+Extract files atomically.
+By default
+.Nm
+unlinks the original file with the same name as the extracted file (if it
+exists), and then creates it immediately under the same name and writes to
+it.
+For a short period of time, applications trying to access the file might
+not find it, or see incomplete results.
+If
+.Fl Fl safe-writes
+is enabled,
+.Nm
+first creates a unique temporary file, then writes the new contents to
+the temporary file, and finally renames the temporary file to its final
+name atomically using
+.Xr rename 2 .
+This guarantees that an application accessing the file, will either see
+the old contents or the new contents at all times.
 .It Fl Fl same-owner
 (x mode only)
 Extract owner and group IDs.
@@ -817,6 +934,15 @@ the name is not verified against the system user database.
 Pipe the input (in x or t mode) or the output (in c mode) through
 .Pa program
 instead of using the builtin compression support.
+.It Fl Fl owner Ar name Ns Op : Ns Ar uid
+Use the provided user, if
+.Ar uid
+is not provided,
+.Ar name
+can be either an username or numeric id.
+See the
+.Fl Fl uname
+option for details.
 .It Fl v , Fl Fl verbose
 Produce verbose output.
 In create and extract modes,
@@ -845,7 +971,8 @@ See
 for more information about the handling of exclusions.
 .It Fl Fl xattrs
 (c, r, u, x modes only)
-Archive or extract extended file attributes. This is the reverse of
+Archive or extract extended file attributes.
+This is the reverse of
 .Fl Fl no-xattrs
 and the default behavior in c, r, and u modes or if
 .Nm
@@ -881,7 +1008,7 @@ archives.
 .Sh ENVIRONMENT
 The following environment variables affect the execution of
 .Nm :
-.Bl -tag -width ".Ev BLOCKSIZE"
+.Bl -tag -width indent
 .It Ev TAR_READER_OPTIONS
 The default options for format readers and compression readers.
 The
@@ -937,9 +1064,9 @@ To examine the contents of an ISO 9660 cdrom image:
 To move file hierarchies, invoke
 .Nm
 as
-.Dl Nm Fl cf Pa - Fl C Pa srcdir\ . | Nm Fl xpf Pa - Fl C Pa destdir
+.Dl Nm Fl cf Pa - Fl C Pa srcdir \&. | Nm Fl xpf Pa - Fl C Pa destdir
 or more traditionally
-.Dl cd srcdir \&; Nm Fl cf Pa -\ . | ( cd destdir \&; Nm Fl xpf Pa - )
+.Dl cd srcdir \&; Nm Fl cf Pa - \&. | ( cd destdir \&; Nm Fl xpf Pa - )
 .Pp
 In create mode, the list of files and directories to be archived
 can also include directory change instructions of the form
@@ -967,7 +1094,6 @@ An input file in
 .Xr mtree 5
 format can be used to create an output archive with arbitrary ownership,
 permissions, or names that differ from existing data on disk:
-.Pp
 .Bd -literal -offset indent
 $ cat input.mtree
 #mtree

@@ -1,7 +1,5 @@
 /*-
- * Copyright (c) 2016 IBM Corporation
- * Copyright (c) 2003-2007 Tim Kientzle
- *
+ * Copyright (c) 2003-2024 Tim Kientzle
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,48 +21,30 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * This test case's code has been derived from test_entry.c
  */
 #include "test.h"
 
-DEFINE_TEST(test_schily_xattr_pax)
+DEFINE_TEST(test_read_filter_gzip_recursive)
 {
+	const char *name = "test_read_filter_gzip_recursive.gz";
 	struct archive *a;
-	struct archive_entry *ae;
-	const char *refname = "test_read_pax_schily_xattr.tar";
-	const char *xname; /* For xattr tests. */
-	const void *xval; /* For xattr tests. */
-	size_t xsize; /* For xattr tests. */
-	const char *string, *array;
+
+	if (!canGzip()) {
+		skipping("gzip not available");
+		return;
+	}
 
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	extract_reference_file(name);
+	assertEqualIntA(a, ARCHIVE_FATAL,
+	    archive_read_open_filename(a, name, 200));
 
-	extract_reference_file(refname);
-	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, refname, 10240));
+	/* Verify that the filter detection worked. */
+	assertEqualInt(archive_filter_code(a, 0), ARCHIVE_FILTER_GZIP);
+	assertEqualString(archive_filter_name(a, 0), "gzip");
 
-	assertEqualInt(ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt(2, archive_entry_xattr_count(ae));
-	assertEqualInt(2, archive_entry_xattr_reset(ae));
-
-	assertEqualInt(0, archive_entry_xattr_next(ae, &xname, &xval, &xsize));
-	assertEqualString(xname, "security.selinux");
-	string = "system_u:object_r:unlabeled_t:s0";
-	assertEqualString(xval, string);
-	/* the xattr's value also contains the terminating \0 */
-	assertEqualInt((int)xsize, strlen(string) + 1);
-
-	assertEqualInt(0, archive_entry_xattr_next(ae, &xname, &xval, &xsize));
-	assertEqualString(xname, "security.ima");
-	assertEqualInt((int)xsize, 265);
-	/* we only compare the first 12 bytes */
-	array = "\x03\x02\x04\xb0\xe9\xd6\x79\x01\x00\x2b\xad\x1e";
-	assertEqualMem(xval, array, 12);
-
-	/* Close the archive. */
 	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }

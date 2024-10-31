@@ -22,15 +22,13 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $FreeBSD: head/lib/libarchive/archive_entry.h 201096 2009-12-28 02:41:27Z kientzle $
  */
 
 #ifndef ARCHIVE_ENTRY_H_INCLUDED
 #define	ARCHIVE_ENTRY_H_INCLUDED
 
 /* Note: Compiler will complain if this does not match archive.h! */
-#define	ARCHIVE_VERSION_NUMBER 3004000
+#define	ARCHIVE_VERSION_NUMBER 3007007
 
 /*
  * Note: archive_entry.h is for use outside of libarchive; the
@@ -99,7 +97,7 @@ typedef ssize_t la_ssize_t;
 #endif
 
 /* Large file support for Android */
-#ifdef __ANDROID__
+#if defined(__LIBARCHIVE_BUILD) && defined(__ANDROID__)
 #include "android_lf.h"
 #endif
 
@@ -122,6 +120,8 @@ typedef ssize_t la_ssize_t;
 #   define __LA_DECL	__declspec(dllimport)
 #  endif
 # endif
+#elif defined __LIBARCHIVE_ENABLE_VISIBILITY
+#  define __LA_DECL __attribute__((visibility("default")))
 #else
 /* Static libraries on all platforms and shared libraries on non-Windows. */
 # define __LA_DECL
@@ -249,17 +249,21 @@ __LA_DECL int		 archive_entry_dev_is_set(struct archive_entry *);
 __LA_DECL dev_t		 archive_entry_devmajor(struct archive_entry *);
 __LA_DECL dev_t		 archive_entry_devminor(struct archive_entry *);
 __LA_DECL __LA_MODE_T	 archive_entry_filetype(struct archive_entry *);
+__LA_DECL int		 archive_entry_filetype_is_set(struct archive_entry *);
 __LA_DECL void		 archive_entry_fflags(struct archive_entry *,
 			    unsigned long * /* set */,
 			    unsigned long * /* clear */);
 __LA_DECL const char	*archive_entry_fflags_text(struct archive_entry *);
 __LA_DECL la_int64_t	 archive_entry_gid(struct archive_entry *);
+__LA_DECL int		 archive_entry_gid_is_set(struct archive_entry *);
 __LA_DECL const char	*archive_entry_gname(struct archive_entry *);
 __LA_DECL const char	*archive_entry_gname_utf8(struct archive_entry *);
 __LA_DECL const wchar_t	*archive_entry_gname_w(struct archive_entry *);
+__LA_DECL void		 archive_entry_set_link_to_hardlink(struct archive_entry *);
 __LA_DECL const char	*archive_entry_hardlink(struct archive_entry *);
 __LA_DECL const char	*archive_entry_hardlink_utf8(struct archive_entry *);
 __LA_DECL const wchar_t	*archive_entry_hardlink_w(struct archive_entry *);
+__LA_DECL int		 archive_entry_hardlink_is_set(struct archive_entry *);
 __LA_DECL la_int64_t	 archive_entry_ino(struct archive_entry *);
 __LA_DECL la_int64_t	 archive_entry_ino64(struct archive_entry *);
 __LA_DECL int		 archive_entry_ino_is_set(struct archive_entry *);
@@ -272,6 +276,8 @@ __LA_DECL const char	*archive_entry_pathname(struct archive_entry *);
 __LA_DECL const char	*archive_entry_pathname_utf8(struct archive_entry *);
 __LA_DECL const wchar_t	*archive_entry_pathname_w(struct archive_entry *);
 __LA_DECL __LA_MODE_T	 archive_entry_perm(struct archive_entry *);
+__LA_DECL int		 archive_entry_perm_is_set(struct archive_entry *);
+__LA_DECL int		 archive_entry_rdev_is_set(struct archive_entry *);
 __LA_DECL dev_t		 archive_entry_rdev(struct archive_entry *);
 __LA_DECL dev_t		 archive_entry_rdevmajor(struct archive_entry *);
 __LA_DECL dev_t		 archive_entry_rdevminor(struct archive_entry *);
@@ -280,11 +286,13 @@ __LA_DECL const wchar_t	*archive_entry_sourcepath_w(struct archive_entry *);
 __LA_DECL la_int64_t	 archive_entry_size(struct archive_entry *);
 __LA_DECL int		 archive_entry_size_is_set(struct archive_entry *);
 __LA_DECL const char	*archive_entry_strmode(struct archive_entry *);
+__LA_DECL void		 archive_entry_set_link_to_symlink(struct archive_entry *);
 __LA_DECL const char	*archive_entry_symlink(struct archive_entry *);
 __LA_DECL const char	*archive_entry_symlink_utf8(struct archive_entry *);
 __LA_DECL int		 archive_entry_symlink_type(struct archive_entry *);
 __LA_DECL const wchar_t	*archive_entry_symlink_w(struct archive_entry *);
 __LA_DECL la_int64_t	 archive_entry_uid(struct archive_entry *);
+__LA_DECL int		 archive_entry_uid_is_set(struct archive_entry *);
 __LA_DECL const char	*archive_entry_uname(struct archive_entry *);
 __LA_DECL const char	*archive_entry_uname_utf8(struct archive_entry *);
 __LA_DECL const wchar_t	*archive_entry_uname_w(struct archive_entry *);
@@ -320,6 +328,8 @@ __LA_DECL void	archive_entry_set_fflags(struct archive_entry *,
 /* Note that all recognized tokens are processed, regardless. */
 __LA_DECL const char *archive_entry_copy_fflags_text(struct archive_entry *,
 	    const char *);
+__LA_DECL const char *archive_entry_copy_fflags_text_len(struct archive_entry *,
+	    const char *, size_t);
 __LA_DECL const wchar_t *archive_entry_copy_fflags_text_w(struct archive_entry *,
 	    const wchar_t *);
 __LA_DECL void	archive_entry_set_gid(struct archive_entry *, la_int64_t);
@@ -395,6 +405,19 @@ __LA_DECL void	archive_entry_copy_stat(struct archive_entry *, const struct stat
 
 __LA_DECL const void * archive_entry_mac_metadata(struct archive_entry *, size_t *);
 __LA_DECL void archive_entry_copy_mac_metadata(struct archive_entry *, const void *, size_t);
+
+/*
+ * Digest routine. This is used to query the raw hex digest for the
+ * given entry. The type of digest is provided as an argument.
+ */
+#define ARCHIVE_ENTRY_DIGEST_MD5              0x00000001
+#define ARCHIVE_ENTRY_DIGEST_RMD160           0x00000002
+#define ARCHIVE_ENTRY_DIGEST_SHA1             0x00000003
+#define ARCHIVE_ENTRY_DIGEST_SHA256           0x00000004
+#define ARCHIVE_ENTRY_DIGEST_SHA384           0x00000005
+#define ARCHIVE_ENTRY_DIGEST_SHA512           0x00000006
+
+__LA_DECL const unsigned char * archive_entry_digest(struct archive_entry *, int /* type */);
 
 /*
  * ACL routines.  This used to simply store and return text-format ACL
@@ -524,9 +547,6 @@ __LA_DECL int	 archive_entry_acl_reset(struct archive_entry *, int /* want_type 
 __LA_DECL int	 archive_entry_acl_next(struct archive_entry *, int /* want_type */,
 	    int * /* type */, int * /* permset */, int * /* tag */,
 	    int * /* qual */, const char ** /* name */);
-__LA_DECL int	 archive_entry_acl_next_w(struct archive_entry *, int /* want_type */,
-	    int * /* type */, int * /* permset */, int * /* tag */,
-	    int * /* qual */, const wchar_t ** /* name */);
 
 /*
  * Construct a text-format ACL.  The flags argument is a bitmask that

@@ -25,8 +25,6 @@
 
 #include "archive_platform.h"
 
-__FBSDID("$FreeBSD$");
-
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
 #endif
@@ -79,24 +77,21 @@ static int	zstd_bidder_bid(struct archive_read_filter_bidder *,
 		    struct archive_read_filter *);
 static int	zstd_bidder_init(struct archive_read_filter *);
 
+static const struct archive_read_filter_bidder_vtable
+zstd_bidder_vtable = {
+	.bid = zstd_bidder_bid,
+	.init = zstd_bidder_init,
+};
+
 int
 archive_read_support_filter_zstd(struct archive *_a)
 {
 	struct archive_read *a = (struct archive_read *)_a;
-	struct archive_read_filter_bidder *bidder;
 
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_read_support_filter_zstd");
-
-	if (__archive_read_get_bidder(a, &bidder) != ARCHIVE_OK)
+	if (__archive_read_register_bidder(a, NULL, "zstd",
+				&zstd_bidder_vtable) != ARCHIVE_OK)
 		return (ARCHIVE_FATAL);
 
-	bidder->data = NULL;
-	bidder->name = "zstd";
-	bidder->bid = zstd_bidder_bid;
-	bidder->init = zstd_bidder_init;
-	bidder->options = NULL;
-	bidder->free = NULL;
 #if HAVE_ZSTD_H && HAVE_LIBZSTD
 	return (ARCHIVE_OK);
 #else
@@ -118,7 +113,9 @@ zstd_bidder_bid(struct archive_read_filter_bidder *self,
 	unsigned prefix;
 
 	/* Zstd frame magic values */
-	const unsigned zstd_magic = 0xFD2FB528U;
+	unsigned zstd_magic = 0xFD2FB528U;
+	unsigned zstd_magic_skippable_start = 0x184D2A50U;
+	unsigned zstd_magic_skippable_mask = 0xFFFFFFF0;
 
 	(void) self; /* UNUSED */
 
@@ -128,6 +125,8 @@ zstd_bidder_bid(struct archive_read_filter_bidder *self,
 
 	prefix = archive_le32dec(buffer);
 	if (prefix == zstd_magic)
+		return (32);
+	if ((prefix & zstd_magic_skippable_mask) == zstd_magic_skippable_start)
 		return (32);
 
 	return (0);
@@ -156,6 +155,12 @@ zstd_bidder_init(struct archive_read_filter *self)
 
 #else
 
+static const struct archive_read_filter_vtable
+zstd_reader_vtable = {
+	.read = zstd_filter_read,
+	.close = zstd_filter_close,
+};
+
 /*
  * Initialize the filter object
  */
@@ -163,15 +168,15 @@ static int
 zstd_bidder_init(struct archive_read_filter *self)
 {
 	struct private_data *state;
-	const size_t out_block_size = ZSTD_DStreamOutSize();
+	size_t out_block_size = ZSTD_DStreamOutSize();
 	void *out_block;
 	ZSTD_DStream *dstream;
 
 	self->code = ARCHIVE_FILTER_ZSTD;
 	self->name = "zstd";
 
-	state = (struct private_data *)calloc(sizeof(*state), 1);
-	out_block = (unsigned char *)malloc(out_block_size);
+	state = calloc(1, sizeof(*state));
+	out_block = malloc(out_block_size);
 	dstream = ZSTD_createDStream();
 
 	if (state == NULL || out_block == NULL || dstream == NULL) {
@@ -188,9 +193,7 @@ zstd_bidder_init(struct archive_read_filter *self)
 	state->out_block_size = out_block_size;
 	state->out_block = out_block;
 	state->dstream = dstream;
-	self->read = zstd_filter_read;
-	self->skip = NULL; /* not supported */
-	self->close = zstd_filter_close;
+	self->vtable = &zstd_reader_vtable;
 
 	state->eof = 0;
 	state->in_frame = 0;
@@ -206,6 +209,7 @@ zstd_filter_read(struct archive_read_filter *self, const void **p)
 	ssize_t avail_in;
 	ZSTD_outBuffer out;
 	ZSTD_inBuffer in;
+	size_t ret;
 
 	state = (struct private_data *)self->data;
 
@@ -214,7 +218,7 @@ zstd_filter_read(struct archive_read_filter *self, const void **p)
 	/* Try to fill the output buffer. */
 	while (out.pos < out.size && !state->eof) {
 		if (!state->in_frame) {
-			const size_t ret = ZSTD_initDStream(state->dstream);
+			ret = ZSTD_initDStream(state->dstream);
 			if (ZSTD_isError(ret)) {
 				archive_set_error(&self->archive->archive,
 				    ARCHIVE_ERRNO_MISC,
@@ -244,8 +248,7 @@ zstd_filter_read(struct archive_read_filter *self, const void **p)
 		in.pos = 0;
 
 		{
-			const size_t ret =
-			    ZSTD_decompressStream(state->dstream, &out, &in);
+			ret = ZSTD_decompressStream(state->dstream, &out, &in);
 
 			if (ZSTD_isError(ret)) {
 				archive_set_error(&self->archive->archive,

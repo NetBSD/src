@@ -1,26 +1,8 @@
 /*-
+ * SPDX-License-Identifier: BSD-2-Clause
+ *
  * Copyright (c) 2003-2008 Tim Kientzle
  * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -28,7 +10,6 @@
  */
 
 #include "bsdtar_platform.h"
-__FBSDID("$FreeBSD$");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -94,6 +75,7 @@ static const struct bsdtar_option {
 	{ "format",               1, OPTION_FORMAT },
 	{ "gid",		  1, OPTION_GID },
 	{ "gname",		  1, OPTION_GNAME },
+	{ "group",		  1, OPTION_GROUP },
 	{ "grzip",                0, OPTION_GRZIP },
 	{ "gunzip",               0, 'z' },
 	{ "gzip",                 0, 'z' },
@@ -122,7 +104,9 @@ static const struct bsdtar_option {
 	{ "no-acls",              0, OPTION_NO_ACLS },
 	{ "no-fflags",            0, OPTION_NO_FFLAGS },
 	{ "no-mac-metadata",      0, OPTION_NO_MAC_METADATA },
+	{ "no-read-sparse",       0, OPTION_NO_READ_SPARSE },
 	{ "no-recursion",         0, 'n' },
+	{ "no-safe-writes",	  0, OPTION_NO_SAFE_WRITES },
 	{ "no-same-owner",	  0, OPTION_NO_SAME_OWNER },
 	{ "no-same-permissions",  0, OPTION_NO_SAME_PERMISSIONS },
 	{ "no-xattr",             0, OPTION_NO_XATTRS },
@@ -140,10 +124,13 @@ static const struct bsdtar_option {
 	{ "older-than",		  1, OPTION_OLDER_CTIME_THAN },
 	{ "one-file-system",	  0, OPTION_ONE_FILE_SYSTEM },
 	{ "options",              1, OPTION_OPTIONS },
+	{ "owner",		  1, OPTION_OWNER },
 	{ "passphrase",		  1, OPTION_PASSPHRASE },
 	{ "posix",		  0, OPTION_POSIX },
 	{ "preserve-permissions", 0, 'p' },
 	{ "read-full-blocks",	  0, 'B' },
+	{ "read-sparse",	  0, OPTION_READ_SPARSE },
+	{ "safe-writes",	  0, OPTION_SAFE_WRITES },
 	{ "same-owner",	          0, OPTION_SAME_OWNER },
 	{ "same-permissions",     0, 'p' },
 	{ "strip-components",	  1, OPTION_STRIP_COMPONENTS },
@@ -213,12 +200,18 @@ bsdtar_getopt(struct bsdtar *bsdtar)
 	enum { state_start = 0, state_old_tar, state_next_word,
 	       state_short, state_long };
 
-	const struct bsdtar_option *popt, *match = NULL, *match2 = NULL;
-	const char *p, *long_prefix = "--";
+	const struct bsdtar_option *popt, *match, *match2;
+	const char *p, *long_prefix;
 	size_t optlength;
-	int opt = '?';
-	int required = 0;
+	int opt;
+	int required;
 
+again:
+	match = NULL;
+	match2 = NULL;
+	long_prefix = "--";
+	opt = '?';
+	required = 0;
 	bsdtar->argument = NULL;
 
 	/* First time through, initialize everything. */
@@ -305,7 +298,7 @@ bsdtar_getopt(struct bsdtar *bsdtar)
 		if (opt == '\0') {
 			/* End of this group; recurse to get next option. */
 			bsdtar->getopt_state = state_next_word;
-			return bsdtar_getopt(bsdtar);
+			goto again;
 		}
 
 		/* Does this option take an argument? */

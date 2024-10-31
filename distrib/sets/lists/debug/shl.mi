@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.298.2.19 2024/10/14 18:06:55 martin Exp $
+# $NetBSD: shl.mi,v 1.298.2.20 2024/10/31 18:39:57 martin Exp $
 #
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/lib/libgcc_eh_g.a				comp-c-debuglib		debuglib,compatfile,gcc
@@ -68,7 +68,7 @@
 ./usr/libdata/debug/usr/lib/i18n/libmapper_std.so.5.0.debug	comp-i18n-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/i18n/libmapper_zone.so.5.0.debug	comp-i18n-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libamu.so.5.0.debug			comp-amd-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libarchive.so.5.0.debug		comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libarchive.so.5.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libasan.so.5.0.debug		comp-sys-debug	debug,compatfile,cxx,gcc=9
 ./usr/libdata/debug/usr/lib/libasan.so.5.0.debug		comp-sys-debug	debug,compatfile,cxx,gcc=10
 ./usr/libdata/debug/usr/lib/libasn1.so.10.0.debug		comp-krb5-debug	debug,compatfile,kerberos

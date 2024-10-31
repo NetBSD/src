@@ -25,8 +25,6 @@
 
 #include "archive_platform.h"
 
-__FBSDID("$FreeBSD$");
-
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
 #endif
@@ -99,7 +97,6 @@ static int	lz4_filter_close(struct archive_read_filter *);
  */
 static int	lz4_reader_bid(struct archive_read_filter_bidder *, struct archive_read_filter *);
 static int	lz4_reader_init(struct archive_read_filter *);
-static int	lz4_reader_free(struct archive_read_filter_bidder *);
 #if defined(HAVE_LIBLZ4)
 static ssize_t  lz4_filter_read_default_stream(struct archive_read_filter *,
 		    const void **);
@@ -107,24 +104,21 @@ static ssize_t  lz4_filter_read_legacy_stream(struct archive_read_filter *,
 		    const void **);
 #endif
 
+static const struct archive_read_filter_bidder_vtable
+lz4_bidder_vtable = {
+	.bid = lz4_reader_bid,
+	.init = lz4_reader_init,
+};
+
 int
 archive_read_support_filter_lz4(struct archive *_a)
 {
 	struct archive_read *a = (struct archive_read *)_a;
-	struct archive_read_filter_bidder *reader;
 
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_read_support_filter_lz4");
-
-	if (__archive_read_get_bidder(a, &reader) != ARCHIVE_OK)
+	if (__archive_read_register_bidder(a, NULL, "lz4",
+				&lz4_bidder_vtable) != ARCHIVE_OK)
 		return (ARCHIVE_FATAL);
 
-	reader->data = NULL;
-	reader->name = "lz4";
-	reader->bid = lz4_reader_bid;
-	reader->init = lz4_reader_init;
-	reader->options = NULL;
-	reader->free = lz4_reader_free;
 #if defined(HAVE_LIBLZ4)
 	return (ARCHIVE_OK);
 #else
@@ -132,12 +126,6 @@ archive_read_support_filter_lz4(struct archive *_a)
 	    "Using external lz4 program");
 	return (ARCHIVE_WARN);
 #endif
-}
-
-static int
-lz4_reader_free(struct archive_read_filter_bidder *self){
-	(void)self; /* UNUSED */
-	return (ARCHIVE_OK);
 }
 
 /*
@@ -218,6 +206,12 @@ lz4_reader_init(struct archive_read_filter *self)
 
 #else
 
+static const struct archive_read_filter_vtable
+lz4_reader_vtable = {
+	.read = lz4_filter_read,
+	.close = lz4_filter_close,
+};
+
 /*
  * Setup the callbacks.
  */
@@ -229,7 +223,7 @@ lz4_reader_init(struct archive_read_filter *self)
 	self->code = ARCHIVE_FILTER_LZ4;
 	self->name = "lz4";
 
-	state = (struct private_data *)calloc(sizeof(*state), 1);
+	state = calloc(1, sizeof(*state));
 	if (state == NULL) {
 		archive_set_error(&self->archive->archive, ENOMEM,
 		    "Can't allocate data for lz4 decompression");
@@ -238,9 +232,7 @@ lz4_reader_init(struct archive_read_filter *self)
 
 	self->data = state;
 	state->stage = SELECT_STREAM;
-	self->read = lz4_filter_read;
-	self->skip = NULL; /* not supported */
-	self->close = lz4_filter_close;
+	self->vtable = &lz4_reader_vtable;
 
 	return (ARCHIVE_OK);
 }
@@ -256,7 +248,7 @@ lz4_allocate_out_block(struct archive_read_filter *self)
 		out_block_size += 64 * 1024;
 	if (state->out_block_size < out_block_size) {
 		free(state->out_block);
-		out_block = (unsigned char *)malloc(out_block_size);
+		out_block = malloc(out_block_size);
 		state->out_block_size = out_block_size;
 		if (out_block == NULL) {
 			archive_set_error(&self->archive->archive, ENOMEM,
@@ -279,7 +271,7 @@ lz4_allocate_out_block_for_legacy(struct archive_read_filter *self)
 
 	if (state->out_block_size < out_block_size) {
 		free(state->out_block);
-		out_block = (unsigned char *)malloc(out_block_size);
+		out_block = malloc(out_block_size);
 		state->out_block_size = out_block_size;
 		if (out_block == NULL) {
 			archive_set_error(&self->archive->archive, ENOMEM,
@@ -455,12 +447,14 @@ lz4_filter_read_descriptor(struct archive_read_filter *self)
 	chsum = __archive_xxhash.XXH32(read_buf, (int)descriptor_bytes -1, 0);
 	chsum = (chsum >> 8) & 0xff;
 	chsum_verifier = read_buf[descriptor_bytes-1] & 0xff;
+#ifndef DONT_FAIL_ON_CRC_ERROR
 	if (chsum != chsum_verifier)
 		goto malformed_error;
+#endif
 
 	__archive_read_filter_consume(self->upstream, descriptor_bytes);
 
-	/* Make sure we have an enough buffer for uncompressed data. */
+	/* Make sure we have a large enough buffer for uncompressed data. */
 	if (lz4_allocate_out_block(self) != ARCHIVE_OK)
 		return (ARCHIVE_FATAL);
 	if (state->flags.stream_checksum)
@@ -520,14 +514,16 @@ lz4_filter_read_data_block(struct archive_read_filter *self, const void **p)
 	if (read_buf == NULL)
 		goto truncated_error;
 
-	/* Optional process, checking a block sum. */
+	/* Optional processing, checking a block sum. */
 	if (checksum_size) {
 		unsigned int chsum = __archive_xxhash.XXH32(
 			read_buf + 4, (int)compressed_size, 0);
 		unsigned int chsum_block =
 		    archive_le32dec(read_buf + 4 + compressed_size);
+#ifndef DONT_FAIL_ON_CRC_ERROR
 		if (chsum != chsum_block)
 			goto malformed_error;
+#endif
 	}
 
 
@@ -586,7 +582,7 @@ lz4_filter_read_data_block(struct archive_read_filter *self, const void **p)
 		    state->out_block + prefix64k, (int)compressed_size,
 		    state->flags.block_maximum_size,
 		    state->out_block,
-		    prefix64k);
+		    (int)prefix64k);
 #else
 		uncompressed_size = LZ4_decompress_safe_withPrefix64k(
 		    read_buf + 4,
@@ -640,7 +636,7 @@ lz4_filter_read_default_stream(struct archive_read_filter *self, const void **p)
 	if (ret == 0 && *p == NULL)
 		state->stage = SELECT_STREAM;
 
-	/* Optional process, checking a stream sum. */
+	/* Optional processing, checking a stream sum. */
 	if (state->flags.stream_checksum) {
 		if (state->stage == SELECT_STREAM) {
 			unsigned int checksum;
@@ -658,10 +654,12 @@ lz4_filter_read_default_stream(struct archive_read_filter *self, const void **p)
 			    state->xxh32_state);
 			state->xxh32_state = NULL;
 			if (checksum != checksum_stream) {
+#ifndef DONT_FAIL_ON_CRC_ERROR
 				archive_set_error(&self->archive->archive,
 				    ARCHIVE_ERRNO_MISC,
-				    "lz4 stream cheksum error");
+				    "lz4 stream checksum error");
 				return (ARCHIVE_FATAL);
+#endif
 			}
 		} else if (ret > 0)
 			__archive_xxhash.XXH32_update(state->xxh32_state,
@@ -674,7 +672,7 @@ static ssize_t
 lz4_filter_read_legacy_stream(struct archive_read_filter *self, const void **p)
 {
 	struct private_data *state = (struct private_data *)self->data;
-	int compressed;
+	uint32_t compressed;
 	const char *read_buf;
 	ssize_t ret;
 

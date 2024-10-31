@@ -26,7 +26,6 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD$");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -48,6 +47,7 @@ __FBSDID("$FreeBSD$");
 #include "archive_private.h"
 #include "archive_random_private.h"
 #include "archive_write_private.h"
+#include "archive_write_set_format_private.h"
 
 struct warc_s {
 	unsigned int omit_warcinfo:1;
@@ -259,10 +259,8 @@ _warc_header(struct archive_write *a, struct archive_entry *entry)
 		return (ARCHIVE_OK);
 	}
 	/* just resort to erroring as per Tim's advice */
-	archive_set_error(
-		&a->archive,
-		ARCHIVE_ERRNO_FILE_FORMAT,
-		"WARC can only process regular files");
+	__archive_write_entry_filetype_unsupported(
+	    &a->archive, entry, "WARC");
 	return (ARCHIVE_FAILED);
 }
 
@@ -330,21 +328,21 @@ xstrftime(struct archive_string *as, const char *fmt, time_t t)
 {
 /** like strftime(3) but for time_t objects */
 	struct tm *rt;
-#if defined(HAVE_GMTIME_R) || defined(HAVE__GMTIME64_S)
+#if defined(HAVE_GMTIME_R) || defined(HAVE_GMTIME_S)
 	struct tm timeHere;
 #endif
 	char strtime[100];
 	size_t len;
 
-#ifdef HAVE_GMTIME_R
-	if ((rt = gmtime_r(&t, &timeHere)) == NULL)
-		return;
-#elif defined(HAVE__GMTIME64_S)
-	_gmtime64_s(&timeHere, &t);
+#if defined(HAVE_GMTIME_S)
+	rt = gmtime_s(&timeHere, &t) ? NULL : &timeHere;
+#elif defined(HAVE_GMTIME_R)
+	rt = gmtime_r(&t, &timeHere);
 #else
-	if ((rt = gmtime(&t)) == NULL)
-		return;
+	rt = gmtime(&t);
 #endif
+	if (!rt)
+		return;
 	/* leave the hard yacker to our role model strftime() */
 	len = strftime(strtime, sizeof(strtime)-1, fmt, rt);
 	archive_strncat(as, strtime, len);

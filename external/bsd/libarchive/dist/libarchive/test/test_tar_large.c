@@ -23,7 +23,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: head/lib/libarchive/test/test_tar_large.c 201247 2009-12-30 05:59:21Z kientzle $");
 
 #include <errno.h>
 #include <stdlib.h>
@@ -100,7 +99,7 @@ memory_write(struct archive *a, void *_private, const void *buff, size_t size)
 	} else {
 		/* Yes, we're assuming the very first write is metadata. */
 		/* It's header or metadata, copy and save it. */
-		block = (struct memblock *)malloc(sizeof(*block));
+		block = malloc(sizeof(*block));
 		memset(block, 0, sizeof(*block));
 		block->size = size;
 		block->buff = malloc(size);
@@ -224,7 +223,7 @@ DEFINE_TEST(test_tar_large)
 	 */
 	for (i = 0; tests[i] != 0; i++) {
 		assert((ae = archive_entry_new()) != NULL);
-		sprintf(namebuff, "file_%d", i);
+		snprintf(namebuff, sizeof(namebuff), "file_%d", i);
 		archive_entry_copy_pathname(ae, namebuff);
 		archive_entry_set_mode(ae, S_IFREG | 0755);
 		filesize = tests[i];
@@ -271,7 +270,7 @@ DEFINE_TEST(test_tar_large)
 	 */
 	for (i = 0; tests[i] > 0; i++) {
 		assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-		sprintf(namebuff, "file_%d", i);
+		snprintf(namebuff, sizeof(namebuff), "file_%d", i);
 		assertEqualString(namebuff, archive_entry_pathname(ae));
 		assert(tests[i] == archive_entry_size(ae));
 	}

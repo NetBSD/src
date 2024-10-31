@@ -25,8 +25,6 @@
 
 #include "archive_platform.h"
 
-__FBSDID("$FreeBSD$");
-
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
 #endif
@@ -70,7 +68,6 @@ static int	bzip2_filter_close(struct archive_read_filter *);
  */
 static int	bzip2_reader_bid(struct archive_read_filter_bidder *, struct archive_read_filter *);
 static int	bzip2_reader_init(struct archive_read_filter *);
-static int	bzip2_reader_free(struct archive_read_filter_bidder *);
 
 #if ARCHIVE_VERSION_NUMBER < 4000000
 /* Deprecated; remove in libarchive 4.0 */
@@ -81,24 +78,21 @@ archive_read_support_compression_bzip2(struct archive *a)
 }
 #endif
 
+static const struct archive_read_filter_bidder_vtable
+bzip2_bidder_vtable = {
+	.bid = bzip2_reader_bid,
+	.init = bzip2_reader_init,
+};
+
 int
 archive_read_support_filter_bzip2(struct archive *_a)
 {
 	struct archive_read *a = (struct archive_read *)_a;
-	struct archive_read_filter_bidder *reader;
 
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_read_support_filter_bzip2");
-
-	if (__archive_read_get_bidder(a, &reader) != ARCHIVE_OK)
+	if (__archive_read_register_bidder(a, NULL, "bzip2",
+				&bzip2_bidder_vtable) != ARCHIVE_OK)
 		return (ARCHIVE_FATAL);
 
-	reader->data = NULL;
-	reader->name = "bzip2";
-	reader->bid = bzip2_reader_bid;
-	reader->init = bzip2_reader_init;
-	reader->options = NULL;
-	reader->free = bzip2_reader_free;
 #if defined(HAVE_BZLIB_H) && defined(BZ_CONFIG_ERROR)
 	return (ARCHIVE_OK);
 #else
@@ -106,12 +100,6 @@ archive_read_support_filter_bzip2(struct archive *_a)
 	    "Using external bzip2 program");
 	return (ARCHIVE_WARN);
 #endif
-}
-
-static int
-bzip2_reader_free(struct archive_read_filter_bidder *self){
-	(void)self; /* UNUSED */
-	return (ARCHIVE_OK);
 }
 
 /*
@@ -183,6 +171,12 @@ bzip2_reader_init(struct archive_read_filter *self)
 
 #else
 
+static const struct archive_read_filter_vtable
+bzip2_reader_vtable = {
+	.read = bzip2_filter_read,
+	.close = bzip2_filter_close,
+};
+
 /*
  * Setup the callbacks.
  */
@@ -196,8 +190,8 @@ bzip2_reader_init(struct archive_read_filter *self)
 	self->code = ARCHIVE_FILTER_BZIP2;
 	self->name = "bzip2";
 
-	state = (struct private_data *)calloc(sizeof(*state), 1);
-	out_block = (unsigned char *)malloc(out_block_size);
+	state = calloc(1, sizeof(*state));
+	out_block = malloc(out_block_size);
 	if (state == NULL || out_block == NULL) {
 		archive_set_error(&self->archive->archive, ENOMEM,
 		    "Can't allocate data for bzip2 decompression");
@@ -209,9 +203,7 @@ bzip2_reader_init(struct archive_read_filter *self)
 	self->data = state;
 	state->out_block_size = out_block_size;
 	state->out_block = out_block;
-	self->read = bzip2_filter_read;
-	self->skip = NULL; /* not supported */
-	self->close = bzip2_filter_close;
+	self->vtable = &bzip2_reader_vtable;
 
 	return (ARCHIVE_OK);
 }
@@ -236,7 +228,7 @@ bzip2_filter_read(struct archive_read_filter *self, const void **p)
 
 	/* Empty our output buffer. */
 	state->stream.next_out = state->out_block;
-	state->stream.avail_out = state->out_block_size;
+	state->stream.avail_out = (uint32_t)state->out_block_size;
 
 	/* Try to fill the output buffer. */
 	for (;;) {
@@ -294,7 +286,7 @@ bzip2_filter_read(struct archive_read_filter *self, const void **p)
 			return (ARCHIVE_FATAL);
 		}
 		state->stream.next_in = (char *)(uintptr_t)read_buf;
-		state->stream.avail_in = ret;
+		state->stream.avail_in = (uint32_t)ret;
 		/* There is no more data, return whatever we have. */
 		if (ret == 0) {
 			state->eof = 1;

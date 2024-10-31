@@ -25,7 +25,6 @@
  */
 
 #include "test.h"
-__FBSDID("$FreeBSD: head/lib/libarchive/test/test_write_compress.c 189308 2009-03-03 17:02:51Z kientzle $");
 
 /*
  * A basic exercise of compress reading and writing.
@@ -44,10 +43,10 @@ DEFINE_TEST(test_write_filter_compress)
 	int i;
 
 	buffsize = 1000000;
-	assert(NULL != (buff = (char *)malloc(buffsize)));
+	assert(NULL != (buff = malloc(buffsize)));
 
 	datasize = 10000;
-	assert(NULL != (data = (char *)malloc(datasize)));
+	assert(NULL != (data = malloc(datasize)));
 	memset(data, 0, datasize);
 
 	assert((a = archive_write_new()) != NULL);
@@ -59,7 +58,7 @@ DEFINE_TEST(test_write_filter_compress)
 	    archive_write_open_memory(a, buff, buffsize, &used));
 
 	for (i = 0; i < 100; i++) {
-		sprintf(path, "file%03d", i);
+		snprintf(path, sizeof(path), "file%03d", i);
 		assert((ae = archive_entry_new()) != NULL);
 		archive_entry_copy_pathname(ae, path);
 		archive_entry_set_size(ae, datasize);
@@ -83,7 +82,7 @@ DEFINE_TEST(test_write_filter_compress)
 
 
 	for (i = 0; i < 100; i++) {
-		sprintf(path, "file%03d", i);
+		snprintf(path, sizeof(path), "file%03d", i);
 		if (!assertEqualInt(0, archive_read_next_header(a, &ae)))
 			break;
 		assertEqualString(path, archive_entry_pathname(ae));

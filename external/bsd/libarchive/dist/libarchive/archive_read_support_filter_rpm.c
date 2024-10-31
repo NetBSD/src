@@ -39,8 +39,8 @@
 
 struct rpm {
 	int64_t		 total_in;
-	size_t		 hpos;
-	size_t		 hlen;
+	uint64_t	 hpos;
+	uint64_t	 hlen;
 	unsigned char	 header[16];
 	enum {
 		ST_LEAD,	/* Skipping 'Lead' section. */
@@ -53,7 +53,8 @@ struct rpm {
 	}		 state;
 	int		 first_header;
 };
-#define RPM_LEAD_SIZE	96	/* Size of 'Lead' section. */
+#define RPM_LEAD_SIZE		96	/* Size of 'Lead' section. */
+#define RPM_MIN_HEAD_SIZE	16	/* Minimum size of 'Head'. */
 
 static int	rpm_bidder_bid(struct archive_read_filter_bidder *,
 		    struct archive_read_filter *);
@@ -62,6 +63,8 @@ static int	rpm_bidder_init(struct archive_read_filter *);
 static ssize_t	rpm_filter_read(struct archive_read_filter *,
 		    const void **);
 static int	rpm_filter_close(struct archive_read_filter *);
+
+static inline size_t rpm_limit_bytes(uint64_t, size_t);
 
 #if ARCHIVE_VERSION_NUMBER < 4000000
 /* Deprecated; remove in libarchive 4.0 */
@@ -72,25 +75,19 @@ archive_read_support_compression_rpm(struct archive *a)
 }
 #endif
 
+static const struct archive_read_filter_bidder_vtable
+rpm_bidder_vtable = {
+	.bid = rpm_bidder_bid,
+	.init = rpm_bidder_init,
+};
+
 int
 archive_read_support_filter_rpm(struct archive *_a)
 {
 	struct archive_read *a = (struct archive_read *)_a;
-	struct archive_read_filter_bidder *bidder;
 
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_read_support_filter_rpm");
-
-	if (__archive_read_get_bidder(a, &bidder) != ARCHIVE_OK)
-		return (ARCHIVE_FATAL);
-
-	bidder->data = NULL;
-	bidder->name = "rpm";
-	bidder->bid = rpm_bidder_bid;
-	bidder->init = rpm_bidder_init;
-	bidder->options = NULL;
-	bidder->free = NULL;
-	return (ARCHIVE_OK);
+	return __archive_read_register_bidder(a, NULL, "rpm",
+			&rpm_bidder_vtable);
 }
 
 static int
@@ -133,6 +130,12 @@ rpm_bidder_bid(struct archive_read_filter_bidder *self,
 	return (bits_checked);
 }
 
+static const struct archive_read_filter_vtable
+rpm_reader_vtable = {
+	.read = rpm_filter_read,
+	.close = rpm_filter_close,
+};
+
 static int
 rpm_bidder_init(struct archive_read_filter *self)
 {
@@ -140,11 +143,8 @@ rpm_bidder_init(struct archive_read_filter *self)
 
 	self->code = ARCHIVE_FILTER_RPM;
 	self->name = "rpm";
-	self->read = rpm_filter_read;
-	self->skip = NULL; /* not supported */
-	self->close = rpm_filter_close;
 
-	rpm = (struct rpm *)calloc(sizeof(*rpm), 1);
+	rpm = calloc(1, sizeof(*rpm));
 	if (rpm == NULL) {
 		archive_set_error(&self->archive->archive, ENOMEM,
 		    "Can't allocate data for rpm");
@@ -153,8 +153,15 @@ rpm_bidder_init(struct archive_read_filter *self)
 
 	self->data = rpm;
 	rpm->state = ST_LEAD;
+	self->vtable = &rpm_reader_vtable;
 
 	return (ARCHIVE_OK);
+}
+
+static inline size_t
+rpm_limit_bytes(uint64_t bytes, size_t max)
+{
+	return (bytes > max ? max : (size_t)bytes);
 }
 
 static ssize_t
@@ -162,10 +169,10 @@ rpm_filter_read(struct archive_read_filter *self, const void **buff)
 {
 	struct rpm *rpm;
 	const unsigned char *b;
-	ssize_t avail_in, total;
-	size_t used, n;
-	uint32_t section;
-	uint32_t bytes;
+	ssize_t avail_in, total, used;
+	size_t n;
+	uint64_t section;
+	uint64_t bytes;
 
 	rpm = (struct rpm *)self->data;
 	*buff = NULL;
@@ -199,15 +206,14 @@ rpm_filter_read(struct archive_read_filter *self, const void **buff)
 			}
 			break;
 		case ST_HEADER:
-			n = 16 - rpm->hpos;
-			if (n > avail_in - used)
-				n = avail_in - used;
+			n = rpm_limit_bytes(RPM_MIN_HEAD_SIZE - rpm->hpos,
+			    avail_in - used);
 			memcpy(rpm->header+rpm->hpos, b, n);
 			b += n;
 			used += n;
 			rpm->hpos += n;
 
-			if (rpm->hpos == 16) {
+			if (rpm->hpos == RPM_MIN_HEAD_SIZE) {
 				if (rpm->header[0] != 0x8e ||
 				    rpm->header[1] != 0xad ||
 				    rpm->header[2] != 0xe8 ||
@@ -216,26 +222,25 @@ rpm_filter_read(struct archive_read_filter *self, const void **buff)
 						archive_set_error(
 						    &self->archive->archive,
 						    ARCHIVE_ERRNO_FILE_FORMAT,
-						    "Unrecoginized rpm header");
+						    "Unrecognized rpm header");
 						return (ARCHIVE_FATAL);
 					}
 					rpm->state = ST_ARCHIVE;
 					*buff = rpm->header;
-					total = rpm->hpos;
+					total = RPM_MIN_HEAD_SIZE;
 					break;
 				}
 				/* Calculate 'Header' length. */
 				section = archive_be32dec(rpm->header+8);
 				bytes = archive_be32dec(rpm->header+12);
-				rpm->hlen = 16 + section * 16 + bytes;
+				rpm->hlen = rpm->hpos + section * 16 + bytes;
 				rpm->state = ST_HEADER_DATA;
 				rpm->first_header = 0;
 			}
 			break;
 		case ST_HEADER_DATA:
-			n = rpm->hlen - rpm->hpos;
-			if (n > avail_in - used)
-				n = avail_in - used;
+			n = rpm_limit_bytes(rpm->hlen - rpm->hpos,
+			    avail_in - used);
 			b += n;
 			used += n;
 			rpm->hpos += n;
@@ -243,7 +248,7 @@ rpm_filter_read(struct archive_read_filter *self, const void **buff)
 				rpm->state = ST_PADDING;
 			break;
 		case ST_PADDING:
-			while (used < (size_t)avail_in) {
+			while (used < avail_in) {
 				if (*b != 0) {
 					/* Read next header. */
 					rpm->state = ST_HEADER;
@@ -261,7 +266,7 @@ rpm_filter_read(struct archive_read_filter *self, const void **buff)
 			used = avail_in;
 			break;
 		}
-		if (used == (size_t)avail_in) {
+		if (used == avail_in) {
 			rpm->total_in += used;
 			__archive_read_filter_consume(self->upstream, used);
 			b = NULL;

@@ -24,7 +24,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD$");
 
 #if ARCHIVE_ACL_NFS4
 #if HAVE_SYS_ACL_H
@@ -907,7 +906,7 @@ DEFINE_TEST(test_acl_platform_nfs4)
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
 
 	for (i = 0; i < acls_dir_cnt; ++i) {
-	  sprintf(buff, "dir%d", i);
+	  snprintf(buff, sizeof(buff), "dir%d", i);
 	  archive_entry_set_pathname(ae, buff);
 	  archive_entry_set_filetype(ae, AE_IFDIR);
 	  archive_entry_set_perm(ae, 0654);
@@ -960,7 +959,7 @@ DEFINE_TEST(test_acl_platform_nfs4)
 
 	/* Verify single-permission dirs on disk. */
 	for (i = 0; i < dircnt; ++i) {
-		sprintf(buff, "dir%d", i);
+		snprintf(buff, sizeof(buff), "dir%d", i);
 		assertEqualInt(0, stat(buff, &st));
 		assertEqualInt(st.st_mtime, 123456 + i);
 #if ARCHIVE_ACL_SUNOS_NFS4

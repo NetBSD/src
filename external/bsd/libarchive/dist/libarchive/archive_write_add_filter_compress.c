@@ -58,8 +58,6 @@
 
 #include "archive_platform.h"
 
-__FBSDID("$FreeBSD: head/lib/libarchive/archive_write_set_compression_compress.c 201111 2009-12-28 03:33:05Z kientzle $");
-
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
 #endif
@@ -146,18 +144,13 @@ archive_write_add_filter_compress(struct archive *_a)
 static int
 archive_compressor_compress_open(struct archive_write_filter *f)
 {
-	int ret;
 	struct private_data *state;
 	size_t bs = 65536, bpb;
 
 	f->code = ARCHIVE_FILTER_COMPRESS;
 	f->name = "compress";
 
-	ret = __archive_write_open_filter(f->next_filter);
-	if (ret != ARCHIVE_OK)
-		return (ret);
-
-	state = (struct private_data *)calloc(1, sizeof(*state));
+	state = calloc(1, sizeof(*state));
 	if (state == NULL) {
 		archive_set_error(f->archive, ENOMEM,
 		    "Can't allocate data for compression");
@@ -165,7 +158,7 @@ archive_compressor_compress_open(struct archive_write_filter *f)
 	}
 
 	if (f->archive->magic == ARCHIVE_WRITE_MAGIC) {
-		/* Buffer size should be a multiple number of the of bytes
+		/* Buffer size should be a multiple number of the bytes
 		 * per block for performance. */
 		bpb = archive_write_get_bytes_per_block(f->archive);
 		if (bpb > bs)
@@ -357,7 +350,7 @@ archive_compressor_compress_write(struct archive_write_filter *f,
 	while (length--) {
 		c = *bp++;
 		state->in_count++;
-		state->cur_fcode = (c << 16) + state->cur_code;
+		state->cur_fcode = (c << 16) | state->cur_code;
 		i = ((c << HSHIFT) ^ state->cur_code);	/* Xor hashing. */
 
 		if (state->hashtab[i] == state->cur_fcode) {
@@ -426,30 +419,27 @@ static int
 archive_compressor_compress_close(struct archive_write_filter *f)
 {
 	struct private_data *state = (struct private_data *)f->data;
-	int ret, ret2;
+	int ret;
 
 	ret = output_code(f, state->cur_code);
 	if (ret != ARCHIVE_OK)
-		goto cleanup;
+		return ret;
 	ret = output_flush(f);
 	if (ret != ARCHIVE_OK)
-		goto cleanup;
+		return ret;
 
 	/* Write the last block */
 	ret = __archive_write_filter(f->next_filter,
 	    state->compressed, state->compressed_offset);
-cleanup:
-	ret2 = __archive_write_close_filter(f->next_filter);
-	if (ret > ret2)
-		ret = ret2;
-	free(state->compressed);
-	free(state);
 	return (ret);
 }
 
 static int
 archive_compressor_compress_free(struct archive_write_filter *f)
 {
-	(void)f; /* UNUSED */
+	struct private_data *state = (struct private_data *)f->data;
+
+	free(state->compressed);
+	free(state);
 	return (ARCHIVE_OK);
 }

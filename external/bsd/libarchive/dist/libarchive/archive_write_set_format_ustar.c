@@ -25,8 +25,6 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: head/lib/libarchive/archive_write_set_format_ustar.c 191579 2009-04-27 18:35:03Z kientzle $");
-
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -44,6 +42,7 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_write_set_format_ustar.c 191579 
 #include "archive_entry_locale.h"
 #include "archive_private.h"
 #include "archive_write_private.h"
+#include "archive_write_set_format_private.h"
 
 struct ustar {
 	uint64_t	entry_bytes_remaining;
@@ -184,7 +183,7 @@ archive_write_set_format_ustar(struct archive *_a)
 		return (ARCHIVE_FATAL);
 	}
 
-	ustar = (struct ustar *)calloc(1, sizeof(*ustar));
+	ustar = calloc(1, sizeof(*ustar));
 	if (ustar == NULL) {
 		archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate ustar data");
@@ -255,7 +254,11 @@ archive_write_ustar_header(struct archive_write *a, struct archive_entry *entry)
 		sconv = ustar->opt_sconv;
 
 	/* Sanity check. */
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	if (archive_entry_pathname_w(entry) == NULL) {
+#else
 	if (archive_entry_pathname(entry) == NULL) {
+#endif
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Can't record entry in tar file without pathname");
 		return (ARCHIVE_FAILED);
@@ -264,7 +267,7 @@ archive_write_ustar_header(struct archive_write *a, struct archive_entry *entry)
 	/* Only regular files (not hardlinks) have data. */
 	if (archive_entry_hardlink(entry) != NULL ||
 	    archive_entry_symlink(entry) != NULL ||
-	    !(archive_entry_filetype(entry) == AE_IFREG))
+	    archive_entry_filetype(entry) != AE_IFREG)
 		archive_entry_set_size(entry, 0);
 
 	if (AE_IFDIR == archive_entry_filetype(entry)) {
@@ -512,9 +515,11 @@ __archive_write_format_header_ustar(struct archive_write *a, char h[512],
 	}
 	if (copy_length > 0) {
 		if (copy_length > USTAR_uname_size) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-			    "Username too long");
-			ret = ARCHIVE_FAILED;
+			if (tartype != 'x') {
+				archive_set_error(&a->archive,
+				    ARCHIVE_ERRNO_MISC, "Username too long");
+				ret = ARCHIVE_FAILED;
+			}
 			copy_length = USTAR_uname_size;
 		}
 		memcpy(h + USTAR_uname_offset, p, copy_length);
@@ -535,9 +540,11 @@ __archive_write_format_header_ustar(struct archive_write *a, char h[512],
 	}
 	if (copy_length > 0) {
 		if (strlen(p) > USTAR_gname_size) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-			    "Group name too long");
-			ret = ARCHIVE_FAILED;
+			if (tartype != 'x') {
+				archive_set_error(&a->archive,
+				    ARCHIVE_ERRNO_MISC, "Group name too long");
+				ret = ARCHIVE_FAILED;
+			}
 			copy_length = USTAR_gname_size;
 		}
 		memcpy(h + USTAR_gname_offset, p, copy_length);
@@ -609,16 +616,9 @@ __archive_write_format_header_ustar(struct archive_write *a, char h[512],
 		case AE_IFBLK: h[USTAR_typeflag_offset] = '4' ; break;
 		case AE_IFDIR: h[USTAR_typeflag_offset] = '5' ; break;
 		case AE_IFIFO: h[USTAR_typeflag_offset] = '6' ; break;
-		case AE_IFSOCK:
-			archive_set_error(&a->archive,
-			    ARCHIVE_ERRNO_FILE_FORMAT,
-			    "tar format cannot archive socket");
-			return (ARCHIVE_FAILED);
-		default:
-			archive_set_error(&a->archive,
-			    ARCHIVE_ERRNO_FILE_FORMAT,
-			    "tar format cannot archive this (mode=0%lo)",
-			    (unsigned long)archive_entry_mode(entry));
+		default: /* AE_IFSOCK and unknown */
+			__archive_write_entry_filetype_unsupported(
+			    &a->archive, entry, "ustar");
 			ret = ARCHIVE_FAILED;
 		}
 	}

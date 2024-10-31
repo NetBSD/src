@@ -26,8 +26,6 @@
 
 #include "archive_platform.h"
 
-__FBSDID("$FreeBSD: head/lib/libarchive/archive_write_set_compression_xz.c 201108 2009-12-28 03:28:21Z kientzle $");
-
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
 #endif
@@ -251,13 +249,13 @@ archive_compressor_xz_init_stream(struct archive_write_filter *f,
 		int ds, log2dic, wedges;
 
 		/* Calculate a coded dictionary size */
-		if (dict_size < (1 << 12) || dict_size > (1 << 27)) {
+		if (dict_size < (1 << 12) || dict_size > (1 << 29)) {
 			archive_set_error(f->archive, ARCHIVE_ERRNO_MISC,
 			    "Unacceptable dictionary size for lzip: %d",
 			    dict_size);
 			return (ARCHIVE_FATAL);
 		}
-		for (log2dic = 27; log2dic >= 12; log2dic--) {
+		for (log2dic = 29; log2dic >= 12; log2dic--) {
 			if (dict_size & (1 << log2dic))
 				break;
 		}
@@ -309,14 +307,10 @@ archive_compressor_xz_open(struct archive_write_filter *f)
 	struct private_data *data = f->data;
 	int ret;
 
-	ret = __archive_write_open_filter(f->next_filter);
-	if (ret != ARCHIVE_OK)
-		return (ret);
-
 	if (data->compressed == NULL) {
 		size_t bs = 65536, bpb;
 		if (f->archive->magic == ARCHIVE_WRITE_MAGIC) {
-			/* Buffer size should be a multiple number of the of bytes
+			/* Buffer size should be a multiple number of the bytes
 			 * per block for performance. */
 			bpb = archive_write_get_bytes_per_block(f->archive);
 			if (bpb > bs)
@@ -325,8 +319,7 @@ archive_compressor_xz_open(struct archive_write_filter *f)
 				bs -= bs % bpb;
 		}
 		data->compressed_buffer_size = bs;
-		data->compressed
-		    = (unsigned char *)malloc(data->compressed_buffer_size);
+		data->compressed = malloc(data->compressed_buffer_size);
 		if (data->compressed == NULL) {
 			archive_set_error(f->archive, ENOMEM,
 			    "Can't allocate data for compression buffer");
@@ -386,8 +379,8 @@ archive_compressor_xz_options(struct archive_write_filter *f,
 		    value[1] != '\0')
 			return (ARCHIVE_WARN);
 		data->compression_level = value[0] - '0';
-		if (data->compression_level > 6)
-			data->compression_level = 6;
+		if (data->compression_level > 9)
+			data->compression_level = 9;
 		return (ARCHIVE_OK);
 	} else if (strcmp(key, "threads") == 0) {
 		char *endptr;
@@ -448,7 +441,7 @@ static int
 archive_compressor_xz_close(struct archive_write_filter *f)
 {
 	struct private_data *data = (struct private_data *)f->data;
-	int ret, r1;
+	int ret;
 
 	ret = drive_compressor(f, data, 1);
 	if (ret == ARCHIVE_OK) {
@@ -466,8 +459,7 @@ archive_compressor_xz_close(struct archive_write_filter *f)
 		}
 	}
 	lzma_end(&(data->stream));
-	r1 = __archive_write_close_filter(f->next_filter);
-	return (r1 < ret ? r1 : ret);
+	return ret;
 }
 
 static int

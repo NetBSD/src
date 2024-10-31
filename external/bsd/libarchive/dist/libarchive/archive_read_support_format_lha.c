@@ -175,7 +175,9 @@ struct lha {
 	struct archive_string 	 gname;
 	uint16_t		 header_crc;
 	uint16_t		 crc;
-	struct archive_string_conv *sconv;
+	/* dirname and filename could be in different codepages */
+	struct archive_string_conv *sconv_dir;
+	struct archive_string_conv *sconv_fname;
 	struct archive_string_conv *opt_sconv;
 
 	struct archive_string 	 dirname;
@@ -225,15 +227,15 @@ static int	lha_read_file_header_1(struct archive_read *, struct lha *);
 static int	lha_read_file_header_2(struct archive_read *, struct lha *);
 static int	lha_read_file_header_3(struct archive_read *, struct lha *);
 static int	lha_read_file_extended_header(struct archive_read *,
-		    struct lha *, uint16_t *, int, size_t, size_t *);
+		    struct lha *, uint16_t *, int, uint64_t, size_t *);
 static size_t	lha_check_header_format(const void *);
 static int	lha_skip_sfx(struct archive_read *);
 static time_t	lha_dos_time(const unsigned char *);
 static time_t	lha_win_time(uint64_t, long *);
 static unsigned char	lha_calcsum(unsigned char, const void *,
 		    int, size_t);
-static int	lha_parse_linkname(struct archive_string *,
-		    struct archive_string *);
+static int	lha_parse_linkname(struct archive_wstring *,
+		    struct archive_wstring *);
 static int	lha_read_data_none(struct archive_read *, const void **,
 		    size_t *, int64_t *);
 static int	lha_read_data_lzh(struct archive_read *, const void **,
@@ -263,7 +265,7 @@ archive_read_support_format_lha(struct archive *_a)
 	archive_check_magic(_a, ARCHIVE_READ_MAGIC,
 	    ARCHIVE_STATE_NEW, "archive_read_support_format_lha");
 
-	lha = (struct lha *)calloc(1, sizeof(*lha));
+	lha = calloc(1, sizeof(*lha));
 	if (lha == NULL) {
 		archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate lha data");
@@ -473,13 +475,15 @@ static int
 archive_read_format_lha_read_header(struct archive_read *a,
     struct archive_entry *entry)
 {
-	struct archive_string linkname;
-	struct archive_string pathname;
+	struct archive_wstring linkname;
+	struct archive_wstring pathname;
 	struct lha *lha;
 	const unsigned char *p;
 	const char *signature;
 	int err;
-	
+	struct archive_mstring conv_buffer;
+	const wchar_t *conv_buffer_p;
+
 	lha_crc16_init();
 
 	a->archive.archive_format = ARCHIVE_FORMAT_LHA;
@@ -561,10 +565,13 @@ archive_read_format_lha_read_header(struct archive_read *a,
 	archive_string_empty(&lha->dirname);
 	archive_string_empty(&lha->filename);
 	lha->dos_attr = 0;
-	if (lha->opt_sconv != NULL)
-		lha->sconv = lha->opt_sconv;
-	else
-		lha->sconv = NULL;
+	if (lha->opt_sconv != NULL) {
+		lha->sconv_dir = lha->opt_sconv;
+		lha->sconv_fname = lha->opt_sconv;
+	} else {
+		lha->sconv_dir = NULL;
+		lha->sconv_fname = NULL;
+	}
 
 	switch (p[H_LEVEL_OFFSET]) {
 	case 0:
@@ -594,12 +601,54 @@ archive_read_format_lha_read_header(struct archive_read *a,
 		return (truncated_error(a));
 
 	/*
-	 * Make a pathname from a dirname and a filename.
-	 */
-	archive_string_concat(&lha->dirname, &lha->filename);
+	 * Make a pathname from a dirname and a filename, after converting to Unicode.
+	 * This is because codepages might differ between dirname and filename.
+	*/
 	archive_string_init(&pathname);
 	archive_string_init(&linkname);
-	archive_string_copy(&pathname, &lha->dirname);
+	archive_string_init(&conv_buffer.aes_mbs);
+	archive_string_init(&conv_buffer.aes_mbs_in_locale);
+	archive_string_init(&conv_buffer.aes_utf8);
+	archive_string_init(&conv_buffer.aes_wcs);
+	if (0 != archive_mstring_copy_mbs_len_l(&conv_buffer, lha->dirname.s, lha->dirname.length, lha->sconv_dir)) {
+		archive_set_error(&a->archive,
+			ARCHIVE_ERRNO_FILE_FORMAT,
+			"Pathname cannot be converted "
+			"from %s to Unicode.",
+			archive_string_conversion_charset_name(lha->sconv_dir));
+		err = ARCHIVE_FATAL;
+	} else if (0 != archive_mstring_get_wcs(&a->archive, &conv_buffer, &conv_buffer_p))
+		err = ARCHIVE_FATAL;
+	if (err == ARCHIVE_FATAL) {
+		archive_mstring_clean(&conv_buffer);
+		archive_wstring_free(&pathname);
+		archive_wstring_free(&linkname);
+		return (err);
+	}
+	archive_wstring_copy(&pathname, &conv_buffer.aes_wcs);
+
+	archive_string_empty(&conv_buffer.aes_mbs);
+	archive_string_empty(&conv_buffer.aes_mbs_in_locale);
+	archive_string_empty(&conv_buffer.aes_utf8);
+	archive_wstring_empty(&conv_buffer.aes_wcs);
+	if (0 != archive_mstring_copy_mbs_len_l(&conv_buffer, lha->filename.s, lha->filename.length, lha->sconv_fname)) {
+		archive_set_error(&a->archive,
+			ARCHIVE_ERRNO_FILE_FORMAT,
+			"Pathname cannot be converted "
+			"from %s to Unicode.",
+			archive_string_conversion_charset_name(lha->sconv_fname));
+		err = ARCHIVE_FATAL;
+	}
+	else if (0 != archive_mstring_get_wcs(&a->archive, &conv_buffer, &conv_buffer_p))
+		err = ARCHIVE_FATAL;
+	if (err == ARCHIVE_FATAL) {
+		archive_mstring_clean(&conv_buffer);
+		archive_wstring_free(&pathname);
+		archive_wstring_free(&linkname);
+		return (err);
+	}
+	archive_wstring_concat(&pathname, &conv_buffer.aes_wcs);
+	archive_mstring_clean(&conv_buffer);
 
 	if ((lha->mode & AE_IFMT) == AE_IFLNK) {
 		/*
@@ -610,8 +659,8 @@ archive_read_format_lha_read_header(struct archive_read *a,
 			archive_set_error(&a->archive,
 		    	    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Unknown symlink-name");
-			archive_string_free(&pathname);
-			archive_string_free(&linkname);
+			archive_wstring_free(&pathname);
+			archive_wstring_free(&linkname);
 			return (ARCHIVE_FAILED);
 		}
 	} else {
@@ -629,39 +678,13 @@ archive_read_format_lha_read_header(struct archive_read *a,
 	/*
 	 * Set basic file parameters.
 	 */
-	if (archive_entry_copy_pathname_l(entry, pathname.s,
-	    pathname.length, lha->sconv) != 0) {
-		if (errno == ENOMEM) {
-			archive_set_error(&a->archive, ENOMEM,
-			    "Can't allocate memory for Pathname");
-			return (ARCHIVE_FATAL);
-		}
-		archive_set_error(&a->archive,
-		    ARCHIVE_ERRNO_FILE_FORMAT,
-		    "Pathname cannot be converted "
-		    "from %s to current locale.",
-		    archive_string_conversion_charset_name(lha->sconv));
-		err = ARCHIVE_WARN;
-	}
-	archive_string_free(&pathname);
+	archive_entry_copy_pathname_w(entry, pathname.s);
+	archive_wstring_free(&pathname);
 	if (archive_strlen(&linkname) > 0) {
-		if (archive_entry_copy_symlink_l(entry, linkname.s,
-		    linkname.length, lha->sconv) != 0) {
-			if (errno == ENOMEM) {
-				archive_set_error(&a->archive, ENOMEM,
-				    "Can't allocate memory for Linkname");
-				return (ARCHIVE_FATAL);
-			}
-			archive_set_error(&a->archive,
-			    ARCHIVE_ERRNO_FILE_FORMAT,
-			    "Linkname cannot be converted "
-			    "from %s to current locale.",
-			    archive_string_conversion_charset_name(lha->sconv));
-			err = ARCHIVE_WARN;
-		}
+		archive_entry_copy_symlink_w(entry, linkname.s);
 	} else
 		archive_entry_set_symlink(entry, NULL);
-	archive_string_free(&linkname);
+	archive_wstring_free(&linkname);
 	/*
 	 * When a header level is 0, there is a possibility that
 	 * a pathname and a symlink has '\' character, a directory
@@ -716,7 +739,7 @@ archive_read_format_lha_read_header(struct archive_read *a,
 	if (lha->directory || lha->compsize == 0)
 		lha->end_of_entry = 1;
 
-	sprintf(lha->format_name, "lha -%c%c%c-",
+	snprintf(lha->format_name, sizeof(lha->format_name), "lha -%c%c%c-",
 	    lha->method[0], lha->method[1], lha->method[2]);
 	a->archive.archive_format_name = lha->format_name;
 
@@ -922,7 +945,7 @@ lha_read_file_header_1(struct archive_read *a, struct lha *lha)
 
 	/* Read extended headers */
 	err2 = lha_read_file_extended_header(a, lha, NULL, 2,
-	    (size_t)(lha->compsize + 2), &extdsize);
+	    (uint64_t)(lha->compsize + 2), &extdsize);
 	if (err2 < ARCHIVE_WARN)
 		return (err2);
 	if (err2 < err)
@@ -1016,9 +1039,11 @@ lha_read_file_header_2(struct archive_read *a, struct lha *lha)
 	}
 
 	if (header_crc != lha->header_crc) {
+#ifndef DONT_FAIL_ON_CRC_ERROR
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "LHa header CRC error");
 		return (ARCHIVE_FATAL);
+#endif
 	}
 	return (err);
 }
@@ -1084,9 +1109,11 @@ lha_read_file_header_3(struct archive_read *a, struct lha *lha)
 		return (err);
 
 	if (header_crc != lha->header_crc) {
+#ifndef DONT_FAIL_ON_CRC_ERROR
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "LHa header CRC error");
 		return (ARCHIVE_FATAL);
+#endif
 	}
 	return (err);
 invalid:
@@ -1111,7 +1138,7 @@ invalid:
  */
 static int
 lha_read_file_extended_header(struct archive_read *a, struct lha *lha,
-    uint16_t *crc, int sizefield_length, size_t limitsize, size_t *total_size)
+    uint16_t *crc, int sizefield_length, uint64_t limitsize, size_t *total_size)
 {
 	const void *h;
 	const unsigned char *extdheader;
@@ -1160,8 +1187,7 @@ lha_read_file_extended_header(struct archive_read *a, struct lha *lha,
 		}
 
 		/* Sanity check to the extended header size. */
-		if (((uint64_t)*total_size + extdsize) >
-				    (uint64_t)limitsize ||
+		if (((uint64_t)*total_size + extdsize) > limitsize ||
 		    extdsize <= (size_t)sizefield_length)
 			goto invalid;
 
@@ -1208,6 +1234,27 @@ lha_read_file_extended_header(struct archive_read *a, struct lha *lha,
 			archive_strncpy(&lha->filename,
 			    (const char *)extdheader, datasize);
 			break;
+		case EXT_UTF16_FILENAME:
+			if (datasize == 0) {
+				/* maybe directory header */
+				archive_string_empty(&lha->filename);
+				break;
+			} else if (datasize & 1) {
+				/* UTF-16 characters take always 2 or 4 bytes */
+				goto invalid;
+			}
+			if (extdheader[0] == '\0')
+				goto invalid;
+			archive_string_empty(&lha->filename);
+			archive_array_append(&lha->filename,
+				(const char *)extdheader, datasize);
+			/* Setup a string conversion for a filename. */
+			lha->sconv_fname =
+			    archive_string_conversion_from_charset(&a->archive,
+			        "UTF-16LE", 1);
+			if (lha->sconv_fname == NULL)
+				return (ARCHIVE_FATAL);
+			break;
 		case EXT_DIRECTORY:
 			if (datasize == 0 || extdheader[0] == '\0')
 				/* no directory name data. exit this case. */
@@ -1227,6 +1274,50 @@ lha_read_file_extended_header(struct archive_read *a, struct lha *lha,
 			if (lha->dirname.s[lha->dirname.length-1] != '/')
 				/* invalid directory data */
 				goto invalid;
+			break;
+		case EXT_UTF16_DIRECTORY:
+			/* UTF-16 characters take always 2 or 4 bytes */
+			if (datasize == 0 || (datasize & 1) ||
+			    extdheader[0] == '\0') {
+				/* no directory name data. exit this case. */
+				goto invalid;
+			}
+
+			archive_string_empty(&lha->dirname);
+			archive_array_append(&lha->dirname,
+				(const char *)extdheader, datasize);
+			lha->sconv_dir =
+			    archive_string_conversion_from_charset(&a->archive,
+			        "UTF-16LE", 1);
+			if (lha->sconv_dir == NULL)
+				return (ARCHIVE_FATAL);
+			else {
+				/*
+				 * Convert directory delimiter from 0xFFFF
+				 * to '/' for local system.
+				 */
+				uint16_t dirSep;
+				uint16_t d = 1;
+				if (archive_be16dec(&d) == 1)
+					dirSep = 0x2F00;
+				else
+					dirSep = 0x002F;
+
+				/* UTF-16LE character */
+				uint16_t *utf16name =
+				    (uint16_t *)lha->dirname.s;
+				for (i = 0; i < lha->dirname.length / 2; i++) {
+					if (utf16name[i] == 0xFFFF) {
+						utf16name[i] = dirSep;
+					}
+				}
+				/* Is last character directory separator? */
+				if (utf16name[lha->dirname.length / 2 - 1] !=
+				    dirSep) {
+					/* invalid directory data */
+					goto invalid;
+				}
+			}
 			break;
 		case EXT_DOS_ATTR:
 			if (datasize == 2)
@@ -1255,6 +1346,8 @@ lha_read_file_extended_header(struct archive_read *a, struct lha *lha,
 				lha->compsize = archive_le64dec(extdheader);
 				extdheader += sizeof(uint64_t);
 				lha->origsize = archive_le64dec(extdheader);
+				if (lha->compsize < 0 || lha->origsize < 0)
+					goto invalid;
 			}
 			break;
 		case EXT_CODEPAGE:
@@ -1276,11 +1369,16 @@ lha_read_file_extended_header(struct archive_read *a, struct lha *lha,
 					charset = cp.s;
 					break;
 				}
-				lha->sconv =
+				lha->sconv_dir =
+				    archive_string_conversion_from_charset(
+					&(a->archive), charset, 1);
+				lha->sconv_fname =
 				    archive_string_conversion_from_charset(
 					&(a->archive), charset, 1);
 				archive_string_free(&cp);
-				if (lha->sconv == NULL)
+				if (lha->sconv_dir == NULL)
+					return (ARCHIVE_FATAL);
+				if (lha->sconv_fname == NULL)
 					return (ARCHIVE_FATAL);
 			}
 			break;
@@ -1336,8 +1434,7 @@ lha_read_file_extended_header(struct archive_read *a, struct lha *lha,
 			}
 			break;
 		case EXT_TIMEZONE:		/* Not supported */
-		case EXT_UTF16_FILENAME:	/* Not supported */
-		case EXT_UTF16_DIRECTORY:	/* Not supported */
+			break;
 		default:
 			break;
 		}
@@ -1597,22 +1694,22 @@ archive_read_format_lha_cleanup(struct archive_read *a)
  * example.
  *   1. a symbolic-name is 'aaa/bb/cc'
  *   2. a filename is 'xxx/bbb'
- *  then a archived pathname is 'xxx/bbb|aaa/bb/cc'
+ *  then an archived pathname is 'xxx/bbb|aaa/bb/cc'
  */
 static int
-lha_parse_linkname(struct archive_string *linkname,
-    struct archive_string *pathname)
+lha_parse_linkname(struct archive_wstring *linkname,
+    struct archive_wstring *pathname)
 {
-	char *	linkptr;
+	wchar_t *	linkptr;
 	size_t 	symlen;
 
-	linkptr = strchr(pathname->s, '|');
+	linkptr = wcschr(pathname->s, L'|');
 	if (linkptr != NULL) {
-		symlen = strlen(linkptr + 1);
-		archive_strncpy(linkname, linkptr+1, symlen);
+		symlen = wcslen(linkptr + 1);
+		archive_wstrncpy(linkname, linkptr+1, symlen);
 
 		*linkptr = 0;
-		pathname->length = strlen(pathname->s);
+		pathname->length = wcslen(pathname->s);
 
 		return (1);
 	}
@@ -1722,13 +1819,16 @@ lha_crc16(uint16_t crc, const void *pp, size_t len)
 		/* This if statement expects compiler optimization will
 		 * remove the statement which will not be executed. */
 #undef bswap16
+#ifndef __has_builtin
+#define __has_builtin(x) 0
+#endif
 #if defined(_MSC_VER) && _MSC_VER >= 1400  /* Visual Studio */
 #  define bswap16(x) _byteswap_ushort(x)
 #elif defined(__GNUC__) && ((__GNUC__ == 4 && __GNUC_MINOR__ >= 8) || __GNUC__ > 4)
 /* GCC 4.8 and later has __builtin_bswap16() */
 #  define bswap16(x) __builtin_bswap16(x)
-#elif defined(__clang__)
-/* All clang versions have __builtin_bswap16() */
+#elif defined(__clang__) && __has_builtin(__builtin_bswap16)
+/* Newer clang versions have __builtin_bswap16() */
 #  define bswap16(x) __builtin_bswap16(x)
 #else
 #  define bswap16(x) ((((x) >> 8) & 0xff) | ((x) << 8))
@@ -1913,10 +2013,10 @@ lzh_br_fillup(struct lzh_stream *strm, struct lzh_br *br)
 				    ((uint64_t)strm->next_in[0]) << 48 |
 				    ((uint64_t)strm->next_in[1]) << 40 |
 				    ((uint64_t)strm->next_in[2]) << 32 |
-				    ((uint32_t)strm->next_in[3]) << 24 |
-				    ((uint32_t)strm->next_in[4]) << 16 |
-				    ((uint32_t)strm->next_in[5]) << 8 |
-				     (uint32_t)strm->next_in[6];
+				    ((uint64_t)strm->next_in[3]) << 24 |
+				    ((uint64_t)strm->next_in[4]) << 16 |
+				    ((uint64_t)strm->next_in[5]) << 8 |
+				     (uint64_t)strm->next_in[6];
 				strm->next_in += 7;
 				strm->avail_in -= 7;
 				br->cache_avail += 7 * 8;
@@ -1926,10 +2026,10 @@ lzh_br_fillup(struct lzh_stream *strm, struct lzh_br *br)
 		 		   (br->cache_buffer << 48) |
 				    ((uint64_t)strm->next_in[0]) << 40 |
 				    ((uint64_t)strm->next_in[1]) << 32 |
-				    ((uint32_t)strm->next_in[2]) << 24 |
-				    ((uint32_t)strm->next_in[3]) << 16 |
-				    ((uint32_t)strm->next_in[4]) << 8 |
-				     (uint32_t)strm->next_in[5];
+				    ((uint64_t)strm->next_in[2]) << 24 |
+				    ((uint64_t)strm->next_in[3]) << 16 |
+				    ((uint64_t)strm->next_in[4]) << 8 |
+				     (uint64_t)strm->next_in[5];
 				strm->next_in += 6;
 				strm->avail_in -= 6;
 				br->cache_avail += 6 * 8;
@@ -2286,7 +2386,7 @@ lzh_decode_blocks(struct lzh_stream *strm, int last)
 					return (100);
 				}
 
-				/* lzh_br_read_ahead() always try to fill the
+				/* lzh_br_read_ahead() always tries to fill the
 				 * cache buffer up. In specific situation we
 				 * are close to the end of the data, the cache
 				 * buffer will not be full and thus we have to

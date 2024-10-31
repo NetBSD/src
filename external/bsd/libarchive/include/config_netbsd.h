@@ -31,6 +31,9 @@
 /* MD5 via ARCHIVE_CRYPTO_MD5_LIBSYSTEM supported. */
 /* #undef ARCHIVE_CRYPTO_MD5_LIBSYSTEM */
 
+/* MD5 via ARCHIVE_CRYPTO_MD5_MBEDTLS supported. */
+/* #undef ARCHIVE_CRYPTO_MD5_MBEDTLS */
+
 /* MD5 via ARCHIVE_CRYPTO_MD5_NETTLE supported. */
 /* #undef ARCHIVE_CRYPTO_MD5_NETTLE */
 
@@ -46,6 +49,9 @@
 /* RMD160 via ARCHIVE_CRYPTO_RMD160_LIBMD supported. */
 /* #undef ARCHIVE_CRYPTO_RMD160_LIBMD */
 
+/* RMD160 via ARCHIVE_CRYPTO_RMD160_MBEDTLS supported. */
+/* #undef ARCHIVE_CRYPTO_RMD160_MBEDTLS */
+
 /* RMD160 via ARCHIVE_CRYPTO_RMD160_NETTLE supported. */
 /* #undef ARCHIVE_CRYPTO_RMD160_NETTLE */
 
@@ -60,6 +66,9 @@
 
 /* SHA1 via ARCHIVE_CRYPTO_SHA1_LIBSYSTEM supported. */
 /* #undef ARCHIVE_CRYPTO_SHA1_LIBSYSTEM */
+
+/* SHA1 via ARCHIVE_CRYPTO_SHA1_MBEDTLS supported. */
+/* #undef ARCHIVE_CRYPTO_SHA1_MBEDTLS */
 
 /* SHA1 via ARCHIVE_CRYPTO_SHA1_NETTLE supported. */
 /* #undef ARCHIVE_CRYPTO_SHA1_NETTLE */
@@ -85,6 +94,9 @@
 /* SHA256 via ARCHIVE_CRYPTO_SHA256_LIBSYSTEM supported. */
 /* #undef ARCHIVE_CRYPTO_SHA256_LIBSYSTEM */
 
+/* SHA256 via ARCHIVE_CRYPTO_SHA256_MBEDTLS supported. */
+/* #undef ARCHIVE_CRYPTO_SHA256_MBEDTLS */
+
 /* SHA256 via ARCHIVE_CRYPTO_SHA256_NETTLE supported. */
 /* #undef ARCHIVE_CRYPTO_SHA256_NETTLE */
 
@@ -105,6 +117,9 @@
 
 /* SHA384 via ARCHIVE_CRYPTO_SHA384_LIBSYSTEM supported. */
 /* #undef ARCHIVE_CRYPTO_SHA384_LIBSYSTEM */
+
+/* SHA384 via ARCHIVE_CRYPTO_SHA384_MBEDTLS supported. */
+/* #undef ARCHIVE_CRYPTO_SHA384_MBEDTLS */
 
 /* SHA384 via ARCHIVE_CRYPTO_SHA384_NETTLE supported. */
 /* #undef ARCHIVE_CRYPTO_SHA384_NETTLE */
@@ -130,6 +145,9 @@
 /* SHA512 via ARCHIVE_CRYPTO_SHA512_LIBSYSTEM supported. */
 /* #undef ARCHIVE_CRYPTO_SHA512_LIBSYSTEM */
 
+/* SHA512 via ARCHIVE_CRYPTO_SHA512_MBEDTLS supported. */
+/* #undef ARCHIVE_CRYPTO_SHA512_MBEDTLS */
+
 /* SHA512 via ARCHIVE_CRYPTO_SHA512_NETTLE supported. */
 /* #undef ARCHIVE_CRYPTO_SHA512_NETTLE */
 
@@ -152,13 +170,16 @@
 /* #undef ARCHIVE_XATTR_LINUX */
 
 /* Version number of bsdcat */
-#define BSDCAT_VERSION_STRING "3.4.0"
+#define BSDCAT_VERSION_STRING "3.7.7"
 
 /* Version number of bsdcpio */
-#define BSDCPIO_VERSION_STRING "3.4.0"
+#define BSDCPIO_VERSION_STRING "3.7.7"
 
 /* Version number of bsdtar */
-#define BSDTAR_VERSION_STRING "3.4.0"
+#define BSDTAR_VERSION_STRING "3.7.7"
+
+/* Version number of bsdunzip */
+#define BSDUNZIP_VERSION_STRING "3.7.7"
 
 /* Define to 1 if the system has the type `ace_t'. */
 /* #undef HAVE_ACE_T */
@@ -298,6 +319,9 @@
 /* Define to 1 if you have the `chroot' function. */
 #define HAVE_CHROOT 1
 
+/* cmtime_s function */
+/* #undef HAVE_CMTIME_S */
+
 /* Define to 1 if you have the <copyfile.h> header file. */
 /* #undef HAVE_COPYFILE_H */
 
@@ -432,7 +456,7 @@
 #define HAVE_ERRNO_H 1
 
 /* Define to 1 if you have the <expat.h> header file. */
-#define HAVE_EXPAT_H 1
+/* #undef HAVE_EXPAT_H */
 
 /* Define to 1 if you have the <ext2fs/ext2_fs.h> header file. */
 /* #undef HAVE_EXT2FS_EXT2_FS_H */
@@ -497,6 +521,12 @@
 /* Define to 1 if you have the `flistxattr' function. */
 /* #undef HAVE_FLISTXATTR */
 
+/* Define to 1 if you have the `fnmatch' function. */
+#define HAVE_FNMATCH 1
+
+/* Define to 1 if you have the <fnmatch.h> header file. */
+#define HAVE_FNMATCH_H 1
+
 /* Define to 1 if you have the `fork' function. */
 #define HAVE_FORK 1
 
@@ -545,6 +575,9 @@
 /* Define to 1 if you have the `getgrnam_r' function. */
 #define HAVE_GETGRNAM_R 1
 
+/* Define to 1 if you have the `getline' function. */
+#define HAVE_GETLINE 1
+
 /* Define to 1 if you have the `getpid' function. */
 #define HAVE_GETPID 1
 
@@ -562,6 +595,9 @@
 
 /* Define to 1 if you have the `gmtime_r' function. */
 #define HAVE_GMTIME_R 1
+
+/* gmtime_s function */
+/* #undef HAVE_GMTIME_S */
 
 /* Define to 1 if you have the <grp.h> header file. */
 #define HAVE_GRP_H 1
@@ -614,14 +650,8 @@
 /* Define to 1 if you have the `crypto' library (-lcrypto). */
 #define HAVE_LIBCRYPTO 1
 
-/* Define to 1 if you have the `eay32' library (-leay32). */
-/* #undef HAVE_LIBEAY32 */
-
-/* Define to 1 if you have the `eay64' library (-leay64). */
-/* #undef HAVE_LIBEAY64 */
-
 /* Define to 1 if you have the `expat' library (-lexpat). */
-#define HAVE_LIBEXPAT 1
+/* #undef HAVE_LIBEXPAT */
 
 /* Define to 1 if you have the `lz4' library (-llz4). */
 /* #undef HAVE_LIBLZ4 */
@@ -632,6 +662,9 @@
 /* Define to 1 if you have the `lzo2' library (-llzo2). */
 /* #undef HAVE_LIBLZO2 */
 
+/* Define to 1 if you have the `mbedcrypto' library (-lmbedcrypto). */
+/* #undef HAVE_LIBMBEDCRYPTO */
+
 /* Define to 1 if you have the `md' library (-lmd). */
 /* #undef HAVE_LIBMD */
 
@@ -640,6 +673,12 @@
 
 /* Define to 1 if you have the `pcre' library (-lpcre). */
 /* #undef HAVE_LIBPCRE */
+
+/* Define to 1 if you have the `pcre2' library (-lpcre2). */
+/* #undef HAVE_LIBPCRE2 */
+
+/* Define to 1 if you have the `pcre2-posix' library (-lpcre2-posix). */
+/* #undef HAVE_LIBPCRE2_POSIX */
 
 /* Define to 1 if you have the `pcreposix' library (-lpcreposix). */
 /* #undef HAVE_LIBPCREPOSIX */
@@ -659,17 +698,17 @@
 /* Define to 1 if you have the <libxml/xmlwriter.h> header file. */
 /* #undef HAVE_LIBXML_XMLWRITER_H */
 
-/* Define to 1 if you have the `z' library (-lz). */
-#define HAVE_LIBZ 1
-
 /* Define to 1 if you have the `zstd' library (-lzstd). */
-/* #undef HAVE_LIBZSTD */
+#define HAVE_LIBZSTD 1
 
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1
 
 /* Define to 1 if you have the `link' function. */
 #define HAVE_LINK 1
+
+/* Define to 1 if you have the `linkat' function. */
+#define HAVE_LINKAT 1
 
 /* Define to 1 if you have the <linux/fiemap.h> header file. */
 /* #undef HAVE_LINUX_FIEMAP_H */
@@ -707,6 +746,9 @@
 /* Define to 1 if you have the `localtime_r' function. */
 #define HAVE_LOCALTIME_R 1
 
+/* localtime_s function */
+/* #undef HAVE_LOCALTIME_S */
+
 /* Define to 1 if the system has the type `long long int'. */
 #define HAVE_LONG_LONG_INT 1
 
@@ -732,6 +774,9 @@
 /* Define to 1 if you have the <lz4.h> header file. */
 /* #undef HAVE_LZ4_H */
 
+/* Define to 1 if you have the `LZMA_FILTER_ARM64' macro. */
+/* #undef HAVE_LZMA_FILTER_ARM64 */
+
 /* Define to 1 if you have the <lzma.h> header file. */
 #define HAVE_LZMA_H 1
 
@@ -743,6 +788,15 @@
 
 /* Define to 1 if you have the <lzo/lzoconf.h> header file. */
 /* #undef HAVE_LZO_LZOCONF_H */
+
+/* Define to 1 if you have the <mbedtls/aes.h> header file. */
+/* #undef HAVE_MBEDTLS_AES_H */
+
+/* Define to 1 if you have the <mbedtls/md.h> header file. */
+/* #undef HAVE_MBEDTLS_MD_H */
+
+/* Define to 1 if you have the <mbedtls/pkcs5.h> header file. */
+/* #undef HAVE_MBEDTLS_PKCS5_H */
 
 /* Define to 1 if you have the `mbrtowc' function. */
 #define HAVE_MBRTOWC 1
@@ -765,11 +819,11 @@
 /* Define to 1 if you have the `memmove' function. */
 #define HAVE_MEMMOVE 1
 
-/* Define to 1 if you have the <memory.h> header file. */
-#define HAVE_MEMORY_H 1
-
 /* Define to 1 if you have the `memset' function. */
 #define HAVE_MEMSET 1
+
+/* Define to 1 if you have the <minix/config.h> header file. */
+/* #undef HAVE_MINIX_CONFIG_H */
 
 /* Define to 1 if you have the `mkdir' function. */
 #define HAVE_MKDIR 1
@@ -815,6 +869,9 @@
 
 /* Define to 1 if you have the <paths.h> header file. */
 #define HAVE_PATHS_H 1
+
+/* Define to 1 if you have the <pcre2posix.h> header file. */
+/* #undef HAVE_PCRE2POSIX_H */
 
 /* Define to 1 if you have the <pcreposix.h> header file. */
 /* #undef HAVE_PCREPOSIX_H */
@@ -928,6 +985,9 @@
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
 
+/* Define to 1 if you have the <stdio.h> header file. */
+#define HAVE_STDIO_H 1
+
 /* Define to 1 if you have the <stdlib.h> header file. */
 #define HAVE_STDLIB_H 1
 
@@ -940,7 +1000,7 @@
 /* Define to 1 if you have the `strerror' function. */
 #define HAVE_STRERROR 1
 
-/* Define to 1 if you have the `strerror_r' function. */
+/* Define if you have `strerror_r'. */
 #define HAVE_STRERROR_R 1
 
 /* Define to 1 if you have the `strftime' function. */
@@ -955,6 +1015,9 @@
 /* Define to 1 if you have the `strncpy_s' function. */
 /* #undef HAVE_STRNCPY_S */
 
+/* Define to 1 if you have the `strnlen' function. */
+#define HAVE_STRNLEN 1
+
 /* Define to 1 if you have the `strrchr' function. */
 #define HAVE_STRRCHR 1
 
@@ -963,6 +1026,12 @@
 
 /* Define to 1 if the system has the type `struct richacl'. */
 /* #undef HAVE_STRUCT_RICHACL */
+
+/* Define to 1 if the system has the type `struct statfs'. */
+/* #undef HAVE_STRUCT_STATFS */
+
+/* Define to 1 if `f_iosize' is a member of `struct statfs'. */
+/* #undef HAVE_STRUCT_STATFS_F_IOSIZE */
 
 /* Define to 1 if `f_namemax' is a member of `struct statfs'. */
 /* #undef HAVE_STRUCT_STATFS_F_NAMEMAX */
@@ -1011,6 +1080,9 @@
 
 /* Define to 1 if you have the `symlink' function. */
 #define HAVE_SYMLINK 1
+
+/* Define to 1 if you have the `sysconf' function. */
+#define HAVE_SYSCONF 1
 
 /* Define to 1 if you have the <sys/acl.h> header file. */
 #define HAVE_SYS_ACL_H 1
@@ -1179,14 +1251,15 @@
 /* Define to 1 if you have a working FS_IOC_GETFLAGS */
 /* #undef HAVE_WORKING_FS_IOC_GETFLAGS */
 
-/* Define to 1 if you have the <zlib.h> header file. */
+/* Define to 1 if you have zlib >= 1.2.1 */
 #define HAVE_ZLIB_H 1
 
 /* Define to 1 if you have the <zstd.h> header file. */
-/* #undef HAVE_ZSTD_H */
+#define HAVE_ZSTD_H 1
 
-/* Define to 1 if you have the `_ctime64_s' function. */
-/* #undef HAVE__CTIME64_S */
+/* Define to 1 if you have the `zstd' library (-lzstd) with compression
+   support. */
+#define HAVE_ZSTD_compressStream 1
 
 /* Define to 1 if you have the `_fseeki64' function. */
 /* #undef HAVE__FSEEKI64 */
@@ -1194,20 +1267,17 @@
 /* Define to 1 if you have the `_get_timezone' function. */
 /* #undef HAVE__GET_TIMEZONE */
 
-/* Define to 1 if you have the `_localtime64_s' function. */
-/* #undef HAVE__LOCALTIME64_S */
-
-/* Define to 1 if you have the `_mkgmtime64' function. */
-/* #undef HAVE__MKGMTIME64 */
+/* _mkgmtime function */
+/* #undef HAVE__MKGMTIME */
 
 /* Define as const if the declaration of iconv() needs const. */
-#define ICONV_CONST
+#define ICONV_CONST 
 
 /* Version number of libarchive as a single integer */
-#define LIBARCHIVE_VERSION_NUMBER "3004000"
+#define LIBARCHIVE_VERSION_NUMBER "3007007"
 
 /* Version number of libarchive */
-#define LIBARCHIVE_VERSION_STRING "3.4.0"
+#define LIBARCHIVE_VERSION_STRING "3.7.7"
 
 /* Define to 1 if `lstat' dereferences a symlink specified with a trailing
    slash. */
@@ -1237,7 +1307,7 @@
 #define PACKAGE_NAME "libarchive"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libarchive 3.4.0"
+#define PACKAGE_STRING "libarchive 3.7.7"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libarchive"
@@ -1246,55 +1316,128 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "3.4.0"
+#define PACKAGE_VERSION "3.7.7"
+
+/* Define to 1 if PCRE2_STATIC needs to be defined. */
+/* #undef PCRE2_STATIC */
 
 /* Define to 1 if PCRE_STATIC needs to be defined. */
 /* #undef PCRE_STATIC */
 
+/* The number of bytes in type int */
+#define SIZEOF_INT 4
+
+/* The number of bytes in type long */
+#ifdef __LP64__
+#define SIZEOF_LONG 8
+#else
+#define SIZEOF_LONG 4
+#endif
+
 /* The size of `wchar_t', as computed by sizeof. */
 #define SIZEOF_WCHAR_T 4
 
-/* Define to 1 if you have the ANSI C header files. */
+/* Define to 1 if all of the C90 standard headers exist (not just the ones
+   required in a freestanding environment). This macro is provided for
+   backward compatibility; new code need not use it. */
 #define STDC_HEADERS 1
 
 /* Define to 1 if strerror_r returns char *. */
 /* #undef STRERROR_R_CHAR_P */
 
-/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
-#define TIME_WITH_SYS_TIME 1
-
 /* Enable extensions on AIX 3, Interix.  */
 #ifndef _ALL_SOURCE
 # define _ALL_SOURCE 1
 #endif
-/* Enable GNU extensions on systems that have them.  */
-#ifndef _GNU_SOURCE
-# define _GNU_SOURCE 1
-#endif
-/* Enable threading extensions on Solaris.  */
-#ifndef _POSIX_PTHREAD_SEMANTICS
-# define _POSIX_PTHREAD_SEMANTICS 1
-#endif
-/* Enable extensions on HP NonStop.  */
-#ifndef _TANDEM_SOURCE
-# define _TANDEM_SOURCE 1
+/* Enable general extensions on macOS.  */
+#ifndef _DARWIN_C_SOURCE
+# define _DARWIN_C_SOURCE 1
 #endif
 /* Enable general extensions on Solaris.  */
 #ifndef __EXTENSIONS__
 # define __EXTENSIONS__ 1
 #endif
+/* Enable GNU extensions on systems that have them.  */
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE 1
+#endif
+/* Enable X/Open compliant socket functions that do not require linking
+   with -lxnet on HP-UX 11.11.  */
+#ifndef _HPUX_ALT_XOPEN_SOCKET_API
+# define _HPUX_ALT_XOPEN_SOCKET_API 1
+#endif
+/* Identify the host operating system as Minix.
+   This macro does not affect the system headers' behavior.
+   A future release of Autoconf may stop defining this macro.  */
+#ifndef _MINIX
+/* # undef _MINIX */
+#endif
+/* Enable general extensions on NetBSD.
+   Enable NetBSD compatibility extensions on Minix.  */
+#ifndef _NETBSD_SOURCE
+# define _NETBSD_SOURCE 1
+#endif
+/* Enable OpenBSD compatibility extensions on NetBSD.
+   Oddly enough, this does nothing on OpenBSD.  */
+#ifndef _OPENBSD_SOURCE
+# define _OPENBSD_SOURCE 1
+#endif
+/* Define to 1 if needed for POSIX-compatible behavior.  */
+#ifndef _POSIX_SOURCE
+/* # undef _POSIX_SOURCE */
+#endif
+/* Define to 2 if needed for POSIX-compatible behavior.  */
+#ifndef _POSIX_1_SOURCE
+/* # undef _POSIX_1_SOURCE */
+#endif
+/* Enable POSIX-compatible threading on Solaris.  */
+#ifndef _POSIX_PTHREAD_SEMANTICS
+# define _POSIX_PTHREAD_SEMANTICS 1
+#endif
+/* Enable extensions specified by ISO/IEC TS 18661-5:2014.  */
+#ifndef __STDC_WANT_IEC_60559_ATTRIBS_EXT__
+# define __STDC_WANT_IEC_60559_ATTRIBS_EXT__ 1
+#endif
+/* Enable extensions specified by ISO/IEC TS 18661-1:2014.  */
+#ifndef __STDC_WANT_IEC_60559_BFP_EXT__
+# define __STDC_WANT_IEC_60559_BFP_EXT__ 1
+#endif
+/* Enable extensions specified by ISO/IEC TS 18661-2:2015.  */
+#ifndef __STDC_WANT_IEC_60559_DFP_EXT__
+# define __STDC_WANT_IEC_60559_DFP_EXT__ 1
+#endif
+/* Enable extensions specified by ISO/IEC TS 18661-4:2015.  */
+#ifndef __STDC_WANT_IEC_60559_FUNCS_EXT__
+# define __STDC_WANT_IEC_60559_FUNCS_EXT__ 1
+#endif
+/* Enable extensions specified by ISO/IEC TS 18661-3:2015.  */
+#ifndef __STDC_WANT_IEC_60559_TYPES_EXT__
+# define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
+#endif
+/* Enable extensions specified by ISO/IEC TR 24731-2:2010.  */
+#ifndef __STDC_WANT_LIB_EXT2__
+# define __STDC_WANT_LIB_EXT2__ 1
+#endif
+/* Enable extensions specified by ISO/IEC 24747:2009.  */
+#ifndef __STDC_WANT_MATH_SPEC_FUNCS__
+# define __STDC_WANT_MATH_SPEC_FUNCS__ 1
+#endif
+/* Enable extensions on HP NonStop.  */
+#ifndef _TANDEM_SOURCE
+# define _TANDEM_SOURCE 1
+#endif
+/* Enable X/Open extensions.  Define to 500 only if necessary
+   to make mbstate_t available.  */
+#ifndef _XOPEN_SOURCE
+/* # undef _XOPEN_SOURCE */
+#endif
 
 
 /* Version number of package */
-#define VERSION "3.4.0"
+#define VERSION "3.7.7"
 
 /* Define to '0x0502' for Windows Server 2003 APIs. */
 /* #undef WINVER */
-
-/* Enable large inode numbers on Mac OS X 10.5.  */
-#ifndef _DARWIN_USE_64_BIT_INODE
-# define _DARWIN_USE_64_BIT_INODE 1
-#endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */
@@ -1304,16 +1447,6 @@
 
 /* Define for large files, on AIX-style hosts. */
 /* #undef _LARGE_FILES */
-
-/* Define to 1 if on MINIX. */
-/* #undef _MINIX */
-
-/* Define to 2 if the system does not provide POSIX.1 features except with
-   this defined. */
-/* #undef _POSIX_1_SOURCE */
-
-/* Define to 1 if you need to in order for `stat' and other things to work. */
-/* #undef _POSIX_SOURCE */
 
 /* Define for Solaris 2.5.1 so the uint32_t typedef from <sys/synch.h>,
    <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
@@ -1332,6 +1465,9 @@
 
 /* Define to '0x0502' for Windows Server 2003 APIs. */
 /* #undef _WIN32_WINNT */
+
+/* Internal macro for sanity checks */
+#define __LIBARCHIVE_CONFIG_H_INCLUDED 1
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */

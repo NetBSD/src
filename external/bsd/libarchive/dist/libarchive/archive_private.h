@@ -21,16 +21,16 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $FreeBSD: head/lib/libarchive/archive_private.h 201098 2009-12-28 02:58:14Z kientzle $
  */
 
+#ifndef ARCHIVE_PRIVATE_H_INCLUDED
+#define ARCHIVE_PRIVATE_H_INCLUDED
+
 #ifndef __LIBARCHIVE_BUILD
+#ifndef __LIBARCHIVE_TEST
 #error This header is only to be used internally to libarchive.
 #endif
-
-#ifndef ARCHIVE_PRIVATE_H_INCLUDED
-#define	ARCHIVE_PRIVATE_H_INCLUDED
+#endif
 
 #if HAVE_ICONV_H
 #include <iconv.h>
@@ -40,10 +40,19 @@
 #include "archive_string.h"
 
 #if defined(__GNUC__) && (__GNUC__ > 2 || \
-			  (__GNUC__ == 2 && __GNUC_MINOR__ >= 5))
-#define	__LA_DEAD	__attribute__((__noreturn__))
+						  (__GNUC__ == 2 && __GNUC_MINOR__ >= 5))
+#define __LA_NORETURN __attribute__((__noreturn__))
+#elif defined(_MSC_VER)
+#define __LA_NORETURN __declspec(noreturn)
 #else
-#define	__LA_DEAD
+#define __LA_NORETURN
+#endif
+
+#if defined(__GNUC__) && (__GNUC__ > 2 || \
+			  (__GNUC__ == 2 && __GNUC_MINOR__ >= 7))
+#define	__LA_UNUSED	__attribute__((__unused__))
+#else
+#define	__LA_UNUSED
 #endif
 
 #define	ARCHIVE_WRITE_MAGIC	(0xb0c5c0deU)
@@ -100,13 +109,10 @@ struct archive {
 	 * Some public API functions depend on the "real" type of the
 	 * archive object.
 	 */
-	struct archive_vtable *vtable;
+	const struct archive_vtable *vtable;
 
 	int		  archive_format;
 	const char	 *archive_format_name;
-
-	int	  compression_code;	/* Currently active compression. */
-	const char *compression_name;
 
 	/* Number of file entries processed. */
 	int		  file_count;
@@ -149,11 +155,15 @@ int	__archive_check_magic(struct archive *, unsigned int magic,
 			return ARCHIVE_FATAL; \
 	} while (0)
 
-void	__archive_errx(int retvalue, const char *msg) __LA_DEAD;
+__LA_NORETURN void	__archive_errx(int retvalue, const char *msg);
 
 void	__archive_ensure_cloexec_flag(int fd);
 int	__archive_mktemp(const char *tmpdir);
-int	__archive_mktempx(const char *tmpdir, struct archive_string *template);
+#if defined(_WIN32) && !defined(__CYGWIN__)
+int	__archive_mkstemp(wchar_t *templates);
+#else
+int	__archive_mkstemp(char *templates);
+#endif
 
 int	__archive_clean(struct archive *);
 

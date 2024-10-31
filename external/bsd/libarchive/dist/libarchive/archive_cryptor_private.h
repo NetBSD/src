@@ -23,13 +23,12 @@
 * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef __LIBARCHIVE_BUILD
-#error This header is only to be used internally to libarchive.
-#endif
-
 #ifndef ARCHIVE_CRYPTOR_PRIVATE_H_INCLUDED
 #define ARCHIVE_CRYPTOR_PRIVATE_H_INCLUDED
 
+#ifndef __LIBARCHIVE_BUILD
+#error This header is only to be used internally to libarchive.
+#endif
 /*
  * On systems that do not support any recognized crypto libraries,
  * the archive_cryptor.c file will normally define no usable symbols.
@@ -63,7 +62,7 @@ typedef struct {
 	unsigned	encr_pos;
 } archive_crypto_ctx;
 
-#elif defined(_WIN32) && !defined(__CYGWIN__) && defined(HAVE_BCRYPT_H)
+#elif defined(_WIN32) && !defined(__CYGWIN__) && defined(HAVE_BCRYPT_H) && _WIN32_WINNT >= _WIN32_WINNT_VISTA
 #include <bcrypt.h>
 
 /* Common in other bcrypt implementations, but missing from VS2008. */
@@ -83,14 +82,40 @@ typedef struct {
 	unsigned	encr_pos;
 } archive_crypto_ctx;
 
+#elif defined(HAVE_LIBMBEDCRYPTO) && defined(HAVE_MBEDTLS_AES_H)
+#include <mbedtls/aes.h>
+#include <mbedtls/md.h>
+#include <mbedtls/pkcs5.h>
+
+#define AES_MAX_KEY_SIZE 32
+#define AES_BLOCK_SIZE 16
+
+typedef struct {
+	mbedtls_aes_context	ctx;
+	uint8_t		key[AES_MAX_KEY_SIZE];
+	unsigned	key_len;
+	uint8_t		nonce[AES_BLOCK_SIZE];
+	uint8_t		encr_buf[AES_BLOCK_SIZE];
+	unsigned	encr_pos;
+} archive_crypto_ctx;
+
 #elif defined(HAVE_LIBNETTLE) && defined(HAVE_NETTLE_AES_H)
 #if defined(HAVE_NETTLE_PBKDF2_H)
 #include <nettle/pbkdf2.h>
 #endif
 #include <nettle/aes.h>
+#include <nettle/version.h>
 
 typedef struct {
+#if NETTLE_VERSION_MAJOR < 3
 	struct aes_ctx	ctx;
+#else
+	union {
+		struct aes128_ctx c128;
+		struct aes192_ctx c192;
+		struct aes256_ctx c256;
+	}		ctx;
+#endif
 	uint8_t		key[AES_MAX_KEY_SIZE];
 	unsigned	key_len;
 	uint8_t		nonce[AES_BLOCK_SIZE];

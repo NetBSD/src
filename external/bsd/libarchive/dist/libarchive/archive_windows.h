@@ -23,13 +23,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $FreeBSD$
  */
-
-#ifndef __LIBARCHIVE_BUILD
-#error This header is only to be used internally to libarchive.
-#endif
 
 /*
  * TODO: A lot of stuff in here isn't actually used by libarchive and
@@ -47,6 +41,10 @@
 
 #ifndef LIBARCHIVE_ARCHIVE_WINDOWS_H_INCLUDED
 #define	LIBARCHIVE_ARCHIVE_WINDOWS_H_INCLUDED
+
+#ifndef __LIBARCHIVE_BUILD
+#error This header is only to be used internally to libarchive.
+#endif
 
 /* Start of configuration for native Win32  */
 #ifndef MINGW_HAS_SECURE_API
@@ -294,12 +292,17 @@ typedef int mbstate_t;
 size_t wcrtomb(char *, wchar_t, mbstate_t *);
 #endif
 
-#if defined(_MSC_VER) && _MSC_VER < 1300
+#if !WINAPI_FAMILY_PARTITION (WINAPI_PARTITION_DESKTOP) && NTDDI_VERSION < NTDDI_WIN10_VB
+// not supported in UWP SDK before 20H1
+#define GetVolumePathNameW(f, v, c)   (0)
+#elif defined(_MSC_VER) && _MSC_VER < 1300
 WINBASEAPI BOOL WINAPI GetVolumePathNameW(
        LPCWSTR lpszFileName,
        LPWSTR lpszVolumePathName,
        DWORD cchBufferLength
        );
+#endif
+#if defined(_MSC_VER) && _MSC_VER < 1300
 # if _WIN32_WINNT < 0x0500 /* windows.h not providing 0x500 API */
 typedef struct _FILE_ALLOCATED_RANGE_BUFFER {
        LARGE_INTEGER FileOffset;

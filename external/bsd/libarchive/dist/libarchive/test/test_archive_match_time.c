@@ -24,7 +24,6 @@
  */
 
 #include "test.h"
-__FBSDID("$FreeBSD$");
 
 #define __LIBARCHIVE_BUILD 1
 #include "archive_getdate.h"
@@ -317,6 +316,10 @@ test_newer_mtime_than_file_mbs(void)
 static void
 test_newer_ctime_than_file_mbs(void)
 {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	skipping("Can't set ctime on Windows");
+	return;
+#else
 	struct archive *a;
 	struct archive_entry *ae;
 	struct archive *m;
@@ -369,6 +372,7 @@ test_newer_ctime_than_file_mbs(void)
 	archive_read_free(a);
 	archive_entry_free(ae);
 	archive_match_free(m);
+#endif
 }
 
 static void
@@ -431,6 +435,10 @@ test_newer_mtime_than_file_wcs(void)
 static void
 test_newer_ctime_than_file_wcs(void)
 {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	skipping("Can't set ctime on Windows");
+	return;
+#else
 	struct archive *a;
 	struct archive_entry *ae;
 	struct archive *m;
@@ -484,6 +492,7 @@ test_newer_ctime_than_file_wcs(void)
 	archive_read_free(a);
 	archive_entry_free(ae);
 	archive_match_free(m);
+#endif
 }
 
 static void
@@ -778,6 +787,10 @@ test_older_mtime_than_file_mbs(void)
 static void
 test_older_ctime_than_file_mbs(void)
 {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	skipping("Can't set ctime on Windows");
+	return;
+#else
 	struct archive *a;
 	struct archive_entry *ae;
 	struct archive *m;
@@ -831,6 +844,7 @@ test_older_ctime_than_file_mbs(void)
 	archive_read_free(a);
 	archive_entry_free(ae);
 	archive_match_free(m);
+#endif
 }
 
 static void
@@ -893,6 +907,10 @@ test_older_mtime_than_file_wcs(void)
 static void
 test_older_ctime_than_file_wcs(void)
 {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	skipping("Can't set ctime on Windows");
+	return;
+#else
 	struct archive *a;
 	struct archive_entry *ae;
 	struct archive *m;
@@ -946,6 +964,7 @@ test_older_ctime_than_file_wcs(void)
 	archive_read_free(a);
 	archive_entry_free(ae);
 	archive_match_free(m);
+#endif
 }
 
 static void
@@ -1069,6 +1088,10 @@ test_mtime_between_files_wcs(void)
 static void
 test_ctime_between_files_mbs(void)
 {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	skipping("Can't set ctime on Windows");
+	return;
+#else
 	struct archive *a;
 	struct archive_entry *ae;
 	struct archive *m;
@@ -1123,11 +1146,16 @@ test_ctime_between_files_mbs(void)
 	archive_read_free(a);
 	archive_entry_free(ae);
 	archive_match_free(m);
+#endif
 }
 
 static void
 test_ctime_between_files_wcs(void)
 {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	skipping("Can't set ctime on Windows");
+	return;
+#else
 	struct archive *a;
 	struct archive_entry *ae;
 	struct archive *m;
@@ -1182,6 +1210,7 @@ test_ctime_between_files_wcs(void)
 	archive_read_free(a);
 	archive_entry_free(ae);
 	archive_match_free(m);
+#endif
 }
 
 static void

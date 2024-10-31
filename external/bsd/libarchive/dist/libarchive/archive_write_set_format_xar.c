@@ -24,7 +24,6 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD$");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -212,8 +211,8 @@ struct file {
 	struct heap_data	 data;
         struct archive_string    script;
 
-	int			 virtual:1;
-	int			 dir:1;
+	unsigned int		 virtual:1;
+	unsigned int		 dir:1;
 };
 
 struct hardlink {
@@ -411,6 +410,8 @@ xar_options(struct archive_write *a, const char *key, const char *value)
 	if (strcmp(key, "checksum") == 0) {
 		if (value == NULL)
 			xar->opt_sumalg = CKSUM_NONE;
+		else if (strcmp(value, "none") == 0)
+			xar->opt_sumalg = CKSUM_NONE;
 		else if (strcmp(value, "sha1") == 0)
 			xar->opt_sumalg = CKSUM_SHA1;
 		else if (strcmp(value, "md5") == 0)
@@ -428,6 +429,8 @@ xar_options(struct archive_write *a, const char *key, const char *value)
 		const char *name = NULL;
 
 		if (value == NULL)
+			xar->opt_compression = NONE;
+		else if (strcmp(value, "none") == 0)
 			xar->opt_compression = NONE;
 		else if (strcmp(value, "gzip") == 0)
 			xar->opt_compression = GZIP;
@@ -481,6 +484,8 @@ xar_options(struct archive_write *a, const char *key, const char *value)
 	}
 	if (strcmp(key, "toc-checksum") == 0) {
 		if (value == NULL)
+			xar->opt_toc_sumalg = CKSUM_NONE;
+		else if (strcmp(value, "none") == 0)
 			xar->opt_toc_sumalg = CKSUM_NONE;
 		else if (strcmp(value, "sha1") == 0)
 			xar->opt_toc_sumalg = CKSUM_SHA1;
@@ -675,7 +680,8 @@ xar_write_data(struct archive_write *a, const void *buff, size_t s)
 {
 	struct xar *xar;
 	enum la_zaction run;
-	size_t size, rsize;
+	size_t size = 0;
+	size_t rsize;
 	int r;
 
 	xar = (struct xar *)a->format_data;
@@ -696,13 +702,37 @@ xar_write_data(struct archive_write *a, const void *buff, size_t s)
 		else
 			run = ARCHIVE_Z_FINISH;
 		/* Compress file data. */
-		r = compression_code(&(a->archive), &(xar->stream), run);
-		if (r != ARCHIVE_OK && r != ARCHIVE_EOF)
-			return (ARCHIVE_FATAL);
+		for (;;) {
+			r = compression_code(&(a->archive), &(xar->stream),
+			    run);
+			if (r != ARCHIVE_OK && r != ARCHIVE_EOF)
+				return (ARCHIVE_FATAL);
+			if (xar->stream.avail_out == 0 ||
+			    run == ARCHIVE_Z_FINISH) {
+				size = sizeof(xar->wbuff) -
+				    xar->stream.avail_out;
+				checksum_update(&(xar->a_sumwrk), xar->wbuff,
+				    size);
+				xar->cur_file->data.length += size;
+				if (write_to_temp(a, xar->wbuff,
+				    size) != ARCHIVE_OK)
+					return (ARCHIVE_FATAL);
+				if (r == ARCHIVE_OK) {
+					/* Output buffer was full */
+					xar->stream.next_out = xar->wbuff;
+					xar->stream.avail_out =
+					    sizeof(xar->wbuff);
+				} else {
+					/* ARCHIVE_EOF - We are done */
+					break;
+				}
+			} else {
+				/* Compressor wants more input */
+				break;
+			}
+		}
 		rsize = s - xar->stream.avail_in;
 		checksum_update(&(xar->e_sumwrk), buff, rsize);
-		size = sizeof(xar->wbuff) - xar->stream.avail_out;
-		checksum_update(&(xar->a_sumwrk), xar->wbuff, size);
 	}
 #if !defined(_WIN32) || defined(__CYGWIN__)
 	if (xar->bytes_remaining ==
@@ -739,12 +769,9 @@ xar_write_data(struct archive_write *a, const void *buff, size_t s)
 	if (xar->cur_file->data.compression == NONE) {
 		if (write_to_temp(a, buff, size) != ARCHIVE_OK)
 			return (ARCHIVE_FATAL);
-	} else {
-		if (write_to_temp(a, xar->wbuff, size) != ARCHIVE_OK)
-			return (ARCHIVE_FATAL);
+		xar->cur_file->data.length += size;
 	}
 	xar->bytes_remaining -= rsize;
-	xar->cur_file->data.length += size;
 
 	return (rsize);
 }
@@ -769,7 +796,7 @@ xar_finish_entry(struct archive_write *a)
 		if (w > 0)
 			xar->bytes_remaining -= w;
 		else
-			return (w);
+			return ((int)w);
 	}
 	file = xar->cur_file;
 	checksum_final(&(xar->e_sumwrk), &(file->data.e_sum));
@@ -879,10 +906,10 @@ xmlwrite_time(struct archive_write *a, xmlTextWriterPtr writer,
 	char timestr[100];
 	struct tm tm;
 
-#if defined(HAVE_GMTIME_R)
+#if defined(HAVE_GMTIME_S)
+	gmtime_s(&tm, &t);
+#elif defined(HAVE_GMTIME_R)
 	gmtime_r(&t, &tm);
-#elif defined(HAVE__GMTIME64_S)
-	_gmtime64_s(&tm, &t);
 #else
 	memcpy(&tm, gmtime(&t), sizeof(tm));
 #endif
@@ -1136,7 +1163,7 @@ make_file_entry(struct archive_write *a, xmlTextWriterPtr writer,
 	/*
 	 * Make a file name entry, "<name>".
 	 */
-	l = ll = archive_strlen(&(file->basename));
+	l = ll = (int)archive_strlen(&(file->basename));
 	tmp = malloc(l);
 	if (tmp == NULL) {
 		archive_set_error(&a->archive, ENOMEM,
@@ -1162,7 +1189,7 @@ make_file_entry(struct archive_write *a, xmlTextWriterPtr writer,
 			return (ARCHIVE_FATAL);
 		}
 		r = xmlTextWriterWriteBase64(writer, file->basename.s,
-		    0, archive_strlen(&(file->basename)));
+		    0, (int)archive_strlen(&(file->basename)));
 		if (r < 0) {
 			archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_MISC,
@@ -2103,7 +2130,7 @@ file_gen_utility_names(struct archive_write *a, struct file *file)
 	while (len > 0) {
 		size_t ll = len;
 
-		if (len > 0 && p[len-1] == '/') {
+		if (p[len-1] == '/') {
 			p[len-1] = '\0';
 			len--;
 		}
@@ -2204,10 +2231,10 @@ get_path_component(char *name, int n, const char *fn)
 
 	p = strchr(fn, '/');
 	if (p == NULL) {
-		if ((l = strlen(fn)) == 0)
+		if ((l = (int)strlen(fn)) == 0)
 			return (0);
 	} else
-		l = p - fn;
+		l = (int)(p - fn);
 	if (l > n -1)
 		return (-1);
 	memcpy(name, fn, l);
@@ -2532,13 +2559,11 @@ file_init_hardlinks(struct xar *xar)
 static void
 file_free_hardlinks(struct xar *xar)
 {
-	struct archive_rb_node *n, *next;
+	struct archive_rb_node *n, *tmp;
 
-	for (n = ARCHIVE_RB_TREE_MIN(&(xar->hardlink_rbtree)); n;) {
-		next = __archive_rb_tree_iterate(&(xar->hardlink_rbtree),
-		    n, ARCHIVE_RB_DIR_RIGHT);
+	ARCHIVE_RB_TREE_FOREACH_SAFE(n, &(xar->hardlink_rbtree), tmp) {
+		__archive_rb_tree_remove_node(&(xar->hardlink_rbtree), n);
 		free(n);
-		n = next;
 	}
 }
 
@@ -2626,10 +2651,10 @@ compression_init_encoder_gzip(struct archive *a,
 	 * of ugly hackery to convert a const * pointer to
 	 * a non-const pointer. */
 	strm->next_in = (Bytef *)(uintptr_t)(const void *)lastrm->next_in;
-	strm->avail_in = lastrm->avail_in;
+	strm->avail_in = (uInt)lastrm->avail_in;
 	strm->total_in = (uLong)lastrm->total_in;
 	strm->next_out = lastrm->next_out;
-	strm->avail_out = lastrm->avail_out;
+	strm->avail_out = (uInt)lastrm->avail_out;
 	strm->total_out = (uLong)lastrm->total_out;
 	if (deflateInit2(strm, level, Z_DEFLATED,
 	    (withheader)?15:-15,
@@ -2659,10 +2684,10 @@ compression_code_gzip(struct archive *a,
 	 * of ugly hackery to convert a const * pointer to
 	 * a non-const pointer. */
 	strm->next_in = (Bytef *)(uintptr_t)(const void *)lastrm->next_in;
-	strm->avail_in = lastrm->avail_in;
+	strm->avail_in = (uInt)lastrm->avail_in;
 	strm->total_in = (uLong)lastrm->total_in;
 	strm->next_out = lastrm->next_out;
-	strm->avail_out = lastrm->avail_out;
+	strm->avail_out = (uInt)lastrm->avail_out;
 	strm->total_out = (uLong)lastrm->total_out;
 	r = deflate(strm,
 	    (action == ARCHIVE_Z_FINISH)? Z_FINISH: Z_NO_FLUSH);
@@ -2723,11 +2748,11 @@ compression_init_encoder_bzip2(struct archive *a,
 	 * of ugly hackery to convert a const * pointer to
 	 * a non-const pointer. */
 	strm->next_in = (char *)(uintptr_t)(const void *)lastrm->next_in;
-	strm->avail_in = lastrm->avail_in;
+	strm->avail_in = (unsigned int)lastrm->avail_in;
 	strm->total_in_lo32 = (uint32_t)(lastrm->total_in & 0xffffffff);
 	strm->total_in_hi32 = (uint32_t)(lastrm->total_in >> 32);
 	strm->next_out = (char *)lastrm->next_out;
-	strm->avail_out = lastrm->avail_out;
+	strm->avail_out = (unsigned int)lastrm->avail_out;
 	strm->total_out_lo32 = (uint32_t)(lastrm->total_out & 0xffffffff);
 	strm->total_out_hi32 = (uint32_t)(lastrm->total_out >> 32);
 	if (BZ2_bzCompressInit(strm, level, 0, 30) != BZ_OK) {
@@ -2756,11 +2781,11 @@ compression_code_bzip2(struct archive *a,
 	 * of ugly hackery to convert a const * pointer to
 	 * a non-const pointer. */
 	strm->next_in = (char *)(uintptr_t)(const void *)lastrm->next_in;
-	strm->avail_in = lastrm->avail_in;
+	strm->avail_in = (unsigned int)lastrm->avail_in;
 	strm->total_in_lo32 = (uint32_t)(lastrm->total_in & 0xffffffff);
 	strm->total_in_hi32 = (uint32_t)(lastrm->total_in >> 32);
 	strm->next_out = (char *)lastrm->next_out;
-	strm->avail_out = lastrm->avail_out;
+	strm->avail_out = (unsigned int)lastrm->avail_out;
 	strm->total_out_lo32 = (uint32_t)(lastrm->total_out & 0xffffffff);
 	strm->total_out_hi32 = (uint32_t)(lastrm->total_out >> 32);
 	r = BZ2_bzCompress(strm,
@@ -2901,8 +2926,8 @@ compression_init_encoder_xz(struct archive *a,
 		return (ARCHIVE_FATAL);
 	}
 	lzmafilters = (lzma_filter *)(strm+1);
-	if (level > 6)
-		level = 6;
+	if (level > 9)
+		level = 9;
 	if (lzma_lzma_preset(&lzma_opt, level)) {
 		free(strm);
 		lastrm->real_stream = NULL;

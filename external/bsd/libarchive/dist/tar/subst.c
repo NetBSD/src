@@ -1,37 +1,20 @@
 /*-
+ * SPDX-License-Identifier: BSD-2-Clause
+ *
  * Copyright (c) 2008 Joerg Sonnenberger
  * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "bsdtar_platform.h"
-__FBSDID("$FreeBSD: src/usr.bin/tar/subst.c,v 1.4 2008/06/15 10:08:16 kientzle Exp $");
 
-#if defined(HAVE_REGEX_H) || defined(HAVE_PCREPOSIX_H)
+#if defined(HAVE_REGEX_H) || defined(HAVE_PCREPOSIX_H) || defined(HAVE_PCRE2POSIX_H)
 #include "bsdtar.h"
 
 #include <errno.h>
-#ifdef HAVE_PCREPOSIX_H
+#if defined(HAVE_PCREPOSIX_H)
 #include <pcreposix.h>
+#elif defined(HAVE_PCRE2POSIX_H)
+#include <pcre2posix.h>
 #else
 #include <regex.h>
 #endif
@@ -48,7 +31,7 @@ struct subst_rule {
 	struct subst_rule *next;
 	regex_t re;
 	char *result;
-	unsigned int global:1, print:1, regular:1, symlink:1, hardlink:1;
+	unsigned int global:1, print:1, regular:1, symlink:1, hardlink:1, from_begin:1;
 };
 
 struct substitution {
@@ -128,9 +111,14 @@ add_substitution(struct bsdtar *bsdtar, const char *rule_text)
 	rule->regular = 1; /* Rewrite regular filenames. */
 	rule->symlink = 1; /* Rewrite symlink targets. */
 	rule->hardlink = 1; /* Rewrite hardlink targets. */
+	rule->from_begin = 0; /* Don't match from start. */
 
 	while (*++end_pattern) {
 		switch (*end_pattern) {
+		case 'b':
+		case 'B':
+			rule->from_begin = 1;
+			break;
 		case 'g':
 		case 'G':
 			rule->global = 1;
@@ -159,6 +147,7 @@ add_substitution(struct bsdtar *bsdtar, const char *rule_text)
 			break;
 		default:
 			lafe_errc(1, 0, "Invalid replacement flag %c", *end_pattern);
+			/* NOTREACHED */
 		}
 	}
 }
@@ -212,6 +201,7 @@ apply_substitution(struct bsdtar *bsdtar, const char *name, char **result,
 {
 	const char *path = name;
 	regmatch_t matches[10];
+	char* buffer = NULL;
 	size_t i, j;
 	struct subst_rule *rule;
 	struct substitution *subst;
@@ -235,6 +225,13 @@ apply_substitution(struct bsdtar *bsdtar, const char *name, char **result,
 		} else { /* Regular filename. */
 			if (!rule->regular)
 				continue;
+		}
+
+		if (rule->from_begin && *result) {
+			realloc_strcat(result, name);
+			realloc_strcat(&buffer, *result);
+			name = buffer;
+			(*result)[0] = 0;
 		}
 
 		while (1) {
@@ -276,6 +273,7 @@ apply_substitution(struct bsdtar *bsdtar, const char *name, char **result,
 				case '9':
 					realloc_strncat(result, rule->result + j, i - j - 1);
 					if ((size_t)(c - '0') > (size_t)(rule->re.re_nsub)) {
+						free(buffer);
 						free(*result);
 						*result = NULL;
 						return -1;
@@ -302,6 +300,8 @@ apply_substitution(struct bsdtar *bsdtar, const char *name, char **result,
 	if (got_match)
 		realloc_strcat(result, name);
 
+	free(buffer);
+
 	if (print_match)
 		fprintf(stderr, "%s >> %s\n", path, *result);
 
@@ -320,8 +320,9 @@ cleanup_substitution(struct bsdtar *bsdtar)
 	while ((rule = subst->first_rule) != NULL) {
 		subst->first_rule = rule->next;
 		free(rule->result);
+		regfree(&rule->re);
 		free(rule);
 	}
 	free(subst);
 }
-#endif /* defined(HAVE_REGEX_H) || defined(HAVE_PCREPOSIX_H) */
+#endif /* defined(HAVE_REGEX_H) || defined(HAVE_PCREPOSIX_H) || defined(HAVE_PCRE2POSIX_H) */

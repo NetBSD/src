@@ -25,7 +25,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "archive_platform.h"
-__FBSDID("$FreeBSD$");
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 
@@ -50,6 +49,8 @@ __FBSDID("$FreeBSD$");
 /* Old SDKs do not provide IO_REPARSE_TAG_SYMLINK */
 #define	IO_REPARSE_TAG_SYMLINK 0xA000000CL
 #endif
+/* To deal with absolute symlink isuues */
+#define START_ABSOLUTE_SYMLINK_REPARSE L"\\??\\"
 
 /*-
  * This is a new directory-walking system that addresses a number
@@ -376,7 +377,7 @@ la_linkname_from_handle(HANDLE h, wchar_t **linkname, int *linktype)
 		return (-1);
 	}
 
-	tbuf = malloc(len + 1 * sizeof(wchar_t));
+	tbuf = malloc(len + sizeof(wchar_t));
 	if (tbuf == NULL) {
 		free(indata);
 		return (-1);
@@ -387,17 +388,20 @@ la_linkname_from_handle(HANDLE h, wchar_t **linkname, int *linktype)
 	free(indata);
 
 	tbuf[len / sizeof(wchar_t)] = L'\0';
+	if (wcsncmp(tbuf, START_ABSOLUTE_SYMLINK_REPARSE, 4) == 0) {
+		/* Absolute symlink, so we'll change the NT path into a verbatim one */
+		tbuf[1] = L'\\';
+	} else {
+		/* Relative symlink, so we can translate backslashes to slashes */
+		wchar_t *temp = tbuf;
+		do {
+			if (*temp == L'\\')
+				*temp = L'/';
+			temp++;
+		} while(*temp != L'\0');
+	}
 
 	*linkname = tbuf;
-
-	/*
-	 * Translate backslashes to slashes for libarchive internal use
-	 */
-	while(*tbuf != L'\0') {
-		if (*tbuf == L'\\')
-			*tbuf = L'/';
-		tbuf++;
-	}
 
 	if ((st.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
 		*linktype = AE_SYMLINK_TYPE_FILE;
@@ -418,8 +422,19 @@ la_linkname_from_pathw(const wchar_t *path, wchar_t **outbuf, int *linktype)
 	    FILE_FLAG_OPEN_REPARSE_POINT;
 	int ret;
 
-	h = CreateFileW(path, 0, FILE_SHARE_READ, NULL, OPEN_EXISTING, flag,
-	    NULL);
+# if _WIN32_WINNT >= 0x0602 /* _WIN32_WINNT_WIN8 */
+	CREATEFILE2_EXTENDED_PARAMETERS createExParams;
+	ZeroMemory(&createExParams, sizeof(createExParams));
+	createExParams.dwSize = sizeof(createExParams);
+	createExParams.dwFileFlags = flag;
+	h = CreateFile2(path, 0,
+	    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+	    OPEN_EXISTING, &createExParams);
+#else
+	h = CreateFileW(path, 0,
+	    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
+	    OPEN_EXISTING, flag, NULL);
+#endif
 	if (h == INVALID_HANDLE_VALUE) {
 		la_dosmaperr(GetLastError());
 		return (-1);
@@ -449,22 +464,14 @@ entry_symlink_from_pathw(struct archive_entry *entry, const wchar_t *path)
 	return;
 }
 
-static struct archive_vtable *
-archive_read_disk_vtable(void)
-{
-	static struct archive_vtable av;
-	static int inited = 0;
-
-	if (!inited) {
-		av.archive_free = _archive_read_free;
-		av.archive_close = _archive_read_close;
-		av.archive_read_data_block = _archive_read_data_block;
-		av.archive_read_next_header = _archive_read_next_header;
-		av.archive_read_next_header2 = _archive_read_next_header2;
-		inited = 1;
-	}
-	return (&av);
-}
+static const struct archive_vtable
+archive_read_disk_vtable = {
+	.archive_free = _archive_read_free,
+	.archive_close = _archive_read_close,
+	.archive_read_data_block = _archive_read_data_block,
+	.archive_read_next_header = _archive_read_next_header,
+	.archive_read_next_header2 = _archive_read_next_header2,
+};
 
 const char *
 archive_read_disk_gname(struct archive *_a, la_int64_t gid)
@@ -536,12 +543,12 @@ archive_read_disk_new(void)
 {
 	struct archive_read_disk *a;
 
-	a = (struct archive_read_disk *)calloc(1, sizeof(*a));
+	a = calloc(1, sizeof(*a));
 	if (a == NULL)
 		return (NULL);
 	a->archive.magic = ARCHIVE_READ_DISK_MAGIC;
 	a->archive.state = ARCHIVE_STATE_NEW;
-	a->archive.vtable = archive_read_disk_vtable();
+	a->archive.vtable = &archive_read_disk_vtable;
 	a->entry = archive_entry_new2(&a->archive);
 	a->lookup_uname = trivial_lookup_uname;
 	a->lookup_gname = trivial_lookup_gname;
@@ -1074,14 +1081,29 @@ next_entry(struct archive_read_disk *a, struct tree *t,
 	if (archive_entry_filetype(entry) == AE_IFREG &&
 	    archive_entry_size(entry) > 0) {
 		DWORD flags = FILE_FLAG_BACKUP_SEMANTICS;
+#if _WIN32_WINNT >= 0x0602 /* _WIN32_WINNT_WIN8 */
+		CREATEFILE2_EXTENDED_PARAMETERS createExParams;
+#endif
 		if (t->async_io)
 			flags |= FILE_FLAG_OVERLAPPED;
 		if (t->direct_io)
 			flags |= FILE_FLAG_NO_BUFFERING;
 		else
 			flags |= FILE_FLAG_SEQUENTIAL_SCAN;
+#if _WIN32_WINNT >= 0x0602 /* _WIN32_WINNT_WIN8 */
+		ZeroMemory(&createExParams, sizeof(createExParams));
+		createExParams.dwSize = sizeof(createExParams);
+		createExParams.dwFileFlags = flags;
+		t->entry_fh = CreateFile2(tree_current_access_path(t),
+		    GENERIC_READ,
+		    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+		    OPEN_EXISTING, &createExParams);
+#else
 		t->entry_fh = CreateFileW(tree_current_access_path(t),
-		    GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, flags, NULL);
+		    GENERIC_READ,
+		    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+		    NULL, OPEN_EXISTING, flags, NULL);
+#endif
 		if (t->entry_fh == INVALID_HANDLE_VALUE) {
 			la_dosmaperr(GetLastError());
 			archive_set_error(&a->archive, errno,
@@ -1090,9 +1112,11 @@ next_entry(struct archive_read_disk *a, struct tree *t,
 		}
 
 		/* Find sparse data from the disk. */
-		if (archive_entry_hardlink(entry) == NULL &&
-		    (st->dwFileAttributes & FILE_ATTRIBUTE_SPARSE_FILE) != 0)
-			r = setup_sparse_from_disk(a, entry, t->entry_fh);
+		if ((a->flags & ARCHIVE_READDISK_NO_SPARSE) == 0) {
+			if (archive_entry_hardlink(entry) == NULL &&
+			    (st->dwFileAttributes & FILE_ATTRIBUTE_SPARSE_FILE) != 0)
+				r = setup_sparse_from_disk(a, entry, t->entry_fh);
+		}
 	}
 	return (r);
 }
@@ -1125,6 +1149,8 @@ _archive_read_next_header2(struct archive *_a, struct archive_entry *entry)
 		close_and_restore_time(t->entry_fh, t, &t->restore_time);
 		t->entry_fh = INVALID_HANDLE_VALUE;
 	}
+
+	archive_entry_clear(entry);
 
 	while ((r = next_entry(a, t, entry)) == ARCHIVE_RETRY)
 		archive_entry_clear(entry);
@@ -1298,7 +1324,7 @@ archive_read_disk_descend(struct archive *_a)
 	    ARCHIVE_STATE_HEADER | ARCHIVE_STATE_DATA,
 	    "archive_read_disk_descend");
 
-	if (t->visit_type != TREE_REGULAR || !t->descend)
+	if (!archive_read_disk_can_descend(_a))
 		return (ARCHIVE_OK);
 
 	if (tree_current_is_physical_dir(t)) {
@@ -1548,6 +1574,9 @@ close_and_restore_time(HANDLE h, struct tree *t, struct restore_time *rt)
 {
 	HANDLE handle;
 	int r = 0;
+#if _WIN32_WINNT >= 0x0602 /* _WIN32_WINNT_WIN8 */
+	CREATEFILE2_EXTENDED_PARAMETERS createExParams;
+#endif
 
 	if (h == INVALID_HANDLE_VALUE && AE_IFLNK == rt->filetype)
 		return (0);
@@ -1561,8 +1590,16 @@ close_and_restore_time(HANDLE h, struct tree *t, struct restore_time *rt)
 	if ((t->flags & needsRestoreTimes) == 0)
 		return (r);
 
+#if _WIN32_WINNT >= 0x0602 /* _WIN32_WINNT_WIN8 */
+	ZeroMemory(&createExParams, sizeof(createExParams));
+	createExParams.dwSize = sizeof(createExParams);
+	createExParams.dwFileFlags = FILE_FLAG_BACKUP_SEMANTICS;
+	handle = CreateFile2(rt->full_path, FILE_WRITE_ATTRIBUTES,
+		    0, OPEN_EXISTING, &createExParams);
+#else
 	handle = CreateFileW(rt->full_path, FILE_WRITE_ATTRIBUTES,
 		    0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+#endif
 	if (handle == INVALID_HANDLE_VALUE) {
 		errno = EINVAL;
 		return (-1);
@@ -1842,7 +1879,7 @@ tree_next(struct tree *t)
 					continue;
 				return (r);
 			} else {
-				HANDLE h = FindFirstFileW(d, &t->_findData);
+				HANDLE h = FindFirstFileW(t->stack->full_path.s, &t->_findData);
 				if (h == INVALID_HANDLE_VALUE) {
 					la_dosmaperr(GetLastError());
 					t->tree_errno = errno;
@@ -1923,6 +1960,8 @@ tree_dir_next_windows(struct tree *t, const wchar_t *pattern)
 				t->visit_type = r != 0 ? r : TREE_ERROR_DIR;
 				return (t->visit_type);
 			}
+			/* Top stack item needs a regular visit. */
+			t->current = t->stack;
 			t->findData = &t->_findData;
 			pattern = NULL;
 		} else if (!FindNextFileW(t->d, &t->_findData)) {
@@ -2047,11 +2086,24 @@ tree_current_file_information(struct tree *t, BY_HANDLE_FILE_INFORMATION *st,
 	HANDLE h;
 	int r;
 	DWORD flag = FILE_FLAG_BACKUP_SEMANTICS;
-	
+# if _WIN32_WINNT >= 0x0602 /* _WIN32_WINNT_WIN8 */
+	CREATEFILE2_EXTENDED_PARAMETERS createExParams;
+#endif
+
 	if (sim_lstat && tree_current_is_physical_link(t))
 		flag |= FILE_FLAG_OPEN_REPARSE_POINT;
-	h = CreateFileW(tree_current_access_path(t), 0, FILE_SHARE_READ, NULL,
+# if _WIN32_WINNT >= 0x0602 /* _WIN32_WINNT_WIN8 */
+	ZeroMemory(&createExParams, sizeof(createExParams));
+	createExParams.dwSize = sizeof(createExParams);
+	createExParams.dwFileFlags = flag;
+	h = CreateFile2(tree_current_access_path(t), 0,
+	    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+	    OPEN_EXISTING, &createExParams);
+#else
+	h = CreateFileW(tree_current_access_path(t), 0,
+	    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
 	    OPEN_EXISTING, flag, NULL);
+#endif
 	if (h == INVALID_HANDLE_VALUE) {
 		la_dosmaperr(GetLastError());
 		t->tree_errno = errno;
@@ -2257,7 +2309,10 @@ archive_read_disk_entry_from_file(struct archive *_a,
 		} else {
 			WIN32_FIND_DATAW findData;
 			DWORD flag, desiredAccess;
-	
+# if _WIN32_WINNT >= 0x0602 /* _WIN32_WINNT_WIN8 */
+			CREATEFILE2_EXTENDED_PARAMETERS createExParams;
+#endif
+
 			h = FindFirstFileW(path, &findData);
 			if (h == INVALID_HANDLE_VALUE) {
 				la_dosmaperr(GetLastError());
@@ -2279,8 +2334,18 @@ archive_read_disk_entry_from_file(struct archive *_a,
 			} else
 				desiredAccess = GENERIC_READ;
 
-			h = CreateFileW(path, desiredAccess, FILE_SHARE_READ, NULL,
+# if _WIN32_WINNT >= 0x0602 /* _WIN32_WINNT_WIN8 */
+			ZeroMemory(&createExParams, sizeof(createExParams));
+			createExParams.dwSize = sizeof(createExParams);
+			createExParams.dwFileFlags = flag;
+			h = CreateFile2(path, desiredAccess,
+			    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+			    OPEN_EXISTING, &createExParams);
+#else
+			h = CreateFileW(path, desiredAccess,
+			    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
 			    OPEN_EXISTING, flag, NULL);
+#endif
 			if (h == INVALID_HANDLE_VALUE) {
 				la_dosmaperr(GetLastError());
 				archive_set_error(&a->archive, errno,
@@ -2341,8 +2406,19 @@ archive_read_disk_entry_from_file(struct archive *_a,
 		if (fd >= 0) {
 			h = (HANDLE)_get_osfhandle(fd);
 		} else {
-			h = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, NULL,
+# if _WIN32_WINNT >= 0x0602 /* _WIN32_WINNT_WIN8 */
+			CREATEFILE2_EXTENDED_PARAMETERS createExParams;
+			ZeroMemory(&createExParams, sizeof(createExParams));
+			createExParams.dwSize = sizeof(createExParams);
+			createExParams.dwFileFlags = FILE_FLAG_BACKUP_SEMANTICS;
+			h = CreateFile2(path, GENERIC_READ,
+			    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+			    OPEN_EXISTING, &createExParams);
+#else
+			h = CreateFileW(path, GENERIC_READ,
+			    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
 			    OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+#endif
 			if (h == INVALID_HANDLE_VALUE) {
 				la_dosmaperr(GetLastError());
 				archive_set_error(&a->archive, errno,
@@ -2369,9 +2445,12 @@ archive_read_disk_entry_from_file(struct archive *_a,
 		return (ARCHIVE_OK);
 	}
 
-	r = setup_sparse_from_disk(a, entry, h);
-	if (fd < 0)
-		CloseHandle(h);
+	r = ARCHIVE_OK;
+	if ((a->flags & ARCHIVE_READDISK_NO_SPARSE) == 0) {
+		r = setup_sparse_from_disk(a, entry, h);
+		if (fd < 0)
+			CloseHandle(h);
+	}
 
 	return (r);
 }
@@ -2399,7 +2478,7 @@ setup_sparse_from_disk(struct archive_read_disk *a,
 	range.FileOffset.QuadPart = 0;
 	range.Length.QuadPart = entry_size;
 	outranges_size = 2048;
-	outranges = (FILE_ALLOCATED_RANGE_BUFFER *)malloc(outranges_size);
+	outranges = malloc(outranges_size);
 	if (outranges == NULL) {
 		archive_set_error(&a->archive, ENOMEM,
 			"Couldn't allocate memory");
