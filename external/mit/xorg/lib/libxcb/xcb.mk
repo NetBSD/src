@@ -1,4 +1,4 @@
-#	$NetBSD: xcb.mk,v 1.5 2019/05/29 13:15:53 maya Exp $
+#	$NetBSD: xcb.mk,v 1.6 2024/10/31 08:18:20 rillig Exp $
 
 # define XCBEXT to something before including this
 
@@ -8,6 +8,10 @@ SRCS=	${XCBEXT}.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xcb}/src
 CPPFLAGS+=	-I${.CURDIR}/../files
+
+LINTFLAGS+=	-X 132	# int = long (mostly for pointer differences)
+LINTFLAGS+=	-X 275	# cast discards 'const'
+LINTFLAGS+=	-X 247	# cast between unrelated pointer types
 
 LIBDPLIBS=\
 	xcb	${.CURDIR}/../libxcb \
