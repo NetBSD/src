@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.107 2023/07/20 16:21:23 lukem Exp $
+#	$NetBSD: configure.ac,v 1.108 2024/10/31 17:05:05 kre Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -184,7 +184,7 @@ AC_CHECK_DECLS([asprintf, asnprintf, vasprintf, vasnprintf, vsnprintf, fgetln, f
 ])
 
 AC_CHECK_DECLS([atoll, heapsort, mkdtemp, mkstemp, reallocarr, reallocarray,
-	getsubopt, setenv, strtoi, strtoll, strtou, setprogname,
+	getsubopt, setenv, strtoi, strtoll, strtou, setprogname, shquote,
 	getprogname],,, [
 #include <stdlib.h>
 ])

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.122 2023/07/21 22:05:04 lukem Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.123 2024/10/31 17:05:05 kre Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -518,6 +518,9 @@ int pwcache_groupdb(int (*)(int), void (*)(void),
     struct group * (*)(const char *), struct group * (*)(gid_t));
 #endif
 
+#if !HAVE_DECL_SHQUOTE
+size_t		shquote(const char *, char *, size_t);
+#endif
 #if !HAVE_DECL_STRLCAT
 size_t		strlcat(char *, const char *, size_t);
 #endif
