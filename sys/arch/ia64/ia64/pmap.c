@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.43 2023/10/06 11:45:16 skrll Exp $ */
+/* $NetBSD: pmap.c,v 1.44 2024/10/31 10:09:56 andvar Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43 2023/10/06 11:45:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44 2024/10/31 10:09:56 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1185,7 +1185,7 @@ pmap_pte_attr(struct ia64_lpte *pte, vm_memattr_t ma)
 
 /*
  * Set a pte to contain a valid mapping and enter it in the VHPT. If
- * the pte was orginally valid, then its assumed to already be in the
+ * the pte was originally valid, then its assumed to already be in the
  * VHPT.
  * This functions does not set the protection bits.  It's expected
  * that those have been set correctly prior to calling this function.
