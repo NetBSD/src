@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.251 2024/10/29 20:48:31 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.252 2024/10/31 10:32:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.251 2024/10/29 20:48:31 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.252 2024/10/31 10:32:08 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -403,7 +403,7 @@ static const char *const msgs[] = {
 	"generic selection requires C11 or later",			// 345
 	"call to '%s' effectively discards 'const' from argument",	// 346
 	"redeclaration of '%s' with type '%s', expected '%s'",		// 347
-	"maximum value %d of '%s' does not match maximum array index %d", // 348
+	"maximum value %d for '%s' of type '%s' does not match maximum array index %d", // 348
 	"non type argument to alignof is a GCC extension",		// 349
 	"'_Atomic' requires C11 or later",				// 350
 	"missing%s header declaration for '%s'",			// 351

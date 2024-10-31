@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_348.c,v 1.11 2024/10/29 20:48:31 rillig Exp $	*/
+/*	$NetBSD: msg_348.c,v 1.12 2024/10/31 10:32:08 rillig Exp $	*/
 # 3 "msg_348.c"
 
-// Test for message: maximum value %d of '%s' does not match maximum array index %d [348]
+// Test for message: maximum value %d for '%s' of type '%s' does not match maximum array index %d [348]
 
 /* lint1-extra-flags: -r -X 351 */
 
@@ -24,7 +24,7 @@ color_name(enum color color)
 	    "green",
 	    "blue"
 	};
-	/* No warning since the maximum enum value matches the array size. */
+	/* No warning since the maximum enum value equals the maximum array index. */
 	return name[color];
 }
 
@@ -35,7 +35,7 @@ color_name_too_few(enum color color)
 	    "red",
 	    "green"
 	};
-	/* expect+1: warning: maximum value 2 of 'enum color' does not match maximum array index 1 [348] */
+	/* expect+1: warning: maximum value 2 for 'blue' of type 'enum color' does not match maximum array index 1 [348] */
 	return name[color];
 }
 
@@ -48,7 +48,7 @@ color_name_too_many(enum color color)
 	    "blue",
 	    "black"
 	};
-	/* expect+1: warning: maximum value 2 of 'enum color' does not match maximum array index 3 [348] */
+	/* expect+1: warning: maximum value 2 for 'blue' of type 'enum color' does not match maximum array index 3 [348] */
 	return name[color];
 }
 
@@ -123,12 +123,12 @@ color_initial_letter(enum color color)
 		return;
 
 	/* FIXME: lint should not warn since the maximum usable array index is 2 */
-	/* expect+1: warning: maximum value 2 of 'enum color' does not match maximum array index 3 [348] */
+	/* expect+1: warning: maximum value 2 for 'blue' of type 'enum color' does not match maximum array index 3 [348] */
 	if (len_3_null[color] != '\0')
 		return;
 
 	/* FIXME: lint should not warn since the maximum usable array index is 3, not 4 */
-	/* expect+1: warning: maximum value 2 of 'enum color' does not match maximum array index 4 [348] */
+	/* expect+1: warning: maximum value 2 for 'blue' of type 'enum color' does not match maximum array index 4 [348] */
 	if (len_4_null[color] != '\0')
 		return;
 
@@ -143,7 +143,7 @@ color_initial_letter(enum color color)
 	if (len_3_of_3[color] != '\0')
 		return;
 
-	/* expect+1: warning: maximum value 2 of 'enum color' does not match maximum array index 3 [348] */
+	/* expect+1: warning: maximum value 2 for 'blue' of type 'enum color' does not match maximum array index 3 [348] */
 	if (len_4_of_4[color])
 		return;
 }
@@ -245,5 +245,18 @@ const char *
 lowercase_max_name(enum lowercase_max x)
 {
 	static const char *const name[] = { "first", "second" };
+	return name[x];
+}
+
+enum uppercase_n {
+	UPPERCASE_N_FIRST,
+	UPPERCASE_N_LAST,
+	N_UPPERCASE_N,
+};
+
+const char*
+uppercase_n_name(enum uppercase_n x)
+{
+	static const char *const name[] = { "first", "last" };
 	return name[x];
 }
