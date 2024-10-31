@@ -1,12 +1,12 @@
 make: "deptgt.mk" line 11: warning: Extra target '.PHONY' ignored
 make: "deptgt.mk" line 30: Unassociated shell command ": command3		# parse error, since targets == NULL"
-Parsing line 36: ${:U}: empty-source
+Parsing deptgt.mk:36: ${:U}: empty-source
 ParseDependency(: empty-source)
-Parsing line 37: 	: command for empty targets list
-Parsing line 38: : empty-source
+Parsing deptgt.mk:37: 	: command for empty targets list
+Parsing deptgt.mk:38: : empty-source
 ParseDependency(: empty-source)
-Parsing line 39: 	: command for empty targets list
-Parsing line 40: .MAKEFLAGS: -d0
+Parsing deptgt.mk:39: 	: command for empty targets list
+Parsing deptgt.mk:40: .MAKEFLAGS: -d0
 ParseDependency(.MAKEFLAGS: -d0)
 make: "deptgt.mk" line 45: Unknown modifier "Z"
 	while evaluating "${:U:Z}:" with value ""

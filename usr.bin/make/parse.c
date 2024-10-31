@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.735 2024/08/29 20:20:35 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.736 2024/10/31 09:12:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.735 2024/08/29 20:20:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.736 2024/10/31 09:12:13 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -2617,7 +2617,8 @@ ReadHighLevelLine(void)
 		if (line == NULL)
 			return NULL;
 
-		DEBUG2(PARSE, "Parsing line %u: %s\n", curFile->lineno, line);
+		DEBUG3(PARSE, "Parsing %s:%u: %s\n",
+		    curFile->name.str, curFile->lineno, line);
 		if (curFile->guardState != GS_NO
 		    && ((curFile->guardState == GS_START && line[0] != '.')
 			|| curFile->guardState == GS_DONE))

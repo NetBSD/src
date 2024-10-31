@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.351 2024/08/18 13:40:51 rillig Exp $
+# $NetBSD: Makefile,v 1.352 2024/10/31 09:12:13 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -508,7 +508,7 @@ SED_CMDS.deptgt-phony=	${STD_SED_CMDS.dd}
 SED_CMDS.dir=		${STD_SED_CMDS.dd}
 SED_CMDS.directive-include-guard= \
 	-e '/\.MAKEFLAGS/d' \
-	-e '/^Parsing line/d' \
+	-e '/^Parsing .*:[1-9][0-9]*:/d' \
 	-e '/^SetFilenameVars:/d' \
 	-e '/^ParseDependency/d' \
 	-e '/^ParseEOF:/d'

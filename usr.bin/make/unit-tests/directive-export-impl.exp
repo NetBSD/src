@@ -1,8 +1,8 @@
-Parsing line 21: UT_VAR=		<${REF}>
+Parsing directive-export-impl.mk:21: UT_VAR=		<${REF}>
 Global: UT_VAR = <${REF}>
-Parsing line 28: .export UT_VAR
+Parsing directive-export-impl.mk:28: .export UT_VAR
 Global: .MAKE.EXPORTED = UT_VAR
-Parsing line 32: : ${UT_VAR:N*}
+Parsing directive-export-impl.mk:32: : ${UT_VAR:N*}
 Var_Parse: ${UT_VAR:N*} (eval-defined)
 Var_Parse: ${REF}> (eval-defined)
 Evaluating modifier ${UT_VAR:N...} on value "<>"
@@ -10,7 +10,7 @@ Pattern for ':N' is "*"
 ModifyWords: split "<>" into 1 word
 Result of ${UT_VAR:N*} is ""
 ParseDependency(: )
-Parsing line 42: .if ${:!echo "\$UT_VAR"!} != "<>"
+Parsing directive-export-impl.mk:42: .if ${:!echo "\$UT_VAR"!} != "<>"
 CondParser_Eval: ${:!echo "\$UT_VAR"!} != "<>"
 Var_Parse: ${:!echo "\$UT_VAR"!} != "<>" (eval-defined)
 Evaluating modifier ${:!...} on value "" (eval-defined, undefined)
@@ -25,7 +25,7 @@ Var_Parse: ${UT_VAR} (eval)
 Var_Parse: ${REF}> (eval)
 Result of ${:!echo "\$UT_VAR"!} is "<>" (eval-defined, defined)
 Comparing "<>" != "<>"
-Parsing line 50: : ${UT_VAR:N*}
+Parsing directive-export-impl.mk:50: : ${UT_VAR:N*}
 Var_Parse: ${UT_VAR:N*} (eval-defined)
 Var_Parse: ${REF}> (eval-defined)
 Evaluating modifier ${UT_VAR:N...} on value "<>"
@@ -33,9 +33,9 @@ Pattern for ':N' is "*"
 ModifyWords: split "<>" into 1 word
 Result of ${UT_VAR:N*} is ""
 ParseDependency(: )
-Parsing line 54: REF=		defined
+Parsing directive-export-impl.mk:54: REF=		defined
 Global: REF = defined
-Parsing line 58: .if ${:!echo "\$UT_VAR"!} != "<defined>"
+Parsing directive-export-impl.mk:58: .if ${:!echo "\$UT_VAR"!} != "<defined>"
 CondParser_Eval: ${:!echo "\$UT_VAR"!} != "<defined>"
 Var_Parse: ${:!echo "\$UT_VAR"!} != "<defined>" (eval-defined)
 Evaluating modifier ${:!...} on value "" (eval-defined, undefined)
@@ -50,10 +50,10 @@ Var_Parse: ${UT_VAR} (eval)
 Var_Parse: ${REF}> (eval)
 Result of ${:!echo "\$UT_VAR"!} is "<defined>" (eval-defined, defined)
 Comparing "<defined>" != "<defined>"
-Parsing line 62: all:
+Parsing directive-export-impl.mk:62: all:
 ParseDependency(all:)
 Global: .ALLTARGETS =  all
-Parsing line 63: .MAKEFLAGS: -d0
+Parsing directive-export-impl.mk:63: .MAKEFLAGS: -d0
 ParseDependency(.MAKEFLAGS: -d0)
 Global: .MAKEFLAGS =  -r -k -d cpv -d
 Global: .MAKEFLAGS =  -r -k -d cpv -d 0
