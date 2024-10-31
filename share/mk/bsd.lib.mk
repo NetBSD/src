@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.407 2024/06/28 21:58:24 riastradh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.408 2024/10/31 15:04:11 riastradh Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -707,7 +707,7 @@ CLEANFILES+=	${_LIB.so.full}.diffsym
 CLEANFILES+=	${_LIB.so.full}.diffsym.tmp
 update-symbols: .PHONY
 update-symbols: ${_LIB.so.full}.actsym
-	cp ${.ALLSRC} ${.CURDIR}/${LIB_EXPSYM}
+	cp ${.ALLSRC} ${defined(NETBSDSRCDIR_RW):?${.CURDIR:C,^${NETBSDSRCDIR}/,${NETBSDSRCDIR_RW}/,}:${.CURDIR}}/${LIB_EXPSYM}
 .endif
 
 .if !empty(LOBJS)							# {
