@@ -1,4 +1,4 @@
-/*	$NetBSD: sophgo,sg2042-reset.h,v 1.1 2024/08/12 10:55:56 skrll Exp $	*/
+/*	$NetBSD: sophgo,sg2042-reset.h,v 1.2 2024/10/31 07:07:45 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause */
 /*
