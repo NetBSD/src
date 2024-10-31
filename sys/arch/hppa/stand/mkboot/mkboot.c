@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.4 2024/03/20 00:34:32 christos Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.5 2024/10/31 01:21:12 gutteridge Exp $	*/
 
 /*	$OpenBSD: mkboot.c,v 1.9 2001/05/17 00:57:55 pvalchev Exp $	*/
 
@@ -53,6 +53,7 @@ static char rcsid[] = "$OpenBSD: mkboot.c,v 1.9 2001/05/17 00:57:55 pvalchev Exp
 #endif
 
 #include <sys/param.h>
+#include <sys/endian.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <string.h>
@@ -83,7 +84,7 @@ static char rcsid[] = "$OpenBSD: mkboot.c,v 1.9 2001/05/17 00:57:55 pvalchev Exp
  * Header prepended to each a.out file.
  */
 struct exec {
-	u_long	a_midmag;	/* htonl(flags<<26 | mid<<16 | magic) */
+	u_long	a_midmag;	/* htobe32(flags<<26 | mid<<16 | magic) */
 	u_long	a_text;		/* text segment size */
 	u_long	a_data;		/* initialized data size */
 	u_long	a_bss;		/* uninitialized data size */
@@ -101,7 +102,7 @@ struct exec {
 
 #define N_GETMAGIC(ex) \
     ((((ex).a_midmag)&0xffff0000) ? \
-    (ntohl((uint32_t)((ex).a_midmag))&0xffff) : ((ex).a_midmag))
+    (be32toh((uint32_t)((ex).a_midmag))&0xffff) : ((ex).a_midmag))
 
 #include <stdio.h>
 #include <ctype.h>
