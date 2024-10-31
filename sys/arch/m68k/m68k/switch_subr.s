@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.37 2024/01/17 05:41:57 thorpej Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.38 2024/10/31 07:30:28 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -270,7 +270,7 @@ ENTRY(m68k_make_fpu_idle_frame)
 	clrl	-(%sp)
 	fnop
 
-	frestore (%sp)		| Effectively `resets' the FPU
+	frestore (%sp)			| Effectively `resets' the FPU
 	fnop
 
 	/* Loading '0.0' will change FPU to "idle". */

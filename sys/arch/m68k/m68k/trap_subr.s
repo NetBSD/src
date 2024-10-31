@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.s,v 1.16 2023/09/26 12:46:30 tsutsui Exp $	*/
+/*	$NetBSD: trap_subr.s,v 1.17 2024/10/31 07:30:28 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,7 +57,7 @@ ASENTRY_NOPROFILE(fault)
 	clrl	-(%sp)			| no VA arg
 	clrl	-(%sp)			| or code arg
 	movl	%d0,-(%sp)		| push trap type
-	pea	12(%sp)		| address of trap frame
+	pea	12(%sp)			| address of trap frame
 	jbsr	_C_LABEL(trap)		| handle trap
 	lea	16(%sp),%sp		| pop value args
 	movl	FR_SP(%sp),%a0		| restore
@@ -70,14 +70,14 @@ ASENTRY_NOPROFILE(fault)
  * Similar to above, but will tidy up the stack, if necessary.
  */
 ASENTRY(faultstkadj)
-	pea	12(%sp)		| address of trap frame
+	pea	12(%sp)			| address of trap frame
 	jbsr	_C_LABEL(trap)		| handle the error
 	lea	16(%sp),%sp		| pop value args
 /* for new 68060 Branch Prediction Error handler */
 _ASM_LABEL(faultstkadjnotrap2):
 	movl	FR_SP(%sp),%a0		| restore user SP
 	movl	%a0,%usp		|   from save area
-	movw	FR_ADJ(%sp),%d0	| need to adjust stack?
+	movw	FR_ADJ(%sp),%d0		| need to adjust stack?
 	jne	1f			| yes, go to it
 	moveml	(%sp)+,#0x7FFF		| no, restore most user regs
 	addql	#8,%sp			| toss SSP and stkadj
@@ -168,7 +168,7 @@ ENTRY_NOPROFILE(coperr)
 	movl	%a0,FR_SP(%sp)		|   the user stack pointer
 	clrl	-(%sp)			| no VA arg
 	clrl	-(%sp)			| or code arg
-	movl	#T_COPERR,-(%sp)		| push trap type
+	movl	#T_COPERR,-(%sp)	| push trap type
 	jra	_ASM_LABEL(faultstkadj)	| call trap and deal with stack
 					|   adjustments
 
@@ -179,6 +179,6 @@ ENTRY_NOPROFILE(fmterr)
 	movl	%a0,FR_SP(%sp)		|   the user stack pointer
 	clrl	-(%sp)			| no VA arg
 	clrl	-(%sp)			| or code arg
-	movl	#T_FMTERR,-(%sp)		| push trap type
+	movl	#T_FMTERR,-(%sp)	| push trap type
 	jra	_ASM_LABEL(faultstkadj)	| call trap and deal with stack
 					|   adjustments

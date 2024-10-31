@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_sigreturn14.s,v 1.6 2024/01/17 12:19:06 thorpej Exp $	*/
+/*	$NetBSD: compat_16_sigreturn14.s,v 1.7 2024/10/31 07:30:28 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,7 +64,7 @@ ENTRY_NOPROFILE(m68k_compat_16_sigreturn14_stub)
 	movl	FR_SP(%sp),%a0		| grab and restore
 	movl	%a0,%usp		|   user SP
 	lea	FR_HW(%sp),%a1		| pointer to HW frame
-	movw	FR_ADJ(%sp),%d0	| do we need to adjust the stack?
+	movw	FR_ADJ(%sp),%d0		| do we need to adjust the stack?
 	jeq	2f			| no, just continue
 	moveq	#92,%d1			| total size
 	subw	%d0,%d1			|  - hole size = frame size
