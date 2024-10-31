@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.451 2024/10/23 00:45:58 kalvisd Exp $
+#	$NetBSD: bsd.README,v 1.452 2024/10/31 23:56:44 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1415,6 +1415,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBWRAP?=		${DESTDIR}/usr/lib/libwrap.a
 		LIBY?=			${DESTDIR}/usr/lib/liby.a
 		LIBZ?=			${DESTDIR}/usr/lib/libz.a
+		LIBZSTD?=		${DESTDIR}/usr/lib/libzstd.a
 
 		The following c startup files.
 
