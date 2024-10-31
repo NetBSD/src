@@ -29,6 +29,8 @@
 
 #pragma GCC push_options
 #pragma GCC target ("+nothing+simd")
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-braces"
 
 #pragma GCC aarch64 "arm_neon.h"
 
@@ -9644,7 +9646,7 @@ __extension__ extern __inline int64_t
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
 vabsd_s64 (int64_t __a)
 {
-  return __a < 0 ? - (uint64_t) __a : __a;
+  return __a < 0 ? (int64_t) (- (uint64_t) __a) : __a;
 }
 
 /* vadd */
@@ -17441,7 +17443,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2_lane_u8 (const uint8_t * __ptr, uint8x8x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev8qi_usus (
-	  (__builtin_aarch64_simd_qi *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_qi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline uint16x4x2_t
@@ -17449,7 +17451,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2_lane_u16 (const uint16_t * __ptr, uint16x4x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev4hi_usus (
-	  (__builtin_aarch64_simd_hi *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_hi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline uint32x2x2_t
@@ -17457,7 +17459,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2_lane_u32 (const uint32_t * __ptr, uint32x2x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev2si_usus (
-	  (__builtin_aarch64_simd_si *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_si *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline uint64x1x2_t
@@ -17465,7 +17467,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2_lane_u64 (const uint64_t * __ptr, uint64x1x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanedi_usus (
-	  (__builtin_aarch64_simd_di *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_di *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline int8x8x2_t
@@ -17473,7 +17475,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2_lane_s8 (const int8_t * __ptr, int8x8x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev8qi (
-	  (__builtin_aarch64_simd_qi *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_qi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline int16x4x2_t
@@ -17481,7 +17483,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2_lane_s16 (const int16_t * __ptr, int16x4x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev4hi (
-	  (__builtin_aarch64_simd_hi *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_hi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline int32x2x2_t
@@ -17489,7 +17491,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2_lane_s32 (const int32_t * __ptr, int32x2x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev2si (
-	  (__builtin_aarch64_simd_si *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_si *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline int64x1x2_t
@@ -17497,7 +17499,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2_lane_s64 (const int64_t * __ptr, int64x1x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanedi (
-	  (__builtin_aarch64_simd_di *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_di *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline float16x4x2_t
@@ -17505,7 +17507,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2_lane_f16 (const float16_t * __ptr, float16x4x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev4hf (
-	  (__builtin_aarch64_simd_hf *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_hf *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline float32x2x2_t
@@ -17513,7 +17515,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2_lane_f32 (const float32_t * __ptr, float32x2x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev2sf (
-	  (__builtin_aarch64_simd_sf *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_sf *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline float64x1x2_t
@@ -17521,7 +17523,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2_lane_f64 (const float64_t * __ptr, float64x1x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanedf (
-	  (__builtin_aarch64_simd_df *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_df *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline poly8x8x2_t
@@ -17529,7 +17531,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2_lane_p8 (const poly8_t * __ptr, poly8x8x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev8qi_psps (
-	  (__builtin_aarch64_simd_qi *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_qi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline poly16x4x2_t
@@ -17537,7 +17539,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2_lane_p16 (const poly16_t * __ptr, poly16x4x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev4hi_psps (
-	  (__builtin_aarch64_simd_hi *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_hi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline poly64x1x2_t
@@ -17545,7 +17547,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2_lane_p64 (const poly64_t * __ptr, poly64x1x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanedi_psps (
-	  (__builtin_aarch64_simd_di *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_di *) __ptr, __b, __c);
 }
 
 /* vld2q_lane */
@@ -17555,7 +17557,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2q_lane_u8 (const uint8_t * __ptr, uint8x16x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev16qi_usus (
-	(__builtin_aarch64_simd_qi *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_qi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline uint16x8x2_t
@@ -17563,7 +17565,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2q_lane_u16 (const uint16_t * __ptr, uint16x8x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev8hi_usus (
-	(__builtin_aarch64_simd_hi *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_hi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline uint32x4x2_t
@@ -17571,7 +17573,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2q_lane_u32 (const uint32_t * __ptr, uint32x4x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev4si_usus (
-	(__builtin_aarch64_simd_si *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_si *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline uint64x2x2_t
@@ -17579,7 +17581,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2q_lane_u64 (const uint64_t * __ptr, uint64x2x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev2di_usus (
-	(__builtin_aarch64_simd_di *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_di *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline int8x16x2_t
@@ -17587,7 +17589,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2q_lane_s8 (const int8_t * __ptr, int8x16x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev16qi (
-	(__builtin_aarch64_simd_qi *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_qi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline int16x8x2_t
@@ -17595,7 +17597,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2q_lane_s16 (const int16_t * __ptr, int16x8x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev8hi (
-	(__builtin_aarch64_simd_hi *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_hi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline int32x4x2_t
@@ -17603,7 +17605,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2q_lane_s32 (const int32_t * __ptr, int32x4x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev4si (
-	(__builtin_aarch64_simd_si *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_si *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline int64x2x2_t
@@ -17611,7 +17613,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2q_lane_s64 (const int64_t * __ptr, int64x2x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev2di (
-	(__builtin_aarch64_simd_di *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_di *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline float16x8x2_t
@@ -17619,7 +17621,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2q_lane_f16 (const float16_t * __ptr, float16x8x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev8hf (
-	(__builtin_aarch64_simd_hf *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_hf *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline float32x4x2_t
@@ -17627,7 +17629,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2q_lane_f32 (const float32_t * __ptr, float32x4x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev4sf (
-	(__builtin_aarch64_simd_sf *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_sf *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline float64x2x2_t
@@ -17635,7 +17637,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2q_lane_f64 (const float64_t * __ptr, float64x2x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev2df (
-	(__builtin_aarch64_simd_df *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_df *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline poly8x16x2_t
@@ -17643,7 +17645,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2q_lane_p8 (const poly8_t * __ptr, poly8x16x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev16qi_psps (
-	(__builtin_aarch64_simd_qi *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_qi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline poly16x8x2_t
@@ -17651,7 +17653,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2q_lane_p16 (const poly16_t * __ptr, poly16x8x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev8hi_psps (
-	(__builtin_aarch64_simd_hi *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_hi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline poly64x2x2_t
@@ -17659,7 +17661,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2q_lane_p64 (const poly64_t * __ptr, poly64x2x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev2di_psps (
-	(__builtin_aarch64_simd_di *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_di *) __ptr, __b, __c);
 }
 
 /* vld3_lane */
@@ -17669,7 +17671,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3_lane_u8 (const uint8_t * __ptr, uint8x8x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev8qi_usus (
-	  (__builtin_aarch64_simd_qi *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_qi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline uint16x4x3_t
@@ -17677,7 +17679,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3_lane_u16 (const uint16_t * __ptr, uint16x4x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev4hi_usus (
-	  (__builtin_aarch64_simd_hi *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_hi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline uint32x2x3_t
@@ -17685,7 +17687,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3_lane_u32 (const uint32_t * __ptr, uint32x2x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev2si_usus (
-	  (__builtin_aarch64_simd_si *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_si *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline uint64x1x3_t
@@ -17693,7 +17695,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3_lane_u64 (const uint64_t * __ptr, uint64x1x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanedi_usus (
-	  (__builtin_aarch64_simd_di *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_di *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline int8x8x3_t
@@ -17701,7 +17703,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3_lane_s8 (const int8_t * __ptr, int8x8x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev8qi (
-	  (__builtin_aarch64_simd_qi *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_qi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline int16x4x3_t
@@ -17709,7 +17711,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3_lane_s16 (const int16_t * __ptr, int16x4x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev4hi (
-	  (__builtin_aarch64_simd_hi *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_hi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline int32x2x3_t
@@ -17717,7 +17719,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3_lane_s32 (const int32_t * __ptr, int32x2x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev2si (
-	  (__builtin_aarch64_simd_si *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_si *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline int64x1x3_t
@@ -17725,7 +17727,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3_lane_s64 (const int64_t * __ptr, int64x1x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanedi (
-	  (__builtin_aarch64_simd_di *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_di *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline float16x4x3_t
@@ -17733,7 +17735,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3_lane_f16 (const float16_t * __ptr, float16x4x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev4hf (
-	  (__builtin_aarch64_simd_hf *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_hf *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline float32x2x3_t
@@ -17741,7 +17743,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3_lane_f32 (const float32_t * __ptr, float32x2x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev2sf (
-	  (__builtin_aarch64_simd_sf *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_sf *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline float64x1x3_t
@@ -17749,7 +17751,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3_lane_f64 (const float64_t * __ptr, float64x1x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanedf (
-	  (__builtin_aarch64_simd_df *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_df *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline poly8x8x3_t
@@ -17757,7 +17759,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3_lane_p8 (const poly8_t * __ptr, poly8x8x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev8qi_psps (
-	  (__builtin_aarch64_simd_qi *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_qi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline poly16x4x3_t
@@ -17765,7 +17767,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3_lane_p16 (const poly16_t * __ptr, poly16x4x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev4hi_psps (
-	  (__builtin_aarch64_simd_hi *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_hi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline poly64x1x3_t
@@ -17773,7 +17775,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3_lane_p64 (const poly64_t * __ptr, poly64x1x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanedi_psps (
-	  (__builtin_aarch64_simd_di *) __ptr, __b, __c);
+	  (const __builtin_aarch64_simd_di *) __ptr, __b, __c);
 }
 
 /* vld3q_lane */
@@ -17783,7 +17785,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3q_lane_u8 (const uint8_t * __ptr, uint8x16x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev16qi_usus (
-	(__builtin_aarch64_simd_qi *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_qi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline uint16x8x3_t
@@ -17791,7 +17793,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3q_lane_u16 (const uint16_t * __ptr, uint16x8x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev8hi_usus (
-	(__builtin_aarch64_simd_hi *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_hi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline uint32x4x3_t
@@ -17799,7 +17801,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3q_lane_u32 (const uint32_t * __ptr, uint32x4x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev4si_usus (
-	(__builtin_aarch64_simd_si *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_si *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline uint64x2x3_t
@@ -17807,7 +17809,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3q_lane_u64 (const uint64_t * __ptr, uint64x2x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev2di_usus (
-	(__builtin_aarch64_simd_di *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_di *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline int8x16x3_t
@@ -17815,7 +17817,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3q_lane_s8 (const int8_t * __ptr, int8x16x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev16qi (
-	(__builtin_aarch64_simd_qi *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_qi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline int16x8x3_t
@@ -17823,7 +17825,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3q_lane_s16 (const int16_t * __ptr, int16x8x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev8hi (
-	(__builtin_aarch64_simd_hi *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_hi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline int32x4x3_t
@@ -17831,7 +17833,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3q_lane_s32 (const int32_t * __ptr, int32x4x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev4si (
-	(__builtin_aarch64_simd_si *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_si *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline int64x2x3_t
@@ -17839,7 +17841,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3q_lane_s64 (const int64_t * __ptr, int64x2x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev2di (
-	(__builtin_aarch64_simd_di *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_di *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline float16x8x3_t
@@ -17847,7 +17849,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3q_lane_f16 (const float16_t * __ptr, float16x8x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev8hf (
-	(__builtin_aarch64_simd_hf *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_hf *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline float32x4x3_t
@@ -17855,7 +17857,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3q_lane_f32 (const float32_t * __ptr, float32x4x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev4sf (
-	(__builtin_aarch64_simd_sf *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_sf *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline float64x2x3_t
@@ -17863,7 +17865,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3q_lane_f64 (const float64_t * __ptr, float64x2x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev2df (
-	(__builtin_aarch64_simd_df *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_df *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline poly8x16x3_t
@@ -17871,7 +17873,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3q_lane_p8 (const poly8_t * __ptr, poly8x16x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev16qi_psps (
-	(__builtin_aarch64_simd_qi *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_qi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline poly16x8x3_t
@@ -17879,7 +17881,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3q_lane_p16 (const poly16_t * __ptr, poly16x8x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev8hi_psps (
-	(__builtin_aarch64_simd_hi *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_hi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline poly64x2x3_t
@@ -17887,7 +17889,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3q_lane_p64 (const poly64_t * __ptr, poly64x2x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev2di_psps (
-	(__builtin_aarch64_simd_di *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_di *) __ptr, __b, __c);
 }
 
 /* vld4_lane */
@@ -17897,7 +17899,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4_lane_u8 (const uint8_t * __ptr, uint8x8x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev8qi_usus (
-	  (__builtin_aarch64_simd_qi *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_qi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline uint16x4x4_t
@@ -17905,7 +17907,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4_lane_u16 (const uint16_t * __ptr, uint16x4x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev4hi_usus (
-	  (__builtin_aarch64_simd_hi *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_hi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline uint32x2x4_t
@@ -17913,7 +17915,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4_lane_u32 (const uint32_t * __ptr, uint32x2x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev2si_usus (
-	  (__builtin_aarch64_simd_si *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_si *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline uint64x1x4_t
@@ -17921,7 +17923,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4_lane_u64 (const uint64_t * __ptr, uint64x1x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanedi_usus (
-	  (__builtin_aarch64_simd_di *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_di *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline int8x8x4_t
@@ -17929,7 +17931,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4_lane_s8 (const int8_t * __ptr, int8x8x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev8qi (
-	  (__builtin_aarch64_simd_qi *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_qi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline int16x4x4_t
@@ -17937,7 +17939,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4_lane_s16 (const int16_t * __ptr, int16x4x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev4hi (
-	  (__builtin_aarch64_simd_hi *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_hi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline int32x2x4_t
@@ -17945,7 +17947,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4_lane_s32 (const int32_t * __ptr, int32x2x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev2si (
-	  (__builtin_aarch64_simd_si *) __ptr, __b, __c);
+        (const __builtin_aarch64_simd_si *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline int64x1x4_t
@@ -17953,7 +17955,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4_lane_s64 (const int64_t * __ptr, int64x1x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanedi (
-	  (__builtin_aarch64_simd_di *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_di *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline float16x4x4_t
@@ -17961,7 +17963,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4_lane_f16 (const float16_t * __ptr, float16x4x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev4hf (
-	  (__builtin_aarch64_simd_hf *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_hf *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline float32x2x4_t
@@ -17969,7 +17971,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4_lane_f32 (const float32_t * __ptr, float32x2x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev2sf (
-	  (__builtin_aarch64_simd_sf *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_sf *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline float64x1x4_t
@@ -17977,7 +17979,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4_lane_f64 (const float64_t * __ptr, float64x1x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanedf (
-	  (__builtin_aarch64_simd_df *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_df *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline poly8x8x4_t
@@ -17985,7 +17987,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4_lane_p8 (const poly8_t * __ptr, poly8x8x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev8qi_psps (
-	  (__builtin_aarch64_simd_qi *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_qi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline poly16x4x4_t
@@ -17993,7 +17995,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4_lane_p16 (const poly16_t * __ptr, poly16x4x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev4hi_psps (
-	  (__builtin_aarch64_simd_hi *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_hi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline poly64x1x4_t
@@ -18001,7 +18003,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4_lane_p64 (const poly64_t * __ptr, poly64x1x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanedi_psps (
-	  (__builtin_aarch64_simd_di *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_di *) __ptr, __b, __c);
 }
 
 /* vld4q_lane */
@@ -18011,7 +18013,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4q_lane_u8 (const uint8_t * __ptr, uint8x16x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev16qi_usus (
-	(__builtin_aarch64_simd_qi *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_qi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline uint16x8x4_t
@@ -18019,7 +18021,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4q_lane_u16 (const uint16_t * __ptr, uint16x8x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev8hi_usus (
-	(__builtin_aarch64_simd_hi *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_hi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline uint32x4x4_t
@@ -18027,7 +18029,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4q_lane_u32 (const uint32_t * __ptr, uint32x4x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev4si_usus (
-	(__builtin_aarch64_simd_si *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_si *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline uint64x2x4_t
@@ -18035,7 +18037,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4q_lane_u64 (const uint64_t * __ptr, uint64x2x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev2di_usus (
-	(__builtin_aarch64_simd_di *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_di *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline int8x16x4_t
@@ -18043,7 +18045,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4q_lane_s8 (const int8_t * __ptr, int8x16x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev16qi (
-	(__builtin_aarch64_simd_qi *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_qi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline int16x8x4_t
@@ -18051,7 +18053,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4q_lane_s16 (const int16_t * __ptr, int16x8x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev8hi (
-	(__builtin_aarch64_simd_hi *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_hi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline int32x4x4_t
@@ -18059,7 +18061,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4q_lane_s32 (const int32_t * __ptr, int32x4x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev4si (
-	(__builtin_aarch64_simd_si *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_si *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline int64x2x4_t
@@ -18067,7 +18069,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4q_lane_s64 (const int64_t * __ptr, int64x2x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev2di (
-	(__builtin_aarch64_simd_di *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_di *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline float16x8x4_t
@@ -18075,7 +18077,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4q_lane_f16 (const float16_t * __ptr, float16x8x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev8hf (
-	(__builtin_aarch64_simd_hf *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_hf *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline float32x4x4_t
@@ -18083,7 +18085,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4q_lane_f32 (const float32_t * __ptr, float32x4x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev4sf (
-	(__builtin_aarch64_simd_sf *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_sf *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline float64x2x4_t
@@ -18091,7 +18093,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4q_lane_f64 (const float64_t * __ptr, float64x2x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev2df (
-	(__builtin_aarch64_simd_df *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_df *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline poly8x16x4_t
@@ -18099,7 +18101,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4q_lane_p8 (const poly8_t * __ptr, poly8x16x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev16qi_psps (
-	(__builtin_aarch64_simd_qi *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_qi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline poly16x8x4_t
@@ -18107,7 +18109,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4q_lane_p16 (const poly16_t * __ptr, poly16x8x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev8hi_psps (
-	(__builtin_aarch64_simd_hi *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_hi *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline poly64x2x4_t
@@ -18115,7 +18117,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4q_lane_p64 (const poly64_t * __ptr, poly64x2x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev2di_psps (
-	(__builtin_aarch64_simd_di *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_di *) __ptr, __b, __c);
 }
 
 /* vmax */
@@ -31593,7 +31595,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2_lane_bf16 (const bfloat16_t * __ptr, bfloat16x4x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev4bf (
-	  (__builtin_aarch64_simd_bf *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_bf *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline bfloat16x8x2_t
@@ -31601,7 +31603,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld2q_lane_bf16 (const bfloat16_t * __ptr, bfloat16x8x2_t __b, const int __c)
 {
   return __builtin_aarch64_ld2_lanev8bf (
-	  (__builtin_aarch64_simd_bf *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_bf *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline bfloat16x4x3_t
@@ -31609,7 +31611,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3_lane_bf16 (const bfloat16_t * __ptr, bfloat16x4x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev4bf (
-	  (__builtin_aarch64_simd_bf *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_bf *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline bfloat16x8x3_t
@@ -31617,7 +31619,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld3q_lane_bf16 (const bfloat16_t * __ptr, bfloat16x8x3_t __b, const int __c)
 {
   return __builtin_aarch64_ld3_lanev8bf (
-	  (__builtin_aarch64_simd_bf *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_bf *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline bfloat16x4x4_t
@@ -31625,7 +31627,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4_lane_bf16 (const bfloat16_t * __ptr, bfloat16x4x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev4bf (
-	  (__builtin_aarch64_simd_bf *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_bf *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline bfloat16x8x4_t
@@ -31633,7 +31635,7 @@ __attribute__ ((__always_inline__, __gnu_inline__,__artificial__))
 vld4q_lane_bf16 (const bfloat16_t * __ptr, bfloat16x8x4_t __b, const int __c)
 {
   return __builtin_aarch64_ld4_lanev8bf (
-	  (__builtin_aarch64_simd_bf *) __ptr, __b, __c);
+	(const __builtin_aarch64_simd_bf *) __ptr, __b, __c);
 }
 
 __extension__ extern __inline void
@@ -31790,6 +31792,7 @@ vusmmlaq_s32 (int32x4_t __r, uint8x16_t __a, int8x16_t __b)
   return __builtin_aarch64_simd_usmmlav16qi_ssus (__r, __a, __b);
 }
 
+#pragma GCC diagnostics pop
 #pragma GCC pop_options
 
 __extension__ extern __inline poly8x8_t
