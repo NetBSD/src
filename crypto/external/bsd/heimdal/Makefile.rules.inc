@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.rules.inc,v 1.9 2018/03/13 03:06:51 mrg Exp $
+# $NetBSD: Makefile.rules.inc,v 1.10 2024/11/01 23:43:32 riastradh Exp $
 
 SRCS+= ${HEIMSRCS:N*.et:N*.in:N*.asn1}
 
@@ -104,5 +104,8 @@ OBJS.${PROG} += ${OBJS}
 .if defined(LIB) && exists(version-script.map) && !defined(NO_VERSION_SCRIPT)
 version-script.map:
 
-LDFLAGS.lib${LIB} += -Wl,--version-script=${version-script.map:P}
+# XXX For libkadm5clnt, this should be version-script-client.map --
+# requires major revbump, though; see PR lib/58795: libkadm5clnt.so is
+# built without symbol version map.
+VERSION_MAP=	version-script.map
 .endif
