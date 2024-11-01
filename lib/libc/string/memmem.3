@@ -1,4 +1,4 @@
-.\"	$NetBSD: memmem.3,v 1.3 2008/04/30 13:10:51 martin Exp $
+.\"	$NetBSD: memmem.3,v 1.4 2024/11/01 16:36:58 nia Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 12, 2005
+.Dd November 1, 2024
 .Dt MEMMEM 3
 .Os
 .Sh NAME
@@ -74,11 +74,9 @@ is deemed to match the start of the string, as with
 .Xr strstr 3
 .Sh STANDARDS
 The
-.Fn memmem
-function is not currently standardized.
-However, it is meant to be API compatible with functions in
-.Fx
-and Linux.
+.Nm
+function conforms to
+.St -p1003.1-2024 .
 .Sh HISTORY
 .Fn memmem
 first appeared in the Free Software Foundation's glibc library.

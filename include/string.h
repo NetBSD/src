@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.54 2023/08/01 17:51:24 christos Exp $	*/
+/*	$NetBSD: string.h,v 1.55 2024/11/01 16:36:58 nia Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -94,14 +94,23 @@ __aconst char *strsignal(int);
 #endif
 __END_DECLS
 
+/*
+ * IEEE Std 1003.1-2024 (POSIX.1-2024)
+ */
+#if (_POSIX_C_SOURCE - 0) >= 202405L || (_XOPEN_SOURCE - 0 >= 800) || \
+    defined(_NETBSD_SOURCE)
+__BEGIN_DECLS
+void	*memmem(const void *, size_t, const void *, size_t);
+size_t	 strlcat(char *, const char *, size_t);
+size_t	 strlcpy(char *, const char *, size_t);
+__END_DECLS
+#endif
+
 #if defined(_NETBSD_SOURCE)
 #include <strings.h>		/* for backwards-compatibility */
 __BEGIN_DECLS
-void	*memmem(const void *, size_t, const void *, size_t);
 char	*strcasestr(const char *, const char *);
 char	*strchrnul(const char *, int);
-size_t	 strlcat(char *, const char *, size_t);
-size_t	 strlcpy(char *, const char *, size_t);
 char	*strsep(char **, const char *);
 char	*stresep(char **, const char *, int);
 char	*strnstr(const char *, const char *, size_t);

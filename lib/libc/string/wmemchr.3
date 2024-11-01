@@ -1,4 +1,4 @@
-.\"	$NetBSD: wmemchr.3,v 1.18 2023/07/31 17:38:28 christos Exp $
+.\"	$NetBSD: wmemchr.3,v 1.19 2024/11/01 16:36:58 nia Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -206,10 +206,14 @@ function conforms to
 .St -p1003.1-2008 .
 .Pp
 The
-.Fn wcslcat ,
-.Fn wcslcpy
+.Fn wcslcat
 and
+.Fn wcslcpy
+functions conform to
+.St -p1003.1-2024 .
+.Pp
+The
 .Fn wmempcpy
-functions are
+function is a
 .Nx
-extensions.
+extension.
