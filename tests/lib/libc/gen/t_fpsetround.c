@@ -1,4 +1,4 @@
-/* $NetBSD: t_fpsetround.c,v 1.6 2011/10/01 17:46:10 christos Exp $ */
+/* $NetBSD: t_fpsetround.c,v 1.6.52.1 2024/11/01 14:58:08 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fpsetround.c,v 1.6 2011/10/01 17:46:10 christos Exp $");
+__RCSID("$NetBSD: t_fpsetround.c,v 1.6.52.1 2024/11/01 14:58:08 martin Exp $");
 
 #include <float.h>
 #include <math.h>
@@ -154,10 +154,51 @@ ATF_TC_BODY(fpsetround_basic, tc)
 #endif /* _FLOAT_IEEE754 */
 }
 
+ATF_TC(fpsetround_noftz);
+ATF_TC_HEAD(fpsetround_noftz, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr",
+	    "Test fpsetround(3) does not toggle flush-to-zero mode");
+}
+ATF_TC_BODY(fpsetround_noftz, tc)
+{
+#if !defined(_FLOAT_IEEE754) || !defined(__DBL_DENORM_MIN__)
+	atf_tc_skip("no fpsetround or subnormals");
+#else
+	volatile double x = DBL_MIN;
+	volatile double y;
+	int r;
+
+	y = x/2;
+	ATF_CHECK_MSG(y != 0, "machine runs flush-to-zero by default");
+
+	/*
+	 * This curious test is a regression test for:
+	 *
+	 * PR port-arm/58782: fpsetround flips all the other fpcsr bits
+	 * on aarch64
+	 */
+
+	ATF_CHECK_EQ_MSG((r = fpsetround(FP_RN)), FP_RN,
+	    "r=%d FP_RN=%d", r, FP_RN);
+	y = x/2;
+	ATF_CHECK_MSG(y != 0,
+	    "machine runs flush-to-zero after one fpsetround call");
+
+	ATF_CHECK_EQ_MSG((r = fpsetround(FP_RN)), FP_RN,
+	    "r=%d FP_RN=%d", r, FP_RN);
+	y = x/2;
+	ATF_CHECK_MSG(y != 0,
+	    "machine runs flush-to-zero after two fpsetround calls");
+#endif
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, fpsetround_basic);
+	ATF_TP_ADD_TC(tp, fpsetround_noftz);
 
 	return atf_no_error();
 }

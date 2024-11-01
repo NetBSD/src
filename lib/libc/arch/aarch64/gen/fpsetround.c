@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: fpsetround.c,v 1.2 2016/12/24 15:23:06 maya Exp $");
+__RCSID("$NetBSD: fpsetround.c,v 1.2.24.1 2024/11/01 14:58:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -46,7 +46,7 @@ fp_rnd_t
 fpsetround(fp_rnd_t rnd)
 {
 	const uint32_t old_fpcr = reg_fpcr_read();
-	const uint32_t new_fpcr = (~old_fpcr & ~FPCR_RMODE)
+	const uint32_t new_fpcr = (old_fpcr & ~FPCR_RMODE)
 	    | __SHIFTIN(rnd, FPCR_RMODE);
 	reg_fpcr_write(new_fpcr);
 	return __SHIFTOUT(old_fpcr, FPCR_RMODE);
