@@ -1,4 +1,4 @@
-/*	$NetBSD: env.c,v 1.23 2020/02/08 11:02:07 kamil Exp $	*/
+/*	$NetBSD: env.c,v 1.23.8.1 2024/11/01 14:39:50 martin Exp $	*/
 /*
  * Copyright (c) 1988, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
 
 #ifndef lint
 /*static char sccsid[] = "@(#)env.c	8.3 (Berkeley) 4/2/94";*/
-__RCSID("$NetBSD: env.c,v 1.23 2020/02/08 11:02:07 kamil Exp $");
+__RCSID("$NetBSD: env.c,v 1.23.8.1 2024/11/01 14:39:50 martin Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -62,10 +62,14 @@ main(int argc, char **argv)
 	(void)setlocale(LC_ALL, "");
 
 	term = '\n';
-	while ((ch = getopt(argc, argv, "-0iu:")) != -1)
+	while ((ch = getopt(argc, argv, "-0C:iu:")) != -1)
 		switch((char)ch) {
 		case '0':
 			term = '\0';
+			break;
+		case 'C':
+			if (chdir(optarg) == -1)
+				err(EXIT_FAILURE, "chdir '%s'", optarg);
 			break;
 		case '-':			/* obsolete */
 		case 'i':
@@ -74,7 +78,7 @@ main(int argc, char **argv)
 			break;
 		case 'u':
 			if (unsetenv(optarg) == -1)
-				errx(EXIT_FAILURE, "unsetenv %s", optarg);
+				err(EXIT_FAILURE, "unsetenv '%s'", optarg);
 			break;
 		case '?':
 		default:
@@ -107,7 +111,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-0i] [-u name] [name=value ...] [command]\n",
+	    "Usage: %s [-0i] [-C dir] [-u name] [name=value ...] [command]\n",
 	    getprogname());
 	exit(1);
 }
