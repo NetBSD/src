@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.3 2024/01/19 05:46:36 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.4 2024/11/01 14:28:08 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2023 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.3 2024/01/19 05:46:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.4 2024/11/01 14:28:08 mlelstv Exp $");
 
 #define _VIRT68K_INTR_PRIVATE
 
@@ -279,6 +279,11 @@ intr_dispatch(struct clockframe frame)
 		return;
 	}
 
+	if (pics[pic] == NULL) {
+		printf("Interrupt without a cause on CPU ipl %d\n", ipl);
+		return;
+	}
+
 	const int base = pic * NIRQ_PER_PIC;
 	struct intrhand *ih;
 	bool rv = false;
@@ -293,7 +298,7 @@ intr_dispatch(struct clockframe frame)
 		}
 	}
 	if (!rv) {
-		printf("Spurious interrupt on CPU irq %d\n", ipl);
+		printf("Spurious interrupt on CPU ipl %d\n", ipl);
 	}
 }
 
