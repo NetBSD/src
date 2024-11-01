@@ -1,4 +1,4 @@
-/*	$NetBSD: poll.h,v 1.16 2020/07/17 15:34:16 kamil Exp $	*/
+/*	$NetBSD: poll.h,v 1.17 2024/11/01 16:37:42 nia Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,15 +83,21 @@ __BEGIN_DECLS
 int	poll(struct pollfd *, nfds_t, int);
 __END_DECLS
 
-#ifdef _NETBSD_SOURCE
+/*    
+ * IEEE Std 1003.1-2024 (POSIX.1-2024)
+ */
+#if (_POSIX_C_SOURCE - 0) >= 202405L || (_XOPEN_SOURCE - 0 >= 800) || \
+    defined(_NETBSD_SOURCE)
 #include <sys/sigtypes.h>	/* for sigset_t */
 struct timespec;
 
 __BEGIN_DECLS
 #ifndef __LIBC12_SOURCE__
+#ifdef _NETBSD_SOURCE
 int	pollts(struct pollfd * __restrict, nfds_t,
     const struct timespec * __restrict, const sigset_t * __restrict)
     __RENAME(__pollts50);
+#endif
 int	ppoll(struct pollfd * __restrict, nfds_t,
     const struct timespec * __restrict, const sigset_t * __restrict);
 #endif /* __LIBC12_SOURCE__ */
