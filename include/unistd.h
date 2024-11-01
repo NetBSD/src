@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.168 2024/09/20 15:52:12 kre Exp $	*/
+/*	$NetBSD: unistd.h,v 1.169 2024/11/01 18:48:17 nia Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -326,8 +326,11 @@ int	fexecve(int, char * const *, char * const *);
 #if (_POSIX_C_SOURCE - 0) >= 202405L || (_XOPEN_SOURCE - 0 >= 800) || \
     defined(_NETBSD_SOURCE)
 int	 getentropy(void *, size_t);
+#ifndef __LIBC12_SOURCE__
+int	 dup3(int, int, int) __RENAME(__dup3100);
 #endif
-
+int	 pipe2(int *, int);
+#endif
 
 /*
  * Implementation-defined extensions
@@ -337,9 +340,6 @@ int	 acct(const char *);
 int	 closefrom(int);
 int	 des_cipher(const char *, char *, long, int);
 int	 des_setkey(const char *);
-#ifndef __LIBC12_SOURCE__
-int	 dup3(int, int, int) __RENAME(__dup3100);
-#endif
 void	 endusershell(void);
 int	 exect(const char *, char * const *, char * const *);
 int	 execvpe(const char *, char * const *, char * const *);
@@ -373,7 +373,6 @@ int      issetugid(void);
 long	 lpathconf(const char *, int);
 int	 mkstemps(char *, int);
 int	 nfssvc(int, void *);
-int	 pipe2(int *, int);
 int	 profil(char *, size_t, unsigned long, unsigned int);
 #ifndef __PSIGNAL_DECLARED
 #define __PSIGNAL_DECLARED
