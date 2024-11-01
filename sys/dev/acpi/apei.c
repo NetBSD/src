@@ -1,4 +1,4 @@
-/*	$NetBSD: apei.c,v 1.3.4.2 2024/10/09 13:00:11 martin Exp $	*/
+/*	$NetBSD: apei.c,v 1.3.4.3 2024/11/01 14:45:36 martin Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -38,12 +38,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei.c,v 1.3.4.2 2024/10/09 13:00:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei.c,v 1.3.4.3 2024/11/01 14:45:36 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 
 #include <sys/atomic.h>
+#include <sys/endian.h>
 #include <sys/device.h>
 #include <sys/module.h>
 #include <sys/sysctl.h>
@@ -58,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: apei.c,v 1.3.4.2 2024/10/09 13:00:11 martin Exp $");
 #include <dev/acpi/apei_hestvar.h>
 #include <dev/acpi/apei_interp.h>
 #include <dev/acpi/apeivar.h>
+#include <dev/pci/pcireg.h>
 
 #define	_COMPONENT	ACPI_RESOURCE_COMPONENT
 ACPI_MODULE_NAME	("apei")
@@ -313,10 +315,10 @@ apei_format_guid(const struct uuid *uuid, char guidstr[static 69])
 {
 
 	snprintf(guidstr, 69, "{0x%08x,0x%04x,0x%04x,"
-	    "0x%02x%02x,"
-	    "{0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x}}",
+	    "{0x%02x,%02x,"
+	    "0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x}}",
 	    uuid->time_low, uuid->time_mid, uuid->time_hi_and_version,
-	    uuid->clock_seq_hi_and_reserved, uuid->clock_seq_hi_and_reserved,
+	    uuid->clock_seq_hi_and_reserved, uuid->clock_seq_low,
 	    uuid->node[0], uuid->node[1], uuid->node[2],
 	    uuid->node[3], uuid->node[4], uuid->node[5]);
 }
@@ -356,6 +358,8 @@ static const char *const apei_gede_severity[] = {
 };
 
 /*
+ * N.2.5. Memory Error Section
+ *
  * https://uefi.org/specs/UEFI/2.10/Apx_N_Common_Platform_Error_Record.html#memory-error-section
  */
 static const struct uuid CPER_MEMORY_ERROR_SECTION =
@@ -363,10 +367,16 @@ static const struct uuid CPER_MEMORY_ERROR_SECTION =
 
 static void
 apei_cper_memory_error_report(struct apei_softc *sc, const void *buf,
-    size_t len, const char *ctx)
+    size_t len, const char *ctx, bool ratelimitok)
 {
 	const struct cper_memory_error *ME = buf;
 	char bitbuf[1024];
+
+	/*
+	 * If we've hit the rate limit, skip printing the error.
+	 */
+	if (!ratelimitok)
+		goto out;
 
 	snprintb(bitbuf, sizeof(bitbuf),
 	    CPER_MEMORY_ERROR_VALIDATION_BITS_FMT, ME->ValidationBits);
@@ -472,6 +482,278 @@ apei_cper_memory_error_report(struct apei_softc *sc, const void *buf,
 			    ctx, t);
 		}
 	}
+
+out:	/*
+	 * XXX pass this through to uvm(9) or userland for decisions
+	 * like page retirement
+	 */
+	return;
+}
+
+/*
+ * N.2.7. PCI Express Error Section
+ *
+ * https://uefi.org/specs/UEFI/2.10/Apx_N_Common_Platform_Error_Record.html#pci-express-error-section
+ */
+static const struct uuid CPER_PCIE_ERROR_SECTION =
+    {0xd995e954,0xbbc1,0x430f,0xad,0x91,{0xb4,0x4d,0xcb,0x3c,0x6f,0x35}};
+
+static const char *const cper_pcie_error_port_type[] = {
+#define	F(LN, SN, V)	[LN] = #SN,
+	CPER_PCIE_ERROR_PORT_TYPES(F)
+#undef	F
+};
+
+static void
+apei_cper_pcie_error_report(struct apei_softc *sc, const void *buf, size_t len,
+    const char *ctx, bool ratelimitok)
+{
+	const struct cper_pcie_error *PE = buf;
+	char bitbuf[1024];
+
+	/*
+	 * If we've hit the rate limit, skip printing the error.
+	 */
+	if (!ratelimitok)
+		goto out;
+
+	snprintb(bitbuf, sizeof(bitbuf),
+	    CPER_PCIE_ERROR_VALIDATION_BITS_FMT, PE->ValidationBits);
+	aprint_debug_dev(sc->sc_dev, "%s: ValidationBits=%s\n", ctx, bitbuf);
+	if (PE->ValidationBits & CPER_PCIE_ERROR_VALID_PORT_TYPE) {
+		const uint32_t t = PE->PortType;
+		const char *n = t < __arraycount(cper_pcie_error_port_type)
+		    ? cper_pcie_error_port_type[t] : NULL;
+
+		if (n) {
+			device_printf(sc->sc_dev, "%s: PortType=%"PRIu32
+			    " (%s)\n", ctx, t, n);
+		} else {
+			device_printf(sc->sc_dev, "%s: PortType=%"PRIu32"\n",
+			    ctx, t);
+		}
+	}
+	if (PE->ValidationBits & CPER_PCIE_ERROR_VALID_VERSION) {
+		/* XXX BCD */
+		device_printf(sc->sc_dev, "%s: Version=0x08%"PRIx32"\n",
+		    ctx, PE->Version);
+	}
+	if (PE->ValidationBits & CPER_PCIE_ERROR_VALID_COMMAND_STATUS) {
+		/* XXX move me to pcireg.h */
+		snprintb(bitbuf, sizeof(bitbuf), "\177\020"
+			/* command */
+		    "b\000"	"IO_ENABLE\0"
+		    "b\001"	"MEM_ENABLE\0"
+		    "b\002"	"MASTER_ENABLE\0"
+		    "b\003"	"SPECIAL_ENABLE\0"
+		    "b\004"	"INVALIDATE_ENABLE\0"
+		    "b\005"	"PALETTE_ENABLE\0"
+		    "b\006"	"PARITY_ENABLE\0"
+		    "b\007"	"STEPPING_ENABLE\0"
+		    "b\010"	"SERR_ENABLE\0"
+		    "b\011"	"BACKTOBACK_ENABLE\0"
+		    "b\012"	"INTERRUPT_DISABLE\0"
+			/* status */
+		    "b\023"	"INT_STATUS\0"
+		    "b\024"	"CAPLIST_SUPPORT\0"
+		    "b\025"	"66MHZ_SUPPORT\0"
+		    "b\026"	"UDF_SUPPORT\0"
+		    "b\027"	"BACKTOBACK_SUPPORT\0"
+		    "b\030"	"PARITY_ERROR\0"
+		    "f\031\002"	"DEVSEL\0"
+			"=\000"		"FAST\0"
+			"=\001"		"MEDIUM\0"
+			"=\002"		"SLOW\0"
+		    "b\033"	"TARGET_TARGET_ABORT\0"
+		    "b\034"	"MASTER_TARGET_ABORT\0"
+		    "b\035"	"MASTER_ABORT\0"
+		    "b\036"	"SPECIAL_ERROR\0"
+		    "b\037"	"PARITY_DETECT\0"
+		    "\0", PE->CommandStatus);
+		device_printf(sc->sc_dev, "%s: CommandStatus=%s\n",
+		    ctx, bitbuf);
+	}
+	if (PE->ValidationBits & CPER_PCIE_ERROR_VALID_DEVICE_ID) {
+		device_printf(sc->sc_dev, "%s: DeviceID:"
+		    " VendorID=0x%04"PRIx16
+		    " DeviceID=0x%04"PRIx16
+		    " ClassCode=0x%06"PRIx32
+		    " Function=%"PRIu8
+		    " Device=%"PRIu8
+		    " Segment=%"PRIu16
+		    " Bus=%"PRIu8
+		    " SecondaryBus=%"PRIu8
+		    " Slot=0x%04"PRIx16
+		    " Reserved0=0x%02"PRIx8
+		    "\n",
+		    ctx,
+		    le16dec(PE->DeviceID.VendorID),
+		    le16dec(PE->DeviceID.DeviceID),
+		    (PE->DeviceID.ClassCode[0] |	/* le24dec */
+			((uint32_t)PE->DeviceID.ClassCode[1] << 8) |
+			((uint32_t)PE->DeviceID.ClassCode[2] << 16)),
+		    PE->DeviceID.Function, PE->DeviceID.Device,
+		    le16dec(PE->DeviceID.Segment), PE->DeviceID.Bus,
+		    PE->DeviceID.SecondaryBus, le16dec(PE->DeviceID.Slot),
+		    PE->DeviceID.Reserved0);
+	}
+	if (PE->ValidationBits & CPER_PCIE_ERROR_VALID_DEVICE_SERIAL) {
+		device_printf(sc->sc_dev, "%s: DeviceSerial={%016"PRIx64"}\n",
+		    ctx, PE->DeviceSerial);
+	}
+	if (PE->ValidationBits & CPER_PCIE_ERROR_VALID_BRIDGE_CONTROL_STATUS) {
+		/* XXX snprintb */
+		device_printf(sc->sc_dev, "%s: BridgeControlStatus=%"PRIx32
+		    "\n", ctx, PE->BridgeControlStatus);
+	}
+	if (PE->ValidationBits & CPER_PCIE_ERROR_VALID_CAPABILITY_STRUCTURE) {
+		uint32_t dcsr, dsr;
+		char hex[9*sizeof(PE->CapabilityStructure)/4];
+		unsigned i;
+
+		/*
+		 * Display a hex dump of each 32-bit register in the
+		 * PCIe capability structure.
+		 */
+		__CTASSERT(sizeof(PE->CapabilityStructure) % 4 == 0);
+		for (i = 0; i < sizeof(PE->CapabilityStructure)/4; i++) {
+			snprintf(hex + 9*i, sizeof(hex) - 9*i, "%08"PRIx32" ",
+			    le32dec(&PE->CapabilityStructure[4*i]));
+		}
+		hex[sizeof(hex) - 1] = '\0';
+		device_printf(sc->sc_dev, "%s: CapabilityStructure={%s}\n",
+		    ctx, hex);
+
+		/*
+		 * If the Device Status Register has any bits set,
+		 * highlight it in particular -- these are probably
+		 * error bits.
+		 */
+		dcsr = le32dec(&PE->CapabilityStructure[PCIE_DCSR]);
+		dsr = __SHIFTOUT(dcsr, __BITS(31,16));
+		if (dsr != 0) {
+			/*
+			 * XXX move me to pcireg.h; note: high
+			 * half of DCSR
+			 */
+			snprintb(bitbuf, sizeof(bitbuf), "\177\020"
+			    "b\000"	"CORRECTABLE_ERROR\0"
+			    "b\001"	"NONFATAL_UNCORRECTABLE_ERROR\0"
+			    "b\002"	"FATAL_ERROR\0"
+			    "b\003"	"UNSUPPORTED_REQUEST\0"
+			    "b\004"	"AUX_POWER\0"
+			    "b\005"	"TRANSACTIONS_PENDING\0"
+			    "\0", dsr);
+			device_printf(sc->sc_dev, "%s: PCIe Device Status:"
+			    " %s\n",
+			    ctx, bitbuf);
+		}
+	}
+	if (PE->ValidationBits & CPER_PCIE_ERROR_VALID_AER_INFO) {
+		uint32_t uc_status, uc_sev;
+		uint32_t cor_status;
+		uint32_t control;
+		char hex[9*sizeof(PE->AERInfo)/4];
+		unsigned i;
+
+		/*
+		 * Display a hex dump of each 32-bit register in the
+		 * PCIe Advanced Error Reporting extended capability
+		 * structure.
+		 */
+		__CTASSERT(sizeof(PE->AERInfo) % 4 == 0);
+		for (i = 0; i < sizeof(PE->AERInfo)/4; i++) {
+			snprintf(hex + 9*i, sizeof(hex) - 9*i, "%08"PRIx32" ",
+			    le32dec(&PE->AERInfo[4*i]));
+		}
+		hex[sizeof(hex) - 1] = '\0';
+		device_printf(sc->sc_dev, "%s: AERInfo={%s}\n", ctx, hex);
+
+			/* XXX move me to pcireg.h */
+#define	PCI_AER_UC_STATUS_FMT	"\177\020"				      \
+	"b\000"	"UNDEFINED\0"						      \
+	"b\004"	"DL_PROTOCOL_ERROR\0"					      \
+	"b\005"	"SURPRISE_DOWN_ERROR\0"					      \
+	"b\014"	"POISONED_TLP\0"					      \
+	"b\015"	"FC_PROTOCOL_ERROR\0"					      \
+	"b\016"	"COMPLETION_TIMEOUT\0"					      \
+	"b\017"	"COMPLETION_ABORT\0"					      \
+	"b\020"	"UNEXPECTED_COMPLETION\0"				      \
+	"b\021"	"RECEIVER_OVERFLOW\0"					      \
+	"b\022"	"MALFORMED_TLP\0"					      \
+	"b\023"	"ECRC_ERROR\0"						      \
+	"b\024"	"UNSUPPORTED_REQUEST_ERROR\0"				      \
+	"b\025"	"ACS_VIOLATION\0"					      \
+	"b\026"	"INTERNAL_ERROR\0"					      \
+	"b\027"	"MC_BLOCKED_TLP\0"					      \
+	"b\030"	"ATOMIC_OP_EGRESS_BLOCKED\0"				      \
+	"b\031"	"TLP_PREFIX_BLOCKED_ERROR\0"				      \
+	"b\032"	"POISONTLP_EGRESS_BLOCKED\0"				      \
+	"\0"
+
+		/*
+		 * If there are any hardware error status bits set,
+		 * highlight them in particular, in three groups:
+		 *
+		 * - uncorrectable fatal (UC_STATUS and UC_SEVERITY)
+		 * - uncorrectable nonfatal (UC_STATUS but not UC_SEVERITY)
+		 * - corrected (COR_STATUS)
+		 *
+		 * And if there are any uncorrectable errors, show
+		 * which one was reported first, according to
+		 * CAP_CONTROL.
+		 */
+		uc_status = le32dec(&PE->AERInfo[PCI_AER_UC_STATUS]);
+		uc_sev = le32dec(&PE->AERInfo[PCI_AER_UC_SEVERITY]);
+		cor_status = le32dec(&PE->AERInfo[PCI_AER_COR_STATUS]);
+		control = le32dec(&PE->AERInfo[PCI_AER_CAP_CONTROL]);
+
+		if (uc_status & uc_sev) {
+			snprintb(bitbuf, sizeof(bitbuf), PCI_AER_UC_STATUS_FMT,
+			    uc_status & uc_sev);
+			device_printf(sc->sc_dev, "%s:"
+			    " AER hardware fatal uncorrectable errors: %s\n",
+			    ctx, bitbuf);
+		}
+		if (uc_status & ~uc_sev) {
+			snprintb(bitbuf, sizeof(bitbuf), PCI_AER_UC_STATUS_FMT,
+			    uc_status & ~uc_sev);
+			device_printf(sc->sc_dev, "%s:"
+			    " AER hardware non-fatal uncorrectable errors:"
+			    " %s\n",
+			    ctx, bitbuf);
+		}
+		if (uc_status) {
+			unsigned first = __SHIFTOUT(control,
+			    PCI_AER_FIRST_ERROR_PTR);
+			snprintb(bitbuf, sizeof(bitbuf), PCI_AER_UC_STATUS_FMT,
+			    (uint32_t)1 << first);
+			device_printf(sc->sc_dev, "%s:"
+			    " AER hardware first uncorrectable error: %s\n",
+			    ctx, bitbuf);
+		}
+		if (cor_status) {
+			/* XXX move me to pcireg.h */
+			snprintb(bitbuf, sizeof(bitbuf), "\177\020"
+			    "b\000"	"RECEIVER_ERROR\0"
+			    "b\006"	"BAD_TLP\0"
+			    "b\007"	"BAD_DLLP\0"
+			    "b\010"	"REPLAY_NUM_ROLLOVER\0"
+			    "b\014"	"REPLAY_TIMER_TIMEOUT\0"
+			    "b\015"	"ADVISORY_NF_ERROR\0"
+			    "b\016"	"INTERNAL_ERROR\0"
+			    "b\017"	"HEADER_LOG_OVERFLOW\0"
+			    "\0", cor_status);
+			device_printf(sc->sc_dev, "%s:"
+			    " AER hardware corrected error: %s\n",
+			    ctx, bitbuf);
+		}
+	}
+
+out:	/*
+	 * XXX pass this on to the PCI subsystem to handle
+	 */
+	return;
 }
 
 /*
@@ -489,18 +771,22 @@ static const struct apei_cper_report {
 	const char *name;
 	const struct uuid *type;
 	size_t minlength;
-	void (*func)(struct apei_softc *, const void *, size_t, const char *);
+	void (*func)(struct apei_softc *, const void *, size_t, const char *,
+	    bool);
 } apei_cper_reports[] = {
 	{ "memory", &CPER_MEMORY_ERROR_SECTION,
 	  sizeof(struct cper_memory_error),
 	  apei_cper_memory_error_report },
+	{ "PCIe", &CPER_PCIE_ERROR_SECTION,
+	  sizeof(struct cper_pcie_error),
+	  apei_cper_pcie_error_report },
 };
 
 /*
- * apei_gede_report_header(sc, gede, ctx, &headerlen, &report)
+ * apei_gede_report_header(sc, gede, ctx, ratelimitok, &headerlen, &report)
  *
  *	Report the header of the ith Generic Error Data Entry in the
- *	given context.
+ *	given context, if ratelimitok is true.
  *
  *	Return the actual length of the header in headerlen, or 0 if
  *	not known because the revision isn't recognized.
@@ -510,7 +796,7 @@ static const struct apei_cper_report {
  */
 static void
 apei_gede_report_header(struct apei_softc *sc,
-    const ACPI_HEST_GENERIC_DATA *gede, const char *ctx,
+    const ACPI_HEST_GENERIC_DATA *gede, const char *ctx, bool ratelimitok,
     size_t *headerlenp, const struct apei_cper_report **reportp)
 {
 	const ACPI_HEST_GENERIC_DATA_V300 *const gede_v3 = (const void *)gede;
@@ -538,14 +824,19 @@ apei_gede_report_header(struct apei_softc *sc,
 
 		if (memcmp(&sectype, report->type, sizeof(sectype)) != 0)
 			continue;
-		device_printf(sc->sc_dev, "%s: SectionType=%s (%s error)\n",
-		    ctx, guidstr, report->name);
+		if (ratelimitok) {
+			device_printf(sc->sc_dev, "%s:"
+			    " SectionType=%s (%s error)\n",
+			    ctx, guidstr, report->name);
+		}
 		*reportp = report;
 		break;
 	}
 	if (i == __arraycount(apei_cper_reports)) {
-		device_printf(sc->sc_dev, "%s: SectionType=%s\n", ctx,
-		    guidstr);
+		if (ratelimitok) {
+			device_printf(sc->sc_dev, "%s: SectionType=%s\n", ctx,
+			    guidstr);
+		}
 		*reportp = NULL;
 	}
 
@@ -553,11 +844,14 @@ apei_gede_report_header(struct apei_softc *sc,
 	 * Print the numeric severity and, if we have it, a symbolic
 	 * name for it.
 	 */
-	device_printf(sc->sc_dev, "%s: ErrorSeverity=%"PRIu32" (%s)\n", ctx,
-	    gede->ErrorSeverity,
-	    (gede->ErrorSeverity < __arraycount(apei_gede_severity)
-		? apei_gede_severity[gede->ErrorSeverity]
-		: "unknown"));
+	if (ratelimitok) {
+		device_printf(sc->sc_dev, "%s: ErrorSeverity=%"PRIu32" (%s)\n",
+		    ctx,
+		    gede->ErrorSeverity,
+		    (gede->ErrorSeverity < __arraycount(apei_gede_severity)
+			? apei_gede_severity[gede->ErrorSeverity]
+			: "unknown"));
+	}
 
 	/*
 	 * The Revision may not often be useful, but this is only ever
@@ -565,8 +859,10 @@ apei_gede_report_header(struct apei_softc *sc,
 	 * you can glean at your convenience with acpidump.  So print
 	 * it anyway.
 	 */
-	device_printf(sc->sc_dev, "%s: Revision=0x%"PRIx16"\n", ctx,
-	    gede->Revision);
+	if (ratelimitok) {
+		device_printf(sc->sc_dev, "%s: Revision=0x%"PRIx16"\n", ctx,
+		    gede->Revision);
+	}
 
 	/*
 	 * Don't touch anything past the Revision until we've
@@ -587,38 +883,49 @@ apei_gede_report_header(struct apei_softc *sc,
 	 * Print the validation bits at debug level.  Only really
 	 * helpful if there are bits we _don't_ know about.
 	 */
-	/* XXX define this format somewhere */
-	snprintb(buf, sizeof(buf), "\177\020"
-	    "b\000"	"FRU_ID\0"
-	    "b\001"	"FRU_TEXT\0" /* `FRU string', sometimes */
-	    "b\002"	"TIMESTAMP\0"
-	    "\0", gede->ValidationBits);
-	aprint_debug_dev(sc->sc_dev, "%s: ValidationBits=%s\n", ctx, buf);
+	if (ratelimitok) {
+		/* XXX define this format somewhere */
+		snprintb(buf, sizeof(buf), "\177\020"
+		    "b\000"	"FRU_ID\0"
+		    "b\001"	"FRU_TEXT\0" /* `FRU string', sometimes */
+		    "b\002"	"TIMESTAMP\0"
+		    "\0", gede->ValidationBits);
+		aprint_debug_dev(sc->sc_dev, "%s: ValidationBits=%s\n", ctx,
+		    buf);
+	}
 
 	/*
 	 * Print the CPER section flags.
 	 */
-	snprintb(buf, sizeof(buf), CPER_SECTION_FLAGS_FMT, gede->Flags);
-	device_printf(sc->sc_dev, "%s: Flags=%s\n", ctx, buf);
+	if (ratelimitok) {
+		snprintb(buf, sizeof(buf), CPER_SECTION_FLAGS_FMT,
+		    gede->Flags);
+		device_printf(sc->sc_dev, "%s: Flags=%s\n", ctx, buf);
+	}
 
 	/*
 	 * The ErrorDataLength is unlikely to be useful for the log, so
 	 * print it at debug level only.
 	 */
-	aprint_debug_dev(sc->sc_dev, "%s: ErrorDataLength=0x%"PRIu32"\n",
-	    ctx, gede->ErrorDataLength);
+	if (ratelimitok) {
+		aprint_debug_dev(sc->sc_dev, "%s:"
+		    " ErrorDataLength=0x%"PRIu32"\n",
+		    ctx, gede->ErrorDataLength);
+	}
 
 	/*
 	 * Print the FRU Id and text, if available.
 	 */
-	if (gede->ValidationBits & ACPI_HEST_GEN_VALID_FRU_ID) {
+	if (ratelimitok &&
+	    (gede->ValidationBits & ACPI_HEST_GEN_VALID_FRU_ID) != 0) {
 		struct uuid fruid;
 
 		apei_cper_guid_dec(gede->FruId, &fruid);
 		apei_format_guid(&fruid, guidstr);
 		device_printf(sc->sc_dev, "%s: FruId=%s\n", ctx, guidstr);
 	}
-	if (gede->ValidationBits & ACPI_HEST_GEN_VALID_FRU_STRING) {
+	if (ratelimitok &&
+	    (gede->ValidationBits & ACPI_HEST_GEN_VALID_FRU_STRING) != 0) {
 		device_printf(sc->sc_dev, "%s: FruText=%.20s\n",
 		    ctx, gede->FruText);
 	}
@@ -627,7 +934,8 @@ apei_gede_report_header(struct apei_softc *sc,
 	 * Print the timestamp, if available by the revision number and
 	 * the validation bits.
 	 */
-	if (gede->Revision >= 0x0300 && gede->Revision < 0x0400 &&
+	if (ratelimitok &&
+	    gede->Revision >= 0x0300 && gede->Revision < 0x0400 &&
 	    gede->ValidationBits & ACPI_HEST_GEN_VALID_TIMESTAMP) {
 		const uint8_t *const t = (const uint8_t *)&gede_v3->TimeStamp;
 		const uint8_t s = t[0];
@@ -648,6 +956,106 @@ apei_gede_report_header(struct apei_softc *sc,
 }
 
 /*
+ * apei_gesb_ratelimit
+ *
+ *	State to limit the rate of console log messages about hardware
+ *	errors.  For each of the four severity levels in a Generic
+ *	Error Status Block,
+ *
+ *	0 - Recoverable (uncorrectable),
+ *	1 - Fatal (uncorrectable),
+ *	2 - Corrected, and
+ *	3 - None (including ill-formed errors),
+ *
+ *	we record the last time it happened, protected by a CPU simple
+ *	lock that we only try-acquire so it is safe to use in any
+ *	context, including non-maskable interrupt context.
+ */
+
+static struct {
+	__cpu_simple_lock_t	lock;
+	struct timeval		lasttime;
+	volatile uint32_t	suppressed;
+} __aligned(COHERENCY_UNIT) apei_gesb_ratelimit[4] __cacheline_aligned = {
+	[ACPI_HEST_GEN_ERROR_RECOVERABLE] = { .lock = __SIMPLELOCK_UNLOCKED },
+	[ACPI_HEST_GEN_ERROR_FATAL] = { .lock = __SIMPLELOCK_UNLOCKED },
+	[ACPI_HEST_GEN_ERROR_CORRECTED] = { .lock = __SIMPLELOCK_UNLOCKED },
+	[ACPI_HEST_GEN_ERROR_NONE] = { .lock = __SIMPLELOCK_UNLOCKED },
+};
+
+static void
+atomic_incsat_32(volatile uint32_t *p)
+{
+	uint32_t o, n;
+
+	do {
+		o = atomic_load_relaxed(p);
+		if (__predict_false(o == UINT_MAX))
+			return;
+		n = o + 1;
+	} while (__predict_false(atomic_cas_32(p, o, n) != o));
+}
+
+/*
+ * apei_gesb_ratecheck(sc, severity, suppressed)
+ *
+ *	Check for a rate limit on errors of the specified severity.
+ *
+ *	=> Return true if the error should be printed, and format into
+ *	   the buffer suppressed a message saying how many errors were
+ *	   previously suppressed.
+ *
+ *	=> Return false if the error should be suppressed because the
+ *	   last one printed was too recent.
+ */
+static bool
+apei_gesb_ratecheck(struct apei_softc *sc, uint32_t severity,
+    char suppressed[static sizeof(" (4294967295 or more errors suppressed)")])
+{
+	/* one of each type per minute (XXX worth making configurable?) */
+	const struct timeval mininterval = {60, 0};
+	unsigned i = MIN(severity, ACPI_HEST_GEN_ERROR_NONE); /* paranoia */
+	bool ok = false;
+
+	/*
+	 * If the lock is contended, the rate limit is probably
+	 * exceeded, so it's not OK to print.
+	 *
+	 * Otherwise, with the lock held, ask ratecheck(9) whether it's
+	 * OK to print.
+	 */
+	if (!__cpu_simple_lock_try(&apei_gesb_ratelimit[i].lock))
+		goto out;
+	ok = ratecheck(&apei_gesb_ratelimit[i].lasttime, &mininterval);
+	__cpu_simple_unlock(&apei_gesb_ratelimit[i].lock);
+
+out:	/*
+	 * If it's OK to print, report the number of errors that were
+	 * suppressed.  If it's not OK to print, count a suppressed
+	 * error.
+	 */
+	if (ok) {
+		const uint32_t n =
+		    atomic_swap_32(&apei_gesb_ratelimit[i].suppressed, 0);
+
+		if (n == 0) {
+			suppressed[0] = '\0';
+		} else {
+			snprintf(suppressed,
+			    sizeof(" (4294967295 or more errors suppressed)"),
+			    " (%u%s error%s suppressed)",
+			    n,
+			    n == UINT32_MAX ? " or more" : "",
+			    n == 1 ? "" : "s");
+		}
+	} else {
+		atomic_incsat_32(&apei_gesb_ratelimit[i].suppressed);
+		suppressed[0] = '\0';
+	}
+	return ok;
+}
+
+/*
  * apei_gesb_report(sc, gesb, size, ctx)
  *
  *	Check a Generic Error Status Block, of at most the specified
@@ -663,7 +1071,8 @@ apei_gesb_report(struct apei_softc *sc, const ACPI_HEST_GENERIC_STATUS *gesb,
 	uint32_t datalen, rawdatalen;
 	const ACPI_HEST_GENERIC_DATA *gede0, *gede;
 	const unsigned char *rawdata;
-	char statusbuf[128];
+	bool ratelimitok = false;
+	char suppressed[sizeof(" (4294967295 or more errors suppressed)")];
 	bool fatal = false;
 
 	/*
@@ -671,8 +1080,13 @@ apei_gesb_report(struct apei_softc *sc, const ACPI_HEST_GENERIC_STATUS *gesb,
 	 * Block before we try to touch anything in it.
 	 */
 	if (size < sizeof(*gesb)) {
-		device_printf(sc->sc_dev, "%s: truncated GESB, %zu < %zu\n",
-		    ctx, size, sizeof(*gesb));
+		ratelimitok = apei_gesb_ratecheck(sc, ACPI_HEST_GEN_ERROR_NONE,
+		    suppressed);
+		if (ratelimitok) {
+			device_printf(sc->sc_dev,
+			    "%s: truncated GESB, %zu < %zu%s\n",
+			    ctx, size, sizeof(*gesb), suppressed);
+		}
 		status = 0;
 		goto out;
 	}
@@ -696,29 +1110,42 @@ apei_gesb_report(struct apei_softc *sc, const ACPI_HEST_GENERIC_STATUS *gesb,
 		goto out;
 	}
 
-	/* XXX define this format somewhere */
-	snprintb(statusbuf, sizeof(statusbuf), "\177\020"
-	    "b\000"	"UE\0"
-	    "b\001"	"CE\0"
-	    "b\002"	"MULTI_UE\0"
-	    "b\003"	"MULTI_CE\0"
-	    "f\004\010"	"GEDE_COUNT\0"
-	    "\0", status);
+	/*
+	 * Read out the severity and get the number of entries in this
+	 * status block.
+	 */
+	severity = gesb->ErrorSeverity;
+	nentries = __SHIFTOUT(status, ACPI_HEST_ERROR_ENTRY_COUNT);
 
 	/*
 	 * Print a message to the console and dmesg about the severity
 	 * of the error.
 	 */
-	severity = gesb->ErrorSeverity;
-	nentries = __SHIFTOUT(status, ACPI_HEST_ERROR_ENTRY_COUNT);
-	if (severity < __arraycount(apei_gesb_severity)) {
-		device_printf(sc->sc_dev, "%s reported hardware error:"
-		    " severity=%s nentries=%u status=%s\n",
-		    ctx, apei_gesb_severity[severity], nentries, statusbuf);
-	} else {
-		device_printf(sc->sc_dev, "%s reported error:"
-		    " severity=%"PRIu32" nentries=%u status=%s\n",
-		    ctx, severity, nentries, statusbuf);
+	ratelimitok = apei_gesb_ratecheck(sc, severity, suppressed);
+	if (ratelimitok) {
+		char statusbuf[128];
+
+		/* XXX define this format somewhere */
+		snprintb(statusbuf, sizeof(statusbuf), "\177\020"
+		    "b\000"	"UE\0"
+		    "b\001"	"CE\0"
+		    "b\002"	"MULTI_UE\0"
+		    "b\003"	"MULTI_CE\0"
+		    "f\004\010"	"GEDE_COUNT\0"
+		    "\0", status);
+
+		if (severity < __arraycount(apei_gesb_severity)) {
+			device_printf(sc->sc_dev, "%s"
+			    " reported hardware error%s:"
+			    " severity=%s nentries=%u status=%s\n",
+			    ctx, suppressed,
+			    apei_gesb_severity[severity], nentries, statusbuf);
+		} else {
+			device_printf(sc->sc_dev, "%s reported error%s:"
+			    " severity=%"PRIu32" nentries=%u status=%s\n",
+			    ctx, suppressed,
+			    severity, nentries, statusbuf);
+		}
 	}
 
 	/*
@@ -750,9 +1177,8 @@ apei_gesb_report(struct apei_softc *sc, const ACPI_HEST_GENERIC_STATUS *gesb,
 	unknownstatus &= ~ACPI_HEST_CORRECTABLE;
 	unknownstatus &= ~ACPI_HEST_MULTIPLE_CORRECTABLE;
 	unknownstatus &= ~ACPI_HEST_ERROR_ENTRY_COUNT;
-	if (unknownstatus != 0) {
+	if (ratelimitok && unknownstatus != 0) {
 		/* XXX dtrace */
-		/* XXX rate-limit? */
 		device_printf(sc->sc_dev, "%s: unknown BlockStatus bits:"
 		    " 0x%"PRIx32"\n", ctx, unknownstatus);
 	}
@@ -769,9 +1195,12 @@ apei_gesb_report(struct apei_softc *sc, const ACPI_HEST_GENERIC_STATUS *gesb,
 	 */
 	datalen = gesb->DataLength;
 	if (size < datalen) {
-		device_printf(sc->sc_dev, "%s:"
-		    " GESB DataLength exceeds bounds: %zu < %"PRIu32"\n",
-		    ctx, size, datalen);
+		if (ratelimitok) {
+			device_printf(sc->sc_dev, "%s:"
+			    " GESB DataLength exceeds bounds:"
+			    " %zu < %"PRIu32"\n",
+			    ctx, size, datalen);
+		}
 		datalen = size;
 	}
 	size -= datalen;
@@ -795,9 +1224,11 @@ apei_gesb_report(struct apei_softc *sc, const ACPI_HEST_GENERIC_STATUS *gesb,
 		 * GEDE header, stop here.
 		 */
 		if (datalen < sizeof(*gede)) {
-			device_printf(sc->sc_dev, "%s:"
-			    " truncated GEDE: %"PRIu32" < %zu bytes\n",
-			    subctx, datalen, sizeof(*gede));
+			if (ratelimitok) {
+				device_printf(sc->sc_dev, "%s:"
+				    " truncated GEDE: %"PRIu32" < %zu bytes\n",
+				    subctx, datalen, sizeof(*gede));
+			}
 			break;
 		}
 
@@ -806,7 +1237,7 @@ apei_gesb_report(struct apei_softc *sc, const ACPI_HEST_GENERIC_STATUS *gesb,
 		 * vary from revision to revision of the GEDE) and the
 		 * CPER report function if possible.
 		 */
-		apei_gede_report_header(sc, gede, subctx,
+		apei_gede_report_header(sc, gede, subctx, ratelimitok,
 		    &headerlen, &report);
 
 		/*
@@ -814,9 +1245,11 @@ apei_gesb_report(struct apei_softc *sc, const ACPI_HEST_GENERIC_STATUS *gesb,
 		 * unfamiliar revision, stop here.
 		 */
 		if (headerlen == 0) {
-			device_printf(sc->sc_dev, "%s:"
-			    " unknown revision: 0x%"PRIx16"\n",
-			    subctx, gede->Revision);
+			if (ratelimitok) {
+				device_printf(sc->sc_dev, "%s:"
+				    " unknown revision: 0x%"PRIx16"\n",
+				    subctx, gede->Revision);
+			}
 			break;
 		}
 
@@ -826,9 +1259,12 @@ apei_gesb_report(struct apei_softc *sc, const ACPI_HEST_GENERIC_STATUS *gesb,
 		 */
 		datalen -= headerlen;
 		if (datalen < gede->ErrorDataLength) {
-			device_printf(sc->sc_dev, "%s: truncated GEDE payload:"
-			    " %"PRIu32" < %"PRIu32" bytes\n",
-			    subctx, datalen, gede->ErrorDataLength);
+			if (ratelimitok) {
+				device_printf(sc->sc_dev, "%s:"
+				    " truncated GEDE payload:"
+				    " %"PRIu32" < %"PRIu32" bytes\n",
+				    subctx, datalen, gede->ErrorDataLength);
+			}
 			break;
 		}
 
@@ -837,10 +1273,14 @@ apei_gesb_report(struct apei_softc *sc, const ACPI_HEST_GENERIC_STATUS *gesb,
 		 * this Generic Error Data Entry.
 		 */
 		if (report == NULL) {
-			device_printf(sc->sc_dev, "%s: [unknown type]\n", ctx);
+			if (ratelimitok) {
+				device_printf(sc->sc_dev, "%s:"
+				    " [unknown type]\n", ctx);
+			}
 		} else {
+			/* XXX pass ratelimit through */
 			(*report->func)(sc, (const char *)gede + headerlen,
-			    gede->ErrorDataLength, subctx);
+			    gede->ErrorDataLength, subctx, ratelimitok);
 		}
 
 		/*
@@ -866,9 +1306,12 @@ apei_gesb_report(struct apei_softc *sc, const ACPI_HEST_GENERIC_STATUS *gesb,
 	 */
 	rawdatalen = gesb->RawDataLength;
 	if (size < rawdatalen) {
-		device_printf(sc->sc_dev, "%s:"
-		    " GESB RawDataLength exceeds bounds: %zu < %"PRIu32"\n",
-		    ctx, size, rawdatalen);
+		if (ratelimitok) {
+			device_printf(sc->sc_dev, "%s:"
+			    " GESB RawDataLength exceeds bounds:"
+			    " %zu < %"PRIu32"\n",
+			    ctx, size, rawdatalen);
+		}
 		rawdatalen = size;
 	}
 	size -= rawdatalen;
@@ -876,7 +1319,7 @@ apei_gesb_report(struct apei_softc *sc, const ACPI_HEST_GENERIC_STATUS *gesb,
 	/*
 	 * Hexdump the raw data, if any.
 	 */
-	if (rawdatalen > 0) {
+	if (ratelimitok && rawdatalen > 0) {
 		char devctx[128];
 
 		snprintf(devctx, sizeof(devctx), "%s: %s: raw data",
@@ -887,7 +1330,7 @@ apei_gesb_report(struct apei_softc *sc, const ACPI_HEST_GENERIC_STATUS *gesb,
 	/*
 	 * If there's anything left after the raw data, warn.
 	 */
-	if (size > 0) {
+	if (ratelimitok && size > 0) {
 		device_printf(sc->sc_dev, "%s: excess data: %zu bytes\n",
 		    ctx, size);
 	}

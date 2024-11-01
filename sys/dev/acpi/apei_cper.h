@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_cper.h,v 1.2.4.2 2024/10/09 13:00:10 martin Exp $	*/
+/*	$NetBSD: apei_cper.h,v 1.2.4.3 2024/11/01 14:45:36 martin Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -62,14 +62,14 @@ struct cper_header {
 } __packed;
 __CTASSERT(sizeof(struct cper_header) == 128);
 
-enum {				/* struct cper_header::error_severity */
+enum {				/* struct cper_header::ErrorSeverity */
 	CPER_ERROR_SEVERITY_RECOVERABLE		= 0,
 	CPER_ERROR_SEVERITY_FATAL		= 1,
 	CPER_ERROR_SEVERITY_CORRECTED		= 2,
 	CPER_ERROR_SEVERITY_INFORMATIONAL	= 3,
 };
 
-enum {				/* struct cper_header::validation_bits */
+enum {				/* struct cper_header::ValidationBits */
 	CPER_VALID_PLATFORM_ID		= __BIT(0),
 	CPER_VALID_TIMESTAMP		= __BIT(1),
 	CPER_VALID_PARTITION_ID		= __BIT(2),
@@ -78,7 +78,7 @@ enum {				/* struct cper_header::validation_bits */
 /*
  * https://uefi.org/specs/UEFI/2.10/Apx_N_Common_Platform_Error_Record.html#error-record-header-flags
  */
-enum {				/* struct cper_header::flags */
+enum {				/* struct cper_header::Flags */
 	CPER_HW_ERROR_FLAG_RECOVERED	= __BIT(0),
 	CPER_HW_ERROR_FLAG_PREVERR	= __BIT(1),
 	CPER_HW_ERROR_FLAG_SIMULATED	= __BIT(2),
@@ -110,6 +110,8 @@ enum {
 	"\0"
 
 /*
+ * N.2.5. Memory Error Section
+ *
  * https://uefi.org/specs/UEFI/2.10/Apx_N_Common_Platform_Error_Record.html#memory-error-section
  *
  * Type: {0xa5bc1114,0x6f64,0x4ede,{0xb8,0x63,0x3e,0x83,0xed,0x7c,0x83,0xb1}}
@@ -144,7 +146,7 @@ struct cper_memory_error_ext {
 } __packed;
 __CTASSERT(sizeof(struct cper_memory_error_ext) == 80);
 
-enum {				/* struct cper_memory_error::validation_bits */
+enum {				/* struct cper_memory_error::ValidationBits */
 	CPER_MEMORY_ERROR_VALID_ERROR_STATUS		= __BIT(0),
 	CPER_MEMORY_ERROR_VALID_PHYSICAL_ADDRESS	= __BIT(1),
 	CPER_MEMORY_ERROR_VALID_PHYSICAL_ADDRESS_MASK	= __BIT(2),
@@ -194,7 +196,7 @@ enum {				/* struct cper_memory_error::validation_bits */
 	"b\025"	"CHIP_ID\0"						      \
 	"\0"
 
-enum {				/* struct cper_memory_error::bank */
+enum {				/* struct cper_memory_error::Bank */
 	CPER_MEMORY_ERROR_BANK_ADDRESS	= __BITS(7,0),
 	CPER_MEMORY_ERROR_BANK_GROUP	= __BITS(15,8),
 };
@@ -219,16 +221,92 @@ enum {				/* struct cper_memory_error::bank */
 	F(CPER_MEMORY_ERROR_PHYSMEM_MAPOUT_EVENT, PHYSMEM_MAPOUT_EVENT, 15)   \
 	/* end of CPER_MEMORY_ERROR_TYPES */
 
-enum cper_memory_error_type { /* struct cper_memory_error::memory_error_type */
+enum cper_memory_error_type { /* struct cper_memory_error::MemoryErrorType */
 #define	CPER_MEMORY_ERROR_TYPE_DEF(LN, SN, V)	LN = V,
 	CPER_MEMORY_ERROR_TYPES(CPER_MEMORY_ERROR_TYPE_DEF)
 #undef	CPER_MEMORY_ERROR_TYPE_DEF
 };
 
-enum {				/* struct cper_memory_error_ext::extended */
+enum {				/* struct cper_memory_error_ext::Extended */
 	CPER_MEMORY_ERROR_EXTENDED_ROWBIT16		= __BIT(0),
 	CPER_MEMORY_ERROR_EXTENDED_ROWBIT17		= __BIT(1),
 	CPER_MEMORY_ERROR_EXTENDED_CHIPID		= __BITS(7,5),
+};
+
+/*
+ * N.2.7. PCI Express Error Section
+ *
+ * https://uefi.org/specs/UEFI/2.10/Apx_N_Common_Platform_Error_Record.html#pci-express-error-section
+ *
+ * Type: {0xd995e954,0xbbc1,0x430f,{0xad,0x91,0xb4,0x4d,0xcb,0x3c,0x6f,0x35}}
+ */
+
+struct cper_pcie_error {
+	uint64_t	ValidationBits;
+	uint32_t	PortType;
+	uint32_t	Version;
+	uint32_t	CommandStatus;
+	uint32_t	Reserved0;
+	struct {
+		uint8_t		VendorID[2];
+		uint8_t		DeviceID[2]; /* product */
+		uint8_t		ClassCode[3];
+		uint8_t		Function;
+		uint8_t		Device;
+		uint8_t		Segment[2];
+		uint8_t		Bus;
+		uint8_t		SecondaryBus;
+		uint8_t		Slot[2]; /* bits 0:2 resv, bits 3:15 slot */
+		uint8_t		Reserved0;
+	}		DeviceID;
+	uint64_t	DeviceSerial;
+	uint32_t	BridgeControlStatus;
+	uint8_t		CapabilityStructure[60];
+	uint8_t		AERInfo[96];
+} __packed;
+__CTASSERT(sizeof(struct cper_pcie_error) == 208);
+
+enum {				/* struct cper_pcie_error::ValidationBits */
+	CPER_PCIE_ERROR_VALID_PORT_TYPE			= __BIT(0),
+	CPER_PCIE_ERROR_VALID_VERSION			= __BIT(1),
+	CPER_PCIE_ERROR_VALID_COMMAND_STATUS		= __BIT(2),
+	CPER_PCIE_ERROR_VALID_DEVICE_ID			= __BIT(3),
+	CPER_PCIE_ERROR_VALID_DEVICE_SERIAL		= __BIT(4),
+	CPER_PCIE_ERROR_VALID_BRIDGE_CONTROL_STATUS	= __BIT(5),
+	CPER_PCIE_ERROR_VALID_CAPABILITY_STRUCTURE	= __BIT(6),
+	CPER_PCIE_ERROR_VALID_AER_INFO			= __BIT(7),
+};
+
+#define	CPER_PCIE_ERROR_VALIDATION_BITS_FMT	"\177\020"		      \
+	"b\000"	"PORT_TYPE\0"						      \
+	"b\001"	"VERSION\0"						      \
+	"b\002"	"COMMAND_STATUS\0"					      \
+	"b\003"	"DEVICE_ID\0"						      \
+	"b\004"	"DEVICE_SERIAL\0"					      \
+	"b\005"	"BRIDGE_CONTROL_STATUS\0"				      \
+	"b\006"	"CAPABILITY_STRUCTURE\0"				      \
+	"b\007"	"AER_INFO\0"						      \
+	"\0"
+
+#define	CPER_PCIE_ERROR_PORT_TYPES(F)					      \
+	F(CPER_PCIE_ERROR_PORT_TYPE_PCIE_ENDPOINT, PCIE_ENDPOINT, 0)	      \
+	F(CPER_PCIE_ERROR_PORT_TYPE_LEGACY_PCI_ENDPOINT, LEGACY_PCI_ENDPOINT, \
+	    1)								      \
+	F(CPER_PCIE_ERROR_PORT_TYPE_ROOTPORT5_UPSTREAMSWITCH,		      \
+	    ROOTPORT5_UPSTREAMSWITCH, 4)				      \
+	F(CPER_PCIE_ERROR_PORT_TYPE_DOWNSTREAMSWITCH, DOWNSTREAMSWITCH, 6)    \
+	F(CPER_PCIE_ERROR_PORT_TYPE_PCIE_PCI_BRIDGE, PCIE_PCI_BRIDGE, 7)      \
+	F(CPER_PCIE_ERROR_PORT_TYPE_PCI_PCIE_BRIDGE, PCI_PCIE_BRIDGE, 8)      \
+	F(CPER_PCIE_ERROR_PORT_TYPE_RCIEP_DEV, RCIEP_DEV, 9)		      \
+		/* Root Complex Integrated Endpoint Device */		      \
+	F(CPER_PCIE_ERROR_PORT_TYPE_RCEC, RCEC, 10)			      \
+		/* Root Complex Event Collector */			      \
+	/* end of CPER_PCIE_ERROR_PORT_TYPES */
+
+enum cper_pcie_error_port_type { /* struct cper_pcie_error::PortType */
+#define	CPER_PCIE_ERROR_PORT_TYPE_DEF(LN, SN, V)	LN = V,
+	CPER_PCIE_ERROR_PORT_TYPES(CPER_PCIE_ERROR_PORT_TYPE_DEF)
+#undef	CPER_PCIE_ERROR_PORT_TYPE_DEF
 };
 
 #endif	/* _SYS_DEV_ACPI_APEI_CPER_H_ */
