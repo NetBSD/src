@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.409 2024/10/31 21:53:40 rillig Exp $
+#	$NetBSD: bsd.lib.mk,v 1.410 2024/11/01 23:06:17 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -56,6 +56,12 @@ realinstall:	checkver libinstall
 .if defined(MKPIE) && (${MKPIE} != "no") && !defined(NOPIE)
 CFLAGS+=        ${PIE_CFLAGS}
 AFLAGS+=        ${PIE_AFLAGS}
+.endif
+# The -fPIC is needed for libraries that include other libares
+# The order matters here, PIC needs to be last
+.if ${LIBISPRIVATE} == "pic"
+CFLAGS+=        -fPIC
+AFLAGS+=        -fPIC
 .endif
 
 PGFLAGS+=	-pg
