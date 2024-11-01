@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2024/10/31 15:06:10 riastradh Exp $
+# $NetBSD: Makefile,v 1.18 2024/11/01 23:43:52 riastradh Exp $
 
 LIB=netpgpverify
 SRCS+=b64.c
@@ -34,7 +34,7 @@ LINTFLAGS.bzlib.c+=	-X 161	# constant in conditional context
 LINTFLAGS.bzlib.c+=	-X 220	# fallthrough on case statement
 LINTFLAGS.zlib.c+=	-X 220	# fallthrough on case statement
 
-LDFLAGS+=-Wl,--version-script=${.CURDIR}/verify.map
+VERSION_MAP=		verify.map
 LIB_EXPSYM=		verify.expsym
 
 .include <bsd.lib.mk>
