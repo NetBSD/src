@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.33.4.1 2023/12/18 14:15:58 martin Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.33.4.2 2024/11/01 15:06:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1635,9 +1635,11 @@ connection_timeout_co(void *par)
 	connection_t *conn = par;
 
 	mutex_enter(&iscsi_cleanup_mtx);
-	conn->c_timedout = TOUT_QUEUED;
-	TAILQ_INSERT_TAIL(&iscsi_timeout_conn_list, conn, c_tchain);
-	iscsi_notify_cleanup();
+	if (conn->c_timedout == TOUT_ARMED) {
+		conn->c_timedout = TOUT_QUEUED;
+		TAILQ_INSERT_TAIL(&iscsi_timeout_conn_list, conn, c_tchain);
+		iscsi_notify_cleanup();
+	}
 	mutex_exit(&iscsi_cleanup_mtx);
 }
 
@@ -1657,14 +1659,13 @@ connection_timeout_stop(connection_t *conn)
 {                                                
 	callout_stop(&conn->c_timeout);
 	mutex_enter(&iscsi_cleanup_mtx);
-	if (conn->c_timedout == TOUT_QUEUED) {
+	if (conn->c_timedout == TOUT_QUEUED)
 		TAILQ_REMOVE(&iscsi_timeout_conn_list, conn, c_tchain);
-		conn->c_timedout = TOUT_NONE;
-	}               
 	if (curlwp != iscsi_cleanproc) {
 		while (conn->c_timedout == TOUT_BUSY)
 			kpause("connbusy", false, 1, &iscsi_cleanup_mtx);
 	}
+	conn->c_timedout = TOUT_NONE;
 	mutex_exit(&iscsi_cleanup_mtx);
 }
 
@@ -1674,9 +1675,11 @@ ccb_timeout_co(void *par)
 	ccb_t *ccb = par;
 
 	mutex_enter(&iscsi_cleanup_mtx);
-	ccb->ccb_timedout = TOUT_QUEUED;
-	TAILQ_INSERT_TAIL(&iscsi_timeout_ccb_list, ccb, ccb_tchain);
-	iscsi_notify_cleanup();
+	if (ccb->ccb_timedout == TOUT_ARMED) {
+		ccb->ccb_timedout = TOUT_QUEUED;
+		TAILQ_INSERT_TAIL(&iscsi_timeout_ccb_list, ccb, ccb_tchain);
+		iscsi_notify_cleanup();
+	}
 	mutex_exit(&iscsi_cleanup_mtx);
 }
 
@@ -1696,14 +1699,13 @@ ccb_timeout_stop(ccb_t *ccb)
 {
 	callout_stop(&ccb->ccb_timeout);
 	mutex_enter(&iscsi_cleanup_mtx);
-	if (ccb->ccb_timedout == TOUT_QUEUED) {
+	if (ccb->ccb_timedout == TOUT_QUEUED)
 		TAILQ_REMOVE(&iscsi_timeout_ccb_list, ccb, ccb_tchain);
-		ccb->ccb_timedout = TOUT_NONE;
-	} 
 	if (curlwp != iscsi_cleanproc) {
 		while (ccb->ccb_timedout == TOUT_BUSY)
 			kpause("ccbbusy", false, 1, &iscsi_cleanup_mtx);
 	}
+	ccb->ccb_timedout = TOUT_NONE;
 	mutex_exit(&iscsi_cleanup_mtx);
 }
 

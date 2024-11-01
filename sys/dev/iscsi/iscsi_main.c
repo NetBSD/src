@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_main.c,v 1.41 2022/09/13 13:09:16 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_main.c,v 1.41.4.1 2024/11/01 15:06:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -490,7 +490,7 @@ iscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			DEB(9, ("ISCSI: refcount too high: %d, winsize %d\n",
 				sess->s_refcount, sess->s_send_window));
 			xs->error = XS_BUSY;
-			xs->status = XS_BUSY;
+			xs->status = SCSI_BUSY;
 			scsipi_done(xs);
 			return;
 		}
