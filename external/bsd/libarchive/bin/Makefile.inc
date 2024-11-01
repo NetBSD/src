@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.5 2019/07/30 08:05:22 martin Exp $
+# $NetBSD: Makefile.inc,v 1.6 2024/11/01 00:00:14 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -8,9 +8,9 @@ BINDIR=		/bin
 LDSTATIC?=	-static
 .endif
 
-DPADD=	${LIBARCHIVE_FE} ${LIBARCHIVE} ${LIBEXPAT} ${LIBBZ2} ${LIBLZMA} ${LIBZ} \
-	${LIBCRYPTO} ${LIBPTHREAD}
-LDADD=	-L${LIBARCHIVE_FE_DIR} -larchive_fe -larchive -lexpat -lbz2 -llzma -lz \
-	-lcrypto -lpthread
+DPADD+=	${LIBARCHIVE_FE} ${LIBARCHIVE} ${LIBEXPAT} ${LIBZSTD}
+DPADD+=	${LIBBZ2} ${LIBLZMA} ${LIBZ} ${LIBCRYPTO} ${LIBPTHREAD}
+LDADD+=	-L${LIBARCHIVE_FE_DIR} -larchive_fe -larchive -lexpat -lzstd
+LDADD+=	-lbz2 -llzma -lz -lcrypto -lpthread
 
 CPPFLAGS+=	-I${LIBARCHIVEDIR}/libarchive_fe
