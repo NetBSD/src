@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.8 2024/09/23 10:38:31 rin Exp $
+# $NetBSD: GENERIC,v 1.9 2024/11/01 14:31:59 mlelstv Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/virt68k/conf/std.virt68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.8 $"
+#ident 		"GENERIC-$Revision: 1.9 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -150,6 +150,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	npf			# NPF packet filter
 pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
+pseudo-device	drvctl			# user control of drive subsystem
 
 # crypto pseudo-devices
 pseudo-device	crypto			# /dev/crypto device
@@ -174,10 +175,10 @@ virtctrl*	at mainbus? addr ?
 # VirtIO devices
 virtio*		at mainbus? addr ?	# VirtIO nexus
 ld*		at virtio?		# VirtIO disk device
-viocon*		at virtio?		# VirtIO serial device
 vioif*		at virtio?		# VirtIO network device
 viornd*		at virtio?		# VirtIO entropy device
 vioscsi*	at virtio?		# VirtIO SCSI device
+viocon*		at virtio?		# Virtio Console
 
 # SCSI devices
 scsibus* at scsi?
