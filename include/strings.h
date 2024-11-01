@@ -1,4 +1,4 @@
-/*	$NetBSD: strings.h,v 1.20 2024/11/01 18:42:30 riastradh Exp $	*/
+/*	$NetBSD: strings.h,v 1.21 2024/11/01 18:52:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ typedef	_BSD_SIZE_T_	size_t;
 
 __BEGIN_DECLS
 #if defined(_NETBSD_SOURCE) || \
-    (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE - 0 < 202405L)
+    (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE - 0 < 700)
 int	 bcmp(const void *, const void *, size_t);
 void	 bcopy(const void *, void *, size_t);
 void	 bzero(void *, size_t);
@@ -70,7 +70,7 @@ unsigned int	popcount32(__uint32_t) __constfunc;
 unsigned int	popcount64(__uint64_t) __constfunc;
 #endif
 #if defined(_NETBSD_SOURCE) || \
-    (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE - 0 < 202405L)
+    (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE - 0 < 700)
 char	*index(const char *, int);
 char	*rindex(const char *, int);
 #endif
