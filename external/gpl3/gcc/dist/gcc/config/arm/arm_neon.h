@@ -16918,12 +16918,12 @@ __attribute__  ((__always_inline__, __gnu_inline__, __artificial__))
 vldrq_p128 (poly128_t const * __ptr)
 {
 #ifdef __ARM_BIG_ENDIAN
-  poly64_t* __ptmp = (poly64_t*) __ptr;
+  poly64_t const * __ptmp = (poly64_t const *) __ptr;
   poly64_t __d0 = vld1_p64 (__ptmp);
   poly64_t __d1 = vld1_p64 (__ptmp + 1);
   return vreinterpretq_p128_p64 (vcombine_p64 (__d1, __d0));
 #else
-  return vreinterpretq_p128_p64 (vld1q_p64 ((const poly64_t*) __ptr));
+  return vreinterpretq_p128_p64 (vld1q_p64 ((poly64_t const *) __ptr));
 #endif
 }
 
