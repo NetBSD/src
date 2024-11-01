@@ -1,4 +1,4 @@
-#	$NetBSD: engines.mk,v 1.6 2023/05/26 23:13:37 riastradh Exp $
+#	$NetBSD: engines.mk,v 1.7 2024/11/01 23:44:04 riastradh Exp $
 
 NOLINT=		# don't build a lint library
 NOPROFILE=	# don't build a profile library
@@ -26,7 +26,7 @@ libinstall:: ${DESTDIR}${LIBDIR}/${LIB}.so
 libinstall::
 .endif
 
-LDFLAGS+=-Wl,--version-script=${.CURDIR}/${LIB}.map
+VERSION_MAP=	${LIB}.map
 
 .include <bsd.lib.mk>
 

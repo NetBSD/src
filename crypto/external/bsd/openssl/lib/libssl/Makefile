@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2023/05/27 20:51:22 hgutch Exp $
+#	$NetBSD: Makefile,v 1.19 2024/11/01 23:44:04 riastradh Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -45,7 +45,7 @@ AFLAGS+=-DELF
 INCS=	dtls1.h ssl.h ssl2.h ssl3.h tls1.h srtp.h async.h
 INCSDIR=/usr/include/openssl
 
-LDFLAGS+=-Wl,--version-script=${.CURDIR}/ssl.map
+VERSION_MAP=	ssl.map
 
 PKGCONFIG=libssl openssl
 .include "${.CURDIR}/../../pkgconfig.mk"

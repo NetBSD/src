@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2023/05/25 15:52:29 riastradh Exp $
+#	$NetBSD: Makefile,v 1.8 2024/11/01 23:44:04 riastradh Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -63,7 +63,7 @@ libinstall:: ${DESTDIR}${LIBDIR}/${LIB}.so
 libinstall::
 .endif
 
-LDFLAGS+=-Wl,--version-script=${.CURDIR}/${LIB}.map
+VERSION_MAP=	${LIB}.map
 
 .if ${MKPICLIB} == "yes"
 LIBDPLIBS+= common_pic ${.CURDIR}/../libcommon
