@@ -699,7 +699,7 @@
 /* #undef HAVE_LIBXML_XMLWRITER_H */
 
 /* Define to 1 if you have the `zstd' library (-lzstd). */
-#define HAVE_LIBZSTD 1
+/* #undef HAVE_LIBZSTD */
 
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1
@@ -1255,11 +1255,11 @@
 #define HAVE_ZLIB_H 1
 
 /* Define to 1 if you have the <zstd.h> header file. */
-#define HAVE_ZSTD_H 1
+/* #undef HAVE_ZSTD_H */
 
 /* Define to 1 if you have the `zstd' library (-lzstd) with compression
    support. */
-#define HAVE_ZSTD_compressStream 1
+/* #undef HAVE_ZSTD_compressStream */
 
 /* Define to 1 if you have the `_fseeki64' function. */
 /* #undef HAVE__FSEEKI64 */
