@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bitops.c,v 1.21 2023/07/13 20:39:24 riastradh Exp $ */
+/*	$NetBSD: t_bitops.c,v 1.22 2024/11/01 18:35:12 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bitops.c,v 1.21 2023/07/13 20:39:24 riastradh Exp $");
+__RCSID("$NetBSD: t_bitops.c,v 1.22 2024/11/01 18:35:12 riastradh Exp $");
 
 #include <atf-c.h>
 
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: t_bitops.c,v 1.21 2023/07/13 20:39:24 riastradh Exp $");
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 
 static const struct {
 	uint32_t	val;
@@ -164,17 +165,64 @@ ATF_TC_BODY(ffsfls, tc)
 	uint8_t i;
 	int n, m;
 
+	ATF_CHECK_EQ_MSG((n = ffs(0)), 0x00, "n=%d", n);
+	ATF_CHECK_EQ_MSG((n = ffsl(0)), 0x00, "n=%d", n);
+	ATF_CHECK_EQ_MSG((n = ffsll(0)), 0x00, "n=%d", n);
+
 	ATF_CHECK_EQ_MSG((n = ffs32(0)), 0x00, "n=%d", n);
 	ATF_CHECK_EQ_MSG((n = fls32(0)), 0x00, "n=%d", n);
 	ATF_CHECK_EQ_MSG((n = ffs64(0)), 0x00, "n=%d", n);
 	ATF_CHECK_EQ_MSG((n = fls64(0)), 0x00, "n=%d", n);
+
+	ATF_CHECK_EQ_MSG((n = ffs(UINT_MAX)), 0x01, "n=%d\n", n);
+	ATF_CHECK_EQ_MSG((n = ffsl(ULONG_MAX)), 0x01, "n=%d\n", n);
+	ATF_CHECK_EQ_MSG((n = ffsll(ULLONG_MAX)), 0x01, "n=%d\n", n);
+
+	ATF_CHECK_EQ_MSG((n = ffs((unsigned)INT_MAX + 1)),
+	    CHAR_BIT*sizeof(int),
+	    "n=%d\n", n);
+	ATF_CHECK_EQ_MSG((n = ffsl((unsigned long)LONG_MAX + 1)),
+	    CHAR_BIT*sizeof(long),
+	    "n=%d\n", n);
+	ATF_CHECK_EQ_MSG((n = ffsll((unsigned long long)LLONG_MAX + 1)),
+	    CHAR_BIT*sizeof(long long),
+	    "n=%d\n", n);
 
 	ATF_CHECK_EQ_MSG((n = ffs32(UINT32_MAX)), 0x01, "n=%d", n);
 	ATF_CHECK_EQ_MSG((n = fls32(UINT32_MAX)), 0x20, "n=%d", n);
 	ATF_CHECK_EQ_MSG((n = ffs64(UINT64_MAX)), 0x01, "n=%d", n);
 	ATF_CHECK_EQ_MSG((n = fls64(UINT64_MAX)), 0x40, "n=%d", n);
 
+	for (i = 0; i < CHAR_BIT*sizeof(long long); i++) {
+		if (i < CHAR_BIT*sizeof(int)) {
+			ATF_CHECK_EQ_MSG((n = ffs(1U << i)), i + 1, "n=%d", n);
+		}
+		if (i < CHAR_BIT*sizeof(long)) {
+			ATF_CHECK_EQ_MSG((n = ffsl(1UL << i)), i + 1,
+			    "n=%d", n);
+		}
+		if (i < CHAR_BIT*sizeof(long long)) {
+			ATF_CHECK_EQ_MSG((n = ffsll(1ULL << i)), i + 1,
+			    "n=%d", n);
+		}
+		if (i < CHAR_BIT*sizeof(int32_t)) {
+			ATF_CHECK_EQ_MSG((n = ffs32((uint32_t)1 << i)), i + 1,
+			    "n=%d", n);
+		}
+		if (i < CHAR_BIT*sizeof(int64_t)) {
+			ATF_CHECK_EQ_MSG((n = ffs64((uint64_t)1 << i)), i + 1,
+			    "n=%d", n);
+		}
+	}
+
 	for (i = 1; i < __arraycount(bits); i++) {
+
+		ATF_CHECK_EQ_MSG((n = ffs(bits[i].val)), (m = bits[i].ffs),
+		    "[i=%"PRIu8"] n=%d m=%d", i, n, m);
+		ATF_CHECK_EQ_MSG((n = ffsl(bits[i].val)), (m = bits[i].ffs),
+		    "[i=%"PRIu8"] n=%d m=%d", i, n, m);
+		ATF_CHECK_EQ_MSG((n = ffsll(bits[i].val)), (m = bits[i].ffs),
+		    "[i=%"PRIu8"] n=%d m=%d", i, n, m);
 
 		ATF_CHECK_EQ_MSG((n = ffs32(bits[i].val)), (m = bits[i].ffs),
 		    "[i=%"PRIu8"] n=%d m=%d", i, n, m);
@@ -183,6 +231,16 @@ ATF_TC_BODY(ffsfls, tc)
 		ATF_CHECK_EQ_MSG((n = ffs64(bits[i].val)), (m = bits[i].ffs),
 		    "[i=%"PRIu8"] n=%d m=%d", i, n, m);
 		ATF_CHECK_EQ_MSG((n = fls64(bits[i].val)), (m = bits[i].fls),
+		    "[i=%"PRIu8"] n=%d m=%d", i, n, m);
+
+		ATF_CHECK_EQ_MSG((n = ffs(bits[i].val << 1)),
+		    (m = bits[i].ffs + 1),
+		    "[i=%"PRIu8"] n=%d m=%d", i, n, m);
+		ATF_CHECK_EQ_MSG((n = ffsl(bits[i].val << 1)),
+		    (m = bits[i].ffs + 1),
+		    "[i=%"PRIu8"] n=%d m=%d", i, n, m);
+		ATF_CHECK_EQ_MSG((n = ffsll(bits[i].val << 1)),
+		    (m = bits[i].ffs + 1),
 		    "[i=%"PRIu8"] n=%d m=%d", i, n, m);
 
 		ATF_CHECK_EQ_MSG((n = ffs32(bits[i].val << 1)),
@@ -196,6 +254,16 @@ ATF_TC_BODY(ffsfls, tc)
 		    "[i=%"PRIu8"] n=%d m=%d", i, n, m);
 		ATF_CHECK_EQ_MSG((n = fls64(bits[i].val << 1)),
 		    (m = bits[i].fls + 1),
+		    "[i=%"PRIu8"] n=%d m=%d", i, n, m);
+
+		ATF_CHECK_EQ_MSG((n = ffs(bits[i].val << 9)),
+		    (m = bits[i].ffs + 9),
+		    "[i=%"PRIu8"] n=%d m=%d", i, n, m);
+		ATF_CHECK_EQ_MSG((n = ffsl(bits[i].val << 9)),
+		    (m = bits[i].ffs + 9),
+		    "[i=%"PRIu8"] n=%d m=%d", i, n, m);
+		ATF_CHECK_EQ_MSG((n = ffsll(bits[i].val << 9)),
+		    (m = bits[i].ffs + 9),
 		    "[i=%"PRIu8"] n=%d m=%d", i, n, m);
 
 		ATF_CHECK_EQ_MSG((n = ffs32(bits[i].val << 9)),

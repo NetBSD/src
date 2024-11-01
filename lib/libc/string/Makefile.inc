@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile.inc,v 1.90 2024/06/08 21:35:18 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.91 2024/11/01 18:35:12 riastradh Exp $
 
 # string sources
 .PATH: ${ARCHDIR}/string ${.CURDIR}/string
@@ -15,7 +15,7 @@ SRCS+=	bm.c stpcpy.c stpncpy.c \
 	strtok_r.c strxfrm.c __strsignal.c strerror_r.c strndup.c \
 	stresep.c memrchr.c
 
-SRCS+=	bcmp.c bcopy.c bzero.c ffs.c memchr.c memcmp.c memset.c
+SRCS+=	bcmp.c bcopy.c bzero.c ffs.c ffsl.c ffsll.c memchr.c memcmp.c memset.c
 SRCS+=	strcat.c strcmp.c strcpy.c strcspn.c strlen.c
 SRCS+=	strncat.c strncmp.c strncpy.c strpbrk.c strsep.c
 SRCS+=	strspn.c strstr.c swab.c strnstr.c
