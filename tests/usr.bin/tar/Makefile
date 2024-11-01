@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2020/01/19 17:36:57 christos Exp $
+# $NetBSD: Makefile,v 1.4.10.1 2024/11/01 10:32:30 martin Exp $
 
 NOMAN=
 
@@ -119,3 +119,6 @@ CLEANFILES+=list.h
 
 list.h: ${SRCS.h_tar} Makefile
 	${TOOL_GREP} -h '^DEFINE_TEST(' ${.ALLSRC} > ${.TARGET}
+
+COPTS.test_main.c+=	${GCC_NO_STRINGOP_OVERFLOW}
+COPTS.test_option_b.c+=	${GCC_NO_STRINGOP_OVERFLOW}
