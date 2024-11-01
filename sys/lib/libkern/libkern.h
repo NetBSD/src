@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.146 2024/10/09 13:59:09 christos Exp $	*/
+/*	$NetBSD: libkern.h,v 1.147 2024/11/01 21:11:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -458,8 +458,8 @@ void	 mi_vector_hash(const void * __restrict, size_t, uint32_t,
 int	 scanc(u_int, const u_char *, const u_char *, int);
 int	 skpc(int, size_t, u_char *);
 int	 strcasecmp(const char *, const char *);
-size_t	 strlcpy(char *, const char *, size_t);
-size_t	 strlcat(char *, const char *, size_t);
+size_t	 strlcpy(char * __restrict, const char * __restrict, size_t);
+size_t	 strlcat(char * __restrict, const char * __restrict, size_t);
 int	 strncasecmp(const char *, const char *, size_t);
 u_long	 strtoul(const char *, char **, int);
 long long strtoll(const char *, char **, int);
