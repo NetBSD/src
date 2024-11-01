@@ -1,4 +1,4 @@
-/*	$NetBSD: strings.h,v 1.19 2024/11/01 18:35:12 riastradh Exp $	*/
+/*	$NetBSD: strings.h,v 1.20 2024/11/01 18:42:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ int	 bcmp(const void *, const void *, size_t);
 void	 bcopy(const void *, void *, size_t);
 void	 bzero(void *, size_t);
 #endif
-#if defined(_NETBSD_SOURCE) || _XOPEN_SOURCE - 0 >= 700
+#if defined(_NETBSD_SOURCE) || _XOPEN_SOURCE - 0 >= 600
 int	 ffs(int) __constfunc;
 #endif
 #if defined(_NETBSD_SOURCE) || _XOPEN_SOURCE - 0 >= 800

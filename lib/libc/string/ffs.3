@@ -28,13 +28,15 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ffs.3	8.2 (Berkeley) 4/19/94
-.\"	$NetBSD: ffs.3,v 1.13 2010/04/28 07:47:09 jruoho Exp $
+.\"	$NetBSD: ffs.3,v 1.14 2024/11/01 18:42:30 riastradh Exp $
 .\"
-.Dd April 28, 2010
+.Dd November 1, 2024
 .Dt FFS 3
 .Os
 .Sh NAME
 .Nm ffs
+.Nm ffsl
+.Nm ffsll
 .Nd find first bit set in a bit string
 .Sh LIBRARY
 .Lb libc
@@ -42,24 +44,36 @@
 .In strings.h
 .Ft int
 .Fn ffs "int value"
+.Fn ffsl "long value"
+.Fn ffsll "long long value"
 .Sh DESCRIPTION
 The
-.Fn ffs
-function finds the first bit set in
+.Fn ffs ,
+.Fn ffsl ,
+and
+.Fn ffsll
+functions find the first bit set in
 .Fa value
-and returns the index of that bit.
+and return the index of that bit.
 Bits are numbered starting from 1, starting at the right-most
 bit.
 A return value of 0 means that the argument was zero.
 .Sh SEE ALSO
 .Xr bitstring 3 ,
 .Xr ffs32 3 ,
+.Xr ffs64 3 ,
 .Xr popcount 3
 .Sh STANDARDS
 The
 .Fn ffs
 function conforms to
 .St -p1003.1-2001 .
+The
+.Fn ffsl
+and
+.Fn ffsll
+functions conform to
+.St -p1003.1-2024 .
 .Sh HISTORY
 The
 .Fn ffs

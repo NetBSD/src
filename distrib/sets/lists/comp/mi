@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2478 2024/10/30 18:09:16 christos Exp $
+#	$NetBSD: mi,v 1.2479 2024/11/01 18:42:29 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -7744,6 +7744,8 @@
 ./usr/share/man/cat3/feupdateenv.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fflush.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ffs.0			comp-c-catman		.cat
+./usr/share/man/cat3/ffsl.0			comp-c-catman		.cat
+./usr/share/man/cat3/ffsll.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ffs32.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ffs64.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fgetc.0			comp-c-catman		.cat
@@ -16283,6 +16285,8 @@
 ./usr/share/man/html3/feupdateenv.html		comp-c-htmlman	html
 ./usr/share/man/html3/fflush.html		comp-c-htmlman		html
 ./usr/share/man/html3/ffs.html			comp-c-htmlman		html
+./usr/share/man/html3/ffsl.html			comp-c-htmlman		html
+./usr/share/man/html3/ffsll.html		comp-c-htmlman		html
 ./usr/share/man/html3/ffs32.html		comp-c-htmlman		html
 ./usr/share/man/html3/ffs64.html		comp-c-htmlman		html
 ./usr/share/man/html3/fgetc.html		comp-c-htmlman		html
@@ -24760,6 +24764,8 @@
 ./usr/share/man/man3/feupdateenv.3		comp-c-man		.man
 ./usr/share/man/man3/fflush.3			comp-c-man		.man
 ./usr/share/man/man3/ffs.3			comp-c-man		.man
+./usr/share/man/man3/ffsl.3			comp-c-man		.man
+./usr/share/man/man3/ffsll.3			comp-c-man		.man
 ./usr/share/man/man3/ffs32.3			comp-c-man		.man
 ./usr/share/man/man3/ffs64.3			comp-c-man		.man
 ./usr/share/man/man3/fgetc.3			comp-c-man		.man

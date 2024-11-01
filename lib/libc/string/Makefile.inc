@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile.inc,v 1.91 2024/11/01 18:35:12 riastradh Exp $
+#	$NetBSD: Makefile.inc,v 1.92 2024/11/01 18:42:30 riastradh Exp $
 
 # string sources
 .PATH: ${ARCHDIR}/string ${.CURDIR}/string
@@ -55,6 +55,8 @@ MAN+=	bm.3 bcmp.3 bcopy.3 bstring.3 bzero.3 consttime_memequal.3 \
 	swab.3 wcstok.3 wcswidth.3 wmemchr.3 wcsdup.3 wcscasecmp.3
 
 MLINKS+=bm.3 bm_comp.3 bm.3 bm_exec.3 bm.3 bm_free.3
+MLINKS+=ffs.3 ffsl.3
+MLINKS+=ffs.3 ffsll.3
 MLINKS+=popcount.3 popcountl.3
 MLINKS+=popcount.3 popcountll.3
 MLINKS+=popcount.3 popcount32.3
