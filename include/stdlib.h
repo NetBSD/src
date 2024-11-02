@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.127 2024/10/11 18:43:22 riastradh Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.128 2024/11/02 10:49:10 nia Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -184,7 +184,6 @@ void	 srandom(unsigned int) __RENAME(__srandom60);
 #endif
 #ifdef _NETBSD_SOURCE
 #define	RANDOM_MAX	0x7fffffff	/* (((long)1 << 31) - 1) */
-int	 mkostemp(char *, int);
 int	 mkostemps(char *, int, int);
 #endif
 
@@ -397,6 +396,7 @@ size_t	 wcstombs_l(char * __restrict, const wchar_t * __restrict, size_t,
 #if (_POSIX_C_SOURCE - 0) >= 202405L || \
     defined(_NETBSD_SOURCE) || defined(_OPENBSD_SOURCE)
 void	*reallocarray(void *, size_t, size_t);
+int	 mkostemp(char *, int);
 #endif	/* _POSIX_C_SOURCE >= 202405L || _NETBSD_SOURCE || _OPENBSD_SOURCE */
 
 __END_DECLS
