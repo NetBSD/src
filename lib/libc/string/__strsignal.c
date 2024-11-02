@@ -1,4 +1,4 @@
-/*	$NetBSD: __strsignal.c,v 1.27 2024/11/02 15:47:02 kre Exp $	*/
+/*	$NetBSD: __strsignal.c,v 1.28 2024/11/02 16:10:31 kre Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: __strsignal.c,v 1.27 2024/11/02 15:47:02 kre Exp $");
+__RCSID("$NetBSD: __strsignal.c,v 1.28 2024/11/02 16:10:31 kre Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,10 +49,6 @@ __RCSID("$NetBSD: __strsignal.c,v 1.27 2024/11/02 15:47:02 kre Exp $");
 #include <string.h>
 #include "extern.h"
 #include <signal.h>
-#ifndef SIGRTMIN	/* XXX: Until we remove the #ifdef _KERNEL */
-#define SIGRTMIN	33
-#define SIGRTMAX	63
-#endif
 
 /* ARGSUSED */
 const char *
