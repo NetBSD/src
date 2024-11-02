@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.69 2016/04/10 19:05:50 roy Exp $	*/
+/*	$NetBSD: util.h,v 1.70 2024/11/02 03:21:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -36,6 +36,7 @@
 #include <sys/types.h>
 #include <sys/ansi.h>
 #include <sys/inttypes.h>
+#include <sys/featuretest.h>
 
 #ifdef  _BSD_TIME_T_
 typedef _BSD_TIME_T_    time_t;
