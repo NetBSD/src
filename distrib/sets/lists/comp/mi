@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2479 2024/11/01 18:42:29 riastradh Exp $
+#	$NetBSD: mi,v 1.2480 2024/11/02 02:43:48 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -9256,6 +9256,7 @@
 ./usr/share/man/cat3/mempcpy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/memrchr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/memset.0			comp-c-catman		.cat
+./usr/share/man/cat3/memset_explicit.0		comp-c-catman		.cat
 ./usr/share/man/cat3/menu_attributes.0		comp-c-catman		.cat
 ./usr/share/man/cat3/menu_back.0		comp-c-catman		.cat
 ./usr/share/man/cat3/menu_cursor.0		comp-c-catman		.cat
@@ -17762,6 +17763,7 @@
 ./usr/share/man/html3/mempcpy.html		comp-c-htmlman		html
 ./usr/share/man/html3/memrchr.html		comp-c-htmlman		html
 ./usr/share/man/html3/memset.html		comp-c-htmlman		html
+./usr/share/man/html3/memset_explicit.html	comp-c-htmlman		html
 ./usr/share/man/html3/menu_attributes.html	comp-c-htmlman		html
 ./usr/share/man/html3/menu_back.html		comp-c-htmlman		html
 ./usr/share/man/html3/menu_cursor.html		comp-c-htmlman		html
@@ -26277,6 +26279,7 @@
 ./usr/share/man/man3/mempcpy.3			comp-c-man		.man
 ./usr/share/man/man3/memrchr.3			comp-c-man		.man
 ./usr/share/man/man3/memset.3			comp-c-man		.man
+./usr/share/man/man3/memset_explicit.3		comp-c-man		.man
 ./usr/share/man/man3/menu_attributes.3		comp-c-man		.man
 ./usr/share/man/man3/menu_back.3		comp-c-man		.man
 ./usr/share/man/man3/menu_cursor.3		comp-c-man		.man

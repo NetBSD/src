@@ -1,4 +1,4 @@
-/* $NetBSD: t_memset.c,v 1.4 2015/09/11 09:25:52 martin Exp $ */
+/* $NetBSD: t_memset.c,v 1.5 2024/11/02 02:43:48 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_memset.c,v 1.4 2015/09/11 09:25:52 martin Exp $");
+__RCSID("$NetBSD: t_memset.c,v 1.5 2024/11/02 02:43:48 riastradh Exp $");
 
 #include <sys/stat.h>
 
@@ -44,6 +44,15 @@ static bool	check(char *, size_t, char);
 
 int zero;	/* always zero, but the compiler does not know */
 
+static const struct {
+	const char	*name;
+	void		*(*fn)(void *, int, size_t);
+} memsetfn[] = {
+	{ "memset", &memset },
+	{ "explicit_memset", &explicit_memset }, /* NetBSD extension */
+	{ "memset_explicit", &memset_explicit }, /* C23 adopted name */
+};
+
 ATF_TC(memset_array);
 ATF_TC_HEAD(memset_array, tc)
 {
@@ -53,16 +62,19 @@ ATF_TC_HEAD(memset_array, tc)
 ATF_TC_BODY(memset_array, tc)
 {
 	char buf[1024];
+	unsigned i;
 
-	(void)memset(buf, 0, sizeof(buf));
+	for (i = 0; i < __arraycount(memsetfn); i++) {
+		(void)(*memsetfn[i].fn)(buf, 0, sizeof(buf));
+		ATF_CHECK_MSG(check(buf, sizeof(buf), 0),
+		    "%s did not fill a static buffer",
+		    memsetfn[i].name);
 
-	if (check(buf, sizeof(buf), 0) != true)
-		atf_tc_fail("memset(3) did not fill a static buffer");
-
-	(void)memset(buf, 'x', sizeof(buf));
-
-	if (check(buf, sizeof(buf), 'x') != true)
-		atf_tc_fail("memset(3) did not fill a static buffer");
+		(void)(*memsetfn[i].fn)(buf, 'x', sizeof(buf));
+		ATF_CHECK_MSG(check(buf, sizeof(buf), 'x'),
+		    "%s did not fill a static buffer",
+		    memsetfn[i].name);
+	}
 }
 
 ATF_TC(memset_return);
@@ -75,8 +87,15 @@ ATF_TC_BODY(memset_return, tc)
 {
 	char *b = (char *)0x1;
 	char c[2];
-	ATF_REQUIRE_EQ(memset(b, 0, 0), b);
-	ATF_REQUIRE_EQ(memset(c, 2, sizeof(c)), c);
+	char *p;
+	unsigned i;
+
+	for (i = 0; i < __arraycount(memsetfn); i++) {
+		ATF_CHECK_EQ_MSG((p = (*memsetfn[i].fn)(b, 0, 0)), b,
+		    "%s: returned %p, expected %p", memsetfn[i].name, p, b);
+		ATF_CHECK_EQ_MSG((p = (*memsetfn[i].fn)(c, 2, sizeof(c))), c,
+		    "%s: returned %p, expected %p", memsetfn[i].name, p, c);
+	}
 }
 
 ATF_TC(memset_basic);
@@ -88,6 +107,7 @@ ATF_TC_HEAD(memset_basic, tc)
 ATF_TC_BODY(memset_basic, tc)
 {
 	char *buf, *ret;
+	unsigned i;
 
 	buf = malloc(page);
 	ret = malloc(page);
@@ -95,15 +115,19 @@ ATF_TC_BODY(memset_basic, tc)
 	ATF_REQUIRE(buf != NULL);
 	ATF_REQUIRE(ret != NULL);
 
-	fill(ret, page, 0);
-	memset(buf, 0, page);
+	for (i = 0; i < __arraycount(memsetfn); i++) {
+		fill(ret, page, 0);
+		(*memsetfn[i].fn)(buf, 0, page);
 
-	ATF_REQUIRE(memcmp(ret, buf, page) == 0);
+		ATF_CHECK_EQ_MSG(memcmp(ret, buf, page), 0, "%s",
+		    memsetfn[i].name);
 
-	fill(ret, page, 'x');
-	memset(buf, 'x', page);
+		fill(ret, page, 'x');
+		(*memsetfn[i].fn)(buf, 'x', page);
 
-	ATF_REQUIRE(memcmp(ret, buf, page) == 0);
+		ATF_CHECK_EQ_MSG(memcmp(ret, buf, page), 0, "%s",
+		    memsetfn[i].name);
+	}
 
 	free(buf);
 	free(ret);
@@ -119,17 +143,18 @@ ATF_TC_BODY(memset_nonzero, tc)
 {
 	const size_t n = 0x7f;
 	char *buf;
-	size_t i;
+	size_t i, j;
 
 	buf = malloc(page);
 	ATF_REQUIRE(buf != NULL);
 
 	for (i = 0x21; i < n; i++) {
-
-		(void)memset(buf, i, page);
-
-		if (check(buf, page, i) != true)
-			atf_tc_fail("memset(3) did not fill properly");
+		for (j = 0; j < __arraycount(memsetfn); j++) {
+			(void)(*memsetfn[j].fn)(buf, i, page);
+			ATF_CHECK_MSG(check(buf, page, i),
+			    "%s did not fill properly with %zu",
+			    memsetfn[j].name, i);
+		}
 	}
 
 	free(buf);
@@ -145,16 +170,19 @@ ATF_TC_HEAD(memset_zero_size, tc)
 ATF_TC_BODY(memset_zero_size, tc)
 {
 	char buf[1024];
+	unsigned i;
 
-	(void)memset(buf, 'x', sizeof(buf));
+	for (i = 0; i < __arraycount(memsetfn); i++) {
+		(void)(*memsetfn[i].fn)(buf, 'x', sizeof(buf));
+		ATF_CHECK_MSG(check(buf, sizeof(buf), 'x'),
+		    "%s did not fill a static buffer",
+		    memsetfn[i].name);
 
-	if (check(buf, sizeof(buf), 'x') != true)
-		atf_tc_fail("memset(3) did not fill a static buffer");
-
-	(void)memset(buf+sizeof(buf)/2, 0, zero);
-
-	if (check(buf, sizeof(buf), 'x') != true)
-		atf_tc_fail("memset(3) with 0 size did change the buffer");
+		(void)memset(buf+sizeof(buf)/2, 0, zero);
+		ATF_CHECK_MSG(check(buf, sizeof(buf), 'x'),
+		    "%s with 0 size did change the buffer",
+		    memsetfn[i].name);
+	}
 }
 
 ATF_TC(bzero_zero_size);
@@ -188,30 +216,33 @@ ATF_TC_HEAD(memset_struct, tc)
 ATF_TC_BODY(memset_struct, tc)
 {
 	struct stat st;
+	unsigned i;
 
-	st.st_dev = 0;
-	st.st_ino = 1;
-	st.st_mode = 2;
-	st.st_nlink = 3;
-	st.st_uid = 4;
-	st.st_gid = 5;
-	st.st_rdev = 6;
-	st.st_size = 7;
-	st.st_atime = 8;
-	st.st_mtime = 9;
+	for (i = 0; i < __arraycount(memsetfn); i++) {
+		st.st_dev = 0;
+		st.st_ino = 1;
+		st.st_mode = 2;
+		st.st_nlink = 3;
+		st.st_uid = 4;
+		st.st_gid = 5;
+		st.st_rdev = 6;
+		st.st_size = 7;
+		st.st_atime = 8;
+		st.st_mtime = 9;
 
-	(void)memset(&st, 0, sizeof(struct stat));
+		(void)(*memsetfn[i].fn)(&st, 0, sizeof(struct stat));
 
-	ATF_CHECK(st.st_dev == 0);
-	ATF_CHECK(st.st_ino == 0);
-	ATF_CHECK(st.st_mode == 0);
-	ATF_CHECK(st.st_nlink == 0);
-	ATF_CHECK(st.st_uid == 0);
-	ATF_CHECK(st.st_gid == 0);
-	ATF_CHECK(st.st_rdev == 0);
-	ATF_CHECK(st.st_size == 0);
-	ATF_CHECK(st.st_atime == 0);
-	ATF_CHECK(st.st_mtime == 0);
+		ATF_CHECK_MSG(st.st_dev == 0, "%s", memsetfn[i].name);
+		ATF_CHECK_MSG(st.st_ino == 0, "%s", memsetfn[i].name);
+		ATF_CHECK_MSG(st.st_mode == 0, "%s", memsetfn[i].name);
+		ATF_CHECK_MSG(st.st_nlink == 0, "%s", memsetfn[i].name);
+		ATF_CHECK_MSG(st.st_uid == 0, "%s", memsetfn[i].name);
+		ATF_CHECK_MSG(st.st_gid == 0, "%s", memsetfn[i].name);
+		ATF_CHECK_MSG(st.st_rdev == 0, "%s", memsetfn[i].name);
+		ATF_CHECK_MSG(st.st_size == 0, "%s", memsetfn[i].name);
+		ATF_CHECK_MSG(st.st_atime == 0, "%s", memsetfn[i].name);
+		ATF_CHECK_MSG(st.st_mtime == 0, "%s", memsetfn[i].name);
+	}
 }
 
 static void

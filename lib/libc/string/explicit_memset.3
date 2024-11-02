@@ -1,4 +1,4 @@
-.\"	$NetBSD: explicit_memset.3,v 1.2 2013/08/28 15:46:23 riastradh Exp $
+.\"	$NetBSD: explicit_memset.3,v 1.3 2024/11/02 02:43:48 riastradh Exp $
 .\"
 .\" Copyright (c) 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,11 +27,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 28, 2013
+.Dd November 1, 2024
 .Dt EXPLICIT_MEMSET 3
 .Os
 .Sh NAME
 .Nm explicit_memset
+.Nm memset_explicit
 .Nd guarantee writing a byte to a byte string
 .Sh LIBRARY
 .Lb libc
@@ -39,16 +40,20 @@
 .In string.h
 .Ft void *
 .Fn explicit_memset "void *b" "int c" "size_t len"
+.Ft void *
+.Fn memset_explicit "void *b" "int c" "size_t len"
 .Sh DESCRIPTION
 The
 .Fn explicit_memset
-function writes
+and
+.Fn memset_explicit
+functions write
 .Fa len
 bytes of value
 .Fa c
 (converted to an unsigned char) to the string
 .Fa b .
-It is guaranteed not to be optimized away by the compiler even if
+They are guaranteed not to be optimized away by the compiler even if
 .Fa b
 is no longer used and is about to be freed or go out of scope.
 .Sh RETURN VALUES
@@ -75,8 +80,17 @@ f(void)
 .Sh SEE ALSO
 .Xr consttime_memequal 3 ,
 .Xr memset 3
+.Sh STANDARDS
+The
+.Fn memset_explicit
+function conforms to
+.St -isoC-2023 .
 .Sh HISTORY
 The
 .Fn explicit_memset
 function appeared in
 .Nx 7.0 .
+The
+.Fn memset_explicit
+alias was added in
+.Nx 11.0 .

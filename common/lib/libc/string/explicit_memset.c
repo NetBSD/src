@@ -1,4 +1,4 @@
-/* $NetBSD: explicit_memset.c,v 1.4 2014/06/24 16:39:39 drochner Exp $ */
+/* $NetBSD: explicit_memset.c,v 1.5 2024/11/02 02:43:48 riastradh Exp $ */
 
 /*
  * Written by Matthias Drochner <drochner@NetBSD.org>.
@@ -10,6 +10,7 @@
 #include <string.h>
 #ifdef __weak_alias
 __weak_alias(explicit_memset,_explicit_memset)
+__strong_alias(memset_explicit,_explicit_memset)	/* C23 */
 #endif
 #define explicit_memset_impl __explicit_memset_impl
 #else

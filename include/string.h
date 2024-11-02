@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.56 2024/11/01 21:11:37 riastradh Exp $	*/
+/*	$NetBSD: string.h,v 1.57 2024/11/02 02:43:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -64,6 +64,10 @@ void	*memmem(const void *, size_t, const void *, size_t);
 #endif /* _POSIX_C_SOURCE || _NETBSD_SOURCE */
 void	*memmove(void *, const void *, size_t);
 void	*memset(void *, int, size_t);
+#if (__STDC_VERSION__ - 0 >= 202311L) || defined(_ISOC23_SOURCE) || \
+    defined(_NETBSD_SOURCE)
+void	*memset_explicit(void *, int, size_t);
+#endif
 #if (_POSIX_C_SOURCE - 0 >= 200809L) || defined(_NETBSD_SOURCE)
 char	*stpcpy(char * __restrict, const char * __restrict);
 char	*stpncpy(char * __restrict, const char * __restrict, size_t);
