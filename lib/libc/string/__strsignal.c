@@ -1,4 +1,4 @@
-/*	$NetBSD: __strsignal.c,v 1.26 2024/11/02 13:02:01 kre Exp $	*/
+/*	$NetBSD: __strsignal.c,v 1.27 2024/11/02 15:47:02 kre Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: __strsignal.c,v 1.26 2024/11/02 13:02:01 kre Exp $");
+__RCSID("$NetBSD: __strsignal.c,v 1.27 2024/11/02 15:47:02 kre Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -75,7 +75,7 @@ __strsignal(int num, char *buf, size_t buflen)
 		(void)strlcpy(buf, catgets(catd, 2, (int)signum,
 		    sys_siglist[signum]), buflen); 
 #else
-		return(sys_siglist[signum]);
+		return sys_siglist[signum];
 #endif
 	} else if (signum >= SIGRTMIN && signum <= SIGRTMAX) {
 #ifdef NLS
