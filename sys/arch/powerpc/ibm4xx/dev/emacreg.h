@@ -1,4 +1,4 @@
-/*	$NetBSD: emacreg.h,v 1.5 2021/03/30 02:25:24 rin Exp $	*/
+/*	$NetBSD: emacreg.h,v 1.6 2024/11/02 21:33:30 andvar Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -220,7 +220,7 @@
 #define	  STACR_OPBC_66MHZ	  0x1		/*   -  66MHz */
 #define	  STACR_OPBC_83MHZ	  0x2		/*   -  83MHz */
 #define	  STACR_OPBC_100MHZ	  0x3		/*   - 100MHz */
-#define	  STACR_OPBC_A100MHZ	  0x4		/*   - Abobe 100MHz (GbE) */
+#define	  STACR_OPBC_A100MHZ	  0x4		/*   - Above 100MHz (GbE) */
 #define	  STACR_OPBC(opbc)	  ((opbc) << 10)	/* OPB bus clock freq (!GbE)*/
 #define	  STACR_PCDA		  0x000003e0	/* PHY cmd dest address mask */
 #define	  STACR_PCDA_SHIFT	  5

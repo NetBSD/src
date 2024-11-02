@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.169 2024/05/12 10:34:56 rillig Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.170 2024/11/02 21:33:30 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -571,7 +571,7 @@ void	soloanfree(struct mbuf *, void *, size_t, void *);
  *      that should be delivered in their entirety, or not at all.
  *
  * SB_PRIO_OVERDRAFT:  allow a small (2*MLEN) overflow, over and
- *	aboce normal socket limits. Intended messages indicating
+ *	above normal socket limits. Intended messages indicating
  *      buffer overflow in earlier normal/lower-priority messages .
  *
  * SB_PRIO_BESTEFFORT: Ignore  limits entirely.  Intended only for
