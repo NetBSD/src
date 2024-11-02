@@ -1,0 +1,5 @@
+# $NetBSD: Makefile.zstd,v 1.1 2024/11/02 22:02:39 christos Exp $
+ZSTD := ${.PARSEDIR}
+ZSTDCPPFLAGS= -I${ZSTD}/dist/lib
+
+ZSTDDPLIBS=	zstd ${ZSTD}/lib

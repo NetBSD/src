@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2480 2024/11/02 02:43:48 riastradh Exp $
+#	$NetBSD: mi,v 1.2481 2024/11/02 22:02:38 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3783,10 +3783,10 @@
 ./usr/include/wctype.h				comp-c-include
 ./usr/include/wordexp.h				comp-c-include
 ./usr/include/zconf.h				comp-c-include
-./usr/include/zdict.h				comp-c-include
+./usr/include/zdict.h				comp-obsolete		obsolete
 ./usr/include/zlib.h				comp-c-include
-./usr/include/zstd.h				comp-c-include
-./usr/include/zstd_errors.h			comp-c-include
+./usr/include/zstd.h				comp-obsolete		obsolete
+./usr/include/zstd_errors.h			comp-obsolete		obsolete
 ./usr/lib					base-sys-usr		compatdir
 ./usr/lib/clang/13.0.0/include/sanitizer/allocator_interface.h	comp-cxx-include		llvm
 ./usr/lib/clang/13.0.0/include/sanitizer/asan_interface.h	comp-cxx-include		llvm
@@ -4398,8 +4398,8 @@
 ./usr/lib/libzfs_p.a				comp-zfs-proflib	compatfile,zfs,profile
 ./usr/lib/libzpool.a				comp-zfs-lib		compatfile,zfs
 ./usr/lib/libzpool_p.a				comp-zfs-proflib	compatfile,zfs,profile
-./usr/lib/libzstd.a				comp-c-lib		compatfile
-./usr/lib/libzstd_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libzstd.a				comp-obsolete		obsolete
+./usr/lib/libzstd_p.a				comp-obsolete		obsolete
 ./usr/lib/pkgconfig				comp-c-lib
 ./usr/lib/pkgconfig/atf-c++.pc			comp-atf-lib		atf,share
 ./usr/lib/pkgconfig/atf-c.pc			comp-atf-lib		atf,share
@@ -4414,7 +4414,7 @@
 ./usr/lib/pkgconfig/liblzma.pc			comp-c-lib		share
 ./usr/lib/pkgconfig/libssl.pc			comp-crypto-lib		share
 ./usr/lib/pkgconfig/libuv.pc			comp-obsolete		share,obsolete
-./usr/lib/pkgconfig/libzstd.pc			comp-c-lib
+./usr/lib/pkgconfig/libzstd.pc			comp-obsolete		obsolete
 ./usr/lib/pkgconfig/lutok.pc			comp-crypto-lib		kyua,share
 ./usr/lib/pkgconfig/openssl.pc			comp-crypto-lib		share
 ./usr/lib/pkgconfig/sqlite3.pc			comp-c-lib

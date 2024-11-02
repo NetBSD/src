@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.85 2024/10/31 23:56:44 christos Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.86 2024/11/02 22:02:39 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.hostinit.mk>
@@ -72,7 +72,6 @@ LIBUTIL?=		/usr/lib/libutil.a
 LIBWRAP?=		/usr/lib/libwrap.a
 LIBY?=			/usr/lib/liby.a
 LIBZ?=			/usr/lib/libz.a
-LIBZSTD?=		/usr/lib/libzstd.a
 
 ##### rump file system modules
 LIBRUMPFS_CD9660FS?=	/usr/lib/librumpfs_cd9660fs.a

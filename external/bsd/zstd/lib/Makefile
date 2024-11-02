@@ -1,5 +1,6 @@
-# $NetBSD: Makefile,v 1.3 2024/10/29 20:51:37 christos Exp $	
+# $NetBSD: Makefile,v 1.4 2024/11/02 22:02:40 christos Exp $	
 
+LIBISPRIVATE=pic
 NOLINT=yes	# XXX
 WARNS?=		4
 .include <bsd.init.mk>
@@ -56,10 +57,12 @@ LINTFLAGS += -X 96,117,129,161,174,214,226,231,298
 
 CPPFLAGS+= -I${SRCDIR} -DZSTD_MULTITHREAD
 
+LIBDPLIBS += pthread ${NETBSDSRCDIR}/lib/libpthread
+
+.if ${LIBISPRIVATE:Uno} == "no"
 INCS=	zdict.h zstd.h zstd_errors.h  
 INCSDIR=	/usr/include
 
-LIBDPLIBS += pthread ${NETBSDSRCDIR}/lib/libpthread
 
 PC=libzstd.pc
 FILES+=			${PC}
@@ -82,5 +85,6 @@ ${PC}: ${PC}.in
 		-e s,@INCLUDEDIR@,/usr/include, -e s,@LIBDIR@,/usr/lib, \
 		-e s,@LIBS_PRIVATE@,, \
 	    < ${.ALLSRC} > ${.TARGET})
+.endif
 
 .include <bsd.lib.mk>

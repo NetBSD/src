@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.351 2024/10/31 23:56:44 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.352 2024/11/02 22:02:39 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -192,8 +192,7 @@ _LIBLIST=\
 	wind \
 	wrap \
 	y \
-	z \
-	zstd
+	z
 
 .for _lib in ${_LIBLIST}
 .ifndef LIB${_lib:tu}

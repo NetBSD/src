@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.352 2024/10/30 18:09:17 christos Exp $
+# $NetBSD: shl.mi,v 1.353 2024/11/02 22:02:38 christos Exp $
 #
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/lib/libgcc_eh_g.a				comp-c-debuglib		debuglib,compatfile,gcc
@@ -318,7 +318,7 @@
 ./usr/libdata/debug/usr/lib/libzfs.so.0.0.debug			comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libzfs_core.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libzpool.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
-./usr/libdata/debug/usr/lib/libzstd.so.0.0.debug		comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libzstd.so.0.0.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/lib/named/filter-aaaa.so.0.debug	comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/npf/ext_log.so.0.0.debug		comp-obsolete	debug,compatfile,npf,obsolete
 ./usr/libdata/debug/usr/lib/npf/ext_normalise.so.0.0.debug	comp-obsolete	debug,compatfile,npf,obsolete

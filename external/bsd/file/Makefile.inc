@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2024/10/30 18:09:18 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2024/11/02 22:02:39 christos Exp $
 
 WARNS=4
 DIST=${NETBSDSRCDIR}/external/bsd/file/dist
@@ -16,14 +16,18 @@ MAGIC?=		${MFILESDIR}/magic
 
 VERSION != ${TOOL_SED} -ne "s/^PACKAGE_VERSION='\([^']*\)'/\1/p" ${DIST}/configure
 
+.include "${NETBSDSRCDIR}/external/bsd/zstd/Makefile.zstd"
+
 CPPFLAGS+=	-DMAGIC='"${MAGIC}"' -DHAVE_CONFIG_H -DQUICK -DBUILTIN_ELF \
 		-DELFCORE -DVERSION='"${VERSION}"'
 CPPFLAGS+=	-I${.CURDIR}/../include -I${DIST}/src
+CPPFLAGS+=	${ZSTDCPPFLAGS}
 
 .PATH:		${DIST}/src ${DIST}/doc
 
+
 DPLIBS+=     lzma    ${NETBSDSRCDIR}/external/public-domain/xz/lib
-DPLIBS+=     zstd    ${NETBSDSRCDIR}/external/bsd/zstd/lib
+DPLIBS+=     ${ZSTDDPLIBS}
 DPLIBS+=     bz2     ${NETBSDSRCDIR}/lib/libbz2
 DPLIBS+=     z       ${NETBSDSRCDIR}/lib/libz
 

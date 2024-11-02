@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.992 2024/10/30 18:09:16 christos Exp $
+# $NetBSD: shl.mi,v 1.993 2024/11/02 22:02:38 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -952,9 +952,9 @@
 ./usr/lib/libzpool.so				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libzpool.so.0				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libzpool.so.0.0			base-zfs-shlib		compatfile,zfs
-./usr/lib/libzstd.so				base-sys-shlib		compatfile
-./usr/lib/libzstd.so.0				base-sys-shlib		compatfile
-./usr/lib/libzstd.so.0.0			base-sys-shlib		compatfile
+./usr/lib/libzstd.so				base-obsolete		obsolete
+./usr/lib/libzstd.so.0				base-obsolete		obsolete
+./usr/lib/libzstd.so.0.0			base-obsolete		obsolete
 ./usr/lib/lua/5.1/gpio.so                    	base-obsolete		obsolete
 ./usr/lib/lua/5.1/sqlite.so                    	base-obsolete		obsolete
 ./usr/lib/lua/5.1/syslog.so                    	base-obsolete		obsolete
