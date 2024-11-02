@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn.h,v 1.25 2017/07/11 15:21:35 joerg Exp $	*/
+/*	$NetBSD: dlfcn.h,v 1.26 2024/11/02 20:53:58 nia Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,8 +59,10 @@ void *_dlauxinfo(void) __pure;
 void	*dlopen(const char *, int);
 int	dlclose(void *);
 void	*dlsym(void * __restrict, const char * __restrict);
-#if defined(_NETBSD_SOURCE)
+#if (_POSIX_C_SOURCE - 0 >= 202405L) || defined(_NETBSD_SOURCE)
 int	dladdr(const void * __restrict, Dl_info * __restrict);
+#endif
+#if defined(_NETBSD_SOURCE)
 int	dlctl(void *, int, void *);
 int	dlinfo(void *, int, void *);
 void	*dlvsym(void * __restrict, const char * __restrict,
