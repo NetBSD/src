@@ -30,7 +30,6 @@
 #pragma GCC push_options
 #pragma GCC target ("+nothing+simd")
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-braces"
 
 #pragma GCC aarch64 "arm_neon.h"
 
@@ -26847,140 +26846,140 @@ __extension__ extern __inline float16x4x2_t
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
 vtrn_f16 (float16x4_t __a, float16x4_t __b)
 {
-  return (float16x4x2_t) {vtrn1_f16 (__a, __b), vtrn2_f16 (__a, __b)};
+  return (float16x4x2_t) {{vtrn1_f16 (__a, __b), vtrn2_f16 (__a, __b)}};
 }
 
 __extension__ extern __inline float32x2x2_t
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
 vtrn_f32 (float32x2_t __a, float32x2_t __b)
 {
-  return (float32x2x2_t) {vtrn1_f32 (__a, __b), vtrn2_f32 (__a, __b)};
+  return (float32x2x2_t) {{vtrn1_f32 (__a, __b), vtrn2_f32 (__a, __b)}};
 }
 
 __extension__ extern __inline poly8x8x2_t
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
 vtrn_p8 (poly8x8_t __a, poly8x8_t __b)
 {
-  return (poly8x8x2_t) {vtrn1_p8 (__a, __b), vtrn2_p8 (__a, __b)};
+  return (poly8x8x2_t) {{vtrn1_p8 (__a, __b), vtrn2_p8 (__a, __b)}};
 }
 
 __extension__ extern __inline poly16x4x2_t
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
 vtrn_p16 (poly16x4_t __a, poly16x4_t __b)
 {
-  return (poly16x4x2_t) {vtrn1_p16 (__a, __b), vtrn2_p16 (__a, __b)};
+  return (poly16x4x2_t) {{vtrn1_p16 (__a, __b), vtrn2_p16 (__a, __b)}};
 }
 
 __extension__ extern __inline int8x8x2_t
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
 vtrn_s8 (int8x8_t __a, int8x8_t __b)
 {
-  return (int8x8x2_t) {vtrn1_s8 (__a, __b), vtrn2_s8 (__a, __b)};
+  return (int8x8x2_t) {{vtrn1_s8 (__a, __b), vtrn2_s8 (__a, __b)}};
 }
 
 __extension__ extern __inline int16x4x2_t
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
 vtrn_s16 (int16x4_t __a, int16x4_t __b)
 {
-  return (int16x4x2_t) {vtrn1_s16 (__a, __b), vtrn2_s16 (__a, __b)};
+  return (int16x4x2_t) {{vtrn1_s16 (__a, __b), vtrn2_s16 (__a, __b)}};
 }
 
 __extension__ extern __inline int32x2x2_t
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
 vtrn_s32 (int32x2_t __a, int32x2_t __b)
 {
-  return (int32x2x2_t) {vtrn1_s32 (__a, __b), vtrn2_s32 (__a, __b)};
+  return (int32x2x2_t) {{vtrn1_s32 (__a, __b), vtrn2_s32 (__a, __b)}};
 }
 
 __extension__ extern __inline uint8x8x2_t
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
 vtrn_u8 (uint8x8_t __a, uint8x8_t __b)
 {
-  return (uint8x8x2_t) {vtrn1_u8 (__a, __b), vtrn2_u8 (__a, __b)};
+  return (uint8x8x2_t) {{vtrn1_u8 (__a, __b), vtrn2_u8 (__a, __b)}};
 }
 
 __extension__ extern __inline uint16x4x2_t
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
 vtrn_u16 (uint16x4_t __a, uint16x4_t __b)
 {
-  return (uint16x4x2_t) {vtrn1_u16 (__a, __b), vtrn2_u16 (__a, __b)};
+  return (uint16x4x2_t) {{vtrn1_u16 (__a, __b), vtrn2_u16 (__a, __b)}};
 }
 
 __extension__ extern __inline uint32x2x2_t
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
 vtrn_u32 (uint32x2_t __a, uint32x2_t __b)
 {
-  return (uint32x2x2_t) {vtrn1_u32 (__a, __b), vtrn2_u32 (__a, __b)};
+  return (uint32x2x2_t) {{vtrn1_u32 (__a, __b), vtrn2_u32 (__a, __b)}};
 }
 
 __extension__ extern __inline float16x8x2_t
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
 vtrnq_f16 (float16x8_t __a, float16x8_t __b)
 {
-  return (float16x8x2_t) {vtrn1q_f16 (__a, __b), vtrn2q_f16 (__a, __b)};
+  return (float16x8x2_t) {{vtrn1q_f16 (__a, __b), vtrn2q_f16 (__a, __b)}};
 }
 
 __extension__ extern __inline float32x4x2_t
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
 vtrnq_f32 (float32x4_t __a, float32x4_t __b)
 {
-  return (float32x4x2_t) {vtrn1q_f32 (__a, __b), vtrn2q_f32 (__a, __b)};
+  return (float32x4x2_t) {{vtrn1q_f32 (__a, __b), vtrn2q_f32 (__a, __b)}};
 }
 
 __extension__ extern __inline poly8x16x2_t
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
 vtrnq_p8 (poly8x16_t __a, poly8x16_t __b)
 {
-  return (poly8x16x2_t) {vtrn1q_p8 (__a, __b), vtrn2q_p8 (__a, __b)};
+  return (poly8x16x2_t) {{vtrn1q_p8 (__a, __b), vtrn2q_p8 (__a, __b)}};
 }
 
 __extension__ extern __inline poly16x8x2_t
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
 vtrnq_p16 (poly16x8_t __a, poly16x8_t __b)
 {
-  return (poly16x8x2_t) {vtrn1q_p16 (__a, __b), vtrn2q_p16 (__a, __b)};
+  return (poly16x8x2_t) {{vtrn1q_p16 (__a, __b), vtrn2q_p16 (__a, __b)}};
 }
 
 __extension__ extern __inline int8x16x2_t
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
 vtrnq_s8 (int8x16_t __a, int8x16_t __b)
 {
-  return (int8x16x2_t) {vtrn1q_s8 (__a, __b), vtrn2q_s8 (__a, __b)};
+  return (int8x16x2_t) {{vtrn1q_s8 (__a, __b), vtrn2q_s8 (__a, __b)}};
 }
 
 __extension__ extern __inline int16x8x2_t
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
 vtrnq_s16 (int16x8_t __a, int16x8_t __b)
 {
-  return (int16x8x2_t) {vtrn1q_s16 (__a, __b), vtrn2q_s16 (__a, __b)};
+  return (int16x8x2_t) {{vtrn1q_s16 (__a, __b), vtrn2q_s16 (__a, __b)}};
 }
 
 __extension__ extern __inline int32x4x2_t
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
 vtrnq_s32 (int32x4_t __a, int32x4_t __b)
 {
-  return (int32x4x2_t) {vtrn1q_s32 (__a, __b), vtrn2q_s32 (__a, __b)};
+  return (int32x4x2_t) {{vtrn1q_s32 (__a, __b), vtrn2q_s32 (__a, __b)}};
 }
 
 __extension__ extern __inline uint8x16x2_t
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
 vtrnq_u8 (uint8x16_t __a, uint8x16_t __b)
 {
-  return (uint8x16x2_t) {vtrn1q_u8 (__a, __b), vtrn2q_u8 (__a, __b)};
+  return (uint8x16x2_t) {{vtrn1q_u8 (__a, __b), vtrn2q_u8 (__a, __b)}};
 }
 
 __extension__ extern __inline uint16x8x2_t
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
 vtrnq_u16 (uint16x8_t __a, uint16x8_t __b)
 {
-  return (uint16x8x2_t) {vtrn1q_u16 (__a, __b), vtrn2q_u16 (__a, __b)};
+  return (uint16x8x2_t) {{vtrn1q_u16 (__a, __b), vtrn2q_u16 (__a, __b)}};
 }
 
 __extension__ extern __inline uint32x4x2_t
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
 vtrnq_u32 (uint32x4_t __a, uint32x4_t __b)
 {
-  return (uint32x4x2_t) {vtrn1q_u32 (__a, __b), vtrn2q_u32 (__a, __b)};
+  return (uint32x4x2_t) {{vtrn1q_u32 (__a, __b), vtrn2q_u32 (__a, __b)}};
 }
 
 /* vtst */
@@ -27202,8 +27201,8 @@ vuqaddd_s64 (int64_t __a, uint64_t __b)
   __attribute__ ((__always_inline__, __gnu_inline__, __artificial__)) \
   v ## op ## Q ## _ ## funcsuffix (intype a, intype b)			\
   {									\
-    return (rettype) {v ## op ## 1 ## Q ## _ ## funcsuffix (a, b),	\
-		      v ## op ## 2 ## Q ## _ ## funcsuffix (a, b)};	\
+    return (rettype) {{v ## op ## 1 ## Q ## _ ## funcsuffix (a, b),	\
+		      v ## op ## 2 ## Q ## _ ## funcsuffix (a, b)}};	\
   }
 
 #define __INTERLEAVE_LIST(op)					\
