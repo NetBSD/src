@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.35 2024/08/24 09:39:44 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.36 2024/11/03 10:50:21 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -513,9 +513,11 @@ kill_connection(connection_t *conn, uint32_t status, int logout, bool recover)
 		}
 	}
 
+	mutex_enter(&conn->c_lock);
 	terminating = conn->c_terminating;
 	if (!terminating)
 		conn->c_terminating = status;
+	mutex_exit(&conn->c_lock);
 
 	/* Don't recurse */
 	if (terminating) {
@@ -545,6 +547,12 @@ kill_connection(connection_t *conn, uint32_t status, int logout, bool recover)
 			    logout == LOGOUT_CONNECTION) {
 				logout = LOGOUT_SESSION;
 			}
+
+			/* connection is terminating, prevent cleanup */
+			mutex_enter(&conn->c_lock);
+			conn->c_usecount++;
+			mutex_exit(&conn->c_lock);
+
 			mutex_exit(&iscsi_cleanup_mtx);
 
 			DEBC(conn, 1, ("Send_logout for reason %d\n", logout));
@@ -552,7 +560,10 @@ kill_connection(connection_t *conn, uint32_t status, int logout, bool recover)
 			connection_timeout_start(conn, CONNECTION_TIMEOUT);
 
 			if (!send_logout(conn, conn, logout, FALSE)) {
+				mutex_enter(&conn->c_lock);
+				conn->c_usecount--;
 				conn->c_terminating = ISCSI_STATUS_SUCCESS;
+				mutex_exit(&conn->c_lock);
 				return;
 			}
 			/*
@@ -564,6 +575,11 @@ kill_connection(connection_t *conn, uint32_t status, int logout, bool recover)
 			 */
 
 			mutex_enter(&iscsi_cleanup_mtx);
+
+			/* release connection */
+			mutex_enter(&conn->c_lock);
+			conn->c_usecount--;
+			mutex_exit(&conn->c_lock);
 		}
 
 	}

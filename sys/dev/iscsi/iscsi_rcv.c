@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_rcv.c,v 1.26 2022/09/13 13:09:16 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_rcv.c,v 1.27 2024/11/03 10:50:21 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -582,18 +582,20 @@ receive_logout_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 
 	wake_ccb(req_ccb, status);
 
+	mutex_enter(&conn->c_lock);
 	if (!otherconn && conn->c_state == ST_LOGOUT_SENT) {
 		conn->c_terminating = ISCSI_STATUS_LOGOUT;
 		conn->c_state = ST_SETTLING;
 		conn->c_loggedout = (response) ? LOGOUT_FAILED : LOGOUT_SUCCESS;
+		mutex_exit(&conn->c_lock);
 
 		connection_timeout_stop(conn);
 
 		/* let send thread take over next step of cleanup */
 		mutex_enter(&conn->c_lock);
 		cv_broadcast(&conn->c_conn_cv);
-		mutex_exit(&conn->c_lock);
 	}
+	mutex_exit(&conn->c_lock);
 
 	return !otherconn;
 }
