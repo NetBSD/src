@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.35 2024/10/26 15:06:49 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.36 2024/11/03 15:54:39 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -538,4 +538,22 @@ external/cddl/osnet/sys/sys/types.h		1.21
 
 	PR 57807: fix cross-build on recent -current.
 	[rin, ticket #1915]
+
+xsrc/external/mit/xorg-server/dist/Xi/exevents.c		(apply patch)
+xsrc/external/mit/xorg-server/dist/Xi/xichangehierarchy.c	(apply patch)
+xsrc/external/mit/xorg-server/dist/Xi/xipassivegrab.c		(apply patch)
+xsrc/external/mit/xorg-server/dist/Xi/xiquerypointer.c		(apply patch)
+xsrc/external/mit/xorg-server/dist/Xi/xiselectev.c		(apply patch)
+xsrc/external/mit/xorg-server/dist/dix/devices.c		(apply patch)
+xsrc/external/mit/xorg-server/dist/dix/enterleave.c		(apply patch)
+xsrc/external/mit/xorg-server/dist/glx/glxcmds.c		(apply patch)
+xsrc/external/mit/xorg-server/dist/randr/rrproperty.c		(apply patch)
+xsrc/external/mit/xorg-server/dist/randr/rrproviderproperty.c	(apply patch)
+xsrc/external/mit/xorg-server/dist/xkb/xkb.c			(apply patch)
+
+	Update xorg-server to have various missing CVE fixes:
+	CVE-2023-6377, CVE-2023-6478, CVE-2023-6816, CVE-2024-0229,
+	CVE-2024-0408, CVE-2024-21885, CVE-2024-21886, CVE-2024-31080,
+	CVE-2024-31081, CVE-2024-9632
+	[mrg, ticket #1916]
 
