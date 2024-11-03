@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.94 2024/07/11 20:41:06 riastradh Exp $
+# $NetBSD: ad.mips,v 1.95 2024/11/03 22:24:20 christos Exp $
 #
 -./usr/lib/64/libgomp.a
 -./usr/lib/64/libgomp.so
@@ -83,6 +83,7 @@
 ./usr/include/mips/limits.h			comp-c-include
 ./usr/include/mips/lock.h			comp-c-include
 ./usr/include/mips/locore.h			comp-c-include
+./usr/include/mips/lwp.h			comp-c-include
 ./usr/include/mips/math.h			comp-c-include
 ./usr/include/mips/mcontext.h			comp-c-include
 ./usr/include/mips/mips1_pte.h			comp-c-include

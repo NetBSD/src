@@ -1,4 +1,4 @@
-# $NetBSD: ad.m68k,v 1.73 2024/07/11 20:41:06 riastradh Exp $
+# $NetBSD: ad.m68k,v 1.74 2024/11/03 22:24:20 christos Exp $
 #
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/include/gcc-4.5/math-68881.h		comp-obsolete		obsolete
@@ -55,6 +55,7 @@
 ./usr/include/m68k/kcore.h			comp-c-include
 ./usr/include/m68k/limits.h			comp-c-include
 ./usr/include/m68k/lock.h			comp-c-include
+./usr/include/m68k/lwp.h			comp-c-include
 ./usr/include/m68k/m68k.h			comp-c-include
 ./usr/include/m68k/math.h			comp-c-include
 ./usr/include/m68k/mcontext.h			comp-c-include

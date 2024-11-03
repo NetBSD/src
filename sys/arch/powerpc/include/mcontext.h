@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.23 2024/05/18 00:37:41 thorpej Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.24 2024/11/03 22:24:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -140,49 +140,5 @@ typedef struct {
 #define _UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_R3])
 
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
-
-#if defined(_RTLD_SOURCE) || defined(_LIBC_SOURCE) || defined(__LIBPTHREAD_SOURCE__)
-#include <sys/tls.h>
-
-/*
- * On PowerPC, since displacements are signed 16-bit values, the TCB Pointer
- * is biased by 0x7000 + sizeof(tcb) so that first thread datum can be 
- * addressed by -28672 thereby leaving 60KB available for use as thread data.
- */
-#define	TLS_TP_OFFSET	0x7000
-#define	TLS_DTV_OFFSET	0x8000
-__CTASSERT(TLS_TP_OFFSET + sizeof(struct tls_tcb) < 0x8000);
-
-__BEGIN_DECLS
-
-static __inline void *
-__lwp_gettcb_fast(void)
-{
-	void *__tcb;
-
-	__asm __volatile(
-		"addi %[__tcb],%%r2,%[__offset]"
-	    :	[__tcb] "=r" (__tcb)
-	    :	[__offset] "n" (-(TLS_TP_OFFSET + sizeof(struct tls_tcb))));
-
-	return __tcb;
-}
-
-void _lwp_setprivate(void *);
-
-static __inline void
-__lwp_settcb(void *__tcb)
-{
-	__tcb = (uint8_t *)__tcb + TLS_TP_OFFSET + sizeof(struct tls_tcb);
-
-	__asm __volatile(
-		"mr %%r2,%[__tcb]"
-	    :
-	    :	[__tcb] "r" (__tcb));
-
-	_lwp_setprivate(__tcb);
-}
-__END_DECLS
-#endif /* _RTLD_SOURCE || _LIBC_SOURCE || __LIBPTHREAD_SOURCE__ */
 
 #endif	/* !_POWERPC_MCONTEXT_H_ */

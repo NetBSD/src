@@ -1,4 +1,4 @@
-# $NetBSD: ad.sh3,v 1.49 2024/07/11 20:41:06 riastradh Exp $
+# $NetBSD: ad.sh3,v 1.50 2024/11/03 22:24:20 christos Exp $
 #
 ./usr/include/gcc-4.5/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.8/tgmath.h			comp-obsolete		obsolete
@@ -40,6 +40,7 @@
 ./usr/include/sh3/intr.h			comp-c-include
 ./usr/include/sh3/limits.h			comp-c-include
 ./usr/include/sh3/lock.h			comp-c-include
+./usr/include/sh3/lwp.h				comp-c-include
 ./usr/include/sh3/math.h			comp-c-include
 ./usr/include/sh3/mcontext.h			comp-c-include
 ./usr/include/sh3/mutex.h			comp-c-include

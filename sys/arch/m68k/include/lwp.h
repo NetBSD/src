@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.13 2024/11/03 22:24:23 christos Exp $	*/
+/*	$NetBSD: lwp.h,v 1.2 2024/11/03 22:24:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -29,51 +29,33 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _VAX_MCONTEXT_H_
-#define _VAX_MCONTEXT_H_
+#ifndef _M68K_LWP_H_
+#define _M68K_LWP_H_
 
-/*
- * Layout of mcontext_t.
- * As on Alpha, this maps directly to `struct reg'.
- */
+#define	TLS_TP_OFFSET	0x7000
+#define	TLS_DTV_OFFSET	0x8000
 
-#define	_NGREG	17		/* R0-31, AP, SP, FP, PC, PSL */
+#include <sys/tls.h>
 
-typedef	int		__greg_t;
-typedef	__greg_t	__gregset_t[_NGREG];
+__CTASSERT(TLS_TP_OFFSET + sizeof(struct tls_tcb) < 0x8000);
+__CTASSERT(TLS_TP_OFFSET % sizeof(struct tls_tcb) == 0);
 
-#define	_REG_R0		0
-#define	_REG_R1		1
-#define	_REG_R2		2
-#define	_REG_R3		3
-#define	_REG_R4		4
-#define	_REG_R5		5
-#define	_REG_R6		6
-#define	_REG_R7		7
-#define	_REG_R8		8
-#define	_REG_R9		9
-#define	_REG_R10	10
-#define	_REG_R11	11
-#define	_REG_AP		12
-#define	_REG_FP		13
-#define	_REG_SP		14
-#define	_REG_PC		15
-#define	_REG_PSL	16
+__BEGIN_DECLS
 
-typedef struct {
-	__gregset_t	__gregs;	/* General Purpose Register set */
-} mcontext_t;
+static __inline struct tls_tcb *
+__lwp_gettcb_fast(void)
+{
+	unsigned int __tcb = (unsigned int)_lwp_getprivate();
+	return (struct tls_tcb *)(uintptr_t)
+	    (__tcb - TLS_TP_OFFSET - sizeof(struct tls_tcb));
+}
 
-/* Machine-dependent uc_flags */
-#define	_UC_SETSTACK	_UC_MD_BIT16
-#define	_UC_CLRSTACK	_UC_MD_BIT17
-#define	_UC_TLSBASE	_UC_MD_BIT19
+static inline void
+__lwp_settcb(struct tls_tcb *__tcb)
+{
+	__tcb += TLS_TP_OFFSET / sizeof(*__tcb) + 1;
+	_lwp_setprivate(__tcb);
+}
+__END_DECLS
 
-#define	_UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
-#define	_UC_MACHINE_FP(uc)	((uc)->uc_mcontext.__gregs[_REG_FP])
-#define	_UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_PC])
-#define	_UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_R0])
-
-#define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
-
-#endif	/* !_VAX_MCONTEXT_H_ */
+#endif	/* !_M68K_LWP_H_ */

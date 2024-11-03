@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.13 2024/05/18 00:37:40 thorpej Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.14 2024/11/03 22:24:21 christos Exp $	*/
 
 #ifndef _HPPA_MCONTEXT_H_
 #define	_HPPA_MCONTEXT_H_
@@ -90,24 +90,6 @@ do {									\
 	(uc)->uc_mcontext.__gregs[_REG_PCOQT] = (pc) + 4;		\
 } while (/*CONSTCOND*/0)
 #define	_UC_MACHINE_INTRV(uc) 	((uc)->uc_mcontext.__gregs[_REG_RET0])
-
-#if defined(_RTLD_SOURCE) || defined(_LIBC_SOURCE) || \
-    defined(__LIBPTHREAD_SOURCE__)
-#include <sys/tls.h>
-
-__BEGIN_DECLS
-static __inline void *
-__lwp_getprivate_fast(void)
-{
-	register void *__tmp;
-
-	__asm volatile("mfctl\t27 /* CR_TLS */, %0" : "=r" (__tmp));
-
-	return __tmp;
-}
-__END_DECLS
-
-#endif
 
 #endif /* !__ASSEMBLER__ */
 

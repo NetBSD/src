@@ -1,11 +1,11 @@
-/*	$NetBSD: mcontext.h,v 1.13 2024/11/03 22:24:23 christos Exp $	*/
+/*	$NetBSD: lwp.h,v 1.1 2024/11/03 22:24:22 christos Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Klaus Klein.
+ * by Klaus Klein, and by Jason R. Thorpe of Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,51 +29,56 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _VAX_MCONTEXT_H_
-#define _VAX_MCONTEXT_H_
+#ifndef _MIPS_LWP_H_
+#define	_MIPS_LWP_H_
 
-/*
- * Layout of mcontext_t.
- * As on Alpha, this maps directly to `struct reg'.
- */
+#define	TLS_TP_OFFSET	0x7000
+#define	TLS_DTV_OFFSET	0x8000
 
-#define	_NGREG	17		/* R0-31, AP, SP, FP, PC, PSL */
+#include <sys/tls.h>
 
-typedef	int		__greg_t;
-typedef	__greg_t	__gregset_t[_NGREG];
+__CTASSERT(TLS_TP_OFFSET + sizeof(struct tls_tcb) < 0x8000);
+__CTASSERT(TLS_TP_OFFSET % sizeof(struct tls_tcb) == 0);
 
-#define	_REG_R0		0
-#define	_REG_R1		1
-#define	_REG_R2		2
-#define	_REG_R3		3
-#define	_REG_R4		4
-#define	_REG_R5		5
-#define	_REG_R6		6
-#define	_REG_R7		7
-#define	_REG_R8		8
-#define	_REG_R9		9
-#define	_REG_R10	10
-#define	_REG_R11	11
-#define	_REG_AP		12
-#define	_REG_FP		13
-#define	_REG_SP		14
-#define	_REG_PC		15
-#define	_REG_PSL	16
+__BEGIN_DECLS
 
-typedef struct {
-	__gregset_t	__gregs;	/* General Purpose Register set */
-} mcontext_t;
+static __inline struct tls_tcb *
+__lwp_gettcb_fast(void)
+{
+	struct tls_tcb *__tcb;
 
-/* Machine-dependent uc_flags */
-#define	_UC_SETSTACK	_UC_MD_BIT16
-#define	_UC_CLRSTACK	_UC_MD_BIT17
-#define	_UC_TLSBASE	_UC_MD_BIT19
+	/*
+	 * Only emit a rdhwr $3, $29 so the kernel can quickly emulate it.
+	 */
+	__asm __volatile(
+#if 1
+		// For some reason the syscall is much faster than
+		// emulating rdhwr $3,$29 on a CN50xx
+		"addiu $2,$0,316; syscall; nop; move %[__tcb],$2"
+#else
+		".set push"
+		";.set mips32r2"
+		";.p2align 4"
+		";ssnop"
+		";rdhwr $3,$29"
+		";ssnop"
+		";move %0,$3"
+		";.set pop"
+#endif
+	    : [__tcb]"=r"(__tcb)
+	    :
+	    : "v0", "v1", "a3");
+	return __tcb - (TLS_TP_OFFSET / sizeof(*__tcb) + 1);
+}
 
-#define	_UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
-#define	_UC_MACHINE_FP(uc)	((uc)->uc_mcontext.__gregs[_REG_FP])
-#define	_UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_PC])
-#define	_UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_R0])
+void _lwp_setprivate(void *);
 
-#define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
+static inline void
+__lwp_settcb(struct tls_tcb *__tcb)
+{
+	__tcb += TLS_TP_OFFSET / sizeof(*__tcb) + 1;
+	_lwp_setprivate(__tcb);
+}
+__END_DECLS
 
-#endif	/* !_VAX_MCONTEXT_H_ */
+#endif	/* _MIPS_LWP_H_ */

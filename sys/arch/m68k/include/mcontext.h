@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.13 2024/05/18 00:37:41 thorpej Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.14 2024/11/03 22:24:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -109,36 +109,5 @@ typedef struct {
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
 #define	__UCONTEXT_SIZE	1024
-
-#if defined(_LIBC_SOURCE) || defined(_RTLD_SOURCE) || defined(__LIBPTHREAD_SOURCE__)
-#define	TLS_TP_OFFSET	0x7000
-#define	TLS_DTV_OFFSET	0x8000
-
-#include <sys/tls.h>
-
-__CTASSERT(TLS_TP_OFFSET + sizeof(struct tls_tcb) < 0x8000);
-__CTASSERT(TLS_TP_OFFSET % sizeof(struct tls_tcb) == 0);
-
-__BEGIN_DECLS
-
-void *_lwp_getprivate(void);
-void _lwp_setprivate(void *);
-
-static __inline struct tls_tcb *
-__lwp_gettcb_fast(void)
-{
-	unsigned int __tcb = (unsigned int)_lwp_getprivate();
-	return (struct tls_tcb *)(uintptr_t)
-	    (__tcb - TLS_TP_OFFSET - sizeof(struct tls_tcb));
-}
-
-static inline void
-__lwp_settcb(struct tls_tcb *__tcb)
-{
-	__tcb += TLS_TP_OFFSET / sizeof(*__tcb) + 1;
-	_lwp_setprivate(__tcb);
-}
-__END_DECLS
-#endif
 
 #endif	/* !_M68K_MCONTEXT_H_ */

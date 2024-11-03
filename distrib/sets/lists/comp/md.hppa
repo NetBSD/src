@@ -1,4 +1,4 @@
-# $NetBSD: md.hppa,v 1.18 2024/07/11 20:41:07 riastradh Exp $
+# $NetBSD: md.hppa,v 1.19 2024/11/03 22:24:20 christos Exp $
 #
 ./usr/include/gcc-4.5/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.8/tgmath.h			comp-obsolete		obsolete
@@ -105,6 +105,7 @@
 ./usr/include/hppa/limits.h			comp-c-include
 ./usr/include/hppa/loadfile_machdep.h		comp-c-include
 ./usr/include/hppa/lock.h			comp-c-include
+./usr/include/hppa/lwp.h			comp-c-include
 ./usr/include/hppa/math.h			comp-c-include
 ./usr/include/hppa/mcontext.h			comp-c-include
 ./usr/include/hppa/mutex.h			comp-c-include

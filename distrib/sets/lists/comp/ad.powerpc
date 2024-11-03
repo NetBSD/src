@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.108 2024/08/27 21:51:43 christos Exp $
+# $NetBSD: ad.powerpc,v 1.109 2024/11/03 22:24:20 christos Exp $
 #
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/bin/psim					comp-obsolete		obsolete
@@ -218,6 +218,7 @@
 ./usr/include/powerpc/kcore.h			comp-c-include
 ./usr/include/powerpc/limits.h			comp-c-include
 ./usr/include/powerpc/lock.h			comp-c-include
+./usr/include/powerpc/lwp.h			comp-c-include
 ./usr/include/powerpc/machine_type.h		comp-obsolete		obsolete
 ./usr/include/powerpc/math.h			comp-c-include
 ./usr/include/powerpc/mcontext.h		comp-c-include

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2020/05/17 13:49:37 ad Exp $
+#	$NetBSD: Makefile,v 1.37 2024/11/03 22:24:23 christos Exp $
 
 INCSDIR= /usr/include/sparc
 
@@ -12,7 +12,7 @@ INCS=	ansi.h aout_machdep.h apmvar.h asm.h autoconf.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h \
 	kbd.h kbio.h kcore.h \
-	limits.h lock.h \
+	limits.h lock.h lwp.h \
 	math.h mcontext.h mutex.h \
 	oldmon.h openpromio.h \
 	param.h pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \

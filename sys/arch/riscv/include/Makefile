@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2024/10/12 12:27:33 skrll Exp $
+# $NetBSD: Makefile,v 1.4 2024/11/03 22:24:22 christos Exp $
 
 INCSDIR= /usr/include/riscv
 
@@ -11,7 +11,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	kcore.h \
-	limits.h lock.h \
+	limits.h lock.h lwp.h \
 	math.h mcontext.h mutex.h \
 	param.h pcb.h pmap.h \
 	proc.h profile.h pte.h ptrace.h \

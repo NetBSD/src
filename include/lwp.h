@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.13 2017/12/08 01:19:29 christos Exp $	*/
+/*	$NetBSD: lwp.h,v 1.14 2024/11/03 22:24:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,5 +63,7 @@ int	_lwp_setname(lwpid_t, const char *);
 int	_lwp_getname(lwpid_t, char *, size_t);
 int	_lwp_ctl(int, struct lwpctl **);
 __END_DECLS
+
+#include <machine/lwp.h>
 
 #endif /* !_LWP_H_ */
