@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.36 2024/11/03 10:50:21 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.37 2024/11/03 10:53:02 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -646,19 +646,20 @@ kill_session(uint32_t sid, uint32_t status, int logout, bool recover)
 	}
 
 	if (recover) {
-		mutex_exit(&iscsi_cleanup_mtx);
-
 		/*
 		 * Only recover when there's just one active connection left.
 		 * Otherwise we get in all sorts of timing problems, and it doesn't
 		 * make much sense anyway to recover when the other side has
 		 * requested that we kill a multipathed session.
 		 */
-		if (sess->s_active_connections == 1) {
+		conn = NULL;
+		if (sess->s_active_connections == 1)
 			conn = assign_connection(sess, FALSE);
-			if (conn != NULL)
-				kill_connection(conn, status, logout, TRUE);
-		}
+
+		mutex_exit(&iscsi_cleanup_mtx);
+
+		if (conn != NULL)
+			kill_connection(conn, status, logout, TRUE);
 		return;
 	}
 
