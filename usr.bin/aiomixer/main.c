@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.6 2024/05/20 22:21:45 nia Exp $ */
+/* $NetBSD: main.c,v 1.7 2024/11/03 10:43:27 rillig Exp $ */
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -499,8 +499,6 @@ int
 main(int argc, char **argv)
 {
 	const char *mixer_device = NULL;
-	extern char *optarg;
-	extern int optind;
 	struct aiomixer *aio;
 	char mixer_path[32];
 	unsigned int mixer_count = 0;

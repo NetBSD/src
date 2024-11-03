@@ -1,4 +1,4 @@
-/*	$NetBSD: scmdctl.c,v 1.1 2021/12/07 17:39:55 brad Exp $	*/
+/*	$NetBSD: scmdctl.c,v 1.2 2024/11/03 10:43:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -18,7 +18,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: scmdctl.c,v 1.1 2021/12/07 17:39:55 brad Exp $");
+__RCSID("$NetBSD: scmdctl.c,v 1.2 2024/11/03 10:43:27 rillig Exp $");
 #endif
 
 /* Main userland program that knows how to talk to the Sparkfun
@@ -166,8 +166,6 @@ main(int argc, char *argv[])
 	int lock_type = -1;
 	bool list_names = false;
 	struct function_block func_block;
-	extern char *optarg;
-	extern int optind;
 
 	while ((c = getopt(argc, argv, "db:s:lh")) != -1 ) {
 		switch (c) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: amrctl.c,v 1.12 2020/09/06 02:34:02 mrg Exp $	*/
+/*	$NetBSD: amrctl.c,v 1.13 2024/11/03 10:43:26 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002, Pierre David <Pierre.David@crc.u-strasbg.fr>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: amrctl.c,v 1.12 2020/09/06 02:34:02 mrg Exp $");
+__RCSID("$NetBSD: amrctl.c,v 1.13 2024/11/03 10:43:26 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -590,9 +590,6 @@ main(int argc, char *argv[])
 	char	filename[MAXPATHLEN];
 	char	sdev[MAXPATHLEN];
 	char	*pdev;
-
-	extern char *optarg;
-	extern int optind;
 
 	/*
 	 * Parse arguments

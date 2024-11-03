@@ -1,4 +1,4 @@
-/* $NetBSD: drvctl.c,v 1.22 2022/08/21 07:51:30 mlelstv Exp $ */
+/* $NetBSD: drvctl.c,v 1.23 2024/11/03 10:43:26 rillig Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -68,8 +68,6 @@ main(int argc, char **argv)
 	bool nflag = false, tflag = false;
 	int c, mode;
 	char *attr = 0;
-	extern char *optarg;
-	extern int optind;
 	int fd, res;
 	struct devpmargs paa = { .devname = "", .flags = 0 };
 	struct devdetachargs daa;

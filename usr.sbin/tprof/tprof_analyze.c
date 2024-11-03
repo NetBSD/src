@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_analyze.c,v 1.8 2022/12/01 00:43:27 ryo Exp $	*/
+/*	$NetBSD: tprof_analyze.c,v 1.9 2024/11/03 10:43:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 2010,2011,2012 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof_analyze.c,v 1.8 2022/12/01 00:43:27 ryo Exp $");
+__RCSID("$NetBSD: tprof_analyze.c,v 1.9 2024/11/03 10:43:27 rillig Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -142,8 +142,6 @@ tprof_analyze(int argc, char **argv)
 	bool distinguish_cpus = true;
 	bool distinguish_lwps = true;
 	bool kernel_only = false;
-	extern char *optarg;
-	extern int optind;
 	FILE *f;
 
 	while ((ch = getopt(argc, argv, "CkLPp:s")) != -1) {
