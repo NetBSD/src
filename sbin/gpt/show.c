@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.45 2024/09/13 11:07:35 mlelstv Exp $");
+__RCSID("$NetBSD: show.c,v 1.46 2024/11/04 18:36:16 christos Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -54,13 +54,14 @@ __RCSID("$NetBSD: show.c,v 1.45 2024/09/13 11:07:35 mlelstv Exp $");
 static int cmd_show(gpt_t, int, char *[]);
 
 static const char *showhelp[] = {
-	"[-aglu] [-i index]",
+	"[-aglux] [-i index]",
 };
 
 #define SHOW_UUID  1
 #define SHOW_GUID  2
 #define SHOW_LABEL 4
 #define SHOW_ALL   8
+#define SHOW_HEX   16
 
 struct gpt_cmd c_show = {
 	"show",
@@ -70,6 +71,46 @@ struct gpt_cmd c_show = {
 };
 
 #define usage() gpt_usage(NULL, &c_show)
+
+static const char *
+get_mbr_sig(char *b, size_t blen, const uint8_t *bp)
+{
+	gpt_uuid_t uuid;
+
+	/*
+	 * MBR partitions have a 4 byte signature in the MBR.  Table
+	 * 10.54 of UEFI Spec 2.10 Errata A states how this is to be
+	 * formatted as a GUID.
+	 *
+	 * XXX: I thought I had seen more on this elsewhere, but I
+	 * can't seem to find it now.  In particular, the endianness
+	 * of this quanity is not clear in the above.
+	 *
+	 * XXX: The location and size of the MBR signature should be
+	 * in 'struct mbr,' e.g.:
+	 *
+	 * struct mbr {
+	 *	uint8_t		mbr_code[440];
+	 *	uint32_t	mbr_disc_sig;
+	 *	uint16_t	mbr_unknown;
+	 *	struct mbr_part	mbr_part[4];
+	 *	uint16_t	mbr_sig;
+	 * };
+	 *
+	 * For now, we just hardcode it.  Ugh!
+	 */
+	memset(uuid, 0, sizeof(uuid));
+	memcpy(uuid, bp + 440, 4);
+	gpt_uuid_snprintf(b, blen, "%d", uuid);
+	return b;
+}
+
+static const char *
+get_gpt_hdr_guid(char *b, size_t blen, struct gpt_hdr *hdr)
+{
+	gpt_uuid_snprintf(b, blen, "%d", hdr->hdr_guid);
+	return b;
+}
 
 static void
 print_part_type(int map_type, int flags, void *map_data, off_t map_start)
@@ -90,12 +131,21 @@ print_part_type(int map_type, int flags, void *map_data, off_t map_start)
 		if (map_start != 0)
 			printf("Extended ");
 		printf("MBR");
+		if (map_start == 0 && flags & SHOW_GUID)
+			printf(" - %s",
+			    get_mbr_sig(buf, sizeof(buf), map_data));
 		break;
 	case MAP_TYPE_PRI_GPT_HDR:
 		printf("Pri GPT header");
+		if (flags & SHOW_GUID)
+			printf(" - %s",
+			    get_gpt_hdr_guid(buf, sizeof(buf), map_data));
 		break;
 	case MAP_TYPE_SEC_GPT_HDR:
 		printf("Sec GPT header");
+		if (flags & SHOW_GUID)
+			printf(" - %s",
+			    get_gpt_hdr_guid(buf, sizeof(buf), map_data));
 		break;
 	case MAP_TYPE_PRI_GPT_TBL:
 		printf("Pri GPT table");
@@ -169,8 +219,9 @@ show(gpt_t gpt, int xshow)
 
 	m = map_first(gpt);
 	while (m != NULL) {
-		printf("  %*llu", gpt->lbawidth, (long long)m->map_start);
-		printf("  %*llu", gpt->lbawidth, (long long)m->map_size);
+#define FMT (xshow & SHOW_HEX) ? "  %*jx" : "  %*ju"
+		printf(FMT, gpt->lbawidth, (uintmax_t)m->map_start);
+		printf(FMT, gpt->lbawidth, (uintmax_t)m->map_size);
 		putchar(' ');
 		putchar(' ');
 		if (m->map_index > 0)
@@ -250,7 +301,7 @@ show_one(gpt_t gpt, unsigned int entry)
 }
 
 static int
-show_all(gpt_t gpt)
+show_all(gpt_t gpt, int xshow)
 {
 	map_t m;
 	struct gpt_ent *ent;
@@ -267,8 +318,8 @@ show_all(gpt_t gpt)
 
 	m = map_first(gpt);
 	while (m != NULL) {
-		printf("  %*llu", gpt->lbawidth, (long long)m->map_start);
-		printf("  %*llu", gpt->lbawidth, (long long)m->map_size);
+		printf(FMT, gpt->lbawidth, (uintmax_t)m->map_start);
+		printf(FMT, gpt->lbawidth, (uintmax_t)m->map_size);
 		putchar(' ');
 		putchar(' ');
 		if (m->map_index > 0) {
@@ -284,10 +335,33 @@ show_all(gpt_t gpt)
 			if (strcmp(s1, s2) == 0)
 				strlcpy(s1, "unknown", sizeof(s1));
 			printf(PFX "Type: %s\n", s1);
-			printf(PFX "TypeID: %s\n", s2);
-
-			gpt_uuid_snprintf(s2, sizeof(s2), "%d", ent->ent_guid);
-			printf(PFX "GUID: %s\n", s2);
+			if (m->map_type == MAP_TYPE_MBR_PART) {
+				static uint8_t unused_uuid[sizeof(gpt_uuid_t)];
+				/*
+				 * MBR part partitions don't have
+				 * GUIDs, so don't create a bogus one!
+				 *
+				 * We could get the TypeID from the
+				 * partition type (the one byte OSType
+				 * field in the partition structure),
+				 * perhaps borrowing info from fdisk.
+				 * However, some OSTypes have multiple
+				 * OSes assigned to them and many may
+				 * not have official UUIDs.
+				 *
+				 * Should we even print anything for
+				 * these, in particular the GUID?
+				 */
+				gpt_uuid_snprintf(s2, sizeof(s2), "%d",
+				    unused_uuid);
+				printf(PFX "TypeID: %s\n", s2);	/* XXX: show this? */
+				printf(PFX "GUID: %s\n", s2);	/* XXX: show this? */
+			}
+			else {
+				printf(PFX "TypeID: %s\n", s2);
+				gpt_uuid_snprintf(s2, sizeof(s2), "%d", ent->ent_guid);
+				printf(PFX "GUID: %s\n", s2);
+			}
 
 			printf(PFX "Size: ");
 #ifdef HN_AUTOSCALE
@@ -323,6 +397,21 @@ show_all(gpt_t gpt)
 			print_part_type(m->map_type, 0, m->map_data,
 			    m->map_start);
 			putchar('\n');
+
+			switch (m->map_type) {
+			case MAP_TYPE_PRI_GPT_HDR:
+			case MAP_TYPE_SEC_GPT_HDR:
+				printf(PFX "GUID: %s\n",
+				    get_gpt_hdr_guid(s1, sizeof(s1), 
+				    m->map_data));
+				break;
+			case MAP_TYPE_MBR:
+				printf(PFX "GUID: %s\n",
+				    get_mbr_sig(s1, sizeof(s1), m->map_data));
+				break;
+			default:
+				break;
+			}
 		}
 		m = m->map_next;
 	}
@@ -338,7 +427,7 @@ cmd_show(gpt_t gpt, int argc, char *argv[])
 	off_t start = 0;
 	map_t m;
 
-	while ((ch = getopt(argc, argv, "gi:b:lua")) != -1) {
+	while ((ch = getopt(argc, argv, "gi:b:luax")) != -1) {
 		switch(ch) {
 		case 'a':
 			xshow |= SHOW_ALL;
@@ -360,6 +449,9 @@ cmd_show(gpt_t gpt, int argc, char *argv[])
 		case 'u':
 			xshow |= SHOW_UUID;
 			break;
+		case 'x':
+			xshow |= SHOW_HEX;
+			break;
 		default:
 			return usage();
 		}
@@ -372,7 +464,7 @@ cmd_show(gpt_t gpt, int argc, char *argv[])
 		printf("GPT not found, displaying data from MBR.\n\n");
 
 	if (xshow & SHOW_ALL)
-		return show_all(gpt);
+		return show_all(gpt, xshow);
 
 	if (start > 0) {
 		for (m = map_first(gpt); m != NULL; m = m->map_next) {

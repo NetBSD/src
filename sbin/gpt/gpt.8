@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.83 2024/08/19 17:15:38 christos Exp $
+.\" $NetBSD: gpt.8,v 1.84 2024/11/04 18:36:16 christos Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd August 19, 2024
+.Dd November 4, 2024
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -632,7 +632,7 @@ They may be used by
 .Nx
 in the future.
 .\" ==== show ====
-.It Nm Ic show Oo Fl aglu Oc Oo Fl i Ar index Oc Oo Fl b Ar startsec Oc
+.It Nm Ic show Oo Fl aglux Oc Oo Fl i Ar index Oc Oo Fl b Ar startsec Oc
 The
 .Ic show
 command displays the current partitioning on the listed devices and gives
@@ -660,13 +660,17 @@ With the
 option, all information for all GPT partitions (just like with
 .Fl i Ar index )
 will be printed.
+The
+.Fl x
+option prints start/size in hex.
 None of the options have any effect on non-GPT partitions.
 The order of precedence for the options is:
 .Fl a ,
 .Fl i ,
 .Fl l ,
 .Fl g ,
-.Fl u .
+.Fl u ,
+.Fl x .
 .\" ==== type ====
 .It Nm Ic type Oo Fl a Oc Fl T Ar newtype
 .It Nm Ic type Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
