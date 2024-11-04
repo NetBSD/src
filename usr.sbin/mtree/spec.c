@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.90 2017/12/14 18:34:41 christos Exp $	*/
+/*	$NetBSD: spec.c,v 1.91 2024/11/04 15:39:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.90 2017/12/14 18:34:41 christos Exp $");
+__RCSID("$NetBSD: spec.c,v 1.91 2024/11/04 15:39:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -224,10 +224,14 @@ noparent:		mtree_err("no parent node");
 			 */
 			if (strcmp(centry->name, ".") == 0 && centry->type == 0)
 				centry->type = F_DIR;
-			if (strcmp(centry->name, ".") != 0 ||
-			    centry->type != F_DIR)
+			if (strcmp(centry->name, ".") != 0)
 				mtree_err(
-				    "root node must be the directory `.'");
+				    "root node must be the directory `.',"
+				    " found `%s'", centry->name);
+			if (centry->type != F_DIR)
+				mtree_err(
+				    "root node must type %#x != %#x",
+				    F_DIR, centry->type);
 			last = root = centry;
 			root->parent = root;
 		} else if (pathparent != NULL) {
