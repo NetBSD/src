@@ -1,0 +1,14 @@
+ioconf ds2482ow
+
+include "conf/files"
+
+pseudo-root iic*
+
+ds2482ow* at iic? addr 0x18
+ds2482ow* at iic? addr 0x19
+ds2482ow* at iic? addr 0x1a
+ds2482ow* at iic? addr 0x1b
+ds2482ow* at iic? addr 0x1c
+ds2482ow* at iic? addr 0x1d
+ds2482ow* at iic? addr 0x1e
+ds2482ow* at iic? addr 0x1f

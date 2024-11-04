@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.160 2024/07/18 04:28:54 rin Exp $
+# $NetBSD: mi,v 1.161 2024/11/04 20:43:38 brad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -143,6 +143,8 @@
 ./@MODULEDIR@/dm/dm.kmod			modules-base-kernel	lvm,kmod
 ./@MODULEDIR@/drvctl				modules-base-kernel	kmod
 ./@MODULEDIR@/drvctl/drvctl.kmod		modules-base-kernel	kmod
+./@MODULEDIR@/ds2482ow				modules-base-kernel	kmod
+./@MODULEDIR@/ds2482ow/ds2482ow.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/dtrace				modules-base-kernel	kmod,dtrace
 ./@MODULEDIR@/dtrace/dtrace.kmod		modules-base-kernel	kmod,dtrace
 ./@MODULEDIR@/dtrace_fbt				modules-base-kernel	kmod,dtrace

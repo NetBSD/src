@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.126 2022/12/03 01:04:43 brad Exp $
+#	$NetBSD: files.i2c,v 1.127 2024/11/04 20:43:38 brad Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -439,3 +439,8 @@ file dev/i2c/aht20.c				aht20temp
 # Bosch Sensortec BMP280/BME280 Temperature, Humidity and Pressure sensor
 attach	bmx280thp at iic with bmx280thpi2c
 file dev/i2c/bmx280thpi2c.c			bmx280thpi2c
+
+# Maxim DS2482-100 and DS2482-800 I2C to Onewire bridge
+device ds2482ow: onewirebus
+attach ds2482ow at iic
+file dev/i2c/ds2482ow.c				ds2482ow

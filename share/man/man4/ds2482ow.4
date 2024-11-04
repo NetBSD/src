@@ -1,0 +1,87 @@
+.\" $NetBSD: ds2482ow.4,v 1.1 2024/11/04 20:43:37 brad Exp $
+.\"
+.\" Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd October 31, 2024
+.Dt DS2482OW 4
+.Os
+.Sh NAME
+.Nm ds2482ow
+.Nd Driver for Maxim DS2482-100 and DS2482-800 IC2 to 1-Wire bridge
+.Sh SYNOPSIS
+.Cd "ds2482ow* at iic? addr 0x18"
+.Cd "ds2482ow* at iic? addr 0x19"
+.Cd "ds2482ow* at iic? addr 0x1a"
+.Cd "ds2482ow* at iic? addr 0x1b"
+.Cd "ds2482ow* at iic? addr 0x1c" DS2482-800 only
+.Cd "ds2482ow* at iic? addr 0x1d" DS2482-800 only
+.Cd "ds2482ow* at iic? addr 0x1e" DS2482-800 only
+.Cd "ds2482ow* at iic? addr 0x1f" DS2482-800 only
+.Cd "onewire* at ds2482ow?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides 1 or 8
+.Xr onewire 4
+busses via an I2C interface.
+The
+.Nm
+.Ar addr
+argument selects the address at the
+.Xr iic 4
+bus.
+The chip generates all of the needed 1-Wire pulses on its own
+and provides for the pullup needed on the 1-Wire data line.
+The method that the chip uses for pullup can be changed through
+.Xr sysctl 8
+nodes.
+.Sh SYSCTL VARIABLES
+The following
+.Xr sysctl 3
+variables are provided:
+.Bl -tag -width indent
+.It Li hw.ds2482ow0.pullup.active
+If true, turn on active pullup on all channels supported by the chip.
+.It Li hw.ds2482ow0.pullup.strong
+If true, turn on strong pullup on all channels that the chip supports
+and on the DS2482-100 chip, allow the PCTLZ pin to provide addition
+current to the 1-Wire bus.  This mode conflicts with a 1-Wire reset
+and will be disabled if that command is sent to the 1-Wire bus.
+
+.It Li If neither active pullup or strong pullup are enabled the chip will
+use an internal passive resister.
+.It Li hw.ds2482ow0.debug
+If the driver is compiled with
+.Dv DS2482_DEBUG ,
+this node will appear and can be used to set the debugging level.
+.El
+.Sh SEE ALSO
+.Xr onewire 4 ,
+.Xr iic 4 ,
+.Xr sysctl 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 11.0 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Brad Spencer Aq Mt brad@anduin.eldar.org .
+.Sh BUGS
+The DS2482 chip supports overdrive speed on a 1-Wire bus.
+This driver does not support overdrive speed mode.

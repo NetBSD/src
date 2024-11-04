@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1789 2024/10/30 18:09:17 christos Exp $
+# $NetBSD: mi,v 1.1790 2024/11/04 20:43:38 brad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -1151,6 +1151,7 @@
 ./usr/share/man/cat4/drm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/drum.0			man-sys-catman		.cat
 ./usr/share/man/cat4/drvctl.0			man-sys-catman		.cat
+./usr/share/man/cat4/ds2482ow.0			man-sys-catman		.cat
 ./usr/share/man/cat4/dse.0			man-sys-catman		.cat
 ./usr/share/man/cat4/dtide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/dtv.0			man-sys-catman		.cat
@@ -4717,6 +4718,7 @@
 ./usr/share/man/man4/drm.4			man-sys-man		.man
 ./usr/share/man/man4/drum.4			man-sys-man		.man
 ./usr/share/man/man4/drvctl.4			man-sys-man		.man
+./usr/share/man/man4/ds2482ow.4			man-sys-man		.man
 ./usr/share/man/man4/dse.4			man-sys-man		.man
 ./usr/share/man/man4/dtide.4			man-sys-man		.man
 ./usr/share/man/man4/dtv.4			man-sys-man		.man
