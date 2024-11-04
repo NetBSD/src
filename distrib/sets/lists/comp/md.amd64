@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.304 2024/11/03 22:24:20 christos Exp $
+# $NetBSD: md.amd64,v 1.305 2024/11/04 15:45:22 christos Exp $
 #
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -38,7 +38,6 @@
 ./usr/include/amd64/limits.h			comp-c-include
 ./usr/include/amd64/linux32_machdep.h		comp-c-include
 ./usr/include/amd64/lock.h			comp-c-include
-./usr/include/amd64/lwp.h			comp-c-include
 ./usr/include/amd64/math.h			comp-c-include
 ./usr/include/amd64/mcontext.h			comp-c-include
 ./usr/include/amd64/mtrr.h			comp-c-include
@@ -1304,7 +1303,6 @@
 ./usr/include/i386/kcore.h			comp-c-include
 ./usr/include/i386/limits.h			comp-c-include
 ./usr/include/i386/lock.h			comp-c-include
-./usr/include/i386/lwp.h			comp-c-include
 ./usr/include/i386/math.h			comp-c-include
 ./usr/include/i386/mcontext.h			comp-c-include
 ./usr/include/i386/mtrr.h			comp-c-include

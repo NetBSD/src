@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.17 2024/11/03 22:24:21 christos Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.18 2024/11/04 15:45:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -112,5 +112,23 @@ typedef struct {
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
 #define	__UCONTEXT_SIZE	776
+
+#if defined(_RTLD_SOURCE) || defined(_LIBC_SOURCE) || \
+    defined(__LIBPTHREAD_SOURCE__)
+#include <sys/tls.h>
+
+__BEGIN_DECLS
+static __inline void *
+__lwp_getprivate_fast(void)
+{
+	void *__tmp;
+
+	__asm volatile("movl %%gs:0, %0" : "=r" (__tmp));
+
+	return __tmp;
+}
+__END_DECLS
+
+#endif
 
 #endif	/* !_I386_MCONTEXT_H_ */

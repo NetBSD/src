@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.25 2024/11/03 22:24:21 christos Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.26 2024/11/04 15:45:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -209,6 +209,52 @@ typedef struct {
 #endif
 
 #endif
+
+#if defined(_RTLD_SOURCE) || defined(_LIBC_SOURCE) || \
+    defined(__LIBPTHREAD_SOURCE__)
+
+#include <sys/tls.h>
+
+#if defined(__aarch64__)
+
+__BEGIN_DECLS
+static __inline void *
+__lwp_getprivate_fast(void)
+{
+	void *__tpidr;
+	__asm __volatile("mrs\t%0, tpidr_el0" : "=r"(__tpidr));
+	return __tpidr;
+}
+__END_DECLS
+
+#elif defined(__arm__)
+
+__BEGIN_DECLS
+static __inline void *
+__lwp_getprivate_fast(void)
+{
+#if !defined(__thumb__) || defined(_ARM_ARCH_T2)
+	extern void *_lwp_getprivate(void);
+	void *rv;
+	__asm("mrc p15, 0, %0, c13, c0, 3" : "=r"(rv));
+	if (__predict_true(rv))
+		return rv;
+	/*
+	 * Some ARM cores are broken and don't raise an undefined fault when an
+	 * unrecogized mrc instruction is encountered, but just return zero.
+	 * To do deal with that, if we get a zero we (re-)fetch the value using
+	 * syscall.
+	 */
+	return _lwp_getprivate();
+#else
+	extern void *__aeabi_read_tp(void);
+	return __aeabi_read_tp();
+#endif /* !__thumb__ || _ARM_ARCH_T2 */
+}
+__END_DECLS
+#endif
+
+#endif /* _RTLD_SOURCE || _LIBC_SOURCE || __LIBPTHREAD_SOURCE__ */
 
 /* Machine-dependent uc_flags */
 #define _UC_TLSBASE	_UC_MD_BIT19	/* see <sys/ucontext.h> */

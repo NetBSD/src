@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.14 2024/11/03 22:24:22 christos Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.15 2024/11/04 15:45:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,5 +120,20 @@ typedef struct __mcontext {
 #define	_UC_TLSBASE	_UC_MD_BIT16
 #define	_UC_SETSTACK	_UC_MD_BIT17
 #define	_UC_CLRSTACK	_UC_MD_BIT18
+
+
+#if defined(_RTLD_SOURCE) || defined(_LIBC_SOURCE) || \
+    defined(__LIBPTHREAD_SOURCE__)
+#include <sys/tls.h>
+
+__BEGIN_DECLS
+static __inline void *
+__lwp_getprivate_fast(void)
+{
+	return (void*)0;
+}
+__END_DECLS
+
+#endif
 
 #endif	/* !_IA64_MCONTEXT_H_ */

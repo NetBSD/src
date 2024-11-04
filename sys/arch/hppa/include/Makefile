@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2024/11/03 22:24:21 christos Exp $
+#	$NetBSD: Makefile,v 1.15 2024/11/04 15:45:23 christos Exp $
 
 INCSDIR= /usr/include/hppa
 
@@ -11,7 +11,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	ieee.h ieeefp.h intr.h intrdefs.h iomod.h isa_machdep.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	kcore.h \
-	limits.h loadfile_machdep.h lock.h lwp.h \
+	limits.h loadfile_machdep.h lock.h \
 	math.h mcontext.h mutex.h \
 	nvm.h \
 	param.h pcb.h pdc.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \

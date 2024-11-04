@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2024/11/03 22:24:22 christos Exp $
+#	$NetBSD: Makefile,v 1.44 2024/11/04 15:45:24 christos Exp $
 
 .if !defined(INCSDIR)
 INCSDIR?= /usr/include/powerpc
@@ -13,7 +13,7 @@ INCS+=	ansi.h aout_machdep.h asm.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	kcore.h \
-	limits.h lock.h lwp.h \
+	limits.h lock.h \
 	math.h mcontext.h mutex.h \
 	param.h pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h reloc.h rwlock.h \

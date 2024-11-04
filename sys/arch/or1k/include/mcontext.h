@@ -1,4 +1,4 @@
-/* $NetBSD: mcontext.h,v 1.3 2024/11/03 22:24:22 christos Exp $ */
+/* $NetBSD: mcontext.h,v 1.4 2024/11/04 15:45:24 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -93,5 +93,49 @@ typedef struct {
 #define _UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_RV])
 
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
+
+#if defined(_RTLD_SOURCE) || defined(_LIBC_SOURCE) || defined(__LIBPTHREAD_SOURCE__)
+#include <sys/tls.h>
+
+/*
+ * On OpenRISC 1000, since displacements are signed 16-bit values, the TCB
+ * Pointer is biased by 0x7000 + sizeof(tcb) so that first thread datum can be 
+ * addressed by -28672 thereby leaving 60KB available for use as thread data.
+ */
+#define	TLS_TP_OFFSET	0x7000
+#define	TLS_DTV_OFFSET	0x8000
+__CTASSERT(TLS_TP_OFFSET + sizeof(struct tls_tcb) < 0x8000);
+
+static __inline void *
+__lwp_getprivate_fast(void)
+{
+	void *__tp;
+	__asm("l.ori %0,r10,0" : "=r"(__tp));
+	return __tp;
+}
+
+static __inline void *
+__lwp_gettcb_fast(void)
+{
+	void *__tcb;
+
+	__asm __volatile(
+		"l.addi %[__tcb],r10,%[__offset]"
+	    :	[__tcb] "=r" (__tcb)
+	    :	[__offset] "n" (-(TLS_TP_OFFSET + sizeof(struct tls_tcb))));
+
+	return __tcb;
+}
+
+static __inline void
+__lwp_settcb(void *__tcb)
+{
+	__asm __volatile(
+		"l.addi r10,%[__tcb],%[__offset]"
+	    :
+	    :	[__tcb] "r" (__tcb),
+		[__offset] "n" (TLS_TP_OFFSET + sizeof(struct tls_tcb)));
+}
+#endif /* _RTLD_SOURCE || _LIBC_SOURCE || __LIBPTHREAD_SOURCE__ */
 
 #endif /* !_OR1K_MCONTEXT_H_ */
