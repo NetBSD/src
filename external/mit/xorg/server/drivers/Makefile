@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.114 2024/10/22 13:58:16 macallan Exp $
+#	$NetBSD: Makefile,v 1.115 2024/11/04 02:26:59 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -330,14 +330,21 @@ SUBDIR+= \
 	xf86-video-suncg6 \
 	xf86-video-sunffb \
 	xf86-video-wsfb
+
+.if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 # needs porting for xorg-server 21.1.3
-#	xf86-video-glint
-#	xf86-video-ag10e \
-#	xf86-video-sunleo
+SUBDIR+= \
+	xf86-video-glint \
+	xf86-video-ag10e \
+	xf86-video-sunleo
+.endif	# ${XORG_SERVER_SUBDIR} == "server.old"
 
 .if ${MACHINE} == "sparc"
+.if ${XORG_SERVER_SUBDIR} != "xorg-server.old"
 SUBDIR+= \
-	xf86-video-pnozz \
+	xf86-video-pnozz
+.endif	# ${XORG_SERVER_SUBDIR} != "server.old"
+SUBDIR+= \
 	xf86-video-suncg14 \
 	xf86-video-suntcx
 
