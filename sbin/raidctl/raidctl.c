@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.84 2024/11/05 19:52:18 rillig Exp $   */
+/*      $NetBSD: raidctl.c,v 1.85 2024/11/05 19:58:27 rillig Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
- * This program is a re-write of the original rf_ctrl program 
+/*
+ * This program is a re-write of the original rf_ctrl program
  * distributed by CMU with RAIDframe 1.1.
  *
  * This program is the user-land interface to the RAIDframe kernel
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.84 2024/11/05 19:52:18 rillig Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.85 2024/11/05 19:58:27 rillig Exp $");
 #endif
 
 
@@ -130,7 +130,7 @@ main(int argc,char *argv[])
 	int openmode;
 	int last_unit;
 	struct timeval tv;
-	
+
 	num_options = 0;
 	action = 0;
 	do_output = 0;
@@ -143,7 +143,7 @@ main(int argc,char *argv[])
 
 	if (argc > 5) {
 		/* we have at least 5 args, so it might be a simplified config */
-		
+
 		strlcpy(name, argv[1], sizeof(name));
 		fd = opendisk(name, openmode, dev_name, sizeof(dev_name), 0);
 		if (fd != -1) {
@@ -152,11 +152,11 @@ main(int argc,char *argv[])
 				err(1, "stat failure on: %s", dev_name);
 			if (!S_ISBLK(st.st_mode) && !S_ISCHR(st.st_mode))
 				err(1, "invalid device: %s", dev_name);
-			
+
 			raidID = DISKUNIT(st.st_rdev);
 			if (strncmp(argv[2],"create",6)==0) {
 				rf_simple_create(fd,argc-3,&argv[3]);
-				
+
 				/* set serial number, set autoconfig, init parity */
 
 				if (gettimeofday(&tv,NULL) == -1) {
@@ -167,17 +167,17 @@ main(int argc,char *argv[])
 				init_component_labels(fd, serial_number);
 				strlcpy(autoconf, "yes", sizeof(autoconf));
 				set_autoconfig(fd, raidID, autoconf);
-				
+
 			} else
 				usage();
-			
+
 			close(fd);
 			exit(0);
 		}
 
 		/* otherwise we go back to regular parsing */
 	}
-		
+
 	while ((ch = getopt(argc, argv,
 	    "a:A:c:C:f:F:g:GiI:l:LmM:r:R:sSpPt:uU:v")) != -1)
 		switch (ch) {
@@ -238,7 +238,7 @@ main(int argc,char *argv[])
 			serial_number = xstrtouint(optarg);
 			num_options++;
 			break;
-		case 'l': 
+		case 'l':
 			action = RAIDFRAME_SET_COMPONENT_LABEL;
 			get_comp(component, optarg, sizeof(component));
 			num_options++;
@@ -313,7 +313,7 @@ main(int argc,char *argv[])
 			break;
 		case 'v':
 			verbose = 1;
-			/* Don't bump num_options, as '-v' is not 
+			/* Don't bump num_options, as '-v' is not
 			   an option like the others */
 			/* num_options++; */
 			break;
@@ -381,7 +381,7 @@ main(int argc,char *argv[])
 		break;
 	case RAIDFRAME_REWRITEPARITY:
 		printf("Initiating re-write of parity\n");
-		do_ioctl(fd, RAIDFRAME_REWRITEPARITY, NULL, 
+		do_ioctl(fd, RAIDFRAME_REWRITEPARITY, NULL,
 			 "RAIDFRAME_REWRITEPARITY");
 		if (verbose) {
 			sleep(3); /* XXX give it time to get started */
@@ -444,13 +444,13 @@ rf_configure(int fd, char *config_file, int force)
 
 	if (rf_MakeConfig( config_file, &cfg ) != 0)
 		err(1, "Unable to create RAIDframe configuration structure");
-	
+
 	cfg.force = force;
 
-	/* 
+	/*
 	 * Note the extra level of redirection needed here, since
-	 * what we really want to pass in is a pointer to the pointer to 
-	 * the configuration structure. 
+	 * what we really want to pass in is a pointer to the pointer to
+	 * the configuration structure.
 	 */
 
 	generic = &cfg;
@@ -503,7 +503,7 @@ rf_get_device_status(int fd)
 
 	printf("Components:\n");
 	for(i=0; i < device_config.ndevs; i++) {
-		printf("%20s: %s\n", device_config.devs[i].devname, 
+		printf("%20s: %s\n", device_config.devs[i].devname,
 		       device_status(device_config.devs[i].status));
 	}
 
@@ -514,7 +514,7 @@ rf_get_device_status(int fd)
 		printf("Spares:\n");
 		for(i=0; i < nspares; i++) {
 			printf("%20s: %s\n",
-			       device_config.spares[i].devname, 
+			       device_config.spares[i].devname,
 			       device_status(device_config.spares[i].status));
 		}
 	} else {
@@ -532,18 +532,18 @@ rf_get_device_status(int fd)
 
 	if (nspares > 0) {
 		for(i=0; i < nspares; i++) {
-			if ((device_config.spares[i].status == 
+			if ((device_config.spares[i].status ==
 			     rf_ds_optimal) ||
-			    (device_config.spares[i].status == 
+			    (device_config.spares[i].status ==
 			     rf_ds_used_spare)) {
-				get_component_label(fd, 
+				get_component_label(fd,
 					    device_config.spares[i].devname);
 			} else {
 				printf("%s status is: %s.  Skipping label.\n",
 				       device_config.spares[i].devname,
 				       device_status(
 					   device_config.spares[i].status));
-			}		
+			}
 		}
 	}
 
@@ -575,7 +575,7 @@ rf_output_pmstat(int fd, int raidID)
 	}
 
 	if (st.enabled) {
-		if (0 > humanize_number(srs, 7, st.region_size * DEV_BSIZE, 
+		if (0 > humanize_number(srs, 7, st.region_size * DEV_BSIZE,
 			"B", HN_AUTOSCALE, HN_NOSPACE))
 			strlcpy(srs, "???", 7);
 
@@ -600,7 +600,7 @@ rf_output_pmstat(int fd, int raidID)
 				printf("    ");
 				for (j = i; j < RF_PARITYMAP_NBYTE
 					 && j < i + 32; j++)
-					printf("%x%x", st.dirty[j] & 15, 
+					printf("%x%x", st.dirty[j] & 15,
 					    (st.dirty[j] >> 4) & 15);
 				printf("\n");
 			}
@@ -611,7 +611,7 @@ rf_output_pmstat(int fd, int raidID)
 
 	do_ioctl(fd, RAIDFRAME_PARITYMAP_GET_DISABLE, &dis,
 	    "RAIDFRAME_PARITYMAP_GET_DISABLE");
-	printf("raid%d: parity map will %s %sabled on next configure\n", 
+	printf("raid%d: parity map will %s %sabled on next configure\n",
 	    raidID, dis == st.enabled ? "be" : "remain", dis ? "dis" : "en");
 }
 
@@ -629,7 +629,7 @@ rf_pm_configure(int fd, int raidID, char *parityconf, int parityparams[])
 		params.cooldown = parityparams[0];
 		params.tickms = parityparams[1];
 		params.regions = parityparams[2];
-		
+
 		do_ioctl(fd, RAIDFRAME_PARITYMAP_SET_PARAMS, &params,
 		    "RAIDFRAME_PARITYMAP_SET_PARAMS");
 
@@ -655,7 +655,7 @@ rf_pm_configure(int fd, int raidID, char *parityconf, int parityparams[])
 
 	do_ioctl(fd, RAIDFRAME_PARITYMAP_SET_DISABLE, &dis,
 	    "RAIDFRAME_PARITYMAP_SET_DISABLE");
-	printf("raid%d: parity map will be %sabled on next configure\n", 
+	printf("raid%d: parity map will be %sabled on next configure\n",
 	    raidID, dis ? "dis" : "en");
 }
 
@@ -687,7 +687,7 @@ rf_output_configuration(int fd, const char *name)
 
 	nspares = MIN(device_config.nspares,
 	                __arraycount(device_config.spares));
-	
+
 	printf("START array\n");
 	printf("# numCol numSpare\n");
 	printf("%d %d\n", device_config.cols, device_config.nspares);
@@ -728,8 +728,8 @@ rf_output_configuration(int fd, const char *name)
 	printf(
 	    "# sectPerSU SUsPerParityUnit SUsPerReconUnit RAID_level_%c\n",
 	    (char) component_label.parityConfig);
-	printf("%d %d %d %c\n", 
-	    component_label.sectPerSU, component_label.SUsPerPU, 
+	printf("%d %d %d %c\n",
+	    component_label.sectPerSU, component_label.SUsPerPU,
 	    component_label.SUsPerRU, (char) component_label.parityConfig);
 	printf("\n");
 
@@ -747,17 +747,17 @@ get_component_number(int fd, char *component_name, int *component_number,
 	int found;
 
 	*component_number = -1;
-		
+
 	/* Assuming a full path spec... */
 	cfg_ptr = &device_config;
-	do_ioctl(fd, RAIDFRAME_GET_INFO, &cfg_ptr, 
+	do_ioctl(fd, RAIDFRAME_GET_INFO, &cfg_ptr,
 		 "RAIDFRAME_GET_INFO");
 
 	*num_columns = device_config.cols;
 
 	nspares = MIN(device_config.nspares,
 	                __arraycount(device_config.spares));
-	
+
 	found = 0;
 	for(i=0; i < device_config.ndevs; i++) {
 		if (strncmp(component_name, device_config.devs[i].devname,
@@ -768,14 +768,14 @@ get_component_number(int fd, char *component_name, int *component_number,
 	}
 	if (!found) { /* maybe it's a spare? */
 		for(i=0; i < nspares; i++) {
-			if (strncmp(component_name, 
+			if (strncmp(component_name,
 				    device_config.spares[i].devname,
 				    PATH_MAX)==0) {
 				found = 1;
 				*component_number = i + device_config.ndevs;
 				/* the way spares are done should
 				   really change... */
-				*num_columns = device_config.cols + 
+				*num_columns = device_config.cols +
 					device_config.nspares;
 			}
 		}
@@ -800,7 +800,7 @@ rf_fail_disk(int fd, char *component_to_fail, int do_recon)
 	} else {
 		recon_request.flags = RF_FDFLAGS_NONE;
 	}
-	do_ioctl(fd, RAIDFRAME_FAIL_DISK, &recon_request, 
+	do_ioctl(fd, RAIDFRAME_FAIL_DISK, &recon_request,
 		 "RAIDFRAME_FAIL_DISK");
 	if (do_recon && verbose) {
 		printf("Reconstruction status:\n");
@@ -830,22 +830,22 @@ get_component_label(int fd, char *component)
 	printf("Component label for %s:\n",component);
 
 	printf("   Row: %d, Column: %d, Num Rows: %d, Num Columns: %d\n",
-	       component_label.row, component_label.column, 
+	       component_label.row, component_label.column,
 	       component_label.num_rows, component_label.num_columns);
 	printf("   Version: %d, Serial Number: %u, Mod Counter: %d\n",
 	       component_label.version, component_label.serial_number,
 	       component_label.mod_counter);
 	printf("   Clean: %s, Status: %d\n",
-	       component_label.clean ? "Yes" : "No", 
+	       component_label.clean ? "Yes" : "No",
 	       component_label.status );
 	printf("   sectPerSU: %d, SUsPerPU: %d, SUsPerRU: %d\n",
-	       component_label.sectPerSU, component_label.SUsPerPU, 
+	       component_label.sectPerSU, component_label.SUsPerPU,
 	       component_label.SUsPerRU);
 	printf("   Queue size: %d, blocksize: %d, numBlocks: %"PRIu64"\n",
 	       component_label.maxOutstanding, component_label.blockSize,
 	       rf_component_label_numblocks(&component_label));
 	printf("   RAID Level: %c\n", (char) component_label.parityConfig);
-	printf("   Autoconfig: %s\n", 
+	printf("   Autoconfig: %s\n",
 	       component_label.autoconfigure ? "Yes" : "No" );
 	printf("   Root partition: %s\n",
 	       rootpart[component_label.root_partition & 3]);
@@ -872,7 +872,7 @@ set_component_label(int fd, char *component)
 	component_label.num_columns = 5;
 	component_label.clean = 0;
 	component_label.status = 1;
-	
+
 	do_ioctl( fd, RAIDFRAME_SET_COMPONENT_LABEL, &component_label,
 		  "RAIDFRAME_SET_COMPONENT_LABEL");
 }
@@ -892,7 +892,7 @@ init_component_labels(int fd, int serial_number)
 	component_label.num_columns = 0;
 	component_label.clean = 0;
 	component_label.status = 0;
-	
+
 	do_ioctl( fd, RAIDFRAME_INIT_LABELS, &component_label,
 		  "RAIDFRAME_INIT_LABELS");
 }
@@ -941,9 +941,9 @@ add_hot_spare(int fd, char *component)
 
 	hot_spare.row = 0;
 	hot_spare.column = 0;
-	strncpy(hot_spare.component_name, component, 
+	strncpy(hot_spare.component_name, component,
 		sizeof(hot_spare.component_name));
-	
+
 	do_ioctl( fd, RAIDFRAME_ADD_HOT_SPARE, &hot_spare,
 		  "RAIDFRAME_ADD_HOT_SPARE");
 }
@@ -960,9 +960,9 @@ remove_component(int fd, char *component)
 	comp.row = component_num / num_cols;
 	comp.column = component_num % num_cols;
 
-	strncpy(comp.component_name, component, 
+	strncpy(comp.component_name, component,
 		sizeof(comp.component_name));
-	
+
 	do_ioctl( fd, RAIDFRAME_REMOVE_COMPONENT, &comp,
 		  "RAIDFRAME_REMOVE_COMPONENT");
 }
@@ -979,7 +979,7 @@ rebuild_in_place(int fd, char *component)
 	comp.row = 0;
 	comp.column = component_num;
 	strncpy(comp.component_name, component, sizeof(comp.component_name));
-	
+
 	do_ioctl( fd, RAIDFRAME_REBUILD_IN_PLACE, &comp,
 		  "RAIDFRAME_REBUILD_IN_PLACE");
 
@@ -1008,7 +1008,7 @@ check_parity(int fd, int do_rewrite, char *dev_name)
 		if (do_rewrite) {
 			printf("%s: Initiating re-write of parity\n",
 			       dev_name);
-			do_ioctl(fd, RAIDFRAME_REWRITEPARITY, NULL, 
+			do_ioctl(fd, RAIDFRAME_REWRITEPARITY, NULL,
 				 "RAIDFRAME_REWRITEPARITY");
 			sleep(3); /* XXX give it time to
 				     get started. */
@@ -1017,9 +1017,9 @@ check_parity(int fd, int do_rewrite, char *dev_name)
 				do_meter(fd,
 				    RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT);
 			} else {
-				do_ioctl(fd, 
-					 RAIDFRAME_CHECK_PARITYREWRITE_STATUS, 
-					 &percent_done, 
+				do_ioctl(fd,
+					 RAIDFRAME_CHECK_PARITYREWRITE_STATUS,
+					 &percent_done,
 					 "RAIDFRAME_CHECK_PARITYREWRITE_STATUS"
 					 );
 				while( percent_done < 100 ) {
@@ -1047,11 +1047,11 @@ check_status(int fd, int meter)
 	int recon_percent_done = 0;
 	int parity_percent_done = 0;
 
-	do_ioctl(fd, RAIDFRAME_CHECK_RECON_STATUS, &recon_percent_done, 
+	do_ioctl(fd, RAIDFRAME_CHECK_RECON_STATUS, &recon_percent_done,
 		 "RAIDFRAME_CHECK_RECON_STATUS");
 	printf("Reconstruction is %d%% complete.\n", recon_percent_done);
-	do_ioctl(fd, RAIDFRAME_CHECK_PARITYREWRITE_STATUS, 
-		 &parity_percent_done, 
+	do_ioctl(fd, RAIDFRAME_CHECK_PARITYREWRITE_STATUS,
+		 &parity_percent_done,
 		 "RAIDFRAME_CHECK_PARITYREWRITE_STATUS");
 	printf("Parity Re-write is %d%% complete.\n", parity_percent_done);
 
@@ -1099,15 +1099,15 @@ do_meter(int fd, u_long option)
 	current_time = start_time;
 	simple_eta = 0;
 	last_eta = 0;
-	
+
 	tbit_value = 0;
 	while(progressInfo.completed < progressInfo.total) {
 
-		percent_done = (progressInfo.completed * 100) / 
+		percent_done = (progressInfo.completed * 100) /
 			progressInfo.total;
 
 		get_bar(bar_buffer, percent_done, 40);
-		
+
 		elapsed_sec = current_time.tv_sec - start_time.tv_sec;
 		elapsed_usec = current_time.tv_usec - start_time.tv_usec;
 		if (elapsed_usec < 0) {
@@ -1115,7 +1115,7 @@ do_meter(int fd, u_long option)
 			elapsed_sec++;
 		}
 
-		elapsed = (double) elapsed_sec + 
+		elapsed = (double) elapsed_sec +
 			(double) elapsed_usec / 1000000.0;
 
 		amount = progressInfo.completed - start_value;
@@ -1130,14 +1130,14 @@ do_meter(int fd, u_long option)
 			rate = amount / elapsed;
 
 		if (rate > 0.0) {
-			simple_eta = (int) (((double)progressInfo.total - 
-					     (double) progressInfo.completed) 
+			simple_eta = (int) (((double)progressInfo.total -
+					     (double) progressInfo.completed)
 					    / rate);
 		} else {
 			simple_eta = -1;
 		}
 
-		if (simple_eta <=0) { 
+		if (simple_eta <=0) {
 			simple_eta = last_eta;
 		} else {
 			last_eta = simple_eta;
@@ -1149,7 +1149,7 @@ do_meter(int fd, u_long option)
 			percent_done,bar_buffer,eta_buffer,tbits[tbit_value]);
 		fflush(stdout);
 
-		if (++tbit_value>3) 
+		if (++tbit_value>3)
 			tbit_value = 0;
 
 		sleep(2);
@@ -1158,7 +1158,7 @@ do_meter(int fd, u_long option)
 			err(1, "gettimeofday failed!?!?");
 
 		do_ioctl( fd, option, pInfoPtr, "");
-		
+
 
 	}
 	printf("\n");
@@ -1185,7 +1185,7 @@ get_bar(char *string, double percent, int max_strlen)
 	if (max_strlen > STAR_MIDPOINT) {
 		max_strlen = STAR_MIDPOINT;
 	}
-	offset = STAR_MIDPOINT - 
+	offset = STAR_MIDPOINT -
 		(int)((percent * max_strlen)/ 100);
 	if (offset < 0)
 		offset = 0;
@@ -1216,14 +1216,14 @@ get_time_string(char *string, size_t len, int simple_time)
 		if (seconds < 0 || seconds > 60)
 			seconds = 60;
 #endif
-		
+
 		if (hours > 0) {
 			snprintf(hours_buffer,sizeof hours_buffer,
 			    "%02d:",hours);
 		} else {
 			snprintf(hours_buffer,sizeof hours_buffer,"   ");
 		}
-		
+
 		snprintf(minutes_buffer,sizeof minutes_buffer,"%02d:",minutes);
 		snprintf(seconds_buffer,sizeof seconds_buffer,"%02d",seconds);
 		snprintf(string,len,"%s%s%s",
@@ -1231,7 +1231,7 @@ get_time_string(char *string, size_t len, int simple_time)
 	} else {
 		snprintf(string,len,"   --:--");
 	}
-	
+
 }
 
 /* Simplified RAID creation with a single command line... */
@@ -1245,13 +1245,13 @@ rf_simple_create(int fd, int argc, char *argv[])
 	void *generic;
 	RF_Config_t cfg;
 
-	/* 
+	/*
 	 * Note the extra level of redirection needed here, since
-	 * what we really want to pass in is a pointer to the pointer to 
-	 * the configuration structure. 
+	 * what we really want to pass in is a pointer to the pointer to
+	 * the configuration structure.
 	 */
 
-	
+
 	if (strcmp(argv[0],"mirror")==0) {
 		level = 1;
 	} else
@@ -1308,7 +1308,7 @@ rf_simple_create(int fd, int argc, char *argv[])
 			/* 64 blocks (32K) per disk - 64K data per stripe */
 			cfg.sectPerSU = 64;
 		} else if (num_components >= 4 && num_components < 9) {
-			/* 4 components makes 3 data components.  No power of 2 is 
+			/* 4 components makes 3 data components.  No power of 2 is
 			   evenly divisible by 3 so performance will be lousy
 			   regardless of what number we choose here.  5 components is
 			   what we are really hoping for here, as 5 components with 4
@@ -1321,8 +1321,8 @@ rf_simple_create(int fd, int argc, char *argv[])
 			cfg.sectPerSU = 16;
 		}
 	} else
-		usage();	
-	
+		usage();
+
 	cfg.SUsPerPU = 1;
 	cfg.SUsPerRU = 1;
 	cfg.parityConfig = '0' + level;
@@ -1335,11 +1335,11 @@ rf_simple_create(int fd, int argc, char *argv[])
 	generic = &cfg;
 	do_ioctl(fd, RAIDFRAME_CONFIGURE, &generic, "RAIDFRAME_CONFIGURE");
 
-	if (level == 1 || level == 5) 
-		do_ioctl(fd, RAIDFRAME_REWRITEPARITY, NULL, 
+	if (level == 1 || level == 5)
+		do_ioctl(fd, RAIDFRAME_REWRITEPARITY, NULL,
 			 "RAIDFRAME_REWRITEPARITY");
 }
-	
+
 
 static void
 usage(void)
@@ -1367,7 +1367,7 @@ usage(void)
 	fprintf(stderr, "       %s [-v] -P dev\n", progname);
 	fprintf(stderr, "       %s [-v] -p dev\n", progname);
 	fprintf(stderr, "       %s [-v] -R component dev\n", progname);
-	fprintf(stderr, "       %s [-v] -r component dev\n", progname); 
+	fprintf(stderr, "       %s [-v] -r component dev\n", progname);
 	fprintf(stderr, "       %s [-v] -S dev\n", progname);
 	fprintf(stderr, "       %s [-v] -s dev\n", progname);
 	fprintf(stderr, "       %s [-v] -t config_file\n", progname);
