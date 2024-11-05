@@ -1,12 +1,12 @@
-/*	$NetBSD: msg_360.c,v 1.3 2024/08/31 06:57:31 rillig Exp $	*/
+/*	$NetBSD: msg_360.c,v 1.4 2024/11/05 06:23:04 rillig Exp $	*/
 # 3 "msg_360.c"
 
 // Test for message: missing new-style number base after '\177' [360]
 
 /*
  * The new-style format requires the number base as the second character.
- * This check is merely a byproduct of the implementation, it does not provide
- * much value on its own.
+ * This check is merely a byproduct of the implementation, it provides little
+ * value of its own.
  */
 
 /* lint1-extra-flags: -X 351 */

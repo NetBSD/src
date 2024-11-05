@@ -1,11 +1,11 @@
-/*	$NetBSD: msg_361.c,v 1.3 2024/08/31 06:57:31 rillig Exp $	*/
+/*	$NetBSD: msg_361.c,v 1.4 2024/11/05 06:23:04 rillig Exp $	*/
 # 3 "msg_361.c"
 
 // Test for message: number base '%.*s' is %ju, must be 8, 10 or 16 [361]
 
 /*
  * The first or second character of the snprintb format specifies the number
- * base.  It must be given in binary.
+ * base.  It must be given as an octal or hexadecimal escape sequence.
  */
 
 /* lint1-extra-flags: -X 351 */

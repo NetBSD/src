@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_363.c,v 1.6 2024/08/31 06:57:31 rillig Exp $	*/
+/*	$NetBSD: msg_363.c,v 1.7 2024/11/05 06:23:04 rillig Exp $	*/
 # 3 "msg_363.c"
 
 // Test for message: escaped character '%.*s' in description of conversion '%.*s' [363]
@@ -28,6 +28,18 @@ old_style_description(unsigned u32)
 	snprintb(buf, sizeof(buf),
 	    "\020"
 	    "\001non\tprint\nable\377",
+	    u32);
+
+	// In the new format, the description can technically contain
+	// arbitrary characters, but having non-printable characters would
+	// produce confusing output, so any escaped characters are suspicious
+	// of being unintended.
+	/* expect+6: warning: escaped character '\t' in description of conversion 'b\000non\t' [363] */
+	/* expect+5: warning: escaped character '\n' in description of conversion 'b\000non\tprint\n' [363] */
+	/* expect+4: warning: escaped character '\377' in description of conversion 'b\000non\tprint\nable\377' [363] */
+	snprintb(buf, sizeof(buf),
+	    "\177\020"
+	    "b\000non\tprint\nable\377\0",
 	    u32);
 
 	/* expect+10: warning: escaped character '\177' in description of conversion '\002""\177' [363] */

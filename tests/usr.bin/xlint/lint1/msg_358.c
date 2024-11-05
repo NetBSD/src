@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_358.c,v 1.3 2024/08/31 06:57:31 rillig Exp $	*/
+/*	$NetBSD: msg_358.c,v 1.4 2024/11/05 06:23:04 rillig Exp $	*/
 # 3 "msg_358.c"
 
 // Test for message: hex escape '%.*s' has more than 2 digits [358]
@@ -6,9 +6,13 @@
 /*
  * In the format argument of the snprintb and snprintb_m functions, a bit
  * position or field width is written as an octal or hexadecimal escape
- * sequence.  If the description that follows starts with hex digits (A-Fa-f),
- * these digits are still part of the escape sequence instead of the
- * description.
+ * sequence.  If the description that follows a hexadecimal escape sequence
+ * starts with hexadecimal digits (A-Fa-f), these digits are still part of the
+ * escape sequence instead of the description.
+ *
+ * All platforms supported by lint have 8-bit char, so using more than the
+ * maximum necessary 2 hexadecimal digits in an escape sequence is suspicious
+ * of being unintended.
  */
 
 /* lint1-extra-flags: -X 351 */
