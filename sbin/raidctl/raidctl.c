@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.85 2024/11/05 19:58:27 rillig Exp $   */
+/*      $NetBSD: raidctl.c,v 1.86 2024/11/05 20:07:41 rillig Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.85 2024/11/05 19:58:27 rillig Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.86 2024/11/05 20:07:41 rillig Exp $");
 #endif
 
 
@@ -259,7 +259,7 @@ main(int argc,char *argv[])
 			/* XXXjld: should rf_pm_configure do the strtol()s? */
 			i = 0;
 			while (i < 3 && optind < argc &&
-			    isdigit((int)argv[optind][0]))
+			    isdigit((unsigned char)argv[optind][0]))
 				parityparams[i++] = xstrtouint(argv[optind++]);
 			while (i < 3)
 				parityparams[i++] = 0;
@@ -464,25 +464,18 @@ device_status(RF_DiskStatus_t status)
 	switch (status) {
 	case rf_ds_optimal:
 		return ("optimal");
-		break;
 	case rf_ds_failed:
 		return ("failed");
-		break;
 	case rf_ds_reconstructing:
 		return ("reconstructing");
-		break;
 	case rf_ds_dist_spared:
 		return ("dist_spared");
-		break;
 	case rf_ds_spared:
 		return ("spared");
-		break;
 	case rf_ds_spare:
 		return ("spare");
-		break;
 	case rf_ds_used_spare:
 		return ("used_spare");
-		break;
 	default:
 		return ("UNKNOWN");
 	}
