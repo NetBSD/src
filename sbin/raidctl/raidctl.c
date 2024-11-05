@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.83 2024/02/10 09:21:52 andvar Exp $   */
+/*      $NetBSD: raidctl.c,v 1.84 2024/11/05 19:52:18 rillig Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.83 2024/02/10 09:21:52 andvar Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.84 2024/11/05 19:52:18 rillig Exp $");
 #endif
 
 
@@ -179,7 +179,7 @@ main(int argc,char *argv[])
 	}
 		
 	while ((ch = getopt(argc, argv,
-	    "a:A:Bc:C:f:F:g:GiI:l:LmM:r:R:sSpPt:uU:v")) != -1)
+	    "a:A:c:C:f:F:g:GiI:l:LmM:r:R:sSpPt:uU:v")) != -1)
 		switch (ch) {
 		case 'a':
 			action = RAIDFRAME_ADD_HOT_SPARE;
