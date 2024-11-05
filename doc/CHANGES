@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3112 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3113 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -569,7 +569,23 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		[skrll 20241023]
 	mdnsd(8), dns-sd(1), libdns_sd: import mDNSResponder 2559.1.1
 		[christos 20241026]
+	makefs(8): Document debugging options and allow specifying them
+		by name.  [christos 20241027]
 	zstd(1): import 1.5.6 [christos 20241028]
+	env(1): Implement "env -C dir" to change the current working directory.
+		[kim 20241028]
+	c17(1): Add c17(1) wrapper script for gcc with the ISO 2017 C standard.
+		Required by POSIX.1-2024.  [nia 20241028]
 	tzdata: Updated to 2024b (using 2024bgtz) [kre 20241029]
+	riscv: Import Linux 6.11.5 RISC-V DTS [skrll 20241031]
+	libc: Add ffsl(3), ffsll(3) for POSIX.1-2024 complicance.
+		[riastradh 20241101]
+	memset_explicit(3): Add C23 alias for explicit_memset.
+		[riastradh 20241102]
+	libc: Expose previously non-standard functions to POSIX.1-2024
+		applications.  [nia 20241102]
+	zfs(8): Implement DIOCCACHESYNC in zvol, used by Xen.  [gdt 20241103]
+	gpt(8): Additions to guid printing and an option to print start/size
+		in hex (from Anon Ymous).  [christos 20241104]
 	ds2482ow: Driver for the Maxim DS2482-100 and DS2482-800 I2C
 		to 1-Wire bridge chip.  [brad 20241104]
