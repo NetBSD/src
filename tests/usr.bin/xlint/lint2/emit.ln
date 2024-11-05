@@ -1,4 +1,4 @@
-# $NetBSD: emit.ln,v 1.6 2022/10/01 10:04:06 rillig Exp $
+# $NetBSD: emit.ln,v 1.7 2024/11/05 04:53:28 rillig Exp $
 #
 # Test emitting a lint library file.
 
@@ -53,8 +53,8 @@ S expr_promote.c
 0 d 0.0 d 17var_unsigned_long uL
 0 d 0.0 d 20var_signed_long_long Q
 0 d 0.0 d 22var_unsigned_long_long uQ
-# see emit_lp64 for __int128_t
-# see emit_lp64 for __uint128_t
+# see emit_lp64.c for __int128_t
+# see emit_lp64.c for __uint128_t
 0 d 0.0 d 9var_float sD
 0 d 0.0 d 10var_double D
 0 d 0.0 d 15var_long_double lD

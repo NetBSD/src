@@ -1,4 +1,4 @@
-# $NetBSD: read.ln,v 1.8 2023/08/02 18:51:25 rillig Exp $
+# $NetBSD: read.ln,v 1.9 2024/11/05 04:53:28 rillig Exp $
 #
 # Cover each path of reading declarations, definitions and usages.
 
@@ -25,8 +25,8 @@ S read.c
 112 d 0.112 e 4f112 F0 uL	# ULONG		unsigned long	f112(void);
 113 d 0.113 e 4f113 F0 Q	# LLONG		long long	f113(void);
 114 d 0.114 e 4f114 F0 uQ	# ULLONG	unsigned long long f114(void);
-# INT128	works only in 64-bit mode, see read_lp64.
-# UINT128	works only in 64-bit mode, see read_lp64.
+# INT128	works only in 64-bit mode, see read_lp64.ln.
+# UINT128	works only in 64-bit mode, see read_lp64.ln.
 117 d 0.117 e 4f117 F0 sD	# FLOAT		float		f117(void);
 118 d 0.118 e 4f118 F0 D	# DOUBLE	double		f118(void);
 119 d 0.119 e 4f119 F0 lD	# LDOUBLE	long double	f119(void);

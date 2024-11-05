@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_promote_trad.c,v 1.4 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: expr_promote_trad.c,v 1.5 2024/11/05 04:53:28 rillig Exp $	*/
 # 3 "expr_promote_trad.c"
 
 /*
@@ -47,7 +47,7 @@ caller(arg)
 	    arg->unsigned_long,
 	    arg->single_floating,	/* gets promoted to 'double' */
 	    arg->double_floating,
-	    arg->enumerator);
+	    arg->enumerator);		/* should get promoted to 'int' */
 }
 
 /*

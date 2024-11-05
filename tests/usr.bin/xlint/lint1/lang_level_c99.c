@@ -1,4 +1,4 @@
-/*	$NetBSD: lang_level_c99.c,v 1.5 2024/06/08 13:50:47 rillig Exp $	*/
+/*	$NetBSD: lang_level_c99.c,v 1.6 2024/11/05 04:53:28 rillig Exp $	*/
 # 3 "lang_level_c99.c"
 
 /*
@@ -162,7 +162,7 @@ compound_literal(void)
 
 // [x] designated initializers
 //
-// See d_c99_init.c.
+// See init_c99.c.
 
 // [x] // comments
 //

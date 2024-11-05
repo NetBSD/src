@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_long.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: platform_long.c,v 1.6 2024/11/05 04:53:28 rillig Exp $	*/
 # 3 "platform_long.c"
 
 /*
@@ -17,10 +17,9 @@ convert_unsigned_char_to_size(unsigned char uc)
 {
 	/*
 	 * In this function call, uc is first promoted to INT. It is then
-	 * converted to size_t, which is ULONG. The portable bit size of INT
-	 * is 24 (see INT_RSIZE in inittyp.c), which is less than the 32 of
-	 * ULONG. Since the portable bit size increases from 24 to 32, there
-	 * is no warning.
+	 * converted to size_t, which is ULONG. The portable rank of INT
+	 * (see INT_RANK in inittyp.c) is lower than the rank of ULONG.
+	 * Since the portable rank increases, there is no warning.
 	 *
 	 * XXX: Investigate whether this rule makes sense. Warning 259 is
 	 * about prototype mismatch, not about lossy integer conversions,
