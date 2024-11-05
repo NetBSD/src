@@ -1,4 +1,4 @@
-/*	$NetBSD: etsecreg.h,v 1.11 2024/02/26 20:20:01 andvar Exp $	*/
+/*	$NetBSD: etsecreg.h,v 1.12 2024/11/05 22:00:30 andvar Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@ struct txbd {
 #define	TXFCB_TUP	0x1000	/* Layer 4 is TCP or UDP */
 #define	TXFCB_UDP	0x0800	/* UDP at layer 4 */
 #define	TXFCB_CIP	0x0400	/* Checksum IP header enable */
-#define	TXFCB_CTU	0x0200	/* Checksum TCP or UCP header enable */
+#define	TXFCB_CTU	0x0200	/* Checksum TCP or UDP header enable */
 #define	TXFCB_NPH	0x0100	/* No std Pseudo-Header checksum, use phcs */
 
 struct txfcb {

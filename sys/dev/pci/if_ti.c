@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.124 2024/07/05 04:31:51 rin Exp $ */
+/* $NetBSD: if_ti.c,v 1.125 2024/11/05 22:00:30 andvar Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -48,7 +48,7 @@
  * The Alteon Networks Tigon chip contains an embedded R4000 CPU,
  * gigabit MAC, dual DMA channels and a PCI interface unit. NICs
  * using the Tigon may have anywhere from 512K to 2MB of SRAM. The
- * Tigon supports hardware IP, TCP and UCP checksumming, multicast
+ * Tigon supports hardware IP, TCP and UDP checksumming, multicast
  * filtering and jumbo (9014 byte) frames. The hardware is largely
  * controlled by firmware, which must be loaded into the NIC during
  * initialization.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.124 2024/07/05 04:31:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.125 2024/11/05 22:00:30 andvar Exp $");
 
 #include "opt_inet.h"
 
