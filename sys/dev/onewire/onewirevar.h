@@ -1,4 +1,4 @@
-/* $NetBSD: onewirevar.h,v 1.6 2019/11/30 23:04:12 ad Exp $ */
+/* $NetBSD: onewirevar.h,v 1.7 2024/11/06 19:40:11 riastradh Exp $ */
 /*	$OpenBSD: onewirevar.h,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -19,6 +19,8 @@
 
 #ifndef _DEV_ONEWIRE_ONEWIREVAR_H_
 #define _DEV_ONEWIRE_ONEWIREVAR_H_
+
+#include <sys/types.h>
 
 /*
  * 1-Wire bus interface.
@@ -47,7 +49,7 @@ void		onewire_write_byte(void *, int);
 int		onewire_triplet(void *, int);
 void		onewire_read_block(void *, void *, int);
 void		onewire_write_block(void *, const void *, int);
-void		onewire_matchrom(void *, u_int64_t);
+void		onewire_matchrom(void *, uint64_t);
 
 /* Bus attachment */
 struct onewirebus_attach_args {
@@ -59,7 +61,7 @@ int	onewirebus_print(void *, const char *);
 /* Device attachment */
 struct onewire_attach_args {
 	void *			oa_onewire;
-	u_int64_t		oa_rom;
+	uint64_t		oa_rom;
 };
 
 /* Family matching */
