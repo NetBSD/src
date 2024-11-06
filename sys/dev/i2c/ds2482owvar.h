@@ -1,4 +1,4 @@
-/*	$NetBSD: ds2482owvar.h,v 1.2 2024/11/06 15:49:36 riastradh Exp $	*/
+/*	$NetBSD: ds2482owvar.h,v 1.3 2024/11/06 19:42:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -18,6 +18,14 @@
 
 #ifndef _DEV_I2C_DS2482VAR_H_
 #define _DEV_I2C_DS2482VAR_H_
+
+#include <sys/types.h>
+
+#include <sys/device_if.h>
+#include <sys/mutex.h>
+
+#include <dev/i2c/i2cvar.h>
+#include <dev/onewire/onewirevar.h>
 
 #define DS2482_NUM_INSTANCES	8
 
