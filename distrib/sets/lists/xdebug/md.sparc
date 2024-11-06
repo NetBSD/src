@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.24 2024/11/04 02:27:47 mrg Exp $
+# $NetBSD: md.sparc,v 1.25 2024/11/06 04:44:12 rin Exp $
 #
 ./usr/X11R7/lib/modules/extensions/libcfb32_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb_g.a		xdebug-obsolete	xorg,obsolete
@@ -75,7 +75,6 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mga_drv.so.2.debug		xdebug-xf86-video-mga-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mouse_drv.so.1.debug	xdebug-xf86-input-mouse-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/pnozz_drv.so.0.debug	-unknown-	xorg,debug,xorg_server_ver=120
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/pnozz_drv.so.0.debug	xdebug-obsolete	xorg,obsolete,xorg_server_ver=120
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/r128_drv.so.6.debug	xdebug-xf86-video-r128-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeon_drv.so.6.debug	xdebug-xf86-video-radeon-kms-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/suncg14_drv.so.1.debug	xdebug-xf86-video-suncg14-debug	xorg,debug
