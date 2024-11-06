@@ -1,4 +1,4 @@
-/*	$NetBSD: ds2482ow.c,v 1.1 2024/11/04 20:43:38 brad Exp $	*/
+/*	$NetBSD: ds2482ow.c,v 1.2 2024/11/06 15:49:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -17,24 +17,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds2482ow.c,v 1.1 2024/11/04 20:43:38 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds2482ow.c,v 1.2 2024/11/06 15:49:36 riastradh Exp $");
 
 /*
-  Driver for the DS2482-100 and DS2482-800 I2C to Onewire bridge
-*/
+ * Driver for the DS2482-100 and DS2482-800 I2C to Onewire bridge
+ */
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/device.h>
-#include <sys/module.h>
-#include <sys/sysctl.h>
-#include <sys/mutex.h>
 
-#include <dev/i2c/i2cvar.h>
-#include <dev/onewire/onewirevar.h>
+#include <sys/device.h>
+#include <sys/kernel.h>
+#include <sys/module.h>
+#include <sys/mutex.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+
 #include <dev/i2c/ds2482owreg.h>
 #include <dev/i2c/ds2482owvar.h>
+#include <dev/i2c/i2cvar.h>
+#include <dev/onewire/onewirevar.h>
 
 #define DS2482_ONEWIRE_SINGLE_BIT_READ	0xF7 /* Artifical */
 #define DS2482_ONEWIRE_SINGLE_BIT_WRITE	0xF8 /* Artifical */
@@ -55,28 +56,27 @@ static int	ds2482_ow_triplet(void *, int);
 #define DS2482_DEBUG
 
 #ifdef DS2482_DEBUG
-#define DPRINTF(s, l, x) \
-    do { \
-	if (l <= s->sc_ds2482debug) \
-	    aprint_normal x; \
-    } while (/*CONSTCOND*/0)
+#define DPRINTF(s, l, x)						      \
+	do {								      \
+		if (l <= s->sc_ds2482debug)				      \
+			aprint_normal x;				      \
+	} while (/*CONSTCOND*/0)
 #else
-#define DPRINTF(s, l, x)
+#define DPRINTF(s, l, x)	__nothing
 #endif
 
 #ifdef DS2482_DEBUG
-#define DPRINTF2(dl, l, x)			\
-    do { \
-	if (l <= dl) \
-	    aprint_normal x; \
-    } while (/*CONSTCOND*/0)
+#define DPRINTF2(dl, l, x)						      \
+	do {								      \
+		if (l <= dl)						      \
+			aprint_normal x;				      \
+	} while (/*CONSTCOND*/0)
 #else
-#define DPRINTF2(dl, l, x)
+#define DPRINTF2(dl, l, x)	__nothing
 #endif
 
 CFATTACH_DECL_NEW(ds2482ow, sizeof(struct ds2482ow_sc),
     ds2482_match, ds2482_attach, ds2482_detach, NULL);
-
 
 #define DS2482_QUICK_DELAY 18
 #define DS2482_SLOW_DELAY 35
@@ -111,22 +111,24 @@ ds2482_set_pullup(i2c_tag_t tag, i2c_addr_t addr, bool activepullup,
 	uint8_t pu = 0;
 	uint8_t pux;
 
-	if (activepullup == true)
+	if (activepullup)
 		pu = pu | DS2482_CONFIG_APU;
-	if (strongpullup == true)
+	if (strongpullup)
 		pu = pu | DS2482_CONFIG_SPU;
 
-	/* The Write Config command wants the top bits of the config buffer to be
-	 * the ones complement of the lower bits.
+	/*
+	 * The Write Config command wants the top bits of the config
+	 * buffer to be the ones complement of the lower bits.
 	 */
 
 	pux = ~(pu << 4);
 	pux = pux & 0xf0;
 	pu = pu | pux;
 
-	error = iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, &cmd, 1, &pu, 1, 0);
-
-	DPRINTF2(debuglevel, 4, ("ds2482_set_pullup: pu: %02x ; error: %x %d\n", pu, error, error));
+	error = iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, &cmd, 1, &pu, 1,
+	    0);
+	DPRINTF2(debuglevel, 4, ("ds2482_set_pullup: pu: %02x; error: %x %d\n",
+	    pu, error, error));
 
 	return error;
 }
@@ -142,20 +144,25 @@ ds2482_wait_with_status(i2c_tag_t tag, i2c_addr_t addr, uint8_t *status,
 
 	xcmd = DS2482_SET_READ_POINTER;
 	xbuf = DS2482_REGISTER_STATUS;
-	if (set_pointer == true)
-		error = iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, &xcmd, 1, &xbuf, 1, 0);
-	if (! error) {
-		error = iic_exec(tag, I2C_OP_READ, addr, NULL, 0, status, 1, 0);
-		if ((*status & DS2482_STATUS_1WB) && (! error)) {
+	if (set_pointer) {
+		error = iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, &xcmd, 1,
+		    &xbuf, 1, 0);
+	}
+	if (!error) {
+		error = iic_exec(tag, I2C_OP_READ, addr, NULL, 0, status, 1,
+		    0);
+		if ((*status & DS2482_STATUS_1WB) && !error) {
 			do {
 				delay(d);
-				error = iic_exec(tag, I2C_OP_READ, addr, NULL, 0, status, 1, 0);
-			} while ((*status & DS2482_STATUS_1WB) &&
-			    (! error));
+				error = iic_exec(tag, I2C_OP_READ, addr,
+				    NULL, 0, status, 1, 0);
+			} while ((*status & DS2482_STATUS_1WB) && !error);
 		}
 	}
 
-	DPRINTF2(debuglevel, 5, ("ds2482_wait_with_status: end ; status: %02x %d ; error: %x %d\n", *status, *status, error, error));
+	DPRINTF2(debuglevel, 5,
+	    ("ds2482_wait_with_status: end ; status: %02x %d ; error: %x %d\n",
+	    *status, *status, error, error));
 
 	return error;
 }
@@ -170,8 +177,10 @@ ds2482_cmd(i2c_tag_t tag, i2c_addr_t addr, uint8_t *cmd,
 	uint8_t xbuf;
 
 	switch (*cmd) {
-		/* The datasheet says that none of these are effected by what sort of pullup
-		 * is set and only the Write Config command needs to happen when idle.
+		/*
+		 * The datasheet says that none of these are effected
+		 * by what sort of pullup is set and only the Write
+		 * Config command needs to happen when idle.
 		 */
 	case DS2482_SET_READ_POINTER:
 	case DS2482_WRITE_CONFIG:
@@ -179,76 +188,93 @@ ds2482_cmd(i2c_tag_t tag, i2c_addr_t addr, uint8_t *cmd,
 		KASSERT(cmdarg != NULL);
 
 		error = 0;
-
-		if (*cmd == DS2482_WRITE_CONFIG)
-			error = ds2482_wait_with_status(tag, addr, &xbuf, DS2482_QUICK_DELAY, true, debuglevel);
-
-		if (! error)
-			error = iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, cmd, 1, cmdarg, 1, 0);
-
-		DPRINTF2(debuglevel, 4, ("ds2482_cmd: cmd: %02x ; error: %x %d\n", *cmd, error, error));
-
+		if (*cmd == DS2482_WRITE_CONFIG) {
+			error = ds2482_wait_with_status(tag, addr, &xbuf,
+			    DS2482_QUICK_DELAY, /*set_pointer*/true,
+			    debuglevel);
+		}
+		if (!error) {
+			error = iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr,
+			    cmd, 1, cmdarg, 1, 0);
+		}
+		DPRINTF2(debuglevel, 4,
+		    ("ds2482_cmd: cmd: %02x ; error: %x %d\n",
+		    *cmd, error, error));
 		break;
-
 
 	case DS2482_DEVICE_RESET:
 	case DS2482_ONEWIRE_RESET:
-		/* Device reset resets everything, including pullup
-		 * configuration settings, but that doesn't matter as we will
-		 * always set the config before doing anything that actions on
-		 * the 1-Wire bus.
+		/*
+		 * Device reset resets everything, including pullup
+		 * configuration settings, but that doesn't matter as
+		 * we will always set the config before doing anything
+		 * that actions on the 1-Wire bus.
 		 *
-		 * The data sheet warns about using the strong pull up feature
-		 * with a 1-Wire reset, so we will simply not allow that
-		 * combination.
+		 * The data sheet warns about using the strong pull up
+		 * feature with a 1-Wire reset, so we will simply not
+		 * allow that combination.
 		 *
-		 * The data sheet does not mention if the 1-Wire reset effects
-		 * just a single channel all channels.  It seems likely that it
-		 * is the currently active channel, and the driver works on that
-		 * assumption.
-		*/
-
+		 * The data sheet does not mention if the 1-Wire reset
+		 * effects just a single channel all channels.  It
+		 * seems likely that it is the currently active
+		 * channel, and the driver works on that assumption.
+		 */
 		error = 0;
 		if (*cmd == DS2482_ONEWIRE_RESET) {
-			error = ds2482_wait_with_status(tag, addr, &xbuf, DS2482_QUICK_DELAY, true, debuglevel);
-			if (! error)
-				error = ds2482_set_pullup(tag, addr, activepullup, false, debuglevel);
+			error = ds2482_wait_with_status(tag, addr, &xbuf,
+			    DS2482_QUICK_DELAY, /*set_pointer*/true,
+			    debuglevel);
+			if (!error) {
+				error = ds2482_set_pullup(tag, addr,
+				    activepullup, /*strongpullup*/false,
+				    debuglevel);
+			}
 		}
-
-		if (! error)
-			error = iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, cmd, 1, NULL, 0, 0);
-
-		DPRINTF2(debuglevel, 4, ("ds2482_cmd: cmd: %02x ; error: %x %d\n", *cmd, error, error));
-
+		if (!error) {
+			error = iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr,
+			    cmd, 1, NULL, 0, 0);
+		}
+		DPRINTF2(debuglevel, 4,
+		    ("ds2482_cmd: cmd: %02x ; error: %x %d\n",
+		    *cmd, error, error));
 		if (*cmd == DS2482_DEVICE_RESET)
 			delay(1);
 		if (*cmd == DS2482_ONEWIRE_RESET)
 			delay(1300);
-
 		break;
 
 	case DS2482_ONEWIRE_SINGLE_BIT_WRITE:
 		KASSERT(cmdarg != NULL);
 
-		DPRINTF2(debuglevel, 4, ("ds2482_cmd: DS2482_ONEWIRE_SINGLE_BIT_WRITE: cmdarg: %02x %d\n", *cmdarg, *cmdarg));
+		DPRINTF2(debuglevel, 4,
+		    ("ds2482_cmd: DS2482_ONEWIRE_SINGLE_BIT_WRITE:"
+		    " cmdarg: %02x %d\n", *cmdarg, *cmdarg));
 
 		xcmd = DS2482_SET_READ_POINTER;
 		xbuf = DS2482_REGISTER_STATUS;
-		error = iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, &xcmd, 1, &xbuf, 1, 0);
-		if (! error)
-			error = ds2482_wait_with_status(tag, addr, &xbuf, DS2482_QUICK_DELAY, false, debuglevel);
-
-		if (! error) {
+		error = iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, &xcmd, 1,
+		    &xbuf, 1, 0);
+		if (!error) {
+			error = ds2482_wait_with_status(tag, addr, &xbuf,
+			    DS2482_QUICK_DELAY, /*set_pointer*/false,
+			    debuglevel);
+		}
+		if (!error) {
 			xcmd = DS2482_ONEWIRE_SINGLE_BIT;
 			xbuf = DS2482_ONEWIRE_BIT_ZERO;
 			if (*cmdarg & 0x01)
 				xbuf = DS2482_ONEWIRE_BIT_ONE;
-			error = ds2482_set_pullup(tag, addr, activepullup, strongpullup, debuglevel);
-			if (! error)
-				error = iic_exec(tag, I2C_OP_WRITE, addr, &xcmd, 1, &xbuf, 1, 0);
-			if (! error) {
+			error = ds2482_set_pullup(tag, addr,
+			    activepullup, strongpullup, debuglevel);
+			if (!error) {
+				error = iic_exec(tag, I2C_OP_WRITE, addr,
+				    &xcmd, 1, &xbuf, 1, 0);
+			}
+			if (!error) {
 				xbuf = 0xff;
-				error = ds2482_wait_with_status(tag, addr, &xbuf, DS2482_SLOW_DELAY, false, debuglevel);
+				error = ds2482_wait_with_status(tag, addr,
+				    &xbuf, DS2482_SLOW_DELAY,
+				    /*set_pointer*/false, debuglevel);
 			}
 		}
 		break;
@@ -257,25 +283,35 @@ ds2482_cmd(i2c_tag_t tag, i2c_addr_t addr, uint8_t *cmd,
 		KASSERT(obuf != NULL);
 		KASSERT(obuflen == 1);
 
-		DPRINTF2(debuglevel, 4, ("ds2482_cmd: DS2482_ONEWIRE_SINGLE_BIT_READ\n"));
+		DPRINTF2(debuglevel, 4,
+		    ("ds2482_cmd: DS2482_ONEWIRE_SINGLE_BIT_READ\n"));
 
 		xcmd = DS2482_SET_READ_POINTER;
 		xbuf = DS2482_REGISTER_STATUS;
-		error = iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, &xcmd, 1, &xbuf, 1, 0);
-		if (! error)
-			error = ds2482_wait_with_status(tag, addr, &xbuf, DS2482_QUICK_DELAY, false, debuglevel);
-
-		if (! error) {
+		error = iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, &xcmd, 1,
+		    &xbuf, 1, 0);
+		if (!error) {
+			error = ds2482_wait_with_status(tag, addr, &xbuf,
+			    DS2482_QUICK_DELAY, /*set_pointer*/false,
+			    debuglevel);
+		}
+		if (!error) {
 			xcmd = DS2482_ONEWIRE_SINGLE_BIT;
 			xbuf = DS2482_ONEWIRE_BIT_ONE;
-			error = ds2482_set_pullup(tag, addr, activepullup, strongpullup, debuglevel);
-			if (! error)
-				error = iic_exec(tag, I2C_OP_WRITE, addr, &xcmd, 1, &xbuf, 1, 0);
-			if (! error) {
+			error = ds2482_set_pullup(tag, addr,
+			    activepullup, strongpullup, debuglevel);
+			if (!error) {
+				error = iic_exec(tag, I2C_OP_WRITE, addr,
+				    &xcmd, 1, &xbuf, 1, 0);
+			}
+			if (!error) {
 				xbuf = 0xff;
-				error = ds2482_wait_with_status(tag, addr, &xbuf, DS2482_SLOW_DELAY, false, debuglevel);
-				if (! error) {
-					*obuf = (xbuf & DS2482_STATUS_SBR) >> DS2482_STATUS_SBR_SHIFT;
+				error = ds2482_wait_with_status(tag, addr,
+				    &xbuf, DS2482_SLOW_DELAY,
+				    /*set_pointer*/false, debuglevel);
+				if (!error) {
+					*obuf = (xbuf & DS2482_STATUS_SBR) >>
+					    DS2482_STATUS_SBR_SHIFT;
 				}
 			}
 		}
@@ -284,21 +320,31 @@ ds2482_cmd(i2c_tag_t tag, i2c_addr_t addr, uint8_t *cmd,
 	case DS2482_ONEWIRE_WRITE_BYTE:
 		KASSERT(cmdarg != NULL);
 
-		DPRINTF2(debuglevel, 4, ("ds2482_cmd: DS2482_ONEWIRE_WRITE_BYTE: cmdarg: %02x %d\n", *cmdarg, *cmdarg));
+		DPRINTF2(debuglevel, 4,
+		    ("ds2482_cmd: DS2482_ONEWIRE_WRITE_BYTE:"
+		    " cmdarg: %02x %d\n", *cmdarg, *cmdarg));
 
 		xcmd = DS2482_SET_READ_POINTER;
 		xbuf = DS2482_REGISTER_STATUS;
-		error = iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, &xcmd, 1, &xbuf, 1, 0);
-		if (! error)
-			error = ds2482_wait_with_status(tag, addr, &xbuf, DS2482_QUICK_DELAY, false, debuglevel);
-
-		if (! error) {
-			error = ds2482_set_pullup(tag, addr, activepullup, strongpullup, debuglevel);
-			if (! error)
-				error = iic_exec(tag, I2C_OP_WRITE, addr, cmd, 1, cmdarg, 1, 0);
-			if (! error) {
+		error = iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, &xcmd, 1,
+		    &xbuf, 1, 0);
+		if (!error) {
+			error = ds2482_wait_with_status(tag, addr, &xbuf,
+			    DS2482_QUICK_DELAY, /*set_pointer*/false,
+			    debuglevel);
+		}
+		if (!error) {
+			error = ds2482_set_pullup(tag, addr,
+			    activepullup, strongpullup, debuglevel);
+			if (!error) {
+				error = iic_exec(tag, I2C_OP_WRITE, addr,
+				    cmd, 1, cmdarg, 1, 0);
+			}
+			if (!error) {
 				xbuf = 0xff;
-				error = ds2482_wait_with_status(tag, addr, &xbuf, DS2482_SLOW_DELAY, false, debuglevel);
+				error = ds2482_wait_with_status(tag, addr,
+				    &xbuf, DS2482_SLOW_DELAY,
+				    /*set_pointer*/false, debuglevel);
 			}
 		}
 		break;
@@ -307,29 +353,43 @@ ds2482_cmd(i2c_tag_t tag, i2c_addr_t addr, uint8_t *cmd,
 		KASSERT(obuf != NULL);
 		KASSERT(obuflen == 1);
 
-		DPRINTF2(debuglevel, 4, ("ds2482_cmd: DS2482_ONEWIRE_READ_BYTE\n"));
+		DPRINTF2(debuglevel, 4,
+		    ("ds2482_cmd: DS2482_ONEWIRE_READ_BYTE\n"));
 
 		xcmd = DS2482_SET_READ_POINTER;
 		xbuf = DS2482_REGISTER_STATUS;
-		error = iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, &xcmd, 1, &xbuf, 1, 0);
-		if (! error)
-			error = ds2482_wait_with_status(tag, addr, &xbuf, DS2482_QUICK_DELAY, false, debuglevel);
-
-		if (! error) {
-			error = ds2482_set_pullup(tag, addr, activepullup, strongpullup, debuglevel);
-			if (! error)
-				error = iic_exec(tag, I2C_OP_WRITE, addr, cmd, 1, NULL, 0, 0);
-			if (! error) {
+		error = iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, &xcmd, 1,
+		    &xbuf, 1, 0);
+		if (!error) {
+			error = ds2482_wait_with_status(tag, addr, &xbuf,
+			    DS2482_QUICK_DELAY, /*set_pointer*/false,
+			    debuglevel);
+		}
+		if (!error) {
+			error = ds2482_set_pullup(tag, addr,
+			    activepullup, strongpullup, debuglevel);
+			if (!error) {
+				error = iic_exec(tag, I2C_OP_WRITE, addr,
+				    cmd, 1, NULL, 0, 0);
+			}
+			if (!error) {
 				xbuf = 0xff;
-				error = ds2482_wait_with_status(tag, addr, &xbuf, DS2482_SLOW_DELAY, false, debuglevel);
-				if (! error) {
+				error = ds2482_wait_with_status(tag, addr,
+				    &xbuf, DS2482_SLOW_DELAY,
+				    /*set_pointer*/false, debuglevel);
+				if (!error) {
 					xcmd = DS2482_SET_READ_POINTER;
 					xbuf = DS2482_REGISTER_DATA;
-					error = iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, &xcmd, 1, &xbuf, 1, 0);
-					if (! error) {
+					error = iic_exec(tag,
+					    I2C_OP_WRITE_WITH_STOP, addr,
+					    &xcmd, 1, &xbuf, 1, 0);
+					if (!error) {
 						xbuf = 0xff;
-						error = iic_exec(tag, I2C_OP_READ_WITH_STOP, addr, NULL, 0, &xbuf, 1, 0);
-						if (! error) {
+						error = iic_exec(tag,
+						    I2C_OP_READ_WITH_STOP,
+						    addr, NULL, 0,
+						    &xbuf, 1, 0);
+						if (!error) {
 							*obuf = xbuf;
 						}
 					}
@@ -343,30 +403,48 @@ ds2482_cmd(i2c_tag_t tag, i2c_addr_t addr, uint8_t *cmd,
 		KASSERT(obuf != NULL);
 		KASSERT(obuflen == 1);
 
-		DPRINTF2(debuglevel, 4, ("ds2482_cmd: DS2482_ONEWIRE_TRIPLET: cmdarg: %02x %d\n", *cmdarg, *cmdarg));
+		DPRINTF2(debuglevel, 4,
+		    ("ds2482_cmd: DS2482_ONEWIRE_TRIPLET: cmdarg: %02x %d\n",
+		    *cmdarg, *cmdarg));
 
 		xcmd = DS2482_SET_READ_POINTER;
 		xbuf = DS2482_REGISTER_STATUS;
-		error = iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, &xcmd, 1, &xbuf, 1, 0);
-		if (! error)
-			error = ds2482_wait_with_status(tag, addr, &xbuf, DS2482_QUICK_DELAY, false, debuglevel);
-
-		if (! error) {
+		error = iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, &xcmd, 1,
+		    &xbuf, 1, 0);
+		if (!error) {
+			error = ds2482_wait_with_status(tag, addr, &xbuf,
+			    DS2482_QUICK_DELAY, /*set_pointer*/false,
+			    debuglevel);
+		}
+		if (!error) {
 			xbuf = DS2482_TRIPLET_DIR_ZERO;
 			if (*cmdarg & 0x01) {
 				xbuf = DS2482_TRIPLET_DIR_ONE;
 			}
-			error = ds2482_set_pullup(tag, addr, activepullup, strongpullup, debuglevel);
-			if (! error)
-				error = iic_exec(tag, I2C_OP_WRITE, addr, cmd, 1, &xbuf, 1, 0);
-			if (! error) {
+			error = ds2482_set_pullup(tag, addr,
+			    activepullup, strongpullup, debuglevel);
+			if (!error) {
+				error = iic_exec(tag, I2C_OP_WRITE, addr,
+				    cmd, 1, &xbuf, 1, 0);
+			}
+			if (!error) {
 				xbuf = 0xff;
-				error = ds2482_wait_with_status(tag, addr, &xbuf, DS2482_SLOW_DELAY, false, debuglevel);
-				if (! error) {
-					/* This is undocumented anywhere I could find, but what has to be returned is
-					 * 0x01 is the triplet path was taken, 0x02 is the Not-triplet path was taken,
-					 * and 0x00 is neither was taken.  The DIR bit in the status of the DS2482 may
-					 * help with this some, but what is below seems to work.
+				error = ds2482_wait_with_status(tag, addr,
+				    &xbuf, DS2482_SLOW_DELAY,
+				    /*set_pointer*/false, debuglevel);
+				if (!error) {
+					/*
+					 * This is undocumented
+					 * anywhere I could find, but
+					 * what has to be returned is
+					 * 0x01 is the triplet path was
+					 * taken, 0x02 is the
+					 * Not-triplet path was taken,
+					 * and 0x00 is neither was
+					 * taken.  The DIR bit in the
+					 * status of the DS2482 may
+					 * help with this some, but
+					 * what is below seems to work.
 					 */
 					*obuf = 0;
 					if (xbuf & DS2482_STATUS_TSB) {
@@ -379,7 +457,6 @@ ds2482_cmd(i2c_tag_t tag, i2c_addr_t addr, uint8_t *cmd,
 				}
 			}
 		}
-
 		break;
 
 	default:
@@ -391,11 +468,14 @@ ds2482_cmd(i2c_tag_t tag, i2c_addr_t addr, uint8_t *cmd,
 }
 
 static int
-ds2482_cmdr(struct ds2482ow_sc *sc, uint8_t cmd, uint8_t cmdarg, uint8_t *buf, size_t blen)
+ds2482_cmdr(struct ds2482ow_sc *sc, uint8_t cmd, uint8_t cmdarg,
+    uint8_t *buf, size_t blen)
 {
+
 	DPRINTF(sc, 3, ("%s: ds2482_cmdr: cmd: %02x\n",
 	    device_xname(sc->sc_dev), cmd));
-	return ds2482_cmd(sc->sc_tag, sc->sc_addr, &cmd, &cmdarg, buf, blen, sc->sc_activepullup, sc->sc_strongpullup, sc->sc_ds2482debug);
+	return ds2482_cmd(sc->sc_tag, sc->sc_addr, &cmd, &cmdarg, buf, blen,
+	    sc->sc_activepullup, sc->sc_strongpullup, sc->sc_ds2482debug);
 }
 
 static const uint8_t ds2482_channels[] = {
@@ -416,8 +496,10 @@ ds2482_set_channel(struct ds2482ow_sc *sc, int channel)
 
 	KASSERT(channel >= 0 && channel < DS2482_NUM_INSTANCES);
 
-	if (sc->sc_is_800 == true)
-		error = ds2482_cmdr(sc, DS2482_SELECT_CHANNEL, ds2482_channels[channel], NULL, 0);
+	if (sc->sc_is_800) {
+		error = ds2482_cmdr(sc, DS2482_SELECT_CHANNEL,
+		    ds2482_channels[channel], NULL, 0);
+	}
 
 	return error;
 }
@@ -430,7 +512,8 @@ ds2482_poke(i2c_tag_t tag, i2c_addr_t addr, bool matchdebug)
 	uint8_t obuf;
 	int error;
 
-	error = ds2482_cmd(tag, addr, &reg, &rbuf, &obuf, 1, false, false, 0);
+	error = ds2482_cmd(tag, addr, &reg, &rbuf, &obuf, 1,
+	    /*activepullup*/false, /*strongpullup*/false, 0);
 	if (matchdebug) {
 		printf("poke X 1: %d\n", error);
 	}
@@ -541,10 +624,11 @@ ds2482_attach(device_t parent, device_t self, void *aux)
 	if (error != 0)
 		aprint_error_dev(self, "Reset failed: %d\n", error);
 
-	if (! error) {
+	if (!error) {
 		int xerror;
-		xerror = ds2482_cmdr(sc, DS2482_SELECT_CHANNEL, DS2482_CHANNEL_IO0, NULL, 0);
-		if (! xerror)
+		xerror = ds2482_cmdr(sc, DS2482_SELECT_CHANNEL,
+		    DS2482_CHANNEL_IO0, NULL, 0);
+		if (!xerror)
 			sc->sc_is_800 = true;
 	}
 
@@ -555,40 +639,50 @@ ds2482_attach(device_t parent, device_t self, void *aux)
 		goto out;
 	}
 
-	if (sc->sc_is_800 == true) {
+	if (sc->sc_is_800) {
 		num_channels = DS2482_NUM_INSTANCES;
 	}
 
-	aprint_normal_dev(self, "Maxim DS2482-%s I2C to 1-Wire bridge, Channels available: %d\n",
-	    (sc->sc_is_800 == true) ? "800" : "100",
+	aprint_normal_dev(self, "Maxim DS2482-%s I2C to 1-Wire bridge,"
+	    " Channels available: %d\n",
+	    sc->sc_is_800 ? "800" : "100",
 	    num_channels);
 
-	for(i = 0;i < num_channels;i++) {
+	for (i = 0; i < num_channels; i++) {
 		sc->sc_instances[i].sc_i_channel = i;
 		sc->sc_instances[i].sc = sc;
-		sc->sc_instances[i].sc_i_ow_bus.bus_cookie = &sc->sc_instances[i];
+		sc->sc_instances[i].sc_i_ow_bus.bus_cookie =
+		    &sc->sc_instances[i];
 		sc->sc_instances[i].sc_i_ow_bus.bus_reset = ds2482_ow_reset;
-		sc->sc_instances[i].sc_i_ow_bus.bus_read_bit = ds2482_ow_read_bit;
-		sc->sc_instances[i].sc_i_ow_bus.bus_write_bit = ds2482_ow_write_bit;
-		sc->sc_instances[i].sc_i_ow_bus.bus_read_byte = ds2482_ow_read_byte;
-		sc->sc_instances[i].sc_i_ow_bus.bus_write_byte = ds2482_ow_write_byte;
-		sc->sc_instances[i].sc_i_ow_bus.bus_triplet = ds2482_ow_triplet;
+		sc->sc_instances[i].sc_i_ow_bus.bus_read_bit =
+		    ds2482_ow_read_bit;
+		sc->sc_instances[i].sc_i_ow_bus.bus_write_bit =
+		    ds2482_ow_write_bit;
+		sc->sc_instances[i].sc_i_ow_bus.bus_read_byte =
+		    ds2482_ow_read_byte;
+		sc->sc_instances[i].sc_i_ow_bus.bus_write_byte =
+		    ds2482_ow_write_byte;
+		sc->sc_instances[i].sc_i_ow_bus.bus_triplet =
+		    ds2482_ow_triplet;
 
 		memset(&oba, 0, sizeof(oba));
 		oba.oba_bus = &sc->sc_instances[i].sc_i_ow_bus;
-		sc->sc_instances[i].sc_i_ow_dev = config_found(self, &oba, onewirebus_print, CFARGS_NONE);
+		sc->sc_instances[i].sc_i_ow_dev =
+		    config_found(self, &oba, onewirebus_print, CFARGS_NONE);
 	}
 
 out:
 	return;
 }
 
-/* Hmmm...  except in the case of reset, there really doesn't seem to be any
- * way with the onewire(4) API to indicate an error condition.
-*/
+/*
+ * Hmmm...  except in the case of reset, there really doesn't seem to
+ * be any way with the onewire(4) API to indicate an error condition.
+ */
 
 static int
-ds2482_generic_action(struct ds2482_instance *sci, uint8_t cmd, uint8_t cmdarg, uint8_t *buf, size_t blen)
+ds2482_generic_action(struct ds2482_instance *sci, uint8_t cmd, uint8_t cmdarg,
+    uint8_t *buf, size_t blen)
 {
 	struct ds2482ow_sc *sc = sci->sc;
 	int rv;
@@ -629,9 +723,11 @@ ds2482_ow_read_bit(void *arg)
 	int rv;
 	uint8_t buf = 0x55;
 
-	rv = ds2482_generic_action(sci, DS2482_ONEWIRE_SINGLE_BIT_READ, 0, &buf, 1);
+	rv = ds2482_generic_action(sci, DS2482_ONEWIRE_SINGLE_BIT_READ, 0,
+	    &buf, 1);
 
-	DPRINTF(sc, 3, ("%s: ds2482_read_bit: channel: %d ; rv: %x %d ; buf: %02x %d\n",
+	DPRINTF(sc, 3,
+	    ("%s: ds2482_read_bit: channel: %d ; rv: %x %d ; buf: %02x %d\n",
 	    device_xname(sc->sc_dev), sci->sc_i_channel, rv, rv, buf, buf));
 
 	return (int)buf;
@@ -644,12 +740,13 @@ ds2482_ow_write_bit(void *arg, int value)
 	struct ds2482ow_sc *sc = sci->sc;
 	int rv;
 
-	rv = ds2482_generic_action(sci, DS2482_ONEWIRE_SINGLE_BIT_WRITE, (uint8_t)value, NULL, 0);
+	rv = ds2482_generic_action(sci, DS2482_ONEWIRE_SINGLE_BIT_WRITE,
+	    (uint8_t)value, NULL, 0);
 
-	DPRINTF(sc, 3, ("%s: ds2482_write_bit: channel: %d ; rv: %x %d ; value: %02x %d\n",
-	    device_xname(sc->sc_dev), sci->sc_i_channel, rv, rv, (uint8_t)value, (uint8_t)value));
-
-	return;
+	DPRINTF(sc, 3, ("%s: ds2482_write_bit: channel: %d ;"
+	    " rv: %x %d ; value: %02x %d\n",
+	    device_xname(sc->sc_dev), sci->sc_i_channel,
+	    rv, rv, (uint8_t)value, (uint8_t)value));
 }
 
 static int
@@ -662,7 +759,8 @@ ds2482_ow_read_byte(void *arg)
 
 	rv = ds2482_generic_action(sci, DS2482_ONEWIRE_READ_BYTE, 0, &buf, 1);
 
-	DPRINTF(sc, 3, ("%s: ds2482_read_byte: channel: %d ; rv: %x %d ; buf: %02x %d\n",
+	DPRINTF(sc, 3,
+	    ("%s: ds2482_read_byte: channel: %d ; rv: %x %d ; buf: %02x %d\n",
 	    device_xname(sc->sc_dev), sci->sc_i_channel, rv, rv, buf, buf));
 
 	return (int)buf;
@@ -675,12 +773,13 @@ ds2482_ow_write_byte(void *arg, int value)
 	struct ds2482ow_sc *sc = sci->sc;
 	int rv;
 
-	rv = ds2482_generic_action(sci, DS2482_ONEWIRE_WRITE_BYTE, (uint8_t)value, NULL, 0);
+	rv = ds2482_generic_action(sci, DS2482_ONEWIRE_WRITE_BYTE,
+	    (uint8_t)value, NULL, 0);
 
-	DPRINTF(sc, 3, ("%s: ds2482_write_byte: channel: %d ; rv: %x %d ; value: %02x %d\n",
-	    device_xname(sc->sc_dev), sci->sc_i_channel, rv, rv, (uint8_t)value, (uint8_t)value));
-
-	return;
+	DPRINTF(sc, 3, ("%s: ds2482_write_byte: channel: %d ;"
+	    " rv: %x %d ; value: %02x %d\n",
+	    device_xname(sc->sc_dev), sci->sc_i_channel,
+	    rv, rv, (uint8_t)value, (uint8_t)value));
 }
 
 static int
@@ -691,10 +790,13 @@ ds2482_ow_triplet(void *arg, int dir)
 	struct ds2482ow_sc *sc = sci->sc;
 	int rv;
 
-	rv = ds2482_generic_action(sci, DS2482_ONEWIRE_TRIPLET, (uint8_t) dir, &buf, 1);
+	rv = ds2482_generic_action(sci, DS2482_ONEWIRE_TRIPLET, (uint8_t)dir,
+	    &buf, 1);
 
-	DPRINTF(sc, 3, ("%s: ds2482_triplet: channel: %d ; rv: %x %d ; dir: %x %d ; buf: %02x %d\n",
-	    device_xname(sc->sc_dev), sci->sc_i_channel, rv, rv, dir, dir, (uint8_t)buf, (uint8_t)buf));
+	DPRINTF(sc, 3, ("%s: ds2482_triplet: channel: %d ;"
+	    " rv: %x %d ; dir: %x %d ; buf: %02x %d\n",
+	    device_xname(sc->sc_dev), sci->sc_i_channel, rv, rv,
+	    dir, dir, (uint8_t)buf, (uint8_t)buf));
 
 	return (int)buf;
 }

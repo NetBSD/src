@@ -1,4 +1,4 @@
-/*	$NetBSD: ds2482owvar.h,v 1.1 2024/11/04 20:43:38 brad Exp $	*/
+/*	$NetBSD: ds2482owvar.h,v 1.2 2024/11/06 15:49:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -43,5 +43,4 @@ struct ds2482ow_sc {
 	struct		ds2482_instance	sc_instances[DS2482_NUM_INSTANCES];
 };
 
-
-#endif
+#endif	/* _DEV_I2C_DS2482VAR_H_ */
