@@ -1,5 +1,5 @@
 
-/*	$NetBSD: sht3x.c,v 1.7 2022/04/27 23:11:25 brad Exp $	*/
+/*	$NetBSD: sht3x.c,v 1.8 2024/11/07 20:06:21 brad Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sht3x.c,v 1.7 2022/04/27 23:11:25 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sht3x.c,v 1.8 2024/11/07 20:06:21 brad Exp $");
 
 /*
   Driver for the Sensirion SHT30/SHT31/SHT35
@@ -171,6 +171,10 @@ static struct sht3x_timing sht3x_timings[] = {
 	{
 		.cmd = SHT3X_WRITE_LOW_ALERT_CLEAR,
 		.typicaldelay = 5000,
+	},
+	{
+		.cmd = SHT3X_READ_SERIAL_NUMBER,
+		.typicaldelay = 500,
 	}
 };
 
