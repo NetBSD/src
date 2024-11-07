@@ -1,4 +1,4 @@
-/* $NetBSD: vchiq_kmod_netbsd.c,v 1.13 2024/11/07 09:49:49 rin Exp $ */
+/* $NetBSD: vchiq_kmod_netbsd.c,v 1.14 2024/11/07 09:51:00 rin Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vchiq_kmod_netbsd.c,v 1.13 2024/11/07 09:49:49 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vchiq_kmod_netbsd.c,v 1.14 2024/11/07 09:51:00 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,16 +125,16 @@ SYSCTL_SETUP(sysctl_hw_vchiq_setup, "sysctl hw.vchiq setup")
 
 	sysctl_createv(clog, 0, &cnode, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT, "core",
-	    "VChiq Core Loglevel", NULL, 0,
+	    SYSCTL_DESCR("VChiq Core Loglevel"), NULL, 0,
 	    &vchiq_core_log_level, 0, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &cnode, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT, "coremsg",
-	    "VChiq Core Message Loglevel", NULL, 0,
+	    SYSCTL_DESCR("VChiq Core Message Loglevel"), NULL, 0,
 	    &vchiq_core_msg_log_level, 0, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &cnode, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT, "sync",
-	    "VChiq Sync Loglevel", NULL, 0,
+	    SYSCTL_DESCR("VChiq Sync Loglevel"), NULL, 0,
 	    &vchiq_sync_log_level, 0, CTL_CREATE, CTL_EOL);
 }
