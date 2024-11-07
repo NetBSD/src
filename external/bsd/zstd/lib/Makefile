@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2024/11/02 22:02:40 christos Exp $	
+# $NetBSD: Makefile,v 1.5 2024/11/07 17:52:58 christos Exp $	
 
 LIBISPRIVATE=pic
 NOLINT=yes	# XXX
@@ -58,6 +58,11 @@ LINTFLAGS += -X 96,117,129,161,174,214,226,231,298
 CPPFLAGS+= -I${SRCDIR} -DZSTD_MULTITHREAD
 
 LIBDPLIBS += pthread ${NETBSDSRCDIR}/lib/libpthread
+
+.if ${MACHINE} == "sun2"
+# large got offsets: generate movel instead of lea for got loading
+COPTS.zstd_lazy.c += -mid-shared-library
+.endif
 
 .if ${LIBISPRIVATE:Uno} == "no"
 INCS=	zdict.h zstd.h zstd_errors.h  
