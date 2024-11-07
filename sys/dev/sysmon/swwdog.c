@@ -1,4 +1,4 @@
-/*	$NetBSD: swwdog.c,v 1.23 2021/12/31 11:05:41 riastradh Exp $	*/
+/*	$NetBSD: swwdog.c,v 1.24 2024/11/07 09:47:40 rin Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Steven M. Bellovin
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.23 2021/12/31 11:05:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.24 2024/11/07 09:47:40 rin Exp $");
 
 /*
  *
@@ -277,7 +277,7 @@ SYSCTL_SETUP(swwdog_sysctl_setup, "swwdog sysctl")
 	    NULL, 0, NULL, 0,
 	    CTL_HW, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL, CTLFLAG_READWRITE,
-	    CTLTYPE_BOOL, "reboot", "reboot if timer expires",
+	    CTLTYPE_BOOL, "reboot", SYSCTL_DESCR("reboot if timer expires"),
 	    NULL, 0, &swwdog_reboot, sizeof(bool),
 	    CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);
 }
