@@ -1,4 +1,4 @@
-/*	$NetBSD: ffsl.c,v 1.1 2024/11/01 18:35:12 riastradh Exp $	*/
+/*	$NetBSD: ffsl.c,v 1.2 2024/11/07 18:12:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ffsl.c,v 1.1 2024/11/01 18:35:12 riastradh Exp $");
+__RCSID("$NetBSD: ffsl.c,v 1.2 2024/11/07 18:12:09 christos Exp $");
 
 #include <sys/bitops.h>
 
@@ -45,6 +45,6 @@ ffsl(long x)
 	return ffs64(x);
 #else
 	__CTASSERT(CHAR_BIT*sizeof(x) == 32);
-	return ffs32(x);
+	return ffs32((uint32_t)x);
 #endif
 }
