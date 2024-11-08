@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.65 2024/11/02 10:57:15 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.66 2024/11/08 12:11:39 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -3574,4 +3574,30 @@ share/mk/bsd.x11.mk					(apply patch)
 
 	Update Xorg server to 21.1.14.
 	[mrg, ticket #998]
+
+xsrc/external/mit/xorg-server.old/dist/Xi/exevents.c	1.3
+xsrc/external/mit/xorg-server.old/dist/Xi/exevents.c	1.4
+xsrc/external/mit/xorg-server.old/dist/Xi/xichangehierarchy.c 1.3
+xsrc/external/mit/xorg-server.old/dist/Xi/xipassivegrab.c 1.2
+xsrc/external/mit/xorg-server.old/dist/Xi/xiproperty.c 1.3
+xsrc/external/mit/xorg-server.old/dist/Xi/xiquerypointer.c 1.2
+xsrc/external/mit/xorg-server.old/dist/Xi/xiselectev.c 1.2
+xsrc/external/mit/xorg-server.old/dist/dix/devices.c	1.2
+xsrc/external/mit/xorg-server.old/dist/dix/devices.c	1.3
+xsrc/external/mit/xorg-server.old/dist/dix/property.c 1.2
+xsrc/external/mit/xorg-server.old/dist/glx/glxcmds.c	1.2
+xsrc/external/mit/xorg-server.old/dist/randr/rrproperty.c 1.3
+
+	xorg.old: merge upstream changes for
+	CVE-2022-46344, ZDI-CAN 19405
+	CVE-2023-6478, ZDI-CAN-22561
+	CVE-2023-6816, ZDI-CAN-22664, ZDI-CAN-22665
+	CVE-2024-0229, ZDI-CAN-22678
+	CVE-2024-0408
+	CVE-2024-21885, ZDI-CAN-22744
+	CVE-2024-21886, ZDI-CAN-22840
+	CVE-2024-31080
+	CVE-2024-31081
+	CVE-2024-21886, ZDI-CAN-22840
+	[mrg, ticket #999]
 
