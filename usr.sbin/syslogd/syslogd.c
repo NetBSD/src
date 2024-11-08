@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.144 2024/08/21 17:13:24 gutteridge Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.145 2024/11/08 02:23:54 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.144 2024/08/21 17:13:24 gutteridge Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.145 2024/11/08 02:23:54 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -565,7 +565,7 @@ getgroup:
 #endif
 
 	/*
-	 * All files are open, we can drop privileges and chroot
+	 * All files are open, we can drop privileges and chroot.
 	 */
 	DPRINTF(D_MISC, "Attempt to chroot to `%s'\n", root);
 	if (chroot(root) == -1) {
@@ -586,12 +586,12 @@ getgroup:
 	 * We cannot detach from the terminal before we are sure we won't
 	 * have a fatal error, because error message would not go to the
 	 * terminal and would not be logged because syslogd dies.
-	 * All die() calls are behind us, we can call daemon()
+	 * All die() calls are behind us, we can call daemon().
 	 */
 	if (!Debug) {
 		(void)daemon(0, 0);
 		daemonized = 1;
-		/* tuck my process id away, if i'm not in debug mode */
+		/* Tuck my process id away, if I'm not in debug mode. */
 #ifdef __NetBSD_Version__
 		pidfile(NULL);
 #endif /* __NetBSD_Version__ */
