@@ -1,4 +1,4 @@
-.\"	$NetBSD: dk.4,v 1.15 2024/04/03 00:40:46 uwe Exp $
+.\"	$NetBSD: dk.4,v 1.16 2024/11/08 07:44:46 charlotte Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -131,7 +131,8 @@ partitioning detection method.
 .It Dv DKWEDGE_METHOD_TOS
 Atari's
 .Tn TOS
-partition map detection method.
+partition map detection method, for disks that conform to Atari's AHDI
+specification.
 .Pp
 For each partition, a wedge is created with a name of the format
 .Sm off
