@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.145 2024/11/08 02:23:54 jschauma Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.146 2024/11/09 15:56:35 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.145 2024/11/08 02:23:54 jschauma Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.146 2024/11/09 15:56:35 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -316,6 +316,7 @@ main(int argc, char *argv[])
 	struct group   *gr;
 	struct passwd  *pw;
 	unsigned long l;
+	char pfpath[PATH_MAX];
 
 	/* should we set LC_TIME="C" to ensure correct timestamps&parsing? */
 	(void)setlocale(LC_ALL, "");
@@ -563,6 +564,33 @@ getgroup:
 	    "syslog-protocol/syslog-sign specify %d values",
 	    LOG_NFACILITIES, IETF_NUM_PRIVALUES>>3);
 #endif
+
+#ifdef __NetBSD_Version__
+	if ((uid != 0) || (gid != 0)) {
+		/* Create the pidfile here so we can chown it to the target
+		 * user/group and possibly report any error before daemonizing.
+		 * We then call pidfile(3) again to write the actual
+		 * daemon pid below.
+		 *
+		 * Note: this will likely leave the truncated pidfile in
+		 * place upon exit, since the effective user is unlikely
+		 * to have write permissions to _PATH_VARRUN. */
+		if (pidfile(NULL)) {
+			logerror("Failed to create pidfile");
+			die(0, 0, NULL);
+		}
+		j = sizeof(pfpath);
+		if (snprintf(pfpath, l, "%s%s.pid",
+					_PATH_VARRUN, getprogname()) >= j) {
+			logerror("Pidfile path `%s' too long.", pfpath);
+			die(0, 0, NULL);
+		}
+		if (chown(pfpath, uid, gid) < 0) {
+			logerror("Failed to chown pidfile `%s` to `%d:%d`", pfpath, uid, gid);
+			die(0, 0, NULL);
+		}
+	}
+#endif /* __NetBSD_Version__ */
 
 	/*
 	 * All files are open, we can drop privileges and chroot.
