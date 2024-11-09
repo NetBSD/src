@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.146 2024/11/09 15:56:35 jschauma Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.147 2024/11/09 16:31:31 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.146 2024/11/09 15:56:35 jschauma Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.147 2024/11/09 16:31:31 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -580,7 +580,7 @@ getgroup:
 			die(0, 0, NULL);
 		}
 		j = sizeof(pfpath);
-		if (snprintf(pfpath, l, "%s%s.pid",
+		if (snprintf(pfpath, j, "%s%s.pid",
 					_PATH_VARRUN, getprogname()) >= j) {
 			logerror("Pidfile path `%s' too long.", pfpath);
 			die(0, 0, NULL);
