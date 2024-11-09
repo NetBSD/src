@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsictl.8,v 1.33 2024/11/09 11:09:40 mlelstv Exp $
+.\"	$NetBSD: scsictl.8,v 1.34 2024/11/09 12:45:39 rillig Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,20 +28,17 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 19, 2016
+.Dd November 9, 2024
 .Dt SCSICTL 8
 .Os
 .Sh NAME
 .Nm scsictl
-.Nd a program to manipulate SCSI devices and busses
+.Nd manipulate SCSI devices and busses
 .Sh SYNOPSIS
 .Nm
 .Ar device
 .Ar command
-.Oo
-.Ar arg Oo ...
-.Oc
-.Oc
+.Op Ar arg ...
 .Sh DESCRIPTION
 .Nm
 allows a user or system administrator to issue commands to and otherwise
@@ -78,13 +75,13 @@ Device specific debugging.
 .Pp
 This option is only supported with kernels compiled with
 .Dv SCSIPI_DEBUG .
-.It Cm defects Oo primary Oc Oo grown Oc Oo block|byte|physical Oc
+.It Cm defects Oo Ar primary Oc Oo Ar grown Oc Oo Cm block Ns No | Ns Cm byte Ns No | Ns Cm physical Oc
 Read the primary and/or grown defect lists from the specified device
 in block, byte from index, or physical sector format.
 The default is to return both the primary and grown defect lists
 in physical sector format.
 This command is only supported on direct access devices.
-.It Cm format Oo blocksize Oo immediate Oc Oc
+.It Cm format Op Ar blocksize Op Cm immediate
 (Low level) format the named device.
 If the optional
 .Li blocksize
@@ -119,7 +116,7 @@ This associated sense data has a progress indicator which indicates
 how far the format is progressing.
 Note well that most SCSI disk drives prior to
 a few years ago do not support this option.
-.It Cm identify Oo vpd Oc Oc
+.It Cm identify Op Ar vpd
 Identify the specified device, displaying the device's SCSI
 bus, target, and lun, as well as the device's vendor, product,
 and revision strings.
@@ -128,9 +125,9 @@ When the optional
 .Li vpd
 parameter is added, Vital Product Data that identifies
 the device is also queried and displayed.
-.It Cm reassign Ar blkno Oo blkno Oo ... Oc Oc
-Issues a
-.Li REASSIGN BLOCKS
+.It Cm reassign Ar blkno ...
+Issue a
+.Dq REASSIGN BLOCKS
 command to the device, adding the specified blocks to the
 grown defect list.
 This command is only supported on direct access devices.
@@ -163,8 +160,8 @@ Send a
 command to the device.
 This is useful for generating current device status.
 .It Cm getcache
-Returns basic cache parameters for the device.
-.It Cm setcache Ar none|r|w|rw Op Ar save
+Return basic cache parameters for the device.
+.It Cm setcache Ar Cm none Ns | Ns Cm r Ns | Ns Cm w Ns | Ns Cm rw Op Ar save
 Set basic cache parameters for the device.
 The cache may be disabled
 .Pq none ,
@@ -179,15 +176,15 @@ If the drive's cache parameters are savable, specifying
 after the cache enable state will cause the parameters to be saved in
 non-volatile storage.
 .It Cm flushcache
-Explicitly flushes the write cache.
+Explicitly flush the write cache.
 .It Cm setspeed Ar speed
 Set the highest speed that the optical drive should use for reading
 data.
 The units are multiples of a single speed CDROM (150 KB/s).
 Specify 0 to use the drive's fastest speed.
 .It Cm getrealloc
-Returns automatic reallocation parameters for the device.
-.It Cm setrealloc Ar none|r|w|rw Op Ar save
+Return automatic reallocation parameters for the device.
+.It Cm setrealloc Ar Cm none Ns | Ns Cm r Ns | Ns Cm w Ns | Ns Cm rw Op Ar save
 Set automatic reallocation parameters for the device.
 Automatic reallocation may be disabled
 .Pq none ,
@@ -201,7 +198,7 @@ If the drive's automatic reallocation parameters are savable, specifying
 .Ar save
 after the automatic reallocation enable state will cause the parameters to be
 saved in non-volatile storage.
-.It Cm reportluns Ar normal|wellknown|all|#
+.It Cm reportluns Ar Cm normal Ns | Ns Cm wellknown Ns | Ns Cm all Ns | Ns Ar #
 Report Logical Units provided by the drive.
 .Bl -hang -compact
 .It normal
