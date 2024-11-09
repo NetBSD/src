@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.c,v 1.18 2022/06/08 21:55:51 wiz Exp $	*/
+/*	$NetBSD: bootmenu.c,v 1.19 2024/11/09 12:43:52 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,6 +59,8 @@ do_bootcfg_command(const char *cmd, char *arg)
 {
 	if (strcmp(cmd, BOOTCFG_CMD_LOAD) == 0)
 		module_add(arg);
+	else if (strcmp(cmd, "fs") == 0)
+		fs_add(arg);
 	else if (strcmp(cmd, BOOTCFG_CMD_USERCONF) == 0)
 		userconf_add(arg);
 }
