@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.33 2007/12/25 18:33:42 perry Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.34 2024/11/09 12:06:22 mlelstv Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
@@ -59,7 +59,9 @@
 struct scsipi_inquiry {
 	u_int8_t opcode;
 	u_int8_t byte2;
-	u_int8_t unused[2];
+#define SINQ_EVPD		0x01
+	u_int8_t pagecode;
+	u_int8_t length_hi;	/* upper byte of length */
 	u_int8_t length;
 	u_int8_t control;
 } __packed;
@@ -164,5 +166,84 @@ struct scsipi_inquiry_data {
 /*59*/	char    version_descriptor[8][2];
 #define	SCSIPI_INQUIRY_LENGTH_SCSI3	74
 } __packed; /* 74 Bytes */
+
+/* Vital product data when SINQ_EVPD is set */
+
+struct scsipi_inquiry_evpd_header {
+/* 1*/	u_int8_t device;
+/* 2*/	u_int8_t pagecode;
+/* 3*/	u_int8_t length[2];
+};
+
+#define SINQ_VPD_PAGES		0x00
+#define SINQ_VPD_UNIT_SERIAL	0x80
+#define SINQ_VPD_DEVICE_ID	0x83
+#define SINQ_VPD_SOFTWARE_ID	0x84
+#define SINQ_VPD_MN_ADDRESS	0x85
+#define SINQ_VPD_INQUIRY	0x86
+#define SINQ_VPD_MP_POLICY	0x87
+#define SINQ_VPD_PORTS		0x88
+#define SINQ_VPD_POWER_COND	0x8a
+#define SINQ_VPD_CONSTITUENTS	0x8b
+#define SINQ_VPD_CFA_PROFILE	0x8c
+#define SINQ_VPD_CONSUMPTION	0x8d
+#define SINQ_VPD_BLOCK_LIMITS	0xb0
+#define SINQ_VPD_BLOCK_CHARS	0xb1
+#define SINQ_VPD_LOGICAL_PROV	0xb2
+#define SINQ_VPD_REFERRASLS	0xb3
+#define SINQ_VPD_SUPPORTED	0xb4
+#define SINQ_VPD_BLOCK_CHARSX	0xb5
+#define SINQ_VPD_BLOCK_ZONED	0xb6
+#define SINQ_VPD_BLOCK_LIMITSX	0xb7
+#define SINQ_VPD_FIRMWARE_NUM	0xc0
+#define SINQ_VPD_JUMPERS	0xc2
+#define SINQ_VPD_BEHAVIOUR	0xc3
+
+#define SINQ_VPD_DATE_CODE	0xc1
+struct scsipi_inquiry_evpd_date_code {
+/* 1*/	u_int8_t etf_log_date[8]; /* MMDDYYYY */
+/* 9*/	u_int8_t compile_date[8]; /* MMDDYYYY */
+/*17*/	u_int8_t spindown_count[2];
+/*19*/	u_int8_t spindown_time[6]; /* HHMMSS */
+} __packed;
+
+#define SINQ_VPD_SERIAL		0x80
+struct scsipi_inquiry_evpd_serial {
+/* 1*/	u_int8_t serial_number[251];
+} __packed;
+
+#define SINQ_VPD_DEVICE_ID	0x83
+struct scsipi_inquiry_evpd_device_id {
+/* 1*/	u_int8_t pc;
+#define SINQ_DEVICE_ID_PROTOCOL			0xf0
+#define SINQ_DEVICE_ID_PROTOCOL_FC		0x00
+#define SINQ_DEVICE_ID_PROTOCOL_SSA		0x20
+#define SINQ_DEVICE_ID_PROTOCOL_IEEE1394	0x30
+#define SINQ_DEVICE_ID_PROTOCOL_RDMA		0x40
+#define SINQ_DEVICE_ID_PROTOCOL_ISCSI		0x50
+#define SINQ_DEVICE_ID_PROTOCOL_SAS		0x60
+#define SINQ_DEVICE_ID_CODESET			0x0f
+#define SINQ_DEVICE_ID_CODESET_BINARY		0x01
+#define SINQ_DEVICE_ID_CODESET_ASCII		0x02
+#define SINQ_DEVICE_ID_CODESET_UTF8		0x03
+/* 2*/	u_int8_t flags;
+#define SINQ_DEVICE_ID_PIV			0x80
+#define SINQ_DEVICE_ID_ASSOCIATION		0x30
+#define SINQ_DEVICE_ID_ASSOCIATION_DEVICE	0x00
+#define SINQ_DEVICE_ID_ASSOCIATION_PORT		0x10
+#define SINQ_DEVICE_ID_ASSOCIATION_TARGET	0x20
+#define SINQ_DEVICE_ID_TYPE			0x0f
+#define SINQ_DEVICE_ID_TYPE_UNASSIGNED		0x00
+#define SINQ_DEVICE_ID_TYPE_VENDOR		0x01
+#define SINQ_DEVICE_ID_TYPE_EUI64		0x02
+#define SINQ_DEVICE_ID_TYPE_FC			0x03
+#define SINQ_DEVICE_ID_TYPE_PORTNUMBER1		0x04
+#define SINQ_DEVICE_ID_TYPE_PORTNUMBER2		0x05
+#define SINQ_DEVICE_ID_TYPE_PORTNUMBER3		0x06
+#define SINQ_DEVICE_ID_TYPE_MD5			0x07
+/* 3*/	u_int8_t reserved;
+/* 4*/	u_int8_t designator_length;
+/* 5*/	u_int8_t designator[1];
+} __packed;
 
 #endif /* _DEV_SCSIPI_SCSIPI_ALL_H_ */
