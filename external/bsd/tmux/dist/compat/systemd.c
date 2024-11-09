@@ -24,7 +24,9 @@
 #include <systemd/sd-login.h>
 #include <systemd/sd-id128.h>
 
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "tmux.h"
 
@@ -136,6 +138,17 @@ systemd_move_pid_to_new_cgroup(pid_t pid, char **cause)
 	    (long)pid, (long)parent_pid);
 	r = sd_bus_message_append(m, "(sv)", "Description", "s", desc);
 	free(desc);
+	if (r < 0) {
+		xasprintf(cause, "failed to append to properties: %s",
+		    strerror(-r));
+		goto finish;
+	}
+
+	/*
+	 * Make sure that the session shells are terminated with SIGHUP since
+	 * bash and friends tend to ignore SIGTERM.
+	 */
+	r = sd_bus_message_append(m, "(sv)", "SendSIGHUP", "b", 1);
 	if (r < 0) {
 		xasprintf(cause, "failed to append to properties: %s",
 		    strerror(-r));
