@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsictl.8,v 1.32 2022/08/21 12:44:16 mlelstv Exp $
+.\"	$NetBSD: scsictl.8,v 1.33 2024/11/09 11:09:40 mlelstv Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -119,10 +119,15 @@ This associated sense data has a progress indicator which indicates
 how far the format is progressing.
 Note well that most SCSI disk drives prior to
 a few years ago do not support this option.
-.It Cm identify
+.It Cm identify Oo vpd Oc Oc
 Identify the specified device, displaying the device's SCSI
 bus, target, and lun, as well as the device's vendor, product,
 and revision strings.
+.Pp
+When the optional
+.Li vpd
+parameter is added, Vital Product Data that identifies
+the device is also queried and displayed.
 .It Cm reassign Ar blkno Oo blkno Oo ... Oc Oc
 Issues a
 .Li REASSIGN BLOCKS

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.40 2022/08/21 12:44:16 mlelstv Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.41 2024/11/09 11:09:40 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsictl.c,v 1.40 2022/08/21 12:44:16 mlelstv Exp $");
+__RCSID("$NetBSD: scsictl.c,v 1.41 2024/11/09 11:09:40 mlelstv Exp $");
 #endif
 
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: scsictl.c,v 1.40 2022/08/21 12:44:16 mlelstv Exp $");
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
@@ -99,7 +100,7 @@ static struct command device_commands[] = {
 	{ "defects",	"[primary] [grown] [block|byte|physical]",
 						device_defects },
 	{ "format",	"[blocksize [immediate]]", 	device_format },
-	{ "identify",	"",			device_identify },
+	{ "identify",	"[vpd]",		device_identify },
 	{ "reassign",	"blkno [blkno [...]]",	device_reassign },
 	{ "release",	"",			device_release },
 	{ "reserve",	"",			device_reserve },
@@ -639,26 +640,113 @@ device_format(int argc, char *argv[])
 	return;
 }
 
+static void
+print_designator(const char *pre, struct scsipi_inquiry_evpd_device_id *did)
+{
+	char buf[252 * 4 + 1];
+	unsigned assoc, proto, code, type;
+	static const char *typestr[] = {
+		"vendor",
+		"t10",
+		"eui64",
+		"naa",
+		"target port",
+		"port group",
+		"lun group",
+		"md5",
+		"scsi",
+		"res9",
+		"res10",
+		"res11",
+		"res12",
+		"res13",
+		"res14",
+		"res15"
+	};
+	static const char *assocstr[] = {
+		"lun",
+		"port",
+		"target",
+		"reserved"
+	};
+	static const char *protostr[] = {
+		"fibre channel",
+		"obsolete",
+		"ssa",
+		"ieee1394",
+		"rdma",
+		"iSCSI",
+		"SAS"
+	};
+	const unsigned maxproto = __arraycount(protostr) - 1;
+	const unsigned isbinary =
+	    __SHIFTOUT(SINQ_DEVICE_ID_CODESET_BINARY, SINQ_DEVICE_ID_CODESET);
+	unsigned k;
+
+	assoc = __SHIFTOUT(did->flags, SINQ_DEVICE_ID_ASSOCIATION);
+	proto = __SHIFTOUT(did->pc, SINQ_DEVICE_ID_PROTOCOL);
+	code = __SHIFTOUT(did->pc, SINQ_DEVICE_ID_CODESET);
+	type = __SHIFTOUT(did->flags, SINQ_DEVICE_ID_TYPE);
+
+	printf("%s%s", pre, assocstr[assoc]);
+	if (did->flags & SINQ_DEVICE_ID_PIV) {
+		if (proto > maxproto)
+			printf(" proto%u", proto);
+		else
+			printf(" %s", protostr[proto]);
+	}
+	printf(" %s: ", typestr[type]);
+
+	if (code == isbinary) {
+		for (k=0; k<did->designator_length; ++k) {
+			printf("%02x", did->designator[k]);
+		}
+		printf("\n");
+	} else {
+		scsi_strvis(buf, sizeof(buf), (char *)did->designator,
+		    did->designator_length);
+		printf("%s\n", buf);
+	}
+}
+
 /*
  * device_identify:
  *
  *	Display the identity of the device, including its SCSI bus,
  *	target, lun, and its vendor/product/revision information.
+ *      Optionally query and display vpd identification data.
  */
 static void
 device_identify(int argc, char *argv[])
 {
 	struct scsipi_inquiry_data inqbuf;
+	struct {
+		struct scsipi_inquiry_evpd_header h;
+		uint8_t d[255 - sizeof(struct scsipi_inquiry_evpd_header)];
+	} evpdbuf;
 	struct scsipi_inquiry cmd;
+	unsigned len, rlen;
+	struct scsipi_inquiry_evpd_serial *ser;
+	struct scsipi_inquiry_evpd_device_id *did;
+	int has_serial;
+	int has_device_id;
+	bool getvpd = false;
+	int i;
 
 	/* x4 in case every character is escaped, +1 for NUL. */
 	char vendor[(sizeof(inqbuf.vendor) * 4) + 1],
 	     product[(sizeof(inqbuf.product) * 4) + 1],
-	     revision[(sizeof(inqbuf.revision) * 4) + 1];
+	     revision[(sizeof(inqbuf.revision) * 4) + 1],
+	     ident[252 * 4 + 1];
 
-	/* No arguments. */
-	if (argc != 0)
+	/* Check optional arguments */
+	for (i = 0; i < argc; i++) {
+		if (strncmp("vpd", argv[i], 3) == 0) {
+			getvpd = true;
+			continue;
+		}
 		usage();
+	}
 
 	memset(&cmd, 0, sizeof(cmd));
 	memset(&inqbuf, 0, sizeof(inqbuf));
@@ -679,6 +767,65 @@ device_identify(int argc, char *argv[])
 	printf("%s: scsibus%d target %d lun %d <%s, %s, %s>\n",
 	    dvname, dvaddr.addr.scsi.scbus, dvaddr.addr.scsi.target,
 	    dvaddr.addr.scsi.lun, vendor, product, revision);
+
+	if (!getvpd)
+		return;
+
+	cmd.byte2 |= SINQ_EVPD;
+	cmd.pagecode = SINQ_VPD_PAGES;
+
+	scsi_command(fd, &cmd, sizeof(cmd), &evpdbuf, sizeof(evpdbuf),
+	    10000, SCCMD_READ);
+
+	len = be16dec(evpdbuf.h.length);
+	if (len > sizeof(evpdbuf.d))
+		len = 0;
+
+	has_serial = memchr(evpdbuf.d, SINQ_VPD_SERIAL, len) != NULL;
+	has_device_id = memchr(evpdbuf.d, SINQ_VPD_DEVICE_ID, len) != NULL;
+
+	if (has_serial) {
+
+		cmd.byte2 |= SINQ_EVPD;
+		cmd.pagecode = SINQ_VPD_SERIAL;
+
+		scsi_command(fd, &cmd, sizeof(cmd), &evpdbuf, sizeof(evpdbuf),
+		    10000, SCCMD_READ);
+
+		len = be16dec(evpdbuf.h.length);
+		if (len > sizeof(evpdbuf.d))
+			len = 0;
+
+		ser = (struct scsipi_inquiry_evpd_serial *)&evpdbuf.d;
+		scsi_strvis(ident, sizeof(ident), (char *)ser->serial_number, len);
+		printf("VPD Serial:\n");
+		printf("\t%s\n", ident);
+
+	}
+
+	if (has_device_id) {
+
+		cmd.byte2 |= SINQ_EVPD;
+		cmd.pagecode = SINQ_VPD_DEVICE_ID;
+
+		scsi_command(fd, &cmd, sizeof(cmd), &evpdbuf, sizeof(evpdbuf),
+		    10000, SCCMD_READ);
+
+		len = be16dec(evpdbuf.h.length);
+		if (len > sizeof(evpdbuf.d))
+			len = 0;
+
+		printf("VPD Device IDs:\n");
+
+		for (unsigned off=0; off<len - sizeof(*did); off += rlen) {
+			did = (struct scsipi_inquiry_evpd_device_id *)&evpdbuf.d[off];
+			rlen = sizeof(*did) + did->designator_length - 1;
+			if (off + rlen > len)
+				break;
+
+			print_designator("\t", did);
+		}
+	}
 
 	return;
 }
