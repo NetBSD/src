@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.41 2024/11/09 11:09:40 mlelstv Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.42 2024/11/10 01:55:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -36,9 +36,8 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsictl.c,v 1.41 2024/11/09 11:09:40 mlelstv Exp $");
+__RCSID("$NetBSD: scsictl.c,v 1.42 2024/11/10 01:55:06 riastradh Exp $");
 #endif
-
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -201,15 +200,15 @@ usage(void)
 	    getprogname());
 
 	fprintf(stderr, "   Commands pertaining to scsi devices:\n");
-	for (i=0; device_commands[i].cmd_name != NULL; i++)
+	for (i = 0; device_commands[i].cmd_name != NULL; i++)
 		fprintf(stderr, "\t%s %s\n", device_commands[i].cmd_name,
 					    device_commands[i].arg_names);
 	fprintf(stderr, "   Commands pertaining to scsi busses:\n");
-	for (i=0; bus_commands[i].cmd_name != NULL; i++)
+	for (i = 0; bus_commands[i].cmd_name != NULL; i++)
 		fprintf(stderr, "\t%s %s\n", bus_commands[i].cmd_name,
 					    bus_commands[i].arg_names);
 	fprintf(stderr, "   Use `any' or `all' to wildcard target or lun\n");
-	
+
 	exit(1);
 }
 
@@ -273,7 +272,7 @@ device_defects(int argc, char *argv[])
 		cmd.flags |= (RDD_PRIMARY|RDD_GROWN);
 
 	/* list format option. */
-	if (i < argc) { 
+	if (i < argc) {
 		if (strncmp("block", argv[i], 5) == 0) {
 			cmd.flags |= RDD_BF;
 			dlfmt = RDD_BF;
@@ -327,7 +326,6 @@ device_defects(int argc, char *argv[])
 
 	if ((data->flags & RDD_P_G_MASK) == 0)
 		strcat(msg, ": none reported\n");
-
 
 	printf("%s: scsibus%d target %d lun %d %s",
 	       dvname, dvaddr.addr.scsi.scbus, dvaddr.addr.scsi.target,
@@ -478,7 +476,6 @@ device_format(int argc, char *argv[])
 		struct scsi_mode_parameter_header_6 header;
 		struct scsi_general_block_descriptor blk_desc;
 	} data_select;
-	
 
 	/* Blocksize is an optional argument. */
 	if (argc > 2)
@@ -698,7 +695,7 @@ print_designator(const char *pre, struct scsipi_inquiry_evpd_device_id *did)
 	printf(" %s: ", typestr[type]);
 
 	if (code == isbinary) {
-		for (k=0; k<did->designator_length; ++k) {
+		for (k = 0; k < did->designator_length; k++) {
 			printf("%02x", did->designator[k]);
 		}
 		printf("\n");
@@ -785,7 +782,6 @@ device_identify(int argc, char *argv[])
 	has_device_id = memchr(evpdbuf.d, SINQ_VPD_DEVICE_ID, len) != NULL;
 
 	if (has_serial) {
-
 		cmd.byte2 |= SINQ_EVPD;
 		cmd.pagecode = SINQ_VPD_SERIAL;
 
@@ -797,14 +793,13 @@ device_identify(int argc, char *argv[])
 			len = 0;
 
 		ser = (struct scsipi_inquiry_evpd_serial *)&evpdbuf.d;
-		scsi_strvis(ident, sizeof(ident), (char *)ser->serial_number, len);
+		scsi_strvis(ident, sizeof(ident), (char *)ser->serial_number,
+		    len);
 		printf("VPD Serial:\n");
 		printf("\t%s\n", ident);
-
 	}
 
 	if (has_device_id) {
-
 		cmd.byte2 |= SINQ_EVPD;
 		cmd.pagecode = SINQ_VPD_DEVICE_ID;
 
@@ -817,8 +812,9 @@ device_identify(int argc, char *argv[])
 
 		printf("VPD Device IDs:\n");
 
-		for (unsigned off=0; off<len - sizeof(*did); off += rlen) {
-			did = (struct scsipi_inquiry_evpd_device_id *)&evpdbuf.d[off];
+		for (unsigned off = 0; off < len - sizeof(*did); off += rlen) {
+			void *p = &evpdbuf.d[off];
+			did = (struct scsipi_inquiry_evpd_device_id *)p;
 			rlen = sizeof(*did) + did->designator_length - 1;
 			if (off + rlen > len)
 				break;
@@ -908,8 +904,6 @@ device_release(int argc, char *argv[])
 
 	return;
 }
-
-
 
 /*
  * device_reserve:
@@ -1197,7 +1191,7 @@ device_reportluns(int argc, char *argv[])
 
 	count = len / sizeof(data->desc[0]);
 
-	for (idx=0; idx<count; ++idx) {
+	for (idx = 0; idx < count; idx++) {
 		lun = _8btol(data->desc[idx].lun);
 
 		/*
