@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.364 2024/11/10 13:40:00 martin Exp $
+$NetBSD: UPDATING,v 1.365 2024/11/10 13:58:59 martin Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -25,6 +25,7 @@ Recent changes:
 	if you update from a build from a few days ago.
 	rm -rf ${OBJ}/tools/gcc/ ${OBJ}/external/gpl3/gcc/
 	rm -rf ${OBJ}/external/bsd/libarchive/ ${OBJ}/external/bsd/file/
+	rm -rf ${OBJ}/external/bsd/zstd
 	Also remove libzstd from ${DEST}: rm ${DEST}/usr/lib/libzstd*
 
 20240926:
