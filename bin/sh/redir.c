@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.74 2024/11/10 05:21:24 kre Exp $	*/
+/*	$NetBSD: redir.c,v 1.75 2024/11/10 09:06:24 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.74 2024/11/10 05:21:24 kre Exp $");
+__RCSID("$NetBSD: redir.c,v 1.75 2024/11/10 09:06:24 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,8 +70,8 @@ __RCSID("$NetBSD: redir.c,v 1.74 2024/11/10 05:21:24 kre Exp $");
 #include "show.h"
 
 
+#define EMPTY -2		/* marks an unused slot in redirtab */
 #define CLOSED -1		/* fd was not open before redir */
-
 #ifndef PIPE_BUF
 # define PIPESIZE 4096		/* amount of buffering in a pipe */
 #else
@@ -84,16 +84,10 @@ __RCSID("$NetBSD: redir.c,v 1.74 2024/11/10 05:21:24 kre Exp $");
 
 #ifndef F_DUPFD_CLOEXEC
 #define F_DUPFD_CLOEXEC	F_DUPFD
-#define CLOEXEC(fd)	(fcntl((fd), F_SETFD,				\
-			     (fcntl_int)(fcntl((fd), F_GETFD) | FD_CLOEXEC)))
+#define CLOEXEC(fd)	(fcntl((fd), F_SETFD, fcntl((fd),F_GETFD) | FD_CLOEXEC))
 #else
-#define CLOEXEC(fd)	__nothing
+#define CLOEXEC(fd)
 #endif
-
-/* yes, this is correct, bizarre parens and all -- used only as a cast */
-#define fcntl_int	void *)(intptr_t
-#undef  fcntl_int
-#define fcntl_int	int
 
 
 MKINIT
@@ -101,7 +95,6 @@ struct renamelist {
 	struct renamelist *next;
 	int orig;
 	int into;
-	int cloexec;	/* orig had FD_CLOEXEC set (into always does) */
 };
 
 MKINIT
@@ -125,10 +118,9 @@ STATIC int fd0_redirected = 0;
  * way of user defined fds (normally)
  */
 STATIC int big_sh_fd = 0;
-STATIC int biggest_sh_fd = 2;
 
 STATIC const struct renamelist *is_renamed(const struct renamelist *, int);
-STATIC void fd_rename(struct redirtab *, int, int, int);
+STATIC void fd_rename(struct redirtab *, int, int);
 STATIC int * saved_redirected_fd(int);
 STATIC void free_rl(struct redirtab *, int);
 STATIC void openredirect(union node *, char[10], int);
@@ -186,35 +178,15 @@ free_rl(struct redirtab *rt, int reset)
 			fd0_redirected--;
 		VTRACE(DBG_REDIR, ("popredir %d%s: %s",
 		    rl->orig, rl->orig==0 ? " (STDIN)" : "",
-		    reset == 1  ? "" :
-		    reset == 2  ? "make permanent" :
-				  "no reset\n"));
-
-		switch (reset) {
-		case 1:
+		    reset ? "" : "no reset\n"));
+		if (reset) {
 			if (rl->into < 0) {
-				VTRACE(DBG_REDIR, (" closed\n"));
+				VTRACE(DBG_REDIR, ("closed\n"));
 				close(rl->orig);
 			} else {
-				VTRACE(DBG_REDIR,
-				    (" from %d%s\n", rl->into,
-				       rl->cloexec ? " (colexec)" : ""));
-				copyfd(rl->into, rl->orig, rl->cloexec);
+				VTRACE(DBG_REDIR, ("from %d\n", rl->into));
+				movefd(rl->into, rl->orig);
 			}
-			break;
-		case 2:
-			if (rl->into < 0) {
-				VTRACE(DBG_REDIR, (" was closed\n"));
-				/* nothing to do */
-			} else {
-				VTRACE(DBG_REDIR,
-				    (" close savefd %d\n", rl->into));
-				close(rl->into);
-			}
-			break;
-		default:
-			/* nothing to do */
-			break;
 		}
 		ckfree(rl);
 	}
@@ -222,22 +194,16 @@ free_rl(struct redirtab *rt, int reset)
 }
 
 STATIC void
-fd_rename(struct redirtab *rt, int from, int to, int cloexec)
+fd_rename(struct redirtab *rt, int from, int to)
 {
 	/* XXX someday keep a short list (8..10) of freed renamelists XXX */
 	struct renamelist *rl = ckmalloc(sizeof(struct renamelist));
 
-	/*
-	 * Note this list is operated as LIFO so saved fd's are
-	 * undone in the opposite order to that they were saved
-	 * (needed to ensure correct results)
-	 */
 	rl->next = rt->renamed;
 	rt->renamed = rl;
 
 	rl->orig = from;
 	rl->into = to;
-	rl->cloexec = cloexec;
 }
 
 /*
@@ -258,7 +224,6 @@ redirect(union node *redir, int flags)
 	char memory[10];	/* file descriptors to write to memory */
 
 	CTRACE(DBG_REDIR, ("redirect(F=0x%x):%s\n", flags, redir?"":" NONE"));
-
 	for (i = 10 ; --i >= 0 ; )
 		memory[i] = 0;
 	memory[1] = flags & REDIR_BACKQ;
@@ -288,7 +253,7 @@ redirect(union node *redir, int flags)
 				error("fd %d: %s", fd, strerror(EBADF));
 			/* redirect from/to same file descriptor */
 			/* make sure it stays open */
-			if (fcntl(fd, F_SETFD, (fcntl_int)0) < 0)
+			if (fcntl(fd, F_SETFD, 0) < 0)
 				error("fd %d: %s", fd, strerror(errno));
 			continue;
 		}
@@ -305,21 +270,13 @@ redirect(union node *redir, int flags)
 
 		if ((flags & REDIR_PUSH) && !is_renamed(sv->renamed, fd)) {
 			int bigfd;
-			int cloexec;
-
-			cloexec = fcntl(fd, F_GETFD);
-			if (cloexec >= 0)
-				cloexec &= FD_CLOEXEC;
-			else
-				cloexec = 0;
 
 			INTOFF;
 			if (big_sh_fd < 10)
 				find_big_fd();
 			if ((bigfd = big_sh_fd) < max_user_fd)
 				bigfd = max_user_fd;
-			if ((i = fcntl(fd, F_DUPFD,
-			    (fcntl_int)(bigfd + 1))) == -1) {
+			if ((i = fcntl(fd, F_DUPFD, bigfd + 1)) == -1) {
 				switch (errno) {
 				case EBADF:
 					i = CLOSED;
@@ -327,13 +284,11 @@ redirect(union node *redir, int flags)
 				case EMFILE:
 				case EINVAL:
 					find_big_fd();
-					i = fcntl(fd, F_DUPFD, 
-					          (fcntl_int) big_sh_fd);
+					i = fcntl(fd, F_DUPFD, big_sh_fd);
 					if (i >= 0)
 						break;
 					if (errno == EMFILE || errno == EINVAL)
-						i = fcntl(fd, F_DUPFD,
-							  (fcntl_int) 3);
+						i = fcntl(fd, F_DUPFD, 3);
 					if (i >= 0)
 						break;
 					/* FALLTHRU */
@@ -342,13 +297,10 @@ redirect(union node *redir, int flags)
 					/* NOTREACHED */
 				}
 			}
-			if (i > biggest_sh_fd)
-				biggest_sh_fd = i;
 			if (i >= 0)
-				(void)fcntl(i, F_SETFD, (fcntl_int) FD_CLOEXEC);
-			fd_rename(sv, fd, i, cloexec);
-			VTRACE(DBG_REDIR, ("fd %d saved as %d%s ", fd, i,
-			    cloexec ? "+" : ""));
+				(void)fcntl(i, F_SETFD, FD_CLOEXEC);
+			fd_rename(sv, fd, i);
+			VTRACE(DBG_REDIR, ("fd %d saved as %d ", fd, i));
 			INTON;
 		}
 		VTRACE(DBG_REDIR, ("%s\n", fd == 0 ? "STDIN" : ""));
@@ -392,8 +344,7 @@ openredirect(union node *redir, char memory[10], int flags)
 		VTRACE(DBG_REDIR, ("openredirect(< '%s') -> %d [%#x]",
 		    fname, f, eflags));
 		if (eflags)
-			(void)fcntl(f, F_SETFL,
-				  (fcntl_int)(fcntl(f, F_GETFL) & ~eflags));
+			(void)fcntl(f, F_SETFL, fcntl(f, F_GETFL, 0) & ~eflags);
 		break;
 	case NFROMTO:
 		fname = redir->nfile.expfname;
@@ -467,9 +418,6 @@ openredirect(union node *redir, char memory[10], int flags)
 		abort();
 	}
 
-	if (f > biggest_sh_fd)
-		biggest_sh_fd = f;
-
 	cloexec = fd > 2 && (flags & REDIR_KEEP) == 0 && !posix;
 	if (f != fd) {
 		VTRACE(DBG_REDIR, (" -> %d", fd));
@@ -483,7 +431,7 @@ openredirect(union node *redir, char memory[10], int flags)
 		}
 		close(f);
 	} else if (cloexec)
-		(void)fcntl(f, F_SETFD, (fcntl_int) FD_CLOEXEC);
+		(void)fcntl(f, F_SETFD, FD_CLOEXEC);
 	VTRACE(DBG_REDIR, ("%s\n", cloexec ? " cloexec" : ""));
 
 	INTON;
@@ -511,8 +459,6 @@ openhere(const union node *redir)
 
 	if (pipe(pip) < 0)
 		error("Pipe call failed");
-	if (pip[1] > biggest_sh_fd)
-		biggest_sh_fd = pip[1];
 	len = strlen(redir->nhere.text);
 	VTRACE(DBG_REDIR, ("openhere(%p) [%d] \"%.*s\"%s\n", redir, len,
 	    (len < 40 ? len : 40), redir->nhere.text, (len < 40 ? "" : "...")));
@@ -535,7 +481,7 @@ openhere(const union node *redir)
 		_exit(0);
 	}
 	VTRACE(DBG_REDIR, ("openhere (closing %d)", pip[1]));
- out:;
+ out:
 	close(pip[1]);
 	VTRACE(DBG_REDIR, (" (pipe fd=%d)", pip[0]));
 	return pip[0];
@@ -544,21 +490,16 @@ openhere(const union node *redir)
 
 
 /*
- * if (reset == POPREDIR_UNDO)
- *	Undo the effects of the last redirection.
- * else if (reset == POPREDIR_PERMANENT)
- *	Make the last redirection permanent
- * else / * reset == POPREDIR_DISCARD * /
- *	Just throw away the redirection
+ * Undo the effects of the last redirection.
  */
 
 void
-popredir(int reset)
+popredir(void)
 {
 	struct redirtab *rp = redirlist;
 
 	INTOFF;
-	free_rl(rp, reset);
+	free_rl(rp, 1);
 	redirlist = rp->next;
 	ckfree(rp);
 	INTON;
@@ -574,7 +515,7 @@ INCLUDE "redir.h"
 
 RESET {
 	while (redirlist)
-		popredir(POPREDIR_UNDO);
+		popredir();
 }
 
 SHELLPROC {
@@ -602,7 +543,7 @@ clearredir(int vforked)
 
 	for (rp = redirlist ; rp ; rp = rp->next) {
 		if (!vforked)
-			free_rl(rp, POPREDIR_DISCARD);
+			free_rl(rp, 0);
 		else for (rl = rp->renamed; rl; rl = rl->next)
 			if (rl->into >= 0)
 				close(rl->into);
@@ -627,14 +568,10 @@ copyfd(int from, int to, int cloexec)
 		newfd = dup3(from, to, O_CLOEXEC);
 #else
 		newfd = dup2(from, to);
-		fcntl(newfd, F_SETFD,
-		    (fcntl_int)(fcntl(newfd, F_GETFD) | FD_CLOEXEC));
+		fcntl(newfd, F_SETFD, fcntl(newfd,F_GETFD) | FD_CLOEXEC);
 #endif
 	} else
 		newfd = dup2(from, to);
-
-	if (newfd > biggest_sh_fd)
-		biggest_sh_fd = newfd;
 
 	return newfd;
 }
@@ -651,11 +588,6 @@ copyfd(int from, int to, int cloexec)
 int
 movefd(int from, int to)
 {
-	if (from > biggest_sh_fd)
-		biggest_sh_fd = from;
-	if (to > biggest_sh_fd)
-		biggest_sh_fd = to;
-
 	if (from == to)
 		return to;
 
@@ -681,9 +613,7 @@ find_big_fd(void)
 		last_start++;
 
 	for (i = (1 << last_start); i >= 10; i >>= 1) {
-		if ((fd = fcntl(0, F_DUPFD, (fcntl_int)(i - 1))) >= 0) {
-			if (fd > biggest_sh_fd)
-				biggest_sh_fd = fd;
+		if ((fd = fcntl(0, F_DUPFD, i - 1)) >= 0) {
 			close(fd);
 			break;
 		}
@@ -712,10 +642,8 @@ to_upper_fd(int fd)
 	if (big_sh_fd < 10 || big_sh_fd >= user_fd_limit)
 		find_big_fd();
 	do {
-		i = fcntl(fd, F_DUPFD_CLOEXEC, (fcntl_int) big_sh_fd);
+		i = fcntl(fd, F_DUPFD_CLOEXEC, big_sh_fd);
 		if (i >= 0) {
-			if (i > biggest_sh_fd)
-				biggest_sh_fd = i;
 			if (fd != i)
 				close(fd);
 			VTRACE(DBG_REDIR|DBG_OUTPUT, ("-> %d\n", i));
@@ -731,7 +659,7 @@ to_upper_fd(int fd)
 	 * we certainly do not intend to pass it through exec, even
 	 * if the reassignment failed.
 	 */
-	(void)fcntl(fd, F_SETFD, (fcntl_int) FD_CLOEXEC);
+	(void)fcntl(fd, F_SETFD, FD_CLOEXEC);
 	VTRACE(DBG_REDIR|DBG_OUTPUT, (" fails ->%d\n", fd));
 	return fd;
 }
@@ -784,20 +712,18 @@ pick_new_fd(int fd)
 {
 	int to;
 
-	to = fcntl(fd, F_DUPFD_CLOEXEC, (fcntl_int) big_sh_fd);
+	to = fcntl(fd, F_DUPFD_CLOEXEC, big_sh_fd);
 	if (to == -1 && big_sh_fd >= 22)
-		to = fcntl(fd, F_DUPFD_CLOEXEC, (fcntl_int) (big_sh_fd / 2));
+		to = fcntl(fd, F_DUPFD_CLOEXEC, big_sh_fd/2);
 	if (to == -1)
-		to = fcntl(fd, F_DUPFD_CLOEXEC, (fcntl_int) (fd + 1));
+		to = fcntl(fd, F_DUPFD_CLOEXEC, fd + 1);
 	if (to == -1)
-		to = fcntl(fd, F_DUPFD_CLOEXEC, (fcntl_int) 10);
+		to = fcntl(fd, F_DUPFD_CLOEXEC, 10);
 	if (to == -1)
-		to = fcntl(fd, F_DUPFD_CLOEXEC, (fcntl_int)  3);
+		to = fcntl(fd, F_DUPFD_CLOEXEC, 3);
 	if (to == -1)
 		error("insufficient file descriptors available");
 	CLOEXEC(to);
-	if (to > biggest_sh_fd)
-		biggest_sh_fd = to;
 	return to;
 }
 
@@ -948,11 +874,11 @@ static const struct flgnames {
     O_NOFOLLOW|O_CREAT|O_TRUNC|O_EXCL|O_NOCTTY|O_DIRECTORY|O_REGULAR)
 
 static int
-getflags(int fd, int p, int all)
+getflags(int fd, int p)
 {
 	int c, f;
 
-	if (!all && (sh_fd(fd) != NULL || saved_redirected_fd(fd) != NULL)) {
+	if (sh_fd(fd) != NULL || saved_redirected_fd(fd) != NULL) {
 		if (!p)
 			return -1;
 		error("Can't get status for fd=%d (%s)", fd, strerror(EBADF));
@@ -977,7 +903,7 @@ getflags(int fd, int p, int all)
 static void
 printone(int fd, int p, int verbose, int pfd)
 {
-	int f = getflags(fd, p, verbose > 1);
+	int f = getflags(fd, p);
 	const struct flgnames *fn;
 
 	if (f == -1)
@@ -1039,7 +965,7 @@ parseflags(char *s, int *p, int *n)
 static void
 setone(int fd, int pos, int neg, int verbose)
 {
-	int f = getflags(fd, 1, 0);
+	int f = getflags(fd, 1);
 	int n, cloexec;
 
 	if (f == -1)
@@ -1051,9 +977,7 @@ setone(int fd, int pos, int neg, int verbose)
 	if ((neg & O_CLOEXEC) && (f & O_CLOEXEC))
 		cloexec = 0;
 
-	/* Don't allow O_CLOEXEC on stdin, stdout, or stderr */
-	if ((cloexec > 0 && fd <= 2 && (errno = EINVAL)) ||
-	    (cloexec != -1 && fcntl(fd, F_SETFD, (fcntl_int) cloexec) == -1))
+	if (cloexec != -1 && fcntl(fd, F_SETFD, cloexec) == -1)
 		error("Can't set status for fd=%d (%s)", fd, strerror(errno));
 
 	pos &= ~O_CLOEXEC;
@@ -1062,7 +986,7 @@ setone(int fd, int pos, int neg, int verbose)
 	n = f;
 	n |= pos;
 	n &= ~neg;
-	if (n != f && fcntl(fd, F_SETFL, (fcntl_int)n) == -1)
+	if (n != f && fcntl(fd, F_SETFL, n) == -1)
 		error("Can't set flags for fd=%d (%s)", fd, strerror(errno));
 	if (verbose)
 		printone(fd, 1, verbose, 1);
@@ -1076,17 +1000,8 @@ fdflagscmd(int argc, char *argv[])
 	char *setflags = NULL;
 
 	optreset = 1; optind = 1; /* initialize getopt */
-	while ((ch = getopt(argc, argv, ":vs:"
-#ifdef DEBUG
-					     "V"
-#endif
-						)) != -1)
+	while ((ch = getopt(argc, argv, ":vs:")) != -1)
 		switch ((char)ch) {
-#ifdef DEBUG
-		case 'V':
-			verbose = 2;
-			break;
-#endif
 		case 'v':
 			verbose = 1;
 			break;
@@ -1115,9 +1030,6 @@ fdflagscmd(int argc, char *argv[])
 
 		for (i = 0; i <= max_user_fd; i++)
 			printone(i, 0, verbose, 1);
-		if (verbose > 1)
-			while (i <= biggest_sh_fd)
-				printone(i++, 0, verbose, 1);
 
 	} else while ((num = *argv++) != NULL) {
 		int fd = number(num);
