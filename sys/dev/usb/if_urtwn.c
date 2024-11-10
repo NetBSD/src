@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.109 2024/02/28 20:18:13 riastradh Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.110 2024/11/10 11:52:32 mlelstv Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.109 2024/02/28 20:18:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.110 2024/11/10 11:52:32 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2482,6 +2482,7 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 		if_statinc(ifp, if_ierrors);
 		return;
 	}
+        MCLAIM(m, &sc->sc_ec.ec_rx_mowner);
 	if (pktlen > (int)MHLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if (__predict_false(!(m->m_flags & M_EXT))) {

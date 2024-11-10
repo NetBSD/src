@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.120 2024/05/04 12:41:03 mlelstv Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.121 2024/11/10 11:53:04 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.120 2024/05/04 12:41:03 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.121 2024/11/10 11:53:04 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -305,6 +305,7 @@ usbnet_enqueue(struct usbnet * const un, uint8_t *buf, size_t buflen,
 		if_statinc(ifp, if_ierrors);
 		return;
 	}
+	MCLAIM(m, &unp->unp_ec.ec_rx_mowner);
 
 	m_set_rcvif(m, ifp);
 	m->m_pkthdr.csum_flags = csum_flags;
@@ -334,6 +335,7 @@ usbnet_input(struct usbnet * const un, uint8_t *buf, size_t buflen)
 		if_statinc(ifp, if_ierrors);
 		return;
 	}
+	MCLAIM(m, &unp->unp_ec.ec_rx_mowner);
 
 	m_set_rcvif(m, ifp);
 	memcpy(mtod(m, char *), buf, buflen);
