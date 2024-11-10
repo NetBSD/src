@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.73 2024/11/10 01:22:24 kre Exp $	*/
+/*	$NetBSD: redir.c,v 1.74 2024/11/10 05:21:24 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.73 2024/11/10 01:22:24 kre Exp $");
+__RCSID("$NetBSD: redir.c,v 1.74 2024/11/10 05:21:24 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,9 @@ __RCSID("$NetBSD: redir.c,v 1.73 2024/11/10 01:22:24 kre Exp $");
 #endif
 
 /* yes, this is correct, bizarre parens and all -- used only as a cast */
-#define	fcntl_int	void *)(intptr_t
+#define fcntl_int	void *)(intptr_t
+#undef  fcntl_int
+#define fcntl_int	int
 
 
 MKINIT
