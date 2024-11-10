@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.110 2024/11/10 11:52:32 mlelstv Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.111 2024/11/10 19:01:25 riastradh Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.110 2024/11/10 11:52:32 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.111 2024/11/10 19:01:25 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2482,7 +2482,7 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 		if_statinc(ifp, if_ierrors);
 		return;
 	}
-        MCLAIM(m, &sc->sc_ec.ec_rx_mowner);
+	MCLAIM(m, &sc->sc_ec.ec_rx_mowner);
 	if (pktlen > (int)MHLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if (__predict_false(!(m->m_flags & M_EXT))) {
@@ -2669,7 +2669,7 @@ urtwn_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 				usbd_clear_endpoint_stall_async(pipe);
 			}
 			device_printf(sc->sc_dev, "transmit failed, %s\n",
-			              usbd_errstr(status));
+			    usbd_errstr(status));
 			if_statinc(ifp, if_oerrors);
 		}
 		splx(s);
@@ -4840,7 +4840,7 @@ urtwn_init(struct ifnet *ifp)
 
 	/* Init interrupts. */
 	if (ISSET(sc->chip, URTWN_CHIP_88E) ||
-	     ISSET(sc->chip, URTWN_CHIP_92EU)) {
+	    ISSET(sc->chip, URTWN_CHIP_92EU)) {
 		urtwn_write_4(sc, R88E_HISR, 0xffffffff);
 		urtwn_write_4(sc, R88E_HIMR, R88E_HIMR_CPWM | R88E_HIMR_CPWM2 |
 		    R88E_HIMR_TBDER | R88E_HIMR_PSTIMEOUT);
