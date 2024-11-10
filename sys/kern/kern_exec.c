@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.521 2023/10/08 12:38:58 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.522 2024/11/10 12:15:46 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.521 2023/10/08 12:38:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.522 2024/11/10 12:15:46 mlelstv Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1858,6 +1858,7 @@ exec_add(struct execsw *esp, int count)
 			exec_sigcode_free(it->ex_sw->es_emul);
 			kmem_free(it, sizeof(*it));
 		}
+		rw_exit(&exec_lock);
 		return error;
 	}
 
