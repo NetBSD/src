@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.115 2024/06/29 12:11:11 riastradh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.116 2024/11/10 11:44:23 mlelstv Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.115 2024/06/29 12:11:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.116 2024/11/10 11:44:23 mlelstv Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -4023,6 +4023,7 @@ bnx_get_buf(struct bnx_softc *sc, uint16_t *prod,
 			rc = ENOBUFS;
 			goto bnx_get_buf_exit;
 		}
+		MCLAIM(m_new, &sc->bnx_ec.ec_rx_mowner);
 
 		DBRUNIF(1, sc->rx_mbuf_alloc++);
 

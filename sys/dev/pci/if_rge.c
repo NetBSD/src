@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.32 2024/06/29 12:11:12 riastradh Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.33 2024/11/10 11:45:48 mlelstv Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.9 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.32 2024/06/29 12:11:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.33 2024/11/10 11:45:48 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_net_mpsafe.h"
@@ -1135,6 +1135,7 @@ rge_newbuf(struct rge_softc *sc, int idx)
 	m = MCLGETL(NULL, M_DONTWAIT, RGE_JUMBO_FRAMELEN);
 	if (m == NULL)
 		return (ENOBUFS);
+	MCLAIM(m, &sc->sc_ec.ec_rx_mowner);
 
 	m->m_len = m->m_pkthdr.len = RGE_JUMBO_FRAMELEN;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.800 2024/07/05 04:31:51 rin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.801 2024/11/10 11:46:24 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.800 2024/07/05 04:31:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.801 2024/11/10 11:46:24 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -5949,6 +5949,7 @@ wm_add_rxbuf(struct wm_rxqueue *rxq, int idx)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return ENOBUFS;
+	MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {

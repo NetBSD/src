@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.89 2024/02/09 06:01:03 mlelstv Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.90 2024/11/10 11:44:36 mlelstv Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.89 2024/02/09 06:01:03 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.90 2024/11/10 11:44:36 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -4737,6 +4737,7 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 			m_freem(m);
 			return ENOBUFS;
 		}
+		MCLAIM(m1, &sc->sc_ec.ec_rx_mowner);
 		if (m->m_pkthdr.len > MHLEN) {
 			MCLGET(m1, M_DONTWAIT);
 			if (!(m1->m_flags & M_EXT)) {

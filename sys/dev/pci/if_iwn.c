@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.100 2024/04/03 01:13:41 gutteridge Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.101 2024/11/10 11:45:09 mlelstv Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.100 2024/04/03 01:13:41 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.101 2024/11/10 11:45:09 mlelstv Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -225,6 +225,7 @@ static void	iwn_free_ict(struct iwn_softc *);
 static int	iwn_alloc_fwmem(struct iwn_softc *);
 static void	iwn_free_fwmem(struct iwn_softc *);
 static int	iwn_alloc_rx_ring(struct iwn_softc *, struct iwn_rx_ring *);
+static void	iwn_claim_rx_ring(struct iwn_softc *, struct iwn_rx_ring *);
 static void	iwn_reset_rx_ring(struct iwn_softc *, struct iwn_rx_ring *);
 static void	iwn_free_rx_ring(struct iwn_softc *, struct iwn_rx_ring *);
 static int	iwn_alloc_tx_ring(struct iwn_softc *, struct iwn_tx_ring *,
@@ -661,6 +662,10 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 
 	if_initialize(ifp);
 	ieee80211_ifattach(ic);
+
+	/* MBUFTRACE */
+	iwn_claim_rx_ring(sc, &sc->rxq);
+
 	/* Use common softint-based if_input */
 	ifp->if_percpuq = if_percpuq_create(ifp);
 	if_register(ifp);
@@ -1408,6 +1413,20 @@ iwn_alloc_rx_ring(struct iwn_softc *sc, struct iwn_rx_ring *ring)
 
 fail:	iwn_free_rx_ring(sc, ring);
 	return error;
+}
+
+static void
+iwn_claim_rx_ring(struct iwn_softc *sc, struct iwn_rx_ring *ring)
+{
+	int i;
+
+	for (i = 0; i < IWN_RX_RING_COUNT; i++) {
+		struct iwn_rx_data *data = &ring->data[i];
+	
+		if (data->m != NULL) {
+			MCLAIM(data->m, &sc->sc_ec.ec_rx_mowner);
+		}
+	}
 }
 
 static void
@@ -2165,6 +2184,7 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		if_statinc(ifp, if_ierrors);
 		return;
 	}
+	MCLAIM(m1, &sc->sc_ec.ec_rx_mowner);
 	bus_dmamap_unload(sc->sc_dmat, data->map);
 
 	error = bus_dmamap_load(sc->sc_dmat, data->map, mtod(m1, void *),
@@ -3177,6 +3197,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 			m_freem(m);
 			return ENOBUFS;
 		}
+		MCLAIM(m1, &sc->sc_ec.ec_tx_mowner);
 		if (m->m_pkthdr.len > MHLEN) {
 			MCLGET(m1, M_DONTWAIT);
 			if (!(m1->m_flags & M_EXT)) {
@@ -3437,6 +3458,7 @@ iwn_cmd(struct iwn_softc *sc, int code, const void *buf, int size, int async)
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL)
 			return ENOMEM;
+		MCLAIM(m, &sc->sc_ec.ec_tx_mowner);
 		if (totlen > MHLEN) {
 			MCLGET(m, M_DONTWAIT);
 			if (!(m->m_flags & M_EXT)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.135 2024/09/08 09:36:51 rillig Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.136 2024/11/10 10:57:52 mlelstv Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.135 2024/09/08 09:36:51 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.136 2024/11/10 10:57:52 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_modular.h"
@@ -976,6 +976,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 		if_statinc(ifp, if_ierrors);
 		return ENOBUFS;
 	}
+	MCLAIM(m, &sc->sc_ec.ec_rx_mowner);
 	m->m_pkthdr.len = uio->uio_resid;
 
 	mp = &m;
@@ -986,6 +987,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 				error = ENOBUFS;
 				break;
 			}
+			MCLAIM(*mp, &sc->sc_ec.ec_rx_mowner);
 		}
 		(*mp)->m_len = uimin(MHLEN, uio->uio_resid);
 		len += (*mp)->m_len;

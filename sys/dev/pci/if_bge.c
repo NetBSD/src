@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.396 2024/09/14 07:01:33 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.397 2024/11/10 11:44:08 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.396 2024/09/14 07:01:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.397 2024/11/10 11:44:08 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1486,6 +1486,7 @@ bge_newbuf_std(struct bge_softc *sc, int i)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return ENOBUFS;
+	MCLAIM(m, &sc->ethercom.ec_rx_mowner);
 
 	MCLGET(m, M_DONTWAIT);
 	if (!(m->m_flags & M_EXT)) {
@@ -1545,6 +1546,7 @@ bge_newbuf_jumbo(struct bge_softc *sc, int i, struct mbuf *m)
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL)
 			return ENOBUFS;
+		MCLAIM(m, &sc->ethercom.ec_rx_mowner);
 
 		/* Allocate the jumbo buffer */
 		buf = bge_jalloc(sc);
@@ -5023,6 +5025,7 @@ bge_cksum_pad(struct mbuf *pkt)
 			MGET(n, M_DONTWAIT, MT_DATA);
 			if (n == NULL)
 				return ENOBUFS;
+			MCLAIM(n, last->m_owner);
 			n->m_len = 0;
 			last->m_next = n;
 			last = n;
@@ -5122,6 +5125,7 @@ bge_compact_dma_runt(struct mbuf *pkt)
 				MGET(n, M_NOWAIT, MT_DATA);
 				if (n == NULL)
 				   return ENOBUFS;
+				MCLAIM(n, prev->m_owner);
 				KASSERT(m->m_len + shortfall < MLEN
 					/*,
 					  ("runt %d +prev %d too big\n", m->m_len, shortfall)*/);
