@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.33 2024/11/09 12:43:12 mlelstv Exp $	*/
+/*	$NetBSD: main.c,v 1.34 2024/11/10 01:54:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -96,7 +96,7 @@ alldone(void)
 	clearit();
 }
 
-static int 
+static int
 bootit(const char *filename, int howto)
 {
 	if (exec_netbsd(filename, 0, howto, 0, alldone) < 0)
@@ -241,11 +241,11 @@ command_consdev(char *arg)
 	const struct cons_devs *cdp;
 	char *sep;
 	int speed;
-	
+
 	sep = strchr(arg, ',');
 	if (sep != NULL)
-		*sep++ = '\0';   
-	
+		*sep++ = '\0';
+
 	for (cdp = cons_devs; cdp->name; cdp++) {
 		if (strcmp(arg, cdp->name) != 0)
 			continue;
@@ -253,18 +253,18 @@ command_consdev(char *arg)
 		if (sep != NULL) {
 			if (cdp->tag == CONSDEV_PC)
 				goto error;
-	
+
 			speed = atoi(sep);
 			if (speed < 0)
 				goto error;
 			boot_params.bp_conspeed = speed;
-		} 
-	
+		}
+
 		initio(cdp->tag);
 		clearit();
 		print_bootcfg_banner(bootprog_name, bootprog_rev);
 		return;
-	} 
+	}
 error:
 	printf("invalid console device.\n");
 }
