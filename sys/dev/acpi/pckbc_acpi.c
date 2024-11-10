@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.39 2021/01/29 15:24:00 thorpej Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.40 2024/11/10 13:29:38 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.39 2021/01/29 15:24:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.40 2024/11/10 13:29:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -96,6 +96,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "PNP0F1B",		.value = PCKBC_AUX_SLOT },
 	{ .compat = "PNP0F1C",		.value = PCKBC_AUX_SLOT },
 	{ .compat = "SYN0302",		.value = PCKBC_AUX_SLOT },
+	{ .compat = "ELAN0501",		.value = PCKBC_AUX_SLOT },
 
 	DEVICE_COMPAT_EOL
 };
