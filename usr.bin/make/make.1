@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.379 2024/09/21 23:42:53 sjg Exp $
+.\"	$NetBSD: make.1,v 1.380 2024/11/10 02:39:14 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd September 21, 2024
+.Dd November 10, 2024
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -60,10 +60,11 @@ If no
 .Fl f Ar makefile
 option is given,
 .Nm
-tries to open
-.Sq Pa makefile
-then
-.Sq Pa Makefile
+looks for the makefiles listed in
+.Va .MAKE.MAKEFILE_PREFERENCE
+(default
+.Sq Pa makefile ,
+.Sq Pa Makefile )
 in order to find the specifications.
 If the file
 .Sq Pa .depend
@@ -240,6 +241,13 @@ If
 is
 .Ql \&- ,
 standard input is read.
+If
+.Ar makefile
+starts with the string
+.Ql \&.../ ,
+.Nm
+searches for the specified path in the rest of the argument
+in the current directory and its parents.
 Multiple makefiles may be specified, and are read in the order specified.
 .It Fl I Ar directory
 Specify a directory in which to search for makefiles and included makefiles.

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.634 2024/08/27 04:52:14 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.635 2024/11/10 02:39:14 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.634 2024/08/27 04:52:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.635 2024/11/10 02:39:14 sjg Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1636,6 +1636,20 @@ ReadMakefile(const char *fname)
 		Parse_File("(stdin)", -1);
 		Var_Set(SCOPE_INTERNAL, "MAKEFILE", "");
 	} else {
+		if (strncmp(fname, ".../", 4) == 0) {
+			name = Dir_FindHereOrAbove(curdir, fname + 4);
+			if (name != NULL) {
+				/* Dir_FindHereOrAbove returns dirname */
+				path = str_concat3(name, "/",
+				    str_basename(fname));
+				free(name);
+				fd = open(path, O_RDONLY);
+				if (fd != -1) {
+					fname = path;
+					goto found;
+				}
+			}
+		}
 		/* if we've chdir'd, rebuild the path name */
 		if (strcmp(curdir, objdir) != 0 && *fname != '/') {
 			path = str_concat3(curdir, "/", fname);
