@@ -1,4 +1,4 @@
-/*	$NetBSD: synapticsreg.h,v 1.13 2022/03/03 21:03:14 blymn Exp $	*/
+/*	$NetBSD: synapticsreg.h,v 1.14 2024/11/10 11:49:19 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -43,6 +43,7 @@
 #define	SYNAPTICS_READ_MODE		0x1
 #define	SYNAPTICS_READ_CAPABILITIES	0x2
 #define	SYNAPTICS_READ_MODEL_ID		0x3
+#define	SYNAPTICS_QUERY_RESOLUTION	0x8
 #define	SYNAPTICS_EXTENDED_QUERY	0x9
 #define	SYNAPTICS_CONTINUED_CAPABILITIES 0x0c
 #define	SYNAPTICS_READ_MAX_COORDS	0x0d
@@ -59,7 +60,9 @@
 
 /* Capability bits. */
 /* (byte[0] << 8) | byte[2] */
+/* Submodel ID: byte[1] */
 #define SYNAPTICS_CAP_VALUE(b)	(((b)[0] << 8) | (b)[2])
+#define SYNAPTICS_CAP_SUBMODEL(b)	((b)[1])
 #define	SYNAPTICS_CAP_EXTENDED		(1 << 15)
 #define	SYNAPTICS_CAP_EXTNUM		(1 << 14 | 1 << 13 | 1 << 12)
 #define	SYNAPTICS_CAP_MBUTTON		(1 << 10)
