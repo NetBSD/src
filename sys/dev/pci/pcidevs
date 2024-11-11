@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1512 2024/10/19 06:39:43 mlelstv Exp $
+$NetBSD: pcidevs,v 1.1513 2024/11/11 14:23:11 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2582,7 +2582,37 @@ product BRAINBOXES IS100	0x0d60	Intashield IS-100
 product BRAINBOXES IS200	0x0d80	Intashield IS-200
 product BRAINBOXES IS300	0x0da0	Intashield IS-300
 product BRAINBOXES IS400	0x0dc0	Intashield IS-400
+product BRAINBOXES PX279	0x0e41	Brainboxes PX-279
 product BRAINBOXES UC414	0x0e61	Brainboxes UC-414
+product BRAINBOXES PX420	0x4000	Brainboxes PX-420
+product BRAINBOXES PX431	0x4001	Brainboxes PX-431
+product BRAINBOXES PX820	0x4002	Brainboxes PX-820
+product BRAINBOXES PX831	0x4003	Brainboxes PX-831
+product BRAINBOXES PX246	0x4004	Brainboxes PX-246
+product BRAINBOXES PX101	0x4005	Brainboxes PX-101
+product BRAINBOXES PX257	0x4006	Brainboxes PX-257
+product BRAINBOXES PX846	0x4008	Brainboxes PX-846
+product BRAINBOXES PX857	0x4009	Brainboxes PX-857
+product BRAINBOXES PX260	0x400a	Brainboxes PX-260
+product BRAINBOXES PX320	0x400b	Brainboxes PX-320
+product BRAINBOXES PX313	0x400c	Brainboxes PX-313
+product BRAINBOXES PX310	0x400e	Brainboxes PX-310
+product BRAINBOXES PX346	0x400f	Brainboxes PX-346
+product BRAINBOXES PX368	0x4010	Brainboxes PX-368
+product BRAINBOXES PX420R3	0x4011	Brainboxes PX-420
+product BRAINBOXES PX431R3	0x4012	Brainboxes PX-431
+product BRAINBOXES PX820R3	0x4013	Brainboxes PX-820
+product BRAINBOXES PX831R3	0x4014	Brainboxes PX-831
+product BRAINBOXES PX257R3	0x4015	Brainboxes PX-257
+product BRAINBOXES PX246R3	0x4016	Brainboxes PX-246
+product BRAINBOXES PX846R3	0x4017	Brainboxes PX-846
+product BRAINBOXES PX857R3	0x4018	Brainboxes PX-857
+product BRAINBOXES PX101R3	0x4019	Brainboxes PX-101
+product BRAINBOXES PX475	0x401d	Brainboxes PX-475
+product BRAINBOXES PX803	0x401e	Brainboxes PX-803
+product BRAINBOXES IX100	0x4027	Intashield IX-100
+product BRAINBOXES IX200	0x4028	Intashield IX-200
+product BRAINBOXES IX400	0x4029	Intashield IX-400
 
 /* Broadcom products */
 product BROADCOM BCM5752	0x1600	BCM5752 NetXtreme 1000baseT Ethernet
