@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.14 2024/11/11 19:56:58 skrll Exp $
+# $NetBSD: GENERIC64,v 1.15 2024/11/11 19:59:17 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -50,7 +50,7 @@ options 	DEBUG		# expensive debugging checks/support
 ccache* 	at fdt?			# SiFive FU[57]40 L2 Cache
 
 # Fixed Voltage/Current Regulators
-fregulator*	at fdt? pass 4
+fregulator* 	at fdt? pass 4
 
 # Clock and reset controller
 jh7100clkc* 	at fdt?	pass 2		# StarFive JH7100 clock controller
@@ -58,7 +58,7 @@ jh7110clkc* 	at fdt?	pass 2		# StarFive JH7110 clock controller
 sun20id1ccu* 	at fdt? pass 2		# Allwinner D1/D1s CCU
 
 # Security ID EFUSE
-sunxisid*	at fdt? pass 4		# Allwinner SID
+sunxisid* 	at fdt? pass 4		# Allwinner SID
 
 # DMA
 sun6idma* 	at fdt? pass 4		# Allwinner DMA controller (sun6i)
