@@ -1,4 +1,4 @@
-/*      $NetBSD: bootinfo.c,v 1.7 2024/11/01 14:28:42 mlelstv Exp $        */      
+/*      $NetBSD: bootinfo.c,v 1.8 2024/11/11 13:55:22 riastradh Exp $        */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.7 2024/11/01 14:28:42 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.8 2024/11/11 13:55:22 riastradh Exp $");
 
 #include "opt_md.h"
 
