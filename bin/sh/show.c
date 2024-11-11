@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.58 2024/11/10 09:06:24 kre Exp $	*/
+/*	$NetBSD: show.c,v 1.59 2024/11/11 22:57:42 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.58 2024/11/10 09:06:24 kre Exp $");
+__RCSID("$NetBSD: show.c,v 1.59 2024/11/11 22:57:42 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -163,7 +163,7 @@ opentrace(void)
 	 */
 	if (tracefile)
 		(void) fclose(tracefile);	/* also closes tfd */
-	tracefile = fdopen(fd, "a");	/* don't care if it is NULL */
+	tracefile = fdopen(fd, "ae");	/* don't care if it is NULL */
 	if (tracefile)			/* except here... */
 		setlinebuf(tracefile);
 

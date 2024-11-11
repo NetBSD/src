@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.h,v 1.28 2024/11/10 09:06:24 kre Exp $	*/
+/*	$NetBSD: redir.h,v 1.29 2024/11/11 22:57:42 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,9 +40,14 @@
 #define REDIR_VFORK 0x04	/* running under vfork(2), be careful */
 #define REDIR_KEEP  0x08	/* don't close-on-exec */
 
+/* flags passed to popredir and free_rl */
+#define POPREDIR_DISCARD	0	/* just abandon everything */
+#define POPREDIR_UNDO		1	/* undo saved redirects */
+#define POPREDIR_PERMANENT	2	/* keep renamed fd, close saving fd */
+
 union node;
 void redirect(union node *, int);
-void popredir(void);
+void popredir(int);
 int fd0_redirected_p(void);
 void clearredir(int);
 int movefd(int, int);
