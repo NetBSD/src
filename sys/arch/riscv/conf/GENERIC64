@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.12 2024/10/26 15:49:43 skrll Exp $
+# $NetBSD: GENERIC64,v 1.13 2024/11/11 19:23:18 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -65,6 +65,7 @@ sun6idma* 	at fdt? pass 4		# Allwinner DMA controller (sun6i)
 
 # Pin control
 jh7100pinctrl* 	at fdt? pass 2		# StarFive JH7100 pinctrl driver
+jh7110pinctrl* 	at fdt? pass 2		# StarFive JH7110 pinctrl driver
 sunxigpio* 	at fdt? pass 3		# Allwinner GPIO
 gpio* 		at gpiobus?
 
