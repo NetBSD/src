@@ -1,4 +1,4 @@
-/*	$NetBSD: posix_spawnp.c,v 1.4 2020/05/11 14:54:34 kre Exp $	*/
+/*	$NetBSD: posix_spawnp.c,v 1.5 2024/11/11 06:49:31 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: posix_spawnp.c,v 1.4 2020/05/11 14:54:34 kre Exp $");
+__RCSID("$NetBSD: posix_spawnp.c,v 1.5 2024/11/11 06:49:31 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -57,6 +57,10 @@ int posix_spawnp(pid_t * __restrict pid, const char * __restrict file,
 	int err;
 
 	_DIAGASSERT(file != NULL);
+
+	/* "" is not a valid filename; check this before traversing PATH. */
+	if (file[0] == '\0')
+		return ENOENT;
 
 	/*
 	 * If there is a / in the name, fall straight through to posix_spawn().
