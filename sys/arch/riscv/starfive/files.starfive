@@ -1,4 +1,4 @@
-#	$NetBSD: files.starfive,v 1.6 2024/11/11 19:23:18 skrll Exp $
+#	$NetBSD: files.starfive,v 1.7 2024/11/11 20:01:38 skrll Exp $
 #
 # Configuration info for StarFive SoCs
 #
@@ -39,3 +39,8 @@ attach	eqos at fdt with jh7110_eqos
 file	arch/riscv/starfive/jh7100_gmac.c		jh7100_gmac
 file	arch/riscv/starfive/jh7110_eqos.c		jh7110_eqos
 file	arch/riscv/starfive/jh71x0_eth.c		jh7100_gmac | jh7110_eqos
+
+# JH7110 PCIe PHY
+device	jh7110pciephy
+attach	jh7110pciephy at fdt with jh7110_pciephy
+file	arch/riscv/starfive/jh7110_pciephy.c		jh7110_pciephy
