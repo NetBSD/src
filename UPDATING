@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.365 2024/11/10 13:58:59 martin Exp $
+$NetBSD: UPDATING,v 1.366 2024/11/11 13:58:56 riastradh Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -22,11 +22,21 @@ Recent changes:
 20241104:
 	Changes around the integration of the zstd compression
 	library may require manual deletion of some object directories
-	if you update from a build from a few days ago.
-	rm -rf ${OBJ}/tools/gcc/ ${OBJ}/external/gpl3/gcc/
-	rm -rf ${OBJ}/external/bsd/libarchive/ ${OBJ}/external/bsd/file/
-	rm -rf ${OBJ}/external/bsd/zstd
-	Also remove libzstd from ${DEST}: rm ${DEST}/usr/lib/libzstd*
+	if you update from a build from a few days ago:
+	rm -rf DESTDIR/usr/lib/*/libarchive*
+	rm -rf DESTDIR/usr/lib/*/libmagic*
+	rm -rf DESTDIR/usr/lib/*/libzstd*
+	rm -rf DESTDIR/usr/lib/libarchive*
+	rm -rf DESTDIR/usr/lib/libmagic*
+	rm -rf DESTDIR/usr/lib/libzstd*
+	rm -rf OBJDIR/compat/*/*/external/bsd/file/
+	rm -rf OBJDIR/compat/*/*/external/bsd/libarchive/
+	rm -rf OBJDIR/compat/*/*/external/bsd/zstd/
+	rm -rf OBJDIR/external/bsd/file/
+	rm -rf OBJDIR/external/bsd/libarchive/
+	rm -rf OBJDIR/external/bsd/zstd/
+	rm -rf OBJDIR/external/gpl3/gcc/
+	rm -rf OBJDIR/tools/gcc/
 
 20240926:
 	Building -current when running on amd64 from about 20240924
