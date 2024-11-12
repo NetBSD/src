@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.394 2024/09/27 20:08:21 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.395 2024/11/12 19:58:53 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -533,6 +533,7 @@ ECDH	elliptic curve Diffie-Hellman
 ECDL	elliptic curve discrete logarithm
 ECDLP	elliptic curve discrete logarithm problem
 ECDSA	elliptic curve digital signature algorithm
+EDDSA	Edwards-curve digital signature algorithm
 ECL	emitter-coupled logic
 ECN	explicit congestion notification
 ECP	enhanced capability port
@@ -700,6 +701,7 @@ HAL	hardware abstraction layer
 HAT	hashed array tree
 HATEOAS	hypermedia as the engine of application state
 HBA	host bus adapter
+HBS	hash-based signature
 HCC	Home Cable Computer
 HCCA	Home Cable Computer Adaptor
 HCF	halt and catch fire
@@ -935,6 +937,7 @@ LMCE	local machine check exception
 LMI	local management interface
 LMM	link management mode
 LMP	link management protocol
+LMS	Leighton-Micali Signature
 LNO	loop nest optimization
 LOC	lines of code
 LOM	lights-out management
@@ -1932,8 +1935,10 @@ XGA	Extended Graphics Array
 XHR	XMLHttpRequest
 XIP	execute in place
 XML	Extensible Markup Language
+XMSS	eXtended Merkle Signature Scheme
 XNA	XNA's not acronymed
 XNS	Xerox network systems
+XOF	eXtendable-Output Function
 XOR	exclusive or
 XP	extreme programming
 XSI	X/Open System Interface
