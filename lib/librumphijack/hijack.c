@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.140 2024/08/16 04:23:31 ozaki-r Exp $	*/
+/*      $NetBSD: hijack.c,v 1.141 2024/11/12 03:06:58 kre Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.140 2024/08/16 04:23:31 ozaki-r Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.141 2024/11/12 03:06:58 kre Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1886,7 +1886,7 @@ dup2(int oldd, int newd)
 		 */
 		op_close(newd);
 		setdup2(newd, fd_host2rump(oldd));
-		rv = 0;
+		rv = newd;
 	} else {
 		host_dup2 = syscalls[DUALCALL_DUP2].bs_host;
 		if (rumpclient__closenotify(&newd, RUMPCLIENT_CLOSE_DUP2) == -1)
