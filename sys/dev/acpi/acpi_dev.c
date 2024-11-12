@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_dev.c,v 1.2 2021/07/24 11:36:41 jmcneill Exp $ */
+/* $NetBSD: acpi_dev.c,v 1.3 2024/11/12 13:24:01 martin Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_dev.c,v 1.2 2021/07/24 11:36:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_dev.c,v 1.3 2024/11/12 13:24:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -151,6 +151,8 @@ acpi_find_table(ACPI_PHYSICAL_ADDRESS pa,
     ACPI_PHYSICAL_ADDRESS *paddr, uint32_t *plen)
 {
 	ACPI_TABLE_DESC *tdesc;
+	ACPI_TABLE_TCPA_HDR *tcpa = NULL;
+	size_t tcpa_tdesc_len = 0;
 	bool found_table;
 	uint32_t i;
 
@@ -171,13 +173,61 @@ acpi_find_table(ACPI_PHYSICAL_ADDRESS pa,
 		tdesc = &AcpiGbl_RootTableList.Tables[i];
 		if (pa >= tdesc->Address &&
 		    pa < tdesc->Address + tdesc->Length) {
+
+			/*
+			 * allow access to all root table objects
+			 */
 			*paddr = tdesc->Address;
 			*plen = tdesc->Length;
 			found_table = true;
 			break;
+		} else if (memcmp(tdesc->Signature.Ascii, ACPI_SIG_TCPA, 4)
+		    == 0) {
+
+			/*
+			 * allow acces to TCPA (which requires mapping)
+			 */
+
+			/* duplicate TCPA table? buggy firmware? */
+			if (tcpa != NULL && tcpa_tdesc_len > 0)
+				AcpiOsUnmapMemory(tcpa, tcpa_tdesc_len);
+
+			tcpa = (ACPI_TABLE_TCPA_HDR*)
+			    AcpiOsMapMemory(tdesc->Address, tdesc->Length);
+			if (tcpa != NULL)
+				tcpa_tdesc_len = tdesc->Length;
 		}
 	}
+
+	if (!found_table && tcpa != NULL) {
+		ACPI_PHYSICAL_ADDRESS tcpa_addr = 0;
+		uint32_t tcpa_len = 0;
+
+		if (tcpa->PlatformClass == ACPI_TCPA_CLIENT_TABLE) {
+			ACPI_TABLE_TCPA_CLIENT *t =
+			    (ACPI_TABLE_TCPA_CLIENT *)(tcpa+1);
+			tcpa_addr = t->LogAddress;
+			tcpa_len = t->MinimumLogLength;
+		} else if (tcpa->PlatformClass == ACPI_TCPA_SERVER_TABLE) {
+			ACPI_TABLE_TCPA_SERVER *t =
+			    (ACPI_TABLE_TCPA_SERVER *)(tcpa+1);
+			tcpa_addr = t->LogAddress;
+			tcpa_len = t->MinimumLogLength;
+		}
+		if (tcpa_len != 0 &&
+		    pa >= tcpa_addr &&
+		    pa < tcpa_addr + tcpa_len) {
+			*paddr = tcpa_addr;
+			*plen = tcpa_len;
+			found_table = true;
+		}
+	}
+
+	if (tcpa != NULL && tcpa_tdesc_len != 0)
+		AcpiOsUnmapMemory(tcpa, tcpa_tdesc_len);
+		
 	AcpiUtReleaseMutex(ACPI_MTX_TABLES);
+
 	return found_table;
 }
 
