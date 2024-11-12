@@ -1,4 +1,4 @@
-/* $NetBSD: jh7110_pciephy.c,v 1.1 2024/11/11 20:01:38 skrll Exp $ */
+/* $NetBSD: jh7110_pciephy.c,v 1.2 2024/11/12 07:21:42 skrll Exp $ */
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jh7110_pciephy.c,v 1.1 2024/11/11 20:01:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jh7110_pciephy.c,v 1.2 2024/11/12 07:21:42 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -43,14 +43,6 @@ struct jh7110_pciephy_softc {
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 	int			sc_phandle;
-#if 0
-	struct syscon *		sc_sys_syscon;
-	bus_size_t		sc_phy_connect;
-
-	struct syscon *		sc_stg_syscon;
-	bus_size_t		sc_stg_pcie_mode;
-	bus_size_t		sc_stg_pcie_usb;
-#endif
 };
 
 /* Register definitions */
@@ -61,17 +53,6 @@ struct jh7110_pciephy_softc {
 
 #define PCIE_KVCO_TUNE_SIGNAL		0x80
 #define	 PCIE_KVO_FINE_TUNE_SIGNALS	0x0c
-
-#if 0
-
-#define USB_PDRSTN_SPLIT		__BIT(17)
-
-#define PCIE_PHY_MODE			__BIT(20)
-#define PCIE_PHY_MODE_MASK		__BITS(21, 20)
-#define PCIE_USB3_BUS_WIDTH_MASK	__BITS(3, 2)
-#define PCIE_USB3_PHY_ENABLE		__BIT(4)
-#define PCIE_USB3_BUS_WIDTH		__BIT(3)
-#endif
 
 #define RD4(sc, reg)							      \
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
