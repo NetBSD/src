@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_dev.c,v 1.3 2024/11/12 13:24:01 martin Exp $ */
+/* $NetBSD: acpi_dev.c,v 1.4 2024/11/12 21:49:11 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_dev.c,v 1.3 2024/11/12 13:24:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_dev.c,v 1.4 2024/11/12 21:49:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -192,8 +192,7 @@ acpi_find_table(ACPI_PHYSICAL_ADDRESS pa,
 			if (tcpa != NULL && tcpa_tdesc_len > 0)
 				AcpiOsUnmapMemory(tcpa, tcpa_tdesc_len);
 
-			tcpa = (ACPI_TABLE_TCPA_HDR*)
-			    AcpiOsMapMemory(tdesc->Address, tdesc->Length);
+			tcpa = AcpiOsMapMemory(tdesc->Address, tdesc->Length);
 			if (tcpa != NULL)
 				tcpa_tdesc_len = tdesc->Length;
 		}
@@ -205,12 +204,12 @@ acpi_find_table(ACPI_PHYSICAL_ADDRESS pa,
 
 		if (tcpa->PlatformClass == ACPI_TCPA_CLIENT_TABLE) {
 			ACPI_TABLE_TCPA_CLIENT *t =
-			    (ACPI_TABLE_TCPA_CLIENT *)(tcpa+1);
+			    (ACPI_TABLE_TCPA_CLIENT *)(tcpa + 1);
 			tcpa_addr = t->LogAddress;
 			tcpa_len = t->MinimumLogLength;
 		} else if (tcpa->PlatformClass == ACPI_TCPA_SERVER_TABLE) {
 			ACPI_TABLE_TCPA_SERVER *t =
-			    (ACPI_TABLE_TCPA_SERVER *)(tcpa+1);
+			    (ACPI_TABLE_TCPA_SERVER *)(tcpa + 1);
 			tcpa_addr = t->LogAddress;
 			tcpa_len = t->MinimumLogLength;
 		}
@@ -225,7 +224,7 @@ acpi_find_table(ACPI_PHYSICAL_ADDRESS pa,
 
 	if (tcpa != NULL && tcpa_tdesc_len != 0)
 		AcpiOsUnmapMemory(tcpa, tcpa_tdesc_len);
-		
+
 	AcpiUtReleaseMutex(ACPI_MTX_TABLES);
 
 	return found_table;
