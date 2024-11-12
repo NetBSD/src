@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.17 2024/11/11 20:30:08 skrll Exp $
+# $NetBSD: GENERIC64,v 1.18 2024/11/12 07:30:12 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -90,12 +90,6 @@ sunxiusbphy* 	at fdt?			# Allwinner USB PHY
 
 # USB
 jh71x0usb* 	at fdt?			# StarFive JH71x0 usb
-
-# USB
-xhci* 		at fdt?			# XHCI
-usb* 		at usbus?
-include "dev/usb/usbdevices.config"
-midi* 		at midibus?
 
 # Ethernet
 #awge* 		at fdt?			# DesignWare Gigabit Ethernet
