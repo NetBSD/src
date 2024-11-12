@@ -1,4 +1,4 @@
-/*	$NetBSD: qop.c,v 1.11 2011/08/16 12:49:13 christos Exp $	*/
+/*	$NetBSD: qop.c,v 1.12 2024/11/12 21:28:50 andvar Exp $	*/
 /*	$KAME: qop.c,v 1.11 2001/10/26 04:57:59 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -1069,7 +1069,7 @@ add_filter_rule(struct ifinfo *ifinfo, struct fltrinfo *fltrinfo,
 			break;
 		case FILT_INTERSECT:
 			/*
-			 * if the intersecting two filters beloging to the
+			 * if the intersecting two filters belonging to the
 			 * same class, it's ok.
 			 */
 			if (front->clinfo == back->clinfo)
