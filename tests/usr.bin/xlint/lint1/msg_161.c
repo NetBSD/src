@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_161.c,v 1.11 2023/06/19 12:33:43 rillig Exp $	*/
+/*	$NetBSD: msg_161.c,v 1.12 2024/11/13 04:32:49 rillig Exp $	*/
 # 3 "msg_161.c"
 
 // Test for message: constant in conditional context [161]
@@ -18,7 +18,7 @@ while_0(void)
 {
 	/* expect+1: warning: constant in conditional context [161] */
 	while (0) {
-		/* expect+1: warning: statement not reached [193] */
+		/* expect+1: warning: 'continue' statement not reached [193] */
 		continue;
 	}
 }

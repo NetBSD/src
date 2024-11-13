@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.657 2024/10/31 10:32:08 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.658 2024/11/13 04:32:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.657 2024/10/31 10:32:08 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.658 2024/11/13 04:32:49 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4524,7 +4524,8 @@ is_constcond_false(const tnode_t *tn, tspec_t t)
  * memory which is used for the expression.
  */
 void
-expr(tnode_t *tn, bool vctx, bool cond, bool dofreeblk, bool is_do_while)
+expr(tnode_t *tn, bool vctx, bool cond, bool dofreeblk, bool is_do_while,
+    const char *stmt_kind)
 {
 
 	if (tn == NULL) {	/* in case of errors */
@@ -4534,7 +4535,7 @@ expr(tnode_t *tn, bool vctx, bool cond, bool dofreeblk, bool is_do_while)
 
 	/* expr() is also called in global initializations */
 	if (dcs->d_kind != DLK_EXTERN && !is_do_while)
-		check_statement_reachable();
+		check_statement_reachable(stmt_kind);
 
 	check_expr_misc(tn, vctx, cond, !cond, false, false, false);
 	if (tn->tn_op == ASSIGN && !tn->tn_parenthesized) {

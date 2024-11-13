@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_207.c,v 1.4 2024/04/19 20:59:18 rillig Exp $	*/
+/*	$NetBSD: msg_207.c,v 1.5 2024/11/13 04:32:49 rillig Exp $	*/
 # 3 "msg_207.c"
 
 // Test for message: loop not entered at top [207]
@@ -19,7 +19,7 @@ for_loop(void)
 	// XXX: Why is this different from the snippet above?
 	for (int i = 0; i < 10; i++)
 		if (0 == 1)
-			/* expect+1: warning: statement not reached [193] */
+			/* expect+1: warning: 'init' statement not reached [193] */
 			for (int j = 0;
 			    j < 5;
 			    /* expect+1: warning: end-of-loop code not reached [223] */

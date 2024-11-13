@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.252 2024/10/31 10:32:08 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.253 2024/11/13 04:32:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.252 2024/10/31 10:32:08 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.253 2024/11/13 04:32:49 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -248,7 +248,7 @@ static const char *const msgs[] = {
 	"empty array declaration for '%s'",				// 190
 	"'%s' set but not used in function '%s'",			// 191
 	"'%s' unused in function '%s'",					// 192
-	"statement not reached",					// 193
+	"'%s' statement not reached",					// 193
 	"label '%s' redefined",						// 194
 	"case not in switch",						// 195
 	"case label affected by conversion",				// 196

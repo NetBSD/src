@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_217.c,v 1.14 2024/11/13 03:43:00 rillig Exp $	*/
+/*	$NetBSD: msg_217.c,v 1.15 2024/11/13 04:32:49 rillig Exp $	*/
 # 3 "msg_217.c"
 
 // Test for message: function '%s' falls off bottom without returning value [217]
@@ -65,7 +65,7 @@ unreachable_continue_falls_through(void)
 {
 	for (;;) {
 		if (0)
-			/* expect+1: warning: statement not reached [193] */
+			/* expect+1: warning: 'continue' statement not reached [193] */
 			continue;
 		break;
 	}

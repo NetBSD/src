@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.514 2024/11/13 03:43:00 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.515 2024/11/13 04:32:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.514 2024/11/13 03:43:00 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.515 2024/11/13 04:32:49 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -712,7 +712,8 @@ gcc_statement_expr_item:
 			/* XXX: do that only on the last name */
 			if ($1->tn_op == NAME)
 				$1->u.sym->s_used = true;
-			expr($1, true, false, false, false);
+			expr($1, true, false, false, false,
+			    "statement expression");
 			suppress_fallthrough = false;
 			$$ = $1;
 		}
@@ -2137,25 +2138,39 @@ block_item:
 /* C99 6.8.3, C23 6.8.4 */
 expression_statement:
 	expression T_SEMI {
-		expr($1, false, false, false, false);
+		/*
+		 * Even though a "call statement" is not a formally defined
+		 * term in the C standards, it occurs so often that it's
+		 * helpful to have a distinguishable term for it.
+		 */
+		expr($1, false, false, false, false,
+		    $1 != NULL && $1->tn_op == CALL ? "call" : "expression");
 		suppress_fallthrough = false;
 		if ($1 != NULL && $1->tn_op == CALL
 		    && $1->u.call->func->tn_type->t_subt->t_noreturn)
 			stmt_call_noreturn();
 	}
 |	T_SEMI {
-		check_statement_reachable();
+		check_statement_reachable("empty");
 		suppress_fallthrough = false;
 	}
 |	attribute_specifier_sequence expression T_SEMI {
 		debug_attribute_list(&$1);
-		expr($2, false, false, false, false);
+		/*
+		 * Even though a "call statement" is not a formally defined
+		 * term in the C standards, it occurs so often that it's
+		 * helpful to have a distinguishable term for it.
+		 */
+		expr($2, false, false, false, false,
+		    $2 != NULL && $2->tn_op == CALL ? "call" : "expression");
 		suppress_fallthrough = false;
 	}
 |	attribute_specifier_sequence T_SEMI {
+		bool is_fallthrough = attributes_contain(&$1, "fallthrough");
 		debug_attribute_list(&$1);
-		check_statement_reachable();
-		suppress_fallthrough = attributes_contain(&$1, "fallthrough");
+		check_statement_reachable(
+		    is_fallthrough ? "fallthrough" : "empty");
+		suppress_fallthrough = is_fallthrough;
 	}
 ;
 

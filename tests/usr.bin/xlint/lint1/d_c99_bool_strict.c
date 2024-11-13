@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.50 2024/05/12 12:28:35 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.51 2024/11/13 04:32:49 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -409,8 +409,8 @@ strict_bool_controlling_expression(bool b, int i, double d, const void *p)
 {
 	/* expect+1: warning: constant in conditional context [161] */
 	if (__lint_false)
+		/* expect+1: warning: 'call' statement not reached [193] */
 		do_nothing();
-	/* expect-1: warning: statement not reached [193] */
 
 	/* expect+1: warning: constant in conditional context [161] */
 	if (__lint_true)
@@ -421,8 +421,8 @@ strict_bool_controlling_expression(bool b, int i, double d, const void *p)
 
 	/* expect+1: error: controlling expression must be bool, not 'int' [333] */
 	if (/*CONSTCOND*/0)
+		/* expect+1: warning: 'call' statement not reached [193] */
 		do_nothing();
-	/* expect-1: warning: statement not reached [193] */
 
 	/* expect+1: error: controlling expression must be bool, not 'int' [333] */
 	if (/*CONSTCOND*/1)

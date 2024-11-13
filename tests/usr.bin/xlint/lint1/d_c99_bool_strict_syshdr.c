@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.24 2024/05/12 12:28:35 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.25 2024/11/13 04:32:49 rillig Exp $	*/
 # 3 "d_c99_bool_strict_syshdr.c"
 
 /*
@@ -266,8 +266,8 @@ if_pointer_or_int(void)
 	    ((void *)0)
 # 268 "d_c99_bool_strict_syshdr.c"
 		       )
+		/* expect+1: warning: 'return' statement not reached [193] */
 		return;
-	/* expect-1: warning: statement not reached [193] */
 
 	/* if (EXIT_SUCCESS) */
 	if (
@@ -275,8 +275,8 @@ if_pointer_or_int(void)
 	    0
 # 277 "d_c99_bool_strict_syshdr.c"
 		       )
+		/* expect+1: warning: 'return' statement not reached [193] */
 		return;
-	/* expect-1: warning: statement not reached [193] */
 
 	/* if (errno) */
 	if (

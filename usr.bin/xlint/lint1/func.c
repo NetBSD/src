@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.188 2024/11/13 03:43:00 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.189 2024/11/13 04:32:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.188 2024/11/13 03:43:00 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.189 2024/11/13 04:32:49 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -181,11 +181,11 @@ set_reached(bool new_reached)
  * Prints a warning if a statement cannot be reached.
  */
 void
-check_statement_reachable(void)
+check_statement_reachable(const char *stmt_kind)
 {
 	if (!reached && warn_about_unreachable) {
-		/* statement not reached */
-		warning(193);
+		/* '%s' statement not reached */
+		warning(193, stmt_kind);
 		warn_about_unreachable = false;
 	}
 }
@@ -408,8 +408,8 @@ check_case_label_bitand(const tnode_t *case_expr, const tnode_t *switch_expr)
 	uint64_t mask = (uint64_t)switch_expr->u.ops.right->u.value.u.integer;
 
 	if ((case_value & ~mask) != 0)
-		/* statement not reached */
-		warning(193);
+		/* '%s' statement not reached */
+		warning(193, "case");
 }
 
 static void
@@ -579,7 +579,7 @@ stmt_if_expr(tnode_t *tn)
 	if (tn != NULL)
 		tn = check_controlling_expression(tn, false);
 	if (tn != NULL)
-		expr(tn, false, true, false, false);
+		expr(tn, false, true, false, false, "if");
 	begin_control_statement(CS_IF);
 
 	if (tn != NULL && tn->tn_op == CON && !tn->tn_system_dependent) {
@@ -648,7 +648,7 @@ stmt_switch_expr(tnode_t *tn)
 	(void)expr_save_memory();
 
 	check_getopt_begin_switch();
-	expr(tn, true, false, false, false);
+	expr(tn, true, false, false, false, "switch");
 
 	begin_control_statement(CS_SWITCH);
 	cstmt->c_switch = true;
@@ -730,7 +730,7 @@ stmt_while_expr(tnode_t *tn)
 	bool body_reached = !is_zero(tn);
 
 	check_getopt_begin_while(tn);
-	expr(tn, false, true, true, false);
+	expr(tn, false, true, true, false, "while");
 
 	set_reached(body_reached);
 }
@@ -772,7 +772,7 @@ stmt_do_while_expr(tnode_t *tn)
 			error(323);
 	}
 
-	expr(tn, false, true, true, true);
+	expr(tn, false, true, true, true, "do-while");
 
 	if (cstmt->c_maybe_endless)
 		set_reached(false);
@@ -809,12 +809,12 @@ stmt_for_exprs(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 	cstmt->c_for_expr3_csrc_pos = csrc_pos;
 
 	if (tn1 != NULL)
-		expr(tn1, false, false, true, false);
+		expr(tn1, false, false, true, false, "for");
 
 	if (tn2 != NULL)
 		tn2 = check_controlling_expression(tn2, false);
 	if (tn2 != NULL)
-		expr(tn2, false, true, true, false);
+		expr(tn2, false, true, true, false, "for");
 
 	cstmt->c_maybe_endless = tn2 == NULL || is_nonzero(tn2);
 
@@ -845,7 +845,7 @@ stmt_for_exprs_stmt(void)
 	}
 
 	if (tn3 != NULL)
-		expr(tn3, false, false, true, false);
+		expr(tn3, false, false, true, false, "for continuation");
 	else
 		expr_free_all();
 
@@ -861,7 +861,7 @@ void
 stmt_goto(sym_t *lab)
 {
 	mark_as_used(lab, false, false);
-	check_statement_reachable();
+	check_statement_reachable("goto");
 	set_reached(false);
 }
 
@@ -879,7 +879,7 @@ stmt_break(void)
 		cs->c_break = true;
 
 	if (bflag)
-		check_statement_reachable();
+		check_statement_reachable("break");
 
 	set_reached(false);
 }
@@ -899,7 +899,7 @@ stmt_continue(void)
 		/* TODO: only if reachable, for symmetry with c_break */
 		cs->c_continue = true;
 
-	check_statement_reachable();
+	check_statement_reachable("continue");
 
 	set_reached(false);
 }
@@ -945,7 +945,7 @@ check_return_value(bool sys, tnode_t *tn)
 			warning(302, funcsym->s_name);
 	}
 
-	expr(retn, true, false, true, false);
+	expr(retn, true, false, true, false, "return");
 }
 
 void
@@ -986,7 +986,7 @@ stmt_return(bool sys, tnode_t *tn)
 	if (tn != NULL)
 		check_return_value(sys, tn);
 	else
-		check_statement_reachable();
+		check_statement_reachable("return");
 
 	set_reached(false);
 }

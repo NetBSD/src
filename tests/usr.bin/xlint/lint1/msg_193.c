@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_193.c,v 1.21 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: msg_193.c,v 1.22 2024/11/13 04:32:49 rillig Exp $	*/
 # 3 "msg_193.c"
 
-// Test for message: statement not reached [193]
+// Test for message: '%s' statement not reached [193]
 
 /* lint1-extra-flags: -X 351 */
 
@@ -626,7 +626,7 @@ void
 lint_annotation_NOTREACHED(void)
 {
 	if (0) {
-		/* expect+1: warning: statement not reached [193] */
+		/* expect+1: warning: 'call' statement not reached [193] */
 		unreachable();
 	}
 
@@ -654,7 +654,7 @@ lint_annotation_NOTREACHED(void)
 	 * marks that branch as not reached, which means that any following
 	 * statement cannot be reached as well.
 	 */
-	/* expect+1: warning: statement not reached [193] */
+	/* expect+1: warning: 'if' statement not reached [193] */
 	if (1)
 		/* NOTREACHED */
 		suppressed();
@@ -703,7 +703,7 @@ test_null_statement(void)
 	for (int i = 0; i < 10; i++)
 		;
 
-	/* expect+1: warning: statement not reached [193] */
+	/* expect+1: warning: 'empty' statement not reached [193] */
 	return 0;;
 }
 

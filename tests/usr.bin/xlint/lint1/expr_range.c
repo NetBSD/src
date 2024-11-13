@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_range.c,v 1.5 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: expr_range.c,v 1.6 2024/11/13 04:32:49 rillig Exp $	*/
 # 3 "expr_range.c"
 
 /*
@@ -28,7 +28,7 @@ example(unsigned x)
 		println("0 is reachable");
 		break;
 	case 1:
-		/* expect-1: warning: statement not reached [193] */
+		/* expect-1: warning: 'case' statement not reached [193] */
 		println("1 is not reachable");
 		break;
 	case 2:
@@ -38,7 +38,7 @@ example(unsigned x)
 		println("6 is reachable");
 		break;
 	case 7:
-		/* expect-1: warning: statement not reached [193] */
+		/* expect-1: warning: 'case' statement not reached [193] */
 		println("7 is not reachable");
 		break;
 	}

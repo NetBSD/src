@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.234 2024/11/13 03:43:00 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.235 2024/11/13 04:32:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -301,7 +301,7 @@ tnode_t *cast(tnode_t *, bool, type_t *);
 void add_function_argument(function_call *, tnode_t *);
 tnode_t *build_function_call(tnode_t *, bool, function_call *);
 val_t *integer_constant(tnode_t *, bool);
-void expr(tnode_t *, bool, bool, bool, bool);
+void expr(tnode_t *, bool, bool, bool, bool, const char *);
 void check_expr_misc(const tnode_t *, bool, bool, bool, bool, bool, bool);
 bool constant_addr(const tnode_t *, const sym_t **, ptrdiff_t *);
 buffer *cat_strings(buffer *, buffer *);
@@ -339,7 +339,7 @@ extern bool suppress_longlong;
 
 void begin_control_statement(control_statement_kind);
 void end_control_statement(control_statement_kind);
-void check_statement_reachable(void);
+void check_statement_reachable(const char *);
 void begin_function(sym_t *);
 void end_function(void);
 void named_label(sym_t *);
