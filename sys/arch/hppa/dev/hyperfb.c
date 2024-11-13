@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.18 2024/10/16 09:56:34 macallan Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.19 2024/11/13 08:21:16 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.18 2024/10/16 09:56:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.19 2024/11/13 08:21:16 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -430,54 +430,33 @@ hyperfb_attach(device_t parent, device_t self, void *aux)
 	//sc->sc_gc.gc_blitcookie = sc;
 	//sc->sc_gc.gc_rop = RopSrc;
 
-	if (sc->sc_is_console) {
-		vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
-		    &defattr);
-		sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
+	vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1, &defattr);
+	sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
-		sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
-		sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
-		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
-		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
+	sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
+	sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
+	sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
+	sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
 
 #if 0
-		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
-				sc->sc_scr.fbheight - sc->sc_height - 5,
-				sc->sc_scr.fbwidth,
-				ri->ri_font->fontwidth,
-				ri->ri_font->fontheight,
-				defattr);
+	glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
+			sc->sc_scr.fbheight - sc->sc_height - 5,
+			sc->sc_scr.fbwidth,
+			ri->ri_font->fontwidth,
+			ri->ri_font->fontheight,
+			defattr);
 #endif
+
+	hyperfb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
+	    ri->ri_devcmap[(defattr >> 16) & 0xff]);
+	hyperfb_restore_palette(sc);
+
+	if (sc->sc_is_console) {
+
 		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
 		    defattr);
-
-		hyperfb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
-		    ri->ri_devcmap[(defattr >> 16) & 0xff]);
-
 		vcons_replay_msgbuf(&sc->sc_console_screen);
-	} else {
-		/*
-		 * since we're not the console we can postpone the rest
-		 * until someone actually allocates a screen for us
-		 */
-		if (sc->sc_console_screen.scr_ri.ri_rows == 0) {
-			/* do some minimal setup to avoid weirdnesses later */
-			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
-			    &defattr);
-		} else
-			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
-
-#if 0
-		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
-				sc->sc_scr.fbheight - sc->sc_height - 5,
-				sc->sc_scr.fbwidth,
-				ri->ri_font->fontwidth,
-				ri->ri_font->fontheight,
-				defattr);
-#endif
 	}
-
-	hyperfb_restore_palette(sc);
 
 	/* no suspend/resume support yet */
 	if (!pmf_device_register(sc->sc_dev, NULL, NULL))
@@ -914,7 +893,7 @@ hyperfb_setup(struct hyperfb_softc *sc)
 			0, 0));
 		/* dst bitmap access */
 		hyperfb_write4(sc, NGLE_REG_11,
-		    BA(IndexedDcd, Otc32, OtsIndirect, AddrLong, 0, BINapp0F8,
+		    BA(FractDcd, Otc32, OtsIndirect, AddrLong, 0, BINapp0F8,
 			0));
 		hyperfb_wait_fifo(sc, 3);
 		hyperfb_write4(sc, NGLE_REG_35, 0x00ffffff);	/* fg colour */

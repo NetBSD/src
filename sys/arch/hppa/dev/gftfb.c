@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.26 2024/10/27 19:23:47 riastradh Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.27 2024/11/13 08:21:16 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -295,51 +295,31 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_gc.gc_blitcookie = sc;
 	sc->sc_gc.gc_rop = RopSrc;
 
+	vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1, &defattr);
+	sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
+
+	sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
+	sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
+	sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
+	sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
+
+	glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
+			sc->sc_scr.fbheight - sc->sc_height - 5,
+			sc->sc_scr.fbwidth,
+			ri->ri_font->fontwidth,
+			ri->ri_font->fontheight,
+			defattr);
+
+	gftfb_restore_palette(sc);
+	gftfb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
+	    ri->ri_devcmap[(defattr >> 16) & 0xff]);
+
 	if (is_console) {
-		vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
-		    &defattr);
-		sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
-
-		sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
-		sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
-		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
-		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
-
-		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
-				sc->sc_scr.fbheight - sc->sc_height - 5,
-				sc->sc_scr.fbwidth,
-				ri->ri_font->fontwidth,
-				ri->ri_font->fontheight,
-				defattr);
-
 		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
 		    defattr);
 
-		gftfb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
-		    ri->ri_devcmap[(defattr >> 16) & 0xff]);
-
 		vcons_replay_msgbuf(&sc->sc_console_screen);
-	} else {
-		/*
-		 * since we're not the console we can postpone the rest
-		 * until someone actually allocates a screen for us
-		 */
-		if (sc->sc_console_screen.scr_ri.ri_rows == 0) {
-			/* do some minimal setup to avoid weirdnesses later */
-			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
-			    &defattr);
-		} else
-			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
-
-		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
-				sc->sc_scr.fbheight - sc->sc_height - 5,
-				sc->sc_scr.fbwidth,
-				ri->ri_font->fontwidth,
-				ri->ri_font->fontheight,
-				defattr);
 	}
-
-	gftfb_restore_palette(sc);
 
 	/* no suspend/resume support yet */
 	if (!pmf_device_register(sc->sc_dev, NULL, NULL))
