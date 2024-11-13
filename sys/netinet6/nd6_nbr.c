@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.184 2024/10/05 09:10:53 roy Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.185 2024/11/13 09:25:52 roy Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.184 2024/10/05 09:10:53 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.185 2024/11/13 09:25:52 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -677,12 +677,13 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	}
 
 	if (ndopts.nd_opts_tgt_lladdr != NULL) {
+		struct ifnet *ifp_ll;
+		struct psref psref_ll;
+
 		lladdr = (char *)(ndopts.nd_opts_tgt_lladdr + 1);
 		lladdrlen = ndopts.nd_opts_tgt_lladdr->nd_opt_len << 3;
-	}
 
-	if (lladdr != NULL) {
-		if (((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {
+		if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {
 			nd6log(LOG_INFO, "lladdrlen mismatch for %s "
 			    "(if %d, NA packet %d)\n",
 			    IN6_PRINT(ip6buf, &taddr6),
@@ -690,8 +691,10 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			goto bad;
 		}
 
-		if (!memcmp(lladdr, CLLADDR(ifp->if_sadl), ifp->if_addrlen)) {
+		ifp_ll = if_get_bylla(lladdr, ifp->if_addrlen, &psref_ll);
+		if (ifp_ll != NULL) {
 			/* it's from me, ignore it. */
+			if_put(ifp_ll, &psref_ll);
 			goto freeit;
 		}
 	}
