@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.513 2024/10/29 20:44:22 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.514 2024/11/13 03:43:00 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.513 2024/10/29 20:44:22 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.514 2024/11/13 03:43:00 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -956,6 +956,8 @@ begin_type_declaration_specifiers:	/* see C99 6.7, C23 6.7.1 */
 |	type_attribute begin_type_declaration_specifiers {
 		if ($1.used)
 			dcs_set_used();
+		if ($1.noreturn)
+			dcs->d_noreturn = true;
 	}
 |	begin_type_declaration_specifiers declmod
 |	begin_type_declaration_specifiers notype_type_specifier {
@@ -1025,7 +1027,12 @@ declmod:
 |	T_FUNCTION_SPECIFIER {
 		dcs_add_function_specifier($1);
 	}
-|	type_attribute_list
+|	type_attribute_list {
+		if ($1.used)
+			dcs_set_used();
+		if ($1.noreturn)
+			dcs->d_noreturn = true;
+	}
 ;
 
 type_attribute_list_opt:
@@ -1072,6 +1079,7 @@ begin_type:
 |	attribute_specifier_sequence {
 		dcs_begin_type();
 		dcs->d_used = attributes_contain(&$1, "maybe_unused");
+		dcs->d_noreturn = attributes_contain(&$1, "noreturn");
 	}
 ;
 
@@ -1733,6 +1741,7 @@ abstract_decl_param_list:	/* specific to lint */
 		$$ = $2;
 		$$.prototype = true;
 		$$.used = $4.used;
+		$$.noreturn = $4.noreturn;
 	}
 |	abstract_decl_lparen error T_RPAREN type_attribute_list_opt {
 		$$ = (parameter_list){ .used = $4.used };
@@ -2130,6 +2139,9 @@ expression_statement:
 	expression T_SEMI {
 		expr($1, false, false, false, false);
 		suppress_fallthrough = false;
+		if ($1 != NULL && $1->tn_op == CALL
+		    && $1->u.call->func->tn_type->t_subt->t_noreturn)
+			stmt_call_noreturn();
 	}
 |	T_SEMI {
 		check_statement_reachable();
@@ -2511,6 +2523,8 @@ gcc_attribute:
 			$$.used = true;
 		else if (is_either(name, "fallthrough", "__fallthrough__"))
 			suppress_fallthrough = true;
+		else if (is_either(name, "noreturn", "__noreturn__"))
+			$$.noreturn = true;
 	}
 |	T_NAME T_LPAREN T_RPAREN {
 		$$ = (type_attributes){ .used = false };

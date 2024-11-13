@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.233 2024/09/28 15:51:40 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.234 2024/11/13 03:43:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -360,6 +360,7 @@ void stmt_goto(sym_t *);
 void stmt_continue(void);
 void stmt_break(void);
 void stmt_return(bool, tnode_t *);
+void stmt_call_noreturn(void);
 void global_clean_up_decl(bool);
 void handle_lint_comment(lint_comment, int);
 

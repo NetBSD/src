@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_217.c,v 1.13 2024/11/13 02:54:48 rillig Exp $	*/
+/*	$NetBSD: msg_217.c,v 1.14 2024/11/13 03:43:00 rillig Exp $	*/
 # 3 "msg_217.c"
 
 // Test for message: function '%s' falls off bottom without returning value [217]
@@ -83,38 +83,28 @@ int
 call_noreturn_c11(void)
 {
 	noreturn_c11();
-	// FIXME
-	/* expect+1: warning: function 'call_noreturn_c11' falls off bottom without returning value [217] */
 }
 
 int
 call_noreturn_c23(void)
 {
 	noreturn_c23();
-	// FIXME
-	/* expect+1: warning: function 'call_noreturn_c23' falls off bottom without returning value [217] */
 }
 
 int
 call_noreturn_gnu_prefix(void)
 {
 	noreturn_gnu_prefix();
-	// FIXME
-	/* expect+1: warning: function 'call_noreturn_gnu_prefix' falls off bottom without returning value [217] */
 }
 
 int
 call_noreturn_gnu_infix(void)
 {
 	noreturn_gnu_infix();
-	// FIXME
-	/* expect+1: warning: function 'call_noreturn_gnu_infix' falls off bottom without returning value [217] */
 }
 
 int
 call_noreturn_gnu_suffix(void)
 {
 	noreturn_gnu_suffix();
-	// FIXME
-	/* expect+1: warning: function 'call_noreturn_gnu_suffix' falls off bottom without returning value [217] */
 }

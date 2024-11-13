@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute_func.c,v 1.4 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute_func.c,v 1.5 2024/11/13 03:43:00 rillig Exp $	*/
 # 3 "gcc_attribute_func.c"
 
 /*
@@ -23,11 +23,6 @@ void *__attribute__((__cold__)) attribute_before_name(void);
 void *attribute_after_name __attribute__((__cold__))(void);
 void *attribute_after_parameters(void) __attribute__((__cold__));
 
-/*
- * The attribute 'used' does not influence static functions, it only
- * applies to function parameters.
- */
-/* expect+2: warning: static function 'used_function' unused [236] */
 static void __attribute__((used))
 used_function(void)
 {

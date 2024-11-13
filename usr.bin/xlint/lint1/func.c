@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.187 2024/05/12 12:28:34 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.188 2024/11/13 03:43:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.187 2024/05/12 12:28:34 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.188 2024/11/13 03:43:00 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -901,6 +901,12 @@ stmt_continue(void)
 
 	check_statement_reachable();
 
+	set_reached(false);
+}
+
+void
+stmt_call_noreturn(void)
+{
 	set_reached(false);
 }
 
