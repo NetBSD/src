@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2024/10/30 18:09:19 christos Exp $
+# $NetBSD: Makefile,v 1.15 2024/11/13 03:38:51 riastradh Exp $
 
 NOMAN=
 
@@ -19,6 +19,9 @@ CPPFLAGS+=-I${LIBARCHIVE}/libarchive/test -I${LIBARCHIVE}/../include
 DPADD+=	${LIBARCHIVE} ${LIBEXPAT} ${LIBBZ2} ${LIBLZMA} ${LIBZ} \
 	${LIBCRYPTO} ${LIBPTHREAD}
 LDADD+=	-larchive -lexpat -lbz2 -llzma -lz -lcrypto -lpthread
+
+.include "${NETBSDSRCDIR}/external/bsd/zstd/Makefile.zstd"
+PROGDPLIBS+=	${ZSTDDPLIBS}	# needed by libarchive
 
 SRCS.h_libarchive= \
 read_open_memory.c \
