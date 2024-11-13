@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_217.c,v 1.12 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: msg_217.c,v 1.13 2024/11/13 02:54:48 rillig Exp $	*/
 # 3 "msg_217.c"
 
 // Test for message: function '%s' falls off bottom without returning value [217]
@@ -71,3 +71,50 @@ unreachable_continue_falls_through(void)
 	}
 }
 /* expect-1: warning: function 'unreachable_continue_falls_through' falls off bottom without returning value [217] */
+
+
+_Noreturn void noreturn_c11(void);
+[[noreturn]] void noreturn_c23(void);
+__attribute__((__noreturn__)) void noreturn_gnu_prefix(void);
+void __attribute__((__noreturn__)) noreturn_gnu_infix(void);
+void noreturn_gnu_suffix(void) __attribute__((__noreturn__));
+
+int
+call_noreturn_c11(void)
+{
+	noreturn_c11();
+	// FIXME
+	/* expect+1: warning: function 'call_noreturn_c11' falls off bottom without returning value [217] */
+}
+
+int
+call_noreturn_c23(void)
+{
+	noreturn_c23();
+	// FIXME
+	/* expect+1: warning: function 'call_noreturn_c23' falls off bottom without returning value [217] */
+}
+
+int
+call_noreturn_gnu_prefix(void)
+{
+	noreturn_gnu_prefix();
+	// FIXME
+	/* expect+1: warning: function 'call_noreturn_gnu_prefix' falls off bottom without returning value [217] */
+}
+
+int
+call_noreturn_gnu_infix(void)
+{
+	noreturn_gnu_infix();
+	// FIXME
+	/* expect+1: warning: function 'call_noreturn_gnu_infix' falls off bottom without returning value [217] */
+}
+
+int
+call_noreturn_gnu_suffix(void)
+{
+	noreturn_gnu_suffix();
+	// FIXME
+	/* expect+1: warning: function 'call_noreturn_gnu_suffix' falls off bottom without returning value [217] */
+}
