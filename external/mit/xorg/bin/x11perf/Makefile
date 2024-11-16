@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2018/05/09 08:39:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2024/11/16 08:52:45 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,7 @@ SRCS=	x11perf.c bitmaps.c do_tests.c do_simple.c do_rects.c do_valgc.c \
 CPPFLAGS+=	-DMITSHM -DXRENDER
 CPPFLAGS+=	-DXFT -DXFREE86_FT2 -I${DESTDIR}${X11INCDIR}/freetype2
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2/freetype
+CPPFLAGS+=	-DPACKAGE_STRING=\"${PACKAGE_STRING}\"
 
 MAN=	Xmark.1 x11perf.1 x11perfcomp.1
 
