@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2022/11/13 05:26:07 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2024/11/16 04:05:31 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,8 @@ SRCS=	xlogo.c Logo.c RenderLogo.c
 
 CPPFLAGS+=	-DXRENDER -DXFREE86_FT2 -I${DESTDIR}${X11INCDIR}/freetype2
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2/freetype
-CPPFLAGS+=	-D_CONST_X_STRING
+CPPFLAGS+=	-D_CONST_X_STRING -DHAVE_STRLCAT -DHAVE_STRLCPY
+CPPFLAGS+=	-DPACKAGE_STRING=\"${PACKAGE_STRING}\"
 
 APPDEFS=XLogo XLogo-color
 
