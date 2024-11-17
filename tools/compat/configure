@@ -4923,6 +4923,19 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_SETPROGNAME $ac_have_decl
 _ACEOF
+ac_fn_c_check_decl "$LINENO" "shquote" "ac_cv_have_decl_shquote" "
+#include <stdlib.h>
+
+"
+if test "x$ac_cv_have_decl_shquote" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_SHQUOTE $ac_have_decl
+_ACEOF
 ac_fn_c_check_decl "$LINENO" "getprogname" "ac_cv_have_decl_getprogname" "
 #include <stdlib.h>
 

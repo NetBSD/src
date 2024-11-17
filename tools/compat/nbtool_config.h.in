@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.53.6.1 2023/06/30 17:13:50 martin Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.53.6.2 2024/11/17 13:32:52 martin Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -313,6 +313,10 @@
 /* Define to 1 if you have the declaration of `setprogname', and to 0 if you
    don't. */
 #undef HAVE_DECL_SETPROGNAME
+
+/* Define to 1 if you have the declaration of `shquote', and to 0 if you
+   don't. */
+#undef HAVE_DECL_SHQUOTE
 
 /* Define to 1 if you have the declaration of `snprintf', and to 0 if you
    don't. */
