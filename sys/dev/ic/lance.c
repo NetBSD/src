@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.61 2024/11/10 10:55:13 mlelstv Exp $	*/
+/*	$NetBSD: lance.c,v 1.62 2024/11/17 09:28:34 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.61 2024/11/10 10:55:13 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.62 2024/11/17 09:28:34 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -370,7 +370,7 @@ lance_get(struct lance_softc *sc, int boff, int totlen)
 	MGETHDR(m0, M_DONTWAIT, MT_DATA);
 	if (m0 == 0)
 		return (0);
-	MCLAIM(m0, &sc->sc_ethercom.ec_rx_owner);
+	MCLAIM(m0, &sc->sc_ethercom.ec_rx_mowner);
 	m_set_rcvif(m0, &sc->sc_ethercom.ec_if);
 	m0->m_pkthdr.len = totlen;
 	len = MHLEN;
@@ -401,7 +401,7 @@ lance_get(struct lance_softc *sc, int boff, int totlen)
 			MGET(newm, M_DONTWAIT, MT_DATA);
 			if (newm == 0)
 				goto bad;
-			MCLAIM(newm, &sc->sc_ethercom.ec_rx_owner);
+			MCLAIM(newm, &sc->sc_ethercom.ec_rx_mowner);
 			len = MLEN;
 			m = m->m_next = newm;
 		}
