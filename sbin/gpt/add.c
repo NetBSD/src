@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.44 2018/07/03 03:41:23 jnemeth Exp $");
+__RCSID("$NetBSD: add.c,v 1.44.10.1 2024/11/17 13:35:06 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -121,6 +121,12 @@ add(gpt_t gpt, off_t alignment, off_t block, off_t sectors, off_t size,
 			return -1;
 		}
 	}
+
+	if (gpt_uuid_is_nil(ent->ent_guid))
+		if (gpt_uuid_generate(gpt, ent->ent_guid) == -1) {
+			gpt_warnx(gpt, "Unable to make UUID");
+			return -1;
+		}
 
 	if (alignment > 0) {
 		alignsecs = alignment / gpt->secsz;
