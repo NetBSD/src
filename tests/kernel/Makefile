@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.70 2021/10/01 18:18:32 martin Exp $
+# $NetBSD: Makefile,v 1.70.2.1 2024/11/17 16:16:10 martin Exp $
 
 NOMAN=		# defined
 
@@ -7,7 +7,8 @@ NOMAN=		# defined
 TESTSDIR=	${TESTSBASE}/kernel
 
 TESTS_SUBDIRS+=	kqueue
-TESTS_C=	t_fcntl
+TESTS_C+=	t_cloexec
+TESTS_C+=	t_fcntl
 TESTS_C+=	t_lock
 TESTS_C+=	t_lockf
 TESTS_C+=	t_pty
@@ -37,7 +38,8 @@ TESTS_SH+=	t_simplehook
 .endif
 
 BINDIR=		${TESTSDIR}
-PROGS=		h_fexecve
+PROGS+=		h_cloexec
+PROGS+=		h_fexecve
 PROGS+=		h_ps_strings1
 PROGS+=		h_ps_strings2
 PROGS+=		h_segv

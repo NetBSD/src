@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.70 2022/10/26 23:39:10 riastradh Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.70.2.1 2024/11/17 16:16:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -102,9 +102,15 @@
  * the same way, but in this case it's ok: ff_exclose can only be
  * modified while the descriptor slot is live, and ff_allocated when
  * it's invalid.
+ *
+ * NOTE: ff_exclose should generally be set with fd_set_exclose(), not
+ * written to directly, when implementing flags like O_CLOEXEC or
+ * SOCK_CLOEXEC, so that struct filedesc::fd_exclose is updated as
+ * needed.  See PR kern/58855: close-on-exec is broken for dup3 and
+ * opening cloning devices.
  */
 typedef struct fdfile {
-	bool		ff_exclose;	/* :: close on exec flag */
+	bool		ff_exclose;	/* :: close on exec (fd_set_exclose) */
 	bool		ff_allocated;	/* d: descriptor slot is allocated */
 	u_int		ff_refcnt;	/* a: reference count on structure */
 	struct file	*ff_file;	/* d: pointer to file if open */
