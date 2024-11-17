@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.67 2024/11/17 13:41:12 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.68 2024/11/17 16:18:04 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -3645,4 +3645,15 @@ share/man/man5/security.conf.5			1.44
 
 	security.conf(5): fix path for /var/backups
 	[plunky, ticket #1006]
+
+distrib/sets/lists/debug/mi			1.454 (patch)
+distrib/sets/lists/tests/mi			1.1346 (patch)
+sys/compat/netbsd32/netbsd32_ioctl.c		1.122
+sys/sys/filedesc.h				1.71
+tests/kernel/Makefile				1.83 (patch)
+tests/kernel/h_cloexec.c			1.1
+tests/kernel/t_cloexec.c			1.1
+
+	Add tests and comments for close-on-exec fixes from ticket #1003.
+	[riastradh, ticket #1007]
 
