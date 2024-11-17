@@ -1,4 +1,4 @@
-/* $NetBSD: jh7110_eqos.c,v 1.1 2024/10/26 15:49:43 skrll Exp $ */
+/* $NetBSD: jh7110_eqos.c,v 1.2 2024/11/17 06:56:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jh7110_eqos.c,v 1.1 2024/10/26 15:49:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jh7110_eqos.c,v 1.2 2024/11/17 06:56:58 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: jh7110_eqos.c,v 1.1 2024/10/26 15:49:43 skrll Exp $"
 #include <net/if_media.h>
 
 #include <dev/fdt/fdtvar.h>
-#include <dev/fdt/syscon.h>	// maybe not
 
 #include <dev/mii/miivar.h>
 
@@ -52,9 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: jh7110_eqos.c,v 1.1 2024/10/26 15:49:43 skrll Exp $"
 #include <prop/proplib.h>
 
 #include <riscv/starfive/jh71x0_eth.h>
-
-
-
 
 struct jh7110_eqos_softc {
 	struct eqos_softc	sc_eqos;
@@ -116,6 +112,7 @@ jh7110_eqos_match(device_t parent, cfdata_t cf, void *aux)
 
 	return of_compatible_match(faa->faa_phandle, compat_data);
 }
+
 static void
 jh7110_eqos_attach(device_t parent, device_t self, void *aux)
 {
