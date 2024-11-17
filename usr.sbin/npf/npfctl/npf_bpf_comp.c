@@ -79,10 +79,27 @@
  *	out of the group; if false, then jump "next".  At the end of the
  *	group, an addition failure path is appended and the JUMP_MAGIC
  *	uses within the group are patched to jump past the said path.
+ *
+ *	For multi-word comparisons (IPv6 addresses), there is another
+ *	layer of grouping:
+ *
+ *		A and B and ((C and D) or (E and F))
+ *
+ *	This strains the simple-minded JUMP_MAGIC logic, so for now,
+ *	when generating the jump-if-false targets for (C and D), we
+ *	simply count the number of instructions left to skip over.
+ *
+ *	A better architecture might be to create asm-type labels for
+ *	the jt and jf continuations in the first pass, and then, once
+ *	their offsets are determined, go back and fill them in in the
+ *	second pass.  This would simplify the logic (no need to compute
+ *	exactly how many instructions we're about to generate in a
+ *	chain of conditionals) and eliminate redundant RET #0
+ *	instructions which are currently generated after some groups.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_bpf_comp.c,v 1.16 2020/05/30 14:16:56 rmind Exp $");
+__RCSID("$NetBSD: npf_bpf_comp.c,v 1.16.6.1 2024/11/17 13:18:58 martin Exp $");
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -134,6 +151,7 @@ struct npf_bpf {
 	 */
 	unsigned		ingroup;
 	bool			invert;
+	bool			multiword;
 	unsigned		goff;
 	unsigned		gblock;
 
@@ -322,6 +340,7 @@ npfctl_bpf_group_enter(npf_bpf_t *ctx, bool invert)
 	ctx->goff = bp->bf_len;
 	ctx->gblock = ctx->nblocks;
 	ctx->invert = invert;
+	ctx->multiword = false;
 	ctx->ingroup++;
 }
 
@@ -334,8 +353,14 @@ npfctl_bpf_group_exit(npf_bpf_t *ctx)
 	assert(ctx->ingroup);
 	ctx->ingroup--;
 
-	/* If there are no blocks or only one - nothing to do. */
-	if (!ctx->invert && (ctx->nblocks - ctx->gblock) <= 1) {
+	/*
+	 * If we're not inverting, there were only zero or one options,
+	 * and the last comparison was not a multi-word comparison
+	 * requiring a fallthrough failure -- nothing to do.
+	 */
+	if (!ctx->invert &&
+	    (ctx->nblocks - ctx->gblock) <= 1 &&
+	    !ctx->multiword) {
 		ctx->goff = ctx->gblock = 0;
 		return;
 	}
@@ -502,7 +527,7 @@ npfctl_bpf_cidr(npf_bpf_t *ctx, unsigned opts, sa_family_t af,
     const npf_addr_t *addr, const npf_netmask_t mask)
 {
 	const uint32_t *awords = (const uint32_t *)addr;
-	unsigned nwords, length, maxmask, off;
+	unsigned nwords, origlength, length, maxmask, off;
 
 	assert(((opts & MATCH_SRC) != 0) ^ ((opts & MATCH_DST) != 0));
 	assert((mask && mask <= NPF_MAX_NETMASK) || mask == NPF_NO_NETMASK);
@@ -529,7 +554,7 @@ npfctl_bpf_cidr(npf_bpf_t *ctx, unsigned opts, sa_family_t af,
 	/* Ensure address family. */
 	fetch_l3(ctx, af, 0);
 
-	length = (mask == NPF_NO_NETMASK) ? maxmask : mask;
+	length = origlength = (mask == NPF_NO_NETMASK) ? maxmask : mask;
 
 	/* CAUTION: BPF operates in host byte-order. */
 	for (unsigned i = 0; i < nwords; i++) {
@@ -563,12 +588,48 @@ npfctl_bpf_cidr(npf_bpf_t *ctx, unsigned opts, sa_family_t af,
 			add_insns(ctx, insns_mask, __arraycount(insns_mask));
 		}
 
+		/*
+		 * Determine how many instructions we have to jump
+		 * ahead if the match fails.
+		 *
+		 * - If this is the last word, we jump to the final
+                 *   failure, JUMP_MAGIC.
+		 *
+		 * - If this is not the last word, we jump past the
+		 *   remaining instructions to match this sequence.
+		 *   Each 32-bit word in the sequence takes two
+		 *   instructions (BPF_LD and BPF_JMP).  If there is a
+		 *   partial-word mask ahead, there will be one
+		 *   additional instruction (BPF_ALU).
+		 */
+		uint8_t jf;
+		if (i + 1 == (origlength + 31)/32) {
+			jf = JUMP_MAGIC;
+		} else {
+			jf = 2*((origlength + 31)/32 - i - 1);
+			if (origlength % 32 != 0 && wordmask == 0)
+				jf += 1;
+		}
+
 		/* A == expected-IP-word ? */
 		struct bpf_insn insns_cmp[] = {
-			BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, word, 0, JUMP_MAGIC),
+			BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, word, 0, jf),
 		};
 		add_insns(ctx, insns_cmp, __arraycount(insns_cmp));
 	}
+
+	/*
+	 * If we checked a chain of words in sequence, mark this as a
+	 * multi-word comparison so if this is in a group there will be
+	 * a fallthrough case.
+	 *
+	 * XXX This is a little silly; the compiler should really just
+	 * record holes where conditional jumps need success/failure
+	 * continuations, and go back to fill in the holes when the
+	 * locations of the continuations are determined later.  But
+	 * that requires restructuring this code a little more.
+	 */
+	ctx->multiword = (origlength + 31)/32 > 1;
 
 	uint32_t mwords[] = {
 		(opts & MATCH_SRC) ? BM_SRC_CIDR: BM_DST_CIDR, 6,
