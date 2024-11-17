@@ -15,6 +15,7 @@
 #define	RESULT_BLOCK	ENETUNREACH
 
 static const struct test_case {
+	int		af;
 	const char *	src;
 	const char *	dst;
 	const char *	ifname;
@@ -25,11 +26,13 @@ static const struct test_case {
 
 	/* Stateful pass. */
 	{
+		.af = AF_INET,
 		.src = "10.1.1.1",		.dst = "10.1.1.2",
 		.ifname = IFNAME_INT,		.di = PFIL_OUT,
 		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
 	},
 	{
+		.af = AF_INET,
 		.src = "10.1.1.2",		.dst = "10.1.1.1",
 		.ifname = IFNAME_INT,		.di = PFIL_IN,
 		.stateful_ret = RESULT_PASS,	.ret = RESULT_BLOCK
@@ -37,18 +40,153 @@ static const struct test_case {
 
 	/* Pass forwards stream only. */
 	{
+		.af = AF_INET,
 		.src = "10.1.1.1",		.dst = "10.1.1.3",
 		.ifname = IFNAME_INT,		.di = PFIL_OUT,
 		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
 	},
 	{
+		.af = AF_INET,
 		.src = "10.1.1.3",		.dst = "10.1.1.1",
 		.ifname = IFNAME_INT,		.di = PFIL_IN,
 		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
 	},
 
+	/*
+	 * Pass in from any of the { fe80::1, fe80:1000:0:0/95,
+	 * fe80::2, fe80::2000:0:0/96, fe80::3, fe80::3000:0:0/97 }
+	 * group.
+	 */
+	{			/* fe80::1 */
+		.af = AF_INET6,
+		.src = "fe80::1", .dst = "fe80::adec:c91c:d116:7592",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
+	},
+	{			/* fe80::1000:0:0/95 */
+		.af = AF_INET6,
+		.src = "fe80::1001:0:0", .dst = "fe80::adec:c91c:d116:7592",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
+	},
+	{			/* fe80::1000:0:0/95, one bit off */
+		.af = AF_INET6,
+		.src = "fe80::1003:0:0", .dst = "fe80::adec:c91c:d116:7592",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
+	},
+	{			/* fe80::2 */
+		.af = AF_INET6,
+		.src = "fe80::2", .dst = "fe80::adec:c91c:d116:7592",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
+	},
+	{			/* fe80::2000:0:0/96 */
+		.af = AF_INET6,
+		.src = "fe80::2000:8000:0", .dst = "fe80::adec:c91c:d116:7592",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
+	},
+	{			/* fe80::2000:0:0/96, one bit off */
+		.af = AF_INET6,
+		.src = "fe80::2001:8000:0", .dst = "fe80::adec:c91c:d116:7592",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
+	},
+	{			/* fe80::3 */
+		.af = AF_INET6,
+		.src = "fe80::3", .dst = "fe80::adec:c91c:d116:7592",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
+	},
+	{			/* fe80::3000:0:0/97 */
+		.af = AF_INET6,
+		.src = "fe80::3000:7fff:0", .dst = "fe80::adec:c91c:d116:7592",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
+	},
+	{			/* fe80::3000:0:0/97, one bit off */
+		.af = AF_INET6,
+		.src = "fe80::3000:ffff:0", .dst = "fe80::adec:c91c:d116:7592",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
+	},
+	{
+		.af = AF_INET6,
+		.src = "fe80::4", .dst = "fe80::adec:c91c:d116:7592",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
+	},
+
+	/*
+	 * Pass in from anywhere _not_ in that group, as long as it is
+	 * to that group.
+	 */
+	{			/* fe80::1 */
+		.af = AF_INET6,
+		.src = "fe80::adec:c91c:d116:7592", .dst = "fe80::1",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
+	},
+	{			/* fe80::1000:0:0/95 */
+		.af = AF_INET6,
+		.src = "fe80::adec:c91c:d116:7592", .dst = "fe80::1001:0:0",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
+	},
+	{			/* fe80::1000:0:0/95, one bit off */
+		.af = AF_INET6,
+		.src = "fe80::adec:c91c:d116:7592", .dst = "fe80::1003:0:0",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
+	},
+	{			/* fe80::2 */
+		.af = AF_INET6,
+		.src = "fe80::adec:c91c:d116:7592", .dst = "fe80::2",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
+	},
+	{			/* fe80::2000:0:0/96 */
+		.af = AF_INET6,
+		.src = "fe80::adec:c91c:d116:7592", .dst = "fe80::2000:8000:0",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
+	},
+	{			/* fe80::2000:0:0/96, one bit off */
+		.af = AF_INET6,
+		.src = "fe80::adec:c91c:d116:7592", .dst = "fe80::2001:8000:0",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
+	},
+	{			/* fe80::3 */
+		.af = AF_INET6,
+		.src = "fe80::adec:c91c:d116:7592", .dst = "fe80::3",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
+	},
+	{			/* fe80::3000:0:0/97 */
+		.af = AF_INET6,
+		.src = "fe80::adec:c91c:d116:7592", .dst = "fe80::3000:7fff:0",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_PASS,	.ret = RESULT_PASS
+	},
+	{			/* fe80::3000:0:0/97, one bit off */
+		.af = AF_INET6,
+		.src = "fe80::adec:c91c:d116:7592", .dst = "fe80::3000:ffff:0",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
+	},
+	{
+		.af = AF_INET6,
+		.src = "fe80::adec:c91c:d116:7592", .dst = "fe80::4",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
+	},
+
 	/* Block. */
-	{	.src = "10.1.1.1",		.dst = "10.1.1.4",
+	{
+		.af = AF_INET,
+		.src = "10.1.1.1",		.dst = "10.1.1.4",
 		.ifname = IFNAME_INT,		.di = PFIL_OUT,
 		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
 	},
@@ -65,7 +203,7 @@ run_raw_testcase(unsigned i)
 	npf_rule_t *rl;
 	int slock, error;
 
-	m = mbuf_get_pkt(AF_INET, IPPROTO_UDP, t->src, t->dst, 9000, 9000);
+	m = mbuf_get_pkt(t->af, IPPROTO_UDP, t->src, t->dst, 9000, 9000);
 	npc = get_cached_pkt(m, t->ifname);
 
 	slock = npf_config_read_enter(npf);
@@ -91,7 +229,7 @@ run_handler_testcase(unsigned i)
 	struct mbuf *m;
 	int error;
 
-	m = mbuf_get_pkt(AF_INET, IPPROTO_UDP, t->src, t->dst, 9000, 9000);
+	m = mbuf_get_pkt(t->af, IPPROTO_UDP, t->src, t->dst, 9000, 9000);
 	error = npfk_packet_handler(npf, &m, ifp, t->di);
 	if (m) {
 		m_freem(m);
