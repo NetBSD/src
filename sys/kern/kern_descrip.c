@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.251.10.2 2024/08/07 10:04:47 martin Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.251.10.3 2024/11/17 13:26:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.251.10.2 2024/08/07 10:04:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.251.10.3 2024/11/17 13:26:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -763,7 +763,6 @@ int
 fd_dup(file_t *fp, int minfd, int *newp, bool exclose)
 {
 	proc_t *p = curproc;
-	fdtab_t *dt;
 	int error;
 
 	while ((error = fd_alloc(p, minfd, newp)) != 0) {
@@ -773,8 +772,7 @@ fd_dup(file_t *fp, int minfd, int *newp, bool exclose)
 		fd_tryexpand(p);
 	}
 
-	dt = atomic_load_consume(&curlwp->l_fd->fd_dt);
-	dt->dt_ff[*newp]->ff_exclose = exclose;
+	fd_set_exclose(curlwp, *newp, exclose);
 	fd_affix(p, fp, *newp);
 	return 0;
 }
@@ -829,7 +827,7 @@ fd_dup2(file_t *fp, unsigned newfd, int flags)
 	fd_used(fdp, newfd);
 	mutex_exit(&fdp->fd_lock);
 
-	dt->dt_ff[newfd]->ff_exclose = (flags & O_CLOEXEC) != 0;
+	fd_set_exclose(curlwp, newfd, (flags & O_CLOEXEC) != 0);
 	fp->f_flag |= flags & (FNONBLOCK|FNOSIGPIPE);
 	/* Slot is now allocated.  Insert copy of the file. */
 	fd_affix(curproc, fp, newfd);
@@ -1921,14 +1919,9 @@ int
 fd_clone(file_t *fp, unsigned fd, int flag, const struct fileops *fops,
 	 void *data)
 {
-	fdfile_t *ff;
-	filedesc_t *fdp;
 
 	fp->f_flag = flag & FMASK;
-	fdp = curproc->p_fd;
-	ff = atomic_load_consume(&fdp->fd_dt)->dt_ff[fd];
-	KASSERT(ff != NULL);
-	ff->ff_exclose = (flag & O_CLOEXEC) != 0;
+	fd_set_exclose(curlwp, fd, (flag & O_CLOEXEC) != 0);
 	fp->f_type = DTYPE_MISC;
 	fp->f_ops = fops;
 	fp->f_data = data;
