@@ -3619,7 +3619,7 @@ vdev_deadman(vdev_t *vd)
 				    vq->vq_io_complete_ts);
 
 				printf("SLOW IO: zio timestamp %lluns, "
-				    "delta %"PRIu64"ns, last io %lluns",
+				    "delta %"PRIu64"ns, last io %lluns\n",
 				    fio->io_timestamp, delta,
 				    vq->vq_io_complete_ts);
 
