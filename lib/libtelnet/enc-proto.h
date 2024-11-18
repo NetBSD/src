@@ -1,4 +1,4 @@
-/*	$NetBSD: enc-proto.h,v 1.10 2019/01/05 08:55:58 maya Exp $	*/
+/*	$NetBSD: enc-proto.h,v 1.10.10.1 2024/11/18 19:42:41 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -73,6 +73,7 @@ int EncryptDebug(int);
 int EncryptVerbose(int);
 int EncryptAutoEnc(int);
 int EncryptAutoDec(int);
+int encrypt_debug(void);
 void encrypt_support(unsigned char *, int);
 void encrypt_is(unsigned char *, int);
 void encrypt_reply(unsigned char *, int);
@@ -93,7 +94,6 @@ void encrypt_send_end(void);
 void encrypt_send_request_start(void);
 void encrypt_send_request_end(void);
 void encrypt_wait(void);
-void encrypt_debug(int);
 void encrypt_gen_printsub(unsigned char *, int, unsigned char *, int );
 void encrypt_printsub(unsigned char *, int, unsigned char *, int );
 

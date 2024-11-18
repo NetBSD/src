@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.49 2019/08/15 01:15:21 kamil Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.49.8.1 2024/11/18 19:42:41 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.49 2019/08/15 01:15:21 kamil Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.49.8.1 2024/11/18 19:42:41 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -583,6 +583,10 @@ start_login(char *host, int autologin, char *name)
 	const char *loginprog = NULL;
 	extern struct sockaddr_storage from;
 	char buf[sizeof(from) * 4 + 1];
+	char *user;
+
+	user = getenv("USER");
+	user = (user != NULL) ? strdup(user) : NULL;
 
 	scrub_env();
 
@@ -634,9 +638,9 @@ start_login(char *host, int autologin, char *name)
 		argv = addarg(argv, name);
 	} else
 #endif
-	if (getenv("USER")) {
+	if (user != NULL) {
 		argv = addarg(argv, "--");
-		argv = addarg(argv, getenv("USER"));
+		argv = addarg(argv, user);
 		/*
 		 * Assume that login will set the USER variable
 		 * correctly.  For SysV systems, this means that

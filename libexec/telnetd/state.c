@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.32 2021/08/09 21:38:04 andvar Exp $	*/
+/*	$NetBSD: state.c,v 1.32.2.1 2024/11/18 19:42:41 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: state.c,v 1.32 2021/08/09 21:38:04 andvar Exp $");
+__RCSID("$NetBSD: state.c,v 1.32.2.1 2024/11/18 19:42:41 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,9 +100,33 @@ telrcv(void)
 
 		case TS_CR:
 			state = TS_DATA;
-			/* Strip off \n or \0 after a \r */
-			if ((c == 0) || (c == '\n')) {
-				break;
+
+#ifdef	LINEMODE
+			/*
+			 * If we are operating in linemode,
+			 * convert to local end-of-line.
+			 */
+			if (linemode && (ncc > 0) && ((c == '\n') ||
+				 ((c == 0) && tty_iscrnl())) )
+				c = '\n';
+			else
+#endif
+			{
+				/*
+				 * We now map \r\n ==> \r for pragmatic reasons.
+				 * Many client implementations send \r\n when
+				 * the user hits the CarriageReturn key.
+				 *
+				 * We USED to map \r\n ==> \n, since \r\n says
+				 * that we want to be in column 1 of the next
+				 * printable line, and \n is the standard
+				 * unix way of saying that (\r is only good
+				 * if CRMOD is set, which it normally is).
+				 */
+
+				/* Strip off \n or \0 after a \r */
+				if ((c == 0) || (c == '\n'))
+					break;
 			}
 			/* FALL THROUGH */
 
@@ -111,42 +135,10 @@ telrcv(void)
 				state = TS_IAC;
 				break;
 			}
-			/*
-			 * We now map \r\n ==> \r for pragmatic reasons.
-			 * Many client implementations send \r\n when
-			 * the user hits the CarriageReturn key.
-			 *
-			 * We USED to map \r\n ==> \n, since \r\n says
-			 * that we want to be in column 1 of the next
-			 * printable line, and \n is the standard
-			 * unix way of saying that (\r is only good
-			 * if CRMOD is set, which it normally is).
-			 */
-			if ((c == '\r') && his_state_is_wont(TELOPT_BINARY)) {
-				int nc = *netip;
-#ifdef	ENCRYPTION
-				if (decrypt_input)
-					nc = (*decrypt_input)(nc & 0xff);
-#endif	/* ENCRYPTION */
-#ifdef	LINEMODE
-				/*
-				 * If we are operating in linemode,
-				 * convert to local end-of-line.
-				 */
-				if (linemode && (ncc > 0) && (('\n' == nc) ||
-					 ((0 == nc) && tty_iscrnl())) ) {
-					netip++; ncc--;
-					c = '\n';
-				} else
-#endif
-				{
-#ifdef	ENCRYPTION
-					if (decrypt_input)
-						(void)(*decrypt_input)(-1);
-#endif	/* ENCRYPTION */
-					state = TS_CR;
-				}
-			}
+
+			if ((c == '\r') && his_state_is_wont(TELOPT_BINARY))
+				state = TS_CR;
+
 			*pfrontp++ = c;
 			break;
 
@@ -557,8 +549,10 @@ willoption(int option)
 
 #ifdef	AUTHENTICATION
 		case TELOPT_AUTHENTICATION:
-			func = auth_request;
-			changeok++;
+			if (auth_level >= 0) {
+				func = auth_request;
+				changeok++;
+			}
 			break;
 #endif
 

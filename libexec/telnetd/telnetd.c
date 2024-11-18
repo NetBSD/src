@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.58 2022/08/26 19:30:44 dholland Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.58.2.1 2024/11/18 19:42:41 martin Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -65,7 +65,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.58 2022/08/26 19:30:44 dholland Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.58.2.1 2024/11/18 19:42:41 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -242,7 +242,7 @@ main(int argc, char *argv[])
 #ifdef	ENCRYPTION
 		case 'e':
 			if (strcmp(optarg, "debug") == 0) {
-				encrypt_debug_mode = 1;
+				EncryptDebug(1);
 				break;
 			}
 			usage();
@@ -400,6 +400,7 @@ main(int argc, char *argv[])
 	    (void) dup2(ns, 0);
 	    (void) close(ns);
 	    (void) close(s);
+	    freeaddrinfo(res);
 	} else if (argc > 0) {
 		usage();
 		/* NOT REACHED */
@@ -492,11 +493,13 @@ getterminaltype(char *name, size_t l)
     /*
      * Handle the Authentication option before we do anything else.
      */
-    send_do(TELOPT_AUTHENTICATION, 1);
-    while (his_will_wont_is_changing(TELOPT_AUTHENTICATION))
-	ttloop();
-    if (his_state_is_will(TELOPT_AUTHENTICATION)) {
-	retval = auth_wait(name, l);
+    if (auth_level >= 0) {
+        send_do(TELOPT_AUTHENTICATION, 1);
+        while (his_will_wont_is_changing(TELOPT_AUTHENTICATION))
+    	    ttloop();
+        if (his_state_is_will(TELOPT_AUTHENTICATION)) {
+    	    retval = auth_wait(name, l);
+        }
     }
 #endif
 
