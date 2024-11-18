@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.39 2024/11/18 18:05:51 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.40 2024/11/18 18:21:21 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -612,4 +612,17 @@ tests/kernel/t_cloexec.c			1.1 (patch)
 
 	Add tests and comments for close-on-exec fixes from ticket #1919
 	[riastradh, ticket #1922]
+
+sys/arch/x86/x86/pmap.c				1.427
+
+	x86/pmap: PR 58666: fix null pointer dereference under memory
+	pressure by passing _all_ the flags necessary for uvm_km_alloc
+	to wait rather than fail, not just some of them; this way
+	pmap_pdp_alloc never returns a null pointer, as callers expect.
+	[riastradh, ticket #1924]
+
+external/bsd/nvi/dist/regex/engine.c		1.4
+
+	vi(1): PR 57630: fix crash on certain substitutions.
+	[riastradh, ticket #1925]
 
