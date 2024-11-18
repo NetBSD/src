@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.334.2.7 2022/05/13 11:10:38 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.334.2.8 2024/11/18 18:08:51 martin Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.334.2.7 2022/05/13 11:10:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.334.2.8 2024/11/18 18:08:51 martin Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2357,7 +2357,8 @@ pmap_pdp_alloc(struct pool *pp, int flags)
 {
 	return (void *)uvm_km_alloc(kernel_map,
 	    PAGE_SIZE * PDP_SIZE, PAGE_SIZE * PDP_SIZE,
-	    ((flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT | UVM_KMF_TRYLOCK) |
+	    ((flags & PR_WAITOK) ? UVM_KMF_WAITVA
+		: UVM_KMF_NOWAIT | UVM_KMF_TRYLOCK) |
 	    UVM_KMF_WIRED);
 }
 
