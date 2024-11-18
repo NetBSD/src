@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.38 2024/11/17 13:38:07 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.39 2024/11/18 18:05:51 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -601,4 +601,15 @@ sbin/gpt/add.c					1.45
 
 	gpt(8): PR 58806: never create a partition with a null guid.
 	[kre, ticket #1920]
+
+distrib/sets/lists/debug/mi			1.454 (patch)
+distrib/sets/lists/tests/mi			1.1346 (patch)
+sys/compat/netbsd32/netbsd32_ioctl.c		1.122 (patch)
+sys/sys/filedesc.h				1.71 (patch)
+tests/kernel/Makefile				1.83 (patch)
+tests/kernel/h_cloexec.c			1.1 (patch)
+tests/kernel/t_cloexec.c			1.1 (patch)
+
+	Add tests and comments for close-on-exec fixes from ticket #1919
+	[riastradh, ticket #1922]
 
