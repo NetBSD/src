@@ -1,4 +1,4 @@
-/*	$NetBSD: fish.c,v 1.27 2021/07/25 02:00:42 dholland Exp $	*/
+/*	$NetBSD: fish.c,v 1.28 2024/11/18 20:53:45 hgutch Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)fish.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fish.c,v 1.27 2021/07/25 02:00:42 dholland Exp $");
+__RCSID("$NetBSD: fish.c,v 1.28 2024/11/18 20:53:45 hgutch Exp $");
 #endif
 #endif /* not lint */
 
@@ -188,7 +188,7 @@ usermove(void)
 			continue;
 		}
 		n = p - cards;
-		if (userhand[n] <= 3) {
+		if (1 <= userhand[n] && userhand[n] <= 3) {
 			userasked[n] = 1;
 			return(n);
 		}
