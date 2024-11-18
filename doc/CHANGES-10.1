@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.68 2024/11/17 16:18:04 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.69 2024/11/18 18:27:36 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -3656,4 +3656,30 @@ tests/kernel/t_cloexec.c			1.1
 
 	Add tests and comments for close-on-exec fixes from ticket #1003.
 	[riastradh, ticket #1007]
+
+sys/arch/x86/x86/pmap.c				1.427
+
+	x86/pmap: PR 58666: fix null pointer dereference under memory
+	pressure by passing _all_ the flags necessary for uvm_km_alloc
+	to wait rather than fail, not just some of them; this way
+	pmap_pdp_alloc never returns a null pointer, as callers expect.
+	[riastradh, ticket #1008]
+
+sys/conf/newvers_stand.mk			1.6
+
+	sys/conf/newvers_stand.mk: PR 58220: use TOOL_AWK rather than
+	whatever `awk' runs.
+	[riastradh, ticket #1009]
+
+external/bsd/nvi/dist/regex/engine.c:		1.4
+
+	vi(1): PR 57630: fix crash on certain substitutions.
+	[riastradh, ticket #1010]
+
+sys/kern/sys_select.c				1.67
+tests/lib/libc/sys/t_select.c			1.5
+
+	select(2): PR 57504: fail with EBADF, rather than hanging,
+	on very large fd_set inputs with bad file descriptors included.
+	[riastradh, ticket #1011]
 
