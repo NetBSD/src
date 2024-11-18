@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.60 2022/06/29 22:27:01 riastradh Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.60.4.1 2024/11/18 18:16:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2019, 2020 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.60 2022/06/29 22:27:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.60.4.1 2024/11/18 18:16:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -348,6 +348,29 @@ state_check:
 	return error;
 }
 
+/* designed to be compatible with FD_SET() FD_ISSET() ... */
+static int
+anyset(void *p, size_t nbits)
+{
+	size_t nwords;
+	__fd_mask mask;
+	__fd_mask *f = (__fd_mask *)p;
+
+	nwords = nbits / __NFDBITS;
+
+	while (nwords-- > 0)
+		if (*f++ != 0)
+			return 1;
+
+	nbits &= __NFDMASK;
+	if (nbits != 0) {
+		mask = (1U << nbits) - 1;
+		if ((*f & mask) != 0)
+			return 1;
+	}
+	return 0;
+}
+
 int
 selcommon(register_t *retval, int nd, fd_set *u_in, fd_set *u_ou,
     fd_set *u_ex, struct timespec *ts, sigset_t *mask)
@@ -355,41 +378,123 @@ selcommon(register_t *retval, int nd, fd_set *u_in, fd_set *u_ou,
 	char		smallbits[howmany(FD_SETSIZE, NFDBITS) *
 			    sizeof(fd_mask) * 6];
 	char 		*bits;
-	int		error, nf;
+	int		error, nf, fb, db;
 	size_t		ni;
 
 	if (nd < 0)
-		return (EINVAL);
+		return EINVAL;
+
 	nf = atomic_load_consume(&curlwp->l_fd->fd_dt)->dt_nfiles;
-	if (nd > nf) {
-		/* forgiving; slightly wrong */
-		nd = nf;
+
+	/*
+	 * Don't allow absurdly large numbers of fds to be selected.
+	 * (used to silently truncate, naughty naughty, no more ...)
+	 *
+	 * The additional FD_SETSISE allows for cases where the limit
+	 * is not a round binary number, but the fd_set wants to
+	 * include all the possible fds, as fd_sets are always
+	 * multiples of 32 bits (__NFDBITS extra would be enough).
+	 *
+	 * The first test handles the case where the res limit has been
+	 * set lower after some fds were opened, we always allow selecting
+	 * up to the highest currently open fd.
+	 */
+	if (nd > nf + FD_SETSIZE &&
+	    nd > curlwp->l_proc->p_rlimit[RLIMIT_NOFILE].rlim_max + FD_SETSIZE)
+		return EINVAL;
+
+	fb = howmany(nf, __NFDBITS);		/* how many fd_masks */
+	db = howmany(nd, __NFDBITS);
+
+	if (db > fb) {
+		size_t off;
+
+		/*
+		 * the application wants to supply more fd masks than can
+		 * possibly represent valid file descriptors.
+		 *
+		 * Check the excess fd_masks, if any bits are set in them
+		 * that must be an error (cannot represent valid fd).
+		 *
+		 * Supplying lots of extra cleared fd_masks is dumb,
+		 * but harmless, so allow that.
+		 */
+		ni = (db - fb) * sizeof(fd_mask);	/* excess bytes */
+		bits = smallbits;
+
+		/* skip over the valid fd_masks, those will be checked below */
+		off = howmany(nf, __NFDBITS) * sizeof(__fd_mask);
+
+		nd -= fb * NFDBITS;	/* the number of excess fds */
+
+#define checkbits(name, o, sz, fds)					\
+		do {							\
+		    if (u_ ## name != NULL) {				\
+			error = copyin((char *)u_ ## name + o,		\
+					bits, sz);			\
+			if (error)					\
+			    goto fail;					\
+			if (anyset(bits, (fds) ?			\
+				 (size_t)(fds) : CHAR_BIT * (sz))) {	\
+			    error = EBADF;				\
+			    goto fail;					\
+			}						\
+		    }							\
+		} while (0)
+
+		while (ni > sizeof(smallbits)) {
+			checkbits(in, off, sizeof(smallbits), 0);
+			checkbits(ou, off, sizeof(smallbits), 0);
+			checkbits(ex, off, sizeof(smallbits), 0);
+
+			off += sizeof(smallbits);
+			ni -= sizeof(smallbits);
+			nd -= sizeof(smallbits) * CHAR_BIT;
+		}
+		checkbits(in, off, ni, nd);
+		checkbits(ou, off, ni, nd);
+		checkbits(ex, off, ni, nd);
+#undef checkbits
+
+		db = fb;	/* now just check the plausible fds */
+		nd = db * __NFDBITS;
 	}
-	ni = howmany(nd, NFDBITS) * sizeof(fd_mask);
+
+	ni = db * sizeof(fd_mask);
 	if (ni * 6 > sizeof(smallbits))
 		bits = kmem_alloc(ni * 6, KM_SLEEP);
 	else
 		bits = smallbits;
 
 #define	getbits(name, x)						\
-	if (u_ ## name) {						\
-		error = copyin(u_ ## name, bits + ni * x, ni);		\
-		if (error)						\
-			goto fail;					\
-	} else								\
-		memset(bits + ni * x, 0, ni);
+	do {								\
+		if (u_ ## name) {					\
+			error = copyin(u_ ## name, bits + ni * x, ni);	\
+			if (error)					\
+				goto fail;				\
+		} else							\
+			memset(bits + ni * x, 0, ni);			\
+	} while (0)
+
 	getbits(in, 0);
 	getbits(ou, 1);
 	getbits(ex, 2);
 #undef	getbits
 
 	error = sel_do_scan(selop_select, bits, nd, ni, ts, mask, retval);
-	if (error == 0 && u_in != NULL)
-		error = copyout(bits + ni * 3, u_in, ni);
-	if (error == 0 && u_ou != NULL)
-		error = copyout(bits + ni * 4, u_ou, ni);
-	if (error == 0 && u_ex != NULL)
-		error = copyout(bits + ni * 5, u_ex, ni);
+
+#define copyback(name, x)						\
+		do {							\
+			if (error == 0 && u_ ## name != NULL)		\
+				error = copyout(bits + ni * x,		\
+						u_ ## name, ni);	\
+		} while (0)
+
+	copyback(in, 3);
+	copyback(ou, 4);
+	copyback(ex, 5);
+#undef copyback
+
  fail:
 	if (bits != smallbits)
 		kmem_free(bits, ni * 6);

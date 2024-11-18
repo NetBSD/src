@@ -1,4 +1,4 @@
-/*	$NetBSD: t_select.c,v 1.4 2017/01/13 21:18:33 christos Exp $ */
+/*	$NetBSD: t_select.c,v 1.4.28.1 2024/11/18 18:16:52 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,18 +29,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <assert.h>
 #include <sys/types.h>
+
 #include <sys/select.h>
 #include <sys/wait.h>
+
+#include <assert.h>
 #include <err.h>
-#include <stdio.h>
-#include <string.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include <atf-c.h>
 
@@ -207,11 +209,42 @@ ATF_TC_BODY(pselect_timeout, tc)
 	}
 }
 
+ATF_TC(select_badfd);
+ATF_TC_HEAD(select_badfd, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks select rejects bad fds");
+}
+
+ATF_TC_BODY(select_badfd, tc)
+{
+	int fd;
+
+	for (fd = 0; fd < FD_SETSIZE; fd++) {
+		fd_set readfds;
+		int ret, error;
+
+		if (fcntl(fd, F_GETFL) != -1 || errno != EBADF)
+			continue;
+
+		FD_ZERO(&readfds);
+		FD_SET(fd, &readfds);
+		alarm(5);
+		errno = 0;
+		ret = select(fd + 1, &readfds, NULL, NULL, NULL);
+		error = errno;
+		alarm(0);
+		errno = error;
+		ATF_CHECK_ERRNO(EBADF, ret == -1);
+	}
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, pselect_sigmask);
 	ATF_TP_ADD_TC(tp, pselect_timeout);
+	ATF_TP_ADD_TC(tp, select_badfd);
 
 	return atf_no_error();
 }
