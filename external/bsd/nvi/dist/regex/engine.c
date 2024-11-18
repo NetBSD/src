@@ -1,4 +1,4 @@
-/*	$NetBSD: engine.c,v 1.3 2014/01/07 21:48:12 christos Exp $ */
+/*	$NetBSD: engine.c,v 1.3.40.1 2024/11/18 18:13:13 martin Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -150,6 +150,11 @@ int eflags;
 	const sopno gl = g->laststate;
 	RCHAR_T *start;
 	RCHAR_T *stop;
+	RCHAR_T empty[] = { REOF };
+
+	/* Input can be a NULL pointer, treat like an empty line. */
+	if (string == NULL)
+		string = empty;
 
 	/* simplify the situation where possible */
 	if (g->cflags&REG_NOSUB)
