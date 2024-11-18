@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.103.2.1 2020/02/13 19:28:15 martin Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.103.2.2 2024/11/18 17:38:03 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.103.2.1 2020/02/13 19:28:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.103.2.2 2024/11/18 17:38:03 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -1081,9 +1081,7 @@ netbsd32_ioctl(struct lwp *l,
 		syscallarg(netbsd32_u_long) com;
 		syscallarg(netbsd32_voidp) data;
 	} */
-	struct proc *p = l->l_proc;
 	struct file *fp;
-	struct filedesc *fdp;
 	u_long com;
 	int error = 0;
 	size_t size;
@@ -1091,7 +1089,6 @@ netbsd32_ioctl(struct lwp *l,
 	void *data, *memp = NULL;
 	void *data32, *memp32 = NULL;
 	unsigned int fd;
-	fdfile_t *ff;
 	int tmp;
 #define STK_PARAMS	128
 	uint64_t stkbuf[STK_PARAMS/sizeof(uint64_t)];
@@ -1123,7 +1120,6 @@ netbsd32_ioctl(struct lwp *l,
 	size32 = 0;
 	size = 0;
 
-	fdp = p->p_fd;
 	fd = SCARG(uap, fd);
 	if ((fp = fd_getfile(fd)) == NULL)
 		return EBADF;
@@ -1132,15 +1128,10 @@ netbsd32_ioctl(struct lwp *l,
 		goto out;
 	}
 
-	ff = fdp->fd_dt->dt_ff[SCARG(uap, fd)];
 	switch (com = SCARG(uap, com)) {
 	case FIOCLEX:
-		ff->ff_exclose = true;
-		fdp->fd_exclose = true;
-		goto out;
-
 	case FIONCLEX:
-		ff->ff_exclose = false;
+		fd_set_exclose(l, fd, com == FIOCLEX);
 		goto out;
 	}
 
