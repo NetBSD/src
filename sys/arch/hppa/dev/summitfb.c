@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.1 2024/11/19 12:12:18 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.2 2024/11/19 15:49:44 riastradh Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -24,6 +24,9 @@
  * a native driver for HP Visualize EG PCI graphics cards
  * STI portions are from Miodrag Vallat's sti_pci.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.2 2024/11/19 15:49:44 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +55,7 @@
 #ifdef SUMMITFB_DEBUG
 #define	DPRINTF(s) printf(s)
 #else
-#define	DPRINTF(s) /* */
+#define	DPRINTF(s) __nothing
 #endif
 
 int	summitfb_match(device_t, cfdata_t, void *);
@@ -95,7 +98,8 @@ struct	summitfb_softc {
 CFATTACH_DECL_NEW(summitfb, sizeof(struct summitfb_softc),
     summitfb_match, summitfb_attach, NULL, NULL);
 
-int	summitfb_readbar(struct sti_softc *, struct pci_attach_args *, u_int, int);
+int	summitfb_readbar(struct sti_softc *, struct pci_attach_args *, u_int,
+	    int);
 int	summitfb_check_rom(struct summitfb_softc *, struct pci_attach_args *);
 void	summitfb_enable_rom(struct sti_softc *);
 void	summitfb_disable_rom(struct sti_softc *);
@@ -111,27 +115,30 @@ int	sti_rom_setup(struct sti_rom *, bus_space_tag_t, bus_space_tag_t,
 int	sti_screen_setup(struct sti_screen *, int);
 void	sti_describe_screen(struct sti_softc *, struct sti_screen *);
 
-#define PCI_ROM_SIZE(mr)                                                \
-            (PCI_MAPREG_ROM_ADDR(mr) & -PCI_MAPREG_ROM_ADDR(mr))
+#define PCI_ROM_SIZE(mr)						      \
+	(PCI_MAPREG_ROM_ADDR(mr) & -PCI_MAPREG_ROM_ADDR(mr))
 
 /* wsdisplay stuff */
 static int	summitfb_ioctl(void *, void *, u_long, void *, int,
-			     struct lwp *);
+		    struct lwp *);
 static paddr_t	summitfb_mmap(void *, void *, off_t, int);
-static void	summitfb_init_screen(void *, struct vcons_screen *, int, long *);
+static void	summitfb_init_screen(void *, struct vcons_screen *, int,
+		    long *);
 
-static int	summitfb_putcmap(struct summitfb_softc *, struct wsdisplay_cmap *);
-static int 	summitfb_getcmap(struct summitfb_softc *, struct wsdisplay_cmap *);
+static int	summitfb_putcmap(struct summitfb_softc *,
+		    struct wsdisplay_cmap *);
+static int 	summitfb_getcmap(struct summitfb_softc *,
+		    struct wsdisplay_cmap *);
 static void	summitfb_restore_palette(struct summitfb_softc *);
 static int 	summitfb_putpalreg(struct summitfb_softc *, uint8_t, uint8_t,
-			    uint8_t, uint8_t);
+		    uint8_t, uint8_t);
 
 static inline void summitfb_setup_fb(struct summitfb_softc *);
 
 static void	summitfb_rectfill(struct summitfb_softc *, int, int, int, int,
-			    uint32_t);
+		    uint32_t);
 static void	summitfb_bitblt(void *, int, int, int, int, int,
-			    int, int);
+		    int, int);
 
 static void	summitfb_cursor(void *, int, int, int);
 static void	summitfb_putchar(void *, int, int, u_int, long);
@@ -142,19 +149,20 @@ static void	summitfb_copyrows(void *, int, int, int);
 static void	summitfb_eraserows(void *, int, int, long);
 
 static void	summitfb_move_cursor(struct summitfb_softc *, int, int);
-static int	summitfb_do_cursor(struct summitfb_softc *, struct wsdisplay_cursor *);
+static int	summitfb_do_cursor(struct summitfb_softc *,
+		    struct wsdisplay_cursor *);
 
 static void	summitfb_set_video(struct summitfb_softc *, int);
 
 struct wsdisplay_accessops summitfb_accessops = {
-	summitfb_ioctl,
-	summitfb_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL, 	/* load_font */
-	NULL,	/* pollc */
-	NULL	/* scroll */
+	.ioctl = summitfb_ioctl,
+	.mmap = summitfb_mmap,
+	.alloc_screen = NULL,
+	.free_screen = NULL,
+	.show_screen = NULL,
+	.load_font = NULL,
+	.pollc = NULL,
+	.scroll = NULL,
 };
 
 static inline void summitfb_wait_fifo(struct summitfb_softc *, uint32_t);
@@ -204,6 +212,7 @@ summitfb_read4(struct summitfb_softc *sc, uint32_t offset)
 	struct sti_rom *rom = sc->sc_base.sc_rom;
 	bus_space_tag_t memt = rom->memt;
 	bus_space_handle_t memh = rom->regh[2];
+
 	return bus_space_read_stream_4(memt, memh, offset - 0x400000);
 }
 
@@ -213,6 +222,7 @@ summitfb_write4(struct summitfb_softc *sc, uint32_t offset, uint32_t val)
 	struct sti_rom *rom = sc->sc_base.sc_rom;
 	bus_space_tag_t memt = rom->memt;
 	bus_space_handle_t memh = rom->regh[2];
+
 	bus_space_write_stream_4(memt, memh, offset - 0x400000, val);
 }
 
@@ -222,6 +232,7 @@ summitfb_read1(struct summitfb_softc *sc, uint32_t offset)
 	struct sti_rom *rom = sc->sc_base.sc_rom;
 	bus_space_tag_t memt = rom->memt;
 	bus_space_handle_t memh = rom->regh[2];
+
 	return bus_space_read_1(memt, memh, offset);
 }
 
@@ -231,6 +242,7 @@ summitfb_write1(struct summitfb_softc *sc, uint32_t offset, uint8_t val)
 	struct sti_rom *rom = sc->sc_base.sc_rom;
 	bus_space_tag_t memt = rom->memt;
 	bus_space_handle_t memh = rom->regh[2];
+
 	bus_space_write_1(memt, memh, offset, val);
 }
 
@@ -266,7 +278,7 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 		sc->sc_base.sc_flags |= STI_CONSOLE;
 		is_console = 1;
 	}
-	rom = (struct sti_rom *)kmem_zalloc(sizeof(*rom), KM_SLEEP);
+	rom = kmem_zalloc(sizeof(*rom), KM_SLEEP);
 	rom->rom_softc = &sc->sc_base;
 	ret = sti_rom_setup(rom, paa->pa_iot, paa->pa_memt, sc->sc_romh,
 	    sc->sc_base.bases, STI_CODEBASE_MAIN);
@@ -292,13 +304,13 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	sc->sc_defaultscreen_descr = (struct wsscreen_descr){
-		"default",
-		0, 0,
-		NULL,
-		8, 16,
-		WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
-		      WSSCREEN_RESIZE,
-		NULL
+		.name = "default",
+		.ncols = 0, .nrows = 0,
+		.textops = NULL,
+		.fontwidth = 8, .fontheight = 16,
+		.capabilities = WSSCREEN_WSCOLORS | WSSCREEN_HILIT |
+		    WSSCREEN_UNDERLINE | WSSCREEN_RESIZE,
+		.modecookie = NULL,
 	};
 
 	sc->sc_screens[0] = &sc->sc_defaultscreen_descr;
@@ -327,11 +339,11 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
 
 	glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
-			sc->sc_scr.fbheight - sc->sc_height - 5,
-			sc->sc_scr.fbwidth,
-			ri->ri_font->fontwidth,
-			ri->ri_font->fontheight,
-			defattr);
+	    sc->sc_scr.fbheight - sc->sc_height - 5,
+	    sc->sc_scr.fbwidth,
+	    ri->ri_font->fontwidth,
+	    ri->ri_font->fontheight,
+	    defattr);
 
 	summitfb_restore_palette(sc);
 	summitfb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
@@ -346,9 +358,7 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* no suspend/resume support yet */
-	if (!pmf_device_register(sc->sc_dev, NULL, NULL))
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't establish power handler\n");
+	pmf_device_register(sc->sc_dev, NULL, NULL);
 
 	aa.console = is_console;
 	aa.scrdata = &sc->sc_screenlist;
@@ -391,10 +401,10 @@ summitfb_check_rom(struct summitfb_softc *spc, struct pci_attach_args *pa)
 	address |= PCI_MAPREG_ROM_ENABLE;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM, address);
 	sc->sc_flags |= STI_ROM_ENABLED;
+
 	/*
 	 * Map the complete ROM for now.
 	 */
-
 	romsize = PCI_ROM_SIZE(mask);
 	DPRINTF(("%s: mapping rom @ %lx for %lx\n", __func__,
 	    (long)PCI_MAPREG_ROM_ADDR(address), (long)romsize));
@@ -423,8 +433,8 @@ summitfb_check_rom(struct summitfb_softc *spc, struct pci_attach_args *pa)
 			summitfb_disable_rom_internal(spc);
 			if (offs == 0) {
 				aprint_error_dev(sc->sc_dev,
-				    "invalid PCI ROM header signature (%08x)\n",
-				     tmp);
+				    "invalid PCI ROM header signature"
+				    " (%08x)\n", tmp);
 				rc = EINVAL;
 			}
 			break;
@@ -569,8 +579,8 @@ fail2:
  * Decode a BAR register.
  */
 int
-summitfb_readbar(struct sti_softc *sc, struct pci_attach_args *pa, u_int region,
-    int bar)
+summitfb_readbar(struct sti_softc *sc, struct pci_attach_args *pa,
+    u_int region, int bar)
 {
 	bus_addr_t addr;
 	bus_size_t size;
@@ -579,7 +589,7 @@ summitfb_readbar(struct sti_softc *sc, struct pci_attach_args *pa, u_int region,
 
 	if (bar == 0) {
 		sc->bases[region] = 0;
-		return (0);
+		return 0;
 	}
 
 #ifdef DIAGNOSTIC
@@ -598,14 +608,15 @@ summitfb_readbar(struct sti_softc *sc, struct pci_attach_args *pa, u_int region,
 
 	if (rc != 0) {
 		summitfb_disable_rom(sc);
-		aprint_error_dev(sc->sc_dev, "invalid bar %02x for region %d\n",
+		aprint_error_dev(sc->sc_dev, "invalid bar %02x"
+		    " for region %d\n",
 		    bar, region);
 		summitfb_enable_rom(sc);
-		return (rc);
+		return rc;
 	}
 
 	sc->bases[region] = addr;
-	return (0);
+	return 0;
 }
 
 /*
@@ -664,12 +675,14 @@ static inline void
 summitfb_wait(struct summitfb_softc *sc)
 {
 
-	do {} while (summitfb_read4(sc, VISFX_STATUS) != 0);
+	while (summitfb_read4(sc, VISFX_STATUS) != 0)
+		continue;
 }
 
 static inline void
 summitfb_setup_fb(struct summitfb_softc *sc)
 {
+
 	sc->sc_hwmode = HW_FB;
 	summitfb_wait(sc);
 	summitfb_write4(sc, VISFX_VRAM_WRITE_MODE, VISFX_WRITE_MODE_PLAIN);
@@ -690,7 +703,7 @@ summitfb_setup(struct summitfb_softc *sc)
 	 * one of these puts us into 8bit FB access mode
 	 */
 #if 1
-	summitfb_write4(sc, 0xb08044, 0x1b);	
+	summitfb_write4(sc, 0xb08044, 0x1b);
 	summitfb_write4(sc, 0xb08048, 0x1b);
 	summitfb_write4(sc, 0x920860, 0xe4);
 	summitfb_write4(sc, 0xa00818, 0);
@@ -711,7 +724,7 @@ summitfb_setup(struct summitfb_softc *sc)
 
 static int
 summitfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
-	struct lwp *l)
+    struct lwp *l)
 {
 	struct vcons_data *vd = v;
 	struct summitfb_softc *sc = vd->cookie;
@@ -740,7 +753,7 @@ summitfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	case WSDISPLAYIO_GINFO:
 		if (ms == NULL)
 			return ENODEV;
-		wdf = (void *)data;
+		wdf = data;
 		wdf->height = ms->scr_ri.ri_height;
 		wdf->width = ms->scr_ri.ri_width;
 		wdf->depth = ms->scr_ri.ri_depth;
@@ -760,7 +773,8 @@ summitfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		return 0;
 
 	case WSDISPLAYIO_SMODE: {
-		int new_mode = *(int*)data;
+		int new_mode = *(int *)data;
+
 		if (new_mode != sc->sc_mode) {
 			sc->sc_mode = new_mode;
 			if(new_mode == WSDISPLAYIO_MODE_EMUL) {
@@ -774,51 +788,46 @@ summitfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				summitfb_set_video(sc, 1);
 			}
 		}
-		}
 		return 0;
+	}
 
-	case WSDISPLAYIO_GET_FBINFO:
-		{
-			struct wsdisplayio_fbinfo *fbi = data;
-			int ret;
+	case WSDISPLAYIO_GET_FBINFO: {
+		struct wsdisplayio_fbinfo *fbi = data;
+		int ret;
 
-			ret = wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
-			fbi->fbi_fbsize = sc->sc_scr.fbheight * 2048;
-			return ret;
-		}
+		ret = wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
+		fbi->fbi_fbsize = sc->sc_scr.fbheight * 2048;
+		return ret;
+	}
 
-	case WSDISPLAYIO_GCURPOS:
-		{
-			struct wsdisplay_curpos *cp = (void *)data;
+	case WSDISPLAYIO_GCURPOS: {
+		struct wsdisplay_curpos *cp = data;
 
-			cp->x = sc->sc_cursor_x;
-			cp->y = sc->sc_cursor_y;
-		}
+		cp->x = sc->sc_cursor_x;
+		cp->y = sc->sc_cursor_y;
 		return 0;
+	}
 
-	case WSDISPLAYIO_SCURPOS:
-		{
-			struct wsdisplay_curpos *cp = (void *)data;
+	case WSDISPLAYIO_SCURPOS: {
+		struct wsdisplay_curpos *cp = data;
 
-			summitfb_move_cursor(sc, cp->x, cp->y);
-		}
+		summitfb_move_cursor(sc, cp->x, cp->y);
 		return 0;
+	}
 
-	case WSDISPLAYIO_GCURMAX:
-		{
-			struct wsdisplay_curpos *cp = (void *)data;
+	case WSDISPLAYIO_GCURMAX: {
+		struct wsdisplay_curpos *cp = data;
 
-			cp->x = 64;
-			cp->y = 64;
-		}
+		cp->x = 64;
+		cp->y = 64;
 		return 0;
+	}
 
-	case WSDISPLAYIO_SCURSOR:
-		{
-			struct wsdisplay_cursor *cursor = (void *)data;
+	case WSDISPLAYIO_SCURSOR: {
+		struct wsdisplay_cursor *cursor = data;
 
-			return summitfb_do_cursor(sc, cursor);
-		}
+		return summitfb_do_cursor(sc, cursor);
+	}
 
 	case WSDISPLAYIO_SVIDEO:
 		summitfb_set_video(sc, *(int *)data);
@@ -872,11 +881,11 @@ summitfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_bits = (void *)sc->sc_scr.fbaddr;
 	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
-		      WSSCREEN_RESIZE;
+	    WSSCREEN_RESIZE;
 	scr->scr_flags |= VCONS_LOADFONT | VCONS_DONT_READ;
 
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
-		    sc->sc_width / ri->ri_font->fontwidth);
+	    sc->sc_width / ri->ri_font->fontwidth);
 
 	ri->ri_hw = scr;
 if (0) {
@@ -972,9 +981,10 @@ summitfb_restore_palette(struct summitfb_softc *sc)
 }
 
 static int
-summitfb_putpalreg(struct summitfb_softc *sc, uint8_t idx, uint8_t r, uint8_t g,
-    uint8_t b)
+summitfb_putpalreg(struct summitfb_softc *sc, uint8_t idx,
+    uint8_t r, uint8_t g, uint8_t b)
 {
+
 	mutex_enter(&sc->sc_hwlock);
 	summitfb_write4(sc, VISFX_COLOR_INDEX, 0xc0005100 + idx);
 	summitfb_write4(sc, VISFX_COLOR_VALUE, (r << 16) | ( g << 8) | b);
@@ -990,6 +1000,7 @@ summitfb_wait_fifo(struct summitfb_softc *sc, uint32_t slots)
 {
 #if 0
 	uint32_t reg;
+
 	do {
 		reg = summitfb_read4(sc, NGLE_REG_34);
 	} while (reg < slots);
@@ -998,8 +1009,9 @@ summitfb_wait_fifo(struct summitfb_softc *sc, uint32_t slots)
 
 static void
 summitfb_rectfill(struct summitfb_softc *sc, int x, int y, int wi, int he,
-		      uint32_t bg)
+    uint32_t bg)
 {
+
 	summitfb_wait(sc);
 	summitfb_write4(sc, VISFX_VRAM_WRITE_MODE, VISFX_WRITE_MODE_FILL);
 	summitfb_write4(sc, VISFX_FG_COLOUR, bg);
@@ -1010,7 +1022,7 @@ summitfb_rectfill(struct summitfb_softc *sc, int x, int y, int wi, int he,
 
 static void
 summitfb_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
-			    int he, int rop)
+    int he, int rop)
 {
 #if 0
 	struct summitfb_softc *sc = cookie;
@@ -1057,8 +1069,7 @@ summitfb_cursor(void *cookie, int on, int row, int col)
 		}
 		ri->ri_crow = row;
 		ri->ri_ccol = col;
-	} else
-	{
+	} else {
 		ri->ri_crow = row;
 		ri->ri_ccol = col;
 		ri->ri_flg &= ~RI_CURSOR;
@@ -1172,8 +1183,8 @@ summitfb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		if (ri->ri_crow == row &&
-		   (ri->ri_ccol >= srccol && ri->ri_ccol < (srccol + ncols)) &&
-		   (ri->ri_flg & RI_CURSOR)) {
+		    ri->ri_ccol >= srccol && ri->ri_ccol < (srccol + ncols) &&
+		    (ri->ri_flg & RI_CURSOR)) {
 			summitfb_nuke_cursor(ri);
 		}
 
@@ -1184,13 +1195,14 @@ summitfb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 		height = ri->ri_font->fontheight;
 		summitfb_bitblt(sc, xs, y, xd, y, width, height, RopSrc);
 		if (ri->ri_crow == row &&
-		   (ri->ri_ccol >= dstcol && ri->ri_ccol < (dstcol + ncols)))
+		    ri->ri_ccol >= dstcol && ri->ri_ccol < (dstcol + ncols))
 			ri->ri_flg &= ~RI_CURSOR;
 	}
 }
 
 static void
-summitfb_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
+summitfb_erasecols(void *cookie, int row, int startcol, int ncols,
+    long fillattr)
 {
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
@@ -1206,7 +1218,8 @@ summitfb_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr
 
 		summitfb_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
 		if (ri->ri_crow == row &&
-		   (ri->ri_ccol >= startcol && ri->ri_ccol < (startcol + ncols)))
+		    ri->ri_ccol >= startcol &&
+		    ri->ri_ccol < (startcol + ncols))
 			ri->ri_flg &= ~RI_CURSOR;
 	}
 }
@@ -1220,8 +1233,8 @@ summitfb_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 	int32_t x, ys, yd, width, height;
 
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-		if ((ri->ri_crow >= srcrow && ri->ri_crow < (srcrow + nrows)) &&
-		   (ri->ri_flg & RI_CURSOR)) {
+		if (ri->ri_crow >= srcrow && ri->ri_crow < (srcrow + nrows) &&
+		    (ri->ri_flg & RI_CURSOR)) {
 			summitfb_nuke_cursor(ri);
 		}
 		x = ri->ri_xorigin;
@@ -1291,19 +1304,17 @@ summitfb_move_cursor(struct summitfb_softc *sc, int x, int y)
 static int
 summitfb_do_cursor(struct summitfb_softc *sc, struct wsdisplay_cursor *cur)
 {
-	if (cur->which & WSDISPLAY_CURSOR_DOCUR) {
 
+	if (cur->which & WSDISPLAY_CURSOR_DOCUR) {
 		sc->sc_enabled = cur->enable;
 		cur->which |= WSDISPLAY_CURSOR_DOPOS;
 	}
 	if (cur->which & WSDISPLAY_CURSOR_DOHOT) {
-
 		sc->sc_hot_x = cur->hot.x;
 		sc->sc_hot_y = cur->hot.y;
 		cur->which |= WSDISPLAY_CURSOR_DOPOS;
 	}
 	if (cur->which & WSDISPLAY_CURSOR_DOPOS) {
-
 		summitfb_move_cursor(sc, cur->pos.x, cur->pos.y);
 	}
 	if (cur->which & WSDISPLAY_CURSOR_DOCMAP) {
@@ -1424,6 +1435,7 @@ summitfb_do_cursor(struct summitfb_softc *sc, struct wsdisplay_cursor *cur)
 static void
 summitfb_set_video(struct summitfb_softc *sc, int on)
 {
+
 	if (sc->sc_video_on == on)
 		return;
 
