@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_reg.h,v 1.9 2009/11/22 19:09:15 mbalmer Exp $	*/
+/*	$NetBSD: gemini_reg.h,v 1.10 2024/11/19 05:00:08 andvar Exp $	*/
 
 #ifndef _ARM_GEMINI_REG_H_
 #define _ARM_GEMINI_REG_H_
@@ -36,7 +36,7 @@
 #define GEMINI_LCD_BASE		0x44000000 	/* LCD Interface module */
 #define GEMINI_RTC_BASE		0x45000000 	/* Real Time Clock module */
 #define GEMINI_SATA_BASE	0x46000000 	/* Serial ATA module */
-#define GEMINI_LPCHC_BASE	0x47000000 	/* LPC Hosr Controller module */
+#define GEMINI_LPCHC_BASE	0x47000000 	/* LPC Host Controller module */
 #define GEMINI_LPCIO_BASE	0x47800000 	/* LPC Peripherals IO space */
 #define GEMINI_IC0_BASE		0x48000000 	/* Interrupt Control module #0 */
 #define GEMINI_IC1_BASE		0x49000000 	/* Interrupt Control module #1 */
