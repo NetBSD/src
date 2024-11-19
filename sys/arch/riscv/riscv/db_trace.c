@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.4 2023/05/07 12:41:48 skrll Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.5 2024/11/19 21:17:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: db_trace.c,v 1.4 2023/05/07 12:41:48 skrll Exp $");
+__RCSID("$NetBSD: db_trace.c,v 1.5 2024/11/19 21:17:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,11 +128,11 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	bool trace_thread = false;
 	bool trace_lwp = false;
 
-	printf("have_addr: %s\n", have_addr ? "true" : "false");
+	pr("have_addr: %s\n", have_addr ? "true" : "false");
 	if (have_addr)
-		printf("addr: %lx\n", addr);
-	printf("count: %ld\n", count);
-	printf("modif: %s\n", modif);
+		pr("addr: %lx\n", addr);
+	pr("count: %ld\n", count);
+	pr("modif: %s\n", modif);
 
 	for (; *modif != '\0'; modif++) {
 		switch (*modif) {
