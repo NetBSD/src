@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.16 2024/03/24 12:53:24 martin Exp $
+.\"	$NetBSD: xfer,v 1.17 2024/11/19 03:28:27 kalvisd Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -179,9 +179,6 @@ documentation that came with it.
 on
 .Tn SunOS . )
 .Pp
-There is also very useful documentation at
-.Lk http://www.NetBSD.org/docs/network/netboot/
-.Pp
 You also must install a MOP loader.
 If you are booting from another
 .Nx
@@ -192,7 +189,7 @@ A loader can be found at
 Fetch the latest and read the
 installation instructions.
 .Pp
-The file that should be loaded is called boot and is located in
+The boot program that should be loaded is called boot and is located in
 .Pp
 .Dl Pa \&.../NetBSD-\*V/\*M/installation/netboot/boot
 .Pp
@@ -203,7 +200,17 @@ be found in
 .Pp
 From the install program started in the kernel the rest of the system
 can be installed.
-There is also a very good (if somewhat out of date) FAQ for netbooting
-VAXen at
-.Lk http://world.std.com/~bdc/projects/vaxen/VAX-netboot-HOWTO.html
-that describes netbooting of VAXen from many different OSes.
+.Pp
+The boot program is also available as a MOP image, in
+.Dl Pa \&.../NetBSD-\*V/\*M/installation/netboot/boot.mop
+.Pp
+Use this version if your MOP loader cannot interpret ELF images.
+.Pp
+More details are available at
+.Lk https://www.NetBSD.org/docs/network/netboot/intro.vax.html
+and
+.Lk https://www.NetBSD.org/docs/network/netboot/
+.Pp
+There is also a very good (if somewhat out of date) FAQ, describing
+the process of netbooting VAXen from many different OSes, at
+.Lk https://web.archive.org/web/20031004185104/http://world.std.com/~bdc/projects/vaxen/old/VAX-netboot-HOWTO.html
