@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.9 2023/09/02 09:27:09 skrll Exp $ */
+/* $NetBSD: db_machdep.h,v 1.10 2024/11/19 18:11:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -50,15 +50,15 @@ extern db_regs_t ddb_regs;
 
 #define	PC_REGS(tf)	((tf)->tf_pc)
 
-#define	PC_ADVANCE(tf) do {						\
-	if (db_get_value((tf)->tf_pc, sizeof(uint32_t), false) == BKPT_INST) \
-		(tf)->tf_pc += BKPT_SIZE;			\
+#define	PC_ADVANCE(tf) do {						       \
+	if (db_get_value((tf)->tf_pc, sizeof(uint32_t), false) == BKPT_INST)   \
+		(tf)->tf_pc += BKPT_SIZE;				       \
 } while(0)
 
 /* Similar to PC_ADVANCE(), except only advance on cpu_Debugger()'s bpt */
-#define	PC_BREAK_ADVANCE(tf) do {				\
-	if ((tf)->tf_pc == (register_t)cpu_Debugger_insn)	\
-		(tf)->tf_pc = (register_t)cpu_Debugger_ret;	\
+#define	PC_BREAK_ADVANCE(tf) do {					       \
+	if ((tf)->tf_pc == (register_t)cpu_Debugger_insn)		       \
+		(tf)->tf_pc = (register_t)cpu_Debugger_ret;		       \
 } while(0)
 
 #define	BKPT_ADDR(addr)		(addr)			/* breakpoint address */
