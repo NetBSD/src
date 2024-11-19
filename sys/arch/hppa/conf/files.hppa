@@ -1,4 +1,4 @@
-#	$NetBSD: files.hppa,v 1.27 2024/11/19 12:13:38 macallan Exp $
+#	$NetBSD: files.hppa,v 1.28 2024/11/19 15:15:43 riastradh Exp $
 #
 #	$OpenBSD: files.hppa,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -271,7 +271,7 @@ file	arch/hppa/gsc/com_harmony.c	com_harmony
 #attach	myri at pci
 #file	dev/pci/myri.c			myri
 
-# PCI Visualize EG 
+# PCI Visualize EG
 device	gftfb: wsemuldisplaydev, rasops8, vcons, glyphcache, sti_pci, sti
 attach	gftfb at pci
 file	arch/hppa/dev/gftfb.c		gftfb
@@ -283,7 +283,7 @@ attach	hyperfb at gedoens
 file	arch/hppa/dev/hyperfb.c		hyperfb
 defflag opt_hyperfb.h HYPERFB_DEBUG
 
-# Visualize FX4, aka Summit 
+# Visualize FX4, aka Summit
 device	summitfb: wsemuldisplaydev, rasops8, vcons, glyphcache, sti_pci, sti
 attach	summitfb at pci
 file	arch/hppa/dev/summitfb.c	summitfb
