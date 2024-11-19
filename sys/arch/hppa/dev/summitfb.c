@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.2 2024/11/19 15:49:44 riastradh Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.3 2024/11/19 15:50:41 riastradh Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.2 2024/11/19 15:49:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.3 2024/11/19 15:50:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.2 2024/11/19 15:49:44 riastradh Exp $
 #include "opt_summitfb.h"
 
 #ifdef SUMMITFB_DEBUG
-#define	DPRINTF(s) printf(s)
+#define	DPRINTF(s) printf s
 #else
 #define	DPRINTF(s) __nothing
 #endif
