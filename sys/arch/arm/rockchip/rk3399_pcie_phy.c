@@ -1,4 +1,4 @@
-/*	$NetBSD: rk3399_pcie_phy.c,v 1.4 2021/01/27 03:10:19 thorpej Exp $	*/
+/*	$NetBSD: rk3399_pcie_phy.c,v 1.5 2024/11/19 08:24:47 skrll Exp $	*/
 /*	$OpenBSD: rkpcie.c,v 1.6 2018/08/28 09:33:18 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -18,7 +18,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie_phy.c,v 1.4 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie_phy.c,v 1.5 2024/11/19 08:24:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ rkpciephy_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_phy_node = faa->faa_phandle;
-	
+
 	aprint_naive("\n");
 	aprint_normal(": RK3399 PCIe PHY\n");
 
@@ -251,7 +251,7 @@ rkpcie_phy_poweron(struct rkpciephy_softc *sc, u_int lane)
 	syscon_write_4(rm, RK3399_GRF_SOC_CON8,
 	    RK3399_PCIE_TEST_ADDR_MASK |
 	    RK3399_PCIE_PHY_CFG_PLL_LOCK << RK3399_PCIE_TEST_ADDR_SHIFT);
-		
+
 	for (timo = 50; timo > 0; timo--) {
 		status = syscon_read_4(rm, RK3399_GRF_SOC_STATUS1);
 		if (status & RK3399_PCIE_PHY_PLL_LOCKED)
